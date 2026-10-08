@@ -1,3 +1,17 @@
+---
+id: "7cd936b5-69d3-4800-bc58-7b098761fda1"
+type: procedure
+lifecycle: REVIEW
+category: agent-routing
+tags: [protocol, routing, dispatcher, agent-bridge]
+created: 2026-10-05
+updated: 2026-10-07
+provenance:
+  source_type: ai
+  source_ref: "PR #211 (chore/claude-workflow-dfir-contract)"
+verification: unverified
+---
+
 # AI Memory Vault — Agent Routing Protocol V1
 
 ## Purpose
@@ -319,15 +333,18 @@ Bridge private keys are protected at rest using the host operating system's secu
 The bridge accepts only:
 - configured runtime identifiers;
 - configured agent identifiers;
-- signed, unexpired capability tokens;
-- matching task and route identifiers;
-- unused nonces.
+- signed, unexpired capability tokens bound to ONE packet (`packet_sha256` = SHA-256 of the canonical packet bytes; a substituted packet is refused after decryption);
+- matching task and route identifiers, restricted to `[A-Za-z0-9_-]{1,64}` (they become directory names and AAD);
+- unused nonces; the replay guard refuses new claims when full instead of evicting live ones;
+- a configuration loaded and validated from `04_CONFIG/agent_bridge.json` (`agent_bridge.config.load_bridge_config`); a disabled security switch, `dangerously_skip_permissions: true` or a non-session-local pipe stops the bridge from being built.
+
+The client accepts a response only if it is signed by the bridge AND names the same bridge and task as the request, and its signed status matches the encrypted result.
 
 It never accepts arbitrary shell commands from a WorkPacket.
 
 ### Performance
 
-The Antigravity adapter uses a persistent headless `stream-json` session where supported. This avoids process startup and authentication overhead for every task. Requests are serialized per session and can later be scaled with a bounded session pool.
+The Antigravity adapter uses a persistent headless `stream-json` session where supported. This avoids process startup and authentication overhead for every task. Requests are serialized per session and can later be scaled with a bounded session pool. A session is reused only within one task: a prompt for a different task, or without a task id, starts a fresh process, so a task never inherits another task's context (`AntigravitySession.reset()` does this explicitly). Capability tokens must live at least `security.minimum_ttl_seconds` and at most `security.maximum_ttl_seconds`.
 
 The bridge transport should use Windows named pipes for same-host IPC with an OS ACL restricting the pipe to the intended principal. For distributed operation, the remote hop remains authenticated and encrypted separately.
 
@@ -390,7 +407,8 @@ Therefore:
 - feedback cannot override policy;
 - high-risk work requires independent verification;
 - route decisions are fingerprinted;
-- sensitive goal text is not copied into durable route receipts.
+- sensitive goal text is not copied into durable route receipts: `route.json` and `result.json` hold `goal_sha256` / `brief_sha256`, the brief is passed on stdin and never written to disk, and receipts live in the per-user state directory (`dispatch/`, owner-only), not in the shared temp directory;
+- A2A dispatch sends the full contract (goal, acceptance criteria, constraints, memory references), as text and as structured metadata.
 
 ## Canonical implementation
 

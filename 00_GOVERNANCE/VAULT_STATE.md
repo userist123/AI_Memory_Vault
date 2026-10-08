@@ -65,12 +65,14 @@ in its constructor. Corrected 2026-09-06.
 | `30_SCRIPTS/ingestion/convert_pdf_to_text.py` | real, measured | r030-r031; **20 of 20** books, 1,088 chunks measured by chunking |
 | `30_SCRIPTS/ingestion/model_extract_concepts.py` | real, gates and selectivity both work | r031; recurrence floor validated on all 3 structure modes |
 | `30_SCRIPTS/ingestion/extract_book_concepts.py` (rule-based) | real, **unusable on books** | 28% of its 112 corpus candidates are not terms |
+| `03_IMPLEMENTATION/packages/routing/` (agent router + dispatcher) | real and tested, **NOT wired into production** | reachable only through the manual CLI `python -m routing.route_cli` (`probe` / `route` / `dispatch --execute`); no production module imports it, it does not call `memory_search`, and nothing dispatches the verifier it selects (`PENDING_VERIFICATION` is terminal). Dispatch is tested against the real `04_CONFIG/agent_router.json` with fake executables only; no real agent was invoked (`20_TESTS/test_agent_dispatch_real_config.py`) |
+| `03_IMPLEMENTATION/packages/agent_bridge/` (secure bridge) | library + tests, **NOT wired, no transport** | `transport: windows_named_pipe` is validated in `04_CONFIG/agent_bridge.json` but no pipe server exists; `load_bridge_config()` / `build_bridge()` and `AntigravitySession` have no consumer outside `20_TESTS`; nothing runs it end to end. `minimum_ttl_seconds` is enforced and an AGY session never carries context across tasks (`20_TESTS/test_agent_bridge_hardening.py`), verified against fakes, not the real `agy` |
 
 ## 4. Corpus and graph, measured
 
 | Measure | Value |
 |---|---:|
-| Notes in the index (`VaultIndex`, export residue excluded) | 1041 |
+| Notes in the index (`VaultIndex`, export residue excluded) | 1124 |
 | Notes visible to `FileStorageEngine` | 858 |
 | Graph edges | 483 |
 | — declared / inferred / wikilink | 203 / 203 / 77 |

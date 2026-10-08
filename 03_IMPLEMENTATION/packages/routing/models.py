@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from dataclasses import dataclass, field
 from enum import IntEnum, StrEnum
 from typing import Any, Mapping
@@ -86,6 +88,7 @@ class RuntimeDescriptor:
     adapter_ref:str=""
     model:str|None=None
     enabled:bool=True
+    executable:str=""
 
 
 @dataclass(frozen=True)
@@ -183,6 +186,9 @@ class RouteDecision:
             "execution_contract":dict(self.execution_contract)}
 
 
+SAFE_ID_RE=re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+
+
 @dataclass(frozen=True)
 class WorkPacket:
     task_id:str
@@ -198,6 +204,14 @@ class WorkPacket:
     memory_refs:tuple[str,...]=()
     timeout_seconds:int=3600
     metadata:Mapping[str,Any]=field(default_factory=dict)
+
+    def __post_init__(self):
+        # task_id and route_id become directory names (dispatch receipts) and AAD/token claims:
+        # anything but a plain identifier is refused, so `../` can never reach a filesystem path.
+        for name in ("task_id","route_id"):
+            value=getattr(self,name)
+            if not isinstance(value,str) or not SAFE_ID_RE.fullmatch(value):
+                raise ValueError(f"WorkPacket.{name} must match {SAFE_ID_RE.pattern}")
 
 
 @dataclass(frozen=True)

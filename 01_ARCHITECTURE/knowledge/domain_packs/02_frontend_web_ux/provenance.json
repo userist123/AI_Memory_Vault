@@ -1,0 +1,82 @@
+[
+  {
+    "claim_id": "claim_react_nextjs_architecture_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/02_frontend_web_ux/playbooks/react_nextjs_architecture.md",
+    "source_skill": "code-showcase-react-ui-patterns",
+    "source_path": ".agents/skills/code-showcase-react-ui-patterns/SKILL.md",
+    "source_sha1": "2f1585bd3b87b6d505dc9c6b0822e9d43556a5aa",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "claim_client_state_and_data_fetching_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/02_frontend_web_ux/playbooks/client_state_and_data_fetching.md",
+    "source_skill": "00-andruia-consultant",
+    "source_path": ".agents/skills/00-andruia-consultant/SKILL.md",
+    "source_sha1": "ddb36b4264bbae0bc36a683e935cc07d86c0ac88",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "claim_design_systems_and_tokens_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/02_frontend_web_ux/playbooks/design_systems_and_tokens.md",
+    "source_skill": "code-showcase-core-components",
+    "source_path": ".agents/skills/code-showcase-core-components/SKILL.md",
+    "source_sha1": "21d0b089f4eaec1418277948408c0ed64f0fe7aa",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "claim_css_tailwind_and_responsive_layouts_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/02_frontend_web_ux/playbooks/css_tailwind_and_responsive_layouts.md",
+    "source_skill": "css-alpha-masking",
+    "source_path": ".agents/skills/skillsweb/css-alpha-masking/SKILL.md",
+    "source_sha1": "ce6ce78cc7b38f4743c43e23e5873f9e97f1efb8",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "claim_web_performance_and_accessibility_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/02_frontend_web_ux/playbooks/web_performance_and_accessibility.md",
+    "source_skill": "accessibility",
+    "source_path": ".agents/skills/accessibility/SKILL.md",
+    "source_sha1": "d355dee76501626b55ed64fc09cef6a206a2fbcd",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "claim_motion_and_microinteractions_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/02_frontend_web_ux/playbooks/motion_and_microinteractions.md",
+    "source_skill": "canvas-design",
+    "source_path": ".agents/skills/canvas-design/SKILL.md",
+    "source_sha1": "9bb167de0893032e582ce2fb0185e7e3e50c89b6",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "claim_threejs_webgl_spatial_experiences_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/02_frontend_web_ux/playbooks/threejs_webgl_spatial_experiences.md",
+    "source_skill": "build-mobile-threejs-games",
+    "source_path": ".agents/skills/build-mobile-threejs-games/SKILL.md",
+    "source_sha1": "f89cb68ce76e755419928affd3571808f13cdf8d",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "claim_ux_heuristics_and_conversion_flows_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/02_frontend_web_ux/playbooks/ux_heuristics_and_conversion_flows.md",
+    "source_skill": "bento-ui",
+    "source_path": ".agents/skills/design-it/bento-ui/SKILL.md",
+    "source_sha1": "d7dbdc1b03d81f5de2e5e908ae5104fd22f458b1",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "claim_frontend_testing_and_e2e_verification_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/02_frontend_web_ux/playbooks/frontend_testing_and_e2e_verification.md",
+    "source_skill": "00-andruia-consultant",
+    "source_path": ".agents/skills/00-andruia-consultant/SKILL.md",
+    "source_sha1": "ddb36b4264bbae0bc36a683e935cc07d86c0ac88",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "claim_alternative_frameworks_vue_svelte_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/02_frontend_web_ux/playbooks/alternative_frameworks_vue_svelte.md",
+    "source_skill": "markstream-svelte",
+    "source_path": ".agents/skills/markstream-svelte/SKILL.md",
+    "source_sha1": "94fe353f8b43c54e95fd7f62c5e61c9cafdbb994",
+    "evidence_type": "desc"
+  }
+]

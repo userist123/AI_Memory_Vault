@@ -8,6 +8,7 @@ from agent_bridge.crypto import (
     Ed25519Signer,
     X25519Envelope,
     canonical_json,
+    packet_sha256,
 )
 from agent_bridge.replay import ReplayGuard
 from agent_bridge.antigravity import AntigravitySession
@@ -35,7 +36,7 @@ def test_signed_capability_token_is_scoped_and_expires():
         agent="visual_architect",
         permissions=("execute",),
         expires_at=time.time() + 60,
-        nonce="n1", response_public_key="caller-key",
+        nonce="n1", response_public_key="caller-key", packet_sha256="0" * 64,
     )
     verified = CapabilityToken.verify(token, signer.public_key)
     assert verified["runtime"] == "antigravity"
@@ -59,8 +60,8 @@ def test_canonical_json_is_deterministic():
     assert base64.b64encode(canonical_json(value)).decode()
 
 
-def test_antigravity_command_is_persistent_and_prompt_free():
-    session = AntigravitySession("C:/workspace", model="gemini-3.8-flash-high", effort="high")
+def test_antigravity_command_is_persistent_and_prompt_free(tmp_path):
+    session = AntigravitySession(tmp_path, model="gemini-3.8-flash-high", effort="high")
     command = session.build_command()
     assert "--input-format" in command
     assert "stream-json" in command
@@ -95,7 +96,7 @@ def test_secure_bridge_client_round_trip():
         signer.private_key, bridge_id="bridge-1", task_id=packet.task_id,
         runtime="antigravity", agent="visual_architect", permissions=("execute",),
         expires_at=time.time() + 60, nonce="client-nonce",
-        response_public_key=response_public_key,
+        response_public_key=response_public_key, packet_sha256=packet_sha256(packet),
     )
     seen = {}
     def send(request):
@@ -114,6 +115,7 @@ def test_capability_token_rejects_ttl_above_maximum():
         signer.private_key, bridge_id="bridge-1", task_id="ttl-1",
         runtime="antigravity", agent="visual_architect", permissions=("execute",),
         expires_at=1121, nonce="ttl-nonce", response_public_key="caller", iat=100,
+        packet_sha256="0" * 64,
     )
     with pytest.raises(PolicyError, match="maximum TTL"):
         CapabilityToken.verify(token, signer.public_key, now=100, max_ttl=120)

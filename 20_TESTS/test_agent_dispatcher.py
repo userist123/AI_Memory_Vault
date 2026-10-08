@@ -179,3 +179,71 @@ def test_command_adapters_never_put_goal_in_argv(monkeypatch, tmp_path):
         assert result.status is not DispatchStatus.FAILED
         assert all(goal not in str(arg) for arg in captured["cmd"])
         assert goal in captured["input"]
+
+
+# ── regressions for the PR #211 review ──────────────────────────────────────────────────
+def test_a2a_sends_constraints_acceptance_and_memory_refs_not_only_the_goal(monkeypatch):
+    import json
+    from routing.dispatcher import A2AAdapter
+
+    captured = {}
+
+    class Response:
+        def __enter__(self): return self
+        def __exit__(self, *args): return False
+        def read(self):
+            return json.dumps({"result": {"message": {"parts": [{"text": "ok"}]}}}).encode()
+
+    def fake_urlopen(request, timeout):
+        captured["payload"] = json.loads(request.data.decode())
+        return Response()
+
+    monkeypatch.setattr("routing.dispatcher.urllib.request.urlopen", fake_urlopen)
+    packet = WorkPacket("task-a2a", "route-a2a", "claude_code", "visual_architect", "antigravity",
+                        "visual-architect", "a2a", "inspect UI",
+                        ("screenshot attached",), ("do not modify files", "read-only"), ("vault://governance/vault_state",))
+    A2AAdapter("https://agent.example/rpc").dispatch(packet)
+    params = captured["payload"]["params"]
+    text = params["message"]["parts"][0]["text"]
+    for needle in ("inspect UI", "screenshot attached", "do not modify files", "read-only", "vault://governance/vault_state"):
+        assert needle in text
+    meta = params["metadata"]
+    assert meta["constraints"] == ["do not modify files", "read-only"]
+    assert meta["acceptance_criteria"] == ["screenshot attached"]
+    assert meta["memory_refs"] == ["vault://governance/vault_state"]
+
+
+def test_receipts_default_to_a_private_per_user_directory_not_temp(monkeypatch, tmp_path):
+    import tempfile
+    from routing.dispatcher import default_artifact_root
+    monkeypatch.setenv("AI_MEMORY_VAULT_HOME", str(tmp_path / "home"))
+    root = default_artifact_root()
+    assert root == tmp_path / "home" / "dispatch"
+    assert not root.resolve().is_relative_to(Path(tempfile.gettempdir()).resolve() / "ai-memory-vault-dispatch")
+    import os
+    if os.name != "nt":
+        assert (root.stat().st_mode & 0o777) == 0o700
+
+
+def test_run_dir_refuses_traversal(tmp_path):
+    import pytest
+    from routing.dispatcher import DispatchError, _run_dir
+    for bad in ("../x", "a/b", "..", "", "x" * 65):
+        with pytest.raises(DispatchError):
+            _run_dir(tmp_path, bad)
+    assert _run_dir(tmp_path, "task_abc").parent == tmp_path.resolve()
+
+
+def test_route_receipt_keeps_the_goal_only_as_a_digest(tmp_path):
+    import json
+    root = Path(__file__).resolve().parents[1]
+    reg = RouteRegistry.from_file(root / "04_CONFIG" / "agent_router.json")
+    decision = AgentRouter(reg).route(TaskRequest(goal="inspect the UI visually", capabilities=("visual",)),
+                                      {"antigravity": True})
+    dispatcher = AgentDispatcher(reg, {"antigravity": FakeAdapter()}, artifact_root=tmp_path)
+    secret_goal = "rotate the MApN key ring at 03:00 SECRET-MARKER"
+    packet = dispatcher.make_packet(decision, secret_goal, "claude_code")
+    dispatcher.dispatch(decision, packet)
+    receipt = (tmp_path / "ai-memory-vault-dispatch" / packet.task_id / "route.json").read_text(encoding="utf-8")
+    assert "SECRET-MARKER" not in receipt
+    assert json.loads(receipt)["packet"]["goal_chars"] == len(secret_goal)

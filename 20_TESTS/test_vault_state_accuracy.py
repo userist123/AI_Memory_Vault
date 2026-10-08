@@ -149,3 +149,29 @@ def test_every_referenced_path_exists(state_text):
         if "/" in r and not (REPO / r).exists() and not list(REPO.rglob(Path(r).name))
     ]
     assert not missing, f"VAULT_STATE.md references paths that do not exist: {missing}"
+
+
+def _production_importers(package: str, allowed_dirs: tuple[str, ...]) -> list[str]:
+    """Non-test .py files outside `allowed_dirs` that import `package` (the CLAUDE.md rule)."""
+    skip = ("20_TESTS", "07_EVALUATION", "benchmarks", ".git", ".claude", "node_modules", ".venv")
+    pat = re.compile(rf"^\s*(from|import)\s+{package}\b", re.M)
+    hits = []
+    for path in REPO.rglob("*.py"):
+        rel = path.relative_to(REPO).as_posix()
+        if any(part in skip for part in rel.split("/")) or "/tests/" in rel or path.name.startswith("test_"):
+            continue
+        if any(f"/{d}/" in f"/{rel}" for d in allowed_dirs):
+            continue
+        if pat.search(path.read_text(encoding="utf-8", errors="ignore")):
+            hits.append(rel)
+    return hits
+
+
+def test_routing_and_agent_bridge_are_still_unwired_as_the_card_says(state_text):
+    """The card says routing is manual-CLI only and agent_bridge has no consumer.
+    If a production module starts importing either, the card must change in the same commit."""
+    assert _production_importers("agent_bridge", ("agent_bridge",)) == [], "agent_bridge gained a consumer; update VAULT_STATE.md section 3"
+    assert _production_importers("routing", ("routing", "agent_bridge")) == [], "routing gained a consumer; update VAULT_STATE.md section 3"
+    assert "NOT wired into production" in state_text
+    assert "no transport" in state_text
+    assert "python -m routing.route_cli" in state_text

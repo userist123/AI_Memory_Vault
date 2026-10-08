@@ -27,8 +27,16 @@ class CapabilityToken:
         expires_at: float,
         nonce: str,
         response_public_key: str,
+        packet_sha256: str,
         iat: float | None = None,
     ) -> str:
+        """`packet_sha256` binds the token to ONE work packet (agent_bridge.crypto.packet_sha256).
+
+        Without it a captured token could be replayed with a different packet re-encrypted to the
+        bridge's public key; the bridge refuses tokens that do not carry it.
+        """
+        if not isinstance(packet_sha256, str) or len(packet_sha256) != 64:
+            raise PolicyError("capability token requires a 64-hex packet_sha256")
         issued_at = float(time.time() if iat is None else iat)
         payload = {
             "v": 1,
@@ -41,13 +49,14 @@ class CapabilityToken:
             "expires_at": float(expires_at),
             "nonce": nonce,
             "response_public_key": response_public_key,
+            "packet_sha256": packet_sha256,
         }
         signature = private_key.sign(canonical_json(payload))
         envelope = {"payload": payload, "signature": base64.urlsafe_b64encode(signature).decode("ascii")}
         return base64.urlsafe_b64encode(canonical_json(envelope)).decode("ascii")
 
     @staticmethod
-    def verify(token: str, public_key: Ed25519PublicKey, now: float | None = None, max_ttl: float = 120.0, clock_skew: float = 30.0) -> dict:
+    def verify(token: str, public_key: Ed25519PublicKey, now: float | None = None, max_ttl: float = 120.0, clock_skew: float = 30.0, min_ttl: float = 0.0) -> dict:
         try:
             raw = base64.urlsafe_b64decode(token.encode("ascii"))
             envelope = json.loads(raw.decode("utf-8"))
@@ -70,6 +79,8 @@ class CapabilityToken:
             raise PolicyError("capability token expired")
         if expires_at - iat > float(max_ttl):
             raise PolicyError("capability token exceeds maximum TTL")
+        if expires_at - iat < float(min_ttl):
+            raise PolicyError("capability token below minimum TTL")
         return payload
 
 

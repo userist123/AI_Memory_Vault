@@ -15,7 +15,13 @@ class AntigravityExecutionError(RuntimeError):
 
 
 class AntigravitySession:
-    """Persistent AGY headless session; prompts never enter the process argv."""
+    """Headless AGY session; prompts never enter the process argv.
+
+    The process is reused only inside ONE task. A conversation holds the previous prompts and
+    answers, so by default (`isolate_tasks=True`) a prompt for a different task, or one carrying no
+    task id, first discards the running process: a task never inherits another task's context.
+    `reset()` does the same explicitly.
+    """
 
     def __init__(
         self,
@@ -24,6 +30,7 @@ class AntigravitySession:
         model: str | None = None,
         effort: str | None = None,
         agent: str | None = None,
+        isolate_tasks: bool = True,
         process_factory: Callable[..., subprocess.Popen] = subprocess.Popen,
     ):
         self.working_directory = Path(working_directory).resolve()
@@ -31,6 +38,9 @@ class AntigravitySession:
         self.model = model
         self.effort = effort
         self.agent = agent
+        self.isolate_tasks = isolate_tasks
+        self._context_task_id: str | None = None
+        self._has_context = False
         self.process_factory = process_factory
         self._process = None
         self._events: queue.Queue[dict | BaseException | None] = queue.Queue()
@@ -54,17 +64,20 @@ class AntigravitySession:
             command.extend(["--agent", self.agent])
         return command
 
-    def _pump_stdout(self, process) -> None:
+    @staticmethod
+    def _pump_stdout(process, events: queue.Queue) -> None:
+        # The queue is bound per process: a reader thread of a discarded process must never
+        # write its end-of-stream marker into the queue of the process that replaced it.
         try:
             for line in process.stdout:
                 line = line.strip()
                 if not line:
                     continue
-                self._events.put(json.loads(line))
+                events.put(json.loads(line))
         except BaseException as exc:
-            self._events.put(exc)
+            events.put(exc)
         finally:
-            self._events.put(None)
+            events.put(None)
 
     def _pump_stderr(self, process) -> None:
         try:
@@ -91,15 +104,22 @@ class AntigravitySession:
             text=True,
             bufsize=1,
         )
-        self._reader = threading.Thread(target=self._pump_stdout, args=(self._process,), daemon=True)
+        self._reader = threading.Thread(target=self._pump_stdout, args=(self._process, self._events), daemon=True)
         self._reader.start()
         self._stderr_reader = threading.Thread(target=self._pump_stderr, args=(self._process,), daemon=True)
         self._stderr_reader.start()
 
-    def ask(self, prompt: str, timeout_seconds: float = 3600) -> dict:
+    def reset(self) -> None:
+        """Discard the conversation: the next prompt starts a fresh AGY process."""
+        with self._lock:
+            self.close(force=True)
+
+    def ask(self, prompt: str, timeout_seconds: float = 3600, task_id: str | None = None) -> dict:
         if not prompt:
             raise ValueError("prompt must not be empty")
         with self._lock:
+            if self.isolate_tasks and self._has_context and (task_id is None or task_id != self._context_task_id):
+                self.close(force=True)
             self.start()
             assert self._process is not None and self._process.stdin is not None
             message = {"event": "user", "message": {"content": prompt}}
@@ -125,11 +145,15 @@ class AntigravitySession:
                     self.close(force=True)
                     raise AntigravityExecutionError(str(event))
                 if event.get("event") == "result":
+                    self._has_context = True
+                    self._context_task_id = task_id
                     return event.get("result", {})
 
     def close(self, force: bool = False) -> None:
         process = self._process
         self._process = None
+        self._has_context = False
+        self._context_task_id = None
         if process is None:
             return
         try:
