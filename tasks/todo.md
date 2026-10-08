@@ -121,3 +121,14 @@ Spec: `tasks/loganalyzer/CONTRACT_AUDIT_STAGE1.md` §7 (WP order) + §8 (12 fina
 ## Side deliverable — NIS2 note on audit-data handling (owner request 2026-10-08)
 - [ ] Romanian document with verbatim citations (NIS2 Art. 20/21/23/32-34, Reg. 2024/2690 Annex, OUG 155/2024, DNSC norms, ISO 27001/27037, GDPR) → `tasks/loganalyzer/NIS2_DATE_AUDIT_RESPONSABILITATI.md`.
 - [ ] Orchestrator spot-checks every quote against the fetched source before delivery.
+
+## App requirements derived from the NIS2 / HG 585 note (owner, 2026-10-08)
+Only after the orchestrator has verified the note's quotes. Each item cites the provision it implements.
+- [ ] WP3: case field "system category" (air-gapped network / standalone PC × classified / unclassified) driving collection, export and retention rules.
+- [ ] WP3: read-only collection + SHA-256 at acquisition; the app never deletes or clears logs on the source system.
+- [ ] WP3: hash-chained custody records who collected, from which system, with which removable medium; warn when the collector is the audited system's own administrator.
+- [ ] WP3: lifecycle states (decision 11); deletion only as a manual, dual-approved, logged mark with a legal-hold check; no automatic deletion.
+- [ ] WP10: export carries the case's classification marking, a hash manifest and the medium used.
+- [ ] WP1→WP4: link the existing HG 585 checks in `ComplianceAuditEngine` to the cited articles; never "CONFORM" without evidence.
+- [ ] WP10: "audit/compliance" report profile showing which provision each check rests on and what is missing.
+- Limit to state in UI/docs: the app does not make a classified system compliant (accreditation under HG 585 is the security structure's job); it reports what it checked and on what evidence.
