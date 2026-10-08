@@ -35,7 +35,8 @@ class StaticBootstrap:
                 {"name": "VAULT_STATE.md", "uri": "vault://governance/vault_state", "sha256": "c" * 64,
                  "text": "Current state"},
             ],
-            "authority": "host_bootstrap",
+            "authority": "TEST_FIXTURE",
+            "evidence_level": "TEST_FIXTURE",
         }
 
 
@@ -164,3 +165,81 @@ def test_memory_on_off_harness_keeps_comparison_comparable(tmp_path):
     assert with_memory_trace["record"]["memory"]["query"] == "coding"
     assert without_memory_trace["record"]["memory"]["query"] == ""
     assert with_memory_trace["record"]["context_hash"] != without_memory_trace["record"]["context_hash"]
+
+def test_default_bootstrap_uses_real_vaultaccess_and_real_controller(tmp_path):
+    harness = RealAgentExecutionHarness(
+        trace_dir=tmp_path / "traces",
+    )
+    result, trace = harness.execute(
+        task=_task(),
+        agent_id="pilot_real_fixture",
+        agent_role="coder",
+        workspace=tmp_path / "workspace",
+        memory_query="",
+        enable_memory=False,
+    )
+    assert result["status"] == "success"
+    sources = trace["record"]["bootstrap"]["sources"]
+    assert len(sources) >= 8
+    assert all(source["evidence_level"] == "DIRECT" for source in sources)
+    assert all(source["sha256"] and source["uri"] for source in sources)
+    governance = trace["record"]["bootstrap"]["governance"]
+    assert governance["detection"] == "PARTIAL_TEXT_RULES"
+    assert not governance["conflicts"]
+    assert any(
+        item["type"] == "MAIN_ONLY_VS_PILOT_BRANCH"
+        and item["status"] == "RESOLVED_BY_OWNER_AUTHORIZATION"
+        for item in governance["resolved_conflicts"]
+    )
+
+
+def test_required_evidence_is_enforced_not_declarative(tmp_path):
+    harness = RealAgentExecutionHarness(
+        trace_dir=tmp_path / "traces",
+        bootstrap_provider=StaticBootstrap(),
+    )
+    original = harness._contract_for_task
+
+    def broken_contract(task):
+        contract = original(task)
+        return contract.__class__(
+            allowed_files=contract.allowed_files,
+            protected_paths=contract.protected_paths,
+            allowed_actions=contract.allowed_actions,
+            acceptance_criteria=contract.acceptance_criteria,
+            evidence_required=contract.evidence_required + ("nonexistent_evidence",),
+            stop_conditions=contract.stop_conditions,
+            max_memory_results=contract.max_memory_results,
+        )
+
+    harness._contract_for_task = broken_contract
+    result, trace = harness.execute(
+        task=_task(),
+        agent_id="pilot_evidence_gate",
+        agent_role="coder",
+        workspace=tmp_path / "workspace",
+        memory_query="",
+        enable_memory=False,
+    )
+    assert result["status"] == "failure"
+    assert "nonexistent_evidence" in trace["record"]["execution"]["missing_evidence"]
+
+
+def test_fixture_bootstrap_is_not_labeled_as_direct_evidence(tmp_path):
+    harness = RealAgentExecutionHarness(
+        trace_dir=tmp_path / "traces",
+        bootstrap_provider=StaticBootstrap(),
+    )
+    result, trace = harness.execute(
+        task=_task(),
+        agent_id="pilot_fixture_evidence",
+        agent_role="coder",
+        workspace=tmp_path / "workspace",
+        memory_query="",
+        enable_memory=False,
+    )
+    assert result["status"] == "success"
+    assert all(
+        source["evidence_level"] == "TEST_FIXTURE"
+        for source in trace["record"]["bootstrap"]["sources"]
+    )
