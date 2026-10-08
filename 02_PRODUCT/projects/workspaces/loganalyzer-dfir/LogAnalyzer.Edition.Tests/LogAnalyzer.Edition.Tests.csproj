@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Inspects the BUILD OUTPUT of the classified edition (P1) and fails if any network, AI or host-modifying code is in it
+       (owner decision 13: "absent, not disabled"). The executables are referenced only so they are built first. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageReference Include="xunit" Version="2.*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LogAnalyzer.App.Classified\LogAnalyzer.App.Classified.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\LogAnalyzer.App\LogAnalyzer.App.csproj" ReferenceOutputAssembly="false" Private="false" />
+  </ItemGroup>
+  <PropertyGroup>
+    <ClassifiedIncludeLocalAi Condition="'$(ClassifiedIncludeLocalAi)' == ''">false</ClassifiedIncludeLocalAi>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>ClassifiedIncludeLocalAi</_Parameter1>
+      <_Parameter2>$(ClassifiedIncludeLocalAi)</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>ClassifiedOutput</_Parameter1>
+      <_Parameter2>$(MSBuildThisFileDirectory)..\LogAnalyzer.App.Classified\bin\$(Configuration)\net10.0-windows\</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>UnclassifiedOutput</_Parameter1>
+      <_Parameter2>$(MSBuildThisFileDirectory)..\LogAnalyzer.App\bin\$(Configuration)\net10.0-windows\</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+</Project>

@@ -1,7 +1,7 @@
 # Raționament AI pe baza probelor (spec §25)
 
-Cod: `Dfir.Core/AI/EvidenceReasoner.cs` (catalog, schemă, validare, client local),
-`Dfir.Windows/Investigation/AiCaseAnalysis.cs` (pasul din caz). În aplicație: pagina „Investigație completă”, fila
+Cod (mutat în `LogAnalyzer.Ai`, doar ediția neclasificată, vezi EDITIONS.md): `LogAnalyzer.Ai/EvidenceReasoner.cs` (catalog, schemă, validare, client local),
+`LogAnalyzer.Ai/AiCaseAnalysis.cs` (pasul din caz). În aplicație: pagina „Investigație completă”, fila
 „Analiză AI (locală)”. Teste: `LogAnalyzer.Dfir.Tests/EvidenceReasonerTests.cs`.
 
 ## Principiul
