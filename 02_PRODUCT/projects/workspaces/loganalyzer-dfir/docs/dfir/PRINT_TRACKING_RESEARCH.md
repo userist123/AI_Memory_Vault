@@ -119,3 +119,100 @@ Spus clar: **nu există** un interpretor PCL XL sau PostScript cu licență MIT/
 - **PCL XL**: operatorul `Text`/`TextPath` poartă șiruri de glife cu indecși de font (de regulă fonturi descărcate cu mapare proprie) → text cu valoare incertă; imaginile sunt rastere comprimate (RLE/JPEG/DeltaRow). Fezabilitate: scăzută fără tabele de font.
 - **PostScript**: text în operatorii `show/ashow/xshow` și variantele; cu fonturi Type 3/Type 42 codificate și compresie (`/FlateDecode`, `ASCII85`) → doar parțial. Fezabilitate: scăzută–medie.
 Toate aceste euristici trebuie raportate ca „conținut parțial/nedecodabil fără interpretor", conform deciziei 26a, cu marcaj de încredere; nu se afirmă „ce s-a tipărit" fără o redare completă.
+
+---
+
+## C. Confirmarea ieșirii de hârtie
+
+Principiu: Windows nu poate dovedi hârtia (A.2, 307). Dovada vine **doar de pe dispozitiv**. Trei familii de surse, plus intrare manuală.
+
+### C.1 SNMP — Printer MIB (RFC 3805) și Job Monitoring MIB (RFC 2707)
+Texte RFC citite integral local (rfc-editor.org): https://www.rfc-editor.org/rfc/rfc3805.txt , https://www.rfc-editor.org/rfc/rfc2707.txt
+
+| Obiect | Fapt verificat | Valoare pentru aplicație |
+|---|---|---|
+| `prtMarkerLifeCount` (`prtMarkerEntry` 4; OID `1.3.6.1.2.1.43.10.2.1.4.<hrDeviceIndex>.<markerIndex>`; `printmib`=`mib-2 43`, `prtMarker`=`printmib 10`, `prtMarkerTable`=`prtMarker 2`) | `Counter32`, „numărul de unități de măsură numărate în viața imprimantei", unitatea dată de `prtMarkerCounterUnit` (include `impressions(7)`); „ar trebui implementat ca obiect persistent". | **Contor de pagini**: două citiri (înainte/după) arată dacă dispozitivul a marcat pagini. Dovedește că *s-au marcat pagini* într-un interval, nu că *aceste* pagini aparțin jobului X (alte joburi, copii, fax pot incrementa). Corelație probabilistică. |
+| `prtAlertTable` (`prtAlert`=`printmib 18`) | alertele de dispozitiv (hârtie blocată, fără hârtie, capac deschis…). | Explică „nimic ieșit": jam/out-of-paper în intervalul jobului. Alertele sunt actuale/recente, nu arhivă garantată (**neverificat** retenția). |
+| `hrPrinterStatus` (Host Resources MIB, RFC 2790) | nu a fost citit în sesiune | stare generală (idle/printing/warmup); **neverificat**. |
+| Job Monitoring MIB: `jmJobState` (stări pending/processing/completed/canceled/aborted; „valoarea finală trebuie să fie completed, canceled sau aborted"; durata de păstrare = `jmGeneralJobPersistence`) | verificat în RFC 2707 | stare de job la dispozitiv, **dacă dispozitivul implementează MIB-ul**. |
+| `jmJobImpressionsCompleted` | „impresii terminate până acum; pentru dispozitive de tipărire include interpretare, marcare și stivuire" | dovadă puternică de hârtie ieșită per job. |
+| Susținere de către producători | **neverificat**: nu s-a găsit în sesiune o listă oficială de modele care implementează Job MIB; în practică implementarea e inegală (afirmație nedovedită). HP documentează că Web Jetadmin colectează din „Job Information Table" a dispozitivului și că datele de utilizare pe utilizator „nu înlocuiesc contabilizarea" (https://kaas.hpcloud.hp.com/pdf-public/pdf_6881691_en-US-1.pdf — rezumat din căutare). |
+
+Disponibilitate în rețea: SNMP rulează pe UDP/161 către imprimantă — necesită rețea între stație și dispozitiv. **P1: cod de rețea absent → interzis.** P2 (LAN izolat): permis, ca interogare *opțională* declarată în politică semnată; SNMPv3 cu autentificare/criptare recomandat (SNMPv1/v2c „community" = text clar; recomandare, nu citare). P3: permis.
+Caveat de securitate: orice interogare de rețea modifică amprenta dispozitivului în jurnalul lui; documentat în politică.
+
+### C.2 IPP (RFC 8011)
+Verificat în RFC 8011 (https://www.rfc-editor.org/rfc/rfc8011.txt):
+- `Get-Job-Attributes` = cod operație `0x0009`; `Get-Jobs` = `0x000a`; `Get-Printer-Attributes` = `0x000b`.
+- `job-state` (REQUIRED): pending, pending-held, processing, processing-stopped, canceled, aborted, completed; „starea finală trebuie să fie completed/canceled/aborted înainte ca imprimanta să elimine jobul"; „completed" se atinge „după ce toate activitățile s-au terminat, **inclusiv stivuirea mediei de ieșire**" (§5.3.7).
+- `job-impressions-completed` (RECOMMENDED): „include interpretarea, marcarea și stivuirea ieșirii"; `job-media-sheets-completed` (RECOMMENDED): foi marcate și stivuite.
+- `Get-Jobs` cu `which-jobs=completed` returnează joburile terminate/anulate/abandonate **doar dacă** imprimanta le reține; „dacă implementarea nu păstrează joburi completed… întoarce niciunul" (§4.2.6) — deci istoricul poate lipsi.
+- Valoare probatorie: `completed` + `job-impressions-completed ≥ 1` + `job-media-sheets-completed` = cea mai puternică dovadă via rețea. `job-state-reasons` (ex. `job-completed-successfully`, `job-completed-with-errors`) rafinează rezultatul (valori exacte din RFC 8011 §5.3.8 — **neverificat** în sesiune).
+- Suport de producători: nu s-a verificat model cu model. Joburile create de Windows prin port TCP/IP standard (RAW 9100) **nu** sunt joburi IPP la dispozitiv; `Get-Job-Attributes` funcționează numai pentru joburi trimise prin IPP sau dacă imprimanta expune joburile tuturor canalelor (**neverificat**). Pentru joburi RAW pe 9100 rămân SNMP/contor/jurnal vendor.
+- Rețea: IPP = TCP/631 (HTTP/HTTPS) → **P2/P3 doar**. Nu pentru P1.
+
+### C.3 Jurnale de job ale dispozitivului (vezi secțiunea D)
+Singura cale **offline** reală pentru P1: operatorul exportă jurnalul din interfața web a dispozitivului (sau de pe USB/panou) pe un mediu autorizat și îl importă în aplicație. Jurnalul poate confirma pagini imprimate per job/utilizator/nume fișier (Ricoh, Canon, Sharp, Konica…). Mapare pe stări: vezi C.5.
+
+### C.4 Introducere manuală (P1 fără export)
+Operatorul introduce două valori de contor de pagini (de pe panou/pagină de configurare) cu marcaje de timp, plus „nimic ieșit" ca observație. Aplicația le stochează ca dovadă de tip `OPERATOR_ATTESTED` (nu `DEVICE_CONFIRMED`), cu cine/când. Este dovadă slabă, dar auditabilă.
+
+### C.5 Propunere de model de stare
+Stări (job de tipărire): `SUBMITTED, SPOOLED, SENT_TO_PRINTER, PRINTING, FAILED, CANCELLED/DELETED, PAUSED, PRINTED_CONFIRMED, NOT_CONFIRMED`.
+Reguli: (1) stările sunt rezultate de analiză, **niciodată erori**; (2) `PRINTED_CONFIRMED` numai din dovadă de dispozitiv; (3) lipsa dovezii = `NOT_CONFIRMED` (inclusiv „nimic ieșit din imprimantă" ca rezultat de primă clasă, când există dovadă negativă: alertă jam/out-of-paper, contor neschimbat, jurnal dispozitiv fără job); (4) `NOT_CONFIRMED` ≠ `FAILED`.
+
+| Sursă / eveniment | Stare rezultată | Notă |
+|---|---|---|
+| Windows 800 (job început) | SUBMITTED / SPOOLED | 800 = spool-are (sursă terță) |
+| Fișier SPL/SHD prezent | SPOOLED | SHD dă user/document/datatype/pagini |
+| Windows 308 (pauză) | PAUSED | neverificat |
+| Windows 309 | revine la SPOOLED | neverificat |
+| Windows 801/805/842 (cod 0x0) | PRINTING (în curs de procesare) | diagnostice |
+| Windows 307 | SENT_TO_PRINTER | **limita maximă din Windows** |
+| Windows 372 / 842 cu cod ≠ 0 / 307 cu `Status` ≠ 0 | FAILED (cu motiv) | 372/842: neverificat |
+| Windows 310 (dacă se confirmă „șters") sau job absent din coadă fără 307 | CANCELLED/DELETED | 310 contradictoriu între surse |
+| SNMP `prtMarkerLifeCount` crește în fereastra jobului, fără alt job activ | PRINTED_CONFIRMED cu încredere *medie* („contor") | etichetă separată: `PAGE_COUNTER_DELTA` |
+| SNMP `prtAlert` jam / fără hârtie / capac în fereastră | NOT_CONFIRMED + motiv „nimic ieșit probabil" | dovadă negativă |
+| `jmJobState=completed` + `jmJobImpressionsCompleted>0` | PRINTED_CONFIRMED (dispozitiv) | doar dacă MIB implementat |
+| `jmJobState` canceled/aborted | CANCELLED sau FAILED (după `jmJobStateReasons`) | |
+| IPP `job-state=completed` + `job-impressions-completed>0` | PRINTED_CONFIRMED (dispozitiv) | |
+| IPP `job-state=aborted` | FAILED | |
+| IPP `job-state=canceled` | CANCELLED | |
+| IPP `processing` / `processing-stopped` / `pending-held` | PRINTING / PAUSED | |
+| Jurnal vendor import (Ricoh/Canon/Sharp…): rând job, rezultat OK, nume fișier/utilizator potrivite, pagini>0 | PRINTED_CONFIRMED (dispozitiv, offline) | corelare după utilizator + nume document + timp ±toleranță |
+| Jurnal vendor rezultat NG/eroare | FAILED | |
+| Contoare introduse manual | PRINTED_CONFIRMED *operator* sau NOT_CONFIRMED | nivel de încredere separat |
+| Nicio dovadă de dispozitiv | NOT_CONFIRMED (după 307) | |
+
+Câmp suplimentar obligatoriu: `evidence_level` ∈ {WINDOWS_ONLY, PAGE_COUNTER_DELTA, OPERATOR_ATTESTED, DEVICE_JOB_LOG, DEVICE_PROTOCOL(IPP/JMP)} — pentru a nu se amesteca dovada slabă cu cea tare (în linie cu invariantele anti-overclaim din WP2).
+
+### C.6 Ce merge în fiecare ediție
+| Mecanism | P1 | P2 | P3 |
+|---|---|---|---|
+| EVTX import (offline) | da | da | da |
+| SPL/SHD import (copiere offline) | da | da | da |
+| Export jurnal dispozitiv + import | **da (singura dovadă de dispozitiv)** | da | da |
+| Contor introdus manual | da | da | da |
+| SNMP poll | **nu** (fără cod de rețea) | opțional, politică semnată | opțional |
+| IPP Get-Job-Attributes | **nu** | opțional | opțional |
+
+---
+
+## D. Jurnale MFP (scanare/copiere/fax/tipărire)
+
+Notă generală: formatele publice sunt rare. Numai Ricoh, Canon (parțial) și Sharp au câmpuri documentate pe site-ul public în sesiune; HP, Xerox, Kyocera, Lexmark, Epson: **câmpurile exacte nu sunt documentate public** (de verificat cu eșantion exportat de pe dispozitiv; proprietarul a spus că va furniza eșantioane — decizia 26f). Un parser trebuie să fie **bazat pe antet** (citește rândul de antet, nu poziții fixe) și versionat pe model/firmware.
+
+| Producător | Metodă de export | Câmpuri documentate | Fișier / utilizator / pagini / destinație | Documentat public? | Sursă |
+|---|---|---|---|---|---|
+| **Ricoh** | Web Image Monitor > Configuration > Logs > descărcare CSV (Job Log, Access Log, sau combinat); sau server de colectare/Streamline NX. UTF-8 sau JIS, antet pe primul rând, sortat după Log ID. Nume: `<Machine>_joblog.csv`, `_accesslog.csv`, `_log.csv`, `_ecolog.csv`. | Comune: Start/End Date/Time, Log Type, Result, Operation Method, Status, User Entry ID, User Code/User Name, Log ID. Intrare (Source): Source, Start/End, Stored File, Stored File Name, Folder Number/Name, Print File Name. Ieșire (Target): Target, Start/End, **Destination Name**, **Destination Address**, Stored File ID/Name, Folder. Rânduri multiple per job pentru surse/ținte multiple. | nume fișier: da (Stored File Name / Print File Name); utilizator: da; **pagini: nu apare coloană** în tabelul citit; destinație scan-to-email/folder: da (Destination Name/Address). Tipuri: copiere, tipărire, scanare, fax, rapoarte. | **da** | https://support.ricoh.com/services/device/ccmanual/IM550/en-GB/setting/int/logfiles.htm ; https://support.ricoh.com/services/device/ccmanual/IM550/en-GB/setting/int/loglist.htm |
+| **Canon** imageRUNNER ADVANCE | Remote UI > Settings/Registration > Device Management > Export/Clear Audit Log > Export (CSV; admin; max 20 000 intrări; înlocuiește cele mai vechi); tip log 1001/8193 = Job. Separat: Status Monitor > Job Log > „Store in CSV Format" (ultimele 100 joburi; `tx.csv`/`rx.csv` pentru fax). | Dată/oră, nume utilizator, tip operație, rezultat (OK/NG); pentru Job: tip job (copy, fax, scan, send, print). Lista completă a coloanelor: **neverificat**. | utilizator da; fișier/pagini/destinație: **neverificat** (manualul rezumat nu le listează) | parțial | https://oip.manual.canon/USRMA-0099-zz-CS-enUS/contents/1T0002196156.html ; https://oip.manual.canon/USRMA-0099-zz-CS-enUS/contents/1T0002196126.html |
+| **Konica Minolta** bizhub | Web Connection (admin) > Security > Job Log Settings > Job Log Usage Set = ON (implicit OFF; efect după repornire); apoi Maintenance > Job Log > Create Job Log → descărcare pe PC sau SMB (mod manual = **XML**; mod auto = syslog). Jurnalul nedescărcat se pierde la crearea unuia nou. | Manualul: „utilizare, consum hârtie, operațiuni, istoric joburi per utilizator/cont"; **schema XML nu e descrisă** — „contactați reprezentantul de service". | **neverificat** | **nu** (schema) | https://manuals.konicaminolta.eu/bizhub-451i/EN/contents/WC_12_03_06.html ; https://manuals.konicaminolta.eu/bizhub-650i-550i-450i-UD/EN/contents/id08-_104679563.html |
+| **Sharp** MX/BP | Pagina web a dispozitivului: Job Log (selectare perioadă, Show, salvare, ștergere); Audit Log separat (BP-1360M: export, ghid de referință). Câmpuri contabilitate/OSA: Job ID, Account Job ID, Job Mode, Computer Name, User Name, Login Name, Card ID, Main/Sub Code, Starting/Completing Date-Time, contoare pagini (ccompletate color/mono, pe format). | da (job log); audit: dată, oră, ID eveniment, utilizator, descriere (syslog severitate fixă 6) | utilizator da; nume fișier **neverificat**; pagini da; destinație **neverificat**. Export CSV al jurnalului de job: **neverificat** (CSV găsit doar pentru agendă/utilizatori). | parțial–da | https://global.sharp/restricted/print/manuals/5/bp70m65/en/contents_09-07_021.html ; https://business.sharpusa.com/portals/0/downloads/Manuals/BP-1360M_1250M-Audit-Log-Reference-Guide.pdf |
+| **HP** (LaserJet Enterprise/FutureSmart) | EWS > Information > Job Log (poate fi ascuns; se activează la Security > EWS options „Display Job log on Information tab" — sursă comunitate). Contabilitate: „Serverless Job Accounting" (FutureSmart ≥ 4.6.1): EWS > Security > Accounting Methods > Usage History > **Export**; contorizează fețe copiate/tipărite/scanate per utilizator. Web Jetadmin: rapoarte HTML/CSV, dar nu e contabilitate (HP). | Job Log (comunitate): JobName, User, Status, Date. SJA: contoare, nu job-uri individuale. | nume job da (în Job Log); utilizator da; pagini/destinație: **neverificat** | **slab** (nu există listă oficială de câmpuri găsită) | https://support.hp.com/us-en/document/ish_7598494-7598479-16 ; https://support.hp.com/gb-en/document/c06529554 ; https://h30434.www3.hp.com/t5/LaserJet-Printing/Job-Log/m-p/6367268 |
+| **Xerox** | Standard Accounting: Interfață web > Properties > Accounting > Report and Reset > Usage Report > Download (.csv), opțiune „Show User ID in Report" (contor pe utilizator, nu per job). VersaLink: System > Logs > export jurnal audit (`auditlog.txt`); jurnalul de debug/job este criptat, decriptabil doar de Xerox (Tungsten). | coloanele nu sunt documentate în sursele găsite | **neverificat** | **nu** | https://procurement.ufl.edu/wp-content/uploads/2021/08/AltaLink-Setup-Standard-Accounting.pdf ; https://docshield.tungstenautomation.com/ControlSuite/en_US/help/clients/DRS/XeroxUC/ControlSuite_XeroxUC/t_debuglogs.html |
+| **Kyocera** | Command Center RX: istoric joburi/„Job Accounting"/„Job Box"; ghidul oficial CCRX există (PDF) dar secțiunea de jurnal nu a putut fi extrasă în sesiune. | **neverificat** | **neverificat** | de verificat în ghid | https://downloads.kyoceradocumentsolutions.com.au/Documentation/CommandCenterRX_EN_2020.pdf |
+| **Lexmark** | EWS > Security > Security Audit Log: export (fișier) și syslog (UDP/514, Stunnel; severitate 0–7); „Job Accounting Statistics" activabil, jurnal oprit la 3 MB. | câmpurile exportului audit **neverificat** | **neverificat** | parțial (meniuri), nu câmpuri | https://support.lexmark.com/content/support/guides/en/v55522091/use-printer-menus/security/security-audit-log-v50415213.html ; https://support.lexmark.com/content/support/guides/en/kb20220203102749873/setup-installation-and-configuration-issues/how-to-enable-job-accounting-ho3221.html |
+| **Brother** | „Store Print Log to Network": scrie pe un server CIFS un fișier TXT sau CSV cu ID, tip job, nume job, utilizator, dată, oră, pagini tipărite și color, pentru tipărire PC, USB direct, copiere. Necesită rețea către share (P2/P3), nu offline. | ID, tip job, nume job, nume utilizator, dată/oră, pagini, pagini color | fișier = nume job da; utilizator da; pagini da; destinație scanare: **neverificat** | parțial | https://download.brother.com/welcome/doc002572/cv_dcp8080n_eng_nug_log.pdf |
+| **Epson** | Web Config exportă *configurația*, nu istoricul joburilor (FAQ Epson). Istoric: Epson Device Admin (**neverificat**). | — | — | **nu** | https://epson.com/faq/SPT_C31CD54011~faq-0000716-shared |
+
+Observații: (1) exporturile de dispozitiv sunt **date de la sursă ostilă/necunoscută**: parser defensiv, limite de dimensiune, antet validat, fără execuție. (2) Fusul orar și ceasul dispozitivului se pot abate; aplicația stochează fusul declarat și o toleranță de corelare. (3) Syslog (Lexmark, Konica, Sharp) cere rețea → P2/P3; în P1 se folosește exportul de fișier.

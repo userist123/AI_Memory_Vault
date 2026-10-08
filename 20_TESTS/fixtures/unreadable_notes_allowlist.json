@@ -522,6 +522,12 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Plain planning/research document for LogAnalyzer stage 2; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PRINT_TRACKING_RESEARCH.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain planning/research document for LogAnalyzer stage 2; not a vault note."
     }
   ]
 }
