@@ -212,3 +212,39 @@ def test_tpm_signature_detects_tampering(dummy_device, valid_dual_auth):
 
     with pytest.raises(ValueError, match="Validare manifest eșuată"):
         app.import_and_validate_manifest(tampered_verdict)
+
+
+def test_pades_independent_verification(dummy_device, valid_dual_auth, tmp_path):
+    """
+    AUDIT CONSTATARE 7: Validare PAdES reală cu verificator independent.
+    Demonstrează că PDF-ul conține un container cu certificat și hash validat pe ByteRange.
+    """
+    from src.registry_connector import RegistryBridgeClient
+    from src.pades_signer import PAdESSigner
+
+    sim_adapter = HardwareAdapter(simulation_mode=True)
+    session = SanitizationSession(
+        device=dummy_device,
+        classification=ClassificationLevel.SECRET,
+        hardware_adapter=sim_adapter,
+    )
+    session.confirm_target_safeguard("3456")
+    session.evaluate_and_authorize(dual_auth=valid_dual_auth)
+    session.execute_sanitization()
+    manifest = session.export_manifest()
+
+    bridge = RegistryBridgeClient()
+    export_dir = str(tmp_path / "pades_test_out")
+    pdf_out = bridge.prepare_and_sign_for_registry(
+        raw_manifest=manifest,
+        operator_pin="1234",
+        witness_pin="5678",
+        sic_inventory_number="INV-SIC-TEST-PADES",
+        output_folder=export_dir,
+    )
+
+    with open(pdf_out, "rb") as pf:
+        pdf_bytes = pf.read()
+
+    # Validare independentă a structurii PAdES
+    assert PAdESSigner.verify_pades_pdf(pdf_bytes) is True

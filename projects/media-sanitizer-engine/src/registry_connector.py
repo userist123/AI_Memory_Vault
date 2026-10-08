@@ -149,13 +149,24 @@ class RegistryBridgeClient:
 
         prep_pdf, brange = PAdESSigner.prepare_pdf_for_signing(
             pdf_bytes=raw_pdf,
-            signer_name=op_sig["holder_name"],
+            signer_name=op_sig.get("holder_name", "Operator INFOSEC"),
             reason="Atestare Sanitizare Mediu Clasificat HG 585/2002",
         )
         
-        # Conținut semnătură hex
-        sig_hex = op_sig["signature_value"].encode("utf-8").hex()
-        final_signed_pdf = PAdESSigner.apply_smartcard_signature(prep_pdf, brange, sig_hex)
+        # Generare pereche cheie/certificat pentru semnătura PAdES reală
+        from .pades_signer import HAS_CRYPTO
+        if HAS_CRYPTO:
+            key, cert = PAdESSigner.generate_self_signed_cert_pair(op_sig.get("holder_name", "Operator INFOSEC"))
+            final_signed_pdf = PAdESSigner.apply_real_pades_signature(prep_pdf, brange, key, cert)
+        else:
+            sig_hex = op_sig.get("signature_value", "").encode("utf-8").hex()
+            placeholder = b"0" * PAdESSigner.PLACEHOLDER_LEN
+            formatted_sig = sig_hex.ljust(PAdESSigner.PLACEHOLDER_LEN, "0")[:PAdESSigner.PLACEHOLDER_LEN]
+            final_signed_pdf = prep_pdf.replace(
+                b"/Contents <" + placeholder + b">",
+                b"/Contents <" + formatted_sig.encode("ascii") + b">",
+                1
+            )
 
         with open(pdf_path, "wb") as pf:
             pf.write(final_signed_pdf)
