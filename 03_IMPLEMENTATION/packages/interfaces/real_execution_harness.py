@@ -148,6 +148,34 @@ class ModelExecutionRecord:
         return asdict(self)
 
 
+class ExecutionContractError(RuntimeError):
+    """Raised when mandatory bootstrap/contract evidence is unavailable or violated."""
+
+
+@dataclass(frozen=True)
+class ExecutionContract:
+    """Small, explicit authority boundary for one pilot task."""
+
+    allowed_files: Tuple[str, ...]
+    protected_paths: Tuple[str, ...]
+    allowed_actions: Tuple[str, ...]
+    acceptance_criteria: Tuple[str, ...]
+    evidence_required: Tuple[str, ...]
+    stop_conditions: Tuple[str, ...]
+    max_memory_results: int = 2
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "allowed_files": list(self.allowed_files),
+            "protected_paths": list(self.protected_paths),
+            "allowed_actions": list(self.allowed_actions),
+            "acceptance_criteria": list(self.acceptance_criteria),
+            "evidence_required": list(self.evidence_required),
+            "stop_conditions": list(self.stop_conditions),
+            "max_memory_results": self.max_memory_results,
+        }
+
+
 @dataclass
 class ExecutionTrace:
     """Immutable persistent execution trace record."""
@@ -164,6 +192,9 @@ class ExecutionTrace:
     workspace: Dict[str, Any]
     verification: Dict[str, Any]
     experiment: Optional[Dict[str, Any]] = None
+    bootstrap: Optional[Dict[str, Any]] = None
+    execution_contract: Optional[Dict[str, Any]] = None
+    contract_hash: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         data = asdict(self)
