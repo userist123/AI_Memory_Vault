@@ -53,6 +53,39 @@ jobs:
       - name: Test (Release)
         run: dotnet test LogAnalyzer.slnx --no-build --configuration Release --logger "trx;LogFilePrefix=test-results"
 
+      # Failed tests become annotations: they are readable from the checks API without
+      # downloading logs or artifacts.
+      - name: Annotate failed tests
+        if: always()
+        shell: pwsh
+        run: |
+          $trx = Get-ChildItem -Recurse -Filter *.trx -ErrorAction SilentlyContinue
+          $n = 0
+          foreach ($file in $trx) {
+            [xml]$doc = Get-Content -Raw $file.FullName
+            $ns = @{ t = 'http://microsoft.com/schemas/VisualStudio/TeamTest/2010' }
+            foreach ($r in (Select-Xml -Xml $doc -Namespace $ns -XPath '//t:UnitTestResult[@outcome="Failed"]')) {
+              $msg = (Select-Xml -Xml $r.Node -Namespace $ns -XPath './/t:Message').Node.InnerText
+              $msg = ($msg -replace "`r?`n", ' ')
+              if ($msg.Length -gt 400) { $msg = $msg.Substring(0, 400) }
+              Write-Host "::error title=Test failed::$($r.Node.testName) :: $msg"
+              $n++
+              if ($n -ge 40) { break }
+            }
+          }
+          Write-Host "Failed tests annotated: $n"
+
+      # Without the corpus the run is green but NOT a forensic validation; say so in the job summary.
+      - name: Report forensic validation state
+        if: always()
+        shell: pwsh
+        run: |
+          $f = Get-ChildItem -Recurse -Filter forensic_validation.txt -Path LogAnalyzer.Dfir.Tests/bin -ErrorAction SilentlyContinue | Select-Object -First 1
+          $text = if ($f) { Get-Content -Raw $f.FullName } else { "FORENSIC VALIDATION = UNAVAILABLE (raportul nu a fost generat)" }
+          Write-Host $text
+          "## Forensic validation`n``````text`n$text`n``````" | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+          if ($text -notmatch 'FORENSIC VALIDATION = AVAILABLE') { Write-Host "::warning::$(($text -split "`n")[0])" }
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

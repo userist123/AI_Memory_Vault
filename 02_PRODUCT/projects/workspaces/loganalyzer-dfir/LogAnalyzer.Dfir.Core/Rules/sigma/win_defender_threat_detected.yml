@@ -1,0 +1,17 @@
+title: Microsoft Defender a detectat o amenințare
+id: 8c3e2b4a-7d41-4f0e-9a6d-1d2b7f0e1116
+status: stable
+description: Defender a raportat detectarea (1116) sau acțiunea asupra (1117) unui program malițios sau nedorit.
+date: 2026-10-05
+logsource:
+  product: windows
+  service: windefend
+detection:
+  selection:
+    EventID:
+      - '1116'
+      - '1117'
+  condition: selection
+level: high
+tags:
+  - attack.t1204

@@ -22,7 +22,7 @@ namespace LogAnalyzer.Core.Services
     public class ProvenanceLedgerService
     {
         private readonly List<ProvenanceLedgerEntry> _entries = new();
-        private readonly string _ledgerFilePath;
+        private string _ledgerFilePath;
         private readonly object _lock = new();
 
         public ProvenanceLedgerService(string? customPath = null)
@@ -61,6 +61,8 @@ namespace LogAnalyzer.Core.Services
         {
             lock (_lock)
             {
+                if (LoadError != null) return (false, LoadError + $" Intrările noi sunt în {_ledgerFilePath}.", 0);
+                if (LastSaveError != null) return (false, $"Registrul nu a fost salvat pe disc: {LastSaveError}", 0);
                 if (_entries.Count == 0) return (true, "Jurnalul de proveniență este curat (0 intrări).", 0);
 
                 string expectedPrev = "GENESIS_BLOCK_0000000000000000000000000000000000000000000000000000000000000000";
@@ -100,32 +102,49 @@ namespace LogAnalyzer.Core.Services
             return Convert.ToHexString(bytes).ToLowerInvariant();
         }
 
+        /// <summary>Why the existing ledger could not be read; it is then left untouched and new entries go to a separate file.</summary>
+        public string? LoadError { get; private set; }
+
+        /// <summary>Last failure to persist the ledger; validation reports it until a save succeeds.</summary>
+        public string? LastSaveError { get; private set; }
+
+        /// <summary>File the entries are written to (differs from the requested path after a load failure).</summary>
+        public string LedgerFilePath => _ledgerFilePath;
+
         private void SaveLedger()
         {
             try
             {
                 string json = JsonSerializer.Serialize(_entries, new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(_ledgerFilePath, json);
+                string tmp = _ledgerFilePath + ".tmp";
+                File.WriteAllText(tmp, json);
+                File.Move(tmp, _ledgerFilePath, overwrite: true);
+                LastSaveError = null;
             }
-            catch { }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                LastSaveError = $"{ex.GetType().Name}: {ex.Message}";
+            }
         }
 
         private void LoadLedger()
         {
+            if (!File.Exists(_ledgerFilePath)) return;
             try
             {
-                if (File.Exists(_ledgerFilePath))
-                {
-                    string json = File.ReadAllText(_ledgerFilePath);
-                    var loaded = JsonSerializer.Deserialize<List<ProvenanceLedgerEntry>>(json);
-                    if (loaded != null)
-                    {
-                        _entries.Clear();
-                        _entries.AddRange(loaded);
-                    }
-                }
+                string json = File.ReadAllText(_ledgerFilePath);
+                var loaded = JsonSerializer.Deserialize<List<ProvenanceLedgerEntry>>(json)
+                    ?? throw new JsonException("conținut null");
+                _entries.Clear();
+                _entries.AddRange(loaded);
             }
-            catch { }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+            {
+                // Never start a fresh chain over an unreadable ledger: that would overwrite the only copy of the history.
+                LoadError = $"Registrul existent {_ledgerFilePath} nu a putut fi citit ({ex.GetType().Name}: {ex.Message}); a fost păstrat neatins.";
+                _ledgerFilePath = Path.Combine(Path.GetDirectoryName(_ledgerFilePath) ?? ".",
+                    $"{Path.GetFileNameWithoutExtension(_ledgerFilePath)}.after-load-failure-{DateTime.UtcNow:yyyyMMddTHHmmssZ}.json");
+            }
         }
     }
 }

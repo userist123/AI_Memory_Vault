@@ -43,6 +43,15 @@ public static class AuditPolicy
         }
     }
 
+    /// <summary>Raw AuditingInformation of one subcategory; throws with the Win32 error when it cannot be read.</summary>
+    public static uint QueryFlags(Guid subcategory)
+    {
+        if (!AuditQuerySystemPolicy([subcategory], 1, out var buffer) || buffer == IntPtr.Zero)
+            throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+        try { return Marshal.PtrToStructure<AUDIT_POLICY_INFORMATION>(buffer).AuditingInformation; }
+        finally { AuditFree(buffer); }
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     private struct AUDIT_POLICY_INFORMATION
     {

@@ -105,7 +105,8 @@ namespace LogAnalyzer.Infrastructure.Watchers
                 var parsed = new ParsedEvent
                 {
                     EventId = rec.Id,
-                    TimeCreated = rec.TimeCreated ?? DateTime.UtcNow,
+                    // Missing record time stays unknown (default), never the time it was received.
+                    TimeCreated = rec.TimeCreated ?? default,
                     Level = rec.LevelDisplayName ?? "Information",
                     ProviderName = rec.ProviderName ?? "SecurityLog",
                     MachineName = rec.MachineName ?? Environment.MachineName,

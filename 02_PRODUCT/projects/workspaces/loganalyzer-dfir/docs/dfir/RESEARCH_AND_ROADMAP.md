@@ -97,7 +97,7 @@ Fiecare verificare are un status (CONFORM / NECONFORM / NEDETERMINAT), probele p
 - **E-mail:**
   - Exchange Online: message trace, sign-in-uri, reguli de inbox suspecte (forward extern), prin conectorul M365 existent, cu consimțământul administratorului de tenant;
   - Exchange on-prem: `Get-MessageTrackingLog`.
-- **Stații din domeniu:** colectare la distanță prin WinRM (`RemoteTriageService` există deja ca generator de script). Rezultatele intră în caz ca probe.
+- **Stații din domeniu:** colectare la distanță prin pachetul `Dfir.Windows/Acquisition/RemoteCollection` (cerere autorizată, hash pe țintă, import cu custodie). Rezultatele intră în caz ca probe.
 
 ### Etapa E — Investigația completă (cerința 7)
 
@@ -127,3 +127,26 @@ Fazele 3–10 din master spec, rulate pe corpusul real al cazului NanAgent, unde
 - [Microsoft Learn — Message trace în Exchange Online](https://learn.microsoft.com/en-us/exchange/monitoring/trace-an-email-message/message-trace-modern-eac)
 - [Microsoft Learn — reguli outbound pentru programe în Windows Firewall](https://learn.microsoft.com/en-us/windows/security/operating-system-security/network-security/windows-firewall/create-an-outbound-program-or-service-rule)
 - [text/plain — Windows Filtering Platform](https://textslashplain.com/2025/03/31/defensive-technology-windows-filtering-platform/)
+
+## 5. Starea fazelor din specificația REAL DFIR v2 (2026-10-06)
+
+| Fază | Stare | Document |
+|---|---|---|
+| P0 integritate, P1 model canonic și proveniență, P2 registru de parsere | făcut | `REALITY_AUDIT.md`, `EVIDENCE_MODEL.md`, `PARSER_CONTRACT.md` |
+| P3 acoperire de artefacte | făcut pentru artefactele din `FORENSIC_TEST_LAB.md`; USN, $MFT, ADS nu sunt colectate | `FORENSIC_TEST_LAB.md` |
+| P4 Evidence Graph | făcut; explorator tabelar în aplicație | `EVIDENCE_GRAPH.md` |
+| P5 detecție (IOC, hash, YARA-lite, Sigma-lite, corelare) | făcut | `DETECTION.md` |
+| P6 motor de politici, P7 execuție | făcut pentru registru; audit, cont și servicii doar citire | `POLICY_ENGINE.md` |
+| P8 conformitate / OSCAL | făcut; schema NIST nevalidată; importul de cataloage OSCAL nu există | `COMPLIANCE_MODEL.md` |
+| P9 domeniu în graf | făcut; doar date sintetice | `EVIDENCE_GRAPH.md` |
+| P10 DFIR la distanță | făcut prin pachet; fără execuție la distanță din aplicație | `REALITY_AUDIT.md` |
+| P11 laborator, P12 validare diferențială | făcut (`LADFIR_LAB=1`) | `FORENSIC_TEST_LAB.md` |
+| P13 anti-forensics | făcut (13/16 tehnici observabile) | `ANTI_FORENSICS_TESTING.md` |
+| P14 Memory Vault | propuneri prin poarta vault-ului; trimiterea rămâne la operator | `MEMORY_VAULT_INTEGRATION.md` |
+| P15 AI pe probe | făcut, model local | `AI_FORENSIC_REASONING.md` |
+
+Următorii pași, în ordinea valorii:
+1. $MFT (închide AF08, timestomp). USN este citit din exportul `fsutil` (2026-10-07) și închide AF06 și AF07;
+2. validarea exportului OSCAL cu schema oficială NIST;
+3. testele ca administrator: aplicare HKLM, audit vs `auditpol`;
+4. desenul grafului: azi, în fila „Graf de probe”, există căutare, relații cu probă sau derivare și drum între entități, în formă tabelară.

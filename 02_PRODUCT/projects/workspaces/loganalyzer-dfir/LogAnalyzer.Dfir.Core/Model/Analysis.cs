@@ -30,10 +30,15 @@ public sealed class TimelineEvent
     public string Locator { get; init; } = "";
     public Dictionary<string, string> Fields { get; init; } = new(StringComparer.OrdinalIgnoreCase);
     public string Notes { get; set; } = "";
+    /// <summary>Provenance bound by the pipeline after parsing: SHA-256 of the source and the parser that produced the row.</summary>
+    public string SourceSha256 { get; set; } = "";
+    public string ParserId { get; set; } = "";
+    public string ParserVersion { get; set; } = "";
 }
 
 /// <summary>A pointer from a finding to the exact evidence behind it.</summary>
-public sealed record EvidenceRef(string EvidenceId, string Locator, string Description);
+/// <remarks><see cref="Sha256"/> is the source hash at acquisition, bound by <c>ProvenanceBinder</c>.</remarks>
+public sealed record EvidenceRef(string EvidenceId, string Locator, string Description, string Sha256 = "");
 
 /// <summary>Finding (spec §52). Severity and confidence are deliberately separate.</summary>
 public sealed class Finding
@@ -56,6 +61,8 @@ public sealed class Finding
     public string Domain { get; init; } = "";
     public required string Description { get; init; }
     public List<EvidenceRef> SupportingEvidence { get; init; } = [];
+    /// <summary>Findings this one is built from (an incident chain lists its steps).</summary>
+    public List<string> RelatedFindingIds { get; init; } = [];
     public List<string> ContradictingEvidence { get; init; } = [];
     public List<string> AlternativeExplanations { get; init; } = [];
     public List<string> MissingEvidence { get; init; } = [];
@@ -74,6 +81,8 @@ public sealed class ParseResult
     public required string EvidenceId { get; init; }
     public required string Parser { get; init; }
     public required string ParserVersion { get; init; }
+    /// <summary>Parser maturity at the time of the run (VALIDATED / TESTED / EXPERIMENTAL), from its descriptor.</summary>
+    public string ParserStatus { get; set; } = "";
     public EvidenceStatus Status { get; set; }
     public string Error { get; set; } = "";
     public int Records { get; set; }
@@ -81,6 +90,13 @@ public sealed class ParseResult
     public List<EvidenceGap> Gaps { get; } = [];
     /// <summary>Case-relative paths of derived files this parser produced (each hashed into custody).</summary>
     public List<string> DerivedOutputs { get; } = [];
+    /// <summary>SHA-256 recorded at acquisition.</summary>
+    public string ExpectedSha256 { get; set; } = "";
+    /// <summary>SHA-256 of the source right before parsing (preflight) and right after; all three must match.</summary>
+    public string SourceSha256Before { get; set; } = "";
+    public string SourceSha256After { get; set; } = "";
+    /// <summary>Format recognised from content (<c>EvidenceFingerprint</c>), e.g. "evtx", "regf", "ese".</summary>
+    public string SourceFingerprint { get; set; } = "";
 
     public ParseResult Finish()
     {

@@ -58,7 +58,7 @@ namespace LogAnalyzer.Core.Services
                             row.Spacing(6);
                             AddMetaBox(row, "DATA & ORA EMITERII", $"{data.TimestampUtc:yyyy-MM-dd HH:mm:ss} UTC", "#0f172a");
                             AddMetaBox(row, "STAȚIE DE OPERARE", data.SystemHostId, "#0f172a");
-                            AddMetaBox(row, "REZULTAT SANITIZARE", "CONFIRMAT (ZEROIZAT)", "#10b981");
+                            AddMetaBox(row, "REZULTAT SANITIZARE", data.IsVerifiedZeroized ? "VERIFICAT PRIN CITIRE" : "NEVERIFICAT", data.IsVerifiedZeroized ? "#10b981" : "#b91c1c");
                         });
 
                         // 1. Hardware Identification
@@ -74,9 +74,8 @@ namespace LogAnalyzer.Core.Services
                             });
 
                             AddTableRow(table, "Producător & Model Mediu:", $"{data.DeviceVendor} {data.DeviceModel}", true);
-                            AddTableRow(table, "Serie Hardware Unică (S/N):", data.HardwareSerialNumber, false, isMonospace: true);
+                            AddTableRow(table, "Serie Hardware Unică (S/N):", SanitizationCertificateData.OrUndeclared(data.HardwareSerialNumber), false, isMonospace: true);
                             AddTableRow(table, "Capacitate Fizică Totală:", $"{data.DeviceCapacityBytes:N0} bytes ({data.DeviceCapacityBytes / (1024.0 * 1024.0 * 1024.0):F2} GB)", true);
-                            AddTableRow(table, "Plafon Clasificare Autorizat:", "SECRET DE SERVICIU / RESTRICTED (HG 585)", false);
                         });
 
                         // 2. Sanitization Protocol
@@ -95,7 +94,7 @@ namespace LogAnalyzer.Core.Services
                             AddTableRow(table, "Standard de Conformitate:", data.StandardCompliance, false);
                             AddTableRow(table, "Hash SHA-256 Pre-Sanitizare:", data.PreSanitizationSha256, true, isMonospace: true);
                             AddTableRow(table, "Hash SHA-256 Post-Sanitizare:", data.PostSanitizationSha256, false, isMonospace: true);
-                            AddTableRow(table, "Verificare Stare Zeroizare:", data.IsVerifiedZeroized ? "CONFIRMATĂ (Date distruse ireversibil)" : "NECONFIRMATĂ", true, textColor: "#10b981");
+                            AddTableRow(table, "Verificare Stare Zeroizare:", data.IsVerifiedZeroized ? "CONFIRMATĂ prin citire (fișierul conține doar 0x00)" : "NECONFIRMATĂ", true, textColor: data.IsVerifiedZeroized ? "#10b981" : "#b91c1c");
                         });
 
                         // 3. Chain of Custody & Dual Sign-off (4-Eyes Principle)
@@ -112,7 +111,7 @@ namespace LogAnalyzer.Core.Services
                                 {
                                     c.Spacing(4);
                                     c.Item().Text("OPERATOR PRINCIPAL EXECUȚIE").Bold().FontSize(8f).FontColor("#64748b");
-                                    c.Item().Text(string.IsNullOrWhiteSpace(data.PrimaryOperator) ? "Operator Autorizat" : data.PrimaryOperator).Bold().FontSize(9.5f).FontColor("#0f172a");
+                                    c.Item().Text(SanitizationCertificateData.OrUndeclared(data.PrimaryOperator)).Bold().FontSize(9.5f).FontColor("#0f172a");
                                     c.Item().PaddingTop(15).LineHorizontal(0.5f).LineColor("#94a3b8");
                                     c.Item().Text("Semnătură & Ștampilă Operator").FontSize(7f).FontColor("#94a3b8");
                                 });
@@ -123,7 +122,7 @@ namespace LogAnalyzer.Core.Services
                                 {
                                     c.Spacing(4);
                                     c.Item().Text("OFIȚER SECURITATE / MARTOR").Bold().FontSize(8f).FontColor("#64748b");
-                                    c.Item().Text(string.IsNullOrWhiteSpace(data.VerifierOperator) ? "Ofițer Securitate Info" : data.VerifierOperator).Bold().FontSize(9.5f).FontColor("#0f172a");
+                                    c.Item().Text(SanitizationCertificateData.OrUndeclared(data.VerifierOperator)).Bold().FontSize(9.5f).FontColor("#0f172a");
                                     c.Item().PaddingTop(15).LineHorizontal(0.5f).LineColor("#94a3b8");
                                     c.Item().Text("Semnătură & Ștampilă Control").FontSize(7f).FontColor("#94a3b8");
                                 });
@@ -137,13 +136,13 @@ namespace LogAnalyzer.Core.Services
                                 cBox.Spacing(2);
                                 cBox.Item().Text("AMPRENTĂ AUDIT TAMPER-EVIDENT (SHA-256)")
                                     .Bold().FontSize(7.5f).FontColor("#475569");
-                                cBox.Item().Text(string.IsNullOrWhiteSpace(data.TamperEvidentAuditHash) ? "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" : data.TamperEvidentAuditHash)
+                                cBox.Item().Text(SanitizationCertificateData.OrUndeclared(data.TamperEvidentAuditHash))
                                     .FontFamily("Consolas").FontSize(7.5f).FontColor("#0f172a");
                             });
 
                         // Legal Disclaimer
                         col.Item().Background("#f8fafc").Padding(6).Text(
-                            "Prin prezenta se atestă că datele stocate pe mediul fizic menționat au fost distruse ireversibil prin suprascriere binară multi-pass, conform normativelor NATO și naționale, fără posibilitate de reconstituire prin tehnici de microscopie magnetică sau recuperare forensică avansată.")
+                            "Documentul consemnează suprascrierea fișierului de mai sus și rezultatul verificării prin citire. Nu atestă distrugerea datelor de pe dispozitivul fizic (copii în alte locații, sectoare remapate, SSD cu wear-leveling) și nu este o certificare de conformitate.")
                             .Italic().FontSize(7.5f).FontColor("#64748b");
                     });
 
@@ -153,7 +152,7 @@ namespace LogAnalyzer.Core.Services
                         col.Item().LineHorizontal(0.5f).LineColor("#cbd5e1");
                         col.Item().PaddingTop(4).Row(row =>
                         {
-                            row.RelativeItem().Text("LogAnalyzer Enterprise — Media Sanitization Engine | HG 585/2002 & NIST SP 800-88r2")
+                            row.RelativeItem().Text("LogAnalyzer — suprascriere la nivel de fișier (metoda NIST SP 800-88r2 Clear)")
                                 .FontSize(7.5f).FontColor("#94a3b8");
                             row.ConstantItem(80).AlignRight().DefaultTextStyle(s => s.FontSize(7.5f).FontColor("#94a3b8")).Text(x =>
                             {

@@ -1,0 +1,15 @@
+title: Un jurnal de evenimente a fost șters
+id: 3a9f6c1e-2b8d-4e57-8f3a-0c6e9d2a0104
+status: stable
+description: System 104 (Microsoft-Windows-Eventlog) - un jurnal a fost golit; probele anterioare momentului pot lipsi.
+date: 2026-10-05
+logsource:
+  product: windows
+  service: system
+detection:
+  selection:
+    EventID: '104'
+  condition: selection
+level: high
+tags:
+  - attack.t1070.001

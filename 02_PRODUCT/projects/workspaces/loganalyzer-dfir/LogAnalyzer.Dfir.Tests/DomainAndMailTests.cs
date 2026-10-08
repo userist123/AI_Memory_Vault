@@ -6,6 +6,7 @@ using Xunit;
 
 namespace LogAnalyzer.Dfir.Tests;
 
+[Collection("AppMode")] // one test sets the process-wide operating mode
 public class DomainAndMailTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 5, 12, 0, 0, TimeSpan.Zero);
@@ -58,6 +59,38 @@ public class DomainAndMailTests
         Assert.Equal(ControlStatus.Neconform, Check(c, "DM25").Status);   // Server 2012 R2
         Assert.Equal(ControlStatus.Neconform, Check(c, "DM30").Status);   // min length 7
         Assert.Equal(ControlStatus.Neconform, Check(c, "DM31").Status);   // no lockout
+    }
+
+    [Fact]
+    public void Domain_inventory_enters_the_evidence_graph_with_its_evidence()
+    {
+        var snap = Domain();
+        var checks = DomainEvaluator.Evaluate(snap);
+        Assert.Equal(["legacy"], Check(checks, "DM02").Subjects);
+        Assert.Equal(["svc_sql", "admin.vechi"], Check(checks, "DM10").Subjects!.OrderByDescending(s => s));
+
+        var g = LogAnalyzer.Dfir.Windows.Domain.DomainGraph.Build(snap, checks, "EV-INV-1");
+        Assert.All(g.Relationships, r => Assert.Equal("EV-INV-1", r.EvidenceId));
+        Assert.All(g.Relationships, r => Assert.StartsWith("LDAP ", r.Locator));
+
+        var da = g.Find("Group", "Domain Admins")!;
+        var members = g.Edges(da.Id).Where(r => r.Type == LogAnalyzer.Dfir.Graph.RelationType.MemberOf).Select(r => r.SourceEntity).ToList();
+        Assert.Equal(["Account:corp.local\\administrator", "Account:corp.local\\svc_sql", "Account:corp.local\\admin.vechi"], members);
+
+        // Only NECONFORM checks produce VIOLATES, and only for the accounts the evaluator named.
+        var violates = g.Relationships.Where(r => r.Type == LogAnalyzer.Dfir.Graph.RelationType.Violates).ToList();
+        Assert.Contains(violates, r => r.SourceEntity == "Account:corp.local\\legacy" && r.TargetEntity == "Control:dm02" && r.Derivation == "DomainEvaluator DM02");
+        Assert.Contains(violates, r => r.SourceEntity == "Host:app02" && r.TargetEntity == "Control:dm22");
+        Assert.DoesNotContain(violates, r => r.SourceEntity == "Host:dc01");
+        Assert.DoesNotContain(violates, r => r.TargetEntity == "Control:dm20"); // DE VERIFICAT is not a violation
+        Assert.Equal("CN=legacy,DC=corp,DC=local", violates.First(r => r.TargetEntity == "Control:dm02").Locator["LDAP ".Length..]);
+
+        // A computer account is the same Host entity a case graph builds for that host name.
+        var caseGraph = LogAnalyzer.Dfir.Graph.EvidenceGraph.Build([], [], "APP02");
+        Assert.Contains(caseGraph.Entities, e => e.Id == "Host:app02");
+        var merged = LogAnalyzer.Dfir.Windows.Domain.DomainGraph.Build(snap, checks, "EV-INV-1", caseGraph);
+        Assert.NotEmpty(merged.Path("Host:app02", "AdDomain:corp.local"));
+        Assert.Throws<ArgumentException>(() => LogAnalyzer.Dfir.Windows.Domain.DomainGraph.Build(snap, checks, ""));
     }
 
     [Fact]
