@@ -831,7 +831,7 @@ class RealAgentExecutionHarness:
         return ExecutionContract(
             allowed_files=tuple(allowed),
             protected_paths=(".git", ".github", "AGENTS.md", "CLAUDE.md", "00_GOVERNANCE", "04_CONFIG", "security"),
-            allowed_actions=("write_file", "read_file"),
+            allowed_actions=("write_file",),
             acceptance_criteria=("only allowed files change", "verification exits 0", "required evidence is persisted"),
             evidence_required=("bootstrap_sources", "context_hash", "contract_hash", "workspace_diff", "verification"),
             stop_conditions=("bootstrap missing", "out-of-scope mutation", "protected mutation", "model failure", "verification failure", "missing evidence"),
