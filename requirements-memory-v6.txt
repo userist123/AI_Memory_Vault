@@ -9,3 +9,4 @@ numpy==2.2.6
 pandas==2.2.3
 requests==2.34.2
 mcp==1.30.0
+cryptography==50.0.2

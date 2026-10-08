@@ -5,6 +5,14 @@ description: Use the AI Memory Vault agent definitions and capability metadata t
 
 # Agent Orchestration
 
+## Canonical Agent Router
+
+Use the central Agent Router at `03_IMPLEMENTATION/packages/routing/` before external execution. This skill coordinates with the router; it must not create a competing routing policy.
+
+The router selects eligible agent/runtime/model-tier/skills/memory/verifier metadata. Runtime-specific prompt bodies stay outside the router.
+
+If the router returns `BLOCKED`, do not silently fall back to another agent. If it returns `PLANNED`, do not report execution availability until the host confirms it.
+
 Before assigning work, identify the task's domains and required capabilities.
 
 ## Selection

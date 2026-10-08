@@ -620,6 +620,7 @@ Workflow-urile din [`.github/workflows/`](.github/workflows/), grupate după ce 
 | LogAnalyzer DFIR (.NET): build, teste și pachetele win-x64 ale edițiilor | `loganalyzer-dfir-build.yml` |
 | Audit de dependențe (npm, .NET) pe fiecare manifest; pică la CRITICAL | `dependency-audit.yml` |
 | materialul importat, scanat pentru instrucțiuni injectate | `untrusted-content-guard.yml` |
+| routerul central de agenți, dispatcher-ul și bridge-ul securizat | `agent-routing-tests.yml` |
 | rutele directe `vault://`, politica de acces pe canale, adaptoarele MCP/CLI/Ollama/Telegram | `vault-access.yml` |
 | notele ACTIVE, verificate față de amprentele înregistrate | `active-note-integrity.yml` |
 | zonele scutite de gitleaks, scanate pentru secrete de mare încredere | `exempt-area-secret-scan.yml` |
