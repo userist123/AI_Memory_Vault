@@ -1,5 +1,7 @@
 # VAULT STATE — read this first
 
+**Measured update:** 2026-10-08T19:29:07Z — operational pilot branch `codex/runtime-memory-pilot-20261008`; CI verification was requested for HEAD `666cee75f1ec42a8e53d973c53b782a726797d7d` and remained queued/pending at the time of this update.
+
 **This file records what is verified true right now, not what the architecture
 intends.** README, CLAUDE.md and AGENTS.md describe the design. This file
 describes the measured state. Where they disagree, this file wins and the other
