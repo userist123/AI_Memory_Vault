@@ -626,7 +626,7 @@ Workflow-urile din [`.github/workflows/`](.github/workflows/), grupate după ce 
 | notele ACTIVE, verificate față de amprentele înregistrate | `active-note-integrity.yml` |
 | zonele scutite de gitleaks, scanate pentru secrete de mare încredere | `exempt-area-secret-scan.yml` |
 | căile de scriere ale runtime-ului | `write-path-audit.yml` |
-| securitate: secrete, analiză statică | `secret-scan.yml`, `codeql.yml`, `fortify.yml`, `apisec-scan.yml` |
+| securitate: secrete, analiză statică | `secret-scan.yml`, `codeql.yml`, `codeql-csharp.yml`, `fortify.yml`, `apisec-scan.yml` |
 | cercetare: Planning Influence V3 și fazele Polymarket | `planning-influence-mve.yml`, `polymarket-phase*.yml` (câte unul pe fază) |
 | cercetare: experiment H1 de recall asociativ | `h1-associative-experiment.yml` |
 | rulări programate și ingestie | `memory-consolidation.yml` (consolidarea de noapte), `import-external-skills.yml`, `jarvis-command-center.yml` |

@@ -278,6 +278,12 @@
       "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
     },
     {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RELEASE_GATE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
       "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/EVIDENCE_MODEL.md",
       "kind": "no_frontmatter",
       "category": "plain_document",

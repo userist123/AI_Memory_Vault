@@ -1,5 +1,6 @@
 using System.Diagnostics.Eventing.Reader;
 using System.Xml.Linq;
+using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Parsing;
 
@@ -149,7 +150,7 @@ public sealed class EvtxParser : EvidenceParserBase
             Provider = provider,
             Host = rec.MachineName ?? "",
             User = user,
-            Process = path.Length > 0 ? System.IO.Path.GetFileName(path.TrimEnd('\\')) : "",
+            Process = path.Length > 0 ? WinPath.GetFileName(path.TrimEnd('\\')) : "",
             Pid = rec.ProcessId is int p ? p : null,
             Path = path,
             Summary = summary,

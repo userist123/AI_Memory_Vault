@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Parsing;
 using LogAnalyzer.Dfir.Windows.Native;
@@ -88,9 +89,9 @@ public sealed class SrumNetworkParser : EvidenceParserBase
                 EvidenceId = item.EvidenceId,
                 Provider = "SRUM Network Data Usage",
                 User = row.User,
-                Process = System.IO.Path.GetFileName(app),
+                Process = WinPath.GetFileName(app),
                 Path = app,
-                Summary = $"SRUM: {System.IO.Path.GetFileName(app)} sent {row.BytesSent:N0} B / received {row.BytesRecvd:N0} B in the interval ending at this time",
+                Summary = $"SRUM: {WinPath.GetFileName(app)} sent {row.BytesSent:N0} B / received {row.BytesRecvd:N0} B in the interval ending at this time",
                 TimeSemantics = "SRUM interval end (~1h aggregate)",
                 TemporalType = TemporalType.Historical,
                 Classification = Classification.Direct,

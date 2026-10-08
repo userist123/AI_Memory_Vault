@@ -76,7 +76,7 @@ public sealed class JumpListParser : EvidenceParserBase
             {
                 Time = ft > 0 ? Timestamp.FromFileTime(ft, "DestList last access FILETIME") : Timestamp.Unknown(),
                 TimeSemantics = "item last used through this application (Jump List DestList)",
-                Source = "JumpList", EvidenceId = item.EvidenceId, Path = target, Process = target.Contains('\\') ? Path.GetFileName(target) : "",
+                Source = "JumpList", EvidenceId = item.EvidenceId, Path = target, Process = target.Contains('\\') ? WinPath.GetFileName(target) : "",
                 Host = host, Summary = $"Jump List {appId}: {target} folosit de {uses} ori" + (pin >= 0 ? " (fixat)" : ""),
                 TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.High,
                 Locator = $"DestList entry {entryNo} / stream {streamName}",

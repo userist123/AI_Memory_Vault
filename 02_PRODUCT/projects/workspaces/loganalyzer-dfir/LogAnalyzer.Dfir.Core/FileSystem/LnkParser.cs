@@ -44,7 +44,7 @@ public sealed class LnkParser : EvidenceParserBase
         {
             Time = link.Modified > 0 ? Timestamp.FromFileTime(link.Modified, "LNK header target WriteTime") : Timestamp.Unknown(),
             TimeSemantics = "target file last modified, as recorded in the link header",
-            Source = "LNK", EvidenceId = item.EvidenceId, Path = target, Process = target.Length > 0 ? Path.GetFileName(target) : "",
+            Source = "LNK", EvidenceId = item.EvidenceId, Path = target, Process = target.Length > 0 ? WinPath.GetFileName(target) : "",
             Summary = $"Shortcut către {(target.Length > 0 ? target : "(țintă nedecodată)")}" + (link.Arguments.Length > 0 ? $" {link.Arguments}" : "") +
                       (link.Machine.Length > 0 ? $"; creat pe {link.Machine}" : ""),
             TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.High,

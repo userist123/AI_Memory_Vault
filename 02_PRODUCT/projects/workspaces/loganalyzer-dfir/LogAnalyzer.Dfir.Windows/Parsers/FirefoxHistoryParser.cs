@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Parsing;
 using Microsoft.Data.Sqlite;
@@ -108,7 +109,7 @@ public sealed class FirefoxHistoryParser : EvidenceParserBase
                     sink.Add(new TimelineEvent
                     {
                         Time = UnixMicros(r.IsDBNull(3) ? 0 : r.GetInt64(3), "dateAdded"), TimeSemantics = "download recorded (moz_annos.dateAdded)",
-                        Source = "BrowserDownload", EvidenceId = item.EvidenceId, Path = path, Process = Path.GetFileName(path),
+                        Source = "BrowserDownload", EvidenceId = item.EvidenceId, Path = path, Process = WinPath.GetFileName(path),
                         Dns = Uri.TryCreate(source, UriKind.Absolute, out var su) ? su.Host : "",
                         Summary = $"Descărcare Firefox: {path} de pe {source}", TemporalType = TemporalType.Historical,
                         Classification = Classification.Direct, Confidence = Confidence.High, Locator = $"moz_annos.id={r.GetInt64(0)}",

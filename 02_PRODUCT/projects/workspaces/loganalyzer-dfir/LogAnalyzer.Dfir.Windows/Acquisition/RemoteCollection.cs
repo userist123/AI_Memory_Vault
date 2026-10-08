@@ -79,6 +79,19 @@ public static class RemoteCollection
         return (r, item.Sha256);
     }
 
+    /// <summary>
+    /// Text placed in a '#' comment of the generated script must stay on one line, or the rest of it would be executed.
+    /// PowerShell ends a comment at CR, LF, NEL (U+0085), LS (U+2028) and PS (U+2029); all become spaces.
+    /// </summary>
+    public static string OneLine(string? s)
+    {
+        if (string.IsNullOrEmpty(s)) return "";
+        var chars = s.ToCharArray();
+        for (int i = 0; i < chars.Length; i++)
+            if (chars[i] is '\r' or '\n' or '\u0085' or '\u2028' or '\u2029') chars[i] = ' ';
+        return new string(chars);
+    }
+
     private static string Q(string s) => "'" + s.Replace("'", "''") + "'";
 
     /// <summary>The package script. It only reads the target and writes next to itself; it contains no network command.</summary>
@@ -89,7 +102,7 @@ public static class RemoteCollection
             throw new ArgumentException("Cererea nu este validă pentru generarea pachetului.");
         var sb = new StringBuilder();
         sb.AppendLine("# LogAnalyzer - pachet de colectare DFIR. Ruleaza pe statia tinta, local; nu foloseste reteaua.");
-        sb.AppendLine($"# Cerere {r.RequestId} | caz {r.CaseId} | tinta {r.TargetHost} | operator {r.Operator.Replace("\r", " ").Replace("\n", " ")}");
+        sb.AppendLine($"# Cerere {r.RequestId} | caz {OneLine(r.CaseId)} | tinta {r.TargetHost} | operator {OneLine(r.Operator)}");
         sb.AppendLine("#Requires -Version 5.1");
         sb.AppendLine("$ErrorActionPreference = 'Continue'");
         sb.AppendLine($"$RequestId = {Q(r.RequestId)}");
