@@ -22,14 +22,13 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: depends_on
-  target_id: fc6fd29b-f62b-5b87-ba0d-98b51eb4ab54
-- type: related_to
-  target_id: 7baa7791-77cc-5d1d-95fa-92f7ac855db0
+  - type: related_to
+    target_id: "7baa7791-77cc-5d1d-95fa-92f7ac855db0"
 lifecycle: ARCHIVED
 archive_reason: extragere cu prompt tintit pe intrebarile de test; retrasa conform ordinului de corectie runda 3
 id: 73f5b12e-ba89-5e2d-b147-a3a866c6edbb
 ---
+
 # 📖 Baza Biologică a Memoriei: Structuri Cerebrale și Engrama (OpenStax)
 
 ## 1. Proveniență și Citate Verificate

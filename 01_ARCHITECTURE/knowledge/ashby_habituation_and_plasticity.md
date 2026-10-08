@@ -16,8 +16,6 @@ verification: unverified
 relations:
   - type: depends_on
     target_id: "knw-ashby-step-mechanisms"
-  - type: applies_to
-    target_id: "knw-ashby-multistable-systems"
   - type: related_to
     target_id: "knw-retrieval-bottleneck-p0-0001"
 ---

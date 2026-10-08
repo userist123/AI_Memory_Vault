@@ -17,13 +17,10 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-06-procedures
-- type: part_of
-  target_id: 6e014224-af01-4011-8050-082d3f9ea35e
-- type: applies_to
-  target_id: be1863da-7db4-48b7-9486-ad13b1a74152
+  - type: applies_to
+    target_id: "be1863da-7db4-48b7-9486-ad13b1a74152"
 ---
+
 # operator
 
 ## Canonical Definition

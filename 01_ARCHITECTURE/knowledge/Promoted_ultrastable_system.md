@@ -17,13 +17,10 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-05-state
-- type: depends_on
-  target_id: 2a299363-8d18-48bd-bfa6-fb495686eeba
-- type: related_to
-  target_id: d5ee32c8-67be-4c08-b6a4-5f60f0456fb1
+  - type: related_to
+    target_id: "d5ee32c8-67be-4c08-b6a4-5f60f0456fb1"
 ---
+
 # ultrastable system
 
 ## Canonical Definition
