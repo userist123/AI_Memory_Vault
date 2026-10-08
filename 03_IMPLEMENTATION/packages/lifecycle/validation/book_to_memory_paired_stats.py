@@ -196,3 +196,15 @@ def holm_adjust(pvalues: Sequence[float]) -> List[float]:
         running = max(running, min(1.0, (m - rank) * pvalues[i]))
         adjusted[i] = running
     return adjusted
+
+
+def wilson_interval(successes: int, n: int, confidence: float = 0.95) -> Tuple[float, float]:
+    """Wilson score interval of a proportion (the interval to quote for small samples)."""
+    if n <= 0 or not 0 <= successes <= n:
+        raise StatsError("need 0 <= successes <= n and n > 0")
+    z = t_ppf(1.0 - (1.0 - confidence) / 2.0, 1e7)
+    p = successes / n
+    denom = 1.0 + z * z / n
+    centre = (p + z * z / (2 * n)) / denom
+    half = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / denom
+    return max(0.0, centre - half), min(1.0, centre + half)

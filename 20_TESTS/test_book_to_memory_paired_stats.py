@@ -108,3 +108,13 @@ def test_mean_and_sd_guard_empty_input():
         mean([])
     with pytest.raises(StatsError):
         sample_sd([1.0])
+
+
+def test_wilson_interval_textbook_values():
+    from lifecycle.validation.book_to_memory_paired_stats import wilson_interval
+    lo, hi = wilson_interval(8, 10)
+    assert (lo, hi) == pytest.approx((0.4902, 0.9433), abs=1e-4)
+    assert wilson_interval(0, 10)[0] == 0.0 and wilson_interval(0, 10)[1] == pytest.approx(0.2775, abs=1e-4)
+    assert wilson_interval(10, 10)[1] == 1.0
+    with pytest.raises(StatsError):
+        wilson_interval(3, 0)
