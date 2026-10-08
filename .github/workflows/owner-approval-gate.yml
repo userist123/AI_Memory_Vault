@@ -1,0 +1,19 @@
+name: owner-approval-gate
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  owner-approval:
+    name: owner-approval
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: owner-approval
+    steps:
+      - name: Verify that the protected owner-approval environment was reached
+        run: |
+          echo "Owner approval was granted by the protected GitHub environment."
