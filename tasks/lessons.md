@@ -11,3 +11,8 @@
   not only the tests near the files B touches.
 - Rule: when two PRs touch the same module (here `memory_mcp_server.py`), grep the other PR's
   tests for assertions on that module's public surface before merging.
+
+## 2026-10-08 — Edits to Markdown tables
+- A regex like `\| 7 \|` with count=1 hits the first matching cell anywhere in the file (it overwrote summary
+  rows R4/R9 instead of the decision rows). Scope table edits to the target section and match the full row
+  prefix (e.g. `| 7 | *Provisional:*`), then check `git diff` before committing.
