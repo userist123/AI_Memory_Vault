@@ -23,10 +23,10 @@
         <Border Grid.Row="1" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
             <StackPanel>
                 <DockPanel LastChildFill="False" Margin="0,0,0,8">
-                    <TextBlock DockPanel.Dock="Left" Text="{Binding CurrentStoryline.IncidentTitle, FallbackValue='Multi-Stage Campaign Attribution'}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
-                    <TextBlock DockPanel.Dock="Right" Text="ISO/IEC 27042 Validated" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource SuccessBrush}"/>
+                    <TextBlock DockPanel.Dock="Left" Text="{Binding CurrentStoryline.IncidentTitle, FallbackValue='Nicio poveste de atac construită'}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
+                    <TextBlock DockPanel.Dock="Right" Text="Corelare automată, nevalidată" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
                 </DockPanel>
-                <TextBlock Text="{Binding CurrentStoryline.OverallSummary, FallbackValue='Correlated forensic evidence indicates persistent adversary activity progressing across lateral pivots.'}" FontSize="12" LineHeight="18" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                <TextBlock Text="{Binding CurrentStoryline.OverallSummary, FallbackValue='Nu există încă un rezumat: rulați analiza pentru a construi povestea atacului.'}" FontSize="12" LineHeight="18" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,12"/>
                 
                 <!-- Visual Stage Progression Rail -->
                 <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,8">

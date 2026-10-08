@@ -216,7 +216,7 @@ namespace LogAnalyzer.Core.Services
                             foreach (var c in compList)
                             {
                                 string bg = idx++ % 2 == 0 ? "#ffffff" : "#f8fafc";
-                                string statusColor = c.Status == "CONFORM" ? "#10b981" : (c.Status == "NON-CONFORM" ? "#ef4444" : "#f59e0b");
+                                string statusColor = c.Status == ComplianceStatus.Conform ? "#10b981" : (c.Status == ComplianceStatus.NonConform ? "#ef4444" : (c.Status == ComplianceStatus.NotAssessed ? "#64748b" : "#f59e0b"));
 
                                 table.Cell().Background(bg).Padding(4).Text(c.Framework).FontSize(7.5f);
                                 table.Cell().Background(bg).Padding(4).Text(c.ArticleOrControl).FontSize(7.5f);
