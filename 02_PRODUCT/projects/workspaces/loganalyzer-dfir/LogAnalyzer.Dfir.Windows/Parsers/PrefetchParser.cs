@@ -12,9 +12,21 @@ namespace LogAnalyzer.Dfir.Windows.Parsers;
 /// </summary>
 public sealed class PrefetchParser : EvidenceParserBase
 {
-    public override string Name => "PrefetchParser";
-    public override string Version => "1.0";
-    public override bool CanParse(EvidenceItem item) => item.SourceType == "prefetch" || item.StoredPath.EndsWith(".pf", StringComparison.OrdinalIgnoreCase);
+    public override ParserDescriptor Descriptor { get; } = new()
+    {
+        ParserId = "PrefetchParser", Version = "1.0", Artifact = "Prefetch Windows (.pf)",
+        SourceTypes = ["prefetch"], FileNames = [".pf"], Fingerprints = ["prefetch", "prefetch_mam"],
+        SupportedOs = "Windows 10 / 11 (decompresia MAM folosește API-ul Windows)",
+        FormatVersions = ["SCCA v30", "SCCA v31", "comprimat MAM (Xpress Huffman)"],
+        Limitations =
+        [
+            "Versiunile 17/23/26 (Windows XP–8.1) nu sunt suportate: parsarea eșuează explicit.",
+            "Cel mult 8 ore de rulare per fișier, cât păstrează formatul.",
+            "Prefetch arată că un program a rulat, nu cine l-a pornit sau de ce.",
+        ],
+        Status = ParserMaturity.Validated,
+        Validation = "CorpusRegressionTests (prefetch, prefetchMsiexec), InvestigationTests pe corpusul NanAgent",
+    };
 
     public sealed record PrefetchInfo(int Version, string ExeName, uint Hash, int RunCount, IReadOnlyList<DateTimeOffset> RunTimesUtc,
                                       IReadOnlyList<string> ReferencedFiles, IReadOnlyList<string> Volumes)

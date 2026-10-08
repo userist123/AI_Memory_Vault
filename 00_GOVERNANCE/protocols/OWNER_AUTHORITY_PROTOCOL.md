@@ -48,7 +48,20 @@ protection; required checks can then be made mandatory for a protected branch.
 
 ## Agent tools
 
-.claude/settings.json installs a PreToolUse fail-closed hook. Read-only discovery tools
+### Activation: opt-in, per machine
+
+The hook is **not** active by default. The repository ships its registration as
+`.claude/owner-authority.settings.example.json`, a file Claude Code does not load. To enforce
+the gate on a machine, the owner copies the `hooks` block of that file into
+`.claude/settings.local.json` (gitignored, so it never reaches other clones, cloud sessions or
+CI) and restarts Claude Code. Removing it from `settings.local.json` turns the gate off again.
+
+Why opt-in (owner decision, 2026-10-08): no approval broker exists yet, and a committed
+`.claude/settings.json` would refuse Bash, Edit, Write and most other tools to every agent in
+every clone, cloud sessions included. When a broker exists, moving the block into a committed
+`.claude/settings.json` makes the gate mandatory; that is a separate, deliberate change.
+
+Once activated, the hook is a PreToolUse fail-closed gate. Read-only discovery tools
 are allowed, including the read-only tools of the `vault-memory` MCP server (`memory_search`,
 `memory_get`, `vault_resolve`, `vault_list`, `vault_read`, `vault_search`, `vault_get_metadata`,
 `vault_check_quotes`). Every other tool call — including `memory_propose`, which writes a
@@ -87,7 +100,7 @@ is built around that:
 - Inside the script, malformed JSON, empty stdin, non-object JSON, a missing or non-string
   `tool_name`, and any unexpected exception all produce a JSON deny (exit 0). If even the
   deny cannot be written, the script exits 2.
-- The command in `.claude/settings.json` maps a crash, a missing script and a missing
+- The hook command (in `.claude/owner-authority.settings.example.json`, copied into `settings.local.json` when activated) maps a crash, a missing script and a missing
   interpreter to exit 2. It tries `python3`, then `python`, and uses only an interpreter that
   actually starts (`-c "import sys"`), so the Windows Store `python3` stub (exit 9009) is
   skipped. The script path is `${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/owner_authority_gate.py`.
@@ -98,7 +111,7 @@ is built around that:
   `Write` is really refused before relying on the hook.
 - Outside the hook's control: a hook that exceeds Claude Code's 10 s timeout (the broker is
   capped at 6 s to stay below it), and a user who disables hooks or has not trusted the
-  project's `.claude/settings.json`. Only the OS-level boundary below covers those.
+  project's settings. Only the OS-level boundary below covers those.
 
 ## What is enforced, and what is not
 
@@ -115,17 +128,15 @@ malformed input and every internal failure.
   keeping the secret away from the agent process, is the broker's job. No broker is provided.
 - Caller identity. `session_id` is passed to the broker but is not checked.
 - Protection of the gate itself. An agent that can set `MEMORY_VAULT_OWNER_GATE_COMMAND` in
-  its own environment, or edit `.claude/settings.json` or the hook script, can defeat the gate.
+  its own environment, or edit `.claude/settings.local.json` or the hook script, can defeat the gate.
   The variable must be set by the owner outside the agent's reach, and the files are only
   protected by the OS boundary below.
 - GitHub-side separation of owner and agent (see "Owner decisions before merge").
 
 ## Owner decisions before merge
 
-1. **Gated tool set and broker.** With no broker the hook blocks almost all agent work (see
-   above). Decide whether to write and ship a broker first, to allow-list more non-mutating
-   harness tools (`TodoWrite`, `Task`/`Agent`, `ToolSearch`, `Skill`, `BashOutput`), or to make
-   the hook opt-in through `settings.local.json` instead of the committed `settings.json`.
+1. **Gated tool set and broker.** Decided 2026-10-08: the hook is opt-in through
+   `settings.local.json` (see "Activation"). Making it mandatory waits for a broker.
 2. **The `owner-approval` environment has no reviewers today.** The `owner-approval` job passes
    within seconds on this PR, so the GitHub environment is unprotected and the gate is a
    no-op until the owner runs `configure-owner-authority.sh` (or sets the equivalent in the UI).

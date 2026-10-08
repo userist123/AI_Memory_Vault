@@ -10,7 +10,7 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 HOOK = REPO_ROOT / ".claude" / "hooks" / "owner_authority_gate.py"
-SETTINGS = REPO_ROOT / ".claude" / "settings.json"
+SETTINGS = REPO_ROOT / ".claude" / "owner-authority.settings.example.json"
 BASH = shutil.which("bash")
 
 
@@ -177,7 +177,7 @@ def test_the_hook_is_registered_for_every_tool():
     assert "CLAUDE_PROJECT_DIR" in command
 
 
-# --- the committed settings.json command, executed through bash --------------------------
+# --- the shipped (opt-in) hook command, executed through bash --------------------------
 
 needs_bash = pytest.mark.skipif(BASH is None, reason="bash is not installed on this machine")
 
@@ -222,3 +222,19 @@ def test_settings_command_blocks_when_the_hook_script_is_missing(tmp_path):
     r = run_settings_command({"tool_name": "Read", "tool_input": {}},
                              {"CLAUDE_PROJECT_DIR": str(tmp_path)})
     assert r.returncode == 2
+
+
+# --- opt-in: nothing committed activates the gate -----------------------------------------
+
+def test_the_gate_is_opt_in_and_not_registered_by_committed_settings():
+    """Owner decision 2026-10-08: no broker exists, so the gate must not be active for every
+    clone and cloud session. Claude Code loads `.claude/settings.json` (committed) and
+    `.claude/settings.local.json` (per machine); only the latter may register the hook."""
+    committed = REPO_ROOT / ".claude" / "settings.json"
+    if committed.exists():
+        text = committed.read_text(encoding="utf-8")
+        assert "owner_authority_gate" not in text, "the gate became mandatory: that needs a broker first"
+    gitignore = (REPO_ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+    assert ".claude/settings.local.json" in [line.strip() for line in gitignore]
+    example = json.loads(SETTINGS.read_text(encoding="utf-8"))
+    assert "owner_authority_gate.py" in example["hooks"]["PreToolUse"][0]["hooks"][0]["command"]

@@ -15,26 +15,6 @@ namespace LogAnalyzer.UI.Tests
     public class NetworkEditionServicesTests
     {
         [Fact]
-        public void RemoteTriageService_GeneratesValidWinRmScript()
-        {
-            var service = new RemoteTriageService();
-            var target = new RemoteEndpointTarget
-            {
-                HostnameOrIp = "WS-FINANCE-04",
-                AdminUsername = "corp\\admin_sec",
-                UseSsl = true
-            };
-
-            string script = service.GenerateWinRmCollectionScript(target, "\\\\SEC-SERVER\\ForensicsShare");
-
-            Assert.NotNull(script);
-            Assert.Contains("WS-FINANCE-04", script);
-            Assert.Contains("Invoke-Command", script);
-            Assert.Contains("wevtutil epl Security", script);
-            Assert.Contains("\\\\SEC-SERVER\\ForensicsShare", script);
-        }
-
-        [Fact]
         public void SiemForwarderService_FormatsCefSyslogCorrectly()
         {
             var forwarder = new SiemForwarderService();

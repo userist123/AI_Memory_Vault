@@ -1,0 +1,52 @@
+name: Dependency audit
+
+# Same scope as Dependabot alerts (every committed npm lockfile and .NET project), visible per
+# manifest in the job summary. npm: reads lockfiles only. .NET: `dotnet restore` evaluates MSBuild
+# for the imported projects (props/targets can run code), so that job is not code-free; it runs
+# with contents: read and no secrets. No install, build, test or run step is used anywhere.
+
+on:
+  pull_request:
+    paths:
+      - '**/package-lock.json'
+      - '**/package.json'
+      - '**/*.csproj'
+      - '30_SCRIPTS/security/dependency_audit.py'
+      - '.github/workflows/dependency-audit.yml'
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  npm:
+    name: npm lockfiles
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Audit lockfiles (critical fails)
+        run: python 30_SCRIPTS/security/dependency_audit.py --npm --report npm-audit.json
+
+  dotnet:
+    name: .NET projects
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Setup .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: '10.x'
+      - name: Audit projects (critical fails)
+        run: python 30_SCRIPTS/security/dependency_audit.py --dotnet --report dotnet-audit.json

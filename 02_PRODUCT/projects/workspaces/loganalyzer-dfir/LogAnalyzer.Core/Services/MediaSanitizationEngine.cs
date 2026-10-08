@@ -35,6 +35,12 @@ namespace LogAnalyzer.Core.Services
         public DateTime StartedAtUtc { get; set; }
         public DateTime CompletedAtUtc { get; set; }
         public string ErrorMessage { get; set; } = string.Empty;
+        /// <summary>True only when every byte was read back after the last pass and matched the written pattern (0x00).</summary>
+        public bool ReadBackVerified { get; set; }
+        /// <summary>First offset that did not read back as 0x00, if any.</summary>
+        public long? ReadBackMismatchOffset { get; set; }
+        /// <summary>Why the read-back was not done or did not confirm the wipe.</summary>
+        public string ReadBackNote { get; set; } = string.Empty;
     }
 
     public class MediaSanitizationEngine
@@ -144,9 +150,37 @@ namespace LogAnalyzer.Core.Services
             if (result.Success && File.Exists(targetPath))
             {
                 result.PostSanitizationSha256 = await ComputeSha256Async(targetPath, cancellationToken);
+                if (method == SanitizationMethod.NistClearZero)
+                {
+                    result.ReadBackMismatchOffset = await FindNonZeroAsync(targetPath, cancellationToken);
+                    result.ReadBackVerified = result.ReadBackMismatchOffset is null;
+                    if (!result.ReadBackVerified)
+                        result.ReadBackNote = $"Citirea de verificare a găsit date nenule la offset {result.ReadBackMismatchOffset}.";
+                }
+                else
+                {
+                    result.ReadBackNote = method == SanitizationMethod.CryptographicErase
+                        ? "Doar primul și ultimul MiB au fost suprascrise; restul fișierului nu este verificat ca zeroizat."
+                        : "Ultima trecere scrie date aleatoare; conținutul nu poate fi verificat ca zeroizat prin citire.";
+                }
             }
 
             return result;
+        }
+
+        private static async Task<long?> FindNonZeroAsync(string path, CancellationToken ct)
+        {
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize, FileOptions.SequentialScan);
+            var buffer = new byte[BufferSize];
+            long offset = 0;
+            int n;
+            while ((n = await fs.ReadAsync(buffer.AsMemory(0, BufferSize), ct)) > 0)
+            {
+                int i = buffer.AsSpan(0, n).IndexOfAnyExcept((byte)0);
+                if (i >= 0) return offset + i;
+                offset += n;
+            }
+            return null;
         }
 
         private static void ExecutePass(

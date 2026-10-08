@@ -6,7 +6,9 @@ namespace LogAnalyzer.Dfir.Windows.Audit;
 
 public enum ControlStatus { Conform, Neconform, DeVerificat, Nedeterminat }
 
-public sealed record ControlCheck(string Id, string Area, string Title, ControlStatus Status, string Detail, IReadOnlyList<string> Evidence, string Recommendation);
+/// <param name="Subjects">Accounts or hosts the check is about (sAMAccountName), when the evaluator knows them; null otherwise.</param>
+public sealed record ControlCheck(string Id, string Area, string Title, ControlStatus Status, string Detail, IReadOnlyList<string> Evidence, string Recommendation,
+                                  IReadOnlyList<string>? Subjects = null);
 
 /// <summary>A notable action: who did what, when, according to which record.</summary>
 public sealed record ActionEntry(DateTimeOffset TimeUtc, string Who, string Action, string Detail, string Source);
@@ -175,7 +177,7 @@ public static class ControlEvaluator
 
         var bl = S("BitLocker.SystemDrive");
         Add(r, "P11", "Politici", "Criptarea discului de sistem (BitLocker)", bl == "1" ? ControlStatus.Conform : bl == "" ? ControlStatus.Nedeterminat : ControlStatus.Neconform,
-            bl == "1" ? "Protecție activă." : bl == "" ? "Starea nu a putut fi citită." : "Discul de sistem NU este protejat de BitLocker.");
+            bl == "1" ? "Protecție activă." : bl == "" ? $"Starea nu a putut fi citită.{(S("BitLocker.SystemDrive.Error") is { Length: > 0 } blErr ? " " + blErr : "")}" : "Discul de sistem NU este protejat de BitLocker.");
 
         bool smb1 = S("SMB1.Server") == "1" || S("SMB1.ClientDriverStart") is "2" or "3";
         Add(r, "P12", "Politici", "SMBv1 dezactivat", smb1 ? ControlStatus.Neconform : ControlStatus.Conform, smb1 ? "Protocolul învechit SMBv1 este activ." : "Dezactivat.");

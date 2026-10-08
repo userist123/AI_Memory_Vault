@@ -22,3 +22,22 @@ def test_push_without_approval_fails(tmp_path):
 def test_missing_timeout_fails(tmp_path):
  f=check(tmp_path,'name: x\non:\n  workflow_dispatch:\npermissions:\n  contents: read\njobs:\n  x:\n    runs-on: ubuntu-latest\n    steps: []\n')
  assert any('timeout' in x for x in f)
+
+def test_apisec_and_fortify_scan_outcome_checked_before_reporting_passed():
+    apisec_path = ROOT / '.github/workflows/apisec-scan.yml'
+    fortify_path = ROOT / '.github/workflows/fortify.yml'
+    assert apisec_path.exists() and fortify_path.exists()
+    
+    apisec_text = apisec_path.read_text(encoding='utf-8')
+    assert 'id: apisec_scan' in apisec_text
+    assert 'steps.apisec_scan.outcome' in apisec_text
+    assert 'EXECUTED_FAILED' in apisec_text
+    # Ensure it doesn't just unconditionally echo EXECUTED_PASSED when configured == true
+    assert 'if [[ "$scan_outcome" == "success"' in apisec_text
+    
+    fortify_text = fortify_path.read_text(encoding='utf-8')
+    assert 'id: fortify_scan' in fortify_text
+    assert 'steps.fortify_scan.outcome' in fortify_text
+    assert 'EXECUTED_FAILED' in fortify_text
+    assert 'if [[ "$scan_outcome" == "success"' in fortify_text
+

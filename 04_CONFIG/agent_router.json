@@ -1,0 +1,458 @@
+{
+  "schema_version": 1,
+  "defaults": {
+    "max_candidates": 8,
+    "max_alternatives": 5,
+    "max_support_agents": 2,
+    "max_memory_results": 5,
+    "max_graph_hops": 1
+  },
+  "signals": {
+    "capabilities": {
+      "coding": [
+        "code",
+        "coding",
+        "implement",
+        "fix",
+        "bug",
+        "refactor",
+        "script",
+        "program"
+      ],
+      "repo": [
+        "repository",
+        "repo",
+        "git",
+        "pull request",
+        "commit",
+        "branch"
+      ],
+      "testing": [
+        "test",
+        "tests",
+        "pytest",
+        "unit test",
+        "integration test",
+        "regression"
+      ],
+      "ci": [
+        "ci",
+        "github actions",
+        "pipeline",
+        "workflow"
+      ],
+      "research": [
+        "research",
+        "investigate",
+        "survey",
+        "literature",
+        "sources"
+      ],
+      "external_research": [
+        "current information",
+        "web research",
+        "search the web",
+        "citations"
+      ],
+      "architecture": [
+        "architecture",
+        "design",
+        "system design",
+        "review architecture"
+      ],
+      "visual": [
+        "visual",
+        "ui",
+        "ux",
+        "browser",
+        "screenshot"
+      ],
+      "security": [
+        "security",
+        "threat",
+        "vulnerability",
+        "audit",
+        "secure"
+      ],
+      "reasoning": [
+        "reason",
+        "analyze",
+        "analyse",
+        "compare",
+        "deduce"
+      ],
+      "memory": [
+        "memory",
+        "vault",
+        "retrieval",
+        "knowledge"
+      ],
+      "offline": [
+        "offline",
+        "local only",
+        "air gapped",
+        "air-gapped"
+      ]
+    },
+    "risk_keywords": {
+      "high": [
+        "production",
+        "deploy",
+        "security",
+        "credential",
+        "secret",
+        "delete",
+        "purge"
+      ],
+      "critical": [
+        "irreversible",
+        "root access",
+        "rotate keys",
+        "destroy",
+        "wipe"
+      ]
+    },
+    "task_classes": {
+      "coding": [
+        "code",
+        "coding",
+        "implement",
+        "fix",
+        "bug",
+        "refactor"
+      ],
+      "research": [
+        "research",
+        "survey",
+        "literature",
+        "sources"
+      ],
+      "security": [
+        "security",
+        "vulnerability",
+        "threat",
+        "audit"
+      ],
+      "architecture": [
+        "architecture",
+        "system design",
+        "design review"
+      ]
+    }
+  },
+  "runtimes": [
+    {
+      "id": "claude_code",
+      "capabilities": [
+        "coding",
+        "repo",
+        "debugging",
+        "orchestration",
+        "reasoning"
+      ],
+      "quality": "heavy",
+      "cost_score": 45,
+      "latency_score": 35,
+      "model_local": false,
+      "network": true,
+      "tool_use": true,
+      "code_execution": true,
+      "visual": false,
+      "research": false,
+      "writable": true,
+      "max_context_tokens": 100000,
+      "independence_group": "claude",
+      "enabled": true,
+      "transport": "command",
+      "adapter_ref": "claude_code",
+      "executable": "claude"
+    },
+    {
+      "id": "codex",
+      "capabilities": [
+        "coding",
+        "repo",
+        "testing",
+        "ci",
+        "debugging",
+        "reasoning"
+      ],
+      "quality": "heavy",
+      "cost_score": 40,
+      "latency_score": 30,
+      "model_local": false,
+      "network": true,
+      "tool_use": true,
+      "code_execution": true,
+      "visual": false,
+      "research": false,
+      "writable": true,
+      "max_context_tokens": 100000,
+      "independence_group": "codex",
+      "enabled": true,
+      "transport": "command",
+      "adapter_ref": "codex",
+      "executable": "codex"
+    },
+    {
+      "id": "antigravity",
+      "capabilities": [
+        "architecture",
+        "visual",
+        "browser",
+        "debugging",
+        "reasoning"
+      ],
+      "quality": "heavy",
+      "cost_score": 50,
+      "latency_score": 40,
+      "model_local": false,
+      "network": true,
+      "tool_use": true,
+      "code_execution": true,
+      "visual": true,
+      "research": false,
+      "writable": true,
+      "max_context_tokens": 100000,
+      "independence_group": "antigravity",
+      "enabled": true,
+      "transport": "command",
+      "adapter_ref": "antigravity",
+      "executable": "agy"
+    },
+    {
+      "id": "perplexity",
+      "capabilities": [
+        "research",
+        "external_research",
+        "citations",
+        "reasoning"
+      ],
+      "quality": "heavy",
+      "cost_score": 35,
+      "latency_score": 45,
+      "model_local": false,
+      "network": true,
+      "tool_use": true,
+      "code_execution": false,
+      "visual": false,
+      "research": true,
+      "writable": false,
+      "max_context_tokens": 50000,
+      "independence_group": "perplexity",
+      "enabled": true,
+      "transport": "manual",
+      "adapter_ref": ""
+    },
+    {
+      "id": "local_llm",
+      "capabilities": [
+        "coding",
+        "reasoning",
+        "memory",
+        "offline",
+        "repo"
+      ],
+      "quality": "standard",
+      "cost_score": 10,
+      "latency_score": 20,
+      "model_local": true,
+      "network": false,
+      "tool_use": false,
+      "code_execution": false,
+      "visual": false,
+      "research": false,
+      "writable": false,
+      "max_context_tokens": 32000,
+      "independence_group": "local",
+      "enabled": true,
+      "transport": "command",
+      "adapter_ref": "ollama",
+      "executable": "ollama",
+      "model": "llama3.2"
+    }
+  ],
+  "agents": [
+    {
+      "id": "code_engineer",
+      "profile_ref": ".agents/agents/compiler_and_tooling_engineer/agent.md",
+      "capabilities": [
+        "coding",
+        "repo",
+        "testing",
+        "ci",
+        "debugging",
+        "reasoning"
+      ],
+      "preferred_runtimes": [
+        "codex",
+        "claude_code"
+      ],
+      "min_quality": "standard",
+      "max_risk": "critical",
+      "default_skills": [
+        "coding",
+        "testing"
+      ],
+      "max_skills": 2,
+      "independence_group": "engineering",
+      "prompt_profile": "code-engineer"
+    },
+    {
+      "id": "research_analyst",
+      "profile_ref": ".agents/agents/content_strategist/agent.md",
+      "capabilities": [
+        "research",
+        "external_research",
+        "citations",
+        "reasoning"
+      ],
+      "preferred_runtimes": [
+        "perplexity"
+      ],
+      "min_quality": "standard",
+      "max_risk": "high",
+      "default_skills": [
+        "research"
+      ],
+      "max_skills": 2,
+      "independence_group": "research",
+      "prompt_profile": "research-analyst"
+    },
+    {
+      "id": "visual_architect",
+      "profile_ref": ".agents/agents/ui_sensei_architect/agent.md",
+      "capabilities": [
+        "architecture",
+        "visual",
+        "browser",
+        "debugging",
+        "reasoning"
+      ],
+      "preferred_runtimes": [
+        "antigravity",
+        "claude_code"
+      ],
+      "min_quality": "standard",
+      "max_risk": "high",
+      "default_skills": [
+        "architecture",
+        "visual"
+      ],
+      "max_skills": 2,
+      "independence_group": "visual",
+      "prompt_profile": "visual-architect"
+    },
+    {
+      "id": "local_ai_engineer",
+      "profile_ref": ".agents/agents/local_ai_engineer/agent.md",
+      "capabilities": [
+        "coding",
+        "reasoning",
+        "memory",
+        "offline"
+      ],
+      "preferred_runtimes": [
+        "local_llm"
+      ],
+      "min_quality": "standard",
+      "max_risk": "high",
+      "default_skills": [
+        "local-ai"
+      ],
+      "max_skills": 2,
+      "independence_group": "local-ai",
+      "prompt_profile": "local-ai-engineer"
+    },
+    {
+      "id": "security_reviewer",
+      "profile_ref": ".agents/agents/secops_auditor/agent.md",
+      "capabilities": [
+        "security",
+        "audit",
+        "review",
+        "reasoning"
+      ],
+      "preferred_runtimes": [
+        "claude_code"
+      ],
+      "min_quality": "heavy",
+      "max_risk": "critical",
+      "default_skills": [
+        "security-review"
+      ],
+      "max_skills": 2,
+      "independence_group": "security-review",
+      "prompt_profile": "security-reviewer"
+    },
+    {
+      "id": "security_challenger",
+      "profile_ref": ".agents/agents/secops_auditor/agent.md",
+      "capabilities": [
+        "security",
+        "audit",
+        "review",
+        "reasoning"
+      ],
+      "preferred_runtimes": [
+        "perplexity"
+      ],
+      "min_quality": "heavy",
+      "max_risk": "critical",
+      "default_skills": [
+        "security-review",
+        "research"
+      ],
+      "max_skills": 2,
+      "independence_group": "security-challenge",
+      "prompt_profile": "security-challenger"
+    },
+    {
+      "id": "architecture_reviewer",
+      "profile_ref": ".agents/agents/system_architecture_agent/agent.md",
+      "capabilities": [
+        "architecture",
+        "reasoning",
+        "review"
+      ],
+      "preferred_runtimes": [
+        "antigravity",
+        "claude_code"
+      ],
+      "min_quality": "heavy",
+      "max_risk": "critical",
+      "default_skills": [
+        "architecture-review"
+      ],
+      "max_skills": 2,
+      "independence_group": "architecture",
+      "prompt_profile": "architecture-reviewer"
+    },
+    {
+      "id": "engineering_reviewer",
+      "profile_ref": ".agents/agents/engineering_reviewer/agent.md",
+      "capabilities": [
+        "coding",
+        "repo",
+        "testing",
+        "ci",
+        "debugging",
+        "reasoning",
+        "review"
+      ],
+      "preferred_runtimes": [
+        "antigravity",
+        "claude_code"
+      ],
+      "min_quality": "heavy",
+      "max_risk": "critical",
+      "default_skills": [
+        "code-review",
+        "testing"
+      ],
+      "max_skills": 2,
+      "independence_group": "engineering-review",
+      "prompt_profile": "engineering-reviewer"
+    }
+  ]
+}

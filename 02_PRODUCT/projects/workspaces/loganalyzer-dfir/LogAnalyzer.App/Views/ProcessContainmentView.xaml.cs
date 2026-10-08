@@ -36,4 +36,15 @@ namespace LogAnalyzer.UI.Views
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }
+
+    /// <summary>Spec §26 wording of a classification: OBSERVED, CORRELATED, INFERRED, UNPROVEN (the graph explorer uses the same words).</summary>
+    public sealed class ClassificationWordingConverter : IValueConverter
+    {
+        public static readonly ClassificationWordingConverter Instance = new();
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value is LogAnalyzer.Dfir.Model.Classification c ? LogAnalyzer.Dfir.Graph.GraphExplorer.Wording(c) : "UNKNOWN";
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+    }
 }
