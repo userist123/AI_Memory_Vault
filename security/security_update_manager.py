@@ -43,12 +43,16 @@ class SecurityUpdateManager:
         install: PackageInstaller,
         audit_trail: AuditTrail | None = None,
         provenance_policy: CatalogProvenancePolicy | None = None,
+        production_mode: bool = False,
     ) -> None:
+        if production_mode and provenance_policy is None:
+            raise PermissionError("production runtime requires mandatory provenance_policy")
         self.policy = policy
         self._verify_signature = verify_signature
         self._install = install
         self._audit = audit_trail
         self._provenance_policy = provenance_policy
+        self._production_mode = production_mode
 
     def evaluate(
         self,
@@ -59,23 +63,33 @@ class SecurityUpdateManager:
         actor: str = "security-update-service",
         correlation_id: str = "security-update",
     ) -> bool:
-        provenance_decision = (
-            self._provenance_policy.evaluate(provenance)
-            if self._provenance_policy is not None and provenance is not None
-            else None
-        )
-        if provenance_decision and provenance_decision.disposition is CatalogDisposition.BLOCKED:
-            if self._audit:
-                self._audit.record(
-                    event_type="SECURITY_UPDATE_REJECTED",
-                    actor=actor,
-                    correlation_id=correlation_id,
-                    outcome="BLOCKED",
-                    target=update.update_id,
-                    decision_reason=provenance_decision.reason,
-                    metadata={"verification_type": "provenance"},
-                )
-            return False
+        provenance_decision = None
+        if self._provenance_policy is not None:
+            if provenance is None:
+                if self._audit:
+                    self._audit.record(
+                        event_type="SECURITY_UPDATE_REJECTED",
+                        actor=actor,
+                        correlation_id=correlation_id,
+                        outcome="BLOCKED",
+                        target=update.update_id,
+                        decision_reason="provenance_missing_under_policy",
+                        metadata={"verification_type": "provenance"},
+                    )
+                return False
+            provenance_decision = self._provenance_policy.evaluate(provenance)
+            if provenance_decision.disposition in (CatalogDisposition.BLOCKED, CatalogDisposition.REVIEW):
+                if self._audit:
+                    self._audit.record(
+                        event_type="SECURITY_UPDATE_REJECTED",
+                        actor=actor,
+                        correlation_id=correlation_id,
+                        outcome="BLOCKED",
+                        target=update.update_id,
+                        decision_reason=provenance_decision.reason,
+                        metadata={"verification_type": "provenance"},
+                    )
+                return False
 
         valid_hash = verify_package_sha256(package, update.package_sha256)
         valid_signature = self._verify_signature(update)
@@ -96,8 +110,6 @@ class SecurityUpdateManager:
             )
 
         if not valid_hash or not valid_signature:
-            return False
-        if provenance_decision and provenance_decision.disposition is CatalogDisposition.REVIEW:
             return False
 
         self.policy.apply_manifest(update)

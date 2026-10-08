@@ -63,6 +63,7 @@ export function AppSidebar({ user }: { user: PublicUser }) {
     free: { label: 'Free', class: 'bg-muted text-muted-foreground' },
     pro: { label: 'Pro', class: 'bg-primary text-primary-foreground' },
     elite: { label: 'Elite', class: 'bg-gradient-to-r from-primary to-profit text-primary-foreground' },
+    autopilot: { label: 'AutoPilot', class: 'bg-gradient-to-r from-primary to-profit text-primary-foreground' },
   };
   const badge = planBadge[user.plan];
 

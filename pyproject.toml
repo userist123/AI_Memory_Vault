@@ -23,5 +23,6 @@ include = [
   "providers*",
   "retrieval*",
   "security*",
+  "vault_access*",
   "xau_kinetic*",
 ]

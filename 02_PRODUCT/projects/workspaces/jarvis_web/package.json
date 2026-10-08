@@ -4,7 +4,7 @@
   "description": "Production-grade, 100% free web-based voice AI assistant with real-time STT/TTS, 3D WebGL HUD, tactical audio, and AI Memory Vault REST integration.",
   "type": "module",
   "scripts": {
-    "test": "node --test test/test_jarvis.js"
+    "test": "node --test test/test_jarvis.js test/test_vault_client_auth.js"
   },
   "keywords": [
     "jarvis",

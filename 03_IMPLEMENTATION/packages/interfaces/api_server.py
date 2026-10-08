@@ -1,6 +1,6 @@
 """Local REST API Gateway for AI Memory Vault and JARVIS Command Center."""
 from __future__ import annotations
-import datetime, json, os, sys, urllib.request, urllib.error
+import datetime, hmac, json, os, sys, urllib.request, urllib.error
 from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
@@ -13,6 +13,10 @@ from memory_controller.storage.file_engine import FileStorageEngine
 from cognitive_core.extraction import AtomicMemoryExtractor
 from cognitive_core.proposal_queue import MemoryProposalQueue
 from cognitive_core.queue_promoter import QueuePromoter
+
+#: Display label recorded as `reviewed_by` for a decision made through the web UI. It is only a
+#: label: what makes an approval count is the owner Principal passed to the queue.
+REST_REVIEWER_LABEL='jarvis-web'
 
 class APIJSONEncoder(json.JSONEncoder):
     def default(self,obj):
@@ -91,6 +95,17 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
     vault_root=Path(os.getenv('AI_MEMORY_VAULT_ROOT',str(project_root))).resolve()
     storage=FileStorageEngine(str(vault_root)); controller=MemoryController(storage); queue=MemoryProposalQueue(vault_root/'06_INBOX'/'memory_proposals.jsonl')
     def log_message(self,format,*args): return
+    def _require_api_auth(self) -> bool:
+        secret = os.getenv("AI_MEMORY_VAULT_API_TOKEN", "")
+        provided = self.headers.get("Authorization", "")
+        expected = f"Bearer {secret}" if secret else ""
+        # compare bytes: hmac.compare_digest raises TypeError on a non-ASCII str, which
+        # would drop the connection instead of answering 401
+        if not secret or not hmac.compare_digest(provided.encode("utf-8", "surrogateescape"), expected.encode("utf-8")):
+            self._json(401, {"error": "authentication required"})
+            return False
+        return True
+
     def _set_headers(self,status=200):
         self.send_response(status); self.send_header('Content-Type','application/json; charset=utf-8'); self.send_header('Access-Control-Allow-Origin','*'); self.send_header('Access-Control-Allow-Methods','GET,POST,OPTIONS'); self.send_header('Access-Control-Allow-Headers','Content-Type,Authorization,Mcp-Version'); self.send_header('Cache-Control','no-store'); self.send_header('X-Content-Type-Options','nosniff'); self.end_headers()
     def _json(self,status,payload):
@@ -100,6 +115,8 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self): self._set_headers(200)
     def do_GET(self):
         p=urlparse(self.path); path=p.path; q=parse_qs(p.query)
+        if path.startswith('/api/v1/') and path != '/api/v1/status' and not self._require_api_auth():
+            return
         if path in {'/','/api/v1/status'}:
             agents=_agents(self.vault_root); skills=_skill_catalog(self.vault_root); models=_ollama_models(); self._json(200,{'status':'online','service':'AI Memory Vault Browser Gateway','vault_root':str(self.vault_root),'indexed_notes':len(self.storage.id_to_path),'agents':len(agents),'skills':len(skills),'ollama':bool(models),'models':models[:20],'default_model':os.getenv('JARVIS_MODEL',models[0] if models else '')}); return
         if path=='/api/v1/metrics':
@@ -120,6 +137,8 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
         self._json(404,{'error':'Endpoint not found'})
     def do_POST(self):
         path=urlparse(self.path).path
+        if path.startswith('/api/v1/') and not self._require_api_auth():
+            return
         try: data=self._body()
         except (UnicodeDecodeError,json.JSONDecodeError): self._json(400,{'error':'Invalid JSON body'}); return
         if path=='/api/v1/propose':
@@ -130,11 +149,23 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
         if path.startswith('/api/v1/proposals/') and path.endswith('/decision'):
             cid=path.split('/api/v1/proposals/',1)[1].rsplit('/decision',1)[0]; decision=str(data.get('decision','')).upper()
             if decision not in {'APPROVED','REJECTED'}: self._json(400,{'error':'decision must be APPROVED or REJECTED'}); return
-            try: self.queue.mark(cid,decision,reviewer='jarvis-human'); self._json(200,{'status':decision,'candidate_id':cid})
+            # Reaching this line means the request passed the bearer-token check above: the
+            # token holder is the vault owner. That authenticated request is the owner
+            # attestation (Principal.HUMAN, the person at the web UI); the reviewer name is a
+            # label and the evidence reference is derived from the request, not typed by the caller.
+            reviewer=str(data.get('reviewer') or REST_REVIEWER_LABEL).strip()[:80] or REST_REVIEWER_LABEL
+            evidence=str(data.get('evidence') or '').strip()[:300] or f"rest:POST /api/v1/proposals/{cid}/decision (bearer-authenticated owner request)"
+            try:
+                if decision=='APPROVED': self.queue.mark(cid,decision,reviewer=reviewer,evidence_reference=evidence,approver=Principal.HUMAN)
+                else: self.queue.mark(cid,decision,reviewer=reviewer)
+                self._json(200,{'status':decision,'candidate_id':cid})
             except KeyError as exc: self._json(404,{'error':str(exc)})
+            except (PermissionError,ValueError) as exc: self._json(403,{'error':str(exc)})
             return
         if path=='/api/v1/proposals/promote-approved':
-            try: promoted=QueuePromoter(self.queue,self.controller,Principal.ADMIN).promote_approved(); self._json(200,{'status':'promoted','ids':promoted})
+            try:
+                promoter=QueuePromoter(self.queue,self.controller,Principal.ADMIN); promoted=promoter.promote_approved()
+                self._json(200,{'status':'promoted','ids':promoted,'skipped':promoter.skipped})
             except Exception as exc: self._json(400,{'error':str(exc)})
             return
         if path=='/api/v1/route':

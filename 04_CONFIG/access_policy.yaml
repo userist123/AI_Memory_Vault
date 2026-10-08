@@ -1,0 +1,126 @@
+# Who may read which vault domain, through which channel. Edited by the owner only.
+#
+# Effective clearance = min(principal.clearance, ceiling of the principal's channel). A route
+# is served only when its classification <= effective clearance AND its domain is allowed for
+# the principal AND it is not denylisted AND its trust is allowed. Evaluation is deny-first and
+# fail-closed: an unknown principal becomes `default_principal`.
+#
+# Channel ceilings are about EGRESS, not about how trustworthy a model looks:
+#   local_only  — the model runs on this machine and nothing leaves it (Ollama on localhost)
+#   cloud_model — the agent runs locally but sends context to a vendor cloud (Claude Code,
+#                 Codex, Antigravity, Gemini CLI, Claude Desktop)
+#   telegram    — answers transit Telegram's cloud even if the model is local
+#   cloud_web   — claude.ai / ChatGPT / Perplexity web; only the PUBLIC export
+#   human       — the owner at the keyboard (never selectable through MCP)
+
+version: 1
+
+classifications: [PUBLIC, INTERNAL, SENSITIVE, RESTRICTED]
+
+channels:
+  human: RESTRICTED
+  local_only: SENSITIVE
+  cloud_model: INTERNAL
+  telegram: INTERNAL
+  cloud_web: PUBLIC
+
+# Interfaces and the channels a principal asserted through them may have. A principal is only a
+# string an agent can edit in a config file, so every interface an agent can drive is limited to
+# the channel that agent actually has:
+#   mcp        — started by Claude Code / Codex / Antigravity / Gemini CLI: always cloud_model
+#   cli        — `python -m cognitive_core.vault_cli`, which agents call through their shell: cloud_model
+#   cli_owner  — the same CLI after an interactive confirmation on a real terminal (no agent shell has one)
+#   ollama     — the in-process local assistant (Telegram bot, local console)
+#   export     — the static PUBLIC export
+# Any other interface name is refused. IMPORTANT: this policy governs the vault tools. An agent that
+# also has a shell running as the same Windows user can read files directly; that is contained by OS
+# permissions (a separate account, the private overlay outside the agent's reach), not by this file.
+interfaces:
+  mcp: [cloud_model]
+  cli: [cloud_model]
+  cli_owner: [human]
+  ollama: [local_only, telegram]
+  export: [cloud_web]
+
+# Principal used when none (or an unknown one) is given, per interface.
+default_principals:
+  mcp: cloud_cli.unknown
+  cli: cloud_cli.unknown
+  cli_owner: owner
+  ollama: telegram.bot
+  export: cloud_web.export
+
+principals:
+  owner:
+    channel: human
+    clearance: RESTRICTED
+    domains: ["*"]
+    trust: [verified, unverified, untrusted, archived]
+
+  local_llm.ollama:
+    channel: local_only
+    clearance: SENSITIVE
+    domains: ["*", "!inbox", "!archive", "!knowledge.external_skills"]
+    trust: [verified, unverified]
+
+  telegram.bot:
+    channel: telegram
+    clearance: INTERNAL
+    domains: ["*", "!inbox", "!archive", "!knowledge.external_skills", "!private", "!coordination"]
+    trust: [verified, unverified]
+
+  cloud_cli.claude_code: &cloud_cli
+    channel: cloud_model
+    clearance: INTERNAL
+    domains: ["*", "!inbox", "!archive", "!knowledge.external_skills", "!private"]
+    trust: [verified, unverified]
+  cloud_cli.codex: *cloud_cli
+  cloud_cli.antigravity: *cloud_cli
+  cloud_cli.gemini_cli: *cloud_cli
+  cloud_cli.claude_desktop: *cloud_cli
+  cloud_cli.unknown: *cloud_cli
+
+  cloud_web.export:
+    channel: cloud_web
+    clearance: PUBLIC
+    domains: ["skills", "domain_packs.*"]
+    trust: [verified]
+
+default_principal: cloud_web.export
+
+# Never routed, never read, whatever the principal (owner included: read those with an editor).
+denylist:
+  - "**/.git/**"
+  - "**/.env"
+  - "**/.env.*"
+  - "**/*.key"
+  - "**/*.pem"
+  - "**/*.pfx"
+  - "**/*.p12"
+  - "**/*.dpapi"
+  - "**/id_rsa*"
+  - "**/id_ed25519*"
+  - "**/id_ecdsa*"
+  - "**/*.ppk"
+  - "**/*.kdbx"
+  - "**/*.env"
+  - "**/hmac.key"
+  - "**/.telegram_token"
+  - "**/telegram.token"
+  - "**/*token*.txt"
+  - "**/*secret*.json"
+  - "**/*secret*.txt"
+  - "**/secrets/**"
+  - "**/keystore/**"
+  - "**/credentials*"
+
+limits:
+  max_file_bytes: 2000000      # larger files are not routed
+  max_read_bytes: 16000        # per vault_read call; use line ranges or sections for more
+  max_list: 200                # routes per vault_list page
+  max_search: 10
+
+telegram:
+  allowed_user_ids: []         # default-deny: the owner adds the numeric Telegram user id
+  allowed_chat_types: [private]
+  max_requests_per_minute: 10

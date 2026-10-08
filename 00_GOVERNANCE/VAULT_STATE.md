@@ -58,6 +58,12 @@ in its constructor. Corrected 2026-09-06.
 | `RetrievalTrace` v1.1.0 | real, in production | `observability/retrieval_trace.py`; every note carries a reason code; 16.7 KB per search, verified on 8 benchmark queries |
 | Agent lifecycle floor | real, in production | `controller.py`; `AI_AGENT` asking for no lifecycle gets ACTIVE + REVIEW. Measured cost before adoption: 1 case in 130 |
 | Untrusted content guard | real, in CI | `30_SCRIPTS/verification/untrusted_content_guard.py`; 4 blocking rules, 3 report-only; 27 reviewed allowlist entries |
+| Agent read contract — `memory_search` / `memory_get` (`interfaces/memory_access.py`, `retrieval/context/pack_builder.py`) | **real, in production** | `AI_AGENT` is served ACTIVE and REVIEW notes; a REVIEW note is flagged `unverified`. Withheld: a note flagged `quarantined`, ARCHIVED/RAW notes, and the body of an unverified REVIEW candidate inside a *trusted context pack*. Not being `verified` hides nothing (an ACTIVE note keeps its content). Real vault, 10 queries x top 5 through `memory_access`: **48/48** non-empty snippets and **48/48** `memory_get` ok (main 38/48 and 38/48; the audit-remediation branch before its repair 2/48 and 6/48). The extra 10 over main are REVIEW notes that were never stamped, read as unverified. Guard: `20_TESTS/test_memory_access.py`, whose fixture holds the real mix of states (`seed_real_distribution`); a verified-only fixture had hidden the regression. `ADMIN` and `HUMAN` are the owner views in the pack builder and the egress gate alike (`security/verified_reduction.py`, `OWNER_PRINCIPALS`) |
+| Proposal queue approve → promote (`lifecycle/proposal_queue.py`, `queue_promoter.py`; CLI `memory_v6_cli`; REST `/api/v1/proposals/*`) | **real, works end to end** | An approval is an owner attestation: a typed owner `Principal` (the vault's own `ATTEST` matrix: HUMAN, ADMIN), a reviewer name and an evidence reference, none defaulted; a string such as `human` satisfies nothing. Before: over REST `promote-approved` always failed, and on every path a promoted candidate failed schema validation (`candidate-<uuid>` id, extractor keys in `provenance`, `fact`/`task` as note types), so no real controller ever took one. A promotion only proposes (RAW, unverified): it verifies nothing. One unattested legacy approval no longer blocks the rest (it is reported in `skipped`). Guard: `20_TESTS/test_rest_proposal_flow.py`, `20_TESTS/test_proposal_queue_attestation.py` |
+| REST gateway (`interfaces/api_server.py`) | **real; bearer token on every route but `/status`** | `AI_MEMORY_VAULT_API_TOKEN`, fail-closed while unset. Its clients send it: `jarvis_web/js/vault_client.js` and `js/app.js` (from `sessionStorage`, never in source), `jarvis_v2/supervisor.py` (from the environment). The web page itself is served by `server.cjs`, which has no `/api/v1` proxy: the page needs the gateway behind the same origin. Other behaviour changes of the same branch: an `AI_AGENT` cannot update an ACTIVE note except `relations`/`confidence`/`verification`/`valid_until`, and never to `verified`; a note body over 20,000 characters is refused by the controller |
+| Runtime-authority layer — `security/runtime_enforcer.py`, `runtime_adapter.py`, `memory_adapter.py`, `memory_boundary.py`, `memory_integrity.py`, `security_update_manager.py` | **implemented and tested, NOT wired into production** | The HMAC `ApprovalBroker`, the SQLite-WAL `PersistentNonceStore`, `production_mode`, revision/content binding, the write-boundary rollback and the update provenance gate have no importer outside `security/` and the tests, and nothing builds `RuntimeAdapter`, `RuntimeEnforcer` or `ApprovalBroker` with `production_mode=True`. Findings B1/B2/B4, M01/M02/M03/M07, U02/U03 are therefore *hardened in the library, not yet wired into production*; they harden nothing at runtime until a tool-execution path calls them. Guard: `20_TESTS/test_vault_state_accuracy.py::test_runtime_authority_layer_has_no_production_consumer` fails the day one gains a consumer, so this row gets corrected |
+| External skills importer (`30_SCRIPTS/verification/import_external_skills.py`) | **real, fail-closed** | A script, binary, hidden path (except the checkout's top-level `.git`), executable bit, symlink or traversal aborts the import and every offending path is listed; a file of a type that is not imported (image, `LICENSE`, ...) is left out and written to `SKIPPED_FILES.json`. `20_TESTS/test_import_external_skills.py` |
+| Secret scanning config (`.gitleaks.toml`) | **real, `[[allowlists]]` format** | Gitleaks refuses a file that mixes the legacy `[allowlist]` with `[[allowlists]]`; `20_TESTS/test_gitleaks_config_format.py` keeps the file in the array-of-tables form the other branches extend |
 | Typed relations in the graph | **audited, 20/49 accepted** | Perplexity, independent; 29 rejected rows purged at source; **65 still unaudited** |
 | Held-out benchmark v1 | **INVALID, and no longer run in CI** | gold ids resolve to nothing; recall structurally 0; its schema check also could never pass |
 | Held-out benchmark v2 | real, gold verified | `07_EVALUATION/heldout_retrieval_benchmark_v2/` |
@@ -65,12 +71,15 @@ in its constructor. Corrected 2026-09-06.
 | `30_SCRIPTS/ingestion/convert_pdf_to_text.py` | real, measured | r030-r031; **20 of 20** books, 1,088 chunks measured by chunking |
 | `30_SCRIPTS/ingestion/model_extract_concepts.py` | real, gates and selectivity both work | r031; recurrence floor validated on all 3 structure modes |
 | `30_SCRIPTS/ingestion/extract_book_concepts.py` (rule-based) | real, **unusable on books** | 28% of its 112 corpus candidates are not terms |
+| Direct routes `vault://` (`vault_access/`, 04_CONFIG/vault_domains.yaml) | real, **in the MCP server, CLI and Telegram bot** | measured 2026-10-07: 4221 routes in 114 domains (clean checkout; re-checked by `test_route_and_domain_counts_are_current`); by URI 4221/4221; by file name (measured 2026-10-06 on 4220 routes) 3998 resolve to themselves, 222 AMBIGUOUS, **0 wrong**; `07_EVALUATION/vault_routing/`. Names and titles only — topical questions still go to `memory_search`. The first call needs the metadata of every route: the MCP server warms it in a background thread at start (C YAML loader when PyYAML has it, one frontmatter parse per file; `20_TESTS/test_vault_access_perf.py`) |
+| Access policy per egress channel (`04_CONFIG/access_policy.yaml`) | real, enforced on every `vault_*` call | cloud CLIs ≤ INTERNAL, Telegram ≤ INTERNAL, web export PUBLIC; inbox, archive, RAW skills never served to agents, and a refusal is returned as NOT_FOUND (real reason only in the audit); MCP and the CLI cannot assert the owner or the local channel (owner needs an interactive terminal). Single-user machine: an agent with a shell can still read files directly — this policy binds the vault tools, OS permissions bind the rest |
+| Ollama/Telegram assistant (`vault_access/ollama_assistant.py`) | real, **not yet run against a live Ollama** | reads are extractive (no model call); questions use native `/api/chat` with explicit `num_ctx`, truncation check and verbatim-quote verification; proved with a fake transport (assistant + Telegram: 39 tests) |
 
 ## 4. Corpus and graph, measured
 
 | Measure | Value |
 |---|---:|
-| Notes in the index (`VaultIndex`, export residue excluded) | 1137 |
+| Notes in the index (`VaultIndex`, export residue excluded) | 1138 |
 | Notes visible to `FileStorageEngine` | 858 |
 | Graph edges | 489 |
 | — declared / inferred / wikilink | 206 / 206 / 77 |
@@ -96,6 +105,10 @@ whole-corpus retrieval numbers.
   an existing note in the legacy tree keeps its legacy destination on update; existing notes in the
   content roots stay pinned in place (`db08b847`). Nothing has been moved: the legacy folders are not
   migrated, only new writes are redirected.
+- **Agents now have direct routes, but no live agent turn has used them yet.** The `vault_*` tools are
+  registered for Claude Code, Codex, Antigravity and Gemini CLI (`AGENTS.md`, "Direct routes for every AI");
+  the stdio contract is tested, no client session has been observed calling them. The 8 coordination files
+  that `memory_search` cannot reach (below) are reachable by route (`vault://coordination/...`).
 - **The memory is reachable by agents, but only just, and the results are weak.** `.mcp.json` registers
   the MCP server `vault-memory` (`interfaces/memory_mcp_server.py`: `memory_search`, `memory_get`,
   `memory_propose`); `python -m cognitive_core.recall_cli` is the CLI fallback. There is no REST
@@ -219,6 +232,7 @@ whole-corpus retrieval numbers.
 | Retrieval or search | `memory/controller.py::search` | that graph expansion runs; it is off by default |
 | Anything graph | section 4 above | that "connected" means retrievable — check direction |
 | Writing a note | `storage/path_resolver.py` | that it lands in the content tree |
+| Finding or reading a specific file | `vault_resolve` / `vault_read` (`AGENTS.md`) | that a name is unique: AMBIGUOUS is an answer, not an error |
 | Lifecycle changes | `lifecycle/policy.py` | that any path may bypass it; none may |
 | Benchmarks or evidence | v2 contract | that v1 numbers mean anything |
 | Claiming something is wired | the grep in section 2 | a commit message |

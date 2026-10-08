@@ -62,6 +62,12 @@
       "conclusion": "Reviewed: curriculum provenance gate tests; writes only into tmp_path slots directory."
     },
     {
+      "path": "20_TESTS/test_memory_access.py",
+      "role": "test",
+      "gate": "n/a (temporary directories)",
+      "conclusion": "Reviewed: writes only into temporary vault directories in tmp_path; slots are verified against unauthorized modification."
+    },
+    {
       "path": "20_TESTS/test_memory_usage_evidence.py",
       "role": "test",
       "gate": "n/a (temporary directories)",
