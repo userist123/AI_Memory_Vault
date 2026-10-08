@@ -5,13 +5,21 @@
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
 repository: userist123/AI_Memory_Vault_CODEX_READY
-last_updated_utc: 2026-09-04T21:30:00Z
-current_main_sha: 7224e6ac32b4130383135735d09fd674b863ef88
+last_updated_utc: 2026-10-08T19:29:07Z
+current_main_sha: 94020777d75f5d2fa5e1d01921548941a294cfa1
 status: ACTIVE
 working_branch_policy: MAIN_ONLY
 agent_execution_policy: SEQUENTIAL_HANDOFF
+pilot_branch_override:
+  branch: codex/runtime-memory-pilot-20261008
+  reason: explicit owner request for a dedicated pilot branch
+  base_main_sha: 94020777d75f5d2fa5e1d01921548941a294cfa1
+  auto_merge: false
 current_round: R001
+pilot_integration_status: NOT_VERIFIED
 active_work:
+  - operational Memory Vault pilot: VaultAccess bootstrap -> bounded MemoryController context -> execution contract -> action gate -> verification
+  - pilot evidence classification remains CODE_INSPECTED / CONTRACT_TESTED / LIVE_VERIFIED / NOT_VERIFIED / BLOCKED
   - repository remediation, security hardening and structural rebuild on main
   - bounded terminal resolution contract and deterministic MVE calibration
   - single-main sequential execution
@@ -31,6 +39,9 @@ recent_state:
   - repository hygiene validator and regression tests were added; local reconstructed execution passed 4/4 tests
   - strict hygiene CI workflow was added, but CI runtime has not yet been verified
 open_requirements:
+  - verify PR #231 acceptance tests with fresh CI stdout/log evidence; current runners are queued/pending
+  - execute one real external client/runtime pilot and record LIVE_VERIFIED only if the client actually receives the bootstrap/context pack
+  - run the controlled memory on/off comparison with the same task and predeclared rubric; otherwise keep INSUFFICIENT_DATA
   - finish metadata-driven cleanup of remaining 06_INBOX/RAW_IMPORTS nested tracked files
   - verify secret-scanning and hygiene CI runs with exact stdout/log evidence
   - audit all existing numbered roots and create exact before/after structural map
