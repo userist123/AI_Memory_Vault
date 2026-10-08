@@ -807,7 +807,10 @@ class RealAgentExecutionHarness:
 
             route = resolved.get("route") or {}
             uri = route.get("uri") if isinstance(route, dict) else None
-            if not uri or not uri.endswith(expected_path):
+            expected_route_id = "R-" + hashlib.sha256(
+                f"repo:{expected_path}".encode("utf-8")
+            ).hexdigest()[:10]
+            if not uri or route.get("route_id") != expected_route_id:
                 raise ExecutionContractError(f"bootstrap route identity mismatch: {expected_path}")
 
             metadata = access.metadata(uri)
