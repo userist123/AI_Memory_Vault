@@ -861,6 +861,7 @@ class RealAgentExecutionHarness:
         model_executor: Optional[AgentModelExecutor] = None,
         enable_memory: bool = True,
         experiment: Optional[Dict[str, Any]] = None,
+        bootstrap_provider: Optional[Callable[[AgentTask, str], Dict[str, Any]]] = None,
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """Executes task following the full agent execution contract."""
         started_at = datetime.now(timezone.utc).isoformat()
@@ -883,17 +884,24 @@ class RealAgentExecutionHarness:
         else:
             task_obj = task
 
-        # 1. Validate agent role
+        # 1. Validate agent role and establish mandatory authority bootstrap.
         authorized_role = validate_agent_role(agent_role)
+        self.bootstrap_provider = bootstrap_provider or self.bootstrap_provider
+        bootstrap = self._load_bootstrap(task_obj)
+        execution_contract = self._contract_for_task(task_obj)
+        contract_dict = execution_contract.to_dict()
+        contract_hash = hashlib.sha256(
+            json.dumps(contract_dict, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
 
-        # 2 & 3. Retrieve memory through MemoryController.search() and capture IDs
+        # 2 & 3. Retrieve memory through MemoryController.search() and capture IDs.
         raw_results: List[Dict[str, Any]] = []
         effective_query = memory_query if (enable_memory and memory_query) else ""
         if enable_memory and memory_query:
             pack = self.controller.search(
                 principal=self.principal,
                 query=memory_query,
-                page_size=5,
+                page_size=execution_contract.max_memory_results,
             )
             raw_results = pack.get('results', []) if isinstance(pack, dict) else []
 
