@@ -16,3 +16,8 @@
 - A regex like `\| 7 \|` with count=1 hits the first matching cell anywhere in the file (it overwrote summary
   rows R4/R9 instead of the decision rows). Scope table edits to the target section and match the full row
   prefix (e.g. `| 7 | *Provisional:*`), then check `git diff` before committing.
+
+## 2026-10-08 — Bulk worktree cleanup
+- Never run a blanket "remove every worktree" while a subagent is running: it can delete the agent's
+  working tree mid-task. Remove only worktrees you created yourself, by explicit path, or wait until no
+  agent is running.
