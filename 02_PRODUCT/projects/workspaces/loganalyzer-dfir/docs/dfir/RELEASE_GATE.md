@@ -1,6 +1,6 @@
 # LogAnalyzer release gate and synthetic corpus (stage 2, WP12)
 
-Status: implemented as described below; items marked NOT_IMPLEMENTED are real gaps that belong to later work packages.
+The gate is implemented as described below; items marked NOT_IMPLEMENTED are real gaps that belong to later work packages.
 Source of the rules: `CONTRACT_AUDIT_STAGE1.md` section 7 (WP12) and section 8, owner decisions 7 and 8 (final).
 
 ## 1. What a release needs today
