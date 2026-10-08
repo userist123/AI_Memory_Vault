@@ -5,7 +5,7 @@
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
 repository: userist123/AI_Memory_Vault_CODEX_READY
-last_updated_utc: 2026-10-08T19:39:23Z
+last_updated_utc: 2026-10-08T19:44:12Z
 current_main_sha: 94020777d75f5d2fa5e1d01921548941a294cfa1
 status: ACTIVE
 working_branch_policy: MAIN_ONLY
@@ -17,6 +17,15 @@ pilot_branch_override:
   auto_merge: false
 current_round: R001
 pilot_integration_status: NOT_VERIFIED
+pilot_verification_snapshot:
+  head_sha: 02972dd57fac602a7c598cc952188ad58f2bb52c
+  base_main_sha: 94020777d75f5d2fa5e1d01921548941a294cfa1
+  code_review_status: CODE_INSPECTED
+  local_execution_status: BLOCKED_NO_LOCAL_CHECKOUT
+  desktop_runtime_status: BLOCKED_DEVICE_OFFLINE
+  ci_status_at_snapshot: NOT_YET_REPORTED_FOR_HEAD
+  live_client_status: NOT_VERIFIED
+  memory_on_off_status: INSUFFICIENT_DATA
 authorization_record:
   authorized_at_utc: 2026-10-08T19:39:23Z
   authority: OWNER
@@ -52,7 +61,7 @@ recent_state:
   - repository hygiene validator and regression tests were added; local reconstructed execution passed 4/4 tests
   - strict hygiene CI workflow was added, but CI runtime has not yet been verified
 open_requirements:
-  - verify PR #231 acceptance tests with fresh CI stdout/log evidence; current runners are queued/pending
+  - verify PR #231 acceptance tests with fresh CI stdout/log evidence for HEAD 02972dd57fac602a7c598cc952188ad58f2bb52c
   - execute one real external client/runtime pilot and record LIVE_VERIFIED only if the client actually receives the bootstrap/context pack
   - run the controlled memory on/off comparison with the same task and predeclared rubric; otherwise keep INSUFFICIENT_DATA
   - finish metadata-driven cleanup of remaining 06_INBOX/RAW_IMPORTS nested tracked files
