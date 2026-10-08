@@ -5,7 +5,7 @@
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
 repository: userist123/AI_Memory_Vault_CODEX_READY
-last_updated_utc: 2026-10-08T19:29:07Z
+last_updated_utc: 2026-10-08T19:39:23Z
 current_main_sha: 94020777d75f5d2fa5e1d01921548941a294cfa1
 status: ACTIVE
 working_branch_policy: MAIN_ONLY
@@ -17,6 +17,19 @@ pilot_branch_override:
   auto_merge: false
 current_round: R001
 pilot_integration_status: NOT_VERIFIED
+authorization_record:
+  authorized_at_utc: 2026-10-08T19:39:23Z
+  authority: OWNER
+  scope: "Continue PR #231 exclusively on codex/runtime-memory-pilot-20261008 for finalization, testing, and review of this pilot."
+  main_only_derogation: LIMITED
+  constraints:
+    - "Does not change global MAIN_ONLY."
+    - "Does not permit creation of other branches."
+    - "Does not authorize merge, auto-merge, or GitHub administrative changes."
+    - "Does not permit bypass of protected core or security limits."
+    - "Does not cancel SEQUENTIAL_HANDOFF."
+    - "Is not retroactive approval of prior actions."
+  chronology: "This authorization applies from the timestamp above; prior actions remain governed by their prior authority state."
 active_work:
   - operational Memory Vault pilot: VaultAccess bootstrap -> bounded MemoryController context -> execution contract -> action gate -> verification
   - pilot evidence classification remains CODE_INSPECTED / CONTRACT_TESTED / LIVE_VERIFIED / NOT_VERIFIED / BLOCKED
