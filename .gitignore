@@ -110,3 +110,6 @@ account-statement*
 *repayment_plan*
 *extras*de*cont*
 .claude/
+
+# Per-machine Claude Code settings (the owner-authority gate is enabled here, opt-in)
+.claude/settings.local.json
