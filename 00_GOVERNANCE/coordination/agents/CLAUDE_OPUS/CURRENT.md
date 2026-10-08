@@ -7,6 +7,13 @@ title: CLAUDE_OPUS — current
 
 # CLAUDE_OPUS — current
 
+## 2026-10-08T14:30Z — B02 and B12 of the PR #209 audit closed for Book-to-Memory (claude)
+
+Branch `research/b2m-blockers-security` (from `research/b2m-d-docs`, PR #224).
+- B02: `OwnerApprovalToken` (`lifecycle/validation/book_to_memory_lifecycle.py`) now signs the SHA-256 of the canonical note, its revision marker and an expiry; verification recomputes them from the note being promoted. `issue_owner_approval` takes the note, not its id, so the owner approves the content the pipeline produced (`BookIngestionAuditReport.candidate_note`). Old-format tokens are refused. Not reused: `security/runtime_enforcer.py` (tool-execution approvals, no note digest, no production consumer).
+- B12: `security.trust_gate.SeverityDowngradeAttestation` + `validate_blocker_registry.py --base-ref` + `SEVERITY_ATTESTATIONS.md`; run on pull requests by `repository-hygiene.yml`.
+- Non-obvious: the existing tests issued the token before the pipeline ran; a token cannot cover scores the pipeline has not computed yet, so those tests now do a dry run and approve its candidate. Owner decision left open: whether an attestation entry should also need a signature (today it is as strong as the CODEOWNERS review of the file).
+
 ## 2026-10-07T18:50Z — vault_access cold start and route-count check (PR #214, claude)
 
 Branch `claude/vault-universal-access`. The first `vault_*` call needed the metadata of all routes (15 s measured
