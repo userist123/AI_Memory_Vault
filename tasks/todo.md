@@ -77,15 +77,15 @@ Waiting on owner: #207 (blocks agent tools once merged), #206 (split recommended
 ## NEXT PROJECT (queued 2026-10-08) — LogAnalyzer contract audit
 Start only after the Book-to-Memory blocker PRs are merged and no PR is open.
 Stage 1 is an audit, **no code changes**:
-- [ ] Read, in order: `tasks/loganalyzer/LOGANALYZER_PROGRAM_REQUIREMENTS.md` (functional/architectural
+- [x] Read, in order: `tasks/loganalyzer/LOGANALYZER_PROGRAM_REQUIREMENTS.md` (functional/architectural
       contract), then `tasks/loganalyzer/LOGANALYZER_PRODUCT_UX_CONTRACT.md` (how capabilities are shown).
-- [ ] **Do not redo existing research or audits** (owner, 2026-10-08). Start from what exists and only
+- [x] **Do not redo existing research or audits** (owner, 2026-10-08). Start from what exists and only
       fill the gaps: `loganalyzer-dfir/docs/dfir/REALITY_AUDIT.md`, `DFIR_CURRENT_ARCHITECTURE_AUDIT.md`,
       `RESEARCH_AND_ROADMAP.md`, the other `docs/dfir/*.md` contracts, `Documentation/PHASE1-STATUS.md`,
       `00_GOVERNANCE/coordination/projects/LOGANALYZER_DFIR/CURRENT.md`, and
       `tasks/loganalyzer/PR212_RESEARCH_2026-10-07.md`. Reuse their findings; re-check a finding
       only where the code changed after it was written (#212 merged 2026-10-08).
-- [ ] **Freshness rule** (owner, 2026-10-08): reuse an existing audit only if it is close to current
+- [x] **Freshness rule** (owner, 2026-10-08): reuse an existing audit only if it is close to current
       main. Measured on main @ a6c6d7aa (LogAnalyzer code commits made after the doc was last updated):
       | Doc | Last update | Code commits since | Use |
       |---|---|---|---|
@@ -96,10 +96,15 @@ Stage 1 is an audit, **no code changes**:
       | `docs/dfir/DFIR_CURRENT_ARCHITECTURE_AUDIT.md` | 2026-10-04 | 54 | **stale**: re-audit the areas it covers |
       | `Documentation/PHASE1-STATUS.md` | 2026-09-16 | 56 | **stale**: historical only, do not rely on it |
       Re-measure these numbers when the audit actually starts (main will have moved).
-- [ ] Map the two contracts onto those findings; audit only the requirements they do not cover, and
+- [x] Map the two contracts onto those findings; audit only the requirements they do not cover, and
       audit `main` (`02_PRODUCT/projects/workspaces/loganalyzer-dfir/`) for those, classifying each requirement and
       classify each as IMPLEMENTED / PARTIAL / MISSING / UNWIRED, with file:line evidence and the
       production consumer (or its absence) for each.
-- [ ] Rules from the owner: existing functionality is not refactored or removed just to build the UI;
+- [x] Rules from the owner: existing functionality is not refactored or removed just to build the UI;
       a facade without a real consumer is never presented as production-ready.
-- [ ] Deliver the classified list for owner review before any AI is allowed to modify code.
+- [x] Deliver the classified list for owner review before any AI is allowed to modify code.
+      → `tasks/loganalyzer/CONTRACT_AUDIT_STAGE1.md` (main @ 0689f5d4, 2026-10-08). Requirements: 194 rows,
+      53 IMPLEMENTED / 94 PARTIAL / 6 UNWIRED (27 components) / 41 MISSING. UX: 35 rows, 0 / 23 / 0 / 12.
+      Spot-checked by the orchestrator: static "ALL SYSTEMS NORMAL"/"SHIELD ARMED" text, `ComplianceAuditEngine`
+      CONFORM lines 52/75 unconditional, `Finding.ContradictingEvidence` declared and never set.
+- [ ] Owner: answer the 12 questions in §6 of the audit and approve the stage-2 order (§7) before any code change.
