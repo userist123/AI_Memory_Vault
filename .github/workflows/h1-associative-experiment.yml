@@ -1,0 +1,40 @@
+name: H1 Associative Experiment
+
+# Research experiment: it runs only for changes to this research track (or on demand), not on
+# every pull request to main. Everything else is covered by the regular suites.
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "08_RESEARCH/BOOK_TO_MEMORY/**"
+      - "08_RESEARCH/RETRIEVAL/**"
+      - ".github/workflows/h1-associative-experiment.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  paired-experiment:
+    name: H1-002 paired graph experiment
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+
+      - name: Materialize frozen benchmark packet
+        run: |
+          mkdir -p artifacts/h1
+          cp 08_RESEARCH/BOOK_TO_MEMORY/current_labeling_corpus.json artifacts/h1/current_labeling_corpus.json
+          python 08_RESEARCH/BOOK_TO_MEMORY/build_h1_cases.py
+          python 08_RESEARCH/BOOK_TO_MEMORY/validate_h1_corpus.py artifacts/h1/h1_cases.json artifacts/h1/current_labeling_corpus.json
+
+      - name: Run frozen paired experiment
+        run: python 08_RESEARCH/BOOK_TO_MEMORY/run_h1_associative_experiment.py --reps 3
+
+      - name: Verify research artifact exists
+        run: test -s artifacts/h1/h1_associative_experiment_results.json

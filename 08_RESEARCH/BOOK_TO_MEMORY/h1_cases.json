@@ -1,0 +1,1457 @@
+{
+  "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+  "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+  "cases": [
+    {
+      "id": "H1-DIR-001",
+      "family": "direct_lexical",
+      "intended_boundary": "candidate_generation",
+      "query": "What is the primary information dataflow in the Vault Architecture Map?",
+      "gold_relevant_notes": [
+        "vault-architecture-map-0001"
+      ],
+      "required_facts": [
+        "Vault Architecture"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Direct key term overlap query targeting canonical note."
+    },
+    {
+      "id": "H1-DIR-002",
+      "family": "direct_lexical",
+      "intended_boundary": "candidate_generation",
+      "query": "What procedure governs Git backup restore and rollback operations in the vault?",
+      "gold_relevant_notes": [
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840009"
+      ],
+      "required_facts": [
+        "Backup"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Direct key term overlap query targeting canonical note."
+    },
+    {
+      "id": "H1-DIR-003",
+      "family": "direct_lexical",
+      "intended_boundary": "candidate_generation",
+      "query": "What are the rules and procedure for import sanitization?",
+      "gold_relevant_notes": [
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+      ],
+      "required_facts": [
+        "Import Sanitization"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Direct key term overlap query targeting canonical note."
+    },
+    {
+      "id": "H1-DIR-004",
+      "family": "direct_lexical",
+      "intended_boundary": "candidate_generation",
+      "query": "What are the P0 empirical findings regarding the retrieval bottleneck?",
+      "gold_relevant_notes": [
+        "knw-retrieval-bottleneck-p0-0001"
+      ],
+      "required_facts": [
+        "Retrieval Bottleneck"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Direct key term overlap query targeting canonical note."
+    },
+    {
+      "id": "H1-DIR-005",
+      "family": "direct_lexical",
+      "intended_boundary": "candidate_generation",
+      "query": "What is the P1 architectural specification for context packing?",
+      "gold_relevant_notes": [
+        "knw-context-packing-p1-0001"
+      ],
+      "required_facts": [
+        "Context Packing"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "calibration",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Direct key term overlap query targeting canonical note."
+    },
+    {
+      "id": "H1-DIR-006",
+      "family": "direct_lexical",
+      "intended_boundary": "candidate_generation",
+      "query": "What is the specification for the bio-inspired brain core cognitive architecture?",
+      "gold_relevant_notes": [
+        "proc-brain-arch-0001"
+      ],
+      "required_facts": [
+        "Brain Core"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "calibration",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Direct key term overlap query targeting canonical note."
+    },
+    {
+      "id": "H1-DIR-007",
+      "family": "direct_lexical",
+      "intended_boundary": "candidate_generation",
+      "query": "What role does the identity slot serve in the vault ontology?",
+      "gold_relevant_notes": [
+        "slot-01-identity"
+      ],
+      "required_facts": [
+        "Identity"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Direct key term overlap query targeting canonical note."
+    },
+    {
+      "id": "H1-DIR-008",
+      "family": "direct_lexical",
+      "intended_boundary": "candidate_generation",
+      "query": "What are the retrieval slot definitions and specifications?",
+      "gold_relevant_notes": [
+        "slot-15-retrieval"
+      ],
+      "required_facts": [
+        "Retrieval"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Direct key term overlap query targeting canonical note."
+    },
+    {
+      "id": "H1-DIR-009",
+      "family": "direct_lexical",
+      "intended_boundary": "candidate_generation",
+      "query": "Where is the structured index for the EU AI Act 2024/1689?",
+      "gold_relevant_notes": [
+        "idx-leg-eu-aiact-2024-1689"
+      ],
+      "required_facts": [
+        "AI Act"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Direct key term overlap query targeting canonical note."
+    },
+    {
+      "id": "H1-DIR-010",
+      "family": "direct_lexical",
+      "intended_boundary": "candidate_generation",
+      "query": "What are the clean architecture principles for the XAU_Kinetic trading bot?",
+      "gold_relevant_notes": [
+        "f82194d2-31a8-4c91-a83d-e42109ab7d12"
+      ],
+      "required_facts": [
+        "XAU_Kinetic"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Direct key term overlap query targeting canonical note."
+    },
+    {
+      "id": "H1-PAR-001",
+      "family": "paraphrase",
+      "intended_boundary": "candidate_generation",
+      "query": "Where can I locate the central catalog and navigation overview of all vault notes?",
+      "gold_relevant_notes": [
+        "vault-master-index-0001"
+      ],
+      "required_facts": [
+        "Navigational Index"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
+    },
+    {
+      "id": "H1-PAR-002",
+      "family": "paraphrase",
+      "intended_boundary": "candidate_generation",
+      "query": "How does permanent knowledge retention operate after synaptic consolidation?",
+      "gold_relevant_notes": [
+        "11e9fe55-6924-4231-9635-c5629bff6ae3"
+      ],
+      "required_facts": [
+        "long-term memory"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
+    },
+    {
+      "id": "H1-PAR-003",
+      "family": "paraphrase",
+      "intended_boundary": "candidate_generation",
+      "query": "Which memory subsystem explicitly stores facts and verbalizable episodic occurrences?",
+      "gold_relevant_notes": [
+        "e045ded5-01fd-4a28-8f85-203ebae670de"
+      ],
+      "required_facts": [
+        "declarative memory"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
+    },
+    {
+      "id": "H1-PAR-004",
+      "family": "paraphrase",
+      "intended_boundary": "candidate_generation",
+      "query": "What memory storage remains inactive and unexpressed until triggered by retrieval cues?",
+      "gold_relevant_notes": [
+        "e66a94e4-28b6-47d6-90b3-358cd6dcd743"
+      ],
+      "required_facts": [
+        "latent memory"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
+    },
+    {
+      "id": "H1-PAR-005",
+      "family": "paraphrase",
+      "intended_boundary": "candidate_generation",
+      "query": "What guidelines govern tracking changes over time and temporal decay of memories?",
+      "gold_relevant_notes": [
+        "knw-temporal-memory-p2-0001"
+      ],
+      "required_facts": [
+        "Temporal Memory"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "calibration",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
+    },
+    {
+      "id": "H1-PAR-006",
+      "family": "paraphrase",
+      "intended_boundary": "candidate_generation",
+      "query": "How do agents perform iterative critique and self-correction across closed loops?",
+      "gold_relevant_notes": [
+        "proc-reflexion-0001"
+      ],
+      "required_facts": [
+        "Reflexion"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "calibration",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
+    },
+    {
+      "id": "H1-PAR-007",
+      "family": "paraphrase",
+      "intended_boundary": "candidate_generation",
+      "query": "What methodology is required when reporting proportions from limited observation samples in evaluations?",
+      "gold_relevant_notes": [
+        "proc-stats-reporting-0001"
+      ],
+      "required_facts": [
+        "Propor"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
+    },
+    {
+      "id": "H1-PAR-008",
+      "family": "paraphrase",
+      "intended_boundary": "candidate_generation",
+      "query": "Which ontology section codifies executable operational runbooks and workflows?",
+      "gold_relevant_notes": [
+        "slot-06-procedures"
+      ],
+      "required_facts": [
+        "Procedures"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
+    },
+    {
+      "id": "H1-PAR-009",
+      "family": "paraphrase",
+      "intended_boundary": "candidate_generation",
+      "query": "Where is the comprehensive index for European data privacy regulation 2016/679?",
+      "gold_relevant_notes": [
+        "idx-leg-eu-gdpr-2016-679"
+      ],
+      "required_facts": [
+        "GDPR"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
+    },
+    {
+      "id": "H1-PAR-010",
+      "family": "paraphrase",
+      "intended_boundary": "candidate_generation",
+      "query": "Why was the MetaTrader platform paired with Python and desktop GUI selected for live execution?",
+      "gold_relevant_notes": [
+        "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6"
+      ],
+      "required_facts": [
+        "MetaTrader 5"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
+    },
+    {
+      "id": "H1-IND-001",
+      "family": "indirect_cue",
+      "intended_boundary": "candidate_generation",
+      "query": "Why might two valid bug fixes cancel each other out while all CI checks remain green?",
+      "gold_relevant_notes": [
+        "fd63129c-091c-4171-9eb4-b7c28190b1a4"
+      ],
+      "required_facts": [
+        "independently correct"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
+    },
+    {
+      "id": "H1-IND-002",
+      "family": "indirect_cue",
+      "intended_boundary": "candidate_generation",
+      "query": "What happens when an automated safeguard triggers due to a false premise?",
+      "gold_relevant_notes": [
+        "123fe8df-2490-44f0-b695-143c3d5a997f"
+      ],
+      "required_facts": [
+        "hides the defect"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
+    },
+    {
+      "id": "H1-IND-003",
+      "family": "indirect_cue",
+      "intended_boundary": "candidate_generation",
+      "query": "What language convention must be enforced across all prompt instructions sent to LLMs?",
+      "gold_relevant_notes": [
+        "f10029dc-e28e-4710-bf3a-b2b48bfb84dc"
+      ],
+      "required_facts": [
+        "English"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
+    },
+    {
+      "id": "H1-IND-004",
+      "family": "indirect_cue",
+      "intended_boundary": "candidate_generation",
+      "query": "Why should repository developers avoid packing everything into a single monolithic script?",
+      "gold_relevant_notes": [
+        "0d0d9f30-fa32-416f-95e3-0149006dae79"
+      ],
+      "required_facts": [
+        "Multi-File"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
+    },
+    {
+      "id": "H1-IND-005",
+      "family": "indirect_cue",
+      "intended_boundary": "candidate_generation",
+      "query": "How does the distributed associative interconnect link disparate cognitive modules across nodes?",
+      "gold_relevant_notes": [
+        "vault-memory-mesh-architecture-0001"
+      ],
+      "required_facts": [
+        "Memory Mesh"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "calibration",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
+    },
+    {
+      "id": "H1-IND-006",
+      "family": "indirect_cue",
+      "intended_boundary": "candidate_generation",
+      "query": "How should audit events during cognitive retrieval be emitted in structured logs?",
+      "gold_relevant_notes": [
+        "knw-agent-memory-trace-protocol-0001"
+      ],
+      "required_facts": [
+        "Trace Emitter"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "calibration",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
+    },
+    {
+      "id": "H1-IND-007",
+      "family": "indirect_cue",
+      "intended_boundary": "candidate_generation",
+      "query": "Where are memories stabilized, compacted, and merged from short-term buffers?",
+      "gold_relevant_notes": [
+        "slot-16-consolidation"
+      ],
+      "required_facts": [
+        "Consolidation"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
+    },
+    {
+      "id": "H1-IND-008",
+      "family": "indirect_cue",
+      "intended_boundary": "candidate_generation",
+      "query": "Which ontology category enforces boundary limits, invariants, and negative requirements?",
+      "gold_relevant_notes": [
+        "slot-08-constraints"
+      ],
+      "required_facts": [
+        "Constraints"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
+    },
+    {
+      "id": "H1-IND-009",
+      "family": "indirect_cue",
+      "intended_boundary": "candidate_generation",
+      "query": "What compliance index covers digital operational resilience for financial institutions?",
+      "gold_relevant_notes": [
+        "idx-leg-eu-dora-2022-2554"
+      ],
+      "required_facts": [
+        "DORA"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
+    },
+    {
+      "id": "H1-IND-010",
+      "family": "indirect_cue",
+      "intended_boundary": "candidate_generation",
+      "query": "Where is the automated bot configuration handling multi-strategy execution across forex sessions?",
+      "gold_relevant_notes": [
+        "d94d32d6-701e-43b7-b031-761b2c6c8e43"
+      ],
+      "required_facts": [
+        "MetaTrader5"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
+    },
+    {
+      "id": "H1-ENT-001",
+      "family": "entity_context",
+      "intended_boundary": "candidate_generation",
+      "query": "What framework regulates crypto-asset issuers and trading service providers under EU law?",
+      "gold_relevant_notes": [
+        "idx-leg-eu-mica-2023-1114"
+      ],
+      "required_facts": [
+        "MiCA"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
+    },
+    {
+      "id": "H1-ENT-002",
+      "family": "entity_context",
+      "intended_boundary": "candidate_generation",
+      "query": "What Romanian legislation governs state secrets and national protection standards for classified data?",
+      "gold_relevant_notes": [
+        "knw-leg-hg585-2002-0001"
+      ],
+      "required_facts": [
+        "585/2002"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
+    },
+    {
+      "id": "H1-ENT-003",
+      "family": "entity_context",
+      "intended_boundary": "candidate_generation",
+      "query": "Where is the technical postmortem on creating a dual-language Romanian-English trading journal without capital expenditure?",
+      "gold_relevant_notes": [
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8"
+      ],
+      "required_facts": [
+        "Zero-Dollar"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
+    },
+    {
+      "id": "H1-ENT-004",
+      "family": "entity_context",
+      "intended_boundary": "candidate_generation",
+      "query": "Where are the architecture design and core specifications for the FinScope application?",
+      "gold_relevant_notes": [
+        "finscope-project-core"
+      ],
+      "required_facts": [
+        "FinScope"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
+    },
+    {
+      "id": "H1-ENT-005",
+      "family": "entity_context",
+      "intended_boundary": "candidate_generation",
+      "query": "Which ontology slot tracks dynamic working variables and operational registers?",
+      "gold_relevant_notes": [
+        "slot-05-state"
+      ],
+      "required_facts": [
+        "State"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "calibration",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
+    },
+    {
+      "id": "H1-ENT-006",
+      "family": "entity_context",
+      "intended_boundary": "candidate_generation",
+      "query": "Where does the cognitive core look up task routing matrices and agent capability allocations?",
+      "gold_relevant_notes": [
+        "slot-14-routing"
+      ],
+      "required_facts": [
+        "Routing"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "calibration",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
+    },
+    {
+      "id": "H1-ENT-007",
+      "family": "entity_context",
+      "intended_boundary": "candidate_generation",
+      "query": "What system manages media transfers and hardware device custody on air-gapped workstations?",
+      "gold_relevant_notes": [
+        "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+      ],
+      "required_facts": [
+        "Media Transfer"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
+    },
+    {
+      "id": "H1-ENT-008",
+      "family": "entity_context",
+      "intended_boundary": "candidate_generation",
+      "query": "Where are the PowerShell scripts for Windows 11 system debloating and OS security hardening?",
+      "gold_relevant_notes": [
+        "ed51e423-3078-4b0a-a38b-2f9d2bb62522"
+      ],
+      "required_facts": [
+        "Windows Hardening"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
+    },
+    {
+      "id": "H1-ENT-009",
+      "family": "entity_context",
+      "intended_boundary": "candidate_generation",
+      "query": "What reference document details the Xerox EIP and PaperCut printing infrastructure configuration?",
+      "gold_relevant_notes": [
+        "ef084612-2d02-481e-a7d3-6cbe4608e10d"
+      ],
+      "required_facts": [
+        "PaperCut"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
+    },
+    {
+      "id": "H1-ENT-010",
+      "family": "entity_context",
+      "intended_boundary": "candidate_generation",
+      "query": "What canonical standard defines taxonomy rules for neural module identifiers and node names?",
+      "gold_relevant_notes": [
+        "standard-neural-naming-taxonomy"
+      ],
+      "required_facts": [
+        "Neural naming"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
+    },
+    {
+      "id": "H1-HOP-001",
+      "family": "multi_hop_associative",
+      "intended_boundary": "graph",
+      "query": "Following the relationship from state-determined system through variety, what ontology slot defines system state?",
+      "gold_relevant_notes": [
+        "slot-05-state"
+      ],
+      "required_facts": [
+        "State"
+      ],
+      "graph_path": [
+        {
+          "source": "0d68bba6-662b-4633-b065-bf1666889af9",
+          "target": "911ffebf-ab09-4d79-8aac-247781c673a4",
+          "relation": "related_to"
+        },
+        {
+          "source": "911ffebf-ab09-4d79-8aac-247781c673a4",
+          "target": "slot-05-state",
+          "relation": "part_of"
+        }
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
+    },
+    {
+      "id": "H1-HOP-002",
+      "family": "multi_hop_associative",
+      "intended_boundary": "graph",
+      "query": "Starting from state-determined systems and navigating through constraint, what essential variables must remain bounded?",
+      "gold_relevant_notes": [
+        "df11fec2-d5b4-4b8f-b79e-d4dbb18d3d57"
+      ],
+      "required_facts": [
+        "essential variables"
+      ],
+      "graph_path": [
+        {
+          "source": "0d68bba6-662b-4633-b065-bf1666889af9",
+          "target": "f4211085-75c4-4184-a1a9-0c33da73ac74",
+          "relation": "related_to"
+        },
+        {
+          "source": "f4211085-75c4-4184-a1a9-0c33da73ac74",
+          "target": "df11fec2-d5b4-4b8f-b79e-d4dbb18d3d57",
+          "relation": "related_to"
+        }
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
+    },
+    {
+      "id": "H1-HOP-003",
+      "family": "multi_hop_associative",
+      "intended_boundary": "graph",
+      "query": "From state-determined systems through constraint relationships, which master ontology slot records system constraints?",
+      "gold_relevant_notes": [
+        "slot-08-constraints"
+      ],
+      "required_facts": [
+        "Constraints"
+      ],
+      "graph_path": [
+        {
+          "source": "0d68bba6-662b-4633-b065-bf1666889af9",
+          "target": "f4211085-75c4-4184-a1a9-0c33da73ac74",
+          "relation": "related_to"
+        },
+        {
+          "source": "f4211085-75c4-4184-a1a9-0c33da73ac74",
+          "target": "slot-08-constraints",
+          "relation": "part_of"
+        }
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
+    },
+    {
+      "id": "H1-HOP-004",
+      "family": "multi_hop_associative",
+      "intended_boundary": "graph",
+      "query": "Navigating from security gaps through the procedures slot, what cognitive concept governs procedural memory?",
+      "gold_relevant_notes": [
+        "6e014224-af01-4011-8050-082d3f9ea35e"
+      ],
+      "required_facts": [
+        "procedural memory"
+      ],
+      "graph_path": [
+        {
+          "source": "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+          "target": "slot-06-procedures",
+          "relation": "part_of"
+        },
+        {
+          "source": "slot-06-procedures",
+          "target": "6e014224-af01-4011-8050-082d3f9ea35e",
+          "relation": "related_to"
+        }
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
+    },
+    {
+      "id": "H1-HOP-005",
+      "family": "multi_hop_associative",
+      "intended_boundary": "graph",
+      "query": "Tracing from the security gap register through the procedures slot, what runbook defines ingesting a book into the ontology?",
+      "gold_relevant_notes": [
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39"
+      ],
+      "required_facts": [
+        "Ingesting a book"
+      ],
+      "graph_path": [
+        {
+          "source": "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+          "target": "slot-06-procedures",
+          "relation": "part_of"
+        },
+        {
+          "source": "slot-06-procedures",
+          "target": "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+          "relation": "related_to"
+        }
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "calibration",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
+    },
+    {
+      "id": "H1-HOP-006",
+      "family": "multi_hop_associative",
+      "intended_boundary": "graph",
+      "query": "Following project structure preferences through the Elite Quant Bot, what architectural principles govern XAU_Kinetic?",
+      "gold_relevant_notes": [
+        "f82194d2-31a8-4c91-a83d-e42109ab7d12"
+      ],
+      "required_facts": [
+        "XAU_Kinetic"
+      ],
+      "graph_path": [
+        {
+          "source": "0d0d9f30-fa32-416f-95e3-0149006dae79",
+          "target": "ae0206df-b0cb-4810-b2a2-cea462600561",
+          "relation": "related_to"
+        },
+        {
+          "source": "ae0206df-b0cb-4810-b2a2-cea462600561",
+          "target": "f82194d2-31a8-4c91-a83d-e42109ab7d12",
+          "relation": "related_to"
+        }
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "calibration",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
+    },
+    {
+      "id": "H1-HOP-007",
+      "family": "multi_hop_associative",
+      "intended_boundary": "graph",
+      "query": "Starting from multi-file preferences through the trading bot dependency, what procedure handles deployment and rollback?",
+      "gold_relevant_notes": [
+        "b492a8e1-5c02-4b21-9e12-c7f8a31e9202"
+      ],
+      "required_facts": [
+        "Deployment"
+      ],
+      "graph_path": [
+        {
+          "source": "0d0d9f30-fa32-416f-95e3-0149006dae79",
+          "target": "ae0206df-b0cb-4810-b2a2-cea462600561",
+          "relation": "related_to"
+        },
+        {
+          "source": "ae0206df-b0cb-4810-b2a2-cea462600561",
+          "target": "b492a8e1-5c02-4b21-9e12-c7f8a31e9202",
+          "relation": "depends_on"
+        }
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
+    },
+    {
+      "id": "H1-HOP-008",
+      "family": "multi_hop_associative",
+      "intended_boundary": "graph",
+      "query": "Tracing from zero-dollar SaaS through implementation prompt splits, what document provides the tech stack reference?",
+      "gold_relevant_notes": [
+        "67e1cb1d-3e5a-45be-b265-67bb126a2cd3"
+      ],
+      "required_facts": [
+        "Tech Stack"
+      ],
+      "graph_path": [
+        {
+          "source": "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+          "target": "6bdb2775-add5-426b-ac0c-1b1fef75f2e1",
+          "relation": "related_to"
+        },
+        {
+          "source": "6bdb2775-add5-426b-ac0c-1b1fef75f2e1",
+          "target": "67e1cb1d-3e5a-45be-b265-67bb126a2cd3",
+          "relation": "related_to"
+        }
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
+    },
+    {
+      "id": "H1-HOP-009",
+      "family": "multi_hop_associative",
+      "intended_boundary": "graph",
+      "query": "From project structuring guidelines via quant bot architecture, which document details distributed trading system design?",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10b004"
+      ],
+      "required_facts": [
+        "Arhitectura"
+      ],
+      "graph_path": [
+        {
+          "source": "0d0d9f30-fa32-416f-95e3-0149006dae79",
+          "target": "ae0206df-b0cb-4810-b2a2-cea462600561",
+          "relation": "related_to"
+        },
+        {
+          "source": "ae0206df-b0cb-4810-b2a2-cea462600561",
+          "target": "c1a01101-7291-49fa-9481-22904c10b004",
+          "relation": "related_to"
+        }
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
+    },
+    {
+      "id": "H1-HOP-010",
+      "family": "multi_hop_associative",
+      "intended_boundary": "graph",
+      "query": "Through the procedures ontology slot from security gap review, what rule defines quoting from copyrighted sources?",
+      "gold_relevant_notes": [
+        "7b6aae13-83e6-43ec-80df-7c8a202251fd"
+      ],
+      "required_facts": [
+        "copyrighted"
+      ],
+      "graph_path": [
+        {
+          "source": "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+          "target": "slot-06-procedures",
+          "relation": "part_of"
+        },
+        {
+          "source": "slot-06-procedures",
+          "target": "7b6aae13-83e6-43ec-80df-7c8a202251fd",
+          "relation": "related_to"
+        }
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
+    },
+    {
+      "id": "H1-CNF-001",
+      "family": "conflict",
+      "intended_boundary": "ranking",
+      "query": "Which rollback procedure applies specifically to repository git recovery versus automated service deployment?",
+      "gold_relevant_notes": [
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+        "b492a8e1-5c02-4b21-9e12-c7f8a31e9202"
+      ],
+      "required_facts": [
+        "Procedure",
+        "Procedure"
+      ],
+      "multi_gold_reason": "Both Git and Application deployment define rollback workflows; context determines which applies.",
+      "conflict_group": "rollback-scope",
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Conflicting dual-target context disambiguation task."
+    },
+    {
+      "id": "H1-CNF-002",
+      "family": "conflict",
+      "intended_boundary": "ranking",
+      "query": "When ingesting untrusted external material versus structured books, which sanitization rule takes precedence?",
+      "gold_relevant_notes": [
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39"
+      ],
+      "required_facts": [
+        "Procedure",
+        "Procedure"
+      ],
+      "multi_gold_reason": "General raw import sanitization conflicts with dedicated book ontology ingestion; input format determines path.",
+      "conflict_group": "ingestion-scope",
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Conflicting dual-target context disambiguation task."
+    },
+    {
+      "id": "H1-CNF-003",
+      "family": "conflict",
+      "intended_boundary": "ranking",
+      "query": "When an agent retrieves learned behavior, does declarative fact recall or procedural execution govern?",
+      "gold_relevant_notes": [
+        "e045ded5-01fd-4a28-8f85-203ebae670de",
+        "6e014224-af01-4011-8050-082d3f9ea35e"
+      ],
+      "required_facts": [
+        "memory",
+        "memory"
+      ],
+      "multi_gold_reason": "Declarative facts conflict with procedural production rules; retrieval must distinguish the two memory types.",
+      "conflict_group": "memory-modality",
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Conflicting dual-target context disambiguation task."
+    },
+    {
+      "id": "H1-CNF-004",
+      "family": "conflict",
+      "intended_boundary": "ranking",
+      "query": "When debugging test pass failures, is the root cause cancelling changes or a deceptive defensive guard?",
+      "gold_relevant_notes": [
+        "fd63129c-091c-4171-9eb4-b7c28190b1a4",
+        "123fe8df-2490-44f0-b695-143c3d5a997f"
+      ],
+      "required_facts": [
+        "problem",
+        "problem"
+      ],
+      "multi_gold_reason": "Both lessons address deceptive green test passes through different mechanisms.",
+      "conflict_group": "test-safety-failure",
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Conflicting dual-target context disambiguation task."
+    },
+    {
+      "id": "H1-CNF-005",
+      "family": "conflict",
+      "intended_boundary": "ranking",
+      "query": "When handling personal data in high-risk AI decision systems, which European regulation defines compliance boundaries?",
+      "gold_relevant_notes": [
+        "idx-leg-eu-aiact-2024-1689",
+        "idx-leg-eu-gdpr-2016-679"
+      ],
+      "required_facts": [
+        "Regulamentul",
+        "Regulamentul"
+      ],
+      "multi_gold_reason": "AI Act and GDPR overlap for biometric/risk systems; compliance requires distinguishing their mandates.",
+      "conflict_group": "eu-ai-privacy",
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "calibration",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Conflicting dual-target context disambiguation task."
+    },
+    {
+      "id": "H1-CNF-006",
+      "family": "conflict",
+      "intended_boundary": "ranking",
+      "query": "When storing active runtime variables, should they be indexed in the dynamic state slot or the retrieval catalog?",
+      "gold_relevant_notes": [
+        "slot-05-state",
+        "slot-15-retrieval"
+      ],
+      "required_facts": [
+        "Ontology Slot",
+        "Ontology Slot"
+      ],
+      "multi_gold_reason": "Ephemeral state conflicts with retrieval cataloging; persistence lifetime dictates slot placement.",
+      "conflict_group": "slot-persistence",
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "calibration",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Conflicting dual-target context disambiguation task."
+    },
+    {
+      "id": "H1-CNF-007",
+      "family": "conflict",
+      "intended_boundary": "ranking",
+      "query": "When context token limits are reached, should the system truncate candidate generation or compress the final pack?",
+      "gold_relevant_notes": [
+        "knw-context-packing-p1-0001",
+        "knw-retrieval-bottleneck-p0-0001"
+      ],
+      "required_facts": [
+        "Empirical Findings",
+        "Empirical Findings"
+      ],
+      "multi_gold_reason": "Candidate pruning (P0) versus pack compression (P1) offer competing trade-offs.",
+      "conflict_group": "token-budget-stage",
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Conflicting dual-target context disambiguation task."
+    },
+    {
+      "id": "H1-CNF-008",
+      "family": "conflict",
+      "intended_boundary": "ranking",
+      "query": "When deploying bilingual Romanian-English user interfaces, does the strict English prompt preference apply to internal system prompts?",
+      "gold_relevant_notes": [
+        "f10029dc-e28e-4710-bf3a-b2b48bfb84dc",
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8"
+      ],
+      "required_facts": [
+        "prompt",
+        "prompt"
+      ],
+      "multi_gold_reason": "Bilingual UI requirements conflict with internal English prompt preference.",
+      "conflict_group": "language-boundary",
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Conflicting dual-target context disambiguation task."
+    },
+    {
+      "id": "H1-CNF-009",
+      "family": "conflict",
+      "intended_boundary": "ranking",
+      "query": "When setting up trade routing in MetaTrader, should execution logic reside in the EA bot or the clean architecture layer?",
+      "gold_relevant_notes": [
+        "d94d32d6-701e-43b7-b031-761b2c6c8e43",
+        "f82194d2-31a8-4c91-a83d-e42109ab7d12"
+      ],
+      "required_facts": [
+        "Trading",
+        "Trading"
+      ],
+      "multi_gold_reason": "Direct MetaTrader bot script conflicts with clean domain isolation.",
+      "conflict_group": "trading-architecture",
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Conflicting dual-target context disambiguation task."
+    },
+    {
+      "id": "H1-CNF-010",
+      "family": "conflict",
+      "intended_boundary": "ranking",
+      "query": "When handling classified state data in defense contexts, does general HG 585/2002 or ministerial order M.172/2021 govern?",
+      "gold_relevant_notes": [
+        "knw-leg-hg585-2002-0001",
+        "idx-leg-ro-mapn-m172-2021"
+      ],
+      "required_facts": [
+        "Clasificate",
+        "Clasificate"
+      ],
+      "multi_gold_reason": "National standards conflict with specific military department norms.",
+      "conflict_group": "classified-defense-jurisdiction",
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "Conflicting dual-target context disambiguation task."
+    },
+    {
+      "id": "H1-DST-001",
+      "family": "distractor",
+      "intended_boundary": "ranking",
+      "query": "Show the architectural system dataflow and boundary topology of the memory vault.",
+      "gold_relevant_notes": [
+        "vault-architecture-map-0001"
+      ],
+      "distractor_ids": [
+        "vault-master-index-0001"
+      ],
+      "required_facts": [
+        "Vault Architecture"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "High lexical overlap distractor competing against true semantic gold target."
+    },
+    {
+      "id": "H1-DST-002",
+      "family": "distractor",
+      "intended_boundary": "ranking",
+      "query": "What steps are required to restore git repository state after a corrupted commit?",
+      "gold_relevant_notes": [
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840009"
+      ],
+      "distractor_ids": [
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+      ],
+      "required_facts": [
+        "Git"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "High lexical overlap distractor competing against true semantic gold target."
+    },
+    {
+      "id": "H1-DST-003",
+      "family": "distractor",
+      "intended_boundary": "ranking",
+      "query": "What rules govern soft context budgeting and graceful disclosure degradation?",
+      "gold_relevant_notes": [
+        "knw-context-packing-p1-0001"
+      ],
+      "distractor_ids": [
+        "knw-retrieval-bottleneck-p0-0001"
+      ],
+      "required_facts": [
+        "Context Packing"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "High lexical overlap distractor competing against true semantic gold target."
+    },
+    {
+      "id": "H1-DST-004",
+      "family": "distractor",
+      "intended_boundary": "ranking",
+      "query": "Which system stores consolidated long-term neural memory across extended timeframes?",
+      "gold_relevant_notes": [
+        "11e9fe55-6924-4231-9635-c5629bff6ae3"
+      ],
+      "distractor_ids": [
+        "e045ded5-01fd-4a28-8f85-203ebae670de"
+      ],
+      "required_facts": [
+        "long-term memory"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "development",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "High lexical overlap distractor competing against true semantic gold target."
+    },
+    {
+      "id": "H1-DST-005",
+      "family": "distractor",
+      "intended_boundary": "ranking",
+      "query": "Which ontology slot defines the memory search and candidate generation pipeline?",
+      "gold_relevant_notes": [
+        "slot-15-retrieval"
+      ],
+      "distractor_ids": [
+        "slot-14-routing"
+      ],
+      "required_facts": [
+        "Retrieval"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "calibration",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "High lexical overlap distractor competing against true semantic gold target."
+    },
+    {
+      "id": "H1-DST-006",
+      "family": "distractor",
+      "intended_boundary": "ranking",
+      "query": "What is the closed-loop protocol for self-reflection and multi-stage evaluation?",
+      "gold_relevant_notes": [
+        "proc-reflexion-0001"
+      ],
+      "distractor_ids": [
+        "proc-brain-arch-0001"
+      ],
+      "required_facts": [
+        "Reflexion"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "calibration",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "High lexical overlap distractor competing against true semantic gold target."
+    },
+    {
+      "id": "H1-DST-007",
+      "family": "distractor",
+      "intended_boundary": "ranking",
+      "query": "What clean domain layers isolate business logic from MT5 API connectors in XAU_Kinetic?",
+      "gold_relevant_notes": [
+        "f82194d2-31a8-4c91-a83d-e42109ab7d12"
+      ],
+      "distractor_ids": [
+        "d94d32d6-701e-43b7-b031-761b2c6c8e43"
+      ],
+      "required_facts": [
+        "XAU_Kinetic"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "High lexical overlap distractor competing against true semantic gold target."
+    },
+    {
+      "id": "H1-DST-008",
+      "family": "distractor",
+      "intended_boundary": "ranking",
+      "query": "What European regulation establishes harmonized transparency rules for foundation models and artificial intelligence?",
+      "gold_relevant_notes": [
+        "idx-leg-eu-aiact-2024-1689"
+      ],
+      "distractor_ids": [
+        "idx-leg-eu-dora-2022-2554"
+      ],
+      "required_facts": [
+        "AI Act"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "High lexical overlap distractor competing against true semantic gold target."
+    },
+    {
+      "id": "H1-DST-009",
+      "family": "distractor",
+      "intended_boundary": "ranking",
+      "query": "What standard prevents reporting deceptive percentage deltas over tiny evaluation samples?",
+      "gold_relevant_notes": [
+        "proc-stats-reporting-0001"
+      ],
+      "distractor_ids": [
+        "knw-benchmarks-2026-0001"
+      ],
+      "required_facts": [
+        "Propor"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "High lexical overlap distractor competing against true semantic gold target."
+    },
+    {
+      "id": "H1-DST-010",
+      "family": "distractor",
+      "intended_boundary": "ranking",
+      "query": "What retrospective lesson describes when two independently correct fixes cancel each other?",
+      "gold_relevant_notes": [
+        "fd63129c-091c-4171-9eb4-b7c28190b1a4"
+      ],
+      "distractor_ids": [
+        "123fe8df-2490-44f0-b695-143c3d5a997f"
+      ],
+      "required_facts": [
+        "independently correct"
+      ],
+      "abstain": false,
+      "principal": "HUMAN",
+      "split": "held_out",
+      "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "rationale": "High lexical overlap distractor competing against true semantic gold target."
+    }
+  ],
+  "benchmark_hash": "59bc81e42c0f703bdfb7e966df75a496590669bbeb82c5eafa2d18aef7c3a37f"
+}

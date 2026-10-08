@@ -1,0 +1,3270 @@
+{
+  "benchmark_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
+  "benchmark_hash": "59bc81e42c0f703bdfb7e966df75a496590669bbeb82c5eafa2d18aef7c3a37f",
+  "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+  "timestamp_utc": "2026-10-03T16:19:53.069231+00:00",
+  "total_cases": 70,
+  "reachable_count": 35,
+  "overall_recall_all_at_10": 0.5,
+  "overall_hits_at_1": 17,
+  "overall_recall_at_1": 0.2429,
+  "overall_hits_at_5": 37,
+  "overall_recall_at_5": 0.5286,
+  "overall_hits_at_10": 38,
+  "overall_recall_at_10": 0.5429,
+  "overall_mrr": 0.357,
+  "performance": {
+    "mean_latency_ms": 360.91,
+    "p50_latency_ms": 429.79,
+    "p95_latency_ms": 515.19,
+    "total_repetitions_per_case": 1,
+    "all_deterministic": true
+  },
+  "miss_distribution": {
+    "RETRIEVED_CORRECTLY": 35,
+    "RANKING_MISS": 26,
+    "CANDIDATE_MISS": 6,
+    "GRAPH_MISS_OR_REGRESSION": 3
+  },
+  "by_family": {
+    "conflict": {
+      "count": 10,
+      "reachable": 3,
+      "recall_all_at_10": 0.3,
+      "hits_at_1": 3,
+      "recall_at_1": 0.3,
+      "hits_at_5": 6,
+      "recall_at_5": 0.6,
+      "hits_at_10": 6,
+      "recall_at_10": 0.6,
+      "mrr": 0.3783,
+      "mean_facts_coverage": 0.8,
+      "miss_distribution": {
+        "RETRIEVED_CORRECTLY": 3,
+        "RANKING_MISS": 5,
+        "CANDIDATE_MISS": 2
+      }
+    },
+    "direct_lexical": {
+      "count": 10,
+      "reachable": 8,
+      "recall_all_at_10": 0.8,
+      "hits_at_1": 7,
+      "recall_at_1": 0.7,
+      "hits_at_5": 8,
+      "recall_at_5": 0.8,
+      "hits_at_10": 8,
+      "recall_at_10": 0.8,
+      "mrr": 0.72,
+      "mean_facts_coverage": 0.9,
+      "miss_distribution": {
+        "RETRIEVED_CORRECTLY": 8,
+        "RANKING_MISS": 2
+      }
+    },
+    "distractor": {
+      "count": 10,
+      "reachable": 5,
+      "recall_all_at_10": 0.5,
+      "hits_at_1": 2,
+      "recall_at_1": 0.2,
+      "hits_at_5": 5,
+      "recall_at_5": 0.5,
+      "hits_at_10": 5,
+      "recall_at_10": 0.5,
+      "mrr": 0.325,
+      "mean_facts_coverage": 0.7,
+      "miss_distribution": {
+        "RETRIEVED_CORRECTLY": 5,
+        "RANKING_MISS": 5
+      }
+    },
+    "entity_context": {
+      "count": 10,
+      "reachable": 7,
+      "recall_all_at_10": 0.7,
+      "hits_at_1": 3,
+      "recall_at_1": 0.3,
+      "hits_at_5": 6,
+      "recall_at_5": 0.6,
+      "hits_at_10": 7,
+      "recall_at_10": 0.7,
+      "mrr": 0.4176,
+      "mean_facts_coverage": 0.8,
+      "miss_distribution": {
+        "RANKING_MISS": 2,
+        "CANDIDATE_MISS": 1,
+        "RETRIEVED_CORRECTLY": 7
+      }
+    },
+    "indirect_cue": {
+      "count": 10,
+      "reachable": 4,
+      "recall_all_at_10": 0.4,
+      "hits_at_1": 0,
+      "recall_at_1": 0.0,
+      "hits_at_5": 4,
+      "recall_at_5": 0.4,
+      "hits_at_10": 4,
+      "recall_at_10": 0.4,
+      "mrr": 0.175,
+      "mean_facts_coverage": 0.6,
+      "miss_distribution": {
+        "RANKING_MISS": 5,
+        "RETRIEVED_CORRECTLY": 4,
+        "CANDIDATE_MISS": 1
+      }
+    },
+    "multi_hop_associative": {
+      "count": 10,
+      "reachable": 6,
+      "recall_all_at_10": 0.6,
+      "hits_at_1": 1,
+      "recall_at_1": 0.1,
+      "hits_at_5": 6,
+      "recall_at_5": 0.6,
+      "hits_at_10": 6,
+      "recall_at_10": 0.6,
+      "mrr": 0.3333,
+      "mean_facts_coverage": 0.9,
+      "miss_distribution": {
+        "RETRIEVED_CORRECTLY": 6,
+        "RANKING_MISS": 1,
+        "GRAPH_MISS_OR_REGRESSION": 3
+      }
+    },
+    "paraphrase": {
+      "count": 10,
+      "reachable": 2,
+      "recall_all_at_10": 0.2,
+      "hits_at_1": 1,
+      "recall_at_1": 0.1,
+      "hits_at_5": 2,
+      "recall_at_5": 0.2,
+      "hits_at_10": 2,
+      "recall_at_10": 0.2,
+      "mrr": 0.15,
+      "mean_facts_coverage": 0.6,
+      "miss_distribution": {
+        "RETRIEVED_CORRECTLY": 2,
+        "RANKING_MISS": 6,
+        "CANDIDATE_MISS": 2
+      }
+    }
+  },
+  "by_split": {
+    "development": {
+      "count": 28,
+      "reachable": 15,
+      "recall_all_at_10": 0.5357,
+      "hits_at_10": 16,
+      "recall_at_10": 0.5714,
+      "mrr": 0.3881
+    },
+    "calibration": {
+      "count": 14,
+      "reachable": 5,
+      "recall_all_at_10": 0.3571,
+      "hits_at_10": 5,
+      "recall_at_10": 0.3571,
+      "mrr": 0.2286
+    },
+    "held_out": {
+      "count": 28,
+      "reachable": 15,
+      "recall_all_at_10": 0.5357,
+      "hits_at_10": 17,
+      "recall_at_10": 0.6071,
+      "mrr": 0.3902
+    }
+  },
+  "cases": [
+    {
+      "id": "H1-DIR-001",
+      "family": "direct_lexical",
+      "split": "development",
+      "query": "What is the primary information dataflow in the Vault Architecture Map?",
+      "gold_relevant_notes": [
+        "vault-architecture-map-0001"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Vault Architecture"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        426.69
+      ],
+      "mean_latency_ms": 426.69,
+      "retrieved_ids": [
+        "vault-architecture-map-0001",
+        "bca30cd9-2208-4c0a-b274-6ec893699666",
+        "vault-master-index-0001",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "c1a01101-7291-49fa-9481-22904c10d090",
+        "f82194d2-31a8-4c91-a83d-e42109ab7d12",
+        "e4eca2b5-20e0-4082-aeb3-588d598f10c9",
+        "0d0d9f30-fa32-416f-95e3-0149006dae79",
+        "cat-skills-251-master",
+        "proc-enterprise-integration-0001"
+      ],
+      "hits_at_1": true,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 1.0,
+      "first_gold_rank": 1,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DIR-002",
+      "family": "direct_lexical",
+      "split": "development",
+      "query": "What procedure governs Git backup restore and rollback operations in the vault?",
+      "gold_relevant_notes": [
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840009"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Backup"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        40.61
+      ],
+      "mean_latency_ms": 40.61,
+      "retrieved_ids": [
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+        "b492a8e1-5c02-4b21-9e12-c7f8a31e9202",
+        "7b6aae13-83e6-43ec-80df-7c8a202251fd",
+        "2338e60b-8d54-47ff-9e90-c4291377151a",
+        "64fd38ce-3a9c-40af-8348-1021ffcb0fca",
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+        "a6cd6aa4-910a-462b-8659-341a183536a8",
+        "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+        "proc-enterprise-integration-0001",
+        "b7c3d1e4-9a52-4f68-b103-2c8e5d7a4f19"
+      ],
+      "hits_at_1": true,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 1.0,
+      "first_gold_rank": 1,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 31,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DIR-003",
+      "family": "direct_lexical",
+      "split": "development",
+      "query": "What are the rules and procedure for import sanitization?",
+      "gold_relevant_notes": [
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Import Sanitization"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        40.82
+      ],
+      "mean_latency_ms": 40.82,
+      "retrieved_ids": [
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+        "64fd38ce-3a9c-40af-8348-1021ffcb0fca",
+        "b492a8e1-5c02-4b21-9e12-c7f8a31e9202",
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+        "a6cd6aa4-910a-462b-8659-341a183536a8",
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+        "9a16789d-0d21-44da-8df3-a83a100f6160",
+        "7b6aae13-83e6-43ec-80df-7c8a202251fd",
+        "b7c3d1e4-9a52-4f68-b103-2c8e5d7a4f19",
+        "0056507e-53b9-4d12-9610-a5be259403f5"
+      ],
+      "hits_at_1": true,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 1.0,
+      "first_gold_rank": 1,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 31,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DIR-004",
+      "family": "direct_lexical",
+      "split": "development",
+      "query": "What are the P0 empirical findings regarding the retrieval bottleneck?",
+      "gold_relevant_notes": [
+        "knw-retrieval-bottleneck-p0-0001"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Retrieval Bottleneck"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        425.69
+      ],
+      "mean_latency_ms": 425.69,
+      "retrieved_ids": [
+        "knw-retrieval-bottleneck-p0-0001",
+        "reg-retrieval-hypotheses-0001",
+        "9e6da9df-7fca-4cf5-99bf-03fbdee15170",
+        "multi-agent-execution-protocol-v1",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "11e9fe55-6924-4231-9635-c5629bff6ae3",
+        "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9",
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+        "67f5d777-20a7-4464-867c-7a2c1739d18a",
+        "ac3d2e8a-f55f-404b-ba7d-5157f39ae873"
+      ],
+      "hits_at_1": true,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 1.0,
+      "first_gold_rank": 1,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DIR-005",
+      "family": "direct_lexical",
+      "split": "calibration",
+      "query": "What is the P1 architectural specification for context packing?",
+      "gold_relevant_notes": [
+        "knw-context-packing-p1-0001"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Context Packing"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        454.36
+      ],
+      "mean_latency_ms": 454.36,
+      "retrieved_ids": [
+        "knw-context-packing-p1-0001",
+        "knw-retrieval-bottleneck-p0-0001",
+        "multi-agent-execution-protocol-v1",
+        "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+        "0d0d9f30-fa32-416f-95e3-0149006dae79",
+        "0056507e-53b9-4d12-9610-a5be259403f5",
+        "00ac0842-2c43-4a9d-a579-a83bfa271995",
+        "00ad356a-a850-4ca8-a29a-a4150b3ad133",
+        "00c46560-b27b-4e96-ae81-8f0b637920ad"
+      ],
+      "hits_at_1": true,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 1.0,
+      "first_gold_rank": 1,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DIR-006",
+      "family": "direct_lexical",
+      "split": "calibration",
+      "query": "What is the specification for the bio-inspired brain core cognitive architecture?",
+      "gold_relevant_notes": [
+        "proc-brain-arch-0001"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Brain Core"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note proc-brain-arch-0001 ranked at position 89, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        444.06
+      ],
+      "mean_latency_ms": 444.06,
+      "retrieved_ids": [
+        "vault-master-index-0001",
+        "bca30cd9-2208-4c0a-b274-6ec893699666",
+        "0d0d9f30-fa32-416f-95e3-0149006dae79",
+        "e4eca2b5-20e0-4082-aeb3-588d598f10c9",
+        "f82194d2-31a8-4c91-a83d-e42109ab7d12",
+        "proc-enterprise-integration-0001",
+        "vault-architecture-map-0001",
+        "0d68bba6-662b-4633-b065-bf1666889af9",
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 0.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DIR-007",
+      "family": "direct_lexical",
+      "split": "held_out",
+      "query": "What role does the identity slot serve in the vault ontology?",
+      "gold_relevant_notes": [
+        "slot-01-identity"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Identity"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        420.83
+      ],
+      "mean_latency_ms": 420.83,
+      "retrieved_ids": [
+        "slot-01-identity",
+        "slot-13-agents",
+        "ontology-spec",
+        "slot-12-skills",
+        "slot-03-ontology",
+        "slot-08-constraints",
+        "2a299363-8d18-48bd-bfa6-fb495686eeba",
+        "slot-07-judgement",
+        "slot-11-history",
+        "slot-15-retrieval"
+      ],
+      "hits_at_1": true,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 1.0,
+      "first_gold_rank": 1,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DIR-008",
+      "family": "direct_lexical",
+      "split": "held_out",
+      "query": "What are the retrieval slot definitions and specifications?",
+      "gold_relevant_notes": [
+        "slot-15-retrieval"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Retrieval"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note slot-15-retrieval ranked at position 25, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        423.17
+      ],
+      "mean_latency_ms": 423.17,
+      "retrieved_ids": [
+        "9e6da9df-7fca-4cf5-99bf-03fbdee15170",
+        "knw-retrieval-bottleneck-p0-0001",
+        "reg-retrieval-hypotheses-0001",
+        "multi-agent-execution-protocol-v1",
+        "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "11e9fe55-6924-4231-9635-c5629bff6ae3",
+        "67f5d777-20a7-4464-867c-7a2c1739d18a",
+        "ac3d2e8a-f55f-404b-ba7d-5157f39ae873",
+        "0056507e-53b9-4d12-9610-a5be259403f5"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DIR-009",
+      "family": "direct_lexical",
+      "split": "held_out",
+      "query": "Where is the structured index for the EU AI Act 2024/1689?",
+      "gold_relevant_notes": [
+        "idx-leg-eu-aiact-2024-1689"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "AI Act"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        530.12
+      ],
+      "mean_latency_ms": 530.12,
+      "retrieved_ids": [
+        "romania-classified-information-digital-security-reform",
+        "vault-master-index-0001",
+        "62b32d02-4bed-44ff-b94d-97741fbcec87",
+        "9b54a8b3-52a4-439c-b02d-b39a08f126b1",
+        "idx-leg-eu-aiact-2024-1689",
+        "48aa2279-dc1d-4d68-a118-f36112c4fe15",
+        "18f51db8-af15-4182-a5e6-0f56da1d13fb",
+        "dd9ed96a-a44f-4cd5-ad8c-0ed1bcb52e88",
+        "c1a01101-7291-49fa-9481-22904c10d090",
+        "llm-antihallucination-techniques"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.2,
+      "first_gold_rank": 5,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DIR-010",
+      "family": "direct_lexical",
+      "split": "held_out",
+      "query": "What are the clean architecture principles for the XAU_Kinetic trading bot?",
+      "gold_relevant_notes": [
+        "f82194d2-31a8-4c91-a83d-e42109ab7d12"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "XAU_Kinetic"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        449.27
+      ],
+      "mean_latency_ms": 449.27,
+      "retrieved_ids": [
+        "f82194d2-31a8-4c91-a83d-e42109ab7d12",
+        "ae0206df-b0cb-4810-b2a2-cea462600561",
+        "b492a8e1-5c02-4b21-9e12-c7f8a31e9202",
+        "vault-master-index-0001",
+        "0d0d9f30-fa32-416f-95e3-0149006dae79",
+        "cat-skills-251-master",
+        "bca30cd9-2208-4c0a-b274-6ec893699666",
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+        "1328c5fb-3316-4c02-ae53-511eb3d3f96b",
+        "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6"
+      ],
+      "hits_at_1": true,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 1.0,
+      "first_gold_rank": 1,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-PAR-001",
+      "family": "paraphrase",
+      "split": "development",
+      "query": "Where can I locate the central catalog and navigation overview of all vault notes?",
+      "gold_relevant_notes": [
+        "vault-master-index-0001"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Navigational Index"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        424.89
+      ],
+      "mean_latency_ms": 424.89,
+      "retrieved_ids": [
+        "vault-master-index-0001",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+        "123fe8df-2490-44f0-b695-143c3d5a997f",
+        "cat-skills-251-master",
+        "18f51db8-af15-4182-a5e6-0f56da1d13fb",
+        "48aa2279-dc1d-4d68-a118-f36112c4fe15",
+        "proc-enterprise-integration-0001",
+        "9b54a8b3-52a4-439c-b02d-b39a08f126b1",
+        "0056507e-53b9-4d12-9610-a5be259403f5"
+      ],
+      "hits_at_1": true,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 1.0,
+      "first_gold_rank": 1,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-PAR-002",
+      "family": "paraphrase",
+      "split": "development",
+      "query": "How does permanent knowledge retention operate after synaptic consolidation?",
+      "gold_relevant_notes": [
+        "11e9fe55-6924-4231-9635-c5629bff6ae3"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "long-term memory"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note 11e9fe55-6924-4231-9635-c5629bff6ae3 ranked at position 46, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        143.07
+      ],
+      "mean_latency_ms": 143.07,
+      "retrieved_ids": [
+        "13fbebce-897e-579c-8d82-04368506cb7b",
+        "b2888875-8546-4d42-b262-2c7f779e3cc9",
+        "39a37abc-5f60-4fd0-aa2c-9338a922dc43",
+        "10664ba8-39ac-4498-8823-f47014a73efc",
+        "a1df3d1c-201c-4217-aa62-f36292b01aa4",
+        "5fa452dd-c98b-581d-8ee9-24450ae24390",
+        "73f5b12e-ba89-5e2d-b147-a3a866c6edbb",
+        "519ef025-222f-485e-b7ee-1684078fe6e7",
+        "66559b50-540d-5014-8cad-9d0ea451fc90",
+        "23b3793b-fef3-5536-bfc1-da42d6c8a700"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 150,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-PAR-003",
+      "family": "paraphrase",
+      "split": "development",
+      "query": "Which memory subsystem explicitly stores facts and verbalizable episodic occurrences?",
+      "gold_relevant_notes": [
+        "e045ded5-01fd-4a28-8f85-203ebae670de"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "declarative memory"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "CANDIDATE_MISS",
+      "miss_detail": "Gold note e045ded5-01fd-4a28-8f85-203ebae670de not found in candidate pool (BM25/entity generation)",
+      "is_deterministic": true,
+      "latencies_ms": [
+        387.37
+      ],
+      "mean_latency_ms": 387.37,
+      "retrieved_ids": [
+        "fc6fd29b-f62b-5b87-ba0d-98b51eb4ab54",
+        "vault-memory-mesh-architecture-0001",
+        "f96cf593-6ff1-5671-8498-2d5bda03b414",
+        "66559b50-540d-5014-8cad-9d0ea451fc90",
+        "53f27d1c-b47a-5c1e-b963-dcdf3fddd8cb",
+        "c34f9935-2cfb-5e86-b39a-8cc5205e140d",
+        "multi-agent-execution-protocol-v1",
+        "67a36e52-a645-57b9-a04e-fb4b1b08fac5",
+        "e6bfe28e-9d91-5dd3-a18c-4af282af627b",
+        "8091d22f-ca07-53d1-aa10-7b2f5c82e861"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-PAR-004",
+      "family": "paraphrase",
+      "split": "development",
+      "query": "What memory storage remains inactive and unexpressed until triggered by retrieval cues?",
+      "gold_relevant_notes": [
+        "e66a94e4-28b6-47d6-90b3-358cd6dcd743"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "latent memory"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "CANDIDATE_MISS",
+      "miss_detail": "Gold note e66a94e4-28b6-47d6-90b3-358cd6dcd743 not found in candidate pool (BM25/entity generation)",
+      "is_deterministic": true,
+      "latencies_ms": [
+        442.43
+      ],
+      "mean_latency_ms": 442.43,
+      "retrieved_ids": [
+        "59280499-cba1-5dd3-b7d8-b33b69d5765e",
+        "fc6fd29b-f62b-5b87-ba0d-98b51eb4ab54",
+        "aa6cb048-4c56-5d2e-a4d5-10d1cf385d3b",
+        "9e6da9df-7fca-4cf5-99bf-03fbdee15170",
+        "67a36e52-a645-57b9-a04e-fb4b1b08fac5",
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+        "5fa452dd-c98b-581d-8ee9-24450ae24390",
+        "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9",
+        "multi-agent-execution-protocol-v1",
+        "11e9fe55-6924-4231-9635-c5629bff6ae3"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 0.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-PAR-005",
+      "family": "paraphrase",
+      "split": "calibration",
+      "query": "What guidelines govern tracking changes over time and temporal decay of memories?",
+      "gold_relevant_notes": [
+        "knw-temporal-memory-p2-0001"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Temporal Memory"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note knw-temporal-memory-p2-0001 ranked at position 22, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        407.84
+      ],
+      "mean_latency_ms": 407.84,
+      "retrieved_ids": [
+        "knw-context-packing-p1-0001",
+        "13fbebce-897e-579c-8d82-04368506cb7b",
+        "0d0d9f30-fa32-416f-95e3-0149006dae79",
+        "0056507e-53b9-4d12-9610-a5be259403f5",
+        "00ac0842-2c43-4a9d-a579-a83bfa271995",
+        "00ad356a-a850-4ca8-a29a-a4150b3ad133",
+        "00c46560-b27b-4e96-ae81-8f0b637920ad",
+        "01948766-0019-45b6-bbd6-c3df9020feae",
+        "01db8d4d-2359-4d1b-bed4-c96f32f9fe5e",
+        "73f5b12e-ba89-5e2d-b147-a3a866c6edbb"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 0.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-PAR-006",
+      "family": "paraphrase",
+      "split": "calibration",
+      "query": "How do agents perform iterative critique and self-correction across closed loops?",
+      "gold_relevant_notes": [
+        "proc-reflexion-0001"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Reflexion"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note proc-reflexion-0001 ranked at position 55, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        417.63
+      ],
+      "mean_latency_ms": 417.63,
+      "retrieved_ids": [
+        "cat-skills-251-master",
+        "7986a2c9-0fb7-4282-95fa-3ea39da1ceb1",
+        "ontology-spec",
+        "e613709a-3909-421a-9720-782fb73df150",
+        "4b5d72d1-dc4a-43db-b7eb-595faeef85e4",
+        "c1a01101-7291-49fa-9481-22904c10d070",
+        "knw-retrieval-bottleneck-p0-0001",
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+        "a81adbaa-68bf-4d8a-a18a-26af82a3d375",
+        "moc-artifacts-0015"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 0.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-PAR-007",
+      "family": "paraphrase",
+      "split": "held_out",
+      "query": "What methodology is required when reporting proportions from limited observation samples in evaluations?",
+      "gold_relevant_notes": [
+        "proc-stats-reporting-0001"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Propor"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note proc-stats-reporting-0001 ranked at position 59, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        418.46
+      ],
+      "mean_latency_ms": 418.46,
+      "retrieved_ids": [
+        "cat-skills-251-master",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "123fe8df-2490-44f0-b695-143c3d5a997f",
+        "327bd878-c580-59ca-bfbc-5e09579d61b4",
+        "00ac0842-2c43-4a9d-a579-a83bfa271995",
+        "022e88d5-e0cc-4483-a21f-11a3ab1dd4c1",
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+        "0d0d9f30-fa32-416f-95e3-0149006dae79",
+        "01948766-0019-45b6-bbd6-c3df9020feae",
+        "64fd38ce-3a9c-40af-8348-1021ffcb0fca"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 0.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-PAR-008",
+      "family": "paraphrase",
+      "split": "held_out",
+      "query": "Which ontology section codifies executable operational runbooks and workflows?",
+      "gold_relevant_notes": [
+        "slot-06-procedures"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Procedures"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note slot-06-procedures ranked at position 30, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        416.81
+      ],
+      "mean_latency_ms": 416.81,
+      "retrieved_ids": [
+        "slot-09-provenance",
+        "slot-03-ontology",
+        "slot-05-state",
+        "slot-11-history",
+        "slot-16-consolidation",
+        "slot-13-agents",
+        "slot-08-constraints",
+        "ontology-spec",
+        "slot-01-identity",
+        "slot-14-routing"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-PAR-009",
+      "family": "paraphrase",
+      "split": "held_out",
+      "query": "Where is the comprehensive index for European data privacy regulation 2016/679?",
+      "gold_relevant_notes": [
+        "idx-leg-eu-gdpr-2016-679"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "GDPR"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note idx-leg-eu-gdpr-2016-679 ranked at position 17, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        535.35
+      ],
+      "mean_latency_ms": 535.35,
+      "retrieved_ids": [
+        "9b54a8b3-52a4-439c-b02d-b39a08f126b1",
+        "18f51db8-af15-4182-a5e6-0f56da1d13fb",
+        "48aa2279-dc1d-4d68-a118-f36112c4fe15",
+        "leg-eu-aiact-2024-1689",
+        "dd9ed96a-a44f-4cd5-ad8c-0ed1bcb52e88",
+        "leg-eu-dora-2022-2554",
+        "62b32d02-4bed-44ff-b94d-97741fbcec87",
+        "leg-eu-mica-2023-1114",
+        "leg-eu-gdpr-2016-679",
+        "17e7ea30-a054-4b96-b33e-a42a05115eb8"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-PAR-010",
+      "family": "paraphrase",
+      "split": "held_out",
+      "query": "Why was the MetaTrader platform paired with Python and desktop GUI selected for live execution?",
+      "gold_relevant_notes": [
+        "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "MetaTrader 5"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        515.19
+      ],
+      "mean_latency_ms": 515.19,
+      "retrieved_ids": [
+        "b492a8e1-5c02-4b21-9e12-c7f8a31e9202",
+        "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6",
+        "c1a01101-7291-49fa-9481-22904c10b004",
+        "ae0206df-b0cb-4810-b2a2-cea462600561",
+        "0d0d9f30-fa32-416f-95e3-0149006dae79",
+        "4c5884fe-f24e-426e-a012-1414dbddae23",
+        "1328c5fb-3316-4c02-ae53-511eb3d3f96b",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "cat-skills-251-master",
+        "knw-memory-usage-audit-principles-0001"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.5,
+      "first_gold_rank": 2,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-IND-001",
+      "family": "indirect_cue",
+      "split": "development",
+      "query": "Why might two valid bug fixes cancel each other out while all CI checks remain green?",
+      "gold_relevant_notes": [
+        "fd63129c-091c-4171-9eb4-b7c28190b1a4"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "independently correct"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note fd63129c-091c-4171-9eb4-b7c28190b1a4 ranked at position 19, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        432.64
+      ],
+      "mean_latency_ms": 432.64,
+      "retrieved_ids": [
+        "fce00714-05aa-44ac-84e3-432c6ca70bd1",
+        "slot-06-procedures",
+        "2338e60b-8d54-47ff-9e90-c4291377151a",
+        "123fe8df-2490-44f0-b695-143c3d5a997f",
+        "proc-stats-reporting-0001",
+        "multi-agent-execution-protocol-v1",
+        "cat-skills-251-master",
+        "7eb6b761-da1e-4e93-9f7d-6bccbbd48686",
+        "knw-agent-memory-trace-protocol-0001",
+        "13fbebce-897e-579c-8d82-04368506cb7b"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 0.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-IND-002",
+      "family": "indirect_cue",
+      "split": "development",
+      "query": "What happens when an automated safeguard triggers due to a false premise?",
+      "gold_relevant_notes": [
+        "123fe8df-2490-44f0-b695-143c3d5a997f"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "hides the defect"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        441.35
+      ],
+      "mean_latency_ms": 441.35,
+      "retrieved_ids": [
+        "cat-skills-251-master",
+        "123fe8df-2490-44f0-b695-143c3d5a997f",
+        "0056507e-53b9-4d12-9610-a5be259403f5",
+        "00ac0842-2c43-4a9d-a579-a83bfa271995",
+        "00ad356a-a850-4ca8-a29a-a4150b3ad133",
+        "00c46560-b27b-4e96-ae81-8f0b637920ad",
+        "01948766-0019-45b6-bbd6-c3df9020feae",
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+        "01db8d4d-2359-4d1b-bed4-c96f32f9fe5e",
+        "67a36e52-a645-57b9-a04e-fb4b1b08fac5"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.5,
+      "first_gold_rank": 2,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-IND-003",
+      "family": "indirect_cue",
+      "split": "development",
+      "query": "What language convention must be enforced across all prompt instructions sent to LLMs?",
+      "gold_relevant_notes": [
+        "f10029dc-e28e-4710-bf3a-b2b48bfb84dc"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "English"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note f10029dc-e28e-4710-bf3a-b2b48bfb84dc ranked at position 44, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        449.59
+      ],
+      "mean_latency_ms": 449.59,
+      "retrieved_ids": [
+        "cat-skills-251-master",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0056507e-53b9-4d12-9610-a5be259403f5",
+        "moc-council-0014",
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+        "13fbebce-897e-579c-8d82-04368506cb7b",
+        "1328c5fb-3316-4c02-ae53-511eb3d3f96b",
+        "2338e60b-8d54-47ff-9e90-c4291377151a",
+        "123fe8df-2490-44f0-b695-143c3d5a997f",
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-IND-004",
+      "family": "indirect_cue",
+      "split": "development",
+      "query": "Why should repository developers avoid packing everything into a single monolithic script?",
+      "gold_relevant_notes": [
+        "0d0d9f30-fa32-416f-95e3-0149006dae79"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Multi-File"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        440.43
+      ],
+      "mean_latency_ms": 440.43,
+      "retrieved_ids": [
+        "cat-skills-251-master",
+        "0d0d9f30-fa32-416f-95e3-0149006dae79",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+        "0056507e-53b9-4d12-9610-a5be259403f5",
+        "1328c5fb-3316-4c02-ae53-511eb3d3f96b",
+        "00ac0842-2c43-4a9d-a579-a83bfa271995",
+        "00ad356a-a850-4ca8-a29a-a4150b3ad133",
+        "00c46560-b27b-4e96-ae81-8f0b637920ad",
+        "01948766-0019-45b6-bbd6-c3df9020feae"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.5,
+      "first_gold_rank": 2,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-IND-005",
+      "family": "indirect_cue",
+      "split": "calibration",
+      "query": "How does the distributed associative interconnect link disparate cognitive modules across nodes?",
+      "gold_relevant_notes": [
+        "vault-memory-mesh-architecture-0001"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Memory Mesh"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note vault-memory-mesh-architecture-0001 ranked at position 174, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        424.14
+      ],
+      "mean_latency_ms": 424.14,
+      "retrieved_ids": [
+        "13fbebce-897e-579c-8d82-04368506cb7b",
+        "proc-enterprise-integration-0001",
+        "0056507e-53b9-4d12-9610-a5be259403f5",
+        "00ac0842-2c43-4a9d-a579-a83bfa271995",
+        "00ad356a-a850-4ca8-a29a-a4150b3ad133",
+        "11e9fe55-6924-4231-9635-c5629bff6ae3",
+        "0d68bba6-662b-4633-b065-bf1666889af9",
+        "00c46560-b27b-4e96-ae81-8f0b637920ad",
+        "01948766-0019-45b6-bbd6-c3df9020feae",
+        "5fa452dd-c98b-581d-8ee9-24450ae24390"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 0.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-IND-006",
+      "family": "indirect_cue",
+      "split": "calibration",
+      "query": "How should audit events during cognitive retrieval be emitted in structured logs?",
+      "gold_relevant_notes": [
+        "knw-agent-memory-trace-protocol-0001"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Trace Emitter"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note knw-agent-memory-trace-protocol-0001 ranked at position 21, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        445.73
+      ],
+      "mean_latency_ms": 445.73,
+      "retrieved_ids": [
+        "vault-memory-mesh-architecture-0001",
+        "9e6da9df-7fca-4cf5-99bf-03fbdee15170",
+        "fc6fd29b-f62b-5b87-ba0d-98b51eb4ab54",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "11e9fe55-6924-4231-9635-c5629bff6ae3",
+        "ac3d2e8a-f55f-404b-ba7d-5157f39ae873",
+        "67f5d777-20a7-4464-867c-7a2c1739d18a",
+        "bca30cd9-2208-4c0a-b274-6ec893699666",
+        "proc-enterprise-integration-0001",
+        "reg-retrieval-hypotheses-0001"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 0.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-IND-007",
+      "family": "indirect_cue",
+      "split": "held_out",
+      "query": "Where are memories stabilized, compacted, and merged from short-term buffers?",
+      "gold_relevant_notes": [
+        "slot-16-consolidation"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Consolidation"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "CANDIDATE_MISS",
+      "miss_detail": "Gold note slot-16-consolidation not found in candidate pool (BM25/entity generation)",
+      "is_deterministic": true,
+      "latencies_ms": [
+        452.57
+      ],
+      "mean_latency_ms": 452.57,
+      "retrieved_ids": [
+        "18f51db8-af15-4182-a5e6-0f56da1d13fb",
+        "9b54a8b3-52a4-439c-b02d-b39a08f126b1",
+        "48aa2279-dc1d-4d68-a118-f36112c4fe15",
+        "dd9ed96a-a44f-4cd5-ad8c-0ed1bcb52e88",
+        "62b32d02-4bed-44ff-b94d-97741fbcec87",
+        "13fbebce-897e-579c-8d82-04368506cb7b",
+        "0056507e-53b9-4d12-9610-a5be259403f5",
+        "00ac0842-2c43-4a9d-a579-a83bfa271995",
+        "00ad356a-a850-4ca8-a29a-a4150b3ad133",
+        "00c46560-b27b-4e96-ae81-8f0b637920ad"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-IND-008",
+      "family": "indirect_cue",
+      "split": "held_out",
+      "query": "Which ontology category enforces boundary limits, invariants, and negative requirements?",
+      "gold_relevant_notes": [
+        "slot-08-constraints"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Constraints"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        426.94
+      ],
+      "mean_latency_ms": 426.94,
+      "retrieved_ids": [
+        "slot-01-identity",
+        "slot-08-constraints",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "slot-13-agents",
+        "ontology-spec",
+        "slot-14-routing",
+        "slot-03-ontology",
+        "slot-15-retrieval",
+        "93678180-ff9e-45f5-927e-01320aff8eb9",
+        "84ef8b0f-d457-4741-be32-582ba76e3ab3"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.5,
+      "first_gold_rank": 2,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-IND-009",
+      "family": "indirect_cue",
+      "split": "held_out",
+      "query": "What compliance index covers digital operational resilience for financial institutions?",
+      "gold_relevant_notes": [
+        "idx-leg-eu-dora-2022-2554"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "DORA"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note idx-leg-eu-dora-2022-2554 ranked at position 39, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        435.71
+      ],
+      "mean_latency_ms": 435.71,
+      "retrieved_ids": [
+        "vault-master-index-0001",
+        "17e7ea30-a054-4b96-b33e-a42a05115eb8",
+        "11e9fe55-6924-4231-9635-c5629bff6ae3",
+        "moc-imports-0010",
+        "0056507e-53b9-4d12-9610-a5be259403f5",
+        "00ac0842-2c43-4a9d-a579-a83bfa271995",
+        "00ad356a-a850-4ca8-a29a-a4150b3ad133",
+        "00c46560-b27b-4e96-ae81-8f0b637920ad",
+        "0d0d9f30-fa32-416f-95e3-0149006dae79",
+        "01948766-0019-45b6-bbd6-c3df9020feae"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 0.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-IND-010",
+      "family": "indirect_cue",
+      "split": "held_out",
+      "query": "Where is the automated bot configuration handling multi-strategy execution across forex sessions?",
+      "gold_relevant_notes": [
+        "d94d32d6-701e-43b7-b031-761b2c6c8e43"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "MetaTrader5"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        429.53
+      ],
+      "mean_latency_ms": 429.53,
+      "retrieved_ids": [
+        "knw-retrieval-bottleneck-p0-0001",
+        "vault-memory-mesh-architecture-0001",
+        "multi-agent-execution-protocol-v1",
+        "d94d32d6-701e-43b7-b031-761b2c6c8e43",
+        "knw-memory-usage-audit-principles-0001",
+        "18f51db8-af15-4182-a5e6-0f56da1d13fb",
+        "0d68bba6-662b-4633-b065-bf1666889af9",
+        "48aa2279-dc1d-4d68-a118-f36112c4fe15",
+        "9b54a8b3-52a4-439c-b02d-b39a08f126b1",
+        "dd9ed96a-a44f-4cd5-ad8c-0ed1bcb52e88"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.25,
+      "first_gold_rank": 4,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-ENT-001",
+      "family": "entity_context",
+      "split": "development",
+      "query": "What framework regulates crypto-asset issuers and trading service providers under EU law?",
+      "gold_relevant_notes": [
+        "idx-leg-eu-mica-2023-1114"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "MiCA"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note idx-leg-eu-mica-2023-1114 ranked at position 136, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        438.07
+      ],
+      "mean_latency_ms": 438.07,
+      "retrieved_ids": [
+        "romania-classified-information-digital-security-reform",
+        "cat-skills-251-master",
+        "ae0206df-b0cb-4810-b2a2-cea462600561",
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+        "0d0d9f30-fa32-416f-95e3-0149006dae79",
+        "1328c5fb-3316-4c02-ae53-511eb3d3f96b",
+        "123fe8df-2490-44f0-b695-143c3d5a997f",
+        "leg-eu-dora-2022-2554",
+        "10664ba8-39ac-4498-8823-f47014a73efc",
+        "0056507e-53b9-4d12-9610-a5be259403f5"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-ENT-002",
+      "family": "entity_context",
+      "split": "development",
+      "query": "What Romanian legislation governs state secrets and national protection standards for classified data?",
+      "gold_relevant_notes": [
+        "knw-leg-hg585-2002-0001"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "585/2002"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "CANDIDATE_MISS",
+      "miss_detail": "Gold note knw-leg-hg585-2002-0001 not found in candidate pool (BM25/entity generation)",
+      "is_deterministic": true,
+      "latencies_ms": [
+        30.86
+      ],
+      "mean_latency_ms": 30.86,
+      "retrieved_ids": [],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 0.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 0,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-ENT-003",
+      "family": "entity_context",
+      "split": "development",
+      "query": "Where is the technical postmortem on creating a dual-language Romanian-English trading journal without capital expenditure?",
+      "gold_relevant_notes": [
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Zero-Dollar"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        470.31
+      ],
+      "mean_latency_ms": 470.31,
+      "retrieved_ids": [
+        "48aa2279-dc1d-4d68-a118-f36112c4fe15",
+        "cat-skills-251-master",
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+        "ae0206df-b0cb-4810-b2a2-cea462600561",
+        "18f51db8-af15-4182-a5e6-0f56da1d13fb",
+        "9b54a8b3-52a4-439c-b02d-b39a08f126b1",
+        "dd9ed96a-a44f-4cd5-ad8c-0ed1bcb52e88",
+        "62b32d02-4bed-44ff-b94d-97741fbcec87",
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+        "1328c5fb-3316-4c02-ae53-511eb3d3f96b"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.3333,
+      "first_gold_rank": 3,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-ENT-004",
+      "family": "entity_context",
+      "split": "development",
+      "query": "Where are the architecture design and core specifications for the FinScope application?",
+      "gold_relevant_notes": [
+        "finscope-project-core"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "FinScope"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        429.75
+      ],
+      "mean_latency_ms": 429.75,
+      "retrieved_ids": [
+        "vault-master-index-0001",
+        "finscope-project-core",
+        "moc-projects-0012",
+        "b4e88f21-7291-49fa-9481-22904c10a006",
+        "f82194d2-31a8-4c91-a83d-e42109ab7d12",
+        "cat-skills-251-master",
+        "b4e88f21-7291-49fa-9481-22904c10a002",
+        "proc-enterprise-integration-0001",
+        "18f51db8-af15-4182-a5e6-0f56da1d13fb",
+        "48aa2279-dc1d-4d68-a118-f36112c4fe15"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.5,
+      "first_gold_rank": 2,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-ENT-005",
+      "family": "entity_context",
+      "split": "calibration",
+      "query": "Which ontology slot tracks dynamic working variables and operational registers?",
+      "gold_relevant_notes": [
+        "slot-05-state"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "State"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        467.7
+      ],
+      "mean_latency_ms": 467.7,
+      "retrieved_ids": [
+        "slot-08-constraints",
+        "slot-13-agents",
+        "slot-06-procedures",
+        "slot-01-identity",
+        "slot-05-state",
+        "slot-03-ontology",
+        "slot-14-routing",
+        "slot-15-retrieval",
+        "ontology-spec",
+        "slot-16-consolidation"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.2,
+      "first_gold_rank": 5,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-ENT-006",
+      "family": "entity_context",
+      "split": "calibration",
+      "query": "Where does the cognitive core look up task routing matrices and agent capability allocations?",
+      "gold_relevant_notes": [
+        "slot-14-routing"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Routing"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note slot-14-routing ranked at position 45, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        432.11
+      ],
+      "mean_latency_ms": 432.11,
+      "retrieved_ids": [
+        "multi-agent-execution-protocol-v1",
+        "99280cf1-6eb2-449c-a778-e800c2868e07",
+        "a8a64a3e-1d72-4971-9f2b-64b14a3ea916",
+        "735c6b3e-bf68-49db-8746-95cc2660ead4",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "bdd2358e-e305-454e-9cf0-f044eb5c4244",
+        "vault-memory-mesh-architecture-0001",
+        "knw-benchmarks-2026-0001",
+        "327bd878-c580-59ca-bfbc-5e09579d61b4",
+        "18f51db8-af15-4182-a5e6-0f56da1d13fb"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 0.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-ENT-007",
+      "family": "entity_context",
+      "split": "held_out",
+      "query": "What system manages media transfers and hardware device custody on air-gapped workstations?",
+      "gold_relevant_notes": [
+        "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Media Transfer"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        440.33
+      ],
+      "mean_latency_ms": 440.33,
+      "retrieved_ids": [
+        "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+        "99522c1a-b212-4571-b4d8-7dbbba2a3462",
+        "c1a01101-7291-49fa-9481-22904c10c001",
+        "slot-05-state",
+        "13fbebce-897e-579c-8d82-04368506cb7b",
+        "0056507e-53b9-4d12-9610-a5be259403f5",
+        "4c5884fe-f24e-426e-a012-1414dbddae23",
+        "0d68bba6-662b-4633-b065-bf1666889af9",
+        "00ac0842-2c43-4a9d-a579-a83bfa271995",
+        "11111111-1111-4111-a111-111111111111"
+      ],
+      "hits_at_1": true,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 1.0,
+      "first_gold_rank": 1,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-ENT-008",
+      "family": "entity_context",
+      "split": "held_out",
+      "query": "Where are the PowerShell scripts for Windows 11 system debloating and OS security hardening?",
+      "gold_relevant_notes": [
+        "ed51e423-3078-4b0a-a38b-2f9d2bb62522"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Windows Hardening"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        441.03
+      ],
+      "mean_latency_ms": 441.03,
+      "retrieved_ids": [
+        "ed51e423-3078-4b0a-a38b-2f9d2bb62522",
+        "b8bd05ab-076f-429d-a742-d1bc2ba0c212",
+        "3c2aeb6e-a01e-4f87-b4fb-830cb776376f",
+        "aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e",
+        "cfca79df-d8f8-4720-bd8f-7f7ea7116b47",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "vault-architecture-map-0001",
+        "67e1cb1d-3e5a-45be-b265-67bb126a2cd3",
+        "b5b8ed33-da3a-42cc-8e94-4dde6b1edb6d",
+        "vault-master-index-0001"
+      ],
+      "hits_at_1": true,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 1.0,
+      "first_gold_rank": 1,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-ENT-009",
+      "family": "entity_context",
+      "split": "held_out",
+      "query": "What reference document details the Xerox EIP and PaperCut printing infrastructure configuration?",
+      "gold_relevant_notes": [
+        "ef084612-2d02-481e-a7d3-6cbe4608e10d"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "PaperCut"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        546.65
+      ],
+      "mean_latency_ms": 546.65,
+      "retrieved_ids": [
+        "ef084612-2d02-481e-a7d3-6cbe4608e10d",
+        "616effd2-5172-46dc-b8c1-528c724a5de1",
+        "3d063fab-d6d1-411b-89b2-d31222f4b937",
+        "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc",
+        "67e1cb1d-3e5a-45be-b265-67bb126a2cd3",
+        "0d68bba6-662b-4633-b065-bf1666889af9",
+        "moc-imports-0010",
+        "0056507e-53b9-4d12-9610-a5be259403f5",
+        "00ac0842-2c43-4a9d-a579-a83bfa271995",
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8"
+      ],
+      "hits_at_1": true,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 1.0,
+      "first_gold_rank": 1,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-ENT-010",
+      "family": "entity_context",
+      "split": "held_out",
+      "query": "What canonical standard defines taxonomy rules for neural module identifiers and node names?",
+      "gold_relevant_notes": [
+        "standard-neural-naming-taxonomy"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Neural naming"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        482.13
+      ],
+      "mean_latency_ms": 482.13,
+      "retrieved_ids": [
+        "vault-memory-mesh-architecture-0001",
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+        "0d0d9f30-fa32-416f-95e3-0149006dae79",
+        "10664ba8-39ac-4498-8823-f47014a73efc",
+        "multi-agent-execution-protocol-v1",
+        "123fe8df-2490-44f0-b695-143c3d5a997f",
+        "standard-neural-naming-taxonomy",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "ontology-spec",
+        "00ac0842-2c43-4a9d-a579-a83bfa271995"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.1429,
+      "first_gold_rank": 7,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-HOP-001",
+      "family": "multi_hop_associative",
+      "split": "development",
+      "query": "Following the relationship from state-determined system through variety, what ontology slot defines system state?",
+      "gold_relevant_notes": [
+        "slot-05-state"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "State"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        432.3
+      ],
+      "mean_latency_ms": 432.3,
+      "retrieved_ids": [
+        "0d68bba6-662b-4633-b065-bf1666889af9",
+        "slot-05-state",
+        "1a25d3da-57e2-4902-ab35-da8b476d7e7b",
+        "slot-03-ontology",
+        "slot-14-routing",
+        "ontology-spec",
+        "slot-01-identity",
+        "slot-08-constraints",
+        "d5ee32c8-67be-4c08-b6a4-5f60f0456fb1",
+        "911ffebf-ab09-4d79-8aac-247781c673a4"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.5,
+      "first_gold_rank": 2,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-HOP-002",
+      "family": "multi_hop_associative",
+      "split": "development",
+      "query": "Starting from state-determined systems and navigating through constraint, what essential variables must remain bounded?",
+      "gold_relevant_notes": [
+        "df11fec2-d5b4-4b8f-b79e-d4dbb18d3d57"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "essential variables"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note df11fec2-d5b4-4b8f-b79e-d4dbb18d3d57 ranked at position 24, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        463.0
+      ],
+      "mean_latency_ms": 463.0,
+      "retrieved_ids": [
+        "0056507e-53b9-4d12-9610-a5be259403f5",
+        "1a25d3da-57e2-4902-ab35-da8b476d7e7b",
+        "00ac0842-2c43-4a9d-a579-a83bfa271995",
+        "00ad356a-a850-4ca8-a29a-a4150b3ad133",
+        "00c46560-b27b-4e96-ae81-8f0b637920ad",
+        "01948766-0019-45b6-bbd6-c3df9020feae",
+        "21072af8-9792-4faa-9b9c-f15da7618a37",
+        "01db8d4d-2359-4d1b-bed4-c96f32f9fe5e",
+        "01eaa296-3815-420a-97f6-4101636ca922",
+        "0d68bba6-662b-4633-b065-bf1666889af9"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-HOP-003",
+      "family": "multi_hop_associative",
+      "split": "development",
+      "query": "From state-determined systems through constraint relationships, which master ontology slot records system constraints?",
+      "gold_relevant_notes": [
+        "slot-08-constraints"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Constraints"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        435.84
+      ],
+      "mean_latency_ms": 435.84,
+      "retrieved_ids": [
+        "slot-05-state",
+        "slot-08-constraints",
+        "slot-03-ontology",
+        "0d68bba6-662b-4633-b065-bf1666889af9",
+        "f4211085-75c4-4184-a1a9-0c33da73ac74",
+        "ontology-spec",
+        "slot-04-relationships",
+        "slot-14-routing",
+        "slot-01-identity",
+        "slot-02-map"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.5,
+      "first_gold_rank": 2,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-HOP-004",
+      "family": "multi_hop_associative",
+      "split": "development",
+      "query": "Navigating from security gaps through the procedures slot, what cognitive concept governs procedural memory?",
+      "gold_relevant_notes": [
+        "6e014224-af01-4011-8050-082d3f9ea35e"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "procedural memory"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "GRAPH_MISS_OR_REGRESSION",
+      "miss_detail": "Multi-hop target 6e014224-af01-4011-8050-082d3f9ea35e not reachable via direct lexical candidate generation",
+      "is_deterministic": true,
+      "latencies_ms": [
+        43.23
+      ],
+      "mean_latency_ms": 43.23,
+      "retrieved_ids": [
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+        "proc-enterprise-integration-0001",
+        "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+        "7b6aae13-83e6-43ec-80df-7c8a202251fd",
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+        "7fd8ae5b-eabd-4b54-a8fb-63e6daae9557",
+        "64fd38ce-3a9c-40af-8348-1021ffcb0fca",
+        "7eb6b761-da1e-4e93-9f7d-6bccbbd48686",
+        "eb0af74c-f4f3-47d6-9a5a-7d60fabcded2",
+        "9a16789d-0d21-44da-8df3-a83a100f6160"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 0.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 31,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-HOP-005",
+      "family": "multi_hop_associative",
+      "split": "calibration",
+      "query": "Tracing from the security gap register through the procedures slot, what runbook defines ingesting a book into the ontology?",
+      "gold_relevant_notes": [
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Ingesting a book"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        43.95
+      ],
+      "mean_latency_ms": 43.95,
+      "retrieved_ids": [
+        "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+        "proc-browser-ai-0001",
+        "7435da46-a22e-4a36-b80f-60dcbd18a5df",
+        "7b6aae13-83e6-43ec-80df-7c8a202251fd",
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+        "7fd8ae5b-eabd-4b54-a8fb-63e6daae9557",
+        "64fd38ce-3a9c-40af-8348-1021ffcb0fca",
+        "b7c3d1e4-9a52-4f68-b103-2c8e5d7a4f19",
+        "a6cd6aa4-910a-462b-8659-341a183536a8"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.5,
+      "first_gold_rank": 2,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 31,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-HOP-006",
+      "family": "multi_hop_associative",
+      "split": "calibration",
+      "query": "Following project structure preferences through the Elite Quant Bot, what architectural principles govern XAU_Kinetic?",
+      "gold_relevant_notes": [
+        "f82194d2-31a8-4c91-a83d-e42109ab7d12"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "XAU_Kinetic"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "GRAPH_MISS_OR_REGRESSION",
+      "miss_detail": "Multi-hop target f82194d2-31a8-4c91-a83d-e42109ab7d12 not reachable via direct lexical candidate generation",
+      "is_deterministic": true,
+      "latencies_ms": [
+        38.39
+      ],
+      "mean_latency_ms": 38.39,
+      "retrieved_ids": [
+        "ae0206df-b0cb-4810-b2a2-cea462600561",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "17e7ea30-a054-4b96-b33e-a42a05115eb8",
+        "5d7b785f-221c-48ba-9e7e-557998c9fefa",
+        "b5b8ed33-da3a-42cc-8e94-4dde6b1edb6d",
+        "finscope-project-core",
+        "c756201a-2e4b-4471-bada-3d7ddd1f7b71",
+        "d0f3ac43-9b23-4152-999b-8dee06b43c71",
+        "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 9,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-HOP-007",
+      "family": "multi_hop_associative",
+      "split": "held_out",
+      "query": "Starting from multi-file preferences through the trading bot dependency, what procedure handles deployment and rollback?",
+      "gold_relevant_notes": [
+        "b492a8e1-5c02-4b21-9e12-c7f8a31e9202"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Deployment"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        43.8
+      ],
+      "mean_latency_ms": 43.8,
+      "retrieved_ids": [
+        "b492a8e1-5c02-4b21-9e12-c7f8a31e9202",
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+        "2338e60b-8d54-47ff-9e90-c4291377151a",
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+        "0056507e-53b9-4d12-9610-a5be259403f5",
+        "9a16789d-0d21-44da-8df3-a83a100f6160",
+        "b7c3d1e4-9a52-4f68-b103-2c8e5d7a4f19",
+        "64fd38ce-3a9c-40af-8348-1021ffcb0fca",
+        "7b6aae13-83e6-43ec-80df-7c8a202251fd",
+        "c1a01101-7291-49fa-9481-22904c10d020"
+      ],
+      "hits_at_1": true,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 1.0,
+      "first_gold_rank": 1,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 31,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-HOP-008",
+      "family": "multi_hop_associative",
+      "split": "held_out",
+      "query": "Tracing from zero-dollar SaaS through implementation prompt splits, what document provides the tech stack reference?",
+      "gold_relevant_notes": [
+        "67e1cb1d-3e5a-45be-b265-67bb126a2cd3"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Tech Stack"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        441.68
+      ],
+      "mean_latency_ms": 441.68,
+      "retrieved_ids": [
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+        "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc",
+        "67e1cb1d-3e5a-45be-b265-67bb126a2cd3",
+        "moc-council-0014",
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+        "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6",
+        "1328c5fb-3316-4c02-ae53-511eb3d3f96b",
+        "6bdb2775-add5-426b-ac0c-1b1fef75f2e1",
+        "moc-imports-0010",
+        "cat-skills-251-master"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.3333,
+      "first_gold_rank": 3,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-HOP-009",
+      "family": "multi_hop_associative",
+      "split": "held_out",
+      "query": "From project structuring guidelines via quant bot architecture, which document details distributed trading system design?",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10b004"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Arhitectura"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "GRAPH_MISS_OR_REGRESSION",
+      "miss_detail": "Multi-hop target c1a01101-7291-49fa-9481-22904c10b004 not reachable via direct lexical candidate generation",
+      "is_deterministic": true,
+      "latencies_ms": [
+        33.77
+      ],
+      "mean_latency_ms": 33.77,
+      "retrieved_ids": [
+        "ae0206df-b0cb-4810-b2a2-cea462600561",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "17e7ea30-a054-4b96-b33e-a42a05115eb8",
+        "5d7b785f-221c-48ba-9e7e-557998c9fefa",
+        "b5b8ed33-da3a-42cc-8e94-4dde6b1edb6d",
+        "d0f3ac43-9b23-4152-999b-8dee06b43c71",
+        "finscope-project-core",
+        "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+        "c756201a-2e4b-4471-bada-3d7ddd1f7b71"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 9,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-HOP-010",
+      "family": "multi_hop_associative",
+      "split": "held_out",
+      "query": "Through the procedures ontology slot from security gap review, what rule defines quoting from copyrighted sources?",
+      "gold_relevant_notes": [
+        "7b6aae13-83e6-43ec-80df-7c8a202251fd"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "copyrighted"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        39.8
+      ],
+      "mean_latency_ms": 39.8,
+      "retrieved_ids": [
+        "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+        "7b6aae13-83e6-43ec-80df-7c8a202251fd",
+        "9a16789d-0d21-44da-8df3-a83a100f6160",
+        "7435da46-a22e-4a36-b80f-60dcbd18a5df",
+        "7fd8ae5b-eabd-4b54-a8fb-63e6daae9557",
+        "a6cd6aa4-910a-462b-8659-341a183536a8",
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+        "cb0155f4-d99c-4fd0-b4c7-2326604c70f4",
+        "b777e588-a5ac-47da-83f2-260c7e476a69",
+        "04e86b85-4346-4c5f-a495-c5a43231b61e"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.5,
+      "first_gold_rank": 2,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 23,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-CNF-001",
+      "family": "conflict",
+      "split": "development",
+      "query": "Which rollback procedure applies specifically to repository git recovery versus automated service deployment?",
+      "gold_relevant_notes": [
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+        "b492a8e1-5c02-4b21-9e12-c7f8a31e9202"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Procedure",
+        "Procedure"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        41.24
+      ],
+      "mean_latency_ms": 41.24,
+      "retrieved_ids": [
+        "b492a8e1-5c02-4b21-9e12-c7f8a31e9202",
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+        "64fd38ce-3a9c-40af-8348-1021ffcb0fca",
+        "2338e60b-8d54-47ff-9e90-c4291377151a",
+        "7b6aae13-83e6-43ec-80df-7c8a202251fd",
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+        "b7c3d1e4-9a52-4f68-b103-2c8e5d7a4f19",
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+        "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+        "a6cd6aa4-910a-462b-8659-341a183536a8"
+      ],
+      "hits_at_1": true,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 1.0,
+      "first_gold_rank": 1,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 31,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-CNF-002",
+      "family": "conflict",
+      "split": "development",
+      "query": "When ingesting untrusted external material versus structured books, which sanitization rule takes precedence?",
+      "gold_relevant_notes": [
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Procedure",
+        "Procedure"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        429.79
+      ],
+      "mean_latency_ms": 429.79,
+      "retrieved_ids": [
+        "multi-agent-execution-protocol-v1",
+        "cat-skills-251-master",
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+        "13fbebce-897e-579c-8d82-04368506cb7b",
+        "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+        "00ac0842-2c43-4a9d-a579-a83bfa271995",
+        "7b6aae13-83e6-43ec-80df-7c8a202251fd",
+        "022e88d5-e0cc-4483-a21f-11a3ab1dd4c1"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.3333,
+      "first_gold_rank": 3,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-CNF-003",
+      "family": "conflict",
+      "split": "development",
+      "query": "When an agent retrieves learned behavior, does declarative fact recall or procedural execution govern?",
+      "gold_relevant_notes": [
+        "e045ded5-01fd-4a28-8f85-203ebae670de",
+        "6e014224-af01-4011-8050-082d3f9ea35e"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "memory",
+        "memory"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note e045ded5-01fd-4a28-8f85-203ebae670de ranked at position 138, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        440.02
+      ],
+      "mean_latency_ms": 440.02,
+      "retrieved_ids": [
+        "vault-memory-mesh-architecture-0001",
+        "multi-agent-execution-protocol-v1",
+        "knw-retrieval-bottleneck-p0-0001",
+        "knw-memory-usage-audit-principles-0001",
+        "cat-skills-251-master",
+        "knw-benchmarks-2026-0001",
+        "proc-browser-ai-0001",
+        "53f27d1c-b47a-5c1e-b963-dcdf3fddd8cb",
+        "123fe8df-2490-44f0-b695-143c3d5a997f",
+        "0056507e-53b9-4d12-9610-a5be259403f5"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-CNF-004",
+      "family": "conflict",
+      "split": "development",
+      "query": "When debugging test pass failures, is the root cause cancelling changes or a deceptive defensive guard?",
+      "gold_relevant_notes": [
+        "fd63129c-091c-4171-9eb4-b7c28190b1a4",
+        "123fe8df-2490-44f0-b695-143c3d5a997f"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "problem",
+        "problem"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note fd63129c-091c-4171-9eb4-b7c28190b1a4 ranked at position 12, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        445.89
+      ],
+      "mean_latency_ms": 445.89,
+      "retrieved_ids": [
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "cat-skills-251-master",
+        "jarvis-cognitive-fortress-pattern",
+        "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9",
+        "123fe8df-2490-44f0-b695-143c3d5a997f",
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+        "022e88d5-e0cc-4483-a21f-11a3ab1dd4c1",
+        "00ac0842-2c43-4a9d-a579-a83bfa271995",
+        "a6cd6aa4-910a-462b-8659-341a183536a8",
+        "01948766-0019-45b6-bbd6-c3df9020feae"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.2,
+      "first_gold_rank": 5,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-CNF-005",
+      "family": "conflict",
+      "split": "calibration",
+      "query": "When handling personal data in high-risk AI decision systems, which European regulation defines compliance boundaries?",
+      "gold_relevant_notes": [
+        "idx-leg-eu-aiact-2024-1689",
+        "idx-leg-eu-gdpr-2016-679"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Regulamentul",
+        "Regulamentul"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "CANDIDATE_MISS",
+      "miss_detail": "Gold note idx-leg-eu-aiact-2024-1689 not found in candidate pool (BM25/entity generation)",
+      "is_deterministic": true,
+      "latencies_ms": [
+        31.56
+      ],
+      "mean_latency_ms": 31.56,
+      "retrieved_ids": [
+        "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 0.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 1,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-CNF-006",
+      "family": "conflict",
+      "split": "calibration",
+      "query": "When storing active runtime variables, should they be indexed in the dynamic state slot or the retrieval catalog?",
+      "gold_relevant_notes": [
+        "slot-05-state",
+        "slot-15-retrieval"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Ontology Slot",
+        "Ontology Slot"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note slot-05-state ranked at position 14, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        134.14
+      ],
+      "mean_latency_ms": 134.14,
+      "retrieved_ids": [
+        "vault-architecture-map-0001",
+        "ontology-spec",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "cat-skills-251-master",
+        "knw-benchmarks-2026-0001",
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+        "proc-brain-arch-0001",
+        "moc-master-brain-0001",
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+        "slot-03-ontology"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 64,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-CNF-007",
+      "family": "conflict",
+      "split": "held_out",
+      "query": "When context token limits are reached, should the system truncate candidate generation or compress the final pack?",
+      "gold_relevant_notes": [
+        "knw-context-packing-p1-0001",
+        "knw-retrieval-bottleneck-p0-0001"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Empirical Findings",
+        "Empirical Findings"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note knw-context-packing-p1-0001 ranked at position 14, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        483.28
+      ],
+      "mean_latency_ms": 483.28,
+      "retrieved_ids": [
+        "knw-retrieval-bottleneck-p0-0001",
+        "cat-skills-251-master",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "slot-05-state",
+        "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+        "c1a01101-7291-49fa-9481-22904c10d020",
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+        "0056507e-53b9-4d12-9610-a5be259403f5",
+        "reg-retrieval-hypotheses-0001",
+        "13ce9272-3ee4-4b34-9e49-cbdfb26c5ce4"
+      ],
+      "hits_at_1": true,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 1.0,
+      "first_gold_rank": 1,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-CNF-008",
+      "family": "conflict",
+      "split": "held_out",
+      "query": "When deploying bilingual Romanian-English user interfaces, does the strict English prompt preference apply to internal system prompts?",
+      "gold_relevant_notes": [
+        "f10029dc-e28e-4710-bf3a-b2b48bfb84dc",
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "prompt",
+        "prompt"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        438.41
+      ],
+      "mean_latency_ms": 438.41,
+      "retrieved_ids": [
+        "f10029dc-e28e-4710-bf3a-b2b48bfb84dc",
+        "71a2ef74-8d48-411d-b686-d44746f0515c",
+        "cat-skills-251-master",
+        "1328c5fb-3316-4c02-ae53-511eb3d3f96b",
+        "moc-council-0014",
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+        "slot-05-state",
+        "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9",
+        "c1a01101-7291-49fa-9481-22904c10c001",
+        "0d68bba6-662b-4633-b065-bf1666889af9"
+      ],
+      "hits_at_1": true,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 1.0,
+      "first_gold_rank": 1,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-CNF-009",
+      "family": "conflict",
+      "split": "held_out",
+      "query": "When setting up trade routing in MetaTrader, should execution logic reside in the EA bot or the clean architecture layer?",
+      "gold_relevant_notes": [
+        "d94d32d6-701e-43b7-b031-761b2c6c8e43",
+        "f82194d2-31a8-4c91-a83d-e42109ab7d12"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Trading",
+        "Trading"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note d94d32d6-701e-43b7-b031-761b2c6c8e43 ranked at position 114, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        428.92
+      ],
+      "mean_latency_ms": 428.92,
+      "retrieved_ids": [
+        "ae0206df-b0cb-4810-b2a2-cea462600561",
+        "a8a64a3e-1d72-4971-9f2b-64b14a3ea916",
+        "c1a01101-7291-49fa-9481-22904c10b004",
+        "f82194d2-31a8-4c91-a83d-e42109ab7d12",
+        "vault-architecture-map-0001",
+        "cat-skills-251-master",
+        "b492a8e1-5c02-4b21-9e12-c7f8a31e9202",
+        "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6",
+        "735c6b3e-bf68-49db-8746-95cc2660ead4",
+        "99280cf1-6eb2-449c-a778-e800c2868e07"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.25,
+      "first_gold_rank": 4,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-CNF-010",
+      "family": "conflict",
+      "split": "held_out",
+      "query": "When handling classified state data in defense contexts, does general HG 585/2002 or ministerial order M.172/2021 govern?",
+      "gold_relevant_notes": [
+        "knw-leg-hg585-2002-0001",
+        "idx-leg-ro-mapn-m172-2021"
+      ],
+      "distractor_ids": [],
+      "required_facts": [
+        "Clasificate",
+        "Clasificate"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "CANDIDATE_MISS",
+      "miss_detail": "Gold note knw-leg-hg585-2002-0001 not found in candidate pool (BM25/entity generation)",
+      "is_deterministic": true,
+      "latencies_ms": [
+        30.14
+      ],
+      "mean_latency_ms": 30.14,
+      "retrieved_ids": [],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 0.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 0,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DST-001",
+      "family": "distractor",
+      "split": "development",
+      "query": "Show the architectural system dataflow and boundary topology of the memory vault.",
+      "gold_relevant_notes": [
+        "vault-architecture-map-0001"
+      ],
+      "distractor_ids": [
+        "vault-master-index-0001"
+      ],
+      "required_facts": [
+        "Vault Architecture"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        426.65
+      ],
+      "mean_latency_ms": 426.65,
+      "retrieved_ids": [
+        "multi-agent-execution-protocol-v1",
+        "vault-architecture-map-0001",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "vault-memory-mesh-architecture-0001",
+        "c1a01101-7291-49fa-9481-22904c10d090",
+        "67a36e52-a645-57b9-a04e-fb4b1b08fac5",
+        "f96cf593-6ff1-5671-8498-2d5bda03b414",
+        "fc6fd29b-f62b-5b87-ba0d-98b51eb4ab54",
+        "slot-05-state",
+        "aa6cb048-4c56-5d2e-a4d5-10d1cf385d3b"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.5,
+      "first_gold_rank": 2,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DST-002",
+      "family": "distractor",
+      "split": "development",
+      "query": "What steps are required to restore git repository state after a corrupted commit?",
+      "gold_relevant_notes": [
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840009"
+      ],
+      "distractor_ids": [
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+      ],
+      "required_facts": [
+        "Git"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        425.71
+      ],
+      "mean_latency_ms": 425.71,
+      "retrieved_ids": [
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "be1863da-7db4-48b7-9486-ad13b1a74152",
+        "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+        "ff28fea6-0138-41b6-acd7-e1c0759966b1",
+        "911ffebf-ab09-4d79-8aac-247781c673a4",
+        "1a25d3da-57e2-4902-ab35-da8b476d7e7b",
+        "64b95fc3-bf65-4b06-87c1-f84129396a23",
+        "d5ee32c8-67be-4c08-b6a4-5f60f0456fb1",
+        "e66a94e4-28b6-47d6-90b3-358cd6dcd743"
+      ],
+      "hits_at_1": true,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 1.0,
+      "first_gold_rank": 1,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DST-003",
+      "family": "distractor",
+      "split": "development",
+      "query": "What rules govern soft context budgeting and graceful disclosure degradation?",
+      "gold_relevant_notes": [
+        "knw-context-packing-p1-0001"
+      ],
+      "distractor_ids": [
+        "knw-retrieval-bottleneck-p0-0001"
+      ],
+      "required_facts": [
+        "Context Packing"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note knw-context-packing-p1-0001 ranked at position 23, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        421.31
+      ],
+      "mean_latency_ms": 421.31,
+      "retrieved_ids": [
+        "knw-retrieval-bottleneck-p0-0001",
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+        "0d0d9f30-fa32-416f-95e3-0149006dae79",
+        "1328c5fb-3316-4c02-ae53-511eb3d3f96b",
+        "022e88d5-e0cc-4483-a21f-11a3ab1dd4c1",
+        "00ac0842-2c43-4a9d-a579-a83bfa271995",
+        "7fd8ae5b-eabd-4b54-a8fb-63e6daae9557",
+        "01948766-0019-45b6-bbd6-c3df9020feae",
+        "01db8d4d-2359-4d1b-bed4-c96f32f9fe5e",
+        "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 0.0,
+      "distractor_intruded": true,
+      "distractor_ranked_above_gold": true,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DST-004",
+      "family": "distractor",
+      "split": "development",
+      "query": "Which system stores consolidated long-term neural memory across extended timeframes?",
+      "gold_relevant_notes": [
+        "11e9fe55-6924-4231-9635-c5629bff6ae3"
+      ],
+      "distractor_ids": [
+        "e045ded5-01fd-4a28-8f85-203ebae670de"
+      ],
+      "required_facts": [
+        "long-term memory"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note 11e9fe55-6924-4231-9635-c5629bff6ae3 ranked at position 18, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        416.48
+      ],
+      "mean_latency_ms": 416.48,
+      "retrieved_ids": [
+        "fc6fd29b-f62b-5b87-ba0d-98b51eb4ab54",
+        "67a36e52-a645-57b9-a04e-fb4b1b08fac5",
+        "5fa452dd-c98b-581d-8ee9-24450ae24390",
+        "f5cfb84d-68d1-43ae-b67a-513e3ce7aa34",
+        "23b3793b-fef3-5536-bfc1-da42d6c8a700",
+        "53f27d1c-b47a-5c1e-b963-dcdf3fddd8cb",
+        "8091d22f-ca07-53d1-aa10-7b2f5c82e861",
+        "f96cf593-6ff1-5671-8498-2d5bda03b414",
+        "slot-05-state",
+        "13fbebce-897e-579c-8d82-04368506cb7b"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DST-005",
+      "family": "distractor",
+      "split": "calibration",
+      "query": "Which ontology slot defines the memory search and candidate generation pipeline?",
+      "gold_relevant_notes": [
+        "slot-15-retrieval"
+      ],
+      "distractor_ids": [
+        "slot-14-routing"
+      ],
+      "required_facts": [
+        "Retrieval"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        460.54
+      ],
+      "mean_latency_ms": 460.54,
+      "retrieved_ids": [
+        "slot-13-agents",
+        "slot-15-retrieval",
+        "slot-09-provenance",
+        "slot-01-identity",
+        "slot-08-constraints",
+        "slot-12-skills",
+        "slot-10-confidence",
+        "slot-14-routing",
+        "slot-04-relationships",
+        "ontology-spec"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.5,
+      "first_gold_rank": 2,
+      "facts_coverage": 1.0,
+      "distractor_intruded": true,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DST-006",
+      "family": "distractor",
+      "split": "calibration",
+      "query": "What is the closed-loop protocol for self-reflection and multi-stage evaluation?",
+      "gold_relevant_notes": [
+        "proc-reflexion-0001"
+      ],
+      "distractor_ids": [
+        "proc-brain-arch-0001"
+      ],
+      "required_facts": [
+        "Reflexion"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        434.85
+      ],
+      "mean_latency_ms": 434.85,
+      "retrieved_ids": [
+        "proc-reflexion-0001",
+        "multi-agent-execution-protocol-v1",
+        "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+        "0d0d9f30-fa32-416f-95e3-0149006dae79",
+        "00ad356a-a850-4ca8-a29a-a4150b3ad133",
+        "1328c5fb-3316-4c02-ae53-511eb3d3f96b",
+        "00c46560-b27b-4e96-ae81-8f0b637920ad",
+        "123fe8df-2490-44f0-b695-143c3d5a997f",
+        "vault-master-index-0001"
+      ],
+      "hits_at_1": true,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 1.0,
+      "first_gold_rank": 1,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DST-007",
+      "family": "distractor",
+      "split": "held_out",
+      "query": "What clean domain layers isolate business logic from MT5 API connectors in XAU_Kinetic?",
+      "gold_relevant_notes": [
+        "f82194d2-31a8-4c91-a83d-e42109ab7d12"
+      ],
+      "distractor_ids": [
+        "d94d32d6-701e-43b7-b031-761b2c6c8e43"
+      ],
+      "required_facts": [
+        "XAU_Kinetic"
+      ],
+      "reachability_status": "BASELINE_REACHABLE",
+      "miss_bucket": "RETRIEVED_CORRECTLY",
+      "miss_detail": "All gold relevant notes present in disclosed results",
+      "is_deterministic": true,
+      "latencies_ms": [
+        457.57
+      ],
+      "mean_latency_ms": 457.57,
+      "retrieved_ids": [
+        "b492a8e1-5c02-4b21-9e12-c7f8a31e9202",
+        "1328c5fb-3316-4c02-ae53-511eb3d3f96b",
+        "d94d32d6-701e-43b7-b031-761b2c6c8e43",
+        "f82194d2-31a8-4c91-a83d-e42109ab7d12",
+        "ae0206df-b0cb-4810-b2a2-cea462600561",
+        "5e996db2-ce48-40c7-bee7-3fc9ca7b8c87",
+        "cat-skills-251-master",
+        "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc",
+        "jarvis-cognitive-fortress-pattern",
+        "e08b0d08-8527-4ddf-a260-09f5f6f7c499"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": true,
+      "hits_at_10": true,
+      "all_gold_at_10": true,
+      "reciprocal_rank": 0.25,
+      "first_gold_rank": 4,
+      "facts_coverage": 1.0,
+      "distractor_intruded": true,
+      "distractor_ranked_above_gold": true,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DST-008",
+      "family": "distractor",
+      "split": "held_out",
+      "query": "What European regulation establishes harmonized transparency rules for foundation models and artificial intelligence?",
+      "gold_relevant_notes": [
+        "idx-leg-eu-aiact-2024-1689"
+      ],
+      "distractor_ids": [
+        "idx-leg-eu-dora-2022-2554"
+      ],
+      "required_facts": [
+        "AI Act"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note idx-leg-eu-aiact-2024-1689 ranked at position 22, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        491.2
+      ],
+      "mean_latency_ms": 491.2,
+      "retrieved_ids": [
+        "leg-eu-aiact-2024-1689",
+        "leg-eu-dora-2022-2554",
+        "leg-eu-mica-2023-1114",
+        "leg-eu-gdpr-2016-679",
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+        "022e88d5-e0cc-4483-a21f-11a3ab1dd4c1",
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+        "0d0d9f30-fa32-416f-95e3-0149006dae79",
+        "00ac0842-2c43-4a9d-a579-a83bfa271995",
+        "01948766-0019-45b6-bbd6-c3df9020feae"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 1.0,
+      "distractor_intruded": false,
+      "distractor_ranked_above_gold": false,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DST-009",
+      "family": "distractor",
+      "split": "held_out",
+      "query": "What standard prevents reporting deceptive percentage deltas over tiny evaluation samples?",
+      "gold_relevant_notes": [
+        "proc-stats-reporting-0001"
+      ],
+      "distractor_ids": [
+        "knw-benchmarks-2026-0001"
+      ],
+      "required_facts": [
+        "Propor"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note proc-stats-reporting-0001 ranked at position 15, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        424.1
+      ],
+      "mean_latency_ms": 424.1,
+      "retrieved_ids": [
+        "knw-benchmarks-2026-0001",
+        "multi-agent-execution-protocol-v1",
+        "0d0d9f30-fa32-416f-95e3-0149006dae79",
+        "1ee292c4-d86b-5927-8242-3bdf0124ab9e",
+        "327bd878-c580-59ca-bfbc-5e09579d61b4",
+        "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+        "00ad356a-a850-4ca8-a29a-a4150b3ad133",
+        "13fbebce-897e-579c-8d82-04368506cb7b",
+        "00c46560-b27b-4e96-ae81-8f0b637920ad",
+        "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 0.0,
+      "distractor_intruded": true,
+      "distractor_ranked_above_gold": true,
+      "candidate_count": 871,
+      "ranking_arm": "fused_score"
+    },
+    {
+      "id": "H1-DST-010",
+      "family": "distractor",
+      "split": "held_out",
+      "query": "What retrospective lesson describes when two independently correct fixes cancel each other?",
+      "gold_relevant_notes": [
+        "fd63129c-091c-4171-9eb4-b7c28190b1a4"
+      ],
+      "distractor_ids": [
+        "123fe8df-2490-44f0-b695-143c3d5a997f"
+      ],
+      "required_facts": [
+        "independently correct"
+      ],
+      "reachability_status": "BASELINE_NOT_REACHABLE",
+      "miss_bucket": "RANKING_MISS",
+      "miss_detail": "Gold note fd63129c-091c-4171-9eb4-b7c28190b1a4 ranked at position 23, beyond page size limit",
+      "is_deterministic": true,
+      "latencies_ms": [
+        63.84
+      ],
+      "mean_latency_ms": 63.84,
+      "retrieved_ids": [
+        "00ad356a-a850-4ca8-a29a-a4150b3ad133",
+        "00c46560-b27b-4e96-ae81-8f0b637920ad",
+        "04a60639-b8f3-4d37-a1bc-ad7ca536a4b2",
+        "05ce979d-395b-4c35-802e-47ffc410803a",
+        "062cb894-65b4-4faf-a7fc-77cb067d492e",
+        "123fe8df-2490-44f0-b695-143c3d5a997f",
+        "063669ac-003c-4ec8-9d7c-c8bbc75ca2cb",
+        "08c91a9a-2f0e-4d18-b76e-b501d30fcde9",
+        "0ac1f5d1-78f6-4c8f-bd08-a8b70be3b994",
+        "0ba9e146-1258-404b-b5f5-1888dfc08b5b"
+      ],
+      "hits_at_1": false,
+      "hits_at_5": false,
+      "hits_at_10": false,
+      "all_gold_at_10": false,
+      "reciprocal_rank": 0.0,
+      "first_gold_rank": null,
+      "facts_coverage": 0.0,
+      "distractor_intruded": true,
+      "distractor_ranked_above_gold": true,
+      "candidate_count": 594,
+      "ranking_arm": "fused_score"
+    }
+  ]
+}
