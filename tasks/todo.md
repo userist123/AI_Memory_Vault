@@ -73,3 +73,15 @@ non-ASCII auth headers), #215 (`c19fd5b6`), #214 (`0e7d7857`), #212 (`f8dc8a31`)
 (`1e2f6a0d`, plus cryptography 50.0.2 and the MCP-surface test fix that #209+#214 broke on main).
 main @ `1e2f6a0d`: security/tests 204 passed; full suite 2912 passed / 13 skipped / 9 xfailed.
 Waiting on owner: #207 (blocks agent tools once merged), #206 (split recommended).
+
+## NEXT PROJECT (queued 2026-10-08) — LogAnalyzer contract audit
+Start only after the Book-to-Memory blocker PRs are merged and no PR is open.
+Stage 1 is an audit, **no code changes**:
+- [ ] Read, in order: `tasks/loganalyzer/LOGANALYZER_PROGRAM_REQUIREMENTS.md` (functional/architectural
+      contract), then `tasks/loganalyzer/LOGANALYZER_PRODUCT_UX_CONTRACT.md` (how capabilities are shown).
+- [ ] Audit `main` (`02_PRODUCT/projects/workspaces/loganalyzer-dfir/`) against every requirement and
+      classify each as IMPLEMENTED / PARTIAL / MISSING / UNWIRED, with file:line evidence and the
+      production consumer (or its absence) for each.
+- [ ] Rules from the owner: existing functionality is not refactored or removed just to build the UI;
+      a facade without a real consumer is never presented as production-ready.
+- [ ] Deliver the classified list for owner review before any AI is allowed to modify code.
