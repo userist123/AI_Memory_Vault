@@ -809,6 +809,11 @@ class RealAgentExecutionHarness:
                 "uri": uri,
                 "sha256": integrity["sha256"],
                 "text": body,
+                "evidence_level": "DIRECT",
+                "classification": read.get("classification"),
+                "lifecycle": read.get("lifecycle"),
+                "line_start": evidence[0].get("line_start"),
+                "line_end": evidence[0].get("line_end"),
                 "evidence": evidence[0],
             })
         if sum(len(str(d["text"])) for d in documents) > 24000:
@@ -945,6 +950,9 @@ class RealAgentExecutionHarness:
                     'content': str(content)[:500],
                     'authority': 'DATA_ONLY',
                     'untrusted': True,
+                    'evidence_level': item.get('evidence_level', 'UNKNOWN'),
+                    'provenance': item.get('provenance'),
+                    'verification': item.get('verification'),
                 })
 
         execution_context: Dict[str, Any] = {
