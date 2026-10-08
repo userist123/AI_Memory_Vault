@@ -118,6 +118,20 @@ Spec: `tasks/loganalyzer/CONTRACT_AUDIT_STAGE1.md` §7 (WP order) + §8 (12 fina
 - [ ] Review each PR: Windows CI green, local tests vs main, production-consumer grep; then merge in order WP0 → WP1/WP12.
 - [ ] Next: WP2 (Finding contract + state vocabulary), then WP3/WP4.
 
+## Security fixes found by the accreditation analysis (confirmed by orchestrator, 2026-10-08)
+- [ ] `LogAnalyzer.Infrastructure/Services/AuditCollectionService.cs:33` falls back to a developer path
+      (`C:\Users\user\Desktop\LogAnalyzer.MVP\Scripts\AuditCollector.ps1`) and runs it with
+      `-ExecutionPolicy Bypass` (line 49); `AuditCollector.ps1` is not in the repo, so the feature is broken
+      and any file at that path would run. Fix: drop the fallback, fail closed with a clear error, resolve the
+      script only from the app's own signed install dir. Small PR after WP1 merges (avoid conflicts).
+- [ ] Licensing: the key-derivation salt is in code (`LicenseService.cs`) and in `Generate-LicenseKey.ps1`, and
+      `license.lic` is committed, so anyone with the repo can mint licences. Fix needs an owner decision:
+      asymmetric signing (owner keeps the private key offline, app ships only the public key). Then rotate,
+      remove the committed licence file from the tree.
+- [ ] Hardcoded demo identity "LAB-PC\Owner" in `ViewModels/MainViewModel.cs:645-659` (workspace-root legacy
+      demo data): label as demo or drop from production views (decision 4: legacy root files untouched unless
+      they present fake data as real → WP1 scope).
+
 ## Side deliverable — why a local admin should not collect/delete audit logs (owner request 2026-10-08)
 Standalone document for the organisation, NOT tied to the app. Delivered to the owner as .docx only (not in the repo).
 Basis: Legea 182/2002, HG 585/2002 (INFOSEC), ORNISS; NIS2 / 2024/2690 / OUG 155/2024 as recommendations.
