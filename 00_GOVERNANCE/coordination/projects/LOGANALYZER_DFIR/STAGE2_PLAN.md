@@ -197,3 +197,20 @@ air-gapped networks / standalone PCs. The app's own behaviour and documentation 
       sample PrintService/Operational export, sample spool files (.SPL/.SHD) from a test printer, MFP logs per model.
 - [ ] Job states incl. "nothing came out"; content capture from kept spool files (EMF/XPS → text/PDF), stored as
       classified case material; naming-standard check; chain print→scan→PDF→USB.
+
+## EXECUTION QUEUE — "make the app ready" (owner, 2026-10-08)
+One work package at a time (token rule), each = fresh agent from a short prompt + checkpoint file, PR, CI green
+(Windows build + Python `enforce`), orchestrator verification (trial merge, both Python roots, .NET build), merge.
+1. [ ] #235 notes/specs → main; #233 WP2 → main; WP-ED PR → main; WP-PKG PR → main (incl. AuditCollector.ps1, dev-path fix, no wmic, self-contained smoke test).
+2. [ ] WP1b — log-clear lifecycle (routine vs unexpected), no after-hours auto-penalty, no "Conform" on absence.
+3. [ ] WP3 — hash-chained case audit + custody, evidence lifecycle states (decision 11), mutation invalidation, case scope fields (decision 23).
+4. [ ] WP4 — verification layer (separate assembly, verdicts, contradictions, gate for Vault export/report banner).
+5. [ ] WP15 — procedure profile (hours, rotation, approved software, expected GPO, zones; manual + import), GPO/policy change timeline + diff, control gap, configured/applied/enforced/observed, log lifecycle, time manipulation.
+6. [ ] WP14 + WP11 Tier 1 — media register (registration no., decision 16), users/roles + clearances (decision 17), USB/CD-DVD/portable storage, NIC/Wi-Fi/BT on air-gapped hosts, zone transfers; SMB 5140/5145, 4663, accounts, RDP/WinRM, security agents.
+7. [ ] WP5/WP6/WP7 — case persistence + Home + coverage matrix; RO/EN localisation, accessibility, finding card/Why/Evidence/Know-Think-Don't-know; goal-based navigation, Verify + Memory pages.
+8. [ ] WP13 — Access Evidence + classification (NATO/EU/national, decision 21), mismatch, document lifecycle.
+9. [ ] WP16a — print tracking (decision 26, PRINT_TRACKING_RESEARCH.md): job states, content capture EMF/XPS → text/PDF, naming check, device confirmation (P1 import / P2-P3 SNMP-IPP).
+10. [ ] WP8 AI surface (P2/P3 only), WP9 response verification, WP10 report profiles + export manifest + classification marking.
+11. [ ] WP17 baseline/bulk/staging; WP16 other imports on demand.
+12. [ ] Licensing → asymmetric signatures (explain key handling to owner first); waiver + edition-policy public keys from owner.
+Owner-supplied items that stay placeholders until provided: signing keys, MFP/printer samples, document-name examples.
