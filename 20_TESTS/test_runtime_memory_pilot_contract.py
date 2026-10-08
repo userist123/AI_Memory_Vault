@@ -6,6 +6,7 @@ mocking the entire pipeline.
 from __future__ import annotations
 
 import json
+import os
 import sys
 
 import pytest
@@ -76,6 +77,22 @@ class MaliciousModelExecutor(AgentModelExecutor):
             latency_ms=0.0,
             response_status="success",
             response_text=json.dumps(payload),
+        )
+
+
+
+class SecretEchoModelExecutor(AgentModelExecutor):
+    def execute_model(self, context, task):
+        secret = os.environ["MEMORY_CONTROLLER_HMAC_SECRET"]
+        return ModelExecutionRecord(
+            provider_mode="local",
+            provider_name="test",
+            model_name="test-model",
+            request_started_at="2026-10-08T00:00:00+00:00",
+            response_finished_at="2026-10-08T00:00:00+00:00",
+            latency_ms=0.0,
+            response_status="success",
+            response_text=json.dumps({"actions": [], "echo": secret}),
         )
 
 
@@ -302,3 +319,22 @@ def test_review_memory_remains_data_only_and_unverified(tmp_path):
     assert "REVIEW" in json.dumps(trace["record"])
     assert '"authority": "DATA_ONLY"' in json.dumps(trace["record"])
     assert '"verification": {"state": "unverified"}' in json.dumps(trace["record"])
+
+def test_synthetic_secret_is_redacted_from_persisted_trace(tmp_path, monkeypatch):
+    secret = "SYNTHETIC_SECRET_20261008"
+    monkeypatch.setenv("MEMORY_CONTROLLER_HMAC_SECRET", secret)
+    harness = RealAgentExecutionHarness(
+        trace_dir=tmp_path / "traces",
+        bootstrap_provider=StaticBootstrap(),
+        model_executor=SecretEchoModelExecutor(provider_mode="local"),
+    )
+    result, trace = harness.execute(
+        task=_task(),
+        agent_id="pilot_secret",
+        agent_role="coder",
+        workspace=tmp_path / "workspace",
+        memory_query="",
+        enable_memory=False,
+    )
+    assert result["status"] == "success"
+    assert secret not in json.dumps(trace["record"], sort_keys=True)
