@@ -766,6 +766,7 @@ class RealAgentExecutionHarness:
         authorizer_principal: Principal = Principal.AI_AGENT,
         default_policy: Optional[BaseAgentPolicy] = None,
         model_executor: Optional[AgentModelExecutor] = None,
+        bootstrap_provider: Optional[Callable[[AgentTask, str], Dict[str, Any]]] = None,
     ):
         if memory_controller is None:
             from cognitive_core.recall_cli import get_memory_controller
@@ -779,7 +780,7 @@ class RealAgentExecutionHarness:
         self.trace_dir = base_trace / 'execution_traces'
         self.trace_dir.mkdir(parents=True, exist_ok=True)
         self.bootstrap_principal = os.getenv("VAULT_BOOTSTRAP_PRINCIPAL", "cloud_cli.codex")
-        self.bootstrap_provider = None
+        self.bootstrap_provider = bootstrap_provider
         self._lock = threading.Lock()
 
     def _default_bootstrap(self, task: AgentTask, principal: str) -> Dict[str, Any]:
