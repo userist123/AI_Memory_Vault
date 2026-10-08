@@ -202,11 +202,17 @@ class SanitizationSession:
         if not verified:
             self.state = EngineState.FAILED_REJECTED
             self.final_disposition = FinalDisposition.NON_CONFORM_REQUIRES_DESTRUCTION
+            self.lba_verification_status = "FAILED_RESIDUAL_DATA_DETECTED"
             self.rejection_reason = "Eșec verificare LBA: model rezidual detectat pe eșantioane."
             self.evidence.log_event("VERIFICATION_FAILED", {})
             return False
 
-        self.evidence.log_event("VERIFICATION_SUCCESS", {})
+        if self.adapter.simulation_mode:
+            self.lba_verification_status = "SIMULATED_NOT_VERIFIED"
+        else:
+            self.lba_verification_status = "CONFORM_PURGED_SAMPLED"
+
+        self.evidence.log_event("VERIFICATION_SUCCESS", {"status": self.lba_verification_status})
         self.state = EngineState.COMPLETED
 
         # REGULĂ CRITICĂ DE INTEGRITATE:
@@ -228,4 +234,5 @@ class SanitizationSession:
             dual_auth=self.dual_auth,
             is_simulation=self.adapter.simulation_mode,
             smartcard_signatures=smartcard_signatures,
+            lba_verification_status=getattr(self, "lba_verification_status", "NOT_PERFORMED"),
         )

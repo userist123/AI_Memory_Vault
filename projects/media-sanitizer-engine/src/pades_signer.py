@@ -93,21 +93,22 @@ class PAdESSigner:
     @classmethod
     def create_pkcs7_detached_signature(cls, data_bytes: bytes, private_key: Any, certificate: Any) -> bytes:
         """
-        Construiește o semnătură reală PKCS#7 peste octeții datelor acoperite de ByteRange.
+        Construiește o semnătură reală PKCS#7 SignedData detașată conform RFC 5652
+        utilizând PKCS7SignatureBuilder din pachetul standard cryptography.
         """
         if HAS_CRYPTO:
-            # Semnare directă a digest-ului cu cheia privată
-            signature = private_key.sign(
-                data_bytes,
-                padding.PKCS1v15(),
-                hashes.SHA256(),
+            from cryptography.hazmat.primitives.serialization import pkcs7, Encoding
+            sig_builder = (
+                pkcs7.PKCS7SignatureBuilder()
+                .set_data(data_bytes)
+                .add_signer(certificate, private_key, hashes.SHA256())
             )
-            # Pentru PAdES simplificat, encapsulăm certificatul public DER și semnătura
-            cert_der = certificate.public_bytes(serialization.Encoding.DER)
-            # Structură simplă binară container DER: [Cert_DER_Len(2) + Cert_DER + Sig_Len(2) + Sig]
-            import struct
-            container = struct.pack(">H", len(cert_der)) + cert_der + struct.pack(">H", len(signature)) + signature
-            return container
+            # Semnătură detașată în format DER binar standard (Binary flag previne conversia CRLF S/MIME)
+            sig_der = sig_builder.sign(
+                Encoding.DER,
+                [pkcs7.PKCS7Options.DetachedSignature, pkcs7.PKCS7Options.Binary],
+            )
+            return sig_der
         else:
             return hashlib.sha256(data_bytes).digest()
 
@@ -137,7 +138,10 @@ class PAdESSigner:
     def verify_pades_pdf(cls, pdf_bytes: bytes) -> bool:
         """
         Validator independent PAdES:
-        Extrage ByteRange, verifică dacă hash-ul datelor acoperite corespunde semnăturii.
+        1. Extrage ByteRange și calculează digest-ul datelor acoperite de semnătură.
+        2. Extrage containerul PKCS#7 / CMS din /Contents.
+        3. Parsează certificatele X.509 atașate în containerul PKCS#7.
+        4. Verifică integritatea: orice octet modificat în afara /Contents invalidează verificarea.
         """
         import re
         br_match = re.search(rb"/ByteRange\s*\[\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*\]", pdf_bytes)
@@ -145,17 +149,60 @@ class PAdESSigner:
             return False
 
         o1, l1, o2, l2 = [int(x) for x in br_match.groups()]
+        if o1 + l1 > len(pdf_bytes) or o2 + l2 > len(pdf_bytes):
+            return False
+
         covered_data = pdf_bytes[o1:o1 + l1] + pdf_bytes[o2:o2 + l2]
         
-        # Extragem conținutul semnăturii
+        # Extragem conținutul semnăturii din /Contents
         sig_match = re.search(rb"/Contents\s*<([0-9a-fA-F]+)>", pdf_bytes)
         if not sig_match:
             return False
 
-        sig_hex = sig_match.group(1).decode("ascii").rstrip("0")
-        if not sig_hex:
+        full_sig_hex = sig_match.group(1).decode("ascii")
+        if not full_sig_hex:
             return False
 
-        # Verificare că hash-ul acoperit nu este gol
+        # Determinăm lungimea exactă a containerului ASN.1 DER (0x30 = SEQUENCE)
+        raw_sig_bytes = bytes.fromhex(full_sig_hex)
+        if len(raw_sig_bytes) < 4 or raw_sig_bytes[0] != 0x30:
+            return False
+
+        # Parse DER length for outer SEQUENCE
+        if raw_sig_bytes[1] == 0x82:
+            total_der_len = ((raw_sig_bytes[2] << 8) | raw_sig_bytes[3]) + 4
+        elif raw_sig_bytes[1] == 0x81:
+            total_der_len = raw_sig_bytes[2] + 3
+        elif raw_sig_bytes[1] < 0x80:
+            total_der_len = raw_sig_bytes[1] + 2
+        else:
+            return False
+
+        if total_der_len > len(raw_sig_bytes):
+            return False
+
+        sig_der = raw_sig_bytes[:total_der_len]
+
+        # Validare că digest-ul datelor acoperite corespunde digest-ului semnat în containerul PKCS#7
         calc_digest = hashlib.sha256(covered_data).digest()
-        return len(calc_digest) == 32
+        if len(calc_digest) != 32:
+            return False
+
+        # În standardul PKCS#7 / CMS SignedData cu semnare detașată,
+        # messageDigest (OID 1.2.840.113549.1.9.4) al datelor acoperite este obligatoriu inclus
+        # în atributele semnate din structura DER a semnăturii.
+        if calc_digest not in sig_der:
+            return False
+
+        if HAS_CRYPTO:
+            from cryptography.hazmat.primitives.serialization import pkcs7
+            try:
+                # Verificăm că containerul DER este un PKCS#7 valid și extragem certificatele
+                certs = pkcs7.load_der_pkcs7_certificates(sig_der)
+                if not certs or len(certs) == 0:
+                    return False
+                return True
+            except Exception:
+                return False
+
+        return True

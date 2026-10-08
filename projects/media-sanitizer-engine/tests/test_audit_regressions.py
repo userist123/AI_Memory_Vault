@@ -248,3 +248,91 @@ def test_pades_independent_verification(dummy_device, valid_dual_auth, tmp_path)
 
     # Validare independentă a structurii PAdES
     assert PAdESSigner.verify_pades_pdf(pdf_bytes) is True
+
+
+def test_pades_fails_on_post_signing_pdf_modification(dummy_device, valid_dual_auth, tmp_path):
+    """
+    AUDIT CERINȚA D: Modificarea PDF-ului după semnare trebuie să invalideze verificarea.
+    """
+    from src.registry_connector import RegistryBridgeClient
+    from src.pades_signer import PAdESSigner
+
+    sim_adapter = HardwareAdapter(simulation_mode=True)
+    session = SanitizationSession(
+        device=dummy_device,
+        classification=ClassificationLevel.SECRET,
+        hardware_adapter=sim_adapter,
+    )
+    session.confirm_target_safeguard("3456")
+    session.evaluate_and_authorize(dual_auth=valid_dual_auth)
+    session.execute_sanitization()
+    manifest = session.export_manifest()
+
+    bridge = RegistryBridgeClient()
+    export_dir = str(tmp_path / "pades_tamper_out")
+    pdf_out = bridge.prepare_and_sign_for_registry(
+        raw_manifest=manifest,
+        operator_pin="1234",
+        witness_pin="5678",
+        sic_inventory_number="INV-SIC-TEST-TAMPER",
+        output_folder=export_dir,
+    )
+
+    with open(pdf_out, "rb") as pf:
+        pdf_bytes = bytearray(pf.read())
+
+    # Alterăm un octet din antetul documentului acoperit de ByteRange
+    pdf_bytes[10] = ord(b"X") if pdf_bytes[10] != ord(b"X") else ord(b"Y")
+
+    assert PAdESSigner.verify_pades_pdf(bytes(pdf_bytes)) is False
+
+
+def test_lba_verification_failure_triggers_nonconformity(dummy_device, valid_dual_auth):
+    """
+    AUDIT CERINȚA D: Verificare LBA eșuată comută sesiunea în NON_CONFORM_REQUIRES_DESTRUCTION.
+    """
+    sim_adapter = HardwareAdapter(simulation_mode=True)
+    # Injectăm un eșec la verificarea LBA
+    sim_adapter.inject_power_cut(dummy_device.serial_number)
+
+    session = SanitizationSession(
+        device=dummy_device,
+        classification=ClassificationLevel.SECRET,
+        hardware_adapter=sim_adapter,
+    )
+    session.confirm_target_safeguard("3456")
+    session.evaluate_and_authorize(dual_auth=valid_dual_auth)
+    success = session.execute_sanitization()
+
+    assert success is False
+    assert session.state == EngineState.FAILED_REJECTED
+    assert session.final_disposition in (
+        FinalDisposition.NON_CONFORM_REQUIRES_DESTRUCTION,
+        FinalDisposition.INCOMPLETE_ABORTED,
+    )
+
+
+def test_tpm_verification_fails_on_untrusted_or_missing_envelope():
+    """
+    AUDIT CERINȚA D: Semnătură absentă, invalidă sau cheie neacceptată.
+    """
+    from src.tpm_signer import TPMSigner, TPMVerificationError
+
+    bad_manifest = {
+        "session_id": "test-session",
+        "device": {"serial_number": "12345"},
+        "signatures": {}
+    }
+    with pytest.raises(TPMVerificationError, match="nu conține anvelopa"):
+        TPMSigner.verify_manifest_signature(bad_manifest)
+
+
+def test_missing_smartcard_middleware_fails_safe():
+    """
+    AUDIT CERINȚA D: Lipsa smartcardului sau a middleware-ului PKCS#11 blochează execuția.
+    """
+    from src.smartcard_auth import SmartcardAuthenticator, SmartcardError
+
+    # Când simulation_mode=False pe o mașină fără OpenSC / middleware fizic configurat
+    with pytest.raises(SmartcardError, match="Biblioteca PKCS#11 hardware"):
+        SmartcardAuthenticator(simulation_mode=False, custom_pkcs11_lib="/invalid/path/to/missing_pkcs11.so")

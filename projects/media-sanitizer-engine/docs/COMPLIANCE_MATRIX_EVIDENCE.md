@@ -15,7 +15,7 @@ Conform cerințelor de audit, fiecare componentă din platformă este etichetat�
 
 ---
 
-## 2. Matricea de Urmărire a Cerințelor și Dovada Empirică
+## 2. Inventarul Detaliat al Componentelor
 
 | Modul / Cerință | Fișier Sursă | Statut | Dovadă Tehnică / Fișier Test | Limite și Condiții de Funcționare |
 |---|---|---|---|---|
@@ -26,48 +26,58 @@ Conform cerințelor de audit, fiecare componentă din platformă este etichetat�
 | **Fail-Safe la Hardware Lipsă / Eronat** | `src/hardware_adapter.py`<br>`src/state_machine.py` | `IMPLEMENTAT`<br>`TESTAT AUTOMAT` | `tests/test_audit_regressions.py`<br>(`test_regression_hardware_mode_fails_safe_on_missing_device`) | Lipsa dispozitivului pe magistrală comută imediat în `ABORTED_UNSUPPORTED_ENVIRONMENT` fără a simula succes. |
 | **Timeout și Recuperare la Întrerupere** | `src/state_machine.py` | `IMPLEMENTAT`<br>`TESTAT AUTOMAT` | `tests/test_sanitization_engine.py`<br>(`test_power_cut_in_progress_fails_safe`) | Buclă de interogare cu `max_poll_seconds=1800` și tratare explicită a erorilor de alimentare/interfață. |
 | **Suport ATA / SCSI / Crypto Erase** | `src/hardware_adapter.py` | `NEIMPLEMENTAT`<br>`NEVALIDAT OPERAȚIONAL` | N/A | Declarat explicit ca neimplementat în această versiune; blocat cu eroare la selecție. |
-| **Verificare Eșantionată LBA** | `src/hardware_adapter.py` | `IMPLEMENTAT`<br>(limitat)<br>`NEVALIDAT OPERAȚIONAL` | Codul citește blocuri prin `pread` pe fișierul bloc raw | **Limitare documentată:** Verificarea LBA citește exclusiv spațiul logic accesibil prin OS; nu poate citi blocuri retrase de controller sau over-provisioning (care sunt distruse doar de firmware-ul intern). |
-| **Semnare Hardware TPM Manifest** | `src/tpm_signer.py`<br>`src/windows_registry_app.py` | `IMPLEMENTAT`<br>`TESTAT AUTOMAT`<br>`NEVALIDAT OPERAȚIONAL` | `tests/test_audit_regressions.py`<br>(`test_tpm_signature_detects_tampering`) | Semnătură asimetrică `RSA-PSS-SHA256` / `HMAC`. Detectează orice alterare a seriei discului, verdictului, capacității sau hash-ului terminal. |
-| **Smartcard & Semnare PAdES** | `src/pades_signer.py`<br>`src/registry_connector.py` | `IMPLEMENTAT`<br>`TESTAT AUTOMAT`<br>`NEVALIDAT OPERAȚIONAL` | `tests/test_audit_regressions.py`<br>(`test_pades_independent_verification`) | Structură `/ByteRange` conform ISO 32000-1 / ETSI EN 319 142. Container CMS/PKCS#7 semnat criptografic, verificat independent. |
-| **Semnătură Calificată eIDAS** | `src/pades_signer.py` | `TESTAT AUTOMAT`<br>(cu certificat test)<br>`NEVALIDAT OPERAȚIONAL` | `tests/test_audit_regressions.py` | Statutul de „calificată” depinde legal de utilizarea unui token QSCD fizic și a unui certificat eliberat de un QTSP autorizat. |
-| **Pachet Bootabil UEFI (Packaging)** | `src/build_bootable_iso.py` | `IMPLEMENTAT`<br>`TESTAT AUTOMAT` | Rulare directă a scriptului de asamblare | Asamblează arborele EFI, include driverele, generează `grub.cfg` și manifestul SHA-256. Secure Boot este etichetat `NEVALIDAT_NECESITA_CHEIE_INSTITUTIONALA_OEM`. |
+| **Verificare Eșantionată LBA** | `src/hardware_adapter.py` | `IMPLEMENTAT`<br>(limitat)<br>`TESTAT AUTOMAT`<br>`NEVALIDAT OPERAȚIONAL` | `tests/test_audit_regressions.py`<br>(`test_lba_verification_failure_triggers_nonconformity`) | **Limitare documentată:** Verificarea LBA citește exclusiv spațiul logic accesibil prin OS (`pread`); nu poate citi blocuri retrase de controller sau over-provisioning (care sunt distruse doar de comanda firmware internă). |
+| **Semnare Hardware TPM Manifest** | `src/tpm_signer.py`<br>`src/windows_registry_app.py` | `IMPLEMENTAT`<br>`TESTAT AUTOMAT`<br>`NEVALIDAT OPERAȚIONAL` | `tests/test_audit_regressions.py`<br>(`test_tpm_signature_detects_tampering`, `test_tpm_verification_fails_on_untrusted_or_missing_envelope`) | Semnătură asimetrică `RSA-PSS-SHA256` / `HMAC`. Detectează orice alterare a seriei discului, verdictului, capacității sau hash-ului terminal. |
+| **Smartcard & Semnare PAdES** | `src/pades_signer.py`<br>`src/registry_connector.py` | `IMPLEMENTAT`<br>`TESTAT AUTOMAT`<br>`NEVALIDAT OPERAȚIONAL` | `tests/test_audit_regressions.py`<br>(`test_pades_independent_verification`, `test_pades_fails_on_post_signing_pdf_modification`) | Structură `/ByteRange` conform ISO 32000-1 / ETSI EN 319 142. Container CMS/PKCS#7 semnat criptografic cu flag `Binary`, verificat independent. |
+| **Tratare Lipsă Middleware Smartcard** | `src/smartcard_auth.py` | `IMPLEMENTAT`<br>`TESTAT AUTOMAT` | `tests/test_audit_regressions.py`<br>(`test_missing_smartcard_middleware_fails_safe`) | În mod real, absența bibliotecii PKCS#11 ridică `SmartcardError` explicit, blocând procedura. |
+| **Pachet Bootabil UEFI (Packaging)** | `src/build_bootable_iso.py` | `IMPLEMENTAT`<br>`TESTAT AUTOMAT` | Scriptul generează arborele complet EFI, initramfs helper și manifest SHA-256 | Secure Boot este etichetat onest: `NEVALIDAT_NECESITA_CHEIE_INSTITUTIONALA_OEM`. |
 
 ---
 
-## 3. Dovezi de Execuție Pytest (Mediu de Testare Local)
+## 3. Dovezi Empirice de Execuție Pytest (Local)
 
-La data de 08.10.2026, suita completă de 16 teste trece fără avertismente:
+La data de 08.10.2026, suita extinsă de 20 teste de regresie și integrare trece fără erori:
 ```text
 ============================= test session starts =============================
-platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
+cachedir: .pytest_cache
 rootdir: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
 configfile: pytest.ini
-collected 16 items
+plugins: anyio-4.15.1, asyncio-1.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 20 items
 
-projects/media-sanitizer-engine/tests/test_audit_regressions.py::test_regression_simulation_never_emits_conform_purged PASSED [  6%]
-projects/media-sanitizer-engine/tests/test_audit_regressions.py::test_regression_nvme_sstat_parser_all_states PASSED [ 12%]
-projects/media-sanitizer-engine/tests/test_audit_regressions.py::test_regression_hardware_mode_fails_safe_on_missing_device PASSED [ 18%]
-projects/media-sanitizer-engine/tests/test_audit_regressions.py::test_regression_simulated_pdf_clearly_marked PASSED [ 25%]
-projects/media-sanitizer-engine/tests/test_audit_regressions.py::test_device_discovery_does_not_invent_devices_when_empty PASSED [ 31%]
-projects/media-sanitizer-engine/tests/test_audit_regressions.py::test_tpm_signature_detects_tampering PASSED [ 37%]
-projects/media-sanitizer-engine/tests/test_audit_regressions.py::test_pades_independent_verification PASSED [ 43%]
-projects/media-sanitizer-engine/tests/test_sanitization_engine.py::test_nominal_nvme_sanitization_flow_simulated PASSED [ 50%]
-projects/media-sanitizer-engine/tests/test_sanitization_engine.py::test_target_mismatch_safeguard PASSED [ 56%]
-projects/media-sanitizer-engine/tests/test_sanitization_engine.py::test_usb_bridged_device_rejected PASSED [ 62%]
-projects/media-sanitizer-engine/tests/test_sanitization_engine.py::test_high_security_requires_dual_control PASSED [ 68%]
-projects/media-sanitizer-engine/tests/test_sanitization_engine.py::test_power_cut_in_progress_fails_safe PASSED [ 75%]
-projects/media-sanitizer-engine/tests/test_sanitization_engine.py::test_smartcard_authentication_and_wrong_pin PASSED [ 81%]
-projects/media-sanitizer-engine/tests/test_sanitization_engine.py::test_end_to_end_windows_registry_and_official_pv PASSED [ 87%]
-projects/media-sanitizer-engine/tests/test_sanitization_engine.py::test_registry_bridge_export_package PASSED [ 93%]
+projects/media-sanitizer-engine/tests/test_audit_regressions.py::test_regression_simulation_never_emits_conform_purged PASSED [  5%]
+projects/media-sanitizer-engine/tests/test_audit_regressions.py::test_regression_nvme_sstat_parser_all_states PASSED [ 10%]
+projects/media-sanitizer-engine/tests/test_audit_regressions.py::test_regression_hardware_mode_fails_safe_on_missing_device PASSED [ 15%]
+projects/media-sanitizer-engine/tests/test_audit_regressions.py::test_regression_simulated_pdf_clearly_marked PASSED [ 20%]
+projects/media-sanitizer-engine/tests/test_audit_regressions.py::test_device_discovery_does_not_invent_devices_when_empty PASSED [ 25%]
+projects/media-sanitizer-engine/tests/test_audit_regressions.py::test_tpm_signature_detects_tampering PASSED [ 30%]
+projects/media-sanitizer-engine/tests/test_audit_regressions.py::test_pades_independent_verification PASSED [ 35%]
+projects/media-sanitizer-engine/tests/test_audit_regressions.py::test_pades_fails_on_post_signing_pdf_modification PASSED [ 40%]
+projects/media-sanitizer-engine/tests/test_audit_regressions.py::test_lba_verification_failure_triggers_nonconformity PASSED [ 45%]
+projects/media-sanitizer-engine/tests/test_audit_regressions.py::test_tpm_verification_fails_on_untrusted_or_missing_envelope PASSED [ 50%]
+projects/media-sanitizer-engine/tests/test_audit_regressions.py::test_missing_smartcard_middleware_fails_safe PASSED [ 55%]
+projects/media-sanitizer-engine/tests/test_sanitization_engine.py::test_nominal_nvme_sanitization_flow_simulated PASSED [ 60%]
+projects/media-sanitizer-engine/tests/test_sanitization_engine.py::test_target_mismatch_safeguard PASSED [ 65%]
+projects/media-sanitizer-engine/tests/test_sanitization_engine.py::test_usb_bridged_device_rejected PASSED [ 70%]
+projects/media-sanitizer-engine/tests/test_sanitization_engine.py::test_high_security_requires_dual_control PASSED [ 75%]
+projects/media-sanitizer-engine/tests/test_sanitization_engine.py::test_power_cut_in_progress_fails_safe PASSED [ 80%]
+projects/media-sanitizer-engine/tests/test_sanitization_engine.py::test_smartcard_authentication_and_wrong_pin PASSED [ 85%]
+projects/media-sanitizer-engine/tests/test_sanitization_engine.py::test_end_to_end_windows_registry_and_official_pv PASSED [ 90%]
+projects/media-sanitizer-engine/tests/test_sanitization_engine.py::test_registry_bridge_export_package PASSED [ 95%]
 projects/media-sanitizer-engine/tests/test_sanitization_engine.py::test_linux_ioctl_driver_struct_sizes PASSED [100%]
 
-============================= 16 passed in 0.34s ==============================
+============================= 20 passed in 0.53s ==============================
 ```
 
 ---
 
-## 4. Concluzie și Recomandări pentru Evaluarea ORNISS
+## 4. Limitări Reziduale și Pași Obligatorii pe Hardware Fizic
 
-1. **Stare curentă:** Toate mock-urile din traseul critic au fost eliminate sau etichetate onest ca `SIMULATED_NOT_SANITIZED`.
-2. **Acceptare:** PR #230 rămâne în modul **DRAFT** până la testarea pe banc hardware dedicat cu controlere NVMe fizice sub Linux.
-3. **Validare Operațională:** Sistemul poate fi promovat în faza operațională numai după parcurgerea testelor hardware și semnarea cheilor OEM Secure Boot.
+1. **Banc de Testare Hardware (Fizic):**  
+   - Driverul IOCTL NVMe (`LinuxStorageDriver`) necesită validare pe un banc de probă Linux x86_64 dotat cu controlere NVMe reale (PCIe / M.2) prin emiterea comenzii Sanitize asupra unor discuri de test sacrificate.
+2. **Semnare Secure Boot:**  
+   - Imaginea bootabilă UEFI necesită semnare cu cheile PK/KEK/db ale instituției sau înrolare MOK (Machine Owner Key).
+3. **Cartelă Smartcard și Token QSCD Real:**  
+   - Înrolarea certificatelor emise de un QTSP autorizat pe cartele fizice cu cip și testarea fluxului PKCS#11 end-to-end pe stația Windows.

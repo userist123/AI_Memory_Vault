@@ -59,6 +59,7 @@ class EvidenceManager:
         is_simulation: bool = False,
         platform_key_id: str = "TPM-DEVICE-KEY-PRIMARY",
         smartcard_signatures: Optional[Dict[str, str]] = None,
+        lba_verification_status: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Emite manifestul complet tehnic și lanțul de semnături.
@@ -90,6 +91,7 @@ class EvidenceManager:
             },
             "method_applied": method.value,
             "final_disposition": disposition.value,
+            "lba_verification": lba_verification_status or ("SIMULATED_NOT_VERIFIED" if is_simulation else "NOT_PERFORMED"),
             "authorization": {
                 "operator_id": dual_auth.operator_id if dual_auth else "ANONYMOUS",
                 "witness_id": dual_auth.witness_id if dual_auth else "NONE",

@@ -30,12 +30,15 @@ Ambii membri trebuie să fie dotați cu **legitimație militară/de serviciu cu 
 
 #### Etapa II — Execuția pe Stația Bootabilă Offline (TOE)
 1. Se pornește stația de la mediul bootabil securizat USB/UEFI în regim complet offline (Air-gapped).
-2. Se selectează discul din lista afișată.
+2. Se selectează discul din lista afișată (descoperit direct prin `/sys/block`).
 3. **Măsură anti-eroare:** Operatorul introduce manual ultimele 4 caractere din seria fizică a discului.
 4. Ambii membri ai comisiei își introduc indicativele pentru autorizarea duală.
-5. Sistemul emite comanda hardware `NVMe Sanitize (Block Erase)` sau `ATA Sanitize`.
-6. La finalizare (progres 100%), sistemul execută automat verificarea eșantionată a suprafeței (LBA zero/purged check).
-7. Se exportă fișierul manifest semnat TPM pe stick-ul USB dedicat de transfer.
+5. Sistemul emite comanda hardware nativă `NVMe Sanitize (Block Erase)`.  
+   *(Metodele ATA/SCSI și Cryptographic Erase necesită module dedicate de driver; comanda de bază suportată în versiunea curentă este NVMe Block Erase pe magistrală PCIe/M.2 nativă).*
+6. Sistemul monitorizează logul `SSTAT` conform NVMe Base Spec 2.2 Table 278 până la finalizarea cu succes (`0x1 = COMPLETED_SUCCESS`).
+7. La finalizare, sistemul execută verificarea eșantionată a suprafeței logice accesibile (LBA check).  
+   *Notă tehnică:* Verificarea LBA atestă returnarea de zerouri pe spațiul logic accesibil prin OS; nu constituie citire a blocurilor de rezervă sau over-provisioning (a căror alterare depinde exclusiv de comanda internă NVMe Sanitize).
+8. Se exportă fișierul manifest semnat de platformă (TPM RSA-PSS-SHA256) pe stick-ul USB dedicat de transfer.
 
 #### Etapa III — Semnarea Calificată și Înregistrarea (Aplicația Windows)
 1. Stick-ul de transfer se introduce în stația de lucru de birou conectată la Registratura Electronică.

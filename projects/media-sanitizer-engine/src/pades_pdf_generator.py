@@ -45,6 +45,7 @@ class PAdESPDFGenerator:
         platform_sig = sigs.get("platform_signature", "N/A")
         is_simulation = manifest.get("execution_mode") == "SIMULATION_LABORATORY_TEST"
 
+        lba_status = manifest.get("lba_verification", "NOT_PERFORMED")
         if is_simulation:
             banner_text = "*** DOCUMENT SIMULAT DE LABORATOR - FARA VALOARE DE DECLASIFICARE (NESANITIZAT) ***"
             verdict_text = "SIMULAT - NESANITIZAT HARDWARE (TEST PROTOCOL DOAR)"
@@ -52,7 +53,12 @@ class PAdESPDFGenerator:
         else:
             banner_text = "DOCUMENT NATIV DIGITAL - VALOARE DE INSCRIS AUTENTIC CONFORM REGULAMENTULUI EIDAS"
             verdict_text = "CONFORM (PURGED) - Date ireversibil distruse" if disposition == "CONFORM_PURGED" else "NECONFORM - Necesita Distrugere Mecanica"
-            lba_verify_text = "CONFORM (Zero date reziduale detectate pe esantioanele citite)"
+            if lba_status == "CONFORM_PURGED_SAMPLED":
+                lba_verify_text = "CONFORM (Zero date reziduale detectate pe esantioanele citite)"
+            elif lba_status == "FAILED_RESIDUAL_DATA_DETECTED":
+                lba_verify_text = "NECONFORM (Date reziduale sau eroare de citire pe esantioane)"
+            else:
+                lba_verify_text = "NEEFECTUAT / NEVERIFICAT (Nu a fost efectuata citirea esantioanelor)"
 
         # Conținutul grafic și textual al paginii PDF (Stream PDF operatori text)
         stream_lines = [
