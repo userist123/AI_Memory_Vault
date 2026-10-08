@@ -183,3 +183,11 @@ air-gapped networks / standalone PCs. The app's own behaviour and documentation 
 **PARKED (owner, 2026-10-08): build the app first; accreditation comes after, with data the owner will supply.**
 - [ ] Keep the requirements + gap analysis (`tasks/loganalyzer/HG585_ACCREDITATION_REQUIREMENTS.md`) and its quote
       sources on this branch for later. Do not start WP-ACR work until the owner returns with the accreditation data.
+
+## Owner answers to mapping Q1–Q10 (2026-10-08) → audit §8 decisions 16–25
+- Own media register in the app (registration number field, EPP-Basic style) → WP14.
+- Users/roles + manually entered clearances, one global admin for now → WP14/WP13 + P1 roles.
+- Procedure profile + zones entered manually with paste/import → WP15/WP14.
+- Station/domain/e-mail stay under Advanced.
+- Classification: NATO CTS/NS/NC/NR + EU TS/S/C/R UE, no unclassified (national levels: ask owner).
+- Tier-3 importers only on demand. Case scope fields mandatory. WP1b approved. Exchange scripts not in P1.
