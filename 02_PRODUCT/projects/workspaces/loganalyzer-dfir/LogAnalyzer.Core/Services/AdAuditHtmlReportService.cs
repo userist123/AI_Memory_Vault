@@ -43,6 +43,7 @@ namespace LogAnalyzer.Core.Services
             sb.AppendLine("td { padding: 9px 12px; border-bottom: 1px solid rgba(148,163,184,0.08); color: #E2E8F0; vertical-align: top; }");
             sb.AppendLine(".badge-crit { background: rgba(239,68,68,0.2); color: #EF4444; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; }");
             sb.AppendLine(".badge-warn { background: rgba(245,158,11,0.2); color: #F59E0B; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; }");
+            sb.AppendLine(".badge-na { background: rgba(148,163,184,0.2); color: #94A3B8; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; }");
             sb.AppendLine(".badge-ok { background: rgba(16,185,129,0.2); color: #10B981; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 11px; }");
             sb.AppendLine(".empty-row { text-align: center; color: #64748B; font-style: italic; padding: 18px !important; }");
             sb.AppendLine(".footer { margin-top: 48px; border-top: 1px solid #1E293B; padding-top: 16px; font-size: 11px; color: #64748B; text-align: center; }");
@@ -149,7 +150,7 @@ namespace LogAnalyzer.Core.Services
             {
                 foreach (var cr in cList)
                 {
-                    string badgeClass = cr.Status == "CONFORM" ? "badge-ok" : (cr.Status == "NON-CONFORM" ? "badge-crit" : "badge-warn");
+                    string badgeClass = cr.Status == ComplianceStatus.Conform ? "badge-ok" : (cr.Status == ComplianceStatus.NonConform ? "badge-crit" : (cr.Status == ComplianceStatus.NotAssessed ? "badge-na" : "badge-warn"));
                     sb.AppendLine($"<tr><td>{cr.Framework}</td><td>{cr.ArticleOrControl}</td><td><strong>{cr.ControlTitle}</strong></td><td><span class=\"{badgeClass}\">{cr.Status}</span></td><td>{cr.EvidenceSummary}</td><td>{cr.RequiredAction}</td></tr>");
                 }
             }

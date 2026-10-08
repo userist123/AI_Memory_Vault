@@ -39,9 +39,9 @@
             </Border>
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="4,0,4,0">
                 <StackPanel>
-                    <TextBlock Text="CLASSIFICATION CEILING" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    <TextBlock Text="SECRET DE SERVICIU" Foreground="{StaticResource HighBrush}" FontSize="16" FontWeight="Bold" Margin="0,4,0,0"/>
-                    <TextBlock Text="HG 585 / NATO AC/35 Baseline" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
+                    <TextBlock Text="CLASSIFICATION" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="NESETATĂ" Foreground="{StaticResource TextSecondaryBrush}" FontSize="16" FontWeight="Bold" Margin="0,4,0,0"/>
+                    <TextBlock Text="Aplicația nu a primit o clasificare pentru acest caz" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
                 </StackPanel>
             </Border>
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="8,0,0,0">

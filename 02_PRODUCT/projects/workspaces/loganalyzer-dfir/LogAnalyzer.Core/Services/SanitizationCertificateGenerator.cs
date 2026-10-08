@@ -75,7 +75,7 @@ namespace LogAnalyzer.Core.Services
             var sb = new StringBuilder();
             sb.AppendLine("================================================================================");
             sb.AppendLine("                 CERTIFICAT OFICIAL DE SANITIZARE A DATELOR                    ");
-            sb.AppendLine("         Conform NIST SP 800-88r2 / HG 585/2002 / NATO AC/35-D/1022             ");
+            sb.AppendLine("   Referință metodologică: NIST SP 800-88r2 (conformitate neatestată aici)      ");
             sb.AppendLine("================================================================================");
             sb.AppendLine();
             sb.AppendLine($"  ID CERTIFICAT:              {data.CertificateId}");

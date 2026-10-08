@@ -11,7 +11,7 @@ namespace LogAnalyzer.Core.Services
         NistClearZero,        // NIST SP 800-88r2 Clear: 1 trecere 0x00
         NistClearRandom,      // NIST SP 800-88r2 Clear: 1 trecere pseudo-aleatoare
         DoD5220_22_M_3Pass,   // DoD 5220.22-M: 3 treceri (0x00, 0xFF, Random + Verificare)
-        CryptographicErase    // HG 585/2002 Art. 65 / NIST Crypto Erase: Distrugere cheie MEK/FEK
+        CryptographicErase    // NIST Crypto Erase: Distrugere cheie MEK/FEK (TODO owner: referința legală specifică se adaugă când textele juridice sunt furnizate)
     }
 
     public class SanitizationProgress
@@ -82,7 +82,7 @@ namespace LogAnalyzer.Core.Services
                 {
                     if (method == SanitizationMethod.CryptographicErase)
                     {
-                        // Cryptographic Erase (HG 585/2002 Art. 65 / NIST Crypto Erase)
+                        // Cryptographic Erase (NIST Crypto Erase)
                         // Suprascriere zonă de metadate & chei de criptare din primii și ultimii 1 MB
                         long headerFooterSize = Math.Min(totalBytes, 1024 * 1024);
                         using var fs = new FileStream(targetPath, FileMode.Open, FileAccess.Write, FileShare.None);

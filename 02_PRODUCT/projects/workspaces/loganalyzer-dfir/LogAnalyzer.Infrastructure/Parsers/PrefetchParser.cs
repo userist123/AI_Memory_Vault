@@ -1,3 +1,4 @@
+// UNWIRED (stage-1 audit, 2026-10-08): this legacy LogAnalyzer.Infrastructure.Parsers.PrefetchParser has no production consumer (the wired parser is LogAnalyzer.Dfir.Windows.Parsers.PrefetchParser, same simple name). Not production-ready; do not build on it. See docs/dfir/CONTRACT_AUDIT_STAGE1.md section 5.
 using System;
 using System.Collections.Generic;
 using System.IO;
