@@ -79,7 +79,14 @@ Start only after the Book-to-Memory blocker PRs are merged and no PR is open.
 Stage 1 is an audit, **no code changes**:
 - [ ] Read, in order: `tasks/loganalyzer/LOGANALYZER_PROGRAM_REQUIREMENTS.md` (functional/architectural
       contract), then `tasks/loganalyzer/LOGANALYZER_PRODUCT_UX_CONTRACT.md` (how capabilities are shown).
-- [ ] Audit `main` (`02_PRODUCT/projects/workspaces/loganalyzer-dfir/`) against every requirement and
+- [ ] **Do not redo existing research or audits** (owner, 2026-10-08). Start from what exists and only
+      fill the gaps: `loganalyzer-dfir/docs/dfir/REALITY_AUDIT.md`, `DFIR_CURRENT_ARCHITECTURE_AUDIT.md`,
+      `RESEARCH_AND_ROADMAP.md`, the other `docs/dfir/*.md` contracts, `Documentation/PHASE1-STATUS.md`,
+      `00_GOVERNANCE/coordination/projects/LOGANALYZER_DFIR/CURRENT.md`, and
+      `tasks/loganalyzer/PR212_RESEARCH_2026-10-07.md`. Reuse their findings; re-check a finding
+      only where the code changed after it was written (#212 merged 2026-10-08).
+- [ ] Map the two contracts onto those findings; audit only the requirements they do not cover, and
+      audit `main` (`02_PRODUCT/projects/workspaces/loganalyzer-dfir/`) for those, classifying each requirement and
       classify each as IMPLEMENTED / PARTIAL / MISSING / UNWIRED, with file:line evidence and the
       production consumer (or its absence) for each.
 - [ ] Rules from the owner: existing functionality is not refactored or removed just to build the UI;
