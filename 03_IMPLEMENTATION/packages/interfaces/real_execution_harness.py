@@ -1099,6 +1099,7 @@ class RealAgentExecutionHarness:
                 'memory_ids': retrieved_memory_ids,
                 'retrieval_count': retrieval_count,
                 'relevance_scores': relevance_scores,
+                'support_limit': execution_contract.max_memory_results,
                 'context_hash': context_hash,
             },
             model=model_record.to_dict(),
