@@ -99,7 +99,9 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
         secret = os.getenv("AI_MEMORY_VAULT_API_TOKEN", "")
         provided = self.headers.get("Authorization", "")
         expected = f"Bearer {secret}" if secret else ""
-        if not secret or not hmac.compare_digest(provided, expected):
+        # compare bytes: hmac.compare_digest raises TypeError on a non-ASCII str, which
+        # would drop the connection instead of answering 401
+        if not secret or not hmac.compare_digest(provided.encode("utf-8", "surrogateescape"), expected.encode("utf-8")):
             self._json(401, {"error": "authentication required"})
             return False
         return True

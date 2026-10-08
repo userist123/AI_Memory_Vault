@@ -44,3 +44,17 @@ def test_api_search_endpoint(api_server):
         data = json.loads(resp.read().decode("utf-8"))
         assert "query" in data
         assert "results" in data
+
+def test_api_non_ascii_authorization_header_is_refused_with_401(api_server):
+    # hmac.compare_digest raises TypeError on a non-ASCII str; that used to drop the
+    # connection with no response instead of refusing the request.
+    import http.client
+    from urllib.parse import urlparse
+    target = urlparse(api_server)
+    conn = http.client.HTTPConnection(target.hostname, target.port, timeout=5)
+    conn.putrequest("GET", "/api/v1/search?q=system")
+    conn.putheader("Authorization", "Bearer tést-token-vault")
+    conn.endheaders()
+    resp = conn.getresponse()
+    assert resp.status == 401
+    conn.close()
