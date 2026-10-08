@@ -503,6 +503,7 @@ def _extract_and_validate_actions(
     model_text: str,
     role: AgentRole,
     workspace: Path,
+    contract: Optional[ExecutionContract] = None,
 ) -> Tuple[List[Dict[str, Any]], List[ActionExecutionRecord]]:
     """Extracts, validates, and scopes model-produced actions."""
     records: List[ActionExecutionRecord] = []
