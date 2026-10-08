@@ -24,6 +24,7 @@ from memory_controller.authorizer import Principal
 from memory_controller.controller import MemoryController, RANKING_ARM_FUSED_SCORE, GraphExpansionDegraded
 from retrieval.vault_index import VaultIndex
 from memory_controller.storage.file_engine import FileStorageEngine
+from lifecycle.validation.book_to_memory_run_config import RunConfig, compare_results, stamp
 
 CASES_PATH = REPO_ROOT / "artifacts" / "h1" / "h1_cases.json"
 CORPUS_PATH = REPO_ROOT / "artifacts" / "h1" / "current_labeling_corpus.json"
@@ -32,6 +33,30 @@ RESULTS_PATH = REPO_ROOT / "artifacts" / "h1" / "h1_associative_experiment_resul
 FROZEN_CORPUS_HASH = "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398"
 FROZEN_BENCHMARK_HASH = "59bc81e42c0f703bdfb7e966df75a496590669bbeb82c5eafa2d18aef7c3a37f"
 FROZEN_CORPUS_COMMIT = "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0"
+
+
+VARIABLES_UNDER_TEST = ["controls.enable_graph_expansion", "controls.strict_graph_expansion"]
+
+
+def arm_run_config(graph_on: bool, reps: int) -> RunConfig:
+    """Explicit run config of one arm (PR #209 B08). The two arms differ only in the graph flags."""
+    return RunConfig.for_retrieval({
+        "principal": "HUMAN",
+        "page_size": 10,
+        "ranking_arm": "fused_score",
+        "lifecycle_and_authorization": "unchanged",
+        "token_budget": "unchanged",
+        "repetitions": reps,
+        "enable_graph_expansion": graph_on,
+        "strict_graph_expansion": graph_on,
+    })
+
+
+def guarded_arm_configs(reps: int) -> Dict[str, Any]:
+    """Build both arm configs and refuse the comparison unless only the graph flags differ."""
+    base, var = arm_run_config(False, reps), arm_run_config(True, reps)
+    guard = compare_results(stamp({}, base), stamp({}, var), VARIABLES_UNDER_TEST)
+    return {"baseline": base, "variant": var, "guard": guard}
 
 
 def load_frozen() -> List[Dict[str, Any]]:
@@ -100,6 +125,7 @@ def main() -> int:
         raise SystemExit("--reps must be >= 2 for repeatability evidence")
 
     cases = load_frozen()
+    arms = guarded_arm_configs(args.reps)
     index = VaultIndex.load(REPO_ROOT, include_raw=True, include_archived=True)
     storage = FileStorageEngine(str(REPO_ROOT))
 
@@ -136,6 +162,8 @@ def main() -> int:
                 "case_set": "identical paired cases",
             },
             "block_reason": str(exc),
+            "variant_run_config": arms["variant"].to_dict(),
+            "comparison_guard": arms["guard"],
             "baseline": baseline_rows,
             "variant": None,
             "scientific_disposition": (
@@ -144,6 +172,7 @@ def main() -> int:
                 "treating this as a zero-effect result would be invalid."
             ),
         }
+        stamp(result, arms["baseline"])
         RESULTS_PATH.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
         print(json.dumps({
             "status": result["status"],
@@ -186,9 +215,12 @@ def main() -> int:
             "variant": protected_v,
             "absolute_delta_recall_at_10": None if protected_b["recall_at_10"] is None else round(protected_v["recall_at_10"] - protected_b["recall_at_10"], 4),
         },
+        "variant_run_config": arms["variant"].to_dict(),
+        "comparison_guard": arms["guard"],
         "baseline": baseline_rows,
         "variant": variant_rows,
     }
+    stamp(result, arms["baseline"])
     RESULTS_PATH.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(result["primary"], indent=2))
     print(json.dumps(result["protected_held_out"], indent=2))

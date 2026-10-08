@@ -36,6 +36,7 @@ from memory_controller.authorizer import Principal
 from memory_controller.controller import MemoryController, RANKING_ARM_FUSED_SCORE
 from memory_controller.storage.file_engine import FileStorageEngine
 from retrieval.vault_index import VaultIndex
+from lifecycle.validation.book_to_memory_run_config import RunConfig, stamp
 
 CASES_PATH = REPO_ROOT / "artifacts" / "h1" / "h1_cases.json"
 CORPUS_PATH = REPO_ROOT / "artifacts" / "h1" / "current_labeling_corpus.json"
@@ -117,7 +118,21 @@ def classify_miss(
     return "CONTEXT_PACK_MISS", f"Gold notes omitted during context pack construction or budget cut"
 
 
-def run_evaluation(num_repetitions: int = 3) -> Dict[str, Any]:
+def baseline_run_config(num_repetitions: int = 3) -> RunConfig:
+    """The explicit run config of this runner (PR #209 B08). It calls no language model: the controls
+    that define the run are the retrieval settings below, and they are recorded in every result file."""
+    return RunConfig.for_retrieval({
+        "principal": "HUMAN",
+        "page_size": 10,
+        "ranking_arm": RANKING_ARM_FUSED_SCORE,
+        "enable_graph_expansion": False,
+        "strict_graph_expansion": False,
+        "repetitions": num_repetitions,
+    })
+
+
+def run_evaluation(num_repetitions: int = 3, run_config: Optional[RunConfig] = None) -> Dict[str, Any]:
+    run_config = run_config or baseline_run_config(num_repetitions)
     cases_data, corpus_data = load_benchmark()
     cases = cases_data.get("cases", [])
 
@@ -347,7 +362,7 @@ def run_evaluation(num_repetitions: int = 3) -> Dict[str, Any]:
         "cases": case_evaluations,
     }
 
-    return results_payload
+    return stamp(results_payload, run_config)
 
 
 def generate_report(results: Dict[str, Any]) -> str:
@@ -482,9 +497,14 @@ def generate_report(results: Dict[str, Any]) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run H1 baseline evaluation")
     parser.add_argument("--reps", type=int, default=3, help="Number of repetitions per case")
+    parser.add_argument("--run-config", help="JSON file with an explicit RunConfig (default: the retrieval baseline config)")
     args = parser.parse_args()
 
-    results = run_evaluation(num_repetitions=args.reps)
+    run_config = None
+    if args.run_config:
+        run_config = RunConfig.from_dict(json.loads(Path(args.run_config).read_text(encoding="utf-8")))
+
+    results = run_evaluation(num_repetitions=args.reps, run_config=run_config)
 
     # Save structured results
     RESULTS_PATH.write_text(json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8")

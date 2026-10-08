@@ -26,6 +26,7 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from memory_controller.authorizer import Principal
+from lifecycle.validation.book_to_memory_run_config import RunConfig
 from lifecycle.validation.book_to_memory_hypothesis import (
     BookToMemoryHypothesisRegistry,
     DecisionRecord,
@@ -56,8 +57,14 @@ class ExperimentConfig:
     min_sample_size: int = 5
     required_delta_threshold: float = 0.15
     metadata: Dict[str, Any] = field(default_factory=dict)
+    #: ``RunConfig.to_dict()`` of the run both arms are executed under (B08); None = unspecified.
+    run_config: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
+        if self.run_config is not None:
+            if isinstance(self.run_config, RunConfig):
+                self.run_config = self.run_config.to_dict()
+            RunConfig.from_dict(self.run_config)  # raises RunConfigError when malformed
         if not re.match(r"^EXP-[A-Za-z0-9_-]+$", self.experiment_id):
             raise ExperimentValidationError(
                 f"Invalid experiment_id '{self.experiment_id}'. Must match pattern '^EXP-[A-Za-z0-9_-]+$'."
@@ -96,6 +103,7 @@ class ExperimentResult:
     per_case_details: List[Dict[str, Any]]
     timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     digest: str = ""
+    run_config: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         if not self.digest:
@@ -220,6 +228,7 @@ class BookToMemoryExperimentHarness:
             paired=True,
             is_statistically_improved=is_improved,
             per_case_details=per_case_details,
+            run_config=config.run_config,
         )
 
         self._results[experiment_id] = result
@@ -262,6 +271,10 @@ class BookToMemoryExperimentHarness:
         # Otherwise, outcome is DECISION_PENDING (awaiting human decision) or CLOSED_NO_CHANGE (if failed).
         if not res.is_statistically_improved:
             decision_outcome = TrackState.CLOSED_NO_CHANGE
+        elif res.run_config is None:
+            # B08: an improvement measured without a recorded run config cannot be shown to compare
+            # like with like, so it never closes a change as validated.
+            decision_outcome = TrackState.DECISION_PENDING
         elif actor in (Principal.HUMAN, Principal.ADMIN):
             decision_outcome = TrackState.CLOSED_CHANGE_VALIDATED
         else:
@@ -270,7 +283,9 @@ class BookToMemoryExperimentHarness:
         summary = (
             f"Experiment {experiment_id} evaluated {res.sample_count} paired cases. "
             f"Baseline: {res.mean_baseline:.3f}, Variant: {res.mean_variant:.3f}, "
-            f"Absolute Delta: {res.absolute_delta:+.3f}, Failures: {res.failure_count}."
+            f"Absolute Delta: {res.absolute_delta:+.3f}, Failures: {res.failure_count}. "
+            + ("Run config recorded." if res.run_config is not None
+               else "NO RUN CONFIG RECORDED: not comparable, cannot close as validated (PR #209 B08).")
         )
 
         decision = DecisionRecord(

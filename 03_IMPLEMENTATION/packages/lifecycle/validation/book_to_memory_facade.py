@@ -117,11 +117,14 @@ class BookToMemoryFacade:
         ablation_models: Optional[List[str]] = None,
         ablation_repetitions: int = 3,
         ablation_trial_data: Optional[Dict[str, Any]] = None,
+        ablation_run_configs: Optional[Dict[str, Any]] = None,
     ) -> BookIngestionAuditReport:
         """Process a raw extracted concept note through all validation gates.
 
         The usage-test attempt/rubric and the ablation trial data must come from a real evaluation;
         without them the corresponding gates report INSUFFICIENT_DATA and the note does not advance.
+        ``ablation_run_configs`` (model -> RunConfig) records how the paired runs were configured; without
+        it the ablation is flagged not comparable and the note does not advance (PR #209 B08).
         """
         # Validate security upfront as front-door gate
         validate_untrusted_security(note_dict)
@@ -146,6 +149,7 @@ class BookToMemoryFacade:
             ablation_models=ablation_models,
             ablation_repetitions=ablation_repetitions,
             ablation_trial_data=ablation_trial_data,
+            ablation_run_configs=ablation_run_configs,
         )
 
         if report.final_lifecycle in ("VERIFIED", "ACTIVE"):

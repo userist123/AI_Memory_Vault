@@ -25,6 +25,7 @@ from lifecycle.validation.book_to_memory_usage_test import (
     TaskSpecification,
 )
 from lifecycle.validation.book_to_memory_facade import BookToMemoryFacade
+from lifecycle.validation.book_to_memory_run_config import RunConfig
 
 
 def _synthetic_eval(note_id: str) -> dict:
@@ -47,6 +48,11 @@ def _synthetic_eval(note_id: str) -> dict:
         ),
         "rubric": rubric(2),
         "ablation_trial_data": trials,
+        "ablation_run_configs": {
+            m: RunConfig.build(model_id=m, temperature=0.0, seed=1, max_tokens=512,
+                               prompt_template="synthetic fixture template")
+            for m in ("model_primary", "model_secondary")
+        },
     }
 
 
