@@ -602,6 +602,40 @@ def _extract_and_validate_actions(
                 )
                 continue
 
+        if contract is not None and act_type not in contract.allowed_actions:
+            records.append(
+                ActionExecutionRecord(
+                    action_type=act_type,
+                    validated=False,
+                    execution_status="rejected: action outside execution contract",
+                )
+            )
+            continue
+
+        if contract is not None and act_type in ("write_file", "read_file"):
+            normalized = target_path.relative_to(workspace.resolve()).as_posix()
+            if normalized not in contract.allowed_files:
+                records.append(
+                    ActionExecutionRecord(
+                        action_type=act_type,
+                        validated=False,
+                        execution_status="rejected: file outside execution scope",
+                    )
+                )
+                continue
+            if any(
+                normalized == protected or normalized.startswith(protected.rstrip("/") + "/")
+                for protected in contract.protected_paths
+            ):
+                records.append(
+                    ActionExecutionRecord(
+                        action_type=act_type,
+                        validated=False,
+                        execution_status="rejected: protected file",
+                    )
+                )
+                continue
+
         # Validated successfully
         valid_actions.append(item)
         records.append(
