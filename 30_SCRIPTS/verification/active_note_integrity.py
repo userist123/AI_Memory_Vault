@@ -108,6 +108,9 @@ def main() -> int:
     for kind, ids in changes.items():
         for note_id in ids[:20]:
             print(f"  {kind}: {note_id}")
+            if kind == "drifted":
+                print(f"    recorded={recorded.get(note_id)}")
+                print(f"    current={current.get(note_id)}")
     # Entering ACTIVE is growth, not damage: it fails so a person accepts it
     # with --record, but it is reported apart from drift so the two are never
     # confused in a CI log.
