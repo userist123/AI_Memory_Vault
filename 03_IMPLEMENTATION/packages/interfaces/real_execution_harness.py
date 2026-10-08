@@ -776,7 +776,78 @@ class RealAgentExecutionHarness:
         base_trace = Path(trace_dir or os.getenv('ANTIGRAVITY_TELEMETRY_DIR', 'telemetry'))
         self.trace_dir = base_trace / 'execution_traces'
         self.trace_dir.mkdir(parents=True, exist_ok=True)
+        self.bootstrap_principal = os.getenv("VAULT_BOOTSTRAP_PRINCIPAL", "cloud_cli.codex")
+        self.bootstrap_provider = None
         self._lock = threading.Lock()
+
+    def _default_bootstrap(self, task: AgentTask, principal: str) -> Dict[str, Any]:
+        from vault_access.core import VaultAccess
+
+        access = VaultAccess(principal=self.bootstrap_principal, interface="harness")
+        documents = []
+        for query, expected_name in (
+            ("AGENTS.md", "AGENTS.md"),
+            ("CLAUDE.md", "CLAUDE.md"),
+            ("VAULT_STATE.md", "VAULT_STATE.md"),
+        ):
+            resolved = access.resolve(query)
+            route = resolved.get("route") if isinstance(resolved, dict) else None
+            if not route:
+                raise ExecutionContractError("bootstrap unavailable")
+            read = access.read(route)
+            evidence = read.get("evidence") or []
+            integrity = read.get("integrity") or {}
+            body = evidence[0].get("text", "") if evidence else ""
+            if read.get("code") != "OK" or not body or not integrity.get("sha256"):
+                raise ExecutionContractError("bootstrap incomplete")
+            documents.append({
+                "name": expected_name,
+                "uri": route,
+                "sha256": integrity["sha256"],
+                "text": body,
+                "evidence": evidence[0],
+            })
+        if sum(len(str(d["text"])) for d in documents) > 24000:
+            raise ExecutionContractError("bootstrap exceeds bounded context budget")
+        return {"sources": documents, "authority": "vault_access", "conflicts": []}
+
+    @staticmethod
+    def _contract_for_task(task: AgentTask) -> ExecutionContract:
+        def normalize(value: str) -> str:
+            candidate = str(value or "").replace("\\\\", "/").lstrip("/")
+            if not candidate or candidate.startswith("../") or "/../" in candidate:
+                raise ExecutionContractError("task path escapes scope")
+            return candidate
+
+        allowed = [normalize(task.target_file)]
+        if task.test_file:
+            test_path = normalize(task.test_file)
+            if test_path not in allowed:
+                allowed.append(test_path)
+        return ExecutionContract(
+            allowed_files=tuple(allowed),
+            protected_paths=(".git", ".github", "AGENTS.md", "CLAUDE.md", "00_GOVERNANCE", "04_CONFIG", "security"),
+            allowed_actions=("write_file", "read_file"),
+            acceptance_criteria=("only allowed files change", "verification exits 0", "required evidence is persisted"),
+            evidence_required=("bootstrap_sources", "context_hash", "contract_hash", "workspace_diff", "verification"),
+            stop_conditions=("bootstrap missing", "out-of-scope mutation", "protected mutation", "model failure", "verification failure", "missing evidence"),
+            max_memory_results=2,
+        )
+
+    def _load_bootstrap(self, task: AgentTask) -> Dict[str, Any]:
+        provider = self.bootstrap_provider or self._default_bootstrap
+        bootstrap = provider(task, self.principal.value if hasattr(self.principal, "value") else str(self.principal))
+        if not isinstance(bootstrap, dict):
+            raise ExecutionContractError("bootstrap unavailable")
+        sources = bootstrap.get("sources")
+        if not isinstance(sources, list) or len(sources) < 3:
+            raise ExecutionContractError("bootstrap incomplete")
+        if bootstrap.get("conflicts"):
+            raise ExecutionContractError("bootstrap conflict")
+        for source in sources:
+            if not source.get("text") or not source.get("sha256") or not source.get("uri"):
+                raise ExecutionContractError("bootstrap provenance missing")
+        return bootstrap
 
     def execute(
         self,
