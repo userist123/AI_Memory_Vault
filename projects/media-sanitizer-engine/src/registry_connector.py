@@ -73,8 +73,12 @@ class RegistryBridgeClient:
     Client de punte pentru pregătirea și transmiterea pachetelor către aplicația existentă de registratură.
     """
 
-    def __init__(self):
-        self.smartcard_auth = SmartcardAuthenticator(simulation_mode=True)
+    def __init__(self, simulation_mode: bool = True, custom_pkcs11_lib: Optional[str] = None):
+        self.simulation_mode = simulation_mode
+        self.smartcard_auth = SmartcardAuthenticator(
+            simulation_mode=simulation_mode,
+            custom_pkcs11_lib=custom_pkcs11_lib,
+        )
 
     def prepare_and_sign_for_registry(
         self,

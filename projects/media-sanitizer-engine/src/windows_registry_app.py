@@ -21,9 +21,18 @@ class WindowsRegistryApp:
     Sistemul administrativ digital de birou pentru gestiunea fără hârtie a mediilor clasificate.
     """
 
-    def __init__(self, registry_file: str = "media_sanitization_registry.json"):
+    def __init__(
+        self,
+        registry_file: str = "media_sanitization_registry.json",
+        simulation_mode: bool = True,
+        custom_pkcs11_lib: Optional[str] = None,
+    ):
         self.registry_file = registry_file
-        self.smartcard_auth = SmartcardAuthenticator(simulation_mode=True)
+        self.simulation_mode = simulation_mode
+        self.smartcard_auth = SmartcardAuthenticator(
+            simulation_mode=simulation_mode,
+            custom_pkcs11_lib=custom_pkcs11_lib,
+        )
         self.records: List[Dict[str, Any]] = self._load_registry()
 
     def _load_registry(self) -> List[Dict[str, Any]]:
