@@ -2,6 +2,9 @@ using System.Security.Principal;
 using System.Text.Json;
 using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.Case;
+using LogAnalyzer.Dfir.Detection;
+using LogAnalyzer.Dfir.Graph;
+using LogAnalyzer.Dfir.Integrity;
 using LogAnalyzer.Dfir.IO;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Network;
@@ -21,6 +24,16 @@ public sealed class InvestigationResult
     public List<TimelineEvent> Timeline { get; } = [];
     public List<Finding> Findings { get; } = [];
     public List<EvidenceGap> Gaps { get; } = [];
+    /// <summary>Findings refused because they did not point to evidence in the case (kept for review, never reported as findings).</summary>
+    public List<RejectedFinding> RejectedFindings { get; } = [];
+    /// <summary>Entities and relationships built from the timeline and findings (Analysis/graph.json).</summary>
+    public EvidenceGraph? Graph { get; set; }
+    /// <summary>Rule matches (IOC, Sigma, YARA) with rule identity and evidence (Analysis/detections.json).</summary>
+    public List<DetectionResult> Detections { get; } = [];
+    /// <summary>Rules that were loaded for this run (Analysis/rules.json).</summary>
+    public List<DetectionRule> RulesUsed { get; } = [];
+    /// <summary>Anti-forensics checks: DETECTED / NOT_DETECTED / UNDETERMINED per technique (Analysis/anti_forensics.json).</summary>
+    public List<AntiForensicCheck> AntiForensics { get; } = [];
     public string TimelineCsv { get; set; } = "";
     public string FindingsJson { get; set; } = "";
 }
@@ -31,10 +44,12 @@ public sealed class InvestigationResult
 /// </summary>
 public sealed class InvestigationPipeline
 {
-    private readonly IEvidenceParser[] _parsers = [new EvtxParser(), new PrefetchParser(), new SrumNetworkParser(), new PcapngParser()];
+    private readonly ParserRegistry _registry;
+
+    public InvestigationPipeline(ParserRegistry? registry = null) => _registry = registry ?? WindowsParsers.Registry;
 
     public static IReadOnlyList<ICollector> AllCollectors { get; } =
-        [new LiveStateCollector(), new EventLogCollector(), new PrefetchCollector(), new SrumCollector()];
+        [new LiveStateCollector(), new EventLogCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector()];
 
     public static CaseWorkspace NewCase(string casesRoot, string name)
     {
@@ -48,7 +63,7 @@ public sealed class InvestigationPipeline
         });
     }
 
-    /// <summary>Imports existing evidence files (EVTX, .pf, SRUDB.dat, .pcapng) — copies, never moves.</summary>
+    /// <summary>Imports existing evidence files — copies, never moves. Known artifacts get their type; anything else is type "file".</summary>
     public static List<EvidenceItem> Import(CaseWorkspace ws, IEnumerable<string> files)
     {
         var list = new List<EvidenceItem>();
@@ -57,16 +72,35 @@ public sealed class InvestigationPipeline
             var ext = Path.GetExtension(f).ToLowerInvariant();
             var type = ext switch
             {
-                ".evtx" => "evtx", ".pf" => "prefetch", ".pcapng" => "pcapng",
+                ".evtx" => "evtx", ".pf" => "prefetch", ".pcapng" => "pcapng", ".lnk" => "lnk",
+                _ when f.EndsWith(".automaticDestinations-ms", StringComparison.OrdinalIgnoreCase) => "jumplist_auto",
                 _ when Path.GetFileName(f).Equals("SRUDB.dat", StringComparison.OrdinalIgnoreCase) => "srum",
-                _ => null,
+                _ when Path.GetFileName(f).Equals("SYSTEM", StringComparison.OrdinalIgnoreCase)
+                       || Path.GetFileName(f).EndsWith("SYSTEM.hiv", StringComparison.OrdinalIgnoreCase) => "system_hive",
+                _ when Path.GetFileName(f).Equals("Amcache.hve", StringComparison.OrdinalIgnoreCase) => "amcache",
+                _ when EvidenceFingerprint.Detect(f) == "task_xml" => "task_xml",
+                _ when EvidenceFingerprint.Detect(f) == "usn_fsutil" => "usn_journal",
+                _ when Path.GetFileName(f).Equals("History", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "chromium_history",
+                _ when Path.GetFileName(f).Equals("places.sqlite", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "firefox_places",
+                _ when RegistryHiveType(Path.GetFileName(f)) is { } hiveType && EvidenceFingerprint.Detect(f) == "regf" => hiveType,
+                // Any other file is still evidence: copied, hashed, listed (no parser → SKIPPED_BY_DESIGN) and available to
+                // hash IOCs and YARA rules.
+                _ => "file",
             };
-            if (type is null) continue;
             var source = type == "evtx" ? Path.GetFileNameWithoutExtension(f).Replace('%', '/') : type;
             list.Add(ws.ImportFile(f, "Import:" + source, type == "evtx" ? "EventLog:" + source : type, TemporalType.Historical, "Import", DfirInfo.ApplicationVersion,
                 notes: "Importat de operator din: " + f));
         }
         return list;
+    }
+
+    /// <summary>Hive kind from the usual file names of saved or copied hives.</summary>
+    public static string? RegistryHiveType(string name)
+    {
+        var n = name.ToUpperInvariant();
+        if (n is "NTUSER.DAT" or "HKCU.HIV" || n.StartsWith("NTUSER", StringComparison.Ordinal) && n.EndsWith(".HIV", StringComparison.Ordinal)) return "ntuser_hive";
+        if (n is "SOFTWARE" or "SOFTWARE.HIV" || n.EndsWith("_SOFTWARE.HIV", StringComparison.Ordinal)) return "software_hive";
+        return null;
     }
 
     public InvestigationResult Run(CaseWorkspace ws, CollectionProfile profile, bool collect, IProgress<string>? progress = null, CancellationToken ct = default)
@@ -102,37 +136,133 @@ public sealed class InvestigationPipeline
         var analysisDir = Path.Combine(ws.Root, "Analysis");
         Directory.CreateDirectory(analysisDir);
         var sink = new ListSink();
+        File.WriteAllText(Path.Combine(analysisDir, "parsers.json"), JsonSerializer.Serialize(_registry.Descriptors, new JsonSerializerOptions { WriteIndented = true }));
         foreach (var ev in ws.LoadEvidence())
         {
             ct.ThrowIfCancellationRequested();
-            var parser = _parsers.FirstOrDefault(p => p.CanParse(ev));
-            if (parser is null) continue;
-            progress?.Report($"Parsare: {Path.GetFileName(ev.StoredPath)} ({parser.Name})");
-            var pr = parser.Parse(ev, ws.FullPath(ev.StoredPath), sink, ct);
-            r.Parsing.Add(pr);
-            ws.RecordTransformation(ev.EvidenceId, parser.Name, parser.Version, "Analysis/timeline.csv", $"{pr.Records} înregistrări, status {pr.Status.ToSpec()}");
-            r.Gaps.AddRange(pr.Gaps);
-            if (pr.Status is EvidenceStatus.Failed or EvidenceStatus.Partial)
-                r.Gaps.Add(new EvidenceGap(Path.GetFileName(ev.StoredPath), pr.Status, pr.Error.Length > 0 ? pr.Error : $"{pr.MalformedRecords} înregistrări corupte",
-                    "Evenimente lipsă din cronologie", "Alt parser / copie a probei", "Posibil"));
+            var full = ws.FullPath(ev.StoredPath);
+            var sel = _registry.Select(ev, full);
+            if (!sel.HasCandidate)
+            {
+                // Live snapshots are read by LiveStateAnalyzer below; anything else is listed, never silently ignored.
+                if (ev.SourceType != "live_snapshot")
+                    r.Parsing.Add(new ParseResult
+                    {
+                        EvidenceId = ev.EvidenceId, Parser = "-", ParserVersion = "-", Status = EvidenceStatus.SkippedByDesign,
+                        Error = sel.Problem, ExpectedSha256 = ev.Sha256,
+                    });
+                continue;
+            }
+            if (sel.Parsers.Count == 0)
+            {
+                var pre0 = sel.Preflight!;
+                var refused = new ParseResult
+                {
+                    EvidenceId = ev.EvidenceId, Parser = string.Join("|", _registry.Candidates(ev).Select(p => p.Descriptor.ParserId)), ParserVersion = "-",
+                    Status = EvidenceStatus.Failed, Error = sel.Problem, ExpectedSha256 = ev.Sha256, SourceSha256Before = pre0.Sha256, SourceFingerprint = pre0.Fingerprint,
+                };
+                r.Parsing.Add(refused);
+                r.Gaps.Add(new EvidenceGap(Path.GetFileName(ev.StoredPath), EvidenceStatus.Failed, refused.Error,
+                    "Proba nu a fost parsată: rezultatele ar putea să nu provină din sursa achiziționată", "Reachiziție din sursa originală", "Doar prin reachiziție"));
+                ws.Audit(pre0.Code == "EVIDENCE_MUTATED" ? "evidence.mutated" : "evidence.preflight_failed", $"{ev.EvidenceId} {sel.Problem}");
+                continue;
+            }
+            var pre = sel.Preflight!;
+            foreach (var parser in sel.Parsers)
+            {
+                progress?.Report($"Parsare: {Path.GetFileName(ev.StoredPath)} ({parser.Descriptor.ParserId})");
+                var mark = sink.Events.Count;
+                var pr = parser.Parse(ev, full, sink, ct);
+                pr.ExpectedSha256 = ev.Sha256;
+                pr.SourceSha256Before = pre.Sha256;
+                pr.SourceFingerprint = pre.Fingerprint;
+                var post = parser.Preflight(ev, full);
+                pr.SourceSha256After = post.Sha256;
+                if (!post.CanParse)
+                {
+                    // The source changed while it was being read: nothing extracted from it can be attributed to the acquired original.
+                    sink.Events.RemoveRange(mark, sink.Events.Count - mark);
+                    pr.Status = EvidenceStatus.Failed;
+                    pr.Error = $"{post.Code} în timpul parsării: {post.Detail}" + (pr.Error.Length > 0 ? $" | {pr.Error}" : "");
+                    ws.Audit("evidence.mutated", $"{ev.EvidenceId} during parse {post.Detail}");
+                }
+                else
+                    ProvenanceBinder.BindEvents(sink.Events.Skip(mark), ev, parser.Descriptor.ParserId, parser.Descriptor.Version);
+                r.Parsing.Add(pr);
+                ws.RecordTransformation(ev.EvidenceId, parser.Descriptor.ParserId, parser.Descriptor.Version, "Analysis/timeline.csv", $"{pr.Records} înregistrări, status {pr.Status.ToSpec()}");
+                r.Gaps.AddRange(pr.Gaps);
+                if (pr.Status is EvidenceStatus.Failed or EvidenceStatus.Partial)
+                    r.Gaps.Add(new EvidenceGap(Path.GetFileName(ev.StoredPath), pr.Status, pr.Error.Length > 0 ? pr.Error : $"{pr.MalformedRecords} înregistrări corupte",
+                        "Evenimente lipsă din cronologie", "Alt parser / copie a probei", "Posibil"));
+            }
         }
         r.Timeline.AddRange(sink.Events.OrderBy(e => e.Time.Utc ?? DateTimeOffset.MaxValue));
+        r.Gaps.AddRange(AuditCoverage.Gaps(r.Timeline));
 
         // 3. Correlation (timeline) + live state.
         progress?.Report("Corelare");
-        r.Findings.AddRange(Correlation.Run(r.Timeline));
+        var found = new List<Finding>(Correlation.Run(r.Timeline));
         foreach (var live in ws.LoadEvidence().Where(e => e.SourceType == "live_snapshot"))
-            r.Findings.AddRange(LiveStateAnalyzer.Analyze(live, ws.FullPath(live.StoredPath), r.Findings.Count));
+        {
+            var pre = EvidencePreflight.Check(live, ws.FullPath(live.StoredPath));
+            if (!pre.CanParse)
+            {
+                r.Gaps.Add(new EvidenceGap(Path.GetFileName(live.StoredPath), EvidenceStatus.Failed, $"{pre.Code}: {pre.Detail}",
+                    "Constatările din starea live lipsesc", "O nouă fotografie a stării live", "Doar prin reachiziție"));
+                ws.Audit(pre.Code == "EVIDENCE_MUTATED" ? "evidence.mutated" : "evidence.preflight_failed", $"{live.EvidenceId} {pre.Code} {pre.Detail}");
+                continue;
+            }
+            found.AddRange(LiveStateAnalyzer.Analyze(live, ws.FullPath(live.StoredPath), found.Count));
+        }
+        var (kept, rejected) = ProvenanceBinder.BindFindings(found, ws.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal));
+        r.Findings.AddRange(kept);
+        r.RejectedFindings.AddRange(rejected);
+        foreach (var x in rejected) ws.Audit("finding.rejected", $"{x.Finding.FindingId} {x.Finding.RuleId}: {x.Reason}");
 
         // 4. Outputs, kept in the case and hashed into custody.
         progress?.Report("Scriere rezultate");
         r.TimelineCsv = Path.Combine(analysisDir, "timeline.csv");
-        using (var w = new CsvWriter(r.TimelineCsv, ["TimeUtc", "TimeSemantics", "Source", "EventId", "Provider", "Host", "User", "Process", "Pid", "Path", "RemoteIp", "RemotePort", "Dns", "Summary", "Classification", "EvidenceId", "Locator"]))
+        using (var w = new CsvWriter(r.TimelineCsv, ["TimeUtc", "TimeSemantics", "Source", "EventId", "Provider", "Host", "User", "Process", "Pid", "Path", "RemoteIp", "RemotePort", "Dns", "Summary", "Classification", "EvidenceId", "Locator", "SourceSha256", "Parser", "ParserVersion"]))
             foreach (var e in r.Timeline)
-                w.WriteRow(new object?[] { e.Time.Utc?.ToString("o") ?? "", e.TimeSemantics, e.Source, e.EventId, e.Provider, e.Host, e.User, e.Process, e.Pid, e.Path, e.RemoteIp, e.RemotePort, e.Dns, e.Summary, e.Classification.ToSpec(), e.EvidenceId, e.Locator });
+                w.WriteRow(new object?[] { e.Time.Utc?.ToString("o") ?? "", e.TimeSemantics, e.Source, e.EventId, e.Provider, e.Host, e.User, e.Process, e.Pid, e.Path, e.RemoteIp, e.RemotePort, e.Dns, e.Summary, e.Classification.ToSpec(), e.EvidenceId, e.Locator, e.SourceSha256, e.ParserId, e.ParserVersion });
         r.FindingsJson = Path.Combine(analysisDir, "findings.json");
-        File.WriteAllText(r.FindingsJson, JsonSerializer.Serialize(new { r.Findings, r.Gaps, r.Collection }, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(r.FindingsJson, JsonSerializer.Serialize(new { r.Findings, r.Gaps, r.Collection, RejectedFindings = r.RejectedFindings.Select(x => new { x.Finding.FindingId, x.Finding.RuleId, x.Finding.Title, x.Reason }) }, new JsonSerializerOptions { WriteIndented = true }));
         File.WriteAllText(Path.Combine(analysisDir, "parsing.json"), JsonSerializer.Serialize(r.Parsing, new JsonSerializerOptions { WriteIndented = true }));
+        progress?.Report("Graf de probe");
+        r.Graph = EvidenceGraph.Build(r.Timeline, r.Findings, ws.Info.Host);
+        var (graphJson, graphSha) = r.Graph.Snapshot(ws.Info.CaseId);
+        File.WriteAllText(Path.Combine(analysisDir, "graph.json"), graphJson);
+        ws.RecordTransformation("CASE", "EvidenceGraph", "1.0", "Analysis/graph.json", $"{r.Graph.Entities.Count} entități, {r.Graph.Relationships.Count} relații, SHA-256 {graphSha}");
+
+        // Detection: rules shipped with the application plus the case's own Rules folder (ioc / yara / sigma).
+        progress?.Report("Detecție (IOC, Sigma, YARA)");
+        var engine = DetectionEngine.Load(Path.Combine(AppContext.BaseDirectory, "Rules"), Path.Combine(ws.Root, "Rules"));
+        var evidenceItems = ws.LoadEvidence();
+        var scannable = new List<EvidenceItem>();
+        foreach (var e in evidenceItems)
+        {
+            if (e.SourceType != "file") { scannable.Add(e); continue; }
+            var pre = EvidencePreflight.Check(e, ws.FullPath(e.StoredPath));
+            if (pre.CanParse) scannable.Add(e);
+            else r.Gaps.Add(new EvidenceGap(e.OriginalName, EvidenceStatus.Failed, $"{pre.Code}: {pre.Detail}", "Fișierul nu a fost scanat cu YARA", "Reachiziție", "Doar prin reachiziție"));
+        }
+        r.Detections.AddRange(engine.Run(r.Timeline, scannable, e => File.ReadAllBytes(ws.FullPath(e.StoredPath))));
+        r.RulesUsed.AddRange(engine.Rules);
+        r.Gaps.AddRange(engine.LoadErrors);
+        File.WriteAllText(Path.Combine(analysisDir, "detections.json"), JsonSerializer.Serialize(r.Detections, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(Path.Combine(analysisDir, "rules.json"), JsonSerializer.Serialize(r.RulesUsed, new JsonSerializerOptions { WriteIndented = true }));
+        ws.RecordTransformation("CASE", "DetectionEngine", "1.0", "Analysis/detections.json", $"{r.Detections.Count} potriviri, {r.RulesUsed.Count} reguli");
+        r.AntiForensics.AddRange(LogAnalyzer.Dfir.Analysis.AntiForensics.Evaluate(r.Timeline, r.Gaps));
+        File.WriteAllText(Path.Combine(analysisDir, "anti_forensics.json"), JsonSerializer.Serialize(r.AntiForensics, new JsonSerializerOptions { WriteIndented = true }));
+        ws.RecordTransformation("CASE", "AntiForensics", "1.0", "Analysis/anti_forensics.json",
+            $"{r.AntiForensics.Count(c => c.Result == AntiForensicResult.Detected)} DETECTED, {r.AntiForensics.Count(c => c.Result == AntiForensicResult.Undetermined)} UNDETERMINED");
+        // Memory Vault proposals (spec §24): written into the case only; submitting them is the operator's step, through the vault's gate.
+        var (proposals, refusedForVault) = LogAnalyzer.Dfir.Memory.VaultExport.FromCase(ws.Info.CaseId, ws.LoadEvidence(), r.Findings, r.AntiForensics, r.Gaps,
+            $"LogAnalyzer {DfirInfo.ApplicationVersion} ({Environment.UserDomainName}\\{Environment.UserName})");
+        var vaultFile = Path.Combine(ws.Root, "Exports", "vault_proposals.jsonl");
+        LogAnalyzer.Dfir.Memory.VaultExport.Write(vaultFile, proposals);
+        File.WriteAllText(Path.Combine(ws.Root, "Exports", "vault_refused.json"), JsonSerializer.Serialize(refusedForVault, new JsonSerializerOptions { WriteIndented = true }));
+        ws.RecordTransformation("CASE", "VaultExport", "1.0", "Exports/vault_proposals.jsonl", $"{proposals.Count} propuneri, {refusedForVault.Count} refuzate");
         ws.Audit("investigation.end", $"{r.Timeline.Count} events, {r.Findings.Count} findings, {r.Gaps.Count} gaps");
         return r;
     }

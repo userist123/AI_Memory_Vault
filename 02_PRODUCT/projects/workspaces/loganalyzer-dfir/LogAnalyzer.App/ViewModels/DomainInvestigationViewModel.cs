@@ -64,8 +64,13 @@ namespace LogAnalyzer.UI.ViewModels
                 foreach (var c in checks.OrderBy(c => c.Status == ControlStatus.Neconform ? 0 : c.Status == ControlStatus.DeVerificat ? 1 : 2)) DomainChecks.Add(c);
                 DomainControllers = string.Join(", ", _snapshot.Computers.Where(c => c.IsDomainController).Select(c => c.SamAccountName.TrimEnd('$')));
                 DomainStatus = $"{_snapshot.DomainName}: {_snapshot.Users.Count} utilizatori, {_snapshot.Computers.Count} calculatoare, server {_snapshot.Server}.";
-                Save("domain_inventory", new { _snapshot, checks });
-                Status = $"Inventar complet: {checks.Count(c => c.Status == ControlStatus.Neconform)} NECONFORM, {checks.Count(c => c.Status == ControlStatus.DeVerificat)} DE VERIFICAT.";
+                var inventory = Save("domain_inventory", new { _snapshot, checks });
+                // The inventory goes into the Evidence Graph; every edge points back at the stored inventory.
+                var graph = LogAnalyzer.Dfir.Windows.Domain.DomainGraph.Build(_snapshot, checks, inventory.EvidenceId);
+                var (graphJson, _) = graph.Snapshot(LogAnalyzer.UI.Services.LiveCase.Get().Info.CaseId);
+                SaveText("domain_graph", graphJson, inventory.EvidenceId);
+                Status = $"Inventar complet: {checks.Count(c => c.Status == ControlStatus.Neconform)} NECONFORM, {checks.Count(c => c.Status == ControlStatus.DeVerificat)} DE VERIFICAT. " +
+                         $"Graf: {graph.Entities.Count} entități, {graph.Relationships.Count} relații.";
             }
             catch (NetworkBlockedException ex) { Status = ex.Message + " " + ModeNote; }
             catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
@@ -155,16 +160,20 @@ namespace LogAnalyzer.UI.ViewModels
         }
 
         /// <summary>Results are kept in the station's case as evidence (JSON with SHA-256 and custody).</summary>
-        private static void Save(string name, object data)
+        private static LogAnalyzer.Dfir.Model.EvidenceItem Save(string name, object data) =>
+            SaveText(name, JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true }));
+
+        private static LogAnalyzer.Dfir.Model.EvidenceItem SaveText(string name, string json, string? parentEvidenceId = null)
         {
             var ws = LogAnalyzer.UI.Services.LiveCase.Get();
             var dir = Path.Combine(ws.Root, "Investigations");
             Directory.CreateDirectory(dir);
             var safe = string.Concat(name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
             var path = Path.Combine(dir, $"{safe}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.json");
-            File.WriteAllText(path, JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true }));
-            ws.RegisterStored(path, "live:" + Environment.MachineName, "investigation", name, LogAnalyzer.Dfir.Model.TemporalType.CurrentSnapshot,
-                "DomainInvestigationViewModel", LogAnalyzer.Dfir.Model.DfirInfo.ApplicationVersion);
+            File.WriteAllText(path, json);
+            return ws.RegisterStored(path, "live:" + Environment.MachineName, "investigation", name,
+                parentEvidenceId is null ? LogAnalyzer.Dfir.Model.TemporalType.CurrentSnapshot : LogAnalyzer.Dfir.Model.TemporalType.Derived,
+                "DomainInvestigationViewModel", LogAnalyzer.Dfir.Model.DfirInfo.ApplicationVersion, parentEvidenceId: parentEvidenceId);
         }
     }
 }

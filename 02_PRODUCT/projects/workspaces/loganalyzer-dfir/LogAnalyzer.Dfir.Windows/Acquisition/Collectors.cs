@@ -209,3 +209,48 @@ public sealed class LiveStateCollector : ICollector
         { errors.Add($"{what}: {ex.Message}"); }
     }
 }
+
+/// <summary>Execution artifacts as offline hives: the SYSTEM hive (BAM, ShimCache) via reg save, and Amcache.hve with its
+/// transaction logs via a VSS copy (the live files are locked). Needs elevation.</summary>
+public sealed class ExecutionArtifactsCollector : ICollector
+{
+    public string Name => "ExecutionArtifactsCollector";
+    public string Version => "1.0";
+    public bool RequiresElevation => true;
+    public CollectionProfile Profiles => CollectionProfile.QuickAndUp;
+
+    public CollectorOutcome Collect(CollectorContext ctx, CancellationToken ct)
+    {
+        if (!ctx.IsElevated) return CollectorOutcome.NotAvailable("SYSTEM/Amcache: necesită drepturi de administrator", "registry");
+        var o = new CollectorOutcome { Source = "registry hives", Tool = "reg.exe / esentutl.exe" };
+        var logDir = Path.Combine(ctx.Case.Root, "Logs", "tools");
+
+        var sysDir = ctx.Case.RawDir("Registry");
+        var sysDest = Path.Combine(sysDir, "SYSTEM");
+        var save = ToolRunner.Run(ToolRunner.System32("reg.exe"), ["save", @"HKLM\SYSTEM", sysDest, "/y"], logDir, "reg_save_system", TimeSpan.FromMinutes(5), ct);
+        o.Commands.Add(save.CommandLine);
+        if (save.ExitCode == 0 && File.Exists(sysDest))
+            o.Evidence.Add(ctx.Case.RegisterStored(sysDest, @"HKLM\SYSTEM", "Registry:SYSTEM", "system_hive", TemporalType.CurrentSnapshot, Name, Version));
+        else o.Errors.Add($"reg save SYSTEM: exit {save.ExitCode}");
+
+        var amSrc = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "appcompat", "Programs", "Amcache.hve");
+        if (!File.Exists(amSrc)) o.Errors.Add("Amcache.hve nu există pe stație");
+        else
+        {
+            var amDir = ctx.Case.RawDir("Amcache");
+            foreach (var suffix in new[] { "", ".LOG1", ".LOG2" })
+            {
+                var src = amSrc + suffix;
+                if (!File.Exists(src)) continue;
+                var dest = Path.Combine(amDir, "Amcache.hve" + suffix);
+                var run = ToolRunner.Run(ToolRunner.System32("esentutl.exe"), ["/y", src, "/vss", "/d", dest], logDir, "esentutl_amcache" + suffix, TimeSpan.FromMinutes(5), ct);
+                o.Commands.Add(run.CommandLine);
+                if (run.ExitCode == 0 && File.Exists(dest))
+                    o.Evidence.Add(ctx.Case.RegisterStored(dest, src, "Amcache", suffix.Length == 0 ? "amcache" : "amcache_log", TemporalType.Historical, Name, Version));
+                else o.Errors.Add($"Amcache{suffix}: esentutl exit {run.ExitCode}");
+            }
+        }
+        o.Status = o.Evidence.Count == 0 ? EvidenceStatus.Failed : o.Errors.Count > 0 ? EvidenceStatus.Partial : EvidenceStatus.Success;
+        return o;
+    }
+}

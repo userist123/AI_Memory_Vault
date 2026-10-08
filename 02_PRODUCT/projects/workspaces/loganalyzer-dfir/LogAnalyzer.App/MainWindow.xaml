@@ -150,6 +150,7 @@
                             <RadioButton Content="Control stație (utilizatori și admini)" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="14"/>
                             <RadioButton Content="Investigație domeniu și e-mail" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="15"/>
                             <RadioButton Content="Investigație completă (caz)" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="16"/>
+                            <RadioButton Content="Politici (import, aprobare, aplicare)" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="17"/>
                         </StackPanel>
                     </ScrollViewer>
 
@@ -221,6 +222,7 @@
                 <TabItem><views:StationControlView DataContext="{Binding StationControl}"/></TabItem>
                 <TabItem><views:DomainInvestigationView DataContext="{Binding DomainInvestigation}"/></TabItem>
                 <TabItem><views:InvestigationView DataContext="{Binding Investigation}"/></TabItem>
+                <TabItem><views:PolicyView DataContext="{Binding Policy}"/></TabItem>
                 </TabControl>
             </Grid>
         </Grid>

@@ -23,17 +23,18 @@ namespace LogAnalyzer.Core.Services
             {
                 foreach (var ev in events)
                 {
-                    string dateStr = ev.TimeCreated.ToString("MM/dd/yyyy");
-                    string timeStr = ev.TimeCreated.ToString("HH:mm:ss");
+                    // An event without a recorded time keeps default(DateTime); it is exported as unknown ("-"), never as "now".
+                    string dateStr = ev.TimeCreated == default ? "-" : ev.TimeCreated.ToString("MM/dd/yyyy");
+                    string timeStr = ev.TimeCreated == default ? "-" : ev.TimeCreated.ToString("HH:mm:ss");
                     string macb = "M..."; // Event log recorded timestamp
                     string source = "EVTX";
                     string sourceType = ev.ProviderName ?? "Windows Event Log";
                     string type = $"EID {ev.EventId}";
-                    string user = ev.MachineName ?? "-";
+                    string user = "-";
                     string host = ev.MachineName ?? "-";
                     string shortDesc = EscapeCsv(ev.Level ?? "Info");
                     string desc = EscapeCsv(ev.Message ?? string.Empty);
-                    string filename = "Security.evtx";
+                    string filename = "-";
 
                     sb.AppendLine($"{dateStr},{timeStr},UTC,{macb},{source},{sourceType},{type},{user},{host},{shortDesc},{desc},2,{filename},-,-,LogAnalyzer EVTX Engine,-");
                 }
@@ -69,9 +70,8 @@ namespace LogAnalyzer.Core.Services
             {
                 foreach (var reg in registryEntries)
                 {
-                    DateTime regTime = reg.LastWriteTime ?? DateTime.UtcNow;
-                    string dateStr = regTime.ToString("MM/dd/yyyy");
-                    string timeStr = regTime.ToString("HH:mm:ss");
+                    string dateStr = reg.LastWriteTime is DateTime regTime ? regTime.ToString("MM/dd/yyyy") : "-";
+                    string timeStr = reg.LastWriteTime is DateTime regTime2 ? regTime2.ToString("HH:mm:ss") : "-";
                     string macb = "M...";
                     string source = "Registry";
                     string sourceType = reg.Category ?? "Registry Key";
