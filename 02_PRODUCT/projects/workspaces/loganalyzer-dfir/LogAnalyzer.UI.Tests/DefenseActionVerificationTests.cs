@@ -123,5 +123,23 @@ namespace LogAnalyzer.UI.Tests
             Assert.False(r.Success);
             Assert.Equal(DefenseActionResult.Failed, r.Status);
         }
+
+        [Theory]
+        [InlineData("advfirewall firewall set rule name=\"x\" new enable=no")]
+        [InlineData("advfirewall reset")]
+        [InlineData("add rule name=\"x\"")]
+        public void Com_backend_refuses_anything_but_the_three_rule_operations_without_touching_the_firewall(string arguments)
+        {
+            var r = new ComFirewallRunner().Netsh(arguments);
+            Assert.Equal(-1, r.ExitCode);
+            Assert.Equal("INetFwPolicy2", new ComFirewallRunner().BackendName);
+        }
+
+        [Fact]
+        public void Production_default_does_not_start_netsh()
+        {
+            // The default backend is the COM runner; NetshRunner stays an explicit fallback only.
+            Assert.IsNotType<NetshRunner>(new ComFirewallRunner());
+        }
     }
 }

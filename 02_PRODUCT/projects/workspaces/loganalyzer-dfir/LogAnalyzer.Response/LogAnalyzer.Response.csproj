@@ -9,6 +9,10 @@
     <RootNamespace>LogAnalyzer.Response</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Ships inside the package (Scripts\AuditCollector.ps1 next to the executable); the collector never looks anywhere else. -->
+    <None Include="Scripts\AuditCollector.ps1" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\LogAnalyzer.Core\LogAnalyzer.Core.csproj" />
     <ProjectReference Include="..\LogAnalyzer.Dfir.Core\LogAnalyzer.Dfir.Core.csproj" />
     <ProjectReference Include="..\LogAnalyzer.Dfir.Windows\LogAnalyzer.Dfir.Windows.csproj" />
