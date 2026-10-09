@@ -502,3 +502,93 @@ For every run, preserve model tag and Ollama ID, branch/source SHA, exact comman
 ### 16.4 Conversation handling and truthfulness
 
 The user asked for the essential contents of the conversation to be preserved in the PR, including user requests, assistant commitments, checks attempted, actual results, and next actions. This ledger is the durable project record; it is not represented as a verbatim transcript. If the exact supplied transcript is needed later, use the attached source artifact rather than reconstructing quoted dialogue from memory. Correct earlier omissions explicitly and do not claim a GitHub publication until the resulting commit is verified.
+
+
+## 17. Essential findings recovered from the supplied full conversation — 2026-10-09
+
+### 17.1 Source and provenance
+
+The user supplied `Text lipit(20261009-171153).txt` and explicitly confirmed that it contains the full conversation they wanted considered. The source was read from the uploaded attachment, not reconstructed from memory. Source file SHA-256: `82b9b99d8ad6371d8afc6022b4b1bd85bca624c64361bc9748e3dcbdcb252be2`; source size: 64,783 bytes. The file includes an earlier conversation transcript plus the more recent exchange and a prior export verification. This section extracts durable project facts and decisions; it is not a substitute for the original transcript and does not claim to reproduce every message verbatim.
+
+### 17.2 Original architecture review — findings and limits
+
+The conversation began with an architectural code review of `userist123/AI_Memory_Vault_CODEX_READY`. The review explicitly stated that it was a static code review, not a test of the user's local runtime. Its core verdict was **PARTIAL — architectural validation**; it did not recommend rewriting the whole repository.
+
+Findings recorded in that review:
+- **Retrieval/ranking:** candidate generation uses BM25 and entity extraction with a default candidate limit of 200. A later ranking path can rely on `RelevanceScorer` (lexical overlap plus confidence) rather than consistently preserving the fused retrieval score. This could promote a high-confidence but query-irrelevant note. Graph expansion was described as disabled/ineffective by default under the documented budget configuration.
+- **Markdown/PARA:** frontmatter and metadata such as id, type, tags, lifecycle, verification and provenance were present. The review did not establish that the default MemoryController path universally uses dense embeddings or semantic Markdown chunking; the documented primary path was largely lexical. It proposed section-aware chunks carrying note ID, title, PARA, section path, tags, lifecycle, verification, provenance and content hash. This was a design proposal, not a claim that the schema already existed.
+- **Qdrant IDs:** `03_IMPLEMENTATION/packages/retrieval/qdrant_retrieval.py` used `abs(hash(point_id)) % (2 ** 31)`. Python string hashes vary between processes, so the identifier is unsuitable for persistent point identity and can also collide. A deterministic UUID/hash-derived ID was recommended.
+- **Reindex reconciliation:** an upsert alone does not remove stale fragments when source chunks disappear or change identity. The review recommended content hashes, incremental reindexing, deletion/reconciliation of stale points, and explicit incomplete status on failed reindex.
+- **Prompt safety:** the Ollama assistant had evidence delimiters, JSON-schema validation, quote/number checks, retry and extractive fallback. These controls do not prove semantic entailment, correct entity–value attribution, or complete protection against prompt injection. Access/lifecycle filtering must precede prompt inclusion.
+- **Ollama runtime:** factual-task settings included temperature 0, fixed seed, non-streaming responses, context size 8192 and timeout 180 seconds. Tests inspected at that point used a simulated transport; real runtime validation was still required.
+- **Scaling:** keep Markdown as canonical source; treat lexical/vector/graph indexes as derived and rebuildable. Prioritize ranking correctness, stable IDs/reconciliation, evidence provenance, real Ollama validation and measurable retrieval benchmarks before adding complexity.
+
+Recommended evaluation metrics included Recall@k, MRR, nDCG@k, irrelevant-result rate, latency and context-budget measurements on a frozen benchmark. Proposed security/regression scenarios included stale vector removal, idempotent reindex, distinct note identity, access filtering before prompt inclusion, prompt injection in Markdown, valid citations supporting invalid conclusions, timeout/model-unavailable cases, truncated/invalid JSON and provenance preservation.
+
+### 17.3 Local test environment discovery and repository identity
+
+The supplied conversation records an initial mistaken path, `C:\Users\Marius\AI_Memory_Vault_CODEX_READY`, which contained only `.git`, an invalid HEAD reference and an `index.lock`; no tests were found there. The user corrected the location context to the Codex Projects copy. The repository actually used for later tests was identified as:
+
+- Path: `C:\Users\Marius\Projects\AI_Memory_Vault_CODEX_READY`
+- Branch for historical clean baseline: `main`
+- Historical SHA: `c5f939185f05c516e1cd46e11b3763026a6137d5`
+- Python: 3.14.2; pytest: 9.0.2; Ollama endpoint: `http://127.0.0.1:11434`
+- Generative model: `qwen2.5-coder:3b`; embedding model: `nomic-embed-text:latest` (768 dimensions).
+
+The first historical full-suite report recorded 2,597 passed, 13 skipped and 9 xfailed, with no reported failures. It also recorded a live Ollama generation test returning `LOCAL_MODEL_OK`, 35 prompt tokens and 4 generated tokens. These are historical observations at the old SHA and must not be merged with later results.
+
+### 17.4 Qdrant repair worktree — preserve as separate evidence
+
+The conversation records work in a separate worktree and branch, `fix/qdrant-stable-point-ids`, at `C:\Users\Marius\Projects\AI_Memory_Vault_QdrantFix`. It must remain untouched during the current model matrix unless the owner explicitly changes this instruction.
+
+Reported changes in that worktree:
+- Replace process-randomized `hash()` point IDs with deterministic SHA-256-derived IDs.
+- Make reindex fail visibly when collection preparation or upsert fails.
+- Validate an existing Qdrant collection's vector size and Cosine distance.
+- Add `20_TESTS/test_qdrant_stable_point_ids.py` and `20_TESTS/test_qdrant_live_integration.py`.
+- Add regression coverage for process-to-process ID stability, distinct notes, reindex idempotency, upsert/collection failures, and filtering of REVIEW notes.
+- Add `60_DEPLOYMENT/start_local_qdrant.ps1` and audit/journal documents in that worktree.
+- Install dependencies in a dedicated venv; a recorded `pip check` in that venv reported no broken requirements.
+- Reported Qdrant Server v1.19.2 on loopback only: `127.0.0.1:6333` HTTP and `127.0.0.1:6334` gRPC; not registered as a Windows service and not configured for automatic startup.
+- A live temporary-collection test reportedly exercised Ollama embeddings → Qdrant upsert → semantic search and removed its temporary collection.
+
+**Do not merge the separate result counts into one baseline:** the supplied transcript reports 2,605 passed, 14 skipped and 9 xfailed for one final Qdrant-fix full run; other project context separately reports 2,620 passed, 13 skipped and 9 xfailed for a modified Qdrant worktree run. These are separate recorded observations with potentially different worktree/test states. Neither establishes that clean `main` passed those tests. The transcript says commit, push and merge had not been performed for the Qdrant repair branch at that point.
+
+The transcript also reports an earlier environment-level `pip check` problem outside the dedicated venv: missing `langsmith` required by `langchain-core`, and installed `setuptools 83.0.0` conflicting with a Torch requirement for `setuptools<82`. Keep this distinct from the dedicated-venv dependency check.
+
+### 17.5 Earlier smoke tests versus full-suite evidence
+
+The conversation reports these smoke tests, which are **not** full-suite results:
+- `qwen2.5-coder:3b`: PASS, 3.57 s in one recorded live test; another simple local generation test also passed.
+- `qwen2.5-coder:7b`: PASS, 7.82 s.
+- `qwen2.5:7b-instruct`: PASS, 10.34 s.
+- `mistral:7b-instruct`: PASS, 8.25 s.
+- `llama3.1:8b`: PASS, 17.40 s.
+- `qwen3:30b-a3b`: failed before generation in 4.38 s because Ollama could not allocate a CUDA host buffer of approximately 12.9 GB.
+- `nomic-embed-text:latest`: embedding model, 768-dimensional vectors; evaluate through embedding/retrieval integration, not as a generative council model.
+
+These observations motivate the sequential matrix, but must not be presented as proof that each model passes the repository suite.
+
+### 17.6 Current-source baseline and model matrix — keep results distinct
+
+The newer test matrix uses `main` SHA `154dc4274b3b3d634a50c6e9f30b86a77b798590`, not the historical `c5f9391...` baseline. A full baseline run on this newer source was reported to have 15 failed tests and 2 errors. The completed `qwen2.5-coder:3b` full run on the same SHA recorded 3,682 passed, 43 skipped, 9 xfailed, 15 failed and 2 errors in 993.47 seconds, exit code 1. Failure IDs and caveats are documented in section 15.1. The failure categories there are preliminary classifications, not confirmed root causes.
+
+The `qwen2.5-coder:7b` full-suite launch initially failed because of malformed PowerShell quoting; that attempt did not execute tests. The corrected multiline launch started the actual suite as PID 30080. The supplied conversation ends with an observed progress reading around 88% and no captured final pytest summary or exit code. It must remain **in progress / final result unavailable** until the live process is polled and its actual terminal output recovered.
+
+The agreed next order is `qwen2.5:7b-instruct`, `mistral:7b-instruct`, `llama3.1:8b`, and `qwen3:30b-a3b`, after the active 7B run completes. Run only one full suite at a time, use the same source SHA, configure `light`, `standard` and `heavy` tiers to the current model, enable `RUN_LIVE_OLLAMA_TESTS=1`, capture exact counts and exit code, and publish each completed result before starting the next model. Evaluate `nomic-embed-text:latest` separately.
+
+### 17.7 Owner's requested deliverable and operational constraints
+
+The user's end goal is not only a code review. The project must be tested and made usable, with a final report covering required materials/dependencies, tests, scripts, setup, limitations, and next steps. The user explicitly directed that:
+1. Keep verification active and start the next model when the current run ends.
+2. Record the work, commands, failed attempts, results, questions/answers that affect decisions, findings and next actions in PR #248.
+3. After the matrix, repair defects that are confirmed by evidence, with regression tests and a separate implementation PR/branch.
+4. Never commit directly to `main`; PR #248 is an open, unmerged audit trail.
+5. Do not modify the Qdrant recovery worktree or write/reindex the production collection `vault_memory` without explicit approval.
+6. Do not claim all tests passed, all tests invoked the LLM, a cleanup was verified, or a root cause was proven unless the available evidence supports that exact claim.
+
+The conversation's earlier local Qdrant validation report is useful history, but later test runs on a different SHA showed failures. Do not treat the earlier green report as proof that the current `main` is green. The correct next action remains to finish the active model run, publish its verified result, complete the serial matrix, then triage current-main failures and implement confirmed fixes under review.
+
+### 17.8 File integrity/export note
+
+The supplied conversation contains a prior export step that created `conversatie_completa_din_fisier.zip` from an earlier uploaded transcript file and verified that the extracted member matched that source byte-for-byte, reporting source size 28,278 bytes and SHA-256 `88f50e1e546f6648e32e4a20d498126cfee22aec318caa5186be788e10e04313`. That SHA/size refer to the earlier source file, not the currently supplied `Text lipit(20261009-171153).txt`. Keep these provenance values distinct.
