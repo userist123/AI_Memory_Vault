@@ -50,9 +50,18 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 
 ## Done
 - 2026-10-09T18:45Z claude-orchestrator: spec written; branch created.
+- 2026-10-09 claude-wp6a: items 1-9 implemented and pushed (commits a72166002, 03d2e4a75, 43827d4ab, 87134d70e + docs commit):
+  glossary (Dfir.Core/Language, `{views:Term}`), one state mapping (StateLabels.ForClassification/Meaning, GraphExplorer.Wording removed, Romanian verification line),
+  Presentation models (FindingCardModel, WhyExplainer, EvidenceLevels, KnowThinkDontKnow), FindingCard + KnowThinkDontKnowPanel controls, selected-finding panel under the kept grid,
+  accessibility baseline (AutomationProperties.Name everywhere on the investigation page/Home/new controls, fonts >= 12, XAML scan test), docs/dfir/FINDING_CARD.md.
+  Tests: Dfir.Tests Wp6a* (53), App.Tests FindingCardViewModelTests (Windows CI only).
 
 ## Next
-- Implement 1-9.
+- Final verification: full Dfir/UI/Edition run vs baseline, full Python suite on the final head; then hand back to the orchestrator (no PR opened here).
 
-## Blockers
-- None known.
+## Blockers / owner questions
+- BenignKnown maps to "Observat" (as FindingContract already did); the graph no longer distinguishes "known benign" in the classification column. Owner: keep, or add an 11th label?
+- The audit cites a converter in ProcessContainmentView.xaml.cs that no longer exists (nothing to remove there); AiAnalysisViewModel still says "UNPROVEN" in a Romanian sentence (asserted by App.Tests ViewModelSmokeTests); left for WP6b.
+- "Verifică" on the card shows the WP4 verdict and its checks; it does not re-run the verifier on demand (the verifier runs per case). Owner: should a per-finding re-run exist?
+- Advanced-mode switch (technical names instead of human phrases everywhere) does not exist yet; only tooltips and `Advanced=True` in XAML. Belongs with the navigation/settings work (WP7).
+- High-contrast theme and graph text alternative on the other pages are not covered by this baseline.
