@@ -73,7 +73,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (_service is not null) return;
             _case = LogAnalyzer.UI.Services.LiveCase.Get();
             _service = new ProcessContainmentService(new WindowsFirewallController(), new ProcessScanner(), _case,
-                ProcessSuspension.Suspend, ProcessSuspension.Resume);
+                ProcessSuspension.Suspend, ProcessSuspension.Resume, operatorName: LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified);
             OnPropertyChanged(nameof(CaseRoot));
         }
 

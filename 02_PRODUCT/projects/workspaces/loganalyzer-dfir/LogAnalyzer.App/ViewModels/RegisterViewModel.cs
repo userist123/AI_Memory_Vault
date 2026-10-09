@@ -39,12 +39,16 @@ namespace LogAnalyzer.UI.ViewModels
             ImportCsvCommand = new RelayCommand(ImportCsv);
             PasteCommand = new RelayCommand(Paste);
             LoadFrom(_registerPath, startup: true);
+            Services.AuthApp.SessionChanged += () => { OnPropertyChanged(nameof(AccessNotice)); OnPropertyChanged(nameof(CanEdit)); };
         }
 
         public string Title => _register.Title;
         public string Columns => string.Join(" | ", _register.Columns);
         /// <summary>A shown-always line under the title (for the users register: who may edit it, and that the application cannot enforce it yet).</summary>
         public virtual string Notice => "";
+        /// <summary>Shown when the signed-in user may read but not change this register (only the global administrator edits; decision 33).</summary>
+        public string AccessNotice => LogAnalyzer.Dfir.Auth.OperatorIdentity.MayEditAdministration ? "" : LogAnalyzer.Dfir.Auth.OperatorIdentity.AdministratorOnlyMessage + ". Puteți citi registrul, nu îl puteți modifica.";
+        public bool CanEdit => LogAnalyzer.Dfir.Auth.OperatorIdentity.MayEditAdministration;
         public abstract string Hint { get; }
         public DataTable Data { get; }
         public DataView View => Data.DefaultView;

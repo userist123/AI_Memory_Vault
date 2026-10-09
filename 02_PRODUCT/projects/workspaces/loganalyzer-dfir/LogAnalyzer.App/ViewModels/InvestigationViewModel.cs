@@ -262,7 +262,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (_result is null) return;
             var dlg = new SaveFileDialog { FileName = $"Raport_{_result.Case.Info.CaseId}.pdf", Filter = "PDF (*.pdf)|*.pdf", InitialDirectory = _result.Case.Root };
             if (dlg.ShowDialog() != true) return;
-            InvestigationReportPdf.Write(_result, dlg.FileName, $"{Environment.UserDomainName}\\{Environment.UserName}");
+            InvestigationReportPdf.Write(_result, dlg.FileName, LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified);
             _result.Case.Audit("report.pdf", dlg.FileName);
             Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });
         }

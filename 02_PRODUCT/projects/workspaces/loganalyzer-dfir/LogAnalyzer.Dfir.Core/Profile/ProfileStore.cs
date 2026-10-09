@@ -1,4 +1,5 @@
 using System.Text.Json;
+using LogAnalyzer.Dfir.Auth;
 using LogAnalyzer.Dfir.IO;
 
 namespace LogAnalyzer.Dfir.Profile;
@@ -29,6 +30,7 @@ public static class ProfileStore
     public static List<ProfileIssue> Save(ProcedureProfile p, string? path, out string sha256)
     {
         sha256 = "";
+        if (!OperatorIdentity.MayEditAdministration) return [new ProfileIssue(null, 0, OperatorIdentity.AdministratorOnlyMessage)];
         var issues = ProfileOps.Validate(p);
         if (issues.Any(i => i.IsError)) return issues;
         path ??= DefaultPath;
