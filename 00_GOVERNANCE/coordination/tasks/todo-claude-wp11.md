@@ -82,8 +82,11 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
   `Correlation.Run(events, maintenance, profile)` and the pipeline) + item 1 SMB (`SMB-ADMIN-SHARE`, `SMB-SHARE-PERMS-CHANGED`) + item 2 accounts
   (`ACCOUNT-CREATED`, `ACCOUNT-ADDED-PRIVILEGED-GROUP`, `ACCOUNT-CREATED-THEN-USED`). Dfir 48 failures = Linux baseline, Edition 15/15.
 
+- 2026-10-09 claude-wp11: item 3 remote administration (`REMOTE-RDP-INTERNAL`, `REMOTE-WINRM`, `REMOTE-PSEXEC`, `REMOTE-SSH`) + WinRM/OpenSSH channels in
+  `EventLogCollector.Channels`; `ApprovedSoftwareMatcher` made constraint-decisive (hash, else path pattern, else name).
+
 ## Next
-- Items 3 (remote admin + channels), 4 (agents), 5 (VSS), 6 (DNS), 7 (remote tools), 8 (descriptors), 9 (remaining tests), then merge main, full suites, push.
+- Items 4 (agents), 5 (VSS), 6 (DNS), 7 (remote tools), 8 (descriptors), 9 (remaining tests), then merge main, full suites, push.
 
 ## Blockers
 - None.

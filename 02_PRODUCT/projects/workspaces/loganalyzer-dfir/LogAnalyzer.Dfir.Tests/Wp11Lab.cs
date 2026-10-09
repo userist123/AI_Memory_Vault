@@ -44,8 +44,8 @@ internal static class W11
         Classification = Classification.Direct, FirstSeenUtc = new DateTimeOffset(T0.AddMinutes(minute), TimeSpan.Zero), Description = description,
     };
 
-    public static ProcedureProfile ProfileWithSoftware(params (string Name, string Path, string Sha)[] rows) => new()
+    public static ProcedureProfile ProfileWithSoftware(params (string Name, string Publisher, string Path, string Sha)[] rows) => new()
     {
-        ApprovedSoftware = rows.Select(r => new ApprovedSoftwareRow { Name = r.Name, PathPattern = r.Path, Sha256 = r.Sha }).ToList(),
+        ApprovedSoftware = rows.Select(r => new ApprovedSoftwareRow { Name = r.Name, Publisher = r.Publisher, PathPattern = r.Path, Sha256 = r.Sha }).ToList(),
     };
 }
