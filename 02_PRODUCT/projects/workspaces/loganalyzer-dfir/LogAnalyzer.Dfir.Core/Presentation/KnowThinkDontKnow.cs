@@ -1,4 +1,5 @@
 using LogAnalyzer.Dfir.Analysis;
+using LogAnalyzer.Dfir.Language;
 using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Presentation;
@@ -21,9 +22,9 @@ public sealed record KtdStatement(string Text, string Basis);
 /// </summary>
 public sealed record KnowThinkDontKnow(IReadOnlyList<KtdStatement> Know, IReadOnlyList<KtdStatement> Think, IReadOnlyList<KtdStatement> DontKnow)
 {
-    public const string KnowHeading = "CE ȘTIM";
-    public const string ThinkHeading = "CE SUSPECTĂM";
-    public const string DontKnowHeading = "CE NU PUTEM DEMONSTRA";
+    public static string KnowHeading => Loc.T("ktd.ce_stim");
+    public static string ThinkHeading => Loc.T("ktd.ce_suspectam");
+    public static string DontKnowHeading => Loc.T("ktd.ce_nu_putem_demonstra");
 
     public static KnowThinkDontKnow Build(Finding f, EvidenceContext ctx)
     {
@@ -37,30 +38,30 @@ public sealed record KnowThinkDontKnow(IReadOnlyList<KtdStatement> Know, IReadOn
         string reason = f.ClassificationReason.Length > 0 ? f.ClassificationReason : WhyExplainer.NoReasoning;
 
         if (refuted)
-            dont.Add(new($"{claim} ({StateLabels.Label(verdict).ToLowerInvariant()} de verificare)", $"{StateLabels.Label(verdict)}: {f.Verification.Reason}"));
+            dont.Add(new(Loc.Format("ktd.refuted_claim", claim, StateLabels.Label(verdict).ToLowerInvariant()), $"{StateLabels.Label(verdict)}: {f.Verification.Reason}"));
         else
         {
             foreach (var r in f.SupportingEvidence.Where(r => r.Description.Length > 0))
                 know.Add(new(r.Description, $"{r.EvidenceId}{(r.Locator.Length > 0 ? " · " + r.Locator : "")}"));
             if (!hasEvidence)
-                dont.Add(new($"Constatarea „{claim}” nu are probe atașate", "fără probă nu se poate afirma"));
+                dont.Add(new(Loc.Format("ktd.no_evidence_claim", claim), Loc.T("ktd.basis_no_evidence")));
             else if (f.Classification is Classification.Direct or Classification.BenignKnown || verdict == StandardState.Verified)
                 know.Insert(0, new(claim, EvidenceLevels.SummaryLine(f.SupportingEvidence.Count, f.SupportingEvidence.Select(r => r.EvidenceId).Distinct().Count())));
             else
                 think.Add(new(claim, $"{StateLabels.Label(f.Status)}: {reason}"));
         }
 
-        foreach (var c in f.ContradictingEvidence) know.Add(new("Contrazis de: " + c, "dovadă contrară găsită"));
-        foreach (var a in f.AlternativeExplanations) think.Add(new(a, "explicație alternativă care nu poate fi exclusă cu probele din caz"));
+        foreach (var c in f.ContradictingEvidence) know.Add(new(Loc.T("ktd.contradicted_by") + c, Loc.T("ktd.basis_contrary")));
+        foreach (var a in f.AlternativeExplanations) think.Add(new(a, Loc.T("ktd.basis_alternative")));
 
-        foreach (var m in f.MissingEvidence) dont.Add(new(m, "probă lipsă"));
-        foreach (var l in f.Limitations.Where(l => l.Length > 0)) dont.Add(new(l, "limită a acestui tip de probă sau de afirmație"));
+        foreach (var m in f.MissingEvidence) dont.Add(new(m, Loc.T("ktd.basis_missing")));
+        foreach (var l in f.Limitations.Where(l => l.Length > 0)) dont.Add(new(l, Loc.T("ktd.basis_limit")));
 
         if (f.Sequence is { } seq)
             foreach (var st in seq.Steps)
             {
-                if (st.Observed) know.Add(new($"Pas {st.Order}: {st.Name}", $"{st.Note} (sursa: {(st.Source.Length > 0 ? st.Source : EvidenceLevels.Unknown)})"));
-                else dont.Add(new($"Pas {st.Order}: {st.Name}", st.Note.Length > 0 ? st.Note : "pas neobservat"));
+                if (st.Observed) know.Add(new(Loc.Format("ktd.step", st.Order, st.Name), Loc.Format("ktd.step_source", st.Note, st.Source.Length > 0 ? st.Source : EvidenceLevels.Unknown)));
+                else dont.Add(new(Loc.Format("ktd.step", st.Order, st.Name), st.Note.Length > 0 ? st.Note : Loc.T("ktd.step_unobserved")));
             }
 
         var sources = f.SupportingEvidence.Select(r => ctx.ItemOf(r.EvidenceId)).Where(i => i is not null)
@@ -69,7 +70,7 @@ public sealed record KnowThinkDontKnow(IReadOnlyList<KtdStatement> Know, IReadOn
         {
             var art = g.Artifact.Trim();
             if (art.Length == 0 || !sources.Any(s => s.Contains(art, StringComparison.OrdinalIgnoreCase) || art.Contains(s, StringComparison.OrdinalIgnoreCase))) continue;
-            dont.Add(new($"{g.Artifact}: {g.Reason}" + (g.Impact.Length > 0 ? $" ({g.Impact})" : ""), $"gol de probă ({g.Status.ToSpec()})"));
+            dont.Add(new($"{g.Artifact}: {g.Reason}" + (g.Impact.Length > 0 ? $" ({g.Impact})" : ""), Loc.Format("ktd.basis_gap", g.Status.ToSpec())));
         }
 
         return new KnowThinkDontKnow(Distinct(know), Distinct(think), Distinct(dont));

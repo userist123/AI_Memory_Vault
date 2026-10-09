@@ -48,8 +48,9 @@ public class Wp6aXamlTests
         Assert.DoesNotContain("Content=\"Event Explorer (EVTX)\"", main);
         Assert.DoesNotContain("Content=\"Chain of Custody (NIS2)\"", main);
         Assert.Matches(@"Content=""\{views:Term evtx\}""[^>]*ToolTip=""\{views:Term evtx, Tooltip=True\}""", main);
-        Assert.Matches(@"Content=""\{views:Term chain_of_custody[^}]*\}""[^>]*ToolTip=""\{views:Term chain_of_custody, Tooltip=True\}""", main);
-        Assert.Contains("Investigație completă (caz)", main);   // no page was removed or renamed
+        Assert.Matches(@"Content=""\{loc:T shell\.nav\.custody_nis2\}""[^>]*ToolTip=""\{views:Term chain_of_custody, Tooltip=True\}""", main);   // phrase + NIS2 tag, one key
+        Assert.Contains("Content=\"{loc:T shell.investigatie_completa_caz}\"", main);   // no page was removed or renamed (WP6b: the label is a key)
+        Assert.Equal("Investigație completă (caz)", LogAnalyzer.Dfir.Language.Loc.T("shell.investigatie_completa_caz", LogAnalyzer.Dfir.Language.AppLanguage.Romanian));
     }
 
     [Fact]
@@ -78,6 +79,9 @@ public class Wp6aXamlTests
     private static bool Has(XElement e, string attr) => e.Attributes().Any(a => a.Name.LocalName == attr && a.Value.Trim().Length > 0);
     private static bool IsLiteral(XElement e, string attr) => e.Attributes().Any(a => a.Name.LocalName == attr && a.Value.Trim().Length > 0 && !a.Value.TrimStart().StartsWith("{"));
 
+    /// <summary>A resource-layer key (<c>{loc:T key}</c>) is the element's own visible text, exactly like a literal (WP6b).</summary>
+    private static bool IsKey(XElement e, string attr) => e.Attributes().Any(a => a.Name.LocalName == attr && a.Value.TrimStart().StartsWith("{loc:T "));
+
     [Fact]
     public void Every_interactive_element_of_the_baseline_pages_has_an_automation_name()
     {
@@ -88,8 +92,8 @@ public class Wp6aXamlTests
             foreach (var e in doc.Descendants().Where(e => Interactive.Contains(e.Name.LocalName)))
             {
                 bool named = Has(e, "AutomationProperties.Name") || Has(e, "AutomationProperties.LabeledBy")
-                             || (NamedByOwnText.Contains(e.Name.LocalName) && IsLiteral(e, "Content"))
-                             || (e.Name.LocalName == "Expander" && IsLiteral(e, "Header"));
+                             || (NamedByOwnText.Contains(e.Name.LocalName) && (IsLiteral(e, "Content") || IsKey(e, "Content")))
+                             || (e.Name.LocalName == "Expander" && (IsLiteral(e, "Header") || IsKey(e, "Header")));
                 if (!named) missing.Add($"{rel[^1]}: <{e.Name.LocalName}> {string.Join(" ", e.Attributes().Take(3).Select(a => a.Name.LocalName + "=" + a.Value))}");
             }
         }
@@ -124,7 +128,11 @@ public class Wp6aXamlTests
     {
         var xaml = Read("Views", "Controls", "FindingCard.xaml");
         foreach (var a in FindingCardActions.All)
-            Assert.Matches($@"Content=""{Regex.Escape(a.AccessText)}""[^>]*AutomationProperties\.HelpText=""", xaml);
+        {
+            // WP6b: the texts are keys of the resource layer; the model and the XAML name the same keys, in both languages.
+            Assert.Matches($@"Content=""\{{loc:T {Regex.Escape(a.AccessTextKey)}\}}""[^>]*AutomationProperties\.HelpText=""\{{loc:T {Regex.Escape(a.HelpKey)}\}}""", xaml);
+            Assert.Contains("_", a.AccessText);
+        }
         Assert.Equal(4, Regex.Matches(xaml, @"<Button\b").Count);
     }
 
@@ -143,7 +151,9 @@ public class Wp6aXamlTests
     public void The_know_think_dont_know_control_uses_the_three_documented_headings_and_marks_each_column_with_a_symbol()
     {
         var xaml = Read("Views", "Controls", "KnowThinkDontKnowPanel.xaml");
-        foreach (var h in new[] { KnowThinkDontKnow.KnowHeading, KnowThinkDontKnow.ThinkHeading, KnowThinkDontKnow.DontKnowHeading }) Assert.Contains(h, xaml);
+        foreach (var key in new[] { "ktd.ce_stim", "ktd.ce_suspectam", "ktd.ce_nu_putem_demonstra" }) Assert.Contains("{loc:T " + key + "}", xaml);   // WP6b: headings are keys
+        Assert.Equal("CE ȘTIM", Loc.T("ktd.ce_stim", AppLanguage.Romanian));
+        Assert.Equal("CE ȘTIM", KnowThinkDontKnow.KnowHeading);
         foreach (var sym in new[] { "✓", "⚠", "?" }) Assert.Contains(sym, xaml);
         foreach (var path in new[] { "Know", "Think", "DontKnow" }) Assert.Contains("ItemsSource=\"{Binding " + path + "}\"", xaml);
     }
@@ -156,6 +166,10 @@ public class Wp6aXamlTests
         Assert.Contains("SelectedItem=\"{Binding SelectedFinding}\"", inv);
         Assert.Contains("<ctrl:FindingCard DataContext=\"{Binding SelectedCard}\"", inv);
         foreach (var header in new[] { "Severitate", "Clasificare", "Stare", "Verificare", "Prima (UTC)", "Regulă", "Constatare", "Detalii" })
-            Assert.Contains($"Header=\"{header}\"", inv);
+        {
+            // WP6b: the grid headers are keys; the Romanian text (what the operator saw in WP6a) is unchanged.
+            var keys = Loc.Keys(AppLanguage.Romanian).Where(k => Loc.T(k, AppLanguage.Romanian) == header).ToList();
+            Assert.True(keys.Any(k => inv.Contains($"Header=\"{{loc:T {k}}}\"")), $"no grid header uses a key whose Romanian text is '{header}'");
+        }
     }
 }

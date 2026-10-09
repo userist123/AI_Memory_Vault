@@ -1,9 +1,9 @@
-<UserControl x:Class="LogAnalyzer.UI.Views.Controls.FindingCard"
+<UserControl xmlns:loc="clr-namespace:LogAnalyzer.UI.Views" x:Class="LogAnalyzer.UI.Views.Controls.FindingCard"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls"
              xmlns:views="clr-namespace:LogAnalyzer.UI.Views"
-             AutomationProperties.Name="Fișa constatării selectate">
+             AutomationProperties.Name="{loc:T card.fisa_constatarii_selectate}">
     <!-- WP6a / U4. DataContext: LogAnalyzer.UI.ViewModels.FindingCardViewModel. Severity, state and verification are TEXT (plus an icon shape for severity), never colour alone. -->
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -18,54 +18,54 @@
 
             <WrapPanel Margin="0,8,0,0">
                 <TextBlock Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,16,0">
-                    <Run Text="Severitate:" FontWeight="SemiBold"/> <Run Text="{Binding Card.SeverityIcon, Mode=OneWay}"/> <Run Text="{Binding Card.SeverityText, Mode=OneWay}"/>
+                    <Run Text="{loc:T card.severitate}" FontWeight="SemiBold"/> <Run Text="{Binding Card.SeverityIcon, Mode=OneWay}"/> <Run Text="{Binding Card.SeverityText, Mode=OneWay}"/>
                 </TextBlock>
                 <TextBlock Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,16,0" ToolTip="{Binding Card.StateMeaning}">
-                    <Run Text="Stare:" FontWeight="SemiBold"/> <Run Text="{Binding Card.StateLabel, Mode=OneWay}"/>
+                    <Run Text="{loc:T card.stare}" FontWeight="SemiBold"/> <Run Text="{Binding Card.StateLabel, Mode=OneWay}"/>
                 </TextBlock>
                 <TextBlock Foreground="{StaticResource TextPrimaryBrush}" ToolTip="{Binding Card.VerificationText}">
-                    <Run Text="Verificare:" FontWeight="SemiBold"/> <Run Text="{Binding Card.VerificationLabel, Mode=OneWay}"/>
+                    <Run Text="{loc:T card.verificare}" FontWeight="SemiBold"/> <Run Text="{Binding Card.VerificationLabel, Mode=OneWay}"/>
                 </TextBlock>
             </WrapPanel>
 
             <WrapPanel Margin="0,10,0,0">
-                <Button Content="_De ce?" AutomationProperties.Name="De ce?" AutomationProperties.HelpText="Arată observația, dovezile, raționamentul, limitele și verificarea acestei constatări." Command="{Binding ShowWhyCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,4"/>
-                <Button Content="_Arată dovezile" AutomationProperties.Name="Arată dovezile" AutomationProperties.HelpText="Arată dovezile constatării: rezumat, listă și detalii tehnice (SHA-256, parser, locator)." Command="{Binding ShowEvidenceCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,4"/>
-                <Button Content="_Verifică" AutomationProperties.Name="Verifică" AutomationProperties.HelpText="Arată verdictul verificării automate pentru această constatare și controalele pe care se sprijină." Command="{Binding ShowVerifyCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,4"/>
-                <Button Content="_Ce trebuie să fac" AutomationProperties.Name="Ce trebuie să fac" AutomationProperties.HelpText="Arată pașii recomandați pentru această constatare." Command="{Binding ShowTodoCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,4"/>
+                <Button Content="{loc:T card.de_ce}" AutomationProperties.Name="{loc:T card.de_ce_2}" AutomationProperties.HelpText="{loc:T card.arata_observatia_dovezile_rationamentul_limitele}" Command="{Binding ShowWhyCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,4"/>
+                <Button Content="{loc:T card.arata_dovezile}" AutomationProperties.Name="{loc:T card.arata_dovezile_2}" AutomationProperties.HelpText="{loc:T card.arata_dovezile_constatarii_rezumat_lista}" Command="{Binding ShowEvidenceCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,4"/>
+                <Button Content="{loc:T card.verifica}" AutomationProperties.Name="{loc:T card.verifica_2}" AutomationProperties.HelpText="{loc:T card.arata_verdictul_verificarii_automate_pentru}" Command="{Binding ShowVerifyCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,4"/>
+                <Button Content="{loc:T card.ce_trebuie_sa_fac}" AutomationProperties.Name="{loc:T card.ce_trebuie_sa_fac_2}" AutomationProperties.HelpText="{loc:T card.arata_pasii_recomandati_pentru_aceasta}" Command="{Binding ShowTodoCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,4"/>
             </WrapPanel>
 
             <!-- De ce? (U5) -->
             <StackPanel Visibility="{Binding IsWhyOpen, Converter={StaticResource BoolToVis}}" Margin="0,6,0,0">
-                <TextBlock Text="De ce?" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="{loc:T card.de_ce_2}" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <TextBox Text="{Binding WhyText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}"
-                         Padding="8" AutomationProperties.Name="Explicația constatării: ce am observat, dovezi, raționament, limite, verificare"/>
+                         Padding="8" AutomationProperties.Name="{loc:T card.explicatia_constatarii_ce_am_observat}"/>
             </StackPanel>
 
             <!-- Dovezile, în trei niveluri (U6) -->
             <StackPanel Visibility="{Binding IsEvidenceOpen, Converter={StaticResource BoolToVis}}" Margin="0,6,0,0">
                 <TextBlock Text="{Binding Card.Evidence.Summary}" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <DataGrid ItemsSource="{Binding Card.Evidence.List}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="220" Margin="0,6,0,0"
-                          AutomationProperties.Name="Lista dovezilor: sursă, oră, descriere">
+                          AutomationProperties.Name="{loc:T card.lista_dovezilor_sursa_ora_descriere}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Sursă" Binding="{Binding Source}" Width="*"/>
-                        <DataGridTextColumn Header="Ora" Binding="{Binding TimeText}" Width="*"/>
-                        <DataGridTextColumn Header="Descriere" Binding="{Binding Description}" Width="3*"/>
+                        <DataGridTextColumn Header="{loc:T inv.sursa}" Binding="{Binding Source}" Width="*"/>
+                        <DataGridTextColumn Header="{loc:T card.ora}" Binding="{Binding TimeText}" Width="*"/>
+                        <DataGridTextColumn Header="{loc:T card.descriere}" Binding="{Binding Description}" Width="3*"/>
                     </DataGrid.Columns>
                 </DataGrid>
-                <Expander Header="Detalii tehnice (id probă, SHA-256, cale, parser, locator)" AutomationProperties.Name="Detalii tehnice ale dovezilor" Margin="0,6,0,0" Foreground="{StaticResource TextPrimaryBrush}">
+                <Expander Header="{loc:T card.detalii_tehnice_id_proba_sha}" AutomationProperties.Name="{loc:T card.detalii_tehnice_ale_dovezilor}" Margin="0,6,0,0" Foreground="{StaticResource TextPrimaryBrush}">
                     <StackPanel>
                         <TextBlock Text="{views:Term provenance}" ToolTip="{views:Term provenance, Tooltip=True}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,4"/>
                         <DataGrid ItemsSource="{Binding Card.Evidence.Technical}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="260"
-                                  AutomationProperties.Name="Detalii tehnice ale dovezilor">
+                                  AutomationProperties.Name="{loc:T card.detalii_tehnice_ale_dovezilor}">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Id probă" Binding="{Binding EvidenceId}" Width="90"/>
+                                <DataGridTextColumn Header="{loc:T card.id_proba}" Binding="{Binding EvidenceId}" Width="90"/>
                                 <DataGridTextColumn Header="SHA-256" Binding="{Binding Sha256}" Width="2*"/>
-                                <DataGridTextColumn Header="Cale sursă" Binding="{Binding SourcePath}" Width="2*"/>
-                                <DataGridTextColumn Header="Parser" Binding="{Binding Parser}" Width="*"/>
-                                <DataGridTextColumn Header="Versiune" Binding="{Binding ParserVersion}" Width="80"/>
-                                <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp}" Width="*"/>
-                                <DataGridTextColumn Header="Locator" Binding="{Binding Locator}" Width="*"/>
+                                <DataGridTextColumn Header="{loc:T card.cale_sursa}" Binding="{Binding SourcePath}" Width="2*"/>
+                                <DataGridTextColumn Header="{loc:T home.parser}" Binding="{Binding Parser}" Width="*"/>
+                                <DataGridTextColumn Header="{loc:T card.versiune}" Binding="{Binding ParserVersion}" Width="80"/>
+                                <DataGridTextColumn Header="{loc:T card.marcaj_de_timp}" Binding="{Binding Timestamp}" Width="*"/>
+                                <DataGridTextColumn Header="{loc:T card.locator}" Binding="{Binding Locator}" Width="*"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </StackPanel>
@@ -77,7 +77,7 @@
                 <TextBlock Text="{views:Term verification}" ToolTip="{views:Term verification, Tooltip=True}" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <TextBlock Text="{Binding Card.VerificationLabel}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0"/>
                 <TextBlock Text="{Binding Card.VerificationText}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/>
-                <ItemsControl ItemsSource="{Binding Card.Why.VerificationChecks}" AutomationProperties.Name="Controalele verificării" Margin="0,4,0,0">
+                <ItemsControl ItemsSource="{Binding Card.Why.VerificationChecks}" AutomationProperties.Name="{loc:T card.controalele_verificarii}" Margin="0,4,0,0">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate><TextBlock Text="{Binding StringFormat='• {0}'}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/></DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -86,8 +86,8 @@
 
             <!-- Ce trebuie să fac -->
             <StackPanel Visibility="{Binding IsTodoOpen, Converter={StaticResource BoolToVis}}" Margin="0,6,0,0">
-                <TextBlock Text="Ce trebuie să fac" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
-                <ItemsControl ItemsSource="{Binding Card.NextSteps}" AutomationProperties.Name="Pașii recomandați">
+                <TextBlock Text="{loc:T card.ce_trebuie_sa_fac_2}" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                <ItemsControl ItemsSource="{Binding Card.NextSteps}" AutomationProperties.Name="{loc:T card.pasii_recomandati}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate><TextBlock Text="{Binding StringFormat='• {0}'}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,2,0,0"/></DataTemplate>
                     </ItemsControl.ItemTemplate>

@@ -1,7 +1,7 @@
-<UserControl x:Class="LogAnalyzer.UI.Views.Controls.KnowThinkDontKnowPanel"
+<UserControl xmlns:loc="clr-namespace:LogAnalyzer.UI.Views" x:Class="LogAnalyzer.UI.Views.Controls.KnowThinkDontKnowPanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             AutomationProperties.Name="Ce știm, ce suspectăm și ce nu putem demonstra">
+             AutomationProperties.Name="{loc:T ktd.ce_stim_ce_suspectam_si}">
     <!-- WP6a / U8. DataContext: LogAnalyzer.Dfir.Presentation.KnowThinkDontKnow. Each column has a text heading AND a symbol (✓ ⚠ ?), so no column is told apart by colour alone. -->
     <UserControl.Resources>
         <DataTemplate x:Key="StatementTemplate">
@@ -16,16 +16,16 @@
     </UserControl.Resources>
     <UniformGrid Columns="3" Margin="0,8,0,0">
         <StackPanel Margin="0,0,8,0">
-            <TextBlock Text="CE ȘTIM" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
-            <ItemsControl ItemsSource="{Binding Know}" ItemTemplate="{StaticResource StatementTemplate}" Tag="✓" AutomationProperties.Name="Ce știm"/>
+            <TextBlock Text="{loc:T ktd.ce_stim}" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
+            <ItemsControl ItemsSource="{Binding Know}" ItemTemplate="{StaticResource StatementTemplate}" Tag="✓" AutomationProperties.Name="{loc:T ktd.ce_stim_2}"/>
         </StackPanel>
         <StackPanel Margin="0,0,8,0">
-            <TextBlock Text="CE SUSPECTĂM" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
-            <ItemsControl ItemsSource="{Binding Think}" ItemTemplate="{StaticResource StatementTemplate}" Tag="⚠" AutomationProperties.Name="Ce suspectăm"/>
+            <TextBlock Text="{loc:T ktd.ce_suspectam}" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
+            <ItemsControl ItemsSource="{Binding Think}" ItemTemplate="{StaticResource StatementTemplate}" Tag="⚠" AutomationProperties.Name="{loc:T ktd.ce_suspectam_2}"/>
         </StackPanel>
         <StackPanel>
-            <TextBlock Text="CE NU PUTEM DEMONSTRA" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
-            <ItemsControl ItemsSource="{Binding DontKnow}" ItemTemplate="{StaticResource StatementTemplate}" Tag="?" AutomationProperties.Name="Ce nu putem demonstra"/>
+            <TextBlock Text="{loc:T ktd.ce_nu_putem_demonstra}" FontWeight="Bold" FontSize="13" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
+            <ItemsControl ItemsSource="{Binding DontKnow}" ItemTemplate="{StaticResource StatementTemplate}" Tag="?" AutomationProperties.Name="{loc:T ktd.ce_nu_putem_demonstra_2}"/>
         </StackPanel>
     </UniformGrid>
 </UserControl>

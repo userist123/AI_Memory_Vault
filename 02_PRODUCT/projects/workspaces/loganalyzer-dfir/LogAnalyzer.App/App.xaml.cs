@@ -61,6 +61,7 @@ namespace LogAnalyzer.UI
             {
                 File.WriteAllText(debugLogPath, "OnStartup starting...\n");
                 base.OnStartup(e);
+                LogAnalyzer.UI.Services.LanguageChoice.Instance.ApplyStored();   // per-user UI language (default Romanian), before any window
                 LogAnalyzer.UI.Services.LiveCase.ScopePrompt = LogAnalyzer.UI.Views.ScopeDialog.Ask;   // owner decision 28
 
                 // Operating mode: decided by the edition. The unclassified edition takes it only from the signed policy

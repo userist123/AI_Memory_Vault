@@ -1,5 +1,6 @@
 using System.Text;
 using LogAnalyzer.Dfir.Analysis;
+using LogAnalyzer.Dfir.Language;
 using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Presentation;
@@ -19,14 +20,14 @@ public sealed record WhyExplanation(
     public string ToPlainText()
     {
         var sb = new StringBuilder();
-        sb.AppendLine("Ce am observat").AppendLine("  " + Observation).AppendLine();
-        sb.AppendLine("Dovezi").AppendLine("  " + EvidenceSummary);
+        sb.AppendLine(Loc.T("why.observed")).AppendLine("  " + Observation).AppendLine();
+        sb.AppendLine(Loc.T("why.evidence")).AppendLine("  " + EvidenceSummary);
         foreach (var l in EvidenceLines) sb.AppendLine("  • " + l);
-        sb.AppendLine().AppendLine("Raționament").AppendLine("  " + Reasoning).AppendLine();
-        sb.AppendLine("Limite");
-        if (Limitations.Count == 0) sb.AppendLine("  Nicio limită înregistrată (asta nu înseamnă că nu există).");
+        sb.AppendLine().AppendLine(Loc.T("why.reasoning")).AppendLine("  " + Reasoning).AppendLine();
+        sb.AppendLine(Loc.T("why.limits"));
+        if (Limitations.Count == 0) sb.AppendLine("  " + Loc.T("why.no_limits"));
         foreach (var l in Limitations) sb.AppendLine("  • " + l);
-        sb.AppendLine().AppendLine("Verificare").AppendLine("  " + Verification);
+        sb.AppendLine().AppendLine(Loc.T("why.check")).AppendLine("  " + Verification);
         foreach (var c in VerificationChecks) sb.AppendLine("  • " + c);
         if (LegacyScoreNote is not null) sb.AppendLine().AppendLine(LegacyScoreNote);
         return sb.ToString().TrimEnd();
@@ -35,7 +36,7 @@ public sealed record WhyExplanation(
 
 public static class WhyExplainer
 {
-    public const string NoReasoning = "Motivul clasificării nu este înregistrat pentru această constatare.";
+    public static string NoReasoning => Loc.T("why.no_reasoning");
 
     public static WhyExplanation Build(Finding f, EvidenceContext ctx, IReadOnlyList<string>? verificationChecks = null, LegacyScore? legacyScore = null)
     {
@@ -43,16 +44,16 @@ public static class WhyExplainer
         var lines = ev.List.Zip(f.SupportingEvidence, (l, r) => $"{l.Source} · {l.TimeText} · {r.Description} ({r.EvidenceId}, {(r.Locator.Length > 0 ? r.Locator : EvidenceLevels.Unknown)})").ToList();
 
         var lim = new List<string>();
-        lim.AddRange(f.MissingEvidence.Select(m => "Lipsește: " + m));
-        lim.AddRange(f.AlternativeExplanations.Select(a => "Alternativă care nu poate fi exclusă: " + a));
-        lim.AddRange(f.ContradictingEvidence.Select(c => "Contrazis de: " + c));
+        lim.AddRange(f.MissingEvidence.Select(m => Loc.T("why.missing") + m));
+        lim.AddRange(f.AlternativeExplanations.Select(a => Loc.T("why.alternative") + a));
+        lim.AddRange(f.ContradictingEvidence.Select(c => Loc.T("ktd.contradicted_by") + c));
         lim.AddRange(f.Limitations);
 
         var v = f.Verification;
-        string verification = $"{StateLabels.Label(v.State)}: {v.Reason}" + (v.Verifier.Length > 0 ? $" (verificator: {v.Verifier})" : "");
+        string verification = $"{StateLabels.Label(v.State)}: {v.Reason}" + (v.Verifier.Length > 0 ? " " + Loc.Format("why.verifier", v.Verifier) : "");
 
         string? note = legacyScore is { Factors.Count: > 0 } s
-            ? $"Scor euristic vechi: {s.Score}/100, calculat din: {string.Join("; ", s.Factors)}. Scorul nu este o verificare și nu înlocuiește dovezile de mai sus."
+            ? Loc.Format("why.legacy_score", s.Score, string.Join("; ", s.Factors))
             : null;
 
         return new WhyExplanation(

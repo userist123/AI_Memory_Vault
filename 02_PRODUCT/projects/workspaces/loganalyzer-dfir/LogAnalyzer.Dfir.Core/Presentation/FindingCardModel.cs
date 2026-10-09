@@ -1,19 +1,29 @@
 using LogAnalyzer.Dfir.Analysis;
+using LogAnalyzer.Dfir.Language;
 using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Presentation;
 
-/// <summary>One of the four buttons of the finding card. <see cref="AccessText"/> carries the WPF access-key underscore.</summary>
-public sealed record CardAction(string Key, string Label, string AccessKey, string AccessText, string HelpText);
+/// <summary>
+/// One of the four buttons of the finding card. The texts come from the resource layer (keys below), so they follow the language;
+/// <see cref="AccessText"/> carries the WPF access-key underscore and <see cref="AccessKey"/> is the letter after it.
+/// </summary>
+public sealed record CardAction(string Key, string LabelKey, string AccessTextKey, string HelpKey)
+{
+    public string Label => Loc.T(LabelKey);
+    public string AccessText => Loc.T(AccessTextKey);
+    public string HelpText => Loc.T(HelpKey);
+    public string AccessKey => AccessText.IndexOf('_') is var i and >= 0 && i + 1 < AccessText.Length ? AccessText[i + 1].ToString().ToUpperInvariant() : "";
+}
 
 public static class FindingCardActions
 {
     public static IReadOnlyList<CardAction> All { get; } =
     [
-        new("why", "De ce?", "D", "_De ce?", "Arată observația, dovezile, raționamentul, limitele și verificarea acestei constatări."),
-        new("evidence", "Arată dovezile", "A", "_Arată dovezile", "Arată dovezile constatării: rezumat, listă și detalii tehnice (SHA-256, parser, locator)."),
-        new("verify", "Verifică", "V", "_Verifică", "Arată verdictul verificării automate pentru această constatare și controalele pe care se sprijină."),
-        new("todo", "Ce trebuie să fac", "C", "_Ce trebuie să fac", "Arată pașii recomandați pentru această constatare."),
+        new("why", "card.de_ce_2", "card.de_ce", "card.arata_observatia_dovezile_rationamentul_limitele"),
+        new("evidence", "card.arata_dovezile_2", "card.arata_dovezile", "card.arata_dovezile_constatarii_rezumat_lista"),
+        new("verify", "card.verifica_2", "card.verifica", "card.arata_verdictul_verificarii_automate_pentru"),
+        new("todo", "card.ce_trebuie_sa_fac_2", "card.ce_trebuie_sa_fac", "card.arata_pasii_recomandati_pentru_aceasta"),
     ];
 }
 
@@ -26,7 +36,7 @@ public sealed record FindingCardModel(
     string StateLabel, string StateMeaning, string VerificationLabel, string VerificationText,
     WhyExplanation Why, EvidenceLevels Evidence, KnowThinkDontKnow Know, IReadOnlyList<string> NextSteps, string TechnicalSummary)
 {
-    public const string NoNextStep = "Niciun pas recomandat nu este înregistrat pentru această constatare.";
+    public static string NoNextStep => Loc.T("card.no_next_step");
 
     public static FindingCardModel Build(Finding f, EvidenceContext ctx, IReadOnlyList<string>? verificationChecks = null, LegacyScore? legacyScore = null)
     {

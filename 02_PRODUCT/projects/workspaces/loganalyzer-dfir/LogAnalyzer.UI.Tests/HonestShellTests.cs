@@ -199,8 +199,11 @@ namespace LogAnalyzer.UI.Tests
 
             Assert.Contains("Containment.AutoContainEnabled", main);
             Assert.Contains("Containment.AutoContainEnabled", dash);
-            Assert.Contains("oprită (implicit)", main);
-            Assert.Contains("Stare: nicio analiză rulată", main);
+            // WP6b: the status-bar texts are keys of the resource layer (Strings.ro.json); the Romanian wording is unchanged.
+            var ro = File.ReadAllText(Path.Combine(AppDir(), "..", "LogAnalyzer.Dfir.Core", "Language", "Strings.ro.json"));
+            Assert.Contains("{loc:T shell.izolare_automata_oprita_implicit}", main);
+            Assert.Contains("\"shell.izolare_automata_oprita_implicit\": \"Izolare automată: oprită (implicit)\"", ro);
+            Assert.Contains("Text=\"{Binding StatusMessage}\"", main);
             Assert.Contains("{Binding ProvenanceStatusMessage}", dash);
         }
 

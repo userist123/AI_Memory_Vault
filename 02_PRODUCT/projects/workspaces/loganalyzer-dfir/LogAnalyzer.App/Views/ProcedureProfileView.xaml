@@ -1,4 +1,4 @@
-<UserControl x:Class="LogAnalyzer.UI.Views.ProcedureProfileView"
+<UserControl xmlns:loc="clr-namespace:LogAnalyzer.UI.Views" x:Class="LogAnalyzer.UI.Views.ProcedureProfileView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid Margin="24">
@@ -10,26 +10,26 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,12">
-            <TextBlock Text="Profil de proceduri" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+            <TextBlock Text="{loc:T proc.profil_de_proceduri}" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
             <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
-                       Text="Program de lucru, mentenanța jurnalelor, software aprobat, politica GPO așteptată, zone și transferuri. Se introduc manual, se lipesc din tabel sau se importă (JSON / CSV). Analiza le compară cu ce s-a observat; nimic nu se aplică pe Windows. O secțiune goală este „nedefinit”, niciodată „conform”."/>
+                       Text="{loc:T proc.program_de_lucru_mentenanta_jurnalelor}"/>
             <TextBlock Text="{Binding AccessNotice}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource CriticalBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
         </StackPanel>
 
         <Border Grid.Row="1" Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,8">
             <StackPanel>
                 <WrapPanel VerticalAlignment="Center">
-                    <TextBlock Text="Fișier:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="{loc:T reg.fisier}" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <TextBox Text="{Binding ProfilePath, Mode=OneWay}" IsReadOnly="True" Width="420" Margin="0,0,10,0"/>
-                    <Button Content="Salvează" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Salvează ca…" Command="{Binding SaveAsCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Reîncarcă" Command="{Binding ReloadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Deschide…" Command="{Binding OpenFileCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Validează" Command="{Binding ValidateCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
-                    <Button Content="Importă JSON…" Command="{Binding ImportJsonCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Importă CSV în tabel…" Command="{Binding ImportCsvCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Lipește în tabel" Command="{Binding PasteCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,10,0"/>
-                    <CheckBox Content="înlocuiește conținutul tabelului la import/lipire" IsChecked="{Binding ReplaceOnImport}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                    <Button Content="{loc:T reg.salveaza}" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="{loc:T proc.salveaza_ca}" Command="{Binding SaveAsCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="{loc:T reg.reincarca}" Command="{Binding ReloadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="{loc:T reg.deschide}" Command="{Binding OpenFileCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="{loc:T reg.valideaza}" Command="{Binding ValidateCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
+                    <Button Content="{loc:T reg.importa_json}" Command="{Binding ImportJsonCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="{loc:T proc.importa_csv_in_tabel}" Command="{Binding ImportCsvCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="{loc:T reg.lipeste_in_tabel}" Command="{Binding PasteCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,10,0"/>
+                    <CheckBox Content="{loc:T proc.inlocuieste_continutul_tabelului_la_import}" IsChecked="{Binding ReplaceOnImport}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                 </WrapPanel>
                 <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"/>
             </StackPanel>
@@ -60,7 +60,7 @@
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="2*"/></Grid.ColumnDefinitions>
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,8,0">
                 <DockPanel>
-                    <TextBlock DockPanel.Dock="Top" Text="Secțiuni" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
+                    <TextBlock DockPanel.Dock="Top" Text="{loc:T proc.sectiuni}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
                     <ItemsControl ItemsSource="{Binding SectionLines}">
                         <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" Foreground="{StaticResource TextSecondaryBrush}"/></DataTemplate></ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -68,7 +68,7 @@
             </Border>
             <Border Grid.Column="1" Style="{StaticResource ObsidianCardStyle}" MaxHeight="150">
                 <DockPanel>
-                    <TextBlock DockPanel.Dock="Top" Text="Erori și avertismente (pe linii)" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
+                    <TextBlock DockPanel.Dock="Top" Text="{loc:T reg.erori_si_avertismente_pe_linii}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
                     <ListBox ItemsSource="{Binding Issues}" Background="Transparent" BorderThickness="0"/>
                 </DockPanel>
             </Border>

@@ -31,7 +31,7 @@ public class Wp6bLocTests
     {
         foreach (var k in Loc.Keys(AppLanguage.English)) Assert.True(Loc.Has(k, AppLanguage.Romanian), $"English-only key '{k}'");
         foreach (var l in new[] { AppLanguage.Romanian, AppLanguage.English })
-            foreach (var k in Loc.Keys(l)) Assert.False(string.IsNullOrWhiteSpace(Loc.T(k, l)), $"{l}: '{k}' is empty");
+            foreach (var k in Loc.Keys(l).Where(k => !k.StartsWith("fmt.", StringComparison.Ordinal))) Assert.False(string.IsNullOrWhiteSpace(Loc.T(k, l)), $"{l}: '{k}' is empty");   // fmt.* keys are connectors and may be blank
     }
 
     [Fact]
@@ -135,12 +135,12 @@ public class Wp6bLocSwitchTests
             Loc.SetLanguage(AppLanguage.English);
             Assert.Contains("Item[]", raised);
             Assert.Equal("Verified", LocSource.Instance["state.verified"]);
-            Assert.Equal("Windows logs", LocSource.Instance["@term:evtx"]);
-            Assert.StartsWith("EVTX — Windows logs.", LocSource.Instance["@term:evtx:tip"]);
-            Assert.Equal("EVTX (Windows logs)", LocSource.Instance["@term:evtx:adv"]);
+            Assert.Equal("Windows logs", LocSource.Instance["glossary.evtx"]);
+            Assert.StartsWith("EVTX — Windows logs.", LocSource.Instance["glossary.evtx.tip"]);
+            Assert.Equal("EVTX (Windows logs)", LocSource.Instance["glossary.evtx.adv"]);
         }
         finally { Loc.SetLanguage(AppLanguage.Romanian); LocSource.Instance.PropertyChanged -= h; }
         Assert.Equal("Verificat", LocSource.Instance["state.verified"]);
-        Assert.Equal("Jurnale Windows", LocSource.Instance["@term:evtx"]);
+        Assert.Equal("Jurnale Windows", LocSource.Instance["glossary.evtx"]);
     }
 }

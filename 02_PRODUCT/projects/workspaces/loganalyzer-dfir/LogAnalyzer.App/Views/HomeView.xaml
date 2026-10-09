@@ -1,11 +1,11 @@
-<UserControl x:Class="LogAnalyzer.UI.Views.HomeView"
+<UserControl xmlns:loc="clr-namespace:LogAnalyzer.UI.Views" x:Class="LogAnalyzer.UI.Views.HomeView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24">
-            <TextBlock Text="Acasă" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+            <TextBlock Text="{loc:T home.acasa}" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
             <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,12" TextWrapping="Wrap"
-                       Text="Răspunsuri calculate din cazul deschis: probleme, gravitate, încrederea în probe, ce s-a găsit și ce urmează. Nimic de aici nu este tastat de mână, iar „nimic detectat” nu înseamnă „sistem curat”."/>
+                       Text="{loc:T home.raspunsuri_calculate_din_cazul_deschis}"/>
 
             <!-- First-run intent chooser (U22): shown while no case is open. The question chooser comes with the goal navigation (WP7). -->
             <Border Margin="0,0,0,10">
@@ -18,11 +18,11 @@
                     </Style>
                 </Border.Style>
                 <StackPanel>
-                    <TextBlock Text="Ce doriți să faceți?" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{loc:T home.ce_doriti_sa_faceti}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                     <WrapPanel Margin="0,10,0,0">
-                        <Button Content="Verifică acest calculator" Command="{Binding CheckThisComputerCommand}" Style="{StaticResource AccentButtonStyle}" Padding="16,10" Margin="0,0,10,6"/>
-                        <Button Content="Analizează probe" Command="{Binding AnalyzeEvidenceCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="16,10" Margin="0,0,10,6"/>
-                        <Button Content="Deschide caz existent" Command="{Binding OpenExistingCaseCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="16,10" Margin="0,0,10,6"/>
+                        <Button Content="{loc:T home.verifica_acest_calculator}" Command="{Binding CheckThisComputerCommand}" Style="{StaticResource AccentButtonStyle}" Padding="16,10" Margin="0,0,10,6"/>
+                        <Button Content="{loc:T home.analizeaza_probe}" Command="{Binding AnalyzeEvidenceCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="16,10" Margin="0,0,10,6"/>
+                        <Button Content="{loc:T home.deschide_caz_existent}" Command="{Binding OpenExistingCaseCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="16,10" Margin="0,0,10,6"/>
                     </WrapPanel>
                 </StackPanel>
             </Border>
@@ -61,25 +61,25 @@
             <UniformGrid Columns="2" Margin="0,0,0,10">
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,5,5">
                     <StackPanel>
-                        <TextBlock Text="Există o problemă?" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
+                        <TextBlock Text="{loc:T home.exista_o_problema}" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
                         <TextBlock Text="{Binding Problem}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="5,0,0,5">
                     <StackPanel>
-                        <TextBlock Text="Cât de grav?" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
+                        <TextBlock Text="{loc:T home.cat_de_grav}" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
                         <TextBlock Text="{Binding Seriousness}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,5,5,0">
                     <StackPanel>
-                        <TextBlock Text="Sunt probele de încredere?" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
+                        <TextBlock Text="{loc:T home.sunt_probele_de_incredere}" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
                         <TextBlock Text="{Binding Trust}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="5,5,0,0">
                     <StackPanel>
-                        <TextBlock Text="Ce s-a găsit?" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
+                        <TextBlock Text="{loc:T home.ce_s_a_gasit}" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
                         <TextBlock Text="{Binding Found}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Border>
@@ -87,16 +87,16 @@
 
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,10">
                 <StackPanel>
-                    <TextBlock Text="Ce urmează?" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
+                    <TextBlock Text="{loc:T home.ce_urmeaza}" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
                     <ItemsControl ItemsSource="{Binding NextSteps}" Margin="0,4,0,0">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate><TextBlock Text="{Binding StringFormat='• {0}'}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,2,0,0"/></DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                     <WrapPanel Margin="0,10,0,0">
-                        <Button Content="Deschide caz existent" Command="{Binding OpenExistingCaseCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,0"/>
-                        <Button Content="Verifică acest calculator" Command="{Binding CheckThisComputerCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,0"/>
-                        <Button Content="Analizează probe" Command="{Binding AnalyzeEvidenceCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                        <Button Content="{loc:T home.deschide_caz_existent}" Command="{Binding OpenExistingCaseCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,0"/>
+                        <Button Content="{loc:T home.verifica_acest_calculator}" Command="{Binding CheckThisComputerCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,0"/>
+                        <Button Content="{loc:T home.analizeaza_probe}" Command="{Binding AnalyzeEvidenceCommand}" Style="{StaticResource OutlineButtonStyle}"/>
                     </WrapPanel>
                     <TextBlock Text="{Binding OpenStatus}" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,8,0,0"/>
                 </StackPanel>
@@ -105,18 +105,18 @@
             <!-- Coverage matrix (U21) -->
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,10">
                 <StackPanel>
-                    <TextBlock Text="Acoperirea surselor" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{loc:T home.acoperirea_surselor}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                     <TextBlock Text="{Binding CoverageLine}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,8"/>
-                    <DataGrid AutomationProperties.Name="Acoperirea surselor pe familii de artefacte" ItemsSource="{Binding CoverageRows}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="420">
+                    <DataGrid AutomationProperties.Name="{loc:T home.acoperirea_surselor_pe_familii_de}" ItemsSource="{Binding CoverageRows}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="420">
                         <DataGrid.Columns>
-                            <DataGridTemplateColumn Header="Familie de artefacte" Width="2*">
+                            <DataGridTemplateColumn Header="{loc:T home.familie_de_artefacte}" Width="2*">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate><TextBlock Text="{Binding HumanFamily}" ToolTip="{Binding FamilyTooltip}" TextWrapping="Wrap"/></DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="Stare" Binding="{Binding StateName}" Width="130"/>
-                            <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="3*"/>
-                            <DataGridTextColumn Header="Parser" Binding="{Binding ParserStatus}" Width="110"/>
+                            <DataGridTextColumn Header="{loc:T home.stare}" Binding="{Binding StateName}" Width="130"/>
+                            <DataGridTextColumn Header="{loc:T home.motiv}" Binding="{Binding Reason}" Width="3*"/>
+                            <DataGridTextColumn Header="{loc:T home.parser}" Binding="{Binding ParserStatus}" Width="110"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </StackPanel>
@@ -125,26 +125,26 @@
             <!-- Recent cases -->
             <Border Style="{StaticResource ObsidianCardStyle}">
                 <StackPanel>
-                    <TextBlock Text="Cazuri recente" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{loc:T home.cazuri_recente}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                     <ItemsControl ItemsSource="{Binding RecentList}" Margin="0,6,0,0">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <DockPanel Margin="0,2">
-                                    <Button DockPanel.Dock="Right" Content="Elimină din listă" AutomationProperties.Name="{Binding Entry.Title, StringFormat='Elimină din listă cazul {0}'}" Style="{StaticResource OutlineButtonStyle}" Margin="8,0,0,0"
+                                    <Button DockPanel.Dock="Right" Content="{loc:T home.elimina_din_lista}" AutomationProperties.Name="{loc:F home.forget_case, Path=Entry.Title}" Style="{StaticResource OutlineButtonStyle}" Margin="8,0,0,0"
                                             Command="{Binding DataContext.ForgetRecentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                                    <Button DockPanel.Dock="Right" Content="Deschide" AutomationProperties.Name="{Binding Entry.Title, StringFormat='Deschide cazul {0}'}" Style="{StaticResource OutlineButtonStyle}"
+                                    <Button DockPanel.Dock="Right" Content="{loc:T home.deschide}" AutomationProperties.Name="{loc:F home.open_case_named, Path=Entry.Title}" Style="{StaticResource OutlineButtonStyle}"
                                             Command="{Binding DataContext.OpenRecentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
                                     <TextBlock Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
                                         <Run Text="{Binding Entry.Title, Mode=OneWay}" FontWeight="SemiBold"/>
                                         <Run Text="{Binding StateText, Mode=OneWay}"/>
-                                        <Run Text="{Binding Entry.LastOpenedUtc, Mode=OneWay, StringFormat='deschis ultima dată {0:yyyy-MM-dd HH:mm} UTC'}"/>
+                                        <Run Text="{loc:F home.last_opened, Path=Entry.LastOpenedUtc}"/>
                                         <Run Text="{Binding Entry.Path, Mode=OneWay}" Foreground="{StaticResource TextMutedBrush}"/>
                                     </TextBlock>
                                 </DockPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                    <TextBlock Text="Nicio intrare: cazurile deschise de aici apar în această listă." Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0">
+                    <TextBlock Text="{loc:T home.nicio_intrare_cazurile_deschise_de}" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Visibility" Value="Collapsed"/>

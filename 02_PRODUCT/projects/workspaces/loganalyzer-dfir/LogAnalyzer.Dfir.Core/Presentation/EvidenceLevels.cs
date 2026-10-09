@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.Language;
 using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Presentation;
@@ -16,7 +17,7 @@ public sealed record EvidenceTechnical(string EvidenceId, string Sha256, string 
 public sealed record EvidenceLevels(string Summary, IReadOnlyList<EvidenceLine> List, IReadOnlyList<EvidenceTechnical> Technical)
 {
     /// <summary>Shown where the case does not give a detail. Never blank, never a guess.</summary>
-    public const string Unknown = "necunoscut în caz";
+    public static string Unknown => Loc.T("ev.unknown");
 
     public static EvidenceLevels Build(Finding f, EvidenceContext ctx)
     {
@@ -47,11 +48,12 @@ public sealed record EvidenceLevels(string Summary, IReadOnlyList<EvidenceLine> 
     /// <summary>„4 probe din 2 surse”, „1 probă dintr-o sursă”, „Nicio probă atașată”; the Romanian „de” is used from 20 up (20 de probe, 119 probe, 120 de probe).</summary>
     public static string SummaryLine(int pieces, int sources)
     {
-        if (pieces <= 0) return "Nicio probă atașată";
-        string p = pieces == 1 ? "1 probă" : $"{pieces}{De(pieces)} probe";
-        string s = sources == 1 ? "dintr-o sursă" : $"din {sources}{De(sources)} surse";
+        if (pieces <= 0) return Loc.T("ev.none");
+        string p = pieces == 1 ? Loc.T("ev.pieces_one") : Loc.Format("ev.pieces_many", pieces, De(pieces));
+        string s = sources == 1 ? Loc.T("ev.sources_one") : Loc.Format("ev.sources_many", sources, De(sources));
         return $"{p} {s}";
     }
 
-    private static string De(int n) { int m = n % 100; return m == 0 || m >= 20 ? " de" : ""; }
+    /// <summary>The Romanian „de” between a number of 20 or more and the noun (20 de probe, 119 probe, 120 de probe); English has no such word (the key is empty).</summary>
+    private static string De(int n) { int m = n % 100; return m == 0 || m >= 20 ? Loc.T("fmt.de") : ""; }
 }
