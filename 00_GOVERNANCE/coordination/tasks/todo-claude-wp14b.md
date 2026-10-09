@@ -54,8 +54,11 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
   (windows, size threshold, minimum steps, tool lists), `SequenceRules*.cs` (3 rules), `Finding.Sequence` (`SequenceDetail`), 3 catalog entries, call in `InvestigationPipeline` after the policy timeline,
   61 tests in `LogAnalyzer.Dfir.Tests/Wp14bSequenceTests.cs` (red run with the rules disabled: 28 failed; green after). Dfir 48 failing = baseline names, UI 6 = baseline, Edition 15/15.
 
+- 2026-10-09 claude-wp14b: item 7. "Secvențe" tab in `InvestigationView.xaml` (shared by both editions: App.Classified links the same view), `InvestigationViewModel.SequenceFindings / SequenceSummary / SequenceSteps`,
+  one added assertion in `LogAnalyzer.App.Tests/ViewModelSmokeTests.cs` (App.Tests run on Windows CI only; no existing text was changed). Slnx builds, 0 errors.
+
 ## Next
-- Item 7 (UI tab "Secvențe", both editions use the same view), then full checks, then the full Python suite once.
+- Final checks: Dfir/UI/Edition tests vs baseline, full Python suite once, final report.
 
 ## Blockers
 - None. Owner questions (defaults until reviewed): windows (control gap +120 min after; SMB to staging 120 min; staging to medium 240 min; program to archive 480 min; archive to medium 240 min),

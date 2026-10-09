@@ -49,3 +49,9 @@ def test_every_emitted_rule_has_a_contract_entry():
 def test_catalog_has_no_dead_entries():
     emitted, cataloged = emitted_rule_ids(), catalog_rule_ids()
     assert not (cataloged - emitted), f"catalog entries no producer emits: {sorted(cataloged - emitted)}"
+
+
+def test_sequence_rules_have_a_production_consumer():
+    """Global Production-Consumer Rule: the WP14b sequence rules are called by the investigation pipeline, not only by tests."""
+    pipeline = (ROOT / "LogAnalyzer.Dfir.Windows/Investigation/InvestigationPipeline.cs").read_text(encoding="utf-8")
+    assert "SequenceRules.Run(" in pipeline

@@ -133,6 +133,27 @@
                     </DataGrid>
                 </DockPanel>
             </TabItem>
+            <TabItem Header="Secvențe" Style="{StaticResource InspectorTabItemStyle}">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="2*"/>
+                        <RowDefinition Height="3*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Text="{Binding SequenceSummary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding SequenceFindings}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="0,0,0,6">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="80"/>
+                            <DataGridTextColumn Header="Regulă" Binding="{Binding RuleId}" Width="200"/>
+                            <DataGridTextColumn Header="Prima (UTC)" Binding="{Binding FirstSeenUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="120"/>
+                            <DataGridTextColumn Header="Cine (din dovezi)" Binding="{Binding User}" Width="*"/>
+                            <DataGridTextColumn Header="Constatare" Binding="{Binding Title}" Width="3*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <TextBox Grid.Row="2" Text="{Binding SequenceSteps, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                             Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="12" FontSize="12.5"/>
+                </Grid>
+            </TabItem>
             <TabItem Header="Cronologie" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">

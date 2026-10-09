@@ -33,6 +33,8 @@ public sealed class ViewModelSmokeTests
         Assert.Empty(vm.Timeline);
         Assert.Empty(vm.ImportFiles);
         Assert.Empty(vm.GraphEntities);
+        Assert.Empty(vm.SequenceFindings);                               // WP14b: no combined sequences before a run, and the summary says undefined rather than clean
+        Assert.Contains("nedefinit", vm.SequenceSummary);
         Assert.Null(vm.AiAnalysis);                                      // no AI screen unless the edition supplies one
     }
 
