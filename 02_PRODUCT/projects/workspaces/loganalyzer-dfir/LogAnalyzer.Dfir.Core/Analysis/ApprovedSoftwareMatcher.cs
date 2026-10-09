@@ -29,9 +29,17 @@ public static class ApprovedSoftwareMatcher
         return null;
     }
 
+    /// <summary>Path without its volume: "C:\x" and "\VOLUME{guid}\x" (Prefetch) both become "\x", so one pattern fits every source.</summary>
+    private static string WithoutVolume(string path)
+    {
+        var p = path.Replace('/', '\\').Trim();
+        if (p.StartsWith(@"\VOLUME{", StringComparison.OrdinalIgnoreCase)) { var i = p.IndexOf('}'); if (i > 0) return p[(i + 1)..]; }
+        return p.Length > 1 && p[1] == ':' ? p[2..] : p;
+    }
+
     public static bool PathMatches(string pattern, string path)
     {
-        var rx = "^" + Regex.Escape(pattern.Replace('/', '\\')).Replace(@"\*", ".*").Replace(@"\?", ".") + "$";
-        return Regex.IsMatch(path.Replace('/', '\\'), rx, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+        var rx = "^" + Regex.Escape(WithoutVolume(pattern)).Replace(@"\*", ".*").Replace(@"\?", ".") + "$";
+        return Regex.IsMatch(WithoutVolume(path), rx, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
     }
 }

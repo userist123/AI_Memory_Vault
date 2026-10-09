@@ -6,7 +6,7 @@
       "logMarkers": ["\\anydesk\\ad.trace", "\\anydesk\\ad_svc.trace", "\\anydesk\\connection_trace.txt"] },
     { "id": "teamviewer", "name": "TeamViewer", "aliases": ["teamviewer"],
       "executables": ["teamviewer.exe", "teamviewer_service.exe", "tv_w32.exe", "tv_x64.exe"], "serviceNames": ["TeamViewer"], "displayContains": ["TeamViewer"], "productContains": ["TeamViewer"],
-      "logMarkers": ["\\teamviewer\\connections_incoming.txt", "\\teamviewer\\teamviewer", "_logfile.log"] },
+      "logMarkers": ["\\teamviewer\\connections_incoming.txt", "\\teamviewer\\teamviewer"] },
     { "id": "vnc", "name": "VNC (UltraVNC / TightVNC / RealVNC / WinVNC)", "aliases": ["vnc", "ultravnc", "tightvnc", "realvnc", "winvnc"],
       "executables": ["winvnc.exe", "winvnc4.exe", "vncviewer.exe", "vncserver.exe", "vncagent.exe", "tvnserver.exe", "tvnviewer.exe", "uvnc_service.exe", "vncserverui.exe"],
       "serviceNames": ["uvnc_service", "tvnserver", "winvnc", "WinVNC4", "vncserver"], "displayContains": ["VNC Server", "UltraVNC", "TightVNC"], "productContains": ["VNC", "UltraVNC", "TightVNC"],
