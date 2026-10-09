@@ -59,6 +59,7 @@ namespace LogAnalyzer.UI.ViewModels
             StationLine = $"{Environment.MachineName} · {LogAnalyzer.Core.Services.Edition.StationRoleContext.Current.HumanRole} · " +
                           (AppModeContext.IsAirGapped ? "fără rețea (izolată)" : "conectată");
             LoadPreviousControls();
+            InspectorFunction = _headerProfile.InspectorFunction;
             RaiseFlow();
         }
 
@@ -73,6 +74,19 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private ControlComparison? _comparison;
         [ObservableProperty] private PreviousControl? _selectedPrevious;
         [ObservableProperty] private string _previousNote = "";
+        // WP18 S5: the "proces-verbal" fields (decision D3) and the manual marking (decision D4).
+        private readonly LogAnalyzer.Dfir.Reporting.ReportHeaderProfile _headerProfile = LogAnalyzer.Dfir.Reporting.ReportHeaderProfile.Load(null, out _);
+        [ObservableProperty] private string _inspectorFunction = "";
+        [ObservableProperty] private string _registrationNumber = "";
+        [ObservableProperty] private string _markingLevel = "";
+        public string MarkingNote => "Marcajul se introduce manual și este tipărit pe fiecare pagină ca „" + ControlReportHeader.MarkingNote + "”.";
+        private static string HardwareIdOrUnknown()
+        {
+            try { return new LogAnalyzer.Core.Services.LicenseService().GetHardwareId(); }
+            catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException or System.Management.ManagementException or UnauthorizedAccessException) { return "necunoscut (" + ex.Message + ")"; }
+        }
+        private ControlReportHeader BuildHeader(ControlReport r) =>
+            ControlReportHeader.From(_headerProfile, r.Facts, HardwareIdOrUnknown(), Inspector, InspectorFunction, LogAnalyzer.Core.Services.Edition.StationRoleContext.Current.HumanRole, RegistrationNumber, MarkingLevel);
         public ObservableCollection<SectionStatus> ProfileSections { get; } = new();
         public ObservableCollection<PreviousControl> PreviousControls { get; } = new();
         public ObservableCollection<CheckChange> ComparisonChanges { get; } = new();
@@ -230,7 +244,8 @@ namespace LogAnalyzer.UI.ViewModels
             if (_report is null) { Status = "Rulați întâi controlul."; return; }
             var ws = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
             if (ws is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
-            var (_, pdf) = ControlReportPdf.SaveToCase(_report, ws, Inspector, Notes);
+            if (Result is null) BuildResult();
+            var (_, pdf) = ControlReportPdf.SaveToCase(_report, ws, Inspector, Notes, BuildHeader(_report), Result);
             var dlg = new SaveFileDialog { FileName = Path.GetFileName(pdf), Filter = "PDF (*.pdf)|*.pdf", Title = "Salvați o copie a raportului (originalul rămâne în caz)" };
             if (dlg.ShowDialog() == true && !string.Equals(dlg.FileName, pdf, StringComparison.OrdinalIgnoreCase))
                 File.Copy(pdf, dlg.FileName, overwrite: true);

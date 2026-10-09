@@ -18,7 +18,9 @@
                 <Button Content="Folder caz" Command="{Binding OpenCaseCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                 <Button Content="Închidere caz" Command="{Binding CloseCaseCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"
                         ToolTip="Afișează capetele lanțurilor de custodie și de audit, de înscris în registrul de custodie cu semnătură și dată"/>
-                <Button Content="Raport PDF" Command="{Binding ExportPdfCommand}" Style="{StaticResource AccentButtonStyle}"/>
+                <TextBlock Text="Pentru cine este raportul?" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <ComboBox AutomationProperties.Name="Pentru cine este raportul" ItemsSource="{Binding ReportAudienceLabels}" SelectedIndex="{Binding ReportAudienceIndex}" ToolTip="{Binding ReportAudienceDescription}" Width="230" Margin="0,0,6,0"/>
+                <Button Content="Raport de incident (PDF)" Command="{Binding ExportPdfCommand}" Style="{StaticResource AccentButtonStyle}" ToolTip="{Binding ReportAudienceDescription}"/>
             </StackPanel>
             <StackPanel>
                 <TextBlock Text="Investigație completă" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>

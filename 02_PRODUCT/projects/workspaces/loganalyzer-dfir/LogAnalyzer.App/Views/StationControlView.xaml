@@ -64,6 +64,15 @@
                         <TextBlock Text="Observații:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox AutomationProperties.Name="Observații" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Width="260"/>
                     </WrapPanel>
+                    <WrapPanel Margin="0,6,0,0">
+                        <TextBlock Text="Funcția:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox AutomationProperties.Name="Funcția celui care controlează" Text="{Binding InspectorFunction, UpdateSourceTrigger=PropertyChanged}" Width="170" Margin="0,0,16,0"/>
+                        <TextBlock Text="Număr de înregistrare:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox AutomationProperties.Name="Număr de înregistrare" Text="{Binding RegistrationNumber, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="0,0,16,0"/>
+                        <TextBlock Text="Marcaj (nivel):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox AutomationProperties.Name="Marcajul raportului, introdus manual" Text="{Binding MarkingLevel, UpdateSourceTrigger=PropertyChanged}" Width="180"/>
+                    </WrapPanel>
+                    <TextBlock Text="{Binding MarkingNote}" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                 </StackPanel>
 
                 <TextBlock Text="{Binding FlowError}" Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,6,0,0"/>

@@ -177,6 +177,11 @@ namespace LogAnalyzer.UI.ViewModels
         };
 
         [ObservableProperty] private string _caseName = $"Investigație {Environment.MachineName} {DateTime.Now:yyyy-MM-dd}";
+        // WP18 S5: "Pentru cine este raportul?" (UX contract §15) — the audience chooses the sections, never the facts.
+        public string[] ReportAudienceLabels { get; } = LogAnalyzer.Dfir.Reporting.ReportAudiences.All.Select(LogAnalyzer.Dfir.Reporting.ReportAudiences.Label).ToArray();
+        [ObservableProperty] private int _reportAudienceIndex = (int)LogAnalyzer.Dfir.Reporting.ReportAudience.Everything;
+        public string ReportAudienceDescription => LogAnalyzer.Dfir.Reporting.ReportAudiences.Description((LogAnalyzer.Dfir.Reporting.ReportAudience)Math.Clamp(ReportAudienceIndex, 0, ReportAudienceLabels.Length - 1));
+        partial void OnReportAudienceIndexChanged(int value) => OnPropertyChanged(nameof(ReportAudienceDescription));
         [ObservableProperty] private string _log = "";
         [ObservableProperty] private bool _isBusy;
         /// <summary>Operation state of the last run (UX contract §20), in Romanian. "Finalizat" does not mean any finding is verified.</summary>
@@ -401,8 +406,9 @@ namespace LogAnalyzer.UI.ViewModels
             if (_result is null) return;
             var dlg = new SaveFileDialog { FileName = $"Raport_{_result.Case.Info.CaseId}.pdf", Filter = "PDF (*.pdf)|*.pdf", InitialDirectory = _result.Case.Root };
             if (dlg.ShowDialog() != true) return;
-            InvestigationReportPdf.Write(_result, dlg.FileName, LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified);
-            _result.Case.Audit("report.pdf", dlg.FileName);
+            var audience = (LogAnalyzer.Dfir.Reporting.ReportAudience)Math.Clamp(ReportAudienceIndex, 0, ReportAudienceLabels.Length - 1);
+            InvestigationReportPdf.Write(_result, dlg.FileName, LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified, audience: audience);
+            _result.Case.Audit("report.pdf", $"{dlg.FileName} · {LogAnalyzer.Dfir.Reporting.ReportAudiences.Label(audience)}");
             Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });
         }
 

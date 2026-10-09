@@ -1,5 +1,5 @@
 # todo-claude-wp18
-STATUS: IN_PROGRESS        UPDATED: 2026-10-10T04:10Z
+STATUS: IN_PROGRESS        UPDATED: 2026-10-10T05:00Z
 TASK: WP18 — station roles (CONTROL / CSIRT chosen by the PC through the signed policy) and non-technical UI, per
 `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PROMPT_WP18_ROLURI_STATIE_UI_SIMPLA.md` (owner decisions D1–D8 in §11).
 BRANCH / PR: `claude/loganalyzer-dfir-roles-ui-0a71fb` (worktree). One commit per step; PR at the end of the package.
@@ -30,6 +30,14 @@ DONE:
   `StationControlView.xaml`: three-step "Verifică această stație" (station → period → procedures/inspector → run), single result card, "Compară cu
   controlul anterior", raw parameters under "Avansat". `InvestigationViewModel` + `InvestigationView.xaml`: three-step "Primește probe de la o stație"
   (folder → what was found/what is missing → scope → run). Tests: `LogAnalyzer.App.Tests/Wp18FlowTests.cs` (7). App.Tests 52/52; Wp6a XAML tests green.
+- S5 reports per role: `LogAnalyzer.Dfir.Core/Reporting/ReportHeaderProfile.cs` (unit header, decision D3, next to the procedure profile;
+  ReportAudience + sections, UX §15); `LogAnalyzer.Dfir.Windows/Audit/ControlReportHeader.cs`; `ControlReportPdf` prints the proces-verbal header
+  (unit, structure, station, Hardware ID, period, inspector + function, station role, registration number), the five answers and the gaps/unread
+  sources BEFORE the checks, the manual marking on every page ("marcaj introdus manual, neverificat de aplicație", decision D4) and two signature
+  lines; `ReportFooter.Compose(marking)`; `InvestigationReportPdf.Write(audience)` = "Pentru cine este raportul?" chooses sections, never facts
+  (gaps and incident chains always printed). UI: step 3 of the control flow has function / registration number / marking; investigation page has
+  the audience chooser; procedure-profile page has "Antetul rapoartelor unității" (administrator saves). Tests: `Wp18ReportTests.cs` (4; PDF smoke
+  with the footer observer). App.Tests 56/56, UI.Tests 187/187, Dfir.Tests report/seal/XAML subset 129 passed.
 VERIFICATION (S1, local, Windows):
 - `dotnet build LogAnalyzer.slnx -c Release`: Build succeeded (TEST_VERIFIED).
 - App.Tests 28/28, Edition.Tests 15/15, UI.Tests 179/179 passed.
