@@ -28,13 +28,24 @@ namespace LogAnalyzer.UI.Views
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }
 
-    /// <summary>Spec §26 wording of a classification: OBSERVED, CORRELATED, INFERRED, UNPROVEN (the graph explorer uses the same words).</summary>
+    /// <summary>Romanian state label of a classification (Observat, Corelat, Deducție, Nedemonstrat): the same mapping as the finding state and the graph view.</summary>
     public sealed class ClassificationWordingConverter : IValueConverter
     {
         public static readonly ClassificationWordingConverter Instance = new();
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
-            value is LogAnalyzer.Dfir.Model.Classification c ? LogAnalyzer.Dfir.Graph.GraphExplorer.Wording(c) : "UNKNOWN";
+            value is LogAnalyzer.Dfir.Model.Classification c ? LogAnalyzer.Dfir.Analysis.StateLabels.ForClassification(c) : LogAnalyzer.Dfir.Analysis.StateLabels.Romanian(LogAnalyzer.Dfir.Model.StandardState.Unknown);
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+    }
+
+    /// <summary>Severity as icon + Romanian word („▲ Ridicată”), so it is never only a colour or an English enum name.</summary>
+    public sealed class SeverityTextConverter : IValueConverter
+    {
+        public static readonly SeverityTextConverter Instance = new();
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value is LogAnalyzer.Dfir.Model.Severity s ? LogAnalyzer.Dfir.Presentation.SeverityLabels.Icon(s) + " " + LogAnalyzer.Dfir.Presentation.SeverityLabels.Romanian(s) : "";
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }

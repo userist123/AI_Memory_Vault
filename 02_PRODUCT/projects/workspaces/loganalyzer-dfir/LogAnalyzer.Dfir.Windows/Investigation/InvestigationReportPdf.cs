@@ -47,7 +47,7 @@ public static class InvestigationReportPdf
                 // WP4: one verification line (automatic cross-check by a separate module of this application, not an external verification) and a warning when needed.
                 col.Item().Border(0.8f).BorderColor(Line).Padding(5).Column(vc =>
                 {
-                    vc.Item().Text(verification is null ? "Verificare: nerulată pentru acest caz (Analysis/verification.json lipsește)." : verification.Banner + " (verificare automată, nu externă)")
+                    vc.Item().Text(verification is null ? "Verificare: nerulată pentru acest caz (Analysis/verification.json lipsește)." : verification.BannerRomanian + " (verificare automată, nu externă)")
                         .FontSize(8).Bold().FontColor(Ink);
                     if (verification?.Warning is { } warn)
                         vc.Item().PaddingTop(3).Background("#fef2f2").Border(1).BorderColor("#b91c1c").Padding(4).Text(warn).FontSize(8).Bold().FontColor("#7f1d1d");

@@ -52,6 +52,18 @@ public sealed class FindingVerdict
     public List<string> MissingEvidence { get; set; } = [];
     /// <summary>Artifact kinds the supporting evidence resolves to (e.g. "Prefetch", "EventLog:Security 4688").</summary>
     public List<string> EvidenceKinds { get; set; } = [];
+
+    /// <summary>One line per check for the finding card („Verifică”): the stable check id, the outcome in Romanian, and the check's own reason.</summary>
+    public IReadOnlyList<string> CheckLines() => Checks.Select(c => $"{c.CheckId}: {OutcomeText(c.Outcome)} — {c.Reason}").ToList();
+
+    public static string OutcomeText(CheckOutcome o) => o switch
+    {
+        CheckOutcome.Pass => "trecut",
+        CheckOutcome.Fail => "eșuat",
+        CheckOutcome.Unknown => "necunoscut",
+        CheckOutcome.NotApplicable => "nu se aplică",
+        _ => "informativ",
+    };
 }
 
 /// <summary>The verdict on one statement of the AI analysis (Analysis/ai_reasoning.json). Never VERIFIED.</summary>
@@ -114,6 +126,16 @@ public sealed class VerificationReport
     public static string Line(IReadOnlyDictionary<string, int> counts)
     {
         var parts = VerdictOrder.Where(v => counts.GetValueOrDefault(v.ToSpec()) > 0).Select(v => $"{counts[v.ToSpec()]} {v.ToSpec()}").ToList();
+        return parts.Count == 0 ? "Verificare: nicio constatare de verificat" : "Verificare: " + string.Join(", ", parts);
+    }
+
+    /// <summary>Banner for the operator (WP6a, U7): the Romanian state label first, the spec name in parentheses, e.g. "Verificare: 3 Verificat (VERIFIED), 2 Nedemonstrat (UNPROVEN)". <see cref="Banner"/> stays the data form.</summary>
+    public string BannerRomanian => LineRomanian(Counts);
+
+    public static string LineRomanian(IReadOnlyDictionary<string, int> counts)
+    {
+        var parts = VerdictOrder.Where(v => counts.GetValueOrDefault(v.ToSpec()) > 0)
+            .Select(v => $"{counts[v.ToSpec()]} {LogAnalyzer.Dfir.Analysis.StateLabels.Romanian(v)} ({v.ToSpec()})").ToList();
         return parts.Count == 0 ? "Verificare: nicio constatare de verificat" : "Verificare: " + string.Join(", ", parts);
     }
 

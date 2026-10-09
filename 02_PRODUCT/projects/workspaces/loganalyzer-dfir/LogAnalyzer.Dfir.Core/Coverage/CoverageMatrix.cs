@@ -22,6 +22,10 @@ public sealed record CoverageRow(string FamilyId, string Family, CoverageState S
 {
     public string StateName => CoverageNames.Spec(State);
     public string StateLabel => CoverageNames.Label(State);
+    /// <summary>WP6a (R18): the plain-language phrase of the family when the glossary has one (BAM, Amcache, EVTX, Prefetch); otherwise the label unchanged. <see cref="Family"/> stays the technical label.</summary>
+    public string HumanFamily => LogAnalyzer.Dfir.Language.Glossary.Find(FamilyId) is { } t ? t.Romanian : Family;
+    /// <summary>Tooltip for <see cref="HumanFamily"/>: the technical name and the explanation; the label alone when there is no glossary entry.</summary>
+    public string FamilyTooltip => LogAnalyzer.Dfir.Language.Glossary.Find(FamilyId) is { } ? LogAnalyzer.Dfir.Language.Glossary.Tooltip(FamilyId) : Family;
 }
 
 public static class CoverageNames
