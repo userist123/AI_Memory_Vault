@@ -1,5 +1,5 @@
 # todo-claude-wp18
-STATUS: IN_PROGRESS        UPDATED: 2026-10-10T02:00Z
+STATUS: IN_PROGRESS        UPDATED: 2026-10-10T02:40Z
 TASK: WP18 — station roles (CONTROL / CSIRT chosen by the PC through the signed policy) and non-technical UI, per
 `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PROMPT_WP18_ROLURI_STATIE_UI_SIMPLA.md` (owner decisions D1–D8 in §11).
 BRANCH / PR: `claude/loganalyzer-dfir-roles-ui-0a71fb` (worktree). One commit per step; PR at the end of the package.
@@ -9,6 +9,11 @@ DONE:
   startup log + `station.role` audit + auth audit `session.context`; `CaseInfo.StationRole` written by `NewCase` and the LIVE case;
   header badge `ROL:` with the decision as tooltip (`MainViewModel`, `MainWindow.xaml`); `Sign-EditionPolicy.ps1 -Role`.
   Tests: `LogAnalyzer.UI.Tests/StationRoleTests.cs` (9). Docs: `docs/dfir/EDITIONS.md` "Station role (WP18)".
+- S2 Home + navigation per role: `LogAnalyzer.Core/Services/Edition/RoleProfile.cs` (HomeIntent, IntentAvailability, NavigationEntry,
+  RoleProfile, RoleProfiles.For — data, ≤5 primary intents, unavailable ones listed with the reason); `HomeViewModel` renders the profile
+  (`PrimaryIntents`, `MoreIntents`, `RunIntentCommand`); `HomeView.xaml` big buttons + "Mai multe"; sidebar section of the role +
+  "Avansat (toate paginile)" expander with every legacy page (decision 5); the app opens on Home in every mode (Live SOC jump removed).
+  Tests: `LogAnalyzer.UI.Tests/RoleProfileTests.cs` (8), `HomeViewModelTests` (+2, one updated). App.Tests 30/30, UI.Tests 187/187.
 VERIFICATION (S1, local, Windows):
 - `dotnet build LogAnalyzer.slnx -c Release`: Build succeeded (TEST_VERIFIED).
 - App.Tests 28/28, Edition.Tests 15/15, UI.Tests 179/179 passed.

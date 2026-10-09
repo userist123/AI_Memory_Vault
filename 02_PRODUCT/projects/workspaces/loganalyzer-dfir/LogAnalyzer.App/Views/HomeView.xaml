@@ -18,12 +18,47 @@
                     </Style>
                 </Border.Style>
                 <StackPanel>
-                    <TextBlock Text="Ce doriți să faceți?" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                    <WrapPanel Margin="0,10,0,0">
-                        <Button Content="Verifică acest calculator" Command="{Binding CheckThisComputerCommand}" Style="{StaticResource AccentButtonStyle}" Padding="16,10" Margin="0,0,10,6"/>
-                        <Button Content="Analizează probe" Command="{Binding AnalyzeEvidenceCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="16,10" Margin="0,0,10,6"/>
-                        <Button Content="Deschide caz existent" Command="{Binding OpenExistingCaseCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="16,10" Margin="0,0,10,6"/>
-                    </WrapPanel>
+                    <TextBlock Text="{Binding RoleTitle}" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{Binding RoleIntro}" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                    <TextBlock Text="Ce doriți să faceți?" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,10,0,0"/>
+                    <!-- WP18 S2: at most five big buttons from the role profile; unavailable ones stay visible, disabled, with the reason under them -->
+                    <ItemsControl ItemsSource="{Binding PrimaryIntents}" Margin="0,6,0,0">
+                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Command="{Binding DataContext.RunIntentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                        IsEnabled="{Binding Enabled}" ToolTip="{Binding Tooltip}" ToolTipService.ShowOnDisabled="True"
+                                        AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="{Binding Tooltip}"
+                                        Style="{StaticResource AccentButtonStyle}" Padding="16,10" Margin="0,0,10,8" Width="300" HorizontalContentAlignment="Left">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding Description}" FontSize="11.5" TextWrapping="Wrap" Opacity="0.85" Margin="0,3,0,0"/>
+                                        <TextBlock Text="{Binding ReasonLine}" FontSize="11.5" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,3,0,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers><DataTrigger Binding="{Binding Enabled}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Expander Header="Mai multe" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" AutomationProperties.Name="Mai multe acțiuni">
+                        <ItemsControl ItemsSource="{Binding MoreIntents}" Margin="0,6,0,0">
+                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding Title}" Command="{Binding DataContext.RunIntentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                            IsEnabled="{Binding Enabled}" ToolTip="{Binding Tooltip}" ToolTipService.ShowOnDisabled="True"
+                                            AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="{Binding Tooltip}"
+                                            Style="{StaticResource OutlineButtonStyle}" Padding="12,8" Margin="0,0,8,6"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Expander>
                 </StackPanel>
             </Border>
 
@@ -93,11 +128,16 @@
                             <DataTemplate><TextBlock Text="{Binding StringFormat='• {0}'}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,2,0,0"/></DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                    <WrapPanel Margin="0,10,0,0">
-                        <Button Content="Deschide caz existent" Command="{Binding OpenExistingCaseCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,0"/>
-                        <Button Content="Verifică acest calculator" Command="{Binding CheckThisComputerCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,0"/>
-                        <Button Content="Analizează probe" Command="{Binding AnalyzeEvidenceCommand}" Style="{StaticResource OutlineButtonStyle}"/>
-                    </WrapPanel>
+                    <ItemsControl ItemsSource="{Binding PrimaryIntents}" Margin="0,10,0,0">
+                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding Title}" Command="{Binding DataContext.RunIntentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                        IsEnabled="{Binding Enabled}" ToolTip="{Binding Tooltip}" ToolTipService.ShowOnDisabled="True" AutomationProperties.Name="{Binding Title}"
+                                        Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,6"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                     <TextBlock Text="{Binding OpenStatus}" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,8,0,0"/>
                 </StackPanel>
             </Border>

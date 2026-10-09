@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LogAnalyzer.Core.Services.Connectivity;
+using LogAnalyzer.Core.Services.Edition;
 using LogAnalyzer.Dfir.Case;
 using LogAnalyzer.Dfir.Coverage;
 using LogAnalyzer.Dfir.Home;
@@ -30,12 +32,17 @@ namespace LogAnalyzer.UI.ViewModels
         private readonly RecentCases _recent;
         private readonly Func<string?> _pickFolder;
 
-        public HomeViewModel(InvestigationViewModel investigation, Action<int>? navigate = null, RecentCases? recent = null, Func<string?>? pickFolder = null)
+        /// <param name="profile">The role profile (WP18): which intents this PC offers. Default: the role decided at startup, on the unclassified edition.</param>
+        public HomeViewModel(InvestigationViewModel investigation, Action<int>? navigate = null, RecentCases? recent = null, Func<string?>? pickFolder = null,
+            RoleProfile? profile = null)
         {
             _investigation = investigation;
             _navigate = navigate ?? (_ => { });
             _recent = recent ?? new RecentCases(RecentCases.DefaultFile());
             _pickFolder = pickFolder ?? PickFolderWithDialog;
+            Profile = profile ?? RoleProfiles.For(StationRoleContext.Role, new UnclassifiedEditionProfile(), AppModeContext.Current.Mode);
+            foreach (var i in Profile.PrimaryIntents) PrimaryIntents.Add(new HomeIntentView(i));
+            foreach (var i in Profile.MoreIntents) MoreIntents.Add(new HomeIntentView(i));
             _investigation.StateChanged += (_, _) => Refresh();
             Refresh();
             ReloadRecent();
@@ -63,11 +70,36 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>Cases opened before; a folder that no longer exists is listed as missing.</summary>
         public ObservableCollection<RecentCaseView> RecentList { get; } = new();
 
+        /// <summary>The role profile this page renders (WP18 S2): data, not decisions.</summary>
+        public RoleProfile Profile { get; }
+        public string RoleTitle => Profile.Title;
+        public string RoleIntro => Profile.Intro;
+        /// <summary>At most five big buttons, in the user's words. Unavailable ones stay visible, disabled, with the reason.</summary>
+        public ObservableCollection<HomeIntentView> PrimaryIntents { get; } = new();
+        /// <summary>The rest, under "Mai multe".</summary>
+        public ObservableCollection<HomeIntentView> MoreIntents { get; } = new();
+
         /// <summary>
-        /// The three intents of the first-run chooser (U22). The question chooser ("A rulat un program?") belongs to WP7; its hook is
+        /// Titles of the primary intents (U22, now per role). The question chooser ("A rulat un program?") belongs to WP7; its hook is
         /// <see cref="ChooseQuestion"/>, which does nothing yet.
         /// </summary>
-        public string[] Intents { get; } = { "Verifică acest calculator", "Analizează probe", "Deschide caz existent" };
+        public string[] Intents => PrimaryIntents.Select(i => i.Title).ToArray();
+
+        /// <summary>Runs an intent: navigates to its page with the source it declares, or says why it is unavailable. Never widens what the edition allows.</summary>
+        [RelayCommand]
+        private async Task RunIntent(HomeIntentView? intent)
+        {
+            if (intent is null) return;
+            if (!intent.Enabled) { OpenStatus = $"„{intent.Title}” nu este disponibil pe această stație: {intent.Reason}."; return; }
+            switch (intent.Source)
+            {
+                case IntentSource.CollectFromThisStation: _investigation.CollectFromThisStation = true; _navigate(intent.TargetTab); break;
+                case IntentSource.ImportEvidence: _investigation.CollectFromThisStation = false; _navigate(intent.TargetTab); break;
+                case IntentSource.OpenExistingCase: await OpenExistingCase(); return;
+                default: _navigate(intent.TargetTab); break;
+            }
+            OpenStatus = $"{intent.Title}: {intent.Description}";
+        }
 
         /// <summary>WP7 hook: maps a question to an existing workflow. Intentionally empty in WP5.</summary>
         public void ChooseQuestion(string question) { }
@@ -172,5 +204,22 @@ namespace LogAnalyzer.UI.ViewModels
             var dlg = new OpenFolderDialog { Title = "Folderul unui caz existent (conține case.json)" };
             return dlg.ShowDialog() == true ? dlg.FolderName : null;
         }
+    }
+
+    /// <summary>A Home button as the view shows it: title, one-sentence description, and, when disabled, the reason next to it.</summary>
+    public sealed class HomeIntentView
+    {
+        public HomeIntentView(IntentAvailability a) { Availability = a; }
+        public IntentAvailability Availability { get; }
+        public string Key => Availability.Key;
+        public string Title => Availability.Title;
+        public string Description => Availability.Description;
+        public bool Enabled => Availability.Enabled;
+        public string Reason => Availability.Reason;
+        public int TargetTab => Availability.TargetTab;
+        public IntentSource Source => Availability.Intent.Source;
+        /// <summary>What the screen reader and the tooltip say: the description, or the reason when the button is disabled.</summary>
+        public string Tooltip => Enabled ? Description : $"Nu este disponibil: {Reason}";
+        public string ReasonLine => Enabled ? "" : $"Nu este disponibil: {Reason}";
     }
 }

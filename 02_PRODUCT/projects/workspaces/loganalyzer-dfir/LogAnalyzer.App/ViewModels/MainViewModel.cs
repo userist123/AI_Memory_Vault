@@ -101,6 +101,9 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>True when this edition contains per-program containment.</summary>
         public bool HasContainment => Containment is not null;
         public IEditionProfile Edition { get; }
+        /// <summary>WP18 S2: the role profile (intents and sidebar entries) of this PC. Data from the role, the edition and the mode.</summary>
+        public LogAnalyzer.Core.Services.Edition.RoleProfile RoleProfile { get; }
+        public System.Collections.Generic.IReadOnlyList<LogAnalyzer.Core.Services.Edition.NavigationEntry> RoleNavigation => RoleProfile.Navigation;
 
         /// <summary>Control audit of this station ("Control stație" tab).</summary>
         public StationControlViewModel StationControl { get; } = new();
@@ -571,7 +574,8 @@ namespace LogAnalyzer.UI.ViewModels
             Containment = featureViews.CreateViewModel(FeatureKeys.Containment);
             DomainInvestigation = featureViews.CreateViewModel(FeatureKeys.DomainInvestigation);
             Investigation = new InvestigationViewModel(inv => featureViews.CreateViewModel(FeatureKeys.AiAnalysis, inv));
-            Home = new HomeViewModel(Investigation, tab => SelectedTabIndex = tab);
+            RoleProfile = LogAnalyzer.Core.Services.Edition.RoleProfiles.For(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role, edition, AppModeContext.Current.Mode);
+            Home = new HomeViewModel(Investigation, tab => SelectedTabIndex = tab, profile: RoleProfile);
             Policy = new PolicyViewModel(registryWriter);
             ProcedureProfile = new ProcedureProfileViewModel();
             MediaRegister = new MediaRegisterViewModel();
@@ -610,7 +614,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (IsNetworkMode)
             {
                 LicenseTier = "Enterprise Network SOC (Live EDR)";
-                SelectedTabIndex = 11; // Open directly on Real-Time Live SOC Stream
+                // WP18: the application opens on Home in every mode and role (WP5); Live SOC stays reachable under "Avansat".
             }
             else
             {

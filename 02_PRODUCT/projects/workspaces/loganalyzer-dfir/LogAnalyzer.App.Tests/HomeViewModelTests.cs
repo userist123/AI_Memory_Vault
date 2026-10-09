@@ -1,4 +1,6 @@
 using System.IO;
+using LogAnalyzer.Core.Services.Connectivity;
+using LogAnalyzer.Core.Services.Edition;
 using LogAnalyzer.Dfir.Case;
 using LogAnalyzer.Dfir.Coverage;
 using LogAnalyzer.Dfir.Home;
@@ -47,15 +49,17 @@ public sealed class HomeViewModelTests : IDisposable
     }
 
     [Fact]
-    public void Without_a_case_home_is_undetermined_offers_three_intents_and_never_says_safe_or_normal()
+    public void Without_a_case_home_is_undetermined_offers_the_role_intents_and_never_says_safe_or_normal()
     {
         var vm = New(out _);
         Assert.False(vm.HasCase);
         Assert.Equal(AttentionLevel.Undetermined, vm.Attention);
-        Assert.Equal(3, vm.Intents.Length);
-        Assert.Contains("Verifică acest calculator", vm.Intents);
-        Assert.Contains("Analizează probe", vm.Intents);
-        Assert.Contains("Deschide caz existent", vm.Intents);
+        // WP18 S2: the default profile is the role decided at startup (CONTROL when nothing was decided), at most five intents
+        Assert.Equal(StationRole.Control, vm.Profile.Role);
+        Assert.Equal(RoleProfiles.MaxPrimary, vm.Intents.Length);
+        Assert.Contains("Verifică această stație", vm.Intents);
+        Assert.Contains("Deschide un control anterior", vm.Intents);
+        Assert.Contains("Raport pentru proces-verbal", vm.Intents);
         Assert.NotEmpty(vm.CoverageRows);
         Assert.All(vm.CoverageRows, r => Assert.NotEqual(CoverageState.Collected, r.State));
         foreach (var t in new[] { vm.AttentionLabel, vm.Problem, vm.Trust, vm.Found, string.Join(" ", vm.NextSteps) })
@@ -74,6 +78,52 @@ public sealed class HomeViewModelTests : IDisposable
         vm.CheckThisComputerCommand.Execute(null);
         Assert.True(inv.CollectFromThisStation);
         Assert.Equal([HomeViewModel.InvestigationTabIndex, HomeViewModel.InvestigationTabIndex], nav);
+    }
+
+    [Fact]
+    public async Task Role_intents_navigate_with_their_source_and_a_disabled_intent_only_explains_itself()
+    {
+        var nav = new List<int>();
+        var csirt = RoleProfiles.For(StationRole.Csirt, new UnclassifiedEditionProfile(), AppMode.AirGapped);
+        var inv = new InvestigationViewModel();
+        var vm = new HomeViewModel(inv, t => nav.Add(t), new RecentCases(Path.Combine(_dir, "recent.json")), () => null, csirt);
+        Assert.Equal("Stație de sprijin răspuns la incidente", vm.RoleTitle);
+        Assert.Equal(RoleProfiles.MaxPrimary, vm.PrimaryIntents.Count);
+        Assert.NotEmpty(vm.MoreIntents);
+
+        inv.CollectFromThisStation = true;
+        await vm.RunIntentCommand.ExecuteAsync(vm.PrimaryIntents.Single(i => i.Key == "receive_evidence"));
+        Assert.False(inv.CollectFromThisStation);
+        Assert.Equal([RoleProfiles.TabInvestigation], nav);
+        Assert.StartsWith("Primește probe de la o stație:", vm.OpenStatus);
+
+        await vm.RunIntentCommand.ExecuteAsync(vm.MoreIntents.Single(i => i.Key == "check_this_computer"));
+        Assert.True(inv.CollectFromThisStation);
+        Assert.Equal([RoleProfiles.TabInvestigation, RoleProfiles.TabInvestigation], nav);
+
+        var domain = vm.MoreIntents.Single(i => i.Key == "domain_mail");
+        Assert.False(domain.Enabled);
+        Assert.StartsWith("Nu este disponibil:", domain.Tooltip);
+        await vm.RunIntentCommand.ExecuteAsync(domain);
+        Assert.Equal(2, nav.Count);                                    // nothing navigated
+        Assert.Contains("nu este disponibil pe această stație", vm.OpenStatus);
+        Assert.Contains("izolată", vm.OpenStatus);
+
+        // "open cases" asks for a folder; cancelled here, so nothing opens and the status says so
+        await vm.RunIntentCommand.ExecuteAsync(vm.PrimaryIntents.Single(i => i.Key == "open_cases"));
+        Assert.False(vm.HasCase);
+        Assert.Contains("anulată", vm.OpenStatus);
+    }
+
+    [Fact]
+    public void Control_role_offers_no_network_intent_and_every_intent_leads_to_a_page()
+    {
+        var control = RoleProfiles.For(StationRole.Control, new ClassifiedEditionProfile(), AppMode.AirGapped);
+        var vm = new HomeViewModel(new InvestigationViewModel(), null, new RecentCases(Path.Combine(_dir, "recent.json")), () => null, control);
+        Assert.Equal("Stație de control", vm.RoleTitle);
+        Assert.All(vm.PrimaryIntents, i => Assert.True(i.Enabled, i.Reason));
+        Assert.DoesNotContain(vm.PrimaryIntents.Concat(vm.MoreIntents), i => i.Availability.Intent.RequiresNetwork);
+        Assert.All(vm.PrimaryIntents.Concat(vm.MoreIntents), i => Assert.False(string.IsNullOrWhiteSpace(i.Description)));
     }
 
     [Fact]
