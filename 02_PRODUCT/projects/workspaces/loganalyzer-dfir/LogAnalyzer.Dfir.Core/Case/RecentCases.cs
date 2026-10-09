@@ -1,5 +1,6 @@
 using System.Text.Json;
 using LogAnalyzer.Dfir.IO;
+using LogAnalyzer.Dfir.Language;
 
 namespace LogAnalyzer.Dfir.Case;
 
@@ -16,8 +17,8 @@ public static class CaseLifecycleNames
 
     public static string Label(CaseLifecycle l) => l switch
     {
-        CaseLifecycle.Active => "activ", CaseLifecycle.Sealed => "sigilat (închis)", CaseLifecycle.Archived => "arhivat",
-        CaseLifecycle.Invalidated => "invalidat", _ => "integritate eșuată",
+        CaseLifecycle.Active => Loc.T("case.life.active"), CaseLifecycle.Sealed => Loc.T("case.life.sealed"), CaseLifecycle.Archived => Loc.T("case.life.archived"),
+        CaseLifecycle.Invalidated => Loc.T("case.life.invalidated"), _ => Loc.T("case.life.integrity_failed"),
     };
 }
 
@@ -27,7 +28,7 @@ public sealed record RecentCase(string Path, string Title, DateTimeOffset LastOp
 /// <summary>A remembered case with what the folder looks like now. A folder that no longer exists is shown as missing, never dropped silently.</summary>
 public sealed record RecentCaseView(RecentCase Entry, bool Exists)
 {
-    public string StateText => Exists ? Entry.State : "LIPSĂ (folderul nu mai există)";
+    public string StateText => Exists ? Entry.State : Loc.T("case.recent.missing");
 }
 
 /// <summary>

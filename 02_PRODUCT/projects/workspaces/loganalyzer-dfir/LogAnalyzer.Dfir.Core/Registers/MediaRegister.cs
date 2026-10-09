@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.Language;
 using System.Text.Json.Serialization;
 using LogAnalyzer.Dfir.Model;
 
@@ -44,7 +45,7 @@ public sealed class MediaRegister : IRegisterData
     public List<MediaRow> Rows { get; set; } = [];
 
     [JsonIgnore] public string Kind => "media";
-    [JsonIgnore] public string Title => "Registru medii";
+    [JsonIgnore] public string Title => Loc.T("reg.title.media");
     [JsonIgnore] public string FileName => DefaultFileName;
     [JsonIgnore] public IReadOnlyList<string> Columns => ColumnNames;
     [JsonIgnore] public bool IsDefined => Rows.Count > 0;

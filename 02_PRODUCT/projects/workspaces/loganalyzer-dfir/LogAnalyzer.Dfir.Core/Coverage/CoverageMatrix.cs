@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.Language;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Parsing;
 
@@ -38,16 +39,16 @@ public static class CoverageNames
 
     public static string Label(CoverageState s) => s switch
     {
-        CoverageState.Collected => "Colectat", CoverageState.Partial => "Parțial", CoverageState.Unavailable => "Indisponibil",
-        CoverageState.NotCollected => "Necolectat", _ => "Nesuportat",
+        CoverageState.Collected => Loc.T("cov.state.collected"), CoverageState.Partial => Loc.T("cov.state.partial"), CoverageState.Unavailable => Loc.T("cov.state.unavailable"),
+        CoverageState.NotCollected => Loc.T("cov.state.not_collected"), _ => Loc.T("cov.state.not_supported"),
     };
 
     public static string Spec(OverallCoverage o) => o.ToString().ToUpperInvariant();
 
     public static string Label(OverallCoverage o) => o switch
     {
-        OverallCoverage.Full => "Completă (pentru familiile suportate)", OverallCoverage.Partial => "Parțială",
-        OverallCoverage.Minimal => "Minimă", _ => "Nedeterminată",
+        OverallCoverage.Full => Loc.T("cov.overall.full"), OverallCoverage.Partial => Loc.T("cov.overall.partial"),
+        OverallCoverage.Minimal => Loc.T("cov.overall.minimal"), _ => Loc.T("cov.overall.unknown"),
     };
 }
 
@@ -79,26 +80,30 @@ public sealed class CoverageMatrix
     public static CoverageMatrix Unknown(IReadOnlyList<ParserDescriptor> parsers) =>
         Build(new CoverageInputs([], [], [], [], parsers));
 
-    private sealed record Family(string Id, string Label, string[] ParserIds, string[] Collectors, string[] ExtraSourceTypes, string[] GapPrefixes, string Note = "");
+    private sealed record Family(string Id, string LabelKey, string[] ParserIds, string[] Collectors, string[] ExtraSourceTypes, string[] GapPrefixes, string NoteKey = "")
+    {
+        public string Label => Loc.T(LabelKey);
+        public string Note => NoteKey.Length > 0 ? Loc.T(NoteKey) : "";
+    }
 
     private static readonly Family[] Families =
     [
-        new("evtx", "Jurnale de evenimente Windows (canale EVTX)", ["EvtxParser"], ["EventLogCollector"], [], ["Security "]),
-        new("prefetch", "Prefetch", ["PrefetchParser"], ["PrefetchCollector"], [], []),
-        new("amcache", "Amcache", ["AmcacheParser"], ["ExecutionArtifactsCollector"], [], [], "prezență în Amcache nu înseamnă execuție"),
-        new("shimcache", "ShimCache (AppCompatCache)", ["SystemHiveExecutionParser"], ["ExecutionArtifactsCollector"], [], [], "citit de același parser ca BAM"),
-        new("bam", "BAM", ["SystemHiveExecutionParser"], ["ExecutionArtifactsCollector"], [], [], "citit de același parser ca ShimCache"),
-        new("srum", "SRUM", ["SrumNetworkParser"], ["SrumCollector"], [], [], "se citește doar utilizarea rețelei per aplicație"),
-        new("registry", "Hive-uri de registru (NTUSER, SOFTWARE)", ["UserHiveParser", "SoftwareHiveParser"], ["ExecutionArtifactsCollector"], [], []),
-        new("services", "Servicii și drivere (hive SYSTEM)", ["ServicesParser"], [], [], []),
-        new("usn", "Jurnal USN", ["UsnJournalParser"], [], [], []),
-        new("lnk_jumplist", "LNK și Jump Lists", ["LnkParser", "JumpListParser"], [], [], []),
-        new("usb", "Istoric dispozitive USB", ["UsbDevicesParser"], [], [], []),
-        new("network_profiles", "Profiluri de rețea", [], [], [], [], "niciun parser pentru profilurile de rețea"),
-        new("network_capture", "Captură de rețea (pcapng)", ["PcapngParser"], [], [], []),
-        new("browser", "Istoric browser (Chromium, Firefox)", ["BrowserHistoryParser", "FirefoxHistoryParser"], [], [], []),
-        new("tasks", "Sarcini programate", ["ScheduledTaskParser"], [], [], []),
-        new("live_state", "Starea live (procese, conexiuni, rulare automată)", [], ["LiveStateCollector"], ["live_snapshot"], [], "analizor propriu, fără parser"),
+        new("evtx", "cov.family.evtx", ["EvtxParser"], ["EventLogCollector"], [], ["Security "]),
+        new("prefetch", "cov.family.prefetch", ["PrefetchParser"], ["PrefetchCollector"], [], []),
+        new("amcache", "cov.family.amcache", ["AmcacheParser"], ["ExecutionArtifactsCollector"], [], [], "cov.note.amcache"),
+        new("shimcache", "cov.family.shimcache", ["SystemHiveExecutionParser"], ["ExecutionArtifactsCollector"], [], [], "cov.note.shimcache"),
+        new("bam", "cov.family.bam", ["SystemHiveExecutionParser"], ["ExecutionArtifactsCollector"], [], [], "cov.note.bam"),
+        new("srum", "cov.family.srum", ["SrumNetworkParser"], ["SrumCollector"], [], [], "cov.note.srum"),
+        new("registry", "cov.family.registry", ["UserHiveParser", "SoftwareHiveParser"], ["ExecutionArtifactsCollector"], [], []),
+        new("services", "cov.family.services", ["ServicesParser"], [], [], []),
+        new("usn", "cov.family.usn", ["UsnJournalParser"], [], [], []),
+        new("lnk_jumplist", "cov.family.lnk_jumplist", ["LnkParser", "JumpListParser"], [], [], []),
+        new("usb", "cov.family.usb", ["UsbDevicesParser"], [], [], []),
+        new("network_profiles", "cov.family.network_profiles", [], [], [], [], "cov.note.network_profiles"),
+        new("network_capture", "cov.family.network_capture", ["PcapngParser"], [], [], []),
+        new("browser", "cov.family.browser", ["BrowserHistoryParser", "FirefoxHistoryParser"], [], [], []),
+        new("tasks", "cov.family.tasks", ["ScheduledTaskParser"], [], [], []),
+        new("live_state", "cov.family.live_state", [], ["LiveStateCollector"], ["live_snapshot"], [], "cov.note.live_state"),
     ];
 
     public static CoverageMatrix Build(CoverageInputs inp)
@@ -108,16 +113,15 @@ public sealed class CoverageMatrix
         bool anything = inp.Evidence.Count > 0 || inp.Collection.Count > 0 || inp.Parsing.Count > 0;
         var supported = rows.Where(r => r.State != CoverageState.NotSupported).ToList();
         if (!anything || supported.Count == 0)
-            return new CoverageMatrix(rows, OverallCoverage.Unknown, "nicio sursă cunoscută în caz (nici probe, nici colectări, nici parsări): acoperirea nu poate fi evaluată");
+            return new CoverageMatrix(rows, OverallCoverage.Unknown, Loc.T("cov.reason.unknown"));
 
         int collected = supported.Count(r => r.State == CoverageState.Collected);
         int partial = supported.Count(r => r.State == CoverageState.Partial);
         double score = (collected + 0.5 * partial) / supported.Count;
-        string counts = $"{collected} colectate, {partial} parțiale, {supported.Count(r => r.State == CoverageState.Unavailable)} indisponibile, " +
-                        $"{supported.Count(r => r.State == CoverageState.NotCollected)} necolectate din {supported.Count} familii suportate";
+        string counts = Loc.Format("cov.reason.counts", collected, partial, supported.Count(r => r.State == CoverageState.Unavailable), supported.Count(r => r.State == CoverageState.NotCollected), supported.Count);
         int unsupported = rows.Count - supported.Count;
-        string tail = unsupported > 0 ? $"; {unsupported} familii nesuportate de aplicație" : "";
-        if (collected == supported.Count) return new CoverageMatrix(rows, OverallCoverage.Full, "toate familiile suportate sunt colectate (" + counts + ")" + tail);
+        string tail = unsupported > 0 ? Loc.Format("cov.reason.tail", unsupported) : "";
+        if (collected == supported.Count) return new CoverageMatrix(rows, OverallCoverage.Full, Loc.Format("cov.reason.all", counts) + tail);
         if (score < MinimalBelow) return new CoverageMatrix(rows, OverallCoverage.Minimal, counts + tail);
         return new CoverageMatrix(rows, OverallCoverage.Partial, counts + tail);
     }
@@ -129,7 +133,7 @@ public sealed class CoverageMatrix
         CoverageRow R(CoverageState s, string reason) => new(f.Id, f.Label, s, reason, status, f.ParserIds);
 
         bool ownAnalyzer = f.ExtraSourceTypes.Length > 0;
-        if (registered.Count == 0 && !ownAnalyzer) return R(CoverageState.NotSupported, f.Note.Length > 0 ? f.Note : "aplicația nu are parser pentru această familie");
+        if (registered.Count == 0 && !ownAnalyzer) return R(CoverageState.NotSupported, f.Note.Length > 0 ? f.Note : Loc.T("cov.reason.no_parser"));
 
         var descriptors = inp.Parsers.Where(d => registered.Contains(d.ParserId)).ToList();
         var ev = inp.Evidence.Where(e => descriptors.Any(d => d.Accepts(e)) || f.ExtraSourceTypes.Contains(e.SourceType)).ToList();
@@ -144,15 +148,15 @@ public sealed class CoverageMatrix
             if (bad.Count > 0)
                 return R(CoverageState.Unavailable, string.Join("; ", bad.Select(c => $"{c.Collector}: {c.Status.ToSpec()}" + (c.Errors.Length > 0 ? $" ({Trim(c.Errors)})" : ""))));
             if (runs.Count > 0)
-                return R(CoverageState.Unavailable, $"colectorul {runs[0].Collector} a rulat, dar nu a produs această sursă (lipsa sursei nu înseamnă că activitatea nu a avut loc)");
-            return R(CoverageState.NotCollected, "sursa nu a fost colectată sau importată în acest caz");
+                return R(CoverageState.Unavailable, Loc.Format("cov.reason.ran_no_source", runs[0].Collector));
+            return R(CoverageState.NotCollected, Loc.T("cov.reason.not_collected"));
         }
 
         CoverageRow Result;
         if (ownAnalyzer && registered.Count == 0)
-            Result = R(CoverageState.Collected, $"{ev.Count} fotografii ale stării live, citite de analizorul propriu");
+            Result = R(CoverageState.Collected, Loc.Format("cov.reason.live", ev.Count));
         else if (prs.Count == 0)
-            Result = R(CoverageState.Partial, $"{ev.Count} probe prezente, dar fără niciun rezultat de parser (neparsate)");
+            Result = R(CoverageState.Partial, Loc.Format("cov.reason.unparsed", ev.Count));
         else
         {
             int ok = prs.Count(p => p.Status == EvidenceStatus.Success);
@@ -162,19 +166,19 @@ public sealed class CoverageMatrix
             int parsedEvidence = prs.Select(p => p.EvidenceId).Distinct(StringComparer.Ordinal).Count(id => ev.Any(e => e.EvidenceId == id));
             int unparsed = Math.Max(0, ev.Count - parsedEvidence);
             if (failed == prs.Count)
-                Result = R(CoverageState.Unavailable, $"toate parsările au eșuat ({failed}): {Trim(prs.Select(p => p.Error).FirstOrDefault(e => e.Length > 0) ?? "fără detaliu")}");
+                Result = R(CoverageState.Unavailable, Loc.Format("cov.reason.all_failed", failed, Trim(prs.Select(p => p.Error).FirstOrDefault(e => e.Length > 0) ?? Loc.T("cov.reason.no_detail"))));
             else if (empty == prs.Count)
-                Result = R(CoverageState.Partial, "sursa a fost citită, dar nu conține înregistrări: asta nu dovedește absența activității");
+                Result = R(CoverageState.Partial, Loc.T("cov.reason.empty"));
             else if (part == 0 && empty == 0 && failed == 0 && unparsed == 0)
-                Result = R(CoverageState.Collected, $"{ok} probe parsate");
+                Result = R(CoverageState.Collected, Loc.Format("cov.reason.parsed", ok));
             else
             {
                 var bits = new List<string>();
-                if (ok > 0) bits.Add($"{ok} parsate");
-                if (part > 0) bits.Add($"{part} parțiale");
-                if (empty > 0) bits.Add($"{empty} fără înregistrări");
-                if (failed > 0) bits.Add($"{failed} eșuate");
-                if (unparsed > 0) bits.Add($"{unparsed} neparsate");
+                if (ok > 0) bits.Add(Loc.Format("cov.bit.parsed", ok));
+                if (part > 0) bits.Add(Loc.Format("cov.bit.partial", part));
+                if (empty > 0) bits.Add(Loc.Format("cov.bit.empty", empty));
+                if (failed > 0) bits.Add(Loc.Format("cov.bit.failed", failed));
+                if (unparsed > 0) bits.Add(Loc.Format("cov.bit.unparsed", unparsed));
                 Result = R(CoverageState.Partial, string.Join(", ", bits));
             }
         }
@@ -182,10 +186,10 @@ public sealed class CoverageMatrix
         if (Result.State == CoverageState.Collected)
         {
             if (famGaps.Count > 0)
-                return R(CoverageState.Partial, "sursa este colectată, dar auditul a fost incomplet: " + string.Join("; ", famGaps.Take(3).Select(g => g.Artifact)));
+                return R(CoverageState.Partial, Loc.T("cov.reason.audit_incomplete") + string.Join("; ", famGaps.Take(3).Select(g => g.Artifact)));
             var badRun = runs.FirstOrDefault(c => c.Status is EvidenceStatus.Partial or EvidenceStatus.Failed or EvidenceStatus.NotAvailable);
             if (badRun is not null)
-                return R(CoverageState.Partial, $"colectorul {badRun.Collector}: {badRun.Status.ToSpec()}" + (badRun.Errors.Length > 0 ? $" ({Trim(badRun.Errors)})" : ""));
+                return R(CoverageState.Partial, Loc.Format("cov.reason.collector", badRun.Collector, badRun.Status.ToSpec()) + (badRun.Errors.Length > 0 ? $" ({Trim(badRun.Errors)})" : ""));
         }
         return Result;
     }
@@ -194,7 +198,7 @@ public sealed class CoverageMatrix
 
     private static string ParserStatusOf(Family f, IReadOnlyList<ParserDescriptor> parsers, List<string> registered)
     {
-        if (registered.Count == 0) return f.ExtraSourceTypes.Length > 0 ? "analizor propriu" : "fără parser";
+        if (registered.Count == 0) return f.ExtraSourceTypes.Length > 0 ? Loc.T("cov.parser.own") : Loc.T("cov.parser.none");
         var worst = parsers.Where(d => registered.Contains(d.ParserId)).Select(d => d.Status).DefaultIfEmpty(ParserMaturity.Validated).Max();
         return worst.ToString().ToUpperInvariant();
     }

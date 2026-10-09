@@ -35,7 +35,7 @@
                         <TextBlock Text="{loc:T inv.nume_caz}" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox AutomationProperties.Name="{loc:T inv.nume_caz_2}" Text="{Binding CaseName, UpdateSourceTrigger=PropertyChanged}" Width="280" Margin="0,0,10,0"/>
                         <TextBlock Text="{loc:T inv.profil}" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <ComboBox AutomationProperties.Name="{loc:T inv.profil_de_colectare}" ItemsSource="{Binding Profiles}" SelectedIndex="{Binding ProfileIndex}" Width="230"/>
+                        <ComboBox AutomationProperties.Name="{loc:T inv.profil_de_colectare}" ItemsSource="{Binding Profiles}" DisplayMemberPath="Text" SelectedIndex="{Binding ProfileIndex}" Width="230"/>
                     </WrapPanel>
                     <TextBlock Text="{loc:T inv.scopul_cazului_obligatoriu_de_ce}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                     <WrapPanel Margin="0,0,0,6">
@@ -52,10 +52,10 @@
                         <TextBlock Text="{loc:T inv.pana_la}" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <DatePicker AutomationProperties.Name="{loc:T inv.perioada_pana_la}" SelectedDate="{Binding ScopeTo}" Width="130" Margin="0,0,10,0"/>
                         <TextBlock Text="{loc:T inv.temei}" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <ComboBox AutomationProperties.Name="{loc:T inv.temei_legal}" ItemsSource="{Binding LegalBases}" SelectedIndex="{Binding LegalBasisIndex}" Width="100" Margin="0,0,10,0"/>
+                        <ComboBox AutomationProperties.Name="{loc:T inv.temei_legal}" ItemsSource="{Binding LegalBases}" DisplayMemberPath="Text" SelectedIndex="{Binding LegalBasisIndex}" Width="100" Margin="0,0,10,0"/>
                         <TextBlock Text="{loc:T inv.sistem}" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <ComboBox AutomationProperties.Name="{loc:T inv.categoria_sistemului}" ItemsSource="{Binding NetworkCategories}" SelectedIndex="{Binding NetworkIndex}" Width="140" Margin="0,0,6,0"/>
-                        <ComboBox AutomationProperties.Name="{loc:T inv.nivel_de_clasificare}" ItemsSource="{Binding ClassificationLevels}" SelectedIndex="{Binding ClassificationIndex}" Width="110"/>
+                        <ComboBox AutomationProperties.Name="{loc:T inv.categoria_sistemului}" ItemsSource="{Binding NetworkCategories}" DisplayMemberPath="Text" SelectedIndex="{Binding NetworkIndex}" Width="140" Margin="0,0,6,0"/>
+                        <ComboBox AutomationProperties.Name="{loc:T inv.nivel_de_clasificare}" ItemsSource="{Binding ClassificationLevels}" DisplayMemberPath="Text" SelectedIndex="{Binding ClassificationIndex}" Width="110"/>
                     </WrapPanel>
                     <CheckBox Content="{loc:T inv.colecteaza_de_pe_aceasta_statie}" IsChecked="{Binding CollectFromThisStation}" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,6"/>
                     <WrapPanel>

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LogAnalyzer.Dfir.Language;
 using LogAnalyzer.Dfir.Registers;
 using Microsoft.Win32;
 
@@ -28,7 +29,7 @@ namespace LogAnalyzer.UI.ViewModels
         protected RegisterViewModel(string? path = null)
         {
             _registerPath = path ?? RegisterStore.DefaultPath<T>();
-            _status = "Introduceți rândurile în tabel (sau lipiți / importați), apoi apăsați „Salvează”. Un registru fără rânduri este „registru nedefinit”. Nimic din registru nu se aplică pe Windows.";
+            _status = Loc.T("reg.vm.initial");
             Data = new DataTable(_register.Kind);
             foreach (var c in _register.Columns) Data.Columns.Add(c, typeof(string));
             SaveCommand = new RelayCommand(Save);
@@ -47,7 +48,7 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>A shown-always line under the title (for the users register: who may edit it, and that the application cannot enforce it yet).</summary>
         public virtual string Notice => "";
         /// <summary>Shown when the signed-in user may read but not change this register (only the global administrator edits; decision 33).</summary>
-        public string AccessNotice => LogAnalyzer.Dfir.Auth.OperatorIdentity.MayEditAdministration ? "" : LogAnalyzer.Dfir.Auth.OperatorIdentity.AdministratorOnlyMessage + ". Puteți citi registrul, nu îl puteți modifica.";
+        public string AccessNotice => LogAnalyzer.Dfir.Auth.OperatorIdentity.MayEditAdministration ? "" : Loc.Format("reg.vm.access_notice", LogAnalyzer.Dfir.Auth.OperatorIdentity.AdministratorOnlyMessage);
         public bool CanEdit => LogAnalyzer.Dfir.Auth.OperatorIdentity.MayEditAdministration;
         public abstract string Hint { get; }
         public DataTable Data { get; }
@@ -79,7 +80,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             Data.Clear();
             foreach (var row in _register.Cells()) Data.Rows.Add(row.Cast<object>().ToArray());
-            Definition = _register.IsDefined ? $"definit ({_register.Cells().Count} rânduri)" : "nedefinit (registru nedefinit: nu există rânduri)";
+            Definition = _register.IsDefined ? Loc.Format("reg.vm.defined", _register.Cells().Count) : Loc.T("reg.vm.undefined");
         }
 
         private void ShowIssues(System.Collections.Generic.IEnumerable<RegisterIssue> issues)
@@ -96,18 +97,18 @@ namespace LogAnalyzer.UI.ViewModels
                 _register = new T();
                 Push();
                 ShowIssues(r.Issues);
-                Status = r.Issues.Count > 0 ? "Registrul nu a putut fi citit; lista de mai jos arată motivul. Nu s-a înlocuit nimic." : startup ? "Nu există un registru salvat: registru nedefinit." : "Fișierul nu există.";
+                Status = r.Issues.Count > 0 ? Loc.T("reg.vm.unreadable") : startup ? Loc.T("reg.vm.none_saved") : Loc.T("reg.vm.no_file");
                 return;
             }
             _register = r.Register;
             Push();
             ShowIssues(r.Issues);
-            Status = $"Registru încărcat din {path}." + (r.HasErrors ? " Unele rânduri sunt invalide (vezi lista); ele nu sunt folosite la analiză." : "");
+            Status = Loc.Format("reg.vm.loaded", path) + (r.HasErrors ? Loc.T("reg.vm.loaded_invalid") : "");
         }
 
         private void OpenFile()
         {
-            var dlg = new OpenFileDialog { Filter = "Registru (*.json)|*.json|Toate fișierele|*.*", Title = $"Deschideți {Title.ToLowerInvariant()}" };
+            var dlg = new OpenFileDialog { Filter = Loc.T("reg.vm.dialog_filter"), Title = Loc.Format("reg.vm.dialog_open", Title.ToLowerInvariant()) };
             if (dlg.ShowDialog() == true) LoadFrom(dlg.FileName);
         }
 
@@ -116,7 +117,7 @@ namespace LogAnalyzer.UI.ViewModels
             Pull();
             var issues = _register.Validate();
             ShowIssues(issues);
-            Status = issues.Any(i => i.IsError) ? $"{issues.Count(i => i.IsError)} erori; corectați rândurile indicate înainte de salvare." : "Registrul este valid.";
+            Status = issues.Any(i => i.IsError) ? Loc.Format("reg.vm.errors_fix", issues.Count(i => i.IsError)) : Loc.T("reg.vm.valid");
         }
 
         private void Save()
@@ -126,20 +127,20 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 var issues = RegisterStore.Save(_register, RegisterPath, out var sha, action: "save");
                 ShowIssues(issues);
-                if (issues.Any(i => i.IsError)) { Status = $"Nu s-a salvat nimic: {issues.Count(i => i.IsError)} erori (vezi lista, pe linii)."; return; }
+                if (issues.Any(i => i.IsError)) { Status = Loc.Format("reg.vm.not_saved", issues.Count(i => i.IsError)); return; }
                 Sha256 = sha;
-                Definition = _register.IsDefined ? $"definit ({_register.Cells().Count} rânduri)" : "nedefinit (registru nedefinit: nu există rânduri)";
-                Status = $"Registru salvat în {RegisterPath} (SHA-256 {sha}). Se folosește la următoarea analiză; fiecare caz își păstrează o copie și hash-ul în custodie. Modificarea este în jurnalul de audit al registrelor.";
+                Definition = _register.IsDefined ? Loc.Format("reg.vm.defined", _register.Cells().Count) : Loc.T("reg.vm.undefined");
+                Status = Loc.Format("reg.vm.saved", RegisterPath, sha);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                Status = "Registrul nu a putut fi scris: " + ex.Message;
+                Status = Loc.Format("reg.vm.write_failed", ex.Message);
             }
         }
 
         private void ImportJson()
         {
-            var dlg = new OpenFileDialog { Filter = "Registru JSON (*.json)|*.json|Toate fișierele|*.*", Title = "Importați un registru (format propriu)" };
+            var dlg = new OpenFileDialog { Filter = Loc.T("reg.vm.dialog_json_filter"), Title = Loc.T("reg.vm.dialog_import") };
             if (dlg.ShowDialog() != true) return;
             ImportJsonText(File.ReadAllText(dlg.FileName), dlg.FileName);
         }
@@ -148,15 +149,15 @@ namespace LogAnalyzer.UI.ViewModels
         {
             var r = RegisterImport.FromJson<T>(json);
             ShowIssues(r.Issues);
-            if (r.Register is null) { Status = $"Importul din {source} a eșuat; nimic nu s-a schimbat."; return; }
+            if (r.Register is null) { Status = Loc.Format("reg.vm.import_failed", source); return; }
             _register = r.Register;
             Push();
-            Status = $"Importat din {source}: {r.RowsAccepted} rânduri valide, {r.RowsRejected} cu erori (rămân în tabel, marcate în listă; nu se salvează până nu sunt corectate).";
+            Status = Loc.Format("reg.vm.imported", source, r.RowsAccepted, r.RowsRejected);
         }
 
         private void ImportCsv()
         {
-            var dlg = new OpenFileDialog { Filter = "CSV / text (*.csv;*.tsv;*.txt)|*.csv;*.tsv;*.txt|Toate fișierele|*.*", Title = $"Importați CSV în „{Title}”" };
+            var dlg = new OpenFileDialog { Filter = Loc.T("reg.vm.dialog_csv_filter"), Title = Loc.Format("reg.vm.dialog_csv", Title) };
             if (dlg.ShowDialog() == true) ImportText(File.ReadAllText(dlg.FileName), dlg.FileName);
         }
 
@@ -164,9 +165,9 @@ namespace LogAnalyzer.UI.ViewModels
         {
             string text;
             try { text = Clipboard.GetText(); }
-            catch (System.Runtime.InteropServices.COMException) { Status = "Clipboard-ul nu este disponibil."; return; }
-            if (string.IsNullOrWhiteSpace(text)) { Status = "Clipboard-ul este gol."; return; }
-            ImportText(text, "clipboard");
+            catch (System.Runtime.InteropServices.COMException) { Status = Loc.T("reg.vm.clipboard_unavailable"); return; }
+            if (string.IsNullOrWhiteSpace(text)) { Status = Loc.T("reg.vm.clipboard_empty"); return; }
+            ImportText(text, Loc.T("reg.vm.clipboard_source"));
         }
 
         /// <summary>CSV / tab-separated text into the grid; the invalid lines are listed with their line numbers and are not added.</summary>
@@ -176,7 +177,7 @@ namespace LogAnalyzer.UI.ViewModels
             var r = RegisterImport.Text(_register, text, ReplaceOnImport);
             Push();
             ShowIssues(r.Issues);
-            Status = $"{Title} din {source}: {r.RowsAccepted} rânduri adăugate, {r.RowsRejected} respinse" + (r.RowsRejected > 0 ? " (vezi lista, pe linii)." : ".");
+            Status = Loc.Format("reg.vm.added", Title, source, r.RowsAccepted, r.RowsRejected) + (r.RowsRejected > 0 ? Loc.T("reg.vm.see_list") : ".");
         }
     }
 
@@ -184,18 +185,14 @@ namespace LogAnalyzer.UI.ViewModels
     public sealed class MediaRegisterViewModel : RegisterViewModel<MediaRegister>
     {
         public MediaRegisterViewModel(string? path = null) : base(path) { }
-        public override string Hint =>
-            "RegistrationNumber (unic); Serial; VidPid (0951:1666, opțional); Type: USB | HDD | SSD | CD | DVD | other; Classification: nivel NATO, UE sau național (gol = nemarcat; nu există nivel neclasificat); " +
-            "AssignedUser: DOMENIU\\utilizator; Zone; ValidFrom/ValidTo: yyyy-MM-dd; Status: active | withdrawn | destroyed. Mediile observate se compară cu acest registru: AUTHORIZED / REGISTERED / UNREGISTERED / UNAUTHORIZED / UNKNOWN.";
+        public override string Hint => Loc.T("reg.hint.media");
     }
 
     /// <summary>"Registru utilizatori" (decision 17): persons, accounts and clearances, entered by hand by the global administrator.</summary>
     public sealed class UsersRegisterViewModel : RegisterViewModel<UsersRegister>
     {
         public UsersRegisterViewModel(string? path = null) : base(path) { }
-        public override string Notice => UsersRegister.EditNotice;
-        public override string Hint =>
-            "Person; Accounts: DOMENIU\\utilizator, separate prin ; sau |; Sids: opțional; Clearance: nivel NATO, UE sau național (un rând pentru fiecare abilitare; gol = fără abilitare); " +
-            "ClearanceValidFrom/To: yyyy-MM-dd; NeedToKnow: note; ZonesAllowed: zone separate prin ; sau |. Abilitările se introduc manual; nu se deduc din nimic.";
+        public override string Notice => Loc.T("reg.vm.users_notice");
+        public override string Hint => Loc.T("reg.hint.users");
     }
 }

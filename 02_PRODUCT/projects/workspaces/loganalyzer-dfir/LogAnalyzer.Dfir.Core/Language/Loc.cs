@@ -69,9 +69,9 @@ public static class Loc
         return key;
     }
 
-    /// <summary>Like <see cref="T(string)"/> with <c>{0}</c>, <c>{1}</c>... filled by <paramref name="args"/> (invariant culture).</summary>
-    public static string Format(string key, params object?[] args) => string.Format(CultureInfo.InvariantCulture, T(key), args);
-    public static string Format(string key, AppLanguage language, params object?[] args) => string.Format(CultureInfo.InvariantCulture, T(key, language), args);
+    /// <summary>Like <see cref="T(string)"/> with <c>{0}</c>, <c>{1}</c>... filled by <paramref name="args"/> (current culture, as the interface always formatted numbers).</summary>
+    public static string Format(string key, params object?[] args) => string.Format(CultureInfo.CurrentCulture, T(key), args);
+    public static string Format(string key, AppLanguage language, params object?[] args) => string.Format(CultureInfo.CurrentCulture, T(key, language), args);
 
     public static bool Has(string key) => Ro.Value.ContainsKey(key);
     public static bool Has(string key, AppLanguage language) => language == AppLanguage.English ? En.Value.ContainsKey(key) : Ro.Value.ContainsKey(key);

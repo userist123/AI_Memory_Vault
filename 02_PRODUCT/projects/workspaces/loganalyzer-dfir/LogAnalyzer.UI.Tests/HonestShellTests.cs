@@ -278,11 +278,12 @@ namespace LogAnalyzer.UI.Tests
             var main = File.ReadAllText(Path.Combine(AppDir(), "MainWindow.xaml"));
             var vm = File.ReadAllText(Path.Combine(AppDir(), "ViewModels", "MainViewModel.cs"));
 
-            Assert.True(main.IndexOf("Acasă (caz, acoperire, pornire)", StringComparison.Ordinal) < main.IndexOf("Command Dashboard", StringComparison.Ordinal));
+            // WP6b: the sidebar labels are keys (Strings.ro.json / Strings.en.json); the order and the pages are what this test guards.
+            Assert.True(main.IndexOf("{loc:T shell.acasa_caz_acoperire_pornire}", StringComparison.Ordinal) < main.IndexOf("{loc:T shell.command_dashboard}", StringComparison.Ordinal));
             Assert.Contains("<views:HomeView DataContext=\"{Binding Home}\"/>", main);
             Assert.Contains("private int _selectedTabIndex = HomeViewModel.HomeTabIndex", vm);
-            Assert.Contains("Command Dashboard", main);          // the existing pages are still there
-            Assert.Contains("Investigație completă (caz)", main);
+            Assert.Contains("{loc:T shell.command_dashboard}", main);          // the existing pages are still there
+            Assert.Contains("{loc:T shell.investigatie_completa_caz}", main);
         }
 
         [Fact]

@@ -1,5 +1,6 @@
 using LogAnalyzer.Dfir.Case;
 using LogAnalyzer.Dfir.Coverage;
+using LogAnalyzer.Dfir.Language;
 using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Home;
@@ -59,8 +60,8 @@ public sealed record HomeSummary
 public static class HomeAggregator
 {
     public const int MaxNextSteps = 5;
-    public const string NothingDetected = "Nimic detectat în sursele analizate";
-    public const string NoCase = "Niciun caz deschis";
+    public static string NothingDetected => Loc.T("home.nothing_detected");
+    public static string NoCase => Loc.T("home.no_case");
 
     public static HomeSummary Build(HomeInputs i)
     {
@@ -68,59 +69,59 @@ public static class HomeAggregator
         int total = i.FindingsBySeverity.Values.Sum();
         int N(Severity s) => i.FindingsBySeverity.TryGetValue(s, out var n) ? n : 0;
         var top = Enum.GetValues<Severity>().Where(s => N(s) > 0).DefaultIfEmpty(Severity.Info).Max();
-        string coverageLine = $"Acoperire: {cov.OverallLabel} — {cov.OverallReason}";
+        string coverageLine = Loc.Format("home.coverage_line", cov.OverallLabel, cov.OverallReason);
 
         bool analysed = i.AnalysisState is OperationState.Completed or OperationState.Partial;
         var (trustState, trust) = TrustOf(i);
 
         AttentionLevel level; string label;
-        if (!i.CaseOpen) { level = AttentionLevel.Undetermined; label = "Nedeterminat: " + NoCase.ToLowerInvariant(); }
+        if (!i.CaseOpen) { level = AttentionLevel.Undetermined; label = Loc.Format("home.undetermined_prefix", NoCase.ToLowerInvariant()); }
         else if (!analysed && total == 0)
         {
             level = AttentionLevel.Undetermined;
             label = i.AnalysisState == OperationState.NotStarted
-                ? "Nedeterminat: analiza nu a fost rulată pentru acest caz"
-                : $"Nedeterminat: analiza nu a fost finalizată ({StateWord(i.AnalysisState)}){(i.AnalysisStateReason.Length > 0 ? " — " + i.AnalysisStateReason : "")}";
+                ? Loc.T("home.undetermined_not_run")
+                : Loc.Format("home.undetermined_unfinished", StateWord(i.AnalysisState), i.AnalysisStateReason.Length > 0 ? " — " + i.AnalysisStateReason : "");
         }
         else if (total > 0)
         {
             (level, label) = top switch
             {
-                Severity.Critical => (AttentionLevel.Critical, "Atenție critică"),
-                Severity.High => (AttentionLevel.High, "Atenție ridicată"),
-                Severity.Medium => (AttentionLevel.Medium, "Atenție medie"),
-                _ => (AttentionLevel.Low, "Observații minore"),
+                Severity.Critical => (AttentionLevel.Critical, Loc.T("home.attention_critical")),
+                Severity.High => (AttentionLevel.High, Loc.T("home.attention_high")),
+                Severity.Medium => (AttentionLevel.Medium, Loc.T("home.attention_medium")),
+                _ => (AttentionLevel.Low, Loc.T("home.attention_low")),
             };
-            if (i.AnalysisState == OperationState.Partial) label += " (analiză parțială)";
+            if (i.AnalysisState == OperationState.Partial) label += Loc.T("home.partial_suffix");
         }
         else if (cov.Overall is OverallCoverage.Minimal or OverallCoverage.Unknown)
         {
             level = AttentionLevel.Undetermined;
-            label = $"Nedeterminat: {NothingDetected.ToLowerInvariant()}, dar acoperirea este {cov.OverallLabel.ToLowerInvariant()}";
+            label = Loc.Format("home.undetermined_coverage", NothingDetected.ToLowerInvariant(), cov.OverallLabel.ToLowerInvariant());
         }
-        else { level = AttentionLevel.NothingDetected; label = $"{NothingDetected} (acoperire {cov.OverallLabel.ToLowerInvariant()})"; }
+        else { level = AttentionLevel.NothingDetected; label = Loc.Format("home.nothing_with_coverage", NothingDetected, cov.OverallLabel.ToLowerInvariant()); }
 
         string problem;
-        if (!i.CaseOpen) problem = "Nedeterminat: nu este deschis niciun caz.";
+        if (!i.CaseOpen) problem = Loc.T("home.problem.undetermined_no_case");
         else if (level == AttentionLevel.Undetermined && total == 0) problem = label + ".";
-        else if (total == 0) problem = $"{NothingDetected}. Aceasta nu înseamnă că sistemul este curat: acoperire {cov.OverallLabel.ToLowerInvariant()}, {i.GapCount} goluri de probă.";
-        else problem = level >= AttentionLevel.High ? $"Da: {N(Severity.Critical) + N(Severity.High)} constatări de severitate ridicată sau critică."
-                     : level == AttentionLevel.Medium ? $"Posibil: {N(Severity.Medium)} constatări de severitate medie de revizuit."
-                     : "Doar observații de severitate scăzută; verificați acoperirea înainte de a le considera neînsemnate.";
-        if (trustState == TrustState.Compromised) problem += " În plus, integritatea probelor este compromisă.";
+        else if (total == 0) problem = Loc.Format("home.problem.none_not_clean", NothingDetected, cov.OverallLabel.ToLowerInvariant(), i.GapCount);
+        else problem = level >= AttentionLevel.High ? Loc.Format("home.problem.high", N(Severity.Critical) + N(Severity.High))
+                     : level == AttentionLevel.Medium ? Loc.Format("home.problem.medium", N(Severity.Medium))
+                     : Loc.T("home.problem.low");
+        if (trustState == TrustState.Compromised) problem += Loc.T("home.problem.compromised");
 
         string seriousness = total == 0
-            ? (i.CaseOpen ? "Nu se poate stabili: nu există constatări, iar lipsa lor nu dovedește lipsa activității." : "Nedeterminat.")
-            : $"Severitate maximă: {SeverityWord(top)}.";
+            ? (i.CaseOpen ? Loc.T("home.seriousness.none") : Loc.T("home.seriousness.undetermined"))
+            : Loc.Format("home.seriousness.max", SeverityWord(top));
 
         string found;
-        if (!i.CaseOpen) found = "Nimic de arătat: nu este deschis niciun caz.";
+        if (!i.CaseOpen) found = Loc.T("home.found.nothing_to_show");
         else
         {
             var bySev = Enum.GetValues<Severity>().Reverse().Where(s => N(s) > 0).Select(s => $"{N(s)} {SeverityWord(s).ToLowerInvariant()}").ToList();
-            found = total == 0 ? $"{NothingDetected}." : $"{total} constatări ({string.Join(", ", bySev)}).";
-            found += i.VerificationCounts is { } vc ? " " + LogAnalyzer.Dfir.Home.HomeAggregator.VerificationLine(vc) : " Verificare automată: nerulată sau indisponibilă (nedeterminat).";
-            if (i.TopFindings.Count > 0) found += " Primele: " + string.Join("; ", i.TopFindings.Take(3)) + ".";
+            found = total == 0 ? $"{NothingDetected}." : Loc.Format("home.found.count", total, string.Join(", ", bySev));
+            found += i.VerificationCounts is { } vc ? " " + LogAnalyzer.Dfir.Home.HomeAggregator.VerificationLine(vc) : Loc.T("home.found.no_verification");
+            if (i.TopFindings.Count > 0) found += Loc.Format("home.found.first", string.Join("; ", i.TopFindings.Take(3)));
         }
 
         return new HomeSummary
@@ -136,56 +137,56 @@ public static class HomeAggregator
         int solid = Get(StandardState.Verified) + Get(StandardState.Supported);
         int weak = Get(StandardState.Unproven) + Get(StandardState.Unknown) + Get(StandardState.NotAssessed);
         int bad = Get(StandardState.Contradicted) + Get(StandardState.Rejected);
-        return $"Verificare automată (nu externă): {solid} susținute, {weak} nedovedite sau neevaluate, {bad} contrazise sau respinse.";
+        return Loc.Format("home.verification_line", solid, weak, bad);
     }
 
     private static (TrustState, string) TrustOf(HomeInputs i)
     {
-        if (!i.CaseOpen) return (TrustState.Undetermined, "Nedeterminat: nu este deschis niciun caz.");
+        if (!i.CaseOpen) return (TrustState.Undetermined, Loc.T("home.trust.no_case"));
         var detail = i.IntegritySummary.Length > 0 ? " " + i.IntegritySummary : "";
         return i.Integrity switch
         {
-            null => (TrustState.Undetermined, "Nedeterminat: reverificarea de integritate nu a rulat (sau încă rulează)."),
-            RecheckVerdict.Valid => (TrustState.Intact, "Probele și lanțurile de custodie și audit sunt intacte la reverificare." + detail),
-            RecheckVerdict.Legacy => (TrustState.Limited, "Caz creat înainte de lanțurile criptografice: integritatea nu poate fi dovedită complet." + detail),
-            RecheckVerdict.Unverified => (TrustState.Limited, "Unele probe nu au putut fi verificate; integritatea nu este dovedită complet." + detail),
-            RecheckVerdict.Missing => (TrustState.Compromised, "Probe sau rezultate lipsesc din caz; rezultatele care depind de ele sunt invalidate." + detail),
-            RecheckVerdict.Modified => (TrustState.Compromised, "Probe sau rezultate au fost modificate față de achiziție; rezultatele care depind de ele sunt invalidate." + detail),
-            _ => (TrustState.Compromised, "Lanțul de custodie sau de audit este rupt; nu folosiți rezultatele ca probă." + detail),
+            null => (TrustState.Undetermined, Loc.T("home.trust.not_run")),
+            RecheckVerdict.Valid => (TrustState.Intact, Loc.T("home.trust.valid") + detail),
+            RecheckVerdict.Legacy => (TrustState.Limited, Loc.T("home.trust.legacy") + detail),
+            RecheckVerdict.Unverified => (TrustState.Limited, Loc.T("home.trust.unverified") + detail),
+            RecheckVerdict.Missing => (TrustState.Compromised, Loc.T("home.trust.missing") + detail),
+            RecheckVerdict.Modified => (TrustState.Compromised, Loc.T("home.trust.modified") + detail),
+            _ => (TrustState.Compromised, Loc.T("home.trust.broken") + detail),
         };
     }
 
     private static List<string> NextSteps(HomeInputs i, int total, AttentionLevel level, TrustState trust)
     {
         var steps = new List<string>();
-        if (!i.CaseOpen) { steps.Add("Alegeți: verificați acest calculator, analizați probe sau deschideți un caz existent."); return steps; }
-        if (trust == TrustState.Compromised) steps.Add("Nu folosiți rezultatele ca probă: investigați probele modificate sau lipsă și reachiziționați-le din sursa originală.");
-        if (i.AnalysisState == OperationState.NotStarted) steps.Add("Rulați analiza pe probele cazului.");
-        else if (i.AnalysisState is OperationState.Failed or OperationState.Cancelled or OperationState.Blocked) steps.Add("Analiza nu s-a finalizat: reluați-o după ce remediați cauza.");
-        if (level >= AttentionLevel.High) steps.Add($"Revizuiți constatările de severitate ridicată sau critică ({i.FindingsBySeverity.GetValueOrDefault(Severity.Critical) + i.FindingsBySeverity.GetValueOrDefault(Severity.High)}).");
-        else if (level is AttentionLevel.Medium or AttentionLevel.Low) steps.Add($"Revizuiți cele {total} constatări.");
+        if (!i.CaseOpen) { steps.Add(Loc.T("home.next.choose")); return steps; }
+        if (trust == TrustState.Compromised) steps.Add(Loc.T("home.next.compromised"));
+        if (i.AnalysisState == OperationState.NotStarted) steps.Add(Loc.T("home.next.run"));
+        else if (i.AnalysisState is OperationState.Failed or OperationState.Cancelled or OperationState.Blocked) steps.Add(Loc.T("home.next.rerun"));
+        if (level >= AttentionLevel.High) steps.Add(Loc.Format("home.next.review_high", i.FindingsBySeverity.GetValueOrDefault(Severity.Critical) + i.FindingsBySeverity.GetValueOrDefault(Severity.High)));
+        else if (level is AttentionLevel.Medium or AttentionLevel.Low) steps.Add(Loc.Format("home.next.review_all", total));
         if (i.VerificationCounts is { } vc)
         {
             int bad = vc.GetValueOrDefault(StandardState.Contradicted.ToSpec()) + vc.GetValueOrDefault(StandardState.Rejected.ToSpec());
             int weak = vc.GetValueOrDefault(StandardState.Unproven.ToSpec());
-            if (bad > 0) steps.Add($"{bad} constatări sunt contrazise sau respinse: nu le prezentați ca fapte.");
-            else if (weak > 0) steps.Add($"{weak} constatări sunt nedovedite: căutați probe suplimentare.");
+            if (bad > 0) steps.Add(Loc.Format("home.next.bad", bad));
+            else if (weak > 0) steps.Add(Loc.Format("home.next.weak", weak));
         }
         var holes = i.Coverage.Gaps;
-        if (holes.Count > 0) steps.Add("Completați sursele lipsă sau parțiale: " + string.Join(", ", holes.Take(4).Select(h => h.Family)) + (holes.Count > 4 ? $" și încă {holes.Count - 4}" : "") + ".");
-        if (i.ScopeNote is { Length: > 0 }) steps.Add("Confirmați scopul cazului (acum: " + i.ScopeNote + ").");
-        if (i.ReadOnly) steps.Add("Cazul este deschis doar pentru citire; nu se pot adăuga probe sau rula analize.");
-        if (steps.Count == 0) steps.Add("Nicio acțiune urgentă; păstrați cazul și lanțul de custodie.");
+        if (holes.Count > 0) steps.Add(Loc.Format("home.next.sources", string.Join(", ", holes.Take(4).Select(h => h.Family)), holes.Count > 4 ? Loc.Format("home.next.sources_more", holes.Count - 4) : ""));
+        if (i.ScopeNote is { Length: > 0 }) steps.Add(Loc.Format("home.next.scope", i.ScopeNote));
+        if (i.ReadOnly) steps.Add(Loc.T("home.next.read_only"));
+        if (steps.Count == 0) steps.Add(Loc.T("home.next.none"));
         return steps.Take(MaxNextSteps).ToList();
     }
 
     private static string SeverityWord(Severity s) => s switch
     {
-        Severity.Critical => "Critică", Severity.High => "Ridicată", Severity.Medium => "Medie", Severity.Low => "Scăzută", _ => "Informativă",
+        Severity.Critical => Loc.T("sev.critical"), Severity.High => Loc.T("sev.high"), Severity.Medium => Loc.T("sev.medium"), Severity.Low => Loc.T("sev.low"), _ => Loc.T("sev.info"),
     };
 
     private static string StateWord(OperationState s) => s switch
     {
-        OperationState.Running => "în desfășurare", OperationState.Failed => "eșuată", OperationState.Cancelled => "oprită", OperationState.Blocked => "blocată", _ => "nepornită",
+        OperationState.Running => Loc.T("home.state.running"), OperationState.Failed => Loc.T("home.state.failed"), OperationState.Cancelled => Loc.T("home.state.cancelled"), OperationState.Blocked => Loc.T("home.state.blocked"), _ => Loc.T("home.state.not_started"),
     };
 }

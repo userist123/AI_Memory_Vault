@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LogAnalyzer.Dfir.Case;
 using LogAnalyzer.Dfir.Coverage;
+using LogAnalyzer.Dfir.Language;
 using LogAnalyzer.Dfir.Home;
 using LogAnalyzer.Dfir.Windows.Investigation;
 using Microsoft.Win32;
@@ -37,8 +38,14 @@ namespace LogAnalyzer.UI.ViewModels
             _recent = recent ?? new RecentCases(RecentCases.DefaultFile());
             _pickFolder = pickFolder ?? PickFolderWithDialog;
             _investigation.StateChanged += (_, _) => Refresh();
+            Loc.LanguageChanged += (_, _) => { OnUi(Refresh); OnUi(ReloadRecent); };
             Refresh();
             ReloadRecent();
+        }
+
+        private static void OnUi(Action a)
+        {
+            if (System.Windows.Application.Current?.Dispatcher is { } d && !d.CheckAccess()) d.Invoke(a); else a();
         }
 
         // The five answers.
@@ -67,7 +74,7 @@ namespace LogAnalyzer.UI.ViewModels
         /// The three intents of the first-run chooser (U22). The question chooser ("A rulat un program?") belongs to WP7; its hook is
         /// <see cref="ChooseQuestion"/>, which does nothing yet.
         /// </summary>
-        public string[] Intents { get; } = { "Verifică acest calculator", "Analizează probe", "Deschide caz existent" };
+        public string[] Intents => new[] { Loc.T("home.verifica_acest_calculator"), Loc.T("home.analizeaza_probe"), Loc.T("home.deschide_caz_existent") };
 
         /// <summary>WP7 hook: maps a question to an existing workflow. Intentionally empty in WP5.</summary>
         public void ChooseQuestion(string question) { }
@@ -109,7 +116,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             _investigation.CollectFromThisStation = true;
             _navigate(InvestigationTabIndex);
-            OpenStatus = "Verificare calculator: completați scopul cazului și porniți investigația (colectare de pe această stație și analiză).";
+            OpenStatus = Loc.T("homevm.check_status");
         }
 
         [RelayCommand]
@@ -117,7 +124,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             _investigation.CollectFromThisStation = false;
             _navigate(InvestigationTabIndex);
-            OpenStatus = "Analiză probe: adăugați fișierele sau folderul de probe, completați scopul cazului și porniți investigația.";
+            OpenStatus = Loc.T("homevm.analyze_status");
         }
 
         /// <summary>Asks for a case folder and opens it (R9.1).</summary>
@@ -125,7 +132,7 @@ namespace LogAnalyzer.UI.ViewModels
         private async Task OpenExistingCase()
         {
             var folder = _pickFolder();
-            if (string.IsNullOrWhiteSpace(folder)) { OpenStatus = "Deschiderea cazului a fost anulată."; return; }
+            if (string.IsNullOrWhiteSpace(folder)) { OpenStatus = Loc.T("homevm.open_cancelled"); return; }
             await OpenFolder(folder);
         }
 
@@ -133,7 +140,7 @@ namespace LogAnalyzer.UI.ViewModels
         private async Task OpenRecent(RecentCaseView? entry)
         {
             if (entry is null) return;
-            if (!entry.Exists) { OpenStatus = $"Folderul cazului nu mai există: {entry.Entry.Path}. Intrarea rămâne în listă până o eliminați."; return; }
+            if (!entry.Exists) { OpenStatus = Loc.Format("homevm.folder_missing", entry.Entry.Path); return; }
             await OpenFolder(entry.Entry.Path);
         }
 
@@ -150,26 +157,26 @@ namespace LogAnalyzer.UI.ViewModels
         public async Task OpenFolder(string folder)
         {
             IsBusy = true;
-            OpenStatus = "Se deschide cazul și se rulează reverificarea de integritate…";
+            OpenStatus = Loc.T("homevm.opening");
             try
             {
                 var res = await CaseLoader.OpenAsync(folder, _recent);
-                if (!res.Opened) { OpenStatus = "Cazul nu a fost deschis: " + res.RefusedReason; return; }
+                if (!res.Opened) { OpenStatus = Loc.Format("homevm.not_opened", res.RefusedReason); return; }
                 _investigation.ShowLoaded(res.Case!);   // raises StateChanged: Home refreshes
                 OpenStatus = res.Case!.ReadOnly
-                    ? "Caz deschis doar pentru citire: " + string.Join("; ", res.Case.ReadOnlyReasons)
-                    : $"Caz deschis: {res.Case.Workspace.Info.CaseId}.";
+                    ? Loc.Format("homevm.opened_read_only", string.Join("; ", res.Case.ReadOnlyReasons))
+                    : Loc.Format("homevm.opened", res.Case.Workspace.Info.CaseId);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or OperationCanceledException)
             {
-                OpenStatus = "Cazul nu a putut fi deschis: " + ex.Message;
+                OpenStatus = Loc.Format("homevm.open_failed", ex.Message);
             }
             finally { IsBusy = false; ReloadRecent(); }
         }
 
         private static string? PickFolderWithDialog()
         {
-            var dlg = new OpenFolderDialog { Title = "Folderul unui caz existent (conține case.json)" };
+            var dlg = new OpenFolderDialog { Title = Loc.T("homevm.dialog_title") };
             return dlg.ShowDialog() == true ? dlg.FolderName : null;
         }
     }

@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.Language;
 using System.Text.Json.Serialization;
 using LogAnalyzer.Dfir.Auth;
 using LogAnalyzer.Dfir.Model;
@@ -38,7 +39,7 @@ public sealed class UsersRegister : IRegisterData
     public List<UserRow> Rows { get; set; } = [];
 
     [JsonIgnore] public string Kind => "users";
-    [JsonIgnore] public string Title => "Registru utilizatori";
+    [JsonIgnore] public string Title => Loc.T("reg.title.users");
     [JsonIgnore] public string FileName => DefaultFileName;
     [JsonIgnore] public IReadOnlyList<string> Columns => ColumnNames;
     [JsonIgnore] public bool IsDefined => Rows.Count > 0;

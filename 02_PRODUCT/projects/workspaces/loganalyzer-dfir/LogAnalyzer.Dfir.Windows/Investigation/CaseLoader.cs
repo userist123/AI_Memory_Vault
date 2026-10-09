@@ -1,6 +1,7 @@
 using System.Text.Json;
 using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.Case;
+using LogAnalyzer.Dfir.Language;
 using LogAnalyzer.Dfir.Coverage;
 using LogAnalyzer.Dfir.Home;
 using LogAnalyzer.Dfir.IO;
@@ -47,10 +48,10 @@ public static class CaseLoader
     {
         string full;
         try { full = Path.GetFullPath(root); }
-        catch (Exception ex) when (ex is ArgumentException or NotSupportedException) { return Refuse("calea cazului nu este validă: " + ex.Message); }
-        if (!Directory.Exists(full)) return Refuse($"folderul cazului nu există: {full}");
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException) { return Refuse(Loc.Format("case.refuse.bad_path", ex.Message)); }
+        if (!Directory.Exists(full)) return Refuse(Loc.Format("case.refuse.no_folder", full));
         var caseJson = Path.Combine(full, "case.json");
-        if (!File.Exists(caseJson)) return Refuse("folderul nu conține case.json: nu este un caz LogAnalyzer");
+        if (!File.Exists(caseJson)) return Refuse(Loc.T("case.refuse.no_case_json"));
 
         // Everything that can refuse is read BEFORE the workspace is opened, so a refused folder is not written to (no audit entry in a folder that is not ours).
         var notes = new List<string>();
@@ -66,47 +67,47 @@ public static class CaseLoader
         {
             info = Json.Read<CaseInfo>(caseJson);
             if (SchemaVersions.Major(info.SchemaVersion) is < 1 or > 1)
-                return Refuse($"case.json: versiunea de caz '{info.SchemaVersion}' nu este cunoscută (această aplicație citește 1.x); cazul nu a fost deschis.");
+                return Refuse(Loc.Format("case.refuse.version", info.SchemaVersion));
 
             var manifest = SchemaManifest.Read(analysis);
             var findingsPath = Path.Combine(analysis, "findings.json");
             if (File.Exists(findingsPath))
             {
                 ff = FindingsFile.Read(findingsPath);
-                if (SchemaVersions.Major(ff.SchemaVersion) < 2) notes.Add($"findings.json este în formatul vechi {ff.SchemaVersion}: câmpurile contractului de constatare lipsesc și au valori implicite (NOT_ASSESSED).");
+                if (SchemaVersions.Major(ff.SchemaVersion) < 2) notes.Add(Loc.Format("case.note.old_format", ff.SchemaVersion));
                 if (ff.Collection is { ValueKind: JsonValueKind.Array } c) collection = JsonSerializer.Deserialize<List<CollectionRow>>(c.GetRawText()) ?? [];
             }
-            else notes.Add("Analysis/findings.json lipsește: analiza nu a fost rulată pentru acest caz sau fișierul a fost șters; nu există constatări de arătat.");
+            else notes.Add(Loc.T("case.note.no_findings"));
 
             var timelinePath = Path.Combine(analysis, "timeline.csv");
             if (File.Exists(timelinePath))
             {
                 SchemaVersions.Accept(manifest.VersionOf("timeline.csv"), "timeline.csv");
                 timeline = TimelineCsv.Read(timelinePath);
-                notes.Add("Cronologia a fost citită din timeline.csv: conține doar coloanele acelui fișier (câmpurile specifice parserelor nu sunt păstrate în el).");
+                notes.Add(Loc.T("case.note.timeline_csv"));
             }
-            else if (ff is not null) notes.Add("Analysis/timeline.csv lipsește: cronologia nu poate fi arătată.");
+            else if (ff is not null) notes.Add(Loc.T("case.note.no_timeline"));
 
             var parsingPath = Path.Combine(analysis, "parsing.json");
             if (File.Exists(parsingPath)) parsing = JsonSerializer.Deserialize<List<ParseResult>>(File.ReadAllText(parsingPath)) ?? [];
-            else if (ff is not null) notes.Add("Analysis/parsing.json lipsește: starea parserelor nu este cunoscută.");
+            else if (ff is not null) notes.Add(Loc.T("case.note.no_parsing"));
 
             verification = VerificationReport.Read(Path.Combine(analysis, VerificationReport.FileName));
-            if (verification is null && ff is not null) notes.Add("Analysis/verification.json lipsește: verificarea automată este nedeterminată pentru acest caz.");
+            if (verification is null && ff is not null) notes.Add(Loc.T("case.note.no_verification"));
 
             var runPath = Path.Combine(analysis, "run_state.json");
             if (File.Exists(runPath)) run = JsonSerializer.Deserialize<RunState>(File.ReadAllText(runPath));
         }
         catch (Exception ex) when (ex is InvalidDataException or JsonException or IOException or UnauthorizedAccessException or FormatException)
         {
-            return Refuse("cazul nu poate fi citit: " + ex.Message);
+            return Refuse(Loc.Format("case.refuse.unreadable", ex.Message));
         }
-        if (ff is not null) notes.Add("Golurile de probă găsite după scrierea findings.json (reguli neîncărcate, fișiere nescanate de YARA) nu sunt păstrate în fișier; detecțiile, regulile și verificările anti-forensics nu sunt reîncărcate.");
+        if (ff is not null) notes.Add(Loc.T("case.note.not_kept"));
 
         // Open: audited as the signed-in account (OperatorIdentity), then re-checked.
         CaseWorkspace ws;
         try { ws = CaseWorkspace.Open(full, recheck: false); }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException) { return Refuse("cazul nu poate fi deschis: " + ex.Message); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException) { return Refuse(Loc.Format("case.refuse.cannot_open", ex.Message)); }
         if (recheck) ws.Recheck(ct);
 
         var (lifecycle, reasons) = Classify(ws);
@@ -136,8 +137,8 @@ public static class CaseLoader
         }
         // The state is the one the run recorded; a case with no findings.json has not been analysed, whatever else is in the folder.
         result.State = ff is null ? OperationState.NotStarted : run?.State ?? OperationState.NotStarted;
-        result.StateReason = ff is null ? "Analiza nu a fost rulată pentru acest caz." : run?.Reason ?? "run_state.json lipsește: starea analizei este necunoscută.";
-        if (ff is not null && run is null) notes.Add("Analysis/run_state.json lipsește: starea analizei este nedeterminată.");
+        result.StateReason = ff is null ? Loc.T("case.state.not_run") : run?.Reason ?? Loc.T("case.state.no_run_state");
+        if (ff is not null && run is null) notes.Add(Loc.T("case.note.no_run_state"));
 
         var loaded = Describe(result, ws, lifecycle, reasons, notes);
         recent?.Record(ws.Root, ws.Info.Name, lifecycle);
@@ -167,24 +168,24 @@ public static class CaseLoader
     {
         var reasons = new List<string>();
         var life = CaseLifecycle.Active;
-        if (IsClosed(ws)) { life = CaseLifecycle.Sealed; reasons.Add("cazul a fost închis (sigilat) de un operator; ancora de închidere este în lanțul de audit"); }
+        if (IsClosed(ws)) { life = CaseLifecycle.Sealed; reasons.Add(Loc.T("case.ro.sealed")); }
         var evidence = ws.LoadEvidence();
         if (evidence.Count > 0 && evidence.All(e => e.State is EvidenceState.Archived or EvidenceState.Disposed))
         {
             if (life == CaseLifecycle.Active) life = CaseLifecycle.Archived;
-            reasons.Add("toate probele sunt ARCHIVED sau DISPOSED");
+            reasons.Add(Loc.T("case.ro.archived"));
         }
         if (ws.LastRecheck is { } rc)
         {
             if (rc.InvalidatedCount > 0)
             {
                 life = CaseLifecycle.Invalidated;
-                reasons.Add($"{rc.InvalidatedCount} rezultate sunt INVALIDATED de reverificare (probe modificate sau lipsă)");
+                reasons.Add(Loc.Format("case.ro.invalidated", rc.InvalidatedCount));
             }
             if (rc.Verdict is RecheckVerdict.ChainBroken or RecheckVerdict.Modified or RecheckVerdict.Missing)
             {
                 if (life != CaseLifecycle.Invalidated) life = CaseLifecycle.IntegrityFailed;
-                reasons.Add("reverificarea integrității a eșuat: " + rc.Summary);
+                reasons.Add(Loc.Format("case.ro.integrity_failed", rc.Summary));
             }
         }
         return (life, reasons);
