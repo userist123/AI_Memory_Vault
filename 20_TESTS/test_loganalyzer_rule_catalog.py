@@ -10,6 +10,7 @@ PRODUCERS = [
     ROOT / "LogAnalyzer.Dfir.Core/Analysis/Correlation.cs",
     ROOT / "LogAnalyzer.Dfir.Windows/Investigation/InvestigationPipeline.cs",
     ROOT / "LogAnalyzer.Dfir.Core/Analysis/PolicyTimeline.cs",
+    *sorted((ROOT / "LogAnalyzer.Dfir.Core/Analysis").glob("Wp11Rules*.cs")),
     ROOT / "LogAnalyzer.Response/Containment/ProcessContainmentService.cs",
 ]
 CATALOG = ROOT / "LogAnalyzer.Dfir.Core/Analysis/RuleContracts.cs"

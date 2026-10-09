@@ -19,6 +19,7 @@ public sealed class EventLogCollector : ICollector
         "Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", "Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational",
         "Microsoft-Windows-Sysmon/Operational", "Microsoft-Windows-Bits-Client/Operational", "Microsoft-Windows-WMI-Activity/Operational",
         "Microsoft-Windows-Windows Firewall With Advanced Security/Firewall", "Microsoft-Windows-Partition/Diagnostic",
+        "Microsoft-Windows-WinRM/Operational", "OpenSSH/Operational",
         "Microsoft-Windows-NetworkProfile/Operational", "Microsoft-Windows-WLAN-AutoConfig/Operational", "Microsoft-Windows-DNS-Client/Operational",
     ];
 

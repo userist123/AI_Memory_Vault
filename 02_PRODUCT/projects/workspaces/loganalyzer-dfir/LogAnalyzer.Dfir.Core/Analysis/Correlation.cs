@@ -1,5 +1,6 @@
 using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
+using LogAnalyzer.Dfir.Profile;
 
 namespace LogAnalyzer.Dfir.Analysis;
 
@@ -14,7 +15,7 @@ public static class Correlation
         [@"\programdata\", @"\appdata\", @"\temp\", @"\downloads\", @"\users\public\", @"\windows\temp\", @"\$recycle.bin\"];
 
     /// <summary>Signed Microsoft binaries frequently used to run attacker code or move data ("living off the land").</summary>
-    private static readonly HashSet<string> Lolbins = new(StringComparer.OrdinalIgnoreCase)
+    internal static readonly HashSet<string> Lolbins = new(StringComparer.OrdinalIgnoreCase)
     {
         "msbuild.exe", "regsvr32.exe", "rundll32.exe", "mshta.exe", "installutil.exe", "regasm.exe", "regsvcs.exe", "cmstp.exe",
         "wscript.exe", "cscript.exe", "certutil.exe", "bitsadmin.exe", "msiexec.exe", "powershell.exe", "pwsh.exe", "wmic.exe",
@@ -41,7 +42,8 @@ public static class Correlation
     }
 
     /// <param name="maintenancePolicy">Approved log-clearing accounts and maintenance windows from the procedure profile; <c>null</c> = not defined yet.</param>
-    public static List<Finding> Run(IReadOnlyList<TimelineEvent> events, LogMaintenancePolicy? maintenancePolicy = null)
+    /// <param name="profile">The procedure profile (approved software, ...) for the WP11 rules; <c>null</c> = none, nothing is approved.</param>
+    public static List<Finding> Run(IReadOnlyList<TimelineEvent> events, LogMaintenancePolicy? maintenancePolicy = null, ProcedureProfile? profile = null)
     {
         var f = new List<Finding>();
         int n = 0;
@@ -352,6 +354,9 @@ public static class Correlation
                 SupportingEvidence = ps.Take(20).Select(e => Ref(e, "4104")).ToList(),
                 AlternativeExplanations = ["Scripturi de administrare sau de instalare legitime."],
             });
+
+        // 7b. WP11 Tier 1: SMB shares, account lifecycle, remote administration, security agents, snapshot deletion, DNS, remote-access tools.
+        f.AddRange(Wp11Rules.Run(events, f.ToList(), Id, profile));
 
         if (clears.Count > 0)
         {
