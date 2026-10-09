@@ -97,7 +97,7 @@ namespace LogAnalyzer.UI.Services
         /// <summary>
         /// Scope for a LIVE case created before the operator entered one. These values are NOT an authorization: the approver is
         /// marked unknown, the system category is the most restrictive one, the period starts now and is open for one year, and the note says it must be confirmed.
-        /// OWNER DECISION PENDING (see todo-claude-wp3.md, Blockers).
+        /// Used only until the operator confirms a scope (owner decision 28: mandatory before the first LIVE use; emergency containment may run on it).
         /// </summary>
         private static CaseScope ProvisionalScope()
         {
