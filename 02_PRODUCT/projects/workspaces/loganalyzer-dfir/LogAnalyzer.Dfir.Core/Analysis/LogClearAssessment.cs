@@ -72,10 +72,23 @@ public static class LogClearAssessment
     }
 
     /// <summary>
-    /// For the single-event legacy engines, which have no subject, no policy and no other findings: always <see cref="LogClearLifecycle.NotAssessed"/>.
+    /// For the single-event legacy engines, which have no other findings to corroborate with. Without a <paramref name="policy"/> the result is always
+    /// <see cref="LogClearLifecycle.NotAssessed"/> (as before the procedure profile existed); with the profile's policy the clear is Routine or Unexpected.
     /// </summary>
-    public static LogClearAssessmentItem AssessUnscheduled(string channel, DateTimeOffset timeUtc) =>
-        Assess([new LogClearEvent(channel, timeUtc, "")], null, [])[0];
+    public static LogClearAssessmentItem AssessUnscheduled(string channel, DateTimeOffset timeUtc, LogMaintenancePolicy? policy = null, string subjectUser = "", string subjectDomain = "") =>
+        Assess([new LogClearEvent(channel, timeUtc, subjectUser, subjectDomain)], policy, [])[0];
+
+    /// <summary>SubjectUserName / SubjectDomainName from the &lt;EventData&gt; XML of a Security 1102 or System 104 event ("" when absent).</summary>
+    public static (string User, string Domain) SubjectFromXml(string? xml)
+    {
+        static string Field(string? x, string name)
+        {
+            if (string.IsNullOrEmpty(x)) return "";
+            var m = System.Text.RegularExpressions.Regex.Match(x, $"(?:<Data\\s+Name=\"{name}\"\\s*>|<{name}>)([^<]*)<", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            return m.Success ? System.Net.WebUtility.HtmlDecode(m.Groups[1].Value).Trim() : "";
+        }
+        return (Field(xml, "SubjectUserName"), Field(xml, "SubjectDomainName"));
+    }
 
     /// <summary>Highest severity of the assessed clears; Info when there is none.</summary>
     public static Severity Overall(IReadOnlyList<LogClearAssessmentItem> items) => items.Count == 0 ? Severity.Info : items.Max(i => i.Severity);

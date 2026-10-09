@@ -80,9 +80,10 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
   corrected to decision 15 (adds Win10 LTSC 2019/2021 incl. IoT, LTSB 2016 best effort); spec written; branch created.
 
 - 2026-10-09 claude-wp15a: spec 1 (model Profile/, tables, validation, CSV/paste/JSON import, store, recurring window expansion, ToMaintenancePolicy/ToWorkingHours) + tests (ProcedureProfileTests, 17 pass).
+- spec 4 done (LogClearAssessment.AssessServiceStop/AssessAuditPolicyChange, used by LOG-TAMPER). spec 3 done: pipeline Run(procedureProfile) -> snapshot Analysis/procedure_profile.json in custody + maintenance policy to Correlation/AF; legacy engines (AnalysisEngine, LiveSecurityMonitoringEngine MaintenancePolicy), MainViewModel passes policy + WorkingHours via ProfileProvider.Shared.
 
 ## Next
-- Spec 4 (1100/4719 lifecycle), spec 3 (wire pipeline/legacy engines + snapshot in custody), spec 5 (scope dialog), spec 6 (anchor in PDFs/manifest/close case), spec 2 (App view), then merge main + full suites + push. The orchestrator opens the PR.
+- Spec 5 (scope dialog), spec 6 (anchor in PDFs/manifest/close case), spec 2 (App view), then merge main + full suites + push. The orchestrator opens the PR.
 
 ## Blockers
 - None.

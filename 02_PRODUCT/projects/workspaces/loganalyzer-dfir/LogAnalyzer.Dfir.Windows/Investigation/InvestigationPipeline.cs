@@ -9,6 +9,7 @@ using LogAnalyzer.Dfir.IO;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Network;
 using LogAnalyzer.Dfir.Parsing;
+using LogAnalyzer.Dfir.Profile;
 using LogAnalyzer.Dfir.Windows.Acquisition;
 using LogAnalyzer.Dfir.Windows.Parsers;
 
@@ -34,6 +35,9 @@ public sealed class InvestigationResult
     public List<DetectionRule> RulesUsed { get; } = [];
     /// <summary>Anti-forensics checks: DETECTED / NOT_DETECTED / UNDETERMINED per technique (Analysis/anti_forensics.json).</summary>
     public List<AntiForensicCheck> AntiForensics { get; } = [];
+    /// <summary>The procedure profile used by this run (null = none: log clears stay NotAssessed). Its snapshot is Analysis/procedure_profile.json.</summary>
+    public ProcedureProfile? Procedure { get; set; }
+    public string ProcedureProfileSha256 { get; set; } = "";
     public string TimelineCsv { get; set; } = "";
     public string FindingsJson { get; set; } = "";
     /// <summary>How far the analysis got (UX contract §20). Not a verdict on any finding: see <see cref="Finding.Verification"/>.</summary>
@@ -108,10 +112,12 @@ public sealed class InvestigationPipeline
         return null;
     }
 
-    public InvestigationResult Run(CaseWorkspace ws, CollectionProfile profile, bool collect, IProgress<string>? progress = null, CancellationToken ct = default)
+    /// <param name="procedureProfile">The procedure profile to use. When null the profile installed on this machine (%PROGRAMDATA%\LogAnalyzer\profile) is loaded
+    /// if there is one; with none, behaviour is exactly as before the profile existed (log clears are NotAssessed).</param>
+    public InvestigationResult Run(CaseWorkspace ws, CollectionProfile profile, bool collect, IProgress<string>? progress = null, CancellationToken ct = default, ProcedureProfile? procedureProfile = null)
     {
         var r = new InvestigationResult { Case = ws, State = OperationState.Running, StateReason = "Analiza rulează." };
-        try { return RunCore(r, ws, profile, collect, progress, ct); }
+        try { return RunCore(r, ws, profile, collect, progress, ct, procedureProfile); }
         catch (OperationCanceledException) { MarkEnded(r, ws, OperationState.Cancelled, "Oprit de operator; rezultatele parțiale nu sunt complete."); throw; }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { MarkEnded(r, ws, OperationState.Failed, ex.Message); throw; }
     }
@@ -138,7 +144,7 @@ public sealed class InvestigationPipeline
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* the original failure is what the caller must see */ }
     }
 
-    private InvestigationResult RunCore(InvestigationResult r, CaseWorkspace ws, CollectionProfile profile, bool collect, IProgress<string>? progress, CancellationToken ct)
+    private InvestigationResult RunCore(InvestigationResult r, CaseWorkspace ws, CollectionProfile profile, bool collect, IProgress<string>? progress, CancellationToken ct, ProcedureProfile? procedureProfile = null)
     {
         bool elevated = OperatingSystem.IsWindows() && IsAdministrator();
         ws.Audit("investigation.start", $"profile={profile} collect={collect} elevated={elevated}");
@@ -235,7 +241,24 @@ public sealed class InvestigationPipeline
 
         // 3. Correlation (timeline) + live state.
         progress?.Report("Corelare");
-        var found = new List<Finding>(Correlation.Run(r.Timeline));
+        // WP15a: the procedure profile (explicit, or the one installed on this machine) turns log clears into Routine / Unexpected; without one they stay NotAssessed.
+        var profileIssues = new List<ProfileIssue>();
+        if (procedureProfile is null)
+        {
+            var loaded = ProfileStore.Load();
+            profileIssues.AddRange(loaded.Issues);
+            procedureProfile = loaded.Profile;
+            foreach (var i in loaded.Issues.Where(i => i.IsError)) ws.Audit("profile.issue", i.ToString());
+        }
+        else profileIssues.AddRange(ProfileOps.Validate(procedureProfile));
+        LogMaintenancePolicy? maintenance = null;
+        if (procedureProfile is not null)
+        {
+            r.Procedure = procedureProfile;
+            r.ProcedureProfileSha256 = ProfileSnapshot.WriteTo(ws, procedureProfile, profileIssues);
+            maintenance = ProfileSnapshot.MaintenancePolicyFor(procedureProfile, r.Timeline.Where(e => e.Time.Utc is not null).Select(e => e.Time.Utc!.Value), ws.Info.Timezone);
+        }
+        var found = new List<Finding>(Correlation.Run(r.Timeline, maintenance));
         foreach (var live in ws.LoadEvidence().Where(e => e.SourceType == "live_snapshot"))
         {
             var pre = EvidencePreflight.Check(live, ws.FullPath(live.StoredPath));
@@ -301,8 +324,8 @@ public sealed class InvestigationPipeline
         ws.RecordOutput("Analysis/detections.json", "DetectionEngine", "1.0", evidenceIds);
         ws.RecordOutput("Analysis/rules.json", "DetectionEngine", "1.0");
         ws.RecordTransformation("CASE", "DetectionEngine", "1.0", "Analysis/detections.json", $"{r.Detections.Count} potriviri, {r.RulesUsed.Count} reguli");
-        r.AntiForensics.AddRange(LogAnalyzer.Dfir.Analysis.AntiForensics.Evaluate(r.Timeline, r.Gaps, null,
-            found.Where(x => x.Severity >= Severity.High && x.RuleId != "LOG-TAMPER" && (x.FirstSeenUtc ?? x.LastSeenUtc) is not null).Select(x => (x.FirstSeenUtc ?? x.LastSeenUtc)!.Value).ToList()));   // no maintenance policy until the procedure profile (WP15)
+        r.AntiForensics.AddRange(LogAnalyzer.Dfir.Analysis.AntiForensics.Evaluate(r.Timeline, r.Gaps, maintenance,
+            found.Where(x => x.Severity >= Severity.High && x.RuleId != "LOG-TAMPER" && (x.FirstSeenUtc ?? x.LastSeenUtc) is not null).Select(x => (x.FirstSeenUtc ?? x.LastSeenUtc)!.Value).ToList()));
         File.WriteAllText(Path.Combine(analysisDir, "anti_forensics.json"), JsonSerializer.Serialize(r.AntiForensics, new JsonSerializerOptions { WriteIndented = true }));
         ws.RecordOutput("Analysis/anti_forensics.json", "AntiForensics", "1.0", evidenceIds);
         ws.RecordTransformation("CASE", "AntiForensics", "1.0", "Analysis/anti_forensics.json",
