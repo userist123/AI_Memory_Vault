@@ -95,8 +95,8 @@ namespace LogAnalyzer.UI.ViewModels
         // AI / Heuristic Analysis Properties
         public ObservableCollection<AiAnomalyItem> AiAnomalies { get; set; } = new();
         [ObservableProperty] private int _aiRiskScore = 0;
-        [ObservableProperty] private string _aiRiskLevel = "SCĂZUT (Normal)";
-        [ObservableProperty] private string _aiRiskColor = "#22c55e";
+        [ObservableProperty] private string _aiRiskLevel = "NEDETERMINAT (analiza nu a fost rulată)";
+        [ObservableProperty] private string _aiRiskColor = "#94a3b8";
         [ObservableProperty] private int _aiHighEntropyCount = 0;
         [ObservableProperty] private int _aiMasqueradingCount = 0;
         [ObservableProperty] private int _aiOffHoursCount = 0;
@@ -128,7 +128,7 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<ProvenanceLedgerEntry> ProvenanceEntries { get; set; } = new();
         public ObservableCollection<MitreTacticColumn> MitreTacticColumns { get; set; } = new();
         public ObservableCollection<MultiEventCorrelationFinding> MultiEventCorrelations { get; set; } = new();
-        [ObservableProperty] private string _provenanceStatusMessage = "✅ Lanț Criptografic Verificat (SHA-256)";
+        [ObservableProperty] private string _provenanceStatusMessage = "Lanțul de custodie nu a fost verificat în această sesiune";
 
         // ADAudit Plus & Active Directory Analytics Properties
         [ObservableProperty] private int _adEventsAnalyzedCount = 0;

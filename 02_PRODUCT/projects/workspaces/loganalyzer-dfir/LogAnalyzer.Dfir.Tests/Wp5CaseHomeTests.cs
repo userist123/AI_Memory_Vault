@@ -133,6 +133,9 @@ public sealed class Wp5CaseHomeTests : IDisposable
         Assert.NotNull(c.Result.Verification);
         Assert.Equal(run.Verification!.Counts, c.Result.Verification!.Counts);
         Assert.Equal(ws.Info.Scope.Purpose, c.Workspace.Info.Scope.Purpose);
+        Assert.False(c.ReadOnly, string.Join("; ", c.ReadOnlyReasons));   // a sound run reopens writable
+        Assert.NotEqual(RecheckVerdict.Modified, c.Recheck!.Verdict);
+        Assert.NotEqual(RecheckVerdict.ChainBroken, c.Recheck!.Verdict);
     }
 
     [Fact]
