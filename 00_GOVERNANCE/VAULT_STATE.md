@@ -29,6 +29,15 @@ The repository layout is a trap for newcomers in three specific ways.
 is `03_IMPLEMENTATION/packages/memory/controller.py`, roughly 1000 lines. A
 `grep` inside `memory_controller/` finds nothing and is not evidence of
 absence. An external audit reached exactly that false conclusion.
+The shim has a second trap: a file reachable under both names is imported
+as **two module objects**. `retrieval.context.candidate_generation` and
+`memory_controller.context.candidate_generation` are the same file and `is`
+not the same module; the controller uses the latter. A monkeypatch on the
+former changes nothing the controller sees — which is how an entire
+experiment ran three identical arms and reported it as a result (section 5).
+Patch the module the controller's function actually belongs to
+(`sys.modules[MemoryController.__module__].generate_candidates.__module__`)
+and prove it with a negative control that must change the output.
 
 **A module existing is not a module being used.** Before believing any
 component is "in production", run the rule from `CLAUDE.md`:
@@ -186,13 +195,36 @@ whole-corpus retrieval numbers.
   Across the whole graph population, 30 of 114 typed relations are verified (26.3% precision; 84 total rejections
   documented with rationales in `07_EVALUATION/edge_audit_v2_remaining/AUDIT_RESULT.md` and simulated in
   `07_EVALUATION/edge_audit_v2_remaining/audit_purge_dry_run_report.md`).
-- **Causal loss attribution of missed benchmark cases: measured, single run.** Evaluated on all 130
-  non-abstain benchmark v3 cases in `07_EVALUATION/loss_funnel/LOSS_FUNNEL_REPORT.md` (and `loss_funnel_cases.json`).
-  Under production agent operating point (`AI_AGENT`, `page_size=5`), 71.56% of misses are `PAGINATION_CUT`
-  (ranked > 5; median rank 20.5), 13.76% `AGENT_LIFECYCLE_FLOOR_EXCLUDED`, 11.93% `NEVER_CANDIDATE`, 1.83%
-  `CANDIDATE_LIMIT_CUT`, and 0.92% `RAW_EXCLUDED` (0.00% undetermined). A pre-registered decision rule
-  *points to* a cross-encoder / reranker rather than blind candidate generator expansion. That is the outcome of the
-  rule on one run, not an adoption: no reranker is built, wired or evaluated.
+- **Every benchmark figure quoted before 2026-10-07 was measured on a ranking arm production does not use.**
+  `search()` defaults to `RANKING_ARM_FUSED_SCORE`; the v3 runner, the loss funnel and the tokenizer
+  experiment all passed `RANKING_ARM_BASELINE`. Remeasured on the production arm at the agent operating point
+  (`AI_AGENT`, `page_size=5`, floor on, graph off), 130 measurable cases: recall 24/130 (18.46%), of which the
+  misses are 70 `PAGINATION_CUT`, 15 `AGENT_LIFECYCLE_FLOOR_EXCLUDED`, 13 `NEVER_CANDIDATE`, 7
+  `CANDIDATE_LIMIT_CUT`, 1 `RAW_EXCLUDED` (`07_EVALUATION/loss_funnel/LOSS_FUNNEL_REPORT__fused_score.md`).
+  The funnel's "oracle ceiling" is not a property of the candidate pool — it reads gold's rank from the returned
+  page first, so it moves with the arm (76.15% on baseline, 72.31% on fused_score, same pool). The arm-independent
+  ceiling, from the fusion order alone, is 94/130 (72.31%): 70 cases hold the right note in the pool below rank 5,
+  which is what a reranker could reach; 20 are candidate-generation failures and 16 policy exclusions, which it
+  cannot (`07_EVALUATION/ranking_formula/reranker_ceiling.json`; the two scripts were written independently and
+  partition the 130 cases identically). No reranker is built, wired or evaluated.
+- **The production ranking step is a no-op.** `generate_candidates()` returns notes already sorted by
+  `(-fused_score, id)`, and `RANKING_ARM_FUSED_SCORE` sorts by the same key: on all 160 benchmark cases, replacing
+  its sort key with a constant changed nothing, while the same sabotage changed 154 pages under `baseline`
+  (`07_EVALUATION/ranking_formula/REPORT.md`; pinned by `20_TESTS/test_fused_score_ranking_is_a_noop.py`). r025's
+  gain over baseline came from *ceasing* to apply `RelevanceScorer`'s key, not from applying a new one. The
+  returned page is the fusion top-k and there is no reranking anywhere in the pipeline. Of the five arms the
+  controller supports, none beats the default under the preregistered rule (`baseline` 22, `confidence_tiebreak`
+  19, `no_confidence` 18, all with ≥ 28 discordant cases and McNemar p ≥ 0.34; `07_EVALUATION/ranking_formula/`).
+  The arm is read only on the graph-OFF branch; turning expansion on would make it inert.
+- **The ASCII tokenizer is in the production path and does not explain the Romanian gap.** It is called by
+  `candidate_generation.py` on every document and query. The first tokenizer experiment patched
+  `retrieval.context.candidate_generation.tokenize`; the controller uses
+  `memory_controller.context.candidate_generation`, a second module object for the same file created by the shim
+  (section 2), so all three arms ran the production tokenizer and its report presented 21/130 three times as a
+  finding. Re-run with the patch verified to reach the controller and a negative control (empty tokenizer →
+  1/130, 94 cases changed): ASCII 24/130, Unicode 24/130 (identical set), diacritics-stripped 25/130 (+1 RO,
+  p = 1.0). Preregistered verdict: keep the tokenizer. Romanian 5/61 vs English 19/69 on the production arm is
+  real and is not the tokenizer (`07_EVALUATION/tokenizer_experiment/`).
 - **Promoted notes were islands, and one still could be.** A note can declare
   a relation, validate on write and read correctly in Obsidian while
   contributing nothing to the graph: `SynapseStore.from_index()` reads
