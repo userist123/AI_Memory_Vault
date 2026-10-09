@@ -27,6 +27,10 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>WP14a: the findings of the "Air-gap integrity" category (Finding.AirGap carries channel, authorised?, who, when, object, classification, direction, destination, evidence).</summary>
         public ObservableCollection<Finding> AirGapFindings { get; } = new();
         [ObservableProperty] private string _airGapSummary = "Integritate air-gap: nedefinit (nicio analiză încă).";
+        /// <summary>WP14b: the findings of the "Combined sequences" category (control gap + media, SMB + staging + USB, portable software + archive + USB); Finding.Sequence carries the ordered steps.</summary>
+        public ObservableCollection<Finding> SequenceFindings { get; } = new();
+        [ObservableProperty] private string _sequenceSummary = "Secvențe combinate: nedefinit (nicio analiză încă).";
+        [ObservableProperty] private string _sequenceSteps = "";
         /// <summary>WP14a: the zone of the analysed system, as the operator declares it (compared with the zone in the media register).</summary>
         [ObservableProperty] private string _systemZone = "";
         [ObservableProperty] private string _registerLine = "Registre: nedefinit (nicio analiză încă).";
@@ -201,6 +205,17 @@ namespace LogAnalyzer.UI.ViewModels
                 foreach (var f in _result.Findings) Findings.Add(f);
                 AirGapFindings.Clear();
                 foreach (var f in _result.Findings.Where(f => f.Category == LogAnalyzer.Dfir.Analysis.Wp14Rules.Category)) AirGapFindings.Add(f);
+                SequenceFindings.Clear();
+                foreach (var f in _result.Findings.Where(f => f.Category == LogAnalyzer.Dfir.Analysis.SequenceRules.Category)) SequenceFindings.Add(f);
+                SequenceSummary = SequenceFindings.Count == 0
+                    ? "Secvențe combinate: nicio secvență observată în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (o sursă necolectată dă „pas neobservat”, nu absență)."
+                    : $"Secvențe combinate: {SequenceFindings.Count} ({SequenceFindings.Count(a => a.Severity >= Severity.High)} ridicate). Fiecare arată faptele observate, în ordine, și pașii neobservați; nu stabilește scopul.";
+                SequenceSteps = string.Join(Environment.NewLine + Environment.NewLine, SequenceFindings.Select(f =>
+                    $"{f.Title} [{f.Severity.ToSpec()}] — {f.FindingId}{Environment.NewLine}" +
+                    string.Join(Environment.NewLine, (f.Sequence?.Steps ?? []).Select(st => st.Observed
+                        ? $"  {st.Order}. {st.WhenUtc:yyyy-MM-dd HH:mm} UTC — {st.Name}: {st.Note} [cont: {(st.Account.Length > 0 ? st.Account : "necunoscut în sursă")}; sursa: {st.Source}]"
+                        : $"  {st.Order}. {st.Name}: {st.Note}")) +
+                    $"{Environment.NewLine}  Legătură: {f.Sequence?.Link}{Environment.NewLine}  Constatări componente: {string.Join(", ", f.RelatedFindingIds)}"));
                 RegisterLine = _result.RegisterLine;
                 AirGapSummary = AirGapFindings.Count == 0
                     ? "Integritate air-gap: nu s-a observat nimic în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (jurnalele au o istorie limitată; unele canale pot lipsi, vezi „Goluri de probă”)."

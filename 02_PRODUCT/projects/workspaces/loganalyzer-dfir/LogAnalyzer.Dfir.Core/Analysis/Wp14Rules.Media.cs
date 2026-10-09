@@ -142,9 +142,9 @@ public static partial class Wp14Rules
 
     // ---- file activity on the volume of a medium ----
 
-    private sealed record Activity(TimelineEvent Event, bool Write, string What);
+    internal sealed record Activity(TimelineEvent Event, bool Write, string What);
 
-    private static bool Write4663(TimelineEvent e)
+    internal static bool Write4663(TimelineEvent e)
     {
         var mask = F(e, "AccessMask").Trim();
         if (mask.StartsWith("0x", StringComparison.OrdinalIgnoreCase) && int.TryParse(mask[2..], System.Globalization.NumberStyles.HexNumber, null, out var m) && (m & 0x6) != 0) return true;
@@ -152,13 +152,16 @@ public static partial class Wp14Rules
         return list.Contains("%%4417") || list.Contains("%%4418") || list.Contains("WriteData", StringComparison.OrdinalIgnoreCase) || list.Contains("AppendData", StringComparison.OrdinalIgnoreCase) || list.Contains("AddFile", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static readonly string[] UsnWrite = ["FILE_CREATE", "DATA_EXTEND", "DATA_OVERWRITE", "DATA_TRUNCATION", "RENAME_NEW_NAME"];
+    internal static readonly string[] UsnWrite = ["FILE_CREATE", "DATA_EXTEND", "DATA_OVERWRITE", "DATA_TRUNCATION", "RENAME_NEW_NAME"];
 
-    private static List<Activity> ActivityOn(Ctx c, string letter)
+    private static List<Activity> ActivityOn(Ctx c, string letter) => ActivityOn(c.Events, letter);
+
+    /// <summary>The traces on the volume of a drive letter (LNK / JumpList, Security 4663, USN), each marked as a write or not. Shared with the WP14b sequence rules.</summary>
+    internal static List<Activity> ActivityOn(IReadOnlyList<TimelineEvent> events, string letter)
     {
         var prefix = letter + ":\\";
         var res = new List<Activity>();
-        foreach (var e in c.Events)
+        foreach (var e in events)
         {
             if (e.Source is "LNK" or "JumpList")
             {

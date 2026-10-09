@@ -316,6 +316,11 @@ public sealed class InvestigationPipeline
         int lastFindingNo = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n) ? n : 0).DefaultIfEmpty(0).Max();
         found.AddRange(policyTimeline.ToFindings(() => $"F-{++lastFindingNo:D4}"));
         r.PolicyTimeline = policyTimeline;
+        // WP14b: combined sequences (control gap + media, SMB + staging + USB, portable software + archive + USB) over the findings and rows above; they add no second detection.
+        progress?.Report("Secvențe combinate");
+        int sequenceNo = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n1) ? n1 : 0).DefaultIfEmpty(0).Max();
+        var sequences = SequenceRules.Run(r.Timeline, found, () => $"F-{++sequenceNo:D4}", new SequenceInput { Scope = ws.Info.Scope });
+        found.AddRange(sequences);
         var (kept, rejected) = ProvenanceBinder.BindFindings(found, ws.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal));
         TimeReliability.Apply(kept, r.Timeline);
         // Finding contract: semantic type, standard state, limitations, provenance, audit trail (added beside Classification).
