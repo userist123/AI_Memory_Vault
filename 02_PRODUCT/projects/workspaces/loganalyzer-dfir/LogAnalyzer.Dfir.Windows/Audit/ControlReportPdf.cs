@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using LogAnalyzer.Dfir.Case;
 using LogAnalyzer.Dfir.Model;
+using LogAnalyzer.Verification;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -13,7 +14,7 @@ public static class ControlReportPdf
 {
     private const string Ink = "#0f172a", Muted = "#64748b", Line = "#cbd5e1";
 
-    public static void Write(ControlReport r, string path, string inspector, string notes = "")
+    public static void Write(ControlReport r, string path, string inspector, string notes = "", VerificationReport? verification = null)
     {
         QuestPDF.Settings.License = LicenseType.Community;
         var f = r.Facts;
@@ -45,6 +46,14 @@ public static class ControlReportPdf
                     Badge(row, "NEDETERMINAT", r.Count(ControlStatus.Nedeterminat), "#475569");
                 });
                 if (notes.Length > 0) col.Item().Text("Observații: " + notes);
+                // WP4: when the case holds a verification run of its investigation findings, one line (and the warning, if any) is shown here too.
+                if (verification is not null)
+                    col.Item().Border(0.8f).BorderColor(Line).Padding(5).Column(vc =>
+                    {
+                        vc.Item().Text(verification.Banner + " (constatările investigației din acest caz; verificare automată, nu externă)").FontSize(8).Bold().FontColor(Ink);
+                        if (verification.Warning is { } warn)
+                            vc.Item().PaddingTop(3).Background("#fef2f2").Border(1).BorderColor("#b91c1c").Padding(4).Text(warn).FontSize(8).Bold().FontColor("#7f1d1d");
+                    });
 
                 col.Item().Text("1. Verificări").Bold().FontSize(11).FontColor(Ink);
                 foreach (var area in r.Checks.GroupBy(c => c.Area))
@@ -120,7 +129,7 @@ public static class ControlReportPdf
         File.WriteAllText(json, JsonSerializer.Serialize(new { r.Facts, r.Checks, r.Users, r.Actions },
             new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } }));
         var pdf = Path.Combine(dir, $"Raport_control_{r.Facts.Host}_{r.Facts.CollectedUtc:yyyyMMdd}.pdf");
-        Write(r, pdf, inspector, notes);
+        Write(r, pdf, inspector, notes, Investigation.InvestigationReportPdf.ReadVerification(ws.Root));
         ws.RegisterStored(json, "live:" + r.Facts.Host, "control", "control_report", TemporalType.CurrentSnapshot, "StationFactCollector", DfirInfo.ApplicationVersion);
         ws.RegisterStored(pdf, "live:" + r.Facts.Host, "control", "control_report_pdf", TemporalType.Derived, "ControlReportPdf", DfirInfo.ApplicationVersion);
         // WP3b: the report files are also outputs in the custody chain, listed with the chain heads in a manifest next to them.

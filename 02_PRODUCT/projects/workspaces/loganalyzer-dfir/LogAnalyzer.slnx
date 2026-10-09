@@ -14,4 +14,5 @@
   <Project Path="LogAnalyzer.Response/LogAnalyzer.Response.csproj" />
   <Project Path="LogAnalyzer.LicenseManager/LogAnalyzer.LicenseManager.csproj" />
   <Project Path="LogAnalyzer.UI.Tests/LogAnalyzer.UI.Tests.csproj" />
+  <Project Path="LogAnalyzer.Verification/LogAnalyzer.Verification.csproj" />
 </Solution>

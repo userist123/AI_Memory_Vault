@@ -16,6 +16,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LogAnalyzer.Dfir.Core\LogAnalyzer.Dfir.Core.csproj" />
+    <!-- WP4: independent verification module (reads the case from disk; the pipeline runs it before the Vault export). -->
+    <ProjectReference Include="..\LogAnalyzer.Verification\LogAnalyzer.Verification.csproj" />
     <!-- NetworkPolicy / AppModeContext: networked features obey the AirGapped/Network mode. -->
     <ProjectReference Include="..\LogAnalyzer.Core\LogAnalyzer.Core.csproj" />
   </ItemGroup>
