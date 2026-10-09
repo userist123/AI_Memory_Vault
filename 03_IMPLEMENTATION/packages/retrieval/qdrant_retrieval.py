@@ -148,29 +148,40 @@ class SemanticRetrieval:
     """
 
     def __init__(self, controller, embedder: Optional[OllamaEmbedder] = None,
-                 index: Optional[QdrantIndex] = None):
+                 index: Optional[QdrantIndex] = None, *, max_delete_fraction: float = 0.5):
         self.controller = controller
         self.embedder = embedder or OllamaEmbedder()
         self.index = index or QdrantIndex()
+        if not 0 <= max_delete_fraction <= 1:
+            raise ValueError("max_delete_fraction must be between 0 and 1")
+        self.max_delete_fraction = max_delete_fraction
 
-    def reindex(self) -> int:
+    def reindex(self) -> dict:
+        def result(ok, reason, upserted=0, deleted=0):
+            return {"ok": bool(ok), "reason": str(reason), "upserted": int(upserted), "deleted": int(deleted)}
         if not self.index.ensure_collection():
-            return 0
+            return result(False, "collection_unavailable")
         notes = {str(n["id"]): n for n in self.controller.storage.store.values()
                  if n.get("id") is not None
                  and n.get("lifecycle") in {"ACTIVE", "VERIFIED"}
                  and n.get("content")}
         existing = self.index.scroll_points()
         if existing is None:
-            return 0
+            return result(False, "scroll_incomplete")
+        if not notes and existing:
+            return result(False, "empty_store_refuses_mass_delete")
+        for point in existing:
+            payload = point.get("payload") if isinstance(point, dict) else None
+            if not isinstance(point, dict) or not isinstance(payload, dict) or point.get("id") is None or not isinstance(payload.get("note_id"), str):
+                return result(False, "malformed_existing_point")
         points = []
         for note_id, note in notes.items():
             vector = self.embedder.embed(str(note["content"]))
             if vector is None:
-                continue
+                return result(False, "embedding_failed")
             points.append((note_id, vector, {"category": note.get("category", "")}))
         if points and not self.index.upsert(points):
-            return 0
+            return result(False, "upsert_failed")
         embedded = {note_id for note_id, _, _ in points}
         stale = []
         for point in existing:
@@ -178,16 +189,23 @@ class SemanticRetrieval:
             point_id = point.get("id")
             note_id = payload.get("note_id") if isinstance(payload, dict) else None
             if not isinstance(note_id, str) or point_id is None:
-                continue
+                return result(False, "malformed_existing_point")
             if note_id not in notes or (note_id in embedded and
                                         point_id != self.index._stable_point_id(note_id)):
                 stale.append(point_id)
+        if stale and len(stale) / max(len(existing), 1) > self.max_delete_fraction:
+            return result(False, "delete_fraction_exceeds_threshold", len(points), 0)
         if stale and not self.index.delete_points(stale):
-            return 0
-        return len(points)
+            return result(False, "delete_failed", len(points), 0)
+        return result(True, "reconciled", len(points), len(stale))
 
     def query(self, text: str, top_k: int = 10) -> List[str]:
         vector = self.embedder.embed(text)
         if vector is None:
             return []
-        return self.index.search(vector, top_k=top_k)
+        candidates = self.index.search(vector, top_k=top_k)
+        store = getattr(getattr(self.controller, "storage", None), "store", {})
+        return [note_id for note_id in candidates
+                if isinstance(store, dict)
+                and isinstance(store.get(note_id), dict)
+                and store[note_id].get("lifecycle") in {"ACTIVE", "VERIFIED"}]

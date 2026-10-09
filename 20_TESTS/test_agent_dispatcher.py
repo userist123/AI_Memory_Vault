@@ -154,11 +154,14 @@ def test_local_llm_uses_registry_binary_and_model(monkeypatch, tmp_path):
     captured = {}
     class Proc:
         returncode = 0
-        stdout = "local result"
+        stdout = "STATUS: PASS\nRESULT: local result\nEVIDENCE: verified\nCHANGES: none\nFAILURES: none\nUNKNOWNS: none"
         stderr = ""
     monkeypatch.setattr("routing.dispatcher.shutil.which", lambda name: "/mock/" + name)
     def fake_run(cmd, **kwargs):
-        captured["cmd"] = cmd; captured["input"] = kwargs["input"]; return Proc()
+        captured["cmd"] = cmd; captured["input"] = kwargs["input"]
+        if cmd and cmd[0] == "ollama":
+            return SimpleNamespace(returncode=0, stdout="STATUS: PASS\nRESULT: ok\nEVIDENCE: verified\nCHANGES: none\nFAILURES: none\nUNKNOWNS: none", stderr="")
+        return Proc()
     monkeypatch.setattr("routing.dispatcher.subprocess.run", fake_run)
     adapter = CommandAdapter("local_llm", runtime.adapter_ref, runtime.model, working_directory=tmp_path)
     packet = WorkPacket("local-task","local-route","router","local_ai_engineer","local_llm","local-ai","command","LOCAL GOAL")
@@ -175,7 +178,7 @@ def test_local_llm_model_can_be_overridden_per_workstation(monkeypatch, tmp_path
 
     def fake_run(cmd, **kwargs):
         captured["cmd"] = cmd
-        return SimpleNamespace(returncode=0, stdout="ok", stderr="")
+        return SimpleNamespace(returncode=0, stdout="STATUS: PASS\nRESULT: ok\nEVIDENCE: verified\nCHANGES: none\nFAILURES: none\nUNKNOWNS: none", stderr="")
 
     monkeypatch.setenv("AI_MEMORY_VAULT_LOCAL_MODEL", "qwen2.5:7b-instruct")
     monkeypatch.setattr("routing.dispatcher.shutil.which", lambda name: "/mock/" + name)
@@ -187,6 +190,8 @@ def test_local_llm_model_can_be_overridden_per_workstation(monkeypatch, tmp_path
 
     assert result.status == DispatchStatus.COMPLETED
     assert captured["cmd"] == ["ollama", "run", "qwen2.5:7b-instruct"]
+    assert result.metadata["model"] == "qwen2.5:7b-instruct"
+    assert result.metadata["model_digest"].startswith("sha256:")
 
 
 def test_command_adapters_never_put_goal_in_argv(monkeypatch, tmp_path):
@@ -197,15 +202,43 @@ def test_command_adapters_never_put_goal_in_argv(monkeypatch, tmp_path):
         stderr = ""
     monkeypatch.setattr("routing.dispatcher.shutil.which", lambda name: "/mock/" + name)
     def fake_run(cmd, **kwargs):
-        captured["cmd"] = cmd; captured["input"] = kwargs["input"]; return Proc()
+        captured["cmd"] = cmd; captured["input"] = kwargs["input"]
+        if cmd and cmd[0] == "ollama":
+            return SimpleNamespace(returncode=0, stdout="STATUS: PASS\nRESULT: ok\nEVIDENCE: verified\nCHANGES: none\nFAILURES: none\nUNKNOWNS: none", stderr="")
+        return Proc()
     monkeypatch.setattr("routing.dispatcher.subprocess.run", fake_run)
-    for runtime_id, adapter_ref, model in (("claude_code","claude",None),("codex","codex",None),("antigravity","agy",None),("local_llm","ollama","registry-model")):
+    for runtime_id, adapter_ref, model in (("claude_code","claude",None),("codex","codex",None),("antigravity","agy",None),("local_llm","ollama","llama3.2")):
         goal=f"UNIQUE SECRET GOAL {runtime_id}"
         packet=WorkPacket("task-"+runtime_id,"route-"+runtime_id,"router","agent",runtime_id,"profile","command",goal)
         result=CommandAdapter(runtime_id,adapter_ref,model,working_directory=tmp_path).dispatch(packet)
         assert result.status is not DispatchStatus.FAILED
         assert all(goal not in str(arg) for arg in captured["cmd"])
         assert goal in captured["input"]
+
+
+def test_local_llm_rejects_unstructured_success(monkeypatch, tmp_path):
+    monkeypatch.setattr("routing.dispatcher.shutil.which", lambda name: "/mock/" + name)
+    monkeypatch.setattr("routing.dispatcher.subprocess.run", lambda *a, **k: SimpleNamespace(returncode=0, stdout="local result", stderr=""))
+    packet = WorkPacket("local-contract", "route", "router", "agent", "local_llm", "profile", "command", "goal")
+    result = CommandAdapter("local_llm", model="llama3.2", working_directory=tmp_path).dispatch(packet)
+    assert result.status is DispatchStatus.FAILED
+
+
+def test_a2a_brief_does_not_include_local_execution_contract(monkeypatch):
+    import json
+    from routing.dispatcher import A2AAdapter
+    captured = {}
+    class Response:
+        def __enter__(self): return self
+        def __exit__(self, *args): return False
+        def read(self): return json.dumps({"result": {"message": {"parts": [{"text": "ok"}]}}}).encode()
+    def fake(request, timeout):
+        captured["text"] = json.loads(request.data.decode())["params"]["message"]["parts"][0]["text"]
+        return Response()
+    monkeypatch.setattr("routing.dispatcher.urllib.request.urlopen", fake)
+    packet = WorkPacket("a2a-contract", "route", "router", "agent", "antigravity", "profile", "a2a", "goal")
+    A2AAdapter("https://agent.example/rpc").dispatch(packet)
+    assert "EXECUTION CONTRACT" not in captured["text"]
 
 
 # ── regressions for the PR #211 review ──────────────────────────────────────────────────
