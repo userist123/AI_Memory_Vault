@@ -54,9 +54,11 @@ public static class SelfTest
         {
             SQLitePCL.Batteries_V2.Init();
             var path = Path.Combine(Path.GetTempPath(), "la_selftest_" + Guid.NewGuid().ToString("N") + ".db");
+            // No pooling: a pooled connection keeps the file open after Dispose, and Windows then refuses the header read and the delete.
+            var cs = $"Data Source={path};Pooling=False";
             try
             {
-                using (var c = new SqliteConnection($"Data Source={path}"))
+                using (var c = new SqliteConnection(cs))
                 {
                     c.Open();
                     using var k = c.CreateCommand(); k.CommandText = "PRAGMA key = 'self-test-key'"; k.ExecuteNonQuery();
@@ -68,7 +70,7 @@ public static class SelfTest
                 var head = new byte[16];
                 using (var fs = File.OpenRead(path)) fs.ReadExactly(head);
                 if (Encoding.ASCII.GetString(head).StartsWith("SQLite format 3", StringComparison.Ordinal)) throw new InvalidOperationException("database is not encrypted");
-                using var c2 = new SqliteConnection($"Data Source={path}");
+                using var c2 = new SqliteConnection(cs);
                 c2.Open();
                 using var k2 = c2.CreateCommand(); k2.CommandText = "PRAGMA key = 'self-test-key'"; k2.ExecuteNonQuery();
                 using var r = c2.CreateCommand(); r.CommandText = "SELECT x FROM t";
