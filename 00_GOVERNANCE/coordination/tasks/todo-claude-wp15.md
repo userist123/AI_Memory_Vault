@@ -117,9 +117,22 @@ may add gPLink data in the unclassified edition only).
 - spec 2 done: ProcedureProfileViewModel + ProcedureProfileView ('Profil de proceduri', sidebar + tab 18), Save/Load/Import JSON/CSV/paste, per-line issues; App.Tests added but cannot run on Linux. Report line ProcedureProfileLine; LESSONS_LEARNED rows 8, 9 updated.
 - 2026-10-09 claude-wp15a: merged origin/main; Dfir 48 failed (baseline) / 539 passed, UI 6 failed (baseline), Edition 14/14, build 0 errors, Python 3719 passed 0 failed. WP15a complete; ready for PR.
 
+- 2026-10-09 claude-wp15b: spec 1-5 done in Core (`DC/Analysis/PolicyTimeline.cs`, `TimeManipulation.cs`; AF05 extended; rule `POLICY-CONTROL-GAP` in RuleContracts +
+  `20_TESTS/test_loganalyzer_rule_catalog.py` PRODUCERS; `CaseFacts.ManipulatedWindows` + TEMPORAL UNKNOWN). Spec 6: pipeline writes `Analysis/policy_timeline.json`
+  (RecordOutput, schema manifest), `PolicyTimelineReport` lines in the investigation PDF (6b) and the new view tab "Cronologie politici". Spec 7 tests:
+  PolicyTimelineTests, TimeManipulationTests, PolicyTimelineReportTests, PolicyTimelineCaseTests, 2 new TEMPORAL tests. Dfir 48 failed = baseline.
+
 ## Next
-- WP15a merged as #243 (`4627a6b0`). Implement WP15b 1-7 on its branch, verify, push. The orchestrator opens the PR.
+- WP15a merged as #243 (`4627a6b0`). WP15b implemented; remaining: merge origin/main, full .NET + Python run, final push. The orchestrator opens the PR.
 
 ## Blockers
 - None blocking. Safe defaults chosen (owner may revise): a maintenance section with only accounts or only windows counts as defined (clears then Unexpected); holidays are stored but unused; shifts/weekday intervals collapse to one covering range for the legacy WorkingHours; approved software, zones/transfers and the expected-policy link are stored and shown but no analyser consumes them yet; the rotation order is validated, not matched against evidence; 1100 pairs with System 1074/6006 within +-10 min or the first 6005 within 10 min after.
 - App code (profile view, scope dialog, LiveCase gating) is build-verified only; App.Tests cannot run on Linux.
+- WP15b safe defaults (owner may revise): (a) the policy timeline works from EVTX alone; "enforced" is UNKNOWN unless an effective-state dictionary is passed
+  (StationFacts/AuditQuerySystemPolicy are not yet fed into the Investigation pipeline); (b) behaviour is evaluated only for audit-policy changes (4719: event ids stop/start
+  after the change, catalog of ~13 subcategories) and for GPOs that add the audit extension (4719 by SYSTEM within 24h); Defender/firewall/USB policy effects are
+  NOT_EVALUABLE (no safe event mapping without SYSVOL content); (c) "applied" for a setting is OBSERVED from an extension event that mentions the audit CSE
+  {F3CCC681-...} (non-audit: any 5016/5017/5312) and NOT_OBSERVED only on an explicit GroupPolicy error (7320 or ErrorCode != 0); (d) NOT_OBSERVED for "observed" only for
+  frequent activity (4688, 4624, 5156, 4672, 4634) with >= 1h of Security log; (e) time-zone changes open a +-1h unreliable-time window (constant, owner may revise);
+  (f) gPLink from LDAP (unclassified edition DirectoryCollector) is NOT added; (g) gap High only for audit settings broken at enforced/observed level with a High finding
+  in [4719 removal or first Security event, last Security event].

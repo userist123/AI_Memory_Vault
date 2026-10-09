@@ -26,6 +26,9 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<Finding> Findings { get; } = new();
         public ObservableCollection<TimelineEvent> Timeline { get; } = new();
         public ObservableCollection<LogAnalyzer.Dfir.Analysis.AntiForensicCheck> AntiForensics { get; } = new();
+        /// <summary>WP15b: "Cronologie politici" (same lines as the investigation PDF).</summary>
+        public ObservableCollection<LogAnalyzer.Dfir.Analysis.PolicyReportLine> PolicyTimelineLines { get; } = new();
+        [ObservableProperty] private string _policyTimelineSummary = "Cronologie politici: nedefinit (nicio analiză încă).";
         public ObservableCollection<LogAnalyzer.Dfir.Graph.Entity> GraphEntities { get; } = new();
         public ObservableCollection<LogAnalyzer.Dfir.Graph.GraphEdgeRow> GraphEdges { get; } = new();
 
@@ -198,6 +201,9 @@ namespace LogAnalyzer.UI.ViewModels
                 GapsText = string.Join(Environment.NewLine, _result.Gaps.Select(g => $"{g.Artifact}: {g.Status.ToSpec()} — {g.Reason}"));
                 AntiForensics.Clear();
                 foreach (var a in _result.AntiForensics.OrderBy(a => a.Result).ThenBy(a => a.Id)) AntiForensics.Add(a);
+                PolicyTimelineLines.Clear();
+                if (_result.PolicyTimeline is { } policyTimeline) foreach (var pl in LogAnalyzer.Dfir.Analysis.PolicyTimelineReport.Lines(policyTimeline)) PolicyTimelineLines.Add(pl);
+                PolicyTimelineSummary = _result.PolicyTimelineLine;
                 FillGraphEntities();
                 GraphStatus = _result.Graph is { } gr ? $"Graf: {gr.Entities.Count} entități, {gr.Relationships.Count} relații." : "Graful nu a fost construit.";
                 Summary = $"{_result.Timeline.Count:N0} evenimente · {_result.Findings.Count(f => f.Severity == Severity.Critical)} critice · " +

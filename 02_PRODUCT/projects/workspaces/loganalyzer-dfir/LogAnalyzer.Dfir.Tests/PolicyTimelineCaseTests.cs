@@ -100,4 +100,22 @@ public sealed class PolicyTimelineCaseTests : IDisposable
         Assert.Contains("1 decalaje", withGap.PolicyTimelineLine);
         Assert.DoesNotContain("conform", withGap.PolicyTimelineLine, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public void The_investigation_pdf_renders_the_policy_timeline_section_without_failing_for_an_empty_and_a_full_result()
+    {
+        var ws = NewCase("pdf");
+        var T0 = new DateTimeOffset(2026, 9, 19, 12, 0, 0, TimeSpan.Zero);
+        var chain = new PolicyChain
+        {
+            Change = new PolicyChange { ChangeId = "PC-001", TimeUtc = T0, Kind = "DS_MODIFIED", EventId = "5136", Who = "CORP\\a", TargetKind = "GPO", TargetId = "{G}", Attribute = "versionNumber", OldValue = "5", NewValue = "6" },
+            Behavior = BehaviorState.NotEvaluable, BehaviorReason = "SYSVOL",
+        };
+        var r = new InvestigationResult { Case = ws, PolicyTimeline = new PolicyTimelineResult { Chains = [chain], Gaps = [new ControlGap { Title = "t", BrokenLevel = "observed", Reason = "r" }] } };
+        var pdf = Path.Combine(_dir, "pt.pdf");
+        InvestigationReportPdf.Write(r, pdf, "test");
+        Assert.True(new FileInfo(pdf).Length > 1000);
+        InvestigationReportPdf.Write(new InvestigationResult { Case = ws }, Path.Combine(_dir, "empty.pdf"), "test");
+        Assert.True(File.Exists(Path.Combine(_dir, "empty.pdf")));
+    }
 }
