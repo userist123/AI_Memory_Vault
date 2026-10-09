@@ -212,7 +212,9 @@ public static class PolicyTimeline
 
     private static readonly Regex GuidRx = new(@"\{[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\}", RegexOptions.Compiled);
     private static readonly Regex GpoRx = new(@"<GPO\s+ID=""(\{[0-9A-Fa-f\-]{36}\})""[^>]*>(?:\s*<Name>([^<]*)</Name>)?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-    private static readonly Regex LinkRx = new(@"\[[A-Za-z]{4}:/{2}([^;\]]*);(\d+)\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    // Parses gPLink values ("[LDAP://cn={GUID},cn=policies,...;0]") from event text; never opens a connection. The classified-edition
+    // scanner allows exactly this literal in LogAnalyzer.Dfir.Core.dll (ClassifiedEditionBuildTests.ParsingOnlyLiterals).
+    private static readonly Regex LinkRx = new(@"\[LDAP://([^;\]]*);(\d+)\]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     private static string F(TimelineEvent e, string k) => e.Fields.TryGetValue(k, out var v) ? v : "";
     private static EvidenceRef Ref(TimelineEvent e, string d) => new(e.EvidenceId, e.Locator, d, e.SourceSha256);
