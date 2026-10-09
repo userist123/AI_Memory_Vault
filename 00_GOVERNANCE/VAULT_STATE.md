@@ -211,11 +211,26 @@ whole-corpus retrieval numbers.
   `(-fused_score, id)`, and `RANKING_ARM_FUSED_SCORE` sorts by the same key: on all 160 benchmark cases, replacing
   its sort key with a constant changed nothing, while the same sabotage changed 154 pages under `baseline`
   (`07_EVALUATION/ranking_formula/REPORT.md`; pinned by `20_TESTS/test_fused_score_ranking_is_a_noop.py`). r025's
-  gain over baseline came from *ceasing* to apply `RelevanceScorer`'s key, not from applying a new one. The
-  returned page is the fusion top-k and there is no reranking anywhere in the pipeline. Of the five arms the
+  gain over baseline came from *ceasing* to apply `RelevanceScorer`'s key, not from applying a new one. There is
+  no reranking anywhere in the pipeline: the page is the fusion top-k **minus whatever the context-pack builder
+  cannot fit** (next row), which is why it equals the fusion top-5 in only 93 of 130 benchmark cases. Of the five arms the
   controller supports, none beats the default under the preregistered rule (`baseline` 22, `confidence_tiebreak`
   19, `no_confidence` 18, all with ≥ 28 discordant cases and McNemar p ≥ 0.34; `07_EVALUATION/ranking_formula/`).
   The arm is read only on the graph-OFF branch; turning expansion on would make it inert.
+- **Notes without provenance took page slots and were rejected at egress, emptying the agent's page.** 51 notes
+  have `provenance: null` and no `source_ref` (26 REVIEW, 1 ACTIVE pass the agent floor: `legal_source`,
+  `legal_index`, `legal_atomic_obligation`, `core`, `index`). The pack builder rejects them — the egress contract
+  requires provenance on every model-facing result — but only *after* they ranked and filled the page, and the
+  controller labelled every such drop `BUDGET_EXCEEDED`. On benchmark v3 at the agent point the page was shorter
+  than five in 41 of 130 cases and empty in 22 (R3-004: all five rejected, 195 candidates unused). Two earlier
+  explanations (a type filter; the token budget and the 100 k–1 M-character statute notes) were wrong and are kept
+  in `07_EVALUATION/reranker_envelope/DEVIATIONS.md` D-2 with how each was ruled out. Fixed on
+  `claude/pack-size-gate-backfill` (`846b4c04a`): eligibility settled before pagination with the true reason
+  recorded (`PROVENANCE_MISSING`, `UNVERIFIED_AT_EGRESS`), bounded backfill after a real budget drop. Measured after
+  the fix: recall 26/130 (from 24), short pages 4 (from 41), empty 1 (from 22). **Benchmark ceiling for an agent is
+  at most 105/130**: 16 cases' gold notes are provenance-less and never showable, and 9 cases' gold ids are `path:`
+  files without frontmatter, in the index but not in the storage pool production searches. Open, separately: the
+  eight 100 k–1 M-character notes still dominate fusion ranks; the 51 provenance-less notes are a content defect.
 - **The ASCII tokenizer is in the production path and does not explain the Romanian gap.** It is called by
   `candidate_generation.py` on every document and query. The first tokenizer experiment patched
   `retrieval.context.candidate_generation.tokenize`; the controller uses

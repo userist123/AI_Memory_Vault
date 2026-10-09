@@ -99,7 +99,7 @@ Reference arm `fused_score` at operating point `agent`.
 `fused_score` is the production default, and its sort key is inert: `generate_candidates()` already returns notes in `(-fused_score, id)` order, so sorting by the same key again cannot move anything. Two consequences, kept apart on purpose:
 
 - The **recall figures** for `fused_score` above are valid. They are what production returns, because production returns the fusion order unchanged.
-- The **ranking step** under `fused_score` is redundant. Its gain over `baseline` is the gain of *not* applying `RelevanceScorer`'s key, not of applying a new one. There is no reranking step anywhere in the pipeline; the page is the fusion top-k.
+- The **ranking step** under `fused_score` is redundant. Its gain over `baseline` is the gain of *not* applying `RelevanceScorer`'s key, not of applying a new one. There is no reranking step anywhere in the pipeline; the page is the fusion top-k minus whatever the context-pack builder cannot fit (`07_EVALUATION/reranker_envelope/DEVIATIONS.md`, D-1/D-2).
 
 Pinned by `20_TESTS/test_fused_score_ranking_is_a_noop.py`, including the one known divergence (ties: generation ascends by id, the arm descends), which no benchmark page exercised.
 
