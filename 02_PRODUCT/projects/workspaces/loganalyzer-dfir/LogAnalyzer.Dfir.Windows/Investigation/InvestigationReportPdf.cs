@@ -24,6 +24,7 @@ public static class InvestigationReportPdf
         var chains = r.Findings.Where(f => f.RuleId == "INCIDENT-CHAIN").ToList();
         var others = r.Findings.Where(f => f.RuleId != "INCIDENT-CHAIN").ToList();
         var integrity = ReportIntegrity.Check(r);
+        var seal = LogAnalyzer.Dfir.Case.ReportSeal.For(r.Case);   // chain heads at the moment the report is printed (decision 30)
         var evidence = r.Case.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal);
         var verification = r.Verification ?? ReadVerification(r.Case.Root);
 
@@ -59,6 +60,7 @@ public static class InvestigationReportPdf
                     Box(row, r.Timeline.Count.ToString("N0"), "EVENIMENTE", "#334155");
                     Box(row, r.Gaps.Count.ToString(), "GOLURI", "#475569");
                 });
+                col.Item().Text(r.ProcedureProfileLine).FontSize(7.5f).FontColor(Muted);
                 if (notes.Length > 0) col.Item().Text("Observații: " + notes);
 
                 col.Item().Text("1. Ce s-a întâmplat (lanțuri de incident)").Bold().FontSize(11).FontColor(Ink);
@@ -135,13 +137,7 @@ public static class InvestigationReportPdf
                                               "„NOT_AVAILABLE” înseamnă că sursa nu a putut fi citită, nu că activitatea nu a avut loc. Clasificarea CANDIDATE cere confirmarea analistului.")
                     .FontSize(7).Italic().FontColor(Muted);
             });
-            page.Footer().AlignCenter().Text(t =>
-            {
-                t.Span($"LogAnalyzer {DfirInfo.ApplicationVersion} · {info.CaseId} · pagina ").FontSize(7).FontColor(Muted);
-                t.CurrentPageNumber().FontSize(7).FontColor(Muted);
-                t.Span(" / ").FontSize(7).FontColor(Muted);
-                t.TotalPages().FontSize(7).FontColor(Muted);
-            });
+            LogAnalyzer.Dfir.Windows.Audit.ReportFooter.Compose(page.Footer(), "investigation", $"LogAnalyzer {DfirInfo.ApplicationVersion} · {info.CaseId}", seal);
         })).GeneratePdf(path);
     }
 

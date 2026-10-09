@@ -9,6 +9,9 @@ namespace LogAnalyzer.Core.Services.Network
     {
         public const string TestAlertTitle = "[TEST — NU ESTE O ALERTĂ REALĂ] Mesaj de test al căii de alertare";
 
+        /// <summary>Approved accounts and maintenance windows from the procedure profile (WP15a); <c>null</c> = no profile, log clears stay NotAssessed.</summary>
+        public LogMaintenancePolicy? MaintenancePolicy { get; set; }
+
         private readonly List<string> _failedLogonHistory = new();
         private DateTime _lastCleanupUtc = DateTime.UtcNow;
 
@@ -127,7 +130,8 @@ namespace LogAnalyzer.Core.Services.Network
             if (ev.EventId == 1102 || ev.EventId == 104 || (msg.Contains("wevtutil") && (msg.Contains("cl") || msg.Contains("clear-log"))))
             {
                 string channel = ev.EventId == 1102 ? "Security" : ev.EventId == 104 ? "System" : "indicat în linia de comandă wevtutil";
-                var clear = LogClearAssessment.AssessUnscheduled(channel, new DateTimeOffset(ev.TimeCreated.ToUniversalTime()));
+                var (clearUser, clearDomain) = LogClearAssessment.SubjectFromXml(ev.XmlData);
+                var clear = LogClearAssessment.AssessUnscheduled(channel, new DateTimeOffset(ev.TimeCreated.ToUniversalTime()), MaintenancePolicy, clearUser, clearDomain);
                 return new DetectedIssue
                 {
                     Title = "⚠️ Jurnal de evenimente golit (necesită verificare)",

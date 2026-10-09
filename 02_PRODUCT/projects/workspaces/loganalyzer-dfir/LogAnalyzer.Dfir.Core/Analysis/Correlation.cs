@@ -353,7 +353,13 @@ public static class Correlation
                 AlternativeExplanations = ["Scripturi de administrare sau de instalare legitime."],
             });
 
-        if (clears.Count > 0) f.Add(BuildLogTamper(logTamperId, clears, f, maintenancePolicy, F));
+        if (clears.Count > 0)
+        {
+            // System 1074 / 6006 / 6005 pair a Security 1100 with an ordinary shutdown or restart (owner decision 27).
+            var systemEvents = events.Where(e => e.Time.Utc is not null && e.EventId is "1074" or "6006" or "6005" && e.Source.Equals("EventLog:System", StringComparison.OrdinalIgnoreCase))
+                                     .Select(e => new SystemLifecycleEvent(e.Time.Utc!.Value, "System", int.Parse(e.EventId))).ToList();
+            f.Add(BuildLogTamper(logTamperId, clears, f, maintenancePolicy, systemEvents, F));
+        }
 
         // 8. Executions from user-writable locations: individual findings only when another signal touches them.
         static DateTimeOffset? T(Finding x) => x.FirstSeenUtc ?? x.LastSeenUtc;
@@ -470,17 +476,21 @@ public static class Correlation
     /// <summary>
     /// LOG-TAMPER. Clears (Security 1102 / System 104) are scored by <see cref="LogClearAssessment"/>: planned maintenance is Info,
     /// an unexplained clear without a procedure profile is Medium, an unexpected or corroborated one is High, never Critical.
-    /// Service stop (1100) and audit-policy change (4719) stay Medium.
+    /// Service stop (1100) and audit-policy change (4719) follow the same lifecycle (owner decision 27): a stop during a shutdown/restart
+    /// or a Group Policy audit change is Info, a removal of success/failure auditing that is not routine is High.
     /// </summary>
-    private static Finding BuildLogTamper(string id, List<TimelineEvent> clears, List<Finding> found, LogMaintenancePolicy? policy, Func<TimelineEvent, string, string> F)
+    private static Finding BuildLogTamper(string id, List<TimelineEvent> clears, List<Finding> found, LogMaintenancePolicy? policy, IReadOnlyList<SystemLifecycleEvent> systemEvents, Func<TimelineEvent, string, string> F)
     {
         var logClears = clears.Where(e => e.EventId is "1102" or "104").Where(e => e.Time.Utc is not null).OrderBy(e => e.Time.Utc).ToList();
         var others = found.Where(x => x.Severity >= Severity.High && (x.FirstSeenUtc ?? x.LastSeenUtc) is not null).Select(x => (x.FirstSeenUtc ?? x.LastSeenUtc)!.Value).ToList();
         var assessed = LogClearAssessment.Assess(
             logClears.Select(e => new LogClearEvent(e.EventId == "1102" ? "Security" : F(e, "Channel") is { Length: > 0 } ch ? ch : "System",
-                e.Time.Utc!.Value, F(e, "SubjectUserName"), F(e, "SubjectDomainName"))).ToList(), policy, others);
+                e.Time.Utc!.Value, F(e, "SubjectUserName"), F(e, "SubjectDomainName"))).ToList(), policy, others).ToList();
+        foreach (var e in clears.Where(e => e.EventId == "1100" && e.Time.Utc is not null).OrderBy(e => e.Time.Utc))
+            assessed.Add(LogClearAssessment.AssessServiceStop(new ServiceStopEvent(e.Time.Utc!.Value, F(e, "SubjectUserName"), F(e, "SubjectDomainName")), policy, systemEvents));
+        foreach (var e in clears.Where(e => e.EventId == "4719" && e.Time.Utc is not null).OrderBy(e => e.Time.Utc))
+            assessed.Add(LogClearAssessment.AssessAuditPolicyChange(new AuditPolicyChangeEvent(e.Time.Utc!.Value, F(e, "SubjectUserName"), F(e, "SubjectDomainName"), F(e, "SubjectUserSid"), F(e, "AuditPolicyChanges")), policy));
         var severity = assessed.Count > 0 ? LogClearAssessment.Overall(assessed) : Severity.Medium;
-        if (clears.Any(e => e.EventId is not ("1102" or "104")) && severity < Severity.Medium) severity = Severity.Medium;   // 1100 / 4719 present
         var lines = clears.OrderBy(e => e.Time.Utc).Take(15).Select(e =>
             $"{e.Time.Utc:yyyy-MM-dd HH:mm} {e.Source[9..]} {e.EventId} {(e.EventId == "1102" ? "de " + F(e, "SubjectUserName") : F(e, "Channel"))}").ToList();
         var verdict = assessed.Select(a => a.Reason).Distinct().ToList();

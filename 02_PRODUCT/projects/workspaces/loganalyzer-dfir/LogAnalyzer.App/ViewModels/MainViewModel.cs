@@ -107,6 +107,8 @@ namespace LogAnalyzer.UI.ViewModels
 
         /// <summary>Owner policies: import, lifecycle, verified application ("Politici" tab).</summary>
         public PolicyViewModel Policy { get; }
+        /// <summary>"Profil de proceduri" (owner decisions 18, 19): working hours, log maintenance, approved software, expected policy, zones and transfers.</summary>
+        public ProcedureProfileViewModel ProcedureProfile { get; }
 
         // Session / Module Management
         [ObservableProperty] private int _selectedModuleIndex = 0; // 0 for Forensics, 1 for Collection
@@ -557,6 +559,7 @@ namespace LogAnalyzer.UI.ViewModels
             DomainInvestigation = featureViews.CreateViewModel(FeatureKeys.DomainInvestigation);
             Investigation = new InvestigationViewModel(inv => featureViews.CreateViewModel(FeatureKeys.AiAnalysis, inv));
             Policy = new PolicyViewModel(registryWriter);
+            ProcedureProfile = new ProcedureProfileViewModel();
             _eventParser = eventParser;
             _analysisEngine = analysisEngine;
             _registryParser = registryParser;
@@ -1738,6 +1741,7 @@ namespace LogAnalyzer.UI.ViewModels
                     });
 
                     // 4. Real-time Security Evaluation
+                    _liveEngine.MaintenancePolicy = LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.MaintenancePolicyFor([new DateTimeOffset(ev.TimeCreated.ToUniversalTime())]);
                     var alert = _liveEngine.EvaluateLiveEvent(ev);
                     if (alert != null)
                     {
@@ -2192,6 +2196,9 @@ namespace LogAnalyzer.UI.ViewModels
                 var eventsForAnalysis = _databaseService.GetEvents(20000, 0, null, null, securityEventIds).ToList();
                 var registryForAnalysis = _databaseService.GetRegistryArtifacts(10000, 0, null).ToList();
                 
+                // WP15a: the procedure profile (approved accounts, maintenance windows) decides whether a log clear was planned; none = unchanged.
+                if (_analysisEngine is AnalysisEngine profiled)
+                    profiled.MaintenancePolicy = LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.MaintenancePolicyFor(eventsForAnalysis.Select(e => new DateTimeOffset(e.TimeCreated.ToUniversalTime())));
                 var issues = _analysisEngine.AnalyzeEvents(eventsForAnalysis);
                 var regIssues = _analysisEngine.AnalyzeRegistry(registryForAnalysis);
                 
@@ -2522,7 +2529,7 @@ namespace LogAnalyzer.UI.ViewModels
                 int totalCount = anomalies.Count + yaraMatches.Count;
 
                 // Evaluare Scor de Risc Explicabil (ISO/IEC 27042)
-                var explainableRisk = _explainableAiEngine.Evaluate(DetectedIssues, entropyCount, masqCount, offHoursCount, yaraMatches.Count);
+                var explainableRisk = _explainableAiEngine.Evaluate(DetectedIssues, entropyCount, masqCount, offHoursCount, yaraMatches.Count, LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.WorkingHours);
                 AiRiskScore = explainableRisk.TotalScore;
                 AiRiskLevel = explainableRisk.Level;
                 AiRiskColor = explainableRisk.LevelColor;
@@ -2555,7 +2562,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză Comportamentală Utilizatori UBA (User Behavior Analytics)
-                var ubaFindings = _ubaEngine.Evaluate(eventsForAnalysis);
+                var ubaFindings = _ubaEngine.Evaluate(eventsForAnalysis, LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.WorkingHours);
                 UbaAnomalies.Clear();
                 foreach (var uf in ubaFindings)
                 {

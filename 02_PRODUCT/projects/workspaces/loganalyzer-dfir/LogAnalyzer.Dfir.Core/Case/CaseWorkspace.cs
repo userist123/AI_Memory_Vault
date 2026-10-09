@@ -36,14 +36,35 @@ public sealed partial class CaseWorkspace
         Zone = TryZone(info.Timezone);
         _custodyChain = new HashChain(Path.Combine(Root, "Logs", "chain_of_custody.jsonl"));
         _auditChain = new HashChain(Path.Combine(Root, "Logs", "audit_chain.jsonl"));
-        ScopeNote = info.Scope.MissingFields().Count > 0 ? "scop incomplet (caz vechi)"
-                  : info.Scope.Provisional ? "scop provizoriu, neconfirmat de operator: aprobatorul, perioada și categoria sistemului trebuie confirmate"
-                  : null;
         _evidenceCounter = Json.ReadLines<EvidenceItem>(EvidenceIndexPath).Count();
     }
 
     /// <summary>Set when the case has no complete scope (a case created before WP3: "scop incomplet (caz vechi)") or only a provisional one.</summary>
-    public string? ScopeNote { get; }
+    public string? ScopeNote => Info.Scope.MissingFields().Count > 0 ? "scop incomplet (caz vechi)"
+                              : Info.Scope.Provisional ? "scop provizoriu, neconfirmat de operator: aprobatorul, perioada și categoria sistemului trebuie confirmate"
+                              : null;
+
+    /// <summary>
+    /// Owner decision 28: the operator confirms (or replaces) the case scope. A provisional or incomplete scope is refused. case.json is rewritten and the
+    /// change goes to the audit chain as <c>case.scope_confirmed</c>, with the scope before and after.
+    /// </summary>
+    public void ConfirmScope(CaseScope scope, string confirmedBy)
+    {
+        var missing = scope.MissingFields();
+        if (missing.Count > 0) throw new CaseScopeIncompleteException(missing);
+        if (scope.Provisional) throw new ArgumentException("A provisional scope cannot confirm the case scope.", nameof(scope));
+        CaseInfo before;
+        lock (_gate)
+        {
+            before = Info;
+            Info = Info.WithScope(scope);
+            Json.Write(Path.Combine(Root, "case.json"), Info);
+        }
+        Audit("case.scope_confirmed", $"by={confirmedBy}; before: {Describe(before.Scope)}; after: {Describe(scope)}");
+    }
+
+    private static string Describe(CaseScope s) =>
+        $"{(s.Provisional ? "PROVIZORIU " : "")}purpose={s.Purpose}; period={s.PeriodFromUtc:yyyy-MM-dd}..{s.PeriodToUtc:yyyy-MM-dd}; systems={string.Join(",", s.SystemsInScope)}; approver={s.Approver}; basis={s.LegalBasis}; network={s.Network}; classification={s.Classification}";
 
     /// <summary>Who collects, from which machine, which source system and removable medium. Unknown parts are written as "necunoscut".</summary>
     public void SetCollectionContext(CollectionContext context) { lock (_gate) _context = context; }

@@ -23,6 +23,14 @@ public sealed class CaseInfo
     public CaseScope Scope { get; init; } = new();
     /// <summary>While true no evidence may be marked DISPOSED (decision 11).</summary>
     public bool LegalHold { get; set; }
+    /// <summary>A copy of this case record with another scope (the scope is init-only: confirming it replaces the record).</summary>
+    public CaseInfo WithScope(CaseScope scope) => new()
+    {
+        SchemaVersion = SchemaVersion, CaseId = CaseId, Name = Name, Host = Host, User = User, CreatedAtUtc = CreatedAtUtc, Investigator = Investigator,
+        Os = Os, Architecture = Architecture, Timezone = Timezone, StartTimeUtc = StartTimeUtc, EndTimeUtc = EndTimeUtc, Notes = Notes,
+        CollectionMode = CollectionMode, ApplicationVersion = ApplicationVersion, Scope = scope, LegalHold = LegalHold, RetentionUntilUtc = RetentionUntilUtc,
+    };
+
     /// <summary>Retention limit. Empty by default; the application only warns when it is exceeded, it never deletes.</summary>
     public DateTimeOffset? RetentionUntilUtc { get; set; }
 }
@@ -47,6 +55,9 @@ public sealed class CaseScope
     public ClassificationLevel Classification { get; init; }
     /// <summary>Free note, e.g. that the values are provisional defaults which must be confirmed.</summary>
     public string Notes { get; init; } = "";
+
+    /// <summary>True when the scope is complete and was entered by the operator (not the placeholder of a LIVE case, not a pre-WP3 case).</summary>
+    public bool IsConfirmed => !Provisional && MissingFields().Count == 0;
 
     /// <summary>Names of the mandatory fields that are empty or inconsistent. Empty list = complete.</summary>
     public IReadOnlyList<string> MissingFields()
