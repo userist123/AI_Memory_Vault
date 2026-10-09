@@ -28,6 +28,9 @@ public sealed class AuthTests : IDisposable
     public void Dispose()
     {
         _ca.Dispose();
+        // Case evidence copies are read-only on Windows; clear the attribute before deleting the temporary folder.
+        if (Directory.Exists(_dir))
+            foreach (var f in Directory.EnumerateFiles(_dir, "*", SearchOption.AllDirectories)) File.SetAttributes(f, FileAttributes.Normal);
         try { Directory.Delete(_dir, true); } catch (IOException) { }
     }
 

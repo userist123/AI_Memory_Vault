@@ -49,10 +49,12 @@ public sealed class RegisterViewModelTests : IDisposable
     }
 
     [Fact]
-    public void The_users_register_shows_the_authentication_gap_notice()
+    public void The_users_register_says_only_the_signed_in_global_administrator_edits_it()
     {
+        // Decision 33 replaced the "authentication not implemented yet" notice with the real role gate.
         var vm = new UsersRegisterViewModel(Path.Combine(_dir, "users.json"));
-        Assert.Equal("editare permisă administratorului global; autentificarea în aplicație nu este încă implementată", vm.Notice);
+        Assert.Equal(UsersRegister.EditNotice, vm.Notice);
+        Assert.Contains("administratorului global autentificat", vm.Notice);
         Assert.Equal("", new MediaRegisterViewModel(Path.Combine(_dir, "m.json")).Notice);
     }
 
