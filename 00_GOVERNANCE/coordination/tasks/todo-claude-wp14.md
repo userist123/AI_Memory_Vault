@@ -127,8 +127,11 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 ## Done
 - 2026-10-09T12:05Z claude-orchestrator: spec written; branch created.
 
+- 2026-10-09 claude-wp14a (agent): items 1-3 done and tested (`Model/SecrecyLevels.cs`, `Dfir.Core/Registers/*`: media + users registers, CSV/JSON import,
+  store, hash-chained `register_audit.jsonl`, case snapshot with SHA-256 in custody). `Wp14SecrecyLevelTests`, `Wp14RegisterTests`.
+
 ## Next
-- Main with WP11-T1 (#245, `bc567d66`) is merged in. Implement 1-10.
+- Item 4 (observed media vs register), 5 (USB/CD-DVD evidence), 6-7 (air-gap rules + category), 8 (D01/N01), 9 (UI), 10 (tests; rule catalog + allowlist + Python suite).
 
 ## Blockers
 - App user authentication does not exist. Decision 17's "only the global admin creates accounts" cannot be enforced in-app yet.
