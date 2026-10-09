@@ -5,7 +5,7 @@ lifecycle: REVIEW
 category: digital_twin
 tags: [project, casa3d, digital_twin, interior_design, geometry, boq, budget, ai, monetization, romania]
 created: "2026-10-01"
-updated: "2026-10-07"
+updated: "2026-10-10"
 provenance:
   source_type: user
   source_ref: "Casa3D Faza 0-3 ZIP artifacts + supplied Claude conversation"
@@ -39,9 +39,10 @@ Principiul central: **AI-ul propune, Geometry Engine valideaza, utilizatorul apr
 | F1 | aplicatie persistenta, editor, 3D, API, DB, revizii, undo/redo | DONE |
 | F2 | BOQ, materiale, cantitati, buget, provenance | DONE |
 | F3 | Design Brief, 3 variante, validare, preview, reject/apply, AI optional | DONE |
-| F4 | monetizare/link layer, oferte si retaileri | NEXT / TEST MODE |
+| F4 | monetizare/link layer, oferte si retaileri | COD PREZENT IN MANIFESTUL v8, NEVERIFICAT (vezi "Reconciliere F4-F8") |
+| F5-F8 | documente `PHASE5.md`-`PHASE8.md` in manifestul v8; continut necunoscut in Vault | UNKNOWN |
 
-F0-F3 sunt sustinute de artefactele furnizate. F4 nu este tratata ca implementata.
+F0-F3 sunt sustinute de artefactele furnizate. F4 nu este tratata ca implementata: manifestul v8 arata fisiere F4/F5, dar nicio dovada de test nu a ajuns in Vault.
 
 ## Constitutia
 
@@ -130,6 +131,39 @@ Layer propus:
 - afilierea ulterioara poate introduce `rel="sponsored"` si disclosure.
 
 Aceasta este decizie de proiectare/test mode, nu dovada implementarii F4 si nici dovada curenta a programelor de afiliere ale retailerilor.
+
+## Reconciliere F4-F8 (2026-10-10)
+
+Nota de mai sus declara F4 "NEXT / TEST MODE" si descrie layer-ul de oferte ca decizie de proiectare.
+Manifestul `02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md` (143 fisiere, arhiva
+`7bb34bf3...9628bc`) contine insa artefacte care corespund F4 si F5:
+
+| Artefact in manifestul v8 | Faza careia ii corespunde |
+|---|---|
+| `lib/offers.ts`, `tests/offers.test.ts` | F4 — layer `retailers`/`offers`/`offer_links` |
+| `app/api/go/[offerId]/route.ts` | F4 — redirect `/go/:offerId` |
+| `data/supplier-offer-feed.example.json`, `core/catalog-feed.ts`, `tests/catalog-feed.test.ts`, `app/api/catalog/import/route.ts` | F4/F5 — feed furnizor |
+| `scripts/verify-f4.mjs`, `scripts/verify-f5.mjs` | scripturi de verificare F4 si F5 |
+| `PHASE4.md` ... `PHASE8.md` | documentatie de faza, continut necunoscut in Vault |
+
+Stare stabilita:
+- **Codul F4 si cel putin o parte din F5 exista in snapshot** (DOCUMENT_VERIFIED prin manifest).
+- **Niciun rezultat de test F4/F5 nu exista in Vault** (`verify-f4.mjs`, `verify-f5.mjs`, `offers.test.ts`,
+  `catalog-feed.test.ts` nu apar in ledger-ul de dovezi din `CORE_IMPLEMENTATION_v8.md`). F4 ramane
+  **UNVERIFIED**, nu "neimplementat" si nu "implementat".
+- **Sursa v8 nu este stocata in Vault si nu a fost gasita pe masina proprietarului la 2026-10-10**
+  (cautare dupa numele `casa3d*` in profilul utilizatorului, pe D: si in istoricul git; arhiva salvata
+  sub alt nume nu ar fi fost gasita). Hash-urile din ledger nu pot fi reverificate local.
+- `ANTHROPIC_API_KEY` nu era setata la 2026-10-10; integrarea AI reala ramane CLAIMED_ONLY.
+
+Ce ar inchide reconcilierea:
+1. arhiva v8 depusa intr-un loc accesibil si hash-ul ei comparat cu `7bb34bf3...9628bc`;
+2. `npm ci`, Vitest complet si `next build` rulate pe arhiva, cu iesirea salvata in ledger;
+3. `node scripts/verify-f4.mjs` si `verify-f5.mjs` rulate, cu rezultatul in ledger;
+4. un apel real al modelului pe fluxul Brief -> DSL -> Solver, cu procentul de DSL valid inregistrat;
+5. abia apoi randul F4 din tabel poate trece la DONE, iar F5-F8 pot primi o descriere.
+
+Pana atunci, un agent nu trateaza oferta/redirectul ca functionalitate disponibila.
 
 ## Decizii canonice
 
