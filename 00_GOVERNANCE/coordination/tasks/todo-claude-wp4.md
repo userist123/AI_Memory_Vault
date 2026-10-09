@@ -103,8 +103,15 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 ## Done
 - 2026-10-09T05:20Z claude-orchestrator: spec written, branch created.
 
+- 2026-10-09 claude-wp4 (stopped by session limit before reporting; work recovered by the orchestrator):
+  LogAnalyzer.Verification (CaseVerifier, Checks, ContradictionRules x3, AiClaims, CaseFacts, ArtifactKinds, report),
+  pipeline stage before the Vault export, VaultExport verdict gate + "NEVERIFICAT" marker, PDF banners, 67 tests.
+- 2026-10-09T07:10Z claude-orchestrator: committed the recovered work (`6295dcc1`); updated the WP2 contract test to assert
+  each finding carries the verifier's verdict (was: always NOT_ASSESSED); added the investigation-view verification line and
+  `docs/dfir/VERIFICATION.md`. Dfir 48 failed (baseline) / UI 6 (baseline) / Edition 14/14; build 0 errors.
+
 ## Next
-- Implement 1-7, verify, push. The orchestrator opens the PR.
+- PR against main; Windows CI green; merge. Then queue item 5 (WP15, procedure profile).
 
 ## Blockers
 - None yet.

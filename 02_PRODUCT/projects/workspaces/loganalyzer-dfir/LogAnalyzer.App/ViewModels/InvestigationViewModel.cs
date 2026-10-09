@@ -122,6 +122,8 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _summary = "";
         /// <summary>Verdict of the last integrity re-check of the case (WP3b): valid, modified n, missing n, chain broken or legacy. Reports only; nothing is repaired.</summary>
         [ObservableProperty] private string _integrityLine = "";
+        /// <summary>WP4: verdict counts from the verification module (Analysis/verification.json) and, when any finding is CONTRADICTED or REJECTED, the warning.</summary>
+        [ObservableProperty] private string _verificationLine = "";
         [ObservableProperty] private string _chains = "";
         [ObservableProperty] private string _gapsText = "";
         [ObservableProperty] private string _timelineFilter = "";
@@ -203,6 +205,9 @@ namespace LogAnalyzer.UI.ViewModels
                 var checkedCase = _result.Case;
                 var ct = _cts.Token;
                 IntegrityLine = (await Task.Run(() => checkedCase.Recheck(ct))).Summary;
+                VerificationLine = _result.Verification is { } v
+                    ? v.Banner + " (verificare automată, nu externă)" + (v.Warning is { } w ? Environment.NewLine + w : "")
+                    : "Verificare: nerulată pentru această analiză.";
                 OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[_result.State] + " — " + _result.StateReason;
                 Summary += $" · analiză: {LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[_result.State]} (nu verifică constatările)";
                 Log += "Gata. Dublu-click pe o constatare sau pe un eveniment pentru detalii." + Environment.NewLine;
