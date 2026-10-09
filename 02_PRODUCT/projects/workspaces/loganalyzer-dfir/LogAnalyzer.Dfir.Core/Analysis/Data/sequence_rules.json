@@ -1,0 +1,27 @@
+{
+  "_comment": "WP14b combined-sequence rules. Data, not code: windows (minutes), size threshold (bytes), minimum observed steps and the tool lists. Defaults until the owner reviews them.",
+  "controlGapMedia": {
+    "minObservedSteps": 2,
+    "mediaAfterGapMinutes": 120,
+    "controlWords": ["usb", "removable", "amovibil", "device install", "device-install", "instalare dispozitiv", "dispozitiv", "stocare", "storage", "audit", "defender", "antivirus", "antimalware", "real-time", "realtime"]
+  },
+  "smbStagingUsb": {
+    "minObservedSteps": 3,
+    "minObservedStepsWithFileLink": 2,
+    "smbToStagingMinutes": 120,
+    "stagingToMediaMinutes": 240,
+    "ignoredShares": ["IPC$"],
+    "ignoredStagingPathParts": ["\\windows\\", "\\program files", "\\programdata\\microsoft\\", "$recycle.bin", "\\appdata\\local\\microsoft\\", "\\appdata\\local\\temp\\", "\\system volume information\\"]
+  },
+  "portableUsbArchive": {
+    "minObservedSteps": 2,
+    "execToArchiveMinutes": 480,
+    "archiveToMediaMinutes": 240,
+    "archiveMinBytes": 104857600,
+    "archiveExtensions": [".zip", ".7z", ".rar", ".tar", ".gz", ".tgz", ".bz2", ".xz"],
+    "archiverTools": ["7z.exe", "7zg.exe", "7za.exe", "7zfm.exe", "winrar.exe", "rar.exe", "peazip.exe", "bandizip.exe", "tar.exe"],
+    "portableTools": ["totalcmd.exe", "totalcmd64.exe", "winscp.exe", "putty.exe", "filezilla.exe", "freefilesync.exe", "teracopy.exe", "everything.exe", "rclone.exe"],
+    "portableNameWords": ["portable"],
+    "userWritablePathParts": ["\\users\\", "\\programdata\\", "\\temp\\", "\\perflogs\\"]
+  }
+}

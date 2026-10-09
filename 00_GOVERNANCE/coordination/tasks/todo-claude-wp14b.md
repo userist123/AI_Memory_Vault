@@ -50,9 +50,16 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 
 ## Done
 - 2026-10-09T14:50Z claude-orchestrator: spec written; branch created; 6b marked done in STAGE2_PLAN.
+- 2026-10-09 claude-wp14b: items 1-6 and 8 in code. `SequenceEngine` (pure: Follows / Within / JoinAccount / JoinHost / JoinVolume / Order / NotObserved), `SequenceData` + `Data/sequence_rules.json`
+  (windows, size threshold, minimum steps, tool lists), `SequenceRules*.cs` (3 rules), `Finding.Sequence` (`SequenceDetail`), 3 catalog entries, call in `InvestigationPipeline` after the policy timeline,
+  61 tests in `LogAnalyzer.Dfir.Tests/Wp14bSequenceTests.cs` (red run with the rules disabled: 28 failed; green after). Dfir 48 failing = baseline names, UI 6 = baseline, Edition 15/15.
 
 ## Next
-- Implement 1-8.
+- Item 7 (UI tab "Secvențe", both editions use the same view), then full checks, then the full Python suite once.
 
 ## Blockers
-- None known. Sequence windows and severities are defaults until the owner reviews them.
+- None. Owner questions (defaults until reviewed): windows (control gap +120 min after; SMB to staging 120 min; staging to medium 240 min; program to archive 480 min; archive to medium 240 min),
+  archive size threshold 100 MB, severities (CGM High/Medium, Critical only with write on an unregistered or unauthorized medium in the gap on a classified scope; SMB and portable: High with a
+  proven link or three firm steps on a classified scope, one level lower otherwise), control words for the gap (usb, removable, device install, audit, defender, antivirus ...).
+- Known limits to decide with the owner: `POLICY-CONTROL-GAP` carries no restoration time, so "control restabilit" is always "pas neobservat" until WP15b exposes the restoration; USN rows
+  without a drive letter cannot be used as local staging (they cannot be told from the removable volume); Prefetch/BAM carry no account, so portable-software steps show "cont necunoscut".

@@ -12,12 +12,15 @@ PRODUCERS = [
     ROOT / "LogAnalyzer.Dfir.Core/Analysis/PolicyTimeline.cs",
     *sorted((ROOT / "LogAnalyzer.Dfir.Core/Analysis").glob("Wp11Rules*.cs")),
     *sorted((ROOT / "LogAnalyzer.Dfir.Core/Analysis").glob("Wp14Rules*.cs")),
+    *sorted((ROOT / "LogAnalyzer.Dfir.Core/Analysis").glob("SequenceRules*.cs")),
     ROOT / "LogAnalyzer.Response/Containment/ProcessContainmentService.cs",
 ]
 CATALOG = ROOT / "LogAnalyzer.Dfir.Core/Analysis/RuleContracts.cs"
 ID = re.compile(r'"([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)"')
 # WP14a builds its air-gap findings through one shared helper, Net(c, "<RULE-ID>", ...), so the id is an argument and not on a `RuleId = ` line.
 NET_CALL = re.compile(r'\bNet\(c, "([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)"')
+# WP14b builds its sequence findings through one shared helper, Build(c, "<RULE-ID>", ...), so the id is an argument as well.
+BUILD_CALL = re.compile(r'\bBuild\(c, "([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)"')
 
 
 def emitted_rule_ids():
@@ -28,6 +31,8 @@ def emitted_rule_ids():
                 ids.update(ID.findall(line.split("RuleId = ", 1)[1]))
             if p.name.startswith("Wp14Rules"):
                 ids.update(NET_CALL.findall(line))
+            if p.name.startswith("SequenceRules"):
+                ids.update(BUILD_CALL.findall(line))
     return ids
 
 
