@@ -178,6 +178,7 @@ def test_local_llm_model_can_be_overridden_per_workstation(monkeypatch, tmp_path
         return SimpleNamespace(returncode=0, stdout="ok", stderr="")
 
     monkeypatch.setenv("AI_MEMORY_VAULT_LOCAL_MODEL", "qwen2.5:7b-instruct")
+    monkeypatch.setattr("routing.dispatcher.shutil.which", lambda name: "/mock/" + name)
     monkeypatch.setattr("routing.dispatcher.subprocess.run", fake_run)
     adapter = CommandAdapter("local_llm", runtime.adapter_ref, runtime.model, working_directory=tmp_path)
     packet = WorkPacket("local-override", "local-route", "router", "local_ai_engineer", "local_llm", "local-ai", "command", "LOCAL GOAL")
