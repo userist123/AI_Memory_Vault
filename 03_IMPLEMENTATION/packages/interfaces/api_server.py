@@ -2,7 +2,7 @@
 from __future__ import annotations
 import datetime, hmac, json, os, sys, urllib.request, urllib.error
 from pathlib import Path
-from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
+from http.server import HTTPServer, ThreadingHTTPServer, BaseHTTPRequestHandler  # HTTPServer: tests import it from here
 from urllib.parse import parse_qs, urlparse
 
 # The repository root: interfaces/ -> packages/ -> 03_IMPLEMENTATION/ -> repo. It was
