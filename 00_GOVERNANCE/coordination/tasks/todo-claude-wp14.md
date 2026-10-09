@@ -128,7 +128,7 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 - 2026-10-09T12:05Z claude-orchestrator: spec written; branch created.
 
 ## Next
-- After #245 (WP11-T1) merges: merge main, implement 1-10.
+- Main with WP11-T1 (#245, `bc567d66`) is merged in. Implement 1-10.
 
 ## Blockers
 - App user authentication does not exist. Decision 17's "only the global admin creates accounts" cannot be enforced in-app yet.
