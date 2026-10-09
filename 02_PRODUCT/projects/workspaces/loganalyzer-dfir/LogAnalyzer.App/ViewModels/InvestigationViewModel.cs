@@ -24,6 +24,12 @@ namespace LogAnalyzer.UI.ViewModels
 
         public ObservableCollection<string> ImportFiles { get; } = new();
         public ObservableCollection<Finding> Findings { get; } = new();
+        /// <summary>WP14a: the findings of the "Air-gap integrity" category (Finding.AirGap carries channel, authorised?, who, when, object, classification, direction, destination, evidence).</summary>
+        public ObservableCollection<Finding> AirGapFindings { get; } = new();
+        [ObservableProperty] private string _airGapSummary = "Integritate air-gap: nedefinit (nicio analiză încă).";
+        /// <summary>WP14a: the zone of the analysed system, as the operator declares it (compared with the zone in the media register).</summary>
+        [ObservableProperty] private string _systemZone = "";
+        [ObservableProperty] private string _registerLine = "Registre: nedefinit (nicio analiză încă).";
         public ObservableCollection<TimelineEvent> Timeline { get; } = new();
         public ObservableCollection<LogAnalyzer.Dfir.Analysis.AntiForensicCheck> AntiForensics { get; } = new();
         /// <summary>WP15b: "Cronologie politici" (same lines as the investigation PDF).</summary>
@@ -177,6 +183,7 @@ namespace LogAnalyzer.UI.ViewModels
             var files = ImportFiles.ToList();
             bool collect = CollectFromThisStation;
             var name = CaseName;
+            var zone = SystemZone.Trim();
             try
             {
                 _result = await Task.Run(() =>
@@ -188,10 +195,16 @@ namespace LogAnalyzer.UI.ViewModels
                         ((IProgress<string>)progress).Report($"Import {files.Count} fișiere (copii; originalele nu se modifică)");
                         InvestigationPipeline.Import(ws, files);
                     }
-                    return new InvestigationPipeline().Run(ws, profile, collect, progress, _cts.Token);
+                    return new InvestigationPipeline().Run(ws, profile, collect, progress, _cts.Token, systemZone: zone);
                 });
                 Findings.Clear();
                 foreach (var f in _result.Findings) Findings.Add(f);
+                AirGapFindings.Clear();
+                foreach (var f in _result.Findings.Where(f => f.Category == LogAnalyzer.Dfir.Analysis.Wp14Rules.Category)) AirGapFindings.Add(f);
+                RegisterLine = _result.RegisterLine;
+                AirGapSummary = AirGapFindings.Count == 0
+                    ? "Integritate air-gap: nu s-a observat nimic în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (jurnalele au o istorie limitată; unele canale pot lipsi, vezi „Goluri de probă”)."
+                    : $"Integritate air-gap: {AirGapFindings.Count} constatări ({AirGapFindings.Count(a => a.Severity >= Severity.High)} ridicate).";
                 ResultChanged?.Invoke(this, EventArgs.Empty);
                 FillTimeline();
                 var chains = _result.Findings.Where(f => f.RuleId == "INCIDENT-CHAIN").ToList();
