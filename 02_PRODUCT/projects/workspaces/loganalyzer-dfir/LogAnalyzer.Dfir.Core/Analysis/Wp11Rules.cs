@@ -31,7 +31,7 @@ public static partial class Wp11Rules
         return found;
     }
 
-    /// <summary>The rule ids this producer can emit (kept in step with <see cref="RuleContracts"/> by tests).</summary>
+    /// <summary>What the themes read: the run's timeline, the findings already produced (corroboration only), the profile, the data lists and the thresholds.</summary>
     internal sealed class Ctx(IReadOnlyList<TimelineEvent> events, IReadOnlyList<Finding> existing, Func<string> nextId, ProcedureProfile? profile, Wp11Data data, Wp11Options options)
     {
         public IReadOnlyList<TimelineEvent> Events { get; } = events;

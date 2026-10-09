@@ -86,7 +86,7 @@ public class Wp11DnsTests
     }
 
     private static TimelineEvent NameServer(double m, string iface, string servers) =>
-        Row("NameServer", m, f: [("Interface", iface), ("NameServer", servers)]);
+        Row("SystemConfig", m, f: [("Interface", iface), ("NameServer", servers)]);
 
     [Fact]
     public void Changed_name_server_is_Low_for_private_and_Medium_for_a_public_server()

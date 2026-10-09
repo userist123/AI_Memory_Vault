@@ -77,18 +77,26 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 
 ## Done
 - 2026-10-09T08:30Z claude-orchestrator: spec written; branch created.
-
-- 2026-10-09 claude-wp11: infra (embedded JSON data `Analysis/Data/*.json`, `Wp11Data`, `ApprovedSoftwareMatcher`, `Wp11Rules` partials, wired into
-  `Correlation.Run(events, maintenance, profile)` and the pipeline) + item 1 SMB (`SMB-ADMIN-SHARE`, `SMB-SHARE-PERMS-CHANGED`) + item 2 accounts
-  (`ACCOUNT-CREATED`, `ACCOUNT-ADDED-PRIVILEGED-GROUP`, `ACCOUNT-CREATED-THEN-USED`). Dfir 48 failures = Linux baseline, Edition 15/15.
-
-- 2026-10-09 claude-wp11: item 3 remote administration (`REMOTE-RDP-INTERNAL`, `REMOTE-WINRM`, `REMOTE-PSEXEC`, `REMOTE-SSH`) + WinRM/OpenSSH channels in
-  `EventLogCollector.Channels`; `ApprovedSoftwareMatcher` made constraint-decisive (hash, else path pattern, else name).
-
-- 2026-10-09 claude-wp11: items 4 (`SECURITY-AGENT-STOPPED`, list in `Analysis/Data/security_agents.json`) and 5 (`VSS-SNAPSHOT-DELETED`).
+- 2026-10-09 claude-wp11: all of items 1-9 implemented on `loganalyzer/wp11-t1-rules`.
+  - Code: `LogAnalyzer.Dfir.Core/Analysis/Wp11Rules*.cs` (one partial per theme, called from `Correlation.Run(events, maintenance, profile)`; the pipeline now passes the
+    procedure profile), `Wp11Data.cs` + embedded `Analysis/Data/{security_agents,remote_access_tools,rule_lists}.json` (lists are data), `ApprovedSoftwareMatcher.cs`,
+    `RuleContracts.cs` (15 new entries), `ParserCapabilities.cs` (additive `Channels` table on `EvtxParser`, item 8), `Collectors.cs` (+WinRM/Operational, +OpenSSH/Operational).
+  - New rule ids: SMB-ADMIN-SHARE, SMB-SHARE-PERMS-CHANGED, ACCOUNT-CREATED, ACCOUNT-ADDED-PRIVILEGED-GROUP, ACCOUNT-CREATED-THEN-USED, REMOTE-RDP-INTERNAL, REMOTE-WINRM,
+    REMOTE-PSEXEC, REMOTE-SSH, SECURITY-AGENT-STOPPED, VSS-SNAPSHOT-DELETED, DNS-RARE-DOMAIN, DNS-SERVER-CHANGED, REMOTE-TOOL-PRESENT, REMOTE-TOOL-EXECUTED.
+  - Tests: `LogAnalyzer.Dfir.Tests/Wp11*.cs` (lab + SMB/account, remote, agent/VSS, DNS/tool, contract tests); `20_TESTS/test_loganalyzer_rule_catalog.py` now also scans `Wp11Rules*.cs`.
+  - Edition.Tests 15/15 with no gate exception (no banned literal/type added). Dfir 48 failures = the known Linux-only set (identical list before/after); UI 6 = known.
 
 ## Next
-- Items 6, 7, 8, 9 (was: 4 (agents), 5 (VSS), 6 (DNS), 7 (remote tools), 8 (descriptors), 9 (remaining tests), then merge main, full suites, push.
+- Merge origin/main, rebuild, rerun .NET suites, full Python suite once, push (see the final report of the run).
 
-## Blockers
-- None.
+## Blockers / owner decisions (safe defaults implemented)
+- `DnsTunnelingClassifier` (R7.9) is left unwired: it lives in `LogAnalyzer.Core` (another layer than `Dfir.Core`), so wiring it would add a cross-layer reference; DNS-RARE-DOMAIN uses a simple, deterministic count instead.
+- `DNS-SERVER-CHANGED` reads `SystemConfig` rows with `Interface`/`NameServer` fields. No collector or parser produces them yet (NetworkProfile carries no DNS servers), so in production the rule is inert
+  until a registry collector (Tcpip\Parameters\Interfaces) is added. Not claimed as working end to end.
+- `DNS-Client` 3006/3008/3020 do not name the querying process: it is inferred from the event's PID and the latest earlier process start (Candidate). Sysmon 22 names it directly (Direct).
+- VSS-SNAPSHOT-DELETED: the command alone is Medium (spec). volsnap 25/33 alone are Info/Low (a size limit is a benign cause) and VSS 8193/8194 are errors, used only as supporting evidence, never a finding by themselves.
+  High needs impact evidence already in the case (Category Impact, T1486/T1485 or a Defender "ransom" detection within 24 h); no such Dfir rule exists yet (WP17), so today High arises only via Defender ransomware detections.
+- Remote Registry has no rule id in the spec; the `winreg` pipe on IPC$ (5145) is reported inside SMB-ADMIN-SHARE (Low).
+- SMB-ADMIN-SHARE cannot know which accounts/hosts are administrative; it reports remote access to C$/ADMIN$/IPC$ as Low (Info for IPC$ alone, Medium if an executable/script is touched). Machine accounts and loopback are skipped.
+- Approved software (WP15a): the row's most specific constraint decides (SHA-256, else path pattern, else name); a portable copy outside the approved path is not approved. Approved = Info "aprobat în profil".
+- `docs/dfir/LESSONS_LEARNED_MAPPING.md` is a dated snapshot ("doar mapare") and was not edited.

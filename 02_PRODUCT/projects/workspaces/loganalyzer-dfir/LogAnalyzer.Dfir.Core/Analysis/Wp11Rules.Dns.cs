@@ -22,7 +22,7 @@ public static partial class Wp11Rules
     /// DNS-RARE-DOMAIN: a domain looked up at most N times in the whole case (default 2), by a LOLBin or a process in a user-writable
     /// folder. The process comes from Sysmon 22 (Image) or, for DNS-Client 3006/3008/3020, only from the event's process id matched to the
     /// latest earlier process start (a Candidate: ids are reused). One finding per process. A lookup is not a connection.
-    /// DNS-SERVER-CHANGED: a different name-server set for the same interface among registry NameServer rows (Source "NameServer", fields
+    /// DNS-SERVER-CHANGED: a different name-server set for the same interface among registry NameServer rows (Source "SystemConfig", fields
     /// Interface and NameServer, produced by a collector that reads Tcpip\Parameters\Interfaces); the NetworkProfile log carries no DNS
     /// server data and is only attached as context. DnsTunnelingClassifier (LogAnalyzer.Core) is not wired here: it lives in another layer.
     /// </summary>
@@ -92,7 +92,7 @@ public static partial class Wp11Rules
 
     private static void DnsServerChanged(Ctx c, List<Finding> o)
     {
-        foreach (var g in c.Events.Where(e => e.Source == "NameServer" && F(e, "NameServer").Length > 0).GroupBy(e => F(e, "Interface").ToLowerInvariant()))
+        foreach (var g in c.Events.Where(e => e.Source == "SystemConfig" && F(e, "NameServer").Length > 0).GroupBy(e => F(e, "Interface").ToLowerInvariant()))
         {
             var items = g.OrderBy(T).ToList();
             static string[] Servers(string s) => s.Split([',', ' ', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToArray();
