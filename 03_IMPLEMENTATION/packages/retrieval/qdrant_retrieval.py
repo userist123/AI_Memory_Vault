@@ -7,6 +7,7 @@ raises into the existing search() pipeline and never mutates canonical memory.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import urllib.error
 import urllib.request
@@ -64,20 +65,71 @@ class QdrantIndex:
             return None
 
     def ensure_collection(self) -> bool:
-        result = self._request("PUT", f"/collections/{self.collection}", {
+        path = f"/collections/{self.collection}"
+        existing = self._request("GET", path)
+        if existing is not None:
+            vectors = (existing.get("result", {})
+                       .get("config", {})
+                       .get("params", {})
+                       .get("vectors", {}))
+            return (isinstance(vectors, dict)
+                    and vectors.get("size") == self.vector_size
+                    and str(vectors.get("distance", "")).lower() == "cosine")
+        result = self._request("PUT", path, {
             "vectors": {"size": self.vector_size, "distance": "Cosine"}
         })
-        return result is not None
+        return result is not None and result.get("status") == "ok"
+
+    @staticmethod
+    def _stable_point_id(point_id: str) -> int:
+        """Derive a process-independent Qdrant point ID from the canonical note ID."""
+        digest = hashlib.sha256(str(point_id).encode("utf-8")).digest()
+        return int.from_bytes(digest[:8], "big") & ((1 << 63) - 1)
 
     def upsert(self, points: Iterable[Tuple[str, List[float], Dict[str, Any]]]) -> bool:
         payload_points = [
-            {"id": abs(hash(point_id)) % (2 ** 31), "vector": vector, "payload": {**payload, "note_id": point_id}}
+            {"id": self._stable_point_id(point_id), "vector": vector,
+             "payload": {**payload, "note_id": point_id}}
             for point_id, vector, payload in points
         ]
         if not payload_points:
             return True
         result = self._request("PUT", f"/collections/{self.collection}/points", {"points": payload_points})
-        return result is not None
+        return result is not None and result.get("status") == "ok"
+
+    def scroll_points(self, page_size: int = 100) -> Optional[List[dict]]:
+        """Return all points, or None when enumeration is incomplete."""
+        if page_size < 1:
+            return None
+        points: List[dict] = []
+        offset = None
+        seen_offsets = set()
+        while True:
+            body = {"limit": page_size, "with_payload": True, "with_vector": False}
+            if offset is not None:
+                body["offset"] = offset
+            result = self._request("POST", f"/collections/{self.collection}/points/scroll", body)
+            page = result.get("result") if isinstance(result, dict) else None
+            if not isinstance(page, dict) or not isinstance(page.get("points"), list):
+                return None
+            if not all(isinstance(point, dict) for point in page["points"]):
+                return None
+            points.extend(page["points"])
+            offset = page.get("next_page_offset")
+            if offset is None:
+                return points
+            marker = json.dumps(offset, sort_keys=True)
+            if marker in seen_offsets:
+                return None
+            seen_offsets.add(marker)
+
+    def delete_points(self, point_ids: Iterable[Any]) -> bool:
+        ids = list(point_ids)
+        if not ids:
+            return True
+        result = self._request("POST", f"/collections/{self.collection}/points/delete",
+                               {"points": ids})
+        return result is not None and result.get("status") == "ok"
 
     def search(self, vector: List[float], top_k: int = 10) -> List[str]:
         result = self._request("POST", f"/collections/{self.collection}/points/search", {
@@ -92,8 +144,7 @@ class QdrantIndex:
 class SemanticRetrieval:
     """Embeds canonical ACTIVE/VERIFIED notes and serves semantic search over them.
 
-    Fully optional: if Ollama or Qdrant are unreachable, reindex() and query()
-    both degrade to no-ops / empty lists rather than raising.
+    Reindexing reconciles eligible notes without mutating canonical memory.
     """
 
     def __init__(self, controller, embedder: Optional[OllamaEmbedder] = None,
@@ -103,19 +154,36 @@ class SemanticRetrieval:
         self.index = index or QdrantIndex()
 
     def reindex(self) -> int:
-        self.index.ensure_collection()
-        notes = [
-            n for n in self.controller.storage.store.values()
-            if n.get("lifecycle") in {"ACTIVE", "VERIFIED"} and n.get("content")
-        ]
+        if not self.index.ensure_collection():
+            return 0
+        notes = {str(n["id"]): n for n in self.controller.storage.store.values()
+                 if n.get("id") is not None
+                 and n.get("lifecycle") in {"ACTIVE", "VERIFIED"}
+                 and n.get("content")}
+        existing = self.index.scroll_points()
+        if existing is None:
+            return 0
         points = []
-        for note in notes:
+        for note_id, note in notes.items():
             vector = self.embedder.embed(str(note["content"]))
             if vector is None:
                 continue
-            points.append((note["id"], vector, {"category": note.get("category", "")}))
-        if points:
-            self.index.upsert(points)
+            points.append((note_id, vector, {"category": note.get("category", "")}))
+        if points and not self.index.upsert(points):
+            return 0
+        embedded = {note_id for note_id, _, _ in points}
+        stale = []
+        for point in existing:
+            payload = point.get("payload")
+            point_id = point.get("id")
+            note_id = payload.get("note_id") if isinstance(payload, dict) else None
+            if not isinstance(note_id, str) or point_id is None:
+                continue
+            if note_id not in notes or (note_id in embedded and
+                                        point_id != self.index._stable_point_id(note_id)):
+                stale.append(point_id)
+        if stale and not self.index.delete_points(stale):
+            return 0
         return len(points)
 
     def query(self, text: str, top_k: int = 10) -> List[str]:

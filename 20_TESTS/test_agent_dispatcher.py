@@ -7,6 +7,7 @@ from routing.models import DispatchResult, DispatchStatus, TaskRequest, RouteSta
 from routing.agent_router import AgentRouter
 from routing.registry import RouteRegistry
 from pathlib import Path
+from types import SimpleNamespace
 from routing.dispatcher import CommandAdapter, WorkPacket
 
 
@@ -164,6 +165,27 @@ def test_local_llm_uses_registry_binary_and_model(monkeypatch, tmp_path):
     result = adapter.dispatch(packet)
     assert result.status is DispatchStatus.COMPLETED
     assert captured["cmd"] == ["ollama", "run", "llama3.2"]
+
+
+def test_local_llm_model_can_be_overridden_per_workstation(monkeypatch, tmp_path):
+    root = Path(__file__).resolve().parents[1]
+    reg = RouteRegistry.from_file(root / "04_CONFIG" / "agent_router.json")
+    runtime = reg.runtimes["local_llm"]
+    captured = {}
+
+    def fake_run(cmd, **kwargs):
+        captured["cmd"] = cmd
+        return SimpleNamespace(returncode=0, stdout="ok", stderr="")
+
+    monkeypatch.setenv("AI_MEMORY_VAULT_LOCAL_MODEL", "qwen2.5:7b-instruct")
+    monkeypatch.setattr("routing.dispatcher.subprocess.run", fake_run)
+    adapter = CommandAdapter("local_llm", runtime.adapter_ref, runtime.model, working_directory=tmp_path)
+    packet = WorkPacket("local-override", "local-route", "router", "local_ai_engineer", "local_llm", "local-ai", "command", "LOCAL GOAL")
+
+    result = adapter.dispatch(packet)
+
+    assert result.status == DispatchStatus.COMPLETED
+    assert captured["cmd"] == ["ollama", "run", "qwen2.5:7b-instruct"]
 
 
 def test_command_adapters_never_put_goal_in_argv(monkeypatch, tmp_path):
