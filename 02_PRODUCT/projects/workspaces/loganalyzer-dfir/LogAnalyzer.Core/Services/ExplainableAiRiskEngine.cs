@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using LogAnalyzer.Core.Models;
+using LogAnalyzer.Dfir.Analysis;
 
 namespace LogAnalyzer.Core.Services
 {
@@ -32,7 +33,8 @@ namespace LogAnalyzer.Core.Services
             int highEntropyCount, 
             int masqueradingCount, 
             int offHoursCount, 
-            int yaraMatchesCount)
+            int yaraMatchesCount,
+            WorkingHours? workingHours = null)
         {
             var assessment = new ExplainableRiskAssessment();
             var factorList = new List<ExplainableRiskFactor>();
@@ -70,19 +72,20 @@ namespace LogAnalyzer.Core.Services
                 });
             }
 
-            // 3. Evaluare Euristică: Logări Nocturne / Anomale
+            // 3. Logări în afara orelor: doar context, 0 puncte. Fără program de lucru definit nu se poate spune că ar fi o abatere;
+            //    chiar și cu program definit, rezultatul este o comparație cu profilul, nu o penalizare automată.
             if (offHoursCount > 0)
             {
-                int points = Math.Min(15, offHoursCount * 5);
-                rawScore += points;
                 factorList.Add(new ExplainableRiskFactor
                 {
-                    Category = "Anomalie Temporală (Logon Off-Hours)",
-                    Description = $"{offHoursCount} autentificări interactive/RDP înregistrate în afara ferestrei operaționale (01:00 - 05:00).",
-                    WeightPoints = points,
+                    Category = "Context Temporal (Logon Off-Hours)",
+                    Description = workingHours is null
+                        ? $"{offHoursCount} autentificări interactive/RDP în intervalul nocturn 01:00 - 05:00; neevaluat: programul de lucru nu este definit."
+                        : $"{offHoursCount} autentificări interactive/RDP în afara programului de lucru al profilului ({workingHours.Describe()}); comparație cu profilul, nu adaugă puncte.",
+                    WeightPoints = 0,
                     EvidenceSource = "EVTX Security (EID 4624 / EID 4625)",
                     MitreTechniqueId = "T1078",
-                    LegalJustification = "Abatere statistică semnificativă față de baseline-ul normal de activitate al utilizatorului."
+                    LegalJustification = "Ora unei autentificări nu dovedește o abatere (ture, gardă, mentenanță); se interpretează doar față de profilul de procedură al organizației."
                 });
             }
 

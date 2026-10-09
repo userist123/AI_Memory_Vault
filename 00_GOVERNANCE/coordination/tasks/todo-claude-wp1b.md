@@ -49,9 +49,17 @@ Paths below are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 
 ## Done
 - 2026-10-09T03:10Z claude-orchestrator: spec written, branch created.
+- 2026-10-09 claude-wp1b: items 1-5 implemented (TDD). Classifier `LogClearAssessment.cs` (+ `WorkingHours.cs`) in Dfir.Core;
+  used by Correlation LOG-TAMPER (built after sections 1-7 so it sees other High findings; optional `maintenancePolicy` arg),
+  AntiForensics AF01 (still Detected, lifecycle text appended), AnalysisEngine, LiveSecurityMonitoringEngine, SigmaRuleEngine
+  (all NotAssessed -> Medium). Off-hours: ExplainableAiRiskEngine 0 points + context factor, UBA Info/RiskWeight 0,
+  AnomalyDetectionEngine night logon Info; optional `WorkingHours` input on both. `LogAnalyzer.Core` now references `Dfir.Core`.
+  Decision: a Routine clear that also has a corroborating factor is High (factors override lifecycle). 1100/4719 stay Medium.
+  Tests: Dfir 15 classifier + 6 correlation/AF01, UI 10 legacy-engine. CONFORM regression test already existed.
+- Verified: build 0 errors; Dfir 48 failed (baseline) / UI 6 failed (baseline) / Edition 5 passed.
 
 ## Next
-- Implement 1-5, verify, push, open PR against main.
+- Full Python suite, push. PR not opened by this agent (orchestrator opens it).
 
 ## Blockers
 - None. Procedure profile (working hours, log rotation, approved accounts) arrives with WP15; WP1b only adds the inputs.

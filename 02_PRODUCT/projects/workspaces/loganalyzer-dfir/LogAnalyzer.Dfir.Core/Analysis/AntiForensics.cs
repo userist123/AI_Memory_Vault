@@ -64,7 +64,10 @@ public static class AntiForensics
     /// <summary>Component-store copies of the same binaries are not masquerading.</summary>
     private static readonly string[] ComponentStores = [@"\WINDOWS\WINSXS\", @"\WINDOWS\SERVICING\", @"\WINDOWS\SOFTWAREDISTRIBUTION\"];
 
-    public static List<AntiForensicCheck> Evaluate(IReadOnlyList<TimelineEvent> events, IReadOnlyList<EvidenceGap> gaps)
+    /// <param name="maintenancePolicy">Approved log-clearing accounts and windows (procedure profile); <c>null</c> = not defined yet.</param>
+    /// <param name="otherHighFindingTimesUtc">Times of other High/Critical findings in the case, used to corroborate a log clear.</param>
+    public static List<AntiForensicCheck> Evaluate(IReadOnlyList<TimelineEvent> events, IReadOnlyList<EvidenceGap> gaps,
+        LogMaintenancePolicy? maintenancePolicy = null, IReadOnlyList<DateTimeOffset>? otherHighFindingTimesUtc = null)
     {
         var sources = events.Select(e => e.Source).ToHashSet(StringComparer.OrdinalIgnoreCase);
         bool Has(string s) => sources.Contains(s);
@@ -82,9 +85,16 @@ public static class AntiForensics
             var hits = events.Where(e => e.Provider.Equals("Microsoft-Windows-Eventlog", StringComparison.OrdinalIgnoreCase)
                                          && (Ev(e, Security, "1102") || Ev(e, System, "104"))).ToList();
             if (hits.Count > 0)
+            {
+                // Detected stays: the clear was observed. Whether it was planned is the lifecycle, reported next to it, never assumed.
+                var assessed = LogClearAssessment.Assess(
+                    hits.Where(e => e.Time.Utc is not null).Select(e => new LogClearEvent(e.EventId == "1102" ? "Security" : F(e, "Channel"), e.Time.Utc!.Value, F(e, "SubjectUserName"), F(e, "SubjectDomainName"))).ToList(),
+                    maintenancePolicy, otherHighFindingTimesUtc ?? []);
+                string lifecycle = assessed.Count == 0 ? "" : " Ciclu de viață: " + string.Join(" ", assessed.Select(a => a.Reason).Distinct().Take(5));
                 Add("AF01", "Jurnal EVTX golit", "T1070.001", AntiForensicResult.Detected,
-                    $"{hits.Count} goliri: " + string.Join("; ", hits.Take(10).Select(e => $"{e.Time.UtcIso} {(e.EventId == "1102" ? "Security" : F(e, "Channel"))} de {F(e, "SubjectDomainName")}\\{F(e, "SubjectUserName")}")),
+                    $"{hits.Count} goliri: " + string.Join("; ", hits.Take(10).Select(e => $"{e.Time.UtcIso} {(e.EventId == "1102" ? "Security" : F(e, "Channel"))} de {F(e, "SubjectDomainName")}\\{F(e, "SubjectUserName")}")) + "." + lifecycle,
                     hits.Select(e => Ref(e, "eveniment de golire a jurnalului")));
+            }
             else if (Has(Security) && Has(System))
                 Add("AF01", "Jurnal EVTX golit", "T1070.001", AntiForensicResult.NotDetected, "Security și System analizate: niciun 1102 / 104.");
             else Add("AF01", "Jurnal EVTX golit", "T1070.001", AntiForensicResult.Undetermined, Missing(Security, System) + ": golirea nu poate fi verificată.");

@@ -289,7 +289,8 @@ public sealed class InvestigationPipeline
         File.WriteAllText(Path.Combine(analysisDir, "detections.json"), JsonSerializer.Serialize(r.Detections, new JsonSerializerOptions { WriteIndented = true }));
         File.WriteAllText(Path.Combine(analysisDir, "rules.json"), JsonSerializer.Serialize(r.RulesUsed, new JsonSerializerOptions { WriteIndented = true }));
         ws.RecordTransformation("CASE", "DetectionEngine", "1.0", "Analysis/detections.json", $"{r.Detections.Count} potriviri, {r.RulesUsed.Count} reguli");
-        r.AntiForensics.AddRange(LogAnalyzer.Dfir.Analysis.AntiForensics.Evaluate(r.Timeline, r.Gaps));
+        r.AntiForensics.AddRange(LogAnalyzer.Dfir.Analysis.AntiForensics.Evaluate(r.Timeline, r.Gaps, null,
+            found.Where(x => x.Severity >= Severity.High && x.RuleId != "LOG-TAMPER" && (x.FirstSeenUtc ?? x.LastSeenUtc) is not null).Select(x => (x.FirstSeenUtc ?? x.LastSeenUtc)!.Value).ToList()));   // no maintenance policy until the procedure profile (WP15)
         File.WriteAllText(Path.Combine(analysisDir, "anti_forensics.json"), JsonSerializer.Serialize(r.AntiForensics, new JsonSerializerOptions { WriteIndented = true }));
         ws.RecordTransformation("CASE", "AntiForensics", "1.0", "Analysis/anti_forensics.json",
             $"{r.AntiForensics.Count(c => c.Result == AntiForensicResult.Detected)} DETECTED, {r.AntiForensics.Count(c => c.Result == AntiForensicResult.Undetermined)} UNDETERMINED");
