@@ -55,3 +55,8 @@ When the owner corrects an agent or a real incident reveals a reusable failure p
   When a scanner flags a literal that is only parsed, keep the code exact and add an explicit, documented exception bound to
   that exact literal in that one assembly, with a test that the exception does not leak (`ParsingOnlyLiterals`). Agent prompts
   must say: a red security gate is fixed in the gate's own allowlist with a reason, never by obfuscation.
+
+## 2026-10-09 — Limba răspunsurilor către owner
+- Corecție owner: toate răspunsurile către owner se scriu **doar în limba română**. Engleza rămâne doar pentru prompturile
+  generate pentru agenți, commit-uri, PR-uri și fișierele tehnice din depozit.
+- Regulă: înainte de orice mesaj către owner, verifică limba. Rezumatele, rapoartele de stare și întrebările deschise sunt în română.
