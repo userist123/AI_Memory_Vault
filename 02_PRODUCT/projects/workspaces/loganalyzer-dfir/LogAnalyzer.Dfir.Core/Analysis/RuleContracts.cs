@@ -18,6 +18,7 @@ public static class RuleContracts
 {
     private const string Corr = "LogAnalyzer.Dfir.Analysis.Correlation";
     private const string Live = "LogAnalyzer.Dfir.Windows.Investigation.LiveStateAnalyzer";
+    private const string W11 = "LogAnalyzer.Dfir.Analysis.Wp11Rules";
     private const string Pol = "LogAnalyzer.Dfir.Analysis.PolicyTimeline";
     private const string Cont = "LogAnalyzer.Dfir.Windows.Containment.ProcessContainmentService";
 
@@ -156,6 +157,28 @@ public static class RuleContracts
             ["Arată configurația de autostart, nu o pornire efectivă."],
             ["Dovada pornirilor trecute."],
             ["Dezactivați intrările după preluarea probelor, nu înainte."]),
+        // ---- WP11 Tier 1 ----
+        R("SMB-ADMIN-SHARE", W11, SemanticType.Observation, "Windows a înregistrat accesul la o partajare administrativă (C$, ADMIN$, IPC$) dintr-o altă adresă.",
+            ["Accesul la partajări administrative este rutină pentru administratori și software de backup; evenimentul nu spune dacă contul este autorizat.", "Se numără accesele; pragurile de volum nu fac parte din această regulă.",
+             "5145 apare doar dacă auditul de partajări detaliat este activ; lipsa lui nu arată că nu s-au accesat fișiere."],
+            ["Autentificarea care a precedat accesul (4624 tip 3) și jurnalele stației sursă.", "Auditul detaliat de partajări (5145), dacă nu este activ."],
+            ["Verificați dacă contul și stația sursă sunt administrative autorizate.", "Căutați creări de servicii (7045) și procese noi în aceeași fereastră."]),
+        R("SMB-SHARE-PERMS-CHANGED", W11, SemanticType.Observation, "Permisiunile unui obiect de tip fișier sau director (inclusiv partajat) au fost schimbate (4670).",
+            ["4670 nu spune dacă schimbarea a fost intenționată; instalatoarele și moștenirea permisiunilor o produc și ele.", "Acordările largi sunt detectate doar din descriptorii vechi și noi din eveniment."],
+            ["Procesul și sesiunea care au făcut schimbarea, motivul operațional.", "Starea actuală a permisiunilor."],
+            ["Comparați descriptorul nou cu politica de acces a partajării.", "Verificați cine a avut acces după schimbare."]),
+        R("ACCOUNT-CREATED", W11, SemanticType.Observation, "A fost creat un cont (4720); creat nu înseamnă folosit.",
+            ["Evenimentul arată crearea, nu folosirea; folosirea se citește din autentificările colectate, care pot lipsi.", "Un cont creat și nefolosit în dovezile colectate poate fi folosit în afara perioadei sau a surselor colectate."],
+            ["Autentificările contului (4624/4648) din perioade sau de pe alte stații necolectate.", "Cine a cerut contul (ticket)."],
+            ["Confirmați cererea de creare a contului.", "Căutați autentificările contului pe controlerul de domeniu."]),
+        R("ACCOUNT-ADDED-PRIVILEGED-GROUP", W11, SemanticType.Observation, "Un cont a fost adăugat într-un grup privilegiat (Administrators, Domain Admins, Remote Desktop Users…).",
+            ["Arată apartenența acordată, nu folosirea ei și nici cine a cerut-o.", "Lista grupurilor privilegiate este o listă de date; un grup necunoscut ei nu este semnalat."],
+            ["Aprobarea modificării, autentificările contului după adăugare."],
+            ["Verificați aprobarea pentru adăugare.", "Căutați folosirea contului după adăugare (4624, 4672)."]),
+        R("ACCOUNT-CREATED-THEN-USED", W11, SemanticType.Observation, "Un cont creat în caz a fost folosit ulterior (4624/4648); High doar dacă este și privilegiat și folosit de la distanță.",
+            ["Corelație în timp și după SID/nume în același jurnal; nu dovedește că utilizatorul nu este cel legitim.", "Dacă SID-ul lipsește, legătura după nume nu exclude refolosirea numelui.", "Folosirea de la distanță se deduce din tipul de logon și adresa sursă din 4624."],
+            ["Sursa independentă (stația de unde s-a autentificat contul), cererea de creare."],
+            ["Confirmați cu proprietarul contului.", "Verificați activitatea din sesiunile contului."]),
         R("POLICY-CONTROL-GAP", Pol, SemanticType.Correlation, "O setare cerută de politica așteptată nu este observată la unul din nivelurile aplicat, impus sau observat.",
             ["Compară politica așteptată cu dovezi de aplicare (GroupPolicy/Operational), de stare efectivă și cu evenimente; un nivel necolectat e UNKNOWN și nu produce decalaj.",
              "Absența evenimentelor poate însemna absența activității auditate, nu absența auditului.", "Nu arată cine sau de ce, nici dacă decalajul e intenționat."],

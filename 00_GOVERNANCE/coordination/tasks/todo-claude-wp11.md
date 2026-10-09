@@ -78,8 +78,12 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 ## Done
 - 2026-10-09T08:30Z claude-orchestrator: spec written; branch created.
 
+- 2026-10-09 claude-wp11: infra (embedded JSON data `Analysis/Data/*.json`, `Wp11Data`, `ApprovedSoftwareMatcher`, `Wp11Rules` partials, wired into
+  `Correlation.Run(events, maintenance, profile)` and the pipeline) + item 1 SMB (`SMB-ADMIN-SHARE`, `SMB-SHARE-PERMS-CHANGED`) + item 2 accounts
+  (`ACCOUNT-CREATED`, `ACCOUNT-ADDED-PRIVILEGED-GROUP`, `ACCOUNT-CREATED-THEN-USED`). Dfir 48 failures = Linux baseline, Edition 15/15.
+
 ## Next
-- Implement 1-9 (main with WP15b already merged in).
+- Items 3 (remote admin + channels), 4 (agents), 5 (VSS), 6 (DNS), 7 (remote tools), 8 (descriptors), 9 (remaining tests), then merge main, full suites, push.
 
 ## Blockers
 - None.

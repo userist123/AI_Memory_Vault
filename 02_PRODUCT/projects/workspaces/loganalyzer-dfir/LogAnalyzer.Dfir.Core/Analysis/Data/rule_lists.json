@@ -1,0 +1,30 @@
+{
+  "_comment": "WP11 shared lists for the SMB / account / remote-administration / VSS / DNS rules. Data, not code.",
+  "privilegedGroups": {
+    "names": ["Administrators", "Administratori", "Domain Admins", "Enterprise Admins", "Schema Admins", "Account Operators", "Server Operators", "Backup Operators", "Print Operators",
+              "Remote Desktop Users", "Remote Management Users", "Group Policy Creator Owners", "DnsAdmins", "Key Admins", "Enterprise Key Admins"],
+    "sids": ["S-1-5-32-544", "S-1-5-32-548", "S-1-5-32-549", "S-1-5-32-550", "S-1-5-32-551", "S-1-5-32-555", "S-1-5-32-580"],
+    "domainRids": ["512", "518", "519", "520", "526", "527"],
+    "remoteAccessGroups": ["Remote Desktop Users", "Remote Management Users"]
+  },
+  "executableExtensions": [".exe", ".dll", ".sys", ".scr", ".bat", ".cmd", ".ps1", ".vbs", ".msi"],
+  "sharePipesOfInterest": ["winreg", "svcctl", "atsvc", "srvsvc", "samr", "lsarpc"],
+  "dns": {
+    "ignoredSuffixes": [".local", ".lan", ".internal", ".home.arpa", ".arpa", ".localdomain"],
+    "benignSuffixes": ["microsoft.com", "windowsupdate.com", "msftconnecttest.com", "msftncsi.com", "digicert.com", "microsoftonline.com"],
+    "highInterestLolbins": ["mshta.exe", "regsvr32.exe", "rundll32.exe", "certutil.exe", "cmstp.exe", "msbuild.exe", "installutil.exe", "regasm.exe", "regsvcs.exe", "wscript.exe", "cscript.exe", "odbcconf.exe", "msxsl.exe", "forfiles.exe"]
+  },
+  "vss": {
+    "_comment": "kind: delete = removes snapshots; resize = shrinks the snapshot storage, which purges snapshots (weaker).",
+    "commandPatterns": [
+      { "kind": "delete", "tool": "vssadmin", "regex": "vssadmin(\\.exe)?\\s+delete\\s+shadows" },
+      { "kind": "delete", "tool": "wmic", "regex": "wmic(\\.exe)?\\s+.*shadowcopy\\s+.*delete" },
+      { "kind": "delete", "tool": "diskshadow", "regex": "diskshadow(\\.exe)?\\b.*delete\\s+shadows" },
+      { "kind": "delete", "tool": "wmi-cim", "regex": "win32_shadowcopy.*(\\.delete\\(|remove-wmiobject|remove-ciminstance)|(\\.delete\\(|remove-wmiobject|remove-ciminstance).*win32_shadowcopy" },
+      { "kind": "resize", "tool": "vssadmin", "regex": "vssadmin(\\.exe)?\\s+resize\\s+shadowstorage" }
+    ],
+    "impactMitreIds": ["T1486", "T1485"],
+    "impactCategories": ["Impact"],
+    "impactDetectionKeywords": ["ransom"]
+  }
+}

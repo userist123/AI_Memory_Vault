@@ -272,7 +272,7 @@ public sealed class InvestigationPipeline
             r.ProcedureProfileSha256 = ProfileSnapshot.WriteTo(ws, procedureProfile, profileIssues);
             maintenance = ProfileSnapshot.MaintenancePolicyFor(procedureProfile, r.Timeline.Where(e => e.Time.Utc is not null).Select(e => e.Time.Utc!.Value), ws.Info.Timezone);
         }
-        var found = new List<Finding>(Correlation.Run(r.Timeline, maintenance));
+        var found = new List<Finding>(Correlation.Run(r.Timeline, maintenance, procedureProfile));
         foreach (var live in ws.LoadEvidence().Where(e => e.SourceType == "live_snapshot"))
         {
             var pre = EvidencePreflight.Check(live, ws.FullPath(live.StoredPath));
