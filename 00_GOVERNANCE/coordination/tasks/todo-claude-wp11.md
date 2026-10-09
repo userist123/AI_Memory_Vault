@@ -5,7 +5,6 @@
   - The queue item is split: WP11-T1 (this file) → WP14a (media register, users/clearances, USB/CD/NIC/Wi-Fi/BT, air-gap
     category) → WP14b (combined sequences).
 - **Branch:** `loganalyzer/wp11-t1-rules`; main (with WP15b #244, `b02c4a43`) is merged in. Ready to implement.
-  is merged. Both touch `Correlation.cs` and `RuleContracts.cs`, so merge main first.
 
 Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 
