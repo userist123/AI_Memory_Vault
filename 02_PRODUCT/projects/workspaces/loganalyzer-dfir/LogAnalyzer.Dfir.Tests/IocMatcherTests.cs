@@ -80,7 +80,7 @@ public sealed class IocMatcherTests(ITestOutputHelper output) : IDisposable
         var m = IocMatcher.LoadCsv(Corpus.File("iocInventory"));
         var samples = Corpus.S("iocInventory", "samples").Split('|').Select(s => Path.Combine(Corpus.Root, s))
             .SelectMany(s => File.Exists(s) ? [s] : Directory.GetFiles(s, "*", SearchOption.AllDirectories)).ToList();
-        var ws = InvestigationPipeline.NewCase(Path.Combine(_dir, "cases"), "ioc");
+        var ws = InvestigationPipeline.NewCase(Path.Combine(_dir, "cases"), "ioc", TestScopes.Valid());
         var evidence = InvestigationPipeline.Import(ws, samples);
         Assert.Equal(samples.Count, evidence.Count);
         Assert.All(evidence.Where(e => e.OriginalName.EndsWith(".msi") || e.OriginalName.EndsWith(".targets")), e => Assert.Equal("file", e.SourceType));

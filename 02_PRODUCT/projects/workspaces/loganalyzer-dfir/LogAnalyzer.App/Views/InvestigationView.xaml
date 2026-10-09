@@ -34,6 +34,26 @@
                         <TextBlock Text="Profil:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <ComboBox ItemsSource="{Binding Profiles}" SelectedIndex="{Binding ProfileIndex}" Width="230"/>
                     </WrapPanel>
+                    <TextBlock Text="Scopul cazului (obligatoriu): de ce, pentru ce perioadă, pe ce sisteme, cine aprobă" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                    <WrapPanel Margin="0,0,0,6">
+                        <TextBlock Text="Scop:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding ScopePurpose, UpdateSourceTrigger=PropertyChanged}" Width="260" Margin="0,0,10,0"/>
+                        <TextBlock Text="Aprobator:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding ScopeApprover, UpdateSourceTrigger=PropertyChanged}" Width="160" Margin="0,0,10,0"/>
+                        <TextBlock Text="Sisteme în scop:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding ScopeSystems, UpdateSourceTrigger=PropertyChanged}" Width="220" Margin="0,0,10,0"/>
+                    </WrapPanel>
+                    <WrapPanel Margin="0,0,0,6">
+                        <TextBlock Text="Perioada de la:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <DatePicker SelectedDate="{Binding ScopeFrom}" Width="130" Margin="0,0,10,0"/>
+                        <TextBlock Text="până la:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <DatePicker SelectedDate="{Binding ScopeTo}" Width="130" Margin="0,0,10,0"/>
+                        <TextBlock Text="Temei:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <ComboBox ItemsSource="{Binding LegalBases}" SelectedIndex="{Binding LegalBasisIndex}" Width="100" Margin="0,0,10,0"/>
+                        <TextBlock Text="Sistem:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <ComboBox ItemsSource="{Binding NetworkCategories}" SelectedIndex="{Binding NetworkIndex}" Width="140" Margin="0,0,6,0"/>
+                        <ComboBox ItemsSource="{Binding ClassificationLevels}" SelectedIndex="{Binding ClassificationIndex}" Width="110"/>
+                    </WrapPanel>
                     <CheckBox Content="Colectează de pe această stație (jurnale, Prefetch, SRUM, stare live)" IsChecked="{Binding CollectFromThisStation}" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,6"/>
                     <WrapPanel>
                         <Button Content="Adaugă fișiere de probă…" Command="{Binding AddFilesCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>

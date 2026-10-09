@@ -87,7 +87,7 @@ public class InvestigationTests
         var casesRoot = Path.Combine(Path.GetTempPath(), "la-inv-" + Guid.NewGuid().ToString("N"));
         try
         {
-            var ws = InvestigationPipeline.NewCase(casesRoot, "regression");
+            var ws = InvestigationPipeline.NewCase(casesRoot, "regression", TestScopes.Valid());
             InvestigationPipeline.Import(ws, files);
             // The investigation's IOC inventory as a case rule list (Rules/ioc), next to the rules shipped with the application.
             Directory.CreateDirectory(Path.Combine(ws.Root, "Rules", "ioc"));

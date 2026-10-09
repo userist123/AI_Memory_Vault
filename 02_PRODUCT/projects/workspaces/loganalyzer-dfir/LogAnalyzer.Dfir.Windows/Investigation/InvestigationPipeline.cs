@@ -54,7 +54,8 @@ public sealed class InvestigationPipeline
     public static IReadOnlyList<ICollector> AllCollectors { get; } =
         [new LiveStateCollector(), new EventLogCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector()];
 
-    public static CaseWorkspace NewCase(string casesRoot, string name)
+    /// <summary>Creates a case. <paramref name="scope"/> is mandatory (owner decision 23): an incomplete scope is refused with <see cref="CaseScopeIncompleteException"/>.</summary>
+    public static CaseWorkspace NewCase(string casesRoot, string name, CaseScope scope)
     {
         var id = $"CASE-{Environment.MachineName}-{DateTime.UtcNow:yyyyMMdd-HHmmss}";
         return CaseWorkspace.Create(Path.Combine(casesRoot, id), new CaseInfo
@@ -62,7 +63,7 @@ public sealed class InvestigationPipeline
             CaseId = id, Name = name, Host = Environment.MachineName, User = Environment.UserName, CreatedAtUtc = DateTimeOffset.UtcNow,
             Investigator = $"{Environment.UserDomainName}\\{Environment.UserName}", Os = Environment.OSVersion.VersionString,
             Architecture = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString(), Timezone = TimeZoneInfo.Local.Id,
-            CollectionMode = "investigation",
+            CollectionMode = "investigation", Scope = scope,
         });
     }
 

@@ -101,7 +101,7 @@ public sealed class ParserRegistryTests : IDisposable
         using (var fs = new FileStream(hive, FileMode.Create, FileAccess.ReadWrite))
         using (var h = DiscUtils.Registry.RegistryHive.Create(fs))
             h.Root.CreateSubKey("Select").SetValue("Current", 1, DiscUtils.Registry.RegistryValueType.Dword);
-        var ws = InvestigationPipeline.NewCase(Path.Combine(_dir, "cases"), "registry");
+        var ws = InvestigationPipeline.NewCase(Path.Combine(_dir, "cases"), "registry", TestScopes.Valid());
         var ev = Assert.Single(InvestigationPipeline.Import(ws, [hive]));
         var extra = Path.Combine(ws.RawDir("Other"), "notes.txt");
         File.WriteAllText(extra, "free text");

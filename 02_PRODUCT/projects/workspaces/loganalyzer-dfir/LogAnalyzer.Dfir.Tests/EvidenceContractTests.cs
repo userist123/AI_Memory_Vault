@@ -42,7 +42,7 @@ public sealed class EvidenceContractTests : IDisposable
 
     private (CaseWorkspace ws, EvidenceItem ev) CaseWith(string file)
     {
-        var ws = InvestigationPipeline.NewCase(Path.Combine(_dir, "cases"), "contract");
+        var ws = InvestigationPipeline.NewCase(Path.Combine(_dir, "cases"), "contract", TestScopes.Valid());
         return (ws, Assert.Single(InvestigationPipeline.Import(ws, [file])));
     }
 

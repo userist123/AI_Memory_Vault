@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.Model;
 using System.Reflection;
 using System.Text;
 using LogAnalyzer.Dfir.Windows.Acquisition;
@@ -123,7 +124,12 @@ public static class SelfTest
             Directory.CreateDirectory(corpus);
             var task = Path.Combine(corpus, "orchestratormaintain");
             File.WriteAllBytes(task, BuiltInTask());
-            var ws = InvestigationPipeline.NewCase(Path.Combine(root, "cases"), "self-test");
+            var ws = InvestigationPipeline.NewCase(Path.Combine(root, "cases"), "self-test", new CaseScope
+            {
+                Purpose = "self-test (sintetic)", PeriodFromUtc = DateTimeOffset.UtcNow, PeriodToUtc = DateTimeOffset.UtcNow.AddHours(1),
+                SystemsInScope = [Environment.MachineName], Approver = "self-test", LegalBasis = LegalBasis.Control,
+                Network = NetworkCategory.StandalonePc, Classification = ClassificationLevel.Unclassified,
+            });
             InvestigationPipeline.Import(ws, new[] { task }.Concat(extraFiles ?? []));
             var r = new InvestigationPipeline().Run(ws, CollectionProfile.Quick, collect: false);
             var sig = string.Join("\n", r.Findings.Select(f => $"{f.RuleId}|{f.Severity}|{f.Title}|{f.Description}").OrderBy(x => x, StringComparer.Ordinal));

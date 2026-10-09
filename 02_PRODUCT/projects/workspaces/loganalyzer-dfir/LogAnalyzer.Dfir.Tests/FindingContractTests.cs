@@ -409,7 +409,7 @@ public sealed class FindingContractTests : IDisposable
 
     private (CaseWorkspace ws, InvestigationResult r) Run()
     {
-        var ws = InvestigationPipeline.NewCase(Path.Combine(_dir, "cases"), "contract");
+        var ws = InvestigationPipeline.NewCase(Path.Combine(_dir, "cases"), "contract", TestScopes.Valid());
         InvestigationPipeline.Import(ws, [TaskFile()]);
         return (ws, new InvestigationPipeline().Run(ws, CollectionProfile.Quick, collect: false));
     }
@@ -488,7 +488,7 @@ public sealed class FindingContractTests : IDisposable
         var rs = JsonDocument.Parse(File.ReadAllText(Path.Combine(ws.Root, "Analysis", "run_state.json"))).RootElement;
         Assert.Equal("COMPLETED", rs.GetProperty("State").GetString());
 
-        var ws2 = InvestigationPipeline.NewCase(Path.Combine(_dir, "cases2"), "cancel");
+        var ws2 = InvestigationPipeline.NewCase(Path.Combine(_dir, "cases2"), "cancel", TestScopes.Valid());
         InvestigationPipeline.Import(ws2, [TaskFile()]);
         using var cts = new CancellationTokenSource(); cts.Cancel();
         Assert.ThrowsAny<OperationCanceledException>(() => new InvestigationPipeline().Run(ws2, CollectionProfile.Quick, false, null, cts.Token));

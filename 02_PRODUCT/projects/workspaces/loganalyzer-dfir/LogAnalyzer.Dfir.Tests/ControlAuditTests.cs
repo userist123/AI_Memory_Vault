@@ -118,7 +118,7 @@ public class ControlAuditTests
         var root = Path.Combine(Path.GetTempPath(), "la-control-" + Guid.NewGuid().ToString("N"));
         try
         {
-            var ws = CaseWorkspace.Create(root, new CaseInfo { CaseId = "CASE-CTRL", Name = "control", CreatedAtUtc = DateTimeOffset.UtcNow });
+            var ws = CaseWorkspace.Create(root, new CaseInfo { CaseId = "CASE-CTRL", Name = "control", CreatedAtUtc = DateTimeOffset.UtcNow , Scope = TestScopes.Valid() });
             var (json, pdf) = ControlReportPdf.SaveToCase(ControlEvaluator.Evaluate(IsolatedStation()), ws, "inspector test", "control anual");
             Assert.True(File.Exists(json));
             Assert.StartsWith("%PDF-", System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(pdf), 0, 5));

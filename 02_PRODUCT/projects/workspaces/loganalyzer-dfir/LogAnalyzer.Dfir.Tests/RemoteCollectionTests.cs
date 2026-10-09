@@ -32,7 +32,7 @@ public sealed class RemoteCollectionTests : IDisposable
         Directory.Delete(_root, true);
     }
 
-    private CaseWorkspace NewCase() => CaseWorkspace.Create(Path.Combine(_root, "case"), new CaseInfo { CaseId = "CASE-REMOTE", Name = "remote", CreatedAtUtc = DateTimeOffset.UtcNow });
+    private CaseWorkspace NewCase() => CaseWorkspace.Create(Path.Combine(_root, "case"), new CaseInfo { CaseId = "CASE-REMOTE", Name = "remote", CreatedAtUtc = DateTimeOffset.UtcNow , Scope = TestScopes.Valid() });
 
     /// <summary>Windows PowerShell 5.1 as an operator starts it. PSModulePath is dropped so a PowerShell 7 parent (the CI
     /// runner's default shell) cannot hand it PS7-only module paths.</summary>
@@ -116,7 +116,7 @@ public sealed class RemoteCollectionTests : IDisposable
         Assert.Contains(forged, p => p.Contains("autorizat pentru"));
 
         // A package from another case (its request is not here) is not imported.
-        var other = CaseWorkspace.Create(Path.Combine(_root, "other"), new CaseInfo { CaseId = "CASE-OTHER", Name = "o", CreatedAtUtc = DateTimeOffset.UtcNow });
+        var other = CaseWorkspace.Create(Path.Combine(_root, "other"), new CaseInfo { CaseId = "CASE-OTHER", Name = "o", CreatedAtUtc = DateTimeOffset.UtcNow , Scope = TestScopes.Valid() });
         Assert.Contains(RemoteCollection.Verify(other, pkg).Problems, p => p.Contains("nu a fost autorizată aici"));
     }
 
