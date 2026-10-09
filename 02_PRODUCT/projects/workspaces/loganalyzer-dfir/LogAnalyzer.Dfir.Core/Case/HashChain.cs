@@ -25,43 +25,73 @@ public sealed class HashChain(string path)
     public static readonly string Genesis = new('0', 64);
 
     private readonly object _gate = new();
-    private long _seq;
-    private string _head = Genesis;
-    private bool _loaded;
 
     public string Path { get; } = path;
 
-    /// <summary>Appends <paramref name="entry"/> (any serializable object) with chain fields. Caller serializes writers across instances.</summary>
+    /// <summary>
+    /// Appends <paramref name="entry"/> (any serializable object) with chain fields. The head is re-read from the file under an
+    /// exclusive lock on every append, so several workspaces (or processes) writing the same case continue one chain instead of forking it.
+    /// </summary>
     public void Append(object entry)
     {
         lock (_gate)
         {
-            if (!_loaded) Load();
+            using var fs = OpenExclusive();
+            var (seq, head) = ReadHead(fs);
             var obj = JsonSerializer.SerializeToNode(entry, Json.Line)!.AsObject();
-            obj["seq"] = _seq + 1;
-            obj["prevHash"] = _head;
-            var hash = HashOf(obj);
-            obj["hash"] = hash;
-            File.AppendAllText(Path, obj.ToJsonString(Json.Line) + "\n");
-            _seq++; _head = hash;
+            obj["seq"] = seq + 1;
+            obj["prevHash"] = head;
+            obj["hash"] = HashOf(obj);
+            var bytes = Encoding.UTF8.GetBytes(obj.ToJsonString(Json.Line) + "\n");
+            fs.Seek(0, SeekOrigin.End);
+            fs.Write(bytes);
+            fs.Flush(true);
         }
     }
 
-    private void Load()
+    private FileStream OpenExclusive()
     {
-        _loaded = true;
-        if (!File.Exists(Path)) return;
-        foreach (var line in File.ReadLines(Path).Reverse())
+        for (int attempt = 0; ; attempt++)
         {
-            if (string.IsNullOrWhiteSpace(line)) continue;
-            try
-            {
-                var o = JsonNode.Parse(line)!.AsObject();
-                if (o["seq"] is { } s && o["hash"] is { } h) { _seq = s.GetValue<long>(); _head = h.GetValue<string>(); }
-            }
-            catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { /* Verify() reports it; start a fresh chain */ }
-            return;
+            try { return new FileStream(Path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None); }
+            catch (IOException) when (attempt < 100) { Thread.Sleep(20); }   // another writer holds the file; wait up to ~2 s
         }
+    }
+
+    /// <summary>Seq and hash of the last chained line; a legacy or unreadable last line starts a fresh chain (Verify() reports it).</summary>
+    private static (long Seq, string Head) ReadHead(FileStream fs)
+    {
+        var last = LastNonEmptyLine(fs);
+        if (last is null) return (0, Genesis);
+        try
+        {
+            var o = JsonNode.Parse(last)!.AsObject();
+            if (o["seq"] is { } s && o["hash"] is { } h) return (s.GetValue<long>(), h.GetValue<string>());
+        }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { }
+        return (0, Genesis);
+    }
+
+    private static string? LastNonEmptyLine(FileStream fs)
+    {
+        long end = fs.Length;
+        if (end == 0) return null;
+        var buffer = new List<byte>();
+        var chunk = new byte[4096];
+        long pos = end;
+        while (pos > 0)
+        {
+            int n = (int)Math.Min(chunk.Length, pos);
+            pos -= n;
+            fs.Seek(pos, SeekOrigin.Begin);
+            fs.ReadExactly(chunk, 0, n);
+            buffer.InsertRange(0, chunk.Take(n));
+            var text = Encoding.UTF8.GetString(buffer.ToArray()).TrimEnd('\r', '\n', ' ', '\t');
+            int nl = text.LastIndexOf('\n');
+            if (nl >= 0) return text[(nl + 1)..].TrimEnd('\r');
+            if (pos == 0) return text.Length > 0 ? text : null;
+        }
+        return null;
     }
 
     public ChainVerification Verify()

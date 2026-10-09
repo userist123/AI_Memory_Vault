@@ -41,6 +41,9 @@ public sealed class CaseScope
     public string Approver { get; init; } = "";
     public LegalBasis LegalBasis { get; init; }
     public NetworkCategory Network { get; init; }
+    /// <summary>True when the scope was filled with placeholder values because the operator has not entered one yet (e.g. the LIVE case).
+    /// A provisional scope lets work start but is never reported as confirmed.</summary>
+    public bool Provisional { get; init; }
     public ClassificationLevel Classification { get; init; }
     /// <summary>Free note, e.g. that the values are provisional defaults which must be confirmed.</summary>
     public string Notes { get; init; } = "";

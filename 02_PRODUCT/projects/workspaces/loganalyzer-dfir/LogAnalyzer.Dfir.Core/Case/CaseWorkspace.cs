@@ -36,11 +36,13 @@ public sealed class CaseWorkspace
         Zone = TryZone(info.Timezone);
         _custodyChain = new HashChain(Path.Combine(Root, "Logs", "chain_of_custody.jsonl"));
         _auditChain = new HashChain(Path.Combine(Root, "Logs", "audit_chain.jsonl"));
-        ScopeNote = info.Scope.MissingFields().Count == 0 ? null : "scop incomplet (caz vechi)";
+        ScopeNote = info.Scope.MissingFields().Count > 0 ? "scop incomplet (caz vechi)"
+                  : info.Scope.Provisional ? "scop provizoriu, neconfirmat de operator: aprobatorul, perioada și categoria sistemului trebuie confirmate"
+                  : null;
         _evidenceCounter = Json.ReadLines<EvidenceItem>(EvidenceIndexPath).Count();
     }
 
-    /// <summary>Set when the case has no complete scope (a case created before WP3): "scop incomplet (caz vechi)".</summary>
+    /// <summary>Set when the case has no complete scope (a case created before WP3: "scop incomplet (caz vechi)") or only a provisional one.</summary>
     public string? ScopeNote { get; }
 
     /// <summary>Who collects, from which machine, which source system and removable medium. Unknown parts are written as "necunoscut".</summary>
@@ -59,6 +61,7 @@ public sealed class CaseWorkspace
         Json.Write(Path.Combine(root, "case.json"), info);
         var ws = new CaseWorkspace(root, info);
         ws.Audit("case.created", $"name={info.Name} host={info.Host}");
+        if (info.Scope.Provisional) ws.Audit("case.scope_provisional", ws.ScopeNote!);
         return ws;
     }
 
@@ -67,7 +70,7 @@ public sealed class CaseWorkspace
         var info = Json.Read<CaseInfo>(Path.Combine(root, "case.json"));
         var ws = new CaseWorkspace(root, info);
         ws.Audit("case.opened", "");
-        if (ws.ScopeNote is { } note) ws.Audit("case.scope_incomplete", note);
+        if (ws.ScopeNote is { } note) ws.Audit(info.Scope.Provisional ? "case.scope_provisional" : "case.scope_incomplete", note);
         if (ws.RetentionWarning(DateTimeOffset.UtcNow) is { } warn) ws.Audit("case.retention_exceeded", warn);
         return ws;
     }

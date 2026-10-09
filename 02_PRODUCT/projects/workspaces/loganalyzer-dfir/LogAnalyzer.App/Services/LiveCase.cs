@@ -35,6 +35,7 @@ namespace LogAnalyzer.UI.Services
                 Network = NetworkCategory.AirGappedNetwork,
                 Classification = ClassificationLevel.Classified,
                 Notes = "scop provizoriu: categoria sistemului, aprobatorul și perioada trebuie confirmate de operator",
+                Provisional = true,
             };
         }
 

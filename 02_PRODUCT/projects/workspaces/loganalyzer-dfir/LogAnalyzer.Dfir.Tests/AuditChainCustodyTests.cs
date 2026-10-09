@@ -71,6 +71,19 @@ public sealed class AuditChainCustodyTests : IDisposable
         Assert.Equal(ChainStatus.Valid, r.Audit.Status);
     }
 
+    [Fact]
+    public void Two_open_workspaces_on_the_same_case_interleave_without_forking_the_chain()
+    {
+        // e.g. the investigation pipeline and a later Open of the same case folder, both alive: each append must
+        // continue from what is on disk, not from a head cached when the first instance was created.
+        var a = NewCase();
+        var b = CaseWorkspace.Open(a.Root);
+        Add(a, "1.txt"); Add(b, "2.txt"); Add(a, "3.txt"); Add(b, "4.txt");
+        var r = a.VerifyChains();
+        Assert.Equal(ChainStatus.Valid, r.Custody.Status);
+        Assert.Equal(ChainStatus.Valid, r.Audit.Status);
+    }
+
     private static void Rewrite(string path, Func<List<string>, List<string>> f) => File.WriteAllLines(path, f(File.ReadAllLines(path).ToList()));
 
     [Fact]
@@ -370,6 +383,24 @@ public sealed class AuditChainCustodyTests : IDisposable
         Assert.Equal(["TESTHOST"], back.SystemsInScope);
         Assert.Empty(back.MissingFields());
         Assert.Null(CaseWorkspace.Open(ws.Root).ScopeNote);
+    }
+
+    [Fact]
+    public void Provisional_scope_is_never_reported_as_confirmed_and_is_audited_on_create_and_open()
+    {
+        var root = Path.Combine(_root, "prov");
+        var scope = TestScopes.Valid();
+        var info = new CaseInfo { CaseId = "CASE-P", Name = "prov", CreatedAtUtc = DateTimeOffset.UtcNow, Scope = new CaseScope
+        {
+            Purpose = scope.Purpose, PeriodFromUtc = scope.PeriodFromUtc, PeriodToUtc = scope.PeriodToUtc, SystemsInScope = scope.SystemsInScope,
+            Approver = scope.Approver, LegalBasis = scope.LegalBasis, Network = scope.Network, Classification = scope.Classification, Provisional = true,
+        } };
+        var ws = CaseWorkspace.Create(root, info);
+        Assert.Contains("scop provizoriu", ws.ScopeNote);
+        Assert.Contains("case.scope_provisional", File.ReadAllText(ws.AppAuditLogPath));
+        var reopened = CaseWorkspace.Open(root);
+        Assert.True(reopened.Info.Scope.Provisional);
+        Assert.Contains("scop provizoriu", reopened.ScopeNote);
     }
 
     [Fact]
