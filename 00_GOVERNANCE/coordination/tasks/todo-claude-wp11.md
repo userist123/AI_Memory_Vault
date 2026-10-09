@@ -4,7 +4,7 @@
   - Covers rows 26, 36, 37, 39, 43, 47 and 83 of `docs/dfir/LESSONS_LEARNED_MAPPING.md`; its WP11 line has the summary.
   - The queue item is split: WP11-T1 (this file) → WP14a (media register, users/clearances, USB/CD/NIC/Wi-Fi/BT, air-gap
     category) → WP14b (combined sequences).
-- **Branch:** `loganalyzer/wp11-t1-rules` from main @ `4627a6b0`. Start ONLY after WP15b (`loganalyzer/wp15b-policy-timeline`)
+- **Branch:** `loganalyzer/wp11-t1-rules`; main (with WP15b #244, `b02c4a43`) is merged in. Ready to implement.
   is merged. Both touch `Correlation.cs` and `RuleContracts.cs`, so merge main first.
 
 Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
@@ -80,7 +80,7 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 - 2026-10-09T08:30Z claude-orchestrator: spec written; branch created.
 
 ## Next
-- Wait for WP15b to merge, merge main into this branch, then implement 1-9.
+- Implement 1-9 (main with WP15b already merged in).
 
 ## Blockers
 - None.
