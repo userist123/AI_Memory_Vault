@@ -301,4 +301,24 @@ public class Wp6aFindingCardTests
         foreach (var x in a) Assert.Contains("_" + x.AccessKey, x.AccessText, StringComparison.OrdinalIgnoreCase);
         Assert.All(a, x => Assert.False(string.IsNullOrWhiteSpace(x.HelpText)));
     }
+
+    [Fact]
+    public void Verification_check_lines_name_the_check_and_say_the_outcome_in_romanian()
+    {
+        var v = new LogAnalyzer.Verification.FindingVerdict
+        {
+            Checks =
+            [
+                LogAnalyzer.Verification.CheckResult.Pass(LogAnalyzer.Verification.CheckIds.Provenance, "hash-uri intacte"),
+                LogAnalyzer.Verification.CheckResult.Fail(LogAnalyzer.Verification.CheckIds.Contradictions, StandardState.Contradicted, "o probă contrazice"),
+                LogAnalyzer.Verification.CheckResult.Unknown(LogAnalyzer.Verification.CheckIds.Temporal, "ora nu este cunoscută"),
+                LogAnalyzer.Verification.CheckResult.NotApplicable(LogAnalyzer.Verification.CheckIds.Graph, "fără graf"),
+                LogAnalyzer.Verification.CheckResult.Info(LogAnalyzer.Verification.CheckIds.Sufficiency, "două tipuri de artefact"),
+            ],
+        };
+        Assert.Equal(
+            ["PROVENANCE: trecut — hash-uri intacte", "CONTRADICTIONS: eșuat — o probă contrazice", "TEMPORAL: necunoscut — ora nu este cunoscută",
+             "GRAPH: nu se aplică — fără graf", "SUFFICIENCY: informativ — două tipuri de artefact"],
+            v.CheckLines());
+    }
 }

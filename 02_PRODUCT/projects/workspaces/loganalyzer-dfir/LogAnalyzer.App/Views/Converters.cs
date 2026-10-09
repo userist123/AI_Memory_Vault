@@ -38,4 +38,15 @@ namespace LogAnalyzer.UI.Views
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }
+
+    /// <summary>Severity as icon + Romanian word („▲ Ridicată”), so it is never only a colour or an English enum name.</summary>
+    public sealed class SeverityTextConverter : IValueConverter
+    {
+        public static readonly SeverityTextConverter Instance = new();
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value is LogAnalyzer.Dfir.Model.Severity s ? LogAnalyzer.Dfir.Presentation.SeverityLabels.Icon(s) + " " + LogAnalyzer.Dfir.Presentation.SeverityLabels.Romanian(s) : "";
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+    }
 }

@@ -52,6 +52,18 @@ public sealed class FindingVerdict
     public List<string> MissingEvidence { get; set; } = [];
     /// <summary>Artifact kinds the supporting evidence resolves to (e.g. "Prefetch", "EventLog:Security 4688").</summary>
     public List<string> EvidenceKinds { get; set; } = [];
+
+    /// <summary>One line per check for the finding card („Verifică”): the stable check id, the outcome in Romanian, and the check's own reason.</summary>
+    public IReadOnlyList<string> CheckLines() => Checks.Select(c => $"{c.CheckId}: {OutcomeText(c.Outcome)} — {c.Reason}").ToList();
+
+    public static string OutcomeText(CheckOutcome o) => o switch
+    {
+        CheckOutcome.Pass => "trecut",
+        CheckOutcome.Fail => "eșuat",
+        CheckOutcome.Unknown => "necunoscut",
+        CheckOutcome.NotApplicable => "nu se aplică",
+        _ => "informativ",
+    };
 }
 
 /// <summary>The verdict on one statement of the AI analysis (Analysis/ai_reasoning.json). Never VERIFIED.</summary>

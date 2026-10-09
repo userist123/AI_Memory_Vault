@@ -1,4 +1,7 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
+using LogAnalyzer.Dfir.Presentation;
 using LogAnalyzer.Dfir.Language;
 using Xunit;
 
@@ -58,5 +61,101 @@ public class Wp6aXamlTests
         var home = Read("Views", "HomeView.xaml");
         Assert.Contains("{Binding HumanFamily}", home);
         Assert.Contains("FamilyTooltip", home);
+    }
+
+    // ---- U18 accessibility baseline ---------------------------------------------------------------------------------------------
+
+    /// <summary>The XAML files the baseline covers: the investigation page, Home and the new controls.</summary>
+    private static readonly string[][] Scope =
+    [
+        ["Views", "InvestigationView.xaml"], ["Views", "HomeView.xaml"],
+        ["Views", "Controls", "FindingCard.xaml"], ["Views", "Controls", "KnowThinkDontKnowPanel.xaml"], ["Views", "Controls", "SeverityBadge.xaml"],
+    ];
+
+    private static readonly HashSet<string> Interactive = ["Button", "ToggleButton", "CheckBox", "RadioButton", "TextBox", "ComboBox", "DatePicker", "DataGrid", "ListBox", "ListView", "TabControl", "Expander", "Slider"];
+    private static readonly HashSet<string> NamedByOwnText = ["Button", "ToggleButton", "CheckBox", "RadioButton"];
+
+    private static bool Has(XElement e, string attr) => e.Attributes().Any(a => a.Name.LocalName == attr && a.Value.Trim().Length > 0);
+    private static bool IsLiteral(XElement e, string attr) => e.Attributes().Any(a => a.Name.LocalName == attr && a.Value.Trim().Length > 0 && !a.Value.TrimStart().StartsWith("{"));
+
+    [Fact]
+    public void Every_interactive_element_of_the_baseline_pages_has_an_automation_name()
+    {
+        var missing = new List<string>();
+        foreach (var rel in Scope)
+        {
+            var doc = XDocument.Parse(Read(rel));
+            foreach (var e in doc.Descendants().Where(e => Interactive.Contains(e.Name.LocalName)))
+            {
+                bool named = Has(e, "AutomationProperties.Name") || Has(e, "AutomationProperties.LabeledBy")
+                             || (NamedByOwnText.Contains(e.Name.LocalName) && IsLiteral(e, "Content"))
+                             || (e.Name.LocalName == "Expander" && IsLiteral(e, "Header"));
+                if (!named) missing.Add($"{rel[^1]}: <{e.Name.LocalName}> {string.Join(" ", e.Attributes().Take(3).Select(a => a.Name.LocalName + "=" + a.Value))}");
+            }
+        }
+        Assert.True(missing.Count == 0, "Elements without an automation name:\n" + string.Join("\n", missing));
+    }
+
+    [Fact]
+    public void Every_data_grid_column_of_the_baseline_pages_has_a_header()
+    {
+        var missing = new List<string>();
+        foreach (var rel in Scope)
+            foreach (var c in XDocument.Parse(Read(rel)).Descendants().Where(e => e.Name.LocalName.StartsWith("DataGrid") && e.Name.LocalName.EndsWith("Column") && !e.Name.LocalName.Contains('.')))
+                if (!Has(c, "Header")) missing.Add($"{rel[^1]}: {c.Name.LocalName} {c.Attributes().FirstOrDefault(a => a.Name.LocalName == "Binding")?.Value}");
+        Assert.True(missing.Count == 0, "Columns without a header:\n" + string.Join("\n", missing));
+    }
+
+    [Fact]
+    public void The_baseline_pages_have_no_fixed_tiny_fonts()
+    {
+        var tiny = new List<string>();
+        foreach (var rel in Scope)
+            foreach (Match m in Regex.Matches(Read(rel), @"FontSize=""([0-9.]+)"""))
+                if (double.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture) < 12) tiny.Add($"{rel[^1]}: FontSize={m.Groups[1].Value}");
+        Assert.True(tiny.Count == 0, "Fonts below 12:\n" + string.Join("\n", tiny));
+        Assert.DoesNotContain("FontSize = ", Read("Views", "Controls", "SeverityBadge.xaml.cs"));
+    }
+
+    // ---- U4 / U8 the new controls ---------------------------------------------------------------------------------------------
+
+    [Fact]
+    public void The_finding_card_has_the_four_actions_with_their_access_keys_and_help_text()
+    {
+        var xaml = Read("Views", "Controls", "FindingCard.xaml");
+        foreach (var a in FindingCardActions.All)
+            Assert.Matches($@"Content=""{Regex.Escape(a.AccessText)}""[^>]*AutomationProperties\.HelpText=""", xaml);
+        Assert.Equal(4, Regex.Matches(xaml, @"<Button\b").Count);
+    }
+
+    [Fact]
+    public void The_finding_card_states_severity_state_and_verification_as_text()
+    {
+        var xaml = Read("Views", "Controls", "FindingCard.xaml");
+        foreach (var path in new[] { "Card.Title", "Card.HumanSummary", "Card.SeverityText", "Card.SeverityIcon", "Card.StateLabel", "Card.VerificationLabel" })
+            Assert.Contains("{Binding " + path, xaml);
+        Assert.Contains("{views:Term provenance", xaml);
+        Assert.Contains("{views:Term verification", xaml);
+        Assert.Contains("SeverityLabels.Icon", Read("Views", "Controls", "SeverityBadge.xaml.cs"));
+    }
+
+    [Fact]
+    public void The_know_think_dont_know_control_uses_the_three_documented_headings_and_marks_each_column_with_a_symbol()
+    {
+        var xaml = Read("Views", "Controls", "KnowThinkDontKnowPanel.xaml");
+        foreach (var h in new[] { KnowThinkDontKnow.KnowHeading, KnowThinkDontKnow.ThinkHeading, KnowThinkDontKnow.DontKnowHeading }) Assert.Contains(h, xaml);
+        foreach (var sym in new[] { "✓", "⚠", "?" }) Assert.Contains(sym, xaml);
+        foreach (var path in new[] { "Know", "Think", "DontKnow" }) Assert.Contains("ItemsSource=\"{Binding " + path + "}\"", xaml);
+    }
+
+    [Fact]
+    public void The_findings_grid_stays_and_the_card_is_its_selected_item_panel()
+    {
+        var inv = Read("Views", "InvestigationView.xaml");
+        Assert.Contains("ItemsSource=\"{Binding Findings}\"", inv);
+        Assert.Contains("SelectedItem=\"{Binding SelectedFinding}\"", inv);
+        Assert.Contains("<ctrl:FindingCard DataContext=\"{Binding SelectedCard}\"", inv);
+        foreach (var header in new[] { "Severitate", "Clasificare", "Stare", "Verificare", "Prima (UTC)", "Regulă", "Constatare", "Detalii" })
+            Assert.Contains($"Header=\"{header}\"", inv);
     }
 }

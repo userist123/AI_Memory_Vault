@@ -107,7 +107,7 @@
                 <StackPanel>
                     <TextBlock Text="Acoperirea surselor" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                     <TextBlock Text="{Binding CoverageLine}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,8"/>
-                    <DataGrid ItemsSource="{Binding CoverageRows}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="420">
+                    <DataGrid AutomationProperties.Name="Acoperirea surselor pe familii de artefacte" ItemsSource="{Binding CoverageRows}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="420">
                         <DataGrid.Columns>
                             <DataGridTemplateColumn Header="Familie de artefacte" Width="2*">
                                 <DataGridTemplateColumn.CellTemplate>
@@ -130,9 +130,9 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <DockPanel Margin="0,2">
-                                    <Button DockPanel.Dock="Right" Content="Elimină din listă" Style="{StaticResource OutlineButtonStyle}" Margin="8,0,0,0"
+                                    <Button DockPanel.Dock="Right" Content="Elimină din listă" AutomationProperties.Name="{Binding Entry.Title, StringFormat='Elimină din listă cazul {0}'}" Style="{StaticResource OutlineButtonStyle}" Margin="8,0,0,0"
                                             Command="{Binding DataContext.ForgetRecentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                                    <Button DockPanel.Dock="Right" Content="Deschide" Style="{StaticResource OutlineButtonStyle}"
+                                    <Button DockPanel.Dock="Right" Content="Deschide" AutomationProperties.Name="{Binding Entry.Title, StringFormat='Deschide cazul {0}'}" Style="{StaticResource OutlineButtonStyle}"
                                             Command="{Binding DataContext.OpenRecentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
                                     <TextBlock Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
                                         <Run Text="{Binding Entry.Title, Mode=OneWay}" FontWeight="SemiBold"/>

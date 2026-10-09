@@ -33,29 +33,29 @@
                 <StackPanel Grid.Column="0">
                     <WrapPanel Margin="0,0,0,6">
                         <TextBlock Text="Nume caz:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBox Text="{Binding CaseName, UpdateSourceTrigger=PropertyChanged}" Width="280" Margin="0,0,10,0"/>
+                        <TextBox AutomationProperties.Name="Nume caz" Text="{Binding CaseName, UpdateSourceTrigger=PropertyChanged}" Width="280" Margin="0,0,10,0"/>
                         <TextBlock Text="Profil:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <ComboBox ItemsSource="{Binding Profiles}" SelectedIndex="{Binding ProfileIndex}" Width="230"/>
+                        <ComboBox AutomationProperties.Name="Profil de colectare" ItemsSource="{Binding Profiles}" SelectedIndex="{Binding ProfileIndex}" Width="230"/>
                     </WrapPanel>
                     <TextBlock Text="Scopul cazului (obligatoriu): de ce, pentru ce perioadă, pe ce sisteme, cine aprobă" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                     <WrapPanel Margin="0,0,0,6">
                         <TextBlock Text="Scop:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBox Text="{Binding ScopePurpose, UpdateSourceTrigger=PropertyChanged}" Width="260" Margin="0,0,10,0"/>
+                        <TextBox AutomationProperties.Name="Scopul cazului" Text="{Binding ScopePurpose, UpdateSourceTrigger=PropertyChanged}" Width="260" Margin="0,0,10,0"/>
                         <TextBlock Text="Aprobator:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBox Text="{Binding ScopeApprover, UpdateSourceTrigger=PropertyChanged}" Width="160" Margin="0,0,10,0"/>
+                        <TextBox AutomationProperties.Name="Aprobator" Text="{Binding ScopeApprover, UpdateSourceTrigger=PropertyChanged}" Width="160" Margin="0,0,10,0"/>
                         <TextBlock Text="Sisteme în scop:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBox Text="{Binding ScopeSystems, UpdateSourceTrigger=PropertyChanged}" Width="220" Margin="0,0,10,0"/>
+                        <TextBox AutomationProperties.Name="Sisteme în scop" Text="{Binding ScopeSystems, UpdateSourceTrigger=PropertyChanged}" Width="220" Margin="0,0,10,0"/>
                     </WrapPanel>
                     <WrapPanel Margin="0,0,0,6">
                         <TextBlock Text="Perioada de la:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <DatePicker SelectedDate="{Binding ScopeFrom}" Width="130" Margin="0,0,10,0"/>
+                        <DatePicker AutomationProperties.Name="Perioada de la" SelectedDate="{Binding ScopeFrom}" Width="130" Margin="0,0,10,0"/>
                         <TextBlock Text="până la:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <DatePicker SelectedDate="{Binding ScopeTo}" Width="130" Margin="0,0,10,0"/>
+                        <DatePicker AutomationProperties.Name="Perioada până la" SelectedDate="{Binding ScopeTo}" Width="130" Margin="0,0,10,0"/>
                         <TextBlock Text="Temei:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <ComboBox ItemsSource="{Binding LegalBases}" SelectedIndex="{Binding LegalBasisIndex}" Width="100" Margin="0,0,10,0"/>
+                        <ComboBox AutomationProperties.Name="Temei legal" ItemsSource="{Binding LegalBases}" SelectedIndex="{Binding LegalBasisIndex}" Width="100" Margin="0,0,10,0"/>
                         <TextBlock Text="Sistem:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <ComboBox ItemsSource="{Binding NetworkCategories}" SelectedIndex="{Binding NetworkIndex}" Width="140" Margin="0,0,6,0"/>
-                        <ComboBox ItemsSource="{Binding ClassificationLevels}" SelectedIndex="{Binding ClassificationIndex}" Width="110"/>
+                        <ComboBox AutomationProperties.Name="Categoria sistemului" ItemsSource="{Binding NetworkCategories}" SelectedIndex="{Binding NetworkIndex}" Width="140" Margin="0,0,6,0"/>
+                        <ComboBox AutomationProperties.Name="Nivel de clasificare" ItemsSource="{Binding ClassificationLevels}" SelectedIndex="{Binding ClassificationIndex}" Width="110"/>
                     </WrapPanel>
                     <CheckBox Content="Colectează de pe această stație (jurnale, Prefetch, SRUM, stare live)" IsChecked="{Binding CollectFromThisStation}" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,6"/>
                     <WrapPanel>
@@ -67,18 +67,18 @@
                     </WrapPanel>
                     <TextBlock Text="{Binding ImportFiles.Count, StringFormat='{}{0} fișiere de importat'}" Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,0"/>
                 </StackPanel>
-                <TextBox Grid.Column="2" Text="{Binding Log, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Height="120" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
-                         FontFamily="Consolas" FontSize="11" Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="8"/>
+                <TextBox AutomationProperties.Name="Jurnalul investigației" Grid.Column="2" Text="{Binding Log, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Height="120" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                         FontFamily="Consolas" FontSize="12" Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="8"/>
             </Grid>
         </Border>
 
-        <TabControl Grid.Row="2" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
+        <TabControl AutomationProperties.Name="Rezultatele investigației" Grid.Row="2" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
             <TabItem Header="Lanțul incidentului" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <TextBlock DockPanel.Dock="Top" Text="{Binding Summary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
                     <TextBlock DockPanel.Dock="Top" Text="{Binding IntegrityLine}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
                     <TextBlock DockPanel.Dock="Top" Text="{Binding VerificationLine}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                    <TextBox DockPanel.Dock="Top" Text="{Binding ClosureText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" FontFamily="{StaticResource CodeFontFamily}" Margin="0,0,0,8">
+                    <TextBox AutomationProperties.Name="Text de închidere a cazului" DockPanel.Dock="Top" Text="{Binding ClosureText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" FontFamily="{StaticResource CodeFontFamily}" Margin="0,0,0,8">
                         <TextBox.Style>
                             <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
                                 <Style.Triggers>
@@ -89,32 +89,58 @@
                             </Style>
                         </TextBox.Style>
                     </TextBox>
-                    <TextBox Text="{Binding Chains, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                    <TextBox AutomationProperties.Name="Lanțurile incidentului" Text="{Binding Chains, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
                              Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="12" FontSize="12.5"/>
                 </DockPanel>
             </TabItem>
             <TabItem Header="Constatări" Style="{StaticResource InspectorTabItemStyle}">
-                <DataGrid Margin="8" ItemsSource="{Binding Findings}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="85"/>
-                        <DataGridTextColumn Header="Clasificare" Binding="{Binding Classification, Converter={x:Static local:ClassificationWordingConverter.Instance}}" Width="100"/>
-                        <DataGridTextColumn Header="Stare" Binding="{Binding Status, Converter={x:Static local:StandardStateLabelConverter.Instance}}" Width="110"/>
-                        <DataGridTextColumn Header="Prima (UTC)" Binding="{Binding FirstSeenUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="120"/>
-                        <DataGridTextColumn Header="Regulă" Binding="{Binding RuleId}" Width="170"/>
-                        <DataGridTextColumn Header="Constatare" Binding="{Binding Title}" Width="2*"/>
-                        <DataGridTextColumn Header="Detalii" Binding="{Binding Description}" Width="3*"/>
-                    </DataGrid.Columns>
-                </DataGrid>
+                <Grid Margin="8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="2*" MinHeight="120"/>
+                        <RowDefinition Height="8"/>
+                        <RowDefinition Height="3*" MinHeight="120"/>
+                    </Grid.RowDefinitions>
+                    <!-- The grid stays; the card below is the panel of the selected finding (WP6a, U4). -->
+                    <DataGrid AutomationProperties.Name="Constatări" Grid.Row="0" ItemsSource="{Binding Findings}" SelectedItem="{Binding SelectedFinding}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Single">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static local:SeverityTextConverter.Instance}}" Width="110"/>
+                            <DataGridTextColumn Header="Clasificare" Binding="{Binding Classification, Converter={x:Static local:ClassificationWordingConverter.Instance}}" Width="100"/>
+                            <DataGridTextColumn Header="Stare" Binding="{Binding Status, Converter={x:Static local:StandardStateLabelConverter.Instance}}" Width="130"/>
+                            <DataGridTextColumn Header="Verificare" Binding="{Binding Verification.State, Converter={x:Static local:StandardStateLabelConverter.Instance}}" Width="120"/>
+                            <DataGridTextColumn Header="Prima (UTC)" Binding="{Binding FirstSeenUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="120"/>
+                            <DataGridTextColumn Header="Regulă" Binding="{Binding RuleId}" Width="170"/>
+                            <DataGridTextColumn Header="Constatare" Binding="{Binding Title}" Width="2*"/>
+                            <DataGridTextColumn Header="Detalii" Binding="{Binding Description}" Width="3*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <GridSplitter Grid.Row="1" Height="8" HorizontalAlignment="Stretch" AutomationProperties.Name="Separator între lista de constatări și fișa constatării" Focusable="False"/>
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock Text="Alegeți o constatare din listă: fișa ei arată de ce a apărut, dovezile, verificarea și ce trebuie făcut. Selectarea nu modifică nimic în caz."
+                                       TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="4">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedCard}" Value="{x:Null}"><Setter Property="Visibility" Value="Visible"/></DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <ctrl:FindingCard DataContext="{Binding SelectedCard}"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
             </TabItem>
             <TabItem Header="Integritate air-gap" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,6">
                         <TextBlock Text="Zona sistemului analizat (pentru compararea cu registrul de medii):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBox Text="{Binding SystemZone, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                        <TextBox AutomationProperties.Name="Zona sistemului analizat" Text="{Binding SystemZone, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
                     </WrapPanel>
                     <TextBlock DockPanel.Dock="Top" Text="{Binding AirGapSummary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,4"/>
                     <TextBlock DockPanel.Dock="Top" Text="{Binding RegisterLine}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
-                    <DataGrid ItemsSource="{Binding AirGapFindings}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                    <DataGrid AutomationProperties.Name="Constatări de integritate air-gap" ItemsSource="{Binding AirGapFindings}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="80"/>
                             <DataGridTextColumn Header="Subcategorie" Binding="{Binding AirGap.Subcategory}" Width="110"/>
@@ -142,7 +168,7 @@
                         <RowDefinition Height="3*"/>
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Text="{Binding SequenceSummary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
-                    <DataGrid Grid.Row="1" ItemsSource="{Binding SequenceFindings}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="0,0,0,6">
+                    <DataGrid AutomationProperties.Name="Constatări de tip secvență" Grid.Row="1" ItemsSource="{Binding SequenceFindings}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="0,0,0,6">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="80"/>
                             <DataGridTextColumn Header="Regulă" Binding="{Binding RuleId}" Width="200"/>
@@ -151,7 +177,7 @@
                             <DataGridTextColumn Header="Constatare" Binding="{Binding Title}" Width="3*"/>
                         </DataGrid.Columns>
                     </DataGrid>
-                    <TextBox Grid.Row="2" Text="{Binding SequenceSteps, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                    <TextBox AutomationProperties.Name="Pașii secvențelor" Grid.Row="2" Text="{Binding SequenceSteps, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
                              Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="12" FontSize="12.5"/>
                 </Grid>
             </TabItem>
@@ -159,9 +185,9 @@
                 <DockPanel Margin="8">
                     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
                         <TextBlock Text="Filtru (text, proces, cale, utilizator, IP, ID eveniment):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <TextBox Text="{Binding TimelineFilter, UpdateSourceTrigger=PropertyChanged, Delay=400}"/>
+                        <TextBox AutomationProperties.Name="Filtru cronologie" Text="{Binding TimelineFilter, UpdateSourceTrigger=PropertyChanged, Delay=400}"/>
                     </DockPanel>
-                    <DataGrid ItemsSource="{Binding Timeline}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" EnableRowVirtualization="True">
+                    <DataGrid AutomationProperties.Name="Cronologie" ItemsSource="{Binding Timeline}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" EnableRowVirtualization="True">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding Time.Utc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140"/>
                             <DataGridTextColumn Header="Sursă" Binding="{Binding Source}" Width="1.3*"/>
@@ -178,25 +204,25 @@
                 <DockPanel Margin="8">
                     <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,6">
                         <TextBlock Text="Caută entitate:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBox Text="{Binding GraphSearch, UpdateSourceTrigger=PropertyChanged, Delay=300}" Width="220" Margin="0,0,16,0"/>
+                        <TextBox AutomationProperties.Name="Caută entitate" Text="{Binding GraphSearch, UpdateSourceTrigger=PropertyChanged, Delay=300}" Width="220" Margin="0,0,16,0"/>
                         <TextBlock Text="Drum de la:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBox Text="{Binding PathFrom, UpdateSourceTrigger=PropertyChanged}" Width="170" Margin="0,0,6,0"/>
+                        <TextBox AutomationProperties.Name="Drum de la" Text="{Binding PathFrom, UpdateSourceTrigger=PropertyChanged}" Width="170" Margin="0,0,6,0"/>
                         <TextBlock Text="la:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBox Text="{Binding PathTo, UpdateSourceTrigger=PropertyChanged}" Width="170" Margin="0,0,6,0"/>
+                        <TextBox AutomationProperties.Name="Drum până la" Text="{Binding PathTo, UpdateSourceTrigger=PropertyChanged}" Width="170" Margin="0,0,6,0"/>
                         <Button Content="Arată drumul" Command="{Binding FindPathCommand}" Style="{StaticResource OutlineButtonStyle}"/>
                     </WrapPanel>
                     <TextBlock DockPanel.Dock="Top" Text="{Binding GraphStatus}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
                     <Grid>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="2*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="5*"/></Grid.ColumnDefinitions>
-                        <DataGrid Grid.Column="0" ItemsSource="{Binding GraphEntities}" SelectedItem="{Binding SelectedEntity}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                        <DataGrid AutomationProperties.Name="Entități din graf" Grid.Column="0" ItemsSource="{Binding GraphEntities}" SelectedItem="{Binding SelectedEntity}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Tip" Binding="{Binding Type}" Width="90"/>
                                 <DataGridTextColumn Header="Entitate" Binding="{Binding Label}" Width="*"/>
                             </DataGrid.Columns>
                         </DataGrid>
-                        <DataGrid Grid.Column="2" ItemsSource="{Binding GraphEdges}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                        <DataGrid AutomationProperties.Name="Legăturile entității alese" Grid.Column="2" ItemsSource="{Binding GraphEdges}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="" Binding="{Binding Direction}" Width="24"/>
+                                <DataGridTextColumn Header="Sens" Binding="{Binding Direction}" Width="50"/>
                                 <DataGridTextColumn Header="Relație" Binding="{Binding Relation}" Width="110"/>
                                 <DataGridTextColumn Header="Cu" Binding="{Binding OtherLabel}" Width="2*"/>
                                 <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding TimeUtc}" Width="150"/>
@@ -210,7 +236,7 @@
                 </DockPanel>
             </TabItem>
             <TabItem Header="Anti-forensics" Style="{StaticResource InspectorTabItemStyle}">
-                <DataGrid Margin="8" ItemsSource="{Binding AntiForensics}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                <DataGrid AutomationProperties.Name="Verificări anti-forensics" Margin="8" ItemsSource="{Binding AntiForensics}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="55"/>
                         <DataGridTextColumn Header="Tehnică" Binding="{Binding Technique}" Width="1.6*"/>
@@ -226,7 +252,7 @@
             <TabItem Header="Cronologie politici" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <TextBlock DockPanel.Dock="Top" Text="{Binding PolicyTimelineSummary}" TextWrapping="Wrap" Margin="0,0,0,6" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    <ListBox ItemsSource="{Binding PolicyTimelineLines}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox AutomationProperties.Name="Cronologia politicilor" ItemsSource="{Binding PolicyTimelineLines}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontFamily="Consolas"/>
@@ -242,9 +268,9 @@
                 <StackPanel Margin="12">
                     <WrapPanel Margin="0,0,0,8">
                         <TextBlock Text="Stația țintă (nume calculator):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBox Text="{Binding RemoteHost, UpdateSourceTrigger=PropertyChanged}" Width="160" Margin="0,0,10,0"/>
+                        <TextBox AutomationProperties.Name="Stația țintă" Text="{Binding RemoteHost, UpdateSourceTrigger=PropertyChanged}" Width="160" Margin="0,0,10,0"/>
                         <TextBlock Text="Justificare:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBox Text="{Binding RemoteJustification, UpdateSourceTrigger=PropertyChanged}" Width="320"/>
+                        <TextBox AutomationProperties.Name="Justificare" Text="{Binding RemoteJustification, UpdateSourceTrigger=PropertyChanged}" Width="320"/>
                     </WrapPanel>
                     <WrapPanel Margin="0,0,0,8">
                         <Button Content="Autorizează și generează pachetul…" Command="{Binding GenerateRemotePackageCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
@@ -254,7 +280,7 @@
                 </StackPanel>
             </TabItem>
             <TabItem Header="Goluri de probă" Style="{StaticResource InspectorTabItemStyle}">
-                <TextBox Margin="8" Text="{Binding GapsText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                <TextBox AutomationProperties.Name="Goluri de probă" Margin="8" Text="{Binding GapsText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
                          Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="12"/>
             </TabItem>
         </TabControl>
