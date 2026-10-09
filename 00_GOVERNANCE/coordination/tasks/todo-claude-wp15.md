@@ -84,9 +84,11 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 - spec 6 done (ReportSeal/ReportFooter in Investigation/Control/Checks PDFs, manifest ScopeNote, CaseClosure.Close) and the Core of spec 5 (CaseWorkspace.ConfirmScope -> case.scope_confirmed, ScopeNote computed). Dfir.Tests: 48 failed = baseline.
 - spec 5 WPF done (ScopeForm in Core tested; ScopeDialog; LiveCase.GetConfirmed/RequestScopeConfirmation/ScopePrompt; guards in StationControl/DomainInvestigation/Investigation VMs; emergency containment prompts right after) and 'Închidere caz' button (InvestigationView). App code is build-verified only (App.Tests cannot run on Linux).
 - spec 2 done: ProcedureProfileViewModel + ProcedureProfileView ('Profil de proceduri', sidebar + tab 18), Save/Load/Import JSON/CSV/paste, per-line issues; App.Tests added but cannot run on Linux. Report line ProcedureProfileLine; LESSONS_LEARNED rows 8, 9 updated.
+- 2026-10-09 claude-wp15a: merged origin/main; Dfir 48 failed (baseline) / 539 passed, UI 6 failed (baseline), Edition 14/14, build 0 errors, Python 3719 passed 0 failed. WP15a complete; ready for PR.
 
 ## Next
-- Merge main, full .NET + Python suites, final push. The orchestrator opens the PR.
+- WP15b (policy timeline). Open the WP15a PR. The orchestrator opens the PR.
 
 ## Blockers
-- None.
+- None blocking. Safe defaults chosen (owner may revise): a maintenance section with only accounts or only windows counts as defined (clears then Unexpected); holidays are stored but unused; shifts/weekday intervals collapse to one covering range for the legacy WorkingHours; approved software, zones/transfers and the expected-policy link are stored and shown but no analyser consumes them yet; the rotation order is validated, not matched against evidence; 1100 pairs with System 1074/6006 within +-10 min or the first 6005 within 10 min after.
+- App code (profile view, scope dialog, LiveCase gating) is build-verified only; App.Tests cannot run on Linux.
