@@ -16,6 +16,10 @@
     <EmbeddedResource Include="Analysis\Data\*.json" LogicalName="LogAnalyzer.Dfir.Analysis.Data.%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
+    <!-- WP6b: the Romanian / English text tables (one key -> text per language) and the keys that are deliberately Romanian-only; data, not code. -->
+    <EmbeddedResource Include="Language\Strings.*.json" WithCulture="false" LogicalName="LogAnalyzer.Dfir.Language.%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
     <!-- Detection rules shipped with the application (YARA-lite, Sigma-lite); hashed and versioned when loaded. -->
     <None Include="Rules\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

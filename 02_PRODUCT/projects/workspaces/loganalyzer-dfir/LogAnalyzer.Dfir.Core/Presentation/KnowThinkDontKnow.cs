@@ -37,7 +37,7 @@ public sealed record KnowThinkDontKnow(IReadOnlyList<KtdStatement> Know, IReadOn
         string reason = f.ClassificationReason.Length > 0 ? f.ClassificationReason : WhyExplainer.NoReasoning;
 
         if (refuted)
-            dont.Add(new($"{claim} ({StateLabels.Romanian(verdict).ToLowerInvariant()} de verificare)", $"{StateLabels.Romanian(verdict)}: {f.Verification.Reason}"));
+            dont.Add(new($"{claim} ({StateLabels.Label(verdict).ToLowerInvariant()} de verificare)", $"{StateLabels.Label(verdict)}: {f.Verification.Reason}"));
         else
         {
             foreach (var r in f.SupportingEvidence.Where(r => r.Description.Length > 0))
@@ -47,7 +47,7 @@ public sealed record KnowThinkDontKnow(IReadOnlyList<KtdStatement> Know, IReadOn
             else if (f.Classification is Classification.Direct or Classification.BenignKnown || verdict == StandardState.Verified)
                 know.Insert(0, new(claim, EvidenceLevels.SummaryLine(f.SupportingEvidence.Count, f.SupportingEvidence.Select(r => r.EvidenceId).Distinct().Count())));
             else
-                think.Add(new(claim, $"{StateLabels.Romanian(f.Status)}: {reason}"));
+                think.Add(new(claim, $"{StateLabels.Label(f.Status)}: {reason}"));
         }
 
         foreach (var c in f.ContradictingEvidence) know.Add(new("Contrazis de: " + c, "dovadă contrară găsită"));

@@ -135,7 +135,7 @@ public sealed class VerificationReport
     public static string LineRomanian(IReadOnlyDictionary<string, int> counts)
     {
         var parts = VerdictOrder.Where(v => counts.GetValueOrDefault(v.ToSpec()) > 0)
-            .Select(v => $"{counts[v.ToSpec()]} {LogAnalyzer.Dfir.Analysis.StateLabels.Romanian(v)} ({v.ToSpec()})").ToList();
+            .Select(v => $"{counts[v.ToSpec()]} {LogAnalyzer.Dfir.Analysis.StateLabels.Label(v)} ({v.ToSpec()})").ToList();
         return parts.Count == 0 ? "Verificare: nicio constatare de verificat" : "Verificare: " + string.Join(", ", parts);
     }
 

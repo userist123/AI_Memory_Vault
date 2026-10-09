@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.Language;
 using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Analysis;
@@ -123,58 +124,51 @@ public static class FindingContract
     };
 }
 
-/// <summary>Romanian UI labels of the ten states (UX contract §7), as a table the UI can bind to. The full localisation layer is a later package.</summary>
+/// <summary>
+/// UI labels of the ten states (UX contract §7) and of the seven operation states, from the resource layer (<c>state.*</c>, <c>op.*</c>): one table, two languages.
+/// <see cref="Label(StandardState)"/> follows the current UI language; <c>Romanian</c> pins Romanian (stored-case checks, tests).
+/// </summary>
 public static class StateLabels
 {
-    public static IReadOnlyDictionary<StandardState, string> RomanianTable { get; } = new Dictionary<StandardState, string>
-    {
-        [StandardState.Observed] = "Observat",
-        [StandardState.Correlated] = "Corelat",
-        [StandardState.Supported] = "Susținut de dovezi",
-        [StandardState.Verified] = "Verificat",
-        [StandardState.Inferred] = "Deducție",
-        [StandardState.Unproven] = "Nedemonstrat",
-        [StandardState.Contradicted] = "Contrazis",
-        [StandardState.Rejected] = "Respins",
-        [StandardState.Unknown] = "Necunoscut",
-        [StandardState.NotAssessed] = "Neevaluat",
-    };
+    private static string Key(StandardState s) => "state." + s.ToSpec().ToLowerInvariant();
 
-    public static string Romanian(StandardState s) => RomanianTable[s];
+    public static IReadOnlyDictionary<StandardState, string> RomanianTable { get; } = new RomanianView<StandardState>(s => Loc.T(Key(s), AppLanguage.Romanian));
+
+    /// <summary>The label in the current UI language.</summary>
+    public static string Label(StandardState s) => Loc.T(Key(s));
+    public static string Label(StandardState s, AppLanguage lang) => Loc.T(Key(s), lang);
+    public static string Romanian(StandardState s) => Loc.T(Key(s), AppLanguage.Romanian);
 
     /// <summary>
     /// The label of a classification, through the same mapping the finding contract uses (<see cref="FindingContract.StatusFor"/>) and the same table
-    /// as <see cref="Romanian"/>. The grids, the graph view and the finding card use this instead of any wording of their own.
+    /// as <see cref="Label(StandardState)"/>. The grids, the graph view and the finding card use this instead of any wording of their own.
     /// </summary>
-    public static string ForClassification(Classification c) => Romanian(FindingContract.StatusFor(c));
+    public static string ForClassification(Classification c) => Label(FindingContract.StatusFor(c));
 
     /// <summary>One sentence on what a state means and does not mean, for tooltips and the finding card; so a state is never only a word or a colour.</summary>
-    public static string Meaning(StandardState s) => MeaningTable[s];
+    public static string Meaning(StandardState s) => Loc.T(Key(s) + ".meaning");
+    public static string Meaning(StandardState s, AppLanguage lang) => Loc.T(Key(s) + ".meaning", lang);
 
-    public static IReadOnlyDictionary<StandardState, string> MeaningTable { get; } = new Dictionary<StandardState, string>
-    {
-        [StandardState.Observed] = "Faptul apare direct într-o probă din caz.",
-        [StandardState.Correlated] = "Mai multe fapte observate se potrivesc (în timp, în cale sau în sursă); corelația nu dovedește cauzalitate.",
-        [StandardState.Supported] = "Verificarea a găsit în caz dovezi care susțin constatarea.",
-        [StandardState.Verified] = "Verificarea automată a confirmat constatarea față de probele din caz (nu este o verificare externă sau umană).",
-        [StandardState.Inferred] = "Este o deducție din fapte observate, nu o observație directă.",
-        [StandardState.Unproven] = "Probele din caz nu sunt suficiente pentru a o demonstra.",
-        [StandardState.Contradicted] = "Există dovezi în caz care contrazic constatarea.",
-        [StandardState.Rejected] = "Verificarea a respins constatarea.",
-        [StandardState.Unknown] = "Nu se poate spune cu probele din caz.",
-        [StandardState.NotAssessed] = "Nicio verificare nu a evaluat încă această constatare.",
-    };
+    public static IReadOnlyDictionary<StandardState, string> MeaningTable { get; } = new RomanianView<StandardState>(s => Loc.T(Key(s) + ".meaning", AppLanguage.Romanian));
 
-    public static IReadOnlyDictionary<OperationState, string> RomanianOperation { get; } = new Dictionary<OperationState, string>
+    private static string OpKey(OperationState s) => "op." + s.ToSpec().ToLowerInvariant();
+
+    public static string Operation(OperationState s) => Loc.T(OpKey(s));
+    public static IReadOnlyDictionary<OperationState, string> RomanianOperation { get; } = new RomanianView<OperationState>(s => Loc.T(OpKey(s), AppLanguage.Romanian));
+
+    /// <summary>Read-only view over every value of an enum, with the text produced on demand from the resource layer in Romanian.</summary>
+    private sealed class RomanianView<T>(Func<T, string> text) : IReadOnlyDictionary<T, string> where T : struct, Enum
     {
-        [OperationState.NotStarted] = "Neînceput",
-        [OperationState.Running] = "În desfășurare",
-        [OperationState.Completed] = "Finalizat",
-        [OperationState.Partial] = "Parțial",
-        [OperationState.Failed] = "Eșuat",
-        [OperationState.Cancelled] = "Anulat",
-        [OperationState.Blocked] = "Blocat",
-    };
+        private static readonly T[] All = Enum.GetValues<T>();
+        public string this[T key] => text(key);
+        public IEnumerable<T> Keys => All;
+        public IEnumerable<string> Values => All.Select(text);
+        public int Count => All.Length;
+        public bool ContainsKey(T key) => true;
+        public bool TryGetValue(T key, out string value) { value = text(key); return true; }
+        public IEnumerator<KeyValuePair<T, string>> GetEnumerator() => All.Select(k => new KeyValuePair<T, string>(k, text(k))).GetEnumerator();
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+    }
 }
 
 /// <summary>

@@ -61,7 +61,7 @@ public class Wp6aGlossaryTests
         Assert.Equal("Jurnale Windows", Glossary.Human("EVTX"));
         Assert.Equal("Istoricul probei", Glossary.Human("chain_of_custody"));
         Assert.Equal("Istoricul probei", Glossary.Human("Chain of Custody"));
-        Assert.Equal("Windows logs", Glossary.Human("EVTX", GlossaryLanguage.English));
+        Assert.Equal("Windows logs", Glossary.Human("EVTX", AppLanguage.English));
         Assert.Equal("ShimCache", Glossary.Human("ShimCache"));   // not in the table: never invented, shown as is
         Assert.Null(Glossary.Find("ShimCache"));
     }

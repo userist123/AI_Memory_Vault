@@ -33,9 +33,9 @@ public sealed record FindingCardModel(
         var v = f.Verification;
         return new FindingCardModel(
             f.FindingId, f.RuleId, f.Title, f.HumanSummary.Length > 0 ? f.HumanSummary : f.Description,
-            SeverityLabels.Romanian(f.Severity), f.Severity.ToSpec(), SeverityLabels.Icon(f.Severity),
-            StateLabels.Romanian(f.Status), StateLabels.Meaning(f.Status),
-            StateLabels.Romanian(v.State), $"{StateLabels.Meaning(v.State)} {v.Reason}".Trim(),
+            SeverityLabels.Text(f.Severity), f.Severity.ToSpec(), SeverityLabels.Icon(f.Severity),
+            StateLabels.Label(f.Status), StateLabels.Meaning(f.Status),
+            StateLabels.Label(v.State), $"{StateLabels.Meaning(v.State)} {v.Reason}".Trim(),
             WhyExplainer.Build(f, ctx, verificationChecks, legacyScore), EvidenceLevels.Build(f, ctx), KnowThinkDontKnow.Build(f, ctx),
             f.RecommendedNextSteps.Count > 0 ? f.RecommendedNextSteps.ToList() : [NoNextStep], f.TechnicalSummary);
     }

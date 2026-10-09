@@ -80,7 +80,7 @@ public static class InvestigationReportPdf
                         cc.Item().Text($"{f.FindingId} · {f.Title}").Bold();
                         cc.Item().Text($"{f.Severity.ToSpec()} · {f.Classification.ToSpec()} · încredere {f.Confidence.ToSpec()} · {f.Category}{(f.MitreTechniqueId.Length > 0 ? " · MITRE " + f.MitreTechniqueId : "")} · {L(f.FirstSeenUtc)} – {L(f.LastSeenUtc)}")
                             .FontSize(7.5f).FontColor(Muted);
-                        cc.Item().Text($"Stare: {LogAnalyzer.Dfir.Analysis.StateLabels.Romanian(f.Status)} ({f.Status.ToSpec()}) · tip: {f.SemanticType.ToSpec()} · verificare automată: {LogAnalyzer.Dfir.Analysis.StateLabels.Romanian(f.Verification.State)} ({f.Verification.State.ToSpec()})")
+                        cc.Item().Text($"Stare: {LogAnalyzer.Dfir.Analysis.StateLabels.Label(f.Status)} ({f.Status.ToSpec()}) · tip: {f.SemanticType.ToSpec()} · verificare automată: {LogAnalyzer.Dfir.Analysis.StateLabels.Label(f.Verification.State)} ({f.Verification.State.ToSpec()})")
                             .FontSize(7.5f).FontColor(Muted);
                         if (f.Verification.State != StandardState.NotAssessed && f.Verification.Reason.Length > 0) cc.Item().Text("Verificare: " + f.Verification.Reason).FontSize(7).FontColor(Muted);
                         cc.Item().Text(f.Description);

@@ -49,7 +49,7 @@ public static class WhyExplainer
         lim.AddRange(f.Limitations);
 
         var v = f.Verification;
-        string verification = $"{StateLabels.Romanian(v.State)}: {v.Reason}" + (v.Verifier.Length > 0 ? $" (verificator: {v.Verifier})" : "");
+        string verification = $"{StateLabels.Label(v.State)}: {v.Reason}" + (v.Verifier.Length > 0 ? $" (verificator: {v.Verifier})" : "");
 
         string? note = legacyScore is { Factors.Count: > 0 } s
             ? $"Scor euristic vechi: {s.Score}/100, calculat din: {string.Join("; ", s.Factors)}. Scorul nu este o verificare și nu înlocuiește dovezile de mai sus."

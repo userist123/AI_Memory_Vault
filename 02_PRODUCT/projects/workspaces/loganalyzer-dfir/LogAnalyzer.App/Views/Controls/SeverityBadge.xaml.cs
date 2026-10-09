@@ -35,7 +35,7 @@ namespace LogAnalyzer.UI.Views.Controls
             var s = (severity ?? "INFO").ToUpperInvariant();
             // The badge always says the severity in words and with an icon shape, so it is readable without colour (U18).
             if (System.Enum.TryParse<LogAnalyzer.Dfir.Model.Severity>(s, true, out var level))
-                BadgeText.Text = LogAnalyzer.Dfir.Presentation.SeverityLabels.Icon(level) + " " + LogAnalyzer.Dfir.Presentation.SeverityLabels.Romanian(level);
+                BadgeText.Text = LogAnalyzer.Dfir.Presentation.SeverityLabels.Icon(level) + " " + LogAnalyzer.Dfir.Presentation.SeverityLabels.Text(level);
             else
                 BadgeText.Text = s;
             System.Windows.Automation.AutomationProperties.SetName(this, "Severitate: " + BadgeText.Text);

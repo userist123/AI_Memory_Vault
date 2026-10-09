@@ -130,7 +130,7 @@ namespace LogAnalyzer.UI.ViewModels
             Loaded = loaded;
             IntegrityLine = loaded.Recheck?.Summary ?? "Reverificare: nerulată (nedeterminat).";
             VerificationLine = VerificationText(loaded.Result);
-            OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[loaded.Result.State] + " — " + loaded.Result.StateReason;
+            OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.Operation(loaded.Result.State) + " — " + loaded.Result.StateReason;
             Summary += $" · caz deschis, stare: {LogAnalyzer.Dfir.Case.CaseLifecycleNames.Label(loaded.Lifecycle)}";
             IsReadOnlyCase = loaded.ReadOnly;
             ReadOnlyNotice = loaded.ReadOnly ? "Caz deschis doar pentru citire: " + string.Join("; ", loaded.ReadOnlyReasons) : "";
@@ -180,7 +180,7 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _log = "";
         [ObservableProperty] private bool _isBusy;
         /// <summary>Operation state of the last run (UX contract §20), in Romanian. "Finalizat" does not mean any finding is verified.</summary>
-        [ObservableProperty] private string _operationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[OperationState.NotStarted];
+        [ObservableProperty] private string _operationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.Operation(OperationState.NotStarted);
         [ObservableProperty] private string _summary = "";
         /// <summary>Verdict of the last integrity re-check of the case (WP3b): valid, modified n, missing n, chain broken or legacy. Reports only; nothing is repaired.</summary>
         [ObservableProperty] private string _integrityLine = "";
@@ -228,7 +228,7 @@ namespace LogAnalyzer.UI.ViewModels
             }
             LogAnalyzer.UI.Services.LiveCase.Configure(scope);
             IsBusy = true;
-            OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[OperationState.Running];
+            OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.Operation(OperationState.Running);
             _cts = new CancellationTokenSource();
             Log = "";
             var progress = new Progress<string>(m => Log += $"{DateTime.Now:HH:mm:ss}  {m}{Environment.NewLine}");
@@ -255,16 +255,16 @@ namespace LogAnalyzer.UI.ViewModels
                 var ct = _cts.Token;
                 IntegrityLine = (await Task.Run(() => checkedCase.Recheck(ct))).Summary;
                 VerificationLine = VerificationText(_result);
-                OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[_result.State] + " — " + _result.StateReason;
-                Summary += $" · analiză: {LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[_result.State]} (nu verifică constatările)";
+                OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.Operation(_result.State) + " — " + _result.StateReason;
+                Summary += $" · analiză: {LogAnalyzer.Dfir.Analysis.StateLabels.Operation(_result.State)} (nu verifică constatările)";
                 Loaded = null; IsReadOnlyCase = false; ReadOnlyNotice = "";
                 StateChanged?.Invoke(this, EventArgs.Empty);
                 Log += "Gata. Dublu-click pe o constatare sau pe un eveniment pentru detalii." + Environment.NewLine;
             }
-            catch (OperationCanceledException) { OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[OperationState.Cancelled]; Log += "Oprit de operator." + Environment.NewLine; }
+            catch (OperationCanceledException) { OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.Operation(OperationState.Cancelled); Log += "Oprit de operator." + Environment.NewLine; }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
             {
-                OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[OperationState.Failed] + " — " + ex.Message;
+                OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.Operation(OperationState.Failed) + " — " + ex.Message;
                 Log += "Eroare: " + ex.Message + Environment.NewLine;
             }
             finally { IsBusy = false; }

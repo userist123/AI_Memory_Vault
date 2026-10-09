@@ -23,7 +23,7 @@ namespace LogAnalyzer.UI.Views
         public static readonly StandardStateLabelConverter Instance = new();
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
-            value is LogAnalyzer.Dfir.Model.StandardState s ? LogAnalyzer.Dfir.Analysis.StateLabels.Romanian(s) : "";
+            value is LogAnalyzer.Dfir.Model.StandardState s ? LogAnalyzer.Dfir.Analysis.StateLabels.Label(s) : "";
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }
@@ -34,7 +34,7 @@ namespace LogAnalyzer.UI.Views
         public static readonly ClassificationWordingConverter Instance = new();
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
-            value is LogAnalyzer.Dfir.Model.Classification c ? LogAnalyzer.Dfir.Analysis.StateLabels.ForClassification(c) : LogAnalyzer.Dfir.Analysis.StateLabels.Romanian(LogAnalyzer.Dfir.Model.StandardState.Unknown);
+            value is LogAnalyzer.Dfir.Model.Classification c ? LogAnalyzer.Dfir.Analysis.StateLabels.ForClassification(c) : LogAnalyzer.Dfir.Analysis.StateLabels.Label(LogAnalyzer.Dfir.Model.StandardState.Unknown);
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }
@@ -45,7 +45,7 @@ namespace LogAnalyzer.UI.Views
         public static readonly SeverityTextConverter Instance = new();
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
-            value is LogAnalyzer.Dfir.Model.Severity s ? LogAnalyzer.Dfir.Presentation.SeverityLabels.Icon(s) + " " + LogAnalyzer.Dfir.Presentation.SeverityLabels.Romanian(s) : "";
+            value is LogAnalyzer.Dfir.Model.Severity s ? LogAnalyzer.Dfir.Presentation.SeverityLabels.Icon(s) + " " + LogAnalyzer.Dfir.Presentation.SeverityLabels.Text(s) : "";
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }
