@@ -12,7 +12,7 @@
         <StackPanel Grid.Row="0" Margin="0,0,0,12">
             <TextBlock Text="Profil de proceduri" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
             <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
-                       Text="Program de lucru, mentenanța jurnalelor, software aprobat, politica GPO așteptată, zone și transferuri. Se introduc manual, se lipesc din tabel sau se importă (JSON / CSV). Analiza le compară cu ce s-a observat; nimic nu se aplică pe Windows. O secțiune goală este „nedefinit”, niciodată „conform”."/>
+                       Text="Program de lucru, mentenanța jurnalelor, software aprobat, politica de grup așteptată (GPO), zone și transferuri. Se introduc manual, se lipesc din tabel sau se importă (JSON / CSV). Analiza le compară cu ce s-a observat; nimic nu se aplică pe Windows. O secțiune goală este „nedefinit”, niciodată „conform”."/>
             <TextBlock Text="{Binding AccessNotice}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource CriticalBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
         </StackPanel>
 

@@ -1,5 +1,5 @@
 # todo-claude-wp18
-STATUS: IN_PROGRESS        UPDATED: 2026-10-10T02:40Z
+STATUS: IN_PROGRESS        UPDATED: 2026-10-10T03:20Z
 TASK: WP18 — station roles (CONTROL / CSIRT chosen by the PC through the signed policy) and non-technical UI, per
 `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PROMPT_WP18_ROLURI_STATIE_UI_SIMPLA.md` (owner decisions D1–D8 in §11).
 BRANCH / PR: `claude/loganalyzer-dfir-roles-ui-0a71fb` (worktree). One commit per step; PR at the end of the package.
@@ -14,6 +14,14 @@ DONE:
   (`PrimaryIntents`, `MoreIntents`, `RunIntentCommand`); `HomeView.xaml` big buttons + "Mai multe"; sidebar section of the role +
   "Avansat (toate paginile)" expander with every legacy page (decision 5); the app opens on Home in every mode (Live SOC jump removed).
   Tests: `LogAnalyzer.UI.Tests/RoleProfileTests.cs` (8), `HomeViewModelTests` (+2, one updated). App.Tests 30/30, UI.Tests 187/187.
+- S3 language levels, terms, glossary: `LogAnalyzer.Dfir.Core/Language/LanguageLevel.cs` (UiLanguageLevel Simple/Expert, LanguageLevelContext,
+  LanguagePreferences per account under %LOCALAPPDATA%\LogAnalyzer\preferences, default Simple for EVERY account); 11 control-line terms added
+  to the single `Glossary` (Hardware ID, NetworkList, USBSTOR, auditpol, RecordID, CRL, CA, SHA-256, SRUM, RDP, GPO); `TermExtension` now binds
+  to the level (Simple = human phrase, Expert = technical name beside it) and recomputes on change; header switch "LIMBAJ: Simplu/Expert" +
+  "Ce înseamnă?" opening `GlossaryWindow` (searchable); role pages reworded so technical names appear only in parentheses (StationControl,
+  Investigation, ProcedureProfile, Auth, FindingCard); administration buttons in user words ("Adaugă persoana", "Înregistrează cardul",
+  "Adu lista certificatelor revocate (CRL)…"). Lint test over the role pages: `LogAnalyzer.App.Tests/Wp18LanguageTests.cs` (15 tests incl. theory).
+  App.Tests 45/45, UI.Tests 187/187; Dfir.Tests Wp6a glossary/XAML tests green after the SRUM entry (example family → shimcache).
 VERIFICATION (S1, local, Windows):
 - `dotnet build LogAnalyzer.slnx -c Release`: Build succeeded (TEST_VERIFIED).
 - App.Tests 28/28, Edition.Tests 15/15, UI.Tests 179/179 passed.

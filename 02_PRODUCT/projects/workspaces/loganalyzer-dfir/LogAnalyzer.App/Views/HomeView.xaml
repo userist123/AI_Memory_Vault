@@ -32,8 +32,8 @@
                                         Style="{StaticResource AccentButtonStyle}" Padding="16,10" Margin="0,0,10,8" Width="300" HorizontalContentAlignment="Left">
                                     <StackPanel>
                                         <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"/>
-                                        <TextBlock Text="{Binding Description}" FontSize="11.5" TextWrapping="Wrap" Opacity="0.85" Margin="0,3,0,0"/>
-                                        <TextBlock Text="{Binding ReasonLine}" FontSize="11.5" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,3,0,0">
+                                        <TextBlock Text="{Binding Description}" FontSize="12" TextWrapping="Wrap" Opacity="0.85" Margin="0,3,0,0"/>
+                                        <TextBlock Text="{Binding ReasonLine}" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,3,0,0">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="Visibility" Value="Visible"/>

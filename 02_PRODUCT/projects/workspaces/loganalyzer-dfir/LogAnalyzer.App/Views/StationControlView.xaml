@@ -63,7 +63,7 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Utilizator" Binding="{Binding User}" Width="2*"/>
                         <DataGridTextColumn Header="Autentificări locale" Binding="{Binding InteractiveLogons}" Width="*"/>
-                        <DataGridTextColumn Header="RDP" Binding="{Binding RemoteLogons}" Width="*"/>
+                        <DataGridTextColumn Header="Acces de la distanță (RDP)" Binding="{Binding RemoteLogons}" Width="*"/>
                         <DataGridTextColumn Header="Eșuate" Binding="{Binding FailedLogons}" Width="*"/>
                         <DataGridTextColumn Header="Sesiuni privilegiate" Binding="{Binding PrivilegedSessions}" Width="*"/>
                         <DataGridTextColumn Header="Modificări făcute" Binding="{Binding AccountChangesMade}" Width="*"/>

@@ -114,6 +114,18 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- WP18 S3: language level (Simple for everyone; Expert is a switch) and the glossary -->
+                    <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,3" Margin="0,0,10,0" VerticalAlignment="Center"
+                            ToolTip="Simplu: cuvinte pe înțelesul tuturor, detaliile tehnice la un click distanță. Expert: numele tehnice rămân lângă cele simple. Datele sunt aceleași.">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="LIMBAJ: " FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"/>
+                            <CheckBox IsChecked="{Binding IsExpertLevel}" Content="{Binding LanguageLevelText}" AutomationProperties.Name="Nivel de limbaj: Simplu sau Expert"
+                                      AutomationProperties.HelpText="Bifat: Expert, numele tehnice rămân lângă cele simple. Nebifat: Simplu." Foreground="{StaticResource TextPrimaryBrush}" FontSize="10.5" FontWeight="Bold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    <Button Content="Ce înseamnă?" Command="{Binding OpenGlossaryCommand}" Style="{StaticResource ActionButtonStyle}" Padding="10,5" Margin="0,0,10,0"
+                            AutomationProperties.HelpText="Deschide glosarul: fiecare termen tehnic, cu numele pe înțelesul tuturor și o explicație scurtă."/>
+
                     <!-- Analyst Scratchpad Toggle -->
                     <Button Content="Case Notes ▾" Command="{Binding ToggleAnalystDrawerCommand}" Style="{StaticResource ActionButtonStyle}" Padding="10,5"/>
                 </StackPanel>
