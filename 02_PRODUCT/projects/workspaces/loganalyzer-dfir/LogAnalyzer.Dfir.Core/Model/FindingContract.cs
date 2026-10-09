@@ -60,10 +60,10 @@ public enum ParserHealth { Available, Collected, Parsed, Partial, Unsupported, I
 [JsonConverter(typeof(SpecEnumConverter<SourceAvailability>))]
 public enum SourceAvailability { Available, NotAvailable, NotEnabled, NotApplicable, NotCollected }
 
-/// <summary>Result of independent verification. Until the verifier exists (stage-2 WP4) every finding is NOT_ASSESSED, with the reason.</summary>
+/// <summary>Result of the verification layer (LogAnalyzer.Verification, a separate module of the same application; not an external or human verification). Without a run, a finding is NOT_ASSESSED, with the reason.</summary>
 public sealed record FindingVerification(StandardState State, string Reason, string Verifier = "", DateTimeOffset? AssessedUtc = null)
 {
-    public const string NoVerifierReason = "Nicio verificare independentă nu a rulat: modulul de verificare nu există încă; starea nu e un verdict.";
+    public const string NoVerifierReason = "Nicio verificare nu a rulat pentru această constatare (verdictul modulului de verificare, dacă există, e în Analysis/verification.json); starea nu e un verdict.";
     public static FindingVerification NotAssessed(string? reason = null) => new(StandardState.NotAssessed, reason ?? NoVerifierReason);
 }
 

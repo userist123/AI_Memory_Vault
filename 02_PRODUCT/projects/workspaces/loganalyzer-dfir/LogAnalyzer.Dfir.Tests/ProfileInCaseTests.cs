@@ -90,6 +90,27 @@ public sealed class ProfileInCaseTests : IDisposable
         Assert.DoesNotContain(File.ReadAllLines(ws.AuditChainPath), l => l.Contains("profile.used"));
     }
 
+    private static TimelineEvent Clear1102(DateTimeOffset at, string user) => new()
+    {
+        Time = Timestamp.FromUtc(at.UtcDateTime, "", "test"), Source = "EventLog:Security", EventId = "1102", Provider = "Microsoft-Windows-Eventlog", EvidenceId = "EV-1",
+        Locator = "EventRecordID=1", Summary = "t",
+        Fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["SubjectUserName"] = user, ["SubjectDomainName"] = "CORP" },
+    };
+
+    [Fact]
+    public void AF01_and_LOG_TAMPER_with_the_profile_say_planned_or_unexpected_and_without_it_not_assessed()
+    {
+        var monday = new DateTimeOffset(2026, 10, 5, 8, 30, 0, TimeSpan.Zero);   // a Monday, inside 08:00-10:00 (UTC zone)
+        var policy = ProfileSnapshot.MaintenancePolicyFor(Profile(), [monday], "UTC");
+        string Af01(TimelineEvent e, LogMaintenancePolicy? p) => AntiForensics.Evaluate([e], [], p).Single(c => c.Id == "AF01").Reason;
+        Assert.Contains("planificată", Af01(Clear1102(monday, "alice"), policy));
+        Assert.Contains("neașteptată", Af01(Clear1102(monday, "mallory"), policy));
+        Assert.Contains("nu există profil de procedură", Af01(Clear1102(monday, "alice"), null));
+        Assert.Equal(Severity.Info, Correlation.Run([Clear1102(monday, "alice")], policy).Single(f => f.RuleId == "LOG-TAMPER").Severity);
+        Assert.Equal(Severity.High, Correlation.Run([Clear1102(monday, "mallory")], policy).Single(f => f.RuleId == "LOG-TAMPER").Severity);
+        Assert.Equal(Severity.Medium, Correlation.Run([Clear1102(monday, "alice")], null).Single(f => f.RuleId == "LOG-TAMPER").Severity);
+    }
+
     [Fact]
     public void Maintenance_policy_for_a_case_uses_the_case_time_zone_and_the_evidence_span()
     {

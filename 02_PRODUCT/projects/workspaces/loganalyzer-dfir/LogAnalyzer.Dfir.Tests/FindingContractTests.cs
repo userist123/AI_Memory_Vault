@@ -435,10 +435,13 @@ public sealed class FindingContractTests : IDisposable
     {
         var (ws, r) = Run();
         var task = Assert.Single(r.Findings, f => f.RuleId == "PERSIST-TASK-CONFIG");
+        // WP4: every finding carries exactly the verdict the verification module gave it (no finding is left with the WP2 default).
+        var verdicts = r.Verification!.ToContract();
         Assert.All(r.Findings, f =>
         {
             Assert.Equal("1.0", f.ContractVersion);
-            Assert.Equal(StandardState.NotAssessed, f.Verification.State);
+            Assert.True(verdicts.ContainsKey(f.FindingId), $"no verdict for {f.FindingId}");
+            Assert.Equal(verdicts[f.FindingId].State, f.Verification.State);
             Assert.NotEmpty(f.Limitations); Assert.NotEmpty(f.MissingEvidence); Assert.NotEmpty(f.RecommendedNextSteps);
             Assert.NotEmpty(f.Provenance!.EvidenceSha256);
             Assert.Empty(AntiOverclaim.Violations(f));
@@ -469,13 +472,16 @@ public sealed class FindingContractTests : IDisposable
     }
 
     [Fact]
-    public void Vault_proposal_for_a_finding_carries_semantic_type_status_and_unassessed_verification()
+    public void Vault_proposal_for_a_finding_carries_semantic_type_status_and_the_verification_verdict()
     {
         var (_, r) = Run();
         var p = VaultExport.Read(Path.Combine(r.Case.Root, "Exports", "vault_proposals.jsonl")).First(x => x.Title.Contains("PERSIST-TASK-CONFIG"));
         Assert.Contains("\"semantic_type\": \"CONFIGURATION\"", p.Body);
         Assert.Contains("\"status\": \"OBSERVED\"", p.Body);
-        Assert.Contains("\"state\": \"NOT_ASSESSED\"", p.Body);
+        // WP4: the verdict of the verification module travels with the proposal (a single-source configuration claim is SUPPORTED, not VERIFIED).
+        Assert.Equal(StandardState.Supported, r.Verification!.Findings.First(f => f.RuleId == "PERSIST-TASK-CONFIG").Verdict);
+        Assert.Contains("\"state\": \"SUPPORTED\"", p.Body);
+        Assert.DoesNotContain("NEVERIFICAT", p.Body);
         Assert.Contains("Limitări:", p.Body);
         Assert.Contains("Contradicții:", p.Body);
     }

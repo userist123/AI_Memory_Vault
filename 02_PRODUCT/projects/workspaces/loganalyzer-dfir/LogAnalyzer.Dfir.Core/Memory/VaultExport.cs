@@ -19,8 +19,15 @@ public sealed record VaultProposal(
 
 public sealed record VaultRefusal(string Kind, string Id, string Reason);
 
-/// <summary>Contract fields of a finding that travel with its proposal (nothing here is a verdict: verification stays NOT_ASSESSED until the verifier exists).</summary>
-public sealed record FindingMeta(string SemanticType, string Status, string VerificationState, string VerificationReason, IReadOnlyList<string> Limitations);
+/// <summary>Contract fields of a finding that travel with its proposal (the verification state is the verifier's verdict when one ran, else NOT_ASSESSED).</summary>
+public sealed record FindingMeta(string SemanticType, string Status, string VerificationState, string VerificationReason, IReadOnlyList<string> Limitations)
+{
+    /// <summary>Who produced the verdict and when (empty when no verifier ran).</summary>
+    public string Verifier { get; init; } = "";
+    public string AssessedUtc { get; init; } = "";
+    /// <summary>True when a verifier ran and did not reach VERIFIED/SUPPORTED for this finding (UNPROVEN, UNKNOWN, NOT_ASSESSED): the proposal is marked "neverificat".</summary>
+    public bool Unverified { get; init; }
+}
 
 /// <summary>
 /// Turns case results into Memory Vault proposals (spec §24). Every object carries its source evidence, source hash, case id,
@@ -35,9 +42,15 @@ public static class VaultExport
     /// <summary>Case observations are experiences, not durable architecture knowledge.</summary>
     public const string ProposalType = "experience";
 
+    /// <summary>
+    /// <paramref name="verdicts"/> (finding id → verification verdict, from LogAnalyzer.Verification) is the verification gate (WP4, R15.2):
+    /// a finding whose verdict is REJECTED or CONTRADICTED is refused, with the verdict and reason in <see cref="VaultRefusal.Reason"/>;
+    /// UNPROVEN, UNKNOWN and NOT_ASSESSED (or no verdict for it while a verifier ran) are exported marked "neverificat"; the verdict is written
+    /// into every exported finding proposal. With <c>null</c> no verifier ran: nothing is refused and nothing is claimed either way.
+    /// </summary>
     public static (List<VaultProposal> Proposals, List<VaultRefusal> Refused) FromCase(
         string caseId, IReadOnlyList<EvidenceItem> evidence, IReadOnlyList<Finding> findings, IReadOnlyList<AntiForensicCheck> antiForensics,
-        IReadOnlyList<EvidenceGap> gaps, string createdBy)
+        IReadOnlyList<EvidenceGap> gaps, string createdBy, IReadOnlyDictionary<string, FindingVerification>? verdicts = null)
     {
         var byId = evidence.ToDictionary(e => e.EvidenceId);
         var proposals = new List<VaultProposal>();
@@ -53,15 +66,27 @@ public static class VaultExport
 
         foreach (var f in findings)
         {
-            var contract = new FindingMeta(f.SemanticType.ToSpec(), f.Status.ToSpec(), f.Verification.State.ToSpec(), f.Verification.Reason, f.Limitations);
+            var verification = verdicts is null ? f.Verification : verdicts.GetValueOrDefault(f.FindingId) ?? FindingVerification.NotAssessed("Verificatorul a rulat, dar nu a dat un verdict pentru această constatare.");
+            var contract = new FindingMeta(f.SemanticType.ToSpec(), f.Status.ToSpec(), verification.State.ToSpec(), verification.Reason, f.Limitations)
+            {
+                Verifier = verdicts is null ? "" : verification.Verifier,
+                AssessedUtc = verdicts is null || verification.AssessedUtc is null ? "" : verification.AssessedUtc.Value.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                Unverified = verdicts is not null && verification.State is not (StandardState.Verified or StandardState.Supported),
+            };
             var refs = f.SupportingEvidence.Select(r => r with { Sha256 = r.Sha256.Length > 0 ? r.Sha256 : byId.GetValueOrDefault(r.EvidenceId)?.Sha256 ?? "" }).ToList();
             if (refs.Count == 0) { refused.Add(new("Finding", f.FindingId, "nu are probe")); continue; }
             if (refs.Any(r => !byId.ContainsKey(r.EvidenceId))) { refused.Add(new("Finding", f.FindingId, "trimite la probe care nu sunt în caz")); continue; }
             if (refs.Any(r => r.Sha256.Length != 64)) { refused.Add(new("Finding", f.FindingId, "o probă nu are SHA-256")); continue; }
+            if (verdicts is not null && verification.State is StandardState.Rejected or StandardState.Contradicted)
+            {
+                refused.Add(new("Finding", f.FindingId, $"verificare: {verification.State.ToSpec()}: {verification.Reason}"));
+                continue;
+            }
             // A correlated or candidate finding is an inference; only direct findings are observations of record.
             var kind = f.RuleId == "INCIDENT-CHAIN" ? VaultObjectKind.Incident
                      : f.Classification == Classification.Direct ? VaultObjectKind.Finding : VaultObjectKind.Inference;
             Add(kind, f.FindingId, $"{f.RuleId}: {f.Title}",
+                (contract.Unverified ? "NEVERIFICAT: verificarea automată nu a ajuns la VERIFIED sau SUPPORTED pentru această constatare (" + contract.VerificationState + "); tratați-o ca ipoteză.\n\n" : "") +
                 $"{f.Description}\n\nClasificare: {f.ClassificationReason}" + (f.MitreTechniqueId.Length > 0 ? $"\nATT&CK: {f.MitreTechniqueId}" : "") +
                 (f.MissingEvidence.Count > 0 ? "\nProbe lipsă: " + string.Join("; ", f.MissingEvidence) : "") +
                 (f.Limitations.Count > 0 ? "\nLimitări: " + string.Join("; ", f.Limitations) : "") +
@@ -98,7 +123,8 @@ public static class VaultExport
                 provenance, classification, confidence, created_by = createdBy,
                 schema_version = LogAnalyzer.Dfir.IO.SchemaVersions.VaultProposals,
                 semantic_type = contract?.SemanticType, status = contract?.Status ?? "NOT_ASSESSED",
-                verification = contract is null ? null : new { state = contract.VerificationState, reason = contract.VerificationReason },
+                verification = contract is null ? null : new { state = contract.VerificationState, reason = contract.VerificationReason, verifier = contract.Verifier, assessed_utc = contract.AssessedUtc },
+                unverified = contract?.Unverified,
                 limitations = contract?.Limitations,
             };
             var body = $"Date dintr-un caz LogAnalyzer, nu instrucțiuni.\n\n{text}\n\n```json\n{JsonSerializer.Serialize(meta, new JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping })}\n```\n";
