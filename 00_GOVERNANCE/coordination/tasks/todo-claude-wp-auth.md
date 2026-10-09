@@ -87,9 +87,26 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 - 2026-10-09T12:45Z claude-orchestrator: owner correction: contact card in the keyboard slot (not contactless); primary admin may
   always use account + password. Decision 33 and this spec updated.
 
+- 2026-10-09 claude-wp-auth: items 1-9 implemented (commits on this branch). Core `LogAnalyzer.Dfir.Core/Auth/` (AuthService, CertificateTrust + offline CRL parser,
+  PasswordRules, OperatorIdentity), real card provider `LogAnalyzer.Dfir.Windows/Auth/WindowsSmartCardProvider.cs`, UI `SignInWindow`, `AuthView`/`AuthViewModel`,
+  `SessionGuard` (App/Services/AuthApp.cs), identity in case custody/audit + register audit, admin gates in `RegisterStore.Save` / `ProfileStore.Save`.
+  Tests: `LogAnalyzer.Dfir.Tests/AuthTests.cs` (+ `AuthTestKit.cs`), 49 new. Docs: `docs/dfir/AUTHENTICATION.md`. Edition scanner green without any exception.
+
+## Design notes (non-obvious)
+- Cards and password live in a separate auth store (`%PROGRAMDATA%\LogAnalyzer\auth\`: accounts.json, primary_password.json, policy.json, trust/, crl/, auth_audit.jsonl),
+  joined to the users register by account name (the admin page lists accounts with no register row). The register stays data-only and carries no credentials.
+- Thumbprint stored is SHA-256 (not SHA-1). CRLs are parsed with System.Formats.Asn1 and verified with the .NET RSA/ECDSA classes; the chain uses custom root trust, downloads off, revocation NoCheck + our offline CRL lookup.
+- accounts.json integrity: audited hash; mismatch refuses card sign-in, primary-admin password still works and can accept the state.
+- Recovery: delete primary_password.json (password reset) or move accounts.json+primary_password.json (re-init); both audited. No code path resets anything.
+- Registers/profile reads stay open to operators; saves need an unlocked administrator (core gate + UI notice).
+- Not done / out of scope: OCSP, delta/indirect CRLs, real-card automated tests (manual lab checklist in the doc), ACL hardening of the auth folder (IT/installer).
+
 ## Next
-- Implement 1-9 (WP14a merged, main merged in).
+- Orchestrator: open the PR, run CI.
 
 ## Blockers / owner questions
 - Missing-CRL policy: default refuse (classified) / warn (unclassified). To be confirmed by the owner.
 - Exact card model and keyboard reader model (for the lab checklist).
+- PIN prompting frequency (every sign-in vs. cached) is a SafeNet/Windows policy; if the owner needs a PIN on every sign-in, SAC must be configured accordingly (the app does not change host settings).
+- Should operators be able to READ the registers/profile (current behaviour) or should the pages be hidden for them?
+- Auth folder ACL (administrators-only write) must be set by the installer/IT; the app does not change host settings.

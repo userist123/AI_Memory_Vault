@@ -16,6 +16,10 @@ and the unclassified edition keeps all of it.
 nor `LogAnalyzer.Ai`. In P1 the screens of those features show "nu este disponibil în ediția clasificată" and the services are
 replaced by stand-ins that only refuse (`LogAnalyzer.Core/Services/Edition/UnavailableServices.cs`).
 
+Both editions require sign-in (card + PIN; the primary administrator may also use account + password) and have the same
+administrator/operator model; the only difference is the default of the missing-CRL policy (classified: refuse, unclassified: warn).
+See `AUTHENTICATION.md`.
+
 ## How the code is organised
 - Shared: `LogAnalyzer.Core`, `.Infrastructure`, `.Dfir.Core`, `.Dfir.Windows` (parsers, analysis, evidence, timeline, case, read-only
   collectors, report generation). Contracts for the optional capabilities live in `LogAnalyzer.Core` (`IHostDefense`,
