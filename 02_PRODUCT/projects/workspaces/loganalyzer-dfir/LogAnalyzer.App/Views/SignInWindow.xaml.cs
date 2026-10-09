@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -105,6 +106,7 @@ namespace LogAnalyzer.UI.Views
                 }
                 Finish(r);
             }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { StatusText.Text = StoreUnwritable(ex); }
             finally { CardButton.IsEnabled = true; }
         }
 
@@ -140,8 +142,14 @@ namespace LogAnalyzer.UI.Views
                         break;
                 }
             }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { StatusText.Text = StoreUnwritable(ex); }
             finally { PasswordBox.Clear(); ConfirmBox.Clear(); PasswordButton.IsEnabled = true; }
         }
+
+        /// <summary>The auth store or its audit cannot be written: nobody is signed in (fail closed) and the cause is shown instead of crashing.</summary>
+        private static string StoreUnwritable(Exception ex) =>
+            "Autentificarea nu poate fi înregistrată: folderul de autentificare nu poate fi scris (" + ex.Message + "). " +
+            "Nimeni nu a fost autentificat. Porniți LogAnalyzer dintr-un cont de administrator Windows (vezi AUTHENTICATION.md, secțiunea 2b).";
 
         private void Finish(SignInResult r)
         {

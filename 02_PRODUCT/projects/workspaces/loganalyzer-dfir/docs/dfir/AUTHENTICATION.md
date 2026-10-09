@@ -48,8 +48,22 @@ Nothing is created before that. The password stays valid after a card is enrolle
 - Install SafeNet Authentication Client (SAC) / Tools on the station and confirm in SafeNet Authentication Client Tools that the card is
   seen in the keyboard reader and that its certificate is visible. The card PIN, PIN policy, PIN change and unblocking are managed there.
 - Confirm the certificate appears in `certmgr.msc` → Personal → Certificates for the signed-in Windows user while the card is inserted.
-- PIN prompting (every use vs. cached) is a SafeNet / Windows policy, not an application setting. If the owner wants a PIN for every
-  sign-in, configure that in SAC (PIN cache / single-logon) - the application does not change host settings.
+- PIN prompting (every use vs. cached) is a SafeNet / Windows policy, not an application setting. Owner decision 34: the **PIN is required at
+  every card sign-in and unlock**, so configure SAC without PIN caching / single logon. IT applies it; the application does not change host settings.
+
+### 2b. Auth folder permissions (IT, at deployment; decision 34)
+Write access to `%PROGRAMDATA%\LogAnalyzer\auth\` must be limited to Administrators and SYSTEM, because anyone who can write there can reset the
+authentication store. LogAnalyzer does not change host settings, so IT runs this once, from an elevated prompt, after the first start has created the folder:
+
+```
+icacls "%PROGRAMDATA%\LogAnalyzer\auth" /inheritance:r /grant:r "*S-1-5-32-544:(OI)(CI)F" "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-545:(OI)(CI)RX"
+```
+
+(S-1-5-32-544 = Administrators, S-1-5-18 = SYSTEM, S-1-5-32-545 = Users, read only.)
+
+Every sign-in writes the auth audit, so LogAnalyzer is started from **Windows accounts in the local Administrators group** (live collection
+needs it anyway; the manifest `highestAvailable` elevates them). Started from a standard account, the sign-in window refuses with the cause
+("folderul de autentificare nu poate fi scris") and nobody is signed in.
 
 ### 3. Trust: import the organisation CA
 Sign in as administrator → **Autentificare și conturi** → **Importă certificat CA…**. Import the root CA certificate of the organisation
@@ -126,7 +140,7 @@ Does not:
 - that the card holder is the person in the users register (the administrator binds them at enrolment).
 
 ## Lab checklist (manual; real SafeNet card and keyboard reader)
-Record the card model and the keyboard/reader model in the test report (open owner question).
+Record the card model and the keyboard/reader model in the test report (decision 34: any PKI contact card supported by the SafeNet minidriver, PC/SC keyboard reader).
 1. SafeNet Authentication Client Tools shows the card in the keyboard reader and the user certificate; certmgr shows it under the user's Personal store.
 2. First start: create the primary administrator; password sign-in works.
 3. Import the organisation CA and a current CRL. Enrol the primary administrator's card; sign out; card sign-in works (PIN prompt is the Windows/SafeNet one).
@@ -141,3 +155,5 @@ Record the card model and the keyboard/reader model in the test report (open own
 12. Disable the operator card while the session is open: the session ends within ~2 s.
 13. Verify the audit chain on the admin page (valid), edit one byte of `auth_audit.jsonl`: reported broken.
 14. Recovery procedure above, on a test station.
+15. Auth folder permissions (section 2b): as a standard Windows user, creating or deleting a file in `%PROGRAMDATA%\LogAnalyzer\auth\` is denied.
+16. PIN on every sign-in (decision 34): sign out and sign in again with the card; the PIN is asked again (no SafeNet PIN cache).

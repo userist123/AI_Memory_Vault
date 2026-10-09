@@ -105,8 +105,7 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 - Orchestrator: open the PR, run CI.
 
 ## Blockers / owner questions
-- Missing-CRL policy: default refuse (classified) / warn (unclassified). To be confirmed by the owner.
-- Exact card model and keyboard reader model (for the lab checklist).
-- PIN prompting frequency (every sign-in vs. cached) is a SafeNet/Windows policy; if the owner needs a PIN on every sign-in, SAC must be configured accordingly (the app does not change host settings).
-- Should operators be able to READ the registers/profile (current behaviour) or should the pages be hidden for them?
-- Auth folder ACL (administrators-only write) must be set by the installer/IT; the app does not change host settings.
+- None open. Owner decision 34 (2026-10-09, recommendations accepted) answers the five questions: missing CRL refuse (classified) / warn
+  (unclassified); any SafeNet-supported PKI contact card in a PC/SC keyboard reader, models recorded in the lab report; PIN at every sign-in
+  (SAC without PIN cache, applied by IT); operators read registers/profile, only the administrator edits; auth folder ACL set by IT with the
+  documented `icacls` command (`AUTHENTICATION.md` 2b).
