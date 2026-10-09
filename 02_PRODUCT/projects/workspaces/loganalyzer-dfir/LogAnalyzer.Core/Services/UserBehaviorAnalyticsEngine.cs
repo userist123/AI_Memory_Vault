@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using LogAnalyzer.Core.Models;
+using LogAnalyzer.Dfir.Analysis;
 
 namespace LogAnalyzer.Core.Services
 {
@@ -14,15 +15,21 @@ namespace LogAnalyzer.Core.Services
             "DWM-1", "DWM-2", "DWM-3", "UMFD-0", "UMFD-1", "UMFD-2", "-"
         };
 
-        public List<UbaAnomalyItem> Evaluate(IEnumerable<ParsedEvent> events)
+        /// <param name="workingHours">Working hours from the procedure profile; <c>null</c> = not defined yet. Off-hours logons are context either way, never a High finding.</param>
+        public List<UbaAnomalyItem> Evaluate(IEnumerable<ParsedEvent> events, WorkingHours? workingHours = null)
         {
             var anomalies = new List<UbaAnomalyItem>();
             if (events == null) return anomalies;
 
             var list = events.ToList();
 
-            // 1. Detectare autentificare în afara orelor normale (23:00 - 06:00) - Agregat per Utilizator
-            var offHoursLogons = list.Where(e => e.EventId == 4624 && (e.TimeCreated.Hour >= 23 || e.TimeCreated.Hour < 6)).ToList();
+            // 1. Autentificări în afara orelor (context, nu penalizare) - Agregat per Utilizator. Fără program de lucru definit se
+            //    listează intervalul nocturn 23:00 - 06:00 ca informație, fără a-l considera o abatere.
+            var offHoursLogons = list.Where(e => e.EventId == 4624 &&
+                (workingHours is null ? e.TimeCreated.Hour >= 23 || e.TimeCreated.Hour < 6 : !workingHours.Contains(TimeOnly.FromDateTime(e.TimeCreated)))).ToList();
+            string hoursNote = workingHours is null
+                ? "Context, neevaluat: programul de lucru nu este definit (intervalul 23:00-06:00 este doar informație)."
+                : $"Comparație cu programul de lucru al profilului ({workingHours.Describe()}); nu este o penalizare automată.";
             var validOffHours = offHoursLogons
                 .Select(e => new { Event = e, User = ExtractTargetUser(e.Message) })
                 .Where(x => IsRealUser(x.User))
@@ -37,9 +44,9 @@ namespace LogAnalyzer.Core.Services
                     Username = g.Key,
                     Workstation = g.FirstOrDefault()?.Event.MachineName ?? "Workstation",
                     AnomalyType = "Autentificare în Afara Orelor Normale (Off-Hours Logon)",
-                    Severity = "High",
-                    RiskWeight = 75.0,
-                    Description = $"Utilizatorul {g.Key} a înregistrat {g.Count()} autentificări nocturne între {first:HH:mm} și {last:HH:mm}. Abatere comportamentală de la programul autorizat.",
+                    Severity = "Info",
+                    RiskWeight = 0.0,
+                    Description = $"Utilizatorul {g.Key} a înregistrat {g.Count()} autentificări în afara orelor între {first:HH:mm} și {last:HH:mm}. {hoursNote}",
                     Timestamp = last
                 });
             }

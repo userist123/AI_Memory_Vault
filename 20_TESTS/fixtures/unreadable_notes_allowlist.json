@@ -560,6 +560,12 @@
       "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
     },
     {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-wp1b.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
       "path": "00_GOVERNANCE/coordination/tasks/todo-claude-wp3.md",
       "kind": "no_frontmatter",
       "category": "plain_document",

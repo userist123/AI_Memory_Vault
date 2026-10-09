@@ -40,7 +40,8 @@ public static class Correlation
         return UserWritableMarkers.Any(p.Contains) && !KnownBenignMarkers.Any(p.Contains);
     }
 
-    public static List<Finding> Run(IReadOnlyList<TimelineEvent> events)
+    /// <param name="maintenancePolicy">Approved log-clearing accounts and maintenance windows from the procedure profile; <c>null</c> = not defined yet.</param>
+    public static List<Finding> Run(IReadOnlyList<TimelineEvent> events, LogMaintenancePolicy? maintenancePolicy = null)
     {
         var f = new List<Finding>();
         int n = 0;
@@ -84,19 +85,10 @@ public static class Correlation
 
         // 2. Log tampering: cleared logs and record-id gaps (ported from the 2026-08-08 prototype's LogIntegrityService).
         var clears = events.Where(e => Ev(e, "Security", 1102) || Ev(e, "System", 104) || Ev(e, "Security", 1100) || Ev(e, "Security", 4719)).ToList();
-        if (clears.Count > 0)
-            f.Add(new Finding
-            {
-                FindingId = Id(), RuleId = "LOG-TAMPER", Title = "Jurnale șterse, serviciul de jurnalizare oprit sau politica de audit modificată",
-                Severity = clears.Any(e => e.EventId is "1102" or "104") ? Severity.High : Severity.Medium, Category = "Defense Evasion",
-                Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1070.001",
-                FirstSeenUtc = clears.Min(e => e.Time.Utc), LastSeenUtc = clears.Max(e => e.Time.Utc),
-                Description = string.Join("; ", clears.OrderBy(e => e.Time.Utc).Take(15).Select(e =>
-                    $"{e.Time.Utc:yyyy-MM-dd HH:mm} {e.Source[9..]} {e.EventId} {(e.EventId == "1102" ? "de " + F(e, "SubjectUserName") : F(e, "Channel"))}")),
-                ClassificationReason = "Evenimente 1102/104/1100/4719 înregistrate de Windows.",
-                SupportingEvidence = clears.Take(30).Select(e => Ref(e, $"{e.Source} {e.EventId}")).ToList(),
-                MissingEvidence = ["Activitatea anterioară ștergerii nu mai este în jurnal; surse alternative: SRUM, Prefetch, Amcache, copii VSS."],
-            });
+        // The severity of a cleared log depends on other findings (a clear next to a High finding is worse), so the finding is
+        // built after sections 1-7 have run (see below); its id is reserved here to keep the numbering stable.
+        var logTamperId = clears.Count > 0 ? Id() : "";
+
         foreach (var g in events.Where(e => e.Source.StartsWith("EventLog:", StringComparison.Ordinal) && e.Locator.StartsWith("EventRecordID=", StringComparison.Ordinal))
                                 .GroupBy(e => e.EvidenceId))
         {
@@ -361,6 +353,8 @@ public static class Correlation
                 AlternativeExplanations = ["Scripturi de administrare sau de instalare legitime."],
             });
 
+        if (clears.Count > 0) f.Add(BuildLogTamper(logTamperId, clears, f, maintenancePolicy, F));
+
         // 8. Executions from user-writable locations: individual findings only when another signal touches them.
         static DateTimeOffset? T(Finding x) => x.FirstSeenUtc ?? x.LastSeenUtc;
         var strong = f.Where(x => x.Severity >= Severity.High && T(x) is not null).ToList();
@@ -471,6 +465,37 @@ public static class Correlation
         Flush();
 
         return f.OrderByDescending(x => x.Severity).ThenBy(x => x.FirstSeenUtc ?? x.LastSeenUtc).ToList();
+    }
+
+    /// <summary>
+    /// LOG-TAMPER. Clears (Security 1102 / System 104) are scored by <see cref="LogClearAssessment"/>: planned maintenance is Info,
+    /// an unexplained clear without a procedure profile is Medium, an unexpected or corroborated one is High, never Critical.
+    /// Service stop (1100) and audit-policy change (4719) stay Medium.
+    /// </summary>
+    private static Finding BuildLogTamper(string id, List<TimelineEvent> clears, List<Finding> found, LogMaintenancePolicy? policy, Func<TimelineEvent, string, string> F)
+    {
+        var logClears = clears.Where(e => e.EventId is "1102" or "104").Where(e => e.Time.Utc is not null).OrderBy(e => e.Time.Utc).ToList();
+        var others = found.Where(x => x.Severity >= Severity.High && (x.FirstSeenUtc ?? x.LastSeenUtc) is not null).Select(x => (x.FirstSeenUtc ?? x.LastSeenUtc)!.Value).ToList();
+        var assessed = LogClearAssessment.Assess(
+            logClears.Select(e => new LogClearEvent(e.EventId == "1102" ? "Security" : F(e, "Channel") is { Length: > 0 } ch ? ch : "System",
+                e.Time.Utc!.Value, F(e, "SubjectUserName"), F(e, "SubjectDomainName"))).ToList(), policy, others);
+        var severity = assessed.Count > 0 ? LogClearAssessment.Overall(assessed) : Severity.Medium;
+        if (clears.Any(e => e.EventId is not ("1102" or "104")) && severity < Severity.Medium) severity = Severity.Medium;   // 1100 / 4719 present
+        var lines = clears.OrderBy(e => e.Time.Utc).Take(15).Select(e =>
+            $"{e.Time.Utc:yyyy-MM-dd HH:mm} {e.Source[9..]} {e.EventId} {(e.EventId == "1102" ? "de " + F(e, "SubjectUserName") : F(e, "Channel"))}").ToList();
+        var verdict = assessed.Select(a => a.Reason).Distinct().ToList();
+        return new Finding
+        {
+            FindingId = id, RuleId = "LOG-TAMPER", Title = "Jurnale șterse, serviciul de jurnalizare oprit sau politica de audit modificată",
+            Severity = severity, Category = "Defense Evasion",
+            Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1070.001",
+            FirstSeenUtc = clears.Min(e => e.Time.Utc), LastSeenUtc = clears.Max(e => e.Time.Utc),
+            Description = string.Join("; ", lines) + (verdict.Count > 0 ? ". Evaluare: " + string.Join(" ", verdict.Take(5)) : ""),
+            ClassificationReason = "Evenimente 1102/104/1100/4719 înregistrate de Windows. Severitatea ține de ciclul de viață al golirii (planificată / neașteptată / neevaluată) și de factori de corelare, nu de ora din zi.",
+            SupportingEvidence = clears.Take(30).Select(e => new EvidenceRef(e.EvidenceId, e.Locator, $"{e.Source} {e.EventId}")).ToList(),
+            MissingEvidence = ["Activitatea anterioară ștergerii nu mai este în jurnal; surse alternative: SRUM, Prefetch, Amcache, copii VSS."],
+            AlternativeExplanations = ["Mentenanță planificată (rotirea jurnalelor, curățare după instalare) făcută de un administrator."],
+        };
     }
 
     /// <summary>"containerfile:_C:\x.zip; file:_C:\x.zip->inner" → "C:\x.zip".</summary>

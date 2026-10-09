@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using LogAnalyzer.Core.Models;
+using LogAnalyzer.Dfir.Analysis;
 
 namespace LogAnalyzer.Core.Services.Network
 {
@@ -125,13 +126,15 @@ namespace LogAnalyzer.Core.Services.Network
             // 6. Curățare Jurnal de Securitate (Anti-Forensics EID 1102 / 104)
             if (ev.EventId == 1102 || ev.EventId == 104 || (msg.Contains("wevtutil") && (msg.Contains("cl") || msg.Contains("clear-log"))))
             {
+                string channel = ev.EventId == 1102 ? "Security" : ev.EventId == 104 ? "System" : "indicat în linia de comandă wevtutil";
+                var clear = LogClearAssessment.AssessUnscheduled(channel, new DateTimeOffset(ev.TimeCreated.ToUniversalTime()));
                 return new DetectedIssue
                 {
-                    Title = "🚨 ALERTĂ CRITICĂ: Jurnal de Securitate Șters Intenționat (Anti-Forensics)",
-                    Severity = "Critical",
+                    Title = "⚠️ Jurnal de evenimente golit (necesită verificare)",
+                    Severity = clear.Severity.ToString(),
                     MitreTechniqueId = "T1070.001",
                     MitreTacticName = "Defense Evasion",
-                    Explanation = $"Jurnalul Security a fost curățat intenționat (wevtutil cl / Event Log Cleared) pe [{ev.MachineName}]. Tehnică standard de acoperire a urmelor după compromitere.",
+                    Explanation = $"Golire de jurnal ({channel}) (EID {ev.EventId} / wevtutil cl) pe [{ev.MachineName}]. Golirea poate fi mentenanță planificată sau ascundere de urme după compromitere; {clear.Reason}",
                     CreatedAt = DateTime.UtcNow,
                     RelatedEvents = new List<ParsedEvent> { ev }
                 };

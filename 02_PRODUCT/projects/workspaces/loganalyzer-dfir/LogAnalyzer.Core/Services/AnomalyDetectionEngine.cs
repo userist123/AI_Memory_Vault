@@ -127,8 +127,8 @@ namespace LogAnalyzer.Core.Services
                         anomalies.Add(new DetectedIssue
                         {
                             Title = $"Autentificare Nocturnă Neobișnuită (Off-Hours: {ev.TimeCreated:HH:mm})",
-                            Severity = "Medium",
-                            Explanation = $"S-a înregistrat o autentificare cu succes în afara orelor standard de lucru ({ev.TimeCreated:HH:mm:ss}) pe gazda {ev.MachineName}. Poate indica un atacator ce operează dintr-un alt fus orar.",
+                            Severity = "Info",
+                            Explanation = $"S-a înregistrat o autentificare cu succes în intervalul nocturn ({ev.TimeCreated:HH:mm:ss}) pe gazda {ev.MachineName}. Context, nu constatare: neevaluat, programul de lucru nu este definit.",
                             ComplianceTag = "User Behavioral Anomaly",
                             MitreTechniqueId = "T1078",
                             MitreTacticName = "Initial Access",

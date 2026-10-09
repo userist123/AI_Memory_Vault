@@ -138,11 +138,11 @@ level: critical",
             {
                 Id = "c102a8e1-512a-4318-912f-874b2190ee01",
                 Title = "Windows Event Log Cleared (Indicator Removal)",
-                Severity = "Critical",
+                Severity = "Medium",
                 MitreTechnique = "T1070.001",
                 ComplianceTag = "HG 585/2002 - Securitate Jurnale",
                 FilePath = "rules/eventlog_cleared.yml",
-                Description = "Detectează golirea intenționată a jurnalelor de evenimente Security sau System în scopul evaziunii forenzice.",
+                Description = "Detectează golirea jurnalelor de evenimente Security sau System. Poate fi mentenanță planificată sau ștergere de urme; necesită verificare: nu există profil de procedură care să arate dacă golirea a fost planificată.",
                 YamlContent = @"title: Windows Event Log Cleared
 id: c102a8e1-512a-4318-912f-874b2190ee01
 status: stable
@@ -154,7 +154,7 @@ detection:
     selection:
         EventID: [1102, 104]
     condition: selection
-level: critical",
+level: medium",
                 MatchPredicate = ev => ev.EventId == 1102 || ev.EventId == 104
             });
 
