@@ -2,11 +2,16 @@
 from __future__ import annotations
 import datetime, hmac, json, os, sys, urllib.request, urllib.error
 from pathlib import Path
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
 
-project_root = Path(__file__).resolve().parent.parent
-if str(project_root) not in sys.path: sys.path.insert(0, str(project_root))
+# The repository root: interfaces/ -> packages/ -> 03_IMPLEMENTATION/ -> repo. It was
+# `parent.parent` (= 03_IMPLEMENTATION/packages), so a gateway started without
+# AI_MEMORY_VAULT_ROOT indexed one note and reported zero agents and zero skills.
+project_root = Path(__file__).resolve().parents[3]
+# The import root stays `packages/`: that is where `memory_controller` and `cognitive_core` live.
+packages_root = Path(__file__).resolve().parents[1]
+if str(packages_root) not in sys.path: sys.path.insert(0, str(packages_root))
 from memory_controller.authorizer import Principal
 from memory_controller.controller import MemoryController
 from memory_controller.storage.file_engine import FileStorageEngine
@@ -189,8 +194,15 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
             return
         self._json(404,{'error':'Endpoint not found'})
 
+#: Seconds an accepted connection may sit without sending a request line before it is
+#: dropped. A browser opens speculative connections and sends nothing on most of them;
+#: on a single-threaded server with no timeout, one such socket blocked every other
+#: client for as long as the browser kept it open (reproduced 2026-10-10).
+IDLE_CONNECTION_TIMEOUT=30
+BrowserMemoryAPIHandler.timeout=IDLE_CONNECTION_TIMEOUT
+
 def run_server(port=8000):
-    httpd=HTTPServer(('127.0.0.1',port),BrowserMemoryAPIHandler); print(f'[BROWSER GATEWAY] Running REST API server at http://127.0.0.1:{port}...')
+    httpd=ThreadingHTTPServer(('127.0.0.1',port),BrowserMemoryAPIHandler); httpd.daemon_threads=True; print(f'[BROWSER GATEWAY] Running REST API server at http://127.0.0.1:{port}...')
     try: httpd.serve_forever()
     except KeyboardInterrupt: httpd.server_close()
 if __name__=='__main__': run_server(int(sys.argv[1]) if len(sys.argv)>1 else 8000)
