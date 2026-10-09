@@ -202,13 +202,13 @@ air-gapped networks / standalone PCs. The app's own behaviour and documentation 
 One work package at a time (token rule), each = fresh agent from a short prompt + checkpoint file, PR, CI green
 (Windows build + Python `enforce`), orchestrator verification (trial merge, both Python roots, .NET build), merge.
 1. [ ] #235 notes/specs → main; #233 WP2 → main; WP-ED PR → main; WP-PKG PR → main (incl. AuditCollector.ps1, dev-path fix, no wmic, self-contained smoke test).
-2. [ ] WP1b — log-clear lifecycle (routine vs unexpected), no after-hours auto-penalty, no "Conform" on absence.
-3. [ ] WP3 — hash-chained case audit + custody, evidence lifecycle states (decision 11), mutation invalidation, case scope fields (decision 23).
-4. [ ] WP4 — verification layer (separate assembly, verdicts, contradictions, gate for Vault export/report banner).
-5. [ ] WP15 — procedure profile (hours, rotation, approved software, expected GPO, zones; manual + import), GPO/policy change timeline + diff, control gap, configured/applied/enforced/observed, log lifecycle, time manipulation.
-6. [ ] WP14 + WP11 Tier 1 (WP11-T1 #245 and WP14a #246 merged; WP14b combined sequences next) — media register (registration no., decision 16), users/roles + clearances (decision 17), USB/CD-DVD/portable storage, NIC/Wi-Fi/BT on air-gapped hosts, zone transfers; SMB 5140/5145, 4663, accounts, RDP/WinRM, security agents.
+2. [x] WP1b (#237) — log-clear lifecycle (routine vs unexpected), no after-hours auto-penalty, no "Conform" on absence.
+3. [x] WP3 (#238, #239) — hash-chained case audit + custody, evidence lifecycle states (decision 11), mutation invalidation, case scope fields (decision 23).
+4. [x] WP4 (#240) — verification layer (separate assembly, verdicts, contradictions, gate for Vault export/report banner).
+5. [x] WP15 (#243, #244) — procedure profile (hours, rotation, approved software, expected GPO, zones; manual + import), GPO/policy change timeline + diff, control gap, configured/applied/enforced/observed, log lifecycle, time manipulation.
+6. [x] WP14 + WP11 Tier 1 (#245, #246, #249; print-scan sequence waits for WP13/WP16a) — media register (registration no., decision 16), users/roles + clearances (decision 17), USB/CD-DVD/portable storage, NIC/Wi-Fi/BT on air-gapped hosts, zone transfers; SMB 5140/5145, 4663, accounts, RDP/WinRM, security agents.
 6b. [x] WP-AUTH (#247, merged 2026-10-09; decision 34 recorded) — smart-card sign-in (decision 33): contact PKI card in the keyboard smart-card slot + PIN via SafeNet, primary admin may always use account + password, card→user mapping in the users register (WP14a), offline chain/CRL, sign-in audit chain, role gate for register/admin actions; spec `00_GOVERNANCE/coordination/tasks/todo-claude-wp-auth.md`.
-7. [ ] WP5/WP6/WP7 — case persistence + Home + coverage matrix; RO/EN localisation, accessibility, finding card/Why/Evidence/Know-Think-Don't-know; goal-based navigation, Verify + Memory pages.
+7. [ ] WP5/WP6/WP7 (split: WP5 first, spec `00_GOVERNANCE/coordination/tasks/todo-claude-wp5.md`) — case persistence + Home + coverage matrix; RO/EN localisation, accessibility, finding card/Why/Evidence/Know-Think-Don't-know; goal-based navigation, Verify + Memory pages.
 8. [ ] WP13 — Access Evidence + classification (NATO/EU/national, decision 21), mismatch, document lifecycle.
 9. [ ] WP16a — print tracking (decision 26, PRINT_TRACKING_RESEARCH.md): job states, content capture EMF/XPS → text/PDF, naming check, device confirmation (P1 import / P2-P3 SNMP-IPP).
 10. [ ] WP8 AI surface (P2/P3 only), WP9 response verification, WP10 report profiles + export manifest + classification marking.

@@ -261,6 +261,28 @@ namespace LogAnalyzer.UI.Tests
         }
 
         [Fact]
+        public void Risk_level_default_is_not_a_reassuring_claim()
+        {
+            var vm = File.ReadAllText(Path.Combine(AppDir(), "ViewModels", "MainViewModel.cs"));
+
+            Assert.DoesNotContain("SCĂZUT (Normal)", vm);
+            Assert.Contains("NEDETERMINAT (analiza nu a fost rulată)", vm);
+        }
+
+        [Fact]
+        public void Home_is_the_first_sidebar_page_and_the_default_tab_and_no_page_was_removed()
+        {
+            var main = File.ReadAllText(Path.Combine(AppDir(), "MainWindow.xaml"));
+            var vm = File.ReadAllText(Path.Combine(AppDir(), "ViewModels", "MainViewModel.cs"));
+
+            Assert.True(main.IndexOf("Acasă (caz, acoperire, pornire)", StringComparison.Ordinal) < main.IndexOf("Command Dashboard", StringComparison.Ordinal));
+            Assert.Contains("<views:HomeView DataContext=\"{Binding Home}\"/>", main);
+            Assert.Contains("private int _selectedTabIndex = HomeViewModel.HomeTabIndex", vm);
+            Assert.Contains("Command Dashboard", main);          // the existing pages are still there
+            Assert.Contains("Investigație completă (caz)", main);
+        }
+
+        [Fact]
         public void Provenance_default_is_not_a_verification_claim()
         {
             var vm = File.ReadAllText(Path.Combine(AppDir(), "ViewModels", "MainViewModel.cs"));

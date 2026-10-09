@@ -23,6 +23,21 @@ public sealed partial class CaseWorkspace
     public CaseInfo Info { get; private set; }
     public TimeZoneInfo Zone { get; }
 
+    private volatile string? _readOnlyReason;
+
+    /// <summary>
+    /// WP5: set by the case loader when an existing case is opened sealed, archived, invalidated or with a failed integrity re-check. A read-only
+    /// case refuses everything that adds or changes evidence, outputs, scope, state, hold or retention; auditing the open and re-checking still work.
+    /// </summary>
+    public bool IsReadOnly => _readOnlyReason is not null;
+    public string? ReadOnlyReason => _readOnlyReason;
+    public void MarkReadOnly(string reason) => _readOnlyReason = string.IsNullOrWhiteSpace(reason) ? "caz doar pentru citire" : reason;
+
+    private void ThrowIfReadOnly()
+    {
+        if (_readOnlyReason is { } r) throw new InvalidOperationException("Cazul este deschis doar pentru citire: " + r);
+    }
+
     public string EvidenceIndexPath => Path.Combine(Root, "Evidence", "evidence_index.jsonl");
     public string CustodyCsvPath => Path.Combine(Root, "Logs", "chain_of_custody.csv");
     public string CustodyJsonlPath => Path.Combine(Root, "Logs", "chain_of_custody.jsonl");
@@ -51,6 +66,7 @@ public sealed partial class CaseWorkspace
     /// </summary>
     public void ConfirmScope(CaseScope scope, string confirmedBy)
     {
+        ThrowIfReadOnly();
         var missing = scope.MissingFields();
         if (missing.Count > 0) throw new CaseScopeIncompleteException(missing);
         if (scope.Provisional) throw new ArgumentException("A provisional scope cannot confirm the case scope.", nameof(scope));
@@ -120,6 +136,7 @@ public sealed partial class CaseWorkspace
                                    string collector, string collectorVersion, Sensitivity sensitivity = Sensitivity.Confidential,
                                    string? parentEvidenceId = null, string notes = "")
     {
+        ThrowIfReadOnly();
         var dir = RawDir(source);
         var dest = UniquePath(Path.Combine(dir, SafeName(Path.GetFileName(originalPath))));
         using (var src = new FileStream(originalPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
@@ -135,6 +152,7 @@ public sealed partial class CaseWorkspace
                                        Sensitivity sensitivity = Sensitivity.Confidential, string? parentEvidenceId = null, string notes = "",
                                        EvidenceStatus status = EvidenceStatus.Success)
     {
+        ThrowIfReadOnly();
         var full = Path.GetFullPath(storedFullPath);
         if (!full.StartsWith(Root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
             throw new ArgumentException($"Stored evidence must live inside the case: {full}");
@@ -246,6 +264,7 @@ public sealed partial class CaseWorkspace
     /// <summary>ACQUIRED → VERIFIED → IN_ANALYSIS → ARCHIVED, one step at a time. DISPOSED is reached only through <see cref="MarkDisposed"/>.</summary>
     public StateResult TransitionState(string evidenceId, EvidenceState to, string actor)
     {
+        if (_readOnlyReason is { } ro) return StateResult.Refuse("caz doar pentru citire: " + ro);
         lock (_gate)
         {
             var all = LoadEvidence().ToList();
@@ -270,6 +289,7 @@ public sealed partial class CaseWorkspace
     /// </summary>
     public StateResult MarkDisposed(string evidenceId, string approver1, string approver2, string reason)
     {
+        if (_readOnlyReason is { } ro) return StateResult.Refuse("caz doar pentru citire: " + ro);
         lock (_gate)
         {
             if (Info.LegalHold) return StateResult.Refuse("cazul are LegalHold: marcarea DISPOSED este refuzată");
@@ -298,6 +318,7 @@ public sealed partial class CaseWorkspace
 
     public void SetLegalHold(bool on, string reason)
     {
+        ThrowIfReadOnly();
         lock (_gate)
         {
             Info.LegalHold = on;
@@ -308,6 +329,7 @@ public sealed partial class CaseWorkspace
 
     public void SetRetention(DateTimeOffset? until)
     {
+        ThrowIfReadOnly();
         lock (_gate)
         {
             Info.RetentionUntilUtc = until;

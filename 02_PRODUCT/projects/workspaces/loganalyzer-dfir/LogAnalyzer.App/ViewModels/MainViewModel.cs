@@ -105,6 +105,9 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>Full investigation pipeline ("Investigație completă" tab).</summary>
         public InvestigationViewModel Investigation { get; }
 
+        /// <summary>WP5: the Home page ("Acasă"): case answers, coverage matrix, the three starting intents and the recent cases.</summary>
+        public HomeViewModel Home { get; }
+
         /// <summary>Owner policies: import, lifecycle, verified application ("Politici" tab).</summary>
         public PolicyViewModel Policy { get; }
         /// <summary>"Profil de proceduri" (owner decisions 18, 19): working hours, log maintenance, approved software, expected policy, zones and transfers.</summary>
@@ -120,8 +123,8 @@ namespace LogAnalyzer.UI.ViewModels
         // AI / Heuristic Analysis Properties
         public ObservableCollection<AiAnomalyItem> AiAnomalies { get; set; } = new();
         [ObservableProperty] private int _aiRiskScore = 0;
-        [ObservableProperty] private string _aiRiskLevel = "SCĂZUT (Normal)";
-        [ObservableProperty] private string _aiRiskColor = "#22c55e";
+        [ObservableProperty] private string _aiRiskLevel = "NEDETERMINAT (analiza nu a fost rulată)";
+        [ObservableProperty] private string _aiRiskColor = "#94a3b8";
         [ObservableProperty] private int _aiHighEntropyCount = 0;
         [ObservableProperty] private int _aiMasqueradingCount = 0;
         [ObservableProperty] private int _aiOffHoursCount = 0;
@@ -248,7 +251,7 @@ namespace LogAnalyzer.UI.ViewModels
         }
 
         // Dashboard stats
-        [ObservableProperty] private int _selectedTabIndex = 0;
+        [ObservableProperty] private int _selectedTabIndex = HomeViewModel.HomeTabIndex;   // WP5: the app opens on Home
         [ObservableProperty] private int _totalEventsCount;
         [ObservableProperty] private int _totalAlertsCount;
         // Severity counts of the loaded alerts; test alerts (DetectedIssue.IsTestAlert) are excluded.
@@ -562,6 +565,7 @@ namespace LogAnalyzer.UI.ViewModels
             Containment = featureViews.CreateViewModel(FeatureKeys.Containment);
             DomainInvestigation = featureViews.CreateViewModel(FeatureKeys.DomainInvestigation);
             Investigation = new InvestigationViewModel(inv => featureViews.CreateViewModel(FeatureKeys.AiAnalysis, inv));
+            Home = new HomeViewModel(Investigation, tab => SelectedTabIndex = tab);
             Policy = new PolicyViewModel(registryWriter);
             ProcedureProfile = new ProcedureProfileViewModel();
             MediaRegister = new MediaRegisterViewModel();
