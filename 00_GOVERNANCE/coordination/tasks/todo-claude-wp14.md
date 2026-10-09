@@ -134,10 +134,24 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
   `Finding.AirGap` (AirGapDetail), `Wp14Analysis` called by `InvestigationPipeline`, new EVTX channels + capabilities, 12 RuleContracts entries,
   python rule-catalog producers extended. Dfir tests: 48 known Linux failures only.
 
+- 2026-10-09 claude-wp14a: item 9 done (`RegisterViewModel<T>` + `RegisterView`, sidebar "Registru medii" / "Registru utilizatori", investigation tab "Integritate air-gap"
+  with a "zona sistemului" field); `LESSONS_LEARNED_MAPPING.md` rows 15-18, 21, 22, 48, 50, 53, 55, 103 updated. Item 10 tests: `Wp14*Tests` (Dfir), `RegisterViewModelTests` (App, Windows only).
+
 ## Next
-- (done above: items 1-8) Item 4 (observed media vs register), 5 (USB/CD-DVD evidence), 6-7 (air-gap rules + category), 8 (D01/N01), 9 (UI), 10 (tests; rule catalog + allowlist + Python suite).
+- Final merge of origin/main, full .NET + Python verification, final push (see the report). WP14b (combined sequences) is the next PR.
 
 ## Blockers
 - App user authentication does not exist. Decision 17's "only the global admin creates accounts" cannot be enforced in-app yet.
   The register is data plus an audit chain; enforcement needs an owner decision on authentication (Windows account / local PIN /
   smart card).
+- Defaults chosen without an owner decision (change them in one place if the owner differs):
+  - Case scope with classification "Unspecified" is treated like unclassified for severity (only an explicit Classified scope gets the higher level).
+  - MEDIA-REGISTERED / MEDIA-UNKNOWN: Low on classified, Info otherwise; MEDIA-AUTHORIZED: Info. AIRGAP-NETWORK-CONNECTED and -WIFI-ASSOCIATED: High on classified
+    (Medium otherwise), -BLUETOOTH-PAIRED / -DHCP-LEASE / -NIC-ADDED (physical): Medium (Low otherwise), authorised by the profile: Info.
+  - The zone of the analysed system is not part of the case scope; the operator declares it in the investigation view ("zona sistemului"). Undeclared zone: a medium
+    whose register row names a zone is REGISTERED (zone not confirmable), never AUTHORIZED.
+  - The register has no withdrawal/destruction date, so a withdrawn/destroyed medium is UNAUTHORIZED for any observation (the finding says the observation may predate it).
+  - The equivalence table NATO/EU/national (Legea 182/2002 art. 15, HG 585/2002) is entered from decision 21; the owner should check it against the text in force.
+  - LNK / JumpList / USN rows carry no device serial, so activity is tied to a medium only through the drive letter MountedDevices recorded last (stated in the finding).
+  - Kernel-PnP 400 is used for "adapter added"; 410 (started) is not, because it fires at every boot. Enable/disable of an adapter has no event in the collected sources.
+
