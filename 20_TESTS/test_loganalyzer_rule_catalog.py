@@ -1,7 +1,7 @@
 """Every finding rule id emitted by LogAnalyzer's C# code has an entry in the finding-contract catalog (stage 2, WP2).
 
 A rule that is not in `RuleContracts.cs` would get no limitations, missing evidence or next steps; this keeps the catalog
-in step with the producers (Correlation, LiveStateAnalyzer, ProcessContainmentService)."""
+in step with the producers (Correlation, LiveStateAnalyzer, ProcessContainmentService, PolicyTimeline)."""
 import re
 from pathlib import Path
 
@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1] / "02_PRODUCT/projects/workspaces/log
 PRODUCERS = [
     ROOT / "LogAnalyzer.Dfir.Core/Analysis/Correlation.cs",
     ROOT / "LogAnalyzer.Dfir.Windows/Investigation/InvestigationPipeline.cs",
+    ROOT / "LogAnalyzer.Dfir.Core/Analysis/PolicyTimeline.cs",
     ROOT / "LogAnalyzer.Response/Containment/ProcessContainmentService.cs",
 ]
 CATALOG = ROOT / "LogAnalyzer.Dfir.Core/Analysis/RuleContracts.cs"

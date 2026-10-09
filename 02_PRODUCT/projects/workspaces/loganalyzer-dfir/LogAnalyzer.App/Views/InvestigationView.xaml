@@ -173,6 +173,18 @@
                     </DataGrid.Columns>
                 </DataGrid>
             </TabItem>
+            <TabItem Header="Cronologie politici" Style="{StaticResource InspectorTabItemStyle}">
+                <DockPanel Margin="8">
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding PolicyTimelineSummary}" TextWrapping="Wrap" Margin="0,0,0,6" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <ListBox ItemsSource="{Binding PolicyTimelineLines}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Text}" TextWrapping="Wrap" FontFamily="Consolas"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </TabItem>
             <TabItem Header="Analiză AI (locală)" Style="{StaticResource InspectorTabItemStyle}">
                 <ctrl:FeaturePlaceholder FeatureKey="AiAnalysis" Title="Analiza AI" ViewModel="{Binding AiAnalysis}"/>
             </TabItem>

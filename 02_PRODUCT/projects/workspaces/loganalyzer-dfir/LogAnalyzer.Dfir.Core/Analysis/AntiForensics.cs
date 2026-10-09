@@ -149,22 +149,31 @@ public static class AntiForensics
             else Add("AF04", "Goluri în RecordID", "T1070.001", AntiForensicResult.Undetermined, "Niciun fișier EVTX analizat.");
         }
 
-        // AF05 — system clock changed by something other than time synchronization (W32Time runs in svchost.exe).
+        // AF05 — system clock changed by something other than time synchronization (W32Time runs in svchost.exe). WP15b: magnitude and direction of every
+        // jump, time-zone changes and record-order inversions (RecordID grows while the time goes back) come from TimeManipulation, the same source the
+        // TEMPORAL check of the verification layer uses for its unreliable-time windows.
         {
+            var tm = TimeManipulation.Analyze(events);
             var manual = events.Where(e => Ev(e, Security, "4616") && !F(e, "ProcessName").EndsWith(@"\svchost.exe", StringComparison.OrdinalIgnoreCase)
                                         || e.Source.Equals(System, StringComparison.OrdinalIgnoreCase) && e.EventId == "1"
                                            && e.Provider.Equals("Microsoft-Windows-Kernel-General", StringComparison.OrdinalIgnoreCase)
                                            && F(e, "Reason") == "1" && !F(e, "ProcessName").EndsWith(@"\svchost.exe", StringComparison.OrdinalIgnoreCase)).ToList();
-            if (manual.Count > 0)
+            string Mag(TimelineEvent e) => tm.Jumps.FirstOrDefault(j => j.Evidence.EvidenceId == e.EvidenceId && j.Evidence.Locator == e.Locator && j.EventId == e.EventId) is { Magnitude.Length: > 0 } j ? $" [{j.Magnitude}]" : "";
+            string zones = tm.ZoneChanges.Count == 0 ? "" : $" Schimbări de fus orar: {tm.ZoneChanges.Count} ({string.Join("; ", tm.ZoneChanges.Take(5).Select(z => $"{z.TimeUtc:yyyy-MM-dd HH:mm} UTC {z.Detail}"))}); nu sunt, singure, manipulare.";
+            string inversions = tm.Inversions.Count == 0 ? "" : $" Ordinea înregistrărilor contrazice ora: {tm.Inversions.Count} ({string.Join("; ", tm.Inversions.Take(5).Select(v => $"{v.Source["EventLog:".Length..]} RecordID {v.PreviousRecordId} → {v.RecordId}, ora înapoi cu {TimeManipulation.Human(v.Back)}"))}).";
+            var refs = manual.Select(e => Ref(e, "schimbare a orei sistemului")).Concat(tm.Inversions.Select(v => v.Evidence)).ToList();
+            if (manual.Count > 0 || tm.Inversions.Count > 0)
                 Add("AF05", "Manipularea orei sistemului", "", AntiForensicResult.Detected,
-                    $"{manual.Count(e => e.EventId == "4616")} în Security 4616 și {manual.Count(e => e.EventId == "1")} în Kernel-General 1 (aceeași schimbare apare în ambele jurnale), făcute de alt proces decât sincronizarea (svchost): " +
-                    string.Join("; ", manual.Take(10).Select(e => e.EventId == "4616"
-                        ? $"4616 {F(e, "PreviousTime")} → {F(e, "NewTime")} de {F(e, "SubjectUserName")} ({WinPath.GetFileName(F(e, "ProcessName"))})"
-                        : $"Kernel-General {F(e, "OldTime")} → {F(e, "NewTime")} ({WinPath.GetFileName(F(e, "ProcessName"))})")),
-                    manual.Select(e => Ref(e, "schimbare a orei sistemului")));
+                    (manual.Count > 0
+                        ? $"{manual.Count(e => e.EventId == "4616")} în Security 4616 și {manual.Count(e => e.EventId == "1")} în Kernel-General 1 (aceeași schimbare apare în ambele jurnale), făcute de alt proces decât sincronizarea (svchost): " +
+                          string.Join("; ", manual.Take(10).Select(e => e.EventId == "4616"
+                              ? $"4616 {F(e, "PreviousTime")} → {F(e, "NewTime")}{Mag(e)} de {F(e, "SubjectUserName")} ({WinPath.GetFileName(F(e, "ProcessName"))})"
+                              : $"Kernel-General {F(e, "OldTime")} → {F(e, "NewTime")}{Mag(e)} ({WinPath.GetFileName(F(e, "ProcessName"))})")) + "."
+                        : "Nicio schimbare manuală a ceasului în Security 4616 / Kernel-General 1.") + inversions + zones,
+                    refs);
             else if (Has(System))
                 Add("AF05", "Manipularea orei sistemului", "", AntiForensicResult.NotDetected,
-                    "System analizat: schimbările de oră (Kernel-General 1) sunt doar sincronizări, ceasul hardware sau fusul orar.");
+                    "System analizat: schimbările de oră (Kernel-General 1) sunt doar sincronizări, ceasul hardware sau fusul orar." + zones);
             else Add("AF05", "Manipularea orei sistemului", "", AntiForensicResult.Undetermined, "Lipsește jurnalul System (Kernel-General 1).");
         }
 

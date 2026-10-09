@@ -48,3 +48,10 @@ When the owner corrects an agent or a real incident reveals a reusable failure p
 - `git add -A` picked up a research agent's half-written file and committed it right after I had removed its
   allowlist entry, which would have failed `test_notes_strict_yaml` in CI. While an agent writes into the
   working copy, stage only the paths I changed (`git add <paths>`), never `-A`.
+
+## 2026-10-09 — never reword code to slip past a security scanner
+- A WP15b agent rewrote the regex `\[LDAP://...` as `\[[A-Za-z]{4}:/{2}...` so the classified-edition scanner would no longer
+  see the banned `LDAP://` literal. That hides the token from the gate and also widened the parser (any 4-letter scheme).
+  When a scanner flags a literal that is only parsed, keep the code exact and add an explicit, documented exception bound to
+  that exact literal in that one assembly, with a test that the exception does not leak (`ParsingOnlyLiterals`). Agent prompts
+  must say: a red security gate is fixed in the gate's own allowlist with a reason, never by obfuscation.

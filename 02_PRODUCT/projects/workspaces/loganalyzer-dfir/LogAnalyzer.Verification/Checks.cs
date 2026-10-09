@@ -141,6 +141,20 @@ public static class Checks
                     bad.Add($"evenimentul {r.Ref.EvidenceId} {r.Ref.Locator} ({Ids(known.Select(x => T(x.Time!.Value)).Distinct())}) iese din fereastra revendicată [{(first is { } fv ? T(fv) : "…")} – {(last is { } lv ? T(lv) : "…")}]");
             }
         }
+        if (bad.Count > 0 && facts.ManipulatedWindows.Count > 0)
+        {
+            // WP15b: where the system clock was moved the timestamps cannot order events, so an ordering violation is not a contradiction there: UNKNOWN, with the window named.
+            var times = new List<DateTimeOffset>();
+            if (first is { } f0) times.Add(f0);
+            if (last is { } l0) times.Add(last.Value);
+            times.AddRange(refs.SelectMany(r => r.Rows).Where(x => x.Time is not null).Select(x => x.Time!.Value));
+            var lo = times.Count > 0 ? times.Min() : (DateTimeOffset?)null; var hi = times.Count > 0 ? times.Max() : (DateTimeOffset?)null;
+            var hit = lo is { } a0 && hi is { } b0 ? facts.ManipulatedWindows.Where(w => a0 <= w.End && b0 >= w.Start).ToList() : [];
+            if (hit.Count > 0)
+                return CheckResult.Unknown(CheckIds.Temporal,
+                    "Ceasul sistemului nu e de încredere în intervalul acestei constatări (" + string.Join("; ", hit.Take(3).Select(w => $"{w.Kind} {T(w.Start)} – {T(w.End)}: {w.Description}")) +
+                    "): ordinea în timp nu se poate judeca; ar fi fost semnalat: " + string.Join("; ", bad.Distinct()) + ".", bad.Concat(unknown));
+        }
         if (bad.Count > 0) return CheckResult.Fail(CheckIds.Temporal, StandardState.Contradicted, "Încălcări de ordine în timp: " + string.Join("; ", bad.Distinct()) + ".", bad.Concat(unknown));
         if (first is null && last is null && !anyEventTime && f.SemanticType == SemanticType.Execution)
             return CheckResult.Unknown(CheckIds.Temporal, "O afirmație de execuție fără nicio oră (nici a constatării, nici a evenimentelor): momentul execuției nu e cunoscut.", unknown);

@@ -20,6 +20,9 @@ public sealed class GraphFacts
 
 public sealed record GraphEdge(string Id, string Source, string Target, string Type, string EvidenceId, string Derivation);
 
+/// <summary>A window of unreliable time (clock jump, zone change, record-order inversion) read from Analysis/policy_timeline.json.</summary>
+public sealed record ManipulatedWindowFact(DateTimeOffset Start, DateTimeOffset End, string Kind, string Description);
+
 /// <summary>Everything the checks read, loaded once per run. Every input is optional: a missing or unreadable one is a note, never a crash.</summary>
 public sealed class CaseFacts
 {
@@ -39,6 +42,8 @@ public sealed class CaseFacts
     public Dictionary<string, string> InvalidatedFindings { get; } = new(StringComparer.Ordinal);
     public bool InvalidationsRead { get; set; }
     public DateTimeOffset? LatestAcquisitionUtc { get; set; }
+    /// <summary>WP15b: intervals in which the clock was moved, the zone changed or record order contradicts time (Analysis/policy_timeline.json, TimeWindows). Empty when the file is absent.</summary>
+    public List<ManipulatedWindowFact> ManipulatedWindows { get; } = [];
     public JsonDocument? AiReasoning { get; set; }
     public Dictionary<string, string> Inputs { get; } = new(StringComparer.Ordinal);
     public List<string> Notes { get; } = [];
@@ -151,6 +156,22 @@ public sealed class CaseFacts
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
                 { f.Notes.Add($"proba {id} nu a putut fi recitită pentru verificarea hash-ului: {ex.Message}"); }
             }
+
+        // policy_timeline.json (WP15b): only its manipulated-time windows are used here
+        var ptp = f.AnalysisPath("policy_timeline.json");
+        Input("Analysis/policy_timeline.json", File.Exists(ptp));
+        if (File.Exists(ptp))
+            try
+            {
+                using var doc = JsonDocument.Parse(File.ReadAllText(ptp));
+                if (doc.RootElement.ValueKind == JsonValueKind.Object && doc.RootElement.TryGetProperty("TimeWindows", out var tw) && tw.ValueKind == JsonValueKind.Array)
+                    foreach (var w in tw.EnumerateArray())
+                        if (DateTimeOffset.TryParse(Str(w, "Start"), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var a)
+                            && DateTimeOffset.TryParse(Str(w, "End"), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var b))
+                            f.ManipulatedWindows.Add(new ManipulatedWindowFact(a, b, Str(w, "Kind"), Str(w, "Description")));
+            }
+            catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
+            { f.Notes.Add("policy_timeline.json nu a putut fi citit: " + ex.Message); }
 
         // AI analysis, when one was run
         var ap = f.AnalysisPath("ai_reasoning.json");

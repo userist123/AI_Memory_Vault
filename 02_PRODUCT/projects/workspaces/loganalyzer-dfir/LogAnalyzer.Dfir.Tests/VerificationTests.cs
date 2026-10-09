@@ -339,6 +339,33 @@ public sealed class VerificationTests : IDisposable
         Assert.Equal(StandardState.Verified, Only(_lab.Verify()).Verdict);
     }
 
+    private void WriteManipulatedWindow(DateTimeOffset start, DateTimeOffset end, string kind = "CLOCK_JUMP") =>
+        File.WriteAllText(_lab.Analysis("policy_timeline.json"), System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, object>
+        {
+            ["schema_version"] = "1.0",
+            ["TimeWindows"] = new[] { new { Start = start, End = end, Kind = kind, Description = "ceasul a fost mutat", EvidenceId = "EV", Locator = "L1" } },
+        }));
+
+    [Fact]
+    public void Temporal_inside_a_manipulated_clock_window_is_UNKNOWN_not_CONTRADICTED()
+    {
+        _lab.ExecutionWithTwoKinds(); _lab.Findings[0] = Clone(_lab.Findings[0], first: T0.AddHours(1), last: T0); _lab.WriteAll();
+        Assert.Equal(StandardState.Contradicted, Only(_lab.Verify()).Verdict);   // without the window: a real ordering violation
+        WriteManipulatedWindow(T0.AddMinutes(-30), T0.AddHours(2));
+        var c = Check(Only(_lab.Verify()), CheckIds.Temporal);
+        Assert.Equal(StandardState.Unknown, c.Effect);
+        Assert.Contains("ceasul", c.Reason);
+        Assert.Contains("CLOCK_JUMP", c.Reason);
+    }
+
+    [Fact]
+    public void Temporal_a_manipulated_window_elsewhere_does_not_hide_a_real_contradiction()
+    {
+        _lab.ExecutionWithTwoKinds(); _lab.Findings[0] = Clone(_lab.Findings[0], first: T0.AddHours(1), last: T0); _lab.WriteAll();
+        WriteManipulatedWindow(T0.AddDays(-20), T0.AddDays(-19));
+        Assert.Equal(StandardState.Contradicted, Check(Only(_lab.Verify()), CheckIds.Temporal).Effect);
+    }
+
     [Fact]
     public void Temporal_unknown_event_time_is_UNKNOWN_not_a_violation()
     {
