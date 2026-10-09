@@ -1,0 +1,30 @@
+{
+  "_comment": "WP11 REMOTE-TOOL-PRESENT / REMOTE-TOOL-EXECUTED: remote-access tools. Data, not code. executables = process/file names (case-insensitive); serviceNames = exact service key names; displayContains = fragments of service display names; productContains = fragments of installed-product names (MsiInstaller 11707); logMarkers = path fragments of the tool's own log/trace files (matched on any collected row's path); aliases = names an operator may use in the procedure profile's approved-software list.",
+  "tools": [
+    { "id": "anydesk", "name": "AnyDesk", "aliases": ["anydesk"],
+      "executables": ["anydesk.exe"], "serviceNames": ["AnyDesk"], "displayContains": ["AnyDesk"], "productContains": ["AnyDesk"],
+      "logMarkers": ["\\anydesk\\ad.trace", "\\anydesk\\ad_svc.trace", "\\anydesk\\connection_trace.txt"] },
+    { "id": "teamviewer", "name": "TeamViewer", "aliases": ["teamviewer"],
+      "executables": ["teamviewer.exe", "teamviewer_service.exe", "tv_w32.exe", "tv_x64.exe"], "serviceNames": ["TeamViewer"], "displayContains": ["TeamViewer"], "productContains": ["TeamViewer"],
+      "logMarkers": ["\\teamviewer\\connections_incoming.txt", "\\teamviewer\\teamviewer"] },
+    { "id": "vnc", "name": "VNC (UltraVNC / TightVNC / RealVNC / WinVNC)", "aliases": ["vnc", "ultravnc", "tightvnc", "realvnc", "winvnc"],
+      "executables": ["winvnc.exe", "winvnc4.exe", "vncviewer.exe", "vncserver.exe", "vncagent.exe", "tvnserver.exe", "tvnviewer.exe", "uvnc_service.exe", "vncserverui.exe"],
+      "serviceNames": ["uvnc_service", "tvnserver", "winvnc", "WinVNC4", "vncserver"], "displayContains": ["VNC Server", "UltraVNC", "TightVNC"], "productContains": ["VNC", "UltraVNC", "TightVNC"],
+      "logMarkers": ["\\uvnc bvba\\ultravnc\\winvnc.log", "\\tightvnc\\tvnserver.log"] },
+    { "id": "rustdesk", "name": "RustDesk", "aliases": ["rustdesk"],
+      "executables": ["rustdesk.exe"], "serviceNames": ["RustDesk"], "displayContains": ["RustDesk"], "productContains": ["RustDesk"],
+      "logMarkers": ["\\rustdesk\\log\\"] },
+    { "id": "screenconnect", "name": "ScreenConnect (ConnectWise Control)", "aliases": ["screenconnect", "connectwise control", "connectwise"],
+      "executables": ["screenconnect.clientservice.exe", "screenconnect.windowsclient.exe", "screenconnect.client.exe"], "serviceNames": [], "displayContains": ["ScreenConnect Client"], "productContains": ["ScreenConnect"],
+      "logMarkers": ["\\screenconnect client (", "\\screenconnect\\"] },
+    { "id": "splashtop", "name": "Splashtop", "aliases": ["splashtop"],
+      "executables": ["srservice.exe", "strwinclt.exe", "srmanager.exe", "sragent.exe"], "serviceNames": ["SplashtopRemoteService", "SSUService"], "displayContains": ["Splashtop"], "productContains": ["Splashtop"],
+      "logMarkers": ["\\splashtop\\"] },
+    { "id": "chromeremotedesktop", "name": "Chrome Remote Desktop", "aliases": ["chrome remote desktop", "chromoting"],
+      "executables": ["remoting_host.exe", "remoting_desktop.exe", "remoting_start_host.exe"], "serviceNames": ["chromoting"], "displayContains": ["Chrome Remote Desktop"], "productContains": ["Chrome Remote Desktop"],
+      "logMarkers": ["\\chrome remote desktop\\"] },
+    { "id": "meshagent", "name": "MeshCentral MeshAgent", "aliases": ["meshagent", "meshcentral", "mesh agent"],
+      "executables": ["meshagent.exe", "meshagent64.exe"], "serviceNames": ["Mesh Agent", "MeshAgent"], "displayContains": ["Mesh Agent"], "productContains": ["Mesh Agent", "MeshAgent"],
+      "logMarkers": ["\\mesh agent\\", "\\meshagent\\"] }
+  ]
+}
