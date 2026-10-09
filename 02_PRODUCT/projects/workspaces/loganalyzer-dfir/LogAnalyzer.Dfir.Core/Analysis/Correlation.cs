@@ -165,6 +165,7 @@ public static class Correlation
                 SupportingEvidence = [Ref(e, "definiție task")],
                 AlternativeExplanations = ["Actualizatoare legitime instalate per utilizator (AppData) creează astfel de taskuri."],
                 MissingEvidence = ["Rulări ale taskului: TaskScheduler/Operational (200/201) sau Prefetch pentru executabil."],
+                ContradictingEvidence = F(e, "Enabled") == "false" ? ["Taskul este dezactivat (Settings/Enabled=false): în această stare nu pornește singur."] : [],
             });
         }
 
@@ -183,6 +184,8 @@ public static class Correlation
                 SupportingEvidence = [Ref(e, "configurație serviciu")],
                 AlternativeExplanations = ["Unele produse legitime își instalează serviciul în ProgramData."],
                 MissingEvidence = ["Instalarea (System 7045) și pornirile (7036), semnătura binarului."],
+                ContradictingEvidence = F(e, "StartMode").Equals("Disabled", StringComparison.OrdinalIgnoreCase)
+                    ? ["Serviciul este dezactivat (Start=4): în această stare nu pornește singur."] : [],
             });
         }
 
@@ -253,7 +256,7 @@ public static class Correlation
                     Severity = Severity.Medium, Category = "Execution", Classification = Classification.Direct, Confidence = Confidence.High,
                     LastSeenUtc = e.Time.Utc, File = exePath, Process = e.Process,
                     Description = $"{exePath} a rulat de {F(e, "RunCount")} ori; ultima rulare {e.Time.Utc:yyyy-MM-dd HH:mm} UTC.",
-                    ClassificationReason = "Fișierul Prefetch al programului (execuție dovedită).",
+                    ClassificationReason = "Fișierul Prefetch al programului (execuție dovedită).", SemanticType = SemanticType.Execution,
                     SupportingEvidence = [Ref(e, "Prefetch")],
                     AlternativeExplanations = ["Instalator sau aplicație legitimă instalată per utilizator."],
                 });
@@ -282,6 +285,7 @@ public static class Correlation
                     ? $"{e.Path}: ultima rulare {e.Time.Utc:yyyy-MM-dd HH:mm} UTC (BAM, utilizator {e.User})."
                     : $"{e.Path}: prezent în Amcache (SHA-1 {e.Hash}, {F(e, "Publisher")} {F(e, "Version")}), intrare scrisă {e.Time.Utc:yyyy-MM-dd HH:mm} UTC.",
                 ClassificationReason = e.Source == "BAM" ? "BAM înregistrează ultima execuție per utilizator." : "Amcache înregistrează prezența/instalarea programului.",
+                SemanticType = AntiOverclaim.SemanticForArtifact(e.Source),
                 SupportingEvidence = [Ref(e, e.Source)],
                 AlternativeExplanations = ["Instalator sau aplicație legitimă instalată per utilizator."],
             });
@@ -386,7 +390,11 @@ public static class Correlation
         if (rest.Count > 0)
             f.Add(new Finding
             {
-                FindingId = Id(), RuleId = "EXEC-USERPATH", Title = $"{rest.Count} programe au rulat din locații scriabile (fără alte semnale)",
+                FindingId = Id(), RuleId = "EXEC-USERPATH",
+                SemanticType = rest.All(x => x.SemanticType == SemanticType.Execution) ? SemanticType.Execution : SemanticType.Presence,
+                Title = rest.All(x => x.SemanticType == SemanticType.Execution)
+                    ? $"{rest.Count} programe au rulat din locații scriabile (fără alte semnale)"
+                    : $"{rest.Count} programe au rulat sau sunt doar prezente în locații scriabile (fără alte semnale)",
                 Severity = Severity.Low, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Low,
                 FirstSeenUtc = rest.Min(T), LastSeenUtc = rest.Max(T),
                 Description = string.Join("; ", rest.OrderByDescending(T).Take(60).Select(x => $"{x.Process} ({T(x):yyyy-MM-dd HH:mm})")),

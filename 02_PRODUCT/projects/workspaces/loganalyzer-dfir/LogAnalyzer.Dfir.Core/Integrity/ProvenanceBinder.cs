@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Integrity;
@@ -20,6 +21,7 @@ public static class ProvenanceBinder
             e.SourceSha256 = source.Sha256;
             e.ParserId = parserId;
             e.ParserVersion = parserVersion;
+            TimeFacts.Annotate(e);
         }
     }
 
