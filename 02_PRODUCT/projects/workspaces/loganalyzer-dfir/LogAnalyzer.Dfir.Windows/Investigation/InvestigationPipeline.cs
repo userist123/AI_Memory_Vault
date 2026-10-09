@@ -38,6 +38,11 @@ public sealed class InvestigationResult
     public List<AntiForensicCheck> AntiForensics { get; } = [];
     /// <summary>The procedure profile used by this run (null = none: log clears stay NotAssessed). Its snapshot is Analysis/procedure_profile.json.</summary>
     public ProcedureProfile? Procedure { get; set; }
+    /// <summary>WP15b: policy change timeline, configured/applied/enforced/observed levels, control gaps and unreliable-time windows (Analysis/policy_timeline.json).</summary>
+    public PolicyTimelineResult? PolicyTimeline { get; set; }
+    public string PolicyTimelineLine => PolicyTimeline is null ? "Cronologie politici: nedefinit (nu a fost calculată)."
+        : $"Cronologie politici: {PolicyTimeline.Changes.Count} modificări de politică, {PolicyTimeline.Applications.Count} înregistrări de aplicare GroupPolicy, {PolicyTimeline.Gaps.Count} decalaje de control, {PolicyTimeline.TimeWindows.Count} ferestre de oră nesigură."
+          + (PolicyTimeline.ExpectedNote.Length > 0 ? " Politica așteptată: nedefinit." : "");
     public string ProcedureProfileSha256 { get; set; } = "";
     /// <summary>What the report says about the profile: each section defined or "nedefinit" (never "conform"), and the SHA-256 of the copy in the case.</summary>
     public string ProcedureProfileLine => "Profil de proceduri: " + (Procedure is null ? "niciun profil (toate secțiunile nedefinite)" : LogAnalyzer.Dfir.Profile.ProfileOps.Describe(Procedure)
@@ -280,6 +285,19 @@ public sealed class InvestigationPipeline
             }
             found.AddRange(LiveStateAnalyzer.Analyze(live, ws.FullPath(live.StoredPath), found.Count));
         }
+        // WP15b: policy change timeline, configured/applied/enforced/observed and control gaps, from the case timeline alone (EVTX is enough; the expected policy comes from the profile link).
+        progress?.Report("Cronologie politici");
+        var expectedIssues = new List<string>();
+        var expectedSettings = PolicyTimeline.ExpectedFromProfile(procedureProfile, expectedIssues);
+        foreach (var issue in expectedIssues) ws.Audit("policy_timeline.expected_issue", issue);
+        var policyTimeline = PolicyTimeline.Build(r.Timeline, new PolicyTimelineOptions
+        {
+            Expected = expectedSettings, ExpectedIssues = expectedIssues, Maintenance = maintenance,
+            HighFindingTimesUtc = found.Where(x => x.Severity >= Severity.High && (x.FirstSeenUtc ?? x.LastSeenUtc) is not null).Select(x => (x.FirstSeenUtc ?? x.LastSeenUtc)!.Value).ToList(),
+        });
+        int lastFindingNo = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n) ? n : 0).DefaultIfEmpty(0).Max();
+        found.AddRange(policyTimeline.ToFindings(() => $"F-{++lastFindingNo:D4}"));
+        r.PolicyTimeline = policyTimeline;
         var (kept, rejected) = ProvenanceBinder.BindFindings(found, ws.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal));
         TimeReliability.Apply(kept, r.Timeline);
         // Finding contract: semantic type, standard state, limitations, provenance, audit trail (added beside Classification).
@@ -339,6 +357,10 @@ public sealed class InvestigationPipeline
         ws.RecordOutput("Analysis/anti_forensics.json", "AntiForensics", "1.0", evidenceIds);
         ws.RecordTransformation("CASE", "AntiForensics", "1.0", "Analysis/anti_forensics.json",
             $"{r.AntiForensics.Count(c => c.Result == AntiForensicResult.Detected)} DETECTED, {r.AntiForensics.Count(c => c.Result == AntiForensicResult.Undetermined)} UNDETERMINED");
+        File.WriteAllText(Path.Combine(analysisDir, "policy_timeline.json"), policyTimeline.ToJson());
+        ws.RecordOutput("Analysis/policy_timeline.json", "PolicyTimeline", "1.0", evidenceIds);
+        ws.RecordTransformation("CASE", "PolicyTimeline", "1.0", "Analysis/policy_timeline.json",
+            $"{policyTimeline.Changes.Count} modificări, {policyTimeline.Applications.Count} aplicări, {policyTimeline.Gaps.Count} decalaje, {policyTimeline.TimeWindows.Count} ferestre de oră nesigură");
         // WP4 verification layer (R9.7): after graph, detections and anti-forensics, before the Vault export. The verifier reads the case back from disk
         // (it is a separate module); dependencies.json is written first so it can confirm the finding -> evidence dependencies (rewritten with the proposals below).
         progress?.Report("Verificare");

@@ -71,7 +71,7 @@ public sealed class TimeManipulationTests
         var r = TimeManipulation.Analyze([tz, tz2]);
         Assert.Equal(2, r.ZoneChanges.Count);
         Assert.Equal(2, r.Windows.Count(w => w.Kind == "TIMEZONE_CHANGE"));
-        Assert.Empty(r.Jumps.Where(j => !j.Benign));
+        Assert.DoesNotContain(r.Jumps, j => !j.Benign);
     }
 
     [Fact]

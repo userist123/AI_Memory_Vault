@@ -197,7 +197,7 @@ public sealed class PolicyTimelineResult
 /// </summary>
 public static class PolicyTimeline
 {
-    public const string SchemaVersion = "1.0";
+    public const string SchemaVersion = SchemaVersions.PolicyTimeline;
     public const string GapRuleId = "POLICY-CONTROL-GAP";
     public const int MaxApplicationsInJson = 2000;
     private const string Security = "EventLog:Security";
@@ -248,6 +248,29 @@ public static class PolicyTimeline
         foreach (var (name, guid) in AuditSubcategories.ByName)
             if (string.Equals("{" + guid.ToString() + "}", g, StringComparison.OrdinalIgnoreCase)) return name;
         return g;
+    }
+
+    /// <summary>
+    /// The expected settings the procedure profile links to (the profile stores a path to a policy of the existing Policy import, never a copy). A link that cannot be
+    /// read is reported in <paramref name="issues"/>, not dropped.
+    /// </summary>
+    public static List<ExpectedSetting> ExpectedFromProfile(LogAnalyzer.Dfir.Profile.ProcedureProfile? profile, List<string> issues)
+    {
+        var all = new List<ExpectedSetting>();
+        foreach (var row in profile?.ExpectedPolicies ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(row.PolicyPath)) continue;
+            try
+            {
+                var doc = PolicyLoader.LoadFile(row.PolicyPath.Trim());
+                if (row.Sha256.Length > 0 && !row.Sha256.Equals(doc.Sha256, StringComparison.OrdinalIgnoreCase))
+                    issues.Add($"{row.PolicyPath}: SHA-256 diferit de cel din profil (politica s-a schimbat după legare)");
+                all.AddRange(ExpectedSetting.From(doc));
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            { issues.Add($"{row.PolicyPath}: {ex.Message}"); }
+        }
+        return all;
     }
 
     public static PolicyTimelineResult Build(IReadOnlyList<TimelineEvent> events, PolicyTimelineOptions? options = null)
