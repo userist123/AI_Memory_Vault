@@ -27,7 +27,44 @@
             </StackPanel>
         </DockPanel>
 
-        <Border Grid.Row="1" Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,12">
+        <StackPanel Grid.Row="1">
+        <!-- WP18 S4: "Primește probe de la o stație" in three steps; the full form stays below -->
+        <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,12">
+            <StackPanel>
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding IntakeProgress}" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding IntakeStepTitle}" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                </DockPanel>
+                <TextBlock Text="{Binding IntakeQuestion}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,8"/>
+                <StackPanel>
+                    <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IntakeStepIndex}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                    <WrapPanel>
+                        <TextBox AutomationProperties.Name="Folderul cu probele aduse" Text="{Binding IntakeFolder, UpdateSourceTrigger=PropertyChanged}" Width="420" Margin="0,0,6,0"/>
+                        <Button Content="Alege folderul…" Command="{Binding IntakePickFolderCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                    </WrapPanel>
+                </StackPanel>
+                <StackPanel>
+                    <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IntakeStepIndex}" Value="1"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                    <TextBlock Text="{Binding IntakeScan.Summary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                    <ItemsControl ItemsSource="{Binding IntakeFamilies}" Margin="0,4,0,0">
+                        <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding Text}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/></DataTemplate></ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+                <StackPanel>
+                    <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IntakeStepIndex}" Value="2"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                    <TextBlock Text="Completați scopul cazului în formularul de mai jos, apoi apăsați „Pornește analiza”." Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                </StackPanel>
+                <TextBlock Text="{Binding IntakeError}" Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                <WrapPanel Margin="0,8,0,0">
+                    <Button Content="Înapoi" Command="{Binding IntakeBackCommand}" IsEnabled="{Binding IntakeCanGoBack}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="{Binding IntakeNextText}" AutomationProperties.Name="Înainte sau Pornește analiza" Command="{Binding IntakeNextCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Oprește" Command="{Binding IntakeStopCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="De la început" Command="{Binding IntakeRestartCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                </WrapPanel>
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,12">
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
@@ -71,6 +108,7 @@
                          FontFamily="Consolas" FontSize="12" Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="8"/>
             </Grid>
         </Border>
+        </StackPanel>
 
         <TabControl AutomationProperties.Name="Rezultatele investigației" Grid.Row="2" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
             <TabItem Header="Lanțul incidentului" Style="{StaticResource InspectorTabItemStyle}">

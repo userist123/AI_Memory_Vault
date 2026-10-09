@@ -8,6 +8,8 @@ using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LogAnalyzer.Core.Services.Connectivity;
+using LogAnalyzer.Dfir.Flow;
+using LogAnalyzer.Dfir.Profile;
 using LogAnalyzer.Dfir.Windows.Audit;
 using Microsoft.Win32;
 
@@ -38,6 +40,148 @@ namespace LogAnalyzer.UI.ViewModels
         public string[] StatusFilters { get; } = { "Toate", "NECONFORM", "DE VERIFICAT", "NEDETERMINAT", "CONFORM" };
 
         partial void OnStatusFilterChanged(string value) => FillChecks();
+
+        // ───────── WP18 S4: the guided control, "Verifică această stație", in three steps ─────────
+
+        public sealed record PeriodOption(ControlPeriodChoice Choice, string Label);
+
+        private readonly GuidedFlow _flow;
+
+        public StationControlViewModel()
+        {
+            _flow = new GuidedFlow("Verifică această stație",
+            [
+                new FlowStep("station", "Ce stație?", "Controlul se face pe acest calculator. Aplicația doar citește; nu modifică nimic."),
+                new FlowStep("period", "Ce perioadă?", "Alegeți perioada pe care o verificați.", ValidatePeriod),
+                new FlowStep("procedures", "Ce proceduri?", "Acestea sunt procedurile după care se judecă stația. O secțiune nedefinită nu poate da CONFORM."),
+            ]);
+            PeriodOptions = Enum.GetValues<ControlPeriodChoice>().Select(c => new PeriodOption(c, ControlPeriods.Label(c))).ToList();
+            StationLine = $"{Environment.MachineName} · {LogAnalyzer.Core.Services.Edition.StationRoleContext.Current.HumanRole} · " +
+                          (AppModeContext.IsAirGapped ? "fără rețea (izolată)" : "conectată");
+            LoadPreviousControls();
+            RaiseFlow();
+        }
+
+        public IReadOnlyList<PeriodOption> PeriodOptions { get; }
+        [ObservableProperty] private ControlPeriodChoice _periodChoice = ControlPeriodChoice.SinceLastControl;
+        [ObservableProperty] private int _customDays = 30;
+        [ObservableProperty] private string _periodNote = "";
+        [ObservableProperty] private string _stationLine = "";
+        [ObservableProperty] private string _profileLine = "";
+        [ObservableProperty] private string _flowError = "";
+        [ObservableProperty] private ControlResultScreen? _result;
+        [ObservableProperty] private ControlComparison? _comparison;
+        [ObservableProperty] private PreviousControl? _selectedPrevious;
+        [ObservableProperty] private string _previousNote = "";
+        public ObservableCollection<SectionStatus> ProfileSections { get; } = new();
+        public ObservableCollection<PreviousControl> PreviousControls { get; } = new();
+        public ObservableCollection<CheckChange> ComparisonChanges { get; } = new();
+        public ObservableCollection<string> ResultNextSteps { get; } = new();
+
+        public string FlowTitle => _flow.Title;
+        public string FlowProgress => _flow.ProgressText;
+        public int FlowStepIndex => _flow.StepIndex;
+        public string FlowStepTitle => _flow.Current.Title;
+        public string FlowQuestion => _flow.Current.Question;
+        public bool FlowCanGoBack => _flow.CanGoBack;
+        public bool FlowIsLastStep => _flow.IsLastStep;
+        public bool FlowStopped => _flow.Stopped;
+        public bool FlowCompleted => _flow.Completed;
+        public bool IsCustomPeriod => PeriodChoice == ControlPeriodChoice.Custom;
+        public bool HasResult => Result is not null;
+        public string FlowNextText => _flow.IsLastStep ? "Pornește controlul" : "Înainte";
+
+        partial void OnPeriodChoiceChanged(ControlPeriodChoice value) => OnPropertyChanged(nameof(IsCustomPeriod));
+        partial void OnResultChanged(ControlResultScreen? value)
+        {
+            OnPropertyChanged(nameof(HasResult));
+            ResultNextSteps.Clear();
+            if (value is not null) foreach (var st in value.NextSteps) ResultNextSteps.Add(st);
+        }
+
+        private void RaiseFlow()
+        {
+            foreach (var n in new[] { nameof(FlowProgress), nameof(FlowStepIndex), nameof(FlowStepTitle), nameof(FlowQuestion), nameof(FlowCanGoBack), nameof(FlowIsLastStep), nameof(FlowStopped), nameof(FlowCompleted), nameof(FlowNextText) })
+                OnPropertyChanged(n);
+            FlowError = _flow.LastError;
+        }
+
+        private string? ValidatePeriod()
+        {
+            var days = ControlPeriods.Days(PeriodChoice, PreviousControls.FirstOrDefault(), CustomDays, DateTimeOffset.UtcNow, out var note);
+            if (days <= 0) return note;
+            PeriodDays = days; PeriodNote = note;
+            return null;
+        }
+
+        private void LoadPreviousControls()
+        {
+            PreviousControls.Clear();
+            try
+            {
+                var list = ControlArchive.List(LogAnalyzer.UI.Services.LiveCase.Root, out var problems);
+                foreach (var p in list) PreviousControls.Add(p);
+                PreviousNote = list.Count == 0 ? "Niciun control anterior salvat pe această stație."
+                    : $"{list.Count} controale anterioare; cel mai recent: {list[0].Label}." + (problems.Count > 0 ? $" Foldere necitite: {problems.Count}." : "");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { PreviousNote = "Controalele anterioare nu au putut fi citite: " + ex.Message; }
+        }
+
+        private void LoadProfileSections()
+        {
+            ProfileSections.Clear();
+            ProcedureProfile? p = null;
+            try { p = ProfileProvider.Shared.Current; } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { }
+            foreach (var sct in ProfileSummary.Sections(p)) ProfileSections.Add(sct);
+            ProfileLine = ProfileSummary.Line(ProfileSections.ToList());
+        }
+
+        [RelayCommand]
+        private async Task FlowNext()
+        {
+            if (_flow.Completed) { _flow.Restart(); Result = null; RaiseFlow(); return; }
+            bool wasLast = _flow.IsLastStep;
+            if (!_flow.Next()) { RaiseFlow(); return; }
+            if (_flow.StepIndex == 2 && !wasLast) LoadProfileSections();
+            RaiseFlow();
+            if (wasLast && _flow.Completed)
+            {
+                await Run();
+                BuildResult();
+                RaiseFlow();
+            }
+        }
+
+        [RelayCommand] private void FlowBack() { _flow.Back(); RaiseFlow(); }
+        [RelayCommand] private void FlowStop() { _flow.Stop(); RaiseFlow(); Status = "Controlul a fost oprit. Ce ați ales rămâne; apăsați „Înainte” ca să continuați."; }
+        [RelayCommand] private void FlowRestart() { _flow.Restart(); Result = null; Comparison = null; ComparisonChanges.Clear(); RaiseFlow(); }
+
+        /// <summary>"Compară cu controlul anterior": a difference against the selected (or the most recent) saved control.</summary>
+        [RelayCommand]
+        private void CompareWithPrevious()
+        {
+            if (_report is null) { Status = "Rulați întâi controlul."; return; }
+            var prev = SelectedPrevious ?? PreviousControls.FirstOrDefault();
+            if (prev is null) { Status = "Nu există un control anterior cu care să compar."; return; }
+            Comparison = ControlComparison.Compare(prev, _report.Checks);
+            ComparisonChanges.Clear();
+            foreach (var ch in Comparison.Worse.Concat(Comparison.Better).Concat(Comparison.New).Concat(Comparison.Removed)) ComparisonChanges.Add(ch);
+            BuildResult();
+            Status = Comparison.Summary;
+        }
+
+        private void BuildResult()
+        {
+            if (_report is null) return;
+            if (ProfileSections.Count == 0) LoadProfileSections();
+            if (Comparison is null && PreviousControls.Count > 0 && PeriodChoice == ControlPeriodChoice.SinceLastControl)
+            {
+                Comparison = ControlComparison.Compare(PreviousControls[0], _report.Checks);
+                ComparisonChanges.Clear();
+                foreach (var ch in Comparison.Worse.Concat(Comparison.Better).Concat(Comparison.New).Concat(Comparison.Removed)) ComparisonChanges.Add(ch);
+            }
+            Result = ControlResultScreen.Build(_report, ProfileSections.ToList(), Comparison);
+        }
 
         [RelayCommand]
         private async Task Run()
@@ -91,6 +235,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (dlg.ShowDialog() == true && !string.Equals(dlg.FileName, pdf, StringComparison.OrdinalIgnoreCase))
                 File.Copy(pdf, dlg.FileName, overwrite: true);
             Status = $"Raport salvat în caz (cu SHA-256 și custodie): {pdf}";
+            LoadPreviousControls();
             Process.Start(new ProcessStartInfo(dlg.FileName is { Length: > 0 } f && File.Exists(f) ? f : pdf) { UseShellExecute = true });
         }
 

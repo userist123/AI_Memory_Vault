@@ -215,6 +215,72 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ClearFiles() => ImportFiles.Clear();
 
+        // ───────── WP18 S4: "Primește probe de la o stație", in three steps ─────────
+
+        private readonly LogAnalyzer.Dfir.Flow.GuidedFlow _intake = new("Primește probe de la o stație",
+        [
+            new LogAnalyzer.Dfir.Flow.FlowStep("folder", "De unde vin probele?", "Alegeți folderul (sau suportul) adus de la stația afectată. Nimic nu se copiază încă."),
+            new LogAnalyzer.Dfir.Flow.FlowStep("found", "Ce s-a găsit?", "Ce conține folderul, ce lipsește și ce nu este probă. Integritatea se calculează la import."),
+            new LogAnalyzer.Dfir.Flow.FlowStep("scope", "Scopul cazului", "De ce, pentru ce perioadă, pe ce sisteme, cine aprobă. Fără scop nu se creează cazul."),
+        ]);
+        [ObservableProperty] private string _intakeFolder = "";
+        [ObservableProperty] private IncomingEvidenceScan? _intakeScan;
+        [ObservableProperty] private string _intakeError = "";
+        public ObservableCollection<IncomingFamily> IntakeFamilies { get; } = new();
+        public string IntakeTitle => _intake.Title;
+        public string IntakeProgress => _intake.ProgressText;
+        public int IntakeStepIndex => _intake.StepIndex;
+        public string IntakeStepTitle => _intake.Current.Title;
+        public string IntakeQuestion => _intake.Current.Question;
+        public bool IntakeCanGoBack => _intake.CanGoBack;
+        public bool IntakeStopped => _intake.Stopped;
+        public string IntakeNextText => _intake.IsLastStep ? "Pornește analiza" : "Înainte";
+
+        private void RaiseIntake()
+        {
+            foreach (var n in new[] { nameof(IntakeProgress), nameof(IntakeStepIndex), nameof(IntakeStepTitle), nameof(IntakeQuestion), nameof(IntakeCanGoBack), nameof(IntakeStopped), nameof(IntakeNextText) })
+                OnPropertyChanged(n);
+            IntakeError = _intake.LastError;
+        }
+
+        private string? ValidateIntakeStep() => _intake.StepIndex switch
+        {
+            0 => string.IsNullOrWhiteSpace(IntakeFolder) || !Directory.Exists(IntakeFolder) ? "Alegeți folderul cu probele aduse de la stație." : null,
+            1 => IntakeScan is { HasAnything: true } ? null : "Folderul nu conține probe pe care aplicația să le poată importa; alegeți alt folder.",
+            _ => BuildScope().MissingFields() is { Count: > 0 } m ? "Scopul cazului este incomplet; câmpuri lipsă: " + string.Join(", ", m) : null,
+        };
+
+        [RelayCommand]
+        private void IntakePickFolder()
+        {
+            var dlg = new OpenFolderDialog { Title = "Folderul (sau suportul) cu probele aduse de la stația afectată" };
+            if (dlg.ShowDialog() == true) IntakeFolder = dlg.FolderName;
+        }
+
+        [RelayCommand]
+        private async Task IntakeNext()
+        {
+            if (_intake.Completed) { _intake.Restart(); RaiseIntake(); return; }
+            var error = ValidateIntakeStep();
+            if (error is not null) { IntakeError = error; return; }
+            bool wasLast = _intake.IsLastStep;
+            if (_intake.StepIndex == 0)
+            {
+                IntakeScan = IncomingEvidence.Scan(IntakeFolder);
+                IntakeFamilies.Clear(); foreach (var fam in IntakeScan.Families) IntakeFamilies.Add(fam);
+                ImportFiles.Clear(); foreach (var f in IntakeScan.Importable) ImportFiles.Add(f);
+                CollectFromThisStation = false;
+                Log += $"Folder scanat: {IntakeScan.Summary}{Environment.NewLine}";
+            }
+            _intake.Next();
+            RaiseIntake();
+            if (wasLast && _intake.Completed) await Run();
+        }
+
+        [RelayCommand] private void IntakeBack() { _intake.Back(); RaiseIntake(); }
+        [RelayCommand] private void IntakeStop() { _intake.Stop(); RaiseIntake(); Log += "Primirea probelor a fost oprită; ce ați ales rămâne." + Environment.NewLine; }
+        [RelayCommand] private void IntakeRestart() { _intake.Restart(); IntakeScan = null; IntakeFamilies.Clear(); RaiseIntake(); }
+
         [RelayCommand]
         private async Task Run()
         {
