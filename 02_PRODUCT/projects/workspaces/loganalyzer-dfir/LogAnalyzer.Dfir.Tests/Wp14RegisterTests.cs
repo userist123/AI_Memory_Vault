@@ -175,13 +175,14 @@ public sealed class Wp14RegisterTests : IDisposable
     }
 
     [Fact]
-    public void The_audit_records_that_the_application_has_no_authentication_so_who_is_the_os_account_not_a_proven_identity()
+    public void Outside_a_signed_in_session_the_audit_says_who_is_the_os_account_and_that_no_application_sign_in_was_active()
     {
         var path = Path.Combine(_dir, "media.json");
+        using var _s = LogAnalyzer.Dfir.Auth.OperatorIdentity.Scope(null, authenticationRequired: false);
         RegisterStore.Save(Media(Good), path, out _, action: "save");
         var e = JsonDocument.Parse(File.ReadAllLines(RegisterStore.AuditPathFor(path))[0]).RootElement;
         Assert.Contains(Environment.UserName, e.GetProperty("who").GetString());
-        Assert.Contains("neautentificat", e.GetProperty("whoSource").GetString());
+        Assert.Contains("nu este activă", e.GetProperty("whoSource").GetString());
     }
 
     // ---- users ----
@@ -233,9 +234,9 @@ public sealed class Wp14RegisterTests : IDisposable
     }
 
     [Fact]
-    public void The_authentication_gap_notice_is_the_one_the_spec_gives()
+    public void The_edit_notice_states_the_administrator_only_rule_of_decision_33()
     {
-        Assert.Equal("editare permisă administratorului global; autentificarea în aplicație nu este încă implementată", UsersRegister.EditNotice);
+        Assert.Equal("editare permisă numai administratorului global autentificat (card + PIN; administratorul principal poate folosi și contul + parola)", UsersRegister.EditNotice);
     }
 
     [Fact]

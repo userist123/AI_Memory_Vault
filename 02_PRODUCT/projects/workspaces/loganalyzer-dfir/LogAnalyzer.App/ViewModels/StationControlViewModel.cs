@@ -27,7 +27,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         [ObservableProperty] private int _periodDays = 90;
         [ObservableProperty] private bool _stationShouldBeIsolated = AppModeContext.IsAirGapped;
-        [ObservableProperty] private string _inspector = $"{Environment.UserDomainName}\\{Environment.UserName}";
+        [ObservableProperty] private string _inspector = LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified;
         [ObservableProperty] private string _notes = "";
         [ObservableProperty] private bool _isBusy;
         [ObservableProperty] private string _status = "Alegeți perioada și apăsați „Rulează controlul”. Colectarea doar citește; nu modifică stația.";

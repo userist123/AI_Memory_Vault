@@ -154,6 +154,7 @@
                             <RadioButton Content="Profil de proceduri" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="18"/>
                             <RadioButton Content="Registru medii" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="19"/>
                             <RadioButton Content="Registru utilizatori" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="20"/>
+                            <RadioButton Content="Autentificare și conturi" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="21"/>
                         </StackPanel>
                     </ScrollViewer>
 
@@ -229,6 +230,7 @@
                 <TabItem><views:ProcedureProfileView DataContext="{Binding ProcedureProfile}"/></TabItem>
                 <TabItem><views:RegisterView DataContext="{Binding MediaRegister}"/></TabItem>
                 <TabItem><views:RegisterView DataContext="{Binding UsersRegister}"/></TabItem>
+                <TabItem><views:AuthView DataContext="{Binding Auth}"/></TabItem>
                 </TabControl>
             </Grid>
         </Grid>

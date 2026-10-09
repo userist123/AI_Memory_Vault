@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.Auth;
 using LogAnalyzer.Dfir.IO;
 using LogAnalyzer.Dfir.Model;
 
@@ -172,7 +173,7 @@ public sealed partial class CaseWorkspace
             Json.AppendLine(EvidenceIndexPath, item);
         }
         WarnIfCollectorIsAdministrator();
-        Custody(new CustodyEntry(DateTimeOffset.UtcNow, Environment.UserName, action, item.EvidenceId, originalPath, item.StoredPath, sha, collector, collectorVersion, "", ""));
+        Custody(new CustodyEntry(DateTimeOffset.UtcNow, OperatorIdentity.Who, action, item.EvidenceId, originalPath, item.StoredPath, sha, collector, collectorVersion, "", ""));
         Audit("evidence.registered", $"{item.EvidenceId} {item.Source} {item.StoredPath} sha256={sha}");
         return item;
     }
@@ -182,7 +183,7 @@ public sealed partial class CaseWorkspace
     {
         var full = FullPath(outputRelPath);
         var sha = File.Exists(full) ? Hashing.Sha256File(full) : "";
-        Custody(new CustodyEntry(DateTimeOffset.UtcNow, Environment.UserName, "parsed", evidenceId, "", outputRelPath, sha, parser, parserVersion, parser, description));
+        Custody(new CustodyEntry(DateTimeOffset.UtcNow, OperatorIdentity.Who, "parsed", evidenceId, "", outputRelPath, sha, parser, parserVersion, parser, description));
     }
 
     public void Custody(CustodyEntry e)
@@ -216,7 +217,7 @@ public sealed partial class CaseWorkspace
             if (!IsLocalAdministrator()) return;
             _adminWarned = true;
         }
-        Custody(new CustodyEntry(DateTimeOffset.UtcNow, Environment.UserName, "warning.collector_admin", "", "", "", "", "", "", "",
+        Custody(new CustodyEntry(DateTimeOffset.UtcNow, OperatorIdentity.Who, "warning.collector_admin", "", "", "", "", "", "", "",
             $"colectorul este administrator al sistemului auditat ({ctx.Account} pe {ctx.Machine})"));
         Audit("warning.collector_admin", "colectorul este administrator al sistemului auditat");
     }
@@ -257,7 +258,7 @@ public sealed partial class CaseWorkspace
             var from = item.State;
             item.State = to;
             RewriteEvidenceIndex(all);
-            Custody(new CustodyEntry(DateTimeOffset.UtcNow, string.IsNullOrWhiteSpace(actor) ? Environment.UserName : actor, "state.transition", evidenceId, "", item.StoredPath,
+            Custody(new CustodyEntry(DateTimeOffset.UtcNow, string.IsNullOrWhiteSpace(actor) ? OperatorIdentity.Who : actor, "state.transition", evidenceId, "", item.StoredPath,
                 item.Sha256, "", "", "", $"{Label(from)}->{Label(to)}"));
             Audit("evidence.state", $"{evidenceId} {Label(from)}->{Label(to)}");
             return StateResult.Success;
@@ -281,7 +282,7 @@ public sealed partial class CaseWorkspace
             if (item.State != EvidenceState.Archived) return StateResult.Refuse($"DISPOSED se poate marca doar din ARCHIVED (acum {Label(item.State)})");
             item.State = EvidenceState.Disposed;
             RewriteEvidenceIndex(all);
-            Custody(new CustodyEntry(DateTimeOffset.UtcNow, Environment.UserName, "state.disposed", evidenceId, "", item.StoredPath, item.Sha256, "", "", "",
+            Custody(new CustodyEntry(DateTimeOffset.UtcNow, OperatorIdentity.Who, "state.disposed", evidenceId, "", item.StoredPath, item.Sha256, "", "", "",
                 $"ARCHIVED->DISPOSED approvers={a1};{a2} reason={reason}".ReplaceLineEndings(" ")));
             Audit("evidence.disposed_mark", $"{evidenceId} approvers={a1};{a2}");
             return StateResult.Success;
@@ -341,8 +342,8 @@ public sealed partial class CaseWorkspace
         var d = detail.ReplaceLineEndings(" ");
         lock (_gate)
         {
-            File.AppendAllText(AppAuditLogPath, $"{now:yyyy-MM-ddTHH:mm:ss.fffZ}\t{Environment.UserName}\t{action}\t{d}\n");
-            _auditChain.Append(new AuditEntry(now, Environment.UserName, action, d));
+            File.AppendAllText(AppAuditLogPath, $"{now:yyyy-MM-ddTHH:mm:ss.fffZ}\t{OperatorIdentity.Who}\t{action}\t{d}\n");
+            _auditChain.Append(new AuditEntry(now, OperatorIdentity.Who, action, d));
         }
     }
 

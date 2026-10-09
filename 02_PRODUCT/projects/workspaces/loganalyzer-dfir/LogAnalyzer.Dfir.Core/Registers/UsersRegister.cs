@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using LogAnalyzer.Dfir.Auth;
 using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Registers;
@@ -22,14 +23,14 @@ public sealed class UserRow
 }
 
 /// <summary>
-/// Users and clearances (owner decision 17): clearances and need-to-know are entered MANUALLY by the global administrator. The application has no user
-/// authentication yet, so this register is data plus an audit chain; it does not enforce who may edit it (see <see cref="EditNotice"/>).
+/// Users and clearances (owner decision 17): clearances and need-to-know are entered MANUALLY by the global administrator. Only the signed-in global administrator
+/// may edit it (decision 33; <see cref="OperatorIdentity"/>); the register stays data plus an audit chain (see <see cref="EditNotice"/>).
 /// </summary>
 public sealed class UsersRegister : IRegisterData
 {
     public const string CurrentSchemaVersion = "1.0";
     public const string DefaultFileName = "users.json";
-    public const string EditNotice = "editare permisă administratorului global; autentificarea în aplicație nu este încă implementată";
+    public const string EditNotice = "editare permisă numai administratorului global autentificat (card + PIN; administratorul principal poate folosi și contul + parola)";
     public static readonly string[] ColumnNames = ["Person", "Accounts", "Sids", "Clearance", "ClearanceValidFrom", "ClearanceValidTo", "NeedToKnow", "ZonesAllowed"];
 
     [JsonPropertyName("schema_version")] public string SchemaVersion { get; set; } = CurrentSchemaVersion;
