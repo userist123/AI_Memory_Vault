@@ -18,6 +18,7 @@ public static class RuleContracts
 {
     private const string Corr = "LogAnalyzer.Dfir.Analysis.Correlation";
     private const string Live = "LogAnalyzer.Dfir.Windows.Investigation.LiveStateAnalyzer";
+    private const string Pol = "LogAnalyzer.Dfir.Analysis.PolicyTimeline";
     private const string Cont = "LogAnalyzer.Dfir.Windows.Containment.ProcessContainmentService";
 
     private static RuleContract R(string id, string producer, SemanticType t, string meaning, string[] limits, string[] missing, string[] steps, string? contra = null) =>
@@ -155,6 +156,11 @@ public static class RuleContracts
             ["Arată configurația de autostart, nu o pornire efectivă."],
             ["Dovada pornirilor trecute."],
             ["Dezactivați intrările după preluarea probelor, nu înainte."]),
+        R("POLICY-CONTROL-GAP", Pol, SemanticType.Correlation, "O setare cerută de politica așteptată nu este observată la unul din nivelurile aplicat, impus sau observat.",
+            ["Compară politica așteptată cu dovezi de aplicare (GroupPolicy/Operational), de stare efectivă și cu evenimente; un nivel necolectat e UNKNOWN și nu produce decalaj.",
+             "Absența evenimentelor poate însemna absența activității auditate, nu absența auditului.", "Nu arată cine sau de ce, nici dacă decalajul e intenționat."],
+            ["Starea efectivă a setării (auditpol /get, AuditQuerySystemPolicy).", "GroupPolicy/Operational de la stație și conținutul GPO din SYSVOL (gpresult / RSoP)."],
+            ["Rulați gpresult /h și auditpol /get pe stație.", "Verificați replicarea SYSVOL, filtrarea de securitate, filtrul WMI și politica loopback."]),
     ];
 
     private static readonly Dictionary<string, RuleContract> ById = All.ToDictionary(r => r.RuleId, StringComparer.Ordinal);
