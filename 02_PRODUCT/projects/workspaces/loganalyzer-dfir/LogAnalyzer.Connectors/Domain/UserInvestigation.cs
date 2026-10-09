@@ -6,17 +6,6 @@ using LogAnalyzer.Dfir.Windows.Audit;
 
 namespace LogAnalyzer.Dfir.Windows.Domain;
 
-public sealed class UserInvestigationResult
-{
-    public required string User { get; init; }
-    public DirectoryAccount? Account { get; set; }
-    public List<string> PrivilegedGroups { get; } = [];
-    public List<ActionEntry> Timeline { get; } = [];
-    public Dictionary<string, int> LogonSources { get; } = new(StringComparer.OrdinalIgnoreCase);
-    public List<EvidenceGap> Gaps { get; } = [];
-    public List<string> Observations { get; } = [];
-}
-
 /// <summary>
 /// Everything about one domain user: directory attributes, privileged memberships, and the user's authentication
 /// trail read from domain controllers' Security logs (remote, read-only; needs Event Log Readers rights on the DCs).

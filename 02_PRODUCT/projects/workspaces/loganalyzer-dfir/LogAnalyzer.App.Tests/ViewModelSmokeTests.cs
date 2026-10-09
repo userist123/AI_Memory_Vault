@@ -33,8 +33,22 @@ public sealed class ViewModelSmokeTests
         Assert.Empty(vm.Timeline);
         Assert.Empty(vm.ImportFiles);
         Assert.Empty(vm.GraphEntities);
-        Assert.StartsWith("http://127.0.0.1", vm.AiEndpoint);          // the AI endpoint is loopback by default
-        Assert.Contains("UNPROVEN", vm.AiStatus);                        // AI output is presented as unproven until verified
+        Assert.Null(vm.AiAnalysis);                                      // no AI screen unless the edition supplies one
+    }
+
+    [Fact]
+    public void Ai_viewmodel_defaults_to_loopback_and_presents_output_as_unproven()
+    {
+        var ai = new AiAnalysisViewModel(new InvestigationViewModel());
+        Assert.StartsWith("http://127.0.0.1", ai.AiEndpoint);            // the AI endpoint is loopback by default
+        Assert.Contains("UNPROVEN", ai.AiStatus);                        // AI output is presented as unproven until verified
+    }
+
+    [Fact]
+    public void Investigation_gets_its_optional_ai_screen_from_the_edition_factory()
+    {
+        var vm = new InvestigationViewModel(inv => new AiAnalysisViewModel(inv));
+        Assert.IsType<AiAnalysisViewModel>(vm.AiAnalysis);
     }
 
     [Fact]

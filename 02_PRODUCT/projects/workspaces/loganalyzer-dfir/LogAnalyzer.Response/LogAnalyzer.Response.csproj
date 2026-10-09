@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Actions that change the station: per-program containment, firewall isolation / IoC blocking, audit policy changes, process
+       suspension, registry writes of the policy executor, running the audit collection script. Referenced ONLY by the
+       unclassified edition; absent (not disabled) from the classified edition. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>LogAnalyzer.Response</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LogAnalyzer.Core\LogAnalyzer.Core.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Dfir.Core\LogAnalyzer.Dfir.Core.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Dfir.Windows\LogAnalyzer.Dfir.Windows.csproj" />
+  </ItemGroup>
+</Project>

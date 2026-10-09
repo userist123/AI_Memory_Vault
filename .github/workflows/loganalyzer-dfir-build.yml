@@ -65,6 +65,11 @@ jobs:
       - name: Test (Release)
         run: dotnet test LogAnalyzer.slnx --no-build --configuration Release --logger "trx;LogFilePrefix=test-results"
 
+      # Edition split (docs/dfir/EDITIONS.md): both executables were built by the solution build above; this step runs only the
+      # inspection of the classified (P1) build output so a violation is named in its own step.
+      - name: Classified edition contains no network, AI or host-modifying code
+        run: dotnet test LogAnalyzer.Edition.Tests/LogAnalyzer.Edition.Tests.csproj --no-build --configuration Release
+
       # Failed tests become annotations: they are readable from the checks API without
       # downloading logs or artifacts.
       - name: Annotate failed tests

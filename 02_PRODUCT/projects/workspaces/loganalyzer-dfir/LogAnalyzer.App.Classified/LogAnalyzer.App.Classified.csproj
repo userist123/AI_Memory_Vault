@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- CLASSIFIED edition (P1). It compiles the UI sources of LogAnalyzer.App (linked, not copied) except Edition\Unclassified\**,
+       and references NO network, AI or host-modifying assembly: LogAnalyzer.Connectors, LogAnalyzer.Response and LogAnalyzer.Ai are
+       absent. A test (LogAnalyzer.Edition.Tests) inspects this project's build output and fails if any of that code is present.
+       Optional, off by default, REQUIRES OWNER APPROVAL: -p:ClassifiedIncludeLocalAi=true adds the local-AI layer. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>..\LogAnalyzer.App\app.manifest</ApplicationManifest>
+    <AssemblyName>LogAnalyzer.Classified</AssemblyName>
+    <RootNamespace>LogAnalyzer.UI</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+    <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
+    <DefineConstants>$(DefineConstants);CLASSIFIED_EDITION</DefineConstants>
+    <ClassifiedIncludeLocalAi Condition="'$(ClassifiedIncludeLocalAi)' == ''">false</ClassifiedIncludeLocalAi>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LogAnalyzer.Core\LogAnalyzer.Core.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Infrastructure\LogAnalyzer.Infrastructure.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Dfir.Windows\LogAnalyzer.Dfir.Windows.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />
+    <PackageReference Include="QuestPDF" Version="2026.7.2" />
+    <PackageReference Include="DiscUtils.Registry" Version="0.16.13" />
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="9.0.0" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlcipher" Version="2.1.10" />
+    <PackageReference Include="System.Diagnostics.EventLog" Version="10.0.10" />
+    <PackageReference Include="System.Management" Version="10.0.10" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.10" />
+  </ItemGroup>
+
+  <!-- Shared UI sources, linked from LogAnalyzer.App. -->
+  <ItemGroup>
+    <Compile Include="..\LogAnalyzer.App\**\*.cs" Exclude="..\LogAnalyzer.App\obj\**;..\LogAnalyzer.App\bin\**;..\LogAnalyzer.App\Edition\Unclassified\**"
+             Link="%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="Edition\ClassifiedComposition.cs" />
+    <ApplicationDefinition Include="..\LogAnalyzer.App\App.xaml" Link="App.xaml" />
+    <Page Include="..\LogAnalyzer.App\**\*.xaml" Exclude="..\LogAnalyzer.App\App.xaml;..\LogAnalyzer.App\obj\**;..\LogAnalyzer.App\bin\**;..\LogAnalyzer.App\Edition\Unclassified\**"
+          Link="%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="..\LogAnalyzer.App\Categories\*.json" Link="Categories\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Explicit, documented option: local AI over loopback in the classified build. Off by default (owner question open). -->
+  <ItemGroup Condition="'$(ClassifiedIncludeLocalAi)' == 'true'">
+    <ProjectReference Include="..\LogAnalyzer.Ai\LogAnalyzer.Ai.csproj" />
+    <Compile Include="..\LogAnalyzer.App\Edition\Unclassified\AiAnalysisViewModel.cs;..\LogAnalyzer.App\Edition\Unclassified\AiAnalysisView.xaml.cs" Link="Edition\%(Filename)%(Extension)" />
+    <Page Include="..\LogAnalyzer.App\Edition\Unclassified\AiAnalysisView.xaml" Link="Edition\AiAnalysisView.xaml" />
+    <Compile Include="Edition\ClassifiedLocalAi.cs" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(ClassifiedIncludeLocalAi)' == 'true'">
+    <DefineConstants>$(DefineConstants);CLASSIFIED_LOCAL_AI</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>ClassifiedIncludeLocalAi</_Parameter1>
+      <_Parameter2>$(ClassifiedIncludeLocalAi)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+</Project>

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -9,14 +9,24 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>LogAnalyzer</AssemblyName>
     <RootNamespace>LogAnalyzer.UI</RootNamespace>
-    <!-- One application for both station types: AirGapped or Network is chosen at startup
-         (LogAnalyzer.Core/Services/Connectivity), not at compile time. -->
+    <!-- UNCLASSIFIED edition (P2/P3): one executable, air-gapped or connected. The mode comes only from a signed policy file
+         (Edition/Unclassified/UnclassifiedComposition.cs). The classified edition is LogAnalyzer.App.Classified, which shares
+         the UI sources of this project but not the Connectors / Response / Ai assemblies (docs/dfir/EDITIONS.md). -->
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\LogAnalyzer.Core\LogAnalyzer.Core.csproj" />
     <ProjectReference Include="..\LogAnalyzer.Infrastructure\LogAnalyzer.Infrastructure.csproj" />
     <ProjectReference Include="..\LogAnalyzer.Dfir.Windows\LogAnalyzer.Dfir.Windows.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Connectors\LogAnalyzer.Connectors.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Response\LogAnalyzer.Response.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Ai\LogAnalyzer.Ai.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Public key (base64 SPKI, ECDSA P-256) that verifies the edition policy. Absent: no policy can be valid, the app stays air-gapped. -->
+    <EmbeddedResource Include="Edition\Unclassified\edition-policy-public-key.b64" LogicalName="edition-policy-public-key.b64"
+                      Condition="Exists('Edition\Unclassified\edition-policy-public-key.b64')" />
   </ItemGroup>
 
   <ItemGroup>

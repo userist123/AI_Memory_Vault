@@ -218,9 +218,9 @@
                     <TabItem><views:LiveSocView/></TabItem>
                     <!-- 12: Telemetry & Forensic Triage Collector -->
                     <TabItem><views:DataCollectionView/></TabItem>
-                <TabItem><views:ProcessContainmentView DataContext="{Binding Containment}"/></TabItem>
+                <TabItem><ctrl:FeaturePlaceholder FeatureKey="Containment" Title="Izolare procese suspecte" ViewModel="{Binding Containment}"/></TabItem>
                 <TabItem><views:StationControlView DataContext="{Binding StationControl}"/></TabItem>
-                <TabItem><views:DomainInvestigationView DataContext="{Binding DomainInvestigation}"/></TabItem>
+                <TabItem><ctrl:FeaturePlaceholder FeatureKey="DomainInvestigation" Title="Investigație domeniu" ViewModel="{Binding DomainInvestigation}"/></TabItem>
                 <TabItem><views:InvestigationView DataContext="{Binding Investigation}"/></TabItem>
                 <TabItem><views:PolicyView DataContext="{Binding Policy}"/></TabItem>
                 </TabControl>
@@ -243,6 +243,9 @@
                             <Style TargetType="TextBlock">
                                 <Setter Property="Text" Value="Izolare automată: oprită (implicit)"/>
                                 <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasContainment}" Value="False">
+                                        <Setter Property="Text" Value="Izolare automată: nu este disponibilă în ediția clasificată"/>
+                                    </DataTrigger>
                                     <DataTrigger Binding="{Binding Containment.AutoContainEnabled}" Value="True">
                                         <Setter Property="Text" Value="Izolare automată: pornită"/>
                                     </DataTrigger>

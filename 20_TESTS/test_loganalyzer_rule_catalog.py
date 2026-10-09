@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1] / "02_PRODUCT/projects/workspaces/log
 PRODUCERS = [
     ROOT / "LogAnalyzer.Dfir.Core/Analysis/Correlation.cs",
     ROOT / "LogAnalyzer.Dfir.Windows/Investigation/InvestigationPipeline.cs",
-    ROOT / "LogAnalyzer.Dfir.Windows/Containment/ProcessContainmentService.cs",
+    ROOT / "LogAnalyzer.Response/Containment/ProcessContainmentService.cs",
 ]
 CATALOG = ROOT / "LogAnalyzer.Dfir.Core/Analysis/RuleContracts.cs"
 ID = re.compile(r'"([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)"')

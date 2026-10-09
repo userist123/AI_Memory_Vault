@@ -244,7 +244,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (MessageBox.Show("Activați auditul Windows pentru conexiunile blocate (subcategoria „Filtering Platform Connection”, eșecuri)?\n\n" +
                                 "Este o modificare a politicii de audit a stației. Fără ea nu se poate vedea unde încearcă să se conecteze un program izolat.",
                     "Activare audit", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
-            var (ok, detail) = BlockedConnectionLog.EnableFailureAudit();
+            var (ok, detail) = LogAnalyzer.Response.Containment.AuditPolicyChange.EnableBlockedConnectionFailureAudit();
             _case?.Audit("auditpol.enable", $"Filtering Platform Connection failure: {(ok ? "OK" : "FAILED")} {detail}");
             Load();
             if (!ok) Status = "Activarea a eșuat: " + detail;

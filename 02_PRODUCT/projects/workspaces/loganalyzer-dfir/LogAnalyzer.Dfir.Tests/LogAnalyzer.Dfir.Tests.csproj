@@ -16,6 +16,9 @@
   <ItemGroup>
     <ProjectReference Include="..\LogAnalyzer.Dfir.Core\LogAnalyzer.Dfir.Core.csproj" />
     <ProjectReference Include="..\LogAnalyzer.Dfir.Windows\LogAnalyzer.Dfir.Windows.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Connectors\LogAnalyzer.Connectors.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Response\LogAnalyzer.Response.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Ai\LogAnalyzer.Ai.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Corpus\**\*" CopyToOutputDirectory="PreserveNewest" />

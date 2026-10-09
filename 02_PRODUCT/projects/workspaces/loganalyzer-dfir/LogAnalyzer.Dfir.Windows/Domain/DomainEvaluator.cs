@@ -47,7 +47,7 @@ public static class DomainEvaluator
             var accounts = members.Select(m => d.Users.Concat(d.Computers).FirstOrDefault(u => u.SamAccountName.Equals(m, StringComparison.OrdinalIgnoreCase))).ToList();
             var bad = accounts.Where(a => a is not null && (!a.Enabled || a.LastLogonUtc is { } l && (now - l).TotalDays > staleDays ||
                                                             a.Flags.HasFlag(Uac.DontExpirePassword))).ToList();
-            Add($"DM1{Array.FindIndex(DirectoryCollector.PrivilegedGroupIds, x => x.Name == group)}", $"Membri {group}",
+            Add($"DM1{Array.FindIndex(PrivilegedGroupCatalog.Ids, x => x.Name == group)}", $"Membri {group}",
                 bad.Count > 0 ? ControlStatus.Neconform : ControlStatus.DeVerificat,
                 $"{members.Count} membri (recursiv). " + (bad.Count > 0 ? $"{bad.Count} sunt dezactivați, nefolosiți de peste {staleDays} zile sau au parolă care nu expiră." : "Comparați cu lista aprobată."),
                 accounts.Select((a, i) => a is null ? members[i] : $"{a.SamAccountName}: {(a.Enabled ? "activ" : "DEZACTIVAT")}, ultima autentificare {a.LastLogonUtc:yyyy-MM-dd}, parolă {a.PasswordLastSetUtc:yyyy-MM-dd}{(a.Flags.HasFlag(Uac.DontExpirePassword) ? ", NU EXPIRĂ" : "")}"),

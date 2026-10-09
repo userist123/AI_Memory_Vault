@@ -20,7 +20,8 @@ namespace LogAnalyzer.UI.ViewModels
     /// </summary>
     public partial class PolicyViewModel : ObservableObject
     {
-        private PolicyWorkbench _bench = new();
+        private readonly LogAnalyzer.Dfir.Windows.Policy.IRegistryValueWriter? _registryWriter;
+        private PolicyWorkbench _bench;
         private PolicyDocument? _policy;
         private PolicyPlan? _plan;
 
@@ -39,9 +40,19 @@ namespace LogAnalyzer.UI.ViewModels
 
         public string Operator => _bench.Operator;
 
+        /// <param name="registryWriter">Null in the classified edition: policies can be opened, validated and compared but not applied to the registry.</param>
+        public PolicyViewModel(LogAnalyzer.Dfir.Windows.Policy.IRegistryValueWriter? registryWriter = null)
+        {
+            _registryWriter = registryWriter;
+            _bench = NewBench(null);
+        }
+
+        private PolicyWorkbench NewBench(string? root) =>
+            new(root, LogAnalyzer.Dfir.Windows.Policy.WindowsSettingProviders.All(_registryWriter));
+
         partial void OnStoreRootChanged(string value)
         {
-            try { _bench = new PolicyWorkbench(value); Refresh(); }
+            try { _bench = NewBench(value); Refresh(); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { Status = "Depozitul nu poate fi citit: " + ex.Message; }
         }
 

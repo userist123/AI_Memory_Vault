@@ -108,7 +108,7 @@ public sealed class PolicyExecutionTests : IDisposable
     public void Approved_policy_is_applied_on_hkcu_verified_by_reg_and_rolled_back()
     {
         using (var k = Registry.CurrentUser.CreateSubKey(_key)) { k.SetValue("Mode", "lax"); k.SetValue("List", new[] { "x" }, RegistryValueKind.MultiString); }
-        var x = new PolicyExecutor([new RegistrySettingProvider()], _dir);
+        var x = new PolicyExecutor([new RegistrySettingProvider(new LogAnalyzer.Response.Policy.RegistryValueWriter())], _dir);
         var (p, store) = Approved(x, Yaml());
 
         var plan = x.Plan(p);
@@ -314,7 +314,7 @@ public sealed class PolicyExecutionTests : IDisposable
     public void Audit_provider_without_elevation_reports_the_missing_privilege_and_the_control_is_unreadable()
     {
         if (WindowsSettingProvidersTestHook.Elevated) return; // the elevated path is covered by Audit_provider_matches_auditpol
-        var x = new PolicyExecutor(WindowsSettingProviders.All(), _dir);
+        var x = new PolicyExecutor(WindowsSettingProviders.All(new LogAnalyzer.Response.Policy.RegistryValueWriter()), _dir);
         var p = PolicyLoader.Parse("""
             policy: { id: A, version: '1', title: t, author: a }
             controls:

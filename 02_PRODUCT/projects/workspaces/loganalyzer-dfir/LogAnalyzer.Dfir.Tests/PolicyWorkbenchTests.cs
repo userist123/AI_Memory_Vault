@@ -22,7 +22,7 @@ public sealed class PolicyWorkbenchTests : IDisposable
         if (Directory.Exists(_root)) Directory.Delete(_root, true);
     }
 
-    private PolicyWorkbench Bench() => new(_root, [new RegistrySettingProvider()], () => _who);
+    private PolicyWorkbench Bench() => new(_root, [new RegistrySettingProvider(new LogAnalyzer.Response.Policy.RegistryValueWriter())], () => _who);
 
     [Fact]
     public void Lgpo_text_is_imported_approved_by_another_account_applied_and_rolled_back()

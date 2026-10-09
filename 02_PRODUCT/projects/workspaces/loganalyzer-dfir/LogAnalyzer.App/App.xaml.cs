@@ -42,10 +42,9 @@ namespace LogAnalyzer.UI
                 File.WriteAllText(debugLogPath, "OnStartup starting...\n");
                 base.OnStartup(e);
 
-                // Operating mode: --mode= argument, then LogAnalyzer.mode next to the executable, then passive detection.
-                var modeFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "LogAnalyzer.mode");
-                string? stationMode = File.Exists(modeFile) ? File.ReadAllText(modeFile) : null;
-                var decision = OperatingModeResolver.Resolve(e.Args, stationMode, new WindowsConnectivityProbe().Probe());
+                // Operating mode: decided by the edition. The unclassified edition takes it only from the signed policy
+                // (fail closed to AirGapped); --mode= and LogAnalyzer.mode are ignored. The classified edition is always AirGapped.
+                var decision = EditionComposition.DecideMode(e.Args, AppDomain.CurrentDomain.BaseDirectory);
                 AppModeContext.Initialize(decision);
                 File.AppendAllText(debugLogPath,
                     $"Mode: {decision.Mode} (override: {decision.IsOverride}) — {decision.Reason}\n" +
@@ -82,7 +81,7 @@ namespace LogAnalyzer.UI
                 services.AddSingleton<IAnalysisEngine, AnalysisEngine>();
                 services.AddSingleton<IRegistryParser, OfflineRegistryParser>();
                 services.AddSingleton<IDatabaseService, DatabaseService>();
-                services.AddSingleton<IAuditCollectionService, AuditCollectionService>();
+                EditionComposition.Register(services);
                 
                 // Componentele MVVM și Ferestrele din UI
                 services.AddTransient<MainViewModel>();
