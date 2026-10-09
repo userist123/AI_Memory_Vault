@@ -40,7 +40,7 @@ Module în care a fost înlocuit `tokenize`: `memory_controller.context.candidat
 ---
 
 ## 3. Tabelul 2 — Analiza Pereche și Testul Exact McNemar
-### [Punct de operare: Principal.AI_AGENT, page_size=5, braț de clasare `fused_score`]
+### [Punct de operare: Principal.AI_AGENT, page_size=5, Floor: ACTIV, braț de clasare `fused_score`]
 
 | Comparație vs Baseline | Felie | Câștiguri ($b$) | Pierderi ($c$) | Cazuri Discordante | $\Delta$ Cazuri | $\Delta$ Procentual (pp) | $p$ McNemar Exact | Semnificație la 0.05 |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---|
@@ -54,6 +54,7 @@ Module în care a fost înlocuit `tokenize`: `memory_controller.context.candidat
 ---
 
 ## 4. Tabelul 3 — Evaluarea Ipotezelor Preînregistrate
+### [Punct de operare: Principal.AI_AGENT, page_size=5, Floor: ACTIV]
 
 Regula se aplică în cazuri, nu în puncte procentuale: preînregistrarea dă pentru română atât „+5.00 pp” cât și „≥ 3 cazuri nete”, iar pe 61 de cazuri trei cazuri înseamnă 4.92 pp. Numărul de cazuri este lectura neambiguă.
 

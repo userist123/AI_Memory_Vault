@@ -1,14 +1,17 @@
-"""20_TESTS/test_tokenizer_experiment_accuracy.py — Tokenizer Normalization Experiment Accuracy & Controls.
+"""The tokenizer experiment's artifacts are consistent with each other and with the preregistered rule.
 
-Validates Part 3 PR 1:
-1. Artifact integrity: PREREGISTRATION.md, tokenizer_experiment_cases.json, and TOKENIZER_EXPERIMENT_REPORT.md exist and non-empty.
-2. Frozen benchmark immutability: SHA-256 matches frozen hash eeb53822ae5f022df89290d6fca789c1d4387b7572ed70103a7c08aae5b57eaa.
-3. Bit-for-bit rendering accuracy: render_report(json_data) matches TOKENIZER_EXPERIMENT_REPORT.md exactly.
-4. Negative controls on report tampering: modifying any count or delta in report or JSON fails verification.
-5. Operating point contract: every table declares (Principal.AI_AGENT, page_size=5, Floor: ACTIV).
-6. Pre-registered decision rule evaluation: verified against formal criteria (verdict: MENȚINERE BASELINE, H-TOKEN-1 INFIRMATĂ).
-7. Discordant pairs integrity: b = 0, c = 0, p_mcnemar = 1.000000 across all comparisons.
-8. Unit testing of statistical functions (McNemar exact test, Wilson score interval) and tokenizer behaviors.
+What this guards:
+1. The three artifacts exist; the benchmark is still the frozen file (SHA-256 pinned).
+2. The committed report is bit-for-bit what `render_report()` produces from the JSON.
+3. Tampering with either the report or the JSON is noticed.
+4. Every table in the report declares its operating point.
+5. The recorded verdicts are what the preregistered rule yields from the recorded counts —
+   recomputed here, not pinned. The first version of this file pinned the counts themselves
+   (21/130 three times over), which made it a test that the experiment stayed broken: those
+   numbers came from three arms that had all run the production tokenizer.
+6. The negative control passed — the one thing that distinguishes a measured null result
+   from an inert arm.
+7. The statistical helpers and the three tokenizers behave as documented.
 """
 from __future__ import annotations
 
@@ -17,6 +20,7 @@ import hashlib
 import json
 import sys
 from pathlib import Path
+
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -24,7 +28,7 @@ scripts_eval_path = REPO_ROOT / "30_SCRIPTS" / "evaluation"
 if str(scripts_eval_path) not in sys.path:
     sys.path.insert(0, str(scripts_eval_path))
 
-from eval_tokenizer_experiment import (
+from eval_tokenizer_experiment import (  # noqa: E402
     ARTIFACT_JSON_PATH,
     BENCHMARK_PATH,
     BENCHMARK_SHA_PATH,
@@ -39,192 +43,157 @@ from eval_tokenizer_experiment import (
     wilson_score_interval,
 )
 
+FROZEN_SHA = "eeb53822ae5f022df89290d6fca789c1d4387b7572ed70103a7c08aae5b57eaa"
+
 
 @pytest.fixture(scope="module")
-def tokenizer_data():
-    """Loads precomputed tokenizer experiment JSON artifact."""
+def data():
     assert ARTIFACT_JSON_PATH.exists(), f"Artifact missing: {ARTIFACT_JSON_PATH}"
-    content = ARTIFACT_JSON_PATH.read_text(encoding="utf-8")
-    return json.loads(content)
+    return json.loads(ARTIFACT_JSON_PATH.read_text(encoding="utf-8"))
 
 
 @pytest.fixture(scope="module")
-def tokenizer_report_md():
-    """Loads committed markdown report."""
+def report():
     assert REPORT_MD_PATH.exists(), f"Report missing: {REPORT_MD_PATH}"
     return REPORT_MD_PATH.read_text(encoding="utf-8")
 
 
-def test_tokenizer_experiment_artifacts_exist_and_non_empty():
-    """Verifies that preregistration, JSON artifact, and report exist and are non-empty."""
-    assert PREREG_PATH.exists(), "PREREGISTRATION.md is missing"
-    assert PREREG_PATH.stat().st_size > 2000, "PREREGISTRATION.md unexpectedly small"
+# --- 1. artifacts and the frozen benchmark --------------------------------------------
 
-    assert ARTIFACT_JSON_PATH.exists(), "tokenizer_experiment_cases.json is missing"
-    assert ARTIFACT_JSON_PATH.stat().st_size > 10_000, "tokenizer_experiment_cases.json unexpectedly small"
-
-    assert REPORT_MD_PATH.exists(), "TOKENIZER_EXPERIMENT_REPORT.md is missing"
-    assert REPORT_MD_PATH.stat().st_size > 2000, "TOKENIZER_EXPERIMENT_REPORT.md unexpectedly small"
+def test_artifacts_exist_and_are_not_stubs():
+    assert PREREG_PATH.stat().st_size > 2000
+    assert ARTIFACT_JSON_PATH.stat().st_size > 10_000
+    assert REPORT_MD_PATH.stat().st_size > 2000
 
 
-def test_frozen_benchmark_integrity():
-    """Verifies that retrieval_benchmark_v3.json has not been modified."""
-    assert BENCHMARK_PATH.exists()
-    assert BENCHMARK_SHA_PATH.exists()
-    expected_sha = BENCHMARK_SHA_PATH.read_text(encoding="utf-8").split()[0]
-    actual_sha = hashlib.sha256(BENCHMARK_PATH.read_bytes()).hexdigest()
-    assert actual_sha == expected_sha == "eeb53822ae5f022df89290d6fca789c1d4387b7572ed70103a7c08aae5b57eaa"
+def test_frozen_benchmark_integrity(data):
+    expected = BENCHMARK_SHA_PATH.read_text(encoding="utf-8").split()[0]
+    actual = hashlib.sha256(BENCHMARK_PATH.read_bytes()).hexdigest()
+    assert actual == expected == FROZEN_SHA
+    assert data["metadata"]["benchmark_sha256"] == FROZEN_SHA, "the artifact was measured on a different benchmark"
 
 
-def test_report_matches_render_output_bit_for_bit(tokenizer_data, tokenizer_report_md):
-    """Verifies that TOKENIZER_EXPERIMENT_REPORT.md is bit-for-bit identical to render_report(data)."""
-    rendered = render_report(tokenizer_data)
-    assert tokenizer_report_md.strip() == rendered.strip(), (
-        "TOKENIZER_EXPERIMENT_REPORT.md does not match render_report(data) bit-for-bit!"
-    )
+# --- 2 & 3. the report is generated, and tampering shows ------------------------------
+
+def test_report_matches_render_output_bit_for_bit(data, report):
+    assert report.strip() == render_report(data).strip()
 
 
-def test_negative_control_report_tampering(tokenizer_data, tokenizer_report_md):
-    """Negative Control: altering any reported statistic in the markdown report triggers mismatch."""
-    # 1. Tamper hit count
-    tampered_hits = tokenizer_report_md.replace("21 / 130", "22 / 130", 1)
-    assert tampered_hits != tokenizer_report_md
-    rendered = render_report(tokenizer_data)
-    assert tampered_hits.strip() != rendered.strip(), (
-        "Tampered report with altered hit count unexpectedly matched rendered output!"
-    )
-
-    # 2. Tamper percentage
-    tampered_pct = tokenizer_report_md.replace("16.15%", "16.50%", 1)
-    assert tampered_pct != tokenizer_report_md
-    assert tampered_pct.strip() != rendered.strip(), (
-        "Tampered report with altered percentage unexpectedly matched rendered output!"
-    )
-
-    # 3. Tamper verdict
-    tampered_verdict = tokenizer_report_md.replace("INFIRMATĂ", "CONFIRMATĂ", 1)
-    assert tampered_verdict != tokenizer_report_md
-    assert tampered_verdict.strip() != rendered.strip(), (
-        "Tampered report with altered verdict unexpectedly matched rendered output!"
-    )
+def test_tampering_with_the_report_is_noticed(data, report):
+    """Three edits a careless hand might make; each must break the bit-for-bit match."""
+    rendered = render_report(data).strip()
+    arm1 = data["arms"]["arm1_baseline"]
+    hits_text = f"{arm1['hits_all']} / {arm1['total_cases']}"
+    pct_text = f"{arm1['recall_all'] * 100:.2f}%"
+    assert hits_text in report and pct_text in report, "the report no longer states arm 1's figures as expected"
+    for before, after in (
+        (hits_text, f"{arm1['hits_all'] + 1} / {arm1['total_cases']}"),
+        (pct_text, f"{arm1['recall_all'] * 100 + 0.35:.2f}%"),
+        (data["verdicts"]["decision"], "ADOPTARE TOKENIZATOR NOU (arm2_unicode)"),
+    ):
+        tampered = report.replace(before, after, 1)
+        assert tampered != report, f"{before!r} not found, so this edit tests nothing"
+        assert tampered.strip() != rendered
 
 
-def test_negative_control_json_tampering(tokenizer_data, tokenizer_report_md):
-    """Negative Control: modifying statistics in JSON produces output differing from committed report."""
-    tampered_data = copy.deepcopy(tokenizer_data)
-    # Tamper Romanian hits in Arm 2
-    tampered_data["arms"]["arm2_unicode"]["hits_ro"] += 3
-    tampered_rendered = render_report(tampered_data)
-    assert tampered_rendered.strip() != tokenizer_report_md.strip(), (
-        "Report re-rendered with tampered JSON data unexpectedly matched committed report!"
-    )
+def test_tampering_with_the_json_is_noticed(data, report):
+    tampered = copy.deepcopy(data)
+    tampered["arms"]["arm2_unicode"]["hits_ro"] += 3
+    tampered["arms"]["arm2_unicode"]["recall_ro"] = round(tampered["arms"]["arm2_unicode"]["hits_ro"] / 61, 4)
+    assert render_report(tampered).strip() != report.strip()
 
 
-def test_every_table_declares_operating_point(tokenizer_report_md):
-    """Every markdown table in the report must explicitly declare its operating point parameters.
+# --- 4. every table says where it was measured -----------------------------------------
 
-    Required parameters in title/caption:
-    - Principal.AI_AGENT
-    - page_size=5
-    - Floor: ACTIV
-    """
-    lines = tokenizer_report_md.splitlines()
-    table_indices = []
-    for idx, line in enumerate(lines):
-        if line.strip().startswith("|") and "---" in line:
-            table_indices.append(idx)
-
-    assert len(table_indices) >= 4, f"Expected at least 4 tables, found {len(table_indices)}"
-
-    for sep_idx in table_indices:
-        preceding_text = "\n".join(lines[max(0, sep_idx - 6) : sep_idx])
-        has_principal = "Principal.AI_AGENT" in preceding_text
-        has_page_size = "page_size=5" in preceding_text
-        has_floor = "Floor: ACTIV" in preceding_text
-
-        assert has_principal and has_page_size and has_floor, (
-            f"Table near line {sep_idx+1} does not declare required operating point in header/caption:\n{preceding_text}"
-        )
+def test_every_table_declares_its_operating_point(report):
+    lines = report.splitlines()
+    separators = [i for i, line in enumerate(lines) if line.strip().startswith("|") and "---" in line]
+    assert len(separators) >= 3, f"expected the three result tables, found {len(separators)}"
+    for sep in separators:
+        caption = "\n".join(lines[max(0, sep - 8): sep])
+        assert "Principal.AI_AGENT" in caption and "page_size=5" in caption and "Floor: ACTIV" in caption, (
+            f"table near line {sep + 1} does not declare its operating point:\n{caption}")
 
 
-def test_preregistered_verdicts_and_rules(tokenizer_data, tokenizer_report_md):
-    """Verifies that measured outcomes conform strictly to pre-registered hypotheses and decision rules."""
-    verdicts = tokenizer_data["verdicts"]
-    assert verdicts["hypothesis_H_TOKEN_1"] == "INFIRMATĂ"
-    assert verdicts["non_regression_english"] == "CONFIRMATĂ"
-    assert verdicts["net_total_gain"] == "INFIRMATĂ"
-    assert verdicts["decision"] == "MENȚINERE BASELINE (RESPINGERE ADOPTARE TOKENIZATOR NOU)"
+# --- 5. verdicts follow from the counts, by the preregistered rule -------------------
 
-    # Report mentions these conclusions explicitly
-    assert "MENȚINERE BASELINE (RESPINGERE ADOPTARE TOKENIZATOR NOU)" in tokenizer_report_md
-    assert "INFIRMATĂ" in tokenizer_report_md
-    assert "Tokenizatorul de producție din `hybrid_retrieval.py` rămâne neschimbat pe `main`" in tokenizer_report_md
+def _rule(comp: dict) -> dict:
+    """PREREGISTRATION.md section 7, counted in cases (see the report for why cases, not pp)."""
+    ro = comp["ro"]["delta_cases"] >= 3
+    en = comp["en"]["delta_cases"] >= -1 and (comp["en"]["delta_cases"] >= 0 or comp["en"]["p_mcnemar"] > 0.10)
+    total = comp["all"]["delta_cases"] >= 2
+    return {"ro": ro, "en": en, "total": total, "adopt": ro and en and total}
 
-    # Arm results check
-    for arm_key in ["arm1_baseline", "arm2_unicode", "arm3_stripped"]:
-        arm = tokenizer_data["arms"][arm_key]
-        assert arm["hits_all"] == 21
-        assert arm["total_cases"] == 130
-        assert arm["hits_ro"] == 9
-        assert arm["total_ro"] == 61
-        assert arm["hits_en"] == 12
-        assert arm["total_en"] == 69
-        assert arm["reachable_in_top200_ro"] == 46
 
-    # Discordant cases check
-    comp_u = tokenizer_data["comparisons"]["arm2_unicode_vs_baseline"]
-    comp_s = tokenizer_data["comparisons"]["arm3_stripped_vs_baseline"]
-    for comp in [comp_u, comp_s]:
-        assert comp["all"]["gains_b"] == 0
-        assert comp["all"]["losses_c"] == 0
-        assert comp["all"]["p_mcnemar"] == 1.0
-        assert comp["ro"]["gains_b"] == 0
-        assert comp["ro"]["losses_c"] == 0
-        assert comp["ro"]["p_mcnemar"] == 1.0
-        assert len(comp["discordant_cases"]) == 0
+def test_verdicts_are_what_the_rule_yields_from_the_counts(data, report):
+    comps = {"arm2_unicode": data["comparisons"]["arm2_unicode_vs_baseline"],
+             "arm3_stripped": data["comparisons"]["arm3_stripped_vs_baseline"]}
+    judged = {arm: _rule(c) for arm, c in comps.items()}
+    verdicts = data["verdicts"]
 
+    def status(flag: bool) -> str:
+        return "CONFIRMATĂ" if flag else "INFIRMATĂ"
+
+    assert verdicts["hypothesis_H_TOKEN_1"] == status(any(j["ro"] for j in judged.values()))
+    assert verdicts["non_regression_english"] == status(all(j["en"] for j in judged.values()))
+    assert verdicts["net_total_gain"] == status(any(j["total"] for j in judged.values()))
+    passing = [a for a, j in judged.items() if j["adopt"]]
+    if passing:
+        assert verdicts["decision"].startswith("ADOPTARE TOKENIZATOR NOU")
+        assert verdicts["chosen_arm"] in passing
+    else:
+        assert verdicts["decision"] == "MENȚINERE BASELINE (RESPINGERE ADOPTARE TOKENIZATOR NOU)"
+        assert verdicts["chosen_arm"] is None
+    assert verdicts["decision"] in report
+
+
+def test_discordant_counts_are_internally_consistent(data):
+    """delta_cases is gains minus losses, and p comes from exactly those two numbers."""
+    for comp in (data["comparisons"]["arm2_unicode_vs_baseline"], data["comparisons"]["arm3_stripped_vs_baseline"]):
+        for sl in ("ro", "en", "all"):
+            sc = comp[sl]
+            assert sc["delta_cases"] == sc["gains_b"] - sc["losses_c"]
+            assert sc["p_mcnemar"] == pytest.approx(mcnemar_exact_test(sc["gains_b"], sc["losses_c"]))
+        assert comp["all"]["gains_b"] + comp["all"]["losses_c"] == len(comp["discordant_cases"])
+
+
+# --- 6. the negative control ------------------------------------------------------------
+
+def test_the_negative_control_passed(data):
+    """An empty tokenizer must change the outcome. If it does not, the arms never reached the
+    search path and every comparison above is void — which is exactly what happened the first time."""
+    ctrl = data["negative_control"]
+    assert ctrl["passed"] is True
+    assert ctrl["cases_changed_vs_baseline"] > 0
+    assert ctrl["hits_all"] < data["arms"]["arm1_baseline"]["hits_all"]
+
+
+def test_the_patch_reached_the_module_the_controller_uses(data):
+    """Both module objects for candidate_generation must have been patched, or the shim hides the arm."""
+    patched = set(data["metadata"]["patched_modules"])
+    assert "memory_controller.context.candidate_generation" in patched, patched
+
+
+# --- 7. helpers and tokenizers ----------------------------------------------------------
 
 def test_statistical_helpers_mcnemar_and_wilson():
-    """Unit tests for McNemar exact test and Wilson score intervals."""
-    # 1. McNemar exact
-    # Concordant / no discordant pairs
     assert mcnemar_exact_test(0, 0) == 1.0
     assert mcnemar_exact_test(1, 1) == 1.0
     assert mcnemar_exact_test(10, 10) == 1.0
-
-    # 5 gains, 0 losses: sum_{k=0}^0 comb(5, 0) * 0.5^5 = 1/32 = 0.03125. Two-tailed: 2 * 0.03125 = 0.0625
     assert mcnemar_exact_test(5, 0) == pytest.approx(0.0625, abs=1e-5)
     assert mcnemar_exact_test(0, 5) == pytest.approx(0.0625, abs=1e-5)
-
-    # 10 gains, 1 loss: n=11, k<=1: (1 + 11) * 0.5^11 = 12 / 2048 = 0.005859375. Two-tailed: 0.01171875
     assert mcnemar_exact_test(10, 1) == pytest.approx(0.01171875, abs=1e-5)
-
-    # 2. Wilson score interval
     w = wilson_score_interval(21, 130)
-    assert 0.10 < w["lower"] < 0.16
-    assert 0.16 < w["upper"] < 0.25
+    assert w["lower"] < w["proportion"] < w["upper"]
     assert w["proportion"] == round(21 / 130, 4)
 
 
 def test_tokenizer_behaviors():
-    """Unit tests demonstrating the exact character behavior of each tokenizer arm."""
     text_ro = "științific și regăsire"
-
-    # Baseline: splits on Romanian diacritics into fragments
-    # Note: 'științific' splits into 'tiin' and 'ific'
-    # Note: In 'învățare', 'are' is removed because it collides with English stopword 'are'
     toks_base = tokenize_baseline(text_ro)
-    assert "tiin" in toks_base
-    assert "ific" in toks_base
-    assert "reg" in toks_base
-    assert "sire" in toks_base
-
-    # Unicode: preserves Romanian letters in single tokens
+    assert "tiin" in toks_base and "ific" in toks_base and "reg" in toks_base and "sire" in toks_base
     toks_uni = tokenize_unicode(text_ro)
-    assert "științific" in toks_uni
-    assert "regăsire" in toks_uni
-
-    # Stripped: removes diacritics symmetrically
+    assert "științific" in toks_uni and "regăsire" in toks_uni
     toks_strip = tokenize_stripped(text_ro)
-    assert "stiintific" in toks_strip
-    assert "regasire" in toks_strip
+    assert "stiintific" in toks_strip and "regasire" in toks_strip
+    assert strip_diacritics("învățare") == "invatare"

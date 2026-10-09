@@ -446,7 +446,7 @@ def render_report(data: Dict[str, Any]) -> str:
     w("---")
     w("")
     w("## 3. Tabelul 2 — Analiza Pereche și Testul Exact McNemar")
-    w(f"### [Punct de operare: Principal.AI_AGENT, page_size=5, braț de clasare `{meta.get('ranking_arm', 'baseline (nedeclarat)')}`]")
+    w(f"### [Punct de operare: Principal.AI_AGENT, page_size=5, Floor: ACTIV, braț de clasare `{meta.get('ranking_arm', 'baseline (nedeclarat)')}`]")
     w("")
     w("| Comparație vs Baseline | Felie | Câștiguri ($b$) | Pierderi ($c$) | Cazuri Discordante | $\\Delta$ Cazuri | $\\Delta$ Procentual (pp) | $p$ McNemar Exact | Semnificație la 0.05 |")
     w("|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---|")
@@ -461,6 +461,7 @@ def render_report(data: Dict[str, Any]) -> str:
     w("---")
     w("")
     w("## 4. Tabelul 3 — Evaluarea Ipotezelor Preînregistrate")
+    w("### [Punct de operare: Principal.AI_AGENT, page_size=5, Floor: ACTIV]")
     w("")
     w("Regula se aplică în cazuri, nu în puncte procentuale: preînregistrarea dă pentru română atât "
       "„+5.00 pp” cât și „≥ 3 cazuri nete”, iar pe 61 de cazuri trei cazuri înseamnă 4.92 pp. "
