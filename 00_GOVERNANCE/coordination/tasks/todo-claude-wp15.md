@@ -68,6 +68,37 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
    - anchor in each PDF footer (text extraction or a generator hook);
    - empty sections reported "nedefinit".
 
+## WP15b spec (branch `loganalyzer/wp15b-policy-timeline`, from main @ `4627a6b0` after WP15a #243 merged)
+Lessons-learned rows 31-32 (`docs/dfir/LESSONS_LEARNED_MAPPING.md`) and STAGE2_PLAN item 5. Works offline from collected evidence in both
+editions (P1 has no directory connector: everything must work from EVTX alone; `LogAnalyzer.Connectors/Domain/DirectoryCollector.cs`
+may add gPLink data in the unclassified edition only).
+1. **Policy change events → PolicyChange records** (`Dfir.Core/Analysis/PolicyTimeline.cs`): Security 5136 (DS object modified:
+   groupPolicyContainer attributes, versionNumber, gPCFileSysPath, gPLink/gPOptions on OUs/domain), 5137 (created), 5141 (deleted),
+   5139 (moved), 4739 (domain policy), 4719 (audit policy, reuse WP15a classifier), 4907 (object SACL); endpoint application from
+   Microsoft-Windows-GroupPolicy/Operational (4000-4007 start, 5016/5017 extension processed, 7016/7017, 8000-8007 end, 5312/5313
+   applied/filtered GPO lists, 7320 errors). Each record: who, when, target (GPO GUID/name, OU), attribute, old/new value when the
+   event carries them (5136 OperationType %%14674 value added / %%14675 value deleted pairs = before/after).
+2. **Timeline BEFORE→CHANGE→AFTER→APPLICATION→BEHAVIOR** per GPO change: before/after values, first application on each host
+   (GroupPolicy/Operational), and behaviour = observable effect in the same evidence (e.g. audit subcategory turned off → those event
+   ids stop; Defender/firewall/USB policy → related events change). Behaviour is reported as "observat / neobservat / neevaluabil"
+   with the reason; never inferred beyond the evidence.
+3. **Configured / applied / enforced / observed** per expected policy setting: configured = expected policy (WP15a profile link to the
+   existing Policy store/import), applied = GroupPolicy/Operational evidence, enforced = effective state where collected (StationFacts /
+   AuditQuerySystemPolicy results already in the case), observed = events consistent with it. Each level OBSERVED/NOT_OBSERVED/UNKNOWN.
+4. **Control gap finding** (new rule id, registered in `RuleContracts.cs` + `20_TESTS/test_loganalyzer_rule_catalog.py` stays green):
+   configured ≠ applied/enforced/observed → finding with the exact level where it breaks, the evidence, MissingEvidence, and
+   AlternativeExplanations (replication delay, filtering, WMI filter, loopback, host offline). Severity Medium by default; High only when
+   the gap disables auditing or a security control AND a High finding falls in the gap window.
+5. **Time manipulation (extend AF05, do not duplicate):** clock jumps from 4616 / Kernel-General 1 with magnitude and direction,
+   time-zone changes (Kernel-General 22 / 4616 reason), record-order vs timestamp inversions inside one channel (RecordID increases while
+   time goes back > tolerance), and mark affected windows in TimeFacts so the WP4 TEMPORAL check reports UNKNOWN there instead of
+   CONTRADICTED. W32Time sync stays benign.
+6. **Output + UI:** `Analysis/policy_timeline.json` (versioned, RecordOutput); a "Cronologie politici" section in the investigation view
+   and the investigation PDF (list per GPO: before/after/application/behaviour, gap rows). Additive; no page removed.
+7. **Tests (TDD):** synthetic EVTX-derived TimelineEvents for each event type; before/after pairing from 5136 value-added/deleted;
+   application per host; behaviour observed / not observed / not evaluable; the four levels; gap finding severity rules; clock jump,
+   timezone change, record-order inversion; WP4 TEMPORAL becomes UNKNOWN inside a manipulated window; classified build unaffected.
+
 ## Verification required before push
 - `dotnet build LogAnalyzer.slnx -p:EnableWindowsTargeting=true` → 0 errors.
 - Dfir/UI/Edition tests: only the known Linux-only failures (Dfir 48, UI 6); all new tests pass; Edition green (the profile
@@ -87,7 +118,7 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 - 2026-10-09 claude-wp15a: merged origin/main; Dfir 48 failed (baseline) / 539 passed, UI 6 failed (baseline), Edition 14/14, build 0 errors, Python 3719 passed 0 failed. WP15a complete; ready for PR.
 
 ## Next
-- WP15b (policy timeline). Open the WP15a PR. The orchestrator opens the PR.
+- WP15a merged as #243 (`4627a6b0`). Implement WP15b 1-7 on its branch, verify, push. The orchestrator opens the PR.
 
 ## Blockers
 - None blocking. Safe defaults chosen (owner may revise): a maintenance section with only accounts or only windows counts as defined (clears then Unexpected); holidays are stored but unused; shifts/weekday intervals collapse to one covering range for the legacy WorkingHours; approved software, zones/transfers and the expected-policy link are stored and shown but no analyser consumes them yet; the rotation order is validated, not matched against evidence; 1100 pairs with System 1074/6006 within +-10 min or the first 6005 within 10 min after.
