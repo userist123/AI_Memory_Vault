@@ -464,16 +464,16 @@
       "reason": "Plain markdown README documenting the knowledge area; it is not a memory note and therefore intentionally has no note frontmatter."
     },
     {
-      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-wp-ed.md",
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/FINDING_CONTRACT.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
-      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+      "reason": "Plain markdown README documenting the knowledge area; it is not a memory note and therefore intentionally has no note frontmatter."
     },
     {
-      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/EDITIONS.md",
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-wp2.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
-      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+      "reason": "Plain markdown README documenting the knowledge area; it is not a memory note and therefore intentionally has no note frontmatter."
     },
     {
       "path": "00_GOVERNANCE/coordination/tasks/README.md",
@@ -488,16 +488,70 @@
       "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
     },
     {
-      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/FINDING_CONTRACT.md",
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/HG585_ACCREDITATION_REQUIREMENTS.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
-      "reason": "Plain markdown README documenting the knowledge area; it is not a memory note and therefore intentionally has no note frontmatter."
+      "reason": "Plain planning/research document for LogAnalyzer stage 2; not a vault note."
     },
     {
-      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-wp2.md",
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/HG585_QUOTE_SOURCES.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
-      "reason": "Plain markdown README documenting the knowledge area; it is not a memory note and therefore intentionally has no note frontmatter."
+      "reason": "Plain planning/research document for LogAnalyzer stage 2; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/LESSONS_LEARNED_MAPPING.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain planning/research document for LogAnalyzer stage 2; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/LOGANALYZER_LESSONS_LEARNED_COMPLETE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain planning/research document for LogAnalyzer stage 2; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PR212_RESEARCH_2026-10-07.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain planning/research document for LogAnalyzer stage 2; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/WINDOWS_TOOLING_COMPAT.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain planning/research document for LogAnalyzer stage 2; not a vault note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/projects/LOGANALYZER_DFIR/STAGE2_PLAN.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain planning/research document for LogAnalyzer stage 2; not a vault note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-print-research.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain planning/research document for LogAnalyzer stage 2; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PRINT_TRACKING_RESEARCH.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain planning/research document for LogAnalyzer stage 2; not a vault note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-wp-ed.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/EDITIONS.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
     }
   ]
 }
