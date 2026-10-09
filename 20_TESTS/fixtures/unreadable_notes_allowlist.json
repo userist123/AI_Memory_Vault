@@ -576,6 +576,12 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-wp4.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
     }
   ]
 }
