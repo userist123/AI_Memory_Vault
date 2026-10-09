@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace LogAnalyzer.Dfir.Model;
 
 /// <summary>Normalized timeline row (spec §54). Every row points back to its evidence (§70).</summary>
@@ -34,6 +36,12 @@ public sealed class TimelineEvent
     public string SourceSha256 { get; set; } = "";
     public string ParserId { get; set; } = "";
     public string ParserVersion { get; set; } = "";
+    /// <summary>What this row is about: an observation, mere presence, execution, configuration (program requirements §5). Set by the pipeline from the source.</summary>
+    public SemanticType SemanticType { get; set; } = SemanticType.Observation;
+    /// <summary>Timezone basis of <see cref="Time"/> where the source says it (e.g. "UTC (native)"); empty = not stated by the source.</summary>
+    public string TimeZoneBasis { get; set; } = "";
+    /// <summary>Known imprecision of the time (aggregate interval, key-level time, ambiguous local time); empty = none known.</summary>
+    public string TimeUncertainty { get; set; } = "";
 }
 
 /// <summary>A pointer from a finding to the exact evidence behind it.</summary>
@@ -49,7 +57,7 @@ public sealed class Finding
     public Severity Severity { get; init; }
     public string Category { get; init; } = "";
     public Classification Classification { get; init; }
-    public Confidence Confidence { get; init; }
+    public Confidence Confidence { get; set; }
     public DateTimeOffset? FirstSeenUtc { get; init; }
     public DateTimeOffset? LastSeenUtc { get; init; }
     public string Host { get; init; } = "";
@@ -70,6 +78,28 @@ public sealed class Finding
     public string MitreTechniqueId { get; init; } = "";
     /// <summary>Why this classification was assigned (spec §68).</summary>
     public string ClassificationReason { get; init; } = "";
+
+    // ---- Finding contract (program requirements §19, UX contract §19). Everything below is additive; the fields above are unchanged. ----
+
+    /// <summary>"" = the contract was not applied to this finding (legacy or hand-built); the pipeline applies it to every finding it emits.</summary>
+    public string ContractVersion { get; set; } = "";
+    private SemanticType? _semanticType;
+    /// <summary>What the claim is about. Defaults to the weakest honest value (OBSERVATION) until set.</summary>
+    public SemanticType SemanticType { get => _semanticType ?? SemanticType.Observation; set => _semanticType = value; }
+    [JsonIgnore] public bool HasSemanticType => _semanticType is not null;
+    /// <summary>Standard state (section 20), derived from <see cref="Classification"/> by <c>FindingContract</c>. Default NOT_ASSESSED.</summary>
+    public StandardState Status { get; set; } = StandardState.NotAssessed;
+    public FindingVerification Verification { get; set; } = FindingVerification.NotAssessed();
+    public List<string> Limitations { get; set; } = [];
+    public FindingProvenance? Provenance { get; set; }
+    public List<FindingAuditEntry> AuditTrail { get; set; } = [];
+    /// <summary>Localisation keys (UX contract §19); the Romanian text in Title/Description stays the display fallback.</summary>
+    public string TitleKey { get; set; } = "";
+    public string SummaryKey { get; set; } = "";
+    public string HumanSummary { get; set; } = "";
+    public string TechnicalSummary { get; set; } = "";
+    /// <summary>The contract's Contradictions[] is <see cref="ContradictingEvidence"/> (same list, contract name).</summary>
+    [JsonIgnore] public List<string> Contradictions => ContradictingEvidence;
 }
 
 /// <summary>Evidence gap (spec §48, §67). "Not available" never means "did not happen".</summary>
