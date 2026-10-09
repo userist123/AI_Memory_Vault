@@ -269,14 +269,9 @@ Not established by the present metadata inspection:
 - That the local Qdrant recovery files have been safely backed up/hashed during this audit.
 - That all WP0-WP8 implementation work has been performed, all providers have been exercised, or G0-G9 pass.
 
-### 11.5 Required continuation for a truthful final audit
+### 11.5 Recovery status
 
-1. Recover the actual local tool-call/session history and inspect the referenced validation report plus all three Qdrant audit/journal files. Extract each action, command, output, exit code, artifact path, and timestamp.
-2. Re-fetch current `main` SHA, PR #248 head and CI checks; distinguish the documentation branch from implementation.
-3. Compare all reported tests by exact commit/worktree, command, elapsed time, and output; label them HISTORICAL, FRESH, CLAIMED_ONLY, or UNVERIFIED.
-4. Inventory all outputs created today (reports, scripts, backups, test logs, generated prompt files) and map each to its exact local path and/or committed Git path.
-5. Update this ledger and the master prompt only with evidence recovered from logs or source artifacts. Do not infer a successful run from a planned command or a test name.
-6. Do not merge PR #248 automatically, do not rerun the original broad prompt as a substitute for history recovery, and do not modify the protected Qdrant recovery worktree or production vector collection without the stated safeguards.
+The recovery actions above have been performed to the extent supported by the retained local tool history and readable artifacts. The fresh main/model results are recorded in section 12; the retained-history and artifact inventory is recorded in section 13. A missing result remains marked unverified rather than inferred. PR #248 remains open and unmerged. The separate Qdrant recovery worktree and production collection were not modified by the fresh validation.
 
 
 
@@ -358,3 +353,37 @@ The same probe also exposed an existing main-branch defect in `03_IMPLEMENTATION
 - Follow-up should first reconcile the five stale Book-to-Memory generated-artifact/hash failures; fix and test the Windows executable-bit handling and vault-access line-ending contract; diagnose the two frontmatter test setup errors; then re-run the full suite on a newly recorded SHA.
 - Qdrant remediation should be integrated only through a reviewed code change and tests. Do not write/reindex the production `vault_memory` collection without separate explicit owner approval.
 - No source changes, dependency upgrades, automatic merge, or production collection writes were performed in this validation.
+
+
+## 13. Recovered tool history and artifact inventory — 2026-10-09
+
+### 13.1 Retained local tool history
+
+The Remote Desktop Commander history query returned **903 retained calls** in memory, of which **886 had timestamps dated 2026-10-09**. The day's recorded call types included 456 `start_process`, 267 `read_process_output`, 91 `read_file`, 26 `list_directory`, 17 `write_file`, 13 `read_multiple_files`, 9 `list_sessions`, 3 `list_processes`, 2 `start_search`, and 1 `get_config`. These are tool-call counts, not 886 separate substantive tasks; many are polling/read operations for long-running commands. Outputs larger than the history system's 4 KiB retention cap are stored as omission markers, so the history is not a complete byte-for-byte transcript of every large output.
+
+The retained history confirms, among other things:
+- Main was originally checked at `c5f939185f05c516e1cd46e11b3763026a6137d5`; the recovered report and tests must not be mislabeled as tests of the later `154dc4274b3b3d634a50c6e9f30b86a77b798590`.
+- The separate Qdrant worktree was tested and iteratively fixed; a final full suite on that modified worktree returned 2620 passed, 13 skipped, 9 xfailed, exit 0 in 515.46 s.
+- The local CLI audit attempts and Qwen allocation failures described in the AI-agent workflow audit were actually attempted, with outcomes recorded there. A CLI/model appearing in the installed inventory is not evidence that it completed the requested audit.
+- Attempts to compile/write a second `FULL_FUNCTIONAL_AGENT_COMPLETION_PROMPT_V1.md` into the local main checkout stopped on validation errors (an unfilled TODO placeholder, then invalid Requirements-section bounds). These attempts are **not** a successful committed artifact. The usable master prompt is the version committed on PR #248 as `FULL_FUNCTIONAL_COMPLETION_PROMPT_V1.md`.
+- A compiled prompt source was referenced at `C:\Users\Marius\AppData\Local\Temp\AI_MEMORY_VAULT_FULL_FUNCTIONALITY_IMPLEMENT_PROMPT_COMPILED.md` in history. Its current existence was not rechecked, and it is not treated as a durable result.
+
+### 13.2 Recovered local files and their evidentiary scope
+
+| Artifact | Path | Recovered content / status |
+|---|---|---|
+| Initial validation report | `C:\Users\Marius\Projects\AI_Memory_Vault_VALIDATION_REPORT_20261009.md` | Read successfully; 125 lines. Records historical main SHA `c5f9391...`, 2597 passed / 13 skipped / 9 xfailed in 779.13 s, live `qwen2.5-coder:3b` council smoke test, 768-dimension embeddings, then-unavailable Qdrant, system `pip check` problems, and a clean old main checkout. |
+| Qdrant stability audit | `C:\Users\Marius\Projects\AI_Memory_Vault_QdrantFix\10_DOCUMENTATION\audits\2026-10-09-qdrant-stability-audit.md` | Read successfully; 133 lines. Records QDR-001 through QDR-007, temporary-collection live integration, full-suite result on the modified worktree, and the explicit non-use of the production collection. |
+| Agent workflow audit | `C:\Users\Marius\Projects\AI_Memory_Vault_QdrantFix\10_DOCUMENTATION\audits\2026-10-09-ai-agent-workflow-audit.md` | Read successfully; 368 lines. Records CLI/model inventory, observable audit attempts, skill-routing findings, Qwen allocation failures, and limitations of the traces. |
+| Qdrant technical journal | `C:\Users\Marius\Projects\AI_Memory_Vault_QdrantFix\10_DOCUMENTATION\journal\2026-10-09-qdrant-stability-fix.md` | Read successfully; 105 lines. Records RED/GREEN iterations and the worktree's test sequence. |
+| Historical full-suite log (modified worktree) | `%LOCALAPPDATA%\AI_Memory_Vault_QdrantFix\pytest_full_final_after_upsert_guard.log` | Its tail and final summary were read from history: 2620 passed, 13 skipped, 9 xfailed in 515.46 s. This log is historical and not the fresh main run. |
+| Historical main test log reference | `50_ARTIFACTS\local_test_run_20261009.log` relative to the old main checkout | Mentioned by the initial validation report as an ignored log. Its complete current contents were not independently re-read during this recovery; do not infer more than the report states. |
+| Qdrant worktree code/test artifacts | `C:\Users\Marius\Projects\AI_Memory_Vault_QdrantFix` | The recovered worktree inventory reported modified tracked files `03_IMPLEMENTATION/packages/retrieval/qdrant_retrieval.py`, `20_TESTS/fixtures/unreadable_notes_allowlist.json`, `20_TESTS/test_qdrant_retrieval.py`; and untracked audit/journal docs, `20_TESTS/test_qdrant_live_integration.py`, `20_TESTS/test_qdrant_stable_point_ids.py`, `60_DEPLOYMENT/start_local_qdrant.ps1`. These changes were not copied, stashed, reset, or edited by this fresh main validation. |
+| Master prompt and context ledger | PR #248 branch `docs/full-functional-completion-prompt-v1` | Directly committed and fetched from GitHub. The current ledger includes sections 12 and 13; PR #248 remains open and unmerged. |
+
+### 13.3 What was temporary in the fresh validation
+
+- The model-tier JSON used for each live model smoke test was written to the OS temporary directory and removed by the same command after the test.
+- The Qdrant integration probe used temporary collection `mv_audit_70fab018e69c`; Qdrant returned HTTP 200 for deletion, and a follow-up lookup returned 404.
+- No fresh test report, model output, or code change was written to the local repository. The main checkout remained clean at the tested SHA.
+- The new validation evidence was published directly to this PR's context ledger and PR description. The only new durable report from this validation is in GitHub, not a local report file.
