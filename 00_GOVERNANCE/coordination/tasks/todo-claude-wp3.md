@@ -107,8 +107,12 @@ written (grep the App and Core report services) and include them.
   `IO/Hashing.cs` (streaming cancellable hash), `Memory/VaultExport.cs` (Release gate), `IO/SchemaVersions.cs`; callers: `InvestigationPipeline`, `ControlReportPdf.SaveToCase`,
   `AiCaseAnalysis`, `LiveCase.IntegrityLine`, `InvestigationViewModel.IntegrityLine`/`InvestigationView.xaml`; doc `docs/dfir/INTEGRITY_RECHECK.md`.
 
+- 2026-10-09T05:10Z claude-orchestrator review: the LIVE case (every `LiveCase.Get()` caller is a UI command) now opens with
+  `recheck: false` and runs `Recheck()` on a background task; `IntegrityLine` says "Verificare de integritate în curs…" until it
+  ends and reports a failed re-check as failed, never as clean. A newly created LIVE case is not re-checked (nothing to check).
+
 ## Next
-- Orchestrator: open the PR for WP3b and check CI. Nothing else pending in WP3b.
+- PR against main; Windows CI green; merge. Then queue item 4 (WP4, verification layer v1).
 
 ## Blockers (owner decisions; safe defaults implemented)
 - LIVE case (`LiveCase.Get`) has no creation dialog: if the operator has not entered a scope, it is created with a PROVISIONAL scope
