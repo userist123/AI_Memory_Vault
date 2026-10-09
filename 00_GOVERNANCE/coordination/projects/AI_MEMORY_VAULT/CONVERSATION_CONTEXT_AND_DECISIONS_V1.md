@@ -278,3 +278,83 @@ Not established by the present metadata inspection:
 5. Update this ledger and the master prompt only with evidence recovered from logs or source artifacts. Do not infer a successful run from a planned command or a test name.
 6. Do not merge PR #248 automatically, do not rerun the original broad prompt as a substitute for history recovery, and do not modify the protected Qdrant recovery worktree or production vector collection without the stated safeguards.
 
+
+
+## 12. Fresh main validation and local-model matrix — 2026-10-09
+
+This section records a new, direct execution after the local checkout was recovered. Results here supersede neither older snapshots nor the separate Qdrant recovery worktree; every result is tied to its own revision and command.
+
+### 12.1 Main baseline and environment
+
+- Repository: `C:\Users\Marius\Projects\AI_Memory_Vault_CODEX_READY`.
+- Branch: `main`.
+- Before update, checkout was clean at `c5f939185f05c516e1cd46e11b3763026a6137d5`.
+- Ran `git fetch origin main` and `git merge --ff-only origin/main`; fast-forward completed without reset. New HEAD and `origin/main`: `154dc4274b3b3d634a50c6e9f30b86a77b798590`.
+- Runtime: Python 3.14.2, pytest 9.0.2, Ollama 0.40.1, NVIDIA GeForce RTX 5060 Laptop GPU with 8151 MiB VRAM.
+- Final Git check after testing: `## main...origin/main`, no tracked/untracked changes reported. `git diff --check` emitted no errors.
+- `python -m pip check` is **FAIL** in the system Python environment: `langchain-core 1.5.5` requires missing `langsmith`; `torch 2.11.0` requires `setuptools<82`, but installed setuptools is 83.0.0. This is an environment/dependency issue; no global package changes were made.
+
+### 12.2 Fresh full-suite result on exact main SHA
+
+Command:
+
+```powershell
+python -m pytest -q --tb=short
+```
+
+- Revision: `154dc4274b3b3d634a50c6e9f30b86a77b798590`.
+- Exit code: **1**.
+- Runtime: **638.35 seconds**.
+- Result: **15 failed tests and 2 test errors**. The streaming output contained an extremely long parametrized test ID and did not yield a trustworthy aggregate passed-count; do not infer one.
+- The failing tests were reproduced in a targeted run. No source fixes were made as part of this validation.
+
+Failing test IDs and observed symptoms:
+
+1. `20_TESTS/test_b2m_leakage_check.py::test_committed_report_matches_a_fresh_run` — committed report differs from fresh output.
+2. `20_TESTS/test_book_to_memory_human_labels.py::test_committed_packet_is_a_fresh_build` — committed labelling packet is not a fresh build.
+3. `20_TESTS/test_book_to_memory_real_ablation.py::test_committed_packet_baseline_prompts_are_clean_and_hashes_match` — `trials.json` SHA-256 differs from manifest.
+4. `20_TESTS/test_book_to_memory_real_ablation.py::test_committed_packet_is_bound_to_the_preregistration` — preregistration SHA-256 differs from the committed packet manifest.
+5. `20_TESTS/test_book_to_memory_real_ablation.py::test_committed_packet_is_reproducible_from_the_notes` — generator `--check` reports `DIFFERS: manifest.json`.
+6. `20_TESTS/test_import_external_skills.py::test_an_executable_bit_aborts_the_import_even_on_an_allowed_type` — expected `SystemExit` was not raised for an executable-bit case.
+7. `20_TESTS/test_owner_authority_gate.py::test_settings_command_allows_and_denies` — allowed command returned exit code 2 instead of 0.
+8. `20_TESTS/test_vault_access_core.py::test_read_is_verbatim_with_hash_and_exact_lines` — exact text comparison differs at CRLF/LF line endings.
+9–15. `20_TESTS/test_vault_access_ollama_telegram.py::test_reading_a_file_is_extractive_and_never_calls_the_model` — seven parameter variants fail because the test's expected CRLF-containing body does not match the LF-normalized file content.
+16–17. Two setup errors in parametrized `20_TESTS/test_vault_access_core.py::test_unreadable_or_unusual_frontmatter_fails_closed`, including the long `Long.md` frontmatter input. The captured output was dominated by the full generated parameter value; exact root cause remains **unverified** and must not be guessed.
+
+The first five failures indicate generated/committed Book-to-Memory evaluation artifacts or their manifests are not in sync. The vault-access failures demonstrate a byte/line-ending contract mismatch in this Windows run. These are observations, not a claim that a specific upstream PR caused them.
+
+### 12.3 Real local model execution — one model per isolated run
+
+Each run used the live test `20_TESTS/test_b3_local_provider_live.py::test_b3_live_ollama_council_execution` with `RUN_LIVE_OLLAMA_TESTS=1` and a temporary three-tier config pointing all tiers to the selected model. The temporary config was removed after each run; no report or result file was saved locally.
+
+| Installed model | Result | Test runtime | Evidence |
+|---|---|---:|---|
+| `qwen2.5-coder:3b` | PASS — 1 passed | 3.57 s | Real LocalProvider health, specialist + synthesis execution, provider identity and real token-usage telemetry asserted |
+| `qwen2.5-coder:7b` | PASS — 1 passed | 7.82 s | Same live council smoke test |
+| `qwen2.5:7b-instruct` | PASS — 1 passed | 10.34 s | Same live council smoke test |
+| `mistral:7b-instruct` | PASS — 1 passed | 8.25 s | Same live council smoke test |
+| `llama3.1:8b` | PASS — 1 passed | 17.40 s | Same live council smoke test |
+| `qwen3:30b-a3b` | FAIL — 1 failed | 4.38 s | Ollama HTTP 500 before generation: `failed to allocate CUDA_Host buffer of size 12897402880` (12,897,402,880 bytes) |
+
+The installed inventory contains a 30B-total-parameter MoE model with A3B active parameters, not a 20B-A3B model. No 20B-A3B model was present in `ollama list`, so the tested larger model is recorded under its exact installed tag. The failed run did not produce an LLM response; do not treat it as a quality or reasoning evaluation.
+
+### 12.4 Real Ollama embedding + Qdrant integration on main
+
+A direct live integration probe used a newly generated temporary collection named `mv_audit_70fab018e69c`, not `vault_memory`:
+
+- Ollama `nomic-embed-text:latest` returned a **768-dimensional** embedding.
+- Temporary Qdrant collection creation succeeded.
+- Upsert succeeded; semantic search returned `audit-note-1`.
+- Temporary collection deletion returned HTTP 200.
+- Final result: **PASS**; the temporary collection was deleted and the production collection was not modified.
+
+The same probe also exposed an existing main-branch defect in `03_IMPLEMENTATION/packages/retrieval/qdrant_retrieval.py`: point IDs are calculated with `abs(hash(point_id)) % (2 ** 31)`. Two separate Python processes returned **1302104753** and **1046550395** for the same `audit-note-1`, confirming process-randomized IDs. The main implementation also attempts collection creation unconditionally and does not propagate `ensure_collection()` / `upsert()` failure from `SemanticRetrieval.reindex()`. These defects are still present on this tested SHA; fixes in the separate `fix/qdrant-stable-point-ids` worktree have not been integrated by this documentation PR.
+
+### 12.5 Correct interpretation and next work
+
+- **Main is not green** on `154dc4274b3b3d634a50c6e9f30b86a77b798590`: full-suite exit code 1, 15 failures, 2 errors.
+- Real council execution works on the installed 3B, both 7B, and 8B models. The installed Qwen3 30B-A3B model fails before generation because the runtime cannot allocate a 12.9 GB CUDA host buffer.
+- Live embeddings and semantic retrieval work against a temporary Qdrant collection. This does not validate production reindexing, repeat-run idempotency, stale-point reconciliation, or stable point IDs.
+- Follow-up should first reconcile the five stale Book-to-Memory generated-artifact/hash failures; fix and test the Windows executable-bit handling and vault-access line-ending contract; diagnose the two frontmatter test setup errors; then re-run the full suite on a newly recorded SHA.
+- Qdrant remediation should be integrated only through a reviewed code change and tests. Do not write/reindex the production `vault_memory` collection without separate explicit owner approval.
+- No source changes, dependency upgrades, automatic merge, or production collection writes were performed in this validation.
