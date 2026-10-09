@@ -43,9 +43,17 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 
 ## Done
 - 2026-10-09T17:40Z claude-orchestrator: spec written; branch created; STAGE2_PLAN items 2-6 marked done.
+- 2026-10-09 claude-wp5: items 1-3, 8 (backend) in `32e655371`: `CaseLoader` (Dfir.Windows), `CoverageMatrix`, `HomeAggregator`, `RecentCases`, read-only guard in `CaseWorkspace`,
+  `TimelineCsv` reader/writer shared with the pipeline; `Wp5CaseHomeTests` (38 tests, green on Linux).
+- 2026-10-09 claude-wp5: items 4-7 in `6d7b698c1`: `HomeView`/`HomeViewModel` (tab 22, first in the sidebar, default tab), intent chooser, `InvestigationViewModel.ShowLoaded`,
+  `MainViewModel` risk default NEDETERMINAT, legacy root UI claims neutralised, `docs/dfir/CASE_HOME.md`, `HomeViewModelTests` (App.Tests, Windows CI only: not run here), `HonestShellTests` +2.
 
 ## Next
-- Implement 1-8.
+- Final verification: full Dfir/UI/Edition runs vs baseline, full Python suite, final push.
 
 ## Blockers
-- None known.
+- None.
+
+## Key files
+- `LogAnalyzer.Dfir.Windows/Investigation/CaseLoader.cs`, `HomeBuilder.cs`; `LogAnalyzer.Dfir.Core/Coverage/CoverageMatrix.cs`, `Home/HomeSummary.cs`, `Case/RecentCases.cs`, `IO/TimelineCsv.cs`;
+  `LogAnalyzer.App/ViewModels/HomeViewModel.cs`, `Views/HomeView.xaml`; `docs/dfir/CASE_HOME.md`.
