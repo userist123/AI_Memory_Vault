@@ -49,10 +49,21 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
   `MainViewModel` risk default NEDETERMINAT, legacy root UI claims neutralised, `docs/dfir/CASE_HOME.md`, `HomeViewModelTests` (App.Tests, Windows CI only: not run here), `HonestShellTests` +2.
 
 ## Next
-- Final verification: full Dfir/UI/Edition runs vs baseline, full Python suite, final push.
+- Orchestrator: open the PR, check Windows CI (App.Tests `HomeViewModelTests` could not run on Linux), review the owner questions below.
 
-## Blockers
-- None.
+## Verification (final head)
+- `dotnet build LogAnalyzer.slnx -p:EnableWindowsTargeting=true`: 0 errors.
+- Dfir 48 failed / 922 passed / 28 skipped (base 48 / 884 / 28: same 48 names); UI 6 failed / 164 passed (base 6 / 162: same 6 names); Edition 15/15.
+- Full Python suite: 3720 passed, 22 skipped, 9 xfailed, 0 failed.
+
+## Blockers (owner questions)
+1. Gaps that the pipeline adds after `findings.json` is written (rule load errors, YARA preflight failures) are not on disk, so a reopened case can show fewer gaps than the run. Rewrite
+   `findings.json` at the end of the run (re-registered in custody) or add a separate gaps file? Not done here to avoid changing the verified inputs of WP4.
+2. "Sealed" = the audit chain holds `case.closed` (CaseClosure). Closing does not lock a case today; now a closed case reopens read-only. Confirm that closing is meant to be final.
+3. Recheck verdicts Legacy/Unverified open writable with "încredere limitată"; only Modified/Missing/ChainBroken, INVALIDATED results, ARCHIVED and closed cases are read-only. Stricter?
+4. Overall coverage FULL is reachable (every supported family COLLECTED) although Network profiles stay NOT_SUPPORTED; the reason text always lists the unsupported ones. Acceptable?
+5. The root-level legacy UI (MainWindow.xaml, Views/, ViewModels/ next to LogAnalyzer.UI.csproj, not in the solution) still exists; its static claims were neutralised. Delete it?
+6. `HomeViewModelTests` (App.Tests) are written but unverified locally (Windows CI only).
 
 ## Key files
 - `LogAnalyzer.Dfir.Windows/Investigation/CaseLoader.cs`, `HomeBuilder.cs`; `LogAnalyzer.Dfir.Core/Coverage/CoverageMatrix.cs`, `Home/HomeSummary.cs`, `Case/RecentCases.cs`, `IO/TimelineCsv.cs`;
