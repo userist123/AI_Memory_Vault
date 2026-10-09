@@ -11,7 +11,14 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 HOOK = REPO_ROOT / ".claude" / "hooks" / "owner_authority_gate.py"
 SETTINGS = REPO_ROOT / ".claude" / "owner-authority.settings.example.json"
-BASH = shutil.which("bash")
+if os.name == "nt":
+    _windows_bash = next((candidate for candidate in (
+        r"C:\Program Files\Git\bin\bash.exe",
+        r"C:\Program Files\Git\usr\bin\bash.exe",
+    ) if Path(candidate).exists()), None)
+    BASH = _windows_bash or shutil.which("bash")
+else:
+    BASH = shutil.which("bash")
 
 
 def run_hook(payload, env=None, raw=None):

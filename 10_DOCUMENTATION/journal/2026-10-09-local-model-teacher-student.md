@@ -79,3 +79,19 @@ zone without progress. It reported `3329 passed, 7 failed, 40 skipped,
 pre-existing research packet/report freshness mismatches, Windows executable-bit
 expectation, and owner-authority CLI return code. They are not represented as
 implementation success in PR #252.
+
+## Repair pass
+
+The canonical generators were rerun:
+
+```text
+python 30_SCRIPTS/evaluation/b2m_leakage_check.py
+python 30_SCRIPTS/evaluation/generate_b06_labelling_packet.py
+python 30_SCRIPTS/evaluation/generate_b03_task_packet.py
+```
+
+The five artifact freshness/reproducibility tests returned `5 passed`. The
+import guard now treats a shebang as executable intent when Windows does not
+preserve POSIX mode bits. The owner gate test selects installed Git Bash on
+Windows instead of the WSL shim; the focused import/owner suite returned
+`57 passed`.
