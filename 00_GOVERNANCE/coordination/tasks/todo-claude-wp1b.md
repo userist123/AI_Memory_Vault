@@ -56,10 +56,14 @@ Paths below are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
   AnomalyDetectionEngine night logon Info; optional `WorkingHours` input on both. `LogAnalyzer.Core` now references `Dfir.Core`.
   Decision: a Routine clear that also has a corroborating factor is High (factors override lifecycle). 1100/4719 stay Medium.
   Tests: Dfir 15 classifier + 6 correlation/AF01, UI 10 legacy-engine. CONFORM regression test already existed.
-- Verified: build 0 errors; Dfir 48 failed (baseline) / UI 6 failed (baseline) / Edition 5 passed.
+- Verified: build 0 errors; Dfir 48 failed (baseline) / UI 6 failed (baseline) / Edition 5 passed. Python 3719 passed, 0 failed.
+- 2026-10-09T03:40Z claude-orchestrator review: changed the Routine+factor rule. Multi-channel clearing is reported but does
+  NOT escalate a Routine clear (planned rotation often clears Security/System/Application together); proximity to another
+  High/Critical finding still escalates. Test `Planned_maintenance_clearing_several_channels_stays_Routine_Info` (red, then green).
+  Checked: LOG-GAP findings are Medium, so a clear cannot escalate itself through its own record-id gap.
 
 ## Next
-- Full Python suite, push. PR not opened by this agent (orchestrator opens it).
+- PR against main; Windows CI green; merge. Then queue item 3 (WP3).
 
 ## Blockers
 - None. Procedure profile (working hours, log rotation, approved accounts) arrives with WP15; WP1b only adds the inputs.

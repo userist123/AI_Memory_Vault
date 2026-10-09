@@ -37,16 +37,24 @@ public static class LogClearAssessment
         {
             var lifecycle = Lifecycle(c, policy);
             var factors = new List<string>();
+            bool escalating = false;
 
             var channels = clears.Where(o => SameSubject(o, c) && (o.TimeUtc - c.TimeUtc).Duration() <= MultiChannelWindow)
                                  .Select(o => o.Channel).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             if (channels.Count > 1)
+            {
                 factors.Add($"mai multe canale golite de același utilizator în 10 min ({string.Join(", ", channels)})");
+                // Planned maintenance often clears several channels together: reported, but it escalates only an unplanned clear.
+                escalating |= lifecycle != LogClearLifecycle.Routine;
+            }
 
             if (otherHighFindingTimesUtc.Any(t => (t - c.TimeUtc).Duration() <= CorrelationWindow))
+            {
                 factors.Add("golirea este la mai puțin de ±60 min de alt rezultat de severitate High/Critical din același caz");
+                escalating = true;
+            }
 
-            var severity = factors.Count > 0 || lifecycle == LogClearLifecycle.Unexpected ? Severity.High
+            var severity = escalating || lifecycle == LogClearLifecycle.Unexpected ? Severity.High
                          : lifecycle == LogClearLifecycle.Routine ? Severity.Info
                          : Severity.Medium;
             result.Add(new LogClearAssessmentItem(c, lifecycle, factors, severity, ReasonFor(c, lifecycle, factors)));

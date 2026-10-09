@@ -106,6 +106,19 @@ public class LogClearAssessmentTests
     }
 
     [Fact]
+    public void Planned_maintenance_clearing_several_channels_stays_Routine_Info()
+    {
+        // Routine maintenance often clears Security, System and Application together; that alone must not escalate.
+        var items = LogClearAssessment.Assess([Clear(0, "Security"), Clear(2, "System"), Clear(3, "Application")], Policy(), []);
+        Assert.All(items, i =>
+        {
+            Assert.Equal(LogClearLifecycle.Routine, i.Lifecycle);
+            Assert.Equal(Severity.Info, i.Severity);
+            Assert.Contains(i.Factors, x => x.Contains("canale"));   // still reported, just not escalating
+        });
+    }
+
+    [Fact]
     public void A_clear_alone_is_never_Critical()
     {
         var all = LogClearAssessment.Assess([Clear(0, "Security"), Clear(1, "System"), Clear(2, "Application", user: "x")], Policy("nobody"), [T0]);
