@@ -134,7 +134,7 @@
 
                             <!-- GROUP 2: INVESTIGATION -->
                             <TextBlock Text="INVESTIGATION" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6"/>
-                            <RadioButton Content="Event Explorer (EVTX)" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="1"/>
+                            <RadioButton Content="{views:Term evtx}" ToolTip="{views:Term evtx, Tooltip=True}" AutomationProperties.Name="{views:Term evtx}" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="1"/>
                             <RadioButton Content="Registry Forensics" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="2"/>
                             <RadioButton Content="Explainable Risk AI" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="5"/>
                             <RadioButton Content="Attack Storyline Lineage" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="6"/>
@@ -144,7 +144,7 @@
                             <RadioButton Content="Threat Intel &amp; suprapunere tehnici" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="7"/>
                             <RadioButton Content="Standalone SAM &amp; USB Audit" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="8" Visibility="{Binding IsAirGappedMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             <RadioButton Content="Active Directory &amp; ADAudit" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="8" Visibility="{Binding IsNetworkMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                            <RadioButton Content="Chain of Custody (NIS2)" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="9"/>
+                            <RadioButton Content="{views:Term chain_of_custody, Suffix=' (NIS2)'}" ToolTip="{views:Term chain_of_custody, Tooltip=True}" AutomationProperties.Name="{views:Term chain_of_custody}" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="9"/>
                             <RadioButton Content="MITRE ATT&amp;CK Matrix" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="10"/>
 
                             <!-- GROUP 4: TELEMETRY & AUDIT -->

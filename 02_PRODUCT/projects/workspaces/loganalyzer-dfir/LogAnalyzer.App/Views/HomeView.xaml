@@ -109,7 +109,11 @@
                     <TextBlock Text="{Binding CoverageLine}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,8"/>
                     <DataGrid ItemsSource="{Binding CoverageRows}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="420">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Familie de artefacte" Binding="{Binding Family}" Width="2*"/>
+                            <DataGridTemplateColumn Header="Familie de artefacte" Width="2*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate><TextBlock Text="{Binding HumanFamily}" ToolTip="{Binding FamilyTooltip}" TextWrapping="Wrap"/></DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                             <DataGridTextColumn Header="Stare" Binding="{Binding StateName}" Width="130"/>
                             <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="3*"/>
                             <DataGridTextColumn Header="Parser" Binding="{Binding ParserStatus}" Width="110"/>
