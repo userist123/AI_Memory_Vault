@@ -45,6 +45,19 @@ public sealed class ClassifiedEditionBuildTests
          "NtUnloadDriver", "ZwUnloadDriver", "NtLoadDriver", "SetNamedSecurityInfo", "SetFirmwareEnvironmentVariable", "InitiateSystemShutdownEx"];
 
     // Literals that would start a station-changing command or contact something.
+    /// <summary>
+    /// Exact literals that contain a banned token but only PARSE text from collected evidence (no connection, no process). Each entry is
+    /// one exact string in one named assembly; the same text anywhere else, or any other string, is still a violation.
+    /// </summary>
+    internal static readonly (string Assembly, string Literal)[] ParsingOnlyLiterals =
+    [
+        // WP15b PolicyTimeline: regex reading gPLink values out of Security 5136 event text.
+        ("LogAnalyzer.Dfir.Core.dll", @"\[LDAP://([^;\]]*);(\d+)\]"),
+    ];
+
+    internal static bool IsParsingOnlyLiteral(string file, string literal) =>
+        ParsingOnlyLiterals.Any(p => p.Assembly.Equals(file, StringComparison.OrdinalIgnoreCase) && p.Literal == literal);
+
     private static readonly string[] BannedStrings =
         ["netsh.exe", "HNetCfg.FWRule", "/failure:enable", "-ExecutionPolicy Bypass", "LogAnalyzer-Containment-", "LDAP://", "http://127.0.0.1:11434"];
 
@@ -91,7 +104,7 @@ public sealed class ClassifiedEditionBuildTests
                 if (BannedPInvokeDlls.Contains(dll, StringComparer.OrdinalIgnoreCase)) found.Add($"{f.File}: P/Invoke into {dll} ({fn})");
                 if (BannedPInvokeFunctions.Contains(fn, StringComparer.OrdinalIgnoreCase)) found.Add($"{f.File}: P/Invoke {dll}!{fn}");
             }
-            foreach (var s in BannedStrings.Where(b => f.UserStrings.Any(u => u.Contains(b, StringComparison.OrdinalIgnoreCase)))) if (!aiAllowedHere) found.Add($"{f.File}: string \"{s}\"");
+            foreach (var s in BannedStrings.Where(b => f.UserStrings.Any(u => u.Contains(b, StringComparison.OrdinalIgnoreCase) && !IsParsingOnlyLiteral(f.File, u)))) if (!aiAllowedHere) found.Add($"{f.File}: string \"{s}\"");
             foreach (var n in f.DefinedTypes) if (!aiAllowedHere && BannedTypeNames.Contains(n[(n.LastIndexOf('.') + 1)..])) found.Add($"{f.File}: defines {n}");
         }
         return found;
@@ -104,6 +117,16 @@ public sealed class ClassifiedEditionBuildTests
         Assert.True(BuildOutputInspector.OwnAssemblies(ClassifiedDir).Any(), "no LogAnalyzer assemblies in " + ClassifiedDir);
         var violations = Violations(ClassifiedDir, allowAiAssembly: ClassifiedIncludesLocalAi());
         Assert.True(violations.Count == 0, "The classified edition contains excluded code:\n" + string.Join("\n", violations.Distinct()));
+    }
+
+    [Fact]
+    public void Parsing_only_literal_exception_is_exact_and_bound_to_its_assembly()
+    {
+        var (asm, lit) = ParsingOnlyLiterals[0];
+        Assert.True(IsParsingOnlyLiteral(asm, lit));
+        Assert.False(IsParsingOnlyLiteral("LogAnalyzer.Dfir.Windows.dll", lit));     // same text, other assembly: still banned
+        Assert.False(IsParsingOnlyLiteral(asm, "LDAP://dc01.example/"));             // any other LDAP string: still banned
+        Assert.False(IsParsingOnlyLiteral(asm, lit + " "));                           // exact match only
     }
 
     [Fact]

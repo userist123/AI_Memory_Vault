@@ -123,6 +123,17 @@ public static class InvestigationReportPdf
                        .FontColor(a.Result == AntiForensicResult.Detected ? "#b91c1c" : a.Result == AntiForensicResult.Undetermined ? "#92400e" : "#1e293b");
                 col.Item().Text("DETECTED = urmă observată în probe (nu dovedește singură intenția); NOT_DETECTED = sursa relevantă a fost analizată și nu arată urma; UNDETERMINED = sursa lipsește sau nu e parsată. Nicio verificare nu înseamnă „curat”.").FontSize(7).Italic().FontColor(Muted);
 
+                col.Item().Text("6b. Cronologie politici").Bold().FontSize(11).FontColor(Ink);
+                col.Item().Text(r.PolicyTimelineLine).FontSize(7.5f);
+                if (r.PolicyTimeline is { } policyTimeline)
+                    foreach (var pl in PolicyTimelineReport.Lines(policyTimeline))
+                        col.Item().Text(pl.Text).FontSize(pl.Style == PolicyLineStyle.Heading ? 8.5f : 7.5f).FontColor(pl.Style switch
+                        {
+                            PolicyLineStyle.Bad => "#b91c1c", PolicyLineStyle.Warn => "#92400e", PolicyLineStyle.Muted => Muted, _ => "#1e293b",
+                        });
+                col.Item().Text("Comportament: observat / neobservat / neevaluabil, cu motivul; niciodată dedus dincolo de dovezi. Un nivel UNKNOWN nu înseamnă conform. Detalii: Analysis/policy_timeline.json.")
+                    .FontSize(7).Italic().FontColor(Muted);
+
                 col.Item().Text("7. Integritatea probelor (reverificată acum)").Bold().FontSize(11).FontColor(Ink);
                 foreach (var i in integrity.Items)
                 {

@@ -24,6 +24,8 @@ public static class SchemaVersions
     public const string ExportManifest = "1.0";
     /// <summary>WP4: Analysis/verification.json (written by LogAnalyzer.Verification).</summary>
     public const string Verification = "1.0";
+    /// <summary>WP15b: Analysis/policy_timeline.json.</summary>
+    public const string PolicyTimeline = "1.0";
     /// <summary>Files that stay a bare JSON array (existing consumers index into them): their version lives in the manifest.</summary>
     public const string ParsersInventory = "1.1";
     public const int SupportedMajor = 2;
@@ -92,7 +94,7 @@ public sealed class SchemaManifest
             ["Exports/vault_proposals.jsonl"] = SchemaVersions.VaultProposals, ["Exports/vault_refused.json"] = SchemaVersions.Legacy,
             ["parsers.json"] = SchemaVersions.ParsersInventory, ["parsing.json"] = SchemaVersions.Legacy, ["detections.json"] = SchemaVersions.Legacy,
             ["rules.json"] = SchemaVersions.Legacy, ["anti_forensics.json"] = SchemaVersions.Legacy, ["run_state.json"] = SchemaVersions.Legacy,
-            ["verification.json"] = SchemaVersions.Verification, ["dependencies.json"] = SchemaVersions.Dependencies, ["invalidations.json"] = SchemaVersions.Invalidations, ["integrity_recheck.json"] = SchemaVersions.IntegrityRecheck,
+            ["verification.json"] = SchemaVersions.Verification, ["policy_timeline.json"] = SchemaVersions.PolicyTimeline, ["dependencies.json"] = SchemaVersions.Dependencies, ["invalidations.json"] = SchemaVersions.Invalidations, ["integrity_recheck.json"] = SchemaVersions.IntegrityRecheck,
         },
     };
 
