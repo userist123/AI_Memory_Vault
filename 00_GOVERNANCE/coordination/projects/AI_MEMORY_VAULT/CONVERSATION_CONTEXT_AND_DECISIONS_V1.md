@@ -207,3 +207,74 @@ Acceptance gates G0–G9 are mandatory: governance, prompt completeness, routing
 6. Final report in Romanian; no claim of full functionality until G0-G9 are supported by fresh evidence.
 
 Integrity note: This document preserves the relevant known context and decisions found during retrieval. It is not a verbatim transcript of every conversation. Where a detail conflicts with current source-of-truth files or fresh runtime evidence, investigate and correct this ledger in the same commit as the measured change.
+
+
+## 11. October 9 conversation audit — evidence ledger (not a rerun)
+
+This section was added after the owner clarified that the initial Senior AI/ML Engineer RAG code-review prompt must NOT be executed again. The required task is to audit the conversation/actions already performed today, recover what was saved and tested, and preserve those facts in this PR. This is an evidence ledger, not a claim that all prior runs have been reproduced.
+
+### 11.1 Original scope to retain
+
+The original request was a detailed architectural/code review of the existing repository, specifically:
+- Markdown/PARA ingestion and chunk boundaries; metadata use and preservation of logical context;
+- vector-store update/upsert semantics and duplicate-free updates after a note changes;
+- retrieval relevance, context noise, small-model context budgets, and prompt-injection boundaries;
+- Ollama API robustness: timeouts, streaming, factual-task temperature and error handling;
+- bottlenecks, scalability, vulnerabilities, and whether the current architecture requires foundational redesign.
+
+Subsequent clarification changed the immediate action: do not run this prompt again. Audit today's conversation and existing work/evidence, identify what was actually saved/tested/claimed, and consolidate it in PR #248.
+
+### 11.2 Verified repository PR records inspected during this audit
+
+The live GitHub PR metadata was fetched on 2026-10-09. These are recorded PR states, not assertions that every runtime integration is complete.
+
+| PR | Observed state | Evidence / limits that must remain visible |
+|---|---|---|
+| #204 external-content trust boundary | merged | Workflow and scanner hardening recorded. Repository settings, branch protection, and some upstream version/lockfile checks were explicitly unverified in the PR record. |
+| #207 owner-authority guardrail | merged | 45 targeted tests reported in the PR description. Windows least-privilege account setup and actual host-level enforcement required owner-side execution; repo-local hooks cannot constrain an unrestricted owner account. |
+| #208 LogAnalyzer DFIR platform | merged | Separate product scope; do not conflate with Memory Vault implementation. |
+| #209 runtime authority and memory integrity | merged | Several security components are hardened and tested in library code but explicitly not yet wired to production execution. Its PR body documents a real memory-read regression and subsequent repair; do not describe all security gates as production-enforced merely because unit tests pass. |
+| #211 central agent router/dispatcher | merged | PR body says routing was reachable through manual CLI only, not through a production consumer; real claude/codex/agy/ollama executable dispatch was not exercised in the tests described there. |
+| #213 fixes for #211 | merged into #211 branch | PR body reports 49 targeted tests passed and a full suite of 2,691 passed, 13 skipped, 9 xfailed, 0 failed (19m14s) on that historical head. It also explicitly lists remaining work: verifier dispatch/verification loop, authority_gate, FeedbackStore reload, named-pipe bridge transport, and final-result persistence/goal-data policy. Re-run on current main before using as current evidence. |
+| #214 universal Vault access | merged | PR body reports 2,757 passed, 13 skipped, 9 xfailed, 0 failures on its historical tree; baseline main was 2,611. It includes a real MCP stdio session/snapshot test, but also says no real Claude/Codex/Antigravity/Gemini session had yet called vault tools and the Ollama bot used a fake transport. These are historical claims, not fresh current-main results. |
+| #206 Book-to-Memory research | closed without merge | Research history was split into smaller PRs; don't assume #206 itself is merged or its empirical claims validated. |
+| #220, #221, #223, #224, #225, #226 | merged | Book-to-Memory audit/notes/harness/docs/security/evaluation changes landed. #226 explicitly says no model was run for B03 and no human labels were written for B06; leakage findings and comparability controls are recorded, but real ablation and human calibration remain pending. |
+| #248 completion prompt/context | open, not merged | Documentation-only handoff. It does not itself implement the WP0-WP8 plan or establish that its acceptance gates pass. |
+
+### 11.3 October 9 local-runtime and Qdrant evidence already recorded
+
+The earlier context supplied to this audit records the following, which must not be presented as a fresh run unless reproduced:
+- A local validation report was referenced as `C:\Users\Marius\Projects\AI_Memory_Vault_VALIDATION_REPORT_20261009.md`.
+- A separate recovery worktree exists at `C:\Users\Marius\Projects\AI_Memory_Vault_QdrantFix`, branch `fix/qdrant-stable-point-ids`, with uncommitted tracked and untracked artifacts. Never stash, clean, reset, delete, overwrite, or checkout main inside that worktree.
+- Historical modified-recovery-worktree suite: 2,620 passed, 13 skipped, 9 xfailed in 515.46s; targeted Qdrant 27 passed; SkillRouter 3 passed; strict YAML 10 passed; `git diff --check` exit 0. This was not a clean-main baseline.
+- Qdrant recovery changes concern stable SHA-256-based 63-bit IDs instead of Python randomized hash, dimension/distance validation, pagination, fail-closed reindex, upsert semantics, legacy ID migration/reconciliation. Live tests must use temporary collections. Production `vault_memory` writes/reindex need separate explicit owner approval.
+- Local CLI audit: Antigravity 1.3.1 read-only audit succeeded with gemini-3.8-flash-high (71.7s; four successful view_file calls and one failed read); it selected writing-plans and agent-memory, the latter being a poor fit for a skill-routing audit.
+- Claude Code 2.1.295 smoke test passed, but the full audit failed with `429 usage_limit_reached`; no audit answer was produced.
+- Five Qwen3:30b-a3b attempts failed before generation due to CUDA host-allocation/resource constraints; no Qwen response was produced. Do not claim that model completed the audit. No driver changes, process termination, or system-setting changes without owner approval.
+- Historical memory retrieval measurement: 20 coordination questions, 5 relevant items among the first three results (57 returned items). Historical loss funnel snapshot: 71.56% PAGINATION_CUT, 13.76% lifecycle floor exclusion, 11.93% never candidate, 1.83% candidate limit, 0.92% RAW exclusion, 0% undetermined. Single-run snapshot only; reproduce before current claims and separate corpus populations.
+- Historical corpus counts differ by snapshot (VaultIndex 972 / edges 483 / edge-bearing 195 / storage-visible 852 versus later VaultIndex 1209 and FileStorageEngine-visible 858). Never combine these as if measured at one time.
+
+### 11.4 What this audit has and has not established
+
+Established from live PR metadata and previously preserved context:
+- Several prior PRs have merged, including routing/security/access-control changes; those merge states were re-fetched during this audit.
+- Their own descriptions distinguish unit/code verification from production wiring and real-provider execution.
+- Historical full-suite counts differ by commit and worktree. They are not interchangeable and must not be summarized as a single “current tests passed” figure.
+- The initial code-review prompt is the scope reference, not a task to re-execute in this conversation.
+
+Not established by the present metadata inspection:
+- That the complete local tool-call history for the entire day has been recovered verbatim.
+- That every previously claimed command/test was freshly executed now.
+- That current `main` is clean, has the same SHA as any historical report, or passes the full suite.
+- That the local Qdrant recovery files have been safely backed up/hashed during this audit.
+- That all WP0-WP8 implementation work has been performed, all providers have been exercised, or G0-G9 pass.
+
+### 11.5 Required continuation for a truthful final audit
+
+1. Recover the actual local tool-call/session history and inspect the referenced validation report plus all three Qdrant audit/journal files. Extract each action, command, output, exit code, artifact path, and timestamp.
+2. Re-fetch current `main` SHA, PR #248 head and CI checks; distinguish the documentation branch from implementation.
+3. Compare all reported tests by exact commit/worktree, command, elapsed time, and output; label them HISTORICAL, FRESH, CLAIMED_ONLY, or UNVERIFIED.
+4. Inventory all outputs created today (reports, scripts, backups, test logs, generated prompt files) and map each to its exact local path and/or committed Git path.
+5. Update this ledger and the master prompt only with evidence recovered from logs or source artifacts. Do not infer a successful run from a planned command or a test name.
+6. Do not merge PR #248 automatically, do not rerun the original broad prompt as a substitute for history recovery, and do not modify the protected Qdrant recovery worktree or production vector collection without the stated safeguards.
+
