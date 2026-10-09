@@ -100,7 +100,7 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _readOnlyNotice = "";
 
         private static string VerificationText(InvestigationResult r) => r.Verification is { } v
-            ? v.Banner + " (verificare automată, nu externă)" + (v.Warning is { } w ? Environment.NewLine + w : "")
+            ? v.BannerRomanian + " (verificare automată, nu externă)" + (v.Warning is { } w ? Environment.NewLine + w : "")
             : "Verificare: nerulată pentru această analiză (nedeterminat).";
 
         /// <summary>

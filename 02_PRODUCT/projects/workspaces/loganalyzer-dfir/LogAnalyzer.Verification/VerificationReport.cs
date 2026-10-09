@@ -117,6 +117,16 @@ public sealed class VerificationReport
         return parts.Count == 0 ? "Verificare: nicio constatare de verificat" : "Verificare: " + string.Join(", ", parts);
     }
 
+    /// <summary>Banner for the operator (WP6a, U7): the Romanian state label first, the spec name in parentheses, e.g. "Verificare: 3 Verificat (VERIFIED), 2 Nedemonstrat (UNPROVEN)". <see cref="Banner"/> stays the data form.</summary>
+    public string BannerRomanian => LineRomanian(Counts);
+
+    public static string LineRomanian(IReadOnlyDictionary<string, int> counts)
+    {
+        var parts = VerdictOrder.Where(v => counts.GetValueOrDefault(v.ToSpec()) > 0)
+            .Select(v => $"{counts[v.ToSpec()]} {LogAnalyzer.Dfir.Analysis.StateLabels.Romanian(v)} ({v.ToSpec()})").ToList();
+        return parts.Count == 0 ? "Verificare: nicio constatare de verificat" : "Verificare: " + string.Join(", ", parts);
+    }
+
     /// <summary>Warning text when any finding is CONTRADICTED or REJECTED; null otherwise.</summary>
     public string? Warning => WarningFor(Counts);
 
