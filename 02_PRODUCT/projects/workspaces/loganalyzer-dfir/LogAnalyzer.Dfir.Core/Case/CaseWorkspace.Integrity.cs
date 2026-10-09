@@ -37,6 +37,7 @@ public sealed partial class CaseWorkspace
     /// </summary>
     public OutputRecord RecordOutput(string relPath, string producer, string version, IEnumerable<string>? dependsOnEvidenceIds = null)
     {
+        ThrowIfReadOnly();
         var rel = RelativeInside(relPath);
         var full = FullPath(rel);
         if (!File.Exists(full)) throw new FileNotFoundException("Output file not found in the case.", full);
