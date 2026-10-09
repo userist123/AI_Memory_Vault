@@ -81,7 +81,12 @@ namespace LogAnalyzer.UI.ViewModels
             foreach (var t in ProfileTables.All) Tables.Add(new ProfileTableViewModel(t));
             SelectedTable = Tables[0];
             LoadFrom(_profilePath, startup: true);
+            Services.AuthApp.SessionChanged += () => { OnPropertyChanged(nameof(AccessNotice)); OnPropertyChanged(nameof(CanEdit)); };
         }
+
+        /// <summary>Shown when the signed-in user may read but not change the profile (only the global administrator edits; decision 33).</summary>
+        public string AccessNotice => LogAnalyzer.Dfir.Auth.OperatorIdentity.MayEditAdministration ? "" : LogAnalyzer.Dfir.Auth.OperatorIdentity.AdministratorOnlyMessage + ". Puteți citi profilul, nu îl puteți modifica.";
+        public bool CanEdit => LogAnalyzer.Dfir.Auth.OperatorIdentity.MayEditAdministration;
 
         private void Pull()
         {

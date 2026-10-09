@@ -31,6 +31,22 @@ namespace LogAnalyzer.UI
 
         public static IServiceProvider? ServiceProvider { get; private set; }
 
+        /// <summary>First run creates the primary administrator; after an offline password recovery a new password is set; otherwise the normal sign-in.</summary>
+        private static bool SignInBeforeMainWindow(string debugLogPath)
+        {
+            var mode = AuthApp.Service.SetupState switch
+            {
+                LogAnalyzer.Dfir.Auth.AuthSetupState.FirstRun => SignInWindowMode.FirstRun,
+                LogAnalyzer.Dfir.Auth.AuthSetupState.PasswordRecovery => SignInWindowMode.Recovery,
+                _ => SignInWindowMode.SignIn,
+            };
+            File.AppendAllText(debugLogPath, $"Auth setup state: {AuthApp.Service.SetupState}\n");
+            var window = new SignInWindow(mode);
+            if (window.ShowDialog() != true || window.Session is null) return false;
+            AuthApp.SetSession(window.Session);
+            return true;
+        }
+
         protected override void OnStartup(StartupEventArgs e)
         {
             // `--self-test`: prove the published executable runs on a bare machine, then exit without opening any window.
@@ -126,12 +142,26 @@ namespace LogAnalyzer.UI
                     }
                 }
 
+                // 2b. Autentificare (decizia 33): card + PIN pentru utilizatori; cont + parolă numai pentru administratorul principal.
+                splash.Hide();
+                AuthApp.Initialize();
+                var signedIn = SignInBeforeMainWindow(debugLogPath);
+                if (!signedIn)
+                {
+                    File.AppendAllText(debugLogPath, "Sign-in cancelled; shutting down.\n");
+                    splash.Close();
+                    this.Shutdown();
+                    return;
+                }
+                splash.Show();
+
                 // 3. Afișăm fereastra principală
                 File.AppendAllText(debugLogPath, "Resolving MainWindow...\n");
                 var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
                 this.MainWindow = mainWindow;
                 File.AppendAllText(debugLogPath, "Showing MainWindow...\n");
                 mainWindow.Show();
+                new SessionGuard(mainWindow).Start();      // lock on inactivity / card removal (card sessions only)
 
                 // --tab=<n> opens a given tab at startup (e.g. 13 = "Izolare procese suspecte").
                 var tabArg = Array.Find(e.Args, a => a.StartsWith("--tab=", StringComparison.OrdinalIgnoreCase));

@@ -112,6 +112,7 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>"Registru medii" (decision 16) and "Registru utilizatori" (decision 17): data the operator enters; observed media are compared with them.</summary>
         public MediaRegisterViewModel MediaRegister { get; }
         public UsersRegisterViewModel UsersRegister { get; }
+        public AuthViewModel Auth { get; }
 
         // Session / Module Management
         [ObservableProperty] private int _selectedModuleIndex = 0; // 0 for Forensics, 1 for Collection
@@ -565,6 +566,7 @@ namespace LogAnalyzer.UI.ViewModels
             ProcedureProfile = new ProcedureProfileViewModel();
             MediaRegister = new MediaRegisterViewModel();
             UsersRegister = new UsersRegisterViewModel();
+            Auth = new AuthViewModel();
             _eventParser = eventParser;
             _analysisEngine = analysisEngine;
             _registryParser = registryParser;
@@ -592,7 +594,7 @@ namespace LogAnalyzer.UI.ViewModels
             InitializeSigmaRules();
             PopulateMitreMatrix();
 
-            OperatorName = $"{Environment.UserName.ToUpper()} @ {Environment.MachineName.ToUpper()}";
+            OperatorName = $"{LogAnalyzer.Dfir.Auth.OperatorIdentity.Who.ToUpper()} @ {Environment.MachineName.ToUpper()}";   // the signed-in identity (decision 33)
             // Detail windows look for related events among the events loaded in this session.
             LogAnalyzer.Core.Services.Details.DetailSheetBuilder.EventCorpus = () => Events.ToList();
             if (IsNetworkMode)
@@ -1962,7 +1964,7 @@ namespace LogAnalyzer.UI.ViewModels
                             LoadingSubDetail = $"Verificare hash: {Path.GetFileName(file)} ({scannedCount}/{targetFiles.Count})";
                         });
 
-                        _evidenceIntake.Import(file, Environment.UserName);
+                        _evidenceIntake.Import(file, LogAnalyzer.Dfir.Auth.OperatorIdentity.Who);
                         acceptedFiles.Add(file);
 
                         using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
