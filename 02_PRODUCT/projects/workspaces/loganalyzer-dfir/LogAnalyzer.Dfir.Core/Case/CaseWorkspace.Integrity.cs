@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.Auth;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using LogAnalyzer.Dfir.IO;
@@ -42,7 +43,7 @@ public sealed partial class CaseWorkspace
         var sha = Hashing.Sha256File(full);
         var size = new FileInfo(full).Length;
         var deps = (dependsOnEvidenceIds ?? []).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.Ordinal).OrderBy(d => d, StringComparer.Ordinal).ToList();
-        Custody(new CustodyEntry(DateTimeOffset.UtcNow, Environment.UserName, OutputAction, "", "", rel, sha, producer, version, "",
+        Custody(new CustodyEntry(DateTimeOffset.UtcNow, OperatorIdentity.Who, OutputAction, "", "", rel, sha, producer, version, "",
             deps.Count > 0 ? DependsPrefix + string.Join(";", deps) : ""));
         return new OutputRecord(rel, sha, size, producer, version, deps);
     }

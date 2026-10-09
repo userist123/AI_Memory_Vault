@@ -1,4 +1,5 @@
 using System.Text.Json;
+using LogAnalyzer.Dfir.Auth;
 using LogAnalyzer.Dfir.Case;
 using LogAnalyzer.Dfir.IO;
 using LogAnalyzer.Dfir.Profile;
@@ -83,7 +84,8 @@ public sealed record RegisterAuditEntry(string Register, string Action, string W
 public static class RegisterStore
 {
     public const string AuditFileName = "register_audit.jsonl";
-    public const string WhoSourceNote = "cont de sistem de operare; aplicația nu are autentificare, deci identitatea este neautentificată";
+    /// <summary>Used only when nobody is signed in and authentication is not required (tests, tools); the application always signs in first (decision 33).</summary>
+    public const string WhoSourceNote = "cont de sistem de operare; autentificarea în aplicație nu este activă în acest context";
 
     /// <summary>%PROGRAMDATA%\LogAnalyzer\registers</summary>
     public static string DefaultDir => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "LogAnalyzer", "registers");
@@ -108,6 +110,7 @@ public static class RegisterStore
     public static List<RegisterIssue> Save<T>(T register, string? path, out string sha256, string? who = null, string action = "save") where T : class, IRegisterData, new()
     {
         sha256 = "";
+        if (!OperatorIdentity.MayEditAdministration) return [new RegisterIssue(register.Title, 0, OperatorIdentity.AdministratorOnlyMessage)];
         var issues = register.Validate();
         if (issues.Any(i => i.IsError)) return issues;
         path ??= DefaultPath<T>();
@@ -119,7 +122,7 @@ public static class RegisterStore
         register.UpdatedUtc = DateTimeOffset.UtcNow;
         Json.Write(path, register);
         sha256 = Hashing.Sha256File(path);
-        new HashChain(AuditPathFor(path)).Append(new RegisterAuditEntry(register.Kind, action, who ?? $"{Environment.UserDomainName}\\{Environment.UserName}", WhoSourceNote,
+        new HashChain(AuditPathFor(path)).Append(new RegisterAuditEntry(register.Kind, action, who ?? OperatorIdentity.WhoDomainQualified, OperatorIdentity.WhoSource,
             DateTimeOffset.UtcNow, beforeSha, sha256, before, after));
         return issues;
     }
