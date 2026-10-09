@@ -17,6 +17,11 @@ public static class SchemaVersions
     public const string VaultProposals = "2.0";
     public const string Timeline = "2.0";
     public const string Manifest = "1.0";
+    /// <summary>WP3b: Analysis/dependencies.json, invalidations.json, integrity_recheck.json and the export/report manifests.</summary>
+    public const string Dependencies = "1.0";
+    public const string Invalidations = "1.0";
+    public const string IntegrityRecheck = "1.0";
+    public const string ExportManifest = "1.0";
     /// <summary>Files that stay a bare JSON array (existing consumers index into them): their version lives in the manifest.</summary>
     public const string ParsersInventory = "1.1";
     public const int SupportedMajor = 2;
@@ -74,6 +79,8 @@ public sealed class SchemaManifest
     [JsonPropertyName("schema_version")] public string SchemaVersion { get; set; } = SchemaVersions.Manifest;
     public string ContractVersion { get; set; } = LogAnalyzer.Dfir.Analysis.FindingContract.Version;
     public Dictionary<string, string> Files { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>Heads of the custody and audit chains when the manifest was written (WP3b); absent in manifests written before.</summary>
+    public LogAnalyzer.Dfir.Case.ChainAnchor? Anchor { get; set; }
 
     public static SchemaManifest ForRun() => new()
     {
@@ -83,6 +90,7 @@ public sealed class SchemaManifest
             ["Exports/vault_proposals.jsonl"] = SchemaVersions.VaultProposals, ["Exports/vault_refused.json"] = SchemaVersions.Legacy,
             ["parsers.json"] = SchemaVersions.ParsersInventory, ["parsing.json"] = SchemaVersions.Legacy, ["detections.json"] = SchemaVersions.Legacy,
             ["rules.json"] = SchemaVersions.Legacy, ["anti_forensics.json"] = SchemaVersions.Legacy, ["run_state.json"] = SchemaVersions.Legacy,
+            ["dependencies.json"] = SchemaVersions.Dependencies, ["invalidations.json"] = SchemaVersions.Invalidations, ["integrity_recheck.json"] = SchemaVersions.IntegrityRecheck,
         },
     };
 

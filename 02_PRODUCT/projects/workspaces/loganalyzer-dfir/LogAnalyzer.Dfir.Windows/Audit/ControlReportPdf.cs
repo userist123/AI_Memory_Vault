@@ -123,6 +123,11 @@ public static class ControlReportPdf
         Write(r, pdf, inspector, notes);
         ws.RegisterStored(json, "live:" + r.Facts.Host, "control", "control_report", TemporalType.CurrentSnapshot, "StationFactCollector", DfirInfo.ApplicationVersion);
         ws.RegisterStored(pdf, "live:" + r.Facts.Host, "control", "control_report_pdf", TemporalType.Derived, "ControlReportPdf", DfirInfo.ApplicationVersion);
+        // WP3b: the report files are also outputs in the custody chain, listed with the chain heads in a manifest next to them.
+        var relJson = Path.GetRelativePath(ws.Root, json); var relPdf = Path.GetRelativePath(ws.Root, pdf);
+        ws.RecordOutput(relJson, "ControlReportPdf", DfirInfo.ApplicationVersion);
+        ws.RecordOutput(relPdf, "ControlReportPdf", DfirInfo.ApplicationVersion);
+        ws.WriteManifest(Path.Combine(Path.GetDirectoryName(relJson)!, "report_manifest.json"), [relJson, relPdf], "ControlReportPdf", DfirInfo.ApplicationVersion);
         ws.Audit("control.report", $"{r.Facts.Host} {r.Checks.Count} checks, NECONFORM {r.Count(ControlStatus.Neconform)}, {pdf}");
         return (json, pdf);
     }

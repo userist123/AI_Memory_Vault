@@ -7,7 +7,7 @@ namespace LogAnalyzer.Dfir.Case;
 /// A case folder (spec §7) with its evidence index, chain of custody (§9), collection audit (§11)
 /// and application audit log (§81). Raw evidence is stored once, hashed, and marked read-only.
 /// </summary>
-public sealed class CaseWorkspace
+public sealed partial class CaseWorkspace
 {
     public static readonly string[] Folders = ["Evidence", "Raw", "Parsed", "Derived", "Reports", "Exports", "Logs", "Hashes", "Tools"];
 
@@ -65,13 +65,19 @@ public sealed class CaseWorkspace
         return ws;
     }
 
-    public static CaseWorkspace Open(string root)
+    /// <summary>
+    /// Opens a case. Unless <paramref name="recheck"/> is false, it then runs <see cref="Recheck"/> (WP3b): evidence and registered outputs are
+    /// re-hashed and both chains verified; the verdict is in <see cref="LastRecheck"/>. Nothing is ever repaired. Hashing is streamed and
+    /// <paramref name="ct"/> cancels it (the exception propagates; the case folder is left as it was apart from the audit entries already written).
+    /// </summary>
+    public static CaseWorkspace Open(string root, bool recheck = true, CancellationToken ct = default)
     {
         var info = Json.Read<CaseInfo>(Path.Combine(root, "case.json"));
         var ws = new CaseWorkspace(root, info);
         ws.Audit("case.opened", "");
         if (ws.ScopeNote is { } note) ws.Audit(info.Scope.Provisional ? "case.scope_provisional" : "case.scope_incomplete", note);
         if (ws.RetentionWarning(DateTimeOffset.UtcNow) is { } warn) ws.Audit("case.retention_exceeded", warn);
+        if (recheck) ws.Recheck(ct);
         return ws;
     }
 
