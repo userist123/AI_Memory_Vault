@@ -115,6 +115,7 @@ public sealed partial class AuthService
 
     private void Audit(string ev, string who, string account, string result, string reason, string detail = "", string card = "", string reader = "", bool accountsChanged = false)
     {
+        Directory.CreateDirectory(Dir);
         new HashChain(AuditPath).Append(new AuthAuditEntry(ev, who, account, card, reader, result, reason, _clock(), detail, accountsChanged ? AccountsSha256 : ""));
     }
 

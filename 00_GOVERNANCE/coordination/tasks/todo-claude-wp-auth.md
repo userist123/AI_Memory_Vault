@@ -90,7 +90,7 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 - 2026-10-09 claude-wp-auth: items 1-9 implemented (commits on this branch). Core `LogAnalyzer.Dfir.Core/Auth/` (AuthService, CertificateTrust + offline CRL parser,
   PasswordRules, OperatorIdentity), real card provider `LogAnalyzer.Dfir.Windows/Auth/WindowsSmartCardProvider.cs`, UI `SignInWindow`, `AuthView`/`AuthViewModel`,
   `SessionGuard` (App/Services/AuthApp.cs), identity in case custody/audit + register audit, admin gates in `RegisterStore.Save` / `ProfileStore.Save`.
-  Tests: `LogAnalyzer.Dfir.Tests/AuthTests.cs` (+ `AuthTestKit.cs`), 49 new. Docs: `docs/dfir/AUTHENTICATION.md`. Edition scanner green without any exception.
+  Tests: `LogAnalyzer.Dfir.Tests/AuthTests.cs` (+ `AuthTestKit.cs`), 50 new. Docs: `docs/dfir/AUTHENTICATION.md`. Edition scanner green without any exception.
 
 ## Design notes (non-obvious)
 - Cards and password live in a separate auth store (`%PROGRAMDATA%\LogAnalyzer\auth\`: accounts.json, primary_password.json, policy.json, trust/, crl/, auth_audit.jsonl),

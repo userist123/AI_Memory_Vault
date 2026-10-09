@@ -235,6 +235,16 @@ public sealed class AuthTests : IDisposable
         Assert.Equal(ChainStatus.Valid, again.VerifyAudit().Status);
     }
 
+    [Fact]
+    public void Sign_in_attempts_before_any_setup_are_refused_and_audited_without_throwing()
+    {
+        var svc = Svc();
+        Assert.False(svc.SignInWithPassword(Admin, Pw).Ok);
+        Assert.False(svc.SignInWithCard(_card).Ok);
+        Assert.Equal(AuthSetupState.FirstRun, svc.SetupState);
+        Assert.Equal(ChainStatus.Valid, svc.VerifyAudit().Status);
+    }
+
     // ───────────── card sign-in ─────────────
 
     [Fact]
