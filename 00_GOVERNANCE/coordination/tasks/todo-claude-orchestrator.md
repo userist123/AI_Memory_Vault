@@ -5,10 +5,10 @@ BRANCH / PR: working notes on `claude/wonderful-bohr-iifqfn` (not for main); cod
 BASE: main @ 94020777 (WP0 #227, WP1 #228, WP12 #229 merged).
 SPEC (read first, in this order):
 - `docs/dfir/CONTRACT_AUDIT_STAGE1.md` (on main; decisions 1–12) + latest decisions 13–15 on branch
-  `claude/wonderful-bohr-iifqfn`: `tasks/loganalyzer/CONTRACT_AUDIT_STAGE1.md` §8.
-- `tasks/todo.md` on that branch (full plan, app requirements, security fixes, parked items).
-- `tasks/loganalyzer/LESSONS_LEARNED_MAPPING.md` (owner's 107-section lessons doc → new WP13–WP17).
-- `tasks/loganalyzer/WINDOWS_TOOLING_COMPAT.md` (WP-PKG fix list).
+  `claude/wonderful-bohr-iifqfn`: `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/CONTRACT_AUDIT_STAGE1.md` §8.
+- `00_GOVERNANCE/coordination/projects/LOGANALYZER_DFIR/STAGE2_PLAN.md` on that branch (full plan, app requirements, security fixes, parked items).
+- `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/LESSONS_LEARNED_MAPPING.md` (owner's 107-section lessons doc → new WP13–WP17).
+- `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/WINDOWS_TOOLING_COMPAT.md` (WP-PKG fix list).
 DONE:
 - Stage-1 audit + 15 owner decisions; WP0, WP1, WP12 merged; Book-to-Memory B03–B10 tooling merged (#226).
 IN FLIGHT (agents, own branches; each must keep its own todo-<name>.md here):
@@ -27,6 +27,6 @@ OWNER QUESTIONS OPEN:
   procedure, zones/transfer channels, station/domain/email results into DFIR case?, classification sources,
   Tier-3 availability, case purpose/scope fields, WP1b approval, Exchange scripts in P1).
 - WP12: waiver signing key; findings register (recommended: CodeQL + manual file).
-PARKED: HG 585 accreditation (`tasks/loganalyzer/HG585_ACCREDITATION_REQUIREMENTS.md`) until owner supplies data.
+PARKED: HG 585 accreditation (`02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/HG585_ACCREDITATION_REQUIREMENTS.md`) until owner supplies data.
 RULES: one agent at a time unless independent; checkpoints per README here; no wmic; P1 has no network/AI/host
 actions; never present a facade as production-ready; don't remove existing functionality.
