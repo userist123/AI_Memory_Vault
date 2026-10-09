@@ -465,3 +465,40 @@ Every durable finding from this audit must be committed to branch `docs/full-fun
 - **Cleanup:** the wrapper contains a post-run removal of the temporary tier config. A separate post-exit filesystem check was not captured in the available output, so removal is **expected but not independently verified**. Verify before reusing the config path.
 - **Verdict:** full suite completed, **FAIL** (15 failed, 2 errors). This confirms the current-main failures are reproducible in a run configured for the local 3B model, but does not prove they are model-caused.
 - **Next action:** publish this result before starting the next model; then run the same full suite serially with `qwen2.5-coder:7b`. Do not repair source during the model matrix, so each run has a stable source SHA and results remain comparable. After the matrix, triage and repair the confirmed project defects on a dedicated feature branch/PR, with regression tests; keep PR #248 as the audit trail and do not commit to main.
+
+
+## 16. Explicit owner instructions and conversation decisions — 2026-10-09
+
+This section consolidates the operational instructions repeated in the conversation and the supplied transcript file. It is a durable decision record, not a verbatim transcript.
+
+### 16.1 Non-negotiable publication and audit rules
+
+- The user explicitly corrected the workflow: **publish to PR #248, never commit directly to `main`**. PR #248 must remain open and unmerged unless the owner separately authorizes a change.
+- The PR audit must include the useful work performed, not only a final verdict: what was requested, commands attempted, failed launch attempts, corrections, configuration, checks, measured outputs, proposed interpretations, unresolved questions, and next steps.
+- Clearly separate observed evidence from inference. Never invent a final test count, exit code, model response, or root cause. A smoke test is not a full suite; a model configured in the environment is not proof that every test invoked it.
+- Keep each full-suite run serial. Wait for the current process to exit, capture the final pytest summary and exit code, append its record to this ledger, verify that publication succeeded, and only then start the next model.
+- Do not edit application source during the model comparison matrix. After the matrix, triage confirmed defects and implement fixes with regression tests on a dedicated feature branch/PR.
+- Preserve `C:\Users\Marius\Projects\AI_Memory_Vault_QdrantFix` exactly as found; do not clean, reset, stash, overwrite, or silently discard its uncommitted recovery work.
+- Do not write to or reindex production Qdrant collection `vault_memory` without explicit owner approval.
+
+### 16.2 Required order and classification of local model validation
+
+Run the full pytest suite sequentially on the same recorded source SHA with the following generative tags where the runtime permits: `qwen2.5-coder:3b`, `qwen2.5-coder:7b`, `qwen2.5:7b-instruct`, `mistral:7b-instruct`, `llama3.1:8b`, and `qwen3:30b-a3b`. Configure `light`, `standard`, and `heavy` to the model under test, set `RUN_LIVE_OLLAMA_TESTS=1`, and record the exact command/configuration. If a model cannot allocate memory, record a blocked/failed launch with evidence and do not repeatedly retry the same known failing profile without a bounded, justified change.
+
+Evaluate `nomic-embed-text:latest` separately using embedding/retrieval integration; do not label it a generative council model or substitute a generation smoke test for embedding validation.
+
+For every run, preserve model tag and Ollama ID, branch/source SHA, exact command and environment, start/end time if available, elapsed time, exit code, passed/skipped/xfail/failed/error counts, failed test IDs and relevant diagnostics, evidence of actual model invocation, cleanup status, verdict, and next action. Label unavailable fields as unavailable rather than guessing.
+
+### 16.3 Results and state already established in this conversation
+
+- Historical clean `main` at `c5f939185f05c516e1cd46e11b3763026a6137d5`: 2,597 passed, 13 skipped, 9 xfailed. Keep this historical baseline separate from newer source.
+- Modified Qdrant recovery worktree: 2,620 passed, 13 skipped, 9 xfailed in a previously reported run. This is not a clean-main result and must not be represented as one.
+- Current `main` source used for the model matrix: `154dc4274b3b3d634a50c6e9f30b86a77b798590`.
+- Completed full suite with `qwen2.5-coder:3b`: 3,682 passed, 43 skipped, 9 xfailed, 15 failed, 2 errors; 993.47 seconds; exit code 1. Full failing test IDs and caveats are in section 15.1. Preliminary categories are not confirmed root causes.
+- `qwen2.5-coder:7b`: the first launch attempt failed due to PowerShell quoting and did not run tests. A corrected multiline here-string launch started the actual full suite as PID 30080 on Marius-PC. In the latest captured output available while preparing this entry, progress had reached 88%; failures and skips had appeared, but no final summary or exit code had yet been captured. This is an in-progress observation, not a final verdict. Update this entry only after collecting the actual terminal output.
+- Previously reported smoke tests are separate from full-suite results: `qwen2.5-coder:3b` PASS 3.57 s; `qwen2.5-coder:7b` PASS 7.82 s; `qwen2.5:7b-instruct` PASS 10.34 s; `mistral:7b-instruct` PASS 8.25 s; `llama3.1:8b` PASS 17.40 s; `qwen3:30b-a3b` failed before generation in 4.38 s due to a CUDA host-buffer allocation error. These smoke tests do not satisfy the full-suite matrix.
+- Current next action: continue monitoring PID 30080 until it exits; capture the real summary/exit code; verify temporary tier-config cleanup if possible; append the final `qwen2.5-coder:7b` result to section 15.2 and verify the PR update; then continue one model at a time.
+
+### 16.4 Conversation handling and truthfulness
+
+The user asked for the essential contents of the conversation to be preserved in the PR, including user requests, assistant commitments, checks attempted, actual results, and next actions. This ledger is the durable project record; it is not represented as a verbatim transcript. If the exact supplied transcript is needed later, use the attached source artifact rather than reconstructing quoted dialogue from memory. Correct earlier omissions explicitly and do not claim a GitHub publication until the resulting commit is verified.
