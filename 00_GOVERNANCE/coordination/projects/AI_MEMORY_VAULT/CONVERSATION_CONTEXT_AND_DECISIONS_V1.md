@@ -437,3 +437,31 @@ The required sequential inventory from the current `ollama list` is: `qwen2.5-co
 ### 14.4 Publication invariant
 
 Every durable finding from this audit must be committed to branch `docs/full-functional-completion-prompt-v1` via PR #248. Do not write audit files or commits directly to `main`. Local temporary configuration files may be created solely to execute a test and must be removed in the same command; they are not the final report. Before declaring completion, re-fetch the PR file and PR metadata from GitHub and verify the latest commit contains the audit and results.
+
+
+## 15. Sequential local-AI full-suite execution log
+
+### 15.1 Full pytest run — `qwen2.5-coder:3b`
+
+- **Date:** 2026-10-09 (local machine, Marius-PC; exact wall-clock start/end timestamps were not captured by the process wrapper).
+- **Source under test:** branch `main`, SHA `154dc4274b3b3d634a50c6e9f30b86a77b798590`. This was a test run only; no changes were committed to main.
+- **Ollama model tag / ID:** `qwen2.5-coder:3b` / `f72c60cabf62`.
+- **Configuration:** temporary JSON config set `light`, `standard`, and `heavy` tiers to `{"provider":"local","model":"qwen2.5-coder:3b"}`; environment `RUN_LIVE_OLLAMA_TESTS=1`, `OLLAMA_MODEL=qwen2.5-coder:3b`, `OLLAMA_MODEL_TIERS_CONFIG=<TEMP>\mv_model_tiers_test.json`.
+- **Command:** `python -m pytest -q --tb=no`.
+- **Captured final result:** **3,682 passed, 43 skipped, 9 xfailed, 15 failed, 2 errors** in **993.47 seconds** (16m 33s); pytest exit code **1**. Remote wrapper runtime was 997.13 seconds and confirmed process completion. The progress reached 100%; this is a completed run, not an in-progress estimate.
+- **Failing test IDs (15):**
+  1. `20_TESTS/test_b2m_leakage_check.py::test_committed_report_matches_a_fresh_run`
+  2. `20_TESTS/test_book_to_memory_human_labels.py::test_committed_packet_is_a_fresh_build`
+  3. `20_TESTS/test_book_to_memory_real_ablation.py::test_committed_packet_baseline_prompts_are_clean_and_hashes_match`
+  4. `20_TESTS/test_book_to_memory_real_ablation.py::test_committed_packet_is_bound_to_the_preregistration`
+  5. `20_TESTS/test_book_to_memory_real_ablation.py::test_committed_packet_is_reproducible_from_the_notes`
+  6. `20_TESTS/test_import_external_skills.py::test_an_executable_bit_aborts_the_import_even_on_an_allowed_type`
+  7. `20_TESTS/test_owner_authority_gate.py::test_settings_command_allows_and_denies`
+  8. `20_TESTS/test_vault_access_core.py::test_read_is_verbatim_with_hash_and_exact_lines`
+  9–15. Seven parameter cases of `20_TESTS/test_vault_access_ollama_telegram.py::test_reading_a_file_is_extractive_and_never_calls_the_model`: `citește VAULT_STATE`, `Citeste VAULT_STATE.md`, `ce scrie în VAULT_STATE?`, `/read VAULT_STATE`, `vault://governance/vault_state`, `deschide vault state`, and `arată-mi conținutul VAULT_STATE`.
+- **Errors (2):** two setup/error cases in `20_TESTS/test_vault_access_core.py::test_unreadable_or_unusual_frontmatter_fails_closed`, including the `Long.md` parameter with repeated frontmatter fields. The captured output was too verbose to preserve a concise traceback in the process response; root cause remains unverified.
+- **Observed pattern:** the Vault access failures report line-ending differences (CRLF versus LF); the Book-to-Memory tests report stale/non-reproducible generated artifacts or manifest/preregistration hash mismatches; the external-skill executable-bit guard and owner-authority command test fail their expected enforcement/exit behavior. These are failure classifications from test names and prior captured diagnostics, not yet proven root causes. Do not modify files based solely on these classifications.
+- **Model invocation caveat:** the full suite ran with the live-Ollama test flag and all three model tiers configured to this model. The pytest summary does not establish that every test invoked the model; most tests are deterministic code tests. This run is a full-suite result under the model configuration, not proof that every test used generative inference.
+- **Cleanup:** the wrapper contains a post-run removal of the temporary tier config. A separate post-exit filesystem check was not captured in the available output, so removal is **expected but not independently verified**. Verify before reusing the config path.
+- **Verdict:** full suite completed, **FAIL** (15 failed, 2 errors). This confirms the current-main failures are reproducible in a run configured for the local 3B model, but does not prove they are model-caused.
+- **Next action:** publish this result before starting the next model; then run the same full suite serially with `qwen2.5-coder:7b`. Do not repair source during the model matrix, so each run has a stable source SHA and results remain comparable. After the matrix, triage and repair the confirmed project defects on a dedicated feature branch/PR, with regression tests; keep PR #248 as the audit trail and do not commit to main.
