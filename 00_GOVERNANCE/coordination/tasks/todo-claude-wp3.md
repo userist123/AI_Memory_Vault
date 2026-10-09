@@ -47,11 +47,33 @@ callers are `LogAnalyzer.Dfir.Windows/Investigation/InvestigationPipeline.cs` an
    transition (valid and refused), dual approval, legal hold, retention warning, scope validation, admin-collector
    warning.
 
-## WP3b spec (next PR, do not start before WP3a merges)
-- Register findings, report and exports in custody, with hashes.
-- Track finding → EvidenceId dependencies. A changed evidence hash invalidates exactly the affected findings and any
-  Vault proposals built on them.
-- Re-check hashes and chains on case open, and show the result.
+## WP3b spec (branch `loganalyzer/wp3b-invalidation-recheck`, from main @ `8e72b252` after WP3a #238 merged)
+Production path: `LogAnalyzer.Dfir.Windows/Investigation/InvestigationPipeline.cs` (writes `Analysis/findings.json`, graph,
+detections, anti_forensics, `Exports/vault_proposals.jsonl` via `LogAnalyzer.Dfir.Core/Memory/VaultExport.cs`); case open via
+`CaseWorkspace.Open` (callers: `LogAnalyzer.App/Services/LiveCase.cs`, tests). Find where reports (PDF/HTML/OSCAL) for a case are
+written (grep the App and Core report services) and include them.
+1. **Outputs in custody:** every file the pipeline or a report/export writes into the case (Analysis/*.json, Reports/*,
+   Exports/*) is registered in the custody chain with its SHA-256 (one entry per file, action `output.written`), via a single
+   `CaseWorkspace.RecordOutput(relPath, producer, version, dependsOnEvidenceIds)` helper. Do not change the files' content/format.
+2. **Dependency index:** `Analysis/dependencies.json` maps each FindingId (and each Vault proposal id) to the EvidenceIds it rests
+   on (from SupportingEvidence/EvidenceRef, transitively through derived evidence when a parsed item names its source). Versioned
+   with SchemaVersions.
+3. **Re-check on open:** `CaseWorkspace.Open` (or a `Recheck()` it calls) re-hashes every stored evidence file against
+   `evidence_index.jsonl`, verifies both chains (`VerifyChains`), and re-hashes registered outputs. Result object + audit entry
+   `case.recheck` + `Analysis/integrity_recheck.json`. Missing file = MISSING, different hash = MODIFIED; never auto-repair.
+   Large cases: hashing must stream (no whole-file reads into memory) and be cancellable.
+4. **Exact invalidation:** a MODIFIED/MISSING evidence item marks exactly the findings and Vault proposals depending on it as
+   `INVALIDATED` (with reason + evidence id) in an `Analysis/invalidations.json` (do not rewrite findings.json); unrelated
+   findings stay untouched. Vault export of an invalidated proposal is refused (VaultExport gate) with the reason.
+   Use the existing WP2 state vocabulary/Status field if one fits (check `Finding`/SchemaVersions first); otherwise add additively.
+5. **External head anchor (WP3a blocker 3):** the current head hashes of both chains are written into every report/export
+   manifest the case produces and shown in the re-check result, so truncation at the end is detectable by comparing with a copy
+   held outside the case. Document this limit honestly in `docs/dfir/` (short section), no claims beyond it.
+6. **Surface it:** where the App shows a case (LiveCase / investigation view), show the re-check verdict line (Valid / Modified n /
+   Missing n / chain broken / legacy) — minimal, additive UI; no page removed.
+7. **Tests (TDD):** output registration; dependency index; recheck clean / modified / missing / chain broken / legacy case;
+   exact invalidation (only dependents); Vault gate refuses invalidated proposals; anchor present in manifests; streaming hash on a
+   large temp file.
 
 ## Verification required before push (each PR)
 - `dotnet build LogAnalyzer.slnx -p:EnableWindowsTargeting=true` → 0 errors.
@@ -76,8 +98,10 @@ callers are `LogAnalyzer.Dfir.Windows/Investigation/InvestigationPipeline.cs` an
   - Merged main (WP1b #237). Allowlisted the reworded LiveSecurityMonitoringEngine explanation fragment `" / wevtutil cl) pe ["`
     (Core.dll only).
 
+- 2026-10-09T04:35Z claude-orchestrator: #238 (WP3a) merged as `8e72b252`. WP3b spec detailed; branch created.
+
 ## Next
-- PR against main; Windows CI green; merge. Then WP3b on a new branch from main.
+- Implement WP3b 1-7, verify, push. The orchestrator opens the PR.
 
 ## Blockers (owner decisions; safe defaults implemented)
 - LIVE case (`LiveCase.Get`) has no creation dialog: if the operator has not entered a scope, it is created with a PROVISIONAL scope
