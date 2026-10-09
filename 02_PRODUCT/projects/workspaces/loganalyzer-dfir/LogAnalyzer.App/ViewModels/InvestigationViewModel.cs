@@ -89,6 +89,38 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>Raised when a new investigation result is available.</summary>
         public event EventHandler? ResultChanged;
 
+        /// <summary>Raised when the page's case state is complete: after the integrity re-check of a run, or after an existing case was opened (WP5 Home refreshes from it).</summary>
+        public event EventHandler? StateChanged;
+
+        /// <summary>WP5: the existing case shown on this page (null for a result of a run made here).</summary>
+        public LogAnalyzer.Dfir.Windows.Investigation.LoadedCase? Loaded { get; private set; }
+
+        /// <summary>True while an opened case is sealed, archived, invalidated or failed its integrity re-check: the page shows it for reading only.</summary>
+        [ObservableProperty] private bool _isReadOnlyCase;
+        [ObservableProperty] private string _readOnlyNotice = "";
+
+        private static string VerificationText(InvestigationResult r) => r.Verification is { } v
+            ? v.Banner + " (verificare automată, nu externă)" + (v.Warning is { } w ? Environment.NewLine + w : "")
+            : "Verificare: nerulată pentru această analiză (nedeterminat).";
+
+        /// <summary>
+        /// WP5 (R9.1): shows an existing case, opened by <see cref="LogAnalyzer.Dfir.Windows.Investigation.CaseLoader"/>, on the same page and with the same
+        /// collections as a fresh run. Read-only cases say why; what could not be restored is listed in the log, never hidden.
+        /// </summary>
+        public void ShowLoaded(LogAnalyzer.Dfir.Windows.Investigation.LoadedCase loaded)
+        {
+            ShowResult(loaded.Result);
+            Loaded = loaded;
+            IntegrityLine = loaded.Recheck?.Summary ?? "Reverificare: nerulată (nedeterminat).";
+            VerificationLine = VerificationText(loaded.Result);
+            OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[loaded.Result.State] + " — " + loaded.Result.StateReason;
+            Summary += $" · caz deschis, stare: {LogAnalyzer.Dfir.Case.CaseLifecycleNames.Label(loaded.Lifecycle)}";
+            IsReadOnlyCase = loaded.ReadOnly;
+            ReadOnlyNotice = loaded.ReadOnly ? "Caz deschis doar pentru citire: " + string.Join("; ", loaded.ReadOnlyReasons) : "";
+            Log = $"Caz deschis: {loaded.Workspace.Info.CaseId} ({loaded.Workspace.Root}).{Environment.NewLine}" + string.Concat(loaded.Notes.Select(n => "Notă: " + n + Environment.NewLine));
+            StateChanged?.Invoke(this, EventArgs.Empty);
+        }
+
         public InvestigationViewModel(Func<InvestigationViewModel, object?>? aiFactory = null)
         {
             AiAnalysis = aiFactory?.Invoke(this);
@@ -201,49 +233,15 @@ namespace LogAnalyzer.UI.ViewModels
                     }
                     return new InvestigationPipeline().Run(ws, profile, collect, progress, _cts.Token, systemZone: zone);
                 });
-                Findings.Clear();
-                foreach (var f in _result.Findings) Findings.Add(f);
-                AirGapFindings.Clear();
-                foreach (var f in _result.Findings.Where(f => f.Category == LogAnalyzer.Dfir.Analysis.Wp14Rules.Category)) AirGapFindings.Add(f);
-                SequenceFindings.Clear();
-                foreach (var f in _result.Findings.Where(f => f.Category == LogAnalyzer.Dfir.Analysis.SequenceRules.Category)) SequenceFindings.Add(f);
-                SequenceSummary = SequenceFindings.Count == 0
-                    ? "Secvențe combinate: nicio secvență observată în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (o sursă necolectată dă „pas neobservat”, nu absență)."
-                    : $"Secvențe combinate: {SequenceFindings.Count} ({SequenceFindings.Count(a => a.Severity >= Severity.High)} ridicate). Fiecare arată faptele observate, în ordine, și pașii neobservați; nu stabilește scopul.";
-                SequenceSteps = string.Join(Environment.NewLine + Environment.NewLine, SequenceFindings.Select(f =>
-                    $"{f.Title} [{f.Severity.ToSpec()}] — {f.FindingId}{Environment.NewLine}" +
-                    string.Join(Environment.NewLine, (f.Sequence?.Steps ?? []).Select(st => st.Observed
-                        ? $"  {st.Order}. {st.WhenUtc:yyyy-MM-dd HH:mm} UTC — {st.Name}: {st.Note} [cont: {(st.Account.Length > 0 ? st.Account : "necunoscut în sursă")}; sursa: {st.Source}]"
-                        : $"  {st.Order}. {st.Name}: {st.Note}")) +
-                    $"{Environment.NewLine}  Legătură: {f.Sequence?.Link}{Environment.NewLine}  Constatări componente: {string.Join(", ", f.RelatedFindingIds)}"));
-                RegisterLine = _result.RegisterLine;
-                AirGapSummary = AirGapFindings.Count == 0
-                    ? "Integritate air-gap: nu s-a observat nimic în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (jurnalele au o istorie limitată; unele canale pot lipsi, vezi „Goluri de probă”)."
-                    : $"Integritate air-gap: {AirGapFindings.Count} constatări ({AirGapFindings.Count(a => a.Severity >= Severity.High)} ridicate).";
-                ResultChanged?.Invoke(this, EventArgs.Empty);
-                FillTimeline();
-                var chains = _result.Findings.Where(f => f.RuleId == "INCIDENT-CHAIN").ToList();
-                Chains = chains.Count == 0 ? "Niciun lanț de incident (constatări grave grupate în timp)." :
-                    string.Join(Environment.NewLine + Environment.NewLine, chains.Select(c => $"{c.Title} [{c.Severity.ToSpec()}]{Environment.NewLine}" +
-                        string.Join(Environment.NewLine, c.Description.Split(" → ").Select(s => "  → " + s))));
-                GapsText = string.Join(Environment.NewLine, _result.Gaps.Select(g => $"{g.Artifact}: {g.Status.ToSpec()} — {g.Reason}"));
-                AntiForensics.Clear();
-                foreach (var a in _result.AntiForensics.OrderBy(a => a.Result).ThenBy(a => a.Id)) AntiForensics.Add(a);
-                PolicyTimelineLines.Clear();
-                if (_result.PolicyTimeline is { } policyTimeline) foreach (var pl in LogAnalyzer.Dfir.Analysis.PolicyTimelineReport.Lines(policyTimeline)) PolicyTimelineLines.Add(pl);
-                PolicyTimelineSummary = _result.PolicyTimelineLine;
-                FillGraphEntities();
-                GraphStatus = _result.Graph is { } gr ? $"Graf: {gr.Entities.Count} entități, {gr.Relationships.Count} relații." : "Graful nu a fost construit.";
-                Summary = $"{_result.Timeline.Count:N0} evenimente · {_result.Findings.Count(f => f.Severity == Severity.Critical)} critice · " +
-                          $"{_result.Findings.Count(f => f.Severity == Severity.High)} ridicate · {_result.Findings.Count} constatări · {_result.Gaps.Count} goluri · caz {_result.Case.Info.CaseId}";
+                ShowResult(_result);
                 var checkedCase = _result.Case;
                 var ct = _cts.Token;
                 IntegrityLine = (await Task.Run(() => checkedCase.Recheck(ct))).Summary;
-                VerificationLine = _result.Verification is { } v
-                    ? v.Banner + " (verificare automată, nu externă)" + (v.Warning is { } w ? Environment.NewLine + w : "")
-                    : "Verificare: nerulată pentru această analiză.";
+                VerificationLine = VerificationText(_result);
                 OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[_result.State] + " — " + _result.StateReason;
                 Summary += $" · analiză: {LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[_result.State]} (nu verifică constatările)";
+                Loaded = null; IsReadOnlyCase = false; ReadOnlyNotice = "";
+                StateChanged?.Invoke(this, EventArgs.Empty);
                 Log += "Gata. Dublu-click pe o constatare sau pe un eveniment pentru detalii." + Environment.NewLine;
             }
             catch (OperationCanceledException) { OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[OperationState.Cancelled]; Log += "Oprit de operator." + Environment.NewLine; }
@@ -257,6 +255,47 @@ namespace LogAnalyzer.UI.ViewModels
 
         [RelayCommand]
         private void Cancel() => _cts?.Cancel();
+
+        /// <summary>Fills every collection and summary line of the page from a result: a run that just finished or an existing case that was opened (WP5).</summary>
+        private void ShowResult(InvestigationResult result)
+        {
+            _result = result;
+            Findings.Clear();
+            foreach (var f in _result.Findings) Findings.Add(f);
+            AirGapFindings.Clear();
+            foreach (var f in _result.Findings.Where(f => f.Category == LogAnalyzer.Dfir.Analysis.Wp14Rules.Category)) AirGapFindings.Add(f);
+            SequenceFindings.Clear();
+            foreach (var f in _result.Findings.Where(f => f.Category == LogAnalyzer.Dfir.Analysis.SequenceRules.Category)) SequenceFindings.Add(f);
+            SequenceSummary = SequenceFindings.Count == 0
+                ? "Secvențe combinate: nicio secvență observată în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (o sursă necolectată dă „pas neobservat”, nu absență)."
+                : $"Secvențe combinate: {SequenceFindings.Count} ({SequenceFindings.Count(a => a.Severity >= Severity.High)} ridicate). Fiecare arată faptele observate, în ordine, și pașii neobservați; nu stabilește scopul.";
+            SequenceSteps = string.Join(Environment.NewLine + Environment.NewLine, SequenceFindings.Select(f =>
+                $"{f.Title} [{f.Severity.ToSpec()}] — {f.FindingId}{Environment.NewLine}" +
+                string.Join(Environment.NewLine, (f.Sequence?.Steps ?? []).Select(st => st.Observed
+                    ? $"  {st.Order}. {st.WhenUtc:yyyy-MM-dd HH:mm} UTC — {st.Name}: {st.Note} [cont: {(st.Account.Length > 0 ? st.Account : "necunoscut în sursă")}; sursa: {st.Source}]"
+                    : $"  {st.Order}. {st.Name}: {st.Note}")) +
+                $"{Environment.NewLine}  Legătură: {f.Sequence?.Link}{Environment.NewLine}  Constatări componente: {string.Join(", ", f.RelatedFindingIds)}"));
+            RegisterLine = _result.RegisterLine;
+            AirGapSummary = AirGapFindings.Count == 0
+                ? "Integritate air-gap: nu s-a observat nimic în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (jurnalele au o istorie limitată; unele canale pot lipsi, vezi „Goluri de probă”)."
+                : $"Integritate air-gap: {AirGapFindings.Count} constatări ({AirGapFindings.Count(a => a.Severity >= Severity.High)} ridicate).";
+            ResultChanged?.Invoke(this, EventArgs.Empty);
+            FillTimeline();
+            var chains = _result.Findings.Where(f => f.RuleId == "INCIDENT-CHAIN").ToList();
+            Chains = chains.Count == 0 ? "Niciun lanț de incident (constatări grave grupate în timp)." :
+                string.Join(Environment.NewLine + Environment.NewLine, chains.Select(c => $"{c.Title} [{c.Severity.ToSpec()}]{Environment.NewLine}" +
+                    string.Join(Environment.NewLine, c.Description.Split(" → ").Select(s => "  → " + s))));
+            GapsText = string.Join(Environment.NewLine, _result.Gaps.Select(g => $"{g.Artifact}: {g.Status.ToSpec()} — {g.Reason}"));
+            AntiForensics.Clear();
+            foreach (var a in _result.AntiForensics.OrderBy(a => a.Result).ThenBy(a => a.Id)) AntiForensics.Add(a);
+            PolicyTimelineLines.Clear();
+            if (_result.PolicyTimeline is { } policyTimeline) foreach (var pl in LogAnalyzer.Dfir.Analysis.PolicyTimelineReport.Lines(policyTimeline)) PolicyTimelineLines.Add(pl);
+            PolicyTimelineSummary = _result.PolicyTimelineLine;
+            FillGraphEntities();
+            GraphStatus = _result.Graph is { } gr ? $"Graf: {gr.Entities.Count} entități, {gr.Relationships.Count} relații." : "Graful nu a fost construit.";
+            Summary = $"{_result.Timeline.Count:N0} evenimente · {_result.Findings.Count(f => f.Severity == Severity.Critical)} critice · " +
+                      $"{_result.Findings.Count(f => f.Severity == Severity.High)} ridicate · {_result.Findings.Count} constatări · {_result.Gaps.Count} goluri · caz {_result.Case.Info.CaseId}";
+        }
 
         private void FillTimeline()
         {
@@ -325,6 +364,7 @@ namespace LogAnalyzer.UI.ViewModels
         private void CloseCase()
         {
             if (_result is null) { ClosureText = "Rulați întâi o investigație; închiderea se face pe cazul curent."; return; }
+            if (IsReadOnlyCase) { ClosureText = "Cazul este deschis doar pentru citire: nu se mai poate închide din nou."; return; }
             var closure = LogAnalyzer.Dfir.Case.CaseClosure.Close(_result.Case, $"{Environment.UserDomainName}\\{Environment.UserName}");
             ClosureText = closure.RegisterText;
             try { Clipboard.SetText(closure.RegisterText); ClosureText += Environment.NewLine + "(Copiat în clipboard.)"; }

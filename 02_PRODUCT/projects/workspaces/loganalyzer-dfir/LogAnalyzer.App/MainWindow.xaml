@@ -121,9 +121,13 @@
 
                     <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Margin="8,10">
                         <StackPanel>
+                            <!-- GROUP 0: HOME (WP5): the first page; the case answers, coverage matrix and the three starting intents -->
+                            <TextBlock Text="ACASĂ" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="12,10,0,6"/>
+                            <RadioButton Content="Acasă (caz, acoperire, pornire)" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="22" IsChecked="True"/>
+
                             <!-- GROUP 1: OPERATIONS -->
-                            <TextBlock Text="OPERATIONS" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="12,10,0,6"/>
-                            <RadioButton Content="Command Dashboard" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="0" IsChecked="True"/>
+                            <TextBlock Text="OPERATIONS" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6"/>
+                            <RadioButton Content="Command Dashboard" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="0"/>
                             <RadioButton Content="Live Real-Time SOC" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="11" Visibility="{Binding IsNetworkMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             <RadioButton Content="Threats &amp; Detections" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="3"/>
                             <RadioButton Content="Incident Timeline" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="4"/>
@@ -231,6 +235,8 @@
                 <TabItem><views:RegisterView DataContext="{Binding MediaRegister}"/></TabItem>
                 <TabItem><views:RegisterView DataContext="{Binding UsersRegister}"/></TabItem>
                 <TabItem><views:AuthView DataContext="{Binding Auth}"/></TabItem>
+                <!-- 22: Home (WP5) -->
+                <TabItem><views:HomeView DataContext="{Binding Home}"/></TabItem>
                 </TabControl>
             </Grid>
         </Grid>
