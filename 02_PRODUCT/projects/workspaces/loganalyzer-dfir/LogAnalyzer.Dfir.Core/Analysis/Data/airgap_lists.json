@@ -1,0 +1,25 @@
+{
+  "_comment": "WP14a lists for the air-gap integrity category and the removable-media rules. Data, not code. subcategories = the 19 subcategories of lessons-learned row 50.",
+  "subcategories": [
+    "NETWORK INTERFACE", "USB", "OPTICAL MEDIA", "PORTABLE STORAGE", "WIRELESS", "BLUETOOTH", "PHONE", "MAINTENANCE DEVICE", "LAPTOP", "REMOTE MANAGEMENT",
+    "NETWORK CABLE", "SWITCH PORT", "VPN", "PROXY", "EMAIL", "WEB", "FILE TRANSFER", "BACKUP", "PRINT/SCAN"
+  ],
+  "burnTools": {
+    "executables": ["isoburn.exe", "imgburn.exe", "cdburnerxp.exe", "infrarecorder.exe", "burnaware.exe", "burnaware_free.exe", "nero.exe", "nerobackitup.exe", "neroburningrom.exe", "dvdburner.exe", "ashampoo_burning_studio.exe", "bdburn.exe", "xburn.exe", "cdrtfe.exe", "freeburner.exe", "burn4free.exe", "ultraiso.exe", "poweriso.exe", "alcohol.exe", "brasero.exe"],
+    "imapiProviders": ["IMAPI", "IMAPI2", "Microsoft-Windows-ImapiLib"]
+  },
+  "optical": {
+    "deviceWords": ["CDROM", "CD-ROM", "DVD-ROM", "DVD/CD-RW", "DVD-RW", "BD-ROM", "OPTICAL"],
+    "imageExtensions": [".iso", ".img", ".nrg"],
+    "mountChannelWords": ["VHDMP", "Storage"]
+  },
+  "network": {
+    "wifiKeywords": ["wi-fi", "wifi", "wlan", "wireless"],
+    "bluetoothKeywords": ["bluetooth"],
+    "networkKeywords": ["ethernet", "lan", "retea", "rețea", "network"],
+    "virtualAdapterWords": ["virtual", "loopback", "tap-windows", "tap adapter", "vmware", "virtualbox", "hyper-v", "vethernet", "wan miniport", "isatap", "teredo", "6to4", "tunnel", "vpn"],
+    "netClassGuid": "{4d36e972-e325-11ce-bfc1-08002be10318}",
+    "bluetoothClassGuids": ["{e0cbf06c-cd8b-4647-bb8a-263b43f0f974}"],
+    "ignoredNetworkNamePrefixes": ["Identifying", "Se identific"]
+  }
+}
