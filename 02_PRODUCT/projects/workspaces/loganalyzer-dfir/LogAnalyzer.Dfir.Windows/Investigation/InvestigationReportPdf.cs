@@ -1,5 +1,6 @@
 using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.Model;
+using LogAnalyzer.Verification;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -24,6 +25,7 @@ public static class InvestigationReportPdf
         var others = r.Findings.Where(f => f.RuleId != "INCIDENT-CHAIN").ToList();
         var integrity = ReportIntegrity.Check(r);
         var evidence = r.Case.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal);
+        var verification = r.Verification ?? ReadVerification(r.Case.Root);
 
         Document.Create(doc => doc.Page(page =>
         {
@@ -41,6 +43,14 @@ public static class InvestigationReportPdf
                 col.Spacing(7);
                 col.Item().Background(integrity.AllIntact ? "#ecfdf5" : "#fef2f2").Border(1).BorderColor(integrity.AllIntact ? "#10b981" : "#b91c1c").Padding(6)
                     .Text(integrity.Banner).FontSize(8).Bold().FontColor(integrity.AllIntact ? "#065f46" : "#7f1d1d");
+                // WP4: one verification line (automatic cross-check by a separate module of this application, not an external verification) and a warning when needed.
+                col.Item().Border(0.8f).BorderColor(Line).Padding(5).Column(vc =>
+                {
+                    vc.Item().Text(verification is null ? "Verificare: nerulată pentru acest caz (Analysis/verification.json lipsește)." : verification.Banner + " (verificare automată, nu externă)")
+                        .FontSize(8).Bold().FontColor(Ink);
+                    if (verification?.Warning is { } warn)
+                        vc.Item().PaddingTop(3).Background("#fef2f2").Border(1).BorderColor("#b91c1c").Padding(4).Text(warn).FontSize(8).Bold().FontColor("#7f1d1d");
+                });
                 col.Item().Row(row =>
                 {
                     Box(row, r.Findings.Count(f => f.Severity == Severity.Critical).ToString(), "CRITICE", "#7f1d1d");
@@ -68,8 +78,9 @@ public static class InvestigationReportPdf
                         cc.Item().Text($"{f.FindingId} · {f.Title}").Bold();
                         cc.Item().Text($"{f.Severity.ToSpec()} · {f.Classification.ToSpec()} · încredere {f.Confidence.ToSpec()} · {f.Category}{(f.MitreTechniqueId.Length > 0 ? " · MITRE " + f.MitreTechniqueId : "")} · {L(f.FirstSeenUtc)} – {L(f.LastSeenUtc)}")
                             .FontSize(7.5f).FontColor(Muted);
-                        cc.Item().Text($"Stare: {LogAnalyzer.Dfir.Analysis.StateLabels.Romanian(f.Status)} ({f.Status.ToSpec()}) · tip: {f.SemanticType.ToSpec()} · verificare independentă: {LogAnalyzer.Dfir.Analysis.StateLabels.Romanian(f.Verification.State)}")
+                        cc.Item().Text($"Stare: {LogAnalyzer.Dfir.Analysis.StateLabels.Romanian(f.Status)} ({f.Status.ToSpec()}) · tip: {f.SemanticType.ToSpec()} · verificare automată: {LogAnalyzer.Dfir.Analysis.StateLabels.Romanian(f.Verification.State)} ({f.Verification.State.ToSpec()})")
                             .FontSize(7.5f).FontColor(Muted);
+                        if (f.Verification.State != StandardState.NotAssessed && f.Verification.Reason.Length > 0) cc.Item().Text("Verificare: " + f.Verification.Reason).FontSize(7).FontColor(Muted);
                         cc.Item().Text(f.Description);
                         if (f.ClassificationReason.Length > 0) cc.Item().Text("De ce: " + f.ClassificationReason).FontSize(7.5f);
                         foreach (var e in f.SupportingEvidence.Take(8)) cc.Item().Text($"Probă {e.EvidenceId} (SHA-256 {Short(e.Sha256)}) · {e.Locator} · {e.Description}").FontSize(7).FontColor(Muted);
@@ -132,6 +143,13 @@ public static class InvestigationReportPdf
                 t.TotalPages().FontSize(7).FontColor(Muted);
             });
         })).GeneratePdf(path);
+    }
+
+    /// <summary>The case's Analysis/verification.json, or null when absent or unreadable (a report must still be produced for an old case).</summary>
+    internal static VerificationReport? ReadVerification(string caseRoot)
+    {
+        try { return VerificationReport.Read(Path.Combine(caseRoot, "Analysis", VerificationReport.FileName)); }
+        catch (Exception ex) when (ex is System.Text.Json.JsonException or InvalidDataException or IOException or UnauthorizedAccessException) { return null; }
     }
 
     private static string Short(string sha) => sha.Length >= 16 ? sha[..16] + "…" : sha.Length > 0 ? sha : "—";

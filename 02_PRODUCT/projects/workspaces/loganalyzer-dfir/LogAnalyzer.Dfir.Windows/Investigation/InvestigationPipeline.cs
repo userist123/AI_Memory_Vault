@@ -11,6 +11,7 @@ using LogAnalyzer.Dfir.Network;
 using LogAnalyzer.Dfir.Parsing;
 using LogAnalyzer.Dfir.Windows.Acquisition;
 using LogAnalyzer.Dfir.Windows.Parsers;
+using LogAnalyzer.Verification;
 
 namespace LogAnalyzer.Dfir.Windows.Investigation;
 
@@ -34,6 +35,11 @@ public sealed class InvestigationResult
     public List<DetectionRule> RulesUsed { get; } = [];
     /// <summary>Anti-forensics checks: DETECTED / NOT_DETECTED / UNDETERMINED per technique (Analysis/anti_forensics.json).</summary>
     public List<AntiForensicCheck> AntiForensics { get; } = [];
+    /// <summary>
+    /// WP4: the verdict on every finding and on the AI statements (Analysis/verification.json), from the separate verification module. Null for a run that
+    /// did not get that far. The verdicts are also set on <see cref="Finding.Verification"/> in memory; findings.json on disk is never rewritten.
+    /// </summary>
+    public VerificationReport? Verification { get; set; }
     public string TimelineCsv { get; set; } = "";
     public string FindingsJson { get; set; } = "";
     /// <summary>How far the analysis got (UX contract §20). Not a verdict on any finding: see <see cref="Finding.Verification"/>.</summary>
@@ -307,9 +313,17 @@ public sealed class InvestigationPipeline
         ws.RecordOutput("Analysis/anti_forensics.json", "AntiForensics", "1.0", evidenceIds);
         ws.RecordTransformation("CASE", "AntiForensics", "1.0", "Analysis/anti_forensics.json",
             $"{r.AntiForensics.Count(c => c.Result == AntiForensicResult.Detected)} DETECTED, {r.AntiForensics.Count(c => c.Result == AntiForensicResult.Undetermined)} UNDETERMINED");
+        // WP4 verification layer (R9.7): after graph, detections and anti-forensics, before the Vault export. The verifier reads the case back from disk
+        // (it is a separate module); dependencies.json is written first so it can confirm the finding -> evidence dependencies (rewritten with the proposals below).
+        progress?.Report("Verificare");
+        ws.WriteDependencies(r.Findings, []);
+        r.Verification = CaseVerifier.Verify(ws, ct: ct);
+        var verdicts = r.Verification.ToContract();
+        foreach (var f in r.Findings)
+            if (verdicts.TryGetValue(f.FindingId, out var verdict)) f.Verification = verdict;   // in memory only: findings.json stays as it was written
         // Memory Vault proposals (spec §24): written into the case only; submitting them is the operator's step, through the vault's gate.
         var (proposals, refusedForVault) = LogAnalyzer.Dfir.Memory.VaultExport.FromCase(ws.Info.CaseId, ws.LoadEvidence(), r.Findings, r.AntiForensics, r.Gaps,
-            $"LogAnalyzer {DfirInfo.ApplicationVersion} ({Environment.UserDomainName}\\{Environment.UserName})");
+            $"LogAnalyzer {DfirInfo.ApplicationVersion} ({Environment.UserDomainName}\\{Environment.UserName})", verdicts);
         var vaultFile = Path.Combine(ws.Root, "Exports", "vault_proposals.jsonl");
         // WP3b gate: a proposal that rests on evidence found MODIFIED or MISSING by the last re-check is refused, with the reason, not written for submission.
         var (releasedProposals, invalidatedProposals) = LogAnalyzer.Dfir.Memory.VaultExport.Release(ws, proposals);
