@@ -85,8 +85,10 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 - 2026-10-09 claude-wp11: item 3 remote administration (`REMOTE-RDP-INTERNAL`, `REMOTE-WINRM`, `REMOTE-PSEXEC`, `REMOTE-SSH`) + WinRM/OpenSSH channels in
   `EventLogCollector.Channels`; `ApprovedSoftwareMatcher` made constraint-decisive (hash, else path pattern, else name).
 
+- 2026-10-09 claude-wp11: items 4 (`SECURITY-AGENT-STOPPED`, list in `Analysis/Data/security_agents.json`) and 5 (`VSS-SNAPSHOT-DELETED`).
+
 ## Next
-- Items 4 (agents), 5 (VSS), 6 (DNS), 7 (remote tools), 8 (descriptors), 9 (remaining tests), then merge main, full suites, push.
+- Items 6, 7, 8, 9 (was: 4 (agents), 5 (VSS), 6 (DNS), 7 (remote tools), 8 (descriptors), 9 (remaining tests), then merge main, full suites, push.
 
 ## Blockers
 - None.
