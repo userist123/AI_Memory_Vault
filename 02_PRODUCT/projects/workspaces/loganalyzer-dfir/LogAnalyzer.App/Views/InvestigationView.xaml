@@ -105,6 +105,34 @@
                     </DataGrid.Columns>
                 </DataGrid>
             </TabItem>
+            <TabItem Header="Integritate air-gap" Style="{StaticResource InspectorTabItemStyle}">
+                <DockPanel Margin="8">
+                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                        <TextBlock Text="Zona sistemului analizat (pentru compararea cu registrul de medii):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding SystemZone, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                    </WrapPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding AirGapSummary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding RegisterLine}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                    <DataGrid ItemsSource="{Binding AirGapFindings}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="80"/>
+                            <DataGridTextColumn Header="Subcategorie" Binding="{Binding AirGap.Subcategory}" Width="110"/>
+                            <DataGridTextColumn Header="Regulă" Binding="{Binding RuleId}" Width="170"/>
+                            <DataGridTextColumn Header="Canal" Binding="{Binding AirGap.Channel}" Width="150"/>
+                            <DataGridTextColumn Header="Autorizat?" Binding="{Binding AirGap.Authorized}" Width="95"/>
+                            <DataGridTextColumn Header="Când (UTC)" Binding="{Binding AirGap.WhenUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="115"/>
+                            <DataGridTextColumn Header="Cine" Binding="{Binding AirGap.Who}" Width="*"/>
+                            <DataGridTextColumn Header="Obiect" Binding="{Binding AirGap.ObjectName}" Width="*"/>
+                            <DataGridTextColumn Header="Clasificare (caz / registru)" Binding="{Binding AirGap.CaseClassification}" Width="*"/>
+                            <DataGridTextColumn Header="Registru" Binding="{Binding AirGap.RegisterClassification}" Width="*"/>
+                            <DataGridTextColumn Header="Direcție" Binding="{Binding AirGap.TransferDirection}" Width="*"/>
+                            <DataGridTextColumn Header="Destinație" Binding="{Binding AirGap.Destination}" Width="*"/>
+                            <DataGridTextColumn Header="Constatare" Binding="{Binding Title}" Width="2*"/>
+                            <DataGridTextColumn Header="Detalii" Binding="{Binding Description}" Width="3*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
             <TabItem Header="Cronologie" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">

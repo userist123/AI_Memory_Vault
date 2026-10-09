@@ -11,10 +11,13 @@ PRODUCERS = [
     ROOT / "LogAnalyzer.Dfir.Windows/Investigation/InvestigationPipeline.cs",
     ROOT / "LogAnalyzer.Dfir.Core/Analysis/PolicyTimeline.cs",
     *sorted((ROOT / "LogAnalyzer.Dfir.Core/Analysis").glob("Wp11Rules*.cs")),
+    *sorted((ROOT / "LogAnalyzer.Dfir.Core/Analysis").glob("Wp14Rules*.cs")),
     ROOT / "LogAnalyzer.Response/Containment/ProcessContainmentService.cs",
 ]
 CATALOG = ROOT / "LogAnalyzer.Dfir.Core/Analysis/RuleContracts.cs"
 ID = re.compile(r'"([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)"')
+# WP14a builds its air-gap findings through one shared helper, Net(c, "<RULE-ID>", ...), so the id is an argument and not on a `RuleId = ` line.
+NET_CALL = re.compile(r'\bNet\(c, "([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)"')
 
 
 def emitted_rule_ids():
@@ -23,6 +26,8 @@ def emitted_rule_ids():
         for line in p.read_text(encoding="utf-8").splitlines():
             if "RuleId = " in line:
                 ids.update(ID.findall(line.split("RuleId = ", 1)[1]))
+            if p.name.startswith("Wp14Rules"):
+                ids.update(NET_CALL.findall(line))
     return ids
 
 
