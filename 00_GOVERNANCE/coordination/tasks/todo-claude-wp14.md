@@ -137,6 +137,11 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 - 2026-10-09 claude-wp14a: item 9 done (`RegisterViewModel<T>` + `RegisterView`, sidebar "Registru medii" / "Registru utilizatori", investigation tab "Integritate air-gap"
   with a "zona sistemului" field); `LESSONS_LEARNED_MAPPING.md` rows 15-18, 21, 22, 48, 50, 53, 55, 103 updated. Item 10 tests: `Wp14*Tests` (Dfir), `RegisterViewModelTests` (App, Windows only).
 
+- 2026-10-09T14:10Z claude-orchestrator review: failing .NET tests equal the main baseline (Dfir 48, UI 6); Edition 15/15; no gate exception.
+  Fix: a register row with a classification level was AUTHORIZED when the users register was undefined or the user of the medium unknown
+  (clearance unchecked). Now REGISTERED with the reason (decision 24). Test `A_classified_medium_whose_user_clearance_cannot_be_checked_is_registered_never_authorized`
+  (red, then green); the air-gap field test now expects MEDIA-REGISTERED for that case.
+
 ## Next
 - Final merge of origin/main, full .NET + Python verification, final push (see the report). WP14b (combined sequences) is the next PR.
 

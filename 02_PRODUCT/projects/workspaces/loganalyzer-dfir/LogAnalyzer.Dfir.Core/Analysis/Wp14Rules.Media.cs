@@ -116,10 +116,18 @@ public static partial class Wp14Rules
             if (c.Input.SystemZone.Length == 0) why.Add($"zona sistemului nu este declarată, deci zona mediului ({row.Zone}) nu poate fi confirmată");
             else if (!c.Input.SystemZone.Equals(row.Zone, StringComparison.OrdinalIgnoreCase)) why.Add($"zona sistemului ({c.Input.SystemZone}) diferă de zona mediului ({row.Zone})");
         }
-        if (row.Level is { } need && c.Input.Users is { IsDefined: true } users && o.Users.Count > 0)
+        if (row.Level is { } need)
         {
-            bool Holds(string u) => users.ForAccount(u).Any(r => r.Level is { } held && SecrecyLevels.AtLeast(held, need) && ClearanceValidAt(r, times));
-            if (!o.Users.Any(Holds)) why.Add($"abilitarea utilizatorului ({string.Join(", ", o.Users)}) nu acoperă nivelul mediului ({need.Name}) în registrul de utilizatori, la momentul observat");
+            // Decision 24: a clearance that cannot be checked is never treated as confirmed.
+            if (c.Input.Users is not { IsDefined: true } users)
+                why.Add($"abilitarea pentru nivelul mediului ({need.Name}) nu poate fi verificată: registrul de utilizatori nu este definit");
+            else if (o.Users.Count == 0)
+                why.Add($"abilitarea pentru nivelul mediului ({need.Name}) nu poate fi verificată: utilizatorul care a folosit mediul nu a putut fi stabilit");
+            else
+            {
+                bool Holds(string u) => users.ForAccount(u).Any(r => r.Level is { } held && SecrecyLevels.AtLeast(held, need) && ClearanceValidAt(r, times));
+                if (!o.Users.Any(Holds)) why.Add($"abilitarea utilizatorului ({string.Join(", ", o.Users)}) nu acoperă nivelul mediului ({need.Name}) în registrul de utilizatori, la momentul observat");
+            }
         }
         return new(why.Count > 0 ? ObservedMediaStatus.Registered : ObservedMediaStatus.Authorized, why, row);
     }

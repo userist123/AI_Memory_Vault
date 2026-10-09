@@ -136,6 +136,21 @@ public class Wp14MediaTests
         Assert.Single(Go([Usb("AA001"), ion], media: m, users: expired), y => y.RuleId == "MEDIA-REGISTERED" && y.Description.Contains("abilitare"));
     }
 
+    [Fact]
+    public void A_classified_medium_whose_user_clearance_cannot_be_checked_is_registered_never_authorized()
+    {
+        // Decision 24: an unverifiable clearance is never treated as a confirmed one.
+        var m = W14.Media(Row("AA001", cls: "NATO SECRET"));
+        var ion = Sec(6416, 0, ("DeviceId", @"USBSTOR\DISK&VEN_K&PROD_D&REV_1\AA001&0"), ("ClassName", "DiskDrive"), ("SubjectUserName", "ion"), ("SubjectDomainName", "CORP"));
+        // no users register
+        Assert.Single(Go([Usb("AA001"), ion], media: m), y => y.RuleId == "MEDIA-REGISTERED" && y.Description.Contains("abilitare"));
+        // users register defined, but the user of the medium is unknown
+        var users = Users(["Ion", @"CORP\ion", "", "STRICT SECRET", "2026-01-01", "2027-01-01", "", ""]);
+        Assert.Single(Go([Usb("AA001")], media: m, users: users), y => y.RuleId == "MEDIA-REGISTERED" && y.Description.Contains("abilitare"));
+        // a medium without a level needs no clearance check
+        Assert.Single(Go([Usb("AA001"), ion], media: W14.Media(Row("AA001"))), y => y.RuleId == "MEDIA-AUTHORIZED");
+    }
+
     // ---- USB completeness ----
 
     [Fact]
@@ -271,7 +286,7 @@ public class Wp14MediaTests
     [Fact]
     public void Media_findings_on_an_air_gapped_scope_are_in_the_air_gap_integrity_category_with_every_field()
     {
-        var x = Only(Go([Usb("AA001")], Classified(), W14.Media(Row("AA001", cls: "NATO SECRET"))), "MEDIA-AUTHORIZED");
+        var x = Only(Go([Usb("AA001")], Classified(), W14.Media(Row("AA001", cls: "NATO SECRET"))), "MEDIA-REGISTERED"); // user and clearance unknown: never AUTHORIZED (decision 24)
         Assert.Equal("Air-gap integrity", x.Category);
         var d = x.AirGap!;
         Assert.Equal("USB", d.Subcategory);
