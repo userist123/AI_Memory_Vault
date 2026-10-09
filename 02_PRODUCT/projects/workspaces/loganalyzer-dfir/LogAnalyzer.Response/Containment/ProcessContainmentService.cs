@@ -101,7 +101,7 @@ public sealed class ProcessContainmentService
             catch (IOException ex) { Record(incident, "evidence.sample", programPath, false, ex.Message); }
         }
 
-        incident.Findings.AddRange(BuildFindings(incident));
+        incident.Findings.AddRange(BuildContractFindings(incident));
         Save(incident);
         return incident;
     }
@@ -121,7 +121,7 @@ public sealed class ProcessContainmentService
             Record(incident, "blocked.refresh", incident.ProgramPath, false, ex.Message);
         }
         incident.Findings.RemoveAll(f => f.RuleId == "CONTAIN-BLOCKED-ATTEMPTS");
-        incident.Findings.AddRange(BuildFindings(incident).Where(f => f.RuleId == "CONTAIN-BLOCKED-ATTEMPTS"));
+        incident.Findings.AddRange(BuildContractFindings(incident).Where(f => f.RuleId == "CONTAIN-BLOCKED-ATTEMPTS"));
         Save(incident);
         return incident;
     }
@@ -185,6 +185,10 @@ public sealed class ProcessContainmentService
 
     private static string ShortHash(string s) =>
         Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(s.ToUpperInvariant())))[..8];
+
+    /// <summary>The incident's findings with the finding contract applied (semantic type, standard state, limitations, provenance).</summary>
+    internal static IEnumerable<Finding> BuildContractFindings(ProcessIncident i) =>
+        LogAnalyzer.Dfir.Analysis.FindingContract.Enrich(BuildFindings(i).ToList(), new LogAnalyzer.Dfir.Analysis.FindingContractContext { NowUtc = DateTimeOffset.UtcNow });
 
     /// <summary>Findings carry the observation they rest on; classification follows the spec (DIRECT = observed now).</summary>
     internal static IEnumerable<Finding> BuildFindings(ProcessIncident i)

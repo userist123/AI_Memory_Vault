@@ -29,6 +29,9 @@ public sealed record ParserDescriptor
     /// <summary>The tests behind <see cref="Status"/>.</summary>
     public required string Validation { get; init; }
 
+    /// <summary>What this parser can and cannot prove, its limits and correlation sources (lessons learned §2); null if none recorded.</summary>
+    public LogAnalyzer.Dfir.Analysis.ParserCapabilities? Capabilities => LogAnalyzer.Dfir.Analysis.ParserCapabilities.For(ParserId);
+
     public string StatusName => Status.ToString().ToUpperInvariant();
 
     public bool Accepts(EvidenceItem item)

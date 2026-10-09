@@ -486,6 +486,18 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/FINDING_CONTRACT.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown README documenting the knowledge area; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-wp2.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown README documenting the knowledge area; it is not a memory note and therefore intentionally has no note frontmatter."
     }
   ]
 }
