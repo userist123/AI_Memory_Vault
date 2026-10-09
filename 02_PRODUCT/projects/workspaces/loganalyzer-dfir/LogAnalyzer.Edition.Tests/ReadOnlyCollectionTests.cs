@@ -26,15 +26,14 @@ public sealed class ReadOnlyCollectionTests
     // Attacker-technique INDICATORS that the detection engines look for in monitored events (RansomwareDetectionEngine command-line
     // patterns; the explanation text of LiveSecurityMonitoringEngine). They are matched against event data, never executed.
     // Exact strings, in LogAnalyzer.Core.dll only: anything else, or the same text in another assembly, is a violation.
+    // The last entry is a fragment of LiveSecurityMonitoringEngine's interpolated explanation ("... (EID {id} / wevtutil cl) pe [{machine}] ...").
     private static readonly string[] DetectorIndicatorLiterals =
     [
-        "wevtutil cl security", "wevtutil cl system",
+        "wevtutil cl security", "wevtutil cl system", " / wevtutil cl) pe [",
     ];
-    private const string DetectorExplanationPrefix = "Jurnalul Security a fost curățat intenționat (wevtutil cl / Event Log Cleared)";
 
     private static bool IsDetectorIndicator(AssemblyFacts f, string literal) =>
-        f.File.Equals("LogAnalyzer.Core.dll", StringComparison.OrdinalIgnoreCase) &&
-        (DetectorIndicatorLiterals.Contains(literal) || literal.StartsWith(DetectorExplanationPrefix, StringComparison.Ordinal));
+        f.File.Equals("LogAnalyzer.Core.dll", StringComparison.OrdinalIgnoreCase) && DetectorIndicatorLiterals.Contains(literal);
 
     internal static List<string> Violations(AssemblyFacts f)
     {

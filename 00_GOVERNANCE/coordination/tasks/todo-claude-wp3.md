@@ -68,8 +68,16 @@ callers are `LogAnalyzer.Dfir.Windows/Investigation/InvestigationPipeline.cs` an
   `LogAnalyzer.Dfir.Tests/AuditChainCustodyTests.cs`, `LogAnalyzer.Edition.Tests/ReadOnlyCollectionTests.cs`,
   callers: `InvestigationPipeline.NewCase(..., scope)`, `LiveCase.Configure`, `InvestigationViewModel`/`InvestigationView.xaml` scope fields.
 
+- 2026-10-09T04:25Z claude-orchestrator review:
+  - HashChain re-reads the head under an exclusive file lock on every append. Two workspaces on one case used to fork the chain.
+    Test `Two_open_workspaces_on_the_same_case_interleave_without_forking_the_chain` went red, then green.
+  - `CaseScope.Provisional`: the LIVE placeholder scope is flagged; ScopeNote and the `case.scope_provisional` audit entry
+    report it, so it is never taken as the operator-confirmed scope.
+  - Merged main (WP1b #237). Allowlisted the reworded LiveSecurityMonitoringEngine explanation fragment `" / wevtutil cl) pe ["`
+    (Core.dll only).
+
 ## Next
-- Python suite once, push; the orchestrator opens the PR. WP3b starts only after WP3a merges.
+- PR against main; Windows CI green; merge. Then WP3b on a new branch from main.
 
 ## Blockers (owner decisions; safe defaults implemented)
 - LIVE case (`LiveCase.Get`) has no creation dialog: if the operator has not entered a scope, it is created with a PROVISIONAL scope
@@ -79,6 +87,6 @@ callers are `LogAnalyzer.Dfir.Windows/Investigation/InvestigationPipeline.cs` an
 - Admin-collector warning fires when the collecting machine equals the audited host and the process token is a local Administrator
   (Windows only; false elsewhere). Written once per workspace instance.
 - Chain limit: deleting lines from the END of a log is not detectable without an external anchor of the head hash (WP3b candidate).
-- Read-only scan allowlists three detector-indicator literals in LogAnalyzer.Core.dll (RansomwareDetectionEngine patterns "wevtutil cl security/system"
-  and an explanation text); they are matched against events, never executed.
+- Read-only scan allowlists three exact detector-indicator literals in LogAnalyzer.Core.dll (RansomwareDetectionEngine patterns "wevtutil cl security/system"
+  and one fragment of LiveSecurityMonitoringEngine's explanation); they are matched against events, never executed.
 - Existing Dfir tests/pipeline callers now pass a scope (CaseWorkspace.Create refuses an incomplete one); no test was weakened.
