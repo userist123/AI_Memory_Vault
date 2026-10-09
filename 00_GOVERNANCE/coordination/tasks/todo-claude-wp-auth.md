@@ -7,16 +7,16 @@
 
 Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 
-## What the owner decided
-- Everyone signs in with a contactless (RFID-frequency) smart card + card PIN. The card and the PIN are managed by
-  SafeNet Authentication Client / SafeNet Authentication Tools.
-- The primary administrator uses account + password only until enrolling their own card. After that the password is disabled
-  for them, and they use card + PIN only.
+## What the owner decided (decision 33, corrected 2026-10-09)
+- Users sign in with a **contact** smart card inserted in the **smart-card slot of the keyboard** (not contactless) + card PIN.
+  The card and the PIN are managed by SafeNet Authentication Client / SafeNet Authentication Tools.
+- The **primary administrator may always sign in with account + password, without a card**. The password stays valid after
+  they enrol a card; for them the card is optional, never required.
 - Other accounts are created by the global administrator (decision 17) and use card + PIN only.
 
 ## Spec
 1. **No custom crypto, no PIN handling.**
-   - The app uses Windows smart-card support (SafeNet minidriver / CNG key storage provider, PC/SC contactless reader).
+   - The app uses Windows smart-card support (SafeNet minidriver / CNG key storage provider, PC/SC reader built into the keyboard).
    - Sign-in sequence:
      - list certificates with a private key on smart-card providers (Windows `X509Store` My/CurrentUser, filtered to
        smart-card keys);
@@ -35,11 +35,15 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 3. **Card → user mapping in the WP14a users register:**
    - Store certificate thumbprint + issuer + serial; never the private key.
    - One user can have several cards (replacement). Disabling a user or a card is immediate.
-4. **Bootstrap primary admin:**
-   - First run with no users: create the primary admin with account + password, hashed with PBKDF2-SHA256 (≥ 600k iterations)
-     or Argon2id if a vetted library is already referenced. Lockout after N failures with back-off.
-   - After the admin enrols a card, password sign-in for that account is disabled permanently. Re-enabling needs a documented
-     recovery procedure (two-person, logged). Propose it in docs; do not implement a silent backdoor.
+4. **Primary admin: account + password, always allowed (decision 33):**
+   - First run with no users: create the primary admin with account + password.
+     - Hash with PBKDF2-SHA256 (≥ 600k iterations), or Argon2id if a vetted library is already referenced.
+     - Strong-password rule: length ≥ 14, not equal to the account name, not in a small embedded deny-list.
+     - Lockout after N failures with back-off; every password sign-in is written to the auth audit.
+   - The password **stays valid** after the admin enrols a card; card + PIN becomes an extra option for them.
+   - Only the primary admin account can ever use a password. Any other account trying the password mode is refused.
+   - Password change: requires the current password; it is audited.
+   - Forgotten-password recovery: a documented offline procedure (re-initialise the auth store, audited). No silent backdoor.
 5. **Roles:** global administrator and operator.
    - Gate the registers (media, users, procedure profile) and the admin actions (trust store, CRL import, user/card management)
      on the administrator role.
@@ -51,14 +55,16 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
    - The signed-in identity is used as `Who` in the case custody/audit chains instead of `Environment.UserName`, where those
      are written.
 7. **UI:**
-   - Sign-in window before the main window: card mode, plus password mode only while the bootstrap admin has no card.
+   - Sign-in window before the main window: card mode (default), plus a password mode for the primary administrator only.
    - Card enrolment page for the signed-in user.
    - Admin page: users ↔ cards, trust store, CRLs.
-   - Session lock after inactivity (configurable), and lock when the card is removed from the reader.
+   - Session lock after inactivity (configurable). A card-based session also locks when the card is removed from the keyboard slot.
+     A password session (primary admin) locks on inactivity only.
 8. **Testability:**
    - Abstract the card behind an interface. Unit tests use software certificates generated in tests (self-signed CA + user
-     certificate with a private key) to prove challenge/verify, chain, revocation (test CRL), expiry, mapping, the
-     bootstrap → card transition, the password disabled after enrolment, lockout and role gates.
+     certificate with a private key) to prove challenge/verify, chain, revocation (test CRL), expiry and mapping. They also cover:
+     the primary admin password valid both before and after card enrolment; password mode refused for every other account;
+     lockout; role gates; card removal locking only card sessions.
    - Real SafeNet card tests are manual (lab checklist in docs).
 9. **Docs:** `docs/dfir/AUTHENTICATION.md`:
    - setup with SafeNet Authentication Client, importing the CA and CRLs, enrolment;
@@ -75,10 +81,12 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 
 ## Done
 - 2026-10-09T12:30Z claude-orchestrator: owner decision 33 recorded; queue entry 6b; spec written; branch created.
+- 2026-10-09T12:45Z claude-orchestrator: owner correction: contact card in the keyboard slot (not contactless); primary admin may
+  always use account + password. Decision 33 and this spec updated.
 
 ## Next
 - After WP14a merges: merge main, implement 1-9.
 
 ## Blockers / owner questions
 - Missing-CRL policy: default refuse (classified) / warn (unclassified). To be confirmed by the owner.
-- Exact card model and reader (needed for the lab checklist): IDPrime with a contactless interface? Which reader?
+- Exact card model and keyboard reader model (for the lab checklist).
