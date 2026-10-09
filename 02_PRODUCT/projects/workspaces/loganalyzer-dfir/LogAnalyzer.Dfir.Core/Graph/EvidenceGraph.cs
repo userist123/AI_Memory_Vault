@@ -13,6 +13,8 @@ public enum RelationType
     Executed, Spawned, ConnectedTo, Resolved, Authenticated, Created, Modified, Deleted, Persisted, Loaded, Installed, LoggedOn,
     MemberOf, AuthorizedBy, Violates, Satisfies, Supports, Contradicts, DerivedFrom, PartOf, DependsOn,
     Downloaded, Opened, Detected,
+    // Vocabulary of lessons learned §94, added so later parsers can use them; nothing emits these yet.
+    Accessed, Copied, Changed, Transmitted, Printed, Mounted, Unmounted,
 }
 
 public sealed record Entity(string Id, string Type, string Key, string Label);
@@ -314,6 +316,7 @@ public sealed class EvidenceGraph
     {
         var json = JsonSerializer.Serialize(new
         {
+            schema_version = LogAnalyzer.Dfir.IO.SchemaVersions.Graph,
             CaseId = caseId,
             Entities = _entities.Values.OrderBy(e => e.Id, StringComparer.Ordinal),
             Relationships = _relationships.Select(r => new

@@ -62,6 +62,7 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="85"/>
                         <DataGridTextColumn Header="Clasificare" Binding="{Binding Classification, Converter={x:Static local:ClassificationWordingConverter.Instance}}" Width="100"/>
+                        <DataGridTextColumn Header="Stare" Binding="{Binding Status, Converter={x:Static local:StandardStateLabelConverter.Instance}}" Width="110"/>
                         <DataGridTextColumn Header="Prima (UTC)" Binding="{Binding FirstSeenUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="120"/>
                         <DataGridTextColumn Header="Regulă" Binding="{Binding RuleId}" Width="170"/>
                         <DataGridTextColumn Header="Constatare" Binding="{Binding Title}" Width="2*"/>

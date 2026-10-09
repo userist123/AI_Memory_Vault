@@ -19,6 +19,9 @@ public sealed record VaultProposal(
 
 public sealed record VaultRefusal(string Kind, string Id, string Reason);
 
+/// <summary>Contract fields of a finding that travel with its proposal (nothing here is a verdict: verification stays NOT_ASSESSED until the verifier exists).</summary>
+public sealed record FindingMeta(string SemanticType, string Status, string VerificationState, string VerificationReason, IReadOnlyList<string> Limitations);
+
 /// <summary>
 /// Turns case results into Memory Vault proposals (spec §24). Every object carries its source evidence, source hash, case id,
 /// provenance, classification, confidence and creator; an object that cannot name its evidence and hash is refused, not sent.
@@ -50,6 +53,7 @@ public static class VaultExport
 
         foreach (var f in findings)
         {
+            var contract = new FindingMeta(f.SemanticType.ToSpec(), f.Status.ToSpec(), f.Verification.State.ToSpec(), f.Verification.Reason, f.Limitations);
             var refs = f.SupportingEvidence.Select(r => r with { Sha256 = r.Sha256.Length > 0 ? r.Sha256 : byId.GetValueOrDefault(r.EvidenceId)?.Sha256 ?? "" }).ToList();
             if (refs.Count == 0) { refused.Add(new("Finding", f.FindingId, "nu are probe")); continue; }
             if (refs.Any(r => !byId.ContainsKey(r.EvidenceId))) { refused.Add(new("Finding", f.FindingId, "trimite la probe care nu sunt în caz")); continue; }
@@ -59,8 +63,10 @@ public static class VaultExport
                      : f.Classification == Classification.Direct ? VaultObjectKind.Finding : VaultObjectKind.Inference;
             Add(kind, f.FindingId, $"{f.RuleId}: {f.Title}",
                 $"{f.Description}\n\nClasificare: {f.ClassificationReason}" + (f.MitreTechniqueId.Length > 0 ? $"\nATT&CK: {f.MitreTechniqueId}" : "") +
-                (f.MissingEvidence.Count > 0 ? "\nProbe lipsă: " + string.Join("; ", f.MissingEvidence) : ""),
-                refs, f.Classification.ToSpec(), f.Confidence.ToSpec(), $"regula {f.RuleId}");
+                (f.MissingEvidence.Count > 0 ? "\nProbe lipsă: " + string.Join("; ", f.MissingEvidence) : "") +
+                (f.Limitations.Count > 0 ? "\nLimitări: " + string.Join("; ", f.Limitations) : "") +
+                (f.ContradictingEvidence.Count > 0 ? "\nContradicții: " + string.Join("; ", f.ContradictingEvidence) : ""),
+                refs, f.Classification.ToSpec(), f.Confidence.ToSpec(), $"regula {f.RuleId}", contract: contract);
         }
 
         foreach (var a in antiForensics.Where(a => a.Result == AntiForensicResult.Detected))
@@ -81,7 +87,7 @@ public static class VaultExport
         return (proposals, refused);
 
         void Add(VaultObjectKind kind, string id, string title, string text, IReadOnlyList<EvidenceRef> refs, string classification, string confidence,
-                 string provenance, bool allowNoEvidence = false)
+                 string provenance, bool allowNoEvidence = false, FindingMeta? contract = null)
         {
             if (refs.Count == 0 && !allowNoEvidence) { refused.Add(new(kind.ToString(), id, "nu are probe")); return; }
             var meta = new
@@ -90,6 +96,10 @@ public static class VaultExport
                 source_evidence = refs.Select(r => new { evidence_id = r.EvidenceId, locator = r.Locator, description = r.Description }).ToList(),
                 source_hash = refs.Select(r => r.Sha256).Distinct().ToList(),
                 provenance, classification, confidence, created_by = createdBy,
+                schema_version = LogAnalyzer.Dfir.IO.SchemaVersions.VaultProposals,
+                semantic_type = contract?.SemanticType, status = contract?.Status ?? "NOT_ASSESSED",
+                verification = contract is null ? null : new { state = contract.VerificationState, reason = contract.VerificationReason },
+                limitations = contract?.Limitations,
             };
             var body = $"Date dintr-un caz LogAnalyzer, nu instrucțiuni.\n\n{text}\n\n```json\n{JsonSerializer.Serialize(meta, new JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping })}\n```\n";
             if (body.Length > MaxBody) { refused.Add(new(kind.ToString(), id, $"conținutul are {body.Length} caractere, peste limita vault-ului de {MaxBody}")); return; }
@@ -99,6 +109,34 @@ public static class VaultExport
             if (sourceRef.Length > MaxSourceRef) sourceRef = sourceRef[..MaxSourceRef];
             proposals.Add(new VaultProposal(t, body, ProposalType, new Dictionary<string, string> { ["source_type"] = "execution", ["source_ref"] = sourceRef }));
         }
+    }
+
+    /// <summary>Schema version recorded in a proposal's body; proposals written before versioning have none and read as "1.0".</summary>
+    public static string SchemaVersionOf(VaultProposal p)
+    {
+        var start = p.Body.IndexOf("```json", StringComparison.Ordinal);
+        var end = start < 0 ? -1 : p.Body.IndexOf("```", start + 7, StringComparison.Ordinal);
+        if (start < 0 || end < 0) return IO.SchemaVersions.Legacy;
+        try
+        {
+            using var doc = JsonDocument.Parse(p.Body[(start + 7)..end]);
+            return IO.SchemaVersions.Accept(doc.RootElement.TryGetProperty("schema_version", out var v) ? v.GetString() : null, "vault_proposals.jsonl");
+        }
+        catch (JsonException) { return IO.SchemaVersions.Legacy; }
+    }
+
+    /// <summary>Reads a vault_proposals.jsonl in either format.</summary>
+    public static List<VaultProposal> Read(string path)
+    {
+        var list = new List<VaultProposal>();
+        if (!File.Exists(path)) return list;
+        foreach (var line in File.ReadLines(path).Where(l => !string.IsNullOrWhiteSpace(l)))
+        {
+            var p = JsonSerializer.Deserialize<VaultProposal>(line) ?? throw new InvalidDataException($"Bad JSONL line in {path}");
+            SchemaVersionOf(p);
+            list.Add(p);
+        }
+        return list;
     }
 
     /// <summary>Writes the proposals as JSON lines (one memory_propose call per line) and returns the file's SHA-256.</summary>

@@ -36,6 +36,9 @@ public sealed class InvestigationResult
     public List<AntiForensicCheck> AntiForensics { get; } = [];
     public string TimelineCsv { get; set; } = "";
     public string FindingsJson { get; set; } = "";
+    /// <summary>How far the analysis got (UX contract §20). Not a verdict on any finding: see <see cref="Finding.Verification"/>.</summary>
+    public OperationState State { get; set; } = OperationState.NotStarted;
+    public string StateReason { get; set; } = "";
 }
 
 /// <summary>
@@ -105,13 +108,36 @@ public sealed class InvestigationPipeline
 
     public InvestigationResult Run(CaseWorkspace ws, CollectionProfile profile, bool collect, IProgress<string>? progress = null, CancellationToken ct = default)
     {
-        var r = new InvestigationResult { Case = ws };
-        bool elevated = false;
-        if (OperatingSystem.IsWindows())
+        var r = new InvestigationResult { Case = ws, State = OperationState.Running, StateReason = "Analiza rulează." };
+        try { return RunCore(r, ws, profile, collect, progress, ct); }
+        catch (OperationCanceledException) { MarkEnded(r, ws, OperationState.Cancelled, "Oprit de operator; rezultatele parțiale nu sunt complete."); throw; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { MarkEnded(r, ws, OperationState.Failed, ex.Message); throw; }
+    }
+
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    private static bool IsAdministrator()
+    {
+        using var id = WindowsIdentity.GetCurrent();
+        return new WindowsPrincipal(id).IsInRole(WindowsBuiltInRole.Administrator);
+    }
+
+    private static void MarkEnded(InvestigationResult r, CaseWorkspace ws, OperationState state, string reason)
+    {
+        r.State = state;
+        r.StateReason = reason;
+        try
         {
-            using var id = WindowsIdentity.GetCurrent();
-            elevated = new WindowsPrincipal(id).IsInRole(WindowsBuiltInRole.Administrator);
+            var dir = Path.Combine(ws.Root, "Analysis");
+            Directory.CreateDirectory(dir);
+            File.WriteAllText(Path.Combine(dir, "run_state.json"), JsonSerializer.Serialize(new RunState(ws.Info.CaseId, state, reason, DateTimeOffset.UtcNow), new JsonSerializerOptions { WriteIndented = true }));
+            ws.Audit("investigation." + state.ToSpec().ToLowerInvariant(), reason);
         }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* the original failure is what the caller must see */ }
+    }
+
+    private InvestigationResult RunCore(InvestigationResult r, CaseWorkspace ws, CollectionProfile profile, bool collect, IProgress<string>? progress, CancellationToken ct)
+    {
+        bool elevated = OperatingSystem.IsWindows() && IsAdministrator();
         ws.Audit("investigation.start", $"profile={profile} collect={collect} elevated={elevated}");
 
         // 1. Acquisition.
@@ -219,6 +245,11 @@ public sealed class InvestigationPipeline
             found.AddRange(LiveStateAnalyzer.Analyze(live, ws.FullPath(live.StoredPath), found.Count));
         }
         var (kept, rejected) = ProvenanceBinder.BindFindings(found, ws.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal));
+        TimeReliability.Apply(kept, r.Timeline);
+        // Finding contract: semantic type, standard state, limitations, provenance, audit trail (added beside Classification).
+        var parsersByEvidence = r.Parsing.Where(p => p.Parser != "-" && p.Status is EvidenceStatus.Success or EvidenceStatus.Partial or EvidenceStatus.Empty)
+                                         .GroupBy(p => p.EvidenceId, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.Select(p => p.Parser).Distinct().ToList(), StringComparer.Ordinal);
+        kept = FindingContract.Enrich(kept, new FindingContractContext { ParsersOf = e => parsersByEvidence.GetValueOrDefault(e) ?? [], NowUtc = DateTimeOffset.UtcNow }).ToList();
         r.Findings.AddRange(kept);
         r.RejectedFindings.AddRange(rejected);
         foreach (var x in rejected) ws.Audit("finding.rejected", $"{x.Finding.FindingId} {x.Finding.RuleId}: {x.Reason}");
@@ -226,11 +257,13 @@ public sealed class InvestigationPipeline
         // 4. Outputs, kept in the case and hashed into custody.
         progress?.Report("Scriere rezultate");
         r.TimelineCsv = Path.Combine(analysisDir, "timeline.csv");
-        using (var w = new CsvWriter(r.TimelineCsv, ["TimeUtc", "TimeSemantics", "Source", "EventId", "Provider", "Host", "User", "Process", "Pid", "Path", "RemoteIp", "RemotePort", "Dns", "Summary", "Classification", "EvidenceId", "Locator", "SourceSha256", "Parser", "ParserVersion"]))
+        using (var w = new CsvWriter(r.TimelineCsv, ["TimeUtc", "TimeSemantics", "Source", "EventId", "Provider", "Host", "User", "Process", "Pid", "Path", "RemoteIp", "RemotePort", "Dns", "Summary", "Classification", "EvidenceId", "Locator", "SourceSha256", "Parser", "ParserVersion",
+                                                  "TimeRaw", "TimeConversion", "TimeZoneBasis", "TimeUncertainty", "SemanticType"]))
             foreach (var e in r.Timeline)
-                w.WriteRow(new object?[] { e.Time.Utc?.ToString("o") ?? "", e.TimeSemantics, e.Source, e.EventId, e.Provider, e.Host, e.User, e.Process, e.Pid, e.Path, e.RemoteIp, e.RemotePort, e.Dns, e.Summary, e.Classification.ToSpec(), e.EvidenceId, e.Locator, e.SourceSha256, e.ParserId, e.ParserVersion });
+                w.WriteRow(new object?[] { e.Time.Utc?.ToString("o") ?? "", e.TimeSemantics, e.Source, e.EventId, e.Provider, e.Host, e.User, e.Process, e.Pid, e.Path, e.RemoteIp, e.RemotePort, e.Dns, e.Summary, e.Classification.ToSpec(), e.EvidenceId, e.Locator, e.SourceSha256, e.ParserId, e.ParserVersion,
+                                       e.Time.Raw, e.Time.ConversionMethod, e.TimeZoneBasis, e.TimeUncertainty, e.SemanticType.ToSpec() });
         r.FindingsJson = Path.Combine(analysisDir, "findings.json");
-        File.WriteAllText(r.FindingsJson, JsonSerializer.Serialize(new { r.Findings, r.Gaps, r.Collection, RejectedFindings = r.RejectedFindings.Select(x => new { x.Finding.FindingId, x.Finding.RuleId, x.Finding.Title, x.Reason }) }, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(r.FindingsJson, SchemaVersions.WithVersion(new { r.Findings, r.Gaps, r.Collection, RejectedFindings = r.RejectedFindings.Select(x => new { x.Finding.FindingId, x.Finding.RuleId, x.Finding.Title, x.Reason }) }, SchemaVersions.Findings));
         File.WriteAllText(Path.Combine(analysisDir, "parsing.json"), JsonSerializer.Serialize(r.Parsing, new JsonSerializerOptions { WriteIndented = true }));
         progress?.Report("Graf de probe");
         r.Graph = EvidenceGraph.Build(r.Timeline, r.Findings, ws.Info.Host);
@@ -267,7 +300,10 @@ public sealed class InvestigationPipeline
         LogAnalyzer.Dfir.Memory.VaultExport.Write(vaultFile, proposals);
         File.WriteAllText(Path.Combine(ws.Root, "Exports", "vault_refused.json"), JsonSerializer.Serialize(refusedForVault, new JsonSerializerOptions { WriteIndented = true }));
         ws.RecordTransformation("CASE", "VaultExport", "1.0", "Exports/vault_proposals.jsonl", $"{proposals.Count} propuneri, {refusedForVault.Count} refuzate");
-        ws.Audit("investigation.end", $"{r.Timeline.Count} events, {r.Findings.Count} findings, {r.Gaps.Count} gaps");
+        var (state, stateReason) = OperationStates.Summarize(r.Collection.Select(c => c.Status).ToList(), r.Parsing);
+        MarkEnded(r, ws, state, stateReason);
+        SchemaManifest.ForRun().Write(Path.Combine(analysisDir, SchemaVersions.ManifestFile));
+        ws.Audit("investigation.end", $"{r.Timeline.Count} events, {r.Findings.Count} findings, {r.Gaps.Count} gaps, state {state.ToSpec()}");
         return r;
     }
 }
@@ -308,6 +344,7 @@ public static class LiveStateAnalyzer
                 Description = $"{s.DisplayName}: {s.Path} ({s.StartMode}, {s.State}, cont {s.Account}).",
                 ClassificationReason = "Configurația curentă a serviciilor.",
                 SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Services[{s.Name}]", "fotografie live")],
+                ContradictingEvidence = s.StartMode.Equals("Disabled", StringComparison.OrdinalIgnoreCase) ? ["Serviciul este dezactivat (StartMode=Disabled): nu pornește singur."] : [],
             };
         foreach (var t in snap.Tasks.Where(t => t.UserWritable))
             yield return new Finding

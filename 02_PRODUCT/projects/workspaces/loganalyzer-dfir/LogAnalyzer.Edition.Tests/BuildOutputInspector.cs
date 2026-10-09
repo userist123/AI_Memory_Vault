@@ -28,6 +28,8 @@ public static class BuildOutputInspector
     {
         using var fs = File.OpenRead(path);
         using var pe = new PEReader(fs);
+        // A native PE (apphost .exe, native dll) has no metadata; callers skip it via BadImageFormatException.
+        if (!pe.HasMetadata) throw new BadImageFormatException("not a managed assembly", path);
         var md = pe.GetMetadataReader();
         string Name(StringHandle h) => md.GetString(h);
 

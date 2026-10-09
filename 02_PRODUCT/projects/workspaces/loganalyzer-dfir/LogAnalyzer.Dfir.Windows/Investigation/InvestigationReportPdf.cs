@@ -68,11 +68,15 @@ public static class InvestigationReportPdf
                         cc.Item().Text($"{f.FindingId} · {f.Title}").Bold();
                         cc.Item().Text($"{f.Severity.ToSpec()} · {f.Classification.ToSpec()} · încredere {f.Confidence.ToSpec()} · {f.Category}{(f.MitreTechniqueId.Length > 0 ? " · MITRE " + f.MitreTechniqueId : "")} · {L(f.FirstSeenUtc)} – {L(f.LastSeenUtc)}")
                             .FontSize(7.5f).FontColor(Muted);
+                        cc.Item().Text($"Stare: {LogAnalyzer.Dfir.Analysis.StateLabels.Romanian(f.Status)} ({f.Status.ToSpec()}) · tip: {f.SemanticType.ToSpec()} · verificare independentă: {LogAnalyzer.Dfir.Analysis.StateLabels.Romanian(f.Verification.State)}")
+                            .FontSize(7.5f).FontColor(Muted);
                         cc.Item().Text(f.Description);
                         if (f.ClassificationReason.Length > 0) cc.Item().Text("De ce: " + f.ClassificationReason).FontSize(7.5f);
                         foreach (var e in f.SupportingEvidence.Take(8)) cc.Item().Text($"Probă {e.EvidenceId} (SHA-256 {Short(e.Sha256)}) · {e.Locator} · {e.Description}").FontSize(7).FontColor(Muted);
                         foreach (var a in f.AlternativeExplanations) cc.Item().Text("Alternativă: " + a).FontSize(7).Italic();
                         foreach (var m in f.MissingEvidence) cc.Item().Text("Lipsește: " + m).FontSize(7).Italic();
+                        foreach (var c in f.ContradictingEvidence) cc.Item().Text("Contrazice: " + c).FontSize(7).Italic().FontColor("#92400e");
+                        foreach (var l in f.Limitations.Take(6)) cc.Item().Text("Limită: " + l).FontSize(7).Italic().FontColor(Muted);
                     });
 
                 col.Item().Text("3. Probe colectate și parsate").Bold().FontSize(11).FontColor(Ink);

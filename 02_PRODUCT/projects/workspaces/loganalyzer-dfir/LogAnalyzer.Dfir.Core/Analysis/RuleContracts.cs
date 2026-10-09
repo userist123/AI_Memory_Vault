@@ -1,0 +1,163 @@
+using LogAnalyzer.Dfir.Model;
+
+namespace LogAnalyzer.Dfir.Analysis;
+
+/// <summary>
+/// Contract data for one finding rule: what kind of claim it makes, its plain-language meaning, the limits of the method,
+/// the evidence it cannot see and the next steps. <see cref="ContradictionCheck"/> names the contradiction test the rule
+/// really performs; null means the rule does not test for contradicting evidence (said so in the finding's Limitations).
+/// </summary>
+public sealed record RuleContract(
+    string RuleId, string Producer, Func<Finding, SemanticType> Semantic, string Meaning,
+    IReadOnlyList<string> Limitations, IReadOnlyList<string> MissingEvidence, IReadOnlyList<string> NextSteps, string? ContradictionCheck = null)
+{
+    public const string RuleVersion = "1.0";
+}
+
+public static class RuleContracts
+{
+    private const string Corr = "LogAnalyzer.Dfir.Analysis.Correlation";
+    private const string Live = "LogAnalyzer.Dfir.Windows.Investigation.LiveStateAnalyzer";
+    private const string Cont = "LogAnalyzer.Dfir.Windows.Containment.ProcessContainmentService";
+
+    private static RuleContract R(string id, string producer, SemanticType t, string meaning, string[] limits, string[] missing, string[] steps, string? contra = null) =>
+        new(id, producer, _ => t, meaning, limits, missing, steps, contra);
+
+    private static RuleContract RF(string id, string producer, Func<Finding, SemanticType> t, string meaning, string[] limits, string[] missing, string[] steps, string? contra = null) =>
+        new(id, producer, t, meaning, limits, missing, steps, contra);
+
+    public static IReadOnlyList<RuleContract> All { get; } =
+    [
+        R("DEF-DETECTION", Corr, SemanticType.Observation, "Antivirusul Windows a înregistrat o detecție; asta nu arată că programul a rulat.",
+            ["O detecție de către Defender nu dovedește execuția și nu exclude fals-pozitive."],
+            ["Dacă fișierul a rulat înainte de detecție (Prefetch, BAM, EVTX 4688).", "Rezultatul remedierii (curățat/pus în carantină)."],
+            ["Verificați dacă fișierul mai există și dacă rulează.", "Căutați același hash pe alte stații."]),
+        R("DEF-TAMPER", Corr, SemanticType.Configuration, "Jurnalul Defender arată protecție dezactivată sau excluderi adăugate.",
+            ["Arată o schimbare de configurație, nu cine a făcut-o și nici dacă a fost abuzată."],
+            ["Contul și procesul care au modificat setarea.", "Starea actuală a protecției."],
+            ["Stabiliți cine a modificat setarea (Security 4688/4657) și dacă excluderea are justificare."]),
+        R("LOG-TAMPER", Corr, SemanticType.Observation, "Windows a înregistrat ștergerea unui jurnal, oprirea jurnalizării sau schimbarea politicii de audit.",
+            ["Ștergerea e dovedită; intenția rău-voitoare nu este (mentenanța o produce și ea).", "Activitatea dinaintea ștergerii nu mai e în jurnalul respectiv."],
+            ["Activitatea anterioară ștergerii (SRUM, Prefetch, Amcache, copii VSS)."],
+            ["Cereți ticketul de mentenanță, dacă există.", "Căutați copii ale jurnalului (VSS, SIEM, export)."]),
+        R("LOG-GAP", Corr, SemanticType.Inference, "Numerele de înregistrare au goluri mari; asta sugerează ștergere selectivă, nu o dovedește.",
+            ["Deducție din numerotare; golurile apar și la corupere sau la export parțial."],
+            ["Un export complet al jurnalului sau o copie VSS pentru comparație."],
+            ["Comparați cu o copie a jurnalului din altă sursă.", "Verificați integritatea fișierului EVTX."]),
+        R("PERSIST-SERVICE-USERPATH", Corr, SemanticType.Configuration, "Un serviciu a fost instalat cu binarul într-o locație scriabilă de utilizatori.",
+            ["Instalarea nu înseamnă că serviciul a pornit sau a făcut ceva.", "Locațiile scriabile sunt folosite și de software legitim."],
+            ["Pornirile serviciului (System 7036), Prefetch pentru binar, semnătura binarului."],
+            ["Verificați semnătura și hash-ul binarului.", "Verificați cine a instalat serviciul (cont din eveniment)."]),
+        R("PERSIST-TASK", Corr, SemanticType.Configuration, "A fost creat un task programat care indică o locație scriabilă sau un script.",
+            ["Crearea nu înseamnă că taskul a rulat."],
+            ["Rulările taskului (TaskScheduler 200/201) și Prefetch pentru executabil."],
+            ["Verificați acțiunea completă a taskului și contul care l-a creat."]),
+        R("PERSIST-TASK-CONFIG", Corr, SemanticType.Configuration, "Definiția unui task programat arată o acțiune dintr-o locație scriabilă.",
+            ["Arată configurația, nu o rulare.", "Autorul și data de înregistrare sunt scrise de creator."],
+            ["Rulările taskului (TaskScheduler 200/201) sau Prefetch pentru executabil."],
+            ["Căutați rulări ale taskului în jurnale.", "Verificați semnătura executabilului."], "taskul este dezactivat (Settings/Enabled=false)"),
+        R("PERSIST-SERVICE-CONFIG", Corr, SemanticType.Configuration, "Un serviciu din hive-ul SYSTEM are binarul sau ServiceDll într-o locație scriabilă.",
+            ["Arată configurația, nu o pornire sau o instalare la o anumită dată."],
+            ["Instalarea (System 7045), pornirile (7036), semnătura binarului."],
+            ["Verificați binarul (hash, semnătură) și evenimentele de instalare."], "serviciul este dezactivat (Start=4)"),
+        R("FIREWALL-RULE-USERPATH", Corr, SemanticType.Configuration, "O regulă de firewall permite un program dintr-o locație scriabilă.",
+            ["Arată o regulă, nu trafic efectiv.", "Aplicațiile per utilizator își adaugă astfel de reguli la instalare."],
+            ["Trafic efectiv al programului (firewall 5156, SRUM)."],
+            ["Verificați programul și dacă regula mai există."]),
+        R("PERSIST-RUNKEY-USERPATH", Corr, SemanticType.Configuration, "O cheie Run/RunOnce pornește un program dintr-o locație scriabilă.",
+            ["Arată configurația; ora este a cheii, nu a valorii.", "Multe aplicații legitime per utilizator se pornesc așa."],
+            ["Dovada că intrarea a rulat (Prefetch, BAM)."],
+            ["Verificați programul indicat (hash, semnătură)."]),
+        R("PERSIST-IFEO-DEBUGGER", Corr, SemanticType.Configuration, "Image File Execution Options redirecționează pornirea unui program către alt program.",
+            ["Arată configurația, nu o redirecționare efectivă."],
+            ["Dovada că programul țintă a fost pornit prin redirecționare (Prefetch)."],
+            ["Verificați dacă depanatorul este instalat intenționat."]),
+        R("PERSIST-WINLOGON", Corr, SemanticType.Configuration, "Shell sau Userinit din Winlogon diferă de valoarea implicită.",
+            ["Arată configurația, nu o rulare."],
+            ["Dovada că programul a pornit la autentificare (Prefetch)."],
+            ["Verificați valoarea față de configurația standard a stației."]),
+        R("EXEC-USERPATH", Corr, SemanticType.Execution, "Programe au rulat din locații scriabile; singure, sunt frecvente pentru instalatoare și aplicații per utilizator.",
+            ["Execuția provine din Prefetch/BAM; intrările Amcache arată doar prezența.", "Locația scriabilă nu face programul rău-intenționat."],
+            ["Semnătura și hash-ul programului, originea lui (descărcare)."],
+            ["Verificați semnătura și originea celor mai recente programe."]),
+        R("EXEC-SCRIPT-VIA-LOLBIN", Corr, SemanticType.Execution, "Un instrument Windows frecvent abuzat a rulat și a referit scripturi din locații scriabile.",
+            ["Fișierele referite în Prefetch nu dovedesc că scripturile au fost executate sau ce conțineau."],
+            ["Conținutul scriptului (PowerShell 4104), linia de comandă (4688)."],
+            ["Recuperați scriptul și analizați-l.", "Căutați linia de comandă în jurnale."]),
+        R("EXEC-USERPATH-CORRELATED", Corr, SemanticType.Correlation, "Un program rulat din locație scriabilă apare lângă alte constatări grave, în timp sau în cale.",
+            ["Apropierea în timp sau în cale nu dovedește legătura cauzală dintre constatări."],
+            ["Dovada directă a legăturii (proces părinte, linie de comandă)."],
+            ["Reconstituiți relația proces-părinte/copil din jurnale."]),
+        RF("NET-LOLBIN-TRAFFIC", Corr, f => f.Classification == Classification.Correlated ? SemanticType.Correlation : SemanticType.Inference,
+            "O unealtă Windows abuzată frecvent a transferat volume mari prin rețea (SRUM).",
+            ["SRUM arată volume pe interval orar, nu destinații sau conținut.", "Corelarea cu Prefetch arată că programul a rulat, nu că traficul a fost malițios."],
+            ["Destinațiile traficului (captură de rețea, jurnale firewall/proxy)."],
+            ["Obțineți destinațiile din firewall/proxy/PCAP.", "Verificați dacă transferul corespunde unei activități legitime."]),
+        RF("NET-USERPATH-UPLOAD", Corr, f => f.Classification == Classification.Correlated ? SemanticType.Correlation : SemanticType.Inference,
+            "Un program din locație scriabilă a trimis volum mare de date (SRUM).",
+            ["SRUM arată volume pe interval orar, nu destinații sau conținut.", "Sincronizarea în cloud legitimă produce același tipar."],
+            ["Destinațiile traficului (captură de rețea, jurnale firewall/proxy)."],
+            ["Obțineți destinațiile din firewall/proxy/PCAP.", "Verificați programul (semnătură, origine)."]),
+        R("CRED-BRUTEFORCE", Corr, SemanticType.Observation, "Au fost înregistrate multe autentificări eșuate pentru același cont și adresă.",
+            ["Nu arată dacă o autentificare ulterioară a reușit sau dacă atacul a avut succes."],
+            ["Autentificări reușite ulterioare (4624) de la aceeași adresă."],
+            ["Verificați 4624 de la aceeași adresă după serie.", "Blocați sau monitorizați adresa dacă e externă."]),
+        R("REMOTE-RDP-PUBLIC", Corr, SemanticType.Observation, "Au fost înregistrate autentificări RDP de la adrese publice.",
+            ["Adresa din eveniment poate fi un intermediar; nu identifică persoana."],
+            ["Activitatea din sesiune (procese, fișiere), jurnalele gateway-ului RDP."],
+            ["Confirmați cu utilizatorul legitimitatea accesului.", "Verificați activitatea din sesiunile respective."]),
+        R("PS-SUSPICIOUS", Corr, SemanticType.Inference, "Blocuri PowerShell conțin cuvinte-cheie folosite des în descărcare, obfuscare sau dezactivare a protecției.",
+            ["Potrivire de cuvinte-cheie; instrumentele administrative legitime le folosesc.", "Nu arată rezultatul execuției."],
+            ["Contextul scriptului: cine, de unde, ce a făcut."],
+            ["Citiți scriptul complet.", "Identificați contul și procesul care l-au lansat."]),
+        R("DOWNLOAD-THEN-EXEC", Corr, SemanticType.Correlation, "O descărcare a fost urmată, în 6 ore, de rularea unui program din același folder.",
+            ["Corelație în timp și în cale, nu dovadă că programul rulat este fișierul descărcat."],
+            ["Zone.Identifier al fișierului extras; jurnalul de extragere al arhivei."],
+            ["Comparați hash-ul fișierului descărcat cu cel al programului rulat."]),
+        RF("INCIDENT-CHAIN", Corr, _ => SemanticType.Correlation, "Constatări grave din surse diferite sunt grupate în aceeași fereastră de timp.",
+            ["Gruparea în timp nu demonstrează legătura cauzală dintre pași."],
+            ["Dovada legăturii dintre pași (proces părinte, hash comun)."],
+            ["Reconstituiți fiecare pas din probele indicate.", "Stabiliți ce date au părăsit stația în fereastra lanțului."],
+            "contradicțiile pașilor sunt preluate în lanț"),
+        R("LIVE-UNSIGNED-USERPATH", Live, SemanticType.Execution, "Un proces nesemnat rulează acum dintr-o locație scriabilă (fotografie a stării live).",
+            ["Fotografia arată starea la momentul colectării, nu istoricul.", "Software legitim per utilizator poate fi nesemnat."],
+            ["Istoricul rulărilor (Prefetch, BAM), originea fișierului."],
+            ["Izolați programul pentru scanare completă.", "Verificați hash-ul și originea."]),
+        R("LIVE-UNSIGNED-USERPATH-NET", Live, SemanticType.Execution, "Un proces nesemnat dintr-o locație scriabilă rulează acum și are conexiuni în Internet.",
+            ["Conexiunile sunt cele din momentul colectării; scopul lor nu e cunoscut."],
+            ["Destinațiile în timp (firewall, PCAP), istoricul rulărilor."],
+            ["Izolați programul pentru scanare completă.", "Obțineți istoricul conexiunilor."]),
+        R("LIVE-SERVICE-USERPATH", Live, SemanticType.Configuration, "Un serviciu este configurat acum cu binarul într-o locație scriabilă.",
+            ["Arată configurația curentă, nu istoricul instalării."],
+            ["Evenimentele de instalare și pornire, semnătura binarului."],
+            ["Verificați binarul și evenimentele de instalare."], "serviciul este dezactivat (StartMode=Disabled)"),
+        R("LIVE-TASK-USERPATH", Live, SemanticType.Configuration, "Un task programat actual rulează o comandă dintr-o locație scriabilă.",
+            ["Arată configurația curentă, nu o rulare."],
+            ["Rulările taskului (TaskScheduler 200/201)."],
+            ["Verificați comanda și contul taskului."]),
+        R("LIVE-AUTORUN-USERPATH", Live, SemanticType.Configuration, "O cheie Run actuală pornește un program dintr-o locație scriabilă.",
+            ["Arată configurația curentă; multe aplicații legitime per utilizator procedează la fel."],
+            ["Dovada că intrarea a rulat (Prefetch, BAM)."],
+            ["Verificați programul indicat."]),
+        R("CONTAIN-SUSPICIOUS-PROGRAM", Cont, SemanticType.Observation, "Scanarea unui program izolat a găsit motive de suspiciune (semnătură, locație, conexiuni, persistență).",
+            ["Motivele sunt observații la momentul scanării; nu dovedesc intenția.", "Software legitim nesemnat declanșează aceleași motive."],
+            ["Istoricul programului, originea lui, rezultate ale altor scanere."],
+            ["Verificați destinațiile din raport.", "Căutați același SHA-256 pe alte stații."]),
+        R("CONTAIN-BLOCKED-ATTEMPTS", Cont, SemanticType.Observation, "Windows a înregistrat încercări de comunicare blocate după izolarea programului.",
+            ["Arată încercări blocate, nu ce ar fi transmis programul."],
+            ["Destinațiile finale și conținutul intenționat."],
+            ["Analizați destinațiile încercate.", "Păstrați izolarea până la clarificare."]),
+        R("CONTAIN-EXTERNAL-CONNECTIONS", Cont, SemanticType.Observation, "Programul avea conexiuni către Internet la momentul izolării.",
+            ["Tabela TCP e o fotografie; scopul conexiunilor nu e cunoscut."],
+            ["Istoricul conexiunilor și conținutul."],
+            ["Verificați destinațiile.", "Păstrați izolarea până la clarificare."]),
+        R("CONTAIN-PERSISTENCE", Cont, SemanticType.Configuration, "Există intrări de autostart care conțin calea sau numele programului.",
+            ["Arată configurația de autostart, nu o pornire efectivă."],
+            ["Dovada pornirilor trecute."],
+            ["Dezactivați intrările după preluarea probelor, nu înainte."]),
+    ];
+
+    private static readonly Dictionary<string, RuleContract> ById = All.ToDictionary(r => r.RuleId, StringComparer.Ordinal);
+
+    public static RuleContract? For(string ruleId) => ById.GetValueOrDefault(ruleId);
+}
