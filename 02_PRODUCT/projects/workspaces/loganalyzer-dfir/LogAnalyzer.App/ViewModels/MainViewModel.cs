@@ -109,6 +109,9 @@ namespace LogAnalyzer.UI.ViewModels
         public PolicyViewModel Policy { get; }
         /// <summary>"Profil de proceduri" (owner decisions 18, 19): working hours, log maintenance, approved software, expected policy, zones and transfers.</summary>
         public ProcedureProfileViewModel ProcedureProfile { get; }
+        /// <summary>"Registru medii" (decision 16) and "Registru utilizatori" (decision 17): data the operator enters; observed media are compared with them.</summary>
+        public MediaRegisterViewModel MediaRegister { get; }
+        public UsersRegisterViewModel UsersRegister { get; }
 
         // Session / Module Management
         [ObservableProperty] private int _selectedModuleIndex = 0; // 0 for Forensics, 1 for Collection
@@ -560,6 +563,8 @@ namespace LogAnalyzer.UI.ViewModels
             Investigation = new InvestigationViewModel(inv => featureViews.CreateViewModel(FeatureKeys.AiAnalysis, inv));
             Policy = new PolicyViewModel(registryWriter);
             ProcedureProfile = new ProcedureProfileViewModel();
+            MediaRegister = new MediaRegisterViewModel();
+            UsersRegister = new UsersRegisterViewModel();
             _eventParser = eventParser;
             _analysisEngine = analysisEngine;
             _registryParser = registryParser;

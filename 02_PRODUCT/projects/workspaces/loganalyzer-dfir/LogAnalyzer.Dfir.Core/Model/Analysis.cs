@@ -98,9 +98,24 @@ public sealed class Finding
     public string SummaryKey { get; set; } = "";
     public string HumanSummary { get; set; } = "";
     public string TechnicalSummary { get; set; } = "";
+    /// <summary>Air-gap integrity detail (WP14a): channel, authorised?, observed, when, who, object, classification, transfer direction, destination, evidence. Null for every other finding.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public AirGapDetail? AirGap { get; set; }
     /// <summary>The contract's Contradictions[] is <see cref="ContradictingEvidence"/> (same list, contract name).</summary>
     [JsonIgnore] public List<string> Contradictions => ContradictingEvidence;
 }
+
+/// <summary>Whether a channel / destination is approved by the procedure profile (decision 19). Without a profile section it is Undefined, never "authorised".</summary>
+[JsonConverter(typeof(SpecEnumConverter<AirGapAuthorization>))]
+public enum AirGapAuthorization { Authorized, NotAuthorized, Undefined }
+
+/// <summary>
+/// What an AIR-GAP INTEGRITY finding carries (lessons-learned rows 50 and 103): <see cref="Subcategory"/> (one of the 19), the channel, whether the profile
+/// authorises it, what was observed, when, who, the object, the classification (case and register), the transfer direction, the destination and the evidence.
+/// A field the sources do not give says so in words ("necunoscut: ...") instead of being left to look like a "no".
+/// </summary>
+public sealed record AirGapDetail(
+    string Subcategory, string Channel, AirGapAuthorization Authorized, string AuthorizedBasis, string Observed, DateTimeOffset? WhenUtc, string Who,
+    string ObjectName, string CaseClassification, string RegisterClassification, string TransferDirection, string Destination, IReadOnlyList<string> Evidence);
 
 /// <summary>Evidence gap (spec §48, §67). "Not available" never means "did not happen".</summary>
 public sealed record EvidenceGap(string Artifact, EvidenceStatus Status, string Reason, string Impact, string AlternativeSource, string Recoverability, string Notes = "");

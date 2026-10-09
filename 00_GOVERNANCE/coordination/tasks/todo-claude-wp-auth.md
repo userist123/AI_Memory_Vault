@@ -2,8 +2,10 @@
 
 - **Task:** queue item 6b of `00_GOVERNANCE/coordination/projects/LOGANALYZER_DFIR/STAGE2_PLAN.md`; owner decision 33 and
   decision 17 in `docs/dfir/CONTRACT_AUDIT_STAGE1.md` §8.
-- **Branch:** `loganalyzer/wp-auth-smartcard`, from main @ `bc567d66`. It already carries decision 33 and the queue entry.
-  **Start implementing only after WP14a merges** (it adds the users register this builds on); merge main first.
+- **Branch:** `loganalyzer/wp-auth-smartcard`. It already carries decision 33 and the queue entry. Main (with WP14a, #246) is merged in
+  @ `2cd0049d`. Build on WP14a: `LogAnalyzer.Dfir.Core/Registers/UsersRegister.cs`, `RegisterIo.cs`, `RegisterCommon.cs`,
+  the register audit chain, and the App `RegisterViewModel` / `RegisterView` (its edit banner says authentication is missing; replace it with
+  the real role gate).
 
 Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 
@@ -80,12 +82,13 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 - Security gates are fixed only through their documented exception mechanism, never by obfuscation.
 
 ## Done
+- 2026-10-09T13:25Z claude-orchestrator: WP14a merged (#246); main merged into this branch.
 - 2026-10-09T12:30Z claude-orchestrator: owner decision 33 recorded; queue entry 6b; spec written; branch created.
 - 2026-10-09T12:45Z claude-orchestrator: owner correction: contact card in the keyboard slot (not contactless); primary admin may
   always use account + password. Decision 33 and this spec updated.
 
 ## Next
-- After WP14a merges: merge main, implement 1-9.
+- Implement 1-9 (WP14a merged, main merged in).
 
 ## Blockers / owner questions
 - Missing-CRL policy: default refuse (classified) / warn (unclassified). To be confirmed by the owner.

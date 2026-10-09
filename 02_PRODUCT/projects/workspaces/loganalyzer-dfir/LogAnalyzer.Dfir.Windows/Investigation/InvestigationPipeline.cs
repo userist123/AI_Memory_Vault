@@ -10,6 +10,7 @@ using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Network;
 using LogAnalyzer.Dfir.Parsing;
 using LogAnalyzer.Dfir.Profile;
+using LogAnalyzer.Dfir.Registers;
 using LogAnalyzer.Dfir.Windows.Acquisition;
 using LogAnalyzer.Dfir.Windows.Parsers;
 using LogAnalyzer.Verification;
@@ -43,6 +44,11 @@ public sealed class InvestigationResult
     public string PolicyTimelineLine => PolicyTimeline is null ? "Cronologie politici: nedefinit (nu a fost calculată)."
         : $"Cronologie politici: {PolicyTimeline.Changes.Count} modificări de politică, {PolicyTimeline.Applications.Count} înregistrări de aplicare GroupPolicy, {PolicyTimeline.Gaps.Count} decalaje de control, {PolicyTimeline.TimeWindows.Count} ferestre de oră nesigură."
           + (PolicyTimeline.ExpectedNote.Length > 0 ? " Politica așteptată: nedefinit." : "");
+    /// <summary>WP14a: SHA-256 of the copies of the media / users registers in the case ("" = register not defined, nothing copied).</summary>
+    public string MediaRegisterSha256 { get; set; } = "";
+    public string UsersRegisterSha256 { get; set; } = "";
+    /// <summary>What the report says about the registers: each defined (with the SHA-256 of its copy) or "nedefinit" (never "conform").</summary>
+    public string RegisterLine { get; set; } = "Registre: nedefinit (nu au fost folosite).";
     public string ProcedureProfileSha256 { get; set; } = "";
     /// <summary>What the report says about the profile: each section defined or "nedefinit" (never "conform"), and the SHA-256 of the copy in the case.</summary>
     public string ProcedureProfileLine => "Profil de proceduri: " + (Procedure is null ? "niciun profil (toate secțiunile nedefinite)" : LogAnalyzer.Dfir.Profile.ProfileOps.Describe(Procedure)
@@ -126,12 +132,17 @@ public sealed class InvestigationPipeline
         return null;
     }
 
+    /// <param name="mediaRegister">WP14a: the media register to compare observed media with. When null the register installed on this machine
+    /// (%PROGRAMDATA%\LogAnalyzer\registers) is loaded if there is one; without rows it is "registru nedefinit".</param>
+    /// <param name="usersRegister">WP14a: users and clearances, loaded like the media register.</param>
+    /// <param name="systemZone">WP14a: the zone of the analysed system, as the operator declares it ("" = not declared).</param>
     /// <param name="procedureProfile">The procedure profile to use. When null the profile installed on this machine (%PROGRAMDATA%\LogAnalyzer\profile) is loaded
     /// if there is one; with none, behaviour is exactly as before the profile existed (log clears are NotAssessed).</param>
-    public InvestigationResult Run(CaseWorkspace ws, CollectionProfile profile, bool collect, IProgress<string>? progress = null, CancellationToken ct = default, ProcedureProfile? procedureProfile = null)
+    public InvestigationResult Run(CaseWorkspace ws, CollectionProfile profile, bool collect, IProgress<string>? progress = null, CancellationToken ct = default, ProcedureProfile? procedureProfile = null,
+        MediaRegister? mediaRegister = null, UsersRegister? usersRegister = null, string systemZone = "")
     {
         var r = new InvestigationResult { Case = ws, State = OperationState.Running, StateReason = "Analiza rulează." };
-        try { return RunCore(r, ws, profile, collect, progress, ct, procedureProfile); }
+        try { return RunCore(r, ws, profile, collect, progress, ct, procedureProfile, mediaRegister, usersRegister, systemZone); }
         catch (OperationCanceledException) { MarkEnded(r, ws, OperationState.Cancelled, "Oprit de operator; rezultatele parțiale nu sunt complete."); throw; }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { MarkEnded(r, ws, OperationState.Failed, ex.Message); throw; }
     }
@@ -158,7 +169,8 @@ public sealed class InvestigationPipeline
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* the original failure is what the caller must see */ }
     }
 
-    private InvestigationResult RunCore(InvestigationResult r, CaseWorkspace ws, CollectionProfile profile, bool collect, IProgress<string>? progress, CancellationToken ct, ProcedureProfile? procedureProfile = null)
+    private InvestigationResult RunCore(InvestigationResult r, CaseWorkspace ws, CollectionProfile profile, bool collect, IProgress<string>? progress, CancellationToken ct, ProcedureProfile? procedureProfile = null,
+        MediaRegister? mediaRegister = null, UsersRegister? usersRegister = null, string systemZone = "")
     {
         bool elevated = OperatingSystem.IsWindows() && IsAdministrator();
         ws.Audit("investigation.start", $"profile={profile} collect={collect} elevated={elevated}");
@@ -273,6 +285,12 @@ public sealed class InvestigationPipeline
             maintenance = ProfileSnapshot.MaintenancePolicyFor(procedureProfile, r.Timeline.Where(e => e.Time.Utc is not null).Select(e => e.Time.Utc!.Value), ws.Info.Timezone);
         }
         var found = new List<Finding>(Correlation.Run(r.Timeline, maintenance, procedureProfile));
+        // WP14a: removable media against the media register, CD/DVD, and NIC / Wi-Fi / Bluetooth / DHCP on an air-gapped or standalone scope.
+        progress?.Report("Medii amovibile și integritate air-gap");
+        int wp14No = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n0) ? n0 : 0).DefaultIfEmpty(0).Max();
+        var wp14 = Wp14Analysis.Run(ws, r.Timeline, () => $"F-{++wp14No:D4}", mediaRegister, usersRegister, procedureProfile, systemZone);
+        found.AddRange(wp14.Findings);
+        r.MediaRegisterSha256 = wp14.MediaSha256; r.UsersRegisterSha256 = wp14.UsersSha256; r.RegisterLine = wp14.Line;
         foreach (var live in ws.LoadEvidence().Where(e => e.SourceType == "live_snapshot"))
         {
             var pre = EvidencePreflight.Check(live, ws.FullPath(live.StoredPath));

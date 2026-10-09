@@ -83,9 +83,9 @@ public static class ProfileImport
 
     // ---- minimal RFC 4180 reader (quotes, embedded delimiters / newlines); delimiter = tab, semicolon or comma, whichever the header line uses ----
 
-    private sealed record Record(int Line, List<string> Fields);
+    internal sealed record Record(int Line, List<string> Fields);
 
-    private static List<Record> SplitRecords(string text, out char delimiter)
+    internal static List<Record> SplitRecords(string text, out char delimiter)
     {
         text = text.TrimStart('﻿');
         var firstLine = text.Split('\n', 2)[0];

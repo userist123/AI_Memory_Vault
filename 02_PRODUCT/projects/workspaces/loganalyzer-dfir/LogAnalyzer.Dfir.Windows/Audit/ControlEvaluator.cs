@@ -354,8 +354,17 @@ public static class ControlEvaluator
         foreach (var l in pnp.Where(l => V(l, "ClassName") is "DiskDrive" or "WPD" or "USB"))
             r.Actions.Add(new ActionEntry(l.TimeUtc, Who(l), "dispozitiv extern recunoscut", $"{V(l, "DeviceDescription")} {V(l, "DeviceId")}", Ev(l)));
         var any = f.UsbDevices.Count + partition.Count;
-        Add(r, "D01", "Dispozitive", "Dispozitive de stocare USB folosite pe stație", any == 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
-            $"{f.UsbDevices.Count} dispozitive în istoricul USBSTOR; {partition.Count} conectări înregistrate în perioada controlată.",
+        // Owner decision 24: the absence of observations is never "Conform". With readable sources it is "de verificat" (nothing observed in what was
+        // collected); with an unreadable source it is undetermined.
+        bool usbSourcesKnown = ChannelReadable(f, "Microsoft-Windows-Partition/Diagnostic") && !f.Gaps.Any(g => g.Artifact == "Dispozitive USB (USBSTOR)");
+        var d01Status = any > 0 ? ControlStatus.DeVerificat : usbSourcesKnown ? ControlStatus.DeVerificat : ControlStatus.Nedeterminat;
+        var d01Detail = any > 0
+            ? $"{f.UsbDevices.Count} dispozitive în istoricul USBSTOR; {partition.Count} conectări înregistrate în perioada controlată."
+            : usbSourcesKnown
+                ? "Dispozitive USB: nu s-a observat în sursele colectate (istoricul USBSTOR și jurnalul Partition/Diagnostic); absența observațiilor nu dovedește că nu au fost folosite suporturi (jurnalul are o istorie limitată, iar dispozitivele pot lăsa urme doar în alte surse)."
+                : "Dispozitive USB: nu se poate stabili, deoarece istoricul USBSTOR sau jurnalul Partition/Diagnostic nu a putut fi citit; rulați ca administrator.";
+        Add(r, "D01", "Dispozitive", "Dispozitive de stocare USB folosite pe stație", d01Status,
+            d01Detail,
             f.UsbDevices.Select(u => $"{u.FriendlyName} [{u.Device}] SN {u.Serial}").Concat(partition.Select(l => $"{Ev(l)}: {V(l, "Manufacturer")} {V(l, "Model")} SN {V(l, "SerialNumber")}")),
             "Comparați cu registrul suporturilor aprobate.");
     }
@@ -377,17 +386,21 @@ public static class ControlEvaluator
         {
             bool connected = inPeriod.Count > 0 || evts.Count > 0 || f.ConnectedInterfacesNow.Count > 0;
             Add(r, "N01", "Rețea", "Stația izolată nu s-a conectat la nicio rețea",
-                connected ? ControlStatus.Neconform : profilesKnown && eventsKnown ? ControlStatus.Conform : ControlStatus.Nedeterminat,
+                connected ? ControlStatus.Neconform : profilesKnown && eventsKnown ? ControlStatus.DeVerificat : ControlStatus.Nedeterminat,
                 connected
                     ? $"Conectări în perioada controlată: {inPeriod.Count} profiluri, {evts.Count} evenimente de conectare; interfețe active acum: {f.ConnectedInterfacesNow.Count}."
-                    : "Nicio conectare la rețea în perioada controlată și nicio interfață activă acum.",
+                    : profilesKnown && eventsKnown
+                        ? "Conectare la rețea: nu s-a observat în sursele colectate (profiluri de rețea, NetworkProfile, WLAN-AutoConfig) și nicio interfață activă acum; absența observațiilor nu dovedește că stația nu s-a conectat (istorie limitată a jurnalelor, adaptoare fără urme în aceste surse)."
+                        : "Conectare la rețea: nu se poate stabili, deoarece profilurile de rețea sau jurnalele NetworkProfile / WLAN-AutoConfig nu au putut fi citite.",
                 inPeriod.Select(p => $"{p.Name} ({p.Kind}) ultima conectare {p.LastConnectedLocal:yyyy-MM-dd HH:mm} ora locală")
                         .Concat(evts.Select(l => $"{Ev(l)}: {V(l, "Name")}{V(l, "SSID")}")).Concat(f.ConnectedInterfacesNow.Select(i => "acum: " + i)),
                 "Orice conectare a unei stații izolate trebuie investigată (cine, când, ce s-a transferat).");
         }
         Add(r, "N02", "Rețea", "Rețele cunoscute de stație (istoric)",
-            !profilesKnown ? ControlStatus.Nedeterminat : f.NetworkProfiles.Count == 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
-            !profilesKnown ? "Istoricul rețelelor (registry NetworkList) nu a putut fi citit; rulați ca administrator." : $"{f.NetworkProfiles.Count} profiluri de rețea salvate.",
+            !profilesKnown ? ControlStatus.Nedeterminat : ControlStatus.DeVerificat,
+            !profilesKnown ? "Istoricul rețelelor (registry NetworkList) nu a putut fi citit; rulați ca administrator."
+                : f.NetworkProfiles.Count == 0 ? "Rețele cunoscute: nu s-a observat în sursele colectate (NetworkList); absența profilurilor nu dovedește că stația nu s-a conectat (profilurile pot fi șterse)."
+                : $"{f.NetworkProfiles.Count} profiluri de rețea salvate.",
             f.NetworkProfiles.OrderByDescending(p => p.LastConnectedLocal).Select(p => $"{p.Name} ({p.Kind}) creat {p.CreatedLocal:yyyy-MM-dd} · ultima conectare {p.LastConnectedLocal:yyyy-MM-dd HH:mm}"));
     }
 
