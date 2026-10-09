@@ -109,3 +109,7 @@ Add an E2E test from Romanian request through complete English prompt, agent/mod
 ## 8. Required final report
 
 Respond in Romanian. State actual changes, exact main commit SHA(s), fresh targeted/full test output, routing/retrieval/task metrics and sample sizes, actual model/provider/tool calls, Qwen resource outcome, unverified claims, required approvals, report/log paths, and next action. Separate CODE_VERIFIED, TEST_VERIFIED, RUNTIME_VERIFIED, CI_VERIFIED, DOCUMENT_VERIFIED, CLAIMED_ONLY, and UNVERIFIED. Never claim full functionality unless G0–G9 are supported by fresh evidence.
+
+## Historical context and decisions (read before implementation)
+
+Before beginning WP0, read `00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CONVERSATION_CONTEXT_AND_DECISIONS_V1.md`. It consolidates the user's intent, prior measurements, local model/client failures, routing requirements, Qdrant recovery constraints, related PR history, security/research blockers, lessons learned, and source references. Treat it as a navigation and handoff ledger, not a replacement for `VAULT_STATE.md`, current source, live PR state, or original evidence artifacts. Revalidate all historical statuses and measurements before acting. Preserve the scope separation between Memory Vault, Book-to-Memory research, security PRs, and LogAnalyzer.
