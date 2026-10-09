@@ -248,7 +248,8 @@ namespace LogAnalyzer.UI.ViewModels
         {
             try
             {
-                var ws = LogAnalyzer.UI.Services.LiveCase.Get();
+                var ws = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
+                if (ws is null) { RemoteStatus = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
             IntegrityLine = LogAnalyzer.UI.Services.LiveCase.IntegrityLine ?? "";
                 using var id = System.Security.Principal.WindowsIdentity.GetCurrent();
                 var (req, sha) = RemoteCollection.Authorize(ws, RemoteHost, id.Name, RemoteJustification, RemoteCollection.KnownArtifacts);
@@ -265,7 +266,8 @@ namespace LogAnalyzer.UI.ViewModels
         {
             var dlg = new OpenFolderDialog { Title = "Folderul pachetului colectat (conține manifest.json)" };
             if (dlg.ShowDialog() != true) return;
-            var ws = LogAnalyzer.UI.Services.LiveCase.Get();
+            var ws = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
+            if (ws is null) { RemoteStatus = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
             IntegrityLine = LogAnalyzer.UI.Services.LiveCase.IntegrityLine ?? "";
             var check = RemoteCollection.Verify(ws, dlg.FolderName);
             if (!check.Ok) { RemoteStatus = "Pachetul NU a fost importat: " + string.Join("; ", check.Problems); return; }
@@ -274,6 +276,20 @@ namespace LogAnalyzer.UI.ViewModels
             var failed = check.Manifest!.Steps.Where(s => s.Status != "ok").Select(s => $"{s.Artifact} ({s.Error})").ToList();
             RemoteStatus = $"Importat: {items.Count - 1} fișiere de pe {check.Manifest.Host}, fiecare cu SHA-256 egal cu cel calculat pe țintă; adăugate la lista de probe." +
                            (failed.Count > 0 ? " Pași eșuați pe țintă: " + string.Join("; ", failed) : "");
+        }
+
+        /// <summary>Text shown at case close (owner decision 30): the final chain heads to record in the custody register.</summary>
+        [ObservableProperty] private string _closureText = "";
+
+        /// <summary>"Închidere caz": audits the closure and shows the head hashes of the custody and audit chains; the operator copies them out of the case.</summary>
+        [RelayCommand]
+        private void CloseCase()
+        {
+            if (_result is null) { ClosureText = "Rulați întâi o investigație; închiderea se face pe cazul curent."; return; }
+            var closure = LogAnalyzer.Dfir.Case.CaseClosure.Close(_result.Case, $"{Environment.UserDomainName}\\{Environment.UserName}");
+            ClosureText = closure.RegisterText;
+            try { Clipboard.SetText(closure.RegisterText); ClosureText += Environment.NewLine + "(Copiat în clipboard.)"; }
+            catch (System.Runtime.InteropServices.COMException) { /* clipboard busy: the text stays on screen */ }
         }
 
         [RelayCommand]

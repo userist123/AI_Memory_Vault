@@ -153,6 +153,11 @@ namespace LogAnalyzer.UI.ViewModels
                 Status = "Eroare: " + ex.Message;
             }
             finally { IsBusy = false; }
+            // Owner decision 28: isolation may start on the provisional scope; the scope dialog opens right after it.
+            if (!LogAnalyzer.UI.Services.LiveCase.ScopeConfirmed)
+                Status += LogAnalyzer.UI.Services.LiveCase.RequestScopeConfirmation()
+                    ? " Scopul cazului a fost confirmat."
+                    : " Scopul cazului rămâne provizoriu, neconfirmat (rapoartele îl menționează).";
         }
 
         private async void AutoTick(object? sender, EventArgs e)

@@ -53,6 +53,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task InventoryDomain()
         {
+            if (LogAnalyzer.UI.Services.LiveCase.GetConfirmed() is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
             IsBusy = true;
             Status = "Se citește Active Directory…";
             try
@@ -84,6 +85,7 @@ namespace LogAnalyzer.UI.ViewModels
         private async Task InvestigateUser()
         {
             if (string.IsNullOrWhiteSpace(UserName)) { Status = "Introduceți numele de utilizator (sAMAccountName)."; return; }
+            if (LogAnalyzer.UI.Services.LiveCase.GetConfirmed() is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
             IsBusy = true;
             Status = $"Se investighează {UserName}…";
             try
@@ -111,7 +113,9 @@ namespace LogAnalyzer.UI.ViewModels
         private void SaveScript(bool online)
         {
             if (!Mailbox.Contains('@')) { Status = "Introduceți adresa cutiei poștale."; return; }
-            var outDir = Path.Combine(LogAnalyzer.UI.Services.LiveCase.Get().Root, "Mail", Mailbox.Replace('@', '_'));
+            var liveCase = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
+            if (liveCase is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
+            var outDir = Path.Combine(liveCase.Root, "Mail", Mailbox.Replace('@', '_'));
             var start = DateTimeOffset.UtcNow.AddDays(-Math.Max(1, Days));
             var script = online ? MailInvestigation.ExchangeOnlineScript(Mailbox.Trim(), start, DateTimeOffset.UtcNow, outDir)
                                 : MailInvestigation.ExchangeOnPremScript(Mailbox.Trim(), start, DateTimeOffset.UtcNow, outDir);
@@ -124,6 +128,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task ImportMail()
         {
+            if (LogAnalyzer.UI.Services.LiveCase.GetConfirmed() is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
             var dlg = new OpenFolderDialog { Title = "Folderul cu message_trace.csv / inbox_rules.csv / mailbox_forwarding.csv" };
             if (dlg.ShowDialog() != true) return;
             var domains = InternalDomains.Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries);
@@ -146,11 +151,13 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ExportPdf()
         {
+            var liveCase = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
+            if (liveCase is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
             var dlg = new SaveFileDialog { FileName = $"Investigatie_{DateTime.Now:yyyyMMdd_HHmm}.pdf", Filter = "PDF (*.pdf)|*.pdf" };
             if (dlg.ShowDialog() != true) return;
             var checks = DomainChecks.Concat(MailChecks).ToList();
             var notes = new[] { DomainStatus, UserSummary, MailSummary }.Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
-            ChecksReportPdf.Write(dlg.FileName, "Investigație domeniu și e-mail", ModeNote, LogAnalyzer.Dfir.Case.ReportSeal.For(LogAnalyzer.UI.Services.LiveCase.Get()), checks, notes,
+            ChecksReportPdf.Write(dlg.FileName, "Investigație domeniu și e-mail", ModeNote, LogAnalyzer.Dfir.Case.ReportSeal.For(liveCase), checks, notes,
                 new ChecksReportPdf.Table($"Cronologia utilizatorului {UserName}", new[] { "Ora (UTC)", "Ce", "Detalii", "Probă" },
                     UserTimeline.Select(t => new[] { t.TimeUtc.ToString("yyyy-MM-dd HH:mm:ss"), t.Action, t.Detail, t.Source }).ToList()),
                 new ChecksReportPdf.Table($"Mesaje {Mailbox}", new[] { "Ora (UTC)", "Expeditor", "Destinatari", "Subiect", "IP", "Status" },

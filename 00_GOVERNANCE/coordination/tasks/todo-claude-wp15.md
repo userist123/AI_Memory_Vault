@@ -82,9 +82,10 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 - 2026-10-09 claude-wp15a: spec 1 (model Profile/, tables, validation, CSV/paste/JSON import, store, recurring window expansion, ToMaintenancePolicy/ToWorkingHours) + tests (ProcedureProfileTests, 17 pass).
 - spec 4 done (LogClearAssessment.AssessServiceStop/AssessAuditPolicyChange, used by LOG-TAMPER). spec 3 done: pipeline Run(procedureProfile) -> snapshot Analysis/procedure_profile.json in custody + maintenance policy to Correlation/AF; legacy engines (AnalysisEngine, LiveSecurityMonitoringEngine MaintenancePolicy), MainViewModel passes policy + WorkingHours via ProfileProvider.Shared.
 - spec 6 done (ReportSeal/ReportFooter in Investigation/Control/Checks PDFs, manifest ScopeNote, CaseClosure.Close) and the Core of spec 5 (CaseWorkspace.ConfirmScope -> case.scope_confirmed, ScopeNote computed). Dfir.Tests: 48 failed = baseline.
+- spec 5 WPF done (ScopeForm in Core tested; ScopeDialog; LiveCase.GetConfirmed/RequestScopeConfirmation/ScopePrompt; guards in StationControl/DomainInvestigation/Investigation VMs; emergency containment prompts right after) and 'Închidere caz' button (InvestigationView). App code is build-verified only (App.Tests cannot run on Linux).
 
 ## Next
-- Spec 5 WPF part (scope dialog + gating of LiveCase.Get callers + 'Închidere caz' button), spec 2 (App view 'Profil de proceduri'), then merge main + full suites + push. The orchestrator opens the PR.
+- Spec 2 (App view 'Profil de proceduri'), then merge main + full suites + push. The orchestrator opens the PR.
 
 ## Blockers
 - None.

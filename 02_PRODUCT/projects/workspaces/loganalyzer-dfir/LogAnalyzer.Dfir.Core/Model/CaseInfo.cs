@@ -56,6 +56,9 @@ public sealed class CaseScope
     /// <summary>Free note, e.g. that the values are provisional defaults which must be confirmed.</summary>
     public string Notes { get; init; } = "";
 
+    /// <summary>True when the scope is complete and was entered by the operator (not the placeholder of a LIVE case, not a pre-WP3 case).</summary>
+    public bool IsConfirmed => !Provisional && MissingFields().Count == 0;
+
     /// <summary>Names of the mandatory fields that are empty or inconsistent. Empty list = complete.</summary>
     public IReadOnlyList<string> MissingFields()
     {

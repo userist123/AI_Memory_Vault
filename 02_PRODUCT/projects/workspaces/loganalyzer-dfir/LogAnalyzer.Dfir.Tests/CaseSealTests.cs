@@ -180,3 +180,37 @@ public sealed class CaseSealTests : IDisposable
 
 [CollectionDefinition("ReportFooterObserver", DisableParallelization = true)]
 public sealed class ReportFooterObserverCollection { }
+
+public class ScopeFormTests
+{
+    [Fact]
+    public void Empty_form_lists_every_missing_field_and_builds_nothing_usable()
+    {
+        Assert.False(new ScopeForm().TryBuild(out var scope, out var missing));
+        Assert.Equal(8, missing.Count);
+        Assert.False(scope.IsConfirmed);
+    }
+
+    [Fact]
+    public void Complete_form_builds_a_confirmed_non_provisional_scope()
+    {
+        var f = new ScopeForm { Purpose = "control anual", Approver = "col. Ionescu", Systems = "ST-01; ST-02,ST-03", PeriodFrom = new DateTime(2026, 1, 1), PeriodTo = new DateTime(2026, 12, 31),
+                                LegalBasisIndex = 2, NetworkIndex = 0, ClassificationIndex = 0 };
+        Assert.True(f.TryBuild(out var s, out var missing)); Assert.Empty(missing);
+        Assert.True(s.IsConfirmed); Assert.False(s.Provisional);
+        Assert.Equal(["ST-01", "ST-02", "ST-03"], s.SystemsInScope);
+        Assert.Equal(LegalBasis.Control, s.LegalBasis); Assert.Equal(NetworkCategory.AirGappedNetwork, s.Network); Assert.Equal(ClassificationLevel.Classified, s.Classification);
+        Assert.Equal(new DateTime(2026, 12, 31), s.PeriodToUtc!.Value.UtcDateTime.Date);   // the whole last day is in scope
+    }
+
+    [Fact]
+    public void Form_from_a_provisional_scope_does_not_carry_the_placeholders_over()
+    {
+        var prov = new CaseScope { Purpose = "Caz LIVE", Approver = "necunoscut (de confirmat)", SystemsInScope = ["PC-9"], PeriodFromUtc = DateTimeOffset.UtcNow, PeriodToUtc = DateTimeOffset.UtcNow.AddYears(1),
+                                   LegalBasis = LegalBasis.Control, Network = NetworkCategory.AirGappedNetwork, Classification = ClassificationLevel.Classified, Provisional = true };
+        var f = ScopeForm.FromScope(prov);
+        Assert.Equal("PC-9", f.Systems); Assert.Equal("", f.Approver); Assert.Null(f.PeriodFrom); Assert.Equal(-1, f.NetworkIndex);
+        Assert.False(f.TryBuild(out _, out var missing)); Assert.Contains("approver", missing);
+        Assert.False(prov.IsConfirmed);
+    }
+}

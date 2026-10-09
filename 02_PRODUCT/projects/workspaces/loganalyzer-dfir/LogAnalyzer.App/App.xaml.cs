@@ -45,6 +45,7 @@ namespace LogAnalyzer.UI
             {
                 File.WriteAllText(debugLogPath, "OnStartup starting...\n");
                 base.OnStartup(e);
+                LogAnalyzer.UI.Services.LiveCase.ScopePrompt = LogAnalyzer.UI.Views.ScopeDialog.Ask;   // owner decision 28
 
                 // Operating mode: decided by the edition. The unclassified edition takes it only from the signed policy
                 // (fail closed to AirGapped); --mode= and LogAnalyzer.mode are ignored. The classified edition is always AirGapped.
