@@ -387,3 +387,53 @@ The retained history confirms, among other things:
 - The Qdrant integration probe used temporary collection `mv_audit_70fab018e69c`; Qdrant returned HTTP 200 for deletion, and a follow-up lookup returned 404.
 - No fresh test report, model output, or code change was written to the local repository. The main checkout remained clean at the tested SHA.
 - The new validation evidence was published directly to this PR's context ledger and PR description. The only new durable report from this validation is in GitHub, not a local report file.
+
+
+## 14. Conversation audit trail and execution contract — 2026-10-09
+
+This section exists because the owner explicitly required that the PR preserve not only outcomes, but also what the owner asked, what the assistant answered, what was attempted, what failed, what was proposed, and what must happen next. The transcript is summarized chronologically; it does not claim to be a byte-for-byte export of the full chat UI. The retained Remote Desktop Commander history and source artifacts are separately described in section 13.
+
+### 14.1 Owner requests and assistant responses (chronological)
+
+1. **Owner — initial request:** asked for a senior AI/ML architecture/code review of the AI Memory Vault RAG/local-model orchestration, including ingestion/chunking, vector-store upsert, retrieval/prompt injection, Ollama timeout/streaming/temperature, bottlenecks, and scalability.
+   **Assistant response/clarification:** owner subsequently clarified not to rerun this original broad prompt. The goal was to audit today's entire conversation and work, recover everything claimed/tested/saved, and include it in the existing PR.
+
+2. **Owner:** asked whether that was all the work done today and pointed out the explicit request to test all of `main`.
+   **Assistant response:** admitted it had not demonstrated a fresh full-suite run on current main; separated the historical 2,620-pass modified Qdrant worktree run from main.
+
+3. **Owner:** directed recovery of everything, then tests with local 3B/7B/8B models and Qwen3 30B-A3B if it worked, with everything published directly to GitHub rather than left in untracked local files.
+   **Assistant response:** initially reported Remote Desktop access failures and that execution had not completed. After access returned, it recovered reports/history, fast-forwarded the clean main checkout from `c5f939185f05c516e1cd46e11b3763026a6137d5` to `154dc4274b3b3d634a50c6e9f30b86a77b798590`, ran a fresh full suite, tested local model smoke tests, and a temporary Qdrant integration probe.
+
+4. **Owner:** explicitly corrected the publication target: “În pr nu pe main direct.”
+   **Binding instruction:** do not commit any audit/results/report changes directly to `main`. Use PR #248 branch `docs/full-functional-completion-prompt-v1` for every durable audit update. The main checkout is only the source/test baseline, not the publication target. Keep PR #248 open; do not merge.
+
+5. **Owner — current request:** explained that every activity must be audited, including what the owner asked, what the assistant answered, work checked, proposals, attempts, and all outputs; requested running all tests with all local AIs one at a time, recording whether claims are confirmed/useful and what to do next, entirely in the PR.
+   **Assistant commitment:** execute sequentially by model, distinguish source-code tests from model-dependent tests, publish successes and failures directly to PR #248, and avoid presenting a model as tested when the test did not actually invoke it.
+
+### 14.2 Corrections to prior assistant reporting
+
+- An earlier assistant statement that it had “recovered access” and completed all testing was too broad until the exact current-main run and model runs were evidenced. Section 12 now gives the exact SHA, command, exit code, failures and model-specific outcomes available at that point.
+- Historical results of 2,597 passed / 13 skipped / 9 xfailed on old main SHA `c5f9391...` and 2,620 passed / 13 skipped / 9 xfailed on modified Qdrant worktree are separate runs. They must never be merged into one total or described as a current-main result.
+- The previously completed individual live smoke tests for 3B, 7B and 8B models do not constitute running the entire pytest suite under every model. A sequential full-suite matrix is now being run separately; results must be added to this section only after process exit and captured output.
+- The current-main full suite on SHA `154dc4274b3b3d634a50c6e9f30b86a77b798590` failed with 15 failed tests and 2 errors in 638.35 seconds. No source fixes have yet been applied by this evidence-only PR.
+- The Qdrant stability changes in `AI_Memory_Vault_QdrantFix` are not part of main or PR #248; the recovery worktree must remain untouched until a separate, reviewed integration plan is approved.
+- Any report about tests still running, incomplete logs, unavailable models, or lost output must say so explicitly; do not invent pass counts or treat a launch as a completed test.
+
+### 14.3 Required run record for every local model
+
+For every installed model, append a separate result row containing:
+- exact model tag and Ollama model ID where available;
+- exact tested source SHA and branch/worktree;
+- exact command and relevant environment variables/config;
+- test scope (full pytest suite, live provider/council smoke test, embedding/Qdrant integration, or a targeted test);
+- start/end time, elapsed duration, exit code, pass/skip/xfail/fail/error counts if captured;
+- relevant failing test IDs and error excerpts;
+- whether the test truly invoked the model or only exercised deterministic code;
+- cleanup verification (temporary config removed; temporary Qdrant collection absent);
+- verdict and next action.
+
+The required sequential inventory from the current `ollama list` is: `qwen2.5-coder:3b`, `qwen2.5-coder:7b`, `qwen2.5:7b-instruct`, `mistral:7b-instruct`, `llama3.1:8b`, and `qwen3:30b-a3b`. `nomic-embed-text:latest` is an embedding model and must be evaluated through embedding/retrieval integration rather than counted as a generative council model.
+
+### 14.4 Publication invariant
+
+Every durable finding from this audit must be committed to branch `docs/full-functional-completion-prompt-v1` via PR #248. Do not write audit files or commits directly to `main`. Local temporary configuration files may be created solely to execute a test and must be removed in the same command; they are not the final report. Before declaring completion, re-fetch the PR file and PR metadata from GitHub and verify the latest commit contains the audit and results.
