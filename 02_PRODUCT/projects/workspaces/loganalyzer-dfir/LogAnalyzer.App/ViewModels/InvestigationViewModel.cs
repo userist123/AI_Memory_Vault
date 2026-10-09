@@ -88,6 +88,32 @@ namespace LogAnalyzer.UI.ViewModels
         public string[] Profiles { get; } = { "Rapid (jurnale, Prefetch, stare live)", "Standard (+ SRUM)", "Complet" };
         [ObservableProperty] private int _profileIndex = 1;
         [ObservableProperty] private bool _collectFromThisStation = true;
+        // Case scope (owner decision 23): mandatory; the case is not created while a field is missing. Nothing is pre-filled on the operator's behalf.
+        public string[] LegalBases { get; } = { "Incident", "Audit", "Control" };
+        public string[] NetworkCategories { get; } = { "Rețea air-gapped", "PC standalone", "Conectat" };
+        public string[] ClassificationLevels { get; } = { "Clasificat", "Neclasificat" };
+        [ObservableProperty] private string _scopePurpose = "";
+        [ObservableProperty] private string _scopeApprover = "";
+        /// <summary>Systems in scope, separated by comma or semicolon.</summary>
+        [ObservableProperty] private string _scopeSystems = "";
+        [ObservableProperty] private DateTime? _scopeFrom;
+        [ObservableProperty] private DateTime? _scopeTo;
+        [ObservableProperty] private int _legalBasisIndex = -1;
+        [ObservableProperty] private int _networkIndex = -1;
+        [ObservableProperty] private int _classificationIndex = -1;
+
+        private CaseScope BuildScope() => new()
+        {
+            Purpose = ScopePurpose.Trim(),
+            Approver = ScopeApprover.Trim(),
+            SystemsInScope = ScopeSystems.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(),
+            PeriodFromUtc = ScopeFrom is { } f ? new DateTimeOffset(DateTime.SpecifyKind(f.Date, DateTimeKind.Utc)) : null,
+            PeriodToUtc = ScopeTo is { } t ? new DateTimeOffset(DateTime.SpecifyKind(t.Date, DateTimeKind.Utc)).AddDays(1).AddTicks(-1) : null,
+            LegalBasis = LegalBasisIndex switch { 0 => LegalBasis.Incident, 1 => LegalBasis.Audit, 2 => LegalBasis.Control, _ => LegalBasis.Unspecified },
+            Network = NetworkIndex switch { 0 => NetworkCategory.AirGappedNetwork, 1 => NetworkCategory.StandalonePc, 2 => NetworkCategory.Connected, _ => NetworkCategory.Unspecified },
+            Classification = ClassificationIndex switch { 0 => ClassificationLevel.Classified, 1 => ClassificationLevel.Unclassified, _ => ClassificationLevel.Unspecified },
+        };
+
         [ObservableProperty] private string _caseName = $"Investigație {Environment.MachineName} {DateTime.Now:yyyy-MM-dd}";
         [ObservableProperty] private string _log = "";
         [ObservableProperty] private bool _isBusy;
@@ -127,6 +153,14 @@ namespace LogAnalyzer.UI.ViewModels
         private async Task Run()
         {
             if (!CollectFromThisStation && ImportFiles.Count == 0) { Log += "Alegeți colectarea de pe această stație sau adăugați probe de importat." + Environment.NewLine; return; }
+            var scope = BuildScope();
+            var missingScope = scope.MissingFields();
+            if (missingScope.Count > 0)
+            {
+                Log += "Scopul cazului este incomplet; câmpuri lipsă: " + string.Join(", ", missingScope) + Environment.NewLine;
+                return;
+            }
+            LogAnalyzer.UI.Services.LiveCase.Configure(scope);
             IsBusy = true;
             OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[OperationState.Running];
             _cts = new CancellationTokenSource();
@@ -141,7 +175,7 @@ namespace LogAnalyzer.UI.ViewModels
                 _result = await Task.Run(() =>
                 {
                     var casesRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LogAnalyzer", "Cases");
-                    var ws = InvestigationPipeline.NewCase(casesRoot, name);
+                    var ws = InvestigationPipeline.NewCase(casesRoot, name, scope);
                     if (files.Count > 0)
                     {
                         ((IProgress<string>)progress).Report($"Import {files.Count} fișiere (copii; originalele nu se modifică)");

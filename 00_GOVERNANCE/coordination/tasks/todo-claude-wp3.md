@@ -61,9 +61,24 @@ callers are `LogAnalyzer.Dfir.Windows/Investigation/InvestigationPipeline.cs` an
 
 ## Done
 - 2026-10-09T03:35Z claude-orchestrator: spec written, branch created.
+- 2026-10-09 claude-wp3a: WP3a items 1-6 implemented and verified locally (build 0 errors; Dfir 48 failed = baseline, 32 new tests pass; UI 6 = baseline; Edition 14/14 incl. original 5).
+  Key files (under `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`): `LogAnalyzer.Dfir.Core/Case/HashChain.cs` (chain + verify),
+  `Case/CaseWorkspace.cs` (VerifyChains, lifecycle, legal hold, retention, collection context, admin warning),
+  `Model/CaseInfo.cs` (CaseScope, LegalHold, RetentionUntilUtc), `Model/EvidenceItem.cs` (State),
+  `LogAnalyzer.Dfir.Tests/AuditChainCustodyTests.cs`, `LogAnalyzer.Edition.Tests/ReadOnlyCollectionTests.cs`,
+  callers: `InvestigationPipeline.NewCase(..., scope)`, `LiveCase.Configure`, `InvestigationViewModel`/`InvestigationView.xaml` scope fields.
 
 ## Next
-- Implement WP3a 1-6, verify, push. The orchestrator opens the PR.
+- Python suite once, push; the orchestrator opens the PR. WP3b starts only after WP3a merges.
 
-## Blockers
-- None.
+## Blockers (owner decisions; safe defaults implemented)
+- LIVE case (`LiveCase.Get`) has no creation dialog: if the operator has not entered a scope, it is created with a PROVISIONAL scope
+  (period now..+1 year, approver "necunoscut (de confirmat)", most restrictive category air-gapped+classified, Notes "scop provizoriu").
+  Owner should decide the real policy (e.g. force the scope dialog before first LIVE use).
+- DISPOSED only from ARCHIVED (strictest reading); owner may allow it from other states.
+- Admin-collector warning fires when the collecting machine equals the audited host and the process token is a local Administrator
+  (Windows only; false elsewhere). Written once per workspace instance.
+- Chain limit: deleting lines from the END of a log is not detectable without an external anchor of the head hash (WP3b candidate).
+- Read-only scan allowlists three detector-indicator literals in LogAnalyzer.Core.dll (RansomwareDetectionEngine patterns "wevtutil cl security/system"
+  and an explanation text); they are matched against events, never executed.
+- Existing Dfir tests/pipeline callers now pass a scope (CaseWorkspace.Create refuses an incomplete one); no test was weakened.

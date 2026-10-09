@@ -32,4 +32,9 @@ public sealed class EvidenceItem
     public Sensitivity Sensitivity { get; init; } = Sensitivity.Confidential;
     public string? ParentEvidenceId { get; init; }
     public string Notes { get; set; } = "";
+    /// <summary>Lifecycle state (decision 11). Absent in JSON written before WP3 = <see cref="EvidenceState.Acquired"/>.</summary>
+    public EvidenceState State { get; set; } = EvidenceState.Acquired;
 }
+
+/// <summary>ACQUIRED → VERIFIED → IN_ANALYSIS → ARCHIVED; DISPOSED is only a manual mark, never a deletion.</summary>
+public enum EvidenceState { Acquired, Verified, InAnalysis, Archived, Disposed }

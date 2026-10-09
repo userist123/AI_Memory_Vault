@@ -126,7 +126,7 @@ public class CoreTests
         try
         {
             File.WriteAllText(src, "evidence-bytes");
-            var ws = CaseWorkspace.Create(root, new CaseInfo { CaseId = "CASE-T", Name = "t", CreatedAtUtc = DateTimeOffset.UtcNow, Timezone = "GTB Standard Time" });
+            var ws = CaseWorkspace.Create(root, new CaseInfo { CaseId = "CASE-T", Name = "t", CreatedAtUtc = DateTimeOffset.UtcNow, Timezone = "GTB Standard Time" , Scope = TestScopes.Valid() });
             var ev = ws.ImportFile(src, "Test:Source", "txt", TemporalType.Historical, "unit", "1");
             var stored = ws.FullPath(ev.StoredPath);
 

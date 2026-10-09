@@ -48,7 +48,7 @@ public class ContainmentTests : IDisposable
     }
 
     private CaseWorkspace NewCase() => CaseWorkspace.Create(Path.Combine(_root, "case"),
-        new CaseInfo { CaseId = "CASE-C", Name = "containment", CreatedAtUtc = DateTimeOffset.UtcNow, Timezone = "GTB Standard Time" });
+        new CaseInfo { CaseId = "CASE-C", Name = "containment", CreatedAtUtc = DateTimeOffset.UtcNow, Timezone = "GTB Standard Time" , Scope = TestScopes.Valid() });
 
     /// <summary>An unsigned "program" in a user-writable folder (Temp), with a URL and an IP in its content.</summary>
     private string UnsignedSample()

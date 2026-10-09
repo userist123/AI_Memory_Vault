@@ -59,7 +59,7 @@ public sealed class EvidenceIntegrityTests : IDisposable
     {
         var src = Path.Combine(_dir, "Security.evtx");
         File.WriteAllBytes(src, content);
-        var ws = InvestigationPipeline.NewCase(Path.Combine(_dir, "cases"), "integrity");
+        var ws = InvestigationPipeline.NewCase(Path.Combine(_dir, "cases"), "integrity", TestScopes.Valid());
         var ev = Assert.Single(InvestigationPipeline.Import(ws, [src]));
         return (ws, ev);
     }
