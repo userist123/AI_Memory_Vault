@@ -14,6 +14,9 @@
   pwsh release-gate/Sign-EditionPolicy.ps1 -NewKeyPair -KeyDir $HOME\.loganalyzer-policy
   pwsh release-gate/Sign-EditionPolicy.ps1 -Mode connected -Version 1 -NotBefore 2026-10-09 -Audience '*' -Signer owner `
        -PrivateKeyPath $HOME\.loganalyzer-policy\policy-signer-private-key.pkcs8.b64 -Out .\LogAnalyzer.policy
+  # WP18: the PC of the incident-response centre (role csirt); without -Role the station is a control station
+  pwsh release-gate/Sign-EditionPolicy.ps1 -Mode connected -Role csirt -Version 2 -NotBefore 2026-10-10 -Audience CSIRT-PC01 -Signer owner `
+       -PrivateKeyPath $HOME\.loganalyzer-policy\policy-signer-private-key.pkcs8.b64 -Out .\LogAnalyzer.policy
   # install: copy LogAnalyzer.policy to %ProgramData%\LogAnalyzer\ (ACL: administrators write, users read)
 #>
 [CmdletBinding(DefaultParameterSetName = 'Sign')]
@@ -25,6 +28,8 @@ param(
     [Parameter(ParameterSetName = 'Sign', Mandatory)][string]$NotBefore,
     [Parameter(ParameterSetName = 'Sign')][string]$NotAfter = '',
     [Parameter(ParameterSetName = 'Sign')][string]$Audience = '*',
+    # WP18: station role. Omitted = the policy does not name a role and the station is a control station (CONTROL).
+    [Parameter(ParameterSetName = 'Sign')][ValidateSet('control', 'csirt')][string]$Role = '',
     [Parameter(ParameterSetName = 'Sign', Mandatory)][string]$Signer,
     [Parameter(ParameterSetName = 'Sign', Mandatory)][string]$PrivateKeyPath,
     [Parameter(ParameterSetName = 'Sign', Mandatory)][string]$Out
@@ -41,14 +46,17 @@ if ($PSCmdlet.ParameterSetName -eq 'Key') {
     return
 }
 
-$payload = @('loganalyzer-edition-policy/1', "mode=$Mode", "version=$Version", "notBefore=$NotBefore", "notAfter=$NotAfter", "audience=$Audience", "signer=$Signer") -join "`n"
+$lines = @('loganalyzer-edition-policy/1', "mode=$Mode", "version=$Version", "notBefore=$NotBefore", "notAfter=$NotAfter", "audience=$Audience", "signer=$Signer")
+if ($Role) { $lines += "role=$Role" }   # must match EditionPolicy.Payload: the role is the optional last signed line
+$payload = $lines -join "`n"
 $k = [System.Security.Cryptography.ECDsa]::Create()
 $k.ImportPkcs8PrivateKey([Convert]::FromBase64String((Get-Content -Raw -LiteralPath $PrivateKeyPath).Trim()), [ref]$null)
 $sig = $k.SignData([Text.Encoding]::UTF8.GetBytes($payload), [System.Security.Cryptography.HashAlgorithmName]::SHA256, [System.Security.Cryptography.DSASignatureFormat]::IeeeP1363FixedFieldConcatenation)
 $policy = [ordered]@{
     schema = 'loganalyzer-edition-policy/1'; mode = $Mode; version = $Version; notBefore = $NotBefore
     notAfter = $(if ($NotAfter) { $NotAfter } else { $null }); audience = $Audience; signer = $Signer
-    signature = [ordered]@{ alg = 'ecdsa-p256-sha256'; value = [Convert]::ToBase64String($sig) }
 }
+if ($Role) { $policy.role = $Role }
+$policy.signature = [ordered]@{ alg = 'ecdsa-p256-sha256'; value = [Convert]::ToBase64String($sig) }
 $policy | ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8 -LiteralPath $Out
 Write-Host "Policy written: $Out"

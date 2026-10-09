@@ -1,0 +1,23 @@
+# todo-claude-wp18
+STATUS: IN_PROGRESS        UPDATED: 2026-10-10T02:00Z
+TASK: WP18 — station roles (CONTROL / CSIRT chosen by the PC through the signed policy) and non-technical UI, per
+`02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PROMPT_WP18_ROLURI_STATIE_UI_SIMPLA.md` (owner decisions D1–D8 in §11).
+BRANCH / PR: `claude/loganalyzer-dfir-roles-ui-0a71fb` (worktree). One commit per step; PR at the end of the package.
+DONE:
+- S1 station role: `LogAnalyzer.Core/Services/Edition/StationRole.cs` (enum, decision, resolver, context, StartupDecision);
+  `role` as optional last signed line of `LogAnalyzer.policy` (`EditionPolicy.cs`); both `EditionComposition.DecideStartup`;
+  startup log + `station.role` audit + auth audit `session.context`; `CaseInfo.StationRole` written by `NewCase` and the LIVE case;
+  header badge `ROL:` with the decision as tooltip (`MainViewModel`, `MainWindow.xaml`); `Sign-EditionPolicy.ps1 -Role`.
+  Tests: `LogAnalyzer.UI.Tests/StationRoleTests.cs` (9). Docs: `docs/dfir/EDITIONS.md` "Station role (WP18)".
+VERIFICATION (S1, local, Windows):
+- `dotnet build LogAnalyzer.slnx -c Release`: Build succeeded (TEST_VERIFIED).
+- App.Tests 28/28, Edition.Tests 15/15, UI.Tests 179/179 passed.
+- Dfir.Tests 1045 passed, 4 skipped, 2 FAILED on the real local corpus: `AntiForensicsTests.Real_corpus_traces_match_wevtutil…` (28 vs 64)
+  and `InvestigationTests.NanAgent_corpus_yields_the_known_incident_chain` (chain text lacks NanAgent32.exe). Neither test touches WP18 code
+  (parsers / AntiForensics.Evaluate / incident chain); treated as PRE-EXISTING local corpus drift, NOT fixed here. CI never runs them (no corpus).
+- Windows Defender flags `LogAnalyzer.Dfir.Tests.dll` as `Ransom:Win32/Clop.SIB!MTB` on every rebuild (test data contains the literal
+  `vssadmin delete shadows /all /quiet` lines of WP11 tests). False positive on the test assembly; owner restored the file from quarantine.
+- `Sign-EditionPolicy.ps1` change: parsed OK with Windows PowerShell; end-to-end run UNVERIFIED here (needs pwsh 7, not installed).
+NEXT: S2 Home + navigation per role → S3 language levels/terms/glossary → S4 guided flows → S5 reports → S6 accessibility → S7 docs.
+BLOCKERS: none.
+KEY FILES: see DONE; prompt §2 reading list.

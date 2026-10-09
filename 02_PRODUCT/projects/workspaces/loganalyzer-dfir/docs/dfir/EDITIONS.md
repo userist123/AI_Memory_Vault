@@ -48,6 +48,19 @@ See `AUTHENTICATION.md`.
 - Limit: a malicious local administrator can replace the executable or the embedded key. The protection is against the operator and
   configuration mistakes, not against a hostile administrator.
 
+## Station role (WP18)
+- The same signed policy may carry `role`: `control` (default) or `csirt`. It is the optional **last line of the signed text**
+  (`EditionPolicy.Payload`), so a policy issued before WP18 stays valid and means CONTROL, and a role cannot be added or edited without re-signing.
+- Decision chain (`StationRoleResolver.Decide`, recorded in `startup_debug.log`, the `station.role` audit line, the auth audit `session.context`
+  of the signed-in session, `case.json` → `StationRole`, and the header badge tooltip): edition → signed policy → `role` → consistency checks → effective role.
+- **Fail closed to CONTROL**: no policy, invalid signature, expired, other station, rolled-back version, unknown role value (which also invalidates the policy).
+  P1 (classified) is always CONTROL; a policy asking for `csirt` is refused with a reason (P1 has no policy key, so the file is only peeked at, never trusted).
+  `csirt` with `mode: airgapped` is accepted and shown as "CSIRT fără rețea": the role never widens what the edition and the mode allow.
+- No switch exists in the UI, on the command line or in a file. Changing the role needs a new policy with a higher `version`, signed by the holder of the private key:
+  `release-gate/Sign-EditionPolicy.ps1 -Role csirt …`.
+- WP18 adds **no account role**: administrator and operator stay as in `AUTHENTICATION.md` (owner decision, 2026-10-10).
+- Tests: `LogAnalyzer.UI.Tests/StationRoleTests.cs`.
+
 ## Verification
 `LogAnalyzer.Edition.Tests` reads the metadata of every `LogAnalyzer*` assembly in the P1 build output and fails if it finds an excluded
 assembly, a reference to a network or directory assembly, a banned type (sockets, HTTP, DNS, remote event-log session, LDAP, service

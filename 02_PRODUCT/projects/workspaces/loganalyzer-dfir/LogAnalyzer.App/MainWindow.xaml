@@ -60,6 +60,24 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Station role badge (WP18): CONTROL / CSIRT from the signed policy; the tooltip is the full decision chain -->
+                    <Border Margin="8,0,0,0" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,4" VerticalAlignment="Center"
+                            ToolTip="{Binding StationRoleReasonText}" AutomationProperties.Name="Rolul acestei stații">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="ROL: " FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}"/>
+                            <TextBlock Text="{Binding StationRoleBadgeText}" FontSize="10.5" FontWeight="Bold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasStationRoleWarning}" Value="True"><Setter Property="Foreground" Value="{StaticResource WarningBrush}"/></DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Raised when an AirGapped station gains a network connection while the application runs -->
                     <Border Margin="10,0,0,0" Background="{StaticResource BadgeCriticalBgBrush}" BorderBrush="{StaticResource DangerBrush}" BorderThickness="1" CornerRadius="6" Padding="10,4" VerticalAlignment="Center"
                             Visibility="{Binding HasConnectivityWarning, Converter={StaticResource BooleanToVisibilityConverter}}"

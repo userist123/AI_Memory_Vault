@@ -89,6 +89,7 @@ public sealed class InvestigationPipeline
             Investigator = $"{Environment.UserDomainName}\\{Environment.UserName}", Os = Environment.OSVersion.VersionString,
             Architecture = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString(), Timezone = TimeZoneInfo.Local.Id,
             CollectionMode = "investigation", Scope = scope,
+            StationRole = LogAnalyzer.Core.Services.Edition.StationRoles.Name(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role),
         });
     }
 

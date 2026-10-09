@@ -160,6 +160,7 @@ namespace LogAnalyzer.UI.Services
                         Timezone = TimeZoneInfo.Local.Id,
                         CollectionMode = "live",
                         Scope = _configured ?? ProvisionalScope(),
+                        StationRole = LogAnalyzer.Core.Services.Edition.StationRoles.Name(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role),
                     });
                 if (existing)
                 {

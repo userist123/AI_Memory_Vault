@@ -86,6 +86,12 @@ namespace LogAnalyzer.UI.ViewModels
             ? "Mod AirGapped: rețeaua este blocată de aplicație; izolarea fizică a stației nu este verificată"
             : "Mod Network: serviciile online sunt permise; aplicația nu evaluează siguranța stației";
         [ObservableProperty] private string _modeReasonText = AppModeContext.Current.Reason;
+        // Station role (WP18): decided once at startup from the signed policy; shown next to the mode badge with the full decision as tooltip.
+        [ObservableProperty] private string _stationRoleBadgeText = LogAnalyzer.Core.Services.Edition.StationRoleContext.Current.BadgeText;
+        [ObservableProperty] private string _stationRoleReasonText = LogAnalyzer.Core.Services.Edition.StationRoleContext.Current.Summary;
+        [ObservableProperty] private bool _isControlStation = LogAnalyzer.Core.Services.Edition.StationRoleContext.IsControl;
+        [ObservableProperty] private bool _isCsirtStation = LogAnalyzer.Core.Services.Edition.StationRoleContext.IsCsirt;
+        [ObservableProperty] private bool _hasStationRoleWarning = LogAnalyzer.Core.Services.Edition.StationRoleContext.Current.HasWarning;
         [ObservableProperty] private string _connectivityWarningText = string.Empty;
         public bool HasConnectivityWarning => !string.IsNullOrEmpty(ConnectivityWarningText);
         partial void OnConnectivityWarningTextChanged(string value) => OnPropertyChanged(nameof(HasConnectivityWarning));
