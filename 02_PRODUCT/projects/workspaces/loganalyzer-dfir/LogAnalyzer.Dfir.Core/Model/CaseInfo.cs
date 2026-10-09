@@ -23,6 +23,14 @@ public sealed class CaseInfo
     public CaseScope Scope { get; init; } = new();
     /// <summary>While true no evidence may be marked DISPOSED (decision 11).</summary>
     public bool LegalHold { get; set; }
+    /// <summary>A copy of this case record with another scope (the scope is init-only: confirming it replaces the record).</summary>
+    public CaseInfo WithScope(CaseScope scope) => new()
+    {
+        SchemaVersion = SchemaVersion, CaseId = CaseId, Name = Name, Host = Host, User = User, CreatedAtUtc = CreatedAtUtc, Investigator = Investigator,
+        Os = Os, Architecture = Architecture, Timezone = Timezone, StartTimeUtc = StartTimeUtc, EndTimeUtc = EndTimeUtc, Notes = Notes,
+        CollectionMode = CollectionMode, ApplicationVersion = ApplicationVersion, Scope = scope, LegalHold = LegalHold, RetentionUntilUtc = RetentionUntilUtc,
+    };
+
     /// <summary>Retention limit. Empty by default; the application only warns when it is exceeded, it never deletes.</summary>
     public DateTimeOffset? RetentionUntilUtc { get; set; }
 }

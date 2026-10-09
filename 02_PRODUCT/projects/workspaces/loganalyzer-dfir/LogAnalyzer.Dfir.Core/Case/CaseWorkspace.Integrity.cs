@@ -50,7 +50,7 @@ public sealed partial class CaseWorkspace
     /// <summary>Writes <paramref name="relManifestPath"/> listing <paramref name="relFiles"/> with SHA-256 and the current chain heads, then registers it as an output.</summary>
     public OutputManifest WriteManifest(string relManifestPath, IEnumerable<string> relFiles, string producer, string version)
     {
-        var m = new OutputManifest { CaseId = Info.CaseId, CreatedUtc = DateTimeOffset.UtcNow, Producer = producer, Version = version, Anchor = Anchor() };
+        var m = new OutputManifest { CaseId = Info.CaseId, CreatedUtc = DateTimeOffset.UtcNow, Producer = producer, Version = version, Anchor = Anchor(), ScopeNote = ScopeNote ?? "" };
         foreach (var f in relFiles)
         {
             var rel = RelativeInside(f);

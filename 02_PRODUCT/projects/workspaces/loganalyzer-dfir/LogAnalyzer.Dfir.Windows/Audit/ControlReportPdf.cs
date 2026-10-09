@@ -13,7 +13,7 @@ public static class ControlReportPdf
 {
     private const string Ink = "#0f172a", Muted = "#64748b", Line = "#cbd5e1";
 
-    public static void Write(ControlReport r, string path, string inspector, string notes = "")
+    public static void Write(ControlReport r, string path, string inspector, string notes = "", LogAnalyzer.Dfir.Case.ReportSeal? seal = null)
     {
         QuestPDF.Settings.License = LicenseType.Community;
         var f = r.Facts;
@@ -101,13 +101,7 @@ public static class ControlReportPdf
                                               "„NEDETERMINAT” înseamnă că sursa necesară nu a putut fi citită; nu înseamnă că activitatea nu a avut loc.").FontSize(7).Italic().FontColor(Muted);
             });
 
-            page.Footer().AlignCenter().Text(t =>
-            {
-                t.Span($"LogAnalyzer {DfirInfo.ApplicationVersion} · control {f.Host} · pagina ").FontSize(7).FontColor(Muted);
-                t.CurrentPageNumber().FontSize(7).FontColor(Muted);
-                t.Span(" / ").FontSize(7).FontColor(Muted);
-                t.TotalPages().FontSize(7).FontColor(Muted);
-            });
+            ReportFooter.Compose(page.Footer(), "control", $"LogAnalyzer {DfirInfo.ApplicationVersion} · control {f.Host}", seal);
         })).GeneratePdf(path);
     }
 
@@ -120,7 +114,7 @@ public static class ControlReportPdf
         File.WriteAllText(json, JsonSerializer.Serialize(new { r.Facts, r.Checks, r.Users, r.Actions },
             new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } }));
         var pdf = Path.Combine(dir, $"Raport_control_{r.Facts.Host}_{r.Facts.CollectedUtc:yyyyMMdd}.pdf");
-        Write(r, pdf, inspector, notes);
+        Write(r, pdf, inspector, notes, LogAnalyzer.Dfir.Case.ReportSeal.For(ws));
         ws.RegisterStored(json, "live:" + r.Facts.Host, "control", "control_report", TemporalType.CurrentSnapshot, "StationFactCollector", DfirInfo.ApplicationVersion);
         ws.RegisterStored(pdf, "live:" + r.Facts.Host, "control", "control_report_pdf", TemporalType.Derived, "ControlReportPdf", DfirInfo.ApplicationVersion);
         // WP3b: the report files are also outputs in the custody chain, listed with the chain heads in a manifest next to them.

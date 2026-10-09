@@ -150,7 +150,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (dlg.ShowDialog() != true) return;
             var checks = DomainChecks.Concat(MailChecks).ToList();
             var notes = new[] { DomainStatus, UserSummary, MailSummary }.Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
-            ChecksReportPdf.Write(dlg.FileName, "Investigație domeniu și e-mail", ModeNote, checks, notes,
+            ChecksReportPdf.Write(dlg.FileName, "Investigație domeniu și e-mail", ModeNote, LogAnalyzer.Dfir.Case.ReportSeal.For(LogAnalyzer.UI.Services.LiveCase.Get()), checks, notes,
                 new ChecksReportPdf.Table($"Cronologia utilizatorului {UserName}", new[] { "Ora (UTC)", "Ce", "Detalii", "Probă" },
                     UserTimeline.Select(t => new[] { t.TimeUtc.ToString("yyyy-MM-dd HH:mm:ss"), t.Action, t.Detail, t.Source }).ToList()),
                 new ChecksReportPdf.Table($"Mesaje {Mailbox}", new[] { "Ora (UTC)", "Expeditor", "Destinatari", "Subiect", "IP", "Status" },
