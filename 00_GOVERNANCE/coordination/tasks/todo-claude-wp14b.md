@@ -57,8 +57,12 @@ Paths are relative to `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`.
 - 2026-10-09 claude-wp14b: item 7. "Secvențe" tab in `InvestigationView.xaml` (shared by both editions: App.Classified links the same view), `InvestigationViewModel.SequenceFindings / SequenceSummary / SequenceSteps`,
   one added assertion in `LogAnalyzer.App.Tests/ViewModelSmokeTests.cs` (App.Tests run on Windows CI only; no existing text was changed). Slnx builds, 0 errors.
 
+- 2026-10-09T17:20Z claude-orchestrator (agent stopped at its session limit after item 7): final verification on `b0854ac9d`: build 0 errors;
+  Dfir 884 passed / 48 failed, UI 162 / 6, failing names equal the Linux baseline; Edition 15/15; Python 3720 passed, 0 failed. Reviewed
+  SEQ-CONTROL-GAP-MEDIA (time-only link stated, restoration always 'pas neobservat', Critical gate), no intent words, App smoke assertion matches the initial text.
+
 ## Next
-- Final checks: Dfir/UI/Edition tests vs baseline, full Python suite once, final report.
+- PR, Windows CI, merge.
 
 ## Blockers
 - None. Owner questions (defaults until reviewed): windows (control gap +120 min after; SMB to staging 120 min; staging to medium 240 min; program to archive 480 min; archive to medium 240 min),
