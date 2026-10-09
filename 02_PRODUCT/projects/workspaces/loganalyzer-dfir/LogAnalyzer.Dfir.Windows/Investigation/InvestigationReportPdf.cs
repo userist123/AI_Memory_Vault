@@ -50,6 +50,7 @@ public static class InvestigationReportPdf
                     Box(row, r.Timeline.Count.ToString("N0"), "EVENIMENTE", "#334155");
                     Box(row, r.Gaps.Count.ToString(), "GOLURI", "#475569");
                 });
+                col.Item().Text(r.ProcedureProfileLine).FontSize(7.5f).FontColor(Muted);
                 if (notes.Length > 0) col.Item().Text("Observații: " + notes);
 
                 col.Item().Text("1. Ce s-a întâmplat (lanțuri de incident)").Bold().FontSize(11).FontColor(Ink);

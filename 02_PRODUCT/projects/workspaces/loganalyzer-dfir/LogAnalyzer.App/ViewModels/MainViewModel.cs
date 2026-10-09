@@ -107,6 +107,8 @@ namespace LogAnalyzer.UI.ViewModels
 
         /// <summary>Owner policies: import, lifecycle, verified application ("Politici" tab).</summary>
         public PolicyViewModel Policy { get; }
+        /// <summary>"Profil de proceduri" (owner decisions 18, 19): working hours, log maintenance, approved software, expected policy, zones and transfers.</summary>
+        public ProcedureProfileViewModel ProcedureProfile { get; }
 
         // Session / Module Management
         [ObservableProperty] private int _selectedModuleIndex = 0; // 0 for Forensics, 1 for Collection
@@ -557,6 +559,7 @@ namespace LogAnalyzer.UI.ViewModels
             DomainInvestigation = featureViews.CreateViewModel(FeatureKeys.DomainInvestigation);
             Investigation = new InvestigationViewModel(inv => featureViews.CreateViewModel(FeatureKeys.AiAnalysis, inv));
             Policy = new PolicyViewModel(registryWriter);
+            ProcedureProfile = new ProcedureProfileViewModel();
             _eventParser = eventParser;
             _analysisEngine = analysisEngine;
             _registryParser = registryParser;

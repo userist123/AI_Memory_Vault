@@ -38,6 +38,9 @@ public sealed class InvestigationResult
     /// <summary>The procedure profile used by this run (null = none: log clears stay NotAssessed). Its snapshot is Analysis/procedure_profile.json.</summary>
     public ProcedureProfile? Procedure { get; set; }
     public string ProcedureProfileSha256 { get; set; } = "";
+    /// <summary>What the report says about the profile: each section defined or "nedefinit" (never "conform"), and the SHA-256 of the copy in the case.</summary>
+    public string ProcedureProfileLine => "Profil de proceduri: " + (Procedure is null ? "niciun profil (toate secțiunile nedefinite)" : LogAnalyzer.Dfir.Profile.ProfileOps.Describe(Procedure)
+        + (ProcedureProfileSha256.Length > 0 ? $"; copie în caz Analysis/procedure_profile.json, SHA-256 {ProcedureProfileSha256}" : ""));
     public string TimelineCsv { get; set; } = "";
     public string FindingsJson { get; set; } = "";
     /// <summary>How far the analysis got (UX contract §20). Not a verdict on any finding: see <see cref="Finding.Verification"/>.</summary>

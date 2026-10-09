@@ -59,6 +59,28 @@ public sealed class ProfileInCaseTests : IDisposable
     }
 
     [Fact]
+    public void Report_line_names_every_section_as_defined_or_nedefinit_never_conform()
+    {
+        var none = new InvestigationResult { Case = NewCaseWithSample() };
+        Assert.Contains("niciun profil", none.ProcedureProfileLine);
+        var ws = NewCaseWithSample2();
+        var r = new InvestigationPipeline().Run(ws, CollectionProfile.Quick, collect: false, procedureProfile: Profile());
+        Assert.Contains("Mentenanța jurnalelor: definit", r.ProcedureProfileLine);
+        Assert.Contains("Software aprobat: nedefinit", r.ProcedureProfileLine);
+        Assert.Contains(r.ProcedureProfileSha256, r.ProcedureProfileLine);
+        Assert.DoesNotContain("conform", r.ProcedureProfileLine, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private CaseWorkspace NewCaseWithSample2()
+    {
+        var sample = Path.Combine(_dir, "sample2.bin");
+        File.WriteAllText(sample, "MZ not really a program 2");
+        var ws = InvestigationPipeline.NewCase(Path.Combine(_dir, "cases2"), "wp15b", TestScopes.Valid());
+        InvestigationPipeline.Import(ws, [sample]);
+        return ws;
+    }
+
+    [Fact]
     public void Run_without_a_profile_writes_no_snapshot_and_audits_no_profile()
     {
         var ws = NewCaseWithSample();
