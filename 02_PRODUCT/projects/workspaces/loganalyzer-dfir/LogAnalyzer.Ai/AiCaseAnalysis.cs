@@ -27,6 +27,8 @@ public static class AiCaseAnalysis
         File.WriteAllText(Path.Combine(dir, "ai_catalog.txt"), EvidenceReasoner.CatalogText(catalog), new UTF8Encoding(false));
         File.WriteAllText(Path.Combine(dir, "ai_raw_response.json"), ai.RawResponse, new UTF8Encoding(false));
         File.WriteAllText(Path.Combine(dir, "ai_reasoning.json"), JsonSerializer.Serialize(ai with { RawResponse = "(Analysis/ai_raw_response.json)" }, opts), new UTF8Encoding(false));
+        foreach (var f in new[] { "ai_catalog.txt", "ai_raw_response.json", "ai_reasoning.json" })
+            r.Case.RecordOutput("Analysis/" + f, "LocalModel", ai.ModelDigest.Length >= 12 ? ai.ModelDigest[..12] : ai.ModelDigest);   // WP3b: outputs in custody
         r.Case.RecordTransformation("CASE", $"LocalModel {ai.Model}", ai.ModelDigest.Length >= 12 ? ai.ModelDigest[..12] : ai.ModelDigest, "Analysis/ai_reasoning.json",
             $"{ai.Accepted.Count} afirmații acceptate, {ai.Rejected.Count} respinse; catalog {ai.CatalogSha256}; răspuns {ai.ResponseSha256}");
         r.Case.Audit("ai.reasoning", $"model={ai.Model} digest={ai.ModelDigest} endpoint={ai.Endpoint} prompt={ai.PromptSha256} response={ai.ResponseSha256}");

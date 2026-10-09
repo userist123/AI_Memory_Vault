@@ -47,6 +47,7 @@ public sealed class InvestigationResult
 /// </summary>
 public sealed class InvestigationPipeline
 {
+    private const string Producer = "InvestigationPipeline";
     private readonly ParserRegistry _registry;
 
     public InvestigationPipeline(ParserRegistry? registry = null) => _registry = registry ?? WindowsParsers.Registry;
@@ -131,6 +132,7 @@ public sealed class InvestigationPipeline
             var dir = Path.Combine(ws.Root, "Analysis");
             Directory.CreateDirectory(dir);
             File.WriteAllText(Path.Combine(dir, "run_state.json"), JsonSerializer.Serialize(new RunState(ws.Info.CaseId, state, reason, DateTimeOffset.UtcNow), new JsonSerializerOptions { WriteIndented = true }));
+            ws.RecordOutput("Analysis/run_state.json", Producer, DfirInfo.ApplicationVersion);
             ws.Audit("investigation." + state.ToSpec().ToLowerInvariant(), reason);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* the original failure is what the caller must see */ }
@@ -168,6 +170,7 @@ public sealed class InvestigationPipeline
         Directory.CreateDirectory(analysisDir);
         var sink = new ListSink();
         File.WriteAllText(Path.Combine(analysisDir, "parsers.json"), JsonSerializer.Serialize(_registry.Descriptors, new JsonSerializerOptions { WriteIndented = true }));
+        ws.RecordOutput("Analysis/parsers.json", Producer, DfirInfo.ApplicationVersion);
         foreach (var ev in ws.LoadEvidence())
         {
             ct.ThrowIfCancellationRequested();
@@ -257,19 +260,25 @@ public sealed class InvestigationPipeline
 
         // 4. Outputs, kept in the case and hashed into custody.
         progress?.Report("Scriere rezultate");
+        // WP3b: every file written below is registered in the custody chain with its SHA-256 and the evidence it rests on.
+        var evidenceIds = ws.LoadEvidence().Select(e => e.EvidenceId).ToList();
         r.TimelineCsv = Path.Combine(analysisDir, "timeline.csv");
         using (var w = new CsvWriter(r.TimelineCsv, ["TimeUtc", "TimeSemantics", "Source", "EventId", "Provider", "Host", "User", "Process", "Pid", "Path", "RemoteIp", "RemotePort", "Dns", "Summary", "Classification", "EvidenceId", "Locator", "SourceSha256", "Parser", "ParserVersion",
                                                   "TimeRaw", "TimeConversion", "TimeZoneBasis", "TimeUncertainty", "SemanticType"]))
             foreach (var e in r.Timeline)
                 w.WriteRow(new object?[] { e.Time.Utc?.ToString("o") ?? "", e.TimeSemantics, e.Source, e.EventId, e.Provider, e.Host, e.User, e.Process, e.Pid, e.Path, e.RemoteIp, e.RemotePort, e.Dns, e.Summary, e.Classification.ToSpec(), e.EvidenceId, e.Locator, e.SourceSha256, e.ParserId, e.ParserVersion,
                                        e.Time.Raw, e.Time.ConversionMethod, e.TimeZoneBasis, e.TimeUncertainty, e.SemanticType.ToSpec() });
+        ws.RecordOutput("Analysis/timeline.csv", Producer, DfirInfo.ApplicationVersion, evidenceIds);
         r.FindingsJson = Path.Combine(analysisDir, "findings.json");
         File.WriteAllText(r.FindingsJson, SchemaVersions.WithVersion(new { r.Findings, r.Gaps, r.Collection, RejectedFindings = r.RejectedFindings.Select(x => new { x.Finding.FindingId, x.Finding.RuleId, x.Finding.Title, x.Reason }) }, SchemaVersions.Findings));
+        ws.RecordOutput("Analysis/findings.json", Producer, DfirInfo.ApplicationVersion, evidenceIds);
         File.WriteAllText(Path.Combine(analysisDir, "parsing.json"), JsonSerializer.Serialize(r.Parsing, new JsonSerializerOptions { WriteIndented = true }));
+        ws.RecordOutput("Analysis/parsing.json", Producer, DfirInfo.ApplicationVersion, evidenceIds);
         progress?.Report("Graf de probe");
         r.Graph = EvidenceGraph.Build(r.Timeline, r.Findings, ws.Info.Host);
         var (graphJson, graphSha) = r.Graph.Snapshot(ws.Info.CaseId);
         File.WriteAllText(Path.Combine(analysisDir, "graph.json"), graphJson);
+        ws.RecordOutput("Analysis/graph.json", "EvidenceGraph", "1.0", evidenceIds);
         ws.RecordTransformation("CASE", "EvidenceGraph", "1.0", "Analysis/graph.json", $"{r.Graph.Entities.Count} entități, {r.Graph.Relationships.Count} relații, SHA-256 {graphSha}");
 
         // Detection: rules shipped with the application plus the case's own Rules folder (ioc / yara / sigma).
@@ -289,22 +298,35 @@ public sealed class InvestigationPipeline
         r.Gaps.AddRange(engine.LoadErrors);
         File.WriteAllText(Path.Combine(analysisDir, "detections.json"), JsonSerializer.Serialize(r.Detections, new JsonSerializerOptions { WriteIndented = true }));
         File.WriteAllText(Path.Combine(analysisDir, "rules.json"), JsonSerializer.Serialize(r.RulesUsed, new JsonSerializerOptions { WriteIndented = true }));
+        ws.RecordOutput("Analysis/detections.json", "DetectionEngine", "1.0", evidenceIds);
+        ws.RecordOutput("Analysis/rules.json", "DetectionEngine", "1.0");
         ws.RecordTransformation("CASE", "DetectionEngine", "1.0", "Analysis/detections.json", $"{r.Detections.Count} potriviri, {r.RulesUsed.Count} reguli");
         r.AntiForensics.AddRange(LogAnalyzer.Dfir.Analysis.AntiForensics.Evaluate(r.Timeline, r.Gaps, null,
             found.Where(x => x.Severity >= Severity.High && x.RuleId != "LOG-TAMPER" && (x.FirstSeenUtc ?? x.LastSeenUtc) is not null).Select(x => (x.FirstSeenUtc ?? x.LastSeenUtc)!.Value).ToList()));   // no maintenance policy until the procedure profile (WP15)
         File.WriteAllText(Path.Combine(analysisDir, "anti_forensics.json"), JsonSerializer.Serialize(r.AntiForensics, new JsonSerializerOptions { WriteIndented = true }));
+        ws.RecordOutput("Analysis/anti_forensics.json", "AntiForensics", "1.0", evidenceIds);
         ws.RecordTransformation("CASE", "AntiForensics", "1.0", "Analysis/anti_forensics.json",
             $"{r.AntiForensics.Count(c => c.Result == AntiForensicResult.Detected)} DETECTED, {r.AntiForensics.Count(c => c.Result == AntiForensicResult.Undetermined)} UNDETERMINED");
         // Memory Vault proposals (spec §24): written into the case only; submitting them is the operator's step, through the vault's gate.
         var (proposals, refusedForVault) = LogAnalyzer.Dfir.Memory.VaultExport.FromCase(ws.Info.CaseId, ws.LoadEvidence(), r.Findings, r.AntiForensics, r.Gaps,
             $"LogAnalyzer {DfirInfo.ApplicationVersion} ({Environment.UserDomainName}\\{Environment.UserName})");
         var vaultFile = Path.Combine(ws.Root, "Exports", "vault_proposals.jsonl");
-        LogAnalyzer.Dfir.Memory.VaultExport.Write(vaultFile, proposals);
+        // WP3b gate: a proposal that rests on evidence found MODIFIED or MISSING by the last re-check is refused, with the reason, not written for submission.
+        var (releasedProposals, invalidatedProposals) = LogAnalyzer.Dfir.Memory.VaultExport.Release(ws, proposals);
+        refusedForVault.AddRange(invalidatedProposals);
+        LogAnalyzer.Dfir.Memory.VaultExport.Write(vaultFile, releasedProposals);
         File.WriteAllText(Path.Combine(ws.Root, "Exports", "vault_refused.json"), JsonSerializer.Serialize(refusedForVault, new JsonSerializerOptions { WriteIndented = true }));
-        ws.RecordTransformation("CASE", "VaultExport", "1.0", "Exports/vault_proposals.jsonl", $"{proposals.Count} propuneri, {refusedForVault.Count} refuzate");
+        ws.RecordTransformation("CASE", "VaultExport", "1.0", "Exports/vault_proposals.jsonl", $"{releasedProposals.Count} propuneri, {refusedForVault.Count} refuzate");
+        ws.WriteDependencies(r.Findings, proposals);   // Analysis/dependencies.json: finding and proposal id -> evidence ids
+        ws.RecordOutput("Exports/vault_proposals.jsonl", "VaultExport", "1.0", evidenceIds);
+        ws.RecordOutput("Exports/vault_refused.json", "VaultExport", "1.0", evidenceIds);
+        ws.WriteManifest("Exports/export_manifest.json", ["Exports/vault_proposals.jsonl", "Exports/vault_refused.json", "Analysis/dependencies.json"], Producer, DfirInfo.ApplicationVersion);
         var (state, stateReason) = OperationStates.Summarize(r.Collection.Select(c => c.Status).ToList(), r.Parsing);
         MarkEnded(r, ws, state, stateReason);
-        SchemaManifest.ForRun().Write(Path.Combine(analysisDir, SchemaVersions.ManifestFile));
+        var schemaManifest = SchemaManifest.ForRun();
+        schemaManifest.Anchor = ws.Anchor();   // chain heads: a copy held outside the case makes truncation at the end detectable
+        schemaManifest.Write(Path.Combine(analysisDir, SchemaVersions.ManifestFile));
+        ws.RecordOutput("Analysis/" + SchemaVersions.ManifestFile, Producer, DfirInfo.ApplicationVersion);
         ws.Audit("investigation.end", $"{r.Timeline.Count} events, {r.Findings.Count} findings, {r.Gaps.Count} gaps, state {state.ToSpec()}");
         return r;
     }

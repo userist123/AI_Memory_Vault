@@ -39,6 +39,9 @@ namespace LogAnalyzer.UI.Services
             };
         }
 
+        /// <summary>Verdict line of the re-check run when the LIVE case was opened (WP3b); null before the case is opened or when it was just created.</summary>
+        public static string? IntegrityLine { get { lock (Gate) return _case?.LastRecheck?.Summary; } }
+
         public static CaseWorkspace Get()
         {
             lock (Gate)

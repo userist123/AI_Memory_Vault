@@ -100,8 +100,15 @@ written (grep the App and Core report services) and include them.
 
 - 2026-10-09T04:35Z claude-orchestrator: #238 (WP3a) merged as `8e72b252`. WP3b spec detailed; branch created.
 
+- 2026-10-09 claude-wp3b: WP3b items 1-7 implemented (branch `loganalyzer/wp3b-invalidation-recheck`). Build 0 errors; Dfir 48 failed = baseline, 27 new tests pass
+  (`IntegrityRecheckTests` 23, `PipelineIntegrityTests` 4); UI 6 = baseline; Edition 14/14. Python suite: see commit log / final report.
+  Key files (under `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`): `LogAnalyzer.Dfir.Core/Case/CaseWorkspace.Integrity.cs` (RecordOutput, WriteManifest, WriteDependencies,
+  Recheck, Anchor/CheckAnchor, invalidations), `Case/DependencyIndex.cs`, `Case/IntegrityRecheck.cs` (result types), `Case/HashChain.cs` (Head, Contains),
+  `IO/Hashing.cs` (streaming cancellable hash), `Memory/VaultExport.cs` (Release gate), `IO/SchemaVersions.cs`; callers: `InvestigationPipeline`, `ControlReportPdf.SaveToCase`,
+  `AiCaseAnalysis`, `LiveCase.IntegrityLine`, `InvestigationViewModel.IntegrityLine`/`InvestigationView.xaml`; doc `docs/dfir/INTEGRITY_RECHECK.md`.
+
 ## Next
-- Implement WP3b 1-7, verify, push. The orchestrator opens the PR.
+- Orchestrator: open the PR for WP3b and check CI. Nothing else pending in WP3b.
 
 ## Blockers (owner decisions; safe defaults implemented)
 - LIVE case (`LiveCase.Get`) has no creation dialog: if the operator has not entered a scope, it is created with a PROVISIONAL scope
@@ -113,4 +120,9 @@ written (grep the App and Core report services) and include them.
 - Chain limit: deleting lines from the END of a log is not detectable without an external anchor of the head hash (WP3b candidate).
 - Read-only scan allowlists three exact detector-indicator literals in LogAnalyzer.Core.dll (RansomwareDetectionEngine patterns "wevtutil cl security/system"
   and one fragment of LiveSecurityMonitoringEngine's explanation); they are matched against events, never executed.
+- WP3b: `INVALIDATED` is a separate marker in `Analysis/invalidations.json`, not a new value of `Finding.Status`/`StandardState` (no existing state fits; changing the enum would touch the frozen spec vocabulary). Owner may want a state in the contract later.
+- WP3b: `CaseWorkspace.Open` now re-hashes all evidence on every open (spec). On a very large case this blocks the caller (LiveCase.Get is synchronous); `Open(root, recheck: false)` + `Recheck(ct)` is available for an async/cancellable UI path. Owner decision: should the LIVE case open defer the re-check to a background task?
+- WP3b: the anchor only helps if a copy is kept outside the case (documented in docs/dfir/INTEGRITY_RECHECK.md). Owner decision: where the operator is told to keep it (printout, ticket, removable medium).
+- WP3b: `integrity_recheck.json` and `invalidations.json` are rewritten at every open and deliberately not registered as outputs (they would add custody entries on each open).
+- WP3b: legacy detection uses the CSV custody / plain audit log as the reference for "lines that existed before chains" (VerifyChains alone reports a missing jsonl as an empty valid chain).
 - Existing Dfir tests/pipeline callers now pass a scope (CaseWorkspace.Create refuses an incomplete one); no test was weakened.

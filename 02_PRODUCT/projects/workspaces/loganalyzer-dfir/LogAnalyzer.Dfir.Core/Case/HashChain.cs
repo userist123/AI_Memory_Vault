@@ -49,6 +49,41 @@ public sealed class HashChain(string path)
         }
     }
 
+    /// <summary>Seq and hash of the last chained line (<c>(0, Genesis)</c> when empty or legacy). Read-only: a writer holding the file only delays it.</summary>
+    public (long Seq, string Head) Head()
+    {
+        lock (_gate)
+        {
+            if (!File.Exists(Path)) return (0, Genesis);
+            for (int attempt = 0; ; attempt++)
+            {
+                try
+                {
+                    using var fs = new FileStream(Path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                    return ReadHead(fs);
+                }
+                catch (IOException) when (attempt < 100) { Thread.Sleep(20); }
+            }
+        }
+    }
+
+    /// <summary>Whether an entry with this <paramref name="seq"/> and <paramref name="hash"/> is on the chain (a copy of the head held outside the case).</summary>
+    public bool Contains(long seq, string hash)
+    {
+        if (!File.Exists(Path)) return false;
+        foreach (var line in File.ReadLines(Path))
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            try
+            {
+                var o = JsonNode.Parse(line)!.AsObject();
+                if (o["seq"] is { } s && s.GetValue<long>() == seq) return o["hash"] is { } h && string.Equals(h.GetValue<string>(), hash, StringComparison.Ordinal);
+            }
+            catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { }
+        }
+        return false;
+    }
+
     private FileStream OpenExclusive()
     {
         for (int attempt = 0; ; attempt++)

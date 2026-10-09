@@ -111,6 +111,41 @@ public static class VaultExport
         }
     }
 
+    /// <summary>Identity of a proposal inside the case: its provenance source_ref (<c>loganalyzer:&lt;case&gt;:&lt;kind&gt;:&lt;object id&gt;</c>).</summary>
+    public static string IdOf(VaultProposal p) => p.Provenance.TryGetValue("source_ref", out var r) ? r : p.Title;
+
+    /// <summary>Evidence ids a proposal rests on (the <c>source_evidence</c> of its JSON block). Empty for a proposal that names none (e.g. an evidence gap).</summary>
+    public static IReadOnlyList<string> EvidenceIdsOf(VaultProposal p)
+    {
+        var start = p.Body.IndexOf("```json", StringComparison.Ordinal);
+        var end = start < 0 ? -1 : p.Body.IndexOf("```", start + 7, StringComparison.Ordinal);
+        if (start < 0 || end < 0) return [];
+        try
+        {
+            using var doc = JsonDocument.Parse(p.Body[(start + 7)..end]);
+            if (!doc.RootElement.TryGetProperty("source_evidence", out var arr) || arr.ValueKind != JsonValueKind.Array) return [];
+            return arr.EnumerateArray().Select(e => e.TryGetProperty("evidence_id", out var v) ? v.GetString() ?? "" : "").Where(x => x.Length > 0).Distinct(StringComparer.Ordinal).ToList();
+        }
+        catch (JsonException) { return []; }
+    }
+
+    /// <summary>
+    /// The invalidation gate (WP3b): a proposal whose evidence was found MODIFIED or MISSING by the re-check is refused, with the reason,
+    /// and is not written for submission. Everything else is released unchanged.
+    /// </summary>
+    public static (List<VaultProposal> Released, List<VaultRefusal> Refused) Release(Case.CaseWorkspace ws, IReadOnlyList<VaultProposal> proposals)
+    {
+        var invalid = ws.LoadInvalidations().Items.Where(i => i.Kind == "vault_proposal").ToDictionary(i => i.Id, StringComparer.Ordinal);
+        var released = new List<VaultProposal>(); var refused = new List<VaultRefusal>();
+        foreach (var p in proposals)
+        {
+            var id = IdOf(p);
+            if (invalid.TryGetValue(id, out var inv)) refused.Add(new VaultRefusal("Invalidated", id, $"{inv.State}: {inv.Reason}"));
+            else released.Add(p);
+        }
+        return (released, refused);
+    }
+
     /// <summary>Schema version recorded in a proposal's body; proposals written before versioning have none and read as "1.0".</summary>
     public static string SchemaVersionOf(VaultProposal p)
     {

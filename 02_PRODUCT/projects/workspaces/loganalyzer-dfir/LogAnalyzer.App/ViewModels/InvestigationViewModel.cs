@@ -120,6 +120,8 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>Operation state of the last run (UX contract §20), in Romanian. "Finalizat" does not mean any finding is verified.</summary>
         [ObservableProperty] private string _operationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[OperationState.NotStarted];
         [ObservableProperty] private string _summary = "";
+        /// <summary>Verdict of the last integrity re-check of the case (WP3b): valid, modified n, missing n, chain broken or legacy. Reports only; nothing is repaired.</summary>
+        [ObservableProperty] private string _integrityLine = "";
         [ObservableProperty] private string _chains = "";
         [ObservableProperty] private string _gapsText = "";
         [ObservableProperty] private string _timelineFilter = "";
@@ -198,6 +200,9 @@ namespace LogAnalyzer.UI.ViewModels
                 GraphStatus = _result.Graph is { } gr ? $"Graf: {gr.Entities.Count} entități, {gr.Relationships.Count} relații." : "Graful nu a fost construit.";
                 Summary = $"{_result.Timeline.Count:N0} evenimente · {_result.Findings.Count(f => f.Severity == Severity.Critical)} critice · " +
                           $"{_result.Findings.Count(f => f.Severity == Severity.High)} ridicate · {_result.Findings.Count} constatări · {_result.Gaps.Count} goluri · caz {_result.Case.Info.CaseId}";
+                var checkedCase = _result.Case;
+                var ct = _cts.Token;
+                IntegrityLine = (await Task.Run(() => checkedCase.Recheck(ct))).Summary;
                 OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[_result.State] + " — " + _result.StateReason;
                 Summary += $" · analiză: {LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[_result.State]} (nu verifică constatările)";
                 Log += "Gata. Dublu-click pe o constatare sau pe un eveniment pentru detalii." + Environment.NewLine;
@@ -244,6 +249,7 @@ namespace LogAnalyzer.UI.ViewModels
             try
             {
                 var ws = LogAnalyzer.UI.Services.LiveCase.Get();
+            IntegrityLine = LogAnalyzer.UI.Services.LiveCase.IntegrityLine ?? "";
                 using var id = System.Security.Principal.WindowsIdentity.GetCurrent();
                 var (req, sha) = RemoteCollection.Authorize(ws, RemoteHost, id.Name, RemoteJustification, RemoteCollection.KnownArtifacts);
                 var dlg = new SaveFileDialog { FileName = $"Colectare_{req.TargetHost}.ps1", Filter = "PowerShell (*.ps1)|*.ps1" };
@@ -260,6 +266,7 @@ namespace LogAnalyzer.UI.ViewModels
             var dlg = new OpenFolderDialog { Title = "Folderul pachetului colectat (conține manifest.json)" };
             if (dlg.ShowDialog() != true) return;
             var ws = LogAnalyzer.UI.Services.LiveCase.Get();
+            IntegrityLine = LogAnalyzer.UI.Services.LiveCase.IntegrityLine ?? "";
             var check = RemoteCollection.Verify(ws, dlg.FolderName);
             if (!check.Ok) { RemoteStatus = "Pachetul NU a fost importat: " + string.Join("; ", check.Problems); return; }
             var items = RemoteCollection.Import(ws, check);
