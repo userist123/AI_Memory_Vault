@@ -21,6 +21,7 @@ public static class RuleContracts
     private const string W11 = "LogAnalyzer.Dfir.Analysis.Wp11Rules";
     private const string Pol = "LogAnalyzer.Dfir.Analysis.PolicyTimeline";
     private const string W14 = "LogAnalyzer.Dfir.Analysis.Wp14Rules";
+    private const string Seq = "LogAnalyzer.Dfir.Analysis.SequenceRules";
     private const string Cont = "LogAnalyzer.Dfir.Windows.Containment.ProcessContainmentService";
 
     private static RuleContract R(string id, string producer, SemanticType t, string meaning, string[] limits, string[] missing, string[] steps, string? contra = null) =>
@@ -287,6 +288,21 @@ public static class RuleContracts
             ["400 apare la prima instalare și la schimbări de driver: nu dovedește un adaptor nou fizic.", "Adaptoarele virtuale (listă de date) sunt tratate cu severitate mai mică.", "Activarea sau dezactivarea adaptorului nu este înregistrată separat în sursele colectate."],
             ["Starea actuală a adaptorului, istoricul de driver, setările BIOS."],
             ["Verificați adaptorul în Device Manager și BIOS.", "Comparați cu configurația hardware aprobată."]),
+        R("SEQ-CONTROL-GAP-MEDIA", Seq, SemanticType.Correlation, "Un decalaj de control (USB, instalare de dispozitive, audit, Defender) este urmat, în interiorul decalajului sau în fereastra de după el, de un mediu amovibil observat.",
+            ["Ordinea este cea din timp; nu dovedește o legătură între dezactivarea controlului și folosirea mediului și nu spune cine a modificat controlul.", "Constatarea de decalaj nu poartă momentul restabilirii: pasul „control restabilit” este întotdeauna neobservat, iar sfârșitul ferestrei este ultima înregistrare colectată.",
+             "Prezența mediului nu este copiere; scrierile pe volum vin din MEDIA-FILE-ACTIVITY și nu arată conținutul."],
+            ["Momentul și autorul modificării controlului (Security 4719/4657, GroupPolicy/Operational), restabilirea controlului, activitatea pe volumul mediului."],
+            ["Verificați gpresult și starea efectivă a controlului.", "Examinați constatările componente (POLICY-CONTROL-GAP, MEDIA-*)."]),
+        R("SEQ-SMB-STAGING-USB", Seq, SemanticType.Correlation, "Acces la o partajare de la distanță, urme de fișiere create local și scrieri pe un mediu amovibil, în această ordine și în ferestrele din date.",
+            ["Fără legătură de nume de fișier, secvența este doar o corelare temporală; un nume egal nu dovedește același conținut (fără hash).", "Pasul de staging cere căi cu literă de unitate (un rând USN fără literă nu se deosebește de volumul mediului).",
+             "Nu arată conținutul transferat și nu stabilește scopul; sursele care nu au fost colectate dau „pas neobservat”, nu absență."],
+            ["Hash-urile fișierelor, 4663 cu SACL pe fișierele sensibile, jurnalul USN al volumului mediului, jurnalele serverului de fișiere."],
+            ["Examinați constatările componente (SMB, MEDIA-FILE-ACTIVITY).", "Comparați fișierele de pe mediu cu cele accesate pe partajare, după hash, dacă mediul este disponibil."]),
+        R("SEQ-PORTABLE-USB-ARCHIVE", Seq, SemanticType.Correlation, "Software portabil sau rulat de pe un mediu amovibil, apărut în perioadă, o arhivă creată și scrieri pe un mediu amovibil, în ferestrele din date.",
+            ["Prima apariție este prima din artefactele colectate, nu dovada că programul nu exista înainte; Amcache arată prezență, nu execuție.", "Dimensiunea arhivei se știe doar când o sursă o conține; fără ea arhiva se raportează cu dimensiune necunoscută.",
+             "Legătura program → arhivă → mediu este temporală; numele de fișier egale nu dovedesc același conținut."],
+            ["Hash-urile arhivei și ale fișierelor de pe mediu, jurnalele programului, contul care a pornit programul (Prefetch nu îl conține)."],
+            ["Examinați constatările componente (MEDIA-*, REMOTE-TOOL-*).", "Verificați arhiva și conținutul ei dacă mai există."]),
     ];
 
     private static readonly Dictionary<string, RuleContract> ById = All.ToDictionary(r => r.RuleId, StringComparer.Ordinal);
