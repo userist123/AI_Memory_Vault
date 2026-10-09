@@ -24,6 +24,23 @@ namespace LogAnalyzer.UI.ViewModels
 
         public ObservableCollection<string> ImportFiles { get; } = new();
         public ObservableCollection<Finding> Findings { get; } = new();
+
+        // WP6a (U4): the finding chosen in the grid and its card. The card is built from the finding and the case data by LogAnalyzer.Dfir.Presentation; selecting changes nothing in the case.
+        private LogAnalyzer.Dfir.Presentation.EvidenceContext _evidenceContext = LogAnalyzer.Dfir.Presentation.EvidenceContext.Empty;
+        [ObservableProperty] private Finding? _selectedFinding;
+        [ObservableProperty] private FindingCardViewModel? _selectedCard;
+
+        partial void OnSelectedFindingChanged(Finding? value) => SelectedCard = value is null ? null : new FindingCardViewModel(
+            LogAnalyzer.Dfir.Presentation.FindingCardModel.Build(value, _evidenceContext, _result?.Verification?.Of(value.FindingId)?.CheckLines()));
+
+        /// <summary>The case data the card looks evidence details up in. A case file that cannot be read leaves the details "necunoscut în caz" on the card; nothing is guessed.</summary>
+        private static LogAnalyzer.Dfir.Presentation.EvidenceContext BuildEvidenceContext(InvestigationResult r)
+        {
+            IReadOnlyList<EvidenceItem> items;
+            try { items = r.Case.LoadEvidence(); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { items = []; }
+            return new LogAnalyzer.Dfir.Presentation.EvidenceContext { Items = items, Timeline = r.Timeline, Parsing = r.Parsing, Gaps = r.Gaps };
+        }
         /// <summary>WP14a: the findings of the "Air-gap integrity" category (Finding.AirGap carries channel, authorised?, who, when, object, classification, direction, destination, evidence).</summary>
         public ObservableCollection<Finding> AirGapFindings { get; } = new();
         [ObservableProperty] private string _airGapSummary = "Integritate air-gap: nedefinit (nicio analiză încă).";
@@ -100,7 +117,7 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _readOnlyNotice = "";
 
         private static string VerificationText(InvestigationResult r) => r.Verification is { } v
-            ? v.Banner + " (verificare automată, nu externă)" + (v.Warning is { } w ? Environment.NewLine + w : "")
+            ? v.BannerRomanian + " (verificare automată, nu externă)" + (v.Warning is { } w ? Environment.NewLine + w : "")
             : "Verificare: nerulată pentru această analiză (nedeterminat).";
 
         /// <summary>
@@ -260,6 +277,8 @@ namespace LogAnalyzer.UI.ViewModels
         private void ShowResult(InvestigationResult result)
         {
             _result = result;
+            SelectedFinding = null;
+            _evidenceContext = BuildEvidenceContext(result);
             Findings.Clear();
             foreach (var f in _result.Findings) Findings.Add(f);
             AirGapFindings.Clear();

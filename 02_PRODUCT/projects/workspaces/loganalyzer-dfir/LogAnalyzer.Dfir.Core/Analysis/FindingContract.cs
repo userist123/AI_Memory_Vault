@@ -142,6 +142,29 @@ public static class StateLabels
 
     public static string Romanian(StandardState s) => RomanianTable[s];
 
+    /// <summary>
+    /// The label of a classification, through the same mapping the finding contract uses (<see cref="FindingContract.StatusFor"/>) and the same table
+    /// as <see cref="Romanian"/>. The grids, the graph view and the finding card use this instead of any wording of their own.
+    /// </summary>
+    public static string ForClassification(Classification c) => Romanian(FindingContract.StatusFor(c));
+
+    /// <summary>One sentence on what a state means and does not mean, for tooltips and the finding card; so a state is never only a word or a colour.</summary>
+    public static string Meaning(StandardState s) => MeaningTable[s];
+
+    public static IReadOnlyDictionary<StandardState, string> MeaningTable { get; } = new Dictionary<StandardState, string>
+    {
+        [StandardState.Observed] = "Faptul apare direct într-o probă din caz.",
+        [StandardState.Correlated] = "Mai multe fapte observate se potrivesc (în timp, în cale sau în sursă); corelația nu dovedește cauzalitate.",
+        [StandardState.Supported] = "Verificarea a găsit în caz dovezi care susțin constatarea.",
+        [StandardState.Verified] = "Verificarea automată a confirmat constatarea față de probele din caz (nu este o verificare externă sau umană).",
+        [StandardState.Inferred] = "Este o deducție din fapte observate, nu o observație directă.",
+        [StandardState.Unproven] = "Probele din caz nu sunt suficiente pentru a o demonstra.",
+        [StandardState.Contradicted] = "Există dovezi în caz care contrazic constatarea.",
+        [StandardState.Rejected] = "Verificarea a respins constatarea.",
+        [StandardState.Unknown] = "Nu se poate spune cu probele din caz.",
+        [StandardState.NotAssessed] = "Nicio verificare nu a evaluat încă această constatare.",
+    };
+
     public static IReadOnlyDictionary<OperationState, string> RomanianOperation { get; } = new Dictionary<OperationState, string>
     {
         [OperationState.NotStarted] = "Neînceput",
