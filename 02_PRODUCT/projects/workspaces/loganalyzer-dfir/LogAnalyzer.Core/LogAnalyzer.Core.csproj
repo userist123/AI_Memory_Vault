@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\LogAnalyzer.Dfir.Core\LogAnalyzer.Dfir.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="QuestPDF" Version="2026.7.2" />
     <PackageReference Include="System.Management" Version="10.0.10" />
