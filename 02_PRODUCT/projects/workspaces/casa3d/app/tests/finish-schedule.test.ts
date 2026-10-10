@@ -6,7 +6,7 @@ import materials from '../data/materials.v1.json';
 import { newSnapshot } from '../core/project';
 import { computeBOQ, finishesOf } from '../core/boq';
 import { finishSchedule, productCode } from '../core/finish-schedule';
-import { scheduleCsv, detailText } from '../lib/finish-schedule-text';
+import { scheduleCsv, detailText, csvCell } from '../lib/finish-schedule-text';
 import { t as tr } from '../lib/i18n';
 import type { Catalog, MaterialsCatalog, Snapshot } from '../core/types';
 
@@ -43,4 +43,10 @@ test('CSV: antet, separator „;”, BOM, câte o linie pe produs', () => {
   assert.ok(csv.startsWith('﻿"Nivel";"Cameră";"Element";"Produs"')); assert.equal(csv.split('\n').length, rows.length + 1);
   assert.match(csv, /"Parter";"Living";"Pardoseală";"Parchet laminat 8 mm Krono Original Herringbone K450/);
   assert.match(csv, /"Toată casa";"Adeziv"/);
+});
+test('CSV: textul care ar porni o formulă în Excel e neutralizat; numerele rămân numere', () => {
+  assert.equal(csvCell('=HYPERLINK("http://x","y")'), '"\'=HYPERLINK(""http://x"",""y"")"'); assert.equal(csvCell('@SUM(1)'), '"\'@SUM(1)"');
+  assert.equal(csvCell(-12.5), '"-12.5"'); assert.equal(csvCell('Living'), '"Living"');
+  const s = project(); s.floor.rooms.find(r => r.id === 'living')!.name = '+cmd|calc';
+  assert.match(scheduleCsv(finishSchedule(s, cat, mc), t, 'RON', () => 'Parter'), /"'\+cmd\|calc"/);
 });

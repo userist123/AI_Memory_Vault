@@ -3,7 +3,7 @@
 // Fiecare textură e desenată în metri (px/m fix), deci o placă de 60 × 120 cm arată ca o placă de 60 × 120 cm.
 import * as THREE from 'three';
 
-const cache = new Map(), MAX = 48;
+const cache = new Map(), MAX = 16;   // pânzele mari (până la 2048 px) țin memorie: puține în cache
 function cached(key, make){ if (cache.has(key)){ const t = cache.get(key); cache.delete(key); cache.set(key, t); return t; }
   const t = make(); cache.set(key, t); if (cache.size > MAX){ const [k, old] = cache.entries().next().value; cache.delete(k); old.dispose(); } return t; }
 // generator determinist (același proiect → aceeași textură la fiecare reconstruire)

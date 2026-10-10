@@ -191,7 +191,8 @@ function model(it){
   // ---------- casa (reconstruită la fiecare schimbare de plan) ----------
   let house = new THREE.Group(), ceilings = new THREE.Group(), walls = new THREE.Group(), furniture = new THREE.Group(); scene.add(house, furniture);
   let colliders = [], blockers = [], structBlockers = [], plan = null, W = 1, D = 1, C = new THREE.Vector3(), pickables = [];
-  const disposeGroup = g => g.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+  // la reconstruire: geometria și texturile clonate pentru finisaje (fiecare clonă e o încărcare separată pe GPU)
+  const disposeGroup = g => g.traverse(o => { if (o.geometry) o.geometry.dispose(); const m = o.material; if (m && m.map && m.map.userData && m.map.userData.owned){ m.map.dispose(); m.dispose(); } });
   function box(w, h, d, mat, x, y, z, rotY, parent){ const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.rotation.y = rotY || 0; m.castShadow = m.receiveShadow = true; parent.add(m); return m; }
   function buildHouse(p){
     disposeGroup(house); scene.remove(house); interiorLights.length = 0; house = new THREE.Group(); ceilings = new THREE.Group(); walls = new THREE.Group(); house.add(ceilings, walls); scene.add(house); colliders = [];
@@ -208,7 +209,7 @@ function model(it){
       // pardoseala aleasă (modul de așezare, mărimea plăcii, rostul) e desenată o dată pe toată camera; altfel textura generică
       const ff = r.fin && r.fin.floor, rw = r.x1 - r.x0, rd = r.z1 - r.z0, ft = ff ? floorTexture(ff, rw, rd, r.id) : null, tileFloor = ff ? ff.kind === 'tile' : wet;
       for (const q of rectsMinus(r, voids)){ const w = q.x1 - q.x0, d = q.z1 - q.z0; let t;
-        if (ft){ t = ft.clone(); t.needsUpdate = true; t.repeat.set(w / rw, d / rd); t.offset.set((q.x0 - r.x0) / rw, (r.z1 - q.z1) / rd); }
+        if (ft){ t = ft.clone(); t.userData = { owned: true }; t.needsUpdate = true; t.repeat.set(w / rw, d / rd); t.offset.set((q.x0 - r.x0) / rw, (r.z1 - q.z1) / rd); }
         else { t = (wet ? tiles : parquet).clone(); t.needsUpdate = true; t.repeat.set(w / sc, d / sc); t.offset.set((q.x0 - r.x0) / sc, (r.z1 - q.z1) / sc); }
         const fmat = new THREE.MeshStandardMaterial({ map: t, roughness: tileFloor ? .35 : .6, color: lin(r.podea || '#ffffff') });
         if (ft) fmat.userData = { kind: ff.kind === 'tile' ? 'tile' : 'parquet', pat: { ...ff, rect: [r.x0, r.z0, r.x1, r.z1] } };
@@ -269,16 +270,17 @@ function model(it){
       r.fin.walls.forEach((wv, wi) => { const horiz = wv.side === 'N' || wv.side === 'S', edge = { N: r.z0, S: r.z1, W: r.x0, E: r.x1 }[wv.side], inward = wv.side === 'N' || wv.side === 'W' ? 1 : -1;
         const lo = (horiz ? r.x0 : r.z0) + .075, hi = (horiz ? r.x1 : r.z1) - .075, top = Math.min(H, wv.heightM || H); if (hi - lo < .05) return;
         // pereții pe latura asta: grosimea (fața camerei) și golurile, în coordonata de-a lungul laturii
-        let th = .15; const holes = [];
+        let th = .15, found = false; const holes = [];
         p.pereti.forEach(wl => { const [ax, az] = wl.a, [bx, bz] = wl.b, h2 = Math.abs(az - bz) < 1e-6, v2 = Math.abs(ax - bx) < 1e-6;
           if (horiz ? !(h2 && Math.abs(az - edge) < 1e-6) : !(v2 && Math.abs(ax - edge) < 1e-6)) return;
           const s0 = horiz ? ax : az, dir = Math.sign(horiz ? bx - ax : bz - az), a0 = Math.min(s0, horiz ? bx : bz), a1 = Math.max(s0, horiz ? bx : bz); if (a1 < lo || a0 > hi) return;
-          th = wl.ext ? .25 : .15;
+          th = wl.ext ? .25 : .15; found = true;
           wl.goluri.forEach(g => { const p0 = s0 + dir * g.la, p1 = s0 + dir * (g.la + g.l), sl = g.tip === 'usa' ? 0 : (g.sill != null ? g.sill : .9), tp = g.tip === 'usa' ? Math.min(H - .05, g.h || 2.1) : Math.min(H - .05, sl + (g.h || 1.3));
             holes.push({ a: Math.min(p0, p1), b: Math.max(p0, p1), y0: sl, y1: tp }); }); });
+        if (!found) return;   // latură fără perete (deschisă spre altă cameră): nu desenăm o placare în aer
         const kind = wv.kind, depth = kind === 'stone' ? .022 : kind === 'brick' ? .014 : kind === 'slats' ? .021 : kind === 'tile' ? .01 : .004, off = edge + inward * (th / 2 + depth / 2 + .001);
         const tex = kind === 'slats' ? null : wallTexture(wv, `${r.id}:${wi}`), size = tex ? tex.userData.size : 1;
-        const mkMat = (len, hgt, s0, y0) => { if (!tex) return null; const t = tex.clone(); t.needsUpdate = true; t.repeat.set(len / size, hgt / size); t.offset.set(s0 / size, y0 / size);
+        const mkMat = (len, hgt, s0, y0) => { if (!tex) return null; const t = tex.clone(); t.userData = { ...tex.userData, owned: true }; t.needsUpdate = true; t.repeat.set(len / size, hgt / size); t.offset.set(s0 / size, y0 / size);
           const m = new THREE.MeshStandardMaterial({ map: t, roughness: kind === 'tile' ? .3 : kind === 'wallpaper' ? .7 : .9 }); m.userData = { kind: kind === 'tile' ? 'tile' : kind, col: wv.color, size: wv.sizeCm ? [wv.sizeCm[0] / 100, wv.sizeCm[1] / 100] : null, marble: !!wv.marble }; return m; };
         const slatBack = lookMat('slatback', '#2e2c2a', .95), slatMat = MAT('wood', wv.color);
         const place = (s0, s1, y0, y1) => { const len = s1 - s0, hgt = y1 - y0; if (len < .01 || hgt < .01) return; const mid = (s0 + s1) / 2, x = horiz ? mid : off, z = horiz ? off : mid, rot = horiz ? 0 : Math.PI / 2;

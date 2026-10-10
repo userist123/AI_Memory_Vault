@@ -141,12 +141,16 @@ class Materials:
         if d.get('img') and pat.get('rect'):
             # spic / chevron: aceeași imagine ca în aplicație, întinsă pe dreptunghiul camerei (Blender: X = x, Y = -z)
             import base64
+            import hashlib
             import tempfile
             raw = base64.b64decode(d['img'].split(',', 1)[1])
-            path = os.path.join(tempfile.gettempdir(), f"c3d_floor_{abs(hash(d['img'])) % 10**10}.jpg")
+            path = os.path.join(tempfile.mkdtemp(prefix='c3d_'), hashlib.sha256(raw).hexdigest()[:16] + '.jpg')
             with open(path, 'wb') as fh:
                 fh.write(raw)
-            img = bpy.data.images.load(path, check_existing=True)
+            img = bpy.data.images.load(path)
+            img.pack()  # imaginea intră în .blend; fișierul temporar nu mai e necesar
+            os.remove(path)
+            os.rmdir(os.path.dirname(path))
             x0, z0, x1, z1 = pat['rect']
             sep = nt.nodes.new('ShaderNodeSeparateXYZ')
             nt.links.new(world_pos(), sep.inputs['Vector'])
@@ -178,12 +182,13 @@ class Materials:
             nt.links.new(mix.outputs['Result'], inp['Base Color'])
             bump(t.outputs['Color'], 0.15, 0.002)
         else:
-            # drept, decalat, șah, diagonală: plăci/lamele de mărimea reală cu rost (Brick Texture); 1/3 alternează 0 și 1/3
+            # drept, decalat, șah, diagonală: plăci/lamele de mărimea reală cu rost (Brick Texture). Nodul decalează doar rândurile
+            # cu indexul multiplu de `offset_frequency`, deci „1/3” devine aproximativ: rânduri alternând 0 și 1/3.
             p = pat.get('pattern', 'straight')
             rot = (math.pi / 2 if pat.get('angle') == 90 else 0.0) + (math.pi / 4 if p == 'diagonal' else 0.0)
             br = nt.nodes.new('ShaderNodeTexBrick')
             br.offset = 0.5 if p == 'brick' else 0.333 if p == 'third' else 0.0
-            br.offset_frequency = 1 if p == 'third' else 2
+            br.offset_frequency = 2
             br.inputs['Scale'].default_value = 1.0
             br.inputs['Brick Width'].default_value = float(pat.get('pieceL', 0.6))
             br.inputs['Row Height'].default_value = float(pat.get('pieceW', 0.6))

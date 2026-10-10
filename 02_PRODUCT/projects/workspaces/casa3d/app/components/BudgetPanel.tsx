@@ -1,4 +1,5 @@
 'use client';
+import { csvCell } from '@/lib/finish-schedule-text';
 import { finishSchedule } from '@/core/finish-schedule';
 import { downloadSchedule } from './FinishSchedule';
 import { useMemo, useState } from 'react';
@@ -31,7 +32,7 @@ export default function BudgetPanel({ snap, catalog, mc, out, onBudget }: { snap
     const rows = [[t('budget.csv.category'), t('budget.csv.room'), t('budget.csv.item'), t('budget.csv.netQty'), t('budget.csv.unit'), t('budget.csv.waste'), t('budget.csv.orderedQty'), t('budget.csv.packs'), t('budget.csv.unitPrice', { cur }), t('budget.csv.total', { cur }), t('budget.csv.supplier'), t('budget.csv.source'), t('budget.csv.verified'), t('budget.csv.confidence')],
       ...b.items.map(i => [t(CAT_LABEL[i.category]!), roomName(i.roomId), i.label, i.netQty, i.unit, Math.round(i.wastePct * 100), i.orderedQty, i.packs != null ? `${i.packs} × ${i.packLabel}` : '', i.unitPrice ?? t('budget.csv.unknown'), i.total ?? t('budget.csv.unknown'), i.supplier, i.sourceUrl ?? '', i.verifiedAt ?? '', i.confidence]),
       ...b.labor.map(l => [t('budget.labor'), roomName(l.roomId), l.label, l.qty, l.unit, 0, l.qty, '', '', l.expected, t('budget.csv.range', { low: l.low, high: l.high }), l.sources.map(x => x.url).join(' '), mc.verifiedAt, l.confidence])];
-    const text = '\ufeff' + rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n');
+    const text = '\ufeff' + rows.map(r => r.map(csvCell).join(';')).join('\n');
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' })); a.download = `${snap.name.replace(/[^\w\- ]+/g, '').trim() || t('budget.csv.fileFallback')}-${t('budget.csv.fileSuffix')}.csv`; a.click(); URL.revokeObjectURL(a.href);
   }
   return (<div className="budget">

@@ -3,7 +3,7 @@ import { resolve, groupOf } from './catalog';
 import { area as rectArea } from './geometry';
 import { openingsOnSide } from './validate';
 import { floors, floorOfRoom } from './levels';
-import { layoutOf, floorWaste, floorLaborId, sideGeometry, wallpaperRolls, panelCount, pieceSizeCm, ceilingOf, FEATURE_CATEGORY, FEATURE_LABOR } from './finishes';
+import { bathTiles, layoutOf, floorWaste, floorLaborId, sideGeometry, wallpaperRolls, panelCount, pieceSizeCm, ceilingOf, FEATURE_CATEGORY, FEATURE_LABOR } from './finishes';
 import { WASTE, PAINT_COATS, DOOR_HEIGHT, WINDOW_HEIGHT, BATH_TILE_HEIGHT, BACKSPLASH_HEIGHT, LIGHTS_EXTRA_PER_M2, VAT_RATE, WET_ROOMS, SANITARY, APPLIANCES, DEFAULT_BUDGET } from './rules.boq';
 
 const r2 = (v: number) => Math.round(v * 100) / 100;
@@ -57,7 +57,8 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
     if (room.type === 'baie') addLabor(room.id, 'manopera-hidroizolatie', g.floorArea);
     // faianță: baie până la 2,1 m; bucătărie = zona dintre blat și dulapuri, pe lungimea mobilierului de bucătărie
     let tileArea = 0;
-    if (room.type === 'baie') tileArea = Math.max(0, g.perimeter * BATH_TILE_HEIGHT - g.doorWidth * DOOR_HEIGHT - g.windowWidth * Math.max(0, BATH_TILE_HEIGHT - .9));
+    // baie: până la 2,1 m pe fiecare perete care nu are altă placare (aceeași regulă ca în 3D)
+    if (room.type === 'baie') tileArea = bathTiles(f, room.type).reduce((a, w) => a + sideGeometry(fl, room, w.side, BATH_TILE_HEIGHT).netM2, 0);
     if (room.type === 'bucatarie'){ const k = snap.placements.find(p => p.roomId === room.id && p.group === 'bucatarie'), rv = k && resolve(cat, k.variantId); tileArea = rv ? rv.w * BACKSPLASH_HEIGHT : 0; }
     const wt = M(f.wallTile); if (wt && tileArea > 0){ items.push(materialLine(wt, `${room.id}:walltile`, room.id, `Faianță · ${room.name}`, tileArea, mc.verifiedAt)); adhesiveArea += tileArea; addLabor(room.id, 'manopera-faianta', tileArea); }
     // placări pe pereți (tapet, riflaj, tencuială decorativă, cărămidă, piatră, faianță), fiecare pe latura ei, până la înălțimea aleasă
@@ -72,15 +73,19 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
       const lab = FEATURE_LABOR[wf.kind]; if (lab) addLabor(room.id, lab, sg.netM2); else unknown.push(`Manoperă ${FEATURE_LABEL[wf.kind].toLowerCase()} · ${where}`); }
     // tavan fals / scafă luminoasă / cornișă / spoturi
     const c = ceilingOf(f), w = room.rect.x1 - room.rect.x0, d = room.rect.z1 - room.rect.z0;
-    let ceilingBand = 0;
-    if (c.type !== 'flat'){ const gk = mc.materials.find(m => m.category === 'plasterboard'); ceilingBand = g.perimeter * c.dropCm / 100;
-      if (gk){ items.push(materialLine(gk, `${room.id}:ceiling`, room.id, `Tavan fals gips-carton · ${room.name} (coborât ${c.dropCm} cm${c.type === 'cove' ? `, scafă ${c.coveCm} cm` : ''})`, g.ceiling + ceilingBand, mc.verifiedAt)); addLabor(room.id, 'manopera-rigips-tavan', g.ceiling + ceilingBand); }
-      if (c.type === 'cove'){ const inner = 2 * (Math.max(0, w - 2 * c.coveCm / 100) + Math.max(0, d - 2 * c.coveCm / 100)); addLabor(room.id, 'manopera-scafa', inner);
+    // tavan fals simplu: placa acoperă tot tavanul, iar pereții se vopsesc doar până sub el;
+    // cu scafă: panoul din mijloc + fâșia verticală a scafei (conturul interior × coborârea); pereții rămân pe toată înălțimea
+    let ceilingBand = 0, wallsHidden = 0;
+    if (c.type !== 'flat'){ const gk = mc.materials.find(m => m.category === 'plasterboard'), iw = Math.max(0, w - 2 * c.coveCm / 100), id = Math.max(0, d - 2 * c.coveCm / 100), inner = 2 * (iw + id);
+      if (c.type === 'cove') ceilingBand = inner * c.dropCm / 100; else wallsHidden = g.perimeter * c.dropCm / 100;
+      const board = c.type === 'cove' ? iw * id + ceilingBand : g.ceiling;
+      if (gk){ items.push(materialLine(gk, `${room.id}:ceiling`, room.id, `Tavan fals gips-carton · ${room.name} (coborât ${c.dropCm} cm${c.type === 'cove' ? `, scafă ${c.coveCm} cm` : ''})`, board, mc.verifiedAt)); addLabor(room.id, 'manopera-rigips-tavan', board); }
+      if (c.type === 'cove'){ addLabor(room.id, 'manopera-scafa', inner);
         const led = M(c.led); if (led) items.push(materialLine(led, `${room.id}:led`, room.id, `Bandă LED scafă · ${room.name} (${r2(inner)} m)`, inner, mc.verifiedAt)); } }
     const cm = M(c.cornice); if (cm){ items.push(materialLine(cm, `${room.id}:cornice`, room.id, `Cornișă · ${room.name}`, g.perimeter, mc.verifiedAt)); addLabor(room.id, 'manopera-cornisa', g.perimeter); }
     const sm = M(c.spot); if (sm && c.spots > 0) items.push(materialLine(sm, `${room.id}:spots`, room.id, `Spoturi încastrate · ${room.name}`, c.spots, mc.verifiedAt));
     // vopsea: pereți (fără zona placată) + tavan (și marginea tavanului fals), 2 straturi
-    const paintArea = Math.max(0, g.wallNet - (wt ? tileArea : 0) - featureArea) + g.ceiling + ceilingBand, pm = M(f.wallPaint);
+    const paintArea = Math.max(0, g.wallNet - wallsHidden - (wt ? tileArea : 0) - featureArea) + g.ceiling + ceilingBand, pm = M(f.wallPaint);
     if (pm && pm.coverage){ const litres = paintArea * PAINT_COATS / pm.coverage; const line = materialLine(pm, `${room.id}:paint`, room.id, `Vopsea pereți + tavan · ${room.name} (${r2(paintArea)} m², ${PAINT_COATS} straturi)`, litres, mc.verifiedAt); items.push(line); addLabor(room.id, 'manopera-zugravit', paintArea); }
     // plintă (doar unde nu e placat)
     const bm = M(f.baseboard); if (bm && !WET_ROOMS.has(room.type)){ const len = Math.max(0, g.perimeter - g.doorWidth); items.push(materialLine(bm, `${room.id}:baseboard`, room.id, `Plintă · ${room.name}`, len, mc.verifiedAt)); addLabor(room.id, 'manopera-plinta', len); }

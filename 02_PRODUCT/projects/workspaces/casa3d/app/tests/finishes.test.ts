@@ -25,7 +25,7 @@ describe('calcule de bază', () => {
     assert.deepEqual(wallpaperRolls(3.5, 2.6, { widthM: .53, lengthM: 10.05, repeatCm: 64 }), { strips: 7, perRoll: 3, rolls: 3 });
     assert.deepEqual(wallpaperRolls(3.5, 2.6, { widthM: .53, lengthM: 10.05, repeatCm: 80 }), { strips: 7, perRoll: 2, rolls: 4 });
   });
-  test('riflaj: coloane × rânduri de panouri', () => { assert.equal(panelCount(3, 2.4, [60, 240]), 5); assert.equal(panelCount(3.1, 2.6, [60, 240]), 12); });
+  test('riflaj: coloane × rânduri de panouri', () => { assert.equal(panelCount(3, 2.4, [60, 240]), 5); assert.equal(panelCount(3.1, 2.6, [60, 240]), 7, 'restul de 20 cm se taie din panouri: 12 bucăți dintr-unul'); });
   test('pierderi după modul de așezare și format', () => {
     const egger = materialOf(mc, 'parchet-egger-h2099'), big = materialOf(mc, 'gresie-emarble-60x120'), small = materialOf(mc, 'gresie-mckinley');
     assert.equal(floorWaste({ pattern: 'third' }, egger), .10); assert.equal(floorWaste({ pattern: 'herringbone' }, egger), .15); assert.equal(floorWaste({ pattern: 'chevron' }, egger), .18);
@@ -93,6 +93,37 @@ describe('avertismente tehnice', () => {
     assert.ok(keys(set(demo(), 'living', { floorLayout: { pattern: 'herringbone' } }), 'living').includes('fin.patternProduct'));
     assert.ok(keys(set(demo(), 'living', { floor: 'parchet-krono-herringbone-k450', floorLayout: { pattern: 'straight' } }), 'living').includes('fin.herringboneOnly'));
     assert.deepEqual(keys(demo(), 'living'), []);
+  });
+});
+
+describe('regresii din review (2026-10-10)', () => {
+  test('faianța băii nu se numără de două ori când un perete are altă placare; vopseaua scade o singură dată', () => {
+    const plain = computeBOQ(demo(), cat, mc), s = set(demo(), 'baie', { wallFeatures: [{ side: 'N', kind: 'tile', material: 'faianta-lane-blanco' }] }), b = computeBOQ(s, cat, mc);
+    const n = sideGeometry(s.floor, room(s, 'baie'), 'N', 2.1).netM2, tile0 = plain.items.find(i => i.key === 'baie:walltile')!.netQty, tile1 = b.items.find(i => i.key === 'baie:walltile')!.netQty;
+    assert.ok(Math.abs(tile0 - tile1 - n) < .02, `${tile0} - ${tile1} = ${n}`);
+    const full = sideGeometry(s.floor, room(s, 'baie'), 'N').netM2, p0 = plain.items.find(i => i.key === 'baie:paint')!.netQty, p1 = b.items.find(i => i.key === 'baie:paint')!.netQty;
+    assert.ok(p1 < p0 && p1 > 0, 'vopseaua scade, dar nu sub zero'); void full;
+  });
+  test('același perete nu poate avea două placări; tipuri și valori necunoscute dau 400, nu 500', () => {
+    assert.equal(sanitizeFinishes({ x: { wallFeatures: [{ side: 'N', kind: 'wallpaper', material: 'a' }, { side: 'N', kind: 'tile', material: 'b' }] } }), 'Placările de pe pereți sunt invalide.');
+    assert.equal(sanitizeFinishes({ x: { wallFeatures: [{ side: 'N', kind: 'toString', material: 'a' }] } }), 'Placările de pe pereți sunt invalide.');
+    assert.equal(sanitizeFinishes({ x: { floorLayout: null } }), 'Modul de așezare a pardoselii este invalid.');
+    assert.equal(sanitizeFinishes({ x: { ceiling: null } }), 'Tavanul este invalid.');
+    assert.equal(sanitizeFinishes({ x: { floor: 'x'.repeat(500) } }), 'Finisajele sunt invalide.');
+  });
+  test('scafa fără bandă LED: nicio linie de LED', () => {
+    const b = computeBOQ(set(demo(), 'living', { ceiling: { type: 'cove', dropCm: 15, coveCm: 25, led: null } }), cat, mc);
+    assert.ok(!b.items.some(i => i.key === 'living:led')); assert.ok(b.labor.some(l => l.key === 'living:manopera-scafa'));
+  });
+  test('tavanul fals simplu scade vopseaua pereților; cel cu scafă adaugă doar fâșia scafei', () => {
+    const paint = (s: Snapshot) => computeBOQ(s, cat, mc).items.find(i => i.key === 'living:paint')!.netQty, board = (s: Snapshot) => computeBOQ(s, cat, mc).items.find(i => i.key === 'living:ceiling')!.netQty;
+    const flat = paint(demo()), drop = set(demo(), 'living', { ceiling: { type: 'drop', dropCm: 60 } }), cove = set(demo(), 'living', { ceiling: { type: 'cove', dropCm: 15, coveCm: 25 } });
+    assert.ok(paint(drop) < flat, `${paint(drop)} < ${flat}`); assert.ok(Math.abs(board(drop) - 21.28) < .02, 'placa acoperă tavanul, fără margine');
+    const iw = 5.6 - .5, id = 3.8 - .5; assert.ok(Math.abs(board(cove) - (iw * id + 2 * (iw + id) * .15)) < .02);
+  });
+  test('o latură fără perete (deschisă) nu are ce placa', () => {
+    const s = demo(), r = room(s, 'living'); s.floor.walls = s.floor.walls.filter(w => !(Math.abs(w.a[1] - w.b[1]) < 1e-6 && Math.abs(w.a[1] - r.rect.z0) < 1e-6));
+    assert.equal(sideGeometry(s.floor, r, 'N').netM2, 0);
   });
 });
 

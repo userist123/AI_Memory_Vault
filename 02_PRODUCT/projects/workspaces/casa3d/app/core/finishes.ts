@@ -54,7 +54,14 @@ export const FEATURE_LABOR: Partial<Record<WallFeatureKind, string>> = { wallpap
 export interface SideGeometry { side: WallFeature['side']; lengthM: number; heightM: number; openingsM2: number; netM2: number }
 /** Lungimea unei laturi a camerei și suprafața netă până la înălțimea `h` (ușile până la 2,1 m, ferestrele între 0,9 și 2,2 m). */
 export function sideGeometry(fl: Floor, room: Room, side: WallFeature['side'], h?: number): SideGeometry {
-  const r = room.rect, H = fl.ceilingHeight, top = Math.min(H, h ?? H), horiz = side === 'N' || side === 'S', lo = horiz ? r.x0 : r.z0, hi = horiz ? r.x1 : r.z1, len = hi - lo;
+  const r = room.rect, H = fl.ceilingHeight, top = Math.min(H, h ?? H), horiz = side === 'N' || side === 'S', lo = horiz ? r.x0 : r.z0, hi = horiz ? r.x1 : r.z1, edge = { N: r.z0, S: r.z1, W: r.x0, E: r.x1 }[side];
+  // doar lungimea acoperită de pereți reali (o latură deschisă spre altă cameră nu are ce placa)
+  let len = 0;
+  for (const w of fl.walls){ const hz = Math.abs(w.a[1] - w.b[1]) < 1e-6, vt = Math.abs(w.a[0] - w.b[0]) < 1e-6;
+    if (horiz ? !(hz && Math.abs(w.a[1] - edge) < 1e-6) : !(vt && Math.abs(w.a[0] - edge) < 1e-6)) continue;
+    const a0 = Math.min(horiz ? w.a[0] : w.a[1], horiz ? w.b[0] : w.b[1]), a1 = Math.max(horiz ? w.a[0] : w.a[1], horiz ? w.b[0] : w.b[1]);
+    len += Math.max(0, Math.min(a1, hi) - Math.max(a0, lo)); }
+  len = Math.min(len, hi - lo);
   let openings = 0;
   for (const o of openingsOnSide(fl, room, side)){ const w = Math.max(0, Math.min(o.b, hi) - Math.max(o.a, lo));
     openings += o.kind === 'door' ? w * Math.min(top, 2.1) : w * Math.max(0, Math.min(top, 2.2) - .9); }
@@ -67,14 +74,16 @@ export function wallpaperRolls(lengthM: number, heightM: number, roll: { widthM:
 }
 /** Panouri riflaj: coloane pe lungime × rânduri pe înălțime. */
 export function panelCount(lengthM: number, heightM: number, sizeCm: [number, number]): number {
-  const w = Math.min(sizeCm[0], sizeCm[1]) / 100, l = Math.max(sizeCm[0], sizeCm[1]) / 100;
-  return Math.ceil(lengthM / w - 1e-9) * Math.ceil(heightM / l - 1e-9);
+  const w = Math.min(sizeCm[0], sizeCm[1]) / 100, l = Math.max(sizeCm[0], sizeCm[1]) / 100, cols = Math.ceil(lengthM / w - 1e-9);
+  // rânduri întregi + restul de sus tăiat din panouri: dintr-un panou ies floor(l / rest) bucăți de înălțimea restului
+  const full = Math.floor(heightM / l + 1e-9), rest = heightM - full * l;
+  return cols * full + (rest > 1e-6 ? Math.ceil(cols / Math.max(1, Math.floor(l / rest + 1e-9))) : 0);
 }
 
 // ---------- tavan ----------
 export function ceilingOf(f: RoomFinishes){ const c = f.ceiling || { type: 'flat' as const };
   return { type: c.type, dropCm: c.type === 'flat' ? 0 : Math.max(5, Math.min(FINISH_RULES.maxDropCm, c.dropCm ?? 10)), coveCm: c.type === 'cove' ? Math.max(10, Math.min(FINISH_RULES.maxCoveCm, c.coveCm ?? 25)) : 0,
-    led: c.type === 'cove' ? c.led ?? 'banda-led-hoff-3000k' : null, cornice: c.cornice ?? null, spot: c.spot ?? null, spots: c.spot ? Math.max(0, Math.min(40, Math.round(c.spots ?? 4))) : 0 }; }
+    led: c.type === 'cove' ? (c.led === undefined ? 'banda-led-hoff-3000k' : c.led) : null, cornice: c.cornice ?? null, spot: c.spot ?? null, spots: c.spot ? Math.max(0, Math.min(40, Math.round(c.spots ?? 4))) : 0 }; }
 /** Înălțimea liberă a camerei sub tavanul fals. */
 export const clearHeight = (fl: Floor, f: RoomFinishes) => r2(fl.ceilingHeight - ceilingOf(f).dropCm / 100);
 
@@ -106,20 +115,22 @@ export function projectFinishIssues(snap: Snapshot, mc: MaterialsCatalog, finish
 }
 /** Curăță și limitează ce vine de la client: tipuri cunoscute, numere în intervale rezonabile, culori hex. */
 export function sanitizeFinishes(f: any): string | null {
-  if (f == null) return null; if (typeof f !== 'object' || Array.isArray(f)) return 'Finisajele sunt invalide.';
+  if (f == null) return null; if (typeof f !== 'object' || Array.isArray(f) || Object.keys(f).length > 400) return 'Finisajele sunt invalide.';
   const hex = (v: unknown) => v === undefined || (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v));
   const num = (v: unknown, lo: number, hi: number) => v === undefined || (typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi);
   for (const rf of Object.values<any>(f)){ if (!rf || typeof rf !== 'object') return 'Finisajele sunt invalide.';
-    const l = rf.floorLayout; if (l !== undefined && (typeof l !== 'object' || !PATTERNS.includes(l.pattern) || !num(l.groutMm, 0, 20) || !hex(l.groutColor) || ![undefined, 0, 90].includes(l.angle))) return 'Modul de așezare a pardoselii este invalid.';
-    const wf = rf.wallFeatures; if (wf !== undefined && (!Array.isArray(wf) || wf.length > 8 || wf.some((w: any) => !w || !SIDES.includes(w.side) || !(w.kind in FEATURE_CATEGORY) || typeof w.material !== 'string' || w.material.length > 80 || !hex(w.color) || !num(w.heightM, .3, 10)))) return 'Placările de pe pereți sunt invalide.';
-    const c = rf.ceiling; if (c !== undefined && (typeof c !== 'object' || !['flat', 'drop', 'cove'].includes(c.type) || !num(c.dropCm, 0, FINISH_RULES.maxDropCm) || !num(c.coveCm, 0, FINISH_RULES.maxCoveCm) || !num(c.spots, 0, 40)
+    if ([rf.floor, rf.wallPaint, rf.wallTile, rf.baseboard, rf.light].some(x => x != null && (typeof x !== 'string' || x.length > 80))) return 'Finisajele sunt invalide.';
+    const l = rf.floorLayout; if (l !== undefined && (l === null || typeof l !== 'object' || !PATTERNS.includes(l.pattern) || !num(l.groutMm, 0, 20) || !hex(l.groutColor) || ![undefined, 0, 90].includes(l.angle))) return 'Modul de așezare a pardoselii este invalid.';
+    const wf = rf.wallFeatures; if (wf !== undefined && (!Array.isArray(wf) || wf.length > 8 || wf.some((w: any) => !w || !SIDES.includes(w.side) || !Object.hasOwn(FEATURE_CATEGORY, w.kind) || typeof w.material !== 'string' || w.material.length > 80 || !hex(w.color) || !num(w.heightM, .3, 10))
+      || new Set(wf.map((w: any) => w.side)).size !== wf.length)) return 'Placările de pe pereți sunt invalide.';
+    const c = rf.ceiling; if (c !== undefined && (c === null || typeof c !== 'object' || !['flat', 'drop', 'cove'].includes(c.type) || !num(c.dropCm, 0, FINISH_RULES.maxDropCm) || !num(c.coveCm, 0, FINISH_RULES.maxCoveCm) || !num(c.spots, 0, 40)
       || [c.led, c.cornice, c.spot].some(x => x != null && (typeof x !== 'string' || x.length > 80)))) return 'Tavanul este invalid.'; }
   return null;
 }
 
 // ---------- ce desenează motorul 3D ----------
 /** Faianța băii (din `wallTile`), până la 2,1 m pe fiecare perete care nu are altă placare — la fel ca în BOQ. */
-const bathTiles = (f: RoomFinishes, roomType: string): WallFeature[] => roomType !== 'baie' || !f.wallTile ? []
+export const bathTiles = (f: RoomFinishes, roomType: string): WallFeature[] => roomType !== 'baie' || !f.wallTile ? []
   : SIDES.filter(s => !(f.wallFeatures || []).some(w => w.side === s)).map(side => ({ side, kind: 'tile' as const, material: f.wallTile!, heightM: 2.1 }));
 /** Culoarea folosită doar la randare (aproximată după numele culorii de pe pagina produsului). */
 export const renderColor = (m: Material | undefined, fallback: string) => m?.specs?.color || fallback;

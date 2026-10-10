@@ -23,7 +23,7 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish }: { 
   const features = f.wallFeatures || [];
   const setFeature = (i: number, p: Partial<WallFeature>) => onFinish({ wallFeatures: features.map((w, k) => k === i ? { ...w, ...p } : w) });
   const firstOf = (kind: WallFeatureKind) => by(FEATURE_CATEGORY[kind])[0]?.id || '';
-  const freeSide = SIDES.find(s => !features.some(w => w.side === s)) || 'N';
+  const freeSide = SIDES.find(s => !features.some(w => w.side === s));
   const setCeiling = (p: Partial<NonNullable<RoomFinishes['ceiling']>>) => onFinish({ ceiling: { type: c.type, ...(f.ceiling || {}), ...p } });
   // costul finisajelor acestei camere, din același BOQ ca bugetul (materiale + manoperă estimată)
   const cost = useMemo(() => { const b = computeBOQ(snap, cat, mc), items = b.items.filter(i => i.roomId === room.id && (i.category === 'finishes' || i.category === 'lighting'));
@@ -60,7 +60,7 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish }: { 
       {features.map((w, i) => <div key={i} className="fin-row">
         <div className="grid2">
           <label className="f"><span>{t('fin.side')}</span><select value={w.side} onChange={e => setFeature(i, { side: e.target.value as WallFeature['side'] })}>
-            {SIDES.map(s => <option key={s} value={s}>{t(`fin.side.${s}`)} · {sideLen(s)}</option>)}</select></label>
+            {SIDES.map(s => <option key={s} value={s} disabled={s !== w.side && features.some(x => x.side === s)}>{t(`fin.side.${s}`)} · {sideLen(s)}</option>)}</select></label>
           <label className="f"><span>{t('fin.kind')}</span><select value={w.kind} onChange={e => { const k = e.target.value as WallFeatureKind; setFeature(i, { kind: k, material: firstOf(k) }); }}>
             {KINDS.filter(k => by(FEATURE_CATEGORY[k]).length).map(k => <option key={k} value={k}>{t(`fin.kind.${k}`)}</option>)}</select></label>
         </div>
@@ -71,7 +71,7 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish }: { 
           <button className="btn" style={{ alignSelf: 'end' }} onClick={() => onFinish({ wallFeatures: features.filter((_, k) => k !== i) })}>{t('fin.remove')}</button>
         </div>
       </div>)}
-      {features.length < 8 && <button className="btn" onClick={() => onFinish({ wallFeatures: [...features, { side: freeSide, kind: 'wallpaper', material: firstOf('wallpaper') }] })}>{t('fin.addFeature')}</button>}
+      {freeSide && <button className="btn" onClick={() => onFinish({ wallFeatures: [...features, { side: freeSide, kind: 'wallpaper', material: firstOf('wallpaper') }] })}>{t('fin.addFeature')}</button>}
       {room.type !== 'baie' && room.type !== 'bucatarie' && <label className="f"><span>{t('editor.baseboard')}</span><select value={f.baseboard || ''} onChange={e => onFinish({ baseboard: e.target.value || null })}><option value="">{t('editor.noBaseboard')}</option>{by('baseboard').map(opt)}</select></label>}
     </fieldset>
 
