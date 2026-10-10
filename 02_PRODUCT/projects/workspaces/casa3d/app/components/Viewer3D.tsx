@@ -2,9 +2,8 @@
 import { useEffect, useRef, useState } from 'react';
 import Joystick from './Joystick';
 import type { Catalog, Snapshot } from '@/core/types';
-import { floorToPlan } from '@/features/migration/legacy';
-import { toEngineCatalog, groupOf, indexOf } from '@/core/catalog';
-import { footprintOf } from '@/core/validate';
+import { viewerInput } from '@/lib/viewer-input';
+import { toEngineCatalog } from '@/core/catalog';
 import { lighting, sunDirection, captureFileName, type TimeOfDay } from '@/core/lighting';
 
 export default function Viewer3D({ snap, catalog, onPick }: { snap: Snapshot; catalog: Catalog; onPick(id: string | null): void }){
@@ -18,9 +17,7 @@ export default function Viewer3D({ snap, catalog, onPick }: { snap: Snapshot; ca
     return () => { alive = false; v.current?.dispose(); v.current = null; }; }, []); // eslint-disable-line
   const engineCat = useRef<ReturnType<typeof toEngineCatalog> | null>(null);
   function push(){ if (!v.current) return; engineCat.current ||= toEngineCatalog(catalog);
-    const items = snap.placements.map(p => { const g = engineCat.current![groupOf(p.variantId)], vv = g?.v[indexOf(p.variantId)];
-      return { id: p.id, group: p.group, x: p.x, z: p.z, rotation: p.rotation, fp: footprintOf(catalog, p), variant: vv ? { ...vv, model: g.model } : null }; });
-    v.current.setState(floorToPlan(snap.floor, snap.name), items); }
+    const { plan, items } = viewerInput(snap, catalog, engineCat.current); v.current.setState(plan, items); }
   useEffect(push, [snap]); // eslint-disable-line
   function applyLight(){ const p = lighting(time, azimuth); v.current?.setLighting({ ...p, dir: sunDirection(p.azimuthDeg, p.elevationDeg) }); }
   useEffect(applyLight, [time, azimuth]); // eslint-disable-line
