@@ -58,7 +58,7 @@ describe('server (PGlite)', () => {
   });
   test('afiliere expirată → revine automat la linkul direct', async () => {
     await ob.addLink({ kind: 'o', targetId: 'offer-pat-0', type: 'affiliate', network: '2performant', url: 'https://event.2performant.ro/events/click?x=1', activeFrom: '2025-01-01', activeTo: '2025-02-01' });
-    const r = await ob.go('o', 'offer-pat-0', { ua, from: null }); assert.equal(r.type, 'direct'); assert.ok(r.url.includes('ikea.com'));
+    const r = await ob.go('o', 'offer-pat-0', { ua, from: null }); assert.equal(r.type, 'direct'); assert.equal(new URL(r.url).hostname, 'www.ikea.com');
   });
   test('schimbare de preț: catalogul se actualizează, istoricul se păstrează', async () => {
     await assert.rejects(ob.updatePrice({ kind: 'o', targetId: 'offer-canapea-0', price: -5, verifiedAt: '2026-10-02' }), (e: any) => e.status === 400);

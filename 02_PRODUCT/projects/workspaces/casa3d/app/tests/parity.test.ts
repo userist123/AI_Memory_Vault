@@ -10,7 +10,8 @@ import legacyOpts from '../data/legacy-opts.json';
 import catalogV1 from '../data/catalog.v1.json';
 
 const catalog: any = (legacyOpts as any).groups;
-const html = readFileSync(new URL('../legacy/prototype-v2.html', import.meta.url), 'utf8');
+// Windows checkouts may convert the prototype to CRLF; the block markers below are matched with '\n'.
+const html = readFileSync(new URL('../legacy/prototype-v2.html', import.meta.url), 'utf8').replace(/\r\n/g, '\n');
 const layBlock = html.slice(html.indexOf('/* =====================================================================\n   3) AMENAJAREA'), html.indexOf('/* =====================================================================\n   4) SCENA 3D'));
 function legacyRun(sel: any, picked = new Set<string>()){
   const f = new Function('PLAN', 'OPTS', 'SEL', 'PICKED', `const WT = .15; let NOFIT = [];
