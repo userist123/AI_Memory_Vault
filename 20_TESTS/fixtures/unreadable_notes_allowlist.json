@@ -188,6 +188,42 @@
       "reason": "Package README of the Casa3D twin-core workspace; developer documentation, not a vault note."
     },
     {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/CONSTITUTION.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Casa3D constitution (product rules), developer documentation of the imported app; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/README.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "README of the imported Casa3D application; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE1.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Casa3D phase 1 STOP GATE report, developer documentation; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE2.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Casa3D phase 2 STOP GATE report, developer documentation; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE3.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Casa3D phase 3 STOP GATE report, developer documentation; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE4.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Casa3D phase 4 STOP GATE report, developer documentation; not a vault note."
+    },
+    {
       "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/README.md",
       "kind": "no_frontmatter",
       "category": "plain_document",

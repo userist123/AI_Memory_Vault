@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-10T12:05:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-10T12:40:00Z
 TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / none    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
@@ -74,8 +74,14 @@ PLAN v8 REBUILD (2026-10-10; owner decisions 10:58 UTC: code in Vault workspace 
   hashFiles() removed from casa3d-build.yml, Vitest 5 (tinypool critical), node_modules skipped by the vault scan.
   53 tests, tsc clean, npm audit 0. Casa3D.md and the verification ledger record the rebuilt layer as TEST_VERIFIED.
   PR #258 (opened by the owner from codex/casa3d-memory) is subscribed and driven from the cloud session.
+- 2026-10-10 12:35 UTC: owner published faza4 at https://github.com/userist123/casa3d (main @ 44d194f, 81 files,
+  viewer3d-engine.js rename included). W0 DONE: imported with git subtree into
+  02_PRODUCT/projects/workspaces/casa3d/app (commit 747fec0f); in the container: npm ci, tsc clean, Vitest 64/64,
+  next build OK (22 routes). App docs (CONSTITUTION, README, PHASE1-4) allowlisted as plain documents.
 NEXT (in order):
-0. Confirm CI green on adf2c659 (casa3d-build twin-core ubuntu+windows, npm lockfiles audit); fix anything red.
+0. Integrate twin-core into the app: lib/twin-adapter.ts (Snapshot <-> Twin), /api/projects/[id]/design (3 alternatives
+   via rules provider, BOQ-aware), /design/[pid] accept/reject with stale protection, /shares + /share/[token],
+   joystick in Viewer3D; tests; CI app job green.
 1. Owner supplies the v8 archive (or its path), or allows the PowerShell hash scan on LAB-PC; compare SHA-256 with 7bb34bf3...9628bc.
 2. npm ci, full Vitest, next build; record output in CORE_IMPLEMENTATION_v8.md.
 3. node scripts/verify-f4.mjs and verify-f5.mjs; record output.
