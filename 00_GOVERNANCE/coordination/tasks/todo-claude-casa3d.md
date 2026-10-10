@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-10T13:05:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-10T13:20:00Z
 TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / userist123/AI_Memory_Vault_CODEX_READY#258    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
@@ -89,6 +89,9 @@ NEXT (in order):
 1. DONE 13:05 UTC: independent review (REQUEST CHANGES) acted on: unique ids, atomic apply (claim + CAS), project-wide
    error check before the draft write, legacy warnings gated, room-size cap + adaptive grid, untwinnable pieces kept,
    share name/price, action whitelist, joystick reset. Evidence: twin-core 58/58, app tsc 0, vitest 81/81, next build OK.
+   Second review (REQUEST CHANGES, post-CAS non-atomic, reproduced): apply is now one transaction (claim, CAS with
+   revision number, decision, revision written from `next`); createRevision uses the same rule; apply issue refs mapped.
+   Evidence: app 84/84, rollback test red on the old code. pg branch also run on local Postgres 16 (design-review 12/12, design-twin 4/4).
    Open: twin-core does not model piece facing (covered by the app validator gate). NEXT: confirm CI on the pushed head;
    owner checks the UI on the PC.
 1. Owner supplies the v8 archive (or its path), or allows the PowerShell hash scan on LAB-PC; compare SHA-256 with 7bb34bf3...9628bc.

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 process.env.PGLITE_MEMORY = '1'; delete process.env.DATABASE_URL;
 const OWNER = '66666666-6666-4666-8666-666666666666';
 vi.mock('@/lib/owner', () => ({ ownerId: async () => OWNER }));
-import { resetDbForTests } from '../lib/db';
+import { resetDbForTests, getDb } from '../lib/db';
 import * as repo from '../lib/repo';
 import * as design from '../lib/design';
 import * as share from '../lib/share';
@@ -95,4 +95,35 @@ test('ruta de decizie acceptă doar apply/reject și un index întreg', async ()
   assert.equal((await call({ action: 'apply', index: '0' })).status, 400);
   assert.equal((await repo.getProject(A, id)).currentRevision, 0, 'cererile respinse nu ating proiectul');
   const ok = await call({ action: 'reject', index: 2 }); assert.equal(ok.status, 200); assert.deepEqual(await ok.json(), { ok: true });
+});
+
+test('revizia aplicată este exact proiectul aplicat, iar problemele trimit doar la piese din proiect', async () => {
+  const id = await repo.createProject(A, 'Revizie exactă', 'demo');
+  const r = await design.generateDesign(A, id, { roomId: 'dormitor', wants: ['pat', 'noptiera'], replace: true });
+  const out = await design.decideDesign(A, id, r.id, 0, 'apply', true) as { snapshot: import('../core/types').Snapshot; revision: number; issues: design.DesignIssue[] };
+  const { q } = await getDb(); const { rows } = await q('select snapshot from revisions where project_id=$1 and number=$2', [id, out.revision]);
+  assert.deepEqual(rows[0].snapshot, out.snapshot);
+  assert.deepEqual((await repo.getProject(A, id)).draft, out.snapshot);
+  const known = new Set(out.snapshot.placements.map(p => p.id));
+  for (const i of out.issues) for (const ref of i.refs) assert.ok(known.has(ref) || !ref.startsWith('ai-'), `ref necunoscut: ${ref}`);
+});
+
+test('un eșec după scrierea draftului face rollback complet: draft, claim și revizii rămân neatinse', async () => {
+  const id = await repo.createProject(A, 'Rollback', 'demo'); const before = (await repo.getProject(A, id)).draft;
+  const r = await design.generateDesign(A, id, { roomId: 'dormitor', wants: ['pat'], replace: true });
+  // o salvare manuală concurentă a ocupat deja numărul 1 → inserarea reviziei din aplicare eșuează
+  const { q } = await getDb(); await q('insert into revisions(project_id, number, note, snapshot) values($1,1,$2,$3)', [id, 'concurent', JSON.stringify(before)]);
+  await assert.rejects(design.decideDesign(A, id, r.id, 0, 'apply', true));
+  const p = await repo.getProject(A, id);
+  assert.deepEqual(p.draft, before, 'draftul nu e schimbat'); assert.equal(p.currentRevision, 0);
+  assert.equal((await design.listDesigns(A, id))[0].status, 'PREVIEW', 'claim-ul e eliberat');
+  await q('delete from revisions where project_id=$1', [id]);
+  assert.equal((await design.decideDesign(A, id, r.id, 0, 'apply', true)).revision, 1, 'după rollback, aplicarea poate fi reluată');
+});
+
+test('salvările manuale concurente de revizie primesc numere distincte', async () => {
+  const id = await repo.createProject(A, 'Revizii concurente', 'demo');
+  const out = await Promise.allSettled([repo.createRevision(A, id, 'a'), repo.createRevision(A, id, 'b')]);
+  const nums = out.flatMap(o => o.status === 'fulfilled' ? [o.value.number] : []);
+  assert.deepEqual(nums.sort(), [1, 2]);
 });

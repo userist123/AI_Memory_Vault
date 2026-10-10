@@ -70,10 +70,16 @@ export async function createRevision(owner: string, id: string, note: unknown){
   const p = await own(owner, id), cat = await getCatalog(), snap = p.draft as Snapshot;
   const errors = projectErrors(snap, cat);
   if (errors.length) throw new HttpError(409, 'Proiectul are erori care trebuie rezolvate înainte de a salva o revizie.', errors);
-  const { q } = await getDb(), n = p.current_revision + 1;
-  await q('insert into revisions(project_id, number, note, snapshot) values($1,$2,$3,$4)', [id, n, String(note ?? '').slice(0, 300), JSON.stringify(snap)]);
-  await q('update projects set current_revision=$1, updated_at=now() where id=$2', [n, id]);
-  return { number: n };
+  // Numărul reviziei și instantaneul se iau în aceeași tranzacție, din același rând: două salvări concurente nu se ciocnesc.
+  const { tx } = await getDb();
+  return tx(async q => {
+    // Se salvează exact draftul validat mai sus; dacă între timp s-a schimbat, cererea se repetă (409), nu se salvează nevalidat.
+    const { rows } = await q('update projects set current_revision=current_revision+1, updated_at=now() where id=$1 and owner=$2 and draft = $3::jsonb returning current_revision, draft', [id, owner, JSON.stringify(snap)]);
+    if (!rows[0]) throw new HttpError(409, 'Proiectul s-a schimbat în timpul salvării; încearcă din nou.');
+    const n = rows[0].current_revision as number;
+    await q('insert into revisions(project_id, number, note, snapshot) values($1,$2,$3,$4)', [id, n, String(note ?? '').slice(0, 300), JSON.stringify(rows[0].draft)]);
+    return { number: n };
+  });
 }
 export async function listRevisions(owner: string, id: string){ await own(owner, id); const { q } = await getDb(); const { rows } = await q('select number, note, created_at from revisions where project_id=$1 order by number desc', [id]); return rows; }
 export async function restoreRevision(owner: string, id: string, number: number){

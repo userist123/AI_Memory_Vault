@@ -8,7 +8,7 @@ Verificat în containerul cloud la 2026-10-10, Node 22. Nucleul `@casa3d/twin-co
 | twin-core: `tsc --noEmit` | ✅ curat |
 | twin-core: `npm audit` | ✅ 0 vulnerabilități |
 | app: `npm run typecheck` | ✅ curat |
-| app: `npm test` | ✅ 81/81 (64 anterioare + 17 noi, dintre care 10 regresii din review) |
+| app: `npm test` | ✅ 84/84 (64 anterioare + 20 noi, dintre care 13 regresii din cele două review-uri) |
 | app: `npm run build` | ✅ |
 | CI `.github/workflows/casa3d-build.yml` | ✅ definit pentru ubuntu și windows; rezultatul pe acest commit se citește pe GitHub Actions |
 
@@ -56,7 +56,9 @@ Un reviewer separat (alt context, alt model) a cerut modificări; toate constat�
 - Piesele fără dimensiuni în catalog sunt păstrate la aplicare.
 - Linkul partajat arată numele reviziei; prețul necunoscut e numărat separat, nu ca 0.
 - Ruta de decizie acceptă doar `apply`/`reject` și un index întreg; joystick-ul se oprește la demontare și la ieșirea din modul de mers.
-- Rămas deschis: nucleul nu modelează direcția feței piesei; validatorul aplicației o acoperă prin poarta de mai sus.
+- Al doilea review: aplicarea rula pași separați după scrierea draftului. Acum claim-ul, compare-and-swap-ul pe draft (care dă și numărul reviziei), decizia și revizia sunt o singură tranzacție, iar revizia se scrie din proiectul aplicat, nu recitită. Un eșec face rollback complet (test: o revizie concurentă ocupă numărul → draftul, claim-ul și reviziile rămân neatinse; testul pică pe codul vechi). Salvarea manuală a reviziei folosește aceeași regulă. Referințele problemelor de la aplicare folosesc id-urile din proiect.
+- Ramura `pg` a tranzacției e verificată și pe Postgres 16 real (o copie temporară a testelor `design-review` și `design-twin` cu `DATABASE_URL`: 12/12 și 4/4, inclusiv aplicările concurente prin pool); suita din CI rulează pe PGlite.
+- Rămas deschis: nucleul nu modelează direcția feței piesei; validatorul aplicației o acoperă prin poarta de mai sus. Joystick-ul nu are test automat (fără mediu de test UI); verificarea e manuală.
 
 ## Decizii
 - Twin-ul este sursa de adevăr geometrică pentru design; `Snapshot` rămâne formatul persistat al aplicației.

@@ -5,7 +5,7 @@
 import { RulesDesignProvider, draft, solveAlternatives, evaluateBoq, catalogFromItems, createProject, preview, accept, fingerprint,
   type Brief, type DesignDsl, type EvaluatedAlternative, type Issue } from '@casa3d/twin-core';
 import { getDb } from './db';
-import { HttpError, getCatalog, getProject, createRevision, checkSnapshot, projectErrors } from './repo';
+import { HttpError, getCatalog, getProject, checkSnapshot, projectErrors } from './repo';
 import { snapshotToTwin, twinCatalogItems, placementsFromTwin, untwinnablePlacements, ROLE_ALIASES } from './twin';
 import { groups } from '../core/catalog';
 import { validatePlacement } from '../core/validate';
@@ -125,22 +125,28 @@ export async function decideDesign(owner: string, id: string, pid: string, index
   const prop = preview(core, pid, alt.dsl, catalog, 'rules');
   const out = accept(core, prop, { confirmWarnings: true }); // poarta de avertismente e aplicată mai jos, pe ambele validatoare
   if (!out.accepted) throw new HttpError(409, 'Varianta nu poate fi aplicată pe proiectul curent.', out.validation?.issues ?? out.issues ?? []);
-  const next = checkSnapshot(structuredClone(nextSnapshot(p.draft, base, cat, out.project.twin)));
-  const issues: DesignIssue[] = [...out.validation.issues, ...appIssues(next, cat, brief.roomId)];
+  const ids = new Map<string, string>(), idOf = (x: string) => ids.get(x) ?? x;
+  const next = checkSnapshot(structuredClone(nextSnapshot(p.draft, base, cat, out.project.twin, ids)));
+  const coreIssues = out.validation.issues.map(i => ({ ...i, refs: i.refs.map(idOf) }));
+  const issues: DesignIssue[] = [...coreIssues, ...appIssues(next, cat, brief.roomId)];
   if (issues.some(i => i.severity === 'ERROR')) throw new HttpError(409, 'Varianta nu poate fi aplicată pe proiectul curent.', issues);
-  // Revizia de după aplicare cere un proiect fără erori în toate camerele: verificăm înainte de a scrie ceva,
-  // ca draftul să nu fie modificat de o aplicare care apoi ar eșua la revizie.
+  // Revizia de după aplicare cere un proiect fără erori în toate camerele: verificăm înainte de a scrie ceva.
   const blocking = projectErrors(next, cat);
   if (blocking.length) throw new HttpError(409, 'Proiectul are erori în afara variantei (de ex. produse scoase din catalog); rezolvă-le înainte de a aplica.', blocking);
   if (issues.length && !confirmWarnings) throw new HttpError(409, 'Varianta are avertismente; confirmă-le înainte de aplicare.', issues);
-  // 1) claim atomic: o singură alternativă pe propunere, o singură dată
-  const claim = await q('update design_proposals set applied_index=$1 where id=$2 and applied_index is null and not (decisions ? $3) returning id', [index, pid, key]);
-  if (!claim.rows[0]) throw new HttpError(409, 'Varianta a fost deja decisă.');
-  // 2) compare-and-swap pe draft: se scrie doar dacă proiectul e exact cel validat
-  const cas = await q('update projects set draft=$1, name=$2, updated_at=now() where id=$3 and owner=$4 and draft = $5::jsonb returning id', [JSON.stringify(next), next.name, id, owner, JSON.stringify(p.draft)]);
-  if (!cas.rows[0]){ await q('update design_proposals set applied_index=null where id=$1 and applied_index=$2', [pid, index]);
-    throw new HttpError(409, 'Proiectul s-a schimbat de când a fost generată propunerea; generează din nou.', [{ code: 'STALE', severity: 'ERROR', message: 'Propunere stale.' }]); }
-  await q("update design_proposals set decisions = decisions || $1::jsonb where id=$2", [JSON.stringify({ [key]: { decision: 'approved', at: now } }), pid]);
-  const rev = await createRevision(owner, id, `Varianta ${alt.title} (Digital Twin, motor de reguli) aplicată`);
-  return { snapshot: next, revision: rev.number, issues };
+  // O singură tranzacție: claim pe propunere, compare-and-swap pe draft (care dă și numărul reviziei), decizia și
+  // revizia scrisă din `next`. Orice eșec face rollback complet: niciun draft schimbat fără revizie, niciun claim rămas.
+  const { tx } = await getDb();
+  const revision = await tx(async q => {
+    const claim = await q('update design_proposals set applied_index=$1 where id=$2 and applied_index is null and not (decisions ? $3) returning id', [index, pid, key]);
+    if (!claim.rows[0]) throw new HttpError(409, 'Varianta a fost deja decisă.');
+    const cas = await q('update projects set draft=$1, name=$2, current_revision=current_revision+1, updated_at=now() where id=$3 and owner=$4 and draft = $5::jsonb returning current_revision',
+      [JSON.stringify(next), next.name, id, owner, JSON.stringify(p.draft)]);
+    if (!cas.rows[0]) throw new HttpError(409, 'Proiectul s-a schimbat de când a fost generată propunerea; generează din nou.', [{ code: 'STALE', severity: 'ERROR', message: 'Propunere stale.' }]);
+    const n = cas.rows[0].current_revision as number;
+    await q('update design_proposals set decisions = decisions || $1::jsonb where id=$2', [JSON.stringify({ [key]: { decision: 'approved', at: now } }), pid]);
+    await q('insert into revisions(project_id, number, note, snapshot) values($1,$2,$3,$4)', [id, n, `Varianta ${alt.title} (Digital Twin, motor de reguli) aplicată`, JSON.stringify(next)]);
+    return n;
+  });
+  return { snapshot: next, revision, issues };
 }

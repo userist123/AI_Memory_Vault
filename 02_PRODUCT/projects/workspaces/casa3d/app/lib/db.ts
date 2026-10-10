@@ -4,15 +4,24 @@ import catalogSeed from '../data/catalog.v1.json';
 import materialsSeed from '../data/materials.v1.json';
 export type Query = (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
 export type DbMode = 'postgres' | 'pglite-file' | 'pglite-memory';
-let ready: Promise<{ q: Query; mode: DbMode }> | null = null;
+/** Rulează `fn` într-o tranzacție: orice excepție face ROLLBACK și e rearuncată neschimbată. */
+export type Tx = <T>(fn: (q: Query) => Promise<T>) => Promise<T>;
+type Db = { q: Query; tx: Tx; mode: DbMode };
+let ready: Promise<Db> | null = null;
 
-async function connect(): Promise<{ q: Query; mode: DbMode }> {
+async function connect(): Promise<Db> {
   if (process.env.DATABASE_URL){ const { Pool } = await import('pg'); const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5, ssl: process.env.DATABASE_URL.includes('localhost') ? undefined : { rejectUnauthorized: false } });
-    return { q: (s, p) => pool.query(s, p as any[]), mode: 'postgres' }; }
+    const tx: Tx = async fn => { const c = await pool.connect();
+      try { await c.query('begin'); const out = await fn((s, p) => c.query(s, p as any[])); await c.query('commit'); return out; }
+      catch (e){ await c.query('rollback').catch(() => {}); throw e; }
+      finally { c.release(); } };
+    return { q: (s, p) => pool.query(s, p as any[]), tx, mode: 'postgres' }; }
   const { PGlite } = await import('@electric-sql/pglite');
   const memory = !!process.env.VERCEL || process.env.PGLITE_MEMORY === '1';
   const db = memory ? new PGlite() : new PGlite(process.env.PGLITE_DIR || './.data/pglite');
-  return { q: (s, p) => db.query(s, p as any[]) as any, mode: memory ? 'pglite-memory' : 'pglite-file' };
+  // PGlite ține tranzacția exclusiv: celelalte interogări așteaptă până la commit/rollback.
+  const tx: Tx = fn => db.transaction(t => fn((s, p) => t.query(s, p as any[]) as any));
+  return { q: (s, p) => db.query(s, p as any[]) as any, tx, mode: memory ? 'pglite-memory' : 'pglite-file' };
 }
 async function seedOutbound(q: Query){
   // retaileri + linkuri directe (fără afiliere în modul de testare); se rulează după catalog și materiale
