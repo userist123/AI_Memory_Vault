@@ -33,7 +33,7 @@ import yaml  # noqa: E402
 
 from memory.storage.serializer import deserialize  # noqa: E402
 
-_SKIP_MARKERS = ("RAW_IMPORTS", "Obsidian")
+_SKIP_MARKERS = ("RAW_IMPORTS", "Obsidian", "node_modules")
 
 
 def engine_roots() -> tuple:

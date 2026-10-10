@@ -51,12 +51,12 @@ jobs:
       - run: npm test
 
   app:
-    # The Next.js application (app/), once the faza4 source is imported; skipped until app/package.json exists.
+    # The Next.js application (app/), once the faza4 source is imported. hashFiles() is not allowed in a
+    # job-level `if`, so the first step detects app/package.json and every later step is gated on it.
     name: app typecheck, test, build (${{ matrix.os }})
-    if: ${{ hashFiles('02_PRODUCT/projects/workspaces/casa3d/app/package.json') != '' }}
     defaults:
       run:
-        working-directory: 02_PRODUCT/projects/workspaces/casa3d/app
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -67,24 +67,37 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Is the application imported yet?
+        id: app
+        shell: bash
+        run: |
+          if [ -f app/package.json ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; echo "app/package.json not present: the faza4 source is not imported yet, nothing to build."; fi
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        if: steps.app.outputs.present == 'true'
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: 02_PRODUCT/projects/workspaces/casa3d/app/package-lock.json
       - name: Install (lockfile, no lifecycle scripts)
+        if: steps.app.outputs.present == 'true'
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d/app
         run: npm ci --ignore-scripts
       - name: Typecheck
+        if: steps.app.outputs.present == 'true'
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d/app
         run: npm run typecheck
       - name: Unit tests
+        if: steps.app.outputs.present == 'true'
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d/app
         run: npm test
       - name: Production build
+        if: steps.app.outputs.present == 'true'
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d/app
         run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: '1'
       - name: Verification gates (F4, F5)
-        if: hashFiles('02_PRODUCT/projects/workspaces/casa3d/app/scripts/verify-f4.mjs') != ''
-        run: |
-          node scripts/verify-f4.mjs
-          if [ -f scripts/verify-f5.mjs ]; then node scripts/verify-f5.mjs; fi
+        if: steps.app.outputs.present == 'true'
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d/app
         shell: bash
+        run: |
+          if [ -f scripts/verify-f4.mjs ]; then node scripts/verify-f4.mjs; fi
+          if [ -f scripts/verify-f5.mjs ]; then node scripts/verify-f5.mjs; fi
