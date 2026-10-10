@@ -178,10 +178,16 @@ function model(it){
       const pl = new THREE.PointLight(0xfff0dc, light ? light.interior : .35, 7, 2); interiorLights.push(pl); pl.position.set((r.x0 + r.x1) / 2, H - .3, (r.z0 + r.z1) / 2); ceilings.add(pl); });
     p.pereti.forEach(wl => {
       const [ax, az] = wl.a, [bx, bz] = wl.b, L = Math.hypot(bx - ax, bz - az); if (L < .01) return; const ux = (bx - ax) / L, uz = (bz - az) / L, rot = -Math.atan2(uz, ux), th = wl.ext ? .25 : .15, edge = wl.ext ? extMat : wallMat;
-      // fețele mari ale cutiei: +z local = normala (-uz, ux) = fața A, -z = fața B (vezi wallFaceRooms)
-      const mat = [edge, edge, edge, edge, faceMat(wl.fete && wl.fete.a, wl.ext), faceMat(wl.fete && wl.fete.b, wl.ext)];
+      // fețele mari ale cutiei: +z local = normala (-uz, ux) = fața A, -z = fața B (vezi wallFaceRooms în core/appearance.ts).
+      // Peretele se taie la granițele camerelor, ca fiecare bucată să ia culoarea camerei din dreptul ei (sau accentul).
+      const nx = -uz, nz = ux, off = th / 2 + .1, roomAt = (x, z) => p.camere.find(r => x > r.x0 && x < r.x1 && z > r.z0 && z < r.z1);
+      const faceHex = r => r ? ((wl.accente && wl.accente[r.id]) || r.pereti || null) : null;
+      const breaks = [...new Set(p.camere.flatMap(r => [[r.x0, r.z0], [r.x1, r.z0], [r.x1, r.z1], [r.x0, r.z1]])
+        .filter(([cx, cz]) => Math.abs((cx - ax) * nx + (cz - az) * nz) < th + .3).map(([cx, cz]) => +((cx - ax) * ux + (cz - az) * uz).toFixed(4)))].filter(t => t > .01 && t < L - .01).sort((a, b) => a - b);
+      const matAt = m => { const px = ax + ux * m, pz = az + uz * m; return [edge, edge, edge, edge, faceMat(faceHex(roomAt(px + nx * off, pz + nz * off)), wl.ext), faceMat(faceHex(roomAt(px - nx * off, pz - nz * off)), wl.ext)]; };
       const gs = [...wl.goluri].sort((a, b) => a.la - b.la); let q = 0;
-      const seg = (s0, s1, y0, y1) => { if (s1 - s0 < .005 || y1 - y0 < .005) return; const m = (s0 + s1) / 2; box(s1 - s0, y1 - y0, th, mat, ax + ux * m, (y0 + y1) / 2, az + uz * m, rot, walls); };
+      const piece = (s0, s1, y0, y1) => { if (s1 - s0 < .005 || y1 - y0 < .005) return; const m = (s0 + s1) / 2; box(s1 - s0, y1 - y0, th, matAt(m), ax + ux * m, (y0 + y1) / 2, az + uz * m, rot, walls); };
+      const seg = (s0, s1, y0, y1) => { let q0 = s0; for (const t of breaks){ if (t > q0 + .005 && t < s1 - .005){ piece(q0, t, y0, y1); q0 = t; } } piece(q0, s1, y0, y1); };
       gs.forEach(g => { seg(q, g.la, 0, H);
         if (g.tip === 'usa'){ const dh = Math.min(H - .05, g.h || 2.1), fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat; seg(g.la, g.la + g.l, dh, H); const m = g.la + g.l / 2; [g.la, g.la + g.l].forEach(s => box(.05, dh, th + .02, fm, ax + ux * s, dh / 2, az + uz * s, rot, walls)); box(g.l, .05, th + .02, fm, ax + ux * m, dh, az + uz * m, rot, walls); }
         else { const sl = g.sill != null ? g.sill : .9, top = Math.min(H - .05, sl + (g.h || 1.3)), wh = top - sl, cy = (sl + top) / 2, fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat;

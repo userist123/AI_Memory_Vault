@@ -29,22 +29,20 @@ export const MATERIAL_LABEL: Record<string, { ro: string; en: string }> = {
 
 // ---------- pereți: ce cameră vede fiecare față ----------
 const inRect = (r: { x0: number; x1: number; z0: number; z1: number }, x: number, z: number) => x > r.x0 && x < r.x1 && z > r.z0 && z < r.z1;
-/** Pentru fiecare perete (în ordinea din plan): camera de pe fața A (normala (-uz, ux)) și de pe fața B. */
-export function wallFaceRooms(floor: Floor): { wallId: string; a: string | null; b: string | null }[] {
+/** Pentru fiecare perete (în ordinea din plan): camerele de pe fața A (normala (-uz, ux)) și de pe fața B.
+ *  Un perete lung poate trece prin mai multe camere pe aceeași față, deci se eșantionează pe toată lungimea. */
+export function wallFaceRooms(floor: Floor): { wallId: string; a: string[]; b: string[] }[] {
   return floor.walls.map(w => { const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
-    const mx = (w.a[0] + w.b[0]) / 2, mz = (w.a[1] + w.b[1]) / 2, off = w.thickness / 2 + 0.1, nx = -uz, nz = ux;
-    const at = (sx: number, sz: number) => floor.rooms.find(r => inRect(r.rect, sx, sz))?.id ?? null;
-    return { wallId: w.id, a: at(mx + nx * off, mz + nz * off), b: at(mx - nx * off, mz - nz * off) }; });
+    const off = w.thickness / 2 + 0.1, nx = -uz, nz = ux, a = new Set<string>(), b = new Set<string>(), n = Math.max(2, Math.ceil(L / 0.25));
+    for (let i = 0; i < n; i++){ const t = (i + 0.5) / n * L, px = w.a[0] + ux * t, pz = w.a[1] + uz * t;
+      for (const r of floor.rooms){ if (inRect(r.rect, px + nx * off, pz + nz * off)) a.add(r.id); if (inRect(r.rect, px - nx * off, pz - nz * off)) b.add(r.id); } }
+    return { wallId: w.id, a: [...a], b: [...b] }; });
 }
 const color = (f: Finish | undefined) => normalizeHex(f?.color);
 /** Culoarea unei fețe de perete văzute din cameră: accentul feței, apoi culoarea pereților camerei, apoi implicitul. */
 export function wallFaceColor(snap: Snapshot, wallId: string, roomId: string | null, exterior = false): string {
   const a = snap.appearance; if (!roomId) return exterior ? DEFAULT_LOOK.exterior : DEFAULT_LOOK.wall;
   return color(a?.wallFaces?.[`${wallId}@${roomId}`]) ?? color(a?.rooms?.[roomId]?.walls) ?? DEFAULT_LOOK.wall;
-}
-/** Aspectul pentru motorul 3D, în ordinea pereților din plan: culorile celor două fețe. */
-export function wallLook(snap: Snapshot): { a: string; b: string }[] {
-  return wallFaceRooms(snap.floor).map((f, i) => { const ext = snap.floor.walls[i]!.exterior; return { a: wallFaceColor(snap, f.wallId, f.a, ext), b: wallFaceColor(snap, f.wallId, f.b, ext) }; });
 }
 export function roomLook(snap: Snapshot, roomId: string): { walls: string; floorTint: string; ceiling: string } {
   const r = snap.appearance?.rooms?.[roomId];

@@ -37,7 +37,7 @@ export function RoomLookPanel({ room, snap, onRoom, onAllWalls }: { room: Room; 
 }
 
 export function WallLookPanel({ wall, snap, onFace }: { wall: Wall; snap: Snapshot; onFace(roomId: string, hex: string | null): void }){
-  const f = wallFaceRooms(snap.floor).find(x => x.wallId === wall.id), rooms = [f?.a, f?.b].filter((x): x is string => !!x);
+  const f = wallFaceRooms(snap.floor).find(x => x.wallId === wall.id), rooms = [...new Set([...(f?.a || []), ...(f?.b || [])])];
   if (!rooms.length) return null;
   return (<><h4>{T.wallSides}</h4>{rooms.map(rid => { const r = snap.floor.rooms.find(x => x.id === rid)!, own = snap.appearance?.wallFaces?.[`${wall.id}@${rid}`];
     return <ColorField key={rid} label={r.name} value={wallFaceColor(snap, wall.id, rid)} isDefault={!own} onChange={h => onFace(rid, h)} onReset={() => onFace(rid, null)} />; })}</>);

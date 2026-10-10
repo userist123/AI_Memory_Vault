@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import catalogJson from '../data/catalog.v1.json';
 import materialsJson from '../data/materials.v1.json';
 import { newSnapshot } from '../core/project';
-import { wallFaceRooms, wallFaceColor, wallLook, roomLook, itemStyle, itemSizeCm, similarVariants, colorDistance, sanitizeAppearance, appearanceColors, normalizeHex, DEFAULT_LOOK } from '../core/appearance';
+import { wallFaceRooms, wallFaceColor, roomLook, itemStyle, itemSizeCm, similarVariants, colorDistance, sanitizeAppearance, appearanceColors, normalizeHex, DEFAULT_LOOK } from '../core/appearance';
 import { furnitureTotal, resolve } from '../core/catalog';
 import { footprintOf, validatePlacement } from '../core/validate';
 import { computeBOQ } from '../core/boq';
@@ -14,26 +14,28 @@ import type { Catalog, MaterialsCatalog, Snapshot } from '../core/types';
 const cat = catalogJson as unknown as Catalog, mc = materialsJson as unknown as MaterialsCatalog;
 const demo = (): Snapshot => newSnapshot(cat, 'Test', 'demo');
 
-test('fiecare față de perete știe camera în care se vede', () => {
+test('fiecare față de perete știe camerele în care se vede, inclusiv pereții lungi care trec prin mai multe camere', () => {
   const s = demo(), faces = wallFaceRooms(s.floor);
   assert.equal(faces.length, s.floor.walls.length);
-  for (const [i, f] of faces.entries()){ const w = s.floor.walls[i]!; if (w.exterior) assert.ok(!(f.a && f.b), `${w.id}: un perete exterior are o singură față interioară`); else assert.ok(f.a && f.b && f.a !== f.b, `${w.id}: un perete interior desparte două camere`); }
+  for (const [i, f] of faces.entries()){ const w = s.floor.walls[i]!; if (w.exterior) assert.ok(!(f.a.length && f.b.length), `${w.id}: un perete exterior are o singură față interioară`); else assert.ok(f.a.length && f.b.length, `${w.id}: un perete interior are camere pe ambele fețe`); }
+  assert.ok(faces.some(f => f.a.length > 1 || f.b.length > 1), 'demo-ul are un perete exterior lung lângă două camere');
 });
 test('culoarea feței: accentul bate culoarea camerei, care bate implicitul', () => {
-  const s = demo(), f = wallFaceRooms(s.floor).find(x => x.a && x.b)!;
-  assert.equal(wallFaceColor(s, f.wallId, f.a), DEFAULT_LOOK.wall);
-  s.appearance = { rooms: { [f.a!]: { walls: { color: '#C5D8E0' } } } };
-  assert.equal(wallFaceColor(s, f.wallId, f.a), '#c5d8e0'); assert.equal(wallFaceColor(s, f.wallId, f.b), DEFAULT_LOOK.wall, 'cealaltă cameră nu se schimbă');
-  s.appearance.wallFaces = { [`${f.wallId}@${f.a}`]: { color: '#c94f3d' } };
-  assert.equal(wallFaceColor(s, f.wallId, f.a), '#c94f3d', 'peretele accent');
-  const look = wallLook(s), i = s.floor.walls.findIndex(w => w.id === f.wallId); assert.equal(look[i]!.a, '#c94f3d'); assert.equal(look[i]!.b, DEFAULT_LOOK.wall);
+  const s = demo(), f = wallFaceRooms(s.floor).find(x => x.a.length === 1 && x.b.length === 1)!, A = f.a[0]!, Bk = f.b[0]!;
+  assert.equal(wallFaceColor(s, f.wallId, A), DEFAULT_LOOK.wall);
+  s.appearance = { rooms: { [A]: { walls: { color: '#C5D8E0' } } } };
+  assert.equal(wallFaceColor(s, f.wallId, A), '#c5d8e0'); assert.equal(wallFaceColor(s, f.wallId, Bk), DEFAULT_LOOK.wall, 'cealaltă cameră nu se schimbă');
+  s.appearance.wallFaces = { [`${f.wallId}@${A}`]: { color: '#c94f3d' } };
+  assert.equal(wallFaceColor(s, f.wallId, A), '#c94f3d', 'peretele accent');
+  const p = planWithLook(s), i = s.floor.walls.findIndex(w => w.id === f.wallId);
+  assert.deepEqual(p.pereti[i].accente, { [A]: '#c94f3d' }); assert.equal(p.camere.find((c: any) => c.id === A).pereti, '#c5d8e0'); assert.equal(p.camere.find((c: any) => c.id === Bk).pereti, undefined);
 });
 test('podeaua, tavanul și ramele ajung în planul pentru 3D', () => {
   const s = demo(), r = s.floor.rooms[0]!, w = s.floor.walls.find(w => w.openings.length)!, o = w.openings[0]!;
   s.appearance = { rooms: { [r.id]: { floor: { color: '#9a5b3c' }, ceiling: { color: '#e3ecef' } } }, openings: { [o.id]: { color: '#1f1f1f' } } };
   assert.deepEqual(roomLook(s, r.id), { walls: DEFAULT_LOOK.wall, floorTint: '#9a5b3c', ceiling: '#e3ecef' });
   const p = planWithLook(s); assert.equal(p.camere.find((c: any) => c.id === r.id).podea, '#9a5b3c'); assert.equal(p.camere.find((c: any) => c.id === r.id).tavan, '#e3ecef');
-  const wi = s.floor.walls.indexOf(w); assert.equal(p.pereti[wi].goluri[0].culoare, '#1f1f1f'); assert.ok(p.pereti[wi].fete.a && p.pereti[wi].fete.b);
+  const wi = s.floor.walls.indexOf(w); assert.equal(p.pereti[wi].goluri[0].culoare, '#1f1f1f');
 });
 test('culoarea și materialul piesei suprascriu stilul variantei doar unde modelul permite', () => {
   const s = demo(), sofa = s.placements.find(p => p.group === 'canapea')!, base = resolve(cat, sofa.variantId)!.variant.style;
@@ -70,9 +72,9 @@ test('culoarea aleasă găsește produsele reale cele mai apropiate din aceeași
   assert.deepEqual(similarVariants(cat, 'canapea', 'nu-e-culoare'), []);
 });
 test('culorile proiectului pentru consilier includ pereții, accentele și mobila', () => {
-  const s = demo(), f = wallFaceRooms(s.floor).find(x => x.a)!; s.appearance = { wallFaces: { [`${f.wallId}@${f.a}`]: { color: '#c94f3d' } } };
+  const s = demo(), f = wallFaceRooms(s.floor).find(x => x.a.length)!, A = f.a[0]!; s.appearance = { wallFaces: { [`${f.wallId}@${A}`]: { color: '#c94f3d' } } };
   const cs = appearanceColors(s, cat);
-  assert.ok(cs.some(c => c.kind === 'wall' && c.hex === '#c94f3d' && c.roomId === f.a));
+  assert.ok(cs.some(c => c.kind === 'wall' && c.hex === '#c94f3d' && c.roomId === A));
   assert.equal(cs.filter(c => c.kind === 'item').length, s.placements.filter(p => resolve(cat, p.variantId)?.variant.style?.col).length);
 });
 test('twin-ul păstrează dimensiunile pe comandă la dus-întors', () => {
