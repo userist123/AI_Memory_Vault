@@ -233,6 +233,8 @@ export const en: Dict = {
   "issue.DOOR_ZONE": "It stops a door from opening.",
   "issue.OVERLAP": "It overlaps {nm}.",
   "issue.STAIR_NO_LEVEL": "The staircase leads nowhere: add a level above.",
+  "issue.STAIR_DOOR": "The staircase blocks a door from opening: move or rotate it.",
+  "issue.STAIR_VOID_DOOR": "Upstairs, the stairwell opening is in front of a door: whoever steps out falls into it.",
   "issue.STAIR_OUTSIDE": "The staircase must sit entirely inside one room.",
   "issue.STAIR_BLOCKED": "This item stands on the staircase.",
   "issue.STAIR_VOID": "This item stands in the stairwell opening on the level above.",

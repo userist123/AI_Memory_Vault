@@ -4,11 +4,12 @@ import Joystick from './Joystick';
 import { usePrefs } from '@/lib/prefs';
 import PanoramaView from './PanoramaView';
 import type { Catalog, Snapshot } from '@/core/types';
-import { viewerInput } from '@/lib/viewer-input';
+import { viewerInput, type PlateVoid } from '@/lib/viewer-input';
+const NO_VOIDS: PlateVoid[] = [];
 import { toEngineCatalog } from '@/core/catalog';
 import { lighting, sunDirection, captureFileName, type TimeOfDay } from '@/core/lighting';
 
-export default function Viewer3D({ snap, catalog, onPick }: { snap: Snapshot; catalog: Catalog; onPick(id: string | null): void }){
+export default function Viewer3D({ snap, catalog, onPick, voids = NO_VOIDS }: { snap: Snapshot; catalog: Catalog; onPick(id: string | null): void; voids?: PlateVoid[] }){
   const { t } = usePrefs();
   const [room, setRoom] = useState<string | null>(null), [pano, setPano] = useState<{ url: string; title: string; file: string } | null>(null), [panoBusy, setPanoBusy] = useState(false), [panoMsg, setPanoMsg] = useState('');
   const ref = useRef<HTMLCanvasElement>(null), v = useRef<any>(null), pickRef = useRef(onPick);
@@ -23,7 +24,7 @@ export default function Viewer3D({ snap, catalog, onPick }: { snap: Snapshot; ca
     return () => { alive = false; v.current?.dispose(); v.current = null; }; }, []); // eslint-disable-line
   const engineCat = useRef<ReturnType<typeof toEngineCatalog> | null>(null);
   function push(){ if (!v.current) return; engineCat.current ||= toEngineCatalog(catalog);
-    const { plan, items } = viewerInput(snap, catalog, engineCat.current); v.current.setState(plan, items); }
+    const { plan, items } = viewerInput(snap, catalog, engineCat.current, { voids }); v.current.setState(plan, items); }
   useEffect(push, [snap]); // eslint-disable-line
   function applyLight(){ const p = lighting(time, azimuth); v.current?.setLighting({ ...p, dir: sunDirection(p.azimuthDeg, p.elevationDeg) }); }
   useEffect(applyLight, [time, azimuth]); // eslint-disable-line

@@ -233,6 +233,8 @@ export const ro: Dict = {
   "issue.DOOR_ZONE": "Blochează deschiderea unei uși.",
   "issue.OVERLAP": "Se suprapune cu {nm}.",
   "issue.STAIR_NO_LEVEL": "Scara nu duce nicăieri: adaugă un nivel deasupra.",
+  "issue.STAIR_DOOR": "Scara blochează deschiderea unei uși: mut-o sau rotește-o.",
+  "issue.STAIR_VOID_DOOR": "Golul scării de la etaj e în dreptul unei uși: cine iese pe ușă calcă în gol.",
   "issue.STAIR_OUTSIDE": "Scara trebuie să stea în întregime într-o cameră.",
   "issue.STAIR_BLOCKED": "Piesa stă pe scară.",
   "issue.STAIR_VOID": "Piesa stă în golul scării de la etaj.",

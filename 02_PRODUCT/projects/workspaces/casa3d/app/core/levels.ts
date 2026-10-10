@@ -4,7 +4,7 @@
 // Totalurile pe casă (buget, tabel de suprafețe) parcurg `floors()`.
 import type { Catalog, Floor, Issue, RoomRect, Snapshot, Stair } from './types';
 import { footprintAt, insideRect, rectHit } from './geometry';
-import { footprintOf } from './validate';
+import { footprintOf, doorZones } from './validate';
 
 /** Grosimea plăcii dintre niveluri (m); cota unui nivel = înălțimile de sub el + câte o placă. */
 export const SLAB = 0.2;
@@ -45,14 +45,15 @@ export function mergeLevel(full: Snapshot, i: number, view: Snapshot): Snapshot 
     ...(full.tech || viewTech ? { tech } : {}), ...(underlay ? { underlay } : {}) };
 }
 
-/** Adaugă un nivel deasupra celui mai de sus, cu aceiași pereți, goluri și camere (id-uri noi), fără mobilier și fără intrare. */
+/** Adaugă un nivel deasupra celui mai de sus, cu aceiași pereți, goluri și camere (id-uri noi), fără mobilier; ușa de la
+ *  intrare nu urcă (sus ar da în gol), celelalte uși și ferestrele rămân. */
 export function addLevel(s: Snapshot, o: { name: string; id?: () => string }): Snapshot {
   const fl = floors(s); if (fl.length >= MAX_LEVELS) throw new RangeError(`Cel mult ${MAX_LEVELS} niveluri.`);
   const id = o.id ?? (() => globalThis.crypto.randomUUID().slice(0, 8)), top = fl[fl.length - 1];
   const floor: Floor = { id: `nivel-${id()}`, name: o.name, ceilingHeight: top.ceilingHeight,
     rooms: top.rooms.map(r => ({ ...r, id: `camera-${id()}`, rect: { ...r.rect } })),
     walls: top.walls.map(w => ({ ...w, id: `wall-${id()}`, a: [...w.a] as [number, number], b: [...w.b] as [number, number],
-      openings: w.openings.map(({ entrance: _e, ...op }) => ({ ...op, id: `gol-${id()}` })) })) };
+      openings: w.openings.filter(op => !op.entrance).map(op => ({ ...op, id: `gol-${id()}` })) })) };
   return { ...s, levels: [...(s.levels ?? []), floor] };
 }
 /** Șterge un etaj (nu parterul) cu tot ce ține de el; scările care urcau la el dispar dacă era ultimul. */
@@ -102,6 +103,10 @@ export function stairIssues(s: Snapshot, cat: Catalog): Issue[] {
   fl.forEach((f, i) => { for (const st of f.stairs ?? []){ const r = stairRect(st);
     if (i === fl.length - 1) out.push(err('issue.STAIR_NO_LEVEL', 'Scara nu duce nicăieri: adaugă un nivel deasupra.', { stair: st.id }));
     if (!f.rooms.some(room => insideRect(room.rect, r))) out.push(err('issue.STAIR_OUTSIDE', 'Scara trebuie să stea în întregime într-o cameră.', { stair: st.id }));
+    // ușile care se deschid în camera scării trebuie să rămână libere (aceeași zonă ca pentru mobilier)
+    if (f.rooms.some(room => doorZones(f, room).some(z => rectHit(z, r)))) out.push(err('issue.STAIR_DOOR', 'Scara blochează deschiderea unei uși: mut-o sau rotește-o.', { stair: st.id }));
+    // la etaj, golul scării nu poate fi în dreptul unei uși: cine iese pe ușă calcă în gol
+    const up = fl[i + 1]; if (up && up.rooms.some(room => doorZones(up, room).some(z => rectHit(z, r)))) out.push(err('issue.STAIR_VOID_DOOR', 'Golul scării de la etaj e în dreptul unei uși: cine iese pe ușă calcă în gol.', { stair: st.id }));
     // abruptă: se poate construi, dar e incomodă și periculoasă (avertisment, nu blochează)
     const g = stairGeometry(st, f.ceilingHeight + SLAB), riser = Math.round(g.riser * 100), going = Math.round(g.going * 100);
     if (g.riser > STAIR_RISER_MAX + 1e-9 || g.going < STAIR_GOING_MIN - 1e-9) out.push({ code: 'STAIR', severity: 'WARNING', key: 'issue.STAIR_STEEP',

@@ -135,7 +135,7 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
     ents.length = save.n; ({ x0, y0, x1, y1 } = save);
     if (i > 0 && Number.isFinite(m.x0)) ox = prevMax + 3000 - m.x0; else ox = 0;
     drawLevel(view); drawStairs(snap, i);
-    if (multi && Number.isFinite(m.x0)) text('LEVELS', [(m.x0 + m.x1) / 2 + ox, m.y1 + 300], 250, fl.name || `L${i}`, { center: true });
+    if (multi && Number.isFinite(m.x0)) text('LEVELS', [(m.x0 + m.x1) / 2 + ox, m.y1 + 300], 250, i === 0 ? (opts.lang === 'en' ? 'Ground floor' : 'Parter') : fl.name || `L${i}`, { center: true });
     if (Number.isFinite(m.x1)) prevMax = m.x1 + ox;
   });
 

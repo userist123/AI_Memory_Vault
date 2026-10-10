@@ -103,3 +103,20 @@ test('geometria scării: direcția după rotație, număr de trepte, avertisment
   const steep = stairIssues(s, cat).filter(i => i.key === 'issue.STAIR_STEEP');
   assert.equal(steep.length, 1); assert.equal(steep[0]!.severity, 'WARNING'); assert.equal(steep[0]!.vars!.length, Math.round(comfortableStairLength(s.floor.ceilingHeight + SLAB) * 100));
 });
+test('scara care blochează deschiderea unei uși e eroare; etajul nou nu copiază ușa de la intrare', () => {
+  const s = twoLevels(), hall = s.floor.rooms.find(x => x.type === 'hol')!;
+  // scara pe toată lungimea holului trece prin dreptul ușilor care se deschid în hol
+  s.floor.stairs = [{ id: 'hol', x: (hall.rect.x0 + hall.rect.x1) / 2, z: (hall.rect.z0 + hall.rect.z1) / 2, width: .9, length: Math.min(4.3, hall.rect.x1 - hall.rect.x0 - .1), rotation: Math.PI / 2 }];
+  assert.ok(stairIssues(s, cat).some(i => i.key === 'issue.STAIR_DOOR' && i.severity === 'ERROR'));
+  const ground = house(), entrances = ground.floor.walls.flatMap(w => w.openings).filter(o => o.entrance).length, doors = ground.floor.walls.flatMap(w => w.openings).filter(o => o.kind === 'door').length;
+  const up = addLevel(ground, { name: 'L1', id }).levels![0]!.walls.flatMap(w => w.openings).filter(o => o.kind === 'door').length;
+  assert.ok(entrances > 0); assert.equal(up, doors - entrances, 'ușa de la intrare nu urcă la etaj');
+});
+test('golul scării în dreptul unei uși de la etaj e eroare (cine iese pe ușă calcă în gol)', () => {
+  const s = twoLevels(), hall = s.floor.rooms.find(x => x.type === 'hol')!;
+  s.floor.stairs = [{ id: 'hol', x: (hall.rect.x0 + hall.rect.x1) / 2, z: (hall.rect.z0 + hall.rect.z1) / 2, width: .9, length: Math.min(4.3, hall.rect.x1 - hall.rect.x0 - .1), rotation: Math.PI / 2 }];
+  assert.ok(stairIssues(s, cat).some(i => i.key === 'issue.STAIR_VOID_DOOR' && i.severity === 'ERROR'));
+  // fără uși la etaj în dreptul golului: nicio eroare de acest fel
+  const t = structuredClone(s); for (const w of t.levels![0]!.walls) w.openings = w.openings.filter(o => o.kind !== 'door');
+  assert.ok(!stairIssues(t, cat).some(i => i.key === 'issue.STAIR_VOID_DOOR'));
+});
