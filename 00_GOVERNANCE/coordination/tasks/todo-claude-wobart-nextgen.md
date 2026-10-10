@@ -30,6 +30,14 @@ DONE:
   GPU screenshots taken on Marius-PC via headless Chromium (scripts/visual/shot-gpu.cjs): car grounded, satin black reads well.
   Wobart commits 87346d2, e7cffa0, 00199ef, 0187a4d, 5a98f6a, 04cb015. CC BY credit added in the section disclaimer.
 - Lesson recorded (Wobart tasks/lessons.md): a push chained with ';' after a red lint went out; chain with '&&' only.
+- 2026-10-11 (claude-wobart-nextgen): owner wants the Terminal Industries truck effect for the car ("nu cu puncte"). Particle hero
+  replaced by a PRE-RENDERED scroll story: Wobart scripts/blender/render_scrub.py (Cycles, 151 frames, 30/chapter): photoreal car ->
+  scan cut (world-X ScanMask node group on every material) -> glowing X-ray wireframe hologram with laser band -> layer shells ->
+  finishes cycle -> aerial on a grid. Frames -> WebP (frames_to_webp.ps1, public/story/1920|1280) scrubbed on <canvas> by
+  components/canvas/FrameScrub.tsx (coarse-to-fine loading, phone crop follows the car). Live R3F fallback: CarStory.tsx (unwired).
+  Findings: Wireframe modifier with even offset on duplicate verts spiked to km-long geometry (white frames + GPU OOM) -> weld first,
+  no even offset, exterior parts only, bounds guard; studio lights must be visible_camera=False for a flying camera; PowerShell `$_`
+  is stripped in inline DC commands -> use .ps1 files. Renders wait politely for other Blender users (queue_scrub.ps1).
 NEXT (in order):
 0. vault-worker polishes the configurator section UI; then PC build + GPU shots + owner review in the browser.
 1. Owner: look at the site on the PC (desktop + mobile), check the 3D scene, the Process stage and the WhatsApp CTA; then attest or reject the memory proposal.
