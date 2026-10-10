@@ -99,3 +99,12 @@ label.f{display:grid;gap:4px;font-size:12px;color:var(--lead)} label.f > span{fo
 /* niveluri: primul rând al zonei de lucru, peste toate coloanele (nu acoperă bara 3D sau planul) */
 .canvas{grid-template-rows:auto minmax(0,1fr)} .levelbar{grid-column:1/-1;display:flex;gap:4px;flex-wrap:wrap;align-items:center;padding:6px 8px;border-bottom:1px solid var(--line,#d9dad5);background:#fff}
 .levelbar .btn{min-height:30px;padding:0 10px} .levelbar .btn[aria-selected="true"]{background:var(--graphite,#23262B);color:#fff}
+
+/* laptopuri (1280–1440 px, inclusiv 1920 cu scalare 125–150%): bara de sus pe un rând, panoul lateral mai îngust */
+@media (max-width: 1440px) and (min-width: 901px){
+  .topbar{gap:6px;padding:6px 10px;flex-wrap:nowrap} .topbar .btn{min-height:32px;padding:0 9px;font-size:13px} .topbar select.btn{padding:0 4px}
+  .topbar .name{min-width:110px;max-width:220px} .topbar .status{font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1 1 auto}
+  .body{grid-template-columns:52px 1fr clamp(270px, 24vw, 340px)} .side{padding:10px 12px;gap:10px}
+  .v3bar .btn{min-height:30px;font-size:12px;padding:0 9px}
+}
+.v3bar select.btn{width:auto;flex:0 1 auto;max-width:240px;min-height:32px;font-size:12.5px;padding:0 6px}

@@ -52,7 +52,11 @@ export default function Viewer3D({ snap, catalog, onPick, voids = NO_VOIDS }: { 
     {mode === 'walk' && touch && !err && <Joystick onMove={(f, s) => v.current?.setMove(f, s)} />}
     <div className="v3bar">
       <button className="btn" aria-pressed={mode === 'house'} onClick={() => go('house')}>{t('viewer.house')}</button>
-      {snap.floor.rooms.map(r => <button key={r.id} className="btn" onClick={() => { setMode('walk'); setRoom(r.id); v.current?.goRoom(r.id); }}>{t('viewer.tour', { room: r.name })}</button>)}
+      {/* intrarea în camere: o listă, nu câte un buton pe cameră (bara încape pe un rând și pe laptop) */}
+      <select className="btn" aria-label={t('viewer.tourPick')} value={mode === 'walk' && room ? room : ''} onChange={e => { const id = e.target.value; if (!id) { go('house'); return; } setMode('walk'); setRoom(id); v.current?.goRoom(id); }}>
+        <option value="">{t('viewer.tourPick')}</option>
+        {snap.floor.rooms.map(r => <option key={r.id} value={r.id}>{t('viewer.tour', { room: r.name })}</option>)}
+      </select>
       {mode === 'walk' && room && <button className="btn" disabled={panoBusy || !!err} title={t('pano.title')} onClick={openPano}>360°</button>}
       {panoMsg && <span className="muted" role="status">{panoMsg}</span>}
       <button className="btn" aria-expanded={lightOpen} onClick={() => setLightOpen(o => !o)} title={t('viewer.lightTitle')}>{t('viewer.light')}</button>

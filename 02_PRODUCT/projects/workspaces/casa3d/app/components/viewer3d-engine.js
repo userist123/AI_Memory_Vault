@@ -253,7 +253,7 @@ function model(it){
     const xs = p.camere.flatMap(r => [r.x0, r.x1]), zs = p.camere.flatMap(r => [r.z0, r.z1]);
     const minX = Math.min(...xs, 0), maxX = Math.max(...xs, 1), minZ = Math.min(...zs, 0), maxZ = Math.max(...zs, 1);
     W = maxX - minX; D = maxZ - minZ; C.set((minX + maxX) / 2, 0, (minZ + maxZ) / 2); placeSun(); sun.target.position.copy(C);
-    orbit.r = Math.max(W, D, 4) * 1.15; walls.scale.y = mode === 'walk' ? 1 : .42; ceilings.visible = mode === 'walk';
+    orbit.r = Math.max(W, D, 4) * 1.15; setMode(mode);
   }
   function buildFurniture(items){ disposeGroup(furniture); scene.remove(furniture); furniture = new THREE.Group(); scene.add(furniture); pickables = []; blockers = [];
     for (const it of items){ if (!it.variant || !it.variant.w) continue; const m = model(it.variant); m.position.set(it.x, 0, it.z); m.rotation.y = it.rotation; m.userData = { pid: it.id }; m.traverse(o => { o.userData.item = m; }); furniture.add(m); pickables.push(m);
@@ -313,7 +313,10 @@ function model(it){
         else if (!horiz && Math.abs(px - room.x1) < 1e-6 && pz > room.z0 && pz < room.z1) spot = [room.x1 - .55, pz];
         if (spot) break; } if (spot) break; }
     const [x, z] = collide(...(spot || [cx, cz])); player.set(x, 0, z); yaw = Math.atan2(-(cx - x), -(cz - z)); pitch = -.08; }
-  function setMode(m){ mode = m; walls.scale.y = m === 'walk' ? 1 : .42; ceilings.visible = m === 'walk'; }
+  // macheta taie pereții la 42% din înălțime; aceeași tăietură se aplică și mobilierului (dulapuri înalte, biblioteci),
+  // altfel ar ieși deasupra pereților și ar părea în afara casei
+  const cut = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1.1);
+  function setMode(m){ mode = m; walls.scale.y = m === 'walk' ? 1 : .42; ceilings.visible = m === 'walk'; cut.constant = (plan ? plan.inaltime : 2.6) * .42 + .01; R.clippingPlanes = m === 'walk' ? [] : [cut]; }
   const keys = {}; const joy = { f: 0, s: 0 }; // joystick virtual: axe în [-1, 1], însumate cu tastele
   const kd = e => { if (e.target.closest && e.target.closest('input,select,textarea')) return; keys[e.key.toLowerCase()] = true; }, ku = e => { keys[e.key.toLowerCase()] = false; };
   addEventListener('keydown', kd); addEventListener('keyup', ku);

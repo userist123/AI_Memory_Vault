@@ -49,7 +49,7 @@ export const en: Dict = {
   "editor.light": "Light fixture", "editor.lightCount": "Number of fixtures",
   // ---- plan, 3D view, shortcuts ----
   "plan.aria": "Editable 2D plan",
-  "viewer.aria": "3D view", "viewer.house": "Model", "viewer.tour": "Tour: {room}", "viewer.light": "Light", "viewer.lightTitle": "Time of day and sun direction",
+  "viewer.aria": "3D view", "viewer.house": "Model", "viewer.tour": "Tour: {room}", "viewer.tourPick": "Walk into a room…", "viewer.light": "Light", "viewer.lightTitle": "Time of day and sun direction",
   "viewer.blender": "Photo render (Blender)", "viewer.blenderTitle": "Download this level as a scene for a photorealistic render in Blender (tools/blender/casa3d_render.py)",
   "viewer.capture": "Save PNG", "viewer.captureTitle": "Download the current 3D view as a PNG", "viewer.lighting": "Lighting", "viewer.day": "Day", "viewer.evening": "Evening", "viewer.night": "Night",
   "viewer.quality": "High quality", "viewer.qualityTitle": "Contact shadows in corners and under furniture (ambient occlusion)", "viewer.sun": "Sun from {deg}°",

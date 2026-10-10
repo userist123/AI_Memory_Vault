@@ -49,7 +49,7 @@ export const ro: Dict = {
   "editor.light": "Corp de iluminat", "editor.lightCount": "Număr corpuri",
   // ---- plan, vizualizare 3D, comenzi rapide ----
   "plan.aria": "Plan 2D editabil",
-  "viewer.aria": "Vizualizare 3D", "viewer.house": "Machetă", "viewer.tour": "Tur: {room}", "viewer.light": "Lumină", "viewer.lightTitle": "Momentul zilei și orientarea soarelui",
+  "viewer.aria": "Vizualizare 3D", "viewer.house": "Machetă", "viewer.tour": "Tur: {room}", "viewer.tourPick": "Intră în cameră…", "viewer.light": "Lumină", "viewer.lightTitle": "Momentul zilei și orientarea soarelui",
   "viewer.blender": "Randare foto (Blender)", "viewer.blenderTitle": "Descarcă nivelul ca scenă pentru o randare fotorealistă în Blender (tools/blender/casa3d_render.py)",
   "viewer.capture": "Captură PNG", "viewer.captureTitle": "Descarcă imaginea 3D curentă ca PNG", "viewer.lighting": "Iluminare", "viewer.day": "Zi", "viewer.evening": "Seară", "viewer.night": "Noapte",
   "viewer.quality": "Calitate înaltă", "viewer.qualityTitle": "Umbre de contact în colțuri și sub mobilă (ocluzie ambientală)", "viewer.sun": "Soarele din direcția {deg}°",
