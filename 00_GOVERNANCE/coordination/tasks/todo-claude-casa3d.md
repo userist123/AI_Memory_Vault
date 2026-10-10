@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-10T22:20:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-10T23:05:00Z
 TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / userist123/AI_Memory_Vault_CODEX_READY#258    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
@@ -119,6 +119,11 @@ PLAN v8 REBUILD (2026-10-10; owner decisions 10:58 UTC: code in Vault workspace 
   count, open sides, texture disposal, Blender temp file). 6d8670de marble veins. Evidence: vitest 269/269, tsc 0, build OK; PC app
   updated and restarted on 3123 (DB got 29 materials/14 labour rates); Blender renders out3/out4 on the PC. Next: P1 from the report (lighting model CCT/CRI/lux, kitchen and bathroom as systems,
   door/window styles, textiles), Blender render of a finished room on the PC.
+2026-10-10 23:05 UTC — owner "continua" on P2: 6d47a274 lighting estimate (lumen method, lux targets, CCT checks; VIRRMO/KABOMBA
+  specs read on IKEA), a7f91339 curtains/sheers/blinds/rugs (17 IKEA products read on pages, rod/fullness/panel rules, textiles
+  budget category, 3D), d7169ed0 interior doors + handles (5 Dedeman doors, 2 handles; warnings; 3D leaf styles). Evidence: vitest
+  283/283, tsc 0, build OK, browser screenshots; PC app rebuilt at d7169ed0. Open: kitchen as a system (fronts, countertop, handles,
+  tap finish) — no verified countertop product yet; independent review of 6d47a274..d7169ed0.
 PLAN multi-level homes (done; kept for reference):
   Model: Snapshot.floor stays the ground level (saved projects and the API unchanged); new Snapshot.levels?: Floor[]
   for the levels above; Floor.stairs?: Stair {id, x, z, width, length, rotation} on the lower level, leading to the
