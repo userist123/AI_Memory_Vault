@@ -6,6 +6,7 @@ import BudgetPanel, { type Outbound } from './BudgetPanel';
 import { relFor, freshness } from '@/core/outbound';
 import DesignPanel from './DesignPanel';
 import TwinDesignPanel from './TwinDesignPanel';
+import RevisionDiff from './RevisionDiff';
 import { finishesOf, budgetOf, roomGeometry } from '@/core/boq';
 import { History } from '@/core/history';
 import { validatePlacement, validateFloor, severityOf } from '@/core/validate';
@@ -166,6 +167,7 @@ export default function Editor({ id }: { id: string }){
         {panel === 'budget' && <BudgetPanel snap={snap} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
         {panel === 'revs' && <div className="revs"><h3>Revizii</h3>{revs.length === 0 && <p className="muted">Nicio revizie încă. Folosește „Salvează revizia”.</p>}
           {revs.map(r => <div key={r.number} className="r"><span>Revizia {r.number}{r.note ? ` · ${r.note}` : ''}</span><button className="btn" onClick={() => restore(r.number)}>Revin</button><button className="btn" onClick={() => shareRevision(r.number)} title="Link doar pentru vizualizare, către această revizie">Partajează</button><small>{new Date(r.created_at).toLocaleString('ro-RO')}</small></div>)}
+          <RevisionDiff id={id} revs={revs} />
           {shares.filter(s => !s.revokedAt).length > 0 && <><h4>Linkuri de vizualizare active</h4>{shares.filter(s => !s.revokedAt).map(s => <div key={s.token} className="r"><span>Revizia {s.revisionNumber}</span><a className="btn" href={s.path} target="_blank" rel="noopener">Deschide</a><button className="btn danger" onClick={() => revokeShare(s.token)}>Revocă</button><small>{new Date(s.createdAt).toLocaleString('ro-RO')}</small></div>)}</>}</div>}
       </aside>
     </div>
