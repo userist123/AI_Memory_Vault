@@ -4,7 +4,7 @@
     python3 .claude/skills/cost-router/install.py            # user scope: ~/.claude
     python3 .claude/skills/cost-router/install.py --no-hook  # skill + agents only
     python3 .claude/skills/cost-router/install.py --uninstall
-    python3 .claude/skills/cost-router/install.py --home /tmp/x   # another HOME (tests)
+    python3 .claude/skills/cost-router/install.py --home <dir>    # another HOME (tests)
     python3 .claude/skills/cost-router/install.py --session-start # what the SessionStart hook runs:
                                                                   # skill + agents only, and nothing at
                                                                   # all after an --uninstall (marker file)

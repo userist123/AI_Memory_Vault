@@ -54,7 +54,7 @@ def default_projects_dir() -> Path:
 
 def project_slug(project_dir: Path) -> str:
     """Claude Code names the transcript folder after the absolute path with every
-    non-alphanumeric character replaced by `-` (`/home/u/AI_Vault` -> `-home-u-AI-Vault`)."""
+    non-alphanumeric character replaced by `-` (`<root>/u/AI_Vault` -> `-root-u-AI-Vault`)."""
     import re
     return re.sub(r"[^A-Za-z0-9]", "-", str(Path(project_dir).resolve()))
 
