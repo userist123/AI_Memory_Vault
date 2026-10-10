@@ -200,6 +200,12 @@
       "reason": "README of the imported Casa3D application; not a vault note."
     },
     {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/tools/blender/README.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Usage notes of the Casa3D Blender render script; not a vault note."
+    },
+    {
       "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE5.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
