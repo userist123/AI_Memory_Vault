@@ -90,6 +90,26 @@ Rules applied after classification (`rules` in the policy; can only raise a tier
   advertises it for `summarize` only when a configured model answers on 127.0.0.1:11434. Never used
   for multi-step code, design, risky work or verification; unreachable from cloud sessions.
 
+## 3B. Context economy in every project (2026-10-10, owner-approved)
+
+Sessions spent 300–400k tokens exploring repositories (owner report, not measured here). The user
+install now adds, for every project on the machine (and every cloud session via the bootstrap):
+- **Repository map** — `SessionStart` hook `hook_repo_map.py` (matcher `startup|clear|compact`)
+  injects `lib/repo_map.py`'s map of the current git repository: root files, test command, each
+  top-level directory with file count, size, main types, README line and largest subdirectories;
+  ⚠ marks directories over 300 files or 50 MB. Built from `git ls-files` and file sizes only,
+  capped at 4,000 characters (about 1k tokens), cached in `~/.claude/cache/repo-map/` by path and
+  HEAD (this repository, 17,562 files: 0.35 s uncached). Silent outside git; never blocks.
+- **Reading rules** — a marked block in `~/.claude/CLAUDE.md` (rest of the file untouched): use the
+  map, grep narrowly, no wholesale reads of ⚠ directories, one task per session with `/clear` from
+  a checkpoint.
+- **Read deny rules** in `~/.claude/settings.json` for pure tool caches only (`__pycache__`,
+  `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `.git/objects`). Dependency and build trees
+  (node_modules, virtualenvs, dist) stay readable: a deny beats any project allow, and debugging
+  needs them. The rules actually added are recorded in `~/.claude/cost-router.deny-added.json`.
+`--no-context` skips the last two; `--uninstall` removes exactly what was added. Tests:
+`20_TESTS/test_cost_router_repo_map.py`.
+
 ## 4. How to use it
 
 **Install once, every project on the machine** (user scope, idempotent, reversible):
