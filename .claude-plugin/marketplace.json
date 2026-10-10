@@ -11,7 +11,7 @@
       "name": "ai-memory-vault",
       "source": "./",
       "description": "Use AI_Memory_Vault_CODEX_READY as Claude Code's external canonical memory layer.",
-      "version": "1.0.0"
+      "version": "1.0.1"
     }
   ]
 }
