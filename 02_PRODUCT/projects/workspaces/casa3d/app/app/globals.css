@@ -108,3 +108,8 @@ label.f{display:grid;gap:4px;font-size:12px;color:var(--lead)} label.f > span{fo
   .v3bar .btn{min-height:30px;font-size:12px;padding:0 9px}
 }
 .v3bar select.btn{width:auto;flex:0 1 auto;max-width:240px;min-height:32px;font-size:12.5px;padding:0 6px}
+/* finisaje de designer: grupuri pe element (pardoseală, pereți, tavan, iluminat) */
+.finishes .fin-group{ border:1px solid var(--line, #dcdcd6); border-radius:8px; padding:8px 10px 10px; margin:10px 0 0; display:grid; gap:6px; min-width:0 }
+.finishes .fin-group legend{ font-weight:600; padding:0 4px }
+.finishes .fin-row{ display:grid; gap:6px; padding-top:6px; border-top:1px dashed var(--line, #dcdcd6) }
+.finishes select{ max-width:100%; min-width:0 }
