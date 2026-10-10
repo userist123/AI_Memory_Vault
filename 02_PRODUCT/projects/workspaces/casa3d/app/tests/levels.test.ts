@@ -2,7 +2,7 @@ import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import catalogJson from '../data/catalog.v1.json';
 import { newSnapshot } from '../core/project';
-import { floors, levelView, mergeLevel, addLevel, removeLevel, elevationOf, levelOfRoom, stairRect, stairVoids, stairIssues, SLAB, MAX_LEVELS } from '../core/levels';
+import { floors, levelView, mergeLevel, addLevel, removeLevel, elevationOf, levelOfRoom, stairRect, stairVoids, stairIssues, stairGeometry, comfortableStairLength, SLAB, MAX_LEVELS } from '../core/levels';
 import type { Catalog, Snapshot, Stair } from '../core/types';
 
 const cat = catalogJson as unknown as Catalog;
@@ -87,4 +87,19 @@ test('scara: dreptunghiul ei, golul de deasupra și verificările', () => {
   const voided = structuredClone(s), upRoom = voided.levels![0].rooms.find(x => x.rect.x0 <= st.x && st.x <= x.rect.x1 && x.rect.z0 <= st.z && st.z <= x.rect.z1)!;
   voided.placements.push({ ...s.placements[0], id: 'in-void', roomId: upRoom.id, x: st.x, z: st.z });
   assert.ok(stairIssues(voided, cat).some(i => i.key === 'issue.STAIR_VOID' && i.with === 'in-void'));
+});
+test('geometria scării: direcția după rotație, număr de trepte, avertisment pentru scara abruptă', () => {
+  const st: Stair = { id: 's', x: 2, z: 3, width: 1, length: 4.32, rotation: 0 };
+  const g = stairGeometry(st, 2.8);
+  assert.deepEqual(g.dir, [0, -1]); assert.deepEqual(g.bottom, [2, 3 + 2.16]); assert.deepEqual(g.top, [2, 3 - 2.16]);
+  assert.equal(g.steps, 16); assert.ok(Math.abs(g.riser - .175) < 1e-9); assert.ok(Math.abs(g.going - .27) < 1e-9);
+  assert.deepEqual(stairGeometry({ ...st, rotation: Math.PI / 2 }, 2.8).dir, [-1, 0]);
+  assert.deepEqual(stairGeometry({ ...st, rotation: Math.PI }, 2.8).dir, [0, 1]);
+  assert.deepEqual(stairGeometry({ ...st, rotation: -Math.PI / 2 }, 2.8).dir, [1, 0]);
+  assert.ok(Math.abs(comfortableStairLength(2.8) - 4.32) < 1e-9);
+  // o scară scurtă: avertisment cu lungimea recomandată, nu eroare
+  const s = twoLevels(), r = s.floor.rooms.find(x => x.type === 'living')!;
+  s.floor.stairs = [{ id: 'scurta', x: (r.rect.x0 + r.rect.x1) / 2, z: (r.rect.z0 + r.rect.z1) / 2, width: .9, length: 1.2, rotation: 0 }];
+  const steep = stairIssues(s, cat).filter(i => i.key === 'issue.STAIR_STEEP');
+  assert.equal(steep.length, 1); assert.equal(steep[0]!.severity, 'WARNING'); assert.equal(steep[0]!.vars!.length, Math.round(comfortableStairLength(s.floor.ceilingHeight + SLAB) * 100));
 });

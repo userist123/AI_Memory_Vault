@@ -79,6 +79,18 @@ export function removeLevel(s: Snapshot, i: number): Snapshot {
 }
 
 export const stairRect = (st: Stair): RoomRect => footprintAt(st.x, st.z, st.rotation, st.width, st.length);
+/** Treapta confortabilă: contratreaptă ≤ 19 cm, lățime de călcare ≥ 25 cm (2·h + l ≈ 63 cm). */
+export const STAIR_RISER_MAX = 0.19, STAIR_GOING_MIN = 0.25, STAIR_RISER_TARGET = 0.175;
+/** Geometria comună planului, 3D-ului și DXF-ului. Rotația 0 urcă spre −z, apoi, la fiecare 90° (ca rotation.y din
+ *  three.js aplicat lui −z): −x, +z, +x. `rise` = înălțimea de urcat (tavanul nivelului + placa). */
+export function stairGeometry(st: Stair, rise: number){
+  const q = ((Math.round(st.rotation / (Math.PI / 2)) % 4) + 4) % 4, dir = ([[0, -1], [-1, 0], [0, 1], [1, 0]] as const)[q]!;
+  const steps = Math.max(2, Math.ceil(rise / STAIR_RISER_TARGET - 1e-9)), h = st.length / 2;
+  return { dir: [dir[0], dir[1]] as [number, number], bottom: [st.x - dir[0] * h, st.z - dir[1] * h] as [number, number], top: [st.x + dir[0] * h, st.z + dir[1] * h] as [number, number],
+    steps, riser: rise / steps, going: st.length / steps, rect: stairRect(st) };
+}
+/** Lungimea unei scări drepte cu trepte confortabile pentru o înălțime dată. */
+export const comfortableStairLength = (rise: number) => Math.ceil(rise / STAIR_RISER_TARGET - 1e-9) * 0.27;
 /** Golurile din placa nivelului i: scările care urcă de la nivelul de dedesubt. */
 export const stairVoids = (s: Snapshot, i: number): RoomRect[] => i <= 0 ? [] : (floors(s)[i - 1]?.stairs ?? []).map(stairRect);
 
@@ -90,6 +102,11 @@ export function stairIssues(s: Snapshot, cat: Catalog): Issue[] {
   fl.forEach((f, i) => { for (const st of f.stairs ?? []){ const r = stairRect(st);
     if (i === fl.length - 1) out.push(err('issue.STAIR_NO_LEVEL', 'Scara nu duce nicăieri: adaugă un nivel deasupra.', { stair: st.id }));
     if (!f.rooms.some(room => insideRect(room.rect, r))) out.push(err('issue.STAIR_OUTSIDE', 'Scara trebuie să stea în întregime într-o cameră.', { stair: st.id }));
+    // abruptă: se poate construi, dar e incomodă și periculoasă (avertisment, nu blochează)
+    const g = stairGeometry(st, f.ceilingHeight + SLAB), riser = Math.round(g.riser * 100), going = Math.round(g.going * 100);
+    if (g.riser > STAIR_RISER_MAX + 1e-9 || g.going < STAIR_GOING_MIN - 1e-9) out.push({ code: 'STAIR', severity: 'WARNING', key: 'issue.STAIR_STEEP',
+      message: `Scara e prea abruptă: trepte de ${riser} cm înălțime și ${going} cm adâncime (confortabil: cel mult 19 și cel puțin 25 cm). Lungește scara la ${Math.round(comfortableStairLength(f.ceilingHeight + SLAB) * 100)} cm.`,
+      vars: { stair: st.id, riser, going, length: Math.round(comfortableStairLength(f.ceilingHeight + SLAB) * 100) } });
     const hits = (k: number, key: string, msg: string) => { if (k >= fl.length) return;
       for (const p of levelView(s, k).placements){ const fp = footprintOf(cat, p); if (fp && rectHit(fp, r)) out.push(err(key, msg, { stair: st.id }, p.id)); } };
     hits(i, 'issue.STAIR_BLOCKED', 'Piesa stă pe scară.');

@@ -253,4 +253,17 @@ export const en: Dict = {
   "pano.close": "Close",
   "pano.noRoom": "This room no longer exists. Pick a room again in the tour.",
   "pano.failed": "The panorama could not be rendered: {msg}",
+  // ---- levels and stairs ----
+  "issue.STAIR_STEEP": "The staircase is too steep: steps {riser} cm high and {going} cm deep (comfortable: at most 19 and at least 25 cm). Make it {length} cm long.",
+  "level.tabs": "Levels", "level.ground": "Ground floor", "level.n": "Level {n}", "level.add": "+ Level",
+  "level.addTitle": "Add a level above the top one, with the same walls and rooms (no furniture)",
+  "level.remove": "Delete level", "level.removeConfirm": "Delete “{name}” and everything on it?", "level.max": "At most {n} levels.",
+  "level.name": "Level name", "level.elevation": "Floor level: {h} above the ground floor",
+  "level.underlayGround": "The tracing image belongs to the ground floor.",
+  "stair.add": "Stairs", "stair.addTitle": "Put a straight staircase to the level above in the selected room",
+  "stair.title": "Staircase", "stair.width": "Width ({u})", "stair.length": "Length ({u})", "stair.x": "Centre X ({u})", "stair.z": "Centre Z ({u})",
+  "stair.rotate": "Rotate 90°", "stair.delete": "Delete staircase", "stair.info": "{steps} steps of {riser} × {going} cm, up to {to}",
+  "stair.needRoom": "Select the room where the staircase goes first.", "stair.needLevel": "A staircase leads to the level above: add a level first.",
+  "stair.up": "UP", "stair.void": "stairwell",
+  "print.levelPlan": "Plan · {name}",
 };

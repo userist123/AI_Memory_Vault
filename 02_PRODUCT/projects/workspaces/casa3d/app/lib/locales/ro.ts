@@ -253,4 +253,17 @@ export const ro: Dict = {
   "pano.close": "Închide",
   "pano.noRoom": "Camera nu mai există. Alege din nou o cameră în tur.",
   "pano.failed": "Panorama nu s-a putut randa: {msg}",
+  // ---- niveluri și scări ----
+  "issue.STAIR_STEEP": "Scara e prea abruptă: trepte de {riser} cm înălțime și {going} cm adâncime (confortabil: cel mult 19 și cel puțin 25 cm). Lungește scara la {length} cm.",
+  "level.tabs": "Niveluri", "level.ground": "Parter", "level.n": "Etaj {n}", "level.add": "+ Nivel",
+  "level.addTitle": "Adaugă un nivel deasupra celui mai de sus, cu aceiași pereți și camere (fără mobilier)",
+  "level.remove": "Șterge nivelul", "level.removeConfirm": "Ștergi „{name}” cu tot ce e pe el?", "level.max": "Cel mult {n} niveluri.",
+  "level.name": "Numele nivelului", "level.elevation": "Cota pardoselii: {h} peste parter",
+  "level.underlayGround": "Imaginea de calc ține de parter.",
+  "stair.add": "Scară", "stair.addTitle": "Pune în camera selectată o scară dreaptă spre nivelul de deasupra",
+  "stair.title": "Scară", "stair.width": "Lățime ({u})", "stair.length": "Lungime ({u})", "stair.x": "Centru X ({u})", "stair.z": "Centru Z ({u})",
+  "stair.rotate": "Rotește 90°", "stair.delete": "Șterge scara", "stair.info": "{steps} trepte de {riser} × {going} cm, urcă la {to}",
+  "stair.needRoom": "Selectează întâi camera în care pui scara.", "stair.needLevel": "Scara duce la nivelul de deasupra: adaugă întâi un nivel.",
+  "stair.up": "SUS", "stair.void": "gol scară",
+  "print.levelPlan": "Plan · {name}",
 };
