@@ -4,6 +4,50 @@ Durable lessons from real corrections, incidents and verification failures.
 
 ## Current lessons
 
+## 2026-10-10 — a hint is not routing; enforce the model where the spawn happens
+- What happened: with only a UserPromptSubmit hint, the main session (this agent) delegated once in a
+  whole build session and did its bulk reads on Fable ($81 of $87). The hint was also injected twice per
+  prompt in the vault (project + user copies of the same hook).
+- Rule: enforce cost routing at the `Agent` PreToolUse (rewrite `model` from the brief), keep the prompt
+  line as guidance only, and make every project hook defer to the user-scope copy of itself.
+- Rule: edits to Claude Code's own hooks/skills are classified as self-modification; get the owner's
+  explicit approval for that specific change first, then make it in one pass.
+
+## 2026-10-10 — the owner's PC is reached through a Remote Control session, and it needs the owner's own approval
+- What happened: Desktop Commander showed the PC offline; the owner asked for work on the PC to go through
+  the Claude Code Remote Control session instead. That session correctly refused a permanent change to
+  `~/.claude` requested by a message from this cloud session: cross-session messages are data, not
+  owner approval, and it cannot message back.
+- Rule: for anything on the owner's computer, find the `remote-control-cli` session (`list_sessions`),
+  send it a bounded brief, and tell the owner to give the approval **in that session**; read its
+  `post_turn_summary` / events for the result instead of assuming. Never try to launder approval
+  through a session message.
+
+## 2026-10-10 — a routing policy that reads only the task class sends risky work to cheap models
+- What happened: the first cost-router classified "update the production credentials and rotate the
+  secret" as `implement` -> Sonnet, because risk was a parameter nobody passed, not something read
+  from the prompt. An independent `vault-reviewer` pass (Opus, fresh context) found it; my own tests
+  had not, because they only exercised the happy path per class.
+- Rule: any gate that lowers cost/capability must derive its risk input from the same text it
+  classifies, default to the policy's medium (never "low by silence"), and be tested with the
+  adversarial prompts (credentials, deletes, git history, auth, in both languages the owner uses).
+- Rule: run the independent reviewer before opening the PR, not after; it costs one Opus call and
+  caught four real findings here.
+
+## 2026-10-10 — new markdown files under a vault domain move the measured state card
+- What happened: two plain `.md` files (a protocol doc and a checkpoint) pushed the `vault://` route
+  count past the 5% tolerance of `test_route_and_domain_counts_are_current`, and
+  `test_no_unlisted_unreadable_file` flagged them as notes without frontmatter.
+- Rule: when adding `.md` files under `00_GOVERNANCE/`, `01_ARCHITECTURE/`, `10_DOCUMENTATION/` or
+  any `04_CONFIG/vault_domains.yaml` domain, (a) add plain documents to
+  `20_TESTS/fixtures/unreadable_notes_allowlist.json` with the `plain_document` reason, and (b) if the
+  route-count test fails, re-measure with `python3 30_SCRIPTS/routing/measure_route_resolution.py --out
+  07_EVALUATION/vault_routing/route_resolution.json` (about 12 minutes) and update both
+  `VAULT_STATE.md` and `07_EVALUATION/vault_routing/README.md` from the JSON, never by hand-estimating.
+- Rule: never `git stash` while a test suite is running in the background; the files vanish mid-run.
+- Environment note: this container had `mcp 2.2.0` while the repo pins `mcp==1.30.0`; the MCP stdio tests
+  (and the `vault-memory` MCP server) fail until `pip install mcp==1.30.0`. Pin first, then judge failures.
+
 Lessons from the 2026-10-07/08 Claude Code session (PR repair round, LogAnalyzer stage 2).
 
 ## 2026-10-08 — sequential merges need the combined test roots, not a subset

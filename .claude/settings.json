@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "model": "opus",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "for py in python3 python; do if \"$py\" -c \"import sys\" >/dev/null 2>&1; then \"$py\" \"${CLAUDE_PROJECT_DIR:-.}/.claude/skills/cost-router/hook_prompt_route.py\"; exit 0; fi; done; exit 0",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "for py in python3 python; do if \"$py\" -c \"import sys\" >/dev/null 2>&1; then \"$py\" \"${CLAUDE_PROJECT_DIR:-.}/.claude/skills/cost-router/install.py\" --session-start >/dev/null 2>&1; exit 0; fi; done; exit 0",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "for py in python3 python; do if \"$py\" -c \"import sys\" >/dev/null 2>&1; then \"$py\" \"${CLAUDE_PROJECT_DIR:-.}/.claude/skills/cost-router/hook_agent_model.py\"; exit 0; fi; done; exit 0",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
