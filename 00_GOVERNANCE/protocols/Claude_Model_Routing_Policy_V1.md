@@ -112,8 +112,14 @@ sparse clone of just the skill's files (9 files, about 2 seconds, measured 2026-
 container), the installer, then cleanup. It never touches the current project's git state.
 
 ```bash
-d=$(mktemp -d) && git clone -q --filter=blob:none --sparse --depth 1 https://github.com/userist123/AI_Memory_Vault_CODEX_READY "$d" && git -C "$d" sparse-checkout set --no-cone .claude/skills/cost-router .claude/agents /03_IMPLEMENTATION/packages/routing/claude_model_router.py /04_CONFIG/claude_model_routing.json >/dev/null 2>&1 && python3 "$d/.claude/skills/cost-router/install.py"; rm -rf "$d"; exit 0
+d=$(mktemp -d) && git clone -q --filter=blob:none --sparse --depth 1 https://github.com/userist123/AI_Memory_Vault_CODEX_READY "$d" && git -C "$d" sparse-checkout set --no-cone .claude/skills/cost-router .claude/agents 03_IMPLEMENTATION/packages/routing/claude_model_router.py 04_CONFIG/claude_model_routing.json >/dev/null 2>&1 && for py in python3 python; do if "$py" -c "import sys" >/dev/null 2>&1; then "$py" "$d/.claude/skills/cost-router/install.py"; break; fi; done; rm -rf "$d"; exit 0
 ```
+
+The patterns carry no leading `/`: Git Bash (MSYS) rewrites an argument that starts with `/` into a
+Windows path, so `/03_IMPLEMENTATION/...` never reached git and `install.py` stopped on "missing
+source" (seen on the owner's PC, 2026-10-10). A slash inside the pattern anchors it to the root
+just the same (gitignore rules; git prints a harmless warning, discarded). The `python3`/`python`
+loop covers Windows, where `python3` may be the Store stub.
 
 - **Every cloud session, any repository:** paste that line into the cloud environment's *Setup
   script* (session title bar, cloud environment menu, Edit). New sessions run it at start.
