@@ -24,7 +24,7 @@ Programul de cercetare pe terminalul MetaTrader 5 a supus ipoteza existenței un
 5. **Testul pe Holdout al Botului Owner (XAUUSD) Eșuează la Corecția Multiplă (Partea D)**:
    Evaluarea celor 7 strategii înghețate din botul utilizatorului pe fereastra de holdout complet nevăzută (2026-06-20 – 2026-09-14, 1.395 bare H1) arată că strategia `M7_MACD_MOM` a obținut naiv un Sharpe net de $1.30$ ($p = 0.038$ vs intrări aleatoare). Cu toate acestea, la aplicarea corecției Hansen SPA pe familia celor 7 strategii, $p_{SPA} = 0.4245$ vs Cash și $p_{SPA} = 0.4095$ vs Buy & Hold. Modelul ML a suferit de colaps de calibrare (overconfidence extrem) din cauza greutăților neregularizate giganți ($+619.24$).
 6. **Protocolul Prospectiv (Partea F)**:
-   A fost implementat și verificat un logger pasiv read-only dotat cu lanț de blocuri criptografic SHA-256 (`prospective_logger.py`), setat pe un orizont de 8 săptămâni (2026-09-15 – 2026-11-10), singurul mecanism imun la orice formă de data snooping.
+   A fost implementat și verificat un logger pasiv read-only dotat cu lanț de blocuri criptografic SHA-256 (`prospective_logger.py`), setat pe un orizont de 8 săptămâni (2026-09-15 – 2026-11-10), singurul mecanism imun la orice formă de data snooping. *Actualizare 2026-10-10: logger-ul n-a rulat după genesis, iar orizontul de 8 săptămâni nu avea putere statistică; testul a fost închis ca neconcludent (Secțiunea 7.2, Deviația 5).*
 
 ---
 
@@ -196,6 +196,11 @@ python 07_EVALUATION/metatrader/research/prospective_logger.py --verify
 ```
 Rezultat: `LANT SHA-256 VALID: 3 intrari verificate cu succes. Nicio modificare detectata.`
 
+### 7.2. Stadiul la 2026-10-10: Testul Prospectiv Este Închis ca Neconcludent
+- Logger-ul a rulat o singură dată (genesis, 2026-09-15T18:34Z, 3 intrări). Nu a fost programat nicio rulare ulterioară, iar la 2026-10-10 lanțul conține tot 3 intrări (19 din cele 41 de zile lucrătoare ale orizontului au trecut fără nicio înregistrare). Lanțul rămâne valid (`--verify` reconfirmat la 2026-10-10).
+- Chiar cu un jurnal complet, criteriul din 7.1 nu putea fi atins pentru un Sharpe realist: pe $T = 41$ zile, eroarea standard a Sharpe-ului anualizat este $\sqrt{252/41} \approx 2.48$, deci $p < 0.05$ (unilateral, o singură strategie, fără corecție multiplă) cere un Sharpe adevărat de $\approx 4.1$ pentru putere 50% și $\approx 6.2$ pentru putere 80%. Este aceeași concluzie ca în Secțiunea 3, pe un eșantion de 6 ori mai mic.
+- **Decizie**: testul prospectiv din 7.1 se închide ca **NECONCLUDENT**, fără a fi completat retroactiv. Completarea din bare istorice ar rămâne out-of-sample (parametrii erau înghețați), dar lanțul SHA-256 n-ar mai dovedi momentul înregistrării, iar puterea ar rămâne insuficientă. Un forward test viitor necesită o preînregistrare nouă, cu un orizont dimensionat pe curba de putere (cel puțin 6–12 luni) și rulare programată, nu manuală. Vezi Deviația 5.
+
 ---
 
 ## 8. Răspunsul Definitiv la Întrebarea Inițială
@@ -266,4 +271,8 @@ Răspunsul științific, formulat pe baza a 331 de ipoteze testate, 5.4 milioane
    - Intervale de încredere Wilson 95% au fost calculate și raportate riguros pentru fiecare palier; estimarea MDSR ($\text{MDSR} = 3.9360 \gg 1.5$) și concluzia că puterea studiului a fost insuficientă pentru a detecta Sharpe 1.0 pe 1 an rămân neschimbate și matematice.
 4. **Fuzul Orar al Orelor de Rollover**:
    - În `fetch_tick_costs.py` și `table_9_tick_cost_comparison.csv`, orele de rollover raportate (00:00) reprezintă **Server Time (EET/EEST, ceasul serverului brokerului RoboForex)**, și NU timpul universal coordonat (UTC). În timpul orei de vară (EEST), 00:00 Server Time corespunde orei 21:00 UTC din ziua precedentă.
+5. **Testul Prospectiv (Partea F) Nu a Fost Executat după Genesis**:
+   - Preînregistrarea prevedea monitorizare pe 8 săptămâni (2026-09-15 – 2026-11-10); `prospective_log.jsonl` conține doar cele 3 intrări de genesis din 2026-09-15, fiindcă nu a existat o rulare programată.
+   - Criteriul preînregistrat (SR net $\ge 0.50$, $p_{bootstrap} < 0.05$ pe 8 săptămâni) nu avea putere statistică pentru Sharpe-uri realiste (vezi 7.2: Sharpe adevărat necesar $\approx 4.1$ la putere 50%).
+   - Testul este închis formal ca **NECONCLUDENT** la 2026-10-10. Nu s-au adăugat intrări retroactive și nu s-a calculat niciun Sharpe prospectiv. Concluziile din Secțiunea 8 nu depind de acest test și rămân neschimbate.
 
