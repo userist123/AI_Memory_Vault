@@ -1,6 +1,6 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-10T10:40:00Z
-TASK: Casa3D — execute the recommended follow-ups (verify v8, real AI call, reconcile F4-F8 memory)
+STATUS: IN_PROGRESS    UPDATED: 2026-10-10T10:55:00Z
+TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / none    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
 DONE:
@@ -18,6 +18,39 @@ DONE:
   (health 200, admin 401/200, /go/o 302 with UTM and no cookie, bot clicks not counted, 404 for missing offer).
   Recorded in VERIFICATION_2026-10-10.md; Casa3D.md F4 section updated. v8 archive hash search on the PC was blocked
   by the Claude Code permission classifier (both personal folders and D:\w\casa3d).
+PLAN v8 REBUILD (2026-10-10, awaiting owner decisions on location/scope/source transfer):
+  Objective: the v8 layer exists only as a manifest + hashes; rebuild it on the verified faza4 app so every
+  capability in Casa3D.md "Implementare continua" is TEST_VERIFIED, and remove the known faza4 defects.
+  Spec sources (authority order): faza4 code + tests > CONSTITUTION.md > Casa3D.md v8 section > CORE_IMPLEMENTATION_v8.md
+  > SOURCE_SNAPSHOT_v8.md file list. No invented commercial data; AI never supplies coordinates.
+  Scope (increment order, each with Vitest red->green, tsc, next build):
+    W0 bring faza4 source into the Vault workspace 02_PRODUCT/projects/workspaces/casa3d/ (git subtree from branch
+       casa3d/faza4-source pushed by the owner); rename components/viewer3d.js -> viewer3d-engine.js (NTFS/APFS clash);
+       add .github/workflows/casa3d-build.yml (path-filtered: npm ci, typecheck, vitest, build) like loganalyzer-dfir.
+    W1 core/digital-twin.ts: canonical Digital Twin v1.0 (rooms, walls, openings, placements, units = m), fingerprint
+       (SHA-256 of canonical JSON), revalidation on persist; core/geometry-engine.ts: deterministic placement +
+       validation (fits, doors/windows clearance, circulation) over the existing core/layout.js + core/validate.ts.
+    W2 core/view-state.ts: renderer-neutral ViewerState shared by PlanView (2D) and Viewer3D; tests.
+    W3 core/design-dsl.ts: Design DSL 1.1 (ADD/REMOVE/REPLACE/MOVE; constraints near, againstWall, alignedWith,
+       keepClear, orientation), schema validator, no coordinates accepted; core/design-search.ts: deterministic
+       semantic Solver (DSL -> candidate geometry via Geometry Engine), up to 3 alternatives + comparator (measures,
+       issues, no auto-winner).
+    W4 core/design-approval.ts + app/api/projects/[id]/design/*: proposal with base fingerprint, non-persistent
+       preview, stale rejection, Accept = revalidate current twin -> apply -> revision; ERROR blocks, WARNING confirm.
+    W5 core/boq-search.ts: BOQ-aware evaluation of each alternative through the existing core/boq.ts
+       (quantities, totals, UNKNOWN, provenance, delta vs target budget).
+    W6 share: app/api/projects/[id]/shares, app/api/share/[token], app/share/[token]/page.tsx: read-only share of
+       one revision by unguessable token, no owner cookie needed; core/catalog-feed.ts + data/supplier-offer-feed.example.json
+       + app/api/catalog/import: supplier feed import with provenance (F5 start).
+    W7 lib/ai-design.ts: AI adapter that only emits DSL (rules-engine fallback without ANTHROPIC_API_KEY); real model
+       call stays DEFERRED by owner; scripts/verify-f4.mjs / verify-f5.mjs as runnable gates; PHASE5-8 docs rewritten
+       from what is actually built.
+  "Better than before": full Vitest coverage for every new module (not isolated smoke tests), CI on every push,
+  portability fix, PHASE4.md 404/401 wording corrected, ledger updated with real outputs.
+  Out of scope unless owner asks: L-shaped rooms, auto wall-room linking, mobile joystick, real affiliate programs,
+  payments, real AI call.
+  Verification per increment: vitest + tsc + next build in the cloud container (Node 22, npm registry reachable);
+  the owner's PC run stays the RUNTIME_VERIFIED reference for server checks.
 NEXT (in order):
 1. Owner supplies the v8 archive (or its path), or allows the PowerShell hash scan on LAB-PC; compare SHA-256 with 7bb34bf3...9628bc.
 2. npm ci, full Vitest, next build; record output in CORE_IMPLEMENTATION_v8.md.
