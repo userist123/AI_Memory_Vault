@@ -93,14 +93,15 @@ describe('chei folosite în componente', () => {
       for (const m of s.matchAll(/\btp?\(\s*(?:lang\s*,\s*)?['"`]([A-Za-z0-9_.${}]+)['"`]/g)) if (!m[1]!.includes('$')) used.set(m[1]!, f);
       for (const m of s.matchAll(/['"]([a-z][A-Za-z0-9]*\.[A-Za-z0-9_.]+)['"]/g)) if (prefixes.has(m[1]!.split('.')[0]!)) used.set(m[1]!, f); }
     assert.ok(used.size > 250, String(used.size));
-    for (const [k, f] of used) assert.ok(k in DICTS.ro, `${path.relative(root, f)}: cheia ${k} lipsește din dicționar`);
+    for (const [k, f] of used) assert.ok(k in DICTS.ro, `${path.relative(root, f).split(path.sep).join('/')}: cheia ${k} lipsește din dicționar`);
   });
   test('componentele nu mai conțin texte românești vizibile în JSX (sample: cuvinte cu diacritice)', () => {
     // textul românesc trăiește în lib/locales/ro.ts; componentele pot avea doar comentarii în română
     const bad: string[] = [];
-    for (const f of sources) readFileSync(f, 'utf8').split('\n').forEach((line, i) => {
+    // CRLF pe Windows: fără split pe \r?\n, `.` nu trece de \r și comentariile de la final de linie nu se mai elimină
+    for (const f of sources) readFileSync(f, 'utf8').split(/\r?\n/).forEach((line, i) => {
       const code = line.replace(/\/\/.*$/, '').replace(/\/\*.*?\*\//g, '');
-      if (/>[^<>{}]*[ăâîșțĂÂÎȘȚ][^<>{}]*</.test(code) || /['"`][^'"`]*[ăâîșț][^'"`]*['"`]/.test(code.replace(/\{\/\*.*?\*\/\}/g, ''))) bad.push(`${path.relative(root, f)}:${i + 1}: ${line.trim().slice(0, 90)}`); });
+      if (/>[^<>{}]*[ăâîșțĂÂÎȘȚ][^<>{}]*</.test(code) || /['"`][^'"`]*[ăâîșț][^'"`]*['"`]/.test(code.replace(/\{\/\*.*?\*\/\}/g, ''))) bad.push(`${path.relative(root, f).split(path.sep).join('/')}:${i + 1}: ${line.trim().slice(0, 90)}`); });
     // excepții: pagina principală (rescrisă separat), pagina statică despre-linkuri și metadata din layout
     assert.deepEqual(bad.filter(b => !/app\/page\.tsx|despre-linkuri|app\/layout\.tsx/.test(b)), []);
   });
