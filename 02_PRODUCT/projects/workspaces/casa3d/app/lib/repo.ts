@@ -5,7 +5,7 @@ const MODEL_OF_GROUP: Record<string, string> = Object.fromEntries((catalogSeed a
 import { getDb } from './db';
 import { newSnapshot } from '../core/project';
 import { validateFloor, validatePlacement } from '../core/validate';
-import type { Catalog, Snapshot, MaterialsCatalog } from '../core/types';
+import type { Catalog, Snapshot, MaterialsCatalog, Underlay } from '../core/types';
 import { checkBrief } from '../core/brief';
 import { diffSnapshots } from '../core/diff';
 import { parseProposal, evaluateProposal, applyVariant, TIERS, type Tier, type RawProposal } from '../core/proposal';
@@ -13,7 +13,9 @@ import { proposeByRules } from '../core/proposer-rules';
 import { aiConfigured, aiModel, proposeWithClaude } from './ai';
 
 export class HttpError extends Error { constructor(public status: number, msg: string, public details?: unknown){ super(msg); } }
-const MAX_SNAPSHOT = 1_000_000;
+const MAX_SNAPSHOT = 1_000_000; // proiectul fără imaginea de calc
+export const MAX_UNDERLAY_BYTES = 1_500_000; // imaginea de calc, după decodare
+
 const cleanName = (s: unknown) => { const v = String(s ?? '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 120); if (!v) throw new HttpError(400, 'Numele proiectului lipsește.'); return v; };
 
 export async function getCatalog(): Promise<Catalog> {
@@ -32,9 +34,28 @@ export async function getMaterials(): Promise<MaterialsCatalog> {
     labor: l.rows.map(r => ({ id: r.id, label: r.label, unit: r.unit, low: Number(r.low), expected: Number(r.expected), high: Number(r.high), sources: r.sources, confidence: r.confidence })),
     services: sv.rows.map(r => ({ id: r.id, label: r.label, supplier: r.supplier, ...(r.price != null ? { price: Number(r.price) } : {}), ...(r.price_per_meter != null ? { pricePerMeter: Number(r.price_per_meter) } : {}), sourceUrl: r.source_url, verificationType: r.verification_type, confidence: r.confidence, ...(r.note ? { note: r.note } : {}) })) } as MaterialsCatalog;
 }
+/** Imaginea de calc: doar PNG/JPEG în data URL, ≤ 1,5 MB decodat, numere finite. Orice altceva e respins cu 400. */
+export function checkUnderlay(u: any): Underlay {
+  const bad = (m: string) => new HttpError(400, m), fin = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
+  if (!u || typeof u !== 'object' || Array.isArray(u)) throw bad('Imaginea de calc este invalidă.');
+  const m = typeof u.dataUrl === 'string' ? /^data:image\/(png|jpeg);base64,([A-Za-z0-9+/]*={0,2})$/.exec(u.dataUrl) : null;
+  if (!m) throw bad('Imaginea de calc trebuie să fie PNG sau JPEG.');
+  const b64 = m[2]!; if (b64.length < 8 || b64.length % 4 !== 0) throw bad('Imaginea de calc este coruptă.');
+  const bytes = b64.length / 4 * 3 - (b64.endsWith('==') ? 2 : b64.endsWith('=') ? 1 : 0);
+  if (bytes > MAX_UNDERLAY_BYTES) throw bad('Imaginea de calc depășește 1,5 MB.');
+  const head = Buffer.from(b64.slice(0, 16), 'base64'), isPng = head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4e && head[3] === 0x47, isJpg = head[0] === 0xff && head[1] === 0xd8;
+  if ((m[1] === 'png' && !isPng) || (m[1] === 'jpeg' && !isJpg)) throw bad('Conținutul imaginii de calc nu corespunde tipului declarat.');
+  if (!fin(u.x) || !fin(u.z) || Math.abs(u.x) > 1000 || Math.abs(u.z) > 1000) throw bad('Poziția imaginii de calc este invalidă.');
+  if (!fin(u.widthM) || u.widthM < 1 || u.widthM > 100) throw bad('Lățimea imaginii de calc trebuie să fie între 1 și 100 m.');
+  if (!fin(u.opacity) || u.opacity < 0.1 || u.opacity > 1) throw bad('Opacitatea imaginii de calc trebuie să fie între 0,1 și 1.');
+  if (typeof u.locked !== 'boolean') throw bad('Starea de blocare a imaginii de calc este invalidă.');
+  return { dataUrl: u.dataUrl, x: u.x, z: u.z, widthM: u.widthM, opacity: u.opacity, locked: u.locked };
+}
 export function checkSnapshot(s: any): Snapshot {
   if (!s || typeof s !== 'object' || !s.floor || !Array.isArray(s.floor.rooms) || !Array.isArray(s.floor.walls) || !Array.isArray(s.placements) || typeof s.selections !== 'object') throw new HttpError(400, 'Structura proiectului e invalidă.');
-  if (JSON.stringify(s).length > MAX_SNAPSHOT) throw new HttpError(413, 'Proiectul e prea mare.');
+  const { underlay: rawUnderlay, ...rest } = s;
+  if (JSON.stringify(rest).length > MAX_SNAPSHOT) throw new HttpError(413, 'Proiectul e prea mare.');
+  if (rawUnderlay != null) s.underlay = checkUnderlay(rawUnderlay);
   const num = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
   for (const r of s.floor.rooms) if (!['x0', 'z0', 'x1', 'z1'].every(k => num(r.rect?.[k])) || r.rect.x1 <= r.rect.x0 || r.rect.z1 <= r.rect.z0) throw new HttpError(400, `Camera ${r.id} are dimensiuni invalide.`);
   for (const w of s.floor.walls) if (!num(w.a?.[0]) || !num(w.a?.[1]) || !num(w.b?.[0]) || !num(w.b?.[1]) || !Array.isArray(w.openings)) throw new HttpError(400, `Peretele ${w.id} e invalid.`);
