@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-10T16:55:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-10T19:30:00Z
 TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / userist123/AI_Memory_Vault_CODEX_READY#258    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
@@ -99,6 +99,14 @@ PLAN v8 REBUILD (2026-10-10; owner decisions 10:58 UTC: code in Vault workspace 
   + 12 room pages + 12 images, share page per level, DXF two levels (ezdxf 0 errors). Independent review of
   3cbe6af4..adf9a7cc running. Next from the sweep: comments on the share link, market separate from language
   (catalog/currency/VAT), own 3D models, AR, L/U stairs and roofs.
+2026-10-10 19:30 UTC — owner: "ies multe din peisaj", "librarie mica de produse", "instaleaza programe pe pc".
+  Done: house-view clipping plane (aa43fc84), laptop layout verified at 4 sizes on the PC (Playwright), Blender 4.5
+  photoreal pipeline with Poly Haven textures/HDRI (7e110f7c), door leaves + softer plaster (c8f49022), catalog 68 -> 212
+  variants from IKEA/Dedeman/JYSK/Mobexpert verified on product pages 2026-10-10 (2ee6922e; evidence file
+  data/catalog-evidence.2026-10-10.json), incremental DB seeding, nightstand real-size fix, smarter rules retry.
+  Evidence: tsc 0, vitest 245/245, next build OK, browser: 212 catalog results, doors visible in 3D.
+  Open: independent review of multi-level + catalog batch (reviewer agent failed earlier on org spend limit);
+  Dedeman prices where two unlabeled prices were shown are marked confidence MEDIUM; eMAG blocked (HTTP 511).
 PLAN multi-level homes (done; kept for reference):
   Model: Snapshot.floor stays the ground level (saved projects and the API unchanged); new Snapshot.levels?: Floor[]
   for the levels above; Floor.stairs?: Stair {id, x, z, width, length, rotation} on the lower level, leading to the
