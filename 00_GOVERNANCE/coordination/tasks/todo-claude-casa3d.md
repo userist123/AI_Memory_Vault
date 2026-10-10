@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-10T11:55:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-10T12:05:00Z
 TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / none    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
@@ -69,7 +69,13 @@ PLAN v8 REBUILD (2026-10-10; owner decisions 10:58 UTC: code in Vault workspace 
   W2 DONE (view-state.ts: one ViewerState for plan and 3d, reducer, renderItems with preview overlay) with W9 built in
   (joystick action: deterministic camera-frame walk, clamped). W5 DONE (boq-eval.ts: RON-only sums, UNKNOWN counted,
   budget verdict UNKNOWN whenever a price is unknown, room quantities, provenance kept). 45 tests green, tsc clean.
+- 2026-10-10 12:05 UTC: W6 DONE (share.ts, catalog-feed.ts), W7 DONE (designer.ts: DesignProvider contract + rules
+  engine; model provider deliberately not wired), e2e test on an L-shaped room, README. CI made green: job-level
+  hashFiles() removed from casa3d-build.yml, Vitest 5 (tinypool critical), node_modules skipped by the vault scan.
+  53 tests, tsc clean, npm audit 0. Casa3D.md and the verification ledger record the rebuilt layer as TEST_VERIFIED.
+  PR #258 (opened by the owner from codex/casa3d-memory) is subscribed and driven from the cloud session.
 NEXT (in order):
+0. Confirm CI green on adf2c659 (casa3d-build twin-core ubuntu+windows, npm lockfiles audit); fix anything red.
 1. Owner supplies the v8 archive (or its path), or allows the PowerShell hash scan on LAB-PC; compare SHA-256 with 7bb34bf3...9628bc.
 2. npm ci, full Vitest, next build; record output in CORE_IMPLEMENTATION_v8.md.
 3. node scripts/verify-f4.mjs and verify-f5.mjs; record output.

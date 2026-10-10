@@ -90,6 +90,21 @@ Nerulat: testul din browser (interfata, mesajul de informare pentru afiliere) si
 LAB-PC, blocata de clasificatorul de permisiuni al Claude Code atat pentru dosarele personale cat si pentru
 `D:\w\casa3d`; listarea `D:\w\casa3d` arata doar `casa3d-faza0.zip`, `casa3d-faza2.zip`, `casa3d-faza4.zip`.
 
+## Reconstructia stratului v8 (twin-core), 2026-10-10 11:40-12:05 UTC
+
+Rulata in containerul cloud (Node v22.22.0, npm 10.9.4, TypeScript 5.9.3, Vitest 5.0.3), fara apel AI.
+Cod: `02_PRODUCT/projects/workspaces/casa3d/packages/twin-core`, commit-uri `b16ef221`, `bcc5dfac`, `8fd67ac1`,
+`5b330ffb`, `425c11c3`, `adf2c659` pe `codex/casa3d-memory`.
+
+| Verificare | Rezultat | Nivel |
+|---|---|---|
+| `npx vitest run` | 10 fisiere, 53/53 pass | TEST_VERIFIED |
+| `npx tsc --noEmit` (strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes) | exit 0 | CODE_VERIFIED |
+| `npm audit` | 0 vulnerabilitati (dupa trecerea la Vitest 5; Vitest 3 aducea tinypool critic) | TEST_VERIFIED |
+| CI `casa3d-build.yml`, job twin-core, Ubuntu + Windows | primele 5 rulari au picat la pornire (hashFiles in `if` de job); corectat in `adf2c659`, rezultatul se citeste pe GitHub Actions | CI_VERIFIED dupa rularea verde |
+
+Limite: pachetul nu e inca consumat de aplicatie (sursa faza4 nu a ajuns in Vault); nicio verificare in browser.
+
 ## Defect de portabilitate gasit
 
 `components/Viewer3D.tsx` importa dinamic `./viewer3d.js`, iar `components/viewer3d.js` este un fisier
