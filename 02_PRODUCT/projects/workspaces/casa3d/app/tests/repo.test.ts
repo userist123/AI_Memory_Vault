@@ -43,7 +43,11 @@ test('date invalide sunt respinse', async () => {
 });
 
 test('Faza 2: materialele, manopera și serviciile sunt în baza de date cu proveniență și dau același buget ca fișierul sursă', async () => {
-  const mc = await repo.getMaterials(); assert.equal(mc.materials.length, 16); assert.equal(mc.labor.length, 6);
+  const src = (await import('../data/materials.v1.json')).default as any;
+  const mc = await repo.getMaterials(); assert.equal(mc.materials.length, src.materials.length); assert.equal(mc.labor.length, src.labor.length);
+  // datele tehnice și data verificării fiecărui material ajung din fișier în baza de date
+  for (const x of src.materials) assert.deepEqual(mc.materials.find(m => m.id === x.id)!.specs, x.specs, x.id);
+  assert.equal(mc.materials.find(m => m.id === 'tapet-grandeco-marmor')!.verifiedAt, '2026-10-10');
   assert.ok(mc.materials.every(m => m.verificationType && m.confidence)); assert.equal(mc.verifiedAt, '2026-10-01');
   const { computeBudget } = await import('../core/boq'); const json = (await import('../data/materials.v1.json')).default as any;
   const id = await repo.createProject(A, 'Buget DB', 'demo'), p = await repo.getProject(A, id), cat = await repo.getCatalog();

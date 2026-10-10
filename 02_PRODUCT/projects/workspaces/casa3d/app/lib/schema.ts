@@ -14,6 +14,7 @@ create table if not exists revisions(id uuid primary key default gen_random_uuid
   number int not null, note text not null default '', created_at timestamptz not null default now(), snapshot jsonb not null, unique(project_id, number));
 create table if not exists materials(id text primary key, category text not null, name text not null, supplier text not null, unit text not null, unit_price numeric(12,2) not null,
   pack jsonb, coverage numeric(8,2), consumption numeric(8,2), source_url text, verified_at date, verification_type text not null, confidence text not null, note text);
+alter table materials add column if not exists specs jsonb;
 create table if not exists labor_rates(id text primary key, label text not null, unit text not null, low numeric(10,2) not null, expected numeric(10,2) not null, high numeric(10,2) not null,
   sources jsonb not null, confidence text not null, verified_at date);
 create table if not exists services(id text primary key, label text not null, supplier text not null, price numeric(10,2), price_per_meter numeric(10,2), source_url text,

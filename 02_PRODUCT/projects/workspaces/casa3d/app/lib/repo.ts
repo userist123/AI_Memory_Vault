@@ -1,4 +1,5 @@
 import { sanitizeAppearance, SIZE_LIMITS_CM } from '../core/appearance';
+import { sanitizeFinishes } from '../core/finishes';
 import { sanitizeTech, MAX_TECH_POINTS } from '../core/technical';
 import catalogSeed from '../data/catalog.v1.json';
 // grupă → model 3D, ca materialele permise pe piesă să fie verificate fără a citi catalogul din baza de date
@@ -33,7 +34,8 @@ export async function getCatalog(): Promise<Catalog> {
 export async function getMaterials(): Promise<MaterialsCatalog> {
   const { q } = await getDb(); const [m, l, sv] = await Promise.all([q('select * from materials order by category, unit_price'), q('select * from labor_rates'), q('select * from services')]);
   const d = (v: any) => v ? new Date(v).toISOString().slice(0, 10) : null, n = (v: any) => v == null ? undefined : Number(v);
-  return { verifiedAt: d(m.rows[0]?.verified_at) || '', materials: m.rows.map(r => ({ id: r.id, category: r.category, name: r.name, supplier: r.supplier, unit: r.unit, unitPrice: Number(r.unit_price), ...(r.pack ? { pack: { ...r.pack, ...(r.pack.price != null ? { price: Number(r.pack.price) } : {}) } } : {}), ...(r.coverage != null ? { coverage: n(r.coverage) } : {}), ...(r.consumption != null ? { consumption: n(r.consumption) } : {}), sourceUrl: r.source_url, verificationType: r.verification_type, confidence: r.confidence, ...(r.note ? { note: r.note } : {}) })),
+  return { verifiedAt: m.rows.map(r => d(r.verified_at)).filter(Boolean).sort()[0] || '',   // cea mai veche verificare: data catalogului nu pare mai nouă decât este
+    materials: m.rows.map(r => ({ id: r.id, category: r.category, name: r.name, supplier: r.supplier, unit: r.unit, unitPrice: Number(r.unit_price), ...(r.pack ? { pack: { ...r.pack, ...(r.pack.price != null ? { price: Number(r.pack.price) } : {}) } } : {}), ...(r.coverage != null ? { coverage: n(r.coverage) } : {}), ...(r.consumption != null ? { consumption: n(r.consumption) } : {}), sourceUrl: r.source_url, verificationType: r.verification_type, confidence: r.confidence, ...(r.note ? { note: r.note } : {}), ...(r.specs ? { specs: r.specs } : {}), ...(r.verified_at ? { verifiedAt: d(r.verified_at)! } : {}) })),
     labor: l.rows.map(r => ({ id: r.id, label: r.label, unit: r.unit, low: Number(r.low), expected: Number(r.expected), high: Number(r.high), sources: r.sources, confidence: r.confidence })),
     services: sv.rows.map(r => ({ id: r.id, label: r.label, supplier: r.supplier, ...(r.price != null ? { price: Number(r.price) } : {}), ...(r.price_per_meter != null ? { pricePerMeter: Number(r.price_per_meter) } : {}), sourceUrl: r.source_url, verificationType: r.verification_type, confidence: r.confidence, ...(r.note ? { note: r.note } : {}) })) } as MaterialsCatalog;
 }
@@ -96,7 +98,7 @@ export function checkSnapshot(s: any): Snapshot {
   // culorile: camerele, pereții și golurile de pe orice nivel
   if (s.appearance != null){ const house = { ...s.floor, rooms: fls.flatMap(f => f.rooms), walls: fls.flatMap(f => f.walls) };
     const a = sanitizeAppearance(s.appearance, { floor: house, placements: s.placements }, p => MODEL_OF_GROUP[p.group] ?? ''); if (a) s.appearance = a; else delete s.appearance; }
-  if (s.finishes != null && (typeof s.finishes !== 'object' || Array.isArray(s.finishes))) throw new HttpError(400, 'Finisajele sunt invalide.');
+  { const bad = sanitizeFinishes(s.finishes); if (bad) throw new HttpError(400, bad); }
   if (s.budget != null){ const b = s.budget; const okNum = (v: unknown) => v == null || (typeof v === 'number' && Number.isFinite(v) && v >= 0);
     if (typeof b !== 'object' || !okNum(b.target) || !okNum(b.contingencyPct) || !okNum(b.deliveryDedeman) || !okNum(b.furnitureAssembly) || !okNum(b.design) || (b.contingencyPct ?? 0) > 100) throw new HttpError(400, 'Setările de buget sunt invalide.'); }
   if (s.brief != null){ try { s.brief = checkBrief(s.brief); } catch { delete s.brief; } }

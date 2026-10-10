@@ -1,5 +1,6 @@
 // Reguli de calcul pentru cantități — ipoteze de planificare, afișate în interfață (nu sunt date de catalog).
-export const WASTE: Record<string, number> = { parquet: .10, floor_tile: .10, wall_tile: .10, baseboard: .05, paint: .10, tile_adhesive: 0, lighting: 0 };
+export const WASTE: Record<string, number> = { parquet: .10, floor_tile: .10, wall_tile: .10, baseboard: .05, paint: .10, tile_adhesive: 0, lighting: 0,
+  wallpaper: 0, wall_panel: 0, decorative_plaster: .05, brick_cladding: .10, stone_cladding: .10, plasterboard: .10, cornice: .10, led_strip: .05, spot: 0 };
 export const PAINT_COATS = 2;
 export const DOOR_HEIGHT = 2.1;
 export const WINDOW_HEIGHT = 1.3;            // între parapet (0,9 m) și buiandrug (2,2 m), ca în modelul 3D
