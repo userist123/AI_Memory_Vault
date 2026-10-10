@@ -666,6 +666,18 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/WP18_USABILITY_SCRIPT.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown project document (WP18); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/STATION_ROLES.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown project document (WP18); not a note. Frontmatter would require owner lifecycle/verification values."
     }
   ]
 }

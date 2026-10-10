@@ -59,7 +59,7 @@ See `AUTHENTICATION.md`.
 - No switch exists in the UI, on the command line or in a file. Changing the role needs a new policy with a higher `version`, signed by the holder of the private key:
   `release-gate/Sign-EditionPolicy.ps1 -Role csirt …`.
 - WP18 adds **no account role**: administrator and operator stay as in `AUTHENTICATION.md` (owner decision, 2026-10-10).
-- Tests: `LogAnalyzer.UI.Tests/StationRoleTests.cs`.
+- Tests: `LogAnalyzer.UI.Tests/StationRoleTests.cs`. What the role changes in the UI (Home intents, sidebar, flows, reports): `STATION_ROLES.md`.
 
 ## Verification
 `LogAnalyzer.Edition.Tests` reads the metadata of every `LogAnalyzer*` assembly in the P1 build output and fails if it finds an excluded
