@@ -14,20 +14,26 @@ import { formatMoney, formatLength, formatArea, formatDimsCm, type Units } from 
 import { intlLocale, translator, type Lang, type Translate } from '@/lib/i18n';
 import { suggestTechPoints, techCounts, TECH_KINDS, type TechKind } from '@/core/technical';
 import { TECH_SYMBOL } from './TechPanel';
+import { floors, levelView, stairGeometry, stairwells, SLAB } from '@/core/levels';
 
 interface ProjectDto { id: string; name: string; currentRevision: number | null; draft: Snapshot }
 const ROOM_FILL: Record<string, string> = { baie: '#e4e8e6', bucatarie: '#e6e8e3', hol: '#efeae1', living: '#f0e8da', dormitor: '#efe6dc' };
 const MARGIN = 0.5;   // m în jurul planului pentru cote
 
-type PlanProps = { snap: Snapshot; catalog: Catalog; box: { x0: number; z0: number; w: number; d: number }; widthMm: number; heightMm: number; mm: number; units: Units; locale: Lang; roomId?: string; showDims?: boolean; aria: string };
+type PlanProps = { snap: Snapshot; catalog: Catalog; box: { x0: number; z0: number; w: number; d: number }; widthMm: number; heightMm: number; mm: number; units: Units; locale: Lang; roomId?: string; showDims?: boolean; aria: string; voids?: { x0: number; z0: number; x1: number; z1: number }[] };
 // Planul (complet sau decupat pe o cameră): pereți, deschideri, amprentele mobilierului și etichete; `mm` = metri pe plan per mm de hârtie.
-function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, locale, roomId, showDims, aria }: PlanProps){
+function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, locale, roomId, showDims, aria, voids = [] }: PlanProps){
   const f = snap.floor, fs = (v: number) => v * mm, dims = showDims ? wallDimensions(f) : [], rooms = roomId ? f.rooms.filter(r => r.id === roomId) : f.rooms, pls = roomId ? snap.placements.filter(pl => pl.roomId === roomId) : snap.placements;
   return (<svg viewBox={`${box.x0} ${box.z0} ${box.w} ${box.d}`} width={`${widthMm}mm`} height={`${heightMm}mm`} overflow={roomId ? 'hidden' : 'visible'} role="img" aria-label={aria} style={{ background: '#fbfaf7' }}>
     {f.rooms.map(r => <rect key={r.id} x={r.rect.x0} y={r.rect.z0} width={r.rect.x1 - r.rect.x0} height={r.rect.z1 - r.rect.z0} fill={roomId && r.id !== roomId ? '#f6f4ef' : ROOM_FILL[r.type] || '#f3f1ec'} stroke="#c9c4b8" strokeWidth={fs(0.2)} />)}
     {f.walls.map(w => <line key={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#333" strokeWidth={w.thickness} strokeLinecap="square" />)}
     {f.walls.flatMap(w => { const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
       return w.openings.map(o => <line key={o.id} x1={w.a[0] + ux * o.offset} y1={w.a[1] + uz * o.offset} x2={w.a[0] + ux * (o.offset + o.width)} y2={w.a[1] + uz * (o.offset + o.width)} stroke={o.kind === 'door' ? '#B7791F' : '#5b8fb9'} strokeWidth={w.thickness + 0.02} />); })}
+    {voids.map((v, k) => <g key={'v' + k} stroke="#666" strokeWidth={fs(0.2)} fill="none"><rect x={v.x0} y={v.z0} width={v.x1 - v.x0} height={v.z1 - v.z0} strokeDasharray={`${fs(1.2)} ${fs(0.8)}`} /><path d={`M${v.x0} ${v.z0}L${v.x1} ${v.z1}M${v.x1} ${v.z0}L${v.x0} ${v.z1}`} /></g>)}
+    {(f.stairs ?? []).map(st => { const g = stairGeometry(st, f.ceilingHeight + SLAB), r = g.rect, [dx, dz] = g.dir, px = -dz, pz = dx, hw = st.width / 2;
+      const treads = Array.from({ length: g.steps - 1 }, (_, k) => { const cx = g.bottom[0] + dx * g.going * (k + 1), cz = g.bottom[1] + dz * g.going * (k + 1); return `M${cx - px * hw} ${cz - pz * hw}L${cx + px * hw} ${cz + pz * hw}`; }).join('');
+      return <g key={st.id} stroke="#444" fill="none"><rect x={r.x0} y={r.z0} width={r.x1 - r.x0} height={r.z1 - r.z0} fill="#efe9de" strokeWidth={fs(0.25)} /><path d={treads} strokeWidth={fs(0.12)} />
+        <path d={`M${g.bottom[0] + dx * .1} ${g.bottom[1] + dz * .1}L${g.top[0]} ${g.top[1]}M${g.top[0] - dx * .2 - px * .12} ${g.top[1] - dz * .2 - pz * .12}L${g.top[0]} ${g.top[1]}L${g.top[0] - dx * .2 + px * .12} ${g.top[1] - dz * .2 + pz * .12}`} strokeWidth={fs(0.2)} /></g>; })}
     {pls.map(pl => { const fp = footprintOf(catalog, pl); if (!fp) return null; const rv = resolve(catalog, pl.variantId), label = (rv?.product.name ?? pl.group).split(' ')[0] ?? '';
       return <g key={pl.id}><rect x={fp.x0} y={fp.z0} width={fp.x1 - fp.x0} height={fp.z1 - fp.z0} fill="#ffffffcc" stroke="#1F4E79" strokeWidth={fs(0.2)} rx={0.03} />
         {(fp.x1 - fp.x0) > fs(label.length * 1.8) && <text x={(fp.x0 + fp.x1) / 2} y={(fp.z0 + fp.z1) / 2 + fs(0.7)} fontSize={fs(2)} textAnchor="middle" fill="#1F4E79">{label}</text>}</g>; })}
@@ -57,10 +63,11 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
     (async () => { try {
       const m = await import('./viewer3d-engine.js'); if (!alive || !canvasRef.current) return;
       viewer = m.createViewer(canvasRef.current); const lp = lighting('day'); viewer.setLighting({ ...lp, dir: sunDirection(lp.azimuthDeg, lp.elevationDeg) }); viewer.setQuality?.('high');
-      const snap = data.p.draft, { plan, items } = viewerInput(snap, data.catalog); viewer.setState(plan, items);
-      await nextFrame(); await nextFrame(); if (!alive) return;
-      const out: Record<string, string> = {}, ov = viewer.renderView(undefined, 1200, 800); if (!ov) throw new Error('no image'); out.overview = ov;
-      for (const r of snap.floor.rooms){ const u = viewer.renderView({ roomId: r.id }, 1200, 800); if (u) out[r.id] = u; }
+      const snap = data.p.draft, out: Record<string, string> = {};
+      for (let i = 0; i < floors(snap).length; i++){ const v = levelView(snap, i), { plan, items } = viewerInput(v, data.catalog, undefined, { voids: stairwells(snap, i) }); viewer.setState(plan, items);
+        await nextFrame(); await nextFrame(); if (!alive) return;
+        if (i === 0){ const ov = viewer.renderView(undefined, 1200, 800); if (!ov) throw new Error('no image'); out.overview = ov; }
+        for (const r of v.floor.rooms){ const u = viewer.renderView({ roomId: r.id }, 1200, 800); if (u) out[r.id] = u; } }
       if (alive) setImages(out);
     } catch { if (alive) setImgErr(true); } finally { try { viewer?.dispose(); } catch { /* deja eliberat */ } if (alive) setBusy(false); } })();
     return () => { alive = false; };
@@ -68,17 +75,20 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
   const canvas = <canvas ref={canvasRef} width={1200} height={800} aria-hidden="true" style={{ position: 'fixed', left: -10000, top: 0, width: 1200, height: 800, pointerEvents: 'none' }} />;
   const view = useMemo(() => {
     if (!data) return null;
-    const { p, catalog, mc } = data, snap = p.draft, f = snap.floor;
-    const works = new Map(f.rooms.map(r => [r.id, roomWorks(snap, catalog, mc, r.id)] as const));
+    const { p, catalog, mc } = data, snap = p.draft;
+    const works = new Map(floors(snap).flatMap(f => f.rooms).map(r => [r.id, roomWorks(snap, catalog, mc, r.id)] as const));
     return { works, budget: computeBudget(snap, catalog, mc), furn: furnitureTotal(catalog, snap.placements) };
   }, [data]);
   if (err) return <main className="print-page"><p>{t('print.loadError')}</p></main>;
   if (!data || !view) return <main className="print-page">{canvas}<p>{t('print.loading')}</p></main>;
 
-  const { p, catalog } = data, snap = p.draft, f = snap.floor, budget = view.budget;
-  const b = floorBounds(f) ?? { x0: 0, x1: 6, z0: 0, z1: 5 };
-  const ex0 = b.x0 - MARGIN, ez0 = b.z0 - MARGIN, ew = b.x1 - b.x0 + 2 * MARGIN, ed = b.z1 - b.z0 + 2 * MARGIN;
-  const sc = printScale(ew, ed), mm = sc.denominator / 1000;   // 1 mm pe hârtie = `mm` metri pe plan
+  const { p, catalog } = data, snap = p.draft, budget = view.budget;
+  // câte o vedere pe nivel: planul, camerele și culorile se desenează pe nivelul lor
+  const views = floors(snap).map((_, i) => levelView(snap, i)), multi = views.length > 1, allRooms = views.flatMap(v => v.floor.rooms);
+  const levelName = (i: number) => i === 0 ? t('level.ground') : views[i]!.floor.name || t('level.n', { n: i });
+  const plans = views.map(v => { const b = floorBounds(v.floor) ?? { x0: 0, x1: 6, z0: 0, z1: 5 };
+    const box = { x0: b.x0 - MARGIN, z0: b.z0 - MARGIN, w: b.x1 - b.x0 + 2 * MARGIN, d: b.z1 - b.z0 + 2 * MARGIN }, sc = printScale(box.w, box.d);
+    return { box, sc, mm: sc.denominator / 1000 }; });   // 1 mm pe hârtie = `mm` metri pe plan
   const sched = roomSchedule(snap), money = (n: number | null | undefined, cur: string) => formatMoney(n, cur, locale, t('print.unknownPrice'));
   const cur = catalog.offers[0]?.currency ?? 'RON', bm = (n: number | null) => formatMoney(n, cur, locale, t('print.unknownPrice'));
   const furnKnownByCur = new Map<string, number>(); for (const pl of snap.placements){ const o = pricedOffer(catalog, pl); if (o) furnKnownByCur.set(o.currency, (furnKnownByCur.get(o.currency) ?? 0) + o.price); }
@@ -89,10 +99,9 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
   // piesele pe comandă au grupa lor („pe comandă”), fără ofertă de catalog; prețul lor e necunoscut
   for (const pl of snap.placements){ const rv = resolve(catalog, pl.variantId), o = pl.size ? null : rv?.offer ?? null, shop = pl.size ? t('print.custom') : o?.provenance.source ?? t('print.noOffer'), po = pricedOffer(catalog, pl);
     if (po) sums.set(po.currency, (sums.get(po.currency) ?? 0) + po.price); else unknownCount++;
-    const arr = byRetailer.get(shop) ?? []; arr.push({ id: pl.id, name: rv?.product.name ?? pl.group, variant: pl.size ? `${rv?.variant.name ?? ''} — ${formatDimsCm(pl.size, units, locale)}` : rv?.variant.name ?? '', room: f.rooms.find(r => r.id === pl.roomId)?.name ?? '', offer: o }); byRetailer.set(shop, arr); }
+    const arr = byRetailer.get(shop) ?? []; arr.push({ id: pl.id, name: rv?.product.name ?? pl.group, variant: pl.size ? `${rv?.variant.name ?? ''} — ${formatDimsCm(pl.size, units, locale)}` : rv?.variant.name ?? '', room: allRooms.find(r => r.id === pl.roomId)?.name ?? '', offer: o }); byRetailer.set(shop, arr); }
   const catLines = ([['furniture', t('print.furniture')], ['finishes', t('print.finishes')], ['lighting', t('print.lighting')], ['appliances', t('print.appliances')], ['sanitary', t('print.sanitary')]] as const).map(([k, l]) => [l, budget.categories[k] ?? 0] as const).filter(([, v]) => v > 0);
-  const planBox = { x0: ex0, z0: ez0, w: ew, d: ed };
-  const ROOM_MM = 100;
+  const ROOM_MM = 100, levelOf = new Map(views.flatMap((v, i) => v.floor.rooms.map(r => [r.id, i] as const)));
 
   return (<main className="print-page">
     {canvas}
@@ -114,28 +123,31 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
         </dl></div>
     </section>
 
-    <section className="print-plan print-break">
-      <PlanSvg snap={snap} catalog={catalog} box={planBox} widthMm={sc.widthMm} heightMm={sc.heightMm} mm={mm} units={units} locale={locale} showDims aria={t('print.planAria')} />
+    {views.map((v, i) => { const { box, sc, mm } = plans[i]!; return (<section key={v.floor.id} className="print-plan print-break" data-testid={`plan-${i}`}>
+      {multi && <h2>{t('print.levelPlan', { name: levelName(i) })}</h2>}
+      <PlanSvg snap={v} catalog={catalog} box={box} widthMm={sc.widthMm} heightMm={sc.heightMm} mm={mm} units={units} locale={locale} showDims voids={stairwells(snap, i)} aria={multi ? `${t('print.planAria')} · ${levelName(i)}` : t('print.planAria')} />
       <div className="print-scale"><b>{t('print.scale')} 1:{sc.denominator}</b>
         <svg role="img" aria-label={t('print.scaleBar')} width={`${5000 / sc.denominator}mm`} height="7mm" viewBox={`0 0 ${5000 / sc.denominator} 7`} overflow="visible">
           <rect x={0} y={2} width={1000 / sc.denominator} height={1.6} fill="#333" /><rect x={1000 / sc.denominator} y={2} width={4000 / sc.denominator} height={1.6} fill="#fff" stroke="#333" strokeWidth={0.2} />
           <text x={0} y={6.5} fontSize={2.4}>0</text><text x={1000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="middle">{formatLength(1, units, locale)}</text><text x={5000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="end">{formatLength(5, units, locale)}</text></svg></div>
+    </section>); })}
+    <section>
       <div className="print-sec"><h2>{t('print.schedule')}</h2>
         <table className="print-table"><thead><tr><th>{t('print.room')}</th><th>{t('print.dims')}</th><th>{t('print.areaCol')}</th><th>{t('print.perimeter')}</th></tr></thead>
-          <tbody>{sched.rows.map(r => <tr key={r.id}><td>{r.name}</td><td>{formatLength(r.width, units, locale)} × {formatLength(r.depth, units, locale)}</td><td>{formatArea(r.area, units, locale)}</td><td>{formatLength(r.perimeter, units, locale)}</td></tr>)}</tbody>
+          <tbody>{sched.rows.map(r => <tr key={r.id}><td>{r.name}{multi && <small> · {levelName(r.level)}</small>}</td><td>{formatLength(r.width, units, locale)} × {formatLength(r.depth, units, locale)}</td><td>{formatArea(r.area, units, locale)}</td><td>{formatLength(r.perimeter, units, locale)}</td></tr>)}</tbody>
           <tfoot><tr><th>{t('print.total')} ({sched.totals.rooms} {t('print.rooms')})</th><td></td><th>{formatArea(sched.totals.area, units, locale)}</th><td></td></tr></tfoot></table></div>
     </section>
 
-    {f.rooms.map(r => { const w = view.works.get(r.id)!, row = sched.rows.find(x => x.id === r.id), rw = r.rect.x1 - r.rect.x0, rd = r.rect.z1 - r.rect.z0, PAD = 0.4;
+    {allRooms.map(r => { const lv = levelOf.get(r.id) ?? 0, v = views[lv]!, w = view.works.get(r.id)!, row = sched.rows.find(x => x.id === r.id), rw = r.rect.x1 - r.rect.x0, rd = r.rect.z1 - r.rect.z0, PAD = 0.4;
       const bw = rw + 2 * PAD, bd = rd + 2 * PAD, k = ROOM_MM / Math.max(bw, bd), img = images[r.id];
       return (<section key={r.id} className="print-room print-break" data-testid={`room-${r.id}`}>
-        <h2>{r.name} <small>· {formatArea(row?.area ?? rw * rd, units, locale)} · {formatLength(rw, units, locale)} × {formatLength(rd, units, locale)}</small></h2>
+        <h2>{r.name} <small>{multi ? `· ${levelName(lv)} ` : ''}· {formatArea(row?.area ?? rw * rd, units, locale)} · {formatLength(rw, units, locale)} × {formatLength(rd, units, locale)}</small></h2>
         <div className="print-room-cols">
           <div className="print-room-left">
             {img ? <img className="print-room-img" src={img} alt={`${t('print.roomAlt')} ${r.name}`} /> : <div className="print-room-img print-hero-empty">{busy ? t('print.preparing') : t('print.dash')}</div>}
             <h3>{t('print.whatIsDone')}</h3>
-            <RoomColors snap={snap} roomId={r.id} t={t} />
-            <RoomTech snap={snap} roomId={r.id} t={t} lang={locale} />
+            <RoomColors snap={v} roomId={r.id} t={t} />
+            <RoomTech snap={v} roomId={r.id} t={t} lang={locale} />
             <table className="print-table"><thead><tr><th>{t('print.finishesWorks')}</th><th className="num">{t('print.qty')}</th><th className="num">{t('print.cost')}</th></tr></thead>
               <tbody>{w.materials.length === 0 && <tr><td colSpan={3} className="muted">{t('print.noWorks')}</td></tr>}
                 {w.materials.map(m => <tr key={m.key}><td>{m.label}</td><td className="num">{m.qty} {m.unit}</td><td className="num">{money(m.cost, cur)}</td></tr>)}</tbody>
@@ -144,7 +156,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
             </table>
           </div>
           <div className="print-room-right">
-            <div className="print-room-plan"><PlanSvg snap={snap} catalog={catalog} box={{ x0: r.rect.x0 - PAD, z0: r.rect.z0 - PAD, w: bw, d: bd }} widthMm={bw * k} heightMm={bd * k} mm={1 / k} units={units} locale={locale} roomId={r.id} aria={`${t('print.plan')} ${r.name}`} /></div>
+            <div className="print-room-plan"><PlanSvg snap={v} voids={stairwells(snap, lv)} catalog={catalog} box={{ x0: r.rect.x0 - PAD, z0: r.rect.z0 - PAD, w: bw, d: bd }} widthMm={bw * k} heightMm={bd * k} mm={1 / k} units={units} locale={locale} roomId={r.id} aria={`${t('print.plan')} ${r.name}`} /></div>
             <table className="print-table"><thead><tr><th>{t('print.roomFurniture')}</th><th>{t('print.retailer')}</th><th className="num">{t('print.price')}</th></tr></thead>
               <tbody>{w.furniture.length === 0 && <tr><td colSpan={3} className="muted">{t('print.noFurniture')}</td></tr>}
                 {w.furniture.map(x => <tr key={x.id}><td>{x.name}</td><td>{x.retailer ?? t('print.noOffer')}</td><td className="num">{money(x.price, x.currency ?? cur)}</td></tr>)}</tbody></table>

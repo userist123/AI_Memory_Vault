@@ -90,6 +90,11 @@ export function stairGeometry(st: Stair, rise: number){
   return { dir: [dir[0], dir[1]] as [number, number], bottom: [st.x - dir[0] * h, st.z - dir[1] * h] as [number, number], top: [st.x + dir[0] * h, st.z + dir[1] * h] as [number, number],
     steps, riser: rise / steps, going: st.length / steps, rect: stairRect(st) };
 }
+/** Golurile din placa nivelului i cu direcția de urcare a scării de dedesubt (latura de sosire = cea spre `dir`). */
+export function stairwells(s: Snapshot, i: number): (RoomRect & { dir: [number, number] })[] {
+  const below = i > 0 ? floors(s)[i - 1] : undefined; if (!below) return [];
+  return (below.stairs ?? []).map(st => { const g = stairGeometry(st, below.ceilingHeight + SLAB); return { ...g.rect, dir: g.dir }; });
+}
 /** Lungimea unei scări drepte cu trepte confortabile pentru o înălțime dată. */
 export const comfortableStairLength = (rise: number) => Math.ceil(rise / STAIR_RISER_TARGET - 1e-9) * 0.27;
 /** Golurile din placa nivelului i: scările care urcă de la nivelul de dedesubt. */

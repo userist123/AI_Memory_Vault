@@ -2,7 +2,7 @@ import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import catalogJson from '../data/catalog.v1.json';
 import { newSnapshot } from '../core/project';
-import { floors, levelView, mergeLevel, addLevel, removeLevel, elevationOf, levelOfRoom, stairRect, stairVoids, stairIssues, stairGeometry, comfortableStairLength, SLAB, MAX_LEVELS } from '../core/levels';
+import { floors, levelView, mergeLevel, addLevel, removeLevel, elevationOf, levelOfRoom, stairRect, stairVoids, stairIssues, stairGeometry, comfortableStairLength, stairwells, SLAB, MAX_LEVELS } from '../core/levels';
 import type { Catalog, Snapshot, Stair } from '../core/types';
 
 const cat = catalogJson as unknown as Catalog;
@@ -119,4 +119,9 @@ test('golul scării în dreptul unei uși de la etaj e eroare (cine iese pe uș�
   // fără uși la etaj în dreptul golului: nicio eroare de acest fel
   const t = structuredClone(s); for (const w of t.levels![0]!.walls) w.openings = w.openings.filter(o => o.kind !== 'door');
   assert.ok(!stairIssues(t, cat).some(i => i.key === 'issue.STAIR_VOID_DOOR'));
+});
+test('stairwells: golurile nivelului cu direcția scării de dedesubt', () => {
+  const s = twoLevels(), st: Stair = { id: 'w', x: 3, z: 3, width: 1, length: 3, rotation: Math.PI / 2 }; s.floor.stairs = [st];
+  assert.deepEqual(stairwells(s, 1), [{ ...stairRect(st), dir: [-1, 0] }]); assert.deepEqual(stairwells(s, 0), []);
+  assert.deepEqual(stairwells(s, 1).map(({ dir: _d, ...r }) => r), stairVoids(s, 1));
 });
