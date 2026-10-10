@@ -8,6 +8,7 @@ import { floorOfRoom } from '@/core/levels';
 import { defaultLayout, PATTERNS, SIDES, FEATURE_CATEGORY, layoutOf, materialOf, sideGeometry, ceilingOf, clearHeight, finishIssues, pieceSizeCm, FINISH_RULES } from '@/core/finishes';
 import { formatMoney, formatArea, formatLength } from '@/core/format';
 import { normalizeHex } from '@/core/appearance';
+import { lightReport } from '@/core/light-design';
 import { usePrefs } from '@/lib/prefs';
 
 const KINDS = Object.keys(FEATURE_CATEGORY) as WallFeatureKind[];
@@ -28,7 +29,7 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish }: { 
   // costul finisajelor acestei camere, din același BOQ ca bugetul (materiale + manoperă estimată)
   const cost = useMemo(() => { const b = computeBOQ(snap, cat, mc), items = b.items.filter(i => i.roomId === room.id && (i.category === 'finishes' || i.category === 'lighting'));
     return { mat: items.reduce((a, i) => a + (i.total ?? 0), 0), lab: b.labor.filter(l => l.roomId === room.id).reduce((a, l) => a + l.expected, 0) }; }, [snap, cat, mc, room.id]);
-  const issues = finishIssues(snap, mc, fl, room, f);
+  const issues = finishIssues(snap, mc, fl, room, f), light = lightReport(mc, fl, room, f);
   const sideLen = (s: WallFeature['side']) => formatLength(sideGeometry(fl, room, s).lengthM, units, lang);
   const patternOk = (p: FloorPattern) => tile ? p !== 'herringbone' && p !== 'chevron' || pieceSizeCm(fm)[0] >= 2 * pieceSizeCm(fm)[1] : true;
 
@@ -92,6 +93,7 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish }: { 
     </fieldset>
 
     <fieldset className="fin-group"><legend>{t('fin.lighting')}</legend>
+      <div className="prov" role="status">{t(light.unknownLumens ? 'light.estimateUnknown' : 'light.estimate', { lux: light.lux, lm: light.lumens })}{light.target ? ` · ${t('light.target', { min: light.target[0], max: light.target[1] })}` : ''}{light.ccts.length ? ` · ${light.ccts.join(' / ')} K` : ''}</div>
       <div className="grid2">
         <label className="f"><span>{t('editor.light')}</span><select value={f.light} onChange={e => onFinish({ light: e.target.value })}>{by('lighting').map(opt)}</select></label>
         <label className="f"><span>{t('editor.lightCount')}</span><input type="number" min={0} max={20} value={f.lights ?? ''} placeholder={t('common.auto')} onChange={e => onFinish({ lights: e.target.value === '' ? undefined : Math.max(0, Math.min(20, Number(e.target.value) || 0)) })} /></label>

@@ -2,6 +2,7 @@
 // Funcții pure: cantitățile (BOQ), avertismentele tehnice, panoul din editor și motorul 3D citesc de aici.
 // Regulile tehnice și pierderile sunt ipoteze de planificare cu sursă (vezi FINISH_RULES), nu date de catalog.
 import type { Floor, FloorLayout, FloorPattern, Material, MaterialsCatalog, Room, RoomFinishes, Snapshot, WallFeature, WallFeatureKind } from './types';
+import { lightIssues } from './light-design';
 import { openingsOnSide } from './validate';
 
 const r2 = (v: number) => Math.round(v * 100) / 100;
@@ -106,6 +107,7 @@ export function finishIssues(snap: Snapshot, mc: MaterialsCatalog, fl: Floor, ro
   if (c.type !== 'flat' && clearHeight(fl, f) < FINISH_RULES.minCeilingM) add('fin.ceilingLow', { h: clearHeight(fl, f), min: FINISH_RULES.minCeilingM });
   if (wet) for (const id of [c.spot, c.led, f.light]){ const m = materialOf(mc, id), ip = m?.specs?.ip ? Number(m.specs.ip.replace(/\D/g, '').slice(-1)) : null;
     if (m && m.specs?.ip && ip != null && ip < 4) add('fin.ipLow', { name: m.name, ip: m.specs.ip, min: `IP${FINISH_RULES.bathMinIp}` }); }
+  out.push(...lightIssues(mc, fl, room, f));
   if (f.baseboard && wet && materialOf(mc, f.baseboard)?.specs?.wet === false) add('fin.notForWet', { side: '-', name: materialOf(mc, f.baseboard)!.name });
   return out;
 }

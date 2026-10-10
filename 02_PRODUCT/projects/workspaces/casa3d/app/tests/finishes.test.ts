@@ -8,6 +8,7 @@ import { newSnapshot } from '../core/project';
 import { computeBOQ, finishesOf } from '../core/boq';
 import { wallpaperRolls, panelCount, floorWaste, sideGeometry, finishIssues, defaultLayout, materialOf, clearHeight, sanitizeFinishes, roomVisual } from '../core/finishes';
 import { viewerInput } from '../lib/viewer-input';
+import { lightReport, autoLightCount } from '../core/light-design';
 import { getDb, resetDbForTests, reseedForTests } from '../lib/db';
 import * as repo from '../lib/repo';
 import type { Catalog, MaterialsCatalog, Snapshot, RoomFinishes } from '../core/types';
@@ -92,7 +93,7 @@ describe('avertismente tehnice', () => {
     assert.ok(keys(set(demo(), 'baie', { wallFeatures: [{ side: 'N', kind: 'wallpaper', material: 'tapet-grandeco-marmor' }] }), 'baie').includes('fin.notForWet'));
     assert.ok(keys(set(demo(), 'living', { floorLayout: { pattern: 'herringbone' } }), 'living').includes('fin.patternProduct'));
     assert.ok(keys(set(demo(), 'living', { floor: 'parchet-krono-herringbone-k450', floorLayout: { pattern: 'straight' } }), 'living').includes('fin.herringboneOnly'));
-    assert.deepEqual(keys(demo(), 'living'), []);
+    assert.deepEqual(keys(demo(), 'living'), ['light.low'], 'singurul avertisment implicit: 2 × 800 lm în 21 m² e prea puțin');
   });
 });
 
@@ -124,6 +125,25 @@ describe('regresii din review (2026-10-10)', () => {
   test('o latură fără perete (deschisă) nu are ce placa', () => {
     const s = demo(), r = room(s, 'living'); s.floor.walls = s.floor.walls.filter(w => !(Math.abs(w.a[1] - w.b[1]) < 1e-6 && Math.abs(w.a[1] - r.rect.z0) < 1e-6));
     assert.equal(sideGeometry(s.floor, r, 'N').netM2, 0);
+  });
+});
+
+describe('iluminat (metoda fluxului)', () => {
+  const rep = (s: Snapshot, id: string) => lightReport(mc, s.floor, room(s, id), finishesOf(s, room(s, id)));
+  test('lux = lm × 0,5 × 0,8 / m²; spoturile și scafa se adună; câte spoturi lipsesc până la țintă', () => {
+    const r0 = rep(demo(), 'living'); assert.equal(autoLightCount(21.28), 2); assert.equal(r0.lumens, 1600); assert.equal(r0.lux, Math.round(1600 * .4 / 21.28));
+    assert.equal(r0.spotsForTarget, Math.ceil((100 * 21.28 / .4 - 1600) / 905));
+    const s = set(demo(), 'living', { ceiling: { type: 'cove', dropCm: 15, coveCm: 25, spot: 'spot-mt143-9w', spots: 6 } }), r = rep(s, 'living'), inner = 2 * (5.1 + 3.3);
+    assert.equal(r.lumens, Math.round(1600 + 6 * 905 + inner * 500 * .5)); assert.ok(r.lux >= 100);
+    assert.ok(!keys(s, 'living').includes('light.low'));
+  });
+  test('temperatura de culoare: 2700 K în baie e prea caldă; amestecul 2700/3000 nu e avertizat (sub 500 K)', () => {
+    assert.ok(keys(demo(), 'baie').includes('light.cct'));
+    const s = set(demo(), 'living', { ceiling: { type: 'drop', dropCm: 10, spot: 'spot-mt143-9w', spots: 10 } }); assert.ok(!keys(s, 'living').includes('light.cctMixed'));
+    assert.deepEqual(rep(s, 'living').ccts, [2700, 3000]);
+  });
+  test('un corp fără flux declarat: estimarea e minimă și nu se avertizează pe baza ei', () => {
+    const s = set(demo(), 'living', { light: 'lampa-karrnocka' }), r = rep(s, 'living'); assert.ok(r.unknownLumens); assert.ok(!keys(s, 'living').includes('light.low'));
   });
 });
 
