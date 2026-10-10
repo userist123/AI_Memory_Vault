@@ -618,6 +618,7 @@ Workflow-urile din [`.github/workflows/`](.github/workflows/), grupate după ce 
 | igiena depozitului: căi absolute, fișiere nepermise în rădăcină, date personale | `repository-hygiene.yml` |
 | regăsirea pe benchmark-ul reținut, înghețat prin SHA-256 | `r009b-heldout-benchmark.yml` |
 | LogAnalyzer DFIR (.NET): build, teste și pachetele win-x64 ale edițiilor | `loganalyzer-dfir-build.yml` |
+| Casa3D (TypeScript): typecheck și Vitest pentru `twin-core` pe Ubuntu și Windows, apoi aplicația Next.js când e importată | `casa3d-build.yml` |
 | Audit de dependențe (npm, .NET) pe fiecare manifest; pică la CRITICAL | `dependency-audit.yml` |
 | materialul importat, scanat pentru instrucțiuni injectate | `untrusted-content-guard.yml` |
 | aprobarea owner-ului pentru PR-uri (mediu GitHub; efectiv abia după ce owner-ul îi setează revieweri) | `owner-approval-gate.yml` |
