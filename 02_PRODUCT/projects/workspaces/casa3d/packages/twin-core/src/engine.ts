@@ -34,6 +34,13 @@ export const DOOR_CLEAR_DEPTH = 0.9;
 export const DOOR_SIDE_MARGIN = 0.05;
 export const MIN_FREE_AREA_RATIO = 0.3;
 export const PLACEMENT_GRID = 0.05;
+/** Upper bound on grid positions tried per rotation; on large rooms the step grows (in 5 cm multiples) to stay under it. */
+export const MAX_GRID_POSITIONS = 6000;
+export function gridStep(w: number, d: number): number {
+  const cells = (w / PLACEMENT_GRID + 1) * (d / PLACEMENT_GRID + 1);
+  if (cells <= MAX_GRID_POSITIONS) return PLACEMENT_GRID;
+  return mm(Math.ceil(Math.sqrt(cells / MAX_GRID_POSITIONS)) * PLACEMENT_GRID);
+}
 
 const err = (code: IssueCode, refs: string[], message: string): Issue => ({ severity: 'ERROR', code, refs, message });
 const warn = (code: IssueCode, refs: string[], message: string): Issue => ({ severity: 'WARNING', code, refs, message });
@@ -173,8 +180,9 @@ export function findPosition(twin: Twin, req: PlacementRequest): PlacementCandid
   for (const rotation of req.rotations ?? [0, 90, 180, 270]) {
     const fw = rotation === 90 || rotation === 270 ? req.d : req.w;
     const fd = rotation === 90 || rotation === 270 ? req.w : req.d;
-    for (let y = bounds.y; y + fd <= bounds.y + bounds.d + EPS; y = mm(y + PLACEMENT_GRID)) {
-      for (let x = bounds.x; x + fw <= bounds.x + bounds.w + EPS; x = mm(x + PLACEMENT_GRID)) {
+    const step = gridStep(bounds.w, bounds.d);
+    for (let y = bounds.y; y + fd <= bounds.y + bounds.d + EPS; y = mm(y + step)) {
+      for (let x = bounds.x; x + fw <= bounds.x + bounds.w + EPS; x = mm(x + step)) {
         const f = rectOf(x, y, fw, fd);
         if (!rectInsidePolygon(f, room.polygon)) continue;
         if (twin.placements.some(o => !overlapAllowed(twin, { role: req.role }, o) && rectsOverlap(f, others.get(o.id)!))) continue;

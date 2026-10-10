@@ -54,3 +54,16 @@ describe('rules design provider', () => {
     expect(b.errors[0]!.message).toMatch(/network/);
   });
 });
+
+describe('role aliases', () => {
+  it('applies the layout rules to catalog-specific role names', async () => {
+    const ren: Record<string, string> = { bed: 'pat', nightstand: 'noptiera', wardrobe: 'dulap' };
+    const ro: CatalogItem[] = items.map(i => ({ ...i, role: ren[i.role!] ?? i.role! }));
+    const p = new RulesDesignProvider({ pat: 'bed', noptiera: 'nightstand', dulap: 'wardrobe' });
+    const d = await draft(p, { roomId: 'bedroom', wants: ['pat', 'noptiera'] }, { twin: bedroom(), catalog: catalogFromItems(ro), catalogItems: ro }, 0);
+    expect((d.dsl!.operations[0] as { constraints: unknown[] }).constraints).toEqual([{ type: 'againstWall' }]);
+    expect((d.dsl!.operations[1] as { constraints: unknown[] }).constraints).toEqual([{ type: 'near', ref: 'pat-1' }]);
+    const plain = await draft(new RulesDesignProvider(), { roomId: 'bedroom', wants: ['pat'] }, { twin: bedroom(), catalog: catalogFromItems(ro), catalogItems: ro }, 0);
+    expect((plain.dsl!.operations[0] as { constraints: unknown[] }).constraints).toEqual([]);
+  });
+});

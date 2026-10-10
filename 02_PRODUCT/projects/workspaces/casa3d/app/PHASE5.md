@@ -4,11 +4,11 @@ Verificat în containerul cloud la 2026-10-10, Node 22. Nucleul `@casa3d/twin-co
 
 | Verificare | Rezultat |
 |---|---|
-| twin-core: `npx vitest run` | ✅ 55/55 |
+| twin-core: `npx vitest run` | ✅ 58/58 |
 | twin-core: `tsc --noEmit` | ✅ curat |
 | twin-core: `npm audit` | ✅ 0 vulnerabilități |
 | app: `npm run typecheck` | ✅ curat |
-| app: `npm test` | ✅ 71/71 (64 anterioare + 7 noi) |
+| app: `npm test` | ✅ 81/81 (64 anterioare + 17 noi, dintre care 10 regresii din review) |
 | app: `npm run build` | ✅ |
 | CI `.github/workflows/casa3d-build.yml` | ✅ definit pentru ubuntu și windows; rezultatul pe acest commit se citește pe GitHub Actions |
 
@@ -45,6 +45,18 @@ Verificat în containerul cloud la 2026-10-10, Node 22. Nucleul `@casa3d/twin-co
 - `GET/POST/DELETE /api/projects/[id]/shares`; public `GET /api/share/[token]` și pagina `/share/[token]` (noindex, fără cookie de proprietar, 404 pentru token necunoscut sau revocat).
 - Editor: fila „Twin”; „Partajează” pe fiecare revizie, cu listă de linkuri și revocare.
 - Joystick virtual în turul 3D pe dispozitive tactile (`setMove` al motorului, axe limitate la [-1, 1]).
+
+## Review independent (2026-10-10)
+Un reviewer separat (alt context, alt model) a cerut modificări; toate constatările de mai jos au regresie în `tests/design-review.test.ts` și `tests/design-warnings.test.ts`, iar cele din nucleu în testele twin-core.
+- Id-uri: piesele noi primesc UUID; id-urile solver-ului sunt unice și nu ajung în proiect. BOQ-ul și referințele problemelor folosesc id-urile finale.
+- Aplicare atomică: claim condiționat pe propunere (o singură variantă, o singură dată) și compare-and-swap pe draft; dublu-click și aplicări concurente dau 409, iar perdantul nu rămâne revendicat.
+- Erorile din tot proiectul se verifică înainte de a scrie draftul (aceeași regulă ca la revizie), deci draftul nu se schimbă dacă revizia ar fi refuzată.
+- Avertismentele validatorului aplicației trec prin poarta de confirmare.
+- Camerele peste 30 m pe latură sau 400 m² sunt refuzate cu 422; grila de căutare se rărește peste 6000 de poziții.
+- Piesele fără dimensiuni în catalog sunt păstrate la aplicare.
+- Linkul partajat arată numele reviziei; prețul necunoscut e numărat separat, nu ca 0.
+- Ruta de decizie acceptă doar `apply`/`reject` și un index întreg; joystick-ul se oprește la demontare și la ieșirea din modul de mers.
+- Rămas deschis: nucleul nu modelează direcția feței piesei; validatorul aplicației o acoperă prin poarta de mai sus.
 
 ## Decizii
 - Twin-ul este sursa de adevăr geometrică pentru design; `Snapshot` rămâne formatul persistat al aplicației.

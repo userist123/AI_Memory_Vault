@@ -123,3 +123,17 @@ describe('policy and door margins', () => {
     expect(codes(t)).toEqual([]);
   });
 });
+
+describe('bounded search on large rooms', () => {
+  it('keeps the grid under MAX_GRID_POSITIONS and still finds a valid spot quickly', async () => {
+    const { gridStep, MAX_GRID_POSITIONS, PLACEMENT_GRID } = await import('../src/engine');
+    expect(gridStep(4, 3)).toBe(PLACEMENT_GRID);
+    const s = gridStep(100, 100);
+    expect(((100 / s) + 1) ** 2).toBeLessThanOrEqual(MAX_GRID_POSITIONS * 1.1);
+    const big = wallsFromRooms({ ...emptyTwin('big'), rooms: [rectangleRoom('hall', 'Hala', 0, 0, 100, 100)] });
+    const t0 = Date.now();
+    const r = findPosition(big, { id: 'b', catalogId: 'bed', roomId: 'hall', w: 1.6, d: 2, h: 0.5, againstWall: true });
+    expect(r).not.toBeNull();
+    expect(Date.now() - t0).toBeLessThan(15000);
+  });
+});

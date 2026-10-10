@@ -48,8 +48,13 @@ const VARIANT_TITLES = ['Economic', 'Echilibrat', 'Premium'] as const;
  * item (Economic), the median (Echilibrat) or the largest (Premium) among the allowed retailers. Items with
  * UNKNOWN price are allowed but sort last for Economic. Never invents products: only catalog ids.
  */
+export type CanonicalRole = 'bed' | 'nightstand' | 'wardrobe' | 'sofa' | 'desk' | 'chair' | 'table' | 'bookcase' | 'dresser';
+
 export class RulesDesignProvider implements DesignProvider {
   readonly name = 'rules';
+  /** Maps the catalog's own role names (e.g. 'pat', 'dulap') to the canonical roles the layout rules know. */
+  constructor(private readonly roleAliases: Readonly<Record<string, CanonicalRole>> = {}) {}
+  private canonical(role: string): string { return this.roleAliases[role] ?? role; }
   async propose(brief: Brief, context: DesignContext, variant: 0 | 1 | 2): Promise<unknown> {
     const ops: Operation[] = [];
     const used = new Set<string>();
@@ -65,14 +70,14 @@ export class RulesDesignProvider implements DesignProvider {
       const pick = choose(pool, variant);
       const ref = `${role}-${used.size + 1}`;
       used.add(ref);
-      const constraints: Constraint[] = [];
-      if (['bed', 'wardrobe', 'sofa', 'desk', 'bookcase', 'dresser'].includes(role)) constraints.push({ type: 'againstWall' });
-      if (role === 'nightstand' && anchorRef['bed']) constraints.push({ type: 'near', ref: anchorRef['bed'] });
-      if (role === 'chair' && anchorRef['desk']) constraints.push({ type: 'near', ref: anchorRef['desk'] });
-      if (role === 'table' && anchorRef['sofa']) constraints.push({ type: 'keepClear', ref: anchorRef['sofa'], distance: brief.accessibility ? 0.9 : 0.6 });
-      if (brief.accessibility && anchorRef['bed'] && role !== 'nightstand') constraints.push({ type: 'keepClear', ref: anchorRef['bed'], distance: 0.9 });
+      const constraints: Constraint[] = [], kind = this.canonical(role);
+      if (['bed', 'wardrobe', 'sofa', 'desk', 'bookcase', 'dresser'].includes(kind)) constraints.push({ type: 'againstWall' });
+      if (kind === 'nightstand' && anchorRef['bed']) constraints.push({ type: 'near', ref: anchorRef['bed'] });
+      if (kind === 'chair' && anchorRef['desk']) constraints.push({ type: 'near', ref: anchorRef['desk'] });
+      if (kind === 'table' && anchorRef['sofa']) constraints.push({ type: 'keepClear', ref: anchorRef['sofa'], distance: brief.accessibility ? 0.9 : 0.6 });
+      if (brief.accessibility && anchorRef['bed'] && kind !== 'nightstand') constraints.push({ type: 'keepClear', ref: anchorRef['bed'], distance: 0.9 });
       ops.push({ op: 'ADD', ref, roomId: brief.roomId, catalogId: pick.id, role, constraints, reason: `${VARIANT_TITLES[variant]}: ${pick.name}` });
-      anchorRef[role] ??= ref;
+      anchorRef[kind] ??= ref;
     }
     if (ops.length === 0) return null;
     return { version: '1.1', title: VARIANT_TITLES[variant], operations: ops };

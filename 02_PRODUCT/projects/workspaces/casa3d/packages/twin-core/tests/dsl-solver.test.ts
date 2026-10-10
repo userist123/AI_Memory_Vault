@@ -123,3 +123,17 @@ describe('alternatives', () => {
     expect(measure(t).rooms[0]).toEqual({ roomId: 'bedroom', area: 12, usedArea: 0, freeRatio: 1, items: 0 });
   });
 });
+
+describe('review fixes', () => {
+  it('generated ids never collide with placements already in the twin (second design in the same project)', () => {
+    const t = bedroom();
+    const dsl = validateDsl({ version: '1.1', operations: [{ op: 'ADD', ref: 'n', roomId: 'bedroom', catalogId: 'night-45' }] }, t, catalog).dsl!;
+    const first = solve(dsl, t, catalog);
+    expect(first.ok).toBe(true);
+    const second = solve(dsl, first.twin, catalog);
+    expect(second.ok).toBe(true);
+    const ids = second.twin.placements.map(p => p.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toHaveLength(2);
+  });
+});

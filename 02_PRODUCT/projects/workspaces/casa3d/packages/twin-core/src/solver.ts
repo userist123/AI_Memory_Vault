@@ -57,7 +57,9 @@ export function solve(dsl: DesignDsl, base: Twin, catalog: Catalog): SolveResult
   for (const [index, op] of dsl.operations.entries()) {
     switch (op.op) {
       case 'ADD': {
-        const id = `${PLACEMENT_ID_PREFIX}${slug(op.ref)}-${++counter}`;
+        let id = `${PLACEMENT_ID_PREFIX}${slug(op.ref)}-${++counter}`;
+        // Ids must be unique in the twin: an earlier design may have left a placement with the same generated id.
+        while (twin.placements.some(p => p.id === id)) id = `${PLACEMENT_ID_PREFIX}${slug(op.ref)}-${++counter}`;
         const req = requestFrom(id, op.catalogId, op.roomId, op.role, op.constraints ?? [], refMap, catalog);
         if (typeof req === 'string') return fail(index, op, op.ref, req);
         const found = findPosition(twin, req);

@@ -61,10 +61,14 @@ export async function saveDraft(owner: string, id: string, snapshot: unknown){
   const { rows } = await q('update projects set draft=$1, name=$2, updated_at=now() where id=$3 and owner=$4 returning updated_at', [JSON.stringify(s), s.name, id, owner]);
   return { updatedAt: rows[0].updated_at };
 }
+/** Erorile care împiedică o revizie, pe tot proiectul (aceeași regulă și pentru aplicarea unui design). */
+export function projectErrors(snap: Snapshot, cat: Catalog){
+  return [...validateFloor(snap.floor).filter(i => i.severity === 'ERROR'), ...snap.placements.flatMap(pl => validatePlacement(snap, cat, pl).filter(i => i.severity === 'ERROR'))];
+}
 // O revizie se creează doar dacă proiectul nu are erori (constituția: ERROR blochează aplicarea).
 export async function createRevision(owner: string, id: string, note: unknown){
   const p = await own(owner, id), cat = await getCatalog(), snap = p.draft as Snapshot;
-  const errors = [...validateFloor(snap.floor).filter(i => i.severity === 'ERROR'), ...snap.placements.flatMap(pl => validatePlacement(snap, cat, pl).filter(i => i.severity === 'ERROR'))];
+  const errors = projectErrors(snap, cat);
   if (errors.length) throw new HttpError(409, 'Proiectul are erori care trebuie rezolvate înainte de a salva o revizie.', errors);
   const { q } = await getDb(), n = p.current_revision + 1;
   await q('insert into revisions(project_id, number, note, snapshot) values($1,$2,$3,$4)', [id, n, String(note ?? '').slice(0, 300), JSON.stringify(snap)]);

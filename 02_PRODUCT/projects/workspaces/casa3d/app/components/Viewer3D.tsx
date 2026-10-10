@@ -20,6 +20,8 @@ export default function Viewer3D({ snap, catalog, onPick }: { snap: Snapshot; ca
       return { id: p.id, group: p.group, x: p.x, z: p.z, rotation: p.rotation, fp: footprintOf(catalog, p), variant: vv ? { ...vv, model: g.model } : null }; });
     v.current.setState(floorToPlan(snap.floor, snap.name), items); }
   useEffect(push, [snap]); // eslint-disable-line
+  // Joystick-ul dispare când ieși din tur: orice mișcare rămasă e anulată, altfel jucătorul ar aluneca la următorul tur.
+  useEffect(() => { if (mode !== 'walk') v.current?.setMove(0, 0); }, [mode]);
   const go = (m: 'house' | 'walk') => { setMode(m); v.current?.setMode(m); };
   return (<div className="view3d">
     <canvas ref={ref} aria-label="Vizualizare 3D" />

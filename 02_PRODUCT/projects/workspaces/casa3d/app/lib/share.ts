@@ -30,8 +30,9 @@ export interface SharedView { projectName: string; revisionNumber: number; note:
 export async function resolveShare(token: unknown): Promise<SharedView> {
   if (typeof token !== 'string' || !TOKEN_RE.test(token)) throw new HttpError(404, 'Link inexistent.');
   const { q } = await getDb();
-  const { rows } = await q(`select p.name, r.number, r.note, r.created_at, r.snapshot from shares s join projects p on p.id = s.project_id
+  const { rows } = await q(`select r.number, r.note, r.created_at, r.snapshot from shares s
     join revisions r on r.project_id = s.project_id and r.number = s.revision_number where s.token=$1 and s.revoked_at is null`, [token]);
   if (!rows[0]) throw new HttpError(404, 'Link inexistent.');
-  return { projectName: rows[0].name, revisionNumber: rows[0].number, note: rows[0].note, createdAt: rows[0].created_at, snapshot: rows[0].snapshot as Snapshot, readOnly: true };
+  // Numele vine din revizia partajată: o redenumire ulterioară a proiectului nu apare pe linkurile vechi.
+  return { projectName: String(rows[0].snapshot?.name ?? ''), revisionNumber: rows[0].number, note: rows[0].note, createdAt: rows[0].created_at, snapshot: rows[0].snapshot as Snapshot, readOnly: true };
 }

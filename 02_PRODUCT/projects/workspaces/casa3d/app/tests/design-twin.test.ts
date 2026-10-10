@@ -42,6 +42,7 @@ test('generare → 3 variante deterministe, BOQ-aware, fără coordonate în DSL
 test('aplicarea creează revizie și revalidează; o propunere stale e refuzată cu 409; deciziile nu se repetă', async () => {
   const id = await repo.createProject(A, 'Aplicare', 'demo');
   const r = await design.generateDesign(A, id, { roomId: 'dormitor', wants: ['pat', 'noptiera'], replace: true });
+  const older = await design.generateDesign(A, id, { roomId: 'dormitor', wants: ['pat'], replace: true });
   await assert.rejects(design.decideDesign(B, id, r.id, 0, 'apply', false), (e: any) => e.status === 404, 'alt proprietar nu vede proiectul');
   await assert.rejects(design.decideDesign(A, id, r.id, 7, 'apply', false), (e: any) => e.status === 404);
   const applied = await design.decideDesign(A, id, r.id, 1, 'apply', true);
@@ -50,9 +51,12 @@ test('aplicarea creează revizie și revalidează; o propunere stale e refuzată
   assert.equal(p.draft.placements.filter(x => x.roomId === 'dormitor').length, 2);
   assert.ok(p.draft.placements.some(x => x.roomId === 'living'), 'celelalte camere rămân neatinse');
   await assert.rejects(design.decideDesign(A, id, r.id, 1, 'apply', true), (e: any) => e.status === 409 && /deja/.test(e.message));
-  // varianta 0 a fost generată pe twin-ul de dinainte de aplicare → stale
-  await assert.rejects(design.decideDesign(A, id, r.id, 0, 'apply', true), (e: any) => e.status === 409 && /schimbat/.test(e.message));
-  const list = await design.listDesigns(A, id); assert.equal(list[0].status, 'STALE');
+  // o propunere se aplică o singură dată: și celelalte variante ale ei sunt închise
+  await assert.rejects(design.decideDesign(A, id, r.id, 0, 'apply', true), (e: any) => e.status === 409 && /deja/.test(e.message));
+  // propunerea generată pe twin-ul de dinainte de aplicare → stale
+  await assert.rejects(design.decideDesign(A, id, older.id, 0, 'apply', true), (e: any) => e.status === 409 && /schimbat/.test(e.message));
+  const list = await design.listDesigns(A, id);
+  assert.equal(list.find(l => l.id === r.id)!.status, 'APPLIED'); assert.equal(list.find(l => l.id === older.id)!.status, 'STALE');
   const r2 = await design.generateDesign(A, id, { roomId: 'living', wants: ['canapea', 'masuta'], replace: true });
   const rej = await design.decideDesign(A, id, r2.id, 2, 'reject', false); assert.deepEqual(rej, { ok: true });
   assert.equal((await repo.getProject(A, id)).currentRevision, 1, 'respingerea nu creează revizie');

@@ -36,16 +36,27 @@ export function snapshotToTwin(snap: Snapshot, cat: Catalog, twinId = 'project')
 export const twinFingerprint = (snap: Snapshot, cat: Catalog): string => fingerprint(snapshotToTwin(snap, cat));
 
 /** Piesele twin-ului, înapoi în formatul aplicației. Piesele existente își păstrează id-ul și sursa; cele noi sunt 'auto'. */
-export function placementsFromTwin(snap: Snapshot, cat: Catalog, twin: Twin): FurniturePlacement[] {
+/** `ids` (opțional) primește corespondența id solver → id aplicație, ca BOQ-ul și problemele să poată fi raportate pe id-urile finale. */
+export function placementsFromTwin(snap: Snapshot, cat: Catalog, twin: Twin, ids?: Map<string, string>): FurniturePlacement[] {
   const existing = new Map(snap.placements.map(p => [p.id, p]));
   return twin.placements.flatMap((q): FurniturePlacement[] => {
     const rv = resolve(cat, q.catalogId); if (!rv) return [];
     const swap = q.rotation === 90 || q.rotation === 270;
     const fw = swap ? rv.d : rv.w, fd = swap ? rv.w : rv.d;
     const prev = existing.get(q.id);
-    return [{ id: q.id, roomId: q.roomId, group: groupOf(q.catalogId), variantId: q.catalogId, x: r3(q.x + fw / 2), z: r3(q.y + fd / 2), rotation: toRadians(q.rotation), source: prev?.source ?? 'auto' }];
+    // Piesele noi primesc un UUID, ca la orice piesă a aplicației: id-urile generate de solver nu ajung în proiect.
+    const id = prev ? q.id : globalThis.crypto.randomUUID(); ids?.set(q.id, id);
+    return [{ id, roomId: q.roomId, group: groupOf(q.catalogId), variantId: q.catalogId, x: r3(q.x + fw / 2), z: r3(q.y + fd / 2), rotation: toRadians(q.rotation), source: prev?.source ?? 'auto' }];
   });
 }
+
+/** Piesele pe care twin-ul nu le poate reprezenta (fără dimensiuni în catalog). Se păstrează neatinse la aplicare. */
+export function untwinnablePlacements(snap: Snapshot, cat: Catalog): FurniturePlacement[] {
+  return snap.placements.filter(p => { const rv = resolve(cat, p.variantId); return !rv || !rv.w || !rv.d; });
+}
+
+/** Grupele catalogului → rolurile pe care le știe motorul de reguli (lipit de perete, lângă pat etc.). */
+export const ROLE_ALIASES = { pat: 'bed', noptiera: 'nightstand', dulap: 'wardrobe', canapea: 'sofa', birou: 'desk', scaunBirou: 'chair', masuta: 'table', biblioteca: 'bookcase', comodaTv: 'dresser' } as const;
 
 /** Catalogul aplicației ca lista de produse a solver-ului: doar variante cu dimensiuni; prețul lipsă rămâne UNKNOWN. */
 export function twinCatalogItems(cat: Catalog): CatalogItem[] {
