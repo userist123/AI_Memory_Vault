@@ -1,7 +1,7 @@
 # todo-claude-model-router
 STATUS: IN_PROGRESS        UPDATED: 2026-10-10T11:50:00Z (SessionStart hook added; awaiting owner review / PR)
 TASK: cost-aware Claude model/effort router for Claude Code (policy + CLI + subagents + usage report)
-BRANCH / PR: ccr-d35fe5b8-vdxnq4 / none    BASE: 21da5bbf
+BRANCH / PR: ccr-d35fe5b8-vdxnq4 / https://github.com/userist123/AI_Memory_Vault_CODEX_READY/pull/262    BASE: 21da5bbf
 SPEC: 00_GOVERNANCE/protocols/Claude_Model_Routing_Policy_V1.md, 04_CONFIG/claude_model_routing.json
 DONE:
 - research: rate card (claude-api skill 2026-10-06), Claude Code subagent `model`/`effort` frontmatter,
@@ -13,7 +13,7 @@ DONE:
 - `cost-router` skill (.claude/skills/cost-router: SKILL.md, lib/route.py, hook_prompt_route.py, install.py) + SessionStart hook (user-scope install, --no-hook),
   project hook in .claude/settings.json, 20_TESTS/test_cost_router_skill.py (12 passed)
 NEXT (in order):
-1. owner review; open PR from ccr-d35fe5b8-vdxnq4 if accepted
+1. owner review of PR #262; CI result
 2. owner runs `python3 .claude/skills/cost-router/install.py` on each machine (user scope)
 BLOCKERS / OWNER QUESTIONS:
 - none
