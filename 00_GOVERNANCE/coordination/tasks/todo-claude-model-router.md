@@ -1,7 +1,7 @@
 # todo-claude-model-router
-STATUS: IN_PROGRESS        UPDATED: 2026-10-10T12:40:00Z (review findings fixed, main merged; PR #262 awaiting CI)
+STATUS: DONE               UPDATED: 2026-10-10T12:05:00Z (PR #262 merged f9b7cf46; bootstrap doc follow-up)
 TASK: cost-aware Claude model/effort router for Claude Code (policy + CLI + subagents + usage report)
-BRANCH / PR: ccr-d35fe5b8-vdxnq4 / https://github.com/userist123/AI_Memory_Vault_CODEX_READY/pull/262    BASE: 21da5bbf
+BRANCH / PR: ccr-d35fe5b8-vdxnq4 / https://github.com/userist123/AI_Memory_Vault_CODEX_READY/pull/262 (MERGED)    BASE: 21da5bbf
 SPEC: 00_GOVERNANCE/protocols/Claude_Model_Routing_Policy_V1.md, 04_CONFIG/claude_model_routing.json
 DONE:
 - research: rate card (claude-api skill 2026-10-06), Claude Code subagent `model`/`effort` frontmatter,
@@ -16,8 +16,8 @@ DONE:
   verifier always Opus, SessionStart honours --uninstall marker, installer validates settings.json first,
   doc drift; Romanian task keywords; CI hygiene fix (absolute path in a test); main merged (allowlist conflict)
 NEXT (in order):
-1. owner review of PR #262; CI result
-2. owner runs `python3 .claude/skills/cost-router/install.py` on each machine (user scope)
+1. owner: paste the bootstrap line (protocol §4) into the cloud environment Setup script
+2. owner: approve the install in the PC Remote Control session (approval must be given there)
 BLOCKERS / OWNER QUESTIONS:
 - none
 KEY FILES:
