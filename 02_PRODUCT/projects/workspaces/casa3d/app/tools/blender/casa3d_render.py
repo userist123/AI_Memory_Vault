@@ -293,10 +293,19 @@ class Materials:
         else:  # tapet: vinil semi-mat; modelul marmură primește vinișoare din zgomot
             inp['Roughness'].default_value = 0.55
             if d.get('marble'):
-                n = noise(3.0, 12.0)
-                r = ramp(n.outputs['Fac'], scaled(col, 0.72), col)
-                r.color_ramp.elements[0].position = 0.47
-                r.color_ramp.elements[1].position = 0.5
+                # vinișoare subțiri: o curbă de nivel a zgomotului (|zgomot - 0,5| mic), nu pete întregi
+                n = noise(1.6, 12.0)
+                n.inputs['Distortion'].default_value = 2.5
+                sub = nt.nodes.new('ShaderNodeMath')
+                sub.operation = 'SUBTRACT'
+                sub.inputs[1].default_value = 0.5
+                nt.links.new(n.outputs['Fac'], sub.inputs[0])
+                ab = nt.nodes.new('ShaderNodeMath')
+                ab.operation = 'ABSOLUTE'
+                nt.links.new(sub.outputs[0], ab.inputs[0])
+                r = ramp(ab.outputs[0], scaled(col, 0.8), col)
+                r.color_ramp.elements[0].position = 0.0
+                r.color_ramp.elements[1].position = 0.012
                 nt.links.new(r.outputs['Color'], inp['Base Color'])
 
     def get(self, d):
