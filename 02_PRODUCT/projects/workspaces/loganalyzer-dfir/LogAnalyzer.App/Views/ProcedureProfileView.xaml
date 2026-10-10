@@ -20,7 +20,7 @@
             <StackPanel>
                 <WrapPanel VerticalAlignment="Center">
                     <TextBlock Text="Fișier:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <TextBox Text="{Binding ProfilePath, Mode=OneWay}" IsReadOnly="True" Width="420" Margin="0,0,10,0"/>
+                    <TextBox AutomationProperties.Name="Fișierul profilului" Text="{Binding ProfilePath, Mode=OneWay}" IsReadOnly="True" Width="420" Margin="0,0,10,0"/>
                     <Button Content="Salvează" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Salvează ca…" Command="{Binding SaveAsCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Reîncarcă" Command="{Binding ReloadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
@@ -58,7 +58,7 @@
             </StackPanel>
         </Border>
 
-        <TabControl Grid.Row="2" ItemsSource="{Binding Tables}" SelectedItem="{Binding SelectedTable, Mode=TwoWay}" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
+        <TabControl AutomationProperties.Name="Tabelele profilului de proceduri" Grid.Row="2" ItemsSource="{Binding Tables}" SelectedItem="{Binding SelectedTable, Mode=TwoWay}" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
             <TabControl.ItemContainerStyle>
                 <Style TargetType="TabItem" BasedOn="{StaticResource InspectorTabItemStyle}"/>
             </TabControl.ItemContainerStyle>
@@ -72,7 +72,7 @@
                     <DockPanel Margin="8">
                         <TextBlock DockPanel.Dock="Top" Text="{Binding Section}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         <TextBlock DockPanel.Dock="Top" Text="{Binding Hint}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,2,0,8"/>
-                        <DataGrid ItemsSource="{Binding View}" AutoGenerateColumns="True" CanUserAddRows="True" CanUserDeleteRows="True"
+                        <DataGrid AutomationProperties.Name="{Binding Title}" ItemsSource="{Binding View}" AutoGenerateColumns="True" CanUserAddRows="True" CanUserDeleteRows="True"
                                   HeadersVisibility="Column" SelectionUnit="CellOrRowHeader" ClipboardCopyMode="IncludeHeader"/>
                     </DockPanel>
                 </DataTemplate>
@@ -92,7 +92,7 @@
             <Border Grid.Column="1" Style="{StaticResource ObsidianCardStyle}" MaxHeight="150">
                 <DockPanel>
                     <TextBlock DockPanel.Dock="Top" Text="Erori și avertismente (pe linii)" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
-                    <ListBox ItemsSource="{Binding Issues}" Background="Transparent" BorderThickness="0"/>
+                    <ListBox AutomationProperties.Name="Probleme ale profilului" ItemsSource="{Binding Issues}" Background="Transparent" BorderThickness="0"/>
                 </DockPanel>
             </Border>
         </Grid>

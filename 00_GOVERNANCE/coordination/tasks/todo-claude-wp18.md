@@ -1,5 +1,5 @@
 # todo-claude-wp18
-STATUS: IN_PROGRESS        UPDATED: 2026-10-10T05:00Z
+STATUS: IN_PROGRESS        UPDATED: 2026-10-10T06:00Z
 TASK: WP18 — station roles (CONTROL / CSIRT chosen by the PC through the signed policy) and non-technical UI, per
 `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PROMPT_WP18_ROLURI_STATIE_UI_SIMPLA.md` (owner decisions D1–D8 in §11).
 BRANCH / PR: `claude/loganalyzer-dfir-roles-ui-0a71fb` (worktree). One commit per step; PR at the end of the package.
@@ -38,6 +38,11 @@ DONE:
   (gaps and incident chains always printed). UI: step 3 of the control flow has function / registration number / marking; investigation page has
   the audience chooser; procedure-profile page has "Antetul rapoartelor unității" (administrator saves). Tests: `Wp18ReportTests.cs` (4; PDF smoke
   with the footer observer). App.Tests 56/56, UI.Tests 187/187, Dfir.Tests report/seal/XAML subset 129 passed.
+- S6 accessibility: automation names on every interactive element of the five main screens (Home, Control stație, Investigație,
+  Profil de proceduri, Autentificare; 23 legacy controls named); `LogAnalyzer.App.Tests/Wp18AccessibilityTests.cs` (8): name lint, no font
+  below 11, the theme loads (App.xaml order, last definition wins as in merged dictionaries), and each screen is laid out at 150 % in a
+  1366-px window with no page-wide horizontal overflow and no clipped NoWrap label. `docs/dfir/WP18_USABILITY_SCRIPT.md`: the real-person
+  run (decision D7). S6 stays PARTIAL until that run is recorded. App.Tests 64/64.
 VERIFICATION (S1, local, Windows):
 - `dotnet build LogAnalyzer.slnx -c Release`: Build succeeded (TEST_VERIFIED).
 - App.Tests 28/28, Edition.Tests 15/15, UI.Tests 179/179 passed.
