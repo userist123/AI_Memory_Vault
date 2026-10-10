@@ -92,13 +92,30 @@ Rules applied after classification (`rules` in the policy; can only raise a tier
 
 ## 4. How to use it
 
-**Install once, every project on the machine** (user scope, idempotent, reversible):
+**One install per surface, then it runs and stays current** (owner rule, 2026-10-10):
+
+| Surface | Install once | Takes effect | Stays current |
+|---|---|---|---|
+| PC (Claude Code CLI/desktop, every project) | `install.py` below, or the bootstrap line in any shell | next session | `SessionStart` hook `hook_self_update.py`: at most hourly, sparse clone of `main` + its `install.py` |
+| Cloud sessions (any repository, or none) | bootstrap line in the environment *Setup script* | next new session | every new session runs it |
+| claude.ai chat | zip `.claude/skills/cost-router/chat/` (folder `cost-router` with `SKILL.md`) and upload it under Settings > Capabilities > Skills | next chat | re-upload when it changes (rare); chat has no hooks |
 
 ```text
-python3 .claude/skills/cost-router/install.py            # skill + agents + prompt hook into ~/.claude
-python3 .claude/skills/cost-router/install.py --no-hook  # without the per-prompt hint
+python3 .claude/skills/cost-router/install.py            # skill + agents + 3 hooks into ~/.claude
+python3 .claude/skills/cost-router/install.py --no-hook  # skill + agents only, no hooks, no self-update
 python3 .claude/skills/cost-router/install.py --uninstall
 ```
+
+The self-update fetches only from the canonical repository URL fixed in the hook, prints nothing,
+gives up silently offline (the installed copy keeps working), never runs after `--uninstall`, writes
+the source commit to `~/.claude/skills/cost-router/VERSION`, and replaces an agent file only while it
+is still the copy an install wrote (owner edits are kept). Every install holds
+`~/.claude/cost-router.lock` and swaps the skill directory in by rename, so two sessions starting at
+once or a run killed by the 60 s hook timeout never leave a half-deleted skill; an update never undoes
+`--uninstall`. Tests: `20_TESTS/test_cost_router_self_update.py` (including the concurrency race the
+independent review reproduced on the first draft).
+Chat cannot switch its own model or spawn model-pinned subagents: the chat skill only names the
+cheaper model in one line and keeps the conversation short.
 
 Inside this repository nothing needs installing: the project skill, agents and the hook in
 `.claude/settings.json` are versioned, and a `SessionStart` hook (startup and resume) runs

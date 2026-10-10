@@ -4,12 +4,14 @@
 Registered by install.py in ~/.claude/settings.json (matcher startup|resume), so one install keeps
 working and stays up to date in every project on the machine. At most once per THROTTLE_SECONDS it
 fetches the skill's files from the canonical repository (sparse, shallow clone of main, about two
-seconds) and runs that copy's install.py, which replaces the skill, refreshes agents the owner has
-not edited and re-merges the hooks. Offline, slow or broken fetches leave the installed copy as it
-is. It prints nothing (SessionStart stdout would become context), never blocks a session and always
-exits 0. Nothing runs after `install.py --uninstall` (the disabled marker).
+seconds) and runs that copy's `install.py --self-update`, which swaps the skill in atomically under
+a lock, refreshes agents the owner has not edited and re-merges the hooks. Offline, slow or broken
+fetches leave the installed copy as it is. It prints nothing (SessionStart stdout would become
+context), never blocks a session, stays under the 60 s hook timeout and always exits 0. Nothing runs
+after `install.py --uninstall` (the disabled marker).
 
-COST_ROUTER_REPO_URL overrides the source repository (tests use a local repository).
+Trust model: it runs install.py from the `main` branch of REPO_URL, fixed here (no environment
+override), as the owner approved on 2026-10-10. Tests pass another URL to update() directly.
 """
 from __future__ import annotations
 
@@ -43,7 +45,7 @@ def _git(args, timeout):
                           stdin=subprocess.DEVNULL)
 
 
-def update(home: Path, now: float | None = None) -> str:
+def update(home: Path, now: float | None = None, url: str = REPO_URL) -> str:
     """Return what happened (for tests); never raises for an expected failure."""
     claude = home / ".claude"
     if (claude / DISABLED_MARKER).exists():
@@ -51,7 +53,8 @@ def update(home: Path, now: float | None = None) -> str:
     stamp = claude / STAMP
     now = time.time() if now is None else now
     try:
-        if now - float(stamp.read_text(encoding="utf-8").strip() or 0) < THROTTLE_SECONDS:
+        age = now - float(stamp.read_text(encoding="utf-8").strip() or 0)
+        if -60 <= age < THROTTLE_SECONDS:  # a stamp further in the future (clock moved back) is stale
             return "throttled"
     except (OSError, ValueError):
         pass
@@ -61,17 +64,18 @@ def update(home: Path, now: float | None = None) -> str:
     stamp.write_text(f"{now:.0f}\n", encoding="utf-8")  # one attempt per window, even if it fails
     tmp = Path(tempfile.mkdtemp(prefix="cost-router-update-"))
     try:
-        url = os.environ.get("COST_ROUTER_REPO_URL", REPO_URL)
-        if _git(["clone", "-q", "--filter=blob:none", "--sparse", "--depth", "1", url, str(tmp / "r")], 20).returncode:
+        # sub-timeouts sum to 50 s, under the 60 s the hook is registered with
+        if _git(["clone", "-q", "--filter=blob:none", "--sparse", "--depth", "1", url, str(tmp / "r")], 15).returncode:
             return "fetch-failed"
-        if _git(["-C", str(tmp / "r"), "sparse-checkout", "set", "--no-cone", *SPARSE], 20).returncode:
+        if _git(["-C", str(tmp / "r"), "sparse-checkout", "set", "--no-cone", *SPARSE], 10).returncode:
             return "fetch-failed"
         ref = _git(["-C", str(tmp / "r"), "rev-parse", "--short", "HEAD"], 5).stdout.strip()
         installer = tmp / "r" / ".claude" / "skills" / "cost-router" / "install.py"
         if not installer.exists():
             return "fetch-failed"
-        r = subprocess.run([sys.executable, str(installer), "--home", str(home), "--source-ref", ref or "unknown"],
-                           capture_output=True, text=True, timeout=30, stdin=subprocess.DEVNULL)
+        r = subprocess.run([sys.executable, str(installer), "--home", str(home), "--self-update",
+                            "--source-ref", ref or "unknown"],
+                           capture_output=True, text=True, timeout=20, stdin=subprocess.DEVNULL)
         return "updated" if r.returncode == 0 else "install-failed"
     except subprocess.TimeoutExpired:
         return "timeout"
