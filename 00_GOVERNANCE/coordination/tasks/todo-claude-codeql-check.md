@@ -1,7 +1,7 @@
 # todo-claude-codeql-check
-STATUS: IN_PROGRESS        UPDATED: 2026-10-10T00:10Z
+STATUS: IN_PROGRESS        UPDATED: 2026-10-10T01:00Z
 TASK: Make the PR check "Code scanning results / CodeQL" end pass/fail instead of "neutral".
-BRANCH / PR: claude/blissful-cannon-6w2cnz / none yet    BASE: main @ 21da5bbf
+BRANCH / PR: claude/blissful-cannon-6w2cnz / https://github.com/userist123/AI_Memory_Vault_CODEX_READY/pull/259    BASE: main @ 21da5bbf
 SPEC: check-run text on PR #256 / #254: "6 configurations present on refs/heads/main were not found":
   /language:c-cpp, go, javascript-typescript, ruby, rust (codeql.yml) and /language:csharp (codeql-csharp.yml).
   GitHub compares a PR's analyses with the configurations present on main; any main-only configuration -> neutral.
@@ -13,9 +13,9 @@ DONE:
   ~19 min critical path of the Python jobs).
 NEXT (in order):
 1. Merge to main (main must upload actions, python, javascript-typescript, csharp once).
-2. OWNER, in the GitHub UI (no API access from the agent session: 403 on code-scanning endpoints):
-   Security and quality -> Code scanning -> Tool status -> CodeQL -> select each of
-   /language:c-cpp, /language:go, /language:ruby, /language:rust -> "..." -> Delete configuration.
+2. After merge: run workflow "CodeQL stale configuration cleanup" (codeql-config-cleanup.yml) in dry run,
+   then with apply=true (owner approved deleting c-cpp/go/ruby/rust on 2026-10-10). UI fallback: Security and
+   quality -> Code scanning -> Tool status -> CodeQL -> each category -> "..." -> Delete configuration.
    (These languages have no code in the repository: 0 Ruby/Rust files, 4 Go and 1 C++ files are skill examples.)
 3. Push any change to an open PR and confirm the CodeQL check is green (or red with real alerts), not neutral.
 BLOCKERS / OWNER QUESTIONS:
