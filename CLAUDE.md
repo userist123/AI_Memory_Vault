@@ -109,6 +109,27 @@ When multiple AI systems (Claude Code, Antigravity, ChatGPT, Perplexity) collabo
 3. **Protected Core**: Respect the frozen boundaries of the cognitive core (`cognitive_core/model_provider.py`, `fake_model_provider.py`, `model_tier_router.py`, `actual_usage_telemetry.py`, `council_model_execution.py`, `executive_model_execution_bridge.py`). These contracts are verified by the cognitive-core protected-boundary tests.
 4. **Empirical Verification**: Run the relevant `pytest` suites and verify zero regressions before closing any task.
 
+## Model routing inside Claude Code (cost-aware)
+
+Policy: `04_CONFIG/claude_model_routing.json`, explained in
+`00_GOVERNANCE/protocols/Claude_Model_Routing_Policy_V1.md`. Rate card as of 2026-10-06:
+Fable 5.1 $10/$50, Opus 5.5 $4/$20, Sonnet 5.5 $2/$10, Haiku 5.5 $0.10/$0.50 per MTok in/out.
+
+- Reads and inventories (`where is`, `who imports`, `list`) → `Explore` subagent (haiku, low).
+- Bounded, spec'd changes with tests as the signal → `vault-worker` (sonnet, medium); on failure
+  escalate one tier, not to Fable.
+- Verification, diff review, security review → `vault-reviewer` (opus, high), in its own context.
+- Design, root cause, multi-file plans → main session, Opus at `xhigh`.
+- Fable only for the main session on ambiguous, long-horizon orchestration; never as a subagent.
+- Risk `high`/`critical` (detected from the task text, EN/RO) never below Opus, main session,
+  `vault-reviewer` before DONE. Keep tools and system prompt stable in a session
+  (cache), lower `effort` before changing model, switch models between tasks, not inside one.
+
+Applied by the `cost-router` skill (`.claude/skills/cost-router/`, invoke with `/cost-router`; a
+`UserPromptSubmit` hook adds one route line per non-trivial prompt). Install once for every project:
+`python3 .claude/skills/cost-router/install.py`. Manual: `python -m routing.claude_model_cli route --goal "..."`
+prints the decision with cost; `... report` prices the real token usage from local Claude Code transcripts.
+
 ## Agent checkpoints and token economy
 
 Owner rule: every agent keeps a short checkpoint file `00_GOVERNANCE/coordination/tasks/todo-<agent-name>.md`
