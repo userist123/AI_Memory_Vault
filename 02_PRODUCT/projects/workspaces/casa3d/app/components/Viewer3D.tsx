@@ -10,7 +10,7 @@ import { toEngineCatalog } from '@/core/catalog';
 import { lighting, sunDirection, captureFileName, type TimeOfDay } from '@/core/lighting';
 
 export default function Viewer3D({ snap, catalog, onPick, voids = NO_VOIDS }: { snap: Snapshot; catalog: Catalog; onPick(id: string | null): void; voids?: PlateVoid[] }){
-  const { t } = usePrefs();
+  const { t, lang } = usePrefs();
   const [room, setRoom] = useState<string | null>(null), [pano, setPano] = useState<{ url: string; title: string; file: string } | null>(null), [panoBusy, setPanoBusy] = useState(false), [panoMsg, setPanoMsg] = useState('');
   const ref = useRef<HTMLCanvasElement>(null), v = useRef<any>(null), pickRef = useRef(onPick);
   const [mode, setMode] = useState<'house' | 'walk'>('house'), [err, setErr] = useState(''), [touch, setTouch] = useState(false);
@@ -38,6 +38,10 @@ export default function Viewer3D({ snap, catalog, onPick, voids = NO_VOIDS }: { 
         else setPanoMsg(t('pano.noRoom')); }
       catch (e){ setPanoMsg(t('pano.failed', { msg: e instanceof Error ? e.message : String(e) })); }
       finally { setPanoBusy(false); } }, 30); }
+  // scena pentru randarea fotorealistă în Blender (tools/blender/casa3d_render.py): aceleași forme, materiale și lumină
+  function exportBlender(){ const p = lighting(time, azimuth), sc = v.current?.exportScene?.({ name: snap.name, time, azimuthDeg: p.azimuthDeg, level: snap.floor.name, lang }); if (!sc) return;
+    const a = document.createElement('a'), url = URL.createObjectURL(new Blob([JSON.stringify(sc)], { type: 'application/json' }));
+    a.href = url; a.download = captureFileName(`${snap.name}-blender`).replace(/\.png$/, '.casa3d.json'); document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
   function capture(){ const url: string | undefined = v.current?.capture(); if (!url) return;
     const a = document.createElement('a'); a.href = url; a.download = captureFileName(snap.name); document.body.appendChild(a); a.click(); a.remove(); }
   // Joystick-ul dispare când ieși din tur: orice mișcare rămasă e anulată, altfel jucătorul ar aluneca la următorul tur.
@@ -53,6 +57,7 @@ export default function Viewer3D({ snap, catalog, onPick, voids = NO_VOIDS }: { 
       {panoMsg && <span className="muted" role="status">{panoMsg}</span>}
       <button className="btn" aria-expanded={lightOpen} onClick={() => setLightOpen(o => !o)} title={t('viewer.lightTitle')}>{t('viewer.light')}</button>
       <button className="btn" onClick={capture} disabled={!!err} title={t('viewer.captureTitle')}>{t('viewer.capture')}</button>
+      <button className="btn" onClick={exportBlender} disabled={!!err} title={t('viewer.blenderTitle')}>{t('viewer.blender')}</button>
     </div>
     {lightOpen && <div className="v3light" role="group" aria-label={t('viewer.lighting')}>
       {(['day', 'evening', 'night'] as const).map(tod => <button key={tod} className="btn" aria-pressed={time === tod} onClick={() => setTime(tod)}>{t(tod === 'day' ? 'viewer.day' : tod === 'evening' ? 'viewer.evening' : 'viewer.night')}</button>)}

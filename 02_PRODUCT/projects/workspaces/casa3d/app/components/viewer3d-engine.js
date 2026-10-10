@@ -79,7 +79,7 @@ function MAT(kind, col){ const k = kind + col; if (matCache[k]) return matCache[
 // cutie cu muchii rotunjite (perne, tapițerie)
 function rgeo(w, h, d, r){ r = Math.max(.002, Math.min(r, w / 2 - .002, h / 2 - .002, d / 2 - .002)); const s = new THREE.Shape(), x = -(w - 2 * r) / 2, y = -(h - 2 * r) / 2, W2 = w - 2 * r, H2 = h - 2 * r, q = Math.min(W2, H2) * .08;
   s.moveTo(x + q, y); s.lineTo(x + W2 - q, y); s.quadraticCurveTo(x + W2, y, x + W2, y + q); s.lineTo(x + W2, y + H2 - q); s.quadraticCurveTo(x + W2, y + H2, x + W2 - q, y + H2); s.lineTo(x + q, y + H2); s.quadraticCurveTo(x, y + H2, x, y + H2 - q); s.lineTo(x, y + q); s.quadraticCurveTo(x, y, x + q, y);
-  const g = new THREE.ExtrudeGeometry(s, { depth: Math.max(.001, d - 2 * r), bevelEnabled: true, bevelSize: r, bevelThickness: r, bevelSegments: 4, curveSegments: 6 }); g.translate(0, 0, -(d - 2 * r) / 2); return g; }
+  const g = new THREE.ExtrudeGeometry(s, { depth: Math.max(.001, d - 2 * r), bevelEnabled: true, bevelSize: r, bevelThickness: r, bevelSegments: 4, curveSegments: 6 }); g.translate(0, 0, -(d - 2 * r) / 2); g.userData.rbox = [w, h, d, r]; return g; }
 
 /* ---------- modele 3D pe variante, la dimensiunile oficiale ---------- */
 function model(it){
@@ -334,9 +334,45 @@ function model(it){
       cam.position.set(player.x, EYE, player.z); cam.rotation.order = 'YXZ'; cam.rotation.set(pitch, yaw, 0);
     } else { const t = new THREE.Vector3(C.x + Math.sin(orbit.th) * Math.sin(orbit.ph) * orbit.r, Math.cos(orbit.ph) * orbit.r, C.z + Math.cos(orbit.th) * Math.sin(orbit.ph) * orbit.r); cam.position.lerp(t, reduce ? 1 : Math.min(1, dt * 5)); cam.lookAt(C); }
     draw(); })();
+  // ---------- scena pentru randarea fotorealistă (tools/blender/casa3d_render.py) ----------
+  // Aceleași primitive ca vederea 3D (cutii, cutii rotunjite, cilindri, plăci, tor), cu poziția în lume și materialul
+  // lor: tipul (lemn, textil, sticlă...) se deduce din textura și parametrii PBR, iar valorile brute merg și ele.
+  function exportScene(meta = {}){ if (!plan) return null; const prevMode = mode; setMode('walk'); scene.updateMatrixWorld(true);
+    const r4 = v => Math.round(v * 1e4) / 1e4, hex = c => '#' + c.clone().convertLinearToSRGB().getHexString();
+    const mats = [], matIx = new Map(), meshes = [], P = new THREE.Vector3(), Q = new THREE.Quaternion(), Sc = new THREE.Vector3();
+    const kindOf = m => { const img = m.map && m.map.image;
+      if (img && img === parquet.image) return 'parquet'; if (img && img === tiles.image) return 'tile';
+      if (m.map === grain) return 'wood'; if (m.map === rattan) return 'rattan'; if (m.map === weave) return m.sheen ? 'velvet' : 'fabric'; if (m.bumpMap === weave) return 'leather';
+      if (m.emissive && (m.emissive.r + m.emissive.g + m.emissive.b) > .05) return 'emit';
+      if (m.transparent && m.opacity < .4) return 'glass'; if (m.transparent) return 'frost';
+      if (m.metalness >= .95) return m.roughness < .06 ? 'mirror' : 'chrome'; if (m.metalness >= .8) return 'metal';
+      if ((m.clearcoat || 0) > .5) return 'ceramic'; return 'paint'; };
+    const matOf = m => { if (matIx.has(m)) return matIx.get(m);
+      const d = { k: kindOf(m), c: hex(m.color), r: r4(m.roughness ?? .8), mt: r4(m.metalness ?? 0), o: m.transparent ? r4(m.opacity) : 1 };
+      if (d.k === 'emit') { d.e = hex(m.emissive); d.ei = r4(m.emissiveIntensity ?? 1); }
+      if (m.clearcoat) d.cc = r4(m.clearcoat);
+      matIx.set(m, mats.length); mats.push(d); return mats.length - 1; };
+    const geoOf = g => { const p = g.parameters || {};
+      if (g.userData && g.userData.rbox) return { t: 'rbox', p: g.userData.rbox.map(r4) };
+      switch (g.type){
+        case 'BoxGeometry': case 'BoxBufferGeometry': return { t: 'box', p: [p.width, p.height, p.depth].map(r4) };
+        case 'PlaneGeometry': case 'PlaneBufferGeometry': return { t: 'plane', p: [p.width, p.height].map(r4) };
+        case 'CylinderGeometry': case 'CylinderBufferGeometry': return { t: 'cyl', p: [p.radiusTop, p.radiusBottom, p.height, p.radialSegments, p.openEnded ? 1 : 0, p.thetaStart, p.thetaLength].map(r4) };
+        case 'TorusGeometry': case 'TorusBufferGeometry': return { t: 'torus', p: [p.radius, p.tube, p.radialSegments, p.tubularSegments, p.arc].map(r4) };
+        default: return null; } };
+    for (const root of [house, furniture]) root.traverse(o => { if (!o.isMesh || !o.visible) return; for (let a = o.parent; a; a = a.parent) if (!a.visible) return;
+      const g = geoOf(o.geometry); if (!g) return; o.matrixWorld.decompose(P, Q, Sc);
+      const m = Array.isArray(o.material) ? o.material.map(matOf) : matOf(o.material);
+      meshes.push({ g, m, p: [P.x, P.y, P.z].map(r4), q: [Q.x, Q.y, Q.z, Q.w].map(r4), s: [Sc.x, Sc.y, Sc.z].map(r4) }); });
+    const rooms = plan.camere.map(r => ({ id: r.id, name: r.nume, type: r.tip, rect: [r.x0, r.z0, r.x1, r.z1] }));
+    const out = { format: 'casa3d-scene', version: 1, units: 'm', up: 'Y', height: plan.inaltime, rooms, materials: mats, meshes,
+      sun: { dir: light && light.dir ? light.dir : [.45, .75, -.48], time: meta.time || 'day', azimuthDeg: meta.azimuthDeg ?? null },
+      lights: interiorLights.map(l => ({ p: [l.position.x, l.position.y, l.position.z].map(r4), i: r4(l.intensity) })), ...meta };
+    setMode(prevMode); return out; }
+
   return {
     setState(p, items){ plan = p; buildHouse(p); buildFurniture(items); },
-    setMode, goRoom, getMode: () => mode, setLighting, capture, renderView, renderPanorama,
+    setMode, goRoom, getMode: () => mode, setLighting, capture, renderView, renderPanorama, exportScene,
     setQuality(q){ quality = q === 'high' ? 'high' : 'normal'; if (quality === 'high' && !composer){ try { setupComposer(); } catch (e){ quality = 'normal'; composer = null; } } return quality; },
     setMove(forward, strafe){ joy.f = Number.isFinite(forward) ? Math.max(-1, Math.min(1, forward)) : 0; joy.s = Number.isFinite(strafe) ? Math.max(-1, Math.min(1, strafe)) : 0; },
     dispose(){ alive = false; cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('wheel', wh); if (composer){ ssao.dispose(); composer.renderTarget1.dispose(); composer.renderTarget2.dispose(); composer = null; } R.dispose(); }
