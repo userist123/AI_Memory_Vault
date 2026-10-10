@@ -89,13 +89,20 @@ Inside this repository nothing needs installing: the project skill, agents and t
 does nothing after an `--uninstall` on that machine (marker `~/.claude/cost-router.disabled`; an
 explicit `install.py` clears it). The installer refuses a user `settings.json` it cannot parse as
 strict JSON before copying anything. Hook commands are `bash` lines: on Windows they need Claude
-Code's Git Bash (unverified here). Another repository gets the same by adding to its
-`.claude/settings.json`:
+Code's Git Bash (unverified here). Another repository, or every cloud session at once, gets the same with the **bootstrap** below: a
+sparse clone of just the skill's files (9 files, about 2 seconds, measured 2026-10-10 from a cloud
+container), the installer, then cleanup. It never touches the current project's git state.
 
-```json
-{"hooks": {"SessionStart": [{"matcher": "startup|resume", "hooks": [{"type": "command", "timeout": 60,
-  "command": "d=$(mktemp -d) && git clone -q --depth 1 https://github.com/userist123/AI_Memory_Vault_CODEX_READY \"$d\" && python3 \"$d/.claude/skills/cost-router/install.py\"; exit 0"}]}]}}
-``` `/cost-router` invokes the skill by hand; Claude also loads
+```bash
+d=$(mktemp -d) && git clone -q --filter=blob:none --sparse --depth 1 https://github.com/userist123/AI_Memory_Vault_CODEX_READY "$d" && git -C "$d" sparse-checkout set --no-cone .claude/skills/cost-router .claude/agents /03_IMPLEMENTATION/packages/routing/claude_model_router.py /04_CONFIG/claude_model_routing.json >/dev/null 2>&1 && python3 "$d/.claude/skills/cost-router/install.py"; rm -rf "$d"; exit 0
+```
+
+- **Every cloud session, any repository:** paste that line into the cloud environment's *Setup
+  script* (session title bar, cloud environment menu, Edit). New sessions run it at start.
+- **One other repository:** put it in that repo's `.claude/settings.json` as a `SessionStart`
+  hook (`"matcher": "startup|resume"`, `"timeout": 60`).
+- **A personal computer:** run it once in any shell (Git Bash on Windows); it is the same as
+  running `install.py` from a clone. `/cost-router` invokes the skill by hand; Claude also loads
 it on its own from the description. The hook adds about 60 tokens per prompt and is silent on
 trivial prompts (slash commands, yes/no, under four words); it can never block a prompt.
 
@@ -113,6 +120,11 @@ and what the same tokens cost on Fable. `report` reads the local Claude Code tra
 (`~/.claude/projects/<slug>/*.jsonl`, de-duplicated by `requestId`) and prices real usage per
 model, with the counterfactual cost on every other model (equal-token assumption: an upper
 bound on savings).
+
+The project `.claude/settings.json` sets `"model": "opus"`, so a session on this repository starts
+on Opus 5.5 unless the owner overrides it (`/model`, `--model` and `ANTHROPIC_MODEL` all rank
+higher): the main-session model is the largest single cost lever (Fable is 2.5x Opus per token)
+and the skill never changes it. Pick Fable deliberately, for the ambiguous long-horizon tail.
 
 In a session, the main agent (whatever model the owner picked with `/model`) does the
 classification itself with this table and delegates: `Agent(subagent_type="Explore")` for
