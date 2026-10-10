@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-10T16:00:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-10T17:30:00Z
 TASK: Casa3D — execute the recommended follow-ups (verify v8, real AI call, reconcile F4-F8 memory)
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / none    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
@@ -18,9 +18,13 @@ NEXT (in order):
 1. Owner supplies the v8 archive (or its path); compare SHA-256 with 7bb34bf3...9628bc.
 2. npm ci, full Vitest, next build; record output in CORE_IMPLEMENTATION_v8.md.
 3. node scripts/verify-f4.mjs and verify-f5.mjs; record output.
-4. One real model call Brief -> DSL -> Solver with ANTHROPIC_API_KEY (owner sets the key; agent never types it).
+4. DEFERRED by owner on 2026-10-10 ("continua fara AI deocamdata"): real model call Brief -> DSL -> Solver. Not a blocker for 1-3 and 5.
 5. Only then move F4 to DONE in the phase table.
 BLOCKERS / OWNER QUESTIONS:
+- 2026-10-10 cloud session: no Casa3D archive is in the Vault repo or its git history; Desktop Commander device LAB-PC
+  is offline, so D:\w\casa3d (faza0/2/4 extracted, npm installed) is unreachable from here. To unblock steps 1-3 and the
+  PHASE4.md server check: either bring LAB-PC online (Desktop Commander app) or upload casa3d-faza4.zip / the v8
+  archive into the session. Pushed state: codex/casa3d-memory @ e628911c.
 - v8 source archive not on this machine (manifest path /mnt/data/casa3d-v8/app was the Claude.ai sandbox). Where is it saved locally?
 - ANTHROPIC_API_KEY not set in the environment.
 KEY FILES:
