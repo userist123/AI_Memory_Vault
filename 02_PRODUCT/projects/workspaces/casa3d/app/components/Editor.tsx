@@ -149,6 +149,7 @@ export default function Editor({ id }: { id: string }){
         {(['2d', 'split', '3d'] as const).map(vv => <button key={vv} className="btn" style={{ minHeight: 30, border: 0, background: view === vv ? 'var(--graphite)' : 'transparent', color: view === vv ? '#fff' : undefined }} onClick={() => { setView(vv); if (vv === '3d' && typeof matchMedia === 'function' && matchMedia('(max-width: 900px)').matches) setSideOpen(false); }}>{vv === '2d' ? t('editor.view2d') : vv === '3d' ? '3D' : t('editor.viewSplit')}</button>)}
       </div>
       <a className="btn" href={`/p/${id}/print`} target="_blank" rel="noopener">{t('editor.print')}</a>
+      <a className="btn" href={`/api/projects/${id}/export.dxf?lang=${lang}`} download title={t('editor.exportDxf')}>{t('editor.exportDxf')}</a>
       <PrefsSwitcher />
       <button className="btn primary" onClick={saveRevision}>{t('editor.saveRevision')}</button>
     </header>

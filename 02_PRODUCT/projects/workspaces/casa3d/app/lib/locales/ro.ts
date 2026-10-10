@@ -23,7 +23,7 @@ export const ro: Dict = {
   "editor.projects": "← Proiecte", "editor.projectName": "Numele proiectului",
   "editor.saved": "Salvat", "editor.saving": "Se salvează…", "editor.dirty": "Modificări nesalvate", "editor.saveError": "Eroare la salvare",
   "editor.revisionN": "Revizia {n}", "editor.noRevisions": "fără revizii", "editor.undo": "Anulează", "editor.redo": "Refă",
-  "editor.view": "Vizualizare", "editor.view2d": "Plan", "editor.viewSplit": "Plan + 3D", "editor.print": "Tipărește / PDF", "editor.saveRevision": "Salvează revizia", "editor.tools": "Unelte",
+  "editor.view": "Vizualizare", "editor.view2d": "Plan", "editor.viewSplit": "Plan + 3D", "editor.exportDxf": "DXF", "editor.print": "Tipărește / PDF", "editor.saveRevision": "Salvează revizia", "editor.tools": "Unelte",
   "editor.hintWall": "Click pentru început, click pentru fiecare colț · Esc sau click dreapta termină", "editor.hintRoom": "Trage un dreptunghi", "editor.hintOpening": "Apasă lângă un perete",
   "editor.hintMeasure": "Click pe două puncte ca să afli distanța · Esc oprește", "editor.hintSelect": "Rotița = zoom · Alt+trage = deplasare · R = rotește · Delete = șterge · ? = comenzi rapide",
   "editor.previewBar": "Previzualizare: {title} (nesalvată)", "editor.warnings": "Avertismente", "editor.positionWarnings": "Poziția are avertismente",
