@@ -4,6 +4,17 @@ Durable lessons from real corrections, incidents and verification failures.
 
 ## Current lessons
 
+## 2026-10-10 — a routing policy that reads only the task class sends risky work to cheap models
+- What happened: the first cost-router classified "update the production credentials and rotate the
+  secret" as `implement` -> Sonnet, because risk was a parameter nobody passed, not something read
+  from the prompt. An independent `vault-reviewer` pass (Opus, fresh context) found it; my own tests
+  had not, because they only exercised the happy path per class.
+- Rule: any gate that lowers cost/capability must derive its risk input from the same text it
+  classifies, default to the policy's medium (never "low by silence"), and be tested with the
+  adversarial prompts (credentials, deletes, git history, auth, in both languages the owner uses).
+- Rule: run the independent reviewer before opening the PR, not after; it costs one Opus call and
+  caught four real findings here.
+
 ## 2026-10-10 — new markdown files under a vault domain move the measured state card
 - What happened: two plain `.md` files (a protocol doc and a checkpoint) pushed the `vault://` route
   count past the 5% tolerance of `test_route_and_domain_counts_are_current`, and

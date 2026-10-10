@@ -6,8 +6,9 @@ when_to_use: Apply on every new task, bug fix, feature, refactor, research or re
 
 # cost-router: finish the task, spend the fewest tokens that still buy the result
 
-Policy source: `policy.json` next to this file (rate card as of its `pricing_as_of`), explained in
-`00_GOVERNANCE/protocols/Claude_Model_Routing_Policy_V1.md` when you are inside the AI Memory Vault.
+Policy source: `04_CONFIG/claude_model_routing.json` inside the AI Memory Vault (explained in
+`00_GOVERNANCE/protocols/Claude_Model_Routing_Policy_V1.md`); in an installed copy it is `policy.json`
+next to this file. The rate card is as of the file's `pricing_as_of`.
 Quality is not negotiable: every rule below cuts tokens by cutting *waste*, never by cutting
 verification. If a cheaper path fails its check, escalate one tier; never ship unverified.
 
@@ -23,8 +24,10 @@ verification. If a cheaper path fails its check, escalate one tier; never ship u
 | frontier | ambiguous, long-horizon, end-to-end orchestration | you, on Fable only if the owner chose it | the one place 2.5x Opus pays |
 | unclear | keywords don't match | you, session default | say so; never guess cheaper |
 
-Risk `high`/`critical` (production, credentials, deletes, security boundary): never below Opus.
-Fable is never a subagent model. Escalation order on a failed check: haiku → sonnet → opus → fable,
+Risk `high`/`critical` (production, credentials, secrets, deletes, auth, trust boundaries, git
+history): never below Opus, and always an independent `vault-reviewer` pass before DONE. The route
+helper detects these words itself (English and Romanian); if the hint says sonnet/haiku for such
+work, the hint is wrong and this rule wins. Fable is never a subagent or verifier model. Escalation order on a failed check: haiku → sonnet → opus → fable,
 one notch, only after the check actually failed.
 
 Optional precise answer: `python3 "<this dir>/lib/route.py" "<task>"` prints class, model, effort,

@@ -5,6 +5,9 @@
     python3 .claude/skills/cost-router/install.py --no-hook  # skill + agents only
     python3 .claude/skills/cost-router/install.py --uninstall
     python3 .claude/skills/cost-router/install.py --home /tmp/x   # another HOME (tests)
+    python3 .claude/skills/cost-router/install.py --session-start # what the SessionStart hook runs:
+                                                                  # skill + agents only, and nothing at
+                                                                  # all after an --uninstall (marker file)
 
 What it does (idempotent, prints every path it touched):
   1. copies this skill directory to ~/.claude/skills/cost-router/ and the canonical router
@@ -28,6 +31,7 @@ ROUTER_SRC = REPO / "03_IMPLEMENTATION" / "packages" / "routing" / "claude_model
 POLICY_SRC = REPO / "04_CONFIG" / "claude_model_routing.json"
 AGENTS_SRC = REPO / ".claude" / "agents"
 HOOK_MARK = "cost-router/hook_prompt_route.py"
+DISABLED_MARKER = "cost-router.disabled"  # written by --uninstall under ~/.claude; honoured by --session-start
 
 
 def hook_entry(skill_dir: Path) -> dict:
@@ -36,8 +40,22 @@ def hook_entry(skill_dir: Path) -> dict:
     return {"hooks": [{"type": "command", "command": cmd, "timeout": 10}]}
 
 
+def load_settings(settings_path: Path) -> dict:
+    """Parse the user settings or raise ValueError with a message that names the file."""
+    if not settings_path.exists():
+        return {}
+    try:
+        data = json.loads(settings_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{settings_path} is not strict JSON ({exc.msg} at line {exc.lineno}); "
+                         "remove comments/trailing commas or run with --no-hook") from exc
+    if not isinstance(data, dict):
+        raise ValueError(f"{settings_path} must contain a JSON object")
+    return data
+
+
 def merge_hook(settings_path: Path, skill_dir: Path, remove: bool = False) -> str:
-    settings = json.loads(settings_path.read_text(encoding="utf-8")) if settings_path.exists() else {}
+    settings = load_settings(settings_path)
     hooks = settings.setdefault("hooks", {})
     entries = [e for e in hooks.get("UserPromptSubmit", []) if HOOK_MARK not in json.dumps(e)]
     if not remove:
@@ -53,8 +71,13 @@ def merge_hook(settings_path: Path, skill_dir: Path, remove: bool = False) -> st
     return str(settings_path)
 
 
-def install(home: Path, with_hook: bool, force: bool) -> list[str]:
+def install(home: Path, with_hook: bool, force: bool, session_start: bool = False) -> list[str]:
     touched: list[str] = []
+    marker = home / ".claude" / DISABLED_MARKER
+    if session_start and marker.exists():
+        return [f"skipped: {marker} exists (cost-router was uninstalled on this machine; run install.py to re-enable)"]
+    if with_hook:
+        load_settings(home / ".claude" / "settings.json")  # fail before anything is copied
     skill_dir = home / ".claude" / "skills" / "cost-router"
     if skill_dir.exists():
         shutil.rmtree(skill_dir)
@@ -74,6 +97,9 @@ def install(home: Path, with_hook: bool, force: bool) -> list[str]:
         touched.append(str(dst))
     if with_hook:
         touched.append(merge_hook(home / ".claude" / "settings.json", skill_dir) + " (UserPromptSubmit hook)")
+    if not session_start and marker.exists():
+        marker.unlink()
+        touched.append(f"removed {marker} (re-enabled)")
     return touched
 
 
@@ -91,6 +117,10 @@ def uninstall(home: Path) -> list[str]:
     settings = home / ".claude" / "settings.json"
     if settings.exists():
         touched.append(merge_hook(settings, skill_dir, remove=True) + " (hook removed)")
+    marker = home / ".claude" / DISABLED_MARKER
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text("cost-router uninstalled; the SessionStart hook will not reinstall it. Delete this file or run install.py to re-enable.\n", encoding="utf-8")
+    touched.append(f"wrote {marker} (SessionStart will not reinstall)")
     return touched
 
 
@@ -100,12 +130,19 @@ def main(argv=None) -> int:
     ap.add_argument("--no-hook", action="store_true")
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--uninstall", action="store_true")
+    ap.add_argument("--session-start", action="store_true", help="quiet mode for the SessionStart hook: implies --no-hook, honours the disabled marker")
     a = ap.parse_args(argv)
+    if a.session_start:
+        a.no_hook = True
     for p in (ROUTER_SRC, POLICY_SRC, AGENTS_SRC):
         if not p.exists():
             print(f"missing source: {p}", file=sys.stderr)
             return 1
-    touched = uninstall(a.home) if a.uninstall else install(a.home, not a.no_hook, a.force)
+    try:
+        touched = uninstall(a.home) if a.uninstall else install(a.home, not a.no_hook, a.force, a.session_start)
+    except ValueError as exc:
+        print(f"not installed: {exc}", file=sys.stderr)
+        return 1
     print("\n".join(touched) or "nothing to do")
     if not a.uninstall:
         print("\nDone. New sessions in every project load the skill; type /cost-router to invoke it by hand."

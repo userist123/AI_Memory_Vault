@@ -47,7 +47,10 @@ def test_route_helper_resolves_from_repo_layout():
     assert "class=implement" in r.stdout and "vault-worker subagent, sonnet/medium" in r.stdout
     r = _run([str(ROUTE), "security audit of the token handling", "--json"])
     d = json.loads(r.stdout)
-    assert d["model"] == "opus" and d["verifier_model"] == "fable"
+    assert d["model"] == "opus" and d["verifier_model"] is None and d["task_class"] == "review"
+    r = _run([str(ROUTE), "rotate the production secret", "--json"])
+    d = json.loads(r.stdout)
+    assert d["model"] == "opus" and d["verifier_model"] == "opus" and d["subagent"] is None
 
 
 def test_hook_injects_one_line_of_context_for_a_real_prompt():
@@ -113,7 +116,7 @@ def test_project_settings_register_the_same_hook():
     start = settings["hooks"]["SessionStart"]
     assert start[0]["matcher"] == "startup|resume"
     cmd = start[0]["hooks"][0]["command"]
-    assert "cost-router/install.py" in cmd and "--no-hook" in cmd, "user-scope install must not duplicate the project prompt hook"
+    assert "cost-router/install.py" in cmd and "--session-start" in cmd, "user-scope install must not duplicate the project prompt hook"
     assert cmd.rstrip().endswith("exit 0") and "exit 2" not in cmd
 
 
@@ -127,4 +130,33 @@ def test_session_start_command_runs_quietly_and_installs(tmp_path):
     assert r.returncode == 0 and r.stdout == "", (r.stdout, r.stderr)
     assert (tmp_path / ".claude" / "skills" / "cost-router" / "SKILL.md").exists()
     assert (tmp_path / ".claude" / "agents" / "Explore.md").exists()
-    assert not (tmp_path / ".claude" / "settings.json").exists(), "--no-hook writes no user settings"
+    assert not (tmp_path / ".claude" / "settings.json").exists(), "--session-start writes no user settings"
+
+
+def test_uninstall_stops_the_session_start_reinstall(tmp_path):
+    """Reviewer finding 3: opening the repo must not undo an uninstall."""
+    home = tmp_path / "home"
+    assert _run([str(INSTALL), "--home", str(home)]).returncode == 0
+    assert _run([str(INSTALL), "--home", str(home), "--uninstall"]).returncode == 0
+    marker = home / ".claude" / "cost-router.disabled"
+    assert marker.exists()
+    r = _run([str(INSTALL), "--home", str(home), "--session-start"])
+    assert r.returncode == 0 and "skipped" in r.stdout
+    assert not (home / ".claude" / "skills" / "cost-router").exists()
+    assert not (home / ".claude" / "agents" / "Explore.md").exists()
+    # an explicit install re-enables
+    assert _run([str(INSTALL), "--home", str(home), "--no-hook"]).returncode == 0
+    assert not marker.exists() and (home / ".claude" / "skills" / "cost-router" / "SKILL.md").exists()
+
+
+def test_install_refuses_a_settings_file_it_cannot_parse_without_touching_anything(tmp_path):
+    """Reviewer finding 4: a settings.json with comments must not half-install."""
+    home = tmp_path / "home"
+    (home / ".claude").mkdir(parents=True)
+    (home / ".claude" / "settings.json").write_text('{ // comment\n "model": "opus" }')
+    r = _run([str(INSTALL), "--home", str(home)])
+    assert r.returncode == 1 and "not strict JSON" in r.stderr
+    assert not (home / ".claude" / "skills").exists() and not (home / ".claude" / "agents").exists()
+    assert (home / ".claude" / "settings.json").read_text() == '{ // comment\n "model": "opus" }'
+    # --no-hook still works without reading settings
+    assert _run([str(INSTALL), "--home", str(home), "--no-hook"]).returncode == 0

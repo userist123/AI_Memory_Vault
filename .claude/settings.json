@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "for py in python3 python; do if \"$py\" -c \"import sys\" >/dev/null 2>&1; then \"$py\" \"${CLAUDE_PROJECT_DIR:-.}/.claude/skills/cost-router/install.py\" --no-hook >/dev/null 2>&1; exit 0; fi; done; exit 0",
+            "command": "for py in python3 python; do if \"$py\" -c \"import sys\" >/dev/null 2>&1; then \"$py\" \"${CLAUDE_PROJECT_DIR:-.}/.claude/skills/cost-router/install.py\" --session-start >/dev/null 2>&1; exit 0; fi; done; exit 0",
             "timeout": 20
           }
         ]

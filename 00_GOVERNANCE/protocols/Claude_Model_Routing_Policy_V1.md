@@ -61,8 +61,12 @@ Rules applied after classification (`rules` in the policy; can only raise a tier
   never below Opus;
 - **Fable is never a subagent model**; a subagent route that would escalate to Fable hands the
   step back to the main session;
-- **security work gets an independent verifier** one tier up (Opus worker → Fable main session;
-  for subagents, a fresh Opus context);
+- **risk is read from the task text** (`rules.risk_keywords`, English and Romanian: production,
+  credentials, secrets, auth, trust boundaries, deletes, git history, ...); a detected `high`/
+  `critical` risk raises the route to Opus at `high` effort, keeps it in the main session (the
+  cheaper-model subagents are not used) and names an independent verifier;
+- **the verifier is always `vault-reviewer` (Opus, fresh context)**, for every high/critical or
+  security task that is not itself a review; Fable is never a verifier;
 - **escalation order on failure**: haiku → sonnet → opus → fable, one notch, after the tests
   say the cheaper attempt failed;
 - **subagent output contract**: `decision / evidence / risks / unknowns / confidence /
@@ -80,8 +84,12 @@ python3 .claude/skills/cost-router/install.py --uninstall
 
 Inside this repository nothing needs installing: the project skill, agents and the hook in
 `.claude/settings.json` are versioned, and a `SessionStart` hook (startup and resume) runs
-`install.py --no-hook` so the skill and agents also land in the session's user scope (`~/.claude`),
-which is what an ephemeral cloud container needs. Another repository gets the same by adding to its
+`install.py --session-start` so the skill and agents also land in the session's user scope
+(`~/.claude`), which is what an ephemeral cloud container needs. It adds no user-scope hook and it
+does nothing after an `--uninstall` on that machine (marker `~/.claude/cost-router.disabled`; an
+explicit `install.py` clears it). The installer refuses a user `settings.json` it cannot parse as
+strict JSON before copying anything. Hook commands are `bash` lines: on Windows they need Claude
+Code's Git Bash (unverified here). Another repository gets the same by adding to its
 `.claude/settings.json`:
 
 ```json

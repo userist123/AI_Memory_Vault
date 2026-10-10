@@ -152,6 +152,15 @@ class ClaudeModelPolicy:
         for risk, alias in self.rules.get("risk_floor", {}).items():
             if risk not in RISK_LEVELS or alias not in self.models:
                 raise ModelRoutingPolicyError(f"risk_floor entry {risk}->{alias} is invalid")
+        self.verifier_model = self.rules.get("verifier_model")
+        if self.verifier_model is not None and self.verifier_model not in self.models:
+            raise ModelRoutingPolicyError(f"verifier_model '{self.verifier_model}' is not a defined model")
+        self.risk_keywords: dict[str, tuple[str, ...]] = {
+            level: tuple(k.lower() for k in kws) for level, kws in self.rules.get("risk_keywords", {}).items()
+        }
+        for level in self.risk_keywords:
+            if level not in RISK_LEVELS:
+                raise ModelRoutingPolicyError(f"risk_keywords names unknown level '{level}'")
         self.escalation_order: tuple[str, ...] = tuple(self.rules.get("escalation_order", ()))
         for alias in self.escalation_order:
             if alias not in self.models:
@@ -242,6 +251,26 @@ def classify(policy: ClaudeModelPolicy, goal: str) -> tuple[Optional[TaskClass],
     return best, best_hits
 
 
+def _kw_hit(kw: str, text: str) -> bool:
+    if " " in kw or "-" in kw:
+        return kw in text
+    return re.search(rf"(?<![\w-]){re.escape(kw)}(?![\w-])", text) is not None
+
+
+def detect_risk(policy: ClaudeModelPolicy, goal: str) -> tuple[str, tuple[str, ...]]:
+    """Highest risk level whose keywords appear in the goal, with the matching keywords.
+
+    Returns ("medium", ()) when nothing matches: the policy default, never "low" by silence.
+    """
+    text = " " + re.sub(r"\s+", " ", goal.lower()) + " "
+    best, hits = "medium", ()
+    for level in ("high", "critical"):
+        found = tuple(k for k in policy.risk_keywords.get(level, ()) if _kw_hit(k, text))
+        if found:
+            best, hits = level, hits + found
+    return best, hits
+
+
 # -- routing ---------------------------------------------------------------
 
 def route(
@@ -260,6 +289,10 @@ def route(
         raise ModelRoutingPolicyError(f"requested model '{requested_model}' is not in the policy")
 
     applied: list[str] = []
+    detected, risk_hits = detect_risk(policy, goal)
+    if RISK_LEVELS.index(detected) > RISK_LEVELS.index(risk):
+        applied.append(f"risk_detected:{detected}({', '.join(risk_hits[:3])})")
+        risk = detected
     tc, hits = classify(policy, goal)
     if tc is None:
         task_class = "unclassified"
@@ -276,7 +309,14 @@ def route(
     if floor and policy.rank(floor) > policy.rank(model):
         applied.append(f"risk_floor:{risk}->{floor}")
         model = floor
-        effort = policy.models[model].default_effort if effort not in policy.models[model].effort_levels else effort
+    if floor:
+        # Risky work stays in the main session (the class subagents are pinned to cheaper models)
+        # at an effort where edge cases get looked at, even when the model was already high enough.
+        subagent = None
+        levels = policy.models[model].effort_levels
+        if "high" in levels and levels.index(effort) < levels.index("high"):
+            effort = "high"
+            applied.append(f"risk_effort:{risk}->high")
 
     # Fable is a main-session choice, never a subagent model.
     if for_subagent and policy.rules.get("fable_never_for_subagents") and model == "fable":
@@ -293,14 +333,18 @@ def route(
             if effort not in policy.models[model].effort_levels:
                 effort = policy.models[model].default_effort
 
-    # Independent verifier for review/security work: a different model, not lower tier.
+    # Independent verifier: high/critical risk and security work always get one, on the policy's
+    # verifier model (Opus, the vault-reviewer subagent, in a fresh context). A review-class task
+    # is itself the verification, so it gets none. Fable is never a verifier.
     verifier: Optional[str] = None
-    is_security = any(k in hits for k in ("security", "threat", "vulnerability", "audit"))
-    if is_security and policy.rules.get("security_requires_independent_verifier"):
-        verifier = policy.higher_tier(model) or model
-        if for_subagent and verifier == "fable" and policy.rules.get("fable_never_for_subagents"):
-            verifier = "opus"  # same tier, fresh context: independence comes from the separate run
-        applied.append(f"security_requires_independent_verifier->{verifier}")
+    is_security = bool(risk_hits) or any(k in hits for k in ("security", "threat", "vulnerability", "audit", "securitate", "vulnerabilitate"))
+    needs_verifier = task_class != "review" and (
+        RISK_LEVELS.index(risk) >= RISK_LEVELS.index("high")
+        or (is_security and policy.rules.get("security_requires_independent_verifier"))
+    )
+    if needs_verifier and policy.verifier_model:
+        verifier = policy.verifier_model
+        applied.append(f"independent_verifier->{verifier}")
 
     escalate_to = policy.higher_tier(model)
     if for_subagent and escalate_to == "fable":

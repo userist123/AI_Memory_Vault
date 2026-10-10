@@ -65,6 +65,21 @@ def test_classify_known_classes(goal, expected):
     assert tc is not None and tc.name == expected, hits
 
 
+@pytest.mark.parametrize("goal,expected", [
+    ("găsește care fișiere importă memory_controller", "explore"),
+    ("gaseste unde e definit controllerul", "explore"),
+    ("rezumă formatul retrieval trace", "summarize"),
+    ("repară testul care pică în test_memory_access.py", "implement"),
+    ("Corectează tot ce trebuie ca să fie bun de utilizat", "implement"),
+    ("verifică diff-ul pentru regresii", "review"),
+    ("diagnostichează cauza pentru expansiunea instabilă a grafului", "design"),
+    ("orchestrează o rescriere cap-coadă a întregului depozit", "frontier"),
+])
+def test_classify_romanian_prompts(goal, expected):
+    tc, hits = classify(POLICY, goal)
+    assert tc is not None and tc.name == expected, hits
+
+
 def test_unclassified_goes_to_default_with_low_confidence():
     d = route(POLICY, "zzz qqq")
     assert d.task_class == "unclassified"
@@ -99,11 +114,40 @@ def test_fable_is_never_a_subagent_model():
     assert sub.escalate_to is None
 
 
-def test_security_requires_independent_verifier():
-    d = route(POLICY, "security audit of the token handling")
-    assert d.model == "opus" and d.verifier_model == "fable"
-    sub = route(POLICY, "security audit of the token handling", for_subagent=True)
+def test_security_work_gets_an_opus_verifier_never_fable():
+    d = route(POLICY, "implement the new token handling in the auth module")
+    assert d.model == "opus" and d.verifier_model == "opus"
+    sub = route(POLICY, "implement the new token handling in the auth module", for_subagent=True)
     assert sub.verifier_model == "opus"
+    # a review-class task is itself the verification
+    r = route(POLICY, "security audit of the token handling")
+    assert r.task_class == "review" and r.model == "opus" and r.verifier_model is None
+
+
+@pytest.mark.parametrize("goal", [
+    "fix the HMAC auth bypass in the I-RETRIEVAL trust boundary",
+    "update the production credentials and rotate the secret",
+    "find and remove the leaked API key from git history",
+    "delete the old deploy tokens from the config",
+    "rotește secretul de producție și șterge cheia veche",
+    "repară autentificarea cu parola de producție",
+])
+def test_risky_prompts_never_go_below_opus(goal):
+    """Reviewer finding 1 (2026-10-10): risk was never read from the task text."""
+    d = route(POLICY, goal)
+    assert POLICY.rank(d.model) >= POLICY.rank("opus"), (goal, d.model, d.applied_rules)
+    assert d.verifier_model == "opus"
+    assert d.subagent is None, "no cheaper-model subagent for risky work"
+    assert d.effort in ("high", "xhigh")
+    assert any(r.startswith("risk_detected") for r in d.applied_rules), d.applied_rules
+
+
+def test_detect_risk_defaults_to_medium_not_low():
+    from routing.claude_model_router import detect_risk
+    assert detect_risk(POLICY, "summarize the readme")[0] == "medium"
+    assert detect_risk(POLICY, "wipe the volume, irreversible")[0] == "critical"
+    # 'auth' must not match inside 'author'
+    assert detect_risk(POLICY, "list the author of each note")[0] == "medium"
 
 
 def test_requested_model_respected_unless_below_risk_floor():
@@ -207,7 +251,7 @@ def test_usage_report_dedupes_by_request_id_and_prices(tmp_path):
 
 
 def test_project_slug_matches_claude_code_layout():
-    assert project_slug(Path("/home/user/AI_Memory_Vault_CODEX_READY")) == "-home-user-AI-Memory-Vault-CODEX-READY"
+    assert project_slug(Path("/srv/user/AI_Memory_Vault_CODEX_READY")) == "-srv-user-AI-Memory-Vault-CODEX-READY"
 
 
 # -- CLI ----------------------------------------------------------------------
