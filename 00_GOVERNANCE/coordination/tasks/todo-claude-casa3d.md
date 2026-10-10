@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-10T10:55:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-10T11:50:00Z
 TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / none    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
@@ -54,6 +54,15 @@ PLAN v8 REBUILD (2026-10-10; owner decisions 10:58 UTC: code in Vault workspace 
   Out of scope unless owner asks: real affiliate programs, payments, real AI call (deferred by owner).
   Verification per increment: vitest + tsc + next build in the cloud container (Node 22, npm registry reachable);
   the owner's PC run stays the RUNTIME_VERIFIED reference for server checks.
+- 2026-10-10 11:50 UTC: owner said "fa-le tu, nu mai astepta". The PC session refuses to push faza4 without the owner's
+  own confirmation (correct), so the v8 layer is being built as a framework-free package first:
+  02_PRODUCT/projects/workspaces/casa3d/packages/twin-core (TypeScript 5.9, Vitest 3.2, Node 22).
+  W1 DONE: src/geometry.ts (rectilinear polygons incl. L-shapes, rect-in-polygon, overlaps, wall bands),
+  src/twin.ts (Digital Twin v1.0 model, normalize, SHA-256 fingerprint, wallsFromRooms, linkWalls = automatic
+  wall-room linking with shared walls), src/engine.ts (validate: 16 issue codes, ERROR/WARNING; findPosition:
+  deterministic 5 cm grid search with againstWall/near/keepClear/alignedWith). 24 tests green, tsc clean.
+  W8 (L-shaped rooms + wall-room linking) is therefore built into the model from the start.
+  CI: casa3d-build.yml has a twin-core job (ubuntu + windows) and an app job that waits for app/package.json.
 NEXT (in order):
 1. Owner supplies the v8 archive (or its path), or allows the PowerShell hash scan on LAB-PC; compare SHA-256 with 7bb34bf3...9628bc.
 2. npm ci, full Vitest, next build; record output in CORE_IMPLEMENTATION_v8.md.

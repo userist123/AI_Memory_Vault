@@ -26,13 +26,37 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-defaults:
-  run:
-    working-directory: 02_PRODUCT/projects/workspaces/casa3d
-
 jobs:
-  build:
-    name: typecheck, test, build (${{ matrix.os }})
+  twin-core:
+    # Framework-free Digital Twin core (packages/twin-core): typecheck + Vitest on both OSes.
+    name: twin-core typecheck + test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d/packages/twin-core
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: 02_PRODUCT/projects/workspaces/casa3d/packages/twin-core/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npm test
+
+  app:
+    # The Next.js application (app/), once the faza4 source is imported; skipped until app/package.json exists.
+    name: app typecheck, test, build (${{ matrix.os }})
+    if: ${{ hashFiles('02_PRODUCT/projects/workspaces/casa3d/app/package.json') != '' }}
+    defaults:
+      run:
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d/app
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -47,7 +71,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: 02_PRODUCT/projects/workspaces/casa3d/package-lock.json
+          cache-dependency-path: 02_PRODUCT/projects/workspaces/casa3d/app/package-lock.json
       - name: Install (lockfile, no lifecycle scripts)
         run: npm ci --ignore-scripts
       - name: Typecheck
@@ -59,7 +83,7 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: '1'
       - name: Verification gates (F4, F5)
-        if: hashFiles('02_PRODUCT/projects/workspaces/casa3d/scripts/verify-f4.mjs') != ''
+        if: hashFiles('02_PRODUCT/projects/workspaces/casa3d/app/scripts/verify-f4.mjs') != ''
         run: |
           node scripts/verify-f4.mjs
           if [ -f scripts/verify-f5.mjs ]; then node scripts/verify-f5.mjs; fi
