@@ -1,7 +1,7 @@
 # todo-claude-codeql-check
-STATUS: IN_PROGRESS        UPDATED: 2026-10-10T10:40Z
+STATUS: DONE        UPDATED: 2026-10-10T12:00Z
 TASK: Make the PR check "Code scanning results / CodeQL" end pass/fail instead of "neutral".
-BRANCH / PR: claude/blissful-cannon-6w2cnz / #259 merged (23041ac9); follow-up PR for the cleanup loop    BASE: main @ 23041ac9
+BRANCH / PR: claude/blissful-cannon-6w2cnz / #259 and #261 merged    BASE: main @ 6ce6633f
 SPEC: check-run text on PR #256 / #254: "6 configurations present on refs/heads/main were not found":
   /language:c-cpp, go, javascript-typescript, ruby, rust (codeql.yml) and /language:csharp (codeql-csharp.yml).
   GitHub compares a PR's analyses with the configurations present on main; any main-only configuration -> neutral.
@@ -22,7 +22,8 @@ BLOCKERS / OWNER QUESTIONS:
 - Merge of PR #259 is the owner's (security-sensitive CI change). Cleanup itself runs from the workflow.
 KEY FILES:
 - .github/workflows/codeql.yml, .github/workflows/codeql-csharp.yml, .github/codeql/javascript-config.yml
-VERIFICATION SO FAR: #259 CI green; CodeQL check 6 -> 4 missing. Cleanup run 38044442962 (apply) deleted only the
-  newest analysis per category: the chain stopped (confirm_delete_url null). Analyses sit in many sets. Fix: delete
-  every deletable analysis per round, re-list, fail if any remain (simulated locally). Not yet re-run.
-  Main also holds stale /language:java-kotlin and /language:swift (not named by the PR check; not approved, untouched).
+VERIFICATION SO FAR: cleanup runs 38047621817 and 38048531016 stopped on transient HTTP 503 from code scanning;
+  run 38049583815 finished: c-cpp, go, ruby, rust removed from refs/heads/main. PR #262: "CodeQL" check = success
+  ("No new alerts in code changed by this pull request"). The check is computed when the PR's first analysis lands,
+  so it can show python/csharp as missing for a few minutes until those analyses finish; that is not stale config.
+  Not touched: stale /language:java-kotlin and /language:swift on main (PR check does not name them; not approved).
