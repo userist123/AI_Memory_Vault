@@ -147,6 +147,32 @@ describe('iluminat (metoda fluxului)', () => {
   });
 });
 
+describe('pereți în straturi (benzi)', () => {
+  test('lambriu jos, baghetă, tapet sus și o vopsea colorată pe alt perete: suprafețe pe benzi, vopseaua principală scade', () => {
+    const base = computeBOQ(demo(), cat, mc).items.find(i => i.key === 'living:paint')!.netQty;
+    const s = set(demo(), 'living', { wallFeatures: [
+      { side: 'E', kind: 'panel', material: 'riflaj-mdf-unic-alb', heightM: 1.1, color: '#e9e4da' }, { side: 'E', kind: 'rail', material: 'nu-exista', heightM: 1.1 },
+      { side: 'E', kind: 'wallpaper', material: 'tapet-grandeco-marmor', fromM: 1.1 }, { side: 'W', kind: 'paint', material: 'vopsea-savana-super', color: '#5b7065' } ] });
+    const b = computeBOQ(s, cat, mc), fl = s.floor, r = room(s, 'living');
+    const wp = b.items.find(i => i.key === 'living:wall:E:2')!, full = sideGeometry(fl, r, 'E').netM2, low = sideGeometry(fl, r, 'E', 1.1).netM2;
+    assert.match(wp.label, /1\.1–2\.6 m/); const rr = wallpaperRolls(3.8, 1.5, { widthM: .53, lengthM: 10.05, repeatCm: 0 }); assert.equal(wp.orderedQty, rr.rolls);
+    const pan = b.items.find(i => i.key === 'living:wall:E:0')!; assert.equal(pan.orderedQty, panelCount(3.8, 1.1, [60, 240]));
+    assert.ok(b.unknown.some(u => /baghetă/.test(u)), 'bagheta fără produs e necunoscută');
+    const accent = b.items.find(i => i.key === 'living:wall:W:3')!; assert.match(accent.label, /nuanța #5b7065/); assert.equal(accent.refId, 'vopsea-savana-super');
+    const main = b.items.find(i => i.key === 'living:paint')!.netQty, west = sideGeometry(fl, r, 'W').netM2;
+    assert.ok(Math.abs((base - main) - (full + west) * 2 / 13) < .05, `${base} - ${main}`); void low;
+  });
+  test('benzile care se suprapun pe același perete sunt refuzate; cele alăturate trec', () => {
+    assert.equal(sanitizeFinishes({ x: { wallFeatures: [{ side: 'E', kind: 'panel', material: 'a', heightM: 1.2 }, { side: 'E', kind: 'wallpaper', material: 'b', fromM: 1.1 }] } }), 'Placările de pe pereți sunt invalide.');
+    assert.equal(sanitizeFinishes({ x: { wallFeatures: [{ side: 'E', kind: 'panel', material: 'a', heightM: 1.1 }, { side: 'E', kind: 'rail', material: 'r', heightM: 1.1 }, { side: 'E', kind: 'wallpaper', material: 'b', fromM: 1.1 }] } }), null);
+    assert.equal(sanitizeFinishes({ x: { wallFeatures: [{ side: 'E', kind: 'paint', material: 'a', fromM: 2, heightM: 1 }] } }), 'Placările de pe pereți sunt invalide.');
+  });
+  test('3D: banda pornește de la înălțimea ei', () => {
+    const s = set(demo(), 'living', { wallFeatures: [{ side: 'E', kind: 'wallpaper', material: 'tapet-grandeco-marmor', fromM: 1.1 }] });
+    assert.equal(roomVisual(mc, finishesOf(s, room(s, 'living')), 'living').walls[0]!.fromM, 1.1);
+  });
+});
+
 describe('3D', () => {
   test('motorul primește pardoseala în metri, placările, tavanul și faianța băii până la 2,1 m', () => {
     const s = set(demo(), 'living', { floor: 'gresie-emarble-60x120', floorLayout: { pattern: 'brick', groutMm: 2, groutColor: '#333333' }, wallFeatures: [{ side: 'E', kind: 'brick', material: 'caramida-bronx-60' }],

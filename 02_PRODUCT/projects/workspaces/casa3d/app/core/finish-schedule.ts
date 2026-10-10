@@ -4,7 +4,7 @@
 import type { Catalog, MaterialsCatalog, Snapshot, Confidence } from './types';
 import { computeBOQ, finishesOf } from './boq';
 import { floors } from './levels';
-import { layoutOf, materialOf, pieceSizeCm, ceilingOf } from './finishes';
+import { layoutOf, materialOf, pieceSizeCm, ceilingOf, bandOf } from './finishes';
 
 export type ScheduleElement = 'floor' | 'walltile' | 'wall' | 'paint' | 'baseboard' | 'ceiling' | 'led' | 'cornice' | 'spots' | 'light' | 'curtain' | 'sheer' | 'blind' | 'rug' | 'door' | 'door_handle' | 'adhesive';
 export interface ScheduleRow { level: number; roomId: string | null; room: string; element: ScheduleElement; side?: string; kind?: string;
@@ -33,7 +33,8 @@ export function finishSchedule(snap: Snapshot, cat: Catalog, mc: MaterialsCatalo
         if (m?.category === 'floor_tile') details.push({ key: 'sched.grout', vars: { mm: lay.groutMm ?? 3, color: lay.groutColor ?? '#bdb8ae' } });
         if (m?.specs?.slip) details.push({ key: 'sched.slip', vars: { slip: m.specs.slip } }); if (m?.specs?.rectified) details.push({ key: 'fin.rectified' }); }
       if (el === 'wall'){ const [, , s, i] = it.key.split(':'), wf = f.wallFeatures?.[Number(i)]; side = s; kind = wf?.kind;
-        if (wf){ details.push({ key: `fin.kind.${wf.kind}` }, { key: 'sched.wallSide', vars: { side: s ?? '' } }, wf.heightM ? { key: 'sched.upTo', vars: { h: wf.heightM } } : { key: 'fin.fullHeight' });
+        if (wf){ const [a, b] = bandOf(wf, floors(snap)[at.level]!.ceilingHeight);
+          details.push({ key: `fin.kind.${wf.kind}` }, { key: 'sched.wallSide', vars: { side: s ?? '' } }, wf.kind === 'rail' ? { key: 'sched.at', vars: { h: b } } : a > 0 ? { key: 'sched.band', vars: { a, b } } : wf.heightM ? { key: 'sched.upTo', vars: { h: wf.heightM } } : { key: 'fin.fullHeight' });
           if (wf.color) details.push({ key: 'sched.color', vars: { color: wf.color } }); } }
       if (el === 'walltile') details.push({ key: 'sched.size', vars: { l: pieceSizeCm(m)[0], w: pieceSizeCm(m)[1] } });
       if (el === 'ceiling'){ const c = ceilingOf(f); details.push({ key: `fin.ceiling.${c.type}` }, { key: 'sched.drop', vars: { cm: c.dropCm } }); if (c.type === 'cove') details.push({ key: 'sched.cove', vars: { cm: c.coveCm } }); }

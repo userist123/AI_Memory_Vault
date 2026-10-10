@@ -288,7 +288,7 @@ function model(it){
     // placări pe pereți (tapet, riflaj, tencuială, cărămidă, piatră, faianță): un strat subțire pe fața dinspre cameră, tăiat în jurul ușilor și ferestrelor
     p.camere.forEach(r => { if (!r.fin || !r.fin.walls || !r.fin.walls.length) return;
       r.fin.walls.forEach((wv, wi) => { const horiz = wv.side === 'N' || wv.side === 'S', edge = { N: r.z0, S: r.z1, W: r.x0, E: r.x1 }[wv.side], inward = wv.side === 'N' || wv.side === 'W' ? 1 : -1;
-        const lo = (horiz ? r.x0 : r.z0) + .075, hi = (horiz ? r.x1 : r.z1) - .075, top = Math.min(H, wv.heightM || H); if (hi - lo < .05) return;
+        const lo = (horiz ? r.x0 : r.z0) + .075, hi = (horiz ? r.x1 : r.z1) - .075, bottom = Math.max(0, Math.min(H, wv.fromM || 0)), top = wv.kind === 'rail' ? Math.min(H, bottom + .045) : Math.min(H, wv.heightM || H); if (hi - lo < .05 || top - bottom < .005) return;
         // pereții pe latura asta: grosimea (fața camerei) și golurile, în coordonata de-a lungul laturii
         let th = .15, found = false; const holes = [];
         p.pereti.forEach(wl => { const [ax, az] = wl.a, [bx, bz] = wl.b, h2 = Math.abs(az - bz) < 1e-6, v2 = Math.abs(ax - bx) < 1e-6;
@@ -298,18 +298,24 @@ function model(it){
           wl.goluri.forEach(g => { const p0 = s0 + dir * g.la, p1 = s0 + dir * (g.la + g.l), sl = g.tip === 'usa' ? 0 : (g.sill != null ? g.sill : .9), tp = g.tip === 'usa' ? Math.min(H - .05, g.h || 2.1) : Math.min(H - .05, sl + (g.h || 1.3));
             holes.push({ a: Math.min(p0, p1), b: Math.max(p0, p1), y0: sl, y1: tp }); }); });
         if (!found) return;   // latură fără perete (deschisă spre altă cameră): nu desenăm o placare în aer
-        const kind = wv.kind, depth = kind === 'stone' ? .022 : kind === 'brick' ? .014 : kind === 'slats' ? .021 : kind === 'tile' ? .01 : .004, off = edge + inward * (th / 2 + depth / 2 + .001);
-        const tex = kind === 'slats' ? null : wallTexture(wv, `${r.id}:${wi}`), size = tex ? tex.userData.size : 1;
+        const kind = wv.kind, depth = kind === 'stone' ? .022 : kind === 'brick' ? .014 : kind === 'slats' ? .021 : kind === 'rail' ? .02 : kind === 'panel' ? .012 : kind === 'tile' ? .01 : .003, off = edge + inward * (th / 2 + depth / 2 + .001);
+        const plainKind = kind === 'slats' || kind === 'paint' || kind === 'rail' || kind === 'panel', tex = plainKind ? null : wallTexture(wv, `${r.id}:${wi}`), size = tex ? tex.userData.size : 1;
         const mkMat = (len, hgt, s0, y0) => { if (!tex) return null; const t = tex.clone(); t.userData = { ...tex.userData, owned: true }; t.needsUpdate = true; t.repeat.set(len / size, hgt / size); t.offset.set(s0 / size, y0 / size);
           const m = new THREE.MeshStandardMaterial({ map: t, roughness: kind === 'tile' ? .3 : kind === 'wallpaper' ? .7 : .9 }); m.userData = { kind: kind === 'tile' ? 'tile' : kind, col: wv.color, size: wv.sizeCm ? [wv.sizeCm[0] / 100, wv.sizeCm[1] / 100] : null, marble: !!wv.marble }; return m; };
         const slatBack = lookMat('slatback', '#2e2c2a', .95), slatMat = MAT('wood', wv.color);
         const place = (s0, s1, y0, y1) => { const len = s1 - s0, hgt = y1 - y0; if (len < .01 || hgt < .01) return; const mid = (s0 + s1) / 2, x = horiz ? mid : off, z = horiz ? off : mid, rot = horiz ? 0 : Math.PI / 2;
+          if (kind === 'paint' || kind === 'rail'){ const pm = lookMat(kind === 'rail' ? 'rail' : 'bandpaint', wv.color, kind === 'rail' ? .5 : .92); pm.userData = { kind: 'paint' }; box(len, hgt, depth, pm, x, (y0 + y1) / 2, z, rot, walls).castShadow = false; return; }
+          if (kind === 'panel'){ const pm = lookMat('panel', wv.color, .55); box(len, hgt, depth, pm, x, (y0 + y1) / 2, z, rot, walls).castShadow = false;
+            // lambriu cu ramă: panouri în relief de ~60 cm, cu o bordură sus
+            const n = Math.max(1, Math.round(len / .6)), pw = len / n;
+            for (let k = 0; k < n; k++){ const sm = s0 + pw * (k + .5), px = horiz ? sm : off + inward * .006, pz = horiz ? off + inward * .006 : sm; box(pw - .1, Math.max(.05, hgt - .16), .006, pm, px, (y0 + y1) / 2, pz, rot, walls).castShadow = false; }
+            box(len, .03, depth + .012, pm, x, y1 - .015, z, rot, walls).castShadow = false; return; }
           if (kind === 'slats'){ box(len, hgt, .006, slatBack, horiz ? mid : edge + inward * (th / 2 + .004), (y0 + y1) / 2, horiz ? edge + inward * (th / 2 + .004) : mid, rot, walls).castShadow = false;
             for (let sx = s0 + .02; sx < s1 - .01; sx += .05){ const px = horiz ? sx : off, pz = horiz ? off : sx; box(.027, hgt, depth, slatMat, px, (y0 + y1) / 2, pz, rot, walls).castShadow = false; } return; }
           box(len, hgt, depth, mkMat(len, hgt, s0, y0), x, (y0 + y1) / 2, z, rot, walls).castShadow = false; };
         // benzi verticale între marginile golurilor; în fiecare bandă, intervalele de înălțime rămase după scăderea golurilor
         const cuts = [...new Set([lo, hi, ...holes.flatMap(h => [h.a, h.b]).filter(v => v > lo && v < hi)])].sort((a, b) => a - b);
-        for (let i = 0; i + 1 < cuts.length; i++){ const s0 = cuts[i], s1 = cuts[i + 1], m = (s0 + s1) / 2; let spans = [[0, top]];
+        for (let i = 0; i + 1 < cuts.length; i++){ const s0 = cuts[i], s1 = cuts[i + 1], m = (s0 + s1) / 2; let spans = [[bottom, top]];
           for (const h of holes) if (h.a < m && h.b > m) spans = spans.flatMap(([y0, y1]) => { const out = []; if (h.y0 > y0) out.push([y0, Math.min(y1, h.y0)]); if (h.y1 < y1) out.push([Math.max(y0, h.y1), y1]); return out.filter(([a2, b2]) => b2 - a2 > .005); });
           spans.forEach(([y0, y1]) => place(s0, s1, y0, y1)); } }); });
     // scări: trepte pline din lemn (treapta k are înălțimea (k+1)·riser), mână curentă pe o parte

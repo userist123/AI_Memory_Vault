@@ -5,7 +5,7 @@ import { openingsOnSide } from './validate';
 import { floors, floorOfRoom } from './levels';
 import { roomWindows, curtainPlan, blindPlan } from './textiles';
 import { doorOpenings } from './doors';
-import { bathTiles, layoutOf, floorWaste, floorLaborId, sideGeometry, wallpaperRolls, panelCount, pieceSizeCm, ceilingOf, FEATURE_CATEGORY, FEATURE_LABOR } from './finishes';
+import { bandGeometry, bathTiles, layoutOf, floorWaste, floorLaborId, sideGeometry, wallpaperRolls, panelCount, pieceSizeCm, ceilingOf, FEATURE_CATEGORY, FEATURE_LABOR } from './finishes';
 import { WASTE, PAINT_COATS, DOOR_HEIGHT, WINDOW_HEIGHT, BATH_TILE_HEIGHT, BACKSPLASH_HEIGHT, LIGHTS_EXTRA_PER_M2, VAT_RATE, WET_ROOMS, SANITARY, APPLIANCES, DEFAULT_BUDGET } from './rules.boq';
 
 const r2 = (v: number) => Math.round(v * 100) / 100;
@@ -31,7 +31,7 @@ export const budgetOf = (snap: Snapshot): BudgetSettings => ({ ...DEFAULT_BUDGET
 // ---------- 2) BOQ ----------
 const TEXTILE_CATS = new Set(['curtain', 'sheer', 'blind', 'rug']);
 const PATTERN_LABEL: Record<string, string> = { straight: 'drept', brick: 'decalat 1/2', third: 'decalat 1/3', diagonal: 'diagonală', herringbone: 'spic', chevron: 'chevron', checker: 'șah' };
-const FEATURE_LABEL: Record<string, string> = { wallpaper: 'Tapet', slats: 'Riflaj', plaster: 'Tencuială decorativă', brick: 'Cărămidă aparentă', stone: 'Piatră decorativă', tile: 'Faianță' };
+const FEATURE_LABEL: Record<string, string> = { paint: 'Vopsea', panel: 'Lambriu', rail: 'Baghetă', wallpaper: 'Tapet', slats: 'Riflaj', plaster: 'Tencuială decorativă', brick: 'Cărămidă aparentă', stone: 'Piatră decorativă', tile: 'Faianță' };
 export type BoqCategory = 'furniture' | 'finishes' | 'lighting' | 'appliances' | 'sanitary' | 'textiles';
 export interface BoqItem { key: string; category: BoqCategory; roomId: string | null; label: string; refId: string; netQty: number; unit: string; wastePct: number;
   orderedQty: number; packs: number | null; packLabel: string | null; unitPrice: number | null; total: number | null; supplier: string; sourceUrl: string | null; verifiedAt: string | null; confidence: Confidence; note?: string }
@@ -66,9 +66,14 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
     const wt = M(f.wallTile); if (wt && tileArea > 0){ items.push(materialLine(wt, `${room.id}:walltile`, room.id, `Faianță · ${room.name}`, tileArea, mc.verifiedAt)); adhesiveArea += tileArea; addLabor(room.id, 'manopera-faianta', tileArea); }
     // placări pe pereți (tapet, riflaj, tencuială decorativă, cărămidă, piatră, faianță), fiecare pe latura ei, până la înălțimea aleasă
     let featureArea = 0;
-    for (const [i, wf] of (f.wallFeatures || []).entries()){ const m = M(wf.material), sg = sideGeometry(fl, room, wf.side, wf.heightM); if (sg.netM2 <= 0) continue;
+    for (const [i, wf] of (f.wallFeatures || []).entries()){ const m = M(wf.material), sg = bandGeometry(fl, room, wf);
+      if (wf.kind === 'rail'){ if (!m || m.category !== 'moulding' || sg.lengthM <= 0){ if (sg.lengthM > 0) unknown.push(`${room.name}: baghetă ${wf.side}`); continue; }
+        items.push(materialLine(m, `${room.id}:wall:${wf.side}:${i}`, room.id, `Baghetă · ${room.name}, perete ${wf.side} la ${r2(sg.toM)} m`, sg.lengthM, mc.verifiedAt)); addLabor(room.id, 'manopera-bagheta', sg.lengthM); continue; }
+      if (sg.netM2 <= 0) continue;
       if (!m || m.category !== FEATURE_CATEGORY[wf.kind]){ unknown.push(`${room.name}: ${wf.kind} ${wf.side}`); continue; }
-      featureArea += sg.netM2; const key = `${room.id}:wall:${wf.side}:${i}`, where = `${room.name}, perete ${wf.side} (${r2(sg.lengthM)} × ${r2(sg.heightM)} m)`;
+      featureArea += sg.netM2; const key = `${room.id}:wall:${wf.side}:${i}`, where = `${room.name}, perete ${wf.side} (${r2(sg.lengthM)} m × ${r2(sg.fromM)}–${r2(sg.toM)} m)`;
+      if (wf.kind === 'paint'){ if (m.coverage) items.push(materialLine(m, key, room.id, `Vopsea${wf.color ? ` nuanța ${wf.color}` : ''} · ${where} (${r2(sg.netM2)} m², ${PAINT_COATS} straturi)`, sg.netM2 * PAINT_COATS / m.coverage, mc.verifiedAt)); addLabor(room.id, 'manopera-zugravit', sg.netM2); continue; }
+      if (wf.kind === 'panel' && m.specs?.sizeCm){ items.push(materialLine(m, key, room.id, `Lambriu · ${where}`, panelCount(sg.lengthM, sg.heightM, m.specs.sizeCm), mc.verifiedAt, 0)); unknown.push(`Manoperă lambriu · ${where}`); continue; }
       if (wf.kind === 'wallpaper' && m.specs?.roll){ const rr = wallpaperRolls(sg.lengthM, sg.heightM, m.specs.roll); items.push({ ...materialLine(m, key, room.id, `Tapet · ${where}: ${rr.strips} fâșii, ${rr.perRoll} pe rolă`, rr.rolls, mc.verifiedAt, 0) }); }
       else if (wf.kind === 'slats' && m.specs?.sizeCm) items.push(materialLine(m, key, room.id, `Riflaj · ${where}`, panelCount(sg.lengthM, sg.heightM, m.specs.sizeCm), mc.verifiedAt, 0));
       else if (wf.kind === 'plaster') items.push(materialLine(m, key, room.id, `Tencuială decorativă · ${where} (${r2(sg.netM2)} m²)`, sg.netM2 * (m.consumption || 0), mc.verifiedAt));

@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import type { Snapshot, MaterialsCatalog, RoomFinishes, Room, Material, WallFeature, WallFeatureKind, FloorPattern, Catalog, WindowTreatment } from '@/core/types';
 import { finishesOf, roomGeometry, computeBOQ } from '@/core/boq';
 import { floorOfRoom } from '@/core/levels';
-import { defaultLayout, PATTERNS, SIDES, FEATURE_CATEGORY, layoutOf, materialOf, sideGeometry, ceilingOf, clearHeight, finishIssues, pieceSizeCm, FINISH_RULES } from '@/core/finishes';
+import { bandsOverlap, defaultLayout, PATTERNS, SIDES, FEATURE_CATEGORY, layoutOf, materialOf, sideGeometry, ceilingOf, clearHeight, finishIssues, pieceSizeCm, FINISH_RULES } from '@/core/finishes';
 import { formatMoney, formatArea, formatLength } from '@/core/format';
 import { normalizeHex } from '@/core/appearance';
 import { lightReport } from '@/core/light-design';
@@ -64,18 +64,22 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish }: { 
       {features.map((w, i) => <div key={i} className="fin-row">
         <div className="grid2">
           <label className="f"><span>{t('fin.side')}</span><select value={w.side} onChange={e => setFeature(i, { side: e.target.value as WallFeature['side'] })}>
-            {SIDES.map(s => <option key={s} value={s} disabled={s !== w.side && features.some(x => x.side === s)}>{t(`fin.side.${s}`)} · {sideLen(s)}</option>)}</select></label>
+            {SIDES.map(s => <option key={s} value={s}>{t(`fin.side.${s}`)} · {sideLen(s)}</option>)}</select></label>
           <label className="f"><span>{t('fin.kind')}</span><select value={w.kind} onChange={e => { const k = e.target.value as WallFeatureKind; setFeature(i, { kind: k, material: firstOf(k) }); }}>
             {KINDS.filter(k => by(FEATURE_CATEGORY[k]).length).map(k => <option key={k} value={k}>{t(`fin.kind.${k}`)}</option>)}</select></label>
         </div>
         <label className="f"><span>{t('fin.product')}</span><select value={w.material} onChange={e => setFeature(i, { material: e.target.value })}>{by(FEATURE_CATEGORY[w.kind]).map(opt)}</select></label>
         <div className="grid2">
-          <label className="f"><span>{t('fin.height')}</span><input type="number" min={.3} max={fl.ceilingHeight} step={.05} value={w.heightM ?? ''} placeholder={t('fin.fullHeight')}
-            onChange={e => setFeature(i, { heightM: e.target.value === '' ? undefined : Math.max(.3, Math.min(fl.ceilingHeight, Number(e.target.value) || fl.ceilingHeight)) })} /></label>
+          {w.kind !== 'rail' && <label className="f"><span>{t('fin.from')}</span><input type="number" min={0} max={fl.ceilingHeight} step={.05} value={w.fromM ?? ''} placeholder="0"
+            onChange={e => setFeature(i, { fromM: e.target.value === '' ? undefined : Math.max(0, Math.min(fl.ceilingHeight - .05, Number(e.target.value) || 0)) })} /></label>}
+          <label className="f"><span>{t(w.kind === 'rail' ? 'fin.railHeight' : 'fin.height')}</span><input type="number" min={.05} max={fl.ceilingHeight} step={.05} value={w.heightM ?? ''} placeholder={t(w.kind === 'rail' ? 'fin.railDefault' : 'fin.fullHeight')}
+            onChange={e => setFeature(i, { heightM: e.target.value === '' ? undefined : Math.max(.05, Math.min(fl.ceilingHeight, Number(e.target.value) || fl.ceilingHeight)) })} /></label>
+          {(w.kind === 'paint' || w.kind === 'panel' || w.kind === 'rail') && <label className="f"><span>{t('fin.color')}</span><input type="color" value={w.color || '#f3f1ec'} onChange={e => { const h = normalizeHex(e.target.value); if (h) setFeature(i, { color: h }); }} /></label>}
           <button className="btn" style={{ alignSelf: 'end' }} onClick={() => onFinish({ wallFeatures: features.filter((_, k) => k !== i) })}>{t('fin.remove')}</button>
         </div>
       </div>)}
-      {freeSide && <button className="btn" onClick={() => onFinish({ wallFeatures: [...features, { side: freeSide, kind: 'wallpaper', material: firstOf('wallpaper') }] })}>{t('fin.addFeature')}</button>}
+      {features.length < 24 && <button className="btn" onClick={() => onFinish({ wallFeatures: [...features, { side: freeSide ?? 'N', kind: 'wallpaper', material: firstOf('wallpaper'), ...(freeSide ? {} : { fromM: Math.min(fl.ceilingHeight - .3, 1.2) }) }] })}>{t('fin.addFeature')}</button>}
+      {bandsOverlap(features, fl.ceilingHeight) && <div className="issue WARNING">{t('fin.bandsOverlap')}</div>}
       {room.type !== 'baie' && room.type !== 'bucatarie' && <label className="f"><span>{t('editor.baseboard')}</span><select value={f.baseboard || ''} onChange={e => onFinish({ baseboard: e.target.value || null })}><option value="">{t('editor.noBaseboard')}</option>{by('baseboard').map(opt)}</select></label>}
     </fieldset>
 

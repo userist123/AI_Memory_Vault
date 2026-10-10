@@ -30,7 +30,7 @@ export interface Issue { code: 'OUT_OF_ROOM' | 'OVERLAP' | 'DOOR_ZONE' | 'WINDOW
 // ---------- Faza 2: materiale, manoperă, servicii, finisaje, buget ----------
 export type MaterialCategory = 'parquet' | 'floor_tile' | 'wall_tile' | 'paint' | 'baseboard' | 'tile_adhesive' | 'lighting'
   | 'wallpaper' | 'wall_panel' | 'decorative_plaster' | 'brick_cladding' | 'stone_cladding' | 'plasterboard' | 'cornice' | 'led_strip' | 'spot'
-  | 'curtain' | 'sheer' | 'blind' | 'rug' | 'door' | 'door_handle';
+  | 'curtain' | 'sheer' | 'blind' | 'rug' | 'door' | 'door_handle' | 'moulding';
 /** Modul de așezare a pardoselii (parchet sau plăci). */
 export type FloorPattern = 'straight' | 'brick' | 'third' | 'diagonal' | 'herringbone' | 'chevron' | 'checker';
 /** Date tehnice citite pe pagina produsului; lipsa unei valori înseamnă „nedeclarat”, nu „bun”. */
@@ -43,9 +43,11 @@ export interface LaborRate { id: string; label: string; unit: 'm2' | 'ml'; low: 
 export interface Service { id: string; label: string; supplier: string; price?: number; pricePerMeter?: number; sourceUrl: string | null; verificationType: string; confidence: Confidence; note?: string }
 export interface MaterialsCatalog { verifiedAt: string; materials: Material[]; labor: LaborRate[]; services: Service[] }
 export interface FloorLayout { pattern: FloorPattern; angle?: 0 | 90; groutMm?: number; groutColor?: string }
-export type WallFeatureKind = 'wallpaper' | 'slats' | 'plaster' | 'brick' | 'stone' | 'tile';
-/** Un perete al camerei (latura N/S/V/E a dreptunghiului) placat altfel decât cu vopsea, de la pardoseală până la `heightM` (lipsă = tot peretele). */
-export interface WallFeature { side: 'N' | 'S' | 'W' | 'E'; kind: WallFeatureKind; material: string; color?: string; heightM?: number }
+export type WallFeatureKind = 'wallpaper' | 'slats' | 'plaster' | 'brick' | 'stone' | 'tile' | 'paint' | 'panel' | 'rail';
+/** O bandă pe un perete al camerei (latura N/S/V/E): de la `fromM` (lipsă = pardoseala) până la `heightM` (lipsă = tavanul).
+ *  Pe același perete pot sta mai multe benzi fără să se suprapună (ex. lambriu 0–1,1 m, baghetă la 1,1 m, tapet deasupra);
+ *  `rail` e o baghetă orizontală la înălțimea `heightM`; `paint` e o vopsea de altă culoare pe banda ei. */
+export interface WallFeature { side: 'N' | 'S' | 'W' | 'E'; kind: WallFeatureKind; material: string; color?: string; fromM?: number; heightM?: number }
 /** Tavan: drept (vopsit), fals din gips-carton coborât cu `dropCm`, sau fals cu scafă luminoasă pe contur. */
 export interface CeilingFinish { type: 'flat' | 'drop' | 'cove'; dropCm?: number; coveCm?: number; led?: string | null; cornice?: string | null; spot?: string | null; spots?: number }
 export interface RoomFinishes { floor: string; wallPaint: string; wallTile?: string | null; baseboard?: string | null; light: string; lights?: number;
