@@ -1,4 +1,5 @@
 import { sanitizeAppearance, SIZE_LIMITS_CM } from '../core/appearance';
+import { sanitizeTech } from '../core/technical';
 import catalogSeed from '../data/catalog.v1.json';
 // grupă → model 3D, ca materialele permise pe piesă să fie verificate fără a citi catalogul din baza de date
 const MODEL_OF_GROUP: Record<string, string> = Object.fromEntries((catalogSeed as any).products.map((p: any) => [p.group, p.model3d]));
@@ -70,6 +71,7 @@ export function checkSnapshot(s: any): Snapshot {
     // golul trebuie să încapă sub tavan (ușa de la podea, fereastra de la parapet)
     const top = (o.kind === 'window' ? (o.sill ?? 0.9) : 0) + (o.height ?? (o.kind === 'door' ? 2.1 : 1.3)), ceil = num(s.floor.ceilingHeight) ? s.floor.ceilingHeight : 2.6;
     if ((o.height != null || o.sill != null) && top > ceil + 1e-9) throw new HttpError(400, `Golul depășește tavanul: are ${Math.round(top * 100)} cm, iar tavanul ${Math.round(ceil * 100)} cm.`); }
+  if (s.tech != null){ const t = sanitizeTech(s.tech, s); if (t) s.tech = t; else delete s.tech; }
   if (s.appearance != null){ const a = sanitizeAppearance(s.appearance, s, p => MODEL_OF_GROUP[p.group] ?? ''); if (a) s.appearance = a; else delete s.appearance; }
   if (s.finishes != null && (typeof s.finishes !== 'object' || Array.isArray(s.finishes))) throw new HttpError(400, 'Finisajele sunt invalide.');
   if (s.budget != null){ const b = s.budget; const okNum = (v: unknown) => v == null || (typeof v === 'number' && Number.isFinite(v) && v >= 0);

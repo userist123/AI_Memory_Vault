@@ -1,5 +1,6 @@
 // Consilierul de design: funcție pură și deterministă care spune ce nu e bine în proiect, de ce și cum se repară.
 // Toate pragurile de mai jos sunt reguli de bun-simț din proiectarea interioară, NU norme legale.
+import { MIN_OUTLETS } from './technical';
 import type { Catalog, FurniturePlacement, Room, RoomRect, Snapshot } from './types';
 import { resolve } from './catalog';
 import { area, insideRect, rectHit } from './geometry';
@@ -10,7 +11,7 @@ import { WINDOW_HEIGHT, LIGHTS_EXTRA_PER_M2 } from './rules.boq';
 import { contrastRatio, hexToRgb, hueDistance, isNeutral, relativeLuminance, rgbToHsl } from './color';
 
 export type AdviceSeverity = 'BLOCKER' | 'WARNING' | 'TIP';
-export type AdviceCategory = 'circulatie' | 'proportii' | 'culori' | 'lumina' | 'ergonomie' | 'buget' | 'siguranta';
+export type AdviceCategory = 'circulatie' | 'proportii' | 'culori' | 'lumina' | 'ergonomie' | 'buget' | 'siguranta' | 'instalatii';
 export interface AdviceRefs { roomId?: string; placementIds?: string[]; wallIds?: string[] }
 /** Un sfat nu poartă text: `code` + `vars` sunt randate în limba aleasă prin dicționar (lib/i18n.ts, `advice.<code>.title|why|fix`).
  *  Convenția variabilelor: `*_m` = metri, `*_mu` = metri rotunjiți în sus (cel puțin), `*_m2` = m², `*_money` = sumă (moneda în `cur`), `*_n` = număr zecimal; restul sunt text sau numere simple.
@@ -81,6 +82,12 @@ export function defaultColors(snap: Snapshot, cat: Catalog): ColorEntry[] {
   return out;
 }
 
+/** Distanța maximă (m) între un obiect sanitar și scurgerea lui — regulă uzuală, orientativă. */
+export const TECH_NEAR_M = 1.5;
+function doorTouches(w: { a: [number, number]; b: [number, number] }, o: { offset: number; width: number }, room: Room){
+  const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, m = o.offset + o.width / 2, x = w.a[0] + (w.b[0] - w.a[0]) / L * m, z = w.a[1] + (w.b[1] - w.a[1]) / L * m, r = room.rect;
+  return x >= r.x0 - 0.2 && x <= r.x1 + 0.2 && z >= r.z0 - 0.2 && z <= r.z1 + 0.2;
+}
 export function adviseProject(snap: Snapshot, cat: Catalog, opts: AdvisorOptions = {}): Advice[] {
   const out: Advice[] = [], seen = new Set<string>();
   const clear = opts.accessibility ? ACCESSIBLE_CLEARANCE_M : null;
@@ -195,6 +202,16 @@ export function adviseProject(snap: Snapshot, cat: Catalog, opts: AdvisorOptions
   }
 
   // ---------- 4) Buget ----------
+  // instalații: doar când utilizatorul a generat sau desenat stratul tehnic (fără el nu știm ce există)
+  if (snap.tech){
+    const pts = snap.tech, near = (p: FurniturePlacement, kinds: string[], max = TECH_NEAR_M) => pts.some(t => t.roomId === p.roomId && kinds.includes(t.kind) && Math.hypot(t.x - p.x, t.z - p.z) <= max);
+    for (const room of snap.floor.rooms){ const rn = room.name, n = pts.filter(t => t.roomId === room.id && (t.kind === 'outlet' || t.kind === 'outlet_double')).length, min = MIN_OUTLETS[room.type] ?? 1;
+      if (n < min) add('TECH_FEW_OUTLETS', { severity: 'TIP', category: 'instalatii', refs: { roomId: room.id }, code: 'TECH_FEW_OUTLETS', vars: { rn, count: n, min } });
+      const doors = snap.floor.walls.some(w => w.openings.some(o => o.kind === 'door' && doorTouches(w, o, room)));
+      if (doors && !pts.some(t => t.roomId === room.id && t.kind === 'switch')) add('TECH_NO_SWITCH', { severity: 'TIP', category: 'instalatii', refs: { roomId: room.id }, code: 'TECH_NO_SWITCH', vars: { rn } }); }
+    for (const p of snap.placements.filter(q => ['lavoar', 'dus', 'wc', 'bucatarie'].includes(q.group)))
+      if (!near(p, ['drain'])) add('TECH_NO_DRAIN', { severity: 'WARNING', category: 'instalatii', refs: { roomId: p.roomId, placementIds: [p.id] }, code: 'TECH_NO_DRAIN', vars: { nm: nameOf(p), rn: roomOf(p.roomId)?.name ?? '' } });
+  }
   const b = opts.budget, cur = opts.currency ?? 'RON';
   if (b){
     if (b.total != null && b.target != null && b.total > b.target) add('OVER_BUDGET', { severity: 'WARNING', category: 'buget', refs: {}, code: 'OVER_BUDGET', vars: { cur, total_money: b.total, over_money: b.total - b.target, target_money: b.target } });

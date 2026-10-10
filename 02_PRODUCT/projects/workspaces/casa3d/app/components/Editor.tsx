@@ -10,6 +10,8 @@ import TwinDesignPanel from './TwinDesignPanel';
 import AdvisorPanel from './AdvisorPanel';
 import { adviseProject, type Advice } from '@/core/advisor';
 import RevisionDiff from './RevisionDiff';
+import TechPanel from './TechPanel';
+import { suggestTechPoints, placeTechPoint, type TechKind } from '@/core/technical';
 import { RoomLookPanel, WallLookPanel, OpeningLookPanel, ItemLookPanel } from './AppearanceControls';
 import { finishesOf, budgetOf, roomGeometry, computeBudget } from '@/core/boq';
 import { appearanceColors } from '@/core/appearance';
@@ -31,15 +33,16 @@ const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 
 const uid = () => crypto.randomUUID();
 const ROOM_TYPES = [['living', 'roomType.living'], ['dormitor', 'roomType.dormitor'], ['bucatarie', 'roomType.bucatarie'], ['baie', 'roomType.baie'], ['hol', 'roomType.hol']];
-const ICON: Record<Tool, string> = { select: 'M5 3l12 8-6 1 3 7-2 1-3-7-4 4z', wall: 'M3 12h18M3 9v6M21 9v6', room: 'M4 4h16v16H4z', door: 'M5 21V4h9v17M5 21h14M12 12h.01', window: 'M4 5h16v14H4zM12 5v14M4 12h16', measure: 'M3 17L17 3l4 4L7 21zM8 12l2 2M11 9l2 2M14 6l2 2' };
-const TOOL_LABEL: Record<Tool, string> = { select: 'tool.select', wall: 'tool.wall', room: 'tool.room', door: 'tool.door', window: 'tool.window', measure: 'tool.measure' };
+const ICON: Record<Tool, string> = { select: 'M5 3l12 8-6 1 3 7-2 1-3-7-4 4z', wall: 'M3 12h18M3 9v6M21 9v6', room: 'M4 4h16v16H4z', door: 'M5 21V4h9v17M5 21h14M12 12h.01', window: 'M4 5h16v14H4zM12 5v14M4 12h16', measure: 'M3 17L17 3l4 4L7 21zM8 12l2 2M11 9l2 2M14 6l2 2', tech: 'M13 2L4 14h7l-1 8 9-12h-7z' };
+const TOOL_LABEL: Record<Tool, string> = { select: 'tool.select', wall: 'tool.wall', room: 'tool.room', door: 'tool.door', window: 'tool.window', measure: 'tool.measure', tech: 'tool.tech' };
 
 export default function Editor({ id }: { id: string }){
   const { t, tp, lang, units } = usePrefs(), u = lengthInputUnit(units);
   const [snap, setSnap] = useState<Snapshot | null>(null), [catalog, setCatalog] = useState<Catalog | null>(null), [mc, setMc] = useState<MaterialsCatalog | null>(null), [out, setOut] = useState<Outbound | null>(null);
   const [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('split'), [help, setHelp] = useState(false), [calib, setCalib] = useState<Calib | null>(null);
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error'>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
-  const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[] } | null>(null), [persistent, setPersistent] = useState(true), [panel, setPanel] = useState<'props' | 'catalog' | 'budget' | 'design' | 'twin' | 'revs' | 'advisor'>('props'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
+  const [showTech, setShowTech] = useState(true), [techKind, setTechKind] = useState<TechKind>('outlet_double');
+  const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[] } | null>(null), [persistent, setPersistent] = useState(true), [panel, setPanel] = useState<'props' | 'catalog' | 'budget' | 'design' | 'twin' | 'revs' | 'advisor' | 'tech'>('props'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
   const hist = useRef(new History<Snapshot>()), dragStart = useRef<Snapshot | null>(null), timer = useRef<any>(null), latest = useRef<Snapshot | null>(null), [, force] = useState(0);
   const say = (t: string) => { setToast(t); clearTimeout((say as any).t); (say as any).t = setTimeout(() => setToast(''), 3500); };
 
@@ -152,7 +155,7 @@ export default function Editor({ id }: { id: string }){
         {(Object.keys(ICON) as Tool[]).map(tk => <button key={tk} aria-pressed={tool === tk} onClick={() => setTool(tk)} title={t(TOOL_LABEL[tk])}><svg viewBox="0 0 24 24"><path d={ICON[tk]} /></svg>{t(TOOL_LABEL[tk])}</button>)}
       </nav>
       <div className={`canvas ${view === 'split' ? 'split' : ''}`}>
-        {view !== '3d' && <div style={{ position: 'relative', minHeight: 0 }}><PlanView key={preview ? 'p' + preview.v.tier : 'live'} snap={preview ? preview.v.candidate : snap} catalog={catalog} sel={preview ? null : sel} tool={preview ? 'select' : tool} severities={preview ? {} : sev} onSelect={preview ? () => {} : setSel} onEdit={preview ? () => {} : onEdit} onAddWall={preview ? () => {} : onAddWall} onAddRoom={preview ? () => {} : onAddRoom} onAddOpening={preview ? () => {} : onAddOpening} calib={preview ? null : calib} onCalibPick={(a, b) => setCalib({ stage: 'enter', a, b })} />
+        {view !== '3d' && <div style={{ position: 'relative', minHeight: 0 }}><PlanView showTech={showTech && !preview} onTechAt={(x, z) => { if (!snap || preview) return; const pt = placeTechPoint(snap, techKind, x, z); if (!pt){ say(t('tech.outside')); return; } mutate(s => { s.tech = [...(s.tech || []), pt]; }); say(t('tech.placed', { rn: snap.floor.rooms.find(r => r.id === pt.roomId)?.name ?? '' })); }} key={preview ? 'p' + preview.v.tier : 'live'} snap={preview ? preview.v.candidate : snap} catalog={catalog} sel={preview ? null : sel} tool={preview ? 'select' : tool} severities={preview ? {} : sev} onSelect={preview ? () => {} : setSel} onEdit={preview ? () => {} : onEdit} onAddWall={preview ? () => {} : onAddWall} onAddRoom={preview ? () => {} : onAddRoom} onAddOpening={preview ? () => {} : onAddOpening} calib={preview ? null : calib} onCalibPick={(a, b) => setCalib({ stage: 'enter', a, b })} />
           <div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'measure' ? t('editor.hintMeasure') : t('editor.hintSelect')}</div></div>}
         {view !== '2d' && <Viewer3D snap={preview ? preview.v.candidate : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })} />}
         {preview && <div className="previewbar" role="status">{t('editor.previewBar', { title: preview.v.title })} <button className="btn" onClick={() => setPreview(null)}>{t('common.close')}</button></div>}
@@ -164,7 +167,7 @@ export default function Editor({ id }: { id: string }){
       <aside className={`side ${sideOpen ? '' : 'closed'}`}>
         <div className="sidetabs" style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
         <div className="btn" role="tablist" style={{ padding: 2, gap: 2, justifySelf: 'start', flexWrap: 'wrap', height: 'auto', maxWidth: '100%', minWidth: 0 }}>
-          {([['props', 'tab.props'], ['catalog', 'tab.catalog'], ['budget', 'tab.budget'], ['design', 'tab.design'], ['twin', 'tab.twin'], ['revs', 'tab.revs'], ['advisor', 'tab.advisor']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={panel === k} className="btn" style={{ minHeight: 30, border: 0, background: panel === k ? 'var(--graphite)' : 'transparent', color: panel === k ? '#fff' : undefined }} onClick={() => { setPanel(k); setSideOpen(true); }}>{t(l)}{k === 'advisor' && advice.filter(a => a.severity !== 'TIP').length > 0 && <span className="badge" style={{ marginLeft: 4, background: '#B7791F', color: '#fff', borderRadius: 8, padding: '0 6px', fontSize: 11 }}>{advice.filter(a => a.severity !== 'TIP').length}</span>}</button>)}
+          {([['props', 'tab.props'], ['catalog', 'tab.catalog'], ['budget', 'tab.budget'], ['design', 'tab.design'], ['twin', 'tab.twin'], ['revs', 'tab.revs'], ['advisor', 'tab.advisor'], ['tech', 'tab.tech']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={panel === k} className="btn" style={{ minHeight: 30, border: 0, background: panel === k ? 'var(--graphite)' : 'transparent', color: panel === k ? '#fff' : undefined }} onClick={() => { setPanel(k); setSideOpen(true); }}>{t(l)}{k === 'advisor' && advice.filter(a => a.severity !== 'TIP').length > 0 && <span className="badge" style={{ marginLeft: 4, background: '#B7791F', color: '#fff', borderRadius: 8, padding: '0 6px', fontSize: 11 }}>{advice.filter(a => a.severity !== 'TIP').length}</span>}</button>)}
         </div>
           <button className="btn sidetoggle" aria-expanded={sideOpen} onClick={() => setSideOpen(o => !o)}>{sideOpen ? t('editor.hidePanel') : t('editor.showPanel')}</button>
         </div>
@@ -218,6 +221,9 @@ export default function Editor({ id }: { id: string }){
         {panel === 'design' && <DesignPanel id={id} snap={snap} say={say} cur={cur} onPreview={(v: any, pid: string | null) => setPreview(v && pid ? { v, pid } : null)} onApplied={(s: Snapshot, n: number) => { hist.current.push(snap); setSnap(s); latest.current = s; setRev(n); setSave('saved'); setSel(null); }} />}
         {panel === 'twin' && <TwinDesignPanel id={id} snap={snap} catalog={catalog} say={say} onPreview={(s: Snapshot | null, label: string | null) => setPreview(s && label ? { v: { candidate: s, title: label, tier: 'twin-' + label }, pid: 'twin' } : null)} onApplied={(s: Snapshot, n: number) => { hist.current.push(snap); setSnap(s); latest.current = s; setRev(n); setSave('saved'); setSel(null); loadRevs(); }} />}
         {panel === 'catalog' && <CatalogPanel locale={lang} units={units} catalog={catalog} snap={snap} onUse={(g, vid) => mutate(s => { s.selections[g] = vid; if (!s.picked.includes(g)) s.picked.push(g); })} onAdd={selRoom ? (vid: string) => { const r = addPlacement(snap, catalog, selRoom.id, vid); if (!r){ say(t('editor.noFreeSpot')); return; } commit(r); setSel({ kind: 'placement', id: r.placements.at(-1)!.id }); } : undefined} />}
+        {panel === 'tech' && <TechPanel snap={snap} show={showTech} kind={techKind} onShow={setShowTech} onKind={k => { setTechKind(k); setTool('tech'); }}
+          onSuggest={() => { const pts = suggestTechPoints(snap); mutate(s => { s.tech = pts; }); setShowTech(true); say(t('tech.suggested', { n: pts.length })); }}
+          onClear={() => mutate(s => { delete s.tech; })} onDelete={id => mutate(s => { s.tech = (s.tech || []).filter(p => p.id !== id); })} />}
         {panel === 'advisor' && <AdvisorPanel lang={lang} units={units} currency={cur} advice={advice} rooms={snap.floor.rooms} onShow={showAdvice} />}
         {panel === 'budget' && <BudgetPanel snap={snap} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
         {panel === 'revs' && <div className="revs"><h3>{t('tab.revs')}</h3>{revs.length === 0 && <p className="muted">{t('editor.noRevsYet')}</p>}

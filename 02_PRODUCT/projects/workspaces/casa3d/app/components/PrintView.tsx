@@ -12,6 +12,8 @@ import { computeBudget } from '@/core/boq';
 import { floorBounds, wallDimensions, roomSchedule, printScale } from '@/core/dimensions';
 import { formatMoney, formatLength, formatArea, formatDimsCm, type Units } from '@/core/format';
 import { intlLocale, translator, type Lang, type Translate } from '@/lib/i18n';
+import { suggestTechPoints, techCounts, TECH_KINDS, type TechKind } from '@/core/technical';
+import { TECH_SYMBOL } from './TechPanel';
 
 interface ProjectDto { id: string; name: string; currentRevision: number | null; draft: Snapshot }
 const ROOM_FILL: Record<string, string> = { baie: '#e4e8e6', bucatarie: '#e6e8e3', hol: '#efeae1', living: '#f0e8da', dormitor: '#efe6dc' };
@@ -133,6 +135,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
             {img ? <img className="print-room-img" src={img} alt={`${t('print.roomAlt')} ${r.name}`} /> : <div className="print-room-img print-hero-empty">{busy ? t('print.preparing') : t('print.dash')}</div>}
             <h3>{t('print.whatIsDone')}</h3>
             <RoomColors snap={snap} roomId={r.id} t={t} />
+            <RoomTech snap={snap} roomId={r.id} t={t} lang={locale} />
             <table className="print-table"><thead><tr><th>{t('print.finishesWorks')}</th><th className="num">{t('print.qty')}</th><th className="num">{t('print.cost')}</th></tr></thead>
               <tbody>{w.materials.length === 0 && <tr><td colSpan={3} className="muted">{t('print.noWorks')}</td></tr>}
                 {w.materials.map(m => <tr key={m.key}><td>{m.label}</td><td className="num">{m.qty} {m.unit}</td><td className="num">{money(m.cost, cur)}</td></tr>)}</tbody>
@@ -178,4 +181,11 @@ function RoomColors({ snap, roomId, t }: { snap: Snapshot; roomId: string; t: Tr
   const accents = Object.entries(snap.appearance?.wallFaces || {}).filter(([k]) => k.endsWith('@' + roomId)).map(([, f]) => normalizeHex(f.color)).filter((x): x is string => !!x);
   const rows: [string, string, boolean][] = [[t('print.wallsC'), l.walls, !!a?.walls], ...accents.map(c => [t('print.accentC'), c, true] as [string, string, boolean]), [t('print.floorC'), l.floorTint, !!a?.floor], [t('print.ceilingC'), l.ceiling, !!a?.ceiling]];
   return (<div className="print-colors"><b>{t('print.colors')}:</b> {rows.map(([label, hex, chosen], i) => <span key={i}><i style={{ background: hex }} /> {label} {chosen ? hex : t('print.defaultC')}</span>)}</div>);
+}
+
+/** Instalațiile camerei pe tipuri (punctele desenate; dacă lipsesc, cele sugerate, marcate ca atare). */
+function RoomTech({ snap, roomId, t, lang }: { snap: Snapshot; roomId: string; t: Translate; lang: Lang }){
+  const own = !!snap.tech, pts = (snap.tech ?? suggestTechPoints(snap)).filter(p => p.roomId === roomId), c = techCounts(pts).total;
+  const kinds = (Object.keys(TECH_KINDS) as TechKind[]).filter(k => c[k]); if (!kinds.length) return null;
+  return (<div className="print-colors"><b>{t('tech.exportTitle')}{own ? '' : ' ' + t('tech.exportSuggested')}:</b> {kinds.map(k => <span key={k}><i className="techdot" style={{ background: TECH_SYMBOL[k].color }}>{TECH_SYMBOL[k].letter}</i> {c[k]} × {TECH_KINDS[k].label[lang === 'en' ? 'en' : 'ro']}</span>)}</div>);
 }

@@ -41,3 +41,35 @@ test('cel mai apropiat punct de perete', () => {
   const q = nearestWallPoint(room, 1, 0.4); assert.ok(Math.abs(q.z - 0.02) < 1e-9 && q.x === 1);
   const q2 = nearestWallPoint(room, 3.9, 1.5); assert.ok(Math.abs(q2.x - 3.98) < 1e-9);
 });
+
+import { placeTechPoint, sanitizeTech } from '../core/technical';
+import { checkSnapshot } from '../lib/repo';
+import { adviseProject } from '../core/advisor';
+
+test('punctul adăugat manual se pune pe peretele cel mai apropiat al camerei; în afara camerelor nu se pune', () => {
+  const s = demo(), r = s.floor.rooms.find(x => x.id === 'living')!.rect;
+  const p = placeTechPoint(s, 'outlet', r.x0 + 0.3, (r.z0 + r.z1) / 2)!; assert.equal(p.roomId, 'living'); assert.ok(Math.abs(p.x - (r.x0 + 0.02)) < 1e-9);
+  s.tech = [p]; const q = placeTechPoint(s, 'outlet', r.x0 + 0.3, (r.z0 + r.z1) / 2)!; assert.notEqual(q.id, p.id, 'id unic');
+  assert.equal(placeTechPoint(s, 'outlet', -50, -50), null);
+  const l = placeTechPoint(s, 'light_point', (r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2)!; assert.equal(l.height, s.floor.ceilingHeight);
+});
+test('serverul păstrează doar puncte tehnice valide', () => {
+  const s = demo(), good = suggestTechPoints(s).slice(0, 3);
+  s.tech = [...good, { ...good[0]!, id: good[0]!.id }, { ...good[1]!, id: 'x1', kind: 'nuclear' as any }, { ...good[1]!, id: 'x2', roomId: 'nu-exista' }, { ...good[1]!, id: 'x3', height: 9 }, { ...good[1]!, id: 'x4', x: 999 }, { ...good[1]!, id: '<script>' }];
+  assert.deepEqual(checkSnapshot(structuredClone(s)).tech!.map(p => p.id), good.map(p => p.id));
+  assert.equal(sanitizeTech('nu', s), undefined);
+});
+test('consilierul: prize puține, lipsă întrerupător, sanitar fără scurgere — doar când există stratul tehnic', () => {
+  const s = demo(), codes = (x: Snapshot) => adviseProject(x, cat).map(a => a.code);
+  assert.ok(!codes(s).some(c => c.startsWith('TECH_')), 'fără strat tehnic, nicio observație de instalații');
+  s.tech = suggestTechPoints(s); assert.ok(!codes(s).some(c => c.startsWith('TECH_')), 'sugestiile complete nu produc observații');
+  s.tech = s.tech.filter(p => !(p.roomId === 'baie' && p.kind === 'drain') && !(p.roomId === 'living' && (p.kind === 'switch' || p.kind.startsWith('outlet'))));
+  const a = adviseProject(s, cat);
+  assert.ok(a.some(x => x.code === 'TECH_NO_DRAIN' && x.severity === 'WARNING'));
+  assert.ok(a.some(x => x.code === 'TECH_NO_SWITCH' && x.refs.roomId === 'living'));
+  assert.ok(a.some(x => x.code === 'TECH_FEW_OUTLETS' && x.refs.roomId === 'living' && x.vars.count === 0));
+});
+test('cel mult două întrerupătoare pe cameră, întâi la intrare', () => {
+  const s = demo(), c = techCounts(suggestTechPoints(s));
+  for (const r of s.floor.rooms) assert.ok((c.byRoom[r.id]?.switch ?? 0) <= 2, `${r.name}: ${c.byRoom[r.id]?.switch}`);
+});
