@@ -121,6 +121,11 @@ and what the same tokens cost on Fable. `report` reads the local Claude Code tra
 model, with the counterfactual cost on every other model (equal-token assumption: an upper
 bound on savings).
 
+The project `.claude/settings.json` sets `"model": "opus"`, so a session on this repository starts
+on Opus 5.5 unless the owner overrides it (`/model`, `--model` and `ANTHROPIC_MODEL` all rank
+higher): the main-session model is the largest single cost lever (Fable is 2.5x Opus per token)
+and the skill never changes it. Pick Fable deliberately, for the ambiguous long-horizon tail.
+
 In a session, the main agent (whatever model the owner picked with `/model`) does the
 classification itself with this table and delegates: `Agent(subagent_type="Explore")` for
 reads, `vault-worker` for bounded changes, `vault-reviewer` before claiming DONE. The main
