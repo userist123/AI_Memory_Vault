@@ -1,0 +1,66 @@
+name: Casa3D Build & Test
+
+# Casa3D lives in the vault as a workspace (02_PRODUCT/projects/workspaces/casa3d), like LogAnalyzer.
+# Every push that touches it runs the same gates the owner runs locally: typecheck, Vitest, next build.
+# No model call: ANTHROPIC_API_KEY is never set here, so the rules engine path is what gets tested.
+
+on:
+  push:
+    branches:
+      - main
+      - 'codex/casa3d-**'
+      - 'casa3d/**'
+    paths:
+      - '02_PRODUCT/projects/workspaces/casa3d/**'
+      - '.github/workflows/casa3d-build.yml'
+  pull_request:
+    paths:
+      - '02_PRODUCT/projects/workspaces/casa3d/**'
+      - '.github/workflows/casa3d-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: 02_PRODUCT/projects/workspaces/casa3d
+
+jobs:
+  build:
+    name: typecheck, test, build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Windows is in the matrix on purpose: the case-insensitive file system is where the
+        # viewer3d.js / Viewer3D.tsx clash was found (VERIFICATION_2026-10-10.md).
+        os: [ubuntu-latest, windows-latest]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: 02_PRODUCT/projects/workspaces/casa3d/package-lock.json
+      - name: Install (lockfile, no lifecycle scripts)
+        run: npm ci --ignore-scripts
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Production build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - name: Verification gates (F4, F5)
+        if: hashFiles('02_PRODUCT/projects/workspaces/casa3d/scripts/verify-f4.mjs') != ''
+        run: |
+          node scripts/verify-f4.mjs
+          if [ -f scripts/verify-f5.mjs ]; then node scripts/verify-f5.mjs; fi
+        shell: bash
