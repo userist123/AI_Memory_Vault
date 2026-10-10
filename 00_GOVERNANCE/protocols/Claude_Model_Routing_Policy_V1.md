@@ -79,7 +79,15 @@ python3 .claude/skills/cost-router/install.py --uninstall
 ```
 
 Inside this repository nothing needs installing: the project skill, agents and the hook in
-`.claude/settings.json` are versioned. `/cost-router` invokes the skill by hand; Claude also loads
+`.claude/settings.json` are versioned, and a `SessionStart` hook (startup and resume) runs
+`install.py --no-hook` so the skill and agents also land in the session's user scope (`~/.claude`),
+which is what an ephemeral cloud container needs. Another repository gets the same by adding to its
+`.claude/settings.json`:
+
+```json
+{"hooks": {"SessionStart": [{"matcher": "startup|resume", "hooks": [{"type": "command", "timeout": 60,
+  "command": "d=$(mktemp -d) && git clone -q --depth 1 https://github.com/userist123/AI_Memory_Vault_CODEX_READY \"$d\" && python3 \"$d/.claude/skills/cost-router/install.py\"; exit 0"}]}]}}
+``` `/cost-router` invokes the skill by hand; Claude also loads
 it on its own from the description. The hook adds about 60 tokens per prompt and is silent on
 trivial prompts (slash commands, yes/no, under four words); it can never block a prompt.
 

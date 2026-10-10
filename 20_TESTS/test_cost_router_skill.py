@@ -110,3 +110,21 @@ def test_project_settings_register_the_same_hook():
     cmds = json.dumps(settings["hooks"]["UserPromptSubmit"])
     assert ".claude/skills/cost-router/hook_prompt_route.py" in cmds
     assert "exit 2" not in cmds, "the route hint must never block a prompt"
+    start = settings["hooks"]["SessionStart"]
+    assert start[0]["matcher"] == "startup|resume"
+    cmd = start[0]["hooks"][0]["command"]
+    assert "cost-router/install.py" in cmd and "--no-hook" in cmd, "user-scope install must not duplicate the project prompt hook"
+    assert cmd.rstrip().endswith("exit 0") and "exit 2" not in cmd
+
+
+def test_session_start_command_runs_quietly_and_installs(tmp_path):
+    """Run the SessionStart command exactly as settings.json spells it, against a scratch HOME."""
+    import os
+    settings = json.loads((ROOT / ".claude" / "settings.json").read_text(encoding="utf-8"))
+    cmd = settings["hooks"]["SessionStart"][0]["hooks"][0]["command"]
+    env = dict(os.environ, CLAUDE_PROJECT_DIR=str(ROOT), HOME=str(tmp_path))
+    r = subprocess.run(["bash", "-c", cmd], env=env, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0 and r.stdout == "", (r.stdout, r.stderr)
+    assert (tmp_path / ".claude" / "skills" / "cost-router" / "SKILL.md").exists()
+    assert (tmp_path / ".claude" / "agents" / "Explore.md").exists()
+    assert not (tmp_path / ".claude" / "settings.json").exists(), "--no-hook writes no user settings"
