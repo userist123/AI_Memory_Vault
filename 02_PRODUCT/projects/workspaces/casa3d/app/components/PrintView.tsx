@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalog, MaterialsCatalog, Snapshot } from '@/core/types';
 import { footprintOf } from '@/core/validate';
 import { pricedOffer, resolve, furnitureTotal } from '@/core/catalog';
+import { roomLook, normalizeHex } from '@/core/appearance';
 import { roomWorks } from '@/core/room-works';
 import { lighting, sunDirection } from '@/core/lighting';
 import { viewerInput } from '@/lib/viewer-input';
@@ -25,7 +26,7 @@ const T = { custom: 'Pe comandă (preț la producător)',
   dash: '—', scaleBar: 'Bară de scară',
   preparing: 'Se pregătesc imaginile 3D…', noImages: 'Imaginile 3D nu au putut fi generate pe acest dispozitiv (WebGL indisponibil); exportul conține planurile și listele.', overviewAlt: 'Vedere 3D a casei', roomAlt: 'Vedere 3D a camerei',
   keyFigures: 'Cifre cheie', roomsCount: 'Camere', totalArea: 'Suprafață totală', furnitureKnown: 'Mobilier (prețuri cunoscute)', furnitureUnknown: 'piese fără preț', budgetTotalLabel: 'Total buget',
-  plan: 'Plan', whatIsDone: 'Ce se face în cameră', finishesWorks: 'Finisaje și materiale', laborWorks: 'Manoperă', qty: 'Cantitate', cost: 'Cost', laborExpected: 'Estimat', laborRange: 'Interval minim – maxim', roomFurniture: 'Mobilier în cameră', roomTotal: 'Subtotal cameră', roomLabor: 'manoperă estimată', noWorks: 'Nicio lucrare specifică.', noFurniture: 'Fără mobilier.',
+  colors: 'Culori alese', wallsC: 'Pereți', accentC: 'Perete accent', floorC: 'Nuanță pardoseală', ceilingC: 'Tavan', defaultC: 'implicit', plan: 'Plan', whatIsDone: 'Ce se face în cameră', finishesWorks: 'Finisaje și materiale', laborWorks: 'Manoperă', qty: 'Cantitate', cost: 'Cost', laborExpected: 'Estimat', laborRange: 'Interval minim – maxim', roomFurniture: 'Mobilier în cameră', roomTotal: 'Subtotal cameră', roomLabor: 'manoperă estimată', noWorks: 'Nicio lucrare specifică.', noFurniture: 'Fără mobilier.',
   byRetailer: 'Magazin', productLink: 'Link produs', rev: 'Rev.',
 };
 
@@ -147,6 +148,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
           <div className="print-room-left">
             {img ? <img className="print-room-img" src={img} alt={`${T.roomAlt} ${r.name}`} /> : <div className="print-room-img print-hero-empty">{busy ? T.preparing : T.dash}</div>}
             <h3>{T.whatIsDone}</h3>
+            <RoomColors snap={snap} roomId={r.id} />
             <table className="print-table"><thead><tr><th>{T.finishesWorks}</th><th className="num">{T.qty}</th><th className="num">{T.cost}</th></tr></thead>
               <tbody>{w.materials.length === 0 && <tr><td colSpan={3} className="muted">{T.noWorks}</td></tr>}
                 {w.materials.map(m => <tr key={m.key}><td>{m.label}</td><td className="num">{m.qty} {m.unit}</td><td className="num">{money(m.cost, cur)}</td></tr>)}</tbody>
@@ -184,4 +186,12 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
       {new Set(catalog.offers.map(o => o.currency)).size > 1 && <p className="muted">{T.currencyNote}</p>}
       <footer className="print-foot">{T.disclaimer}</footer></section>
   </main>);
+}
+
+/** Culorile alese pentru cameră, cu mostre și cod hex: zugravul și magazinul de vopsea lucrează direct după ele. */
+function RoomColors({ snap, roomId }: { snap: Snapshot; roomId: string }){
+  const l = roomLook(snap, roomId), a = snap.appearance?.rooms?.[roomId];
+  const accents = Object.entries(snap.appearance?.wallFaces || {}).filter(([k]) => k.endsWith('@' + roomId)).map(([, f]) => normalizeHex(f.color)).filter((x): x is string => !!x);
+  const rows: [string, string, boolean][] = [[T.wallsC, l.walls, !!a?.walls], ...accents.map(c => [T.accentC, c, true] as [string, string, boolean]), [T.floorC, l.floorTint, !!a?.floor], [T.ceilingC, l.ceiling, !!a?.ceiling]];
+  return (<div className="print-colors"><b>{T.colors}:</b> {rows.map(([label, hex, chosen], i) => <span key={i}><i style={{ background: hex }} /> {label} {chosen ? hex : T.defaultC}</span>)}</div>);
 }
