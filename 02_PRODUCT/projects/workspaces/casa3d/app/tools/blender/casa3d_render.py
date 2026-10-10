@@ -67,7 +67,7 @@ def scaled(rgba, k):
 # ---------------------------------------------------------------- materiale
 # Texturi foto (Poly Haven, CC0), folosite când există --assets: tip -> (dosar, mărimea unei repetări în metri, tărie relief)
 TEXTURES = {'parquet': ('laminate_floor_02', 2.0, 1.0), 'tile': ('large_grey_tiles', 2.4, 1.0), 'fabric': ('rough_linen', 0.5, 0.8),
-            'velvet': ('velour_velvet', 0.5, 0.6), 'leather': ('leather_white', 0.6, 0.8), 'wall': ('plastered_wall', 2.5, 0.35)}
+            'velvet': ('velour_velvet', 0.5, 0.6), 'leather': ('leather_white', 0.6, 0.8), 'wall': ('plastered_wall', 2.5, 0.12)}
 
 
 class Materials:

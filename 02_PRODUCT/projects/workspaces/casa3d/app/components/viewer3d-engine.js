@@ -210,6 +210,8 @@ function model(it){
         const c = new THREE.Mesh(new THREE.PlaneGeometry(w, d), r.tavan ? lookMat('ceil', r.tavan, 1) : ceilMat); c.rotation.x = Math.PI / 2; c.position.set((q.x0 + q.x1) / 2, H, (q.z0 + q.z1) / 2); ceilings.add(c); }
       const w = r.x1 - r.x0, d = r.z1 - r.z0;
       const pl = new THREE.PointLight(0xfff0dc, light ? light.interior : .35, 7, 2); interiorLights.push(pl); pl.position.set((r.x0 + r.x1) / 2, H - .3, (r.z0 + r.z1) / 2); ceilings.add(pl); });
+    const leafMat = MAT('paint', '#f4f2ed'), entranceMat = MAT('wood', '#4a3324'), handleMat = MAT('chrome', '#d8d8d8');
+    const pMinX = Math.min(...p.camere.map(r => r.x0)), pMaxX = Math.max(...p.camere.map(r => r.x1)), pMinZ = Math.min(...p.camere.map(r => r.z0)), pMaxZ = Math.max(...p.camere.map(r => r.z1));
     p.pereti.forEach(wl => {
       const [ax, az] = wl.a, [bx, bz] = wl.b, L = Math.hypot(bx - ax, bz - az); if (L < .01) return; const ux = (bx - ax) / L, uz = (bz - az) / L, rot = -Math.atan2(uz, ux), th = wl.ext ? .25 : .15, edge = wl.ext ? extMat : wallMat;
       // fețele mari ale cutiei: +z local = normala (-uz, ux) = fața A, -z = fața B (vezi wallFaceRooms în core/appearance.ts).
@@ -226,7 +228,13 @@ function model(it){
       const piece = (s0, s1, y0, y1) => { if (s1 - s0 < .005 || y1 - y0 < .005) return; const m = (s0 + s1) / 2; box(s1 - s0, y1 - y0, th, matAt(m), ax + ux * m, (y0 + y1) / 2, az + uz * m, rot, walls); if (y0 === 0) skirting(s0, s1, m); };
       const seg = (s0, s1, y0, y1) => { let q0 = s0; for (const t of breaks){ if (t > q0 + .005 && t < s1 - .005){ piece(q0, t, y0, y1); q0 = t; } } piece(q0, s1, y0, y1); };
       gs.forEach(g => { seg(q, g.la, 0, H);
-        if (g.tip === 'usa'){ const dh = Math.min(H - .05, g.h || 2.1), fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat; seg(g.la, g.la + g.l, dh, H); const m = g.la + g.l / 2; [g.la, g.la + g.l].forEach(s => box(.05, dh, th + .02, fm, ax + ux * s, dh / 2, az + uz * s, rot, walls)); box(g.l, .05, th + .02, fm, ax + ux * m, dh, az + uz * m, rot, walls); }
+        if (g.tip === 'usa'){ const dh = Math.min(H - .05, g.h || 2.1), fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat; seg(g.la, g.la + g.l, dh, H); const m = g.la + g.l / 2; [g.la, g.la + g.l].forEach(s => box(.05, dh, th + .02, fm, ax + ux * s, dh / 2, az + uz * s, rot, walls)); box(g.l, .05, th + .02, fm, ax + ux * m, dh, az + uz * m, rot, walls);
+          // foaia ușii, deschisă ~75° spre interior (opusul normalei exterioare, ca arcul din DXF), balamaua la începutul golului
+          const cmx = (pMinX + pMaxX) / 2, cmz = (pMinZ + pMaxZ) / 2, mx = ax + ux * m, mz = az + uz * m, sIn = ((mx - cmx) * nx + (mz - cmz) * nz) > 0 ? -1 : 1;
+          const R = rot - sIn * 1.31, dx = Math.cos(R), dz = -Math.sin(R), lw = Math.max(.3, g.l - .06), hx = ax + ux * (g.la + .03), hz = az + uz * (g.la + .03), lh = dh - .015;
+          box(lw, lh, .04, g.intrare ? entranceMat : leafMat, hx + dx * lw / 2, lh / 2, hz + dz * lw / 2, R, walls);
+          const kx = hx + dx * (lw - .07), kz = hz + dz * (lw - .07), px = -dz, pz = dx;
+          [1, -1].forEach(sg => box(.12, .02, .02, handleMat, kx + px * sg * .045, 1.02, kz + pz * sg * .045, R, walls).castShadow = false); }
         else { const sl = g.sill != null ? g.sill : .9, top = Math.min(H - .05, sl + (g.h || 1.3)), wh = top - sl, cy = (sl + top) / 2, fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat;
           seg(g.la, g.la + g.l, 0, sl); seg(g.la, g.la + g.l, top, H); const m = g.la + g.l / 2; box(g.l, wh, .02, glass, ax + ux * m, cy, az + uz * m, rot, walls).castShadow = false;
           box(g.l, .05, th + .04, fm, ax + ux * m, sl, az + uz * m, rot, walls); box(g.l, .05, th + .02, fm, ax + ux * m, top, az + uz * m, rot, walls); box(.04, wh, th + .02, fm, ax + ux * m, cy, az + uz * m, rot, walls); }
