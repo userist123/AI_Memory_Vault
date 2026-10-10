@@ -4,6 +4,20 @@ Durable lessons from real corrections, incidents and verification failures.
 
 ## Current lessons
 
+## 2026-10-10 — new markdown files under a vault domain move the measured state card
+- What happened: two plain `.md` files (a protocol doc and a checkpoint) pushed the `vault://` route
+  count past the 5% tolerance of `test_route_and_domain_counts_are_current`, and
+  `test_no_unlisted_unreadable_file` flagged them as notes without frontmatter.
+- Rule: when adding `.md` files under `00_GOVERNANCE/`, `01_ARCHITECTURE/`, `10_DOCUMENTATION/` or
+  any `04_CONFIG/vault_domains.yaml` domain, (a) add plain documents to
+  `20_TESTS/fixtures/unreadable_notes_allowlist.json` with the `plain_document` reason, and (b) if the
+  route-count test fails, re-measure with `python3 30_SCRIPTS/routing/measure_route_resolution.py --out
+  07_EVALUATION/vault_routing/route_resolution.json` (about 12 minutes) and update both
+  `VAULT_STATE.md` and `07_EVALUATION/vault_routing/README.md` from the JSON, never by hand-estimating.
+- Rule: never `git stash` while a test suite is running in the background; the files vanish mid-run.
+- Environment note: this container had `mcp 2.2.0` while the repo pins `mcp==1.30.0`; the MCP stdio tests
+  (and the `vault-memory` MCP server) fail until `pip install mcp==1.30.0`. Pin first, then judge failures.
+
 Lessons from the 2026-10-07/08 Claude Code session (PR repair round, LogAnalyzer stage 2).
 
 ## 2026-10-08 — sequential merges need the combined test roots, not a subset
