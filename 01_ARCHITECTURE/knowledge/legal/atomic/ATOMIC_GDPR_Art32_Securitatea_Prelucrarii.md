@@ -3,6 +3,12 @@ id: "atm-gdpr-art32-securitate"
 type: legal_atomic_obligation
 lifecycle: REVIEW
 verification: verified_source
+provenance:
+  source_type: ai
+  source_ref: "https://eur-lex.europa.eu/legal-content/RO/TXT/?uri=CELEX:32016R0679"
+  original_path: "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2016_679_GDPR.md"
+  redaction: none
+  provenance_status: complete
 instruction_trust: NONE
 category: technical_obligation_analysis
 source_act: "[[Regulament_UE_2016_679_GDPR]]"

@@ -3,6 +3,13 @@ id: "leg-eu-dora-2022-2554"
 type: legal_source
 lifecycle: REVIEW
 verification: verified_source
+provenance:
+  source_type: official
+  source_ref: "https://eur-lex.europa.eu/legal-content/RO/TXT/?uri=CELEX:32022R2554"
+  source_date: "2022-12-27"
+  original_path: "06_INBOX/Legi/CELEX_32022R2554_RO_TXT.pdf"
+  redaction: none
+  provenance_status: incomplete
 instruction_trust: NONE
 category: normative_external_data
 jurisdiction: "Uniunea Europeană (UE)"

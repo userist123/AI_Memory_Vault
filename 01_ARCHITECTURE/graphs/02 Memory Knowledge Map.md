@@ -3,6 +3,11 @@ id: "moc-knowledge-0002"
 type: moc
 lifecycle: ACTIVE
 category: navigation
+provenance:
+  source_type: user
+  source_ref: "git:2612ee92d"
+  redaction: none
+  provenance_status: complete
 tags: [moc, knowledge, durable-facts]
 ---
 

@@ -3,6 +3,13 @@ id: "leg-ro-mapn-m172-2021"
 type: legal_source
 lifecycle: REVIEW
 verification: verified_source
+provenance:
+  source_type: official
+  source_ref: "http://legislatie.just.ro/Public/DetaliiDocument/245842"
+  source_date: "2021-09-02"
+  original_path: "06_INBOX/Legi/M 172-2021.docx"
+  redaction: none
+  provenance_status: incomplete
 instruction_trust: NONE
 category: normative_external_data
 jurisdiction: "România (RO - MApN)"
