@@ -37,6 +37,35 @@ Cercetarea e făcută pe paginile oficiale; afirmațiile neconfirmate sunt marca
 | Cedreo | da, cote automate | import plan | parțial | da | da | DXF, JPG 300 dpi | nu | parțial | parțial |
 | Interior AI / ReimagineHome | nu | nu | parțial | parțial | imagini generate | nu | parțial | nu | da (restilizare foto) |
 
+## Restul pieței mondiale (al doilea tur, 2026-10-10)
+| Aplicație | Regiune | Ce face cel mai bine |
+|---|---|---|
+| Kujiale / Coohom | China, global | proiectare 3D în cloud, dulapuri și bucătării, randări rapide, tururi 360/720 |
+| 3vjia | China | de la proiect la comanda în fabrică (CNC), B2B |
+| Archisketch | Coreea | ~100k produse reale, așezare cu AI, showroom-uri panoramice |
+| Madory | Japonia | plan desenat cu degetul, mai multe niveluri, acoperișuri, 56 de limbi |
+| Chief Architect Home Designer | SUA | acoperișuri, scări, structură, listă de materiale cu prețuri, video |
+| SketchUp | SUA | modelare liberă, export IFC, extensii |
+| Houzz Pro | SUA | produse reale în 3D, scanare LiDAR, AR, comentarii ale clientului |
+| Roomle | Austria | plasare AR, 11.000+ produse configurabile de la 200+ mărci |
+| pCon.planner | Germania | 750+ cataloage de producători, import DWG/DXF |
+| Leroy Merlin, Hornbach, Home Depot | Europa, SUA | planificatoare de bucătărie/baie legate de gama proprie, preț live, vopsea/pardoseală pe poza ta |
+| Polycam, CamToPlan, Apple RoomPlan | global | scanare cu telefonul în plan editabil, export DXF |
+| Spacely, Collov | global | randări/restilizare cu AI din schiță sau poză |
+
+Funcții pe care le are cel puțin un lider mondial și Casa3D încă nu (ordonate după valoarea pentru proprietar):
+1. Scanare cu telefonul (LiDAR) în plan editabil — cere aplicație nativă; pe web nu se poate.
+2. Mai multe niveluri, scări, acoperișuri.
+3. Plasare AR pe telefon (mobilă la scară reală în cameră).
+4. Vopsea/pardoseală previzualizată pe poza proprie — cere segmentare (AI, amânat de proprietar).
+5. Configurator de bucătărie/baie cu preț live, ofertă și programare la specialist.
+6. Export DXF/DWG/IFC și import DWG.
+7. Tururi 360° și video pe cameră.
+8. Colaborare în timp real, cu comentarii puse pe obiecte.
+9. Modele 3D încărcate de utilizator și cataloage de producători.
+10. Măsurare cu telemetru laser prin Bluetooth.
+Limbi: liderii livrează de la 5 la 56 de limbi; cataloagele se localizează pe piețe (site separat pe țară la retaileri). Casa3D păstrează independente limba, unitățile și piața (catalog, monedă, TVA).
+
 ## Unde Casa3D e deja peste ei
 - Produse reale din România (IKEA și Dedeman) cu prețuri în lei, data verificării și linkuri directe. Niciun concurent verificat nu are piața românească.
 - Buget complet de renovare pentru proprietar: mobilier, finisaje, manoperă (minim/așteptat/maxim), transport, montaj, rezervă. Doar magicplan face deviz, și e pentru contractori.
@@ -65,6 +94,6 @@ Cerințele complete, reformulate, sunt în CERINTE_PRODUS_v2.md. Starea de mai j
 - FĂCUT: consilier („așa nu e bine”): circulație, proporții, lumină, ergonomie, culori, buget, cu motiv și reparație.
 - FĂCUT: realism 3D: lumină zi/seară/noapte, direcția soarelui, ocluzie ambientală (calitate înaltă), plinte, captură PNG.
 - FĂCUT: editor: duplicare, mutare cu săgețile, măsurare, ajutor pentru taste, plan din imagine cu calibrarea scării.
-- ÎN LUCRU: interfață în mai multe limbi (română, engleză) cu unități la alegere; șabloane generice (garsonieră, 1, 2, 3 camere).
-- URMEAZĂ: strat tehnic (prize, întrerupătoare, puncte de apă) cu numărătoare; mai multe niveluri; camere în L în aplicație; comentarii pe linkul partajat; cataloage pe piețe din alte țări (are nevoie de date reale de la magazine).
+- FĂCUT: interfață în română și engleză, unități metric/imperial (inclusiv la intrări); șabloane generice (garsonieră, 1, 2, 3 camere) cu nume de camere în limba aleasă; strat tehnic (prize, întrerupătoare, lumină, date, apă, scurgere) cu sugestii, plan, consilier și export.
+- URMEAZĂ (din comparația mondială): export DXF pentru meseriași; tururi panoramice 360° pe cameră; mai multe niveluri cu scări; comentarii pe linkul partajat; piață separată de limbă (catalog, monedă, TVA); modele 3D proprii; plasare AR.
 - AMÂNAT de proprietar: apelul real la un model AI. Nu se face pe web: scanare LiDAR (cere aplicație nativă).
