@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-10T11:50:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-10T11:55:00Z
 TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / none    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
@@ -63,6 +63,12 @@ PLAN v8 REBUILD (2026-10-10; owner decisions 10:58 UTC: code in Vault workspace 
   deterministic 5 cm grid search with againstWall/near/keepClear/alignedWith). 24 tests green, tsc clean.
   W8 (L-shaped rooms + wall-room linking) is therefore built into the model from the start.
   CI: casa3d-build.yml has a twin-core job (ubuntu + windows) and an app job that waits for app/package.json.
+- 2026-10-10 11:55 UTC: W3 DONE (catalog contract with UNKNOWN, dsl.ts validator that rejects coordinates and
+  invented ids, solver.ts with solve/measure/solveAlternatives, no auto-winner). W4 DONE (approval.ts: preview never
+  persists, accept revalidates the current twin, STALE/FAILED/ERROR/NEEDS_CONFIRMATION/ALREADY_DECIDED, revisions).
+  W2 DONE (view-state.ts: one ViewerState for plan and 3d, reducer, renderItems with preview overlay) with W9 built in
+  (joystick action: deterministic camera-frame walk, clamped). W5 DONE (boq-eval.ts: RON-only sums, UNKNOWN counted,
+  budget verdict UNKNOWN whenever a price is unknown, room quantities, provenance kept). 45 tests green, tsc clean.
 NEXT (in order):
 1. Owner supplies the v8 archive (or its path), or allows the PowerShell hash scan on LAB-PC; compare SHA-256 with 7bb34bf3...9628bc.
 2. npm ci, full Vitest, next build; record output in CORE_IMPLEMENTATION_v8.md.

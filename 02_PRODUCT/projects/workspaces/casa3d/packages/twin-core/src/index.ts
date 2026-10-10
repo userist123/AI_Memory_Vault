@@ -4,3 +4,6 @@ export * from './engine.js';
 export * from './catalog.js';
 export * from './dsl.js';
 export * from './solver.js';
+export * from './approval.js';
+export * from './view-state.js';
+export * from './boq-eval.js';
