@@ -32,10 +32,15 @@ export function toEngineCatalog(cat: Catalog): Record<string, EngineGroup> {
 }
 
 /** Totalul mobilierului la prețurile cunoscute din catalogul curent; piesele fără preț se numără separat, nu ca 0. */
+/** Oferta care dă prețul unei piese din plan. `null` pentru piesele pe comandă (cu `size`: nu se cumpără din catalog)
+ *  și pentru ofertele fără preț valid. Toate totalurile (buget, diff, export) trec pe aici, ca regula să fie una singură. */
+export function pricedOffer(cat: Catalog, p: { variantId: string; size?: unknown }): Offer | null {
+  if (p.size) return null; const o = resolve(cat, p.variantId)?.offer;
+  return o && typeof o.price === 'number' && Number.isFinite(o.price) ? o : null;
+}
 export function furnitureTotal(cat: Catalog, placements: { variantId: string; size?: unknown }[]): { known: number; unknown: number } {
   let known = 0, unknown = 0;
-  // o piesă pe comandă (cu `size`) nu are preț de catalog: se numără ca necunoscută
-  for (const p of placements){ const price = p.size ? undefined : resolve(cat, p.variantId)?.offer?.price; if (typeof price === 'number' && Number.isFinite(price)) known += price; else unknown++; }
+  for (const p of placements){ const price = pricedOffer(cat, p)?.price; if (typeof price === 'number' && Number.isFinite(price)) known += price; else unknown++; }
   return { known, unknown };
 }
 

@@ -44,10 +44,12 @@ export function WallLookPanel({ wall, snap, onFace }: { wall: Wall; snap: Snapsh
 }
 
 export function OpeningLookPanel({ op, snap, num, onPatch, onFrame }: { op: Opening; snap: Snapshot; num: any; onPatch(p: Partial<Opening>): void; onFrame(hex: string | null): void }){
-  const h = op.height ?? (op.kind === 'door' ? 2.1 : 1.3);
+  // golul rămâne sub tavan: înălțimea și parapetul se limitează la spațiul disponibil (serverul refuză altfel)
+  const h = op.height ?? (op.kind === 'door' ? 2.1 : 1.3), sill = op.kind === 'window' ? op.sill ?? 0.9 : 0, ceil = snap.floor.ceilingHeight || 2.6;
+  const r2 = (x: number) => Math.round(x * 100) / 100;
   return (<><div className="grid2">
-    <label className="f"><span>{T.height}</span><input type="number" value={Math.round(h * 100)} onChange={e => num(e.target.value, (x: number) => onPatch({ height: Math.round(x) / 100 }), 30)} /></label>
-    {op.kind === 'window' && <label className="f"><span>{T.sill}</span><input type="number" value={Math.round((op.sill ?? 0.9) * 100)} onChange={e => num(e.target.value, (x: number) => onPatch({ sill: Math.round(x) / 100 }), 0)} /></label>}
+    <label className="f"><span>{T.height}</span><input type="number" value={Math.round(h * 100)} onChange={e => num(e.target.value, (x: number) => onPatch({ height: r2(Math.min(x / 100, ceil - sill)) }), 30)} /></label>
+    {op.kind === 'window' && <label className="f"><span>{T.sill}</span><input type="number" value={Math.round(sill * 100)} onChange={e => num(e.target.value, (x: number) => onPatch({ sill: r2(Math.max(0, Math.min(x / 100, ceil - h))) }), 0)} /></label>}
   </div>
   <ColorField label={T.frame} value={openingColor(snap, op.id)} isDefault={!snap.appearance?.openings?.[op.id]} onChange={h => onFrame(h)} onReset={() => onFrame(null)} /></>);
 }

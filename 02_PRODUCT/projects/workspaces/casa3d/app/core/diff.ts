@@ -1,6 +1,6 @@
 // Compararea a două instantanee (revizii sau draft): camere, pereți, mobilier, cost. Pur, fără I/O.
 import type { Catalog, Snapshot, Room, Wall, FurniturePlacement } from './types';
-import { resolve } from './catalog';
+import { resolve, pricedOffer } from './catalog';
 
 export interface RoomRef { id: string; name: string }
 export interface FurnitureChange { id: string; roomName: string; name: string; detail?: string }
@@ -8,7 +8,9 @@ export interface CurrencyCost { before: number; after: number; delta: number; un
 export interface SnapshotDiff {
   rooms: { added: RoomRef[]; removed: RoomRef[]; changed: (RoomRef & { changes: string[] })[] };
   walls: { added: number; removed: number; changed: number };
-  furniture: { added: FurnitureChange[]; removed: FurnitureChange[]; moved: FurnitureChange[]; swapped: FurnitureChange[] };
+  furniture: { added: FurnitureChange[]; removed: FurnitureChange[]; moved: FurnitureChange[]; swapped: FurnitureChange[]; resized: FurnitureChange[] };
+  /** câte elemente și-au schimbat culoarea sau materialul (pereți, accente, podele, tavane, goluri, piese) */
+  looks: number;
   /** Pe moneda ofertei (ISO 4217); piesele fără preț se numără separat, nu ca 0, și sunt atribuite monedei implicite a catalogului. */
   cost: Record<string, CurrencyCost>;
   isEmpty: boolean;
@@ -46,10 +48,12 @@ export function diffSnapshots(before: Snapshot, after: Snapshot, cat: Catalog): 
   const variantName = (v: string) => resolve(cat, v)?.variant.name ?? v;
   const ref = (p: FurniturePlacement, detail?: string): FurnitureChange => ({ id: p.id, roomName: roomName(p.roomId), name: prodName(p), ...(detail ? { detail } : {}) });
   const pa = new Map(before.placements.map(p => [p.id, p])), pb = new Map(after.placements.map(p => [p.id, p]));
-  const furniture: SnapshotDiff['furniture'] = { added: [], removed: [], moved: [], swapped: [] };
+  const furniture: SnapshotDiff['furniture'] = { added: [], removed: [], moved: [], swapped: [], resized: [] };
   for (const [id, p] of pb) if (!pa.has(id)) furniture.added.push(ref(p));
   for (const [id, p] of pa){ const n = pb.get(id); if (!n){ furniture.removed.push(ref(p)); continue; }
     if (p.variantId !== n.variantId) furniture.swapped.push(ref(n, `${variantName(p.variantId)} → ${variantName(n.variantId)}`));
+    const sz = (q: FurniturePlacement) => q.size ? `${q.size.w}×${q.size.d}×${q.size.h} cm (pe comandă)` : 'din catalog';
+    if (JSON.stringify(p.size ?? null) !== JSON.stringify(n.size ?? null)) furniture.resized.push(ref(n, `${sz(p)} → ${sz(n)}`));
     const dist = Math.hypot(n.x - p.x, n.z - p.z), far = dist > MOVE_EPS_M + 1e-9, rot = !sameRot(p.rotation, n.rotation);
     if (far || rot){
       const parts: string[] = []; if (far) parts.push(`${Math.round(dist * 100)} cm`); if (rot) parts.push(`rotire ${p.rotation}° → ${n.rotation}°`);
@@ -57,14 +61,19 @@ export function diffSnapshots(before: Snapshot, after: Snapshot, cat: Catalog): 
 
   const defCur = cat.offers[0]?.currency ?? 'XXX';
   const tot = (pl: FurniturePlacement[]) => { const m: Record<string, { known: number; unknown: number }> = {};
-    for (const p of pl){ const o = resolve(cat, p.variantId)?.offer, ok = !!o && typeof o.price === 'number' && Number.isFinite(o.price), c = ok ? o!.currency as string : defCur;
-      const e = m[c] ??= { known: 0, unknown: 0 }; if (ok) e.known += o!.price; else e.unknown++; }
+    // prețul vine din pricedOffer (pe comandă = necunoscut); moneda piesei fără preț e a ofertei ei, dacă există
+    for (const p of pl){ const o = pricedOffer(cat, p), c = o ? o.currency as string : (resolve(cat, p.variantId)?.offer?.currency ?? defCur);
+      const e = m[c] ??= { known: 0, unknown: 0 }; if (o) e.known += o.price; else e.unknown++; }
     return m; };
   const tb = tot(before.placements), ta = tot(after.placements), cost: Record<string, CurrencyCost> = {};
   for (const c of new Set([...Object.keys(tb), ...Object.keys(ta)])){ const b = tb[c] ?? { known: 0, unknown: 0 }, a = ta[c] ?? { known: 0, unknown: 0 };
-    cost[c] = { before: b.known, after: a.known, delta: a.known - b.known, unknownBefore: b.unknown, unknownAfter: a.unknown }; }
+    const r2 = (v: number) => Math.round(v * 100) / 100;
+    cost[c] = { before: r2(b.known), after: r2(a.known), delta: r2(a.known - b.known), unknownBefore: b.unknown, unknownAfter: a.unknown }; }
   const costSame = Object.values(cost).every(k => k.delta === 0 && k.unknownBefore === k.unknownAfter);
+  // aspect: fiecare intrare (cameră, față de perete, gol, piesă) adăugată, ștearsă sau schimbată contează o dată
+  const flat = (a: Snapshot['appearance']) => { const m = new Map<string, string>(); for (const [k, v] of Object.entries(a || {})) for (const [id, f] of Object.entries(v || {})) m.set(`${k}:${id}`, JSON.stringify(f)); return m; };
+  const la = flat(before.appearance), lb = flat(after.appearance); let looks = 0; for (const k of new Set([...la.keys(), ...lb.keys()])) if (la.get(k) !== lb.get(k)) looks++;
   const isEmpty = !rooms.added.length && !rooms.removed.length && !rooms.changed.length && !walls.added && !walls.removed && !walls.changed
-    && !furniture.added.length && !furniture.removed.length && !furniture.moved.length && !furniture.swapped.length && costSame;
-  return { rooms, walls, furniture, cost, isEmpty };
+    && !furniture.added.length && !furniture.removed.length && !furniture.moved.length && !furniture.swapped.length && !furniture.resized.length && costSame && !looks;
+  return { rooms, walls, furniture, looks, cost, isEmpty };
 }

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalog, MaterialsCatalog, Snapshot } from '@/core/types';
 import { footprintOf } from '@/core/validate';
-import { resolve, furnitureTotal } from '@/core/catalog';
+import { pricedOffer, resolve, furnitureTotal } from '@/core/catalog';
 import { roomWorks } from '@/core/room-works';
 import { lighting, sunDirection } from '@/core/lighting';
 import { viewerInput } from '@/lib/viewer-input';
@@ -12,7 +12,7 @@ import { floorBounds, wallDimensions, roomSchedule, printScale } from '@/core/di
 import { formatMoney, formatLength, formatArea, type Locale, type Units } from '@/core/format';
 
 // Toate textele vizibile ale paginii, într-un singur loc, pentru stratul i18n.
-const T = {
+const T = { custom: 'Pe comandă (preț la producător)',
   brand: 'Casa mea 3D', printedOn: 'Tipărit la', revision: 'Revizia', noRevisions: 'fără revizii', loading: 'Se încarcă…', loadError: 'Proiectul nu există sau nu ai acces la el.',
   print: 'Tipărește / Salvează ca PDF', scale: 'Scara', planAria: 'Planul locuinței la scară', unnamed: 'Proiect fără nume',
   schedule: 'Tabel camere', room: 'Cameră', dims: 'Dimensiuni', areaCol: 'Suprafață', perimeter: 'Perimetru', total: 'Total', rooms: 'camere',
@@ -94,14 +94,15 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
   const sc = printScale(ew, ed), mm = sc.denominator / 1000;   // 1 mm pe hârtie = `mm` metri pe plan
   const sched = roomSchedule(snap), money = (n: number | null | undefined, cur: string) => formatMoney(n, cur, locale, T.unknownPrice);
   const cur = catalog.offers[0]?.currency ?? 'RON', bm = (n: number | null) => formatMoney(n, cur, locale, T.unknownPrice);
-  const furnKnownByCur = new Map<string, number>(); for (const pl of snap.placements){ const o = resolve(catalog, pl.variantId)?.offer; if (o && Number.isFinite(o.price)) furnKnownByCur.set(o.currency, (furnKnownByCur.get(o.currency) ?? 0) + o.price); }
+  const furnKnownByCur = new Map<string, number>(); for (const pl of snap.placements){ const o = pricedOffer(catalog, pl); if (o) furnKnownByCur.set(o.currency, (furnKnownByCur.get(o.currency) ?? 0) + o.price); }
 
   // lista de cumpărături pe magazine; prețurile lipsă rămân necunoscute, totalul se face pe monedă
   const sums = new Map<string, number>(); let unknownCount = 0;
   const byRetailer = new Map<string, { id: string; name: string; variant: string; room: string; offer: NonNullable<ReturnType<typeof resolve>>['offer'] }[]>();
-  for (const pl of snap.placements){ const rv = resolve(catalog, pl.variantId), o = rv?.offer ?? null, shop = o?.provenance.source ?? T.noOffer;
-    if (o && Number.isFinite(o.price)) sums.set(o.currency, (sums.get(o.currency) ?? 0) + o.price); else unknownCount++;
-    const arr = byRetailer.get(shop) ?? []; arr.push({ id: pl.id, name: rv?.product.name ?? pl.group, variant: rv?.variant.name ?? '', room: f.rooms.find(r => r.id === pl.roomId)?.name ?? '', offer: o }); byRetailer.set(shop, arr); }
+  // piesele pe comandă au grupa lor („pe comandă”), fără ofertă de catalog; prețul lor e necunoscut
+  for (const pl of snap.placements){ const rv = resolve(catalog, pl.variantId), o = pl.size ? null : rv?.offer ?? null, shop = pl.size ? T.custom : o?.provenance.source ?? T.noOffer, po = pricedOffer(catalog, pl);
+    if (po) sums.set(po.currency, (sums.get(po.currency) ?? 0) + po.price); else unknownCount++;
+    const arr = byRetailer.get(shop) ?? []; arr.push({ id: pl.id, name: rv?.product.name ?? pl.group, variant: pl.size ? `${rv?.variant.name ?? ''} — ${pl.size.w}×${pl.size.d}×${pl.size.h} cm` : rv?.variant.name ?? '', room: f.rooms.find(r => r.id === pl.roomId)?.name ?? '', offer: o }); byRetailer.set(shop, arr); }
   const catLines = ([['furniture', T.furniture], ['finishes', T.finishes], ['lighting', T.lighting], ['appliances', T.appliances], ['sanitary', T.sanitary]] as const).map(([k, l]) => [l, budget.categories[k] ?? 0] as const).filter(([, v]) => v > 0);
   const planBox = { x0: ex0, z0: ez0, w: ew, d: ed };
   const ROOM_MM = 100;

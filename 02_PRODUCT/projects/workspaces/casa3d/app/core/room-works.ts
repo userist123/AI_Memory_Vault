@@ -1,7 +1,7 @@
 // Ce se face într-o cameră: finisaje/materiale, manoperă și mobilier, cu totaluri pe monedă (prețurile lipsă se numără, nu devin 0).
 import type { Catalog, MaterialsCatalog, Snapshot } from './types';
 import { computeBOQ } from './boq';
-import { resolve } from './catalog';
+import { resolve, pricedOffer } from './catalog';
 
 export interface WorkMaterial { key: string; label: string; qty: number; unit: string; cost: number | null }
 export interface WorkLabor { key: string; label: string; qty: number; unit: string; low: number; expected: number; high: number }
@@ -16,8 +16,10 @@ export function roomWorks(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, ro
   const items = boq.items.filter(i => i.roomId === roomId && i.category !== 'furniture');
   const materials: WorkMaterial[] = items.map(i => ({ key: i.key, label: i.label, qty: i.orderedQty, unit: i.unit, cost: finite(i.total) ? i.total : null }));
   const labor: WorkLabor[] = boq.labor.filter(l => l.roomId === roomId).map(l => ({ key: l.key, label: l.label, qty: l.qty, unit: l.unit, low: l.low, expected: l.expected, high: l.high }));
-  const furniture: WorkFurniture[] = snap.placements.filter(p => p.roomId === roomId).map(p => { const rv = resolve(cat, p.variantId), o = rv?.offer ?? null;
-    return { id: p.id, name: rv?.product.name ?? p.group, retailer: o?.provenance.source ?? null, price: o && finite(o.price) ? o.price : null, currency: o?.currency ?? null, offerId: o?.id ?? null }; });
+  // piesa pe comandă nu se cumpără din catalog: fără magazin, fără link, preț necunoscut (pricedOffer)
+  const furniture: WorkFurniture[] = snap.placements.filter(p => p.roomId === roomId).map(p => { const rv = resolve(cat, p.variantId), o = pricedOffer(cat, p);
+    const name = rv?.product.name ?? p.group;
+    return { id: p.id, name: p.size ? `${name} — pe comandă ${p.size.w}×${p.size.d}×${p.size.h} cm` : name, retailer: p.size ? null : rv?.offer?.provenance.source ?? null, price: o ? o.price : null, currency: rv?.offer?.currency ?? null, offerId: p.size ? null : rv?.offer?.id ?? null }; });
   const totals: Record<string, RoomCurrencyTotal> = {};
   const slot = (c: string) => (totals[c] ||= { known: 0, unknown: 0, laborExpected: 0 });
   const placementIds = new Set(furniture.map(f => f.id));

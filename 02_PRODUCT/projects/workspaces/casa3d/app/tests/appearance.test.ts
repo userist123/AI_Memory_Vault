@@ -58,7 +58,7 @@ test('serverul acceptă doar dimensiuni și aspect plauzibile', () => {
   const s = demo(); s.placements[0]!.size = { w: 5, d: 60, h: 45 };
   assert.throws(() => checkSnapshot(structuredClone(s)), (e: any) => e.status === 400);
   s.placements[0]!.size = { w: 120, d: 60, h: 45 }; assert.doesNotThrow(() => checkSnapshot(structuredClone(s)));
-  const w = s.floor.walls.find(w => w.openings.length)!; w.openings[0]!.height = 5; assert.throws(() => checkSnapshot(structuredClone(s)), (e: any) => e.status === 400); w.openings[0]!.height = 2.2;
+  const w = s.floor.walls.find(w => w.openings.length)!; w.openings[0]!.height = 5; assert.throws(() => checkSnapshot(structuredClone(s)), (e: any) => e.status === 400); w.openings[0]!.height = w.openings[0]!.kind === 'door' ? 2.2 : 1.5;
   s.appearance = { rooms: { [s.floor.rooms[0]!.id]: { walls: { color: 'roșu' }, floor: { color: '#abc' } }, 'nu-exista': { walls: { color: '#ffffff' } } }, items: { [s.placements[0]!.id]: { color: '#123456', material: 'plutoniu' } }, wallFaces: { 'x@y': { color: '#ffffff' } } } as any;
   const c = checkSnapshot(structuredClone(s));
   assert.deepEqual(c.appearance, { rooms: { [s.floor.rooms[0]!.id]: { floor: { color: '#aabbcc' } } }, items: { [s.placements[0]!.id]: { color: '#123456' } } });

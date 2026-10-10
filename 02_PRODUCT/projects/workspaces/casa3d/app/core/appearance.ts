@@ -103,7 +103,7 @@ export function sanitizeAppearance(a: unknown, snap: Pick<Snapshot, 'floor' | 'p
   const rooms = new Set(snap.floor.rooms.map(r => r.id)), walls = new Set(snap.floor.walls.map(w => w.id)), ops = new Set(snap.floor.walls.flatMap(w => w.openings.map(o => o.id))), items = new Map(snap.placements.map(p => [p.id, p]));
   if (x.rooms && typeof x.rooms === 'object') for (const [id, r] of Object.entries<any>(x.rooms)){ if (!rooms.has(id) || !r) continue;
     const e = { walls: fin(r.walls), floor: fin(r.floor), ceiling: fin(r.ceiling) }; const kept = Object.fromEntries(Object.entries(e).filter(([, v]) => v)); if (Object.keys(kept).length) (out.rooms ||= {})[id] = kept; }
-  if (x.wallFaces && typeof x.wallFaces === 'object') for (const [k, f] of Object.entries<any>(x.wallFaces)){ const [w, r] = k.split('@'); const v = fin(f); if (v && w && r && walls.has(w) && rooms.has(r)) (out.wallFaces ||= {})[k] = v; }
+  if (x.wallFaces && typeof x.wallFaces === 'object') for (const [k, f] of Object.entries<any>(x.wallFaces)){ const parts = k.split('@'), [w, r] = parts; const v = fin(f); if (v && parts.length === 2 && w && r && walls.has(w) && rooms.has(r)) (out.wallFaces ||= {})[k] = v; }
   if (x.openings && typeof x.openings === 'object') for (const [id, f] of Object.entries<any>(x.openings)){ const v = fin(f); if (v && ops.has(id)) (out.openings ||= {})[id] = v; }
   if (x.items && typeof x.items === 'object') for (const [id, f] of Object.entries<any>(x.items)){ const p = items.get(id); const v = p && fin(f, modelOf ? MATERIAL_OPTIONS[modelOf(p)] || [] : ALL_MATERIALS); if (v) (out.items ||= {})[id] = v; }
   return Object.keys(out).length ? out : undefined;

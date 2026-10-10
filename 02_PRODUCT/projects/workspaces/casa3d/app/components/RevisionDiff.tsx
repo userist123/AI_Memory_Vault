@@ -11,7 +11,7 @@ const T = {
   pickFrom: 'Alege revizia de pornire.', failed: 'Compararea a eșuat.', noDiff: 'Nicio diferență între', and: 'și',
   rooms: 'Camere', walls: 'pereți', furniture: 'mobilier', moved: 'mutate', swapped: 'schimbate', more: 'altele', unpriced: 'fără preț',
   roomsAdded: 'Camere adăugate', roomsRemoved: 'Camere eliminate', roomsChanged: 'Camere modificate',
-  furAdded: 'Mobilier adăugat', furRemoved: 'Mobilier eliminat', furMoved: 'Mobilier mutat', furSwapped: 'Variante schimbate', cost: 'Mobilier',
+  furAdded: 'Mobilier adăugat', furRemoved: 'Mobilier eliminat', furMoved: 'Mobilier mutat', furSwapped: 'Variante schimbate', furResized: 'Dimensiuni schimbate', looks: 'elemente cu culoare sau material schimbat', cost: 'Mobilier',
 };
 
 function Lines({ title, lines }: { title: string; lines: string[] }){
@@ -46,6 +46,8 @@ export default function RevisionDiff({ id, revs }: { id: string; revs: { number:
       <Lines title={T.furRemoved} lines={res.furniture.removed.map(fur)} />
       <Lines title={T.furMoved} lines={res.furniture.moved.map(fur)} />
       <Lines title={T.furSwapped} lines={res.furniture.swapped.map(fur)} />
+      <Lines title={T.furResized} lines={(res.furniture.resized ?? []).map(fur)} />
+      {res.looks > 0 && <p className="prov">{res.looks} {T.looks}</p>}
       {Object.entries(res.cost).map(([cur, c]) => <p key={cur} className="prov">{T.cost} ({cur}): {formatMoney(c.before, cur)} → {formatMoney(c.after, cur)} (<b>{formatMoneyDelta(c.delta, cur)}</b>)
         {(c.unknownBefore > 0 || c.unknownAfter > 0) && ` · ${T.unpriced}: ${c.unknownBefore} → ${c.unknownAfter}`}</p>)}
     </div>)}
