@@ -104,6 +104,7 @@ export default function Editor({ id }: { id: string }){
       <div className="btn" role="group" aria-label="Vizualizare" style={{ padding: 2, gap: 2 }}>
         {(['2d', 'split', '3d'] as const).map(vv => <button key={vv} className="btn" style={{ minHeight: 30, border: 0, background: view === vv ? 'var(--graphite)' : 'transparent', color: view === vv ? '#fff' : undefined }} onClick={() => { setView(vv); if (vv === '3d' && typeof matchMedia === 'function' && matchMedia('(max-width: 900px)').matches) setSideOpen(false); }}>{vv === '2d' ? 'Plan' : vv === '3d' ? '3D' : 'Plan + 3D'}</button>)}
       </div>
+      <a className="btn" href={`/p/${id}/print`} target="_blank" rel="noopener">Tipărește / PDF</a>
       <button className="btn primary" onClick={saveRevision}>Salvează revizia</button>
     </header>
     <div className="body">
