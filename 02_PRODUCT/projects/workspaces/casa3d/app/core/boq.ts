@@ -3,6 +3,7 @@ import { resolve, groupOf } from './catalog';
 import { area as rectArea } from './geometry';
 import { openingsOnSide } from './validate';
 import { floors, floorOfRoom } from './levels';
+import { roomWindows, curtainPlan, blindPlan } from './textiles';
 import { bathTiles, layoutOf, floorWaste, floorLaborId, sideGeometry, wallpaperRolls, panelCount, pieceSizeCm, ceilingOf, FEATURE_CATEGORY, FEATURE_LABOR } from './finishes';
 import { WASTE, PAINT_COATS, DOOR_HEIGHT, WINDOW_HEIGHT, BATH_TILE_HEIGHT, BACKSPLASH_HEIGHT, LIGHTS_EXTRA_PER_M2, VAT_RATE, WET_ROOMS, SANITARY, APPLIANCES, DEFAULT_BUDGET } from './rules.boq';
 
@@ -27,9 +28,10 @@ export const finishesOf = (snap: Snapshot, room: Room): RoomFinishes => ({ ...de
 export const budgetOf = (snap: Snapshot): BudgetSettings => ({ ...DEFAULT_BUDGET, ...(snap.budget || {}) });
 
 // ---------- 2) BOQ ----------
+const TEXTILE_CATS = new Set(['curtain', 'sheer', 'blind', 'rug']);
 const PATTERN_LABEL: Record<string, string> = { straight: 'drept', brick: 'decalat 1/2', third: 'decalat 1/3', diagonal: 'diagonală', herringbone: 'spic', chevron: 'chevron', checker: 'șah' };
 const FEATURE_LABEL: Record<string, string> = { wallpaper: 'Tapet', slats: 'Riflaj', plaster: 'Tencuială decorativă', brick: 'Cărămidă aparentă', stone: 'Piatră decorativă', tile: 'Faianță' };
-export type BoqCategory = 'furniture' | 'finishes' | 'lighting' | 'appliances' | 'sanitary';
+export type BoqCategory = 'furniture' | 'finishes' | 'lighting' | 'appliances' | 'sanitary' | 'textiles';
 export interface BoqItem { key: string; category: BoqCategory; roomId: string | null; label: string; refId: string; netQty: number; unit: string; wastePct: number;
   orderedQty: number; packs: number | null; packLabel: string | null; unitPrice: number | null; total: number | null; supplier: string; sourceUrl: string | null; verifiedAt: string | null; confidence: Confidence; note?: string }
 export interface LaborItem { key: string; roomId: string; rateId: string; label: string; qty: number; unit: string; low: number; expected: number; high: number; confidence: Confidence; sources: { name: string; url: string }[] }
@@ -39,7 +41,7 @@ function materialLine(m: Material, key: string, roomId: string | null, label: st
   let packs: number | null = null, ordered = need, total: number;
   if (m.pack){ packs = Math.ceil(need / m.pack.size - 1e-9); ordered = packs * m.pack.size; total = m.pack.price != null ? packs * m.pack.price : ordered * m.unitPrice; }
   else { ordered = m.unit === 'buc' ? Math.ceil(need - 1e-9) : need; total = ordered * m.unitPrice; }
-  return { key, category: m.category === 'lighting' || m.category === 'spot' || m.category === 'led_strip' ? 'lighting' : 'finishes', roomId, label, refId: m.id, netQty: r2(net), unit: m.unit, wastePct: waste, orderedQty: r2(ordered), packs, packLabel: m.pack?.label ?? null,
+  return { key, category: m.category === 'lighting' || m.category === 'spot' || m.category === 'led_strip' ? 'lighting' : TEXTILE_CATS.has(m.category) ? 'textiles' : 'finishes', roomId, label, refId: m.id, netQty: r2(net), unit: m.unit, wastePct: waste, orderedQty: r2(ordered), packs, packLabel: m.pack?.label ?? null,
     unitPrice: m.unitPrice, total: r2(total), supplier: m.supplier, sourceUrl: m.sourceUrl, verifiedAt, confidence: m.confidence, note: m.note };
 }
 export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
@@ -83,6 +85,13 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
       if (c.type === 'cove'){ addLabor(room.id, 'manopera-scafa', inner);
         const led = M(c.led); if (led) items.push(materialLine(led, `${room.id}:led`, room.id, `Bandă LED scafă · ${room.name} (${r2(inner)} m)`, inner, mc.verifiedAt)); } }
     const cm = M(c.cornice); if (cm){ items.push(materialLine(cm, `${room.id}:cornice`, room.id, `Cornișă · ${room.name}`, g.perimeter, mc.verifiedAt)); addLabor(room.id, 'manopera-cornisa', g.perimeter); }
+    // textile: draperii și perdele în pachete (perechi de panouri), storuri pe fereastră, covorul camerei
+    const wins = roomWindows(fl, room);
+    for (const t of f.windows || []){ const win = wins.find(x => x.openingId === t.openingId); if (!win) continue; const n = wins.indexOf(win) + 1;
+      for (const [k, id, lbl] of [['curtain', t.curtain, 'Draperii'], ['sheer', t.sheer, 'Perdele']] as const){ const m = M(id); if (!m) continue; const p = curtainPlan(win, fl.ceilingHeight, m, t.fullness);
+        items.push(materialLine(m, `${room.id}:${k}:${t.openingId}`, room.id, `${lbl} · ${room.name}, fereastra ${n} (${r2(win.widthM)} m): bară ${p.rodW} m, ${p.panels} panouri, cădere ${p.drop} m${p.hemM > .02 ? `, tiv ${Math.round(p.hemM * 100)} cm` : ''}`, p.packs, mc.verifiedAt, 0)); }
+      const bm2 = M(t.blind); if (bm2){ const p = blindPlan(win, bm2); items.push(materialLine(bm2, `${room.id}:blind:${t.openingId}`, room.id, `Stor · ${room.name}, fereastra ${n} (${r2(win.widthM)} m)`, p.count, mc.verifiedAt, 0)); } }
+    const rug = M(f.rug?.material); if (rug) items.push(materialLine(rug, `${room.id}:rug`, room.id, `Covor · ${room.name}`, 1, mc.verifiedAt, 0));
     const sm = M(c.spot); if (sm && c.spots > 0) items.push(materialLine(sm, `${room.id}:spots`, room.id, `Spoturi încastrate · ${room.name}`, c.spots, mc.verifiedAt));
     // vopsea: pereți (fără zona placată) + tavan (și marginea tavanului fals), 2 straturi
     const paintArea = Math.max(0, g.wallNet - wallsHidden - (wt ? tileArea : 0) - featureArea) + g.ceiling + ceilingBand, pm = M(f.wallPaint);
@@ -112,7 +121,7 @@ export interface BudgetLine { key: string; label: string; amount: number | null;
 export function computeBudget(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
   const s = budgetOf(snap), { items, labor, geometry, unknown } = computeBOQ(snap, cat, mc);
   const sum = (c: BoqCategory) => r2(items.filter(i => i.category === c).reduce((a, i) => a + (i.total ?? 0), 0));
-  const cats: Record<string, number> = { furniture: sum('furniture'), finishes: sum('finishes'), lighting: sum('lighting'), appliances: sum('appliances'), sanitary: sum('sanitary') };
+  const cats: Record<string, number> = { furniture: sum('furniture'), finishes: sum('finishes'), lighting: sum('lighting'), appliances: sum('appliances'), sanitary: sum('sanitary'), textiles: sum('textiles') };
   const laborTotals = { low: r2(labor.reduce((a, l) => a + l.low, 0)), expected: r2(labor.reduce((a, l) => a + l.expected, 0)), high: r2(labor.reduce((a, l) => a + l.high, 0)) };
   const svc = (id: string) => mc.services.find(x => x.id === id);
   const extra: BudgetLine[] = [];

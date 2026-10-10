@@ -1,6 +1,7 @@
 // Intrarea motorului 3D, construită dintr-un snapshot: planul + piesele cu amprentă și varianta de catalog.
 import type { Catalog, Snapshot, MaterialsCatalog } from '@/core/types';
 import { roomVisual } from '@/core/finishes';
+import { textileVisual } from '@/core/textiles';
 import { finishesOf } from '@/core/boq';
 import { planWithLook } from '@/lib/plan-look';
 import { itemStyle, itemSizeCm } from '@/core/appearance';
@@ -20,6 +21,9 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   const scari = (snap.floor.stairs ?? []).map(st => ({ id: st.id, x: st.x, z: st.z, w: st.width, l: st.length, rot: st.rotation, ...stairGeometry(st, rise) }));
   const plan = planWithLook(snap), mc = extra.mc;
   // finisajele de designer ale fiecărei camere (modul de așezare, placări, tavan), doar când avem catalogul de materiale
-  if (mc) plan.camere.forEach((c: any) => { const r = snap.floor.rooms.find(x => x.id === c.id); if (r) c.fin = roomVisual(mc, finishesOf(snap, r), r.type); });
+  if (mc) plan.camere.forEach((c: any) => { const r = snap.floor.rooms.find(x => x.id === c.id); if (!r) return; const f = finishesOf(snap, r), tv = textileVisual(mc, snap.floor, r, f);
+    c.fin = { ...roomVisual(mc, f, r.type), rug: tv.rug };
+    // textilele de la ferestre stau pe golul lor, pe partea dinspre cameră
+    for (const w of tv.windows){ const g = plan.pereti[w.wallIndex]?.goluri[w.openingIndex]; if (g) g.trat = { inward: w.inward, rodH: w.rodH, curtain: w.curtain, sheer: w.sheer, blind: w.blind }; } });
   return { plan: { ...plan, scari, goluriPlaca: extra.voids ?? [] }, items };
 }

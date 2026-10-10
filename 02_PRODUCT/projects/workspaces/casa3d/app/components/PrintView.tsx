@@ -102,7 +102,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
   for (const pl of snap.placements){ const rv = resolve(catalog, pl.variantId), o = pl.size ? null : rv?.offer ?? null, shop = pl.size ? t('print.custom') : o?.provenance.source ?? t('print.noOffer'), po = pricedOffer(catalog, pl);
     if (po) sums.set(po.currency, (sums.get(po.currency) ?? 0) + po.price); else unknownCount++;
     const arr = byRetailer.get(shop) ?? []; arr.push({ id: pl.id, name: rv?.product.name ?? pl.group, variant: pl.size ? `${rv?.variant.name ?? ''} — ${formatDimsCm(pl.size, units, locale)}` : rv?.variant.name ?? '', room: allRooms.find(r => r.id === pl.roomId)?.name ?? '', offer: o }); byRetailer.set(shop, arr); }
-  const catLines = ([['furniture', t('print.furniture')], ['finishes', t('print.finishes')], ['lighting', t('print.lighting')], ['appliances', t('print.appliances')], ['sanitary', t('print.sanitary')]] as const).map(([k, l]) => [l, budget.categories[k] ?? 0] as const).filter(([, v]) => v > 0);
+  const catLines = ([['furniture', t('print.furniture')], ['finishes', t('print.finishes')], ['lighting', t('print.lighting')], ['appliances', t('print.appliances')], ['sanitary', t('print.sanitary')], ['textiles', t('print.textiles')]] as const).map(([k, l]) => [l, budget.categories[k] ?? 0] as const).filter(([, v]) => v > 0);
   const ROOM_MM = 100, levelOf = new Map(views.flatMap((v, i) => v.floor.rooms.map(r => [r.id, i] as const)));
 
   return (<main className="print-page">

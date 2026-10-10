@@ -34,7 +34,7 @@ test('detaliile spun modelul, mărimea, înălțimea și partea peretelui, în r
   const rows = finishSchedule(project(), cat, mc), floor = rows.find(r => r.roomId === 'living' && r.element === 'floor')!, wall = rows.find(r => r.element === 'wall')!;
   assert.equal(floor.code, '4026660'); assert.equal(floor.verifiedAt, '2026-10-10');
   assert.equal(detailText(floor, t), 'Spic (herringbone) · 63 × 12.6 cm');
-  assert.match(detailText(wall, t), /^Tapet · Peretele de sus · până la 1.2 m · Raportul modelului nu e declarat/);
+  assert.match(detailText(wall, t), /^Tapet · Peretele de sus · până la 1.2 m · 11 fâșii, 8 pe rolă · Raportul modelului nu e declarat/);
   assert.match(detailText(rows.find(r => r.element === 'ceiling')!, t), /Fals cu scafă luminoasă · coborât 12 cm · scafă 25 cm/);
   assert.match(detailText(rows.find(r => r.element === 'led')!, t), /3000 K · IP20/);
 });

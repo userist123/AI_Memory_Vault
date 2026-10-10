@@ -13,12 +13,12 @@ import { formatNumber } from '@/lib/i18n';
 
 // Cantitățile de materiale rămân în unitățile de comandă ale magazinului (m², ml, L, kg, buc); doar banii, lungimile și suprafețele de proiect urmează limba și unitățile.
 const pc = (x: number) => Math.round(x * 1000) / 10;
-const CAT_LABEL: Record<string, string> = { furniture: 'budget.cat.furniture', finishes: 'budget.cat.finishes', lighting: 'budget.cat.lighting', appliances: 'budget.cat.appliances', sanitary: 'budget.cat.sanitary' };
+const CAT_LABEL: Record<string, string> = { furniture: 'budget.cat.furniture', finishes: 'budget.cat.finishes', lighting: 'budget.cat.lighting', appliances: 'budget.cat.appliances', sanitary: 'budget.cat.sanitary' , textiles: 'budget.cat.textiles' };
 const UNIT: Record<string, string> = { m2: 'm²', ml: 'budget.unit.ml', L: 'L', kg: 'kg', buc: 'budget.unit.buc' };
 const CONF: Record<string, string> = { HIGH: 'budget.conf.HIGH', MEDIUM: 'budget.conf.MEDIUM', LOW: 'budget.conf.LOW', UNKNOWN: 'budget.conf.UNKNOWN' };
 
 export type Outbound = { targets: Record<string, 'direct' | 'affiliate'>; disclosure: boolean };
-export function linkFor(i: BoqItem, out: Outbound | null){ const mat = i.category === 'finishes' || i.category === 'lighting', key = mat ? `m:${i.refId}` : `o:offer-${i.refId}`, t = out?.targets[key];
+export function linkFor(i: BoqItem, out: Outbound | null){ const mat = i.category === 'finishes' || i.category === 'lighting' || i.category === 'textiles', key = mat ? `m:${i.refId}` : `o:offer-${i.refId}`, t = out?.targets[key];
   return t ? { href: mat ? `/go/m/${i.refId}` : `/go/o/offer-${i.refId}`, rel: relFor(t), affiliate: t === 'affiliate' } : null; }
 export function Fresh({ at }: { at: string | null }){ const { t } = usePrefs(), f = freshness(at); return f.stale ? <span className="stale">{f.days == null ? t('budget.dateUnknown') : t('budget.staleDays', { days: f.days })}</span> : null; }
 export default function BudgetPanel({ snap, catalog, mc, out, onBudget }: { snap: Snapshot; catalog: Catalog; mc: MaterialsCatalog; out: Outbound | null; onBudget(patch: Partial<BudgetSettings>): void }){
@@ -55,8 +55,8 @@ export default function BudgetPanel({ snap, catalog, mc, out, onBudget }: { snap
     <label className="f" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked={s.deliveryIkea} onChange={e => onBudget({ deliveryIkea: e.target.checked })} /> {t('budget.deliveryIkea')}</label>
     <label className="f" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked={s.kitchenAssembly} onChange={e => onBudget({ kitchenAssembly: e.target.checked })} /> {t('budget.kitchenAssembly')}</label>
 
-    <button className="acc" onClick={() => setOpen(open === 'mat' ? null : 'mat')} aria-expanded={open === 'mat'}>{t('budget.materials', { n: b.items.filter(i => i.category === 'finishes' || i.category === 'lighting').length })}</button>
-    {open === 'mat' && <div className="tbl">{b.items.filter(i => i.category === 'finishes' || i.category === 'lighting').map(i => <div key={i.key} className="trow">
+    <button className="acc" onClick={() => setOpen(open === 'mat' ? null : 'mat')} aria-expanded={open === 'mat'}>{t('budget.materials', { n: b.items.filter(i => i.category === 'finishes' || i.category === 'lighting' || i.category === 'textiles').length })}</button>
+    {open === 'mat' && <div className="tbl">{b.items.filter(i => i.category === 'finishes' || i.category === 'lighting' || i.category === 'textiles').map(i => <div key={i.key} className="trow">
       <ItemLink i={i} out={out} /><b className="mono">{i.total != null ? lei(i.total) : '—'}</b>
       <small>{num(i.netQty)} {unit(i.unit)} {t('budget.net')}{i.wastePct ? ` + ${Math.round(i.wastePct * 100)}% = ` : ' · '}{i.packs != null ? `${i.packs} × ${i.packLabel} (${num(i.orderedQty)} ${unit(i.unit)})` : `${num(i.orderedQty)} ${unit(i.unit)}`} · {formatMoney(i.unitPrice || 0, cur, lang)}/{unit(i.unit)} · {i.supplier}, {i.verifiedAt}, {t(CONF[i.confidence]!)} <Fresh at={i.verifiedAt} /></small></div>)}</div>}
     <button className="acc" onClick={() => setOpen(open === 'lab' ? null : 'lab')} aria-expanded={open === 'lab'}>{t('budget.laborSection', { n: b.labor.length })}</button>

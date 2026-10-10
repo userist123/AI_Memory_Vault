@@ -214,6 +214,8 @@ function model(it){
         const fmat = new THREE.MeshStandardMaterial({ map: t, roughness: tileFloor ? .35 : .6, color: lin(r.podea || '#ffffff') });
         if (ft) fmat.userData = { kind: ff.kind === 'tile' ? 'tile' : 'parquet', pat: { ...ff, rect: [r.x0, r.z0, r.x1, r.z1] } };
         const f = new THREE.Mesh(new THREE.PlaneGeometry(w, d), fmat); f.rotation.x = -Math.PI / 2; f.position.set((q.x0 + q.x1) / 2, 0, (q.z0 + q.z1) / 2); f.receiveShadow = true; house.add(f); }
+      // covorul camerei, centrat, cu latura lungă după cameră (sau rotit)
+      if (r.fin && r.fin.rug){ const rg = r.fin.rug, rm = MAT('fabric', rg.color); const o = box(rg.w, .012, rg.d, rm, (r.x0 + r.x1) / 2, .006, (r.z0 + r.z1) / 2, 0, house); o.castShadow = false; }
       // tavan: drept la H; fals coborât cu `drop`; cu scafă: banda de lângă pereți rămâne sus, panoul din mijloc coboară, cu bandă LED pe margine
       const cv = r.fin && r.fin.ceiling, cmat = r.tavan ? lookMat('ceil', r.tavan, 1) : ceilMat, ctop = cv && cv.type === 'drop' ? H - cv.drop : H;
       const ceilPlane = (rect, y) => { for (const q of rectsMinus(rect, stairs.map(a => a.rect))){ const w = q.x1 - q.x0, d = q.z1 - q.z0;
@@ -262,7 +264,20 @@ function model(it){
           [1, -1].forEach(sg => box(.12, .02, .02, handleMat, kx + px * sg * .045, 1.02, kz + pz * sg * .045, R, walls).castShadow = false); }
         else { const sl = g.sill != null ? g.sill : .9, top = Math.min(H - .05, sl + (g.h || 1.3)), wh = top - sl, cy = (sl + top) / 2, fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat;
           seg(g.la, g.la + g.l, 0, sl); seg(g.la, g.la + g.l, top, H); const m = g.la + g.l / 2; box(g.l, wh, .02, glass, ax + ux * m, cy, az + uz * m, rot, walls).castShadow = false;
-          box(g.l, .05, th + .04, fm, ax + ux * m, sl, az + uz * m, rot, walls); box(g.l, .05, th + .02, fm, ax + ux * m, top, az + uz * m, rot, walls); box(.04, wh, th + .02, fm, ax + ux * m, cy, az + uz * m, rot, walls); }
+          box(g.l, .05, th + .04, fm, ax + ux * m, sl, az + uz * m, rot, walls); box(g.l, .05, th + .02, fm, ax + ux * m, top, az + uz * m, rot, walls); box(.04, wh, th + .02, fm, ax + ux * m, cy, az + uz * m, rot, walls);
+          if (g.trat){ const tr = g.trat, sg = tr.inward, at = (s, d, y, w2, h2, dp, mat) => { const px = ax + ux * s + nx * sg * d, pz = az + uz * s + nz * sg * d; const o = box(w2, h2, dp, mat, px, y, pz, rot, walls); o.castShadow = false; return o; };
+            // stor în golul ferestrei, pe partea camerei: rulou (coborât o treime), roman (pliuri orizontale) sau jaluzea venețiană (lamele)
+            if (tr.blind){ const bm = lookMat('blind', tr.blind.color, .85), bw = g.l - .04, bh = wh * .38, d0 = th / 2 + .02;
+              at(m, d0, top - .04, bw + .04, .07, .07, bm);
+              if (tr.blind.kind === 'venetian'){ for (let yv = top - .1; yv > top - wh + .02; yv -= .025) at(m, d0, yv, bw, .004, .025, bm); }
+              else { at(m, d0, top - .07 - bh / 2, bw, bh, .006, bm); if (tr.blind.kind === 'roman') for (let k = 1; k <= 3; k++) at(m, d0 + .006, top - .07 - bh * k / 3.2, bw, .012, .012, bm); } }
+            // bara deasupra golului, depășind fereastra cu 20 cm pe fiecare parte; perdeaua trasă pe toată lățimea, draperiile strânse la capete
+            if (tr.curtain || tr.sheer){ const rw = g.l + .4, d1 = th / 2 + .13, y0 = .01, y1 = tr.rodH, hh = y1 - y0;
+              at(m, d1, y1 + .01, rw + .06, .025, .025, lookMat('rod', '#2b2b2b', .4));
+              if (tr.sheer){ const sm = new THREE.MeshStandardMaterial({ color: lin(tr.sheer.color), transparent: true, opacity: .45, roughness: .9, side: THREE.DoubleSide, depthWrite: false });
+                for (let k = 0; k < Math.ceil(rw / .08); k++) at(m - rw / 2 + .04 + k * .08, d1 - .03 + (k % 2 ? .015 : 0), y0 + hh / 2, .085, hh, .004, sm); }
+              if (tr.curtain){ const cm = MAT('fabric', tr.curtain.color), stack = .34;
+                [-1, 1].forEach(e => { for (let k = 0; k < 6; k++) at(m + e * (rw / 2 - stack / 2) - stack / 2 + .03 + k * (stack - .06) / 5, d1 + .03 + (k % 2 ? .025 : 0), y0 + hh / 2, .07, hh, .012, cm); }); } } } }
         colliders.push({ ax, az, ux, uz, s0: q, s1: g.la }); if (g.tip === 'fereastra') colliders.push({ ax, az, ux, uz, s0: g.la, s1: g.la + g.l }); q = g.la + g.l; });
       seg(q, L, 0, H); colliders.push({ ax, az, ux, uz, s0: q, s1: L }); });
     // placări pe pereți (tapet, riflaj, tencuială, cărămidă, piatră, faianță): un strat subțire pe fața dinspre cameră, tăiat în jurul ușilor și ferestrelor

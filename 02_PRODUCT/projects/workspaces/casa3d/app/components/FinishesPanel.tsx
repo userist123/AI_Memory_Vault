@@ -2,13 +2,14 @@
 // Finisajele unei camere, ca la un designer: pardoseala și modul ei de așezare, pereții (vopsea, faianță, placări pe fiecare latură),
 // tavanul (drept, fals, scafă luminoasă, cornișă, spoturi), plinta și iluminatul — cu costul camerei și avertismentele tehnice.
 import { useMemo } from 'react';
-import type { Snapshot, MaterialsCatalog, RoomFinishes, Room, Material, WallFeature, WallFeatureKind, FloorPattern, Catalog } from '@/core/types';
+import type { Snapshot, MaterialsCatalog, RoomFinishes, Room, Material, WallFeature, WallFeatureKind, FloorPattern, Catalog, WindowTreatment } from '@/core/types';
 import { finishesOf, roomGeometry, computeBOQ } from '@/core/boq';
 import { floorOfRoom } from '@/core/levels';
 import { defaultLayout, PATTERNS, SIDES, FEATURE_CATEGORY, layoutOf, materialOf, sideGeometry, ceilingOf, clearHeight, finishIssues, pieceSizeCm, FINISH_RULES } from '@/core/finishes';
 import { formatMoney, formatArea, formatLength } from '@/core/format';
 import { normalizeHex } from '@/core/appearance';
 import { lightReport } from '@/core/light-design';
+import { roomWindows, curtainPlan, blindPlan, TEXTILE_RULES } from '@/core/textiles';
 import { usePrefs } from '@/lib/prefs';
 
 const KINDS = Object.keys(FEATURE_CATEGORY) as WallFeatureKind[];
@@ -27,9 +28,11 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish }: { 
   const freeSide = SIDES.find(s => !features.some(w => w.side === s));
   const setCeiling = (p: Partial<NonNullable<RoomFinishes['ceiling']>>) => onFinish({ ceiling: { type: c.type, ...(f.ceiling || {}), ...p } });
   // costul finisajelor acestei camere, din același BOQ ca bugetul (materiale + manoperă estimată)
-  const cost = useMemo(() => { const b = computeBOQ(snap, cat, mc), items = b.items.filter(i => i.roomId === room.id && (i.category === 'finishes' || i.category === 'lighting'));
+  const cost = useMemo(() => { const b = computeBOQ(snap, cat, mc), items = b.items.filter(i => i.roomId === room.id && (i.category === 'finishes' || i.category === 'lighting' || i.category === 'textiles'));
     return { mat: items.reduce((a, i) => a + (i.total ?? 0), 0), lab: b.labor.filter(l => l.roomId === room.id).reduce((a, l) => a + l.expected, 0) }; }, [snap, cat, mc, room.id]);
-  const issues = finishIssues(snap, mc, fl, room, f), light = lightReport(mc, fl, room, f);
+  const issues = finishIssues(snap, mc, fl, room, f), light = lightReport(mc, fl, room, f), wins = roomWindows(fl, room);
+  const treat = (id: string) => (f.windows || []).find(t => t.openingId === id) ?? { openingId: id };
+  const setTreat = (id: string, p: Partial<WindowTreatment>) => onFinish({ windows: [...(f.windows || []).filter(t => t.openingId !== id), { ...treat(id), ...p }] });
   const sideLen = (s: WallFeature['side']) => formatLength(sideGeometry(fl, room, s).lengthM, units, lang);
   const patternOk = (p: FloorPattern) => tile ? p !== 'herringbone' && p !== 'chevron' || pieceSizeCm(fm)[0] >= 2 * pieceSizeCm(fm)[1] : true;
 
@@ -97,6 +100,28 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish }: { 
       <div className="grid2">
         <label className="f"><span>{t('editor.light')}</span><select value={f.light} onChange={e => onFinish({ light: e.target.value })}>{by('lighting').map(opt)}</select></label>
         <label className="f"><span>{t('editor.lightCount')}</span><input type="number" min={0} max={20} value={f.lights ?? ''} placeholder={t('common.auto')} onChange={e => onFinish({ lights: e.target.value === '' ? undefined : Math.max(0, Math.min(20, Number(e.target.value) || 0)) })} /></label>
+      </div>
+    </fieldset>
+    <fieldset className="fin-group"><legend>{t('tex.title')}</legend>
+      {wins.length === 0 && <div className="prov">{t('tex.noWindows')}</div>}
+      {wins.map((w, i) => { const tr = treat(w.openingId), cm = materialOf(mc, tr.curtain ?? tr.sheer), cp = cm ? curtainPlan(w, fl.ceilingHeight, cm, tr.fullness) : null, bm = materialOf(mc, tr.blind), bp = bm ? blindPlan(w, bm) : null;
+        return <div key={w.openingId} className="fin-row">
+          <strong>{t('tex.window', { n: i + 1, w: formatLength(w.widthM, units, lang), side: t(`fin.side.${w.side}`) })}</strong>
+          <div className="grid2">
+            <label className="f"><span>{t('tex.curtain')}</span><select value={tr.curtain || ''} onChange={e => setTreat(w.openingId, { curtain: e.target.value || null })}><option value="">{t('fin.none')}</option>{by('curtain').map(opt)}</select></label>
+            <label className="f"><span>{t('tex.sheer')}</span><select value={tr.sheer || ''} onChange={e => setTreat(w.openingId, { sheer: e.target.value || null })}><option value="">{t('fin.none')}</option>{by('sheer').map(opt)}</select></label>
+          </div>
+          <div className="grid2">
+            <label className="f"><span>{t('tex.fullness')}</span><select value={tr.fullness ?? TEXTILE_RULES.defaultFullness} onChange={e => setTreat(w.openingId, { fullness: Number(e.target.value) })}>
+              {TEXTILE_RULES.fullness.map(x => <option key={x} value={x}>{t(`tex.fullness.${String(x).replace('.', '_')}`)}</option>)}</select></label>
+            <label className="f"><span>{t('tex.blind')}</span><select value={tr.blind || ''} onChange={e => setTreat(w.openingId, { blind: e.target.value || null })}><option value="">{t('fin.none')}</option>{by('blind').map(opt)}</select></label>
+          </div>
+          {cp && <div className="prov">{t('tex.curtainPlan', { rod: formatLength(cp.rodW, units, lang), panels: cp.panels, packs: cp.packs, drop: formatLength(cp.drop, units, lang) })}</div>}
+          {bp && <div className="prov">{t('tex.blindPlan', { n: bp.count, cover: formatLength(bp.coverM, units, lang) })}</div>}
+        </div>; })}
+      <div className="grid2">
+        <label className="f"><span>{t('tex.rug')}</span><select value={f.rug?.material || ''} onChange={e => onFinish({ rug: e.target.value ? { material: e.target.value, ...(f.rug?.rotate ? { rotate: true } : {}) } : null })}><option value="">{t('fin.none')}</option>{by('rug').map(opt)}</select></label>
+        {f.rug && <label className="f"><span>{t('tex.rugRotate')}</span><input type="checkbox" checked={!!f.rug.rotate} onChange={e => onFinish({ rug: { material: f.rug!.material, ...(e.target.checked ? { rotate: true } : {}) } })} /></label>}
       </div>
     </fieldset>
   </div>);
