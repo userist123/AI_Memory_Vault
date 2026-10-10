@@ -1,0 +1,80 @@
+# Maintenance, run on demand only: delete stale CodeQL configurations from the default branch.
+# Why: the "Code scanning results / CodeQL" pull request check compares a PR with every configuration present on
+# main. Categories that main uploaded once but no workflow produces any more (an old language matrix) make that
+# check end "neutral" on every PR ("configurations not found"). The tool status page can delete them by hand; this
+# workflow does the same through the REST API with the job token, the only credential here that has
+# security-events write. Dry run by default: it lists what it would delete. Nothing is deleted unless the
+# `apply` input is true. Owner approval for the first run (c-cpp, go, ruby, rust: no code in those languages):
+# 00_GOVERNANCE/coordination/tasks/todo-claude-codeql-check.md.
+name: "CodeQL stale configuration cleanup"
+
+on:
+  workflow_dispatch:
+    inputs:
+      categories:
+        description: "Comma-separated language categories to delete from the default branch (e.g. c-cpp,go,ruby,rust)"
+        required: true
+        default: "c-cpp,go,ruby,rust"
+      apply:
+        description: "Actually delete (true). Default false = dry run that only lists the analyses."
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    name: Delete stale CodeQL configurations
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      CATEGORIES: ${{ inputs.categories }}
+      APPLY: ${{ inputs.apply }}
+    steps:
+    - name: List and delete stale analyses on the default branch
+      shell: bash
+      run: |
+        set -euo pipefail
+        ref="refs/heads/$(gh api "repos/$GH_REPO" --jq .default_branch)"
+        echo "Default branch ref: $ref"
+        if [ "$APPLY" = "true" ]; then echo "Mode: APPLY"; else echo "Mode: DRY-RUN"; fi
+        list="$(gh api --paginate "repos/$GH_REPO/code-scanning/analyses?ref=$ref&tool_name=CodeQL&per_page=100" --jq '.[]' | jq -s '.')"
+        echo "Categories currently present on $ref:"
+        echo "$list" | jq -r 'group_by(.category) | .[] | "  \(.[0].category)  analyses=\(length)  newest=\(max_by(.created_at).created_at)"'
+        IFS=',' read -ra cats <<< "$CATEGORIES"
+        for raw in "${cats[@]}"; do
+          cat="$(echo "$raw" | tr -d '[:space:]')"
+          [ -n "$cat" ] || continue
+          category="/language:$cat"
+          echo "::group::$category"
+          id="$(echo "$list" | jq -r --arg c "$category" '[.[] | select(.category == $c)] | sort_by(.created_at) | reverse | .[0].id // empty')"
+          if [ -z "$id" ]; then
+            echo "no analysis with category $category on $ref (nothing to do)"
+            echo "::endgroup::"
+            continue
+          fi
+          count="$(echo "$list" | jq -r --arg c "$category" '[.[] | select(.category == $c)] | length')"
+          echo "found $count analyses for $category on $ref; newest id=$id"
+          if [ "$APPLY" != "true" ]; then
+            echo "dry run: would delete the whole set starting at analysis $id"
+            echo "::endgroup::"
+            continue
+          fi
+          # Only the newest analysis of a set is deletable; each delete names the next one, until the set is gone.
+          url="repos/$GH_REPO/code-scanning/analyses/$id?confirm_delete"
+          n=0
+          while [ -n "$url" ]; do
+            resp="$(gh api -X DELETE "$url")"
+            n=$((n+1))
+            url="$(echo "$resp" | jq -r '.confirm_delete_url // empty' | sed -E 's#^https://api.github.com/##')"
+          done
+          echo "deleted $n analyses; configuration $category removed from $ref"
+          echo "::endgroup::"
+        done
