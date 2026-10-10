@@ -146,8 +146,10 @@ Verificat local de agent, pe masina proprietarului (detalii si limite in `Casa3D
 - `tsc --noEmit` si `next build` (22 rute) trec dupa redenumirea locala `components/viewer3d.js` ->
   `viewer3d-engine.js` (coliziune de majuscule cu `Viewer3D.tsx` pe NTFS/APFS; pe Linux nu apare).
 
-Nu s-a verificat: verificarea server/browser descrisa in `PHASE4.md` (302 cu UTM, 401 fara token) si
-niciun program real de afiliere. Afilierea reala, `rel="sponsored"` si disclosure-ul raman roadmap.
+Verificat si pe server, la 10:15 UTC, pe build-ul de productie cu PGlite in memorie: `/api/health` 200, rutele
+`/api/admin/*` 401 fara token si 200 cu token, `/go/o/offer-canapea-0` 302 catre IKEA cu `utm_source=casamea3d`,
+`no-store`, `noindex`, fara `Set-Cookie`, clic numarat agregat fara IP, robotii nenumarati, oferta lipsa 404.
+Nu s-a verificat: testul din browser (interfata, mesajul de informare) si niciun program real de afiliere. Afilierea reala, `rel="sponsored"` si disclosure-ul raman roadmap.
 Patch-ul `0001-casa3d-f4.patch` si varianta notei din Downloads (auto-declarata ACTIVE/verified)
 nu au fost importate; sectiunea de mai sus este scrisa din dovezile ledger-ului, nu din patch.
 
@@ -228,7 +230,7 @@ Roadmap-ul nu reprezinta capabilitati implementate.
 - F1 nu trebuie interpretat ca avand auth completa sau colaborare multi-user.
 - F2 nu reprezinta un feed comercial live si nu acopera toate categoriile de lucrari/materiale; valorile necunoscute trebuie pastrate ca UNKNOWN.
 - F3 are integrarea AI reala configurata, dar fara `ANTHROPIC_API_KEY` executia modelului nu a fost runtime-verificata; fallback-ul rules engine si testele de siguranta sunt cele verificate.
-- F4 este verificata in test mode; afilierea reala, programele retailerilor si verificarea server/browser din `PHASE4.md` raman nedovedite.
+- F4 este verificata in test mode, inclusiv pe server (`PHASE4.md`); afilierea reala, programele retailerilor si testul din browser raman nedovedite.
 - Stratul v8 (Digital Twin v1.0, DSL 1.1, approval, share, feed furnizor) are doar manifest si hash-uri; sursa nu a fost gasita la 2026-10-10.
 - `components/viewer3d.js` se ciocneste cu `Viewer3D.tsx` pe sisteme de fisiere insensibile la majuscule; `tsc` si `next build` pica pe Windows/macOS fara redenumire.
 - Orice informatie comerciala sau de afiliere din conversatii trebuie revalidata inainte de a deveni fapt curent.
