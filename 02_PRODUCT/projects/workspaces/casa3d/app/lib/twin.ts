@@ -25,9 +25,11 @@ export function snapshotToTwin(snap: Snapshot, cat: Catalog, twinId = 'project')
     clearDepth: o.kind === 'door' ? DOOR_CLEAR_DEPTH : 0, sillHeight: o.kind === 'window' ? WINDOW_SILL : 0 })));
   t.placements = snap.placements.flatMap((p): Placement[] => {
     const rv = resolve(cat, p.variantId); if (!rv || !rv.w || !rv.d) return [];
+    // piesa pe comandă intră în twin cu dimensiunile ei reale, ca suprapunerile și spațiile să fie verificate corect
+    const w = p.size ? p.size.w / 100 : rv.w, d = p.size ? p.size.d / 100 : rv.d, h = p.size ? p.size.h / 100 : rv.h;
     const rotation = toRotation(p.rotation), swap = rotation === 90 || rotation === 270;
-    const fw = swap ? rv.d : rv.w, fd = swap ? rv.w : rv.d;
-    return [{ id: p.id, catalogId: p.variantId, roomId: p.roomId, x: r3(p.x - fw / 2), y: r3(p.z - fd / 2), w: rv.w, d: rv.d, h: rv.h, rotation, role: p.group }];
+    const fw = swap ? d : w, fd = swap ? w : d;
+    return [{ id: p.id, catalogId: p.variantId, roomId: p.roomId, x: r3(p.x - fw / 2), y: r3(p.z - fd / 2), w, d, h, rotation, role: p.group }];
   });
   t.policy = { allowedOverlaps: ALLOWED_OVERLAP.map(([a, b]) => [a, b] as [string, string]) };
   return normalize(linkWalls(t));
@@ -41,12 +43,13 @@ export function placementsFromTwin(snap: Snapshot, cat: Catalog, twin: Twin, ids
   const existing = new Map(snap.placements.map(p => [p.id, p]));
   return twin.placements.flatMap((q): FurniturePlacement[] => {
     const rv = resolve(cat, q.catalogId); if (!rv) return [];
-    const swap = q.rotation === 90 || q.rotation === 270;
-    const fw = swap ? rv.d : rv.w, fd = swap ? rv.w : rv.d;
+    // dimensiunile din twin (egale cu ale variantei, sau cele pe comandă pentru piesele existente cu `size`)
+    const swap = q.rotation === 90 || q.rotation === 270, qw = q.w || rv.w, qd = q.d || rv.d;
+    const fw = swap ? qd : qw, fd = swap ? qw : qd;
     const prev = existing.get(q.id);
     // Piesele noi primesc un UUID, ca la orice piesă a aplicației: id-urile generate de solver nu ajung în proiect.
     const id = prev ? q.id : globalThis.crypto.randomUUID(); ids?.set(q.id, id);
-    return [{ id, roomId: q.roomId, group: groupOf(q.catalogId), variantId: q.catalogId, x: r3(q.x + fw / 2), z: r3(q.y + fd / 2), rotation: toRadians(q.rotation), source: prev?.source ?? 'auto' }];
+    return [{ id, roomId: q.roomId, group: groupOf(q.catalogId), variantId: q.catalogId, x: r3(q.x + fw / 2), z: r3(q.y + fd / 2), rotation: toRadians(q.rotation), source: prev?.source ?? 'auto', ...(prev?.size ? { size: prev.size } : {}) }];
   });
 }
 

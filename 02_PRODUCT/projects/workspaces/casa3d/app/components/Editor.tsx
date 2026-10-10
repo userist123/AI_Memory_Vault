@@ -1,13 +1,14 @@
 'use client';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Catalog, Snapshot, Severity, Issue, FurniturePlacement, MaterialsCatalog, BudgetSettings, RoomFinishes } from '@/core/types';
+import type { Catalog, Snapshot, Severity, Issue, FurniturePlacement, MaterialsCatalog, BudgetSettings, RoomFinishes, Appearance, Finish } from '@/core/types';
 import BudgetPanel, { type Outbound } from './BudgetPanel';
 import { relFor, freshness } from '@/core/outbound';
 import DesignPanel from './DesignPanel';
 import CatalogPanel from './CatalogPanel';
 import TwinDesignPanel from './TwinDesignPanel';
 import RevisionDiff from './RevisionDiff';
+import { RoomLookPanel, WallLookPanel, OpeningLookPanel, ItemLookPanel } from './AppearanceControls';
 import { finishesOf, budgetOf, roomGeometry } from '@/core/boq';
 import { History } from '@/core/history';
 import { validatePlacement, validateFloor, severityOf } from '@/core/validate';
@@ -44,6 +45,15 @@ export default function Editor({ id }: { id: string }){
       if (r.ok) setSave('saved'); else { setSave('error'); say((await r.json()).error || 'Salvarea a eșuat.'); } }, 700); }, [id]);
   const commit = (next: Snapshot, record = true) => { if (record && snap) hist.current.push(snap); setSnap(next); persist(next); force(x => x + 1); };
   const mutate = (fn: (s: Snapshot) => void) => { if (!snap) return; const n = structuredClone(snap); fn(n); commit(n); };
+  // aspect: modifică snap.appearance și șterge intrările rămase goale (un aspect gol = implicit)
+  const look = (fn: (a: Appearance) => void) => mutate(s => { const a: Appearance = s.appearance || {}; fn(a);
+    for (const k of ['rooms', 'wallFaces', 'openings', 'items'] as const){ const m: any = a[k]; if (!m) continue; for (const id of Object.keys(m)){ const v = m[id]; if (k === 'rooms') for (const part of Object.keys(v)) if (!v[part] || !Object.keys(v[part]).length) delete v[part]; if (!Object.keys(v).length) delete m[id]; } if (!Object.keys(m).length) delete a[k]; }
+    if (Object.keys(a).length) s.appearance = a; else delete s.appearance; });
+  const setFinish = (map: Record<string, Finish> | undefined, id: string, patch: Partial<Record<keyof Finish, string | null>>): Record<string, Finish> => { const m = { ...(map || {}) }, f: any = { ...(m[id] || {}) };
+    for (const [k, v] of Object.entries(patch)) if (v == null) delete f[k]; else f[k] = v; m[id] = f; return m; };
+  // schimbarea variantei sau a dimensiunii unei piese trece prin validare: ERROR refuză, WARNING cere confirmare
+  const changePiece = (id: string, fn: (q: FurniturePlacement) => void, refused: string) => { if (!snap) return; const n = structuredClone(snap), q = n.placements.find(x => x.id === id)!; fn(q); const iss = validatePlacement(n, catalog!, q);
+    if (severityOf(iss) === 'ERROR'){ say(`${refused}: ${iss.find(i => i.severity === 'ERROR')!.message}`); return; } commit(n); if (iss.length) setPending({ before: snap, issues: iss }); };
 
   const issues = useMemo(() => { const m: Record<string, Issue[]> = {}; if (snap && catalog) for (const p of snap.placements) m[p.id] = validatePlacement(snap, catalog, p); return m; }, [snap, catalog]);
   const sev = useMemo(() => Object.fromEntries(Object.entries(issues).map(([k, v]) => [k, severityOf(v)])) as Record<string, Severity>, [issues]);
@@ -139,6 +149,8 @@ export default function Editor({ id }: { id: string }){
           {selRoom && <RoomPanel room={selRoom} snap={snap} G={G} mc={mc} onFinish={(patch: Partial<RoomFinishes>) => mutate(s => { s.finishes = { ...(s.finishes || {}), [selRoom.id]: { ...finishesOf(s, selRoom), ...patch } }; })} onChange={(fn: (r: any) => void) => mutate(s => fn(s.floor.rooms.find(r => r.id === selRoom.id)!))}
             onAuto={() => { const r = autoLayout(snap, catalog, { roomId: selRoom.id }); commit(r.snapshot); say(r.notFit.length ? 'Unele piese nu au încăput.' : `${selRoom.name}: amenajare automată aplicată.`); }}
             onAdd={(vid: string) => { const r = addPlacement(snap, catalog, selRoom.id, vid); if (!r){ say('Nu am găsit loc liber pentru piesa asta în cameră.'); return; } commit(r); setSel({ kind: 'placement', id: r.placements.at(-1)!.id }); }} num={num} />}
+          {selRoom && <RoomLookPanel room={selRoom} snap={snap} onRoom={(part, hex) => look(a => { const r: any = { ...(a.rooms?.[selRoom.id] || {}) }; if (hex) r[part] = { ...(r[part] || {}), color: hex }; else delete r[part]; a.rooms = { ...(a.rooms || {}), [selRoom.id]: r }; })}
+            onAllWalls={hex => look(a => { a.rooms = { ...(a.rooms || {}) }; for (const r of snap.floor.rooms) a.rooms[r.id] = { ...(a.rooms[r.id] || {}), walls: { color: hex } }; })} />}
           {selWall && <>
             <h3>Perete</h3>
             <div className="grid2">
@@ -147,6 +159,7 @@ export default function Editor({ id }: { id: string }){
             </div>
             <label className="f" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked={selWall.exterior} onChange={e => mutate(s => { s.floor.walls.find(w => w.id === selWall.id)!.exterior = e.target.checked; })} /> Perete exterior</label>
             <div className="prov">{selWall.openings.length} goluri · trage capetele albastre ca să-l modifici</div>
+            <WallLookPanel wall={selWall} snap={snap} onFace={(rid, hex) => look(a => { a.wallFaces = setFinish(a.wallFaces, `${selWall.id}@${rid}`, { color: hex }); })} />
             <button className="btn danger" onClick={del}>Șterge peretele</button>
           </>}
           {selOp && <>
@@ -155,14 +168,19 @@ export default function Editor({ id }: { id: string }){
               <label className="f"><span>Lățime (cm)</span><input type="number" value={Math.round(selOp.width * 100)} onChange={e => num(e.target.value, x => mutate(s => { s.floor.walls.find(w => w.id === (sel as any).wallId)!.openings.find(o => o.id === selOp.id)!.width = r3(x / 100); }), 30)} /></label>
               <label className="f"><span>Poziție pe perete (cm)</span><input type="number" value={Math.round(selOp.offset * 100)} onChange={e => num(e.target.value, x => mutate(s => { s.floor.walls.find(w => w.id === (sel as any).wallId)!.openings.find(o => o.id === selOp.id)!.offset = r3(x / 100); }))} /></label>
             </div>
+            <OpeningLookPanel op={selOp} snap={snap} num={num} onPatch={patch => mutate(s => { Object.assign(s.floor.walls.find(w => w.id === (sel as any).wallId)!.openings.find(o => o.id === selOp.id)!, patch); })}
+              onFrame={hex => look(a => { a.openings = setFinish(a.openings, selOp.id, { color: hex }); })} />
             <button className="btn danger" onClick={del}>Șterge golul</button>
           </>}
           {selPl && <PlacementPanel out={out} p={selPl} snap={snap} catalog={catalog} issues={issues[selPl.id] || []} G={G} num={num}
-            onVariant={vid => { const n = structuredClone(snap), q = n.placements.find(x => x.id === selPl.id)!; q.variantId = vid; const iss = validatePlacement(n, catalog, q);
-              if (severityOf(iss) === 'ERROR'){ say(`Varianta nu încape aici: ${iss.find(i => i.severity === 'ERROR')!.message}`); return; } commit(n); if (iss.length) setPending({ before: snap, issues: iss }); }}
+            onVariant={vid => changePiece(selPl.id, q => { q.variantId = vid; }, 'Varianta nu încape aici')}
             onMove={(x, z) => { const n = structuredClone(snap), q = n.placements.find(p => p.id === selPl.id)!; q.x = r3(x); q.z = r3(z); q.source = 'manual'; const iss = validatePlacement(n, catalog, q);
               if (severityOf(iss) === 'ERROR'){ say(`Poziție refuzată: ${iss.find(i => i.severity === 'ERROR')!.message}`); return; } commit(n); }}
             onRotate={() => rotate(selPl.id)} onDelete={del} />}
+          {selPl && <ItemLookPanel p={selPl} snap={snap} catalog={catalog} model={resolve(catalog, selPl.variantId)?.product.model3d ?? ''} num={num}
+            onItem={patch => look(a => { a.items = setFinish(a.items, selPl.id, patch); })}
+            onSize={size => changePiece(selPl.id, q => { if (size) q.size = size; else delete q.size; }, 'Dimensiunea nu încape aici')}
+            onVariant={vid => changePiece(selPl.id, q => { q.variantId = vid; }, 'Varianta nu încape aici')} />}
         </>}
         {panel === 'design' && <DesignPanel id={id} snap={snap} say={say} onPreview={(v: any, pid: string | null) => setPreview(v && pid ? { v, pid } : null)} onApplied={(s: Snapshot, n: number) => { hist.current.push(snap); setSnap(s); latest.current = s; setRev(n); setSave('saved'); setSel(null); }} />}
         {panel === 'twin' && <TwinDesignPanel id={id} snap={snap} catalog={catalog} say={say} onPreview={(s: Snapshot | null, label: string | null) => setPreview(s && label ? { v: { candidate: s, title: label, tier: 'twin-' + label }, pid: 'twin' } : null)} onApplied={(s: Snapshot, n: number) => { hist.current.push(snap); setSnap(s); latest.current = s; setRev(n); setSave('saved'); setSel(null); loadRevs(); }} />}

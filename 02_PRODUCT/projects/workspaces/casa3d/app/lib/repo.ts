@@ -1,3 +1,4 @@
+import { sanitizeAppearance, SIZE_LIMITS_CM } from '../core/appearance';
 import { getDb } from './db';
 import { newSnapshot } from '../core/project';
 import { validateFloor, validatePlacement } from '../core/validate';
@@ -35,6 +36,12 @@ export function checkSnapshot(s: any): Snapshot {
   for (const r of s.floor.rooms) if (!['x0', 'z0', 'x1', 'z1'].every(k => num(r.rect?.[k])) || r.rect.x1 <= r.rect.x0 || r.rect.z1 <= r.rect.z0) throw new HttpError(400, `Camera ${r.id} are dimensiuni invalide.`);
   for (const w of s.floor.walls) if (!num(w.a?.[0]) || !num(w.a?.[1]) || !num(w.b?.[0]) || !num(w.b?.[1]) || !Array.isArray(w.openings)) throw new HttpError(400, `Peretele ${w.id} e invalid.`);
   for (const p of s.placements) if (!num(p.x) || !num(p.z) || !num(p.rotation) || typeof p.variantId !== 'string') throw new HttpError(400, 'O piesă de mobilier e invalidă.');
+  // dimensiuni pe comandă (cm) și goluri cu înălțime/parapet: doar valori plauzibile
+  const cm = (v: unknown) => num(v) && (v as number) >= SIZE_LIMITS_CM.min && (v as number) <= SIZE_LIMITS_CM.max;
+  for (const p of s.placements) if (p.size != null && !(cm(p.size?.w) && cm(p.size?.d) && cm(p.size?.h))) throw new HttpError(400, `Dimensiunile pe comandă trebuie să fie între ${SIZE_LIMITS_CM.min} și ${SIZE_LIMITS_CM.max} cm.`);
+  for (const w of s.floor.walls) for (const o of w.openings){ if (o.height != null && !(num(o.height) && o.height >= 0.3 && o.height <= 3)) throw new HttpError(400, 'Înălțimea golului trebuie să fie între 30 și 300 cm.');
+    if (o.sill != null && !(num(o.sill) && o.sill >= 0 && o.sill <= 2)) throw new HttpError(400, 'Parapetul ferestrei trebuie să fie între 0 și 200 cm.'); }
+  if (s.appearance != null){ const a = sanitizeAppearance(s.appearance, s); if (a) s.appearance = a; else delete s.appearance; }
   if (s.finishes != null && (typeof s.finishes !== 'object' || Array.isArray(s.finishes))) throw new HttpError(400, 'Finisajele sunt invalide.');
   if (s.budget != null){ const b = s.budget; const okNum = (v: unknown) => v == null || (typeof v === 'number' && Number.isFinite(v) && v >= 0);
     if (typeof b !== 'object' || !okNum(b.target) || !okNum(b.contingencyPct) || !okNum(b.deliveryDedeman) || !okNum(b.furnitureAssembly) || !okNum(b.design) || (b.contingencyPct ?? 0) > 100) throw new HttpError(400, 'Setările de buget sunt invalide.'); }

@@ -3,11 +3,16 @@ export type Confidence = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
 export interface Provenance { source: string; sourceUrl: string | null; verifiedAt: string | null; verificationType: string; confidence: Confidence }
 export interface RoomRect { x0: number; z0: number; x1: number; z1: number }
 export interface Room { id: string; name: string; type: string; rect: RoomRect }
-export interface Opening { id: string; kind: 'door' | 'window'; offset: number; width: number; entrance?: boolean }
+export interface Opening { id: string; kind: 'door' | 'window'; offset: number; width: number; entrance?: boolean; height?: number; sill?: number }
 export interface Wall { id: string; a: [number, number]; b: [number, number]; thickness: number; exterior: boolean; openings: Opening[] }
 export interface Floor { id: string; name: string; ceilingHeight: number; rooms: Room[]; walls: Wall[] }
-export interface FurniturePlacement { id: string; roomId: string; group: string; variantId: string; x: number; z: number; rotation: number; source: 'auto' | 'manual' }
-export interface Snapshot { name: string; floor: Floor; placements: FurniturePlacement[]; selections: Record<string, string>; picked: string[]; finishes?: Record<string, RoomFinishes>; budget?: BudgetSettings; brief?: import('./brief').DesignBrief }
+/** `size` (cm) = piesă pe comandă cu altă dimensiune decât varianta din catalog; prețul ei devine necunoscut. */
+export interface FurniturePlacement { id: string; roomId: string; group: string; variantId: string; x: number; z: number; rotation: number; source: 'auto' | 'manual'; size?: { w: number; d: number; h: number } }
+/** Culoare (hex #rrggbb) și, unde modelul permite, material; lipsa înseamnă aspectul implicit. */
+export interface Finish { color?: string; material?: string }
+/** Aspectul ales de utilizator. Chei: pereți pe fețe `${wallId}@${roomId}`, camere, goluri (id), piese (id). */
+export interface Appearance { rooms?: Record<string, { walls?: Finish; floor?: Finish; ceiling?: Finish }>; wallFaces?: Record<string, Finish>; openings?: Record<string, Finish>; items?: Record<string, Finish> }
+export interface Snapshot { name: string; floor: Floor; placements: FurniturePlacement[]; selections: Record<string, string>; picked: string[]; finishes?: Record<string, RoomFinishes>; appearance?: Appearance; budget?: BudgetSettings; brief?: import('./brief').DesignBrief }
 export interface Supplier { id: string; name: string; country: string; website: string }
 export interface Product { id: string; group: string; name: string; brand: string; category: string; model3d: string }
 export interface ProductVariant { id: string; productId: string; name: string; legacyIndex: number; dimensionsCm: { w: number; d: number; h: number } | null; dimensionsConfidence: Confidence; style: Record<string, any>; chairs?: number; includedWith?: string }

@@ -21,7 +21,7 @@ export function doorZones(floor: Floor, room: Room): RoomRect[] {
     if (s === 'N') f.z1 = r.z0 + .95; if (s === 'S') f.z0 = r.z1 - .95; if (s === 'W') f.x1 = r.x0 + .95; if (s === 'E') f.x0 = r.x1 - .95; z.push(f); }
   return z;
 }
-export function footprintOf(cat: Catalog, p: FurniturePlacement){ const rv = resolve(cat, p.variantId); if (!rv) return null; return footprintAt(p.x, p.z, p.rotation, rv.w, rv.d); }
+export function footprintOf(cat: Catalog, p: FurniturePlacement){ const rv = resolve(cat, p.variantId); if (!rv) return null; return p.size ? footprintAt(p.x, p.z, p.rotation, p.size.w / 100, p.size.d / 100) : footprintAt(p.x, p.z, p.rotation, rv.w, rv.d); }
 function clearanceZone(cat: Catalog, p: FurniturePlacement, fp: RoomRect): RoomRect | null {
   if (p.group === 'masa'){ const rv = resolve(cat, p.variantId)!, px = (rv.variant.chairs || 4) === 2 ? DINING_CLEARANCE.chairs2 : DINING_CLEARANCE.chairs4, pz = DINING_CLEARANCE.ends;
     const q = Math.round(p.rotation / (Math.PI / 2)) % 2 !== 0; const ex = q ? pz : px, ez = q ? px : pz; return { x0: fp.x0 - ex, x1: fp.x1 + ex, z0: fp.z0 - ez, z1: fp.z1 + ez }; }
@@ -32,14 +32,14 @@ export function validatePlacement(snap: Snapshot, cat: Catalog, p: FurniturePlac
   const issues: Issue[] = [], rv = resolve(cat, p.variantId), room = snap.floor.rooms.find(r => r.id === p.roomId);
   if (!rv) return [{ code: 'UNKNOWN_VARIANT', severity: 'ERROR', message: 'Produsul nu mai există în catalog.' }];
   if (!room) return [{ code: 'OUT_OF_ROOM', severity: 'ERROR', message: 'Piesa nu aparține niciunei camere.' }];
-  const fp = footprintAt(p.x, p.z, p.rotation, rv.w, rv.d);
+  const fp = footprintOf(cat, p)!, ph = p.size ? p.size.h / 100 : rv.h; // dimensiunile pe comandă au prioritate
   if (!insideRect(room.rect, fp)) issues.push({ code: 'OUT_OF_ROOM', severity: 'ERROR', message: `Iese din ${room.name}.` });
   if (doorZones(snap.floor, room).some(z => rectHit(z, fp))) issues.push({ code: 'DOOR_ZONE', severity: 'ERROR', message: 'Blochează deschiderea unei uși.' });
   const others = snap.placements.filter(o => o.id !== p.id && o.roomId === p.roomId);
   for (const o of others){ const ofp = footprintOf(cat, o); if (!ofp || allowed(p.group, o.group)) continue;
     if (rectHit(fp, ofp)) issues.push({ code: 'OVERLAP', severity: 'ERROR', message: `Se suprapune cu ${resolve(cat, o.variantId)?.product.name}.`, with: o.id }); }
   // LACUNA 1 reparată: mobilierul înalt nu are voie în fața ferestrei nici la mutarea manuală
-  if (rv.h > TALL_ITEM_M){ const r = room.rect, sides: [('N' | 'S' | 'W' | 'E'), number, boolean][] = [['N', fp.z0 - r.z0, true], ['S', r.z1 - fp.z1, true], ['W', fp.x0 - r.x0, false], ['E', r.x1 - fp.x1, false]];
+  if (ph > TALL_ITEM_M){ const r = room.rect, sides: [('N' | 'S' | 'W' | 'E'), number, boolean][] = [['N', fp.z0 - r.z0, true], ['S', r.z1 - fp.z1, true], ['W', fp.x0 - r.x0, false], ['E', r.x1 - fp.x1, false]];
     for (const [s, gap, horiz] of sides){ if (gap > WALL_PROXIMITY_M) continue; const a = horiz ? fp.x0 : fp.z0, b = horiz ? fp.x1 : fp.z1;
       if (openingsOnSide(snap.floor, room, s).some(o => o.kind === 'window' && b > o.a + .01 && a < o.b - .01)) { issues.push({ code: 'WINDOW_BLOCKED', severity: 'WARNING', message: 'Acoperă o fereastră (piesă mai înaltă de 95 cm).' }); break; } } }
   // LACUNA 2 reparată: spațiul de circulație din fața piesei (și cel al pieselor vecine)

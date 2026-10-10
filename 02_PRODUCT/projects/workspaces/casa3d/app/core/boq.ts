@@ -66,11 +66,12 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
   const ad = mc.materials.find(m => m.category === 'tile_adhesive');
   if (ad && adhesiveArea > 0) items.push(materialLine(ad, 'adhesive', null, `Adeziv gresie/faianță (${r2(adhesiveArea)} m²)`, adhesiveArea * (ad.consumption || 0), mc.verifiedAt));
   // mobilier, sanitare, electrocasnice din plan (o linie pe piesă; electrocasnicele bucătăriei din selecții)
-  const lineFor = (key: string, roomId: string | null, vid: string) => { const rv = resolve(cat, vid); const g = groupOf(vid);
-    if (!rv){ unknown.push(vid); return; } const price = rv.offer?.price ?? null; if (price == null) unknown.push(rv.variant.name);
-    items.push({ key, category: SANITARY.has(g) ? 'sanitary' : APPLIANCES.has(g) ? 'appliances' : 'furniture', roomId, label: rv.variant.name, refId: vid, netQty: 1, unit: 'buc', wastePct: 0, orderedQty: 1, packs: null, packLabel: null,
+  // o piesă pe comandă (dimensiuni proprii) nu are preț de catalog: rămâne necunoscută până la oferta producătorului
+  const lineFor = (key: string, roomId: string | null, vid: string, custom?: { w: number; d: number; h: number }) => { const rv = resolve(cat, vid); const g = groupOf(vid);
+    if (!rv){ unknown.push(vid); return; } const price = custom ? null : rv.offer?.price ?? null; const label = custom ? `${rv.variant.name} — pe comandă ${custom.w}×${custom.d}×${custom.h} cm` : rv.variant.name; if (price == null) unknown.push(label);
+    items.push({ key, category: SANITARY.has(g) ? 'sanitary' : APPLIANCES.has(g) ? 'appliances' : 'furniture', roomId, label, refId: vid, netQty: 1, unit: 'buc', wastePct: 0, orderedQty: 1, packs: null, packLabel: null,
       unitPrice: price, total: price, supplier: rv.offer?.provenance.source || 'UNKNOWN', sourceUrl: rv.offer?.provenance.sourceUrl ?? null, verifiedAt: rv.offer?.provenance.verifiedAt ?? null, confidence: rv.offer?.provenance.confidence ?? 'UNKNOWN' }); };
-  for (const p of snap.placements) lineFor(p.id, p.roomId, p.variantId);
+  for (const p of snap.placements) lineFor(p.id, p.roomId, p.variantId, p.size);
   const kitchen = snap.placements.find(p => p.group === 'bucatarie');
   if (kitchen) for (const g of ['plita', 'cuptor', 'hota']) lineFor(`${kitchen.id}:${g}`, kitchen.roomId, snap.selections[g] || `${g}-0`);
   return { items, labor, geometry, unknown };

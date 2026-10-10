@@ -24,6 +24,9 @@ export function createViewer(canvas, { onPick } = {}){
   const tiles = tex(512, 512, (g, w, h) => { g.fillStyle = '#b9bab5'; g.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 128) for (let x = 0; x < w; x += 128){ const v = 222 + (Math.random() * 12 | 0); g.fillStyle = `rgb(${v},${v - 1},${v - 4})`; g.fillRect(x + 2, y + 2, 124, 124); } });
   const wallMat = M('#f4f3ef', { roughness: .92 }), extMat = M('#ecebe6', { roughness: .95 }), glass = new THREE.MeshPhysicalMaterial({ color: lin('#cfe3ee'), transparent: true, opacity: .28, roughness: .05, metalness: 0 });
   const frameMat = M('#ffffff', { roughness: .5 }), ceilMat = M('#fbfbf9', { roughness: 1 });
+  // materiale pe culoare, cu cache: fețe de perete, tavane, rame (culorile vin din core/appearance.ts prin plan)
+  const lookCache = {}; const lookMat = (kind, hex, rough) => lookCache[kind + hex] ||= M(hex, { roughness: rough });
+  const faceMat = (hex, ext) => hex ? lookMat('wall', hex, ext ? .95 : .92) : (ext ? extMat : wallMat);
 
 /* ---------- materiale realiste (texturi generate, fără imagini externe) ---------- */
 const gray = (w, h, draw) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d'), w, h); const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t; };
@@ -170,17 +173,20 @@ function model(it){
     disposeGroup(house); scene.remove(house); interiorLights.length = 0; house = new THREE.Group(); ceilings = new THREE.Group(); walls = new THREE.Group(); house.add(ceilings, walls); scene.add(house); colliders = [];
     const H = p.inaltime;
     p.camere.forEach(r => { const wet = r.tip === 'baie' || r.tip === 'bucatarie', w = r.x1 - r.x0, d = r.z1 - r.z0, t = (wet ? tiles : parquet).clone(); t.needsUpdate = true; t.repeat.set(w / (wet ? .9 : 1.6), d / (wet ? .9 : 1.6));
-      const f = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ map: t, roughness: wet ? .35 : .6 })); f.rotation.x = -Math.PI / 2; f.position.set((r.x0 + r.x1) / 2, 0, (r.z0 + r.z1) / 2); f.receiveShadow = true; house.add(f);
-      const c = new THREE.Mesh(new THREE.PlaneGeometry(w, d), ceilMat); c.rotation.x = Math.PI / 2; c.position.set((r.x0 + r.x1) / 2, H, (r.z0 + r.z1) / 2); ceilings.add(c);
+      const f = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ map: t, roughness: wet ? .35 : .6, color: lin(r.podea || '#ffffff') })); f.rotation.x = -Math.PI / 2; f.position.set((r.x0 + r.x1) / 2, 0, (r.z0 + r.z1) / 2); f.receiveShadow = true; house.add(f);
+      const c = new THREE.Mesh(new THREE.PlaneGeometry(w, d), r.tavan ? lookMat('ceil', r.tavan, 1) : ceilMat); c.rotation.x = Math.PI / 2; c.position.set((r.x0 + r.x1) / 2, H, (r.z0 + r.z1) / 2); ceilings.add(c);
       const pl = new THREE.PointLight(0xfff0dc, light ? light.interior : .35, 7, 2); interiorLights.push(pl); pl.position.set((r.x0 + r.x1) / 2, H - .3, (r.z0 + r.z1) / 2); ceilings.add(pl); });
     p.pereti.forEach(wl => {
-      const [ax, az] = wl.a, [bx, bz] = wl.b, L = Math.hypot(bx - ax, bz - az); if (L < .01) return; const ux = (bx - ax) / L, uz = (bz - az) / L, rot = -Math.atan2(uz, ux), th = wl.ext ? .25 : .15, mat = wl.ext ? extMat : wallMat;
+      const [ax, az] = wl.a, [bx, bz] = wl.b, L = Math.hypot(bx - ax, bz - az); if (L < .01) return; const ux = (bx - ax) / L, uz = (bz - az) / L, rot = -Math.atan2(uz, ux), th = wl.ext ? .25 : .15, edge = wl.ext ? extMat : wallMat;
+      // fețele mari ale cutiei: +z local = normala (-uz, ux) = fața A, -z = fața B (vezi wallFaceRooms)
+      const mat = [edge, edge, edge, edge, faceMat(wl.fete && wl.fete.a, wl.ext), faceMat(wl.fete && wl.fete.b, wl.ext)];
       const gs = [...wl.goluri].sort((a, b) => a.la - b.la); let q = 0;
       const seg = (s0, s1, y0, y1) => { if (s1 - s0 < .005 || y1 - y0 < .005) return; const m = (s0 + s1) / 2; box(s1 - s0, y1 - y0, th, mat, ax + ux * m, (y0 + y1) / 2, az + uz * m, rot, walls); };
       gs.forEach(g => { seg(q, g.la, 0, H);
-        if (g.tip === 'usa'){ seg(g.la, g.la + g.l, 2.1, H); const m = g.la + g.l / 2; [g.la, g.la + g.l].forEach(s => box(.05, 2.1, th + .02, frameMat, ax + ux * s, 1.05, az + uz * s, rot, walls)); box(g.l, .05, th + .02, frameMat, ax + ux * m, 2.1, az + uz * m, rot, walls); }
-        else { seg(g.la, g.la + g.l, 0, .9); seg(g.la, g.la + g.l, 2.2, H); const m = g.la + g.l / 2; box(g.l, 1.3, .02, glass, ax + ux * m, 1.55, az + uz * m, rot, walls).castShadow = false;
-          box(g.l, .05, th + .04, frameMat, ax + ux * m, .9, az + uz * m, rot, walls); box(g.l, .05, th + .02, frameMat, ax + ux * m, 2.2, az + uz * m, rot, walls); box(.04, 1.3, th + .02, frameMat, ax + ux * m, 1.55, az + uz * m, rot, walls); }
+        if (g.tip === 'usa'){ const dh = Math.min(H - .05, g.h || 2.1), fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat; seg(g.la, g.la + g.l, dh, H); const m = g.la + g.l / 2; [g.la, g.la + g.l].forEach(s => box(.05, dh, th + .02, fm, ax + ux * s, dh / 2, az + uz * s, rot, walls)); box(g.l, .05, th + .02, fm, ax + ux * m, dh, az + uz * m, rot, walls); }
+        else { const sl = g.sill != null ? g.sill : .9, top = Math.min(H - .05, sl + (g.h || 1.3)), wh = top - sl, cy = (sl + top) / 2, fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat;
+          seg(g.la, g.la + g.l, 0, sl); seg(g.la, g.la + g.l, top, H); const m = g.la + g.l / 2; box(g.l, wh, .02, glass, ax + ux * m, cy, az + uz * m, rot, walls).castShadow = false;
+          box(g.l, .05, th + .04, fm, ax + ux * m, sl, az + uz * m, rot, walls); box(g.l, .05, th + .02, fm, ax + ux * m, top, az + uz * m, rot, walls); box(.04, wh, th + .02, fm, ax + ux * m, cy, az + uz * m, rot, walls); }
         colliders.push({ ax, az, ux, uz, s0: q, s1: g.la }); if (g.tip === 'fereastra') colliders.push({ ax, az, ux, uz, s0: g.la, s1: g.la + g.l }); q = g.la + g.l; });
       seg(q, L, 0, H); colliders.push({ ax, az, ux, uz, s0: q, s1: L }); });
     const xs = p.camere.flatMap(r => [r.x0, r.x1]), zs = p.camere.flatMap(r => [r.z0, r.z1]);

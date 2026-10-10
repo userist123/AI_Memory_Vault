@@ -32,9 +32,10 @@ export function toEngineCatalog(cat: Catalog): Record<string, EngineGroup> {
 }
 
 /** Totalul mobilierului la prețurile cunoscute din catalogul curent; piesele fără preț se numără separat, nu ca 0. */
-export function furnitureTotal(cat: Catalog, placements: { variantId: string }[]): { known: number; unknown: number } {
+export function furnitureTotal(cat: Catalog, placements: { variantId: string; size?: unknown }[]): { known: number; unknown: number } {
   let known = 0, unknown = 0;
-  for (const p of placements){ const price = resolve(cat, p.variantId)?.offer?.price; if (typeof price === 'number' && Number.isFinite(price)) known += price; else unknown++; }
+  // o piesă pe comandă (cu `size`) nu are preț de catalog: se numără ca necunoscută
+  for (const p of placements){ const price = p.size ? undefined : resolve(cat, p.variantId)?.offer?.price; if (typeof price === 'number' && Number.isFinite(price)) known += price; else unknown++; }
   return { known, unknown };
 }
 
