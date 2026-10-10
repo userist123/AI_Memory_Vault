@@ -5,7 +5,8 @@ import { footprintOf } from '@/core/validate';
 import { resolve } from '@/core/catalog';
 import { area, r3, snapPoint, wallLength } from '@/core/geometry';
 import { measure } from '@/core/edit-ops';
-import { formatLength } from '@/core/format';
+import { formatArea, formatLength } from '@/core/format';
+import { usePrefs } from '@/lib/prefs';
 import type { Calib } from './UnderlayPanel';
 
 export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'measure';
@@ -21,6 +22,9 @@ const G = .05;
 const snapG = (v: number) => r3(Math.round(v / G) * G);
 
 export default function PlanView(p: Props){
+  const { t, lang, units } = usePrefs();
+  // etichete de lungime: metric = cm fără unitate pe plan (aglomerat), imperial = picioare și inci
+  const wl = (m: number) => units === 'imperial' ? formatLength(m, 'imperial', lang) : String(Math.round(m * 100));
   const svg = useRef<SVGSVGElement>(null);
   const floor = p.snap.floor;
   const bounds = useMemo(() => { const xs = floor.walls.flatMap(w => [w.a[0], w.b[0]]).concat(floor.rooms.flatMap(r => [r.rect.x0, r.rect.x1])), zs = floor.walls.flatMap(w => [w.a[1], w.b[1]]).concat(floor.rooms.flatMap(r => [r.rect.z0, r.rect.z1]));
@@ -98,14 +102,14 @@ export default function PlanView(p: Props){
 
   const fs = Math.max(.12, vb.w / 70), isSel = (k: string, id: string) => p.sel && p.sel.kind === k && p.sel.id === id;
   return (<svg ref={svg} className="plan" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onContextMenu={e => { e.preventDefault(); setPreview(null); }}
-    style={{ cursor: p.tool === 'select' ? 'default' : 'crosshair' }} role="application" aria-label="Plan 2D editabil">
+    style={{ cursor: p.tool === 'select' ? 'default' : 'crosshair' }} role="application" aria-label={t('plan.aria')}>
     <defs><pattern id="g" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M1 0H0V1" fill="none" stroke="#e4e5e0" strokeWidth=".01" /></pattern></defs>
     <rect x={vb.x} y={vb.y} width={vb.w} height={vb.h} fill="url(#g)" />
     {ul && <image data-k="underlay" href={ul.dataUrl} x={ul.x} y={ul.z} width={ul.widthM} height={ul.widthM * aspect} preserveAspectRatio="none" opacity={ul.opacity} pointerEvents={ul.locked || p.calib?.stage === 'pick' ? 'none' : 'auto'} style={{ cursor: ul.locked ? 'default' : 'move' }} />}
     {floor.rooms.map(r => { const w = r.rect.x1 - r.rect.x0, d = r.rect.z1 - r.rect.z0; return (<g key={r.id}>
       <rect data-k="room" data-id={r.id} x={r.rect.x0} y={r.rect.z0} width={w} height={d} fill={ROOM_FILL[r.type] || '#f2eee6'} fillOpacity={ul ? .45 : 1} stroke={isSel('room', r.id) ? '#1F4E79' : 'none'} strokeWidth={.04} />
       <text x={(r.rect.x0 + r.rect.x1) / 2} y={(r.rect.z0 + r.rect.z1) / 2 - fs * .2} textAnchor="middle" fontSize={fs * 1.05} fontFamily="IBM Plex Sans" fill="#23262B" pointerEvents="none">{r.name}</text>
-      <text x={(r.rect.x0 + r.rect.x1) / 2} y={(r.rect.z0 + r.rect.z1) / 2 + fs * 1.1} textAnchor="middle" fontSize={fs * .8} fontFamily="IBM Plex Mono" fill="#5E636B" pointerEvents="none">{area(r.rect).toFixed(1)} m² · {Math.round(w * 100)}×{Math.round(d * 100)}</text>
+      <text x={(r.rect.x0 + r.rect.x1) / 2} y={(r.rect.z0 + r.rect.z1) / 2 + fs * 1.1} textAnchor="middle" fontSize={fs * .8} fontFamily="IBM Plex Mono" fill="#5E636B" pointerEvents="none">{formatArea(area(r.rect), units, lang)} · {wl(w)}×{wl(d)}</text>
     </g>); })}
     {p.snap.placements.map(pl => { const fp = footprintOf(p.catalog, pl); if (!fp) return null; const sv = p.severities[pl.id] || 'PASS', rv = resolve(p.catalog, pl.variantId);
       const k = ((Math.round(pl.rotation / (Math.PI / 2)) % 4) + 4) % 4, fl = k === 0 ? [fp.x0, fp.z1, fp.x1, fp.z1] : k === 2 ? [fp.x0, fp.z0, fp.x1, fp.z0] : k === 1 ? [fp.x1, fp.z0, fp.x1, fp.z1] : [fp.x0, fp.z0, fp.x0, fp.z1];
@@ -120,19 +124,19 @@ export default function PlanView(p: Props){
           return (<g key={o.id}><line data-k="opening" data-id={o.id} data-w={w.id} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={os ? '#dbe7f3' : '#FBFBF9'} strokeWidth={w.thickness + .01} style={{ cursor: 'ew-resize' }} />
             {o.kind === 'window' ? <><line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke="#2E6DA4" strokeWidth={.025} pointerEvents="none" /><line x1={a[0] + nx * w.thickness * .3} y1={a[1] + nz * w.thickness * .3} x2={b[0] + nx * w.thickness * .3} y2={b[1] + nz * w.thickness * .3} stroke="#2E6DA4" strokeWidth={.012} pointerEvents="none" /></>
               : <path d={`M${a[0]} ${a[1]} L${a[0] + nx * o.width} ${a[1] + nz * o.width} A${o.width} ${o.width} 0 0 ${1} ${b[0]} ${b[1]}`} fill="none" stroke="#5E636B" strokeWidth={.012} strokeDasharray=".04 .03" pointerEvents="none" />}</g>); })}
-        <text x={mid[0]} y={mid[1] + fs * .3} textAnchor="middle" fontSize={fs * .78} fontFamily="IBM Plex Mono" fill={sel ? '#1F4E79' : '#5E636B'} pointerEvents="none">{Math.round(L * 100)}</text>
+        <text x={mid[0]} y={mid[1] + fs * .3} textAnchor="middle" fontSize={fs * .78} fontFamily="IBM Plex Mono" fill={sel ? '#1F4E79' : '#5E636B'} pointerEvents="none">{wl(L)}</text>
         {sel && ([['a', w.a], ['b', w.b]] as const).map(([end, pt]) => <circle key={end} data-k="handle" data-w={w.id} data-end={end} data-id={w.id} cx={pt[0]} cy={pt[1]} r={fs * .6} fill="#fff" stroke="#1F4E79" strokeWidth={.03} style={{ cursor: 'grab' }} />)}
       </g>); })}
     {preview && <line x1={preview.a[0]} y1={preview.a[1]} x2={preview.b[0]} y2={preview.b[1]} stroke="#2E6DA4" strokeWidth={.15} strokeOpacity={.5} strokeDasharray=".1 .06" />}
-    {preview && <text x={(preview.a[0] + preview.b[0]) / 2} y={(preview.a[1] + preview.b[1]) / 2 - fs} textAnchor="middle" fontSize={fs} fontFamily="IBM Plex Mono" fill="#1F4E79">{Math.round(wallLength(preview.a, preview.b) * 100)} cm</text>}
+    {preview && <text x={(preview.a[0] + preview.b[0]) / 2} y={(preview.a[1] + preview.b[1]) / 2 - fs} textAnchor="middle" fontSize={fs} fontFamily="IBM Plex Mono" fill="#1F4E79">{units === 'imperial' ? formatLength(wallLength(preview.a, preview.b), 'imperial', lang) : `${Math.round(wallLength(preview.a, preview.b) * 100)} cm`}</text>}
     {roomDraft && <rect x={Math.min(roomDraft.a[0], roomDraft.b[0])} y={Math.min(roomDraft.a[1], roomDraft.b[1])} width={Math.abs(roomDraft.b[0] - roomDraft.a[0])} height={Math.abs(roomDraft.b[1] - roomDraft.a[1])} fill="#2E6DA4" fillOpacity={.12} stroke="#2E6DA4" strokeWidth={.02} strokeDasharray=".08 .05" />}
     {ruler && (() => { const b = ruler.b || rulerHover || ruler.a, d = measure(ruler.a, b); return (<g pointerEvents="none">
       <line x1={ruler.a[0]} y1={ruler.a[1]} x2={b[0]} y2={b[1]} stroke="#B3261E" strokeWidth={.03} strokeDasharray=".1 .05" />
       <circle cx={ruler.a[0]} cy={ruler.a[1]} r={fs * .3} fill="#B3261E" /><circle cx={b[0]} cy={b[1]} r={fs * .3} fill="#B3261E" />
-      <text x={(ruler.a[0] + b[0]) / 2} y={(ruler.a[1] + b[1]) / 2 - fs * .6} textAnchor="middle" fontSize={fs} fontFamily="IBM Plex Mono" fill="#B3261E" stroke="#fff" strokeWidth={fs * .25} paintOrder="stroke">{formatLength(d)}</text></g>); })()}
+      <text x={(ruler.a[0] + b[0]) / 2} y={(ruler.a[1] + b[1]) / 2 - fs * .6} textAnchor="middle" fontSize={fs} fontFamily="IBM Plex Mono" fill="#B3261E" stroke="#fff" strokeWidth={fs * .25} paintOrder="stroke">{formatLength(d, units, lang)}</text></g>); })()}
     {p.calib && (() => { const a = p.calib.stage === 'enter' ? p.calib.a : calA, b = p.calib.stage === 'enter' ? p.calib.b : (calA && cursor) || undefined; if (!a) return null; return (<g pointerEvents="none">
       {b && <line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke="#7A4A7F" strokeWidth={.03} strokeDasharray=".1 .05" />}
       <circle cx={a[0]} cy={a[1]} r={fs * .3} fill="#7A4A7F" />{b && <circle cx={b[0]} cy={b[1]} r={fs * .3} fill="#7A4A7F" />}</g>); })()}
-    {cursor && <text x={vb.x + vb.w - fs * .6} y={vb.y + vb.h - fs * .6} textAnchor="end" fontSize={fs * .8} fontFamily="IBM Plex Mono" fill="#5E636B" pointerEvents="none">x {cursor[0].toFixed(2)} · z {cursor[1].toFixed(2)} m</text>}
+    {cursor && <text x={vb.x + vb.w - fs * .6} y={vb.y + vb.h - fs * .6} textAnchor="end" fontSize={fs * .8} fontFamily="IBM Plex Mono" fill="#5E636B" pointerEvents="none">{units === 'imperial' ? `x ${formatLength(cursor[0], 'imperial', lang)} · z ${formatLength(cursor[1], 'imperial', lang)}` : `x ${cursor[0].toFixed(2)} · z ${cursor[1].toFixed(2)} m`}</text>}
   </svg>);
 }
