@@ -18,7 +18,9 @@ DONE:
   (health 200, admin 401/200, /go/o 302 with UTM and no cookie, bot clicks not counted, 404 for missing offer).
   Recorded in VERIFICATION_2026-10-10.md; Casa3D.md F4 section updated. v8 archive hash search on the PC was blocked
   by the Claude Code permission classifier (both personal folders and D:\w\casa3d).
-PLAN v8 REBUILD (2026-10-10, awaiting owner decisions on location/scope/source transfer):
+PLAN v8 REBUILD (2026-10-10; owner decisions 10:58 UTC: code in Vault workspace 02_PRODUCT/projects/workspaces/casa3d/;
+  scope = full v8 layer with tests + L-shaped rooms and wall-room linking + mobile joystick; real AI call still deferred;
+  source arrives by owner push from the PC to branch casa3d/faza4-source):
   Objective: the v8 layer exists only as a manifest + hashes; rebuild it on the verified faza4 app so every
   capability in Casa3D.md "Implementare continua" is TEST_VERIFIED, and remove the known faza4 defects.
   Spec sources (authority order): faza4 code + tests > CONSTITUTION.md > Casa3D.md v8 section > CORE_IMPLEMENTATION_v8.md
@@ -47,8 +49,9 @@ PLAN v8 REBUILD (2026-10-10, awaiting owner decisions on location/scope/source t
        from what is actually built.
   "Better than before": full Vitest coverage for every new module (not isolated smoke tests), CI on every push,
   portability fix, PHASE4.md 404/401 wording corrected, ledger updated with real outputs.
-  Out of scope unless owner asks: L-shaped rooms, auto wall-room linking, mobile joystick, real affiliate programs,
-  payments, real AI call.
+    W8 L-shaped (rectilinear polygon) rooms in the Digital Twin + Geometry Engine, with automatic wall-room linking; tests.
+    W9 mobile joystick / touch navigation for Viewer3D (UI only); manual check recorded.
+  Out of scope unless owner asks: real affiliate programs, payments, real AI call (deferred by owner).
   Verification per increment: vitest + tsc + next build in the cloud container (Node 22, npm registry reachable);
   the owner's PC run stays the RUNTIME_VERIFIED reference for server checks.
 NEXT (in order):
