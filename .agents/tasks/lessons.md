@@ -99,3 +99,11 @@ When the owner corrects an agent or a real incident reveals a reusable failure p
   When a scanner flags a literal that is only parsed, keep the code exact and add an explicit, documented exception bound to
   that exact literal in that one assembly, with a test that the exception does not leak (`ParsingOnlyLiterals`). Agent prompts
   must say: a red security gate is fixed in the gate's own allowlist with a reason, never by obfuscation.
+
+## 2026-10-10 — "install once" means one step per surface, then it runs and stays current
+- The cost-router was spread as a copied bootstrap line in 10 repos' SessionStart hooks. On the owner's PC that line broke
+  in Git Bash (MSYS path rewriting) and every copy failed silently, so the PC never updated; plain claude.ai chat had no
+  install path at all. Owner correction: it must run immediately after ONE install on whichever surface (cloud, PC, chat).
+  Rule: ship one install step per surface (PC: user-scope installer; cloud: environment Setup script; chat: uploadable skill
+  zip), make that install keep itself current, never fan out copies of the same line into many repos, and test the install
+  line on every shell the owner uses (Git Bash on Windows) before calling it done.
