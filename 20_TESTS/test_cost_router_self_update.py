@@ -197,6 +197,7 @@ def test_a_killed_run_is_recovered(tmp_path):
     (home / ".claude" / "cost-router.staging-12345").mkdir()
     _install(home)
     assert (home / ".claude" / "skills" / "cost-router" / "SKILL.md").exists() and not lock.exists()
+    assert not (home / ".claude" / "cost-router.staging-12345").exists(), "leftovers of a killed run are cleaned"
     # a live lock makes a hook-driven run skip quietly instead of waiting
     lock.write_text("1\n", encoding="utf-8")
     r = _install(home, "--self-update")

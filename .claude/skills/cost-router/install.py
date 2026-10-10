@@ -174,7 +174,8 @@ def install(home: Path, with_hook: bool, force: bool, session_start: bool = Fals
     skill_dir = home / ".claude" / "skills" / "cost-router"
     written = _written(skill_dir)
     staging = home / ".claude" / f"cost-router.staging-{os.getpid()}"  # same filesystem, outside skills/
-    shutil.rmtree(staging, ignore_errors=True)
+    for leftover in (*(home / ".claude").glob("cost-router.staging-*"), *(home / ".claude").glob("cost-router.old-*")):
+        shutil.rmtree(leftover, ignore_errors=True)  # from a killed run; safe, we hold the lock
     shutil.copytree(SKILL_SRC, staging, ignore=shutil.ignore_patterns("__pycache__", "chat"))  # chat/ is the claude.ai upload
     (staging / "lib").mkdir(exist_ok=True)
     shutil.copy2(ROUTER_SRC, staging / "lib" / "claude_model_router.py")
