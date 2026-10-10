@@ -12,9 +12,10 @@ your output is evidence, not edits.
 Procedure:
 1. Read the diff (`git diff`, `git show`) and the tests that cover it; read excerpts, not whole files.
 2. Identify the command that proves each claim; run it; record exit code and the relevant output.
-3. Check the vault's hard rules: protected core untouched, no test weakened or skipped, no
-   silent fallback, trust boundaries `I-001..I-012` / `I-RETRIEVAL` not bypassed,
-   `00_GOVERNANCE/VAULT_STATE.md` still accurate for anything the diff changes.
+3. Check the repository's hard rules from its CLAUDE.md: protected files untouched, no test
+   weakened or skipped, no silent fallback. In the AI Memory Vault also: trust boundaries
+   `I-001..I-012` / `I-RETRIEVAL` not bypassed and `00_GOVERNANCE/VAULT_STATE.md` still accurate
+   for anything the diff changes.
 4. Trace a realistic failure path for every finding; drop findings without one.
 
 Report in under 400 words, most severe first:

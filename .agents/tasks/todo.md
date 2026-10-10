@@ -47,4 +47,6 @@ estimated cost; `report` reproduces the token totals of a fixture transcript.
 - New tests: 23/23. Full suite: 3604 passed; every failure traced to the environment (mcp 2.x, missing
   dependency) or to the two new plain `.md` files, both fixed (route re-measurement + allowlist).
 - Measured on this session: 91% cache-hit; same tokens on Opus would be 43% of the Fable bill.
-- Remaining work: owner decides whether to enable an opt-in prompt hook; prices to refresh with the rate card.
+- Follow-up (same day): the policy is now a Claude Code skill (`cost-router`) with a per-prompt hook and a
+  one-shot installer (`install.py`, tested in a temp HOME: install, idempotent re-install, foreign hook kept,
+  uninstall). 12 more tests. Remaining: prices to refresh with the rate card.

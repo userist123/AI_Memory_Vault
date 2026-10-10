@@ -113,6 +113,8 @@ account-statement*
 *extras*de*cont*
 .claude/*
 !.claude/agents/
+!.claude/skills/
+!.claude/settings.json
 
 # Per-machine Claude Code settings (the owner-authority gate is enabled here, opt-in)
 .claude/settings.local.json

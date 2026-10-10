@@ -1,9 +1,10 @@
 # Claude Model Routing Policy V1 — which Claude model runs which work, and why
 
-**Status:** REAL, TEST_VERIFIED (`20_TESTS/test_claude_model_router.py`), not wired into any
-automatic hook. The policy is advisory: Claude Code applies it through subagent frontmatter
-(`.claude/agents/*.md`), the Agent tool's `model`/`effort` parameters and the `/model`,
-`/effort` commands. Nothing here calls a provider.
+**Status:** REAL, TEST_VERIFIED (`20_TESTS/test_claude_model_router.py`,
+`20_TESTS/test_cost_router_skill.py`). Applied in Claude Code by the **`cost-router` skill**
+(`.claude/skills/cost-router/SKILL.md`): the skill carries the protocol, a `UserPromptSubmit` hook
+injects one route line per non-trivial prompt, and the subagents in `.claude/agents/` pin the
+cheaper models. Nothing here calls a provider.
 
 **Owner question answered:** "Which model should Claude Code use for what, so the session
 spends fewer tokens-dollars without losing the result?"
@@ -69,6 +70,21 @@ Rules applied after classification (`rules` in the policy; can only raise a tier
 
 ## 4. How to use it
 
+**Install once, every project on the machine** (user scope, idempotent, reversible):
+
+```text
+python3 .claude/skills/cost-router/install.py            # skill + agents + prompt hook into ~/.claude
+python3 .claude/skills/cost-router/install.py --no-hook  # without the per-prompt hint
+python3 .claude/skills/cost-router/install.py --uninstall
+```
+
+Inside this repository nothing needs installing: the project skill, agents and the hook in
+`.claude/settings.json` are versioned. `/cost-router` invokes the skill by hand; Claude also loads
+it on its own from the description. The hook adds about 60 tokens per prompt and is silent on
+trivial prompts (slash commands, yes/no, under four words); it can never block a prompt.
+
+Manual tools:
+
 ```text
 python -m routing.claude_model_cli policy                       # the table above, from the JSON
 python -m routing.claude_model_cli route --goal "<task>" [--risk high] [--subagent] [--input-tokens N]
@@ -114,8 +130,9 @@ claude-fable-5-1        11       292    1807494     171175    33964    5526   91
 - Keyword classification is heuristic. It is meant to make the policy explicit and testable,
   not to replace judgment; the main agent is the classifier in practice.
 - Prices drift; `pricing_as_of` is in the file and must be refreshed with the rate card.
-- No hook applies this automatically. A `UserPromptSubmit` hook printing the `route` line is a
-  possible next step and is left opt-in because it adds tokens to every prompt.
+- The hook only *nudges* (one line of context); the skill body loads when invoked and stays in
+  context for the session (about 1.2K tokens), which is the price of having the protocol present.
+  The main agent still makes the call; a subagent is only as good as the brief it gets.
 - The usage counterfactual assumes equal token counts across models; a cheaper model that
   retries is not cheaper. Judge per completed task.
 - Distinct from `providers/model_tier_router.py` (council tiers, protected core) and

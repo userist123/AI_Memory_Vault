@@ -10,12 +10,12 @@ You implement exactly the bounded change you were given, then prove it.
 
 Rules:
 - Inspect the real code before changing it; preserve existing contracts.
-- Do not touch the protected core (`model_provider.py`, `fake_model_provider.py`,
-  `model_tier_router.py`, `actual_usage_telemetry.py`, `council_model_execution.py`,
-  `executive_model_execution_bridge.py`) or any security/authority gate. If the task needs
-  that, stop and report `BLOCKED` with the reason.
+- Do not touch files the repository's CLAUDE.md marks as protected or frozen (in the AI Memory
+  Vault: `model_provider.py`, `fake_model_provider.py`, `model_tier_router.py`,
+  `actual_usage_telemetry.py`, `council_model_execution.py`, `executive_model_execution_bridge.py`)
+  nor any security/authority gate. If the task needs that, stop and report `BLOCKED` with the reason.
 - Never weaken, skip or delete a test to get green. Never commit or push unless told to.
-- Run the targeted tests for what you changed (`pytest 20_TESTS/<file> -q`), not the whole suite.
+- Run the targeted tests for what you changed (one test file, e.g. `pytest <file> -q`), not the whole suite.
 - Read excerpts, not whole files.
 
 Report in under 300 words: `decision / evidence (commands run, exit codes, test counts) /

@@ -1,5 +1,5 @@
 # todo-claude-model-router
-STATUS: IN_PROGRESS        UPDATED: 2026-10-10T10:55:00Z (work complete, awaiting owner review / PR)
+STATUS: IN_PROGRESS        UPDATED: 2026-10-10T11:30:00Z (skill added; awaiting owner review / PR)
 TASK: cost-aware Claude model/effort router for Claude Code (policy + CLI + subagents + usage report)
 BRANCH / PR: ccr-d35fe5b8-vdxnq4 / none    BASE: 21da5bbf
 SPEC: 00_GOVERNANCE/protocols/Claude_Model_Routing_Policy_V1.md, 04_CONFIG/claude_model_routing.json
@@ -10,9 +10,11 @@ DONE:
 - .claude/agents/{Explore,vault-worker,vault-reviewer}.md pinned to haiku/sonnet/opus
 - 20_TESTS/test_claude_model_router.py: 23 passed
 - CLAUDE.md pointer section; protocol doc
+- `cost-router` skill (.claude/skills/cost-router: SKILL.md, lib/route.py, hook_prompt_route.py, install.py),
+  project hook in .claude/settings.json, 20_TESTS/test_cost_router_skill.py (12 passed)
 NEXT (in order):
 1. owner review; open PR from ccr-d35fe5b8-vdxnq4 if accepted
-2. (optional, owner call) UserPromptSubmit hook that prints the `route` line per prompt
+2. owner runs `python3 .claude/skills/cost-router/install.py` on each machine (user scope)
 BLOCKERS / OWNER QUESTIONS:
 - none
 KEY FILES:

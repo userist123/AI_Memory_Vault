@@ -124,8 +124,10 @@ Fable 5.1 $10/$50, Opus 5.5 $4/$20, Sonnet 5.5 $2/$10, Haiku 5.5 $0.10/$0.50 per
 - Risk `high`/`critical` never below Opus. Keep tools and system prompt stable in a session
   (cache), lower `effort` before changing model, switch models between tasks, not inside one.
 
-`python -m routing.claude_model_cli route --goal "..."` prints the decision with cost;
-`... report` prices the real token usage from the local Claude Code transcripts.
+Applied by the `cost-router` skill (`.claude/skills/cost-router/`, invoke with `/cost-router`; a
+`UserPromptSubmit` hook adds one route line per non-trivial prompt). Install once for every project:
+`python3 .claude/skills/cost-router/install.py`. Manual: `python -m routing.claude_model_cli route --goal "..."`
+prints the decision with cost; `... report` prices the real token usage from local Claude Code transcripts.
 
 ## Agent checkpoints and token economy
 
