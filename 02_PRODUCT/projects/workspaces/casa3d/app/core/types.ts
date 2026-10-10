@@ -12,7 +12,9 @@ export interface FurniturePlacement { id: string; roomId: string; group: string;
 export interface Finish { color?: string; material?: string }
 /** Aspectul ales de utilizator. Chei: pereți pe fețe `${wallId}@${roomId}`, camere, goluri (id), piese (id). */
 export interface Appearance { rooms?: Record<string, { walls?: Finish; floor?: Finish; ceiling?: Finish }>; wallFaces?: Record<string, Finish>; openings?: Record<string, Finish>; items?: Record<string, Finish> }
-export interface Snapshot { name: string; floor: Floor; placements: FurniturePlacement[]; selections: Record<string, string>; picked: string[]; finishes?: Record<string, RoomFinishes>; appearance?: Appearance; budget?: BudgetSettings; brief?: import('./brief').DesignBrief }
+/** Imagine de calc sub plan (scară din `widthM`, înălțimea vine din raportul imaginii). Nu intră în calcule, doar în desenul 2D. */
+export interface Underlay { dataUrl: string; x: number; z: number; widthM: number; opacity: number; locked: boolean }
+export interface Snapshot { name: string; floor: Floor; placements: FurniturePlacement[]; selections: Record<string, string>; picked: string[]; finishes?: Record<string, RoomFinishes>; appearance?: Appearance; underlay?: Underlay; budget?: BudgetSettings; brief?: import('./brief').DesignBrief }
 export interface Supplier { id: string; name: string; country: string; website: string }
 export interface Product { id: string; group: string; name: string; brand: string; category: string; model3d: string }
 export interface ProductVariant { id: string; productId: string; name: string; legacyIndex: number; dimensionsCm: { w: number; d: number; h: number } | null; dimensionsConfidence: Confidence; style: Record<string, any>; chairs?: number; includedWith?: string }

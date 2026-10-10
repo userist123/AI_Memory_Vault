@@ -19,6 +19,8 @@ import { autoLayout, addPlacement } from '@/core/project';
 import { resolve, groups, groupOf } from '@/core/catalog';
 import { area, r3, wallLength } from '@/core/geometry';
 import KeyboardHelp from './KeyboardHelp';
+import UnderlayPanel, { type Calib } from './UnderlayPanel';
+import { scaleFromPoints, anchorAfterScale } from '@/core/underlay';
 import { duplicatePlacement, nudgePlacement, NUDGE_CM, NUDGE_BIG_CM } from '@/core/edit-ops';
 import PlanView, { type Tool, type Sel } from './PlanView';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
@@ -31,7 +33,7 @@ const TOOL_LABEL: Record<Tool, string> = { select: 'Selectez', wall: 'Perete', r
 
 export default function Editor({ id }: { id: string }){
   const [snap, setSnap] = useState<Snapshot | null>(null), [catalog, setCatalog] = useState<Catalog | null>(null), [mc, setMc] = useState<MaterialsCatalog | null>(null), [out, setOut] = useState<Outbound | null>(null);
-  const [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('split'), [help, setHelp] = useState(false);
+  const [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('split'), [help, setHelp] = useState(false), [calib, setCalib] = useState<Calib | null>(null);
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error'>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
   const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[] } | null>(null), [persistent, setPersistent] = useState(true), [panel, setPanel] = useState<'props' | 'catalog' | 'budget' | 'design' | 'twin' | 'revs' | 'advisor'>('props'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
   const hist = useRef(new History<Snapshot>()), dragStart = useRef<Snapshot | null>(null), timer = useRef<any>(null), latest = useRef<Snapshot | null>(null), [, force] = useState(0);
@@ -76,6 +78,11 @@ export default function Editor({ id }: { id: string }){
         if (severityOf(iss) === 'WARNING'){ setPending({ before, issues: iss }); } }
       return; }
     const n = structuredClone(latest.current || snap); fn(n); latest.current = n; setSnap(n); persist(n); };
+  const addUnderlay = (dataUrl: string) => mutate(s => { const xs = s.floor.rooms.flatMap(r => [r.rect.x0, r.rect.x1]), zs = s.floor.rooms.flatMap(r => [r.rect.z0]);
+    const x0 = xs.length ? Math.min(...xs) : 0, w = xs.length ? Math.max(...xs) - x0 : 10; s.underlay = { dataUrl, x: r3(x0), z: r3(zs.length ? Math.min(...zs) : 0), widthM: Math.min(100, Math.max(1, r3(w || 10))), opacity: .5, locked: false }; });
+  const patchUnderlay = (patch: Partial<NonNullable<Snapshot['underlay']>>, record: boolean) => { if (!snap?.underlay) return; const n = structuredClone(snap); Object.assign(n.underlay!, patch); commit(n, record); };
+  const applyCalib = (realCm: number) => { const u = snap?.underlay; if (!snap || !u || calib?.stage !== 'enter' || !calib.a || !calib.b) return false; const w = scaleFromPoints(calib.a, calib.b, realCm, u.widthM); if (w == null) return false;
+    const [x, z] = anchorAfterScale(u, calib.a, w); const n = structuredClone(snap); n.underlay = { ...u, widthM: w, x, z }; commit(n); setCalib(null); return true; };
   const undo = () => { if (!snap) return; const s = hist.current.undo(snap); if (s){ setPending(null); setSnap(s); persist(s); force(x => x + 1); } };
   const redo = () => { if (!snap) return; const s = hist.current.redo(snap); if (s){ setSnap(s); persist(s); force(x => x + 1); } };
   const del = () => { if (!sel) return; mutate(s => {
@@ -98,7 +105,7 @@ export default function Editor({ id }: { id: string }){
       nudge(sel.id, e.key === 'ArrowLeft' ? -st : e.key === 'ArrowRight' ? st : 0, e.key === 'ArrowUp' ? -st : e.key === 'ArrowDown' ? st : 0); }
     else if (e.key === 'Delete' || e.key === 'Backspace'){ del(); }
     else if (e.key.toLowerCase() === 'r' && sel?.kind === 'placement') rotate(sel.id);
-    else if (e.key === 'Escape'){ setTool('select'); setHelp(false); } };
+    else if (e.key === 'Escape'){ setTool('select'); setHelp(false); setCalib(null); } };
     addEventListener('keydown', k); return () => removeEventListener('keydown', k); });
 
   async function saveRevision(){ if (!snap) return; clearTimeout(timer.current); await fetch(`/api/projects/${id}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ snapshot: snap }) });
@@ -138,7 +145,7 @@ export default function Editor({ id }: { id: string }){
         {(Object.keys(ICON) as Tool[]).map(t => <button key={t} aria-pressed={tool === t} onClick={() => setTool(t)} title={TOOL_LABEL[t]}><svg viewBox="0 0 24 24"><path d={ICON[t]} /></svg>{TOOL_LABEL[t]}</button>)}
       </nav>
       <div className={`canvas ${view === 'split' ? 'split' : ''}`}>
-        {view !== '3d' && <div style={{ position: 'relative', minHeight: 0 }}><PlanView key={preview ? 'p' + preview.v.tier : 'live'} snap={preview ? preview.v.candidate : snap} catalog={catalog} sel={preview ? null : sel} tool={preview ? 'select' : tool} severities={preview ? {} : sev} onSelect={preview ? () => {} : setSel} onEdit={preview ? () => {} : onEdit} onAddWall={preview ? () => {} : onAddWall} onAddRoom={preview ? () => {} : onAddRoom} onAddOpening={preview ? () => {} : onAddOpening} />
+        {view !== '3d' && <div style={{ position: 'relative', minHeight: 0 }}><PlanView key={preview ? 'p' + preview.v.tier : 'live'} snap={preview ? preview.v.candidate : snap} catalog={catalog} sel={preview ? null : sel} tool={preview ? 'select' : tool} severities={preview ? {} : sev} onSelect={preview ? () => {} : setSel} onEdit={preview ? () => {} : onEdit} onAddWall={preview ? () => {} : onAddWall} onAddRoom={preview ? () => {} : onAddRoom} onAddOpening={preview ? () => {} : onAddOpening} calib={preview ? null : calib} onCalibPick={(a, b) => setCalib({ stage: 'enter', a, b })} />
           <div className="hintbar">{tool === 'wall' ? 'Click pentru început, click pentru fiecare colț · Esc sau click dreapta termină' : tool === 'room' ? 'Trage un dreptunghi' : tool === 'door' || tool === 'window' ? 'Apasă lângă un perete' : tool === 'measure' ? 'Click pe două puncte ca să afli distanța · Esc oprește' : 'Rotița = zoom · Alt+trage = deplasare · R = rotește · Delete = șterge · ? = comenzi rapide'}</div></div>}
         {view !== '2d' && <Viewer3D snap={preview ? preview.v.candidate : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })} />}
         {preview && <div className="previewbar" role="status">Previzualizare: {preview.v.title} (nesalvată) <button className="btn" onClick={() => setPreview(null)}>Închide</button></div>}
@@ -161,6 +168,8 @@ export default function Editor({ id }: { id: string }){
             <div className="prov">{snap.floor.rooms.length} încăperi · {snap.floor.rooms.reduce((a, r) => a + area(r.rect), 0).toFixed(1)} m² · {snap.placements.length} piese · mobilier {lei(total)} · bugetul complet e în tabul Buget</div>
             <label className="f"><span>Înălțime tavan (cm)</span><input type="number" value={Math.round(snap.floor.ceilingHeight * 100)} onChange={e => num(e.target.value, x => mutate(s => { s.floor.ceilingHeight = r3(x / 100); }), 200)} /></label>
             <button className="btn" onClick={() => { if (!confirm('Amenajarea automată înlocuiește toată mobila din plan. Continui?')) return; const r = autoLayout(snap, catalog); commit(r.snapshot); say(r.notFit.length ? `Nu au încăput: ${r.notFit.map(n => n.key + ' în ' + n.room).join(', ')}` : 'Amenajare automată aplicată.'); }}>Amenajare automată (toată casa)</button>
+            <UnderlayPanel underlay={snap.underlay} calib={calib} say={say} onAdd={addUnderlay} onPatch={patchUnderlay} onRemove={() => { mutate(s => { delete s.underlay; }); setCalib(null); }}
+              onCalibStart={() => setCalib({ stage: 'pick' })} onCalibCancel={() => setCalib(null)} onCalibApply={applyCalib} />
             <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>Selectează o cameră, un perete sau o piesă de mobilier ca să le modifici.</p>
           </>}
           {selRoom && <RoomPanel room={selRoom} snap={snap} G={G} mc={mc} onFinish={(patch: Partial<RoomFinishes>) => mutate(s => { s.finishes = { ...(s.finishes || {}), [selRoom.id]: { ...finishesOf(s, selRoom), ...patch } }; })} onChange={(fn: (r: any) => void) => mutate(s => fn(s.floor.rooms.find(r => r.id === selRoom.id)!))}

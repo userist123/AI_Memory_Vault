@@ -6,13 +6,15 @@ import { resolve } from '@/core/catalog';
 import { area, r3, snapPoint, wallLength } from '@/core/geometry';
 import { measure } from '@/core/edit-ops';
 import { formatLength } from '@/core/format';
+import type { Calib } from './UnderlayPanel';
 
 export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'measure';
 export type Sel = { kind: 'wall' | 'room' | 'placement'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
 type Phase = 'start' | 'move' | 'end';
 interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severities: Record<string, Severity>;
   onSelect(s: Sel): void; onEdit(fn: (s: Snapshot) => void, phase: Phase): void; onAddWall(a: [number, number], b: [number, number]): void;
-  onAddRoom(r: { x0: number; z0: number; x1: number; z1: number }): void; onAddOpening(wallId: string, offset: number, kind: 'door' | 'window'): void; }
+  onAddRoom(r: { x0: number; z0: number; x1: number; z1: number }): void; onAddOpening(wallId: string, offset: number, kind: 'door' | 'window'): void;
+  calib?: Calib | null; onCalibPick?(a: [number, number], b: [number, number]): void; }
 const ROOM_FILL: Record<string, string> = { baie: '#e4e8e6', bucatarie: '#e6e8e3', hol: '#efeae1', living: '#f0e8da', dormitor: '#efe6dc' };
 const SEV: Record<Severity, string> = { PASS: '#1F4E79', WARNING: '#B7791F', ERROR: '#B3261E' };
 const G = .05;
@@ -28,6 +30,10 @@ export default function PlanView(p: Props){
   const [roomDraft, setRoomDraft] = useState<{ a: [number, number]; b: [number, number] } | null>(null);
   const [cursor, setCursor] = useState<[number, number] | null>(null);
   const [rulerHover, setRulerHover] = useState<[number, number] | null>(null);
+  const [aspect, setAspect] = useState(1), [calA, setCalA] = useState<[number, number] | null>(null);
+  const ul = p.snap.underlay;
+  useEffect(() => { if (!ul) return; const i = new Image(); i.onload = () => i.naturalWidth && setAspect(i.naturalHeight / i.naturalWidth); i.src = ul.dataUrl; }, [ul?.dataUrl]); // eslint-disable-line
+  useEffect(() => { if (p.calib?.stage !== 'pick') setCalA(null); }, [p.calib?.stage]);
   const [ruler, setRuler] = useState<{ a: [number, number]; b: [number, number] | null } | null>(null);
   useEffect(() => { setRuler(null); }, [p.tool]);
   const drag = useRef<any>(null), pan = useRef<any>(null);
@@ -36,7 +42,7 @@ export default function PlanView(p: Props){
   useEffect(() => { const el = svg.current!; const wheel = (e: WheelEvent) => { e.preventDefault(); const [wx, wz] = toWorld(e), k = e.deltaY > 0 ? 1.12 : 1 / 1.12;
     setVb(v => { const w = Math.min(80, Math.max(1.5, v.w * k)), h = v.h * (w / v.w); return { x: wx - (wx - v.x) * (w / v.w), y: wz - (wz - v.y) * (w / v.w), w, h }; }); };
     el.addEventListener('wheel', wheel, { passive: false }); return () => el.removeEventListener('wheel', wheel); }, []);
-  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape'){ setRuler(null); setPreview(null); setRoomDraft(null); drag.current = null; } }; addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, []);
+  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape'){ setCalA(null); setRuler(null); setPreview(null); setRoomDraft(null); drag.current = null; } }; addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, []);
 
   function nearestWall(pt: [number, number], maxD = .35){ let best: { id: string; offset: number; d: number } | null = null;
     for (const w of floor.walls){ const L = wallLength(w.a, w.b); if (L < .01) continue; const ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L, s = Math.max(0, Math.min(L, (pt[0] - w.a[0]) * ux + (pt[1] - w.a[1]) * uz)), d = Math.hypot(pt[0] - (w.a[0] + ux * s), pt[1] - (w.a[1] + uz * s));
@@ -44,6 +50,7 @@ export default function PlanView(p: Props){
   function down(e: React.PointerEvent){
     if (e.button === 1 || (e.button === 0 && e.altKey)){ pan.current = { x: e.clientX, y: e.clientY, vb }; (e.target as Element).setPointerCapture?.(e.pointerId); return; }
     if (e.button !== 0) return; const pt = toWorld(e);
+    if (p.calib?.stage === 'pick'){ const q: [number, number] = [r3(pt[0]), r3(pt[1])]; if (!calA) setCalA(q); else if (Math.hypot(q[0] - calA[0], q[1] - calA[1]) > .05){ p.onCalibPick?.(calA, q); setCalA(null); } return; }
     if (p.tool === 'measure'){ const s = snapPoint(pt, floor); setRuler(r => r && !r.b ? { a: r.a, b: s } : { a: s, b: null }); return; }
     if (p.tool === 'wall'){ const s = snapPoint(pt, floor); if (!preview) setPreview({ a: s, b: s }); else { const b = ortho(preview.a, snapPoint(pt, floor)); if (wallLength(preview.a, b) >= .2) p.onAddWall(preview.a, b); setPreview({ a: b, b }); } return; }
     if (p.tool === 'room'){ const s: [number, number] = [snapG(pt[0]), snapG(pt[1])]; setRoomDraft({ a: s, b: s }); svg.current!.setPointerCapture(e.pointerId); return; }
@@ -51,6 +58,7 @@ export default function PlanView(p: Props){
     const t = (e.target as Element).closest('[data-k]') as HTMLElement | null;
     if (!t){ p.onSelect(null); return; }
     const kind = t.dataset.k!, id = t.dataset.id!;
+    if (kind === 'underlay'){ p.onSelect(null); drag.current = { kind, start: pt, moved: false, orig: null }; svg.current!.setPointerCapture(e.pointerId); return; }
     if (kind === 'handle'){ drag.current = { kind, wallId: t.dataset.w, end: t.dataset.end, start: pt, moved: false }; }
     else if (kind === 'opening'){ p.onSelect({ kind: 'opening', id, wallId: t.dataset.w! }); drag.current = { kind, id, wallId: t.dataset.w, start: pt, moved: false }; }
     else { p.onSelect({ kind: kind as any, id }); drag.current = { kind, id, start: pt, moved: false, orig: null }; }
@@ -68,7 +76,8 @@ export default function PlanView(p: Props){
     if (!d.orig) d.orig = JSON.parse(JSON.stringify(p.snap));
     const o = d.orig as Snapshot;
     p.onEdit(s => {
-      if (d.kind === 'placement'){ const a = o.placements.find(x => x.id === d.id)!, b = s.placements.find(x => x.id === d.id)!; b.x = snapG(a.x + dx); b.z = snapG(a.z + dz);
+      if (d.kind === 'underlay'){ const a = o.underlay, b = s.underlay; if (a && b && !a.locked){ b.x = r3(a.x + dx); b.z = r3(a.z + dz); } }
+      else if (d.kind === 'placement'){ const a = o.placements.find(x => x.id === d.id)!, b = s.placements.find(x => x.id === d.id)!; b.x = snapG(a.x + dx); b.z = snapG(a.z + dz);
         const room = s.floor.rooms.find(r => b.x >= r.rect.x0 && b.x <= r.rect.x1 && b.z >= r.rect.z0 && b.z <= r.rect.z1); if (room) b.roomId = room.id; b.source = 'manual'; }
       else if (d.kind === 'room'){ const a = o.floor.rooms.find(x => x.id === d.id)!.rect, b = s.floor.rooms.find(x => x.id === d.id)!; const ddx = snapG(dx), ddz = snapG(dz);
         b.rect = { x0: r3(a.x0 + ddx), x1: r3(a.x1 + ddx), z0: r3(a.z0 + ddz), z1: r3(a.z1 + ddz) }; }
@@ -92,8 +101,9 @@ export default function PlanView(p: Props){
     style={{ cursor: p.tool === 'select' ? 'default' : 'crosshair' }} role="application" aria-label="Plan 2D editabil">
     <defs><pattern id="g" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M1 0H0V1" fill="none" stroke="#e4e5e0" strokeWidth=".01" /></pattern></defs>
     <rect x={vb.x} y={vb.y} width={vb.w} height={vb.h} fill="url(#g)" />
+    {ul && <image data-k="underlay" href={ul.dataUrl} x={ul.x} y={ul.z} width={ul.widthM} height={ul.widthM * aspect} preserveAspectRatio="none" opacity={ul.opacity} pointerEvents={ul.locked || p.calib?.stage === 'pick' ? 'none' : 'auto'} style={{ cursor: ul.locked ? 'default' : 'move' }} />}
     {floor.rooms.map(r => { const w = r.rect.x1 - r.rect.x0, d = r.rect.z1 - r.rect.z0; return (<g key={r.id}>
-      <rect data-k="room" data-id={r.id} x={r.rect.x0} y={r.rect.z0} width={w} height={d} fill={ROOM_FILL[r.type] || '#f2eee6'} stroke={isSel('room', r.id) ? '#1F4E79' : 'none'} strokeWidth={.04} />
+      <rect data-k="room" data-id={r.id} x={r.rect.x0} y={r.rect.z0} width={w} height={d} fill={ROOM_FILL[r.type] || '#f2eee6'} fillOpacity={ul ? .45 : 1} stroke={isSel('room', r.id) ? '#1F4E79' : 'none'} strokeWidth={.04} />
       <text x={(r.rect.x0 + r.rect.x1) / 2} y={(r.rect.z0 + r.rect.z1) / 2 - fs * .2} textAnchor="middle" fontSize={fs * 1.05} fontFamily="IBM Plex Sans" fill="#23262B" pointerEvents="none">{r.name}</text>
       <text x={(r.rect.x0 + r.rect.x1) / 2} y={(r.rect.z0 + r.rect.z1) / 2 + fs * 1.1} textAnchor="middle" fontSize={fs * .8} fontFamily="IBM Plex Mono" fill="#5E636B" pointerEvents="none">{area(r.rect).toFixed(1)} m² · {Math.round(w * 100)}×{Math.round(d * 100)}</text>
     </g>); })}
@@ -120,6 +130,9 @@ export default function PlanView(p: Props){
       <line x1={ruler.a[0]} y1={ruler.a[1]} x2={b[0]} y2={b[1]} stroke="#B3261E" strokeWidth={.03} strokeDasharray=".1 .05" />
       <circle cx={ruler.a[0]} cy={ruler.a[1]} r={fs * .3} fill="#B3261E" /><circle cx={b[0]} cy={b[1]} r={fs * .3} fill="#B3261E" />
       <text x={(ruler.a[0] + b[0]) / 2} y={(ruler.a[1] + b[1]) / 2 - fs * .6} textAnchor="middle" fontSize={fs} fontFamily="IBM Plex Mono" fill="#B3261E" stroke="#fff" strokeWidth={fs * .25} paintOrder="stroke">{formatLength(d)}</text></g>); })()}
+    {p.calib && (() => { const a = p.calib.stage === 'enter' ? p.calib.a : calA, b = p.calib.stage === 'enter' ? p.calib.b : (calA && cursor) || undefined; if (!a) return null; return (<g pointerEvents="none">
+      {b && <line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke="#7A4A7F" strokeWidth={.03} strokeDasharray=".1 .05" />}
+      <circle cx={a[0]} cy={a[1]} r={fs * .3} fill="#7A4A7F" />{b && <circle cx={b[0]} cy={b[1]} r={fs * .3} fill="#7A4A7F" />}</g>); })()}
     {cursor && <text x={vb.x + vb.w - fs * .6} y={vb.y + vb.h - fs * .6} textAnchor="end" fontSize={fs * .8} fontFamily="IBM Plex Mono" fill="#5E636B" pointerEvents="none">x {cursor[0].toFixed(2)} · z {cursor[1].toFixed(2)} m</text>}
   </svg>);
 }
