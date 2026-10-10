@@ -9,3 +9,4 @@ export * from './view-state.js';
 export * from './boq-eval.js';
 export * from './share.js';
 export * from './catalog-feed.js';
+export * from './designer.js';
