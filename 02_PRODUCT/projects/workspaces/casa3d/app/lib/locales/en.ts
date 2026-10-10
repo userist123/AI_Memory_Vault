@@ -23,7 +23,7 @@ export const en: Dict = {
   "editor.projects": "← Projects", "editor.projectName": "Project name",
   "editor.saved": "Saved", "editor.saving": "Saving…", "editor.dirty": "Unsaved changes", "editor.saveError": "Save error",
   "editor.revisionN": "Revision {n}", "editor.noRevisions": "no revisions", "editor.undo": "Undo", "editor.redo": "Redo",
-  "editor.view": "View", "editor.view2d": "Plan", "editor.viewSplit": "Plan + 3D", "editor.print": "Print / PDF", "editor.saveRevision": "Save revision", "editor.tools": "Tools",
+  "editor.view": "View", "editor.view2d": "Plan", "editor.viewSplit": "Plan + 3D", "editor.exportDxf": "DXF", "editor.print": "Print / PDF", "editor.saveRevision": "Save revision", "editor.tools": "Tools",
   "editor.hintWall": "Click to start, click each corner · Esc or right-click to finish", "editor.hintRoom": "Drag a rectangle", "editor.hintOpening": "Click next to a wall",
   "editor.hintMeasure": "Click two points to measure the distance · Esc to stop", "editor.hintSelect": "Wheel = zoom · Alt+drag = pan · R = rotate · Delete = remove · ? = shortcuts",
   "editor.previewBar": "Preview: {title} (not saved)", "editor.warnings": "Warnings", "editor.positionWarnings": "This position has warnings",
