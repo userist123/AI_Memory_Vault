@@ -1,5 +1,7 @@
 'use client';
 // Pagină de tipărire (A4 landscape → „Salvează ca PDF”): plan la scară reală, tabel camere, listă de cumpărături și buget.
+import { finishSchedule } from '@/core/finish-schedule';
+import { ScheduleTable } from './FinishSchedule';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalog, MaterialsCatalog, Snapshot } from '@/core/types';
 import { footprintOf } from '@/core/validate';
@@ -82,7 +84,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
   if (err) return <main className="print-page"><p>{t('print.loadError')}</p></main>;
   if (!data || !view) return <main className="print-page">{canvas}<p>{t('print.loading')}</p></main>;
 
-  const { p, catalog } = data, snap = p.draft, budget = view.budget;
+  const { p, catalog, mc } = data, snap = p.draft, budget = view.budget, finishRows = finishSchedule(snap, catalog, mc);
   // câte o vedere pe nivel: planul, camerele și culorile se desenează pe nivelul lor
   const views = floors(snap).map((_, i) => levelView(snap, i)), multi = views.length > 1, allRooms = views.flatMap(v => v.floor.rooms);
   const levelName = (i: number) => i === 0 ? t('level.ground') : views[i]!.floor.name || t('level.n', { n: i });
@@ -164,6 +166,9 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
           </div>
         </div>
       </section>); })}
+
+    <section className="print-sec print-break" data-testid="finish-schedule"><h2>{t('sched.title')}</h2><p className="muted">{t('sched.intro')}</p>
+      <ScheduleTable rows={finishRows} t={t} cur={cur} locale={locale} /></section>
 
     <section className="print-sec print-break"><h2>{t('print.shopping')}</h2>
       {byRetailer.size === 0 && <p className="muted">{t('print.noItems')}</p>}

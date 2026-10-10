@@ -1,4 +1,6 @@
 'use client';
+import { finishSchedule } from '@/core/finish-schedule';
+import { downloadSchedule } from './FinishSchedule';
 import { useMemo, useState } from 'react';
 import type { Catalog, Snapshot, MaterialsCatalog, BudgetSettings } from '@/core/types';
 import { computeBudget, type BoqItem } from '@/core/boq';
@@ -63,6 +65,7 @@ export default function BudgetPanel({ snap, catalog, mc, out, onBudget }: { snap
     {open === 'mob' && <div className="tbl">{b.items.filter(i => ['furniture', 'sanitary', 'appliances'].includes(i.category)).map(i => <div key={i.key} className="trow">
       <ItemLink i={i} out={out} /><b className="mono">{i.total != null ? lei(i.total) : t('common.unknown')}</b><small>{roomName(i.roomId)} · {i.supplier}, {i.verifiedAt}, {t(CONF[i.confidence]!)} <Fresh at={i.verifiedAt} /></small></div>)}</div>}
     <button className="btn" onClick={csv}>{t('budget.downloadCsv')}</button>
+    <button className="btn" onClick={() => downloadSchedule(finishSchedule(snap, catalog, mc), t, cur, snap.name, i => i === 0 ? t('level.ground') : t('level.n', { n: i }))}>{t('sched.download')}</button>
     <p className="prov">{t('budget.linksNote')} <a href="/despre-linkuri" target="_blank">{t('budget.howItWorks')}</a>.</p>
     <p className="prov">{t('budget.assumptions', { parquet: pc(WASTE.parquet), tile: pc(WASTE.floor_tile), baseboard: pc(WASTE.baseboard), paint: pc(WASTE.paint), coats: PAINT_COATS, bath: formatLength(BATH_TILE_HEIGHT, units, lang), splash: formatLength(BACKSPLASH_HEIGHT, units, lang), per: formatArea(LIGHTS_EXTRA_PER_M2, units, lang) })}</p>
   </div>);
