@@ -75,7 +75,9 @@ for multi-step code, design, risky work or verification. Cloud sessions have no 
    `xhigh` for the hard tail only; `max` overthinks. Lower effort before changing model.
 6. **Write less**: no narration between tool calls, no restating the plan, final report in facts
    and numbers. Subagent briefs: goal, what is ruled out, files to read, scope, output contract.
-7. **Checkpoint, don't replay**: on long work keep a short checkpoint file (task, done, next,
+7. **Use the repo map**: a `SessionStart` hook injects a ~1k-token map of the repository (dirs,
+   sizes, tests; `lib/repo_map.py`). Open files by its paths; never scan a directory it marks ⚠.
+8. **Checkpoint, don't replay**: on long work keep a short checkpoint file (task, done, next,
    blockers, key files) so a resume reads that, not the transcript.
 
 ## 4. Quality guards (what you never trade for tokens)
