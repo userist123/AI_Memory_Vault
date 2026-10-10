@@ -3,6 +3,7 @@ import { newSnapshot } from '../core/project';
 import { validateFloor, validatePlacement } from '../core/validate';
 import type { Catalog, Snapshot, MaterialsCatalog } from '../core/types';
 import { checkBrief } from '../core/brief';
+import { diffSnapshots } from '../core/diff';
 import { parseProposal, evaluateProposal, applyVariant, TIERS, type Tier, type RawProposal } from '../core/proposal';
 import { proposeByRules } from '../core/proposer-rules';
 import { aiConfigured, aiModel, proposeWithClaude } from './ai';
@@ -86,6 +87,15 @@ export async function restoreRevision(owner: string, id: string, number: number)
   await own(owner, id); const { q } = await getDb();
   const { rows } = await q('select snapshot from revisions where project_id=$1 and number=$2', [id, number]); if (!rows[0]) throw new HttpError(404, 'Revizie inexistentă.');
   await q('update projects set draft=$1, updated_at=now() where id=$2', [JSON.stringify(rows[0].snapshot), id]); return rows[0].snapshot as Snapshot;
+}
+/** Ce s-a schimbat între două revizii (sau între o revizie și draftul curent). Aceleași verificări de proprietate ca restaurarea. */
+export async function diffRevisions(owner: string, id: string, from: number, to: number | 'draft'){
+  const okN = (n: unknown): n is number => typeof n === 'number' && Number.isInteger(n) && n >= 1 && n <= 2_000_000_000;
+  if (!okN(from) || (to !== 'draft' && !okN(to))) throw new HttpError(400, 'Numere de revizie invalide.');
+  const p = await own(owner, id), { q } = await getDb();
+  const load = async (n: number) => { const { rows } = await q('select snapshot from revisions where project_id=$1 and number=$2', [id, n]); if (!rows[0]) throw new HttpError(404, 'Revizie inexistentă.'); return rows[0].snapshot as Snapshot; };
+  const before = await load(from), after = to === 'draft' ? p.draft as Snapshot : await load(to);
+  return { from, to, ...diffSnapshots(before, after, await getCatalog()) };
 }
 export async function deleteProject(owner: string, id: string){ await own(owner, id); const { q } = await getDb(); await q('delete from projects where id=$1', [id]); }
 
