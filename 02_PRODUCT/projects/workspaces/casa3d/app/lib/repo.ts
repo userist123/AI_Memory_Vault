@@ -1,0 +1,118 @@
+import { getDb } from './db';
+import { newSnapshot } from '../core/project';
+import { validateFloor, validatePlacement } from '../core/validate';
+import type { Catalog, Snapshot, MaterialsCatalog } from '../core/types';
+import { checkBrief } from '../core/brief';
+import { parseProposal, evaluateProposal, applyVariant, TIERS, type Tier, type RawProposal } from '../core/proposal';
+import { proposeByRules } from '../core/proposer-rules';
+import { aiConfigured, aiModel, proposeWithClaude } from './ai';
+
+export class HttpError extends Error { constructor(public status: number, msg: string, public details?: unknown){ super(msg); } }
+const MAX_SNAPSHOT = 1_000_000;
+const cleanName = (s: unknown) => { const v = String(s ?? '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 120); if (!v) throw new HttpError(400, 'Numele proiectului lipsește.'); return v; };
+
+export async function getCatalog(): Promise<Catalog> {
+  const { q } = await getDb();
+  const [s, p, v, o] = await Promise.all([q('select * from suppliers'), q('select * from products'), q('select * from variants order by legacy_index'), q('select * from offers')]);
+  return { suppliers: s.rows.map(r => ({ id: r.id, name: r.name, country: r.country, website: r.website })),
+    products: p.rows.map(r => ({ id: r.id, group: r.grp, name: r.name, brand: r.brand, category: r.category, model3d: r.model3d })),
+    variants: v.rows.map(r => ({ id: r.id, productId: r.product_id, name: r.name, legacyIndex: r.legacy_index, dimensionsCm: r.dims, dimensionsConfidence: r.dims_confidence, style: r.style || {}, ...(r.chairs ? { chairs: r.chairs } : {}), ...(r.included_with ? { includedWith: r.included_with } : {}) })),
+    offers: o.rows.map(r => ({ id: r.id, variantId: r.variant_id, supplierId: r.supplier_id, price: Number(r.price), currency: r.currency, availability: r.availability, affiliateUrl: r.affiliate_url,
+      provenance: { source: r.source, sourceUrl: r.source_url, verifiedAt: r.verified_at ? new Date(r.verified_at).toISOString().slice(0, 10) : null, verificationType: r.verification_type, confidence: r.confidence } })) };
+}
+export async function getMaterials(): Promise<MaterialsCatalog> {
+  const { q } = await getDb(); const [m, l, sv] = await Promise.all([q('select * from materials order by category, unit_price'), q('select * from labor_rates'), q('select * from services')]);
+  const d = (v: any) => v ? new Date(v).toISOString().slice(0, 10) : null, n = (v: any) => v == null ? undefined : Number(v);
+  return { verifiedAt: d(m.rows[0]?.verified_at) || '', materials: m.rows.map(r => ({ id: r.id, category: r.category, name: r.name, supplier: r.supplier, unit: r.unit, unitPrice: Number(r.unit_price), ...(r.pack ? { pack: { ...r.pack, ...(r.pack.price != null ? { price: Number(r.pack.price) } : {}) } } : {}), ...(r.coverage != null ? { coverage: n(r.coverage) } : {}), ...(r.consumption != null ? { consumption: n(r.consumption) } : {}), sourceUrl: r.source_url, verificationType: r.verification_type, confidence: r.confidence, ...(r.note ? { note: r.note } : {}) })),
+    labor: l.rows.map(r => ({ id: r.id, label: r.label, unit: r.unit, low: Number(r.low), expected: Number(r.expected), high: Number(r.high), sources: r.sources, confidence: r.confidence })),
+    services: sv.rows.map(r => ({ id: r.id, label: r.label, supplier: r.supplier, ...(r.price != null ? { price: Number(r.price) } : {}), ...(r.price_per_meter != null ? { pricePerMeter: Number(r.price_per_meter) } : {}), sourceUrl: r.source_url, verificationType: r.verification_type, confidence: r.confidence, ...(r.note ? { note: r.note } : {}) })) } as MaterialsCatalog;
+}
+export function checkSnapshot(s: any): Snapshot {
+  if (!s || typeof s !== 'object' || !s.floor || !Array.isArray(s.floor.rooms) || !Array.isArray(s.floor.walls) || !Array.isArray(s.placements) || typeof s.selections !== 'object') throw new HttpError(400, 'Structura proiectului e invalidă.');
+  if (JSON.stringify(s).length > MAX_SNAPSHOT) throw new HttpError(413, 'Proiectul e prea mare.');
+  const num = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
+  for (const r of s.floor.rooms) if (!['x0', 'z0', 'x1', 'z1'].every(k => num(r.rect?.[k])) || r.rect.x1 <= r.rect.x0 || r.rect.z1 <= r.rect.z0) throw new HttpError(400, `Camera ${r.id} are dimensiuni invalide.`);
+  for (const w of s.floor.walls) if (!num(w.a?.[0]) || !num(w.a?.[1]) || !num(w.b?.[0]) || !num(w.b?.[1]) || !Array.isArray(w.openings)) throw new HttpError(400, `Peretele ${w.id} e invalid.`);
+  for (const p of s.placements) if (!num(p.x) || !num(p.z) || !num(p.rotation) || typeof p.variantId !== 'string') throw new HttpError(400, 'O piesă de mobilier e invalidă.');
+  if (s.finishes != null && (typeof s.finishes !== 'object' || Array.isArray(s.finishes))) throw new HttpError(400, 'Finisajele sunt invalide.');
+  if (s.budget != null){ const b = s.budget; const okNum = (v: unknown) => v == null || (typeof v === 'number' && Number.isFinite(v) && v >= 0);
+    if (typeof b !== 'object' || !okNum(b.target) || !okNum(b.contingencyPct) || !okNum(b.deliveryDedeman) || !okNum(b.furnitureAssembly) || !okNum(b.design) || (b.contingencyPct ?? 0) > 100) throw new HttpError(400, 'Setările de buget sunt invalide.'); }
+  if (s.brief != null){ try { s.brief = checkBrief(s.brief); } catch { delete s.brief; } }
+  s.name = cleanName(s.name); s.picked = Array.isArray(s.picked) ? s.picked.filter((x: unknown) => typeof x === 'string') : [];
+  return s as Snapshot;
+}
+export async function listProjects(owner: string){
+  const { q } = await getDb(); const { rows } = await q('select id, name, updated_at, current_revision from projects where owner=$1 order by updated_at desc', [owner]); return rows;
+}
+export async function createProject(owner: string, name: unknown, template: 'demo' | 'blank'){
+  const { q } = await getDb(); const cat = await getCatalog(); const n = cleanName(name);
+  const snap = newSnapshot(cat, n, template === 'blank' ? 'blank' : 'demo');
+  const { rows } = await q('insert into projects(owner, name, draft) values($1,$2,$3) returning id', [owner, n, JSON.stringify(snap)]);
+  return rows[0].id as string;
+}
+async function own(owner: string, id: string){
+  if (!/^[0-9a-f-]{36}$/i.test(id)) throw new HttpError(404, 'Proiect inexistent.');
+  const { q } = await getDb(); const { rows } = await q('select * from projects where id=$1 and owner=$2', [id, owner]);
+  if (!rows[0]) throw new HttpError(404, 'Proiect inexistent.'); return rows[0];
+}
+export async function getProject(owner: string, id: string){ const r = await own(owner, id); return { id: r.id, name: r.name, updatedAt: r.updated_at, currentRevision: r.current_revision, draft: r.draft as Snapshot }; }
+export async function saveDraft(owner: string, id: string, snapshot: unknown){
+  const s = checkSnapshot(snapshot); await own(owner, id); const { q } = await getDb();
+  const { rows } = await q('update projects set draft=$1, name=$2, updated_at=now() where id=$3 and owner=$4 returning updated_at', [JSON.stringify(s), s.name, id, owner]);
+  return { updatedAt: rows[0].updated_at };
+}
+// O revizie se creează doar dacă proiectul nu are erori (constituția: ERROR blochează aplicarea).
+export async function createRevision(owner: string, id: string, note: unknown){
+  const p = await own(owner, id), cat = await getCatalog(), snap = p.draft as Snapshot;
+  const errors = [...validateFloor(snap.floor).filter(i => i.severity === 'ERROR'), ...snap.placements.flatMap(pl => validatePlacement(snap, cat, pl).filter(i => i.severity === 'ERROR'))];
+  if (errors.length) throw new HttpError(409, 'Proiectul are erori care trebuie rezolvate înainte de a salva o revizie.', errors);
+  const { q } = await getDb(), n = p.current_revision + 1;
+  await q('insert into revisions(project_id, number, note, snapshot) values($1,$2,$3,$4)', [id, n, String(note ?? '').slice(0, 300), JSON.stringify(snap)]);
+  await q('update projects set current_revision=$1, updated_at=now() where id=$2', [n, id]);
+  return { number: n };
+}
+export async function listRevisions(owner: string, id: string){ await own(owner, id); const { q } = await getDb(); const { rows } = await q('select number, note, created_at from revisions where project_id=$1 order by number desc', [id]); return rows; }
+export async function restoreRevision(owner: string, id: string, number: number){
+  await own(owner, id); const { q } = await getDb();
+  const { rows } = await q('select snapshot from revisions where project_id=$1 and number=$2', [id, number]); if (!rows[0]) throw new HttpError(404, 'Revizie inexistentă.');
+  await q('update projects set draft=$1, updated_at=now() where id=$2', [JSON.stringify(rows[0].snapshot), id]); return rows[0].snapshot as Snapshot;
+}
+export async function deleteProject(owner: string, id: string){ await own(owner, id); const { q } = await getDb(); await q('delete from projects where id=$1', [id]); }
+
+// ---------- Faza 3: propuneri de design ----------
+const publicVariants = (evs: ReturnType<typeof evaluateProposal>) => evs.map(e => ({ ...e }));
+export async function generateProposal(owner: string, id: string, briefInput: unknown, deps: { fetchImpl?: typeof fetch } = {}){
+  let brief; try { brief = checkBrief(briefInput); } catch (e: any){ throw new HttpError(400, e.message); }
+  const p = await own(owner, id), cat = await getCatalog(), mc = await getMaterials(), snap = p.draft as Snapshot;
+  snap.brief = brief; const { q } = await getDb(); await q('update projects set draft=$1, updated_at=now() where id=$2', [JSON.stringify(snap), id]);
+  let raw: RawProposal | null = null, source = 'rules', model: string | null = null; const notes: string[] = [];
+  if (aiConfigured()){
+    try { const out = await proposeWithClaude(snap, cat, mc, brief, deps.fetchImpl); const parsed = parseProposal(out); notes.push(...parsed.errors);
+      if (parsed.proposal){ raw = parsed.proposal; source = 'ai'; model = aiModel(); } else notes.push('Răspunsul AI nu a respectat formatul; am folosit motorul de reguli.'); }
+    catch (e: any){ notes.push(`AI indisponibil (${e.message}); am folosit motorul de reguli.`); }
+  } else notes.push('AI neconfigurat pe server (lipsește ANTHROPIC_API_KEY): variantele sunt generate de motorul de reguli.');
+  if (!raw) raw = proposeByRules(snap, cat, mc, brief);
+  const evs = evaluateProposal(snap, cat, mc, raw, brief);
+  const { rows } = await q('insert into proposals(project_id, source, model, brief, raw, notes) values($1,$2,$3,$4,$5,$6) returning id, created_at', [id, source, model, JSON.stringify(brief), JSON.stringify(raw), JSON.stringify(notes)]);
+  return { id: rows[0].id as string, createdAt: rows[0].created_at, source, model, aiGenerated: source === 'ai', notes, variants: publicVariants(evs) };
+}
+async function proposalOf(id: string, pid: string){ if (!/^[0-9a-f-]{36}$/i.test(pid)) throw new HttpError(404, 'Propunere inexistentă.');
+  const { q } = await getDb(); const { rows } = await q('select * from proposals where id=$1 and project_id=$2', [pid, id]); if (!rows[0]) throw new HttpError(404, 'Propunere inexistentă.'); return rows[0]; }
+// Aplicarea se re-validează pe server, pe proiectul curent (clientul nu e de încredere).
+export async function applyProposal(owner: string, id: string, pid: string, tier: string, confirmWarnings: boolean){
+  if (!TIERS.includes(tier as Tier)) throw new HttpError(400, 'Variantă necunoscută.');
+  const p = await own(owner, id), row = await proposalOf(id, pid), cat = await getCatalog(), mc = await getMaterials();
+  const raw = row.raw as RawProposal, v = raw.variants.find(x => x.tier === tier); if (!v) throw new HttpError(404, 'Varianta nu există în propunere.');
+  const [ev] = evaluateProposal(p.draft as Snapshot, cat, mc, { variants: [v] }, row.brief);
+  const res = applyVariant(ev, confirmWarnings); if (!res.ok) throw new HttpError(409, res.reason, ev.issues);
+  const { q } = await getDb(); await q('update projects set draft=$1, updated_at=now() where id=$2', [JSON.stringify(res.snapshot), id]);
+  await q("update proposals set decisions = decisions || $1::jsonb where id=$2", [JSON.stringify({ [tier]: { decision: 'approved', at: new Date().toISOString() } }), pid]);
+  const rev = await createRevision(owner, id, `Varianta ${tier} aplicată (${row.source === 'ai' ? 'propusă de AI' : 'propusă de motorul de reguli'})`);
+  return { snapshot: res.snapshot, revision: rev.number };
+}
+export async function rejectProposal(owner: string, id: string, pid: string, tier: string){
+  await own(owner, id); await proposalOf(id, pid); if (!TIERS.includes(tier as Tier)) throw new HttpError(400, 'Variantă necunoscută.');
+  const { q } = await getDb(); await q("update proposals set decisions = decisions || $1::jsonb where id=$2", [JSON.stringify({ [tier]: { decision: 'rejected', at: new Date().toISOString() } }), pid]); return { ok: true };
+}
+export async function listProposals(owner: string, id: string){ await own(owner, id); const { q } = await getDb();
+  const { rows } = await q('select id, source, model, decisions, created_at from proposals where project_id=$1 order by created_at desc limit 20', [id]); return rows; }

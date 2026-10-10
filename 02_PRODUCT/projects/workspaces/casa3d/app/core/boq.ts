@@ -1,0 +1,104 @@
+import type { Catalog, Snapshot, Room, MaterialsCatalog, Material, RoomFinishes, BudgetSettings, Confidence } from './types';
+import { resolve, groupOf } from './catalog';
+import { area as rectArea } from './geometry';
+import { openingsOnSide } from './validate';
+import { WASTE, PAINT_COATS, DOOR_HEIGHT, WINDOW_HEIGHT, BATH_TILE_HEIGHT, BACKSPLASH_HEIGHT, LIGHTS_EXTRA_PER_M2, VAT_RATE, WET_ROOMS, SANITARY, APPLIANCES, DEFAULT_BUDGET } from './rules.boq';
+
+const r2 = (v: number) => Math.round(v * 100) / 100;
+export interface RoomGeometry { roomId: string; name: string; floorArea: number; perimeter: number; height: number; doorWidth: number; windowWidth: number; wallGross: number; openings: number; wallNet: number; ceiling: number }
+// ---------- 1) geometrie pe cameră, calculată din Digital Twin ----------
+export function roomGeometry(snap: Snapshot, room: Room): RoomGeometry {
+  const r = room.rect, w = r.x1 - r.x0, d = r.z1 - r.z0, H = snap.floor.ceilingHeight;
+  let doorWidth = 0, windowWidth = 0;
+  for (const s of ['N', 'S', 'W', 'E'] as const) for (const o of openingsOnSide(snap.floor, room, s)){ const lo = s === 'N' || s === 'S' ? r.x0 : r.z0, hi = s === 'N' || s === 'S' ? r.x1 : r.z1;
+    const len = Math.max(0, Math.min(o.b, hi) - Math.max(o.a, lo)); if (o.kind === 'door') doorWidth += len; else windowWidth += len; }
+  const perimeter = 2 * (w + d), wallGross = perimeter * H, openings = doorWidth * DOOR_HEIGHT + windowWidth * WINDOW_HEIGHT;
+  return { roomId: room.id, name: room.name, floorArea: r2(rectArea(r)), perimeter: r2(perimeter), height: H, doorWidth: r2(doorWidth), windowWidth: r2(windowWidth), wallGross: r2(wallGross), openings: r2(openings), wallNet: r2(Math.max(0, wallGross - openings)), ceiling: r2(rectArea(r)) };
+}
+export function defaultFinishes(room: Room): RoomFinishes {
+  if (room.type === 'baie') return { floor: 'gresie-mckinley', wallPaint: 'vopsea-innenweiss', wallTile: 'faianta-grafen', baseboard: null, light: 'lampa-virrmo' };
+  if (room.type === 'bucatarie') return { floor: 'gresie-mckinley', wallPaint: 'vopsea-innenweiss', wallTile: 'faianta-lumiere', baseboard: null, light: 'lampa-virrmo' };
+  return { floor: 'parchet-egger-h2099', wallPaint: 'vopsea-innenweiss', wallTile: null, baseboard: 'plinta-mdf-60', light: 'lampa-virrmo' };
+}
+export const finishesOf = (snap: Snapshot, room: Room): RoomFinishes => ({ ...defaultFinishes(room), ...(snap.finishes?.[room.id] || {}) });
+export const budgetOf = (snap: Snapshot): BudgetSettings => ({ ...DEFAULT_BUDGET, ...(snap.budget || {}) });
+
+// ---------- 2) BOQ ----------
+export type BoqCategory = 'furniture' | 'finishes' | 'lighting' | 'appliances' | 'sanitary';
+export interface BoqItem { key: string; category: BoqCategory; roomId: string | null; label: string; refId: string; netQty: number; unit: string; wastePct: number;
+  orderedQty: number; packs: number | null; packLabel: string | null; unitPrice: number | null; total: number | null; supplier: string; sourceUrl: string | null; verifiedAt: string | null; confidence: Confidence; note?: string }
+export interface LaborItem { key: string; roomId: string; rateId: string; label: string; qty: number; unit: string; low: number; expected: number; high: number; confidence: Confidence; sources: { name: string; url: string }[] }
+
+function materialLine(m: Material, key: string, roomId: string | null, label: string, net: number, verifiedAt: string): BoqItem {
+  const waste = WASTE[m.category] ?? 0, need = net * (1 + waste);
+  let packs: number | null = null, ordered = need, total: number;
+  if (m.pack){ packs = Math.ceil(need / m.pack.size - 1e-9); ordered = packs * m.pack.size; total = m.pack.price != null ? packs * m.pack.price : ordered * m.unitPrice; }
+  else { ordered = m.unit === 'buc' ? Math.ceil(need - 1e-9) : need; total = ordered * m.unitPrice; }
+  return { key, category: m.category === 'lighting' ? 'lighting' : 'finishes', roomId, label, refId: m.id, netQty: r2(net), unit: m.unit, wastePct: waste, orderedQty: r2(ordered), packs, packLabel: m.pack?.label ?? null,
+    unitPrice: m.unitPrice, total: r2(total), supplier: m.supplier, sourceUrl: m.sourceUrl, verifiedAt, confidence: m.confidence, note: m.note };
+}
+export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
+  const items: BoqItem[] = [], labor: LaborItem[] = [], geometry: RoomGeometry[] = [], unknown: string[] = [];
+  const M = (id?: string | null) => (id ? mc.materials.find(m => m.id === id) : undefined), L = (id: string) => mc.labor.find(l => l.id === id)!;
+  const addLabor = (roomId: string, rateId: string, qty: number) => { if (qty <= 0) return; const l = L(rateId);
+    labor.push({ key: `${roomId}:${rateId}`, roomId, rateId, label: l.label, qty: r2(qty), unit: l.unit, low: r2(qty * l.low), expected: r2(qty * l.expected), high: r2(qty * l.high), confidence: l.confidence, sources: l.sources }); };
+  let adhesiveArea = 0;
+  for (const room of snap.floor.rooms){
+    const g = roomGeometry(snap, room), f = finishesOf(snap, room); geometry.push(g);
+    // pardoseală
+    const fm = M(f.floor); if (fm){ items.push(materialLine(fm, `${room.id}:floor`, room.id, `Pardoseală · ${room.name}`, g.floorArea, mc.verifiedAt));
+      if (fm.category === 'floor_tile'){ adhesiveArea += g.floorArea; addLabor(room.id, 'manopera-gresie', g.floorArea); } else addLabor(room.id, 'manopera-parchet', g.floorArea); }
+    if (room.type === 'baie') addLabor(room.id, 'manopera-hidroizolatie', g.floorArea);
+    // faianță: baie până la 2,1 m; bucătărie = zona dintre blat și dulapuri, pe lungimea mobilierului de bucătărie
+    let tileArea = 0;
+    if (room.type === 'baie') tileArea = Math.max(0, g.perimeter * BATH_TILE_HEIGHT - g.doorWidth * DOOR_HEIGHT - g.windowWidth * Math.max(0, BATH_TILE_HEIGHT - .9));
+    if (room.type === 'bucatarie'){ const k = snap.placements.find(p => p.roomId === room.id && p.group === 'bucatarie'), rv = k && resolve(cat, k.variantId); tileArea = rv ? rv.w * BACKSPLASH_HEIGHT : 0; }
+    const wt = M(f.wallTile); if (wt && tileArea > 0){ items.push(materialLine(wt, `${room.id}:walltile`, room.id, `Faianță · ${room.name}`, tileArea, mc.verifiedAt)); adhesiveArea += tileArea; addLabor(room.id, 'manopera-faianta', tileArea); }
+    // vopsea: pereți (fără zona placată) + tavan, 2 straturi
+    const paintArea = Math.max(0, g.wallNet - (wt ? tileArea : 0)) + g.ceiling, pm = M(f.wallPaint);
+    if (pm && pm.coverage){ const litres = paintArea * PAINT_COATS / pm.coverage; const line = materialLine(pm, `${room.id}:paint`, room.id, `Vopsea pereți + tavan · ${room.name} (${r2(paintArea)} m², ${PAINT_COATS} straturi)`, litres, mc.verifiedAt); items.push(line); addLabor(room.id, 'manopera-zugravit', paintArea); }
+    // plintă (doar unde nu e placat)
+    const bm = M(f.baseboard); if (bm && !WET_ROOMS.has(room.type)){ const len = Math.max(0, g.perimeter - g.doorWidth); items.push(materialLine(bm, `${room.id}:baseboard`, room.id, `Plintă · ${room.name}`, len, mc.verifiedAt)); addLabor(room.id, 'manopera-plinta', len); }
+    // iluminat general
+    const lm = M(f.light); if (lm){ const n = f.lights ?? (1 + Math.max(0, Math.ceil((g.floorArea - LIGHTS_EXTRA_PER_M2) / LIGHTS_EXTRA_PER_M2))); const line = materialLine(lm, `${room.id}:light`, room.id, `Iluminat · ${room.name}`, n, mc.verifiedAt); items.push(line); }
+  }
+  // adeziv pentru toate suprafețele placate (o singură comandă)
+  const ad = mc.materials.find(m => m.category === 'tile_adhesive');
+  if (ad && adhesiveArea > 0) items.push(materialLine(ad, 'adhesive', null, `Adeziv gresie/faianță (${r2(adhesiveArea)} m²)`, adhesiveArea * (ad.consumption || 0), mc.verifiedAt));
+  // mobilier, sanitare, electrocasnice din plan (o linie pe piesă; electrocasnicele bucătăriei din selecții)
+  const lineFor = (key: string, roomId: string | null, vid: string) => { const rv = resolve(cat, vid); const g = groupOf(vid);
+    if (!rv){ unknown.push(vid); return; } const price = rv.offer?.price ?? null; if (price == null) unknown.push(rv.variant.name);
+    items.push({ key, category: SANITARY.has(g) ? 'sanitary' : APPLIANCES.has(g) ? 'appliances' : 'furniture', roomId, label: rv.variant.name, refId: vid, netQty: 1, unit: 'buc', wastePct: 0, orderedQty: 1, packs: null, packLabel: null,
+      unitPrice: price, total: price, supplier: rv.offer?.provenance.source || 'UNKNOWN', sourceUrl: rv.offer?.provenance.sourceUrl ?? null, verifiedAt: rv.offer?.provenance.verifiedAt ?? null, confidence: rv.offer?.provenance.confidence ?? 'UNKNOWN' }); };
+  for (const p of snap.placements) lineFor(p.id, p.roomId, p.variantId);
+  const kitchen = snap.placements.find(p => p.group === 'bucatarie');
+  if (kitchen) for (const g of ['plita', 'cuptor', 'hota']) lineFor(`${kitchen.id}:${g}`, kitchen.roomId, snap.selections[g] || `${g}-0`);
+  return { items, labor, geometry, unknown };
+}
+
+// ---------- 3) buget ----------
+export interface BudgetLine { key: string; label: string; amount: number | null; confidence: Confidence; note?: string; sourceUrl?: string | null }
+export function computeBudget(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
+  const s = budgetOf(snap), { items, labor, geometry, unknown } = computeBOQ(snap, cat, mc);
+  const sum = (c: BoqCategory) => r2(items.filter(i => i.category === c).reduce((a, i) => a + (i.total ?? 0), 0));
+  const cats: Record<string, number> = { furniture: sum('furniture'), finishes: sum('finishes'), lighting: sum('lighting'), appliances: sum('appliances'), sanitary: sum('sanitary') };
+  const laborTotals = { low: r2(labor.reduce((a, l) => a + l.low, 0)), expected: r2(labor.reduce((a, l) => a + l.expected, 0)), high: r2(labor.reduce((a, l) => a + l.high, 0)) };
+  const svc = (id: string) => mc.services.find(x => x.id === id);
+  const extra: BudgetLine[] = [];
+  const hasIkea = items.some(i => i.supplier === 'IKEA'), hasDedeman = items.some(i => i.supplier === 'Dedeman');
+  if (hasIkea && s.deliveryIkea){ const d = svc('livrare-ikea-z1'); extra.push({ key: 'transport-ikea', label: 'Transport IKEA', amount: d?.price ?? null, confidence: d?.confidence ?? 'UNKNOWN', note: d?.note, sourceUrl: d?.sourceUrl }); }
+  if (hasDedeman) extra.push({ key: 'transport-dedeman', label: 'Transport Dedeman', amount: s.deliveryDedeman, confidence: s.deliveryDedeman == null ? 'UNKNOWN' : 'MEDIUM', note: s.deliveryDedeman == null ? 'Se calculează la comandă pe dedeman.ro; introdu valoarea ofertei.' : 'Valoare introdusă manual.' });
+  const kit = snap.placements.find(p => p.group === 'bucatarie'), kitW = kit ? (resolve(cat, kit.variantId)?.w || 0) : 0;
+  if (kit && s.kitchenAssembly){ const k = svc('montaj-bucatarie-ikea'); extra.push({ key: 'montaj-bucatarie', label: `Montaj bucătărie (${r2(kitW)} ml)`, amount: k?.pricePerMeter ? r2(k.pricePerMeter * kitW) : null, confidence: k?.confidence ?? 'UNKNOWN', note: k?.note, sourceUrl: k?.sourceUrl }); }
+  extra.push({ key: 'montaj-mobilier', label: 'Montaj mobilier', amount: s.furnitureAssembly, confidence: s.furnitureAssembly == null ? 'UNKNOWN' : 'MEDIUM', note: s.furnitureAssembly == null ? 'Depinde de ofertă (platformele de servicii arată intervale foarte largi); introdu valoarea primită.' : 'Valoare introdusă manual.' });
+  if (s.design > 0) extra.push({ key: 'proiectare', label: 'Proiectare / design', amount: s.design, confidence: 'MEDIUM', note: 'Valoare introdusă manual.' });
+  const known = extra.filter(e => e.amount != null), unknownLines = extra.filter(e => e.amount == null);
+  const extrasTotal = r2(known.reduce((a, e) => a + (e.amount || 0), 0));
+  const mk = (scen: 'low' | 'expected' | 'high') => { const lab = s.includeLabor ? laborTotals[scen] : 0; const subtotal = r2(Object.values(cats).reduce((a, v) => a + v, 0) + lab + extrasTotal);
+    const contingency = r2(subtotal * s.contingencyPct / 100), total = r2(subtotal + contingency), vat = r2(total - total / (1 + VAT_RATE)); return { labor: lab, subtotal, contingency, total, vat }; };
+  const scen = { low: mk('low'), expected: mk('expected'), high: mk('high') }, chosen = scen[s.laborScenario];
+  const target = s.target, diff = target != null ? r2(target - chosen.total) : null;
+  return { settings: s, categories: cats, laborTotals, extras: known, unknownLines, unknownItems: unknown, scenarios: scen, chosen, target, diff,
+    status: diff == null ? 'none' : diff >= 0 ? 'under' : 'over', items, labor, geometry, vatRate: VAT_RATE };
+}
+export type Budget = ReturnType<typeof computeBudget>;
