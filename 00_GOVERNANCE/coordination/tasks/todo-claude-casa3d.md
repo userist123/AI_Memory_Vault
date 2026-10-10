@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-10T13:20:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-10T14:45:00Z
 TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / userist123/AI_Memory_Vault_CODEX_READY#258    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
@@ -78,6 +78,14 @@ PLAN v8 REBUILD (2026-10-10; owner decisions 10:58 UTC: code in Vault workspace 
   viewer3d-engine.js rename included). W0 DONE: imported with git subtree into
   02_PRODUCT/projects/workspaces/casa3d/app (commit 747fec0f); in the container: npm ci, tsc clean, Vitest 64/64,
   next build OK (22 routes). App docs (CONSTITUTION, README, PHASE1-4) allowlisted as plain documents.
+2026-10-10 14:45 UTC — owner: benchmark against every app of this kind worldwide, make it international, visual export,
+  realistic look, customise colours/materials/sizes of everything, an advisor that says what is not good; requirements
+  rewritten in 02_PRODUCT/projects/Casa3D/CERINTE_PRODUS_v2.md, analysis + status in COMPETITOR_ANALYSIS_2026-10-10.md.
+  DONE and pushed (head 81c8b362): mobile/brief/variant/share fixes, format.ts, 3D light + capture + SSAO + skirting,
+  revision diff, catalog filters, visual export (11 A4 pages, 6 images), appearance/customisation, advisor, editor tools
+  (duplicate, nudge, measure, shortcuts, plan underlay). Independent review REQUEST CHANGES (made-to-measure priced in
+  diff/export; validation gaps) acted on in 41841767. Evidence: app 171/171, tsc 0, next build OK, browser checks.
+  IN PROGRESS: i18n worker (branch casa3d-i18n), templates worker (branch casa3d-templates, uncommitted at 14:45).
 NEXT (in order):
 0. DONE 12:55 UTC (integration): lib/twin.ts adapter, lib/design.ts (room-scoped BOQ, stale over the full twin),
    lib/share.ts, tables design_proposals + shares, routes /design, /design/[pid], /shares, /api/share/[token],

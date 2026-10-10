@@ -56,9 +56,15 @@ Cercetarea e făcută pe paginile oficiale; afirmațiile neconfirmate sunt marca
 10. Mai multe niveluri (casă P+1), camere în L în aplicație (nucleul le are deja), comentarii pe linkul partajat.
 11. Scanare LiDAR, randări fotorealiste și restilizare AI: nu se fac acum (scanarea cere aplicație nativă, AI-ul e amânat de proprietar).
 
-## Plan de implementare
-- Etapa 0 (FĂCUT, e83f53d1): cele 4 probleme găsite la rulare (3D și joystick vizibile pe telefon, bife implicite pe tip de cameră, varianta eșuată explicată, etichete lizibile pe linkul partajat).
-- Etapa 1, în paralel: export tipăribil, șabloane RO, comparație revizii, filtre catalog.
-- Etapa 2: productivitate în editor, plan din imagine cu scară, captură 3D și zi/noapte, strat tehnic, perete accent.
-- Etapa 3 (necesită decizii de model de date): mai multe niveluri, camere în L în aplicație, comentarii.
-Fiecare etapă: teste Vitest, tsc, next build, verificare în browser, review independent înainte de DONE.
+## Plan de implementare și stare (actualizat 2026-10-10, ramura codex/casa3d-memory)
+Cerințele complete, reformulate, sunt în CERINTE_PRODUS_v2.md. Starea de mai jos e verificată cu teste (Vitest), compilare, `next build` și browser fără interfață.
+- FĂCUT: cele 4 probleme găsite la rulare (telefon, bife implicite, variantă eșuată, etichete pe linkul partajat).
+- FĂCUT: formatare internațională (moneda ofertei, metric/imperial); comparație între revizii (camere, pereți, mobilier, dimensiuni, culori, cost pe monedă); căutare și filtre în catalog (text, magazin, piață, preț, dimensiuni).
+- FĂCUT: export vizual A4: copertă cu imagine 3D, plan la scară cu cote, câte o pagină pe cameră (imagine 3D, plan, culori alese, finisaje cu cantități, manoperă, mobilier, subtotal), listă de cumpărături pe magazine, buget.
+- FĂCUT: personalizare: culori și materiale pentru pereți, perete accent pe față, pardoseală, tavan, rame, fiecare piesă; înălțime și parapet la goluri; dimensiuni pe comandă (preț necunoscut, nu inventat); produse reale în culori apropiate (ΔE CIE Lab).
+- FĂCUT: consilier („așa nu e bine”): circulație, proporții, lumină, ergonomie, culori, buget, cu motiv și reparație.
+- FĂCUT: realism 3D: lumină zi/seară/noapte, direcția soarelui, ocluzie ambientală (calitate înaltă), plinte, captură PNG.
+- FĂCUT: editor: duplicare, mutare cu săgețile, măsurare, ajutor pentru taste, plan din imagine cu calibrarea scării.
+- ÎN LUCRU: interfață în mai multe limbi (română, engleză) cu unități la alegere; șabloane generice (garsonieră, 1, 2, 3 camere).
+- URMEAZĂ: strat tehnic (prize, întrerupătoare, puncte de apă) cu numărătoare; mai multe niveluri; camere în L în aplicație; comentarii pe linkul partajat; cataloage pe piețe din alte țări (are nevoie de date reale de la magazine).
+- AMÂNAT de proprietar: apelul real la un model AI. Nu se face pe web: scanare LiDAR (cere aplicație nativă).
