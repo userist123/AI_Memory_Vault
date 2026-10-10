@@ -11,7 +11,8 @@ export function createViewer(canvas, { onPick } = {}){
   const scene = new THREE.Scene(); scene.background = new THREE.Color('#e9ebe7'); scene.fog = new THREE.Fog('#e9ebe7', 25, 60);
   const cam = new THREE.PerspectiveCamera(68, 1, .05, 200);
   const pm = new THREE.PMREMGenerator(R); scene.environment = pm.fromScene(new RoomEnvironment(), .04).texture;
-  scene.add(new THREE.HemisphereLight(0xffffff, 0xcfc8bc, .22));
+  const hemi = new THREE.HemisphereLight(0xffffff, 0xcfc8bc, .22); scene.add(hemi);
+  let light = null; const interiorLights = []; // parametrii de iluminare primiți din core/lighting.ts
   const sun = new THREE.DirectionalLight(0xfff3e2, 1.1); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12, near: 1, far: 50 }); sun.shadow.bias = -.0005; scene.add(sun, sun.target);
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), new THREE.MeshStandardMaterial({ color: '#dcdfd9', roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.position.y = -.02; ground.receiveShadow = true; scene.add(ground);
   const lin = c => new THREE.Color(c).convertSRGBToLinear();
@@ -166,12 +167,12 @@ function model(it){
   const disposeGroup = g => g.traverse(o => { if (o.geometry) o.geometry.dispose(); });
   function box(w, h, d, mat, x, y, z, rotY, parent){ const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.rotation.y = rotY || 0; m.castShadow = m.receiveShadow = true; parent.add(m); return m; }
   function buildHouse(p){
-    disposeGroup(house); scene.remove(house); house = new THREE.Group(); ceilings = new THREE.Group(); walls = new THREE.Group(); house.add(ceilings, walls); scene.add(house); colliders = [];
+    disposeGroup(house); scene.remove(house); interiorLights.length = 0; house = new THREE.Group(); ceilings = new THREE.Group(); walls = new THREE.Group(); house.add(ceilings, walls); scene.add(house); colliders = [];
     const H = p.inaltime;
     p.camere.forEach(r => { const wet = r.tip === 'baie' || r.tip === 'bucatarie', w = r.x1 - r.x0, d = r.z1 - r.z0, t = (wet ? tiles : parquet).clone(); t.needsUpdate = true; t.repeat.set(w / (wet ? .9 : 1.6), d / (wet ? .9 : 1.6));
       const f = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ map: t, roughness: wet ? .35 : .6 })); f.rotation.x = -Math.PI / 2; f.position.set((r.x0 + r.x1) / 2, 0, (r.z0 + r.z1) / 2); f.receiveShadow = true; house.add(f);
       const c = new THREE.Mesh(new THREE.PlaneGeometry(w, d), ceilMat); c.rotation.x = Math.PI / 2; c.position.set((r.x0 + r.x1) / 2, H, (r.z0 + r.z1) / 2); ceilings.add(c);
-      const pl = new THREE.PointLight(0xfff0dc, .35, 7, 2); pl.position.set((r.x0 + r.x1) / 2, H - .3, (r.z0 + r.z1) / 2); ceilings.add(pl); });
+      const pl = new THREE.PointLight(0xfff0dc, light ? light.interior : .35, 7, 2); interiorLights.push(pl); pl.position.set((r.x0 + r.x1) / 2, H - .3, (r.z0 + r.z1) / 2); ceilings.add(pl); });
     p.pereti.forEach(wl => {
       const [ax, az] = wl.a, [bx, bz] = wl.b, L = Math.hypot(bx - ax, bz - az); if (L < .01) return; const ux = (bx - ax) / L, uz = (bz - az) / L, rot = -Math.atan2(uz, ux), th = wl.ext ? .25 : .15, mat = wl.ext ? extMat : wallMat;
       const gs = [...wl.goluri].sort((a, b) => a.la - b.la); let q = 0;
@@ -184,12 +185,33 @@ function model(it){
       seg(q, L, 0, H); colliders.push({ ax, az, ux, uz, s0: q, s1: L }); });
     const xs = p.camere.flatMap(r => [r.x0, r.x1]), zs = p.camere.flatMap(r => [r.z0, r.z1]);
     const minX = Math.min(...xs, 0), maxX = Math.max(...xs, 1), minZ = Math.min(...zs, 0), maxZ = Math.max(...zs, 1);
-    W = maxX - minX; D = maxZ - minZ; C.set((minX + maxX) / 2, 0, (minZ + maxZ) / 2); sun.position.set(C.x + 6, 11, C.z - 8); sun.target.position.copy(C);
+    W = maxX - minX; D = maxZ - minZ; C.set((minX + maxX) / 2, 0, (minZ + maxZ) / 2); placeSun(); sun.target.position.copy(C);
     orbit.r = Math.max(W, D, 4) * 1.15; walls.scale.y = mode === 'walk' ? 1 : .42; ceilings.visible = mode === 'walk';
   }
   function buildFurniture(items){ disposeGroup(furniture); scene.remove(furniture); furniture = new THREE.Group(); scene.add(furniture); pickables = []; blockers = [];
     for (const it of items){ if (!it.variant || !it.variant.w) continue; const m = model(it.variant); m.position.set(it.x, 0, it.z); m.rotation.y = it.rotation; m.userData = { pid: it.id }; m.traverse(o => { o.userData.item = m; }); furniture.add(m); pickables.push(m);
       if (it.group !== 'scaunBirou' && it.fp) blockers.push(it.fp); } }
+
+  // soarele stă pe direcția dată (azimut, înălțime), la ~14 m de centrul casei; implicit ca în prototip
+  function placeSun(){ const dir = light && light.dir ? light.dir : null; if (dir) sun.position.set(C.x + dir[0] * 14, dir[1] * 14, C.z + dir[2] * 14); else sun.position.set(C.x + 6, 11, C.z - 8); }
+  function setLighting(p){ light = p; const bg = new THREE.Color(p.background); scene.background = bg; scene.fog.color = bg;
+    hemi.intensity = p.hemi; sun.color.set(p.sunColor); sun.intensity = p.sun; R.toneMappingExposure = p.exposure;
+    interiorLights.forEach(l => { l.intensity = p.interior; }); placeSun(); }
+  // captură PNG: randează cadrul curent și îl citește imediat (fără preserveDrawingBuffer)
+  function capture(){ R.render(scene, cam); return canvas.toDataURL('image/png'); }
+  // imagini fixe pentru export: ansamblu (machetă) sau o cameră văzută din colțul ei cel mai liber, la înălțimea ochilor
+  function renderView(view, w = 1200, h = 800){ if (!plan) return null;
+    const prevMode = mode, prevSize = new THREE.Vector2(); R.getSize(prevSize); const prevAspect = cam.aspect;
+    R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix();
+    if (view && view.roomId){ const r = plan.camere.find(x => x.id === view.roomId); if (!r){ R.setSize(prevSize.x, prevSize.y, false); cam.aspect = prevAspect; cam.updateProjectionMatrix(); return null; }
+      setMode('walk'); const inset = .35, corners = [[r.x0 + inset, r.z0 + inset], [r.x1 - inset, r.z0 + inset], [r.x1 - inset, r.z1 - inset], [r.x0 + inset, r.z1 - inset]];
+      const blocked = ([x, z]) => blockers.some(b => x > b.x0 - .2 && x < b.x1 + .2 && z > b.z0 - .2 && z < b.z1 + .2);
+      const pick = corners.find(c => !blocked(c)) || corners[0]; const opp = [r.x0 + r.x1 - pick[0], r.z0 + r.z1 - pick[1]];
+      cam.fov = 75; cam.updateProjectionMatrix(); cam.position.set(pick[0], 1.65, pick[1]); cam.lookAt(opp[0], .85, opp[1]);
+    } else { setMode('house'); const t = { th: -.7, ph: .85, r: Math.max(W, D, 4) * 1.25 };
+      cam.position.set(C.x + Math.sin(t.th) * Math.sin(t.ph) * t.r, Math.cos(t.ph) * t.r, C.z + Math.cos(t.th) * Math.sin(t.ph) * t.r); cam.lookAt(C); }
+    R.render(scene, cam); const url = canvas.toDataURL('image/png');
+    cam.fov = 68; R.setSize(prevSize.x, prevSize.y, false); cam.aspect = prevAspect; cam.updateProjectionMatrix(); setMode(prevMode); return url; }
 
   // ---------- navigare ----------
   let mode = 'house', yaw = 0, pitch = -.08; const EYE = 1.6, player = new THREE.Vector3(); const orbit = { th: -.7, ph: .95, r: 12 };
@@ -233,7 +255,7 @@ function model(it){
     R.render(scene, cam); })();
   return {
     setState(p, items){ plan = p; buildHouse(p); buildFurniture(items); },
-    setMode, goRoom, getMode: () => mode,
+    setMode, goRoom, getMode: () => mode, setLighting, capture, renderView,
     setMove(forward, strafe){ joy.f = Number.isFinite(forward) ? Math.max(-1, Math.min(1, forward)) : 0; joy.s = Number.isFinite(strafe) ? Math.max(-1, Math.min(1, strafe)) : 0; },
     dispose(){ alive = false; cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('wheel', wh); R.dispose(); }
   };
