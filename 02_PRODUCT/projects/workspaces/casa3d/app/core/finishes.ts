@@ -116,3 +116,26 @@ export function sanitizeFinishes(f: any): string | null {
       || [c.led, c.cornice, c.spot].some(x => x != null && (typeof x !== 'string' || x.length > 80)))) return 'Tavanul este invalid.'; }
   return null;
 }
+
+// ---------- ce desenează motorul 3D ----------
+/** Faianța băii (din `wallTile`), până la 2,1 m pe fiecare perete care nu are altă placare — la fel ca în BOQ. */
+const bathTiles = (f: RoomFinishes, roomType: string): WallFeature[] => roomType !== 'baie' || !f.wallTile ? []
+  : SIDES.filter(s => !(f.wallFeatures || []).some(w => w.side === s)).map(side => ({ side, kind: 'tile' as const, material: f.wallTile!, heightM: 2.1 }));
+/** Culoarea folosită doar la randare (aproximată după numele culorii de pe pagina produsului). */
+export const renderColor = (m: Material | undefined, fallback: string) => m?.specs?.color || fallback;
+export interface FloorVisual { kind: 'parquet' | 'tile'; pattern: FloorPattern; angle: 0 | 90; pieceL: number; pieceW: number; grout: number; groutColor: string; color: string }
+export interface WallVisual { side: WallFeature['side']; kind: WallFeatureKind; color: string; heightM: number | null; sizeCm: [number, number] | null; marble: boolean }
+export interface CeilingVisual { type: 'flat' | 'drop' | 'cove'; drop: number; cove: number; led: string | null; cornice: [number, number] | null; spots: number }
+/** Ce trebuie să deseneze motorul 3D pentru finisajele unei camere: dimensiuni în metri, culori, modul de așezare. */
+export function roomVisual(mc: MaterialsCatalog, f: RoomFinishes, roomType = ''): { floor: FloorVisual | null; walls: WallVisual[]; ceiling: CeilingVisual } {
+  const fm = materialOf(mc, f.floor), lay = layoutOf(f, fm), [L, W] = pieceSizeCm(fm), tile = fm?.category === 'floor_tile', c = ceilingOf(f);
+  const led = materialOf(mc, c.led), cct = led?.specs?.cctK ?? 3000;
+  return {
+    floor: fm ? { kind: tile ? 'tile' : 'parquet', pattern: lay.pattern, angle: lay.angle ?? 0, pieceL: L / 100, pieceW: W / 100, grout: tile ? (lay.groutMm ?? 3) / 1000 : .0006,
+      groutColor: tile ? lay.groutColor || '#bdb8ae' : '#3a2a1c', color: renderColor(fm, tile ? '#e6e4df' : '#b88a5a') } : null,
+    walls: [...(f.wallFeatures || []), ...bathTiles(f, roomType)].map(w => { const m = materialOf(mc, w.material);
+      return { side: w.side, kind: w.kind, color: w.color || renderColor(m, '#d8d4cc'), heightM: w.heightM ?? null, sizeCm: m?.specs?.sizeCm ?? null, marble: /marm|marble/i.test(m?.name || '') }; }),
+    ceiling: { type: c.type, drop: c.dropCm / 100, cove: c.coveCm / 100, led: c.type === 'cove' && led ? (cct <= 3000 ? '#ffd29a' : cct <= 4000 ? '#fff1dc' : '#f4f7ff') : null,
+      cornice: (() => { const m = materialOf(mc, c.cornice); return m ? (m.specs?.sizeCm ? [m.specs.sizeCm[0] / 100, m.specs.sizeCm[1] / 100] as [number, number] : [.1, .1] as [number, number]) : null; })(), spots: c.spots },
+  };
+}

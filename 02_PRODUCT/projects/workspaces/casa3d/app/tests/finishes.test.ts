@@ -6,7 +6,8 @@ import catalogV1 from '../data/catalog.v1.json';
 import materials from '../data/materials.v1.json';
 import { newSnapshot } from '../core/project';
 import { computeBOQ, finishesOf } from '../core/boq';
-import { wallpaperRolls, panelCount, floorWaste, sideGeometry, finishIssues, defaultLayout, materialOf, clearHeight, sanitizeFinishes } from '../core/finishes';
+import { wallpaperRolls, panelCount, floorWaste, sideGeometry, finishIssues, defaultLayout, materialOf, clearHeight, sanitizeFinishes, roomVisual } from '../core/finishes';
+import { viewerInput } from '../lib/viewer-input';
 import { getDb, resetDbForTests, reseedForTests } from '../lib/db';
 import * as repo from '../lib/repo';
 import type { Catalog, MaterialsCatalog, Snapshot, RoomFinishes } from '../core/types';
@@ -95,6 +96,20 @@ describe('avertismente tehnice', () => {
   });
 });
 
+describe('3D', () => {
+  test('motorul primește pardoseala în metri, placările, tavanul și faianța băii până la 2,1 m', () => {
+    const s = set(demo(), 'living', { floor: 'gresie-emarble-60x120', floorLayout: { pattern: 'brick', groutMm: 2, groutColor: '#333333' }, wallFeatures: [{ side: 'E', kind: 'brick', material: 'caramida-bronx-60' }],
+      ceiling: { type: 'cove', dropCm: 12, coveCm: 30, cornice: 'cornisa-nmc-nc109', spot: 'spot-mt143-9w', spots: 4 } });
+    const v = roomVisual(mc, finishesOf(s, room(s, 'living')), 'living');
+    assert.deepEqual(v.floor, { kind: 'tile', pattern: 'brick', angle: 0, pieceL: 1.2, pieceW: .6, grout: .002, groutColor: '#333333', color: '#e0deda' });
+    assert.deepEqual(v.walls.map(w => [w.side, w.kind, w.color]), [['E', 'brick', '#8a5a44']]);
+    assert.deepEqual(v.ceiling, { type: 'cove', drop: .12, cove: .3, led: '#ffd29a', cornice: [.135, .1], spots: 4 });
+    const bath = roomVisual(mc, finishesOf(s, room(s, 'baie')), 'baie'); assert.deepEqual(bath.walls.map(w => [w.side, w.kind, w.heightM]), [['N', 'tile', 2.1], ['E', 'tile', 2.1], ['S', 'tile', 2.1], ['W', 'tile', 2.1]]);
+    const plan = viewerInput(s, cat, undefined, { mc }).plan; assert.equal(plan.camere.find((c: any) => c.id === 'living').fin.floor.pattern, 'brick');
+    assert.equal(viewerInput(s, cat).plan.camere[0].fin, undefined, 'fără catalogul de materiale, 3D-ul rămâne ca înainte');
+  });
+});
+
 describe('salvare și bază de date', () => {
   test('finisaje invalide sunt respinse; cele valide se păstrează', async () => {
     assert.equal(sanitizeFinishes({ x: { floorLayout: { pattern: 'spirala' } } }), 'Modul de așezare a pardoselii este invalid.');
@@ -112,6 +127,6 @@ describe('salvare și bază de date', () => {
     await q("delete from materials where id = 'tapet-grandeco-marmor'"); await q("update materials set unit_price = 1, specs = null where id = 'gresie-mckinley'");
     await reseedForTests(); const mc2 = await repo.getMaterials();
     assert.ok(mc2.materials.some(m => m.id === 'tapet-grandeco-marmor'));
-    const g = mc2.materials.find(m => m.id === 'gresie-mckinley')!; assert.equal(g.unitPrice, 1); assert.deepEqual(g.specs, { sizeCm: [60, 60], rectified: true });
+    const g = mc2.materials.find(m => m.id === 'gresie-mckinley')!; assert.equal(g.unitPrice, 1); assert.deepEqual(g.specs, { sizeCm: [60, 60], rectified: true, color: '#eeede9' });
   });
 });

@@ -125,6 +125,175 @@ class Materials:
             inp['Coat Weight'].default_value = 0.3
         return True
 
+    # ---- finisaje de designer (modul de așezare, rostul, placările pe pereți), la dimensiunile reale din aplicație
+    def _uv(self, nt, world_pos, rot=0.0):
+        """Coordonatele pardoselii în metri, rotite cu `rot` (direcția lamelelor sau diagonala)."""
+        mp = nt.nodes.new('ShaderNodeMapping')
+        mp.inputs['Rotation'].default_value = (0.0, 0.0, rot)
+        nt.links.new(world_pos(), mp.inputs['Vector'])
+        return mp.outputs['Vector']
+
+    def floor_pattern(self, nt, inp, d, tint, bump, world_pos, wood_grain):
+        pat = d['pat']
+        c = hex_rgb(pat.get('color', '#b88a5a'))
+        base = (c[0] * tint[0], c[1] * tint[1], c[2] * tint[2], 1.0)
+        wood = pat.get('kind') == 'parquet'
+        if d.get('img') and pat.get('rect'):
+            # spic / chevron: aceeași imagine ca în aplicație, întinsă pe dreptunghiul camerei (Blender: X = x, Y = -z)
+            import base64
+            import tempfile
+            raw = base64.b64decode(d['img'].split(',', 1)[1])
+            path = os.path.join(tempfile.gettempdir(), f"c3d_floor_{abs(hash(d['img'])) % 10**10}.jpg")
+            with open(path, 'wb') as fh:
+                fh.write(raw)
+            img = bpy.data.images.load(path, check_existing=True)
+            x0, z0, x1, z1 = pat['rect']
+            sep = nt.nodes.new('ShaderNodeSeparateXYZ')
+            nt.links.new(world_pos(), sep.inputs['Vector'])
+
+            def lin(sock, a, b):  # (sock + a) * b
+                n1 = nt.nodes.new('ShaderNodeMath')
+                n1.operation = 'ADD'
+                n1.inputs[1].default_value = a
+                nt.links.new(sock, n1.inputs[0])
+                n2 = nt.nodes.new('ShaderNodeMath')
+                n2.operation = 'MULTIPLY'
+                n2.inputs[1].default_value = b
+                nt.links.new(n1.outputs[0], n2.inputs[0])
+                return n2.outputs[0]
+            comb = nt.nodes.new('ShaderNodeCombineXYZ')
+            nt.links.new(lin(sep.outputs['X'], -x0, 1 / max(1e-6, x1 - x0)), comb.inputs['X'])
+            nt.links.new(lin(sep.outputs['Y'], z1, 1 / max(1e-6, z1 - z0)), comb.inputs['Y'])
+            t = nt.nodes.new('ShaderNodeTexImage')
+            t.image = img
+            t.extension = 'EXTEND'
+            t.interpolation = 'Cubic'
+            nt.links.new(comb.outputs['Vector'], t.inputs['Vector'])
+            mix = nt.nodes.new('ShaderNodeMix')
+            mix.data_type = 'RGBA'
+            mix.blend_type = 'MULTIPLY'
+            mix.inputs['Factor'].default_value = 1.0
+            nt.links.new(t.outputs['Color'], mix.inputs['A'])
+            mix.inputs['B'].default_value = tint
+            nt.links.new(mix.outputs['Result'], inp['Base Color'])
+            bump(t.outputs['Color'], 0.15, 0.002)
+        else:
+            # drept, decalat, șah, diagonală: plăci/lamele de mărimea reală cu rost (Brick Texture); 1/3 alternează 0 și 1/3
+            p = pat.get('pattern', 'straight')
+            rot = (math.pi / 2 if pat.get('angle') == 90 else 0.0) + (math.pi / 4 if p == 'diagonal' else 0.0)
+            br = nt.nodes.new('ShaderNodeTexBrick')
+            br.offset = 0.5 if p == 'brick' else 0.333 if p == 'third' else 0.0
+            br.offset_frequency = 1 if p == 'third' else 2
+            br.inputs['Scale'].default_value = 1.0
+            br.inputs['Brick Width'].default_value = float(pat.get('pieceL', 0.6))
+            br.inputs['Row Height'].default_value = float(pat.get('pieceW', 0.6))
+            br.inputs['Mortar Size'].default_value = max(0.0006, float(pat.get('grout', 0.003)))
+            br.inputs['Mortar Smooth'].default_value = 0.1
+            br.inputs['Color1'].default_value = scaled(base, 0.86 if wood else 0.97)
+            br.inputs['Color2'].default_value = scaled(base, 1.1 if wood else 1.02)
+            br.inputs['Mortar'].default_value = hex_rgb(pat.get('groutColor', '#bdb8ae'))
+            uv = self._uv(nt, world_pos, rot)
+            nt.links.new(uv, br.inputs['Vector'])
+            color = br.outputs['Color']
+            if p == 'checker':  # (floor(x/L) + floor(y/W)) mod 2 alege nuanța închisă
+                sep = nt.nodes.new('ShaderNodeSeparateXYZ')
+                nt.links.new(uv, sep.inputs['Vector'])
+                cells = []
+                for axis, size in (('X', pat.get('pieceL', 0.6)), ('Y', pat.get('pieceW', 0.6))):
+                    dv = nt.nodes.new('ShaderNodeMath')
+                    dv.operation = 'DIVIDE'
+                    dv.inputs[1].default_value = float(size)
+                    nt.links.new(sep.outputs[axis], dv.inputs[0])
+                    fl = nt.nodes.new('ShaderNodeMath')
+                    fl.operation = 'FLOOR'
+                    nt.links.new(dv.outputs[0], fl.inputs[0])
+                    cells.append(fl.outputs[0])
+                ad = nt.nodes.new('ShaderNodeMath')
+                ad.operation = 'ADD'
+                nt.links.new(cells[0], ad.inputs[0])
+                nt.links.new(cells[1], ad.inputs[1])
+                md = nt.nodes.new('ShaderNodeMath')
+                md.operation = 'FLOORED_MODULO'
+                md.inputs[1].default_value = 2.0
+                nt.links.new(ad.outputs[0], md.inputs[0])
+                mx = nt.nodes.new('ShaderNodeMix')
+                mx.data_type = 'RGBA'
+                mx.blend_type = 'MULTIPLY'
+                nt.links.new(md.outputs[0], mx.inputs['Factor'])
+                nt.links.new(color, mx.inputs['A'])
+                mx.inputs['B'].default_value = (0.78, 0.78, 0.78, 1.0)
+                color = mx.outputs['Result']
+            if wood:
+                r, _w = wood_grain(base, 14.0)
+                mix = nt.nodes.new('ShaderNodeMix')
+                mix.data_type = 'RGBA'
+                mix.blend_type = 'MULTIPLY'
+                mix.inputs['Factor'].default_value = 0.5
+                nt.links.new(color, mix.inputs['A'])
+                nt.links.new(r.outputs['Color'], mix.inputs['B'])
+                color = mix.outputs['Result']
+            nt.links.new(color, inp['Base Color'])
+            bump(br.outputs['Fac'], 0.3, 0.002)
+        inp['Roughness'].default_value = 0.42 if wood else 0.25
+        inp['Coat Weight'].default_value = 0.15 if wood else 0.25
+
+    def wall_finish(self, nt, inp, kind, d, col, bump, noise, ramp, world_pos):
+        """Placări pe pereți. Coordonata de-a lungul peretelui e X + Y (pereții sunt paraleli cu axele), înălțimea e Z."""
+        def wall_uv():
+            sep = nt.nodes.new('ShaderNodeSeparateXYZ')
+            nt.links.new(world_pos(), sep.inputs['Vector'])
+            ad = nt.nodes.new('ShaderNodeMath')
+            ad.operation = 'ADD'
+            nt.links.new(sep.outputs['X'], ad.inputs[0])
+            nt.links.new(sep.outputs['Y'], ad.inputs[1])
+            comb = nt.nodes.new('ShaderNodeCombineXYZ')
+            nt.links.new(ad.outputs[0], comb.inputs['X'])
+            nt.links.new(sep.outputs['Z'], comb.inputs['Y'])
+            return comb.outputs['Vector']
+
+        def bricks(w, h, mortar, mortar_col, var, offset):
+            br = nt.nodes.new('ShaderNodeTexBrick')
+            br.offset = offset
+            br.inputs['Scale'].default_value = 1.0
+            br.inputs['Brick Width'].default_value = w
+            br.inputs['Row Height'].default_value = h
+            br.inputs['Mortar Size'].default_value = mortar
+            br.inputs['Color1'].default_value = scaled(col, 1 - var)
+            br.inputs['Color2'].default_value = scaled(col, 1 + var)
+            br.inputs['Mortar'].default_value = hex_rgb(mortar_col)
+            nt.links.new(wall_uv(), br.inputs['Vector'])
+            nt.links.new(br.outputs['Color'], inp['Base Color'])
+            return br
+        size = d.get('size') or []
+        if kind == 'brick':
+            w, h = (max(size), min(size)) if len(size) == 2 else (0.24, 0.071)
+            br = bricks(w, h, 0.01, '#cfc8bd', 0.18, 0.5)
+            bump(br.outputs['Fac'], 0.6, 0.01)
+            inp['Roughness'].default_value = 0.92
+        elif kind == 'tile':
+            w, h = (min(size), max(size)) if len(size) == 2 else (0.3, 0.6)
+            br = bricks(w, h, 0.0025, '#e4e1db', 0.03, 0.0)
+            bump(br.outputs['Fac'], 0.3, 0.002)
+            inp['Roughness'].default_value = 0.2
+            inp['Coat Weight'].default_value = 0.3
+        elif kind == 'stone':
+            br = bricks(0.38, 0.13, 0.012, '#8d8a84', 0.22, 0.4)
+            n = noise(18.0, 6.0)
+            bump(n.outputs['Fac'], 0.7, 0.02)
+            inp['Roughness'].default_value = 0.95
+        elif kind == 'plaster':
+            n = noise(140.0, 8.0)
+            bump(n.outputs['Fac'], 0.35, 0.004)
+            inp['Roughness'].default_value = 0.9
+        else:  # tapet: vinil semi-mat; modelul marmură primește vinișoare din zgomot
+            inp['Roughness'].default_value = 0.55
+            if d.get('marble'):
+                n = noise(3.0, 12.0)
+                r = ramp(n.outputs['Fac'], scaled(col, 0.72), col)
+                r.color_ramp.elements[0].position = 0.47
+                r.color_ramp.elements[1].position = 0.5
+                nt.links.new(r.outputs['Color'], inp['Base Color'])
+
     def get(self, d):
         key = json.dumps(d, sort_keys=True)
         if key not in self.cache:
@@ -143,7 +312,8 @@ class Materials:
         inp['Roughness'].default_value = max(0.02, min(1.0, float(d.get('r', 0.6))))
         inp['Metallic'].default_value = float(d.get('mt', 0))
         world_pos = lambda: nt.nodes.new('ShaderNodeNewGeometry').outputs['Position']
-        if self.textured(nt, inp, kind, col, d):
+        designer = bool(d.get('pat')) or kind in ('wallpaper', 'plaster', 'brick', 'stone') or (kind == 'tile' and d.get('size'))
+        if not designer and self.textured(nt, inp, kind, col, d):
             return m
 
         def bump(height_socket, strength, distance=0.01):
@@ -179,6 +349,12 @@ class Materials:
             r = ramp(w.outputs['Fac'], scaled(base, 0.72), scaled(base, 1.12))
             return r, w
 
+        if d.get('pat'):
+            self.floor_pattern(nt, inp, d, col, bump, world_pos, wood_grain)
+            return m
+        if designer:
+            self.wall_finish(nt, inp, kind, d, col, bump, noise, ramp, world_pos)
+            return m
         if kind in ('wood', 'rattan'):
             r, w = wood_grain(col, 9.0 if kind == 'wood' else 30.0)
             nt.links.new(r.outputs['Color'], inp['Base Color'])

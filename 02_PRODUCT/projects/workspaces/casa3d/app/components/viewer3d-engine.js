@@ -1,6 +1,7 @@
 // components/viewer3d.js — scena 3D portată din prototip (tur la persoana întâi + machetă).
 // Modelele de mobilier, materialele și construcția pereților sunt copiate din prototip.
 import * as THREE from 'three';
+import { floorTexture, wallTexture } from './finish-textures.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js';
@@ -204,10 +205,33 @@ function model(it){
         if (hx0 > q.x0) nx.push({ x0: q.x0, z0: hz0, x1: hx0, z1: hz1 }); if (hx1 < q.x1) nx.push({ x0: hx1, z0: hz0, x1: q.x1, z1: hz1 }); } ps = nx; }
       return ps.filter(q => q.x1 - q.x0 > .01 && q.z1 - q.z0 > .01); };
     p.camere.forEach(r => { const wet = r.tip === 'baie' || r.tip === 'bucatarie', sc = wet ? .9 : 1.6;
-      for (const q of rectsMinus(r, voids)){ const w = q.x1 - q.x0, d = q.z1 - q.z0, t = (wet ? tiles : parquet).clone(); t.needsUpdate = true; t.repeat.set(w / sc, d / sc); t.offset.set((q.x0 - r.x0) / sc, (r.z1 - q.z1) / sc);
-        const f = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ map: t, roughness: wet ? .35 : .6, color: lin(r.podea || '#ffffff') })); f.rotation.x = -Math.PI / 2; f.position.set((q.x0 + q.x1) / 2, 0, (q.z0 + q.z1) / 2); f.receiveShadow = true; house.add(f); }
-      for (const q of rectsMinus(r, stairs.map(a => a.rect))){ const w = q.x1 - q.x0, d = q.z1 - q.z0;
-        const c = new THREE.Mesh(new THREE.PlaneGeometry(w, d), r.tavan ? lookMat('ceil', r.tavan, 1) : ceilMat); c.rotation.x = Math.PI / 2; c.position.set((q.x0 + q.x1) / 2, H, (q.z0 + q.z1) / 2); ceilings.add(c); }
+      // pardoseala aleasă (modul de așezare, mărimea plăcii, rostul) e desenată o dată pe toată camera; altfel textura generică
+      const ff = r.fin && r.fin.floor, rw = r.x1 - r.x0, rd = r.z1 - r.z0, ft = ff ? floorTexture(ff, rw, rd, r.id) : null, tileFloor = ff ? ff.kind === 'tile' : wet;
+      for (const q of rectsMinus(r, voids)){ const w = q.x1 - q.x0, d = q.z1 - q.z0; let t;
+        if (ft){ t = ft.clone(); t.needsUpdate = true; t.repeat.set(w / rw, d / rd); t.offset.set((q.x0 - r.x0) / rw, (r.z1 - q.z1) / rd); }
+        else { t = (wet ? tiles : parquet).clone(); t.needsUpdate = true; t.repeat.set(w / sc, d / sc); t.offset.set((q.x0 - r.x0) / sc, (r.z1 - q.z1) / sc); }
+        const fmat = new THREE.MeshStandardMaterial({ map: t, roughness: tileFloor ? .35 : .6, color: lin(r.podea || '#ffffff') });
+        if (ft) fmat.userData = { kind: ff.kind === 'tile' ? 'tile' : 'parquet', pat: { ...ff, rect: [r.x0, r.z0, r.x1, r.z1] } };
+        const f = new THREE.Mesh(new THREE.PlaneGeometry(w, d), fmat); f.rotation.x = -Math.PI / 2; f.position.set((q.x0 + q.x1) / 2, 0, (q.z0 + q.z1) / 2); f.receiveShadow = true; house.add(f); }
+      // tavan: drept la H; fals coborât cu `drop`; cu scafă: banda de lângă pereți rămâne sus, panoul din mijloc coboară, cu bandă LED pe margine
+      const cv = r.fin && r.fin.ceiling, cmat = r.tavan ? lookMat('ceil', r.tavan, 1) : ceilMat, ctop = cv && cv.type === 'drop' ? H - cv.drop : H;
+      const ceilPlane = (rect, y) => { for (const q of rectsMinus(rect, stairs.map(a => a.rect))){ const w = q.x1 - q.x0, d = q.z1 - q.z0;
+        const c = new THREE.Mesh(new THREE.PlaneGeometry(w, d), cmat); c.rotation.x = Math.PI / 2; c.position.set((q.x0 + q.x1) / 2, y, (q.z0 + q.z1) / 2); ceilings.add(c); } };
+      ceilPlane(r, ctop);
+      const low = cv && cv.type !== 'flat' ? H - cv.drop : H;
+      if (cv && cv.type === 'cove'){ const k = cv.cove, inner = { x0: r.x0 + k, z0: r.z0 + k, x1: r.x1 - k, z1: r.z1 - k };
+        if (inner.x1 - inner.x0 > .3 && inner.z1 - inner.z0 > .3){ ceilPlane(inner, low); const iw = inner.x1 - inner.x0, id = inner.z1 - inner.z0, cx = (inner.x0 + inner.x1) / 2, cz = (inner.z0 + inner.z1) / 2;
+          [[iw, .012, cx, inner.z0], [iw, .012, cx, inner.z1], [.012, id, inner.x0, cz], [.012, id, inner.x1, cz]].forEach(([a, b, x, z]) => { const m = box(a, cv.drop, b, cmat, x, H - cv.drop / 2, z, 0, ceilings); m.castShadow = false; });
+          if (cv.led){ const lm = new THREE.MeshStandardMaterial({ color: lin(cv.led), emissive: lin(cv.led), emissiveIntensity: 1.6 });
+            [[iw, .015, cx, inner.z0 - .02], [iw, .015, cx, inner.z1 + .02], [.015, id, inner.x0 - .02, cz], [.015, id, inner.x1 + .02, cz]].forEach(([a, b, x, z]) => { const m = box(a, .012, b, lm, x, low + .01, z, 0, ceilings); m.castShadow = false; });
+            const glow = new THREE.MeshStandardMaterial({ color: lin('#ffffff'), emissive: lin(cv.led), emissiveIntensity: .35, roughness: 1 });
+            [[r.x1 - r.x0, k, (r.x0 + r.x1) / 2, r.z0 + k / 2], [r.x1 - r.x0, k, (r.x0 + r.x1) / 2, r.z1 - k / 2], [k, id, r.x0 + k / 2, cz], [k, id, r.x1 - k / 2, cz]].forEach(([a, b, x, z]) => {
+              const g2 = new THREE.Mesh(new THREE.PlaneGeometry(a, b), glow); g2.rotation.x = Math.PI / 2; g2.position.set(x, H - .002, z); ceilings.add(g2); }); } } }
+      if (cv && cv.cornice){ const [cd, ch] = cv.cornice, e = .075 + cd / 2, y = (cv.type === 'drop' ? H - cv.drop : H) - ch / 2, cm2 = lookMat('cornice', '#f6f5f1', .7);
+        [[r.x1 - r.x0, cd, (r.x0 + r.x1) / 2, r.z0 + e], [r.x1 - r.x0, cd, (r.x0 + r.x1) / 2, r.z1 - e], [cd, r.z1 - r.z0, r.x0 + e, (r.z0 + r.z1) / 2], [cd, r.z1 - r.z0, r.x1 - e, (r.z0 + r.z1) / 2]]
+          .forEach(([a, b, x, z]) => { box(a, ch, b, cm2, x, y, z, 0, ceilings).castShadow = false; }); }
+      if (cv && cv.spots > 0){ const n = cv.spots, rw2 = r.x1 - r.x0, rd2 = r.z1 - r.z0, cols = Math.max(1, Math.round(Math.sqrt(n * rw2 / rd2))), rows = Math.ceil(n / cols), sm = new THREE.MeshStandardMaterial({ color: lin('#fff6e6'), emissive: lin('#ffd9a8'), emissiveIntensity: 1.4 });
+        for (let i = 0; i < n; i++){ const cx2 = r.x0 + rw2 * ((i % cols) + .5) / cols, cz2 = r.z0 + rd2 * (Math.floor(i / cols) + .5) / rows, s2 = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, .008, 20), sm); s2.position.set(cx2, (cv.type === 'cove' ? low : ctop) - .004, cz2); ceilings.add(s2); } }
       const w = r.x1 - r.x0, d = r.z1 - r.z0;
       const pl = new THREE.PointLight(0xfff0dc, light ? light.interior : .35, 7, 2); interiorLights.push(pl); pl.position.set((r.x0 + r.x1) / 2, H - .3, (r.z0 + r.z1) / 2); ceilings.add(pl); });
     const leafMat = MAT('paint', '#f4f2ed'), entranceMat = MAT('wood', '#4a3324'), handleMat = MAT('chrome', '#d8d8d8');
@@ -240,6 +264,32 @@ function model(it){
           box(g.l, .05, th + .04, fm, ax + ux * m, sl, az + uz * m, rot, walls); box(g.l, .05, th + .02, fm, ax + ux * m, top, az + uz * m, rot, walls); box(.04, wh, th + .02, fm, ax + ux * m, cy, az + uz * m, rot, walls); }
         colliders.push({ ax, az, ux, uz, s0: q, s1: g.la }); if (g.tip === 'fereastra') colliders.push({ ax, az, ux, uz, s0: g.la, s1: g.la + g.l }); q = g.la + g.l; });
       seg(q, L, 0, H); colliders.push({ ax, az, ux, uz, s0: q, s1: L }); });
+    // placări pe pereți (tapet, riflaj, tencuială, cărămidă, piatră, faianță): un strat subțire pe fața dinspre cameră, tăiat în jurul ușilor și ferestrelor
+    p.camere.forEach(r => { if (!r.fin || !r.fin.walls || !r.fin.walls.length) return;
+      r.fin.walls.forEach((wv, wi) => { const horiz = wv.side === 'N' || wv.side === 'S', edge = { N: r.z0, S: r.z1, W: r.x0, E: r.x1 }[wv.side], inward = wv.side === 'N' || wv.side === 'W' ? 1 : -1;
+        const lo = (horiz ? r.x0 : r.z0) + .075, hi = (horiz ? r.x1 : r.z1) - .075, top = Math.min(H, wv.heightM || H); if (hi - lo < .05) return;
+        // pereții pe latura asta: grosimea (fața camerei) și golurile, în coordonata de-a lungul laturii
+        let th = .15; const holes = [];
+        p.pereti.forEach(wl => { const [ax, az] = wl.a, [bx, bz] = wl.b, h2 = Math.abs(az - bz) < 1e-6, v2 = Math.abs(ax - bx) < 1e-6;
+          if (horiz ? !(h2 && Math.abs(az - edge) < 1e-6) : !(v2 && Math.abs(ax - edge) < 1e-6)) return;
+          const s0 = horiz ? ax : az, dir = Math.sign(horiz ? bx - ax : bz - az), a0 = Math.min(s0, horiz ? bx : bz), a1 = Math.max(s0, horiz ? bx : bz); if (a1 < lo || a0 > hi) return;
+          th = wl.ext ? .25 : .15;
+          wl.goluri.forEach(g => { const p0 = s0 + dir * g.la, p1 = s0 + dir * (g.la + g.l), sl = g.tip === 'usa' ? 0 : (g.sill != null ? g.sill : .9), tp = g.tip === 'usa' ? Math.min(H - .05, g.h || 2.1) : Math.min(H - .05, sl + (g.h || 1.3));
+            holes.push({ a: Math.min(p0, p1), b: Math.max(p0, p1), y0: sl, y1: tp }); }); });
+        const kind = wv.kind, depth = kind === 'stone' ? .022 : kind === 'brick' ? .014 : kind === 'slats' ? .021 : kind === 'tile' ? .01 : .004, off = edge + inward * (th / 2 + depth / 2 + .001);
+        const tex = kind === 'slats' ? null : wallTexture(wv, `${r.id}:${wi}`), size = tex ? tex.userData.size : 1;
+        const mkMat = (len, hgt, s0, y0) => { if (!tex) return null; const t = tex.clone(); t.needsUpdate = true; t.repeat.set(len / size, hgt / size); t.offset.set(s0 / size, y0 / size);
+          const m = new THREE.MeshStandardMaterial({ map: t, roughness: kind === 'tile' ? .3 : kind === 'wallpaper' ? .7 : .9 }); m.userData = { kind: kind === 'tile' ? 'tile' : kind, col: wv.color, size: wv.sizeCm ? [wv.sizeCm[0] / 100, wv.sizeCm[1] / 100] : null, marble: !!wv.marble }; return m; };
+        const slatBack = lookMat('slatback', '#2e2c2a', .95), slatMat = MAT('wood', wv.color);
+        const place = (s0, s1, y0, y1) => { const len = s1 - s0, hgt = y1 - y0; if (len < .01 || hgt < .01) return; const mid = (s0 + s1) / 2, x = horiz ? mid : off, z = horiz ? off : mid, rot = horiz ? 0 : Math.PI / 2;
+          if (kind === 'slats'){ box(len, hgt, .006, slatBack, horiz ? mid : edge + inward * (th / 2 + .004), (y0 + y1) / 2, horiz ? edge + inward * (th / 2 + .004) : mid, rot, walls).castShadow = false;
+            for (let sx = s0 + .02; sx < s1 - .01; sx += .05){ const px = horiz ? sx : off, pz = horiz ? off : sx; box(.027, hgt, depth, slatMat, px, (y0 + y1) / 2, pz, rot, walls).castShadow = false; } return; }
+          box(len, hgt, depth, mkMat(len, hgt, s0, y0), x, (y0 + y1) / 2, z, rot, walls).castShadow = false; };
+        // benzi verticale între marginile golurilor; în fiecare bandă, intervalele de înălțime rămase după scăderea golurilor
+        const cuts = [...new Set([lo, hi, ...holes.flatMap(h => [h.a, h.b]).filter(v => v > lo && v < hi)])].sort((a, b) => a - b);
+        for (let i = 0; i + 1 < cuts.length; i++){ const s0 = cuts[i], s1 = cuts[i + 1], m = (s0 + s1) / 2; let spans = [[0, top]];
+          for (const h of holes) if (h.a < m && h.b > m) spans = spans.flatMap(([y0, y1]) => { const out = []; if (h.y0 > y0) out.push([y0, Math.min(y1, h.y0)]); if (h.y1 < y1) out.push([Math.max(y0, h.y1), y1]); return out.filter(([a2, b2]) => b2 - a2 > .005); });
+          spans.forEach(([y0, y1]) => place(s0, s1, y0, y1)); } }); });
     // scări: trepte pline din lemn (treapta k are înălțimea (k+1)·riser), mână curentă pe o parte
     const stairMat = MAT('wood', '#a8794d'), railMat = M('#5a4430', { roughness: .6 });
     stairs.forEach(st => { const [dx, dz] = st.dir, ry = Math.atan2(dx, dz), sx = -dz, sz = dx;
@@ -351,7 +401,7 @@ function model(it){
   function exportScene(meta = {}){ if (!plan) return null; const prevMode = mode; setMode('walk'); scene.updateMatrixWorld(true);
     const r4 = v => Math.round(v * 1e4) / 1e4, hex = c => '#' + c.clone().convertLinearToSRGB().getHexString();
     const mats = [], matIx = new Map(), meshes = [], P = new THREE.Vector3(), Q = new THREE.Quaternion(), Sc = new THREE.Vector3();
-    const kindOf = m => { const img = m.map && m.map.image;
+    const kindOf = m => { if (m.userData && m.userData.kind) return m.userData.kind; const img = m.map && m.map.image;
       if (img && img === parquet.image) return 'parquet'; if (img && img === tiles.image) return 'tile';
       if (m.map === grain) return 'wood'; if (m.map === rattan) return 'rattan'; if (m.map === weave) return m.sheen ? 'velvet' : 'fabric'; if (m.bumpMap === weave) return 'leather';
       if (m.emissive && (m.emissive.r + m.emissive.g + m.emissive.b) > .05) return 'emit';
@@ -362,6 +412,12 @@ function model(it){
       const d = { k: kindOf(m), c: hex(m.color), r: r4(m.roughness ?? .8), mt: r4(m.metalness ?? 0), o: m.transparent ? r4(m.opacity) : 1 };
       if (d.k === 'emit') { d.e = hex(m.emissive); d.ei = r4(m.emissiveIntensity ?? 1); }
       if (m.clearcoat) d.cc = r4(m.clearcoat);
+      // finisajele de designer: culoarea reală (harta e albă la bază), mărimea plăcii, modul de așezare; spicul și chevronul pleacă și ca imagine
+      if (m.userData && m.userData.col) d.c = m.userData.col;
+      if (m.userData && m.userData.size) d.size = m.userData.size.map(r4);
+      if (m.userData && m.userData.marble) d.marble = 1;
+      if (m.userData && m.userData.pat){ d.pat = m.userData.pat; const img = m.map && m.map.image;
+        if ((d.pat.pattern === 'herringbone' || d.pat.pattern === 'chevron') && img && img.toDataURL) d.img = img.toDataURL('image/jpeg', .9); }
       matIx.set(m, mats.length); mats.push(d); return mats.length - 1; };
     const geoOf = g => { const p = g.parameters || {};
       if (g.userData && g.userData.rbox) return { t: 'rbox', p: g.userData.rbox.map(r4) };
