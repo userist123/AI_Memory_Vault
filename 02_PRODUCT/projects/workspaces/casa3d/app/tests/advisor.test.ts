@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import catalogV1 from '../data/catalog.v1.json';
 import { newSnapshot } from '../core/project';
 import { adviseProject, type Advice } from '../core/advisor';
+import { adviceText } from '../lib/i18n';
 import type { Catalog, FurniturePlacement, Opening, Room, Snapshot, Wall } from '../core/types';
 
 // Catalog sintetic: id = `${group}-${n}`, dimensiuni în cm.
@@ -32,6 +33,7 @@ function mkSnap(type: string, W: number, Dp: number, opts: { windows?: Opening[]
   return snap;
 }
 const has = (a: Advice[], rule: string) => a.filter(x => x.id.startsWith(rule + ':'));
+const ro = (x: Advice) => adviceText('ro', x), en = (x: Advice) => adviceText('en', x);
 const cat = mkCat();
 const BIG_WIN = [win(0.5, 3)]; // fereastră mare ca să nu apară reguli de lumină
 const run = (s: Snapshot, o = {}) => adviseProject(s, cat, o);
@@ -41,7 +43,8 @@ describe('validare → plain Romanian', () => {
     const s = mkSnap('living', 5, 4, { windows: BIG_WIN, doors: [{ id: 'd', kind: 'door', offset: 1, width: .9 }], placements: [{ variantId: 'dulap-0', x: 3.5, z: 3.7 }, { id: 'out', variantId: 'masuta-0', x: 4.9, z: 2 }] });
     const a = run(s);
     assert.equal(has(a, 'OUT_OF_ROOM')[0].severity, 'BLOCKER'); assert.equal(has(a, 'DOOR_ZONE')[0].severity, 'BLOCKER');
-    assert.equal(has(a, 'DOOR_ZONE')[0].title, 'Ușa nu se poate deschide complet'); assert.match(has(a, 'DOOR_ZONE')[0].fix, /^Mută piesa cu cel puțin \d+ cm/);
+    assert.equal(has(a, 'DOOR_ZONE')[0].code, 'DOOR_ZONE'); assert.equal(ro(has(a, 'DOOR_ZONE')[0]).title, 'Ușa nu se poate deschide complet'); assert.match(ro(has(a, 'DOOR_ZONE')[0]).fix, /^Mută piesa cu cel puțin \d+ cm/);
+    assert.match(en(has(a, 'DOOR_ZONE')[0]).fix, /^Move it at least \d+ cm/);
   });
   test('OVERLAP raportat o singură dată pentru pereche', () => {
     const a = run(mkSnap('living', 5, 4, { windows: BIG_WIN, placements: [{ id: 'a', variantId: 'masuta-0', x: 2, z: 2 }, { id: 'b', variantId: 'masuta-0', x: 2.3, z: 2 }] }));
@@ -181,7 +184,8 @@ describe('culori', () => {
   });
   test('două culori vii complementare → TIP; analoage → nimic', () => {
     assert.equal(has(adviseProject(base(), cat, { colorsOf: colorsOf(['#ff0000', '#00ffff']) }), 'COLOR_CLASH')[0].severity, 'TIP');
-    assert.match(has(adviseProject(base(), cat, { colorsOf: colorsOf(['#ff0000', '#00ffff']) }), 'COLOR_CLASH')[0].why, /contrast puternic/);
+    const clash = has(adviseProject(base(), cat, { colorsOf: colorsOf(['#ff0000', '#00ffff']) }), 'COLOR_CLASH')[0];
+    assert.equal(clash.code, 'COLOR_CLASH'); assert.match(ro(clash).why, /contrast puternic/); assert.match(en(clash).why, /strong contrast/);
     assert.equal(has(adviseProject(base(), cat, { colorsOf: colorsOf(['#ff0000', '#ff8000']) }), 'COLOR_CLASH').length, 0);
   });
   test('culorile implicite vin din variant.style.col', () => {
@@ -194,7 +198,7 @@ describe('buget', () => {
   const s = mkSnap('living', 5, 5, { windows: BIG_WIN });
   test('total peste țintă → WARNING cu suma depășirii; sub țintă → nimic', () => {
     const a = run(s, { budget: { total: 12000, target: 10000, unknown: 0 } });
-    assert.equal(has(a, 'OVER_BUDGET')[0].severity, 'WARNING'); assert.match(has(a, 'OVER_BUDGET')[0].why, /2[\s. ]?000/);
+    assert.equal(has(a, 'OVER_BUDGET')[0].severity, 'WARNING'); assert.equal(has(a, 'OVER_BUDGET')[0].code, 'OVER_BUDGET'); assert.match(ro(has(a, 'OVER_BUDGET')[0]).why, /2[\s. ]?000/); assert.match(en(has(a, 'OVER_BUDGET')[0]).why, /RON\s12,000/);
     assert.equal(has(run(s, { budget: { total: 9000, target: 10000, unknown: 0 } }), 'OVER_BUDGET').length, 0);
     assert.equal(has(run(s, { budget: { total: 9000, target: null, unknown: 0 } }), 'OVER_BUDGET').length, 0);
   });
@@ -215,7 +219,7 @@ describe('proprietăți generale', () => {
     for (const [snap, c] of [[demo, dcat], [noisy, cat]] as const){
       const a1 = adviseProject(snap, c, { budget: { total: 5, target: 1, unknown: 1 } }), a2 = adviseProject(structuredClone(snap), c, { budget: { total: 5, target: 1, unknown: 1 } });
       assert.deepEqual(a1.map(x => x.id), a2.map(x => x.id)); assert.equal(new Set(a1.map(x => x.id)).size, a1.length);
-      for (const x of a1){ assert.ok(x.why.trim().length > 0, x.id); assert.ok(x.fix.trim().length > 0, x.id); assert.ok(x.title.trim().length > 0, x.id); }
+      for (const x of a1) for (const lang of ['ro', 'en'] as const){ const r = adviceText(lang, x); for (const k of ['why', 'fix', 'title'] as const){ assert.ok(r[k].trim().length > 0, x.id); assert.ok(!r[k].includes('advice.') && !/\{\w+\}/.test(r[k]), `${lang} ${x.id} ${k}: ${r[k]}`); } }
     }
   });
   test('sortare: BLOCKER, apoi WARNING, apoi TIP', () => {

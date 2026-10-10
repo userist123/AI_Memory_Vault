@@ -10,31 +10,14 @@ import { lighting, sunDirection } from '@/core/lighting';
 import { viewerInput } from '@/lib/viewer-input';
 import { computeBudget } from '@/core/boq';
 import { floorBounds, wallDimensions, roomSchedule, printScale } from '@/core/dimensions';
-import { formatMoney, formatLength, formatArea, type Locale, type Units } from '@/core/format';
-
-// Toate textele vizibile ale paginii, într-un singur loc, pentru stratul i18n.
-const T = { custom: 'Pe comandă (preț la producător)',
-  brand: 'Casa mea 3D', printedOn: 'Tipărit la', revision: 'Revizia', noRevisions: 'fără revizii', loading: 'Se încarcă…', loadError: 'Proiectul nu există sau nu ai acces la el.',
-  print: 'Tipărește / Salvează ca PDF', scale: 'Scara', planAria: 'Planul locuinței la scară', unnamed: 'Proiect fără nume',
-  schedule: 'Tabel camere', room: 'Cameră', dims: 'Dimensiuni', areaCol: 'Suprafață', perimeter: 'Perimetru', total: 'Total', rooms: 'camere',
-  shopping: 'Listă de cumpărături', product: 'Produs', retailer: 'Magazin', price: 'Preț', link: 'Link', offer: 'ofertă', unknownPrice: 'preț necunoscut', noItems: 'Nicio piesă plasată.',
-  knownSum: 'Suma prețurilor cunoscute', unknownCount: 'piese cu preț necunoscut (nu sunt numărate ca 0)', noOffer: 'fără ofertă',
-  budget: 'Buget', furniture: 'Mobilier', finishes: 'Finisaje', lighting: 'Iluminat', appliances: 'Electrocasnice', sanitary: 'Sanitare', extras: 'Servicii și transport', unknownLines: 'valoare necunoscută',
-  labor: 'Manoperă', low: 'minim', expected: 'estimat', high: 'maxim', contingency: 'Rezervă', subtotal: 'Subtotal', budgetTotal: 'Total buget', unknownItems: 'Piese fără preț, neincluse în total',
-  currencyNote: 'Bugetul este calculat în moneda catalogului; ofertele cu monede diferite sunt totalizate separat în lista de cumpărături.',
-  disclaimer: 'Prețurile provin din catalogul curent, cu data verificării din catalog, și se pot schimba. Dimensiunile planului sunt cele desenate; verifică pe teren înainte de a comanda.',
-  dash: '—', scaleBar: 'Bară de scară',
-  preparing: 'Se pregătesc imaginile 3D…', noImages: 'Imaginile 3D nu au putut fi generate pe acest dispozitiv (WebGL indisponibil); exportul conține planurile și listele.', overviewAlt: 'Vedere 3D a casei', roomAlt: 'Vedere 3D a camerei',
-  keyFigures: 'Cifre cheie', roomsCount: 'Camere', totalArea: 'Suprafață totală', furnitureKnown: 'Mobilier (prețuri cunoscute)', furnitureUnknown: 'piese fără preț', budgetTotalLabel: 'Total buget',
-  colors: 'Culori alese', wallsC: 'Pereți', accentC: 'Perete accent', floorC: 'Nuanță pardoseală', ceilingC: 'Tavan', defaultC: 'implicit', plan: 'Plan', whatIsDone: 'Ce se face în cameră', finishesWorks: 'Finisaje și materiale', laborWorks: 'Manoperă', qty: 'Cantitate', cost: 'Cost', laborExpected: 'Estimat', laborRange: 'Interval minim – maxim', roomFurniture: 'Mobilier în cameră', roomTotal: 'Subtotal cameră', roomLabor: 'manoperă estimată', noWorks: 'Nicio lucrare specifică.', noFurniture: 'Fără mobilier.',
-  byRetailer: 'Magazin', productLink: 'Link produs', rev: 'Rev.',
-};
+import { formatMoney, formatLength, formatArea, formatDimsCm, type Units } from '@/core/format';
+import { intlLocale, translator, type Lang, type Translate } from '@/lib/i18n';
 
 interface ProjectDto { id: string; name: string; currentRevision: number | null; draft: Snapshot }
 const ROOM_FILL: Record<string, string> = { baie: '#e4e8e6', bucatarie: '#e6e8e3', hol: '#efeae1', living: '#f0e8da', dormitor: '#efe6dc' };
 const MARGIN = 0.5;   // m în jurul planului pentru cote
 
-type PlanProps = { snap: Snapshot; catalog: Catalog; box: { x0: number; z0: number; w: number; d: number }; widthMm: number; heightMm: number; mm: number; units: Units; locale: Locale; roomId?: string; showDims?: boolean; aria: string };
+type PlanProps = { snap: Snapshot; catalog: Catalog; box: { x0: number; z0: number; w: number; d: number }; widthMm: number; heightMm: number; mm: number; units: Units; locale: Lang; roomId?: string; showDims?: boolean; aria: string };
 // Planul (complet sau decupat pe o cameră): pereți, deschideri, amprentele mobilierului și etichete; `mm` = metri pe plan per mm de hârtie.
 function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, locale, roomId, showDims, aria }: PlanProps){
   const f = snap.floor, fs = (v: number) => v * mm, dims = showDims ? wallDimensions(f) : [], rooms = roomId ? f.rooms.filter(r => r.id === roomId) : f.rooms, pls = roomId ? snap.placements.filter(pl => pl.roomId === roomId) : snap.placements;
@@ -57,11 +40,12 @@ function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, locale, roo
 }
 const nextFrame = () => new Promise<void>(res => requestAnimationFrame(() => res()));
 
-export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id: string; locale?: Locale; units?: Units }){
+export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id: string; locale?: Lang; units?: Units }){
+  const t = translator(locale);
   const [data, setData] = useState<{ p: ProjectDto; catalog: Catalog; mc: MaterialsCatalog } | null>(null), [err, setErr] = useState(false), [today, setToday] = useState('');
   const [images, setImages] = useState<Record<string, string>>({}), [busy, setBusy] = useState(true), [imgErr, setImgErr] = useState(false), canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    setToday(new Date().toLocaleDateString(locale === 'ro' ? 'ro-RO' : locale));
+    setToday(new Date().toLocaleDateString(intlLocale(locale)));
     Promise.all([fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/catalog').then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/materials').then(r => r.ok ? r.json() : Promise.reject(r))])
       .then(([p, catalog, mc]) => setData({ p, catalog, mc })).catch(() => { setErr(true); setBusy(false); });
   }, [id, locale]);
@@ -86,58 +70,58 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
     const works = new Map(f.rooms.map(r => [r.id, roomWorks(snap, catalog, mc, r.id)] as const));
     return { works, budget: computeBudget(snap, catalog, mc), furn: furnitureTotal(catalog, snap.placements) };
   }, [data]);
-  if (err) return <main className="print-page"><p>{T.loadError}</p></main>;
-  if (!data || !view) return <main className="print-page">{canvas}<p>{T.loading}</p></main>;
+  if (err) return <main className="print-page"><p>{t('print.loadError')}</p></main>;
+  if (!data || !view) return <main className="print-page">{canvas}<p>{t('print.loading')}</p></main>;
 
   const { p, catalog } = data, snap = p.draft, f = snap.floor, budget = view.budget;
   const b = floorBounds(f) ?? { x0: 0, x1: 6, z0: 0, z1: 5 };
   const ex0 = b.x0 - MARGIN, ez0 = b.z0 - MARGIN, ew = b.x1 - b.x0 + 2 * MARGIN, ed = b.z1 - b.z0 + 2 * MARGIN;
   const sc = printScale(ew, ed), mm = sc.denominator / 1000;   // 1 mm pe hârtie = `mm` metri pe plan
-  const sched = roomSchedule(snap), money = (n: number | null | undefined, cur: string) => formatMoney(n, cur, locale, T.unknownPrice);
-  const cur = catalog.offers[0]?.currency ?? 'RON', bm = (n: number | null) => formatMoney(n, cur, locale, T.unknownPrice);
+  const sched = roomSchedule(snap), money = (n: number | null | undefined, cur: string) => formatMoney(n, cur, locale, t('print.unknownPrice'));
+  const cur = catalog.offers[0]?.currency ?? 'RON', bm = (n: number | null) => formatMoney(n, cur, locale, t('print.unknownPrice'));
   const furnKnownByCur = new Map<string, number>(); for (const pl of snap.placements){ const o = pricedOffer(catalog, pl); if (o) furnKnownByCur.set(o.currency, (furnKnownByCur.get(o.currency) ?? 0) + o.price); }
 
   // lista de cumpărături pe magazine; prețurile lipsă rămân necunoscute, totalul se face pe monedă
   const sums = new Map<string, number>(); let unknownCount = 0;
   const byRetailer = new Map<string, { id: string; name: string; variant: string; room: string; offer: NonNullable<ReturnType<typeof resolve>>['offer'] }[]>();
   // piesele pe comandă au grupa lor („pe comandă”), fără ofertă de catalog; prețul lor e necunoscut
-  for (const pl of snap.placements){ const rv = resolve(catalog, pl.variantId), o = pl.size ? null : rv?.offer ?? null, shop = pl.size ? T.custom : o?.provenance.source ?? T.noOffer, po = pricedOffer(catalog, pl);
+  for (const pl of snap.placements){ const rv = resolve(catalog, pl.variantId), o = pl.size ? null : rv?.offer ?? null, shop = pl.size ? t('print.custom') : o?.provenance.source ?? t('print.noOffer'), po = pricedOffer(catalog, pl);
     if (po) sums.set(po.currency, (sums.get(po.currency) ?? 0) + po.price); else unknownCount++;
-    const arr = byRetailer.get(shop) ?? []; arr.push({ id: pl.id, name: rv?.product.name ?? pl.group, variant: pl.size ? `${rv?.variant.name ?? ''} — ${pl.size.w}×${pl.size.d}×${pl.size.h} cm` : rv?.variant.name ?? '', room: f.rooms.find(r => r.id === pl.roomId)?.name ?? '', offer: o }); byRetailer.set(shop, arr); }
-  const catLines = ([['furniture', T.furniture], ['finishes', T.finishes], ['lighting', T.lighting], ['appliances', T.appliances], ['sanitary', T.sanitary]] as const).map(([k, l]) => [l, budget.categories[k] ?? 0] as const).filter(([, v]) => v > 0);
+    const arr = byRetailer.get(shop) ?? []; arr.push({ id: pl.id, name: rv?.product.name ?? pl.group, variant: pl.size ? `${rv?.variant.name ?? ''} — ${formatDimsCm(pl.size, units, locale)}` : rv?.variant.name ?? '', room: f.rooms.find(r => r.id === pl.roomId)?.name ?? '', offer: o }); byRetailer.set(shop, arr); }
+  const catLines = ([['furniture', t('print.furniture')], ['finishes', t('print.finishes')], ['lighting', t('print.lighting')], ['appliances', t('print.appliances')], ['sanitary', t('print.sanitary')]] as const).map(([k, l]) => [l, budget.categories[k] ?? 0] as const).filter(([, v]) => v > 0);
   const planBox = { x0: ex0, z0: ez0, w: ew, d: ed };
   const ROOM_MM = 100;
 
   return (<main className="print-page">
     {canvas}
     <header className="print-head no-print-border">
-      <div><h1>{snap.name || p.name || T.unnamed}</h1><div className="muted">{T.printedOn} {today} · {p.currentRevision ? `${T.revision} ${p.currentRevision}` : T.noRevisions}</div></div>
-      <div className="print-brand">{T.brand}<button className="btn primary no-print" onClick={() => window.print()} disabled={busy}>{T.print}</button>
-        {busy && <span className="muted no-print" role="status">{T.preparing}</span>}</div>
+      <div><h1>{snap.name || p.name || t('print.unnamed')}</h1><div className="muted">{t('print.printedOn')} {today} · {p.currentRevision ? `${t('print.revision')} ${p.currentRevision}` : t('print.noRevisions')}</div></div>
+      <div className="print-brand">{t('print.brand')}<button className="btn primary no-print" onClick={() => window.print()} disabled={busy}>{t('print.print')}</button>
+        {busy && <span className="muted no-print" role="status">{t('print.preparing')}</span>}</div>
     </header>
-    {imgErr && !busy && <p className="muted no-print" role="status">{T.noImages}</p>}
+    {imgErr && !busy && <p className="muted no-print" role="status">{t('print.noImages')}</p>}
 
     <section className="print-cover" data-testid="cover">
-      {images.overview ? <img className="print-hero" src={images.overview} alt={T.overviewAlt} /> : <div className="print-hero print-hero-empty">{busy ? T.preparing : T.dash}</div>}
-      <div className="print-figs"><h2>{T.keyFigures}</h2>
+      {images.overview ? <img className="print-hero" src={images.overview} alt={t('print.overviewAlt')} /> : <div className="print-hero print-hero-empty">{busy ? t('print.preparing') : t('print.dash')}</div>}
+      <div className="print-figs"><h2>{t('print.keyFigures')}</h2>
         <dl>
-          <dt>{T.roomsCount}</dt><dd>{sched.totals.rooms}</dd>
-          <dt>{T.totalArea}</dt><dd>{formatArea(sched.totals.area, units, locale)}</dd>
-          <dt>{T.furnitureKnown}</dt><dd>{furnKnownByCur.size ? [...furnKnownByCur].map(([c, v]) => formatMoney(v, c, locale)).join(' + ') : T.dash}{view.furn.unknown > 0 && <small> · {view.furn.unknown} {T.furnitureUnknown}</small>}</dd>
-          <dt>{T.budgetTotalLabel}</dt><dd>{bm(budget.chosen.total)}</dd>
+          <dt>{t('print.roomsCount')}</dt><dd>{sched.totals.rooms}</dd>
+          <dt>{t('print.totalArea')}</dt><dd>{formatArea(sched.totals.area, units, locale)}</dd>
+          <dt>{t('print.furnitureKnown')}</dt><dd>{furnKnownByCur.size ? [...furnKnownByCur].map(([c, v]) => formatMoney(v, c, locale)).join(' + ') : t('print.dash')}{view.furn.unknown > 0 && <small> · {view.furn.unknown} {t('print.furnitureUnknown')}</small>}</dd>
+          <dt>{t('print.budgetTotalLabel')}</dt><dd>{bm(budget.chosen.total)}</dd>
         </dl></div>
     </section>
 
     <section className="print-plan print-break">
-      <PlanSvg snap={snap} catalog={catalog} box={planBox} widthMm={sc.widthMm} heightMm={sc.heightMm} mm={mm} units={units} locale={locale} showDims aria={T.planAria} />
-      <div className="print-scale"><b>{T.scale} 1:{sc.denominator}</b>
-        <svg role="img" aria-label={T.scaleBar} width={`${5000 / sc.denominator}mm`} height="7mm" viewBox={`0 0 ${5000 / sc.denominator} 7`} overflow="visible">
+      <PlanSvg snap={snap} catalog={catalog} box={planBox} widthMm={sc.widthMm} heightMm={sc.heightMm} mm={mm} units={units} locale={locale} showDims aria={t('print.planAria')} />
+      <div className="print-scale"><b>{t('print.scale')} 1:{sc.denominator}</b>
+        <svg role="img" aria-label={t('print.scaleBar')} width={`${5000 / sc.denominator}mm`} height="7mm" viewBox={`0 0 ${5000 / sc.denominator} 7`} overflow="visible">
           <rect x={0} y={2} width={1000 / sc.denominator} height={1.6} fill="#333" /><rect x={1000 / sc.denominator} y={2} width={4000 / sc.denominator} height={1.6} fill="#fff" stroke="#333" strokeWidth={0.2} />
           <text x={0} y={6.5} fontSize={2.4}>0</text><text x={1000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="middle">{formatLength(1, units, locale)}</text><text x={5000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="end">{formatLength(5, units, locale)}</text></svg></div>
-      <div className="print-sec"><h2>{T.schedule}</h2>
-        <table className="print-table"><thead><tr><th>{T.room}</th><th>{T.dims}</th><th>{T.areaCol}</th><th>{T.perimeter}</th></tr></thead>
+      <div className="print-sec"><h2>{t('print.schedule')}</h2>
+        <table className="print-table"><thead><tr><th>{t('print.room')}</th><th>{t('print.dims')}</th><th>{t('print.areaCol')}</th><th>{t('print.perimeter')}</th></tr></thead>
           <tbody>{sched.rows.map(r => <tr key={r.id}><td>{r.name}</td><td>{formatLength(r.width, units, locale)} × {formatLength(r.depth, units, locale)}</td><td>{formatArea(r.area, units, locale)}</td><td>{formatLength(r.perimeter, units, locale)}</td></tr>)}</tbody>
-          <tfoot><tr><th>{T.total} ({sched.totals.rooms} {T.rooms})</th><td></td><th>{formatArea(sched.totals.area, units, locale)}</th><td></td></tr></tfoot></table></div>
+          <tfoot><tr><th>{t('print.total')} ({sched.totals.rooms} {t('print.rooms')})</th><td></td><th>{formatArea(sched.totals.area, units, locale)}</th><td></td></tr></tfoot></table></div>
     </section>
 
     {f.rooms.map(r => { const w = view.works.get(r.id)!, row = sched.rows.find(x => x.id === r.id), rw = r.rect.x1 - r.rect.x0, rd = r.rect.z1 - r.rect.z0, PAD = 0.4;
@@ -146,52 +130,52 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
         <h2>{r.name} <small>· {formatArea(row?.area ?? rw * rd, units, locale)} · {formatLength(rw, units, locale)} × {formatLength(rd, units, locale)}</small></h2>
         <div className="print-room-cols">
           <div className="print-room-left">
-            {img ? <img className="print-room-img" src={img} alt={`${T.roomAlt} ${r.name}`} /> : <div className="print-room-img print-hero-empty">{busy ? T.preparing : T.dash}</div>}
-            <h3>{T.whatIsDone}</h3>
-            <RoomColors snap={snap} roomId={r.id} />
-            <table className="print-table"><thead><tr><th>{T.finishesWorks}</th><th className="num">{T.qty}</th><th className="num">{T.cost}</th></tr></thead>
-              <tbody>{w.materials.length === 0 && <tr><td colSpan={3} className="muted">{T.noWorks}</td></tr>}
+            {img ? <img className="print-room-img" src={img} alt={`${t('print.roomAlt')} ${r.name}`} /> : <div className="print-room-img print-hero-empty">{busy ? t('print.preparing') : t('print.dash')}</div>}
+            <h3>{t('print.whatIsDone')}</h3>
+            <RoomColors snap={snap} roomId={r.id} t={t} />
+            <table className="print-table"><thead><tr><th>{t('print.finishesWorks')}</th><th className="num">{t('print.qty')}</th><th className="num">{t('print.cost')}</th></tr></thead>
+              <tbody>{w.materials.length === 0 && <tr><td colSpan={3} className="muted">{t('print.noWorks')}</td></tr>}
                 {w.materials.map(m => <tr key={m.key}><td>{m.label}</td><td className="num">{m.qty} {m.unit}</td><td className="num">{money(m.cost, cur)}</td></tr>)}</tbody>
-              {w.labor.length > 0 && <><thead><tr><th>{T.laborWorks}</th><th className="num">{T.qty}</th><th className="num">{T.laborExpected} ({T.laborRange})</th></tr></thead>
+              {w.labor.length > 0 && <><thead><tr><th>{t('print.laborWorks')}</th><th className="num">{t('print.qty')}</th><th className="num">{t('print.laborExpected')} ({t('print.laborRange')})</th></tr></thead>
                 <tbody>{w.labor.map(l => <tr key={l.key}><td>{l.label}</td><td className="num">{l.qty} {l.unit}</td><td className="num">{money(l.expected, cur)} <small>({money(l.low, cur)} – {money(l.high, cur)})</small></td></tr>)}</tbody></>}
             </table>
           </div>
           <div className="print-room-right">
-            <div className="print-room-plan"><PlanSvg snap={snap} catalog={catalog} box={{ x0: r.rect.x0 - PAD, z0: r.rect.z0 - PAD, w: bw, d: bd }} widthMm={bw * k} heightMm={bd * k} mm={1 / k} units={units} locale={locale} roomId={r.id} aria={`${T.plan} ${r.name}`} /></div>
-            <table className="print-table"><thead><tr><th>{T.roomFurniture}</th><th>{T.retailer}</th><th className="num">{T.price}</th></tr></thead>
-              <tbody>{w.furniture.length === 0 && <tr><td colSpan={3} className="muted">{T.noFurniture}</td></tr>}
-                {w.furniture.map(x => <tr key={x.id}><td>{x.name}</td><td>{x.retailer ?? T.noOffer}</td><td className="num">{money(x.price, x.currency ?? cur)}</td></tr>)}</tbody></table>
-            <p className="print-totals">{Object.entries(w.totals).map(([c, t]) => <span key={c}><b>{T.roomTotal}:</b> {formatMoney(t.known, c, locale)}{t.unknown > 0 && <> + {t.unknown} {T.furnitureUnknown}</>}{t.laborExpected > 0 && <> · {T.roomLabor} {formatMoney(t.laborExpected, c, locale)}</>} </span>)}</p>
+            <div className="print-room-plan"><PlanSvg snap={snap} catalog={catalog} box={{ x0: r.rect.x0 - PAD, z0: r.rect.z0 - PAD, w: bw, d: bd }} widthMm={bw * k} heightMm={bd * k} mm={1 / k} units={units} locale={locale} roomId={r.id} aria={`${t('print.plan')} ${r.name}`} /></div>
+            <table className="print-table"><thead><tr><th>{t('print.roomFurniture')}</th><th>{t('print.retailer')}</th><th className="num">{t('print.price')}</th></tr></thead>
+              <tbody>{w.furniture.length === 0 && <tr><td colSpan={3} className="muted">{t('print.noFurniture')}</td></tr>}
+                {w.furniture.map(x => <tr key={x.id}><td>{x.name}</td><td>{x.retailer ?? t('print.noOffer')}</td><td className="num">{money(x.price, x.currency ?? cur)}</td></tr>)}</tbody></table>
+            <p className="print-totals">{Object.entries(w.totals).map(([c, tot]) => <span key={c}><b>{t('print.roomTotal')}:</b> {formatMoney(tot.known, c, locale)}{tot.unknown > 0 && <> + {tot.unknown} {t('print.furnitureUnknown')}</>}{tot.laborExpected > 0 && <> · {t('print.roomLabor')} {formatMoney(tot.laborExpected, c, locale)}</>} </span>)}</p>
           </div>
         </div>
       </section>); })}
 
-    <section className="print-sec print-break"><h2>{T.shopping}</h2>
-      {byRetailer.size === 0 && <p className="muted">{T.noItems}</p>}
+    <section className="print-sec print-break"><h2>{t('print.shopping')}</h2>
+      {byRetailer.size === 0 && <p className="muted">{t('print.noItems')}</p>}
       {[...byRetailer].map(([shop, rows]) => <div key={shop} className="print-nobreak"><h3>{shop}</h3>
-        <table className="print-table"><thead><tr><th>{T.product}</th><th>{T.room}</th><th className="num">{T.price}</th><th>{T.productLink}</th></tr></thead>
-          <tbody>{rows.map(i => <tr key={i.id}><td>{i.name}{i.variant && <small> · {i.variant}</small>}</td><td>{i.room}</td><td className="num">{i.offer ? money(i.offer.price, i.offer.currency) : T.unknownPrice}</td><td>{i.offer ? <a href={`/go/o/${i.offer.id}`}>/go/o/{i.offer.id}</a> : T.dash}</td></tr>)}</tbody></table></div>)}
-      <p className="print-totals"><b>{T.knownSum}:</b> {sums.size ? [...sums].map(([c, v]) => formatMoney(v, c, locale)).join(' + ') : T.dash}{unknownCount > 0 && <> · <b>{unknownCount}</b> {T.unknownCount}</>}</p>
+        <table className="print-table"><thead><tr><th>{t('print.product')}</th><th>{t('print.room')}</th><th className="num">{t('print.price')}</th><th>{t('print.productLink')}</th></tr></thead>
+          <tbody>{rows.map(i => <tr key={i.id}><td>{i.name}{i.variant && <small> · {i.variant}</small>}</td><td>{i.room}</td><td className="num">{i.offer ? money(i.offer.price, i.offer.currency) : t('print.unknownPrice')}</td><td>{i.offer ? <a href={`/go/o/${i.offer.id}`}>/go/o/{i.offer.id}</a> : t('print.dash')}</td></tr>)}</tbody></table></div>)}
+      <p className="print-totals"><b>{t('print.knownSum')}:</b> {sums.size ? [...sums].map(([c, v]) => formatMoney(v, c, locale)).join(' + ') : t('print.dash')}{unknownCount > 0 && <> · <b>{unknownCount}</b> {t('print.unknownCount')}</>}</p>
 
-      <h2 style={{ marginTop: 16 }}>{T.budget}</h2>
+      <h2 style={{ marginTop: 16 }}>{t('print.budget')}</h2>
       <table className="print-table"><tbody>
         {catLines.map(([l, v]) => <tr key={l}><td>{l}</td><td className="num">{bm(v)}</td></tr>)}
         {budget.extras.map(e => <tr key={e.key}><td>{e.label}</td><td className="num">{bm(e.amount)}</td></tr>)}
-        {budget.unknownLines.map(e => <tr key={e.key}><td>{e.label}</td><td className="num">{T.unknownLines}</td></tr>)}
-        {budget.laborTotals.high > 0 && <tr><td>{T.labor} ({T.low} / {T.expected} / {T.high})</td><td className="num">{bm(budget.laborTotals.low)} / {bm(budget.laborTotals.expected)} / {bm(budget.laborTotals.high)}</td></tr>}
-        <tr><td>{T.subtotal}</td><td className="num">{bm(budget.chosen.subtotal)}</td></tr>
-        {budget.chosen.contingency > 0 && <tr><td>{T.contingency} ({budget.settings.contingencyPct}%)</td><td className="num">{bm(budget.chosen.contingency)}</td></tr>}
-      </tbody><tfoot><tr><th>{T.budgetTotal}</th><th className="num">{bm(budget.chosen.total)}</th></tr></tfoot></table>
-      {budget.unknownItems.length > 0 && <p className="muted">{T.unknownItems}: {budget.unknownItems.join(', ')}</p>}
-      {new Set(catalog.offers.map(o => o.currency)).size > 1 && <p className="muted">{T.currencyNote}</p>}
-      <footer className="print-foot">{T.disclaimer}</footer></section>
+        {budget.unknownLines.map(e => <tr key={e.key}><td>{e.label}</td><td className="num">{t('print.unknownLines')}</td></tr>)}
+        {budget.laborTotals.high > 0 && <tr><td>{t('print.labor')} ({t('print.low')} / {t('print.expected')} / {t('print.high')})</td><td className="num">{bm(budget.laborTotals.low)} / {bm(budget.laborTotals.expected)} / {bm(budget.laborTotals.high)}</td></tr>}
+        <tr><td>{t('print.subtotal')}</td><td className="num">{bm(budget.chosen.subtotal)}</td></tr>
+        {budget.chosen.contingency > 0 && <tr><td>{t('print.contingency')} ({budget.settings.contingencyPct}%)</td><td className="num">{bm(budget.chosen.contingency)}</td></tr>}
+      </tbody><tfoot><tr><th>{t('print.budgetTotal')}</th><th className="num">{bm(budget.chosen.total)}</th></tr></tfoot></table>
+      {budget.unknownItems.length > 0 && <p className="muted">{t('print.unknownItems')}: {budget.unknownItems.join(', ')}</p>}
+      {new Set(catalog.offers.map(o => o.currency)).size > 1 && <p className="muted">{t('print.currencyNote')}</p>}
+      <footer className="print-foot">{t('print.disclaimer')}</footer></section>
   </main>);
 }
 
 /** Culorile alese pentru cameră, cu mostre și cod hex: zugravul și magazinul de vopsea lucrează direct după ele. */
-function RoomColors({ snap, roomId }: { snap: Snapshot; roomId: string }){
+function RoomColors({ snap, roomId, t }: { snap: Snapshot; roomId: string; t: Translate }){
   const l = roomLook(snap, roomId), a = snap.appearance?.rooms?.[roomId];
   const accents = Object.entries(snap.appearance?.wallFaces || {}).filter(([k]) => k.endsWith('@' + roomId)).map(([, f]) => normalizeHex(f.color)).filter((x): x is string => !!x);
-  const rows: [string, string, boolean][] = [[T.wallsC, l.walls, !!a?.walls], ...accents.map(c => [T.accentC, c, true] as [string, string, boolean]), [T.floorC, l.floorTint, !!a?.floor], [T.ceilingC, l.ceiling, !!a?.ceiling]];
-  return (<div className="print-colors"><b>{T.colors}:</b> {rows.map(([label, hex, chosen], i) => <span key={i}><i style={{ background: hex }} /> {label} {chosen ? hex : T.defaultC}</span>)}</div>);
+  const rows: [string, string, boolean][] = [[t('print.wallsC'), l.walls, !!a?.walls], ...accents.map(c => [t('print.accentC'), c, true] as [string, string, boolean]), [t('print.floorC'), l.floorTint, !!a?.floor], [t('print.ceilingC'), l.ceiling, !!a?.ceiling]];
+  return (<div className="print-colors"><b>{t('print.colors')}:</b> {rows.map(([label, hex, chosen], i) => <span key={i}><i style={{ background: hex }} /> {label} {chosen ? hex : t('print.defaultC')}</span>)}</div>);
 }

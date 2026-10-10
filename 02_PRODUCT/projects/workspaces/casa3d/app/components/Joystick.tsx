@@ -1,7 +1,9 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { usePrefs } from '@/lib/prefs';
 // Joystick virtual pentru tur pe telefon: un deget pe pad → axe (strafe, înainte) în [-1, 1]; eliberarea oprește mișcarea.
 export default function Joystick({ onMove, size = 112 }: { onMove(forward: number, strafe: number): void; size?: number }){
+  const { t } = usePrefs();
   const pad = useRef<HTMLDivElement>(null), [knob, setKnob] = useState({ x: 0, y: 0 }), active = useRef<number | null>(null);
   const r = size / 2, dead = 0.12;
   const axes = (e: React.PointerEvent) => { const b = pad.current!.getBoundingClientRect(); let dx = (e.clientX - (b.left + r)) / r, dy = (e.clientY - (b.top + r)) / r;
@@ -10,7 +12,7 @@ export default function Joystick({ onMove, size = 112 }: { onMove(forward: numbe
   const stop = () => { active.current = null; setKnob({ x: 0, y: 0 }); onMove(0, 0); };
   const onMoveRef = useRef(onMove); onMoveRef.current = onMove;
   useEffect(() => () => onMoveRef.current(0, 0), []); // demontat în timpul tragerii → mișcarea se oprește
-  return (<div ref={pad} role="slider" aria-label="Joystick de deplasare" aria-valuemin={-1} aria-valuemax={1} aria-valuenow={0} tabIndex={0}
+  return (<div ref={pad} role="slider" aria-label={t('viewer.joystick')} aria-valuemin={-1} aria-valuemax={1} aria-valuenow={0} tabIndex={0}
     onPointerDown={e => { active.current = e.pointerId; (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); axes(e); }}
     onPointerMove={e => { if (active.current === e.pointerId) axes(e); }} onPointerUp={stop} onPointerCancel={stop} onLostPointerCapture={stop}
     style={{ position: 'absolute', left: 16, bottom: 56, width: size, height: size, borderRadius: '50%', background: 'rgba(30,30,30,.28)', border: '1px solid rgba(255,255,255,.5)', touchAction: 'none', userSelect: 'none', zIndex: 3 }}>
