@@ -1,5 +1,5 @@
 # todo-claude-codeql-check
-STATUS: IN_PROGRESS        UPDATED: 2026-10-10T01:00Z
+STATUS: IN_PROGRESS        UPDATED: 2026-10-10T09:50Z
 TASK: Make the PR check "Code scanning results / CodeQL" end pass/fail instead of "neutral".
 BRANCH / PR: claude/blissful-cannon-6w2cnz / https://github.com/userist123/AI_Memory_Vault_CODEX_READY/pull/259    BASE: main @ 21da5bbf
 SPEC: check-run text on PR #256 / #254: "6 configurations present on refs/heads/main were not found":
@@ -19,7 +19,7 @@ NEXT (in order):
    (These languages have no code in the repository: 0 Ruby/Rust files, 4 Go and 1 C++ files are skill examples.)
 3. Push any change to an open PR and confirm the CodeQL check is green (or red with real alerts), not neutral.
 BLOCKERS / OWNER QUESTIONS:
-- Step 2 needs repository admin / security-events write; cannot be done from this session.
+- Merge of PR #259 is the owner's (security-sensitive CI change). Cleanup itself runs from the workflow.
 KEY FILES:
 - .github/workflows/codeql.yml, .github/workflows/codeql-csharp.yml, .github/codeql/javascript-config.yml
-VERIFICATION SO FAR: YAML parses; workflow_security_audit + related regression tests (see commit).
+VERIFICATION SO FAR: PR #259 CI: all green except regression-and-heldout (allowlist + README CI table, fixed). CodeQL check: 6 -> 5 missing configurations (javascript-typescript resolved; csharp was still running).
