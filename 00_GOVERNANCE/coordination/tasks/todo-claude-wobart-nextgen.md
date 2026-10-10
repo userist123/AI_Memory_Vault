@@ -1,5 +1,5 @@
 # todo-claude-wobart-nextgen
-STATUS: DONE        UPDATED: 2026-10-10T16:05:00Z
+STATUS: IN_PROGRESS        UPDATED: 2026-10-10T17:40:00Z
 TASK: Research "next-gen WOB ART website" (vault + web) and make the Wobart site more complex (3D configurator, scroll stage, FAQ, JSON-LD, WhatsApp, CMS editors), orchestrated per cost-router.
 BRANCH / PR: Wobart `ccr-a57d8bba-5jt0rc` / none    BASE: Wobart 16066a7; vault 120722d9
 SPEC: Wobart `tasks/todo.md`, Wobart `PROJECT_BRAIN/RESEARCH/2026-10-10_next_gen_research.md`
@@ -22,7 +22,16 @@ DONE:
 - GLB wired into WrapConfigurator (vault-worker/sonnet; useGLTF meshopt, Draco off, material 'Wrap' swapped); Playwright visual run
   on the fresh build: canvas on tablet/desktop, poster on phone, car renders with finish swatches; only 503 /api/content (no MONGO_URL).
   Pushed f927c54; screenshots in Wobart test_reports/visual/. Site built and opened on Marius-PC for the owner.
+- Owner rejected the procedural car and the plain stage ("mizerii", "look din 1900"). Replaced with the Khronos CarConcept
+  (CC-BY 4.0, Eric Chadwick / DGG; base CC0): Blender prepare_carconcept.py strips the trademarked Khronos parts and unifies the
+  paint into material 'Wrap'; gltf-transform meshopt+webp 1024 (--palette false, otherwise material names are lost): 11.8 MB -> 1.42 MB.
+  Stage: Poly Haven studio HDRI + Lightformers, Bloom/Vignette, PerformanceMonitor DPR, precise Box3 auto-fit (quantized accessor
+  bounds are inflated and floated the car), contact shadows on the CSS backdrop (MeshReflectorMaterial floor read as a grey slab).
+  GPU screenshots taken on Marius-PC via headless Chromium (scripts/visual/shot-gpu.cjs): car grounded, satin black reads well.
+  Wobart commits 87346d2, e7cffa0, 00199ef, 0187a4d, 5a98f6a, 04cb015. CC BY credit added in the section disclaimer.
+- Lesson recorded (Wobart tasks/lessons.md): a push chained with ';' after a red lint went out; chain with '&&' only.
 NEXT (in order):
+0. vault-worker polishes the configurator section UI; then PC build + GPU shots + owner review in the browser.
 1. Owner: look at the site on the PC (desktop + mobile), check the 3D scene, the Process stage and the WhatsApp CTA; then attest or reject the memory proposal.
 2. Follow-ups listed in Wobart PROJECT_BRAIN/RESEARCH/2026-10-10_next_gen_research.md §8 (licensed GLB, server-side JSON-LD, CWV measurement).
 BLOCKERS / OWNER QUESTIONS:
