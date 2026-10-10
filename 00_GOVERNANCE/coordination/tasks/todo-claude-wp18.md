@@ -1,0 +1,67 @@
+# todo-claude-wp18
+STATUS: DONE (code) / S6 PARTIAL until the real-person usability run        UPDATED: 2026-10-10T06:00Z
+TASK: WP18 — station roles (CONTROL / CSIRT chosen by the PC through the signed policy) and non-technical UI, per
+`02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PROMPT_WP18_ROLURI_STATIE_UI_SIMPLA.md` (owner decisions D1–D8 in §11).
+BRANCH / PR: `claude/loganalyzer-dfir-roles-ui-0a71fb`, PR https://github.com/userist123/AI_Memory_Vault_CODEX_READY/pull/266 (merged main @ 0eb82905d into the branch;
+  allowlist conflict resolved with the branch version, which holds every main entry). Owner merges; no auto-merge (signed policy + auth).
+DONE:
+- S1 station role: `LogAnalyzer.Core/Services/Edition/StationRole.cs` (enum, decision, resolver, context, StartupDecision);
+  `role` as optional last signed line of `LogAnalyzer.policy` (`EditionPolicy.cs`); both `EditionComposition.DecideStartup`;
+  startup log + `station.role` audit + auth audit `session.context`; `CaseInfo.StationRole` written by `NewCase` and the LIVE case;
+  header badge `ROL:` with the decision as tooltip (`MainViewModel`, `MainWindow.xaml`); `Sign-EditionPolicy.ps1 -Role`.
+  Tests: `LogAnalyzer.UI.Tests/StationRoleTests.cs` (9). Docs: `docs/dfir/EDITIONS.md` "Station role (WP18)".
+- S2 Home + navigation per role: `LogAnalyzer.Core/Services/Edition/RoleProfile.cs` (HomeIntent, IntentAvailability, NavigationEntry,
+  RoleProfile, RoleProfiles.For — data, ≤5 primary intents, unavailable ones listed with the reason); `HomeViewModel` renders the profile
+  (`PrimaryIntents`, `MoreIntents`, `RunIntentCommand`); `HomeView.xaml` big buttons + "Mai multe"; sidebar section of the role +
+  "Avansat (toate paginile)" expander with every legacy page (decision 5); the app opens on Home in every mode (Live SOC jump removed).
+  Tests: `LogAnalyzer.UI.Tests/RoleProfileTests.cs` (8), `HomeViewModelTests` (+2, one updated). App.Tests 30/30, UI.Tests 187/187.
+- S3 language levels, terms, glossary: `LogAnalyzer.Dfir.Core/Language/LanguageLevel.cs` (UiLanguageLevel Simple/Expert, LanguageLevelContext,
+  LanguagePreferences per account under %LOCALAPPDATA%\LogAnalyzer\preferences, default Simple for EVERY account); 11 control-line terms added
+  to the single `Glossary` (Hardware ID, NetworkList, USBSTOR, auditpol, RecordID, CRL, CA, SHA-256, SRUM, RDP, GPO); `TermExtension` now binds
+  to the level (Simple = human phrase, Expert = technical name beside it) and recomputes on change; header switch "LIMBAJ: Simplu/Expert" +
+  "Ce înseamnă?" opening `GlossaryWindow` (searchable); role pages reworded so technical names appear only in parentheses (StationControl,
+  Investigation, ProcedureProfile, Auth, FindingCard); administration buttons in user words ("Adaugă persoana", "Înregistrează cardul",
+  "Adu lista certificatelor revocate (CRL)…"). Lint test over the role pages: `LogAnalyzer.App.Tests/Wp18LanguageTests.cs` (15 tests incl. theory).
+  App.Tests 45/45, UI.Tests 187/187; Dfir.Tests Wp6a glossary/XAML tests green after the SRUM entry (example family → shimcache).
+- S4 guided flows: `LogAnalyzer.Dfir.Core/Flow/GuidedFlow.cs` (steps, Next with validation, Back, Stop/Resume keep the place, Restart);
+  `LogAnalyzer.Dfir.Windows/Audit/ControlGuide.cs` (period choices incl. "de la ultimul control", ControlArchive reading Control/CONTROL_*/control_report.json,
+  ControlComparison = difference worse/better/new/removed, ProfileSummary sections defined/nedefinit, ControlResultScreen = the five answers,
+  "nimic neconform găsit" always with the coverage, ≤5 next steps); `LogAnalyzer.Dfir.Windows/Investigation/IncomingEvidence.cs` (scan of a folder
+  brought from another PC: families present/missing, files not evidence; nothing copied or hashed before import). `StationControlViewModel` +
+  `StationControlView.xaml`: three-step "Verifică această stație" (station → period → procedures/inspector → run), single result card, "Compară cu
+  controlul anterior", raw parameters under "Avansat". `InvestigationViewModel` + `InvestigationView.xaml`: three-step "Primește probe de la o stație"
+  (folder → what was found/what is missing → scope → run). Tests: `LogAnalyzer.App.Tests/Wp18FlowTests.cs` (7). App.Tests 52/52; Wp6a XAML tests green.
+- S5 reports per role: `LogAnalyzer.Dfir.Core/Reporting/ReportHeaderProfile.cs` (unit header, decision D3, next to the procedure profile;
+  ReportAudience + sections, UX §15); `LogAnalyzer.Dfir.Windows/Audit/ControlReportHeader.cs`; `ControlReportPdf` prints the proces-verbal header
+  (unit, structure, station, Hardware ID, period, inspector + function, station role, registration number), the five answers and the gaps/unread
+  sources BEFORE the checks, the manual marking on every page ("marcaj introdus manual, neverificat de aplicație", decision D4) and two signature
+  lines; `ReportFooter.Compose(marking)`; `InvestigationReportPdf.Write(audience)` = "Pentru cine este raportul?" chooses sections, never facts
+  (gaps and incident chains always printed). UI: step 3 of the control flow has function / registration number / marking; investigation page has
+  the audience chooser; procedure-profile page has "Antetul rapoartelor unității" (administrator saves). Tests: `Wp18ReportTests.cs` (4; PDF smoke
+  with the footer observer). App.Tests 56/56, UI.Tests 187/187, Dfir.Tests report/seal/XAML subset 129 passed.
+- S6 accessibility: automation names on every interactive element of the five main screens (Home, Control stație, Investigație,
+  Profil de proceduri, Autentificare; 23 legacy controls named); `LogAnalyzer.App.Tests/Wp18AccessibilityTests.cs` (8): name lint, no font
+  below 11, the theme loads (App.xaml order, last definition wins as in merged dictionaries), and each screen is laid out at 150 % in a
+  1366-px window with no page-wide horizontal overflow and no clipped NoWrap label. `docs/dfir/WP18_USABILITY_SCRIPT.md`: the real-person
+  run (decision D7). S6 stays PARTIAL until that run is recorded. App.Tests 64/64.
+- S7 docs: `docs/dfir/STATION_ROLES.md`, README section, EDITIONS.md link.
+- Independent review (vault-reviewer, Opus, 2026-10-10): APPROVE WITH FIXES; security core held (role covered by the signature, fail-closed,
+  P1 never CSIRT, no capability widening). Fixed: (1) every audience gets incident chains, gaps (printed before findings), findings (short with
+  missing/contradicting/limitations) and anti-forensics; (2) intake classifies with `InvestigationPipeline.ImportType` (no file left behind);
+  (3) control-flow restart clears the comparison; (4) `Sign-EditionPolicy.ps1` lower-cases -Mode/-Role before signing; (5) investigation PDF header
+  shows the station role. Added: golden pre-WP18 payload test, stripped-role test, case test; global-state tests in a non-parallel collection.
+  NOT done: LogAnalyzer.Edition.Tests not extended (no new banned type was added); `ResetForTests` stays public (same pattern as AppModeContext).
+- Final local run after fixes: build OK; App.Tests 65/65, UI.Tests 190/190, Edition.Tests 15/15, Dfir.Tests 1022 passed / 29 skipped / 0 failed
+  (corpus tests skipped in this run; the 2 real-corpus failures seen at the first run are pre-existing and unrelated).
+VERIFICATION (S1, local, Windows):
+- `dotnet build LogAnalyzer.slnx -c Release`: Build succeeded (TEST_VERIFIED).
+- App.Tests 28/28, Edition.Tests 15/15, UI.Tests 179/179 passed.
+- Dfir.Tests 1045 passed, 4 skipped, 2 FAILED on the real local corpus: `AntiForensicsTests.Real_corpus_traces_match_wevtutil…` (28 vs 64)
+  and `InvestigationTests.NanAgent_corpus_yields_the_known_incident_chain` (chain text lacks NanAgent32.exe). Neither test touches WP18 code
+  (parsers / AntiForensics.Evaluate / incident chain); treated as PRE-EXISTING local corpus drift, NOT fixed here. CI never runs them (no corpus).
+- Windows Defender flags `LogAnalyzer.Dfir.Tests.dll` as `Ransom:Win32/Clop.SIB!MTB` on every rebuild (test data contains the literal
+  `vssadmin delete shadows /all /quiet` lines of WP11 tests). False positive on the test assembly; owner restored the file from quarantine.
+- `Sign-EditionPolicy.ps1` change: parsed OK with Windows PowerShell; end-to-end run UNVERIFIED here (needs pwsh 7, not installed).
+NEXT: CI on PR #266; owner review and merge; real-person usability run (S6). Earlier plan was: S2 Home + navigation per role → S3 language levels/terms/glossary → S4 guided flows → S5 reports → S6 accessibility → S7 docs.
+BLOCKERS: none.
+KEY FILES: see DONE; prompt §2 reading list.

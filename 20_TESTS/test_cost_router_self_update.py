@@ -80,10 +80,16 @@ def _update(home: Path, origin: Path, capsys=None) -> str:
     return result
 
 
+def _self_update_entry(hooks: dict) -> dict:
+    found = [e for e in hooks["SessionStart"] if "hook_self_update.py" in json.dumps(e)]
+    assert len(found) == 1, found
+    return found[0]
+
+
 def _hook_command(home: Path):
     """Run the hook exactly as settings.json registers it (only where it cannot reach the network)."""
     settings = json.loads((home / ".claude" / "settings.json").read_text(encoding="utf-8"))
-    cmd = settings["hooks"]["SessionStart"][0]["hooks"][0]["command"]
+    cmd = _self_update_entry(settings["hooks"])["hooks"][0]["command"]
     return subprocess.run(["bash", "-c", cmd], input='{"hook_event_name":"SessionStart","source":"startup"}',
                           env=_env(home), capture_output=True, text=True, timeout=120)
 
@@ -95,14 +101,14 @@ def _install(home: Path, *extra: str):
     return r
 
 
-def test_install_registers_three_hooks_once_and_uninstall_removes_them(tmp_path):
+def test_install_registers_each_hook_once_and_uninstall_removes_them(tmp_path):
     home = tmp_path / "home"
     _install(home)
     _install(home)
     hooks = json.loads((home / ".claude" / "settings.json").read_text(encoding="utf-8"))["hooks"]
     assert sorted(hooks) == ["PreToolUse", "SessionStart", "UserPromptSubmit"]
-    assert all(len(v) == 1 for v in hooks.values())
-    start = hooks["SessionStart"][0]
+    assert [len(hooks[k]) for k in ("PreToolUse", "SessionStart", "UserPromptSubmit")] == [1, 2, 1]
+    start = _self_update_entry(hooks)
     assert start["matcher"] == "startup|resume" and start["hooks"][0]["timeout"] == 60
     assert "cost-router/hook_self_update.py" in start["hooks"][0]["command"].replace("\\", "/")
     _install(home, "--uninstall")
@@ -121,7 +127,8 @@ def test_update_pulls_the_latest_version_silently(tmp_path, origin, capsys):
     # an agent the owner never edited follows the repository
     assert "<!-- agent v2 -->" in (home / ".claude" / "agents" / "Explore.md").read_text(encoding="utf-8")
     hooks = json.loads((home / ".claude" / "settings.json").read_text(encoding="utf-8"))["hooks"]
-    assert all(len(v) == 1 for v in hooks.values()), "re-install must not duplicate hooks"
+    assert [len(hooks[k]) for k in ("PreToolUse", "SessionStart", "UserPromptSubmit")] == [1, 2, 1], \
+        "re-install must not duplicate hooks"
     assert not list((home / ".claude").glob("cost-router.staging-*")) and not list((home / ".claude").glob("cost-router.old-*"))
     assert not (home / ".claude" / "cost-router.lock").exists()
 
@@ -218,3 +225,14 @@ def test_registered_command_is_silent_offline_and_never_blocks(tmp_path):
     r = subprocess.run([sys.executable, str(home / ".claude" / "skills" / "cost-router" / "hook_self_update.py")],
                        input="{}", env=env, capture_output=True, text=True, timeout=60)
     assert r.returncode == 0 and r.stdout == ""
+
+
+def test_update_keeps_the_owners_context_choice(tmp_path, origin):
+    """--no-context at install time stays honoured by every later self-update, and vice versa."""
+    off, on = tmp_path / "off", tmp_path / "on"
+    _install(off, "--no-context")
+    _install(on)
+    assert _update(off, origin) == "updated" and _update(on, origin) == "updated"
+    assert not (off / ".claude" / "CLAUDE.md").exists()
+    assert "deny" not in json.loads((off / ".claude" / "settings.json").read_text(encoding="utf-8")).get("permissions", {})
+    assert "cost-router:context-rules:start" in (on / ".claude" / "CLAUDE.md").read_text(encoding="utf-8")

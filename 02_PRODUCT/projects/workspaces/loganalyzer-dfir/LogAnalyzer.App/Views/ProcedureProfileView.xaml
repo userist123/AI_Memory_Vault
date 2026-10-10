@@ -12,7 +12,7 @@
         <StackPanel Grid.Row="0" Margin="0,0,0,12">
             <TextBlock Text="Profil de proceduri" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
             <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
-                       Text="Program de lucru, mentenanța jurnalelor, software aprobat, politica GPO așteptată, zone și transferuri. Se introduc manual, se lipesc din tabel sau se importă (JSON / CSV). Analiza le compară cu ce s-a observat; nimic nu se aplică pe Windows. O secțiune goală este „nedefinit”, niciodată „conform”."/>
+                       Text="Program de lucru, mentenanța jurnalelor, software aprobat, politica de grup așteptată (GPO), zone și transferuri. Se introduc manual, se lipesc din tabel sau se importă (JSON / CSV). Analiza le compară cu ce s-a observat; nimic nu se aplică pe Windows. O secțiune goală este „nedefinit”, niciodată „conform”."/>
             <TextBlock Text="{Binding AccessNotice}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource CriticalBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
         </StackPanel>
 
@@ -20,7 +20,7 @@
             <StackPanel>
                 <WrapPanel VerticalAlignment="Center">
                     <TextBlock Text="Fișier:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <TextBox Text="{Binding ProfilePath, Mode=OneWay}" IsReadOnly="True" Width="420" Margin="0,0,10,0"/>
+                    <TextBox AutomationProperties.Name="Fișierul profilului" Text="{Binding ProfilePath, Mode=OneWay}" IsReadOnly="True" Width="420" Margin="0,0,10,0"/>
                     <Button Content="Salvează" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Salvează ca…" Command="{Binding SaveAsCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Reîncarcă" Command="{Binding ReloadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
@@ -32,10 +32,33 @@
                     <CheckBox Content="înlocuiește conținutul tabelului la import/lipire" IsChecked="{Binding ReplaceOnImport}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                 </WrapPanel>
                 <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                <!-- WP18 S5: the unit's report header for the proces-verbal (decision D3) -->
+                <Expander Header="Antetul rapoartelor unității (pentru procesul-verbal)" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,8,0,0">
+                    <StackPanel Margin="0,6,0,0">
+                        <TextBlock Text="Ce scrie organizația pe fiecare raport de control: unitatea, structura, funcția celui care controlează și etichetele liniilor de semnătură. Nimic de aici nu este probă." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+                        <WrapPanel Margin="0,6,0,0">
+                            <TextBlock Text="Unitatea:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Unitatea" Text="{Binding HeaderUnit, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanEdit}" Width="220" Margin="0,0,12,4"/>
+                            <TextBlock Text="Structura:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Structura" Text="{Binding HeaderStructure, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanEdit}" Width="220" Margin="0,0,12,4"/>
+                            <TextBlock Text="Funcția celui care controlează:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Funcția celui care controlează" Text="{Binding HeaderInspectorFunction, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanEdit}" Width="200" Margin="0,0,12,4"/>
+                        </WrapPanel>
+                        <WrapPanel>
+                            <TextBlock Text="Semnătura din stânga:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Eticheta semnăturii din stânga" Text="{Binding HeaderSignatureLeft, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanEdit}" Width="220" Margin="0,0,12,4"/>
+                            <TextBlock Text="Semnătura din dreapta:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Eticheta semnăturii din dreapta" Text="{Binding HeaderSignatureRight, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanEdit}" Width="220" Margin="0,0,12,4"/>
+                            <Button Content="Salvează antetul" Command="{Binding SaveHeaderCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,4"/>
+                            <Button Content="Reîncarcă antetul" Command="{Binding ReloadHeaderCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,4"/>
+                        </WrapPanel>
+                        <TextBlock Text="{Binding HeaderStatus}" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Expander>
             </StackPanel>
         </Border>
 
-        <TabControl Grid.Row="2" ItemsSource="{Binding Tables}" SelectedItem="{Binding SelectedTable, Mode=TwoWay}" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
+        <TabControl AutomationProperties.Name="Tabelele profilului de proceduri" Grid.Row="2" ItemsSource="{Binding Tables}" SelectedItem="{Binding SelectedTable, Mode=TwoWay}" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
             <TabControl.ItemContainerStyle>
                 <Style TargetType="TabItem" BasedOn="{StaticResource InspectorTabItemStyle}"/>
             </TabControl.ItemContainerStyle>
@@ -49,7 +72,7 @@
                     <DockPanel Margin="8">
                         <TextBlock DockPanel.Dock="Top" Text="{Binding Section}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         <TextBlock DockPanel.Dock="Top" Text="{Binding Hint}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,2,0,8"/>
-                        <DataGrid ItemsSource="{Binding View}" AutoGenerateColumns="True" CanUserAddRows="True" CanUserDeleteRows="True"
+                        <DataGrid AutomationProperties.Name="{Binding Title}" ItemsSource="{Binding View}" AutoGenerateColumns="True" CanUserAddRows="True" CanUserDeleteRows="True"
                                   HeadersVisibility="Column" SelectionUnit="CellOrRowHeader" ClipboardCopyMode="IncludeHeader"/>
                     </DockPanel>
                 </DataTemplate>
@@ -69,7 +92,7 @@
             <Border Grid.Column="1" Style="{StaticResource ObsidianCardStyle}" MaxHeight="150">
                 <DockPanel>
                     <TextBlock DockPanel.Dock="Top" Text="Erori și avertismente (pe linii)" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
-                    <ListBox ItemsSource="{Binding Issues}" Background="Transparent" BorderThickness="0"/>
+                    <ListBox AutomationProperties.Name="Probleme ale profilului" ItemsSource="{Binding Issues}" Background="Transparent" BorderThickness="0"/>
                 </DockPanel>
             </Border>
         </Grid>

@@ -29,7 +29,10 @@ namespace LogAnalyzer.UI.Services
         /// Signed policy → mode. Missing / invalid / expired / foreign / rolled-back policy, or no embedded verification key,
         /// means AirGapped. The command line and the LogAnalyzer.mode file can no longer select Network.
         /// </summary>
-        public static ModeDecision DecideMode(string[] args, string baseDirectory)
+        public static ModeDecision DecideMode(string[] args, string baseDirectory) => DecideStartup(args, baseDirectory).Mode;
+
+        /// <summary>Mode and station role (WP18) from the same signed policy. The role never comes from anywhere else.</summary>
+        public static StartupDecision DecideStartup(string[] args, string baseDirectory)
         {
             var modeFile = System.IO.Path.Combine(baseDirectory, "LogAnalyzer.mode");
             string? stationMode = null;
@@ -56,7 +59,9 @@ namespace LogAnalyzer.UI.Services
                 // Best effort (needs write access to the policy directory, i.e. administrators): later, older policies are refused.
                 try { System.IO.File.WriteAllText(highWaterPath, result.Policy.Version.ToString()); } catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException) { }
             }
-            return EditionPolicyVerifier.Decide(result, snapshot, requested);
+            var mode = EditionPolicyVerifier.Decide(result, snapshot, requested);
+            var role = StationRoleResolver.Decide(EditionKind.Unclassified, result, mode, DateTimeOffset.UtcNow);
+            return new StartupDecision(mode, role);
         }
 
         public static void Register(IServiceCollection services)

@@ -74,6 +74,41 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private bool _replaceOnImport;
         [ObservableProperty] private string _sha256 = "";
 
+        // WP18 S5 (decision D3): the unit's report header, next to the procedure profile; only the administrator saves it.
+        public string HeaderPath { get; } = LogAnalyzer.Dfir.Reporting.ReportHeaderProfile.DefaultPath;
+        [ObservableProperty] private string _headerUnit = "";
+        [ObservableProperty] private string _headerStructure = "";
+        [ObservableProperty] private string _headerInspectorFunction = "";
+        [ObservableProperty] private string _headerSignatureLeft = "";
+        [ObservableProperty] private string _headerSignatureRight = "";
+        [ObservableProperty] private string _headerStatus = "";
+
+        private void LoadHeader()
+        {
+            var h = LogAnalyzer.Dfir.Reporting.ReportHeaderProfile.Load(HeaderPath, out var problem);
+            HeaderUnit = h.Unit; HeaderStructure = h.Structure; HeaderInspectorFunction = h.InspectorFunction; HeaderSignatureLeft = h.SignatureLeft; HeaderSignatureRight = h.SignatureRight;
+            HeaderStatus = problem is null ? (System.IO.File.Exists(HeaderPath) ? "Antetul unității este încărcat." : "Antetul unității nu este încă definit; câmpurile goale apar cu „—” pe raport.")
+                                            : "Antetul nu a putut fi citit: " + problem;
+        }
+
+        [RelayCommand]
+        private void SaveHeader()
+        {
+            if (!CanEdit) { HeaderStatus = LogAnalyzer.Dfir.Auth.OperatorIdentity.AdministratorOnlyMessage; return; }
+            try
+            {
+                LogAnalyzer.Dfir.Reporting.ReportHeaderProfile.Save(new LogAnalyzer.Dfir.Reporting.ReportHeaderProfile
+                {
+                    Unit = HeaderUnit.Trim(), Structure = HeaderStructure.Trim(), InspectorFunction = HeaderInspectorFunction.Trim(),
+                    SignatureLeft = HeaderSignatureLeft.Trim(), SignatureRight = HeaderSignatureRight.Trim(),
+                }, HeaderPath);
+                HeaderStatus = "Antetul unității a fost salvat; apare pe următoarele rapoarte de control.";
+            }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException) { HeaderStatus = "Antetul nu a putut fi salvat: " + ex.Message; }
+        }
+
+        [RelayCommand] private void ReloadHeader() => LoadHeader();
+
         public ProcedureProfileViewModel(ProfileProvider? provider = null)
         {
             _provider = provider ?? ProfileProvider.Shared;
@@ -81,6 +116,7 @@ namespace LogAnalyzer.UI.ViewModels
             foreach (var t in ProfileTables.All) Tables.Add(new ProfileTableViewModel(t));
             SelectedTable = Tables[0];
             LoadFrom(_profilePath, startup: true);
+            LoadHeader();
             Services.AuthApp.SessionChanged += () => { OnPropertyChanged(nameof(AccessNotice)); OnPropertyChanged(nameof(CanEdit)); };
         }
 

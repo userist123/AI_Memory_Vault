@@ -33,7 +33,8 @@ def test_skill_md_contract():
     assert len(fm["description"]) + len(fm.get("when_to_use", "")) <= 1536, "skill listing truncates at 1,536 chars"
     assert "model" not in fm and "effort" not in fm, "the skill must not override the owner's session model/effort"
     assert text.count("\n") < 500
-    for must in ("Explore", "vault-worker", "vault-reviewer", "Never skip, weaken or delete a test", "UNVERIFIED"):
+    for must in ("Explore", "vault-worker", "vault-reviewer", "Never skip, weaken or delete a test", "UNVERIFIED",
+                 "You are the entrepreneur", "Inspect before you pay"):
         assert must in text, must
 
 

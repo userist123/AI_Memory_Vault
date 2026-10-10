@@ -65,11 +65,15 @@ namespace LogAnalyzer.UI
 
                 // Operating mode: decided by the edition. The unclassified edition takes it only from the signed policy
                 // (fail closed to AirGapped); --mode= and LogAnalyzer.mode are ignored. The classified edition is always AirGapped.
-                var decision = EditionComposition.DecideMode(e.Args, AppDomain.CurrentDomain.BaseDirectory);
+                var startup = EditionComposition.DecideStartup(e.Args, AppDomain.CurrentDomain.BaseDirectory);
+                var decision = startup.Mode;
                 AppModeContext.Initialize(decision);
+                // Station role (WP18): from the same signed policy; CONTROL unless the policy says CSIRT. Never from the operator.
+                LogAnalyzer.Core.Services.Edition.StationRoleContext.Initialize(startup.Role);
                 File.AppendAllText(debugLogPath,
                     $"Mode: {decision.Mode} (override: {decision.IsOverride}) — {decision.Reason}\n" +
-                    $"Connectivity: {decision.Snapshot.State} via {decision.Snapshot.Source}: {string.Join("; ", decision.Snapshot.Details)}\n");
+                    $"Connectivity: {decision.Snapshot.State} via {decision.Snapshot.Source}: {string.Join("; ", decision.Snapshot.Details)}\n" +
+                    $"Station role: {startup.Role.EffectiveRole} — {startup.Role.Summary}\n");
 
                 this.DispatcherUnhandledException += (sender, args) =>
                 {
@@ -113,6 +117,7 @@ namespace LogAnalyzer.UI
                 ServiceProvider = services.BuildServiceProvider();
                 File.AppendAllText(debugLogPath, "ServiceProvider built. Initializing Database...\n");
 
+                ServiceProvider.GetRequiredService<AuditLogService>().LogAction("station.role", LogAnalyzer.Core.Services.Edition.StationRoleContext.Current.Summary);
                 var dbService = ServiceProvider.GetRequiredService<IDatabaseService>();
                 dbService.InitializeDatabase();
                 File.AppendAllText(debugLogPath, "Database initialized.\n");
@@ -154,6 +159,9 @@ namespace LogAnalyzer.UI
                     return;
                 }
                 splash.Show();
+                // The auth audit records on which station role this session was opened (WP18).
+                if (AuthApp.Session is { } openedSession)
+                    AuthApp.Service.AuditSessionContext(openedSession, LogAnalyzer.Core.Services.Edition.StationRoleContext.Current.Summary);
 
                 // 3. Afișăm fereastra principală
                 File.AppendAllText(debugLogPath, "Resolving MainWindow...\n");
