@@ -95,5 +95,8 @@ Cerințele complete, reformulate, sunt în CERINTE_PRODUS_v2.md. Starea de mai j
 - FĂCUT: realism 3D: lumină zi/seară/noapte, direcția soarelui, ocluzie ambientală (calitate înaltă), plinte, captură PNG.
 - FĂCUT: editor: duplicare, mutare cu săgețile, măsurare, ajutor pentru taste, plan din imagine cu calibrarea scării.
 - FĂCUT: interfață în română și engleză, unități metric/imperial (inclusiv la intrări); șabloane generice (garsonieră, 1, 2, 3 camere) cu nume de camere în limba aleasă; strat tehnic (prize, întrerupătoare, lumină, date, apă, scurgere) cu sugestii, plan, consilier și export.
-- URMEAZĂ (din comparația mondială): export DXF pentru meseriași; tururi panoramice 360° pe cameră; mai multe niveluri cu scări; comentarii pe linkul partajat; piață separată de limbă (catalog, monedă, TVA); modele 3D proprii; plasare AR.
+- FĂCUT: export DXF (R12) pentru meseriași: pereți, uși, ferestre, camere cu arie, cote, mobilier, instalații; fiecare nivel alături, cu scări și golul scării (verificat cu ezdxf: 0 erori).
+- FĂCUT: panoramă 360° pe cameră, randată din mijlocul ei la înălțimea ochilor, explorabilă și descărcabilă.
+- FĂCUT: case cu mai multe niveluri (parter + până la 3 etaje): niveluri pe file, nivel nou cu același contur, scară dreaptă cu trepte confortabile (contratreaptă ≤ 19 cm, călcare ≥ 25 cm), golul scării cu balustradă în 3D; consilierul spune când scara e abruptă, blochează o ușă, are mobilă pe ea sau golul de sus e în dreptul unei uși. Bugetul, tabelul de suprafețe, comparația reviziilor, exportul tipăribil, linkul partajat și DXF-ul cuprind toată casa.
+- URMEAZĂ (din comparația mondială): comentarii pe linkul partajat; piață separată de limbă (catalog, monedă, TVA); modele 3D proprii; plasare AR; scări în L/U și acoperișuri.
 - AMÂNAT de proprietar: apelul real la un model AI. Nu se face pe web: scanare LiDAR (cere aplicație nativă).

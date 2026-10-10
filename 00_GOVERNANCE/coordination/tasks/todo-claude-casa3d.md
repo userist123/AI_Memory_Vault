@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-10T15:50:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-10T16:55:00Z
 TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / userist123/AI_Memory_Vault_CODEX_READY#258    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
@@ -90,7 +90,16 @@ PLAN v8 REBUILD (2026-10-10; owner decisions 10:58 UTC: code in Vault workspace 
   (ezdxf audit 0 errors, owner-scoped route, 404 without cookie), clean-checkout fix (PGlite ENOENT on missing ./.data),
   DXF room labels fit narrow rooms. Evidence: app tsc 0, vitest 215/215, next build OK. Independent review of
   2b9f4af9..e79e28e4 running.
-PLAN multi-level homes (next, from the global sweep, item 2):
+2026-10-10 16:55 UTC — review of the panorama/DXF batch (CHANGES_REQUESTED) acted on in 3cbe6af4 (modal keys: 9 keys
+  leaked to window listeners before, 0 after, browser-verified; heading 90° fixed with a unit test against three's UVs;
+  exception-safe renderPanorama; WebGL context freed; %% runs in DXF text). Multi-level homes DONE and pushed (head
+  adf9a7cc): core b03a12be, stair geometry d6c65058, editor 0b98ba71, DXF (worker, e699e2d8) and 3D (worker, 45ea8e44)
+  merged, 5aca8b00 (stairwells in 3D, door-blocking stairs), adf9a7cc (print/share per level). Evidence: tsc 0, vitest
+  242/242, next build OK, browser: level tabs, stair in the hall, stairwell with railing, revision accepted, print 2 plans
+  + 12 room pages + 12 images, share page per level, DXF two levels (ezdxf 0 errors). Independent review of
+  3cbe6af4..adf9a7cc running. Next from the sweep: comments on the share link, market separate from language
+  (catalog/currency/VAT), own 3D models, AR, L/U stairs and roofs.
+PLAN multi-level homes (done; kept for reference):
   Model: Snapshot.floor stays the ground level (saved projects and the API unchanged); new Snapshot.levels?: Floor[]
   for the levels above; Floor.stairs?: Stair {id, x, z, width, length, rotation} on the lower level, leading to the
   next level, which shows the stairwell void. Elevation is derived (ceiling heights + 0.2 m slab), never stored.
