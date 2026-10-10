@@ -38,7 +38,17 @@ DONE:
   Findings: Wireframe modifier with even offset on duplicate verts spiked to km-long geometry (white frames + GPU OOM) -> weld first,
   no even offset, exterior parts only, bounds guard; studio lights must be visible_camera=False for a flying camera; PowerShell `$_`
   is stripped in inline DC commands -> use .ps1 files. Renders wait politely for other Blender users (queue_scrub.ps1).
-NEXT (in order):
+- 2026-10-11 00:55 full story rendered (151 frames, ~10 s/frame at 1920x1080/64 spp), WebP 10.8 MB (1920) + 6.4 MB (1280) committed
+  from the PC (Wobart 3ec1e3d); PC build + `pnpm start` on :3000, GPU recording 61 fps / 0 errors; site opened for the owner.
+  Owner: "mai e mult de lucrat la randarea aia" - paused for today.
+NEXT (resume here):
+A. Render pass 2 (scripts/blender/render_scrub.py): ch5 aerial too close under the CTA text (raise/pull back camera key 5);
+   cyan strip reflection blob in ch1; scan sheet reads as a glow ball (drop it, keep the laser band); car reads as floating at the
+   low ch4 angle (contact shadow / lower camera target); paint looks patchy (more samples or fix normals on 'Paint 2' panels);
+   ask the owner what else he wants changed before re-rendering (~25 min per full pass, queue waits for the other Blender user).
+B. Phone check of the scrub (crop follows the car via carFocus) - UNVERIFIED.
+C. Commit the PC-only helpers into Wobart: scripts/blender/render_studio.py, queue_render.ps1, scripts/visual/record-hero.cjs.
+NEXT (older backlog, in order):
 0. vault-worker polishes the configurator section UI; then PC build + GPU shots + owner review in the browser.
 1. Owner: look at the site on the PC (desktop + mobile), check the 3D scene, the Process stage and the WhatsApp CTA; then attest or reject the memory proposal.
 2. Follow-ups listed in Wobart PROJECT_BRAIN/RESEARCH/2026-10-10_next_gen_research.md §8 (licensed GLB, server-side JSON-LD, CWV measurement).
