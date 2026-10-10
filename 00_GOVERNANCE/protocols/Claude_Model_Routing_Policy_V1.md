@@ -72,6 +72,24 @@ Rules applied after classification (`rules` in the policy; can only raise a tier
 - **subagent output contract**: `decision / evidence / risks / unknowns / confidence /
   recommended_action`, under 300 words, so the main session's context stays small.
 
+## 3A. Enforcement and the local tier (2026-10-10, owner-approved)
+
+- **Any subagent type, the model per route.** A `PreToolUse` hook on `Agent`
+  (`.claude/skills/cost-router/hook_agent_model.py`) classifies each spawn's brief and rewrites its
+  `model`: none given → the route's model; cheaper than the route → raised; more than one tier
+  above → capped (one-notch escalation stays allowed); risk detected → Opus; Fable → Opus. An
+  unclassified brief without risk is left to the agent's own frontmatter. The hook answers `allow`
+  with `updatedInput`, as the hooks reference requires; deny/ask rules still apply. It never blocks.
+- **One route line per prompt.** A project copy of a hook stays silent when the user-scope install
+  of the same hook is registered (`is_shadowed` in `lib/route.py`).
+- **Local tier.** `lib/local_llm.py` sends text-in/short-text-out work to Ollama on loopback
+  (`local_llm` in the policy: `qwen2.5:7b-instruct` / `mistral:7b-instruct` for text,
+  `qwen2.5-coder:7b` / `qwen2.5-coder:3b` for code; measured on the owner's PC, RTX 5060 8 GB,
+  3.6–7.4 s cold). Files are read by the local model, never by Claude; input over
+  `max_input_chars` is refused, not truncated; exit 3 = unavailable → Haiku subagent. The prompt hook
+  advertises it for `summarize` only when a configured model answers on 127.0.0.1:11434. Never used
+  for multi-step code, design, risky work or verification; unreachable from cloud sessions.
+
 ## 4. How to use it
 
 **Install once, every project on the machine** (user scope, idempotent, reversible):

@@ -4,6 +4,15 @@ Durable lessons from real corrections, incidents and verification failures.
 
 ## Current lessons
 
+## 2026-10-10 — a hint is not routing; enforce the model where the spawn happens
+- What happened: with only a UserPromptSubmit hint, the main session (this agent) delegated once in a
+  whole build session and did its bulk reads on Fable ($81 of $87). The hint was also injected twice per
+  prompt in the vault (project + user copies of the same hook).
+- Rule: enforce cost routing at the `Agent` PreToolUse (rewrite `model` from the brief), keep the prompt
+  line as guidance only, and make every project hook defer to the user-scope copy of itself.
+- Rule: edits to Claude Code's own hooks/skills are classified as self-modification; get the owner's
+  explicit approval for that specific change first, then make it in one pass.
+
 ## 2026-10-10 — the owner's PC is reached through a Remote Control session, and it needs the owner's own approval
 - What happened: Desktop Commander showed the PC offline; the owner asked for work on the PC to go through
   the Claude Code Remote Control session instead. That session correctly refused a permanent change to

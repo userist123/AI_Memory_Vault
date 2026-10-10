@@ -14,7 +14,9 @@ What it does (idempotent, prints every path it touched):
      module + policy into its lib/ so it works outside this repository;
   2. copies the three subagents (Explore, vault-worker, vault-reviewer) to ~/.claude/agents/
      unless a file of that name already exists (use --force to overwrite);
-  3. merges one UserPromptSubmit hook into ~/.claude/settings.json (kept out with --no-hook).
+  3. merges two hooks into ~/.claude/settings.json (kept out with --no-hook): UserPromptSubmit (one
+     route line per non-trivial prompt) and PreToolUse on Agent (sets each subagent's model from
+     the route of its brief, whatever the subagent type).
 Nothing is executed from the network; only files under ~/.claude are written.
 """
 from __future__ import annotations
@@ -30,14 +32,23 @@ REPO = SKILL_SRC.parents[2]
 ROUTER_SRC = REPO / "03_IMPLEMENTATION" / "packages" / "routing" / "claude_model_router.py"
 POLICY_SRC = REPO / "04_CONFIG" / "claude_model_routing.json"
 AGENTS_SRC = REPO / ".claude" / "agents"
-HOOK_MARK = "cost-router/hook_prompt_route.py"
+HOOK_MARK = "cost-router/hook_"  # every hook this installer owns
+HOOK_SPECS = (  # (event, script, matcher)
+    ("UserPromptSubmit", "hook_prompt_route.py", None),
+    ("PreToolUse", "hook_agent_model.py", "Agent"),
+)
 DISABLED_MARKER = "cost-router.disabled"  # written by --uninstall under ~/.claude; honoured by --session-start
 
 
-def hook_entry(skill_dir: Path) -> dict:
+def hook_entry(skill_dir: Path, script: str = "hook_prompt_route.py", matcher=None) -> dict:
     cmd = (f'for py in python3 python; do if "$py" -c "import sys" >/dev/null 2>&1; then '
-           f'"$py" "{skill_dir / "hook_prompt_route.py"}"; exit 0; fi; done; exit 0')
-    return {"hooks": [{"type": "command", "command": cmd, "timeout": 10}]}
+           f'"$py" "{skill_dir / script}"; exit 0; fi; done; exit 0')
+    entry = {"hooks": [{"type": "command", "command": cmd, "timeout": 10}]}
+    return {"matcher": matcher, **entry} if matcher else entry
+
+
+def _owned(entry) -> bool:
+    return HOOK_MARK in json.dumps(entry).replace("\\\\", "/")
 
 
 def load_settings(settings_path: Path) -> dict:
@@ -57,13 +68,14 @@ def load_settings(settings_path: Path) -> dict:
 def merge_hook(settings_path: Path, skill_dir: Path, remove: bool = False) -> str:
     settings = load_settings(settings_path)
     hooks = settings.setdefault("hooks", {})
-    entries = [e for e in hooks.get("UserPromptSubmit", []) if HOOK_MARK not in json.dumps(e)]
-    if not remove:
-        entries.append(hook_entry(skill_dir))
-    if entries:
-        hooks["UserPromptSubmit"] = entries
-    else:
-        hooks.pop("UserPromptSubmit", None)
+    for event, script, matcher in HOOK_SPECS:
+        entries = [e for e in hooks.get(event, []) if not _owned(e)]
+        if not remove:
+            entries.append(hook_entry(skill_dir, script, matcher))
+        if entries:
+            hooks[event] = entries
+        else:
+            hooks.pop(event, None)
     if not hooks:
         settings.pop("hooks", None)
     settings_path.parent.mkdir(parents=True, exist_ok=True)
@@ -96,7 +108,7 @@ def install(home: Path, with_hook: bool, force: bool, session_start: bool = Fals
         shutil.copy2(src, dst)
         touched.append(str(dst))
     if with_hook:
-        touched.append(merge_hook(home / ".claude" / "settings.json", skill_dir) + " (UserPromptSubmit hook)")
+        touched.append(merge_hook(home / ".claude" / "settings.json", skill_dir) + " (UserPromptSubmit + PreToolUse/Agent hooks)")
     if not session_start and marker.exists():
         marker.unlink()
         touched.append(f"removed {marker} (re-enabled)")

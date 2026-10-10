@@ -24,6 +24,18 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "for py in python3 python; do if \"$py\" -c \"import sys\" >/dev/null 2>&1; then \"$py\" \"${CLAUDE_PROJECT_DIR:-.}/.claude/skills/cost-router/hook_agent_model.py\"; exit 0; fi; done; exit 0",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }

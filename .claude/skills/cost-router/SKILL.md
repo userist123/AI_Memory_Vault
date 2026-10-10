@@ -16,10 +16,10 @@ verification. If a cheaper path fails its check, escalate one tier; never ship u
 
 | Class | Signals | Run it as | Why it is the cheapest adequate path |
 |---|---|---|---|
-| explore | where is X, who imports Y, list every Z, inventory | `Explore` subagent (haiku, low) | answer is a location, not a judgment |
-| summarize | summarize, extract, classify, convert | `Explore` subagent (haiku, low) | checkable mechanical output |
-| implement | spec is clear and tests/lint are the failure signal | `vault-worker` subagent (sonnet, medium) | run cheap first; escalate only failures |
-| review | verify a DONE claim, review a diff, security check | `vault-reviewer` subagent (opus, high) | edge cases; independent context |
+| explore | where is X, who imports Y, list every Z, inventory | subagent on haiku (`Explore` fits) | answer is a location, not a judgment |
+| summarize | summarize, extract, classify, convert | local LLM on the PC, else subagent on haiku | checkable mechanical output |
+| implement | spec is clear and tests/lint are the failure signal | subagent on sonnet (`vault-worker` fits) | run cheap first; escalate only failures |
+| review | verify a DONE claim, review a diff, security check | subagent on opus (`vault-reviewer` fits) | edge cases; independent context |
 | design | architecture, root cause unknown, multi-file plan | you, at `high`/`xhigh` effort | a wrong plan costs more than tokens |
 | frontier | ambiguous, long-horizon, end-to-end orchestration | you, on Fable only if the owner chose it | the one place 2.5x Opus pays |
 | unclear | keywords don't match | you, session default | say so; never guess cheaper |
@@ -27,11 +27,26 @@ verification. If a cheaper path fails its check, escalate one tier; never ship u
 Risk `high`/`critical` (production, credentials, secrets, deletes, auth, trust boundaries, git
 history): never below Opus, and always an independent `vault-reviewer` pass before DONE. The route
 helper detects these words itself (English and Romanian); if the hint says sonnet/haiku for such
-work, the hint is wrong and this rule wins. Fable is never a subagent or verifier model. Escalation order on a failed check: haiku → sonnet → opus → fable,
+work, the hint is wrong and this rule wins. Fable is never a subagent or verifier model. Escalation order on a failed check: local → haiku → sonnet → opus → fable,
 one notch, only after the check actually failed.
 
 Optional precise answer: `python3 "<this dir>/lib/route.py" "<task>"` prints class, model, effort,
 subagent and estimated cost. Do not run it for trivial prompts.
+
+**You are the dispatcher.** For every task, decide first whether it needs the session's model at
+all. If not, hand it on: the subagent *type* is free (`Explore`, `general-purpose`, `vault-worker`,
+any other); what the policy fixes is the *model*. A `PreToolUse` hook on `Agent` sets each spawn's
+`model` from the route of its brief (cheaper than the route is raised, more than one tier above is
+capped, risk forces Opus, Fable never). Pass `model` yourself only to escalate one notch after a
+failed check. Keep in the main session only design, root cause, risky decisions and the final check.
+Do it yourself when the work is a one-minute edit or answer: a subagent starts empty and re-reads.
+
+**Local tier (owner's PC only, free).** For text in, short text out (summarize, extract, classify,
+translate) try the local model first: `python "<this dir>/lib/local_llm.py" --file <path> "<instruction>"`
+(`--kind code` for code-reading questions, `--probe` to see what is installed). The files are read
+by the local model, so their text never enters this conversation. Exit 3 means no local model:
+fall back to a Haiku subagent. Its answer is unverified: check it before relying on it. Never use it
+for multi-step code, design, risky work or verification. Cloud sessions have no local tier.
 
 ## 2. Shape the work so the expensive context stays small
 
