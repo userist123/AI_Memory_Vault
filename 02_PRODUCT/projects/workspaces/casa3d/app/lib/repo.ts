@@ -5,6 +5,7 @@ import catalogSeed from '../data/catalog.v1.json';
 const MODEL_OF_GROUP: Record<string, string> = Object.fromEntries((catalogSeed as any).products.map((p: any) => [p.group, p.model3d]));
 import { getDb } from './db';
 import { newSnapshot } from '../core/project';
+import { getTemplate } from '../core/templates';
 import { validateFloor, validatePlacement } from '../core/validate';
 import type { Catalog, Snapshot, MaterialsCatalog, Underlay } from '../core/types';
 import { checkBrief } from '../core/brief';
@@ -83,9 +84,10 @@ export function checkSnapshot(s: any): Snapshot {
 export async function listProjects(owner: string){
   const { q } = await getDb(); const { rows } = await q('select id, name, updated_at, current_revision from projects where owner=$1 order by updated_at desc', [owner]); return rows;
 }
-export async function createProject(owner: string, name: unknown, template: 'demo' | 'blank'){
+export async function createProject(owner: string, name: unknown, template: unknown = 'demo'){
+  if (typeof template !== 'string' || (template !== 'blank' && !getTemplate(template))) throw new HttpError(400, 'Șablon necunoscut. Alege unul dintre șabloanele din listă sau „Plan gol”.');
   const { q } = await getDb(); const cat = await getCatalog(); const n = cleanName(name);
-  const snap = newSnapshot(cat, n, template === 'blank' ? 'blank' : 'demo');
+  const snap = newSnapshot(cat, n, template);
   const { rows } = await q('insert into projects(owner, name, draft) values($1,$2,$3) returning id', [owner, n, JSON.stringify(snap)]);
   return rows[0].id as string;
 }
