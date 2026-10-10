@@ -46,6 +46,8 @@ if ($PSCmdlet.ParameterSetName -eq 'Key') {
     return
 }
 
+# ValidateSet accepts any case; the signed text must be the canonical lower case that EditionPolicy.Payload rebuilds.
+$Mode = $Mode.ToLowerInvariant(); $Role = $Role.ToLowerInvariant()
 $lines = @('loganalyzer-edition-policy/1', "mode=$Mode", "version=$Version", "notBefore=$NotBefore", "notAfter=$NotAfter", "audience=$Audience", "signer=$Signer")
 if ($Role) { $lines += "role=$Role" }   # must match EditionPolicy.Payload: the role is the optional last signed line
 $payload = $lines -join "`n"

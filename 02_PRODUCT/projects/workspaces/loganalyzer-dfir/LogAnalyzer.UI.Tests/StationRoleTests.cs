@@ -10,6 +10,7 @@ namespace LogAnalyzer.UI.Tests
     /// WP18 S1: the station role (CONTROL / CSIRT) comes only from the signed policy's <c>role</c> field. Anything missing, invalid, refused or
     /// inconsistent fails closed to CONTROL, and the decision text says why. The role never widens what the edition and the mode allow.
     /// </summary>
+    [Collection(GlobalStateCollection.Name)]
     public class StationRoleTests
     {
         private static readonly DateTimeOffset Now = new(2026, 10, 10, 0, 0, 0, TimeSpan.Zero);
@@ -121,6 +122,37 @@ namespace LogAnalyzer.UI.Tests
         }
 
         [Fact]
+        public void Payload_without_role_is_byte_identical_to_the_pre_wp18_format_and_the_role_is_the_last_line()
+        {
+            const string preWp18 = "loganalyzer-edition-policy/1\nmode=connected\nversion=3\nnotBefore=2026-10-01\nnotAfter=\naudience=*\nsigner=owner";
+            Assert.Equal(preWp18, EditionPolicy.Payload(AppMode.Network, 3, "2026-10-01", null, "*", "owner"));
+            Assert.Equal(preWp18 + "\nrole=csirt", EditionPolicy.Payload(AppMode.Network, 3, "2026-10-01", null, "*", "owner", StationRole.Csirt));
+            Assert.Equal(preWp18 + "\nrole=control", EditionPolicy.Payload(AppMode.Network, 3, "2026-10-01", null, "*", "owner", StationRole.Control));
+        }
+
+        [Fact]
+        public void Removing_the_role_from_a_signed_csirt_policy_breaks_the_signature()
+        {
+            var (k, pub) = NewKey();
+            var text = Policy(k, AppMode.Network, StationRole.Csirt);
+            var doc = System.Text.Json.Nodes.JsonNode.Parse(text)!.AsObject();
+            Assert.True(doc.Remove("role"));
+            var r = EditionPolicyVerifier.Verify(doc.ToJsonString(), pub, "PC1", Now);
+            Assert.False(r.Valid);
+            Assert.Equal(StationRole.Control, Decide(EditionKind.Unclassified, r).EffectiveRole);
+        }
+
+        [Fact]
+        public void Role_value_is_read_case_insensitively_but_signed_and_verified_in_canonical_lower_case()
+        {
+            var (k, pub) = NewKey();
+            var upper = Policy(k, AppMode.Network, StationRole.Csirt).Replace("\"csirt\"", "\"CSIRT\"");
+            var r = EditionPolicyVerifier.Verify(upper, pub, "PC1", Now);
+            Assert.True(r.Valid, r.Reason);        // the payload is rebuilt from the parsed role, so the case of the JSON value does not matter
+            Assert.Equal(StationRole.Csirt, r.Policy!.Role);
+        }
+
+        [Fact]
         public void Context_is_set_once_and_defaults_to_control_when_uninitialised()
         {
             StationRoleContext.ResetForTests();
@@ -145,4 +177,8 @@ namespace LogAnalyzer.UI.Tests
             foreach (var reason in d.Reasons) Assert.Contains(reason, d.Summary);
         }
     }
+
+    /// <summary>Tests that change process-wide state (StationRoleContext) run one at a time.</summary>
+    [CollectionDefinition(Name, DisableParallelization = true)]
+    public sealed class GlobalStateCollection { public const string Name = "global-state"; }
 }

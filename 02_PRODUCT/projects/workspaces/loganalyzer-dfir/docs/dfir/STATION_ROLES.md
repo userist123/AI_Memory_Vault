@@ -60,7 +60,7 @@ pwsh release-gate/Sign-EditionPolicy.ps1 -Mode connected -Role csirt -Version 2 
 - **Compară cu controlul anterior** (`ControlComparison`): verificările înrăutățite, îmbunătățite, noi și dispărute față de un control salvat în `Control/CONTROL_*/control_report.json`.
 - **Primește probe de la o stație** (`InvestigationView`) are trei pași:
   1. folderul;
-  2. ce s-a găsit, ce lipsește și ce nu este probă (`IncomingEvidence.Scan`; nimic nu se copiază înainte de import);
+  2. ce s-a găsit și ce lipsește (`IncomingEvidence.Scan`, după aceeași regulă ca importul: orice fișier este probă, cele fără analizor dedicat merg la indicatori și reguli pe conținut; nimic nu se copiază înainte de import);
   3. scopul cazului.
 
   Un export de control adus de la o stație de control se importă ca probă (D2).
@@ -73,7 +73,7 @@ pwsh release-gate/Sign-EditionPolicy.ps1 -Mode connected -Role csirt -Version 2 
   - golurile de probă și sursele necitite, puse **înaintea** verificărilor.
 
   Pe fiecare pagină apare marcajul introdus manual, cu nota „marcaj introdus manual, neverificat de aplicație” (D4). Raportul se încheie cu două linii de semnătură. Antetul unității se configurează în „Profil de proceduri” → „Antetul rapoartelor unității”, în `%ProgramData%\LogAnalyzer\profile\report_header.json` (D3).
-- **Raport de incident** (`InvestigationReportPdf.Write(audience)`). Întrebarea „Pentru cine este raportul?” alege secțiunile, nu faptele. Golurile și lanțurile incidentului apar pentru orice public.
+- **Raport de incident** (`InvestigationReportPdf.Write(audience)`). Întrebarea „Pentru cine este raportul?” alege secțiunile, nu faptele. Pentru orice public apar: lanțurile incidentului, golurile de probă (tipărite înaintea constatărilor), toate constatările (pe scurt pentru conducere și audit, dar cu ce lipsește, ce contrazice și ce limitează) și rezultatele anti-forensics. Antetul arată rolul stației.
 
 ## 7. Accesibilitate
 

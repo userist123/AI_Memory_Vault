@@ -8,54 +8,58 @@ public sealed record IncomingFamily(string Id, string HumanName, int Files, long
 }
 
 /// <summary>What a folder brought from another PC contains, before anything is imported (WP18 S4, "Primește probe de la o stație", step 2).</summary>
-public sealed record IncomingEvidenceScan(string Folder, IReadOnlyList<IncomingFamily> Families, IReadOnlyList<string> Importable, IReadOnlyList<string> Ignored, IReadOnlyList<string> Problems)
+public sealed record IncomingEvidenceScan(string Folder, IReadOnlyList<IncomingFamily> Families, IReadOnlyList<string> Importable, IReadOnlyList<string> Problems)
 {
+    /// <summary>Families with a parser that are absent; "Alte fișiere" is never listed as missing.</summary>
+    public IReadOnlyList<string> MissingFamilies => Families.Where(f => !f.Present && f.Id != IncomingEvidence.OtherFamily).Select(f => f.HumanName).ToList();
     public int PresentFamilies => Families.Count(f => f.Present);
-    public IReadOnlyList<string> MissingFamilies => Families.Where(f => !f.Present).Select(f => f.HumanName).ToList();
+    public int OtherFiles => Families.FirstOrDefault(f => f.Id == IncomingEvidence.OtherFamily)?.Files ?? 0;
     public bool HasAnything => Importable.Count > 0;
     public string Summary => !HasAnything
-        ? "Folderul nu conține probe pe care aplicația să le poată importa."
-        : $"{Importable.Count} fișiere de probă în {PresentFamilies} familii; lipsesc: {(MissingFamilies.Count == 0 ? "nimic" : string.Join(", ", MissingFamilies))}."
-          + (Ignored.Count > 0 ? $" {Ignored.Count} fișiere nu sunt probe recunoscute și nu se importă." : "");
+        ? "Folderul nu conține fișiere."
+        : $"{Importable.Count} fișiere se vor importa ca probe; lipsesc: {(MissingFamilies.Count == 0 ? "nimic" : string.Join(", ", MissingFamilies))}."
+          + (OtherFiles > 0 ? $" {OtherFiles} fișiere nu au un analizor dedicat: se importă oricum, cu amprentă, și se verifică cu indicatorii suspecți și regulile pe conținut." : "");
 }
 
 public static class IncomingEvidence
 {
-    /// <summary>The families the import understands, in the order they are shown; the rules mirror <see cref="InvestigationPipeline.Import"/>.</summary>
-    private static readonly (string Id, string Human, Func<string, bool> Match)[] Families =
+    public const string OtherFamily = "file";
+
+    /// <summary>Families shown on the intake screen, keyed by the evidence types of <see cref="InvestigationPipeline.ImportType"/> (one rule for both).</summary>
+    private static readonly (string Id, string Human, string[] Types)[] Families =
     [
-        ("evtx", "Jurnale Windows", f => f.EndsWith(".evtx", StringComparison.OrdinalIgnoreCase)),
-        ("prefetch", "Istoricul pornirii programelor (Prefetch)", f => f.EndsWith(".pf", StringComparison.OrdinalIgnoreCase)),
-        ("srum", "Consumul de rețea al programelor (SRUM)", f => Path.GetFileName(f).Equals("SRUDB.dat", StringComparison.OrdinalIgnoreCase)),
-        ("pcapng", "Captură de rețea", f => f.EndsWith(".pcapng", StringComparison.OrdinalIgnoreCase)),
-        ("hives", "Registrul Windows (SYSTEM, SOFTWARE, NTUSER, Amcache)", f =>
-            Path.GetFileName(f).Equals("SYSTEM", StringComparison.OrdinalIgnoreCase) || Path.GetFileName(f).Equals("SOFTWARE", StringComparison.OrdinalIgnoreCase)
-            || Path.GetFileName(f).Equals("NTUSER.DAT", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".hiv", StringComparison.OrdinalIgnoreCase)
-            || Path.GetFileName(f).Equals("Amcache.hve", StringComparison.OrdinalIgnoreCase)),
-        ("lnk", "Scurtături și liste de documente recente", f => f.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".automaticDestinations-ms", StringComparison.OrdinalIgnoreCase)),
-        ("browser", "Istoric de navigare", f => Path.GetFileName(f).Equals("History", StringComparison.OrdinalIgnoreCase) || Path.GetFileName(f).Equals("places.sqlite", StringComparison.OrdinalIgnoreCase)),
-        ("control", "Export de control de pe stația controlată", f => Path.GetFileName(f).Equals("control_report.json", StringComparison.OrdinalIgnoreCase)),
+        ("evtx", "Jurnale Windows", ["evtx"]),
+        ("prefetch", "Istoricul pornirii programelor (Prefetch)", ["prefetch"]),
+        ("srum", "Consumul de rețea al programelor (SRUM)", ["srum"]),
+        ("pcapng", "Captură de rețea", ["pcapng"]),
+        ("hives", "Registrul Windows (SYSTEM, SOFTWARE, NTUSER, Amcache)", ["system_hive", "software_hive", "ntuser_hive", "amcache"]),
+        ("tasks", "Sarcini programate", ["task_xml"]),
+        ("usn", "Jurnalul modificărilor de fișiere (USN)", ["usn_journal"]),
+        ("lnk", "Scurtături și liste de documente recente", ["lnk", "jumplist_auto"]),
+        ("browser", "Istoric de navigare", ["chromium_history", "firefox_places"]),
+        (OtherFamily, "Alte fișiere (inclusiv exporturi de control)", ["file"]),
     ];
 
-    /// <summary>Lists, without copying or hashing, what the folder holds. Hashing and custody happen at import, as they always did.</summary>
+    /// <summary>Lists, without copying or hashing, what the folder holds. Every file is imported, exactly as <see cref="InvestigationPipeline.Import"/> does.</summary>
     public static IncomingEvidenceScan Scan(string folder)
     {
         var counts = Families.ToDictionary(f => f.Id, _ => (Files: 0, Bytes: 0L));
-        var importable = new List<string>(); var ignored = new List<string>(); var problems = new List<string>();
-        if (!Directory.Exists(folder))
-            return new IncomingEvidenceScan(folder, Families.Select(f => new IncomingFamily(f.Id, f.Human, 0, 0)).ToList(), importable, ignored, ["Folderul nu există sau nu poate fi citit."]);
-        IEnumerable<string> files;
+        var importable = new List<string>(); var problems = new List<string>();
+        IncomingEvidenceScan Result() => new(folder, Families.Select(f => new IncomingFamily(f.Id, f.Human, counts[f.Id].Files, counts[f.Id].Bytes)).ToList(), importable, problems);
+        if (!Directory.Exists(folder)) { problems.Add("Folderul nu există sau nu poate fi citit."); return Result(); }
+        List<string> files;
         try { files = Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories).ToList(); }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return new IncomingEvidenceScan(folder, Families.Select(f => new IncomingFamily(f.Id, f.Human, 0, 0)).ToList(), importable, ignored, [ex.Message]); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { problems.Add(ex.Message); return Result(); }
         foreach (var f in files)
         {
-            var fam = Families.FirstOrDefault(x => x.Match(f));
-            if (fam.Id is null) { ignored.Add(f); continue; }
+            string type;
             long size = 0;
-            try { size = new FileInfo(f).Length; } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { problems.Add($"{f}: {ex.Message}"); }
-            var c = counts[fam.Id]; counts[fam.Id] = (c.Files + 1, c.Bytes + size);
+            try { type = InvestigationPipeline.ImportType(f); size = new FileInfo(f).Length; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { problems.Add($"{f}: {ex.Message}"); continue; }
+            var fam = Families.FirstOrDefault(x => x.Types.Contains(type)).Id ?? OtherFamily;
+            var c = counts[fam]; counts[fam] = (c.Files + 1, c.Bytes + size);
             importable.Add(f);
         }
-        return new IncomingEvidenceScan(folder, Families.Select(f => new IncomingFamily(f.Id, f.Human, counts[f.Id].Files, counts[f.Id].Bytes)).ToList(), importable, ignored, problems);
+        return Result();
     }
 }

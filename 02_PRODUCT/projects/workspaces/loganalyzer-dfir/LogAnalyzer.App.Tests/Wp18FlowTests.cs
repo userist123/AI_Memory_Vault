@@ -131,19 +131,22 @@ public sealed class Wp18FlowTests : IDisposable
     }
 
     [Fact]
-    public void Intake_scan_lists_what_is_present_what_is_missing_and_what_is_not_evidence()
+    public void Intake_scan_imports_every_file_as_Import_does_and_lists_what_is_missing()
     {
         var f = Path.Combine(_dir, "incoming"); Directory.CreateDirectory(Path.Combine(f, "sub"));
         File.WriteAllText(Path.Combine(f, "Security.evtx"), "x"); File.WriteAllText(Path.Combine(f, "sub", "NOTEPAD.EXE-1234.pf"), "xx");
         File.WriteAllText(Path.Combine(f, "SRUDB.dat"), "xxx"); File.WriteAllText(Path.Combine(f, "readme.txt"), "not evidence");
+        File.WriteAllText(Path.Combine(f, "Updater.xml"), "<?xml version=\"1.0\" encoding=\"UTF-16\"?><Task version=\"1.2\" xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\"><Actions><Exec><Command>c:\\x.exe</Command></Exec></Actions></Task>");
         var scan = IncomingEvidence.Scan(f);
         Assert.True(scan.HasAnything);
-        Assert.Equal(3, scan.Importable.Count);
-        Assert.Single(scan.Ignored);
-        Assert.Equal(3, scan.PresentFamilies);
+        Assert.Equal(5, scan.Importable.Count);                       // nothing is left behind: Import takes every file
+        Assert.Equal(1, scan.Families.Single(x => x.Id == "tasks").Files);           // scheduled-task XML is recognised, as by Import
+        Assert.Equal(1, scan.Families.Single(x => x.Id == "evtx").Files);
+        Assert.True(scan.OtherFiles >= 1);                            // readme.txt is still evidence (IOC/YARA)
         Assert.Contains("Captură de rețea", scan.MissingFamilies);
+        Assert.DoesNotContain(scan.MissingFamilies, m => m.StartsWith("Alte fișiere"));
         Assert.Contains("lipsesc:", scan.Summary);
-        Assert.Contains("nu sunt probe recunoscute", scan.Summary);
+        Assert.Contains("se importă oricum", scan.Summary);
         var none = IncomingEvidence.Scan(Path.Combine(_dir, "nope"));
         Assert.False(none.HasAnything);
         Assert.NotEmpty(none.Problems);

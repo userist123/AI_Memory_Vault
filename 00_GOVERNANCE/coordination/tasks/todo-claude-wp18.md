@@ -1,5 +1,5 @@
 # todo-claude-wp18
-STATUS: IN_PROGRESS        UPDATED: 2026-10-10T06:00Z
+STATUS: DONE (code) / S6 PARTIAL until the real-person usability run        UPDATED: 2026-10-10T06:00Z
 TASK: WP18 — station roles (CONTROL / CSIRT chosen by the PC through the signed policy) and non-technical UI, per
 `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PROMPT_WP18_ROLURI_STATIE_UI_SIMPLA.md` (owner decisions D1–D8 in §11).
 BRANCH / PR: `claude/loganalyzer-dfir-roles-ui-0a71fb` (worktree). One commit per step; PR at the end of the package.
@@ -43,6 +43,15 @@ DONE:
   below 11, the theme loads (App.xaml order, last definition wins as in merged dictionaries), and each screen is laid out at 150 % in a
   1366-px window with no page-wide horizontal overflow and no clipped NoWrap label. `docs/dfir/WP18_USABILITY_SCRIPT.md`: the real-person
   run (decision D7). S6 stays PARTIAL until that run is recorded. App.Tests 64/64.
+- S7 docs: `docs/dfir/STATION_ROLES.md`, README section, EDITIONS.md link.
+- Independent review (vault-reviewer, Opus, 2026-10-10): APPROVE WITH FIXES; security core held (role covered by the signature, fail-closed,
+  P1 never CSIRT, no capability widening). Fixed: (1) every audience gets incident chains, gaps (printed before findings), findings (short with
+  missing/contradicting/limitations) and anti-forensics; (2) intake classifies with `InvestigationPipeline.ImportType` (no file left behind);
+  (3) control-flow restart clears the comparison; (4) `Sign-EditionPolicy.ps1` lower-cases -Mode/-Role before signing; (5) investigation PDF header
+  shows the station role. Added: golden pre-WP18 payload test, stripped-role test, case test; global-state tests in a non-parallel collection.
+  NOT done: LogAnalyzer.Edition.Tests not extended (no new banned type was added); `ResetForTests` stays public (same pattern as AppModeContext).
+- Final local run after fixes: build OK; App.Tests 65/65, UI.Tests 190/190, Edition.Tests 15/15, Dfir.Tests 1022 passed / 29 skipped / 0 failed
+  (corpus tests skipped in this run; the 2 real-corpus failures seen at the first run are pre-existing and unrelated).
 VERIFICATION (S1, local, Windows):
 - `dotnet build LogAnalyzer.slnx -c Release`: Build succeeded (TEST_VERIFIED).
 - App.Tests 28/28, Edition.Tests 15/15, UI.Tests 179/179 passed.

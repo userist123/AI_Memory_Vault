@@ -40,7 +40,7 @@ public static class InvestigationReportPdf
             page.Header().Column(h =>
             {
                 h.Item().Text($"Raport de investigație — {info.Name}" + (audience == LogAnalyzer.Dfir.Reporting.ReportAudience.Everything ? "" : $" · {LogAnalyzer.Dfir.Reporting.ReportAudiences.Label(audience)}")).Bold().FontSize(14).FontColor(Ink);
-                h.Item().Text($"Caz {info.CaseId} · stația {info.Host} · investigator {investigator} · ore în {zone.Id}").FontSize(7.5f).FontColor(Muted);
+                h.Item().Text($"Caz {info.CaseId} · stația {info.Host} · rolul stației: {(info.StationRole.Length == 0 ? "necunoscut (caz anterior WP18)" : LogAnalyzer.Core.Services.Edition.StationRoles.TryParse(info.StationRole, out var sr) ? LogAnalyzer.Core.Services.Edition.StationRoles.Human(sr) : info.StationRole)} · investigator {investigator} · ore în {zone.Id}").FontSize(7.5f).FontColor(Muted);
                 h.Item().PaddingTop(4).LineHorizontal(1).LineColor(Ink);
             });
             page.Content().PaddingVertical(8).Column(col =>
@@ -80,12 +80,26 @@ public static class InvestigationReportPdf
                     });
 
                 }
+                if (S(LogAnalyzer.Dfir.Reporting.ReportSection.Gaps))
+                {
+                col.Item().Text("2. Goluri de probă (înaintea constatărilor: limitează ce se poate afirma)").Bold().FontSize(11).FontColor(Ink);
+                if (r.Gaps.Count == 0) col.Item().Text("Niciun gol raportat.").FontColor(Muted);
+                foreach (var g in r.Gaps)
+                    col.Item().Text($"{g.Artifact} — {g.Status.ToSpec()}: {g.Reason}. Impact: {g.Impact}. Alternativă: {g.AlternativeSource}").FontSize(7.5f);
+
+                }
                 if (S(LogAnalyzer.Dfir.Reporting.ReportSection.Findings))
                 {
-                col.Item().Text("2. Constatări").Bold().FontSize(11).FontColor(Ink);
+                col.Item().Text("3. Constatări").Bold().FontSize(11).FontColor(Ink);
                 if (!fullFindings)
                     foreach (var f in others.OrderByDescending(f => f.Severity).ThenBy(f => f.FirstSeenUtc ?? f.LastSeenUtc))
-                        col.Item().Text($"{f.FindingId} · {f.Title} — {f.Severity.ToSpec()} · {LogAnalyzer.Dfir.Analysis.StateLabels.Romanian(f.Status)}").FontSize(8);
+                        col.Item().Column(sc =>
+                        {
+                            sc.Item().Text($"{f.FindingId} · {f.Title} — {f.Severity.ToSpec()} · {LogAnalyzer.Dfir.Analysis.StateLabels.Romanian(f.Status)}").FontSize(8);
+                            foreach (var m in f.MissingEvidence) sc.Item().Text("Lipsește: " + m).FontSize(7).Italic();
+                            foreach (var c in f.ContradictingEvidence) sc.Item().Text("Contrazice: " + c).FontSize(7).Italic().FontColor("#92400e");
+                            foreach (var l in f.Limitations.Take(3)) sc.Item().Text("Limită: " + l).FontSize(7).Italic().FontColor(Muted);
+                        });
                 else
                 foreach (var f in others.OrderByDescending(f => f.Severity).ThenBy(f => f.FirstSeenUtc ?? f.LastSeenUtc))
                     col.Item().Border(0.5f).BorderColor(Line).Padding(5).Column(cc =>
@@ -108,7 +122,7 @@ public static class InvestigationReportPdf
                 }
                 if (S(LogAnalyzer.Dfir.Reporting.ReportSection.EvidenceCollected))
                 {
-                col.Item().Text("3. Probe colectate și parsate").Bold().FontSize(11).FontColor(Ink);
+                col.Item().Text("4. Probe colectate și parsate").Bold().FontSize(11).FontColor(Ink);
                 foreach (var c in r.Collection)
                     col.Item().Text($"{c.Collector}: {c.Status.ToSpec()}, {c.EvidenceCount} probe ({L(c.StartUtc)}–{L(c.EndUtc)}) {c.Errors}").FontSize(7.5f);
                 foreach (var g in r.Parsing.Where(p => p.Status != EvidenceStatus.SkippedByDesign).GroupBy(p => (p.Parser, p.ParserVersion, p.ParserStatus)))
@@ -116,14 +130,6 @@ public static class InvestigationReportPdf
                 foreach (var s in r.Parsing.Where(p => p.Status == EvidenceStatus.SkippedByDesign))
                     col.Item().Text($"{s.EvidenceId} neparsat (SKIPPED_BY_DESIGN): {s.Error}").FontSize(7.5f).FontColor(Muted);
                 col.Item().Text("VALIDATED = test de regresie pe un corpus real; TESTED = doar teste pe date sintetice; descrierea completă a fiecărui parser: Analysis/parsers.json.").FontSize(7).Italic().FontColor(Muted);
-
-                }
-                if (S(LogAnalyzer.Dfir.Reporting.ReportSection.Gaps))
-                {
-                col.Item().Text("4. Goluri de probă").Bold().FontSize(11).FontColor(Ink);
-                if (r.Gaps.Count == 0) col.Item().Text("Niciun gol raportat.").FontColor(Muted);
-                foreach (var g in r.Gaps)
-                    col.Item().Text($"{g.Artifact} — {g.Status.ToSpec()}: {g.Reason}. Impact: {g.Impact}. Alternativă: {g.AlternativeSource}").FontSize(7.5f);
 
                 }
                 if (S(LogAnalyzer.Dfir.Reporting.ReportSection.Detections))

@@ -10,6 +10,7 @@ namespace LogAnalyzer.App.Tests;
 /// WP18 S3: the language level (Simple for every account, Expert as a switch), the per-account preference, the glossary terms of the control
 /// line, and a lint over the XAML of the role pages: no bare technical term in a visible literal, except inside parentheses or through the glossary.
 /// </summary>
+[Collection(GlobalStateCollection.Name)]
 public sealed class Wp18LanguageTests : IDisposable
 {
     private readonly string _dir = Path.Combine(Path.GetTempPath(), "la-lang-" + Guid.NewGuid().ToString("N"));
@@ -122,3 +123,7 @@ public sealed class Wp18LanguageTests : IDisposable
         Assert.Matches(@"Content=""Ce înseamnă\?""", main);
     }
 }
+
+/// <summary>Tests that change process-wide state (LanguageLevelContext) run one at a time.</summary>
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class GlobalStateCollection { public const string Name = "global-state"; }

@@ -72,6 +72,16 @@ public sealed class Wp18ReportTests : IDisposable
     }
 
     [Fact]
+    public void Incident_report_prints_the_gaps_before_the_findings_and_names_the_station_role()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "LogAnalyzer.Dfir.Windows", "Investigation", "InvestigationReportPdf.cs"))) dir = dir.Parent;
+        var src = File.ReadAllText(Path.Combine(dir!.FullName, "LogAnalyzer.Dfir.Windows", "Investigation", "InvestigationReportPdf.cs"));
+        Assert.True(src.IndexOf("ReportSection.Gaps))", StringComparison.Ordinal) < src.IndexOf("ReportSection.Findings))", StringComparison.Ordinal));
+        Assert.Contains("rolul stației:", src);
+    }
+
+    [Fact]
     public void Audiences_choose_sections_never_facts_and_everything_prints_all()
     {
         Assert.Equal(6, ReportAudiences.All.Count);
@@ -83,6 +93,10 @@ public sealed class Wp18ReportTests : IDisposable
             Assert.Contains(ReportSection.IncidentChains, ReportAudiences.Sections(a));
         }
         Assert.Equal(Enum.GetValues<ReportSection>().Length, ReportAudiences.Sections(ReportAudience.Everything).Count);
+        foreach (var a in ReportAudiences.All)
+            foreach (var must in new[] { ReportSection.Findings, ReportSection.AntiForensics })
+                Assert.Contains(must, ReportAudiences.Sections(a));            // limitations, contradictions and UNDETERMINED never dropped
+        Assert.True((int)ReportSection.Gaps < (int)ReportSection.Findings);   // printed in this order
         Assert.DoesNotContain(ReportSection.Integrity, ReportAudiences.Sections(ReportAudience.Management));
         Assert.Contains(ReportSection.Integrity, ReportAudiences.Sections(ReportAudience.Forensic));
         Assert.Contains(ReportSection.PolicyTimeline, ReportAudiences.Sections(ReportAudience.Audit));

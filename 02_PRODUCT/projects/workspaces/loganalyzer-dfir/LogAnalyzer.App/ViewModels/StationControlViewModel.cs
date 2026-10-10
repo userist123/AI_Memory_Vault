@@ -153,7 +153,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task FlowNext()
         {
-            if (_flow.Completed) { _flow.Restart(); Result = null; RaiseFlow(); return; }
+            if (_flow.Completed) { _flow.Restart(); Result = null; Comparison = null; ComparisonChanges.Clear(); RaiseFlow(); return; }
             bool wasLast = _flow.IsLastStep;
             if (!_flow.Next()) { RaiseFlow(); return; }
             if (_flow.StepIndex == 2 && !wasLast) LoadProfileSections();

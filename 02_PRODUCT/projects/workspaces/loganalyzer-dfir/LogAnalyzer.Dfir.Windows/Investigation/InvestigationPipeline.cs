@@ -99,8 +99,19 @@ public sealed class InvestigationPipeline
         var list = new List<EvidenceItem>();
         foreach (var f in files)
         {
+            var type = ImportType(f);
+            var source = type == "evtx" ? Path.GetFileNameWithoutExtension(f).Replace('%', '/') : type;
+            list.Add(ws.ImportFile(f, "Import:" + source, type == "evtx" ? "EventLog:" + source : type, TemporalType.Historical, "Import", DfirInfo.ApplicationVersion,
+                notes: "Importat de operator din: " + f));
+        }
+        return list;
+    }
+
+    /// <summary>The evidence type <see cref="Import"/> gives a file. Every file is evidence; one with no known type is "file" (hash IOCs, YARA). WP18: the intake screen uses the same rule.</summary>
+    public static string ImportType(string f)
+    {
             var ext = Path.GetExtension(f).ToLowerInvariant();
-            var type = ext switch
+            return ext switch
             {
                 ".evtx" => "evtx", ".pf" => "prefetch", ".pcapng" => "pcapng", ".lnk" => "lnk",
                 _ when f.EndsWith(".automaticDestinations-ms", StringComparison.OrdinalIgnoreCase) => "jumplist_auto",
@@ -117,11 +128,6 @@ public sealed class InvestigationPipeline
                 // hash IOCs and YARA rules.
                 _ => "file",
             };
-            var source = type == "evtx" ? Path.GetFileNameWithoutExtension(f).Replace('%', '/') : type;
-            list.Add(ws.ImportFile(f, "Import:" + source, type == "evtx" ? "EventLog:" + source : type, TemporalType.Historical, "Import", DfirInfo.ApplicationVersion,
-                notes: "Importat de operator din: " + f));
-        }
-        return list;
     }
 
     /// <summary>Hive kind from the usual file names of saved or copied hives.</summary>

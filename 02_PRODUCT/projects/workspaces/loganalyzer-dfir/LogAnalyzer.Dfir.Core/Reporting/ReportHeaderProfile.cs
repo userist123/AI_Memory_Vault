@@ -54,7 +54,7 @@ public sealed class ReportHeaderField { public string Label { get; set; } = ""; 
 public enum ReportAudience { Management, ItSecurity, Forensic, IncidentResponse, Audit, Everything }
 
 /// <summary>Sections of the investigation report, by number as the PDF prints them.</summary>
-public enum ReportSection { IncidentChains = 1, Findings = 2, EvidenceCollected = 3, Gaps = 4, Detections = 5, AntiForensics = 6, PolicyTimeline = 7, Integrity = 8 }
+public enum ReportSection { IncidentChains = 1, Gaps = 2, Findings = 3, EvidenceCollected = 4, Detections = 5, AntiForensics = 6, PolicyTimeline = 7, Integrity = 8 }
 
 public static class ReportAudiences
 {
@@ -72,7 +72,7 @@ public static class ReportAudiences
 
     public static string Description(ReportAudience a) => a switch
     {
-        ReportAudience.Management => "Ce s-a întâmplat, cât de grav, ce lipsește și ce urmează; fără detalii tehnice.",
+        ReportAudience.Management => "Ce s-a întâmplat, golurile de probă și constatările pe scurt (cu ce lipsește și ce limitează concluziile); fără detalii tehnice.",
         ReportAudience.ItSecurity => "Lanțul incidentului, constatările cu probe, detecțiile și golurile; fără integritatea probă cu probă.",
         ReportAudience.Forensic => "Totul, cu accent pe probe: colectare, parsare, integritate, goluri, anti-forensics.",
         ReportAudience.IncidentResponse => "Lanțul incidentului, constatările, detecțiile și golurile, ca să se decidă următorii pași.",
@@ -80,15 +80,25 @@ public static class ReportAudiences
         _ => "Toate secțiunile raportului.",
     };
 
+    /// <summary>
+    /// Sections printed for every audience: what happened, the evidence gaps, every finding (in short for non-technical readers, with what is
+    /// missing, contradicted and limited) and the anti-forensics results. An audience adds sections; it never removes these (WP18 invariant 2).
+    /// </summary>
+    public static IReadOnlySet<ReportSection> Always { get; } = new HashSet<ReportSection> { ReportSection.IncidentChains, ReportSection.Gaps, ReportSection.Findings, ReportSection.AntiForensics };
+
     /// <summary>Which sections the audience gets. The title, the integrity banner, the verification line and the summary boxes are always printed.</summary>
-    public static IReadOnlySet<ReportSection> Sections(ReportAudience a) => a switch
+    public static IReadOnlySet<ReportSection> Sections(ReportAudience a)
     {
-        ReportAudience.Management => new HashSet<ReportSection> { ReportSection.IncidentChains, ReportSection.Gaps },
-        ReportAudience.ItSecurity => new HashSet<ReportSection> { ReportSection.IncidentChains, ReportSection.Findings, ReportSection.Detections, ReportSection.Gaps, ReportSection.AntiForensics },
-        ReportAudience.IncidentResponse => new HashSet<ReportSection> { ReportSection.IncidentChains, ReportSection.Findings, ReportSection.Detections, ReportSection.Gaps },
-        ReportAudience.Audit => new HashSet<ReportSection> { ReportSection.IncidentChains, ReportSection.EvidenceCollected, ReportSection.Gaps, ReportSection.PolicyTimeline, ReportSection.Integrity },
-        _ => new HashSet<ReportSection>(Enum.GetValues<ReportSection>()),
-    };
+        var extra = a switch
+        {
+            ReportAudience.Management => Array.Empty<ReportSection>(),
+            ReportAudience.ItSecurity => new[] { ReportSection.Detections },
+            ReportAudience.IncidentResponse => new[] { ReportSection.Detections },
+            ReportAudience.Audit => new[] { ReportSection.EvidenceCollected, ReportSection.PolicyTimeline, ReportSection.Integrity },
+            _ => Enum.GetValues<ReportSection>(),
+        };
+        return new HashSet<ReportSection>(Always.Concat(extra));
+    }
 
     /// <summary>Full (Forensic / Everything) reports print every finding; the others keep the findings short.</summary>
     public static bool FindingsInFull(ReportAudience a) => a is ReportAudience.Forensic or ReportAudience.Everything or ReportAudience.ItSecurity or ReportAudience.IncidentResponse;
