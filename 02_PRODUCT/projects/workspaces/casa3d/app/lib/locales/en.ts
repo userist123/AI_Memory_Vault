@@ -241,4 +241,10 @@ export const en: Dict = {
   "edit.noPiece": "This item no longer exists.",
   "edit.noFreeSpot": "No free spot next to the item for the copy.",
   "edit.refused": "Position refused: {msg}",
+  // ---- panoramă 360° ----
+  "pano.title": "360° panorama of the room",
+  "pano.of": "360° panorama · {room}",
+  "pano.hint": "Drag to look around · wheel to zoom · Esc to close",
+  "pano.download": "Download panorama",
+  "pano.close": "Close",
 };

@@ -241,4 +241,10 @@ export const ro: Dict = {
   "edit.noPiece": "Piesa nu există.",
   "edit.noFreeSpot": "Nu am găsit loc liber pentru copie lângă piesă.",
   "edit.refused": "Poziție refuzată: {msg}",
+  // ---- panoramă 360° ----
+  "pano.title": "Panoramă 360° a camerei",
+  "pano.of": "Panoramă 360° · {room}",
+  "pano.hint": "Trage ca să privești în jur · rotița apropie · Esc închide",
+  "pano.download": "Descarcă panorama",
+  "pano.close": "Închide",
 };

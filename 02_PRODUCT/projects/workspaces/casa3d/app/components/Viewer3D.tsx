@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Joystick from './Joystick';
 import { usePrefs } from '@/lib/prefs';
+import PanoramaView from './PanoramaView';
 import type { Catalog, Snapshot } from '@/core/types';
 import { viewerInput } from '@/lib/viewer-input';
 import { toEngineCatalog } from '@/core/catalog';
@@ -9,6 +10,7 @@ import { lighting, sunDirection, captureFileName, type TimeOfDay } from '@/core/
 
 export default function Viewer3D({ snap, catalog, onPick }: { snap: Snapshot; catalog: Catalog; onPick(id: string | null): void }){
   const { t } = usePrefs();
+  const [room, setRoom] = useState<string | null>(null), [pano, setPano] = useState<{ url: string; title: string; file: string } | null>(null), [panoBusy, setPanoBusy] = useState(false);
   const ref = useRef<HTMLCanvasElement>(null), v = useRef<any>(null), pickRef = useRef(onPick);
   const [mode, setMode] = useState<'house' | 'walk'>('house'), [err, setErr] = useState(''), [touch, setTouch] = useState(false);
   const [time, setTime] = useState<TimeOfDay>('day'), [azimuth, setAzimuth] = useState(135), [lightOpen, setLightOpen] = useState(false);
@@ -26,6 +28,10 @@ export default function Viewer3D({ snap, catalog, onPick }: { snap: Snapshot; ca
   function applyLight(){ const p = lighting(time, azimuth); v.current?.setLighting({ ...p, dir: sunDirection(p.azimuthDeg, p.elevationDeg) }); }
   useEffect(applyLight, [time, azimuth]); // eslint-disable-line
   useEffect(() => { const q = v.current?.setQuality?.(quality); if (q && q !== quality) setQuality(q); }, [quality]); // eslint-disable-line
+  // panoramă 360° a camerei curente, randată din mijlocul ei; se deschide în vizualizator și se poate descărca
+  function openPano(){ if (!room || !v.current?.renderPanorama) return; setPanoBusy(true);
+    setTimeout(() => { try { const url = v.current.renderPanorama(room, 2048); const rn = snap.floor.rooms.find(r => r.id === room)?.name ?? room;
+      if (url) setPano({ url, title: t('pano.of', { room: rn }), file: captureFileName(`${snap.name}-${rn}-360`).replace(/\.png$/, '.jpg') }); } finally { setPanoBusy(false); } }, 30); }
   function capture(){ const url: string | undefined = v.current?.capture(); if (!url) return;
     const a = document.createElement('a'); a.href = url; a.download = captureFileName(snap.name); document.body.appendChild(a); a.click(); a.remove(); }
   // Joystick-ul dispare când ieși din tur: orice mișcare rămasă e anulată, altfel jucătorul ar aluneca la următorul tur.
@@ -36,7 +42,8 @@ export default function Viewer3D({ snap, catalog, onPick }: { snap: Snapshot; ca
     {mode === 'walk' && touch && !err && <Joystick onMove={(f, s) => v.current?.setMove(f, s)} />}
     <div className="v3bar">
       <button className="btn" aria-pressed={mode === 'house'} onClick={() => go('house')}>{t('viewer.house')}</button>
-      {snap.floor.rooms.map(r => <button key={r.id} className="btn" onClick={() => { setMode('walk'); v.current?.goRoom(r.id); }}>{t('viewer.tour', { room: r.name })}</button>)}
+      {snap.floor.rooms.map(r => <button key={r.id} className="btn" onClick={() => { setMode('walk'); setRoom(r.id); v.current?.goRoom(r.id); }}>{t('viewer.tour', { room: r.name })}</button>)}
+      {mode === 'walk' && room && <button className="btn" disabled={panoBusy || !!err} title={t('pano.title')} onClick={openPano}>360°</button>}
       <button className="btn" aria-expanded={lightOpen} onClick={() => setLightOpen(o => !o)} title={t('viewer.lightTitle')}>{t('viewer.light')}</button>
       <button className="btn" onClick={capture} disabled={!!err} title={t('viewer.captureTitle')}>{t('viewer.capture')}</button>
     </div>
@@ -46,5 +53,6 @@ export default function Viewer3D({ snap, catalog, onPick }: { snap: Snapshot; ca
       <label className="f" style={{ minWidth: 160 }}><span>{t('viewer.sun', { deg: Math.round(azimuth) })}</span><input type="range" min={0} max={359} value={azimuth} onChange={e => setAzimuth(Number(e.target.value))} /></label>
     </div>}
     <div className="hintbar">{err ? t('viewer.noWebgl') : (mode === 'walk' ? (touch ? t('viewer.hintWalkTouch') : t('viewer.hintWalk')) : t('viewer.hintHouse'))}</div>
+    {pano && <PanoramaView url={pano.url} title={pano.title} fileName={pano.file} onClose={() => setPano(null)} />}
   </div>);
 }
