@@ -3,6 +3,12 @@ id: "atm-m172-art51-evidenta-electronica"
 type: legal_atomic_obligation
 lifecycle: REVIEW
 verification: verified_source
+provenance:
+  source_type: ai
+  source_ref: "http://legislatie.just.ro/Public/DetaliiDocument/245842"
+  original_path: "01_ARCHITECTURE/knowledge/legal/primary/Ordinul_M172_2021.md"
+  redaction: none
+  provenance_status: complete
 instruction_trust: NONE
 category: technical_obligation_analysis
 source_act: "[[Ordinul_M172_2021]]"

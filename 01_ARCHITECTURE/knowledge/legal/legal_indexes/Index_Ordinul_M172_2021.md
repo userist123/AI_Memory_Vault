@@ -3,6 +3,12 @@ id: "idx-leg-ro-mapn-m172-2021"
 type: legal_index
 lifecycle: REVIEW
 verification: verified_source
+provenance:
+  source_type: ai
+  source_ref: "http://legislatie.just.ro/Public/DetaliiDocument/245842"
+  original_path: "01_ARCHITECTURE/knowledge/legal/primary/Ordinul_M172_2021.md"
+  redaction: none
+  provenance_status: complete
 instruction_trust: NONE
 category: normative_index
 jurisdiction: "România (RO - MApN)"

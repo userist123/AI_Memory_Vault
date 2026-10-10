@@ -3,6 +3,13 @@ id: "leg-eu-gdpr-2016-679"
 type: legal_source
 lifecycle: REVIEW
 verification: verified_source
+provenance:
+  source_type: official
+  source_ref: "https://eur-lex.europa.eu/legal-content/RO/TXT/?uri=CELEX:32016R0679"
+  source_date: "2016-05-04"
+  original_path: "06_INBOX/Legi/CELEX_32016R0679_RO_TXT.pdf"
+  redaction: none
+  provenance_status: incomplete
 instruction_trust: NONE
 category: normative_external_data
 jurisdiction: "Uniunea Europeană (UE)"

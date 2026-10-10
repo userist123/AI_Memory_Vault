@@ -3,6 +3,12 @@ id: "atm-l153-anexavi-spor-clasificate"
 type: legal_atomic_obligation
 lifecycle: REVIEW
 verification: verified_source
+provenance:
+  source_type: ai
+  source_ref: "http://legislatie.just.ro/Public/DetaliiDocument/190445"
+  original_path: "01_ARCHITECTURE/knowledge/legal/primary/Legea_Cadru_153_2017.md"
+  redaction: none
+  provenance_status: complete
 instruction_trust: NONE
 category: technical_obligation_analysis
 source_act: "[[Legea_Cadru_153_2017]]"
