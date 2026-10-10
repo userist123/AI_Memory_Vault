@@ -15,6 +15,10 @@ DONE:
 - independent vault-reviewer pass (Opus) -> 5 findings fixed: risk detected from prompt text (EN/RO),
   verifier always Opus, SessionStart honours --uninstall marker, installer validates settings.json first,
   doc drift; Romanian task keywords; CI hygiene fix (absolute path in a test); main merged (allowlist conflict)
+- 2026-10-10 follow-up (owner-approved): PreToolUse/Agent hook enforces the route model on any subagent
+  type (live-verified: general-purpose spawn without model ran on claude-haiku-5-5); project hooks shadowed
+  by the user install (one route line per prompt); local tier lib/local_llm.py on Ollama loopback with the
+  4 models measured on the owner's PC; dispatcher rule in CLAUDE.md; 20_TESTS/test_cost_router_enforce.py
 NEXT (in order):
 1. owner: paste the bootstrap line (protocol §4) into the cloud environment Setup script
 2. owner: approve the install in the PC Remote Control session (approval must be given there)

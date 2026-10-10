@@ -115,7 +115,14 @@ Policy: `04_CONFIG/claude_model_routing.json`, explained in
 `00_GOVERNANCE/protocols/Claude_Model_Routing_Policy_V1.md`. Rate card as of 2026-10-06:
 Fable 5.1 $10/$50, Opus 5.5 $4/$20, Sonnet 5.5 $2/$10, Haiku 5.5 $0.10/$0.50 per MTok in/out.
 
-- Reads and inventories (`where is`, `who imports`, `list`) → `Explore` subagent (haiku, low).
+- **Dispatcher rule:** for every task, first decide whether it needs this session's model. If not,
+  hand it to a subagent of any type; a `PreToolUse` hook on `Agent` sets its model from the route
+  (raises a too-cheap model, caps at one tier above, Opus on risk, never Fable). One-minute edits and
+  answers stay here: a subagent starts empty and re-reads.
+- On the owner's PC, text-in/short-text-out work (summarize, extract, classify, translate) goes first
+  to the free local model: `python .claude/skills/cost-router/lib/local_llm.py --file <path> "<instruction>"`
+  (Ollama, loopback only; exit 3 = unavailable, fall back to Haiku). Its answer is unverified.
+- Reads and inventories (`where is`, `who imports`, `list`) → subagent on haiku (`Explore`).
 - Bounded, spec'd changes with tests as the signal → `vault-worker` (sonnet, medium); on failure
   escalate one tier, not to Fable.
 - Verification, diff review, security review → `vault-reviewer` (opus, high), in its own context.

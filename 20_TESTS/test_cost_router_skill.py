@@ -37,8 +37,19 @@ def test_skill_md_contract():
         assert must in text, must
 
 
+_ISOLATED_HOME = None
+
+
 def _run(args, stdin: str | None = None):
-    return subprocess.run([sys.executable, *args], input=stdin, capture_output=True, text=True, timeout=60)
+    """Run with an empty HOME so the project hooks are not shadowed by this machine's user install."""
+    import os
+    import tempfile
+    global _ISOLATED_HOME
+    if _ISOLATED_HOME is None:
+        _ISOLATED_HOME = tempfile.mkdtemp(prefix="cost-router-home-")
+    env = dict(os.environ, HOME=_ISOLATED_HOME, USERPROFILE=_ISOLATED_HOME)
+    env.pop("COST_ROUTER_OLLAMA_ENDPOINT", None)
+    return subprocess.run([sys.executable, *args], input=stdin, capture_output=True, text=True, timeout=60, env=env)
 
 
 def test_route_helper_resolves_from_repo_layout():
@@ -60,6 +71,7 @@ def test_hook_injects_one_line_of_context_for_a_real_prompt():
     ctx = out["hookSpecificOutput"]["additionalContext"]
     assert out["hookSpecificOutput"]["hookEventName"] == "UserPromptSubmit"
     assert "class=explore" in ctx and "Explore subagent, haiku/low" in ctx and "cost-router" in ctx
+    assert "subagent of any type" in ctx and "Agent hook sets its model" in ctx
     assert len(ctx) <= 1000
 
 
