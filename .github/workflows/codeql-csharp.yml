@@ -1,20 +1,16 @@
-# CodeQL for the LogAnalyzer C# code (.NET / WPF). Kept apart from codeql.yml on purpose: C# needs a Windows build, and
-# running a Windows build for every pull request of this repository (Python, YAML, docs) would slow all of them down and
-# put an unrelated check on them. It runs when the LogAnalyzer project changes, weekly, and on demand.
+# CodeQL for the LogAnalyzer C# code (.NET / WPF). Kept apart from codeql.yml because C# needs a Windows build.
+# It runs on every pull request to main, on push to main, weekly, and on demand. It is deliberately NOT path-filtered:
+# the "Code scanning results / CodeQL" check compares a pull request with the configurations present on main, and a
+# configuration missing from the PR (here /language:csharp) makes that check "neutral" instead of pass/fail. The job
+# (~7 min) finishes well inside the time the longest Python jobs already take, so it does not lengthen pull requests.
 # Results land in the same code-scanning view under the category /language:csharp.
 name: "CodeQL C# (LogAnalyzer)"
 
 on:
   push:
     branches: [ "main" ]
-    paths:
-      - '02_PRODUCT/projects/workspaces/loganalyzer-dfir/**'
-      - '.github/workflows/codeql-csharp.yml'
   pull_request:
     branches: [ "main" ]
-    paths:
-      - '02_PRODUCT/projects/workspaces/loganalyzer-dfir/**'
-      - '.github/workflows/codeql-csharp.yml'
   schedule:
     - cron: '30 2 * * 3'
   workflow_dispatch:

@@ -658,7 +658,7 @@ The workflows in [`.github/workflows/`](.github/workflows/), grouped by what the
 | ACTIVE notes, checked against their recorded digests | `active-note-integrity.yml` |
 | the paths gitleaks skips, scanned for high-confidence secrets | `exempt-area-secret-scan.yml` |
 | runtime write paths | `write-path-audit.yml` |
-| security: secrets, static analysis | `secret-scan.yml`, `codeql.yml`, `codeql-csharp.yml`, `fortify.yml`, `apisec-scan.yml` |
+| security: secrets, static analysis | `secret-scan.yml`, `codeql.yml`, `codeql-csharp.yml`, `codeql-config-cleanup.yml`, `fortify.yml`, `apisec-scan.yml` |
 | research: Planning Influence V3 and the Polymarket phases | `planning-influence-mve.yml`, `polymarket-phase*.yml` (one per phase) |
 | research: H1 associative recall experiment | `h1-associative-experiment.yml` |
 | scheduled runs and ingestion | `memory-consolidation.yml` (the nightly consolidation), `import-external-skills.yml`, `jarvis-command-center.yml` |

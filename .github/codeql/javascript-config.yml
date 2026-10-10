@@ -1,0 +1,13 @@
+# CodeQL configuration for the javascript-typescript analysis (referenced from .github/workflows/codeql.yml).
+# The repository holds JavaScript/TypeScript in three kinds of places:
+#   - maintained workspaces (e.g. 02_PRODUCT/projects/workspaces/jarvis_web) -> analyzed;
+#   - imported, untrusted material kept for reference and never executed from here
+#     (02_PRODUCT/projects/imported, 06_INBOX) -> excluded: alerts there have no owner and would only add noise;
+#   - example/template files shipped inside skills (.agents/skills/**) -> excluded for the same reason.
+# These are CodeQL "paths-ignore" entries (what gets analyzed), not workflow trigger filters.
+name: "JavaScript/TypeScript scope"
+paths-ignore:
+  - "02_PRODUCT/projects/imported/**"
+  - "06_INBOX/**"
+  - ".agents/skills/**"
+  - "**/node_modules/**"
