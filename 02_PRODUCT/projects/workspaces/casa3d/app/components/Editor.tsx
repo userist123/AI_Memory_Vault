@@ -7,8 +7,10 @@ import { relFor, freshness } from '@/core/outbound';
 import DesignPanel from './DesignPanel';
 import CatalogPanel from './CatalogPanel';
 import TwinDesignPanel from './TwinDesignPanel';
+import AdvisorPanel from './AdvisorPanel';
+import { adviseProject, type Advice } from '@/core/advisor';
 import RevisionDiff from './RevisionDiff';
-import { finishesOf, budgetOf, roomGeometry } from '@/core/boq';
+import { finishesOf, budgetOf, roomGeometry, computeBudget } from '@/core/boq';
 import { History } from '@/core/history';
 import { validatePlacement, validateFloor, severityOf } from '@/core/validate';
 import { autoLayout, addPlacement } from '@/core/project';
@@ -27,7 +29,7 @@ export default function Editor({ id }: { id: string }){
   const [snap, setSnap] = useState<Snapshot | null>(null), [catalog, setCatalog] = useState<Catalog | null>(null), [mc, setMc] = useState<MaterialsCatalog | null>(null), [out, setOut] = useState<Outbound | null>(null);
   const [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('split');
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error'>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
-  const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[] } | null>(null), [persistent, setPersistent] = useState(true), [panel, setPanel] = useState<'props' | 'catalog' | 'budget' | 'design' | 'twin' | 'revs'>('props'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
+  const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[] } | null>(null), [persistent, setPersistent] = useState(true), [panel, setPanel] = useState<'props' | 'catalog' | 'budget' | 'design' | 'twin' | 'revs' | 'advisor'>('props'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
   const hist = useRef(new History<Snapshot>()), dragStart = useRef<Snapshot | null>(null), timer = useRef<any>(null), latest = useRef<Snapshot | null>(null), [, force] = useState(0);
   const say = (t: string) => { setToast(t); clearTimeout((say as any).t); (say as any).t = setTimeout(() => setToast(''), 3500); };
 
@@ -48,6 +50,9 @@ export default function Editor({ id }: { id: string }){
   const issues = useMemo(() => { const m: Record<string, Issue[]> = {}; if (snap && catalog) for (const p of snap.placements) m[p.id] = validatePlacement(snap, catalog, p); return m; }, [snap, catalog]);
   const sev = useMemo(() => Object.fromEntries(Object.entries(issues).map(([k, v]) => [k, severityOf(v)])) as Record<string, Severity>, [issues]);
   const floorIssues = useMemo(() => snap ? validateFloor(snap.floor) : [], [snap]);
+  const advice = useMemo(() => { if (!snap || !catalog) return [] as Advice[]; let budget; if (mc){ const b = computeBudget(snap, catalog, mc); budget = { total: b.chosen.total, target: b.target, unknown: b.unknownItems.length }; }
+    return adviseProject(snap, catalog, { accessibility: !!snap.brief?.accessibility, budget }); }, [snap, catalog, mc]);
+  const showAdvice = (a: Advice) => { const pid = a.refs.placementIds?.[0], wid = a.refs.wallIds?.[0]; if (pid) setSel({ kind: 'placement', id: pid }); else if (a.refs.roomId) setSel({ kind: 'room', id: a.refs.roomId }); else if (wid) setSel({ kind: 'wall', id: wid }); };
 
   // editare din plan: mutările se validează la final (ERROR → revine, WARNING → cere confirmare)
   const onEdit = (fn: (s: Snapshot) => void, phase: 'start' | 'move' | 'end') => { if (!snap || !catalog) return;
@@ -123,7 +128,7 @@ export default function Editor({ id }: { id: string }){
       <aside className={`side ${sideOpen ? '' : 'closed'}`}>
         <div className="sidetabs" style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
         <div className="btn" role="tablist" style={{ padding: 2, gap: 2, justifySelf: 'start', flexWrap: 'wrap', height: 'auto', maxWidth: '100%', minWidth: 0 }}>
-          {([['props', 'Proprietăți'], ['catalog', 'Catalog'], ['budget', 'Buget'], ['design', 'Design'], ['twin', 'Twin'], ['revs', 'Revizii']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={panel === k} className="btn" style={{ minHeight: 30, border: 0, background: panel === k ? 'var(--graphite)' : 'transparent', color: panel === k ? '#fff' : undefined }} onClick={() => { setPanel(k); setSideOpen(true); }}>{l}</button>)}
+          {([['props', 'Proprietăți'], ['catalog', 'Catalog'], ['budget', 'Buget'], ['design', 'Design'], ['twin', 'Twin'], ['revs', 'Revizii'], ['advisor', 'Consilier']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={panel === k} className="btn" style={{ minHeight: 30, border: 0, background: panel === k ? 'var(--graphite)' : 'transparent', color: panel === k ? '#fff' : undefined }} onClick={() => { setPanel(k); setSideOpen(true); }}>{l}{k === 'advisor' && advice.filter(a => a.severity !== 'TIP').length > 0 && <span className="badge" style={{ marginLeft: 4, background: '#B7791F', color: '#fff', borderRadius: 8, padding: '0 6px', fontSize: 11 }}>{advice.filter(a => a.severity !== 'TIP').length}</span>}</button>)}
         </div>
           <button className="btn sidetoggle" aria-expanded={sideOpen} onClick={() => setSideOpen(o => !o)}>{sideOpen ? 'Ascunde ▾' : 'Panou ▴'}</button>
         </div>
@@ -167,6 +172,7 @@ export default function Editor({ id }: { id: string }){
         {panel === 'design' && <DesignPanel id={id} snap={snap} say={say} onPreview={(v: any, pid: string | null) => setPreview(v && pid ? { v, pid } : null)} onApplied={(s: Snapshot, n: number) => { hist.current.push(snap); setSnap(s); latest.current = s; setRev(n); setSave('saved'); setSel(null); }} />}
         {panel === 'twin' && <TwinDesignPanel id={id} snap={snap} catalog={catalog} say={say} onPreview={(s: Snapshot | null, label: string | null) => setPreview(s && label ? { v: { candidate: s, title: label, tier: 'twin-' + label }, pid: 'twin' } : null)} onApplied={(s: Snapshot, n: number) => { hist.current.push(snap); setSnap(s); latest.current = s; setRev(n); setSave('saved'); setSel(null); loadRevs(); }} />}
         {panel === 'catalog' && <CatalogPanel catalog={catalog} snap={snap} onUse={(g, vid) => mutate(s => { s.selections[g] = vid; if (!s.picked.includes(g)) s.picked.push(g); })} onAdd={selRoom ? (vid: string) => { const r = addPlacement(snap, catalog, selRoom.id, vid); if (!r){ say('Nu am găsit loc liber pentru piesa asta în cameră.'); return; } commit(r); setSel({ kind: 'placement', id: r.placements.at(-1)!.id }); } : undefined} />}
+        {panel === 'advisor' && <AdvisorPanel advice={advice} rooms={snap.floor.rooms} onShow={showAdvice} />}
         {panel === 'budget' && <BudgetPanel snap={snap} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
         {panel === 'revs' && <div className="revs"><h3>Revizii</h3>{revs.length === 0 && <p className="muted">Nicio revizie încă. Folosește „Salvează revizia”.</p>}
           {revs.map(r => <div key={r.number} className="r"><span>Revizia {r.number}{r.note ? ` · ${r.note}` : ''}</span><button className="btn" onClick={() => restore(r.number)}>Revin</button><button className="btn" onClick={() => shareRevision(r.number)} title="Link doar pentru vizualizare, către această revizie">Partajează</button><small>{new Date(r.created_at).toLocaleString('ro-RO')}</small></div>)}
