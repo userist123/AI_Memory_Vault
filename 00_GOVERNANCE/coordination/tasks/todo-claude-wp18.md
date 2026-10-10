@@ -2,7 +2,8 @@
 STATUS: DONE (code) / S6 PARTIAL until the real-person usability run        UPDATED: 2026-10-10T06:00Z
 TASK: WP18 — station roles (CONTROL / CSIRT chosen by the PC through the signed policy) and non-technical UI, per
 `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PROMPT_WP18_ROLURI_STATIE_UI_SIMPLA.md` (owner decisions D1–D8 in §11).
-BRANCH / PR: `claude/loganalyzer-dfir-roles-ui-0a71fb` (worktree). One commit per step; PR at the end of the package.
+BRANCH / PR: `claude/loganalyzer-dfir-roles-ui-0a71fb`, PR https://github.com/userist123/AI_Memory_Vault_CODEX_READY/pull/266 (merged main @ 0eb82905d into the branch;
+  allowlist conflict resolved with the branch version, which holds every main entry). Owner merges; no auto-merge (signed policy + auth).
 DONE:
 - S1 station role: `LogAnalyzer.Core/Services/Edition/StationRole.cs` (enum, decision, resolver, context, StartupDecision);
   `role` as optional last signed line of `LogAnalyzer.policy` (`EditionPolicy.cs`); both `EditionComposition.DecideStartup`;
@@ -61,6 +62,6 @@ VERIFICATION (S1, local, Windows):
 - Windows Defender flags `LogAnalyzer.Dfir.Tests.dll` as `Ransom:Win32/Clop.SIB!MTB` on every rebuild (test data contains the literal
   `vssadmin delete shadows /all /quiet` lines of WP11 tests). False positive on the test assembly; owner restored the file from quarantine.
 - `Sign-EditionPolicy.ps1` change: parsed OK with Windows PowerShell; end-to-end run UNVERIFIED here (needs pwsh 7, not installed).
-NEXT: S2 Home + navigation per role → S3 language levels/terms/glossary → S4 guided flows → S5 reports → S6 accessibility → S7 docs.
+NEXT: CI on PR #266; owner review and merge; real-person usability run (S6). Earlier plan was: S2 Home + navigation per role → S3 language levels/terms/glossary → S4 guided flows → S5 reports → S6 accessibility → S7 docs.
 BLOCKERS: none.
 KEY FILES: see DONE; prompt §2 reading list.
