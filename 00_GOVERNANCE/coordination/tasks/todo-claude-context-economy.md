@@ -12,6 +12,7 @@ NEXT:
 1. owner: re-run `python3 .claude/skills/cost-router/install.py` on the PC (new hook + rules land in ~/.claude)
 2. cloud: the bootstrap line in the environment Setup script already pulls the new files
 BLOCKERS: live injection into a fresh Claude Code session not observed (hook output format matches the prompt hook's)
+- SKILL.md §0: main session = entrepreneur, subagents = employees (owner rule); guarded by test_skill_md_contract
 KEY FILES: .claude/skills/cost-router/{lib/repo_map.py,hook_repo_map.py,install.py}
 REVIEW: vault-reviewer (Opus) 7 findings -> fixed: cp1252 crash (ASCII JSON), uninstall removed user's own deny rules (sidecar record),
   deny too broad (caches only now), CLAUDE.md block byte-exact + damaged markers left alone, cache keyed by HEAD+listing + atomic write,
