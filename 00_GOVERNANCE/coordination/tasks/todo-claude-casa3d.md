@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-10T14:45:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-10T15:50:00Z
 TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / userist123/AI_Memory_Vault_CODEX_READY#258    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
@@ -86,6 +86,21 @@ PLAN v8 REBUILD (2026-10-10; owner decisions 10:58 UTC: code in Vault workspace 
   (duplicate, nudge, measure, shortcuts, plan underlay). Independent review REQUEST CHANGES (made-to-measure priced in
   diff/export; validation gaps) acted on in 41841767. Evidence: app 171/171, tsc 0, next build OK, browser checks.
   IN PROGRESS: i18n worker (branch casa3d-i18n), templates worker (branch casa3d-templates, uncommitted at 14:45).
+2026-10-10 15:50 UTC — pushed e79e28e4: 360° room panoramas (5c1f410b), DXF R12 export merged from casa3d-dxf
+  (ezdxf audit 0 errors, owner-scoped route, 404 without cookie), clean-checkout fix (PGlite ENOENT on missing ./.data),
+  DXF room labels fit narrow rooms. Evidence: app tsc 0, vitest 215/215, next build OK. Independent review of
+  2b9f4af9..e79e28e4 running.
+PLAN multi-level homes (next, from the global sweep, item 2):
+  Model: Snapshot.floor stays the ground level (saved projects and the API unchanged); new Snapshot.levels?: Floor[]
+  for the levels above; Floor.stairs?: Stair {id, x, z, width, length, rotation} on the lower level, leading to the
+  next level, which shows the stairwell void. Elevation is derived (ceiling heights + 0.2 m slab), never stored.
+  core/levels.ts: floors(snap), levelView(snap, i) (floor = level i, placements/tech filtered to its rooms),
+  mergeLevel(full, i, view), addLevel (copies the exterior shell with new ids), removeLevel, elevationOf, levelOfRoom.
+  Room/wall ids unique across levels (checked on save). House-wide totals (BOQ, room schedule, diff, print, advisor,
+  validation on save) iterate floors(); editor/3D/plan/tech/DXF work on levelView, so per-level code is unchanged.
+  Editor: level tabs (ground, level 1, +), stair tool; 3D: active level + stairs + stairwell void; DXF/print: one
+  plan per level. Twin/design proposals: ground level only, upper-level placements preserved on apply (test).
+  Tests first for levels.ts, repo validation, BOQ over two levels, design apply preserving upper placements.
 NEXT (in order):
 0. DONE 12:55 UTC (integration): lib/twin.ts adapter, lib/design.ts (room-scoped BOQ, stale over the full twin),
    lib/share.ts, tables design_proposals + shares, routes /design, /design/[pid], /shares, /api/share/[token],

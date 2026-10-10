@@ -4,6 +4,7 @@ import { toEngineCatalog, resolve, groupOf, indexOf } from './catalog';
 import { r3 } from './geometry';
 import type { Catalog, Floor, FurniturePlacement, Snapshot } from './types';
 import { getTemplate, localizeRoomNames } from './templates';
+import { floors, levelView, mergeLevel, levelOfRoom } from './levels';
 
 const uid = () => (globalThis.crypto as Crypto).randomUUID();
 
@@ -21,7 +22,12 @@ export function newSnapshot(cat: Catalog, name: string, template: string, lang: 
 }
 // Rulează motorul extras din prototip. Nu modifică selecțiile utilizatorului: lucrează pe o copie și
 // întoarce varianta efectiv folosită în fiecare plasare (repară efectul secundar din placeDining).
-export function autoLayout(snap: Snapshot, cat: Catalog, opts: { roomId?: string } = {}){
+export function autoLayout(snap: Snapshot, cat: Catalog, opts: { roomId?: string } = {}): { snapshot: Snapshot; notFit: { key: string; room: string }[] } {
+  // cu etaje: fiecare nivel separat (sau doar nivelul camerei cerute), restul casei rămâne cum era
+  if (snap.levels?.length){ let out = snap; const notFit: { key: string; room: string }[] = [];
+    const which = opts.roomId ? [Math.max(0, levelOfRoom(snap, opts.roomId))] : floors(snap).map((_, i) => i);
+    for (const i of which){ const r = autoLayout(levelView(out, i), cat, opts); out = mergeLevel(out, i, r.snapshot); notFit.push(...r.notFit); }
+    return { snapshot: out, notFit }; }
   const plan = floorToPlan(snap.floor, snap.name), engineCat = toEngineCatalog(cat);
   const sel: Record<string, number> = {}; for (const [g, vid] of Object.entries(snap.selections)) sel[g] = indexOf(vid);
   const engine = createLayoutEngine({ plan, catalog: engineCat, selection: sel, picked: new Set(snap.picked) });

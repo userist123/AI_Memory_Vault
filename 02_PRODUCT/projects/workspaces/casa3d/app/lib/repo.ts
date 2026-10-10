@@ -1,5 +1,5 @@
 import { sanitizeAppearance, SIZE_LIMITS_CM } from '../core/appearance';
-import { sanitizeTech } from '../core/technical';
+import { sanitizeTech, MAX_TECH_POINTS } from '../core/technical';
 import catalogSeed from '../data/catalog.v1.json';
 // grupă → model 3D, ca materialele permise pe piesă să fie verificate fără a citi catalogul din baza de date
 const MODEL_OF_GROUP: Record<string, string> = Object.fromEntries((catalogSeed as any).products.map((p: any) => [p.group, p.model3d]));
@@ -7,6 +7,7 @@ import { getDb } from './db';
 import { newSnapshot } from '../core/project';
 import { getTemplate } from '../core/templates';
 import { validateFloor, validatePlacement } from '../core/validate';
+import { floors, levelView, levelOfRoom, stairIssues, MAX_LEVELS } from '../core/levels';
 import type { Catalog, Snapshot, MaterialsCatalog, Underlay } from '../core/types';
 import { checkBrief } from '../core/brief';
 import { diffSnapshots } from '../core/diff';
@@ -59,21 +60,42 @@ export function checkSnapshot(s: any): Snapshot {
   if (JSON.stringify(rest).length > MAX_SNAPSHOT) throw new HttpError(413, 'Proiectul e prea mare.');
   if (rawUnderlay != null) s.underlay = checkUnderlay(rawUnderlay);
   const num = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
-  for (const r of s.floor.rooms) if (!['x0', 'z0', 'x1', 'z1'].every(k => num(r.rect?.[k])) || r.rect.x1 <= r.rect.x0 || r.rect.z1 <= r.rect.z0) throw new HttpError(400, `Camera ${r.id} are dimensiuni invalide.`);
-  for (const w of s.floor.walls) if (!num(w.a?.[0]) || !num(w.a?.[1]) || !num(w.b?.[0]) || !num(w.b?.[1]) || !Array.isArray(w.openings)) throw new HttpError(400, `Peretele ${w.id} e invalid.`);
+  // etajele: același format ca parterul, cel mult MAX_LEVELS niveluri în total, id-uri unice pe toată casa
+  if (s.levels != null){
+    if (!Array.isArray(s.levels) || s.levels.length > MAX_LEVELS - 1) throw new HttpError(400, `Casa poate avea cel mult ${MAX_LEVELS} niveluri.`);
+    for (const f of s.levels) if (!f || typeof f !== 'object' || typeof f.id !== 'string' || !Array.isArray(f.rooms) || !Array.isArray(f.walls) || !(num(f.ceilingHeight) && f.ceilingHeight >= 1.8 && f.ceilingHeight <= 6)) throw new HttpError(400, 'Un nivel al casei e invalid.');
+    for (const f of s.levels) f.name = String(f.name ?? '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 60);
+    if (!s.levels.length) delete s.levels;
+    const all = (pick: (f: any) => string[]) => { const ids = floors(s).flatMap(pick); return new Set(ids).size === ids.length; };
+    if (s.levels && !(all(f => [f.id]) && all(f => f.rooms.map((r: any) => r.id)) && all(f => f.walls.map((w: any) => w.id)))) throw new HttpError(400, 'Camerele, pereții și nivelurile trebuie să aibă id-uri unice pe toată casa.'); }
+  const fls: any[] = floors(s);
+  for (const f of fls) for (const r of f.rooms) if (!['x0', 'z0', 'x1', 'z1'].every(k => num(r.rect?.[k])) || r.rect.x1 <= r.rect.x0 || r.rect.z1 <= r.rect.z0) throw new HttpError(400, `Camera ${r.id} are dimensiuni invalide.`);
+  for (const f of fls) for (const w of f.walls) if (!num(w.a?.[0]) || !num(w.a?.[1]) || !num(w.b?.[0]) || !num(w.b?.[1]) || !Array.isArray(w.openings)) throw new HttpError(400, `Peretele ${w.id} e invalid.`);
+  // scări: dreptunghi plauzibil; se păstrează doar câmpurile modelului
+  for (const f of fls){ if (f.stairs == null){ delete f.stairs; continue; }
+    if (!Array.isArray(f.stairs) || f.stairs.length > 20) throw new HttpError(400, 'Scările sunt invalide.');
+    f.stairs = f.stairs.map((st: any) => { if (!st || typeof st.id !== 'string' || !/^[\w-]{1,80}$/.test(st.id) || !num(st.x) || !num(st.z) || !num(st.rotation)
+        || !(num(st.width) && st.width >= .6 && st.width <= 3) || !(num(st.length) && st.length >= .8 && st.length <= 8)) throw new HttpError(400, 'O scară are dimensiuni invalide (lățime 60–300 cm, lungime 80–800 cm).');
+      return { id: st.id, x: st.x, z: st.z, width: st.width, length: st.length, rotation: st.rotation }; });
+    if (!f.stairs.length) delete f.stairs; }
   for (const p of s.placements) if (!num(p.x) || !num(p.z) || !num(p.rotation) || typeof p.variantId !== 'string') throw new HttpError(400, 'O piesă de mobilier e invalidă.');
   // dimensiuni pe comandă (cm) și goluri cu înălțime/parapet: doar valori plauzibile
   const cm = (v: unknown) => num(v) && (v as number) >= SIZE_LIMITS_CM.min && (v as number) <= SIZE_LIMITS_CM.max;
   for (const p of s.placements){ if (p.size == null){ delete p.size; continue; }
     if (!(cm(p.size?.w) && cm(p.size?.d) && cm(p.size?.h))) throw new HttpError(400, `Dimensiunile pe comandă trebuie să fie între ${SIZE_LIMITS_CM.min} și ${SIZE_LIMITS_CM.max} cm.`);
     p.size = { w: Math.round(p.size.w), d: Math.round(p.size.d), h: Math.round(p.size.h) }; } // doar w/d/h, în cm întregi
-  for (const w of s.floor.walls) for (const o of w.openings){ if (o.height != null && !(num(o.height) && o.height >= 0.3 && o.height <= 3)) throw new HttpError(400, 'Înălțimea golului trebuie să fie între 30 și 300 cm.');
+  for (const f of fls) for (const w of f.walls) for (const o of w.openings){ if (o.height != null && !(num(o.height) && o.height >= 0.3 && o.height <= 3)) throw new HttpError(400, 'Înălțimea golului trebuie să fie între 30 și 300 cm.');
     if (o.sill != null && !(num(o.sill) && o.sill >= 0 && o.sill <= 2)) throw new HttpError(400, 'Parapetul ferestrei trebuie să fie între 0 și 200 cm.');
     // golul trebuie să încapă sub tavan (ușa de la podea, fereastra de la parapet)
-    const top = (o.kind === 'window' ? (o.sill ?? 0.9) : 0) + (o.height ?? (o.kind === 'door' ? 2.1 : 1.3)), ceil = num(s.floor.ceilingHeight) ? s.floor.ceilingHeight : 2.6;
+    const top = (o.kind === 'window' ? (o.sill ?? 0.9) : 0) + (o.height ?? (o.kind === 'door' ? 2.1 : 1.3)), ceil = num(f.ceilingHeight) ? f.ceilingHeight : 2.6;
     if ((o.height != null || o.sill != null) && top > ceil + 1e-9) throw new HttpError(400, `Golul depășește tavanul: are ${Math.round(top * 100)} cm, iar tavanul ${Math.round(ceil * 100)} cm.`); }
-  if (s.tech != null){ const t = sanitizeTech(s.tech, s); if (t) s.tech = t; else delete s.tech; }
-  if (s.appearance != null){ const a = sanitizeAppearance(s.appearance, s, p => MODEL_OF_GROUP[p.group] ?? ''); if (a) s.appearance = a; else delete s.appearance; }
+  // punctele tehnice se verifică pe nivelul camerei lor (poziție în cameră, înălțime sub tavanul acelui nivel)
+  if (s.tech != null){ const raw = Array.isArray(s.tech) ? s.tech.slice(0, MAX_TECH_POINTS) : null, lvl = (t: any) => t && typeof t === 'object' && typeof t.roomId === 'string' ? Math.max(0, levelOfRoom(s, t.roomId)) : -1;
+    const t = raw ? fls.flatMap((f, i) => sanitizeTech(raw.filter((x: unknown) => lvl(x) === i), { floor: f }) ?? []) : undefined;
+    if (raw && t) s.tech = t; else delete s.tech; }
+  // culorile: camerele, pereții și golurile de pe orice nivel
+  if (s.appearance != null){ const house = { ...s.floor, rooms: fls.flatMap(f => f.rooms), walls: fls.flatMap(f => f.walls) };
+    const a = sanitizeAppearance(s.appearance, { floor: house, placements: s.placements }, p => MODEL_OF_GROUP[p.group] ?? ''); if (a) s.appearance = a; else delete s.appearance; }
   if (s.finishes != null && (typeof s.finishes !== 'object' || Array.isArray(s.finishes))) throw new HttpError(400, 'Finisajele sunt invalide.');
   if (s.budget != null){ const b = s.budget; const okNum = (v: unknown) => v == null || (typeof v === 'number' && Number.isFinite(v) && v >= 0);
     if (typeof b !== 'object' || !okNum(b.target) || !okNum(b.contingencyPct) || !okNum(b.deliveryDedeman) || !okNum(b.furnitureAssembly) || !okNum(b.design) || (b.contingencyPct ?? 0) > 100) throw new HttpError(400, 'Setările de buget sunt invalide.'); }
@@ -104,7 +126,10 @@ export async function saveDraft(owner: string, id: string, snapshot: unknown){
 }
 /** Erorile care împiedică o revizie, pe tot proiectul (aceeași regulă și pentru aplicarea unui design). */
 export function projectErrors(snap: Snapshot, cat: Catalog){
-  return [...validateFloor(snap.floor).filter(i => i.severity === 'ERROR'), ...snap.placements.flatMap(pl => validatePlacement(snap, cat, pl).filter(i => i.severity === 'ERROR'))];
+  const err = (i: { severity: string }) => i.severity === 'ERROR';
+  // fiecare nivel cu piesele lui, plus scările (inclusiv golul lor de la etaj)
+  return [...floors(snap).flatMap((_, k) => { const v = levelView(snap, k); return [...validateFloor(v.floor).filter(err), ...v.placements.flatMap(pl => validatePlacement(v, cat, pl).filter(err))]; }),
+    ...stairIssues(snap, cat)];
 }
 // O revizie se creează doar dacă proiectul nu are erori (constituția: ERROR blochează aplicarea).
 export async function createRevision(owner: string, id: string, note: unknown){

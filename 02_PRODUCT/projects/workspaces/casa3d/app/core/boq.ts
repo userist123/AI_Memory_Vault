@@ -2,15 +2,17 @@ import type { Catalog, Snapshot, Room, MaterialsCatalog, Material, RoomFinishes,
 import { resolve, groupOf } from './catalog';
 import { area as rectArea } from './geometry';
 import { openingsOnSide } from './validate';
+import { floors, floorOfRoom } from './levels';
 import { WASTE, PAINT_COATS, DOOR_HEIGHT, WINDOW_HEIGHT, BATH_TILE_HEIGHT, BACKSPLASH_HEIGHT, LIGHTS_EXTRA_PER_M2, VAT_RATE, WET_ROOMS, SANITARY, APPLIANCES, DEFAULT_BUDGET } from './rules.boq';
 
 const r2 = (v: number) => Math.round(v * 100) / 100;
 export interface RoomGeometry { roomId: string; name: string; floorArea: number; perimeter: number; height: number; doorWidth: number; windowWidth: number; wallGross: number; openings: number; wallNet: number; ceiling: number }
 // ---------- 1) geometrie pe cameră, calculată din Digital Twin ----------
 export function roomGeometry(snap: Snapshot, room: Room): RoomGeometry {
-  const r = room.rect, w = r.x1 - r.x0, d = r.z1 - r.z0, H = snap.floor.ceilingHeight;
+  // înălțimea și golurile vin de pe nivelul camerei (parter sau etaj)
+  const fl = floorOfRoom(snap, room.id), r = room.rect, w = r.x1 - r.x0, d = r.z1 - r.z0, H = fl.ceilingHeight;
   let doorWidth = 0, windowWidth = 0;
-  for (const s of ['N', 'S', 'W', 'E'] as const) for (const o of openingsOnSide(snap.floor, room, s)){ const lo = s === 'N' || s === 'S' ? r.x0 : r.z0, hi = s === 'N' || s === 'S' ? r.x1 : r.z1;
+  for (const s of ['N', 'S', 'W', 'E'] as const) for (const o of openingsOnSide(fl, room, s)){ const lo = s === 'N' || s === 'S' ? r.x0 : r.z0, hi = s === 'N' || s === 'S' ? r.x1 : r.z1;
     const len = Math.max(0, Math.min(o.b, hi) - Math.max(o.a, lo)); if (o.kind === 'door') doorWidth += len; else windowWidth += len; }
   const perimeter = 2 * (w + d), wallGross = perimeter * H, openings = doorWidth * DOOR_HEIGHT + windowWidth * WINDOW_HEIGHT;
   return { roomId: room.id, name: room.name, floorArea: r2(rectArea(r)), perimeter: r2(perimeter), height: H, doorWidth: r2(doorWidth), windowWidth: r2(windowWidth), wallGross: r2(wallGross), openings: r2(openings), wallNet: r2(Math.max(0, wallGross - openings)), ceiling: r2(rectArea(r)) };
@@ -43,7 +45,7 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
   const addLabor = (roomId: string, rateId: string, qty: number) => { if (qty <= 0) return; const l = L(rateId);
     labor.push({ key: `${roomId}:${rateId}`, roomId, rateId, label: l.label, qty: r2(qty), unit: l.unit, low: r2(qty * l.low), expected: r2(qty * l.expected), high: r2(qty * l.high), confidence: l.confidence, sources: l.sources }); };
   let adhesiveArea = 0;
-  for (const room of snap.floor.rooms){
+  for (const room of floors(snap).flatMap(f => f.rooms)){
     const g = roomGeometry(snap, room), f = finishesOf(snap, room); geometry.push(g);
     // pardoseală
     const fm = M(f.floor); if (fm){ items.push(materialLine(fm, `${room.id}:floor`, room.id, `Pardoseală · ${room.name}`, g.floorArea, mc.verifiedAt));

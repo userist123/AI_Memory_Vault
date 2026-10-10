@@ -1,6 +1,7 @@
 // Compararea a două instantanee (revizii sau draft): camere, pereți, mobilier, cost. Pur, fără I/O.
 import type { Catalog, Snapshot, Room, Wall, FurniturePlacement } from './types';
 import { resolve, pricedOffer } from './catalog';
+import { floors } from './levels';
 
 export interface RoomRef { id: string; name: string }
 export interface FurnitureChange { id: string; roomName: string; name: string; detail?: string }
@@ -32,13 +33,15 @@ function roomChanges(a: Room, b: Room): string[] {
 }
 
 export function diffSnapshots(before: Snapshot, after: Snapshot, cat: Catalog): SnapshotDiff {
-  const ra = new Map(before.floor.rooms.map(r => [r.id, r])), rb = new Map(after.floor.rooms.map(r => [r.id, r]));
+  // camerele și pereții tuturor nivelurilor (id-urile sunt unice pe toată casa)
+  const roomsOf = (s: Snapshot) => floors(s).flatMap(f => f.rooms), wallsOf = (s: Snapshot) => floors(s).flatMap(f => f.walls);
+  const ra = new Map(roomsOf(before).map(r => [r.id, r])), rb = new Map(roomsOf(after).map(r => [r.id, r]));
   const rooms: SnapshotDiff['rooms'] = { added: [], removed: [], changed: [] };
   for (const [id, r] of rb) if (!ra.has(id)) rooms.added.push({ id, name: r.name });
   for (const [id, r] of ra){ const n = rb.get(id); if (!n){ rooms.removed.push({ id, name: r.name }); continue; }
     const changes = roomChanges(r, n); if (changes.length) rooms.changed.push({ id, name: n.name, changes }); }
 
-  const wa = new Map(before.floor.walls.map(w => [w.id, w])), wb = new Map(after.floor.walls.map(w => [w.id, w]));
+  const wa = new Map(wallsOf(before).map(w => [w.id, w])), wb = new Map(wallsOf(after).map(w => [w.id, w]));
   const walls = { added: 0, removed: 0, changed: 0 };
   for (const id of wb.keys()) if (!wa.has(id)) walls.added++;
   for (const [id, w] of wa){ const n = wb.get(id); if (!n) walls.removed++; else if (wallKey(w) !== wallKey(n)) walls.changed++; }

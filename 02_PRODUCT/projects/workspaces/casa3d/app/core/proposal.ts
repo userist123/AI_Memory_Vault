@@ -2,6 +2,7 @@
 import type { Catalog, Snapshot, MaterialsCatalog, RoomFinishes, Severity } from './types';
 import { autoLayout } from './project';
 import { validatePlacement, validateFloor, severityOf } from './validate';
+import { floors, levelView } from './levels';
 import { computeBudget, finishesOf } from './boq';
 import { resolve, groupOf, groups } from './catalog';
 import type { DesignBrief } from './brief';
@@ -51,7 +52,7 @@ export function evaluateVariant(snap: Snapshot, cat: Catalog, mc: MaterialsCatal
   // finisaje: material existent, potrivit slotului
   cand.finishes = { ...(cand.finishes || {}) };
   for (const [rid, f] of Object.entries(v.finishes)){
-    const room = cand.floor.rooms.find(r => r.id === rid); if (!room){ issues.push({ code: 'INVALID_MATERIAL', severity: 'ERROR', message: `Camera „${rid}” nu există.` }); continue; }
+    const room = floors(cand).flatMap(f => f.rooms).find(r => r.id === rid); if (!room){ issues.push({ code: 'INVALID_MATERIAL', severity: 'ERROR', message: `Camera „${rid}” nu există.` }); continue; }
     const cur = finishesOf(cand, room), next = { ...cur };
     for (const [slot, mid] of Object.entries(f)){ if (mid === null && (slot === 'wallTile' || slot === 'baseboard')){ (next as any)[slot] = null; continue; }
       const m = mc.materials.find(x => x.id === mid); if (!m || !SLOT_CATS[slot]?.includes(m.category)){ issues.push({ code: 'INVALID_MATERIAL', severity: 'ERROR', message: `Materialul „${mid}” nu e valid pentru ${room.name}.` }); continue; }
@@ -65,9 +66,11 @@ export function evaluateVariant(snap: Snapshot, cat: Catalog, mc: MaterialsCatal
   for (const n of lay.notFit) issues.push({ code: 'DOES_NOT_FIT', severity: 'ERROR', message: `${G[n.key]?.label || n.key}: varianta aleasă nu încape în ${n.room}.` });
   const after = new Set(cand.placements.map(p => `${p.roomId}:${p.group}`));
   for (const k of before) if (!after.has(k)){ const [rid, g] = k.split(':'); if (!lay.notFit.some(n => n.key === g)) issues.push({ code: 'DOES_NOT_FIT', severity: 'ERROR', message: `${G[g]?.label || g}: varianta aleasă nu încape în ${cand.floor.rooms.find(r => r.id === rid)?.name}.` }); }
-  for (const i of validateFloor(cand.floor)) issues.push({ code: 'FLOOR', severity: i.severity, message: i.message });
+  // fiecare nivel cu piesele lui (camerele de la etaj nu sunt în `cand.floor`)
+  const views = floors(cand).map((_, k) => levelView(cand, k));
+  for (const v of views) for (const i of validateFloor(v.floor)) issues.push({ code: 'FLOOR', severity: i.severity, message: i.message });
   const seen = new Set<string>();
-  for (const p of cand.placements) for (const i of validatePlacement(cand, cat, p)){ const m = `${resolve(cat, p.variantId)?.product.name}: ${i.message}`; if (!seen.has(m)){ seen.add(m); issues.push({ code: 'PLACEMENT', severity: i.severity, message: m }); } }
+  for (const v of views) for (const p of v.placements) for (const i of validatePlacement(v, cat, p)){ const m = `${resolve(cat, p.variantId)?.product.name}: ${i.message}`; if (!seen.has(m)){ seen.add(m); issues.push({ code: 'PLACEMENT', severity: i.severity, message: m }); } }
   // buget
   if (brief?.budget) cand.budget = { ...(cand.budget || {} as any), ...computeBudget(cand, cat, mc).settings, target: brief.budget };
   const b0 = computeBudget(snap, cat, mc), b1 = computeBudget(cand, cat, mc), target = brief?.budget ?? b1.settings.target;
@@ -78,7 +81,7 @@ export function evaluateVariant(snap: Snapshot, cat: Catalog, mc: MaterialsCatal
     const pa = priceOf(a), pb = priceOf(bvid), ra = resolve(cat, a), rb = resolve(cat, bvid);
     const dims = ra?.variant.dimensionsCm && rb?.variant.dimensionsCm ? `${rb.variant.dimensionsCm.w - ra.variant.dimensionsCm.w >= 0 ? '+' : ''}${rb.variant.dimensionsCm.w - ra.variant.dimensionsCm.w} cm lățime, ${rb.variant.dimensionsCm.d - ra.variant.dimensionsCm.d >= 0 ? '+' : ''}${rb.variant.dimensionsCm.d - ra.variant.dimensionsCm.d} cm adâncime` : undefined;
     changes.push({ kind: 'product', label: G[g].label, from: ra?.variant.name || a, to: rb!.variant.name, priceDelta: pa != null && pb != null ? Math.round((pb - pa) * 100) / 100 : null, note: dims }); }
-  for (const room of cand.floor.rooms){ const fa = finishesOf(snap, room), fb = finishesOf(cand, room);
+  for (const room of floors(cand).flatMap(f => f.rooms)){ const fa = finishesOf(snap, room), fb = finishesOf(cand, room);
     for (const slot of ['floor', 'wallPaint', 'wallTile', 'baseboard', 'light'] as const){ if ((fa as any)[slot] === (fb as any)[slot]) continue; const nm = (id: any) => mc.materials.find(m => m.id === id)?.name || 'fără';
       changes.push({ kind: 'finish', label: `${room.name} · ${{ floor: 'pardoseală', wallPaint: 'vopsea', wallTile: 'faianță', baseboard: 'plintă', light: 'iluminat' }[slot]}`, from: nm((fa as any)[slot]), to: nm((fb as any)[slot]), priceDelta: null }); } }
   const status: Severity = issues.some(i => i.severity === 'ERROR') ? 'ERROR' : issues.length ? 'WARNING' : 'PASS';

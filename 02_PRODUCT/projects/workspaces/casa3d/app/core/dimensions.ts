@@ -1,6 +1,7 @@
 // Cote și tabele pentru planul tipărit: funcții pure, fără React.
 import type { Floor, Snapshot } from './types';
 import { area, wallLength } from './geometry';
+import { floors } from './levels';
 
 const r2 = (v: number) => Math.round(v * 100) / 100;
 export const LABEL_OFFSET = 0.45;   // distanța (m) a etichetei de cotă față de perete, spre exterior
@@ -25,11 +26,12 @@ export function wallDimensions(floor: Floor): WallDim[] {
   });
 }
 
-export interface ScheduleRow { id: string; name: string; type: string; width: number; depth: number; area: number; perimeter: number }
+export interface ScheduleRow { id: string; name: string; type: string; width: number; depth: number; area: number; perimeter: number; level: number }
 /** Tabelul camerelor (metri, 2 zecimale) și totalurile. */
 export function roomSchedule(snap: Snapshot): { rows: ScheduleRow[]; totals: { area: number; rooms: number } } {
-  const rows = snap.floor.rooms.map(r => { const w = r.rect.x1 - r.rect.x0, d = r.rect.z1 - r.rect.z0;
-    return { id: r.id, name: r.name, type: r.type, width: r2(w), depth: r2(d), area: r2(area(r.rect)), perimeter: r2(2 * (w + d)) }; });
+  // toate nivelurile casei, în ordine (o vedere de nivel are unul singur)
+  const rows = floors(snap).flatMap((f, level) => f.rooms.map(r => { const w = r.rect.x1 - r.rect.x0, d = r.rect.z1 - r.rect.z0;
+    return { id: r.id, name: r.name, type: r.type, width: r2(w), depth: r2(d), area: r2(area(r.rect)), perimeter: r2(2 * (w + d)), level }; }));
   return { rows, totals: { area: r2(rows.reduce((a, x) => a + x.area, 0)), rooms: rows.length } };
 }
 

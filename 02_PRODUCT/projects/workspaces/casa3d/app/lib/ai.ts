@@ -2,6 +2,7 @@
 // orice răspuns e validat de core/proposal.ts înainte să ajungă la utilizator.
 import type { Catalog, Snapshot, MaterialsCatalog } from '../core/types';
 import { groups } from '../core/catalog';
+import { floors } from '../core/levels';
 import { computeBudget } from '../core/boq';
 import type { DesignBrief } from '../core/brief';
 export const aiConfigured = () => !!process.env.ANTHROPIC_API_KEY;
@@ -12,7 +13,7 @@ export function buildPrompt(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, 
   const lines = [...present].filter(g => G[g]).flatMap(g => G[g].variants.map(v => { const o = cat.offers.find(x => x.variantId === v.id), d = v.dimensionsCm;
     return `${v.id} | grupa=${g} | ${v.name} | ${o ? o.price + ' lei' : 'preț necunoscut'} | ${o?.provenance.source || '?'} | ${d ? `${d.w}x${d.d}x${d.h} cm` : 'dimensiuni necunoscute'} | stil=${JSON.stringify(v.style || {})}`; }));
   const mats = mc.materials.map(m => `${m.id} | ${m.category} | ${m.name} | ${m.unitPrice} lei/${m.unit} | ${m.supplier}`);
-  const rooms = snap.floor.rooms.map(r => `${r.id} | ${r.name} | tip=${r.type} | ${((r.rect.x1 - r.rect.x0) * (r.rect.z1 - r.rect.z0)).toFixed(1)} m²`);
+  const rooms = floors(snap).flatMap(f => f.rooms).map(r => `${r.id} | ${r.name} | tip=${r.type} | ${((r.rect.x1 - r.rect.x0) * (r.rect.z1 - r.rect.z0)).toFixed(1)} m²`);
   const system = `Ești designer de interior. Propui variante de amenajare DOAR prin alegeri din catalogul dat.
 Reguli obligatorii:
 - Folosești numai ID-urile din listele de mai jos. Nu inventezi produse, prețuri, dimensiuni, disponibilitate sau certificări.

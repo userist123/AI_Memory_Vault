@@ -4,6 +4,7 @@ import type { Catalog, Snapshot, MaterialsCatalog, ProductVariant, RoomFinishes 
 import { groups, resolve } from './catalog';
 import { STYLES, PRIORITIES, type DesignBrief } from './brief';
 import { TIERS, TIER_LABEL, evaluateVariant, type RawProposal, type RawVariant, type Tier } from './proposal';
+import { floors } from './levels';
 
 const lum = (hex?: string) => { if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) return null; const n = parseInt(hex.slice(1), 16), c = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(v => v / 255); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
 const colorOf = (v: ProductVariant) => v.style?.col || v.style?.top || v.style?.frame || v.style?.prof;
@@ -49,7 +50,7 @@ function finishesFor(snap: Snapshot, mc: MaterialsCatalog, tier: Tier, brief: De
   const ok = (id: string) => mc.materials.some(m => m.id === id && brief.suppliers.includes(m.supplier as any));
   const byCat = (c: string) => mc.materials.filter(m => m.category === c && brief.suppliers.includes(m.supplier as any)).sort((a, b) => a.unitPrice - b.unitPrice);
   const at = (arr: any[], i: number) => arr.length ? arr[i < 0 ? arr.length + i : Math.min(i, arr.length - 1)].id : undefined, plan = FINISH_PLAN[tier], out: Record<string, Partial<RoomFinishes>> = {};
-  for (const r of snap.floor.rooms){ const wet = r.type === 'baie' || r.type === 'bucatarie', f: Partial<RoomFinishes> = {};
+  for (const r of floors(snap).flatMap(f => f.rooms)){ const wet = r.type === 'baie' || r.type === 'bucatarie', f: Partial<RoomFinishes> = {};
     const floor = wet ? at(byCat('floor_tile'), plan.tile) : at(byCat('parquet'), plan.parquet); if (floor) f.floor = floor;
     const paint = plan.paint.find(ok); if (paint) f.wallPaint = paint;
     if (wet){ const t = at(byCat('wall_tile'), plan.wall); if (t) f.wallTile = t; } else if (ok(plan.base)) f.baseboard = plan.base;

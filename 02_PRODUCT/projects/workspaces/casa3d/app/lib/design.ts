@@ -9,6 +9,8 @@ import { HttpError, getCatalog, getProject, checkSnapshot, projectErrors } from 
 import { snapshotToTwin, twinCatalogItems, placementsFromTwin, untwinnablePlacements, ROLE_ALIASES } from './twin';
 import { groups } from '../core/catalog';
 import { validatePlacement } from '../core/validate';
+import { floors, levelView, mergeLevel, levelOfRoom } from '../core/levels';
+import { createHash } from 'node:crypto';
 import type { Catalog, Snapshot, FurniturePlacement } from '../core/types';
 
 /** O problemă raportată fie de Geometry Engine (coduri twin-core), fie de validatorul aplicației (prefix APP_). */
@@ -22,7 +24,7 @@ export const MAX_ROOM_AREA_M2 = 400;
 
 export function checkTwinBrief(input: unknown, snap: Snapshot, groupKeys: string[]): TwinBrief {
   const b = input as any; if (!b || typeof b !== 'object') throw new HttpError(400, 'Brief invalid.');
-  const room = typeof b.roomId === 'string' ? snap.floor.rooms.find(r => r.id === b.roomId) : undefined;
+  const room = typeof b.roomId === 'string' ? floors(snap).flatMap(f => f.rooms).find(r => r.id === b.roomId) : undefined;
   if (!room) throw new HttpError(400, 'Camera nu există în proiect.');
   const w = room.rect.x1 - room.rect.x0, d = room.rect.z1 - room.rect.z0;
   if (w > MAX_ROOM_SIDE_M || d > MAX_ROOM_SIDE_M || w * d > MAX_ROOM_AREA_M2) throw new HttpError(422, `Camera e prea mare pentru proiectare automată (maximum ${MAX_ROOM_SIDE_M} m pe latură și ${MAX_ROOM_AREA_M2} m²).`);
@@ -36,6 +38,16 @@ export function checkTwinBrief(input: unknown, snap: Snapshot, groupKeys: string
 
 export interface PublicAlternative { index: number; title: string; ok: boolean; outcomes: EvaluatedAlternative['result']['outcomes']; measures: EvaluatedAlternative['measures']; boq: EvaluatedAlternative['boq']; issues: DesignIssue[]; placements: FurniturePlacement[]; dsl: DesignDsl }
 interface StoredAlternative { index: number; title: string; dsl: DesignDsl; ok: boolean; issues: DesignIssue[] }
+
+/** Amprenta întregii case: la un singur nivel e chiar amprenta twin-ului (propunerile vechi rămân valabile); cu etaje,
+ *  cuprinde fiecare nivel și scările, ca orice schimbare, pe orice nivel, să facă propunerea stale. */
+export function houseFingerprint(snap: Snapshot, cat: Catalog): string {
+  if (!snap.levels?.length) return fingerprint(snapshotToTwin(snap, cat));
+  const parts = floors(snap).map((f, i) => ({ twin: fingerprint(snapshotToTwin(levelView(snap, i), cat)), stairs: f.stairs ?? [], name: f.name }));
+  return createHash('sha256').update(JSON.stringify(parts)).digest('hex');
+}
+/** Proiectarea lucrează pe nivelul camerei vizate; restul casei se pune la loc neschimbat (core/levels.ts). */
+const levelFor = (snap: Snapshot, roomId: string) => Math.max(0, levelOfRoom(snap, roomId));
 
 /** Cu `replace`, piesele din camera vizată sunt scoase ca solver-ul să re-aşeze camera; altfel se adaugă peste ele. */
 const baseFor = (snap: Snapshot, brief: TwinBrief): Snapshot => brief.replace ? { ...snap, placements: snap.placements.filter(p => p.roomId !== brief.roomId) } : snap;
@@ -70,16 +82,17 @@ async function solveBrief(snap: Snapshot, cat: Catalog, brief: TwinBrief){
 
 export async function generateDesign(owner: string, id: string, input: unknown){
   const p = await getProject(owner, id), cat = await getCatalog();
-  const brief = checkTwinBrief(input, p.draft, Object.keys(groups(cat)));
-  const { base, dsls, alts } = await solveBrief(p.draft, cat, brief);
+  const brief = checkTwinBrief(input, p.draft, Object.keys(groups(cat))), L = levelFor(p.draft, brief.roomId), view = levelView(p.draft, L);
+  const { base, dsls, alts } = await solveBrief(view, cat, brief);
   // Amprenta de bază acoperă tot proiectul: orice modificare ulterioară, în orice cameră, face propunerea stale.
-  const baseFingerprint = fingerprint(snapshotToTwin(p.draft, cat));
+  const baseFingerprint = houseFingerprint(p.draft, cat);
   const alternatives: PublicAlternative[] = alts.map(a => {
-    const ids = new Map<string, string>(), next = a.result.ok ? nextSnapshot(p.draft, base, cat, a.result.twin, ids) : null;
+    const ids = new Map<string, string>(), nextView = a.result.ok ? nextSnapshot(view, base, cat, a.result.twin, ids) : null;
+    const next = nextView ? mergeLevel(p.draft, L, nextView) : null;
     // Clientul vede doar id-urile din proiect: BOQ-ul și referințele problemelor trec prin aceeași corespondență.
     const idOf = (x: string) => ids.get(x) ?? x;
     const coreIssues = a.issues.map(i => ({ ...i, refs: i.refs.map(idOf) }));
-    const issues: DesignIssue[] = next ? [...coreIssues, ...appIssues(next, cat, brief.roomId)] : coreIssues;
+    const issues: DesignIssue[] = nextView ? [...coreIssues, ...appIssues(nextView, cat, brief.roomId)] : coreIssues;
     const ok = a.result.ok && !issues.some(i => i.severity === 'ERROR');
     const boq = { ...a.boq, items: a.boq.items.map(i => ({ ...i, placementId: idOf(i.placementId) })) };
     return { index: a.index, title: a.title, ok, outcomes: a.result.outcomes, measures: a.measures, boq, issues, placements: next ? next.placements : [], dsl: dsls[a.index]! };
@@ -100,7 +113,7 @@ async function proposalOf(id: string, pid: string){
 export async function listDesigns(owner: string, id: string){
   const p = await getProject(owner, id), cat = await getCatalog(); const { q } = await getDb();
   const { rows } = await q('select id, base_fingerprint, brief, decisions, applied_index, created_at from design_proposals where project_id=$1 order by created_at desc limit 20', [id]);
-  const current = fingerprint(snapshotToTwin(p.draft, cat));
+  const current = houseFingerprint(p.draft, cat);
   return rows.map(r => ({ id: r.id, createdAt: r.created_at, brief: r.brief as TwinBrief, decisions: r.decisions, appliedIndex: r.applied_index,
     status: r.applied_index != null ? 'APPLIED' : r.base_fingerprint === current ? 'PREVIEW' : 'STALE' }));
 }
@@ -118,17 +131,17 @@ export async function decideDesign(owner: string, id: string, pid: string, index
     return { ok: true };
   }
   if (row.applied_index != null || (row.decisions ?? {})[key]) throw new HttpError(409, 'Varianta a fost deja decisă.');
-  if (fingerprint(snapshotToTwin(p.draft, cat)) !== row.base_fingerprint) throw new HttpError(409, 'Proiectul s-a schimbat de când a fost generată propunerea; generează din nou.', [{ code: 'STALE', severity: 'ERROR', message: 'Propunere stale.' }]);
-  const brief = row.brief as TwinBrief, base = baseFor(p.draft, brief);
+  if (houseFingerprint(p.draft, cat) !== row.base_fingerprint) throw new HttpError(409, 'Proiectul s-a schimbat de când a fost generată propunerea; generează din nou.', [{ code: 'STALE', severity: 'ERROR', message: 'Propunere stale.' }]);
+  const brief = row.brief as TwinBrief, L = levelFor(p.draft, brief.roomId), view = levelView(p.draft, L), base = baseFor(view, brief);
   const twin = snapshotToTwin(base, cat), catalog = catalogFromItems(twinCatalogItems(cat));
   const core = createProject(id, twin);
   const prop = preview(core, pid, alt.dsl, catalog, 'rules');
   const out = accept(core, prop, { confirmWarnings: true }); // poarta de avertismente e aplicată mai jos, pe ambele validatoare
   if (!out.accepted) throw new HttpError(409, 'Varianta nu poate fi aplicată pe proiectul curent.', out.validation?.issues ?? out.issues ?? []);
   const ids = new Map<string, string>(), idOf = (x: string) => ids.get(x) ?? x;
-  const next = checkSnapshot(structuredClone(nextSnapshot(p.draft, base, cat, out.project.twin, ids)));
+  const next = checkSnapshot(structuredClone(mergeLevel(p.draft, L, nextSnapshot(view, base, cat, out.project.twin, ids))));
   const coreIssues = out.validation.issues.map(i => ({ ...i, refs: i.refs.map(idOf) }));
-  const issues: DesignIssue[] = [...coreIssues, ...appIssues(next, cat, brief.roomId)];
+  const issues: DesignIssue[] = [...coreIssues, ...appIssues(levelView(next, L), cat, brief.roomId)];
   if (issues.some(i => i.severity === 'ERROR')) throw new HttpError(409, 'Varianta nu poate fi aplicată pe proiectul curent.', issues);
   // Revizia de după aplicare cere un proiect fără erori în toate camerele: verificăm înainte de a scrie ceva.
   const blocking = projectErrors(next, cat);
