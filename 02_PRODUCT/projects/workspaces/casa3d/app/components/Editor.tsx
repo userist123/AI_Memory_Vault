@@ -5,6 +5,7 @@ import type { Catalog, Snapshot, Severity, Issue, FurniturePlacement, MaterialsC
 import BudgetPanel, { type Outbound } from './BudgetPanel';
 import { relFor, freshness } from '@/core/outbound';
 import DesignPanel from './DesignPanel';
+import TwinDesignPanel from './TwinDesignPanel';
 import { finishesOf, budgetOf, roomGeometry } from '@/core/boq';
 import { History } from '@/core/history';
 import { validatePlacement, validateFloor, severityOf } from '@/core/validate';
@@ -24,7 +25,7 @@ export default function Editor({ id }: { id: string }){
   const [snap, setSnap] = useState<Snapshot | null>(null), [catalog, setCatalog] = useState<Catalog | null>(null), [mc, setMc] = useState<MaterialsCatalog | null>(null), [out, setOut] = useState<Outbound | null>(null);
   const [sel, setSel] = useState<Sel>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('split');
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error'>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
-  const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[] } | null>(null), [persistent, setPersistent] = useState(true), [panel, setPanel] = useState<'props' | 'budget' | 'design' | 'revs'>('props'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null);
+  const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[] } | null>(null), [persistent, setPersistent] = useState(true), [panel, setPanel] = useState<'props' | 'budget' | 'design' | 'twin' | 'revs'>('props'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
   const hist = useRef(new History<Snapshot>()), dragStart = useRef<Snapshot | null>(null), timer = useRef<any>(null), latest = useRef<Snapshot | null>(null), [, force] = useState(0);
   const say = (t: string) => { setToast(t); clearTimeout((say as any).t); (say as any).t = setTimeout(() => setToast(''), 3500); };
 
@@ -32,7 +33,10 @@ export default function Editor({ id }: { id: string }){
     .then(([p, c, h, m]) => { setSnap(p.draft); latest.current = p.draft; setCatalog(c); setMc(m); setRev(p.currentRevision); setPersistent(h.persistent); }).catch(() => say('Proiectul nu există sau nu ai acces la el.'));
     fetch('/api/outbound').then(r => r.ok ? r.json() : null).then(setOut).catch(() => {});
     loadRevs(); }, [id]); // eslint-disable-line
-  const loadRevs = () => fetch(`/api/projects/${id}/revisions`).then(r => r.ok ? r.json() : []).then(setRevs);
+  const loadRevs = () => { fetch(`/api/projects/${id}/revisions`).then(r => r.ok ? r.json() : []).then(setRevs); fetch(`/api/projects/${id}/shares`).then(r => r.ok ? r.json() : []).then(setShares); };
+  async function shareRevision(n: number){ const r = await fetch(`/api/projects/${id}/shares`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ revision: n }) }); const j = await r.json();
+    if (!r.ok){ say(j.error || 'Partajarea a eșuat.'); return; } const url = `${location.origin}${j.path}`; try { await navigator.clipboard.writeText(url); say('Link de vizualizare copiat; arată doar această revizie.'); } catch { say(`Link de vizualizare: ${url}`); } loadRevs(); }
+  async function revokeShare(token: string){ const r = await fetch(`/api/projects/${id}/shares`, { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token }) }); if (!r.ok){ say('Revocarea a eșuat.'); return; } say('Linkul a fost revocat.'); loadRevs(); }
   const persist = useCallback((s: Snapshot) => { latest.current = s; setSave('dirty'); clearTimeout(timer.current);
     timer.current = setTimeout(async () => { setSave('saving'); const r = await fetch(`/api/projects/${id}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ snapshot: latest.current }) });
       if (r.ok) setSave('saved'); else { setSave('error'); say((await r.json()).error || 'Salvarea a eșuat.'); } }, 700); }, [id]);
@@ -115,7 +119,7 @@ export default function Editor({ id }: { id: string }){
       </div>
       <aside className="side">
         <div className="btn" role="tablist" style={{ padding: 2, gap: 2, justifySelf: 'start' }}>
-          {([['props', 'Proprietăți'], ['budget', 'Buget'], ['design', 'Design'], ['revs', 'Revizii']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={panel === k} className="btn" style={{ minHeight: 30, border: 0, background: panel === k ? 'var(--graphite)' : 'transparent', color: panel === k ? '#fff' : undefined }} onClick={() => setPanel(k)}>{l}</button>)}
+          {([['props', 'Proprietăți'], ['budget', 'Buget'], ['design', 'Design'], ['twin', 'Twin'], ['revs', 'Revizii']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={panel === k} className="btn" style={{ minHeight: 30, border: 0, background: panel === k ? 'var(--graphite)' : 'transparent', color: panel === k ? '#fff' : undefined }} onClick={() => setPanel(k)}>{l}</button>)}
         </div>
         {panel === 'props' && <>
           {floorIssues.map((i, k) => <div key={k} className={`issue ${i.severity}`}>{i.message}</div>)}
@@ -155,9 +159,11 @@ export default function Editor({ id }: { id: string }){
             onRotate={() => rotate(selPl.id)} onDelete={del} />}
         </>}
         {panel === 'design' && <DesignPanel id={id} snap={snap} say={say} onPreview={(v: any, pid: string | null) => setPreview(v && pid ? { v, pid } : null)} onApplied={(s: Snapshot, n: number) => { hist.current.push(snap); setSnap(s); latest.current = s; setRev(n); setSave('saved'); setSel(null); }} />}
+        {panel === 'twin' && <TwinDesignPanel id={id} snap={snap} catalog={catalog} say={say} onPreview={(s: Snapshot | null, label: string | null) => setPreview(s && label ? { v: { candidate: s, title: label, tier: 'twin-' + label }, pid: 'twin' } : null)} onApplied={(s: Snapshot, n: number) => { hist.current.push(snap); setSnap(s); latest.current = s; setRev(n); setSave('saved'); setSel(null); loadRevs(); }} />}
         {panel === 'budget' && <BudgetPanel snap={snap} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
         {panel === 'revs' && <div className="revs"><h3>Revizii</h3>{revs.length === 0 && <p className="muted">Nicio revizie încă. Folosește „Salvează revizia”.</p>}
-          {revs.map(r => <div key={r.number} className="r"><span>Revizia {r.number}{r.note ? ` · ${r.note}` : ''}</span><button className="btn" onClick={() => restore(r.number)}>Revin</button><small>{new Date(r.created_at).toLocaleString('ro-RO')}</small></div>)}</div>}
+          {revs.map(r => <div key={r.number} className="r"><span>Revizia {r.number}{r.note ? ` · ${r.note}` : ''}</span><button className="btn" onClick={() => restore(r.number)}>Revin</button><button className="btn" onClick={() => shareRevision(r.number)} title="Link doar pentru vizualizare, către această revizie">Partajează</button><small>{new Date(r.created_at).toLocaleString('ro-RO')}</small></div>)}
+          {shares.filter(s => !s.revokedAt).length > 0 && <><h4>Linkuri de vizualizare active</h4>{shares.filter(s => !s.revokedAt).map(s => <div key={s.token} className="r"><span>Revizia {s.revisionNumber}</span><a className="btn" href={s.path} target="_blank" rel="noopener">Deschide</a><button className="btn danger" onClick={() => revokeShare(s.token)}>Revocă</button><small>{new Date(s.createdAt).toLocaleString('ro-RO')}</small></div>)}</>}</div>}
       </aside>
     </div>
     {toast && <div className="toast" role="status">{toast}</div>}

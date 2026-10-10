@@ -59,6 +59,11 @@ export interface Placement {
   role?: string;
 }
 
+export interface TwinPolicy {
+  /** Pairs of roles whose footprints may overlap (a desk chair tucked under a desk). Order-independent. */
+  allowedOverlaps?: [string, string][];
+}
+
 export interface Twin {
   version: typeof TWIN_VERSION;
   id: string;
@@ -66,6 +71,12 @@ export interface Twin {
   walls: Wall[];
   openings: Opening[];
   placements: Placement[];
+  policy?: TwinPolicy;
+}
+
+export function overlapAllowed(twin: Pick<Twin, 'policy'>, a: { role?: string | undefined }, b: { role?: string | undefined }): boolean {
+  const pairs = twin.policy?.allowedOverlaps; if (!pairs || !a.role || !b.role) return false;
+  return pairs.some(([x, y]) => (x === a.role && y === b.role) || (x === b.role && y === a.role));
 }
 
 const byId = <T extends { id: string }>(a: T, b: T): number => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
@@ -132,7 +143,9 @@ export function normalize(twin: Twin): Twin {
     if (p.role === undefined) delete q.role;
     return q;
   }).sort(byId);
-  return linkWalls({ version: TWIN_VERSION, id: twin.id, rooms, walls, openings, placements });
+  const out: Twin = { version: TWIN_VERSION, id: twin.id, rooms, walls, openings, placements };
+  if (twin.policy?.allowedOverlaps?.length) out.policy = { allowedOverlaps: twin.policy.allowedOverlaps.map(([a, b]) => (a < b ? [a, b] : [b, a]) as [string, string]).sort() };
+  return linkWalls(out);
 }
 
 function canonicalJson(value: unknown): string {

@@ -29,4 +29,10 @@ create table if not exists clicks(id bigserial primary key, target_kind text not
   hour timestamptz not null, device text not null, from_page text);
 create index if not exists clicks_target on clicks(target_kind, target_id);
 create table if not exists price_history(id bigserial primary key, target_kind text not null, target_id text not null, price numeric(12,2) not null, verified_at date not null, recorded_at timestamptz not null default now());
+create table if not exists design_proposals(id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id) on delete cascade,
+  base_fingerprint text not null, brief jsonb not null, alternatives jsonb not null, decisions jsonb not null default '{}'::jsonb, created_at timestamptz not null default now());
+create index if not exists design_proposals_project on design_proposals(project_id, created_at desc);
+create table if not exists shares(token text primary key, project_id uuid not null references projects(id) on delete cascade, revision_number int not null,
+  created_at timestamptz not null default now(), revoked_at timestamptz);
+create index if not exists shares_project on shares(project_id);
 `;

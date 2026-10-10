@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@casa3d/twin-core": "file:../packages/twin-core",
     "@electric-sql/pglite": "^0.5.8",
     "next": "^15.5.27",
     "pg": "^8.23.1",

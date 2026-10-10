@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-10T12:40:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-10T12:55:00Z
 TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / none    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
@@ -79,9 +79,14 @@ PLAN v8 REBUILD (2026-10-10; owner decisions 10:58 UTC: code in Vault workspace 
   02_PRODUCT/projects/workspaces/casa3d/app (commit 747fec0f); in the container: npm ci, tsc clean, Vitest 64/64,
   next build OK (22 routes). App docs (CONSTITUTION, README, PHASE1-4) allowlisted as plain documents.
 NEXT (in order):
-0. Integrate twin-core into the app: lib/twin-adapter.ts (Snapshot <-> Twin), /api/projects/[id]/design (3 alternatives
-   via rules provider, BOQ-aware), /design/[pid] accept/reject with stale protection, /shares + /share/[token],
-   joystick in Viewer3D; tests; CI app job green.
+0. DONE 12:55 UTC (integration): lib/twin.ts adapter, lib/design.ts (room-scoped BOQ, stale over the full twin),
+   lib/share.ts, tables design_proposals + shares, routes /design, /design/[pid], /shares, /api/share/[token],
+   page /share/[token], editor tab Twin + share buttons, joystick (engine setMove), twin-core overlap policy and
+   door side margin, next.config extensionAlias. Evidence: app tsc 0, vitest 71/71, next build OK, HTTP smoke on
+   next start (apply -> rev 1, stale 409, share 200 no-store/noindex, bad/revoked 404); twin-core 55/55.
+   Work routed with the cost-router skill: Opus reviewer in its own context (pending), Sonnet for PHASE5 and the
+   state-card refresh.
+1. Act on the independent review findings; confirm CI green on the pushed head; owner checks the UI on the PC.
 1. Owner supplies the v8 archive (or its path), or allows the PowerShell hash scan on LAB-PC; compare SHA-256 with 7bb34bf3...9628bc.
 2. npm ci, full Vitest, next build; record output in CORE_IMPLEMENTATION_v8.md.
 3. node scripts/verify-f4.mjs and verify-f5.mjs; record output.

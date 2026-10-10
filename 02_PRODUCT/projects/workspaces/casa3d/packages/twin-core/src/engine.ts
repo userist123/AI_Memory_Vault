@@ -4,7 +4,7 @@ import {
   type Rect, EPS, mm, polygonProblems, rectInsidePolygon, rectsOverlap, rectIntersectionArea, polygonArea,
   rectArea, segmentIsAxisAligned, segmentLength, bandAlong, rectTouchesSegment, polygonBounds, rectOf,
 } from './geometry.js';
-import { type Twin, type Placement, type Opening, type Wall, type Rotation, footprint, wallSegment, linkWalls } from './twin.js';
+import { type Twin, type Placement, type Opening, type Wall, type Rotation, footprint, wallSegment, linkWalls, overlapAllowed } from './twin.js';
 
 export type Severity = 'ERROR' | 'WARNING';
 
@@ -30,6 +30,8 @@ export interface ValidationResult {
 }
 
 export const DOOR_CLEAR_DEPTH = 0.9;
+/** A door's clear zone is slightly wider than the leaf, so a product flush with the frame still counts as blocking. */
+export const DOOR_SIDE_MARGIN = 0.05;
 export const MIN_FREE_AREA_RATIO = 0.3;
 export const PLACEMENT_GRID = 0.05;
 
@@ -37,8 +39,8 @@ const err = (code: IssueCode, refs: string[], message: string): Issue => ({ seve
 const warn = (code: IssueCode, refs: string[], message: string): Issue => ({ severity: 'WARNING', code, refs, message });
 
 export function openingZone(opening: Opening, wall: Wall): Rect {
-  const depth = opening.kind === 'door' ? Math.max(opening.clearDepth, 0) : 0.05;
-  return bandAlong(wallSegment(wall), opening.offset, opening.width, depth);
+  if (opening.kind === 'door') return bandAlong(wallSegment(wall), opening.offset - DOOR_SIDE_MARGIN, opening.width + 2 * DOOR_SIDE_MARGIN, Math.max(opening.clearDepth, 0));
+  return bandAlong(wallSegment(wall), opening.offset, opening.width, 0.05);
 }
 
 export function validate(input: Twin): ValidationResult {
@@ -96,7 +98,7 @@ export function validate(input: Twin): ValidationResult {
   const placed = twin.placements.filter(p => feet.has(p.id));
   for (let i = 0; i < placed.length; i++) for (let j = i + 1; j < placed.length; j++) {
     const a = placed[i]!, b = placed[j]!;
-    if (rectsOverlap(feet.get(a.id)!, feet.get(b.id)!)) issues.push(err('PLACEMENT_OVERLAP', [a.id, b.id], `Produsele ${a.catalogId} si ${b.catalogId} se suprapun.`));
+    if (!overlapAllowed(twin, a, b) && rectsOverlap(feet.get(a.id)!, feet.get(b.id)!)) issues.push(err('PLACEMENT_OVERLAP', [a.id, b.id], `Produsele ${a.catalogId} si ${b.catalogId} se suprapun.`));
   }
   for (const p of placed) {
     const f = feet.get(p.id)!;
@@ -175,7 +177,7 @@ export function findPosition(twin: Twin, req: PlacementRequest): PlacementCandid
       for (let x = bounds.x; x + fw <= bounds.x + bounds.w + EPS; x = mm(x + PLACEMENT_GRID)) {
         const f = rectOf(x, y, fw, fd);
         if (!rectInsidePolygon(f, room.polygon)) continue;
-        if ([...others.values()].some(o => rectsOverlap(f, o))) continue;
+        if (twin.placements.some(o => !overlapAllowed(twin, { role: req.role }, o) && rectsOverlap(f, others.get(o.id)!))) continue;
         let score = 0;
         if (req.againstWall) {
           const touching = roomWalls.filter(w => (!wallFilter || wallFilter.has(w.id)) && rectTouchesSegment(f, wallSegment(w)));

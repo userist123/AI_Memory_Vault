@@ -242,6 +242,8 @@ class VaultIndex:
             if not base.exists():
                 continue
             for path in sorted(base.rglob("*.md")):
+                if "node_modules" in path.parts:  # installed workspace dependencies are not notes
+                    continue
                 if exclude_export_residue and _is_export_residue(path):
                     continue
                 note = _parse(path)

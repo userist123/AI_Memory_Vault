@@ -200,6 +200,12 @@
       "reason": "README of the imported Casa3D application; not a vault note."
     },
     {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE5.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Phase 5 plan of the imported Casa3D application; developer documentation, not a vault note."
+    },
+    {
       "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE1.md",
       "kind": "no_frontmatter",
       "category": "plain_document",

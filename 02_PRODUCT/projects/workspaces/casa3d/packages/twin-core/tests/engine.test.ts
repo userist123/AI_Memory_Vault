@@ -104,3 +104,22 @@ describe('findPosition', () => {
     expect(r!.placement.y).toBeGreaterThan(0.9 - 1e-9);
   });
 });
+
+describe('policy and door margins', () => {
+  it('allows the overlaps the policy names (a chair under a desk) and nothing else', () => {
+    const t = bedroom(); t.policy = { allowedOverlaps: [['desk', 'chair']] };
+    const desk: Placement = { id: 'desk', catalogId: 'desk-120', roomId: 'bedroom', x: 0.5, y: 1.2, w: 1.2, d: 0.6, h: 0.75, rotation: 0, role: 'desk' };
+    const chair: Placement = { ...desk, id: 'chair', catalogId: 'chair-1', x: 0.8, y: 1.5, w: 0.5, d: 0.5, h: 0.9, role: 'chair' };
+    expect(codes({ ...t, placements: [desk, chair] })).toEqual([]);
+    expect(codes({ ...t, placements: [desk, { ...chair, role: 'lamp' }] })).toEqual(['PLACEMENT_OVERLAP']);
+    const { policy: _policy, ...noPolicy } = t;
+    expect(codes({ ...noPolicy, placements: [desk, chair] })).toEqual(['PLACEMENT_OVERLAP']);
+  });
+  it('a product flush with the door frame still blocks the door', () => {
+    const t = bedroom(); // door at offset 0.2..1.1 on the south wall
+    t.placements = [bed({ id: 'w', catalogId: 'wd', x: 1.12, y: 0, w: 0.6, d: 0.6, h: 2 })];
+    expect(codes(t)).toEqual(['PLACEMENT_BLOCKS_DOOR']);
+    t.placements = [bed({ id: 'w', catalogId: 'wd', x: 1.2, y: 0, w: 0.6, d: 0.6, h: 2 })];
+    expect(codes(t)).toEqual([]);
+  });
+});
