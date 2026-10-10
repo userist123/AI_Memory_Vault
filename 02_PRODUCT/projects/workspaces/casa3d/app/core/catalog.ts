@@ -37,3 +37,12 @@ export function furnitureTotal(cat: Catalog, placements: { variantId: string }[]
   for (const p of placements){ const price = resolve(cat, p.variantId)?.offer?.price; if (typeof price === 'number' && Number.isFinite(price)) known += price; else unknown++; }
   return { known, unknown };
 }
+
+/** Categoriile bifate implicit în brief, după tipul camerei; doar grupe care există în catalog. */
+export const ROOM_DEFAULT_WANTS: Record<string, string[]> = {
+  dormitor: ['pat', 'noptiera', 'dulap'], living: ['canapea', 'masuta', 'comodaTv'], bucatarie: ['bucatarie', 'frigider', 'masa'],
+  baie: ['lavoar', 'wc', 'dus'], hol: ['pantofar', 'oglinda'], birou: ['birou', 'scaunBirou', 'biblioteca'],
+};
+export function defaultWants(roomType: string | undefined, groupKeys: string[]): string[] {
+  return (ROOM_DEFAULT_WANTS[roomType ?? ''] ?? []).filter(k => groupKeys.includes(k));
+}

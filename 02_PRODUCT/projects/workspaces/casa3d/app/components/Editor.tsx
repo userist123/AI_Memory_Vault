@@ -23,7 +23,7 @@ const TOOL_LABEL: Record<Tool, string> = { select: 'Selectez', wall: 'Perete', r
 
 export default function Editor({ id }: { id: string }){
   const [snap, setSnap] = useState<Snapshot | null>(null), [catalog, setCatalog] = useState<Catalog | null>(null), [mc, setMc] = useState<MaterialsCatalog | null>(null), [out, setOut] = useState<Outbound | null>(null);
-  const [sel, setSel] = useState<Sel>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('split');
+  const [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('split');
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error'>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
   const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[] } | null>(null), [persistent, setPersistent] = useState(true), [panel, setPanel] = useState<'props' | 'budget' | 'design' | 'twin' | 'revs'>('props'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
   const hist = useRef(new History<Snapshot>()), dragStart = useRef<Snapshot | null>(null), timer = useRef<any>(null), latest = useRef<Snapshot | null>(null), [, force] = useState(0);
@@ -100,7 +100,7 @@ export default function Editor({ id }: { id: string }){
       <button className="btn" onClick={undo} disabled={!hist.current.canUndo} title="Ctrl+Z">↶ Anulează</button>
       <button className="btn" onClick={redo} disabled={!hist.current.canRedo} title="Ctrl+Y">↷ Refă</button>
       <div className="btn" role="group" aria-label="Vizualizare" style={{ padding: 2, gap: 2 }}>
-        {(['2d', 'split', '3d'] as const).map(vv => <button key={vv} className="btn" style={{ minHeight: 30, border: 0, background: view === vv ? 'var(--graphite)' : 'transparent', color: view === vv ? '#fff' : undefined }} onClick={() => setView(vv)}>{vv === '2d' ? 'Plan' : vv === '3d' ? '3D' : 'Plan + 3D'}</button>)}
+        {(['2d', 'split', '3d'] as const).map(vv => <button key={vv} className="btn" style={{ minHeight: 30, border: 0, background: view === vv ? 'var(--graphite)' : 'transparent', color: view === vv ? '#fff' : undefined }} onClick={() => { setView(vv); if (vv === '3d' && typeof matchMedia === 'function' && matchMedia('(max-width: 900px)').matches) setSideOpen(false); }}>{vv === '2d' ? 'Plan' : vv === '3d' ? '3D' : 'Plan + 3D'}</button>)}
       </div>
       <button className="btn primary" onClick={saveRevision}>Salvează revizia</button>
     </header>
@@ -117,9 +117,12 @@ export default function Editor({ id }: { id: string }){
           <strong>Poziția are avertismente</strong>{pending.issues.map((i, k) => <div key={k} className={`issue ${i.severity}`}>{i.message}</div>)}
           <div style={{ display: 'flex', gap: 8 }}><button className="btn primary" onClick={() => setPending(null)}>Păstrez poziția</button><button className="btn" onClick={() => { setSnap(pending.before); persist(pending.before); setPending(null); }}>Revin</button></div></div>}
       </div>
-      <aside className="side">
-        <div className="btn" role="tablist" style={{ padding: 2, gap: 2, justifySelf: 'start' }}>
-          {([['props', 'Proprietăți'], ['budget', 'Buget'], ['design', 'Design'], ['twin', 'Twin'], ['revs', 'Revizii']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={panel === k} className="btn" style={{ minHeight: 30, border: 0, background: panel === k ? 'var(--graphite)' : 'transparent', color: panel === k ? '#fff' : undefined }} onClick={() => setPanel(k)}>{l}</button>)}
+      <aside className={`side ${sideOpen ? '' : 'closed'}`}>
+        <div className="sidetabs" style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="btn" role="tablist" style={{ padding: 2, gap: 2, justifySelf: 'start', overflowX: 'auto', maxWidth: '100%' }}>
+          {([['props', 'Proprietăți'], ['budget', 'Buget'], ['design', 'Design'], ['twin', 'Twin'], ['revs', 'Revizii']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={panel === k} className="btn" style={{ minHeight: 30, border: 0, background: panel === k ? 'var(--graphite)' : 'transparent', color: panel === k ? '#fff' : undefined }} onClick={() => { setPanel(k); setSideOpen(true); }}>{l}</button>)}
+        </div>
+          <button className="btn sidetoggle" aria-expanded={sideOpen} onClick={() => setSideOpen(o => !o)}>{sideOpen ? 'Ascunde ▾' : 'Panou ▴'}</button>
         </div>
         {panel === 'props' && <>
           {floorIssues.map((i, k) => <div key={k} className={`issue ${i.severity}`}>{i.message}</div>)}
