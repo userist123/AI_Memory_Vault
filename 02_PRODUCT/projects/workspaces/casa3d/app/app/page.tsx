@@ -12,7 +12,7 @@ export default function Home(){
   useEffect(() => { fetch('/api/projects').then(r => r.json()).then(setList).catch(() => setErr(t('home.loadFailed'))); }, []); // eslint-disable-line
   const templates = templateSummary();
   async function create(template: string){ setBusy(true); setErr('');
-    const r = await fetch('/api/projects', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: name.trim() || t('home.defaultName'), template }) }); const j = await r.json();
+    const r = await fetch('/api/projects', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: name.trim() || t('home.defaultName'), template, lang }) }); const j = await r.json();
     if (!r.ok){ setErr(j.error || t('home.error')); setBusy(false); return; } location.href = `/p/${j.id}`; }
   return (<main className="home">
     <div style={{ display: 'flex', justifyContent: 'flex-end' }}><PrefsSwitcher /></div>

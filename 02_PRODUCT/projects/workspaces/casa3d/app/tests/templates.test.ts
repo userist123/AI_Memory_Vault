@@ -90,3 +90,12 @@ test('repo.createProject cu fiecare șablon; id necunoscut → 400', async () =>
   for (const bad of ['nu-exista', '', 42, null, '__proto__'])
     await assert.rejects(repo.createProject(OWNER, 'Rău', bad), (e: any) => e.status === 400 && /Șablon necunoscut/.test(e.message));
 });
+
+import { localizeRoomNames } from '../core/templates';
+test('numele implicite ale camerelor se traduc la crearea proiectului; cele personalizate rămân', () => {
+  const f = { id: 'f', name: 'E', ceilingHeight: 2.6, walls: [], rooms: [
+    { id: 'a', name: 'Dormitor 2', type: 'dormitor', rect: { x0: 0, z0: 0, x1: 1, z1: 1 } }, { id: 'b', name: 'WC', type: 'baie', rect: { x0: 0, z0: 0, x1: 1, z1: 1 } },
+    { id: 'c', name: 'Bucătărie', type: 'bucatarie', rect: { x0: 0, z0: 0, x1: 1, z1: 1 } }, { id: 'd', name: 'Camera lui Andrei', type: 'dormitor', rect: { x0: 0, z0: 0, x1: 1, z1: 1 } }] };
+  assert.deepEqual(localizeRoomNames(f, 'en').rooms.map(r => r.name), ['Bedroom 2', 'WC', 'Kitchen', 'Camera lui Andrei']);
+  assert.equal(localizeRoomNames(f, 'ro'), f);
+});

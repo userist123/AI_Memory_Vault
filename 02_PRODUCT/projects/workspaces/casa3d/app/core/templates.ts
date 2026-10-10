@@ -28,3 +28,15 @@ export const floorArea = (f: Floor): number => Math.round(f.rooms.reduce((s, r) 
 export function templateSummary(): TemplateSummary[] {
   return TEMPLATES.map(t => ({ id: t.id, name: t.name, description: t.description, rooms: t.floor.rooms.length, area: floorArea(t.floor) }));
 }
+
+/** Numele camerelor după tip, pe limbi; folosite când un proiect nou pornește dintr-un șablon. */
+export const ROOM_NAMES: Record<'ro' | 'en', Record<string, string>> = {
+  ro: { hol: 'Hol', baie: 'Baie', bucatarie: 'Bucătărie', living: 'Living', dormitor: 'Dormitor' },
+  en: { hol: 'Hall', baie: 'Bathroom', bucatarie: 'Kitchen', living: 'Living room', dormitor: 'Bedroom' },
+};
+/** Traduce numele implicite ale camerelor (de ex. „Dormitor 2” → „Bedroom 2”); numele personalizate (de ex. „WC”) rămân. */
+export function localizeRoomNames(floor: Floor, lang: 'ro' | 'en'): Floor {
+  if (lang === 'ro') return floor;
+  return { ...floor, rooms: floor.rooms.map(r => { const base = ROOM_NAMES.ro[r.type], m = base ? new RegExp(`^${base}( \\d+)?$`).exec(r.name) : null;
+    return m ? { ...r, name: ROOM_NAMES[lang][r.type] + (m[1] ?? '') } : r; }) };
+}
