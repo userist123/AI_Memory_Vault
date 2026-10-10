@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-10T22:10:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-10T22:20:00Z
 TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / userist123/AI_Memory_Vault_CODEX_READY#258    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
@@ -114,7 +114,10 @@ PLAN v8 REBUILD (2026-10-10; owner decisions 10:58 UTC: code in Vault workspace 
   8 labour rates LOW), 4daf123f finishes panel, 0b7491ba 3D + Blender (procedural floors at real size, wall overlays cut around
   openings, bath tiles in 3D, drop/cove ceilings), 80b62a0d finish schedule (CSV + print). Evidence: tsc 0, vitest 263/263, next build
   OK, browser screenshots (panel, living walk with herringbone/brick/stone/spots, print schedule, CSV 26 lines). Independent review of
-  3b41ec99..80b62a0d running (vault-reviewer). Next: P1 from the report (lighting model CCT/CRI/lux, kitchen and bathroom as systems,
+  3b41ec99..80b62a0d done (vault-reviewer, PARTIAL): 9 findings, fixed in d175aaf9 with 7 regression tests red on the old code
+  (bath tiles double count, duplicate wall sides, cove LED none, drop-ceiling paint, CSV formula injection, sanitize 500s, slat
+  count, open sides, texture disposal, Blender temp file). 6d8670de marble veins. Evidence: vitest 269/269, tsc 0, build OK; PC app
+  updated and restarted on 3123 (DB got 29 materials/14 labour rates); Blender renders out3/out4 on the PC. Next: P1 from the report (lighting model CCT/CRI/lux, kitchen and bathroom as systems,
   door/window styles, textiles), Blender render of a finished room on the PC.
 PLAN multi-level homes (done; kept for reference):
   Model: Snapshot.floor stays the ground level (saved projects and the API unchanged); new Snapshot.levels?: Floor[]
