@@ -30,31 +30,31 @@ function clearanceZone(cat: Catalog, p: FurniturePlacement, fp: RoomRect): RoomR
 // Verificarea unei plasări. ERROR = nu se aplică; WARNING = se aplică doar după confirmare.
 export function validatePlacement(snap: Snapshot, cat: Catalog, p: FurniturePlacement): Issue[] {
   const issues: Issue[] = [], rv = resolve(cat, p.variantId), room = snap.floor.rooms.find(r => r.id === p.roomId);
-  if (!rv) return [{ code: 'UNKNOWN_VARIANT', severity: 'ERROR', message: 'Produsul nu mai există în catalog.' }];
-  if (!room) return [{ code: 'OUT_OF_ROOM', severity: 'ERROR', message: 'Piesa nu aparține niciunei camere.' }];
+  if (!rv) return [{ code: 'UNKNOWN_VARIANT', severity: 'ERROR', message: 'Produsul nu mai există în catalog.', key: 'issue.UNKNOWN_VARIANT' }];
+  if (!room) return [{ code: 'OUT_OF_ROOM', severity: 'ERROR', message: 'Piesa nu aparține niciunei camere.', key: 'issue.NO_ROOM' }];
   const fp = footprintOf(cat, p)!, ph = p.size ? p.size.h / 100 : rv.h; // dimensiunile pe comandă au prioritate
-  if (!insideRect(room.rect, fp)) issues.push({ code: 'OUT_OF_ROOM', severity: 'ERROR', message: `Iese din ${room.name}.` });
-  if (doorZones(snap.floor, room).some(z => rectHit(z, fp))) issues.push({ code: 'DOOR_ZONE', severity: 'ERROR', message: 'Blochează deschiderea unei uși.' });
+  if (!insideRect(room.rect, fp)) issues.push({ code: 'OUT_OF_ROOM', severity: 'ERROR', message: `Iese din ${room.name}.`, key: 'issue.OUT_OF_ROOM', vars: { rn: room.name } });
+  if (doorZones(snap.floor, room).some(z => rectHit(z, fp))) issues.push({ code: 'DOOR_ZONE', severity: 'ERROR', message: 'Blochează deschiderea unei uși.', key: 'issue.DOOR_ZONE' });
   const others = snap.placements.filter(o => o.id !== p.id && o.roomId === p.roomId);
   for (const o of others){ const ofp = footprintOf(cat, o); if (!ofp || allowed(p.group, o.group)) continue;
-    if (rectHit(fp, ofp)) issues.push({ code: 'OVERLAP', severity: 'ERROR', message: `Se suprapune cu ${resolve(cat, o.variantId)?.product.name}.`, with: o.id }); }
+    if (rectHit(fp, ofp)) issues.push({ code: 'OVERLAP', severity: 'ERROR', message: `Se suprapune cu ${resolve(cat, o.variantId)?.product.name}.`, with: o.id, key: 'issue.OVERLAP', vars: { nm: resolve(cat, o.variantId)?.product.name ?? '' } }); }
   // LACUNA 1 reparată: mobilierul înalt nu are voie în fața ferestrei nici la mutarea manuală
   if (ph > TALL_ITEM_M){ const r = room.rect, sides: [('N' | 'S' | 'W' | 'E'), number, boolean][] = [['N', fp.z0 - r.z0, true], ['S', r.z1 - fp.z1, true], ['W', fp.x0 - r.x0, false], ['E', r.x1 - fp.x1, false]];
     for (const [s, gap, horiz] of sides){ if (gap > WALL_PROXIMITY_M) continue; const a = horiz ? fp.x0 : fp.z0, b = horiz ? fp.x1 : fp.z1;
-      if (openingsOnSide(snap.floor, room, s).some(o => o.kind === 'window' && b > o.a + .01 && a < o.b - .01)) { issues.push({ code: 'WINDOW_BLOCKED', severity: 'WARNING', message: 'Acoperă o fereastră (piesă mai înaltă de 95 cm).' }); break; } } }
+      if (openingsOnSide(snap.floor, room, s).some(o => o.kind === 'window' && b > o.a + .01 && a < o.b - .01)) { issues.push({ code: 'WINDOW_BLOCKED', severity: 'WARNING', message: 'Acoperă o fereastră (piesă mai înaltă de 95 cm).', key: 'issue.WINDOW_BLOCKED', vars: { h_m: TALL_ITEM_M } }); break; } } }
   // LACUNA 2 reparată: spațiul de circulație din fața piesei (și cel al pieselor vecine)
   const cz = clearanceZone(cat, p, fp);
-  if (cz){ if (!insideRect(room.rect, cz)) issues.push({ code: 'CLEARANCE', severity: 'WARNING', message: `Nu rămân ${Math.round((FRONT_CLEARANCE[p.group] ?? .6) * 100)} cm liberi în față.` });
-    for (const o of others){ const ofp = footprintOf(cat, o); if (ofp && !allowed(p.group, o.group) && rectHit(cz, ofp)) { issues.push({ code: 'CLEARANCE', severity: 'WARNING', message: `Prea aproape de ${resolve(cat, o.variantId)?.product.name}: spațiul de circulație e redus.`, with: o.id }); break; } } }
+  if (cz){ if (!insideRect(room.rect, cz)) issues.push({ code: 'CLEARANCE', severity: 'WARNING', message: `Nu rămân ${Math.round((FRONT_CLEARANCE[p.group] ?? .6) * 100)} cm liberi în față.`, key: 'issue.CLEARANCE_FRONT', vars: { d_m: FRONT_CLEARANCE[p.group] ?? .6 } });
+    for (const o of others){ const ofp = footprintOf(cat, o); if (ofp && !allowed(p.group, o.group) && rectHit(cz, ofp)) { issues.push({ code: 'CLEARANCE', severity: 'WARNING', message: `Prea aproape de ${resolve(cat, o.variantId)?.product.name}: spațiul de circulație e redus.`, with: o.id, key: 'issue.CLEARANCE_NEAR', vars: { nm: resolve(cat, o.variantId)?.product.name ?? '' } }); break; } } }
   for (const o of others){ const ofp = footprintOf(cat, o); if (!ofp || allowed(p.group, o.group)) continue; const oz = clearanceZone(cat, o, ofp);
-    if (oz && rectHit(oz, fp) && !rectHit(ofp, fp)){ issues.push({ code: 'CLEARANCE', severity: 'WARNING', message: `Stă în spațiul de circulație al piesei ${resolve(cat, o.variantId)?.product.name}.`, with: o.id }); break; } }
+    if (oz && rectHit(oz, fp) && !rectHit(ofp, fp)){ issues.push({ code: 'CLEARANCE', severity: 'WARNING', message: `Stă în spațiul de circulație al piesei ${resolve(cat, o.variantId)?.product.name}.`, with: o.id, key: 'issue.CLEARANCE_IN', vars: { nm: resolve(cat, o.variantId)?.product.name ?? '' } }); break; } }
   return issues;
 }
 export const severityOf = (issues: Issue[]): Severity => issues.some(i => i.severity === 'ERROR') ? 'ERROR' : issues.length ? 'WARNING' : 'PASS';
 export function validateFloor(floor: Floor): Issue[] {
   const out: Issue[] = [];
   for (const w of floor.walls){ const L = wallLength(w.a, w.b);
-    if (L < .2) out.push({ code: 'WALL_TOO_SHORT', severity: 'ERROR', message: `Peretele ${w.id} are sub 20 cm.` });
-    for (const o of w.openings) if (o.offset < 0 || o.offset + o.width > L + 1e-6) out.push({ code: 'OPENING_OUTSIDE_WALL', severity: 'ERROR', message: `Golul ${o.id} iese din peretele ${w.id}.` }); }
+    if (L < .2) out.push({ code: 'WALL_TOO_SHORT', severity: 'ERROR', message: `Peretele ${w.id} are sub 20 cm.`, key: 'issue.WALL_TOO_SHORT', vars: { id: w.id, d_m: 0.2 } });
+    for (const o of w.openings) if (o.offset < 0 || o.offset + o.width > L + 1e-6) out.push({ code: 'OPENING_OUTSIDE_WALL', severity: 'ERROR', message: `Golul ${o.id} iese din peretele ${w.id}.`, key: 'issue.OPENING_OUTSIDE_WALL', vars: { op: o.id, id: w.id } }); }
   return out;
 }

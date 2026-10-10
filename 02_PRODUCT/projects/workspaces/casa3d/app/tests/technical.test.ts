@@ -73,3 +73,8 @@ test('cel mult două întrerupătoare pe cameră, întâi la intrare', () => {
   const s = demo(), c = techCounts(suggestTechPoints(s));
   for (const r of s.floor.rooms) assert.ok((c.byRoom[r.id]?.switch ?? 0) <= 2, `${r.name}: ${c.byRoom[r.id]?.switch}`);
 });
+test('tipurile de punct moștenite de la Object (toString, __proto__) sunt respinse de server', () => {
+  const s = demo(), ok = suggestTechPoints(s)[0]!;
+  s.tech = ['toString', 'constructor', '__proto__', 'hasOwnProperty'].map((kind, i) => ({ ...ok, id: `x${i}`, kind: kind as any })).concat([ok]);
+  assert.deepEqual(checkSnapshot(structuredClone(s)).tech!.map(p => p.id), [ok.id]);
+});

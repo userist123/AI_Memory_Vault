@@ -26,7 +26,11 @@ export function createViewer(canvas, { onPick } = {}){
   function setupComposer(){ const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1; composer = new EffectComposer(R); composer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); composer.setSize(w, h);
     ssao = new SSAOPass(scene, cam, w, h); ssao.kernelRadius = .3; ssao.minDistance = .0001; ssao.maxDistance = .0015; composer.addPass(ssao);
     finish = new ShaderPass(FinishShader); composer.addPass(finish); }
-  const draw = () => { if (quality === 'high' && composer) composer.render(); else R.render(scene, cam); };
+  // SSAOPass (r128) copiază proiecția camerei doar la creare și la setSize; o sincronizăm la fiecare cadru,
+  // altfel umbrele de contact folosesc un aspect/fov vechi (după redimensionare sau în imaginile de export)
+  const syncSsao = () => { const u = ssao.ssaoMaterial.uniforms; u.cameraProjectionMatrix.value.copy(cam.projectionMatrix); u.cameraInverseProjectionMatrix.value.copy(cam.projectionMatrixInverse);
+    u.cameraNear.value = cam.near; u.cameraFar.value = cam.far; ssao.depthRenderMaterial.uniforms.cameraNear.value = cam.near; ssao.depthRenderMaterial.uniforms.cameraFar.value = cam.far; };
+  const draw = () => { if (quality === 'high' && composer){ syncSsao(); composer.render(); } else R.render(scene, cam); };
   const pm = new THREE.PMREMGenerator(R); scene.environment = pm.fromScene(new RoomEnvironment(), .04).texture;
   const hemi = new THREE.HemisphereLight(0xffffff, 0xcfc8bc, .22); scene.add(hemi);
   let light = null; const interiorLights = []; // parametrii de iluminare primiți din core/lighting.ts
@@ -291,6 +295,6 @@ function model(it){
     setMode, goRoom, getMode: () => mode, setLighting, capture, renderView,
     setQuality(q){ quality = q === 'high' ? 'high' : 'normal'; if (quality === 'high' && !composer){ try { setupComposer(); } catch (e){ quality = 'normal'; composer = null; } } return quality; },
     setMove(forward, strafe){ joy.f = Number.isFinite(forward) ? Math.max(-1, Math.min(1, forward)) : 0; joy.s = Number.isFinite(strafe) ? Math.max(-1, Math.min(1, strafe)) : 0; },
-    dispose(){ alive = false; cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('wheel', wh); R.dispose(); }
+    dispose(){ alive = false; cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('wheel', wh); if (composer){ ssao.dispose(); composer.renderTarget1.dispose(); composer.renderTarget2.dispose(); composer = null; } R.dispose(); }
   };
 }

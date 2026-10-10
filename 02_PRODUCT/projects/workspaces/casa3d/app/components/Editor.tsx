@@ -17,6 +17,7 @@ import { finishesOf, budgetOf, roomGeometry, computeBudget } from '@/core/boq';
 import { appearanceColors } from '@/core/appearance';
 import { History } from '@/core/history';
 import { usePrefs } from '@/lib/prefs';
+import { issueText } from '@/lib/i18n';
 import { intlLocale } from '@/lib/i18n';
 import PrefsSwitcher from './PrefsSwitcher';
 import { formatMoney, formatArea, formatLength, formatDimsCm, cmToInput, inputToCm, lengthInputUnit, catalogCurrency } from '@/core/format';
@@ -37,7 +38,7 @@ const ICON: Record<Tool, string> = { select: 'M5 3l12 8-6 1 3 7-2 1-3-7-4 4z', w
 const TOOL_LABEL: Record<Tool, string> = { select: 'tool.select', wall: 'tool.wall', room: 'tool.room', door: 'tool.door', window: 'tool.window', measure: 'tool.measure', tech: 'tool.tech' };
 
 export default function Editor({ id }: { id: string }){
-  const { t, tp, lang, units } = usePrefs(), u = lengthInputUnit(units);
+  const { t, tp, lang, units } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units);
   const [snap, setSnap] = useState<Snapshot | null>(null), [catalog, setCatalog] = useState<Catalog | null>(null), [mc, setMc] = useState<MaterialsCatalog | null>(null), [out, setOut] = useState<Outbound | null>(null);
   const [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('split'), [help, setHelp] = useState(false), [calib, setCalib] = useState<Calib | null>(null);
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error'>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
@@ -67,7 +68,7 @@ export default function Editor({ id }: { id: string }){
     for (const [k, v] of Object.entries(patch)) if (v == null) delete f[k]; else f[k] = v; m[id] = f; return m; };
   // schimbarea variantei sau a dimensiunii unei piese trece prin validare: ERROR refuză, WARNING cere confirmare
   const changePiece = (id: string, fn: (q: FurniturePlacement) => void, refused: string) => { if (!snap) return; const n = structuredClone(snap), q = n.placements.find(x => x.id === id)!; fn(q); const iss = validatePlacement(n, catalog!, q);
-    if (severityOf(iss) === 'ERROR'){ say(`${refused}: ${iss.find(i => i.severity === 'ERROR')!.message}`); return; } commit(n); if (iss.length) setPending({ before: snap, issues: iss }); };
+    if (severityOf(iss) === 'ERROR'){ say(`${refused}: ${iT(iss.find(i => i.severity === 'ERROR')!)}`); return; } commit(n); if (iss.length) setPending({ before: snap, issues: iss }); };
 
   const issues = useMemo(() => { const m: Record<string, Issue[]> = {}; if (snap && catalog) for (const p of snap.placements) m[p.id] = validatePlacement(snap, catalog, p); return m; }, [snap, catalog]);
   const sev = useMemo(() => Object.fromEntries(Object.entries(issues).map(([k, v]) => [k, severityOf(v)])) as Record<string, Severity>, [issues]);
@@ -81,7 +82,7 @@ export default function Editor({ id }: { id: string }){
     if (phase === 'start'){ dragStart.current = snap; hist.current.push(snap); }
     if (phase === 'end'){ const before = dragStart.current!; dragStart.current = null; const cur = latest.current!;
       if (sel?.kind === 'placement'){ const p = cur.placements.find(x => x.id === sel.id); const iss = p ? validatePlacement(cur, catalog, p) : [];
-        if (severityOf(iss) === 'ERROR'){ hist.current.discardLast(); setSnap(before); persist(before); say(t('editor.positionRefused', { msg: iss.find(i => i.severity === 'ERROR')!.message })); return; }
+        if (severityOf(iss) === 'ERROR'){ hist.current.discardLast(); setSnap(before); persist(before); say(t('editor.positionRefused', { msg: iT(iss.find(i => i.severity === 'ERROR')!) })); return; }
         if (severityOf(iss) === 'WARNING'){ setPending({ before, issues: iss }); } }
       return; }
     const n = structuredClone(latest.current || snap); fn(n); latest.current = n; setSnap(n); persist(n); };
@@ -98,11 +99,11 @@ export default function Editor({ id }: { id: string }){
     if (sel.kind === 'opening'){ const w = s.floor.walls.find(w => w.id === sel.wallId); if (w) w.openings = w.openings.filter(o => o.id !== sel.id); }
     if (sel.kind === 'room'){ s.floor.rooms = s.floor.rooms.filter(r => r.id !== sel.id); s.placements = s.placements.filter(p => p.roomId !== sel.id); } }); setSel(null); };
   const rotate = (pid: string) => { if (!snap || !catalog) return; const n = structuredClone(snap), p = n.placements.find(x => x.id === pid)!; p.rotation = r3(((p.rotation + Math.PI / 2) % (Math.PI * 2))); p.source = 'manual';
-    const iss = validatePlacement(n, catalog, p); if (severityOf(iss) === 'ERROR'){ say(t('editor.rotateNoFit', { msg: iss.find(i => i.severity === 'ERROR')!.message })); return; } commit(n); if (iss.length) setPending({ before: snap, issues: iss }); };
+    const iss = validatePlacement(n, catalog, p); if (severityOf(iss) === 'ERROR'){ say(t('editor.rotateNoFit', { msg: iT(iss.find(i => i.severity === 'ERROR')!) })); return; } commit(n); if (iss.length) setPending({ before: snap, issues: iss }); };
   const duplicate = (pid: string) => { if (!snap || !catalog) return; const r = duplicatePlacement(snap, catalog, pid, uid());
-    if (!r.ok){ say(r.message); return; } commit(r.snapshot); setSel({ kind: 'placement', id: r.id }); if (r.issues.length) setPending({ before: snap, issues: r.issues }); };
+    if (!r.ok){ say(iT(r)); return; } commit(r.snapshot); setSel({ kind: 'placement', id: r.id }); if (r.issues.length) setPending({ before: snap, issues: r.issues }); };
   const nudge = (pid: string, dx: number, dz: number) => { if (!snap || !catalog) return; const r = nudgePlacement(snap, catalog, pid, dx, dz);
-    if (!r.ok){ say(r.message); return; } commit(r.snapshot); };
+    if (!r.ok){ say(iT(r)); return; } commit(r.snapshot); };
   useEffect(() => { const k = (e: KeyboardEvent) => { if (preview || (e.target as HTMLElement).closest('input,select,textarea')) return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){ e.preventDefault(); e.shiftKey ? redo() : undo(); }
     else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y'){ e.preventDefault(); redo(); }
@@ -117,7 +118,7 @@ export default function Editor({ id }: { id: string }){
 
   async function saveRevision(){ if (!snap) return; clearTimeout(timer.current); await fetch(`/api/projects/${id}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ snapshot: snap }) });
     const note = prompt(t('editor.notePrompt')) ?? ''; const r = await fetch(`/api/projects/${id}/revisions`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ note }) }); const j = await r.json();
-    if (!r.ok){ say(`${j.error} ${(j.details || []).slice(0, 2).map((d: any) => d.message).join(' ')}`); return; } setRev(j.number); setSave('saved'); say(t('editor.revSaved', { n: j.number })); loadRevs(); }
+    if (!r.ok){ say(`${j.error} ${(j.details || []).slice(0, 2).map((d: any) => iT(d)).join(' ')}`); return; } setRev(j.number); setSave('saved'); say(t('editor.revSaved', { n: j.number })); loadRevs(); }
   async function restore(n: number){ if (!confirm(t('editor.restoreConfirm', { n }))) return;
     const r = await fetch(`/api/projects/${id}/revisions/${n}`, { method: 'POST' }); if (!r.ok){ say(t('editor.restoreFailed')); return; } const s = await r.json(); hist.current.push(snap!); setSnap(s); latest.current = s; setSel(null); say(t('editor.restored', { n })); }
 
@@ -132,7 +133,8 @@ export default function Editor({ id }: { id: string }){
   const selPl = sel?.kind === 'placement' ? snap.placements.find(p => p.id === sel.id) : undefined, selRoom = sel?.kind === 'room' ? snap.floor.rooms.find(r => r.id === sel.id) : undefined;
   const selWall = sel?.kind === 'wall' ? snap.floor.walls.find(w => w.id === sel.id) : undefined, selOp = sel?.kind === 'opening' ? snap.floor.walls.find(w => w.id === sel.wallId)?.openings.find(o => o.id === sel.id) : undefined;
   // câmpurile numerice sunt în cm (metric) sau inci (imperial); `f` și `min` primesc mereu cm, datele rămân metrice
-  const num = (v: string, f: (x: number) => void, min = 0) => { const x = v.trim() === '' ? 0 : inputToCm(v, units); if (x != null && x >= min - 1e-9) f(x); };
+  // în inci, minimul afișat (ex. 78,7″ pentru 200 cm) se întoarce puțin sub pragul în cm: acceptăm o jumătate de inci toleranță și fixăm la minim
+  const num = (v: string, f: (x: number) => void, min = 0) => { const x = v.trim() === '' ? 0 : inputToCm(v, units), tol = units === 'imperial' ? 1.27 : 1e-9; if (x != null && x >= min - tol) f(Math.max(x, min)); };
   const cur = catalogCurrency(catalog), money = (v: number | null | undefined) => formatMoney(v, cur, lang, t('common.unknownPrice')), when = (d: string) => new Date(d).toLocaleString(intlLocale(lang)), inField = (m: number) => cmToInput(m * 100, units);
 
   return (<div className="ws">
@@ -161,7 +163,7 @@ export default function Editor({ id }: { id: string }){
         {preview && <div className="previewbar" role="status">{t('editor.previewBar', { title: preview.v.title })} <button className="btn" onClick={() => setPreview(null)}>{t('common.close')}</button></div>}
         {help && <KeyboardHelp onClose={() => setHelp(false)} />}
         {pending && <div className="pending" role="alertdialog" aria-label={t('editor.warnings')}>
-          <strong>{t('editor.positionWarnings')}</strong>{pending.issues.map((i, k) => <div key={k} className={`issue ${i.severity}`}>{i.message}</div>)}
+          <strong>{t('editor.positionWarnings')}</strong>{pending.issues.map((i, k) => <div key={k} className={`issue ${i.severity}`}>{iT(i)}</div>)}
           <div style={{ display: 'flex', gap: 8 }}><button className="btn primary" onClick={() => setPending(null)}>{t('editor.keepPosition')}</button><button className="btn" onClick={() => { setSnap(pending.before); persist(pending.before); setPending(null); }}>{t('editor.revert')}</button></div></div>}
       </div>
       <aside className={`side ${sideOpen ? '' : 'closed'}`}>
@@ -172,7 +174,7 @@ export default function Editor({ id }: { id: string }){
           <button className="btn sidetoggle" aria-expanded={sideOpen} onClick={() => setSideOpen(o => !o)}>{sideOpen ? t('editor.hidePanel') : t('editor.showPanel')}</button>
         </div>
         {panel === 'props' && <>
-          {floorIssues.map((i, k) => <div key={k} className={`issue ${i.severity}`}>{i.message}</div>)}
+          {floorIssues.map((i, k) => <div key={k} className={`issue ${i.severity}`}>{iT(i)}</div>)}
           {!sel && <>
             <h3>{snap.name}</h3>
             <div className="prov">{tp('editor.summaryRooms', snap.floor.rooms.length)} · {formatArea(snap.floor.rooms.reduce((a, r) => a + area(r.rect), 0), units, lang)} · {tp('editor.summaryPieces', snap.placements.length)} · {t('editor.summaryFurniture', { total: money(total) })} · {t('editor.summaryBudget')}</div>
@@ -211,7 +213,7 @@ export default function Editor({ id }: { id: string }){
           {selPl && <PlacementPanel out={out} p={selPl} snap={snap} catalog={catalog} issues={issues[selPl.id] || []} G={G} num={num}
             onVariant={vid => changePiece(selPl.id, q => { q.variantId = vid; }, t('editor.variantNoFit'))}
             onMove={(x, z) => { const n = structuredClone(snap), q = n.placements.find(p => p.id === selPl.id)!; q.x = r3(x); q.z = r3(z); q.source = 'manual'; const iss = validatePlacement(n, catalog, q);
-              if (severityOf(iss) === 'ERROR'){ say(t('editor.positionRefused', { msg: iss.find(i => i.severity === 'ERROR')!.message })); return; } commit(n); }}
+              if (severityOf(iss) === 'ERROR'){ say(t('editor.positionRefused', { msg: iT(iss.find(i => i.severity === 'ERROR')!) })); return; } commit(n); }}
             onRotate={() => rotate(selPl.id)} onDuplicate={() => duplicate(selPl.id)} onDelete={del} />}
           {selPl && <ItemLookPanel p={selPl} snap={snap} catalog={catalog} model={resolve(catalog, selPl.variantId)?.product.model3d ?? ''} num={num}
             onItem={patch => look(a => { a.items = setFinish(a.items, selPl.id, patch); })}
@@ -237,7 +239,7 @@ export default function Editor({ id }: { id: string }){
 }
 
 function RoomPanel({ room, snap, G, mc, cur, onFinish, onChange, onAuto, onAdd, num }: any){
-  const { t, tp, lang, units } = usePrefs(), u = lengthInputUnit(units), inField = (m: number) => cmToInput(m * 100, units);
+  const { t, tp, lang, units } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units), inField = (m: number) => cmToInput(m * 100, units);
   const [grp, setGrp] = useState(Object.keys(G).find(k => !G[k].includedWith)!), [vi, setVi] = useState(0);
   const w = room.rect.x1 - room.rect.x0, d = room.rect.z1 - room.rect.z0;
   return (<>
@@ -260,13 +262,13 @@ function RoomPanel({ room, snap, G, mc, cur, onFinish, onChange, onAuto, onAdd, 
   </>);
 }
 function PlacementPanel({ out, p, snap, catalog, issues, G, num, onVariant, onMove, onRotate, onDuplicate, onDelete }: { out: Outbound | null; p: FurniturePlacement; snap: Snapshot; catalog: Catalog; issues: Issue[]; G: any; num: any; onVariant(v: string): void; onMove(x: number, z: number): void; onRotate(): void; onDuplicate(): void; onDelete(): void }){
-  const { t, tp, lang, units } = usePrefs(), u = lengthInputUnit(units), cur = catalogCurrency(catalog), lei = (v: number) => formatMoney(v, cur, lang), inField = (m: number) => cmToInput(m * 100, units);
+  const { t, tp, lang, units } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units), cur = catalogCurrency(catalog), lei = (v: number) => formatMoney(v, cur, lang), inField = (m: number) => cmToInput(m * 100, units);
   const rv = resolve(catalog, p.variantId)!, room = snap.floor.rooms.find(r => r.id === p.roomId), g = G[groupOf(p.variantId)];
   return (<>
     <h3>{rv.variant.name}</h3>
     <div className="prov">{g.label} · {room?.name} · {rv.offer ? lei(rv.offer.price) : t('common.unknownPrice')}</div>
     {rv.offer && <div className="prov">{t('editor.provenance', { source: rv.offer.provenance.source ?? '', date: rv.offer.provenance.verifiedAt ?? '', conf: rv.offer.provenance.confidence ?? '', dimConf: rv.variant.dimensionsConfidence, stock: rv.offer.availability === 'UNKNOWN' ? t('common.unknown') : rv.offer.availability })}{freshness(rv.offer.provenance.verifiedAt).stale ? ` · ${t('editor.priceRecheck')}` : ''}</div>}
-    {issues.length ? issues.map((i, k) => <div key={k} className={`issue ${i.severity}`}>{i.message}</div>) : <div className="issue PASS">{t('editor.positionValid')}</div>}
+    {issues.length ? issues.map((i, k) => <div key={k} className={`issue ${i.severity}`}>{iT(i)}</div>) : <div className="issue PASS">{t('editor.positionValid')}</div>}
     <div className="grid2">
       <label className="f"><span>{t('editor.xField', { u })}</span><input type="number" value={inField(p.x)} onChange={e => num(e.target.value, (x: number) => onMove(x / 100, p.z), -1e9)} /></label>
       <label className="f"><span>{t('editor.zField', { u })}</span><input type="number" value={inField(p.z)} onChange={e => num(e.target.value, (z: number) => onMove(p.x, z / 100), -1e9)} /></label>

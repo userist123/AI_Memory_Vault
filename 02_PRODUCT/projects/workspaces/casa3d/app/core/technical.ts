@@ -98,7 +98,7 @@ export const MAX_TECH_POINTS = 600;
 export function sanitizeTech(x: unknown, snap: Pick<Snapshot, 'floor'>): TechPoint[] | undefined {
   if (!Array.isArray(x)) return undefined; const rooms = new Map(snap.floor.rooms.map(r => [r.id, r])), ceil = snap.floor.ceilingHeight || 2.6, seen = new Set<string>(), out: TechPoint[] = [];
   for (const v of x.slice(0, MAX_TECH_POINTS)){ if (!v || typeof v !== 'object') continue; const q = v as any, r = rooms.get(q.roomId);
-    if (!r || !(q.kind in TECH_KINDS) || typeof q.id !== 'string' || !/^[\w:.-]{1,80}$/.test(q.id) || seen.has(q.id)) continue;
+    if (!r || typeof q.kind !== 'string' || !Object.hasOwn(TECH_KINDS, q.kind) || typeof q.id !== 'string' || !/^[\w:.-]{1,80}$/.test(q.id) || seen.has(q.id)) continue;
     if (![q.x, q.z, q.height].every(n => typeof n === 'number' && Number.isFinite(n))) continue;
     if (q.x < r.rect.x0 - 0.05 || q.x > r.rect.x1 + 0.05 || q.z < r.rect.z0 - 0.05 || q.z > r.rect.z1 + 0.05 || q.height < 0 || q.height > ceil + 1e-9) continue;
     seen.add(q.id); out.push({ id: q.id, kind: q.kind, roomId: q.roomId, x: q.x, z: q.z, height: q.height, reason: typeof q.reason === 'string' ? q.reason.slice(0, 120) : '' }); }

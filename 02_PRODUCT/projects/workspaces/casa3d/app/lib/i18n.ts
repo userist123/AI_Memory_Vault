@@ -12,7 +12,7 @@ export const DEFAULT_LANG: Lang = 'ro';
 export const DICTS: Record<Lang, Dict> = { ro, en };
 /** Numele limbii în limba ei, pentru selector. */
 export const LANGS: { code: Lang; name: string }[] = [{ code: 'ro', name: 'Română' }, { code: 'en', name: 'English' }];
-export const isLang = (x: unknown): x is Lang => typeof x === 'string' && x in DICTS;
+export const isLang = (x: unknown): x is Lang => typeof x === 'string' && Object.hasOwn(DICTS, x);
 export const detectLang = (navigatorLanguage?: string | null): Lang => /^ro\b/i.test(navigatorLanguage ?? '') ? 'ro' : 'en';
 
 /** Textul cheii în limba cerută. Cheie lipsă în limba aleasă → textul românesc; lipsă și acolo → cheia însăși (se vede imediat în dezvoltare). */
@@ -56,4 +56,13 @@ export function adviceVars(lang: Lang, units: Units, vars: Advice['vars'], curre
 export function adviceText(lang: Lang, a: Pick<Advice, 'code' | 'vars'>, units: Units = 'metric', currency = 'RON'): { title: string; why: string; fix: string } {
   const v = adviceVars(lang, units, a.vars, currency), k = `advice.${a.code}`;
   return { title: t(lang, `${k}.title`, v), why: t(lang, `${k}.why`, v), fix: t(lang, `${k}.fix`, v) };
+}
+
+/** Textul unei probleme de validare (sau al unei operații refuzate) în limba aleasă; variabilele `*_m` sunt lungimi
+ *  formatate după unități. Fără cheie cunoscută → mesajul românesc original (de ex. probleme venite de la server). */
+export function issueText(lang: Lang, i: { message: string; key?: string; vars?: Record<string, string | number>; cause?: { message: string; key?: string; vars?: Record<string, string | number> } }, units: Units = 'metric'): string {
+  if (!i.key || !(i.key in DICTS[lang] || i.key in DICTS[DEFAULT_LANG])) return i.message;
+  const v: Vars = {}; for (const [k, x] of Object.entries(i.vars ?? {})) v[k] = k.endsWith('_m') && typeof x === 'number' ? formatLength(x, units, lang) : x;
+  if (i.cause) v.msg = issueText(lang, i.cause, units);
+  return t(lang, i.key, v);
 }

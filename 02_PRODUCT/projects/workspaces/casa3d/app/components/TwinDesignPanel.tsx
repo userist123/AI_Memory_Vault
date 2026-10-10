@@ -4,13 +4,14 @@ import type { Catalog, Snapshot, FurniturePlacement } from '@/core/types';
 import { groups, defaultWants } from '@/core/catalog';
 import { failText } from '@/core/messages';
 import { usePrefs } from '@/lib/prefs';
+import { issueText } from '@/lib/i18n';
 import { formatMoney, catalogCurrency } from '@/core/format';
 type Alt = { index: number; title: string; ok: boolean; outcomes: { op: string; ref: string; status: string; reason?: string }[]; measures: { items: number; rooms: { roomId: string; area: number; freeRatio: number; items: number }[]; warnings: number; errors: number };
   boq: { knownTotal: number; unknownCount: number; retailers: string[]; budget?: { target: number; delta: number; status: string } }; issues: { severity: string; code: string; message: string }[]; placements: FurniturePlacement[] };
 const BUDGET: Record<string, string> = { UNDER: 'twin.budget.UNDER', OVER: 'twin.budget.OVER', UNKNOWN: 'twin.budget.UNKNOWN' };
 
 export default function TwinDesignPanel({ id, snap, catalog, onPreview, onApplied, say }: { id: string; snap: Snapshot; catalog: Catalog; onPreview(s: Snapshot | null, label: string | null): void; onApplied(s: Snapshot, rev: number): void; say(t: string): void }){
-  const { t, lang } = usePrefs(), cur = catalogCurrency(catalog), lei = (v: number) => formatMoney(Math.round(v), cur, lang);
+  const { t, lang, units } = usePrefs(), iT = (i: any) => issueText(lang, i, units), cur = catalogCurrency(catalog), lei = (v: number) => formatMoney(Math.round(v), cur, lang);
   const G = groups(catalog), groupKeys = Object.keys(G).filter(k => !G[k].includedWith);
   const typeOf = (rid: string) => snap.floor.rooms.find(r => r.id === rid)?.type;
   const [roomId, setRoomId] = useState(snap.floor.rooms[0]?.id ?? ''), [wants, setWants] = useState<string[]>(() => defaultWants(typeOf(snap.floor.rooms[0]?.id ?? ''), groupKeys));
@@ -25,7 +26,7 @@ export default function TwinDesignPanel({ id, snap, catalog, onPreview, onApplie
     const j = await r.json(); setBusy(false); if (!r.ok){ say(j.error || t('design.generateFailed')); return; } setRes(j); }
   async function act(a: Alt, action: 'apply' | 'reject'){ if (!res || acting) return; setActing(true);
     const r = await fetch(`/api/projects/${id}/design/${res.id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ index: a.index, action, confirmWarnings: !!ack[a.index] }) }); const j = await r.json(); setActing(false);
-    if (!r.ok){ say(`${j.error || t('design.actionFailed')} ${(j.details || []).slice(0, 2).map((d: any) => d.message).join(' ')}`); return; }
+    if (!r.ok){ say(`${j.error || t('design.actionFailed')} ${(j.details || []).slice(0, 2).map((d: any) => iT(d)).join(' ')}`); return; }
     setDone({ ...done, [a.index]: action }); onPreview(null, null);
     if (action === 'apply'){ onApplied(j.snapshot, j.revision); say(t('twin.applied', { title: a.title, n: j.revision })); } else say(t('design.rejectedNote')); }
   // Alternativa conține deja toate piesele proiectului după aplicare (generate pe brief-ul salvat), deci previzualizarea e exact ce se aplică.
@@ -51,7 +52,7 @@ export default function TwinDesignPanel({ id, snap, catalog, onPreview, onApplie
           <p className="prov" style={{ margin: 0 }}>{t('twin.measures', { items: a.measures.items, free: a.measures.rooms.filter(r => r.roomId === res.brief.roomId).map(r => t('twin.freeArea', { pct: Math.round(r.freeRatio * 100) })).join(''), shops: a.boq.retailers.join(', ') || '—' })}</p></>
           : <p className="prov" style={{ margin: 0 }}>{t('twin.notPlaced')}</p>}
           {a.outcomes.filter(o => o.status === 'FAILED').map((o, k) => <div key={k} className="issue ERROR">{failText(o.reason, lang)}</div>)}
-          {a.issues.map((i, k) => <div key={k} className={`issue ${i.severity}`}>{i.message}</div>)}
+          {a.issues.map((i, k) => <div key={k} className={`issue ${i.severity}`}>{iT(i)}</div>)}
           {st === 'WARNING' && !done[a.index] && <label className="f" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked={!!ack[a.index]} onChange={e => setAck({ ...ack, [a.index]: e.target.checked })} /> {t('design.ack')}</label>}
           {!done[a.index] && <div className="vbtns">
             <button className="btn" disabled={!a.ok} onClick={() => onPreview(previewSnap(a), a.title)}>{t('design.preview')}</button>

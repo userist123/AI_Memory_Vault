@@ -3,11 +3,12 @@ import { useState } from 'react';
 import type { Snapshot } from '@/core/types';
 import { STYLES, PRIORITIES, DEFAULT_BRIEF, type DesignBrief } from '@/core/brief';
 import { usePrefs } from '@/lib/prefs';
+import { issueText } from '@/lib/i18n';
 import { formatMoney } from '@/core/format';
 const STATUS: Record<string, string> = { PASS: 'design.status.PASS', WARNING: 'design.status.WARNING', ERROR: 'design.status.ERROR' };
 
 export default function DesignPanel({ id, snap, onPreview, onApplied, say, cur = 'RON' }: { id: string; snap: Snapshot; onPreview(v: any | null, pid: string | null): void; onApplied(s: Snapshot, rev: number): void; say(t: string): void; cur?: string }){
-  const { t, lang } = usePrefs(), lei = (v: number) => formatMoney(Math.round(v), cur, lang);
+  const { t, lang, units } = usePrefs(), iT = (i: any) => issueText(lang, i, units), lei = (v: number) => formatMoney(Math.round(v), cur, lang);
   const [b, setB] = useState<DesignBrief>({ ...DEFAULT_BRIEF, ...(snap.brief || {}) }), [busy, setBusy] = useState(false), [res, setRes] = useState<any>(null);
   const [open, setOpen] = useState<Record<string, string>>({}), [ack, setAck] = useState<Record<string, boolean>>({}), [done, setDone] = useState<Record<string, string>>({});
   const set = (p: Partial<DesignBrief>) => setB({ ...b, ...p }), toggle = <T,>(arr: T[], v: T) => arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v];
@@ -42,7 +43,7 @@ export default function DesignPanel({ id, snap, onPreview, onApplied, say, cur =
         <div className="vtotal"><b className="mono">{lei(v.total)}</b><span className="mono">{t('design.delta', { sign: v.delta >= 0 ? '+' : '−', amount: lei(Math.abs(v.delta)) })}</span></div>
         {v.palette.length > 0 && <div className="pal">{v.palette.map((c: string) => <i key={c} style={{ background: c }} title={c} />)}</div>}
         <p className="prov" style={{ margin: 0 }}>{v.summary}</p>
-        {v.issues.map((i: any, k: number) => <div key={k} className={`issue ${i.severity}`}>{i.message}</div>)}
+        {v.issues.map((i: any, k: number) => <div key={k} className={`issue ${i.severity}`}>{iT(i)}</div>)}
         <button className="acc" aria-expanded={open[v.tier] === 'chg'} onClick={() => setOpen({ ...open, [v.tier]: open[v.tier] === 'chg' ? '' : 'chg' })}>{t('design.changes', { n: v.changes.length })}</button>
         {open[v.tier] === 'chg' && <div className="tbl">{v.changes.map((c: any, k: number) => <div key={k} className="trow"><span>{c.label}</span><b className="mono">{c.priceDelta == null ? '' : `${c.priceDelta >= 0 ? '+' : '−'}${lei(Math.abs(c.priceDelta))}`}</b><small>{c.from} → {c.to}{c.note ? ` · ${c.note}` : ''}</small></div>)}</div>}
         <button className="acc" aria-expanded={open[v.tier] === 'why'} onClick={() => setOpen({ ...open, [v.tier]: open[v.tier] === 'why' ? '' : 'why' })}>{t('design.reasons', { n: v.reasons.length })}</button>

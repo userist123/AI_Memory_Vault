@@ -21,7 +21,8 @@ export interface ProductVariant { id: string; productId: string; name: string; l
 export interface Offer { id: string; variantId: string; supplierId: string; price: number; currency: 'RON'; availability: 'UNKNOWN' | 'IN_STOCK' | 'OUT_OF_STOCK'; affiliateUrl: string | null; provenance: Provenance }
 export interface Catalog { suppliers: Supplier[]; products: Product[]; variants: ProductVariant[]; offers: Offer[] }
 export type Severity = 'PASS' | 'WARNING' | 'ERROR';
-export interface Issue { code: 'OUT_OF_ROOM' | 'OVERLAP' | 'DOOR_ZONE' | 'WINDOW_BLOCKED' | 'CLEARANCE' | 'UNKNOWN_VARIANT' | 'OPENING_OUTSIDE_WALL' | 'WALL_TOO_SHORT'; severity: 'WARNING' | 'ERROR'; message: string; with?: string }
+/** `message` = textul românesc (compatibil cu API-ul); `key` + `vars` = același text în orice limbă (lib/i18n.ts issueText). */
+export interface Issue { code: 'OUT_OF_ROOM' | 'OVERLAP' | 'DOOR_ZONE' | 'WINDOW_BLOCKED' | 'CLEARANCE' | 'UNKNOWN_VARIANT' | 'OPENING_OUTSIDE_WALL' | 'WALL_TOO_SHORT'; severity: 'WARNING' | 'ERROR'; message: string; with?: string; key?: string; vars?: Record<string, string | number> }
 
 // ---------- Faza 2: materiale, manoperă, servicii, finisaje, buget ----------
 export type MaterialCategory = 'parquet' | 'floor_tile' | 'wall_tile' | 'paint' | 'baseboard' | 'tile_adhesive' | 'lighting';

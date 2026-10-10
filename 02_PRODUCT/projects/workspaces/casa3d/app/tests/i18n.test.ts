@@ -106,3 +106,18 @@ describe('chei folosite în componente', () => {
     assert.deepEqual(bad.filter(b => !/app\/page\.tsx|despre-linkuri|app\/layout\.tsx/.test(b)), []);
   });
 });
+
+import { issueText } from '../lib/i18n';
+import { validatePlacement } from '../core/validate';
+import { nudgePlacement } from '../core/edit-ops';
+describe('problemele de validare în limba aleasă', () => {
+  test('aceeași problemă în română și în engleză, cu lungimi după unități; fallback la mesajul original', () => {
+    const cat = catalogV1 as unknown as Catalog, s = newSnapshot(cat, 'D', 'demo'), p = s.placements[0]!;
+    p.x += 50; const iss = validatePlacement(s, cat, p), out = iss.find(i => i.code === 'OUT_OF_ROOM')!;
+    assert.equal(issueText('ro', out), out.message); assert.match(issueText('en', out), /^It sticks out of /);
+    const clr = { message: 'x', key: 'issue.CLEARANCE_FRONT', vars: { d_m: 0.9 } };
+    assert.equal(issueText('en', clr, 'metric'), "There isn't 90 cm of free space in front."); assert.match(issueText('en', clr, 'imperial'), /2′ 11″/);
+    assert.equal(issueText('en', { message: 'mesaj de la server' }), 'mesaj de la server');
+    const r = nudgePlacement(s, cat, p.id, 0, 0); assert.equal(r.ok, false); if (!r.ok) assert.match(issueText('en', r), /^Position refused: It sticks out of/);
+  });
+});
