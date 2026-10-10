@@ -6,6 +6,7 @@ import { newSnapshot } from '../core/project';
 import { suggestTechPoints } from '../core/technical';
 import { planToDxf, dxfText, DXF_LAYERS } from '../core/dxf';
 import { roomSchedule } from '../core/dimensions';
+import { addLevel, floors, stairGeometry, stairVoids, SLAB } from '../core/levels';
 import { resetDbForTests } from '../lib/db';
 import * as repo from '../lib/repo';
 import { exportProjectDxf } from '../lib/dxfExport';
@@ -91,4 +92,49 @@ test('export proiect: nume de fișier sigur, 404 pentru alt proprietar', async (
   const r = await exportProjectDxf(A, id, 'ro'); assert.match(r.filename, /^[A-Za-z0-9._-]+\.dxf$/); assert.ok(r.body.startsWith('0\nSECTION\n2\nHEADER'));
   await assert.rejects(exportProjectDxf(B, id, 'ro'), (e: any) => e.status === 404);
   await assert.rejects(exportProjectDxf(A, '33333333-3333-4333-8333-333333333333', 'ro'), (e: any) => e.status === 404);
+});
+
+// ---- niveluri și scări ----
+const twoLevels = (): Snapshot => { let n = 0;
+  const s = addLevel(demo(), { name: 'Etaj', id: () => `t${n++}` }), room = s.floor.rooms[0]!.rect;
+  const cx = (room.x0 + room.x1) / 2, cz = (room.z0 + room.z1) / 2;
+  s.floor = { ...s.floor, stairs: [{ id: 'sc1', x: cx, z: cz, width: 0.9, length: 3, rotation: 0 }] }; return s; };
+const type = (dxf: string, t: string, layer?: string) => entities(dxf).filter(e => e.type === t && (!layer || e.layer === layer));
+const xsOf = (e: Ent) => e.p.filter(([c]) => c === 10 || c === 11).map(([, v]) => Number(v));
+const txt = (e: Ent) => e.p.find(([c]) => c === 1)![1];
+test('niveluri: pereții, ușile și textele se desenează pe fiecare nivel', () => {
+  const s = twoLevels(), dxf = planToDxf(s, cat, { lang: 'ro' }), v0 = planToDxf({ ...s, levels: undefined } as Snapshot, cat, { lang: 'ro' });
+  const walls = type(dxf, 'POLYLINE', 'WALLS').length, one = type(v0, 'POLYLINE', 'WALLS').length;
+  const sum = floors(s).reduce((a, f) => a + type(planToDxf({ ...s, floor: f, levels: undefined } as Snapshot, cat, { lang: 'ro' }), 'POLYLINE', 'WALLS').length, 0);
+  assert.equal(walls, sum); assert.ok(walls > one);
+  const doors = floors(s).flatMap(f => f.walls.flatMap(w => w.openings)).filter(o => o.kind === 'door').length;
+  assert.equal(type(dxf, 'ARC').length, doors);
+});
+test('nivelul 1 începe la cel puțin 3000 mm la dreapta nivelului 0', () => {
+  const s = twoLevels(), lone = planToDxf({ ...s, floor: { ...s.floor }, levels: undefined } as Snapshot, cat, { lang: 'ro' });
+  const max0 = Math.max(...entities(lone).filter(e => e.layer !== 'STAIRS').flatMap(e => e.type === 'ARC' ? [] : xsOf(e)));
+  const full = planToDxf(s, cat, { lang: 'ro' }), lvl1 = entities(full).filter(e => e.layer !== 'LEVELS' && e.layer !== 'STAIRS' && xsOf(e).some(x => x > max0 + 1500));
+  assert.ok(lvl1.length > 20);
+  for (const e of lvl1) for (const x of xsOf(e)) assert.ok(x > max0 + 2999, `${e.type} ${e.layer} ${x} vs ${max0}`);
+  const ext = /\$EXTMAX\n10\n(-?[\d.]+)/.exec(full)!; assert.ok(Number(ext[1]) >= Math.max(...lvl1.flatMap(xsOf)));
+});
+test('scări: contur + goluri pe STAIRS, trepte = pași − 1, săgeată, text după limbă', () => {
+  const s = twoLevels(), dxf = planToDxf(s, cat, { lang: 'ro' }), st = s.floor.stairs![0]!, g = stairGeometry(st, s.floor.ceilingHeight + SLAB);
+  assert.equal(type(dxf, 'POLYLINE', 'STAIRS').length, s.floor.stairs!.length + stairVoids(s, 1).length);
+  // trepte (g.steps − 1) + linia de urcare (1) + 2 brațe de săgeată + 2 diagonale ale golului
+  assert.equal(type(dxf, 'LINE', 'STAIRS').length, (g.steps - 1) + 1 + 2 + 2);
+  const at = (e: Ent, c: number) => Number(e.p.find(([k]) => k === c)![1]);   // rotație 0: treptele sunt orizontale
+  const treads = type(dxf, 'LINE', 'STAIRS').filter(e => at(e, 20) === at(e, 21) && Math.abs(Math.abs(at(e, 10) - at(e, 11)) - st.width * 1000) < 1);
+  assert.equal(treads.length, g.steps - 1);
+  assert.deepEqual(type(dxf, 'TEXT', 'STAIRS').map(txt), ['SUS']);
+  assert.deepEqual(type(planToDxf(s, cat, { lang: 'en' }), 'TEXT', 'STAIRS').map(txt), ['UP']);
+});
+test('titluri de nivel: unul pe nivel, cu numele nivelului', () => {
+  const t = type(planToDxf(twoLevels(), cat, { lang: 'ro' }), 'TEXT', 'LEVELS').map(txt);
+  assert.equal(t.length, 2); assert.ok(t.includes('Etaj'));
+});
+test('un singur nivel: fără entități LEVELS/STAIRS, dar straturile în tabel', () => {
+  const dxf = planToDxf(demo(), cat, { lang: 'ro' });
+  assert.equal(entities(dxf).filter(e => e.layer === 'LEVELS' || e.layer === 'STAIRS').length, 0);
+  assert.ok(dxf.includes('2\nLEVELS\n') && dxf.includes('2\nSTAIRS\n'));
 });
