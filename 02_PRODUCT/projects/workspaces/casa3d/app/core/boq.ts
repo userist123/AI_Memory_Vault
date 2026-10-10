@@ -4,6 +4,7 @@ import { area as rectArea } from './geometry';
 import { openingsOnSide } from './validate';
 import { floors, floorOfRoom } from './levels';
 import { roomWindows, curtainPlan, blindPlan } from './textiles';
+import { doorOpenings } from './doors';
 import { bathTiles, layoutOf, floorWaste, floorLaborId, sideGeometry, wallpaperRolls, panelCount, pieceSizeCm, ceilingOf, FEATURE_CATEGORY, FEATURE_LABOR } from './finishes';
 import { WASTE, PAINT_COATS, DOOR_HEIGHT, WINDOW_HEIGHT, BATH_TILE_HEIGHT, BACKSPLASH_HEIGHT, LIGHTS_EXTRA_PER_M2, VAT_RATE, WET_ROOMS, SANITARY, APPLIANCES, DEFAULT_BUDGET } from './rules.boq';
 
@@ -101,6 +102,10 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
     // iluminat general
     const lm = M(f.light); if (lm){ const n = f.lights ?? (1 + Math.max(0, Math.ceil((g.floorArea - LIGHTS_EXTRA_PER_M2) / LIGHTS_EXTRA_PER_M2))); const line = materialLine(lm, `${room.id}:light`, room.id, `Iluminat · ${room.name}`, n, mc.verifiedAt); items.push(line); }
   }
+  // uși de interior (foaie + toc) și mânere, pe golul lor; montajul nu are tarif verificat
+  for (const d of doorOpenings(snap)){ const c = snap.doors?.[d.id], dm = M(c?.product), hm = M(c?.handle), roomId = d.roomIds[0] ?? null;
+    if (dm){ items.push(materialLine(dm, `door:${d.id}`, roomId, `Ușă · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0)); unknown.push(`Montaj ușă ${dm.name}`); }
+    if (hm) items.push(materialLine(hm, `handle:${d.id}`, roomId, `Mâner ușă · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0)); }
   // adeziv pentru toate suprafețele placate (o singură comandă)
   const ad = mc.materials.find(m => m.category === 'tile_adhesive');
   if (ad && adhesiveArea > 0) items.push(materialLine(ad, 'adhesive', null, `Adeziv gresie/faianță (${r2(adhesiveArea)} m²)`, adhesiveArea * (ad.consumption || 0), mc.verifiedAt));

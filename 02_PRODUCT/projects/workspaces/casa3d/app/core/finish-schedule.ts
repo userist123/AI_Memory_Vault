@@ -6,17 +6,17 @@ import { computeBOQ, finishesOf } from './boq';
 import { floors } from './levels';
 import { layoutOf, materialOf, pieceSizeCm, ceilingOf } from './finishes';
 
-export type ScheduleElement = 'floor' | 'walltile' | 'wall' | 'paint' | 'baseboard' | 'ceiling' | 'led' | 'cornice' | 'spots' | 'light' | 'curtain' | 'sheer' | 'blind' | 'rug' | 'adhesive';
+export type ScheduleElement = 'floor' | 'walltile' | 'wall' | 'paint' | 'baseboard' | 'ceiling' | 'led' | 'cornice' | 'spots' | 'light' | 'curtain' | 'sheer' | 'blind' | 'rug' | 'door' | 'door_handle' | 'adhesive';
 export interface ScheduleRow { level: number; roomId: string | null; room: string; element: ScheduleElement; side?: string; kind?: string;
   product: string; supplier: string; code: string | null; details: { key: string; vars?: Record<string, string | number> }[];
   netQty: number; unit: string; wastePct: number; orderedQty: number; packs: string | null; unitPrice: number | null; total: number | null;
   url: string | null; verifiedAt: string | null; confidence: Confidence }
 
-const ELEMENT_ORDER: ScheduleElement[] = ['floor', 'walltile', 'wall', 'paint', 'baseboard', 'ceiling', 'cornice', 'led', 'spots', 'light', 'curtain', 'sheer', 'blind', 'rug', 'adhesive'];
+const ELEMENT_ORDER: ScheduleElement[] = ['floor', 'walltile', 'wall', 'paint', 'baseboard', 'ceiling', 'cornice', 'led', 'spots', 'light', 'curtain', 'sheer', 'blind', 'rug', 'door', 'door_handle', 'adhesive'];
 /** Codul de produs al magazinului, din link: Dedeman …/p/4026660 (sau 1070874-1048524), IKEA …/p/virrmo-…-70430780/ → 70430780. */
 export function productCode(url: string | null): string | null { const seg = url?.match(/\/p\/([\w-]+)\/?$/)?.[1]; if (!seg) return null;
   return /[a-z]/i.test(seg) ? seg.match(/-s?(\d{6,})$/)?.[1] ?? seg : seg; }
-const elementOf = (key: string): ScheduleElement | null => { const k = key.split(':')[1] ?? key;
+const elementOf = (key: string): ScheduleElement | null => { if (key.startsWith('door:')) return 'door'; if (key.startsWith('handle:')) return 'door_handle'; const k = key.split(':')[1] ?? key;
   return k === 'adhesive' || key === 'adhesive' ? 'adhesive' : (['floor', 'walltile', 'wall', 'paint', 'baseboard', 'ceiling', 'led', 'cornice', 'spots', 'light', 'curtain', 'sheer', 'blind', 'rug'] as const).find(e => e === k) ?? null; };
 
 export function finishSchedule(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog): ScheduleRow[] {
@@ -38,7 +38,7 @@ export function finishSchedule(snap: Snapshot, cat: Catalog, mc: MaterialsCatalo
       if (el === 'walltile') details.push({ key: 'sched.size', vars: { l: pieceSizeCm(m)[0], w: pieceSizeCm(m)[1] } });
       if (el === 'ceiling'){ const c = ceilingOf(f); details.push({ key: `fin.ceiling.${c.type}` }, { key: 'sched.drop', vars: { cm: c.dropCm } }); if (c.type === 'cove') details.push({ key: 'sched.cove', vars: { cm: c.coveCm } }); }
     }
-    if ((el === 'curtain' || el === 'sheer' || el === 'blind' || el === 'rug') && m?.specs?.sizeCm) details.push({ key: 'sched.size', vars: { l: m.specs.sizeCm[0], w: m.specs.sizeCm[1] } });
+    if ((el === 'curtain' || el === 'sheer' || el === 'blind' || el === 'rug' || el === 'door') && m?.specs?.sizeCm) details.push({ key: 'sched.size', vars: { l: m.specs.sizeCm[0], w: m.specs.sizeCm[1] } });
     if (it.label.includes(': ')) details.push({ key: 'sched.note', vars: { note: it.label.split(': ').slice(1).join(': ') } });
     if (m?.specs?.cctK) details.push({ key: 'sched.cct', vars: { k: m.specs.cctK } }); if (m?.specs?.ip) details.push({ key: 'sched.ip', vars: { ip: m.specs.ip } });
     if (it.note) details.push({ key: 'sched.note', vars: { note: it.note } });

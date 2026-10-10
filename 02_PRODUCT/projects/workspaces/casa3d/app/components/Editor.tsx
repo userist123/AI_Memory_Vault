@@ -12,6 +12,7 @@ import { adviseProject, type Advice } from '@/core/advisor';
 import RevisionDiff from './RevisionDiff';
 import TechPanel from './TechPanel';
 import FinishesPanel from './FinishesPanel';
+import { doorIssues } from '@/core/doors';
 import { suggestTechPoints, placeTechPoint, type TechKind } from '@/core/technical';
 import { RoomLookPanel, WallLookPanel, OpeningLookPanel, ItemLookPanel } from './AppearanceControls';
 import { finishesOf, budgetOf, roomGeometry, computeBudget } from '@/core/boq';
@@ -255,6 +256,8 @@ export default function Editor({ id }: { id: string }){
             </div>
             <OpeningLookPanel op={selOp} snap={snap} num={num} onPatch={patch => mutate(s => { Object.assign(s.floor.walls.find(w => w.id === (sel as any).wallId)!.openings.find(o => o.id === selOp.id)!, patch); })}
               onFrame={hex => look(a => { a.openings = setFinish(a.openings, selOp.id, { color: hex }); })} />
+            {selOp.kind === 'door' && mc && <DoorPanel op={selOp} snap={house!} mc={mc} cur={cur} onChange={(p: { product?: string | null; handle?: string | null }) => mutate(s => { const cur0 = s.doors?.[selOp.id] ?? {}, next = { ...cur0, ...p };
+              const clean = { ...(next.product ? { product: next.product } : {}), ...(next.handle ? { handle: next.handle } : {}) }; s.doors = { ...(s.doors || {}) }; if (Object.keys(clean).length) s.doors[selOp.id] = clean; else delete s.doors[selOp.id]; })} />}
             <button className="btn danger" onClick={del}>{t('editor.deleteOpening')}</button>
           </>}
           {selPl && <PlacementPanel out={out} p={selPl} snap={snap} catalog={catalog} issues={issues[selPl.id] || []} G={G} num={num}
@@ -327,3 +330,14 @@ function PlacementPanel({ out, p, snap, catalog, issues, G, num, onVariant, onMo
   </>);
 }
 
+function DoorPanel({ op, snap, mc, cur, onChange }: { op: { id: string; width: number }; snap: Snapshot; mc: MaterialsCatalog; cur: string; onChange(p: { product?: string | null; handle?: string | null }): void }){
+  const { t, lang } = usePrefs(), c = snap.doors?.[op.id] ?? {}, by = (k: string) => mc.materials.filter(m => m.category === k);
+  const opt = (m: MaterialsCatalog['materials'][number]) => <option key={m.id} value={m.id}>{m.name} · {formatMoney(m.unitPrice, cur, lang)}</option>;
+  const iss = doorIssues(snap, mc).filter(i => i.openingId === op.id);
+  return (<>
+    <h4>{t('door.title')}</h4>
+    {iss.map((i, k) => <div key={k} className="issue WARNING">{t(i.key, i.vars)}</div>)}
+    <label className="f"><span>{t('door.product')}</span><select value={c.product || ''} onChange={e => onChange({ product: e.target.value || null })}><option value="">{t('door.none')}</option>{by('door').map(opt)}</select></label>
+    <label className="f"><span>{t('door.handle')}</span><select value={c.handle || ''} onChange={e => onChange({ handle: e.target.value || null })}><option value="">{t('door.none')}</option>{by('door_handle').map(opt)}</select></label>
+  </>);
+}

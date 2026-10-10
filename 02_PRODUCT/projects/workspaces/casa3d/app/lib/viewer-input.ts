@@ -2,6 +2,7 @@
 import type { Catalog, Snapshot, MaterialsCatalog } from '@/core/types';
 import { roomVisual } from '@/core/finishes';
 import { textileVisual } from '@/core/textiles';
+import { doorVisual } from '@/core/doors';
 import { finishesOf } from '@/core/boq';
 import { planWithLook } from '@/lib/plan-look';
 import { itemStyle, itemSizeCm } from '@/core/appearance';
@@ -25,5 +26,6 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
     c.fin = { ...roomVisual(mc, f, r.type), rug: tv.rug };
     // textilele de la ferestre stau pe golul lor, pe partea dinspre cameră
     for (const w of tv.windows){ const g = plan.pereti[w.wallIndex]?.goluri[w.openingIndex]; if (g) g.trat = { inward: w.inward, rodH: w.rodH, curtain: w.curtain, sheer: w.sheer, blind: w.blind }; } });
+  if (mc) for (const d of doorVisual(snap, mc, 0)){ const g = plan.pereti[d.wallIndex]?.goluri[d.openingIndex]; if (g) g.usa = { style: d.style, color: d.color, wood: d.wood, handle: d.handle }; }
   return { plan: { ...plan, scari, goluriPlaca: extra.voids ?? [] }, items };
 }

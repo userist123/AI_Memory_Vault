@@ -1,5 +1,6 @@
 import { sanitizeAppearance, SIZE_LIMITS_CM } from '../core/appearance';
 import { sanitizeFinishes } from '../core/finishes';
+import { sanitizeDoors } from '../core/doors';
 import { sanitizeTech, MAX_TECH_POINTS } from '../core/technical';
 import catalogSeed from '../data/catalog.v1.json';
 // grupă → model 3D, ca materialele permise pe piesă să fie verificate fără a citi catalogul din baza de date
@@ -99,6 +100,7 @@ export function checkSnapshot(s: any): Snapshot {
   if (s.appearance != null){ const house = { ...s.floor, rooms: fls.flatMap(f => f.rooms), walls: fls.flatMap(f => f.walls) };
     const a = sanitizeAppearance(s.appearance, { floor: house, placements: s.placements }, p => MODEL_OF_GROUP[p.group] ?? ''); if (a) s.appearance = a; else delete s.appearance; }
   { const bad = sanitizeFinishes(s.finishes); if (bad) throw new HttpError(400, bad); }
+  if (s.doors != null){ const d = sanitizeDoors(s.doors, s); if (d.error) throw new HttpError(400, d.error); if (d.value && Object.keys(d.value).length) s.doors = d.value; else delete s.doors; }
   if (s.budget != null){ const b = s.budget; const okNum = (v: unknown) => v == null || (typeof v === 'number' && Number.isFinite(v) && v >= 0);
     if (typeof b !== 'object' || !okNum(b.target) || !okNum(b.contingencyPct) || !okNum(b.deliveryDedeman) || !okNum(b.furnitureAssembly) || !okNum(b.design) || (b.contingencyPct ?? 0) > 100) throw new HttpError(400, 'Setările de buget sunt invalide.'); }
   if (s.brief != null){ try { s.brief = checkBrief(s.brief); } catch { delete s.brief; } }

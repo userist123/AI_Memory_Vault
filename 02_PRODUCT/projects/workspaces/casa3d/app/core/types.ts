@@ -17,7 +17,7 @@ export interface Appearance { rooms?: Record<string, { walls?: Finish; floor?: F
 /** Imagine de calc sub plan (scară din `widthM`, înălțimea vine din raportul imaginii). Nu intră în calcule, doar în desenul 2D. */
 export interface Underlay { dataUrl: string; x: number; z: number; widthM: number; opacity: number; locked: boolean }
 /** `floor` = parterul (nivelul 0); `levels` = nivelurile de deasupra, în ordine (core/levels.ts). */
-export interface Snapshot { name: string; floor: Floor; levels?: Floor[]; placements: FurniturePlacement[]; selections: Record<string, string>; picked: string[]; finishes?: Record<string, RoomFinishes>; appearance?: Appearance; underlay?: Underlay; tech?: import('./technical').TechPoint[]; budget?: BudgetSettings; brief?: import('./brief').DesignBrief }
+export interface Snapshot { name: string; floor: Floor; levels?: Floor[]; placements: FurniturePlacement[]; selections: Record<string, string>; picked: string[]; finishes?: Record<string, RoomFinishes>; appearance?: Appearance; underlay?: Underlay; tech?: import('./technical').TechPoint[]; doors?: Record<string, DoorChoice>; budget?: BudgetSettings; brief?: import('./brief').DesignBrief }
 export interface Supplier { id: string; name: string; country: string; website: string }
 export interface Product { id: string; group: string; name: string; brand: string; category: string; model3d: string }
 export interface ProductVariant { id: string; productId: string; name: string; legacyIndex: number; dimensionsCm: { w: number; d: number; h: number } | null; dimensionsConfidence: Confidence; style: Record<string, any>; chairs?: number; includedWith?: string }
@@ -30,13 +30,13 @@ export interface Issue { code: 'OUT_OF_ROOM' | 'OVERLAP' | 'DOOR_ZONE' | 'WINDOW
 // ---------- Faza 2: materiale, manoperă, servicii, finisaje, buget ----------
 export type MaterialCategory = 'parquet' | 'floor_tile' | 'wall_tile' | 'paint' | 'baseboard' | 'tile_adhesive' | 'lighting'
   | 'wallpaper' | 'wall_panel' | 'decorative_plaster' | 'brick_cladding' | 'stone_cladding' | 'plasterboard' | 'cornice' | 'led_strip' | 'spot'
-  | 'curtain' | 'sheer' | 'blind' | 'rug';
+  | 'curtain' | 'sheer' | 'blind' | 'rug' | 'door' | 'door_handle';
 /** Modul de așezare a pardoselii (parchet sau plăci). */
 export type FloorPattern = 'straight' | 'brick' | 'third' | 'diagonal' | 'herringbone' | 'chevron' | 'checker';
 /** Date tehnice citite pe pagina produsului; lipsa unei valori înseamnă „nedeclarat”, nu „bun”. */
 export interface MaterialSpecs { sizeCm?: [number, number]; rectified?: boolean; slip?: 'R9' | 'R10' | 'R11' | 'R12' | 'R13'; ip?: string; cctK?: number; lumens?: number;
   roll?: { widthM: number; lengthM: number; repeatCm: number }; patterns?: FloorPattern[]; wet?: boolean; pieceM?: number; color?: string;
-  pieces?: number; opacity?: number; blind?: 'roller' | 'roman' | 'venetian' }
+  pieces?: number; opacity?: number; blind?: 'roller' | 'roman' | 'venetian'; door?: 'plain' | 'panel' | 'glass'; wood?: boolean }
 export interface Material { id: string; category: MaterialCategory; name: string; supplier: string; unit: 'm2' | 'ml' | 'L' | 'kg' | 'buc'; unitPrice: number;
   pack?: { size: number; label: string; price?: number }; coverage?: number; consumption?: number; sourceUrl: string | null; verificationType: string; confidence: Confidence; note?: string; specs?: MaterialSpecs; verifiedAt?: string }
 export interface LaborRate { id: string; label: string; unit: 'm2' | 'ml'; low: number; expected: number; high: number; sources: { name: string; url: string }[]; confidence: Confidence }
@@ -52,6 +52,8 @@ export interface RoomFinishes { floor: string; wallPaint: string; wallTile?: str
   floorLayout?: FloorLayout; wallFeatures?: WallFeature[]; ceiling?: CeilingFinish; windows?: WindowTreatment[]; rug?: RugChoice | null }
 /** Ce se pune la o fereastră: draperie (pereche de panouri), perdea transparentă, stor/jaluzea; `fullness` = cât de încrețită e draperia. */
 export interface WindowTreatment { openingId: string; curtain?: string | null; sheer?: string | null; blind?: string | null; fullness?: number }
+/** Ușa aleasă pentru un gol de ușă (produs cu toc) și mânerul ei. */
+export interface DoorChoice { product?: string | null; handle?: string | null }
 /** Covorul camerei, centrat; `rotate` îl întoarce cu 90°. */
 export interface RugChoice { material: string; rotate?: boolean }
 export interface BudgetSettings { target: number | null; contingencyPct: number; includeLabor: boolean; laborScenario: 'low' | 'expected' | 'high';

@@ -259,9 +259,14 @@ function model(it){
           // foaia ușii, deschisă ~75° spre interior (opusul normalei exterioare, ca arcul din DXF), balamaua la începutul golului
           const cmx = (pMinX + pMaxX) / 2, cmz = (pMinZ + pMaxZ) / 2, mx = ax + ux * m, mz = az + uz * m, sIn = ((mx - cmx) * nx + (mz - cmz) * nz) > 0 ? -1 : 1;
           const R = rot - sIn * 1.31, dx = Math.cos(R), dz = -Math.sin(R), lw = Math.max(.3, g.l - .06), hx = ax + ux * (g.la + .03), hz = az + uz * (g.la + .03), lh = dh - .015;
-          box(lw, lh, .04, g.intrare ? entranceMat : leafMat, hx + dx * lw / 2, lh / 2, hz + dz * lw / 2, R, walls);
-          const kx = hx + dx * (lw - .07), kz = hz + dz * (lw - .07), px = -dz, pz = dx;
-          [1, -1].forEach(sg => box(.12, .02, .02, handleMat, kx + px * sg * .045, 1.02, kz + pz * sg * .045, R, walls).castShadow = false); }
+          // ușa aleasă din catalog: culoarea foii, geam mat sau panouri în relief, culoarea mânerului
+          const us = g.usa, lm = us && us.color ? (us.wood ? MAT('wood', us.color) : MAT('paint', us.color)) : (g.intrare ? entranceMat : leafMat), hm = us && us.handle ? MAT('chrome', us.handle) : handleMat;
+          const cxL = hx + dx * lw / 2, czL = hz + dz * lw / 2, px = -dz, pz = dx;
+          box(lw, lh, .04, lm, cxL, lh / 2, czL, R, walls);
+          if (us && us.style === 'glass') [1, -1].forEach(sg => { box(lw * .55, lh * .55, .006, MAT('frost', '#e9ecec'), cxL + px * sg * .022, lh * .58, czL + pz * sg * .022, R, walls).castShadow = false; });
+          if (us && us.style === 'panel') [1, -1].forEach(sg => { [lh * .72, lh * .3].forEach((y, i) => box(lw * .62, lh * (i ? .36 : .3), .008, lm, cxL + px * sg * .024, y, czL + pz * sg * .024, R, walls).castShadow = false); });
+          const kx = hx + dx * (lw - .07), kz = hz + dz * (lw - .07);
+          [1, -1].forEach(sg => box(.12, .02, .02, hm, kx + px * sg * .045, 1.02, kz + pz * sg * .045, R, walls).castShadow = false); }
         else { const sl = g.sill != null ? g.sill : .9, top = Math.min(H - .05, sl + (g.h || 1.3)), wh = top - sl, cy = (sl + top) / 2, fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat;
           seg(g.la, g.la + g.l, 0, sl); seg(g.la, g.la + g.l, top, H); const m = g.la + g.l / 2; box(g.l, wh, .02, glass, ax + ux * m, cy, az + uz * m, rot, walls).castShadow = false;
           box(g.l, .05, th + .04, fm, ax + ux * m, sl, az + uz * m, rot, walls); box(g.l, .05, th + .02, fm, ax + ux * m, top, az + uz * m, rot, walls); box(.04, wh, th + .02, fm, ax + ux * m, cy, az + uz * m, rot, walls);
