@@ -9,6 +9,8 @@
 ```
 
 Opțiuni: `--device AUTO|OPTIX|CUDA|CPU`, `--width/--height`, `--rooms living,dormitor`, `--panorama` (360° pe cameră),
-`--export fbx,glb,obj` (pentru 3ds Max, SketchUp, Twinmotion, D5), `--blend` (salvează scena), `--no-render`.
+`--export fbx,glb,obj` (pentru 3ds Max, SketchUp, Twinmotion, D5), `--blend` (salvează scena), `--no-render`,
+`--assets D:\assets\polyhaven` (texturi foto CC0 de la polyhaven.com: laminate_floor_02, large_grey_tiles, plastered_wall,
+rough_linen, velour_velvet, leather_white, plus cerurile kloofendal_43d_clear_puresky.hdr și belfast_sunset_puresky.hdr).
 
 Ieșire: câte o imagine pe încăpere (camera se alege singură: colțul sau peretele cu vederea cea mai liberă), panorame 360°.

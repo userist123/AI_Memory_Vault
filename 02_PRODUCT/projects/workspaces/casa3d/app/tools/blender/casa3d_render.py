@@ -42,6 +42,8 @@ def parse_args(argv):
     p.add_argument('--panorama', action='store_true')
     p.add_argument('--export', default='')
     p.add_argument('--blend', action='store_true')
+    p.add_argument('--assets', default=os.environ.get('CASA3D_ASSETS', ''),
+                   help='dosar cu texturi Poly Haven (CC0): laminate_floor_02, large_grey_tiles, plastered_wall, rough_linen, velour_velvet, leather_white și cerurile *.hdr')
     p.add_argument('--no-render', action='store_true')
     return p.parse_args(argv)
 
@@ -63,9 +65,65 @@ def scaled(rgba, k):
 
 
 # ---------------------------------------------------------------- materiale
+# Texturi foto (Poly Haven, CC0), folosite când există --assets: tip -> (dosar, mărimea unei repetări în metri, tărie relief)
+TEXTURES = {'parquet': ('laminate_floor_02', 2.0, 1.0), 'tile': ('large_grey_tiles', 2.4, 1.0), 'fabric': ('rough_linen', 0.5, 0.8),
+            'velvet': ('velour_velvet', 0.5, 0.6), 'leather': ('leather_white', 0.6, 0.8), 'wall': ('plastered_wall', 2.5, 0.35)}
+
+
 class Materials:
-    def __init__(self):
+    def __init__(self, assets=''):
         self.cache = {}
+        self.assets = assets if assets and os.path.isdir(assets) else ''
+
+    def image(self, folder, name, color):
+        path = os.path.join(self.assets, folder, f'{name}.jpg')
+        if not os.path.isfile(path):
+            return None
+        img = bpy.data.images.load(path, check_existing=True)
+        img.colorspace_settings.name = 'sRGB' if color else 'Non-Color'
+        return img
+
+    def textured(self, nt, inp, kind, col, d):
+        """Material cu texturi foto: culoarea aleasă rămâne (pereți, textile), parchetul și gresia își păstrează imaginea."""
+        key = 'wall' if kind == 'paint' and float(d.get('r', 0.6)) >= 0.85 else kind
+        if not self.assets or key not in TEXTURES:
+            return False
+        folder, size, strength = TEXTURES[key]
+        nor = self.image(folder, 'nor_gl', False)
+        if nor is None:
+            return False
+        geo = nt.nodes.new('ShaderNodeNewGeometry')
+        mp = nt.nodes.new('ShaderNodeMapping')
+        mp.inputs['Scale'].default_value = (1 / size, 1 / size, 1 / size)
+        nt.links.new(geo.outputs['Position'], mp.inputs['Vector'])
+
+        def tex(img):
+            t = nt.nodes.new('ShaderNodeTexImage')
+            t.image = img
+            t.projection = 'BOX'
+            t.projection_blend = 0.2
+            nt.links.new(mp.outputs['Vector'], t.inputs['Vector'])
+            return t
+        diff, rough = self.image(folder, 'Diffuse', True), self.image(folder, 'Rough', False)
+        if key in ('parquet', 'tile') and diff is not None:
+            mix = nt.nodes.new('ShaderNodeMix')
+            mix.data_type = 'RGBA'
+            mix.blend_type = 'MULTIPLY'
+            mix.inputs['Factor'].default_value = 1.0
+            nt.links.new(tex(diff).outputs['Color'], mix.inputs['A'])
+            mix.inputs['B'].default_value = col  # nuanța aleasă în aplicație (alb = textura neschimbată)
+            nt.links.new(mix.outputs['Result'], inp['Base Color'])
+        if rough is not None:
+            nt.links.new(tex(rough).outputs['Color'], inp['Roughness'])
+        nm = nt.nodes.new('ShaderNodeNormalMap')
+        nm.inputs['Strength'].default_value = strength
+        nt.links.new(tex(nor).outputs['Color'], nm.inputs['Color'])
+        nt.links.new(nm.outputs['Normal'], inp['Normal'])
+        if kind in ('fabric', 'velvet'):
+            inp['Sheen Weight'].default_value = 0.35 if kind == 'fabric' else 1.0
+        if kind == 'leather':
+            inp['Coat Weight'].default_value = 0.3
+        return True
 
     def get(self, d):
         key = json.dumps(d, sort_keys=True)
@@ -85,6 +143,8 @@ class Materials:
         inp['Roughness'].default_value = max(0.02, min(1.0, float(d.get('r', 0.6))))
         inp['Metallic'].default_value = float(d.get('mt', 0))
         world_pos = lambda: nt.nodes.new('ShaderNodeNewGeometry').outputs['Position']
+        if self.textured(nt, inp, kind, col, d):
+            return m
 
         def bump(height_socket, strength, distance=0.01):
             b = nt.nodes.new('ShaderNodeBump')
@@ -317,8 +377,8 @@ def clear_scene():
     bpy.ops.wm.read_factory_settings(use_empty=True)
 
 
-def build(scene_data):
-    mats = Materials()
+def build(scene_data, assets=''):
+    mats = Materials(assets)
     col = bpy.data.collections.new('Casa3D')
     bpy.context.scene.collection.children.link(col)
     material_list = scene_data.get('materials', [])
@@ -357,7 +417,7 @@ def build(scene_data):
     return col
 
 
-def light_scene(scene_data):
+def light_scene(scene_data, assets=''):
     sc = bpy.context.scene
     world = bpy.data.worlds.new('cer')
     sc.world = world
@@ -376,6 +436,13 @@ def light_scene(scene_data):
     bg = nt.nodes['Background']
     bg.inputs['Strength'].default_value = {'day': 0.35, 'evening': 0.25, 'night': 0.02}.get(time, 0.35)
     nt.links.new(sky.outputs['Color'], bg.inputs['Color'])
+    # cer fotografiat (HDRI Poly Haven) când există: ziua senin, seara apus; noaptea rămâne cerul calculat, slab
+    hdri = {'day': 'kloofendal_43d_clear_puresky.hdr', 'evening': 'belfast_sunset_puresky.hdr'}.get(time)
+    if assets and hdri and os.path.isfile(os.path.join(assets, hdri)):
+        env = nt.nodes.new('ShaderNodeTexEnvironment')
+        env.image = bpy.data.images.load(os.path.join(assets, hdri), check_existing=True)
+        nt.links.new(env.outputs['Color'], bg.inputs['Color'])
+        bg.inputs['Strength'].default_value = 0.8 if time == 'day' else 0.6
     # soarele, pe aceeași direcție ca în aplicație
     if elevation > 0.02:
         sl = bpy.data.lights.new('soare', 'SUN')
@@ -504,8 +571,8 @@ def main():
         sys.exit('[casa3d] fișierul nu e o scenă Casa3D (format lipsă)')
     os.makedirs(args.out, exist_ok=True)
     clear_scene()
-    build(data)
-    light_scene(data)
+    build(data, args.assets)
+    light_scene(data, args.assets)
     setup_render(args)
     sc = bpy.context.scene
     rooms = data.get('rooms', [])
