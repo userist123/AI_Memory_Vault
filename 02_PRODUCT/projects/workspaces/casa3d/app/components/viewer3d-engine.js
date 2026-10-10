@@ -2,6 +2,16 @@
 // Modelele de mobilier, materialele și construcția pereților sunt copiate din prototip.
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+
+// Pasul final al calității înalte: în r128 tone mapping-ul (ACES) se aplică și la randarea în texturi
+// (WebGLPrograms: toneMapping nu depinde de țintă), dar ieșirea în textură rămâne liniară; aici facem doar sRGB.
+const FinishShader = { uniforms: { tDiffuse: { value: null } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv;
+    vec3 srgb(vec3 c){ return mix(pow(c, vec3(0.41666)) * 1.055 - vec3(0.055), c * 12.92, vec3(lessThanEqual(c, vec3(0.0031308)))); }
+    void main(){ vec4 t = texture2D(tDiffuse, vUv); gl_FragColor = vec4(srgb(clamp(t.rgb, 0.0, 1.0)), t.a); }` };
 
 export function createViewer(canvas, { onPick } = {}){
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -10,6 +20,13 @@ export function createViewer(canvas, { onPick } = {}){
   R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene(); scene.background = new THREE.Color('#e9ebe7'); scene.fog = new THREE.Fog('#e9ebe7', 25, 60);
   const cam = new THREE.PerspectiveCamera(68, 1, .05, 200);
+  // calitate înaltă: ocluzie ambientală (umbre de contact în colțuri și sub mobilă). Distanțele SSAO sunt în adâncime
+  // normalizată la (far - near) = ~200 m: 0.0015 ≈ 0,3 m, 0.0001 ≈ 2 cm (sub atât, suprafețele plane s-ar umbri singure); raza nucleului e în metri.
+  let quality = 'normal', composer = null, ssao = null, finish = null;
+  function setupComposer(){ const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1; composer = new EffectComposer(R); composer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); composer.setSize(w, h);
+    ssao = new SSAOPass(scene, cam, w, h); ssao.kernelRadius = .3; ssao.minDistance = .0001; ssao.maxDistance = .0015; composer.addPass(ssao);
+    finish = new ShaderPass(FinishShader); composer.addPass(finish); }
+  const draw = () => { if (quality === 'high' && composer) composer.render(); else R.render(scene, cam); };
   const pm = new THREE.PMREMGenerator(R); scene.environment = pm.fromScene(new RoomEnvironment(), .04).texture;
   const hemi = new THREE.HemisphereLight(0xffffff, 0xcfc8bc, .22); scene.add(hemi);
   let light = null; const interiorLights = []; // parametrii de iluminare primiți din core/lighting.ts
@@ -24,6 +41,7 @@ export function createViewer(canvas, { onPick } = {}){
   const tiles = tex(512, 512, (g, w, h) => { g.fillStyle = '#b9bab5'; g.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 128) for (let x = 0; x < w; x += 128){ const v = 222 + (Math.random() * 12 | 0); g.fillStyle = `rgb(${v},${v - 1},${v - 4})`; g.fillRect(x + 2, y + 2, 124, 124); } });
   const wallMat = M('#f4f3ef', { roughness: .92 }), extMat = M('#ecebe6', { roughness: .95 }), glass = new THREE.MeshPhysicalMaterial({ color: lin('#cfe3ee'), transparent: true, opacity: .28, roughness: .05, metalness: 0 });
   const frameMat = M('#ffffff', { roughness: .5 }), ceilMat = M('#fbfbf9', { roughness: 1 });
+  const skirtMat = M('#f7f6f2', { roughness: .45 });
   // materiale pe culoare, cu cache: fețe de perete, tavane, rame (culorile vin din core/appearance.ts prin plan)
   const lookCache = {}; const lookMat = (kind, hex, rough) => lookCache[kind + hex] ||= M(hex, { roughness: rough });
   const faceMat = (hex, ext) => hex ? lookMat('wall', hex, ext ? .95 : .92) : (ext ? extMat : wallMat);
@@ -186,7 +204,10 @@ function model(it){
         .filter(([cx, cz]) => Math.abs((cx - ax) * nx + (cz - az) * nz) < th + .3).map(([cx, cz]) => +((cx - ax) * ux + (cz - az) * uz).toFixed(4)))].filter(t => t > .01 && t < L - .01).sort((a, b) => a - b);
       const matAt = m => { const px = ax + ux * m, pz = az + uz * m; return [edge, edge, edge, edge, faceMat(faceHex(roomAt(px + nx * off, pz + nz * off)), wl.ext), faceMat(faceHex(roomAt(px - nx * off, pz - nz * off)), wl.ext)]; };
       const gs = [...wl.goluri].sort((a, b) => a.la - b.la); let q = 0;
-      const piece = (s0, s1, y0, y1) => { if (s1 - s0 < .005 || y1 - y0 < .005) return; const m = (s0 + s1) / 2; box(s1 - s0, y1 - y0, th, matAt(m), ax + ux * m, (y0 + y1) / 2, az + uz * m, rot, walls); };
+      // plintă de 7 cm pe fețele care dau într-o cameră uscată (baia și bucătăria au faianță/gresie)
+      const skirting = (s0, s1, m) => { for (const sg of [1, -1]){ const px = ax + ux * m + nx * sg * off, pz = az + uz * m + nz * sg * off, r = roomAt(px, pz); if (!r || r.tip === 'baie' || r.tip === 'bucatarie') continue;
+        const k = th / 2 + .006; box(s1 - s0, .07, .012, skirtMat, ax + ux * m + nx * sg * k, .035, az + uz * m + nz * sg * k, rot, walls).castShadow = false; } };
+      const piece = (s0, s1, y0, y1) => { if (s1 - s0 < .005 || y1 - y0 < .005) return; const m = (s0 + s1) / 2; box(s1 - s0, y1 - y0, th, matAt(m), ax + ux * m, (y0 + y1) / 2, az + uz * m, rot, walls); if (y0 === 0) skirting(s0, s1, m); };
       const seg = (s0, s1, y0, y1) => { let q0 = s0; for (const t of breaks){ if (t > q0 + .005 && t < s1 - .005){ piece(q0, t, y0, y1); q0 = t; } } piece(q0, s1, y0, y1); };
       gs.forEach(g => { seg(q, g.la, 0, H);
         if (g.tip === 'usa'){ const dh = Math.min(H - .05, g.h || 2.1), fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat; seg(g.la, g.la + g.l, dh, H); const m = g.la + g.l / 2; [g.la, g.la + g.l].forEach(s => box(.05, dh, th + .02, fm, ax + ux * s, dh / 2, az + uz * s, rot, walls)); box(g.l, .05, th + .02, fm, ax + ux * m, dh, az + uz * m, rot, walls); }
@@ -210,20 +231,20 @@ function model(it){
     hemi.intensity = p.hemi; sun.color.set(p.sunColor); sun.intensity = p.sun; R.toneMappingExposure = p.exposure;
     interiorLights.forEach(l => { l.intensity = p.interior; }); placeSun(); }
   // captură PNG: randează cadrul curent și îl citește imediat (fără preserveDrawingBuffer)
-  function capture(){ R.render(scene, cam); return canvas.toDataURL('image/png'); }
+  function capture(){ draw(); return canvas.toDataURL('image/png'); }
   // imagini fixe pentru export: ansamblu (machetă) sau o cameră văzută din colțul ei cel mai liber, la înălțimea ochilor
   function renderView(view, w = 1200, h = 800){ if (!plan) return null;
     const prevMode = mode, prevSize = new THREE.Vector2(); R.getSize(prevSize); const prevAspect = cam.aspect;
-    R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix();
-    if (view && view.roomId){ const r = plan.camere.find(x => x.id === view.roomId); if (!r){ R.setSize(prevSize.x, prevSize.y, false); cam.aspect = prevAspect; cam.updateProjectionMatrix(); return null; }
+    R.setSize(w, h, false); if (composer) composer.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix();
+    if (view && view.roomId){ const r = plan.camere.find(x => x.id === view.roomId); if (!r){ R.setSize(prevSize.x, prevSize.y, false); if (composer) composer.setSize(prevSize.x, prevSize.y); cam.aspect = prevAspect; cam.updateProjectionMatrix(); return null; }
       setMode('walk'); const inset = .35, corners = [[r.x0 + inset, r.z0 + inset], [r.x1 - inset, r.z0 + inset], [r.x1 - inset, r.z1 - inset], [r.x0 + inset, r.z1 - inset]];
       const blocked = ([x, z]) => blockers.some(b => x > b.x0 - .2 && x < b.x1 + .2 && z > b.z0 - .2 && z < b.z1 + .2);
       const pick = corners.find(c => !blocked(c)) || corners[0]; const opp = [r.x0 + r.x1 - pick[0], r.z0 + r.z1 - pick[1]];
       cam.fov = 75; cam.updateProjectionMatrix(); cam.position.set(pick[0], 1.65, pick[1]); cam.lookAt(opp[0], .85, opp[1]);
     } else { setMode('house'); const t = { th: -.7, ph: .85, r: Math.max(W, D, 4) * 1.25 };
       cam.position.set(C.x + Math.sin(t.th) * Math.sin(t.ph) * t.r, Math.cos(t.ph) * t.r, C.z + Math.cos(t.th) * Math.sin(t.ph) * t.r); cam.lookAt(C); }
-    R.render(scene, cam); const url = canvas.toDataURL('image/png');
-    cam.fov = 68; R.setSize(prevSize.x, prevSize.y, false); cam.aspect = prevAspect; cam.updateProjectionMatrix(); setMode(prevMode); return url; }
+    draw(); const url = canvas.toDataURL('image/png');
+    cam.fov = 68; R.setSize(prevSize.x, prevSize.y, false); if (composer) composer.setSize(prevSize.x, prevSize.y); cam.aspect = prevAspect; cam.updateProjectionMatrix(); setMode(prevMode); return url; }
 
   // ---------- navigare ----------
   let mode = 'house', yaw = 0, pitch = -.08; const EYE = 1.6, player = new THREE.Vector3(); const orbit = { th: -.7, ph: .95, r: 12 };
@@ -257,17 +278,18 @@ function model(it){
   const wh = e => { if (mode === 'house'){ orbit.r = Math.max(4, Math.min(40, orbit.r + e.deltaY * .01)); e.preventDefault(); } };
   canvas.addEventListener('pointerdown', pd); canvas.addEventListener('pointermove', pmv); canvas.addEventListener('pointerup', pu); canvas.addEventListener('wheel', wh, { passive: false });
   let raf = 0, last = performance.now(), alive = true;
-  function resize(){ const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+  function resize(){ const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1; R.setSize(w, h, false); if (composer) composer.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix(); }
   const ro = new ResizeObserver(resize); ro.observe(canvas);
   (function loop(){ if (!alive) return; raf = requestAnimationFrame(loop); const now = performance.now(), dt = Math.min(.05, (now - last) / 1000); last = now;
     if (mode === 'walk'){ let f = 0, s = 0; if (keys.w || keys.arrowup) f += 1; if (keys.s || keys.arrowdown) f -= 1; if (keys.a || keys.arrowleft) s -= 1; if (keys.d || keys.arrowright) s += 1; f = Math.max(-1, Math.min(1, f + joy.f)); s = Math.max(-1, Math.min(1, s + joy.s));
       if (f || s){ const sp = 1.7 * dt, fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw); const [x, z] = collide(player.x + (fx * f + rx * s) * sp, player.z + (fz * f + rz * s) * sp); player.x = x; player.z = z; }
       cam.position.set(player.x, EYE, player.z); cam.rotation.order = 'YXZ'; cam.rotation.set(pitch, yaw, 0);
     } else { const t = new THREE.Vector3(C.x + Math.sin(orbit.th) * Math.sin(orbit.ph) * orbit.r, Math.cos(orbit.ph) * orbit.r, C.z + Math.cos(orbit.th) * Math.sin(orbit.ph) * orbit.r); cam.position.lerp(t, reduce ? 1 : Math.min(1, dt * 5)); cam.lookAt(C); }
-    R.render(scene, cam); })();
+    draw(); })();
   return {
     setState(p, items){ plan = p; buildHouse(p); buildFurniture(items); },
     setMode, goRoom, getMode: () => mode, setLighting, capture, renderView,
+    setQuality(q){ quality = q === 'high' ? 'high' : 'normal'; if (quality === 'high' && !composer){ try { setupComposer(); } catch (e){ quality = 'normal'; composer = null; } } return quality; },
     setMove(forward, strafe){ joy.f = Number.isFinite(forward) ? Math.max(-1, Math.min(1, forward)) : 0; joy.s = Number.isFinite(strafe) ? Math.max(-1, Math.min(1, strafe)) : 0; },
     dispose(){ alive = false; cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('wheel', wh); R.dispose(); }
   };

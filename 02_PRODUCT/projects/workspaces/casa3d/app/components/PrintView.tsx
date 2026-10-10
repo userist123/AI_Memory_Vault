@@ -69,7 +69,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
     if (!data) return; let alive = true, viewer: any = null;
     (async () => { try {
       const m = await import('./viewer3d-engine.js'); if (!alive || !canvasRef.current) return;
-      viewer = m.createViewer(canvasRef.current); const lp = lighting('day'); viewer.setLighting({ ...lp, dir: sunDirection(lp.azimuthDeg, lp.elevationDeg) });
+      viewer = m.createViewer(canvasRef.current); const lp = lighting('day'); viewer.setLighting({ ...lp, dir: sunDirection(lp.azimuthDeg, lp.elevationDeg) }); viewer.setQuality?.('high');
       const snap = data.p.draft, { plan, items } = viewerInput(snap, data.catalog); viewer.setState(plan, items);
       await nextFrame(); await nextFrame(); if (!alive) return;
       const out: Record<string, string> = {}, ov = viewer.renderView(undefined, 1200, 800); if (!ov) throw new Error('no image'); out.overview = ov;

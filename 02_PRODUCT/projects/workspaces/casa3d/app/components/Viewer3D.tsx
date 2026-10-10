@@ -10,10 +10,12 @@ export default function Viewer3D({ snap, catalog, onPick }: { snap: Snapshot; ca
   const ref = useRef<HTMLCanvasElement>(null), v = useRef<any>(null), pickRef = useRef(onPick);
   const [mode, setMode] = useState<'house' | 'walk'>('house'), [err, setErr] = useState(''), [touch, setTouch] = useState(false);
   const [time, setTime] = useState<TimeOfDay>('day'), [azimuth, setAzimuth] = useState(135), [lightOpen, setLightOpen] = useState(false);
-  useEffect(() => { setTouch(typeof window !== 'undefined' && (matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0)); }, []);
+  // calitate înaltă (ocluzie ambientală) implicit pe desktop; pe telefon rămâne normală, pentru fluiditate și baterie
+  const [quality, setQuality] = useState<'normal' | 'high'>('normal'), qRef = useRef(quality); qRef.current = quality;
+  useEffect(() => { const t = typeof window !== 'undefined' && (matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0); setTouch(t); if (!t) setQuality('high'); }, []);
   pickRef.current = onPick;
   useEffect(() => { let alive = true;
-    import('./viewer3d-engine.js').then(m => { if (!alive || !ref.current) return; try { v.current = m.createViewer(ref.current, { onPick: (id: string | null) => pickRef.current(id) }); applyLight(); push(); } catch { setErr('Browserul nu suportă WebGL, așa că vizualizarea 3D nu e disponibilă.'); } });
+    import('./viewer3d-engine.js').then(m => { if (!alive || !ref.current) return; try { v.current = m.createViewer(ref.current, { onPick: (id: string | null) => pickRef.current(id) }); applyLight(); v.current.setQuality?.(qRef.current); push(); } catch { setErr('Browserul nu suportă WebGL, așa că vizualizarea 3D nu e disponibilă.'); } });
     return () => { alive = false; v.current?.dispose(); v.current = null; }; }, []); // eslint-disable-line
   const engineCat = useRef<ReturnType<typeof toEngineCatalog> | null>(null);
   function push(){ if (!v.current) return; engineCat.current ||= toEngineCatalog(catalog);
@@ -21,6 +23,7 @@ export default function Viewer3D({ snap, catalog, onPick }: { snap: Snapshot; ca
   useEffect(push, [snap]); // eslint-disable-line
   function applyLight(){ const p = lighting(time, azimuth); v.current?.setLighting({ ...p, dir: sunDirection(p.azimuthDeg, p.elevationDeg) }); }
   useEffect(applyLight, [time, azimuth]); // eslint-disable-line
+  useEffect(() => { const q = v.current?.setQuality?.(quality); if (q && q !== quality) setQuality(q); }, [quality]); // eslint-disable-line
   function capture(){ const url: string | undefined = v.current?.capture(); if (!url) return;
     const a = document.createElement('a'); a.href = url; a.download = captureFileName(snap.name); document.body.appendChild(a); a.click(); a.remove(); }
   // Joystick-ul dispare când ieși din tur: orice mișcare rămasă e anulată, altfel jucătorul ar aluneca la următorul tur.
@@ -37,6 +40,7 @@ export default function Viewer3D({ snap, catalog, onPick }: { snap: Snapshot; ca
     </div>
     {lightOpen && <div className="v3light" role="group" aria-label="Iluminare">
       {(['day', 'evening', 'night'] as const).map(t => <button key={t} className="btn" aria-pressed={time === t} onClick={() => setTime(t)}>{t === 'day' ? 'Zi' : t === 'evening' ? 'Seară' : 'Noapte'}</button>)}
+      <button className="btn" aria-pressed={quality === 'high'} onClick={() => setQuality(q => q === 'high' ? 'normal' : 'high')} title="Umbre de contact în colțuri și sub mobilă (ocluzie ambientală)">Calitate înaltă</button>
       <label className="f" style={{ minWidth: 160 }}><span>Soarele din direcția {Math.round(azimuth)}°</span><input type="range" min={0} max={359} value={azimuth} onChange={e => setAzimuth(Number(e.target.value))} /></label>
     </div>}
     <div className="hintbar">{err || (mode === 'walk' ? (touch ? 'Trage ca să privești · joystick-ul din stânga ca să mergi' : 'Trage ca să privești · W A S D sau săgeți ca să mergi') : 'Trage ca să rotești · rotița pentru zoom · apasă pe o piesă')}</div>
