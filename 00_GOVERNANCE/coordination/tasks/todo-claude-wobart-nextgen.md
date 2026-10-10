@@ -1,5 +1,5 @@
 # todo-claude-wobart-nextgen
-STATUS: DONE        UPDATED: 2026-10-10T14:30:00Z
+STATUS: IN_PROGRESS        UPDATED: 2026-10-10T15:45:00Z
 TASK: Research "next-gen WOB ART website" (vault + web) and make the Wobart site more complex (3D configurator, scroll stage, FAQ, JSON-LD, WhatsApp, CMS editors), orchestrated per cost-router.
 BRANCH / PR: Wobart `ccr-a57d8bba-5jt0rc` / none    BASE: Wobart 16066a7; vault 120722d9
 SPEC: Wobart `tasks/todo.md`, Wobart `PROJECT_BRAIN/RESEARCH/2026-10-10_next_gen_research.md`
@@ -13,7 +13,14 @@ DONE:
 - vault-reviewer (opus): FIX-FIRST, 9 findings → all fixed (schema default, stale observer, hex 400, aggregateRating, poster, wa.me, focus, empty FAQ, copy).
 - Wobart pushed: 402c27b feat + 4640275 fix on `ccr-a57d8bba-5jt0rc`.
 - memory proposal (REVIEW, unverified): 01_ARCHITECTURE/knowledge/next-gen-premium-automotive-wrapping-website-2026-research-v_74299992.md
+- Owner started Desktop Commander (device Marius-PC, Win11, RTX 5060 4 GB, C: 15 GB free, D: 276 GB free). Installed without admin:
+  Blender 5.2.2 LTS portable at D:\Tools\blender-5.2.2-windows-x64, gltf-transform (npm -g), ffmpeg (winget user scope); Ollama 0.40 running
+  with 7 models. Wobart cloned to D:\Projects\Wobart. Inventory: Wobart PROJECT_BRAIN/TOOLING.md.
+- 3D pipeline proven end to end: scripts/blender/build_car.py (headless, 3.6 s) -> GLB 122 KB -> gltf-transform meshopt 33.5 KB with
+  KHR_materials_clearcoat; committed from the PC as 795e0af on ccr-a57d8bba-5jt0rc.
+- Playwright visual smoke script: Wobart scripts/visual/screenshot.mjs (phone/tablet/desktop + configurator with SwiftShader WebGL).
 NEXT (in order):
+0. vault-worker wires public/models/wob-car.glb into WrapConfigurator (useGLTF meshopt, swap material 'Wrap'); then build + visual run + push.
 1. Owner: run Wobart in a browser (desktop + mobile), check the 3D scene, the Process stage and the WhatsApp CTA; then attest or reject the memory proposal.
 2. Follow-ups listed in Wobart PROJECT_BRAIN/RESEARCH/2026-10-10_next_gen_research.md §8 (licensed GLB, server-side JSON-LD, CWV measurement).
 BLOCKERS / OWNER QUESTIONS:
