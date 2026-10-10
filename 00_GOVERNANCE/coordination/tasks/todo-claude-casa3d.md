@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-10T19:30:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-10T22:10:00Z
 TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / userist123/AI_Memory_Vault_CODEX_READY#258    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
@@ -107,6 +107,15 @@ PLAN v8 REBUILD (2026-10-10; owner decisions 10:58 UTC: code in Vault workspace 
   Evidence: tsc 0, vitest 245/245, next build OK, browser: 212 catalog results, doors visible in 3D.
   Open: independent review of multi-level + catalog batch (reviewer agent failed earlier on org spend limit);
   Dedeman prices where two unlabeled prices were shown are marked confidence MEDIUM; eMAG blocked (HTTP 511).
+2026-10-10 22:10 UTC — owner: "verifica si afiseaza tot ce se poate schimba/adauga intr-o casa ca finisaj de designer ... aplicatie
+  profesionista", then "research complex cu cel mai competent agent", then approved P0 ("da"). Research (Fable agent) saved as
+  02_PRODUCT/projects/Casa3D/FINISHES_RESEARCH_2026-10-10.md (REVIEW/unverified). P0 DONE: 0e75f3d1 data model + BOQ (patterns, waste,
+  wallpaper rolls, slats, plaster, brick, stone, plasterboard, cove LED, cornice, spots; 13 new Dedeman products re-read on their pages;
+  8 labour rates LOW), 4daf123f finishes panel, 0b7491ba 3D + Blender (procedural floors at real size, wall overlays cut around
+  openings, bath tiles in 3D, drop/cove ceilings), 80b62a0d finish schedule (CSV + print). Evidence: tsc 0, vitest 263/263, next build
+  OK, browser screenshots (panel, living walk with herringbone/brick/stone/spots, print schedule, CSV 26 lines). Independent review of
+  3b41ec99..80b62a0d running (vault-reviewer). Next: P1 from the report (lighting model CCT/CRI/lux, kitchen and bathroom as systems,
+  door/window styles, textiles), Blender render of a finished room on the PC.
 PLAN multi-level homes (done; kept for reference):
   Model: Snapshot.floor stays the ground level (saved projects and the API unchanged); new Snapshot.levels?: Floor[]
   for the levels above; Floor.stairs?: Stair {id, x, z, width, length, rotation} on the lower level, leading to the
