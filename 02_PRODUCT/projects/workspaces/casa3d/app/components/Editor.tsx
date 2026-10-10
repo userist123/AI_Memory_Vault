@@ -122,7 +122,7 @@ export default function Editor({ id }: { id: string }){
       </div>
       <aside className={`side ${sideOpen ? '' : 'closed'}`}>
         <div className="sidetabs" style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-        <div className="btn" role="tablist" style={{ padding: 2, gap: 2, justifySelf: 'start', overflowX: 'auto', maxWidth: '100%' }}>
+        <div className="btn" role="tablist" style={{ padding: 2, gap: 2, justifySelf: 'start', flexWrap: 'wrap', height: 'auto', maxWidth: '100%', minWidth: 0 }}>
           {([['props', 'Proprietăți'], ['catalog', 'Catalog'], ['budget', 'Buget'], ['design', 'Design'], ['twin', 'Twin'], ['revs', 'Revizii']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={panel === k} className="btn" style={{ minHeight: 30, border: 0, background: panel === k ? 'var(--graphite)' : 'transparent', color: panel === k ? '#fff' : undefined }} onClick={() => { setPanel(k); setSideOpen(true); }}>{l}</button>)}
         </div>
           <button className="btn sidetoggle" aria-expanded={sideOpen} onClick={() => setSideOpen(o => !o)}>{sideOpen ? 'Ascunde ▾' : 'Panou ▴'}</button>
