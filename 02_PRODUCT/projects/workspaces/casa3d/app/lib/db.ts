@@ -18,7 +18,10 @@ async function connect(): Promise<Db> {
     return { q: (s, p) => pool.query(s, p as any[]), tx, mode: 'postgres' }; }
   const { PGlite } = await import('@electric-sql/pglite');
   const memory = !!process.env.VERCEL || process.env.PGLITE_MEMORY === '1';
-  const db = memory ? new PGlite() : new PGlite(process.env.PGLITE_DIR || './.data/pglite');
+  const dir = process.env.PGLITE_DIR || './.data/pglite';
+  // PGlite creează doar ultimul director: pe o copie curată ./.data lipsește încă.
+  if (!memory){ const { mkdirSync } = await import('node:fs'); mkdirSync(dir, { recursive: true }); }
+  const db = memory ? new PGlite() : new PGlite(dir);
   // PGlite ține tranzacția exclusiv: celelalte interogări așteaptă până la commit/rollback.
   const tx: Tx = fn => db.transaction(t => fn((s, p) => t.query(s, p as any[]) as any));
   return { q: (s, p) => db.query(s, p as any[]) as any, tx, mode: memory ? 'pglite-memory' : 'pglite-file' };

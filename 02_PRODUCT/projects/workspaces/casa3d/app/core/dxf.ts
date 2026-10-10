@@ -79,7 +79,10 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
   for (const r of snap.floor.rooms){ const { x0: a, z0: b, x1: c, z1: d } = r.rect;
     poly('ROOMS', [P(a, b), P(c, b), P(c, d), P(a, d)]);
     const ar = sched.get(r.id)?.area ?? (c - a) * (d - b);
-    text('ROOMS', P((a + c) / 2, (b + d) / 2), 180, `${r.name}  ${ar.toFixed(2)} m²`, { center: true }); }
+    // numele deasupra, aria dedesubt; înălțimea scade cât să încapă în lățimea camerei (≈0,9·h pe caracter)
+    const lines = [r.name, `${ar.toFixed(2)} m²`], wide = Math.max(...lines.map(l => [...dxfText(l).replace(/\\U\+[0-9A-F]{4}/g, '#')].length));
+    const h = Math.max(50, Math.min(180, (c - a) * 1000 * .9 / (wide * .9))), [cx, cy] = P((a + c) / 2, (b + d) / 2);
+    text('ROOMS', [cx, cy + h * .6], h, lines[0], { center: true }); text('ROOMS', [cx, cy - h * .6], h, lines[1], { center: true }); }
 
   // ---- cote (LINE + TEXT, compatibil R12) ----
   for (const w of snap.floor.walls){ const dm = dims.get(w.id)!, L = wallLength(w.a, w.b); if (!(L > 0)) continue;

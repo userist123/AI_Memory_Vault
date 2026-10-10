@@ -61,6 +61,17 @@ test('un ARC per ușă, un TEXT cu aria per cameră, un CERC per punct tehnic', 
   assert.ok(s.tech!.length > 0); assert.equal(ents.filter(e => e.type === 'CIRCLE' && e.layer === 'SERVICES').length, s.tech!.length);
   assert.equal(ents.filter(e => e.layer === 'FURNITURE' && e.type === 'POLYLINE').length, s.placements.length);
 });
+test('eticheta camerei: nume și arie pe rânduri separate, încap în lățimea camerei', () => {
+  const s = demo(), ents = entities(planToDxf(s, cat, { lang: 'en' }));
+  const val = (e: { p: [number, string][] }, c: number) => e.p.find(([k]) => k === c)![1];
+  const labels = ents.filter(e => e.type === 'TEXT' && e.layer === 'ROOMS');
+  assert.equal(labels.length, s.floor.rooms.length * 2);
+  for (const r of s.floor.rooms){ const w = (r.rect.x1 - r.rect.x0) * 1000, cx = (r.rect.x0 + r.rect.x1) / 2 * 1000;
+    const mine = labels.filter(e => Math.abs(Number(val(e, 10)) - cx) < 1 && Number(val(e, 20)) < -r.rect.z0 * 1000 && Number(val(e, 20)) > -r.rect.z1 * 1000);
+    assert.equal(mine.length, 2, `două rânduri pentru ${r.id}`);
+    for (const e of mine){ const chars = val(e, 1).replace(/\\U\+[0-9A-F]{4}/g, '#').length;
+      assert.ok(chars * Number(val(e, 40)) * .9 <= w, `${val(e, 1)} depășește ${r.id}`); } }
+});
 test('non-ASCII este codat \\U+XXXX, fără ă/ș/ț brute', () => {
   const s = demo(); s.floor.rooms[0].name = 'Bucătărie ășț'; const dxf = planToDxf(s, cat, { lang: 'ro' });
   assert.ok(/^[\x00-\x7f]*$/.test(dxf), 'doar ASCII'); assert.ok(dxf.includes('Buc\\U+0103t\\U+0103rie \\U+0103\\U+0219\\U+021B'));
