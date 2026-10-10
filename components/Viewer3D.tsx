@@ -10,7 +10,7 @@ export default function Viewer3D({ snap, catalog, onPick }: { snap: Snapshot; ca
   const [mode, setMode] = useState<'house' | 'walk'>('house'), [err, setErr] = useState('');
   pickRef.current = onPick;
   useEffect(() => { let alive = true;
-    import('./viewer3d.js').then(m => { if (!alive || !ref.current) return; try { v.current = m.createViewer(ref.current, { onPick: (id: string | null) => pickRef.current(id) }); push(); } catch { setErr('Browserul nu suportă WebGL, așa că vizualizarea 3D nu e disponibilă.'); } });
+    import('./viewer3d-engine.js').then(m => { if (!alive || !ref.current) return; try { v.current = m.createViewer(ref.current, { onPick: (id: string | null) => pickRef.current(id) }); push(); } catch { setErr('Browserul nu suportă WebGL, așa că vizualizarea 3D nu e disponibilă.'); } });
     return () => { alive = false; v.current?.dispose(); v.current = null; }; }, []); // eslint-disable-line
   const engineCat = useRef<ReturnType<typeof toEngineCatalog> | null>(null);
   function push(){ if (!v.current) return; engineCat.current ||= toEngineCatalog(catalog);
