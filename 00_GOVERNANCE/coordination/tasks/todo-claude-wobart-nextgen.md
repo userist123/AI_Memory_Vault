@@ -1,5 +1,5 @@
 # todo-claude-wobart-nextgen
-STATUS: IN_PROGRESS        UPDATED: 2026-10-10T15:45:00Z
+STATUS: DONE        UPDATED: 2026-10-10T16:05:00Z
 TASK: Research "next-gen WOB ART website" (vault + web) and make the Wobart site more complex (3D configurator, scroll stage, FAQ, JSON-LD, WhatsApp, CMS editors), orchestrated per cost-router.
 BRANCH / PR: Wobart `ccr-a57d8bba-5jt0rc` / none    BASE: Wobart 16066a7; vault 120722d9
 SPEC: Wobart `tasks/todo.md`, Wobart `PROJECT_BRAIN/RESEARCH/2026-10-10_next_gen_research.md`
@@ -19,9 +19,11 @@ DONE:
 - 3D pipeline proven end to end: scripts/blender/build_car.py (headless, 3.6 s) -> GLB 122 KB -> gltf-transform meshopt 33.5 KB with
   KHR_materials_clearcoat; committed from the PC as 795e0af on ccr-a57d8bba-5jt0rc.
 - Playwright visual smoke script: Wobart scripts/visual/screenshot.mjs (phone/tablet/desktop + configurator with SwiftShader WebGL).
+- GLB wired into WrapConfigurator (vault-worker/sonnet; useGLTF meshopt, Draco off, material 'Wrap' swapped); Playwright visual run
+  on the fresh build: canvas on tablet/desktop, poster on phone, car renders with finish swatches; only 503 /api/content (no MONGO_URL).
+  Pushed f927c54; screenshots in Wobart test_reports/visual/. Site built and opened on Marius-PC for the owner.
 NEXT (in order):
-0. vault-worker wires public/models/wob-car.glb into WrapConfigurator (useGLTF meshopt, swap material 'Wrap'); then build + visual run + push.
-1. Owner: run Wobart in a browser (desktop + mobile), check the 3D scene, the Process stage and the WhatsApp CTA; then attest or reject the memory proposal.
+1. Owner: look at the site on the PC (desktop + mobile), check the 3D scene, the Process stage and the WhatsApp CTA; then attest or reject the memory proposal.
 2. Follow-ups listed in Wobart PROJECT_BRAIN/RESEARCH/2026-10-10_next_gen_research.md §8 (licensed GLB, server-side JSON-LD, CWV measurement).
 BLOCKERS / OWNER QUESTIONS:
 - No browser in CI: visual behaviour of the 3D scene and scroll-driven CSS is UNVERIFIED until the owner runs it.
