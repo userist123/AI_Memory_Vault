@@ -20,7 +20,7 @@ async function connect(): Promise<Db> {
   const memory = !!process.env.VERCEL || process.env.PGLITE_MEMORY === '1';
   const dir = process.env.PGLITE_DIR || './.data/pglite';
   // PGlite creează doar ultimul director: pe o copie curată ./.data lipsește încă.
-  if (!memory){ const { mkdirSync } = await import('node:fs'); mkdirSync(dir, { recursive: true }); }
+  if (!memory && !dir.includes('://')){ const { mkdirSync } = await import('node:fs'); mkdirSync(dir, { recursive: true }); }
   const db = memory ? new PGlite() : new PGlite(dir);
   // PGlite ține tranzacția exclusiv: celelalte interogări așteaptă până la commit/rollback.
   const tx: Tx = fn => db.transaction(t => fn((s, p) => t.query(s, p as any[]) as any));

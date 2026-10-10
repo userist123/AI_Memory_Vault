@@ -256,12 +256,13 @@ function model(it){
     fragmentShader: `uniform samplerCube tCube; varying vec2 vUv; const float PI = 3.141592653589793;
       void main(){ float lon = (vUv.x - 0.5) * 2.0 * PI, lat = (vUv.y - 0.5) * PI; vec3 dir = vec3(cos(lat) * sin(lon), sin(lat), -cos(lat) * cos(lon)); gl_FragColor = textureCube(tCube, dir); }` };
   function renderPanorama(roomId, w = 2048){ if (!plan) return null; const r = plan.camere.find(x => x.id === roomId); if (!r) return null;
-    const prevMode = mode, prevSize = new THREE.Vector2(); R.getSize(prevSize); setMode('walk');
+    const prevMode = mode, prevSize = new THREE.Vector2(), prevRatio = R.getPixelRatio(); R.getSize(prevSize); setMode('walk');
     const rt = new THREE.WebGLCubeRenderTarget(Math.min(2048, w / 2), { encoding: THREE.sRGBEncoding, generateMipmaps: false }), cc = new THREE.CubeCamera(.05, 200, rt);
-    cc.position.set((r.x0 + r.x1) / 2, 1.6, (r.z0 + r.z1) / 2); scene.add(cc); cc.update(R, scene); scene.remove(cc);
     const mat = new THREE.ShaderMaterial({ ...EquiShader, uniforms: { tCube: { value: rt.texture } }, depthTest: false, depthWrite: false }), quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat), qs = new THREE.Scene(); qs.add(quad);
-    R.setSize(w, w / 2, false); R.render(qs, new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)); const url = canvas.toDataURL('image/jpeg', .92);
-    quad.geometry.dispose(); mat.dispose(); rt.dispose(); R.setSize(prevSize.x, prevSize.y, false); if (composer) composer.setSize(prevSize.x, prevSize.y); setMode(prevMode); return url; }
+    // orice excepție lasă randatorul cum era (mărime, densitate, mod) și eliberează resursele GPU ale panoramei
+    try { cc.position.set((r.x0 + r.x1) / 2, 1.6, (r.z0 + r.z1) / 2); scene.add(cc); cc.update(R, scene);
+      R.setPixelRatio(1); R.setSize(w, w / 2, false); R.render(qs, new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)); return canvas.toDataURL('image/jpeg', .92); }
+    finally { scene.remove(cc); quad.geometry.dispose(); mat.dispose(); rt.dispose(); R.setPixelRatio(prevRatio); R.setSize(prevSize.x, prevSize.y, false); if (composer) composer.setSize(prevSize.x, prevSize.y); setMode(prevMode); } }
 
   // ---------- navigare ----------
   let mode = 'house', yaw = 0, pitch = -.08; const EYE = 1.6, player = new THREE.Vector3(); const orbit = { th: -.7, ph: .95, r: 12 };

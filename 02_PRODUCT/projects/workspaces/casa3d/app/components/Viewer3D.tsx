@@ -10,7 +10,7 @@ import { lighting, sunDirection, captureFileName, type TimeOfDay } from '@/core/
 
 export default function Viewer3D({ snap, catalog, onPick }: { snap: Snapshot; catalog: Catalog; onPick(id: string | null): void }){
   const { t } = usePrefs();
-  const [room, setRoom] = useState<string | null>(null), [pano, setPano] = useState<{ url: string; title: string; file: string } | null>(null), [panoBusy, setPanoBusy] = useState(false);
+  const [room, setRoom] = useState<string | null>(null), [pano, setPano] = useState<{ url: string; title: string; file: string } | null>(null), [panoBusy, setPanoBusy] = useState(false), [panoMsg, setPanoMsg] = useState('');
   const ref = useRef<HTMLCanvasElement>(null), v = useRef<any>(null), pickRef = useRef(onPick);
   const [mode, setMode] = useState<'house' | 'walk'>('house'), [err, setErr] = useState(''), [touch, setTouch] = useState(false);
   const [time, setTime] = useState<TimeOfDay>('day'), [azimuth, setAzimuth] = useState(135), [lightOpen, setLightOpen] = useState(false);
@@ -29,9 +29,14 @@ export default function Viewer3D({ snap, catalog, onPick }: { snap: Snapshot; ca
   useEffect(applyLight, [time, azimuth]); // eslint-disable-line
   useEffect(() => { const q = v.current?.setQuality?.(quality); if (q && q !== quality) setQuality(q); }, [quality]); // eslint-disable-line
   // panoramă 360° a camerei curente, randată din mijlocul ei; se deschide în vizualizator și se poate descărca
-  function openPano(){ if (!room || !v.current?.renderPanorama) return; setPanoBusy(true);
-    setTimeout(() => { try { const url = v.current.renderPanorama(room, 2048); const rn = snap.floor.rooms.find(r => r.id === room)?.name ?? room;
-      if (url) setPano({ url, title: t('pano.of', { room: rn }), file: captureFileName(`${snap.name}-${rn}-360`).replace(/\.png$/, '.jpg') }); } finally { setPanoBusy(false); } }, 30); }
+  function openPano(){ if (!room || !v.current?.renderPanorama) return; setPanoBusy(true); setPanoMsg('');
+    setTimeout(() => { try { const rn = snap.floor.rooms.find(r => r.id === room)?.name;
+        // camera aleasă în tur poate fi ștearsă între timp: spunem, nu tăcem
+        const url = rn ? v.current.renderPanorama(room, 2048) : null;
+        if (url && rn) setPano({ url, title: t('pano.of', { room: rn }), file: captureFileName(`${snap.name}-${rn}-360`).replace(/\.png$/, '.jpg') });
+        else setPanoMsg(t('pano.noRoom')); }
+      catch (e){ setPanoMsg(t('pano.failed', { msg: e instanceof Error ? e.message : String(e) })); }
+      finally { setPanoBusy(false); } }, 30); }
   function capture(){ const url: string | undefined = v.current?.capture(); if (!url) return;
     const a = document.createElement('a'); a.href = url; a.download = captureFileName(snap.name); document.body.appendChild(a); a.click(); a.remove(); }
   // Joystick-ul dispare când ieși din tur: orice mișcare rămasă e anulată, altfel jucătorul ar aluneca la următorul tur.
@@ -44,6 +49,7 @@ export default function Viewer3D({ snap, catalog, onPick }: { snap: Snapshot; ca
       <button className="btn" aria-pressed={mode === 'house'} onClick={() => go('house')}>{t('viewer.house')}</button>
       {snap.floor.rooms.map(r => <button key={r.id} className="btn" onClick={() => { setMode('walk'); setRoom(r.id); v.current?.goRoom(r.id); }}>{t('viewer.tour', { room: r.name })}</button>)}
       {mode === 'walk' && room && <button className="btn" disabled={panoBusy || !!err} title={t('pano.title')} onClick={openPano}>360°</button>}
+      {panoMsg && <span className="muted" role="status">{panoMsg}</span>}
       <button className="btn" aria-expanded={lightOpen} onClick={() => setLightOpen(o => !o)} title={t('viewer.lightTitle')}>{t('viewer.light')}</button>
       <button className="btn" onClick={capture} disabled={!!err} title={t('viewer.captureTitle')}>{t('viewer.capture')}</button>
     </div>

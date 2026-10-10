@@ -7,8 +7,10 @@ export default function PanoramaView({ url, title, fileName, onClose }: { url: s
   const { t } = usePrefs(), ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => { let alive = true, view: { dispose(): void } | null = null;
     import('./panorama-engine.js').then(m => { if (alive && ref.current) view = m.createPanorama(ref.current, url); });
-    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); }; addEventListener('keydown', esc);
-    return () => { alive = false; view?.dispose(); removeEventListener('keydown', esc); };
+    // Fereastra e modală: tastele nu mai ajung la editor (Delete, R, săgeți, Ctrl+Z) sau la mersul din 3D (WASD).
+    // Ascultătorul e în faza de captură pe window, deci rulează înaintea celorlalți și oprește propagarea.
+    const keys = (e: KeyboardEvent) => { e.stopImmediatePropagation(); if (e.key === 'Escape') onClose(); }; addEventListener('keydown', keys, true);
+    return () => { alive = false; view?.dispose(); removeEventListener('keydown', keys, true); };
   }, [url]); // eslint-disable-line
   return (<div className="pano" role="dialog" aria-modal="true" aria-label={title}>
     <div className="panobar"><b>{title}</b><span className="muted">{t('pano.hint')}</span>

@@ -13,9 +13,9 @@ export const DXF_LAYERS = [
 ] as const;
 export const TECH_SYMBOL: Record<TechKind, string> = { outlet: 'P', outlet_double: 'P2', switch: 'I', light_point: 'L', data: 'D', cooker: 'K', water_cold: 'A', water_hot: 'C', drain: 'S' };
 
-/** Text sigur pentru R12: fără caractere de control, fără coduri %% și \, non-ASCII ca \U+XXXX (convenția AutoCAD). */
+/** Text sigur pentru R12: fără caractere de control, fără coduri %% (oricâte %), fără \, non-ASCII ca \U+XXXX (convenția AutoCAD). */
 export function dxfText(s: string, max = 120): string {
-  const clean = String(s ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/%%/g, '%').replace(/\\/g, '/').trim().slice(0, max);
+  const clean = String(s ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/%{2,}/g, '%').replace(/\\/g, '/').trim().slice(0, max);
   let out = ''; for (const ch of clean){ const c = ch.codePointAt(0)!;
     if (c < 128) out += ch;
     else if (c > 0xffff){ const v = c - 0x10000; out += hex(0xd800 + (v >> 10)) + hex(0xdc00 + (v & 0x3ff)); }

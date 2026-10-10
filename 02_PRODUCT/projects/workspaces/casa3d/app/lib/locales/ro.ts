@@ -247,4 +247,6 @@ export const ro: Dict = {
   "pano.hint": "Trage ca să privești în jur · rotița apropie · Esc închide",
   "pano.download": "Descarcă panorama",
   "pano.close": "Închide",
+  "pano.noRoom": "Camera nu mai există. Alege din nou o cameră în tur.",
+  "pano.failed": "Panorama nu s-a putut randa: {msg}",
 };

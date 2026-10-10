@@ -247,4 +247,6 @@ export const en: Dict = {
   "pano.hint": "Drag to look around · wheel to zoom · Esc to close",
   "pano.download": "Download panorama",
   "pano.close": "Close",
+  "pano.noRoom": "This room no longer exists. Pick a room again in the tour.",
+  "pano.failed": "The panorama could not be rendered: {msg}",
 };

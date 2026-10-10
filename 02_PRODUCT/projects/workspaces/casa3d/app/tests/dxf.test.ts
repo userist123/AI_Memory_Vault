@@ -76,6 +76,8 @@ test('non-ASCII este codat \\U+XXXX, fără ă/ș/ț brute', () => {
   const s = demo(); s.floor.rooms[0].name = 'Bucătărie ășț'; const dxf = planToDxf(s, cat, { lang: 'ro' });
   assert.ok(/^[\x00-\x7f]*$/.test(dxf), 'doar ASCII'); assert.ok(dxf.includes('Buc\\U+0103t\\U+0103rie \\U+0103\\U+0219\\U+021B'));
   assert.equal(dxfText('a\nb%%c\\d'), 'a b%c/d');
+  // orice șir de % (nu doar perechi) se reduce la unul, ca să nu rămână coduri %%d / %%c / %%u
+  for (const s of ['%%%d', '%%%%c', '50%%%%%u']) assert.ok(!dxfText(s).includes('%%'), s);
 });
 test('proiect fără puncte tehnice: fără CIRCLE, fișier valid', () => {
   const s = newSnapshot(cat, 'Gol', 'blank'), ents = entities(planToDxf(s, cat, { lang: 'en' }));
