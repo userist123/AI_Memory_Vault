@@ -5,6 +5,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { SLAB } from '../core/levels';
 
 // Pasul final al calității înalte: în r128 tone mapping-ul (ACES) se aplică și la randarea în texturi
 // (WebGLPrograms: toneMapping nu depinde de țintă), dar ieșirea în textură rămâne liniară; aici facem doar sRGB.
@@ -188,15 +189,26 @@ function model(it){
 
   // ---------- casa (reconstruită la fiecare schimbare de plan) ----------
   let house = new THREE.Group(), ceilings = new THREE.Group(), walls = new THREE.Group(), furniture = new THREE.Group(); scene.add(house, furniture);
-  let colliders = [], blockers = [], plan = null, W = 1, D = 1, C = new THREE.Vector3(), pickables = [];
+  let colliders = [], blockers = [], structBlockers = [], plan = null, W = 1, D = 1, C = new THREE.Vector3(), pickables = [];
   const disposeGroup = g => g.traverse(o => { if (o.geometry) o.geometry.dispose(); });
   function box(w, h, d, mat, x, y, z, rotY, parent){ const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.rotation.y = rotY || 0; m.castShadow = m.receiveShadow = true; parent.add(m); return m; }
   function buildHouse(p){
     disposeGroup(house); scene.remove(house); interiorLights.length = 0; house = new THREE.Group(); ceilings = new THREE.Group(); walls = new THREE.Group(); house.add(ceilings, walls); scene.add(house); colliders = [];
     const H = p.inaltime;
-    p.camere.forEach(r => { const wet = r.tip === 'baie' || r.tip === 'bucatarie', w = r.x1 - r.x0, d = r.z1 - r.z0, t = (wet ? tiles : parquet).clone(); t.needsUpdate = true; t.repeat.set(w / (wet ? .9 : 1.6), d / (wet ? .9 : 1.6));
-      const f = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ map: t, roughness: wet ? .35 : .6, color: lin(r.podea || '#ffffff') })); f.rotation.x = -Math.PI / 2; f.position.set((r.x0 + r.x1) / 2, 0, (r.z0 + r.z1) / 2); f.receiveShadow = true; house.add(f);
-      const c = new THREE.Mesh(new THREE.PlaneGeometry(w, d), r.tavan ? lookMat('ceil', r.tavan, 1) : ceilMat); c.rotation.x = Math.PI / 2; c.position.set((r.x0 + r.x1) / 2, H, (r.z0 + r.z1) / 2); ceilings.add(c);
+    // scări (blocuri pline) și goluri de placă; deschiderile din podea/tavan se taie ca bucăți dreptunghiulare
+    const stairs = p.scari || [], voids = p.goluriPlaca || []; structBlockers = [];
+    const rectsMinus = (r, holes) => { let ps = [{ x0: r.x0, z0: r.z0, x1: r.x1, z1: r.z1 }];
+      for (const h of holes){ const nx = []; for (const q of ps){ const hx0 = Math.max(h.x0, q.x0), hx1 = Math.min(h.x1, q.x1), hz0 = Math.max(h.z0, q.z0), hz1 = Math.min(h.z1, q.z1);
+        if (hx0 >= hx1 - 1e-6 || hz0 >= hz1 - 1e-6){ nx.push(q); continue; }
+        if (hz0 > q.z0) nx.push({ x0: q.x0, z0: q.z0, x1: q.x1, z1: hz0 }); if (hz1 < q.z1) nx.push({ x0: q.x0, z0: hz1, x1: q.x1, z1: q.z1 });
+        if (hx0 > q.x0) nx.push({ x0: q.x0, z0: hz0, x1: hx0, z1: hz1 }); if (hx1 < q.x1) nx.push({ x0: hx1, z0: hz0, x1: q.x1, z1: hz1 }); } ps = nx; }
+      return ps.filter(q => q.x1 - q.x0 > .01 && q.z1 - q.z0 > .01); };
+    p.camere.forEach(r => { const wet = r.tip === 'baie' || r.tip === 'bucatarie', sc = wet ? .9 : 1.6;
+      for (const q of rectsMinus(r, voids)){ const w = q.x1 - q.x0, d = q.z1 - q.z0, t = (wet ? tiles : parquet).clone(); t.needsUpdate = true; t.repeat.set(w / sc, d / sc); t.offset.set((q.x0 - r.x0) / sc, (r.z1 - q.z1) / sc);
+        const f = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ map: t, roughness: wet ? .35 : .6, color: lin(r.podea || '#ffffff') })); f.rotation.x = -Math.PI / 2; f.position.set((q.x0 + q.x1) / 2, 0, (q.z0 + q.z1) / 2); f.receiveShadow = true; house.add(f); }
+      for (const q of rectsMinus(r, stairs.map(a => a.rect))){ const w = q.x1 - q.x0, d = q.z1 - q.z0;
+        const c = new THREE.Mesh(new THREE.PlaneGeometry(w, d), r.tavan ? lookMat('ceil', r.tavan, 1) : ceilMat); c.rotation.x = Math.PI / 2; c.position.set((q.x0 + q.x1) / 2, H, (q.z0 + q.z1) / 2); ceilings.add(c); }
+      const w = r.x1 - r.x0, d = r.z1 - r.z0;
       const pl = new THREE.PointLight(0xfff0dc, light ? light.interior : .35, 7, 2); interiorLights.push(pl); pl.position.set((r.x0 + r.x1) / 2, H - .3, (r.z0 + r.z1) / 2); ceilings.add(pl); });
     p.pereti.forEach(wl => {
       const [ax, az] = wl.a, [bx, bz] = wl.b, L = Math.hypot(bx - ax, bz - az); if (L < .01) return; const ux = (bx - ax) / L, uz = (bz - az) / L, rot = -Math.atan2(uz, ux), th = wl.ext ? .25 : .15, edge = wl.ext ? extMat : wallMat;
@@ -220,6 +232,24 @@ function model(it){
           box(g.l, .05, th + .04, fm, ax + ux * m, sl, az + uz * m, rot, walls); box(g.l, .05, th + .02, fm, ax + ux * m, top, az + uz * m, rot, walls); box(.04, wh, th + .02, fm, ax + ux * m, cy, az + uz * m, rot, walls); }
         colliders.push({ ax, az, ux, uz, s0: q, s1: g.la }); if (g.tip === 'fereastra') colliders.push({ ax, az, ux, uz, s0: g.la, s1: g.la + g.l }); q = g.la + g.l; });
       seg(q, L, 0, H); colliders.push({ ax, az, ux, uz, s0: q, s1: L }); });
+    // scări: trepte pline din lemn (treapta k are înălțimea (k+1)·riser), mână curentă pe o parte
+    const stairMat = MAT('wood', '#a8794d'), railMat = M('#5a4430', { roughness: .6 });
+    stairs.forEach(st => { const [dx, dz] = st.dir, ry = Math.atan2(dx, dz), sx = -dz, sz = dx;
+      for (let k = 0; k < st.steps; k++){ const hgt = (k + 1) * st.riser, m = (k + .5) * st.going; box(st.w, hgt, st.going, stairMat, st.bottom[0] + dx * m, hgt / 2, st.bottom[1] + dz * m, ry, walls); }
+      // mâna curentă: o bară înclinată, la ~0.9 m deasupra treptelor, pe partea laterală a scării
+      const topY = st.steps * st.riser, rise = topY - st.riser, len = Math.hypot(st.l, rise), off = st.w / 2 - .025, cx = st.x + sx * off, cz = st.z + sz * off;
+      const rail = box(.05, .05, len, railMat, cx, (st.riser + topY) / 2 + .9, cz, ry, walls); rail.rotateX(-Math.atan2(rise, st.l)); rail.castShadow = false;
+      [[st.bottom, st.riser, 1], [st.top, topY, -1]].forEach(([e, y, inw]) => box(.05, .9, .05, railMat, e[0] + sx * off + dx * .025 * inw, y + .45, e[1] + sz * off + dz * .025 * inw, ry, walls).castShadow = false);
+      structBlockers.push({ x0: st.rect.x0, z0: st.rect.z0, x1: st.rect.x1, z1: st.rect.z1 }); });
+    // goluri de placă: fund întunecat, balustradă de 1 m pe laturile fără marginea de sosire
+    const darkMat = M('#1c1a18', { roughness: 1 }), postMat = M('#6a5a48', { roughness: .5 });
+    voids.forEach(v => { const w = v.x1 - v.x0, d = v.z1 - v.z0, bot = new THREE.Mesh(new THREE.PlaneGeometry(w, d), darkMat); bot.rotation.x = -Math.PI / 2; bot.position.set((v.x0 + v.x1) / 2, -SLAB, (v.z0 + v.z1) / 2); bot.receiveShadow = true; house.add(bot);
+      const ax = Math.abs(v.dir[0]) > Math.abs(v.dir[1]), arrival = ax ? (v.dir[0] > 0 ? 'x1' : 'x0') : (v.dir[1] > 0 ? 'z1' : 'z0'), cxm = (v.x0 + v.x1) / 2, czm = (v.z0 + v.z1) / 2;
+      const side = (edge, x0, z0, x1, z1) => { if (edge === arrival) return; const L = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.round(L / 1));
+        for (let i = 0; i <= n; i++) box(.05, 1, .05, postMat, x0 + (x1 - x0) * i / n, .5, z0 + (z1 - z0) * i / n, 0, walls).castShadow = false;
+        box(.06, .05, L, postMat, (x0 + x1) / 2, 1, (z0 + z1) / 2, Math.atan2(x1 - x0, z1 - z0), walls); box(.03, .03, L, postMat, (x0 + x1) / 2, .5, (z0 + z1) / 2, Math.atan2(x1 - x0, z1 - z0), walls).castShadow = false; };
+      side('z0', v.x0, v.z0, v.x1, v.z0); side('z1', v.x0, v.z1, v.x1, v.z1); side('x0', v.x0, v.z0, v.x0, v.z1); side('x1', v.x1, v.z0, v.x1, v.z1);
+      structBlockers.push({ x0: v.x0, z0: v.z0, x1: v.x1, z1: v.z1 }); });
     const xs = p.camere.flatMap(r => [r.x0, r.x1]), zs = p.camere.flatMap(r => [r.z0, r.z1]);
     const minX = Math.min(...xs, 0), maxX = Math.max(...xs, 1), minZ = Math.min(...zs, 0), maxZ = Math.max(...zs, 1);
     W = maxX - minX; D = maxZ - minZ; C.set((minX + maxX) / 2, 0, (minZ + maxZ) / 2); placeSun(); sun.target.position.copy(C);
@@ -269,7 +299,7 @@ function model(it){
   function collide(x, z){ const r = .24;
     for (const c of colliders){ const px = x - c.ax, pz = z - c.az, s = Math.max(c.s0, Math.min(c.s1, px * c.ux + pz * c.uz)), cx = c.ax + c.ux * s, cz = c.az + c.uz * s, dx = x - cx, dz = z - cz, dd = Math.hypot(dx, dz);
       if (dd < r + .07 && dd > 1e-6){ const k = (r + .07 - dd) / dd; x += dx * k; z += dz * k; } }
-    for (const b of blockers){ if (x > b.x0 - r && x < b.x1 + r && z > b.z0 - r && z < b.z1 + r){ const dl = x - (b.x0 - r), dr = (b.x1 + r) - x, du = z - (b.z0 - r), dn = (b.z1 + r) - z, m = Math.min(dl, dr, du, dn);
+    for (const b of [...structBlockers, ...blockers]){ if (x > b.x0 - r && x < b.x1 + r && z > b.z0 - r && z < b.z1 + r){ const dl = x - (b.x0 - r), dr = (b.x1 + r) - x, du = z - (b.z0 - r), dn = (b.z1 + r) - z, m = Math.min(dl, dr, du, dn);
       if (m === dl) x = b.x0 - r; else if (m === dr) x = b.x1 + r; else if (m === du) z = b.z0 - r; else z = b.z1 + r; } }
     return [x, z]; }
   // intri în cameră prin ușă, cu privirea spre centrul ei (ca în prototip)
