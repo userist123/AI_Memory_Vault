@@ -4,6 +4,7 @@
 import type { Floor, FloorLayout, FloorPattern, Material, MaterialsCatalog, Room, RoomFinishes, Snapshot, WallFeature, WallFeatureKind } from './types';
 import { lightIssues } from './light-design';
 import { textileIssues, sanitizeTextiles } from './textiles';
+import { sanitizeKitchen } from './kitchen';
 import { openingsOnSide } from './validate';
 
 const r2 = (v: number) => Math.round(v * 100) / 100;
@@ -139,7 +140,7 @@ export function sanitizeFinishes(f: any): string | null {
       || (w.fromM !== undefined && w.heightM !== undefined && w.kind !== 'rail' && w.heightM <= w.fromM)) || bandsOverlap(wf, 10))) return 'Placările de pe pereți sunt invalide.';
     const c = rf.ceiling; if (c !== undefined && (c === null || typeof c !== 'object' || !['flat', 'drop', 'cove'].includes(c.type) || !num(c.dropCm, 0, FINISH_RULES.maxDropCm) || !num(c.coveCm, 0, FINISH_RULES.maxCoveCm) || !num(c.spots, 0, 40)
       || [c.led, c.cornice, c.spot].some(x => x != null && (typeof x !== 'string' || x.length > 80)))) return 'Tavanul este invalid.';
-    const tx = sanitizeTextiles(rf); if (tx) return tx; }
+    const tx = sanitizeTextiles(rf) ?? sanitizeKitchen(rf.kitchen); if (tx) return tx; }
   return null;
 }
 

@@ -10,6 +10,7 @@ import { formatMoney, formatArea, formatLength } from '@/core/format';
 import { normalizeHex } from '@/core/appearance';
 import { lightReport } from '@/core/light-design';
 import { roomWindows, curtainPlan, blindPlan, TEXTILE_RULES } from '@/core/textiles';
+import { kitchenOf, kitchenRun, kitchenQuantities, kitchenIssues } from '@/core/kitchen';
 import { usePrefs } from '@/lib/prefs';
 
 const KINDS = Object.keys(FEATURE_CATEGORY) as WallFeatureKind[];
@@ -31,6 +32,8 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish }: { 
   const cost = useMemo(() => { const b = computeBOQ(snap, cat, mc), items = b.items.filter(i => i.roomId === room.id && (i.category === 'finishes' || i.category === 'lighting' || i.category === 'textiles'));
     return { mat: items.reduce((a, i) => a + (i.total ?? 0), 0), lab: b.labor.filter(l => l.roomId === room.id).reduce((a, l) => a + l.expected, 0) }; }, [snap, cat, mc, room.id]);
   const issues = finishIssues(snap, mc, fl, room, f), light = lightReport(mc, fl, room, f), wins = roomWindows(fl, room);
+  const run = kitchenRun(snap, cat, room.id), ks = kitchenOf(f), kq = run ? kitchenQuantities(run, ks, materialOf(mc, ks.countertop)) : null, kIss = kitchenIssues(snap, cat, mc, room.id, f);
+  const setK = (p: Partial<NonNullable<RoomFinishes['kitchen']>>) => onFinish({ kitchen: { ...(f.kitchen || {}), ...p } });
   const treat = (id: string) => (f.windows || []).find(t => t.openingId === id) ?? { openingId: id };
   const setTreat = (id: string, p: Partial<WindowTreatment>) => onFinish({ windows: [...(f.windows || []).filter(t => t.openingId !== id), { ...treat(id), ...p }] });
   const sideLen = (s: WallFeature['side']) => formatLength(sideGeometry(fl, room, s).lengthM, units, lang);
@@ -106,6 +109,30 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish }: { 
         <label className="f"><span>{t('editor.lightCount')}</span><input type="number" min={0} max={20} value={f.lights ?? ''} placeholder={t('common.auto')} onChange={e => onFinish({ lights: e.target.value === '' ? undefined : Math.max(0, Math.min(20, Number(e.target.value) || 0)) })} /></label>
       </div>
     </fieldset>
+    {run && <fieldset className="fin-group"><legend>{t('kit.title')}</legend>
+      {kIss.map((i, k) => <div key={k} className="issue WARNING">{t(i.key, i.vars)}</div>)}
+      <div className="prov">{t('kit.run', { len: formatLength(run.lengthM, units, lang), n: run.modules, fronts: kq!.fronts })}</div>
+      <div className="grid2">
+        <label className="f"><span>{t('kit.fronts')}</span><input type="color" value={ks.frontColor} onChange={e => { const h = normalizeHex(e.target.value); if (h) setK({ frontColor: h }); }} /></label>
+        <label className="f"><span>{t('kit.finish')}</span><select value={ks.frontFinish} onChange={e => setK({ frontFinish: e.target.value as any })}>{(['matt', 'gloss', 'wood'] as const).map(x => <option key={x} value={x}>{t(`kit.finish.${x}`)}</option>)}</select></label>
+        <label className="f"><span>{t('kit.handle')}</span><select value={ks.handle} onChange={e => setK({ handle: e.target.value as any })}>{(['bar', 'knob', 'profile', 'none'] as const).map(x => <option key={x} value={x}>{t(`kit.handle.${x}`)}</option>)}</select></label>
+        <label className="f"><span>{t('kit.handleColor')}</span><input type="color" value={ks.handleColor} onChange={e => { const h = normalizeHex(e.target.value); if (h) setK({ handleColor: h }); }} /></label>
+        <label className="f"><span>{t('kit.upper')}</span><select value={ks.upper} onChange={e => setK({ upper: e.target.value as any })}>{(['open', 'closed', 'none'] as const).map(x => <option key={x} value={x}>{t(`kit.upper.${x}`)}</option>)}</select></label>
+        <label className="f"><span>{t('kit.backsplash')}</span><select value={ks.backsplash} onChange={e => setK({ backsplash: e.target.value as any })}>{(['tile', 'countertop', 'glass', 'paint'] as const).map(x => <option key={x} value={x}>{t(`kit.backsplash.${x}`)}</option>)}</select></label>
+      </div>
+      {(ks.backsplash === 'glass' || ks.backsplash === 'paint') && <label className="f"><span>{t('kit.backsplashColor')}</span><input type="color" value={ks.backsplashColor || '#e8e6e1'} onChange={e => { const h = normalizeHex(e.target.value); if (h) setK({ backsplashColor: h }); }} /></label>}
+      <label className="f"><span>{t('kit.countertop')}</span><select value={ks.countertop || ''} onChange={e => setK({ countertop: e.target.value || null })}><option value="">{t('kit.customTop')}</option>{by('countertop').map(opt)}</select></label>
+      {!ks.countertop && <div className="grid2">
+        <label className="f"><span>{t('kit.topColor')}</span><input type="color" value={ks.countertopColor} onChange={e => { const h = normalizeHex(e.target.value); if (h) setK({ countertopColor: h }); }} /></label>
+        <label className="f"><span>{t('kit.topMm')}</span><select value={ks.countertopMm} onChange={e => setK({ countertopMm: Number(e.target.value) })}>{[12, 20, 28, 38].map(x => <option key={x} value={x}>{x} mm</option>)}</select></label>
+      </div>}
+      <div className="grid2">
+        <label className="f"><span>{t('kit.sink')}</span><select value={ks.sink || ''} onChange={e => setK({ sink: e.target.value || null })}><option value="">{t('fin.none')}</option>{by('kitchen_sink').map(opt)}</select></label>
+        <label className="f"><span>{t('kit.tap')}</span><select value={ks.tap || ''} onChange={e => setK({ tap: e.target.value || null })}><option value="">{t('fin.none')}</option>{by('kitchen_tap').map(opt)}</select></label>
+      </div>
+      <label className="f"><span>{t('kit.led')}</span><select value={ks.underLed || ''} onChange={e => setK({ underLed: e.target.value || null })}><option value="">{t('fin.none')}</option>{by('led_strip').map(opt)}</select></label>
+    </fieldset>}
+
     <fieldset className="fin-group"><legend>{t('tex.title')}</legend>
       {wins.length === 0 && <div className="prov">{t('tex.noWindows')}</div>}
       {wins.map((w, i) => { const tr = treat(w.openingId), cm = materialOf(mc, tr.curtain ?? tr.sheer), cp = cm ? curtainPlan(w, fl.ceilingHeight, cm, tr.fullness) : null, bm = materialOf(mc, tr.blind), bp = bm ? blindPlan(w, bm) : null;

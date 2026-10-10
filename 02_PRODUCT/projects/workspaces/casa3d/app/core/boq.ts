@@ -5,6 +5,7 @@ import { openingsOnSide } from './validate';
 import { floors, floorOfRoom } from './levels';
 import { roomWindows, curtainPlan, blindPlan } from './textiles';
 import { doorOpenings } from './doors';
+import { kitchenOf, kitchenRun, kitchenQuantities, KITCHEN_DEFAULT } from './kitchen';
 import { bandGeometry, bathTiles, layoutOf, floorWaste, floorLaborId, sideGeometry, wallpaperRolls, panelCount, pieceSizeCm, ceilingOf, FEATURE_CATEGORY, FEATURE_LABOR } from './finishes';
 import { WASTE, PAINT_COATS, DOOR_HEIGHT, WINDOW_HEIGHT, BATH_TILE_HEIGHT, BACKSPLASH_HEIGHT, LIGHTS_EXTRA_PER_M2, VAT_RATE, WET_ROOMS, SANITARY, APPLIANCES, DEFAULT_BUDGET } from './rules.boq';
 
@@ -62,7 +63,9 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
     let tileArea = 0;
     // baie: până la 2,1 m pe fiecare perete care nu are altă placare (aceeași regulă ca în 3D)
     if (room.type === 'baie') tileArea = bathTiles(f, room.type).reduce((a, w) => a + sideGeometry(fl, room, w.side, BATH_TILE_HEIGHT).netM2, 0);
-    if (room.type === 'bucatarie'){ const k = snap.placements.find(p => p.roomId === room.id && p.group === 'bucatarie'), rv = k && resolve(cat, k.variantId); tileArea = rv ? rv.w * BACKSPLASH_HEIGHT : 0; }
+    if (room.type === 'bucatarie'){ const k = snap.placements.find(p => p.roomId === room.id && p.group === 'bucatarie'), rv = k && resolve(cat, k.variantId); tileArea = rv ? rv.w * BACKSPLASH_HEIGHT : 0;
+      // placarea dintre blat și suspendate e faianță doar dacă așa s-a ales în sistemul de bucătărie
+      if (f.kitchen && kitchenOf(f).backsplash !== 'tile') tileArea = 0; }
     const wt = M(f.wallTile); if (wt && tileArea > 0){ items.push(materialLine(wt, `${room.id}:walltile`, room.id, `Faianță · ${room.name}`, tileArea, mc.verifiedAt)); adhesiveArea += tileArea; addLabor(room.id, 'manopera-faianta', tileArea); }
     // placări pe pereți (tapet, riflaj, tencuială decorativă, cărămidă, piatră, faianță), fiecare pe latura ei, până la înălțimea aleasă
     let featureArea = 0;
@@ -98,6 +101,16 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
         items.push(materialLine(m, `${room.id}:${k}:${t.openingId}`, room.id, `${lbl} · ${room.name}, fereastra ${n} (${r2(win.widthM)} m): bară ${p.rodW} m, ${p.panels} panouri, cădere ${p.drop} m${p.hemM > .02 ? `, tiv ${Math.round(p.hemM * 100)} cm` : ''}`, p.packs, mc.verifiedAt, 0)); }
       const bm2 = M(t.blind); if (bm2){ const p = blindPlan(win, bm2); items.push(materialLine(bm2, `${room.id}:blind:${t.openingId}`, room.id, `Stor · ${room.name}, fereastra ${n} (${r2(win.widthM)} m)`, p.count, mc.verifiedAt, 0)); } }
     const rug = M(f.rug?.material); if (rug) items.push(materialLine(rug, `${room.id}:rug`, room.id, `Covor · ${room.name}`, 1, mc.verifiedAt, 0));
+    // bucătăria ca sistem: blat, chiuvetă, baterie, LED sub suspendate, mânere, placare din sticlă
+    const run = f.kitchen ? kitchenRun(snap, cat, room.id) : null;
+    if (run){ const k = kitchenOf(f), top = M(k.countertop), q = kitchenQuantities(run, k, top);
+      if (top && q.countertopPieces) items.push(materialLine(top, `${room.id}:countertop`, room.id, `Blat bucătărie · ${room.name} (${r2(run.lengthM)} m, ${top.specs?.thicknessMm ?? k.countertopMm} mm)`, q.countertopPieces, mc.verifiedAt, 0));
+      else unknown.push(`Blat bucătărie ${r2(run.lengthM)} m, ${k.countertopMm} mm, culoare ${k.countertopColor} (ofertă)`);
+      for (const [id, key, lbl] of [[k.sink, 'sink', 'Chiuvetă'], [k.tap, 'tap', 'Baterie bucătărie']] as const){ const m = M(id); if (m) items.push(materialLine(m, `${room.id}:${key}`, room.id, `${lbl} · ${room.name}`, 1, mc.verifiedAt, 0)); }
+      const led = M(k.underLed); if (led && k.upper !== 'none') items.push(materialLine(led, `${room.id}:kitchen-led`, room.id, `Bandă LED sub suspendate · ${room.name} (${q.ledM} m)`, q.ledM, mc.verifiedAt));
+      if (q.handles > 0) unknown.push(`Mânere bucătărie: ${q.handles} buc (${k.handle})`);
+      if (k.backsplash === 'glass') unknown.push(`Placare sticlă bucătărie ${q.backsplashM2} m² (la comandă)`);
+      if (k.frontFinish !== 'matt' || k.frontColor !== KITCHEN_DEFAULT.frontColor) unknown.push(`Fronturi bucătărie ${q.fronts} buc, ${k.frontFinish}, ${k.frontColor} (diferență față de varianta din catalog)`); }
     const sm = M(c.spot); if (sm && c.spots > 0) items.push(materialLine(sm, `${room.id}:spots`, room.id, `Spoturi încastrate · ${room.name}`, c.spots, mc.verifiedAt));
     // vopsea: pereți (fără zona placată) + tavan (și marginea tavanului fals), 2 straturi
     const paintArea = Math.max(0, g.wallNet - wallsHidden - (wt ? tileArea : 0) - featureArea) + g.ceiling + ceilingBand, pm = M(f.wallPaint);

@@ -60,6 +60,7 @@ const grain = gray(512, 512, (g, w, h) => { g.fillStyle = '#d8d8d8'; g.fillRect(
 const rattan = gray(128, 128, (g, w, h) => { g.fillStyle = '#b8b8b8'; g.fillRect(0, 0, w, h); g.strokeStyle = '#6d6d6d'; g.lineWidth = 2; for (let i = -w; i < w * 2; i += 10){ g.beginPath(); g.moveTo(i, 0); g.lineTo(i + h, h); g.stroke(); g.beginPath(); g.moveTo(i + h, 0); g.lineTo(i, h); g.stroke(); } });
 rattan.repeat.set(3, 3);
 const matCache = {};
+const lumOf = hex => { const n = parseInt(String(hex).slice(1), 16); return ((n >> 16 & 255) * .2126 + (n >> 8 & 255) * .7152 + (n & 255) * .0722) / 255; };
 function MAT(kind, col){ const k = kind + col; if (matCache[k]) return matCache[k]; const c = lin(col); let m;
   switch (kind){
     case 'fabric': m = new THREE.MeshStandardMaterial({ color: c, map: weave, bumpMap: weave, bumpScale: .003, roughness: .97 }); break;
@@ -156,17 +157,33 @@ function model(it){
       for (let i = 0; i < 5; i++){ const a = i / 5 * Math.PI * 2, leg = B(.3, .03, .04, Math.cos(a) * .15, .07, Math.sin(a) * .15, mesh); leg.rotation.y = -a; CY(.025, .025, .04, Math.cos(a) * .3, .025, Math.sin(a) * .3, mesh, 10); }
       CY(.028, .028, .38, 0, .28, 0, MAT('chrome', '#bbb')); RB(.5, .09, .5, .03, 0, .5, .02, fab); RB(.5, h - .75, .06, .02, 0, .55 + (h - .75) / 2 + .1, -.23, mesh); RB(.3, .12, .06, .02, 0, h - .08, -.24, fab);
       [-1, 1].forEach(a => B(.04, .2, .25, a * .27, .64, 0, mesh)); break; }
-    case 'kitchen': { const frame = MAT('metal', s.frame || '#34363a'), front = MAT('paint', s.fronts || '#f4f4f1'), wd = .6;
+    case 'kitchen': { const k = s.k || null, frame = MAT('metal', s.frame || '#34363a'), wd = .6;
+      // sistemul de bucătărie (core/kitchen.ts): finisajul fronturilor, mânerele, blatul, suspendatele, placarea, LED-ul
+      const fcol = k ? k.frontColor : (s.fronts || '#f4f4f1'), front = k && k.frontFinish === 'gloss' ? MAT('ceramic', fcol) : k && k.frontFinish === 'wood' ? MAT('wood', fcol) : MAT('paint', fcol);
+      const hmat = MAT('metal', k ? k.handleColor : '#222'), htype = k ? k.handle : 'bar', topM = k ? k.topM : .038, topMat = k ? (k.topWood ? MAT('wood', k.topColor) : MAT('ceramic', k.topColor)) : MAT('wood', '#cdb592');
+      const handle = (x, y, z, vertical) => { if (htype === 'none') return; if (htype === 'knob') { CY(.012, .012, .025, x, y, z + .01, hmat, 12).rotation.x = Math.PI / 2; return; }
+        if (htype === 'profile') B(vertical ? .015 : .5, vertical ? .5 : .015, .02, x, y, z, hmat); else B(vertical ? .012 : .18, vertical ? .18 : .012, .015, x, y, z, hmat); };
       B(w, .08, wd - .05, 0, .04, -d / 2 + wd / 2, MAT('paint', '#2b2c2f')); B(w, .78, wd - .02, 0, .47, -d / 2 + wd / 2, MAT('paint', '#2d2f33'));
-      const n = Math.round(w / .6); for (let i = 0; i < n; i++){ B(w / n - .006, .74, .018, -w / 2 + w / n * (i + .5), .46, -d / 2 + wd + .009, front); B(.18, .012, .015, -w / 2 + w / n * (i + .5), .78, -d / 2 + wd + .025, MAT('metal', '#222')); }
-      B(w + .01, .038, d, 0, .88, 0, MAT('wood', '#cdb592')); // blat
-      B(.46, .015, .4, -w / 2 + .45, .9, 0, MAT('chrome', '#c6c9cc')); CY(.015, .015, .25, -w / 2 + .45, 1.02, -d / 2 + .08, MAT('chrome', '#c6c9cc'), 10);
-      B(.58, .006, .5, w / 2 - .55, .901, 0, MAT('screen', '#0d0d0e')); B(.56, .56, .012, w / 2 - .55, .46, -d / 2 + wd + .02, MAT('screen', '#141517'));
-      // polițe ENHET cu cadru deschis (antracit) + dulapuri suspendate
-      const top = h - .02; B(w, .02, .32, 0, top, -d / 2 + .16, frame); B(w, .02, .32, 0, top - .72, -d / 2 + .16, frame); for (let i = 0; i <= n; i++) B(.02, .72, .32, -w / 2 + .01 + i * (w - .02) / n, top - .36, -d / 2 + .16, frame);
-      B(w, .015, .3, 0, top - .36, -d / 2 + .16, frame); for (let i = 0; i < n; i += 2) B(w / n - .01, .7, .015, -w / 2 + w / n * (i + .5), top - .36, -d / 2 + .32, front);
-      for (let i = 1; i < n; i += 2){ B(.1, .12, .1, -w / 2 + w / n * (i + .5) - .08, top - .64, -d / 2 + .15, MAT('ceramic', '#eae6de')); B(.14, .1, .14, -w / 2 + w / n * (i + .5) + .08, top - .3, -d / 2 + .15, MAT('ceramic', '#6a7c72')); }
-      B(.6, .12, .46, w / 2 - .55, top - .9, -d / 2 + .23, MAT('metal', '#bfc2c5')); B(w, .01, .02, 0, 1.25, -d / 2 + .01, MAT('ceramic', '#f1efea')); break; }
+      const n = Math.round(w / .6); for (let i = 0; i < n; i++){ const cx = -w / 2 + w / n * (i + .5); B(w / n - .006, .74, .018, cx, .46, -d / 2 + wd + .009, front); handle(cx, htype === 'profile' ? .82 : .78, -d / 2 + wd + .025, false); }
+      const topY = .86 + topM / 2; B(w + .01, topM, d, 0, topY, 0, topMat); // blat
+      const sinkMat = k ? MAT(lumOf(k.sinkColor) > .55 ? 'chrome' : 'paint', k.sinkColor) : MAT('chrome', '#c6c9cc'), tapMat = MAT('chrome', k ? k.tapColor : '#c6c9cc');
+      B(.46, .015, .4, -w / 2 + .45, .86 + topM + .002, 0, sinkMat); CY(.015, .015, .25, -w / 2 + .45, .86 + topM + .14, -d / 2 + .08, tapMat, 10);
+      B(.58, .006, .5, w / 2 - .55, .86 + topM + .003, 0, MAT('screen', '#0d0d0e')); B(.56, .56, .012, w / 2 - .55, .46, -d / 2 + wd + .02, MAT('screen', '#141517'));
+      const upper = k ? k.upper : 'open', top = h - .02, wallBottom = upper === 'none' ? 1.5 : top - .72;
+      if (upper === 'open'){ // polițe ENHET cu cadru deschis + uși pe jumătate din module
+        B(w, .02, .32, 0, top, -d / 2 + .16, frame); B(w, .02, .32, 0, top - .72, -d / 2 + .16, frame); for (let i = 0; i <= n; i++) B(.02, .72, .32, -w / 2 + .01 + i * (w - .02) / n, top - .36, -d / 2 + .16, frame);
+        B(w, .015, .3, 0, top - .36, -d / 2 + .16, frame); for (let i = 0; i < n; i += 2){ const cx = -w / 2 + w / n * (i + .5); B(w / n - .01, .7, .015, cx, top - .36, -d / 2 + .32, front); handle(cx + w / n / 2 - .06, top - .62, -d / 2 + .335, true); }
+        for (let i = 1; i < n; i += 2){ B(.1, .12, .1, -w / 2 + w / n * (i + .5) - .08, top - .64, -d / 2 + .15, MAT('ceramic', '#eae6de')); B(.14, .1, .14, -w / 2 + w / n * (i + .5) + .08, top - .3, -d / 2 + .15, MAT('ceramic', '#6a7c72')); } }
+      else if (upper === 'closed'){ B(w, .72, .32, 0, top - .36, -d / 2 + .16, MAT('paint', '#2d2f33')); for (let i = 0; i < n; i++){ const cx = -w / 2 + w / n * (i + .5); B(w / n - .006, .7, .018, cx, top - .36, -d / 2 + .329, front); handle(cx + w / n / 2 - .06, top - .62, -d / 2 + .345, true); } }
+      if (upper !== 'none') B(.6, .12, .46, w / 2 - .55, top - .9, -d / 2 + .23, MAT('metal', '#bfc2c5'));
+      // placarea dintre blat și suspendate
+      const bsH = Math.max(.2, wallBottom - (.86 + topM)), bsY = .86 + topM + bsH / 2;
+      if (k && k.backsplash === 'tile' && k.backsplashTile){ const t = wallTexture({ kind: 'tile', color: k.backsplashColor, sizeCm: k.backsplashTile }, 'kit:' + k.backsplashColor), tc = t.clone(); tc.userData = { owned: true }; tc.needsUpdate = true; tc.repeat.set(w / t.userData.size, bsH / t.userData.size);
+        const bm = new THREE.MeshStandardMaterial({ map: tc, roughness: .3 }); bm.userData = { kind: 'tile', col: k.backsplashColor, size: [k.backsplashTile[0] / 100, k.backsplashTile[1] / 100] }; B(w, bsH, .008, 0, bsY, -d / 2 + .004, bm); }
+      else if (k) B(w, bsH, .008, 0, bsY, -d / 2 + .004, k.backsplash === 'glass' ? MAT('ceramic', k.backsplashColor) : k.backsplash === 'countertop' ? topMat : MAT('paint', k.backsplashColor));
+      else B(w, .01, .02, 0, 1.25, -d / 2 + .01, MAT('ceramic', '#f1efea'));
+      if (k && k.led && upper !== 'none'){ const lm = new THREE.MeshStandardMaterial({ color: lin(k.led), emissive: lin(k.led), emissiveIntensity: 1.4 }); B(w - .04, .008, .015, 0, wallBottom - .006, -d / 2 + .3, lm); }
+      break; }
     case 'fridge': { const m = s.inox ? MAT('metal', s.col) : MAT('paint', s.col); RB(w, h, d, .02, 0, h / 2, 0, m); B(w - .01, .004, .01, 0, h * .64, d / 2 + .001, MAT('paint', '#bdbdbd')); B(.02, .4, .03, w / 2 - .05, h * .8, d / 2 + .015, MAT('metal', '#aaa')); B(.02, .3, .03, w / 2 - .05, h * .45, d / 2 + .015, MAT('metal', '#aaa')); break; }
     case 'shower': { const pm = MAT('metal', s.prof), gl = MAT(s.frost ? 'frost' : 'glass', '#dcecf2'); B(w, .05, d, 0, .025, 0, MAT('ceramic', '#fafafa'));
       if (s.round){ const arc = new THREE.Mesh(new THREE.CylinderGeometry(w - .02, w - .02, h - .06, 32, 1, true, 0, Math.PI / 2), gl); arc.position.set(-w / 2 + .01, h / 2 + .03, -d / 2 + .01); g.add(arc); }
