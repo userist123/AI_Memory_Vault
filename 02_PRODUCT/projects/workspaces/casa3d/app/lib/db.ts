@@ -26,16 +26,32 @@ async function connect(): Promise<Db> {
   const tx: Tx = fn => db.transaction(t => fn((s, p) => t.query(s, p as any[]) as any));
   return { q: (s, p) => db.query(s, p as any[]) as any, tx, mode: memory ? 'pglite-memory' : 'pglite-file' };
 }
+// Catalogul se completează la fiecare pornire, nu doar pe o bază goală: produsele noi din JSON ajung și în bazele existente,
+// iar un preț verificat mai recent decât cel din bază (inclusiv unul pus manual) îl înlocuiește și intră în istoric.
+async function seedCatalog(q: Query){
+  const c = catalogSeed as any;
+  for (const s of c.suppliers) await q('insert into suppliers values($1,$2,$3,$4) on conflict do nothing', [s.id, s.name, s.country, s.website]);
+  for (const p of c.products) await q('insert into products values($1,$2,$3,$4,$5,$6) on conflict do nothing', [p.id, p.group, p.name, p.brand, p.category, p.model3d]);
+  for (const v of c.variants) await q('insert into variants values($1,$2,$3,$4,$5,$6,$7,$8,$9) on conflict do nothing', [v.id, v.productId, v.name, v.legacyIndex, v.dimensionsCm ? JSON.stringify(v.dimensionsCm) : null, v.dimensionsConfidence, JSON.stringify(v.style || {}), v.chairs ?? null, v.includedWith ?? null]);
+  const have = new Map((await q('select id, verified_at from offers')).rows.map((r: any) => [r.id, r.verified_at ? new Date(r.verified_at).toISOString().slice(0, 10) : '']));
+  for (const o of c.offers){ const pv = o.provenance, at = have.get(o.id);
+    if (at === undefined) await q('insert into offers values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) on conflict do nothing', [o.id, o.variantId, o.supplierId, o.price, o.currency, o.availability, o.affiliateUrl, pv.source, pv.sourceUrl, pv.verifiedAt, pv.verificationType, pv.confidence]);
+    else if (pv.verifiedAt && pv.verifiedAt > at) await q('update offers set price=$1, verified_at=$2, verification_type=$3, confidence=$4, source_url=$5 where id=$6', [o.price, pv.verifiedAt, pv.verificationType, pv.confidence, pv.sourceUrl, o.id]); }
+}
 async function seedOutbound(q: Query){
-  // retaileri + linkuri directe (fără afiliere în modul de testare); se rulează după catalog și materiale
-  if ((await q('select count(*)::int as n from retailers')).rows[0].n === 0){
-    await q("insert into retailers(slug, name, website) values('ikea-ro','IKEA România','https://www.ikea.com/ro/ro/'),('dedeman','Dedeman','https://www.dedeman.ro/') on conflict do nothing"); }
-  if ((await q('select count(*)::int as n from offer_links')).rows[0].n > 0) return;
+  // retaileri (unul pentru fiecare furnizor) + linkuri directe (fără afiliere în modul de testare) + istoricul prețurilor;
+  // fiecare pas adaugă doar ce lipsește, ca pornirile repetate să nu dubleze nimic.
   const c = catalogSeed as any, m = materialsSeed as any, slug = (s: string) => s === 'IKEA' ? 'ikea-ro' : 'dedeman';
-  for (const o of c.offers) if (o.provenance.sourceUrl) await q("insert into offer_links(target_kind, target_id, retailer, type, url) values('o',$1,$2,'direct',$3)", [o.id, o.supplierId === 'ikea-ro' ? 'ikea-ro' : 'dedeman', o.provenance.sourceUrl]);
-  for (const x of m.materials) if (x.sourceUrl) await q("insert into offer_links(target_kind, target_id, retailer, type, url) values('m',$1,$2,'direct',$3)", [x.id, slug(x.supplier), x.sourceUrl]);
-  for (const o of c.offers) await q("insert into price_history(target_kind, target_id, price, verified_at) values('o',$1,$2,$3)", [o.id, o.price, o.provenance.verifiedAt]);
-  for (const x of m.materials) await q("insert into price_history(target_kind, target_id, price, verified_at) values('m',$1,$2,$3)", [x.id, x.pack?.price ?? x.unitPrice, m.verifiedAt]);
+  const names: Record<string, string> = { 'ikea-ro': 'IKEA România' };
+  for (const s of c.suppliers) await q('insert into retailers(slug, name, website) values($1,$2,$3) on conflict do nothing', [s.id, names[s.id] ?? s.name, s.website]);
+  const linked = new Set((await q("select target_kind || ':' || target_id as k from offer_links")).rows.map((r: any) => r.k));
+  for (const o of c.offers) if (o.provenance.sourceUrl && !linked.has('o:' + o.id)) await q("insert into offer_links(target_kind, target_id, retailer, type, url) values('o',$1,$2,'direct',$3)", [o.id, o.supplierId, o.provenance.sourceUrl]);
+  for (const x of m.materials) if (x.sourceUrl && !linked.has('m:' + x.id)) await q("insert into offer_links(target_kind, target_id, retailer, type, url) values('m',$1,$2,'direct',$3)", [x.id, slug(x.supplier), x.sourceUrl]);
+  const key = (k: string, id: string, price: number, at: string) => `${k}:${id}:${Number(price).toFixed(2)}:${at}`;
+  const seen = new Set((await q('select target_kind, target_id, price, verified_at from price_history')).rows.map((r: any) => key(r.target_kind, r.target_id, r.price, new Date(r.verified_at).toISOString().slice(0, 10))));
+  const hist = async (k: string, id: string, price: number, at: string) => { if (seen.has(key(k, id, price, at))) return; seen.add(key(k, id, price, at)); await q('insert into price_history(target_kind, target_id, price, verified_at) values($1,$2,$3,$4)', [k, id, price, at]); };
+  for (const o of c.offers) await hist('o', o.id, o.price, o.provenance.verifiedAt);
+  for (const x of m.materials) await hist('m', x.id, x.pack?.price ?? x.unitPrice, m.verifiedAt);
 }
 async function migrate(q: Query){
   for (const stmt of SCHEMA.split(';').map(s => s.trim()).filter(Boolean)) await q(stmt);
@@ -45,14 +61,9 @@ async function migrate(q: Query){
     for (const x of m.labor) await q('insert into labor_rates values($1,$2,$3,$4,$5,$6,$7,$8,$9) on conflict do nothing', [x.id, x.label, x.unit, x.low, x.expected, x.high, JSON.stringify(x.sources), x.confidence, m.verifiedAt]);
     for (const x of m.services) await q('insert into services values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) on conflict do nothing', [x.id, x.label, x.supplier, x.price ?? null, x.pricePerMeter ?? null, x.sourceUrl, x.verificationType, x.confidence, x.note ?? null, m.verifiedAt]);
   }
-  await seedOutbound(q);
-  const { rows } = await q('select count(*)::int as n from offers'); if (rows[0].n > 0) return;
-  const c = catalogSeed as any;
-  for (const s of c.suppliers) await q('insert into suppliers values($1,$2,$3,$4) on conflict do nothing', [s.id, s.name, s.country, s.website]);
-  for (const p of c.products) await q('insert into products values($1,$2,$3,$4,$5,$6) on conflict do nothing', [p.id, p.group, p.name, p.brand, p.category, p.model3d]);
-  for (const v of c.variants) await q('insert into variants values($1,$2,$3,$4,$5,$6,$7,$8,$9) on conflict do nothing', [v.id, v.productId, v.name, v.legacyIndex, v.dimensionsCm ? JSON.stringify(v.dimensionsCm) : null, v.dimensionsConfidence, JSON.stringify(v.style || {}), v.chairs ?? null, v.includedWith ?? null]);
-  for (const o of c.offers) await q('insert into offers values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) on conflict do nothing', [o.id, o.variantId, o.supplierId, o.price, o.currency, o.availability, o.affiliateUrl, o.provenance.source, o.provenance.sourceUrl, o.provenance.verifiedAt, o.provenance.verificationType, o.provenance.confidence]);
+  await seedCatalog(q);
   await seedOutbound(q);
 }
 export async function getDb(){ if (!ready) ready = (async () => { const c = await connect(); await migrate(c.q); return c; })(); return ready; }
 export function resetDbForTests(){ ready = null; }
+export async function reseedForTests(){ await migrate((await getDb()).q); }

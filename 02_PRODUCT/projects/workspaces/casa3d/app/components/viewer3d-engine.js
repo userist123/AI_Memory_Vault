@@ -89,12 +89,12 @@ function model(it){
   const CY = (rt, rb, hh, x, y, z, m, seg) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, hh, seg || 24), m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
   const body = (c) => s.wood ? MAT('wood', c) : MAT('paint', c);
   switch (it.model){
-    case 'sofa': { const up = MAT(s.mat || 'fabric', s.col), dark = MAT('paint', '#1b1b1b'), ad = .95, arm = .24; const sw = s.chaise ? w - .02 : w;
+    case 'sofa': { const up = MAT(s.mat || 'fabric', s.col), dark = MAT('paint', '#1b1b1b'), ad = Math.min(.95, d), arm = w < 1.1 ? .16 : .24; const sw = s.chaise ? w - .02 : w;
       [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => CY(.02, .018, .06, a * (sw / 2 - .08), .03, b * (ad / 2 - .08), dark, 10));
       RB(sw, .22, ad, .03, 0, .17, 0, up);                          // bază
       RB(.24, .36, ad, .06, -sw / 2 + arm / 2, .46, 0, up);         // cotiere joase și late (specific KIVIK)
       if (!s.chaise) RB(.24, .36, ad, .06, sw / 2 - arm / 2, .46, 0, up);
-      const seatW = (sw - arm * (s.chaise ? 1 : 2)), n = 3; const x0 = -sw / 2 + arm;
+      const seatW = (sw - arm * (s.chaise ? 1 : 2)), n = s.seats || (seatW < .9 ? 1 : seatW < 1.5 ? 2 : 3); const x0 = -sw / 2 + arm;
       for (let i = 0; i < n; i++) RB(seatW / n - .01, .17, ad - .22, .07, x0 + seatW / n * (i + .5), .365, .08, up); // perne șezut
       for (let i = 0; i < n; i++) RB(seatW / n - .02, .44, .2, .09, x0 + seatW / n * (i + .5), .62, -ad / 2 + .15, up); // perne spătar
       RB(sw - .02, .38, .16, .03, 0, .45, -ad / 2 + .08, up);          // spătar
@@ -128,7 +128,7 @@ function model(it){
         else if (s.chair === 'ingolf'){ add(.42, .04, .42, 0, .46, 0, fr); for (let k = -2; k <= 2; k++) add(.018, .42, .018, k * .08, .7, -.2, fr); add(.44, .05, .03, 0, .92, -.2, fr); add(.03, .5, .03, -.2, .7, -.2, fr); add(.03, .5, .03, .2, .7, -.2, fr); }
         else { const cu = MAT('fabric', s.chair === 'orrstaWhite' ? '#d9d9d6' : '#9a9c98'); const o = new THREE.Mesh(rgeo(.43, .06, .43, .02), cu); o.position.set(0, .48, 0); o.castShadow = true; cg.add(o); add(.42, .08, .025, 0, .88, -.2, fr); add(.42, .02, .02, 0, .66, -.2, fr); add(.03, .45, .03, -.19, .7, -.2, fr); add(.03, .45, .03, .19, .7, -.2, fr); } });
       break; }
-    case 'bed': { const fr = body(s.col), hb = s.wood ? MAT('wood', s.col) : MAT('paint', s.col);
+    case 'bed': { const fr = s.mat ? MAT(s.mat, s.col) : body(s.col), hb = s.mat ? MAT(s.mat, s.col) : s.wood ? MAT('wood', s.col) : MAT('paint', s.col);
       B(w, .3, .02, 0, .2, d / 2 - .01, fr); B(.02, .3, d - .1, -w / 2 + .01, .2, .04, fr); B(.02, .3, d - .1, w / 2 - .01, .2, .04, fr); B(w, h, .05, 0, h / 2, -d / 2 + .025, hb);
       [[-1, 1], [1, 1]].forEach(([a, b]) => B(.03, .05, .03, a * (w / 2 - .03), .025, b * (d / 2 - .03), MAT('paint', '#222')));
       if (s.boxes){ for (let i = 0; i < 2; i++) [-1, 1].forEach(sd => B(.02, .16, .9, sd * (w / 2 + .012), .12, -.35 + i * .95, fr)); }

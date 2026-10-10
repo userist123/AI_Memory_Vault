@@ -59,7 +59,7 @@ export function untwinnablePlacements(snap: Snapshot, cat: Catalog): FurniturePl
 }
 
 /** Grupele catalogului → rolurile pe care le știe motorul de reguli (lipit de perete, lângă pat etc.). */
-export const ROLE_ALIASES = { pat: 'bed', noptiera: 'nightstand', dulap: 'wardrobe', canapea: 'sofa', birou: 'desk', scaunBirou: 'chair', masuta: 'table', biblioteca: 'bookcase', comodaTv: 'dresser' } as const;
+export const ROLE_ALIASES = { pat: 'bed', noptiera: 'nightstand', dulap: 'wardrobe', canapea: 'sofa', birou: 'desk', scaunBirou: 'chair', masuta: 'table', biblioteca: 'bookcase', comodaTv: 'dresser', comoda: 'dresser' } as const;
 
 /** Catalogul aplicației ca lista de produse a solver-ului: doar variante cu dimensiuni; prețul lipsă rămâne UNKNOWN. */
 export function twinCatalogItems(cat: Catalog): CatalogItem[] {

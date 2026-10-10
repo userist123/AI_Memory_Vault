@@ -32,7 +32,7 @@ test('catalogul twin păstrează prețurile cunoscute, provenienţa și UNKNOWN'
   const cat = await repo.getCatalog(), items = twinCatalogItems(cat);
   assert.ok(items.length >= 60 && items.length <= cat.variants.length);
   const sofa = items.find(i => i.id === 'canapea-0')!;
-  assert.deepEqual(sofa.price, { amount: 2299, currency: 'RON' }); assert.equal(sofa.retailer, 'IKEA'); assert.equal(sofa.role, 'canapea'); assert.equal(sofa.w, 2.28);
-  assert.equal(sofa.provenance?.verifiedAt, '2026-09-30');
+  assert.deepEqual(sofa.price, { amount: 1699, currency: 'RON' }); assert.equal(sofa.retailer, 'IKEA'); assert.equal(sofa.role, 'canapea'); assert.equal(sofa.w, 2.28);
+  assert.equal(sofa.provenance?.verifiedAt, '2026-10-10');
   const noDims = cat.variants.filter(v => !v.dimensionsCm).length; assert.equal(items.length, cat.variants.length - noDims);
 });

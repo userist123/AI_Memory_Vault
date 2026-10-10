@@ -32,7 +32,9 @@ describe('catalog-filter', () => {
     const ikea = searchCatalog(cat, { retailers: ['ikea-ro'] }), ded = searchCatalog(cat, { retailers: ['Dedeman'] });
     assert.ok(ikea.length > 0 && ded.length > 0); assert.ok(ikea.every(r => r.retailer === 'IKEA')); assert.ok(ded.every(r => r.retailer === 'Dedeman'));
     assert.equal(searchCatalog(cat, { retailers: ['IKEA', 'Dedeman'] }).filter(r => r.offerId).length, ikea.length + ded.length);
-    assert.equal(searchCatalog(cat, { markets: ['RO'] }).filter(r => r.offerId).length, ikea.length + ded.length);
+    const jysk = searchCatalog(cat, { retailers: ['jysk-ro'] }), mob = searchCatalog(cat, { retailers: ['Mobexpert'] });
+    assert.ok(jysk.length > 0 && jysk.every(r => r.retailer === 'JYSK') && mob.length > 0 && mob.every(r => r.retailer === 'Mobexpert'));
+    assert.equal(searchCatalog(cat, { markets: ['RO'] }).filter(r => r.offerId).length, ikea.length + ded.length + jysk.length + mob.length);
     assert.equal(searchCatalog(cat, { markets: ['DE'] }).length, 0);
   });
   test('limite de preț: necunoscutele ies doar când e setată o limită', () => {

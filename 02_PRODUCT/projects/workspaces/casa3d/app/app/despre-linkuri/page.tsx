@@ -3,7 +3,7 @@ export default function Page(){
   return (<main className="home" style={{ maxWidth: 720 }}>
     <a className="btn" href="/">← Proiecte</a>
     <h1 style={{ marginTop: 24 }}>Cum funcționează linkurile spre magazine</h1>
-    <p className="lead">Aplicația e în testare. Linkurile duc direct la paginile produselor de pe ikea.com/ro și dedeman.ro. În această etapă nu primim niciun comision pentru cumpărături.</p>
+    <p className="lead">Aplicația e în testare. Linkurile duc direct la paginile produselor de pe ikea.com/ro, dedeman.ro, jysk.ro și mobexpert.ro. În această etapă nu primim niciun comision pentru cumpărături.</p>
     <h3>Prețuri</h3>
     <p>Fiecare preț e verificat manual și afișat cu data verificării. Prețurile se pot schimba; prețul valabil este cel de pe site-ul magazinului în momentul comenzii. Când un preț e mai vechi de 14 zile, aplicația îl marchează ca „de reverificat”.</p>
     <h3>Ce înregistrăm când apeși un link</h3>

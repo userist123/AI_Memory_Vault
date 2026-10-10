@@ -7,7 +7,8 @@ export const DEFAULT_UTM = { utm_source: 'casamea3d', utm_medium: 'referral', ut
 export const STALE_DAYS = 14;
 // domenii permise pentru linkurile de afiliere (rețelele cercetate) — protecție împotriva open-redirect
 export const AFFILIATE_HOSTS: Record<string, string[]> = { '2performant': ['event.2performant.ro', 'event.2performant.com'], profitshare: ['l.profitshare.ro', 'profitshare.ro'] };
-export const RETAILER_HOSTS: Record<string, string[]> = { 'ikea-ro': ['www.ikea.com', 'ikea.com'], dedeman: ['www.dedeman.ro', 'dedeman.ro'] };
+export const RETAILER_HOSTS: Record<string, string[]> = { 'ikea-ro': ['www.ikea.com', 'ikea.com'], dedeman: ['www.dedeman.ro', 'dedeman.ro'],
+  'jysk-ro': ['jysk.ro', 'www.jysk.ro'], mobexpert: ['mobexpert.ro', 'www.mobexpert.ro'] };
 
 export function activeLink(links: OfferLink[], now = new Date()): OfferLink | null {
   const live = links.filter(l => new Date(l.active_from) <= now && (!l.active_to || new Date(l.active_to) > now));

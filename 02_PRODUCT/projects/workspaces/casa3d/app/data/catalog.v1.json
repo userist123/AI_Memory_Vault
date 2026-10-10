@@ -11,6 +11,18 @@
       "name": "Dedeman",
       "country": "RO",
       "website": "https://www.dedeman.ro/"
+    },
+    {
+      "id": "jysk-ro",
+      "name": "JYSK",
+      "country": "RO",
+      "website": "https://jysk.ro/"
+    },
+    {
+      "id": "mobexpert",
+      "name": "Mobexpert",
+      "country": "RO",
+      "website": "https://mobexpert.ro/"
     }
   ],
   "products": [
@@ -429,6 +441,1150 @@
       "brand": "IKEA",
       "category": "Corp cu oglindă",
       "model3d": "mirror"
+    },
+    {
+      "id": "canapea-ektorp-canapea-3-locuri",
+      "group": "canapea",
+      "name": "EKTORP canapea 3 locuri",
+      "brand": "IKEA",
+      "category": "Canapea",
+      "model3d": "sofa"
+    },
+    {
+      "id": "canapea-saltmyran-canapea-3-locuri",
+      "group": "canapea",
+      "name": "SALTMYRAN canapea 3 locuri",
+      "brand": "IKEA",
+      "category": "Canapea",
+      "model3d": "sofa"
+    },
+    {
+      "id": "canapea-valnas-canapea-3-locuri",
+      "group": "canapea",
+      "name": "VALNÄS canapea 3 locuri",
+      "brand": "IKEA",
+      "category": "Canapea",
+      "model3d": "sofa"
+    },
+    {
+      "id": "canapea-ekholma-canapea-3-locuri",
+      "group": "canapea",
+      "name": "EKHOLMA canapea 3 locuri",
+      "brand": "IKEA",
+      "category": "Canapea",
+      "model3d": "sofa"
+    },
+    {
+      "id": "fotoliu-poang-fotoliu",
+      "group": "fotoliu",
+      "name": "POÄNG fotoliu",
+      "brand": "IKEA",
+      "category": "Fotoliu",
+      "model3d": "sofa"
+    },
+    {
+      "id": "fotoliu-gavle-fotoliu",
+      "group": "fotoliu",
+      "name": "GÄVLE fotoliu",
+      "brand": "IKEA",
+      "category": "Fotoliu",
+      "model3d": "sofa"
+    },
+    {
+      "id": "fotoliu-ekenaset-fotoliu",
+      "group": "fotoliu",
+      "name": "EKENÄSET fotoliu",
+      "brand": "IKEA",
+      "category": "Fotoliu",
+      "model3d": "sofa"
+    },
+    {
+      "id": "fotoliu-dyvlinge-fotoliu-rotativ",
+      "group": "fotoliu",
+      "name": "DYVLINGE fotoliu rotativ",
+      "brand": "IKEA",
+      "category": "Fotoliu",
+      "model3d": "sofa"
+    },
+    {
+      "id": "fotoliu-oskarshamn-fotoliu",
+      "group": "fotoliu",
+      "name": "OSKARSHAMN fotoliu",
+      "brand": "IKEA",
+      "category": "Fotoliu",
+      "model3d": "sofa"
+    },
+    {
+      "id": "pat-tarva-cadru-pat-160x200",
+      "group": "pat",
+      "name": "TARVA cadru pat 160x200",
+      "brand": "IKEA",
+      "category": "Pat",
+      "model3d": "bed"
+    },
+    {
+      "id": "pat-malm-cadru-pat-inalt-140x200",
+      "group": "pat",
+      "name": "MALM cadru pat înalt 140x200",
+      "brand": "IKEA",
+      "category": "Pat",
+      "model3d": "bed"
+    },
+    {
+      "id": "pat-brimnes-cadru-pat-cu-depozitare-si-tablie-180x20",
+      "group": "pat",
+      "name": "BRIMNES cadru pat cu depozitare și tăblie 180x200",
+      "brand": "IKEA",
+      "category": "Pat",
+      "model3d": "bed"
+    },
+    {
+      "id": "pat-idanas-pat-tapitat-cu-depozitare-160x200",
+      "group": "pat",
+      "name": "IDANÄS pat tapiţat cu depozitare 160x200",
+      "brand": "IKEA",
+      "category": "Pat",
+      "model3d": "bed"
+    },
+    {
+      "id": "pat-slattum-cadru-pat-tapitat-160x200",
+      "group": "pat",
+      "name": "SLATTUM cadru pat tapiţat 160x200",
+      "brand": "IKEA",
+      "category": "Pat",
+      "model3d": "bed"
+    },
+    {
+      "id": "pat-fagelfjallet-cadru-pat-160x200",
+      "group": "pat",
+      "name": "FÅGELFJÄLLET cadru pat 160x200",
+      "brand": "IKEA",
+      "category": "Pat",
+      "model3d": "bed"
+    },
+    {
+      "id": "noptiera-radmanso-noptiera",
+      "group": "noptiera",
+      "name": "RÅDMANSÖ noptieră",
+      "brand": "IKEA",
+      "category": "Noptieră",
+      "model3d": "night"
+    },
+    {
+      "id": "noptiera-hauga-noptiera",
+      "group": "noptiera",
+      "name": "HAUGA noptieră",
+      "brand": "IKEA",
+      "category": "Noptieră",
+      "model3d": "night"
+    },
+    {
+      "id": "noptiera-tyssedal-noptiera",
+      "group": "noptiera",
+      "name": "TYSSEDAL noptieră",
+      "brand": "IKEA",
+      "category": "Noptieră",
+      "model3d": "night"
+    },
+    {
+      "id": "noptiera-gullaberg-noptiera-cu-1-sertar-cu-polita",
+      "group": "noptiera",
+      "name": "GULLABERG noptieră cu 1 sertar cu poliță",
+      "brand": "IKEA",
+      "category": "Noptieră",
+      "model3d": "night"
+    },
+    {
+      "id": "dulap-kleppstad-dulap-de-haine-cu-usi-glisante",
+      "group": "dulap",
+      "name": "KLEPPSTAD dulap de haine cu uşi glisante",
+      "brand": "IKEA",
+      "category": "Dulap",
+      "model3d": "wardrobe"
+    },
+    {
+      "id": "dulap-songesand-dulap-de-haine",
+      "group": "dulap",
+      "name": "SONGESAND dulap de haine",
+      "brand": "IKEA",
+      "category": "Dulap",
+      "model3d": "wardrobe"
+    },
+    {
+      "id": "dulap-pax-forsand-dulap",
+      "group": "dulap",
+      "name": "PAX / FORSAND dulap",
+      "brand": "IKEA",
+      "category": "Dulap",
+      "model3d": "wardrobe"
+    },
+    {
+      "id": "comoda-storklinta-comoda-4-sertare",
+      "group": "comoda",
+      "name": "STORKLINTA comodă 4 sertare",
+      "brand": "IKEA",
+      "category": "Comodă",
+      "model3d": "night"
+    },
+    {
+      "id": "comoda-radmanso-comoda-6-sertare",
+      "group": "comoda",
+      "name": "RÅDMANSÖ comodă 6 sertare",
+      "brand": "IKEA",
+      "category": "Comodă",
+      "model3d": "night"
+    },
+    {
+      "id": "comoda-tonstad-comoda-6-sertare",
+      "group": "comoda",
+      "name": "TONSTAD comodă 6 sertare",
+      "brand": "IKEA",
+      "category": "Comodă",
+      "model3d": "night"
+    },
+    {
+      "id": "comoda-hemnes-comoda-8-sertare",
+      "group": "comoda",
+      "name": "HEMNES comodă 8 sertare",
+      "brand": "IKEA",
+      "category": "Comodă",
+      "model3d": "night"
+    },
+    {
+      "id": "comoda-gursken-comoda-3-sertare",
+      "group": "comoda",
+      "name": "GURSKEN comodă 3 sertare",
+      "brand": "IKEA",
+      "category": "Comodă",
+      "model3d": "night"
+    },
+    {
+      "id": "comodaTv-brimnes-comoda-tv",
+      "group": "comodaTv",
+      "name": "BRIMNES comodă TV",
+      "brand": "IKEA",
+      "category": "Comodă TV",
+      "model3d": "tv"
+    },
+    {
+      "id": "comodaTv-lack-comoda-tv",
+      "group": "comodaTv",
+      "name": "LACK comodă TV",
+      "brand": "IKEA",
+      "category": "Comodă TV",
+      "model3d": "tv"
+    },
+    {
+      "id": "comodaTv-radmanso-comoda-tv",
+      "group": "comodaTv",
+      "name": "RÅDMANSÖ comodă TV",
+      "brand": "IKEA",
+      "category": "Comodă TV",
+      "model3d": "tv"
+    },
+    {
+      "id": "comodaTv-byas-comoda-tv",
+      "group": "comodaTv",
+      "name": "BYÅS comodă TV",
+      "brand": "IKEA",
+      "category": "Comodă TV",
+      "model3d": "tv"
+    },
+    {
+      "id": "comodaTv-fryksas-comoda-tv",
+      "group": "comodaTv",
+      "name": "FRYKSÅS comodă TV",
+      "brand": "IKEA",
+      "category": "Comodă TV",
+      "model3d": "tv"
+    },
+    {
+      "id": "biblioteca-hemnes-biblioteca",
+      "group": "biblioteca",
+      "name": "HEMNES bibliotecă",
+      "brand": "IKEA",
+      "category": "Bibliotecă",
+      "model3d": "shelf"
+    },
+    {
+      "id": "biblioteca-tonstad-biblioteca",
+      "group": "biblioteca",
+      "name": "TONSTAD bibliotecă",
+      "brand": "IKEA",
+      "category": "Bibliotecă",
+      "model3d": "shelf"
+    },
+    {
+      "id": "biblioteca-baggebo-biblioteca",
+      "group": "biblioteca",
+      "name": "BAGGEBO bibliotecă",
+      "brand": "IKEA",
+      "category": "Bibliotecă",
+      "model3d": "shelf"
+    },
+    {
+      "id": "biblioteca-brimnes-biblioteca",
+      "group": "biblioteca",
+      "name": "BRIMNES bibliotecă",
+      "brand": "IKEA",
+      "category": "Bibliotecă",
+      "model3d": "shelf"
+    },
+    {
+      "id": "masa-skalsta-masa",
+      "group": "masa",
+      "name": "SKÅLSTA masă",
+      "brand": "IKEA",
+      "category": "Masă cu scaune",
+      "model3d": "dining"
+    },
+    {
+      "id": "masa-vihals-masa",
+      "group": "masa",
+      "name": "VIHALS masă",
+      "brand": "IKEA",
+      "category": "Masă cu scaune",
+      "model3d": "dining"
+    },
+    {
+      "id": "masa-lisabo-masa",
+      "group": "masa",
+      "name": "LISABO masă",
+      "brand": "IKEA",
+      "category": "Masă cu scaune",
+      "model3d": "dining"
+    },
+    {
+      "id": "masa-nackanas-masa",
+      "group": "masa",
+      "name": "NACKANÄS masă",
+      "brand": "IKEA",
+      "category": "Masă cu scaune",
+      "model3d": "dining"
+    },
+    {
+      "id": "masa-docksta-masa-rotunda",
+      "group": "masa",
+      "name": "DOCKSTA masă rotundă",
+      "brand": "IKEA",
+      "category": "Masă cu scaune",
+      "model3d": "dining"
+    },
+    {
+      "id": "birou-lagkapten-alex-birou",
+      "group": "birou",
+      "name": "LAGKAPTEN / ALEX birou",
+      "brand": "IKEA",
+      "category": "Birou",
+      "model3d": "desk"
+    },
+    {
+      "id": "birou-mittzon-birou",
+      "group": "birou",
+      "name": "MITTZON birou",
+      "brand": "IKEA",
+      "category": "Birou",
+      "model3d": "desk"
+    },
+    {
+      "id": "birou-trotten-birou",
+      "group": "birou",
+      "name": "TROTTEN birou",
+      "brand": "IKEA",
+      "category": "Birou",
+      "model3d": "desk"
+    },
+    {
+      "id": "scaunBirou-markus-scaun-rotativ-m",
+      "group": "scaunBirou",
+      "name": "MARKUS scaun rotativ M",
+      "brand": "IKEA",
+      "category": "Scaun de birou",
+      "model3d": "ochair"
+    },
+    {
+      "id": "scaunBirou-flintan-scaun-rotativ",
+      "group": "scaunBirou",
+      "name": "FLINTAN scaun rotativ",
+      "brand": "IKEA",
+      "category": "Scaun de birou",
+      "model3d": "ochair"
+    },
+    {
+      "id": "scaunBirou-renberget-scaun-rotativ",
+      "group": "scaunBirou",
+      "name": "RENBERGET scaun rotativ",
+      "brand": "IKEA",
+      "category": "Scaun de birou",
+      "model3d": "ochair"
+    },
+    {
+      "id": "scaunBirou-hattefjall-scaun-rotativ-cu-brate",
+      "group": "scaunBirou",
+      "name": "HATTEFJÄLL scaun rotativ cu brațe",
+      "brand": "IKEA",
+      "category": "Scaun de birou",
+      "model3d": "ochair"
+    },
+    {
+      "id": "scaunBirou-smallen-scaun-rotativ",
+      "group": "scaunBirou",
+      "name": "SMÄLLEN scaun rotativ",
+      "brand": "IKEA",
+      "category": "Scaun de birou",
+      "model3d": "ochair"
+    },
+    {
+      "id": "canapea-canapea-fixa-3-locuri-andy",
+      "group": "canapea",
+      "name": "Canapea fixa 3 locuri Andy",
+      "brand": "Dedeman",
+      "category": "Canapea",
+      "model3d": "sofa"
+    },
+    {
+      "id": "canapea-canapea-fixa-3-locuri-chesterfield",
+      "group": "canapea",
+      "name": "Canapea fixa 3 locuri Chesterfield",
+      "brand": "Dedeman",
+      "category": "Canapea",
+      "model3d": "sofa"
+    },
+    {
+      "id": "canapea-canapea-fixa-3-locuri-panda",
+      "group": "canapea",
+      "name": "Canapea fixa 3 locuri Panda",
+      "brand": "Dedeman",
+      "category": "Canapea",
+      "model3d": "sofa"
+    },
+    {
+      "id": "canapea-canapea-fixa-3-locuri-romano",
+      "group": "canapea",
+      "name": "Canapea fixa 3 locuri Romano",
+      "brand": "Dedeman",
+      "category": "Canapea",
+      "model3d": "sofa"
+    },
+    {
+      "id": "fotoliu-fotoliu-extensibil-eva-kt1908bd-1",
+      "group": "fotoliu",
+      "name": "Fotoliu extensibil Eva KT1908BD-1",
+      "brand": "Dedeman",
+      "category": "Fotoliu",
+      "model3d": "sofa"
+    },
+    {
+      "id": "fotoliu-fotoliu-fix-charlot",
+      "group": "fotoliu",
+      "name": "Fotoliu fix Charlot",
+      "brand": "Dedeman",
+      "category": "Fotoliu",
+      "model3d": "sofa"
+    },
+    {
+      "id": "fotoliu-fotoliu-recliner-forest",
+      "group": "fotoliu",
+      "name": "Fotoliu recliner Forest",
+      "brand": "Dedeman",
+      "category": "Fotoliu",
+      "model3d": "sofa"
+    },
+    {
+      "id": "pat-pat-dormitor-dr-home-matrimonial-metalic-cu-sert",
+      "group": "pat",
+      "name": "Pat dormitor Dr. Home matrimonial metalic cu sertare 160x200",
+      "brand": "Dedeman",
+      "category": "Pat",
+      "model3d": "bed"
+    },
+    {
+      "id": "pat-pat-dormitor-dr-home-matrimonial-tapitat-160x200",
+      "group": "pat",
+      "name": "Pat dormitor Dr. Home matrimonial tapitat 160x200",
+      "brand": "Dedeman",
+      "category": "Pat",
+      "model3d": "bed"
+    },
+    {
+      "id": "pat-pat-dormitor-fidelio-matrimonial-tapitat-cu-lada",
+      "group": "pat",
+      "name": "Pat dormitor Fidelio matrimonial tapitat cu lada 160x200",
+      "brand": "Dedeman",
+      "category": "Pat",
+      "model3d": "bed"
+    },
+    {
+      "id": "noptiera-noptiera-corsica-cu-raft-sertar",
+      "group": "noptiera",
+      "name": "Noptiera Corsica cu raft + sertar",
+      "brand": "Dedeman",
+      "category": "Noptieră",
+      "model3d": "night"
+    },
+    {
+      "id": "noptiera-noptiera-duero-3f-cu-3-sertare",
+      "group": "noptiera",
+      "name": "Noptiera Duero 3F cu 3 sertare",
+      "brand": "Dedeman",
+      "category": "Noptieră",
+      "model3d": "night"
+    },
+    {
+      "id": "noptiera-noptiera-colhida-cu-2-sertare",
+      "group": "noptiera",
+      "name": "Noptiera Colhida cu 2 sertare",
+      "brand": "Dedeman",
+      "category": "Noptieră",
+      "model3d": "night"
+    },
+    {
+      "id": "dulap-dulap-dormitor-nevis-3k1f1o-cu-oglinda",
+      "group": "dulap",
+      "name": "Dulap dormitor Nevis 3K1F1O cu oglinda",
+      "brand": "Dedeman",
+      "category": "Dulap",
+      "model3d": "wardrobe"
+    },
+    {
+      "id": "dulap-dulap-dormitor-varadero-4k1f1o-cu-oglinda",
+      "group": "dulap",
+      "name": "Dulap dormitor Varadero 4K1F1O cu oglinda",
+      "brand": "Dedeman",
+      "category": "Dulap",
+      "model3d": "wardrobe"
+    },
+    {
+      "id": "dulap-dulap-dormitor-dressing-sierra-220-cu-usi-glisan",
+      "group": "dulap",
+      "name": "Dulap dormitor / dressing Sierra 220 cu usi glisante si oglinda",
+      "brand": "Dedeman",
+      "category": "Dulap",
+      "model3d": "wardrobe"
+    },
+    {
+      "id": "comoda-comoda-dormitor-duero-5f-90-cu-5-sertare",
+      "group": "comoda",
+      "name": "Comoda dormitor Duero 5F 90 cu 5 sertare",
+      "brand": "Dedeman",
+      "category": "Comodă",
+      "model3d": "night"
+    },
+    {
+      "id": "comodaTv-comoda-tv-rex-cu-lumini-si-usi",
+      "group": "comodaTv",
+      "name": "Comoda TV Rex cu lumini si usi",
+      "brand": "Dedeman",
+      "category": "Comodă TV",
+      "model3d": "tv"
+    },
+    {
+      "id": "comodaTv-comoda-tv-darwen-3k2f2v-cu-usi-si-sertare",
+      "group": "comodaTv",
+      "name": "Comoda TV Darwen 3K2F2V cu usi si sertare",
+      "brand": "Dedeman",
+      "category": "Comodă TV",
+      "model3d": "tv"
+    },
+    {
+      "id": "comodaTv-comoda-tv-arles-3k3v-cu-usi",
+      "group": "comodaTv",
+      "name": "Comoda TV Arles 3K3V cu usi",
+      "brand": "Dedeman",
+      "category": "Comodă TV",
+      "model3d": "tv"
+    },
+    {
+      "id": "biblioteca-biblioteca-living-cantal",
+      "group": "biblioteca",
+      "name": "Biblioteca living Cantal",
+      "brand": "Dedeman",
+      "category": "Bibliotecă",
+      "model3d": "shelf"
+    },
+    {
+      "id": "biblioteca-biblioteca-living-margate-ah",
+      "group": "biblioteca",
+      "name": "Biblioteca living Margate AH",
+      "brand": "Dedeman",
+      "category": "Bibliotecă",
+      "model3d": "shelf"
+    },
+    {
+      "id": "biblioteca-biblioteca-living-retimno",
+      "group": "biblioteca",
+      "name": "Biblioteca living Retimno",
+      "brand": "Dedeman",
+      "category": "Bibliotecă",
+      "model3d": "shelf"
+    },
+    {
+      "id": "biblioteca-biblioteca-living-glen",
+      "group": "biblioteca",
+      "name": "Biblioteca living Glen",
+      "brand": "Dedeman",
+      "category": "Bibliotecă",
+      "model3d": "shelf"
+    },
+    {
+      "id": "biblioteca-biblioteca-living-lorca",
+      "group": "biblioteca",
+      "name": "Biblioteca living Lorca",
+      "brand": "Dedeman",
+      "category": "Bibliotecă",
+      "model3d": "shelf"
+    },
+    {
+      "id": "masuta-masuta-cafea-oscar-ks-dreptunghiulara",
+      "group": "masuta",
+      "name": "Masuta cafea Oscar KS dreptunghiulara",
+      "brand": "Dedeman",
+      "category": "Măsuță de cafea",
+      "model3d": "coffee"
+    },
+    {
+      "id": "masuta-masuta-cafea-aberdeen-dreptunghiulara",
+      "group": "masuta",
+      "name": "Masuta cafea Aberdeen dreptunghiulara",
+      "brand": "Dedeman",
+      "category": "Măsuță de cafea",
+      "model3d": "coffee"
+    },
+    {
+      "id": "masuta-masuta-cafea-cirko-rotunda-set-2-in-1",
+      "group": "masuta",
+      "name": "Masuta cafea Cirko rotunda set 2 in 1",
+      "brand": "Dedeman",
+      "category": "Măsuță de cafea",
+      "model3d": "coffee"
+    },
+    {
+      "id": "masuta-masuta-cafea-din-sticla-kugu-rotunda",
+      "group": "masuta",
+      "name": "Masuta cafea din sticla Kugu rotunda",
+      "brand": "Dedeman",
+      "category": "Măsuță de cafea",
+      "model3d": "coffee"
+    },
+    {
+      "id": "masuta-masuta-cafea-aralyn-dreptunghiulara",
+      "group": "masuta",
+      "name": "Masuta cafea Aralyn dreptunghiulara",
+      "brand": "Dedeman",
+      "category": "Măsuță de cafea",
+      "model3d": "coffee"
+    },
+    {
+      "id": "masa-masa-bucatarie-dining-fixa-eva-ab2820",
+      "group": "masa",
+      "name": "Masa bucatarie / dining fixa Eva AB2820",
+      "brand": "Dedeman",
+      "category": "Masă cu scaune",
+      "model3d": "dining"
+    },
+    {
+      "id": "masa-masa-bucatarie-dining-fixa-grandio-mob-tonia",
+      "group": "masa",
+      "name": "Masa bucatarie / dining fixa Grandio Mob Tonia",
+      "brand": "Dedeman",
+      "category": "Masă cu scaune",
+      "model3d": "dining"
+    },
+    {
+      "id": "masa-masa-bucatarie-dining-extensibila-mb-13",
+      "group": "masa",
+      "name": "Masa bucatarie / dining extensibila MB-13",
+      "brand": "Dedeman",
+      "category": "Masă cu scaune",
+      "model3d": "dining"
+    },
+    {
+      "id": "masa-masa-bucatarie-dining-extensibila-saxonia",
+      "group": "masa",
+      "name": "Masa bucatarie / dining extensibila Saxonia",
+      "brand": "Dedeman",
+      "category": "Masă cu scaune",
+      "model3d": "dining"
+    },
+    {
+      "id": "birou-birou-calculator-standard-rubin",
+      "group": "birou",
+      "name": "Birou calculator standard Rubin",
+      "brand": "Dedeman",
+      "category": "Birou",
+      "model3d": "desk"
+    },
+    {
+      "id": "birou-birou-calculator-cu-sertare-si-dulap-alfa",
+      "group": "birou",
+      "name": "Birou calculator cu sertare si dulap Alfa",
+      "brand": "Dedeman",
+      "category": "Birou",
+      "model3d": "desk"
+    },
+    {
+      "id": "birou-birou-cu-sertar-si-dulap-bany",
+      "group": "birou",
+      "name": "Birou cu sertar si dulap Bany",
+      "brand": "Dedeman",
+      "category": "Birou",
+      "model3d": "desk"
+    },
+    {
+      "id": "birou-birou-cu-sertare-si-dulap-eustach",
+      "group": "birou",
+      "name": "Birou cu sertare si dulap Eustach",
+      "brand": "Dedeman",
+      "category": "Birou",
+      "model3d": "desk"
+    },
+    {
+      "id": "scaunBirou-scaun-birou-ergonomic-cu-suport-lombar-ericsson",
+      "group": "scaunBirou",
+      "name": "Scaun birou ergonomic cu suport lombar Ericsson",
+      "brand": "Dedeman",
+      "category": "Scaun de birou",
+      "model3d": "ochair"
+    },
+    {
+      "id": "scaunBirou-scaun-birou-ergonomic-sd-mch801-cu-tetiera",
+      "group": "scaunBirou",
+      "name": "Scaun birou ergonomic SD-MCH801 cu tetiera",
+      "brand": "Dedeman",
+      "category": "Scaun de birou",
+      "model3d": "ochair"
+    },
+    {
+      "id": "scaunBirou-scaun-birou-operational-carbo",
+      "group": "scaunBirou",
+      "name": "Scaun birou operational Carbo",
+      "brand": "Dedeman",
+      "category": "Scaun de birou",
+      "model3d": "ochair"
+    },
+    {
+      "id": "pantofar-pantofar-buseto-2k",
+      "group": "pantofar",
+      "name": "Pantofar Buseto 2K",
+      "brand": "Dedeman",
+      "category": "Pantofar",
+      "model3d": "shoe"
+    },
+    {
+      "id": "pantofar-pantofar-elia",
+      "group": "pantofar",
+      "name": "Pantofar Elia",
+      "brand": "Dedeman",
+      "category": "Pantofar",
+      "model3d": "shoe"
+    },
+    {
+      "id": "pantofar-pantofar-hugo-24-cu-oglinda",
+      "group": "pantofar",
+      "name": "Pantofar Hugo 24 cu oglinda",
+      "brand": "Dedeman",
+      "category": "Pantofar",
+      "model3d": "shoe"
+    },
+    {
+      "id": "pantofar-pantofar-islay-2k",
+      "group": "pantofar",
+      "name": "Pantofar Islay 2K",
+      "brand": "Dedeman",
+      "category": "Pantofar",
+      "model3d": "shoe"
+    },
+    {
+      "id": "pantofar-pantofar-menorca-2k-cu-oglinda",
+      "group": "pantofar",
+      "name": "Pantofar Menorca 2K cu oglinda",
+      "brand": "Dedeman",
+      "category": "Pantofar",
+      "model3d": "shoe"
+    },
+    {
+      "id": "lavoar-masca-baie-lavoar-savini-due-60w-cu-usi",
+      "group": "lavoar",
+      "name": "Masca baie + lavoar Savini Due 60W cu usi",
+      "brand": "Dedeman",
+      "category": "Lavoar cu mobilier",
+      "model3d": "vanity"
+    },
+    {
+      "id": "lavoar-masca-baie-lavoar-savini-due-rimini-cu-usi",
+      "group": "lavoar",
+      "name": "Masca baie + lavoar Savini Due Rimini cu usi",
+      "brand": "Dedeman",
+      "category": "Lavoar cu mobilier",
+      "model3d": "vanity"
+    },
+    {
+      "id": "lavoar-masca-baie-lavoar-roca-a851925529-cu-sertare-sus",
+      "group": "lavoar",
+      "name": "Masca baie + lavoar Roca A851925529 cu sertare suspendat",
+      "brand": "Dedeman",
+      "category": "Lavoar cu mobilier",
+      "model3d": "vanity"
+    },
+    {
+      "id": "lavoar-masca-baie-lavoar-savini-due-creta-80-cu-sertare",
+      "group": "lavoar",
+      "name": "Masca baie + lavoar Savini Due Creta 80 cu sertare",
+      "brand": "Dedeman",
+      "category": "Lavoar cu mobilier",
+      "model3d": "vanity"
+    },
+    {
+      "id": "lavoar-masca-baie-lavoar-fayans-kuandra-cu-sertare-si-u",
+      "group": "lavoar",
+      "name": "Masca baie + lavoar Fayans Kuandra cu sertare si usi",
+      "brand": "Dedeman",
+      "category": "Lavoar cu mobilier",
+      "model3d": "vanity"
+    },
+    {
+      "id": "lavoar-masca-baie-lavoar-cersanit-moduo-s801-221-dsm-cu",
+      "group": "lavoar",
+      "name": "Masca baie + lavoar Cersanit Moduo S801-221-DSM cu sertare suspendat",
+      "brand": "Dedeman",
+      "category": "Lavoar cu mobilier",
+      "model3d": "vanity"
+    },
+    {
+      "id": "frigider-frigider-arctic-ad60310m40s-306-l",
+      "group": "frigider",
+      "name": "Frigider Arctic AD60310M40S 306 l",
+      "brand": "Arctic",
+      "category": "Frigider",
+      "model3d": "fridge"
+    },
+    {
+      "id": "frigider-combina-frigorifica-beko-rcsa406k40dxbn-386-l",
+      "group": "frigider",
+      "name": "Combina frigorifica Beko RCSA406K40DXBN 386 l",
+      "brand": "Beko",
+      "category": "Frigider",
+      "model3d": "fridge"
+    },
+    {
+      "id": "frigider-combina-frigorifica-albatros-cf343e-262-l",
+      "group": "frigider",
+      "name": "Combina frigorifica Albatros CF343E 262 l",
+      "brand": "Albatros",
+      "category": "Frigider",
+      "model3d": "fridge"
+    },
+    {
+      "id": "frigider-frigider-candy-cdg1s514ew-211-l",
+      "group": "frigider",
+      "name": "Frigider Candy CDG1S514EW 211 l",
+      "brand": "Candy",
+      "category": "Frigider",
+      "model3d": "fridge"
+    },
+    {
+      "id": "frigider-frigider-arctic-ad54280m40w-250-l",
+      "group": "frigider",
+      "name": "Frigider Arctic AD54280M40W 250 l",
+      "brand": "Arctic",
+      "category": "Frigider",
+      "model3d": "fridge"
+    },
+    {
+      "id": "frigider-frigider-samus-srx474nfe-359-l",
+      "group": "frigider",
+      "name": "Frigider Samus SRX474NFE 359 l",
+      "brand": "Samus",
+      "category": "Frigider",
+      "model3d": "fridge"
+    },
+    {
+      "id": "dus-cabina-dus-patrata-kadda-jf-90k",
+      "group": "dus",
+      "name": "Cabina dus patrata Kadda JF.90K",
+      "brand": "Kadda",
+      "category": "Cabină de duș",
+      "model3d": "shower"
+    },
+    {
+      "id": "dus-cabina-dus-dreptunghiulara-cadita-seldus-eur5",
+      "group": "dus",
+      "name": "Cabina dus dreptunghiulara + cadita Seldus EUR5",
+      "brand": "Seldus",
+      "category": "Cabină de duș",
+      "model3d": "shower"
+    },
+    {
+      "id": "dus-cabina-dus-semirotunda-cadita-inalta-kadda-2018-",
+      "group": "dus",
+      "name": "Cabina dus semirotunda + cadita inalta Kadda 2018 B",
+      "brand": "Kadda",
+      "category": "Cabină de duș",
+      "model3d": "shower"
+    },
+    {
+      "id": "dus-cabina-dus-dreptunghiulara-west-cb150wst10gb",
+      "group": "dus",
+      "name": "Cabina dus dreptunghiulara West CB150WST10GB",
+      "brand": "West",
+      "category": "Cabină de duș",
+      "model3d": "shower"
+    },
+    {
+      "id": "wc-vas-wc-cu-rezervor-mecanism-capac-set-cersanit-k",
+      "group": "wc",
+      "name": "Vas wc cu rezervor + mecanism + capac, set Cersanit Koral K681-001",
+      "brand": "Cersanit",
+      "category": "Vas WC",
+      "model3d": "wc"
+    },
+    {
+      "id": "wc-vas-wc-suspendat-kadda-therma-mgz-55",
+      "group": "wc",
+      "name": "Vas WC suspendat Kadda Therma MGZ-55",
+      "brand": "Kadda",
+      "category": "Vas WC",
+      "model3d": "wc"
+    },
+    {
+      "id": "wc-vas-wc-suspendat-roca-gap-a34647f000",
+      "group": "wc",
+      "name": "Vas WC suspendat Roca Gap A34647F000",
+      "brand": "Roca",
+      "category": "Vas WC",
+      "model3d": "wc"
+    },
+    {
+      "id": "wc-vas-wc-suspendat-geberit-selnova-square-501-546-",
+      "group": "wc",
+      "name": "Vas WC suspendat Geberit Selnova Square 501.546.01.1",
+      "brand": "Geberit",
+      "category": "Vas WC",
+      "model3d": "wc"
+    },
+    {
+      "id": "wc-vas-wc-cersanit-bonica-k3029-002-pe-pardoseala",
+      "group": "wc",
+      "name": "Vas WC Cersanit Bonica K3029-002 pe pardoseala",
+      "brand": "Cersanit",
+      "category": "Vas WC",
+      "model3d": "wc"
+    },
+    {
+      "id": "wc-vas-wc-suspendat-cersanit-mito-vortex-szcz100379",
+      "group": "wc",
+      "name": "Vas WC suspendat Cersanit Mito Vortex SZCZ1003790001",
+      "brand": "Cersanit",
+      "category": "Vas WC",
+      "model3d": "wc"
+    },
+    {
+      "id": "oglinda-oglinda-decorativa-f2203-dreptunghiulara",
+      "group": "oglinda",
+      "name": "Oglinda decorativa F2203 dreptunghiulara",
+      "brand": "Dedeman",
+      "category": "Corp cu oglindă",
+      "model3d": "mirror"
+    },
+    {
+      "id": "oglinda-oglinda-decorativa-rona-0065lk-cu-suport-de-pode",
+      "group": "oglinda",
+      "name": "Oglinda decorativa Rona 0065LK cu suport de podea",
+      "brand": "Dedeman",
+      "category": "Corp cu oglindă",
+      "model3d": "mirror"
+    },
+    {
+      "id": "oglinda-oglinda-living-cottage-0162miroc",
+      "group": "oglinda",
+      "name": "Oglinda living Cottage 0162MIROC",
+      "brand": "Dedeman",
+      "category": "Corp cu oglindă",
+      "model3d": "mirror"
+    },
+    {
+      "id": "oglinda-oglinda-decorativa-f2205-rotunda",
+      "group": "oglinda",
+      "name": "Oglinda decorativa F2205 rotunda",
+      "brand": "Dedeman",
+      "category": "Corp cu oglindă",
+      "model3d": "mirror"
+    },
+    {
+      "id": "canapea-canapea-egense-3-locuri",
+      "group": "canapea",
+      "name": "Canapea EGENSE 3 locuri",
+      "brand": "JYSK",
+      "category": "Canapea",
+      "model3d": "sofa"
+    },
+    {
+      "id": "canapea-canapea-falslev-3-locuri",
+      "group": "canapea",
+      "name": "Canapea FALSLEV 3 locuri",
+      "brand": "JYSK",
+      "category": "Canapea",
+      "model3d": "sofa"
+    },
+    {
+      "id": "canapea-oskar-canapea-extensibila-3-locuri",
+      "group": "canapea",
+      "name": "OSKAR canapea extensibila 3 locuri",
+      "brand": "Mobexpert",
+      "category": "Canapea",
+      "model3d": "sofa"
+    },
+    {
+      "id": "pat-cadru-pat-markskel-160x200",
+      "group": "pat",
+      "name": "Cadru pat MARKSKEL 160x200",
+      "brand": "JYSK",
+      "category": "Pat",
+      "model3d": "bed"
+    },
+    {
+      "id": "pat-cadru-pat-limfjorden-160x200-3-sertare",
+      "group": "pat",
+      "name": "Cadru pat LIMFJORDEN 160x200 3 sertare",
+      "brand": "JYSK",
+      "category": "Pat",
+      "model3d": "bed"
+    },
+    {
+      "id": "pat-cadru-pat-kongsberg-160x200",
+      "group": "pat",
+      "name": "Cadru pat KONGSBERG 160x200",
+      "brand": "JYSK",
+      "category": "Pat",
+      "model3d": "bed"
+    },
+    {
+      "id": "pat-kenton-pat-tapitat-160x200-cu-somiera-rabatabila",
+      "group": "pat",
+      "name": "KENTON pat tapitat 160x200 cu somiera rabatabila si lada",
+      "brand": "Mobexpert",
+      "category": "Pat",
+      "model3d": "bed"
+    },
+    {
+      "id": "dulap-dulap-fandrup-96x176-2-usi-3-sertare",
+      "group": "dulap",
+      "name": "Dulap FANDRUP 96x176 2 usi 3 sertare",
+      "brand": "JYSK",
+      "category": "Dulap",
+      "model3d": "wardrobe"
+    },
+    {
+      "id": "dulap-dulap-vellerup-200x200-4-usi-3-sertare",
+      "group": "dulap",
+      "name": "Dulap VELLERUP 200x200 4 usi 3 sertare",
+      "brand": "JYSK",
+      "category": "Dulap",
+      "model3d": "wardrobe"
+    },
+    {
+      "id": "scaunBirou-scaun-birou-marbjerg",
+      "group": "scaunBirou",
+      "name": "Scaun birou MARBJERG",
+      "brand": "JYSK",
+      "category": "Scaun de birou",
+      "model3d": "ochair"
+    },
+    {
+      "id": "scaunBirou-scaun-birou-billum",
+      "group": "scaunBirou",
+      "name": "Scaun birou BILLUM",
+      "brand": "JYSK",
+      "category": "Scaun de birou",
+      "model3d": "ochair"
+    },
+    {
+      "id": "comodaTv-comoda-tv-vedde",
+      "group": "comodaTv",
+      "name": "Comoda TV VEDDE",
+      "brand": "JYSK",
+      "category": "Comodă TV",
+      "model3d": "tv"
+    },
+    {
+      "id": "pantofar-pantofar-bakhuse-3-compartimente",
+      "group": "pantofar",
+      "name": "Pantofar BAKHUSE 3 compartimente",
+      "brand": "JYSK",
+      "category": "Pantofar",
+      "model3d": "shoe"
+    },
+    {
+      "id": "comodaTv-jennifer-comoda-tv-2-sertare",
+      "group": "comodaTv",
+      "name": "JENNIFER comoda TV 2 sertare",
+      "brand": "Mobexpert",
+      "category": "Comodă TV",
+      "model3d": "tv"
+    },
+    {
+      "id": "masa-priscilla-masa-dining-extensibila",
+      "group": "masa",
+      "name": "PRISCILLA masa dining extensibila",
+      "brand": "Mobexpert",
+      "category": "Masă cu scaune",
+      "model3d": "dining"
+    },
+    {
+      "id": "biblioteca-avenue-biblioteca",
+      "group": "biblioteca",
+      "name": "AVENUE biblioteca",
+      "brand": "Mobexpert",
+      "category": "Bibliotecă",
+      "model3d": "shelf"
+    },
+    {
+      "id": "masuta-lia-masuta-cafea",
+      "group": "masuta",
+      "name": "LIA masuta cafea",
+      "brand": "Mobexpert",
+      "category": "Măsuță de cafea",
+      "model3d": "coffee"
+    },
+    {
+      "id": "masuta-whity-masuta-cafea",
+      "group": "masuta",
+      "name": "WHITY masuta cafea",
+      "brand": "Mobexpert",
+      "category": "Măsuță de cafea",
+      "model3d": "coffee"
+    },
+    {
+      "id": "masuta-tuycan-masuta-cafea-rotunda",
+      "group": "masuta",
+      "name": "TUYCAN masuta cafea rotunda",
+      "brand": "Mobexpert",
+      "category": "Măsuță de cafea",
+      "model3d": "coffee"
+    },
+    {
+      "id": "masuta-masuta-cafea-ravnsbjerg-90x90",
+      "group": "masuta",
+      "name": "Masuta cafea RAVNSBJERG 90x90",
+      "brand": "JYSK",
+      "category": "Măsuță de cafea",
+      "model3d": "coffee"
+    },
+    {
+      "id": "masa-masa-aabenraa-90x160",
+      "group": "masa",
+      "name": "Masa AABENRAA 90x160",
+      "brand": "JYSK",
+      "category": "Masă cu scaune",
+      "model3d": "dining"
+    },
+    {
+      "id": "masa-masa-ringsted-100-rotunda",
+      "group": "masa",
+      "name": "Masa RINGSTED Ø100 rotunda",
+      "brand": "JYSK",
+      "category": "Masă cu scaune",
+      "model3d": "dining"
     }
   ],
   "variants": [
@@ -1463,6 +2619,2243 @@
       "style": {
         "wall": true
       }
+    },
+    {
+      "id": "canapea-5",
+      "productId": "canapea-ektorp-canapea-3-locuri",
+      "name": "EKTORP canapea 3 locuri, Mångbyn maro/multicolor",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 218,
+        "d": 88,
+        "h": 88
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#7b5e4a"
+      }
+    },
+    {
+      "id": "canapea-6",
+      "productId": "canapea-saltmyran-canapea-3-locuri",
+      "name": "SALTMYRAN canapea 3 locuri, Öreryd gri-bej",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 187,
+        "d": 79,
+        "h": 77
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#a39a8e"
+      }
+    },
+    {
+      "id": "canapea-7",
+      "productId": "canapea-valnas-canapea-3-locuri",
+      "name": "VALNÄS canapea 3 locuri, Knäbäck bej deschis",
+      "legacyIndex": 7,
+      "dimensionsCm": {
+        "w": 246,
+        "d": 94,
+        "h": 90
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#d9cdb8"
+      }
+    },
+    {
+      "id": "canapea-8",
+      "productId": "canapea-ekholma-canapea-3-locuri",
+      "name": "EKHOLMA canapea 3 locuri, Kilanda bej deschis",
+      "legacyIndex": 8,
+      "dimensionsCm": {
+        "w": 207,
+        "d": 85,
+        "h": 94
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#d8ccb6"
+      }
+    },
+    {
+      "id": "fotoliu-0",
+      "productId": "fotoliu-poang-fotoliu",
+      "name": "POÄNG fotoliu, furnir mesteacăn / Knisa bej deschis",
+      "legacyIndex": 0,
+      "dimensionsCm": {
+        "w": 68,
+        "d": 82,
+        "h": 100
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#d9cdb5"
+      }
+    },
+    {
+      "id": "fotoliu-1",
+      "productId": "fotoliu-gavle-fotoliu",
+      "name": "GÄVLE fotoliu, Diseröd gri",
+      "legacyIndex": 1,
+      "dimensionsCm": {
+        "w": 54,
+        "d": 68,
+        "h": 70
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#7d7d7d"
+      }
+    },
+    {
+      "id": "fotoliu-2",
+      "productId": "fotoliu-ekenaset-fotoliu",
+      "name": "EKENÄSET fotoliu, Kilanda bej deschis",
+      "legacyIndex": 2,
+      "dimensionsCm": {
+        "w": 64,
+        "d": 78,
+        "h": 76
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#d8ccb6"
+      }
+    },
+    {
+      "id": "fotoliu-3",
+      "productId": "fotoliu-dyvlinge-fotoliu-rotativ",
+      "name": "DYVLINGE fotoliu rotativ, Kelinge verde",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 63,
+        "d": 75,
+        "h": 68
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#5f7a4f"
+      }
+    },
+    {
+      "id": "fotoliu-4",
+      "productId": "fotoliu-oskarshamn-fotoliu",
+      "name": "OSKARSHAMN fotoliu, Tonerud roşu",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 82,
+        "d": 86,
+        "h": 99
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#a8322d"
+      }
+    },
+    {
+      "id": "pat-4",
+      "productId": "pat-tarva-cadru-pat-160x200",
+      "name": "TARVA cadru pat 160x200, vopsit alb",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 168,
+        "d": 209,
+        "h": 92
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee",
+        "wood": true
+      }
+    },
+    {
+      "id": "pat-5",
+      "productId": "pat-malm-cadru-pat-inalt-140x200",
+      "name": "MALM cadru pat înalt 140x200, alb/Luröy",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 156,
+        "d": 209,
+        "h": 100
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee",
+        "wood": true
+      }
+    },
+    {
+      "id": "pat-6",
+      "productId": "pat-brimnes-cadru-pat-cu-depozitare-si-tablie-180x20",
+      "name": "BRIMNES cadru pat cu depozitare și tăblie 180x200, alb",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 186,
+        "d": 234,
+        "h": 111
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee",
+        "wood": true
+      }
+    },
+    {
+      "id": "pat-7",
+      "productId": "pat-idanas-pat-tapitat-cu-depozitare-160x200",
+      "name": "IDANÄS pat tapiţat cu depozitare 160x200, Gunnared gri închis",
+      "legacyIndex": 7,
+      "dimensionsCm": {
+        "w": 170,
+        "d": 224,
+        "h": 120
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#4a4d52",
+        "mat": "fabric"
+      }
+    },
+    {
+      "id": "pat-8",
+      "productId": "pat-slattum-cadru-pat-tapitat-160x200",
+      "name": "SLATTUM cadru pat tapiţat 160x200, Vissle gri închis",
+      "legacyIndex": 8,
+      "dimensionsCm": {
+        "w": 164,
+        "d": 206,
+        "h": 85
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#4a4d52",
+        "mat": "fabric"
+      }
+    },
+    {
+      "id": "pat-9",
+      "productId": "pat-fagelfjallet-cadru-pat-160x200",
+      "name": "FÅGELFJÄLLET cadru pat 160x200, alb murdar",
+      "legacyIndex": 9,
+      "dimensionsCm": {
+        "w": 172,
+        "d": 207,
+        "h": 101
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#ebe6dc",
+        "wood": true
+      }
+    },
+    {
+      "id": "noptiera-3",
+      "productId": "noptiera-radmanso-noptiera",
+      "name": "RÅDMANSÖ noptieră, maro aspect nuc",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 54,
+        "d": 38,
+        "h": 58
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#6b4a36",
+        "wood": true
+      }
+    },
+    {
+      "id": "noptiera-4",
+      "productId": "noptiera-hauga-noptiera",
+      "name": "HAUGA noptieră, alb",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 40,
+        "d": 36,
+        "h": 63
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee",
+        "wood": true
+      }
+    },
+    {
+      "id": "noptiera-5",
+      "productId": "noptiera-tyssedal-noptiera",
+      "name": "TYSSEDAL noptieră, alb",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 51,
+        "d": 40,
+        "h": 59
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee"
+      }
+    },
+    {
+      "id": "noptiera-6",
+      "productId": "noptiera-gullaberg-noptiera-cu-1-sertar-cu-polita",
+      "name": "GULLABERG noptieră cu 1 sertar cu poliță, alb",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 53,
+        "d": 43,
+        "h": 69
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee",
+        "wood": true
+      }
+    },
+    {
+      "id": "dulap-3",
+      "productId": "dulap-kleppstad-dulap-de-haine-cu-usi-glisante",
+      "name": "KLEPPSTAD dulap de haine cu uşi glisante, alb",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 117,
+        "d": 55,
+        "h": 176
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee",
+        "wood": true
+      }
+    },
+    {
+      "id": "dulap-4",
+      "productId": "dulap-songesand-dulap-de-haine",
+      "name": "SONGESAND dulap de haine, alb",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 120,
+        "d": 60,
+        "h": 191
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee",
+        "wood": true
+      }
+    },
+    {
+      "id": "dulap-5",
+      "productId": "dulap-pax-forsand-dulap",
+      "name": "PAX / FORSAND dulap, alb/alb",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 250,
+        "d": 60,
+        "h": 236
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee",
+        "wood": true
+      }
+    },
+    {
+      "id": "comoda-0",
+      "productId": "comoda-storklinta-comoda-4-sertare",
+      "name": "STORKLINTA comodă 4 sertare, alb",
+      "legacyIndex": 0,
+      "dimensionsCm": {
+        "w": 70,
+        "d": 50,
+        "h": 98
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee",
+        "wood": true
+      }
+    },
+    {
+      "id": "comoda-1",
+      "productId": "comoda-radmanso-comoda-6-sertare",
+      "name": "RÅDMANSÖ comodă 6 sertare, maro aspect nuc",
+      "legacyIndex": 1,
+      "dimensionsCm": {
+        "w": 159,
+        "d": 48,
+        "h": 81
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#6b4a36",
+        "wood": true
+      }
+    },
+    {
+      "id": "comoda-2",
+      "productId": "comoda-tonstad-comoda-6-sertare",
+      "name": "TONSTAD comodă 6 sertare, furnir stejar",
+      "legacyIndex": 2,
+      "dimensionsCm": {
+        "w": 120,
+        "d": 47,
+        "h": 90
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#b38b5d",
+        "wood": true
+      }
+    },
+    {
+      "id": "comoda-3",
+      "productId": "comoda-hemnes-comoda-8-sertare",
+      "name": "HEMNES comodă 8 sertare, vopsit alb",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 160,
+        "d": 50,
+        "h": 96
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee"
+      }
+    },
+    {
+      "id": "comoda-4",
+      "productId": "comoda-gursken-comoda-3-sertare",
+      "name": "GURSKEN comodă 3 sertare, bej deschis",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 69,
+        "d": 38,
+        "h": 67
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#d9cdb5"
+      }
+    },
+    {
+      "id": "comodaTv-4",
+      "productId": "comodaTv-besta-comoda-tv-usi",
+      "name": "BESTÅ comodă TV+uşi, alb Björköviken / furnir stejar",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 180,
+        "d": 42,
+        "h": 38
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#d8d0c0",
+        "fronts": 3,
+        "wood": true
+      }
+    },
+    {
+      "id": "comodaTv-5",
+      "productId": "comodaTv-brimnes-comoda-tv",
+      "name": "BRIMNES comodă TV, alb",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 180,
+        "d": 41,
+        "h": 53
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee",
+        "fronts": 3,
+        "wood": true
+      }
+    },
+    {
+      "id": "comodaTv-6",
+      "productId": "comodaTv-lack-comoda-tv",
+      "name": "LACK comodă TV, negru-maro",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 160,
+        "d": 35,
+        "h": 36
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#2e2a27",
+        "fronts": 3,
+        "wood": true
+      }
+    },
+    {
+      "id": "comodaTv-7",
+      "productId": "comodaTv-radmanso-comoda-tv",
+      "name": "RÅDMANSÖ comodă TV, maro aspect nuc",
+      "legacyIndex": 7,
+      "dimensionsCm": {
+        "w": 176,
+        "d": 48,
+        "h": 66
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#6b4a36",
+        "fronts": 3,
+        "wood": true
+      }
+    },
+    {
+      "id": "comodaTv-8",
+      "productId": "comodaTv-byas-comoda-tv",
+      "name": "BYÅS comodă TV, lucios alb",
+      "legacyIndex": 8,
+      "dimensionsCm": {
+        "w": 160,
+        "d": 42,
+        "h": 45
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f5f5f5",
+        "fronts": 3
+      }
+    },
+    {
+      "id": "comodaTv-9",
+      "productId": "comodaTv-fryksas-comoda-tv",
+      "name": "FRYKSÅS comodă TV, ratan",
+      "legacyIndex": 9,
+      "dimensionsCm": {
+        "w": 157,
+        "d": 41,
+        "h": 49
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#b08d5b",
+        "fronts": 3,
+        "wood": true
+      }
+    },
+    {
+      "id": "biblioteca-5",
+      "productId": "biblioteca-hemnes-biblioteca",
+      "name": "HEMNES bibliotecă, gri-verde/maro deschis vopsit",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 90,
+        "d": 37,
+        "h": 197
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#7f8a76"
+      }
+    },
+    {
+      "id": "biblioteca-6",
+      "productId": "biblioteca-tonstad-biblioteca",
+      "name": "TONSTAD bibliotecă, furnir stejar",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 82,
+        "d": 37,
+        "h": 200
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#c4a273",
+        "wood": true
+      }
+    },
+    {
+      "id": "biblioteca-7",
+      "productId": "biblioteca-baggebo-biblioteca",
+      "name": "BAGGEBO bibliotecă, alb",
+      "legacyIndex": 7,
+      "dimensionsCm": {
+        "w": 50,
+        "d": 25,
+        "h": 160
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee"
+      }
+    },
+    {
+      "id": "biblioteca-8",
+      "productId": "biblioteca-brimnes-biblioteca",
+      "name": "BRIMNES bibliotecă, alb",
+      "legacyIndex": 8,
+      "dimensionsCm": {
+        "w": 60,
+        "d": 35,
+        "h": 190
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee",
+        "wood": true
+      }
+    },
+    {
+      "id": "masa-5",
+      "productId": "masa-skalsta-masa",
+      "name": "SKÅLSTA masă, aspect stejar / formă X negru-gri",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 140,
+        "d": 80,
+        "h": 75
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "top": "#b79a6e",
+        "chair": "orrsta"
+      },
+      "chairs": 4
+    },
+    {
+      "id": "masa-6",
+      "productId": "masa-vihals-masa",
+      "name": "VIHALS masă, alb/alb",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 125,
+        "d": 74,
+        "h": 75
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "top": "#f2f2ee",
+        "chair": "orrstaWhite"
+      },
+      "chairs": 4
+    },
+    {
+      "id": "masa-7",
+      "productId": "masa-lisabo-masa",
+      "name": "LISABO masă, furnir frasin",
+      "legacyIndex": 7,
+      "dimensionsCm": {
+        "w": 140,
+        "d": 78,
+        "h": 74
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "top": "#d8c3a0",
+        "chair": "orrsta"
+      },
+      "chairs": 4
+    },
+    {
+      "id": "masa-8",
+      "productId": "masa-nackanas-masa",
+      "name": "NACKANÄS masă, acacia",
+      "legacyIndex": 8,
+      "dimensionsCm": {
+        "w": 140,
+        "d": 76,
+        "h": 75
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "top": "#b58a58",
+        "chair": "orrsta"
+      },
+      "chairs": 4
+    },
+    {
+      "id": "masa-9",
+      "productId": "masa-docksta-masa-rotunda",
+      "name": "DOCKSTA masă rotundă, alb/alb",
+      "legacyIndex": 9,
+      "dimensionsCm": {
+        "w": 103,
+        "d": 103,
+        "h": 75
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "top": "#f2f2ee",
+        "chair": "orrstaWhite"
+      },
+      "chairs": 4
+    },
+    {
+      "id": "birou-4",
+      "productId": "birou-lagkapten-alex-birou",
+      "name": "LAGKAPTEN / ALEX birou, alb",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 140,
+        "d": 60,
+        "h": 73
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {}
+    },
+    {
+      "id": "birou-5",
+      "productId": "birou-mittzon-birou",
+      "name": "MITTZON birou, alb",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 160,
+        "d": 80,
+        "h": 85
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {}
+    },
+    {
+      "id": "birou-6",
+      "productId": "birou-trotten-birou",
+      "name": "TROTTEN birou, alb",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 120,
+        "d": 70,
+        "h": 75
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {}
+    },
+    {
+      "id": "scaunBirou-3",
+      "productId": "scaunBirou-markus-scaun-rotativ-m",
+      "name": "MARKUS scaun rotativ M, Vissle gri închis",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 62,
+        "d": 60,
+        "h": 140
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {}
+    },
+    {
+      "id": "scaunBirou-4",
+      "productId": "scaunBirou-flintan-scaun-rotativ",
+      "name": "FLINTAN scaun rotativ, negru",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 71,
+        "d": 71,
+        "h": 114
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {}
+    },
+    {
+      "id": "scaunBirou-5",
+      "productId": "scaunBirou-renberget-scaun-rotativ",
+      "name": "RENBERGET scaun rotativ, Bomstad negru",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 67,
+        "d": 67,
+        "h": 111
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {}
+    },
+    {
+      "id": "scaunBirou-6",
+      "productId": "scaunBirou-hattefjall-scaun-rotativ-cu-brate",
+      "name": "HATTEFJÄLL scaun rotativ cu brațe, Gunnared bej/alb",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 68,
+        "d": 68,
+        "h": 114
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {}
+    },
+    {
+      "id": "scaunBirou-7",
+      "productId": "scaunBirou-smallen-scaun-rotativ",
+      "name": "SMÄLLEN scaun rotativ, negru",
+      "legacyIndex": 7,
+      "dimensionsCm": {
+        "w": 65,
+        "d": 65,
+        "h": 85
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {}
+    },
+    {
+      "id": "canapea-9",
+      "productId": "canapea-canapea-fixa-3-locuri-andy",
+      "name": "Canapea fixa 3 locuri Andy, cappuccino, stofa",
+      "legacyIndex": 9,
+      "dimensionsCm": {
+        "w": 215,
+        "d": 78,
+        "h": 90
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#a98f78"
+      }
+    },
+    {
+      "id": "canapea-10",
+      "productId": "canapea-canapea-fixa-3-locuri-chesterfield",
+      "name": "Canapea fixa 3 locuri Chesterfield, maro, stofa",
+      "legacyIndex": 10,
+      "dimensionsCm": {
+        "w": 215,
+        "d": 90,
+        "h": 80
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#7a5538"
+      }
+    },
+    {
+      "id": "canapea-11",
+      "productId": "canapea-canapea-fixa-3-locuri-panda",
+      "name": "Canapea fixa 3 locuri Panda, maro taupe (specs: bej), stofa",
+      "legacyIndex": 11,
+      "dimensionsCm": {
+        "w": 280,
+        "d": 104,
+        "h": 81
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#b09a82"
+      }
+    },
+    {
+      "id": "canapea-12",
+      "productId": "canapea-canapea-fixa-3-locuri-romano",
+      "name": "Canapea fixa 3 locuri Romano, maro deschis, textil",
+      "legacyIndex": 12,
+      "dimensionsCm": {
+        "w": 215,
+        "d": 88,
+        "h": 73
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#a88a67"
+      }
+    },
+    {
+      "id": "fotoliu-5",
+      "productId": "fotoliu-fotoliu-extensibil-eva-kt1908bd-1",
+      "name": "Fotoliu extensibil Eva KT1908BD-1, gri inchis",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 65,
+        "d": 60,
+        "h": 78
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#4a4a4c"
+      }
+    },
+    {
+      "id": "fotoliu-6",
+      "productId": "fotoliu-fotoliu-fix-charlot",
+      "name": "Fotoliu fix Charlot, maro + fag, textil",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 86,
+        "d": 72,
+        "h": 105
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#6b4a33"
+      }
+    },
+    {
+      "id": "fotoliu-7",
+      "productId": "fotoliu-fotoliu-recliner-forest",
+      "name": "Fotoliu recliner Forest, maro ciocolatiu, textil",
+      "legacyIndex": 7,
+      "dimensionsCm": {
+        "w": 78,
+        "d": 90,
+        "h": 114
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#4b2e22"
+      }
+    },
+    {
+      "id": "pat-10",
+      "productId": "pat-pat-dormitor-dr-home-matrimonial-metalic-cu-sert",
+      "name": "Pat dormitor Dr. Home matrimonial metalic cu sertare 160x200, negru + stejar + gri",
+      "legacyIndex": 10,
+      "dimensionsCm": {
+        "w": 160,
+        "d": 203,
+        "h": 112
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#3b3b3b"
+      }
+    },
+    {
+      "id": "pat-11",
+      "productId": "pat-pat-dormitor-dr-home-matrimonial-tapitat-160x200",
+      "name": "Pat dormitor Dr. Home matrimonial tapitat 160x200, crem, textil",
+      "legacyIndex": 11,
+      "dimensionsCm": {
+        "w": 164,
+        "d": 203,
+        "h": 102
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#e6dccb",
+        "mat": "fabric"
+      }
+    },
+    {
+      "id": "pat-12",
+      "productId": "pat-pat-dormitor-fidelio-matrimonial-tapitat-cu-lada",
+      "name": "Pat dormitor Fidelio matrimonial tapitat cu lada 160x200, bej deschis",
+      "legacyIndex": 12,
+      "dimensionsCm": {
+        "w": 172,
+        "d": 213,
+        "h": 102
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#e3d9c4",
+        "mat": "fabric"
+      }
+    },
+    {
+      "id": "noptiera-7",
+      "productId": "noptiera-noptiera-corsica-cu-raft-sertar",
+      "name": "Noptiera Corsica cu raft + sertar, bej (specs: crem)",
+      "legacyIndex": 7,
+      "dimensionsCm": {
+        "w": 50,
+        "d": 40,
+        "h": 60
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#e8dcc8",
+        "wood": true
+      }
+    },
+    {
+      "id": "noptiera-8",
+      "productId": "noptiera-noptiera-duero-3f-cu-3-sertare",
+      "name": "Noptiera Duero 3F cu 3 sertare, stejar gri",
+      "legacyIndex": 8,
+      "dimensionsCm": {
+        "w": 45,
+        "d": 40,
+        "h": 63
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#8d8a85",
+        "wood": true
+      }
+    },
+    {
+      "id": "noptiera-9",
+      "productId": "noptiera-noptiera-colhida-cu-2-sertare",
+      "name": "Noptiera Colhida cu 2 sertare, bej cashmere + stejar inchis",
+      "legacyIndex": 9,
+      "dimensionsCm": {
+        "w": 48,
+        "d": 40,
+        "h": 59
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#d8cdb8",
+        "wood": true
+      }
+    },
+    {
+      "id": "dulap-6",
+      "productId": "dulap-dulap-dormitor-nevis-3k1f1o-cu-oglinda",
+      "name": "Dulap dormitor Nevis 3K1F1O cu oglinda, stejar artisan",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 117,
+        "d": 52,
+        "h": 207
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#c4a77d",
+        "wood": true
+      }
+    },
+    {
+      "id": "dulap-7",
+      "productId": "dulap-dulap-dormitor-varadero-4k1f1o-cu-oglinda",
+      "name": "Dulap dormitor Varadero 4K1F1O cu oglinda, stejar artisan + negru",
+      "legacyIndex": 7,
+      "dimensionsCm": {
+        "w": 158,
+        "d": 53,
+        "h": 204
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#b59a70",
+        "wood": true
+      }
+    },
+    {
+      "id": "dulap-8",
+      "productId": "dulap-dulap-dormitor-dressing-sierra-220-cu-usi-glisan",
+      "name": "Dulap dormitor / dressing Sierra 220 cu usi glisante si oglinda, gri grafit",
+      "legacyIndex": 8,
+      "dimensionsCm": {
+        "w": 217,
+        "d": 62,
+        "h": 210
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#4b4d52",
+        "wood": true
+      }
+    },
+    {
+      "id": "comoda-5",
+      "productId": "comoda-comoda-dormitor-duero-5f-90-cu-5-sertare",
+      "name": "Comoda dormitor Duero 5F 90 cu 5 sertare, stejar gri",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 90,
+        "d": 40,
+        "h": 95
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#8d8a85",
+        "wood": true
+      }
+    },
+    {
+      "id": "comodaTv-10",
+      "productId": "comodaTv-comoda-tv-rex-cu-lumini-si-usi",
+      "name": "Comoda TV Rex cu lumini si usi, alb mat + negru + folie lucioasa alba",
+      "legacyIndex": 10,
+      "dimensionsCm": {
+        "w": 170,
+        "d": 42,
+        "h": 42
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#efefed",
+        "fronts": 3,
+        "wood": true
+      }
+    },
+    {
+      "id": "comodaTv-11",
+      "productId": "comodaTv-comoda-tv-darwen-3k2f2v-cu-usi-si-sertare",
+      "name": "Comoda TV Darwen 3K2F2V cu usi si sertare, bej cashmere + stejar artisan",
+      "legacyIndex": 11,
+      "dimensionsCm": {
+        "w": 180,
+        "d": 40,
+        "h": 52
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#d8cdb8",
+        "fronts": 3,
+        "wood": true
+      }
+    },
+    {
+      "id": "comodaTv-12",
+      "productId": "comodaTv-comoda-tv-arles-3k3v-cu-usi",
+      "name": "Comoda TV Arles 3K3V cu usi, bej cashmere + stejar artisan",
+      "legacyIndex": 12,
+      "dimensionsCm": {
+        "w": 192,
+        "d": 44,
+        "h": 32
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#d8cdb8",
+        "fronts": 3,
+        "wood": true
+      }
+    },
+    {
+      "id": "biblioteca-9",
+      "productId": "biblioteca-biblioteca-living-cantal",
+      "name": "Biblioteca living Cantal, stejar artisan + gri",
+      "legacyIndex": 9,
+      "dimensionsCm": {
+        "w": 259,
+        "d": 38,
+        "h": 193
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#a88f6f",
+        "wood": true
+      }
+    },
+    {
+      "id": "biblioteca-10",
+      "productId": "biblioteca-biblioteca-living-margate-ah",
+      "name": "Biblioteca living Margate AH, stejar artisan + negru",
+      "legacyIndex": 10,
+      "dimensionsCm": {
+        "w": 208,
+        "d": 40,
+        "h": 167
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#8c7457",
+        "wood": true
+      }
+    },
+    {
+      "id": "biblioteca-11",
+      "productId": "biblioteca-biblioteca-living-retimno",
+      "name": "Biblioteca living Retimno, stejar artisan + negru",
+      "legacyIndex": 11,
+      "dimensionsCm": {
+        "w": 208,
+        "d": 33,
+        "h": 158
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#8c7457",
+        "wood": true
+      }
+    },
+    {
+      "id": "biblioteca-12",
+      "productId": "biblioteca-biblioteca-living-glen",
+      "name": "Biblioteca living Glen, stejar gri + alb mat",
+      "legacyIndex": 12,
+      "dimensionsCm": {
+        "w": 170,
+        "d": 42,
+        "h": 170
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#b9b6b0",
+        "wood": true
+      }
+    },
+    {
+      "id": "biblioteca-13",
+      "productId": "biblioteca-biblioteca-living-lorca",
+      "name": "Biblioteca living Lorca, stejar gri + lemn negru",
+      "legacyIndex": 13,
+      "dimensionsCm": {
+        "w": 196,
+        "d": 35,
+        "h": 172
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#8d8a85",
+        "wood": true
+      }
+    },
+    {
+      "id": "masuta-4",
+      "productId": "masuta-masuta-cafea-oscar-ks-dreptunghiulara",
+      "name": "Masuta cafea Oscar KS dreptunghiulara, stejar alb",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 120,
+        "d": 60,
+        "h": 42
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#d9d0c0"
+      }
+    },
+    {
+      "id": "masuta-5",
+      "productId": "masuta-masuta-cafea-aberdeen-dreptunghiulara",
+      "name": "Masuta cafea Aberdeen dreptunghiulara, alb + stejar porto",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 120,
+        "d": 56,
+        "h": 50
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#e4dccd"
+      }
+    },
+    {
+      "id": "masuta-6",
+      "productId": "masuta-masuta-cafea-cirko-rotunda-set-2-in-1",
+      "name": "Masuta cafea Cirko rotunda set 2 in 1, alb marmorat + negru",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 80,
+        "d": 80,
+        "h": 48
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#e8e8e6"
+      }
+    },
+    {
+      "id": "masuta-7",
+      "productId": "masuta-masuta-cafea-din-sticla-kugu-rotunda",
+      "name": "Masuta cafea din sticla Kugu rotunda, crom aramiu",
+      "legacyIndex": 7,
+      "dimensionsCm": {
+        "w": 75,
+        "d": 75,
+        "h": 50
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#b87333"
+      }
+    },
+    {
+      "id": "masuta-8",
+      "productId": "masuta-masuta-cafea-aralyn-dreptunghiulara",
+      "name": "Masuta cafea Aralyn dreptunghiulara, stejar + negru",
+      "legacyIndex": 8,
+      "dimensionsCm": {
+        "w": 110,
+        "d": 50,
+        "h": 54
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#a68a64"
+      }
+    },
+    {
+      "id": "masa-10",
+      "productId": "masa-masa-bucatarie-dining-fixa-eva-ab2820",
+      "name": "Masa bucatarie / dining fixa Eva AB2820, natur + negru",
+      "legacyIndex": 10,
+      "dimensionsCm": {
+        "w": 160,
+        "d": 80,
+        "h": 76
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "top": "#c2a47a",
+        "chair": "orrsta"
+      },
+      "chairs": 4
+    },
+    {
+      "id": "masa-11",
+      "productId": "masa-masa-bucatarie-dining-fixa-grandio-mob-tonia",
+      "name": "Masa bucatarie / dining fixa Grandio Mob Tonia, negru + stejar",
+      "legacyIndex": 11,
+      "dimensionsCm": {
+        "w": 180,
+        "d": 90,
+        "h": 75
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "top": "#8f7554",
+        "chair": "orrsta"
+      },
+      "chairs": 4
+    },
+    {
+      "id": "masa-12",
+      "productId": "masa-masa-bucatarie-dining-extensibila-mb-13",
+      "name": "Masa bucatarie / dining extensibila MB-13, stejar sonoma",
+      "legacyIndex": 12,
+      "dimensionsCm": {
+        "w": 120,
+        "d": 80,
+        "h": 78
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "top": "#c8a97e",
+        "chair": "orrsta"
+      },
+      "chairs": 4
+    },
+    {
+      "id": "masa-13",
+      "productId": "masa-masa-bucatarie-dining-extensibila-saxonia",
+      "name": "Masa bucatarie / dining extensibila Saxonia, nuc",
+      "legacyIndex": 13,
+      "dimensionsCm": {
+        "w": 165,
+        "d": 68,
+        "h": 78
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "top": "#6b4a36",
+        "chair": "orrsta"
+      },
+      "chairs": 4
+    },
+    {
+      "id": "birou-7",
+      "productId": "birou-birou-calculator-standard-rubin",
+      "name": "Birou calculator standard Rubin, stejar cannolo",
+      "legacyIndex": 7,
+      "dimensionsCm": {
+        "w": 130,
+        "d": 65,
+        "h": 73
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {}
+    },
+    {
+      "id": "birou-8",
+      "productId": "birou-birou-calculator-cu-sertare-si-dulap-alfa",
+      "name": "Birou calculator cu sertare si dulap Alfa, stejar sonoma",
+      "legacyIndex": 8,
+      "dimensionsCm": {
+        "w": 145,
+        "d": 66,
+        "h": 76
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {}
+    },
+    {
+      "id": "birou-9",
+      "productId": "birou-birou-cu-sertar-si-dulap-bany",
+      "name": "Birou cu sertar si dulap Bany, alb",
+      "legacyIndex": 9,
+      "dimensionsCm": {
+        "w": 140,
+        "d": 60,
+        "h": 76
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {}
+    },
+    {
+      "id": "birou-10",
+      "productId": "birou-birou-cu-sertare-si-dulap-eustach",
+      "name": "Birou cu sertare si dulap Eustach, alb",
+      "legacyIndex": 10,
+      "dimensionsCm": {
+        "w": 137,
+        "d": 60,
+        "h": 76
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {}
+    },
+    {
+      "id": "scaunBirou-8",
+      "productId": "scaunBirou-scaun-birou-ergonomic-cu-suport-lombar-ericsson",
+      "name": "Scaun birou ergonomic cu suport lombar Ericsson, negru, textil",
+      "legacyIndex": 8,
+      "dimensionsCm": {
+        "w": 61,
+        "d": 51,
+        "h": 104
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {}
+    },
+    {
+      "id": "scaunBirou-9",
+      "productId": "scaunBirou-scaun-birou-ergonomic-sd-mch801-cu-tetiera",
+      "name": "Scaun birou ergonomic SD-MCH801 cu tetiera, negru, mesh",
+      "legacyIndex": 9,
+      "dimensionsCm": {
+        "w": 61,
+        "d": 67,
+        "h": 128
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {}
+    },
+    {
+      "id": "scaunBirou-10",
+      "productId": "scaunBirou-scaun-birou-operational-carbo",
+      "name": "Scaun birou operational Carbo, gri, textil",
+      "legacyIndex": 10,
+      "dimensionsCm": {
+        "w": 49,
+        "d": 56,
+        "h": 80
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {}
+    },
+    {
+      "id": "pantofar-3",
+      "productId": "pantofar-pantofar-buseto-2k",
+      "name": "Pantofar Buseto 2K, alb",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 67,
+        "d": 35,
+        "h": 195
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee",
+        "wood": true
+      }
+    },
+    {
+      "id": "pantofar-4",
+      "productId": "pantofar-pantofar-elia",
+      "name": "Pantofar Elia, alb",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 104,
+        "d": 30,
+        "h": 68
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee",
+        "wood": true
+      }
+    },
+    {
+      "id": "pantofar-5",
+      "productId": "pantofar-pantofar-hugo-24-cu-oglinda",
+      "name": "Pantofar Hugo 24 cu oglinda, stejar gri",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 67,
+        "d": 28,
+        "h": 156
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#8d8a85",
+        "wood": true
+      }
+    },
+    {
+      "id": "pantofar-6",
+      "productId": "pantofar-pantofar-islay-2k",
+      "name": "Pantofar Islay 2K, stejar artisan",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 92,
+        "d": 32,
+        "h": 184
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#c4a77d",
+        "wood": true
+      }
+    },
+    {
+      "id": "pantofar-7",
+      "productId": "pantofar-pantofar-menorca-2k-cu-oglinda",
+      "name": "Pantofar Menorca 2K cu oglinda, alb texturat",
+      "legacyIndex": 7,
+      "dimensionsCm": {
+        "w": 90,
+        "d": 38,
+        "h": 199
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee",
+        "wood": true
+      }
+    },
+    {
+      "id": "lavoar-4",
+      "productId": "lavoar-masca-baie-lavoar-savini-due-60w-cu-usi",
+      "name": "Masca baie + lavoar Savini Due 60W cu usi, alb",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 60,
+        "d": 36,
+        "h": 85
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee"
+      }
+    },
+    {
+      "id": "lavoar-5",
+      "productId": "lavoar-masca-baie-lavoar-savini-due-rimini-cu-usi",
+      "name": "Masca baie + lavoar Savini Due Rimini cu usi, alb",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 56,
+        "d": 42,
+        "h": 87
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee"
+      }
+    },
+    {
+      "id": "lavoar-6",
+      "productId": "lavoar-masca-baie-lavoar-roca-a851925529-cu-sertare-sus",
+      "name": "Masca baie + lavoar Roca A851925529 cu sertare suspendat, alb",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 61,
+        "d": 46,
+        "h": 66
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee",
+        "hang": true
+      }
+    },
+    {
+      "id": "lavoar-7",
+      "productId": "lavoar-masca-baie-lavoar-savini-due-creta-80-cu-sertare",
+      "name": "Masca baie + lavoar Savini Due Creta 80 cu sertare, stejar auriu",
+      "legacyIndex": 7,
+      "dimensionsCm": {
+        "w": 82,
+        "d": 46,
+        "h": 86
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#c8a24a"
+      }
+    },
+    {
+      "id": "lavoar-8",
+      "productId": "lavoar-masca-baie-lavoar-fayans-kuandra-cu-sertare-si-u",
+      "name": "Masca baie + lavoar Fayans Kuandra cu sertare si usi, gri + negru",
+      "legacyIndex": 8,
+      "dimensionsCm": {
+        "w": 65,
+        "d": 42,
+        "h": 85
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#5a5d61"
+      }
+    },
+    {
+      "id": "lavoar-9",
+      "productId": "lavoar-masca-baie-lavoar-cersanit-moduo-s801-221-dsm-cu",
+      "name": "Masca baie + lavoar Cersanit Moduo S801-221-DSM cu sertare suspendat, alb",
+      "legacyIndex": 9,
+      "dimensionsCm": {
+        "w": 80,
+        "d": 45,
+        "h": 62
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f5f5f5",
+        "hang": true
+      }
+    },
+    {
+      "id": "frigider-3",
+      "productId": "frigider-frigider-arctic-ad60310m40s-306-l",
+      "name": "Frigider Arctic AD60310M40S 306 l, gri",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 60,
+        "d": 59,
+        "h": 175
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#9a9da0",
+        "inox": true
+      }
+    },
+    {
+      "id": "frigider-4",
+      "productId": "frigider-combina-frigorifica-beko-rcsa406k40dxbn-386-l",
+      "name": "Combina frigorifica Beko RCSA406K40DXBN 386 l, argintiu",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 60,
+        "d": 67,
+        "h": 202
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#b7b9bc",
+        "inox": true
+      }
+    },
+    {
+      "id": "frigider-5",
+      "productId": "frigider-combina-frigorifica-albatros-cf343e-262-l",
+      "name": "Combina frigorifica Albatros CF343E 262 l, alb",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 55,
+        "d": 56,
+        "h": 180
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee"
+      }
+    },
+    {
+      "id": "frigider-6",
+      "productId": "frigider-frigider-candy-cdg1s514ew-211-l",
+      "name": "Frigider Candy CDG1S514EW 211 l, alb",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 54,
+        "d": 55,
+        "h": 143
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee"
+      }
+    },
+    {
+      "id": "frigider-7",
+      "productId": "frigider-frigider-arctic-ad54280m40w-250-l",
+      "name": "Frigider Arctic AD54280M40W 250 l, alb",
+      "legacyIndex": 7,
+      "dimensionsCm": {
+        "w": 54,
+        "d": 57,
+        "h": 161
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee"
+      }
+    },
+    {
+      "id": "frigider-8",
+      "productId": "frigider-frigider-samus-srx474nfe-359-l",
+      "name": "Frigider Samus SRX474NFE 359 l, argintiu",
+      "legacyIndex": 8,
+      "dimensionsCm": {
+        "w": 60,
+        "d": 65,
+        "h": 185
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#b7b9bc",
+        "inox": true
+      }
+    },
+    {
+      "id": "dus-4",
+      "productId": "dus-cabina-dus-patrata-kadda-jf-90k",
+      "name": "Cabina dus patrata Kadda JF.90K, sticla transparenta, profil cromat",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 90,
+        "d": 90,
+        "h": 200
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "prof": "#c9ccd0"
+      }
+    },
+    {
+      "id": "dus-5",
+      "productId": "dus-cabina-dus-dreptunghiulara-cadita-seldus-eur5",
+      "name": "Cabina dus dreptunghiulara + cadita Seldus EUR5, sticla transparenta, profil negru",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 100,
+        "d": 80,
+        "h": 205
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "prof": "#c9ccd0"
+      }
+    },
+    {
+      "id": "dus-6",
+      "productId": "dus-cabina-dus-semirotunda-cadita-inalta-kadda-2018-",
+      "name": "Cabina dus semirotunda + cadita inalta Kadda 2018 B, sticla mata, profil alb",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 90,
+        "d": 90,
+        "h": 200
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "prof": "#c9ccd0"
+      }
+    },
+    {
+      "id": "dus-7",
+      "productId": "dus-cabina-dus-dreptunghiulara-west-cb150wst10gb",
+      "name": "Cabina dus dreptunghiulara West CB150WST10GB, sticla fumurie, profil negru",
+      "legacyIndex": 7,
+      "dimensionsCm": {
+        "w": 150,
+        "d": 90,
+        "h": 200
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "prof": "#c9ccd0"
+      }
+    },
+    {
+      "id": "wc-2",
+      "productId": "wc-vas-wc-cu-rezervor-mecanism-capac-set-cersanit-k",
+      "name": "Vas wc cu rezervor + mecanism + capac, set Cersanit Koral K681-001, alb",
+      "legacyIndex": 2,
+      "dimensionsCm": {
+        "w": 36,
+        "d": 65,
+        "h": 75
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "square": false
+      }
+    },
+    {
+      "id": "wc-3",
+      "productId": "wc-vas-wc-suspendat-kadda-therma-mgz-55",
+      "name": "Vas WC suspendat Kadda Therma MGZ-55, alb",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 36,
+        "d": 49,
+        "h": 36
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "square": false
+      }
+    },
+    {
+      "id": "wc-4",
+      "productId": "wc-vas-wc-suspendat-roca-gap-a34647f000",
+      "name": "Vas WC suspendat Roca Gap A34647F000, alb",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 35,
+        "d": 54,
+        "h": 40
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "square": false
+      }
+    },
+    {
+      "id": "wc-5",
+      "productId": "wc-vas-wc-suspendat-geberit-selnova-square-501-546-",
+      "name": "Vas WC suspendat Geberit Selnova Square 501.546.01.1, alb",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 35,
+        "d": 54,
+        "h": 33
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "square": true
+      }
+    },
+    {
+      "id": "wc-6",
+      "productId": "wc-vas-wc-cersanit-bonica-k3029-002-pe-pardoseala",
+      "name": "Vas WC Cersanit Bonica K3029-002 pe pardoseala, alb",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 39,
+        "d": 61,
+        "h": 42
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "square": false
+      }
+    },
+    {
+      "id": "wc-7",
+      "productId": "wc-vas-wc-suspendat-cersanit-mito-vortex-szcz100379",
+      "name": "Vas WC suspendat Cersanit Mito Vortex SZCZ1003790001, alb",
+      "legacyIndex": 7,
+      "dimensionsCm": {
+        "w": 36,
+        "d": 49,
+        "h": 36
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "square": false
+      }
+    },
+    {
+      "id": "oglinda-2",
+      "productId": "oglinda-oglinda-decorativa-f2203-dreptunghiulara",
+      "name": "Oglinda decorativa F2203 dreptunghiulara, negru mat, cadru metalic",
+      "legacyIndex": 2,
+      "dimensionsCm": {
+        "w": 55,
+        "d": 2,
+        "h": 75
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "wall": true
+      }
+    },
+    {
+      "id": "oglinda-3",
+      "productId": "oglinda-oglinda-decorativa-rona-0065lk-cu-suport-de-pode",
+      "name": "Oglinda decorativa Rona 0065LK cu suport de podea, auriu",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 60,
+        "d": 3,
+        "h": 160
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {}
+    },
+    {
+      "id": "oglinda-4",
+      "productId": "oglinda-oglinda-living-cottage-0162miroc",
+      "name": "Oglinda living Cottage 0162MIROC, stejar natur",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 160,
+        "d": 2,
+        "h": 55
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "wall": true
+      }
+    },
+    {
+      "id": "oglinda-5",
+      "productId": "oglinda-oglinda-decorativa-f2205-rotunda",
+      "name": "Oglinda decorativa F2205 rotunda, negru",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 60,
+        "d": 2,
+        "h": 60
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "wall": true
+      }
+    },
+    {
+      "id": "canapea-13",
+      "productId": "canapea-canapea-egense-3-locuri",
+      "name": "Canapea EGENSE 3 locuri, nisipie",
+      "legacyIndex": 13,
+      "dimensionsCm": {
+        "w": 200,
+        "d": 80,
+        "h": 80
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#c9b79c"
+      }
+    },
+    {
+      "id": "canapea-14",
+      "productId": "canapea-canapea-falslev-3-locuri",
+      "name": "Canapea FALSLEV 3 locuri, gri",
+      "legacyIndex": 14,
+      "dimensionsCm": {
+        "w": 216,
+        "d": 84,
+        "h": 78
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#8d8d8d"
+      }
+    },
+    {
+      "id": "canapea-15",
+      "productId": "canapea-oskar-canapea-extensibila-3-locuri",
+      "name": "OSKAR canapea extensibila 3 locuri, stofa galben",
+      "legacyIndex": 15,
+      "dimensionsCm": {
+        "w": 225,
+        "d": 96,
+        "h": 90
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "mat": "fabric",
+        "col": "#d9a521"
+      }
+    },
+    {
+      "id": "pat-13",
+      "productId": "pat-cadru-pat-markskel-160x200",
+      "name": "Cadru pat MARKSKEL 160x200, stejar salbatic/alb",
+      "legacyIndex": 13,
+      "dimensionsCm": {
+        "w": 170,
+        "d": 210,
+        "h": 91
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#c8b08a",
+        "wood": true
+      }
+    },
+    {
+      "id": "pat-14",
+      "productId": "pat-cadru-pat-limfjorden-160x200-3-sertare",
+      "name": "Cadru pat LIMFJORDEN 160x200 3 sertare, alb",
+      "legacyIndex": 14,
+      "dimensionsCm": {
+        "w": 165,
+        "d": 205,
+        "h": 91
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee",
+        "wood": true
+      }
+    },
+    {
+      "id": "pat-15",
+      "productId": "pat-cadru-pat-kongsberg-160x200",
+      "name": "Cadru pat KONGSBERG 160x200, bej",
+      "legacyIndex": 15,
+      "dimensionsCm": {
+        "w": 174,
+        "d": 216,
+        "h": 101
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#d6c7ab",
+        "mat": "fabric"
+      }
+    },
+    {
+      "id": "pat-16",
+      "productId": "pat-kenton-pat-tapitat-160x200-cu-somiera-rabatabila",
+      "name": "KENTON pat tapitat 160x200 cu somiera rabatabila si lada, negru",
+      "legacyIndex": 16,
+      "dimensionsCm": {
+        "w": 174,
+        "d": 217,
+        "h": 92
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#222222",
+        "mat": "fabric"
+      }
+    },
+    {
+      "id": "dulap-9",
+      "productId": "dulap-dulap-fandrup-96x176-2-usi-3-sertare",
+      "name": "Dulap FANDRUP 96x176 2 usi 3 sertare, stejar deschis",
+      "legacyIndex": 9,
+      "dimensionsCm": {
+        "w": 97,
+        "d": 50,
+        "h": 176
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#c4a77d",
+        "wood": true
+      }
+    },
+    {
+      "id": "dulap-10",
+      "productId": "dulap-dulap-vellerup-200x200-4-usi-3-sertare",
+      "name": "Dulap VELLERUP 200x200 4 usi 3 sertare, alb",
+      "legacyIndex": 10,
+      "dimensionsCm": {
+        "w": 200,
+        "d": 59,
+        "h": 200
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee",
+        "wood": true
+      }
+    },
+    {
+      "id": "scaunBirou-11",
+      "productId": "scaunBirou-scaun-birou-marbjerg",
+      "name": "Scaun birou MARBJERG, gri, textil",
+      "legacyIndex": 11,
+      "dimensionsCm": {
+        "w": 65,
+        "d": 75,
+        "h": 126
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {}
+    },
+    {
+      "id": "scaunBirou-12",
+      "productId": "scaunBirou-scaun-birou-billum",
+      "name": "Scaun birou BILLUM, negru",
+      "legacyIndex": 12,
+      "dimensionsCm": {
+        "w": 61,
+        "d": 62,
+        "h": 119
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {}
+    },
+    {
+      "id": "comodaTv-13",
+      "productId": "comodaTv-comoda-tv-vedde",
+      "name": "Comoda TV VEDDE, stejar salbatic inchis",
+      "legacyIndex": 13,
+      "dimensionsCm": {
+        "w": 130,
+        "d": 43,
+        "h": 53
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#6b5238",
+        "fronts": 3,
+        "wood": true
+      }
+    },
+    {
+      "id": "pantofar-8",
+      "productId": "pantofar-pantofar-bakhuse-3-compartimente",
+      "name": "Pantofar BAKHUSE 3 compartimente, alb",
+      "legacyIndex": 8,
+      "dimensionsCm": {
+        "w": 65,
+        "d": 25,
+        "h": 124
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee",
+        "wood": true
+      }
+    },
+    {
+      "id": "comodaTv-14",
+      "productId": "comodaTv-jennifer-comoda-tv-2-sertare",
+      "name": "JENNIFER comoda TV 2 sertare, cappuccino",
+      "legacyIndex": 14,
+      "dimensionsCm": {
+        "w": 163,
+        "d": 38,
+        "h": 51
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#8b6b52",
+        "fronts": 3,
+        "wood": true
+      }
+    },
+    {
+      "id": "masa-14",
+      "productId": "masa-priscilla-masa-dining-extensibila",
+      "name": "PRISCILLA masa dining extensibila, cappuccino/stejar",
+      "legacyIndex": 14,
+      "dimensionsCm": {
+        "w": 160,
+        "d": 90,
+        "h": 76
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "top": "#a98c6a",
+        "chair": "orrsta"
+      },
+      "chairs": 4
+    },
+    {
+      "id": "biblioteca-14",
+      "productId": "biblioteca-avenue-biblioteca",
+      "name": "AVENUE biblioteca, gri, stejar",
+      "legacyIndex": 14,
+      "dimensionsCm": {
+        "w": 331,
+        "d": 41,
+        "h": 194
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#9a9792",
+        "wood": true
+      }
+    },
+    {
+      "id": "masuta-9",
+      "productId": "masuta-lia-masuta-cafea",
+      "name": "LIA masuta cafea, sticla transparenta",
+      "legacyIndex": 9,
+      "dimensionsCm": {
+        "w": 110,
+        "d": 55,
+        "h": 36
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#cfe3e6"
+      }
+    },
+    {
+      "id": "masuta-10",
+      "productId": "masuta-whity-masuta-cafea",
+      "name": "WHITY masuta cafea, alb mat",
+      "legacyIndex": 10,
+      "dimensionsCm": {
+        "w": 80,
+        "d": 60,
+        "h": 38
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#f2f2ee"
+      }
+    },
+    {
+      "id": "masuta-11",
+      "productId": "masuta-tuycan-masuta-cafea-rotunda",
+      "name": "TUYCAN masuta cafea rotunda, blat alb, baza neagra",
+      "legacyIndex": 11,
+      "dimensionsCm": {
+        "w": 69,
+        "d": 69,
+        "h": 42
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#e8e8e6"
+      }
+    },
+    {
+      "id": "masuta-12",
+      "productId": "masuta-masuta-cafea-ravnsbjerg-90x90",
+      "name": "Masuta cafea RAVNSBJERG 90x90, stejar cald",
+      "legacyIndex": 12,
+      "dimensionsCm": {
+        "w": 90,
+        "d": 90,
+        "h": 35
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#c4a273"
+      }
+    },
+    {
+      "id": "masa-15",
+      "productId": "masa-masa-aabenraa-90x160",
+      "name": "Masa AABENRAA 90x160, stejar cald/negru",
+      "legacyIndex": 15,
+      "dimensionsCm": {
+        "w": 160,
+        "d": 90,
+        "h": 75
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "top": "#c4a273",
+        "chair": "orrsta"
+      },
+      "chairs": 4
+    },
+    {
+      "id": "masa-16",
+      "productId": "masa-masa-ringsted-100-rotunda",
+      "name": "Masa RINGSTED Ø100 rotunda, alba",
+      "legacyIndex": 16,
+      "dimensionsCm": {
+        "w": 100,
+        "d": 100,
+        "h": 75
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "top": "#f2f2ee",
+        "chair": "orrstaWhite"
+      },
+      "chairs": 4
     }
   ],
   "offers": [
@@ -1470,14 +4863,14 @@
       "id": "offer-canapea-0",
       "variantId": "canapea-0",
       "supplierId": "ikea-ro",
-      "price": 2299,
+      "price": 1699.0,
       "currency": "RON",
       "availability": "UNKNOWN",
       "affiliateUrl": null,
       "provenance": {
         "source": "IKEA",
         "sourceUrl": "https://www.ikea.com/ro/ro/p/kivik-canapea-3-locuri-tibbleby-bej-gri-s49440597/",
-        "verifiedAt": "2026-09-30",
+        "verifiedAt": "2026-10-10",
         "verificationType": "product_page",
         "confidence": "HIGH"
       }
@@ -1694,14 +5087,14 @@
       "id": "offer-biblioteca-1",
       "variantId": "biblioteca-1",
       "supplierId": "ikea-ro",
-      "price": 279,
+      "price": 279.0,
       "currency": "RON",
       "availability": "UNKNOWN",
       "affiliateUrl": null,
       "provenance": {
         "source": "IKEA",
         "sourceUrl": "https://www.ikea.com/ro/ro/p/billy-biblioteca-alb-00263850/",
-        "verifiedAt": "2026-09-30",
+        "verifiedAt": "2026-10-10",
         "verificationType": "product_page",
         "confidence": "HIGH"
       }
@@ -1902,14 +5295,14 @@
       "id": "offer-noptiera-0",
       "variantId": "noptiera-0",
       "supplierId": "ikea-ro",
-      "price": 159,
+      "price": 159.0,
       "currency": "RON",
       "availability": "UNKNOWN",
       "affiliateUrl": null,
       "provenance": {
         "source": "IKEA",
         "sourceUrl": "https://www.ikea.com/ro/ro/p/brimnes-noptiera-alb-10234942/",
-        "verifiedAt": "2026-09-30",
+        "verifiedAt": "2026-10-10",
         "verificationType": "product_page",
         "confidence": "HIGH"
       }
@@ -1950,14 +5343,14 @@
       "id": "offer-dulap-0",
       "variantId": "dulap-0",
       "supplierId": "ikea-ro",
-      "price": 699,
+      "price": 699.0,
       "currency": "RON",
       "availability": "UNKNOWN",
       "affiliateUrl": null,
       "provenance": {
         "source": "IKEA",
         "sourceUrl": "https://www.ikea.com/ro/ro/p/brimnes-dulap-cu-3-usi-alb-40407922/",
-        "verifiedAt": "2026-09-30",
+        "verifiedAt": "2026-10-10",
         "verificationType": "product_page",
         "confidence": "HIGH"
       }
@@ -1998,14 +5391,14 @@
       "id": "offer-birou-0",
       "variantId": "birou-0",
       "supplierId": "ikea-ro",
-      "price": 399,
+      "price": 399.0,
       "currency": "RON",
       "availability": "UNKNOWN",
       "affiliateUrl": null,
       "provenance": {
         "source": "IKEA",
         "sourceUrl": "https://www.ikea.com/ro/ro/p/micke-birou-alb-80213074/",
-        "verifiedAt": "2026-09-30",
+        "verifiedAt": "2026-10-10",
         "verificationType": "product_page",
         "confidence": "HIGH"
       }
@@ -2366,14 +5759,14 @@
       "id": "offer-dus-3",
       "variantId": "dus-3",
       "supplierId": "dedeman",
-      "price": 3120,
+      "price": 2850.01,
       "currency": "RON",
       "availability": "UNKNOWN",
       "affiliateUrl": null,
       "provenance": {
         "source": "Dedeman",
         "sourceUrl": "https://www.dedeman.ro/ro/cabina-dus-patrata-west-cb90wst03-profil-cromat-90-x-90-x-200-cm/p/3028598",
-        "verifiedAt": "2026-09-30",
+        "verifiedAt": "2026-10-10",
         "verificationType": "product_page",
         "confidence": "HIGH"
       }
@@ -2552,6 +5945,2310 @@
         "verifiedAt": "2026-09-30",
         "verificationType": "category_listing",
         "confidence": "MEDIUM"
+      }
+    },
+    {
+      "id": "offer-canapea-5",
+      "variantId": "canapea-5",
+      "supplierId": "ikea-ro",
+      "price": 1999.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/ektorp-canapea-3-locuri-mangbyn-maro-multicolor-s89627201/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-canapea-6",
+      "variantId": "canapea-6",
+      "supplierId": "ikea-ro",
+      "price": 999.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/saltmyran-canapea-3-locuri-oereryd-gri-bej-40618514/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-canapea-7",
+      "variantId": "canapea-7",
+      "supplierId": "ikea-ro",
+      "price": 3299.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/valnaes-canapea-3-locuri-knaebaeck-bej-deschis-s89615335/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-canapea-8",
+      "variantId": "canapea-8",
+      "supplierId": "ikea-ro",
+      "price": 2599.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/ekholma-canapea-3-locuri-kilanda-bej-deschis-s09535597/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-fotoliu-0",
+      "variantId": "fotoliu-0",
+      "supplierId": "ikea-ro",
+      "price": 299.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/poaeng-fotoliu-furnir-mesteacan-knisa-bej-deschis-s39240787/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-fotoliu-1",
+      "variantId": "fotoliu-1",
+      "supplierId": "ikea-ro",
+      "price": 199.9,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/gaevle-fotoliu-diseroed-gri-60588846/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-fotoliu-2",
+      "variantId": "fotoliu-2",
+      "supplierId": "ikea-ro",
+      "price": 899.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/ekenaeset-fotoliu-kilanda-bej-deschis-90533174/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-fotoliu-3",
+      "variantId": "fotoliu-3",
+      "supplierId": "ikea-ro",
+      "price": 999.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/dyvlinge-fotoliu-rotativ-kelinge-verde-60555153/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-fotoliu-4",
+      "variantId": "fotoliu-4",
+      "supplierId": "ikea-ro",
+      "price": 1499.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/oskarshamn-fotoliu-tonerud-rosu-50521682/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-pat-4",
+      "variantId": "pat-4",
+      "supplierId": "ikea-ro",
+      "price": 599.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/tarva-cadru-pat-vopsit-alb-s09553973/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-pat-5",
+      "variantId": "pat-5",
+      "supplierId": "ikea-ro",
+      "price": 899.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-alb-luroey-s69002431/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-pat-6",
+      "variantId": "pat-6",
+      "supplierId": "ikea-ro",
+      "price": 1599.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/brimnes-cadru-pat-cu-depozitare-si-tablie-alb-s19099157/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-pat-7",
+      "variantId": "pat-7",
+      "supplierId": "ikea-ro",
+      "price": 3299.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/idanaes-pat-tapitat-cu-depozitare-gunnared-gri-inchis-10458970/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-pat-8",
+      "variantId": "pat-8",
+      "supplierId": "ikea-ro",
+      "price": 599.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/slattum-cadru-pat-tapitat-vissle-gri-inchis-40571248/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-pat-9",
+      "variantId": "pat-9",
+      "supplierId": "ikea-ro",
+      "price": 899.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/fagelfjaellet-cadru-pat-alb-murdar-50607157/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-noptiera-3",
+      "variantId": "noptiera-3",
+      "supplierId": "ikea-ro",
+      "price": 349.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/radmansoe-noptiera-maro-aspect-nuc-80593597/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-noptiera-4",
+      "variantId": "noptiera-4",
+      "supplierId": "ikea-ro",
+      "price": 179.9,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/hauga-noptiera-alb-00488963/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-noptiera-5",
+      "variantId": "noptiera-5",
+      "supplierId": "ikea-ro",
+      "price": 399.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/tyssedal-noptiera-alb-70299959/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-noptiera-6",
+      "variantId": "noptiera-6",
+      "supplierId": "ikea-ro",
+      "price": 299.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/gullaberg-noptiera-cu-1-sertar-cu-polita-alb-20561740/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-dulap-3",
+      "variantId": "dulap-3",
+      "supplierId": "ikea-ro",
+      "price": 649.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/kleppstad-dulap-de-haine-cu-usi-glisante-alb-90437238/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-dulap-4",
+      "variantId": "dulap-4",
+      "supplierId": "ikea-ro",
+      "price": 1099.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/songesand-dulap-de-haine-alb-90347351/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-dulap-5",
+      "variantId": "dulap-5",
+      "supplierId": "ikea-ro",
+      "price": 2893.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/pax-forsand-dulap-alb-alb-s49502726/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-comoda-0",
+      "variantId": "comoda-0",
+      "supplierId": "ikea-ro",
+      "price": 499.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/storklinta-comoda-4-sertare-alb-40627537/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-comoda-1",
+      "variantId": "comoda-1",
+      "supplierId": "ikea-ro",
+      "price": 1199.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/radmansoe-comoda-6-sertare-maro-aspect-nuc-90593605/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-comoda-2",
+      "variantId": "comoda-2",
+      "supplierId": "ikea-ro",
+      "price": 1599.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/tonstad-comoda-6-sertare-frnr-stjr-50614624/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-comoda-3",
+      "variantId": "comoda-3",
+      "supplierId": "ikea-ro",
+      "price": 1599.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/hemnes-comoda-8-sertare-vopsit-alb-10239280/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-comoda-4",
+      "variantId": "comoda-4",
+      "supplierId": "ikea-ro",
+      "price": 250.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/gursken-comoda-3-sertare-bej-deschis-00486327/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-comodaTv-4",
+      "variantId": "comodaTv-4",
+      "supplierId": "ikea-ro",
+      "price": 1070.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/besta-comoda-tv-usi-alb-bjoerkoeviken-frnr-stjr-s59622912/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-comodaTv-5",
+      "variantId": "comodaTv-5",
+      "supplierId": "ikea-ro",
+      "price": 499.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/brimnes-comoda-tv-alb-50409874/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-comodaTv-6",
+      "variantId": "comodaTv-6",
+      "supplierId": "ikea-ro",
+      "price": 279.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/lack-comoda-tv-negru-maro-20498904/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-comodaTv-7",
+      "variantId": "comodaTv-7",
+      "supplierId": "ikea-ro",
+      "price": 999.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/radmansoe-comoda-tv-maro-aspect-nuc-40597818/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-comodaTv-8",
+      "variantId": "comodaTv-8",
+      "supplierId": "ikea-ro",
+      "price": 549.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/byas-comoda-tv-lucios-alb-80227797/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-comodaTv-9",
+      "variantId": "comodaTv-9",
+      "supplierId": "ikea-ro",
+      "price": 1499.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/fryksas-comoda-tv-ratan-80574099/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-biblioteca-5",
+      "variantId": "biblioteca-5",
+      "supplierId": "ikea-ro",
+      "price": 999.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/hemnes-biblioteca-gri-verde-maro-deschis-vopsit-40596159/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-biblioteca-6",
+      "variantId": "biblioteca-6",
+      "supplierId": "ikea-ro",
+      "price": 1499.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/tonstad-biblioteca-frnr-stjr-70528461/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-biblioteca-7",
+      "variantId": "biblioteca-7",
+      "supplierId": "ikea-ro",
+      "price": 139.9,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/baggebo-biblioteca-alb-20436713/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-biblioteca-8",
+      "variantId": "biblioteca-8",
+      "supplierId": "ikea-ro",
+      "price": 379.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/brimnes-biblioteca-alb-90301225/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masa-5",
+      "variantId": "masa-5",
+      "supplierId": "ikea-ro",
+      "price": 699.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/skalsta-masa-aspect-stejar-forma-x-negru-gri-s19590767/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masa-6",
+      "variantId": "masa-6",
+      "supplierId": "ikea-ro",
+      "price": 299.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/vihals-masa-alb-alb-s39578509/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masa-7",
+      "variantId": "masa-7",
+      "supplierId": "ikea-ro",
+      "price": 749.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/lisabo-masa-furnir-frasin-70294339/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masa-8",
+      "variantId": "masa-8",
+      "supplierId": "ikea-ro",
+      "price": 999.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/nackanaes-masa-acacia-40511056/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masa-9",
+      "variantId": "masa-9",
+      "supplierId": "ikea-ro",
+      "price": 749.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/docksta-masa-alb-alb-s19324995/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-birou-4",
+      "variantId": "birou-4",
+      "supplierId": "ikea-ro",
+      "price": 429.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/lagkapten-alex-birou-alb-s09521595/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-birou-5",
+      "variantId": "birou-5",
+      "supplierId": "ikea-ro",
+      "price": 1049.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/mittzon-birou-alb-s09529087/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-birou-6",
+      "variantId": "birou-6",
+      "supplierId": "ikea-ro",
+      "price": 299.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/trotten-birou-alb-s59621917/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-scaunBirou-3",
+      "variantId": "scaunBirou-3",
+      "supplierId": "ikea-ro",
+      "price": 699.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/markus-scaun-rotativ-vissle-gri-inchis-70261150/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-scaunBirou-4",
+      "variantId": "scaunBirou-4",
+      "supplierId": "ikea-ro",
+      "price": 299.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/flintan-scaun-rotativ-negru-10489028/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-scaunBirou-5",
+      "variantId": "scaunBirou-5",
+      "supplierId": "ikea-ro",
+      "price": 249.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/renberget-scaun-rotativ-bomstad-negru-60493546/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-scaunBirou-6",
+      "variantId": "scaunBirou-6",
+      "supplierId": "ikea-ro",
+      "price": 949.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/hattefjaell-scaun-rotativ-cu-brate-gunnared-bej-alb-60538955/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-scaunBirou-7",
+      "variantId": "scaunBirou-7",
+      "supplierId": "ikea-ro",
+      "price": 119.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/smaellen-scaun-rotativ-negru-00503435/",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-canapea-9",
+      "variantId": "canapea-9",
+      "supplierId": "dedeman",
+      "price": 1999.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/canapea-fixa-3-locuri-andy-cappuccino-215-x-78-x-90-cm-1c/p/8130788",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-canapea-10",
+      "variantId": "canapea-10",
+      "supplierId": "dedeman",
+      "price": 2898.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/canapea-fixa-3-locuri-chesterfield-maro-stofa-215-x-90-x-80-cm-1c/p/8096673",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-canapea-11",
+      "variantId": "canapea-11",
+      "supplierId": "dedeman",
+      "price": 3899.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/canapea-fixa-3-locuri-panda-maro-taupe-280-x-104-x-81-cm-2c/p/8130382",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-canapea-12",
+      "variantId": "canapea-12",
+      "supplierId": "dedeman",
+      "price": 3799.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/canapea-fixa-3-locuri-romano-maro-deschis-textil-215-x-88-x-73-cm-1c/p/8122462",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-fotoliu-5",
+      "variantId": "fotoliu-5",
+      "supplierId": "dedeman",
+      "price": 399.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/fotoliu-extensibil-eva-kt1908bd-1-gri-inchis-65-x-60-x-78-cm-1c/p/8129367",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-fotoliu-6",
+      "variantId": "fotoliu-6",
+      "supplierId": "dedeman",
+      "price": 1199.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/fotoliu-fix-charlot-textil-maro-fag-1c/p/8091835",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-fotoliu-7",
+      "variantId": "fotoliu-7",
+      "supplierId": "dedeman",
+      "price": 1199.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/fotoliu-recliner-forest-textil-maro-ciocolatiu-1c/p/8091844",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-pat-10",
+      "variantId": "pat-10",
+      "supplierId": "dedeman",
+      "price": 799.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/pat-dormitor-dr-home-matrimonial-metalic-cu-sertare-negru-stejar-gri-160-x-200-cm-1c/p/8124257",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-pat-11",
+      "variantId": "pat-11",
+      "supplierId": "dedeman",
+      "price": 699.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/pat-dormitor-dr-home-matrimonial-tapitat-crem-160-x-200-cm-2c/p/8132518",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "MEDIUM"
+      }
+    },
+    {
+      "id": "offer-pat-12",
+      "variantId": "pat-12",
+      "supplierId": "dedeman",
+      "price": 1459.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/pat-dormitor-fidelio-matrimonial-tapitat-cu-lada-bej-deschis-160-x-200-cm-5c/p/8071675",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-noptiera-7",
+      "variantId": "noptiera-7",
+      "supplierId": "dedeman",
+      "price": 358.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/noptiera-corsica-cu-raft-sertar-bej-50-x-40-x-60-cm-1c/p/8129721",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-noptiera-8",
+      "variantId": "noptiera-8",
+      "supplierId": "dedeman",
+      "price": 300.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/noptiera-duero-3f-cu-3-sertare-stejar-gri-45-x-40-x-63-cm-1c/p/8063974",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-noptiera-9",
+      "variantId": "noptiera-9",
+      "supplierId": "dedeman",
+      "price": 266.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/noptiera-colhida-cu-2-sertare-bej-cashmere-stejar-inchis-48-x-40-1-x-59-4-cm-1c/p/8130657",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-dulap-6",
+      "variantId": "dulap-6",
+      "supplierId": "dedeman",
+      "price": 799.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/dulap-dormitor-nevis-3k1f1o-stejar-artisan-3-usi-cu-oglinda-116-8-x-51-6-x-207-3-cm-4c/p/8130661",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-dulap-7",
+      "variantId": "dulap-7",
+      "supplierId": "dedeman",
+      "price": 1079.01,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/dulap-dormitor-varadero-4k1f1o-stejar-artisan-negru-4-usi-cu-oglinda-157-6-x-53-x-203-7-cm-3c/p/8098360",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-dulap-8",
+      "variantId": "dulap-8",
+      "supplierId": "dedeman",
+      "price": 2299.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/dulap-dormitor/-dressing-sierra-220-gri-grafit-2-usi-glisante-cu-oglinda-217-x-62-5-x-210-cm-8c/p/8063961",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-comoda-5",
+      "variantId": "comoda-5",
+      "supplierId": "dedeman",
+      "price": 549.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/comoda-dormitor-duero-5f-90-cu-5-sertare-stejar-gri-90-x-95-x-40-cm-1c/p/8063957",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-comodaTv-10",
+      "variantId": "comodaTv-10",
+      "supplierId": "dedeman",
+      "price": 469.01,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/comoda-tv-rex-cu-lumini-cu-usi-alb-mat-negru-folie-lucioasa-alba-170-x-41-5-x-41-5-cm-2c/p/8054377",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-comodaTv-11",
+      "variantId": "comodaTv-11",
+      "supplierId": "dedeman",
+      "price": 829.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/comoda-tv-darwen-3k2f2v-cu-usi-si-sertare-bej-cashmere-stejar-artisan-179-5-x-40-x-52-5-cm-2c/p/8124717",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-comodaTv-12",
+      "variantId": "comodaTv-12",
+      "supplierId": "dedeman",
+      "price": 469.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/comoda-tv-arles-3k3v-cu-usi-bej-cashmere-stejar-artisan-192-2-x-44-x-32-cm-1c/p/8125262",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-biblioteca-9",
+      "variantId": "biblioteca-9",
+      "supplierId": "dedeman",
+      "price": 979.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/biblioteca-living-cantal-stejar-artisan-gri-259-cm-3c/p/8108282",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-biblioteca-10",
+      "variantId": "biblioteca-10",
+      "supplierId": "dedeman",
+      "price": 698.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/biblioteca-living-margate-ah-stejar-artisan-negru-208-cm-2c/p/8124741",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-biblioteca-11",
+      "variantId": "biblioteca-11",
+      "supplierId": "dedeman",
+      "price": 729.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/biblioteca-living-retimno-stejar-artisan-negru-207-5-cm-2c/p/8119446",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-biblioteca-12",
+      "variantId": "biblioteca-12",
+      "supplierId": "dedeman",
+      "price": 739.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/biblioteca-living-glen-stejar-gri-alb-mat-170-5-cm-2c/p/8050440",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-biblioteca-13",
+      "variantId": "biblioteca-13",
+      "supplierId": "dedeman",
+      "price": 899.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/biblioteca-living-lorca-stejar-gri-lemn-negru-195-5-cm-2c/p/8063761",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masuta-4",
+      "variantId": "masuta-4",
+      "supplierId": "dedeman",
+      "price": 299.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/masuta-cafea-oscar-ks-dreptunghiulara-stejar-alb-120-x-60-x-41-5-cm-1c/p/8050333",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masuta-5",
+      "variantId": "masuta-5",
+      "supplierId": "dedeman",
+      "price": 569.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/masuta-cafea-aberdeen-dreptunghiulara-alb-stejar-porto-120-x-56-4-x-49-5-cm-2c/p/8130622",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masuta-6",
+      "variantId": "masuta-6",
+      "supplierId": "dedeman",
+      "price": 329.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/masuta-cafea-cirko-rotunda-alb-marmorat-negru-80-x-80-x-48-cm-set-2-in-1-1c/p/8128881",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masuta-7",
+      "variantId": "masuta-7",
+      "supplierId": "dedeman",
+      "price": 459.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/masuta-cafea-din-sticla-kugu-rotunda-crom-aramiu-75-x-75-x-50-cm-1c/p/8106760",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masuta-8",
+      "variantId": "masuta-8",
+      "supplierId": "dedeman",
+      "price": 448.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/masuta-cafea-aralyn-dreptunghiulara-stejar-negru-110-x-50-x-54-cm-1c/p/8128866",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masa-10",
+      "variantId": "masa-10",
+      "supplierId": "dedeman",
+      "price": 499.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/masa-bucatarie/-dining-fixa-eva-ab2820-dreptunghiulara-6-persoane-natur-negru-160-x-80-x-76-cm-1c/p/8123970",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masa-11",
+      "variantId": "masa-11",
+      "supplierId": "dedeman",
+      "price": 798.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/masa-bucatarie/-dining-fixa-grandio-mob-tonia-dreptunghiulara-6-persoane-negru-stejar-180-x-90-x-75-cm-2c/p/8115917",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masa-12",
+      "variantId": "masa-12",
+      "supplierId": "dedeman",
+      "price": 799.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/masa-bucatarie/-dining-extensibila-mb-13-dreptunghiulara-4-persoane-stejar-sonoma-120-x-80-x-78-cm-2c/p/8099510",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masa-13",
+      "variantId": "masa-13",
+      "supplierId": "dedeman",
+      "price": 300.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/masa-bucatarie/-dining-extensibila-saxonia-dreptunghiulara-4-persoane-nuc-105/-165-x-68-x-77-5-cm-1c/p/8063498",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "MEDIUM"
+      }
+    },
+    {
+      "id": "offer-birou-7",
+      "variantId": "birou-7",
+      "supplierId": "dedeman",
+      "price": 209.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/birou-calculator-standard-rubin-stejar-cannolo-130-x-65-x-73-cm-1c/p/8705096",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-birou-8",
+      "variantId": "birou-8",
+      "supplierId": "dedeman",
+      "price": 519.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/birou-calculator-cu-sertare-si-dulap-alfa-stejar-sonoma-145-x-65-5-x-75-5-cm-2c/p/8029895",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-birou-9",
+      "variantId": "birou-9",
+      "supplierId": "dedeman",
+      "price": 649.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/birou-cu-sertar-si-dulap-bany-pentru-calculator-alb-140-x-60-x-76-cm-2c/p/8097492",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-birou-10",
+      "variantId": "birou-10",
+      "supplierId": "dedeman",
+      "price": 929.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/birou-cu-sertare-si-dulap-eustach-pentru-calculator-alb-137-x-60-x-76-3-cm-2c/p/8097564",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-scaunBirou-8",
+      "variantId": "scaunBirou-8",
+      "supplierId": "dedeman",
+      "price": 299.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/scaun-birou-ergonomic-cu-suport-lombar-ericsson-rotativ-material-textil-negru/p/8115577",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-scaunBirou-9",
+      "variantId": "scaunBirou-9",
+      "supplierId": "dedeman",
+      "price": 469.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/scaun-birou-ergonomic-cu-suport-lombar-si-tetiera-sd-mch801-rotativ-mesh-negru/p/8066569",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-scaunBirou-10",
+      "variantId": "scaunBirou-10",
+      "supplierId": "dedeman",
+      "price": 239.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/scaun-birou-operational-carbo-rotativ-textil-gri/p/8132330",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-pantofar-3",
+      "variantId": "pantofar-3",
+      "supplierId": "dedeman",
+      "price": 479.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/pantofar-buseto-2k-hdf-pal-alb-67-4-x-34-8-x-195-cm-1c/p/8098391",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-pantofar-4",
+      "variantId": "pantofar-4",
+      "supplierId": "dedeman",
+      "price": 379.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/pantofar-elia-pal-alb-104-x-30-x-68-cm-2c/p/8111202",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-pantofar-5",
+      "variantId": "pantofar-5",
+      "supplierId": "dedeman",
+      "price": 638.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/pantofar-hugo-24-cu-oglinda-pal-stejar-gri-67-x-28-x-155-5-cm-2c/p/8054497",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-pantofar-6",
+      "variantId": "pantofar-6",
+      "supplierId": "dedeman",
+      "price": 929.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/pantofar-islay-2k-mdf-hdf-pal-stejar-artisan-91-6-x-32-4-x-184-4-cm-2c/p/8130163",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-pantofar-7",
+      "variantId": "pantofar-7",
+      "supplierId": "dedeman",
+      "price": 999.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/pantofar-menorca-2k-2og-ob-blf-cu-oglinda-hdf-alb-texturat-89-5-x-37-5-x-199-cm-2c/p/8093485",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-lavoar-4",
+      "variantId": "lavoar-4",
+      "supplierId": "dedeman",
+      "price": 518.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/masca-baie-lavoar-savini-due-60w-cu-usi-alb-pe-pardoseala-pal-mdf-60-5-x-36-3-x-84-6-cm/p/3049330",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-lavoar-5",
+      "variantId": "lavoar-5",
+      "supplierId": "dedeman",
+      "price": 429.01,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/masca-baie-lavoar-savini-due-rimini-cu-usi-alb-pe-pardoseala-pal-mdf-56-5-x-42-5-x-87-cm/p/3024503",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-lavoar-6",
+      "variantId": "lavoar-6",
+      "supplierId": "dedeman",
+      "price": 1349.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/masca-baie-lavoar-roca-a851925529-cu-sertare-alb-suspendat-mdf-ceramica-61-3-x-46-5-x-65-6-cm/p/3045617",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-lavoar-7",
+      "variantId": "lavoar-7",
+      "supplierId": "dedeman",
+      "price": 1246.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/masca-baie-lavoar-savini-due-creta-80-c/f40/00-cu-sertare-stejar-auriu-pe-pardoseala-pal-mdf-ceramica-81-5-x-46-5-x-85-5-cm/p/3052335",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-lavoar-8",
+      "variantId": "lavoar-8",
+      "supplierId": "dedeman",
+      "price": 1349.01,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/masca-baie-lavoar-fayans-kuandra-cu-sertare-si-usi-gri-negru-pe-pardoseala-pal-65-x-42-x-85-cm/p/3018387",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-lavoar-9",
+      "variantId": "lavoar-9",
+      "supplierId": "dedeman",
+      "price": 1188.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/masca-baie-lavoar-cersanit-moduo-s801-221-dsm-cu-sertare-alb-suspendat-pal-80-x-44-7-x-62-cm/p/3045112",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-frigider-3",
+      "variantId": "frigider-3",
+      "supplierId": "dedeman",
+      "price": 1599.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/frigider-arctic-ad60310m40s-cu-2-usi-si-3-rafturi-306-litri-clasa-e-gri-inaltime-175-cm-termostat-reglabil-compartiment-garden-fresh-usi-reversibile-eco-led/p/3050640",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-frigider-4",
+      "variantId": "frigider-4",
+      "supplierId": "dedeman",
+      "price": 2299.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/combina-frigorifica-beko-rcsa406k40dxbn-386-litri-clasa-e-inaltime-202-5-cm-dozator-apa-usi-reversibile-termostat-reglabil-iluminare-led-argintiu/p/3037924",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-frigider-5",
+      "variantId": "frigider-5",
+      "supplierId": "dedeman",
+      "price": 1069.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/combina-frigorifica-albatros-cf343e-262-litri-clasa-e-inaltime-180-cm-termostat-reglabil-dezghetare-automata-frigider-usi-reversibile-lumina-interioara-tip-led-picioare-reglabile-alb/p/3049373",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-frigider-6",
+      "variantId": "frigider-6",
+      "supplierId": "dedeman",
+      "price": 919.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/frigider-candy-cdg1s514ew-cu-2-usi-si-3-rafturi-211-litri-clasa-e-alb-inaltime-143-cm-termostat-reglabil-iluminare-led-usi-reversibile-picioare-reglabile/p/3051493",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-frigider-7",
+      "variantId": "frigider-7",
+      "supplierId": "dedeman",
+      "price": 1249.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/frigider-arctic-ad54280m40w-cu-2-usi-si-3-rafturi-250-litri-clasa-e-alb-inaltime-160-6-cm-termostat-reglabil-compartiment-garden-fresh-usi-reversibile-eco-led/p/3050646",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-frigider-8",
+      "variantId": "frigider-8",
+      "supplierId": "dedeman",
+      "price": 2099.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/frigider-samus-srx474nfe-cu-1-usa-si-4-rafturi-359-litri-clasa-e-argintiu-inaltime-185-cm-full-no-frost-multi-air-flow-system-functie-supercool-afisaj-electronic-lcd-usa-reversibila/p/3051743",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-dus-4",
+      "variantId": "dus-4",
+      "supplierId": "dedeman",
+      "price": 1149.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/cabina-dus-patrata-kadda-jf-90k-sticla-securizata-transparenta-profil-cromat-90-x-90-x-200-cm/p/3056643",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-dus-5",
+      "variantId": "dus-5",
+      "supplierId": "dedeman",
+      "price": 1435.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/cabina-dus-dreptunghiulara-cadita-seldus-eur5-100-x-80-x-205-cm-sticla-securizata-transparenta-profil-negru/p/3052044",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-dus-6",
+      "variantId": "dus-6",
+      "supplierId": "dedeman",
+      "price": 594.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/cabina-dus-semirotunda-cadita-inalta-kadda-2018-b-90-x-90-x-200-cm-sticla-securizata-mata-profil-alb/p/3006432",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-dus-7",
+      "variantId": "dus-7",
+      "supplierId": "dedeman",
+      "price": 3168.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/cabina-dus-dreptunghiulara-westcb150wst10gb-profil-negru-150-x-90-x-200-cm/p/3037972",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-wc-2",
+      "variantId": "wc-2",
+      "supplierId": "dedeman",
+      "price": 329.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/vas-wc-cu-rezervor-mecanism-capac-set-cersanit-koral-k681-001-alb-evacuare-orizontala-montaj-pe-pardoseala/p/3049455",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-wc-3",
+      "variantId": "wc-3",
+      "supplierId": "dedeman",
+      "price": 499.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/vas-wc-suspendat-kadda-therma-mgz-55-alb-evacuare-orizontala-36-3-x-48-6-x-36-4-cm-capac-wc-inclus/p/3057242",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-wc-4",
+      "variantId": "wc-4",
+      "supplierId": "dedeman",
+      "price": 648.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/vas-wc-suspendat-roca-gap-a34647f000-alb-evacuare-orizontala-35-x-54-x-40-cm/p/3056839",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-wc-5",
+      "variantId": "wc-5",
+      "supplierId": "dedeman",
+      "price": 922.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/vas-wc-suspendat-geberit-selnova-square-501-546-01-1-alb-evacuare-orizontala-35-x-54-x-33-cm/p/3049243",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-wc-6",
+      "variantId": "wc-6",
+      "supplierId": "dedeman",
+      "price": 429.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/vas-wc-cersanit-bonica-k3029-002-alb-evacuare-dubla-montaj-pe-pardoseala-39-x-61-x-42-cm-capac-wc-inclus/p/3057961",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-wc-7",
+      "variantId": "wc-7",
+      "supplierId": "dedeman",
+      "price": 648.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/vas-wc-suspendat-cersanit-mito-vortex-szcz1003790001-alb-evacuare-orizontala-36-x-49-x-36-cm-capac-wc-inclus/p/3055926",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-oglinda-2",
+      "variantId": "oglinda-2",
+      "supplierId": "dedeman",
+      "price": 290.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/oglinda-decorativa-f2203-dreptunghiulara-negru-55-x-75-cm/p/3043894",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-oglinda-3",
+      "variantId": "oglinda-3",
+      "supplierId": "dedeman",
+      "price": 349.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/oglinda-decorativa-rona-0065lk-cu-suport-de-podea-auriu-60-x-160-cm-1c/p/8118894",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-oglinda-4",
+      "variantId": "oglinda-4",
+      "supplierId": "dedeman",
+      "price": 578.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/oglinda-living-cottage-0162miroc-stejar-natur-160-x-2-x-55-cm-1c/p/8056934",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-oglinda-5",
+      "variantId": "oglinda-5",
+      "supplierId": "dedeman",
+      "price": 218.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/oglinda-decorativa-f2205-rotunda-negru-60-x-60-cm/p/3043896",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-canapea-13",
+      "variantId": "canapea-13",
+      "supplierId": "jysk-ro",
+      "price": 1500.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "JYSK",
+        "sourceUrl": "https://jysk.ro/sufragerie/canapele/canapea-egense-3-locuri-nisipie",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-canapea-14",
+      "variantId": "canapea-14",
+      "supplierId": "jysk-ro",
+      "price": 1250.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "JYSK",
+        "sourceUrl": "https://jysk.ro/sufragerie/canapele/canapea-falslev-3-locuri-gri",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-canapea-15",
+      "variantId": "canapea-15",
+      "supplierId": "mobexpert",
+      "price": 3623.55,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Mobexpert",
+        "sourceUrl": "https://mobexpert.ro/products/prm114-oskar-canapea-3-locuri-extensibila",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-pat-13",
+      "variantId": "pat-13",
+      "supplierId": "jysk-ro",
+      "price": 1400.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "JYSK",
+        "sourceUrl": "https://jysk.ro/dormitor/cadre-de-pat/cadru-pat-markskel-160x200-stejar-salbatic-alb",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-pat-14",
+      "variantId": "pat-14",
+      "supplierId": "jysk-ro",
+      "price": 1350.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "JYSK",
+        "sourceUrl": "https://jysk.ro/dormitor/paturi/cadre-de-pat-si-somiere/cadre-de-pat/cadru-pat-limfjorden-160x200-3-sertare-alb",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-pat-15",
+      "variantId": "pat-15",
+      "supplierId": "jysk-ro",
+      "price": 1499.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "JYSK",
+        "sourceUrl": "https://jysk.ro/dormitor/paturi/cadre-de-pat-si-somiere/cadre-de-pat/cadru-pat-kongsberg-160x200-bej",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-pat-16",
+      "variantId": "pat-16",
+      "supplierId": "mobexpert",
+      "price": 2809.3,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Mobexpert",
+        "sourceUrl": "https://mobexpert.ro/products/outprm002",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-dulap-9",
+      "variantId": "dulap-9",
+      "supplierId": "jysk-ro",
+      "price": 875.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "JYSK",
+        "sourceUrl": "https://jysk.ro/depozitare/dulapuri/dulap-fandrup-96x176-2-usi-3-sertare-stejar",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-dulap-10",
+      "variantId": "dulap-10",
+      "supplierId": "jysk-ro",
+      "price": 2000.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "JYSK",
+        "sourceUrl": "https://jysk.ro/depozitare/dulapuri/dulap-vellerup-200x200-4-usi-3-sertare-alb",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-scaunBirou-11",
+      "variantId": "scaunBirou-11",
+      "supplierId": "jysk-ro",
+      "price": 550.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "JYSK",
+        "sourceUrl": "https://jysk.ro/birou/scaune-de-birou/scaun-birou-marbjerg-gri",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-scaunBirou-12",
+      "variantId": "scaunBirou-12",
+      "supplierId": "jysk-ro",
+      "price": 300.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "JYSK",
+        "sourceUrl": "https://jysk.ro/birou/scaune-de-birou/scaun-birou-billum-negru",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-comodaTv-13",
+      "variantId": "comodaTv-13",
+      "supplierId": "jysk-ro",
+      "price": 650.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "JYSK",
+        "sourceUrl": "https://jysk.ro/sufragerie/comode-tv/comoda-tv-vedde-stejar-salbatic",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-pantofar-8",
+      "variantId": "pantofar-8",
+      "supplierId": "jysk-ro",
+      "price": 350.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "JYSK",
+        "sourceUrl": "https://jysk.ro/depozitare/pantofare/pantofar-bakhuse-3-compartimente-alb",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-comodaTv-14",
+      "variantId": "comodaTv-14",
+      "supplierId": "mobexpert",
+      "price": 1393.92,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Mobexpert",
+        "sourceUrl": "https://mobexpert.ro/products/jen01-jennifer-comoda-tv",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masa-14",
+      "variantId": "masa-14",
+      "supplierId": "mobexpert",
+      "price": 2414.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Mobexpert",
+        "sourceUrl": "https://mobexpert.ro/products/prl09-priscilla-masa-dining-extensibila",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-biblioteca-14",
+      "variantId": "biblioteca-14",
+      "supplierId": "mobexpert",
+      "price": 4319.92,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Mobexpert",
+        "sourceUrl": "https://mobexpert.ro/products/siteavnubibl02-avenue-biblioteca",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masuta-9",
+      "variantId": "masuta-9",
+      "supplierId": "mobexpert",
+      "price": 858.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Mobexpert",
+        "sourceUrl": "https://mobexpert.ro/products/snr29-lia-masuta-cafea",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masuta-10",
+      "variantId": "masuta-10",
+      "supplierId": "mobexpert",
+      "price": 291.9,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Mobexpert",
+        "sourceUrl": "https://mobexpert.ro/products/wnn1318",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masuta-11",
+      "variantId": "masuta-11",
+      "supplierId": "mobexpert",
+      "price": 3462.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Mobexpert",
+        "sourceUrl": "https://mobexpert.ro/products/ehfoc18194-tuycan-masuta-cafea",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masuta-12",
+      "variantId": "masuta-12",
+      "supplierId": "jysk-ro",
+      "price": 550.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "JYSK",
+        "sourceUrl": "https://jysk.ro/sufragerie/masute-de-cafea/masuta-cafea-ravnsbjerg-90x90-stejar-natur",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masa-15",
+      "variantId": "masa-15",
+      "supplierId": "jysk-ro",
+      "price": 450.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "JYSK",
+        "sourceUrl": "https://jysk.ro/bucatarie/mese-dining/masa-aabenraa-90x160-stejar-cald/negru",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masa-16",
+      "variantId": "masa-16",
+      "supplierId": "jysk-ro",
+      "price": 749.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "JYSK",
+        "sourceUrl": "https://jysk.ro/bucatarie/mese-dining/mese-dining/masa-ringsted-o100-alba",
+        "verifiedAt": "2026-10-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
       }
     }
   ]

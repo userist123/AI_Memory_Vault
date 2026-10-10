@@ -65,7 +65,7 @@ describe('server (PGlite)', () => {
     await ob.updatePrice({ kind: 'o', targetId: 'offer-canapea-0', price: 2199, verifiedAt: '2026-10-02' });
     const c = await repo.getCatalog(), o = c.offers.find(x => x.id === 'offer-canapea-0')!;
     assert.equal(o.price, 2199); assert.equal(o.provenance.verifiedAt, '2026-10-02'); assert.equal(o.provenance.verificationType, 'manual');
-    assert.deepEqual((await ob.priceHistory('o', 'offer-canapea-0')).map(h => h.price), [2299, 2199]);
+    assert.deepEqual((await ob.priceHistory('o', 'offer-canapea-0')).map(h => h.price), [1699, 2199]);
     await ob.updatePrice({ kind: 'm', targetId: 'vopsea-innenweiss', price: 159, verifiedAt: '2026-10-02' });
     const m = (await repo.getMaterials()).materials.find(x => x.id === 'vopsea-innenweiss')!; assert.equal(m.pack!.price, 159); assert.equal(m.unitPrice, 10.6);
   });

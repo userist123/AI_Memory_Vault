@@ -29,13 +29,21 @@ test('paritate: amenajarea implicită e identică cu prototipul', () => {
 test('paritate: toate cele 68 de variante, alese pe rând', () => {
   let n = 0;
   for (const [k, g] of Object.entries<any>(catalog)) g.v.forEach((_: any, i: number) => { const s1: any = defaults(), s2: any = defaults(); s1[k] = s2[k] = i;
-    assert.deepEqual(norm(createLayoutEngine({ plan: structuredClone(plan) as any, catalog, selection: s1, picked: new Set([k]) }).run()), norm(legacyRun(s2, new Set([k]))), `${k}#${i}`); n++; });
+    const ours = norm(createLayoutEngine({ plan: structuredClone(plan) as any, catalog, selection: s1, picked: new Set([k]) }).run()), theirs = norm(legacyRun(s2, new Set([k])));
+    // abatere voită: prototipul punea orice noptieră ca 39×41 cm; noi o punem cu dimensiunile ei, la 1.5 cm de pat
+    if (k === 'noptiera' && i > 0){ const v = g.v[i], other = (x: typeof ours) => x.placed.filter((p: string) => !p.startsWith('noptiera|'));
+      assert.deepEqual(other(ours), other(theirs), `${k}#${i}`); assert.deepEqual(ours.notFit, theirs.notFit, `${k}#${i}`);
+      for (const p of ours.placed.filter((p: string) => p.startsWith('noptiera|'))){ const [, , side, x0, z0, x1, z1] = p.split('|'), horiz = side === 'N' || side === 'S';
+        assert.equal(Math.round((horiz ? +x1 - +x0 : +z1 - +z0) * 100), v.w, p); assert.equal(Math.round((horiz ? +z1 - +z0 : +x1 - +x0) * 100), v.d, p); } }
+    else assert.deepEqual(ours, theirs, `${k}#${i}`); n++; });
   assert.equal(n, 68);
 });
 test('catalogul din baza de date (v1) produce aceeași amenajare ca OPTS-ul original', () => {
   const eng = toEngineCatalog(catalogV1 as any);
   assert.deepEqual(norm(createLayoutEngine({ plan: structuredClone(plan) as any, catalog: eng, selection: defaults() }).run()), norm(legacyRun(defaults())));
-  for (const k of Object.keys(catalog)) assert.equal(eng[k].v.length, catalog[k].v.length, k);
+  // catalogul a crescut, dar primele variante ale fiecărei grupe sunt tot cele din prototip, în aceeași ordine și cu aceleași dimensiuni
+  for (const k of Object.keys(catalog)){ assert.ok(eng[k].v.length >= catalog[k].v.length, k);
+    catalog[k].v.forEach((v: any, i: number) => assert.deepEqual([eng[k].v[i].w, eng[k].v[i].d, eng[k].v[i].h], [v.w, v.d, v.h], `${k}#${i}`)); }
 });
 test('migrare dus-întors PLAN → Floor → PLAN fără pierderi', () => {
   assert.deepEqual(floorToPlan(planToFloor(plan as any), (plan as any).nume), plan);

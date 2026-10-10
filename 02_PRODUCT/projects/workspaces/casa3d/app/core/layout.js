@@ -118,7 +118,9 @@ function autoFurnish(){
   byType('dormitor').forEach(r => {
     const bed = findSpot(r, 'pat', placed, { sides: sidesByLength(r, true), front: .6, windowPenalty: true, extra: [] });
     if (bed){ const horiz = bed.side === 'N' || bed.side === 'S', w = CAT.pat.w / 100;
-      [-1, 1].forEach(k => { const c = bed.along + k * (w / 2 + .21), fp = footprint(r, bed.side, c, .39, .41);
+      // noptiera cu dimensiunile ei (prototipul presupunea mereu 39×41 cm, iar una mai lată intra în pat), la 1.5 cm de pat
+      const ns = CAT.noptiera, nw = ns && ns.w ? ns.w / 100 : .39, nd = ns && ns.d ? ns.d / 100 : .41;
+      [-1, 1].forEach(k => { const c = bed.along + k * (w / 2 + nw / 2 + .015), fp = footprint(r, bed.side, c, nw, nd);
         if (freeOf(r, fp, placed)) placed.push({ key: 'noptiera', room: r.id, side: bed.side, along: c, fp }); });
       bed.front = frontZone(bed.fp, bed.side, .6);
       const sidePad = horiz ? [{ x0: bed.fp.x0 - .6, x1: bed.fp.x0, z0: bed.fp.z0, z1: bed.fp.z1 }, { x0: bed.fp.x1, x1: bed.fp.x1 + .6, z0: bed.fp.z0, z1: bed.fp.z1 }] : [{ z0: bed.fp.z0 - .6, z1: bed.fp.z0, x0: bed.fp.x0, x1: bed.fp.x1 }, { z0: bed.fp.z1, z1: bed.fp.z1 + .6, x0: bed.fp.x0, x1: bed.fp.x1 }];

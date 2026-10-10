@@ -63,7 +63,7 @@ export function proposeByRules(snap: Snapshot, cat: Catalog, mc: MaterialsCatalo
   const variants: RawVariant[] = [];
   for (const tier of TIERS){
     const banned = new Set<string>(); let v: RawVariant | null = null;
-    for (let attempt = 0; attempt < 4; attempt++){
+    for (let attempt = 0; attempt < 12; attempt++){
       const selections: Record<string, string> = {}, reasons: RawVariant['reasons'] = [], colors: string[] = [];
       for (const g of [...present].filter(g => G[g])){ const p = pick(cat, g, tier, brief, banned); if (!p) continue; selections[g] = p.id;
         reasons.push({ target: G[g].label, reason: `${p.name} (${p.price.toLocaleString('ro-RO')} lei): ${p.why.join('; ')}.` });
@@ -72,7 +72,9 @@ export function proposeByRules(snap: Snapshot, cat: Catalog, mc: MaterialsCatalo
         summary: `Stil ${STYLES[brief.style].toLowerCase()}, ${tier === 'economic' ? 'variantele cele mai accesibile care se potrivesc' : tier === 'premium' ? 'variante de gamă superioară' : 'echilibru între preț și finisaje'}${brief.priorities.length ? `; priorități: ${brief.priorities.map(p => PRIORITIES[p].toLowerCase()).join(', ')}` : ''}. Pozițiile sunt calculate de motorul geometric, nu de propunere.` };
       const ev = evaluateVariant(snap, cat, mc, v, brief), misfit = ev.issues.filter(i => i.code === 'DOES_NOT_FIT');
       if (!misfit.length) break;
-      for (const [g, vid] of Object.entries(selections)) if (misfit.some(i => i.message.startsWith(G[g].label))) banned.add(vid);   // reîncearcă fără piesa care nu încape
+      // reîncearcă fără piesa care nu încape; scaunul nu încape doar pentru că biroul lui nu încape, deci rămâne în joc
+      const bad = Object.keys(selections).filter(g => misfit.some(i => i.message.startsWith(G[g].label)));
+      for (const g of bad) if (!(g === 'scaunBirou' && bad.includes('birou'))) banned.add(selections[g]!);
     }
     if (v) variants.push(v);
   }
