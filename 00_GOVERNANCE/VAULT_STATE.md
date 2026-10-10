@@ -228,9 +228,12 @@ whole-corpus retrieval numbers.
   `claude/pack-size-gate-backfill` (`846b4c04a`): eligibility settled before pagination with the true reason
   recorded (`PROVENANCE_MISSING`, `UNVERIFIED_AT_EGRESS`), bounded backfill after a real budget drop. Measured after
   the fix: recall 26/130 (from 24), short pages 4 (from 41), empty 1 (from 22). **Benchmark ceiling for an agent is
-  at most 105/130**: 16 cases' gold notes are provenance-less and never showable, and 9 cases' gold ids are `path:`
-  files without frontmatter, in the index but not in the storage pool production searches. Open, separately: the
-  eight 100 k–1 M-character notes still dominate fusion ranks; the 51 provenance-less notes are a content defect.
+  at most 105/130**, and it is a lifecycle matter, not provenance (an earlier wording here said otherwise): 12 cases'
+  gold notes are `core` governance documents with no `lifecycle` (Rules, Memory_Protocol, Identity, System_Architecture,
+  Goals, …), 4 are `NORMALIZED`/`raw` notes, and 9 cases' gold ids are `path:` files without frontmatter, in the index
+  but not in the storage pool production searches. The 27 floor-passing provenance-less notes get a derived provenance
+  on `claude/legal-provenance-derivation`. Open, separately: the eight 100 k–1 M-character notes still dominate fusion
+  ranks; which lifecycle the core governance documents should carry is the owner's decision.
 - **The ASCII tokenizer is in the production path and does not explain the Romanian gap.** It is called by
   `candidate_generation.py` on every document and query. The first tokenizer experiment patched
   `retrieval.context.candidate_generation.tokenize`; the controller uses
