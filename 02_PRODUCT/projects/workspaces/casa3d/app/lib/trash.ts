@@ -4,6 +4,7 @@
 import { getDb } from './db';
 import { HttpError, checkSnapshot } from './repo';
 import { removeRenders } from './renders';
+import { demoBeforeCreate } from './demo';
 
 export const TRASH_DAYS = 30;
 const ID = /^[0-9a-f-]{36}$/i;
@@ -50,6 +51,7 @@ export async function duplicateProject(owner: string, id: string, name?: unknown
   if (!rows[0]) throw new HttpError(404, 'Proiect inexistent.');
   const n = (typeof name === 'string' && name.trim() ? name.trim() : `${rows[0].name} (copie)`).slice(0, 120);
   const snap = checkSnapshot({ ...(rows[0].draft as any), name: n }); delete (snap as any).brief;
+  await demoBeforeCreate(q, owner);
   const ins = await q('insert into projects(owner, name, draft) values($1,$2,$3) returning id', [owner, n, JSON.stringify(snap)]);
   return { id: ins.rows[0].id as string };
 }
