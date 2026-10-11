@@ -31,6 +31,7 @@ public static class InvestigationReportPdf
         var seal = LogAnalyzer.Dfir.Case.ReportSeal.For(r.Case);   // chain heads at the moment the report is printed (decision 30)
         var evidence = r.Case.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal);
         var verification = r.Verification ?? ReadVerification(r.Case.Root);
+        var station = LogAnalyzer.Dfir.Analysis.StationIdentity.FromEvidence(r.Timeline, info.Host);   // the evidence's station, not the examiner's machine (review I1)
 
         Document.Create(doc => doc.Page(page =>
         {
@@ -40,7 +41,7 @@ public static class InvestigationReportPdf
             page.Header().Column(h =>
             {
                 h.Item().Text($"Raport de investigație — {info.Name}" + (audience == LogAnalyzer.Dfir.Reporting.ReportAudience.Everything ? "" : $" · {LogAnalyzer.Dfir.Reporting.ReportAudiences.Label(audience)}")).Bold().FontSize(14).FontColor(Ink);
-                h.Item().Text($"Caz {info.CaseId} · stația {info.Host} · investigator {investigator} · ore în {zone.Id}").FontSize(7.5f).FontColor(Muted);
+                h.Item().Text($"Caz {info.CaseId} · {station.Line} · investigator {investigator} · ore în {zone.Id}").FontSize(7.5f).FontColor(Muted);
                 h.Item().PaddingTop(4).LineHorizontal(1).LineColor(Ink);
             });
             page.Content().PaddingVertical(8).Column(col =>
