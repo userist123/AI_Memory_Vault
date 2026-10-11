@@ -129,14 +129,8 @@ public sealed class Wp11Data
     /// <summary>The data shipped with the application.</summary>
     public static Wp11Data Default => Shipped.Value;
 
-    private static string Read(string file)
-    {
-        var asm = typeof(Wp11Data).Assembly;
-        using var s = asm.GetManifestResourceStream("LogAnalyzer.Dfir.Analysis.Data." + file)
-                      ?? throw new InvalidOperationException($"Resursa încorporată {file} lipsește din {asm.GetName().Name}.");
-        using var r = new StreamReader(s);
-        return r.ReadToEnd();
-    }
+    // the installed, verified data pack when there is one, else the embedded resource (offline updates, ANALYSIS_2026-10-11_APPLICATION_UPDATES.md)
+    private static string Read(string file) => ShippedData.Read(file);
 }
 
 /// <summary>Tunable thresholds of the WP11 rules (defaults are the documented ones).</summary>
