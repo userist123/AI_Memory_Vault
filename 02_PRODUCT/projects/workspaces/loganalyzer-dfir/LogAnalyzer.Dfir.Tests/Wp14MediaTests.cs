@@ -106,6 +106,15 @@ public class Wp14MediaTests
         Assert.Equal(AirGapAuthorization.Undefined, x.AirGap!.Authorized);
     }
 
+    [Fact]
+    public void Only_exfiltration_indicating_statuses_carry_T1052_001()
+    {
+        // Review item D24: presence of an UNKNOWN / AUTHORIZED medium is not an exfiltration technique.
+        Assert.Equal("", Only(Go([Usb("")], media: W14.Media(Row("AA001"))), "MEDIA-UNKNOWN").MitreTechniqueId);
+        Assert.Equal("", Only(Go([Usb("AA001")], media: W14.Media(Row("AA001"))), "MEDIA-AUTHORIZED").MitreTechniqueId);
+        Assert.Equal("T1052.001", Only(Go([Usb("ZZ999")], media: W14.Media(Row("AA001"))), "MEDIA-UNREGISTERED").MitreTechniqueId);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

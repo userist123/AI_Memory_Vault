@@ -359,7 +359,10 @@ public static class AntiForensics
     /// <summary>True when the file name is a core Windows process and the folder is not where Windows keeps it.</summary>
     public static bool IsMasquerading(string path)
     {
-        var p = Correlation.Normalize(path.Trim().Trim('"'));
+        var raw = path.Trim().Trim('"').Replace('/', '\\');
+        // Win32 extended-length / device prefix (\\?\C:\...) and NT object prefix (\??\C:\...) do not change which file it is.
+        if (raw.StartsWith(@"\\?\", StringComparison.Ordinal) || raw.StartsWith(@"\\.\", StringComparison.Ordinal)) raw = raw[4..];
+        var p = Correlation.Normalize(raw);
         if (p.StartsWith(@"\??\", StringComparison.Ordinal)) p = Correlation.Normalize(p[4..]);
         if (p.StartsWith(@"\DEVICE\HARDDISKVOLUME", StringComparison.Ordinal)) { int i = p.IndexOf('\\', 8); if (i > 0) p = p[i..]; }
         var name = WinPath.GetFileName(p);
