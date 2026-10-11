@@ -43,7 +43,7 @@ Markdown Injection       (http://127.0.0.1:8000)   Tampermonkey Userscript
 
 ## 📝 Metoda A: Prompt de Sistem & Markdown Injection (Fără Server)
 
-1. Deschizi fișierul canonic de prompt-uri: [`06_INBOX/RAW_IMPORTS/markdawn/BROWSER_AI_SYSTEM_PROMPTS.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/06_INBOX/RAW_IMPORTS/markdawn/BROWSER_AI_SYSTEM_PROMPTS.md).
+1. Deschizi fișierul canonic de prompt-uri: [`06_INBOX/RAW_IMPORTS/markdawn/BROWSER_AI_SYSTEM_PROMPTS.md`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/06_INBOX/RAW_IMPORTS/markdawn/BROWSER_AI_SYSTEM_PROMPTS.md).
 2. Copiezi promptul specific platformei tale:
    - **ChatGPT**: Lipește în Custom GPT Instructions.
    - **Perplexity**: Lipește în Space Instructions.
@@ -57,14 +57,14 @@ Markdown Injection       (http://127.0.0.1:8000)   Tampermonkey Userscript
 Porniți serverul REST API local navigând mai întâi în dosarul proiectului:
 
 ```powershell
-cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
+cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY
 python -m memory_controller.api_server 8000
 ```
 
 Sau rulați direct fișierul din orice locație terminală:
 
 ```powershell
-python C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\memory_controller\api_server.py 8000
+python C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\memory_controller\api_server.py 8000
 ```
 
 ### Endpoint-uri OpenAPI Expuse:

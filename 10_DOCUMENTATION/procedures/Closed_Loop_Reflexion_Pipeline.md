@@ -15,7 +15,7 @@ relations:
   - type: related_to
     target_id: 86cbfde2-e9f9-4f3d-9cb5-4dc8e8850e07
   - type: related_to
-    target_id: path:C:/Users/user/Documents/Codex/r006/10_DOCUMENTATION/resources/Obsidian/Artifacts/04_MEMORY__Lessons__README.md
+    target_id: path:C:/Users/Marius/Documents/Codex/r006/10_DOCUMENTATION/resources/Obsidian/Artifacts/04_MEMORY__Lessons__README.md
 ---
 
 # 🔄 Procedură Canonică: Pipeline de Reflecție Închisă (Closed-Loop Reflexion)
