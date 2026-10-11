@@ -16,6 +16,9 @@ export interface ProcurementLine {
 export interface ProcurementRow extends ProcurementLine { state: OrderState; overdue: boolean }
 
 const round2 = (v: number) => Math.round(v * 100) / 100;
+/** Ambalajele a două camere adunate („5 × pachet” + „12 × pachet” = „17 × pachet”); etichete diferite → necunoscut. */
+export function addPacks(a: string | null, b: string | null): string | null {
+  const ma = a?.match(/^(\d+) × (.+)$/), mb = b?.match(/^(\d+) × (.+)$/); return ma && mb && ma[2] === mb[2] ? `${Number(ma[1]) + Number(mb[1])} × ${ma[2]}` : null; }
 const keyOf = (...parts: (string | null | undefined)[]) => parts.map(p => (p ?? '').trim().toLowerCase()).join('|').slice(0, 300);
 
 /** Liniile de cumpărat, stabile între salvări (cheia nu depinde de ordinea camerelor). */
@@ -23,7 +26,7 @@ export function procurementLines(snap: Snapshot, cat: Catalog, mc: MaterialsCata
   const out = new Map<string, ProcurementLine>();
   for (const r of finishSchedule(snap, cat, mc)){ if (!r.product || r.element === 'adhesive' && !r.supplier) continue;
     const key = 'm|' + keyOf(r.supplier, r.code ?? r.product, r.unit), cur = out.get(key);
-    if (cur){ cur.qty = round2(cur.qty + r.orderedQty); cur.total = cur.total != null && r.total != null ? round2(cur.total + r.total) : null; if (!cur.rooms.includes(r.room)) cur.rooms.push(r.room); continue; }
+    if (cur){ cur.qty = round2(cur.qty + r.orderedQty); cur.packs = addPacks(cur.packs, r.packs); cur.total = cur.total != null && r.total != null ? round2(cur.total + r.total) : null; if (!cur.rooms.includes(r.room)) cur.rooms.push(r.room); continue; }
     out.set(key, { key, kind: 'finish', product: r.product, supplier: r.supplier || '—', code: r.code, url: r.url, qty: round2(r.orderedQty), unit: r.unit, packs: r.packs, unitPrice: r.unitPrice, total: r.total, rooms: [r.room] }); }
   const roomName = new Map(floors(snap).flatMap(f => f.rooms).map(r => [r.id, r.name]));
   for (const p of snap.placements){ const rv = resolve(cat, p.variantId); if (!rv) continue;
@@ -53,13 +56,14 @@ export function procurementSummary(rows: ProcurementRow[]){
 }
 
 const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+const validDate = (v: string) => DATE_RE.test(v) && new Date(v + 'T00:00:00Z').toISOString().startsWith(v);
 const clean = (v: unknown, max: number) => typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f​-‏‪-‮⁠-⁩﻿]/g, ' ').trim().slice(0, max) : '';
 /** Starea trimisă de interfață, validată; câmpurile goale dispar. */
 export function checkOrderState(x: unknown): OrderState {
   const o = x as any; if (!o || typeof o !== 'object' || !(ORDER_STATUSES as readonly string[]).includes(o.status)) throw new Error('Starea comenzii e invalidă.');
   const s: OrderState = { status: o.status }, ref = clean(o.ref, 80), note = clean(o.note, 500);
   if (ref) s.ref = ref; if (note) s.note = note;
-  for (const k of ['orderedAt', 'eta', 'deliveredAt'] as const){ const v = o[k]; if (v == null || v === '') continue; if (typeof v !== 'string' || !DATE_RE.test(v)) throw new Error('Data nu e validă (AAAA-LL-ZZ).'); s[k] = v; }
+  for (const k of ['orderedAt', 'eta', 'deliveredAt'] as const){ const v = o[k]; if (v == null || v === '') continue; if (typeof v !== 'string' || !validDate(v)) throw new Error('Data nu e validă (AAAA-LL-ZZ).'); s[k] = v; }
   return s;
 }
 export const isLineKey = (k: unknown): k is string => typeof k === 'string' && k.length <= 300 && /^[mf]\|/.test(k);
