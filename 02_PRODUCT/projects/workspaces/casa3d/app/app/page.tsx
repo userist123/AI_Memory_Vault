@@ -8,6 +8,7 @@ import { usePrefs } from '@/lib/prefs';
 import { intlLocale } from '@/lib/i18n';
 import PrefsSwitcher from '@/components/PrefsSwitcher';
 import PlanThumb from '@/components/PlanThumb';
+import PhoneAccess from '@/components/PhoneAccess';
 type P = { id: string; name: string; updated_at: string; current_revision: number };
 export default function Home(){
   const { t, tp, lang, units } = usePrefs(), L = lang === 'en' ? 'en' : 'ro';
@@ -39,5 +40,6 @@ export default function Home(){
           <PlanThumb floor={tm.floor} label={tm.name[L]} /><b>{tm.name[L]}</b><small>{tp('home.rooms', tm.floor.rooms.length)} · {formatArea(floorArea(tm.floor), units, lang)}</small></button>)}
       </div>
     </section>
+    <PhoneAccess />
   </main>);
 }

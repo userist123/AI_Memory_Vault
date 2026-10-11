@@ -14,3 +14,17 @@ export function isLocalRequest(host: string | null, headers: { get(k: string): s
   return !!host && LOCAL_HOST.test(host) && !headers.get('cf-connecting-ip') && (!fwd || fwd.split(',').every(h => LOCAL_HOST.test(h.trim())));
 }
 export const isPublicPath = (path: string) => PUBLIC_PATHS.some(re => re.test(path));
+
+// După login (sesiune validă) se deschide toată aplicația, în afară de ce rămâne doar pe calculatorul designerului.
+const LOGIN_PATHS = [/^\/login\/?$/, /^\/api\/auth\/login$/];
+const LOCAL_ONLY = [/^\/api\/auth\/password$/, /^\/api\/admin(\/|$)/, /^\/admin(\/|$)/];
+export type GateDecision = 'allow' | 'login' | 'unauthorized' | 'notfound';
+export function gate(o: { local: boolean; path: string; method: string; session: boolean }): GateDecision {
+  if (o.local) return 'allow';
+  if (isPublicPath(o.path) || LOGIN_PATHS.some(re => re.test(o.path))) return 'allow';
+  if (LOCAL_ONLY.some(re => re.test(o.path))) return 'notfound';
+  if (o.session) return 'allow';
+  return !o.path.startsWith('/api/') && o.method === 'GET' ? 'login' : 'unauthorized';
+}
+/** Unde se întoarce după login: doar o cale din aplicație (nu alt site). */
+export const safeNext = (v: unknown) => typeof v === 'string' && /^\/(?![/\\])[\w\-./%?=&]*$/.test(v) && !v.startsWith('/login') ? v : '/';
