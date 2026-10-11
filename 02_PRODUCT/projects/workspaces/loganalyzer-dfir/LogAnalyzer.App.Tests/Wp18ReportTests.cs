@@ -87,7 +87,7 @@ public sealed class Wp18ReportTests : IDisposable
     [Fact]
     public void Audiences_choose_sections_never_facts_and_everything_prints_all()
     {
-        Assert.Equal(6, ReportAudiences.All.Count);
+        Assert.Equal(7, ReportAudiences.All.Count);
         foreach (var a in ReportAudiences.All)
         {
             Assert.False(string.IsNullOrWhiteSpace(ReportAudiences.Label(a)));
@@ -103,6 +103,9 @@ public sealed class Wp18ReportTests : IDisposable
         Assert.DoesNotContain(ReportSection.Integrity, ReportAudiences.Sections(ReportAudience.Management));
         Assert.Contains(ReportSection.Integrity, ReportAudiences.Sections(ReportAudience.Forensic));
         Assert.Contains(ReportSection.PolicyTimeline, ReportAudiences.Sections(ReportAudience.Audit));
+        Assert.Contains(ReportSection.LegalNotes, ReportAudiences.Sections(ReportAudience.Legal));
+        Assert.DoesNotContain(ReportSection.Detections, ReportAudiences.Sections(ReportAudience.Legal));
+        Assert.DoesNotContain(ReportSection.EvidenceCollected, ReportAudiences.Sections(ReportAudience.Legal));
         Assert.False(ReportAudiences.FindingsInFull(ReportAudience.Management));
         Assert.True(ReportAudiences.FindingsInFull(ReportAudience.Forensic));
     }

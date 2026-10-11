@@ -23,15 +23,15 @@ public static class ReportIntegrity
 
         var parts = new List<string>();
         if (invalid.Count > 0)
-            parts.Add($"REZULTATE INVALIDE pentru {invalid.Count} din {items.Count} probe: {string.Join(", ", invalid.Select(b => $"{b.EvidenceId} {b.SpecStatus}"))}. " +
-                      "Constatările și evenimentele care provin din aceste probe nu mai pot fi atribuite sursei achiziționate.");
+            parts.Add($"REZULTATE INVALIDE pentru {invalid.Count} din {LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "element de probă", "elemente de probă")}: {string.Join(", ", invalid.Select(b => $"{b.EvidenceId} {b.SpecStatus}"))}. " +
+                      "Constatările și evenimentele care provin din aceste elemente de probă nu mai pot fi atribuite sursei achiziționate.");
         if (unreadable.Count > 0)
-            parts.Add($"Integritatea nu a putut fi verificată pentru {unreadable.Count} din {items.Count} probe (fișier blocat sau ilizibil la generarea raportului): " +
+            parts.Add($"Integritatea nu a putut fi verificată pentru {unreadable.Count} din {LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "element de probă", "elemente de probă")} (fișier blocat sau ilizibil la generarea raportului): " +
                       string.Join(", ", unreadable.Select(b => $"{b.EvidenceId} {b.SpecStatus}")) + ".");
         if (invalid.Count == 0 && unreadable.Count == 0)
-            parts.Add($"Integritatea probelor verificată la generarea raportului: {items.Count} probe, SHA-256 identic cu cel de la achiziție.");
+            parts.Add($"Integritatea elementelor de probă verificată la generarea raportului: {LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "element de probă", "elemente de probă")}, SHA-256 identic cu cel de la achiziție.");
         if (notices.Count > 0)
-            parts.Add("Probe neinterpretate: " + string.Join("; ", notices.Select(n => $"{n.EvidenceId}: {n.FormatNotice}")) + ".");
+            parts.Add("Elemente de probă neinterpretate: " + string.Join("; ", notices.Select(n => $"{n.EvidenceId}: {n.FormatNotice}")) + ".");
 
         var banner = string.Join(" ", parts);
         var intact = invalid.Count == 0 && unreadable.Count == 0;
