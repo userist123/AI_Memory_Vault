@@ -9,7 +9,9 @@ export function middleware(req: NextRequest){
   const path = req.nextUrl.pathname, local = isLocalRequest(req.headers.get('host'), req.headers);
   const d = gate({ local, path, method: req.method, session: !local && verifySession(readAuth(), req.cookies.get(SESSION_COOKIE)?.value) });
   if (d === 'allow') return NextResponse.next();
-  if (d === 'login'){ const u = req.nextUrl.clone(); u.pathname = '/login'; u.search = `?next=${encodeURIComponent(path + req.nextUrl.search)}`; return NextResponse.redirect(u, { headers: H }); }
+  // pagina de login se arată chiar la adresa cerută (fără redirecționare: serverul nu știe adresa publică a tunelului);
+  // după login, pagina se reîncarcă pe aceeași adresă, acum cu sesiune
+  if (d === 'login'){ const u = req.nextUrl.clone(); u.pathname = '/login'; u.search = ''; return NextResponse.rewrite(u, { headers: H }); }
   if (d === 'unauthorized') return NextResponse.json({ error: 'Autentifică-te.' }, { status: 401, headers: H });
   return new NextResponse('Not found', { status: 404, headers: H });
 }

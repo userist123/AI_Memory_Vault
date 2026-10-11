@@ -8,7 +8,8 @@ export default function Login(){
   const { t } = usePrefs(), [pw, setPw] = useState(''), [err, setErr] = useState(''), [busy, setBusy] = useState(false);
   async function go(e: React.FormEvent){ e.preventDefault(); setBusy(true); setErr('');
     try { const r = await fetch('/api/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: pw }) });
-      if (r.ok){ location.replace(safeNext(new URLSearchParams(location.search).get('next'))); return; }
+      // deschisă direct (/login?next=…) sau arătată în locul paginii cerute (adresa rămâne cea cerută)
+      if (r.ok){ location.replace(safeNext(location.pathname.startsWith('/login') ? new URLSearchParams(location.search).get('next') : location.pathname + location.search)); return; }
       const j = await r.json().catch(() => ({})); setErr(j.error || t('auth.failed')); }
     catch { setErr(t('auth.failed')); } finally { setBusy(false); } }
   return (<main className="login">
