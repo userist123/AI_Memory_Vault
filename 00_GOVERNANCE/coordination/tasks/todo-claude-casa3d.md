@@ -40,11 +40,11 @@ DONE:
 - Reconciled F4-F8 state in Casa3D.md: phase table row F4 -> "code present in v8 manifest, UNVERIFIED",
   new row F5-F8 UNKNOWN, new section listing the F4/F5 artefacts from the manifest and the evidence
   still missing. Note stays REVIEW/unverified.
-- Searched for the v8 source on the owner's machine (C:\Users\Marius, D:\, git history, names casa3d*): not found.
+- Searched for the v8 source on the owner's machine (C:\Users\user, D:\, git history, names casa3d*): not found.
 - 2026-10-10 (cloud session): Casa3D.md updated from the ledger, not from the patch: F4 row -> DONE (TEST MODE),
   new v8 row UNVERIFIED, F4 section 'Implementare verificata', reconciliation renamed to v8 / F5-F8, evidence
   matrix, gaps, roadmap, provenance, relation to ledger 28890ae9. Note stays REVIEW/unverified.
-- 2026-10-10 10:15 UTC: PHASE4.md server verification run on Marius-PC via Remote Control session marius-pc-toasty-raven
+- 2026-10-10 10:15 UTC: PHASE4.md server verification run on LAB-PC via Remote Control session <remote-control-session>
   (health 200, admin 401/200, /go/o 302 with UTM and no cookie, bot clicks not counted, 404 for missing offer).
   Recorded in VERIFICATION_2026-10-10.md; Casa3D.md F4 section updated. v8 archive hash search on the PC was blocked
   by the Claude Code permission classifier (both personal folders and D:\w\casa3d).
@@ -180,7 +180,7 @@ PLAN multi-level homes (done; kept for reference):
 - 2026-10-11 redesign (owner: "sa nu mai arate ca una facuta de AI"; chose Studio editorial + project-stage flow):
   editorial tokens/fonts, 8-stage bar (Releveu..Prezentare), MaterialPicker swatches, architectural furniture
   symbols in plan (core/plan-symbols.ts), client presentation deck (/p/[id]/present), studio dashboard.
-- 2026-10-11 Blender renders from the app (lib/renders.ts, /api/projects/[id]/renders): verified on Marius-PC,
+- 2026-10-11 Blender renders from the app (lib/renders.ts, /api/projects/[id]/renders): verified on LAB-PC,
   5 rooms ~2 min (job 1791718918059). Decor glTF exported as references.
 - 2026-10-11 realism pass (owner: "fa totul mai realist ... usile ... nu din desen animat"): door leaves on pivots
   with hinges, architraves, handles, eased open/close + click toggle, doorSwing rule (core/doors.ts); real windows;
@@ -195,7 +195,7 @@ PLAN multi-level homes (done; kept for reference):
   PC: D:\casa3d-render\public-link.ps1 (cloudflared quick tunnel, sets CASA3D_PUBLIC_URL) and public-link-off.ps1
   written but NOT run: exposing the PC publicly waits for the owner's OK.
 - 2026-10-11 phone access (owner: "Cum fac sa am acces pe telefon la site?" -> "Om fa asta"): public link STARTED on
-  Marius-PC (cloudflared quick tunnel, URL in D:\casa3d-render\public-url.txt, changes per start); verified from
+  LAB-PC (cloudflared quick tunnel, URL in D:\casa3d-render\public-url.txt, changes per start); verified from
   outside: /share 200, editor/API/admin 404. Then d2843c9f: password login (lib/auth.ts scrypt + HMAC sessions,
   .data/auth.json), gate() in middleware (Node runtime), /login, local-only password card on the dashboard, phone
   layout. vitest 332/332, phone e2e (iPhone 13 emulation via cf-connecting-ip) green. Owner must set the password
@@ -217,15 +217,15 @@ NEXT (in order):
    Evidence: app 84/84, rollback test red on the old code. pg branch also run on local Postgres 16 (design-review 12/12, design-twin 4/4).
    Open: twin-core does not model piece facing (covered by the app validator gate). NEXT: confirm CI on the pushed head;
    owner checks the UI on the PC.
-1. Owner supplies the v8 archive (or its path), or allows the PowerShell hash scan on Marius-PC; compare SHA-256 with 7bb34bf3...9628bc.
+1. Owner supplies the v8 archive (or its path), or allows the PowerShell hash scan on LAB-PC; compare SHA-256 with 7bb34bf3...9628bc.
 2. npm ci, full Vitest, next build; record output in CORE_IMPLEMENTATION_v8.md.
 3. node scripts/verify-f4.mjs and verify-f5.mjs; record output.
 4. DEFERRED by owner on 2026-10-10 ("continua fara AI deocamdata"): real model call Brief -> DSL -> Solver. Not a blocker for 1-3 and 5.
 5. Only then move F4 to DONE in the phase table.
 BLOCKERS / OWNER QUESTIONS:
-- 2026-10-10 cloud session: no Casa3D archive is in the Vault repo or its git history; Desktop Commander device Marius-PC
+- 2026-10-10 cloud session: no Casa3D archive is in the Vault repo or its git history; Desktop Commander device LAB-PC
   is offline, so D:\w\casa3d (faza0/2/4 extracted, npm installed) is unreachable from here. To unblock steps 1-3 and the
-  PHASE4.md server check: either bring Marius-PC online (Desktop Commander app) or upload casa3d-faza4.zip / the v8
+  PHASE4.md server check: either bring LAB-PC online (Desktop Commander app) or upload casa3d-faza4.zip / the v8
   archive into the session. Pushed state: codex/casa3d-memory @ e628911c.
 - v8 source archive not on this machine (manifest path /mnt/data/casa3d-v8/app was the Claude.ai sandbox). Where is it saved locally?
 - ANTHROPIC_API_KEY not set in the environment.

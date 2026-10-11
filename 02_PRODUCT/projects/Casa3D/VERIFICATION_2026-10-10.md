@@ -63,7 +63,7 @@ repo (PGlite, revizii, proprietar).
 
 ## Verificare pe server (PHASE4.md), 2026-10-10 10:15 UTC
 
-Rulata de Claude Code (Opus 5.5, sesiune Remote Control `marius-pc-toasty-raven`) pe Marius-PC, la cererea sesiunii
+Rulata de Claude Code (Opus 5.5, sesiune Remote Control `<remote-control-session>`) pe LAB-PC, la cererea sesiunii
 cloud; fara apel AI (`ANTHROPIC_API_KEY` gol), fara commit, fara modificari in cod. Next.js 15.5.27, Node v24.13.0,
 `npx next start -p 3417` pe build-ul existent, PGlite in memorie (`PGLITE_MEMORY=1`), `ADMIN_TOKEN` local de 16 caractere.
 Ofertele se incarca la pornire din `data/catalog.v1.json` (68, toate cu `sourceUrl`); nu a fost nevoie de import.
@@ -87,7 +87,7 @@ token gresit primeste 401. Ruta reala este `/go/o/<id>` (si `/go/m/<id>`), nu `/
 Singurul cookie al aplicatiei este `casa_owner` (`lib/owner.ts`), care nu apare pe rutele `/go`.
 
 Nerulat: testul din browser (interfata, mesajul de informare pentru afiliere) si cautarea arhivei v8 dupa hash pe
-Marius-PC, blocata de clasificatorul de permisiuni al Claude Code atat pentru dosarele personale cat si pentru
+LAB-PC, blocata de clasificatorul de permisiuni al Claude Code atat pentru dosarele personale cat si pentru
 `D:\w\casa3d`; listarea `D:\w\casa3d` arata doar `casa3d-faza0.zip`, `casa3d-faza2.zip`, `casa3d-faza4.zip`.
 
 ## Reconstructia stratului v8 (twin-core), 2026-10-10 11:40-12:05 UTC

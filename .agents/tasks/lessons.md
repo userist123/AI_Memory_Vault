@@ -145,3 +145,9 @@ new server; after an update, check one static chunk returns 200, not just `updat
   cmd.exe with `taskkill /PID <parent> /T /F` worked.
 - Rule: stop the app by killing the port owner's PARENT tree, then verify a static chunk returns 200 through the tunnel
   before telling the owner the PC is updated.
+
+## 2026-10-12 — Owner rule: nothing about the owner's own PC in the repo
+- Never commit, push or publish the machine name, Windows user name, C:\Users\<user> paths, device ids/serials, SIDs,
+  Wi-Fi names, real case ids or content of material the owner hands over: not in files, fixtures, docs, commit messages
+  or PR/issue text (repositories may be public). Use placeholders: LAB-PC, user, C:\Users\user, fake serials.
+- If something already slipped into a pushed branch, tell the owner; history rewrites and visibility are their decision.
