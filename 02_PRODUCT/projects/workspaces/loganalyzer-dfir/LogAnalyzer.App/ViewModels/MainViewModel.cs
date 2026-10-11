@@ -2334,17 +2334,22 @@ namespace LogAnalyzer.UI.ViewModels
 
         private bool FilterIssues(object obj) => !(HideVerifiedAlerts && ((DetectedIssue)obj).IsVerified);
 
-        private void InitializeProcessTree()
+        private async void InitializeProcessTree()
         {
             // Real process tree of this station (WMI, read-only). Processes running from user-writable locations
             // are marked amber; nothing here is a verdict, the detail and containment tabs are.
+            // The WMI query runs off the UI thread: it took ~250 ms of every start-up (measured 2026-10-11, MainWindowStartupTests).
             ProcessTreeNodes.Clear();
             try
             {
-                var rows = new List<(int Pid, int Ppid, string Name, string Path)>();
-                using (var s = new System.Management.ManagementObjectSearcher("SELECT ProcessId, ParentProcessId, Name, ExecutablePath FROM Win32_Process"))
-                    foreach (System.Management.ManagementObject mo in s.Get())
-                        rows.Add((Convert.ToInt32(mo["ProcessId"]), Convert.ToInt32(mo["ParentProcessId"]), mo["Name"] as string ?? "", mo["ExecutablePath"] as string ?? ""));
+                var rows = await Task.Run(() =>
+                {
+                    var list = new List<(int Pid, int Ppid, string Name, string Path)>();
+                    using (var s = new System.Management.ManagementObjectSearcher("SELECT ProcessId, ParentProcessId, Name, ExecutablePath FROM Win32_Process"))
+                        foreach (System.Management.ManagementObject mo in s.Get())
+                            list.Add((Convert.ToInt32(mo["ProcessId"]), Convert.ToInt32(mo["ParentProcessId"]), mo["Name"] as string ?? "", mo["ExecutablePath"] as string ?? ""));
+                    return list;
+                });
                 var pids = rows.Select(r => r.Pid).ToHashSet();
                 var nodes = rows.ToDictionary(r => r.Pid, r => new ProcessNode
                 {
@@ -2359,7 +2364,7 @@ namespace LogAnalyzer.UI.ViewModels
                     else ProcessTreeNodes.Add(nodes[r.Pid]);
                 }
             }
-            catch (System.Management.ManagementException ex)
+            catch (Exception ex) when (ex is System.Management.ManagementException or System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
             {
                 StatusMessage = "Arborele de procese nu a putut fi citit: " + ex.Message;
             }
