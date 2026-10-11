@@ -126,7 +126,8 @@ public class DetectionWave3Tests
         var f = One(Run([Prefetch(0, exe.ToUpperInvariant(), @"C:\Program Files\Tool\" + exe)]), "REMOTE-TOOL-EXECUTED");
         Assert.Equal(Severity.High, f.Severity);
         Assert.Contains(name, f.Title);
-        var approved = ProfileWithSoftware((name, "", "", ""));
+        // a name-only row is invalid in the profile (it needs a publisher, path or hash), and the row name must contain one of the tool's aliases
+        var approved = ProfileWithSoftware((System.IO.Path.GetFileNameWithoutExtension(exe), "Vendor", "", ""));
         Assert.Equal(Severity.Info, One(Run([Prefetch(0, exe.ToUpperInvariant(), @"C:\Program Files\Tool\" + exe)], approved), "REMOTE-TOOL-EXECUTED").Severity);
     }
 
