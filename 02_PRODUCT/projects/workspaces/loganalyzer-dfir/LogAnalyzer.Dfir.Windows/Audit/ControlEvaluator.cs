@@ -57,6 +57,7 @@ public static class ControlEvaluator
         Network(f, r);
         Software(f, r);
         StationHardening(f, r);
+        AirGapChannels(f, r);
         r.Actions.Sort((a, b) => a.TimeUtc.CompareTo(b.TimeUtc));
         return r;
     }
@@ -435,6 +436,113 @@ public static class ControlEvaluator
 
     private const string Absent = StationFactCollector.Absent;
     private const string NoRead = " Nu a putut fi citit; pot fi necesare drepturi de administrator. Rulați aplicația ca administrator și repetați controlul.";
+
+    /// <summary>Checks about the second channels out of an isolated station: adapter kinds (N05), CD/DVD burning (P28), printing (P29), clipboard and activity history (P30), camera / microphone / speakers (P31).</summary>
+    private static void AirGapChannels(StationFacts f, ControlReport r)
+    {
+        string S(string k) => f.Settings.TryGetValue(k, out var v) ? v : "";
+        bool isolated = f.StationShouldBeIsolated;
+        string Shown(string v) => v == Absent ? "nesetat" : v;
+        int N(string k) => int.TryParse(S(k), out var n) ? n : 0;
+
+        // N05 network adapter kinds
+        var nCount = S("Net.AdapterCount");
+        var phone = S("Net.PhoneAdapters"); var cell = S("Net.CellularAdapters"); var usbE = S("Net.UsbEthernetAdapters");
+        if (nCount == "")
+            Add(r, "N05", "Rețea", "Adaptoare de telefon, modem celular sau Ethernet pe USB", ControlStatus.Nedeterminat, "Lista adaptoarelor de rețea nu a putut fi citită." + NoRead);
+        else
+        {
+            bool outbound = phone.Length > 0 || cell.Length > 0;
+            var parts = new List<string>();
+            if (phone.Length > 0) parts.Add($"telefon folosit ca modem (RNDIS): {phone}");
+            if (cell.Length > 0) parts.Add($"modem celular (WWAN): {cell}");
+            if (usbE.Length > 0) parts.Add($"placă Ethernet pe USB: {usbE}");
+            Add(r, "N05", "Rețea", "Adaptoare de telefon, modem celular sau Ethernet pe USB",
+                parts.Count == 0 ? ControlStatus.Conform : outbound && isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+                parts.Count == 0 ? $"Dintre cele {nCount} adaptoare de rețea active, niciunul nu este telefon folosit ca modem, modem celular sau placă Ethernet pe USB (adaptoarele virtuale nu se numără)."
+                    : "Au fost găsite: " + string.Join("; ", parts) + "." + (isolated ? " Un astfel de adaptor dă stației izolate o cale de internet sau către altă rețea, ocolind rețeaua stației." : " Verificați că adaptorul este cel aprobat."),
+                [$"WMI Win32_PnPEntity (clasa Net): {nCount} adaptoare active", "tip stabilit din identificatori compatibili, serviciu și descriere"],
+                "Scoateți telefonul / modemul / placa USB; dacă sunt aprobate, notați documentul de aprobare.");
+        }
+
+        // P28 CD/DVD burning
+        var wc = S("Optical.WriterCount");
+        if (wc == "")
+            Add(r, "P28", "Politici", "Inscripționarea de CD/DVD blocată", ControlStatus.Nedeterminat, "Lista unităților optice nu a putut fi citită." + NoRead);
+        else
+        {
+            int writers = N("Optical.WriterCount");
+            bool denyWrite = S("Optical.DenyWrite") == "1" || S("Optical.DenyAll") == "1";
+            bool explorerOnly = S("Optical.NoCDBurningMachine") == "1" || S("Optical.NoCDBurningUser") == "1";
+            var ev = new[] { @"HKLM\SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices\{53f56308-b6bf-11d0-94f2-00a0c91efb8b} → Deny_Write = " + Shown(S("Optical.DenyWrite")),
+                             @"Policies\Explorer → NoCDBurning (mașină) = " + Shown(S("Optical.NoCDBurningMachine")) + "; (utilizator) = " + Shown(S("Optical.NoCDBurningUser")), "WMI Win32_CDROMDrive → Capabilities (4 = scrie discuri)" };
+            Add(r, "P28", "Politici", "Inscripționarea de CD/DVD blocată",
+                writers == 0 || denyWrite ? ControlStatus.Conform : isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+                writers == 0 ? $"Stația nu are nicio unitate optică cu capacitate de scriere ({N("Optical.DriveCount")} unități optice)."
+                    : denyWrite ? $"Scrierea pe CD/DVD este refuzată prin politica de stocare amovibilă (unități cu scriere: {S("Optical.WriterNames")})."
+                    : explorerOnly ? $"ATENȚIE: stația are {writers} unitate/unități care scriu discuri ({S("Optical.WriterNames")}), iar politica NoCDBurning blochează doar inscripționarea din Explorer. Un program de inscripționare sau serviciul IMAPI pot scrie în continuare; blocarea reală este politica „CD și DVD: refuzare scriere”, care nu este setată."
+                    : $"Stația are {writers} unitate/unități care scriu discuri ({S("Optical.WriterNames")}) și nicio politică nu oprește scrierea (nici NoCDBurning, nici „CD și DVD: refuzare scriere”).",
+                ev, "Setați politica „CD și DVD: refuzare scriere” (Deny_Write); NoCDBurning singur nu este suficient.");
+        }
+
+        // P29 printing recorded
+        var log = S("Print.LogEnabled"); var pc = S("Print.PrinterCount"); var netPr = S("Print.NetworkPrinters");
+        if (pc == "" && log == "")
+            Add(r, "P29", "Audit", "Tipărirea este înregistrată", ControlStatus.Nedeterminat, "Jurnalul de tipărire și lista imprimantelor nu au putut fi citite." + NoRead);
+        else
+        {
+            int printers = N("Print.PrinterCount");
+            var issues = new List<string>();
+            if (printers > 0 && log == "0") issues.Add("jurnalul de tipărire (PrintService/Operational) este OPRIT, deci nu se înregistrează ce documente se tipăresc");
+            if (netPr.Length > 0) issues.Add($"există imprimante de rețea: {netPr}");
+            Add(r, "P29", "Audit", "Tipărirea este înregistrată",
+                printers == 0 ? ControlStatus.Conform : log == "" ? ControlStatus.Nedeterminat : issues.Count == 0 ? ControlStatus.Conform : isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+                printers == 0 ? "Nu este instalată nicio imprimantă."
+                    : log == "" ? $"Starea jurnalului de tipărire nu a putut fi citită ({printers} imprimante instalate)." + NoRead
+                    : issues.Count == 0 ? $"Jurnalul de tipărire este pornit ({printers} imprimante instalate: {S("Print.PrinterNames")}); fiecare document tipărit lasă evenimentul 307 (document, utilizator, imprimantă, pagini)."
+                    : "Probleme: " + string.Join("; ", issues) + (log == "0" ? ". Jurnalul este oprit implicit în Windows și trebuie pornit; fără el absența evenimentelor nu dovedește că nu s-a tipărit." : "."),
+                [$"canalul Microsoft-Windows-PrintService/Operational → activat = {(log == "1" ? "da" : log == "0" ? "nu" : "necitit")}", $"WMI Win32_Printer: {pc} imprimante"],
+                "Porniți jurnalul PrintService/Operational și țineți registrul foilor tipărite; imprimantele de rețea se scot dintr-o stație izolată.");
+        }
+
+        // P30 clipboard history and activity history
+        var cu = S("Clipboard.HistoryUser"); var cp = S("Clipboard.HistoryPolicy"); var ap = S("Activity.FeedPolicy"); var cache = S("Activity.CachePresent");
+        if (cu == "" && cp == "" && ap == "" && cache == "")
+            Add(r, "P30", "Politici", "Istoric clipboard și istoric de activitate Windows oprite", ControlStatus.Nedeterminat, "Setările de istoric nu au putut fi citite." + NoRead);
+        else
+        {
+            bool clipOn = cu == "1" && cp != "0";
+            bool actPolicyOn = ap == "1";
+            bool actDefaultOn = cache == "da" && ap != "0" && ap != "1";
+            Add(r, "P30", "Politici", "Istoric clipboard și istoric de activitate Windows oprite",
+                !clipOn && !actPolicyOn && !actDefaultOn ? ControlStatus.Conform : (clipOn || actPolicyOn) && isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+                clipOn ? $"Istoricul clipboard este PORNIT (EnableClipboardHistory = 1): ultimele elemente copiate, inclusiv text dintr-un document clasificat, rămân pe disc. {(actPolicyOn ? "Istoricul de activitate este și el permis explicit prin politică." : "")}"
+                    : actPolicyOn ? "Istoricul de activitate (Timeline) este permis explicit prin politică (EnableActivityFeed = 1)."
+                    : actDefaultOn ? $"Istoricul clipboard este oprit, dar baza de activitate Windows (ActivitiesCache.db) există și politica EnableActivityFeed nu este setată ({Shown(ap)}), deci istoricul de activitate rămâne în regimul implicit al Windows. Opriți-l prin politică."
+                    : $"Istoricul clipboard și cel de activitate sunt oprite (EnableClipboardHistory = {Shown(cu)}, AllowClipboardHistory = {Shown(cp)}, EnableActivityFeed = {Shown(ap)}).",
+                [@"HKCU\Software\Microsoft\Clipboard → EnableClipboardHistory = " + Shown(cu) + " (doar utilizatorul care a pornit aplicația)", @"HKLM\SOFTWARE\Policies\Microsoft\Windows\System → AllowClipboardHistory = " + Shown(cp),
+                 @"HKLM\SOFTWARE\Policies\Microsoft\Windows\System → EnableActivityFeed = " + Shown(ap), "ActivitiesCache.db prezent = " + (cache == "da" ? "da" : cache == "nu" ? "nu" : "necitit")],
+                "Opriți istoricul clipboard (AllowClipboardHistory = 0) și istoricul de activitate (EnableActivityFeed = 0) prin politică.");
+        }
+
+        // P31 camera, microphone, speakers
+        var camN = S("Hardware.Cameras"); var micN = S("Hardware.Microphones"); var spkN = S("Hardware.Speakers");
+        if (camN == "" && micN == "" && spkN == "")
+            Add(r, "P31", "Politici", "Cameră, microfon și difuzoare prezente și active", ControlStatus.Nedeterminat, "Lista dispozitivelor cameră, microfon și audio nu a putut fi citită." + NoRead);
+        else
+        {
+            int cams = N("Hardware.Cameras"), mics = N("Hardware.Microphones"), spk = N("Hardware.Speakers");
+            bool camDeny = S("Privacy.Webcam").Equals("Deny", StringComparison.OrdinalIgnoreCase), micDeny = S("Privacy.Microphone").Equals("Deny", StringComparison.OrdinalIgnoreCase);
+            bool exposed = cams > 0 && !camDeny || mics > 0 && !micDeny;
+            Add(r, "P31", "Politici", "Cameră, microfon și difuzoare prezente și active",
+                cams + mics + spk == 0 ? ControlStatus.Conform : exposed && isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+                cams + mics + spk == 0 ? "Nu a fost găsită nicio cameră, niciun microfon și nicio ieșire audio activă."
+                    : $"Active: {cams} camere ({S("Hardware.CameraNames")}), {mics} microfoane ({S("Hardware.MicrophoneNames")}), {spk} ieșiri audio. Politica de acces (P19): cameră {(camDeny ? "blocată" : "NEblocată")}, microfon {(micDeny ? "blocat" : "NEblocat")}. " +
+                      (exposed ? "Cel puțin una dintre ele este lăsată aplicațiilor." : "Politica blochează aplicațiile, dar dispozitivele rămân pornite în driver.") + " Acoperirea fizică a camerei și a microfonului se verifică separat (verificarea manuală M09).",
+                [$"WMI Win32_PnPEntity (clasele Camera, Image, MEDIA, AudioEndpoint): {cams} + {mics} + {spk}", @"…\ConsentStore\webcam → Value = " + Shown(S("Privacy.Webcam")), @"…\ConsentStore\microphone → Value = " + Shown(S("Privacy.Microphone"))],
+                "Dezactivați în BIOS camera și microfonul neaprobate, acoperiți camera și completați verificarea manuală M09.");
+        }
+    }
 
     private static void StationHardening(StationFacts f, ControlReport r)
     {

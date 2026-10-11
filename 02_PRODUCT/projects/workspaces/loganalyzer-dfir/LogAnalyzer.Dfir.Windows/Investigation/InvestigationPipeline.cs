@@ -77,7 +77,7 @@ public sealed class InvestigationPipeline
     public InvestigationPipeline(ParserRegistry? registry = null) => _registry = registry ?? WindowsParsers.Registry;
 
     public static IReadOnlyList<ICollector> AllCollectors { get; } =
-        [new LiveStateCollector(), new EventLogCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector()];
+        [new LiveStateCollector(), new EventLogCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector()];
 
     /// <summary>Creates a case. <paramref name="scope"/> is mandatory (owner decision 23): an incomplete scope is refused with <see cref="CaseScopeIncompleteException"/>.</summary>
     public static CaseWorkspace NewCase(string casesRoot, string name, CaseScope scope)
@@ -161,6 +161,32 @@ public sealed class InvestigationPipeline
         return new WindowsPrincipal(id).IsInRole(WindowsBuiltInRole.Administrator);
     }
 
+    /// <summary>The newest facts file of the case (adapters, burn tooling, printers, screenshots, virtual machines, archivers, camera / microphone), checked against its acquisition hash first; null when the case has none or it is unreadable.</summary>
+    private static AirGapFacts? LoadAirGapFacts(CaseWorkspace ws, InvestigationResult r)
+    {
+        var item = ws.LoadEvidence().Where(e => e.SourceType == AirGapFacts.SourceType).OrderByDescending(e => e.AcquiredAtUtc).FirstOrDefault();
+        if (item is null) return null;
+        var full = ws.FullPath(item.StoredPath);
+        var pre = EvidencePreflight.Check(item, full);
+        if (!pre.CanParse)
+        {
+            r.Gaps.Add(new EvidenceGap(Path.GetFileName(item.StoredPath), EvidenceStatus.Failed, $"{pre.Code}: {pre.Detail}", "Constatările despre adaptoare, imprimante, mașini virtuale, arhivatoare și echipamente lipsesc", "O nouă colectare a faptelor stației", "Doar prin reachiziție"));
+            ws.Audit(pre.Code == "EVIDENCE_MUTATED" ? "evidence.mutated" : "evidence.preflight_failed", $"{item.EvidenceId} {pre.Code} {pre.Detail}");
+            return null;
+        }
+        try
+        {
+            var facts = AirGapFacts.FromJson(File.ReadAllText(full));
+            facts.EvidenceId = item.EvidenceId;
+            return facts;
+        }
+        catch (JsonException ex)
+        {
+            r.Gaps.Add(new EvidenceGap(Path.GetFileName(item.StoredPath), EvidenceStatus.Failed, ex.Message, "Faptele stației nu au putut fi citite", "O nouă colectare", "Doar prin reachiziție"));
+            return null;
+        }
+    }
+
     private static void MarkEnded(InvestigationResult r, CaseWorkspace ws, OperationState state, string reason)
     {
         r.State = state;
@@ -218,7 +244,7 @@ public sealed class InvestigationPipeline
             if (!sel.HasCandidate)
             {
                 // Live snapshots are read by LiveStateAnalyzer below; anything else is listed, never silently ignored.
-                if (ev.SourceType != "live_snapshot")
+                if (ev.SourceType is not ("live_snapshot" or "airgap_facts"))
                     r.Parsing.Add(new ParseResult
                     {
                         EvidenceId = ev.EvidenceId, Parser = "-", ParserVersion = "-", Status = EvidenceStatus.SkippedByDesign,
@@ -299,7 +325,7 @@ public sealed class InvestigationPipeline
         // WP14a: removable media against the media register, CD/DVD, and NIC / Wi-Fi / Bluetooth / DHCP on an air-gapped or standalone scope.
         progress?.Report("Suporturi de stocare amovibile și integritate air-gap");
         int wp14No = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n0) ? n0 : 0).DefaultIfEmpty(0).Max();
-        var wp14 = Wp14Analysis.Run(ws, r.Timeline, () => $"F-{++wp14No:D4}", mediaRegister, usersRegister, procedureProfile, systemZone);
+        var wp14 = Wp14Analysis.Run(ws, r.Timeline, () => $"F-{++wp14No:D4}", mediaRegister, usersRegister, procedureProfile, systemZone, facts: LoadAirGapFacts(ws, r));
         found.AddRange(wp14.Findings);
         r.MediaRegisterSha256 = wp14.MediaSha256; r.UsersRegisterSha256 = wp14.UsersSha256; r.RegisterLine = wp14.Line;
         foreach (var live in ws.LoadEvidence().Where(e => e.SourceType == "live_snapshot"))

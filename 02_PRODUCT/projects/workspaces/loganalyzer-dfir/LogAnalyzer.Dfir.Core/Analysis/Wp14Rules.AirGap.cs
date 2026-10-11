@@ -196,6 +196,8 @@ public static partial class Wp14Rules
 
     // ---- NIC added: Kernel-PnP 400 with the Net class (or a Bluetooth radio) ----
 
+    private static string[] SplitIds(string ids) => ids.Split([';', '|', ',', (char)10, (char)13], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
     private static void NicAdded(Ctx c, List<Finding> o)
     {
         var netGuid = c.Data.Network.NetClassGuid;
@@ -205,13 +207,17 @@ public static partial class Wp14Rules
             var items = g.OrderBy(e => T(e)).ToList();
             bool radio = IsBluetoothRadio(c, items[0]);
             var name = F(items[0], "DriverDescription", "DeviceDescription", "DriverName");
-            bool virt = c.Data.Network.VirtualAdapterWords.Any(w => (name + " " + g.Key).Contains(w, StringComparison.OrdinalIgnoreCase)) || g.Key.StartsWith("ROOT\\", StringComparison.OrdinalIgnoreCase) || g.Key.StartsWith("SWD\\", StringComparison.OrdinalIgnoreCase);
-            var sev = virt ? Sev(c, Severity.Low) : Sev(c, Severity.Medium);
-            var kind = radio ? "adaptor Bluetooth" : virt ? "adaptor de rețea virtual" : "adaptor de rețea fizic";
+            var (kindOf, kindWhy) = AdapterKinds.Classify(name, g.Key, SplitIds(F(items[0], "CompatibleIds", "HardwareIds")), F(items[0], "Service", "DriverName"), "Net", c.Data.Network.VirtualAdapterWords);
+            bool virt = !radio && kindOf == AdapterKind.Virtual;
+            bool outbound = !radio && kindOf is AdapterKind.PhoneTethering or AdapterKind.Cellular;
+            var sev = virt ? Sev(c, Severity.Low) : outbound ? Sev(c, Severity.High) : Sev(c, Severity.Medium);
+            var kind = radio ? "adaptor Bluetooth" : virt ? "adaptor de rețea virtual" : outbound || kindOf == AdapterKind.UsbEthernet ? "adaptor de rețea: " + AdapterKinds.Describe(kindOf) : "adaptor de rețea fizic";
             var desc = $"Kernel-PnP a configurat {kind} {(name.Length > 0 ? "„" + name + "” " : "")}({g.Key}) {Time(T(items[0]))}{(items.Count > 1 ? " – " + Time(T(items[^1])) : "")} pe un sistem " +
                        (c.Scope.Network == NetworkCategory.StandalonePc ? "autonom" : "air-gapped") + ". Evenimentul 400 apare la prima instalare și la schimbări de driver: nu dovedește un adaptor nou fizic și nu arată dacă a fost activat sau folosit. " +
-                       (virt ? "Adaptorul pare virtual (listă de date), deci nu este neapărat o ieșire din sistem. " : "") + "Activarea/dezactivarea adaptorului nu este înregistrată separat în sursele colectate.";
-            o.Add(Net(c, "AIRGAP-NIC-ADDED", $"{(radio ? "Adaptor Bluetooth" : "Adaptor de rețea")} configurat pe un sistem izolat: {(name.Length > 0 ? name : g.Key)}", sev, radio ? "BLUETOOTH" : "NETWORK INTERFACE", "Kernel-PnP/Configuration 400", AirGapAuthorization.Undefined,
+                       (virt ? "Adaptorul pare virtual (listă de date), deci nu este neapărat o ieșire din sistem. " : "") +
+                       (outbound ? $"Tip stabilit: {kindWhy}; un astfel de adaptor poate da stației acces la internet independent de rețeaua stației. " : kindOf == AdapterKind.UsbEthernet && !radio ? $"Tip stabilit: {kindWhy}; un cablu de rețea poate fi legat fără a trece prin placa integrată. " : "") +
+                       "Activarea/dezactivarea adaptorului nu este înregistrată separat în sursele colectate.";
+            o.Add(Net(c, "AIRGAP-NIC-ADDED", $"{(radio ? "Adaptor Bluetooth" : "Adaptor de rețea")} configurat pe un sistem izolat: {(name.Length > 0 ? name : g.Key)}{(outbound || kindOf == AdapterKind.UsbEthernet && !radio ? " (" + AdapterKinds.Describe(kindOf) + ")" : "")}", sev, radio ? "BLUETOOTH" : kindOf == AdapterKind.PhoneTethering && !radio ? "PHONE" : "NETWORK INTERFACE", "Kernel-PnP/Configuration 400", AirGapAuthorization.Undefined,
                 "profilul de proceduri nu conține o listă de adaptoare autorizate", $"{kind} configurat ({items.Count}×)", items, g.Key, "necunoscută: adaptorul nu indică o destinație", desc,
                 "Eveniment Kernel-PnP 400 pentru un dispozitiv din clasa Net (sau radio Bluetooth) pe un sistem air-gapped sau autonom.",
                 ["Reinstalarea driverului, o actualizare Windows sau prima pornire a unui adaptor integrat produc același eveniment.", "Adaptorul poate fi dezactivat în BIOS sau în Windows fără a lăsa alte urme în aceste surse."]));
