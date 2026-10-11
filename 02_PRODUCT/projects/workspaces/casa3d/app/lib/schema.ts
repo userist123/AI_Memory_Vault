@@ -37,4 +37,9 @@ create index if not exists design_proposals_project on design_proposals(project_
 create table if not exists shares(token text primary key, project_id uuid not null references projects(id) on delete cascade, revision_number int not null,
   created_at timestamptz not null default now(), revoked_at timestamptz);
 create index if not exists shares_project on shares(project_id);
+create table if not exists share_feedback(id uuid primary key default gen_random_uuid(), token text not null references shares(token) on delete cascade,
+  project_id uuid not null references projects(id) on delete cascade, room_id text, verdict text not null check (verdict in ('like','change','question')),
+  author text not null, body text not null, created_at timestamptz not null default now(), resolved_at timestamptz);
+create index if not exists share_feedback_project on share_feedback(project_id, created_at desc);
+create index if not exists share_feedback_token on share_feedback(token);
 `;

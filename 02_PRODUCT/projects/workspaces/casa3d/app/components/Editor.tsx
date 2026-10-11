@@ -305,6 +305,7 @@ export default function Editor({ id }: { id: string }){
         {stage === 'docs' && <DocsPanel id={id} lang={lang} onSchedule={() => downloadSchedule(finishSchedule(house!, catalog, mc), t, cur, snap.name || 'proiect', levelName)} />}
         {stage === 'docs' && <AdvisorPanel lang={lang} units={units} currency={cur} advice={advice} rooms={snap.floor.rooms} onShow={showAdvice} />}
         {stage === 'quote' && <BudgetPanel snap={house!} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
+        {stage === 'present' && !showSel && <ClientPanel id={id} say={say} onLinked={loadRevs} roomNames={Object.fromEntries(floors(house!).flatMap(f => f.rooms).map(r => [r.id, r.name]))} />}
         {stage === 'present' && !showSel && <RenderGallery id={id} />}
         {stage === 'present' && !showSel && <div className="docs"><a className="docrow" href={`/p/${id}/present`} target="_blank" rel="noopener"><b>{t('stage.openPresentation')}</b><small>{t('stage.openPresentationSub')}</small></a></div>}
         {stage === 'present' && !showSel && <div className="revs"><h3>{t('stage.revisions')}</h3>{revs.length === 0 && <p className="muted">{t('editor.noRevsYet')}</p>}
@@ -393,6 +394,35 @@ function DocsPanel({ id, lang, onSchedule }: { id: string; lang: string; onSched
 }
 
 /** Randările fotorealiste făcute pe acest calculator (Blender Cycles), cele mai noi întâi; se reîmprospătează cât timp lucrează. */
+// Linkul pentru client și părerile venite pe el: un buton care salvează versiunea și copiază linkul; părerile grupate pe camere, de bifat.
+type ClientFeedback = { id: string; roomId: string | null; verdict: 'like' | 'change' | 'question'; author: string; text: string; createdAt: string; resolvedAt: string | null; revisionNumber: number };
+function ClientPanel({ id, say, onLinked, roomNames }: { id: string; say(s: string): void; onLinked(): void; roomNames: Record<string, string> }){
+  const { t, lang } = usePrefs(), [link, setLink] = useState<{ url: string; local: boolean } | null>(null), [busy, setBusy] = useState(false), [items, setItems] = useState<ClientFeedback[] | null>(null);
+  useEffect(() => { let alive = true; const load = () => fetch(`/api/projects/${id}/feedback`).then(r => r.ok ? r.json() : null).then(j => { if (alive && j) setItems(j); }).catch(() => {});
+    load(); const iv = setInterval(load, 30000); return () => { alive = false; clearInterval(iv); }; }, [id]);
+  const copy = async (url: string) => { try { await navigator.clipboard.writeText(url); say(t('client.copied')); } catch { /* fără clipboard: linkul rămâne afișat */ } };
+  async function make(){ setBusy(true); try { const r = await fetch(`/api/projects/${id}/client-link`, { method: 'POST' }), j = await r.json();
+      if (!r.ok){ say(j.error || t('client.failed')); return; }
+      const url = j.url ?? `${location.origin}${j.path}`, local = !j.url && /^(localhost|127\.|\[::1\])/.test(location.hostname);
+      setLink({ url, local }); if (j.newRevision) say(t('client.newRev', { n: j.revisionNumber })); await copy(url); onLinked(); }
+    catch { say(t('client.failed')); } finally { setBusy(false); } }
+  async function toggle(f: ClientFeedback){ const r = await fetch(`/api/projects/${id}/feedback`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: f.id, resolved: !f.resolvedAt }) });
+    if (r.ok){ const j = await r.json(); setItems(xs => (xs ?? []).map(x => x.id === f.id ? { ...x, resolvedAt: j.resolvedAt } : x)); } }
+  const open = (items ?? []).filter(f => !f.resolvedAt).length, groups = new Map<string, ClientFeedback[]>();
+  for (const f of items ?? []){ const k = f.roomId ?? ''; groups.set(k, [...(groups.get(k) ?? []), f]); }
+  return (<div className="client">
+    <div className="docs"><button className="docrow" onClick={make} disabled={busy}><b>{t('client.link')}</b><small>{t('client.linkSub')}</small></button></div>
+    {link && <div className="client-link"><input readOnly value={link.url} onFocus={e => e.currentTarget.select()} aria-label={t('client.link')} /><button className="btn" onClick={() => copy(link.url)}>{t('client.copy')}</button>
+      {link.local && <p className="muted">{t('client.localOnly')}</p>}</div>}
+    <h3>{t('client.feedback')}{open > 0 && <span className="pill">{t('client.open', { n: open })}</span>}</h3>
+    {items && items.length === 0 && <p className="muted">{t('client.noFeedback')}</p>}
+    {[...groups.entries()].map(([room, fs]) => <div key={room} className="fbg"><h4>{room ? roomNames[room] ?? room : t('client.general')}</h4>
+      {fs.map(f => <div key={f.id} className={`fbi ${f.resolvedAt ? 'done' : ''}`}><span className={`fb-tag fb-${f.verdict}`}>{t(`fb.${f.verdict}`)}</span>{f.text && <q>{f.text}</q>}
+        <small>{f.author} · {new Date(f.createdAt).toLocaleString(intlLocale(lang), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · {t('client.rev', { n: f.revisionNumber })}</small>
+        <button className="btn" onClick={() => toggle(f)}>{f.resolvedAt ? t('client.reopen') : t('client.resolve')}</button></div>)}</div>)}
+  </div>);
+}
+
 function RenderGallery({ id }: { id: string }){
   const { t, lang } = usePrefs(), [data, setData] = useState<{ available: boolean; jobs: { job: string; status: string; images: string[]; startedAt: string }[] } | null>(null);
   useEffect(() => { let alive = true, timer: any; const load = () => fetch(`/api/projects/${id}/renders`).then(r => r.ok ? r.json() : null).then(j => { if (!alive) return; setData(j);
