@@ -8,19 +8,20 @@ Owner: "fă un research pentru ce mai lipsește și după pune în aplicare"; ph
 Research: 02_PRODUCT/projects/Casa3D/GAP_ANALYSIS_2026-10-11.md (vendor pages, practitioner reviews, code inventory, phone audit).
 
 Plan (each step: tests first where it is logic, tsc + vitest + build + phone/desktop screenshots, commit, PC update):
-- [ ] 0. Phone: compact editor header (icons, one row), no split view on phones, client deck stacked vertically on phones,
+- [x] 0. (ef8e24b3) Phone: compact editor header (icons, one row), no split view on phones, client deck stacked vertically on phones,
       44 px touch targets, no horizontal overflow, touch hints instead of mouse hints.
-- [ ] 1. Client card and project status: client contact/address, stage (ofertare, proiectare, execuție, predat), due date,
+- [x] 1. (9e0027cb) Client card and project status: client contact/address, stage (ofertare, proiectare, execuție, predat), due date,
       design fee; dashboard filters by status and shows the next due date.
-- [ ] 2. Procurement: per line (furniture + finishes) status de comandat / comandat / livrat / montat, supplier, order number,
+- [x] 2. (673f1ab0) Procurement: per line (furniture + finishes) status de comandat / comandat / livrat / montat, supplier, order number,
       order/delivery dates, overdue flag; order sheet per supplier (print/CSV).
-- [ ] 3. Site: visits with phone camera photos per room and notes; snag list (photo, room, trade, status), PDF report.
+- [x] 3. (8face7f3) Site: visits with phone camera photos per room and notes; snag list (photo, room, trade, status), PDF report.
       Upload: image type sniffing, size cap, stored under .data, served only to the owner.
-- [ ] 4. Client approvals per product/finish on the client link (approve / change), visible in the designer inbox.
-- [ ] 5. Product from a shop link (JSON-LD/OpenGraph): https only, allowlisted RO retailers, no private IPs (SSRF), size/time caps.
-- [ ] 6. Tasks with due dates per project and a "Azi" list on the dashboard.
+- [x] 4. (21e7a07b) Client approvals per product/finish on the client link (approve / change), visible in the designer inbox.
+- [x] 5. (56000bb9) Product from a shop link (JSON-LD/OpenGraph): https only, allowlisted RO retailers, no private IPs (SSRF), size/time caps.
+- [x] 6. (8f06beb2) Tasks with due dates per project and a "Azi" list on the dashboard.
 Later (needs owner input): payment schedule + proforma, e-Factura via SmartBill/Oblio (owner account), contract acceptance,
 joinery cut list, handover pack.
+Review: phases 0-3 reviewed independently (fixes 1321eebc); phases 4-6 review in progress. Full suite 358/358 at 56000bb9.
 Risks: Snapshot schema growth (keep optional fields, validate in lib/repo.ts); public surface stays limited to /share.
 
 ## Current task — Casa3D: professional studio redesign (2026-10-11)
