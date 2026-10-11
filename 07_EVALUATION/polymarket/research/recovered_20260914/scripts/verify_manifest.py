@@ -23,7 +23,7 @@ files_to_check = [
     "07_EVALUATION/polymarket/fixtures/resolutions_attested_50.provenance.json",
 ]
 
-base_dir = "C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY"
+base_dir = "C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY"
 
 print("=== File Manifest (Repo Additions) ===")
 file_table = []
@@ -39,7 +39,7 @@ for rel_path in files_to_check:
         print(f"MISSING: {rel_path}")
 
 print("\n=== Scratch Scripts Added ===")
-scratch_dir = "C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch"
+scratch_dir = "C:/Users/Marius/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch"
 for fname in sorted(os.listdir(scratch_dir)):
     fpath = os.path.join(scratch_dir, fname)
     if os.path.isfile(fpath) and fname.endswith(".py"):

@@ -1,7 +1,7 @@
 import json
 from datetime import datetime, timezone
 
-with open("C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json", "r", encoding="utf-8") as f:
+with open("C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json", "r", encoding="utf-8") as f:
     dataset = json.load(f)
 
 def parse_iso(ts):
@@ -45,5 +45,5 @@ prices = [p["price"] for p in post_close_points]
 for pt in post_close_points:
     print(f"Market {pt['market_id']} | +{pt['seconds_after_close']:.0f}s after close | price={pt['price']} | is_winner={pt['is_winner']} | Q: {pt['question'][:45]}")
 
-with open("C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/post_close_breakdown.json", "w", encoding="utf-8") as f:
+with open("C:/Users/Marius/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/post_close_breakdown.json", "w", encoding="utf-8") as f:
     json.dump(post_close_points, f, indent=2)

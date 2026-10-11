@@ -1,10 +1,10 @@
 import json
 from datetime import datetime, timezone
 
-with open("C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json", "r", encoding="utf-8") as f:
+with open("C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json", "r", encoding="utf-8") as f:
     dataset = json.load(f)
 
-with open("C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/sampled_500_markets.json", "r", encoding="utf-8") as f:
+with open("C:/Users/Marius/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/sampled_500_markets.json", "r", encoding="utf-8") as f:
     sampled = json.load(f)
 raw_by_id = {str(m["id"]): m for m in sampled}
 
@@ -80,5 +80,5 @@ for d in details[:10]:
     r_str = f"{d['ratio_in_life']:.2f}" if d['ratio_in_life'] is not None else "N/A"
     print(f"ID {d['id']} | ratio={r_str} | start={d['startDate']} | entry={d['entry_time']} | close={d['closedTime']} | rem={d['remaining_to_close_sec']:.0f}s | p={d['entry_price']} | won={d['won']} | Q: {d['question'][:45]}")
 
-with open("C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/entry_timing_details.json", "w", encoding="utf-8") as f:
+with open("C:/Users/Marius/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/entry_timing_details.json", "w", encoding="utf-8") as f:
     json.dump(details, f, indent=2)

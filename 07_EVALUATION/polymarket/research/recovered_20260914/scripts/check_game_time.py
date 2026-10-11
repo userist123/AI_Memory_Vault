@@ -1,7 +1,7 @@
 import json
 from datetime import datetime, timezone
 
-with open("C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/sampled_500_markets.json", "r", encoding="utf-8") as f:
+with open("C:/Users/Marius/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/sampled_500_markets.json", "r", encoding="utf-8") as f:
     sampled = json.load(f)
 
 # Look at the recent 50 markets

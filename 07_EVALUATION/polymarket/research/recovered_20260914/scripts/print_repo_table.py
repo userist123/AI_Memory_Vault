@@ -17,7 +17,7 @@ files_to_check = [
     "07_EVALUATION/polymarket/fixtures/resolutions_attested_50.provenance.json",
 ]
 
-base_dir = "C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY"
+base_dir = "C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY"
 for f in files_to_check:
     p = os.path.join(base_dir, f)
     size = os.path.getsize(p)
