@@ -67,6 +67,11 @@ def main(argv=None) -> int:
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--home", type=Path, default=Path.home())
     a = ap.parse_args(argv)
+    for stream in (sys.stdout, sys.stderr):  # claude prints ✔/✘; a cp1252 console must not crash the run
+        try:
+            stream.reconfigure(errors="replace")
+        except (AttributeError, ValueError):
+            pass
     windows = os.name == "nt"
     marker = a.home / ".claude" / MARKER_NAME
     if a.apply and marker.exists() and not a.force:
