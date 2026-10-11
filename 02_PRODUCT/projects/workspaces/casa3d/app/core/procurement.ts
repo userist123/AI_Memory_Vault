@@ -10,7 +10,9 @@ export const ORDER_STATUSES = ['todo', 'quoted', 'ordered', 'delivered', 'instal
 export type OrderStatus = typeof ORDER_STATUSES[number];
 export interface OrderState { status: OrderStatus; ref?: string; orderedAt?: string; eta?: string; deliveredAt?: string; note?: string;
   /** data la care produsul trebuie să fie pe șantier și zilele de livrare (implicit pe categorie, editabil) */
-  neededBy?: string; leadDays?: number }
+  neededBy?: string; leadDays?: number;
+  /** garanția în luni, de pe certificat (lipsă = implicită pe tipul produsului) */
+  warrantyMonths?: number }
 export interface ProcurementLine {
   key: string; kind: 'finish' | 'furniture' | 'custom'; product: string; supplier: string; code: string | null; url: string | null; image?: string | null; itemId?: string;
   qty: number; unit: string; packs: string | null; unitPrice: number | null; total: number | null; rooms: string[];
@@ -87,6 +89,7 @@ export function checkOrderState(x: unknown): OrderState {
   const s: OrderState = { status: o.status }, ref = clean(o.ref, 80), note = clean(o.note, 500);
   if (ref) s.ref = ref; if (note) s.note = note;
   if (o.leadDays != null && o.leadDays !== ''){ if (!Number.isInteger(o.leadDays) || o.leadDays < 0 || o.leadDays > 365) throw new Error('Zilele de livrare nu sunt valide (0–365).'); s.leadDays = o.leadDays; }
+  if (o.warrantyMonths != null && o.warrantyMonths !== ''){ if (!Number.isInteger(o.warrantyMonths) || o.warrantyMonths < 0 || o.warrantyMonths > 240) throw new Error('Garanția nu e validă (0–240 de luni).'); s.warrantyMonths = o.warrantyMonths; }
   for (const k of ['orderedAt', 'eta', 'deliveredAt', 'neededBy'] as const){ const v = o[k]; if (v == null || v === '') continue; if (typeof v !== 'string' || !validDate(v)) throw new Error('Data nu e validă (AAAA-LL-ZZ).'); s[k] = v; }
   return s;
 }
