@@ -97,3 +97,9 @@ When the owner corrects an agent or a real incident reveals a reusable failure p
 - Incident 2: a temporary "revert to HEAD to prove the regression test is red" loop saved backups as `keep_$(basename f)`;
   core/procurement.ts and lib/procurement.ts collided and one file was overwritten. Rule: back up by full path
   (`git stash push -- <paths>` or `cp --parents`), never by basename.
+
+## 2026-10-11 — "not present" assertions on random data are flaky
+CI failed once on `tests/project-meta.test.ts`: it asserted the shared JSON does not contain `'0722'`, but
+UUIDs and the 43-char share token are random and can contain that substring by chance. Rule: when asserting
+that private data is absent, search for a value that cannot occur in ids/tokens (the full formatted string,
+with spaces or non-hex letters), never a short digit run.
