@@ -18,3 +18,15 @@ test('din afară: doar prezentarea pentru client și ce îi trebuie', () => {
   for (const p of [`/share/${tok}`, `/api/share/${tok}`, `/api/share/${tok}/feedback`, '/_next/static/x.js', '/tex/oak.jpg', '/models/plant.glb']) assert.equal(isPublicPath(p), true, p);
   for (const p of ['/api/catalog', '/api/materials', '/', '/p/123', '/p/123/present', '/api/projects', `/api/projects/x/feedback`, '/api/projects/x/renders', '/api/admin/x', '/api/outbound', '/share/short', `/api/share/${tok}/../../projects`, `/share/${tok}/x`, '/api/health']) assert.equal(isPublicPath(p), false, p);
 });
+
+import { gate, safeNext } from '../lib/public-gate';
+test('prin tunel: fără login doar linkurile pentru client și loginul; cu login aplicația, fără parolă și administrare', () => {
+  const g = (path: string, session = false, method = 'GET', local = false) => gate({ local, path, method, session });
+  assert.equal(g('/'), 'login'); assert.equal(g('/p/x'), 'login'); assert.equal(g('/api/projects'), 'unauthorized'); assert.equal(g('/', false, 'POST'), 'unauthorized');
+  assert.equal(g('/login'), 'allow'); assert.equal(g('/api/auth/login', false, 'POST'), 'allow'); assert.equal(g(`/share/${tok}`), 'allow');
+  for (const p of ['/', '/p/x', '/api/projects', '/api/projects/x/renders', '/api/auth/logout']) assert.equal(g(p, true), 'allow', p);
+  for (const p of ['/api/auth/password', '/api/admin/offers', '/admin']) { assert.equal(g(p, true), 'notfound', p); assert.equal(g(p, false, 'GET', true), 'allow', 'local: ' + p); }
+});
+test('după login se întoarce doar pe o cale din aplicație', () => {
+  assert.equal(safeNext('/p/123?x=1'), '/p/123?x=1'); for (const bad of ['//evil.com', 'https://evil.com', '/\\evil.com', '/login', null, 'p/1']) assert.equal(safeNext(bad), '/', String(bad));
+});
