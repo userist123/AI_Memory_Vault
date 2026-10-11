@@ -47,8 +47,12 @@ public static class InvestigationReportPdf
             page.Content().PaddingVertical(8).Column(col =>
             {
                 col.Spacing(7);
-                col.Item().Background(integrity.AllIntact ? "#ecfdf5" : "#fef2f2").Border(1).BorderColor(integrity.AllIntact ? "#10b981" : "#b91c1c").Padding(6)
-                    .Text(integrity.Banner).FontSize(8).Bold().FontColor(integrity.AllIntact ? "#065f46" : "#7f1d1d");
+                // Red: a source changed or vanished. Amber: every hash matches, but a source was empty or of an unexpected format (not interpreted).
+                var (ibg, iborder, ifg) = !integrity.AllIntact ? ("#fef2f2", "#b91c1c", "#7f1d1d")
+                                        : integrity.HasNotices ? ("#fffbeb", "#d97706", "#78350f")
+                                        : ("#ecfdf5", "#10b981", "#065f46");
+                col.Item().Background(ibg).Border(1).BorderColor(iborder).Padding(6)
+                    .Text(integrity.Banner).FontSize(8).Bold().FontColor(ifg);
                 // WP4: one verification line (automatic cross-check by a separate module of this application, not an external verification) and a warning when needed.
                 col.Item().Border(0.8f).BorderColor(Line).Padding(5).Column(vc =>
                 {

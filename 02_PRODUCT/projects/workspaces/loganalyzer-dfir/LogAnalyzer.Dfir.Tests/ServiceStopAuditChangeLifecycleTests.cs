@@ -126,6 +126,35 @@ public class ServiceStopAuditChangeLifecycleTests
         Assert.Contains("System 1074", f.Description);
     }
 
+    [Theory]
+    [InlineData("1074")]
+    [InlineData("6006")]
+    public void LOG_TAMPER_with_only_service_stops_at_orderly_shutdowns_does_not_claim_a_clear(string shutdownId)
+    {
+        var events = new[] { E("EventLog:Security", "1100", 0), E("EventLog:System", shutdownId, 1), E("EventLog:Security", "1100", 600), E("EventLog:System", shutdownId, 601) };
+        var f = Assert.Single(FindingContract.Enrich(Correlation.Run(events)), x => x.RuleId == "LOG-TAMPER");
+        Assert.Equal(Severity.Info, f.Severity);
+        Assert.Equal("", f.MitreTechniqueId);
+        Assert.Contains("serviciul de jurnalizare s-a oprit la oprirea sistemului (normal)", f.Title, StringComparison.OrdinalIgnoreCase);
+        var all = string.Join(" | ", new[] { f.Title, f.Description, f.ClassificationReason, f.HumanSummary }
+            .Concat(f.Limitations).Concat(f.MissingEvidence).Concat(f.AlternativeExplanations).Concat(f.RecommendedNextSteps));
+        Assert.DoesNotContain("Jurnale șterse", all);
+        Assert.DoesNotContain("Ștergerea e dovedită", all);
+        Assert.DoesNotContain("dinaintea ștergerii", all);
+        Assert.DoesNotContain("anterioară ștergerii", all);
+    }
+
+    [Fact]
+    public void LOG_TAMPER_for_a_clear_keeps_the_clear_wording_and_technique()
+    {
+        var clear = E("EventLog:Security", "1102", 0, "Microsoft-Windows-Eventlog", ("SubjectUserName", "mallory"), ("SubjectDomainName", "CORP"));
+        var findings = Correlation.Run([clear, E("EventLog:Security", "1100", 120), E("EventLog:System", "6006", 121)]);
+        var f = Assert.Single(findings, x => x.RuleId == "LOG-TAMPER");
+        Assert.Equal("T1070.001", f.MitreTechniqueId);
+        Assert.StartsWith("Jurnale șterse", f.Title);
+        Assert.Contains(f.MissingEvidence, m => m.Contains("anterioară ștergerii"));
+    }
+
     [Fact]
     public void LOG_TAMPER_for_a_lone_service_stop_is_Medium_without_profile_and_High_with_one()
     {

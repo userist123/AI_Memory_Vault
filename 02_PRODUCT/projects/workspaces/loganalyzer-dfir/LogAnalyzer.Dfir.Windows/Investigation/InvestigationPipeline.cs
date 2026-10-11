@@ -235,8 +235,12 @@ public sealed class InvestigationPipeline
                     Status = EvidenceStatus.Failed, Error = sel.Problem, ExpectedSha256 = ev.Sha256, SourceSha256Before = pre0.Sha256, SourceFingerprint = pre0.Fingerprint,
                 };
                 r.Parsing.Add(refused);
-                r.Gaps.Add(new EvidenceGap(Path.GetFileName(ev.StoredPath), EvidenceStatus.Failed, refused.Error,
-                    "Proba nu a fost parsată: rezultatele ar putea să nu provină din sursa achiziționată", "Reachiziție din sursa originală", "Doar prin reachiziție"));
+                // An empty or unexpected-format file that still matches its acquisition hash is the acquired file, only not interpreted.
+                r.Gaps.Add(pre0.Status == PreflightStatus.FormatMismatch
+                    ? new EvidenceGap(Path.GetFileName(ev.StoredPath), EvidenceStatus.Failed, refused.Error,
+                        char.ToUpperInvariant(pre0.FormatNotice[0]) + pre0.FormatNotice[1..], "Verificați sursa originală; dacă acolo fișierul are conținut, reachiziție", "Doar prin reachiziție")
+                    : new EvidenceGap(Path.GetFileName(ev.StoredPath), EvidenceStatus.Failed, refused.Error,
+                        "Proba nu a fost parsată: rezultatele ar putea să nu provină din sursa achiziționată", "Reachiziție din sursa originală", "Doar prin reachiziție"));
                 ws.Audit(pre0.Code == "EVIDENCE_MUTATED" ? "evidence.mutated" : "evidence.preflight_failed", $"{ev.EvidenceId} {sel.Problem}");
                 continue;
             }

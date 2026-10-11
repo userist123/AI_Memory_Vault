@@ -123,13 +123,17 @@ public static class LogClearAssessment
     /// service stops), or the first System 6005 (next boot) follows within 10 minutes, or an approved account does it inside a maintenance
     /// window. Otherwise NotAssessed (Medium) without a procedure profile and Unexpected (High) with one.
     /// </summary>
+    /// <summary>The shutdown / restart record that makes a Security 1100 at <paramref name="stopUtc"/> part of an orderly shutdown; null when there is none.</summary>
+    public static SystemLifecycleEvent? ShutdownPair(DateTimeOffset stopUtc, IReadOnlyList<SystemLifecycleEvent> systemEvents) =>
+        systemEvents.Where(e => e.EventId is 1074 or 6006 && (e.TimeUtc - stopUtc).Duration() <= ShutdownPairingWindow)
+                    .OrderBy(e => (e.TimeUtc - stopUtc).Duration()).FirstOrDefault()
+        ?? systemEvents.Where(e => e.EventId == 6005 && e.TimeUtc >= stopUtc && e.TimeUtc - stopUtc <= ShutdownPairingWindow)
+                       .OrderBy(e => e.TimeUtc).FirstOrDefault();
+
     public static LogClearAssessmentItem AssessServiceStop(ServiceStopEvent stop, LogMaintenancePolicy? policy, IReadOnlyList<SystemLifecycleEvent> systemEvents)
     {
         var clear = new LogClearEvent("Security (1100)", stop.TimeUtc, stop.SubjectUser, stop.SubjectDomain);
-        var pair = systemEvents.Where(e => e.EventId is 1074 or 6006 && (e.TimeUtc - stop.TimeUtc).Duration() <= ShutdownPairingWindow)
-                               .OrderBy(e => (e.TimeUtc - stop.TimeUtc).Duration()).FirstOrDefault()
-                   ?? systemEvents.Where(e => e.EventId == 6005 && e.TimeUtc >= stop.TimeUtc && e.TimeUtc - stop.TimeUtc <= ShutdownPairingWindow)
-                                  .OrderBy(e => e.TimeUtc).FirstOrDefault();
+        var pair = ShutdownPair(stop.TimeUtc, systemEvents);
         if (pair is not null)
             return new(clear, LogClearLifecycle.Routine, [], Severity.Info,
                 $"serviciul de jurnalizare oprit (Security 1100) la {stop.TimeUtc:yyyy-MM-dd HH:mm} UTC, în cadrul unei opriri/reporniri a sistemului (System {pair.EventId} la {pair.TimeUtc:yyyy-MM-dd HH:mm} UTC): planificată.");

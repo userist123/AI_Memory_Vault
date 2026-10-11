@@ -88,6 +88,18 @@ public sealed record PreflightResult(string EvidenceId, PreflightStatus Status, 
     /// <summary>Unverified = readable and of the declared format, but there is no acquisition hash to compare with.</summary>
     public bool CanParse => Status is PreflightStatus.Ok or PreflightStatus.Unverified;
 
+    /// <summary>
+    /// The file is gone or its content changed after acquisition: results attributed to it no longer belong to the acquired source.
+    /// A format mismatch with an intact hash is not this: the file is the acquired one, it was only not interpreted.
+    /// </summary>
+    public bool IsIntegrityFailure => Status is PreflightStatus.Missing or PreflightStatus.SizeMismatch or PreflightStatus.HashMismatch;
+
+    /// <summary>Reader-facing notice for a format mismatch; empty for every other state.</summary>
+    public string FormatNotice => Status != PreflightStatus.FormatMismatch ? ""
+        : ExpectedSha256.Length > 0
+            ? "fișier gol sau format neașteptat; amprenta este intactă; proba nu a fost interpretată"
+            : "fișier gol sau format neașteptat; nu există amprentă de la achiziție; proba nu a fost interpretată";
+
     /// <summary>Code used in errors, gaps and the audit log.</summary>
     public string Code => Status switch
     {

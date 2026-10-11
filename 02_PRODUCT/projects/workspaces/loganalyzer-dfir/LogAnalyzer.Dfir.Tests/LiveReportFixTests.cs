@@ -71,6 +71,61 @@ public class LiveReportFixTests
         Assert.Contains(found, f => f.RuleId == "EXEC-USERPATH-CORRELATED");
     }
 
+    // ---- review 2026-10-12 §0.4 and §0.5: presence is not execution; a shared folder alone does not correlate across months ----
+
+    private const string TempScripts = @"\USERS\U\APPDATA\LOCAL\TEMP\RUN.PS1";
+    private static TimelineEvent TempPrefetch(string exe, double minute) =>
+        Row("Prefetch", minute, exe, @"C:\Users\u\AppData\Local\Temp\" + exe, f: [("ReferencedFiles", @"\USERS\U\APPDATA\LOCAL\TEMP\" + exe), ("PrefetchHash", "CC" + exe)]);
+
+    [Fact]
+    public void A_shared_folder_does_not_correlate_programs_months_apart()
+    {
+        var found = Correlation.Run([Prefetch("POWERSHELL.EXE", TempScripts), TempPrefetch("SETUP.EXE", 60 * 24 * 60)]);
+        Assert.Contains(found, f => f.RuleId == "EXEC-SCRIPT-VIA-LOLBIN");
+        Assert.DoesNotContain(found, f => f.RuleId == "EXEC-USERPATH-CORRELATED");
+    }
+
+    [Fact]
+    public void A_shared_folder_correlation_within_a_day_covers_the_partner_evidence_in_its_window()
+    {
+        var events = new[] { Prefetch("POWERSHELL.EXE", TempScripts, 180), TempPrefetch("SETUP.EXE", 0) };
+        var found = Correlation.Run(events);
+        var c = Assert.Single(found, f => f.RuleId == "EXEC-USERPATH-CORRELATED");
+        var times = c.SupportingEvidence.Select(r => events.Single(e => e.Locator == r.Locator).Time.Utc!.Value).ToList();
+        Assert.Equal(2, times.Count);
+        Assert.NotNull(c.FirstSeenUtc);
+        Assert.All(times, t => Assert.InRange(t, c.FirstSeenUtc!.Value, c.LastSeenUtc!.Value));
+    }
+
+    [Fact]
+    public void An_amcache_only_program_is_present_not_run_in_the_correlated_finding()
+    {
+        var amcache = Row("Amcache", 30, "TOOL.EXE", @"C:\Users\u\AppData\Local\Temp\tool.exe", "abc");
+        var found = Correlation.Run([Prefetch("POWERSHELL.EXE", TempScripts), amcache, TempPrefetch("SETUP.EXE", 10)]);
+        var present = Assert.Single(found, f => f.RuleId == "EXEC-USERPATH-CORRELATED" && f.Process == "TOOL.EXE");
+        Assert.DoesNotContain("Program rulat", present.Title);
+        Assert.Contains("Program prezent (Amcache)", present.Title);
+        Assert.DoesNotContain("Execuție dovedită", present.ClassificationReason);
+
+        var run = Assert.Single(found, f => f.RuleId == "EXEC-USERPATH-CORRELATED" && f.Process == "SETUP.EXE");
+        Assert.StartsWith("Program rulat", run.Title);
+        Assert.Contains("Execuție dovedită (Prefetch)", run.ClassificationReason);
+    }
+
+    [Fact]
+    public void The_uncorrelated_summary_does_not_claim_prefetch_execution_for_amcache_or_bam_entries()
+    {
+        var mixed = Assert.Single(Correlation.Run([Row("BAM", 0, "B.EXE", @"C:\Users\u\Downloads\b.exe"), Row("Amcache", 0, "A.EXE", @"C:\Users\u\Downloads\a.exe", "h")]),
+            f => f.RuleId == "EXEC-USERPATH");
+        Assert.DoesNotContain("Execuții dovedite de Prefetch", mixed.ClassificationReason);
+        Assert.Contains("Amcache", mixed.ClassificationReason);
+        Assert.Contains("BAM", mixed.ClassificationReason);
+
+        var presence = Assert.Single(Correlation.Run([Row("Amcache", 0, "A.EXE", @"C:\Users\u\Downloads\a.exe", "h")]), f => f.RuleId == "EXEC-USERPATH");
+        Assert.DoesNotContain("rulat", presence.Title);
+        Assert.DoesNotContain("Execuți", presence.ClassificationReason);
+    }
+
     // ---- 3. protected Defender folders ----
 
     [Theory]
