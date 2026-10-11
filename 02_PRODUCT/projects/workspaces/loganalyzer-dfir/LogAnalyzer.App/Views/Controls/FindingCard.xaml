@@ -60,7 +60,7 @@
                                   AutomationProperties.Name="Detalii tehnice ale dovezilor">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Id probă" Binding="{Binding EvidenceId}" Width="90"/>
-                                <DataGridTextColumn Header="SHA-256" Binding="{Binding Sha256}" Width="2*"/>
+                                <DataGridTextColumn Header="Amprenta fișierului (SHA-256)" Binding="{Binding Sha256}" Width="2*"/>
                                 <DataGridTextColumn Header="Cale sursă" Binding="{Binding SourcePath}" Width="2*"/>
                                 <DataGridTextColumn Header="Parser" Binding="{Binding Parser}" Width="*"/>
                                 <DataGridTextColumn Header="Versiune" Binding="{Binding ParserVersion}" Width="80"/>

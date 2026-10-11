@@ -38,6 +38,23 @@ def policy_path() -> Path:
     return local if local.exists() else repo
 
 
+def is_shadowed(hook_file) -> bool:
+    """True when `hook_file` is a project copy and the same hook of the user-scope install is
+    registered in ~/.claude/settings.json: the user copy answers, the project copy stays silent
+    (one route line per prompt, one model decision per subagent spawn)."""
+    home_claude = Path.home() / ".claude"
+    try:
+        Path(hook_file).resolve().relative_to(home_claude.resolve())
+        return False  # this is the user copy itself
+    except ValueError:
+        pass
+    try:
+        text = (home_claude / "settings.json").read_text(encoding="utf-8")
+    except OSError:
+        return False
+    return f"cost-router/{Path(hook_file).name}" in text.replace("\\\\", "/").replace("\\", "/")
+
+
 def decide(goal: str, *, risk: str = "medium", for_subagent: bool = False):
     mod = _load_router()
     policy = mod.ClaudeModelPolicy.from_file(policy_path())

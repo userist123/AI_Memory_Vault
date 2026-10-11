@@ -14,17 +14,20 @@ public static class ReportFooter
     /// <summary>Test hook: called with (report kind, footer text) when a footer is composed. Per async flow, so parallel tests do not see each other's reports.</summary>
     public static readonly AsyncLocal<Action<string, string>?> Observer = new();
 
-    public static void Compose(IContainer footer, string kind, string appLine, ReportSeal? seal)
+    /// <param name="marking">WP18 S5: the marking line entered by hand ("Marcaj: … (marcaj introdus manual, neverificat de aplicație)"), printed first on every page.</param>
+    public static void Compose(IContainer footer, string kind, string appLine, ReportSeal? seal, string? marking = null)
     {
-        var lines = (seal ?? new ReportSeal(null, null)).Lines();
+        var lines = (seal ?? new ReportSeal(null, null)).Lines().ToList();
+        if (!string.IsNullOrWhiteSpace(marking)) lines.Insert(0, marking);
         Observer.Value?.Invoke(kind, string.Join("\n", lines));
         footer.Column(col =>
         {
             for (int i = 0; i < lines.Count; i++)
             {
                 bool scope = seal?.ScopeNote is { Length: > 0 } n && lines[i] == n;
-                var t = col.Item().AlignCenter().Text(lines[i]).FontSize(5.8f);
-                if (scope) t.Bold().FontColor("#b91c1c"); else t.FontColor("#64748b");
+                bool mark = !string.IsNullOrWhiteSpace(marking) && i == 0;
+                var t = col.Item().AlignCenter().Text(lines[i]).FontSize(mark ? 7.5f : 5.8f);
+                if (scope || mark) t.Bold().FontColor("#b91c1c"); else t.FontColor("#64748b");
             }
             col.Item().AlignCenter().Text(t =>
             {

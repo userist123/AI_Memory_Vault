@@ -14,29 +14,38 @@ namespace LogAnalyzer.Core.Services.Edition
     /// and a canonical payload built from the fields so JSON formatting cannot affect the signature.
     /// Fails closed: a missing, malformed, unsigned, expired, foreign or rolled-back policy means AirGapped.
     /// </summary>
-    public sealed record EditionPolicy(string Schema, AppMode Mode, long Version, string NotBefore, string? NotAfter, string Audience, string Signer)
+    public sealed record EditionPolicy(string Schema, AppMode Mode, long Version, string NotBefore, string? NotAfter, string Audience, string Signer,
+        StationRole? Role = null)
     {
         public const string SchemaId = "loganalyzer-edition-policy/1";
         public const string Algorithm = "ecdsa-p256-sha256";
 
-        /// <summary>The exact text that is signed.</summary>
-        public static string Payload(AppMode mode, long version, string notBefore, string? notAfter, string audience, string signer) =>
-            string.Join("\n", SchemaId, $"mode={(mode == AppMode.Network ? "connected" : "airgapped")}",
+        /// <summary>
+        /// The exact text that is signed. The station role (WP18) is an optional last line: a policy signed without it keeps its old payload
+        /// (so policies issued before WP18 stay valid and mean CONTROL), and a role cannot be added or edited without re-signing.
+        /// </summary>
+        public static string Payload(AppMode mode, long version, string notBefore, string? notAfter, string audience, string signer, StationRole? role = null)
+        {
+            var text = string.Join("\n", SchemaId, $"mode={(mode == AppMode.Network ? "connected" : "airgapped")}",
                 $"version={version.ToString(CultureInfo.InvariantCulture)}", $"notBefore={notBefore}", $"notAfter={notAfter ?? ""}",
                 $"audience={audience}", $"signer={signer}");
+            return role is null ? text : text + "\n" + $"role={StationRoles.Name(role.Value)}";
+        }
 
         /// <summary>For the owner's signing tool and the tests: produces the policy file text.</summary>
-        public static string Sign(ECDsa privateKey, AppMode mode, long version, string notBefore, string? notAfter, string audience, string signer)
+        public static string Sign(ECDsa privateKey, AppMode mode, long version, string notBefore, string? notAfter, string audience, string signer, StationRole? role = null)
         {
-            var sig = privateKey.SignData(Encoding.UTF8.GetBytes(Payload(mode, version, notBefore, notAfter, audience, signer)),
+            var sig = privateKey.SignData(Encoding.UTF8.GetBytes(Payload(mode, version, notBefore, notAfter, audience, signer, role)),
                 HashAlgorithmName.SHA256, DSASignatureFormat.IeeeP1363FixedFieldConcatenation);
-            return JsonSerializer.Serialize(new
+            var json = new System.Collections.Generic.Dictionary<string, object?>
             {
-                schema = SchemaId,
-                mode = mode == AppMode.Network ? "connected" : "airgapped",
-                version, notBefore, notAfter, audience, signer,
-                signature = new { alg = Algorithm, value = Convert.ToBase64String(sig) },
-            }, new JsonSerializerOptions { WriteIndented = true });
+                ["schema"] = SchemaId,
+                ["mode"] = mode == AppMode.Network ? "connected" : "airgapped",
+                ["version"] = version, ["notBefore"] = notBefore, ["notAfter"] = notAfter, ["audience"] = audience, ["signer"] = signer,
+            };
+            if (role is not null) json["role"] = StationRoles.Name(role.Value);
+            json["signature"] = new { alg = Algorithm, value = Convert.ToBase64String(sig) };
+            return JsonSerializer.Serialize(json, new JsonSerializerOptions { WriteIndented = true });
         }
     }
 
@@ -73,6 +82,13 @@ namespace LogAnalyzer.Core.Services.Edition
                 var notBefore = S("notBefore"); var notAfter = r.TryGetProperty("notAfter", out var na) && na.ValueKind == JsonValueKind.String ? na.GetString() : null;
                 var audience = S("audience"); var signer = S("signer");
                 if (audience.Length == 0 || signer.Length == 0) return Fail("Politica nu are destinatar sau semnatar.");
+                StationRole? role = null;
+                if (r.TryGetProperty("role", out var roleEl))
+                {
+                    if (roleEl.ValueKind != JsonValueKind.String || !StationRoles.TryParse(roleEl.GetString(), out var parsedRole))
+                        return Fail("Rolul de stație din politică este necunoscut (se acceptă „control” sau „csirt”).");
+                    role = parsedRole;
+                }
                 if (!r.TryGetProperty("signature", out var sg) || sg.ValueKind != JsonValueKind.Object ||
                     !sg.TryGetProperty("alg", out var alg) || alg.GetString() != EditionPolicy.Algorithm ||
                     !sg.TryGetProperty("value", out var val) || val.ValueKind != JsonValueKind.String)
@@ -81,7 +97,7 @@ namespace LogAnalyzer.Core.Services.Edition
                 using var ecdsa = ECDsa.Create();
                 ecdsa.ImportSubjectPublicKeyInfo(Convert.FromBase64String(publicKeyBase64.Trim()), out _);
                 if (ecdsa.KeySize != 256) return Fail("Cheia de verificare nu este P-256.");
-                var payload = Encoding.UTF8.GetBytes(EditionPolicy.Payload(mode, version, notBefore, notAfter, audience, signer));
+                var payload = Encoding.UTF8.GetBytes(EditionPolicy.Payload(mode, version, notBefore, notAfter, audience, signer, role));
                 if (!ecdsa.VerifyData(payload, Convert.FromBase64String(val.GetString()!), HashAlgorithmName.SHA256,
                         DSASignatureFormat.IeeeP1363FixedFieldConcatenation))
                     return Fail("Semnătura politicii nu corespunde conținutului și cheii publice.");
@@ -96,7 +112,7 @@ namespace LogAnalyzer.Core.Services.Edition
                     return Fail($"Versiunea politicii ({version}) este mai veche decât cea deja acceptată ({highWaterVersion}).");
 
                 var sha = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(policyText)));
-                return new PolicyLoadResult(true, new EditionPolicy(EditionPolicy.SchemaId, mode, version, notBefore, notAfter, audience, signer), "Politică semnată validă.", sha);
+                return new PolicyLoadResult(true, new EditionPolicy(EditionPolicy.SchemaId, mode, version, notBefore, notAfter, audience, signer, role), "Politică semnată validă.", sha);
             }
             catch (Exception ex) when (ex is JsonException or FormatException or CryptographicException or ArgumentException or InvalidOperationException)
             {

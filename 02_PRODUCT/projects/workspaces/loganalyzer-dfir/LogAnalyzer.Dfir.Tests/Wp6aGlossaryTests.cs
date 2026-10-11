@@ -88,7 +88,7 @@ public class Wp6aGlossaryTests
         Assert.Equal("Activitatea programelor", bam.HumanFamily);
         Assert.Equal("BAM", bam.Family);
         Assert.Contains("BAM", bam.FamilyTooltip);
-        var srum = m.Rows.First(r => r.FamilyId == "srum");
-        Assert.Equal(srum.Family, srum.HumanFamily);   // no glossary entry: shown unchanged
+        var shim = m.Rows.First(r => r.FamilyId == "shimcache");
+        Assert.Equal(shim.Family, shim.HumanFamily);   // no glossary entry: shown unchanged
     }
 }

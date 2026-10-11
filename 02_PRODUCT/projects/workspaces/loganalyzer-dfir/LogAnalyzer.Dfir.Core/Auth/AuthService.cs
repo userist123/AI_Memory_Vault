@@ -121,6 +121,10 @@ public sealed partial class AuthService
 
     private static string Short(string? thumb) => thumb is null ? "" : thumb[..Math.Min(16, thumb.Length)];
 
+    /// <summary>Writes the context a session runs in (e.g. the station role decided at startup, WP18) to the hash-chained audit. Nothing is changed.</summary>
+    public void AuditSessionContext(AuthSession session, string context) =>
+        Audit("session.context", session.Account, session.Account, "ok", "", context, Short(session.CardThumbprint), session.CardReader ?? "");
+
     // ───────────────────────── first run / recovery ─────────────────────────
 
     /// <summary>First run only: creates the primary administrator with account + password.</summary>

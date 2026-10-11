@@ -21,30 +21,130 @@
             </StackPanel>
         </DockPanel>
 
-        <!-- Parameters -->
-        <Border Grid.Row="1" Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,12">
+        <StackPanel Grid.Row="1">
+        <!-- WP18 S4: the guided control in three steps -->
+        <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,12">
+            <StackPanel>
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding FlowProgress}" Foreground="{StaticResource TextMutedBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding FlowStepTitle}" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                </DockPanel>
+                <TextBlock Text="{Binding FlowQuestion}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,8"/>
+
+                <!-- step 1: the station -->
+                <StackPanel>
+                    <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding FlowStepIndex}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                    <TextBlock Text="{Binding StationLine}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding PreviousNote}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                    <CheckBox Content="Stația trebuie să fie izolată (fără rețea)" IsChecked="{Binding StationShouldBeIsolated}" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,6,0,0"/>
+                </StackPanel>
+                <!-- step 2: the period -->
+                <StackPanel>
+                    <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding FlowStepIndex}" Value="1"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                    <WrapPanel>
+                        <ComboBox AutomationProperties.Name="Perioada controlului" ItemsSource="{Binding PeriodOptions}" DisplayMemberPath="Label" SelectedValuePath="Choice" SelectedValue="{Binding PeriodChoice}" Width="220" Margin="0,0,10,0"/>
+                        <StackPanel Orientation="Horizontal" Visibility="{Binding IsCustomPeriod, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="Zile în urmă:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Zile în urmă" Text="{Binding CustomDays, UpdateSourceTrigger=PropertyChanged}" Width="60"/>
+                        </StackPanel>
+                    </WrapPanel>
+                    <TextBlock Text="{Binding PeriodNote}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                </StackPanel>
+                <!-- step 3: the procedures, the inspector, then start -->
+                <StackPanel>
+                    <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding FlowStepIndex}" Value="2"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                    <TextBlock Text="{Binding ProfileLine}" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                    <ItemsControl ItemsSource="{Binding ProfileSections}" Margin="0,4,0,6">
+                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,14,2"/></DataTemplate></ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <WrapPanel>
+                        <TextBlock Text="Cine controlează:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox AutomationProperties.Name="Cine controlează" Text="{Binding Inspector, UpdateSourceTrigger=PropertyChanged}" Width="170" Margin="0,0,16,0"/>
+                        <TextBlock Text="Observații:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox AutomationProperties.Name="Observații" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Width="260"/>
+                    </WrapPanel>
+                    <WrapPanel Margin="0,6,0,0">
+                        <TextBlock Text="Funcția:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox AutomationProperties.Name="Funcția celui care controlează" Text="{Binding InspectorFunction, UpdateSourceTrigger=PropertyChanged}" Width="170" Margin="0,0,16,0"/>
+                        <TextBlock Text="Număr de înregistrare:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox AutomationProperties.Name="Număr de înregistrare" Text="{Binding RegistrationNumber, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="0,0,16,0"/>
+                        <TextBlock Text="Marcaj (nivel):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox AutomationProperties.Name="Marcajul raportului, introdus manual" Text="{Binding MarkingLevel, UpdateSourceTrigger=PropertyChanged}" Width="180"/>
+                    </WrapPanel>
+                    <TextBlock Text="{Binding MarkingNote}" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                </StackPanel>
+
+                <TextBlock Text="{Binding FlowError}" Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                <WrapPanel Margin="0,8,0,0">
+                    <Button Content="Înapoi" Command="{Binding FlowBackCommand}" IsEnabled="{Binding FlowCanGoBack}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="{Binding FlowNextText}" AutomationProperties.Name="Înainte sau Pornește controlul" Command="{Binding FlowNextCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Oprește" Command="{Binding FlowStopCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="De la început" Command="{Binding FlowRestartCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
+                    <Button Content="Raport pentru proces-verbal (PDF)" Command="{Binding SaveReportCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Compară cu controlul anterior" Command="{Binding CompareWithPreviousCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Folder rapoarte" Command="{Binding OpenCaseFolderCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                </WrapPanel>
+                <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- WP18 S4: the single result screen (five answers); never SAFE -->
+        <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,12" Visibility="{Binding HasResult, Converter={StaticResource BoolToVis}}">
+            <StackPanel>
+                <TextBlock Text="{Binding Result.Headline}" FontSize="18" FontWeight="Bold" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                <UniformGrid Columns="2" Margin="0,6,0,0">
+                    <StackPanel Margin="0,0,6,6"><TextBlock Text="Există o problemă?" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/><TextBlock Text="{Binding Result.Problem}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/></StackPanel>
+                    <StackPanel Margin="6,0,0,6"><TextBlock Text="Cât de grav?" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/><TextBlock Text="{Binding Result.Seriousness}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/></StackPanel>
+                    <StackPanel Margin="0,0,6,0"><TextBlock Text="Sunt probele de încredere?" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/><TextBlock Text="{Binding Result.Trust}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/></StackPanel>
+                    <StackPanel Margin="6,0,0,0"><TextBlock Text="Ce s-a găsit?" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/><TextBlock Text="{Binding Result.Found}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/></StackPanel>
+                </UniformGrid>
+                <TextBlock Text="Ce urmează?" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,0"/>
+                <ItemsControl ItemsSource="{Binding ResultNextSteps}">
+                    <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding StringFormat='• {0}'}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,2,0,0"/></DataTemplate></ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="{Binding Result.CoverageLine}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                <Expander Header="Diferențe față de controlul anterior" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,6,0,0">
+                    <DataGrid AutomationProperties.Name="Diferențe față de controlul anterior" ItemsSource="{Binding ComparisonChanges}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="220">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Ce s-a schimbat" Binding="{Binding Kind}" Width="110"/>
+                            <DataGridTextColumn Header="Cod" Binding="{Binding Id}" Width="60"/>
+                            <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*"/>
+                            <DataGridTextColumn Header="Înainte" Binding="{Binding BeforeText}" Width="110"/>
+                            <DataGridTextColumn Header="Acum" Binding="{Binding AfterText}" Width="110"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Expander>
+            </StackPanel>
+        </Border>
+
+        <!-- Parameters (the raw form stays under "Avansat") -->
+        <Expander Header="Avansat (parametrii controlului)" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12">
+        <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,6,0,0">
             <WrapPanel VerticalAlignment="Center">
                 <TextBlock Text="Perioada (zile în urmă):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                <TextBox Text="{Binding PeriodDays, UpdateSourceTrigger=PropertyChanged}" Width="60" Margin="0,0,16,0"/>
+                <TextBox AutomationProperties.Name="Perioada în zile" Text="{Binding PeriodDays, UpdateSourceTrigger=PropertyChanged}" Width="60" Margin="0,0,16,0"/>
                 <CheckBox Content="Stația trebuie să fie izolată (fără rețea)" IsChecked="{Binding StationShouldBeIsolated}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                 <TextBlock Text="Verificator:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                <TextBox Text="{Binding Inspector, UpdateSourceTrigger=PropertyChanged}" Width="170" Margin="0,0,16,0"/>
+                <TextBox AutomationProperties.Name="Verificator" Text="{Binding Inspector, UpdateSourceTrigger=PropertyChanged}" Width="170" Margin="0,0,16,0"/>
                 <TextBlock Text="Observații:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Width="220" Margin="0,0,16,0"/>
+                <TextBox AutomationProperties.Name="Observații" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Width="220" Margin="0,0,16,0"/>
                 <Button Content="Rulează controlul" Command="{Binding RunCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
                 <Button Content="Salvează raportul (PDF)" Command="{Binding SaveReportCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                 <Button Content="Folder rapoarte" Command="{Binding OpenCaseFolderCommand}" Style="{StaticResource OutlineButtonStyle}"/>
             </WrapPanel>
         </Border>
+        </Expander>
+        </StackPanel>
 
         <TabControl Grid.Row="2" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
             <TabItem Header="Verificări" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
-                        <ComboBox DockPanel.Dock="Right" ItemsSource="{Binding StatusFilters}" SelectedItem="{Binding StatusFilter}" Width="160"/>
+                        <ComboBox AutomationProperties.Name="Filtru după rezultat" DockPanel.Dock="Right" ItemsSource="{Binding StatusFilters}" SelectedItem="{Binding StatusFilter}" Width="160"/>
                         <TextBlock Text="{Binding Summary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                     </DockPanel>
-                    <DataGrid ItemsSource="{Binding Checks}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                    <DataGrid AutomationProperties.Name="Verificările controlului" ItemsSource="{Binding Checks}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Rezultat" Binding="{Binding Status}" Width="110"/>
                             <DataGridTextColumn Header="Cod" Binding="{Binding Id}" Width="55"/>
@@ -59,11 +159,11 @@
                 </DockPanel>
             </TabItem>
             <TabItem Header="Utilizatori" Style="{StaticResource InspectorTabItemStyle}">
-                <DataGrid Margin="8" ItemsSource="{Binding Users}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                <DataGrid AutomationProperties.Name="Activitatea utilizatorilor" Margin="8" ItemsSource="{Binding Users}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Utilizator" Binding="{Binding User}" Width="2*"/>
                         <DataGridTextColumn Header="Autentificări locale" Binding="{Binding InteractiveLogons}" Width="*"/>
-                        <DataGridTextColumn Header="RDP" Binding="{Binding RemoteLogons}" Width="*"/>
+                        <DataGridTextColumn Header="Acces de la distanță (RDP)" Binding="{Binding RemoteLogons}" Width="*"/>
                         <DataGridTextColumn Header="Eșuate" Binding="{Binding FailedLogons}" Width="*"/>
                         <DataGridTextColumn Header="Sesiuni privilegiate" Binding="{Binding PrivilegedSessions}" Width="*"/>
                         <DataGridTextColumn Header="Modificări făcute" Binding="{Binding AccountChangesMade}" Width="*"/>
@@ -74,7 +174,7 @@
                 </DataGrid>
             </TabItem>
             <TabItem Header="Cronologia acțiunilor" Style="{StaticResource InspectorTabItemStyle}">
-                <DataGrid Margin="8" ItemsSource="{Binding Actions}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                <DataGrid AutomationProperties.Name="Cronologia acțiunilor" Margin="8" ItemsSource="{Binding Actions}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding TimeUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140"/>
                         <DataGridTextColumn Header="Cine" Binding="{Binding Who}" Width="1.3*"/>

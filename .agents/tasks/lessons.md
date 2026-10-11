@@ -4,6 +4,15 @@ Durable lessons from real corrections, incidents and verification failures.
 
 ## Current lessons
 
+## 2026-10-10 — a hint is not routing; enforce the model where the spawn happens
+- What happened: with only a UserPromptSubmit hint, the main session (this agent) delegated once in a
+  whole build session and did its bulk reads on Fable ($81 of $87). The hint was also injected twice per
+  prompt in the vault (project + user copies of the same hook).
+- Rule: enforce cost routing at the `Agent` PreToolUse (rewrite `model` from the brief), keep the prompt
+  line as guidance only, and make every project hook defer to the user-scope copy of itself.
+- Rule: edits to Claude Code's own hooks/skills are classified as self-modification; get the owner's
+  explicit approval for that specific change first, then make it in one pass.
+
 ## 2026-10-10 — the owner's PC is reached through a Remote Control session, and it needs the owner's own approval
 - What happened: Desktop Commander showed the PC offline; the owner asked for work on the PC to go through
   the Claude Code Remote Control session instead. That session correctly refused a permanent change to
@@ -90,6 +99,14 @@ When the owner corrects an agent or a real incident reveals a reusable failure p
   When a scanner flags a literal that is only parsed, keep the code exact and add an explicit, documented exception bound to
   that exact literal in that one assembly, with a test that the exception does not leak (`ParsingOnlyLiterals`). Agent prompts
   must say: a red security gate is fixed in the gate's own allowlist with a reason, never by obfuscation.
+
+## 2026-10-10 — "install once" means one step per surface, then it runs and stays current
+- The cost-router was spread as a copied bootstrap line in 10 repos' SessionStart hooks. On the owner's PC that line broke
+  in Git Bash (MSYS path rewriting) and every copy failed silently, so the PC never updated; plain claude.ai chat had no
+  install path at all. Owner correction: it must run immediately after ONE install on whichever surface (cloud, PC, chat).
+  Rule: ship one install step per surface (PC: user-scope installer; cloud: environment Setup script; chat: uploadable skill
+  zip), make that install keep itself current, never fan out copies of the same line into many repos, and test the install
+  line on every shell the owner uses (Git Bash on Windows) before calling it done.
 
 ## 2026-10-11 — Casa3D: commit gated on grep output, backup by basename
 - Incident 1: `npx vitest run | grep ... && git commit` committed 21e7a07b while 1 test failed (grep exits 0 even on failures).

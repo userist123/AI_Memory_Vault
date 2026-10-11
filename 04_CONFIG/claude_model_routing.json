@@ -381,5 +381,31 @@
     },
     "verifier_model": "opus",
     "verifier_note": "Independent verification always runs on the vault-reviewer subagent (Opus, high effort, fresh context). Fable is a main-session choice, never a verifier or subagent model."
+  },
+  "local_llm": {
+    "runtime": "ollama",
+    "endpoint": "http://127.0.0.1:11434",
+    "timeout_seconds": 300,
+    "num_ctx": 16384,
+    "max_input_chars": 60000,
+    "classes": [
+      "summarize"
+    ],
+    "models": {
+      "text": [
+        "qwen2.5:7b-instruct",
+        "mistral:7b-instruct"
+      ],
+      "code": [
+        "qwen2.5-coder:7b",
+        "qwen2.5-coder:3b"
+      ],
+      "fast": [
+        "qwen2.5-coder:3b",
+        "qwen2.5:7b-instruct"
+      ]
+    },
+    "measured": "2026-10-10 on the owner's PC (RTX 5060 Laptop, 8 GB): qwen2.5-coder:3b 3.6 s, qwen2.5:7b-instruct 5.8 s, qwen2.5-coder:7b 6.9 s, mistral:7b-instruct 7.4 s to a one-word reply, cold load included",
+    "notes": "Free, loopback only, data never leaves the PC. Used for text-in/short-text-out work (summarize, extract, classify, translate) before a Haiku subagent; never for multi-step code, design or verification; its answer is unverified until checked. Not reachable from cloud sessions."
   }
 }
