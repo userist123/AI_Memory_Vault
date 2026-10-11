@@ -14,10 +14,12 @@ import { intlLocale } from '@/lib/i18n';
 import { swatchStyle } from './MaterialPicker';
 import { PlanSvg } from './PrintView';
 import FeedbackBox, { type FeedbackItem } from './FeedbackBox';
+import ClientDeliveries from './ClientDeliveries';
+import type { ClientProgress } from '@/core/client-progress';
 
 const nextFrame = () => new Promise<void>(res => requestAnimationFrame(() => res()));
 /** Pe linkul pentru client (`share`) prezentarea vine din revizia partajată și are, sub fiecare planșă de cameră, caseta de păreri. */
-export interface SharedDeck { token: string; name: string; snapshot: Snapshot; revisionNumber: number; catalog: Catalog; mc: MaterialsCatalog }
+export interface SharedDeck { token: string; name: string; snapshot: Snapshot; revisionNumber: number; catalog: Catalog; mc: MaterialsCatalog; progress?: ClientProgress | null }
 export default function PresentView({ id, share }: { id?: string; share?: SharedDeck }){
   const { t, lang, units } = usePrefs();
   const [data, setData] = useState<{ snap: Snapshot; name: string; catalog: Catalog; mc: MaterialsCatalog } | null>(null), [err, setErr] = useState(false);
@@ -83,6 +85,7 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
         <dl>{Object.entries(pres.budget.categories).filter(([, v]) => v > 0).map(([k, v]) => <div key={k}><dt>{t(`budget.cat.${k}`)}</dt><dd>{money(v)}</dd></div>)}
           {pres.budget.labor > 0 && <div><dt>{t('pres.labour')}</dt><dd>{money(pres.budget.labor)}</dd></div>}<div><dt>{t('pres.contingency')}</dt><dd>{money(pres.budget.contingency)}</dd></div></dl></div>
       <footer>{num(n)}</footer></section>
+    {share?.progress && <ClientDeliveries p={share.progress} />}
     {share && <FeedbackBox token={share.token} roomId={null} title={t('fb.general')} sub={t('fb.generalSub')} items={feedback.filter(f => f.roomId === null)} onAdded={added} />}
   </main>);
 }

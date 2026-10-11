@@ -11,6 +11,8 @@ export interface ProjectMeta {
   siteAddress?: string;
   startDate?: string; dueDate?: string;            // AAAA-LL-ZZ
   fee?: { kind: typeof FEE_KINDS[number]; amount: number };
+  /** clientul vede pe link stadiul comenzilor (stare și date de livrare, fără prețuri de achiziție) */
+  shareOrders?: boolean;
 }
 export const DEFAULT_META: ProjectMeta = { status: 'design' };
 const LIM = { name: 120, phone: 40, email: 160, address: 300, notes: 4000, site: 300 };
@@ -37,6 +39,7 @@ export function checkMeta(x: unknown): ProjectMeta {
   if (out.startDate && out.dueDate && out.dueDate < out.startDate) throw new MetaError('Termenul de predare e înaintea începerii.');
   if (o.fee != null){ const f = o.fee; if (typeof f !== 'object' || !(FEE_KINDS as readonly string[]).includes(f.kind) || typeof f.amount !== 'number' || !Number.isFinite(f.amount) || f.amount < 0 || f.amount > 1e8) throw new MetaError('Onorariul e invalid.');
     out.fee = { kind: f.kind, amount: Math.round(f.amount * 100) / 100 }; }
+  if (o.shareOrders === true) out.shareOrders = true; else if (o.shareOrders != null && o.shareOrders !== false) throw new MetaError('Opțiune invalidă.');
   return out;
 }
 /** Citire tolerantă din baza de date (date vechi sau incomplete): niciodată nu aruncă. */

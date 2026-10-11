@@ -37,6 +37,7 @@ export default function ProjectCard({ id, initial, areaM2, cur, say }: { id: str
           <option value="">{t('pcard.noFee')}</option>{FEE_KINDS.map(k => <option key={k} value={k}>{t(`pcard.fee.${k}`)}</option>)}</select></label>
         {m.fee && <label className="f"><span>{t('pcard.amount', { cur })}</span><input type="number" inputMode="decimal" min={0} step="any" value={m.fee.amount} onChange={e => { const v = Number(e.target.value); if (Number.isFinite(v) && v >= 0) setM(x => ({ ...x, fee: { ...x.fee!, amount: v } })); }} /></label>}</div>
       {fee != null && <p className="prov">{t('pcard.feeEstimate', { v: formatMoney(fee, cur, lang) })}</p>}
+      <label className="chk"><input type="checkbox" checked={!!m.shareOrders} onChange={e => setM(x => ({ ...x, shareOrders: e.target.checked || undefined }))} /><span>{t('pcard.shareOrders')}<small>{t('pcard.shareOrdersSub')}</small></span></label>
       <label className="f"><span>{t('pcard.notes')}</span><textarea rows={3} value={c.notes ?? ''} maxLength={4000} onChange={e => setC('notes', e.target.value)} /></label>
       <small className={`prov ${state === 'error' ? 'err' : ''}`}>{t(`pcard.${state}`)}</small>
     </div>

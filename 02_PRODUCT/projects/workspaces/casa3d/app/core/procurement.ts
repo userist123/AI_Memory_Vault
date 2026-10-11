@@ -19,6 +19,9 @@ const round2 = (v: number) => Math.round(v * 100) / 100;
 /** Ambalajele a două camere adunate („5 × pachet” + „12 × pachet” = „17 × pachet”); etichete diferite → necunoscut. */
 export function addPacks(a: string | null, b: string | null): string | null {
   const ma = a?.match(/^(\d+) × (.+)$/), mb = b?.match(/^(\d+) × (.+)$/); return ma && mb && ma[2] === mb[2] ? `${Number(ma[1]) + Number(mb[1])} × ${ma[2]}` : null; }
+/** „BESTĂ comodă” + „BESTĂ comodă TV cu uși, alb” → doar varianta (care repetă deja numele produsului). */
+export function productLabel(product: string, variant: string | null | undefined){
+  const v = (variant ?? '').trim(); if (!v) return product; return v.toLowerCase().startsWith(product.trim().toLowerCase()) ? v : `${product} · ${v}`; }
 const keyOf = (...parts: (string | null | undefined)[]) => parts.map(p => (p ?? '').trim().toLowerCase()).join('|').slice(0, 300);
 
 /** Liniile de cumpărat, stabile între salvări (cheia nu depinde de ordinea camerelor). */
@@ -35,7 +38,7 @@ export function procurementLines(snap: Snapshot, cat: Catalog, mc: MaterialsCata
     const o = pricedOffer(cat, p), sup = cat.suppliers.find(s => s.id === (o ?? rv.offer)?.supplierId)?.name ?? '—';
     const key = 'f|' + keyOf(p.variantId, p.size ? JSON.stringify(p.size) : ''), room = roomName.get(p.roomId ?? '') ?? '', cur = out.get(key);
     if (cur){ cur.qty += 1; cur.total = cur.total != null && o ? round2(cur.total + o.price) : null; if (room && !cur.rooms.includes(room)) cur.rooms.push(room); continue; }
-    out.set(key, { key, kind: 'furniture', product: `${rv.product.name}${rv.variant.name ? ' · ' + rv.variant.name : ''}`, supplier: sup, code: null,
+    out.set(key, { key, kind: 'furniture', product: productLabel(rv.product.name, rv.variant.name), supplier: sup, code: null,
       url: (o ?? rv.offer)?.affiliateUrl ?? (o ?? rv.offer)?.provenance?.sourceUrl ?? null, qty: 1, unit: 'buc', packs: null, unitPrice: o?.price ?? null, total: o ? round2(o.price) : null, rooms: room ? [room] : [] }); }
   for (const c of custom){ const room = roomName.get(c.roomId ?? '') ?? '', key = 'c|' + c.id;
     out.set(key, { key, kind: 'custom', itemId: c.id, product: c.name, supplier: c.supplier, code: c.sku, url: c.url, image: c.image, qty: c.qty, unit: c.unit, packs: null, unitPrice: c.price, total: c.price != null ? round2(c.price * c.qty) : null, rooms: room ? [room] : [] }); }
