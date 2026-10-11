@@ -229,11 +229,10 @@ public class MediaUsageAttributionTests
     }
 
     [Fact]
-    public void Pipeline_without_any_data_says_not_attributable_and_does_not_invent_a_name()
+    public void Pipeline_without_any_data_adds_no_usage_finding_and_never_invents_a_name()
     {
-        var f = Assert.Single(Run(Partition1006(0), UsbRow(0)));
-        Assert.Contains("nu se poate atribui", f.Title);
-        Assert.Equal("", f.User);
+        // No profile, no session, no linked file: the medium's own finding already reports its presence; an extra "nu se poate atribui" line is noise.
+        Assert.Empty(Run(Partition1006(0), UsbRow(0)));
     }
 
     [Fact]
