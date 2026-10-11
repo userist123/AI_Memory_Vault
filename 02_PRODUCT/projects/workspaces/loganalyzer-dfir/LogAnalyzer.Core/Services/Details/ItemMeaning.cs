@@ -184,6 +184,7 @@ namespace LogAnalyzer.Core.Services.Details
             ["T1195"] = "compromiterea unui furnizor de software",
             ["T1197"] = "folosirea serviciului BITS pentru a descărca sau a rula programe",
             ["T1202"] = "rularea comenzilor indirect, prin alt program",
+            ["T1200"] = "conectarea unui dispozitiv fizic străin (tastatură falsă, stick care tastează singur, placă de rețea)",
             ["T1204"] = "rularea unui fișier rău-intenționat de către utilizator",
             ["T1204.002"] = "deschiderea unui fișier atașat sau descărcat rău-intenționat",
             ["T1207"] = "înregistrarea unui controler de domeniu fals",
