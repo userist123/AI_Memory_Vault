@@ -93,11 +93,21 @@ def copy_skill(name: str, home: Path) -> None:
         md.write_text(gate_description(md.read_text(encoding="utf-8")), encoding="utf-8")
 
 
+# `claude plugin install` clones GitHub plugins over SSH; on a machine with no github.com host key
+# that fails ("Host key verification failed", seen on the owner's PC). Rewrite to HTTPS for the
+# child processes only; the user's git config is left untouched.
+GIT_HTTPS_ENV = {"GIT_CONFIG_COUNT": "2",
+                 "GIT_CONFIG_KEY_0": "url.https://github.com/.insteadOf", "GIT_CONFIG_VALUE_0": "git@github.com:",
+                 "GIT_CONFIG_KEY_1": "url.https://github.com/.insteadOf", "GIT_CONFIG_VALUE_1": "ssh://git@github.com/"}
+
+
 def run(cmd: list[str]) -> tuple[int, str]:
     exe = shutil.which(cmd[0])
     if exe is None:
         return 127, f"{cmd[0]} not found on PATH"
-    r = subprocess.run([exe, *cmd[1:]], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=180)
+    env = {**os.environ, **GIT_HTTPS_ENV} if "GIT_CONFIG_COUNT" not in os.environ else None
+    r = subprocess.run([exe, *cmd[1:]], capture_output=True, text=True, encoding="utf-8", errors="replace",
+                       timeout=180, env=env)
     return r.returncode, (r.stdout + r.stderr).strip()
 
 

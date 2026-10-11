@@ -168,3 +168,26 @@ def test_remotion_comes_from_the_official_plugin_only(tmp_path):
     assert motion.startswith("---\nname: motion-director\n")
     for must in ("spring(", "<Sequence", "--crf=18", "never inside the AI_Memory_Vault", "explicit go"):
         assert must in motion, must
+
+
+def test_plugin_clones_use_https_without_touching_git_config(tmp_path):
+    """Seen on the owner's PC: plugin install cloned over SSH and failed on an unknown host key."""
+    import os
+    import pytest
+    if os.name == "nt":
+        pytest.skip("fake claude is a POSIX shell script")
+    fake = tmp_path / "bin" / "claude"
+    fake.parent.mkdir()
+    fake.write_text("#!/bin/sh\ngit config --get-all url.https://github.com/.insteadOf\n", encoding="utf-8")
+    fake.chmod(0o755)
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_CONFIG_")}
+    env["PATH"] = f"{fake.parent}{os.pathsep}{env['PATH']}"
+    old = dict(os.environ)
+    os.environ.clear()
+    os.environ.update(env)
+    try:
+        code, out = mod.run(["claude"])
+    finally:
+        os.environ.clear()
+        os.environ.update(old)
+    assert code == 0 and out.splitlines() == ["git@github.com:", "ssh://git@github.com/"]
