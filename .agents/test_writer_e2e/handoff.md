@@ -44,7 +44,7 @@ The complete Dual-Track 4-Tier E2E Test Suite for Jarvis Cognitive Brain ('Creie
 ## 5. Verification Method
 To independently verify test suite execution:
 ```powershell
-cd c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 
 # Run dedicated E2E Test Runner
 python tests/e2e/test_runner.py

@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import pytest
 
-root = Path(r"c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY")
+root = Path(r"c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY")
 sem_dir = root / "07_EVALUATION" / "skills_semantic_v1"
 
 @pytest.fixture(scope="module")

@@ -75,7 +75,7 @@ pytest memory_controller/tests/test_audit_adversarial.py memory_controller/tests
 pytest
 ============================= test session starts =============================
 platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0
-rootdir: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY
+rootdir: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
 plugins: anyio-4.12.1
 collected 265 items
 

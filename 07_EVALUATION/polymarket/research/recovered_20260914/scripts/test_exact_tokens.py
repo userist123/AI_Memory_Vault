@@ -15,7 +15,7 @@ socket.getaddrinfo = patched_getaddrinfo
 # outcome 1: 104093803534517426712740679855443122353765698182657011070351298955004240391517
 
 # And from an Ethereum market: ID 4532843
-with open("C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json", "r", encoding="utf-8") as f:
+with open("C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json", "r", encoding="utf-8") as f:
     d = json.load(f)
 
 # Find market 4532843

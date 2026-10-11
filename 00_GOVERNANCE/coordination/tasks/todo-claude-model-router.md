@@ -19,7 +19,7 @@ DONE:
   type (live-verified: general-purpose spawn without model ran on claude-haiku-5-5); project hooks shadowed
   by the user install (one route line per prompt); local tier lib/local_llm.py on Ollama loopback with the
   4 models measured on the owner's PC; dispatcher rule in CLAUDE.md; 20_TESTS/test_cost_router_enforce.py
-- 2026-10-10 PC (PR #264 merged 0eb82905): installed on Marius-PC by the owner in Git Bash; settings has
+- 2026-10-10 PC (PR #264 merged 0eb82905): installed on LAB-PC by the owner in Git Bash; settings has
   both hooks once, local_llm --probe exit 0 (qwen2.5:7b-instruct / qwen2.5-coder:7b / qwen2.5-coder:3b),
   agent hook explore->haiku, risky fable->opus. Bootstrap line fixed: no leading '/' in sparse patterns
   (MSYS rewrote them, install stopped on 'missing source'); python3/python loop. The 9 other repos'

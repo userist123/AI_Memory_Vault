@@ -1,7 +1,7 @@
 import json
 
 # Load summary
-with open("C:/Users/Marius/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/mechanical_control_summary.json", "r", encoding="utf-8") as f:
+with open("C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/mechanical_control_summary.json", "r", encoding="utf-8") as f:
     s = json.load(f)
 
 content = f"""# Rezultatele Controlului Mecanic pe Date Reale Polymarket (`MECHANICAL_CONTROL_RESULTS.md`)
@@ -89,7 +89,7 @@ Intervalul temporal dintre momentul primei cotații CLOB (`entry_at`) și moment
 Toate piețele evaluate din această serie au fost piețe cu deznodământ rapid intraday. Aceasta evidențiază încă o dată de ce `fidelity=1440` (candele de 24h) din codul de producție returna zero puncte și bloca sistemul.
 """
 
-target = "C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/MECHANICAL_CONTROL_RESULTS.md"
+target = "C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/MECHANICAL_CONTROL_RESULTS.md"
 with open(target, "w", encoding="utf-8") as f:
     f.write(content)
 

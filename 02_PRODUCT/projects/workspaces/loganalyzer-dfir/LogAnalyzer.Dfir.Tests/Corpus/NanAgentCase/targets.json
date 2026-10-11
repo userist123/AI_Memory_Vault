@@ -1,5 +1,5 @@
 {
-  "_comment": "TEST FIXTURE ONLY (spec §73). Expected results from the real 2026-09-19 MARIUS-PC incident. Never referenced by production code.",
+  "_comment": "TEST FIXTURE ONLY (spec §73). Expected results from the real 2026-09-19 LAB-PC incident. Never referenced by production code.",
   "corpusRoot": "D:\\FORENSIC_CASE",
   "corpusRootEnvVar": "LADFIR_CORPUS",
   "prefetch": {

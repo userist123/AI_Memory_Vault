@@ -6,7 +6,7 @@ Investigate Milestone 5 implementation: `cognitive_core/evaluation.py`, TRACe me
 ## 🔒 My Identity
 - Archetype: explorer
 - Roles: investigation, evaluation, synthesis
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m5_2
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m5_2
 - Original parent: 4b331fbc-eb8c-41a5-8ea8-e64218064557
 - Milestone: Milestone 5 (TRACe & IR Benchmark Evaluation)
 

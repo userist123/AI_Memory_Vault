@@ -19,7 +19,7 @@
 
 > **Conceptele respinse NU așteaptă să fie adăugate de un merge nou — ele se află deja fizic în ontologie!**
 
-> Toate cele **28 de concepte `RESPINGE`** și toate cele **8 concepte `FUZIONEAZĂ`** identificate în [PROMOTION_REVIEW.md](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/book_corpus_conversion/PROMOTION_REVIEW.md) au fost deja scrise pe disc într-o rulare istorică anterioară.
+> Toate cele **28 de concepte `RESPINGE`** și toate cele **8 concepte `FUZIONEAZĂ`** identificate în [PROMOTION_REVIEW.md](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/book_corpus_conversion/PROMOTION_REVIEW.md) au fost deja scrise pe disc într-o rulare istorică anterioară.
 
 > 
 

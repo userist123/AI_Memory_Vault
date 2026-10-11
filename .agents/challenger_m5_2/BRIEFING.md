@@ -6,7 +6,7 @@ Adversarial stress testing and mathematical validation against `RetrievalEvaluat
 ## 🔒 My Identity
 - Archetype: empirical-challenger
 - Roles: critic, specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m5_2
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m5_2
 - Original parent: 4b331fbc-eb8c-41a5-8ea8-e64218064557
 - Milestone: Milestone 5
 - Instance: 2 of 2
@@ -35,8 +35,8 @@ Adversarial stress testing and mathematical validation against `RetrievalEvaluat
 - **Untested angles**: [TBD]
 
 ## Loaded Skills
-- **Source**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
-- **Local copy**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m5_2\skills\vault-operations\SKILL.md`
+- **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
+- **Local copy**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m5_2\skills\vault-operations\SKILL.md`
 - **Core methodology**: Runbook and procedures for interacting with AI Memory Vault cognitive operating system.
 
 ## Key Decisions Made

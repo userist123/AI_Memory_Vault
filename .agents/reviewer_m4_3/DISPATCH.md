@@ -11,9 +11,9 @@ Conduct an independent review of the Milestone 4 remediation in `cognitive_core/
 5. Run full test suite (`python -m pytest`).
 
 ## Mandatory Reference Documents
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md`
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_2\handoff.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_2\handoff.md`
 
 ## Working Directory
 `.agents/reviewer_m4_3`
@@ -21,7 +21,7 @@ Conduct an independent review of the Milestone 4 remediation in `cognitive_core/
 ## Verification Requirements
 1. Run pytest across target and full test suites.
 2. State your explicit verdict (`APPROVE` or `REQUEST_CHANGES`).
-3. Write your handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m4_3\handoff.md`.
+3. Write your handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m4_3\handoff.md`.
 
 ---
 

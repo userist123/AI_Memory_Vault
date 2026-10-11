@@ -6,7 +6,7 @@ Conduct forensic integrity audit and adversarial verification on Milestone 3 con
 ## 🔒 My Identity
 - Archetype: forensic_auditor
 - Roles: critic, specialist, auditor
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m3_2
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m3_2
 - Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
 - Target: Milestone 3 Multi-Agent Workers & Lifecycle Remediation
 

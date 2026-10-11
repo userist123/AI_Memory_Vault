@@ -32,7 +32,7 @@ Static and behavioral analysis confirms genuine, production-grade implementation
 ### 3.1 Test Suite Execution Proof
 ```
 Command: python -m pytest -v
-Working Directory: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+Working Directory: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 Results:
 - tests/unit/test_adversarial_m1.py (23 passed)
 - tests/unit/test_adversarial_m2_audio.py (21 passed)

@@ -8,9 +8,9 @@ Adversarially challenge and stress-test the full Cognitive Loop (OODA) and Multi
 3. Run full pytest test suite (`python -m pytest`).
 
 ## Mandatory Reference Documents
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md`
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_2\handoff.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_2\handoff.md`
 
 ## Working Directory
 `.agents/challenger_m4_4`
@@ -19,7 +19,7 @@ Adversarially challenge and stress-test the full Cognitive Loop (OODA) and Multi
 1. Design and execute empirical stress tests.
 2. Run full pytest suite.
 3. State your explicit verdict (`APPROVE` or `REQUEST_CHANGES`).
-4. Write your handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_4\handoff.md`.
+4. Write your handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_4\handoff.md`.
 
 ---
 

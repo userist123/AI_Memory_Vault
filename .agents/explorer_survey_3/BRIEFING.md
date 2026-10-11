@@ -6,7 +6,7 @@ Explore architecture and design for the Financial Ingestion Pipeline, Multi-Laye
 ## 🔒 My Identity
 - Archetype: teamwork_preview_explorer (Explorer Survey 3)
 - Roles: explorer, analyst, architect
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_3
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_3
 - Original parent: e87bdef8-bfc1-4e8e-a965-ccd159cf02a1
 - Milestone: Survey & Architectural Design for Financial Ingestion, Query Engine & Verification
 
@@ -22,8 +22,8 @@ Explore architecture and design for the Financial Ingestion Pipeline, Multi-Laye
 
 ## Investigation State
 - **Explored paths**:
-  - `C:\Users\Marius\Desktop\Nu sterge\nusterge\ghid.py` (95 assets, 5 macro tickers, 4 FRED series, 30 risks, formulas, secrets)
-  - `C:\Users\Marius\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx` (Market overview, technical dashboards, risk matrices, trade journals)
+  - `C:\Users\user\Desktop\Nu sterge\nusterge\ghid.py` (95 assets, 5 macro tickers, 4 FRED series, 30 risks, formulas, secrets)
+  - `C:\Users\user\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx` (Market overview, technical dashboards, risk matrices, trade journals)
   - `memory_controller/financial_schema.py` & `memory_controller/financial_query.py`
   - `memory_controller/financial_search.py` (5-layer engine, RRF, graph spreading activation, progressive disclosure, HMAC pagination)
   - `vault_api.py` (FastAPI endpoints, authentication, pagination)

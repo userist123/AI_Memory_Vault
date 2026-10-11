@@ -2,11 +2,11 @@
 
 <USER_REQUEST>
 You are Worker 3 (AI Memory Vault REST Client Specialist).
-Working Directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_vault_client
-Original Request Path: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md
-Project Master Plan: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator\PROJECT.md
-Survey Spec: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_1\handoff.md
-Target File: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_web\js\vault_client.js
+Working Directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_vault_client
+Original Request Path: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md
+Project Master Plan: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator\PROJECT.md
+Survey Spec: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_1\handoff.md
+Target File: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_web\js\vault_client.js
 
 Exclusive Write Ownership: `projects/jarvis_web/js/vault_client.js`
 
@@ -20,7 +20,7 @@ Tasks:
    - Note Inspector & Citation Parser: extracts frontmatter, confidence, verification, lifecycle, category, tags, and summary snippet.
    - Memory proposal client: formats proposed note payloads conforming to canonical frontmatter and dispatches to `POST /api/v1/propose`.
    - Live server status health check: `getStatus()` querying `GET /api/v1/status` with connectivity flag and active node count.
-3. Document all implementation details in `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_vault_client\handoff.md`.
+3. Document all implementation details in `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_vault_client\handoff.md`.
 4. Send a completion message to the orchestrator.
 
 MANDATORY INTEGRITY WARNING:

@@ -6,7 +6,7 @@ Comprehensive survey of existing AI Memory Vault codebase to support integrating
 ## 🔒 My Identity
 - Archetype: teamwork_preview_explorer
 - Roles: Explorer / Codebase Surveyor
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_1
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_1
 - Original parent: e87bdef8-bfc1-4e8e-a965-ccd159cf02a1
 - Milestone: Codebase Survey & Analysis for Financial Integration
 
@@ -26,7 +26,7 @@ Comprehensive survey of existing AI Memory Vault codebase to support integrating
   - `tests/` & `memory_controller/tests/` & `tests/financial/`
   - `xau_kinetic/financial_ingestion/` (`catalog.py`, `indicators.py`, `pipeline.py`, `adapter.py`)
   - `AGENTS.md`, `.agents/rules/vault_cognitive_rules.md`, `99_SYSTEM/Canonical_Frontmatter.md`, `00_CORE/Confidence_Model.md`
-  - External Desktop files: `C:\Users\Marius\Desktop\Nu sterge\nusterge\` (`ghid.py`, `Analiza_Piata_Profesionala.xlsx`)
+  - External Desktop files: `C:\Users\user\Desktop\Nu sterge\nusterge\` (`ghid.py`, `Analiza_Piata_Profesionala.xlsx`)
 - **Key findings**:
   - `SQLiteStorageEngine` and `FileStorageEngine` enforce strict atomicity and WAL mode with `PRAGMA busy_timeout=5000`.
   - Invariants P0-P18 restrict AI self-attestation, enforce lifecycle boundaries (`REVIEW` at creation), and mandate provenance immutability.

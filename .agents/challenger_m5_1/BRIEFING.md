@@ -6,7 +6,7 @@ Adversarial challenge, stress testing, and regression verification for Milestone
 ## 🔒 My Identity
 - Archetype: Empirical Challenger
 - Roles: critic, specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m5_1
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m5_1
 - Original parent: 4b331fbc-eb8c-41a5-8ea8-e64218064557
 - Milestone: Milestone 5
 - Instance: 1 of 1
@@ -55,7 +55,7 @@ Adversarial challenge, stress testing, and regression verification for Milestone
 - **Untested angles**: TBD
 
 ## Loaded Skills
-- **Source**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`
+- **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`
 - **Local copy**: Reference loaded from `.agents/skills/vault-security-audit/SKILL.md`
 - **Core methodology**: Security verification and forensic validation runbook for testing trust boundaries and invariants P0-P15.
 

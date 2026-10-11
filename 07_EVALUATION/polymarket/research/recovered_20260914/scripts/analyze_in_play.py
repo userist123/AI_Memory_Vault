@@ -1,10 +1,10 @@
 import json
 from datetime import datetime, timezone
 
-with open("C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json", "r", encoding="utf-8") as f:
+with open("C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json", "r", encoding="utf-8") as f:
     dataset = json.load(f)
 
-with open("C:/Users/Marius/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/sampled_500_markets.json", "r", encoding="utf-8") as f:
+with open("C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/sampled_500_markets.json", "r", encoding="utf-8") as f:
     sampled = json.load(f)
 raw_by_id = {str(m["id"]): m for m in sampled}
 
@@ -69,5 +69,5 @@ progress_pcts = [r["game_progress_pct_at_entry"] for r in results if r["game_pro
 if progress_pcts:
     print(f"\nGame Progress at entry: min={min(progress_pcts):.1%}, max={max(progress_pcts):.1%}, mean={sum(progress_pcts)/len(progress_pcts):.1%}")
 
-with open("C:/Users/Marius/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/in_play_breakdown.json", "w", encoding="utf-8") as f:
+with open("C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/in_play_breakdown.json", "w", encoding="utf-8") as f:
     json.dump(results, f, indent=2)

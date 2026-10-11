@@ -6,7 +6,7 @@ Conduct a rigorous forensic integrity audit on the Financial Ingestion Pipeline 
 ## 🔒 My Identity
 - Archetype: forensic_auditor
 - Roles: [critic, specialist, auditor]
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_final
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_final
 - Original parent: e87bdef8-bfc1-4e8e-a965-ccd159cf02a1
 - Target: full financial pipeline and query engine integration
 
@@ -36,7 +36,7 @@ Conduct a rigorous forensic integrity audit on the Financial Ingestion Pipeline 
 - **Untested angles**: None.
 
 ## Loaded Skills
-- **Source**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`
+- **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`
 - **Core methodology**: Security verification and forensic validation for trust boundaries and invariants P0-P15.
 
 ## Audit Progress

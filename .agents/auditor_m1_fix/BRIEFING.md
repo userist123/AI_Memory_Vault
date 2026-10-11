@@ -6,7 +6,7 @@ Perform a rigorous forensic integrity re-audit on Milestone 1 (`memory_controlle
 ## 🔒 My Identity
 - Archetype: forensic_auditor
 - Roles: critic, specialist, auditor
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_fix
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_fix
 - Original parent: e87bdef8-bfc1-4e8e-a965-ccd159cf02a1
 - Target: Milestone 1: financial_schema.py & test_schema.py
 
@@ -67,6 +67,6 @@ Perform a rigorous forensic integrity re-audit on Milestone 1 (`memory_controlle
 - **Untested angles**: None.
 
 ## Loaded Skills
-- **Source**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
+- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
 - **Local copy**: .agents/auditor_m1_fix/SKILL_vault_security_audit.md
 - **Core methodology**: Security verification and forensic validation runbook for testing trust boundaries and invariants P0-P18.

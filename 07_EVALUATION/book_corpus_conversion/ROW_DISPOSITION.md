@@ -5,9 +5,9 @@
 > **Autor**: ANTIGRAVITY  
 > **Ramură**: `antigravity/r064-row-disposition` (bază: `antigravity/r064-manifest-conversion`)  
 > **Referințe**:
-> - [`07_EVALUATION/book_corpus_conversion/promotion_verdicts.json`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/book_corpus_conversion/promotion_verdicts.json) (91 de verdicte verificate)
-> - [`30_SCRIPTS/ingestion/purge_batches_catalog.json`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/30_SCRIPTS/ingestion/purge_batches_catalog.json) (129 de intrări catalogate în loturile A, B, C, D1, D2)
-> - [`07_EVALUATION/book_corpus_conversion/UNVERIFIED_SOURCE_TRIAGE.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/book_corpus_conversion/UNVERIFIED_SOURCE_TRIAGE.md) (triajul celor 10 rânduri din 2026-09-07)
+> - [`07_EVALUATION/book_corpus_conversion/promotion_verdicts.json`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/book_corpus_conversion/promotion_verdicts.json) (91 de verdicte verificate)
+> - [`30_SCRIPTS/ingestion/purge_batches_catalog.json`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/30_SCRIPTS/ingestion/purge_batches_catalog.json) (129 de intrări catalogate în loturile A, B, C, D1, D2)
+> - [`07_EVALUATION/book_corpus_conversion/UNVERIFIED_SOURCE_TRIAGE.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/book_corpus_conversion/UNVERIFIED_SOURCE_TRIAGE.md) (triajul celor 10 rânduri din 2026-09-07)
 
 ---
 

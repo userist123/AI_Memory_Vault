@@ -6,7 +6,7 @@ Review Milestone 3 multi-agent implementation (`jarvis/agents/` and `tests/`) in
 ## 🔒 My Identity
 - Archetype: teamwork_preview_reviewer
 - Roles: reviewer, critic
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m3_1
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m3_1
 - Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
 - Milestone: Milestone 3 (Multi-Agent System & Supervisor)
 - Instance: 1 of 1

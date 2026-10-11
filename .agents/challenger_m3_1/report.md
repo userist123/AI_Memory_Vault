@@ -2,7 +2,7 @@
 
 **Author**: Teamwork Challenger (`challenger_m3_1`)  
 **Target Milestone**: Milestone 3 (Multi-Agent Subsystem & Worker Pool Orchestration)  
-**Project Path**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
+**Project Path**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
 **Date**: 2026-08-28T17:06:10+03:00  
 **Final Verdict**: **REQUEST_CHANGES**
 

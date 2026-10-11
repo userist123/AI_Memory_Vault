@@ -99,7 +99,7 @@ Fila **„Investigație domeniu și e-mail”** (`LogAnalyzer.exe --tab=15`) are
 Toate interogările de rețea trec prin `NetworkPolicy`. În modul AirGapped sunt blocate; pe o rețea izolată cu domeniu, porniți aplicația cu `--mode=network`. Rezultatele se salvează în cazul stației (`Investigations/`), ca probe, și se pot exporta ca PDF.
 ## Investigația completă (caz)
 
-Fila **„Investigație completă (caz)”** (`LogAnalyzer.exe --tab=16`) reface cap-coadă o investigație ca cea de pe MARIUS-PC:
+Fila **„Investigație completă (caz)”** (`LogAnalyzer.exe --tab=16`) reface cap-coadă o investigație ca cea de pe LAB-PC:
 
 1. **Colectare de pe stație.**
    - Jurnalele de evenimente sunt exportate brut cu `wevtutil` (17 canale).

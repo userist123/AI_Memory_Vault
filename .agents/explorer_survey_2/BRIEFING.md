@@ -6,7 +6,7 @@ Investigate and design the 3D Holographic Arc-Reactor / Sphere UI (Three.js WebG
 ## 🔒 My Identity
 - Archetype: explorer
 - Roles: 3D Holographic UI & Tactical Audio Explorer
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_2
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_2
 - Original parent: 95f7bf7e-c539-4492-b214-af221cca8379
 - Milestone: Phase 0 - Discovery & Architecture Survey (Complete)
 
@@ -22,7 +22,7 @@ Investigate and design the 3D Holographic Arc-Reactor / Sphere UI (Three.js WebG
 - Updated: 2026-08-25T19:31:15Z
 
 ## Investigation State
-- **Explored paths**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`, Three.js procedural geometries, GLSL Fresnel/Noise shaders, Web Audio API synthesis node graphs, 2D Canvas fallback architectures, Sci-Fi dark glass design tokens.
+- **Explored paths**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`, Three.js procedural geometries, GLSL Fresnel/Noise shaders, Web Audio API synthesis node graphs, 2D Canvas fallback architectures, Sci-Fi dark glass design tokens.
 - **Key findings**: Complete zero-asset 3D Arc Reactor geometry + GLSL shaders, 4-state visual reactivity matrix (Idle, Listening, Thinking, Speaking), zero-asset mathematical Web Audio synthesizer (5 core sound effects), unified `IHologramController` interface with 2D Canvas fallback, dark HUD layout tokens.
 - **Unexplored areas**: None for survey scope; ready for development phase implementation.
 

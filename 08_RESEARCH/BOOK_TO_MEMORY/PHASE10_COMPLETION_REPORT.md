@@ -14,7 +14,7 @@
 Phase 10 implements the **Controlled Experimentation Harness & Shadow Mode Execution Engine** (`BookToMemoryExperimentHarness`), completing the empirical execution layer of the Book-to-Memory research track under `00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md` Section 14 and `08_RESEARCH/BOOK_TO_MEMORY/RESEARCH-TRACK-CONTRACT.md`.
 
 With Phase 10:
-1. The **`BookToMemoryExperimentHarness`** is fully implemented and tested in [book_to_memory_experiment.py](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_experiment.py).
+1. The **`BookToMemoryExperimentHarness`** is fully implemented and tested in [book_to_memory_experiment.py](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_experiment.py).
 2. **Shadow Mode Execution Invariant** is enforced: all variant comparisons run against frozen benchmark cases or simulation layers; zero direct mutation of the production index or active corpus.
 3. **Anti-Gaming Constraints** are implemented in code and exercised by unit tests:
    - Minimum sample size $\ge 5$ enforced at configuration time;

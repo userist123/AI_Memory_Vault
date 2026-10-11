@@ -1,7 +1,7 @@
 # Handoff Report — Milestone 2: Cascaded Audio Pipeline (TTS, Chunker, Barge-In)
 
 **Author**: Explorer 3 (Milestone 2 Explorer)  
-**Target Directory**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
+**Target Directory**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
 **Date**: 2026-08-27  
 
 ---
@@ -9,7 +9,7 @@
 ## 1. Observation
 
 ### 1.1 Codebase & Workspace Inspection
-- **Project Location**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`.
+- **Project Location**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`.
 - **Existing Passing Tests**: Ran `python -m pytest -v` inside `projects/jarvis_cognitive_brain` -> **167 passed in 2.69s** (covering Milestone 1 OODA cognitive loop, SQLite WAL dual persistence, ACT-R memory activation, CTE lineage traversal, trust invariants P0-P18, and E2E simulation tiers 1-4).
 - **Existing Audio Configuration Hooks**:
   - `jarvis/config.py`: lines 69–82 define `audio_sample_rate=16000`, `tts_sample_rate=24000`, `vad_silence_threshold_ms=500`.

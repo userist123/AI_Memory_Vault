@@ -6,7 +6,7 @@ Remediate 3 concurrency and lifecycle defects in `jarvis/agents/supervisor.py` i
 ## 🔒 My Identity
 - Archetype: preview_worker
 - Roles: implementer, qa, specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_2
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_2
 - Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
 - Milestone: M3 Remediation
 
@@ -50,7 +50,7 @@ Remediate 3 concurrency and lifecycle defects in `jarvis/agents/supervisor.py` i
 - None
 
 ## Artifact Index
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_2\DISPATCH.md` — Assignment dispatch
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_2\progress.md` — Liveness and task progress
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_2\BRIEFING.md` — Situational awareness
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_2\handoff.md` — Final handoff report
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_2\DISPATCH.md` — Assignment dispatch
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_2\progress.md` — Liveness and task progress
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_2\BRIEFING.md` — Situational awareness
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_2\handoff.md` — Final handoff report

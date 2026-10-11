@@ -36,7 +36,7 @@ public sealed class EvidenceGraphTests
     public void Explorer_lists_an_entitys_edges_with_their_support_and_the_path_between_two_entities()
     {
         var events = Incident();
-        var g = EvidenceGraph.Build(events, Correlation.Run(events), "MARIUS-PC");
+        var g = EvidenceGraph.Build(events, Correlation.Run(events), "LAB-PC");
         var found = GraphExplorer.Search(g, "302044").Select(e => e.Type).ToList();
         Assert.Contains("File", found);
         var zip = g.Find("File", "Tool_302044.zip")!;
@@ -71,7 +71,7 @@ public sealed class EvidenceGraphTests
     {
         var events = Incident();
         var findings = Correlation.Run(events);
-        var g = EvidenceGraph.Build(events, findings, "MARIUS-PC");
+        var g = EvidenceGraph.Build(events, findings, "LAB-PC");
 
         Assert.All(g.Relationships, r => Assert.True(r.EvidenceId.Length > 0 && r.Locator.Length > 0 || r.Derivation.Length > 0));
         var domain = g.Find("Domain", "tzd4is.cyou")!;

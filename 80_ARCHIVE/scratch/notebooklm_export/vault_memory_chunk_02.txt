@@ -1,6 +1,6 @@
 AI MEMORY VAULT - EXPORTED FOR NOTEBOOKLM
 Export date: 2026-08-27 21:57:23
-Vault root: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY
+Vault root: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
 ======================================================================
 
 

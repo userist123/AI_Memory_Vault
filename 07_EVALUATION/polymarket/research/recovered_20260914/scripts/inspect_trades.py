@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 
-with open("C:/Users/Marius/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/mechanical_control_summary.json", "r", encoding="utf-8") as f:
+with open("C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/mechanical_control_summary.json", "r", encoding="utf-8") as f:
     summary = json.load(f)
 
 trades = summary["trades"]

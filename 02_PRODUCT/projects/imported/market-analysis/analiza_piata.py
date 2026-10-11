@@ -22,7 +22,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.formatting.rule import CellIsRule, ColorScaleRule
 from openpyxl.worksheet.datavalidation import DataValidation
 
-TEMPLATE_PATH = r"C:\Users\Marius\Desktop\Analiza_Piata_Profesionala.xlsx"
+TEMPLATE_PATH = r"C:\Users\user\Desktop\Analiza_Piata_Profesionala.xlsx"
 OUTPUT_DIR = os.path.dirname(TEMPLATE_PATH) or "."
 MAX_FILES = 30
 YFINANCE_PERIOD = "1y"

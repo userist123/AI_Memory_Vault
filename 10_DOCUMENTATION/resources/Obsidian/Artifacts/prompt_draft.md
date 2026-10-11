@@ -24,7 +24,7 @@ relations: []
 
 Transform the AI Memory Vault into a fully self-improving, autonomous Cognitive Brain with integrated multi-agent execution, continuous self-reflection, and robust memory governance.
 
-Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY
+Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
 
 ## Requirements
 

@@ -77,7 +77,7 @@ for m in sampled_markets:
 print(f"Qualified binary CLOB markets: {len(qualified_markets)} / {len(sampled_markets)}")
 
 # Save raw qualified markets to scratch
-scratch_path = "C:/Users/Marius/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch"
+scratch_path = "C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch"
 with open(f"{scratch_path}/qualified_clob_markets_500.json", "w", encoding="utf-8") as f:
     json.dump([m for m, toks, win_idx in qualified_markets], f, indent=2)
 

@@ -6,7 +6,7 @@ Review remediated FastMCPIoTServer and HomeAssistantClient in Jarvis Cognitive B
 ## 🔒 My Identity
 - Archetype: teamwork_preview_reviewer
 - Roles: reviewer, critic
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m4_2
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m4_2
 - Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
 - Milestone: M4.2 Remediation Review
 - Instance: 1 of 1

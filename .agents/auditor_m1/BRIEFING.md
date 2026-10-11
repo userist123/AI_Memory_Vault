@@ -6,7 +6,7 @@ Forensic integrity audit for Milestone 1 of the Jarvis Cognitive Brain project.
 ## 🔒 My Identity
 - Archetype: forensic_auditor
 - Roles: critic, specialist, auditor
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1
 - Original parent: 5a625f23-4992-4b00-bb13-1f4b316b216c
 - Target: Milestone 1 (Cognitive OODA Engine & Memory Storage)
 
@@ -21,7 +21,7 @@ Forensic integrity audit for Milestone 1 of the Jarvis Cognitive Brain project.
 - Updated: 2026-08-27T19:30:30Z
 
 ## Audit Scope
-- **Work product**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
+- **Work product**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 - **Profile loaded**: General Project / Vault Security Audit
 - **Audit type**: forensic integrity check (Milestone 1)
 
@@ -40,7 +40,7 @@ Forensic integrity audit for Milestone 1 of the Jarvis Cognitive Brain project.
 - **Untested angles**: Audio hardware VAD/TTS (deferred to M2).
 
 ## Loaded Skills
-- **Source**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
+- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
 - **Local copy**: memory_controller / vault-security-audit
 - **Core methodology**: Security verification and forensic validation runbook for testing trust boundaries and invariants.
 

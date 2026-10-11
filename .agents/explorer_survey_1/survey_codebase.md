@@ -3,7 +3,7 @@
 **Report Date**: 2026-08-26  
 **Author**: Explorer Survey 1 (`explorer_survey_1`)  
 **Target Milestone**: Integration of Financial Ingestion Pipeline and Multi-Layered Financial Query Engine  
-**Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY`
+**Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY`
 
 ---
 
@@ -19,7 +19,7 @@ The codebase is a production-grade cognitive memory system featuring:
 5. **Gaps identified for prompt fulfillment**:
    - `memory_controller/financial_schema.py` is currently a stub (`FINANCIAL_NOTE_SCHEMA = {}`).
    - `memory_controller/financial_query.py` provides a preliminary `FinancialQueryEngine` that requires full schema validation alignment and storage compatibility.
-   - External desktop source files at `C:\Users\Marius\Desktop\Nu sterge\nusterge\` (`ghid.py`, `Analiza_Piata_Profesionala.xlsx`) contain hardcoded API keys (`FRED_API_KEY`) that must be strictly environment-injected to prevent secret leaks.
+   - External desktop source files at `C:\Users\user\Desktop\Nu sterge\nusterge\` (`ghid.py`, `Analiza_Piata_Profesionala.xlsx`) contain hardcoded API keys (`FRED_API_KEY`) that must be strictly environment-injected to prevent secret leaks.
    - Missing unit test suites `tests/financial/test_query_engine.py` and `tests/financial/test_schema.py` must be implemented.
 
 ---
@@ -226,12 +226,12 @@ Provides a sophisticated 5-layer search pipeline:
 
 ### 5.2 External Desktop Data Sources
 
-Found at `C:\Users\Marius\Desktop\Nu sterge\nusterge\`:
+Found at `C:\Users\user\Desktop\Nu sterge\nusterge\`:
 - `ghid.py` (91 KB, 1,954 lines): Market update script containing asset dictionary definitions (`INDICI`, `ACTIUNI`, `CRYPTO`, `VALUTE`, `MATERII_PRIME`), FRED fetching, technical indicators, and Excel report generation.
 - `Analiza_Piata_Profesionala.xlsx`: Production workbook with structured asset sheets, technical indicators, macro dashboards, and historical price matrices.
 
 **Critical Security Finding**:
-In `C:\Users\Marius\Desktop\Nu sterge\nusterge\ghid.py`, line 29:
+In `C:\Users\user\Desktop\Nu sterge\nusterge\ghid.py`, line 29:
 ```python
 FRED_API_KEY = "e372c6879cce084b8c3601f76adbe78d"
 ```

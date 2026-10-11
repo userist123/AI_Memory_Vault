@@ -91,7 +91,7 @@ Every pipeline run emits an immutable, tamper-evident audit report containing:
 
 ## 4. Verification Evidence
 
-The implementation was validated against 16 comprehensive end-to-end tests in [test_book_to_memory_pipeline.py](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/20_TESTS/test_book_to_memory_pipeline.py):
+The implementation was validated against 16 comprehensive end-to-end tests in [test_book_to_memory_pipeline.py](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/20_TESTS/test_book_to_memory_pipeline.py):
 - `16 passed in 0.19s`
 - Cumulative Book-to-Memory suite (Phases 1–7): `197 passed in 0.86s`
 - Security Invariant suite: `33 passed, 1 skipped in 11.21s`
