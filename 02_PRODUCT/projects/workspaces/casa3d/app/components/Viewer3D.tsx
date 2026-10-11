@@ -21,7 +21,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
   pickRef.current = onPick;
   const [doorsOpen, setDoorsOpen] = useState(true);
   useEffect(() => { let alive = true;
-    import('./viewer3d-engine.js').then(m => { if (!alive || !ref.current) return; try { v.current = m.createViewer(ref.current, { onPick: (id: string | null) => pickRef.current(id) }); applyLight(); v.current.setQuality?.(qRef.current); push(); } catch { setErr('webgl'); } });
+    import('./viewer3d-engine.js').then(m => { if (!alive || !ref.current) return; try { v.current = m.createViewer(ref.current, { onPick: (id: string | null) => pickRef.current(id) }); applyLight(); v.current.setQuality?.(qRef.current); push(); } catch (e){ console.error('3D', e); setErr('webgl'); } });
     return () => { alive = false; v.current?.dispose(); v.current = null; }; }, []); // eslint-disable-line
   const engineCat = useRef<ReturnType<typeof toEngineCatalog> | null>(null);
   function push(){ if (!v.current) return; engineCat.current ||= toEngineCatalog(catalog);

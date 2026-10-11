@@ -1,8 +1,10 @@
 // components/viewer3d.js — scena 3D portată din prototip (tur la persoana întâi + machetă).
 // Modelele de mobilier, materialele și construcția pereților sunt copiate din prototip.
 import * as THREE from 'three';
-import { floorTexture, wallTexture } from './finish-textures.js';
+import { floorTexture, wallTexture, onTexturesReady } from './finish-textures.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
@@ -15,7 +17,12 @@ const FinishShader = { uniforms: { tDiffuse: { value: null } }, vertexShader: 'v
     vec3 srgb(vec3 c){ return mix(pow(c, vec3(0.41666)) * 1.055 - vec3(0.055), c * 12.92, vec3(lessThanEqual(c, vec3(0.0031308)))); }
     void main(){ vec4 t = texture2D(tDiffuse, vUv); gl_FragColor = vec4(srgb(clamp(t.rgb, 0.0, 1.0)), t.a); }` };
 
+// hărți de normale fotografice (CC0, public/tex): țesătura textilelor și tencuiala pereților
+const texLoader = typeof document !== 'undefined' ? new THREE.TextureLoader() : null;
+const normalTex = (src, rep) => { if (!texLoader) return null; const t = texLoader.load(src); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); t.anisotropy = 8; return t; };
+const linenN = normalTex('/tex/rough_linen_nor_gl_web.jpg', 5), boucleN = normalTex('/tex/wool_boucle_nor_gl_web.jpg', 4), plasterN = normalTex('/tex/white_plaster_rough_02_nor_gl_web.jpg', 2);
 export function createViewer(canvas, { onPick } = {}){
+  let raf = 0, last = performance.now(), alive = true;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const R = new THREE.WebGLRenderer({ canvas, antialias: true });
   R.setPixelRatio(Math.min(devicePixelRatio, 2)); R.outputEncoding = THREE.sRGBEncoding; R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = .78;
@@ -34,6 +41,8 @@ export function createViewer(canvas, { onPick } = {}){
     u.cameraNear.value = cam.near; u.cameraFar.value = cam.far; ssao.depthRenderMaterial.uniforms.cameraNear.value = cam.near; ssao.depthRenderMaterial.uniforms.cameraFar.value = cam.far; };
   const draw = () => { if (quality === 'high' && composer){ syncSsao(); composer.render(); } else R.render(scene, cam); };
   const pm = new THREE.PMREMGenerator(R); scene.environment = pm.fromScene(new RoomEnvironment(), .04).texture;
+  // lumina de mediu dintr-un interior real (HDRI CC0, public/tex): reflexii și umbre moi credibile; până se încarcă rămâne camera sintetică
+  try { new RGBELoader().setDataType(THREE.UnsignedByteType).load('/tex/lebombo_1k.hdr', t => { if (!alive) { t.dispose(); return; } const env = pm.fromEquirectangular(t).texture; t.dispose(); const old = scene.environment; scene.environment = env; old?.dispose?.(); }, undefined, () => {}); } catch { /* fără HDRI: rămâne mediul sintetic */ }
   const hemi = new THREE.HemisphereLight(0xffffff, 0xcfc8bc, .22); scene.add(hemi);
   let light = null; const interiorLights = []; // parametrii de iluminare primiți din core/lighting.ts
   const sun = new THREE.DirectionalLight(0xfff3e2, 1.1); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12, near: 1, far: 50 }); sun.shadow.bias = -.0005; scene.add(sun, sun.target);
@@ -45,11 +54,12 @@ export function createViewer(canvas, { onPick } = {}){
     for (let y = 0; y < h; y += 32) for (let x = -((y / 32) % 3) * 64; x < w; x += 192){ g.fillStyle = cols[(x / 64 + y / 32 * 7 & 7) % 5]; g.fillRect(x, y, 190, 30);
       for (let k = 0; k < 6; k++){ g.strokeStyle = 'rgba(70,40,20,.10)'; g.beginPath(); g.moveTo(x, y + 4 + k * 4.5); g.bezierCurveTo(x + 60, y + 2 + k * 4.5, x + 120, y + 8 + k * 4.5, x + 190, y + 4 + k * 4.5); g.stroke(); } } });
   const tiles = tex(512, 512, (g, w, h) => { g.fillStyle = '#b9bab5'; g.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 128) for (let x = 0; x < w; x += 128){ const v = 222 + (Math.random() * 12 | 0); g.fillStyle = `rgb(${v},${v - 1},${v - 4})`; g.fillRect(x + 2, y + 2, 124, 124); } });
-  const wallMat = M('#f4f3ef', { roughness: .92 }), extMat = M('#ecebe6', { roughness: .95 }), glass = new THREE.MeshPhysicalMaterial({ color: lin('#cfe3ee'), transparent: true, opacity: .28, roughness: .05, metalness: 0 });
+  const plaster = plasterN ? { normalMap: plasterN, normalScale: new THREE.Vector2(.18, .18) } : {};
+  const wallMat = M('#f4f3ef', { roughness: .92, ...plaster }), extMat = M('#ecebe6', { roughness: .95 }), glass = new THREE.MeshPhysicalMaterial({ color: lin('#cfe3ee'), transparent: true, opacity: .28, roughness: .05, metalness: 0 });
   const frameMat = M('#ffffff', { roughness: .5 }), ceilMat = M('#fbfbf9', { roughness: 1 });
   const skirtMat = M('#f7f6f2', { roughness: .45 });
   // materiale pe culoare, cu cache: fețe de perete, tavane, rame (culorile vin din core/appearance.ts prin plan)
-  const lookCache = {}; const lookMat = (kind, hex, rough) => lookCache[kind + hex] ||= M(hex, { roughness: rough });
+  const lookCache = {}; const lookMat = (kind, hex, rough) => lookCache[kind + hex] ||= M(hex, { roughness: rough, ...(kind === 'wall' ? plaster : {}) });
   const faceMat = (hex, ext) => hex ? lookMat('wall', hex, ext ? .95 : .92) : (ext ? extMat : wallMat);
 
 /* ---------- materiale realiste (texturi generate, fără imagini externe) ---------- */
@@ -59,12 +69,22 @@ weave.repeat.set(6, 6);
 const grain = gray(512, 512, (g, w, h) => { g.fillStyle = '#d8d8d8'; g.fillRect(0, 0, w, h); for (let i = 0; i < 260; i++){ const y = Math.random() * h, a = .05 + Math.random() * .12; g.strokeStyle = `rgba(0,0,0,${a})`; g.lineWidth = .6 + Math.random() * 1.8; g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= w; x += 32) g.lineTo(x, y + Math.sin(x / 70 + i) * 3); g.stroke(); } });
 const rattan = gray(128, 128, (g, w, h) => { g.fillStyle = '#b8b8b8'; g.fillRect(0, 0, w, h); g.strokeStyle = '#6d6d6d'; g.lineWidth = 2; for (let i = -w; i < w * 2; i += 10){ g.beginPath(); g.moveTo(i, 0); g.lineTo(i + h, h); g.stroke(); g.beginPath(); g.moveTo(i + h, 0); g.lineTo(i, h); g.stroke(); } });
 rattan.repeat.set(3, 3);
+// obiecte decorative (CC0, public/models): încărcate o dată, normalizate (bază la y=0, centrate, la înălțimea sau lățimea dorită)
+const DECO = { plant: ['potted_plant_02', 1.05, 'h'], succulent: ['potted_plant_04', .2, 'h'], vase: ['ceramic_vase_01', .28, 'h'], jug: ['ceramic_vase_04', .22, 'h'], art: ['hanging_picture_frame_02', .95, 'w'], photo: ['standing_picture_frame_01', .2, 'h'] };
+const decoReady = {}, decoWaiters = new Set();
+function decoModel(key){ if (decoReady[key] !== undefined) return decoReady[key]; decoReady[key] = null; const [name, size, axis] = DECO[key];
+  try { new GLTFLoader().load(`/models/${name}/${name}.gltf`, gl => { const o = gl.scene; let b = new THREE.Box3().setFromObject(o), sz = b.getSize(new THREE.Vector3());
+      if (axis === 'w' && sz.x < sz.z) { o.rotation.y = Math.PI / 2; b = new THREE.Box3().setFromObject(o); sz = b.getSize(new THREE.Vector3()); }   // tabloul cu fața spre +z
+      const k = size / (axis === 'w' ? sz.x : sz.y), wrap = new THREE.Group(); o.scale.multiplyScalar(k); b = new THREE.Box3().setFromObject(o); const c = b.getCenter(new THREE.Vector3());
+      o.position.set(-c.x, -b.min.y, -c.z); o.traverse(m => { if (m.isMesh){ m.castShadow = true; m.receiveShadow = true; } }); wrap.add(o); decoReady[key] = wrap; decoWaiters.forEach(f => f()); },
+    undefined, () => { decoReady[key] = false; }); } catch { decoReady[key] = false; }
+  return null; }
 const matCache = {};
 const lumOf = hex => { const n = parseInt(String(hex).slice(1), 16); return ((n >> 16 & 255) * .2126 + (n >> 8 & 255) * .7152 + (n & 255) * .0722) / 255; };
 function MAT(kind, col){ const k = kind + col; if (matCache[k]) return matCache[k]; const c = lin(col); let m;
   switch (kind){
-    case 'fabric': m = new THREE.MeshStandardMaterial({ color: c, map: weave, bumpMap: weave, bumpScale: .003, roughness: .97 }); break;
-    case 'velvet': m = new THREE.MeshPhysicalMaterial({ color: c, map: weave, roughness: .85, sheen: lin('#9fc3c2') }); break;
+    case 'fabric': m = new THREE.MeshStandardMaterial({ color: c, map: weave, roughness: .95, ...(linenN ? { normalMap: linenN, normalScale: new THREE.Vector2(.9, .9) } : { bumpMap: weave, bumpScale: .003 }) }); break;
+    case 'velvet': m = new THREE.MeshPhysicalMaterial({ color: c, map: weave, roughness: .85, sheen: lin('#9fc3c2'), ...(boucleN ? { normalMap: boucleN, normalScale: new THREE.Vector2(.6, .6) } : {}) }); break;
     case 'leather': m = new THREE.MeshPhysicalMaterial({ color: c, roughness: .42, clearcoat: .35, clearcoatRoughness: .5, bumpMap: weave, bumpScale: .001 }); break;
     case 'wood': m = new THREE.MeshStandardMaterial({ color: c, map: grain, roughness: .58 }); break;
     case 'paint': m = new THREE.MeshStandardMaterial({ color: c, roughness: .48 }); break;
@@ -396,9 +416,31 @@ function model(it){
     W = maxX - minX; D = maxZ - minZ; C.set((minX + maxX) / 2, 0, (minZ + maxZ) / 2); placeSun(); sun.target.position.copy(C);
     orbit.r = Math.max(W, D, 4) * 1.15; setMode(mode);
   }
+  // decorul: ce ar pune un stilist ca locuința să pară locuită — planta în colțul liber, tabloul deasupra canapelei și a patului,
+  // vaze pe comoda TV și pe masă, o ramă pe noptieră. Determinist (aceleași poziții la fiecare reconstruire), fără coliziuni.
+  let decor = new THREE.Group(), lastItems = [], decorOn = true;
+  function buildDecor(items){ scene.remove(decor); decor = new THREE.Group(); scene.add(decor); if (!decorOn || !plan) return;
+    const put = (key, x, y, z, rotY) => { const m = decoModel(key); if (!m) return; const o = m.clone(); o.position.set(x, y, z); o.rotation.y = rotY || 0; decor.add(o); };
+    const back = r => [-Math.sin(r), -Math.cos(r)], fps = items.filter(i => i.fp).map(i => i.fp);
+    for (const it of items){ const v = it.variant; if (!v || !v.w) continue; const h = v.h / 100, d = v.d / 100, room = plan.camere.find(c => it.x > c.x0 && it.x < c.x1 && it.z > c.z0 && it.z < c.z1); if (!room) continue;
+      const [bx, bz] = back(it.rotation), wallAt = () => { // fața peretelui din spatele piesei
+        if (Math.abs(bx) > .5) return [bx > 0 ? room.x1 - .02 : room.x0 + .02, it.z]; return [it.x, bz > 0 ? room.z1 - .02 : room.z0 + .02]; };
+      if (it.group === 'canapea' || it.group === 'pat'){ const [wx, wz] = wallAt(); put('art', wx, it.group === 'pat' ? 1.25 : 1.32, wz, it.rotation); }
+      else if (it.group === 'comodaTv') put('vase', it.x - Math.cos(it.rotation) * (v.w / 100) * .36, h, it.z + Math.sin(it.rotation) * (v.w / 100) * .36, it.rotation);
+      else if (it.group === 'masa') put('jug', it.x, h, it.z, 0);
+      else if (it.group === 'noptiera') put('photo', it.x + Math.cos(it.rotation) * .12, h, it.z - Math.sin(it.rotation) * .12, it.rotation + .35);
+      else if (it.group === 'biblioteca' && h > .8) put('succulent', it.x, h, it.z, 0);
+      void d; }
+    // planta: în colțul liber al livingului și al holului (departe de mobilier și de uși)
+    for (const room of plan.camere){ if (room.tip !== 'living' && room.tip !== 'hol') continue; const ins = .32, cs = [[room.x0 + ins, room.z0 + ins], [room.x1 - ins, room.z0 + ins], [room.x0 + ins, room.z1 - ins], [room.x1 - ins, room.z1 - ins]];
+      const doorPts = plan.pereti.flatMap(w => { const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1; return w.goluri.filter(g => g.tip === 'usa').map(g => { const t = g.la + g.l / 2; return [w.a[0] + (w.b[0] - w.a[0]) / L * t, w.a[1] + (w.b[1] - w.a[1]) / L * t]; }); });
+      const free = ([x, z]) => !doorPts.some(([px, pz]) => Math.hypot(px - x, pz - z) < 1.15) && !fps.some(f => x > f.x0 - .3 && x < f.x1 + .3 && z > f.z0 - .3 && z < f.z1 + .3) && !blockers.some(f => x > f.x0 - .3 && x < f.x1 + .3 && z > f.z0 - .3 && z < f.z1 + .3) && !structBlockers.some(f => x > f.x0 - .2 && x < f.x1 + .2 && z > f.z0 - .2 && z < f.z1 + .2);
+      const c = cs.find(free); if (c) put(room.tip === 'hol' ? 'succulent' : 'plant', c[0], 0, c[1], 0); } }
+  decoWaiters.add(() => { if (alive) buildDecor(lastItems); });
   function buildFurniture(items){ disposeGroup(furniture); scene.remove(furniture); furniture = new THREE.Group(); scene.add(furniture); pickables = []; blockers = [];
     for (const it of items){ if (!it.variant || !it.variant.w) continue; const m = model(it.variant); m.position.set(it.x, 0, it.z); m.rotation.y = it.rotation; m.userData = { pid: it.id }; m.traverse(o => { o.userData.item = m; }); furniture.add(m); pickables.push(m);
-      if (it.group !== 'scaunBirou' && it.fp) blockers.push(it.fp); } }
+      if (it.group !== 'scaunBirou' && it.fp) blockers.push(it.fp); }
+    lastItems = items; buildDecor(items); }
 
   // soarele stă pe direcția dată (azimut, înălțime), la ~14 m de centrul casei; implicit ca în prototip
   function placeSun(){ const dir = light && light.dir ? light.dir : null; if (dir) sun.position.set(C.x + dir[0] * 14, dir[1] * 14, C.z + dir[2] * 14); else sun.position.set(C.x + 6, 11, C.z - 8); }
@@ -472,7 +514,8 @@ function model(it){
     if (onPick) onPick(fh ? fh.object.userData.item.userData.pid : null); };
   const wh = e => { if (mode === 'house'){ orbit.r = Math.max(4, Math.min(40, orbit.r + e.deltaY * .01)); e.preventDefault(); } };
   canvas.addEventListener('pointerdown', pd); canvas.addEventListener('pointermove', pmv); canvas.addEventListener('pointerup', pu); canvas.addEventListener('wheel', wh, { passive: false });
-  let raf = 0, last = performance.now(), alive = true;
+  // fibra fotografică a parchetului sosește după prima construire: reconstruim casa o singură dată
+  const unTex = onTexturesReady(() => { if (alive && plan) buildHouse(plan); });
   function resize(){ const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1; R.setSize(w, h, false); if (composer) composer.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix(); }
   const ro = new ResizeObserver(resize); ro.observe(canvas);
   (function loop(){ if (!alive) return; raf = requestAnimationFrame(loop); const now = performance.now(), dt = Math.min(.05, (now - last) / 1000); last = now;
@@ -527,10 +570,11 @@ function model(it){
 
   return {
     setState(p, items){ plan = p; buildHouse(p); buildFurniture(items); },
+    setDecor(on){ decorOn = !!on; buildDecor(lastItems); },
     setDoors(open){ doorsOpen = !!open; for (const d of doorLeaves){ d.target = d.open = doorsOpen ? 1 : 0; d.pivot.rotation.y = d.closed + (doorsOpen ? d.maxOpen : 0); } },
     setMode, goRoom, getMode: () => mode, setLighting, capture, renderView, renderPanorama, exportScene,
     setQuality(q){ quality = q === 'high' ? 'high' : 'normal'; if (quality === 'high' && !composer){ try { setupComposer(); } catch (e){ quality = 'normal'; composer = null; } } return quality; },
     setMove(forward, strafe){ joy.f = Number.isFinite(forward) ? Math.max(-1, Math.min(1, forward)) : 0; joy.s = Number.isFinite(strafe) ? Math.max(-1, Math.min(1, strafe)) : 0; },
-    dispose(){ alive = false; cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('wheel', wh); if (composer){ ssao.dispose(); composer.renderTarget1.dispose(); composer.renderTarget2.dispose(); composer = null; } R.dispose(); }
+    dispose(){ alive = false; unTex(); cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('wheel', wh); if (composer){ ssao.dispose(); composer.renderTarget1.dispose(); composer.renderTarget2.dispose(); composer = null; } R.dispose(); }
   };
 }
