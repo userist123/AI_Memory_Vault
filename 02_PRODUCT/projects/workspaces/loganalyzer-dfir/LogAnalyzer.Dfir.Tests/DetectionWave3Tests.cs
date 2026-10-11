@@ -201,4 +201,86 @@ public class DetectionWave3Tests
         Assert.False(Correlation.HasScriptPath(@"C:\x\settings.json"));
         Assert.True(Correlation.HasScriptPath(@"C:\x\run.js"));
     }
+
+    // ---- Review follow-up (items 5-10) ----
+
+    private static TimelineEvent OnHost(string host, TimelineEvent e) => new()
+    {
+        Time = e.Time, Source = e.Source, EvidenceId = e.EvidenceId, EventId = e.EventId, Provider = e.Provider, Host = host, Locator = e.Locator, Summary = e.Summary, Fields = e.Fields,
+    };
+
+    [Fact]
+    public void A_task_start_alone_is_not_a_creation_and_same_named_tasks_on_two_hosts_are_not_merged()
+    {
+        var start = Ev(TaskSched, 200, 5, "", ("TaskName", @"\OneDrive Update"), ("ActionName", @"C:\Users\bob\AppData\Local\Microsoft\OneDrive\OneDriveStandaloneUpdater.exe"));
+        Assert.DoesNotContain(Corr(start), x => x.RuleId == "PERSIST-TASK");
+        var started129 = Ev(TaskSched, 129, 5, "", ("TaskName", @"\Updater"), ("Path", @"C:\Users\bob\AppData\Roaming\run.js"));
+        Assert.DoesNotContain(Corr(started129), x => x.RuleId == "PERSIST-TASK");
+
+        var created = OnHost("PC-A", Ev(TaskSched, 106, 0, "", ("TaskName", @"\Updater"), ("UserContext", @"PC-A\bob")));
+        var otherHostRan = OnHost("PC-B", Ev(TaskSched, 200, 1, "", ("TaskName", @"\Updater"), ("ActionName", @"C:\Users\bob\AppData\Roaming\run.js")));
+        Assert.DoesNotContain(Corr(created, otherHostRan), x => x.RuleId == "PERSIST-TASK");
+        var sameHostRan = OnHost("PC-A", Ev(TaskSched, 200, 1, "", ("TaskName", @"\Updater"), ("ActionName", @"C:\Users\bob\AppData\Roaming\run.js")));
+        var f = One(Corr(created, sameHostRan), "PERSIST-TASK");
+        Assert.Contains("a rulat la", f.Description);
+    }
+
+    [Fact]
+    public void A_task_created_without_a_known_creator_never_prints_an_empty_name()
+    {
+        var f = One(Corr(Ev(TaskSched, 106, 0, "", ("TaskName", @"\Updater")), Ev(TaskSched, 129, 1, "", ("TaskName", @"\Updater"), ("Path", @"C:\Users\bob\AppData\Roaming\run.js"))), "PERSIST-TASK");
+        Assert.Contains("creatorul nu apare în jurnal", f.Description);
+        Assert.DoesNotContain("creat de .", f.Description);
+        Assert.DoesNotContain("creat de ;", f.Description);
+    }
+
+    [Fact]
+    public void A_package_manager_style_download_cradle_is_at_most_Medium_and_one_weak_keyword_is_nothing()
+    {
+        var choco = Corr(Block(0, "iex ((New-Object System.Net.WebClient).DownloadString('https://community.example/install.ps1'))", "c1"));
+        Assert.True(One(choco, "PS-SUSPICIOUS").Severity <= Severity.Medium);
+        var two = Corr(Block(0, "iex ((New-Object Net.WebClient).Proxy)", "c2"));
+        Assert.True(One(two, "PS-SUSPICIOUS").Severity <= Severity.Medium);
+        Assert.DoesNotContain(Corr(Block(0, "$w = New-Object Net.WebClient", "c3")), x => x.RuleId == "PS-SUSPICIOUS");
+        Assert.Equal(Severity.High, One(Corr(Block(0, "[Ref].Assembly.GetType('x.AmsiUtils')", "c4")), "PS-SUSPICIOUS").Severity);
+    }
+
+    [Fact]
+    public void A_data_pack_without_the_powershell_section_falls_back_to_the_embedded_section()
+    {
+        var embedded = ShippedData.ReadEmbedded("rule_lists.json");
+        var merged = Wp11Data.WithMissingSections("{ \"sharePipesOfInterest\": [\"x\"] }", embedded);
+        var lists = Wp11Data.FromJson(ShippedData.ReadEmbedded("security_agents.json"), ShippedData.ReadEmbedded("remote_access_tools.json"), merged).Lists;
+        Assert.NotEmpty(lists.Powershell.Keywords);
+        Assert.Equal(["x"], lists.SharePipesOfInterest);        // a section the pack does have is not replaced
+        var own = Wp11Data.WithMissingSections("{ \"powershell\": { \"keywords\": [ { \"text\": \"only-this\", \"weight\": 4 } ] } }", embedded);
+        Assert.Equal(["only-this"], Wp11Data.FromJson("{}", "{}", own).Lists.Powershell.Keywords.Select(k => k.Text).ToArray());
+    }
+
+    [Fact]
+    public void Only_protection_disabling_switches_in_a_5007_are_DEF_TAMPER()
+    {
+        Assert.DoesNotContain(Corr(Ev(Defender, 5007, 0, "", ("New Value", @"HKLM\SOFTWARE\Microsoft\Windows Defender\DisableLocalAdminMerge = 0x1"))), x => x.RuleId == "DEF-TAMPER");
+        Assert.Contains(Corr(Ev(Defender, 5007, 0, "", ("New Value", @"HKLM\SOFTWARE\Microsoft\Windows Defender\DisableAntiSpyware = 0x1"))), x => x.RuleId == "DEF-TAMPER");
+        Assert.Contains(Corr(Ev(Defender, 5007, 0, "", ("New Value", @"HKLM\SOFTWARE\Microsoft\Windows Defender\Real-Time Protection\DisableOnAccessProtection = 0x1"))), x => x.RuleId == "DEF-TAMPER");
+    }
+
+    [Fact]
+    public void A_generic_executable_name_is_a_remote_tool_only_with_the_vendor_path()
+    {
+        Assert.DoesNotContain(Run([Prefetch(0, "LEVEL.EXE", @"C:\Users\bob\Downloads\level.exe")]), x => x.RuleId == "REMOTE-TOOL-EXECUTED");
+        Assert.DoesNotContain(Run([Prefetch(0, "WINDOWSAGENT.EXE", @"C:\Games\windowsagent.exe")]), x => x.RuleId == "REMOTE-TOOL-EXECUTED");
+        Assert.DoesNotContain(Run([Prefetch(0, "REMOTE ACCESS.EXE", @"C:\Tools\remote access.exe")]), x => x.RuleId == "REMOTE-TOOL-EXECUTED");
+        Assert.Contains("Level", One(Run([Prefetch(0, "LEVEL.EXE", @"C:\Program Files\Level\level.exe")]), "REMOTE-TOOL-EXECUTED").Title);
+        Assert.Contains("N-able", One(Run([Prefetch(0, "WINDOWSAGENT.EXE", @"C:\Program Files (x86)\N-able Technologies\Windows Agent\bin\windowsagent.exe")]), "REMOTE-TOOL-EXECUTED").Title);
+    }
+
+    [Fact]
+    public void Only_the_exact_built_in_WMI_subscription_is_excluded_not_any_text_that_mentions_it()
+    {
+        Assert.DoesNotContain(Corr(Ev(Wmi, 5861, 0, "", ("CONSUMER", "NTEventLogEventConsumer.Name=\"SCM Event Log Consumer\""))), x => x.RuleId == "PERSIST-WMI");
+        Assert.DoesNotContain(Corr(Sysmon(19, 0, ("Name", "SCM Event Log Filter"))), x => x.RuleId == "PERSIST-WMI");
+        Assert.Contains(Corr(Ev(Wmi, 5861, 0, "", ("CONSUMER", "CommandLineEventConsumer.Name=\"Updater\""), ("CommandLineTemplate", "cmd /c echo SCM Event Log & payload.exe"))), x => x.RuleId == "PERSIST-WMI");
+        Assert.Contains(Corr(Ev(Wmi, 5861, 0, "", ("CONSUMER", "CommandLineEventConsumer.Name=\"SCM Event Log Consumer\""))), x => x.RuleId == "PERSIST-WMI");
+    }
 }

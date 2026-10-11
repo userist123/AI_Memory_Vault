@@ -76,10 +76,30 @@ public static class Correlation
         System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
 
     private static readonly System.Text.RegularExpressions.Regex DefenderWeakeningValue = new(
-        @"exclusions|\bDisable\w+\s*=\s*(?:0x)?0*1\b|TamperProtection\s*=\s*(?:0x)?0*4\b|SpynetReporting\s*=\s*(?:0x)?0+\b",
+        @"exclusions|\bDisable(?:RealtimeMonitoring|BehaviorMonitoring|IOAVProtection|ScriptScanning|OnAccessProtection|AntiSpyware|AntiVirus|BlockAtFirstSeen|ArchiveScanning)\s*=\s*(?:0x)?0*1\b|TamperProtection\s*=\s*(?:0x)?0*4\b|SpynetReporting\s*=\s*(?:0x)?0+\b",
         System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
 
-    /// <summary>A Defender 5007 "new value" that weakens protection: an exclusion, a Disable* switch set to 1, Tamper Protection off, cloud reporting off.</summary>
+    private static readonly System.Text.RegularExpressions.Regex WmiTypedName = new(
+        @"^\s*(?:(?<type>[A-Za-z_]+)\.)?Name\s*=\s*""(?<name>[^""]*)""\s*$",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+
+    /// <summary>
+    /// True only for the subscription Windows registers itself: the consumer / filter NAME field is exactly "SCM Event Log Consumer" / "SCM Event Log Filter"
+    /// (an NTEventLogEventConsumer / __EventFilter). A command line or script that merely mentions the phrase is not built-in.
+    /// </summary>
+    private static bool IsBuiltInWmiSubscription(string consumer)
+    {
+        var m = WmiTypedName.Match(consumer);
+        var name = (m.Success ? m.Groups["name"].Value : consumer).Trim();
+        var type = m.Success ? m.Groups["type"].Value : "";
+        if (name.Equals("SCM Event Log Consumer", StringComparison.OrdinalIgnoreCase))
+            return type.Length == 0 || type.Equals("NTEventLogEventConsumer", StringComparison.OrdinalIgnoreCase);
+        if (name.Equals("SCM Event Log Filter", StringComparison.OrdinalIgnoreCase))
+            return type.Length == 0 || type.Equals("__EventFilter", StringComparison.OrdinalIgnoreCase);
+        return false;
+    }
+
+    /// <summary>A Defender 5007 "new value" that weakens protection: an exclusion, a protection-disabling switch (explicit list) set to 1, Tamper Protection off, cloud reporting off.</summary>
     private static bool WeakensDefender(string newValue) => newValue.Length > 0 && DefenderWeakeningValue.IsMatch(newValue);
 
     public static bool IsUserWritable(string path)
@@ -198,22 +218,29 @@ public static class Correlation
                 SupportingEvidence = [Ref(e, "instalare serviciu")],
             });
         // TaskScheduler 106 (registered) carries no action: the command comes from 4698 (TaskContent XML) or from 200 (ActionName) / 129 (Path),
-        // which are matched to the registration by task name.
+        // which are matched to the registration by (host, task name). 200 / 129 occur at EVERY task start, so they never create a finding on
+        // their own: they only supply the action text and the "ran at" note of a task whose creation (106 / 4698) is in the log.
         const string TaskChannel = "Microsoft-Windows-TaskScheduler/Operational";
         var taskEvents = events.Where(e => Ev(e, "Security", 4698) || Ev(e, TaskChannel, 106, 200, 129)).ToList();
-        foreach (var g in taskEvents.GroupBy(e => F(e, "TaskName"), StringComparer.OrdinalIgnoreCase).Where(g => g.Key.Length > 0))
+        foreach (var g in taskEvents.GroupBy(e => (e.Host.ToLowerInvariant(), Task: F(e, "TaskName").ToLowerInvariant())).Where(g => g.Key.Task.Length > 0))
         {
+            var creations = g.Where(e => Ev(e, "Security", 4698) || Ev(e, TaskChannel, 106)).OrderBy(e => e.Time.Utc).ToList();
+            if (creations.Count == 0) continue;
             var withAction = g.Where(e => !Ev(e, TaskChannel, 106)).ToList();
             var actionText = string.Join(" ", withAction.Select(e => F(e, "TaskContent") + " " + F(e, "ActionName") + " " + F(e, "Path")));
             if (!(IsUserWritable(actionText) || HasScriptPath(actionText))) continue;
-            var created = g.Where(e => Ev(e, "Security", 4698) || Ev(e, TaskChannel, 106)).OrderBy(e => e.Time.Utc).FirstOrDefault() ?? g.OrderBy(e => e.Time.Utc).First();
-            var user = F(created, "SubjectUserName") + F(created, "UserContext");
+            var created = creations[0];
+            var taskName = F(created, "TaskName");
+            var user = (F(created, "SubjectUserName") + F(created, "UserContext")).Trim();
+            var ran = g.Where(e => Ev(e, TaskChannel, 200, 129)).OrderBy(e => e.Time.Utc).FirstOrDefault();
             f.Add(new Finding
             {
-                FindingId = Id(), RuleId = "PERSIST-TASK", Title = $"Task programat care rulează din locație scriabilă sau un script: {g.Key}",
+                FindingId = Id(), RuleId = "PERSIST-TASK", Title = $"Task programat care rulează din locație scriabilă sau un script: {taskName}",
                 Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1053.005",
                 FirstSeenUtc = created.Time.Utc, User = user,
-                Description = $"Task {g.Key} creat de {user}. Acțiunea indică o cale scriabilă de utilizatori sau un script. Ce verificați: ce rulează taskul, cine l-a creat și dacă a pornit (TaskScheduler 200).",
+                Description = $"Task {taskName} creat {(user.Length > 0 ? "de " + user : "(creatorul nu apare în jurnal)")}" +
+                              (ran?.Time.Utc is { } at ? $"; a rulat la {at:yyyy-MM-dd HH:mm} UTC" : "") +
+                              ". Acțiunea indică o cale scriabilă de utilizatori sau un script. Ce verificați: ce rulează taskul, cine l-a creat și dacă a pornit (TaskScheduler 200).",
                 ClassificationReason = "Eveniment de creare a taskului (106 / 4698) și acțiunea lui (4698 TaskContent, 200, 129): indică o cale scriabilă sau un script.",
                 SupportingEvidence = g.Take(6).Select(e => Ref(e, $"task {e.EventId}")).ToList(),
             });
@@ -280,7 +307,7 @@ public static class Correlation
         // WMI event subscriptions: WMI-Activity 5861 (permanent event consumer registered) and Sysmon 19/20/21 (filter / consumer / binding).
         // Built-in consumers that Windows registers itself are left out.
         var wmiSubs = events.Where(e => (Ev(e, "Microsoft-Windows-WMI-Activity/Operational", 5861) || Ev(e, Wp11Rules.Sysmon, 19, 20, 21)) &&
-                                        !Wp11Rules.AllText(e).Contains("SCM Event Log", StringComparison.OrdinalIgnoreCase)).ToList();
+                                        !IsBuiltInWmiSubscription(F(e, "CONSUMER", "Consumer", "Name", "ESS"))).ToList();
         foreach (var g in wmiSubs.GroupBy(e => F(e, "CONSUMER", "Consumer", "Name", "ESS") is { Length: > 0 } k ? k : "(fără nume) " + e.EventId, StringComparer.OrdinalIgnoreCase))
         {
             var first = g.OrderBy(e => e.Time.Utc).First();
@@ -473,14 +500,16 @@ public static class Correlation
             var hitKw = psCfg.Keywords.Where(k => k.Text.Length > 0 && text.Contains(k.Text, StringComparison.OrdinalIgnoreCase)).ToList();
             int score = hitKw.Sum(k => k.Weight);
             bool warned = parts.Any(e => F(e, "_xLevel") == "3");
-            if (score < psCfg.MinScore && !warned) continue;
+            // Two distinct indicators, or one heavy one, or Windows' own Warning flag; a single weight-2 keyword (an installer's iex) is not enough.
+            if (hitKw.Count < 2 && score < psCfg.MinScore && !warned) continue;
+            bool amsi = hitKw.Any(k => k.High);
             var first = parts[0];
             var mitre = hitKw.OrderByDescending(k => k.Weight).Select(k => k.Mitre).FirstOrDefault(m => m.Length > 0) ?? "T1059.001";
             psFindings.Add((score, new Finding
             {
                 FindingId = Id(), RuleId = "PS-SUSPICIOUS",
                 Title = hitKw.Count > 0 ? $"Bloc PowerShell suspect: {string.Join(", ", hitKw.OrderByDescending(k => k.Weight).Take(4).Select(k => k.Text.Trim()))}" : "Bloc PowerShell marcat de Windows ca suspect (nivel Avertisment)",
-                Severity = score >= psCfg.HighScore ? Severity.High : Severity.Medium, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Medium, MitreTechniqueId = mitre,
+                Severity = amsi || score >= psCfg.HighScore ? Severity.High : Severity.Medium, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Medium, MitreTechniqueId = mitre,
                 FirstSeenUtc = first.Time.Utc, LastSeenUtc = parts[^1].Time.Utc, User = first.User,
                 Description = $"Ce s-a întâmplat: un script PowerShell conține {(hitKw.Count > 0 ? "tehnici folosite des la descărcare, ofuscare sau dezactivarea protecției (" + string.Join(", ", hitKw.Select(k => k.Text.Trim())) + ")" : "apeluri pe care Windows însuși le marchează ca suspecte (nivel Warning)")}. " +
                               $"De ce contează: aceste tehnici apar în atacuri fără fișiere, dar și în scripturi de administrare. Ce verificați: contul, procesul părinte și scopul scriptului. Începutul: {Trunc(text, 200)}",

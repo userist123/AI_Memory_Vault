@@ -15,12 +15,12 @@
     "highInterestLolbins": ["mshta.exe", "regsvr32.exe", "rundll32.exe", "certutil.exe", "cmstp.exe", "msbuild.exe", "installutil.exe", "regasm.exe", "regsvcs.exe", "wscript.exe", "cscript.exe", "odbcconf.exe", "msxsl.exe", "forfiles.exe"]
   },
   "powershell": {
-    "_comment": "PS-SUSPICIOUS: case-insensitive substrings in one 4104 script block; the block is a finding when its summed weight (each keyword counted once) reaches minScore (High from highScore), or when Windows itself marked it Warning (Level 3). -ExecutionPolicy Bypass alone is deliberately not listed (deployment tools use it).",
-    "minScore": 2, "highScore": 5,
+    "_comment": "PS-SUSPICIOUS: case-insensitive substrings in one 4104 script block; the block is a finding when its summed weight (each keyword counted once) has two distinct keywords or reaches minScore (High from highScore, or on any keyword marked high), or when Windows itself marked it Warning (Level 3). -ExecutionPolicy Bypass alone is deliberately not listed (deployment tools use it).",
+    "minScore": 3, "highScore": 8,
     "keywords": [
-      { "text": "AmsiUtils", "weight": 5, "mitre": "T1562.001" },
-      { "text": "amsiInitFailed", "weight": 5, "mitre": "T1562.001" },
-      { "text": "AmsiScanBuffer", "weight": 5, "mitre": "T1562.001" },
+      { "text": "AmsiUtils", "weight": 5, "mitre": "T1562.001", "high": true },
+      { "text": "amsiInitFailed", "weight": 5, "mitre": "T1562.001", "high": true },
+      { "text": "AmsiScanBuffer", "weight": 5, "mitre": "T1562.001", "high": true },
       { "text": "Reflection.Assembly]::Load", "weight": 3 },
       { "text": "VirtualAlloc", "weight": 3 },
       { "text": "-w hidden", "weight": 2 },

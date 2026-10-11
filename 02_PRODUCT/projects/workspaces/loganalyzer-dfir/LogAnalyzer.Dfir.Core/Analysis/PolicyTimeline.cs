@@ -360,7 +360,7 @@ public static class PolicyTimeline
         foreach (var e in sec.Where(e => e.EventId == "4739"))
         {
             string[] skip = ["SubjectUserSid", "SubjectUserName", "SubjectDomainName", "SubjectLogonId", "DomainName", "DomainSid", "DomainPolicyChanged"];
-            var attrs = e.Fields.Where(kv => !skip.Contains(kv.Key, StringComparer.OrdinalIgnoreCase) && kv.Value.Length > 0 && kv.Value != "-").Select(kv => $"{kv.Key}={kv.Value}").ToList();
+            var attrs = e.Fields.Where(kv => !kv.Key.StartsWith("_x", StringComparison.Ordinal) && !skip.Contains(kv.Key, StringComparer.OrdinalIgnoreCase) && kv.Value.Length > 0 && kv.Value != "-").Select(kv => $"{kv.Key}={kv.Value}").ToList();
             list.Add(new PolicyChange
             {
                 TimeUtc = e.Time.Utc!.Value, Kind = "DOMAIN_POLICY", EventId = "4739", Who = Who(e), Host = e.Host, TargetKind = "Domain", TargetId = F(e, "DomainName"), TargetName = F(e, "DomainName"),
