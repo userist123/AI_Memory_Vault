@@ -164,8 +164,30 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private int _networkIndex = -1;
         [ObservableProperty] private int _classificationIndex = -1;
 
+        // Notes and the authorizing act come from the scope dialog (this form has no fields for them); they are carried so a later Configure does not drop them.
+        private string _scopeNotes = "", _scopeAct = "";
+
+        /// <summary>
+        /// The scope is asked at the start (dialog pre-filled from the last case); this copies a confirmed scope into the form fields when the form is still incomplete,
+        /// so the investigation does not ask for the same answers twice. A form the operator already filled in is never overwritten.
+        /// </summary>
+        public bool AskScopeAtStart()
+        {
+            if (!LogAnalyzer.UI.Services.LiveCase.EnsureScopeAtStart()) return BuildScope().MissingFields().Count == 0;
+            if (BuildScope().MissingFields().Count == 0) return true;
+            if (LogAnalyzer.UI.Services.LiveCase.CurrentScope is not { IsConfirmed: true } s) return false;
+            ScopePurpose = s.Purpose; ScopeApprover = s.Approver; ScopeSystems = string.Join("; ", s.SystemsInScope);
+            ScopeFrom = s.PeriodFromUtc?.UtcDateTime.Date; ScopeTo = s.PeriodToUtc?.UtcDateTime.Date;
+            LegalBasisIndex = s.LegalBasis switch { LegalBasis.Incident => 0, LegalBasis.Audit => 1, LegalBasis.Control => 2, _ => -1 };
+            NetworkIndex = s.Network switch { NetworkCategory.AirGappedNetwork => 0, NetworkCategory.StandalonePc => 1, NetworkCategory.Connected => 2, _ => -1 };
+            ClassificationIndex = s.Classification switch { ClassificationLevel.Classified => 0, ClassificationLevel.Unclassified => 1, _ => -1 };
+            _scopeNotes = s.Notes; _scopeAct = s.AuthorizingAct;
+            return BuildScope().MissingFields().Count == 0;
+        }
+
         private CaseScope BuildScope() => new()
         {
+            Notes = _scopeNotes, AuthorizingAct = _scopeAct,
             Purpose = ScopePurpose.Trim(),
             Approver = ScopeApprover.Trim(),
             SystemsInScope = ScopeSystems.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(),
@@ -266,6 +288,7 @@ namespace LogAnalyzer.UI.ViewModels
         private async Task IntakeNext()
         {
             if (_intake.Completed) { _intake.Restart(); RaiseIntake(); return; }
+            if (_intake.StepIndex == 0) AskScopeAtStart();   // scope first, at the start; the later scope step is then already filled
             var error = ValidateIntakeStep();
             if (error is not null) { IntakeError = error; return; }
             bool wasLast = _intake.IsLastStep;
@@ -290,6 +313,7 @@ namespace LogAnalyzer.UI.ViewModels
         private async Task Run()
         {
             if (!CollectFromThisStation && ImportFiles.Count == 0) { Log += "Alegeți colectarea de pe această stație sau adăugați probe de importat." + Environment.NewLine; return; }
+            if (BuildScope().MissingFields().Count > 0) AskScopeAtStart();
             var scope = BuildScope();
             var missingScope = scope.MissingFields();
             if (missingScope.Count > 0)

@@ -20,6 +20,7 @@ namespace LogAnalyzer.UI.Views
         {
             InitializeComponent();
             _form = ScopeForm.FromScope(current);
+            if (string.IsNullOrWhiteSpace(_form.Systems)) _form.Systems = Environment.MachineName;   // default: the station being checked
             if (afterEmergency)
                 Intro.Text = "Izolarea a pornit pe scopul provizoriu. Completați acum scopul cazului: de ce, pentru ce perioadă, pe ce sisteme, cine aprobă. Până la confirmare, rapoartele și exporturile poartă mențiunea „scop provizoriu, neconfirmat”.";
             LegalBox.ItemsSource = ScopeForm.LegalBases; NetworkBox.ItemsSource = ScopeForm.NetworkCategories; ClassBox.ItemsSource = ScopeForm.ClassificationLevels;

@@ -194,6 +194,9 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (_flow.Completed) { _flow.Restart(); Result = null; Comparison = null; ComparisonChanges.Clear(); RaiseFlow(); return; }
             bool wasLast = _flow.IsLastStep;
+            // The case scope (why, period, systems, approver, act) is asked once, at the start; the report step does not ask again when it is complete.
+            if (_flow.StepIndex == 0 && !LogAnalyzer.UI.Services.LiveCase.EnsureScopeAtStart() && LogAnalyzer.UI.Services.LiveCase.ScopePrompt is not null)
+                Status = "Scopul cazului nu a fost completat; veți fi întrebat din nou la salvarea raportului.";
             if (!_flow.Next()) { RaiseFlow(); return; }
             if (_flow.StepIndex == 2 && !wasLast) LoadProfileSections();
             RaiseFlow();

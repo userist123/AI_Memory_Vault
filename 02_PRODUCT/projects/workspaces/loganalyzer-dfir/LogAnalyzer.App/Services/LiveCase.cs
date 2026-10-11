@@ -65,6 +65,35 @@ namespace LogAnalyzer.UI.Services
         }
 
         /// <summary>
+        /// Asks for the case scope at the START of a station control or an investigation (not only when the PDF is requested). The dialog is pre-filled
+        /// from the station's last case on disk (or the case in memory) and defaults; the operator can edit it later by confirming a new scope.
+        /// Returns true when a complete scope is confirmed (already, or just now); once it is, <see cref="GetConfirmed"/> does not ask again at report time.
+        /// Creates no case: the LIVE case is created later by <see cref="GetConfirmed"/>. False in headless use (no prompt set) or when the operator closes the dialog.
+        /// </summary>
+        public static bool EnsureScopeAtStart()
+        {
+            if (ScopeConfirmed) return true;
+            if (ScopePrompt is null || _prompting) return false;
+            _prompting = true;
+            try
+            {
+                CaseScope? current;
+                lock (Gate) current = _case?.Info.Scope ?? ReadScopeOnDisk();
+                var scope = ScopePrompt.Invoke(current, false);
+                if (scope is null || !scope.IsConfirmed) return false;
+                Configure(scope);
+                return ScopeConfirmed;
+            }
+            finally { _prompting = false; }
+        }
+
+        /// <summary>The scope in force in this session (confirmed or not), or null when none was entered or stored.</summary>
+        public static CaseScope? CurrentScope { get { lock (Gate) return _case?.Info.Scope ?? _configured; } }
+
+        /// <summary>Forgets the scope entered in this session (the case on disk is untouched). For tests.</summary>
+        public static void ResetSessionScope() { lock (Gate) { _configured = null; _case = null; } }
+
+        /// <summary>
         /// Emergency containment may start on the provisional scope; this is called right after it: opens the scope dialog unless the scope is
         /// already confirmed. If the operator closes it, reports and exports keep carrying "scop provizoriu, neconfirmat".
         /// </summary>
