@@ -1,7 +1,10 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-11T14:40:00Z
-LATEST (2026-10-11): gap-analysis plan steps 0-6 all committed (last 56000bb9, 358/358 tests). Next: apply independent
-  review of phases 4-6, update the PC (D:\casa3d-render\update.ps1), verify via tunnel. Plan in .agents/tasks/todo.md.
+STATUS: IN_PROGRESS    UPDATED: 2026-10-11T20:15:00Z
+LATEST (2026-10-11 evening): second research round (02_PRODUCT/projects/Casa3D/research-2026-10-11/SYNTHESIS.md) → plan steps 1-9
+  all committed (last 3daa21d5, 381/381 tests): client delivery status, priced change orders, order/decide-by dates, handover pack,
+  trade checks (NKBA/I5/I7), tile setting-out, title blocks, site survey, time tracking. Independent security review applied (c50a05f8).
+  NEXT: step 10 (kitchen modules + worktop, wardrobe PAL cut list, GLB export); open design notes from review: client link shows
+  current draft orders (not shared revision); all active links share the same powers (no client-only role). PC update after each step.
 TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / userist123/AI_Memory_Vault_CODEX_READY#258    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
