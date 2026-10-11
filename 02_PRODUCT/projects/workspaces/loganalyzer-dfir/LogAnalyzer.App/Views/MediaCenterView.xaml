@@ -32,6 +32,8 @@
             </Border>
             <DockPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Content="Deschide registrul de transferuri" Command="{Binding OpenTransferRegisterCommand}" Margin="0,0,8,0"
+                            AutomationProperties.HelpText="Registrul de transferuri este o pagină separată; folosește mediile din această pagină."/>
                     <Button Content="Reîmprospătează" Command="{Binding RefreshCommand}" Margin="0,0,8,0"/>
                     <Button Command="{Binding ToggleLiveCommand}" AutomationProperties.Name="Pornește sau oprește supravegherea în timp real">
                         <Button.Style>
@@ -163,109 +165,6 @@
             <!-- 4. the register itself -->
             <TabItem Header="Registrul de medii">
                 <views:RegisterView DataContext="{Binding Register}"/>
-            </TabItem>
-
-            <!-- 5. data transfers: one form, almost everything filled in (owner 2026-10-11) -->
-            <TabItem Header="Registrul de transferuri">
-                <Grid Margin="8" DataContext="{Binding Transfer}">
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="4*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="5*"/></Grid.ColumnDefinitions>
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="0,0,12,0">
-                            <TextBlock FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"><Run Text="Transfer nou · "/><Run Text="{Binding NextNumber, Mode=OneWay}"/></TextBlock>
-                            <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,8"/>
-                            <ProgressBar IsIndeterminate="True" Height="4" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" Margin="0,0,0,6"/>
-
-                            <TextBlock Text="Direcție" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
-                            <ComboBox ItemsSource="{Binding Directions}" SelectedItem="{Binding Direction}" AutomationProperties.Name="Direcția transferului" Margin="0,2,0,8"/>
-
-                            <TextBlock Text="Mediul de stocare (conectat acum)" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
-                            <ComboBox ItemsSource="{Binding Media}" SelectedItem="{Binding SelectedMedium}" DisplayMemberPath="Device.DisplayName" AutomationProperties.Name="Mediul folosit" Margin="0,2,0,2"/>
-                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8">
-                                <Run Text="{Binding MediumType, Mode=OneWay}"/><Run Text=" · S/N "/><Run Text="{Binding MediumSerial, Mode=OneWay}"/><Run Text=" · nr. registru "/><Run Text="{Binding MediumRegistration, Mode=OneWay}"/>
-                            </TextBlock>
-
-                            <TextBlock Text="Fișierele transferate" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,2,0,4">
-                                <Button Content="Alege fișierele…" Command="{Binding ChooseFilesCommand}" Margin="0,0,8,0"/>
-                                <Button Content="Tot conținutul mediului" Command="{Binding WholeMediumCommand}"/>
-                            </StackPanel>
-                            <ItemsControl ItemsSource="{Binding Files}" MaxHeight="140" AutomationProperties.Name="Fișiere și amprente">
-                                <ItemsControl.Template><ControlTemplate><ScrollViewer VerticalScrollBarVisibility="Auto"><ItemsPresenter/></ScrollViewer></ControlTemplate></ItemsControl.Template>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Margin="0,0,0,4">
-                                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"><Run Text="{Binding Name, Mode=OneWay}"/> <Run Text="·"/> <Run Text="{Binding SizeText, Mode=OneWay}"/></TextBlock>
-                                            <TextBlock Text="{Binding Sha256}" FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <TextBlock Text="Clasificarea conținutului" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
-                            <ComboBox ItemsSource="{Binding Levels}" SelectedItem="{Binding Classification}" AutomationProperties.Name="Clasificarea conținutului" Margin="0,2,0,8"/>
-
-                            <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
-                                <StackPanel>
-                                    <TextBlock Text="Sursă (structura)" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
-                                    <ComboBox IsEditable="True" Text="{Binding Source, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding KnownDestinations}" AutomationProperties.Name="Sursa"/>
-                                    <TextBlock Text="Stația sursă" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
-                                    <TextBox Text="{Binding SourceStation, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Stația sursă"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Text="Destinație (structura) *" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
-                                    <ComboBox IsEditable="True" Text="{Binding Destination, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding KnownDestinations}" AutomationProperties.Name="Destinația"/>
-                                    <TextBlock Text="Stația destinație" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
-                                    <TextBox Text="{Binding DestinationStation, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Stația destinație"/>
-                                </StackPanel>
-                            </Grid>
-
-                            <Grid Margin="0,8,0,0">
-                                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
-                                <StackPanel>
-                                    <TextBlock Text="Persoana care face transferul" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
-                                    <TextBox Text="{Binding Person, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Persoana"/>
-                                    <TextBlock Text="Funcția" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
-                                    <TextBox Text="{Binding PersonFunction, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Funcția persoanei"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Text="Martor (regula celor patru ochi) *" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
-                                    <ComboBox IsEditable="True" Text="{Binding Witness, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding KnownWitnesses}" AutomationProperties.Name="Martorul"/>
-                                    <TextBlock Text="Aprobat de (opțional)" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
-                                    <TextBox Text="{Binding Approver, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Aprobat de"/>
-                                </StackPanel>
-                            </Grid>
-                            <TextBlock Text="Observații" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
-                            <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Observații la transfer"/>
-                            <Button Content="Înregistrează transferul" Command="{Binding RegisterCommand}" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Left" Margin="0,12,0,0"/>
-                        </StackPanel>
-                    </ScrollViewer>
-                    <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="Transparent"/>
-                    <DockPanel Grid.Column="2" Margin="8,0,0,0">
-                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
-                            <TextBlock Text="Raport din" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,6,0"/>
-                            <DatePicker SelectedDate="{Binding ReportFrom}" AutomationProperties.Name="Raport de la data" Margin="0,0,6,0"/>
-                            <TextBlock Text="până la" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,6,0"/>
-                            <DatePicker SelectedDate="{Binding ReportTo}" AutomationProperties.Name="Raport până la data" Margin="0,0,10,0"/>
-                            <Button Content="Raportul registrului (PDF)" Command="{Binding ReportCommand}"/>
-                        </StackPanel>
-                        <ItemsControl DockPanel.Dock="Bottom" ItemsSource="{Binding Problems}" AutomationProperties.Name="Probleme găsite în registrul de transferuri" Margin="0,6,0,0">
-                            <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource CriticalBrush}"/></DataTemplate></ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                        <DataGrid ItemsSource="{Binding Transfers}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" AutomationProperties.Name="Transferurile înregistrate">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Nr." Binding="{Binding RegistrationNumber}" Width="120"/>
-                                <DataGridTextColumn Header="Data" Binding="{Binding DateTime}" Width="115"/>
-                                <DataGridTextColumn Header="Direcție" Binding="{Binding Direction}" Width="70"/>
-                                <DataGridTextColumn Header="Clasificare" Binding="{Binding Classification}" Width="*"/>
-                                <DataGridTextColumn Header="Destinație" Binding="{Binding Destination}" Width="1.3*"/>
-                                <DataGridTextColumn Header="Mediu" Binding="{Binding MediumSerial}" Width="*"/>
-                                <DataGridTextColumn Header="Conținut" Binding="{Binding Content}" Width="1.6*"/>
-                                <DataGridTextColumn Header="Martor" Binding="{Binding Witness}" Width="*"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </DockPanel>
-                </Grid>
             </TabItem>
 
         </TabControl>

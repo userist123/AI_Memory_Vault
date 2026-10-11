@@ -151,6 +151,9 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>„Medii de stocare”: live inventory and supervision of every medium and connectable device (owner 2026-10-11).</summary>
         public MediaCenterViewModel MediaCenter { get; }
 
+        /// <summary>„Registrul de transferuri”: its own page; reads the media register and the media connected now from <see cref="MediaCenter"/>.</summary>
+        public TransferViewModel Transfer { get; }
+
         [RelayCommand] private void ShowMediaCenter() => SelectedTabIndex = LogAnalyzer.Core.Services.Edition.RoleProfiles.TabMediaRegister;
         public UsersRegisterViewModel UsersRegister { get; }
         public AuthViewModel Auth { get; }
@@ -605,6 +608,8 @@ namespace LogAnalyzer.UI.ViewModels
             ProcedureProfile = new ProcedureProfileViewModel();
             MediaRegister = new MediaRegisterViewModel();
             MediaCenter = new MediaCenterViewModel(MediaRegister);
+            Transfer = new TransferViewModel(MediaCenter);
+            MediaCenter.NavigateToTransferRegister = () => SelectedTabIndex = LogAnalyzer.Core.Services.Edition.RoleProfiles.TabTransferRegister;
             UsersRegister = new UsersRegisterViewModel();
             Auth = new AuthViewModel();
             _eventParser = eventParser;

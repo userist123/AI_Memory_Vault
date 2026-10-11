@@ -6,7 +6,7 @@ using Xunit;
 
 namespace LogAnalyzer.App.Tests;
 
-/// <summary>Owner 2026-10-11 ("the other app is faster"): main-window pages are built the first time they are shown, not all 23 at startup.</summary>
+/// <summary>Owner 2026-10-11 ("the other app is faster"): main-window pages are built the first time they are shown, not all 24 at startup.</summary>
 public sealed class LazyPageTests
 {
     private static DataTemplate Template() => new() { VisualTree = new FrameworkElementFactory(typeof(TextBlock)) };

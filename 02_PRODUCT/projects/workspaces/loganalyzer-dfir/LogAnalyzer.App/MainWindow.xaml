@@ -179,6 +179,7 @@
                             <RadioButton Content="Politici (import, aprobare, aplicare)" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="17"/>
                             <RadioButton Content="Profil de proceduri" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="18"/>
                             <RadioButton Content="Registru medii" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="19"/>
+                            <RadioButton Content="Registrul de transferuri" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="23"/>
                             <RadioButton Content="Registru utilizatori" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="20"/>
                             <RadioButton Content="Autentificare și conturi" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="21"/>
                             </StackPanel>
@@ -273,6 +274,8 @@
                 <TabItem><ctrl:LazyPage><DataTemplate><views:AuthView DataContext="{Binding Auth}"/></DataTemplate></ctrl:LazyPage></TabItem>
                 <!-- 22: Home (WP5) -->
                 <TabItem><ctrl:LazyPage><DataTemplate><views:HomeView DataContext="{Binding Home}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <!-- 23: Registrul de transferuri (own page; shares the media register with MediaCenter) -->
+                <TabItem><ctrl:LazyPage><DataTemplate><views:TransferRegisterView DataContext="{Binding Transfer}"/></DataTemplate></ctrl:LazyPage></TabItem>
                 </TabControl>
             </Grid>
         </Grid>
