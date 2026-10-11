@@ -40,11 +40,20 @@ namespace LogAnalyzer.UI
                 LogAnalyzer.Dfir.Auth.AuthSetupState.PasswordRecovery => SignInWindowMode.Recovery,
                 _ => SignInWindowMode.SignIn,
             };
-            File.AppendAllText(debugLogPath, $"Auth setup state: {AuthApp.Service.SetupState}\n");
+            Step(debugLogPath, $"Auth setup state: {AuthApp.Service.SetupState}\n");
             var window = new SignInWindow(mode);
             if (window.ShowDialog() != true || window.Session is null) return false;
             AuthApp.SetSession(window.Session);
             return true;
+        }
+
+        // Startup timing (owner 2026-10-11: "the other app feels faster"): every step of startup_debug.log carries the milliseconds since start,
+        // so slow steps are measured, not guessed. The sign-in and licence dialogs show as gaps that are the user's time, not the application's.
+        private static readonly System.Diagnostics.Stopwatch StartupClock = System.Diagnostics.Stopwatch.StartNew();
+        private static void Step(string path, string message)
+        {
+            try { File.AppendAllText(path, $"{StartupClock.ElapsedMilliseconds,7} ms  {message}"); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         }
 
         protected override void OnStartup(StartupEventArgs e)
@@ -70,14 +79,14 @@ namespace LogAnalyzer.UI
                 AppModeContext.Initialize(decision);
                 // Station role (WP18): from the same signed policy; CONTROL unless the policy says CSIRT. Never from the operator.
                 LogAnalyzer.Core.Services.Edition.StationRoleContext.Initialize(startup.Role);
-                File.AppendAllText(debugLogPath,
+                Step(debugLogPath,
                     $"Mode: {decision.Mode} (override: {decision.IsOverride}) — {decision.Reason}\n" +
                     $"Connectivity: {decision.Snapshot.State} via {decision.Snapshot.Source}: {string.Join("; ", decision.Snapshot.Details)}\n" +
                     $"Station role: {startup.Role.EffectiveRole} — {startup.Role.Summary}\n");
 
                 this.DispatcherUnhandledException += (sender, args) =>
                 {
-                    File.AppendAllText(debugLogPath, $"Dispatcher unhandled exception: {args.Exception}\n");
+                    Step(debugLogPath, $"Dispatcher unhandled exception: {args.Exception}\n");
                     MessageBox.Show($"Eroare critică internă:\n{args.Exception.Message}", "Crash", MessageBoxButton.OK, MessageBoxImage.Error);
                     args.Handled = true;
                 };
@@ -113,34 +122,34 @@ namespace LogAnalyzer.UI
                 services.AddTransient<MainWindow>();
                 services.AddTransient<ActivationWindow>();
 
-                File.AppendAllText(debugLogPath, "Building ServiceProvider...\n");
+                Step(debugLogPath, "Building ServiceProvider...\n");
                 ServiceProvider = services.BuildServiceProvider();
-                File.AppendAllText(debugLogPath, "ServiceProvider built. Initializing Database...\n");
+                Step(debugLogPath, "ServiceProvider built. Initializing Database...\n");
 
                 ServiceProvider.GetRequiredService<AuditLogService>().LogAction("station.role", LogAnalyzer.Core.Services.Edition.StationRoleContext.Current.Summary);
                 var dbService = ServiceProvider.GetRequiredService<IDatabaseService>();
                 dbService.InitializeDatabase();
-                File.AppendAllText(debugLogPath, "Database initialized.\n");
+                Step(debugLogPath, "Database initialized.\n");
 
                 this.ShutdownMode = ShutdownMode.OnMainWindowClose;
 
-                File.AppendAllText(debugLogPath, "Showing SplashWindow...\n");
+                Step(debugLogPath, "Showing SplashWindow...\n");
                 splash = new SplashWindow();
                 splash.Show();
-                File.AppendAllText(debugLogPath, "SplashWindow shown.\n");
+                Step(debugLogPath, "SplashWindow shown.\n");
 
                 // 2. Verificăm licența
                 var licenseService = ServiceProvider.GetRequiredService<LogAnalyzer.Core.Services.LicenseService>();
-                File.AppendAllText(debugLogPath, $"Verifying license... (IsActivated: {licenseService.IsActivated()})\n");
+                Step(debugLogPath, $"Verifying license... (IsActivated: {licenseService.IsActivated()})\n");
                 if (!licenseService.IsActivated())
                 {
-                    File.AppendAllText(debugLogPath, "License is not activated. Showing ActivationWindow...\n");
+                    Step(debugLogPath, "License is not activated. Showing ActivationWindow...\n");
                     var activationWindow = ServiceProvider.GetRequiredService<ActivationWindow>();
                     bool? activated = activationWindow.ShowDialog();
-                    File.AppendAllText(debugLogPath, $"ActivationWindow ShowDialog returned: {activated}\n");
+                    Step(debugLogPath, $"ActivationWindow ShowDialog returned: {activated}\n");
                     if (activated != true)
                     {
-                        File.AppendAllText(debugLogPath, "Shutdown called due to license failure.\n");
+                        Step(debugLogPath, "Shutdown called due to license failure.\n");
                         splash.Close();
                         this.Shutdown();
                         return;
@@ -153,7 +162,7 @@ namespace LogAnalyzer.UI
                 var signedIn = SignInBeforeMainWindow(debugLogPath);
                 if (!signedIn)
                 {
-                    File.AppendAllText(debugLogPath, "Sign-in cancelled; shutting down.\n");
+                    Step(debugLogPath, "Sign-in cancelled; shutting down.\n");
                     splash.Close();
                     this.Shutdown();
                     return;
@@ -164,10 +173,11 @@ namespace LogAnalyzer.UI
                     AuthApp.Service.AuditSessionContext(openedSession, LogAnalyzer.Core.Services.Edition.StationRoleContext.Current.Summary);
 
                 // 3. Afișăm fereastra principală
-                File.AppendAllText(debugLogPath, "Resolving MainWindow...\n");
+                Step(debugLogPath, "Resolving MainWindow...\n");
                 var mainWindow = ServiceProvider.GetRequiredService<MainWindow>();
                 this.MainWindow = mainWindow;
-                File.AppendAllText(debugLogPath, "Showing MainWindow...\n");
+                Step(debugLogPath, "Showing MainWindow...\n");
+                mainWindow.ContentRendered += (_, _) => Step(debugLogPath, "MainWindow first frame rendered.\n");
                 mainWindow.Show();
                 new SessionGuard(mainWindow).Start();      // lock on inactivity / card removal (card sessions only)
 
@@ -175,9 +185,9 @@ namespace LogAnalyzer.UI
                 var tabArg = Array.Find(e.Args, a => a.StartsWith("--tab=", StringComparison.OrdinalIgnoreCase));
                 if (tabArg is not null && int.TryParse(tabArg[6..], out var tab) && mainWindow.DataContext is MainViewModel mvm)
                     mvm.SelectedTabIndex = tab;
-                File.AppendAllText(debugLogPath, "MainWindow shown. Closing SplashWindow...\n");
+                Step(debugLogPath, "MainWindow shown. Closing SplashWindow...\n");
                 splash.Close();
-                File.AppendAllText(debugLogPath, "Startup complete.\n");
+                Step(debugLogPath, "Startup complete.\n");
             }
             catch (Exception ex)
             {
