@@ -11,6 +11,13 @@ namespace LogAnalyzer.Dfir.Analysis;
 /// </summary>
 public static class Correlation
 {
+    /// <summary>
+    /// A program in a user-writable folder is linked to a grave finding about the same folder only when both lie within this
+    /// interval of each other (inclusive). User folders such as %TEMP% collect unrelated files for months; without a time limit
+    /// any program there would be "linked" to any script there.
+    /// </summary>
+    public static readonly TimeSpan SharedFolderCorrelationWindow = TimeSpan.FromHours(24);
+
     private static readonly string[] UserWritableMarkers =
         [@"\programdata\", @"\appdata\", @"\temp\", @"\downloads\", @"\users\public\", @"\windows\temp\", @"\$recycle.bin\"];
 
@@ -565,22 +572,35 @@ public static class Correlation
         static DateTimeOffset? T(Finding x) => x.FirstSeenUtc ?? x.LastSeenUtc;
         var strong = f.Where(x => x.Severity >= Severity.High && T(x) is not null).ToList();
         var correlated = new HashSet<Finding>();
+        // The artifact behind each entry: Prefetch and BAM record a run, Amcache only that the program was present.
+        static string ExecSource(Finding x) => x.SupportingEvidence.FirstOrDefault()?.Description is { Length: > 0 } d ? d : "?";
+        static bool Ran(Finding x) => x.SemanticType == SemanticType.Execution;
         foreach (var x in userPathExec)
         {
             var dir = WinPath.GetDirectoryName(Normalize(x.File)) ?? "";
             var touching = strong.Where(s =>
-                (s.File.Length > 0 && dir.Length > 3 && Normalize(s.File).StartsWith(dir, StringComparison.OrdinalIgnoreCase)) ||
+                // A shared folder links two findings only when they are also close in time: %TEMP% holds unrelated files for months.
+                (s.File.Length > 0 && dir.Length > 3 && Normalize(s.File).StartsWith(dir, StringComparison.OrdinalIgnoreCase)
+                 && T(s) is { } sf && T(x) is { } xf && (sf - xf).Duration() <= SharedFolderCorrelationWindow) ||
                 (s.Process.Length > 0 && s.Process.Equals(x.Process, StringComparison.OrdinalIgnoreCase)) ||
                 (s.RuleId is "DEF-DETECTION" or "EXEC-SCRIPT-VIA-LOLBIN" or "NET-LOLBIN-TRAFFIC" or "PERSIST-SERVICE-USERPATH" or "PERSIST-TASK" &&
                  T(s) is { } st && T(x) is { } xt && (st - xt).Duration() <= TimeSpan.FromMinutes(10))).ToList();
             if (touching.Count == 0) continue;
+            // The window covers the partners too: their evidence is part of this finding and must lie inside the window it claims.
+            var span = touching.Select(s => (s.FirstSeenUtc ?? s.LastSeenUtc, s.LastSeenUtc ?? s.FirstSeenUtc)).Append((T(x), x.LastSeenUtc ?? T(x)))
+                               .SelectMany(p => new[] { p.Item1, p.Item2 }).Where(t => t is not null).Select(t => t!.Value).ToList();
+            var src = ExecSource(x);
             f.Add(new Finding
             {
-                FindingId = Id(), RuleId = "EXEC-USERPATH-CORRELATED", Title = $"Program rulat din locație scriabilă, legat de alte constatări: {x.Process}",
+                FindingId = Id(), RuleId = "EXEC-USERPATH-CORRELATED",
+                Title = Ran(x) ? $"Program rulat din locație scriabilă, legat de alte constatări: {x.Process}"
+                               : $"Program prezent ({src}) în locație scriabilă, legat de alte constatări: {x.Process}",
                 Severity = Severity.High, Category = "Execution", Classification = Classification.Correlated, Confidence = Confidence.Medium,
-                LastSeenUtc = x.LastSeenUtc, File = x.File, Process = x.Process,
+                FirstSeenUtc = span.Count > 0 ? span.Min() : null, LastSeenUtc = span.Count > 0 ? span.Max() : x.LastSeenUtc, File = x.File, Process = x.Process,
                 Description = x.Description + " Legături: " + string.Join("; ", touching.Take(5).Select(s => s.Title)),
-                ClassificationReason = "Execuție dovedită (Prefetch) apropiată în timp sau în cale de alte constatări grave.",
+                ClassificationReason = Ran(x)
+                    ? $"Execuție dovedită ({src}) apropiată în timp sau în cale de alte constatări grave."
+                    : $"Prezența programului ({src}, fără dovadă de execuție) apropiată în timp sau în cale de alte constatări grave.",
                 SupportingEvidence = x.SupportingEvidence.Concat(touching.SelectMany(s => s.SupportingEvidence.Take(2))).ToList(),
                 AlternativeExplanations = x.AlternativeExplanations,
             });
@@ -591,14 +611,20 @@ public static class Correlation
             f.Add(new Finding
             {
                 FindingId = Id(), RuleId = "EXEC-USERPATH",
-                SemanticType = rest.All(x => x.SemanticType == SemanticType.Execution) ? SemanticType.Execution : SemanticType.Presence,
-                Title = rest.All(x => x.SemanticType == SemanticType.Execution)
-                    ? $"{rest.Count} programe au rulat din locații scriabile (fără alte semnale)"
-                    : $"{rest.Count} programe au rulat sau sunt doar prezente în locații scriabile (fără alte semnale)",
+                SemanticType = rest.All(Ran) ? SemanticType.Execution : SemanticType.Presence,
+                Title = rest.All(Ran) ? $"{rest.Count} programe au rulat din locații scriabile (fără alte semnale)"
+                      : rest.Any(Ran) ? $"{rest.Count} programe au rulat sau sunt doar prezente în locații scriabile (fără alte semnale)"
+                      : $"{rest.Count} programe prezente în locații scriabile, fără dovadă de execuție (fără alte semnale)",
                 Severity = Severity.Low, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Low,
                 FirstSeenUtc = rest.Min(T), LastSeenUtc = rest.Max(T),
-                Description = string.Join("; ", rest.OrderByDescending(T).Take(60).Select(x => $"{x.Process} ({T(x):yyyy-MM-dd HH:mm})")),
-                ClassificationReason = "Execuții dovedite de Prefetch; în sine frecvente pentru instalatoare și aplicații per utilizator.",
+                Description = string.Join("; ", rest.OrderByDescending(T).Take(60).Select(x => $"{x.Process} ({T(x):yyyy-MM-dd HH:mm}{(Ran(x) ? "" : $", doar prezent ({ExecSource(x)})")})")),
+                ClassificationReason = string.Join("; ", new[]
+                {
+                    rest.Count(Ran) is var ran and > 0 ? $"execuție dovedită pentru {ran} ({string.Join("/", rest.Where(Ran).Select(ExecSource).Distinct())})" : "",
+                    rest.Count(x => !Ran(x)) is var only and > 0 ? $"doar prezență, fără dovadă de execuție, pentru {only} ({string.Join("/", rest.Where(x => !Ran(x)).Select(ExecSource).Distinct())})" : "",
+                }.Where(s => s.Length > 0)) is var basis && basis.Length > 0
+                    ? char.ToUpperInvariant(basis[0]) + basis[1..] + "; în sine frecvente pentru instalatoare și aplicații per utilizator."
+                    : "În sine frecvente pentru instalatoare și aplicații per utilizator.",
                 SupportingEvidence = rest.SelectMany(x => x.SupportingEvidence).Take(60).ToList(),
             });
 
@@ -694,6 +720,24 @@ public static class Correlation
         var lines = clears.OrderBy(e => e.Time.Utc).Take(15).Select(e =>
             $"{e.Time.Utc:yyyy-MM-dd HH:mm} {e.Source[9..]} {e.EventId} {(e.EventId == "1102" ? "de " + F(e, "SubjectUserName") : F(e, "Channel"))}").ToList();
         var verdict = assessed.Select(a => a.Reason).Distinct().ToList();
+        // Only Security 1100 records, each next to a System 1074/6006/6005: the logging service stopped because Windows shut down.
+        // Nothing was cleared, so the finding must not say so (no "logs cleared" title, no T1070.001, no "activity before the clear").
+        var stops = clears.Where(e => e.EventId == "1100").ToList();
+        if (stops.Count == clears.Count && stops.All(e => e.Time.Utc is { } t && LogClearAssessment.ShutdownPair(t, systemEvents) is not null))
+            return new Finding
+            {
+                FindingId = id, RuleId = "LOG-TAMPER", Title = "Serviciul de jurnalizare s-a oprit la oprirea sistemului (normal)",
+                Severity = Severity.Info, Category = "Defense Evasion",
+                Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "",
+                FirstSeenUtc = clears.Min(e => e.Time.Utc), LastSeenUtc = clears.Max(e => e.Time.Utc),
+                Description = string.Join("; ", lines) + (verdict.Count > 0 ? ". Evaluare: " + string.Join(" ", verdict.Take(5)) : "") +
+                              ". Niciun jurnal nu a fost golit (nu există Security 1102 / System 104).",
+                ClassificationReason = "Doar Security 1100, fiecare lângă o oprire/repornire a sistemului (System 1074/6006/6005 în ±10 min): Windows oprește serviciul de jurnalizare la fiecare oprire.",
+                SupportingEvidence = clears.Take(30).Select(e => new EvidenceRef(e.EvidenceId, e.Locator, $"{e.Source} {e.EventId}")).ToList(),
+                MissingEvidence = ["Nimic din jurnal nu lipsește din cauza acestei opriri: jurnalizarea reia la pornirea următoare."],
+                RecommendedNextSteps = ["Nicio acțiune, dacă opririle corespund unor reporniri cunoscute ale stației."],
+                AlternativeExplanations = [],
+            };
         return new Finding
         {
             FindingId = id, RuleId = "LOG-TAMPER", Title = "Jurnale șterse, serviciul de jurnalizare oprit sau politica de audit modificată",

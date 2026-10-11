@@ -154,10 +154,8 @@ public static class AntiForensics
         // TEMPORAL check of the verification layer uses for its unreliable-time windows.
         {
             var tm = TimeManipulation.Analyze(events);
-            var manual = events.Where(e => Ev(e, Security, "4616") && !F(e, "ProcessName").EndsWith(@"\svchost.exe", StringComparison.OrdinalIgnoreCase)
-                                        || e.Source.Equals(System, StringComparison.OrdinalIgnoreCase) && e.EventId == "1"
-                                           && e.Provider.Equals("Microsoft-Windows-Kernel-General", StringComparison.OrdinalIgnoreCase)
-                                           && F(e, "Reason") == "1" && !F(e, "ProcessName").EndsWith(@"\svchost.exe", StringComparison.OrdinalIgnoreCase)).ToList();
+            // One filter for AF05 and for TimeReliability, so the report never says the clock was changed while AF05 says it was not.
+            var manual = events.Where(TimeReliability.IsClockChange).ToList();
             string Mag(TimelineEvent e) => tm.Jumps.FirstOrDefault(j => j.Evidence.EvidenceId == e.EvidenceId && j.Evidence.Locator == e.Locator && j.EventId == e.EventId) is { Magnitude.Length: > 0 } j ? $" [{j.Magnitude}]" : "";
             string zones = tm.ZoneChanges.Count == 0 ? "" : $" Schimbări de fus orar: {tm.ZoneChanges.Count} ({string.Join("; ", tm.ZoneChanges.Take(5).Select(z => $"{z.TimeUtc:yyyy-MM-dd HH:mm} UTC {z.Detail}"))}); nu sunt, singure, manipulare.";
             string inversions = tm.Inversions.Count == 0 ? "" : $" Ordinea înregistrărilor contrazice ora: {tm.Inversions.Count} ({string.Join("; ", tm.Inversions.Take(5).Select(v => $"{v.Source["EventLog:".Length..]} RecordID {v.PreviousRecordId} → {v.RecordId}, ora înapoi cu {TimeManipulation.Human(v.Back)}"))}).";
