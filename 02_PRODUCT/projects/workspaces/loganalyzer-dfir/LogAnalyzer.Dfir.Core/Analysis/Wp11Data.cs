@@ -96,8 +96,25 @@ public sealed class VssLists
     public List<string> ImpactDetectionKeywords { get; set; } = [];
 }
 
+public sealed class PowerShellKeyword
+{
+    public string Text { get; set; } = "";
+    public int Weight { get; set; } = 1;
+    /// <summary>MITRE technique when this keyword is the strongest in a block; empty = T1059.001.</summary>
+    public string Mitre { get; set; } = "";
+}
+
+/// <summary>PS-SUSPICIOUS: weighted keywords searched (case-insensitive substring) in one script block (4104).</summary>
+public sealed class PowerShellLists
+{
+    public int MinScore { get; set; } = 2;
+    public int HighScore { get; set; } = 5;
+    public List<PowerShellKeyword> Keywords { get; set; } = [];
+}
+
 public sealed class RuleLists
 {
+    public PowerShellLists Powershell { get; set; } = new();
     public PrivilegedGroupLists PrivilegedGroups { get; set; } = new();
     public List<string> ExecutableExtensions { get; set; } = [];
     public List<string> SharePipesOfInterest { get; set; } = [];

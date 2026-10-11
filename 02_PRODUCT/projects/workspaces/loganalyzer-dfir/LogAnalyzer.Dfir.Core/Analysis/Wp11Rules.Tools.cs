@@ -79,7 +79,7 @@ public static partial class Wp11Rules
             {
                 FindingId = c.NextId(), RuleId = executed ? "REMOTE-TOOL-EXECUTED" : "REMOTE-TOOL-PRESENT",
                 Title = $"Unealtă de acces la distanță {(executed ? "rulată" : "prezentă")}: {tool.Name}" + (approved is not null ? " (aprobat în profil)" : ""),
-                Severity = approved is not null ? Severity.Info : executed ? Severity.Medium : Severity.Low,
+                Severity = approved is not null ? Severity.Info : executed ? Severity.High : Severity.Low,
                 Category = "Command and Control", Classification = Classification.Direct, Confidence = executed ? Confidence.High : Confidence.Medium, MitreTechniqueId = "T1219",
                 FirstSeenUtc = times.FirstOrDefault(), LastSeenUtc = times.LastOrDefault(), Process = tool.Executables.FirstOrDefault() ?? "", File = paths.FirstOrDefault() ?? "",
                 Description = $"{tool.Name}: {kinds}; {Time(times.FirstOrDefault())}" + (times.Count > 1 ? $" – {Time(times.LastOrDefault())}" : "") + "." +

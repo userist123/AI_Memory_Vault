@@ -14,6 +14,30 @@
     "benignSuffixes": ["microsoft.com", "windowsupdate.com", "msftconnecttest.com", "msftncsi.com", "digicert.com", "microsoftonline.com"],
     "highInterestLolbins": ["mshta.exe", "regsvr32.exe", "rundll32.exe", "certutil.exe", "cmstp.exe", "msbuild.exe", "installutil.exe", "regasm.exe", "regsvcs.exe", "wscript.exe", "cscript.exe", "odbcconf.exe", "msxsl.exe", "forfiles.exe"]
   },
+  "powershell": {
+    "_comment": "PS-SUSPICIOUS: case-insensitive substrings in one 4104 script block; the block is a finding when its summed weight (each keyword counted once) reaches minScore (High from highScore), or when Windows itself marked it Warning (Level 3). -ExecutionPolicy Bypass alone is deliberately not listed (deployment tools use it).",
+    "minScore": 2, "highScore": 5,
+    "keywords": [
+      { "text": "AmsiUtils", "weight": 5, "mitre": "T1562.001" },
+      { "text": "amsiInitFailed", "weight": 5, "mitre": "T1562.001" },
+      { "text": "AmsiScanBuffer", "weight": 5, "mitre": "T1562.001" },
+      { "text": "Reflection.Assembly]::Load", "weight": 3 },
+      { "text": "VirtualAlloc", "weight": 3 },
+      { "text": "-w hidden", "weight": 2 },
+      { "text": "-windowstyle hidden", "weight": 2 },
+      { "text": "iex (", "weight": 2 },
+      { "text": "iex(", "weight": 2 },
+      { "text": "FromBase64String", "weight": 2 },
+      { "text": "DownloadString", "weight": 2 },
+      { "text": "DownloadFile", "weight": 2 },
+      { "text": "Net.WebClient", "weight": 2 },
+      { "text": "Invoke-Expression", "weight": 2 },
+      { "text": "-EncodedCommand", "weight": 2 },
+      { "text": "-enc ", "weight": 2 },
+      { "text": "Add-MpPreference", "weight": 3, "mitre": "T1562.001" },
+      { "text": "Set-MpPreference -Disable", "weight": 3, "mitre": "T1562.001" }
+    ]
+  },
   "vss": {
     "_comment": "kind: delete = removes snapshots; resize = shrinks the snapshot storage, which purges snapshots (weaker).",
     "commandPatterns": [
@@ -21,6 +45,9 @@
       { "kind": "delete", "tool": "wmic", "regex": "wmic(\\.exe)?\\s+.*shadowcopy\\s+.*delete" },
       { "kind": "delete", "tool": "diskshadow", "regex": "diskshadow(\\.exe)?\\b.*delete\\s+shadows" },
       { "kind": "delete", "tool": "wmi-cim", "regex": "win32_shadowcopy.*(\\.delete\\(|remove-wmiobject|remove-ciminstance)|(\\.delete\\(|remove-wmiobject|remove-ciminstance).*win32_shadowcopy" },
+      { "kind": "inhibit", "tool": "wbadmin", "regex": "wbadmin(\\.exe)?\\s+delete\\s+(catalog|systemstatebackup)" },
+      { "kind": "inhibit", "tool": "bcdedit", "regex": "bcdedit(\\.exe)?\\s+.*recoveryenabled\\s+(no|off|0|false)\\b" },
+      { "kind": "inhibit", "tool": "bcdedit", "regex": "bcdedit(\\.exe)?\\s+.*bootstatuspolicy\\s+ignoreallfailures" },
       { "kind": "resize", "tool": "vssadmin", "regex": "vssadmin(\\.exe)?\\s+resize\\s+shadowstorage" }
     ],
     "impactMitreIds": ["T1486", "T1485"],

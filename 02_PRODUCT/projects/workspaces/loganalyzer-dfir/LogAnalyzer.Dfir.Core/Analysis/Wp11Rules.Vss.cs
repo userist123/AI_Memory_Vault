@@ -42,7 +42,8 @@ public static partial class Wp11Rules
         {
             var ordered = hits.OrderBy(h => T(h.Event)).ToList();
             var first = T(ordered[0].Event); var last = T(ordered[^1].Event);
-            bool anyDelete = hits.Any(h => h.Pattern.Kind == "delete");
+            bool anyDelete = hits.Any(h => h.Pattern.Kind != "resize");   // "inhibit" (wbadmin/bcdedit, T1490) weighs like a delete
+            bool vssOnly = hits.All(h => h.Pattern.Tool is "vssadmin" or "wmic" or "diskshadow" or "wmi-cim");
             var near = sysEvents.Where(e => first is { } f && T(e) is { } t && t >= f - c.Options.ImpactWindow && t <= (last ?? f) + c.Options.ImpactWindow).ToList();
             var impact = (first is null ? [] : c.Existing.Concat(o).Where(f => IsImpactFinding(f, lists) && (f.FirstSeenUtc ?? f.LastSeenUtc) is { } ft && (ft - first.Value).Duration() <= c.Options.ImpactWindow)).ToList();
             var sev = !anyDelete ? Severity.Low : impact.Count > 0 ? Severity.High : Severity.Medium;
@@ -50,7 +51,7 @@ public static partial class Wp11Rules
             o.Add(new Finding
             {
                 FindingId = c.NextId(), RuleId = "VSS-SNAPSHOT-DELETED",
-                Title = anyDelete ? "Comandă de ștergere a copiilor shadow (VSS) înregistrată" : "Comandă de reducere a spațiului copiilor shadow (VSS) înregistrată",
+                Title = anyDelete ? vssOnly ? "Comandă de ștergere a copiilor shadow (VSS) înregistrată" : "Comandă de ștergere a copiilor de rezervă sau de dezactivare a recuperării sistemului înregistrată" : "Comandă de reducere a spațiului copiilor shadow (VSS) înregistrată",
                 Severity = sev, Category = "Impact", Classification = impact.Count > 0 ? Classification.Correlated : Classification.Direct,
                 Confidence = impact.Count > 0 ? Confidence.High : Confidence.Medium, MitreTechniqueId = "T1490",
                 FirstSeenUtc = first, LastSeenUtc = last, User = F(ordered[0].Event, "SubjectUserName", "User"), Process = ordered[0].Event.Process,

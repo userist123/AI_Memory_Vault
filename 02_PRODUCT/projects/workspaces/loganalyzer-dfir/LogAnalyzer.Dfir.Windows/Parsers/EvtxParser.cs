@@ -193,6 +193,8 @@ public sealed class EvtxParser : EvidenceParserBase
                 i++;
             }
         }
+        // System/Level (1 critical ... 3 warning ...) is kept under a hidden key: Windows marks suspicious PowerShell script blocks as Warning.
+        if (doc.Root?.Element(ns + "System")?.Element(ns + "Level")?.Value is { Length: > 0 } level) fields.TryAdd("_xLevel", level);
         var user = doc.Root?.Element(ns + "UserData");
         if (user is not null)
             foreach (var leaf in user.Descendants().Where(e => !e.HasElements))
