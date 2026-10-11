@@ -65,4 +65,6 @@ create table if not exists change_orders(id uuid primary key default gen_random_
   title text not null, body text not null default '', amount numeric(12,2) not null, days int not null default 0, status text not null default 'draft',
   created_at timestamptz not null default now(), sent_at timestamptz, decided_at timestamptz, decided_by text, client_note text, unique(project_id, number));
 create index if not exists change_orders_project on change_orders(project_id, number);
+create table if not exists surveys(project_id uuid not null references projects(id) on delete cascade, room_id text not null, data jsonb not null,
+  measured_at timestamptz not null default now(), primary key(project_id, room_id));
 `;
