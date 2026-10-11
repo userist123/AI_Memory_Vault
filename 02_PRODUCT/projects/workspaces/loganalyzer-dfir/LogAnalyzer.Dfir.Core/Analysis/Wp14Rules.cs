@@ -34,6 +34,7 @@ public static partial class Wp14Rules
         var c = new Ctx(events, nextId, input, input.Data ?? Wp14Data.Default);
         var found = new List<Finding>();
         Media(c, found);
+        MediaUsageFindings(c, found);
         Optical(c, found);
         AirGap(c, found);
         return found;

@@ -36,6 +36,8 @@ public sealed record DeviceRecord
     public string Sources { get; init; } = "";
     /// <summary>Every connection Windows logged (Partition/Diagnostic 1006), newest first; Windows' own device record keeps only the last one.</summary>
     public IReadOnlyList<DateTimeOffset> Connections { get; init; } = [];
+    /// <summary>Who used this medium at each connection (live: profiles' MountPoints2 only; logon sessions are not read here). Empty = not computed.</summary>
+    public IReadOnlyList<ConnectionUsage> Usage { get; init; } = [];
     public string ConnectionsText => Connections.Count == 0 ? "" : $"{Connections.Count} conectări în jurnal; ultimele: {string.Join(", ", Connections.Take(5).Select(c => c.ToLocalTime().ToString("yyyy-MM-dd HH:mm")))}";
 
     public string KindText => DeviceText.Kind(Kind);
@@ -214,11 +216,28 @@ public static class DeviceDetails
             new("Ultima conectare", When(d.LastConnectedUtc)),
             new("Ultima deconectare", When(d.LastRemovedUtc), "Windows păstrează în fișa dispozitivului doar ULTIMA conectare; istoricul de mai jos vine din jurnal și are o durată limitată."),
             new("Istoric conectări", d.ConnectionsText.Length > 0 ? d.ConnectionsText : "nu există în jurnal"),
+        };
+        foreach (var u in d.Usage.Take(6))
+            list.Add(new($"Cine a folosit (conectare {u.Connection.ConnectUtc.ToLocalTime():yyyy-MM-dd HH:mm})",
+                UsageWord(u.Status) + (u.Accounts.Count > 0 ? ": " + string.Join(", ", u.Accounts) : ""), u.Reason));
+        if (d.Usage.Count > 0)
+            list.Add(new("Sesiuni de logon", "nu sunt citite în inventarul live",
+                "Atribuirea după sesiunea de logon (Security 4624/4634) se face într-un caz analizat, din jurnalul de securitate, nu din starea stației."));
+        list.AddRange(new DeviceDetail[]
+        {
             new("Surse", d.Sources),
             new("Identificator Windows (tehnic)", d.InstanceId),
-        };
+        });
         return list;
     }
+
+    private static string UsageWord(UsageStatus s) => s switch
+    {
+        UsageStatus.Direct => "profil identificat",
+        UsageStatus.Inferred => "presupunere (o sesiune deschisă)",
+        UsageStatus.Ambiguous => "ambiguu: mai mulți candidați",
+        _ => "nu se poate atribui",
+    };
 
     private static string Or(string s) => s.Length > 0 ? s : "necunoscut";
 

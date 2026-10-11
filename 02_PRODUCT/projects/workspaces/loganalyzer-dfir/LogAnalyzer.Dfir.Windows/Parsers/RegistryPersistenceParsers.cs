@@ -129,6 +129,43 @@ public sealed class UserHiveParser : EvidenceParserBase
         foreach (var key in new[] { @"Software\Microsoft\Windows\CurrentVersion\Run", @"Software\Microsoft\Windows\CurrentVersion\RunOnce",
                                     @"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run" })
             Hive.RunKey(reg, "NTUSER", key, item, sink, result);
+
+        EmitMountPoints2(reg, item, sink, result, ct);
+    }
+
+    /// <summary>
+    /// MountPoints2 volume GUIDs: the volumes this profile mounted. The key's last write is the profile's last use of that volume. Network shares
+    /// (##server#share) are not emitted here: the device inventory reads them. The profile name is taken from the original path (…\Users\&lt;name&gt;\NTUSER.DAT).
+    /// </summary>
+    internal const string MountPoints2Key = @"Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2";
+
+    internal static void EmitMountPoints2(RawRegistry reg, EvidenceItem item, IEventSink sink, ParseResult result, CancellationToken ct)
+    {
+        var account = ProfileName(item.OriginalPath);
+        foreach (var k in reg.SubKeys(MountPoints2Key))
+        {
+            ct.ThrowIfCancellationRequested();
+            var leaf = k.Path[(k.Path.LastIndexOf('\\') + 1)..];
+            if (!(leaf.StartsWith('{') && leaf.EndsWith('}'))) continue;
+            var guid = leaf.ToUpperInvariant();
+            sink.Add(new TimelineEvent
+            {
+                Time = Hive.KeyTime(k), TimeSemantics = "MountPoints2 key last written (the profile's last use of this volume)",
+                Source = "MountPoints2", EvidenceId = item.EvidenceId, Path = "", Process = "",
+                Summary = $"Profilul „{account}” a montat volumul {guid} (MountPoints2)",
+                TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.Medium,
+                Locator = $@"NTUSER\{MountPoints2Key}\{leaf}",
+                Fields = { ["Account"] = account, ["VolumeGuid"] = guid },
+            });
+            result.Records++;
+        }
+    }
+
+    /// <summary>The profile folder name from a path such as C:\Users\&lt;name&gt;\NTUSER.DAT; "profil necunoscut" when the path has no such folder.</summary>
+    internal static string ProfileName(string originalPath)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(originalPath ?? "", @"[\\/]Users[\\/]([^\\/]+)[\\/]", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        return m.Success ? m.Groups[1].Value : "profil necunoscut";
     }
 
     public static string Rot13(string s) => string.Create(s.Length, s, (span, src) =>

@@ -56,6 +56,7 @@ public static class DeviceInventory
             };
         }
         devices.AddRange(NetworkDrives(problems));
+        devices = AttachUsage(devices, problems);
         return new(devices.OrderByDescending(d => d.ConnectedNow).ThenBy(d => d.Kind).ThenByDescending(d => d.LastConnectedUtc ?? d.FirstConnectedUtc ?? DateTimeOffset.MinValue).ToList(), problems);
     }
 
@@ -295,6 +296,53 @@ public static class DeviceInventory
             problems.Add("Starea BitLocker a unităților nu a putut fi citită (necesită administrator).");
         }
         return r;
+    }
+
+    // ---- who used each medium: MountPoints2 of every loaded profile against MountedDevices, arrivals from 1006 -----------------------
+
+    /// <summary>
+    /// Attributes each removable medium's connections (live station) with <see cref="MediaUsageRules"/>. Logon sessions are not read here,
+    /// so a medium with no profile that mounted it is "not attributable" in the live view; the case analysis reads the logon log.
+    /// </summary>
+    internal static List<DeviceRecord> AttachUsage(List<DeviceRecord> devices, List<string> problems)
+    {
+        if (!devices.Any(d => d.Serial.Length > 0 && d.Connections.Count > 0 && DeviceRules.TrackedByRegister(d.Kind))) return devices;
+        var volumes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (name, serial) in MountedDevices())
+            if (name.StartsWith(@"\??\Volume{", StringComparison.OrdinalIgnoreCase)) volumes[name[4..].ToUpperInvariant()] = LogAnalyzer.Dfir.Registers.MediaRegister.NormalizeSerial(serial);
+        var mounts = LiveMounts(problems);
+        return devices.Select(d => d.Serial.Length == 0 || d.Connections.Count == 0 || !DeviceRules.TrackedByRegister(d.Kind) ? d : d with
+        {
+            Usage = MediaUsageRules.Attribute(d.Serial, d.Connections.OrderBy(t => t).Select(t => new MediumConnection(t, null)).ToList(), volumes, mounts, []),
+        }).ToList();
+    }
+
+    /// <summary>MountPoints2 volume GUIDs of every loaded profile. The registry API gives no last-write time here, so the time is left empty.</summary>
+    private static List<VolumeMount> LiveMounts(List<string> problems)
+    {
+        var list = new List<VolumeMount>();
+        try
+        {
+            foreach (var sid in Registry.Users.GetSubKeyNames().Where(s => s.StartsWith("S-1-5-21-") && !s.EndsWith("_Classes")))
+            {
+                using var mp = Registry.Users.OpenSubKey(sid + @"\Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2");
+                if (mp is null) continue;
+                var account = AccountName(sid);
+                foreach (var guid in mp.GetSubKeyNames().Where(n => n.StartsWith('{') && n.EndsWith('}')))
+                    list.Add(new VolumeMount(account, guid.ToUpperInvariant(), null));
+            }
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException)
+        {
+            problems.Add("Registrul profilurilor (MountPoints2) nu a putut fi citit: " + ex.Message);
+        }
+        return list;
+    }
+
+    private static string AccountName(string sid)
+    {
+        try { return new System.Security.Principal.SecurityIdentifier(sid).Translate(typeof(System.Security.Principal.NTAccount)).Value; }
+        catch (Exception) { return sid; }   // the SID stays visible when it cannot be translated
     }
 
     // ---- network drives: mapped now (Network\<letter>) and used before (MountPoints2 ##server#share) per loaded user --------------------

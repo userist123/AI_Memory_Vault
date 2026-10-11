@@ -59,6 +59,7 @@ public sealed class UsbDevicesParser : EvidenceParserBase
         var mounted = reg.OpenKey("MountedDevices");
         var letters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var mountedDevices = new Dictionary<string, (string Class, string Value)>(StringComparer.OrdinalIgnoreCase);
+        var volumeDisks = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);   // "{GUID}" -> disk serial
         foreach (var v in mounted?.Values ?? [])
         {
             if (v.Data.Length < 16) continue;
@@ -69,7 +70,21 @@ public sealed class UsbDevicesParser : EvidenceParserBase
             if (parts.Length < 3) continue;
             mountedDevices.TryAdd(parts[2], (parts[1], v.Name));
             if (v.Name.StartsWith(@"\DosDevices\", StringComparison.OrdinalIgnoreCase)) letters[parts[2]] = v.Name[12..];
+            if (v.Name.StartsWith(@"\??\Volume{", StringComparison.OrdinalIgnoreCase))
+                volumeDisks[v.Name[4..].ToUpperInvariant()] = parts[2].EndsWith("&0", StringComparison.Ordinal) || parts[2].EndsWith("&1", StringComparison.Ordinal) ? parts[2][..^2] : parts[2];
         }
+        // Volume GUID -> disk instance (MountedDevices): lets the per-profile MountPoints2 volumes be named by device. One event per mounted volume, no time.
+        // Own source ("MountedVolume"), not "USB": the media rules count "USB" rows as devices, and a volume is not a device arrival.
+        foreach (var (guid, disk) in volumeDisks)
+            sink.Add(new TimelineEvent
+            {
+                Time = Timestamp.Unknown(), TimeSemantics = "no time recorded (MountedDevices keeps the identity, not when)",
+                Source = "MountedVolume", EvidenceId = item.EvidenceId, Path = "", Process = "",
+                Summary = $"Volumul {guid} pe disc {disk} (MountedDevices)",
+                TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.High,
+                Locator = $@"SYSTEM\MountedDevices\??\Volume{guid}",
+                Fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["VolumeGuid"] = guid, ["Serial"] = disk, ["Interface"] = "USBSTOR" },
+            });
         var seenInstances = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var cls in reg.SubKeys(usbstor))
