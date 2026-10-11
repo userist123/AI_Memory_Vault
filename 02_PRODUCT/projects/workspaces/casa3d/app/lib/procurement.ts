@@ -10,9 +10,9 @@ async function states(projectId: string): Promise<Record<string, OrderState>> {
   return Object.fromEntries(rows.map(r => [r.key, r.state as OrderState]));
 }
 /** Liniile cu stare ale unui proiect deja verificat (proprietar sau link de client valid). */
-export async function projectRows(id: string, draft: Snapshot, today = new Date().toISOString().slice(0, 10)){
+export async function projectRows(id: string, draft: Snapshot, today = new Date().toISOString().slice(0, 10), startDate?: string){
   const [cat, mc] = await Promise.all([getCatalog(), getMaterials()]);
-  return procurementRows(procurementLines(draft, cat, mc, await listCustomItems(id)), await states(id), today);
+  return procurementRows(procurementLines(draft, cat, mc, await listCustomItems(id)), await states(id), today, startDate);
 }
 /** Când s-a schimbat ultima dată starea unei comenzi din proiect. */
 export async function ordersUpdatedAt(id: string): Promise<string | null> {
@@ -20,7 +20,7 @@ export async function ordersUpdatedAt(id: string): Promise<string | null> {
   return rows[0]?.t ? new Date(rows[0].t).toISOString() : null;
 }
 export async function getOrders(owner: string, id: string, today = new Date().toISOString().slice(0, 10)){
-  const p = await getProject(owner, id), rows = await projectRows(id, p.draft, today);
+  const p = await getProject(owner, id), rows = await projectRows(id, p.draft, today, p.meta.startDate);
   return { rows, groups: bySupplier(rows), summary: procurementSummary(rows) };
 }
 export async function setOrderState(owner: string, id: string, key: unknown, state: unknown){

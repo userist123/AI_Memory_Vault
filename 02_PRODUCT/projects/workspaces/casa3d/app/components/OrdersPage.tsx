@@ -7,7 +7,7 @@ import { formatMoney } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
 import { intlLocale } from '@/lib/i18n';
 
-type Data = { rows: ProcurementRow[]; groups: SupplierGroup[]; summary: { lines: number; todo: number; ordered: number; delivered: number; installed: number; overdue: number; ordersValue: number } };
+type Data = { rows: ProcurementRow[]; groups: SupplierGroup[]; summary: { lines: number; todo: number; ordered: number; delivered: number; installed: number; overdue: number; orderLate: number; orderSoon: number; ordersValue: number } };
 const csvCell = (v: unknown) => { const s = String(v ?? ''); return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
 type RoomRef = { id: string; name: string };
 export default function OrdersPage({ id, cur, say, projectName, rooms = [] }: { id: string; cur: string; say(s: string): void; projectName: string; rooms?: RoomRef[] }){
@@ -23,7 +23,7 @@ export default function OrdersPage({ id, cur, say, projectName, rooms = [] }: { 
     const r = await fetch(`/api/projects/${id}/orders`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key, state }) });
     if (!r.ok){ const j = await r.json().catch(() => ({})); say(j.error || t('orders.saveError')); return; } load(); }
   const money = (v: number | null) => formatMoney(v, cur, lang, '—'), today = new Date().toISOString().slice(0, 10);
-  const groups = useMemo(() => (data?.groups ?? []).map(g => ({ ...g, rows: g.rows.filter(r => filter === 'all' ? true : filter === 'overdue' ? r.overdue : ['todo', 'quoted'].includes(r.state.status)) })).filter(g => g.rows.length), [data, filter]);
+  const groups = useMemo(() => (data?.groups ?? []).map(g => ({ ...g, rows: g.rows.filter(r => filter === 'all' ? true : filter === 'overdue' ? r.overdue || r.orderUrgency != null : ['todo', 'quoted'].includes(r.state.status)) })).filter(g => g.rows.length), [data, filter]);
   function csv(g: SupplierGroup){ const head = [t('orders.col.product'), t('orders.col.code'), t('orders.col.qty'), t('orders.col.unit'), t('orders.col.packs'), t('orders.col.unitPrice'), t('orders.col.total'), t('orders.col.rooms'), t('orders.col.status'), t('orders.col.ref'), 'URL'];
     const lines = [head, ...g.rows.map(r => [r.product, r.code ?? '', r.qty, r.unit, r.packs ?? '', r.unitPrice ?? '', r.total ?? '', r.rooms.join(', '), t(`ostatus.${r.state.status}`), r.state.ref ?? '', r.url ?? ''])].map(l => l.map(csvCell).join(';')).join('\n');
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + lines], { type: 'text/csv;charset=utf-8' })); a.download = `${projectName || 'proiect'} - ${g.supplier}.csv`.replace(/[\\/:*?"<>|]/g, '_'); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
@@ -32,7 +32,8 @@ export default function OrdersPage({ id, cur, say, projectName, rooms = [] }: { 
   return (<div className="orders">
     <header className="orders-head"><div><h1>{t('orders.title')}</h1><p className="muted">{t('orders.sub')}</p></div>
       <dl className="orders-sum"><div><dt>{t('orders.sum.todo')}</dt><dd>{s.todo}</dd></div><div><dt>{t('orders.sum.ordered')}</dt><dd>{s.ordered}</dd></div><div><dt>{t('orders.sum.delivered')}</dt><dd>{s.delivered}</dd></div>
-        <div className={s.overdue ? 'late' : ''}><dt>{t('orders.sum.overdue')}</dt><dd>{s.overdue}</dd></div><div><dt>{t('orders.sum.value')}</dt><dd>{money(s.ordersValue)}</dd></div></dl></header>
+        <div className={s.overdue ? 'late' : ''}><dt>{t('orders.sum.overdue')}</dt><dd>{s.overdue}</dd></div>
+        {(s.orderLate + s.orderSoon) > 0 && <div className="late"><dt>{t('orders.sum.orderNow')}</dt><dd>{s.orderLate + s.orderSoon}</dd></div>}<div><dt>{t('orders.sum.value')}</dt><dd>{money(s.ordersValue)}</dd></div></dl></header>
     <ClipAdder id={id} rooms={rooms} say={say} onAdded={load} />
     <div className="filters" role="tablist">{(['all', 'open', 'overdue'] as const).map(f => <button key={f} role="tab" aria-selected={filter === f} onClick={() => setFilter(f)}>{t(`orders.filter.${f}`)}</button>)}</div>
     {groups.length === 0 && <p className="muted">{t('orders.none')}</p>}
@@ -45,6 +46,7 @@ export default function OrdersPage({ id, cur, say, projectName, rooms = [] }: { 
           <span className="oqty">{r.qty} {r.unit}{r.packs ? <small>{r.packs}</small> : null}</span>
           <span className="ototal">{money(r.total)}</span>
           <span className={`st st-o-${r.state.status}`}>{t(`ostatus.${r.state.status}`)}</span>
+          {r.orderBy && (r.state.status === 'todo' || r.state.status === 'quoted') && <small className={r.orderUrgency ? 'late' : 'muted'}>{t(r.orderUrgency === 'late' ? 'orders.orderByLate' : 'orders.orderBy', { d: new Date(r.orderBy + 'T12:00:00').toLocaleDateString(intlLocale(lang), { day: 'numeric', month: 'long' }) })}</small>}
           {r.overdue && <small className="late">{t('orders.lateSince', { d: new Date(r.state.eta! + 'T12:00:00').toLocaleDateString(intlLocale(lang), { day: 'numeric', month: 'long' }) })}</small>}</button>
         {open === r.key && <OrderEditor row={r} today={today} onSave={st => save(r.key, st)} onQty={q => setQty(r, q)} onRemove={() => removeItem(r)} />}</li>)}</ul>
     </section>)}
@@ -62,6 +64,9 @@ function OrderEditor({ row, today, onSave, onQty, onRemove }: { row: Procurement
       <label className="f"><span>{t('orders.orderedAt')}</span><input type="date" value={s.orderedAt ?? ''} onChange={e => set({ orderedAt: e.target.value || undefined })} /></label>
       <label className="f"><span>{t('orders.eta')}</span><input type="date" value={s.eta ?? ''} onChange={e => set({ eta: e.target.value || undefined })} /></label>
       <label className="f"><span>{t('orders.deliveredAt')}</span><input type="date" value={s.deliveredAt ?? ''} onChange={e => set({ deliveredAt: e.target.value || undefined })} /></label></div>
+    <div className="grid2">
+      <label className="f"><span>{t('orders.neededBy')}</span><input type="date" value={s.neededBy ?? ''} onChange={e => set({ neededBy: e.target.value || undefined })} /></label>
+      <label className="f"><span>{t('orders.leadDays')}</span><input type="number" inputMode="numeric" min={0} max={365} value={s.leadDays ?? ''} placeholder={String(row.leadDays)} onChange={e => set({ leadDays: e.target.value === '' ? undefined : Math.max(0, Math.min(365, Math.round(Number(e.target.value)))) })} /></label></div>
     <label className="f"><span>{t('orders.note')}</span><input value={s.note ?? ''} maxLength={500} onChange={e => set({ note: e.target.value })} /></label>
     {row.kind === 'custom' && <div className="oedit-item"><label className="f"><span>{t('orders.col.qty')} ({row.unit})</span><input type="number" inputMode="decimal" min="0.01" step="any" value={qty} onChange={e => setQty(e.target.value)} /></label>
       <button className="btn" disabled={!(Number(qty) > 0) || Number(qty) === row.qty} onClick={() => onQty(Number(qty))}>{t('clip.updateQty')}</button><button className="btn danger" onClick={onRemove}>{t('clip.remove')}</button></div>}

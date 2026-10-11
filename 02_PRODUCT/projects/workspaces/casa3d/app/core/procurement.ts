@@ -8,12 +8,25 @@ import { floors } from './levels';
 
 export const ORDER_STATUSES = ['todo', 'quoted', 'ordered', 'delivered', 'installed', 'cancelled'] as const;
 export type OrderStatus = typeof ORDER_STATUSES[number];
-export interface OrderState { status: OrderStatus; ref?: string; orderedAt?: string; eta?: string; deliveredAt?: string; note?: string }
+export interface OrderState { status: OrderStatus; ref?: string; orderedAt?: string; eta?: string; deliveredAt?: string; note?: string;
+  /** data la care produsul trebuie să fie pe șantier și zilele de livrare (implicit pe categorie, editabil) */
+  neededBy?: string; leadDays?: number }
 export interface ProcurementLine {
   key: string; kind: 'finish' | 'furniture' | 'custom'; product: string; supplier: string; code: string | null; url: string | null; image?: string | null; itemId?: string;
   qty: number; unit: string; packs: string | null; unitPrice: number | null; total: number | null; rooms: string[];
 }
-export interface ProcurementRow extends ProcurementLine { state: OrderState; overdue: boolean }
+export interface ProcurementRow extends ProcurementLine { state: OrderState; overdue: boolean;
+  /** zilele de livrare folosite (ale designerului sau implicite) și data până la care trebuie comandat/decis */
+  leadDays: number; orderBy: string | null; orderUrgency: 'late' | 'soon' | null }
+/** Zile de livrare implicite, pe tipul produsului: valori de pornire, nu promisiuni ale furnizorilor (se schimbă pe linie). */
+export function defaultLeadDays(l: Pick<ProcurementLine, 'kind' | 'product'>): number {
+  const n = l.product.toLowerCase();
+  if (/bucătări|kitchen|metod|enhet|canapea|sofa|kivik|la comandă|custom/.test(n)) return 42;
+  if (/gresie|faianț|tile|parchet|laminat|ușă|door|cabin|duș|shower|vas wc|lavoar/.test(n)) return 21;
+  if (l.kind === 'finish') return 10; return 21;
+}
+export const ORDER_SOON_DAYS = 7;
+const addDays = (d: string, n: number) => new Date(Date.parse(d + 'T00:00:00Z') + n * 864e5).toISOString().slice(0, 10);
 
 const round2 = (v: number) => Math.round(v * 100) / 100;
 /** Ambalajele a două camere adunate („5 × pachet” + „12 × pachet” = „17 × pachet”); etichete diferite → necunoscut. */
@@ -45,9 +58,12 @@ export function procurementLines(snap: Snapshot, cat: Catalog, mc: MaterialsCata
   return [...out.values()].sort((a, b) => a.supplier.localeCompare(b.supplier) || a.kind.localeCompare(b.kind) || a.product.localeCompare(b.product));
 }
 /** Liniile cu starea lor; o linie fără stare salvată e „de comandat”. */
-export function procurementRows(lines: ProcurementLine[], states: Record<string, OrderState>, today: string): ProcurementRow[] {
+/** defaultNeededBy: data de început a lucrărilor din fișa proiectului, pentru liniile fără dată proprie. */
+export function procurementRows(lines: ProcurementLine[], states: Record<string, OrderState>, today: string, defaultNeededBy?: string): ProcurementRow[] {
   return lines.map(l => { const state = states[l.key] ?? { status: 'todo' as const };
-    return { ...l, state, overdue: state.status === 'ordered' && !!state.eta && state.eta < today }; });
+    const leadDays = state.leadDays ?? defaultLeadDays(l), needed = state.neededBy ?? defaultNeededBy, orderBy = needed ? addDays(needed, -leadDays) : null, open = state.status === 'todo' || state.status === 'quoted';
+    const orderUrgency = !open || !orderBy ? null : orderBy < today ? 'late' : orderBy <= addDays(today, ORDER_SOON_DAYS) ? 'soon' : null;
+    return { ...l, state, overdue: state.status === 'ordered' && !!state.eta && state.eta < today, leadDays, orderBy, orderUrgency }; });
 }
 export interface SupplierGroup { supplier: string; rows: ProcurementRow[]; total: number | null; open: number; overdue: number }
 export function bySupplier(rows: ProcurementRow[]): SupplierGroup[] {
@@ -58,7 +74,7 @@ export function bySupplier(rows: ProcurementRow[]): SupplierGroup[] {
 }
 export function procurementSummary(rows: ProcurementRow[]){
   const act = rows.filter(r => r.state.status !== 'cancelled'), n = (s: OrderStatus) => act.filter(r => r.state.status === s).length;
-  return { lines: act.length, todo: n('todo') + n('quoted'), ordered: n('ordered'), delivered: n('delivered') + n('installed'), installed: n('installed'), overdue: rows.filter(r => r.overdue).length,
+  return { lines: act.length, todo: n('todo') + n('quoted'), ordered: n('ordered'), delivered: n('delivered') + n('installed'), installed: n('installed'), overdue: rows.filter(r => r.overdue).length, orderLate: rows.filter(r => r.orderUrgency === 'late').length, orderSoon: rows.filter(r => r.orderUrgency === 'soon').length,
     ordersValue: round2(act.filter(r => ['ordered', 'delivered', 'installed'].includes(r.state.status)).reduce((a, r) => a + (r.total ?? 0), 0)) };
 }
 
@@ -70,7 +86,8 @@ export function checkOrderState(x: unknown): OrderState {
   const o = x as any; if (!o || typeof o !== 'object' || !(ORDER_STATUSES as readonly string[]).includes(o.status)) throw new Error('Starea comenzii e invalidă.');
   const s: OrderState = { status: o.status }, ref = clean(o.ref, 80), note = clean(o.note, 500);
   if (ref) s.ref = ref; if (note) s.note = note;
-  for (const k of ['orderedAt', 'eta', 'deliveredAt'] as const){ const v = o[k]; if (v == null || v === '') continue; if (typeof v !== 'string' || !validDate(v)) throw new Error('Data nu e validă (AAAA-LL-ZZ).'); s[k] = v; }
+  if (o.leadDays != null && o.leadDays !== ''){ if (!Number.isInteger(o.leadDays) || o.leadDays < 0 || o.leadDays > 365) throw new Error('Zilele de livrare nu sunt valide (0–365).'); s.leadDays = o.leadDays; }
+  for (const k of ['orderedAt', 'eta', 'deliveredAt', 'neededBy'] as const){ const v = o[k]; if (v == null || v === '') continue; if (typeof v !== 'string' || !validDate(v)) throw new Error('Data nu e validă (AAAA-LL-ZZ).'); s[k] = v; }
   return s;
 }
 export const isLineKey = (k: unknown): k is string => typeof k === 'string' && k.length <= 300 && /^[mfc]\|/.test(k);

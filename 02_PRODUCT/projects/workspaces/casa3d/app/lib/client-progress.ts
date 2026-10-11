@@ -11,6 +11,6 @@ export async function progressForShare(token: unknown, today = new Date().toISOS
   if (!isShareToken(token)) return null;
   const { q } = await getDb();
   const { rows } = await q('select p.id, p.draft, p.meta from shares s join projects p on p.id = s.project_id where s.token=$1 and s.revoked_at is null', [token]);
-  const p = rows[0]; if (!p || !readMeta(p.meta).shareOrders) return null;
-  return clientProgress(await projectRows(p.id, p.draft as Snapshot, today), await ordersUpdatedAt(p.id));
+  const p = rows[0], meta = readMeta(p?.meta); if (!p || !meta.shareOrders) return null;
+  return clientProgress(await projectRows(p.id, p.draft as Snapshot, today, meta.startDate), await ordersUpdatedAt(p.id));
 }
