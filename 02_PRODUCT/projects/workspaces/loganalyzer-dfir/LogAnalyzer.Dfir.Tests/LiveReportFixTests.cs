@@ -47,24 +47,17 @@ public class LiveReportFixTests
         finally { try { Directory.Delete(Path.GetDirectoryName(path)!, true); } catch (IOException) { } }
     }
 
-    // ---- 2. LogAnalyzer's own collection script ----
+    // ---- 2. no exclusion by folder name (the LADFIR_REMOTE_ folders on a developer PC come from the test suite; a name can be imitated) ----
 
     private static TimelineEvent Prefetch(string process, string refs, double minute = 0) =>
         Row("Prefetch", minute, process, @"C:\Windows\System32\WindowsPowerShell\v1.0\" + process, f: [("ReferencedFiles", refs), ("PrefetchHash", "AAAA" + process)]);
 
     [Fact]
-    public void The_own_remote_collection_script_is_Info_and_anchors_nothing()
+    public void A_temp_script_in_a_folder_named_like_ours_is_still_reported()
     {
-        var own = @"\USERS\IONUT\APPDATA\LOCAL\TEMP\LADFIR_REMOTE_0123456789ABCDEF0123456789ABCDEF\TARGET\COLLECT.PS1";
-        var found = Correlation.Run([
-            Prefetch("POWERSHELL.EXE", @"\WINDOWS\SYSTEM32\NTDLL.DLL|" + own),
-            Row("Prefetch", 1, "SETUP.EXE", @"C:\Users\ionut\AppData\Local\Temp\setup.exe", f: [("ReferencedFiles", @"\USERS\IONUT\APPDATA\LOCAL\TEMP\SETUP.EXE"), ("PrefetchHash", "BBBB")]),
-        ]);
-        Assert.DoesNotContain(found, f => f.Severity >= Severity.Medium && f.RuleId is "EXEC-SCRIPT-VIA-LOLBIN" or "EXEC-USERPATH-CORRELATED");
-        Assert.DoesNotContain(found, f => f.RuleId == "EXEC-USERPATH-CORRELATED");
-        var info = Assert.Single(found, f => f.RuleId == "EXEC-SCRIPT-VIA-LOLBIN");
-        Assert.Equal(Severity.Info, info.Severity);
-        Assert.Contains("activitatea uneltei LogAnalyzer", info.Title);
+        var lookalike = @"\USERS\IONUT\APPDATA\LOCAL\TEMP\LADFIR_REMOTE_0123456789ABCDEF0123456789ABCDEF\TARGET\COLLECT.PS1";
+        var found = Correlation.Run([Prefetch("POWERSHELL.EXE", @"\WINDOWS\SYSTEM32\NTDLL.DLL|" + lookalike)]);
+        Assert.Contains(found, f => f.RuleId == "EXEC-SCRIPT-VIA-LOLBIN" && f.Severity == Severity.High);
     }
 
     [Fact]
