@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace LogAnalyzer.Core.Services.Details
 {
@@ -81,6 +82,21 @@ namespace LogAnalyzer.Core.Services.Details
             [5157] = "Conexiune BLOCATĂ de Windows Filtering Platform (de exemplu de o regulă de izolare).",
             [6416] = "Dispozitiv extern nou recunoscut (ex. stick USB).",
             [1102] = "Jurnalul Security a fost ȘTERS. Pe o stație auditată aproape întotdeauna necesită explicație.",
+            // Senior review E1: events the engines analyse (Kerberos/AD, file server, employee activity, credentials) and that had no meaning.
+            [4656] = "S-a cerut acces la un obiect (fișier, folder sau cheie de registru). Arată cine a încercat să-l deschidă și cu ce drepturi; apare doar dacă auditul accesului la obiecte este pornit.",
+            [4662] = "S-a făcut o operație asupra unui obiect din Active Directory. Dacă operația folosește drepturile de replicare a parolelor și contul NU este un controler de domeniu, poate fi un furt al parolelor tuturor conturilor (DCSync).",
+            [4663] = "S-a accesat un obiect (fișier, folder sau cheie de registru). AccessMask arată ce s-a făcut: citire, scriere sau ștergere. Multe ștergeri sau scrieri în scurt timp pot indica criptare (ransomware) sau distrugere de date.",
+            [4739] = "Politica domeniului (parole, blocarea conturilor) a fost modificată.",
+            [4742] = "Contul unui calculator din domeniu a fost modificat. O schimbare neașteptată (de exemplu nume de serviciu sau delegare) poate pregăti un atac asupra domeniului.",
+            [4756] = "Membru adăugat într-un grup universal de securitate (grup valabil în toată pădurea de domenii).",
+            [4800] = "Ecranul stației a fost blocat (utilizatorul a plecat de la stație sau a apăsat Win+L).",
+            [4801] = "Ecranul stației a fost deblocat (utilizatorul s-a întors și a introdus parola).",
+            [4907] = "Setările de audit ale unui obiect (ce se înregistrează despre el) au fost schimbate.",
+            [5136] = "Un obiect din Active Directory a fost modificat (ce atribut, valoarea veche și cea nouă). Modificările de politici de grup sau de drepturi trebuie să fie aprobate.",
+            [5137] = "Un obiect nou a fost creat în Active Directory (cont, grup, calculator, politică de grup).",
+            [5139] = "Un obiect din Active Directory a fost mutat în altă unitate organizațională.",
+            [5141] = "Un obiect a fost șters din Active Directory.",
+            [5379] = "Au fost citite credențiale salvate în Windows Credential Manager. Apare și la funcționarea normală a programelor; multe citiri la rând, făcute de un program neobișnuit, pot indica furtul parolelor salvate.",
         };
 
         private static readonly Dictionary<int, string> System_ = new()
@@ -93,7 +109,46 @@ namespace LogAnalyzer.Core.Services.Details
             [6006] = "Serviciul Event Log s-a oprit (oprire sistem).",
             [6008] = "Oprirea anterioară a sistemului a fost neașteptată.",
             [1074] = "Oprire/repornire inițiată de un proces sau utilizator.",
+            [1100] = "Serviciul de jurnalizare a evenimentelor s-a oprit. La o oprire normală a stației este firesc; altfel, cât timp serviciul este oprit nu se înregistrează nimic.",
+            [1102] = "Jurnalul Security a fost ȘTERS. Pe o stație auditată aproape întotdeauna necesită explicație.",
+            [1] = "Ora sistemului a fost schimbată (Kernel-General 1). Motivul (Reason) arată dacă a fost sincronizarea automată sau o schimbare făcută de o persoană ori de un program.",
+            [22] = "Fusul orar al sistemului a fost schimbat (Kernel-General 22). Orele locale din jurnale se mută; orele UTC rămân corecte.",
         };
+
+        // Senior review E1: providers the engines read that none of the dictionaries above covers. Provider is matched by a fragment of its name.
+        private static readonly (string Provider, int Id, string Text)[] ByProvider =
+        [
+            ("Kernel-Power", 41, "Stația a repornit fără o oprire corectă (pană de curent, blocare, buton de pornire ținut apăsat). Ce rula atunci s-a întrerupt brusc."),
+            ("WinRM", 6, "WinRM: această stație a deschis o sesiune de comenzi de la distanță către alt calculator."),
+            ("WinRM", 91, "WinRM: pe această stație s-a creat o sesiune de comenzi de la distanță (cineva a rulat comenzi aici de pe alt calculator)."),
+            ("WinRM", 142, "WinRM: o operație de comenzi de la distanță a eșuat."),
+            ("DNS-Server", 257, "Server DNS: a răspuns cu succes la o cerere de nume."),
+            ("DNS-Server", 258, "Server DNS: a răspuns cu eroare la o cerere de nume (numele nu există sau cererea a fost refuzată)."),
+            ("DNS-Server", 259, "Server DNS: a ignorat o cerere de nume."),
+            ("DNS-Server", 260, "Server DNS: a trimis cererea mai departe, către alt server DNS (recursivitate)."),
+            ("GroupPolicy", 5016, "Politica de grup: o componentă (extensie) a terminat aplicarea setărilor pe stație."),
+            ("GroupPolicy", 5017, "Politica de grup: un pas din aplicarea politicii s-a încheiat (cu durata lui)."),
+            ("GroupPolicy", 5312, "Politica de grup: lista politicilor (GPO) care se aplică acestei stații sau acestui utilizator."),
+            ("GroupPolicy", 7320, "Politica de grup: eroare la aplicare. Codul de eroare din eveniment arată cauza (de exemplu controlerul de domeniu nu a putut fi contactat)."),
+            ("UserPnp", 20001, "Windows a instalat driverul unui dispozitiv nou conectat (de exemplu un stick USB). Numele și seria dispozitivului sunt în eveniment."),
+            ("UserPnp", 20003, "Windows a adăugat serviciul (driverul) pentru un dispozitiv nou conectat (de exemplu un stick USB)."),
+            ("volsnap", 25, "Copiile de umbră (punctele de restaurare) ale unui disc au fost abandonate, de obicei din lipsă de spațiu. Fișierele vechi nu mai pot fi recuperate din ele."),
+            ("volsnap", 33, "Cea mai veche copie de umbră a unui disc a fost ștearsă ca să se facă loc pentru una nouă."),
+        ];
+
+        /// <summary>Microsoft Entra ID sign-in error codes (documented AADSTS codes), as the cloud engines read them from sign-in logs.</summary>
+        public static readonly Dictionary<int, string> EntraSignInCodes = new()
+        {
+            [50053] = "Autentificare în cloud blocată: contul a fost blocat temporar după prea multe parole greșite sau încercarea a venit de la o adresă cunoscută ca rău-intenționată.",
+            [50074] = "Autentificarea în cloud a cerut verificarea în doi pași (MFA). Parola era corectă; dacă utilizatorul nu a încercat atunci să intre, altcineva îi știe parola.",
+            [50125] = "Autentificarea în cloud a fost întreruptă ca să se schimbe parola sau să se înregistreze o metodă de verificare.",
+            [53003] = "Autentificare în cloud blocată de o regulă de acces condiționat a organizației (loc, dispozitiv sau risc nepermis).",
+        };
+
+        /// <summary>True when any of the tables above has a plain-language meaning for this event ID (for whatever provider).</summary>
+        public static bool HasMeaning(int eventId) =>
+            Security.ContainsKey(eventId) || System_.ContainsKey(eventId) || Other.ContainsKey(eventId) ||
+            ByProvider.Any(p => p.Id == eventId) || EntraSignInCodes.ContainsKey(eventId);
 
         private static readonly Dictionary<int, string> Other = new()
         {
@@ -107,6 +162,13 @@ namespace LogAnalyzer.Core.Services.Details
             [3] = "Sysmon: conexiune de rețea inițiată de un proces.",
             [11] = "Sysmon: fișier creat.",
             [22] = "Sysmon: interogare DNS a unui proces.",
+            [7] = "Sysmon: un program a încărcat o bibliotecă (DLL). O bibliotecă încărcată din Temp sau din Public poate fi cod rău-intenționat strecurat într-un program legitim.",
+            [8] = "Sysmon: un proces a pornit un fir de execuție în ALT proces (CreateRemoteThread). Este tehnica clasică de injectare a codului în alt program.",
+            [10] = "Sysmon: un proces a deschis memoria altui proces. Dacă ținta este lsass.exe (procesul care păstrează parolele), poate fi furt de parole.",
+            [12] = "Sysmon: o cheie de registru a fost creată sau ștearsă.",
+            [13] = "Sysmon: o valoare din registru a fost modificată.",
+            [14] = "Sysmon: o cheie sau o valoare din registru a fost redenumită.",
+            [15] = "Sysmon: a fost scris un flux alternativ al unui fișier (de exemplu marcajul „descărcat de pe internet”). Datele pot fi ascunse în astfel de fluxuri.",
             [11707] = "Windows Installer: produs instalat.",
             [11724] = "Windows Installer: produs dezinstalat.",
         };
@@ -119,11 +181,17 @@ namespace LogAnalyzer.Core.Services.Details
             else if (provider.Contains("Eventlog", StringComparison.OrdinalIgnoreCase) || provider.Contains("Service Control Manager", StringComparison.OrdinalIgnoreCase) ||
                      provider.Contains("Kernel-General", StringComparison.OrdinalIgnoreCase) || provider.Equals("User32", StringComparison.OrdinalIgnoreCase))
                 System_.TryGetValue(eventId, out text);
+            text ??= ByProvider.FirstOrDefault(p => p.Id == eventId && provider.Contains(p.Provider, StringComparison.OrdinalIgnoreCase)).Text;
             text ??= Other.TryGetValue(eventId, out var o) &&
                      (provider.Contains("PowerShell", StringComparison.OrdinalIgnoreCase) || provider.Contains("Defender", StringComparison.OrdinalIgnoreCase) ||
                       provider.Contains("Sysmon", StringComparison.OrdinalIgnoreCase) || provider.Contains("MsiInstaller", StringComparison.OrdinalIgnoreCase))
                 ? o : null;
             text ??= Security.TryGetValue(eventId, out var s) && eventId >= 4600 ? s : null;
+            text ??= EntraSignInCodes.TryGetValue(eventId, out var entra) &&
+                     (provider.Contains("Azure", StringComparison.OrdinalIgnoreCase) || provider.Contains("Entra", StringComparison.OrdinalIgnoreCase) ||
+                      provider.Contains("AAD", StringComparison.OrdinalIgnoreCase) || provider.Contains("SignIn", StringComparison.OrdinalIgnoreCase) ||
+                      provider.Contains("M365", StringComparison.OrdinalIgnoreCase))
+                ? entra : null;
             if (text is not null) into.Add(text);
 
             string D(string k) => data.TryGetValue(k, out var v) ? v : "";

@@ -29,6 +29,16 @@ namespace LogAnalyzer.UI
             e.Handled = true;
         }
 
+        /// <summary>
+        /// The detail window's „Ce înseamnă” tab lives in Core, which cannot see the control-check guides (Dfir.Windows): the guide of a station,
+        /// domain or mailbox check (what, why, how, result, what to do) is plugged in here (senior review E2/E3).
+        /// </summary>
+        public static void RegisterMeaningExplainers() =>
+            LogAnalyzer.Core.Services.Details.ItemMeaning.RegisterExplainer(nameof(LogAnalyzer.Dfir.Windows.Audit.ControlCheck), item =>
+                item is LogAnalyzer.Dfir.Windows.Audit.ControlCheck check
+                    ? LogAnalyzer.Dfir.Windows.Audit.CheckGuides.Explain(check).ToPlainText().Split(Environment.NewLine)
+                    : Array.Empty<string>());
+
         public static IServiceProvider? ServiceProvider { get; private set; }
 
         /// <summary>First run creates the primary administrator; after an offline password recovery a new password is set; otherwise the normal sign-in.</summary>
@@ -127,6 +137,7 @@ namespace LogAnalyzer.UI
                 // Double-click on a row of ANY grid opens the full detail of that item (event, artifact, incident…).
                 EventManager.RegisterClassHandler(typeof(System.Windows.Controls.DataGridRow), System.Windows.Controls.Control.MouseDoubleClickEvent,
                     new System.Windows.Input.MouseButtonEventHandler(OnGridRowDoubleClick));
+                RegisterMeaningExplainers();
 
                 var services = BuildServices();
 

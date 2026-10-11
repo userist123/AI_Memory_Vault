@@ -42,11 +42,26 @@ namespace LogAnalyzer.Core.Services.Details
             ["StorageAuditItem"] = ("Element de stocare", "Un fișier, folder sau suport cu un risc asociat (de exemplu acces neobișnuit, dimensiune, loc)."),
             ["AdAttributeDelta"] = ("Modificare în Active Directory", "Un atribut al unui obiect din domeniu (cont, grup, calculator) a fost schimbat."),
             ["TimelineItem"] = ("Element de cronologie", "Un moment din cronologia incidentului, cu sursa lui."),
+            // Senior review E2: row types of the control, domain, mail, anti-forensics, containment and media screens.
+            ["ControlCheck"] = ("Verificare de control", "O regulă verificată de aplicație (pe stație, în domeniu sau în cutia poștală), cu rezultatul ei: conform, neconform, de verificat sau nedeterminat."),
+            ["AntiForensicCheck"] = ("Verificare de ștergere a urmelor", "Aplicația a căutat în probe o metodă cunoscută prin care cineva își ascunde urmele (jurnale golite, ora schimbată, fișiere șterse). O urmă găsită arată ce s-a întâmplat, nu de ce; poate avea și o explicație legitimă."),
+            ["SuspectProcess"] = ("Program suspect care rulează", "Un program pornit acum pe stație care are unul sau mai multe semne folosite des de programele rău-intenționate (loc neobișnuit, conexiuni spre exterior)."),
+            ["ProcessIncident"] = ("Incident de izolare a unui program", "Un program oprit sau izolat de aplicație (blocat în firewall, suspendat), cu tot ce s-a făcut și ce s-a găsit despre el."),
+            ["MailMessage"] = ("Mesaj de e-mail", "Un mesaj din urmărirea mesajelor serverului de e-mail: cine l-a trimis, cui, când și de pe ce adresă IP. Conținutul mesajului nu este citit."),
+            ["UserActivity"] = ("Activitatea unui cont pe stație", "Câte autentificări (la tastatură, de la distanță, eșuate) și câte sesiuni cu drepturi de administrator a avut un cont în perioada controlată."),
+            ["LiveDeviceEntry"] = ("Dispozitiv conectat sau deconectat", "Un dispozitiv (stick, disc, telefon) care tocmai a fost conectat sau scos, comparat cu registrul suporturilor aprobate."),
+            ["DeviceAssessment"] = ("Dispozitiv comparat cu registrul", "Un dispozitiv cunoscut de stație și dacă figurează în registrul suporturilor aprobate."),
         };
 
-        private static readonly string[] WhyProps = ["Description", "Explanation", "Details", "AnomalyReason", "EvidenceSummary", "SecurityImpact", "LegalJustification", "StorageImpact"];
-        private static readonly string[] DoProps = ["RemediationActionRo", "ContainmentActionRo", "RequiredAction"];
-        private static readonly string[] MitreProps = ["MitreTechniqueId", "MitreId", "TechniqueId", "TechId", "MitreTags"];
+        private static readonly string[] WhyProps = ["Description", "Explanation", "Details", "Detail", "Reason", "AnomalyReason", "EvidenceSummary", "SecurityImpact", "LegalJustification", "StorageImpact", "Verdict", "MatchText"];
+        private static readonly string[] DoProps = ["RemediationActionRo", "ContainmentActionRo", "RequiredAction", "Recommendation", "WhatToDo"];
+        private static readonly string[] MitreProps = ["MitreTechniqueId", "MitreId", "TechniqueId", "TechId", "MitreTags", "Attack"];
+
+        // Explainers registered by assemblies Core cannot reference (the App registers the control-check guides, which live in Dfir.Windows).
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Func<object, IEnumerable<string>>> Explainers = new();
+
+        /// <summary>Adds the plain-language lines an outer assembly knows for items of one type (matched by type name); replaces an earlier registration.</summary>
+        public static void RegisterExplainer(string typeName, Func<object, IEnumerable<string>> explain) => Explainers[typeName] = explain;
 
         /// <summary>Plain-language lines for any object shown in a grid. Never empty: at worst it says what the item is and where to look.</summary>
         public static void Explain(object item, List<string> into)
@@ -55,7 +70,30 @@ namespace LogAnalyzer.Core.Services.Details
             string P(string n) => t.GetProperty(n)?.GetValue(item) is { } v ? Convert.ToString(v, CultureInfo.InvariantCulture)?.Trim() ?? "" : "";
 
             if (Kinds.TryGetValue(t.Name, out var k)) into.Add($"Ce este: {k.Name}. {k.What}");
+            // A registered explainer (for example the control-check guide) already says what was found and what to do: it replaces the generic lines.
+            if (Explainers.TryGetValue(t.Name, out var external))
+            {
+                into.AddRange(external(item).Where(l => !string.IsNullOrWhiteSpace(l)));
+                if (into.Count > 0) return;
+            }
             foreach (var n in WhyProps) if (P(n) is { Length: > 0 } w) into.Add($"{Label(n)}: {w}");
+            if (t.Name is "SuspectProcess" && t.GetProperty("Reasons")?.GetValue(item) is IEnumerable<string> reasons && reasons.Any())
+                into.Add("De ce este suspect: " + string.Join("; ", reasons));
+            if (t.Name is "AntiForensicCheck" && P("Result") is { Length: > 0 } afr)
+                into.Add("Rezultat: " + afr switch
+                {
+                    "Detected" => "DETECTAT — urma există în probe; se cere o explicație.",
+                    "NotDetected" => "NEDETECTAT — probele analizate nu arată această metodă. Nu înseamnă că stația este „curată”, doar că urma nu apare.",
+                    _ => "NEDETERMINAT — sursa necesară lipsește, deci verificarea nu s-a putut face.",
+                });
+            if (t.Name is "ControlCheck" && P("Status") is { Length: > 0 } cs) into.Add($"Rezultat: {cs}.");
+            if (t.Name is "ProcessIncident")
+            {
+                if (P("Trigger") is { Length: > 0 } trig) into.Add($"Ce l-a declanșat: {trig}");
+                if (P("State") is { Length: > 0 } state) into.Add($"Starea izolării: {state}.");
+            }
+            if (t.Name is "UserActivity")
+                into.Add($"Pe scurt: {P("InteractiveLogons")} intrări la tastatură, {P("RemoteLogons")} de la distanță, {P("FailedLogons")} eșuate, {P("PrivilegedSessions")} sesiuni cu drepturi de administrator. Comparați cu cine avea voie să lucreze pe stație.");
 
             if (P("WeightPoints") is { Length: > 0 } pts) into.Add($"Cât contează: {pts} puncte din scorul de risc de 100. Cu cât mai multe, cu atât factorul trage mai mult scorul în sus.");
             if (P("Severity") is { Length: > 0 } sev) into.Add($"Cât de grav: {Severity(sev)}.");
@@ -80,6 +118,10 @@ namespace LogAnalyzer.Core.Services.Details
             "Description" => "De ce apare",
             "Explanation" => "De ce apare",
             "Details" => "Detalii",
+            "Detail" => "Ce s-a găsit",
+            "Reason" => "De ce",
+            "Verdict" => "Concluzie",
+            "MatchText" => "Față de registru",
             "AnomalyReason" => "De ce este suspect",
             "EvidenceSummary" => "Ce s-a găsit",
             "SecurityImpact" => "Ce efect are asupra securității",
