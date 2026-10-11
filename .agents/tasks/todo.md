@@ -2,6 +2,27 @@
 
 This file is the execution ledger for non-trivial Claude tasks.
 
+## Current task — Casa3D: what is missing vs professional design software, then build it (2026-10-11)
+
+Owner: "fă un research pentru ce mai lipsește și după pune în aplicare"; phone "nu funcționează așa bine".
+Research: 02_PRODUCT/projects/Casa3D/GAP_ANALYSIS_2026-10-11.md (vendor pages, practitioner reviews, code inventory, phone audit).
+
+Plan (each step: tests first where it is logic, tsc + vitest + build + phone/desktop screenshots, commit, PC update):
+- [ ] 0. Phone: compact editor header (icons, one row), no split view on phones, client deck stacked vertically on phones,
+      44 px touch targets, no horizontal overflow, touch hints instead of mouse hints.
+- [ ] 1. Client card and project status: client contact/address, stage (ofertare, proiectare, execuție, predat), due date,
+      design fee; dashboard filters by status and shows the next due date.
+- [ ] 2. Procurement: per line (furniture + finishes) status de comandat / comandat / livrat / montat, supplier, order number,
+      order/delivery dates, overdue flag; order sheet per supplier (print/CSV).
+- [ ] 3. Site: visits with phone camera photos per room and notes; snag list (photo, room, trade, status), PDF report.
+      Upload: image type sniffing, size cap, stored under .data, served only to the owner.
+- [ ] 4. Client approvals per product/finish on the client link (approve / change), visible in the designer inbox.
+- [ ] 5. Product from a shop link (JSON-LD/OpenGraph): https only, allowlisted RO retailers, no private IPs (SSRF), size/time caps.
+- [ ] 6. Tasks with due dates per project and a "Azi" list on the dashboard.
+Later (needs owner input): payment schedule + proforma, e-Factura via SmartBill/Oblio (owner account), contract acceptance,
+joinery cut list, handover pack.
+Risks: Snapshot schema growth (keep optional fields, validate in lib/repo.ts); public surface stays limited to /share.
+
 ## Current task — Casa3D: professional studio redesign (2026-10-11)
 
 Owner request: "make the app as if built by a professional human developer to an interior designer's spec; it should not look AI-made".
