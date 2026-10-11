@@ -98,7 +98,7 @@ public static class StationFactCollector
 
     // ---- accounts ---------------------------------------------------------------------------------------------
 
-    private static IEnumerable<LocalAccount> ReadAccounts()
+    internal static IEnumerable<LocalAccount> ReadAccounts()
     {
         var admins = GroupMembers("S-1-5-32-544");
         var rdp = GroupMembers("S-1-5-32-555");
@@ -235,7 +235,7 @@ public static class StationFactCollector
                                                                    !a.Address.ToString().StartsWith("169.254.", StringComparison.Ordinal)))
             .Select(n => $"{n.Name} ({n.NetworkInterfaceType}): {string.Join(", ", n.GetIPProperties().UnicastAddresses.Select(a => a.Address))}");
 
-    private static IEnumerable<UsbDeviceFact> ReadUsbStor()
+    internal static IEnumerable<UsbDeviceFact> ReadUsbStor()
     {
         using var root = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Enum\USBSTOR");
         if (root is null) yield break;

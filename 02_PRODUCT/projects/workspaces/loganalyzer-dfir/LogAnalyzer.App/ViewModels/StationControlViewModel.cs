@@ -56,7 +56,7 @@ namespace LogAnalyzer.UI.ViewModels
                 new FlowStep("procedures", "Ce proceduri?", "Acestea sunt procedurile după care se judecă stația. O secțiune nedefinită nu poate da CONFORM."),
             ]);
             PeriodOptions = Enum.GetValues<ControlPeriodChoice>().Select(c => new PeriodOption(c, ControlPeriods.Label(c))).ToList();
-            StationLine = $"{Environment.MachineName} · " +
+            StationLine = $"{Environment.MachineName} · {LogAnalyzer.Dfir.Registers.StationName.Parse(Environment.MachineName).Describe()} · " +
                           (AppModeContext.IsAirGapped ? "fără rețea (izolată)" : "conectată");
             LoadPreviousControls();
             InspectorFunction = _headerProfile.InspectorFunction;
