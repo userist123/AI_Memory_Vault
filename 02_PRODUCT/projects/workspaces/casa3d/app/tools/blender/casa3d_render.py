@@ -782,7 +782,10 @@ def light_scene(scene_data, assets=''):
         sc.collection.objects.link(ao)
 
 
-def room_camera(scene_data, room, width, height, panorama=False):
+MISSING = {}  # cameră → piesele principale care nu au încăput întregi în cadru
+
+
+def room_camera(scene_data, room, width, height, panorama=False, focus=None):
     """Camera foto a încăperii, la 1,55 m, cu verticalele drepte. Locul se alege dintre colțuri și mijlocul pereților:
     raze trase prin scenă pe toată deschiderea obiectivului; câștigă poziția cu vederea cea mai liberă și adâncă
     (fără un perete lipit de obiectiv) și cu cele mai multe piese în cadru."""
@@ -824,7 +827,7 @@ def room_camera(scene_data, room, width, height, panorama=False):
 
     # ținte ale privirii: un punct dincolo de centrul camerei sau centrul de greutate al pieselor principale
     beyond = lambda c: (cx + (cx - c[0]) * 0.35, cz + (cz - c[1]) * 0.35)
-    main = [(KEY[it['g']], (it['fp'][0] + it['fp'][2]) / 2, (it['fp'][1] + it['fp'][3]) / 2) for it in items if KEY.get(it['g'], 0) >= 1]
+    main = [(KEY[it['g']], (it['fp'][0] + it['fp'][2]) / 2, (it['fp'][1] + it['fp'][3]) / 2) for it in items if (id(it) in focus if focus else KEY.get(it['g'], 0) >= 1)]
     wsum = sum(m[0] for m in main)
     aims = [beyond] + ([lambda c: (sum(m[0] * m[1] for m in main) / wsum, sum(m[0] * m[2] for m in main) / wsum)] if main else [])
 
@@ -868,7 +871,7 @@ def room_camera(scene_data, room, width, height, panorama=False):
         for it in items:
             a, b, e, f = it['fp']
             corners = [(a, b), (e, b), (e, f), (a, f)]
-            w = KEY.get(it['g'], 0.5)
+            w = KEY.get(it['g'], 0.5) if focus is None else (6.0 if id(it) in focus else 0.2)  # a doua vedere: piesele rămase pe dinafară
             low = max(0.45, (1.55 - min(it['h'], 1.5)) / bottom(fov))  # partea de sus a piesei nu e tăiată de marginea de jos
             if all(in_view(c, px, pz, lx, lz, fov / 2 - math.radians(4), low) for px, pz in corners):
                 keys += w
@@ -882,6 +885,8 @@ def room_camera(scene_data, room, width, height, panorama=False):
     _, c, fov, aim = ranked[0]
     print(f"[casa3d] cameră {room['id']}: " + '; '.join(f'({p[0]:.2f},{p[1]:.2f}) {math.degrees(f):.0f}° {aims.index(a)} = {v:.1f}' for v, p, f, a in ranked[:int(os.environ.get('CASA3D_CAMDBG', 4))]))
     lx, lz = look(c, aim)
+    low_of = lambda it: max(0.45, (1.55 - min(it['h'], 1.5)) / bottom(fov))
+    MISSING[ob.name] = [it for it in items if KEY.get(it['g'], 0) >= 2 and not all(in_view(c, px, pz, lx, lz, fov / 2 - math.radians(4), low_of(it)) for px, pz in ((it['fp'][0], it['fp'][1]), (it['fp'][2], it['fp'][1]), (it['fp'][2], it['fp'][3]), (it['fp'][0], it['fp'][3])))]
     ob.location = to_blender((c[0], 1.55, c[1]))
     ob.rotation_euler = to_blender((lx, 0, lz)).normalized().to_track_quat('-Z', 'Y').to_euler()
     cam.lens_unit = 'FOV'
@@ -970,6 +975,12 @@ def main():
         sc.render.filepath = os.path.join(os.path.abspath(args.out), f'{safe}.png')
         bpy.ops.render.render(write_still=True)
         print(f"[casa3d] {r.get('name', r['id'])}: {sc.render.filepath}")
+        missing = MISSING.get(sc.camera.name) or []
+        if missing:  # o piesă principală (WC, lavoar, duș, pat...) nu încape în prima poză: încă o vedere, spre ea
+            sc.camera = room_camera(data, r, args.width, args.height, focus={id(it) for it in missing})
+            sc.render.filepath = os.path.join(os.path.abspath(args.out), f'{safe}-2.png')
+            bpy.ops.render.render(write_still=True)
+            print(f"[casa3d] {r.get('name', r['id'])} (a doua vedere): {sc.render.filepath}")
         if args.panorama:
             sc.camera = room_camera(data, r, args.width, args.height, panorama=True)
             sc.render.resolution_x, sc.render.resolution_y = args.width, args.width // 2   # echirectangular 2:1
