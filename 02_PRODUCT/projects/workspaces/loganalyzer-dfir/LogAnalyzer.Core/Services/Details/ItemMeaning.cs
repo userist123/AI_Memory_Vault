@@ -209,6 +209,7 @@ namespace LogAnalyzer.Core.Services.Details
             ["T1542.001"] = "modificarea firmware-ului de sistem",
             ["T1543"] = "crearea sau modificarea unui proces de sistem pentru persistență",
             ["T1543.003"] = "crearea sau modificarea unui serviciu Windows pentru persistență",
+            ["T1546.003"] = "persistență prin abonamente WMI care rulează o comandă la un eveniment",
             ["T1546.008"] = "înlocuirea funcțiilor de accesibilitate (de exemplu Sticky Keys) pentru acces fără parolă",
             ["T1546.012"] = "persistență prin opțiunile de depanare ale programelor (IFEO)",
             ["T1546.015"] = "persistență prin deturnarea componentelor COM",
