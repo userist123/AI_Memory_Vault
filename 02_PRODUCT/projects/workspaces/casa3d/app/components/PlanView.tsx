@@ -10,6 +10,7 @@ import { usePrefs } from '@/lib/prefs';
 import type { Calib } from './UnderlayPanel';
 import { TECH_SYMBOL } from './TechPanel';
 import { stairGeometry, SLAB } from '@/core/levels';
+import { planSymbol, symbolAngle } from '@/core/plan-symbols';
 import { allFixturePoints } from '@/core/fixtures';
 import { finishesOf } from '@/core/boq';
 
@@ -24,7 +25,7 @@ interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severi
   /** golurile din placă ale acestui nivel (scările care urcă de dedesubt) */
   voids?: { x0: number; z0: number; x1: number; z1: number }[]; }
 const ROOM_FILL: Record<string, string> = { baie: '#e4e8e6', bucatarie: '#e6e8e3', hol: '#efeae1', living: '#f0e8da', dormitor: '#efe6dc' };
-const SEV: Record<Severity, string> = { PASS: '#1F4E79', WARNING: '#B7791F', ERROR: '#B3261E' };
+const SEV: Record<Severity, string> = { PASS: '#8B6A45', WARNING: '#B7791F', ERROR: '#B3261E' };
 const G = .05;
 const snapG = (v: number) => r3(Math.round(v / G) * G);
 
@@ -116,40 +117,47 @@ export default function PlanView(p: Props){
     <rect x={vb.x} y={vb.y} width={vb.w} height={vb.h} fill="url(#g)" />
     {ul && <image data-k="underlay" href={ul.dataUrl} x={ul.x} y={ul.z} width={ul.widthM} height={ul.widthM * aspect} preserveAspectRatio="none" opacity={ul.opacity} pointerEvents={ul.locked || p.calib?.stage === 'pick' ? 'none' : 'auto'} style={{ cursor: ul.locked ? 'default' : 'move' }} />}
     {floor.rooms.map(r => { const w = r.rect.x1 - r.rect.x0, d = r.rect.z1 - r.rect.z0; return (<g key={r.id}>
-      <rect data-k="room" data-id={r.id} x={r.rect.x0} y={r.rect.z0} width={w} height={d} fill={ROOM_FILL[r.type] || '#f2eee6'} fillOpacity={ul ? .45 : 1} stroke={isSel('room', r.id) ? '#1F4E79' : 'none'} strokeWidth={.04} />
-      <text x={(r.rect.x0 + r.rect.x1) / 2} y={(r.rect.z0 + r.rect.z1) / 2 - fs * .2} textAnchor="middle" fontSize={fs * 1.05} fontFamily="IBM Plex Sans" fill="#23262B" pointerEvents="none">{r.name}</text>
-      <text x={(r.rect.x0 + r.rect.x1) / 2} y={(r.rect.z0 + r.rect.z1) / 2 + fs * 1.1} textAnchor="middle" fontSize={fs * .8} fontFamily="IBM Plex Mono" fill="#5E636B" pointerEvents="none">{formatArea(area(r.rect), units, lang)} · {wl(w)}×{wl(d)}</text>
+      <rect data-k="room" data-id={r.id} x={r.rect.x0} y={r.rect.z0} width={w} height={d} fill={ROOM_FILL[r.type] || '#f2eee6'} fillOpacity={ul ? .45 : 1} stroke={isSel('room', r.id) ? '#8B6A45' : 'none'} strokeWidth={.04} />
     </g>); })}
     {(p.voids || []).map((v, k) => <g key={`void-${k}`} pointerEvents="none">
       <rect x={v.x0} y={v.z0} width={v.x1 - v.x0} height={v.z1 - v.z0} fill="#FBFBF9" stroke="#5E636B" strokeWidth={.02} strokeDasharray=".08 .05" />
       <path d={`M${v.x0} ${v.z0}L${v.x1} ${v.z1}M${v.x1} ${v.z0}L${v.x0} ${v.z1}`} stroke="#8A8F96" strokeWidth={.012} />
-      <text x={(v.x0 + v.x1) / 2} y={v.z0 - fs * .3} textAnchor="middle" fontSize={fs * .7} fontFamily="IBM Plex Mono" fill="#5E636B">{t('stair.void')}</text></g>)}
+      <text x={(v.x0 + v.x1) / 2} y={v.z0 - fs * .3} textAnchor="middle" fontSize={fs * .7} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#5E636B">{t('stair.void')}</text></g>)}
     {(floor.stairs || []).map(st => { const g = stairGeometry(st, floor.ceilingHeight + SLAB), r = g.rect, s = isSel('stair', st.id), [dx, dz] = g.dir, px = -dz, pz = dx, hw = st.width / 2;
       // trepte perpendiculare pe direcția de urcare, săgeata de la prima treaptă spre ultima, „SUS” la pornire
       const treads = Array.from({ length: g.steps - 1 }, (_, k) => { const cx = g.bottom[0] + dx * g.going * (k + 1), cz = g.bottom[1] + dz * g.going * (k + 1); return `M${cx - px * hw} ${cz - pz * hw}L${cx + px * hw} ${cz + pz * hw}`; }).join('');
       const ah = Math.min(.25, st.width * .3), tip = g.top, arrow = `M${g.bottom[0] + dx * .1} ${g.bottom[1] + dz * .1}L${tip[0] - dx * .05} ${tip[1] - dz * .05}M${tip[0] - dx * ah - px * ah * .6} ${tip[1] - dz * ah - pz * ah * .6}L${tip[0] - dx * .05} ${tip[1] - dz * .05}L${tip[0] - dx * ah + px * ah * .6} ${tip[1] - dz * ah + pz * ah * .6}`;
-      return (<g key={st.id}><rect data-k="stair" data-id={st.id} x={r.x0} y={r.z0} width={r.x1 - r.x0} height={r.z1 - r.z0} fill="#e9e2d5" stroke={s ? '#1F4E79' : '#5E636B'} strokeWidth={s ? .035 : .018} style={{ cursor: 'move' }} />
+      return (<g key={st.id}><rect data-k="stair" data-id={st.id} x={r.x0} y={r.z0} width={r.x1 - r.x0} height={r.z1 - r.z0} fill="#e9e2d5" stroke={s ? '#8B6A45' : '#5E636B'} strokeWidth={s ? .035 : .018} style={{ cursor: 'move' }} />
         <path d={treads} stroke="#8A8F96" strokeWidth={.01} pointerEvents="none" /><path d={arrow} fill="none" stroke="#23262B" strokeWidth={.02} pointerEvents="none" />
-        <text x={g.bottom[0] - dx * fs * .5} y={g.bottom[1] - dz * fs * .5 + fs * .3} textAnchor="middle" fontSize={fs * .7} fontFamily="IBM Plex Mono" fill="#23262B" pointerEvents="none">{t('stair.up')}</text></g>); })}
-    {p.snap.placements.map(pl => { const fp = footprintOf(p.catalog, pl); if (!fp) return null; const sv = p.severities[pl.id] || 'PASS', rv = resolve(p.catalog, pl.variantId);
-      const k = ((Math.round(pl.rotation / (Math.PI / 2)) % 4) + 4) % 4, fl = k === 0 ? [fp.x0, fp.z1, fp.x1, fp.z1] : k === 2 ? [fp.x0, fp.z0, fp.x1, fp.z0] : k === 1 ? [fp.x1, fp.z0, fp.x1, fp.z1] : [fp.x0, fp.z0, fp.x0, fp.z1];
-      return (<g key={pl.id}><rect data-k="placement" data-id={pl.id} x={fp.x0} y={fp.z0} width={fp.x1 - fp.x0} height={fp.z1 - fp.z0} fill={SEV[sv]} fillOpacity={isSel('placement', pl.id) ? .35 : .16} stroke={SEV[sv]} strokeWidth={isSel('placement', pl.id) ? .035 : .015} style={{ cursor: 'move' }} />
-        <line x1={fl[0]} y1={fl[1]} x2={fl[2]} y2={fl[3]} stroke={SEV[sv]} strokeWidth={.03} pointerEvents="none" />
-        {(fp.x1 - fp.x0) > .45 && <text x={(fp.x0 + fp.x1) / 2} y={(fp.z0 + fp.z1) / 2 + fs * .3} textAnchor="middle" fontSize={fs * .72} fontFamily="IBM Plex Mono" fill={SEV[sv]} pointerEvents="none">{rv?.product.name.split(' ')[0]}</text>}</g>); })}
+        <text x={g.bottom[0] - dx * fs * .5} y={g.bottom[1] - dz * fs * .5 + fs * .3} textAnchor="middle" fontSize={fs * .7} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#23262B" pointerEvents="none">{t('stair.up')}</text></g>); })}
+    {p.snap.placements.map(pl => { const fp = footprintOf(p.catalog, pl); if (!fp) return null; const sv = p.severities[pl.id] || 'PASS', rv = resolve(p.catalog, pl.variantId), on = isSel('placement', pl.id);
+      // simbolul de arhitectură al piesei, la dimensiunile ei reale, rotit spre fața ei; dreptunghiul transparent rămâne pentru selecție și tragere
+      const w = pl.size ? pl.size.w / 100 : rv?.w ?? fp.x1 - fp.x0, d = pl.size ? pl.size.d / 100 : rv?.d ?? fp.z1 - fp.z0, sym = planSymbol(pl.group, w, d, rv?.variant.chairs ?? 4);
+      const ink = sv === 'PASS' ? (on ? '#8B6A45' : '#3a352f') : SEV[sv], sw = on ? .03 : .015;
+      return (<g key={pl.id}><title>{rv ? `${rv.product.name} — ${rv.variant.name}` : pl.group}</title>
+        <g transform={`translate(${pl.x} ${pl.z}) rotate(${symbolAngle(pl.rotation)})`} pointerEvents="none" fill="none" stroke={ink} strokeLinejoin="round">
+          {sym.outline && <path d={sym.outline} fill={sym.fill === 'soft' ? '#fffdf8' : '#fffdfa'} fillOpacity={.92} strokeWidth={sw * 1.4} />}
+          {sym.detail && <path d={sym.detail} strokeWidth={sw * .8} />}</g>
+        <rect data-k="placement" data-id={pl.id} x={fp.x0} y={fp.z0} width={fp.x1 - fp.x0} height={fp.z1 - fp.z0} fill={on ? '#8B6A45' : sv === 'PASS' ? 'transparent' : SEV[sv]} fillOpacity={on ? .12 : sv === 'PASS' ? 0 : .12} stroke={on ? '#8B6A45' : 'none'} strokeWidth={.02} strokeDasharray={on ? '.06 .04' : undefined} style={{ cursor: 'move' }} /></g>); })}
+    {/* etichetele camerelor deasupra mobilierului, cu contur de hârtie ca să rămână lizibile */}
+    {floor.rooms.map(r => { const w = r.rect.x1 - r.rect.x0, d = r.rect.z1 - r.rect.z0, cx = (r.rect.x0 + r.rect.x1) / 2, cz = (r.rect.z0 + r.rect.z1) / 2;
+      return (<g key={`lbl-${r.id}`} pointerEvents="none" stroke="#f6f3ee" strokeWidth={fs * .35} strokeLinejoin="round" paintOrder="stroke">
+        <text x={cx} y={cz - fs * .2} textAnchor="middle" fontSize={fs * 1.15} fontFamily="Newsreader, Georgia, serif" fill="#1E1C19">{r.name}</text>
+        <text x={cx} y={cz + fs * 1.1} textAnchor="middle" fontSize={fs * .78} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#766F66">{formatArea(area(r.rect), units, lang)} · {wl(w)}×{wl(d)}</text></g>); })}
     {floor.walls.map(w => { const L = wallLength(w.a, w.b); if (L < .01) return null; const ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L, nx = -uz, nz = ux, sel = isSel('wall', w.id);
       const mid = [(w.a[0] + w.b[0]) / 2 + nx * (w.thickness / 2 + fs * .9), (w.a[1] + w.b[1]) / 2 + nz * (w.thickness / 2 + fs * .9)];
       return (<g key={w.id}>
-        <line data-k="wall" data-id={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke={sel ? '#1F4E79' : '#23262B'} strokeWidth={w.thickness} strokeLinecap="square" style={{ cursor: 'pointer' }} />
+        <line data-k="wall" data-id={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke={sel ? '#8B6A45' : '#23262B'} strokeWidth={w.thickness} strokeLinecap="square" style={{ cursor: 'pointer' }} />
         {w.openings.map(o => { const a = [w.a[0] + ux * o.offset, w.a[1] + uz * o.offset], b = [w.a[0] + ux * (o.offset + o.width), w.a[1] + uz * (o.offset + o.width)], os = p.sel?.kind === 'opening' && p.sel.id === o.id;
-          return (<g key={o.id}><line data-k="opening" data-id={o.id} data-w={w.id} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={os ? '#dbe7f3' : '#FBFBF9'} strokeWidth={w.thickness + .01} style={{ cursor: 'ew-resize' }} />
-            {o.kind === 'window' ? <><line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke="#2E6DA4" strokeWidth={.025} pointerEvents="none" /><line x1={a[0] + nx * w.thickness * .3} y1={a[1] + nz * w.thickness * .3} x2={b[0] + nx * w.thickness * .3} y2={b[1] + nz * w.thickness * .3} stroke="#2E6DA4" strokeWidth={.012} pointerEvents="none" /></>
+          return (<g key={o.id}><line data-k="opening" data-id={o.id} data-w={w.id} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={os ? '#efe5d8' : '#FBFBF9'} strokeWidth={w.thickness + .01} style={{ cursor: 'ew-resize' }} />
+            {o.kind === 'window' ? <><line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke="#6E8798" strokeWidth={.025} pointerEvents="none" /><line x1={a[0] + nx * w.thickness * .3} y1={a[1] + nz * w.thickness * .3} x2={b[0] + nx * w.thickness * .3} y2={b[1] + nz * w.thickness * .3} stroke="#6E8798" strokeWidth={.012} pointerEvents="none" /></>
               : <path d={`M${a[0]} ${a[1]} L${a[0] + nx * o.width} ${a[1] + nz * o.width} A${o.width} ${o.width} 0 0 ${1} ${b[0]} ${b[1]}`} fill="none" stroke="#5E636B" strokeWidth={.012} strokeDasharray=".04 .03" pointerEvents="none" />}</g>); })}
-        <text x={mid[0]} y={mid[1] + fs * .3} textAnchor="middle" fontSize={fs * .78} fontFamily="IBM Plex Mono" fill={sel ? '#1F4E79' : '#5E636B'} pointerEvents="none">{wl(L)}</text>
-        {sel && ([['a', w.a], ['b', w.b]] as const).map(([end, pt]) => <circle key={end} data-k="handle" data-w={w.id} data-end={end} data-id={w.id} cx={pt[0]} cy={pt[1]} r={fs * .6} fill="#fff" stroke="#1F4E79" strokeWidth={.03} style={{ cursor: 'grab' }} />)}
+        <text x={mid[0]} y={mid[1] + fs * .3} textAnchor="middle" fontSize={fs * .78} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={sel ? '#8B6A45' : '#5E636B'} pointerEvents="none">{wl(L)}</text>
+        {sel && ([['a', w.a], ['b', w.b]] as const).map(([end, pt]) => <circle key={end} data-k="handle" data-w={w.id} data-end={end} data-id={w.id} cx={pt[0]} cy={pt[1]} r={fs * .6} fill="#fff" stroke="#8B6A45" strokeWidth={.03} style={{ cursor: 'grab' }} />)}
       </g>); })}
-    {preview && <line x1={preview.a[0]} y1={preview.a[1]} x2={preview.b[0]} y2={preview.b[1]} stroke="#2E6DA4" strokeWidth={.15} strokeOpacity={.5} strokeDasharray=".1 .06" />}
-    {preview && <text x={(preview.a[0] + preview.b[0]) / 2} y={(preview.a[1] + preview.b[1]) / 2 - fs} textAnchor="middle" fontSize={fs} fontFamily="IBM Plex Mono" fill="#1F4E79">{units === 'imperial' ? formatLength(wallLength(preview.a, preview.b), 'imperial', lang) : `${Math.round(wallLength(preview.a, preview.b) * 100)} cm`}</text>}
-    {roomDraft && <rect x={Math.min(roomDraft.a[0], roomDraft.b[0])} y={Math.min(roomDraft.a[1], roomDraft.b[1])} width={Math.abs(roomDraft.b[0] - roomDraft.a[0])} height={Math.abs(roomDraft.b[1] - roomDraft.a[1])} fill="#2E6DA4" fillOpacity={.12} stroke="#2E6DA4" strokeWidth={.02} strokeDasharray=".08 .05" />}
+    {preview && <line x1={preview.a[0]} y1={preview.a[1]} x2={preview.b[0]} y2={preview.b[1]} stroke="#6E8798" strokeWidth={.15} strokeOpacity={.5} strokeDasharray=".1 .06" />}
+    {preview && <text x={(preview.a[0] + preview.b[0]) / 2} y={(preview.a[1] + preview.b[1]) / 2 - fs} textAnchor="middle" fontSize={fs} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#8B6A45">{units === 'imperial' ? formatLength(wallLength(preview.a, preview.b), 'imperial', lang) : `${Math.round(wallLength(preview.a, preview.b) * 100)} cm`}</text>}
+    {roomDraft && <rect x={Math.min(roomDraft.a[0], roomDraft.b[0])} y={Math.min(roomDraft.a[1], roomDraft.b[1])} width={Math.abs(roomDraft.b[0] - roomDraft.a[0])} height={Math.abs(roomDraft.b[1] - roomDraft.a[1])} fill="#6E8798" fillOpacity={.12} stroke="#6E8798" strokeWidth={.02} strokeDasharray=".08 .05" />}
     {allFixturePoints(p.snap, p.catalog, floor.rooms, finishesOf).map((f, i) => { const r = fs * .45, c = '#8A5A00';
       // simbolurile de pe planul de iluminat: pendul = cerc cu cruce, aplică = semicerc lipit de perete, șină = linie cu spoturi
       if (f.kind === 'track'){ const h = (f.len ?? 2) / 2, [x0, z0, x1, z1] = f.alongX ? [f.x - h, f.z, f.x + h, f.z] : [f.x, f.z - h, f.x, f.z + h], n = Math.max(2, Math.round((f.len ?? 2) / .5));
@@ -158,14 +166,14 @@ export default function PlanView(p: Props){
       return <g key={`fx${i}`} pointerEvents="none"><circle cx={f.x} cy={f.z} r={r} fill="#fff" stroke={c} strokeWidth={.02} /><path d={`M${f.x - r * .7} ${f.z - r * .7}L${f.x + r * .7} ${f.z + r * .7}M${f.x - r * .7} ${f.z + r * .7}L${f.x + r * .7} ${f.z - r * .7}`} stroke={c} strokeWidth={.015} /></g>; })}
     {p.showTech && (p.snap.tech || []).map(tp => { const sym = TECH_SYMBOL[tp.kind], r = fs * (sym.letter.length > 1 ? .62 : .5);
       return <g key={tp.id} pointerEvents="none"><circle cx={tp.x} cy={tp.z} r={r} fill={sym.color} stroke="#fff" strokeWidth={fs * .08} opacity={.92} />
-        <text x={tp.x} y={tp.z + fs * .2} textAnchor="middle" fontSize={fs * (sym.letter.length > 1 ? .5 : .6)} fontFamily="IBM Plex Mono" fill="#fff">{sym.letter}</text></g>; })}
+        <text x={tp.x} y={tp.z + fs * .2} textAnchor="middle" fontSize={fs * (sym.letter.length > 1 ? .5 : .6)} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#fff">{sym.letter}</text></g>; })}
     {ruler && (() => { const b = ruler.b || rulerHover || ruler.a, d = measure(ruler.a, b); return (<g pointerEvents="none">
       <line x1={ruler.a[0]} y1={ruler.a[1]} x2={b[0]} y2={b[1]} stroke="#B3261E" strokeWidth={.03} strokeDasharray=".1 .05" />
       <circle cx={ruler.a[0]} cy={ruler.a[1]} r={fs * .3} fill="#B3261E" /><circle cx={b[0]} cy={b[1]} r={fs * .3} fill="#B3261E" />
-      <text x={(ruler.a[0] + b[0]) / 2} y={(ruler.a[1] + b[1]) / 2 - fs * .6} textAnchor="middle" fontSize={fs} fontFamily="IBM Plex Mono" fill="#B3261E" stroke="#fff" strokeWidth={fs * .25} paintOrder="stroke">{formatLength(d, units, lang)}</text></g>); })()}
+      <text x={(ruler.a[0] + b[0]) / 2} y={(ruler.a[1] + b[1]) / 2 - fs * .6} textAnchor="middle" fontSize={fs} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#B3261E" stroke="#fff" strokeWidth={fs * .25} paintOrder="stroke">{formatLength(d, units, lang)}</text></g>); })()}
     {p.calib && (() => { const a = p.calib.stage === 'enter' ? p.calib.a : calA, b = p.calib.stage === 'enter' ? p.calib.b : (calA && cursor) || undefined; if (!a) return null; return (<g pointerEvents="none">
       {b && <line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke="#7A4A7F" strokeWidth={.03} strokeDasharray=".1 .05" />}
       <circle cx={a[0]} cy={a[1]} r={fs * .3} fill="#7A4A7F" />{b && <circle cx={b[0]} cy={b[1]} r={fs * .3} fill="#7A4A7F" />}</g>); })()}
-    {cursor && <text x={vb.x + vb.w - fs * .6} y={vb.y + vb.h - fs * .6} textAnchor="end" fontSize={fs * .8} fontFamily="IBM Plex Mono" fill="#5E636B" pointerEvents="none">{units === 'imperial' ? `x ${formatLength(cursor[0], 'imperial', lang)} · z ${formatLength(cursor[1], 'imperial', lang)}` : `x ${cursor[0].toFixed(2)} · z ${cursor[1].toFixed(2)} m`}</text>}
+    {cursor && <text x={vb.x + vb.w - fs * .6} y={vb.y + vb.h - fs * .6} textAnchor="end" fontSize={fs * .8} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#5E636B" pointerEvents="none">{units === 'imperial' ? `x ${formatLength(cursor[0], 'imperial', lang)} · z ${formatLength(cursor[1], 'imperial', lang)}` : `x ${cursor[0].toFixed(2)} · z ${cursor[1].toFixed(2)} m`}</text>}
   </svg>);
 }

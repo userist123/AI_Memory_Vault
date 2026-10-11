@@ -13,6 +13,10 @@ import { adviseProject, type Advice } from '@/core/advisor';
 import RevisionDiff from './RevisionDiff';
 import TechPanel from './TechPanel';
 import FinishesPanel from './FinishesPanel';
+import MaterialPicker from './MaterialPicker';
+import { downloadSchedule } from './FinishSchedule';
+import { finishSchedule } from '@/core/finish-schedule';
+import { materialOf } from '@/core/finishes';
 import { doorIssues } from '@/core/doors';
 import { suggestTechPoints, placeTechPoint, type TechKind } from '@/core/technical';
 import { RoomLookPanel, WallLookPanel, OpeningLookPanel, ItemLookPanel } from './AppearanceControls';
@@ -41,13 +45,20 @@ const ROOM_TYPES = [['living', 'roomType.living'], ['dormitor', 'roomType.dormit
 const ICON: Record<Tool, string> = { select: 'M5 3l12 8-6 1 3 7-2 1-3-7-4 4z', wall: 'M3 12h18M3 9v6M21 9v6', room: 'M4 4h16v16H4z', door: 'M5 21V4h9v17M5 21h14M12 12h.01', window: 'M4 5h16v14H4zM12 5v14M4 12h16', measure: 'M3 17L17 3l4 4L7 21zM8 12l2 2M11 9l2 2M14 6l2 2', tech: 'M13 2L4 14h7l-1 8 9-12h-7z' };
 const TOOL_LABEL: Record<Tool, string> = { select: 'tool.select', wall: 'tool.wall', room: 'tool.room', door: 'tool.door', window: 'tool.window', measure: 'tool.measure', tech: 'tool.tech' };
 
+/** Etapele unui proiect de amenajare, în ordinea în care lucrează un designer: fiecare are vederea, uneltele și panoul ei. */
+type Stage = 'survey' | 'concept' | 'finishes' | 'ffe' | 'mep' | 'docs' | 'quote' | 'present';
+const STAGES: { id: Stage; view: '2d' | '3d' | 'split'; tools: Tool[] }[] = [
+  { id: 'survey', view: '2d', tools: ['select', 'wall', 'room', 'door', 'window', 'measure'] }, { id: 'concept', view: 'split', tools: ['select', 'measure'] },
+  { id: 'finishes', view: 'split', tools: ['select', 'measure'] }, { id: 'ffe', view: 'split', tools: ['select', 'measure'] },
+  { id: 'mep', view: '2d', tools: ['select', 'tech', 'measure'] }, { id: 'docs', view: '2d', tools: ['select', 'measure'] },
+  { id: 'quote', view: '2d', tools: ['select'] }, { id: 'present', view: '3d', tools: ['select'] }];
 export default function Editor({ id }: { id: string }){
   const { t, tp, lang, units } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units);
   const [house, setHouse] = useState<Snapshot | null>(null), [lvl, setLvl] = useState(0), [catalog, setCatalog] = useState<Catalog | null>(null), [mc, setMc] = useState<MaterialsCatalog | null>(null), [out, setOut] = useState<Outbound | null>(null);
-  const [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('split'), [help, setHelp] = useState(false), [calib, setCalib] = useState<Calib | null>(null);
+  const [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('2d'), [help, setHelp] = useState(false), [calib, setCalib] = useState<Calib | null>(null);
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error'>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
   const [showTech, setShowTech] = useState(true), [techKind, setTechKind] = useState<TechKind>('outlet_double');
-  const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[] } | null>(null), [persistent, setPersistent] = useState(true), [panel, setPanel] = useState<'props' | 'catalog' | 'budget' | 'design' | 'twin' | 'revs' | 'advisor' | 'tech'>('props'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
+  const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[] } | null>(null), [persistent, setPersistent] = useState(true), [stage, setStageRaw] = useState<Stage>('survey'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
   const hist = useRef(new History<Snapshot>()), dragStart = useRef<Snapshot | null>(null), timer = useRef<any>(null), latest = useRef<Snapshot | null>(null), [, force] = useState(0);
   // Se salvează casa întreagă (`house`); editorul lucrează pe nivelul ales (`snap`, o vedere din core/levels.ts),
   // iar fiecare modificare a vederii se pune la loc în casă cu mergeLevel.
@@ -87,7 +98,7 @@ export default function Editor({ id }: { id: string }){
   const floorIssues = useMemo(() => snap ? [...validateFloor(snap.floor), ...stairIss.filter(i => !i.with && snap.floor.stairs?.some(s => s.id === i.vars?.stair))] : [], [snap, stairIss]);
   const advice = useMemo(() => { if (!snap || !catalog) return [] as Advice[]; let budget; if (mc && house){ const b = computeBudget(house, catalog, mc); budget = { total: b.chosen.total, target: b.target, unknown: b.unknownItems.length }; }
     return adviseProject(snap, catalog, { accessibility: !!snap.brief?.accessibility, budget, colorsOf: appearanceColors, currency: catalogCurrency(catalog) }); }, [snap, house, catalog, mc]);
-  const showAdvice = (a: Advice) => { const pid = a.refs.placementIds?.[0], wid = a.refs.wallIds?.[0]; if (pid) setSel({ kind: 'placement', id: pid }); else if (a.refs.roomId) setSel({ kind: 'room', id: a.refs.roomId }); else if (wid) setSel({ kind: 'wall', id: wid }); };
+  const showAdvice = (a: Advice) => { setStageRaw(a.refs.placementIds?.length ? 'ffe' : 'survey'); const pid = a.refs.placementIds?.[0], wid = a.refs.wallIds?.[0]; if (pid) setSel({ kind: 'placement', id: pid }); else if (a.refs.roomId) setSel({ kind: 'room', id: a.refs.roomId }); else if (wid) setSel({ kind: 'wall', id: wid }); };
 
   // editare din plan: mutările se validează la final (ERROR → revine, WARNING → cere confirmare)
   const onEdit = (fn: (s: Snapshot) => void, phase: 'start' | 'move' | 'end') => { if (!snap || !catalog) return;
@@ -157,6 +168,8 @@ export default function Editor({ id }: { id: string }){
   const onAddOpening = (wallId: string, offset: number, kind: 'door' | 'window') => { const w = snap.floor.walls.find(x => x.id === wallId)!, L = wallLength(w.a, w.b), width = kind === 'door' ? .8 : 1.2;
     if (L < width + .1){ say(t('editor.wallTooShort')); return; } const oid = `op-${uid().slice(0, 8)}`;
     mutate(s => { s.floor.walls.find(x => x.id === wallId)!.openings.push({ id: oid, kind, offset: r3(Math.max(0, Math.min(L - width, offset - width / 2))), width }); }); setSel({ kind: 'opening', id: oid, wallId }); };
+  const setStage = (s: Stage) => { const st = STAGES.find(x => x.id === s)!; setStageRaw(s); setView(st.view); if (!st.tools.includes(tool)) setTool('select'); if (s === 'mep') setShowTech(true); setSideOpen(true); };
+  const stageDef = STAGES.find(x => x.id === stage)!, warnCount = advice.filter(a => a.severity !== 'TIP').length;
   const total = snap.placements.reduce((a, p) => a + (resolve(catalog, p.variantId)?.offer?.price || 0), 0);
   const selPl = sel?.kind === 'placement' ? snap.placements.find(p => p.id === sel.id) : undefined, selRoom = sel?.kind === 'room' ? snap.floor.rooms.find(r => r.id === sel.id) : undefined;
   const shown = (c: Snapshot): Snapshot => c.levels?.length || !house!.levels?.length ? levelView(c, Math.min(L, floors(c).length - 1)) : levelView({ ...house!, placements: c.placements }, L);
@@ -164,6 +177,9 @@ export default function Editor({ id }: { id: string }){
   const voids = stairwells(house!, L);
   const selStair = sel?.kind === 'stair' ? snap.floor.stairs?.find(s => s.id === sel.id) : undefined, nLevels = floors(house!).length;
   const selWall = sel?.kind === 'wall' ? snap.floor.walls.find(w => w.id === sel.id) : undefined, selOp = sel?.kind === 'opening' ? snap.floor.walls.find(w => w.id === sel.wallId)?.openings.find(o => o.id === sel.id) : undefined;
+  // ce se vede în panou: selecția (dacă etapa o folosește) sau conținutul etapei
+  const roomStage = stage === 'survey' || stage === 'finishes' || stage === 'ffe';
+  const showSel = !!((selRoom || selWall || selOp || selStair) ? roomStage : selPl ? stage === 'ffe' || stage === 'concept' || stage === 'finishes' || stage === 'present' : false);
   // câmpurile numerice sunt în cm (metric) sau inci (imperial); `f` și `min` primesc mereu cm, datele rămân metrice
   // în inci, minimul afișat (ex. 78,7″ pentru 200 cm) se întoarce puțin sub pragul în cm: acceptăm o jumătate de inci toleranță și fixăm la minim
   const num = (v: string, f: (x: number) => void, min = 0) => { const x = v.trim() === '' ? 0 : inputToCm(v, units), tol = units === 'imperial' ? 1.27 : 1e-9; if (x != null && x >= min - tol) f(Math.max(x, min)); };
@@ -180,14 +196,15 @@ export default function Editor({ id }: { id: string }){
       <div className="btn" role="group" aria-label={t('editor.view')} style={{ padding: 2, gap: 2 }}>
         {(['2d', 'split', '3d'] as const).map(vv => <button key={vv} className="btn" style={{ minHeight: 30, border: 0, background: view === vv ? 'var(--graphite)' : 'transparent', color: view === vv ? '#fff' : undefined }} onClick={() => { setView(vv); if (vv === '3d' && typeof matchMedia === 'function' && matchMedia('(max-width: 900px)').matches) setSideOpen(false); }}>{vv === '2d' ? t('editor.view2d') : vv === '3d' ? '3D' : t('editor.viewSplit')}</button>)}
       </div>
-      <a className="btn" href={`/p/${id}/print`} target="_blank" rel="noopener">{t('editor.print')}</a>
-      <a className="btn" href={`/api/projects/${id}/export.dxf?lang=${lang}`} download title={t('editor.exportDxf')}>{t('editor.exportDxf')}</a>
       <PrefsSwitcher />
       <button className="btn primary" onClick={saveRevision}>{t('editor.saveRevision')}</button>
     </header>
+    <nav className="stagebar" aria-label={t('stage.aria')}>
+      {STAGES.map((st, i) => <button key={st.id} aria-current={stage === st.id ? 'step' : undefined} onClick={() => setStage(st.id)}><i>{String(i + 1).padStart(2, '0')}</i>{t(`stage.${st.id}`)}{st.id === 'docs' && warnCount > 0 && <b className="count" title={t('stage.checks')}>{warnCount}</b>}</button>)}
+    </nav>
     <div className="body">
       <nav className="tools" aria-label={t('editor.tools')}>
-        {(Object.keys(ICON) as Tool[]).map(tk => <button key={tk} aria-pressed={tool === tk} onClick={() => setTool(tk)} title={t(TOOL_LABEL[tk])}><svg viewBox="0 0 24 24"><path d={ICON[tk]} /></svg>{t(TOOL_LABEL[tk])}</button>)}
+        {(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk)).map(tk => <button key={tk} aria-pressed={tool === tk} onClick={() => setTool(tk)} title={t(TOOL_LABEL[tk])}><svg viewBox="0 0 24 24"><path d={ICON[tk]} /></svg>{t(TOOL_LABEL[tk])}</button>)}
       </nav>
       <div className={`canvas ${view === 'split' ? 'split' : ''}`}>
         <div className="levelbar" role="tablist" aria-label={t('level.tabs')}>
@@ -204,14 +221,12 @@ export default function Editor({ id }: { id: string }){
       </div>
       <aside className={`side ${sideOpen ? '' : 'closed'}`}>
         <div className="sidetabs" style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-        <div className="btn" role="tablist" style={{ padding: 2, gap: 2, justifySelf: 'start', flexWrap: 'wrap', height: 'auto', maxWidth: '100%', minWidth: 0 }}>
-          {([['props', 'tab.props'], ['catalog', 'tab.catalog'], ['budget', 'tab.budget'], ['design', 'tab.design'], ['twin', 'tab.twin'], ['revs', 'tab.revs'], ['advisor', 'tab.advisor'], ['tech', 'tab.tech']] as const).map(([k, l]) => <button key={k} role="tab" aria-selected={panel === k} className="btn" style={{ minHeight: 30, border: 0, background: panel === k ? 'var(--graphite)' : 'transparent', color: panel === k ? '#fff' : undefined }} onClick={() => { setPanel(k); setSideOpen(true); }}>{t(l)}{k === 'advisor' && advice.filter(a => a.severity !== 'TIP').length > 0 && <span className="badge" style={{ marginLeft: 4, background: '#B7791F', color: '#fff', borderRadius: 8, padding: '0 6px', fontSize: 11 }}>{advice.filter(a => a.severity !== 'TIP').length}</span>}</button>)}
-        </div>
+          <h2 className="stage-title"><i>{String(STAGES.indexOf(stageDef) + 1).padStart(2, '0')}</i>{t(`stage.${stage}`)}</h2>
           <button className="btn sidetoggle" aria-expanded={sideOpen} onClick={() => setSideOpen(o => !o)}>{sideOpen ? t('editor.hidePanel') : t('editor.showPanel')}</button>
         </div>
-        {panel === 'props' && <>
-          {floorIssues.filter(i => !(sel?.kind === 'stair' && i.vars?.stair === sel.id)).map((i, k) => <div key={k} className={`issue ${i.severity}`}>{iT(i)}</div>)}
-          {!sel && <>
+        {(showSel || stage === 'survey') && <>
+          {stage === 'survey' && floorIssues.filter(i => !(sel?.kind === 'stair' && i.vars?.stair === sel.id)).map((i, k) => <div key={k} className={`issue ${i.severity}`}>{iT(i)}</div>)}
+          {!showSel && <>
             <h3>{snap.name}{nLevels > 1 ? ` · ${levelName(L)}` : ''}</h3>
             {L > 0 && <div style={{ display: 'grid', gap: 6 }}>
               <label className="f"><span>{t('level.name')}</span><input value={snap.floor.name} maxLength={60} onChange={e => mutate(s => { s.floor.name = e.target.value; })} /></label>
@@ -219,17 +234,15 @@ export default function Editor({ id }: { id: string }){
               <button className="btn" onClick={onRemoveLevel}>{t('level.remove')}</button></div>}
             <div className="prov">{tp('editor.summaryRooms', snap.floor.rooms.length)} · {formatArea(snap.floor.rooms.reduce((a, r) => a + area(r.rect), 0), units, lang)} · {tp('editor.summaryPieces', snap.placements.length)} · {t('editor.summaryFurniture', { total: money(total) })} · {t('editor.summaryBudget')}</div>
             <label className="f"><span>{t('editor.ceilingHeight', { u })}</span><input type="number" value={inField(snap.floor.ceilingHeight)} onChange={e => num(e.target.value, x => mutate(s => { s.floor.ceilingHeight = r3(x / 100); }), 200)} /></label>
-            <button className="btn" onClick={() => { if (!confirm(t('editor.autoConfirm'))) return; const r = autoLayout(snap, catalog); commit(r.snapshot); say(r.notFit.length ? t('editor.notFit', { list: r.notFit.map(n => t('editor.notFitItem', { key: n.key, room: n.room })).join(', ') }) : t('editor.autoApplied')); }}>{t('editor.autoAll')}</button>
-            {house && <StylePanel house={house} cat={catalog} mc={mc} cur={cur} onApply={(h, id) => { commitHouse(h); say(t('style.applied', { name: t(`style.${id}`) })); }} />}
             {L > 0 ? <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>{t('level.underlayGround')}</p> : <UnderlayPanel underlay={snap.underlay} calib={calib} say={say} onAdd={addUnderlay} onPatch={patchUnderlay} onRemove={() => { mutate(s => { delete s.underlay; }); setCalib(null); }}
               onCalibStart={() => setCalib({ stage: 'pick' })} onCalibCancel={() => setCalib(null)} onCalibApply={applyCalib} />}
             <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>{t('editor.selectHint')}</p>
           </>}
-          {selRoom && <RoomPanel room={selRoom} snap={snap} G={G} cat={catalog} mc={mc} cur={cur} onFinish={(patch: Partial<RoomFinishes>) => mutate(s => { s.finishes = { ...(s.finishes || {}), [selRoom.id]: { ...finishesOf(s, selRoom), ...patch } }; })} onChange={(fn: (r: any) => void) => mutate(s => fn(s.floor.rooms.find(r => r.id === selRoom.id)!))}
+          {selRoom && roomStage && <RoomPanel part={stage} room={selRoom} snap={snap} G={G} cat={catalog} mc={mc} cur={cur} onFinish={(patch: Partial<RoomFinishes>) => mutate(s => { s.finishes = { ...(s.finishes || {}), [selRoom.id]: { ...finishesOf(s, selRoom), ...patch } }; })} onChange={(fn: (r: any) => void) => mutate(s => fn(s.floor.rooms.find(r => r.id === selRoom.id)!))}
             onAuto={() => { const r = autoLayout(snap, catalog, { roomId: selRoom.id }); commit(r.snapshot); say(r.notFit.length ? t('editor.someNotFit') : t('editor.roomAutoApplied', { room: selRoom.name })); }}
             onAdd={(vid: string) => { const r = addPlacement(snap, catalog, selRoom.id, vid); if (!r){ say(t('editor.noFreeSpot')); return; } commit(r); setSel({ kind: 'placement', id: r.placements.at(-1)!.id }); }} num={num} />}
-          {selRoom && <button className="btn" title={t('stair.addTitle')} onClick={() => onAddStair(selRoom)}>{t('stair.add')}</button>}
-          {selStair && (() => { const g = stairGeometry(selStair, snap.floor.ceilingHeight + SLAB), cm1 = (m: number) => Math.round(m * 1000) / 10; return (<div style={{ display: 'grid', gap: 8 }}>
+          {selRoom && stage === 'survey' && <button className="btn" title={t('stair.addTitle')} onClick={() => onAddStair(selRoom)}>{t('stair.add')}</button>}
+          {selStair && stage === 'survey' && (() => { const g = stairGeometry(selStair, snap.floor.ceilingHeight + SLAB), cm1 = (m: number) => Math.round(m * 1000) / 10; return (<div style={{ display: 'grid', gap: 8 }}>
             <h3>{t('stair.title')}</h3>
             <div className="prov">{t('stair.info', { steps: g.steps, riser: cm1(g.riser), going: cm1(g.going), to: levelName(L + 1) })}</div>
             {stairIss.filter(i => i.vars?.stair === selStair.id && !i.with).map((i, k) => <div key={k} className={`issue ${i.severity}`}>{iT(i)}</div>)}
@@ -237,9 +250,9 @@ export default function Editor({ id }: { id: string }){
               <label className="f"><span>{t('stair.width', { u })}</span><input type="number" value={inField(selStair.width)} onChange={e => num(e.target.value, x => patchStair(selStair.id, { width: r3(Math.min(300, x) / 100) }), 60)} /></label>
               <label className="f"><span>{t('stair.length', { u })}</span><input type="number" value={inField(selStair.length)} onChange={e => num(e.target.value, x => patchStair(selStair.id, { length: r3(Math.min(800, x) / 100) }), 80)} /></label></div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><button className="btn" onClick={() => rotateStair(selStair.id)}>{t('stair.rotate')} (R)</button><button className="btn" onClick={del}>{t('stair.delete')}</button></div></div>); })()}
-          {selRoom && <RoomLookPanel room={selRoom} snap={snap} onRoom={(part, hex) => look(a => { const r: any = { ...(a.rooms?.[selRoom.id] || {}) }; if (hex) r[part] = { ...(r[part] || {}), color: hex }; else delete r[part]; a.rooms = { ...(a.rooms || {}), [selRoom.id]: r }; })}
+          {selRoom && stage === 'finishes' && <RoomLookPanel room={selRoom} snap={snap} onRoom={(part, hex) => look(a => { const r: any = { ...(a.rooms?.[selRoom.id] || {}) }; if (hex) r[part] = { ...(r[part] || {}), color: hex }; else delete r[part]; a.rooms = { ...(a.rooms || {}), [selRoom.id]: r }; })}
             onAllWalls={hex => look(a => { a.rooms = { ...(a.rooms || {}) }; for (const r of snap.floor.rooms) a.rooms[r.id] = { ...(a.rooms[r.id] || {}), walls: { color: hex } }; })} />}
-          {selWall && <>
+          {selWall && roomStage && <>
             <h3>{t('editor.wall')}</h3>
             <div className="grid2">
               <label className="f"><span>{t('editor.length', { u })}</span><input type="number" value={inField(wallLength(selWall.a, selWall.b))} onChange={e => num(e.target.value, x => mutate(s => { const w = s.floor.walls.find(w => w.id === selWall.id)!, L = wallLength(w.a, w.b), ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L; w.b = [r3(w.a[0] + ux * x / 100), r3(w.a[1] + uz * x / 100)]; }), 20)} /></label>
@@ -250,7 +263,7 @@ export default function Editor({ id }: { id: string }){
             <WallLookPanel wall={selWall} snap={snap} onFace={(rid, hex) => look(a => { a.wallFaces = setFinish(a.wallFaces, `${selWall.id}@${rid}`, { color: hex }); })} />
             <button className="btn danger" onClick={del}>{t('editor.deleteWall')}</button>
           </>}
-          {selOp && <>
+          {selOp && roomStage && <>
             <h3>{selOp.kind === 'door' ? t('tool.door') : t('tool.window')}</h3>
             <div className="grid2">
               <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(selOp.width)} onChange={e => num(e.target.value, x => mutate(s => { s.floor.walls.find(w => w.id === (sel as any).wallId)!.openings.find(o => o.id === selOp.id)!.width = r3(x / 100); }), 30)} /></label>
@@ -262,25 +275,31 @@ export default function Editor({ id }: { id: string }){
               const clean = { ...(next.product ? { product: next.product } : {}), ...(next.handle ? { handle: next.handle } : {}) }; s.doors = { ...(s.doors || {}) }; if (Object.keys(clean).length) s.doors[selOp.id] = clean; else delete s.doors[selOp.id]; })} />}
             <button className="btn danger" onClick={del}>{t('editor.deleteOpening')}</button>
           </>}
-          {selPl && <PlacementPanel out={out} p={selPl} snap={snap} catalog={catalog} issues={issues[selPl.id] || []} G={G} num={num}
+          {selPl && showSel && <PlacementPanel out={out} p={selPl} snap={snap} catalog={catalog} issues={issues[selPl.id] || []} G={G} num={num}
             onVariant={vid => changePiece(selPl.id, q => { q.variantId = vid; }, t('editor.variantNoFit'))}
             onMove={(x, z) => { const n = structuredClone(snap), q = n.placements.find(p => p.id === selPl.id)!; q.x = r3(x); q.z = r3(z); q.source = 'manual'; const iss = validatePlacement(n, catalog, q);
               if (severityOf(iss) === 'ERROR'){ say(t('editor.positionRefused', { msg: iT(iss.find(i => i.severity === 'ERROR')!) })); return; } commit(n); }}
             onRotate={() => rotate(selPl.id)} onDuplicate={() => duplicate(selPl.id)} onDelete={del} />}
-          {selPl && <ItemLookPanel p={selPl} snap={snap} catalog={catalog} model={resolve(catalog, selPl.variantId)?.product.model3d ?? ''} num={num}
+          {selPl && showSel && <ItemLookPanel p={selPl} snap={snap} catalog={catalog} model={resolve(catalog, selPl.variantId)?.product.model3d ?? ''} num={num}
             onItem={patch => look(a => { a.items = setFinish(a.items, selPl.id, patch); })}
             onSize={size => changePiece(selPl.id, q => { if (size) q.size = size; else delete q.size; }, t('editor.sizeNoFit'))}
             onVariant={vid => changePiece(selPl.id, q => { q.variantId = vid; }, t('editor.variantNoFit'))} />}
         </>}
-        {panel === 'design' && <DesignPanel id={id} snap={snap} say={say} cur={cur} onPreview={(v: any, pid: string | null) => setPreview(v && pid ? { v, pid } : null)} onApplied={(s: Snapshot, n: number) => { hist.current.push(house!); setHouse(s); latest.current = s; setRev(n); setSave('saved'); setSel(null); }} />}
-        {panel === 'twin' && <TwinDesignPanel id={id} snap={snap} catalog={catalog} say={say} onPreview={(s: Snapshot | null, label: string | null) => setPreview(s && label ? { v: { candidate: s, title: label, tier: 'twin-' + label }, pid: 'twin' } : null)} onApplied={(s: Snapshot, n: number) => { hist.current.push(house!); setHouse(s); latest.current = s; setRev(n); setSave('saved'); setSel(null); loadRevs(); }} />}
-        {panel === 'catalog' && <CatalogPanel locale={lang} units={units} catalog={catalog} snap={snap} onUse={(g, vid) => mutate(s => { s.selections[g] = vid; if (!s.picked.includes(g)) s.picked.push(g); })} onAdd={selRoom ? (vid: string) => { const r = addPlacement(snap, catalog, selRoom.id, vid); if (!r){ say(t('editor.noFreeSpot')); return; } commit(r); setSel({ kind: 'placement', id: r.placements.at(-1)!.id }); } : undefined} />}
-        {panel === 'tech' && <TechPanel snap={snap} show={showTech} kind={techKind} onShow={setShowTech} onKind={k => { setTechKind(k); setTool('tech'); }}
+        {stage === 'concept' && !showSel && <>
+          {house && <StylePanel house={house} cat={catalog} mc={mc} cur={cur} onApply={(h, id) => { commitHouse(h); say(t('style.applied', { name: t(`style.${id}`) })); }} />}
+          <button className="btn" onClick={() => { if (!confirm(t('editor.autoConfirm'))) return; const r = autoLayout(snap, catalog); commit(r.snapshot); say(r.notFit.length ? t('editor.notFit', { list: r.notFit.map(n => t('editor.notFitItem', { key: n.key, room: n.room })).join(', ') }) : t('editor.autoApplied')); }}>{t('editor.autoAll')}</button>
+        </>}
+        {stage === 'concept' && !showSel && <DesignPanel id={id} snap={snap} say={say} cur={cur} onPreview={(v: any, pid: string | null) => setPreview(v && pid ? { v, pid } : null)} onApplied={(s: Snapshot, n: number) => { hist.current.push(house!); setHouse(s); latest.current = s; setRev(n); setSave('saved'); setSel(null); }} />}
+        {stage === 'concept' && !showSel && <TwinDesignPanel id={id} snap={snap} catalog={catalog} say={say} onPreview={(s: Snapshot | null, label: string | null) => setPreview(s && label ? { v: { candidate: s, title: label, tier: 'twin-' + label }, pid: 'twin' } : null)} onApplied={(s: Snapshot, n: number) => { hist.current.push(house!); setHouse(s); latest.current = s; setRev(n); setSave('saved'); setSel(null); loadRevs(); }} />}
+        {stage === 'finishes' && !showSel && <RoomPicker snap={snap} mc={mc} onPick={rid => setSel({ kind: 'room', id: rid })} />}
+        {stage === 'ffe' && !showSel && <CatalogPanel locale={lang} units={units} catalog={catalog} snap={snap} onUse={(g, vid) => mutate(s => { s.selections[g] = vid; if (!s.picked.includes(g)) s.picked.push(g); })} onAdd={selRoom ? (vid: string) => { const r = addPlacement(snap, catalog, selRoom.id, vid); if (!r){ say(t('editor.noFreeSpot')); return; } commit(r); setSel({ kind: 'placement', id: r.placements.at(-1)!.id }); } : undefined} />}
+        {stage === 'mep' && <TechPanel snap={snap} show={showTech} kind={techKind} onShow={setShowTech} onKind={k => { setTechKind(k); setTool('tech'); }}
           onSuggest={() => { const pts = suggestTechPoints(snap); mutate(s => { s.tech = pts; }); setShowTech(true); say(t('tech.suggested', { n: pts.length })); }}
           onClear={() => mutate(s => { delete s.tech; })} onDelete={id => mutate(s => { s.tech = (s.tech || []).filter(p => p.id !== id); })} />}
-        {panel === 'advisor' && <AdvisorPanel lang={lang} units={units} currency={cur} advice={advice} rooms={snap.floor.rooms} onShow={showAdvice} />}
-        {panel === 'budget' && <BudgetPanel snap={house!} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
-        {panel === 'revs' && <div className="revs"><h3>{t('tab.revs')}</h3>{revs.length === 0 && <p className="muted">{t('editor.noRevsYet')}</p>}
+        {stage === 'docs' && <DocsPanel id={id} lang={lang} onSchedule={() => downloadSchedule(finishSchedule(house!, catalog, mc), t, cur, snap.name || 'proiect', levelName)} />}
+        {stage === 'docs' && <AdvisorPanel lang={lang} units={units} currency={cur} advice={advice} rooms={snap.floor.rooms} onShow={showAdvice} />}
+        {stage === 'quote' && <BudgetPanel snap={house!} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
+        {stage === 'present' && !showSel && <div className="revs"><h3>{t('stage.revisions')}</h3>{revs.length === 0 && <p className="muted">{t('editor.noRevsYet')}</p>}
           {revs.map(r => <div key={r.number} className="r"><span>{t('editor.revisionN', { n: r.number })}{r.note ? ` · ${r.note}` : ''}</span><button className="btn" onClick={() => restore(r.number)}>{t('editor.revert')}</button><button className="btn" onClick={() => shareRevision(r.number)} title={t('editor.shareTitle')}>{t('editor.share')}</button><small>{when(r.created_at)}</small></div>)}
           <RevisionDiff id={id} revs={revs} lang={lang} units={units} />
           {shares.filter(s => !s.revokedAt).length > 0 && <><h4>{t('editor.activeShares')}</h4>{shares.filter(s => !s.revokedAt).map(s => <div key={s.token} className="r"><span>{t('editor.revisionN', { n: s.revisionNumber })}</span><a className="btn" href={s.path} target="_blank" rel="noopener">{t('common.open')}</a><button className="btn danger" onClick={() => revokeShare(s.token)}>{t('editor.revoke')}</button><small>{when(s.createdAt)}</small></div>)}</>}</div>}
@@ -290,13 +309,13 @@ export default function Editor({ id }: { id: string }){
   </div>);
 }
 
-function RoomPanel({ room, snap, G, cat, mc, cur, onFinish, onChange, onAuto, onAdd, num }: any){
+function RoomPanel({ part, room, snap, G, cat, mc, cur, onFinish, onChange, onAuto, onAdd, num }: any){
   const { t, tp, lang, units } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units), inField = (m: number) => cmToInput(m * 100, units);
   const [grp, setGrp] = useState(Object.keys(G).find(k => !G[k].includedWith)!), [vi, setVi] = useState(0);
   const w = room.rect.x1 - room.rect.x0, d = room.rect.z1 - room.rect.z0;
   return (<>
     <h3>{room.name}</h3><div className="prov">{formatArea(area(room.rect), units, lang)} · {tp('editor.pieces', snap.placements.filter((p: any) => p.roomId === room.id).length)}</div>
-    <div className="grid2">
+    {part === 'survey' && <><div className="grid2">
       <label className="f"><span>{t('editor.name')}</span><input type="text" value={room.name} maxLength={60} onChange={e => onChange((r: any) => { r.name = e.target.value; })} /></label>
       <label className="f"><span>{t('editor.type')}</span><select value={room.type} onChange={e => onChange((r: any) => { r.type = e.target.value; })}>{ROOM_TYPES.map(([v, l]) => <option key={v} value={v}>{t(l)}</option>)}</select></label>
       <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(w)} onChange={e => num(e.target.value, (x: number) => onChange((r: any) => { r.rect.x1 = r3(r.rect.x0 + x / 100); }), 60)} /></label>
@@ -304,13 +323,13 @@ function RoomPanel({ room, snap, G, cat, mc, cur, onFinish, onChange, onAuto, on
       <label className="f"><span>{t('editor.posX', { u })}</span><input type="number" value={inField(room.rect.x0)} onChange={e => { const cm = inputToCm(e.target.value, units), x = cm == null ? NaN : cm / 100; if (Number.isFinite(x)) onChange((r: any) => { r.rect.x1 = r3(x + (r.rect.x1 - r.rect.x0)); r.rect.x0 = r3(x); }); }} /></label>
       <label className="f"><span>{t('editor.posZ', { u })}</span><input type="number" value={inField(room.rect.z0)} onChange={e => { const cm = inputToCm(e.target.value, units), z = cm == null ? NaN : cm / 100; if (Number.isFinite(z)) onChange((r: any) => { r.rect.z1 = r3(z + (r.rect.z1 - r.rect.z0)); r.rect.z0 = r3(z); }); }} /></label>
     </div>
-    <p className="prov" style={{ margin: 0 }}>{t('editor.roomWallsNote')}</p>
-    <FinishesPanel room={room} snap={snap} cat={cat} mc={mc} cur={cur} onFinish={onFinish} />
-    <button className="btn" onClick={onAuto}>{t('editor.autoRoom')}</button>
+    <p className="prov" style={{ margin: 0 }} title={t('editor.roomWallsNote')}>{t('editor.roomWallsShort')}</p></>}
+    {part === 'finishes' && <FinishesPanel room={room} snap={snap} cat={cat} mc={mc} cur={cur} onFinish={onFinish} />}
+    {part === 'ffe' && <><button className="btn" onClick={onAuto}>{t('editor.autoRoom')}</button>
     <h4>{t('editor.addFurniture')}</h4>
     <select value={grp} onChange={e => { setGrp(e.target.value); setVi(0); }}>{Object.entries<any>(G).filter(([, g]) => !g.includedWith).map(([k, g]) => <option key={k} value={k}>{g.label}</option>)}</select>
     <select value={vi} onChange={e => setVi(Number(e.target.value))}>{G[grp].variants.map((v: any, i: number) => <option key={v.id} value={i}>{v.name}</option>)}</select>
-    <button className="btn primary" onClick={() => onAdd(G[grp].variants[vi].id)}>{t('editor.addToRoom')}</button>
+    <button className="btn primary" onClick={() => onAdd(G[grp].variants[vi].id)}>{t('editor.addToRoom')}</button></>}
   </>);
 }
 function PlacementPanel({ out, p, snap, catalog, issues, G, num, onVariant, onMove, onRotate, onDuplicate, onDelete }: { out: Outbound | null; p: FurniturePlacement; snap: Snapshot; catalog: Catalog; issues: Issue[]; G: any; num: any; onVariant(v: string): void; onMove(x: number, z: number): void; onRotate(): void; onDuplicate(): void; onDelete(): void }){
@@ -334,12 +353,34 @@ function PlacementPanel({ out, p, snap, catalog, issues, G, num, onVariant, onMo
 
 function DoorPanel({ op, snap, mc, cur, onChange }: { op: { id: string; width: number }; snap: Snapshot; mc: MaterialsCatalog; cur: string; onChange(p: { product?: string | null; handle?: string | null }): void }){
   const { t, lang } = usePrefs(), c = snap.doors?.[op.id] ?? {}, by = (k: string) => mc.materials.filter(m => m.category === k);
-  const opt = (m: MaterialsCatalog['materials'][number]) => <option key={m.id} value={m.id}>{m.name} · {formatMoney(m.unitPrice, cur, lang)}</option>;
   const iss = doorIssues(snap, mc).filter(i => i.openingId === op.id);
   return (<>
     <h4>{t('door.title')}</h4>
     {iss.map((i, k) => <div key={k} className="issue WARNING">{t(i.key, i.vars)}</div>)}
-    <label className="f"><span>{t('door.product')}</span><select value={c.product || ''} onChange={e => onChange({ product: e.target.value || null })}><option value="">{t('door.none')}</option>{by('door').map(opt)}</select></label>
-    <label className="f"><span>{t('door.handle')}</span><select value={c.handle || ''} onChange={e => onChange({ handle: e.target.value || null })}><option value="">{t('door.none')}</option>{by('door_handle').map(opt)}</select></label>
+    <label className="f"><span>{t('door.product')}</span><MaterialPicker cur={cur} value={c.product} options={by('door')} none={t('door.none')} onChange={v => onChange({ product: v || null })} /></label>
+    <label className="f"><span>{t('door.handle')}</span><MaterialPicker cur={cur} value={c.handle} options={by('door_handle')} none={t('door.none')} onChange={v => onChange({ handle: v || null })} /></label>
   </>);
+}
+
+/** Etapa Finisaje fără selecție: camerele ca listă de lucru, cu pardoseala aleasă și starea finisajelor. */
+function RoomPicker({ snap, mc, onPick }: { snap: Snapshot; mc: MaterialsCatalog; onPick(id: string): void }){
+  const { t, lang, units } = usePrefs();
+  return (<div className="roompick">
+    <p className="muted">{t('stage.finishesPick')}</p>
+    {snap.floor.rooms.map(r => { const f = finishesOf(snap, r), fl = materialOf(mc, f.floor), feats = (f.wallFeatures || []).length;
+      return <button key={r.id} className="roomrow" onClick={() => onPick(r.id)}>
+        <i style={{ background: fl?.specs?.color ?? '#d9d2c4' }} aria-hidden />
+        <span><b>{r.name}</b><small>{formatArea(area(r.rect), units, lang)} · {t(`roomType.${r.type}`)}</small></span>
+        <small>{fl ? fl.name.split(',')[0] : '—'}{feats ? ` · ${t('stage.accents', { n: feats })}` : ''}</small></button>; })}
+  </div>);
+}
+/** Etapa Planșe: setul de documentație pentru client și echipe. */
+function DocsPanel({ id, lang, onSchedule }: { id: string; lang: string; onSchedule(): void }){
+  const { t } = usePrefs();
+  return (<div className="docs">
+    <a className="docrow" href={`/p/${id}/print`} target="_blank" rel="noopener"><b>{t('docs.pack')}</b><small>{t('docs.packSub')}</small></a>
+    <button className="docrow" onClick={onSchedule}><b>{t('docs.schedule')}</b><small>{t('docs.scheduleSub')}</small></button>
+    <a className="docrow" href={`/api/projects/${id}/export.dxf?lang=${lang}`} download><b>{t('docs.dxf')}</b><small>{t('docs.dxfSub')}</small></a>
+    <h3>{t('docs.checks')}</h3>
+  </div>);
 }

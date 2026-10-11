@@ -28,9 +28,9 @@ function LevelPlan({ snap, catalog, voids, aria }: { snap: Snapshot; catalog: Ca
         const treads = Array.from({ length: g.steps - 1 }, (_, k) => { const cx = g.bottom[0] + dx * g.going * (k + 1), cz = g.bottom[1] + dz * g.going * (k + 1); return `M${cx - px * hw} ${cz - pz * hw}L${cx + px * hw} ${cz + pz * hw}`; }).join('');
         return <g key={st.id} stroke="#555" fill="none"><rect x={r.x0} y={r.z0} width={r.x1 - r.x0} height={r.z1 - r.z0} fill="#efe9de" strokeWidth={0.02} /><path d={treads} strokeWidth={0.01} /><path d={`M${g.bottom[0]} ${g.bottom[1]}L${g.top[0]} ${g.top[1]}`} strokeWidth={0.02} /></g>; })}
       {snap.placements.map(p => { const fp = footprintOf(catalog, p); if (!fp) return null; const rv = resolve(catalog, p.variantId);
-        return <g key={p.id}><rect x={fp.x0} y={fp.z0} width={fp.x1 - fp.x0} height={fp.z1 - fp.z0} fill="#ffffffcc" stroke="#1F4E79" strokeWidth={0.02} rx={0.03} />
+        return <g key={p.id}><rect x={fp.x0} y={fp.z0} width={fp.x1 - fp.x0} height={fp.z1 - fp.z0} fill="#ffffffcc" stroke="#8B6A45" strokeWidth={0.02} rx={0.03} />
           <title>{rv?.product.name ?? p.group}</title>
-          {(fp.x1 - fp.x0) > 0.45 && <text x={(fp.x0 + fp.x1) / 2} y={(fp.z0 + fp.z1) / 2 + 0.04} fontSize={Math.min(0.13, (fp.x1 - fp.x0) / 6)} textAnchor="middle" fill="#1F4E79">{(rv?.product.name ?? p.group).split(' ')[0]}</text>}</g>; })}
+          {(fp.x1 - fp.x0) > 0.45 && <text x={(fp.x0 + fp.x1) / 2} y={(fp.z0 + fp.z1) / 2 + 0.04} fontSize={Math.min(0.13, (fp.x1 - fp.x0) / 6)} textAnchor="middle" fill="#8B6A45">{(rv?.product.name ?? p.group).split(' ')[0]}</text>}</g>; })}
       {/* etichetele camerelor se desenează ultimele, peste mobilă, cu contur alb ca să rămână lizibile */}
       {f.rooms.map(r => <g key={'l' + r.id}>
         <text x={r.rect.x0 + 0.18} y={r.rect.z1 - 0.2} fontSize={0.2} fill="#444" stroke="#fbfaf7" strokeWidth={0.07} strokeLinejoin="round" paintOrder="stroke">{r.name} · {formatArea(area(r.rect), units, lang)}</text></g>)}

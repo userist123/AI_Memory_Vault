@@ -7,6 +7,7 @@ import { wallElevations } from '@/core/drawings';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalog, MaterialsCatalog, Snapshot } from '@/core/types';
 import { footprintOf } from '@/core/validate';
+import { planSymbol, symbolAngle } from '@/core/plan-symbols';
 import { pricedOffer, resolve, furnitureTotal } from '@/core/catalog';
 import { roomLook, normalizeHex } from '@/core/appearance';
 import { roomWorks } from '@/core/room-works';
@@ -38,9 +39,10 @@ function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, locale, roo
       const treads = Array.from({ length: g.steps - 1 }, (_, k) => { const cx = g.bottom[0] + dx * g.going * (k + 1), cz = g.bottom[1] + dz * g.going * (k + 1); return `M${cx - px * hw} ${cz - pz * hw}L${cx + px * hw} ${cz + pz * hw}`; }).join('');
       return <g key={st.id} stroke="#444" fill="none"><rect x={r.x0} y={r.z0} width={r.x1 - r.x0} height={r.z1 - r.z0} fill="#efe9de" strokeWidth={fs(0.25)} /><path d={treads} strokeWidth={fs(0.12)} />
         <path d={`M${g.bottom[0] + dx * .1} ${g.bottom[1] + dz * .1}L${g.top[0]} ${g.top[1]}M${g.top[0] - dx * .2 - px * .12} ${g.top[1] - dz * .2 - pz * .12}L${g.top[0]} ${g.top[1]}L${g.top[0] - dx * .2 + px * .12} ${g.top[1] - dz * .2 + pz * .12}`} strokeWidth={fs(0.2)} /></g>; })}
-    {pls.map(pl => { const fp = footprintOf(catalog, pl); if (!fp) return null; const rv = resolve(catalog, pl.variantId), label = (rv?.product.name ?? pl.group).split(' ')[0] ?? '';
-      return <g key={pl.id}><rect x={fp.x0} y={fp.z0} width={fp.x1 - fp.x0} height={fp.z1 - fp.z0} fill="#ffffffcc" stroke="#1F4E79" strokeWidth={fs(0.2)} rx={0.03} />
-        {(fp.x1 - fp.x0) > fs(label.length * 1.8) && <text x={(fp.x0 + fp.x1) / 2} y={(fp.z0 + fp.z1) / 2 + fs(0.7)} fontSize={fs(2)} textAnchor="middle" fill="#1F4E79">{label}</text>}</g>; })}
+    {pls.map(pl => { const fp = footprintOf(catalog, pl); if (!fp) return null; const rv = resolve(catalog, pl.variantId);
+      const sym = planSymbol(pl.group, pl.size ? pl.size.w / 100 : rv?.w ?? fp.x1 - fp.x0, pl.size ? pl.size.d / 100 : rv?.d ?? fp.z1 - fp.z0, rv?.variant.chairs ?? 4);
+      return <g key={pl.id} transform={`translate(${pl.x} ${pl.z}) rotate(${symbolAngle(pl.rotation)})`} fill="none" stroke="#3a352f" strokeLinejoin="round">
+        {sym.outline && <path d={sym.outline} fill="#fffdf8" strokeWidth={fs(0.22)} />}{sym.detail && <path d={sym.detail} strokeWidth={fs(0.14)} />}</g>; })}
     {rooms.map(r => <text key={'l' + r.id} x={r.rect.x0 + 0.15} y={r.rect.z1 - 0.15} fontSize={fs(3)} fill="#444" stroke="#fbfaf7" strokeWidth={fs(1)} strokeLinejoin="round" paintOrder="stroke">{r.name} · {formatArea((r.rect.x1 - r.rect.x0) * (r.rect.z1 - r.rect.z0), units, locale)}</text>)}
     {dims.filter(d => d.exterior).map(d => { const w = f.walls.find(x => x.id === d.wallId)!, k = 0.3, tick = fs(1.2), nx = d.normal[0], nz = d.normal[1];
       const a = [w.a[0] + nx * k, w.a[1] + nz * k], c = [w.b[0] + nx * k, w.b[1] + nz * k], vertical = Math.abs(w.b[0] - w.a[0]) < Math.abs(w.b[1] - w.a[1]);

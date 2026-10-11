@@ -5,8 +5,8 @@ import { TECH_KINDS, techCounts, type TechKind } from '@/core/technical';
 import { usePrefs } from '@/lib/prefs';
 
 export const TECH_SYMBOL: Record<TechKind, { letter: string; color: string }> = {
-  outlet: { letter: 'P', color: '#1F4E79' }, outlet_double: { letter: 'P2', color: '#1F4E79' }, switch: { letter: 'I', color: '#5E636B' }, light_point: { letter: 'L', color: '#B7791F' },
-  data: { letter: 'D', color: '#2F6B4F' }, cooker: { letter: 'K', color: '#8a3b2b' }, water_cold: { letter: 'A', color: '#2E6DA4' }, water_hot: { letter: 'C', color: '#B3261E' }, drain: { letter: 'S', color: '#4a4a48' },
+  outlet: { letter: 'P', color: '#8B6A45' }, outlet_double: { letter: 'P2', color: '#8B6A45' }, switch: { letter: 'I', color: '#5E636B' }, light_point: { letter: 'L', color: '#B7791F' },
+  data: { letter: 'D', color: '#2F6B4F' }, cooker: { letter: 'K', color: '#8a3b2b' }, water_cold: { letter: 'A', color: '#6E8798' }, water_hot: { letter: 'C', color: '#B3261E' }, drain: { letter: 'S', color: '#4a4a48' },
 };
 const KINDS = Object.keys(TECH_KINDS) as TechKind[];
 
