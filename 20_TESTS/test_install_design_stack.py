@@ -61,7 +61,7 @@ def test_a_cp1252_console_does_not_crash_the_run(tmp_path):
         pytest.skip("fake claude is a POSIX shell script")
     fake = tmp_path / "bin" / "claude"
     fake.parent.mkdir()
-    fake.write_text("#!/bin/sh\nprintf '\\342\\234\\230 already enabled\\n'\nexit 1\n", encoding="utf-8")
+    fake.write_text("#!/bin/sh\necho '\u2718 already enabled'\nexit 1\n", encoding="utf-8")
     fake.chmod(0o755)
     env = dict(os.environ, PYTHONIOENCODING="cp1252", PATH=f"{fake.parent}{os.pathsep}{os.environ['PATH']}")
     r = subprocess.run([sys.executable, str(SCRIPT), "--home", str(tmp_path / "home"), "--apply"],
