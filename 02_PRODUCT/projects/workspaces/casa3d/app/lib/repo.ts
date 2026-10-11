@@ -89,6 +89,8 @@ export function checkSnapshot(s: any): Snapshot {
     p.size = { w: Math.round(p.size.w), d: Math.round(p.size.d), h: Math.round(p.size.h) }; } // doar w/d/h, în cm întregi
   for (const f of fls) for (const w of f.walls) for (const o of w.openings){ if (o.height != null && !(num(o.height) && o.height >= 0.3 && o.height <= 3)) throw new HttpError(400, 'Înălțimea golului trebuie să fie între 30 și 300 cm.');
     if (o.sill != null && !(num(o.sill) && o.sill >= 0 && o.sill <= 2)) throw new HttpError(400, 'Parapetul ferestrei trebuie să fie între 0 și 200 cm.');
+    if (o.hinge != null && o.hinge !== 'start' && o.hinge !== 'end') throw new HttpError(400, 'Balamaua ușii este invalidă.');
+    if (o.swing != null && o.swing !== 1 && o.swing !== -1) throw new HttpError(400, 'Sensul de deschidere al ușii este invalid.');
     // golul trebuie să încapă sub tavan (ușa de la podea, fereastra de la parapet)
     const top = (o.kind === 'window' ? (o.sill ?? 0.9) : 0) + (o.height ?? (o.kind === 'door' ? 2.1 : 1.3)), ceil = num(f.ceilingHeight) ? f.ceilingHeight : 2.6;
     if ((o.height != null || o.sill != null) && top > ceil + 1e-9) throw new HttpError(400, `Golul depășește tavanul: are ${Math.round(top * 100)} cm, iar tavanul ${Math.round(ceil * 100)} cm.`); }

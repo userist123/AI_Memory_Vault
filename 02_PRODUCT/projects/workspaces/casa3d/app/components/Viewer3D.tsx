@@ -19,6 +19,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
   const [quality, setQuality] = useState<'normal' | 'high'>('normal'), qRef = useRef(quality); qRef.current = quality;
   useEffect(() => { const t = typeof window !== 'undefined' && (matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0); setTouch(t); if (!t) setQuality('high'); }, []);
   pickRef.current = onPick;
+  const [doorsOpen, setDoorsOpen] = useState(true);
   useEffect(() => { let alive = true;
     import('./viewer3d-engine.js').then(m => { if (!alive || !ref.current) return; try { v.current = m.createViewer(ref.current, { onPick: (id: string | null) => pickRef.current(id) }); applyLight(); v.current.setQuality?.(qRef.current); push(); } catch { setErr('webgl'); } });
     return () => { alive = false; v.current?.dispose(); v.current = null; }; }, []); // eslint-disable-line
@@ -59,6 +60,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
       </select>
       {mode === 'walk' && room && <button className="btn" disabled={panoBusy || !!err} title={t('pano.title')} onClick={openPano}>360°</button>}
       {panoMsg && <span className="muted" role="status">{panoMsg}</span>}
+      <button className="btn" aria-pressed={doorsOpen} title={t('viewer.doors')} onClick={() => { const n = !doorsOpen; setDoorsOpen(n); v.current?.setDoors(n); }}>{doorsOpen ? t('viewer.doorsOpen') : t('viewer.doorsClosed')}</button>
       <button className="btn" aria-expanded={lightOpen} onClick={() => setLightOpen(o => !o)} title={t('viewer.lightTitle')}>{t('viewer.light')}</button>
       <button className="btn" onClick={capture} disabled={!!err} title={t('viewer.captureTitle')}>{t('viewer.capture')}</button>
       <button className="btn" onClick={exportBlender} disabled={!!err} title={t('viewer.blenderTitle')}>{t('viewer.blender')}</button>

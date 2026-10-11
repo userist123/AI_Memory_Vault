@@ -5,6 +5,7 @@ import { resolve } from './catalog';
 import { footprintOf } from './validate';
 import { TECH_KINDS, type TechKind } from './technical';
 import { wallDimensions, roomSchedule } from './dimensions';
+import { doorSwing } from './doors';
 import { floors, levelView, stairGeometry, stairVoids, stairRect, SLAB } from './levels';
 import { wallLength } from './geometry';
 
@@ -66,11 +67,13 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
       let cur = 0; for (const q of ops){ if (q.s > cur + 1e-6) poly('WALLS', band(w, cur, q.s)); cur = Math.max(cur, q.e); }
       if (L > cur + 1e-6) poly('WALLS', band(w, cur, L));
       // spre interior = opusul normalei exterioare
-      const nd = dims.get(w.id)!, nx = -nd.normal[0], nz = -nd.normal[1];
+      void dims;
       for (const { o, s, e } of ops){
         const pa = (t: number, side = 0) => P(w.a[0] + ux * t - uz * h * side, w.a[1] + uz * t + ux * h * side);
         if (o.kind === 'door'){
-          const hinge = pa(s), rr = (e - s) * 1000, d: Pt = [ux, -uz], n: Pt = [nx, -nz];   // în coordonate DXF (z inversat)
+          // balamaua și partea de deschidere: aceleași ca în plan și în 3D (core/doors.ts)
+          const sw = doorSwing(snap.floor, snap.floor.walls.indexOf(w), w.openings.indexOf(o)), atS = sw.hinge !== 'end';
+          const hinge = pa(atS ? s : e), rr = (e - s) * 1000, d: Pt = atS ? [ux, -uz] : [-ux, uz], n: Pt = [-uz * sw.swing, -ux * sw.swing];   // în coordonate DXF (z inversat)
           const closed: Pt = [hinge[0] + d[0] * rr, hinge[1] + d[1] * rr], open: Pt = [hinge[0] + n[0] * rr, hinge[1] + n[1] * rr];
           line('DOORS', hinge, open);
           const aC = Math.atan2(d[1], d[0]), aO = Math.atan2(n[1], n[0]), ccw = d[0] * n[1] - d[1] * n[0] > 0;

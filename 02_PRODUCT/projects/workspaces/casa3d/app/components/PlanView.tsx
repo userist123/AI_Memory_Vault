@@ -11,6 +11,7 @@ import type { Calib } from './UnderlayPanel';
 import { TECH_SYMBOL } from './TechPanel';
 import { stairGeometry, SLAB } from '@/core/levels';
 import { planSymbol, symbolAngle } from '@/core/plan-symbols';
+import { doorSwing } from '@/core/doors';
 import { allFixturePoints } from '@/core/fixtures';
 import { finishesOf } from '@/core/boq';
 
@@ -151,7 +152,10 @@ export default function PlanView(p: Props){
         {w.openings.map(o => { const a = [w.a[0] + ux * o.offset, w.a[1] + uz * o.offset], b = [w.a[0] + ux * (o.offset + o.width), w.a[1] + uz * (o.offset + o.width)], os = p.sel?.kind === 'opening' && p.sel.id === o.id;
           return (<g key={o.id}><line data-k="opening" data-id={o.id} data-w={w.id} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={os ? '#efe5d8' : '#FBFBF9'} strokeWidth={w.thickness + .01} style={{ cursor: 'ew-resize' }} />
             {o.kind === 'window' ? <><line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke="#6E8798" strokeWidth={.025} pointerEvents="none" /><line x1={a[0] + nx * w.thickness * .3} y1={a[1] + nz * w.thickness * .3} x2={b[0] + nx * w.thickness * .3} y2={b[1] + nz * w.thickness * .3} stroke="#6E8798" strokeWidth={.012} pointerEvents="none" /></>
-              : <path d={`M${a[0]} ${a[1]} L${a[0] + nx * o.width} ${a[1] + nz * o.width} A${o.width} ${o.width} 0 0 ${1} ${b[0]} ${b[1]}`} fill="none" stroke="#5E636B" strokeWidth={.012} strokeDasharray=".04 .03" pointerEvents="none" />}</g>); })}
+              : (() => { const sw = doorSwing(floor, floor.walls.indexOf(w), w.openings.indexOf(o)), H = sw.hinge === 'end' ? b : a, E = sw.hinge === 'end' ? a : b, sx = nx * sw.swing, sz = nz * sw.swing;
+                // foaia deschisă (linie) și arcul de deschidere, de partea și cu balamaua alese
+                const Px = H[0] + sx * o.width, Pz = H[1] + sz * o.width, cr = (Px - H[0]) * (E[1] - H[1]) - (Pz - H[1]) * (E[0] - H[0]);
+                return <path d={`M${H[0]} ${H[1]} L${Px} ${Pz} A${o.width} ${o.width} 0 0 ${cr > 0 ? 1 : 0} ${E[0]} ${E[1]}`} fill="none" stroke="#3a352f" strokeWidth={.012} pointerEvents="none" />; })()}</g>); })}
         <text x={mid[0]} y={mid[1] + fs * .3} textAnchor="middle" fontSize={fs * .78} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={sel ? '#8B6A45' : '#5E636B'} pointerEvents="none">{wl(L)}</text>
         {sel && ([['a', w.a], ['b', w.b]] as const).map(([end, pt]) => <circle key={end} data-k="handle" data-w={w.id} data-end={end} data-id={w.id} cx={pt[0]} cy={pt[1]} r={fs * .6} fill="#fff" stroke="#8B6A45" strokeWidth={.03} style={{ cursor: 'grab' }} />)}
       </g>); })}
