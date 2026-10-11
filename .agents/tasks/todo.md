@@ -16,7 +16,7 @@ Plan (each step: tests first for logic, tsc + vitest + build + phone/desktop che
 - [x] 7. Title block + numbered sheet set + revision table.
 - [x] 8. Site survey mode: sides + diagonals, closure/squareness check, verified dimensions + drawing freeze.
 - [x] 9. Time tracking per project vs design fee.
-- [ ] 10. Later: kitchen modules + worktop, wardrobe PAL cut list, GLB export.
+- [~] 10. Wardrobe PAL cut list done; kitchen modules + worktop, GLB export still to do.
 Risks: stale ETAs on the client link (show "updated at"); buy prices never reach the client; I7 values stay editable warnings.
 
 ## Current task — Casa3D: what is missing vs professional design software, then build it (2026-10-11)

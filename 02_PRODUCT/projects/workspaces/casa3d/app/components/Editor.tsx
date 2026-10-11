@@ -38,6 +38,7 @@ import ProjectCard from './ProjectCard';
 import TasksPanel from './TasksPanel';
 import SurveyPanel from './SurveyPanel';
 import TimePanel from './TimePanel';
+import WardrobePanel from './WardrobePanel';
 import { DesignerChanges } from './ChangeOrders';
 import OrdersPage from './OrdersPage';
 import SitePage from './SitePage';
@@ -302,6 +303,7 @@ export default function Editor({ id }: { id: string }){
             onMove={(x, z) => { const n = structuredClone(snap), q = n.placements.find(p => p.id === selPl.id)!; q.x = r3(x); q.z = r3(z); q.source = 'manual'; const iss = validatePlacement(n, catalog, q);
               if (severityOf(iss) === 'ERROR'){ say(t('editor.positionRefused', { msg: iT(iss.find(i => i.severity === 'ERROR')!) })); return; } commit(n); }}
             onRotate={() => rotate(selPl.id)} onDuplicate={() => duplicate(selPl.id)} onDelete={del} />}
+          {selPl && showSel && stage === 'ffe' && selPl.group === 'dulap' && <WardrobePanel p={selPl} snap={snap} catalog={catalog} onChange={spec => mutate(s => { const j = { ...(s.joinery ?? {}) }; if (spec) j[selPl.id] = spec; else delete j[selPl.id]; if (Object.keys(j).length) s.joinery = j; else delete s.joinery; })} />}
           {selPl && showSel && <ItemLookPanel p={selPl} snap={snap} catalog={catalog} model={resolve(catalog, selPl.variantId)?.product.model3d ?? ''} num={num}
             onItem={patch => look(a => { a.items = setFinish(a.items, selPl.id, patch); })}
             onSize={size => changePiece(selPl.id, q => { if (size) q.size = size; else delete q.size; }, t('editor.sizeNoFit'))}
