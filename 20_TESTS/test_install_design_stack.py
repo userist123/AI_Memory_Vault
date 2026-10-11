@@ -72,7 +72,7 @@ def test_a_cp1252_console_does_not_crash_the_run(tmp_path):
 
 def test_plan_copies_the_three_directives_and_only_five_replica_skills(tmp_path):
     names = [d.split()[2] for d, cmd in mod.plan(tmp_path, windows=False) if cmd is None]
-    assert names == ["creative-web-director", "security-lockdown", "graph-orchestrator",
+    assert names == ["creative-web-director", "security-lockdown", "graph-orchestrator", "motion-director",
                      "replica-recon", "replica-architect", "replica-entrepreneur", "replica-build", "replica-brand"]
     for name in names:
         assert (mod.skill_source(name) / "SKILL.md").is_file(), name
@@ -156,3 +156,15 @@ def test_owner_skills_are_bounded():
     graph = (ROOT / ".claude" / "skills" / "graph-orchestrator" / "SKILL.md").read_text(encoding="utf-8")
     for must in ("never inside the AI_Memory_Vault", "replica/screens/", "no bulk scraping", "Never copy the"):
         assert must in graph, must
+
+
+def test_remotion_comes_from_the_official_plugin_only(tmp_path):
+    cmds = [cmd for _, cmd in mod.plan(tmp_path, windows=True) if cmd]
+    assert ["claude", "plugin", "marketplace", "add", "remotion-dev/claude-code-plugin"] in cmds
+    assert ["claude", "plugin", "install", "remotion@remotion"] in cmds
+    flat = json.dumps(cmds)
+    assert "haidrrrry" not in flat and "skills add" not in flat, "one Remotion source, no npx skills"
+    motion = (ROOT / ".claude" / "skills" / "motion-director" / "SKILL.md").read_text(encoding="utf-8")
+    assert motion.startswith("---\nname: motion-director\n")
+    for must in ("spring(", "<Sequence", "--crf=18", "never inside the AI_Memory_Vault", "explicit go"):
+        assert must in motion, must
