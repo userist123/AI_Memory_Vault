@@ -10,7 +10,8 @@ cleared: enable frontend-design and ralph-loop (already installed from the offic
 marketplace), confirm superpowers, add chrome-devtools-mcp pinned to 1.9.0 (the version the
 official marketplace pins) with telemetry and CrUX off and an isolated browser profile, and copy
 the owner's standing directives (creative-web-director, security-lockdown, graph-orchestrator)
-plus 5 Replica skills (vendored at a pinned commit, triggers narrowed) to ~/.claude/skills.
+and motion-director, plus 5 Replica skills (vendored at a pinned commit, triggers narrowed), to
+~/.claude/skills, and installs the official Remotion plugin from its own marketplace.
 impeccable and `npx skills` were rejected by that review and are not installed.
 A marker file (~/.claude/design-stack.installed) makes a second --apply a no-op.
 """
@@ -25,12 +26,13 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
-OWNER_SKILLS = ("creative-web-director", "security-lockdown", "graph-orchestrator")  # .claude/skills/<name>
+OWNER_SKILLS = ("creative-web-director", "security-lockdown", "graph-orchestrator", "motion-director")  # .claude/skills/<name>
 REPLICA_SKILLS = ("replica-recon", "replica-architect", "replica-entrepreneur", "replica-build", "replica-brand")
 REPLICA_GATE = ("Replica pack: use only when the owner explicitly asks to clone, rebuild or reverse-engineer "
                 "an existing app or site (normally through graph-orchestrator). ")
 MARKER_NAME = "design-stack.installed"
-VERSION = "2026-10-11.2"  # bump when the stack changes: an older marker re-runs the install once
+VERSION = "2026-10-11.3"  # bump when the stack changes: an older marker re-runs the install once
+PLUGINS_INSTALL = (("remotion-dev/claude-code-plugin", "remotion@remotion"),)  # official Remotion plugin
 PLUGINS_ENABLE = ("frontend-design@claude-plugins-official", "ralph-loop@claude-plugins-official",
                   "superpowers@claude-plugins-official")
 MCP_NAME = "chrome-devtools"
@@ -49,6 +51,9 @@ def mcp_command(windows: bool) -> list[str]:
 
 def plan(home: Path, windows: bool) -> list[tuple[str, list[str] | None]]:
     steps: list[tuple[str, list[str] | None]] = []
+    for repo, plugin in PLUGINS_INSTALL:
+        steps.append((f"add marketplace {repo}", ["claude", "plugin", "marketplace", "add", repo]))
+        steps.append((f"install plugin {plugin}", ["claude", "plugin", "install", plugin]))
     for p in PLUGINS_ENABLE:
         steps.append((f"enable plugin {p}", ["claude", "plugin", "enable", p]))
     steps.append((f"remove an older {MCP_NAME} MCP entry if any", ["claude", "mcp", "remove", "--scope", "user", MCP_NAME]))
@@ -131,7 +136,7 @@ def main(argv=None) -> int:
             print(f"ok   {desc}")
             continue
         code, out = run(cmd)
-        benign = cmd[1:3] == ["mcp", "remove"] or (code != 0 and "already enabled" in out.lower())
+        benign = cmd[1:3] == ["mcp", "remove"] or (code != 0 and "already" in out.lower())
         print(f"{'ok  ' if code == 0 or benign else 'FAIL'} {desc}" + (f"\n     {out[-400:]}" if out and code else ""))
         if code != 0 and not benign:
             failed.append(desc)
