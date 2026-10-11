@@ -236,7 +236,86 @@ public static class StationFactCollector
     {
         try { a(); }
         catch (Exception ex) when (ex is ManagementException or UnauthorizedAccessException or System.Security.SecurityException or IOException
-                                      or System.Runtime.InteropServices.COMException or InvalidOperationException or NetworkInformationException) { }
+                                      or System.Runtime.InteropServices.COMException or InvalidOperationException or NetworkInformationException or EventLogException) { }
+    }
+
+    /// <summary>
+    /// Configuration facts behind the air-gap channel checks: CD/DVD burning (N-series P28), printing (P29), clipboard and activity history (P30),
+    /// camera / microphone / speaker devices (P31) and the kind of every network adapter (N05). A value that cannot be read stays "" (unread), never a default.
+    /// </summary>
+    private static void ReadAirGapChannelSettings(StationFacts f)
+    {
+        var s = f.Settings;
+        const string Rs = @"SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices";
+        s["Optical.NoCDBurningMachine"] = Hklm(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer", "NoCDBurning");
+        s["Optical.NoCDBurningUser"] = RegRead(Registry.CurrentUser, @"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer", "NoCDBurning");
+        s["Optical.DenyWrite"] = Hklm(Rs + @"\{53f56308-b6bf-11d0-94f2-00a0c91efb8b}", "Deny_Write");
+        s["Optical.DenyAll"] = Hklm(Rs, "Deny_All");
+        Guard(() =>
+        {
+            using var cd = new ManagementObjectSearcher("SELECT Name, Capabilities FROM Win32_CDROMDrive");
+            var writers = new List<string>();
+            int drives = 0;
+            foreach (ManagementObject mo in cd.Get())
+            {
+                drives++;
+                if (mo["Capabilities"] is ushort[] caps && caps.Contains((ushort)4)) writers.Add(mo["Name"] as string ?? "unitate");
+            }
+            s["Optical.DriveCount"] = drives.ToString();
+            s["Optical.WriterCount"] = writers.Count.ToString();
+            s["Optical.WriterNames"] = string.Join("; ", writers);
+        });
+
+        Guard(() =>
+        {
+            using var cfg = new System.Diagnostics.Eventing.Reader.EventLogConfiguration("Microsoft-Windows-PrintService/Operational");
+            s["Print.LogEnabled"] = cfg.IsEnabled ? "1" : "0";
+        });
+        Guard(() =>
+        {
+            using var pr = new ManagementObjectSearcher("SELECT Name, PortName, Network FROM Win32_Printer");
+            var all = new List<string>(); var net = new List<string>();
+            foreach (ManagementObject mo in pr.Get())
+            {
+                var name = mo["Name"] as string ?? ""; var port = mo["PortName"] as string ?? "";
+                all.Add(name);
+                if (mo["Network"] is true || port.StartsWith("\\\\", StringComparison.Ordinal) || port.StartsWith("IP_", StringComparison.OrdinalIgnoreCase) || port.StartsWith("WSD", StringComparison.OrdinalIgnoreCase)) net.Add(name);
+            }
+            s["Print.PrinterCount"] = all.Count.ToString();
+            s["Print.PrinterNames"] = string.Join("; ", all.Take(8));
+            s["Print.NetworkPrinters"] = string.Join("; ", net.Take(8));
+        });
+
+        s["Clipboard.HistoryUser"] = RegRead(Registry.CurrentUser, @"Software\Microsoft\Clipboard", "EnableClipboardHistory");
+        s["Clipboard.HistoryPolicy"] = Hklm(@"SOFTWARE\Policies\Microsoft\Windows\System", "AllowClipboardHistory");
+        s["Activity.FeedPolicy"] = Hklm(@"SOFTWARE\Policies\Microsoft\Windows\System", "EnableActivityFeed");
+        Guard(() =>
+        {
+            var cdp = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ConnectedDevicesPlatform");
+            s["Activity.CachePresent"] = Directory.Exists(cdp) && Directory.EnumerateFiles(cdp, "ActivitiesCache.db", SearchOption.AllDirectories).Any() ? "da" : "nu";
+        });
+
+        Guard(() =>
+        {
+            var hw = Acquisition.AirGapFactsCollector.ReadHardware().Where(h => h.Enabled).ToList();
+            List<string> Names(LogAnalyzer.Dfir.Analysis.HardwareKind k) => hw.Where(h => LogAnalyzer.Dfir.Analysis.HardwareKinds.Of(h) == k).Select(h => h.Name).Distinct().ToList();
+            var cams = Names(LogAnalyzer.Dfir.Analysis.HardwareKind.Camera); var mics = Names(LogAnalyzer.Dfir.Analysis.HardwareKind.Microphone); var spk = Names(LogAnalyzer.Dfir.Analysis.HardwareKind.Speaker);
+            s["Hardware.Cameras"] = cams.Count.ToString(); s["Hardware.CameraNames"] = string.Join("; ", cams.Take(5));
+            s["Hardware.Microphones"] = mics.Count.ToString(); s["Hardware.MicrophoneNames"] = string.Join("; ", mics.Take(5));
+            s["Hardware.Speakers"] = spk.Count.ToString(); s["Hardware.SpeakerNames"] = string.Join("; ", spk.Take(5));
+        });
+
+        Guard(() =>
+        {
+            var virt = LogAnalyzer.Dfir.Analysis.Wp14Data.Default.Network.VirtualAdapterWords;
+            var byKind = Acquisition.AirGapFactsCollector.ReadAdapters().Where(a => a.Enabled)
+                .Select(a => (A: a, K: LogAnalyzer.Dfir.Analysis.AdapterKinds.Classify(a.Name, a.InstanceId, a.CompatibleIds, a.Service, a.PnpClass, virt).Kind)).ToList();
+            string Of(LogAnalyzer.Dfir.Analysis.AdapterKind k) => string.Join("; ", byKind.Where(x => x.K == k).Select(x => x.A.Name).Take(5));
+            s["Net.AdapterCount"] = byKind.Count.ToString();
+            s["Net.PhoneAdapters"] = Of(LogAnalyzer.Dfir.Analysis.AdapterKind.PhoneTethering);
+            s["Net.CellularAdapters"] = Of(LogAnalyzer.Dfir.Analysis.AdapterKind.Cellular);
+            s["Net.UsbEthernetAdapters"] = Of(LogAnalyzer.Dfir.Analysis.AdapterKind.UsbEthernet);
+        });
     }
 
     private static void ReadSettingsWave2(StationFacts f)
@@ -297,6 +376,8 @@ public static class StationFactCollector
         // AutoPlay / AutoRun (same keys as DevicePolicyCheck).
         s["AutoRun.NoDriveTypeAutoRun"] = Hklm(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer", "NoDriveTypeAutoRun");
         s["AutoRun.NoAutorun"] = Hklm(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer", "NoAutorun");
+
+        ReadAirGapChannelSettings(f);
 
         // Windows version and last installed update.
         const string cv = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion";

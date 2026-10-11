@@ -17,6 +17,8 @@ public sealed class Wp14Input
     public Wp14Data? Data { get; init; }
     /// <summary>The zone the analysed system is in, as entered by the operator; "" = not stated.</summary>
     public string SystemZone { get; init; } = "";
+    /// <summary>What the facts collector read from the station (adapters, burn tooling, printers, screenshots, virtual machines, archivers, camera / microphone); null = not collected.</summary>
+    public AirGapFacts? Facts { get; init; }
 }
 
 /// <summary>
@@ -38,6 +40,7 @@ public static partial class Wp14Rules
         DeletedTraceFindings(c, found);
         Optical(c, found);
         AirGap(c, found);
+        Channels(c, found);
         return found;
     }
 
@@ -48,6 +51,9 @@ public static partial class Wp14Rules
         public Wp14Input Input { get; } = input;
         public CaseScope Scope => Input.Scope;
         public Wp14Data Data { get; } = data;
+        public AirGapFacts? Facts => Input.Facts;
+        /// <summary>True when the time is inside the case period (an open end is open); an unknown time is not inside.</summary>
+        public bool InPeriod(DateTimeOffset? t) => t is { } x && (Scope.PeriodFromUtc is not { } a || x >= a) && (Scope.PeriodToUtc is not { } b || x <= b);
         public bool Classified => Scope.Classification == ClassificationLevel.Classified;
         public bool AirGapScope => Scope.Network is NetworkCategory.AirGappedNetwork or NetworkCategory.StandalonePc;
         public ProcedureProfile? Profile => Input.Profile;

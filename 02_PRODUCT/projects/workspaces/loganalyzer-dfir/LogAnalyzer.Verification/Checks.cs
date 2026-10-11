@@ -47,7 +47,7 @@ public static class Checks
         if (e.Parser.Length > 0) return true;
         if (facts.ParsersByEvidence?.ContainsKey(e.EvidenceId) == true) return true;
         // The live snapshot is read by the pipeline's own analyzer, not by a registered parser; the finding's provenance names that producer.
-        if (e.SourceType == "live_snapshot" && f.Provenance is { Producer.Length: > 0 }) return true;
+        if (e.SourceType is "live_snapshot" or "airgap_facts" && f.Provenance is { Producer.Length: > 0 }) return true;
         if (facts.ParsersByEvidence is null)
         {
             if (f.Provenance is { Parsers.Count: > 0 }) return true;   // parsing.json is absent (old case); the finding's own provenance names a parser
@@ -123,7 +123,7 @@ public static class Checks
         {
             if (r.Rows.Count == 0)
             {
-                if (r.Item?.SourceType == "live_snapshot") continue;   // the snapshot time is the finding's own time; checked against the acquisition above
+                if (r.Item?.SourceType is "live_snapshot" or "airgap_facts") continue;   // the snapshot time is the finding's own time; checked against the acquisition above
                 if (facts.Timeline is null) unknown.Add($"timeline.csv lipsește: ora din proba {r.Ref.EvidenceId} ({r.Ref.Locator}) nu poate fi verificată");
                 else if (r.Item is not null) unknown.Add($"rândul {r.Ref.EvidenceId} {r.Ref.Locator} nu e în timeline.csv");
                 continue;

@@ -23,7 +23,7 @@ public sealed class EventLogCollector : ICollector
         "Microsoft-Windows-NetworkProfile/Operational", "Microsoft-Windows-WLAN-AutoConfig/Operational", "Microsoft-Windows-DNS-Client/Operational",
         // WP14a: removable media, CD/DVD and network adapters on air-gapped systems. A channel that does not exist on this system is "indisponibil", not a failure.
         "Microsoft-Windows-Kernel-PnP/Configuration", "Microsoft-Windows-DriverFrameworks-UserMode/Operational", "Microsoft-Windows-Dhcp-Client/Operational",
-        "Microsoft-Windows-VHDMP-Operational",
+        "Microsoft-Windows-VHDMP-Operational", "Microsoft-Windows-PrintService/Operational",
     ];
 
     public string Name => "EventLogCollector";

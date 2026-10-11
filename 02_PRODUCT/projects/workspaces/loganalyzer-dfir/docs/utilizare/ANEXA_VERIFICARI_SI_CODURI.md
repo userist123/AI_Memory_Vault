@@ -269,6 +269,38 @@
 - **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Services\W32Time\Parameters → Type, NtpServer`
 - **Cum se citește rezultatul:** Întotdeauna „de verificat”: aplicația arată setările, nu măsoară abaterea ceasului. Comparați ora stației cu ceasul de referință la control.
 
+### P28
+
+- **Ce verificăm:** Dacă stația poate scrie CD/DVD-uri și dacă scrierea este oprită la nivel de politică, nu doar în Explorer.
+- **De ce contează:** Un disc inscripționat este un mod simplu de a scoate date și nu apare ca stick USB; politica NoCDBurning oprește doar inscripționarea din Explorer, nu un program de inscripționare.
+- **Cum verifică aplicația:** A căutat unitățile optice cu capacitate de scriere și a citit politica de refuzare a scrierii pe CD/DVD și politica NoCDBurning.
+- **Sursa tehnică:** `WMI Win32_CDROMDrive → Capabilities; HKLM\SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices\{53f56308-b6bf-11d0-94f2-00a0c91efb8b} → Deny_Write; ...\Policies\Explorer → NoCDBurning`
+- **Cum se citește rezultatul:** Conform = nicio unitate nu scrie, sau scrierea este refuzată prin politică. Neconform = unitatea poate scrie și nu există blocare (sau doar NoCDBurning, care nu este suficient). De verificat = la o stație neizolată.
+
+### P29
+
+- **Ce verificăm:** Dacă stația înregistrează ce se tipărește și dacă are imprimante de rețea.
+- **De ce contează:** Tipărirea este una dintre căile prin care iese informație de pe o stație; fără jurnal nu se poate afla ce documente s-au tipărit.
+- **Cum verifică aplicația:** A citit dacă jurnalul PrintService/Operational este pornit (în Windows este oprit implicit) și lista imprimantelor, cu portul fiecăreia.
+- **Sursa tehnică:** `Canalul Microsoft-Windows-PrintService/Operational (activat); WMI Win32_Printer → PortName, Network`
+- **Cum se citește rezultatul:** Conform = fără imprimante, sau jurnalul este pornit și nu există imprimante de rețea. Neconform = pe stația izolată jurnalul este oprit sau există imprimantă de rețea. Nedeterminat = starea jurnalului nu s-a putut citi.
+
+### P30
+
+- **Ce verificăm:** Dacă istoricul clipboard și istoricul de activitate Windows (Timeline) sunt oprite.
+- **De ce contează:** Ele păstrează pe disc fragmente din ce a fost copiat sau deschis, deci pot reține text dintr-un document clasificat în afara registrelor.
+- **Cum verifică aplicația:** A citit setarea istoricului clipboard (utilizatorul curent și politica), politica istoricului de activitate și dacă baza ActivitiesCache.db există.
+- **Sursa tehnică:** `HKCU\Software\Microsoft\Clipboard → EnableClipboardHistory; HKLM\SOFTWARE\Policies\Microsoft\Windows\System → AllowClipboardHistory, EnableActivityFeed`
+- **Cum se citește rezultatul:** Conform = ambele oprite. Neconform = istoricul clipboard este pornit sau activitatea este permisă explicit, pe o stație izolată. De verificat = activitatea rămâne în regimul implicit al Windows, nesetată prin politică.
+
+### P31
+
+- **Ce verificăm:** Ce camere, microfoane și ieșiri audio sunt active pe stație și dacă politica le blochează aplicațiilor.
+- **De ce contează:** O cameră poate fotografia ecranul, un microfon poate înregistra încăperea, iar difuzoarele pot transmite sunete în afara stației.
+- **Cum verifică aplicația:** A listat dispozitivele din clasele Camera, Image, MEDIA și AudioEndpoint cu starea lor și a citit permisiunea de acces la cameră și microfon (aceeași ca la P19).
+- **Sursa tehnică:** `WMI Win32_PnPEntity → PNPClass, ConfigManagerErrorCode; HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam și microphone → Value`
+- **Cum se citește rezultatul:** Conform = niciun dispozitiv activ. Neconform = pe stația izolată există cameră sau microfon activ, iar accesul aplicațiilor nu este blocat. De verificat = politica blochează, dar dispozitivul rămâne pornit în driver; acoperirea fizică se verifică la M09.
+
 ### A01
 
 - **Ce verificăm:** Dacă stația înregistrează în jurnal tot ce are nevoie un control (autentificări, conturi, programe, USB etc.).
@@ -596,6 +628,14 @@
 - **Cum verifică aplicația:** A căutat dispozitivele Bluetooth cunoscute de Windows și a citit modul de pornire al serviciului Bluetooth.
 - **Sursa tehnică:** `WMI Win32_PnPEntity (clasa Bluetooth); HKLM\SYSTEM\CurrentControlSet\Services\bthserv → Start`
 - **Cum se citește rezultatul:** Conform = nu există Bluetooth. Neconform = pe stația izolată Bluetooth există și serviciul poate porni. De verificat = există dar serviciul este oprit; opriți-l sau cereți aprobarea scrisă.
+
+### N05
+
+- **Ce verificăm:** Dacă stația are un adaptor care este de fapt un telefon folosit ca modem, un modem celular sau o placă Ethernet pe USB.
+- **De ce contează:** Aceste adaptoare dau stației o cale către internet sau către altă rețea, în afara rețelei ei, și nu se văd ca o placă de rețea obișnuită.
+- **Cum verifică aplicația:** A citit adaptoarele de rețea active și a stabilit tipul fiecăruia după clasa dispozitivului, identificatorii compatibili (de exemplu clasa RNDIS pentru tethering), serviciul și descrierea; adaptoarele virtuale nu se numără.
+- **Sursa tehnică:** `WMI Win32_PnPEntity (clasa Net) → Service, CompatibleID, HardwareID`
+- **Cum se citește rezultatul:** Conform = niciunul dintre aceste tipuri. Neconform = pe stația izolată există telefon-modem sau modem celular. De verificat = placă Ethernet pe USB, sau stație neizolată; cereți aprobarea scrisă sau scoaterea dispozitivului.
 
 ### EM01
 

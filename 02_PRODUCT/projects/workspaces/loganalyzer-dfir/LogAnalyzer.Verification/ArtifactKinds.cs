@@ -61,7 +61,7 @@ public static class ArtifactKinds
     {
         if (!r.IsResolved) return false;
         if (AntiOverclaim.SemanticForArtifact(r.Family) == SemanticType.Configuration) return true;
-        return r.Family.StartsWith("EventLog", StringComparison.Ordinal) || r.Family is "Live:Services" or "Live:Tasks" or "Live:Autoruns" or "task_xml";
+        return r.Family.StartsWith("EventLog", StringComparison.Ordinal) || r.Family is "Live:Services" or "Live:Tasks" or "Live:Autoruns" or "task_xml" or "airgap_facts";
     }
 
     /// <summary>Kinds an execution claim can rest on, for the "missing" list.</summary>

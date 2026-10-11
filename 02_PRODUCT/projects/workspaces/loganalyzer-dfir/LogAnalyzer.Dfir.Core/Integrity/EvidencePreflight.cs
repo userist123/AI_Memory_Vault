@@ -66,7 +66,7 @@ public static class EvidenceFingerprint
         if (t == "srum" || name.Equals("SRUDB.dat", StringComparison.OrdinalIgnoreCase)) return ["ese"];
         if (t is "system_hive" or "amcache" or "ntuser_hive" or "software_hive") return ["regf"];
         if (t == "pcapng" || name.EndsWith(".pcapng", StringComparison.OrdinalIgnoreCase)) return ["pcapng"];
-        if (t == "live_snapshot") return ["json"];
+        if (t is "live_snapshot" or "airgap_facts") return ["json"];
         if (t == "task_xml") return ["task_xml"];
         if (t == "usn_journal") return ["usn_fsutil"];
         if (t is "chromium_history" or "firefox_places") return ["sqlite"];
