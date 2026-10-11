@@ -1,0 +1,68 @@
+// Linkul pentru client: clientul deschide prezentarea fără cont și lasă păreri pe camere; designerul le vede și le bifează.
+import { test, beforeAll } from 'vitest';
+import assert from 'node:assert/strict';
+process.env.PGLITE_MEMORY = '1'; delete process.env.DATABASE_URL;
+import { resetDbForTests } from '../lib/db';
+import * as repo from '../lib/repo';
+import { createShare, revokeShare } from '../lib/share';
+import { addFeedback, listFeedbackForShare, listFeedback, setFeedbackResolved, FEEDBACK_LIMITS } from '../lib/feedback';
+beforeAll(() => resetDbForTests());
+const A = '55555555-5555-4555-8555-555555555555', B = '66666666-6666-4666-8666-666666666666';
+
+async function shared(){
+  const id = await repo.createProject(A, 'Pentru client', 'demo'), { number } = await repo.createRevision(A, id, 'Predat clientului');
+  const { token } = await createShare(A, id, number), room = (await repo.getProject(A, id)).draft.floor.rooms[0]!.id;
+  return { id, token, room };
+}
+
+test('clientul lasă păreri pe o cameră și pe tot proiectul; le vede și designerul', async () => {
+  const { id, token, room } = await shared();
+  const f1 = await addFeedback(token, { roomId: room, verdict: 'change', author: '  Ana  ', text: 'Aș vrea o canapea mai deschisă la culoare.' });
+  assert.equal(f1.author, 'Ana'); assert.equal(f1.roomId, room);
+  await addFeedback(token, { roomId: null, verdict: 'like', author: 'Ana', text: '' });
+  const pub = await listFeedbackForShare(token); assert.equal(pub.length, 2); assert.deepEqual(pub.map(f => f.verdict).sort(), ['change', 'like']);
+  const own = await listFeedback(A, id); assert.equal(own.length, 2); assert.ok(own.every(f => f.revisionNumber === 1 && f.resolvedAt === null));
+  const r = await setFeedbackResolved(A, id, f1.id, true); assert.ok(r.resolvedAt);
+  assert.ok((await listFeedbackForShare(token)).find(f => f.id === f1.id)!.resolvedAt, 'clientul vede că a fost rezolvat');
+  await setFeedbackResolved(A, id, f1.id, false); assert.equal((await listFeedback(A, id)).find(f => f.id === f1.id)!.resolvedAt, null);
+});
+
+test('intrări invalide, linkuri revocate și alți proprietari sunt refuzate', async () => {
+  const { id, token, room } = await shared();
+  const bad = [
+    { roomId: room, verdict: 'meh', author: 'Ana', text: 'x' },                                  // verdict necunoscut
+    { roomId: 'nu-exista', verdict: 'like', author: 'Ana', text: '' },                            // camera nu e în revizia partajată
+    { roomId: room, verdict: 'change', author: 'Ana', text: '   ' },                               // „aș schimba” fără text
+    { roomId: room, verdict: 'question', author: '', text: 'De ce?' },                            // fără nume
+    { roomId: room, verdict: 'question', author: 'A'.repeat(FEEDBACK_LIMITS.author + 1), text: 'x' },
+    { roomId: room, verdict: 'question', author: 'Ana', text: 'x'.repeat(FEEDBACK_LIMITS.text + 1) },
+    null, 'text',
+  ];
+  for (const b of bad) await assert.rejects(addFeedback(token, b as any), (e: any) => e.status === 400, JSON.stringify(b));
+  await assert.rejects(addFeedback('x'.repeat(43), { roomId: null, verdict: 'like', author: 'Ana', text: '' }), (e: any) => e.status === 404);
+  await assert.rejects(listFeedback(B, id));
+  const f = await addFeedback(token, { roomId: null, verdict: 'question', author: 'Ana', text: 'Cât durează?\u0000\u0007' });
+  assert.equal(f.text, 'Cât durează?', 'caracterele de control se scot');
+  await assert.rejects(setFeedbackResolved(B, id, f.id, true));
+  await revokeShare(A, id, token);
+  await assert.rejects(addFeedback(token, { roomId: null, verdict: 'like', author: 'Ana', text: '' }), (e: any) => e.status === 404);
+  await assert.rejects(listFeedbackForShare(token), (e: any) => e.status === 404);
+  assert.equal((await listFeedback(A, id)).length, 1, 'părerile rămân la designer după revocare');
+});
+
+test('un link nu poate fi folosit ca să umple baza de date', async () => {
+  const { token } = await shared();
+  for (let i = 0; i < FEEDBACK_LIMITS.perShare; i++) await addFeedback(token, { roomId: null, verdict: 'like', author: 'Bot', text: '' });
+  await assert.rejects(addFeedback(token, { roomId: null, verdict: 'like', author: 'Bot', text: '' }), (e: any) => e.status === 429);
+});
+
+test('butonul „Link pentru client”: salvează versiunea doar dacă s-a schimbat și refolosește linkul activ', async () => {
+  const { clientLink } = await import('../lib/share');
+  const id = await repo.createProject(A, 'Un buton', 'demo');
+  const l1 = await clientLink(A, id); assert.equal(l1.revisionNumber, 1); assert.equal(l1.newRevision, true); assert.match(l1.path, /^\/share\/[\w-]{43}$/); assert.equal(l1.url, null);
+  const l2 = await clientLink(A, id); assert.equal(l2.token, l1.token, 'fără schimbări: același link'); assert.equal(l2.newRevision, false);
+  const p = await repo.getProject(A, id); await repo.saveDraft(A, id, { ...p.draft, name: 'Un buton (v2)' });
+  const l3 = await clientLink(A, id); assert.equal(l3.revisionNumber, 2); assert.notEqual(l3.token, l1.token);
+  process.env.CASA3D_PUBLIC_URL = 'https://casa.example.com/'; try { assert.equal((await clientLink(A, id)).url, `https://casa.example.com${l3.path}`); } finally { delete process.env.CASA3D_PUBLIC_URL; }
+  await assert.rejects(clientLink(B, id));
+});

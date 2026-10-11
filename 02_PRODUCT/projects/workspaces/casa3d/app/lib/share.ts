@@ -1,7 +1,7 @@
 // Partajare read-only a unei revizii, prin token imposibil de ghicit. Fără cookie de proprietar la citire, fără editare.
 import { randomBytes } from 'node:crypto';
 import { getDb } from './db';
-import { HttpError, getProject } from './repo';
+import { HttpError, getProject, createRevision } from './repo';
 import type { Snapshot } from '../core/types';
 
 export const TOKEN_BYTES = 32;
@@ -35,4 +35,19 @@ export async function resolveShare(token: unknown): Promise<SharedView> {
   if (!rows[0]) throw new HttpError(404, 'Link inexistent.');
   // Numele vine din revizia partajată: o redenumire ulterioară a proiectului nu apare pe linkurile vechi.
   return { projectName: String(rows[0].snapshot?.name ?? ''), revisionNumber: rows[0].number, note: rows[0].note, createdAt: rows[0].created_at, snapshot: rows[0].snapshot as Snapshot, readOnly: true };
+}
+
+/** Adresa publică a aplicației (CASA3D_PUBLIC_URL, ex. tunelul spre acest calculator); fără ea linkul folosește adresa din browser. */
+export function publicBase(){ const u = process.env.CASA3D_PUBLIC_URL; return u && /^https?:\/\/[^\s/]+$/.test(u.replace(/\/$/, '')) ? u.replace(/\/$/, '') : null; }
+/** Un singur buton pentru designer: dacă proiectul s-a schimbat de la ultima revizie, se salvează una nouă („Predat clientului”);
+ *  linkul activ spre ultima revizie se refolosește, altfel se creează unul. */
+export async function clientLink(owner: string, id: string){
+  await getProject(owner, id); const { q } = await getDb();
+  const last = await q('select r.number, (r.snapshot = p.draft) as same from revisions r join projects p on p.id = r.project_id where r.project_id=$1 order by r.number desc limit 1', [id]);
+  const same = !!last.rows[0]?.same;
+  const number = same ? last.rows[0].number as number : (await createRevision(owner, id, 'Predat clientului')).number;
+  const old = await q('select token from shares where project_id=$1 and revision_number=$2 and revoked_at is null order by created_at desc limit 1', [id, number]);
+  const s = old.rows[0] ? { token: old.rows[0].token as string, path: `/share/${old.rows[0].token}` } : await createShare(owner, id, number);
+  const base = publicBase();
+  return { token: s.token, path: s.path, revisionNumber: number, newRevision: !same, url: base ? base + s.path : null };
 }

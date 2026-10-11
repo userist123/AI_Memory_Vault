@@ -1,13 +1,12 @@
 import { notFound } from 'next/navigation';
 import { resolveShare } from '@/lib/share';
-import { getCatalog } from '@/lib/repo';
-import SharedView from '@/components/SharedView';
+import PresentView from '@/components/PresentView';
 export const dynamic = 'force-dynamic';
 export const metadata = { robots: { index: false, follow: false } };
 
+// Linkul pentru client: prezentarea reviziei partajate (fără cont, fără editare) cu păreri pe fiecare cameră.
 export default async function SharePage({ params }: { params: Promise<{ token: string }> }){
   const { token } = await params;
   let view; try { view = await resolveShare(token); } catch { notFound(); }
-  const catalog = await getCatalog();
-  return <SharedView view={{ ...view, createdAt: new Date(view.createdAt).toISOString() }} catalog={catalog} />;
+  return <PresentView share={{ token, name: view.projectName, snapshot: view.snapshot, revisionNumber: view.revisionNumber }} />;
 }

@@ -1,7 +1,7 @@
 'use client';
 // Prezentarea pentru client, ca planșe 16:9 (pe ecran sau „Salvează ca PDF”): copertă, moodboard, câte o planșă pe cameră
 // (imaginea 3D, mostrele de finisaj, piesele), planul și bugetul. Imaginile vin din motorul 3D, randate în afara ecranului.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalog, MaterialsCatalog, Snapshot } from '@/core/types';
 import { presentation } from '@/core/presentation';
 import { lighting, sunDirection } from '@/core/lighting';
@@ -13,14 +13,21 @@ import { usePrefs } from '@/lib/prefs';
 import { intlLocale } from '@/lib/i18n';
 import { swatchStyle } from './MaterialPicker';
 import { PlanSvg } from './PrintView';
+import FeedbackBox, { type FeedbackItem } from './FeedbackBox';
 
 const nextFrame = () => new Promise<void>(res => requestAnimationFrame(() => res()));
-export default function PresentView({ id }: { id: string }){
+/** Pe linkul pentru client (`share`) prezentarea vine din revizia partajată și are, sub fiecare planșă de cameră, caseta de păreri. */
+export interface SharedDeck { token: string; name: string; snapshot: Snapshot; revisionNumber: number }
+export default function PresentView({ id, share }: { id?: string; share?: SharedDeck }){
   const { t, lang, units } = usePrefs();
   const [data, setData] = useState<{ snap: Snapshot; name: string; catalog: Catalog; mc: MaterialsCatalog } | null>(null), [err, setErr] = useState(false);
   const [images, setImages] = useState<Record<string, string>>({}), [busy, setBusy] = useState(true), canvasRef = useRef<HTMLCanvasElement>(null);
-  useEffect(() => { Promise.all([fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/catalog').then(r => r.json()), fetch('/api/materials').then(r => r.json())])
-    .then(([p, catalog, mc]) => setData({ snap: p.draft, name: p.draft.name || p.name, catalog, mc })).catch(() => setErr(true)); }, [id]);
+  useEffect(() => { const proj = share ? Promise.resolve({ draft: share.snapshot, name: share.name }) : fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject(r));
+    Promise.all([proj, fetch('/api/catalog').then(r => r.json()), fetch('/api/materials').then(r => r.json())])
+      .then(([p, catalog, mc]) => setData({ snap: p.draft, name: p.draft.name || p.name, catalog, mc })).catch(() => setErr(true)); }, [id, share]);
+  const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
+  useEffect(() => { if (share) fetch(`/api/share/${share.token}/feedback`).then(r => r.ok ? r.json() : []).then(setFeedback).catch(() => {}); }, [share]);
+  const added = (f: FeedbackItem) => setFeedback(xs => [...xs, f]);
   useEffect(() => { if (!data) return; let alive = true, viewer: any = null;
     (async () => { try { const m = await import('./viewer3d-engine.js'); if (!alive || !canvasRef.current) return;
       viewer = m.createViewer(canvasRef.current); const lp = lighting('day'); viewer.setLighting({ ...lp, dir: sunDirection(lp.azimuthDeg, lp.elevationDeg) }); viewer.setQuality?.('high');
@@ -33,7 +40,7 @@ export default function PresentView({ id }: { id: string }){
     return () => { alive = false; }; }, [data]);
   // randările fotorealiste (Blender, pe acest calculator) au întâietate față de imaginile din motorul 3D
   const [photos, setPhotos] = useState<Record<string, string>>({});
-  useEffect(() => { fetch(`/api/projects/${id}/renders`).then(r => r.ok ? r.json() : null).then(j => { const out: Record<string, string> = {};
+  useEffect(() => { if (!id) return; fetch(`/api/projects/${id}/renders`).then(r => r.ok ? r.json() : null).then(j => { const out: Record<string, string> = {};
     for (const job of (j?.jobs ?? []).filter((x: any) => x.status === 'done').reverse()) for (const f of job.images) out[f.replace(/\.png$/, '')] = `/api/projects/${id}/renders/${job.job}/${f}`;
     setPhotos(out); }).catch(() => {}); }, [id]);
   const imgFor = (roomId: string) => photos[roomId.replace(/[^\w-]/g, '_')] ?? images[roomId];
@@ -50,6 +57,7 @@ export default function PresentView({ id }: { id: string }){
   const fl = floors(data.snap)[0]!, b = floorBounds(fl) ?? { x0: 0, x1: 6, z0: 0, z1: 5 }, box = { x0: b.x0 - .4, z0: b.z0 - .4, w: b.x1 - b.x0 + .8, d: b.z1 - b.z0 + .8 };
   const n = pres.rooms.length + 4, num = (i: number) => `${String(i).padStart(2, '0')} / ${String(n).padStart(2, '0')}`;
   return (<main className="deck">{canvas}
+    {share && <p className="fb-intro no-print">{t('fb.intro')}</p>}
     <div className="deck-bar no-print"><span>{busy ? t('print.preparing') : t('pres.keys')}</span><button className="btn primary" onClick={() => print()} disabled={busy}>{t('pres.pdf')}</button></div>
     <section className="slide cover">
       {images.overview ? <img src={images.overview} alt="" /> : <div className="ph" />}
@@ -59,12 +67,13 @@ export default function PresentView({ id }: { id: string }){
       <div className="board-grid">{pres.board.map(g => <div key={g.role} className="board-col"><h3>{t(`pres.board.${g.role}`)}</h3>
         {g.items.slice(0, 6).map((it, i) => <figure key={i}><i style={it.material ? { ...swatchStyle(it.material), backgroundColor: it.color } : { background: it.color }} /><figcaption>{it.material ? title(it.material.name) : it.color}<small>{it.material?.supplier}</small></figcaption></figure>)}</div>)}</div>
       <footer>{num(2)}</footer></section>
-    {pres.rooms.map((r, i) => <section key={r.id} className="slide room">
+    {pres.rooms.map((r, i) => <Fragment key={r.id}><section className="slide room">
       <div className="room-img">{imgFor(r.id) ? <img src={imgFor(r.id)} alt={r.name} /> : <div className="ph" />}</div>
       <div className="room-txt"><span className="kicker">{t(`roomType.${r.type}`)} · {formatArea(r.areaM2, units, lang)}</span><h2>{r.name}</h2>
         <ul className="sw-list">{r.swatches.slice(0, 9).map((s, k) => <li key={k}><i style={s.material ? { ...swatchStyle(s.material), backgroundColor: s.color } : { background: s.color }} /><span><small>{role(s.role)}</small>{s.material ? title(s.material.name) : s.color}</span></li>)}</ul>
         {r.products.length > 0 && <p className="prod">{r.products.slice(0, 6).map(p => p.name).join(' · ')}</p>}</div>
-      <footer>{num(i + 3)}</footer></section>)}
+      <footer>{num(i + 3)}</footer></section>
+      {share && <FeedbackBox token={share.token} roomId={r.id} title={`${t('fb.title')} · ${r.name}`} items={feedback.filter(f => f.roomId === r.id)} onAdded={added} />}</Fragment>)}
     <section className="slide planslide"><header><span className="kicker">{t('pres.planKicker')}</span><h2>{t('pres.plan')}</h2></header>
       <div className="plan-wrap"><PlanSvg snap={levelView(data.snap, 0)} catalog={data.catalog} box={box} widthMm={box.w * 22} heightMm={box.d * 22} mm={1 / 22} units={units} locale={lang} aria={t('pres.plan')} /></div>
       <footer>{num(n - 1)}</footer></section>
@@ -73,5 +82,6 @@ export default function PresentView({ id }: { id: string }){
         <dl>{Object.entries(pres.budget.categories).filter(([, v]) => v > 0).map(([k, v]) => <div key={k}><dt>{t(`budget.cat.${k}`)}</dt><dd>{money(v)}</dd></div>)}
           {pres.budget.labor > 0 && <div><dt>{t('pres.labour')}</dt><dd>{money(pres.budget.labor)}</dd></div>}<div><dt>{t('pres.contingency')}</dt><dd>{money(pres.budget.contingency)}</dd></div></dl></div>
       <footer>{num(n)}</footer></section>
+    {share && <FeedbackBox token={share.token} roomId={null} title={t('fb.general')} sub={t('fb.generalSub')} items={feedback.filter(f => f.roomId === null)} onAdded={added} />}
   </main>);
 }
