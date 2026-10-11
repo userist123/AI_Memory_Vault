@@ -132,3 +132,9 @@ CI `regression-and-heldout` failed on `test_notes_strict_yaml`: four research no
 matter, so the storage engine could not read them. Rule: before committing any new .md under 01_/02_/10_ trees, add the
 front matter (id, type, lifecycle REVIEW, provenance, verification unverified, relations) and run
 `python3 -m pytest -q 20_TESTS/test_notes_strict_yaml.py`. Tell research subagents to write the front matter themselves.
+
+## 2026-10-11 — Casa3D PC: an update must stop the old server before the build, and verify it is gone
+`update.ps1` killed the port-3123 listener after `git pull` but the kill did not take; the old `next start` kept serving
+with the new `.next` underneath, so every `/_next/static/*` chunk returned 400 and the editor hung on "Loading project…".
+Rule: stop the app (by command line and by port, retry until the port is free) *before* `npm run build`, then start the
+new server; after an update, check one static chunk returns 200, not just `update.done`.
