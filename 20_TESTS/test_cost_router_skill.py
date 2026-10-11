@@ -201,8 +201,8 @@ def test_hook_reminds_the_reply_language_from_user_settings(tmp_path):
     r = subprocess.run([sys.executable, str(HOOK)], input=json.dumps({"prompt": "find which files import memory_controller and list them"}),
                        capture_output=True, text=True, timeout=60, env=env)
     ctx = json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
-    assert "Write every message to the owner in Romanian" in ctx and len(ctx) <= 1000
+    assert "Write to the owner in Romanian" in ctx and "commit messages" in ctx and len(ctx) <= 1000
     (home / ".claude" / "settings.json").write_text("{}", encoding="utf-8")
     r = subprocess.run([sys.executable, str(HOOK)], input=json.dumps({"prompt": "find which files import memory_controller and list them"}),
                        capture_output=True, text=True, timeout=60, env=env)
-    assert "Write every message" not in r.stdout
+    assert "Write to the owner" not in r.stdout
