@@ -1760,11 +1760,11 @@ namespace LogAnalyzer.UI.ViewModels
             }
             _liveWatcher.OnStatusChanged += status =>
             {
-                Application.Current?.Dispatcher?.Invoke(() => LiveMonitoringStatusText = status);
+                Application.Current?.Dispatcher?.Invoke(() => { LiveMonitoringStatusText = status; _liveStatus.Pin(); });
             };
             _liveWatcher.OnErrorOccurred += ex =>
             {
-                Application.Current?.Dispatcher?.Invoke(() => LiveMonitoringStatusText = $"Eroare live: {ex.Message}");
+                Application.Current?.Dispatcher?.Invoke(() => { LiveMonitoringStatusText = $"Eroare live: {ex.Message}"; _liveStatus.Pin(); });
             };
             // Events arrive on thread-pool threads, possibly hundreds per second: queue them and let one UI timer apply them in batches
             // instead of one synchronous Dispatcher.Invoke per event (senior review L11).
@@ -1789,6 +1789,7 @@ namespace LogAnalyzer.UI.ViewModels
         private readonly LiveAlertThrottle _liveThrottle = new();
         private System.Windows.Threading.DispatcherTimer? _liveDrainTimer;
         private int _liveDropped;
+        private readonly LiveStatusText _liveStatus = new();   // keeps the repeats line from hiding a warning or an error set since the last tick
 
         /// <summary>
         /// Applies the queued live events in one batch on the UI thread: stream rows, evaluation, de-duplication, at most one toast and one sound per batch,
@@ -1797,13 +1798,14 @@ namespace LogAnalyzer.UI.ViewModels
         /// </summary>
         internal void DrainLiveQueue()
         {
-            int n = 0;
+            var batch = new List<ParsedEvent>();
             DetectedIssue? loudest = null;
-            while (n < LiveBatch && _liveQueue.TryDequeue(out var ev))
+            while (batch.Count < LiveBatch && _liveQueue.TryDequeue(out var ev)) batch.Add(ev);
+            // Every event is evaluated, but only the newest LiveStreamRows of the batch reach the visible stream.
+            foreach (var shown in LiveStatusText.Newest(batch, LiveStreamRows)) LiveStreamingEvents.Insert(0, shown);
+            foreach (var ev in batch)
             {
-                n++;
                 TotalLiveEventsCaptured++;
-                LiveStreamingEvents.Insert(0, ev);
                 _liveEngine.MaintenancePolicy = LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.MaintenancePolicyFor([new DateTimeOffset(ev.TimeCreated.ToUniversalTime())]);
                 var alert = _liveEngine.EvaluateLiveEvent(ev);
                 if (alert is null || !_liveThrottle.Admit(alert, ev)) continue;
@@ -1816,8 +1818,7 @@ namespace LogAnalyzer.UI.ViewModels
             while (LiveStreamingEvents.Count > LiveStreamRows) LiveStreamingEvents.RemoveAt(LiveStreamingEvents.Count - 1);
             while (LiveAlerts.Count > LiveAlertRows) LiveAlerts.RemoveAt(LiveAlerts.Count - 1);
             int dropped = System.Threading.Interlocked.Exchange(ref _liveDropped, 0);
-            if (dropped > 0) LiveMonitoringStatusText = $"Prea multe evenimente deodată: {dropped} nu au mai putut fi evaluate. Pe această stație, monitorizarea live nu este completă.";
-            else if (_liveThrottle.Suppressed > 0) LiveMonitoringStatusText = $"🔴 Monitorizare activă · {_liveThrottle.Suppressed} repetări ale unor alerte deja afișate au fost adăugate la alerta inițială (nu au deschis alerte noi).";
+            if (_liveStatus.Next(dropped, _liveThrottle.Suppressed) is { } statusText) LiveMonitoringStatusText = statusText;
             if (loudest is null) return;
 
             IsAutoShieldTriggered = false;
@@ -1855,7 +1856,7 @@ namespace LogAnalyzer.UI.ViewModels
             _liveWatcher?.Dispose();
             _liveWatcher = null;
             _liveDrainTimer?.Stop();
-            DrainLiveQueue();
+            do DrainLiveQueue(); while (!_liveQueue.IsEmpty);
             IsLiveMonitoringActive = false;
             LiveMonitoringStatusText = "⏹ Monitorizare în timp real oprită.";
         }

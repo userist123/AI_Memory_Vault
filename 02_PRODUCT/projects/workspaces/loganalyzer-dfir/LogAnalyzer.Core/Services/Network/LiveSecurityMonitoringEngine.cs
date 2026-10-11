@@ -28,7 +28,7 @@ namespace LogAnalyzer.Core.Services.Network
         public static string? Field(string? xml, string name)
         {
             if (string.IsNullOrEmpty(xml)) return null;
-            var m = Regex.Match(xml, "<Data Name=\"" + Regex.Escape(name) + "\">([^<]*)</Data>");
+            var m = Regex.Match(xml, "<Data Name=[\"']" + Regex.Escape(name) + "[\"']>([^<]*)</Data>");
             var v = m.Success ? m.Groups[1].Value.Trim() : null;
             return string.IsNullOrEmpty(v) || v == "-" ? null : v;
         }

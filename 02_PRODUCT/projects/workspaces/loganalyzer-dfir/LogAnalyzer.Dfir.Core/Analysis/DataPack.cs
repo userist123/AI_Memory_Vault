@@ -155,6 +155,12 @@ public static class ShippedData
     {
         if (Pack.Value.Pack is { } m && m.Files.Any(f => f.Name.Equals(file, StringComparison.OrdinalIgnoreCase)))
             return File.ReadAllText(Path.Combine(DataPack.InstallDir, file));
+        return ReadEmbedded(file);
+    }
+
+    /// <summary>The copy of a data file embedded in this assembly, ignoring any installed pack.</summary>
+    public static string ReadEmbedded(string file)
+    {
         var asm = typeof(ShippedData).Assembly;
         using var s = asm.GetManifestResourceStream("LogAnalyzer.Dfir.Analysis.Data." + file)
                       ?? throw new InvalidOperationException($"Resursa încorporată {file} lipsește din {asm.GetName().Name}.");

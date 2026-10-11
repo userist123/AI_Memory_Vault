@@ -23,7 +23,10 @@ namespace LogAnalyzer.Core.Services.Network
         public bool Admit(DetectedIssue alert, ParsedEvent ev)
         {
             if (alert.IsTestAlert) return true;
-            var who = LiveSecurityMonitoringEngine.Field(ev.XmlData, "TargetUserName") ?? LiveSecurityMonitoringEngine.Field(ev.XmlData, "SubjectUserName") ?? "";
+            // Password spraying touches a different account on every event: key it by source address, not by account.
+            var who = alert.MitreTechniqueId == "T1110.003"
+                ? "src:" + (LiveSecurityMonitoringEngine.Field(ev.XmlData, "IpAddress") ?? LiveSecurityMonitoringEngine.Field(ev.XmlData, "WorkstationName") ?? "")
+                : LiveSecurityMonitoringEngine.Field(ev.XmlData, "TargetUserName") ?? LiveSecurityMonitoringEngine.Field(ev.XmlData, "SubjectUserName") ?? "";
             var key = $"{alert.Title}|{ev.MachineName}|{who}";
             var at = ev.TimeCreated == default ? DateTime.UtcNow : ev.TimeCreated.ToUniversalTime();
             if (_open.TryGetValue(key, out var open) && at - open.LastUtc < Window && at >= open.LastUtc - Window)

@@ -35,7 +35,15 @@ public static partial class Wp11Rules
         var starts = ProcessStarts(c.Events).ToList();
         foreach (var tool in c.Data.Tools.Tools)
         {
-            bool IsExe(string path) => path.Length > 0 && tool.Executables.Contains(WinPath.GetFileName(path.TrimEnd('\\')), StringComparer.OrdinalIgnoreCase);
+            bool IsExe(string path)
+            {
+                if (path.Length == 0) return false;
+                var file = WinPath.GetFileName(path.TrimEnd('\\'));
+                if (tool.Executables.Contains(file, StringComparer.OrdinalIgnoreCase)) return true;
+                // A generic file name is the tool only together with a path hint (vendor folder).
+                var norm = path.Replace('/', '\\');
+                return tool.ConditionalExecutables.Contains(file, StringComparer.OrdinalIgnoreCase) && tool.PathHints.Any(h => norm.Contains(h, StringComparison.OrdinalIgnoreCase));
+            }
             var exec = new List<ToolHit>(); var present = new List<ToolHit>();
             foreach (var e in c.Events)
             {
