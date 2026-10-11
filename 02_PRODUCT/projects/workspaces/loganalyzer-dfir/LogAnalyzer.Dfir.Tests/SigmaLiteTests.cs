@@ -28,7 +28,7 @@ public sealed class SigmaLiteTests
             EventID: '7045'
             ImagePath|contains|all: ['\Temp\', '.sys']
           sel_b:
-            - ServiceName|startswith: 'Cx'
+            - ServiceName|startswith: 'Vx'
             - ServiceName|endswith: 'Helper'
           filter:
             AccountName|re: '^LocalSystem$'
@@ -45,9 +45,9 @@ public sealed class SigmaLiteTests
         {
             E("System", "7045", ("ImagePath", @"C:\Users\u\AppData\Local\Temp\x.sys"), ("AccountName", "NT AUTHORITY\\SYSTEM")),   // sel_a
             E("System", "7045", ("ImagePath", @"C:\Temp\x.exe")),                                                                   // contains|all fails
-            E("System", "7036", ("ServiceName", "CxUtilSvc")),                                                                      // sel_b (startswith)
+            E("System", "7036", ("ServiceName", "VxUtilSvc")),                                                                      // sel_b (startswith)
             E("System", "7036", ("ServiceName", "Other Helper")),                                                                   // sel_b (endswith)
-            E("System", "7036", ("ServiceName", "CxUtilSvc"), ("AccountName", "LocalSystem")),                                      // filtered
+            E("System", "7036", ("ServiceName", "VxUtilSvc"), ("AccountName", "LocalSystem")),                                      // filtered
             E("Application", "7045", ("ImagePath", @"C:\Temp\x.sys")),                                                               // other channel
         };
         var m = s.Match(events).Select(x => Array.IndexOf(events, x.Event)).ToArray();

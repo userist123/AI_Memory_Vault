@@ -27,7 +27,7 @@ public sealed class EvtxParser : EvidenceParserBase
             "Nu recuperează înregistrări din spațiul nealocat (carving).",
         ],
         Status = ParserMaturity.Validated,
-        Validation = "CorpusRegressionTests (defenderEvtx, msiEvtx), InvestigationTests pe corpusul NanAgent, EvtxRepairTests",
+        Validation = "CorpusRegressionTests (defenderEvtx, msiEvtx), InvestigationTests pe corpusul VendorAgent, EvtxRepairTests",
     };
 
     private static readonly HashSet<string> MessageProviders = new(StringComparer.OrdinalIgnoreCase)

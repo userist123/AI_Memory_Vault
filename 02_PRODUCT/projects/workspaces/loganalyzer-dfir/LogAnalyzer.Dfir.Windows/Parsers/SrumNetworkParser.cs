@@ -26,7 +26,7 @@ public sealed class SrumNetworkParser : EvidenceParserBase
             "O bază „murdară” fără jurnalele ESE poate pierde ultimele înregistrări.",
         ],
         Status = ParserMaturity.Validated,
-        Validation = "CorpusRegressionTests (srum), InvestigationTests pe corpusul NanAgent",
+        Validation = "CorpusRegressionTests (srum), InvestigationTests pe corpusul VendorAgent",
     };
 
     public sealed record SrumNetRow(DateTime TimestampUtc, int AppId, string App, int UserId, string User, long InterfaceLuid, long BytesSent, long BytesRecvd);

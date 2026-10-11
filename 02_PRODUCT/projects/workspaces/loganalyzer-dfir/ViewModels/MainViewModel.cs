@@ -2260,7 +2260,7 @@ namespace LogAnalyzer.UI.ViewModels
                 MachineName = Environment.MachineName,
                 ProviderName = "Microsoft-Windows-Security-Auditing",
                 TimeCreated = DateTime.Now,
-                Message = "An attempt was made to access an object.\nProcess Name: C:\\Users\\Marius\\AppData\\Local\\Temp\\stealc.exe (Lumma / Stealc Infostealer)\nObject Name: %LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Network\\Cookies (OAuth Session Tokens & MFA Bypass Cookies)\nAccess Request: ReadData / Extract SQLite DB"
+                Message = "An attempt was made to access an object.\nProcess Name: C:\\Users\\user\\AppData\\Local\\Temp\\stealc.exe (Lumma / Stealc Infostealer)\nObject Name: %LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Network\\Cookies (OAuth Session Tokens & MFA Bypass Cookies)\nAccess Request: ReadData / Extract SQLite DB"
             };
 
             TotalLiveEventsCaptured++;

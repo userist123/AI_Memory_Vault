@@ -229,7 +229,7 @@ public class Wp6aFindingCardTests
         var (f, ctx) = Fixture();
         f.Sequence = new SequenceDetail("10 min", "doar în timp",
         [
-            new(1, "Fișier descărcat", true, T0, "marius", "setup.zip", "EventLog:Security", ["F-1"], "Descărcare observată."),
+            new(1, "Fișier descărcat", true, T0, "analyst", "setup.zip", "EventLog:Security", ["F-1"], "Descărcare observată."),
             new(2, "Fișier copiat pe USB", false, null, "", "", "", [], "pas neobservat: sursa USB nu a fost colectată"),
         ]);
         ctx = new EvidenceContext

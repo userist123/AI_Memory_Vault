@@ -27,7 +27,7 @@ public sealed class MalformedBinaryInputTests : IDisposable
 
     // ------------------------------------------------------------------ valid samples
 
-    private static byte[] SampleLnk() => LnkParserTests.BuildLnk(@"C:\Users\u\Downloads\SETUP.EXE", "/x", @"C:\Users\u\Downloads", "marius-pc");
+    private static byte[] SampleLnk() => LnkParserTests.BuildLnk(@"C:\Users\u\Downloads\SETUP.EXE", "/x", @"C:\Users\u\Downloads", "ws-01");
 
     private static byte[] SampleCfb() => JumpListParserTests.BuildCfb(("a", [1, 2, 3]), ("b", new byte[900]));
 

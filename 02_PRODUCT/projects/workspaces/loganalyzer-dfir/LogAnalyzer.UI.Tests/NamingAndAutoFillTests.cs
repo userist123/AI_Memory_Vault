@@ -43,7 +43,7 @@ public sealed class NamingConventionTests
     [Fact]
     public void Station_unknown()
     {
-        var s = StationName.Parse("MARIUS-PC");
+        var s = StationName.Parse("WS-01");
         Assert.Equal(StationNameKind.Unknown, s.Kind);
         Assert.Equal("Numele stației nu urmează convenția", s.Describe());
     }
