@@ -10,6 +10,7 @@ create table if not exists projects(id uuid primary key default gen_random_uuid(
   country text not null default 'RO', draft jsonb not null, created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
   current_revision int not null default 0);
 create index if not exists projects_owner on projects(owner, updated_at desc);
+alter table projects add column if not exists meta jsonb not null default '{}'::jsonb;
 create table if not exists revisions(id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id) on delete cascade,
   number int not null, note text not null default '', created_at timestamptz not null default now(), snapshot jsonb not null, unique(project_id, number));
 create table if not exists materials(id text primary key, category text not null, name text not null, supplier text not null, unit text not null, unit_price numeric(12,2) not null,
