@@ -165,22 +165,26 @@ public static class LgpoText
     }
 }
 
-/// <summary>A GPO backup (folder or zip): display name and the Machine/User Registry.pol, GptTmpl.inf and audit.csv it contains.</summary>
-public sealed record GpoBackup(string DisplayName, string Guid, byte[]? MachinePol, byte[]? UserPol, string? SecurityTemplate, string? AuditCsv, string? GpReport)
+/// <summary>
+/// A GPO backup (folder or zip): display name and the Machine/User Registry.pol, GptTmpl.inf and audit.csv it contains, plus the Group Policy
+/// Preferences (Registry.xml, Services.xml, ...) and the scripts. <see cref="NotRead"/> lists every other file, so nothing is dropped silently.
+/// </summary>
+public sealed record GpoBackup(string DisplayName, string Guid, byte[]? MachinePol, byte[]? UserPol, string? SecurityTemplate, string? AuditCsv, string? GpReport,
+    IReadOnlyList<(string Path, string Text)>? Preferences = null, IReadOnlyList<(string Path, string Text)>? Scripts = null, IReadOnlyList<string>? NotRead = null)
 {
     public static GpoBackup FromZip(Stream zip)
     {
         using var z = new ZipArchive(zip, ZipArchiveMode.Read, leaveOpen: true);
         var files = z.Entries.Where(e => e.Length > 0).ToDictionary(e => e.FullName.Replace('\\', '/'), e => e, StringComparer.OrdinalIgnoreCase);
         byte[]? Read(Func<string, bool> pick) => files.Keys.FirstOrDefault(pick) is { } k ? ReadAll(files[k]) : null;
-        return Build(Read, files.Keys);
+        return Build(Read, files.Keys, n => files.TryGetValue(n, out var e) ? ReadAll(e) : null);
     }
 
     public static GpoBackup FromFolder(string folder)
     {
         var files = Directory.GetFiles(folder, "*", SearchOption.AllDirectories).Select(f => Path.GetRelativePath(folder, f).Replace('\\', '/')).ToList();
         byte[]? Read(Func<string, bool> pick) => files.FirstOrDefault(pick) is { } k ? File.ReadAllBytes(Path.Combine(folder, k)) : null;
-        return Build(Read, files);
+        return Build(Read, files, n => File.ReadAllBytes(Path.Combine(folder, n)));
     }
 
     private static byte[] ReadAll(ZipArchiveEntry e)
@@ -191,7 +195,7 @@ public sealed record GpoBackup(string DisplayName, string Guid, byte[]? MachineP
         return ms.ToArray();
     }
 
-    private static GpoBackup Build(Func<Func<string, bool>, byte[]?> read, IEnumerable<string> names)
+    private static GpoBackup Build(Func<Func<string, bool>, byte[]?> read, IEnumerable<string> names, Func<string, byte[]?> readExact)
     {
         bool Ends(string n, string suffix) => n.EndsWith(suffix, StringComparison.OrdinalIgnoreCase);
         var backup = read(n => Ends(n, "/Backup.xml") || n.Equals("Backup.xml", StringComparison.OrdinalIgnoreCase));
@@ -207,8 +211,20 @@ public sealed record GpoBackup(string DisplayName, string Guid, byte[]? MachineP
         var inf = read(n => Ends(n, "/SecEdit/GptTmpl.inf"));
         var audit = read(n => Ends(n, "/Audit/audit.csv"));
         var report = read(n => Ends(n, "/gpreport.xml"));
+        // Group Policy Preferences and scripts are read as text; they are data and are never executed.
+        var prefs = new List<(string, string)>(); var scripts = new List<(string, string)>(); var notRead = new List<string>();
+        foreach (var n in names.OrderBy(n => n, StringComparer.OrdinalIgnoreCase))
+        {
+            string Text() => readExact(n) is { } bytes ? Policy.SecurityTemplate.Decode(bytes) : "";
+            if (n.Contains("/Preferences/", StringComparison.OrdinalIgnoreCase) && Ends(n, ".xml")) prefs.Add((n, Text()));
+            else if (n.Contains("/Scripts/", StringComparison.OrdinalIgnoreCase)) scripts.Add((n, Text()));
+            else if (!(Ends(n, "Backup.xml") || Ends(n, "bkupInfo.xml") || Ends(n, "manifest.xml") || Ends(n, "/gpreport.xml") || Ends(n, "/registry.pol")
+                       || Ends(n, "/SecEdit/GptTmpl.inf") || Ends(n, "/Audit/audit.csv") || Ends(n, "/comment.cmtx")))
+                notRead.Add(n);
+        }
         return new GpoBackup(display, guid,
             read(n => Ends(n, "/Machine/registry.pol")), read(n => Ends(n, "/User/registry.pol")),
-            inf is null ? null : Policy.SecurityTemplate.Decode(inf), audit is null ? null : Policy.SecurityTemplate.Decode(audit), report is null ? null : Policy.SecurityTemplate.Decode(report));
+            inf is null ? null : Policy.SecurityTemplate.Decode(inf), audit is null ? null : Policy.SecurityTemplate.Decode(audit), report is null ? null : Policy.SecurityTemplate.Decode(report),
+            prefs, scripts, notRead);
     }
 }
