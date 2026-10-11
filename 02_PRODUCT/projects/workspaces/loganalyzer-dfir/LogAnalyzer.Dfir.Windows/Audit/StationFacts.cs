@@ -76,6 +76,7 @@ public static class StationFactCollector
             facts.Gaps.Add(new EvidenceGap("Politica de audit", EvidenceStatus.NotAvailable, "nu poate fi citită fără drepturi de administrator",
                 "Nu se poate spune ce activitate înregistrează stația", "auditpol /get /category:* (administrator)", "Cu drepturi de administrator"));
         Try(facts, "Setări de securitate", () => ReadSettings(facts));
+        Try(facts, "Setări de securitate (extinse)", () => ReadSettingsWave2(facts));
         Try(facts, "Profiluri de rețea", () => facts.NetworkProfiles.AddRange(ReadNetworkProfiles()));
         Try(facts, "Interfețe de rețea", () => facts.ConnectedInterfacesNow.AddRange(ReadConnectedInterfaces()));
         Try(facts, "Dispozitive USB (USBSTOR)", () => facts.UsbDevices.AddRange(ReadUsbStor()));
@@ -201,6 +202,165 @@ public static class StationFactCollector
             foreach (ManagementObject o in bl.Get()) s["BitLocker.SystemDrive"] = o["ProtectionStatus"]?.ToString() ?? "";
         }
         catch (ManagementException ex) { s["BitLocker.SystemDrive.Error"] = ex.Message; }
+    }
+
+    // ---- settings, second wave (read-only) ---------------------------------------------------------------------
+
+    /// <summary>The value is not there (key or value missing). Different from "" (empty string) = the read itself failed, so nothing is known.</summary>
+    public const string Absent = "lipsă";
+    /// <summary>A value that exists but is an empty string.</summary>
+    public const string EmptyValue = "(gol)";
+
+    /// <summary>Reads one registry value: its text, <see cref="Absent"/> when key or value does not exist, "" when access failed.</summary>
+    private static string RegRead(RegistryKey hive, string key, string name)
+    {
+        try
+        {
+            using var k = hive.OpenSubKey(key);
+            if (k is null) return Absent;
+            return k.GetValue(name) switch
+            {
+                null => Absent,
+                string { Length: 0 } => EmptyValue,
+                string[] sa => string.Join(", ", sa),
+                byte[] b => Convert.ToHexString(b),
+                var v => v.ToString() ?? "",
+            };
+        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException) { return ""; }
+    }
+
+    private static string Hklm(string key, string name) => RegRead(Registry.LocalMachine, key, name);
+
+    private static void Guard(Action a)
+    {
+        try { a(); }
+        catch (Exception ex) when (ex is ManagementException or UnauthorizedAccessException or System.Security.SecurityException or IOException
+                                      or System.Runtime.InteropServices.COMException or InvalidOperationException or NetworkInformationException) { }
+    }
+
+    private static void ReadSettingsWave2(StationFacts f)
+    {
+        var s = f.Settings;
+
+        // Wireless radios. Facts only: presence and configuration, never a change.
+        Guard(() =>
+        {
+            var wifi = NetworkInterface.GetAllNetworkInterfaces().Where(n => n.NetworkInterfaceType == NetworkInterfaceType.Wireless80211).ToList();
+            s["Wifi.AdapterCount"] = wifi.Count.ToString();
+            s["Wifi.UpCount"] = wifi.Count(n => n.OperationalStatus == OperationalStatus.Up).ToString();
+            s["Wifi.Adapters"] = string.Join("; ", wifi.Select(n => $"{n.Description} ({(n.OperationalStatus == OperationalStatus.Up ? "pornit" : "oprit sau neconectat")})"));
+        });
+        s["Wlan.ServiceStart"] = Hklm(@"SYSTEM\CurrentControlSet\Services\WlanSvc", "Start");
+        Guard(() =>
+        {
+            // Only the number of saved Wi-Fi profiles (the files are named by GUID); the profile contents are never opened.
+            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Wlansvc", "Profiles", "Interfaces");
+            s["Wlan.ProfileCount"] = Directory.Exists(dir) ? Directory.EnumerateFiles(dir, "*.xml", SearchOption.AllDirectories).Count().ToString() : "0";
+        });
+        Guard(() =>
+        {
+            using var bt = new ManagementObjectSearcher("SELECT Name FROM Win32_PnPEntity WHERE PNPClass = 'Bluetooth'");
+            var names = bt.Get().Cast<ManagementBaseObject>().Select(o => o["Name"]?.ToString() ?? "").Where(n => n.Length > 0).ToList();
+            s["Bluetooth.ComponentCount"] = names.Count.ToString();
+            s["Bluetooth.Components"] = string.Join("; ", names.Take(5));
+        });
+        s["Bluetooth.ServiceStart"] = Hklm(@"SYSTEM\CurrentControlSet\Services\bthserv", "Start");
+
+        // Boot.
+        s["SecureBoot.Enabled"] = Hklm(@"SYSTEM\CurrentControlSet\Control\SecureBoot\State", "UEFISecureBootEnabled");
+        s["Firmware.Type"] = Hklm(@"SYSTEM\CurrentControlSet\Control", "PEFirmwareType");   // [NESIGUR] 1 = BIOS vechi, 2 = UEFI (known from Windows setup, no source cited in the research)
+
+        // Session.
+        s["ScreenLock.InactivityTimeoutSecs"] = Hklm(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "InactivityTimeoutSecs");
+        s["LegalNotice.Caption"] = Hklm(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "LegalNoticeCaption");
+        var legalText = Hklm(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "LegalNoticeText");
+        s["LegalNotice.Text"] = legalText.Length > 300 ? legalText[..300] + "…" : legalText;
+
+        // Application control: presence and mode only (AppLocker rule collections; App Control / WDAC policies are not read).
+        Guard(() =>
+        {
+            using var srp = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Policies\Microsoft\Windows\SrpV2");
+            if (srp is null) { s["AppLocker.Collections"] = Absent; return; }
+            var parts = new List<string>();
+            foreach (var col in srp.GetSubKeyNames().Order(StringComparer.OrdinalIgnoreCase))
+            {
+                using var c = srp.OpenSubKey(col);
+                var mode = c?.GetValue("EnforcementMode")?.ToString() ?? "nesetat";
+                var rules = c?.GetSubKeyNames().Length ?? 0;
+                parts.Add($"{col}: mod {mode}, {rules} reguli");
+            }
+            s["AppLocker.Collections"] = parts.Count == 0 ? "(fără colecții)" : string.Join("; ", parts);
+        });
+        s["AppLocker.AppIDSvcStart"] = Hklm(@"SYSTEM\CurrentControlSet\Services\AppIDSvc", "Start");
+
+        // AutoPlay / AutoRun (same keys as DevicePolicyCheck).
+        s["AutoRun.NoDriveTypeAutoRun"] = Hklm(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer", "NoDriveTypeAutoRun");
+        s["AutoRun.NoAutorun"] = Hklm(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer", "NoAutorun");
+
+        // Windows version and last installed update.
+        const string cv = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion";
+        s["OS.ProductName"] = Hklm(cv, "ProductName");
+        s["OS.DisplayVersion"] = Hklm(cv, "DisplayVersion");
+        s["OS.Build"] = Hklm(cv, "CurrentBuild");
+        s["OS.UBR"] = Hklm(cv, "UBR");
+        Guard(() =>
+        {
+            using var qfe = new ManagementObjectSearcher("SELECT InstalledOn FROM Win32_QuickFixEngineering");
+            DateTime? max = null;
+            foreach (ManagementBaseObject o in qfe.Get())
+                if (ParseInstalledOn(o["InstalledOn"]?.ToString()) is { } d && (max is null || d > max)) max = d;
+            s["OS.LastUpdateDate"] = max?.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) ?? Absent;
+        });
+
+        // Camera and microphone consent (machine level).
+        s["Privacy.Webcam"] = Hklm(@"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam", "Value");
+        s["Privacy.Microphone"] = Hklm(@"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone", "Value");   // [NESIGUR] by analogy with webcam
+
+        // Recall / Copilot policies. [NESIGUR] The Copilot policy path comes from the control-station research without a cited source.
+        s["AI.DisableAIDataAnalysis"] = Hklm(@"SOFTWARE\Policies\Microsoft\Windows\WindowsAI", "DisableAIDataAnalysis");
+        s["AI.AllowRecallEnablement"] = Hklm(@"SOFTWARE\Policies\Microsoft\Windows\WindowsAI", "AllowRecallEnablement");
+        s["AI.CopilotTurnOffHklm"] = Hklm(@"SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot", "TurnOffWindowsCopilot");
+        s["AI.CopilotTurnOffHkcu"] = RegRead(Registry.CurrentUser, @"Software\Policies\Microsoft\Windows\WindowsCopilot", "TurnOffWindowsCopilot");   // current user only
+
+        // Credential protection.
+        s["LSA.KeyReadable"] = Hklm(@"SYSTEM\CurrentControlSet\Control\Lsa", "RunAsPPL") == "" ? "nu" : "da";
+        Guard(() =>
+        {
+            using var dg = new ManagementObjectSearcher(@"root\Microsoft\Windows\DeviceGuard", "SELECT SecurityServicesRunning FROM Win32_DeviceGuard");
+            foreach (ManagementBaseObject o in dg.Get())
+                if (o["SecurityServicesRunning"] is Array arr)
+                    s["DeviceGuard.ServicesRunning"] = arr.Length == 0 ? "niciunul" : string.Join(",", arr.Cast<object>().Select(x => x.ToString()));
+        });
+
+        // PowerShell.
+        s["PS.ScriptBlockLogging"] = Hklm(@"SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging", "EnableScriptBlockLogging");
+        s["PS.Transcription"] = Hklm(@"SOFTWARE\Policies\Microsoft\Windows\PowerShell\Transcription", "EnableTranscripting");
+        s["PS.V2Engine"] = Hklm(@"SOFTWARE\Microsoft\PowerShell\1\PowerShellEngine", "PowerShellVersion");   // [NESIGUR] detection by this value; confirm in the lab
+
+        // Data left on disk.
+        s["Disk.ClearPageFile"] = Hklm(@"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management", "ClearPageFileAtShutdown");
+        s["Disk.HibernateEnabled"] = Hklm(@"SYSTEM\CurrentControlSet\Control\Power", "HibernateEnabled");
+        s["Disk.CrashDumpEnabled"] = Hklm(@"SYSTEM\CurrentControlSet\Control\CrashControl", "CrashDumpEnabled");
+
+        // Removable storage auditing helper and time source.
+        s["Storage.HotPlugSecureOpen"] = Hklm(@"SYSTEM\CurrentControlSet\Control\Storage", "HotPlugSecureOpen");
+        s["Time.Type"] = Hklm(@"SYSTEM\CurrentControlSet\Services\W32Time\Parameters", "Type");
+        s["Time.NtpServer"] = Hklm(@"SYSTEM\CurrentControlSet\Services\W32Time\Parameters", "NtpServer");
+    }
+
+    /// <summary>Win32_QuickFixEngineering.InstalledOn is text: a date in the machine's format or a hexadecimal FILETIME.</summary>
+    public static DateTime? ParseInstalledOn(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return null;
+        text = text.Trim();
+        if (text.StartsWith("0x", StringComparison.OrdinalIgnoreCase) && long.TryParse(text[2..], System.Globalization.NumberStyles.HexNumber, null, out var ft))
+        {
+            try { return DateTime.FromFileTimeUtc(ft).Date; } catch (ArgumentOutOfRangeException) { return null; }
+        }
+        if (DateTime.TryParse(text, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var d)) return d.Date;
+        if (DateTime.TryParse(text, System.Globalization.CultureInfo.CurrentCulture, System.Globalization.DateTimeStyles.None, out d)) return d.Date;
+        return null;
     }
 
     // ---- network ----------------------------------------------------------------------------------------------
