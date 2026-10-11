@@ -1,5 +1,17 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-11T18:30:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-11T19:50:00Z
+ROUND 3 (2026-10-11 evening, owner: "design mai complex + ștergere proiect + research, apoi execuție"; "baia: toate formele, ce se
+  poate înlocui"; "verifică toate piesele"): research in 02_PRODUCT/projects/Casa3D/research-2026-10-11b/ (SYNTHESIS + 4 notes).
+  DONE: bath = product-driven (WC mount/cistern/shape per variant, BOQ pays the chosen product, bath panel lists pieces with all
+  variants + add buttons); 28 new verified Dedeman bath products (tubs, bidet, walk-in, WCs, towel rads, columns, mirror cabinets,
+  boiler) with 3D models + plan symbols + tech points; trash 30 days/restore/purge/duplicate/search; full project ZIP export;
+  studio profile (CUI/IBAN checked) on prints + handover; conflict-safe save across devices (draft_rev, 409); advisor rules
+  (coffee ½–⅔ sofa, 90 cm behind dining chairs); mood board /p/[id]/board with 60-30-10 palette; core/product-style derives
+  drawers/doors/mirrors/glass/colour/round/upholstery/chairs from product names → nightstands, chests, TV units, wardrobes, desks,
+  coffee tables, mirrors, shoe cabinets, armchairs now match the ordered piece. Product gallery (233 variants) rendered in a
+  Blender studio (scratchpad tools/studio.py + studio.mjs) and reviewed.
+  NEXT: A/B design options per room, lighting layers, ceilings/panelling, PC re-render to show owner; gitleaks finding in
+  loganalyzer-dfir (other branch) awaits owner decision.
 RENDERS (2026-10-11, owner: "randarile nu sunt perfecte… sa fie exact cu piesa"): 20fc5512 + be8554ad. Kitchen sink recessed in a
   cut worktop (ExtrudeGeometry exported as 'mesh' triangles), vanity = ceramic deck with oval cut-out + lathe bowl, fronts from product
   name (sertare/uși), hung at 86 cm; oak veneer doors; office chair one-piece back; room_camera: wide lens for small rooms, aim at key
