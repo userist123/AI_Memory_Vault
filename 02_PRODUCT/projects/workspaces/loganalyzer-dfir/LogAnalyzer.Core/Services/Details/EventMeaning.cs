@@ -143,6 +143,12 @@ namespace LogAnalyzer.Core.Services.Details
                         if (NtStatus.TryGetValue(st, out var why)) into.Add($"Motivul eșecului: {why} ({st}).");
                     }
                     if (D("ElevatedToken") == "%%1842") into.Add("Sesiunea are token elevat (drepturi de administrator).");
+                    // Owner 2026-10-11: a controller must not mistake the operating system's own logons for a person's activity.
+                    if (eventId == 4624 && (lt is "0" or "5" || D("TargetUserSid") is "S-1-5-18" or "S-1-5-19" or "S-1-5-20" || D("TargetUserName").EndsWith('$') ||
+                                            D("TargetUserName") is "SYSTEM" or "LOCAL SERVICE" or "NETWORK SERVICE" || D("TargetUserName").StartsWith("DWM-") || D("TargetUserName").StartsWith("UMFD-")))
+                        into.Add("Pe înțeles: operație normală a Windows (un serviciu sau sistemul însuși s-a autentificat), NU activitatea unei persoane. Astfel de evenimente apar de sute de ori pe zi; la control nu contează.");
+                    else if (eventId == 4624 && lt is "2" or "10" or "11" or "7")
+                        into.Add("Pe înțeles: o persoană a intrat pe stație" + (lt == "10" ? " de la distanță (Remote Desktop)." : lt == "7" ? " deblocând ecranul." : " la tastatură.") + " Contul și ora se compară cu cine avea voie să lucreze atunci.");
                     break;
                 case 4688:
                     if (D("NewProcessName").Length > 0) into.Add($"A rulat: {D("NewProcessName")}");

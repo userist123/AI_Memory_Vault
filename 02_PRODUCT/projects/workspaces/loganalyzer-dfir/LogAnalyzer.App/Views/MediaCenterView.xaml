@@ -1,0 +1,168 @@
+<UserControl x:Class="LogAnalyzer.UI.Views.MediaCenterView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:LogAnalyzer.UI.Views"
+             AutomationProperties.Name="Medii de stocare și dispozitive">
+    <!-- Owner 2026-10-11: „pentru mediile de stocare îmi trebuie toate datele … ceva viu ca la Endpoint Protector”. DataContext: MediaCenterViewModel. -->
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
+    <Grid Margin="24,20,24,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,10">
+            <TextBlock Text="Medii de stocare și dispozitive" FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+            <TextBlock Text="Tot ce poate stoca sau transfera date pe această stație: discuri, stick-uri, carduri, CD/DVD, telefoane, Bluetooth, unități de rețea, discuri virtuale. Aplicația doar citește; nu blochează și nu modifică nimic."
+                       TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- alert + summary + live switch -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,10">
+            <Border Background="#FDECEA" BorderBrush="{StaticResource CriticalBrush}" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,8"
+                    Visibility="{Binding HasAlert, Converter={StaticResource BoolToVis}}">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Am văzut" Command="{Binding DismissAlertCommand}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding AlertText}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource CriticalBrush}" VerticalAlignment="Center"/>
+                </DockPanel>
+            </Border>
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Content="Reîmprospătează" Command="{Binding RefreshCommand}" Margin="0,0,8,0"/>
+                    <Button Command="{Binding ToggleLiveCommand}" AutomationProperties.Name="Pornește sau oprește supravegherea în timp real">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                <Setter Property="Content" Value="Pornește supravegherea"/>
+                                <Style.Triggers><DataTrigger Binding="{Binding IsLive}" Value="True"><Setter Property="Content" Value="Oprește supravegherea"/></DataTrigger></Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="{Binding Summary}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{Binding LiveStatus}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                    <TextBlock Text="{Binding Problems}" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" Margin="0,2,0,0"/>
+                </StackPanel>
+            </DockPanel>
+            <ProgressBar IsIndeterminate="True" Height="4" Margin="0,6,0,0" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+        </StackPanel>
+
+        <TabControl Grid.Row="2">
+            <!-- 1. now -->
+            <TabItem Header="Acum">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                    <TextBlock Text="Conectate acum" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <DataGrid Grid.Row="1" AutomationProperties.Name="Dispozitive conectate acum" ItemsSource="{Binding ConnectedNow}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="220" Margin="0,4,0,12">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Față de registru" Binding="{Binding MatchText}" Width="170"/>
+                            <DataGridTextColumn Header="Ce este" Binding="{Binding Device.KindText}" Width="1.3*"/>
+                            <DataGridTextColumn Header="Nume" Binding="{Binding Device.Name}" Width="1.6*"/>
+                            <DataGridTextColumn Header="Serie" Binding="{Binding Device.Serial}" Width="*"/>
+                            <DataGridTextColumn Header="Literă" Binding="{Binding Device.DriveLetters}" Width="80"/>
+                            <DataGridTextColumn Header="Etichetă" Binding="{Binding Device.VolumeLabel}" Width="*"/>
+                            <DataGridTextColumn Header="Capacitate" Binding="{Binding Device.CapacityText}" Width="90"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <TextBlock Grid.Row="2" Text="Ce s-a întâmplat (în timp real, de la deschiderea aplicației)" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <DataGrid Grid.Row="3" AutomationProperties.Name="Conectări și deconectări în timp real" ItemsSource="{Binding LiveFeed}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="0,4,0,0">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                <Style.Triggers><DataTrigger Binding="{Binding NeedsAttention}" Value="True"><Setter Property="Foreground" Value="{StaticResource CriticalBrush}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger></Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Ora" Binding="{Binding TimeText}" Width="80"/>
+                            <DataGridTextColumn Header="Ce s-a întâmplat" Binding="{Binding What}" Width="1.6*"/>
+                            <DataGridTextColumn Header="Dispozitiv" Binding="{Binding Device}" Width="1.6*"/>
+                            <DataGridTextColumn Header="Serie" Binding="{Binding Serial}" Width="*"/>
+                            <DataGridTextColumn Header="Verdict și ce faceți" Binding="{Binding Verdict}" Width="3*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <!-- 2. every device: list and detail -->
+            <TabItem Header="Toate dispozitivele">
+                <Grid Margin="8">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="5*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="4*"/></Grid.ColumnDefinitions>
+                    <DockPanel>
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                            <ComboBox DockPanel.Dock="Right" AutomationProperties.Name="Ce dispozitive arată lista" ItemsSource="{Binding Filters}" SelectedItem="{Binding Filter}" Width="250"/>
+                            <TextBlock Text="Dați clic pe un dispozitiv: în dreapta apar toate datele lui." Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                        <DataGrid AutomationProperties.Name="Toate dispozitivele cunoscute de stație" ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}" SelectionMode="Single"
+                                  AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                    <Style.Triggers><DataTrigger Binding="{Binding NeedsAttention}" Value="True"><Setter Property="Foreground" Value="{StaticResource CriticalBrush}"/></DataTrigger></Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Față de registru" Binding="{Binding MatchText}" Width="150"/>
+                                <DataGridTextColumn Header="Ce este" Binding="{Binding Device.KindText}" Width="1.3*"/>
+                                <DataGridTextColumn Header="Nume" Binding="{Binding Device.Name}" Width="1.5*"/>
+                                <DataGridTextColumn Header="Serie" Binding="{Binding Device.Serial}" Width="*"/>
+                                <DataGridTextColumn Header="Stare" Binding="{Binding Device.ConnectedText}" Width="110"/>
+                                <DataGridTextColumn Header="Ultima conectare" Binding="{Binding Device.LastConnectedUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="120"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                    <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="Transparent"/>
+                    <DockPanel Grid.Column="2" Margin="8,0,0,0">
+                        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button Content="Copiază datele (pentru procesul-verbal)" Command="{Binding CopyDetailsCommand}" Margin="0,0,8,0"/>
+                            <Button Content="Adaugă în registru ce lipsește" Command="{Binding AddToRegisterCommand}"/>
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{Binding SelectedDetails}" AutomationProperties.Name="Datele dispozitivului ales">
+                            <ItemsControl.Template><ControlTemplate><ScrollViewer VerticalScrollBarVisibility="Auto"><ItemsPresenter/></ScrollViewer></ControlTemplate></ItemsControl.Template>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,0,0,8">
+                                        <TextBlock Text="{Binding Label}" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
+                                        <TextBox Text="{Binding Value, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" TextWrapping="Wrap" Padding="0" Margin="0" MinHeight="0"
+                                                 AutomationProperties.Name="{Binding Label}" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="{Binding Meaning}" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}">
+                                            <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><Trigger Property="Text" Value=""><Setter Property="Visibility" Value="Collapsed"/></Trigger></Style.Triggers></Style></TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </DockPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- 3. Windows protections -->
+            <TabItem Header="Protecțiile Windows">
+                <DockPanel Margin="8">
+                    <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"
+                               Text="Ce blochează sau înregistrează Windows însuși pe această stație. Aplicația nu schimbă aceste setări; ele se aplică prin politica de grup (GPO) de către administrator."/>
+                    <DataGrid AutomationProperties.Name="Protecțiile Windows pentru dispozitive" ItemsSource="{Binding Protections}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Protecție" Binding="{Binding Title}" Width="1.6*"/>
+                            <DataGridTextColumn Header="Protejat?" Binding="{Binding ProtectedText}" Width="90"/>
+                            <DataGridTextColumn Header="Stare pe stație" Binding="{Binding State}" Width="1.3*"/>
+                            <DataGridTextColumn Header="Ce înseamnă" Binding="{Binding Meaning}" Width="3*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Unde (tehnic)" Binding="{Binding Source}" Width="1.6*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <!-- 4. the register itself -->
+            <TabItem Header="Registrul de medii">
+                <views:RegisterView DataContext="{Binding Register}"/>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

@@ -97,6 +97,9 @@ namespace LogAnalyzer.UI.ViewModels
 
         private void Pull() => _register.SetCells(Rows());
 
+        /// <summary>The register as currently shown (including unsaved edits), for comparisons made elsewhere (e.g. the media page).</summary>
+        public T Snapshot() { Pull(); return _register; }
+
         private void Push()
         {
             Data.Clear();
@@ -207,8 +210,30 @@ namespace LogAnalyzer.UI.ViewModels
     {
         public MediaRegisterViewModel(string? path = null) : base(path) { }
 
-        protected override System.Collections.Generic.IReadOnlyList<object> Discover() =>
-            LogAnalyzer.Dfir.Windows.Registers.StationDiscovery.ObservedMedia().Cast<object>().ToList();
+        /// <summary>
+        /// Every medium the station knows (full device inventory: internal disks, USB storage, cards, portable devices; with history from the
+        /// partition log), plus the earlier sources (USBSTOR, portable device labels, mounted volumes). One row per serial.
+        /// </summary>
+        protected override System.Collections.Generic.IReadOnlyList<object> Discover()
+        {
+            var observed = new System.Collections.Generic.List<LogAnalyzer.Dfir.Registers.ObservedMedium>();
+            foreach (var d in LogAnalyzer.Dfir.Windows.Devices.DeviceInventory.Collect().Devices)
+            {
+                string? type = d.Kind switch
+                {
+                    LogAnalyzer.Dfir.Devices.DeviceKind.UsbStorage => "USB",
+                    LogAnalyzer.Dfir.Devices.DeviceKind.InternalDisk => d.Name.Contains("SSD", StringComparison.OrdinalIgnoreCase) || d.Name.Contains("NVMe", StringComparison.OrdinalIgnoreCase) || d.Bus.Contains("NVME", StringComparison.OrdinalIgnoreCase) || d.InstanceId.Contains("NVME", StringComparison.OrdinalIgnoreCase) ? "SSD" : "HDD",
+                    LogAnalyzer.Dfir.Devices.DeviceKind.MemoryCard or LogAnalyzer.Dfir.Devices.DeviceKind.PortableDevice or LogAnalyzer.Dfir.Devices.DeviceKind.Thunderbolt => "other",
+                    _ => null,   // optical drives, Bluetooth, network and virtual disks are not media of the register
+                };
+                if (type is null || d.Serial.Length == 0) continue;
+                observed.Add(new(d.Serial, d.VidPid, $"{d.Manufacturer} {d.Model}".Trim() is { Length: > 0 } m ? m : d.Name, d.VolumeLabel, type, d.Sources, d.LastConnectedUtc ?? d.FirstConnectedUtc));
+            }
+            foreach (var o in LogAnalyzer.Dfir.Windows.Registers.StationDiscovery.ObservedMedia())
+                if (o.Serial.Length == 0 || !observed.Any(x => LogAnalyzer.Dfir.Registers.MediaRegister.NormalizeSerial(x.Serial) == LogAnalyzer.Dfir.Registers.MediaRegister.NormalizeSerial(o.Serial)))
+                    observed.Add(o);
+            return observed.Cast<object>().ToList();
+        }
 
         protected override string MergeObserved(MediaRegister register, System.Collections.Generic.IReadOnlyList<object> observed)
         {

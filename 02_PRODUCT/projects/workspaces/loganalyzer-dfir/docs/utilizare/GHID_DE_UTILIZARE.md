@@ -98,7 +98,18 @@ Raportul se salvează în cazul stației, cu amprenta lui; vi se oferă și salv
 
 **Important:** lipsa urmelor nu dovedește că un lucru nu s-a întâmplat. De aceea, de exemplu, „niciun stick USB găsit” apare DE VERIFICAT, nu CONFORM: jurnalele au o istorie limitată.
 
-## 6. Registrele de utilizatori și de medii
+## 6. Mediile de stocare și dispozitivele
+
+Pagina **„Medii de stocare și dispozitive”** (din meniu, „Registru medii”) urmărește tot ce poate stoca sau transfera date: discuri interne, stick-uri și discuri externe, carduri, CD/DVD, telefoane conectate prin cablu, dispozitive Bluetooth, unități de rețea și discuri virtuale (ISO/VHD).
+
+- **„Acum”**: ce este conectat în acest moment și, dedesubt, tot ce s-a conectat sau s-a scos de la pornirea aplicației, cu ora. Dacă se conectează un suport care **nu este în registru**, pe orice pagină apare sus un mesaj roșu, cu un sunet: „Vezi dispozitivul” vă duce la el, „Am văzut” închide mesajul.
+- **„Toate dispozitivele”**: fiecare dispozitiv cunoscut de stație, inclusiv cele conectate în trecut. La clic, în dreapta apar toate datele lui, fiecare cu explicația: ce este, dacă e în registru, ce faceți, producător, model, serie, VID:PID, capacitate, literă, etichetă (descifrată după convenția `xxxx-yyyyL`), criptare, prima și ultima conectare, ultima deconectare, istoricul conectărilor din jurnal, sursele. „Copiază datele” le pune gata de lipit în procesul-verbal.
+- **„Protecțiile Windows”**: dacă Windows însuși blochează stick-urile, CD/DVD-urile sau telefoanele, dacă cere stick-uri criptate și dacă **înregistrează copierea fișierelor** pe suporturi. Dacă nu o înregistrează, controlul nu poate spune ce fișiere au ieșit, iar pagina spune asta.
+- **„Registrul de medii”**: registrul propriu-zis (vezi mai jos).
+
+Aplicația **nu blochează** dispozitive; pentru blocare se folosesc politicile Windows (GPO) sau un produs dedicat. Windows păstrează în fișa unui dispozitiv doar **ultima** conectare; istoricul complet vine din jurnal și are o durată limitată.
+
+## 7. Registrele de utilizatori și de medii
 
 Registrele **nu se completează de mână**. Apăsați **„Preia de pe stație”**: aplicația adaugă conturile găsite pe stație, respectiv suporturile conectate vreodată (cu producător, model, serie). Dumneavoastră completați doar ce stația nu poate ști (autorizații, persoana responsabilă).
 
@@ -108,7 +119,7 @@ Registrele **nu se completează de mână**. Apăsați **„Preia de pe stație�
 
 Doar administratorul aplicației poate salva registrele; ceilalți le pot citi, iar ecranul spune asta.
 
-## 7. Politicile (import GPO, verificare, aplicare)
+## 8. Politicile (import GPO, verificare, aplicare)
 
 Ecranul **„Politici”** spune mereu, sus, **pasul următor** și de ce, cu un singur buton care îl face:
 
@@ -123,7 +134,7 @@ Ecranul **„Politici”** spune mereu, sus, **pasul următor** și de ce, cu un
 
 La clic pe un rând din plan, dedesubt apare ce înseamnă setarea: valoare de registru, categorie de audit, serviciu sau regulă de securitate. Elementele pe care aplicația nu le poate citi din politică sunt listate în fila „Neacceptate la import”.
 
-## 8. Când ceva nu merge
+## 9. Când ceva nu merge
 
 | Ce vedeți | Ce înseamnă | Ce faceți |
 |---|---|---|
