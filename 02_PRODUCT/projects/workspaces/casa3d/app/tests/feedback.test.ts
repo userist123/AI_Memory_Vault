@@ -66,3 +66,23 @@ test('butonul „Link pentru client”: salvează versiunea doar dacă s-a schim
   process.env.CASA3D_PUBLIC_URL = 'https://casa.example.com/'; try { assert.equal((await clientLink(A, id)).url, `https://casa.example.com${l3.path}`); } finally { delete process.env.CASA3D_PUBLIC_URL; }
   await assert.rejects(clientLink(B, id));
 });
+
+test('limita pe link ține și la cereri simultane (fără cursă între numărare și inserare)', async () => {
+  const { token, id } = await shared();
+  for (let i = 0; i < FEEDBACK_LIMITS.perShare - 5; i++) await addFeedback(token, { roomId: null, verdict: 'like', author: 'Bot', text: '' });
+  const rs = await Promise.allSettled(Array.from({ length: 30 }, () => addFeedback(token, { roomId: null, verdict: 'like', author: 'Bot', text: '' })));
+  assert.equal(rs.filter(r => r.status === 'fulfilled').length, 5);
+  assert.ok(rs.filter(r => r.status === 'rejected').every(r => (r as PromiseRejectedResult).reason.status === 429));
+  assert.equal((await listFeedback(A, id)).length, FEEDBACK_LIMITS.perShare);
+});
+
+test('numele nu poate ascunde alt nume (caractere invizibile / inversare), id-uri strict UUID, adresa publică doar origine', async () => {
+  const { token, id } = await shared();
+  const f = await addFeedback(token, { roomId: null, verdict: 'question', author: 'An‮a​﻿', text: 'De⁦ ce?' });
+  assert.equal(f.author, 'Ana'); assert.equal(f.text, 'De ce?');
+  await assert.rejects(setFeedbackResolved(A, id, '-'.repeat(36), true), (e: any) => e.status === 404);
+  const { publicBase } = await import('../lib/share');
+  const pb = (u: string | undefined) => { if (u === undefined) delete process.env.CASA3D_PUBLIC_URL; else process.env.CASA3D_PUBLIC_URL = u; try { return publicBase(); } finally { delete process.env.CASA3D_PUBLIC_URL; } };
+  assert.equal(pb('https://casa.example.com/'), 'https://casa.example.com'); assert.equal(pb('http://x.trycloudflare.com'), 'http://x.trycloudflare.com');
+  for (const bad of ['https://h#', 'https://h/?a=1', 'https://u:p@h', 'https://h/cale', 'ftp://h', 'nu e url', undefined]) assert.equal(pb(bad), null, String(bad));
+});

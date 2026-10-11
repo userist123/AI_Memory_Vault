@@ -10,9 +10,10 @@ export type FeedbackVerdict = typeof FEEDBACK_VERDICTS[number];
 export const FEEDBACK_LIMITS = { author: 60, text: 2000, perShare: 200 };
 export interface Feedback { id: string; roomId: string | null; verdict: FeedbackVerdict; author: string; text: string; createdAt: string; resolvedAt: string | null }
 
-const ID_RE = /^[0-9a-f-]{36}$/;
-// fără caractere de control (în afară de rând nou), spații de la capete tăiate
-const clean = (v: unknown) => typeof v === 'string' ? v.replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, '').trim() : null;
+const ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// fără caractere de control (în afară de rând nou) și fără caractere invizibile / de inversare a direcției textului
+// (un nume nu poate să pară altul în lista designerului); spații de la capete tăiate
+const clean = (v: unknown) => typeof v === 'string' ? v.replace(/[\u0000-\u0009\u000b-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/g, '').trim() : null;
 const row = (r: any): Feedback => ({ id: r.id, roomId: r.room_id, verdict: r.verdict, author: r.author, text: r.body, createdAt: new Date(r.created_at).toISOString(), resolvedAt: r.resolved_at ? new Date(r.resolved_at).toISOString() : null });
 
 export async function addFeedback(token: unknown, input: unknown): Promise<Feedback> {
@@ -24,13 +25,15 @@ export async function addFeedback(token: unknown, input: unknown): Promise<Feedb
   if (text == null || text.length > FEEDBACK_LIMITS.text) throw new HttpError(400, 'Textul e prea lung.');
   if (verdict !== 'like' && !text) throw new HttpError(400, 'Scrie ce ai schimba sau ce vrei să întrebi.');
   if (roomId !== null && !(typeof roomId === 'string' && view.snapshot.floor.rooms.concat(...(view.snapshot.levels ?? []).map(l => l.rooms)).some(r => r.id === roomId))) throw new HttpError(400, 'Camera nu există în prezentare.');
-  const { q } = await getDb(), t = token as string;
-  const { rows: [c] } = await q('select count(*)::int as n from share_feedback where token=$1', [t]);
-  if (c.n >= FEEDBACK_LIMITS.perShare) throw new HttpError(429, 'S-au trimis prea multe păreri pe acest link.');
-  const { rows } = await q(`insert into share_feedback(token, project_id, room_id, verdict, author, body)
-    select token, project_id, $2, $3, $4, $5 from shares where token=$1 and revoked_at is null returning *`, [t, roomId, verdict, author, text]);
-  if (!rows[0]) throw new HttpError(404, 'Link inexistent.');
-  return row(rows[0]);
+  // linkul se blochează pe durata tranzacției: numărătoarea și inserarea nu se pot intercala între cereri simultane
+  const { tx } = await getDb(), t = token as string;
+  return tx(async q => {
+    const { rows: [s] } = await q('select project_id from shares where token=$1 and revoked_at is null for update', [t]);
+    if (!s) throw new HttpError(404, 'Link inexistent.');
+    const { rows: [c] } = await q('select count(*)::int as n from share_feedback where token=$1', [t]);
+    if (c.n >= FEEDBACK_LIMITS.perShare) throw new HttpError(429, 'S-au trimis prea multe păreri pe acest link.');
+    const { rows } = await q('insert into share_feedback(token, project_id, room_id, verdict, author, body) values($1,$2,$3,$4,$5,$6) returning *', [t, s.project_id, roomId, verdict, author, text]);
+    return row(rows[0]); });
 }
 /** Ce vede clientul pe link: părerile trimise pe acest link, cu starea lor. */
 export async function listFeedbackForShare(token: unknown): Promise<Feedback[]> {
