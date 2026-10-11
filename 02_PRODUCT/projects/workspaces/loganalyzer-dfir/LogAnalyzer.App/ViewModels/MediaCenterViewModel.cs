@@ -42,6 +42,11 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand] private void RecordTransfer() { AlertText = ""; NavigateToTransferRegister?.Invoke(); }
 
         public MediaRegisterViewModel Register => _register;
+
+        /// <summary>Every device the station knows (also those not connected now), with its media-register match; used to reconcile USB sessions with the transfer register.</summary>
+        public IReadOnlyList<DeviceAssessment> AllDevices => _all;
+        /// <summary>Raised after the device inventory was (re)read.</summary>
+        public event Action? DevicesRefreshed;
         public ObservableCollection<DeviceAssessment> Devices { get; } = new();
         public ObservableCollection<DeviceAssessment> ConnectedNow { get; } = new();
         public ObservableCollection<LiveDeviceEntry> LiveFeed { get; } = new();
@@ -126,6 +131,7 @@ namespace LogAnalyzer.UI.ViewModels
             ConnectedNow.Clear();
             foreach (var a in _all.Where(a => a.Device.ConnectedNow && a.Device.Kind != DeviceKind.Bluetooth)) ConnectedNow.Add(a);
             SelectedDevice = Devices.FirstOrDefault(a => a.Device.InstanceId == keep) ?? Devices.FirstOrDefault(a => a.NeedsAttention) ?? Devices.FirstOrDefault();
+            DevicesRefreshed?.Invoke();
         }
 
         private bool Matches(DeviceAssessment a) => Filter switch

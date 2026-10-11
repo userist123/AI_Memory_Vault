@@ -27,6 +27,9 @@
                     <TextBlock Text="Direcție" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
                     <ComboBox ItemsSource="{Binding Directions}" SelectedItem="{Binding Direction}" AutomationProperties.Name="Direcția transferului" Margin="0,2,0,8"/>
         
+                    <TextBlock Text="Data transferului (gol = acum)" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
+                    <DatePicker SelectedDate="{Binding TransferDate}" AutomationProperties.Name="Data transferului" HorizontalAlignment="Left" Margin="0,2,0,8"/>
+
                     <TextBlock Text="Mediul de stocare (conectat acum)" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
                     <ComboBox ItemsSource="{Binding Media}" SelectedItem="{Binding SelectedMedium}" DisplayMemberPath="Device.DisplayName" AutomationProperties.Name="Mediul folosit" Margin="0,2,0,2"/>
                     <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8">
@@ -97,6 +100,23 @@
                     <TextBlock Text="până la" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,6,0"/>
                     <DatePicker SelectedDate="{Binding ReportTo}" AutomationProperties.Name="Raport până la data" Margin="0,0,10,0"/>
                     <Button Content="Raportul registrului (PDF)" Command="{Binding ReportCommand}"/>
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                    <TextBlock Text="Conectări fără transfer înregistrat" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{Binding UnregisteredSummary}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,4"/>
+                    <ItemsControl ItemsSource="{Binding UnregisteredConnections}" MaxHeight="150" AutomationProperties.Name="Conectări de stick fără transfer înregistrat">
+                        <ItemsControl.Template><ControlTemplate><ScrollViewer VerticalScrollBarVisibility="Auto"><ItemsPresenter/></ScrollViewer></ControlTemplate></ItemsControl.Template>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="0,0,0,4">
+                                    <Button DockPanel.Dock="Right" Content="Înregistrează transferul" Margin="8,0,0,0"
+                                            Command="{Binding DataContext.RegisterTransferForCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
+                                            AutomationProperties.Name="Înregistrează transferul pentru această conectare"/>
+                                    <TextBlock Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{StaticResource CriticalBrush}"/>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
                 <ItemsControl DockPanel.Dock="Bottom" ItemsSource="{Binding Problems}" AutomationProperties.Name="Probleme găsite în registrul de transferuri" Margin="0,6,0,0">
                     <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource CriticalBrush}"/></DataTemplate></ItemsControl.ItemTemplate>
