@@ -18,7 +18,7 @@ cites file:line for each finding.
 
 | Item | Source @ commit | On PC before | Verdict | Action |
 |---|---|---|---|---|
-| frontend-design | anthropics/claude-plugins-official @ f359d43b | installed, disabled | SAFE (text-only skill, 0 guard findings) | enable; copy in `.agents/skills/frontend-design-anthropic` |
+| frontend-design | anthropics/claude-plugins-official @ f359d43b | installed, disabled | SAFE (text-only skill, 0 guard findings) | enable the plugin; no Vault copy (the Vault already has `.agents/skills/frontend-design`, an expanded version of the same skill) |
 | superpowers | obra/superpowers, marketplace-pinned 5bf4e780 | installed, enabled (6.4.1) | already in use | none |
 | ralph-loop | anthropics/claude-plugins-official @ f359d43b | installed, disabled | SAFE-WITH-CONDITIONS | enable; copy in `.agents/skills/ralph-loop` |
 | chrome-devtools-mcp | ChromeDevTools/chrome-devtools-mcp, marketplace-pinned 1cec9cd1 | missing | SAFE-WITH-CONDITIONS | install with the flags below |
