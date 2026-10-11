@@ -80,10 +80,19 @@ namespace LogAnalyzer.UI.ViewModels
             StartLive();
         }
 
+        private Task? _running;
+
+        /// <summary>One inventory at a time; a caller that arrives while one is running waits for it instead of returning with stale data (senior review L4).</summary>
         [RelayCommand]
         private async Task RefreshAsync()
         {
-            if (IsBusy) return;
+            if (_running is { IsCompleted: false } r) { await r; return; }
+            _running = RefreshCoreAsync();
+            await _running;
+        }
+
+        private async Task RefreshCoreAsync()
+        {
             IsBusy = true;
             Summary = "Se citesc dispozitivele stației…";
             try
@@ -157,17 +166,30 @@ namespace LogAnalyzer.UI.ViewModels
             LiveStatus = "Supravegherea în timp real este oprită. Apăsați „Pornește supravegherea” ca să vedeți conectările pe loc.";
         }
 
+        private readonly List<DeviceChange> _pending = new();
+
         private async void OnChange(DeviceChange c)
         {
-            // several WMI events arrive for one physical device: wait a moment, then read the inventory once
+            // several WMI events arrive for one physical device: the INVENTORY is debounced, never the events — every change of the burst is
+            // assessed after one fresh inventory (senior review L5: of two sticks inserted together only the last used to be checked)
+            _pending.Add(c);
             _debounce?.Cancel();
             var cts = _debounce = new CancellationTokenSource();
-            var pending = c;
-            try { await Task.Delay(1500, cts.Token); } catch (TaskCanceledException) { AddFeed(pending, null); return; }
+            try { await Task.Delay(1500, cts.Token); } catch (TaskCanceledException) { return; }   // a later change of the same burst handles the batch
+            var batch = _pending.ToList();
+            _pending.Clear();
+            if (_running is { IsCompleted: false } r) await r;                                    // an inventory already running predates these changes
             await RefreshAsync();
-            var match = _all.FirstOrDefault(a => pending.InstanceId.Length > 0 && a.Device.InstanceId.Equals(pending.InstanceId, StringComparison.OrdinalIgnoreCase))
-                        ?? (pending.Arrived ? _all.Where(a => a.Device.ConnectedNow).OrderByDescending(a => a.Device.LastConnectedUtc).FirstOrDefault() : null);
-            AddFeed(pending, match);
+            var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var p in batch)
+            {
+                var match = _all.FirstOrDefault(a => p.InstanceId.Length > 0 && a.Device.InstanceId.Equals(p.InstanceId, StringComparison.OrdinalIgnoreCase))
+                            ?? (p.Arrived && p.InstanceId.Length > 0
+                                ? _all.Where(a => a.Device.ConnectedNow && !used.Contains(a.Device.InstanceId)).OrderByDescending(a => a.Device.LastConnectedUtc).FirstOrDefault()
+                                : null);
+                if (match is not null) used.Add(match.Device.InstanceId);
+                AddFeed(p, match);
+            }
         }
 
         private void AddFeed(DeviceChange c, DeviceAssessment? a)
