@@ -412,3 +412,14 @@ input[type=file]{font-size:12px;color:var(--lead)} input[type=file]::file-select
 .oedit-item{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap} .oedit-item .f{width:160px}
 .btn.danger{color:var(--err);border-color:var(--err)}
 @media (max-width:700px){ .clip-card{grid-template-columns:1fr} .clip-card>img{width:100%;height:180px} .clip-card>.noimg,.othumb{display:none} .oline-main:has(.othumb){grid-template-columns:minmax(0,1fr) auto} }
+/* Linkul clientului: stadiul comenzilor */
+.cdel{width:min(1280px,94vw);margin:0 auto;background:var(--surface);border:1px solid var(--rule);padding:22px 26px;display:grid;gap:14px;box-sizing:border-box}
+.cdel h2{font:400 30px/1.1 var(--serif);margin:4px 0 0} .cdel header p{margin:4px 0 0}
+.cdel-sum{display:flex;gap:22px;flex-wrap:wrap;margin:0} .cdel-sum div{display:grid} .cdel-sum dt{font:500 10.5px var(--sans);text-transform:uppercase;letter-spacing:.1em;color:var(--lead)} .cdel-sum dd{margin:0;font:400 24px var(--serif)} .cdel-sum .late dd{color:var(--err)}
+.cdel ul{list-style:none;margin:0;padding:0} .cdel-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:10px 0;border-top:1px solid var(--rule)}
+.cdel-name{display:grid;gap:2px;min-width:0} .cdel-name b{font-weight:500} .cdel-name small,.cdel-st small{color:var(--lead);font-size:12px;display:block}
+.cdel-st{text-align:right;font:500 13px var(--sans)} .cdel-row.is-late .cdel-st,.cdel-row.is-late .cdel-st small{color:var(--err)}
+.st-c-ordered .cdel-st{color:#4a5c74} .st-c-delivered .cdel-st{color:#4f6b4a} .st-c-installed .cdel-st{color:#2f4f2f} .st-c-todo .cdel-st{color:var(--lead)}
+.pcard-body .chk{display:flex;gap:10px;align-items:flex-start;cursor:pointer} .pcard-body .chk input{margin-top:3px;width:18px;height:18px} .pcard-body .chk small{display:block;color:var(--lead);font-size:12px}
+@media (max-width:700px){ .cdel{width:auto;margin:0 12px;padding:16px} .cdel h2{font-size:24px} .cdel-sum{gap:14px} .cdel-sum dd{font-size:20px} }
+.cdel-todo summary{cursor:pointer;font:500 13px var(--sans);padding:10px 0;border-top:1px solid var(--rule);min-height:24px} .cdel-todo .cdel-row{opacity:.85}
