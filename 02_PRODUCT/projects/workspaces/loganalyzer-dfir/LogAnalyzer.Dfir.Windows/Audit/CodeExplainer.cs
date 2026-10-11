@@ -86,6 +86,8 @@ public static class CodeExplainer
         ["PowerShell"] = "Microsoft-Windows-PowerShell/Operational", ["TerminalServices"] = "Microsoft-Windows-TerminalServices-LocalSessionManager/Operational",
         ["Partition"] = "Microsoft-Windows-Partition/Diagnostic", ["NetworkProfile"] = "Microsoft-Windows-NetworkProfile/Operational",
         ["WLAN"] = "Microsoft-Windows-WLAN-AutoConfig/Operational",
+        ["TerminalServices-LocalSessionManager"] = "Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", ["Partition/Diagnostic"] = "Microsoft-Windows-Partition/Diagnostic",
+        ["WLAN-AutoConfig"] = "Microsoft-Windows-WLAN-AutoConfig/Operational",
     };
 
     /// <summary>The plain explanation of an event, or null when this log/id pair is not in the catalogue (never guessed).</summary>
@@ -126,6 +128,16 @@ public static class CodeExplainer
         ["protecție la modificare"] = E("Protecție la modificare", "setare Defender", "Împiedică oprirea antivirusului de către programe.", "Fără ea, un program rău-intenționat poate opri Defender.", "True = activă."),
         ["Domain: "] = E("Domain / Private / Public", "profil firewall", "Cele trei profiluri ale firewall-ului Windows: rețea de domeniu, rețea privată, rețea publică.", "Firewall-ul trebuie să fie activ pe toate, altfel stația e expusă când ajunge în rețeaua acelui profil.", ""),
         ["mod Circular"] = E("Circular", "mod jurnal", "Când jurnalul se umple, evenimentele cele mai vechi se suprascriu.", "Cu un jurnal mic, urmele dispar în câteva zile.", "AutoBackup = se arhivează înainte de suprascriere; Retain = nu se suprascrie."),
+        // the technical sources named in the check guides
+        ["auditpol"] = E("auditpol", "comandă Windows", "Comanda Windows care arată ce categorii de activitate înregistrează stația în jurnalul Security.", "Este sursa oficială a politicii de audit efective.", "Necesită drepturi de administrator."),
+        ["Win32_UserAccount"] = E("Win32_UserAccount", "interogare Windows (WMI)", "Lista conturilor locale ale stației, cu starea lor (activ, dezactivat, parolă obligatorie, expirare).", "Este lista reală a conturilor, chiar dacă unele sunt ascunse din ecranul de pornire.", ""),
+        ["Win32_Group"] = E("Win32_Group", "interogare Windows (WMI)", "Grupurile locale ale stației și membrii lor.", "Arată cine are drepturi de administrator sau de acces la distanță.", ""),
+        ["NetUserModalsGet"] = E("NetUserModalsGet", "funcție Windows", "Citește politica de parole a stației (aceeași pe care o arată comanda „net accounts”).", "Arată regulile efective pentru parole și blocarea conturilor.", ""),
+        ["MSFT_MpComputerStatus"] = E("MSFT_MpComputerStatus", "interogare Microsoft Defender", "Starea antivirusului Defender: pornit, protecție în timp real, data semnăturilor.", "Arată dacă stația este protejată acum.", "Dacă există alt antivirus, Defender poate apărea oprit; se verifică vizual."),
+        ["MSFT_MpPreference"] = E("MSFT_MpPreference", "interogare Microsoft Defender", "Setările Defender, inclusiv excluderile.", "Excluderile sunt locuri pe care antivirusul nu le verifică.", ""),
+        ["HNetCfg.FwPolicy2"] = E("HNetCfg.FwPolicy2", "interfață Windows", "Starea firewall-ului Windows pe fiecare profil de rețea.", "Arată dacă firewall-ul este pornit.", ""),
+        ["Win32_EncryptableVolume"] = E("Win32_EncryptableVolume", "interogare BitLocker", "Starea criptării BitLocker a discului.", "Arată dacă datele sunt protejate dacă discul este scos din stație.", "ProtectionStatus 1 = protejat, 0 = neprotejat."),
+        ["EventLogConfiguration"] = E("Configurația jurnalului", "setare Windows", "Dimensiunea maximă a jurnalului și ce face când se umple.", "Un jurnal mic pierde repede evenimentele vechi.", ""),
     };
 
     // ---- audit, SIDs, codes ----------------------------------------------------------------------------------------------------------------
@@ -207,7 +219,7 @@ public static class CodeExplainer
 
     // ---- finding the codes in a line of text --------------------------------------------------------------------------------------------
 
-    private static readonly Regex EventRef = new(@"(?<log>Security|System|Application|Microsoft-Windows-[\w\-]+/\w+|PowerShell|TerminalServices|Partition|NetworkProfile|WLAN) (?<id>\d{1,5})\b", RegexOptions.Compiled);
+    private static readonly Regex EventRef = new(@"(?<log>Security|System|Application|Microsoft-Windows-[\w\-]+/\w+|PowerShell|TerminalServices(?:-LocalSessionManager)?|Partition(?:/Diagnostic)?|NetworkProfile|WLAN(?:-AutoConfig)?) (?<ids>\d{1,5}(?:\s*,\s*\d{1,5})*)\b", RegexOptions.Compiled);
     private static readonly Regex GuidRef = new(@"\{?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\}?", RegexOptions.Compiled);
     private static readonly Regex SidRef = new(@"S-1-\d+(?:-\d+)+", RegexOptions.Compiled);
     private static readonly Regex AuditCode = new(@"%%84(?:48|49|50|51)", RegexOptions.Compiled);
@@ -223,7 +235,10 @@ public static class CodeExplainer
         if (string.IsNullOrWhiteSpace(text)) return found;
         void Add(CodeExplanation? e) { if (e is not null && !found.Any(f => f.Code == e.Code)) found.Add(e); }
 
-        foreach (Match m in EventRef.Matches(text)) Add(Event(m.Groups["log"].Value, int.Parse(m.Groups["id"].Value)));
+        // "Security 4732, 4733" lists several events of one log: each is explained.
+        foreach (Match m in EventRef.Matches(text))
+            foreach (var id in m.Groups["ids"].Value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+                Add(Event(m.Groups["log"].Value, int.Parse(id)));
         foreach (Match m in GuidRef.Matches(text)) Add(AuditSubcategory(m.Value));
         foreach (Match m in SidRef.Matches(text)) Add(Sid(m.Value));
         foreach (Match m in AuditCode.Matches(text)) Add(E(m.Value, "cod de modificare a auditului", AuditChangeCodes[m.Value] + ".", "Dezactivarea auditului reduce urmele pe care le poate verifica un control."));
