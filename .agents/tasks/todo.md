@@ -11,7 +11,7 @@ Plan (each step: tests first for logic, tsc + vitest + build + phone/desktop che
 - [x] 2. Priced change orders: designer writes change + cost delta; client approves/rejects on the link; budget includes approved ones.
 - [x] 3. Decision deadlines: decide-by = needed-on-site date − lead time (per-category defaults, editable).
 - [x] 4. Handover pack PDF: installed products, supplier/code/order ref, warranty defaults per category, care notes, PV with open snags.
-- [ ] 5. Trade checks: kitchen triangle/aisle/dishwasher, bathroom clearances, bath electrical zones (warning), I5 ventilation; adhesive/grout/paint consumption.
+- [x] 5. Trade checks (grout consumption still missing: no grout products in the catalog): kitchen triangle/aisle/dishwasher, bathroom clearances, bath electrical zones (warning), I5 ventilation; adhesive/grout/paint consumption.
 - [ ] 6. Tile setting-out: start point, slivers < 1/3 tile, cut list, grid on sheet, real tile count.
 - [ ] 7. Title block + numbered sheet set + revision table.
 - [ ] 8. Site survey mode: sides + diagonals, closure/squareness check, verified dimensions + drawing freeze.
