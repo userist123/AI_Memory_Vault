@@ -43,4 +43,6 @@ create table if not exists share_feedback(id uuid primary key default gen_random
   author text not null, body text not null, created_at timestamptz not null default now(), resolved_at timestamptz);
 create index if not exists share_feedback_project on share_feedback(project_id, created_at desc);
 create index if not exists share_feedback_token on share_feedback(token);
+create table if not exists procurement(project_id uuid not null references projects(id) on delete cascade, key text not null, state jsonb not null,
+  updated_at timestamptz not null default now(), primary key(project_id, key));
 `;

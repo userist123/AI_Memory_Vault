@@ -333,3 +333,26 @@ input[type=file]{font-size:12px;color:var(--lead)} input[type=file]::file-select
 .prov.err{color:var(--err)}
 @media (max-width:600px){ .filters{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none} .filters button{flex:0 0 auto;min-height:40px} }
 .pcard small em{font-style:normal}
+
+/* etapa Comenzi: pagină întreagă, grupată pe furnizori */
+.pagebody{flex:1 1 auto;overflow:auto;background:var(--paper)}
+.orders{max-width:1100px;margin:0 auto;padding:28px 24px 60px;display:grid;gap:18px}
+.orders-head{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:flex-end} .orders-head h1{font:400 34px/1.1 var(--serif);margin:0} .orders-head p{margin:6px 0 0}
+.orders-sum{display:flex;gap:22px;margin:0;flex-wrap:wrap} .orders-sum div{display:grid} .orders-sum dt{font:500 10.5px var(--sans);text-transform:uppercase;letter-spacing:.1em;color:var(--lead)} .orders-sum dd{margin:0;font:400 24px var(--serif)} .orders-sum .late dd{color:var(--err)}
+.orders .filters{margin:0}
+.supplier{background:var(--surface);border:1px solid var(--rule)} .supplier>header{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--rule)}
+.supplier h2{font:400 22px var(--serif);margin:0} .supplier .gtotal{margin-left:auto;font:400 18px var(--serif)}
+.supplier ul{list-style:none;margin:0;padding:0} .oline{border-top:1px solid var(--rule)} .oline:first-child{border-top:0}
+.oline-main{width:100%;display:grid;grid-template-columns:minmax(0,1fr) 110px 110px 120px;gap:12px;align-items:center;padding:10px 16px;background:transparent;border:0;text-align:left;cursor:pointer;color:inherit;font:inherit}
+.oline-main:hover{background:var(--paper)} .oname{display:grid;gap:2px} .oname b{font-weight:500} .oname small,.oqty small{color:var(--lead);font-size:12px;display:block} .ototal{text-align:right;font-variant-numeric:tabular-nums}
+.oline-main .st{justify-self:end} .oline-main>small.late{grid-column:1/-1;font-size:12px}
+.oline.is-late{box-shadow:inset 3px 0 0 var(--err)} .oline.st-cancelled .oname b{text-decoration:line-through;color:var(--lead)}
+.st-o-todo{color:var(--lead)} .st-o-quoted{color:#6f6a8a} .st-o-ordered{color:#4a5c74} .st-o-delivered{color:#4f6b4a} .st-o-installed{color:#2f4f2f} .st-o-cancelled{color:#9a948a}
+.oedit{display:grid;gap:10px;padding:4px 16px 16px;background:var(--paper)} .ostatuses{display:flex;gap:6px;flex-wrap:wrap}
+.ostatuses button{font:500 13px var(--sans);padding:7px 11px;border:1px solid var(--rule);background:#fff;cursor:pointer} .ostatuses button[aria-checked=true]{background:var(--ink);color:#F6F3EE;border-color:var(--ink)}
+.oedit-act{display:flex;gap:8px;justify-content:flex-end}
+@media (max-width:700px){
+  .orders{padding:16px 12px 40px} .orders-head h1{font-size:28px} .orders-sum{gap:14px} .orders-sum dd{font-size:20px}
+  .oline-main{grid-template-columns:minmax(0,1fr) auto;row-gap:4px} .oqty{grid-column:1} .ototal{grid-column:2;grid-row:1} .oline-main .st{grid-column:2;grid-row:2}
+  .supplier>header{padding:10px 12px} .oline-main{padding:10px 12px} .oedit{padding:4px 12px 14px} .ostatuses button{flex:1 1 30%;min-height:42px}
+}
