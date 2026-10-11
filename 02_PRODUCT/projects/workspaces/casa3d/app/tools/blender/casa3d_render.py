@@ -69,7 +69,10 @@ def scaled(rgba, k):
 # ---------------------------------------------------------------- materiale
 # Texturi foto (Poly Haven, CC0), folosite când există --assets: tip -> (dosar, mărimea unei repetări în metri, tărie relief)
 TEXTURES = {'parquet': ('laminate_floor_02', 2.0, 1.0), 'tile': ('large_grey_tiles', 2.4, 1.0), 'fabric': ('rough_linen', 0.5, 0.8),
-            'velvet': ('velour_velvet', 0.5, 0.6), 'leather': ('leather_white', 0.6, 0.8), 'wall': ('plastered_wall', 2.5, 0.12)}
+            'velvet': ('velour_velvet', 0.5, 0.6), 'leather': ('leather_white', 0.6, 0.8), 'wall': ('plastered_wall', 2.5, 0.12),
+            'wood': ('oak_veneer_01', 1.2, 0.35)}
+# luminanța medie (liniară) a furnirului: fibra foto păstrează desenul lemnului, nuanța vine din culoarea aleasă în aplicație
+WOOD_MEAN_LUM = 0.2374
 
 
 class Materials:
@@ -107,6 +110,27 @@ class Materials:
             nt.links.new(mp.outputs['Vector'], t.inputs['Vector'])
             return t
         diff, rough = self.image(folder, 'Diffuse', True), self.image(folder, 'Rough', False)
+        if key == 'wood' and diff is not None:
+            # furnir real: luminozitatea fibrei (raportată la media texturii) înmulțește culoarea aleasă — lemnul gri,
+            # nuc sau stejar arată ca lemn, nu ca un model generat
+            bw = nt.nodes.new('ShaderNodeRGBToBW')
+            nt.links.new(tex(diff).outputs['Color'], bw.inputs['Color'])
+            div = nt.nodes.new('ShaderNodeMath')
+            div.operation = 'DIVIDE'
+            div.use_clamp = False
+            nt.links.new(bw.outputs['Val'], div.inputs[0])
+            div.inputs[1].default_value = WOOD_MEAN_LUM
+            mix = nt.nodes.new('ShaderNodeMix')
+            mix.data_type = 'RGBA'
+            mix.blend_type = 'MULTIPLY'
+            mix.inputs['Factor'].default_value = 1.0
+            mix.inputs['A'].default_value = col
+            cc = nt.nodes.new('ShaderNodeCombineColor')
+            for i in range(3):
+                nt.links.new(div.outputs['Value'], cc.inputs[i])
+            nt.links.new(cc.outputs['Color'], mix.inputs['B'])
+            nt.links.new(mix.outputs['Result'], inp['Base Color'])
+            inp['Coat Weight'].default_value = 0.15
         if key in ('parquet', 'tile') and diff is not None:
             mix = nt.nodes.new('ShaderNodeMix')
             mix.data_type = 'RGBA'
@@ -359,7 +383,7 @@ class Materials:
             w.wave_type = 'BANDS'
             w.bands_direction = 'X'
             w.inputs['Scale'].default_value = scale
-            w.inputs['Distortion'].default_value = 7.0
+            w.inputs['Distortion'].default_value = 1.6   # fibră lină (fără texturile foto); 7 dădea pete „camuflaj”
             w.inputs['Detail'].default_value = 3.0
             nt.links.new(world_pos(), w.inputs['Vector'])
             r = ramp(w.outputs['Fac'], scaled(base, 0.72), scaled(base, 1.12))
@@ -559,6 +583,48 @@ def mesh_sphere(name, r, wseg, hseg):
     return me
 
 
+def mesh_lathe(name, pts, seg, phi0, phil):
+    """Corp de revoluție (cuve, vase WC, abajururi) ca LatheGeometry din three.js: profilul (x = rază, y = înălțime) rotit
+    în jurul axei Y, în sistemul Y-sus al aplicației (conversia la Z-sus se face la plasare, ca la celelalte forme)."""
+    me = bpy.data.meshes.new(name)
+    seg = max(3, int(seg))
+    closed = abs(phil - 2 * math.pi) < 1e-3
+    rings = seg if closed else seg + 1
+    verts, faces = [], []
+    for i in range(rings):
+        a = phi0 + phil * i / seg
+        for x, y in pts:
+            verts.append((x * math.sin(a), y, x * math.cos(a)))
+    n = len(pts)
+    for i in range(seg):
+        i2 = (i + 1) % rings
+        for j in range(n - 1):
+            faces.append((i * n + j, i2 * n + j, i2 * n + j + 1, i * n + j + 1))
+    me.from_pydata(verts, [], faces)
+    me.update()
+    for p in me.polygons:
+        p.use_smooth = True
+    return me
+
+
+def mesh_tris(name, v, idx):
+    """Formă liberă din aplicație (plăci cu decupaje): triunghiuri din vârfuri Y-sus; vârfurile comune se unesc,
+    ca fețele plane să nu aibă cusături, apoi muchiile vii rămân vii (fără netezire)."""
+    import bmesh
+    me = bpy.data.meshes.new(name)
+    verts = [(v[k], v[k + 1], v[k + 2]) for k in range(0, len(v) - 2, 3)]
+    ids = idx if idx else list(range(len(verts)))
+    faces = [tuple(ids[k:k + 3]) for k in range(0, len(ids) - 2, 3)]
+    me.from_pydata(verts, [], faces)
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
+    bm.to_mesh(me)
+    bm.free()
+    me.update()
+    return me
+
+
 def build_mesh(g, name):
     t, p = g['t'], g['p']
     if t == 'box':
@@ -574,6 +640,10 @@ def build_mesh(g, name):
         return mesh_torus(name, *p), None
     if t == 'sphere':
         return mesh_sphere(name, *p), None
+    if t == 'lathe':
+        return mesh_lathe(name, g.get('pts') or [], *p), None
+    if t == 'mesh':
+        return mesh_tris(name, g.get('v') or [], g.get('i')), None
     return None, None
 
 
@@ -728,18 +798,56 @@ def room_camera(scene_data, room, width, height, panorama=False):
         ob.rotation_euler = (math.radians(90), 0, 0)
         return ob
     fov = math.radians(82)
-    k = 0.35
-    cands = [(x0 + k, z0 + k), (x1 - k, z0 + k), (x1 - k, z1 - k), (x0 + k, z1 - k),
-             (cx, z0 + k), (x1 - k, cz), (cx, z1 - k), (x0 + k, cz)]
+    # piesele din cameră (exportate din aplicație): obiectivul nu stă niciodată într-o piesă sau lipit de ea, iar piesele
+    # principale (bucătăria, patul, canapeaua, WC-ul, lavoarul, dușul) trebuie să intre întregi în cadru
+    KEY = {'bucatarie': 3.0, 'pat': 3.0, 'canapea': 3.0, 'wc': 2.5, 'lavoar': 2.5, 'dus': 2.0, 'masa': 1.5, 'dulap': 1.5, 'frigider': 1.0,
+           'birou': 1.2, 'comodaTv': 1.0, 'pantofar': 1.0, 'oglinda': 0.8, 'biblioteca': 0.6, 'masuta': 0.8, 'noptiera': 0.4}
+    items = [it for it in scene_data.get('items', []) if x0 - .05 <= (it['fp'][0] + it['fp'][2]) / 2 <= x1 + .05 and z0 - .05 <= (it['fp'][1] + it['fp'][3]) / 2 <= z1 + .05]
+    cands = []
+    for k in (0.3, 0.5):
+        cands += [(x0 + k, z0 + k), (x1 - k, z0 + k), (x1 - k, z1 - k), (x0 + k, z1 - k), (cx, z0 + k), (x1 - k, cz), (cx, z1 - k), (x0 + k, cz)]
+    for f in (0.25, 0.75):
+        cands += [(x0 + (x1 - x0) * f, z0 + 0.3), (x0 + (x1 - x0) * f, z1 - 0.3), (x0 + 0.3, z0 + (z1 - z0) * f), (x1 - 0.3, z0 + (z1 - z0) * f)]
+
+    def blocked(c, margin=0.25):  # obiectivul (la 1,55 m) în interiorul sau prea aproape de o piesă care urcă până acolo
+        for it in items:
+            a, b, e, f = it['fp']
+            if it['h'] > 0.9 and a - margin < c[0] < e + margin and b - margin < c[1] < f + margin:
+                return True
+            if a - 0.45 < c[0] < e + 0.45 and b - 0.45 < c[1] < f + 0.45:  # nici lipit de un WC sau de o masă
+                return True
+        return False
+    cands = [c for c in cands if not blocked(c)] or [(cx, cz)]
     pieces = [e['p'] for e in scene_data.get('meshes', []) if x0 < e['p'][0] < x1 and z0 < e['p'][2] < z1 and 0.15 < e['p'][1] < 1.8]
     deps = bpy.context.evaluated_depsgraph_get()
     sc = bpy.context.scene
 
-    def look(c):  # privirea spre un punct dincolo de centrul camerei
-        return (cx + (cx - c[0]) * 0.35 - c[0], cz + (cz - c[1]) * 0.35 - c[1])
+    # ținte ale privirii: un punct dincolo de centrul camerei sau centrul de greutate al pieselor principale
+    beyond = lambda c: (cx + (cx - c[0]) * 0.35, cz + (cz - c[1]) * 0.35)
+    main = [(KEY[it['g']], (it['fp'][0] + it['fp'][2]) / 2, (it['fp'][1] + it['fp'][3]) / 2) for it in items if KEY.get(it['g'], 0) >= 1]
+    wsum = sum(m[0] for m in main)
+    aims = [beyond] + ([lambda c: (sum(m[0] * m[1] for m in main) / wsum, sum(m[0] * m[2] for m in main) / wsum)] if main else [])
 
-    def score(c):
-        lx, lz = look(c)
+    def look(c, aim=beyond):
+        t = aim(c)
+        return (t[0] - c[0], t[1] - c[1])
+
+    def in_view(c, px, pz, lx, lz, half, low=0.45):
+        n = math.hypot(lx, lz) or 1
+        fwd = ((px - c[0]) * lx + (pz - c[1]) * lz) / n
+        side = math.atan2((px - c[0]) * lz - (pz - c[1]) * lx, (px - c[0]) * lx + (pz - c[1]) * lz)
+        return fwd > low and abs(side) < half
+
+    def bottom(fov):  # tangenta marginii de jos a cadrului (cu deplasarea în jos a obiectivului), pe orizontală
+        t = math.tan(fov / 2)
+        return t * height / width + 0.08 * 2 * t
+
+    near = lambda it: 0.6 if it['m'] == 'dining' else 0.1  # scaunele mesei ies din amprenta ei
+
+    def score(c, fov=fov, aim=beyond):
+        lx, lz = look(c, aim)
+        if math.hypot(lx, lz) < 0.3:
+            return -1e9
         base = math.atan2(lz, lx)
         eye = to_blender((c[0], 1.55, c[1]))
         total = 0.0
@@ -749,13 +857,31 @@ def room_camera(scene_data, room, width, height, panorama=False):
             hit, loc, *_ = sc.ray_cast(deps, eye, d, distance=30.0)
             dist = (loc - eye).length if hit else 30.0
             total += min(dist, 7.0) - (6.0 if dist < 0.9 else 0.0)
-        n = math.hypot(lx, lz) or 1
-        seen = sum(1 for p in pieces if ((p[0] - c[0]) * lx + (p[2] - c[1]) * lz) / n > 0.6
-                   and abs(math.atan2((p[0] - c[0]) * lz - (p[2] - c[1]) * lx, (p[0] - c[0]) * lx + (p[2] - c[1]) * lz)) < fov / 2)
-        return total + 0.6 * seen
+        for i in range(14):  # raze în jos (20° și 32°): o masă sau un scaun chiar în fața obiectivului acoperă jumătate din cadru
+            a, (ch, sh) = base - fov / 2 + fov * (i % 7) / 6, ((0.94, 0.342), (0.848, 0.53))[i // 7]
+            d = to_blender((math.cos(a) * ch, -sh, math.sin(a) * ch)).normalized()
+            hit, loc, *_ = sc.ray_cast(deps, eye, d, distance=30.0)
+            if hit and math.hypot(loc.x - eye.x, loc.y - eye.y) < 1.6 and any(it['fp'][0] - near(it) < loc.x < it['fp'][2] + near(it) and it['fp'][1] - near(it) < -loc.y < it['fp'][3] + near(it) for it in items):
+                total -= 3.0
+        seen = sum(1 for p in pieces if in_view(c, p[0], p[2], lx, lz, fov / 2))
+        keys = 0.0  # piesa principală întreagă în cadru (toate cele patru colțuri ale amprentei), cu o margine de 4°
+        for it in items:
+            a, b, e, f = it['fp']
+            corners = [(a, b), (e, b), (e, f), (a, f)]
+            w = KEY.get(it['g'], 0.5)
+            low = max(0.45, (1.55 - min(it['h'], 1.5)) / bottom(fov))  # partea de sus a piesei nu e tăiată de marginea de jos
+            if all(in_view(c, px, pz, lx, lz, fov / 2 - math.radians(4), low) for px, pz in corners):
+                keys += w
+            elif any(in_view(c, px, pz, lx, lz, fov / 2) for px, pz in corners):
+                keys += w * 0.3
+        return total + 0.6 * seen + 8.0 * keys - 6.0 * (fov - math.radians(82))
 
-    c = max(cands, key=score)
-    lx, lz = look(c)
+    # o încăpere mică (baia, holul) nu încape în 82°: se încearcă și obiectivul larg (100°, ca 16 mm la fotografii de interior)
+    fovs = [fov] + ([math.radians(100)] if min(x1 - x0, z1 - z0) < 2.6 or (x1 - x0) * (z1 - z0) < 9 else [])
+    ranked = sorted(((score(c, f, a), c, f, a) for c in cands for f in fovs for a in aims), key=lambda t: -t[0])
+    _, c, fov, aim = ranked[0]
+    print(f"[casa3d] cameră {room['id']}: " + '; '.join(f'({p[0]:.2f},{p[1]:.2f}) {math.degrees(f):.0f}° {aims.index(a)} = {v:.1f}' for v, p, f, a in ranked[:int(os.environ.get('CASA3D_CAMDBG', 4))]))
+    lx, lz = look(c, aim)
     ob.location = to_blender((c[0], 1.55, c[1]))
     ob.rotation_euler = to_blender((lx, 0, lz)).normalized().to_track_quat('-Z', 'Y').to_euler()
     cam.lens_unit = 'FOV'

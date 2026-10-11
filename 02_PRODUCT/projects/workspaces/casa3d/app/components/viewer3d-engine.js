@@ -106,6 +106,13 @@ function rgeo(w, h, d, r){ r = Math.max(.002, Math.min(r, w / 2 - .002, h / 2 - 
   s.moveTo(x + q, y); s.lineTo(x + W2 - q, y); s.quadraticCurveTo(x + W2, y, x + W2, y + q); s.lineTo(x + W2, y + H2 - q); s.quadraticCurveTo(x + W2, y + H2, x + W2 - q, y + H2); s.lineTo(x + q, y + H2); s.quadraticCurveTo(x, y + H2, x, y + H2 - q); s.lineTo(x, y + q); s.quadraticCurveTo(x, y, x + q, y);
   const g = new THREE.ExtrudeGeometry(s, { depth: Math.max(.001, d - 2 * r), bevelEnabled: true, bevelSize: r, bevelThickness: r, bevelSegments: 4, curveSegments: 6 }); g.translate(0, 0, -(d - 2 * r) / 2); g.userData.rbox = [w, h, d, r]; return g; }
 
+// contururi în plan (x, z) pentru plăci decupate: blatul cu gaura chiuvetei, puntea ceramică a lavoarului
+function rrectPath(p, cx, cz, w, d, r){ r = Math.max(.001, Math.min(r, w / 2 - .001, d / 2 - .001)); const x0 = cx - w / 2, x1 = cx + w / 2, y0 = -cz - d / 2, y1 = -cz + d / 2;
+  p.moveTo(x0 + r, y0); p.lineTo(x1 - r, y0); p.quadraticCurveTo(x1, y0, x1, y0 + r); p.lineTo(x1, y1 - r); p.quadraticCurveTo(x1, y1, x1 - r, y1); p.lineTo(x0 + r, y1); p.quadraticCurveTo(x0, y1, x0, y1 - r); p.lineTo(x0, y0 + r); p.quadraticCurveTo(x0, y0, x0 + r, y0); return p; }
+function ellipsePath(p, cx, cz, rx, rz){ p.absellipse(cx, -cz, rx, rz, 0, Math.PI * 2, true); return p; }
+/** Placă orizontală de grosime `t` cu fața de sus la y = 0, din conturul `shape` (cu găuri). */
+function slabGeo(shape, t){ const g = new THREE.ExtrudeGeometry(shape, { depth: t, bevelEnabled: false, curveSegments: 28 }); g.rotateX(-Math.PI / 2); g.translate(0, -t, 0); return g; }
+
 /* ---------- modele 3D pe variante, la dimensiunile oficiale ---------- */
 function model(it){
   const s = it.s || {}, g = new THREE.Group(), w = it.w / 100, d = it.d / 100, h = it.h / 100;
@@ -113,6 +120,8 @@ function model(it){
   const RB = (bw, bh, bd, r, x, y, z, m) => { const o = new THREE.Mesh(rgeo(bw, bh, bd, r), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; g.add(o); return o; };
   const CY = (rt, rb, hh, x, y, z, m, seg) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, hh, seg || 24), m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
   const body = (c) => s.wood ? MAT('wood', c) : MAT('paint', c);
+  const SLAB = (shape, t, y, m) => { const o = new THREE.Mesh(slabGeo(shape, t), m); o.position.y = y; o.castShadow = o.receiveShadow = true; g.add(o); return o; };
+  const name = String(it.nume || '');
   switch (it.model){
     case 'sofa': { const up = MAT(s.mat || 'fabric', s.col), dark = MAT('paint', '#1b1b1b'), ad = Math.min(.95, d), arm = w < 1.1 ? .16 : .24; const sw = s.chaise ? w - .02 : w;
       [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => CY(.02, .018, .06, a * (sw / 2 - .08), .03, b * (ad / 2 - .08), dark, 10));
@@ -137,7 +146,7 @@ function model(it){
       const deco = MAT('paint', '#2f5d50'); CY(.06, .05, .12, w * .18, h + .06, 0, deco, 16); B(.22, .03, .16, -w * .2, h + .015, 0, MAT('paint', '#c8b89a')); break; }
     case 'tv': { const m = body(s.col); if (s.open){ B(w, .02, d, 0, h - .01, 0, m); B(w, .02, d, 0, .01, 0, m); for (let i = 0; i <= 3; i++) B(.02, h, d, -w / 2 + .01 + i * (w - .02) / 3, h / 2, 0, m); B(w, h, .01, 0, h / 2, -d / 2 + .005, m); }
       else { B(w, h - .01, d, 0, h / 2 + .005, 0, m); const n = s.fronts || 3; for (let i = 0; i < n; i++){ B(w / n - .006, h - .03, .016, -w / 2 + w / n * (i + .5), h / 2 + .005, d / 2 + .008, body(s.col)); } }
-      B(1.45, .84, .03, 0, h + .02 + .5, -.06, MAT('screen', '#0b0c0e')); B(.32, .02, .2, 0, h + .01, -.06, MAT('metal', '#222')); B(.04, .09, .04, 0, h + .065, -.06, MAT('metal', '#222')); break; }
+      { const tw = Math.min(1.45, Math.max(.8, w * .72)), th = tw * .5625; B(tw, th, .03, 0, h + .09 + th / 2, -.06, MAT('screen', '#0b0c0e')); } B(.32, .02, .2, 0, h + .01, -.06, MAT('metal', '#222')); B(.04, .09, .04, 0, h + .065, -.06, MAT('metal', '#222')); break; }
     case 'shelf': { const m = body(s.col);
       if (s.type === 'kallax'){ const t = .035; B(w, t, d, 0, t / 2, 0, m); B(w, t, d, 0, h - t / 2, 0, m); B(t, h, d, -w / 2 + t / 2, h / 2, 0, m); B(t, h, d, w / 2 - t / 2, h / 2, 0, m); B(.015, h - t * 2, d, 0, h / 2, 0, m);
         for (let i = 1; i < 4; i++) B(w - t * 2, .015, d, 0, t + i * (h - 2 * t) / 4, 0, m);
@@ -147,8 +156,12 @@ function model(it){
       break; }
     case 'dining': { const top = s.top, tm = top === '#efefec' ? MAT('paint', top) : MAT('wood', top);
       B(w, .03, d, 0, h - .015, 0, tm); B(w - .08, .06, d - .08, 0, h - .06, 0, tm); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.05, h - .03, .05, a * (w / 2 - .05), (h - .03) / 2, b * (d / 2 - .05), tm));
-      const pos = (it.chairs || 4) === 2 ? [[0, -1], [0, 1]] : [[-w * .24, -1], [w * .24, -1], [-w * .24, 1], [w * .24, 1]];
-      pos.forEach(([x, sd]) => { const z = sd * (d / 2 + .1), cg = new THREE.Group(); cg.position.set(x, 0, z); cg.rotation.y = sd > 0 ? Math.PI : 0; g.add(cg);
+      // scaunele: câte încap pe o latură lungă (cel puțin 47 cm fiecare), restul la capete; trase puțin sub blat, fără să se atingă
+      const total = it.chairs || 4, cap = Math.max(1, Math.floor((w - .04) / .47)), perSide = Math.min(cap, Math.ceil(total / 2)), ends = Math.max(0, total - perSide * 2);
+      const pos = []; for (const sd of [-1, 1]) for (let i = 0; i < Math.min(perSide, total - (sd > 0 ? perSide : 0)); i++) pos.push([-w / 2 + w / perSide * (i + .5), sd, 0]);
+      for (let i = 0; i < Math.min(ends, 2); i++) pos.push([0, i ? 1 : -1, 1]);
+      pos.forEach(([x, sd, end]) => { const cg = new THREE.Group(); if (end){ cg.position.set(sd * (w / 2 + .12), 0, 0); cg.rotation.y = sd > 0 ? -Math.PI / 2 : Math.PI / 2; }
+        else { cg.position.set(x, 0, sd * (d / 2 + .12)); cg.rotation.y = sd > 0 ? Math.PI : 0; } g.add(cg);
         const add = (bw, bh, bd, px, py, pz, m) => { const o = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), m); o.position.set(px, py, pz); o.castShadow = true; cg.add(o); };
         const fr = s.chair === 'ingolf' || s.chair === 'orrstaWhite' ? MAT('paint', '#f1f1ee') : s.chair === 'rattan' ? MAT('paint', '#1c1c1c') : MAT('wood', '#3f2d22');
         [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => add(.03, .45, .03, a * .19, .225, b * .19, fr));
@@ -187,7 +200,10 @@ function model(it){
       B(.54, .32, .02, -w * .12, h + .23, -d / 2 + .12, MAT('screen', '#0c0d0f')); B(.05, .12, .05, -w * .12, h + .06, -d / 2 + .12, MAT('metal', '#333')); B(.42, .015, .14, -w * .12, h + .008, .06, MAT('paint', '#2b2d31')); break; }
     case 'ochair': { const fab = MAT('fabric', '#3b3d42'), mesh = MAT('paint', '#1d1e21');
       for (let i = 0; i < 5; i++){ const a = i / 5 * Math.PI * 2, leg = B(.3, .03, .04, Math.cos(a) * .15, .07, Math.sin(a) * .15, mesh); leg.rotation.y = -a; CY(.025, .025, .04, Math.cos(a) * .3, .025, Math.sin(a) * .3, mesh, 10); }
-      CY(.028, .028, .38, 0, .28, 0, MAT('chrome', '#bbb')); RB(.5, .09, .5, .03, 0, .5, .02, fab); RB(.5, h - .75, .06, .02, 0, .55 + (h - .75) / 2 + .1, -.23, mesh); RB(.3, .12, .06, .02, 0, h - .08, -.24, fab);
+      CY(.028, .028, .38, 0, .28, 0, MAT('chrome', '#bbb')); RB(.5, .09, .5, .03, 0, .5, .02, fab);
+      { const bh = Math.min(.62, h - .78), back = MAT('fabric', '#2c2e33'); B(.05, .3, .03, 0, .66, -.26, mesh);                       // coloana spătarului
+        { const bp = RB(.46, bh, .035, .03, 0, .8 + bh / 2, -.29, back); bp.rotation.x = .12; RB(.48, .04, .045, .015, 0, .8 + .02, -.27, mesh); } // spătar dintr-o bucată, ușor înclinat, cu buiandrug lombar
+        if (h > 1.2) { const hr = RB(.28, .1, .05, .02, 0, h - .07, -.3, fab); hr.rotation.x = .15; B(.03, .12, .02, 0, h - .16, -.29, mesh); } }
       [-1, 1].forEach(a => B(.04, .2, .25, a * .27, .64, 0, mesh)); break; }
     case 'kitchen': { const k = s.k || null, frame = MAT('metal', s.frame || '#34363a'), wd = .6;
       // sistemul de bucătărie (core/kitchen.ts): finisajul fronturilor, mânerele, blatul, suspendatele, placarea, LED-ul
@@ -195,12 +211,19 @@ function model(it){
       const hmat = MAT('metal', k ? k.handleColor : '#222'), htype = k ? k.handle : 'bar', topM = k ? k.topM : .038, topMat = k ? (k.topWood ? MAT('wood', k.topColor) : MAT('ceramic', k.topColor)) : MAT('wood', '#cdb592');
       const handle = (x, y, z, vertical) => { if (htype === 'none') return; if (htype === 'knob') { CY(.012, .012, .025, x, y, z + .01, hmat, 12).rotation.x = Math.PI / 2; return; }
         if (htype === 'profile') B(vertical ? .015 : .5, vertical ? .5 : .015, .02, x, y, z, hmat); else B(vertical ? .012 : .18, vertical ? .18 : .012, .015, x, y, z, hmat); };
-      B(w, .08, wd - .05, 0, .04, -d / 2 + wd / 2, MAT('paint', '#2b2c2f')); B(w, .78, wd - .02, 0, .47, -d / 2 + wd / 2, MAT('paint', '#2d2f33'));
+      B(w, .08, wd - .05, 0, .04, -d / 2 + wd / 2, MAT('paint', '#2b2c2f')); const carc = MAT('paint', '#2d2f33'), sxc = -w / 2 + .45; // corpul de sub chiuvetă e mai jos: cuva intră în el
+      B(sxc - .3 + w / 2, .78, wd - .02, (-w / 2 + sxc - .3) / 2, .47, -d / 2 + wd / 2, carc); B(w / 2 - sxc - .3, .78, wd - .02, (sxc + .3 + w / 2) / 2, .47, -d / 2 + wd / 2, carc); B(.6, .56, wd - .02, sxc, .36, -d / 2 + wd / 2, carc);
       const n = Math.round(w / .6); for (let i = 0; i < n; i++){ const cx = -w / 2 + w / n * (i + .5); B(w / n - .006, .74, .018, cx, .46, -d / 2 + wd + .009, front); handle(cx, htype === 'profile' ? .82 : .78, -d / 2 + wd + .025, false); }
-      const topY = .86 + topM / 2; B(w + .01, topM, d, 0, topY, 0, topMat); // blat
+      // blatul cu decupajul chiuvetei (ca la montaj: gaura e mai mică decât rama chiuvetei)
+      { const sh = rrectPath(new THREE.Shape(), 0, 0, w + .01, d, .003); sh.holes.push(rrectPath(new THREE.Path(), -w / 2 + .45, 0, .42, .36, .03)); SLAB(sh, topM, .86 + topM, topMat); }
       const sinkMat = k ? MAT(lumOf(k.sinkColor) > .55 ? 'chrome' : 'paint', k.sinkColor) : MAT('chrome', '#c6c9cc'), tapMat = MAT('chrome', k ? k.tapColor : '#c6c9cc');
       // chiuveta: ramă subțire și cuva (mai închisă, cu scurgere), bateria cu pipă curbată
-      const ct = .86 + topM, sx = -w / 2 + .45; B(.46, .006, .4, sx, ct + .003, 0, sinkMat); B(.4, .004, .34, sx, ct + .007, 0, MAT('metal', k ? k.sinkColor : '#8d9094')); CY(.022, .022, .004, sx + .1, ct + .01, .05, MAT('metal', '#55585c'), 16);
+      const ct = .86 + topM, sx = -w / 2 + .45;
+      { // chiuveta încastrată: rama subțire pe blat, cuva adâncă de 18 cm cu pereți și fund, sita de scurgere
+        const rim = rrectPath(new THREE.Shape(), sx, 0, .48, .42, .035); rim.holes.push(rrectPath(new THREE.Path(), sx, 0, .4, .34, .025)); SLAB(rim, .006, ct + .006, sinkMat);
+        const bowlM = k ? MAT(lumOf(k.sinkColor) > .55 ? 'chrome' : 'paint', k.sinkColor) : MAT('chrome', '#b9bcbf'), dep = .18, by = ct - dep;
+        B(.4, .006, .34, sx, by, 0, bowlM); B(.4, dep, .006, sx, by + dep / 2, -.17, bowlM); B(.4, dep, .006, sx, by + dep / 2, .17, bowlM); B(.006, dep, .34, sx - .2, by + dep / 2, 0, bowlM); B(.006, dep, .34, sx + .2, by + dep / 2, 0, bowlM);
+        CY(.035, .035, .004, sx + .08, by + .005, .06, MAT('metal', '#6a6d71'), 24); CY(.012, .012, .005, sx + .08, by + .007, .06, MAT('paint', '#2a2b2d'), 12); }
       CY(.022, .026, .03, sx, ct + .015, -.2, tapMat, 16); CY(.012, .012, .3, sx, ct + .17, -.2, tapMat, 12);
       { const sp = new THREE.Mesh(new THREE.TorusGeometry(.09, .012, 8, 16, Math.PI), tapMat); sp.rotation.y = Math.PI / 2; sp.position.set(sx, ct + .32, -.11); sp.castShadow = true; g.add(sp); }
       B(.016, .05, .016, sx, ct + .26, -.02, tapMat); B(.012, .012, .1, sx + .03, ct + .27, -.2, tapMat);
@@ -244,15 +267,31 @@ function model(it){
       else { const t = s.thick ? .03 : .02; [[w, .008, 0, d / 2 - .004], [.008, d, w / 2 - .004, 0]].forEach(([a, b, x, z]) => { const p = new THREE.Mesh(new THREE.BoxGeometry(a, h - .06, b), gl); p.position.set(x, h / 2 + .03, z); g.add(p); });
         B(t, h - .05, t, w / 2 - t / 2, h / 2, d / 2 - t / 2, pm); B(w, t, t, 0, h - t / 2, d / 2 - t / 2, pm); B(t, t, d, w / 2 - t / 2, h - t / 2, 0, pm); }
       CY(.012, .012, h - .4, -w / 2 + .12, h / 2 + .1, -d / 2 + .04, fit, 10); CY(.1, .1, .015, -w / 2 + .2, h - .1, -d / 2 + .2, fit, 24); break; }
-    case 'vanity': { const m = body(s.col), y0 = s.hang ? .3 : 0; if (s.legs) [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.03, .15, .03, a * (w / 2 - .04), .075, b * (d / 2 - .04), MAT('metal', '#222')));
-      const hb = (s.hang ? h - .15 : h - .15) - (s.legs ? .15 : 0); B(w, hb, d, 0, y0 + (s.legs ? .15 : 0) + hb / 2, 0, m); B(w / 2 - .01, hb - .03, .015, -w / 4, y0 + (s.legs ? .15 : 0) + hb / 2, d / 2 + .008, m); B(w / 2 - .01, hb - .03, .015, w / 4, y0 + (s.legs ? .15 : 0) + hb / 2, d / 2 + .008, m);
-      const ty = y0 + (s.legs ? .15 : 0) + hb; RB(w + .01, .14, d + .06, .03, 0, ty + .07, .03, MAT('ceramic', '#fdfdfd')); CY(.012, .012, .15, 0, ty + .2, -d / 2 + .05, MAT('chrome', s.b ? s.b.metal : '#cfcfcf'), 10);
+    case 'vanity': { const m = body(s.col), top = s.hang ? .86 : h, bot = s.hang ? Math.max(.12, top - h) : (s.legs ? .15 : .02), lip = .1;
+      // înălțimea din catalog e a ansamblului (corp + lavoar); suspendatul are muchia lavoarului la 86 cm, ca la montaj
+      if (s.legs) [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.03, .15, .03, a * (w / 2 - .04), .075, b * (d / 2 - .04), MAT('metal', '#222')));
+      if (!s.hang && !s.legs) B(w - .04, bot, d - .06, 0, bot / 2, -.02, MAT('paint', '#d9d9d6'));                   // soclul
+      const fh = top - lip - bot; B(w, fh - .08, d, 0, bot + (fh - .08) / 2, 0, m);                                  // corpul (sub cuvă rămâne loc)
+      [-1, 1].forEach(a => B(.018, .08, d, a * (w / 2 - .009), top - lip - .04, 0, m)); B(w, .08, .018, 0, top - lip - .04, -d / 2 + .009, m);
+      // fronturile după produs: sertare („cu sertare”), sertar + uși („sertare și uși”), altfel două uși
+      const drawers = /sertar/i.test(name), doors = !drawers || /u[sș]i/i.test(name), fz = d / 2 + .009, fm = m, hm = MAT('metal', s.col && lumOf(s.col) < .3 ? '#9a9a9a' : '#3a3a3c');
+      if (drawers && !doors){ const n2 = fh > .45 ? 2 : 1; for (let i = 0; i < n2; i++){ const hh = fh / n2 - .006, y = bot + fh / n2 * (i + .5); B(w - .006, hh, .018, 0, y, fz, fm); B(w * .4, .012, .02, 0, y + hh / 2 - .04, fz + .015, hm); } }
+      else { let yTop = top - lip; if (drawers){ const hh = .16; B(w - .006, hh - .006, .018, 0, yTop - hh / 2, fz, fm); B(w * .4, .012, .02, 0, yTop - .05, fz + .015, hm); yTop -= hh; }
+        const dh = yTop - bot - .006; [-1, 1].forEach(a => { B(w / 2 - .006, dh, .018, a * w / 4, bot + dh / 2 + .003, fz, fm); B(.012, .12, .02, a * .03, yTop - .1, fz + .015, hm); }); }
+      // lavoarul ceramic: puntea cu decupaj oval (o singură bucată, fără goluri la colțuri), cuva rotunjită sub ea, scurgerea, bateria pe puntea din spate
+      const cer = MAT('ceramic', '#fbfbfa'), bw = w + .01, bd = d + .02, bz = .01, ow = bw - .1, od = Math.min(bd - .15, ow * .75), oz = bz - bd / 2 + .1 + od / 2;
+      { const sh = rrectPath(new THREE.Shape(), 0, bz, bw, bd, .03); sh.holes.push(ellipsePath(new THREE.Path(), 0, oz, ow / 2, od / 2)); SLAB(sh, lip, top, cer); }
+      { const prof = [[0, -.15], [.22, -.148], [.38, -.125], [.46, -.08], [.495, -.03], [.5, 0]].map(([x, y]) => new THREE.Vector2(x, y)), bowl = new THREE.Mesh(new THREE.LatheGeometry(prof, 40), cer);
+        bowl.scale.set(ow, 1, od); bowl.position.set(0, top - .004, oz); bowl.receiveShadow = true; g.add(bowl); CY(.018, .018, .004, 0, top - .152, oz, MAT('chrome', '#9a9a9a'), 16); }
+      { const tm = MAT('chrome', s.b ? s.b.metal : '#cfcfcf'), tz = bz - bd / 2 + .05; CY(.024, .026, .04, 0, top + .02, tz, tm, 20); CY(.016, .016, .14, 0, top + .1, tz, tm, 16);
+        B(.026, .02, .12, 0, top + .16, tz + .05, tm); B(.012, .045, .05, 0, top + .19, tz - .005, tm); }
+      const ty = top - .14;
       B(w * .85, .6, .02, 0, 1.55, -d / 2 + .01, MAT('mirror', '#dde6ea')); if (s.legs) B(w * .6, .04, .06, 0, 1.9, -d / 2 + .04, MAT('paint', '#f4f4f1'));
-      // ce stă pe un lavoar folosit: dozatorul de săpun, paharul, prosopul de mâini pe muchia blatului
+      // ce stă pe un lavoar folosit: dozatorul de săpun și paharul, pe puntea din spate (fronturile rămân la vedere)
       const tt = ty + .14; CY(.032, .032, .13, w / 2 - .1, tt + .065, -d / 2 + .07, MAT('ceramic', '#7c8a7d'), 20); CY(.006, .006, .03, w / 2 - .1, tt + .145, -d / 2 + .07, MAT('chrome', '#bbb'), 8); B(.04, .006, .006, w / 2 - .085, tt + .158, -d / 2 + .07, MAT('chrome', '#bbb'));
       CY(.035, .03, .1, w / 2 - .19, tt + .05, -d / 2 + .07, MAT('glass', '#d8e2e0'), 20);
-      if (w > .45){ const tw = MAT('velvet', s.towel || '#e6ddcf'); B(.3, .016, .1, -w / 4, tt + .008, d / 2 - .02, tw); B(.3, .32, .016, -w / 4, tt - .16, d / 2 + .04, tw); } break; }
-    case 'wc': { const cer = MAT('ceramic', '#fdfdfd'), hung = s.b && s.b.wallHung, lift = hung ? .1 : 0;
+      break; }
+    case 'wc': { const cer = MAT('ceramic', '#fdfdfd'), hung = s.hung || (s.b && s.b.wallHung), lift = hung ? .1 : 0;
       // WC suspendat: vasul ridicat de la pardoseală, fără picior; clapeta în culoarea armăturilor
       if (s.square || hung){ RB(.36, .3, .52, .06, 0, .27 + lift, .05, cer); } else { const b = new THREE.Mesh(new THREE.CylinderGeometry(.18, .13, .32, 32), cer); b.scale.z = 1.4; b.position.set(0, .24, .06); b.castShadow = true; g.add(b); }
       RB(.37, .03, .5, .015, 0, .42 + lift, .06, cer); B(.42, .9, .12, 0, .75, -d / 2 + .06, MAT('paint', '#efefec')); B(.24, .16, .01, 0, 1.0, -d / 2 + .125, MAT('chrome', s.b ? s.b.metal : '#d4d4d4'));
@@ -615,7 +654,10 @@ function model(it){
         case 'CylinderGeometry': case 'CylinderBufferGeometry': return { t: 'cyl', p: [p.radiusTop, p.radiusBottom, p.height, p.radialSegments, p.openEnded ? 1 : 0, p.thetaStart, p.thetaLength].map(r4) };
         case 'TorusGeometry': case 'TorusBufferGeometry': return { t: 'torus', p: [p.radius, p.tube, p.radialSegments, p.tubularSegments, p.arc].map(r4) };
         case 'SphereGeometry': case 'SphereBufferGeometry': return { t: 'sphere', p: [p.radius, p.widthSegments, p.heightSegments].map(r4) };
-        default: return null; } };
+        case 'LatheGeometry': case 'LatheBufferGeometry': return { t: 'lathe', p: [p.segments, p.phiStart, p.phiLength].map(r4), pts: p.points.map(v => [r4(v.x), r4(v.y)]) };
+        default: { // forme libere (plăci decupate, ExtrudeGeometry): triunghiurile, cu transformările deja aplicate geometriei
+          const pos = g.attributes && g.attributes.position; if (!pos || pos.count > 30000) return null;
+          return { t: 'mesh', p: [], v: Array.from(pos.array, r4), i: g.index ? Array.from(g.index.array) : null }; } } };
     for (const root of [house, furniture]) root.traverse(o => { if (!o.isMesh || !o.visible) return; for (let a = o.parent; a; a = a.parent) if (!a.visible) return;
       const g = geoOf(o.geometry); if (!g) return; o.matrixWorld.decompose(P, Q, Sc);
       const m = Array.isArray(o.material) ? o.material.map(matOf) : matOf(o.material);
@@ -623,7 +665,9 @@ function model(it){
     const rooms = plan.camere.map(r => ({ id: r.id, name: r.nume, type: r.tip, rect: [r.x0, r.z0, r.x1, r.z1] }));
     // decorul: trimitem doar modelul glTF și matricea lui (Blender îl importă din public/models), nu mii de triunghiuri
     decor.updateMatrixWorld(true); const decorRefs = decor.children.filter(o => o.userData.deco && o.children[0]).map(o => ({ model: o.userData.deco, m: o.children[0].matrixWorld.elements.map(r4) }));
-    const out = { format: 'casa3d-scene', version: 1, units: 'm', up: 'Y', height: plan.inaltime, rooms, materials: mats, meshes, decor: decorRefs,
+    // piesele de mobilier (grupă, amprentă, înălțime): camera foto le încadrează pe cele principale și nu stă niciodată în ele
+    const items = lastItems.filter(it => it.variant && it.variant.w && it.fp).map(it => ({ g: it.group, m: it.variant.model, fp: [it.fp.x0, it.fp.z0, it.fp.x1, it.fp.z1].map(r4), h: r4(it.variant.h / 100) }));
+    const out = { format: 'casa3d-scene', version: 1, units: 'm', up: 'Y', height: plan.inaltime, rooms, items, materials: mats, meshes, decor: decorRefs,
       sun: { dir: light && light.dir ? light.dir : [.45, .75, -.48], time: meta.time || 'day', azimuthDeg: meta.azimuthDeg ?? null },
       lights: interiorLights.map(l => ({ p: [l.position.x, l.position.y, l.position.z].map(r4), i: r4(l.intensity) })), ...meta };
     setMode(prevMode); return out; }
