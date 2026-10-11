@@ -13,7 +13,6 @@ ROOT_ALLOWED = {
     ".gitattributes",
     ".gitignore",
     ".gitleaks.toml",
-    #: exact-fingerprint exceptions for gitleaks (owner-approved). Mirrors ROOT_ALLOWLIST.
     ".gitleaksignore",
     #: MCP server registration read by Claude Code / Antigravity / Gemini CLI (vault-memory).
     #: Mirrors ROOT_ALLOWLIST in validate_repository_layout.py.
