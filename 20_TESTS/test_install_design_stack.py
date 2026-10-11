@@ -96,20 +96,63 @@ def test_replica_triggers_are_narrowed_on_install_and_the_vendored_copy_is_untou
     assert mod.REPLICA_GATE not in (tmp_path / ".claude" / "skills" / "security-lockdown" / "SKILL.md").read_text(encoding="utf-8")
 
 
-def test_an_older_marker_runs_the_new_stack_once(tmp_path):
-    marker = tmp_path / ".claude" / mod.MARKER_NAME
-    marker.parent.mkdir(parents=True)
-    marker.write_text('{"version": "2026-10-11.1"}\n')
-    r = subprocess.run([sys.executable, str(SCRIPT), "--home", str(tmp_path), "--apply"], capture_output=True, text=True,
-                       env={"PATH": "", "SYSTEMROOT": __import__("os").environ.get("SYSTEMROOT", "")})
-    assert "already installed" not in r.stdout
-    assert (tmp_path / ".claude" / "skills" / "graph-orchestrator" / "SKILL.md").is_file()
+def _fake_claude(tmp_path):
+    import os
+    fake = tmp_path / "bin" / "claude"
+    fake.parent.mkdir(exist_ok=True)
+    fake.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    fake.chmod(0o755)
+    return dict(os.environ, PATH=f"{fake.parent}{os.pathsep}{os.environ['PATH']}")
+
+
+def _apply(home, env):
+    return subprocess.run([sys.executable, str(SCRIPT), "--home", str(home), "--apply"],
+                          capture_output=True, text=True, env=env)
+
+
+def test_an_older_or_corrupt_marker_runs_the_new_stack_once(tmp_path):
+    import os
+    import pytest
+    if os.name == "nt":
+        pytest.skip("fake claude is a POSIX shell script")
+    env = _fake_claude(tmp_path)
+    for old in ('{"version": "2026-10-11.1"}\n', "[]\n", "null\n", "not json\n"):
+        home = tmp_path / f"home{abs(hash(old))}"
+        marker = home / ".claude" / mod.MARKER_NAME
+        marker.parent.mkdir(parents=True)
+        marker.write_text(old)
+        r = _apply(home, env)
+        assert r.returncode == 0 and "Traceback" not in r.stderr, (old, r.stderr)
+        assert json.loads(marker.read_text())["version"] == mod.VERSION
+        assert (home / ".claude" / "skills" / "graph-orchestrator" / "SKILL.md").is_file()
+        r = _apply(home, env)
+        assert "already installed" in r.stdout, "the second run is a no-op"
+
+
+def test_a_symlinked_skill_dir_is_replaced_without_touching_its_target(tmp_path):
+    import os
+    import pytest
+    if os.name == "nt":
+        pytest.skip("symlinks need privileges on Windows")
+    target = tmp_path / "elsewhere"
+    target.mkdir()
+    (target / "keep.txt").write_text("mine")
+    skills = tmp_path / "home" / ".claude" / "skills"
+    skills.mkdir(parents=True)
+    (skills / "replica-recon").symlink_to(target, target_is_directory=True)
+    mod.copy_skill("replica-recon", tmp_path / "home")
+    assert not (skills / "replica-recon").is_symlink() and (skills / "replica-recon" / "SKILL.md").is_file()
+    assert (target / "keep.txt").read_text() == "mine"
 
 
 def test_owner_skills_are_bounded():
     sec = (ROOT / ".claude" / "skills" / "security-lockdown" / "SKILL.md").read_text(encoding="utf-8")
     assert sec.startswith("---\nname: security-lockdown\n") and "SECURITY_AUDIT.md" in sec and "19." in sec
     assert "never rewrite or force-push without the owner" in sec
+    assert "dependencies)" in sec and "Never runs inside the AI_Memory_Vault" in sec
+    for skill in (sec, (ROOT / ".claude" / "skills" / "graph-orchestrator" / "SKILL.md").read_text(encoding="utf-8")):
+        triggers = skill.split("when_to_use:", 1)[1].split("\n", 1)[0]
+        assert '"audit"' not in triggers, "bare 'audit' is the Vault's own command (CLAUDE.md section 14)"
     graph = (ROOT / ".claude" / "skills" / "graph-orchestrator" / "SKILL.md").read_text(encoding="utf-8")
     for must in ("never inside the AI_Memory_Vault", "replica/screens/", "no bulk scraping", "Never copy the"):
         assert must in graph, must

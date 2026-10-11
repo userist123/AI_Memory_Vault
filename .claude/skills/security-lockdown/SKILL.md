@@ -1,7 +1,7 @@
 ---
 name: security-lockdown
 description: Owner's standing pre-production security gate for any site or application (web, API, desktop such as WPF/.NET, mobile, CLI) - act as Principal AppSec engineer, run a zero-trust audit of the codebase and git history, fix what is found, and write SECURITY_AUDIT.md scoring the 19 checks. Runs automatically when a site or app is finished or about to ship, and on request ("audit de securitate", "hardening", "e gata de productie?"). On a project that already has SECURITY_AUDIT.md, re-check and update it instead of starting over.
-when_to_use: A site/app reaches "done", before any deploy or publish, after a large feature, or when the owner asks for a security audit, hardening, lockdown or production readiness. Romanian triggers - "securitate", "audit", "hardening", "gata de productie", "lansare", "release", "publica aplicatia".
+when_to_use: A site/app reaches "done", before any deploy or publish, after a large feature, or when the owner asks for a security audit, hardening, lockdown or production readiness. Romanian triggers - "audit de securitate", "securitate", "hardening", "gata de productie", "lansare", "release", "publica aplicatia".
 ---
 
 # security-lockdown
@@ -9,7 +9,9 @@ when_to_use: A site/app reaches "done", before any deploy or publish, after a la
 Role: Principal Cybersecurity Engineer and AppSec auditor. Zero trust: every input, route and
 dependency is hostile until shown otherwise. The owner does not type commands; you run the
 audit, fix, verify and report. Ask only before destructive or outward actions (rewriting git
-history, rotating a live key, force-pushing, changing production settings).
+history, rotating a live key, force-pushing, changing production settings, adding, upgrading
+or removing dependencies). Never runs inside the AI_Memory_Vault repository itself: there
+"audit" means the Vault's own failure-mode review (CLAUDE.md §14), not this skill.
 
 ## Zero friction for the owner
 
@@ -73,8 +75,8 @@ API, CORS, rate limits, headers
 Production lockdown
 16. Debug mode off; no verbose or sensitive logging (tokens, passwords, PII) in production.
 17. Error responses are generic for users; stack traces and internals only in server logs.
-18. Dependencies: audit clean of high/critical (or each exception justified), vulnerable ones
-    updated, unused packages removed, lockfile committed.
+18. Dependencies: audit clean of high/critical (or each exception justified), lockfile
+    committed; the updates and removals it needs are listed and applied after the owner's go.
 19. Nothing sensitive is publicly served: no production sourcemaps, `.bak`, backups, dumps,
     logs, `.git` or env files in `public/`, `dist/` or the deployed output.
 

@@ -78,7 +78,9 @@ def gate_description(text: str) -> str:
 
 def copy_skill(name: str, home: Path) -> None:
     dst = home / ".claude" / "skills" / name
-    if dst.exists():
+    if dst.is_symlink():  # `npx skills add` links skills; drop the link, never follow it
+        dst.unlink()
+    elif dst.exists():
         shutil.rmtree(dst)
     shutil.copytree(skill_source(name), dst)
     if name in REPLICA_SKILLS:
@@ -109,8 +111,9 @@ def main(argv=None) -> int:
     marker = a.home / ".claude" / MARKER_NAME
     if a.apply and marker.exists() and not a.force:
         try:
-            done = json.loads(marker.read_text(encoding="utf-8")).get("version")
-        except ValueError:
+            data = json.loads(marker.read_text(encoding="utf-8"))
+            done = data.get("version") if isinstance(data, dict) else None
+        except ValueError:  # a corrupt marker re-runs the install, which rewrites it
             done = None
         if done == VERSION:
             print(f"already installed (version {done}); nothing to do. --force to redo.")
