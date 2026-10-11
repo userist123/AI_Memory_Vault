@@ -61,4 +61,8 @@ create table if not exists custom_items(id uuid primary key default gen_random_u
   name text not null, supplier text not null, url text, image text, sku text, price numeric(12,2), currency text, qty numeric(12,2) not null default 1, unit text not null default 'buc',
   room_id text, created_at timestamptz not null default now());
 create index if not exists custom_items_project on custom_items(project_id, created_at);
+create table if not exists change_orders(id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id) on delete cascade, number int not null,
+  title text not null, body text not null default '', amount numeric(12,2) not null, days int not null default 0, status text not null default 'draft',
+  created_at timestamptz not null default now(), sent_at timestamptz, decided_at timestamptz, decided_by text, client_note text, unique(project_id, number));
+create index if not exists change_orders_project on change_orders(project_id, number);
 `;

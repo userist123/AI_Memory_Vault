@@ -8,7 +8,7 @@ Owner: "mai fă research-uri pe internet ... după care interpretezi research-ul
 Research: 02_PRODUCT/projects/Casa3D/research-2026-10-11/ (SYNTHESIS.md + 4 source reports).
 Plan (each step: tests first for logic, tsc + vitest + build + phone/desktop check, commit gated on exit code, push, PC update):
 - [x] 1. Client link: delivery status per product (status + ETA + "updated at", no buy prices/notes) and budget offered vs current.
-- [ ] 2. Priced change orders: designer writes change + cost delta; client approves/rejects on the link; budget includes approved ones.
+- [x] 2. Priced change orders: designer writes change + cost delta; client approves/rejects on the link; budget includes approved ones.
 - [ ] 3. Decision deadlines: decide-by = needed-on-site date − lead time (per-category defaults, editable).
 - [ ] 4. Handover pack PDF: installed products, supplier/code/order ref, warranty defaults per category, care notes, PV with open snags.
 - [ ] 5. Trade checks: kitchen triangle/aisle/dishwasher, bathroom clearances, bath electrical zones (warning), I5 ventilation; adhesive/grout/paint consumption.

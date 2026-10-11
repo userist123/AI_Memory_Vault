@@ -423,3 +423,16 @@ input[type=file]{font-size:12px;color:var(--lead)} input[type=file]::file-select
 .pcard-body .chk{display:flex;gap:10px;align-items:flex-start;cursor:pointer} .pcard-body .chk input{margin-top:3px;width:18px;height:18px} .pcard-body .chk small{display:block;color:var(--lead);font-size:12px}
 @media (max-width:700px){ .cdel{width:auto;margin:0 12px;padding:16px} .cdel h2{font-size:24px} .cdel-sum{gap:14px} .cdel-sum dd{font-size:20px} }
 .cdel-todo summary{cursor:pointer;font:500 13px var(--sans);padding:10px 0;border-top:1px solid var(--rule);min-height:24px} .cdel-todo .cdel-row{opacity:.85}
+/* Modificări cu preț: pe linkul clientului și în editor */
+.cco{width:min(1280px,94vw);margin:0 auto;background:var(--surface);border:1px solid var(--rule);padding:22px 26px;display:grid;gap:14px;box-sizing:border-box}
+.cco h2{font:400 30px/1.1 var(--serif);margin:4px 0 0} .cco-hint{margin:0;color:var(--lead)}
+.cco-bud{display:flex;gap:26px;flex-wrap:wrap;margin:0} .cco-bud div{display:grid} .cco-bud dt{font:500 10.5px var(--sans);text-transform:uppercase;letter-spacing:.1em;color:var(--lead)} .cco-bud dd{margin:0;font:400 24px var(--serif)} .cco-bud .cur dd{font-size:28px;color:var(--ink)}
+.cco-name{max-width:360px} .cco-item{border:1px solid var(--rule);padding:14px 16px;display:grid;gap:8px;background:#fff}
+.cco-item header{display:flex;justify-content:space-between;gap:12px;align-items:baseline} .cco-item header span{font:400 20px var(--serif);white-space:nowrap} .cco-item .up{color:#8a4b2f} .cco-item .down{color:#4f6b4a} .cco-item p{margin:0}
+.cco-act{display:flex;gap:8px;flex-wrap:wrap} .cco-act .btn{min-height:44px;min-width:110px} .cco-msg{margin:0;font-weight:500}
+.cco-done,.dco-list{list-style:none;margin:0;padding:0} .cco-done li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:8px 0;border-top:1px solid var(--rule)} .cco-done small{grid-column:1/-1}
+.co-st{color:var(--lead);font-size:12px} .co-approved{color:#4f6b4a} .co-rejected{color:var(--err)} .co-sent{color:#4a5c74}
+.dco{display:grid;gap:8px;margin:14px 0} .dco h3{display:flex;gap:8px;align-items:center} .dco-sum{margin:0}
+.dco-list li{border-top:1px solid var(--rule);padding:8px 0;display:grid;gap:4px} .dco-list li>div:first-child{display:flex;justify-content:space-between;gap:8px} .dco-act{display:flex;gap:6px}
+.dco-new{display:grid;gap:6px;border-top:1px solid var(--rule);padding-top:10px}
+@media (max-width:700px){ .cco{width:auto;margin:0 12px;padding:16px} .cco h2{font-size:24px} .cco-bud{gap:14px} .cco-bud dd{font-size:20px} .cco-item header{flex-direction:column} }

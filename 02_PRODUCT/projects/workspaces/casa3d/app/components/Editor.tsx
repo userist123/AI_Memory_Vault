@@ -36,6 +36,7 @@ import KeyboardHelp from './KeyboardHelp';
 import UnderlayPanel, { type Calib } from './UnderlayPanel';
 import ProjectCard from './ProjectCard';
 import TasksPanel from './TasksPanel';
+import { DesignerChanges } from './ChangeOrders';
 import OrdersPage from './OrdersPage';
 import SitePage from './SitePage';
 import type { ProjectMeta } from '@/core/project-meta';
@@ -316,7 +317,7 @@ export default function Editor({ id }: { id: string }){
         {stage === 'docs' && <DocsPanel id={id} lang={lang} onSchedule={() => downloadSchedule(finishSchedule(house!, catalog, mc), t, cur, snap.name || 'proiect', levelName)} />}
         {stage === 'docs' && <AdvisorPanel lang={lang} units={units} currency={cur} advice={advice} rooms={snap.floor.rooms} onShow={showAdvice} />}
         {stage === 'quote' && <BudgetPanel snap={house!} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
-        {stage === 'present' && !showSel && <ClientPanel id={id} say={say} onLinked={loadRevs} flush={flushDraft} roomNames={Object.fromEntries(floors(house!).flatMap(f => f.rooms).map(r => [r.id, r.name]))} />}
+        {stage === 'present' && !showSel && <ClientPanel id={id} cur={cur} say={say} onLinked={loadRevs} flush={flushDraft} roomNames={Object.fromEntries(floors(house!).flatMap(f => f.rooms).map(r => [r.id, r.name]))} />}
         {stage === 'present' && !showSel && <RenderGallery id={id} />}
         {stage === 'present' && !showSel && <div className="docs"><a className="docrow" href={`/p/${id}/present`} target="_blank" rel="noopener"><b>{t('stage.openPresentation')}</b><small>{t('stage.openPresentationSub')}</small></a></div>}
         {stage === 'present' && !showSel && <div className="revs"><h3>{t('stage.revisions')}</h3>{revs.length === 0 && <p className="muted">{t('editor.noRevsYet')}</p>}
@@ -407,7 +408,7 @@ function DocsPanel({ id, lang, onSchedule }: { id: string; lang: string; onSched
 /** Randările fotorealiste făcute pe acest calculator (Blender Cycles), cele mai noi întâi; se reîmprospătează cât timp lucrează. */
 // Linkul pentru client și părerile venite pe el: un buton care salvează versiunea și copiază linkul; părerile grupate pe camere, de bifat.
 type ClientFeedback = { id: string; roomId: string | null; verdict: 'like' | 'change' | 'question'; author: string; text: string; createdAt: string; resolvedAt: string | null; revisionNumber: number; item?: { key: string; label: string; role: string | null } | null };
-function ClientPanel({ id, say, onLinked, flush, roomNames }: { id: string; say(s: string): void; onLinked(): void; flush(): Promise<void>; roomNames: Record<string, string> }){
+function ClientPanel({ id, say, onLinked, flush, roomNames, cur }: { id: string; say(s: string): void; onLinked(): void; flush(): Promise<void>; roomNames: Record<string, string>; cur: string }){
   const { t, lang } = usePrefs(), [link, setLink] = useState<{ url: string; local: boolean } | null>(null), [busy, setBusy] = useState(false), [items, setItems] = useState<ClientFeedback[] | null>(null);
   useEffect(() => { let alive = true; const load = () => fetch(`/api/projects/${id}/feedback`).then(r => r.ok ? r.json() : null).then(j => { if (alive && j) setItems(j); }).catch(() => {});
     load(); const iv = setInterval(load, 30000); return () => { alive = false; clearInterval(iv); }; }, [id]);
@@ -425,6 +426,7 @@ function ClientPanel({ id, say, onLinked, flush, roomNames }: { id: string; say(
     <div className="docs"><button className="docrow" onClick={make} disabled={busy}><b>{t('client.link')}</b><small>{t('client.linkSub')}</small></button></div>
     {link && <div className="client-link"><input readOnly value={link.url} onFocus={e => e.currentTarget.select()} aria-label={t('client.link')} /><button className="btn" onClick={() => copy(link.url)}>{t('client.copy')}</button>
       {link.local && <p className="muted">{t('client.localOnly')}</p>}</div>}
+    <DesignerChanges id={id} cur={cur} say={say} />
     <h3>{t('client.feedback')}{open > 0 && <span className="pill">{t('client.open', { n: open })}</span>}</h3>
     {items && items.length === 0 && <p className="muted">{t('client.noFeedback')}</p>}
     {[...groups.entries()].map(([room, fs]) => <div key={room} className="fbg"><h4>{room ? roomNames[room] ?? room : t('client.general')}</h4>
