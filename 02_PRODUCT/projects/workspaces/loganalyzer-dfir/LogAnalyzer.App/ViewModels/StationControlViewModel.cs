@@ -36,6 +36,18 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _summary = "";
         [ObservableProperty] private string _statusFilter = "Toate";
         [ObservableProperty] private string _gapsText = "";
+        [ObservableProperty] private string _savedReportInfo = "";
+
+        // Checks only the controller can do (docs/dfir/RESEARCH_2026-10-11_CONTROL_STATII_CLASIFICATE.md §3), answered here and printed in the report.
+        public ObservableCollection<ManualCheckItem> ManualItems { get; } = new(LogAnalyzer.Dfir.Flow.ManualChecks.All.Select(c => new ManualCheckItem(c)));
+        [ObservableProperty] private string _manualSummary = LogAnalyzer.Dfir.Flow.ManualChecks.Summary([]);
+        private void HookManual()
+        {
+            foreach (var m in ManualItems)
+                m.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(ManualCheckItem.Answer)) ManualSummary = LogAnalyzer.Dfir.Flow.ManualChecks.Summary(ManualItems.Select(x => x.ToResult()).ToList()); };
+        }
+        partial void OnSavedReportInfoChanged(string value) => OnPropertyChanged(nameof(HasSavedReport));
+        public bool HasSavedReport => SavedReportInfo.Length > 0;
 
         public string[] StatusFilters { get; } = { "Toate", "NECONFORM", "DE VERIFICAT", "NEDETERMINAT", "CONFORM" };
 
@@ -75,6 +87,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         public StationControlViewModel()
         {
+            HookManual();
             _flow = new GuidedFlow("Verifică această stație",
             [
                 new FlowStep("station", "Ce stație?", "Controlul se face pe acest calculator. Aplicația doar citește; nu modifică nimic."),
@@ -233,6 +246,7 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 var start = DateTimeOffset.UtcNow.AddDays(-PeriodDays);
                 var isolated = StationShouldBeIsolated;
+                SavedReportInfo = "";
                 _report = await Task.Run(() => ControlEvaluator.Evaluate(StationFactCollector.Collect(start, isolated)));
                 FillChecks();
                 Users.Clear();
@@ -272,11 +286,19 @@ namespace LogAnalyzer.UI.ViewModels
             var ws = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
             if (ws is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
             if (Result is null) BuildResult();
-            var (_, pdf) = ControlReportPdf.SaveToCase(_report, ws, Inspector, Notes, BuildHeader(_report), Result);
+            var (_, pdf) = ControlReportPdf.SaveToCase(_report, ws, Inspector, Notes, BuildHeader(_report), Result, ManualItems.Select(m => m.ToResult()).ToList());
             var dlg = new SaveFileDialog { FileName = Path.GetFileName(pdf), Filter = "PDF (*.pdf)|*.pdf", Title = "Salvați o copie a raportului (originalul rămâne în caz)" };
             if (dlg.ShowDialog() == true && !string.Equals(dlg.FileName, pdf, StringComparison.OrdinalIgnoreCase))
                 File.Copy(pdf, dlg.FileName, overwrite: true);
-            Status = $"Raport salvat în caz (cu SHA-256 și custodie): {pdf}";
+            // confirmation page in words (UX research R19): where it is, its fingerprint as the reference for the official report, what comes next
+            string sha;
+            using (var fs = File.OpenRead(pdf)) sha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fs));
+            SavedReportInfo = $"Raportul a fost salvat.{Environment.NewLine}" +
+                              $"Unde: {pdf}{Environment.NewLine}" +
+                              $"Amprenta fișierului (SHA-256): {sha}{Environment.NewLine}" +
+                              "Ce urmează: tipăriți raportul, treceți amprenta în procesul-verbal ca referință și semnați. Dacă cineva modifică fișierul, amprenta nu se mai potrivește. " +
+                              "Originalul rămâne în cazul stației; orice copie se verifică prin aceeași amprentă.";
+            Status = "Raport salvat în caz.";
             LoadPreviousControls();
             Process.Start(new ProcessStartInfo(dlg.FileName is { Length: > 0 } f && File.Exists(f) ? f : pdf) { UseShellExecute = true });
         }

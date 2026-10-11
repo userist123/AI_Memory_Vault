@@ -17,7 +17,7 @@ public static class ControlReportPdf
     /// <param name="header">WP18 S5: the "proces-verbal" header (unit, station, Hardware ID, period, inspector, role, registration number, marking, signatures).</param>
     /// <param name="result">WP18 S5: the five answers, printed on the first page before the checks, together with the evidence gaps.</param>
     public static void Write(ControlReport r, string path, string inspector, string notes = "", VerificationReport? verification = null, LogAnalyzer.Dfir.Case.ReportSeal? seal = null,
-        ControlReportHeader? header = null, ControlResultScreen? result = null)
+        ControlReportHeader? header = null, ControlResultScreen? result = null, IReadOnlyList<LogAnalyzer.Dfir.Flow.ManualCheckResult>? manual = null)
     {
         QuestPDF.Settings.License = LicenseType.Community;
         var f = r.Facts;
@@ -106,6 +106,18 @@ public static class ControlReportPdf
                         });
                 }
 
+                // checks only the controller can do (physical, documents): every question is printed; unanswered ones as „Neverificat”
+                col.Item().Text("1b. Verificări făcute de controlor (fizic și pe documente)").Bold().FontSize(11).FontColor(Ink);
+                var answers = (manual ?? []).ToDictionary(m => m.Id);
+                col.Item().Text(LogAnalyzer.Dfir.Flow.ManualChecks.Summary(answers.Values)).FontSize(8.5f);
+                foreach (var q in LogAnalyzer.Dfir.Flow.ManualChecks.All)
+                {
+                    var a = answers.GetValueOrDefault(q.Id);
+                    var text = $"{q.Id} · {q.Question} — {LogAnalyzer.Dfir.Flow.ManualChecks.AnswerText(a?.Answer ?? LogAnalyzer.Dfir.Flow.ManualAnswer.NotAnswered)}";
+                    col.Item().Text(text + (a?.Note is { Length: > 0 } n ? $". Observație: {n}" : "")).FontSize(8)
+                        .FontColor(a?.Answer == LogAnalyzer.Dfir.Flow.ManualAnswer.No ? "#b91c1c" : Ink);
+                }
+
                 col.Item().Text("2. Activitatea utilizatorilor").Bold().FontSize(11).FontColor(Ink);
                 if (r.Users.Count == 0) col.Item().Text("Nu există date (jurnalul Security necitit sau fără autentificări în perioadă).").FontColor(Muted);
                 else col.Item().Table(t =>
@@ -154,15 +166,16 @@ public static class ControlReportPdf
     }
 
     /// <summary>Saves the report (JSON) and its PDF in the case, registered as evidence with SHA-256.</summary>
-    public static (string Json, string Pdf) SaveToCase(ControlReport r, CaseWorkspace ws, string inspector, string notes = "", ControlReportHeader? header = null, ControlResultScreen? result = null)
+    public static (string Json, string Pdf) SaveToCase(ControlReport r, CaseWorkspace ws, string inspector, string notes = "", ControlReportHeader? header = null, ControlResultScreen? result = null,
+        IReadOnlyList<LogAnalyzer.Dfir.Flow.ManualCheckResult>? manual = null)
     {
         var dir = Path.Combine(ws.Root, "Control", $"CONTROL_{r.Facts.CollectedUtc:yyyyMMdd_HHmmss}");
         Directory.CreateDirectory(dir);
         var json = Path.Combine(dir, "control_report.json");
-        File.WriteAllText(json, JsonSerializer.Serialize(new { r.Facts, r.Checks, r.Users, r.Actions },
+        File.WriteAllText(json, JsonSerializer.Serialize(new { r.Facts, r.Checks, r.Users, r.Actions, ManualChecks = manual ?? [] },
             new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } }));
         var pdf = Path.Combine(dir, $"Raport_control_{r.Facts.Host}_{r.Facts.CollectedUtc:yyyyMMdd}.pdf");
-        Write(r, pdf, inspector, notes, Investigation.InvestigationReportPdf.ReadVerification(ws.Root), LogAnalyzer.Dfir.Case.ReportSeal.For(ws), header, result);
+        Write(r, pdf, inspector, notes, Investigation.InvestigationReportPdf.ReadVerification(ws.Root), LogAnalyzer.Dfir.Case.ReportSeal.For(ws), header, result, manual);
         ws.RegisterStored(json, "live:" + r.Facts.Host, "control", "control_report", TemporalType.CurrentSnapshot, "StationFactCollector", DfirInfo.ApplicationVersion);
         ws.RegisterStored(pdf, "live:" + r.Facts.Host, "control", "control_report_pdf", TemporalType.Derived, "ControlReportPdf", DfirInfo.ApplicationVersion);
         // WP3b: the report files are also outputs in the custody chain, listed with the chain heads in a manifest next to them.

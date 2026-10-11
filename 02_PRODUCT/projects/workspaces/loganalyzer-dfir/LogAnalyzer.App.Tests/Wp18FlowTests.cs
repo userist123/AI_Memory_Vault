@@ -113,7 +113,7 @@ public sealed class Wp18FlowTests : IDisposable
         Assert.Contains("2 verificări sunt NECONFORME", r.Problem);
         Assert.Contains("Conturi", r.Seriousness); Assert.Contains("Politici", r.Seriousness);
         Assert.Contains("FĂRĂ drepturi de administrator", r.Trust);
-        Assert.Contains("NECONFORM 2", r.Found);
+        Assert.Contains("2 probleme · 1 de lămurit cu organizația · 1 nu s-au putut verifica · 1 în regulă", r.Found);   // plain counts, no score (UX research R9)
         Assert.InRange(r.NextSteps.Count, 1, ControlResultScreen.MaxNextSteps);
         Assert.Contains(r.NextSteps, s => s.Contains("administrator"));
         Assert.Contains(r.NextSteps, s => s.Contains("profilul de proceduri"));
