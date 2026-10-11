@@ -39,6 +39,9 @@ public sealed record DeviceRecord
     public string ConnectionsText => Connections.Count == 0 ? "" : $"{Connections.Count} conectări în jurnal; ultimele: {string.Join(", ", Connections.Take(5).Select(c => c.ToLocalTime().ToString("yyyy-MM-dd HH:mm")))}";
 
     public string KindText => DeviceText.Kind(Kind);
+    /// <summary>What a person recognises first: the label written on the medium, else make and model, else the Windows name.</summary>
+    public string DisplayName => VolumeLabel.Length > 0 && !VolumeLabel.Contains('·') ? $"{VolumeLabel} ({(Model.Length > 0 ? Model : Name)})"
+                               : $"{Manufacturer} {Model}".Trim() is { Length: > 0 } mm ? mm : Name.Length > 0 ? Name : KindText;
     public string CapacityText => CapacityBytes is long b && b > 0 ? DeviceText.Bytes(b) : "";
     public string ConnectedText => Kind == DeviceKind.Bluetooth ? (ConnectedNow ? "asociat cu stația" : "asociat anterior") : ConnectedNow ? "conectat acum" : "neconectat";
 }

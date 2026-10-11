@@ -58,9 +58,9 @@
                     <TextBlock Text="Conectate acum" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                     <DataGrid Grid.Row="1" AutomationProperties.Name="Dispozitive conectate acum" ItemsSource="{Binding ConnectedNow}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="220" Margin="0,4,0,12">
                         <DataGrid.Columns>
+                            <DataGridTextColumn Header="Nume" Binding="{Binding Device.DisplayName}" Width="1.6*"/>
                             <DataGridTextColumn Header="Față de registru" Binding="{Binding MatchText}" Width="170"/>
                             <DataGridTextColumn Header="Ce este" Binding="{Binding Device.KindText}" Width="1.3*"/>
-                            <DataGridTextColumn Header="Nume" Binding="{Binding Device.Name}" Width="1.6*"/>
                             <DataGridTextColumn Header="Serie" Binding="{Binding Device.Serial}" Width="*"/>
                             <DataGridTextColumn Header="Literă" Binding="{Binding Device.DriveLetters}" Width="80"/>
                             <DataGridTextColumn Header="Etichetă" Binding="{Binding Device.VolumeLabel}" Width="*"/>
@@ -104,9 +104,9 @@
                                 </Style>
                             </DataGrid.RowStyle>
                             <DataGrid.Columns>
+                                <DataGridTextColumn Header="Nume" Binding="{Binding Device.DisplayName}" Width="1.6*"/>
                                 <DataGridTextColumn Header="Față de registru" Binding="{Binding MatchText}" Width="150"/>
                                 <DataGridTextColumn Header="Ce este" Binding="{Binding Device.KindText}" Width="1.3*"/>
-                                <DataGridTextColumn Header="Nume" Binding="{Binding Device.Name}" Width="1.5*"/>
                                 <DataGridTextColumn Header="Serie" Binding="{Binding Device.Serial}" Width="*"/>
                                 <DataGridTextColumn Header="Stare" Binding="{Binding Device.ConnectedText}" Width="110"/>
                                 <DataGridTextColumn Header="Ultima conectare" Binding="{Binding Device.LastConnectedUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="120"/>

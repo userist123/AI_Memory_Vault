@@ -162,7 +162,8 @@ public sealed record ControlResultScreen(string Headline, string Problem, string
             : unreadable.Count > 0 || f.Gaps.Count > 0 ? $"Probe parțiale. {coverage}"
             : $"Probele sunt complete pentru acest control. {coverage}";
         var top = r.Checks.Where(c => c.Status == ControlStatus.Neconform).Take(3).Select(c => c.Title).ToList();
-        string found = $"NECONFORM {nc} · DE VERIFICAT {dv} · NEDETERMINAT {nd} · CONFORM {ok}" + (top.Count > 0 ? $". De exemplu: {string.Join("; ", top)}." : ".")
+        // plain counts, no score (docs/dfir/RESEARCH_2026-10-11_UX_NESPECIALISTI.md R9); what could not be checked is never counted as „în regulă”
+        string found = $"{nc} probleme · {dv} de lămurit cu organizația · {nd} nu s-au putut verifica · {ok} în regulă" + (top.Count > 0 ? $". De exemplu: {string.Join("; ", top)}." : ".")
             + (comparison is null ? "" : " " + comparison.Summary);
 
         var steps = new List<string>();

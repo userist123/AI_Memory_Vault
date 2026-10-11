@@ -111,6 +111,10 @@
                     <Button Content="Deschide folderul rapoartelor" Command="{Binding OpenCaseFolderCommand}" Margin="0,0,8,6"/>
                     <Button Content="Control nou" Command="{Binding FlowRestartCommand}" Margin="0,0,8,6"/>
                 </WrapPanel>
+                <Border Visibility="{Binding HasSavedReport, Converter={StaticResource BoolToVis}}" Background="{StaticResource CanvasBrush}" CornerRadius="6" Padding="10" Margin="0,6,0,0">
+                    <TextBox Text="{Binding SavedReportInfo, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="Transparent" MinHeight="0"
+                             Foreground="{StaticResource TextPrimaryBrush}" AutomationProperties.Name="Confirmarea salvării raportului: loc, amprentă și pașii următori"/>
+                </Border>
                 <Expander Header="Diferențe față de controlul anterior" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,6,0,0">
                     <DataGrid AutomationProperties.Name="Diferențe față de controlul anterior" ItemsSource="{Binding ComparisonChanges}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="220">
                         <DataGrid.Columns>
@@ -218,6 +222,37 @@
                             </StackPanel>
                         </ScrollViewer>
                     </Grid>
+                </DockPanel>
+            </TabItem>
+            <TabItem Header="Verificări făcute de dumneavoastră" Style="{StaticResource InspectorTabItemStyle}">
+                <DockPanel Margin="8">
+                    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <TextBlock Text="Aceste lucruri nu se pot verifica din calculator. Uitați-vă și răspundeți; răspunsurile intră în raportul pentru procesul-verbal. „Nu am putut verifica” este un răspuns valid și apare ca atare în raport."
+                                   TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="{Binding ManualSummary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0"/>
+                    </StackPanel>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding ManualItems}" AutomationProperties.Name="Verificări făcute de controlor">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" Padding="0,8">
+                                        <StackPanel>
+                                            <TextBlock TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"><Run Text="{Binding Check.Id, Mode=OneWay}"/> <Run Text="·"/> <Run Text="{Binding Check.Question, Mode=OneWay}"/></TextBlock>
+                                            <TextBlock Text="{Binding Check.Why, StringFormat='De ce contează: {0}'}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                                            <TextBlock Text="{Binding Check.How, StringFormat='Cum verificați: {0}'}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                            <TextBlock Text="{Binding Check.ComparedWith, StringFormat='Comparați cu: {0}'}" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                                            <WrapPanel Margin="0,6,0,0">
+                                                <RadioButton Content="Da" GroupName="{Binding GroupName}" IsChecked="{Binding IsYes}" Margin="0,0,16,0"/>
+                                                <RadioButton Content="NU" GroupName="{Binding GroupName}" IsChecked="{Binding IsNo}" Margin="0,0,16,0"/>
+                                                <RadioButton Content="Nu am putut verifica" GroupName="{Binding GroupName}" IsChecked="{Binding IsCannot}" Margin="0,0,16,0"/>
+                                                <TextBox Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}" Width="360" AutomationProperties.Name="Observație la această verificare"/>
+                                            </WrapPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
                 </DockPanel>
             </TabItem>
             <TabItem Header="Utilizatori" Style="{StaticResource InspectorTabItemStyle}">
