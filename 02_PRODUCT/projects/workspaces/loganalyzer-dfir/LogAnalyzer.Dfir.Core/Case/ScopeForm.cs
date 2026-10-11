@@ -22,6 +22,7 @@ public sealed class ScopeForm
     public int NetworkIndex { get; set; } = -1;
     public int ClassificationIndex { get; set; } = -1;
     public string Notes { get; set; } = "";
+    public string AuthorizingAct { get; set; } = "";
 
     /// <summary>
     /// The form for an existing scope. A provisional scope's placeholder values (approver "necunoscut (de confirmat)", the one-year period,
@@ -32,7 +33,7 @@ public sealed class ScopeForm
         if (s is null) return new ScopeForm();
         var f = new ScopeForm { Purpose = s.Purpose, Systems = string.Join("; ", s.SystemsInScope) };
         if (s.Provisional) return f;
-        f.Approver = s.Approver; f.Notes = s.Notes;
+        f.Approver = s.Approver; f.Notes = s.Notes; f.AuthorizingAct = s.AuthorizingAct;
         f.PeriodFrom = s.PeriodFromUtc?.UtcDateTime.Date; f.PeriodTo = s.PeriodToUtc?.UtcDateTime.Date;
         f.LegalBasisIndex = s.LegalBasis switch { LegalBasis.Incident => 0, LegalBasis.Audit => 1, LegalBasis.Control => 2, _ => -1 };
         f.NetworkIndex = s.Network switch { NetworkCategory.AirGappedNetwork => 0, NetworkCategory.StandalonePc => 1, NetworkCategory.Connected => 2, _ => -1 };
@@ -54,6 +55,7 @@ public sealed class ScopeForm
             Network = NetworkIndex switch { 0 => NetworkCategory.AirGappedNetwork, 1 => NetworkCategory.StandalonePc, 2 => NetworkCategory.Connected, _ => NetworkCategory.Unspecified },
             Classification = ClassificationIndex switch { 0 => ClassificationLevel.Classified, 1 => ClassificationLevel.Unclassified, _ => ClassificationLevel.Unspecified },
             Notes = Notes.Trim(),
+            AuthorizingAct = AuthorizingAct.Trim(),
             Provisional = false,
         };
         missing = scope.MissingFields();

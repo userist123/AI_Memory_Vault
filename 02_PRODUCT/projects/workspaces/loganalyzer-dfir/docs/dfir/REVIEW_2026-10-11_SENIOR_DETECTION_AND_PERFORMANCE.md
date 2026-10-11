@@ -179,7 +179,62 @@ Each issue lists its impact on (a) non-IT controllers and (b) CSIRT analysts.
 | PowerShell 4104 | SHALLOW | SHALLOW |
 | AMSI bypass | MISSING | MISSING |
 
-<!-- A.3 and A.5 inserted below -->
+### A.3 Alerting
+
+**What exists.**
+
+- **Event-log live source:** `LogAnalyzer.Connectors/Network/LiveEventLogWatcherService.cs`.
+  - It uses `EventLogWatcher` subscriptions on Security (all events), Sysmon, PowerShell Operational, Windows PowerShell and System. System is filtered to event 7045 only (`:58`).
+  - The unclassified edition registers it (`Edition/Unclassified/UnclassifiedComposition.cs:72`). The classified edition registers `NoLiveEventSourceFactory` (`LogAnalyzer.App.Classified/Edition/ClassifiedComposition.cs:45`).
+  - It starts automatically only in network mode (`MainViewModel.cs:672-673`); otherwise it waits for a manual button (`Views/LiveSocView.xaml:19`).
+- **Media live source:** `DeviceWatcher` (WMI `__InstanceCreation/DeletionEvent WITHIN 2` on `Win32_PnPEntity`, plus `Win32_VolumeChangeEvent`). It starts 3 s after the window loads.
+- **Global surfaces visible on every page:**
+  - the event-log toast (`MainWindow.xaml:312` → `Views/Controls/LiveAlertToast.xaml`);
+  - the media banner (`MainWindow.xaml:215-224`).
+- **Missing:** there is no tray icon and no Windows notification.
+
+| # | Finding | Status | Evidence | Impact (a) / (b) | Fix | Pri | Effort |
+|---|---|---|---|---|---|---|---|
+| L1 | **The live-alert detail is a facade.** `OpenAlertModal` sets `IsCountermeasureModalVisible`, but no XAML binds it (0 matches for "Countermeasure" in `*.xaml`). The toast's "Inspect Playbook" button, Dashboard live-alert selection and auto-open all show nothing. The isolate and block-IoC commands have no visible trigger. | FACADE | `MainViewModel.cs` `OpenAlertModal` (~432-443), `OnSelectedLiveAlertChanged`; `LiveAlertToast.xaml:39`; `DashboardView.xaml:253` | (a) The button does nothing, so the app looks frozen. (b) No playbook or raw event from an alert. | Route to `AlertDetailWindow` (as IssuesView does), or add the overlay | P1 | M |
+| L2 | **Live alerts and live events are memory-only** and lost on restart. `KnowledgeBaseService.SaveAlert` has no callers. | MISSING | `Core/Interfaces/IDatabaseService.cs:9-24`; `Core/Services/KnowledgeBaseService.cs:63`; `OnEventReceived` (~1769-1848) | (a) An overnight alert has vanished by the morning. (b) No alert history or evidence trail. | Persist the alert and its source event (SQLCipher) with an audit line; reload on start | P1 | M |
+| L3 | **No acknowledgment flow.** The toast auto-hides after 7 s, and nothing records who saw it. The media banner's "Am văzut" is not audited either. | MISSING | toast timer `System.Timers.Timer(7000)` (~1840); `AlertDetailWindow.xaml.cs:34`; `MediaCenterViewModel.cs:184,190` | (a) No proof the alert was handled. (b) No triage state. | New/Seen/Closed states with operator and time in the audit log; an unacknowledged counter in the sidebar | P1 | M |
+| L4 | **A media alert can be missed during an inventory.** `OnChange` → `RefreshAsync()` returns at once when `IsBusy`, the device list is stale and no banner appears. The first refresh runs exactly when the watcher starts. | REAL bug *(spot-checked)* | `MediaCenterViewModel.cs:78-80, 86, 167-170` | (a) An unregistered stick inserted at the wrong moment raises no alert. This is a false negative in the core control. | Await or queue the running refresh; assess the device from the WMI instance id | P1 | S |
+| L5 | **Burst debounce drops assessments.** Earlier events in a 1.5 s burst are logged unassessed, so of two sticks inserted together only the last is checked. | SHALLOW | `MediaCenterViewModel.cs:163-166` | (a) The second stick is silently accepted | Debounce the refresh, not the events; assess every pending arrival | P1 | S |
+| L6 | **The media banner has one slot**, so a new alert overwrites the previous one. A foreign device already present at start never triggers the banner. | SHALLOW / MISSING | `MediaCenterViewModel.cs:75-104, 184` | (a) The first unregistered medium is hidden; a stick present at start goes unnoticed | A list of open media alerts; raise the banner after the first inventory | P2 | S |
+| L7 | **A watcher failure is invisible.** `IsLive` is true even if every WMI watcher failed, and only the media page says so. | SHALLOW | `MediaCenterViewModel.cs:141-150`; `Dfir.Windows/Devices/DeviceWatcher.cs:41-44` | (a) Believes the station is supervised when it is not | Global "supraveghere oprită/eșuată" indicator | P2 | S |
+| L8 | **The live rule for System 104 can never fire**, because the System subscription is filtered to 7045 | REAL bug *(spot-checked)* | `LiveEventLogWatcherService.cs:58` vs `LiveSecurityMonitoringEngine.cs:130` | (b) A System-log clear is missed live | `EventID=7045 or EventID=104` | P1 | S |
+| L9 | **Live events carry no `XmlData`, channel or RecordId.** The log-clear subject is therefore always unknown (maintenance allow-listing never applies), and detail sheets lose field-level explanations. | SHALLOW | `LiveEventLogWatcherService.cs:108-117`; `Core/Services/Details/DetailSheet.cs:89-102` | (a) Every live log clear looks unapproved. (b) Live events are not usable as evidence. | Set `XmlData = rec.ToXml()`, LogName and RecordId | P1 | S |
+| L10 | **No dedup and no rate limit.** After 5 failures, every 4625 is a new High alert. The counter is global across hosts and uses a fixed 2-minute reset. Every 7045 raises an alert. `LiveAlerts` is unbounded, and each match plays a sound. | REAL (fatigue) | `LiveSecurityMonitoringEngine.cs:15, 148-180, 346-354` | (a) Sound and popups every few seconds. (b) Floods and mixed-host counts. | Dedup by (rule, host, account) per window; per-host sliding counters; cap the list; sound for High+ only | P1 | M |
+| L11 | **UI-thread flood.** Every Security event (query `*`) is marshalled with a synchronous `Dispatcher.Invoke` and inserted into three UI collections. | REAL (perf) | `OnEventReceived` (~1769-1802); `LiveEventLogWatcherService.cs:48` | (a) The app hangs on a busy host or DC. (b) Delayed events. | ConcurrentQueue + a batched `BeginInvoke` every ~250 ms; pre-filter IDs in the XPath query | P1 | M |
+| L12 | **Live rows are mixed into the case `Events`/`TimelineItems`** and counters but never saved, so the counts do not match the store | REAL | `OnEventReceived` (~1773-1802) | (a) Counts do not match the report. (b) Integrity confusion. | Keep live data on the Live page, or persist it first | P2 | S |
+| L13 | **Clicking a stream row fabricates an alert** with `MitreTechniqueId = "T1059 (Event Log Triage)"` | REAL | `OnSelectedLiveStreamingEventChanged` (~407-419) | (a) A misleading attack hint on a logon event | Open `GenericDetailWindow` for the event; never invent a technique | P2 | S |
+| L14 | **Subscription failures go only to the status text** (bare `catch {}` in `DisposeWatcher`); a missing Sysmon channel is not reported as a coverage gap | SHALLOW | `LiveEventLogWatcherService.cs:85-88, 103-106, 154` | (b) Silent coverage gap | Show "canale monitorizate: x/5" | P2 | S |
+| L15 | **The MITRE matrix live highlight uses `Equals`**, so composite IDs never highlight | SHALLOW | `MainViewModel.cs` (~1816-1825) | (b) The matrix under-reports | Split IDs (and fix D24) | P3 | S |
+
+### A.5 Explanation and terminology
+
+**Positive coverage:**
+- Every Dfir `RuleId` has a `RuleContracts` entry.
+- Every MITRE ID used in C# has an `ItemMeaning` text.
+- Every station check C01…P* has a `CheckGuide`.
+
+| # | Finding | Status | Evidence | Impact (a) / (b) | Fix | Pri | Effort |
+|---|---|---|---|---|---|---|---|
+| E1 | **Event IDs that are analysed but not explained:** Sysmon 7/8/10/15; Security 4656, 4662, 4663, 4742, 4756, 4800, 4801, 5136, 5137, 5141, 5379; 20001/20003; Entra codes 50053/50074/50125/53003 | MISSING | `Core/Services/Details/EventMeaning.cs:42-112` vs `Core/Services/{Kerberos,FileServer,EmployeeActivity,StandaloneSam,AzureAd,AdAttributeDelta}*Engine.cs` | (a) "nu are încă o explicație" on the very events behind DCSync, LSASS and USB findings | Add the entries, plus a test that every event ID used by a production engine has a meaning | P1 | M |
+| E2 | **Row types with no ItemMeaning kind:** `ControlCheck` (DM*/EM*), `AntiForensicCheck` (AF01-16), `SuspectProcess`, `ProcessIncident`, `MailMessage`, `UserActivity`, `LiveDeviceEntry`, `DeviceAssessment`. The properties `Detail`, `Reason`, `Recommendation` and `Attack` are not mapped. | MISSING | `Core/Services/Details/ItemMeaning.cs:19-49, 74-75`; `App.xaml.cs:19-28` | (a) Domain and anti-forensics screens are unexplained | Add the kinds and property mappings; route `ControlCheck` to `CheckGuides.Explain` | P1 | S |
+| E3 | **Domain/mail checks have no guide:** DM01-05, DM21-23, DM25, DM30-31 and EM01-05 have no `CheckGuide`, and the Domain view never calls `Explain` | MISSING | `Dfir.Windows/Audit/CheckGuide.cs:45-212`; `Dfir.Windows/Domain/DomainEvaluator.cs:23`; `Domain/MailInvestigation.cs:105` | (a) Kerberoasting and mail bursts are shown with no "ce verificăm / de ce contează" | Write the guides; reuse the Station Control detail panel; extend the sync test | P1 | M |
+| E4 | **A finding opened by double-click** (`GenericDetailWindow`) ignores `RecommendedNextSteps`, `AlternativeExplanations` and `MissingEvidence`; `Finding` is not a kind | SHALLOW | `Dfir.Core/Model/Analysis.cs:74-77`; `ItemMeaning.cs:47-48` | (a) Loses "what to do / other explanations" | Map Finding to the FindingCard content | P2 | S |
+| E5 | **False persistence claim:** `ForRegistry` adds "Cheie de pornire automată … T1547.001" to any path containing `\run`, including **RunMRU**. Run, Services and UserAssist keys are explained twice. | REAL bug | `Core/Services/Details/DetailSheet.cs:198-201` vs `ItemMeaning.cs:272-285` | (a) A command-history key is presented as malware persistence | Delete lines 198-201, or anchor the regex | P1 | S |
+| E6 | **Severity vocabulary:** at least four scales are in use (Critică/Ridicată/Medie; CRITIC/RIDICAT/MEDIU; "ALERTĂ MARE"/"NOTIFICARE"; raw "Critical/High"). Investigation uses the converter in one grid only. | REAL | `Dfir.Core/Presentation/SeverityLabels.cs:8-15`; `ItemMeaning.cs:91-99`; `DashboardView.xaml:233,255`; `InvestigationView.xaml:146` vs `:185,213`; `LiveAlertToast.xaml:18` | (a) Is "Mare" the same as "Ridicată"? (b) Inconsistent report wording. | One severity converter everywhere; engines emit the enum | P1 | S |
+| E7 | **"Registru" means both** the Windows registry and the media/user registers | REAL | `MainWindow.xaml:160` vs `:181-182`; `MediaCenterViewModel.cs:51,103` | (a) Controllers look in the wrong place | Always write "registrul de medii" / "registrul Windows"; add a glossary term | P2 | S |
+| E8 | **Raw statuses:** `ControlStatus` shows as "DeVerificat"/"Nedeterminat"; the workbench shows "MATCHED (n)"/"Active" | SHALLOW | `StationControlView.xaml:164`; `MainViewModel.cs` `InitializeSigmaRules` | (a) Odd, English labels | Status converter | P2 | S |
+| E9 | **The Live page uses English and a false claim:** "START LIVE STREAM", "Clear Stream", "Auto-refreshing < 50ms" (false, see L11) | FACADE | `Views/LiveSocView.xaml:19,33,55,56` | (a) Jargon. (b) Misleading. | Romanian labels; remove the claim | P2 | S |
+| E10 | **The detail sheet shows developer names:** the C# class name as header (`Kind = type.Name`), raw property names, "Event ID", "Hive", "Export PDF" | SHALLOW | `DetailSheet.cs:84, 188-190, 229, 237`; `GenericDetailWindow.xaml:19,78` | (a) Developer names on the main explanation surface | Display names from Kinds; Romanian field labels | P2 | M |
+| E11 | **The alert surfaces are in English** and contain demo fallbacks ("Live EDR Threat Detected", "Process injection and C2 beaconing…", "Forensic Security Alert Triage") | REAL | `LiveAlertToast.xaml:18-39`; `AlertDetailWindow.xaml:4,52,64` | (a) English on the main alert UX, with fake placeholder text | Translate; neutral or empty fallbacks | P1 | S |
+| E12 | **The Dashboard, Alerts and Events screens are partly English:** "Prioritized Threat Queue", "Alert Title", "Playbook & Action", "Compile & Evaluate Rules", "Provider Source", "Host Machine"… | REAL | `DashboardView.xaml:42,228-258`; `AlertsAndRulesView.xaml:14-45`; `EventExplorerView.xaml:36-118` | (a) Mixed language | Translation pass through the `Term` extension, plus a XAML lint test for English Header/Content | P2 | M |
+| E13 | **Other screens and strings are English:** window title "… Threat Triage & Incident Response Command Center", splash, "Export Evidence Package", "Run AI & Heuristic Evaluation", the "Live Event" category | REAL | `MainWindow.xaml:7`; `SplashWindow.xaml:4,20`; `ChainOfCustodyView.xaml:16-39`; `RiskAnalysisView.xaml:18,74`; `DataCollectionView.xaml:15,74-79` | (a) Mixed language | Same pass | P3 | M |
+| E14 | **Placeholder text shown as data:** the AI page entity fallback "TargetHost", and the MITRE fallbacks (D24) | REAL | `MainViewModel.cs` `RunAiAnalysis` (~2567, 2582) | (a)/(b) Invented values look like evidence | Show "—" / "necunoscut" | P2 | S |
+
 
 ### A.4 Identification and attribution
 
@@ -194,4 +249,170 @@ Each issue lists its impact on (a) non-IT controllers and (b) CSIRT analysts.
 | I7 | Windows pseudo-serials (second character `&`) are treated as real serials and matched against the media register | REAL bug | `UsbDevicesParser.cs:83`; `Wp14Rules.Media.cs:34-35`; `Dfir.Core/Registers/MediaRegister.cs:111-115` | (a) False "unregistered medium" alerts, or one stick counted as several | Mark them "no serial"; match on VID/PID + label + 1006 serial | P2 | S |
 | I8 | "Related events" in detail windows come only from the **current page** (100 rows): `EventCorpus = () => Events.ToList()` | SHALLOW | `MainViewModel.cs:646` (`DetailSheetBuilder.EventCorpus`) | (a) "No related events" when there are some. (b) Incomplete context. | Query the DB around the event time and host instead of the page | P2 | S |
 
-<!-- Part B inserted below -->
+---
+
+## Part B — Why the application is slow, and how to make it faster
+
+### B.1 Measurements (all *measured*, 2026-10-11)
+
+**Machine state matters.** The system disk C: had **245–509 MB free (100% used)** during the run. One benchmark failed with `SQLite Error 13: database or disk is full`. A full disk slows every write, including SQLite WAL, %TEMP% extraction and Defender caches. Free space first, before any profiling is trusted.
+
+**1. Main-window start-up** (`LogAnalyzer.App.Tests/MainWindowStartupTests`, real services, real database).
+
+| Build | Run | services + DB | MainViewModel | MainWindow |
+|---|---|---|---|---|
+| Debug (before `41e0f2ad3`) | cold, right after build | 2084 ms | 537 ms | 217 ms |
+| Debug (before `41e0f2ad3`) | warm | 43 ms | 481 ms | 197 ms |
+| Release (21:29 build) | cold, right after build | 2325 ms | 817 ms | 183 ms |
+| Release (21:29 build) | warm, ×4 | 48–56 ms | 447–530 ms | 191–212 ms |
+| Debug (after `41e0f2ad3`, WMI asynchronous) | warm, ×3 | 46 ms | 219–233 ms | 186–195 ms |
+| Release (rebuilt 21:4x, after `41e0f2ad3`) | cold, right after build | 1537 ms | 608 ms | 429 ms |
+| Release (rebuilt 21:4x, after `41e0f2ad3`) | warm, ×5 | 44–86 ms | 214–456 ms (steady about 215–250 ms) | 186–364 ms (steady about 190 ms) |
+| Release, `DOTNET_ReadyToRun=0` (framework JIT-compiled) | warm | 54 ms | 346 ms | 330 ms |
+| Release, `DOTNET_TieredCompilation=0` | warm | 85 ms | 350 ms | 199 ms |
+| Release, `DOTNET_TieredPGO=0` / `TC_QuickJitForLoops=1` | warm (old build) | ≈ base | ≈ base (−5…−10%) | ≈ base |
+
+How to read the start-up table:
+
+- **Debug and Release are about equal** for start-up once warm. Most of the time is JIT, I/O and WPF, not optimised code.
+- **The cold "services + DB" cost** (1.5–2.3 s) appears only on the first run after new binaries are written. Every run after that is about 45 ms. This is consistent with first-touch disk I/O and an antivirus scan of new DLLs and the native SQLCipher library. An installed build pays it once per update, or on every launch if single-file extraction to %TEMP% is re-scanned (needs lab).
+- **ReadyToRun matters.** Turning off ReadyToRun *for the framework* adds about 130 ms to the view-model and about 140 ms to the window. The application's own assemblies are **not** ReadyToRun today (`PublishReadyToRun=false` in `LogAnalyzer.App/Properties/PublishProfiles/win-x64-singlefile.pubxml`), so they pay this JIT cost on every start.
+- **Tiered-compilation knobs bring nothing.** Leave them alone.
+
+**2. Inside the MainViewModel constructor.** These are the temporary timing lines of the other session (`%TEMP%\la_ctor.txt`, warm). The traced steps sum to about 80–150 ms:
+
+- Auth 23–36 ms
+- language + Home 16–29 ms
+- feature VMs 9–16 ms
+- profiles 11–16 ms
+- KB categories 9–14 ms
+
+One run showed "ProcessTree+Sigma 258 ms". That is first-touch loading of System.Management inside the `async void` before its first `await`; other runs showed 1–6 ms.
+
+**3. Field and property initialisers**, timed one by one in a scratch harness by reflection over `MainViewModel` fields (Release).
+
+| Item | Cold | Warm |
+|---|---|---|
+| All 50 eager fields together (the "36 engines" etc.) | — | 130 ms |
+| …of which **`StationControlViewModel`** (`MainViewModel.cs:134`) | 110 ms | 108 ms |
+| …each of the other engines (`AttackStorylineEngine`, `LolbasEngine`, `Nis2…`, …) | 0 ms | 0 ms |
+| `AnalysisEngine` (Sigma/YARA/anomaly) constructor | 1 ms | 0 ms |
+| `KnowledgeBaseService.LoadCategories` (Categories JSON) | 186 ms | 10 ms |
+
+Conclusions:
+
+- The 36 eagerly created engines are **not** a start-up cost; making them lazy would save under 5 ms.
+- **`StationControlViewModel` is the cost.** Its constructor calls `LoadPreviousControls()` → `ControlArchive.List`, which fully deserializes **every** previous `control_report.json` (`Dfir.Windows/Audit/ControlGuide.cs:61-80`). That cost grows with the number of controls kept, and it is paid even if the page is never opened.
+
+**4. The post-start-up UI-thread block: the main cause of the "slow" feeling.**
+
+The constructor schedules `Task.Run(() => Application.Current.Dispatcher.Invoke(() => { UpdateDatabaseSize; ReloadEvtx/Registry/Timeline; ReloadDashboardStats; RunAiAnalysis; … }))` (`MainViewModel.cs:660-676`). This only *defers* the work; it then runs entirely **on the UI thread**, right after the window appears. The comment beside it ("< 50ms") is not true for any non-trivial database. The start-up test cannot see this, because `Application.Current` is null in tests.
+
+The same calls were timed on the real database, the same calls on a synthetic 50k-event encrypted database, and with the engines `RunAiAnalysis` starts with (Release, scratch harness):
+
+| Step (the UI thread is blocked) | Real DB (7,629 events, 990 MB file) | 50,000 events |
+|---|---|---|
+| Events count + first page | 26–67 ms | 20 ms |
+| Timeline count + page (no index on `Timestamp`: full scan + temp B-tree) | 41 ms | 158 ms |
+| Dashboard: count + `COUNT(DISTINCT MachineName)` (full scan) | 87–126 ms | 303 ms |
+| `RunAiAnalysis`: `GetEvents(50000)` incl. XmlData | 144–151 ms | 521 ms |
+| anomaly + "YARA" over those events | 69–77 ms | 246 ms |
+| **Total before the UI responds** | **≈ 450–515 ms** | **≈ 1,250 ms** |
+| (the rest of `RunAiAnalysis`: Kerberos, LOLBAS, UBA, SAM, FileServer… on the same thread) | not timed | not timed, adds to the total |
+| Search keystroke (`LIKE '%x%'` count + page, 400 ms debounce, UI thread) | 88 ms | 638 ms |
+| Deep page (`OFFSET 49,900`) | 4 ms | 25 ms |
+| Import write rate (SaveEvents + SaveTimeline) | — | 38k events/s (every event is written twice: Events **and** Timeline) |
+
+**5. The database file.**
+
+- `PRAGMA page_count` = 241,627 and `freelist_count` = 238,073, so **98.5% of the 990 MB file is free pages**. `ClearDatabase` (`Infrastructure/Services/DatabaseService.cs:90-96`) does `DELETE` without `VACUUM`, and there is no `auto_vacuum`.
+- `Pooling=false` (`DatabaseService.cs:662-667`): every query opens a connection, applies the key and 5 PRAGMAs, and loses the 64 MB page cache. The first count took 41 ms; the same count on a warmed connection took 2 ms.
+- Indexes exist only on `Events(EventId)`, `Events(TimeCreated)` and `RegistryArtifacts(KeyPath)`. There is no index on `Timeline(Timestamp)`, `Events(MachineName)` or `RegistryArtifacts(Category)`, and no FTS.
+
+**6. Build output.**
+
+- `bin/Release` holds 23 managed DLLs (about 5 MB of application code) and a 113 MB `runtimes/` folder with native SQLCipher/Skia for **every** RID: linux-*, musl, arm, wasm. That is 133 MB in total, because no `RuntimeIdentifier` is set for normal builds.
+- The publish profile is single-file with `IncludeNativeLibrariesForSelfExtract=true`, so natives are extracted to %TEMP% at run time.
+
+**7. XAML virtualization.**
+
+- `DashboardView.xaml:5` wraps the whole page in a `ScrollViewer`. The `IssuesView` and `LiveAlerts` DataGrids inside it (`:231, :253`) have only `MinHeight`. They get infinite height, so row virtualization is **off** and every alert row is realised.
+- This interacts badly with D1 (one alert per 4625) and L10 (unbounded `LiveAlerts`).
+- `IncidentTimelineView.xaml:37-38` has the same pattern: an ItemsControl inside a ScrollViewer, so the `VirtualizingStackPanel` settings have no effect. It shows 100 rows per page, so the impact is moderate.
+- The global DataGrid style file `LogAnalyzer.App/Themes/Components/DataGrids.xaml` is **empty**, so virtualization defaults vary per grid. The Fluent theme (`App.xaml:10`) is loaded globally; its cost was not measured (see the lab list).
+
+**8. Dispatcher and collection patterns.**
+
+- Live monitoring uses a synchronous `Dispatcher.Invoke` per event (L11).
+- Import uses a synchronous `Invoke` per file for progress (acceptable).
+- `DetectedIssues.Add` is called in a loop (`MainViewModel.cs` import stage 3), raising one `CollectionChanged` and one filter pass per item, although `RangeObservableCollection` exists (`Services/RangeObservableCollection.cs`).
+- Each evidence file is SHA-256 hashed **twice** on import: by `EvidenceIntakeService.Import` → `SecurePathService.ComputeSha256`, then again inline (`MainViewModel.cs` ~2019-2027). That doubles read I/O on large images.
+
+### B.2 Ranked changes
+
+The expected gain is measured where marked; otherwise it is estimated with the reasoning given.
+
+| Rank | Change | Expected gain | Risk | Effort |
+|---|---|---|---|---|
+| 1 | **Run the post-start-up load off the UI thread.** Query on a background task and assign the collections with a single `Dispatcher.BeginInvoke`. **Do not run `RunAiAnalysis` at start-up**: run it when the AI/Risk page is opened, or after import, on a background thread. | Removes a **0.45 s (today) → 1.25 s (50k events)** UI freeze after the window appears *(measured)*; grows linearly with the case | Low (data binding is unchanged; guard against re-entrancy) | S |
+| 2 | **`VACUUM` after `ClearDatabase`** (or `PRAGMA auto_vacuum=INCREMENTAL` + `incremental_vacuum`) and a one-off VACUUM now | Reclaims **≈ 930 MB** on this machine *(measured freelist)*; smaller backups and copies | Low (VACUUM on SQLCipher needs about 2× space briefly; run it with a progress note) | S |
+| 3 | **Index `Timeline(Timestamp)` and `Events(MachineName)`**; replace `COUNT(DISTINCT MachineName)` with a covering-index scan or a maintained hosts table | Timeline page 158 → about 20 ms; dashboard 303 → under 50 ms at 50k (estimate from the indexed Events page at 20 ms) | Low | S |
+| 4 | **One long-lived connection** (or `Pooling=true`) instead of open + key + PRAGMAs per query | 5–40 ms per query → about 1–2 ms (measured: 41 ms cold vs 2 ms warmed); dozens of queries per screen | Low–medium (thread-safety: one connection per thread, or a lock) | S |
+| 5 | **Lazy `StationControlViewModel`** (create on first open of the page), and `ControlArchive.List` reading only header fields asynchronously | −110 ms MainViewModel today *(measured)*; grows with the number of controls | Low | S |
+| 6 | **Load `KnowledgeBaseService.LoadCategories` on a background task** (needed only when an event is shown) | −186 ms on cold start *(measured)*, −10 ms warm | Low | S |
+| 7 | **`PublishReadyToRun=true`** in the release profile (optionally `TieredCompilation` defaults) | Estimated −100 to −250 ms cold start (the framework-ReadyToRun experiment shows about 130 ms per stage when JIT is needed); larger binary | Low | S |
+| 8 | **Full-text search** (SQLite FTS5 over Message, Description, KeyPath/ValueData) instead of `LIKE '%x%'`, run off the UI thread | Search keystroke 638 ms → under 20 ms at 50k events (estimate; FTS index lookup) | Medium (index build time on import; FTS5 availability in the SQLCipher bundle needs verifying) | M |
+| 9 | **Live events batched**: ConcurrentQueue + `DispatcherTimer` 250 ms flush, XPath pre-filter by event ID (L11) | Removes per-event UI blocking; on a busy host or DC, from hundreds of `Invoke` calls per second to 4 batches per second | Low | M |
+| 10 | **Dashboard grids virtualised**: give the alert grids a bounded height (row `*` in a Grid, not inside the page ScrollViewer), or move the page ScrollViewer inside the sections | With 5k legacy alerts, from 5k realised rows to about 30 (estimate). Combine with D1/L10 dedup. | Low | S |
+| 11 | **Add `DetectedIssues` with `AddRange`** (`RangeObservableCollection`) and refresh `IssuesView` once | One change notification instead of N filter passes | Low | S |
+| 12 | **Hash each evidence file once**: reuse the `EvidenceReceipt.Sha256` returned by `Import` | Halves the hashing I/O on import *(code-verified double hash)* | Low | S |
+| 13 | **Stop writing every event twice** (Events and Timeline): make Timeline a view, or keep only the event id | About 40% less write volume and file size on import (estimate: Timeline rows duplicate Message) | Medium (Timeline consumers must change) | M |
+| 14 | **Set `<RuntimeIdentifier>win-x64</RuntimeIdentifier>`** (or `SatelliteResourceLanguages` + RID-specific restore) for dev/test builds | Output 133 MB → about 20 MB; faster copy, fewer files for the antivirus to scan | Low | S |
+| 15 | **Store times as UTC INTEGER ticks** (fixes C5) | Correct filters and cheaper comparisons than text sorting | Medium (migration) | M |
+| 16 | **IncidentTimelineView**: use a `ListBox`/`ItemsControl` with its own ScrollViewer template, and no outer ScrollViewer | Real virtualization; small gain at 100 rows | Low | S |
+| 17 | **Path A EVTX streaming** (C9): an `EventLogPropertySelector` instead of `ToXml()` + `XDocument`, spilling to SQLite | Estimated 2–4× faster parsing and bounded memory on multi-GB logs (needs lab) | Medium | M |
+| 18 | **Natives beside the exe** instead of single-file self-extract (or a stable extraction dir) | Avoids extraction and re-scan on first run (needs lab) | Low | S |
+| 19 | **Remove the temporary timing lines** (`__T(`/`__sw`, `File.AppendAllText` per step on the UI thread) before shipping | A few ms; removes disk writes to %TEMP% | None | S |
+| 20 | Do **not** spend time on lazy-creating the 36 engines or on TieredPGO / QuickJit knobs | 0–10 ms *(measured)* | — | — |
+
+---
+
+## Combined top-20 action plan (value ÷ effort)
+
+| # | Action | Refs | Pri | Effort |
+|---|---|---|---|---|
+| 1 | Run the post-start-up load and `RunAiAnalysis` off the UI thread; `RunAiAnalysis` on demand only | B2-1 | P1 | S |
+| 2 | VACUUM / auto_vacuum; Timeline and MachineName indexes; one pooled connection | B2-2,3,4 | P1 | S |
+| 3 | Fix the alert facades and silent misses: System 104 subscription, live `XmlData`, media `IsBusy` race and burst debounce | L4, L5, L8, L9 | P1 | S |
+| 4 | Make the live-alert detail real (route to `AlertDetailWindow`); add acknowledge + audit; persist alerts | L1, L2, L3 | P1 | M |
+| 5 | Dedup and rate-limit live alerts; batch Dispatcher updates; virtualise the dashboard grids | L10, L11, B2-9,10 | P1 | M |
+| 6 | Turn the legacy engine into an adapter over the Dfir rules (or remove it): brute force per 4625, "bypass" Critical, LOLBAS High, the SigmaCorrelation join, the MITRE-dedup bug | D1, D2, D5, D6, D7 | P1 | M |
+| 7 | Route all imports through the Dfir pipeline, or at minimum report the 20k/50k caps and the unparsed file types | C3, C4, D3 | P1 | S |
+| 8 | Remove the contradicting SigmaLite log-clear rules; one RecordID-gap threshold | D21, D22 | P1 | S |
+| 9 | New P1 rules, S-effort batch: WMI 5861, password spray, AMSI and PowerShell keyword list, Defender 5013/5007 values, RMM catalog extension | D11–D15 | P1 | S |
+| 10 | New P1 rules, M-effort batch: LSASS access, RunMRU/ClickFix parser + rule, BYOVD (collect CodeIntegrity), EXFIL-TOOL | D8, D9, D10, D16 | P1 | M |
+| 11 | Separate the source host from the examiner host in case, report and graph | I1 | P1 | M |
+| 12 | Logon-session builder plus a case-wide SID→name identity map; fix the 4688 user field | I2, I3, I4 | P1 | M |
+| 13 | USB→user through MountPoints2 + MountedDevices + overlapping session; treat pseudo-serials as "no serial"; correct the ParserCapabilities claims | I5, I7 | P1 | M |
+| 14 | Live collector: per-user artifacts, task XML, setupapi, SOFTWARE/SAM | C1 | P1 | M |
+| 15 | Lazy `StationControlViewModel`, background KB load, ReadyToRun publish | B2-5,6,7 | P2 | S |
+| 16 | Explanation gaps: EventMeaning IDs, ItemMeaning kinds and properties, DM/EM guides, RunMRU false-persistence text | E1, E2, E3, E5 | P1 | S–M |
+| 17 | One severity converter; translate the alert toast and alert window; drop demo fallbacks and invented MITRE/"TargetHost" values | E6, E11, E14, D24 | P1 | S |
+| 18 | Store UTC times in the legacy DB; source time zone for USN; UTC with seconds in the PDF | C5, C6, C7 | P2 | S |
+| 19 | FTS5 search off the UI thread; hash evidence once; AddRange for issues | B2-8,11,12 | P2 | M |
+| 20 | New parsers: setupapi → ConsoleHost_history → NTUSER RunMRU/MountPoints2 → SAM → MFT; "present but not analysed" on the intake screen | C2 | P1 | L |
+
+---
+
+## Uncertain / needs lab
+
+1. **Antivirus cost.** Defender/antivirus scan cost on first launch of the single-file build: how much of the 1.5–2.3 s cold "services + DB" comes from scanning the extracted native SQLCipher/Skia libraries in %TEMP%, and does it repeat on every launch? Measure with Process Monitor on a clean VM, with and without `IncludeNativeLibrariesForSelfExtract`.
+2. **ReadyToRun gain** for the application assemblies. The estimate (−100 to −250 ms) comes from the framework-ReadyToRun toggle; it needs an actual publish and timing on a target station.
+3. **Fluent theme cost** (`PresentationFramework.Fluent`) on DataGrid-heavy pages, compared with the classic Aero2 theme. It was not isolated here.
+4. **Remaining `RunAiAnalysis` engines** (Kerberos, LOLBAS, UBA, SAM, FileServer, compliance): their UI-thread time at 50k and 500k events was not timed.
+5. **Path A EVTX throughput and memory** on a multi-GB Security log (millions of records). The documented 348k events in 19 s needs a repeat with a memory profile.
+6. **FTS5 availability** in `SQLitePCLRaw.bundle_e_sqlcipher` 2.1.10, and the index build cost at import.
+7. **Live-monitor load on a domain controller** (Security `*` subscription): event rate against the UI thread before and after batching.
+8. **The detection P1 rules** (LSASS, ClickFix, BYOVD, spray, AMSI, WMI) need lab replay corpora (Atomic Red Team or EVTX-ATTACK-SAMPLES-style) to set thresholds and allowlists before they are shipped.
+9. **Media alert race (L4/L5)** reproduction on hardware: insert two sticks within 1.5 s, and one during the first inventory.
+10. **Measurement drift.** Another session committed start-up changes (`41e0f2ad3`) during this review. The MainViewModel numbers above therefore cover both before (≈ 450–530 ms Release warm) and after (≈ 215–250 ms) that commit; re-run the start-up test once the tree is stable.

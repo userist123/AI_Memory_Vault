@@ -17,7 +17,7 @@ public static class ControlReportPdf
     /// <param name="header">WP18 S5: the "proces-verbal" header (unit, station, Hardware ID, period, inspector, role, registration number, marking, signatures).</param>
     /// <param name="result">WP18 S5: the five answers, printed on the first page before the checks, together with the evidence gaps.</param>
     public static void Write(ControlReport r, string path, string inspector, string notes = "", VerificationReport? verification = null, LogAnalyzer.Dfir.Case.ReportSeal? seal = null,
-        ControlReportHeader? header = null, ControlResultScreen? result = null, IReadOnlyList<LogAnalyzer.Dfir.Flow.ManualCheckResult>? manual = null)
+        ControlReportHeader? header = null, ControlResultScreen? result = null, IReadOnlyList<LogAnalyzer.Dfir.Flow.ManualCheckResult>? manual = null, string authorizingAct = "")
     {
         QuestPDF.Settings.License = LicenseType.Community;
         var f = r.Facts;
@@ -157,6 +157,11 @@ public static class ControlReportPdf
                 col.Item().PaddingTop(6).Text("5. Limitări").Bold().FontSize(11).FontColor(Ink);
                 foreach (var lim in Limitations(f))
                     col.Item().Text("• " + lim).FontSize(7.5f);
+                // basis and declaration (legal research G1, G4)
+                col.Item().PaddingTop(8).Text("Actul care autorizează controlul: " + (authorizingAct.Length > 0 ? authorizingAct : "nespecificat în scopul cazului")).FontSize(8)
+                    .FontColor(authorizingAct.Length > 0 ? Ink : "#b45309");
+                col.Item().Text($"Declar că am efectuat controlul stației {f.Host} folosind aplicația indicată în subsolul paginii, doar prin citire, fără a modifica stația, " +
+                                "și că rezultatele de mai sus reproduc fidel ce a constatat aplicația și ce am verificat personal.").FontSize(8);
                 if (header is not null)
                     col.Item().PaddingTop(28).Row(row =>
                     {
@@ -196,7 +201,7 @@ public static class ControlReportPdf
         File.WriteAllText(json, JsonSerializer.Serialize(new { r.Facts, r.Checks, r.Users, r.Actions, ManualChecks = manual ?? [] },
             new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } }));
         var pdf = Path.Combine(dir, $"Raport_control_{r.Facts.Host}_{r.Facts.CollectedUtc:yyyyMMdd}.pdf");
-        Write(r, pdf, inspector, notes, Investigation.InvestigationReportPdf.ReadVerification(ws.Root), LogAnalyzer.Dfir.Case.ReportSeal.For(ws), header, result, manual);
+        Write(r, pdf, inspector, notes, Investigation.InvestigationReportPdf.ReadVerification(ws.Root), LogAnalyzer.Dfir.Case.ReportSeal.For(ws), header, result, manual, ws.Info.Scope.AuthorizingAct);
         ws.RegisterStored(json, "live:" + r.Facts.Host, "control", "control_report", TemporalType.CurrentSnapshot, "StationFactCollector", DfirInfo.ApplicationVersion);
         ws.RegisterStored(pdf, "live:" + r.Facts.Host, "control", "control_report_pdf", TemporalType.Derived, "ControlReportPdf", DfirInfo.ApplicationVersion);
         // WP3b: the report files are also outputs in the custody chain, listed with the chain heads in a manifest next to them.

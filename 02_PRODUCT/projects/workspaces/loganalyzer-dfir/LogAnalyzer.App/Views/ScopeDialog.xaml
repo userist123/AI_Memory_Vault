@@ -11,7 +11,7 @@
         <Grid>
             <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-                <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" Text="Scop:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,4"/>
             <TextBox Grid.Row="0" Grid.Column="1" x:Name="PurposeBox" Margin="0,4"/>
@@ -31,6 +31,8 @@
             <ComboBox Grid.Row="7" Grid.Column="1" x:Name="ClassBox" Margin="0,4" HorizontalAlignment="Left" Width="200"/>
             <TextBlock Grid.Row="8" Text="Observații:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,4"/>
             <TextBox Grid.Row="8" Grid.Column="1" x:Name="NotesBox" Margin="0,4"/>
+            <TextBlock Grid.Row="9" Text="Actul care autorizează:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,4"/>
+            <TextBox Grid.Row="9" Grid.Column="1" x:Name="ActBox" Margin="0,4" ToolTip="Numărul, data și emitentul documentului care dispune controlul sau investigația (apare în raport)"/>
         </Grid>
         <TextBlock x:Name="ErrorText" Foreground="{StaticResource CriticalBrush}" TextWrapping="Wrap" Margin="0,8,0,0"/>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
