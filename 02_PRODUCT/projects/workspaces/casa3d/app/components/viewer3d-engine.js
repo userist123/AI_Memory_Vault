@@ -196,8 +196,24 @@ function model(it){
       const n = Math.round(w / .6); for (let i = 0; i < n; i++){ const cx = -w / 2 + w / n * (i + .5); B(w / n - .006, .74, .018, cx, .46, -d / 2 + wd + .009, front); handle(cx, htype === 'profile' ? .82 : .78, -d / 2 + wd + .025, false); }
       const topY = .86 + topM / 2; B(w + .01, topM, d, 0, topY, 0, topMat); // blat
       const sinkMat = k ? MAT(lumOf(k.sinkColor) > .55 ? 'chrome' : 'paint', k.sinkColor) : MAT('chrome', '#c6c9cc'), tapMat = MAT('chrome', k ? k.tapColor : '#c6c9cc');
-      B(.46, .015, .4, -w / 2 + .45, .86 + topM + .002, 0, sinkMat); CY(.015, .015, .25, -w / 2 + .45, .86 + topM + .14, -d / 2 + .08, tapMat, 10);
-      B(.58, .006, .5, w / 2 - .55, .86 + topM + .003, 0, MAT('screen', '#0d0d0e')); B(.56, .56, .012, w / 2 - .55, .46, -d / 2 + wd + .02, MAT('screen', '#141517'));
+      // chiuveta: ramă subțire și cuva (mai închisă, cu scurgere), bateria cu pipă curbată
+      const ct = .86 + topM, sx = -w / 2 + .45; B(.46, .006, .4, sx, ct + .003, 0, sinkMat); B(.4, .004, .34, sx, ct + .007, 0, MAT('metal', k ? k.sinkColor : '#8d9094')); CY(.022, .022, .004, sx + .1, ct + .01, .05, MAT('metal', '#55585c'), 16);
+      CY(.022, .026, .03, sx, ct + .015, -.2, tapMat, 16); CY(.012, .012, .3, sx, ct + .17, -.2, tapMat, 12);
+      { const sp = new THREE.Mesh(new THREE.TorusGeometry(.09, .012, 8, 16, Math.PI), tapMat); sp.rotation.y = Math.PI / 2; sp.position.set(sx, ct + .32, -.11); sp.castShadow = true; g.add(sp); }
+      B(.016, .05, .016, sx, ct + .26, -.02, tapMat); B(.012, .012, .1, sx + .03, ct + .27, -.2, tapMat);
+      // plita: sticlă neagră cu cele patru zone de gătit marcate
+      const hx = w / 2 - .55; B(.58, .006, .5, hx, ct + .003, 0, MAT('screen', '#0d0d0e'));
+      for (const [dx, dz, r] of [[-.14, -.1, .09], [.14, -.1, .07], [-.14, .12, .07], [.14, .12, .09]]){ const z = new THREE.Mesh(new THREE.TorusGeometry(r, .003, 4, 32), MAT('paint', '#3c3d40')); z.rotation.x = Math.PI / 2; z.position.set(hx + dx, ct + .0065, dz); g.add(z); }
+      // cuptorul: rama inox, ușa de sticlă cu geam fumuriu, mânerul bară și panoul de comandă
+      const oz = -d / 2 + wd + .02; B(.58, .58, .012, hx, .46, oz, MAT('metal', '#9da0a3')); B(.54, .38, .006, hx, .4, oz + .008, MAT('screen', '#111214')); B(.5, .08, .006, hx, .68, oz + .008, MAT('screen', '#1a1b1d'));
+      B(.46, .016, .016, hx, .62, oz + .035, MAT('metal', '#c4c7ca')); [-.18, .18].forEach(a => B(.012, .012, .03, hx + a, .62, oz + .02, MAT('metal', '#c4c7ca')));
+      [-.2, -.14, .14, .2].forEach(a => CY(.014, .014, .015, hx + a, .68, oz + .015, MAT('metal', '#c4c7ca'), 16).rotation.x = Math.PI / 2);
+      // pe blat, ca într-o casă locuită: tocătorul sprijinit de perete, ibricul, un bol cu fructe, sticlele lângă plită
+      { const wood = MAT('wood', '#b38a5e'), bx = w > 2 ? -w / 2 + 1.05 : sx; const cb = B(.3, .4, .02, bx, ct + .2, -d / 2 + .06, wood); cb.rotation.x = -.12; B(.22, .3, .018, bx + .2, ct + .15, -d / 2 + .07, MAT('wood', '#8a6340')).rotation.x = -.12;
+        if (w > 1.6){ const kx = hx - .45; CY(.075, .085, .2, kx, ct + .1, -.1, MAT('ceramic', '#ece8e0'), 24); CY(.05, .07, .02, kx, ct + .21, -.1, MAT('ceramic', '#ece8e0'), 24); B(.03, .14, .06, kx - .09, ct + .1, -.1, MAT('paint', '#2b2b2b'));
+          const bowl = new THREE.Mesh(new THREE.CylinderGeometry(.14, .07, .07, 32, 1, true), MAT('ceramic', '#cfc5b4')); bowl.material.side = THREE.DoubleSide; bowl.position.set(kx - .35, ct + .04, .05); bowl.castShadow = true; g.add(bowl);
+          [['#c9572f', -.04, .02], ['#e0a83a', .05, -.02], ['#8aa04a', 0, .06], ['#c9572f', .03, .05]].forEach(([c, a, b], i) => { const f = new THREE.Mesh(new THREE.SphereGeometry(.038, 16, 12), MAT('paint', c)); f.position.set(kx - .35 + a, ct + .07 + (i > 2 ? .03 : 0), .05 + b); f.castShadow = true; g.add(f); }); }
+        [['#3d4a2a', .32, .03], ['#6b3f22', .24, .028]].forEach(([c, hh, r], i) => { CY(r, r, hh, hx + .36 + i * .07, ct + hh / 2, -d / 2 + .08, MAT('glass', c), 16); CY(.01, .01, .04, hx + .36 + i * .07, ct + hh + .02, -d / 2 + .08, MAT('wood', '#9c7a52'), 8); }); }
       const upper = k ? k.upper : 'open', top = h - .02, wallBottom = upper === 'none' ? 1.5 : top - .72;
       if (upper === 'open'){ // polițe ENHET cu cadru deschis + uși pe jumătate din module
         B(w, .02, .32, 0, top, -d / 2 + .16, frame); B(w, .02, .32, 0, top - .72, -d / 2 + .16, frame); for (let i = 0; i <= n; i++) B(.02, .72, .32, -w / 2 + .01 + i * (w - .02) / n, top - .36, -d / 2 + .16, frame);
@@ -579,6 +595,7 @@ function model(it){
         case 'PlaneGeometry': case 'PlaneBufferGeometry': return { t: 'plane', p: [p.width, p.height].map(r4) };
         case 'CylinderGeometry': case 'CylinderBufferGeometry': return { t: 'cyl', p: [p.radiusTop, p.radiusBottom, p.height, p.radialSegments, p.openEnded ? 1 : 0, p.thetaStart, p.thetaLength].map(r4) };
         case 'TorusGeometry': case 'TorusBufferGeometry': return { t: 'torus', p: [p.radius, p.tube, p.radialSegments, p.tubularSegments, p.arc].map(r4) };
+        case 'SphereGeometry': case 'SphereBufferGeometry': return { t: 'sphere', p: [p.radius, p.widthSegments, p.heightSegments].map(r4) };
         default: return null; } };
     for (const root of [house, furniture]) root.traverse(o => { if (!o.isMesh || !o.visible) return; for (let a = o.parent; a; a = a.parent) if (!a.visible) return;
       const g = geoOf(o.geometry); if (!g) return; o.matrixWorld.decompose(P, Q, Sc);
