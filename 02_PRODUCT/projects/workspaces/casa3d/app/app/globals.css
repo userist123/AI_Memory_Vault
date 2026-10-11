@@ -401,3 +401,14 @@ input[type=file]{font-size:12px;color:var(--lead)} input[type=file]::file-select
 .task span{display:grid;gap:2px} .task b{font-weight:500} .task small{color:var(--lead);font-size:12px}
 .task .del{border:0;background:transparent;font-size:18px;color:var(--lead);cursor:pointer;padding:0 6px} .task .btn{min-height:30px;padding:0 10px}
 @media (max-width:700px){ .task-add{grid-template-columns:1fr 1fr} .task-add input:first-child{grid-column:1/-1} .task .tick{width:28px;height:28px} .task{padding:10px} }
+/* Produs din link */
+.clip-open{display:flex;justify-content:flex-end}
+.clip{background:var(--surface);border:1px solid var(--rule);padding:14px 16px;display:grid;gap:10px} .clip>header{display:flex;justify-content:space-between;align-items:center;gap:12px} .clip h2{font:400 22px var(--serif);margin:0} .clip p{margin:0}
+.clip-link{display:flex;gap:8px;flex-wrap:wrap} .clip-link input{flex:1 1 260px;min-width:0}
+.clip-card{display:grid;grid-template-columns:140px minmax(0,1fr);gap:16px;align-items:start} .clip-card>img,.clip-card>.noimg{width:140px;height:140px;object-fit:contain;background:var(--paper);border:1px solid var(--rule)}
+.clip-fields{display:grid;gap:8px} .qty-unit{display:grid;grid-template-columns:minmax(0,1fr) 70px;gap:6px}
+.othumb{width:40px;height:40px;object-fit:contain;background:var(--paper);border:1px solid var(--rule);grid-row:span 1}
+.oline-main:has(.othumb){grid-template-columns:40px minmax(0,1fr) 110px 110px 120px}
+.oedit-item{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap} .oedit-item .f{width:160px}
+.btn.danger{color:var(--err);border-color:var(--err)}
+@media (max-width:700px){ .clip-card{grid-template-columns:1fr} .clip-card>img{width:100%;height:180px} .clip-card>.noimg,.othumb{display:none} .oline-main:has(.othumb){grid-template-columns:minmax(0,1fr) auto} }
