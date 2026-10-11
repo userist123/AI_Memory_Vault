@@ -3,7 +3,7 @@
 // (imaginea 3D, mostrele de finisaj, piesele), planul și bugetul. Imaginile vin din motorul 3D, randate în afara ecranului.
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalog, MaterialsCatalog, Snapshot } from '@/core/types';
-import { presentation } from '@/core/presentation';
+import { presentation, approvalItems } from '@/core/presentation';
 import { lighting, sunDirection } from '@/core/lighting';
 import { viewerInput } from '@/lib/viewer-input';
 import { floors, levelView, stairwells } from '@/core/levels';
@@ -73,7 +73,8 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
         <ul className="sw-list">{r.swatches.slice(0, 9).map((s, k) => <li key={k}><i style={s.material ? { ...swatchStyle(s.material), backgroundColor: s.color } : { background: s.color }} /><span><small>{role(s.role)}</small>{s.material ? title(s.material.name) : s.color}</span></li>)}</ul>
         {r.products.length > 0 && <p className="prod">{r.products.slice(0, 6).map(p => p.name).join(' · ')}</p>}</div>
       <footer>{num(i + 3)}</footer></section>
-      {share && <FeedbackBox token={share.token} roomId={r.id} title={`${t('fb.title')} · ${r.name}`} items={feedback.filter(f => f.roomId === r.id)} onAdded={added} />}</Fragment>)}
+      {share && <FeedbackBox token={share.token} roomId={r.id} title={`${t('fb.title')} · ${r.name}`} items={feedback.filter(f => f.roomId === r.id)} onAdded={added}
+        approvals={approvalItems(r).map(a => { const sw = r.swatches.find(s => `f:${s.key}` === a.key); return { ...a, swatch: sw ? (sw.material ? { ...swatchStyle(sw.material), backgroundColor: sw.color } : { background: sw.color }) : undefined }; })} />}</Fragment>)}
     <section className="slide planslide"><header><span className="kicker">{t('pres.planKicker')}</span><h2>{t('pres.plan')}</h2></header>
       <div className="plan-wrap"><PlanSvg snap={levelView(data.snap, 0)} catalog={data.catalog} box={box} widthMm={box.w * 22} heightMm={box.d * 22} mm={1 / 22} units={units} locale={lang} aria={t('pres.plan')} /></div>
       <footer>{num(n - 1)}</footer></section>
