@@ -77,8 +77,8 @@ CONTEXT_RULES = f"""{RULES_START}
   files) and start the next task with /clear from that checkpoint, not from the old transcript.
 - Do not re-read a file you already have unchanged in context; do not paste whole files back.
 - Write every message to the owner in the language set by `language` in ~/.claude/settings.json
-  (Romanian for this owner), including short progress notes; code, commits and repository files
-  keep their own language.
+  (Romanian for this owner), including short progress notes. Everything internal stays in
+  English: subagent briefs, self check-ins, skills, prompts, code, commits and repository files.
 {RULES_END}
 """
 DISABLED_MARKER = "cost-router.disabled"  # written by --uninstall under ~/.claude; honoured by --session-start
