@@ -10,6 +10,8 @@ import { usePrefs } from '@/lib/prefs';
 import type { Calib } from './UnderlayPanel';
 import { TECH_SYMBOL } from './TechPanel';
 import { stairGeometry, SLAB } from '@/core/levels';
+import { allFixturePoints } from '@/core/fixtures';
+import { finishesOf } from '@/core/boq';
 
 export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'measure' | 'tech';
 export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
@@ -148,6 +150,12 @@ export default function PlanView(p: Props){
     {preview && <line x1={preview.a[0]} y1={preview.a[1]} x2={preview.b[0]} y2={preview.b[1]} stroke="#2E6DA4" strokeWidth={.15} strokeOpacity={.5} strokeDasharray=".1 .06" />}
     {preview && <text x={(preview.a[0] + preview.b[0]) / 2} y={(preview.a[1] + preview.b[1]) / 2 - fs} textAnchor="middle" fontSize={fs} fontFamily="IBM Plex Mono" fill="#1F4E79">{units === 'imperial' ? formatLength(wallLength(preview.a, preview.b), 'imperial', lang) : `${Math.round(wallLength(preview.a, preview.b) * 100)} cm`}</text>}
     {roomDraft && <rect x={Math.min(roomDraft.a[0], roomDraft.b[0])} y={Math.min(roomDraft.a[1], roomDraft.b[1])} width={Math.abs(roomDraft.b[0] - roomDraft.a[0])} height={Math.abs(roomDraft.b[1] - roomDraft.a[1])} fill="#2E6DA4" fillOpacity={.12} stroke="#2E6DA4" strokeWidth={.02} strokeDasharray=".08 .05" />}
+    {allFixturePoints(p.snap, p.catalog, floor.rooms, finishesOf).map((f, i) => { const r = fs * .45, c = '#8A5A00';
+      // simbolurile de pe planul de iluminat: pendul = cerc cu cruce, aplică = semicerc lipit de perete, șină = linie cu spoturi
+      if (f.kind === 'track'){ const h = (f.len ?? 2) / 2, [x0, z0, x1, z1] = f.alongX ? [f.x - h, f.z, f.x + h, f.z] : [f.x, f.z - h, f.x, f.z + h], n = Math.max(2, Math.round((f.len ?? 2) / .5));
+        return <g key={`fx${i}`} pointerEvents="none"><line x1={x0} y1={z0} x2={x1} y2={z1} stroke={c} strokeWidth={.03} />{Array.from({ length: n }, (_, k) => { const o = (k + .5) / n; return <circle key={k} cx={x0 + (x1 - x0) * o} cy={z0 + (z1 - z0) * o} r={r * .45} fill="#fff" stroke={c} strokeWidth={.015} />; })}</g>; }
+      if (f.kind === 'sconce'){ const a = Math.atan2(f.nz, f.nx) * 180 / Math.PI; return <path key={`fx${i}`} pointerEvents="none" transform={`translate(${f.x} ${f.z}) rotate(${a})`} d={`M0 ${-r} A${r} ${r} 0 0 1 0 ${r} Z`} fill="#fff" stroke={c} strokeWidth={.02} />; }
+      return <g key={`fx${i}`} pointerEvents="none"><circle cx={f.x} cy={f.z} r={r} fill="#fff" stroke={c} strokeWidth={.02} /><path d={`M${f.x - r * .7} ${f.z - r * .7}L${f.x + r * .7} ${f.z + r * .7}M${f.x - r * .7} ${f.z + r * .7}L${f.x + r * .7} ${f.z - r * .7}`} stroke={c} strokeWidth={.015} /></g>; })}
     {p.showTech && (p.snap.tech || []).map(tp => { const sym = TECH_SYMBOL[tp.kind], r = fs * (sym.letter.length > 1 ? .62 : .5);
       return <g key={tp.id} pointerEvents="none"><circle cx={tp.x} cy={tp.z} r={r} fill={sym.color} stroke="#fff" strokeWidth={fs * .08} opacity={.92} />
         <text x={tp.x} y={tp.z + fs * .2} textAnchor="middle" fontSize={fs * (sym.letter.length > 1 ? .5 : .6)} fontFamily="IBM Plex Mono" fill="#fff">{sym.letter}</text></g>; })}

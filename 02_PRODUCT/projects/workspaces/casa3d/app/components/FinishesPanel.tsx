@@ -12,6 +12,7 @@ import { lightReport } from '@/core/light-design';
 import { roomWindows, curtainPlan, blindPlan, TEXTILE_RULES } from '@/core/textiles';
 import { kitchenOf, kitchenRun, kitchenQuantities, kitchenIssues } from '@/core/kitchen';
 import { bathOf, bathIssues, METAL_COLOR, TILE_ZONE_M } from '@/core/bath';
+import { fixtureIssues, fixtureCount, FIXTURE_KINDS, FIXTURE_ANCHORS } from '@/core/fixtures';
 import { usePrefs } from '@/lib/prefs';
 
 const KINDS = Object.keys(FEATURE_CATEGORY) as WallFeatureKind[];
@@ -35,6 +36,8 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish }: { 
   const issues = finishIssues(snap, mc, fl, room, f), light = lightReport(mc, fl, room, f), wins = roomWindows(fl, room);
   const run = kitchenRun(snap, cat, room.id), ks = kitchenOf(f), kq = run ? kitchenQuantities(run, ks, materialOf(mc, ks.countertop)) : null, kIss = kitchenIssues(snap, cat, mc, room.id, f);
   const setK = (p: Partial<NonNullable<RoomFinishes['kitchen']>>) => onFinish({ kitchen: { ...(f.kitchen || {}), ...p } });
+  const fxs = f.fixtures || [], fxIss = fixtureIssues(snap, cat, mc, room, f), setFx = (i: number, p: Partial<NonNullable<RoomFinishes['fixtures']>[number]>) => onFinish({ fixtures: fxs.map((x, k) => k === i ? { ...x, ...p } : x) });
+  const FX_CATS = { pendant: ['pendant', 'lighting'], sconce: ['wall_light'], track: ['led_profile', 'spot'] } as const;
   const bs = bathOf(f), bIss = bathIssues(snap, mc, room, f), setB = (p: Partial<NonNullable<RoomFinishes['bath']>>) => onFinish({ bath: { ...(f.bath || {}), ...p } });
   const treat = (id: string) => (f.windows || []).find(t => t.openingId === id) ?? { openingId: id };
   const setTreat = (id: string, p: Partial<WindowTreatment>) => onFinish({ windows: [...(f.windows || []).filter(t => t.openingId !== id), { ...treat(id), ...p }] });
@@ -110,6 +113,22 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish }: { 
         <label className="f"><span>{t('editor.light')}</span><select value={f.light} onChange={e => onFinish({ light: e.target.value })}>{by('lighting').map(opt)}</select></label>
         <label className="f"><span>{t('editor.lightCount')}</span><input type="number" min={0} max={20} value={f.lights ?? ''} placeholder={t('common.auto')} onChange={e => onFinish({ lights: e.target.value === '' ? undefined : Math.max(0, Math.min(20, Number(e.target.value) || 0)) })} /></label>
       </div>
+      <div className="prov">{t('fix.title')}</div>
+      {fxIss.map((i, k) => <div key={`fi${k}`} className="issue WARNING">{t(i.key, i.vars)}</div>)}
+      {fxs.map((x, i) => <div key={i} className="band">
+        <div className="grid2">
+          <label className="f"><span>{t('fix.kind')} {i + 1}</span><select value={x.kind} onChange={e => setFx(i, { kind: e.target.value as any, material: null })}>{FIXTURE_KINDS.map(k => <option key={k} value={k}>{t(`fix.kind.${k}`)}</option>)}</select></label>
+          <label className="f"><span>{t('fix.anchor')}</span><select value={x.anchor} onChange={e => setFx(i, { anchor: e.target.value as any })}>{FIXTURE_ANCHORS.map(a => <option key={a} value={a}>{t(`fix.anchor.${a}`)}</option>)}</select></label>
+        </div>
+        <label className="f"><span>{t('fix.product')}</span><select value={x.material || ''} onChange={e => setFx(i, { material: e.target.value || null })}><option value="">{t('fin.none')}</option>{by(...FX_CATS[x.kind]).map(opt)}</select></label>
+        <div className="grid2">
+          <label className="f"><span>{t('fix.count')}</span><input type="number" min={1} max={12} value={x.count ?? ''} placeholder={String(fixtureCount({ ...x, count: undefined } as any))} onChange={e => setFx(i, { count: e.target.value === '' ? undefined : Math.max(1, Math.min(12, Math.round(Number(e.target.value) || 1))) })} /></label>
+          <label className="f"><span>{t('fix.color')}</span><input type="color" value={x.color || '#1c1c1c'} onChange={e => { const h = normalizeHex(e.target.value); if (h) setFx(i, { color: h }); }} /></label>
+        </div>
+        {x.anchor === 'wall' && <label className="f"><span>{t('fix.side')}</span><select value={x.side || 'N'} onChange={e => setFx(i, { side: e.target.value as any })}>{(['N', 'S', 'E', 'W'] as const).map(sd => <option key={sd} value={sd}>{sd}</option>)}</select></label>}
+        <button className="btn" onClick={() => onFinish({ fixtures: fxs.filter((_, k) => k !== i) })}>{t('fix.remove')}</button>
+      </div>)}
+      {fxs.length < 24 && <button className="btn" onClick={() => onFinish({ fixtures: [...fxs, { kind: 'pendant', anchor: snap.placements.some(p => p.roomId === room.id && p.group === 'masa') ? 'table' : 'center' }] })}>{t('fix.add')}</button>}
     </fieldset>
     {room.type === 'baie' && <fieldset className="fin-group"><legend>{t('bath.title')}</legend>
       {bIss.map((i, k) => <div key={k} className="issue WARNING">{t(i.key, i.vars)}</div>)}

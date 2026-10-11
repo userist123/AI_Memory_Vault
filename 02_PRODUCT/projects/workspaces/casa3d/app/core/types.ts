@@ -53,7 +53,11 @@ export interface WallFeature { side: 'N' | 'S' | 'W' | 'E'; kind: WallFeatureKin
 /** Tavan: drept (vopsit), fals din gips-carton coborât cu `dropCm`, sau fals cu scafă luminoasă pe contur. */
 export interface CeilingFinish { type: 'flat' | 'drop' | 'cove'; dropCm?: number; coveCm?: number; led?: string | null; cornice?: string | null; spot?: string | null; spots?: number }
 export interface RoomFinishes { floor: string; wallPaint: string; wallTile?: string | null; baseboard?: string | null; light: string; lights?: number;
-  floorLayout?: FloorLayout; wallFeatures?: WallFeature[]; ceiling?: CeilingFinish; windows?: WindowTreatment[]; rug?: RugChoice | null; kitchen?: KitchenSpec; bath?: BathSpec }
+  floorLayout?: FloorLayout; wallFeatures?: WallFeature[]; ceiling?: CeilingFinish; windows?: WindowTreatment[]; rug?: RugChoice | null; kitchen?: KitchenSpec; bath?: BathSpec; fixtures?: LightFixture[] }
+/** Un corp de iluminat plasat: pendul, aplică sau șină, legat de o piesă de mobilier (ancora) sau de un perete. */
+export type FixtureAnchor = 'table' | 'counter' | 'bed' | 'sofa' | 'desk' | 'vanity' | 'center' | 'wall';
+export interface LightFixture { kind: 'pendant' | 'sconce' | 'track'; anchor: FixtureAnchor; material?: string | null; count?: number; heightM?: number; lengthM?: number;
+  side?: 'N' | 'S' | 'E' | 'W'; color?: string }
 /** Baia ca sistem: finisajul armăturilor (toate la fel), tipul de duș și de WC, înălțimea faianței, calorifer port-prosop, oglindă LED. */
 export interface BathSpec { metal?: 'chrome' | 'black' | 'brass' | 'gunmetal'; tap?: string | null; shower?: string | null; showerType?: 'cabin' | 'walkin';
   wc?: 'floor' | 'wall'; tileZone?: 'h120' | 'h210' | 'full'; towelRadiator?: string | null; mirror?: string | null }

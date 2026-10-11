@@ -5,6 +5,8 @@ import { textileVisual } from '@/core/textiles';
 import { doorVisual } from '@/core/doors';
 import { kitchenVisual } from '@/core/kitchen';
 import { bathVisual } from '@/core/bath';
+import { allFixturePoints } from '@/core/fixtures';
+import { materialOf } from '@/core/finishes';
 import { finishesOf } from '@/core/boq';
 import { planWithLook } from '@/lib/plan-look';
 import { itemStyle, itemSizeCm } from '@/core/appearance';
@@ -34,5 +36,7 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   if (mc) for (const it of items) if ((it.group === 'dus' || it.group === 'lavoar' || it.group === 'wc') && it.variant){ const r = snap.floor.rooms.find(x => x.id === snap.placements.find(p => p.id === it.id)?.roomId);
     const bv = r ? bathVisual(finishesOf(snap, r)) : null; if (bv) it.variant = { ...it.variant, s: { ...(it.variant.s || {}), b: bv } }; }
   if (mc) for (const d of doorVisual(snap, mc, 0)){ const g = plan.pereti[d.wallIndex]?.goluri[d.openingIndex]; if (g) g.usa = { style: d.style, color: d.color, wood: d.wood, handle: d.handle }; }
-  return { plan: { ...plan, scari, goluriPlaca: extra.voids ?? [] }, items };
+  // corpurile de iluminat plasate (culoarea: aleasă, a produsului, sau negru)
+  const lumini = allFixturePoints(snap, catalog, snap.floor.rooms, finishesOf).map(f => ({ kind: f.kind, x: f.x, z: f.z, y: f.y, nx: f.nx, nz: f.nz, len: f.len, alongX: f.alongX, color: f.color ?? (mc ? materialOf(mc, f.material)?.specs?.color : undefined) ?? '#1c1c1c' }));
+  return { plan: { ...plan, scari, lumini, goluriPlaca: extra.voids ?? [] }, items };
 }

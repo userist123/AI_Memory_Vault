@@ -7,6 +7,9 @@ import { roomWindows, curtainPlan, blindPlan } from './textiles';
 import { doorOpenings } from './doors';
 import { kitchenOf, kitchenRun, kitchenQuantities, KITCHEN_DEFAULT } from './kitchen';
 import { bathOf } from './bath';
+import { fixtureCount } from './fixtures';
+const LIGHT_CATS = new Set(['lighting', 'spot', 'led_strip', 'pendant', 'wall_light', 'led_profile']);
+const FIXTURE_LABEL = { pendant: 'Pendul', sconce: 'Aplică', track: 'Șină cu spoturi' } as const;
 import { bandGeometry, bathTiles, layoutOf, floorWaste, floorLaborId, sideGeometry, wallpaperRolls, panelCount, pieceSizeCm, ceilingOf, FEATURE_CATEGORY, FEATURE_LABOR } from './finishes';
 import { WASTE, PAINT_COATS, DOOR_HEIGHT, WINDOW_HEIGHT, BATH_TILE_HEIGHT, BACKSPLASH_HEIGHT, LIGHTS_EXTRA_PER_M2, VAT_RATE, WET_ROOMS, SANITARY, APPLIANCES, DEFAULT_BUDGET } from './rules.boq';
 
@@ -44,7 +47,7 @@ function materialLine(m: Material, key: string, roomId: string | null, label: st
   let packs: number | null = null, ordered = need, total: number;
   if (m.pack){ packs = Math.ceil(need / m.pack.size - 1e-9); ordered = packs * m.pack.size; total = m.pack.price != null ? packs * m.pack.price : ordered * m.unitPrice; }
   else { ordered = m.unit === 'buc' ? Math.ceil(need - 1e-9) : need; total = ordered * m.unitPrice; }
-  return { key, category: m.category === 'lighting' || m.category === 'spot' || m.category === 'led_strip' ? 'lighting' : TEXTILE_CATS.has(m.category) ? 'textiles' : 'finishes', roomId, label, refId: m.id, netQty: r2(net), unit: m.unit, wastePct: waste, orderedQty: r2(ordered), packs, packLabel: m.pack?.label ?? null,
+  return { key, category: LIGHT_CATS.has(m.category) ? 'lighting' : TEXTILE_CATS.has(m.category) ? 'textiles' : 'finishes', roomId, label, refId: m.id, netQty: r2(net), unit: m.unit, wastePct: waste, orderedQty: r2(ordered), packs, packLabel: m.pack?.label ?? null,
     unitPrice: m.unitPrice, total: r2(total), supplier: m.supplier, sourceUrl: m.sourceUrl, verifiedAt, confidence: m.confidence, note: m.note };
 }
 export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
@@ -118,6 +121,10 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
         const m = M(id); if (m) items.push(materialLine(m, `${room.id}:${key}`, room.id, `${lbl} · ${room.name}`, 1, mc.verifiedAt, 0)); }
       if (bb.wc === 'wall') unknown.push(`Cadru WC suspendat + clapetă · ${room.name}`);
       if (bb.showerType === 'walkin') unknown.push(`Duș walk-in: pantă, rigolă și hidroizolație suplimentară · ${room.name}`); }
+    // corpurile de iluminat plasate (pendule, aplice, șină); fără produs ales rămân necunoscute; aplicele cer un punct electric pe perete
+    (f.fixtures || []).forEach((fx, i) => { const m = M(fx.material), n = fixtureCount(fx), lbl = FIXTURE_LABEL[fx.kind];
+      if (m) items.push(materialLine(m, `${room.id}:fixture:${i}`, room.id, `${lbl} · ${room.name}`, n, mc.verifiedAt, 0)); else unknown.push(`${lbl} ×${n} (produs neales) · ${room.name}`);
+      if (fx.kind === 'sconce') unknown.push(`Punct electric pe perete pentru aplice ×${n} · ${room.name}`); });
     const sm = M(c.spot); if (sm && c.spots > 0) items.push(materialLine(sm, `${room.id}:spots`, room.id, `Spoturi încastrate · ${room.name}`, c.spots, mc.verifiedAt));
     // vopsea: pereți (fără zona placată) + tavan (și marginea tavanului fals), 2 straturi
     const paintArea = Math.max(0, g.wallNet - wallsHidden - (wt ? tileArea : 0) - featureArea) + g.ceiling + ceilingBand, pm = M(f.wallPaint);

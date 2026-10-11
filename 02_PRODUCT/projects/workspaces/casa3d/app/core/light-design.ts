@@ -5,6 +5,7 @@
 import type { Floor, MaterialsCatalog, Room, RoomFinishes } from './types';
 import { materialOf, ceilingOf } from './finishes';
 import { LIGHTS_EXTRA_PER_M2 } from './rules.boq';
+import { fixtureCount } from './fixtures';
 
 export const UTILIZATION = .5, MAINTENANCE = .8, COVE_SHARE = .5;
 /** Ținta de iluminare pe tip de cameră (lx); camerele fără valoare în sursă nu primesc verificare. */
@@ -26,6 +27,8 @@ export function lightReport(mc: MaterialsCatalog, _fl: Floor, room: Room, f: Roo
   if (c.type === 'cove' && c.led){ const m = materialOf(mc, c.led), len = 2 * (Math.max(0, r.x1 - r.x0 - 2 * c.coveCm / 100) + Math.max(0, r.z1 - r.z0 - 2 * c.coveCm / 100));
     // banda: lumenii pe metru = fluxul setului / lungimea lui
     if (m?.specs?.lumens && m.specs.pieceM) add(c.led, len, true, m.specs.lumens / m.specs.pieceM); else add(c.led, len, true); }
+  // corpurile plasate: pendulele și șina luminează direct, aplicele mai mult perete și tavan
+  for (const fx of f.fixtures || []) add(fx.material, fixtureCount(fx), fx.kind === 'sconce');
   const lumens = sources.reduce((a, s) => a + (s.lumens ?? 0) * s.count * (s.indirect ? COVE_SHARE : 1), 0);
   const lux = area > 0 ? Math.round(lumens * UTILIZATION * MAINTENANCE / area) : 0, target = LUX_TARGET[room.type] ?? null;
   const spot = materialOf(mc, c.spot) ?? mc.materials.find(m => m.category === 'spot'), spotLm = spot?.specs?.lumens;
