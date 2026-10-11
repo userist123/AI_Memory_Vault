@@ -1,3 +1,4 @@
+import { deriveStyle } from './product-style';
 import type { Catalog, ProductVariant, Offer, Product } from './types';
 import type { EngineGroup } from './layout';
 
@@ -26,7 +27,7 @@ export function toEngineCatalog(cat: Catalog): Record<string, EngineGroup> {
   for (const [g, grp] of Object.entries(groups(cat))){
     out[g] = { eticheta: grp.label, ...(grp.model && grp.model !== 'none' ? { model: grp.model } : {}), ...(grp.includedWith ? { inclus: grp.includedWith } : {}),
       v: grp.variants.map(v => { const o = cat.offers.find(x => x.variantId === v.id); const dm = v.dimensionsCm;
-        return { nume: v.name, mag: o?.provenance.source, pret: o?.price, url: o?.provenance.sourceUrl || undefined, ...(dm ? { w: dm.w, d: dm.d, h: dm.h } : {}), ...(v.dimensionsConfidence === 'MEDIUM' && dm ? { aprox: true } : {}), ...(Object.keys(v.style || {}).length ? { s: v.style } : {}), ...(v.chairs ? { chairs: v.chairs } : {}) }; }) };
+        return { nume: v.name, mag: o?.provenance.source, pret: o?.price, url: o?.provenance.sourceUrl || undefined, ...(dm ? { w: dm.w, d: dm.d, h: dm.h } : {}), ...(v.dimensionsConfidence === 'MEDIUM' && dm ? { aprox: true } : {}), ...(() => { const st = { ...deriveStyle(g, v.name), ...(v.style || {}) }; return Object.keys(st).length ? { s: st } : {}; })(), ...(v.chairs ? { chairs: v.chairs } : {}) }; }) };
   }
   return out;
 }
