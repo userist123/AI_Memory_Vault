@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-11T12:45:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-11T13:10:00Z
 TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / userist123/AI_Memory_Vault_CODEX_READY#258    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
@@ -164,6 +164,12 @@ PLAN multi-level homes (done; kept for reference):
   red-first tests (d78c40ab, 65df12f8). vitest 327/327. CI fixes: render stub as Node script (Windows), LICENSE.txt.
   PC: D:\casa3d-render\public-link.ps1 (cloudflared quick tunnel, sets CASA3D_PUBLIC_URL) and public-link-off.ps1
   written but NOT run: exposing the PC publicly waits for the owner's OK.
+- 2026-10-11 phone access (owner: "Cum fac sa am acces pe telefon la site?" -> "Om fa asta"): public link STARTED on
+  LAB-PC (cloudflared quick tunnel, URL in D:\casa3d-render\public-url.txt, changes per start); verified from
+  outside: /share 200, editor/API/admin 404. Then d2843c9f: password login (lib/auth.ts scrypt + HMAC sessions,
+  .data/auth.json), gate() in middleware (Node runtime), /login, local-only password card on the dashboard, phone
+  layout. vitest 332/332, phone e2e (iPhone 13 emulation via cf-connecting-ip) green. Owner must set the password
+  himself on http://localhost:3123 (card "Acces de pe telefon"). vault-reviewer review of d2843c9f pending.
 NEXT (in order):
 0. Owner OK -> run public-link.ps1 on the PC, verify the public URL from outside (only /share works). Realism: hood chimney; verify on PC at 1440/1280.
 0. DONE 12:55 UTC (integration): lib/twin.ts adapter, lib/design.ts (room-scoped BOQ, stale over the full twin),
