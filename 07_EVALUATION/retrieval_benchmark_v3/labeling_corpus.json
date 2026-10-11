@@ -2041,7 +2041,7 @@
    "type": "unknown",
    "lifecycle": "NONE",
    "path": "02_PRODUCT/ORIGINAL_REQUEST.md",
-   "excerpt": "Original User Request 2026-08-14T22:58:52+03:00 Transform the AI Memory Vault into a fully self-improving, autonomous Cognitive Brain with integrated multi-agent execution, continuous self-reflection, and robust memory governance. Working directory: c:\\Users\\user\\Documents\\Codex\\AI Memory Vault CODEX READY Requirements R1. Cognitive Loop Self-Execution & Autonomous Task Processing The cognitive core must autonomously process user goals through the full OODA sequence: Observe (Query classification) - Retrieve (Associative & Semantic recall) - Reason (Tree-of-Thought) - Plan (Multi-step execution) - Act (ToolRouter) - Reflect (Formal Reflexion) - Consolidate (Learning & Deduplication). R2. S"
+   "excerpt": "Original User Request 2026-08-14T22:58:52+03:00 Transform the AI Memory Vault into a fully self-improving, autonomous Cognitive Brain with integrated multi-agent execution, continuous self-reflection, and robust memory governance. Working directory: c:\\Users\\Marius\\Documents\\Codex\\AI Memory Vault CODEX READY Requirements R1. Cognitive Loop Self-Execution & Autonomous Task Processing The cognitive core must autonomously process user goals through the full OODA sequence: Observe (Query classification) - Retrieve (Associative & Semantic recall) - Reason (Tree-of-Thought) - Plan (Multi-step execution) - Act (ToolRouter) - Reflect (Formal Reflexion) - Consolidate (Learning & Deduplication). R2. S"
   },
   {
    "id": "path:02_PRODUCT/Product_Repository_Spine_Specification.md",
@@ -2065,7 +2065,7 @@
    "type": "project",
    "lifecycle": "ACTIVE",
    "path": "02_PRODUCT/projects/Continuity_Handoff.md",
-   "excerpt": "Agent Transfer & Continuity Handoff Package Vault Path : 02 PROJECTS/Continuity Handoff.md Version : 1.0.0 Target Agent : Perplexity Desktop --- 1. INSTRUCTIONS FOR PERPLEXITY (\"START HERE\") Welcome, Successor Agent (Perplexity). Do not guess or assume what the previous agent knew. Follow these exact instructions to bootstrap your execution: 1. Read this Document First : This handoff details the entire system architecture, runtime call graphs, and historical context. 2. Read the Core Operating Protocols : - Inspect [00 CORE/Rules.md](file:///C:/Users/user/Documents/Codex/AI Memory VAULT CODEX READY/00 CORE/Rules.md) (Core rules). - Inspect [00 CORE/Memory Protocol.md](file:///C:/Users/Mari"
+   "excerpt": "Agent Transfer & Continuity Handoff Package Vault Path : 02 PROJECTS/Continuity Handoff.md Version : 1.0.0 Target Agent : Perplexity Desktop --- 1. INSTRUCTIONS FOR PERPLEXITY (\"START HERE\") Welcome, Successor Agent (Perplexity). Do not guess or assume what the previous agent knew. Follow these exact instructions to bootstrap your execution: 1. Read this Document First : This handoff details the entire system architecture, runtime call graphs, and historical context. 2. Read the Core Operating Protocols : - Inspect [00 CORE/Rules.md](file:///C:/Users/Marius/Documents/Codex/AI Memory VAULT CODEX READY/00 CORE/Rules.md) (Core rules). - Inspect [00 CORE/Memory Protocol.md](file:///C:/Users/Mari"
   },
   {
    "id": "ae0206df-b0cb-4810-b2a2-cea462600561",
@@ -2489,7 +2489,7 @@
    "type": "procedure",
    "lifecycle": "ACTIVE",
    "path": "10_DOCUMENTATION/procedures/Browser_AI_Agent_Integration_Runbook.md",
-   "excerpt": "🌐 Runbook Canonic: Sincronizarea și Conectarea Agenților AI din Browser Acest ghid descrie procedurile pas-cu-pas pentru conectarea tuturor agenților AI din browser ( ChatGPT, Perplexity, Claude Web, Gemini Web, Extensii de Browser / Tampermonkey ) la Vault-ul canonic de memorie. --- 🏗️ 1. Cele 3 Metode de Conectare --- 📝 Metoda A: Prompt de Sistem & Markdown Injection (Fără Server) 1. Deschizi fișierul canonic de prompt-uri: [ 06 INBOX/RAW IMPORTS/markdawn/BROWSER AI SYSTEM PROMPTS.md ](file:///C:/Users/user/Documents/Codex/AI Memory Vault CODEX READY/06 INBOX/RAW IMPORTS/markdawn/BROWSER AI SYSTEM PROMPTS.md). 2. Copiezi promptul specific platformei tale: - ChatGPT : Lipește în Custom GP"
+   "excerpt": "🌐 Runbook Canonic: Sincronizarea și Conectarea Agenților AI din Browser Acest ghid descrie procedurile pas-cu-pas pentru conectarea tuturor agenților AI din browser ( ChatGPT, Perplexity, Claude Web, Gemini Web, Extensii de Browser / Tampermonkey ) la Vault-ul canonic de memorie. --- 🏗️ 1. Cele 3 Metode de Conectare --- 📝 Metoda A: Prompt de Sistem & Markdown Injection (Fără Server) 1. Deschizi fișierul canonic de prompt-uri: [ 06 INBOX/RAW IMPORTS/markdawn/BROWSER AI SYSTEM PROMPTS.md ](file:///C:/Users/Marius/Documents/Codex/AI Memory Vault CODEX READY/06 INBOX/RAW IMPORTS/markdawn/BROWSER AI SYSTEM PROMPTS.md). 2. Copiezi promptul specific platformei tale: - ChatGPT : Lipește în Custom GP"
   },
   {
    "id": "proc-reflexion-0001",
