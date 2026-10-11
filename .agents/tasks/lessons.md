@@ -126,3 +126,9 @@ Review finding: a client's approval only sent {decision, author}; the designer c
 re-send under the same id, and a stale client tab would approve the new amount. Rule: any public approve/accept action
 carries the version the person saw (here the ms-truncated `sent_at`) and the update is conditional on it (409 otherwise).
 Also: `res.pipe(decoder)` does not forward `res` errors (use `stream.pipeline`), and a socket `timeout` is not an overall deadline.
+
+## 2026-10-11 — Every .md written into the content tree needs the vault YAML front matter, including subagent research
+CI `regression-and-heldout` failed on `test_notes_strict_yaml`: four research notes written by subagents had no front
+matter, so the storage engine could not read them. Rule: before committing any new .md under 01_/02_/10_ trees, add the
+front matter (id, type, lifecycle REVIEW, provenance, verification unverified, relations) and run
+`python3 -m pytest -q 20_TESTS/test_notes_strict_yaml.py`. Tell research subagents to write the front matter themselves.
