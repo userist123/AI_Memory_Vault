@@ -356,3 +356,21 @@ input[type=file]{font-size:12px;color:var(--lead)} input[type=file]::file-select
   .oline-main{grid-template-columns:minmax(0,1fr) auto;row-gap:4px} .oqty{grid-column:1} .ototal{grid-column:2;grid-row:1} .oline-main .st{grid-column:2;grid-row:2}
   .supplier>header{padding:10px 12px} .oline-main{padding:10px 12px} .oedit{padding:4px 12px 14px} .ostatuses button{flex:1 1 30%;min-height:42px}
 }
+
+/* etapa Șantier și raportul de remedieri */
+.site-act{display:flex;gap:8px;align-items:center;flex-wrap:wrap} .site-act .filters{margin:0 0 0 auto} .btn.big{min-height:46px;padding:0 20px;font-size:15px}
+.snag{border-top:1px solid var(--rule);padding:12px 16px;display:grid;gap:10px} .snag:first-child{border-top:0}
+.snag-main{display:grid;grid-template-columns:auto 1fr;gap:12px} .snag-n{font:400 20px var(--serif);color:var(--lead)} .snag-txt{display:grid;gap:3px} .snag-txt b{font-weight:500} .snag-txt p{margin:0;color:var(--ink)} .snag-txt small{color:var(--lead);font-size:12px}
+.snag-photos{display:flex;gap:8px;flex-wrap:wrap;align-items:center} .snag-photos img{width:84px;height:84px;object-fit:cover;display:block;border:1px solid var(--rule)}
+.snag .ostatuses .snag-more{margin-left:auto;background:transparent;border-color:transparent;color:var(--lead)}
+.snag.st-s-fixed .snag-txt b{color:#4f6b4a} .snag.st-s-verified{opacity:.65}
+.snag-form{background:var(--surface);border:1px solid var(--ink);padding:16px;display:grid;gap:12px} .snag-form textarea{font:inherit;padding:8px;border:1px solid var(--rule)}
+.photo-btn{cursor:pointer;display:inline-flex;align-items:center;min-height:42px}
+.report{max-width:900px;margin:0 auto;padding:32px 24px;background:#fff;min-height:100vh} .report header{border-bottom:1px solid var(--ink);padding-bottom:14px;margin-bottom:18px}
+.report h1{font:400 34px var(--serif);margin:6px 0} .report header p{margin:4px 0} .report h2{font:400 22px var(--serif);margin:22px 0 8px;border-bottom:1px solid var(--rule);padding-bottom:4px}
+.report .kicker{font:500 11px var(--sans);text-transform:uppercase;letter-spacing:.14em;color:var(--accent)}
+.r-snag{padding:10px 0;border-bottom:1px solid var(--rule);break-inside:avoid} .r-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap} .r-head span{color:var(--lead);font-size:13px} .r-snag p{margin:6px 0}
+.r-photos{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px} .r-photos img{width:180px;height:135px;object-fit:cover;border:1px solid var(--rule)}
+.report-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+@media print{ .report{padding:0} .r-photos img{width:150px;height:112px} }
+@media (max-width:700px){ .site-act .filters{margin:0;width:100%} .site-act .btn.big{flex:1 1 auto} .snag{padding:12px} .snag .ostatuses button{flex:1 1 28%} .snag-photos img{width:72px;height:72px} .report{padding:16px 12px} }

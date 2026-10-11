@@ -43,6 +43,13 @@ create table if not exists share_feedback(id uuid primary key default gen_random
   author text not null, body text not null, created_at timestamptz not null default now(), resolved_at timestamptz);
 create index if not exists share_feedback_project on share_feedback(project_id, created_at desc);
 create index if not exists share_feedback_token on share_feedback(token);
+create table if not exists site_photos(id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id) on delete cascade,
+  mime text not null, data bytea not null, bytes int not null, created_at timestamptz not null default now());
+create index if not exists site_photos_project on site_photos(project_id);
+create table if not exists snags(id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id) on delete cascade, number int not null,
+  title text not null, body text not null default '', room_id text, trade text not null, status text not null default 'open', photos jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now(), resolved_at timestamptz, unique(project_id, number));
+create index if not exists snags_project on snags(project_id, number);
 create table if not exists procurement(project_id uuid not null references projects(id) on delete cascade, key text not null, state jsonb not null,
   updated_at timestamptz not null default now(), primary key(project_id, key));
 `;
