@@ -15,7 +15,9 @@ export const CCT_RANGE: Record<string, [number, number]> = { living: [2700, 3000
 
 export interface LightSource { id: string; count: number; lumens: number | null; cctK: number | null; indirect: boolean }
 export interface LightReport { area: number; sources: LightSource[]; lumens: number; unknownLumens: boolean; lux: number; target: [number, number] | null;
-  ccts: number[]; spotsForTarget: number | null }
+  ccts: number[]; spotsForTarget: number | null;
+  /** straturile de lumină: general (plafonieră, spoturi, scafă), de lucru (peste blat, masă, birou, lavoar, citit), de accent (aplice, scafă) */
+  layers: { ambient: boolean; task: boolean; accent: boolean } }
 
 export const autoLightCount = (area: number) => 1 + Math.max(0, Math.ceil((area - LIGHTS_EXTRA_PER_M2) / LIGHTS_EXTRA_PER_M2));
 export function lightReport(mc: MaterialsCatalog, _fl: Floor, room: Room, f: RoomFinishes): LightReport {
@@ -29,12 +31,17 @@ export function lightReport(mc: MaterialsCatalog, _fl: Floor, room: Room, f: Roo
     if (m?.specs?.lumens && m.specs.pieceM) add(c.led, len, true, m.specs.lumens / m.specs.pieceM); else add(c.led, len, true); }
   // corpurile plasate: pendulele și șina luminează direct, aplicele mai mult perete și tavan
   for (const fx of f.fixtures || []) add(fx.material, fixtureCount(fx), fx.kind === 'sconce');
+  const TASK_AT = new Set(['table', 'counter', 'desk', 'vanity']), fx = f.fixtures || [];
+  const layers = { ambient: (f.lights ?? 1) > 0 && !!materialOf(mc, f.light) || (!!c.spot && (c.spots ?? 0) > 0) || (c.type === 'cove' && !!c.led),
+    task: fx.some(x => (x.kind !== 'sconce' && TASK_AT.has(x.anchor)) || (x.kind === 'sconce' && (x.anchor === 'bed' || TASK_AT.has(x.anchor)))) || !!f.kitchen?.underLed
+      || materialOf(mc, f.bath?.mirror)?.category === 'led_mirror',
+    accent: fx.some(x => x.kind === 'sconce' && !TASK_AT.has(x.anchor)) || (c.type === 'cove' && !!c.led) || fx.some(x => x.kind === 'track' && !TASK_AT.has(x.anchor)) };
   const lumens = sources.reduce((a, s) => a + (s.lumens ?? 0) * s.count * (s.indirect ? COVE_SHARE : 1), 0);
   const lux = area > 0 ? Math.round(lumens * UTILIZATION * MAINTENANCE / area) : 0, target = LUX_TARGET[room.type] ?? null;
   const spot = materialOf(mc, c.spot) ?? mc.materials.find(m => m.category === 'spot'), spotLm = spot?.specs?.lumens;
   const missing = target ? Math.max(0, target[0] * area / (UTILIZATION * MAINTENANCE) - lumens) : 0;
   return { area: Math.round(area * 100) / 100, sources, lumens: Math.round(lumens), unknownLumens: sources.some(s => s.lumens == null), lux, target,
-    ccts: [...new Set(sources.map(s => s.cctK).filter((k): k is number => k != null))].sort(), spotsForTarget: target && spotLm && missing > 0 ? Math.ceil(missing / spotLm) : null };
+    ccts: [...new Set(sources.map(s => s.cctK).filter((k): k is number => k != null))].sort(), spotsForTarget: target && spotLm && missing > 0 ? Math.ceil(missing / spotLm) : null, layers };
 }
 /** Avertismentele de iluminat: prea puțină lumină pentru tipul camerei, temperatură de culoare nepotrivită sau amestecată. */
 export function lightIssues(mc: MaterialsCatalog, fl: Floor, room: Room, f: RoomFinishes): { key: string; roomId: string; vars?: Record<string, string | number> }[] {
@@ -42,6 +49,9 @@ export function lightIssues(mc: MaterialsCatalog, fl: Floor, room: Room, f: Room
   if (rep.target && !rep.unknownLumens && rep.lux < rep.target[0]) out.push({ key: 'light.low', roomId: room.id, vars: { lux: rep.lux, min: rep.target[0], max: rep.target[1], ...(rep.spotsForTarget ? { n: rep.spotsForTarget } : { n: '-' }) } });
   const cr = CCT_RANGE[room.type];
   if (cr) for (const k of rep.ccts) if (k < cr[0] || k > cr[1]) out.push({ key: 'light.cct', roomId: room.id, vars: { k, lo: cr[0], hi: cr[1] } });
+  // straturi: lumina de lucru lipsește unde se lucrează (bucătărie, baie); o singură sursă generală face camera de zi plată
+  if ((room.type === 'bucatarie' || room.type === 'baie') && !rep.layers.task) out.push({ key: room.type === 'baie' ? 'light.noTaskBath' : 'light.noTaskKitchen', roomId: room.id });
+  if ((room.type === 'living' || room.type === 'dormitor') && [rep.layers.ambient, rep.layers.task, rep.layers.accent].filter(Boolean).length < 2) out.push({ key: 'light.oneLayer', roomId: room.id });
   if (rep.ccts.length > 1 && rep.ccts.at(-1)! - rep.ccts[0]! > 500) out.push({ key: 'light.cctMixed', roomId: room.id, vars: { list: rep.ccts.join(' / ') } });
   return out;
 }

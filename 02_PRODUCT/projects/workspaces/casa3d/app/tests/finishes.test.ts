@@ -93,7 +93,10 @@ describe('avertismente tehnice', () => {
     assert.ok(keys(set(demo(), 'baie', { wallFeatures: [{ side: 'N', kind: 'wallpaper', material: 'tapet-grandeco-marmor' }] }), 'baie').includes('fin.notForWet'));
     assert.ok(keys(set(demo(), 'living', { floorLayout: { pattern: 'herringbone' } }), 'living').includes('fin.patternProduct'));
     assert.ok(keys(set(demo(), 'living', { floor: 'parchet-krono-herringbone-k450', floorLayout: { pattern: 'straight' } }), 'living').includes('fin.herringboneOnly'));
-    assert.deepEqual(keys(demo(), 'living'), ['light.low'], 'singurul avertisment implicit: 2 × 800 lm în 21 m² e prea puțin');
+    assert.deepEqual(keys(demo(), 'living'), ['light.low', 'light.oneLayer'], 'implicit: 2 × 800 lm în 21 m² e prea puțin și e o singură sursă (doar plafoniera)');
+    assert.ok(!keys(set(demo(), 'living', { fixtures: [{ kind: 'sconce', anchor: 'sofa' }] }), 'living').includes('light.oneLayer'), 'aplicele adaugă stratul de accent');
+    assert.ok(keys(set(demo(), 'baie', { fixtures: [], bath: { mirror: null } }), 'baie').includes('light.noTaskBath'));
+    assert.ok(!keys(set(demo(), 'baie', { bath: { mirror: 'ikea-faxalven-oglinda-iluminat-60x95' } }), 'baie').includes('light.noTaskBath'), 'oglinda cu LED e lumina de lucru a băii');
   });
 });
 

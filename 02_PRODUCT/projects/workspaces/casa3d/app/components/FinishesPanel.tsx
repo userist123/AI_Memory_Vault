@@ -118,6 +118,7 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish, onSw
 
     <fieldset className="fin-group"><legend>{t('fin.lighting')}</legend>
       <div className="prov" role="status">{t(light.unknownLumens ? 'light.estimateUnknown' : 'light.estimate', { lux: light.lux, lm: light.lumens })}{light.target ? ` · ${t('light.target', { min: light.target[0], max: light.target[1] })}` : ''}{light.ccts.length ? ` · ${light.ccts.join(' / ')} K` : ''}</div>
+      <div className="prov">{t('light.layers')}: {(['ambient', 'task', 'accent'] as const).map(k => `${t(`light.layer.${k}`)} ${light.layers[k] ? '✓' : '—'}`).join(' · ')}</div>
       <div className="grid2">
         <label className="f"><span>{t('editor.light')}</span><MaterialPicker cur={cur} value={f.light} options={by('lighting')} onChange={v => onFinish({ light: v })} /></label>
         <label className="f"><span>{t('editor.lightCount')}</span><input type="number" min={0} max={20} value={f.lights ?? ''} placeholder={t('common.auto')} onChange={e => onFinish({ lights: e.target.value === '' ? undefined : Math.max(0, Math.min(20, Number(e.target.value) || 0)) })} /></label>
