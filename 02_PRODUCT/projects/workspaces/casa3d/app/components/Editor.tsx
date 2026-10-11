@@ -212,7 +212,7 @@ export default function Editor({ id }: { id: string }){
           <button className="btn" onClick={onAddLevel} title={t('level.addTitle')} disabled={nLevels >= MAX_LEVELS}>{t('level.add')}</button></div>
         {view !== '3d' && <div style={{ position: 'relative', minHeight: 0 }}><PlanView showTech={showTech && !preview} onTechAt={(x, z) => { if (!snap || preview) return; const pt = placeTechPoint(snap, techKind, x, z); if (!pt){ say(t('tech.outside')); return; } mutate(s => { s.tech = [...(s.tech || []), pt]; }); say(t('tech.placed', { rn: snap.floor.rooms.find(r => r.id === pt.roomId)?.name ?? '' })); }} key={(preview ? 'p' + preview.v.tier : 'live') + L} voids={voids} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} sel={preview ? null : sel} tool={preview ? 'select' : tool} severities={preview ? {} : sev} onSelect={preview ? () => {} : setSel} onEdit={preview ? () => {} : onEdit} onAddWall={preview ? () => {} : onAddWall} onAddRoom={preview ? () => {} : onAddRoom} onAddOpening={preview ? () => {} : onAddOpening} calib={preview ? null : calib} onCalibPick={(a, b) => setCalib({ stage: 'enter', a, b })} />
           <div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'measure' ? t('editor.hintMeasure') : t('editor.hintSelect')}</div></div>}
-        {view !== '2d' && <Viewer3D voids={voids} mc={mc} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })} />}
+        {view !== '2d' && <Viewer3D projectId={id} voids={voids} mc={mc} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })} />}
         {preview && <div className="previewbar" role="status">{t('editor.previewBar', { title: preview.v.title })} <button className="btn" onClick={() => setPreview(null)}>{t('common.close')}</button></div>}
         {help && <KeyboardHelp onClose={() => setHelp(false)} />}
         {pending && <div className="pending" role="alertdialog" aria-label={t('editor.warnings')}>
@@ -305,6 +305,7 @@ export default function Editor({ id }: { id: string }){
         {stage === 'docs' && <DocsPanel id={id} lang={lang} onSchedule={() => downloadSchedule(finishSchedule(house!, catalog, mc), t, cur, snap.name || 'proiect', levelName)} />}
         {stage === 'docs' && <AdvisorPanel lang={lang} units={units} currency={cur} advice={advice} rooms={snap.floor.rooms} onShow={showAdvice} />}
         {stage === 'quote' && <BudgetPanel snap={house!} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
+        {stage === 'present' && !showSel && <RenderGallery id={id} />}
         {stage === 'present' && !showSel && <div className="docs"><a className="docrow" href={`/p/${id}/present`} target="_blank" rel="noopener"><b>{t('stage.openPresentation')}</b><small>{t('stage.openPresentationSub')}</small></a></div>}
         {stage === 'present' && !showSel && <div className="revs"><h3>{t('stage.revisions')}</h3>{revs.length === 0 && <p className="muted">{t('editor.noRevsYet')}</p>}
           {revs.map(r => <div key={r.number} className="r"><span>{t('editor.revisionN', { n: r.number })}{r.note ? ` · ${r.note}` : ''}</span><button className="btn" onClick={() => restore(r.number)}>{t('editor.revert')}</button><button className="btn" onClick={() => shareRevision(r.number)} title={t('editor.shareTitle')}>{t('editor.share')}</button><small>{when(r.created_at)}</small></div>)}
@@ -388,5 +389,20 @@ function DocsPanel({ id, lang, onSchedule }: { id: string; lang: string; onSched
     <a className="docrow" href={`/p/${id}/print`} target="_blank" rel="noopener"><b>{t('docs.pack')}</b><small>{t('docs.packSub')}</small></a>
     <button className="docrow" onClick={onSchedule}><b>{t('docs.schedule')}</b><small>{t('docs.scheduleSub')}</small></button>
     <a className="docrow" href={`/api/projects/${id}/export.dxf?lang=${lang}`} download><b>{t('docs.dxf')}</b><small>{t('docs.dxfSub')}</small></a>
+  </div>);
+}
+
+/** Randările fotorealiste făcute pe acest calculator (Blender Cycles), cele mai noi întâi; se reîmprospătează cât timp lucrează. */
+function RenderGallery({ id }: { id: string }){
+  const { t, lang } = usePrefs(), [data, setData] = useState<{ available: boolean; jobs: { job: string; status: string; images: string[]; startedAt: string }[] } | null>(null);
+  useEffect(() => { let alive = true, timer: any; const load = () => fetch(`/api/projects/${id}/renders`).then(r => r.ok ? r.json() : null).then(j => { if (!alive) return; setData(j);
+      if (j?.jobs?.some((x: any) => x.status === 'running')) timer = setTimeout(load, 5000); }).catch(() => {});
+    load(); return () => { alive = false; clearTimeout(timer); }; }, [id]);
+  if (!data) return null;
+  return (<div className="renders"><h3>{t('render.title')}</h3>
+    {!data.available && <p className="muted">{t('render.notConfigured')}</p>}
+    {data.available && data.jobs.length === 0 && <p className="muted">{t('render.none')}</p>}
+    {data.jobs.slice(0, 3).map(j => <div key={j.job} className="render-job"><small>{new Date(j.startedAt).toLocaleString(intlLocale(lang))} · {t(`render.status.${j.status}`)}</small>
+      <div className="render-grid">{j.images.map(f => <a key={f} href={`/api/projects/${id}/renders/${j.job}/${f}`} target="_blank" rel="noopener"><img src={`/api/projects/${id}/renders/${j.job}/${f}`} alt={f} loading="lazy" /></a>)}</div></div>)}
   </div>);
 }
