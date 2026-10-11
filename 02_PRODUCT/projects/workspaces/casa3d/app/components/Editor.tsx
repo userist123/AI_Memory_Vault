@@ -35,6 +35,7 @@ import { area, r3, wallLength } from '@/core/geometry';
 import KeyboardHelp from './KeyboardHelp';
 import UnderlayPanel, { type Calib } from './UnderlayPanel';
 import ProjectCard from './ProjectCard';
+import TasksPanel from './TasksPanel';
 import OrdersPage from './OrdersPage';
 import SitePage from './SitePage';
 import type { ProjectMeta } from '@/core/project-meta';
@@ -237,6 +238,7 @@ export default function Editor({ id }: { id: string }){
           {!showSel && <>
             <h3>{snap.name}{nLevels > 1 ? ` · ${levelName(L)}` : ''}</h3>
             {meta && <ProjectCard id={id} initial={meta} areaM2={floors(house!).flatMap(f => f.rooms).reduce((a, r) => a + area(r.rect), 0)} cur={cur} say={say} />}
+            {meta && L === 0 && <TasksPanel projectId={id} />}
             {L > 0 && <div style={{ display: 'grid', gap: 6 }}>
               <label className="f"><span>{t('level.name')}</span><input value={snap.floor.name} maxLength={60} onChange={e => mutate(s => { s.floor.name = e.target.value; })} /></label>
               <div className="prov">{t('level.elevation', { h: formatLength(elevationOf(house!, L), units, lang) })}</div>
