@@ -1,0 +1,4 @@
+# Verified false positives, one exact fingerprint each (commit:path:rule:line).
+# generic-api-key matched ordinary prose in a detection review table on the owner's loganalyzer
+# branch; no secret. Checked 2026-10-11 with gitleaks 8.28.0; exception approved by the owner.
+667f76d7744ed4c9b7697d25b2ef16f02b2b7935:02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/REVIEW_2026-10-11_SENIOR_DETECTION_AND_PERFORMANCE.md:generic-api-key:393
