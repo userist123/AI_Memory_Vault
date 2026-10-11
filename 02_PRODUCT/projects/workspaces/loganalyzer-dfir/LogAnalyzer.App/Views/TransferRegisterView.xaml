@@ -118,10 +118,31 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
+                <StackPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+                    <TextBlock Text="Verifică transferul după conținut" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="Alegeți un transfer din listă (sau niciunul = toate) și un folder sau mediul conectat. Se compară amprentele SHA-256; suportul nu este modificat." TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,4"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <Button Content="Verifică un folder…" Command="{Binding VerifyFolderCommand}" Margin="0,0,8,0" AutomationProperties.Name="Verifică transferul după conținut într-un folder"/>
+                        <Button Content="Verifică mediul conectat" Command="{Binding VerifyMediumCommand}" Margin="0,0,8,0" AutomationProperties.Name="Verifică transferul după conținut pe mediul ales"/>
+                        <Button Content="Oprește" Command="{Binding CancelVerifyCommand}" Margin="0,0,12,0" AutomationProperties.Name="Oprește verificarea"/>
+                        <CheckBox Content="arată și fișierele de pe suport care nu sunt în niciun transfer" IsChecked="{Binding ReportUnlisted}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <ProgressBar IsIndeterminate="True" Height="4" Visibility="{Binding IsVerifying, Converter={StaticResource BoolToVis}}"/>
+                    <TextBlock Text="{Binding VerifyProgress}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{StaticResource TextMutedBrush}"/>
+                    <TextBlock Text="{Binding VerifySummary}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,4"/>
+                    <ItemsControl ItemsSource="{Binding VerifyResults}" MaxHeight="150" AutomationProperties.Name="Rezultatul verificării după conținut">
+                        <ItemsControl.Template><ControlTemplate><ScrollViewer VerticalScrollBarVisibility="Auto"><ItemsPresenter/></ScrollViewer></ControlTemplate></ItemsControl.Template>
+                        <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding Text}" TextWrapping="Wrap" Margin="0,0,0,2" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"/></DataTemplate></ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <ItemsControl ItemsSource="{Binding VerifyUnlisted}" MaxHeight="100" AutomationProperties.Name="Fișiere de pe suport care nu apar în niciun transfer">
+                        <ItemsControl.Template><ControlTemplate><ScrollViewer VerticalScrollBarVisibility="Auto"><ItemsPresenter/></ScrollViewer></ControlTemplate></ItemsControl.Template>
+                        <ItemsControl.ItemTemplate><DataTemplate><TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource WarningBrush}"><Run Text="Nedeclarat: "/><Run Text="{Binding RelativePath, Mode=OneWay}"/></TextBlock></DataTemplate></ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
                 <ItemsControl DockPanel.Dock="Bottom" ItemsSource="{Binding Problems}" AutomationProperties.Name="Probleme găsite în registrul de transferuri" Margin="0,6,0,0">
                     <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource CriticalBrush}"/></DataTemplate></ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <DataGrid ItemsSource="{Binding Transfers}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" AutomationProperties.Name="Transferurile înregistrate">
+                <DataGrid ItemsSource="{Binding Transfers}" SelectedItem="{Binding SelectedTransfer, Mode=TwoWay}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" AutomationProperties.Name="Transferurile înregistrate">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Nr." Binding="{Binding RegistrationNumber}" Width="120"/>
                         <DataGridTextColumn Header="Data" Binding="{Binding DateTime}" Width="115"/>

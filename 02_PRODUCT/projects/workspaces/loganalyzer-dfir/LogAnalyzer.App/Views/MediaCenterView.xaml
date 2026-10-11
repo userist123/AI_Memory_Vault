@@ -59,7 +59,24 @@
                 <Grid Margin="8">
                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                     <TextBlock Text="Conectate acum" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                    <DataGrid Grid.Row="1" AutomationProperties.Name="Dispozitive conectate acum" ItemsSource="{Binding ConnectedNow}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="220" Margin="0,4,0,12">
+                    <StackPanel Grid.Row="1" Margin="0,4,0,12">
+                    <ItemsControl ItemsSource="{Binding MediumChecks}" AutomationProperties.Name="Verificarea suportului introdus">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock TextWrapping="Wrap" Margin="0,0,0,2">
+                                    <Run Text="{Binding Device, Mode=OneWay}" FontWeight="SemiBold"/><Run Text=" — "/><Run Text="{Binding Text, Mode=OneWay}"/>
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                            <Style.Triggers><DataTrigger Binding="{Binding Suspicious}" Value="True"><Setter Property="Foreground" Value="{StaticResource CriticalBrush}"/></DataTrigger></Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Button Content="Verifică suportul introdus" Command="{Binding InspectMediaCommand}" HorizontalAlignment="Left" Margin="0,2,0,6" AutomationProperties.Name="Verifică stick-urile conectate (autorun, foldere ascunse, scurtături)"/>
+                    <DataGrid AutomationProperties.Name="Dispozitive conectate acum" ItemsSource="{Binding ConnectedNow}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="220" Margin="0,4,0,0">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Nume" Binding="{Binding Device.DisplayName}" Width="1.6*"/>
                             <DataGridTextColumn Header="Față de registru" Binding="{Binding MatchText}" Width="170"/>
@@ -70,6 +87,7 @@
                             <DataGridTextColumn Header="Capacitate" Binding="{Binding Device.CapacityText}" Width="90"/>
                         </DataGrid.Columns>
                     </DataGrid>
+                    </StackPanel>
                     <TextBlock Grid.Row="2" Text="Ce s-a întâmplat (în timp real, de la deschiderea aplicației)" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                     <DataGrid Grid.Row="3" AutomationProperties.Name="Conectări și deconectări în timp real" ItemsSource="{Binding LiveFeed}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="0,4,0,0">
                         <DataGrid.RowStyle>

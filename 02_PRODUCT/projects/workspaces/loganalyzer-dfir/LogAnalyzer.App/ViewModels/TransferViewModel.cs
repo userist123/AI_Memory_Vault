@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -224,13 +225,73 @@ namespace LogAnalyzer.UI.ViewModels
             Status = $"Transferul {row.RegistrationNumber} a fost înregistrat." + (issues.Count > 0 ? " Atenție: " + string.Join("; ", issues.Select(i => i.Message)) : "");
         }
 
+        // ---- verification by content (research 2026-10-12, item 1) ------------------------------------------------------------------
+
+        /// <summary>The transfer chosen in the list; empty = every transfer is compared.</summary>
+        [ObservableProperty] private TransferRow? _selectedTransfer;
+        [ObservableProperty] private bool _reportUnlisted = true;
+        [ObservableProperty] private bool _isVerifying;
+        [ObservableProperty] private string _verifySummary = "Verificarea după conținut compară amprentele din registru cu un folder sau cu mediul conectat. Suportul este citit doar pentru citire.";
+        [ObservableProperty] private string _verifyProgress = "";
+        public ObservableCollection<DeclaredFileResult> VerifyResults { get; } = new();
+        public ObservableCollection<UnlistedFile> VerifyUnlisted { get; } = new();
+        private TransferVerification? _lastVerification;
+        private CancellationTokenSource? _verifyCts;
+
+        [RelayCommand]
+        private async Task VerifyFolder()
+        {
+            var dlg = new OpenFolderDialog { Title = "Folderul sau mediul de verificat (se citește, nu se modifică)" };
+            if (dlg.ShowDialog() != true) return;
+            await VerifyAt(dlg.FolderName);
+        }
+
+        [RelayCommand]
+        private async Task VerifyMedium()
+        {
+            var letter = SelectedMedium?.Device.DriveLetters.Split(' ').FirstOrDefault(l => l.Length == 2);
+            if (letter is null) { VerifySummary = "Mediul ales nu are o literă de unitate: alegeți un folder cu „Verifică un folder…”."; return; }
+            await VerifyAt(letter + "\\");
+        }
+
+        [RelayCommand]
+        private void CancelVerify() => _verifyCts?.Cancel();
+
+        private async Task VerifyAt(string root)
+        {
+            if (IsVerifying) return;
+            if (_register.Rows.Count == 0) { VerifySummary = "Registrul nu are niciun transfer de verificat."; return; }
+            var scope = SelectedTransfer is { } t ? new List<TransferRow> { t } : _register.Rows.ToList();
+            var all = _register.Rows.ToList();
+            var opts = new TransferVerifyOptions { ReportUnlisted = ReportUnlisted };
+            IsVerifying = true;
+            VerifyResults.Clear(); VerifyUnlisted.Clear();
+            VerifySummary = "Se citește suportul și se calculează amprentele…";
+            using var cts = _verifyCts = new CancellationTokenSource();
+            var progress = new Progress<TransferVerifyProgress>(p => VerifyProgress = p.Current.Length == 0 ? "" : $"{p.FilesDone}/{p.FilesTotal}: {p.Current}");
+            try
+            {
+                var v = await Task.Run(() => TransferVerifier.Verify(scope, all, root, opts, progress, cts.Token));
+                _lastVerification = v;
+                foreach (var d in v.Declared) VerifyResults.Add(d);
+                foreach (var u in v.Unlisted) VerifyUnlisted.Add(u);
+                var logged = TransferVerifier.WriteAudit(v);
+                VerifySummary = v.SummaryText + (logged ? " Verificarea a fost înscrisă în jurnalul de audit." : " NU a fost înscrisă în audit: autentificați-vă în aplicație.");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                VerifySummary = "Suportul nu a putut fi citit: " + ex.Message;
+            }
+            finally { IsVerifying = false; VerifyProgress = ""; _verifyCts = null; }
+        }
+
         [RelayCommand]
         private void Report()
         {
             var dlg = new SaveFileDialog { FileName = $"Registru_transferuri_{DateTime.Now:yyyyMMdd}.pdf", Filter = "PDF (*.pdf)|*.pdf", Title = "Raportul registrului de transferuri" };
             if (dlg.ShowDialog() != true) return;
             var findings = TransferChecks.Check(_register, _media.Register.Snapshot());
-            TransferReportPdf.Write(dlg.FileName, _register, findings, _header, "", AppModeContext.IsAirGapped, ReportFrom, ReportTo?.Date.AddDays(1).AddTicks(-1));
+            TransferReportPdf.Write(dlg.FileName, _register, findings, _header, "", AppModeContext.IsAirGapped, ReportFrom, ReportTo?.Date.AddDays(1).AddTicks(-1), _lastVerification);
             Status = $"Raportul a fost salvat: {dlg.FileName}";
             Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });
         }
