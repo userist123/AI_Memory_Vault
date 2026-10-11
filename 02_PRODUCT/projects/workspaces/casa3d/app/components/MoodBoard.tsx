@@ -8,6 +8,7 @@ import { floors } from '@/core/levels';
 import { formatMoney, formatDimsCm } from '@/core/format';
 import { swatchStyle } from './MaterialPicker';
 import { usePrefs } from '@/lib/prefs';
+import EmptyState from './EmptyState';
 
 export default function MoodBoard({ id }: { id: string }){
   const { t, lang, units } = usePrefs(), [d, setD] = useState<{ name: string; draft: Snapshot; cat: Catalog; mc: MaterialsCatalog; renders: Record<string, string> } | null>(null), [err, setErr] = useState(false);
@@ -27,7 +28,7 @@ export default function MoodBoard({ id }: { id: string }){
       return <section key={b.roomId} className="board-room">
         <h2>{b.name}</h2>
         <div className="board-grid">
-          <div className="board-hero">{d.renders[b.roomId] ? <img src={d.renders[b.roomId]} alt={b.name} /> : <div className="board-noimg">{t('board.noRender')}</div>}</div>
+          <div className="board-hero">{d.renders[b.roomId] ? <img src={d.renders[b.roomId]} alt={b.name} /> : <EmptyState className="board-noimg" title={t('empty.board.title')} text={t('empty.board.text')} />}</div>
           <div className="board-side">
             <h3>{t('board.palette')}</h3>
             <div className="board-bar" role="img" aria-label={t('board.palette')}>{b.palette.map((c, i) => <span key={i} style={{ background: c.hex, flexGrow: c.share }} title={`${c.label} · ${pct(c.share)}`} />)}</div>

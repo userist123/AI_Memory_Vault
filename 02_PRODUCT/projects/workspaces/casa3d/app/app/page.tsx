@@ -54,7 +54,6 @@ export default function Home(){
     {demo && <section className="demo-hero"><span className="kicker">{t('demo.kicker')}</span><h1>{t('demo.title')}</h1><p>{t('demo.lead')}</p>
       <ul>{['plan', 'products', 'finishes', 'budget', 'client', 'docs'].map(k => <li key={k}>{t(`demo.f.${k}`)}</li>)}</ul>
       <div className="row"><button className="btn primary" disabled={busy} onClick={() => create('demo')}>{t('demo.open')}</button><span className="muted">{t('demo.note')}</span></div></section>}
-    {list !== null && <TasksPanel projects={(list ?? []).map(p => ({ id: p.id, name: p.name }))} />}
     <section>
       <div className="home-sec"><h1>{t('home.projects')}</h1>{list && list.length > 0 && <span className="muted">{tp('home.count', list.length)}</span>}</div>
       {err && <p className="issue ERROR">{err}</p>}
@@ -74,6 +73,7 @@ export default function Home(){
         <ul>{trash.map(x => <li key={x.id}><b>{x.name}</b><small>{t('home.purgeIn', { n: daysTo(x.purgeAt) })}</small>
           <button className="btn" onClick={() => restore(x.id)}>{t('home.restore')}</button><button className="btn danger" onClick={() => purge(x)}>{t('home.purge')}</button></li>)}</ul></details>}
     </section>
+    {list !== null && <TasksPanel projects={(list ?? []).map(p => ({ id: p.id, name: p.name }))} />}
     <section>
       <div className="home-sec"><h2>{t('home.newProject')}</h2></div>
       <div className="new"><label className="f"><span>{t('home.nameAria')}</span><input type="text" value={name} placeholder={t('home.defaultName')} onChange={e => setName(e.target.value)} maxLength={120} /></label></div>

@@ -512,3 +512,81 @@ input[type=file]{font-size:12px;color:var(--lead)} input[type=file]::file-select
 .demo-hero{display:grid;gap:10px;padding:20px;border:1px solid var(--rule);border-radius:12px;background:var(--surface);margin:12px 0}
 .demo-hero h1{margin:0;font-size:clamp(22px,4vw,32px);line-height:1.15} .demo-hero p{margin:0;max-width:70ch}
 .demo-hero ul{margin:0;padding-left:18px;display:grid;gap:4px} .demo-hero .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+
+/* ---------- revizie UI: câmpuri, butoane, antet, panouri, stări goale ---------- */
+/* 1. câmpuri: orice input/select/textarea din panou umple celula (și cele fără type, tel, email, date, search) */
+.side{min-width:0;overflow-x:hidden}
+.grid2>*,.side label.f{min-width:0}
+.side input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]):not([type=range]):not([type=hidden]):not([type=button]):not([type=submit]),
+.side select,.side textarea,
+.tasks input:not([type=checkbox]),.tasks select{width:100%;min-width:0;min-height:34px;padding:4px 8px;border:1px solid var(--rule);border-radius:3px;background:var(--surface)}
+.side textarea{min-height:64px;padding:6px 8px}
+.side input[type=date],.tasks input[type=date]{padding-right:4px}
+.side select,.tasks select{padding-right:26px}
+.side input[type=range]{width:100%;min-width:0}
+/* 2. sistem de butoane: .btn, .primary, .ghost, .danger, .sm, .block; 34px implicit */
+.btn{min-height:34px;border-radius:3px;font-size:13px}
+.btn.sm{min-height:28px;padding:0 9px;font-size:12px}
+.btn.block{display:flex;width:100%;justify-content:center}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.btn.primary:hover:not(:disabled){background:#000}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--graphite)}
+.btn.ghost:hover:not(:disabled){background:var(--paper-2);border-color:var(--rule)}
+.btn.danger{color:var(--err);border-color:#DDB9B2;background:var(--surface)}
+.btn.danger:hover:not(:disabled){background:#F7E8E4;border-color:var(--err)}
+.btn.primary.danger{background:var(--err);border-color:var(--err);color:#fff}
+.btn:disabled,.btn[aria-disabled=true]{opacity:.45;cursor:not-allowed}
+.btn:hover:disabled{border-color:var(--rule);background:var(--surface)}
+.btn.primary:disabled{background:var(--surface);border-color:var(--rule);color:var(--lead);opacity:.6}
+.btn.ghost:disabled,.btn.danger:disabled{background:transparent}
+.btn[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+/* 4. antet: control segmentat pentru vedere, limba/unitățile discrete */
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:3px;background:var(--surface);overflow:hidden}
+.seg button{min-height:32px;padding:0 12px;border:0;border-left:1px solid var(--rule);border-radius:0;background:transparent;font:500 13px var(--sans);color:var(--graphite);letter-spacing:.01em}
+.seg button:first-child{border-left:0}
+.seg button:hover{background:var(--paper-2)}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.topbar .prefs{gap:2px!important;margin-left:4px}
+.topbar .prefs select.btn{min-height:28px;padding:0 20px 0 6px;border-color:transparent;background-color:transparent;color:var(--lead);font-size:12px;background-position:right 6px center}
+.topbar .prefs select.btn:hover{border-color:var(--rule);color:var(--graphite)}
+.topbar .btn.primary{margin-left:2px}
+@media (max-width:1440px) and (min-width:901px){ .topbar .seg button{min-height:30px;padding:0 9px;font-size:13px} .topbar .prefs select.btn{min-height:28px;padding:0 18px 0 4px;font-size:12px} }
+/* 5. ierarhia titlurilor din panou: titlu de panou (serif) și titlu de secțiune (mic, majuscule) */
+.side h3{font:500 18px/1.25 var(--serif);letter-spacing:-.01em}
+.side h3:not(:first-child),.side .sec-title{font:600 11px/1.3 var(--sans);text-transform:uppercase;letter-spacing:.1em;color:var(--lead);margin-top:6px;padding-top:12px;border-top:1px solid var(--rule)}
+.side h4{font:600 12px/1.3 var(--sans);color:var(--graphite);margin:2px 0 0}
+.side .finishes .fin-group legend{font:500 16px/1.2 var(--serif)}
+/* 6. stare goală */
+.empty-state{display:grid;gap:6px;justify-items:start;padding:18px 18px;border:1px dashed var(--rule);border-radius:3px;background:var(--surface)}
+.empty-state .es-title{font:500 17px/1.25 var(--serif)} .empty-state .es-text{margin:0;color:var(--lead);font-size:13px;max-width:52ch}
+.empty-state .btn{margin-top:6px}
+.board-noimg.empty-state{aspect-ratio:16/10;justify-items:center;align-content:center;text-align:center}
+/* 7. acasă */
+.phone-help{margin:0 0 12px} .phone-help summary{cursor:pointer;color:var(--lead);font-size:12.5px} .phone-help p{margin-top:6px}
+.phone-url div{flex-wrap:wrap}
+/* 8. bare de buget: titlu + sumă pe un rând, bara pe toată lățimea */
+.bar{grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;align-items:baseline}
+.bar > span{min-width:0;overflow-wrap:anywhere}
+.bar .track{grid-column:1/-1;display:block;height:10px;border-radius:2px;background:var(--paper-2);overflow:hidden;font-style:normal}
+.bar .track i{height:100%;border-radius:2px;min-width:3px}
+.bars{gap:10px}
+/* 9. bara 3D: butoane scurte, exportul într-un meniu */
+.v3bar{flex-wrap:nowrap;align-items:center;gap:6px}
+.v3bar .btn{flex:0 0 auto;min-height:32px;padding:0 10px;font-size:12.5px}
+.v3bar select.btn{flex:0 1 auto;min-width:0;max-width:170px;text-overflow:ellipsis}
+.v3bar .muted{flex:0 1 auto;min-width:0;font-size:12px;background:rgba(255,253,250,.9);padding:2px 6px}
+.v3exp{position:relative;margin-left:auto;flex:0 0 auto}
+.v3exp > .btn::after{content:'▾';margin-left:2px;font-size:10px;color:var(--lead)} .v3exp > .btn[aria-expanded=true]::after{content:'▴'}
+.v3menu{position:absolute;right:0;top:calc(100% + 4px);z-index:8;min-width:190px;display:grid;background:var(--surface);border:1px solid var(--graphite);border-radius:3px;box-shadow:0 10px 30px rgba(0,0,0,.14)}
+.v3menu button{min-height:38px;padding:0 14px;border:0;border-bottom:1px solid var(--rule);background:transparent;text-align:left;font:500 13px var(--sans)}
+.v3menu button:last-child{border-bottom:0} .v3menu button:hover{background:var(--paper-2)}
+@media (max-width:600px){ .v3bar{left:6px;right:6px;top:6px;gap:4px} .v3bar .btn{padding:0 7px;font-size:12px} .v3bar select.btn{max-width:96px} .v3bar .btn[title]{min-width:0} }
+/* 3. editor pe telefon */
+@media (max-width:600px){
+  .canvas{height:55vh;height:55dvh;min-height:320px}
+  .canvas.split{height:auto;min-height:0;grid-template-rows:auto 55dvh 55dvh}
+  .canvas.split > .levelbar{grid-column:1/-1}
+  .stagebar{position:relative;padding-right:0;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent)}
+  .stagebar::after{content:'';flex:0 0 28px}
+}
+@media (hover:none),(pointer:coarse){ .hintbar{display:none} }

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { agenda, type Task } from '@/core/tasks';
 import { usePrefs } from '@/lib/prefs';
 import { intlLocale } from '@/lib/i18n';
+import EmptyState from './EmptyState';
 
 type T = Task & { projectName?: string | null };
 const today = () => new Date().toISOString().slice(0, 10);
@@ -34,7 +35,7 @@ export default function TasksPanel({ projectId, projects }: { projectId?: string
       <button className="btn primary" disabled={!title.trim()}>{t('tasks.add')}</button>
     </form>
     {err && <p className="fb-err">{err}</p>}
-    {tasks && tasks.length === 0 && <p className="muted">{t('tasks.none')}</p>}
+    {tasks && tasks.length === 0 && <EmptyState title={t('empty.tasks.title')} text={t('tasks.none')} />}
     {sec('overdue', a.overdue, 'late')}{sec('dueToday', a.today, 'soon')}{sec('week', a.week)}{sec('later', a.later)}{sec('noDate', a.noDate)}
     {done.length > 0 && <details className="tsec"><summary>{t('tasks.done')} <i>{done.length}</i></summary><ul>{done.map(x => item(x))}</ul></details>}
   </section>);

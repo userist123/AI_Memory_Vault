@@ -18,6 +18,7 @@ import ClientDeliveries from './ClientDeliveries';
 import { ClientChanges } from './ChangeOrders';
 import RoomChoiceBox, { type ClientChoice } from './RoomChoiceBox';
 import type { ClientProgress } from '@/core/client-progress';
+import './present.css';
 
 const nextFrame = () => new Promise<void>(res => requestAnimationFrame(() => res()));
 /** Pe linkul pentru client (`share`) prezentarea vine din revizia partajată și are, sub fiecare planșă de cameră, caseta de păreri. */
@@ -67,11 +68,16 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
     <div className="deck-bar no-print"><span>{busy ? t('print.preparing') : t('pres.keys')}</span><button className="btn primary" onClick={() => print()} disabled={busy}>{t('pres.pdf')}</button></div>
     <section className="slide cover">
       {images.overview ? <img src={images.overview} alt="" /> : <div className="ph" />}
-      <div className="cover-txt"><span className="kicker">{t('pres.kicker')}</span><h1>{data.name}</h1><p>{t('pres.coverSub', { rooms: pres.rooms.length, area: formatArea(pres.totalArea, units, lang) })}</p><small>{date}</small></div>
+      <div className="cover-txt"><span className="kicker">{t('pres.kicker')}</span>
+        <div className="cover-main"><h1>{data.name}</h1><p>{t('pres.coverSub', { rooms: pres.rooms.length, area: formatArea(pres.totalArea, units, lang) })}</p></div>
+        {pres.palette.length > 0 && <div className="cover-pal" aria-label={t('pres2.palette')}>{pres.palette.map((c, i) => <i key={i} style={c.material ? { ...swatchStyle(c.material), backgroundColor: c.color } : { background: c.color }} />)}<small>{t('pres2.palette')}</small></div>}
+        <dl className="cover-facts"><div><dt>{t('pres2.rooms')}</dt><dd>{pres.rooms.length}</dd></div><div><dt>{t('pres2.area')}</dt><dd>{formatArea(pres.totalArea, units, lang)}</dd></div><div><dt>{t('pres2.prepared')}</dt><dd>{date}</dd></div></dl></div>
       <footer>{num(1)}</footer></section>
-    <section className="slide board"><header><span className="kicker">{t('pres.conceptKicker')}</span><h2>{t('pres.concept')}</h2></header>
-      <div className="board-grid">{pres.board.map(g => <div key={g.role} className="board-col"><h3>{t(`pres.board.${g.role}`)}</h3>
-        {g.items.slice(0, 6).map((it, i) => <figure key={i}><i style={it.material ? { ...swatchStyle(it.material), backgroundColor: it.color } : { background: it.color }} /><figcaption>{it.material ? title(it.material.name) : it.color}<small>{it.material?.supplier}</small></figcaption></figure>)}</div>)}</div>
+    <section className="slide pboard"><header><span className="kicker">{t('pres.conceptKicker')}</span><h2>{t('pres.concept')}</h2></header>
+      {pres.palette.length > 0 && <div className="pb-strip" role="img" aria-label={t('pres2.palette')}>{pres.palette.map((c, i) => <i key={i} style={c.material ? { ...swatchStyle(c.material), backgroundColor: c.color } : { background: c.color }} />)}</div>}
+      <div className="pb-grid">{pres.board.map(g => <div key={g.role} className="pb-col"><h3>{t(`pres.board.${g.role}`)}</h3>
+        {g.items.slice(0, 4).map((it, i) => <figure key={i}><i style={it.material ? { ...swatchStyle(it.material), backgroundColor: it.color } : { background: it.color }} /><figcaption>{it.material ? title(it.material.name) : it.color}<small>{it.material?.supplier}</small></figcaption></figure>)}</div>)}</div>
+      <div className="pb-rooms"><h3>{t('pres2.byRoom')}</h3><ul>{pres.rooms.slice(0, 8).map(r => <li key={r.id}><b>{r.name}</b><span>{r.swatches.slice(0, 4).map((s, k) => <i key={k} title={s.material ? title(s.material.name) : s.color} style={s.material ? { ...swatchStyle(s.material), backgroundColor: s.color } : { background: s.color }} />)}</span></li>)}</ul></div>
       <footer>{num(2)}</footer></section>
     {pres.rooms.map((r, i) => <Fragment key={r.id}><section className="slide room">
       <div className="room-img">{imgFor(r.id) ? <img src={imgFor(r.id)} alt={r.name} /> : <div className="ph" />}</div>

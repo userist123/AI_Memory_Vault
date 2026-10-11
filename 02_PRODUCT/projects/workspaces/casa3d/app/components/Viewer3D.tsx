@@ -14,7 +14,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
   const [room, setRoom] = useState<string | null>(null), [pano, setPano] = useState<{ url: string; title: string; file: string } | null>(null), [panoBusy, setPanoBusy] = useState(false), [panoMsg, setPanoMsg] = useState('');
   const ref = useRef<HTMLCanvasElement>(null), v = useRef<any>(null), pickRef = useRef(onPick);
   const [mode, setMode] = useState<'house' | 'walk'>('house'), [err, setErr] = useState(''), [touch, setTouch] = useState(false);
-  const [time, setTime] = useState<TimeOfDay>('day'), [azimuth, setAzimuth] = useState(135), [lightOpen, setLightOpen] = useState(false);
+  const [time, setTime] = useState<TimeOfDay>('day'), [azimuth, setAzimuth] = useState(135), [lightOpen, setLightOpen] = useState(false), [exportOpen, setExportOpen] = useState(false);
   // calitate înaltă (ocluzie ambientală) implicit pe desktop; pe telefon rămâne normală, pentru fluiditate și baterie
   const [quality, setQuality] = useState<'normal' | 'high'>('normal'), qRef = useRef(quality); qRef.current = quality;
   useEffect(() => { const t = typeof window !== 'undefined' && (matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0); setTouch(t); if (!t) setQuality('high'); }, []);
@@ -69,9 +69,14 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
       {panoMsg && <span className="muted" role="status">{panoMsg}</span>}
       <button className="btn" aria-pressed={doorsOpen} title={t('viewer.doors')} onClick={() => { const n = !doorsOpen; setDoorsOpen(n); v.current?.setDoors(n); }}>{doorsOpen ? t('viewer.doorsOpen') : t('viewer.doorsClosed')}</button>
       <button className="btn" aria-expanded={lightOpen} onClick={() => setLightOpen(o => !o)} title={t('viewer.lightTitle')}>{t('viewer.light')}</button>
-      <button className="btn" onClick={capture} disabled={!!err} title={t('viewer.captureTitle')}>{t('viewer.capture')}</button>
-      <button className="btn" onClick={exportBlender} disabled={!!err} title={t('viewer.blenderTitle')}>{t('viewer.blender')}</button>
-      <button className="btn" onClick={exportGlb} disabled={!!err} title={t('viewer.glbTitle')}>{t('viewer.glb')}</button>
+      <div className="v3exp">
+        <button className="btn" aria-expanded={exportOpen} aria-haspopup="menu" disabled={!!err} onClick={() => setExportOpen(o => !o)} title={t('viewer.exportTitle')}>{t('viewer.export')}</button>
+        {exportOpen && <div className="v3menu" role="menu" onKeyDown={e => { if (e.key === 'Escape') setExportOpen(false); }}>
+          <button role="menuitem" onClick={() => { setExportOpen(false); capture(); }} title={t('viewer.captureTitle')}>{t('viewer.capture')}</button>
+          <button role="menuitem" onClick={() => { setExportOpen(false); exportBlender(); }} title={t('viewer.blenderTitle')}>{t('viewer.blender')}</button>
+          <button role="menuitem" onClick={() => { setExportOpen(false); exportGlb(); }} title={t('viewer.glbTitle')}>{t('viewer.glb')}</button>
+        </div>}
+      </div>
     </div>
     {lightOpen && <div className="v3light" role="group" aria-label={t('viewer.lighting')}>
       {(['day', 'evening', 'night'] as const).map(tod => <button key={tod} className="btn" aria-pressed={time === tod} onClick={() => setTime(tod)}>{t(tod === 'day' ? 'viewer.day' : tod === 'evening' ? 'viewer.evening' : 'viewer.night')}</button>)}

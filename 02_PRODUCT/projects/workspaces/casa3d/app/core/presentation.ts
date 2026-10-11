@@ -41,7 +41,9 @@ export function presentation(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog)
   for (const s of rooms.flatMap(r => r.swatches)){ const role = ROLE[s.role] ?? (s.role.startsWith('accent.') ? 'walls' : s.role.startsWith('fixture.') ? 'lighting' : null); if (!role) continue;
     const g = board.find(b => b.role === role)!; if (!g.items.some(i => i.material?.id === s.material?.id && i.color === s.color)) g.items.push({ material: s.material, color: s.color }); }
   const b = computeBudget(snap, cat, mc);
-  return { rooms, board: board.filter(g => g.items.length), budget: { total: b.chosen.total, categories: b.categories, labor: b.chosen.labor, contingency: b.chosen.contingency, unknown: b.unknownItems.length + b.unknownLines.length },
+  // paleta casei: culorile distincte ale tuturor grupurilor, în ordinea pardoseală, pereți, textile, dotări, lumină
+  const palette: BoardGroup['items'] = []; for (const g of board) for (const it of g.items) if (!palette.some(p => p.color.toLowerCase() === it.color.toLowerCase())) palette.push(it);
+  return { rooms, board: board.filter(g => g.items.length), palette: palette.slice(0, 8), budget: { total: b.chosen.total, categories: b.categories, labor: b.chosen.labor, contingency: b.chosen.contingency, unknown: b.unknownItems.length + b.unknownLines.length },
     totalArea: Math.round(rooms.reduce((a, r) => a + r.areaM2, 0) * 10) / 10 };
 }
 

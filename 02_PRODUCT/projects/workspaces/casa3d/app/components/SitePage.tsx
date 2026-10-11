@@ -7,6 +7,7 @@ import type { Room } from '@/core/types';
 import { shrinkPhoto } from '@/lib/image-resize';
 import { usePrefs } from '@/lib/prefs';
 import { intlLocale } from '@/lib/i18n';
+import EmptyState from './EmptyState';
 
 export default function SitePage({ id, rooms, say }: { id: string; rooms: Room[]; say(s: string): void }){
   const { t, tp, lang } = usePrefs(), [items, setItems] = useState<Snag[] | null>(null), [adding, setAdding] = useState(false), [filter, setFilter] = useState<'open' | 'all'>('open'), [edit, setEdit] = useState<string | null>(null);
@@ -24,7 +25,7 @@ export default function SitePage({ id, rooms, say }: { id: string; rooms: Room[]
     <div className="site-act"><button className="btn primary big" onClick={() => setAdding(true)}>{t('site.add')}</button><a className="btn" href={`/p/${id}/site-report`} target="_blank" rel="noopener">{t('site.report')}</a><a className="btn" href={`/p/${id}/handover`} target="_blank" rel="noopener">{t('ho.kicker')}</a>
       <div className="filters" role="tablist">{(['open', 'all'] as const).map(f => <button key={f} role="tab" aria-selected={filter === f} onClick={() => setFilter(f)}>{t(`site.filter.${f}`)}</button>)}</div></div>
     {adding && <SnagForm id={id} rooms={rooms} say={say} onDone={s => { setAdding(false); if (s) setItems(xs => [...(xs ?? []), s]); }} />}
-    {items === null ? <p className="muted">{t('site.loading')}</p> : groups.length === 0 ? <p className="muted">{filter === 'open' && items.length ? t('site.allDone') : t('site.none')}</p> :
+    {items === null ? <p className="muted">{t('site.loading')}</p> : groups.length === 0 ? (filter === 'open' && items.length ? <EmptyState title={t('site.allDone')} /> : <EmptyState title={t('empty.site.title')} text={t('site.none')} action={{ label: t('site.add'), onClick: () => setAdding(true) }} />) :
       groups.map(([rid, list]) => <section key={rid} className="supplier"><header><h2>{roomName(rid || null)}</h2><span className="muted">{tp('site.count', list.length)}</span></header>
         <ul>{list.map(s => <li key={s.id} className={`snag st-s-${s.status}`}>
           <div className="snag-main"><b className="snag-n">#{s.number}</b><div className="snag-txt"><b>{s.title}</b>{s.body && <p>{s.body}</p>}

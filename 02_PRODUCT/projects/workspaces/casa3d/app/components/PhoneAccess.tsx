@@ -22,7 +22,7 @@ export default function PhoneAccess(){
     <div className="phone-grid">
       <div><p>{t('phone.how')}</p>
         {st.publicUrl ? <div className="phone-url"><b>{st.publicUrl}</b><div><button className="btn" onClick={() => copy(st.publicUrl!)}>{t('client.copy')}</button><a className="btn" href={`https://wa.me/?text=${encodeURIComponent(st.publicUrl)}`} target="_blank" rel="noopener">WhatsApp</a></div></div>
-          : <p className="muted">{t('phone.noTunnel')}</p>}
+          : <div><p className="muted">{t('phone.noTunnel')}</p><details className="phone-help"><summary>{t('phone.tunnelHelp')}</summary><p className="muted small">{t('phone.tunnelPath')}</p></details></div>}
         <p className="muted small">{t('phone.note')}</p></div>
       <form onSubmit={save}>
         <label>{st.enabled ? t('phone.newPassword') : t('phone.password')}<input type="password" autoComplete="new-password" value={pw} onChange={e => setPw(e.target.value)} minLength={10} maxLength={200} required /></label>

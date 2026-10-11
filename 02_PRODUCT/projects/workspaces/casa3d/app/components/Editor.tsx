@@ -46,6 +46,7 @@ import SitePage from './SitePage';
 import type { ProjectMeta } from '@/core/project-meta';
 import { scaleFromPoints, anchorAfterScale } from '@/core/underlay';
 import { duplicatePlacement, nudgePlacement, NUDGE_CM, NUDGE_BIG_CM } from '@/core/edit-ops';
+import EmptyState from './EmptyState';
 import PlanView, { type Tool, type Sel } from './PlanView';
 import { floors, levelView, mergeLevel, addLevel, removeLevel, stairIssues, stairGeometry, stairwells, comfortableStairLength, elevationOf, SLAB, MAX_LEVELS } from '@/core/levels';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
@@ -211,8 +212,8 @@ export default function Editor({ id }: { id: string }){
       {save === 'conflict' && <span className="conflict-bar" role="alert">{t('editor.conflict')} <button className="btn" onClick={() => location.reload()}>{t('editor.conflictReload')}</button><button className="btn" onClick={() => send(true)}>{t('editor.conflictKeep')}</button></span>}<span className={`status ${save === 'error' || save === 'conflict' ? 'err' : ''}`}>{save === 'saved' ? t('editor.saved') : save === 'saving' ? t('editor.saving') : save === 'dirty' ? t('editor.dirty') : save === 'conflict' ? t('editor.conflictShort') : t('editor.saveError')} · {rev ? t('editor.revisionN', { n: rev }) : t('editor.noRevisions')}</span>
       <button className="btn" onClick={undo} disabled={!hist.current.canUndo} title="Ctrl+Z" aria-label={t('editor.undo')}>↶<span className="lbl"> {t('editor.undo')}</span></button>
       <button className="btn" onClick={redo} disabled={!hist.current.canRedo} title="Ctrl+Y" aria-label={t('editor.redo')}>↷<span className="lbl"> {t('editor.redo')}</span></button>
-      <div className="btn" role="group" aria-label={t('editor.view')} style={{ padding: 2, gap: 2 }}>
-        {(['2d', 'split', '3d'] as const).map(vv => <button key={vv} className={`btn v-${vv}`} style={{ minHeight: 30, border: 0, background: view === vv ? 'var(--graphite)' : 'transparent', color: view === vv ? '#fff' : undefined }} onClick={() => { setView(vv); if (vv === '3d' && typeof matchMedia === 'function' && matchMedia('(max-width: 900px)').matches) setSideOpen(false); }}>{vv === '2d' ? t('editor.view2d') : vv === '3d' ? '3D' : t('editor.viewSplit')}</button>)}
+      <div className="seg" role="group" aria-label={t('editor.view')}>
+        {(['2d', 'split', '3d'] as const).map(vv => <button key={vv} className={`v-${vv}`} aria-pressed={view === vv} onClick={() => { setView(vv); if (vv === '3d' && typeof matchMedia === 'function' && matchMedia('(max-width: 900px)').matches) setSideOpen(false); }}>{vv === '2d' ? t('editor.view2d') : vv === '3d' ? '3D' : t('editor.viewSplit')}</button>)}
       </div>
       <PrefsSwitcher />
       <button className="btn primary" onClick={saveRevision}><span className="lbl">{t('editor.saveRevision')}</span><span className="lbl-s">{t('editor.saveShort')}</span></button>
@@ -441,7 +442,7 @@ function ClientPanel({ id, say, onLinked, flush, roomNames, cur }: { id: string;
       {link.local && <p className="muted">{t('client.localOnly')}</p>}</div>}
     <DesignerChanges id={id} cur={cur} say={say} />
     <h3>{t('client.feedback')}{open > 0 && <span className="pill">{t('client.open', { n: open })}</span>}</h3>
-    {items && items.length === 0 && <p className="muted">{t('client.noFeedback')}</p>}
+    {items && items.length === 0 && <EmptyState title={t('empty.feedback.title')} text={t('empty.feedback.text')} action={{ label: t('client.link'), onClick: make }} />}
     {[...groups.entries()].map(([room, fs]) => <div key={room} className="fbg"><h4>{room ? roomNames[room] ?? room : t('client.general')}</h4>
       {fs.map(f => <div key={f.id} className={`fbi ${f.resolvedAt ? 'done' : ''}`}><span className={`fb-tag fb-${f.verdict}`}>{f.item && f.verdict === 'like' ? t('fb.isApproved') : t(`fb.${f.verdict}`)}{f.item ? ` · ${f.item.label}` : ''}</span>{f.text && <q>{f.text}</q>}
         <small>{f.author} · {new Date(f.createdAt).toLocaleString(intlLocale(lang), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · {t('client.rev', { n: f.revisionNumber })}</small>
