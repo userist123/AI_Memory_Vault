@@ -46,3 +46,24 @@ test('regresii: ambalajele se adună pe camere, datele imposibile și liniile in
   assert.throws(() => checkOrderState({ status: 'ordered', eta: '2026-02-31' }));
   await assert.rejects(setOrderState(A, id, 'm|inventat|x', { status: 'ordered' }), (e: any) => e.status === 400);
 });
+
+test('termene de comandă: data necesară pe șantier minus zilele de livrare; implicit de la începutul lucrărilor', async () => {
+  const { procurementRows: rowsOf, defaultLeadDays, checkOrderState: chk } = await import('../core/procurement');
+  const L = (key: string, product: string, kind: any = 'furniture'): ProcurementLine => ({ key, kind, product, supplier: 'S', code: null, url: null, qty: 1, unit: 'buc', packs: null, unitPrice: 1, total: 1, rooms: [] });
+  assert.equal(defaultLeadDays({ kind: 'furniture', product: 'ENHET bucătărie antracit' }), 42); assert.equal(defaultLeadDays({ kind: 'finish', product: 'Gresie 60x60' }), 21);
+  assert.equal(defaultLeadDays({ kind: 'finish', product: 'Vopsea lavabilă' }), 10);
+  const rows = rowsOf([L('f|a', 'Canapea Kivik'), L('f|b', 'Lampă'), L('f|c', 'Masă'), L('f|d', 'Scaun')], {
+    'f|a': { status: 'todo', neededBy: '2026-11-20' },                    // 42 zile → 2026-10-09: deja trecut
+    'f|b': { status: 'quoted', neededBy: '2026-11-05', leadDays: 20 },    // → 2026-10-16: în 5 zile
+    'f|d': { status: 'ordered', neededBy: '2026-10-12' },                 // comandat: nu mai e urgent
+  }, '2026-10-11', '2026-12-01');
+  const by = Object.fromEntries(rows.map(r => [r.key, r]));
+  assert.equal(by['f|a']!.orderBy, '2026-10-09'); assert.equal(by['f|a']!.orderUrgency, 'late');
+  assert.equal(by['f|b']!.orderBy, '2026-10-16'); assert.equal(by['f|b']!.orderUrgency, 'soon'); assert.equal(by['f|b']!.leadDays, 20);
+  assert.equal(by['f|c']!.orderBy, '2026-11-10', 'fără dată proprie: începutul lucrărilor minus 21 de zile'); assert.equal(by['f|c']!.orderUrgency, null);
+  assert.equal(by['f|d']!.orderUrgency, null);
+  assert.equal(procurementSummary(rows).orderLate, 1); assert.equal(procurementSummary(rows).orderSoon, 1);
+  assert.equal(rowsOf([L('f|x', 'X')], {}, '2026-10-11')[0]!.orderBy, null, 'fără nicio dată nu se inventează termen');
+  assert.equal(chk({ status: 'todo', leadDays: 14, neededBy: '2026-11-01' }).leadDays, 14);
+  for (const bad of [{ status: 'todo', leadDays: -1 }, { status: 'todo', leadDays: 2.5 }, { status: 'todo', leadDays: 400 }, { status: 'todo', neededBy: '2026-02-30' }]) assert.throws(() => chk(bad), JSON.stringify(bad));
+});

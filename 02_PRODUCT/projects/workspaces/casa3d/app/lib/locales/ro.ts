@@ -355,4 +355,12 @@ export const ro: Dict = {
   "co.amount": "Diferența de cost ({cur}, cu minus dacă scade)",
   "co.daysField": "Zile în plus (opțional)",
   "co.add": "Adaugă ciorna",
+  "orders.sum.orderNow": "De comandat acum",
+  "orders.orderBy": "de comandat până la {d}",
+  "orders.orderByLate": "trebuia comandat până la {d}",
+  "orders.neededBy": "Necesar pe șantier la",
+  "orders.leadDays": "Livrare (zile)",
+  "cdel.decide": "Decizii necesare curând ({n}) — ca produsele să ajungă la timp pe șantier",
+  "cdel.decideByLate": "trebuia decis până la {d} — vă rugăm cât mai repede",
+  "cdel.decideBy": "de decis până la {d}",
 };

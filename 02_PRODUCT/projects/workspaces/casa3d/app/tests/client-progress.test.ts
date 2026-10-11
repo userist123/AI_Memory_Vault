@@ -48,3 +48,10 @@ test('numele produsului nu se repetă când varianta îl conține deja', async (
   assert.equal(productLabel('Canapea Kivik', '3 locuri, bej'), 'Canapea Kivik · 3 locuri, bej');
   assert.equal(productLabel('Masă', ''), 'Masă');
 });
+
+test('clientul vede până când trebuie decis ce nu e încă comandat', () => {
+  const row = (product: string, status: string, orderBy: string | null, orderUrgency: any) => ({ key: product, kind: 'finish', product, supplier: 'S', code: null, url: null, qty: 1, unit: 'buc', packs: null, unitPrice: 1, total: 1, rooms: [], state: { status }, overdue: false, leadDays: 21, orderBy, orderUrgency }) as any;
+  const p = clientProgress([row('Canapea', 'todo', '2026-10-09', 'late'), row('Masă', 'todo', '2026-11-10', null), row('Lampă', 'ordered', '2026-10-01', null)], null);
+  assert.equal(p.decisionsDue, 1); const c = p.items.find(i => i.product === 'Canapea')!; assert.equal(c.decideBy, '2026-10-09'); assert.equal(c.decideUrgent, true); assert.equal(c.decideLate, true);
+  assert.equal(p.items.find(i => i.product === 'Lampă')!.decideBy, null, 'ce e comandat nu mai cere decizie');
+});

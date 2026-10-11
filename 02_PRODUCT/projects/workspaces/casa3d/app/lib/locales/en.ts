@@ -355,4 +355,12 @@ export const en: Dict = {
   "co.amount": "Cost difference ({cur}, minus if it goes down)",
   "co.daysField": "Extra days (optional)",
   "co.add": "Add draft",
+  "orders.sum.orderNow": "Order now",
+  "orders.orderBy": "order by {d}",
+  "orders.orderByLate": "should have been ordered by {d}",
+  "orders.neededBy": "Needed on site",
+  "orders.leadDays": "Lead time (days)",
+  "cdel.decide": "Decisions needed soon ({n}) — so items arrive on site in time",
+  "cdel.decideByLate": "should have been decided by {d} — as soon as possible please",
+  "cdel.decideBy": "decide by {d}",
 };
