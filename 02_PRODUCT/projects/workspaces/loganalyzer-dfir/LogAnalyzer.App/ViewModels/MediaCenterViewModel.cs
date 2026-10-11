@@ -209,7 +209,14 @@ namespace LogAnalyzer.UI.ViewModels
             Log(entry);
         }
 
-        [RelayCommand] private void DismissAlert() => AlertText = "";
+        /// <summary>"Am văzut": recorded with who and when in the station's live log, so there is proof the alert was handled (senior review L3).</summary>
+        [RelayCommand]
+        private void DismissAlert()
+        {
+            if (AlertText.Length == 0) return;
+            Log(new LiveDeviceEntry(DateTimeOffset.UtcNow, "alertă văzută de " + LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified, AlertText, "", "confirmată", false));
+            AlertText = "";
+        }
 
         private static void Log(LiveDeviceEntry e)
         {

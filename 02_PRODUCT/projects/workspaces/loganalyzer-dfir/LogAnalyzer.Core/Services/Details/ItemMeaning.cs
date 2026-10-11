@@ -44,7 +44,7 @@ namespace LogAnalyzer.Core.Services.Details
             ["TimelineItem"] = ("Element de cronologie", "Un moment din cronologia incidentului, cu sursa lui."),
         };
 
-        private static readonly string[] WhyProps = ["Description", "Details", "AnomalyReason", "EvidenceSummary", "SecurityImpact", "LegalJustification", "StorageImpact"];
+        private static readonly string[] WhyProps = ["Description", "Explanation", "Details", "AnomalyReason", "EvidenceSummary", "SecurityImpact", "LegalJustification", "StorageImpact"];
         private static readonly string[] DoProps = ["RemediationActionRo", "ContainmentActionRo", "RequiredAction"];
         private static readonly string[] MitreProps = ["MitreTechniqueId", "MitreId", "TechniqueId", "TechId", "MitreTags"];
 
@@ -78,6 +78,7 @@ namespace LogAnalyzer.Core.Services.Details
         private static string Label(string prop) => prop switch
         {
             "Description" => "De ce apare",
+            "Explanation" => "De ce apare",
             "Details" => "Detalii",
             "AnomalyReason" => "De ce este suspect",
             "EvidenceSummary" => "Ce s-a găsit",
