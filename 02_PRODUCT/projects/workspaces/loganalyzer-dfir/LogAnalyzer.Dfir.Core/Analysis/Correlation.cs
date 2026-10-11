@@ -26,7 +26,9 @@ public static class Correlation
 
     /// <summary>Writable by design but owned by Microsoft components (Defender platform, installer caches, PowerShell's own policy probes).</summary>
     private static readonly string[] KnownBenignMarkers =
-        [@"\programdata\microsoft\", @"\programdata\package cache\", "__psscriptpolicytest_", @"\appdata\local\microsoft\windowsapps\"];
+        [@"\programdata\microsoft\", @"\programdata\package cache\", "__psscriptpolicytest_", @"\appdata\local\microsoft\windowsapps\",
+         // Defender's platform and ATP folders are ACL-protected (not user-writable) even though they sit under ProgramData.
+         @"\programdata\microsoft\windows defender\platform\", @"\programdata\microsoft\windows defender advanced threat protection\"];
 
     /// <summary>Environment variables in task/service commands that resolve to user-writable folders (not expanded on this machine).</summary>
     private static readonly (string Var, string Folder)[] WritableEnvVars =
@@ -101,6 +103,30 @@ public static class Correlation
 
     /// <summary>A Defender 5007 "new value" that weakens protection: an exclusion, a protection-disabling switch (explicit list) set to 1, Tamper Protection off, cloud reporting off.</summary>
     private static bool WeakensDefender(string newValue) => newValue.Length > 0 && DefenderWeakeningValue.IsMatch(newValue);
+
+    private static readonly System.Text.RegularExpressions.Regex OwnCollectionFolder = new(
+        @"\\(?:ladfir_remote_[0-9a-f]{8}(?:-?[0-9a-f]{4}){3}-?[0-9a-f]{12}\\|temp\\loganalyzer\\)",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+
+    /// <summary>True for artifacts of LogAnalyzer's own collection (the remote-collection package folder in %TEMP%, the app's temp work folders).</summary>
+    public static bool IsOwnCollectionArtifact(string path) => OwnCollectionFolder.IsMatch(path.Replace('/', '\\'));
+
+    private static readonly System.Text.RegularExpressions.Regex CommandExecutableRx = new(
+        @"^\s*(?:""(?<q>[^""]*)""|(?<p>.+?\.(?:exe|sys|dll)(?=\s|$)|\S+))",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+
+    /// <summary>
+    /// The executable of a service ImagePath / task command: the quoted first token, or the unquoted path up to the first .exe/.sys/.dll followed
+    /// by a space or the end. Arguments (log paths, config folders) are not part of the location being classified.
+    /// </summary>
+    public static string CommandExecutable(string command)
+    {
+        var m = CommandExecutableRx.Match(command ?? "");
+        return !m.Success ? "" : (m.Groups["q"].Success ? m.Groups["q"].Value : m.Groups["p"].Value).Trim();
+    }
+
+    /// <summary>True when the executable of a command line (not its arguments) is in a user-writable location.</summary>
+    public static bool IsUserWritableCommand(string command) => IsUserWritable(CommandExecutable(command));
 
     public static bool IsUserWritable(string path)
     {
@@ -207,7 +233,7 @@ public static class Correlation
 
         // 3. Persistence: new services and scheduled tasks, especially from user-writable locations.
         var services = events.Where(e => Ev(e, "System", 7045) || Ev(e, "Security", 4697)).ToList();
-        foreach (var e in services.Where(e => IsUserWritable(F(e, "ImagePath") + F(e, "ServiceFileName"))))
+        foreach (var e in services.Where(e => IsUserWritableCommand(F(e, "ImagePath") + F(e, "ServiceFileName"))))
             f.Add(new Finding
             {
                 FindingId = Id(), RuleId = "PERSIST-SERVICE-USERPATH", Title = $"Serviciu instalat dintr-o locație scriabilă de utilizatori: {F(e, "ServiceName")}",
@@ -377,7 +403,20 @@ public static class Correlation
                     SupportingEvidence = [Ref(e, "Prefetch")],
                     AlternativeExplanations = ["Instalator sau aplicație legitimă instalată per utilizator."],
                 });
-            var scripts = refsFiles.Where(r => ScriptExtensions.Any(x => r.EndsWith(x, StringComparison.OrdinalIgnoreCase)) && IsUserWritable(r)).ToList();
+            var allScripts = refsFiles.Where(r => ScriptExtensions.Any(x => r.EndsWith(x, StringComparison.OrdinalIgnoreCase)) && IsUserWritable(r)).ToList();
+            var scripts = allScripts.Where(r => !IsOwnCollectionArtifact(r)).ToList();
+            // LogAnalyzer's own remote-collection script: tool activity, Info at most, never a correlation anchor (strong findings are High+).
+            if (allScripts.Count > scripts.Count && scripts.Count == 0 && Lolbins.Contains(e.Process))
+                f.Add(new Finding
+                {
+                    FindingId = Id(), RuleId = "EXEC-SCRIPT-VIA-LOLBIN", Title = "activitatea uneltei LogAnalyzer (colectarea în curs)",
+                    Severity = Severity.Info, Category = "Execution", Classification = Classification.Direct, Confidence = Confidence.High,
+                    LastSeenUtc = e.Time.Utc, Process = e.Process, File = string.Join("; ", allScripts.Take(5)),
+                    Description = $"{e.Process} a lucrat cu scriptul de colectare al LogAnalyzer: {string.Join(", ", allScripts.Take(5))}. Este activitatea aplicației în timpul colectării, nu o constatare.",
+                    ClassificationReason = "Calea scriptului este folderul pachetului de colectare LogAnalyzer din %TEMP%.",
+                    SupportingEvidence = [Ref(e, "Prefetch ReferencedFiles")],
+                    AlternativeExplanations = ["Un script cu același nume de folder plasat de altcineva; verificați semnătura pachetului de colectare."],
+                });
             if (scripts.Count > 0 && Lolbins.Contains(e.Process))
                 f.Add(new Finding
                 {

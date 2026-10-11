@@ -227,7 +227,9 @@ public static partial class Wp14Rules
             {
                 FindingId = c.NextId(), RuleId = status switch { ObservedMediaStatus.Authorized => "MEDIA-AUTHORIZED", ObservedMediaStatus.Registered => "MEDIA-REGISTERED", ObservedMediaStatus.Unregistered => "MEDIA-UNREGISTERED", ObservedMediaStatus.Unauthorized => "MEDIA-UNAUTHORIZED", _ => "MEDIA-UNKNOWN" },
                 Title = $"Mediu amovibil {(m.Serial.Length > 0 ? m.Serial : Kind(m))}: {status.ToString().ToUpperInvariant()}",
-                Severity = sev, Category = c.FindingCategory, Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1052.001",
+                Severity = sev, Category = c.FindingCategory, Classification = Classification.Direct, Confidence = Confidence.High,
+                // T1052.001 (exfiltration over a physical medium) only for statuses that indicate it; presence of an UNKNOWN / AUTHORIZED medium is not exfiltration.
+                MitreTechniqueId = status is ObservedMediaStatus.Registered or ObservedMediaStatus.Unregistered or ObservedMediaStatus.Unauthorized ? "T1052.001" : "",
                 FirstSeenUtc = times.Count > 0 ? times[0] : null, LastSeenUtc = times.Count > 0 ? times[^1] : null, User = users,
                 Description = desc,
                 ClassificationReason = "Dispozitivul de stocare amovibil apare în sursele colectate (USBSTOR, Partition/Diagnostic, Security 6416, Kernel-PnP, DriverFrameworks) și a fost comparat cu registrul de medii; starea vine din comparație, nu dintr-o dovadă de utilizare.",

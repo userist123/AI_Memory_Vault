@@ -32,8 +32,13 @@ public static class SuspiciousProcessDetector
         System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp"),
     ];
 
+    /// <summary>ACL-protected folders that sit under a writable root (ProgramData) but that standard users cannot write to.</summary>
+    private static readonly string[] ProtectedSystemMarkers =
+        [@"\programdata\microsoft\windows defender\platform\", @"\programdata\microsoft\windows defender advanced threat protection\"];
+
     public static bool IsUserWritableLocation(string path) =>
         !string.IsNullOrEmpty(path) &&
+        !ProtectedSystemMarkers.Any(m => path.Replace('/', '\\').Contains(m, StringComparison.OrdinalIgnoreCase)) &&
         UserWritableRoots.Where(r => !string.IsNullOrEmpty(r))
                          .Any(r => path.StartsWith(r.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase));
 
