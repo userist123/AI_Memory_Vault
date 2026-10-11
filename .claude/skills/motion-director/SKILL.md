@@ -57,13 +57,17 @@ Ask only for what is theirs: text, brand assets, music rights, length and format
      --crf=18`.
    Report the output path, length, resolution, size and which encoder ran.
 3. 3D scenes that need real lighting (product shots, fly-throughs): Blender with Cycles on OptiX
-   (RTX) renders them to an image sequence that Remotion composites. Blender is not installed;
-   installing it is the owner's call, then render headless with
+   (RTX) renders them to an image sequence that Remotion composites. Render headless with
    `blender -b <scene>.blend -E CYCLES -o //frames/f_#### -a -- --cycles-device OPTIX`.
 4. Assets: only the owner's own or properly licensed fonts, images and audio; list sources in
    the project README.
 
 ## 4. Limits
+
+- Owner's standing permission (2026-10-11): when a render tool is missing on the PC, install it
+  yourself, without asking, from the official source only (winget package of the vendor, or
+  the vendor's own download), pinned to an exact version, then report what was installed.
+  Installed so far: Blender 5.2.2 (winget `BlenderFoundation.Blender`).
 
 - Cloud rendering (Lambda/Cloud Run), uploads and publishing only with the owner's explicit go.
 - Pin what you scaffold: `npx create-video@<the version in the project's package.json, or the
