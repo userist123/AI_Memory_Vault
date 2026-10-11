@@ -15,6 +15,15 @@ Ask only for what is theirs: text, brand assets, music rights, length and format
 - A separate project folder, never inside the AI_Memory_Vault repository.
 - New project: scaffold with the official Remotion skills (`remotion` plugin); installing
   `remotion` and its npm packages for that project is part of the job, nothing global.
+- GPU, set once per project so every preview and render uses it without flags: in
+  `remotion.config.ts` call `Config.setChromiumOpenGlRenderer("angle")` (Chromium draws on the
+  NVIDIA GPU through ANGLE/Direct3D on Windows) and `Config.setHardwareAcceleration("if-possible")`
+  (hardware video encoding where Remotion supports it; it falls back to CPU otherwise). The
+  owner's PC has an RTX 5060 with 8 GB VRAM: keep `Config.setConcurrency()` at half the CPU
+  cores for normal scenes and 1-2 for heavy WebGL/3D scenes so VRAM is not exhausted.
+- On the first render of a project, confirm the GPU is really used (`nvidia-smi` shows
+  Chromium/ffmpeg load during the render) and record the result in `PLAN.md`; if a setting is
+  not supported by the installed Remotion version, remove it and say so rather than guessing.
 - Brand: reuse the project's `DESIGN.md` palette and type scale when one exists
   (`creative-web-director`); otherwise write a short one first.
 

@@ -41,6 +41,15 @@ The owner asked for Remotion motion graphics. The proposal listed three sources:
 
 Bash prompts for `npx`, `npm i` and `remotion lambda` stay on; none are allow-listed.
 
-## Vault duplicates noted, not removed in this change
+## Vault duplicates removed (owner rule: merge or delete duplicates)
 
-`.agents/skills/remotion` and `.agents/skills/remotion-best-practices` are older copies from a third-party aggregate (`agentic-awesome-skills`). They are not installed on the PC. Removing them is an owner decision.
+`.agents/skills/remotion` and `.agents/skills/remotion-best-practices` were older copies of the
+same Remotion skills from a third-party aggregate (`agentic-awesome-skills`). They were deleted;
+the motion-animation index now points to the official plugin and `motion-director`.
+
+## GPU rendering on the owner's PC
+
+`motion-director` sets per project, once, in `remotion.config.ts`: ANGLE OpenGL renderer (Chromium
+draws on the RTX 5060 via Direct3D) and hardware encoding "if-possible" with CPU fallback;
+concurrency is kept low for WebGL/3D scenes because of the 8 GB of VRAM. The first render of
+each project checks `nvidia-smi` for real GPU use. Not yet verified on the PC.
