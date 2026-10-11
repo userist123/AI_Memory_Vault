@@ -83,6 +83,16 @@ namespace LogAnalyzer.UI.Tests
             Assert.Contains(DetailSheetBuilder.Build(ev).Meaning, l => l.Contains("o persoană a intrat pe stație la tastatură"));
         }
 
+        [Fact]
+        public void RunMRU_is_what_the_user_typed_not_a_startup_entry()
+        {
+            var mru = DetailSheetBuilder.Build(new RegistryArtifact { KeyPath = @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU", ValueName = "a", ValueData = "cmd" }).Meaning;
+            Assert.DoesNotContain(mru, l => l.Contains("persistență"));
+            Assert.Contains(mru, l => l.Contains("Ce a tastat utilizatorul"));
+            var run = DetailSheetBuilder.Build(new RegistryArtifact { KeyPath = @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run", ValueName = "x", ValueData = @"c:\x.exe" }).Meaning;
+            Assert.Contains(run, l => l.Contains("pornire automată"));
+        }
+
         private sealed class Unknown { public string Foo { get; set; } = "x"; }
 
         [Fact]

@@ -2328,9 +2328,14 @@ namespace LogAnalyzer.UI.ViewModels
             LoadingProgress = 100;
             SelectedTabIndex = 0; 
             IsLoading = false;
-            StatusMessage = rejectedFiles.Count == 0
-                ? $"✅ Procesare completă: {TotalEventsCount:N0} loguri și {TotalRegistryCount:N0} artefacte registru salvate."
-                : $"✅ Procesare completă: {TotalEventsCount:N0} loguri și {TotalRegistryCount:N0} artefacte salvate ({rejectedFiles.Count} fișiere ignorate/respinse).";
+            // say exactly what was NOT read (senior review C3): accepted types this importer does not parse, and the analysis caps
+            var unparsed = acceptedFiles.Where(f => !(f.EndsWith(".evtx", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".reg", StringComparison.OrdinalIgnoreCase) ||
+                                                      f.EndsWith(".dat", StringComparison.OrdinalIgnoreCase) || f.EndsWith("ntuser", StringComparison.OrdinalIgnoreCase) ||
+                                                      f.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))).ToList();
+            StatusMessage = $"Import terminat: {TotalEventsCount:N0} evenimente și {TotalRegistryCount:N0} artefacte de registru salvate."
+                + (rejectedFiles.Count > 0 ? $" {rejectedFiles.Count} fișiere respinse." : "")
+                + (unparsed.Count > 0 ? $" {unparsed.Count} fișiere NU au fost citite de acest import (tipuri {string.Join(", ", unparsed.Select(f => Path.GetExtension(f).ToLowerInvariant()).Distinct())}): folosiți „Investigație completă (caz)”, care le citește." : "")
+                + (TotalEventsCount > 20000 ? " Regulile de aici au analizat doar cele mai noi 20 000 de evenimente de securitate; investigația completă le analizează pe toate." : "");
             if (importErrors.Count > 0)
             {
                 StatusMessage += $" ATENȚIE: {importErrors.Count} probleme la import.";

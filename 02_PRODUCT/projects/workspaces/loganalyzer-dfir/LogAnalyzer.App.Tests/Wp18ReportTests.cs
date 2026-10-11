@@ -80,7 +80,8 @@ public sealed class Wp18ReportTests : IDisposable
         var src = File.ReadAllText(Path.Combine(dir!.FullName, "LogAnalyzer.Dfir.Windows", "Investigation", "InvestigationReportPdf.cs"));
         Assert.True(src.IndexOf("ReportSection.Gaps))", StringComparison.Ordinal) < src.IndexOf("ReportSection.Findings))", StringComparison.Ordinal));
         Assert.DoesNotContain("rolul stației", src);                                    // owner 2026-10-11: name only
-        Assert.Contains("stația {info.Host}", src);
+        Assert.Contains("StationIdentity.FromEvidence(r.Timeline, info.Host)", src);   // review I1: the station named by the evidence (StationIdentityTests)
+        Assert.Contains("{station.Line}", src);
     }
 
     [Fact]
