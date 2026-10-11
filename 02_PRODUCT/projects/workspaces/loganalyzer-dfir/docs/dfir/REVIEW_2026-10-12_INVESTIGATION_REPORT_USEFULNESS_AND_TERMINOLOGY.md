@@ -13,7 +13,7 @@ Abbreviations: IRP = `LogAnalyzer.Dfir.Windows/Investigation/InvestigationReport
 RC = `…/Analysis/RuleContracts.cs`, COR = `…/Analysis/Correlation.cs`, MED = `…/Analysis/Wp14Rules.Media.cs`, AF = `…/Analysis/AntiForensics.cs`,
 VR = `LogAnalyzer.Verification/VerificationReport.cs`.
 
-## 0. False statements (most severe first)
+## 0. False statements (most severe first) — Fixed in 8f6419c85
 1. "REZULTATE INVALIDE … nu mai pot fi atribuite sursei achiziționate" is printed for an empty Prefetch file whose SHA-256 still matches.
    `EvidencePreflight.cs:108` maps a format mismatch to UNVERIFIED; `ReportIntegrity.cs:16-20` counts it as invalid; `InvestigationPipeline.cs:239`
    repeats it. Fix: a separate notice ("fișier gol sau format neașteptat; amprenta este intactă"); "invalid" only for a changed hash (MUTATED).
@@ -88,6 +88,15 @@ No Romanian translation of ISO/IEC 27037/27041/27042/27043 was found; none was r
 English codes only in an end legend. 4. Generic limitations once; relevance filter instead of `Take(6)`. 5. Group repeats. 6. Glossary.
 7. Grammar table. 8. One time convention (local with UTC in brackets), Romanian time-zone name. 9. Readable paths, full hash once, a legal audience.
 10. Consistent section numbering.
+
+## Implementation status (D2-D10)
+Implemented in the commits after 8f6419c85: page-1 box "Concluzie pe scurt" (`InvestigationReportText.Summarize`), headline counters with confirmed vs indicative,
+general limitations once and a relevance filter instead of `Take(6)`, grouping of identical collector errors and of findings of the same rule and reason,
+AF04 shortened (full list in `anti_forensics.json`, field `Detail`), Romanian state, severity and result labels with an end legend, the glossary of section C
+in every user-visible string, the grammar table of section B (`RoText.Count`, ro-RO numbers, sentence capitals, translated OS errors), one time convention
+(local with UTC in brackets, "ora României (UTC+03:00)"), readable paths, the full SHA-256 once per evidence item in an annex, the "Pentru consilier juridic"
+audience, consistent section numbering. Not done: the table rows for `Wp11Rules.Tools` labels by real source type beyond registry/log, and Romanian wording
+of the policy-timeline lines (they still carry OBSERVED / NOT_OBSERVED codes, explained in the note under that section).
 
 ## Risks and unknowns
 - AF04 "RecordID reutilizat" and AF05 inversions cluster at boot within milliseconds: possibly a record-reading order artefact, not reuse.

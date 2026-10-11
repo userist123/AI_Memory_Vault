@@ -32,9 +32,8 @@ public static class ReportFooter
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { program = "amprenta programului nu a putut fi citită"; }
         var tz = TimeZoneInfo.Local;
-        var off = tz.GetUtcOffset(DateTime.Now);
         return $"Generat de {program} · liste de detecție: {LogAnalyzer.Dfir.Analysis.ShippedData.Description} · " +
-               $"fus orar al stației: {tz.Id}, UTC{(off < TimeSpan.Zero ? "-" : "+")}{Math.Abs(off.Hours):00}:{Math.Abs(off.Minutes):00}; orele marcate UTC sunt universale";
+               $"fus orar al stației: {LogAnalyzer.Dfir.Language.RoText.ZoneName(tz, DateTimeOffset.Now)}; orele cu „UTC” sunt în timp universal, restul în ora stației";
     });
 
     /// <param name="marking">WP18 S5: the marking line entered by hand ("Marcaj: … (marcaj introdus manual, neverificat de aplicație)"), printed first on every page.</param>
