@@ -73,3 +73,21 @@ cites file:line for each finding.
 - The published npm builds and the downloaded binaries were not compared with the reviewed source.
 - Whether impeccable's `hook` path itself reaches the network was not checked.
 - How these plugins behave inside Claude Code on Windows was not observed.
+
+## One-time install (owner: "run once, then the AI does the rest")
+
+`30_SCRIPTS/setup/install_design_stack.py --apply` installs exactly the cleared items, once. A
+marker file (`~/.claude/design-stack.installed`) turns a second run into a no-op. Without
+`--apply` the script only prints the plan.
+
+What it installs:
+- It enables `frontend-design`, `ralph-loop` and `superpowers`.
+- It adds the MCP server `chrome-devtools-mcp@1.9.0`, the version the official marketplace pins.
+  At that version, `cd4a.config.json` discovery does not exist yet. It runs with
+  `--no-usage-statistics --no-performance-crux --isolated`.
+- It copies the `creative-web-director` skill.
+
+The skill carries the owner's directive: PRODUCT/DESIGN/PLAN files, the anti-"AI slop" visual
+standard, browser verification, ralph-loop always bounded, and memory through the Vault. It
+triggers on any web/UI request, so the owner never types the commands themselves.
+Tests: `20_TESTS/test_install_design_stack.py`.
