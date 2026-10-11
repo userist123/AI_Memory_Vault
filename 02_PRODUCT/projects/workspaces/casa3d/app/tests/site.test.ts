@@ -43,3 +43,13 @@ test('poze: doar imagini, cu mărime limitată', async () => {
   await assert.rejects(addPhoto(A, id, new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>')), (e: any) => e.status === 415);
   const big = new Uint8Array(SITE_LIMITS.photoBytes + 1); big.set(JPEG); await assert.rejects(addPhoto(A, id, big), (e: any) => e.status === 413);
 });
+
+test('regresii: numerele nu se refolosesc după ștergerea ultimei, data rezolvării rămâne la verificare, pozele scoase se șterg', async () => {
+  const id = await repo.createProject(A, 'Regresii', 'demo');
+  const s1 = await addSnag(A, id, { title: 'unu' }), s2 = await addSnag(A, id, { title: 'doi' }); await deleteSnag(A, id, s2.id);
+  assert.equal((await addSnag(A, id, { title: 'trei' })).number, 3, 'după ștergerea lui #2, următorul e #3');
+  const fixed = await updateSnag(A, id, s1.id, { status: 'fixed' }); const ver = await updateSnag(A, id, s1.id, { status: 'verified' });
+  assert.equal(ver.resolvedAt, fixed.resolvedAt, 'verificarea nu schimbă data rezolvării');
+  const ph = await addPhoto(A, id, JPEG); await updateSnag(A, id, s1.id, { photos: [ph.id] }); await updateSnag(A, id, s1.id, { photos: [] });
+  await assert.rejects(readPhoto(A, id, ph.id), (e: any) => e.status === 404, 'poza scoasă din remediere e ștearsă');
+});

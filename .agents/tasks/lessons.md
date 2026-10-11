@@ -90,3 +90,10 @@ When the owner corrects an agent or a real incident reveals a reusable failure p
   When a scanner flags a literal that is only parsed, keep the code exact and add an explicit, documented exception bound to
   that exact literal in that one assembly, with a test that the exception does not leak (`ParsingOnlyLiterals`). Agent prompts
   must say: a red security gate is fixed in the gate's own allowlist with a reason, never by obfuscation.
+
+## 2026-10-11 — Casa3D: commit gated on grep output, backup by basename
+- Incident 1: `npx vitest run | grep ... && git commit` committed 21e7a07b while 1 test failed (grep exits 0 even on failures).
+  Rule: gate commits on the test command's own exit status (`npx vitest run > log; [ $? -eq 0 ] && git commit`), never on a pipe into grep.
+- Incident 2: a temporary "revert to HEAD to prove the regression test is red" loop saved backups as `keep_$(basename f)`;
+  core/procurement.ts and lib/procurement.ts collided and one file was overwritten. Rule: back up by full path
+  (`git stash push -- <paths>` or `cp --parents`), never by basename.

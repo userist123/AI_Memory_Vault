@@ -39,7 +39,7 @@ export default function SitePage({ id, rooms, say }: { id: string; rooms: Room[]
 function AddPhotos({ id, say, onAdded, label }: { id: string; say(s: string): void; onAdded(ids: string[]): void; label?: string }){
   const { t } = usePrefs(), ref = useRef<HTMLInputElement>(null), [busy, setBusy] = useState(false);
   async function pick(files: FileList | null){ if (!files?.length) return; setBusy(true); const ids: string[] = [];
-    try { for (const f of [...files].slice(0, 8)){ const blob = await shrinkPhoto(f), r = await fetch(`/api/projects/${id}/site/photos`, { method: 'POST', body: blob });
+    try { if (files.length > 8) say(t('site.tooMany')); for (const f of [...files].slice(0, 8)){ const blob = await shrinkPhoto(f), r = await fetch(`/api/projects/${id}/site/photos`, { method: 'POST', body: blob });
         const j = await r.json().catch(() => ({})); if (!r.ok){ say(j.error || t('site.photoError')); continue; } ids.push(j.id); }
       if (ids.length) onAdded(ids); } finally { setBusy(false); if (ref.current) ref.current.value = ''; } }
   return (<label className="btn photo-btn">{busy ? t('site.uploading') : label ?? t('site.addPhoto')}<input ref={ref} type="file" accept="image/*" capture="environment" multiple hidden disabled={busy} onChange={e => pick(e.target.files)} /></label>);

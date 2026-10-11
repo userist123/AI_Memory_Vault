@@ -36,3 +36,13 @@ test('pur: anulatele nu intră în totaluri, o linie fără preț face totalul f
   const s = procurementSummary(rows); assert.equal(s.lines, 2); assert.equal(s.ordersValue, 100);
   assert.deepEqual(checkOrderState({ status: 'ordered', ref: '  A1‮ ', note: '' }), { status: 'ordered', ref: 'A1' });
 });
+
+test('regresii: ambalajele se adună pe camere, datele imposibile și liniile inventate sunt refuzate', async () => {
+  const { addPacks } = await import('../core/procurement');
+  assert.equal(addPacks('5 × pachet', '12 × pachet'), '17 × pachet'); assert.equal(addPacks('5 × pachet', '2 × cutie'), null); assert.equal(addPacks(null, '2 × cutie'), null);
+  const id = await repo.createProject(A, 'Ambalaje', 'demo'), o = await getOrders(A, id);
+  const multi = o.rows.find(r => r.kind === 'finish' && r.rooms.length > 1 && r.packs);
+  if (multi){ const n = Number(multi.packs!.split(' × ')[0]); assert.ok(n >= multi.rooms.length, 'cel puțin un ambalaj pe cameră'); }
+  assert.throws(() => checkOrderState({ status: 'ordered', eta: '2026-02-31' }));
+  await assert.rejects(setOrderState(A, id, 'm|inventat|x', { status: 'ordered' }), (e: any) => e.status === 400);
+});
