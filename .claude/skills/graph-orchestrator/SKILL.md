@@ -1,7 +1,7 @@
 ---
 name: graph-orchestrator
 description: Owner's standing directive for auditing, analysing, cloning or rebuilding an existing app or site - run it as a graph, not a loop. Fan out parallel subagents (recon of screens and flows, architecture and data, market reviews and complaints, prior decisions from memory), fan in to one synthesis, then rebuild one slice first with the replica-* skills. Rebuild function and logic only, never the target's code, brand, logo, copy or colours. Apply automatically; the owner does not type commands.
-when_to_use: Any request to audit, analyse, reverse-engineer, clone, replicate or rebuild an app, SaaS or website, or to beat a competitor's product. Romanian triggers - "cloneaza", "fa ca aplicatia X", "analizeaza aplicatia", "reconstruieste", "replica", "audit".
+when_to_use: Any request to audit, analyse, reverse-engineer, clone, replicate or rebuild an app, SaaS or website, or to beat a competitor's product. Romanian triggers - "cloneaza", "fa ca aplicatia X", "analizeaza aplicatia", "reconstruieste", "replica", "auditeaza aplicatia X".
 ---
 
 # graph-orchestrator
