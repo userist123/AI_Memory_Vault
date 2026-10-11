@@ -45,8 +45,9 @@ Ask only for what is theirs: text, brand assets, music rights, length and format
 1. Type-check and lint; open the composition in Remotion Studio (`npx remotion studio`) and
    check every scene at its key frames (stills via `npx remotion still`).
 2. Render on the owner's PC with the apps installed there (checked 2026-10-11: FFmpeg 9.0.2 on
-   PATH with working `h264_nvenc`, `hevc_nvenc`, `av1_nvenc`; NVIDIA driver 616.92; Blender not
-   installed). Remotion draws the frames on the GPU (ANGLE), then the PC's FFmpeg encodes on the
+   PATH with working `h264_nvenc`, `hevc_nvenc`, `av1_nvenc`; NVIDIA driver 616.92; Blender 5.2.2
+   LTS portable at `D:\Apps\blender-5.2.2-windows-x64\blender.exe`, OptiX sees the RTX 5060).
+   Drive C: is nearly full: write projects, intermediates and renders to D:. Remotion draws the frames on the GPU (ANGLE), then the PC's FFmpeg encodes on the
    RTX 5060 (NVENC):
    - `npx remotion render <Composition> out/<name>.mov --codec=prores --prores-profile=4444`
      (lossless intermediate; 60 fps when the brief asks for it);
@@ -58,7 +59,8 @@ Ask only for what is theirs: text, brand assets, music rights, length and format
    Report the output path, length, resolution, size and which encoder ran.
 3. 3D scenes that need real lighting (product shots, fly-throughs): Blender with Cycles on OptiX
    (RTX) renders them to an image sequence that Remotion composites. Render headless with
-   `blender -b <scene>.blend -E CYCLES -o //frames/f_#### -a -- --cycles-device OPTIX`.
+   `D:\Apps\blender-5.2.2-windows-x64\blender.exe -b <scene>.blend -E CYCLES -o //frames/f_#### -a
+   -- --cycles-device OPTIX`.
 4. Assets: only the owner's own or properly licensed fonts, images and audio; list sources in
    the project README.
 
@@ -67,7 +69,8 @@ Ask only for what is theirs: text, brand assets, music rights, length and format
 - Owner's standing permission (2026-10-11): when a render tool is missing on the PC, install it
   yourself, without asking, from the official source only (winget package of the vendor, or
   the vendor's own download), pinned to an exact version, then report what was installed.
-  Installed so far: Blender 5.2.2 (winget `BlenderFoundation.Blender`).
+  Prefer drive D: (C: is nearly full). Installed so far: Blender 5.2.2 LTS, official portable
+  zip from download.blender.org, sha256 checked against the official `.sha256` file.
 
 - Cloud rendering (Lambda/Cloud Run), uploads and publishing only with the owner's explicit go.
 - Pin what you scaffold: `npx create-video@<the version in the project's package.json, or the
