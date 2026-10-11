@@ -44,7 +44,7 @@ DONE:
 - 2026-10-10 (cloud session): Casa3D.md updated from the ledger, not from the patch: F4 row -> DONE (TEST MODE),
   new v8 row UNVERIFIED, F4 section 'Implementare verificata', reconciliation renamed to v8 / F5-F8, evidence
   matrix, gaps, roadmap, provenance, relation to ledger 28890ae9. Note stays REVIEW/unverified.
-- 2026-10-10 10:15 UTC: PHASE4.md server verification run on LAB-PC via Remote Control session LAB-PC-toasty-raven
+- 2026-10-10 10:15 UTC: PHASE4.md server verification run on LAB-PC via Remote Control session <remote-control-session>
   (health 200, admin 401/200, /go/o 302 with UTM and no cookie, bot clicks not counted, 404 for missing offer).
   Recorded in VERIFICATION_2026-10-10.md; Casa3D.md F4 section updated. v8 archive hash search on the PC was blocked
   by the Claude Code permission classifier (both personal folders and D:\w\casa3d).

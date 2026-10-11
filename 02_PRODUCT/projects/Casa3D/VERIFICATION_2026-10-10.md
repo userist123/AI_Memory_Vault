@@ -63,7 +63,7 @@ repo (PGlite, revizii, proprietar).
 
 ## Verificare pe server (PHASE4.md), 2026-10-10 10:15 UTC
 
-Rulata de Claude Code (Opus 5.5, sesiune Remote Control `LAB-PC-toasty-raven`) pe LAB-PC, la cererea sesiunii
+Rulata de Claude Code (Opus 5.5, sesiune Remote Control `<remote-control-session>`) pe LAB-PC, la cererea sesiunii
 cloud; fara apel AI (`ANTHROPIC_API_KEY` gol), fara commit, fara modificari in cod. Next.js 15.5.27, Node v24.13.0,
 `npx next start -p 3417` pe build-ul existent, PGlite in memorie (`PGLITE_MEMORY=1`), `ADMIN_TOKEN` local de 16 caractere.
 Ofertele se incarca la pornire din `data/catalog.v1.json` (68, toate cu `sourceUrl`); nu a fost nevoie de import.
