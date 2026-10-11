@@ -232,47 +232,47 @@
                     </TabControl.ItemContainerStyle>
 
                     <!-- 0: Command Dashboard -->
-                    <TabItem><views:DashboardView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:DashboardView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 1: EVTX Event Explorer -->
-                    <TabItem><views:EventExplorerView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:EventExplorerView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 2: Offline Registry Forensics -->
-                    <TabItem><views:RegistryForensicsView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:RegistryForensicsView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 3: Threats, Alerts & Sigma Workbench -->
-                    <TabItem><views:AlertsAndRulesView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:AlertsAndRulesView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 4: Incident Timeline Live -->
-                    <TabItem><views:IncidentTimelineView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:IncidentTimelineView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 5: Explainable Risk Analysis -->
-                    <TabItem><views:RiskAnalysisView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:RiskAnalysisView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 6: Attack Storyline & Kill Chain -->
-                    <TabItem><views:AttackStorylineView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:AttackStorylineView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 7: Threat Intel & APT Profiler -->
-                    <TabItem><views:ThreatIntelView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:ThreatIntelView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 8: Kerberos AD & LOLBAS -->
-                    <TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate>
                     <Grid>
                         <views:KerberosAndLateralMovementView Visibility="{Binding IsAirGappedMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                         <views:ActiveDirectoryAuditView Visibility="{Binding IsNetworkMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     </Grid>
-                </TabItem>
+                </DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 9: Chain of Custody & Provenance -->
-                    <TabItem><views:ChainOfCustodyView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:ChainOfCustodyView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 10: MITRE ATT&CK Enterprise Matrix -->
-                    <TabItem><views:MitreMatrixView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:MitreMatrixView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 11: Real-Time Live SOC Monitoring -->
-                    <TabItem><views:LiveSocView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:LiveSocView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 12: Telemetry & Forensic Triage Collector -->
-                    <TabItem><views:DataCollectionView/></TabItem>
-                <TabItem><ctrl:FeaturePlaceholder FeatureKey="Containment" Title="Izolare procese suspecte" ViewModel="{Binding Containment}"/></TabItem>
-                <TabItem><views:StationControlView DataContext="{Binding StationControl}"/></TabItem>
-                <TabItem><ctrl:FeaturePlaceholder FeatureKey="DomainInvestigation" Title="Investigație domeniu" ViewModel="{Binding DomainInvestigation}"/></TabItem>
-                <TabItem><views:InvestigationView DataContext="{Binding Investigation}"/></TabItem>
-                <TabItem><views:PolicyView DataContext="{Binding Policy}"/></TabItem>
-                <TabItem><views:ProcedureProfileView DataContext="{Binding ProcedureProfile}"/></TabItem>
-                <TabItem><views:MediaCenterView DataContext="{Binding MediaCenter}"/></TabItem>
-                <TabItem><views:RegisterView DataContext="{Binding UsersRegister}"/></TabItem>
-                <TabItem><views:AuthView DataContext="{Binding Auth}"/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:DataCollectionView/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><ctrl:FeaturePlaceholder FeatureKey="Containment" Title="Izolare procese suspecte" ViewModel="{Binding Containment}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><views:StationControlView DataContext="{Binding StationControl}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><ctrl:FeaturePlaceholder FeatureKey="DomainInvestigation" Title="Investigație domeniu" ViewModel="{Binding DomainInvestigation}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><views:InvestigationView DataContext="{Binding Investigation}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><views:PolicyView DataContext="{Binding Policy}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><views:ProcedureProfileView DataContext="{Binding ProcedureProfile}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><views:MediaCenterView DataContext="{Binding MediaCenter}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><views:RegisterView DataContext="{Binding UsersRegister}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><views:AuthView DataContext="{Binding Auth}"/></DataTemplate></ctrl:LazyPage></TabItem>
                 <!-- 22: Home (WP5) -->
-                <TabItem><views:HomeView DataContext="{Binding Home}"/></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><views:HomeView DataContext="{Binding Home}"/></DataTemplate></ctrl:LazyPage></TabItem>
                 </TabControl>
             </Grid>
         </Grid>
