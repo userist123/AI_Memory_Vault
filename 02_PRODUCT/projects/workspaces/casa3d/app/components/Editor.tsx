@@ -170,7 +170,8 @@ export default function Editor({ id }: { id: string }){
   const onAddOpening = (wallId: string, offset: number, kind: 'door' | 'window') => { const w = snap.floor.walls.find(x => x.id === wallId)!, L = wallLength(w.a, w.b), width = kind === 'door' ? .8 : 1.2;
     if (L < width + .1){ say(t('editor.wallTooShort')); return; } const oid = `op-${uid().slice(0, 8)}`;
     mutate(s => { s.floor.walls.find(x => x.id === wallId)!.openings.push({ id: oid, kind, offset: r3(Math.max(0, Math.min(L - width, offset - width / 2))), width }); }); setSel({ kind: 'opening', id: oid, wallId }); };
-  const setStage = (s: Stage) => { const st = STAGES.find(x => x.id === s)!; setStageRaw(s); setView(st.view); if (!st.tools.includes(tool)) setTool('select'); if (s === 'mep') setShowTech(true); setSideOpen(true); };
+  // pe telefon nu e loc pentru plan + 3D unul sub altul: etapele care îl folosesc pornesc pe plan
+  const setStage = (s: Stage) => { const st = STAGES.find(x => x.id === s)!; setStageRaw(s); setView(st.view === 'split' && typeof matchMedia === 'function' && matchMedia('(max-width: 600px)').matches ? '2d' : st.view); if (!st.tools.includes(tool)) setTool('select'); if (s === 'mep') setShowTech(true); setSideOpen(true); };
   const stageDef = STAGES.find(x => x.id === stage)!, warnCount = advice.filter(a => a.severity !== 'TIP').length;
   const total = snap.placements.reduce((a, p) => a + (resolve(catalog, p.variantId)?.offer?.price || 0), 0);
   const selPl = sel?.kind === 'placement' ? snap.placements.find(p => p.id === sel.id) : undefined, selRoom = sel?.kind === 'room' ? snap.floor.rooms.find(r => r.id === sel.id) : undefined;
@@ -190,16 +191,16 @@ export default function Editor({ id }: { id: string }){
   return (<div className="ws">
     {!persistent && <div className="banner">{t('editor.demoBanner')}</div>}
     <header className="topbar">
-      <a className="btn" href="/">{t('editor.projects')}</a>
+      <a className="btn" href="/" aria-label={t('home.projects')}>←<span className="lbl"> {t('home.projects')}</span></a>
       <input className="name" value={snap.name} aria-label={t('editor.projectName')} maxLength={120} onChange={e => { const n = { ...house!, name: e.target.value }; setHouse(n); persist(n); }} />
       <span className={`status ${save === 'error' ? 'err' : ''}`}>{save === 'saved' ? t('editor.saved') : save === 'saving' ? t('editor.saving') : save === 'dirty' ? t('editor.dirty') : t('editor.saveError')} · {rev ? t('editor.revisionN', { n: rev }) : t('editor.noRevisions')}</span>
-      <button className="btn" onClick={undo} disabled={!hist.current.canUndo} title="Ctrl+Z">↶ {t('editor.undo')}</button>
-      <button className="btn" onClick={redo} disabled={!hist.current.canRedo} title="Ctrl+Y">↷ {t('editor.redo')}</button>
+      <button className="btn" onClick={undo} disabled={!hist.current.canUndo} title="Ctrl+Z" aria-label={t('editor.undo')}>↶<span className="lbl"> {t('editor.undo')}</span></button>
+      <button className="btn" onClick={redo} disabled={!hist.current.canRedo} title="Ctrl+Y" aria-label={t('editor.redo')}>↷<span className="lbl"> {t('editor.redo')}</span></button>
       <div className="btn" role="group" aria-label={t('editor.view')} style={{ padding: 2, gap: 2 }}>
-        {(['2d', 'split', '3d'] as const).map(vv => <button key={vv} className="btn" style={{ minHeight: 30, border: 0, background: view === vv ? 'var(--graphite)' : 'transparent', color: view === vv ? '#fff' : undefined }} onClick={() => { setView(vv); if (vv === '3d' && typeof matchMedia === 'function' && matchMedia('(max-width: 900px)').matches) setSideOpen(false); }}>{vv === '2d' ? t('editor.view2d') : vv === '3d' ? '3D' : t('editor.viewSplit')}</button>)}
+        {(['2d', 'split', '3d'] as const).map(vv => <button key={vv} className={`btn v-${vv}`} style={{ minHeight: 30, border: 0, background: view === vv ? 'var(--graphite)' : 'transparent', color: view === vv ? '#fff' : undefined }} onClick={() => { setView(vv); if (vv === '3d' && typeof matchMedia === 'function' && matchMedia('(max-width: 900px)').matches) setSideOpen(false); }}>{vv === '2d' ? t('editor.view2d') : vv === '3d' ? '3D' : t('editor.viewSplit')}</button>)}
       </div>
       <PrefsSwitcher />
-      <button className="btn primary" onClick={saveRevision}>{t('editor.saveRevision')}</button>
+      <button className="btn primary" onClick={saveRevision}><span className="lbl">{t('editor.saveRevision')}</span><span className="lbl-s">{t('editor.saveShort')}</span></button>
     </header>
     <nav className="stagebar" aria-label={t('stage.aria')}>
       {STAGES.map((st, i) => <button key={st.id} aria-current={stage === st.id ? 'step' : undefined} onClick={() => setStage(st.id)}><i>{String(i + 1).padStart(2, '0')}</i>{t(`stage.${st.id}`)}{st.id === 'docs' && warnCount > 0 && <b className="count" title={t('stage.checks')}>{warnCount}</b>}</button>)}

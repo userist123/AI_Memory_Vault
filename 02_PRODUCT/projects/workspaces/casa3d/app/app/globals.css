@@ -282,10 +282,40 @@ input[type=file]{font-size:12px;color:var(--lead)} input[type=file]::file-select
   .home{padding-left:16px;padding-right:16px} .home-head{flex-wrap:wrap;row-gap:4px} .home-head .home-sub{order:3;flex-basis:100%}
   .topbar .prefs{display:none!important} .topbar .status{display:none} .topbar .btn{min-height:34px;padding:0 9px;font-size:13px}
   .topbar .name{flex:1 1 100%;order:-1;font-size:15px}
-  .body{grid-template-columns:1fr;grid-template-rows:auto minmax(52dvh,1fr) auto}
+  .body{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(52dvh,1fr) auto}
   .tools{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--rule);padding:4px 6px;scrollbar-width:none}
   .tools button{flex:0 0 58px;height:46px}
   .side{max-height:none;overflow:visible}
   .ws{height:auto;min-height:100dvh} .ws > .body{flex:0 0 auto}
   .stagebar{padding:0 8px}
+}
+
+/* telefon, pasul 2: antet cu iconițe, fără „Plan + 3D”, ținte pentru deget, prezentarea pe verticală */
+.lbl-s{display:none}
+@media (pointer:coarse){ .btn,.side button,.side select,.side input,.stagebar button{min-height:42px} .tools button{min-height:46px} }
+@media (max-width:600px){
+  .topbar .lbl{display:none} .topbar .lbl-s{display:inline} .topbar .v-split{display:none}
+  .topbar{flex-wrap:wrap;row-gap:6px} .topbar .btn{min-width:42px;justify-content:center}
+  .side{padding:12px 14px;grid-template-columns:minmax(0,1fr)} .side *{max-width:100%}
+}
+@media (max-width:700px){
+  .deck{padding:0 0 88px;gap:14px}
+  .deck-bar{right:12px;bottom:12px;padding:0;border:0;background:transparent} .deck-bar span{display:none}
+  .fb-intro{padding:16px 16px 0;font-size:18px;width:auto}
+  .slide{width:100%;aspect-ratio:auto;display:block;box-shadow:none;border-bottom:1px solid var(--rule);container-type:normal}
+  .slide footer{position:static;padding:0 16px 14px;font-size:11px;text-align:right}
+  .slide .kicker{font-size:11px} .slide h1{font-size:34px;margin:8px 0} .slide h2{font-size:28px;margin:6px 0 0} .slide h3{font-size:12px;margin:0 0 10px}
+  .slide img,.slide .ph{height:auto;aspect-ratio:4/3}
+  .cover-txt{padding:20px 16px 8px;gap:4px} .cover-txt p{font-size:15px} .cover-txt small{font-size:13px;margin-top:10px}
+  .board,.planslide,.budgetslide{padding:20px 16px 4px}
+  .board-grid{grid-auto-flow:row;grid-template-columns:1fr;gap:18px;margin-top:16px}
+  .board-col figure{grid-template-columns:48px 1fr;gap:12px;margin:0 0 10px} .board-col i{width:48px;height:48px} .board-col figcaption{font-size:14px} .board-col small{font-size:12px}
+  .room-txt{padding:18px 16px 10px;gap:2px}
+  .sw-list{margin-top:14px;gap:10px} .sw-list li{grid-template-columns:40px 1fr;gap:12px} .sw-list i{width:40px;height:40px} .sw-list span{font-size:14px} .sw-list small{font-size:10px}
+  .room .prod{font-size:13px;margin-top:14px;padding-top:10px}
+  .plan-wrap{margin-top:12px} .plan-wrap svg{width:100%;height:auto}
+  .bud{grid-template-columns:1fr;gap:16px;margin-top:14px} .bud-total small{font-size:11px} .bud-total b{font-size:40px;margin:6px 0} .bud-total p{font-size:13px}
+  .bud dl div{font-size:14px;padding:8px 0}
+  .fb{width:auto;margin:0 12px;padding:16px} .fb header h3{font-size:20px}
+  .fb-v{flex:1 1 auto;min-height:44px}
 }

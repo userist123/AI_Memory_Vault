@@ -73,7 +73,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
       <button className="btn" aria-pressed={quality === 'high'} onClick={() => setQuality(q => q === 'high' ? 'normal' : 'high')} title={t('viewer.qualityTitle')}>{t('viewer.quality')}</button>
       <label className="f" style={{ minWidth: 160 }}><span>{t('viewer.sun', { deg: Math.round(azimuth) })}</span><input type="range" min={0} max={359} value={azimuth} onChange={e => setAzimuth(Number(e.target.value))} /></label>
     </div>}
-    <div className="hintbar">{err ? t('viewer.noWebgl') : (mode === 'walk' ? (touch ? t('viewer.hintWalkTouch') : t('viewer.hintWalk')) : t('viewer.hintHouse'))}</div>
+    <div className="hintbar">{err ? t('viewer.noWebgl') : (mode === 'walk' ? (touch ? t('viewer.hintWalkTouch') : t('viewer.hintWalk')) : (touch ? t('viewer.hintHouseTouch') : t('viewer.hintHouse')))}</div>
     {pano && <PanoramaView url={pano.url} title={pano.title} fileName={pano.file} onClose={() => setPano(null)} />}
   </div>);
 }
