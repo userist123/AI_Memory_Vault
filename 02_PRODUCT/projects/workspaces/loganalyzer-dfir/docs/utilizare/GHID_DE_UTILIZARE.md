@@ -133,7 +133,19 @@ Ecranul **„Politici”** spune mereu, sus, **pasul următor** și de ce, cu un
 7. „Aplică planul…”: cu confirmare, iar fiecare setare se recitește după scriere (doar în ediția neclasificată);
 8. „Verifică conformitatea”.
 
-La clic pe un rând din plan, dedesubt apare ce înseamnă setarea: valoare de registru, categorie de audit, serviciu sau regulă de securitate. Elementele pe care aplicația nu le poate citi din politică sunt listate în fila „Neacceptate la import”.
+### 8.1 Ce face fiecare setare: listă în stânga, explicație în dreapta
+
+Ținând mouse-ul pe un rând din plan apare, pe un rând, ce face setarea. La clic pe rând, în dreapta apare explicația completă, pe înțeles:
+
+- **Ce face** setarea, fără termeni tehnici;
+- **De ce contează pe o stație izolată** care tratează informații clasificate;
+- **Valoarea recomandată**. Unde valoarea o hotărăște organizația (de exemplu durata blocării contului), scrie „valoarea cerută de procedura dumneavoastră (profilul de proceduri)”, iar dedesubt apare valoarea pe care o cere politica deschisă; unde există un reper Microsoft, acesta este menționat ca reper, nu ca obligație;
+- **Ce înseamnă valoarea de acum** a stației (de exemplu „0: contul nu se blochează niciodată”);
+- **Unde se setează**: calea din editorul de politici de grup (în engleză, între ghilimele, cum apare în Windows) și, pentru IT, locul tehnic (cheia de registru, comanda auditpol sau „net accounts”).
+
+Butonul „Copiază explicația (pentru procesul-verbal)” pune tot textul în clipboard. Catalogul cuprinde politica de parole și de blocare a conturilor, toate categoriile auditului avansat, serviciile cunoscute și valorile de registru folosite de obicei pe o stație izolată (UAC, ecran, suporturi amovibile, instalarea dispozitivelor, AutoPlay, BitLocker, firewall, Defender, PowerShell, Recall, Copilot, cameră, microfon, ceas). O setare din afara catalogului este spusă cinstit: aplicația arată ce fel de setare este și unde se află, dar nu îi ghicește semnificația; titlul controlului din politică o descrie.
+
+Elementele pe care aplicația nu le poate citi din politică sunt listate în fila „Neacceptate la import”.
 
 ## 9. Când ceva nu merge
 

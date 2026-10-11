@@ -66,11 +66,22 @@ namespace LogAnalyzer.UI.ViewModels
             UpdateNextStep();
         }
 
-        // Plain-language explanation of the selected plan row (registry value, audit category, service, security policy key).
+        // Plain-language explanation of the selected plan row (owner 2026-10-12: „ce face fiecare politică în parte"): what the setting does, why it
+        // matters on an isolated station, the recommended value, what the opened policy requires, what the current value means and where it is set.
         [ObservableProperty] private ControlPlan? _selectedPlanRow;
-        [ObservableProperty] private LogAnalyzer.Dfir.Windows.Audit.CodeExplanation? _selectedSettingExplanation;
+        [ObservableProperty] private PolicySettingExplanation? _selectedSettingExplanation;
+        public bool HasSelectedSetting => SelectedSettingExplanation is not null;
         partial void OnSelectedPlanRowChanged(ControlPlan? value) =>
-            SelectedSettingExplanation = value is null ? null : LogAnalyzer.Dfir.Windows.Audit.CodeExplainer.Setting(value.Setting);
+            SelectedSettingExplanation = value is null ? null : PolicySettingCatalogue.Explain(value);
+        partial void OnSelectedSettingExplanationChanged(PolicySettingExplanation? value) => OnPropertyChanged(nameof(HasSelectedSetting));
+
+        [RelayCommand]
+        private void CopyExplanation()
+        {
+            if (SelectedSettingExplanation is null) { Status = "Alegeți întâi o setare din plan."; return; }
+            try { Clipboard.SetText(SelectedSettingExplanation.ToPlainText()); Status = "Explicația a fost copiată; o puteți lipi în procesul-verbal."; }
+            catch (System.Runtime.InteropServices.COMException) { Status = "Clipboard-ul este ocupat de alt program; încercați din nou."; }
+        }
 
         /// <param name="registryWriter">Null in the classified edition: policies can be opened, validated and compared but not applied to the registry.</param>
         public PolicyViewModel(LogAnalyzer.Dfir.Windows.Policy.IRegistryValueWriter? registryWriter = null)
