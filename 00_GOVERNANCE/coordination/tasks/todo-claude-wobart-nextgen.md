@@ -13,7 +13,7 @@ DONE:
 - vault-reviewer (opus): FIX-FIRST, 9 findings → all fixed (schema default, stale observer, hex 400, aggregateRating, poster, wa.me, focus, empty FAQ, copy).
 - Wobart pushed: 402c27b feat + 4640275 fix on `ccr-a57d8bba-5jt0rc`.
 - memory proposal (REVIEW, unverified): 01_ARCHITECTURE/knowledge/next-gen-premium-automotive-wrapping-website-2026-research-v_74299992.md
-- Owner started Desktop Commander (device Marius-PC, Win11, RTX 5060 4 GB, C: 15 GB free, D: 276 GB free). Installed without admin:
+- Owner started Desktop Commander (device LAB-PC, Win11, RTX 5060 4 GB, C: 15 GB free, D: 276 GB free). Installed without admin:
   Blender 5.2.2 LTS portable at D:\Tools\blender-5.2.2-windows-x64, gltf-transform (npm -g), ffmpeg (winget user scope); Ollama 0.40 running
   with 7 models. Wobart cloned to D:\Projects\Wobart. Inventory: Wobart PROJECT_BRAIN/TOOLING.md.
 - 3D pipeline proven end to end: scripts/blender/build_car.py (headless, 3.6 s) -> GLB 122 KB -> gltf-transform meshopt 33.5 KB with
@@ -21,13 +21,13 @@ DONE:
 - Playwright visual smoke script: Wobart scripts/visual/screenshot.mjs (phone/tablet/desktop + configurator with SwiftShader WebGL).
 - GLB wired into WrapConfigurator (vault-worker/sonnet; useGLTF meshopt, Draco off, material 'Wrap' swapped); Playwright visual run
   on the fresh build: canvas on tablet/desktop, poster on phone, car renders with finish swatches; only 503 /api/content (no MONGO_URL).
-  Pushed f927c54; screenshots in Wobart test_reports/visual/. Site built and opened on Marius-PC for the owner.
+  Pushed f927c54; screenshots in Wobart test_reports/visual/. Site built and opened on LAB-PC for the owner.
 - Owner rejected the procedural car and the plain stage ("mizerii", "look din 1900"). Replaced with the Khronos CarConcept
   (CC-BY 4.0, Eric Chadwick / DGG; base CC0): Blender prepare_carconcept.py strips the trademarked Khronos parts and unifies the
   paint into material 'Wrap'; gltf-transform meshopt+webp 1024 (--palette false, otherwise material names are lost): 11.8 MB -> 1.42 MB.
   Stage: Poly Haven studio HDRI + Lightformers, Bloom/Vignette, PerformanceMonitor DPR, precise Box3 auto-fit (quantized accessor
   bounds are inflated and floated the car), contact shadows on the CSS backdrop (MeshReflectorMaterial floor read as a grey slab).
-  GPU screenshots taken on Marius-PC via headless Chromium (scripts/visual/shot-gpu.cjs): car grounded, satin black reads well.
+  GPU screenshots taken on LAB-PC via headless Chromium (scripts/visual/shot-gpu.cjs): car grounded, satin black reads well.
   Wobart commits 87346d2, e7cffa0, 00199ef, 0187a4d, 5a98f6a, 04cb015. CC BY credit added in the section disclaimer.
 - Lesson recorded (Wobart tasks/lessons.md): a push chained with ';' after a red lint went out; chain with '&&' only.
 - 2026-10-11 (claude-wobart-nextgen): owner wants the Terminal Industries truck effect for the car ("nu cu puncte"). Particle hero
