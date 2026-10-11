@@ -2755,19 +2755,21 @@ namespace LogAnalyzer.UI.ViewModels
             var dialog = new SaveFileDialog { Filter = "Notificare NIS2 (*.txt)|*.txt", FileName = $"DNSC_Avertizare_Timpurie_24h_{DateTime.Now:yyyyMMdd_HHmmss}.txt" };
             if (dialog.ShowDialog() == true)
             {
+                // No invented entity data, awareness time or measures (audit 2026-10-11): unknown fields are printed as [DE COMPLETAT].
                 string draft = _nis2Service.GenerateDnscDraft(
                     Nis2Stage.EarlyWarning_24h,
-                    "Entitate Esențială / Companie Securizată",
-                    "RO12345678",
+                    new Nis2Entity(),
+                    "",
                     CurrentStoryline.IncidentTitle,
-                    "Stații de Lucru & Servere de Domeniu",
-                    DateTime.UtcNow.AddHours(-3),
+                    "",
+                    null,
                     CurrentStoryline,
                     TotalEventsCount,
-                    TotalAlertsCount);
+                    TotalAlertsCount,
+                    iocs: CurrentIocs.ToList());
 
                 File.WriteAllText(dialog.FileName, draft, Encoding.UTF8);
-                _provenanceLedger.AppendEntry("NIS2_EXPORTED", dialog.FileName, "-", "Exportat draft Notificare Timpurie NIS2 (24h) către DNSC.");
+                _provenanceLedger.AppendEntry("NIS2_EXPORTED", dialog.FileName, "-", "Salvat proiectul de avertizare timpurie NIS2 (24h); netransmis, de verificat și transmis prin PNRISC de entitate.");
                 StatusMessage = "✅ Draft Notificare Timpurie NIS2 (24h) exportat cu succes!";
             }
         }
@@ -2778,19 +2780,21 @@ namespace LogAnalyzer.UI.ViewModels
             var dialog = new SaveFileDialog { Filter = "Notificare NIS2 (*.txt)|*.txt", FileName = $"DNSC_Notificare_Incident_72h_{DateTime.Now:yyyyMMdd_HHmmss}.txt" };
             if (dialog.ShowDialog() == true)
             {
+                // No invented entity data, awareness time or measures (audit 2026-10-11): unknown fields are printed as [DE COMPLETAT].
                 string draft = _nis2Service.GenerateDnscDraft(
                     Nis2Stage.Notification_72h,
-                    "Entitate Esențială / Companie Securizată",
-                    "RO12345678",
+                    new Nis2Entity(),
+                    "",
                     CurrentStoryline.IncidentTitle,
-                    "Stații de Lucru & Servere de Domeniu",
-                    DateTime.UtcNow.AddHours(-12),
+                    "",
+                    null,
                     CurrentStoryline,
                     TotalEventsCount,
-                    TotalAlertsCount);
+                    TotalAlertsCount,
+                    iocs: CurrentIocs.ToList());
 
                 File.WriteAllText(dialog.FileName, draft, Encoding.UTF8);
-                _provenanceLedger.AppendEntry("NIS2_EXPORTED", dialog.FileName, "-", "Exportat draft Notificare Incident NIS2 (72h) către DNSC.");
+                _provenanceLedger.AppendEntry("NIS2_EXPORTED", dialog.FileName, "-", "Salvat proiectul de notificare NIS2 (72h); netransmis, de verificat și transmis prin PNRISC de entitate.");
                 StatusMessage = "✅ Draft Notificare Incident NIS2 (72h) exportat cu succes!";
             }
         }
@@ -2851,14 +2855,15 @@ namespace LogAnalyzer.UI.ViewModels
 
                 string nis2Draft = _nis2Service.GenerateDnscDraft(
                     Nis2Stage.Notification_72h,
-                    "Entitate Esențială / Companie Securizată",
-                    "RO12345678",
+                    new Nis2Entity(),
+                    "",
                     CurrentStoryline.IncidentTitle,
-                    "Stații de Lucru & Servere de Domeniu",
-                    DateTime.UtcNow.AddHours(-6),
+                    "",
+                    null,
                     CurrentStoryline,
                     TotalEventsCount,
-                    TotalAlertsCount);
+                    TotalAlertsCount,
+                    iocs: CurrentIocs.ToList());
 
                 string tempCsv = Path.GetTempFileName();
                 var events = _databaseService.GetEvents(20000, 0, null, null, null);
