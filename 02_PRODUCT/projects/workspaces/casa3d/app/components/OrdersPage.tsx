@@ -9,10 +9,16 @@ import { intlLocale } from '@/lib/i18n';
 
 type Data = { rows: ProcurementRow[]; groups: SupplierGroup[]; summary: { lines: number; todo: number; ordered: number; delivered: number; installed: number; overdue: number; ordersValue: number } };
 const csvCell = (v: unknown) => { const s = String(v ?? ''); return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
-export default function OrdersPage({ id, cur, say, projectName }: { id: string; cur: string; say(s: string): void; projectName: string }){
+type RoomRef = { id: string; name: string };
+export default function OrdersPage({ id, cur, say, projectName, rooms = [] }: { id: string; cur: string; say(s: string): void; projectName: string; rooms?: RoomRef[] }){
   const { t, lang } = usePrefs(), [data, setData] = useState<Data | null>(null), [open, setOpen] = useState<string | null>(null), [filter, setFilter] = useState<'all' | 'open' | 'overdue'>('all');
   const load = () => fetch(`/api/projects/${id}/orders`).then(r => r.ok ? r.json() : null).then(j => j && setData(j)).catch(() => say(t('orders.loadError')));
   useEffect(() => { load(); }, [id]); // eslint-disable-line
+  async function removeItem(r: ProcurementRow){ if (!r.itemId || !confirm(t('clip.confirmDelete', { name: r.product }))) return;
+    const res = await fetch(`/api/projects/${id}/items/${r.itemId}`, { method: 'DELETE' }); if (!res.ok){ say(t('clip.saveError')); return; } setOpen(null); load(); }
+  async function setQty(r: ProcurementRow, qty: number){ if (!r.itemId) return;
+    const res = await fetch(`/api/projects/${id}/items/${r.itemId}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ qty }) });
+    if (!res.ok){ const j = await res.json().catch(() => ({})); say(j.error || t('clip.saveError')); return; } load(); }
   async function save(key: string, state: OrderState){
     const r = await fetch(`/api/projects/${id}/orders`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key, state }) });
     if (!r.ok){ const j = await r.json().catch(() => ({})); say(j.error || t('orders.saveError')); return; } load(); }
@@ -27,6 +33,7 @@ export default function OrdersPage({ id, cur, say, projectName }: { id: string; 
     <header className="orders-head"><div><h1>{t('orders.title')}</h1><p className="muted">{t('orders.sub')}</p></div>
       <dl className="orders-sum"><div><dt>{t('orders.sum.todo')}</dt><dd>{s.todo}</dd></div><div><dt>{t('orders.sum.ordered')}</dt><dd>{s.ordered}</dd></div><div><dt>{t('orders.sum.delivered')}</dt><dd>{s.delivered}</dd></div>
         <div className={s.overdue ? 'late' : ''}><dt>{t('orders.sum.overdue')}</dt><dd>{s.overdue}</dd></div><div><dt>{t('orders.sum.value')}</dt><dd>{money(s.ordersValue)}</dd></div></dl></header>
+    <ClipAdder id={id} rooms={rooms} say={say} onAdded={load} />
     <div className="filters" role="tablist">{(['all', 'open', 'overdue'] as const).map(f => <button key={f} role="tab" aria-selected={filter === f} onClick={() => setFilter(f)}>{t(`orders.filter.${f}`)}</button>)}</div>
     {groups.length === 0 && <p className="muted">{t('orders.none')}</p>}
     {groups.map(g => <section key={g.supplier} className="supplier">
@@ -34,17 +41,17 @@ export default function OrdersPage({ id, cur, say, projectName }: { id: string; 
         <b className="gtotal">{money(g.total)}</b><button className="btn" onClick={() => csv(g)}>{t('orders.csv')}</button></header>
       <ul>{g.rows.map(r => <li key={r.key} className={`oline st-${r.state.status} ${r.overdue ? 'is-late' : ''}`}>
         <button className="oline-main" aria-expanded={open === r.key} onClick={() => setOpen(o => o === r.key ? null : r.key)}>
-          <span className="oname"><b>{r.product}</b><small>{[r.code, r.rooms.join(', ')].filter(Boolean).join(' · ')}</small></span>
+          {r.image ? <img className="othumb" src={r.image} alt="" referrerPolicy="no-referrer" loading="lazy" /> : null}<span className="oname"><b>{r.product}</b><small>{[r.code, r.rooms.join(', ')].filter(Boolean).join(' · ')}</small></span>
           <span className="oqty">{r.qty} {r.unit}{r.packs ? <small>{r.packs}</small> : null}</span>
           <span className="ototal">{money(r.total)}</span>
           <span className={`st st-o-${r.state.status}`}>{t(`ostatus.${r.state.status}`)}</span>
           {r.overdue && <small className="late">{t('orders.lateSince', { d: new Date(r.state.eta! + 'T12:00:00').toLocaleDateString(intlLocale(lang), { day: 'numeric', month: 'long' }) })}</small>}</button>
-        {open === r.key && <OrderEditor row={r} today={today} onSave={st => save(r.key, st)} />}</li>)}</ul>
+        {open === r.key && <OrderEditor row={r} today={today} onSave={st => save(r.key, st)} onQty={q => setQty(r, q)} onRemove={() => removeItem(r)} />}</li>)}</ul>
     </section>)}
   </div>);
 }
-function OrderEditor({ row, today, onSave }: { row: ProcurementRow; today: string; onSave(s: OrderState): void }){
-  const { t } = usePrefs(), [s, setS] = useState<OrderState>(row.state);
+function OrderEditor({ row, today, onSave, onQty, onRemove }: { row: ProcurementRow; today: string; onSave(s: OrderState): void; onQty(q: number): void; onRemove(): void }){
+  const { t } = usePrefs(), [s, setS] = useState<OrderState>(row.state), [qty, setQty] = useState(String(row.qty));
   const set = (patch: Partial<OrderState>) => setS(x => ({ ...x, ...patch }));
   // trecerea la „comandat” / „livrat” completează data de azi dacă lipsește
   const status = (st: OrderState['status']) => set({ status: st, ...(st === 'ordered' && !s.orderedAt ? { orderedAt: today } : {}), ...((st === 'delivered' || st === 'installed') && !s.deliveredAt ? { deliveredAt: today } : {}) });
@@ -56,6 +63,48 @@ function OrderEditor({ row, today, onSave }: { row: ProcurementRow; today: strin
       <label className="f"><span>{t('orders.eta')}</span><input type="date" value={s.eta ?? ''} onChange={e => set({ eta: e.target.value || undefined })} /></label>
       <label className="f"><span>{t('orders.deliveredAt')}</span><input type="date" value={s.deliveredAt ?? ''} onChange={e => set({ deliveredAt: e.target.value || undefined })} /></label></div>
     <label className="f"><span>{t('orders.note')}</span><input value={s.note ?? ''} maxLength={500} onChange={e => set({ note: e.target.value })} /></label>
+    {row.kind === 'custom' && <div className="oedit-item"><label className="f"><span>{t('orders.col.qty')} ({row.unit})</span><input type="number" inputMode="decimal" min="0.01" step="any" value={qty} onChange={e => setQty(e.target.value)} /></label>
+      <button className="btn" disabled={!(Number(qty) > 0) || Number(qty) === row.qty} onClick={() => onQty(Number(qty))}>{t('clip.updateQty')}</button><button className="btn danger" onClick={onRemove}>{t('clip.remove')}</button></div>}
     <div className="oedit-act">{row.url && <a className="btn" href={row.url} target="_blank" rel="noopener noreferrer">{t('orders.openShop')}</a>}<button className="btn primary" onClick={() => onSave(s)}>{t('orders.save')}</button></div>
   </div>);
+}
+
+type Draft = { name: string; supplier: string; url: string; image: string; sku: string; price: string; currency: string; qty: string; unit: string; roomId: string };
+const EMPTY: Draft = { name: '', supplier: '', url: '', image: '', sku: '', price: '', currency: '', qty: '1', unit: 'buc', roomId: '' };
+/** „+ Produs din link”: lipești adresa paginii din magazin, aplicația citește numele, prețul și poza; le verifici și adaugi. */
+function ClipAdder({ id, rooms, say, onAdded }: { id: string; rooms: RoomRef[]; say(s: string): void; onAdded(): void }){
+  const { t } = usePrefs(), [open, setOpen] = useState(false), [link, setLink] = useState(''), [d, setD] = useState<Draft | null>(null), [busy, setBusy] = useState(false), [err, setErr] = useState('');
+  const set = (patch: Partial<Draft>) => setD(x => ({ ...(x ?? EMPTY), ...patch }));
+  async function fetchLink(){ setBusy(true); setErr('');
+    try { const r = await fetch(`/api/projects/${id}/clip`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url: link.trim() }) }), j = await r.json().catch(() => ({}));
+      if (!r.ok){ setErr(j.error || t('clip.fetchError')); setD(x => ({ ...(x ?? EMPTY), url: link.trim() })); return; }
+      setD({ ...EMPTY, name: j.name ?? '', supplier: j.supplier ?? '', url: j.url ?? link.trim(), image: j.image ?? '', sku: j.sku ?? '', price: j.price != null ? String(j.price) : '', currency: j.currency ?? '' });
+    } catch { setErr(t('clip.fetchError')); } finally { setBusy(false); } }
+  async function add(){ if (!d) return; setBusy(true); setErr('');
+    const body = { name: d.name, supplier: d.supplier, url: d.url.trim() || null, image: d.image || null, sku: d.sku || null, price: d.price.trim() ? Number(d.price.replace(',', '.')) : null, currency: d.currency || null, qty: Number(d.qty.replace(',', '.')), unit: d.unit, roomId: d.roomId || null };
+    try { const r = await fetch(`/api/projects/${id}/items`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }), j = await r.json().catch(() => ({}));
+      if (!r.ok){ setErr(j.error || t('clip.saveError')); return; } say(t('clip.added', { name: d.name })); setD(null); setLink(''); setOpen(false); onAdded();
+    } finally { setBusy(false); } }
+  if (!open) return <div className="clip-open"><button className="btn" onClick={() => setOpen(true)}>{t('clip.open')}</button></div>;
+  return (<section className="clip" aria-label={t('clip.title')}>
+    <header><h2>{t('clip.title')}</h2><button className="btn" onClick={() => { setOpen(false); setD(null); setErr(''); }}>{t('clip.close')}</button></header>
+    <p className="muted">{t('clip.hint')}</p>
+    <form className="clip-link" onSubmit={e => { e.preventDefault(); if (link.trim()) fetchLink(); }}>
+      <input type="url" inputMode="url" placeholder="https://www.dedeman.ro/…" value={link} onChange={e => setLink(e.target.value)} aria-label={t('clip.linkAria')} />
+      <button className="btn primary" disabled={busy || !link.trim()}>{busy && !d ? t('clip.fetching') : t('clip.fetch')}</button>
+      {!d && <button type="button" className="btn" onClick={() => setD({ ...EMPTY, url: link.trim() })}>{t('clip.manual')}</button>}</form>
+    {err && <p className="issue WARNING" role="alert">{err}</p>}
+    {d && <div className="clip-card">
+      {d.image ? <img src={d.image} alt="" referrerPolicy="no-referrer" /> : <div className="noimg" />}
+      <div className="clip-fields">
+        <label className="f"><span>{t('clip.name')}</span><input value={d.name} maxLength={200} onChange={e => set({ name: e.target.value })} /></label>
+        <div className="grid2"><label className="f"><span>{t('clip.supplier')}</span><input value={d.supplier} maxLength={80} onChange={e => set({ supplier: e.target.value })} /></label>
+          <label className="f"><span>{t('orders.col.code')}</span><input value={d.sku} maxLength={60} onChange={e => set({ sku: e.target.value })} /></label>
+          <label className="f"><span>{t('orders.col.unitPrice')}{d.currency ? ` (${d.currency})` : ''}</span><input inputMode="decimal" value={d.price} onChange={e => set({ price: e.target.value })} /></label>
+          <label className="f"><span>{t('orders.col.qty')}</span><span className="qty-unit"><input inputMode="decimal" value={d.qty} onChange={e => set({ qty: e.target.value })} /><input value={d.unit} maxLength={12} onChange={e => set({ unit: e.target.value })} aria-label={t('orders.col.unit')} /></span></label></div>
+        <label className="f"><span>{t('clip.url')}</span><input type="url" inputMode="url" value={d.url} maxLength={1000} onChange={e => set({ url: e.target.value })} /></label>
+        {rooms.length > 0 && <label className="f"><span>{t('clip.room')}</span><select value={d.roomId} onChange={e => set({ roomId: e.target.value })}><option value="">{t('clip.noRoom')}</option>{rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}</select></label>}
+        <div className="oedit-act"><button className="btn primary" disabled={busy || !d.name.trim() || !d.supplier.trim() || !(Number(d.qty.replace(',', '.')) > 0)} onClick={add}>{t('clip.add')}</button></div>
+      </div></div>}
+  </section>);
 }

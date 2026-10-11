@@ -10,7 +10,7 @@ export const ORDER_STATUSES = ['todo', 'quoted', 'ordered', 'delivered', 'instal
 export type OrderStatus = typeof ORDER_STATUSES[number];
 export interface OrderState { status: OrderStatus; ref?: string; orderedAt?: string; eta?: string; deliveredAt?: string; note?: string }
 export interface ProcurementLine {
-  key: string; kind: 'finish' | 'furniture'; product: string; supplier: string; code: string | null; url: string | null;
+  key: string; kind: 'finish' | 'furniture' | 'custom'; product: string; supplier: string; code: string | null; url: string | null; image?: string | null; itemId?: string;
   qty: number; unit: string; packs: string | null; unitPrice: number | null; total: number | null; rooms: string[];
 }
 export interface ProcurementRow extends ProcurementLine { state: OrderState; overdue: boolean }
@@ -22,7 +22,9 @@ export function addPacks(a: string | null, b: string | null): string | null {
 const keyOf = (...parts: (string | null | undefined)[]) => parts.map(p => (p ?? '').trim().toLowerCase()).join('|').slice(0, 300);
 
 /** Liniile de cumpărat, stabile între salvări (cheia nu depinde de ordinea camerelor). */
-export function procurementLines(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog): ProcurementLine[] {
+/** Produs adăugat de designer în afara catalogului (din linkul unui magazin sau de mână). */
+export interface CustomLineItem { id: string; name: string; supplier: string; url: string | null; image: string | null; sku: string | null; price: number | null; qty: number; unit: string; roomId: string | null }
+export function procurementLines(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, custom: CustomLineItem[] = []): ProcurementLine[] {
   const out = new Map<string, ProcurementLine>();
   for (const r of finishSchedule(snap, cat, mc)){ if (!r.product || r.element === 'adhesive' && !r.supplier) continue;
     const key = 'm|' + keyOf(r.supplier, r.code ?? r.product, r.unit), cur = out.get(key);
@@ -35,6 +37,8 @@ export function procurementLines(snap: Snapshot, cat: Catalog, mc: MaterialsCata
     if (cur){ cur.qty += 1; cur.total = cur.total != null && o ? round2(cur.total + o.price) : null; if (room && !cur.rooms.includes(room)) cur.rooms.push(room); continue; }
     out.set(key, { key, kind: 'furniture', product: `${rv.product.name}${rv.variant.name ? ' · ' + rv.variant.name : ''}`, supplier: sup, code: null,
       url: (o ?? rv.offer)?.affiliateUrl ?? (o ?? rv.offer)?.provenance?.sourceUrl ?? null, qty: 1, unit: 'buc', packs: null, unitPrice: o?.price ?? null, total: o ? round2(o.price) : null, rooms: room ? [room] : [] }); }
+  for (const c of custom){ const room = roomName.get(c.roomId ?? '') ?? '', key = 'c|' + c.id;
+    out.set(key, { key, kind: 'custom', itemId: c.id, product: c.name, supplier: c.supplier, code: c.sku, url: c.url, image: c.image, qty: c.qty, unit: c.unit, packs: null, unitPrice: c.price, total: c.price != null ? round2(c.price * c.qty) : null, rooms: room ? [room] : [] }); }
   return [...out.values()].sort((a, b) => a.supplier.localeCompare(b.supplier) || a.kind.localeCompare(b.kind) || a.product.localeCompare(b.product));
 }
 /** Liniile cu starea lor; o linie fără stare salvată e „de comandat”. */
@@ -66,4 +70,4 @@ export function checkOrderState(x: unknown): OrderState {
   for (const k of ['orderedAt', 'eta', 'deliveredAt'] as const){ const v = o[k]; if (v == null || v === '') continue; if (typeof v !== 'string' || !validDate(v)) throw new Error('Data nu e validă (AAAA-LL-ZZ).'); s[k] = v; }
   return s;
 }
-export const isLineKey = (k: unknown): k is string => typeof k === 'string' && k.length <= 300 && /^[mf]\|/.test(k);
+export const isLineKey = (k: unknown): k is string => typeof k === 'string' && k.length <= 300 && /^[mfc]\|/.test(k);
