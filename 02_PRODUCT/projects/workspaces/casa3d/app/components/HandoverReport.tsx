@@ -1,4 +1,5 @@
 'use client';
+import { profileLine, type StudioProfile } from '@/core/studio-profile';
 // Dosarul de predare pentru client (PDF din browser): produsele montate cu garanții, codurile finisajelor, îngrijire,
 // ce nu s-a livrat încă, remedierile deschise și un model de proces-verbal de recepție.
 import { useEffect, useState } from 'react';
@@ -10,6 +11,8 @@ import { intlLocale } from '@/lib/i18n';
 type Data = Handover & { name: string; meta: ProjectMeta; openSnags: { number: number; title: string; trade: string }[] };
 export default function HandoverReport({ id }: { id: string }){
   const { t, lang } = usePrefs(), [d, setD] = useState<Data | null>(null), [err, setErr] = useState(false), [pv, setPv] = useState(true);
+  const [profile, setProfile] = useState<StudioProfile | null>(null);
+  useEffect(() => { fetch('/api/studio').then(r => r.ok ? r.json() : null).then(setProfile).catch(() => {}); }, []);
   useEffect(() => { fetch(`/api/projects/${id}/handover`).then(r => r.ok ? r.json() : Promise.reject()).then(setD).catch(() => setErr(true)); }, [id]);
   if (err) return <main className="report"><p>{t('print.loadError')}</p></main>;
   if (!d) return <main className="report"><p className="muted">{t('print.loading')}</p></main>;
@@ -17,7 +20,7 @@ export default function HandoverReport({ id }: { id: string }){
   const today = date(new Date().toISOString()), addr = d.meta.siteAddress || d.meta.client?.address;
   return (<main className="report handover">
     <div className="no-print report-bar"><label><input type="checkbox" checked={pv} onChange={e => setPv(e.target.checked)} /> {t('ho.withPv')}</label><button className="btn primary" onClick={() => print()}>{t('pres.pdf')}</button></div>
-    <header><span className="kicker">{t('ho.kicker')}</span><h1>{d.name}</h1>
+    <header>{profile && (profile.logo || profile.name) && <div className="ho-studio">{profile.logo && <img src={profile.logo} alt="" />}<div><b>{profile.name}</b><small>{profileLine({ ...profile, name: undefined })}</small>{profile.address && <small>{profile.address}</small>}</div></div>}<span className="kicker">{t('ho.kicker')}</span><h1>{d.name}</h1>
       <p>{[d.meta.client?.name, addr, today].filter(Boolean).join(' · ')}</p><p className="muted">{t('ho.intro')}</p></header>
 
     <section><h2>{t('ho.items')}</h2>

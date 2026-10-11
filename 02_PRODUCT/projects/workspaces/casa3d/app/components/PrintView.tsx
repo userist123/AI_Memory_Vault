@@ -22,6 +22,7 @@ import { intlLocale, translator, type Lang, type Translate } from '@/lib/i18n';
 import { suggestTechPoints, techCounts, TECH_KINDS, type TechKind } from '@/core/technical';
 import { TECH_SYMBOL } from './TechPanel';
 import { floors, levelView, stairGeometry, stairwells, SLAB } from '@/core/levels';
+import { profileLine, type StudioProfile } from '@/core/studio-profile';
 
 interface ProjectDto { id: string; name: string; currentRevision: number | null; draft: Snapshot }
 const ROOM_FILL: Record<string, string> = { baie: '#e4e8e6', bucatarie: '#e6e8e3', hol: '#efeae1', living: '#f0e8da', dormitor: '#efe6dc' };
@@ -58,7 +59,8 @@ const nextFrame = () => new Promise<void>(res => requestAnimationFrame(() => res
 
 export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id: string; locale?: Lang; units?: Units }){
   const t = translator(locale);
-  const [surveys, setSurveys] = useState<RoomSurvey[]>([]);
+  const [surveys, setSurveys] = useState<RoomSurvey[]>([]), [profile, setProfile] = useState<StudioProfile | null>(null);
+  useEffect(() => { fetch('/api/studio').then(r => r.ok ? r.json() : null).then(setProfile).catch(() => {}); }, []);
   const [revs, setRevs] = useState<{ number: number; note: string | null; created_at: string }[]>([]);
   const [data, setData] = useState<{ p: ProjectDto; catalog: Catalog; mc: MaterialsCatalog } | null>(null), [err, setErr] = useState(false), [today, setToday] = useState('');
   const [images, setImages] = useState<Record<string, string>>({}), [busy, setBusy] = useState(true), [imgErr, setImgErr] = useState(false), canvasRef = useRef<HTMLCanvasElement>(null);
@@ -118,7 +120,8 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
     const arr = byRetailer.get(shop) ?? []; arr.push({ id: pl.id, name: rv?.product.name ?? pl.group, variant: pl.size ? `${rv?.variant.name ?? ''} — ${formatDimsCm(pl.size, units, locale)}` : rv?.variant.name ?? '', room: allRooms.find(r => r.id === pl.roomId)?.name ?? '', offer: o }); byRetailer.set(shop, arr); }
   const catLines = ([['furniture', t('print.furniture')], ['finishes', t('print.finishes')], ['lighting', t('print.lighting')], ['appliances', t('print.appliances')], ['sanitary', t('print.sanitary')], ['textiles', t('print.textiles')]] as const).map(([k, l]) => [l, budget.categories[k] ?? 0] as const).filter(([, v]) => v > 0);
   const client = (p as any).meta?.client?.name as string | undefined;
-  const tblock = <div className="tblock" aria-hidden="true"><span className="tb-studio">{t('print.brand')}</span><span className="tb-proj"><b>{snap.name || p.name}</b>{client && <> · {client}</>}</span>
+  const studio = profile?.name || t('print.brand');
+  const tblock = <div className="tblock" aria-hidden="true"><span className="tb-studio">{profile?.logo && <img className="tb-logo" src={profile.logo} alt="" />}{studio}{profile && profileLine({ ...profile, name: undefined }) && <small>{profileLine({ ...profile, name: undefined })}</small>}</span><span className="tb-proj"><b>{snap.name || p.name}</b>{client && <> · {client}</>}</span>
     <span className="tb-rev">{p.currentRevision ? `${t('print.revision')} ${p.currentRevision}` : t('print.noRevisions')} · {today}</span><span className="tb-no">{t('tb.sheet')} <i className="tb-n" /></span></div>;
   const ROOM_MM = 100, levelOf = new Map(views.flatMap((v, i) => v.floor.rooms.map(r => [r.id, i] as const)));
 
@@ -126,7 +129,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
     {canvas}
     <header className="print-head no-print-border">
       <div><h1>{snap.name || p.name || t('print.unnamed')}</h1><div className="muted">{t('print.printedOn')} {today} · {p.currentRevision ? `${t('print.revision')} ${p.currentRevision}` : t('print.noRevisions')}</div></div>
-      <div className="print-brand">{t('print.brand')}<button className="btn primary no-print" onClick={() => window.print()} disabled={busy}>{t('print.print')}</button>
+      <div className="print-brand">{profile?.logo && <img className="pb-logo" src={profile.logo} alt="" />}{studio}<button className="btn primary no-print" onClick={() => window.print()} disabled={busy}>{t('print.print')}</button>
         {busy && <span className="muted no-print" role="status">{t('print.preparing')}</span>}</div>
     </header>
     {imgErr && !busy && <p className="muted no-print" role="status">{t('print.noImages')}</p>}
