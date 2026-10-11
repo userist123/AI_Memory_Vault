@@ -43,6 +43,12 @@ Ask only for what is theirs: text, brand assets, music rights, length and format
 ## 4. Limits
 
 - Cloud rendering (Lambda/Cloud Run), uploads and publishing only with the owner's explicit go.
+- Pin what you scaffold: `npx create-video@<the version in the project's package.json, or the
+  current stable you name in PLAN.md>`, never `@latest --yes` blind. Never run `npx skills update`
+  or any other command that rewrites installed skills.
+- Start `npx remotion studio` only to verify a scene, and stop it when done.
+- Third-party services (ElevenLabs voice, Mapbox/MapTiler/Google maps, AWS) only when the owner
+  asks for that feature; keys go in the project's `.env`, never in chat or in code.
 - Remotion licence: free for individuals and small teams; a company licence may be required
   for larger companies. Say so once when a video is for a business, then follow the owner.
 - Durable decisions (brand motion rules, reusable scenes) go to the Vault via
