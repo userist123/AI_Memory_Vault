@@ -5,6 +5,7 @@
 import https from 'node:https';
 import dns from 'node:dns';
 import zlib from 'node:zlib';
+import { pipeline, Writable } from 'node:stream';
 import type { LookupFunction } from 'node:net';
 import { HttpError } from './repo';
 import { shopOf, isPrivateIp, parseProductPage, type ClippedProduct } from '../core/clip';
@@ -26,20 +27,23 @@ export function safeLookup(lookup: DnsLookup = dns.lookup as any): LookupFunctio
   }) as LookupFunction;
 }
 
-/** O singură cerere GET, fără a urma redirecționări; corpul doar pentru 200 HTML, decomprimat și limitat. */
+/** O singură cerere GET, fără a urma redirecționări; corpul doar pentru 200 HTML, decomprimat și limitat. Un termen-limită
+ *  total (nu doar pe socket inactiv) oprește cererea oricum; erorile de pe răspuns ajung și prin decompresor (pipeline). */
 export const httpsGet: GetFn = (url) => new Promise((resolve, reject) => {
+  let done = false; const finish = (fn: () => void) => { if (!done){ done = true; clearTimeout(deadline); fn(); } };
   const req = https.get(url, { lookup: safeLookup(), timeout: CLIP_LIMITS.timeoutMs, headers: { 'user-agent': 'Mozilla/5.0 (Casa3D; product preview)', accept: 'text/html,application/xhtml+xml', 'accept-encoding': 'gzip, deflate, br', 'accept-language': 'ro-RO,ro;q=0.9,en;q=0.5' } }, res => {
     const status = res.statusCode ?? 0, location = typeof res.headers.location === 'string' ? res.headers.location : null, type = String(res.headers['content-type'] ?? '');
-    if (status !== 200 || !/^(text\/html|application\/xhtml\+xml)/i.test(type)){ res.resume(); return resolve({ status, location, type, body: null }); }
+    if (status !== 200 || !/^(text\/html|application\/xhtml\+xml)/i.test(type)){ res.resume(); return finish(() => resolve({ status, location, type, body: null })); }
     const enc = String(res.headers['content-encoding'] ?? '').toLowerCase();
-    const stream = enc === 'gzip' ? res.pipe(zlib.createGunzip()) : enc === 'deflate' ? res.pipe(zlib.createInflate()) : enc === 'br' ? res.pipe(zlib.createBrotliDecompress()) : res;
+    const dec = enc === 'gzip' ? zlib.createGunzip() : enc === 'deflate' ? zlib.createInflate() : enc === 'br' ? zlib.createBrotliDecompress() : null;
     const chunks: Buffer[] = []; let n = 0;
-    stream.on('data', (c: Buffer) => { n += c.length; if (n > CLIP_LIMITS.bytes){ req.destroy(); stream.destroy(); reject(new HttpError(422, 'Pagina e prea mare.')); return; } chunks.push(c); });
-    stream.on('end', () => resolve({ status, location, type, body: Buffer.concat(chunks) }));
-    stream.on('error', reject);
+    const sink = new Writable({ write(c: Buffer, _e, cb){ n += c.length; if (n > CLIP_LIMITS.bytes) return cb(new HttpError(422, 'Pagina e prea mare.')); chunks.push(c); cb(); } });
+    const done2 = (err?: Error | null) => { if (err){ req.destroy(); finish(() => reject(err)); } else finish(() => resolve({ status, location, type, body: Buffer.concat(chunks) })); };
+    if (dec) pipeline(res, dec, sink, done2); else pipeline(res, sink, done2);
   });
+  const deadline = setTimeout(() => { req.destroy(); finish(() => reject(new HttpError(504, 'Magazinul nu a răspuns la timp.'))); }, CLIP_LIMITS.timeoutMs);
   req.on('timeout', () => req.destroy(new HttpError(504, 'Magazinul nu a răspuns la timp.')));
-  req.on('error', reject);
+  req.on('error', e => finish(() => reject(e)));
 });
 
 /** Produsul din adresa dată; urmează cel mult 3 redirecționări, fiecare tot spre un magazin permis. */

@@ -10,12 +10,35 @@ export function shopOf(raw: unknown): string | null {
   if (u.protocol !== 'https:' || u.username || u.password || (u.port && u.port !== '443')) return null;
   const h = u.hostname.toLowerCase().replace(/\.$/, ''); return ALLOWED_SHOPS.find(d => h === d || h.endsWith('.' + d)) ?? null;
 }
-/** Adrese IP care nu sunt pe internet (rețea locală, loopback, link-local, metadata cloud, multicast, rezervate). */
+/** IPv6 desfăcut în 8 grupe de 16 biți (cu IPv4 încorporat la final); null dacă nu e o adresă validă. */
+function ipv6Words(ip: string): number[] | null {
+  let x = ip.toLowerCase().replace(/^\[|\]$/g, '').replace(/%.*$/, ''), tail: number[] = [];
+  const v4 = x.match(/(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+  if (v4){ const b = v4.slice(1).map(Number); if (b.some(n => n > 255)) return null; tail = [(b[0]! << 8) | b[1]!, (b[2]! << 8) | b[3]!]; x = x.slice(0, -v4[0].length).replace(/:$/, ':0').replace(/::0$/, '::'); if (x.endsWith(':') && !x.endsWith('::')) x = x.slice(0, -1); }
+  const parts = x.split('::'); if (parts.length > 2) return null;
+  const head = parts[0] ? parts[0].split(':') : [], rest = parts.length === 2 && parts[1] ? parts[1].split(':') : [];
+  const words = (a: string[]) => a.map(h => /^[0-9a-f]{1,4}$/.test(h) ? parseInt(h, 16) : NaN);
+  const h = words(head), r = words(rest), fill = 8 - tail.length - h.length - r.length;
+  if (h.some(Number.isNaN) || r.some(Number.isNaN) || fill < 0 || (parts.length === 1 && fill !== 0)) return null;
+  return [...h, ...Array(fill).fill(0), ...r, ...tail];
+}
+function privateV4(a: number, b: number): boolean {
+  return a === 0 || a === 10 || a === 127 || (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 192 && b === 0) || (a === 198 && (b === 18 || b === 19)) || a >= 224;
+}
+/** Adrese IP care nu sunt pe internet (rețea locală, loopback, link-local, metadata cloud, multicast, rezervate), în orice
+ *  scriere: IPv4, IPv6, IPv4 mapat/compatibil/traducere (::ffff:, ::, ::ffff:0:, 64:ff9b::), 6to4 (2002::). Ce nu se poate
+ *  interpreta se tratează ca privat (se refuză). */
 export function isPrivateIp(ip: string): boolean {
-  const v4 = ip.replace(/^::ffff:/i, '');
-  if (/^\d+\.\d+\.\d+\.\d+$/.test(v4)){ const [a, b] = v4.split('.').map(Number) as [number, number];
-    return a === 0 || a === 10 || a === 127 || (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 192 && b === 0) || (a === 198 && (b === 18 || b === 19)) || a >= 224; }
-  const x = ip.toLowerCase(); return x === '::' || x === '::1' || x.startsWith('fc') || x.startsWith('fd') || x.startsWith('fe8') || x.startsWith('fe9') || x.startsWith('fea') || x.startsWith('feb') || x.startsWith('ff') || x.startsWith('64:ff9b');
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(ip)){ const b = ip.split('.').map(Number); return b.some(n => n > 255) || privateV4(b[0]!, b[1]!); }
+  const w = ipv6Words(ip); if (!w) return true;
+  const v4 = (hi: number, lo: number) => privateV4(hi >> 8, hi & 255) || (hi === 0 && lo === 0);
+  if (w.every(x => x === 0)) return true;                                                         // ::
+  if (w.slice(0, 7).every(x => x === 0) && w[7] === 1) return true;                               // ::1
+  if (w.slice(0, 5).every(x => x === 0) && (w[5] === 0xffff || w[5] === 0)) return v4(w[6]!, w[7]!); // ::ffff:a.b.c.d, ::a.b.c.d
+  if (w.slice(0, 4).every(x => x === 0) && w[4] === 0xffff && w[5] === 0) return v4(w[6]!, w[7]!);  // ::ffff:0:a.b.c.d
+  if (w[0] === 0x64 && w[1] === 0xff9b) return true;                                              // NAT64: traducere spre IPv4, oricare
+  if (w[0] === 0x2002) return v4(w[1]!, w[2]!);                                                   // 6to4
+  const f = w[0]!; return (f & 0xfe00) === 0xfc00 || (f & 0xffc0) === 0xfe80 || (f & 0xffc0) === 0xfec0 || (f & 0xff00) === 0xff00 || f === 0x2001 && w[1] === 0xdb8;
 }
 const decode = (s: string) => s.replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n))).replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16))).replace(/&amp;/g, '&');
 const text = (v: unknown, max = 300) => typeof v === 'string' ? decode(v).replace(/\s+/g, ' ').replace(/[\u0000-\u001f\u007f​-‏‪-‮⁠-⁩﻿]/g, '').trim().slice(0, max) || null : null;
