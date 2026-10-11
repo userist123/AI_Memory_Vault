@@ -344,7 +344,18 @@ function model(it){
           if (g.intrare) box(g.l, .02, th + .02, MAT('metal', '#7b766e'), ax + ux * m, .01, az + uz * m, rot, walls); }
         else { const sl = g.sill != null ? g.sill : .9, top = Math.min(H - .05, sl + (g.h || 1.3)), wh = top - sl, cy = (sl + top) / 2, fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat;
           seg(g.la, g.la + g.l, 0, sl); seg(g.la, g.la + g.l, top, H); const m = g.la + g.l / 2; box(g.l, wh, .02, glass, ax + ux * m, cy, az + uz * m, rot, walls).castShadow = false;
-          box(g.l, .05, th + .04, fm, ax + ux * m, sl, az + uz * m, rot, walls); box(g.l, .05, th + .02, fm, ax + ux * m, top, az + uz * m, rot, walls); box(.04, wh, th + .02, fm, ax + ux * m, cy, az + uz * m, rot, walls);
+          // fereastră reală: toc PVC de 6 cm, canaturi cu profil, montant între canaturi, mânere, glaf interior și pervaz exterior
+          { const pf = .06, pd = .07, at = (sv, y, w2, h2, d2, mat, off = 0) => { const o = box(w2, h2, d2, mat, ax + ux * sv + nx * off, y, az + uz * sv + nz * off, rot, walls); o.castShadow = false; return o; };
+            const sIn = ((ax + ux * m - (pMinX + pMaxX) / 2) * nx + (az + uz * m - (pMinZ + pMaxZ) / 2) * nz) > 0 ? -1 : 1;   // partea dinspre casă
+            at(g.la + pf / 2, cy, pf, wh, pd, fm); at(g.la + g.l - pf / 2, cy, pf, wh, pd, fm); at(m, sl + pf / 2, g.l, pf, pd, fm); at(m, top - pf / 2, g.l, pf, pd, fm);
+            const n2 = g.l > 1.1 ? 2 : 1, iw = (g.l - 2 * pf) / n2;
+            for (let k = 0; k < n2; k++){ const c0 = g.la + pf + iw * (k + .5), sw2 = iw - .01, sh2 = wh - 2 * pf - .01, sy = cy;
+              [[c0 - sw2 / 2 + .03, sy, .06, sh2], [c0 + sw2 / 2 - .03, sy, .06, sh2]].forEach(([sv, y, w2, h2]) => at(sv, y, w2, h2, .06, fm, sIn * .012));
+              [sy - sh2 / 2 + .03, sy + sh2 / 2 - .03].forEach(y => at(c0, y, sw2, .06, .06, fm, sIn * .012));
+              const hx = k === 0 && n2 === 2 ? c0 + sw2 / 2 - .03 : c0 - sw2 / 2 + .03; at(hx, sy, .02, .14, .02, handleMat, sIn * (.06)); at(hx, sy + .05, .035, .035, .012, handleMat, sIn * .05); }
+            if (n2 === 2) at(m, cy, .02, wh - 2 * pf, pd, fm);
+            at(m, sl - .01, g.l + .08, .025, .2, MAT('paint', '#f4f2ee'), sIn * (th / 2 + .06));               // glaf
+            if (wl.ext) at(m, sl - .04, g.l + .06, .015, .14, MAT('metal', '#d8d6d0'), -sIn * (th / 2 + .05)); }   // pervaz
           if (g.trat){ const tr = g.trat, sg = tr.inward, at = (s, d, y, w2, h2, dp, mat) => { const px = ax + ux * s + nx * sg * d, pz = az + uz * s + nz * sg * d; const o = box(w2, h2, dp, mat, px, y, pz, rot, walls); o.castShadow = false; return o; };
             // stor în golul ferestrei, pe partea camerei: rulou (coborât o treime), roman (pliuri orizontale) sau jaluzea venețiană (lamele)
             if (tr.blind){ const bm = lookMat('blind', tr.blind.color, .85), bw = g.l - .04, bh = wh * .38, d0 = th / 2 + .02;
@@ -423,8 +434,10 @@ function model(it){
     const put = (key, x, y, z, rotY) => { const m = decoModel(key); if (!m) return; const o = m.clone(); o.position.set(x, y, z); o.rotation.y = rotY || 0; o.userData.deco = DECO[key][0]; decor.add(o); };
     const back = r => [-Math.sin(r), -Math.cos(r)], fps = items.filter(i => i.fp).map(i => i.fp);
     for (const it of items){ const v = it.variant; if (!v || !v.w) continue; const h = v.h / 100, d = v.d / 100, room = plan.camere.find(c => it.x > c.x0 && it.x < c.x1 && it.z > c.z0 && it.z < c.z1); if (!room) continue;
-      const [bx, bz] = back(it.rotation), wallAt = () => { // fața peretelui din spatele piesei
-        if (Math.abs(bx) > .5) return [bx > 0 ? room.x1 - .02 : room.x0 + .02, it.z]; return [it.x, bz > 0 ? room.z1 - .02 : room.z0 + .02]; };
+      const [bx, bz] = back(it.rotation), side = Math.abs(bx) > .5 ? (bx > 0 ? 'E' : 'W') : (bz > 0 ? 'S' : 'N');
+      // pe un perete placat (riflaj, cărămidă, piatră, lambriu) tabloul stă în fața placării
+      const clad = room.fin && room.fin.walls && room.fin.walls.some(w => w.side === side && ['slats', 'brick', 'stone', 'panel', 'tile'].includes(w.kind)) ? .06 : 0, k = .02 + clad;
+      const wallAt = () => Math.abs(bx) > .5 ? [bx > 0 ? room.x1 - k : room.x0 + k, it.z] : [it.x, bz > 0 ? room.z1 - k : room.z0 + k];
       if (it.group === 'canapea' || it.group === 'pat'){ const [wx, wz] = wallAt(); put('art', wx, it.group === 'pat' ? 1.25 : 1.32, wz, it.rotation); }
       else if (it.group === 'comodaTv') put('vase', it.x - Math.cos(it.rotation) * (v.w / 100) * .36, h, it.z + Math.sin(it.rotation) * (v.w / 100) * .36, it.rotation);
       else if (it.group === 'masa') put('jug', it.x, h, it.z, 0);
