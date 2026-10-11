@@ -47,6 +47,38 @@ namespace LogAnalyzer.UI
             return true;
         }
 
+        /// <summary>The application's services, exactly as startup registers them (also used by the startup timing test).</summary>
+        public static ServiceCollection BuildServices()
+        {
+            var services = new ServiceCollection();
+            
+            // Servicii Core (Utilitare)
+            services.AddSingleton<AuditLogService>();
+            services.AddSingleton<PluginManagerService>();
+            services.AddSingleton<KnowledgeBaseService>();
+            services.AddSingleton<LogAnalyzer.Core.Services.LicenseService>();
+
+            var applicationDataPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "LogAnalyzer");
+            Directory.CreateDirectory(applicationDataPath);
+            services.AddSingleton<SecurePathService>();
+            services.AddSingleton(sp => new ChainOfCustodyService(Path.Combine(applicationDataPath, "chain-of-custody.ndjson")));
+            services.AddSingleton<EvidenceIntakeService>();
+            // Motoarele din Infrastructure
+            services.AddSingleton<IEventParser, EvtxParser>();
+            services.AddSingleton<IAnalysisEngine, AnalysisEngine>();
+            services.AddSingleton<IRegistryParser, OfflineRegistryParser>();
+            services.AddSingleton<IDatabaseService, DatabaseService>();
+            EditionComposition.Register(services);
+            
+            // Componentele MVVM și Ferestrele din UI
+            services.AddTransient<MainViewModel>();
+            services.AddTransient<MainWindow>();
+            services.AddTransient<ActivationWindow>();
+            return services;
+        }
+
         // Startup timing (owner 2026-10-11: "the other app feels faster"): every step of startup_debug.log carries the milliseconds since start,
         // so slow steps are measured, not guessed. The sign-in and licence dialogs show as gaps that are the user's time, not the application's.
         private static readonly System.Diagnostics.Stopwatch StartupClock = System.Diagnostics.Stopwatch.StartNew();
@@ -95,32 +127,7 @@ namespace LogAnalyzer.UI
                 EventManager.RegisterClassHandler(typeof(System.Windows.Controls.DataGridRow), System.Windows.Controls.Control.MouseDoubleClickEvent,
                     new System.Windows.Input.MouseButtonEventHandler(OnGridRowDoubleClick));
 
-                var services = new ServiceCollection();
-                
-                // Servicii Core (Utilitare)
-                services.AddSingleton<AuditLogService>();
-                services.AddSingleton<PluginManagerService>();
-                services.AddSingleton<KnowledgeBaseService>();
-                services.AddSingleton<LogAnalyzer.Core.Services.LicenseService>();
-
-                var applicationDataPath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "LogAnalyzer");
-                Directory.CreateDirectory(applicationDataPath);
-                services.AddSingleton<SecurePathService>();
-                services.AddSingleton(sp => new ChainOfCustodyService(Path.Combine(applicationDataPath, "chain-of-custody.ndjson")));
-                services.AddSingleton<EvidenceIntakeService>();
-                // Motoarele din Infrastructure
-                services.AddSingleton<IEventParser, EvtxParser>();
-                services.AddSingleton<IAnalysisEngine, AnalysisEngine>();
-                services.AddSingleton<IRegistryParser, OfflineRegistryParser>();
-                services.AddSingleton<IDatabaseService, DatabaseService>();
-                EditionComposition.Register(services);
-                
-                // Componentele MVVM și Ferestrele din UI
-                services.AddTransient<MainViewModel>();
-                services.AddTransient<MainWindow>();
-                services.AddTransient<ActivationWindow>();
+                var services = BuildServices();
 
                 Step(debugLogPath, "Building ServiceProvider...\n");
                 ServiceProvider = services.BuildServiceProvider();

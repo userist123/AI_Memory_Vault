@@ -214,7 +214,7 @@
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                 <!-- a medium that is not in the register was connected: shown on every page (owner 2026-10-11, „ceva viu”) -->
                 <Border Grid.Row="0" Background="#FDECEA" BorderBrush="{StaticResource CriticalBrush}" BorderThickness="0,0,0,1" Padding="16,8"
-                        Visibility="{Binding MediaCenter.HasAlert, Converter={StaticResource BoolToVisibilityConverter}}">
+                        Visibility="{Binding MediaCenter.HasAlert, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <DockPanel>
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                             <Button Content="Vezi dispozitivul" Command="{Binding ShowMediaCenterCommand}" Margin="12,0,8,0"/>
