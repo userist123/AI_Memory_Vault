@@ -2,6 +2,7 @@
 // Pagină de tipărire (A4 landscape → „Salvează ca PDF”): plan la scară reală, tabel camere, listă de cumpărături și buget.
 import { finishSchedule } from '@/core/finish-schedule';
 import { settingOut, type AxisPlan } from '@/core/setting-out';
+import { analyzeSurvey, type RoomSurvey } from '@/core/survey';
 import { ScheduleTable } from './FinishSchedule';
 import { CeilingSheet, FloorSheet, ElevationSheet } from './Drawings';
 import { wallElevations } from '@/core/drawings';
@@ -57,6 +58,7 @@ const nextFrame = () => new Promise<void>(res => requestAnimationFrame(() => res
 
 export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id: string; locale?: Lang; units?: Units }){
   const t = translator(locale);
+  const [surveys, setSurveys] = useState<RoomSurvey[]>([]);
   const [revs, setRevs] = useState<{ number: number; note: string | null; created_at: string }[]>([]);
   const [data, setData] = useState<{ p: ProjectDto; catalog: Catalog; mc: MaterialsCatalog } | null>(null), [err, setErr] = useState(false), [today, setToday] = useState('');
   const [images, setImages] = useState<Record<string, string>>({}), [busy, setBusy] = useState(true), [imgErr, setImgErr] = useState(false), canvasRef = useRef<HTMLCanvasElement>(null);
@@ -65,6 +67,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
     Promise.all([fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/catalog').then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/materials').then(r => r.ok ? r.json() : Promise.reject(r))])
       .then(([p, catalog, mc]) => setData({ p, catalog, mc })).catch(() => { setErr(true); setBusy(false); });
     fetch(`/api/projects/${id}/revisions`).then(r => r.ok ? r.json() : []).then(setRevs).catch(() => {});
+    fetch(`/api/projects/${id}/survey`).then(r => r.ok ? r.json() : []).then(setSurveys).catch(() => {});
   }, [id, locale]);
   // lista planșelor de pe copertă: titlurile secțiunilor numerotate, citite după randare (aceeași ordine ca la tipar)
   const mainRef = useRef<HTMLElement>(null), [sheets, setSheets] = useState<string[]>([]);
@@ -166,6 +169,8 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
       const bw = rw + 2 * PAD, bd = rd + 2 * PAD, k = ROOM_MM / Math.max(bw, bd), img = images[r.id];
       return (<section key={r.id} className="print-room print-break" data-testid={`room-${r.id}`}>
         <h2>{r.name} <small>{multi ? `· ${levelName(lv)} ` : ''}· {formatArea(row?.area ?? rw * rd, units, locale)} · {formatLength(rw, units, locale)} × {formatLength(rd, units, locale)}</small></h2>
+        {(() => { const sv = surveys.find(x => x.roomId === r.id); if (!sv) return <p className="sv-print muted">{t('sv.printNone')}</p>; const a = analyzeSurvey(r.rect, sv);
+          return <p className={`sv-print sv-${a.level}`}>{t('sv.printDone', { d: new Date(sv.measuredAt).toLocaleDateString(intlLocale(locale)), w: a.width, dd: a.depth })}{a.diagDiff != null ? ` · ${t('sv.printDiag', { d: a.diagDiff })}` : ''}{a.level !== 'ok' ? ` · ${t(`sv.level.${a.level}`)}` : ''}{sv.note ? ` · ${sv.note}` : ''}</p>; })()}
         <div className="print-room-cols">
           <div className="print-room-left">
             {img ? <img className="print-room-img" src={img} alt={`${t('print.roomAlt')} ${r.name}`} /> : <div className="print-room-img print-hero-empty">{busy ? t('print.preparing') : t('print.dash')}</div>}

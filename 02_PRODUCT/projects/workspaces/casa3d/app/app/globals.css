@@ -455,3 +455,8 @@ input[type=file]{font-size:12px;color:var(--lead)} input[type=file]::file-select
 .print-revs table{border-collapse:collapse;font-size:12px} .print-revs td{border-bottom:1px solid var(--rule);padding:3px 10px 3px 0}
 @media screen{ .tblock{opacity:.75} }
 .print-figs .print-index h2,.print-figs .print-revs h2{font-size:15px;margin:14px 0 4px} .print-index li{padding:1px 0} .print-revs td{font-size:10.5px;padding:2px 8px 2px 0}
+/* Releveu pe șantier */
+.survey{display:grid;gap:8px;margin:14px 0;border-top:1px solid var(--rule);padding-top:12px} .survey h3{display:flex;gap:8px;align-items:center;margin:0}
+.sv-res{border:1px solid var(--rule);padding:8px 12px;background:#fff} .sv-res p{margin:0} .sv-res ul{margin:4px 0 0;padding-left:18px;font-size:13px}
+.sv-ok{border-color:#4f6b4a} .sv-ok b{color:#4f6b4a} .sv-warn{border-color:#b08d57} .sv-warn b{color:#8a6a2f} .sv-bad{border-color:var(--err)} .sv-bad b{color:var(--err)}
+.sv-print{margin:2px 0 8px;font-size:12px} .sv-print.sv-bad{color:var(--err)} .sv-print.sv-warn{color:#8a6a2f}
