@@ -56,6 +56,7 @@ public static class ControlEvaluator
         Devices(f, r);
         Network(f, r);
         Software(f, r);
+        StationHardening(f, r);
         r.Actions.Sort((a, b) => a.TimeUtc.CompareTo(b.TimeUtc));
         return r;
     }
@@ -428,6 +429,269 @@ public static class ControlEvaluator
 
         foreach (var l in Logs(f, "System", 1074))
             r.Actions.Add(new ActionEntry(l.TimeUtc, V(l, "param7") is { Length: > 0 } u ? u : l.UserSid, "a oprit/repornit stația", $"{V(l, "param1")} {V(l, "param3")}", Ev(l)));
+    }
+
+    // ---- station hardening, radios, data left behind (read-only registry / WMI facts) ----------------------------
+
+    private const string Absent = StationFactCollector.Absent;
+    private const string NoRead = " Nu a putut fi citit; pot fi necesare drepturi de administrator. Rulați aplicația ca administrator și repetați controlul.";
+
+    private static void StationHardening(StationFacts f, ControlReport r)
+    {
+        string S(string k) => f.Settings.TryGetValue(k, out var v) ? v : "";
+        bool isolated = f.StationShouldBeIsolated;
+        string Shown(string v) => v == Absent ? "nesetat" : v;
+
+        // N03 Wi-Fi
+        var wifiCount = S("Wifi.AdapterCount");
+        if (wifiCount == "")
+            Add(r, "N03", "Rețea", "Adaptor Wi-Fi (rețea fără fir)", ControlStatus.Nedeterminat, "Lista adaptoarelor de rețea nu a putut fi citită." + NoRead);
+        else
+        {
+            int wifi = int.TryParse(wifiCount, out var wc) ? wc : 0, wifiUp = int.TryParse(S("Wifi.UpCount"), out var wu) ? wu : 0;
+            var profiles = S("Wlan.ProfileCount");
+            var svc = S("Wlan.ServiceStart");
+            var svcText = svc switch { "" => "starea serviciului Wi-Fi nu a putut fi citită", Absent => "serviciul Wi-Fi nu există pe această stație", "4" => "serviciul Wi-Fi este dezactivat", "2" => "serviciul Wi-Fi pornește singur", _ => "serviciul Wi-Fi poate porni la cerere" };
+            var profText = profiles == "" ? "profilurile Wi-Fi salvate nu au putut fi numărate (necesită administrator)" : $"{profiles} profiluri Wi-Fi salvate";
+            var status = wifi == 0 ? ControlStatus.Conform : isolated && wifiUp > 0 ? ControlStatus.Neconform : ControlStatus.DeVerificat;
+            Add(r, "N03", "Rețea", "Adaptor Wi-Fi (rețea fără fir)", status,
+                wifi == 0 ? $"Stația nu are niciun adaptor Wi-Fi; {profText}."
+                    : $"Stația are {wifi} adaptor(oare) Wi-Fi ({wifiUp} pornit/pornite acum); {svcText}; {profText}." + (isolated ? " Pe o stație izolată un adaptor Wi-Fi poate crea o legătură cu exteriorul." : ""),
+                (wifi > 0 ? S("Wifi.Adapters").Split("; ", StringSplitOptions.RemoveEmptyEntries) : []).Concat([@"HKLM\SYSTEM\CurrentControlSet\Services\WlanSvc → Start = " + Shown(svc)]),
+                "Adaptorul Wi-Fi se scoate fizic sau se dezactivează din BIOS; dacă este aprobat, notați documentul de aprobare.");
+        }
+
+        // N04 Bluetooth
+        var btCount = S("Bluetooth.ComponentCount");
+        if (btCount == "")
+            Add(r, "N04", "Rețea", "Bluetooth", ControlStatus.Nedeterminat, "Lista dispozitivelor Bluetooth nu a putut fi citită." + NoRead);
+        else
+        {
+            int bt = int.TryParse(btCount, out var bc) ? bc : 0;
+            var svc = S("Bluetooth.ServiceStart");
+            bool svcOff = svc is "4" or Absent;
+            var status = bt == 0 ? ControlStatus.Conform : isolated && !svcOff ? ControlStatus.Neconform : ControlStatus.DeVerificat;
+            Add(r, "N04", "Rețea", "Bluetooth", status,
+                bt == 0 ? "Stația nu are componente Bluetooth."
+                    : $"Stația are Bluetooth ({bt} componente: {S("Bluetooth.Components")}); serviciul Bluetooth este {(svcOff ? "dezactivat" : svc == "" ? "într-o stare necitită" : "permis să pornească")}." +
+                      (isolated ? " Prin Bluetooth se pot trimite fișiere fără cablu." : ""),
+                [@"HKLM\SYSTEM\CurrentControlSet\Services\bthserv → Start = " + Shown(svc)],
+                "Bluetooth trebuie oprit dacă organizația nu l-a aprobat în scris.");
+        }
+
+        // P15 Secure Boot and firmware mode
+        var sb = S("SecureBoot.Enabled");
+        var fw = S("Firmware.Type");
+        var fwText = fw switch { "2" => "UEFI (modern)", "1" => "BIOS vechi (Legacy)", "" => "necitit", Absent => "necunoscut", var x => $"cod {x}" };
+        Add(r, "P15", "Politici", "Pornire securizată (Secure Boot)",
+            sb == "" ? ControlStatus.Nedeterminat : sb == "1" ? ControlStatus.Conform : sb == "0" || fw == "1" ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+            sb == "" ? "Starea Secure Boot nu a putut fi citită." + NoRead
+                : sb == "1" ? $"Secure Boot este pornit. Mod de pornire: {fwText}."
+                : sb == "0" ? $"Secure Boot este OPRIT: stația poate fi pornită de pe un stick cu alt sistem. Mod de pornire: {fwText}."
+                : fw == "1" ? "Stația pornește în mod BIOS vechi (Legacy), care nu are Secure Boot."
+                : $"Nu s-a găsit informația Secure Boot în registru (stație veche sau fără UEFI). Mod de pornire: {fwText}.",
+            [@"HKLM\SYSTEM\CurrentControlSet\Control\SecureBoot\State → UEFISecureBootEnabled = " + Shown(sb)],
+            "Activați Secure Boot din setările UEFI/BIOS (protejate cu parolă).");
+
+        // P16 screen lock
+        var lockV = S("ScreenLock.InactivityTimeoutSecs");
+        bool lockNum = int.TryParse(lockV, out var lockSecs);
+        Add(r, "P16", "Politici", "Blocarea automată a ecranului la inactivitate",
+            lockV == "" ? ControlStatus.Nedeterminat : lockV == Absent ? ControlStatus.DeVerificat : !lockNum ? ControlStatus.DeVerificat : lockSecs is > 0 and <= 900 ? ControlStatus.Conform : ControlStatus.Neconform,
+            lockV == "" ? "Timpul de blocare nu a putut fi citit." + NoRead
+                : lockV == Absent ? "Nu este setată o politică de blocare după inactivitate. Ecranul poate fi blocat prin screensaver cu parolă, pe care aplicația nu îl citește; verificați la stație."
+                : !lockNum ? $"Valoare neașteptată: {lockV}."
+                : lockSecs == 0 ? "Blocarea după inactivitate este dezactivată: dacă utilizatorul pleacă, ecranul rămâne deschis."
+                : lockSecs <= 900 ? $"Ecranul se blochează după {lockSecs / 60.0:0.#} minute de inactivitate."
+                : $"Ecranul se blochează abia după {lockSecs / 60.0:0.#} minute; regula este cel mult 15 minute.",
+            [@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System → InactivityTimeoutSecs = " + Shown(lockV)],
+            "Setați blocarea la cel mult 15 minute (900 de secunde).");
+
+        // P17 application allow-list
+        var al = S("AppLocker.Collections");
+        var alSvc = S("AppLocker.AppIDSvcStart");
+        bool alEnforced = al.Contains("mod 1", StringComparison.Ordinal) && !al.Contains("mod 0", StringComparison.Ordinal) && !al.Contains("nesetat", StringComparison.Ordinal);
+        Add(r, "P17", "Politici", "Listă albă de aplicații (AppLocker)",
+            al == "" ? ControlStatus.Nedeterminat : al == Absent || al.StartsWith('(') ? ControlStatus.DeVerificat : alEnforced && alSvc == "4" ? ControlStatus.Neconform : alEnforced ? ControlStatus.Conform : ControlStatus.DeVerificat,
+            al == "" ? "Politica AppLocker nu a putut fi citită." + NoRead
+                : al == Absent ? "Nu s-a găsit nicio politică AppLocker. Aplicația nu verifică și App Control (WDAC); dacă organizația îl folosește, constatarea se completează manual."
+                : al.StartsWith('(') ? "Există o politică AppLocker, dar fără colecții de reguli."
+                : alEnforced && alSvc == "4" ? $"Politica AppLocker cere blocarea ({al}), dar serviciul care o aplică (AppIDSvc) este dezactivat: lista albă nu funcționează."
+                : alEnforced ? $"Lista albă blochează programele neaprobate: {al}."
+                : $"Lista albă există, dar cel puțin o colecție este doar în mod audit (notează, nu blochează) sau fără mod setat: {al}.",
+            [@"HKLM\SOFTWARE\Policies\Microsoft\Windows\SrpV2 → EnforcementMode: " + Shown(al), @"HKLM\SYSTEM\CurrentControlSet\Services\AppIDSvc → Start = " + Shown(alSvc)],
+            "Pe o stație clasificată doar programele aprobate trebuie să poată porni: folosiți modul de blocare.");
+
+        // P18 AutoPlay / AutoRun
+        var nd = S("AutoRun.NoDriveTypeAutoRun");
+        var na = S("AutoRun.NoAutorun");
+        bool ndOk = int.TryParse(nd, out var ndv) && (ndv & 0x24) == 0x24;   // 0x04 removable drives + 0x20 CD-ROM
+        Add(r, "P18", "Politici", "Pornirea automată de pe stick/CD (AutoPlay / AutoRun)",
+            ndOk || na == "1" ? ControlStatus.Conform : nd == "" || na == "" ? ControlStatus.Nedeterminat : nd == Absent && na is Absent or "0" ? ControlStatus.DeVerificat : ControlStatus.Neconform,
+            ndOk || na == "1" ? $"Pornirea automată a conținutului de pe stick și CD este oprită prin politică (NoDriveTypeAutoRun = {Shown(nd)}, NoAutorun = {Shown(na)})."
+                : nd == "" || na == "" ? "Politica de pornire automată nu a putut fi citită." + NoRead
+                : nd == Absent && na is Absent or "0" ? "Nu este setată nicio politică de oprire a pornirii automate; se aplică comportamentul implicit al Windows, care poate afișa sau porni conținutul unui stick introdus."
+                : $"Pornirea automată nu este oprită pentru stick-uri și CD-uri (NoDriveTypeAutoRun = {Shown(nd)}, NoAutorun = {Shown(na)}).",
+            [@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer → NoDriveTypeAutoRun = " + Shown(nd), @"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer → NoAutorun = " + Shown(na)],
+            "Setați NoDriveTypeAutoRun la 255 și NoAutorun la 1.");
+
+        // P19 camera and microphone
+        var cam = S("Privacy.Webcam");
+        var mic = S("Privacy.Microphone");
+        Add(r, "P19", "Politici", "Camera și microfonul blocate prin politică",
+            cam == "" || mic == "" ? ControlStatus.Nedeterminat : cam.Equals("Deny", StringComparison.OrdinalIgnoreCase) && mic.Equals("Deny", StringComparison.OrdinalIgnoreCase) ? ControlStatus.Conform : ControlStatus.DeVerificat,
+            cam == "" || mic == "" ? "Setările pentru cameră și microfon nu au putut fi citite." + NoRead
+                : $"Acces la cameră: {(cam == Absent ? "nesetat" : cam)}; acces la microfon: {(mic == Absent ? "nesetat" : mic)}. „Deny” înseamnă blocat pentru toate aplicațiile. Aplicația nu poate spune dacă stația are fizic cameră sau microfon.",
+            [@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam → Value = " + Shown(cam),
+             @"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone → Value = " + Shown(mic)],
+            "Camera și microfonul se acoperă, se deconectează sau se dezactivează din BIOS; verificați fizic stația.");
+
+        // P20 Recall / Copilot
+        var dis = S("AI.DisableAIDataAnalysis");
+        var allow = S("AI.AllowRecallEnablement");
+        var cH = S("AI.CopilotTurnOffHklm");
+        var cU = S("AI.CopilotTurnOffHkcu");
+        bool recallOff = dis == "1" || allow == "0", recallOn = dis == "0" || allow == "1";
+        bool copOff = cH == "1" || cU == "1", copOn = cH == "0" || cU == "0";
+        Add(r, "P20", "Politici", "Windows Recall și Copilot oprite",
+            dis == "" && allow == "" && cH == "" ? ControlStatus.Nedeterminat : recallOn || copOn ? ControlStatus.Neconform : recallOff && copOff ? ControlStatus.Conform : ControlStatus.DeVerificat,
+            dis == "" && allow == "" && cH == "" ? "Politicile Recall/Copilot nu au putut fi citite." + NoRead
+                : recallOn || copOn ? "Recall sau Copilot sunt permise explicit. Recall face poze periodice ale ecranului, adică copii neînregistrate ale documentelor."
+                : recallOff && copOff ? "Politicile opresc atât Recall (poze periodice ale ecranului), cât și Copilot."
+                : $"Nu sunt setate politici care să oprească Recall ({(recallOff ? "oprit" : "nesetat")}) și Copilot ({(copOff ? "oprit" : "nesetat")}). Funcțiile pot lipsi pe această versiune de Windows; confirmați la stație.",
+            [@"HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI → DisableAIDataAnalysis = " + Shown(dis), @"HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI → AllowRecallEnablement = " + Shown(allow),
+             @"HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsCopilot → TurnOffWindowsCopilot = " + Shown(cH),
+             @"HKCU\Software\Policies\Microsoft\Windows\WindowsCopilot → TurnOffWindowsCopilot = " + Shown(cU) + " (doar utilizatorul care a pornit aplicația)"],
+            "Opriți Recall (DisableAIDataAnalysis = 1) și Copilot prin politică.");
+
+        // P21 LSA protection
+        var ppl = S("LSA.RunAsPPL");
+        bool lsaReadable = S("LSA.KeyReadable") == "da";
+        Add(r, "P21", "Politici", "Protecția procesului care păstrează parolele (LSA)",
+            ppl is "1" or "2" ? ControlStatus.Conform : ppl == "" && !lsaReadable ? ControlStatus.Nedeterminat : ppl == "0" ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+            ppl is "1" or "2" ? $"Procesul LSA rulează protejat (RunAsPPL = {ppl})."
+                : ppl == "" && !lsaReadable ? "Setarea de protecție LSA nu a putut fi citită." + NoRead
+                : ppl == "0" ? "Protecția LSA este oprită explicit: un program rău-intenționat poate încerca să citească parolele din memorie."
+                : "Protecția LSA nu este setată în registru. Pe unele versiuni recente de Windows poate fi activă implicit; aplicația nu o poate confirma.",
+            [@"HKLM\SYSTEM\CurrentControlSet\Control\Lsa → RunAsPPL = " + (ppl == "" ? "nesetat" : ppl)],
+            "Setați RunAsPPL la 1 (cu blocare UEFI) și reporniți stația.");
+
+        // P22 Credential Guard
+        var dg = S("DeviceGuard.ServicesRunning");
+        var dgList = dg.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        Add(r, "P22", "Politici", "Credential Guard (parolele izolate în memorie)",
+            dg == "" ? ControlStatus.Nedeterminat : dgList.Contains("1") ? ControlStatus.Conform : ControlStatus.DeVerificat,
+            dg == "" ? "Starea Credential Guard nu a putut fi citită (poate necesita administrator sau ediția Windows nu o oferă)." + NoRead
+                : dgList.Contains("1") ? $"Credential Guard rulează (servicii de securitate active: {dg}){(dgList.Contains("2") ? "; protecția integrității codului (HVCI) este activă" : "")}."
+                : "Credential Guard nu rulează. Cerința oficială este formulată pentru stațiile din domeniu; pe o stație izolată decideți conform documentației de securitate.",
+            [@"WMI root\Microsoft\Windows\DeviceGuard Win32_DeviceGuard → SecurityServicesRunning = " + dg]);
+
+        // P23 PowerShell logging
+        var sbl = S("PS.ScriptBlockLogging");
+        var trn = S("PS.Transcription");
+        Add(r, "P23", "Politici", "Înregistrarea comenzilor PowerShell",
+            sbl == "" ? ControlStatus.Nedeterminat : sbl == "1" && trn == "1" ? ControlStatus.Conform : sbl == "1" ? ControlStatus.DeVerificat : ControlStatus.Neconform,
+            sbl == "" ? "Politica de înregistrare PowerShell nu a putut fi citită." + NoRead
+                : sbl == "1" && trn == "1" ? "Textul scripturilor PowerShell și transcrierea sesiunilor sunt înregistrate."
+                : sbl == "1" ? $"Textul scripturilor este înregistrat, dar transcrierea sesiunilor nu ({(trn == "" ? "necitită" : Shown(trn))})."
+                : "Înregistrarea scripturilor PowerShell nu este pornită prin politică: dacă cineva rulează un script, poate să nu rămână nicio urmă.",
+            [@"HKLM\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging → EnableScriptBlockLogging = " + Shown(sbl),
+             @"HKLM\SOFTWARE\Policies\Microsoft\Windows\PowerShell\Transcription → EnableTranscripting = " + Shown(trn)],
+            "Activați ScriptBlockLogging și Transcription prin politică.");
+
+        // P24 PowerShell 2.0
+        var ps2 = S("PS.V2Engine");
+        Add(r, "P24", "Politici", "PowerShell 2.0 (versiunea veche, fără jurnalizare) eliminat",
+            ps2 == "" ? ControlStatus.Nedeterminat : ps2 == Absent ? ControlStatus.Conform : ps2.StartsWith("2.", StringComparison.Ordinal) ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+            ps2 == "" ? "Prezența motorului PowerShell 2.0 nu a putut fi citită." + NoRead
+                : ps2 == Absent ? "Nu s-a găsit motorul PowerShell 2.0."
+                : ps2.StartsWith("2.", StringComparison.Ordinal) ? $"Motorul PowerShell 2.0 este instalat (versiune {ps2}); nu înregistrează scripturile și poate fi folosit pentru a ocoli protecțiile."
+                : $"Cheia motorului PowerShell vechi există, cu versiunea {ps2}; verificați dacă funcția opțională PowerShell 2.0 este dezactivată.",
+            [@"HKLM\SOFTWARE\Microsoft\PowerShell\1\PowerShellEngine → PowerShellVersion = " + Shown(ps2)],
+            "Dezactivați funcția opțională Windows „PowerShell 2.0”.");
+
+        // P25 data left on disk
+        var cp = S("Disk.ClearPageFile");
+        var hib = S("Disk.HibernateEnabled");
+        var dump = S("Disk.CrashDumpEnabled");
+        var problems = new List<string>();
+        var unread = new List<string>();
+        if (cp == "") unread.Add("ștergerea fișierului de paginare"); else if (cp != "1") problems.Add("fișierul de paginare NU se șterge la oprire (fragmente de documente pot rămâne pe disc)");
+        if (hib is "" or Absent) unread.Add("hibernarea"); else if (hib != "0") problems.Add("hibernarea este permisă (tot conținutul memoriei, inclusiv documentele deschise, se scrie pe disc)");
+        if (dump is "" or Absent) unread.Add("copia memoriei la o cădere"); else if (dump != "0") problems.Add($"după o cădere a sistemului, o copie a memoriei se salvează pe disc (CrashDumpEnabled = {dump})");
+        Add(r, "P25", "Politici", "Date rămase pe disc (paginare, hibernare, copie a memoriei)",
+            problems.Count > 0 ? ControlStatus.DeVerificat : unread.Count > 0 ? ControlStatus.Nedeterminat : ControlStatus.Conform,
+            problems.Count > 0 ? "Pot rămâne date pe disc: " + string.Join("; ", problems) + "." + (unread.Count > 0 ? $" Necitit: {string.Join(", ", unread)}." : "")
+                : unread.Count > 0 ? $"Nu s-a putut stabili: {string.Join(", ", unread)}." + NoRead
+                : "Fișierul de paginare se șterge la oprire, hibernarea este oprită, iar copia memoriei la cădere este dezactivată.",
+            [@"HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management → ClearPageFileAtShutdown = " + Shown(cp),
+             @"HKLM\SYSTEM\CurrentControlSet\Control\Power → HibernateEnabled = " + Shown(hib), @"HKLM\SYSTEM\CurrentControlSet\Control\CrashControl → CrashDumpEnabled = " + Shown(dump)],
+            "Decideți conform documentației de securitate dacă aceste copii pe disc sunt acceptabile pentru informațiile tratate.");
+
+        // P26 logon banner
+        var cap = S("LegalNotice.Caption");
+        var txt = S("LegalNotice.Text");
+        bool noCap = cap is Absent or StationFactCollector.EmptyValue, noTxt = txt is Absent or StationFactCollector.EmptyValue;
+        Add(r, "P26", "Politici", "Mesaj de avertizare la pornire (cu nivelul de clasificare)",
+            cap == "" && txt == "" ? ControlStatus.Nedeterminat : noCap && noTxt ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+            cap == "" && txt == "" ? "Mesajul de avertizare nu a putut fi citit." + NoRead
+                : noCap && noTxt ? "La pornire nu apare niciun mesaj de avertizare că stația tratează informații clasificate."
+                : $"La pornire apare titlul „{(noCap ? "—" : cap)}” și un text de {(noTxt ? 0 : txt.Length)} caractere. Comparați-l cu marcajul de clasificare aprobat pentru stație.",
+            [@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System → LegalNoticeCaption = " + (noCap ? "nesetat" : cap),
+             @"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System → LegalNoticeText = " + (noTxt ? "nesetat" : txt)],
+            "Setați un mesaj care indică nivelul maxim de clasificare al stației.");
+
+        // P27 time source
+        var tType = S("Time.Type");
+        var tNtp = S("Time.NtpServer");
+        var tMeaning = tType switch
+        {
+            "NTP" => "se sincronizează cu un server de timp NTP",
+            "NT5DS" => "se sincronizează cu domeniul",
+            "NoSync" => "nu se sincronizează deloc (ceasul merge liber)",
+            "AllSync" => "folosește toate sursele disponibile",
+            Absent => "nesetat",
+            "" => "necitit",
+            var x => $"tip „{x}”",
+        };
+        Add(r, "P27", "Politici", "Sursa de timp a stației",
+            tType == "" && tNtp == "" ? ControlStatus.Nedeterminat : ControlStatus.DeVerificat,
+            tType == "" && tNtp == "" ? "Setările sursei de timp nu au putut fi citite." + NoRead
+                : $"Ceasul stației: {tMeaning}; server de timp configurat: {(tNtp == Absent ? "niciunul" : tNtp == "" ? "necitit" : tNtp)}. Aplicația nu măsoară abaterea ceasului; comparați ora stației cu ceasul de referință la control.",
+            [@"HKLM\SYSTEM\CurrentControlSet\Services\W32Time\Parameters → Type = " + Shown(tType), @"HKLM\SYSTEM\CurrentControlSet\Services\W32Time\Parameters → NtpServer = " + Shown(tNtp)],
+            "Ora din jurnale este de încredere doar dacă ceasul este verificat periodic față de o sursă aprobată.");
+
+        // A08 copies to removable media recorded?
+        var hot = S("Storage.HotPlugSecureOpen");
+        if (f.AuditPolicy is { } ap)
+        {
+            var rs = ap.GetValueOrDefault("Removable Storage");
+            bool logs = (rs & AuditSetting.Success) == AuditSetting.Success;
+            Add(r, "A08", "Audit", "Copierea fișierelor pe stick-uri este înregistrată",
+                logs ? ControlStatus.Conform : ControlStatus.Neconform,
+                logs ? $"Stația notează accesul la fișiere de pe suporturi amovibile (auditare: {rs}). Pe unele versiuni de Windows este nevoie și de HotPlugSecureOpen (acum: {Shown(hot)}); verificați la un test de copiere."
+                     : "Stația NU notează ce fișiere se copiază pe stick-uri. Dacă s-a copiat ceva, nu vom putea afla ce anume.",
+                [$"Removable Storage: {rs}", @"HKLM\SYSTEM\CurrentControlSet\Control\Storage → HotPlugSecureOpen = " + Shown(hot)],
+                "Cereți administratorului să pornească auditarea „Removable Storage” (succes).");
+        }
+        else Add(r, "A08", "Audit", "Copierea fișierelor pe stick-uri este înregistrată", ControlStatus.Nedeterminat, "Politica de audit nu a putut fi citită." + NoRead);
+
+        // S03 Windows version and last update (facts; support status needs the organisation's offline table)
+        var build = S("OS.Build");
+        if (build == "")
+            Add(r, "S03", "Software", "Versiunea de Windows și ultima actualizare", ControlStatus.Nedeterminat, "Versiunea de Windows nu a putut fi citită." + NoRead);
+        else
+        {
+            var family = int.TryParse(build, out var bn) && bn >= 22000 ? "Windows 11" : "Windows 10 sau mai vechi";
+            var ubr = S("OS.UBR");
+            var upd = S("OS.LastUpdateDate");
+            var updText = upd == "" ? "data ultimei actualizări nu a putut fi citită" : upd == Absent ? "nu este înregistrată nicio actualizare" : $"ultima actualizare instalată: {upd}";
+            Add(r, "S03", "Software", "Versiunea de Windows și ultima actualizare", ControlStatus.DeVerificat,
+                $"{family}, versiunea {Shown(S("OS.DisplayVersion"))}, build {build}{(ubr is "" or Absent ? "" : "." + ubr)}; {updText}. Aplicația nu are tabelul oficial al versiunilor încă suportate; comparați cu registrul actualizărilor offline.",
+                [@"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion → ProductName = " + Shown(S("OS.ProductName")), @"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion → DisplayVersion = " + Shown(S("OS.DisplayVersion")),
+                 @"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion → CurrentBuild = " + build, @"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion → UBR = " + Shown(ubr), "WMI Win32_QuickFixEngineering → InstalledOn = " + Shown(upd)],
+                "Verificați că versiunea mai primește actualizări de securitate și că ultima actualizare corespunde procedurii.");
+        }
     }
 
     /// <summary>"Logon {0CCE9215-…}": the subcategory name next to the GUID Windows writes in 4719, so the timeline is readable.</summary>

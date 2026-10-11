@@ -165,6 +165,110 @@
 - **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Services\USBSTOR → Start; HKLM\SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices → Deny_All`
 - **Cum se citește rezultatul:** Conform = blocat. De verificat = permis: atunci trebuie folosite doar suporturi aprobate și înregistrate.
 
+### P15
+
+- **Ce verificăm:** Dacă pornirea securizată (Secure Boot) este activă și în ce mod pornește stația (UEFI modern sau BIOS vechi).
+- **De ce contează:** Fără ea, cineva poate porni stația de pe un stick cu alt sistem de operare și poate ocoli toate protecțiile Windows.
+- **Cum verifică aplicația:** A citit din registru starea Secure Boot și tipul de firmware al plăcii de bază.
+- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Control\SecureBoot\State → UEFISecureBootEnabled; HKLM\SYSTEM\CurrentControlSet\Control → PEFirmwareType`
+- **Cum se citește rezultatul:** Conform = pornită. Neconform = oprită sau BIOS vechi. De verificat = informația lipsește (stație veche); verificați în setările UEFI.
+
+### P16
+
+- **Ce verificăm:** După cât timp de inactivitate se blochează automat ecranul.
+- **De ce contează:** Dacă utilizatorul pleacă de la stație, oricine poate folosi contul lui cât timp ecranul rămâne deschis.
+- **Cum verifică aplicația:** A citit timpul de inactivitate stabilit prin politică, în secunde.
+- **Sursa tehnică:** `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System → InactivityTimeoutSecs`
+- **Cum se citește rezultatul:** Conform = între 1 secundă și 900 (15 minute). Neconform = 0 (dezactivat) sau peste 15 minute. De verificat = politica nu este setată; ecranul poate fi blocat altfel (screensaver cu parolă), pe care aplicația nu îl citește.
+
+### P17
+
+- **Ce verificăm:** Dacă stația are o listă albă de programe (AppLocker) și dacă ea blochează sau doar notează.
+- **De ce contează:** Cu o listă albă blocată, pe stație rulează doar programele aprobate; fără ea poate porni orice program adus pe un stick.
+- **Cum verifică aplicația:** A citit colecțiile de reguli AppLocker din politică, modul fiecăreia (1 = blochează, 0 = doar notează) și modul de pornire al serviciului care le aplică.
+- **Sursa tehnică:** `HKLM\SOFTWARE\Policies\Microsoft\Windows\SrpV2 → EnforcementMode; HKLM\SYSTEM\CurrentControlSet\Services\AppIDSvc → Start`
+- **Cum se citește rezultatul:** Conform = toate colecțiile blochează. Neconform = lista cere blocare, dar serviciul care o aplică este dezactivat. De verificat = lipsește, este doar în mod audit sau fără mod; App Control (WDAC) nu este verificat de aplicație.
+
+### P18
+
+- **Ce verificăm:** Dacă stația pornește singură conținutul unui stick sau CD introdus (AutoPlay / AutoRun).
+- **De ce contează:** Un stick poate conține un program care pornește singur la introducere, fără să-l deschidă cineva.
+- **Cum verifică aplicația:** A citit cele două setări de politică care opresc pornirea automată pentru suporturi amovibile și CD-uri.
+- **Sursa tehnică:** `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer → NoDriveTypeAutoRun, NoAutorun`
+- **Cum se citește rezultatul:** Conform = oprită (255 sau cel puțin suporturi amovibile și CD, ori NoAutorun = 1). Neconform = setată, dar insuficient. De verificat = nesetată; se aplică comportamentul implicit al Windows.
+
+### P19
+
+- **Ce verificăm:** Dacă accesul la cameră și la microfon este blocat prin politică pentru toate aplicațiile.
+- **De ce contează:** O cameră sau un microfon pornit pe o stație clasificată poate înregistra imagini și conversații din încăpere.
+- **Cum verifică aplicația:** A citit permisiunea „Deny” (blocat) sau „Allow” (permis) pentru cameră și microfon din setările de confidențialitate ale Windows.
+- **Sursa tehnică:** `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam → Value și microphone → Value`
+- **Cum se citește rezultatul:** Conform = ambele „Deny”. De verificat = altfel. Aplicația nu poate spune dacă stația are fizic cameră sau microfon; verificați și fizic (acoperită, deconectată sau dezactivată în BIOS).
+
+### P20
+
+- **Ce verificăm:** Dacă funcțiile Windows Recall (poze periodice ale ecranului) și Copilot (asistent) sunt oprite prin politică.
+- **De ce contează:** Recall păstrează pe disc imagini ale ecranului, adică copii ale documentelor care nu sunt în nicio evidență.
+- **Cum verifică aplicația:** A citit politicile care opresc Recall și Copilot (pentru Copilot și valoarea utilizatorului care a pornit aplicația).
+- **Sursa tehnică:** `HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsAI → DisableAIDataAnalysis, AllowRecallEnablement; WindowsCopilot → TurnOffWindowsCopilot`
+- **Cum se citește rezultatul:** Conform = ambele oprite. Neconform = cel puțin una permisă explicit. De verificat = nesetat; funcția poate lipsi pe această versiune de Windows. Calea politicii Copilot nu are încă o sursă oficială citată.
+
+### P21
+
+- **Ce verificăm:** Dacă procesul Windows care păstrează parolele (LSA) rulează protejat.
+- **De ce contează:** Un program rău-intenționat poate încerca să citească parolele din memoria acestui proces; protecția îl împiedică.
+- **Cum verifică aplicația:** A citit valoarea RunAsPPL din registru.
+- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Control\Lsa → RunAsPPL`
+- **Cum se citește rezultatul:** Conform = 1 sau 2 (protejat). Neconform = 0 (oprit). De verificat = nesetat; pe versiuni recente de Windows poate fi activ implicit, dar aplicația nu poate confirma.
+
+### P22
+
+- **Ce verificăm:** Dacă Credential Guard (izolarea parolelor într-o zonă protejată a memoriei) rulează.
+- **De ce contează:** Chiar dacă un program rău-intenționat rulează pe stație, nu poate citi parolele izolate.
+- **Cum verifică aplicația:** A cerut Windows lista serviciilor de securitate bazate pe virtualizare care rulează acum.
+- **Sursa tehnică:** `WMI root\Microsoft\Windows\DeviceGuard, Win32_DeviceGuard → SecurityServicesRunning`
+- **Cum se citește rezultatul:** Conform = rulează (1 în listă). De verificat = nu rulează; cerința oficială este formulată pentru stațiile din domeniu. Nedeterminat = nu s-a putut citi (poate cere administrator sau ediția Windows nu o oferă).
+
+### P23
+
+- **Ce verificăm:** Dacă Windows înregistrează textul scripturilor PowerShell și transcrierea sesiunilor.
+- **De ce contează:** Fără această înregistrare, un script rău-intenționat poate rula fără să lase vreo urmă pe stație.
+- **Cum verifică aplicația:** A citit cele două politici PowerShell: înregistrarea blocurilor de script și transcrierea.
+- **Sursa tehnică:** `HKLM\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging → EnableScriptBlockLogging; ...\PowerShell\Transcription → EnableTranscripting`
+- **Cum se citește rezultatul:** Conform = ambele pornite. De verificat = scripturile sunt înregistrate, transcrierea nu. Neconform = înregistrarea scripturilor nu este pornită prin politică.
+
+### P24
+
+- **Ce verificăm:** Dacă versiunea veche PowerShell 2.0 mai este instalată.
+- **De ce contează:** PowerShell 2.0 nu înregistrează scripturile și poate fi folosit ca să se ocolească protecțiile versiunilor noi.
+- **Cum verifică aplicația:** A căutat în registru motorul PowerShell 2.0.
+- **Sursa tehnică:** `HKLM\SOFTWARE\Microsoft\PowerShell\1\PowerShellEngine → PowerShellVersion`
+- **Cum se citește rezultatul:** Conform = nu s-a găsit. Neconform = versiunea 2.x este instalată. De verificat = cheia există cu altă versiune; confirmați în Funcții Windows opționale. Metoda de detectare trebuie confirmată în laborator.
+
+### P25
+
+- **Ce verificăm:** Ce date pot rămâne pe disc după oprire: fișierul de paginare, hibernarea și copia memoriei de la o cădere a sistemului.
+- **De ce contează:** Toate trei pot păstra pe disc fragmente de documente care au fost doar deschise, nu salvate, și pot fi citite ulterior.
+- **Cum verifică aplicația:** A citit trei setări: ștergerea fișierului de paginare la oprire, hibernarea permisă și tipul copiei memoriei la cădere.
+- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management → ClearPageFileAtShutdown; ...\Control\Power → HibernateEnabled; ...\Control\CrashControl → CrashDumpEnabled`
+- **Cum se citește rezultatul:** Conform = paginarea se șterge, hibernarea este oprită, nu se salvează copia memoriei. De verificat = cel puțin una lasă date pe disc; organizația decide dacă este acceptabil. Nedeterminat = o setare nu s-a putut citi.
+
+### P26
+
+- **Ce verificăm:** Dacă la pornirea stației apare un mesaj de avertizare și ce spune el.
+- **De ce contează:** Mesajul trebuie să anunțe că stația tratează informații clasificate, la nivelul maxim aprobat, și că utilizarea este monitorizată.
+- **Cum verifică aplicația:** A citit titlul și textul mesajului de la pornire.
+- **Sursa tehnică:** `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System → LegalNoticeCaption, LegalNoticeText`
+- **Cum se citește rezultatul:** Neconform = nu există niciun mesaj. De verificat = există; citiți titlul afișat și comparați-l cu nivelul de clasificare din documentele stației.
+
+### P27
+
+- **Ce verificăm:** De unde își ia stația ora și dacă este configurat un server de timp.
+- **De ce contează:** Orele din jurnale sunt probă doar dacă ceasul stației este de încredere; un ceas lăsat liber poate fi greșit.
+- **Cum verifică aplicația:** A citit tipul de sincronizare și serverul de timp din configurarea serviciului de timp al Windows.
+- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Services\W32Time\Parameters → Type, NtpServer`
+- **Cum se citește rezultatul:** Întotdeauna „de verificat”: aplicația arată setările, nu măsoară abaterea ceasului. Comparați ora stației cu ceasul de referință la control.
+
 ### A01
 
 - **Ce verificăm:** Dacă stația înregistrează în jurnal tot ce are nevoie un control (autentificări, conturi, programe, USB etc.).
@@ -220,6 +324,14 @@
 - **Cum verifică aplicația:** A căutat schimbările de oră, fără corecțiile automate ale Windows.
 - **Sursa tehnică:** `Security 4616 (fără svchost.exe și conturile sistemului)`
 - **Cum se citește rezultatul:** Conform = nicio schimbare manuală. De verificat = schimbări făcute de utilizatori.
+
+### A08
+
+- **Ce verificăm:** Dacă stația notează ce fișiere se copiază pe stick-uri și pe alte suporturi amovibile.
+- **De ce contează:** Fără această urmă nu se poate afla ce fișiere au ieșit pe un stick; este principala dovadă într-un caz de scurgere de date.
+- **Cum verifică aplicația:** A citit politica de audit pentru subcategoria „Removable Storage” (acces la fișiere pe suporturi amovibile) și, ca informație, valoarea HotPlugSecureOpen.
+- **Sursa tehnică:** `auditpol: subcategoria Removable Storage; HKLM\SYSTEM\CurrentControlSet\Control\Storage → HotPlugSecureOpen`
+- **Cum se citește rezultatul:** Conform = auditarea succeselor este pornită. Neconform = nu se înregistrează nimic despre copieri. Auditarea pornită nu garantează lista completă a fișierelor pe toate versiunile de Windows; verificați cu o copiere de probă.
 
 ### U01
 
@@ -293,6 +405,22 @@
 - **Sursa tehnică:** `HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Profiles`
 - **Cum se citește rezultatul:** De verificat: fiecare rețea din listă trebuie să fie una permisă.
 
+### N03
+
+- **Ce verificăm:** Dacă stația are adaptor Wi-Fi, dacă serviciul Wi-Fi poate porni și câte rețele Wi-Fi sunt salvate.
+- **De ce contează:** Un adaptor Wi-Fi poate crea o legătură cu exteriorul și strică izolarea stației.
+- **Cum verifică aplicația:** A căutat adaptoarele de rețea fără fir, a citit modul de pornire al serviciului Wi-Fi și a numărat fișierele de profil Wi-Fi salvate (fără să le deschidă).
+- **Sursa tehnică:** `Adaptoare de rețea Windows (tip 802.11); HKLM\SYSTEM\CurrentControlSet\Services\WlanSvc → Start; ProgramData\Microsoft\Wlansvc\Profiles\Interfaces`
+- **Cum se citește rezultatul:** Conform = nu există adaptor Wi-Fi. Neconform = pe stația izolată există un adaptor Wi-Fi pornit. De verificat = adaptor prezent dar oprit, sau stație neizolată; cereți aprobarea scrisă sau scoaterea plăcii.
+
+### N04
+
+- **Ce verificăm:** Dacă stația are componente Bluetooth și dacă serviciul Bluetooth poate porni.
+- **De ce contează:** Prin Bluetooth se pot trimite fișiere fără cablu, fără ca stația să fie conectată la vreo rețea.
+- **Cum verifică aplicația:** A căutat dispozitivele Bluetooth cunoscute de Windows și a citit modul de pornire al serviciului Bluetooth.
+- **Sursa tehnică:** `WMI Win32_PnPEntity (clasa Bluetooth); HKLM\SYSTEM\CurrentControlSet\Services\bthserv → Start`
+- **Cum se citește rezultatul:** Conform = nu există Bluetooth. Neconform = pe stația izolată Bluetooth există și serviciul poate porni. De verificat = există dar serviciul este oprit; opriți-l sau cereți aprobarea scrisă.
+
 ### S01
 
 - **Ce verificăm:** Ce programe au fost instalate sau dezinstalate în perioada controlată.
@@ -308,6 +436,14 @@
 - **Cum verifică aplicația:** A căutat instalările de servicii (fără drivere, listate separat în cronologie) și crearea de task-uri programate.
 - **Sursa tehnică:** `System 7045; Security 4698`
 - **Cum se citește rezultatul:** Conform = niciunul. De verificat = fiecare nume necunoscut trebuie explicat.
+
+### S03
+
+- **Ce verificăm:** Ce versiune de Windows rulează stația și când s-a instalat ultima actualizare.
+- **De ce contează:** O versiune care nu mai primește actualizări de securitate rămâne cu defecte cunoscute; pe o stație izolată actualizările se aduc manual, deci data lor trebuie să corespundă procedurii.
+- **Cum verifică aplicația:** A citit numele, versiunea și numărul de build al Windows din registru și cea mai recentă dată de instalare a unei actualizări din lista Windows.
+- **Sursa tehnică:** `HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion → DisplayVersion, CurrentBuild, UBR; WMI Win32_QuickFixEngineering → InstalledOn`
+- **Cum se citește rezultatul:** Întotdeauna „de verificat”: aplicația arată faptele, dar nu are tabelul oficial al versiunilor încă suportate. Compară cu registrul actualizărilor offline al organizației. Numele din registru poate spune „Windows 10” și pe Windows 11; un build de la 22000 în sus este Windows 11.
 
 ## Ce înseamnă rezultatele
 
@@ -326,6 +462,7 @@
 | System 104 | eveniment Windows | Un jurnal de evenimente (altul decât Security sau chiar System) a fost golit. | La fel ca la 1102: urmele de dinainte se pierd. |  |
 | Security 4719 | eveniment Windows | Politica de audit a fost modificată (ce anume înregistrează stația în jurnal). | Cine reduce auditul poate face lucruri care nu mai lasă urme. | Codul GUID arată ce categorie s-a schimbat; %%8449/%%8451 = s-a activat, %%8448/%%8450 = s-a dezactivat. |
 | Security 4616 | eveniment Windows | Ora sistemului a fost schimbată. | Cu ora schimbată, orele din toate jurnalele devin greșite; poate fi folosită pentru a ascunde când s-a întâmplat ceva. | Windows își corectează singur ora (svchost.exe, cont SYSTEM) — acelea nu sunt listate. Listate sunt doar schimbările făcute de o persoană. |
+| Storage\\HotPlugSecureOpen | valoare de registru | Setare folosită de unele versiuni de Windows pentru a înregistra accesul la fișiere pe suporturi amovibile. | Fără ea, auditarea pe suporturi amovibile poate să nu noteze fișierele copiate. | 1 = pornită; lipsa înseamnă comportamentul implicit al versiunii. |
 | Win32_UserAccount | interogare Windows (WMI) | Lista conturilor locale ale stației, cu starea lor (activ, dezactivat, parolă obligatorie, expirare). | Este lista reală a conturilor, chiar dacă unele sunt ascunse din ecranul de pornire. |  |
 | S-1-5-32-544 | identificator de securitate (SID) | Administrators: grupul administratorilor locali: control total. | SID-ul identifică sigur contul sau grupul, chiar dacă a fost redenumit. |  |
 | Win32_Group | interogare Windows (WMI) | Grupurile locale ale stației și membrii lor. | Arată cine are drepturi de administrator sau de acces la distanță. |  |
@@ -335,6 +472,8 @@
 | NetworkProfile 10000 | eveniment Windows | Stația s-a conectat la o rețea (numele rețelei este în eveniment). | Pe o stație izolată, orice conectare la rețea este o abatere. |  |
 | WLAN 8001 | eveniment Windows | Stația s-a conectat la o rețea fără fir (Wi-Fi); SSID = numele rețelei. | Pe o stație izolată, o conectare Wi-Fi este o abatere. |  |
 | NetworkList\\Profiles | cheie de registru | Lista rețelelor la care stația s-a conectat vreodată, cu data primei și ultimei conectări. | Pe o stație izolată arată dacă a fost vreodată conectată la o rețea. | Profilurile pot fi șterse manual; lipsa lor nu dovedește nimic. |
+| Services\\WlanSvc\\Start | valoare de registru | Modul de pornire al serviciului Wi-Fi (WLAN AutoConfig). | Fără serviciu pornit, stația nu se poate conecta la rețele fără fir. | 4 = dezactivat, 3 = la cerere, 2 = automat; lipsa înseamnă că serviciul nu există. |
+| Services\\bthserv\\Start | valoare de registru | Modul de pornire al serviciului Bluetooth. | Bluetooth permite trimiterea de fișiere fără cablu. | 4 = dezactivat, 3 = la cerere, 2 = automat. |
 | NetUserModalsGet | funcție Windows | Citește politica de parole a stației (aceeași pe care o arată comanda „net accounts”). | Arată regulile efective pentru parole și blocarea conturilor. |  |
 | Policies\\System\\EnableLUA | valoare de registru | Pornește sau oprește UAC (fereastra care cere confirmare înainte ca un program să primească drepturi de administrator). | Cu UAC oprit, orice program pornit de un administrator are control total, fără întrebare. | 1 = activ (corect), 0 = oprit. |
 | Policies\\System\\ConsentPromptBehaviorAdmin | valoare de registru | Cum întreabă UAC un administrator înainte de a da drepturi complete. | 0 înseamnă că nu se mai întreabă nimic. | 0 = fără întrebare, 1/3 = cere parola, 2/4 = cere confirmare, 5 = cere confirmare doar pentru programe din afara Windows (implicit). |
@@ -353,12 +492,38 @@
 | WDigest\\UseLogonCredential | valoare de registru | Dacă Windows păstrează parolele în memorie în formă care poate fi citită. | Cu valoarea 1, un program rău-intenționat poate extrage parolele în clar (tehnică Mimikatz). | 0 sau lipsă = sigur (implicit pe Windows 10/11). |
 | Services\\USBSTOR\\Start | valoare de registru | Pornirea componentei Windows care citește stick-urile și discurile USB. | Dacă este oprită, stick-urile USB nu mai pot fi folosite pe stație. | 4 = blocat (stick-urile nu funcționează), 3 = permis (implicit). |
 | RemovableStorageDevices\\Deny_All | valoare de registru | Politica „Toate clasele de stocare amovibilă: interzice orice acces”. | Blochează toate suporturile amovibile. | 1 = blocat. |
+| State\\UEFISecureBootEnabled | valoare de registru | Dacă pornirea securizată (Secure Boot) este activă. | Fără ea, stația poate fi pornită de pe un stick cu alt sistem de operare. | 1 = activă, 0 = oprită; lipsa cheii înseamnă de obicei BIOS vechi sau stație fără UEFI. |
+| Control\\PEFirmwareType | valoare de registru | Tipul de firmware al plăcii de bază. | BIOS-ul vechi nu are protecțiile pornirii moderne. | 1 = BIOS vechi (Legacy), 2 = UEFI (modern). |
+| System\\InactivityTimeoutSecs | valoare de registru | După câte secunde de inactivitate se blochează ecranul. | Ecranul deschis lângă o stație nesupravegheată poate fi folosit de oricine. | Cel mult 900 (15 minute) este corect; 0 = dezactivat. |
+| Services\\AppIDSvc\\Start | valoare de registru | Modul de pornire al serviciului care aplică lista albă de programe (AppLocker). | Dacă este dezactivat, regulile AppLocker nu mai sunt aplicate. | 4 = dezactivat, 3 = la cerere (normal), 2 = automat. |
+| SrpV2\\EnforcementMode | valoare de registru | Modul unei colecții de reguli AppLocker (lista albă de programe). | Doar modul de blocare oprește programele neaprobate. | 1 = blochează, 0 = doar notează în jurnal (audit). |
+| Explorer\\NoDriveTypeAutoRun | valoare de registru | Pentru ce tipuri de unități este oprită pornirea automată. | Un stick poate porni singur un program la introducere. | 255 = toate unitățile; trebuie să includă cel puțin suporturile amovibile (4) și CD-urile (32). |
+| Explorer\\NoAutorun | valoare de registru | Oprește comenzile de pornire automată din fișierul autorun.inf. | Fișierul autorun.inf al unui stick poate porni un program. | 1 = oprit (corect), 0 sau lipsă = permis. |
+| webcam\\Value | valoare de registru | Permisiunea implicită de acces la cameră pentru toate aplicațiile. | O cameră permisă poate face imagini din încăpere. | Deny = blocat, Allow = permis. |
+| microphone\\Value | valoare de registru | Permisiunea implicită de acces la microfon pentru toate aplicațiile. | Un microfon permis poate înregistra conversații. | Deny = blocat, Allow = permis. |
+| WindowsAI\\DisableAIDataAnalysis | valoare de registru | Politica care oprește funcția Recall (poze periodice ale ecranului). | Recall păstrează pe disc imagini ale ecranului, deci copii ale documentelor. | 1 = oprit (corect), 0 = permis. |
+| WindowsAI\\AllowRecallEnablement | valoare de registru | Politica care permite sau nu activarea funcției Recall. | Vezi DisableAIDataAnalysis. | 0 = indisponibilă (corect), 1 = poate fi activată. |
+| WindowsCopilot\\TurnOffWindowsCopilot | valoare de registru | Politica care oprește asistentul Windows Copilot. | Copilot poate trimite conținutul ecranului către un serviciu din afară. | 1 = oprit (corect), 0 = permis. |
+| Lsa\\RunAsPPL | valoare de registru | Protecția procesului care păstrează parolele (LSA). | Îngreunează furtul parolelor din memorie. | 1 sau 2 = protejat. |
+| ScriptBlockLogging\\EnableScriptBlockLogging | valoare de registru | Înregistrarea textului scripturilor PowerShell în jurnal. | Fără ea, un script rău-intenționat nu lasă urme. | 1 = pornită (corect), lipsa sau 0 = oprită. |
+| Transcription\\EnableTranscripting | valoare de registru | Salvarea unei transcrieri a fiecărei sesiuni PowerShell. | Păstrează tot ce s-a tastat și tot ce s-a afișat. | 1 = pornită (corect). |
+| PowerShellEngine\\PowerShellVersion | valoare de registru | Versiunea motorului PowerShell găsit sub această cheie. | Versiunea 2.0 nu înregistrează scripturile și poate ocoli protecțiile noi. | 2.0 = versiunea veche prezentă; lipsa cheii = nu s-a găsit. |
+| Memory Management\\ClearPageFileAtShutdown | valoare de registru | Dacă fișierul de paginare (memoria virtuală de pe disc) se șterge la oprire. | Poate conține fragmente de documente deschise. | 1 = se șterge (corect pentru stații clasificate), 0 = rămâne pe disc. |
+| Power\\HibernateEnabled | valoare de registru | Dacă hibernarea este permisă. | Hibernarea scrie pe disc tot conținutul memoriei, inclusiv documentele deschise. | 0 = oprită, 1 = permisă. |
+| CrashControl\\CrashDumpEnabled | valoare de registru | Ce copie a memoriei salvează Windows la o cădere a sistemului. | Copia poate conține date din documente deschise. | 0 = nimic, 1 = completă, 2 = nucleu, 3 = mică, 7 = automată. |
+| System\\LegalNoticeCaption | valoare de registru | Titlul mesajului de avertizare afișat înainte de autentificare. | Anunță utilizatorul că stația tratează informații clasificate. | Trebuie să corespundă marcajului de clasificare aprobat. |
+| System\\LegalNoticeText | valoare de registru | Textul mesajului de avertizare afișat înainte de autentificare. | Vezi LegalNoticeCaption. | Trebuie să indice nivelul maxim de clasificare. |
+| Parameters\\NtpServer | valoare de registru | Serverul de timp configurat pentru ceasul stației. | Ora din jurnale este de încredere doar dacă ceasul este sincronizat cu o sursă aprobată. | Lipsa înseamnă că niciun server nu este configurat. |
+| Parameters\\Type | valoare de registru | Tipul de sincronizare a ceasului stației. | Un ceas lăsat liber se abate în timp. | NTP = server de timp, NT5DS = domeniu, NoSync = fără sincronizare. |
 | Application 11707 | eveniment Windows | Windows Installer: un program a fost instalat cu succes. | Software-ul instalat trebuie să fie pe lista aprobată. |  |
 | Application 11724 | eveniment Windows | Windows Installer: un program a fost dezinstalat cu succes. | Dezinstalarea poate ascunde un program folosit anterior. |  |
 | Application 1033 | eveniment Windows | Windows Installer: instalare încheiată (cu codul de rezultat). | Software-ul instalat trebuie să fie pe lista aprobată. | Codul de stare 0 = reușit. |
 | Application 1034 | eveniment Windows | Windows Installer: dezinstalare încheiată. | Dezinstalarea poate ascunde un program folosit anterior. |  |
 | System 7045 | eveniment Windows | Un serviciu nou (program care rulează permanent în fundal) a fost instalat. | Serviciile noi sunt o metodă frecventă de a păstra un program rău-intenționat activ după repornire. | Calea executabilului (ImagePath) arată ce program rulează. |
 | Security 4698 | eveniment Windows | A fost creat un task programat (o comandă care pornește singură la o oră sau la pornire). | Task-urile programate sunt o metodă frecventă prin care un program rău-intenționat repornește singur. | Programele legitime (actualizări) creează și ele task-uri; comparați numele cu software-ul aprobat. |
+| CurrentVersion\\DisplayVersion | valoare de registru | Versiunea Windows pe înțelesul utilizatorilor (de exemplu 24H2). | Arată cât de nouă este versiunea și dacă mai primește actualizări. | Se compară cu tabelul versiunilor suportate al organizației. |
+| CurrentVersion\\CurrentBuild | valoare de registru | Numărul de build al Windows. | Identifică exact versiunea; 22000 sau mai mult înseamnă Windows 11. | Numele produsului din registru poate spune „Windows 10” și pe Windows 11. |
+| CurrentVersion\\UBR | valoare de registru | Numărul de revizie al actualizărilor instalate peste build. | Crește cu fiecare actualizare lunară instalată. | Se citește împreună cu build-ul: 26100.1234 înseamnă revizia 1234. |
 | Security 4732 | eveniment Windows | Un membru a fost adăugat într-un grup local (de exemplu Administrators). | Adăugarea în Administrators dă control total asupra stației. | SID-ul S-1-5-32-544 înseamnă grupul Administrators. |
 | Security 4733 | eveniment Windows | Un membru a fost eliminat dintr-un grup local. | Schimbă drepturile contului. |  |
 | Security 4720 | eveniment Windows | A fost creat un cont de utilizator nou. | Orice cont nou trebuie să aibă aprobare. |  |
