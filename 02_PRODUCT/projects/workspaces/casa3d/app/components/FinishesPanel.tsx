@@ -11,6 +11,7 @@ import { normalizeHex } from '@/core/appearance';
 import { lightReport } from '@/core/light-design';
 import { roomWindows, curtainPlan, blindPlan, TEXTILE_RULES } from '@/core/textiles';
 import { kitchenOf, kitchenRun, kitchenQuantities, kitchenIssues } from '@/core/kitchen';
+import { bathOf, bathIssues, METAL_COLOR, TILE_ZONE_M } from '@/core/bath';
 import { usePrefs } from '@/lib/prefs';
 
 const KINDS = Object.keys(FEATURE_CATEGORY) as WallFeatureKind[];
@@ -34,6 +35,7 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish }: { 
   const issues = finishIssues(snap, mc, fl, room, f), light = lightReport(mc, fl, room, f), wins = roomWindows(fl, room);
   const run = kitchenRun(snap, cat, room.id), ks = kitchenOf(f), kq = run ? kitchenQuantities(run, ks, materialOf(mc, ks.countertop)) : null, kIss = kitchenIssues(snap, cat, mc, room.id, f);
   const setK = (p: Partial<NonNullable<RoomFinishes['kitchen']>>) => onFinish({ kitchen: { ...(f.kitchen || {}), ...p } });
+  const bs = bathOf(f), bIss = bathIssues(snap, mc, room, f), setB = (p: Partial<NonNullable<RoomFinishes['bath']>>) => onFinish({ bath: { ...(f.bath || {}), ...p } });
   const treat = (id: string) => (f.windows || []).find(t => t.openingId === id) ?? { openingId: id };
   const setTreat = (id: string, p: Partial<WindowTreatment>) => onFinish({ windows: [...(f.windows || []).filter(t => t.openingId !== id), { ...treat(id), ...p }] });
   const sideLen = (s: WallFeature['side']) => formatLength(sideGeometry(fl, room, s).lengthM, units, lang);
@@ -109,6 +111,22 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish }: { 
         <label className="f"><span>{t('editor.lightCount')}</span><input type="number" min={0} max={20} value={f.lights ?? ''} placeholder={t('common.auto')} onChange={e => onFinish({ lights: e.target.value === '' ? undefined : Math.max(0, Math.min(20, Number(e.target.value) || 0)) })} /></label>
       </div>
     </fieldset>
+    {room.type === 'baie' && <fieldset className="fin-group"><legend>{t('bath.title')}</legend>
+      {bIss.map((i, k) => <div key={k} className="issue WARNING">{t(i.key, i.vars)}</div>)}
+      <div className="grid2">
+        <label className="f"><span>{t('bath.metal')}</span><select value={bs.metal} onChange={e => setB({ metal: e.target.value as any })}>{Object.keys(METAL_COLOR).map(x => <option key={x} value={x}>{t(`bath.metal.${x}`)}</option>)}</select></label>
+        <label className="f"><span>{t('bath.tileZone')}</span><select value={bs.tileZone} onChange={e => setB({ tileZone: e.target.value as any })}>{Object.keys(TILE_ZONE_M).map(x => <option key={x} value={x}>{t(`bath.tileZone.${x}`)}</option>)}</select></label>
+        <label className="f"><span>{t('bath.shower')}</span><select value={bs.showerType} onChange={e => setB({ showerType: e.target.value as any })}>{(['cabin', 'walkin'] as const).map(x => <option key={x} value={x}>{t(`bath.shower.${x}`)}</option>)}</select></label>
+        <label className="f"><span>{t('bath.wc')}</span><select value={bs.wc} onChange={e => setB({ wc: e.target.value as any })}>{(['floor', 'wall'] as const).map(x => <option key={x} value={x}>{t(`bath.wc.${x}`)}</option>)}</select></label>
+      </div>
+      <div className="grid2">
+        <label className="f"><span>{t('bath.tap')}</span><select value={bs.tap || ''} onChange={e => setB({ tap: e.target.value || null })}><option value="">{t('fin.none')}</option>{by('bath_tap').map(opt)}</select></label>
+        <label className="f"><span>{t('bath.showerSet')}</span><select value={bs.shower || ''} onChange={e => setB({ shower: e.target.value || null })}><option value="">{t('fin.none')}</option>{by('shower_set').map(opt)}</select></label>
+        <label className="f"><span>{t('bath.radiator')}</span><select value={bs.towelRadiator || ''} onChange={e => setB({ towelRadiator: e.target.value || null })}><option value="">{t('fin.none')}</option>{by('towel_radiator').map(opt)}</select></label>
+        <label className="f"><span>{t('bath.mirror')}</span><select value={bs.mirror || ''} onChange={e => setB({ mirror: e.target.value || null })}><option value="">{t('fin.none')}</option>{by('led_mirror').map(opt)}</select></label>
+      </div>
+    </fieldset>}
+
     {run && <fieldset className="fin-group"><legend>{t('kit.title')}</legend>
       {kIss.map((i, k) => <div key={k} className="issue WARNING">{t(i.key, i.vars)}</div>)}
       <div className="prov">{t('kit.run', { len: formatLength(run.lengthM, units, lang), n: run.modules, fronts: kq!.fronts })}</div>

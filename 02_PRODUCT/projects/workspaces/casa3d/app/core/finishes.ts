@@ -5,6 +5,7 @@ import type { Floor, FloorLayout, FloorPattern, Material, MaterialsCatalog, Room
 import { lightIssues } from './light-design';
 import { textileIssues, sanitizeTextiles } from './textiles';
 import { sanitizeKitchen } from './kitchen';
+import { sanitizeBath, bathTileHeight } from './bath';
 import { openingsOnSide } from './validate';
 
 const r2 = (v: number) => Math.round(v * 100) / 100;
@@ -140,14 +141,14 @@ export function sanitizeFinishes(f: any): string | null {
       || (w.fromM !== undefined && w.heightM !== undefined && w.kind !== 'rail' && w.heightM <= w.fromM)) || bandsOverlap(wf, 10))) return 'Placările de pe pereți sunt invalide.';
     const c = rf.ceiling; if (c !== undefined && (c === null || typeof c !== 'object' || !['flat', 'drop', 'cove'].includes(c.type) || !num(c.dropCm, 0, FINISH_RULES.maxDropCm) || !num(c.coveCm, 0, FINISH_RULES.maxCoveCm) || !num(c.spots, 0, 40)
       || [c.led, c.cornice, c.spot].some(x => x != null && (typeof x !== 'string' || x.length > 80)))) return 'Tavanul este invalid.';
-    const tx = sanitizeTextiles(rf) ?? sanitizeKitchen(rf.kitchen); if (tx) return tx; }
+    const tx = sanitizeTextiles(rf) ?? sanitizeKitchen(rf.kitchen) ?? sanitizeBath(rf.bath); if (tx) return tx; }
   return null;
 }
 
 // ---------- ce desenează motorul 3D ----------
-/** Faianța băii (din `wallTile`), până la 2,1 m pe fiecare perete care nu are altă placare — la fel ca în BOQ. */
+/** Faianța băii (din `wallTile`), până la înălțimea aleasă (1,2 m / 2,1 m / tavan) pe fiecare perete fără altă placare — la fel ca în BOQ. */
 export const bathTiles = (f: RoomFinishes, roomType: string): WallFeature[] => roomType !== 'baie' || !f.wallTile ? []
-  : SIDES.filter(s => !(f.wallFeatures || []).some(w => w.side === s)).map(side => ({ side, kind: 'tile' as const, material: f.wallTile!, heightM: 2.1 }));
+  : SIDES.filter(s => !(f.wallFeatures || []).some(w => w.side === s)).map(side => { const h = bathTileHeight(f); return { side, kind: 'tile' as const, material: f.wallTile!, ...(h !== undefined ? { heightM: h } : {}) }; });
 /** Culoarea folosită doar la randare (aproximată după numele culorii de pe pagina produsului). */
 export const renderColor = (m: Material | undefined, fallback: string) => m?.specs?.color || fallback;
 export interface FloorVisual { kind: 'parquet' | 'tile'; pattern: FloorPattern; angle: 0 | 90; pieceL: number; pieceW: number; grout: number; groutColor: string; color: string }

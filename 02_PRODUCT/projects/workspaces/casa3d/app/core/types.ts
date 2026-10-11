@@ -53,7 +53,10 @@ export interface WallFeature { side: 'N' | 'S' | 'W' | 'E'; kind: WallFeatureKin
 /** Tavan: drept (vopsit), fals din gips-carton coborât cu `dropCm`, sau fals cu scafă luminoasă pe contur. */
 export interface CeilingFinish { type: 'flat' | 'drop' | 'cove'; dropCm?: number; coveCm?: number; led?: string | null; cornice?: string | null; spot?: string | null; spots?: number }
 export interface RoomFinishes { floor: string; wallPaint: string; wallTile?: string | null; baseboard?: string | null; light: string; lights?: number;
-  floorLayout?: FloorLayout; wallFeatures?: WallFeature[]; ceiling?: CeilingFinish; windows?: WindowTreatment[]; rug?: RugChoice | null; kitchen?: KitchenSpec }
+  floorLayout?: FloorLayout; wallFeatures?: WallFeature[]; ceiling?: CeilingFinish; windows?: WindowTreatment[]; rug?: RugChoice | null; kitchen?: KitchenSpec; bath?: BathSpec }
+/** Baia ca sistem: finisajul armăturilor (toate la fel), tipul de duș și de WC, înălțimea faianței, calorifer port-prosop, oglindă LED. */
+export interface BathSpec { metal?: 'chrome' | 'black' | 'brass' | 'gunmetal'; tap?: string | null; shower?: string | null; showerType?: 'cabin' | 'walkin';
+  wc?: 'floor' | 'wall'; tileZone?: 'h120' | 'h210' | 'full'; towelRadiator?: string | null; mirror?: string | null }
 /** Bucătăria ca sistem: fronturi, mânere, corpuri suspendate, blat, placare între blat și suspendate, chiuvetă, baterie, LED sub suspendate. */
 export interface KitchenSpec { frontColor?: string; frontFinish?: 'matt' | 'gloss' | 'wood'; handle?: 'bar' | 'knob' | 'profile' | 'none'; handleColor?: string;
   upper?: 'open' | 'closed' | 'none'; countertop?: string | null; countertopColor?: string; countertopMm?: number;

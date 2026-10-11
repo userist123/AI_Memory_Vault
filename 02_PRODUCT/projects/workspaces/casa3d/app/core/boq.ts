@@ -6,6 +6,7 @@ import { floors, floorOfRoom } from './levels';
 import { roomWindows, curtainPlan, blindPlan } from './textiles';
 import { doorOpenings } from './doors';
 import { kitchenOf, kitchenRun, kitchenQuantities, KITCHEN_DEFAULT } from './kitchen';
+import { bathOf } from './bath';
 import { bandGeometry, bathTiles, layoutOf, floorWaste, floorLaborId, sideGeometry, wallpaperRolls, panelCount, pieceSizeCm, ceilingOf, FEATURE_CATEGORY, FEATURE_LABOR } from './finishes';
 import { WASTE, PAINT_COATS, DOOR_HEIGHT, WINDOW_HEIGHT, BATH_TILE_HEIGHT, BACKSPLASH_HEIGHT, LIGHTS_EXTRA_PER_M2, VAT_RATE, WET_ROOMS, SANITARY, APPLIANCES, DEFAULT_BUDGET } from './rules.boq';
 
@@ -62,7 +63,7 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
     // faianță: baie până la 2,1 m; bucătărie = zona dintre blat și dulapuri, pe lungimea mobilierului de bucătărie
     let tileArea = 0;
     // baie: până la 2,1 m pe fiecare perete care nu are altă placare (aceeași regulă ca în 3D)
-    if (room.type === 'baie') tileArea = bathTiles(f, room.type).reduce((a, w) => a + sideGeometry(fl, room, w.side, BATH_TILE_HEIGHT).netM2, 0);
+    if (room.type === 'baie') tileArea = bathTiles(f, room.type).reduce((a, w) => a + sideGeometry(fl, room, w.side, w.heightM).netM2, 0);
     if (room.type === 'bucatarie'){ const k = snap.placements.find(p => p.roomId === room.id && p.group === 'bucatarie'), rv = k && resolve(cat, k.variantId); tileArea = rv ? rv.w * BACKSPLASH_HEIGHT : 0;
       // placarea dintre blat și suspendate e faianță doar dacă așa s-a ales în sistemul de bucătărie
       if (f.kitchen && kitchenOf(f).backsplash !== 'tile') tileArea = 0; }
@@ -111,6 +112,12 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
       if (q.handles > 0) unknown.push(`Mânere bucătărie: ${q.handles} buc (${k.handle})`);
       if (k.backsplash === 'glass') unknown.push(`Placare sticlă bucătărie ${q.backsplashM2} m² (la comandă)`);
       if (k.frontFinish !== 'matt' || k.frontColor !== KITCHEN_DEFAULT.frontColor) unknown.push(`Fronturi bucătărie ${q.fronts} buc, ${k.frontFinish}, ${k.frontColor} (diferență față de varianta din catalog)`); }
+    // baia ca sistem: baterie, set de duș, calorifer port-prosop, oglindă LED; cadrul WC suspendat și dușul walk-in cer lucrări fără preț verificat
+    if (room.type === 'baie' && f.bath){ const bb = bathOf(f);
+      for (const [id, key, lbl] of [[bb.tap, 'bath-tap', 'Baterie lavoar'], [bb.shower, 'shower-set', 'Set duș'], [bb.towelRadiator, 'towel-radiator', 'Calorifer port-prosop'], [bb.mirror, 'led-mirror', 'Oglindă LED']] as const){
+        const m = M(id); if (m) items.push(materialLine(m, `${room.id}:${key}`, room.id, `${lbl} · ${room.name}`, 1, mc.verifiedAt, 0)); }
+      if (bb.wc === 'wall') unknown.push(`Cadru WC suspendat + clapetă · ${room.name}`);
+      if (bb.showerType === 'walkin') unknown.push(`Duș walk-in: pantă, rigolă și hidroizolație suplimentară · ${room.name}`); }
     const sm = M(c.spot); if (sm && c.spots > 0) items.push(materialLine(sm, `${room.id}:spots`, room.id, `Spoturi încastrate · ${room.name}`, c.spots, mc.verifiedAt));
     // vopsea: pereți (fără zona placată) + tavan (și marginea tavanului fals), 2 straturi
     const paintArea = Math.max(0, g.wallNet - wallsHidden - (wt ? tileArea : 0) - featureArea) + g.ceiling + ceilingBand, pm = M(f.wallPaint);

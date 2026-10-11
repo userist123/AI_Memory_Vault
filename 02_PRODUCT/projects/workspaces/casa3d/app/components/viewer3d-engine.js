@@ -185,17 +185,23 @@ function model(it){
       if (k && k.led && upper !== 'none'){ const lm = new THREE.MeshStandardMaterial({ color: lin(k.led), emissive: lin(k.led), emissiveIntensity: 1.4 }); B(w - .04, .008, .015, 0, wallBottom - .006, -d / 2 + .3, lm); }
       break; }
     case 'fridge': { const m = s.inox ? MAT('metal', s.col) : MAT('paint', s.col); RB(w, h, d, .02, 0, h / 2, 0, m); B(w - .01, .004, .01, 0, h * .64, d / 2 + .001, MAT('paint', '#bdbdbd')); B(.02, .4, .03, w / 2 - .05, h * .8, d / 2 + .015, MAT('metal', '#aaa')); B(.02, .3, .03, w / 2 - .05, h * .45, d / 2 + .015, MAT('metal', '#aaa')); break; }
-    case 'shower': { const pm = MAT('metal', s.prof), gl = MAT(s.frost ? 'frost' : 'glass', '#dcecf2'); B(w, .05, d, 0, .025, 0, MAT('ceramic', '#fafafa'));
+    case 'shower': { const bm = s.b || null, pm = MAT('metal', bm ? bm.metal : s.prof), fit = MAT('chrome', bm ? bm.metal : '#cfcfcf'), gl = MAT(s.frost ? 'frost' : 'glass', '#dcecf2');
+      // walk-in: fără cădiță și fără ușă, doar un panou fix de sticlă cu profil sus și o bară de rigidizare
+      if (bm && bm.walkin){ const p = new THREE.Mesh(new THREE.BoxGeometry(.008, h - .06, d * .8), gl); p.position.set(w / 2 - .004, h / 2 + .01, -d * .1); g.add(p); B(.02, .02, d * .8, w / 2 - .004, h - .02, -d * .1, pm);
+        B(w * .6, .004, .06, w * .1, .003, d / 2 - .05, MAT('metal', '#444')); CY(.012, .012, h - .4, -w / 2 + .12, h / 2 + .1, -d / 2 + .04, fit, 10); CY(.12, .12, .012, -w / 2 + .25, h - .08, -d / 2 + .25, fit, 24); break; }
+      B(w, .05, d, 0, .025, 0, MAT('ceramic', '#fafafa'));
       if (s.round){ const arc = new THREE.Mesh(new THREE.CylinderGeometry(w - .02, w - .02, h - .06, 32, 1, true, 0, Math.PI / 2), gl); arc.position.set(-w / 2 + .01, h / 2 + .03, -d / 2 + .01); g.add(arc); }
       else { const t = s.thick ? .03 : .02; [[w, .008, 0, d / 2 - .004], [.008, d, w / 2 - .004, 0]].forEach(([a, b, x, z]) => { const p = new THREE.Mesh(new THREE.BoxGeometry(a, h - .06, b), gl); p.position.set(x, h / 2 + .03, z); g.add(p); });
         B(t, h - .05, t, w / 2 - t / 2, h / 2, d / 2 - t / 2, pm); B(w, t, t, 0, h - t / 2, d / 2 - t / 2, pm); B(t, t, d, w / 2 - t / 2, h - t / 2, 0, pm); }
-      CY(.012, .012, h - .4, -w / 2 + .12, h / 2 + .1, -d / 2 + .04, MAT('chrome', '#cfcfcf'), 10); CY(.1, .1, .015, -w / 2 + .2, h - .1, -d / 2 + .2, MAT('chrome', '#cfcfcf'), 24); break; }
+      CY(.012, .012, h - .4, -w / 2 + .12, h / 2 + .1, -d / 2 + .04, fit, 10); CY(.1, .1, .015, -w / 2 + .2, h - .1, -d / 2 + .2, fit, 24); break; }
     case 'vanity': { const m = body(s.col), y0 = s.hang ? .3 : 0; if (s.legs) [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.03, .15, .03, a * (w / 2 - .04), .075, b * (d / 2 - .04), MAT('metal', '#222')));
       const hb = (s.hang ? h - .15 : h - .15) - (s.legs ? .15 : 0); B(w, hb, d, 0, y0 + (s.legs ? .15 : 0) + hb / 2, 0, m); B(w / 2 - .01, hb - .03, .015, -w / 4, y0 + (s.legs ? .15 : 0) + hb / 2, d / 2 + .008, m); B(w / 2 - .01, hb - .03, .015, w / 4, y0 + (s.legs ? .15 : 0) + hb / 2, d / 2 + .008, m);
-      const ty = y0 + (s.legs ? .15 : 0) + hb; RB(w + .01, .14, d + .06, .03, 0, ty + .07, .03, MAT('ceramic', '#fdfdfd')); CY(.012, .012, .15, 0, ty + .2, -d / 2 + .05, MAT('chrome', '#cfcfcf'), 10);
+      const ty = y0 + (s.legs ? .15 : 0) + hb; RB(w + .01, .14, d + .06, .03, 0, ty + .07, .03, MAT('ceramic', '#fdfdfd')); CY(.012, .012, .15, 0, ty + .2, -d / 2 + .05, MAT('chrome', s.b ? s.b.metal : '#cfcfcf'), 10);
       B(w * .85, .6, .02, 0, 1.55, -d / 2 + .01, MAT('mirror', '#dde6ea')); if (s.legs) B(w * .6, .04, .06, 0, 1.9, -d / 2 + .04, MAT('paint', '#f4f4f1')); break; }
-    case 'wc': { const cer = MAT('ceramic', '#fdfdfd'); if (s.square){ RB(.36, .3, .52, .06, 0, .27, .05, cer); } else { const b = new THREE.Mesh(new THREE.CylinderGeometry(.18, .13, .32, 32), cer); b.scale.z = 1.4; b.position.set(0, .24, .06); b.castShadow = true; g.add(b); }
-      RB(.37, .03, .5, .015, 0, .42, .06, cer); B(.42, .9, .12, 0, .75, -d / 2 + .06, MAT('paint', '#efefec')); B(.24, .16, .01, 0, 1.0, -d / 2 + .125, MAT('chrome', '#d4d4d4')); break; }
+    case 'wc': { const cer = MAT('ceramic', '#fdfdfd'), hung = s.b && s.b.wallHung, lift = hung ? .1 : 0;
+      // WC suspendat: vasul ridicat de la pardoseală, fără picior; clapeta în culoarea armăturilor
+      if (s.square || hung){ RB(.36, .3, .52, .06, 0, .27 + lift, .05, cer); } else { const b = new THREE.Mesh(new THREE.CylinderGeometry(.18, .13, .32, 32), cer); b.scale.z = 1.4; b.position.set(0, .24, .06); b.castShadow = true; g.add(b); }
+      RB(.37, .03, .5, .015, 0, .42 + lift, .06, cer); B(.42, .9, .12, 0, .75, -d / 2 + .06, MAT('paint', '#efefec')); B(.24, .16, .01, 0, 1.0, -d / 2 + .125, MAT('chrome', s.b ? s.b.metal : '#d4d4d4')); break; }
     case 'shoe': { const m = body(s.col); B(w, h - .04, d, 0, (h - .04) / 2 + .04, 0, m); B(w + .02, .025, d + .02, 0, h - .012, 0, m); [[-1, 1], [1, 1]].forEach(([a, b]) => B(.03, .04, .03, a * (w / 2 - .03), .02, b * (d / 2 - .03), m));
       const rows = s.two ? 2 : 2, cols = s.two ? 1 : 2; for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++){ const fw = w / cols - .01, fh = (h - .1) / rows - .015, x = -w / 2 + w / cols * (c + .5), y = .06 + (h - .1) / rows * (r + .5); B(fw, fh, .018, x, y, d / 2 + .009, m); CY(.012, .012, .02, x, y + fh / 2 - .05, d / 2 + .025, MAT('metal', '#7c6a55'), 10).rotation.x = Math.PI / 2; }
       break; }

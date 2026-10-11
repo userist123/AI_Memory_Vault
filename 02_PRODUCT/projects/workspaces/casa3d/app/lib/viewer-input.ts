@@ -4,6 +4,7 @@ import { roomVisual } from '@/core/finishes';
 import { textileVisual } from '@/core/textiles';
 import { doorVisual } from '@/core/doors';
 import { kitchenVisual } from '@/core/kitchen';
+import { bathVisual } from '@/core/bath';
 import { finishesOf } from '@/core/boq';
 import { planWithLook } from '@/lib/plan-look';
 import { itemStyle, itemSizeCm } from '@/core/appearance';
@@ -30,6 +31,8 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   // bucătăria ca sistem: fronturile, blatul, placarea și LED-ul ajung în stilul piesei de bucătărie
   if (mc) for (const it of items) if (it.group === 'bucatarie' && it.variant){ const r = snap.floor.rooms.find(x => x.id === snap.placements.find(p => p.id === it.id)?.roomId);
     const kv = r ? kitchenVisual(mc, finishesOf(snap, r)) : null; if (kv) it.variant = { ...it.variant, s: { ...(it.variant.s || {}), k: kv } }; }
+  if (mc) for (const it of items) if ((it.group === 'dus' || it.group === 'lavoar' || it.group === 'wc') && it.variant){ const r = snap.floor.rooms.find(x => x.id === snap.placements.find(p => p.id === it.id)?.roomId);
+    const bv = r ? bathVisual(finishesOf(snap, r)) : null; if (bv) it.variant = { ...it.variant, s: { ...(it.variant.s || {}), b: bv } }; }
   if (mc) for (const d of doorVisual(snap, mc, 0)){ const g = plan.pereti[d.wallIndex]?.goluri[d.openingIndex]; if (g) g.usa = { style: d.style, color: d.color, wood: d.wood, handle: d.handle }; }
   return { plan: { ...plan, scari, goluriPlaca: extra.voids ?? [] }, items };
 }
