@@ -67,10 +67,28 @@ public sealed class Wp18AccessibilityTests
     }
 
     /// <summary>Runs <paramref name="body"/> on an STA thread with the application's theme loaded, as the real application has it.</summary>
+    /// <summary>One STA thread with a running dispatcher for every WPF test: the application and its theme resources belong to one thread.</summary>
+    private static readonly Lazy<System.Windows.Threading.Dispatcher> UiThread = new(() =>
+    {
+        System.Windows.Threading.Dispatcher? d = null;
+        using var ready = new ManualResetEventSlim();
+        var t = new Thread(() =>
+        {
+            d = System.Windows.Threading.Dispatcher.CurrentDispatcher;
+            ready.Set();
+            System.Windows.Threading.Dispatcher.Run();
+        }) { IsBackground = true };
+        t.SetApartmentState(ApartmentState.STA);
+        t.Start();
+        ready.Wait();
+        return d!;
+    }, LazyThreadSafetyMode.ExecutionAndPublication);
+
+    /// <summary>Runs <paramref name="body"/> on the shared STA thread with the application's theme loaded, as the real application has it.</summary>
     internal static T OnSta<T>(Func<T> body)
     {
         T result = default!; Exception? error = null;
-        var t = new Thread(() =>
+        UiThread.Value.Invoke(() =>
         {
             try
             {
@@ -99,14 +117,16 @@ public sealed class Wp18AccessibilityTests
                     }
                     root.Add(XElement.Parse("<BooleanToVisibilityConverter xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\" x:Key=\"BooleanToVisibilityConverter\"/>"));
                     var xaml = root.ToString();
-                    app.Resources = (ResourceDictionary)System.Windows.Markup.XamlReader.Parse(xaml);
+                    // Windows 11 controls first, as App.xaml merges them (WP18 redesign); the theme's keyed styles are based on them.
+                    app.Resources = new ResourceDictionary();
+                    if (appXaml.Contains("PresentationFramework.Fluent"))
+                        app.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("pack://application:,,,/PresentationFramework.Fluent;component/Themes/Fluent.Light.xaml") });
+                    app.Resources.MergedDictionaries.Add((ResourceDictionary)System.Windows.Markup.XamlReader.Parse(xaml));
                 }
                 result = body();
             }
             catch (Exception ex) { error = ex; }
         });
-        t.SetApartmentState(ApartmentState.STA);
-        t.Start(); t.Join();
         if (error is not null) throw new Xunit.Sdk.XunitException(error.ToString());
         return result;
     }
@@ -122,7 +142,7 @@ public sealed class Wp18AccessibilityTests
             try { var b = new Button { Content = "x" }; b.Measure(new Size(200, 50)); ok = b.DesiredSize.Width > 0; } catch (Exception ex) { err = ex.ToString(); }
             return (app.Resources.MergedDictionaries.Count, app.TryFindResource("TextPrimaryBrush") is not null, app.TryFindResource("AccentButtonStyle") is not null, ok, err);
         });
-        Assert.Equal(0, dictionaries);   // flattened: one dictionary
+        Assert.InRange(dictionaries, 1, 2);   // Fluent + the flattened theme
         Assert.True(brush, "TextPrimaryBrush not found");
         Assert.True(style, "AccentButtonStyle not found");
         Assert.True(buttonOk, "a plain Button cannot be measured with the theme: " + error);

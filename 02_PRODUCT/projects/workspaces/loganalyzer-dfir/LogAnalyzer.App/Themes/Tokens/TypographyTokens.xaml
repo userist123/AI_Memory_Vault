@@ -3,7 +3,7 @@
                     xmlns:sys="clr-namespace:System;assembly=mscorlib">
 
     <!-- Fonts -->
-    <FontFamily x:Key="UiFontFamily">Segoe UI, Arial, sans-serif</FontFamily>
+    <FontFamily x:Key="UiFontFamily">Segoe UI Variable Text, Segoe UI, sans-serif</FontFamily>
     <FontFamily x:Key="CodeFontFamily">Cascadia Mono, Consolas, JetBrains Mono, monospace</FontFamily>
 
     <!-- Font Size Scale -->

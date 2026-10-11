@@ -32,7 +32,7 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _inspector = LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified;
         [ObservableProperty] private string _notes = "";
         [ObservableProperty] private bool _isBusy;
-        [ObservableProperty] private string _status = "Alegeți perioada și apăsați „Rulează controlul”. Colectarea doar citește; nu modifică stația.";
+        [ObservableProperty] private string _status = "Apăsați „Înainte” ca să alegeți perioada. Controlul doar citește; nu modifică stația.";
         [ObservableProperty] private string _summary = "";
         [ObservableProperty] private string _statusFilter = "Toate";
         [ObservableProperty] private string _gapsText = "";
