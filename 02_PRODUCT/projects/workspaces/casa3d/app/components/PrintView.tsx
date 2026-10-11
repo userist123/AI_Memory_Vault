@@ -57,13 +57,19 @@ const nextFrame = () => new Promise<void>(res => requestAnimationFrame(() => res
 
 export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id: string; locale?: Lang; units?: Units }){
   const t = translator(locale);
+  const [revs, setRevs] = useState<{ number: number; note: string | null; created_at: string }[]>([]);
   const [data, setData] = useState<{ p: ProjectDto; catalog: Catalog; mc: MaterialsCatalog } | null>(null), [err, setErr] = useState(false), [today, setToday] = useState('');
   const [images, setImages] = useState<Record<string, string>>({}), [busy, setBusy] = useState(true), [imgErr, setImgErr] = useState(false), canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     setToday(new Date().toLocaleDateString(intlLocale(locale)));
     Promise.all([fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/catalog').then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/materials').then(r => r.ok ? r.json() : Promise.reject(r))])
       .then(([p, catalog, mc]) => setData({ p, catalog, mc })).catch(() => { setErr(true); setBusy(false); });
+    fetch(`/api/projects/${id}/revisions`).then(r => r.ok ? r.json() : []).then(setRevs).catch(() => {});
   }, [id, locale]);
+  // lista planșelor de pe copertă: titlurile secțiunilor numerotate, citite după randare (aceeași ordine ca la tipar)
+  const mainRef = useRef<HTMLElement>(null), [sheets, setSheets] = useState<string[]>([]);
+  useEffect(() => { if (!mainRef.current) return; const list = [...mainRef.current.querySelectorAll<HTMLElement>('section.print-break')].map(sec => (sec.dataset.title ?? sec.querySelector('h2')?.firstChild?.textContent ?? '').trim());
+    setSheets(x => x.length === list.length && x.every((v, i) => v === list[i]) ? x : list); });
   // imaginile 3D: un motor pe un canvas ascuns, în afara ecranului; o imagine pentru ansamblu și una pe cameră
   useEffect(() => {
     if (!data) return; let alive = true, viewer: any = null;
@@ -108,9 +114,12 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
     if (po) sums.set(po.currency, (sums.get(po.currency) ?? 0) + po.price); else unknownCount++;
     const arr = byRetailer.get(shop) ?? []; arr.push({ id: pl.id, name: rv?.product.name ?? pl.group, variant: pl.size ? `${rv?.variant.name ?? ''} — ${formatDimsCm(pl.size, units, locale)}` : rv?.variant.name ?? '', room: allRooms.find(r => r.id === pl.roomId)?.name ?? '', offer: o }); byRetailer.set(shop, arr); }
   const catLines = ([['furniture', t('print.furniture')], ['finishes', t('print.finishes')], ['lighting', t('print.lighting')], ['appliances', t('print.appliances')], ['sanitary', t('print.sanitary')], ['textiles', t('print.textiles')]] as const).map(([k, l]) => [l, budget.categories[k] ?? 0] as const).filter(([, v]) => v > 0);
+  const client = (p as any).meta?.client?.name as string | undefined;
+  const tblock = <div className="tblock" aria-hidden="true"><span className="tb-studio">{t('print.brand')}</span><span className="tb-proj"><b>{snap.name || p.name}</b>{client && <> · {client}</>}</span>
+    <span className="tb-rev">{p.currentRevision ? `${t('print.revision')} ${p.currentRevision}` : t('print.noRevisions')} · {today}</span><span className="tb-no">{t('tb.sheet')} <i className="tb-n" /></span></div>;
   const ROOM_MM = 100, levelOf = new Map(views.flatMap((v, i) => v.floor.rooms.map(r => [r.id, i] as const)));
 
-  return (<main className="print-page">
+  return (<main className="print-page" ref={mainRef}>
     {canvas}
     <header className="print-head no-print-border">
       <div><h1>{snap.name || p.name || t('print.unnamed')}</h1><div className="muted">{t('print.printedOn')} {today} · {p.currentRevision ? `${t('print.revision')} ${p.currentRevision}` : t('print.noRevisions')}</div></div>
@@ -127,23 +136,25 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
           <dt>{t('print.totalArea')}</dt><dd>{formatArea(sched.totals.area, units, locale)}</dd>
           <dt>{t('print.furnitureKnown')}</dt><dd>{furnKnownByCur.size ? [...furnKnownByCur].map(([c, v]) => formatMoney(v, c, locale)).join(' + ') : t('print.dash')}{view.furn.unknown > 0 && <small> · {view.furn.unknown} {t('print.furnitureUnknown')}</small>}</dd>
           <dt>{t('print.budgetTotalLabel')}</dt><dd>{bm(budget.chosen.total)}</dd>
-        </dl></div>
+        </dl>
+      {sheets.length > 0 && <div className="print-index"><h2>{t('tb.index')}</h2><ol>{sheets.map((x, k) => <li key={k}><span>{String(k + 1).padStart(2, '0')}</span>{x}</li>)}</ol></div>}
+      {revs.length > 0 && <div className="print-revs"><h2>{t('tb.revisions')}</h2><table><tbody>{revs.slice(0, 8).map(r => <tr key={r.number}><td>{r.number}</td><td>{new Date(r.created_at).toLocaleDateString(intlLocale(locale))}</td><td>{r.note || '—'}</td></tr>)}</tbody></table></div>}</div>
     </section>
 
-    {views.map((v, i) => { const { box, sc, mm } = plans[i]!; return (<section key={v.floor.id} className="print-plan print-break" data-testid={`plan-${i}`}>
+    {views.map((v, i) => { const { box, sc, mm } = plans[i]!; return (<section key={v.floor.id} className="print-plan print-break" data-testid={`plan-${i}`} data-title={multi ? t('print.levelPlan', { name: levelName(i) }) : t('tb.plan')}>
       {multi && <h2>{t('print.levelPlan', { name: levelName(i) })}</h2>}
       <PlanSvg snap={v} catalog={catalog} box={box} widthMm={sc.widthMm} heightMm={sc.heightMm} mm={mm} units={units} locale={locale} showDims voids={stairwells(snap, i)} aria={multi ? `${t('print.planAria')} · ${levelName(i)}` : t('print.planAria')} />
       <div className="print-scale"><b>{t('print.scale')} 1:{sc.denominator}</b>
         <svg role="img" aria-label={t('print.scaleBar')} width={`${5000 / sc.denominator}mm`} height="7mm" viewBox={`0 0 ${5000 / sc.denominator} 7`} overflow="visible">
           <rect x={0} y={2} width={1000 / sc.denominator} height={1.6} fill="#333" /><rect x={1000 / sc.denominator} y={2} width={4000 / sc.denominator} height={1.6} fill="#fff" stroke="#333" strokeWidth={0.2} />
           <text x={0} y={6.5} fontSize={2.4}>0</text><text x={1000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="middle">{formatLength(1, units, locale)}</text><text x={5000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="end">{formatLength(5, units, locale)}</text></svg></div>
-    </section>); })}
+    {tblock}</section>); })}
     {/* planșele pentru echipe: tavan și iluminat, pardoseli — la aceeași scară ca planul */}
     {views.map((v, i) => { const { box, sc, mm } = plans[i]!, lv = multi ? ` · ${levelName(i)}` : ''; return (<div key={'dr' + v.floor.id}>
       <section className="print-plan print-break" data-testid={`ceiling-${i}`}><h2>{t('draw.ceiling')}{lv} <small>1:{sc.denominator}</small></h2>
-        <CeilingSheet snap={v} fl={v.floor} cat={catalog} mc={mc} box={box} widthMm={sc.widthMm} heightMm={sc.heightMm} mm={mm} t={t} units={units} locale={locale} /></section>
+        <CeilingSheet snap={v} fl={v.floor} cat={catalog} mc={mc} box={box} widthMm={sc.widthMm} heightMm={sc.heightMm} mm={mm} t={t} units={units} locale={locale} />{tblock}</section>
       <section className="print-plan print-break" data-testid={`floors-${i}`}><h2>{t('draw.floor')}{lv} <small>1:{sc.denominator}</small></h2>
-        <FloorSheet snap={v} fl={v.floor} mc={mc} box={box} widthMm={sc.widthMm} heightMm={sc.heightMm} mm={mm} t={t} units={units} locale={locale} /></section></div>); })}
+        <FloorSheet snap={v} fl={v.floor} mc={mc} box={box} widthMm={sc.widthMm} heightMm={sc.heightMm} mm={mm} t={t} units={units} locale={locale} />{tblock}</section></div>); })}
     <section>
       <div className="print-sec"><h2>{t('print.schedule')}</h2>
         <table className="print-table"><thead><tr><th>{t('print.room')}</th><th>{t('print.dims')}</th><th>{t('print.areaCol')}</th><th>{t('print.perimeter')}</th></tr></thead>
@@ -176,21 +187,21 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
             <p className="print-totals">{Object.entries(w.totals).map(([c, tot]) => <span key={c}><b>{t('print.roomTotal')}:</b> {formatMoney(tot.known, c, locale)}{tot.unknown > 0 && <> + {tot.unknown} {t('print.furnitureUnknown')}</>}{tot.laborExpected > 0 && <> · {t('print.roomLabor')} {formatMoney(tot.laborExpected, c, locale)}</>} </span>)}</p>
           </div>
         </div>
-      </section>); })}
+      {tblock}</section>); })}
 
     {allRooms.map(r => { const lv = levelOf.get(r.id) ?? 0, v = views[lv]!; return (<section key={'el' + r.id} className="print-sec print-break" data-testid={`elev-${r.id}`}>
       <h2>{t('draw.elevations', { room: r.name })} <small>1:50 · {t('draw.elevNote')}</small></h2>
-      <ElevationSheet elevs={wallElevations(v, mc, catalog, v.floor, r)} t={t} units={units} locale={locale} /></section>); })}
+      <ElevationSheet elevs={wallElevations(v, mc, catalog, v.floor, r)} t={t} units={units} locale={locale} />{tblock}</section>); })}
 
     {tilePlans.length > 0 && <section className="print-sec print-break" data-testid="setting-out"><h2>{t('so.title')}</h2><p className="muted">{t('so.intro')}</p>
       <table className="so-table"><thead><tr><th>{t('so.col.where')}</th><th>{t('so.col.tile')}</th><th>{t('so.col.size')}</th><th>{t('so.col.across')}</th><th>{t('so.col.along')}</th><th>{t('so.col.tiles')}</th></tr></thead>
         <tbody>{tilePlans.map((x, k) => { const ax = (a: AxisPlan, vertical: boolean) => <>{t(`so.start.${a.start}${vertical && a.start === 'edge' ? 'Floor' : ''}`)}<small>{a.cuts.length ? t('so.cuts', { list: [...new Set(a.cuts.map(c => Math.round(c * 1000) / 10))].join(' / ') }) : t('so.noCuts')}{a.sliver ? ' · ' + t('so.sliver') : ''}</small></>;
           return <tr key={k} className={x.sliver ? 'warn' : ''}><td>{x.room}<small>{t(`so.surface.${x.surface}`)}</small></td><td>{x.material}<small>{x.tileCm[0]}×{x.tileCm[1]} cm · {t('so.grout', { mm: x.groutMm })}</small></td>
             <td>{formatLength(x.widthM, units, locale)} × {formatLength(x.heightM, units, locale)}</td><td>{ax(x.across, false)}</td><td>{ax(x.along, x.surface !== 'floor')}</td><td><b>{x.tiles}</b><small>{t('so.tilesSub', { full: x.across.full * x.along.full })}</small></td></tr>; })}</tbody></table>
-      <p className="muted small">{t('so.note')}</p></section>}
+      <p className="muted small">{t('so.note')}</p>{tblock}</section>}
 
     <section className="print-sec print-break" data-testid="finish-schedule"><h2>{t('sched.title')}</h2><p className="muted">{t('sched.intro')}</p>
-      <ScheduleTable rows={finishRows} t={t} cur={cur} locale={locale} /></section>
+      <ScheduleTable rows={finishRows} t={t} cur={cur} locale={locale} />{tblock}</section>
 
     <section className="print-sec print-break"><h2>{t('print.shopping')}</h2>
       {byRetailer.size === 0 && <p className="muted">{t('print.noItems')}</p>}
@@ -210,7 +221,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
       </tbody><tfoot><tr><th>{t('print.budgetTotal')}</th><th className="num">{bm(budget.chosen.total)}</th></tr></tfoot></table>
       {budget.unknownItems.length > 0 && <p className="muted">{t('print.unknownItems')}: {budget.unknownItems.join(', ')}</p>}
       {new Set(catalog.offers.map(o => o.currency)).size > 1 && <p className="muted">{t('print.currencyNote')}</p>}
-      <footer className="print-foot">{t('print.disclaimer')}</footer></section>
+      <footer className="print-foot">{t('print.disclaimer')}</footer>{tblock}</section>
   </main>);
 }
 

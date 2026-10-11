@@ -460,4 +460,8 @@ export const ro: Dict = {
   "so.surface.W": "perete V",
   "so.surface.E": "perete E",
   "so.surface.backsplash": "între blat și suspendate",
+  "tb.plan": "Plan cotat",
+  "tb.sheet": "Planșa",
+  "tb.index": "Lista planșelor",
+  "tb.revisions": "Revizii",
 };

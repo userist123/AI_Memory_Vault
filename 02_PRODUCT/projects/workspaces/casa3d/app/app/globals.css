@@ -446,3 +446,12 @@ input[type=file]{font-size:12px;color:var(--lead)} input[type=file]::file-select
 @media (max-width:700px){ .handover .ho-table{font-size:12px} .handover .ho-table th:nth-child(3),.handover .ho-table td:nth-child(3){display:none} }
 .so-table{width:100%;border-collapse:collapse;font-size:12.5px} .so-table th{text-align:left;font:500 10px var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--lead);border-bottom:1px solid var(--ink);padding:5px 8px 5px 0}
 .so-table td{border-bottom:1px solid var(--rule);padding:6px 8px 6px 0;vertical-align:top} .so-table small{display:block;color:var(--lead);font-size:11px} .so-table tr.warn td small{color:var(--err)}
+/* Cartuș și numerotarea planșelor (tipar) */
+.print-page{counter-reset:sheet} .print-page section.print-break{counter-increment:sheet;position:relative}
+.tblock{display:grid;grid-template-columns:auto 1fr auto auto;gap:4px 14px;align-items:baseline;border-top:1.5px solid var(--ink);margin-top:14px;padding-top:5px;font:400 10.5px var(--sans);color:var(--ink)}
+.tblock .tb-studio{font:500 10px var(--sans);text-transform:uppercase;letter-spacing:.12em} .tblock .tb-rev{color:var(--lead)} .tblock .tb-no{font-weight:600}
+.tblock .tb-n::before{content:counter(sheet, decimal-leading-zero);font-style:normal}
+.print-index ol{list-style:none;margin:0;padding:0;columns:2;column-gap:14px;font-size:10.5px} .print-index li{display:flex;gap:8px;padding:2px 0;break-inside:avoid} .print-index li span{font-weight:600;min-width:20px}
+.print-revs table{border-collapse:collapse;font-size:12px} .print-revs td{border-bottom:1px solid var(--rule);padding:3px 10px 3px 0}
+@media screen{ .tblock{opacity:.75} }
+.print-figs .print-index h2,.print-figs .print-revs h2{font-size:15px;margin:14px 0 4px} .print-index li{padding:1px 0} .print-revs td{font-size:10.5px;padding:2px 8px 2px 0}

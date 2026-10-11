@@ -460,4 +460,8 @@ export const en: Dict = {
   "so.surface.W": "wall W",
   "so.surface.E": "wall E",
   "so.surface.backsplash": "between worktop and wall units",
+  "tb.plan": "Dimensioned plan",
+  "tb.sheet": "Sheet",
+  "tb.index": "Sheet list",
+  "tb.revisions": "Revisions",
 };
