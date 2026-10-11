@@ -2,6 +2,8 @@
 // Pagină de tipărire (A4 landscape → „Salvează ca PDF”): plan la scară reală, tabel camere, listă de cumpărături și buget.
 import { finishSchedule } from '@/core/finish-schedule';
 import { ScheduleTable } from './FinishSchedule';
+import { CeilingSheet, FloorSheet, ElevationSheet } from './Drawings';
+import { wallElevations } from '@/core/drawings';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalog, MaterialsCatalog, Snapshot } from '@/core/types';
 import { footprintOf } from '@/core/validate';
@@ -133,6 +135,12 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
           <rect x={0} y={2} width={1000 / sc.denominator} height={1.6} fill="#333" /><rect x={1000 / sc.denominator} y={2} width={4000 / sc.denominator} height={1.6} fill="#fff" stroke="#333" strokeWidth={0.2} />
           <text x={0} y={6.5} fontSize={2.4}>0</text><text x={1000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="middle">{formatLength(1, units, locale)}</text><text x={5000 / sc.denominator} y={6.5} fontSize={2.4} textAnchor="end">{formatLength(5, units, locale)}</text></svg></div>
     </section>); })}
+    {/* planșele pentru echipe: tavan și iluminat, pardoseli — la aceeași scară ca planul */}
+    {views.map((v, i) => { const { box, sc, mm } = plans[i]!, lv = multi ? ` · ${levelName(i)}` : ''; return (<div key={'dr' + v.floor.id}>
+      <section className="print-plan print-break" data-testid={`ceiling-${i}`}><h2>{t('draw.ceiling')}{lv} <small>1:{sc.denominator}</small></h2>
+        <CeilingSheet snap={v} fl={v.floor} cat={catalog} mc={mc} box={box} widthMm={sc.widthMm} heightMm={sc.heightMm} mm={mm} t={t} units={units} locale={locale} /></section>
+      <section className="print-plan print-break" data-testid={`floors-${i}`}><h2>{t('draw.floor')}{lv} <small>1:{sc.denominator}</small></h2>
+        <FloorSheet snap={v} fl={v.floor} mc={mc} box={box} widthMm={sc.widthMm} heightMm={sc.heightMm} mm={mm} t={t} units={units} locale={locale} /></section></div>); })}
     <section>
       <div className="print-sec"><h2>{t('print.schedule')}</h2>
         <table className="print-table"><thead><tr><th>{t('print.room')}</th><th>{t('print.dims')}</th><th>{t('print.areaCol')}</th><th>{t('print.perimeter')}</th></tr></thead>
@@ -166,6 +174,10 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
           </div>
         </div>
       </section>); })}
+
+    {allRooms.map(r => { const lv = levelOf.get(r.id) ?? 0, v = views[lv]!; return (<section key={'el' + r.id} className="print-sec print-break" data-testid={`elev-${r.id}`}>
+      <h2>{t('draw.elevations', { room: r.name })} <small>1:50 · {t('draw.elevNote')}</small></h2>
+      <ElevationSheet elevs={wallElevations(v, mc, catalog, v.floor, r)} t={t} units={units} locale={locale} /></section>); })}
 
     <section className="print-sec print-break" data-testid="finish-schedule"><h2>{t('sched.title')}</h2><p className="muted">{t('sched.intro')}</p>
       <ScheduleTable rows={finishRows} t={t} cur={cur} locale={locale} /></section>
