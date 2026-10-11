@@ -1,5 +1,13 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-11T19:50:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-11T20:30:00Z
+ROUND 4 (2026-10-11 late, owner: "nu te opresti pana nu faci ceva real si gata pentru vanzare, ai grija la limitele de utilizare"):
+  DONE: 73262cf5 bathroom camera frames the WC bowl (PC render out7 shown to owner); b028ca5d A/B/C options per room
+  (core/room-options.ts, snapshot.roomOptions, client choice table room_choices + /api/share/[token]/choices, owner
+  /api/projects/[id]/choices, RoomOptionsPanel in finishes/ffe stages, RoomChoiceBox on share link, ZIP export, e2e checked);
+  a3dc9b58 lighting layers ambient/task/accent + warnings. 412/412 tests.
+  FINDING: sale-readiness gap = single-designer self-hosted model (anonymous owner cookie + one password in .data/auth.json,
+  tunnel). Multi-account SaaS (sign-up, per-user data, billing, legal pages) is an authority/security-boundary decision -> asked owner.
+  LESSON: never kill by `pgrep -f`/`grep` of a string present in the same shell command (exit 144 twice); use ps -eo comm.
 ROUND 3 (2026-10-11 evening, owner: "design mai complex + ștergere proiect + research, apoi execuție"; "baia: toate formele, ce se
   poate înlocui"; "verifică toate piesele"): research in 02_PRODUCT/projects/Casa3D/research-2026-10-11b/ (SYNTHESIS + 4 notes).
   DONE: bath = product-driven (WC mount/cistern/shape per variant, BOQ pays the chosen product, bath panel lists pieces with all
