@@ -857,6 +857,9 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None):
         t = math.tan(fov / 2)
         return t * height / width + 0.08 * 2 * t
 
+    # ce trebuie să se vadă din piesă: la WC și bideu vasul (~42 cm), nu cadrul sau rezervorul de deasupra lui
+    top = lambda it: min(it['h'], 0.42 if it['g'] in ('wc', 'bideu') else 1.5)
+
     near = lambda it: 0.6 if it['m'] == 'dining' else 0.1  # scaunele mesei ies din amprenta ei
 
     def score(c, fov=fov, aim=beyond):
@@ -884,7 +887,7 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None):
             a, b, e, f = it['fp']
             corners = [(a, b), (e, b), (e, f), (a, f)]
             w = KEY.get(it['g'], 0.5) if focus is None else (6.0 if id(it) in focus else 0.2)  # a doua vedere: piesele rămase pe dinafară
-            low = max(0.45, (1.55 - min(it['h'], 1.5)) / bottom(fov))  # partea de sus a piesei nu e tăiată de marginea de jos
+            low = max(0.45, (1.55 - top(it)) / bottom(fov))  # partea de sus a piesei nu e tăiată de marginea de jos
             if all(in_view(c, px, pz, lx, lz, fov / 2 - math.radians(4), low) for px, pz in corners):
                 keys += w
             elif any(in_view(c, px, pz, lx, lz, fov / 2) for px, pz in corners):
@@ -897,7 +900,7 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None):
     _, c, fov, aim = ranked[0]
     print(f"[casa3d] cameră {room['id']}: " + '; '.join(f'({p[0]:.2f},{p[1]:.2f}) {math.degrees(f):.0f}° {aims.index(a)} = {v:.1f}' for v, p, f, a in ranked[:int(os.environ.get('CASA3D_CAMDBG', 4))]))
     lx, lz = look(c, aim)
-    low_of = lambda it: max(0.45, (1.55 - min(it['h'], 1.5)) / bottom(fov))
+    low_of = lambda it: max(0.45, (1.55 - top(it)) / bottom(fov))
     MISSING[ob.name] = [it for it in items if KEY.get(it['g'], 0) >= 2 and not all(in_view(c, px, pz, lx, lz, fov / 2 - math.radians(4), low_of(it)) for px, pz in ((it['fp'][0], it['fp'][1]), (it['fp'][2], it['fp'][1]), (it['fp'][2], it['fp'][3]), (it['fp'][0], it['fp'][3])))]
     ob.location = to_blender((c[0], 1.55, c[1]))
     ob.rotation_euler = to_blender((lx, 0, lz)).normalized().to_track_quat('-Z', 'Y').to_euler()
