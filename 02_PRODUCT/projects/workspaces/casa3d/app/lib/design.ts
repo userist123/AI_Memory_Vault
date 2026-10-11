@@ -153,7 +153,7 @@ export async function decideDesign(owner: string, id: string, pid: string, index
   const revision = await tx(async q => {
     const claim = await q('update design_proposals set applied_index=$1 where id=$2 and applied_index is null and not (decisions ? $3) returning id', [index, pid, key]);
     if (!claim.rows[0]) throw new HttpError(409, 'Varianta a fost deja decisă.');
-    const cas = await q('update projects set draft=$1, name=$2, current_revision=current_revision+1, updated_at=now() where id=$3 and owner=$4 and draft = $5::jsonb returning current_revision',
+    const cas = await q('update projects set draft=$1, name=$2, current_revision=current_revision+1, draft_rev=draft_rev+1, updated_at=now() where id=$3 and owner=$4 and draft = $5::jsonb returning current_revision',
       [JSON.stringify(next), next.name, id, owner, JSON.stringify(p.draft)]);
     if (!cas.rows[0]) throw new HttpError(409, 'Proiectul s-a schimbat de când a fost generată propunerea; generează din nou.', [{ code: 'STALE', severity: 'ERROR', message: 'Propunere stale.' }]);
     const n = cas.rows[0].current_revision as number;
