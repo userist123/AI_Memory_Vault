@@ -675,7 +675,7 @@ namespace LogAnalyzer.UI.ViewModels
                         ReloadRegistryFromDb();
                         ReloadTimelineFromDb();
                         ReloadDashboardStats();
-                        RunAiAnalysis();
+                        _ = RunAiAnalysis();
                         if (IsNetworkMode)
                             StartLiveMonitoring();
                     });
@@ -2320,7 +2320,7 @@ namespace LogAnalyzer.UI.ViewModels
             ReloadTimelineFromDb();
             ReloadDashboardStats();
             UpdateDatabaseSize();
-            RunAiAnalysis();
+            _ = RunAiAnalysis();
             
             LoadingProgress = 100;
             SelectedTabIndex = 0; 
@@ -2537,7 +2537,7 @@ namespace LogAnalyzer.UI.ViewModels
         /// the window ~0.45 s with 7.6k events and ~1.25 s with 50k, right after start-up); only filling the lists happens on the UI thread.
         /// </summary>
         [RelayCommand]
-        public async void RunAiAnalysis()
+        public async Task RunAiAnalysis()
         {
             if (_analysisEngine is not AnalysisEngine ae || _aiRunning) return;
             _aiRunning = true;
