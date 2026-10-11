@@ -155,7 +155,9 @@ export default function Editor({ id }: { id: string }){
     else if (e.key === 'Escape'){ setTool('select'); setHelp(false); setCalib(null); } };
     addEventListener('keydown', k); return () => removeEventListener('keydown', k); });
 
-  async function saveRevision(){ if (!house) return; clearTimeout(timer.current); await fetch(`/api/projects/${id}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ snapshot: latest.current ?? house }) });
+  // salvarea automată e amânată 700 ms; înainte de o revizie sau de un link pentru client se trimite imediat ultima stare
+  const flushDraft = async () => { if (!house) return; clearTimeout(timer.current); await fetch(`/api/projects/${id}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ snapshot: latest.current ?? house }) }); };
+  async function saveRevision(){ if (!house) return; await flushDraft();
     const note = prompt(t('editor.notePrompt')) ?? ''; const r = await fetch(`/api/projects/${id}/revisions`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ note }) }); const j = await r.json();
     if (!r.ok){ say(`${j.error} ${(j.details || []).slice(0, 2).map((d: any) => iT(d)).join(' ')}`); return; } setRev(j.number); setSave('saved'); say(t('editor.revSaved', { n: j.number })); loadRevs(); }
   async function restore(n: number){ if (!confirm(t('editor.restoreConfirm', { n }))) return;
@@ -305,7 +307,7 @@ export default function Editor({ id }: { id: string }){
         {stage === 'docs' && <DocsPanel id={id} lang={lang} onSchedule={() => downloadSchedule(finishSchedule(house!, catalog, mc), t, cur, snap.name || 'proiect', levelName)} />}
         {stage === 'docs' && <AdvisorPanel lang={lang} units={units} currency={cur} advice={advice} rooms={snap.floor.rooms} onShow={showAdvice} />}
         {stage === 'quote' && <BudgetPanel snap={house!} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
-        {stage === 'present' && !showSel && <ClientPanel id={id} say={say} onLinked={loadRevs} roomNames={Object.fromEntries(floors(house!).flatMap(f => f.rooms).map(r => [r.id, r.name]))} />}
+        {stage === 'present' && !showSel && <ClientPanel id={id} say={say} onLinked={loadRevs} flush={flushDraft} roomNames={Object.fromEntries(floors(house!).flatMap(f => f.rooms).map(r => [r.id, r.name]))} />}
         {stage === 'present' && !showSel && <RenderGallery id={id} />}
         {stage === 'present' && !showSel && <div className="docs"><a className="docrow" href={`/p/${id}/present`} target="_blank" rel="noopener"><b>{t('stage.openPresentation')}</b><small>{t('stage.openPresentationSub')}</small></a></div>}
         {stage === 'present' && !showSel && <div className="revs"><h3>{t('stage.revisions')}</h3>{revs.length === 0 && <p className="muted">{t('editor.noRevsYet')}</p>}
@@ -396,12 +398,12 @@ function DocsPanel({ id, lang, onSchedule }: { id: string; lang: string; onSched
 /** Randările fotorealiste făcute pe acest calculator (Blender Cycles), cele mai noi întâi; se reîmprospătează cât timp lucrează. */
 // Linkul pentru client și părerile venite pe el: un buton care salvează versiunea și copiază linkul; părerile grupate pe camere, de bifat.
 type ClientFeedback = { id: string; roomId: string | null; verdict: 'like' | 'change' | 'question'; author: string; text: string; createdAt: string; resolvedAt: string | null; revisionNumber: number };
-function ClientPanel({ id, say, onLinked, roomNames }: { id: string; say(s: string): void; onLinked(): void; roomNames: Record<string, string> }){
+function ClientPanel({ id, say, onLinked, flush, roomNames }: { id: string; say(s: string): void; onLinked(): void; flush(): Promise<void>; roomNames: Record<string, string> }){
   const { t, lang } = usePrefs(), [link, setLink] = useState<{ url: string; local: boolean } | null>(null), [busy, setBusy] = useState(false), [items, setItems] = useState<ClientFeedback[] | null>(null);
   useEffect(() => { let alive = true; const load = () => fetch(`/api/projects/${id}/feedback`).then(r => r.ok ? r.json() : null).then(j => { if (alive && j) setItems(j); }).catch(() => {});
     load(); const iv = setInterval(load, 30000); return () => { alive = false; clearInterval(iv); }; }, [id]);
   const copy = async (url: string) => { try { await navigator.clipboard.writeText(url); say(t('client.copied')); } catch { /* fără clipboard: linkul rămâne afișat */ } };
-  async function make(){ setBusy(true); try { const r = await fetch(`/api/projects/${id}/client-link`, { method: 'POST' }), j = await r.json();
+  async function make(){ setBusy(true); try { await flush(); const r = await fetch(`/api/projects/${id}/client-link`, { method: 'POST' }), j = await r.json();
       if (!r.ok){ say(j.error || t('client.failed')); return; }
       const url = j.url ?? `${location.origin}${j.path}`, local = !j.url && /^(localhost|127\.|\[::1\])/.test(location.hostname);
       setLink({ url, local }); if (j.newRevision) say(t('client.newRev', { n: j.revisionNumber })); await copy(url); onLinked(); }

@@ -17,13 +17,13 @@ import FeedbackBox, { type FeedbackItem } from './FeedbackBox';
 
 const nextFrame = () => new Promise<void>(res => requestAnimationFrame(() => res()));
 /** Pe linkul pentru client (`share`) prezentarea vine din revizia partajată și are, sub fiecare planșă de cameră, caseta de păreri. */
-export interface SharedDeck { token: string; name: string; snapshot: Snapshot; revisionNumber: number }
+export interface SharedDeck { token: string; name: string; snapshot: Snapshot; revisionNumber: number; catalog: Catalog; mc: MaterialsCatalog }
 export default function PresentView({ id, share }: { id?: string; share?: SharedDeck }){
   const { t, lang, units } = usePrefs();
   const [data, setData] = useState<{ snap: Snapshot; name: string; catalog: Catalog; mc: MaterialsCatalog } | null>(null), [err, setErr] = useState(false);
   const [images, setImages] = useState<Record<string, string>>({}), [busy, setBusy] = useState(true), canvasRef = useRef<HTMLCanvasElement>(null);
-  useEffect(() => { const proj = share ? Promise.resolve({ draft: share.snapshot, name: share.name }) : fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject(r));
-    Promise.all([proj, fetch('/api/catalog').then(r => r.json()), fetch('/api/materials').then(r => r.json())])
+  useEffect(() => { if (share){ setData({ snap: share.snapshot, name: share.snapshot.name || share.name, catalog: share.catalog, mc: share.mc }); return; }
+    Promise.all([fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/catalog').then(r => r.json()), fetch('/api/materials').then(r => r.json())])
       .then(([p, catalog, mc]) => setData({ snap: p.draft, name: p.draft.name || p.name, catalog, mc })).catch(() => setErr(true)); }, [id, share]);
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   useEffect(() => { if (share) fetch(`/api/share/${share.token}/feedback`).then(r => r.ok ? r.json() : []).then(setFeedback).catch(() => {}); }, [share]);

@@ -6,6 +6,7 @@ import type { Snapshot } from '../core/types';
 
 export const TOKEN_BYTES = 32;
 const TOKEN_RE = /^[A-Za-z0-9_-]{43}$/;
+export const isShareToken = (t: unknown): t is string => typeof t === 'string' && TOKEN_RE.test(t);
 
 export async function createShare(owner: string, id: string, revisionNumber: unknown){
   const n = Number(revisionNumber); if (!Number.isInteger(n) || n < 1) throw new HttpError(400, 'Revizie invalidă.');
@@ -38,7 +39,9 @@ export async function resolveShare(token: unknown): Promise<SharedView> {
 }
 
 /** Adresa publică a aplicației (CASA3D_PUBLIC_URL, ex. tunelul spre acest calculator); fără ea linkul folosește adresa din browser. */
-export function publicBase(){ const u = process.env.CASA3D_PUBLIC_URL; return u && /^https?:\/\/[^\s/]+$/.test(u.replace(/\/$/, '')) ? u.replace(/\/$/, '') : null; }
+export function publicBase(){ const u = process.env.CASA3D_PUBLIC_URL; if (!u) return null;
+  // doar o origine curată: http(s), fără utilizator, cale, interogare sau fragment
+  try { const x = new URL(u); return /^https?:$/.test(x.protocol) && !x.username && !x.password && (x.pathname === '/' || x.pathname === '') && !x.search && !x.hash && !/[?#]$/.test(u) ? x.origin : null; } catch { return null; } }
 /** Un singur buton pentru designer: dacă proiectul s-a schimbat de la ultima revizie, se salvează una nouă („Predat clientului”);
  *  linkul activ spre ultima revizie se refolosește, altfel se creează unul. */
 export async function clientLink(owner: string, id: string){
