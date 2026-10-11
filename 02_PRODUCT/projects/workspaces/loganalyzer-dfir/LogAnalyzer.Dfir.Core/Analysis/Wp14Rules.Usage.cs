@@ -44,6 +44,8 @@ public static partial class Wp14Rules
             var verdicts = MediaUsageRules.Attribute(m.Serial, connections, volumeToSerial, mounts, sessions);
             var volumes = volumeToSerial.Where(kv => kv.Value.Equals(m.Serial, StringComparison.OrdinalIgnoreCase)).Select(kv => kv.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
             var links = MediaUsageRules.Link<TimelineEvent>("", m.Letter, connections, files);
+            // Nothing to say (no profile, no session, no linked file): no extra finding; the medium's own finding already reports the presence.
+            if (links.Count == 0 && verdicts.All(v => v.Status == UsageStatus.NotAttributable)) continue;
             var strong = links.Count(l => l.Kind == FileLinkKind.OpenedFromMedium);
             var hints = links.Count - strong;
 
