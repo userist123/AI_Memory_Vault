@@ -18,7 +18,7 @@ public static partial class Wp14Rules
         var media = ObservedUsb(c.Events).Where(m => m.Serial.Length > 0).OrderBy(m => m.Times.DefaultIfEmpty(DateTimeOffset.MaxValue).Min()).ToList();
         if (media.Count == 0) return;
 
-        // MountedDevices: volume GUID -> disk serial. The disk serial is not the volume serial that LNK files carry (see the description: no volume serial is read yet).
+        // MountedDevices: volume GUID -> disk serial. The disk serial is not the volume serial that LNK files carry; that one comes from the boot record logged in 1006 (Observed.VolumeSerials).
         var volumeToSerial = c.Events.Where(e => e.Source == "MountedVolume" && F(e, "VolumeGuid").Length > 0)
             .GroupBy(e => F(e, "VolumeGuid"), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(g => g.Key, g => MediaRegister.NormalizeSerial(F(g.First(), "Serial")), StringComparer.OrdinalIgnoreCase);
@@ -43,7 +43,7 @@ public static partial class Wp14Rules
 
             var verdicts = MediaUsageRules.Attribute(m.Serial, connections, volumeToSerial, mounts, sessions);
             var volumes = volumeToSerial.Where(kv => kv.Value.Equals(m.Serial, StringComparison.OrdinalIgnoreCase)).Select(kv => kv.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var links = MediaUsageRules.Link<TimelineEvent>("", m.Letter, connections, files);
+            var links = MediaUsageRules.Link<TimelineEvent>(m.VolumeSerials, m.Letter, connections, files);
             // Nothing to say (no profile, no session, no linked file): no extra finding; the medium's own finding already reports the presence.
             if (links.Count == 0 && verdicts.All(v => v.Status == UsageStatus.NotAttributable)) continue;
             var strong = links.Count(l => l.Kind == FileLinkKind.OpenedFromMedium);
@@ -56,10 +56,15 @@ public static partial class Wp14Rules
                 : "nu se poate atribui";
             var lines = verdicts.Take(6).Select(v => $"{Time(v.Connection.ConnectUtc)} — {StatusWord(v.Status)}: {v.Reason}");
             var linkLines = links.Take(8).Select(l => $"{Time(l.WhenUtc)} {l.Path} — {(l.Kind == FileLinkKind.OpenedFromMedium ? "deschis de pe acest suport" : "doar aceeași literă (indiciu)")}");
-            var noSerial = "Seria volumului suportului (cea din scurtăturile LNK) nu este citită din sursele analizate: legăturile sigure după serie nu pot fi făcute; " +
-                           "sunt afișate doar indiciile după litera de unitate, care nu dovedesc nimic singure.";
+            var serialText = string.Join(", ", m.VolumeSerials.OrderBy(v => v, StringComparer.OrdinalIgnoreCase));
+            var noSerial = m.VolumeSerials.Count == 0
+                ? "Seria volumului suportului (cea din scurtăturile LNK) nu este citită din sursele analizate (sectorul de boot logat în Partition/Diagnostic 1006 lipsește sau nu este recunoscut): " +
+                  "legăturile sigure după serie nu pot fi făcute; sunt afișate doar indiciile după litera de unitate, care nu dovedesc nimic singure."
+                : $"Seria volumului suportului este {serialText} (din sectorul de boot logat în Partition/Diagnostic 1006), dar nicio scurtătură nu o poartă: " +
+                  "indiciile după litera de unitate nu dovedesc singure că fișierele sunt de pe acest suport.";
+            var serialLine = m.VolumeSerials.Count == 0 ? "" : $" Seria volumului (din sectorul de boot logat în 1006): {serialText}.";
 
-            var desc = $"Suportul {(m.Serial)} ({(m.Letter.Length > 0 ? "litera " + m.Letter + ":" : "fără literă cunoscută")}): {verdicts.Count} conectări. " +
+            var desc = $"Suportul {(m.Serial)} ({(m.Letter.Length > 0 ? "litera " + m.Letter + ":" : "fără literă cunoscută")}): {verdicts.Count} conectări.{serialLine} " +
                        $"Cine a folosit: {summary}" + (accounts.Count > 0 ? $" ({string.Join(", ", accounts)})" : "") + ". " +
                        string.Join(" ", lines) + (verdicts.Count > 6 ? $" (și încă {verdicts.Count - 6} conectări, vezi evidența)." : "") + " " +
                        (links.Count == 0 ? "Fișiere legate de acest suport: niciunul găsit în scurtăturile LNK sau în Jump Lists."

@@ -84,7 +84,7 @@ public sealed class JumpListParser : EvidenceParserBase
                 {
                     ["AppId"] = appId, ["EntryNumber"] = entryNo.ToString(CultureInfo.InvariantCulture), ["AccessCount"] = uses.ToString(CultureInfo.InvariantCulture),
                     ["Pinned"] = pin >= 0 ? "true" : "false", ["Hostname"] = host, ["DestListPath"] = destPath, ["LnkTarget"] = link?.Target ?? "",
-                    ["Arguments"] = link?.Arguments ?? "", ["DestListVersion"] = version.ToString(CultureInfo.InvariantCulture),
+                    ["Arguments"] = link?.Arguments ?? "", ["VolumeSerial"] = link?.Serial ?? "", ["DriveType"] = link?.DriveType ?? "", ["DestListVersion"] = version.ToString(CultureInfo.InvariantCulture),
                 },
             });
             result.Records++;

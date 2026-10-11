@@ -20,7 +20,7 @@ public sealed class LnkParserTests : IDisposable
     private static EvidenceItem Item(string path) => new() { EvidenceId = "EV-L", CaseId = "C", Source = "lnk", SourceType = "lnk", StoredPath = path };
 
     /// <summary>Header + LinkInfo (local path, volume) + working dir + arguments (Unicode) + TrackerDataBlock.</summary>
-    public static byte[] BuildLnk(string localPath, string args, string workDir, string machine)
+    public static byte[] BuildLnk(string localPath, string args, string workDir, string machine, uint volumeSerial = 0x1234ABCD, int driveType = 3)
     {
         var ms = new MemoryStream();
         var w = new BinaryWriter(ms);
@@ -35,8 +35,8 @@ public sealed class LnkParserTests : IDisposable
         var label = Encoding.ASCII.GetBytes("OS\0");
         var volume = new byte[16 + label.Length];
         BinaryPrimitives.WriteInt32LittleEndian(volume, volume.Length);
-        BinaryPrimitives.WriteInt32LittleEndian(volume.AsSpan(4), 3);            // DRIVE_FIXED
-        BinaryPrimitives.WriteUInt32LittleEndian(volume.AsSpan(8), 0x1234ABCD);
+        BinaryPrimitives.WriteInt32LittleEndian(volume.AsSpan(4), driveType);    // 3 = DRIVE_FIXED, 2 = DRIVE_REMOVABLE
+        BinaryPrimitives.WriteUInt32LittleEndian(volume.AsSpan(8), volumeSerial);
         BinaryPrimitives.WriteInt32LittleEndian(volume.AsSpan(12), 16);
         label.CopyTo(volume, 16);
         var basePath = Encoding.ASCII.GetBytes(localPath + "\0");

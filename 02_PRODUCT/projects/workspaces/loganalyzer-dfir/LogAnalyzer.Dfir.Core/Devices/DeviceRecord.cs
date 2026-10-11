@@ -38,6 +38,8 @@ public sealed record DeviceRecord
     public IReadOnlyList<DateTimeOffset> Connections { get; init; } = [];
     /// <summary>Who used this medium at each connection (live: profiles' MountPoints2 only; logon sessions are not read here). Empty = not computed.</summary>
     public IReadOnlyList<ConnectionUsage> Usage { get; init; } = [];
+    /// <summary>Serials of the volumes (file systems) on this medium, read from the boot records Windows logged in Partition/Diagnostic 1006; the same serial LNK files carry. Empty = none logged or not recognised.</summary>
+    public IReadOnlyList<string> VolumeSerials { get; init; } = [];
     public string ConnectionsText => Connections.Count == 0 ? "" : $"{Connections.Count} conectări în jurnal; ultimele: {string.Join(", ", Connections.Take(5).Select(c => c.ToLocalTime().ToString("yyyy-MM-dd HH:mm")))}";
 
     public string KindText => DeviceText.Kind(Kind);
@@ -215,6 +217,8 @@ public static class DeviceDetails
             new("Prima conectare", When(d.FirstConnectedUtc)),
             new("Ultima conectare", When(d.LastConnectedUtc)),
             new("Ultima deconectare", When(d.LastRemovedUtc), "Windows păstrează în fișa dispozitivului doar ULTIMA conectare; istoricul de mai jos vine din jurnal și are o durată limitată."),
+            new("Seria volumului (sector de boot)", d.VolumeSerials.Count > 0 ? string.Join(", ", d.VolumeSerials) : "nu este în jurnal",
+                d.VolumeSerials.Count > 0 ? "Seria sistemului de fișiere, citită din sectorul de boot logat de Windows la conectare. Aceeași serie apare în scurtăturile LNK și în Jump Lists ale fișierelor deschise de pe acest suport; se schimbă la reformatare." : "Windows nu a logat sectorul de boot (jurnalul a fost șters sau este mai vechi) sau formatul nu este recunoscut."),
             new("Istoric conectări", d.ConnectionsText.Length > 0 ? d.ConnectionsText : "nu există în jurnal"),
         };
         foreach (var u in d.Usage.Take(6))

@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.Devices;
 using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Registers;
@@ -20,6 +21,8 @@ public static partial class Wp14Rules
         public List<TimelineEvent> Events { get; } = [];
         public List<string> Channels { get; } = [];
         public HashSet<string> Users { get; } = new(StringComparer.OrdinalIgnoreCase);
+        /// <summary>Volume serials of the file systems on this medium, read from the boot records logged in Partition/Diagnostic 1006 (the serial LNK files carry).</summary>
+        public HashSet<string> VolumeSerials { get; } = new(StringComparer.OrdinalIgnoreCase);
         public List<DateTimeOffset> Times => Events.Select(T).Where(t => t is not null).Select(t => t!.Value).ToList();
     }
 
@@ -29,7 +32,7 @@ public static partial class Wp14Rules
         return s.Length >= 1 && char.IsAsciiLetter(s[0]) && (s.Length == 1 || s[1] == ':') ? char.ToUpperInvariant(s[0]).ToString() : "";
     }
 
-    private static void AddObs(Dictionary<string, Observed> map, TimelineEvent e, string rawSerial, string vidPid, string label, string letter, string channel, string user = "")
+    private static Observed AddObs(Dictionary<string, Observed> map, TimelineEvent e, string rawSerial, string vidPid, string label, string letter, string channel, string user = "")
     {
         var serial = MediaRegister.NormalizeSerial(rawSerial);
         var key = serial.Length > 0 ? serial : "nosn|" + label.Trim().ToLowerInvariant();
@@ -40,6 +43,7 @@ public static partial class Wp14Rules
         o.Events.Add(e);
         if (!o.Channels.Contains(channel)) o.Channels.Add(channel);
         if (user.Length > 0) o.Users.Add(user);
+        return o;
     }
 
     /// <summary>
@@ -57,7 +61,10 @@ public static partial class Wp14Rules
             {
                 var bus = F(e, "BusType").Trim();
                 if (bus is "7" or "12" or "13" && F(e, "Capacity") is not ("0" or ""))
-                    AddObs(map, e, F(e, "SerialNumber"), "", $"{F(e, "Manufacturer")} {F(e, "Model")}".Trim(), "", "Partition/Diagnostic 1006");
+                {
+                    var o = AddObs(map, e, F(e, "SerialNumber"), "", $"{F(e, "Manufacturer")} {F(e, "Model")}".Trim(), "", "Partition/Diagnostic 1006");
+                    foreach (var v in VolumeBootRecord.FromEvent(n => F(e, n))) o.VolumeSerials.Add(v.Serial);
+                }
             }
             else if (Ev(e, "Security", 6416))
             {

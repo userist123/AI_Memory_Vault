@@ -115,7 +115,7 @@ public static class DeviceInventory
     }
 
     /// <summary>One disk arrival logged by Windows (Microsoft-Windows-Partition/Diagnostic 1006): who it was, when, with the volume id it got.</summary>
-    internal sealed record PartitionEvent(DateTimeOffset TimeUtc, string Serial, string Manufacturer, string Model, long? Capacity, string BusType, string ParentId, string RegistryId);
+    internal sealed record PartitionEvent(DateTimeOffset TimeUtc, string Serial, string Manufacturer, string Model, long? Capacity, string BusType, string ParentId, string RegistryId, IReadOnlyList<string>? VolumeSerials = null);
 
     internal static List<PartitionEvent> PartitionEvents(List<string> problems, int max = 5000)
     {
@@ -132,7 +132,8 @@ public static class DeviceInventory
                     if (D("Capacity") is "0" or "") continue;   // a card reader without a card, or an empty slot
                     list.Add(new(e.TimeCreated is { } t ? new DateTimeOffset(t.ToUniversalTime()) : DateTimeOffset.MinValue,
                                  LogAnalyzer.Dfir.Registers.MediaRegister.NormalizeSerial(D("SerialNumber").TrimEnd('.')), D("Manufacturer"), D("Model"),
-                                 long.TryParse(D("Capacity"), out var c) ? c : null, D("BusType"), D("ParentId"), D("RegistryId")));
+                                 long.TryParse(D("Capacity"), out var c) ? c : null, D("BusType"), D("ParentId"), D("RegistryId"),
+                                 LogAnalyzer.Dfir.Devices.VolumeBootRecord.FromEvent(D).Select(v => v.Serial).ToList()));
                 }
         }
         catch (Exception ex) when (ex is System.Diagnostics.Eventing.Reader.EventLogException or UnauthorizedAccessException or System.Xml.XmlException)
@@ -153,6 +154,7 @@ public static class DeviceInventory
         {
             Connections = ev.Select(e => e.TimeUtc).ToList(),
             CapacityBytes = d.CapacityBytes ?? ev[0].Capacity,
+            VolumeSerials = VolumeSerialsOf(ev),
             Sources = d.Sources + ", jurnal Partition/Diagnostic 1006",
         } : d).ToList();
         foreach (var (serial, ev) in bySerial)
@@ -164,12 +166,15 @@ public static class DeviceInventory
             {
                 Kind = kind.Value, InstanceId = ev[0].ParentId.Length > 0 ? ev[0].ParentId : @"LOG\" + serial, Name = $"{ev[0].Manufacturer} {ev[0].Model}".Trim(),
                 Manufacturer = ev[0].Manufacturer, Model = ev[0].Model, Serial = serial, VidPid = DeviceRules.VidPid(ev[0].ParentId), Bus = "USB",
-                CapacityBytes = ev[0].Capacity, FirstConnectedUtc = ev[^1].TimeUtc, LastConnectedUtc = ev[0].TimeUtc, Connections = ev.Select(e => e.TimeUtc).ToList(),
+                CapacityBytes = ev[0].Capacity, VolumeSerials = VolumeSerialsOf(ev), FirstConnectedUtc = ev[^1].TimeUtc, LastConnectedUtc = ev[0].TimeUtc, Connections = ev.Select(e => e.TimeUtc).ToList(),
                 Sources = "jurnal Partition/Diagnostic 1006 (Windows nu mai are înregistrarea dispozitivului)",
             });
         }
         return result;
     }
+
+    private static List<string> VolumeSerialsOf(IEnumerable<PartitionEvent> ev) =>
+        ev.SelectMany(e => e.VolumeSerials ?? []).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
     /// <summary>
     /// HKLM\SYSTEM\MountedDevices: for each volume GUID and drive letter, the device it last belonged to (for MBR removable media the value is
@@ -317,7 +322,7 @@ public static class DeviceInventory
         }).ToList();
     }
 
-    /// <summary>MountPoints2 volume GUIDs of every loaded profile. The registry API gives no last-write time here, so the time is left empty.</summary>
+    /// <summary>MountPoints2 volume GUIDs of every loaded profile, each with the key's last write time (RegQueryInfoKey): the profile's last use of that volume. Empty when Windows refuses the query.</summary>
     private static List<VolumeMount> LiveMounts(List<string> problems)
     {
         var list = new List<VolumeMount>();
@@ -329,7 +334,10 @@ public static class DeviceInventory
                 if (mp is null) continue;
                 var account = AccountName(sid);
                 foreach (var guid in mp.GetSubKeyNames().Where(n => n.StartsWith('{') && n.EndsWith('}')))
-                    list.Add(new VolumeMount(account, guid.ToUpperInvariant(), null));
+                {
+                    using var sub = mp.OpenSubKey(guid);
+                    list.Add(new VolumeMount(account, guid.ToUpperInvariant(), sub is null ? null : KeyLastWrite(sub)));
+                }
             }
         }
         catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException)
@@ -338,6 +346,10 @@ public static class DeviceInventory
         }
         return list;
     }
+
+    private static DateTimeOffset? KeyLastWrite(RegistryKey key) =>
+        RegQueryInfoKey(key.Handle, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, out var ft) == 0 && ft > 0
+            ? new DateTimeOffset(DateTime.FromFileTimeUtc(ft)) : null;
 
     private static string AccountName(string sid)
     {
@@ -391,6 +403,10 @@ public static class DeviceInventory
 
     [DllImport("setupapi.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern IntPtr SetupDiGetClassDevsW(IntPtr classGuid, string? enumerator, IntPtr hwndParent, uint flags);
+
+    [DllImport("advapi32.dll")]
+    private static extern int RegQueryInfoKey(Microsoft.Win32.SafeHandles.SafeRegistryHandle key, IntPtr lpClass, IntPtr lpcchClass, IntPtr lpReserved, IntPtr lpcSubKeys, IntPtr lpcbMaxSubKeyLen,
+        IntPtr lpcbMaxClassLen, IntPtr lpcValues, IntPtr lpcbMaxValueNameLen, IntPtr lpcbMaxValueLen, IntPtr lpcbSecurityDescriptor, out long lpftLastWriteTime);
 
     [DllImport("setupapi.dll", SetLastError = true)]
     private static extern bool SetupDiEnumDeviceInfo(IntPtr set, uint index, ref SP_DEVINFO_DATA data);
