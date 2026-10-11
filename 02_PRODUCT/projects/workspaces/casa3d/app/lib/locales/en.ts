@@ -570,4 +570,5 @@ export const en: Dict = {
   "kmod.sinkLanding": "{l} / {r} cm of worktop beside the sink; NKBA asks for at least 61 cm on one side and 46 on the other.",
   "kmod.hobLanding": "{l} / {r} cm of worktop beside the hob; NKBA asks for at least 38 cm on one side and 30 on the other.",
   "kmod.fridgeLanding": "There is no worktop of at least 38 cm beside the fridge to put things down.",
+  "bath.pieces": "Bathroom pieces", "bath.piecesNote": "Each piece is the chosen product: the 3D shape, the render and the estimate follow it. Swap it here or add a bathtub, bidet, mirror cabinet, towel radiator, tall cabinet or water heater.",
 };

@@ -255,7 +255,7 @@ export default function Editor({ id }: { id: string }){
               onCalibStart={() => setCalib({ stage: 'pick' })} onCalibCancel={() => setCalib(null)} onCalibApply={applyCalib} />}
             <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>{t('editor.selectHint')}</p>
           </>}
-          {selRoom && roomStage && <RoomPanel part={stage} room={selRoom} snap={snap} G={G} cat={catalog} mc={mc} cur={cur} onFinish={(patch: Partial<RoomFinishes>) => mutate(s => { s.finishes = { ...(s.finishes || {}), [selRoom.id]: { ...finishesOf(s, selRoom), ...patch } }; })} onChange={(fn: (r: any) => void) => mutate(s => fn(s.floor.rooms.find(r => r.id === selRoom.id)!))}
+          {selRoom && roomStage && <RoomPanel part={stage} room={selRoom} snap={snap} G={G} cat={catalog} mc={mc} cur={cur} onSwap={(pid: string, vid: string) => changePiece(pid, q => { q.variantId = vid; }, t('editor.variantNoFit'))} onFinish={(patch: Partial<RoomFinishes>) => mutate(s => { s.finishes = { ...(s.finishes || {}), [selRoom.id]: { ...finishesOf(s, selRoom), ...patch } }; })} onChange={(fn: (r: any) => void) => mutate(s => fn(s.floor.rooms.find(r => r.id === selRoom.id)!))}
             onAuto={() => { const r = autoLayout(snap, catalog, { roomId: selRoom.id }); commit(r.snapshot); say(r.notFit.length ? t('editor.someNotFit') : t('editor.roomAutoApplied', { room: selRoom.name })); }}
             onAdd={(vid: string) => { const r = addPlacement(snap, catalog, selRoom.id, vid); if (!r){ say(t('editor.noFreeSpot')); return; } commit(r); setSel({ kind: 'placement', id: r.placements.at(-1)!.id }); }} num={num} />}
           {selRoom && stage === 'survey' && <button className="btn" title={t('stair.addTitle')} onClick={() => onAddStair(selRoom)}>{t('stair.add')}</button>}
@@ -336,7 +336,7 @@ export default function Editor({ id }: { id: string }){
   </div>);
 }
 
-function RoomPanel({ part, room, snap, G, cat, mc, cur, onFinish, onChange, onAuto, onAdd, num }: any){
+function RoomPanel({ part, room, snap, G, cat, mc, cur, onFinish, onChange, onAuto, onAdd, onSwap, num }: any){
   const { t, tp, lang, units } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units), inField = (m: number) => cmToInput(m * 100, units);
   const [grp, setGrp] = useState(Object.keys(G).find(k => !G[k].includedWith)!), [vi, setVi] = useState(0);
   const w = room.rect.x1 - room.rect.x0, d = room.rect.z1 - room.rect.z0;
@@ -351,7 +351,7 @@ function RoomPanel({ part, room, snap, G, cat, mc, cur, onFinish, onChange, onAu
       <label className="f"><span>{t('editor.posZ', { u })}</span><input type="number" value={inField(room.rect.z0)} onChange={e => { const cm = inputToCm(e.target.value, units), z = cm == null ? NaN : cm / 100; if (Number.isFinite(z)) onChange((r: any) => { r.rect.z1 = r3(z + (r.rect.z1 - r.rect.z0)); r.rect.z0 = r3(z); }); }} /></label>
     </div>
     <p className="prov" style={{ margin: 0 }} title={t('editor.roomWallsNote')}>{t('editor.roomWallsShort')}</p></>}
-    {part === 'finishes' && <FinishesPanel room={room} snap={snap} cat={cat} mc={mc} cur={cur} onFinish={onFinish} />}
+    {part === 'finishes' && <FinishesPanel room={room} snap={snap} cat={cat} mc={mc} cur={cur} onFinish={onFinish} onSwap={onSwap} onAdd={onAdd} />}
     {part === 'ffe' && <><button className="btn" onClick={onAuto}>{t('editor.autoRoom')}</button>
     <h4>{t('editor.addFurniture')}</h4>
     <select value={grp} onChange={e => { setGrp(e.target.value); setVi(0); }}>{Object.entries<any>(G).filter(([, g]) => !g.includedWith).map(([k, g]) => <option key={k} value={k}>{g.label}</option>)}</select>

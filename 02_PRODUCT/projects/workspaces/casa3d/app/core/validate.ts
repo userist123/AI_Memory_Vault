@@ -1,9 +1,9 @@
 import { resolve } from './catalog';
 import { rectHit, insideRect, footprintAt, frontRect, wallLength } from './geometry';
-import { FRONT_CLEARANCE, DINING_CLEARANCE, TALL_ITEM_M, WALL_PROXIMITY_M, ALLOWED_OVERLAP } from './rules';
+import { FRONT_CLEARANCE, DINING_CLEARANCE, TALL_ITEM_M, WALL_PROXIMITY_M, ALLOWED_OVERLAP, WALL_HIGH } from './rules';
 import type { Catalog, Floor, FurniturePlacement, Issue, Room, Severity, Snapshot, RoomRect } from './types';
 
-const allowed = (a: string, b: string) => ALLOWED_OVERLAP.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
+const allowed = (a: string, b: string) => WALL_HIGH.has(a) !== WALL_HIGH.has(b) || ALLOWED_OVERLAP.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
 // golurile de pe o latură a camerei (aceeași logică ca openingsOnSide din motor)
 export function openingsOnSide(floor: Floor, room: Room, side: 'N' | 'S' | 'W' | 'E'){
   const r = room.rect, out: { kind: string; a: number; b: number }[] = [];

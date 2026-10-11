@@ -570,4 +570,5 @@ export const ro: Dict = {
   "kmod.sinkLanding": "Lângă chiuvetă rămân {l} / {r} cm de blat; NKBA cere cel puțin 61 cm pe o parte și 46 pe cealaltă.",
   "kmod.hobLanding": "Lângă plită rămân {l} / {r} cm de blat; NKBA cere cel puțin 38 cm pe o parte și 30 pe cealaltă.",
   "kmod.fridgeLanding": "Lângă frigider nu e blat de cel puțin 38 cm unde să pui ce scoți din el.",
+  "bath.pieces": "Piesele băii", "bath.piecesNote": "Fiecare piesă e produsul ales: forma din 3D, randarea și devizul urmează produsul. Schimbă-l aici sau adaugă cadă, bideu, dulap cu oglindă, calorifer, coloană, boiler.",
 };
