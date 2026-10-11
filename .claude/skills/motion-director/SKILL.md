@@ -44,9 +44,23 @@ Ask only for what is theirs: text, brand assets, music rights, length and format
 
 1. Type-check and lint; open the composition in Remotion Studio (`npx remotion studio`) and
    check every scene at its key frames (stills via `npx remotion still`).
-2. Render: `npx remotion render <Composition> out/<name>.mp4 --codec=h264 --crf=18`
-   (60 fps when the brief asks for it). Report the output path, length, resolution and size.
-3. Assets: only the owner's own or properly licensed fonts, images and audio; list sources in
+2. Render on the owner's PC with the apps installed there (checked 2026-10-11: FFmpeg 9.0.2 on
+   PATH with working `h264_nvenc`, `hevc_nvenc`, `av1_nvenc`; NVIDIA driver 616.92; Blender not
+   installed). Remotion draws the frames on the GPU (ANGLE), then the PC's FFmpeg encodes on the
+   RTX 5060 (NVENC):
+   - `npx remotion render <Composition> out/<name>.mov --codec=prores --prores-profile=4444`
+     (lossless intermediate; 60 fps when the brief asks for it);
+   - `ffmpeg -i out/<name>.mov -c:v h264_nvenc -preset p7 -rc vbr -cq 18 -b:v 0 -pix_fmt yuv420p
+     -movflags +faststart out/<name>.mp4` (`hevc_nvenc` for 4K or smaller files); delete the
+     intermediate after the MP4 checks out.
+   - Quick drafts may skip the intermediate: `npx remotion render ... out/<name>.mp4 --codec=h264
+     --crf=18`.
+   Report the output path, length, resolution, size and which encoder ran.
+3. 3D scenes that need real lighting (product shots, fly-throughs): Blender with Cycles on OptiX
+   (RTX) renders them to an image sequence that Remotion composites. Blender is not installed;
+   installing it is the owner's call, then render headless with
+   `blender -b <scene>.blend -E CYCLES -o //frames/f_#### -a -- --cycles-device OPTIX`.
+4. Assets: only the owner's own or properly licensed fonts, images and audio; list sources in
    the project README.
 
 ## 4. Limits
