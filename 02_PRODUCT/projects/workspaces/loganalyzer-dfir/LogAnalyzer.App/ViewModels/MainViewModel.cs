@@ -23,6 +23,7 @@ using LogAnalyzer.Infrastructure.Parsers;
 using LogAnalyzer.Infrastructure.Services;
 using Microsoft.Win32;
 using LogAnalyzer.UI.Services;
+using LogAnalyzer.UI.Views;
 
 namespace LogAnalyzer.UI.ViewModels
 {
@@ -86,6 +87,32 @@ namespace LogAnalyzer.UI.ViewModels
             ? "Mod AirGapped: rețeaua este blocată de aplicație; izolarea fizică a stației nu este verificată"
             : "Mod Network: serviciile online sunt permise; aplicația nu evaluează siguranța stației";
         [ObservableProperty] private string _modeReasonText = AppModeContext.Current.Reason;
+        // Station role (WP18): decided once at startup from the signed policy; shown next to the mode badge with the full decision as tooltip.
+        [ObservableProperty] private string _stationRoleBadgeText = LogAnalyzer.Core.Services.Edition.StationRoleContext.Current.BadgeText;
+        [ObservableProperty] private string _stationRoleReasonText = LogAnalyzer.Core.Services.Edition.StationRoleContext.Current.Summary;
+        [ObservableProperty] private bool _isControlStation = LogAnalyzer.Core.Services.Edition.StationRoleContext.IsControl;
+        [ObservableProperty] private bool _isCsirtStation = LogAnalyzer.Core.Services.Edition.StationRoleContext.IsCsirt;
+        [ObservableProperty] private bool _hasStationRoleWarning = LogAnalyzer.Core.Services.Edition.StationRoleContext.Current.HasWarning;
+
+        // WP18 S3: language level. Simple for every account (administrators included); Expert is a switch, remembered per account.
+        private readonly LogAnalyzer.Dfir.Language.LanguagePreferences _languagePreferences = new();
+        private static string PreferenceAccount => AuthApp.Session?.Account ?? Environment.UserName;
+        [ObservableProperty] private bool _isExpertLevel = LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert;
+        public string LanguageLevelText => IsExpertLevel ? "Expert" : "Simplu";
+        partial void OnIsExpertLevelChanged(bool value)
+        {
+            LogAnalyzer.Dfir.Language.LanguageLevelContext.Set(value ? LogAnalyzer.Dfir.Language.UiLanguageLevel.Expert : LogAnalyzer.Dfir.Language.UiLanguageLevel.Simple);
+            _languagePreferences.Save(PreferenceAccount, LogAnalyzer.Dfir.Language.LanguageLevelContext.Current);
+            OnPropertyChanged(nameof(LanguageLevelText));
+        }
+        /// <summary>"Ce înseamnă?": the single glossary, searchable.</summary>
+        [RelayCommand]
+        private void OpenGlossary()
+        {
+            var w = new GlossaryWindow();
+            if (System.Windows.Application.Current?.MainWindow is { IsVisible: true } owner && owner != w) w.Owner = owner;
+            w.ShowDialog();
+        }
         [ObservableProperty] private string _connectivityWarningText = string.Empty;
         public bool HasConnectivityWarning => !string.IsNullOrEmpty(ConnectivityWarningText);
         partial void OnConnectivityWarningTextChanged(string value) => OnPropertyChanged(nameof(HasConnectivityWarning));
@@ -95,6 +122,9 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>True when this edition contains per-program containment.</summary>
         public bool HasContainment => Containment is not null;
         public IEditionProfile Edition { get; }
+        /// <summary>WP18 S2: the role profile (intents and sidebar entries) of this PC. Data from the role, the edition and the mode.</summary>
+        public LogAnalyzer.Core.Services.Edition.RoleProfile RoleProfile { get; }
+        public System.Collections.Generic.IReadOnlyList<LogAnalyzer.Core.Services.Edition.NavigationEntry> RoleNavigation => RoleProfile.Navigation;
 
         /// <summary>Control audit of this station ("Control stație" tab).</summary>
         public StationControlViewModel StationControl { get; } = new();
@@ -565,7 +595,11 @@ namespace LogAnalyzer.UI.ViewModels
             Containment = featureViews.CreateViewModel(FeatureKeys.Containment);
             DomainInvestigation = featureViews.CreateViewModel(FeatureKeys.DomainInvestigation);
             Investigation = new InvestigationViewModel(inv => featureViews.CreateViewModel(FeatureKeys.AiAnalysis, inv));
-            Home = new HomeViewModel(Investigation, tab => SelectedTabIndex = tab);
+            // The account's language level (default Simple) before any page reads a glossary term.
+            LogAnalyzer.Dfir.Language.LanguageLevelContext.Set(_languagePreferences.Load(PreferenceAccount));
+            IsExpertLevel = LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert;
+            RoleProfile = LogAnalyzer.Core.Services.Edition.RoleProfiles.For(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role, edition, AppModeContext.Current.Mode);
+            Home = new HomeViewModel(Investigation, tab => SelectedTabIndex = tab, profile: RoleProfile);
             Policy = new PolicyViewModel(registryWriter);
             ProcedureProfile = new ProcedureProfileViewModel();
             MediaRegister = new MediaRegisterViewModel();
@@ -604,7 +638,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (IsNetworkMode)
             {
                 LicenseTier = "Enterprise Network SOC (Live EDR)";
-                SelectedTabIndex = 11; // Open directly on Real-Time Live SOC Stream
+                // WP18: the application opens on Home in every mode and role (WP5); Live SOC stays reachable under "Avansat".
             }
             else
             {

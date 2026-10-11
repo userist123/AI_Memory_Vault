@@ -18,6 +18,8 @@ public sealed class CaseInfo
     public string Notes { get; set; } = "";
     public string CollectionMode { get; init; } = "";
     public string ApplicationVersion { get; init; } = DfirInfo.ApplicationVersion;
+    /// <summary>Role of the PC the case was created on (WP18): "control" or "csirt". Empty in cases created before WP18 (read as unknown, never as control).</summary>
+    public string StationRole { get; init; } = "";
 
     /// <summary>Why, for which period, on which systems, approved by whom (owner decision 23). Empty in cases created before WP3.</summary>
     public CaseScope Scope { get; init; } = new();
@@ -29,6 +31,7 @@ public sealed class CaseInfo
         SchemaVersion = SchemaVersion, CaseId = CaseId, Name = Name, Host = Host, User = User, CreatedAtUtc = CreatedAtUtc, Investigator = Investigator,
         Os = Os, Architecture = Architecture, Timezone = Timezone, StartTimeUtc = StartTimeUtc, EndTimeUtc = EndTimeUtc, Notes = Notes,
         CollectionMode = CollectionMode, ApplicationVersion = ApplicationVersion, Scope = scope, LegalHold = LegalHold, RetentionUntilUtc = RetentionUntilUtc,
+        StationRole = StationRole,
     };
 
     /// <summary>Retention limit. Empty by default; the application only warns when it is exceeded, it never deletes.</summary>

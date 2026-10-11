@@ -26,6 +26,20 @@ Aplicația este licențiată per stație (Hardware ID).
 - **Criminalistică**: SHA-256 la intake, chain of custody append-only, probe brute read-only
 - **Securitate**: SQLCipher pentru date la rest, Windows DPAPI pentru secrete
 
+## Roluri de stație și interfața simplă (WP18)
+
+Pe lângă mod, fiecare PC are un **rol de stație**, stabilit tot de politica semnată (câmpul `role`):
+
+| Rol | Pentru cine | Ce oferă pe Acasă |
+|---|---|---|
+| **Stație de control** (implicit) | controalele pe linia protecției informațiilor clasificate, pe stații izolate | Verifică această stație · Verifică un suport · Cine a lucrat și când · Deschide un control anterior · Raport pentru proces-verbal |
+| **Stație de sprijin răspuns la incidente** (`csirt`) | centrul de răspuns la incidente de securitate cibernetică | Primește probe de la o stație · Ce s-a întâmplat? · Ce fac acum? · Raport de incident · Cazuri deschise |
+
+- Fără politică validă, rolul este „Stație de control”. Ediția clasificată este mereu stație de control. Rolul nu se schimbă din aplicație.
+- Butoanele și textele sunt scrise pentru oameni fără pregătire IT, **administratori incluși**. Nivelul „Simplu” este implicit pentru orice cont, iar „Expert” este un comutator în antet. Datele sunt aceleași în ambele niveluri.
+- „Ce înseamnă?” din antet deschide glosarul. Paginile tehnice rămân toate sub „Avansat”.
+- Detalii: `docs/dfir/STATION_ROLES.md`.
+
 ## Izolarea proceselor suspecte
 
 Fila **„Izolare procese suspecte”** (sau `LogAnalyzer.exe --tab=13`) funcționează în ambele moduri, fără să deschidă nicio conexiune:
