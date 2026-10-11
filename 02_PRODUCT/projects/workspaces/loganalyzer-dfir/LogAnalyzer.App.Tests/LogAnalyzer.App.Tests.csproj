@@ -17,5 +17,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LogAnalyzer.App\LogAnalyzer.App.csproj" />
+    <!-- F3 / F4: the report verifier and the archive verifier of the command line (report-keygen, verify-report, verify-archive). -->
+    <ProjectReference Include="..\LogAnalyzer.KeyGen\LogAnalyzer.KeyGen.csproj" />
   </ItemGroup>
 </Project>

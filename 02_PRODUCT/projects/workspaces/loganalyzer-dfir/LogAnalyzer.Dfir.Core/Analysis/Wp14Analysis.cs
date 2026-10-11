@@ -22,7 +22,8 @@ public static class Wp14Analysis
         users = Resolve(ws, users, usersPath);
         var mediaSha = media is { IsDefined: true } ? RegisterSnapshot.WriteTo(ws, media) : RegisterSnapshot.WriteTo(ws, new MediaRegister());
         var usersSha = users is { IsDefined: true } ? RegisterSnapshot.WriteTo(ws, users) : RegisterSnapshot.WriteTo(ws, new UsersRegister());
-        var findings = Wp14Rules.Run(timeline, nextId, new Wp14Input { Scope = ws.Info.Scope, Media = media, Users = users, Profile = profile, SystemZone = systemZone, Data = data, Facts = facts });
+        var findings = Wp14Rules.Run(timeline, nextId, new Wp14Input { Scope = ws.Info.Scope, Media = media, Users = users, Profile = profile, SystemZone = systemZone, Data = data, Facts = facts,
+                                                               EvidenceOrigins = EvidenceOrigin.Map(ws.LoadEvidence()) });
         string Part(string title, IRegisterData? r, string sha) => $"{title}: " + (r is { IsDefined: true } ? $"definit ({r.Cells().Count} rânduri; copie în caz Analysis/{r.Kind}_register.json, SHA-256 {sha})" : "nedefinit (nu există rânduri; observațiile nu se compară cu un registru)");
         var zone = systemZone.Length > 0 ? $" Zona sistemului declarată: {systemZone}." : " Zona sistemului nu este declarată.";
         return new Wp14Result(findings, mediaSha, usersSha, Part("Registru medii", media, mediaSha) + "; " + Part("Registru utilizatori", users, usersSha) + "." + zone);

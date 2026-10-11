@@ -191,7 +191,9 @@ public class Wp14MediaTests
     public void Usbstor_instance_suffix_does_not_split_a_device_in_two()
     {
         var f = Go([Usb("AA001&0", 0), Usb("AA001", 1)], media: W14.Media(Row("AA001")));
-        Assert.Single(Media(f));
+        // One device finding and one connection history (MEDIA-HISTORY, E1) for the same medium, not two of either.
+        Assert.Single(Media(f), x => x.RuleId != "MEDIA-HISTORY");
+        Assert.Single(Media(f), x => x.RuleId == "MEDIA-HISTORY");
     }
 
     // ---- presence is not copying ----

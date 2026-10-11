@@ -14,13 +14,20 @@ public static class ControlReportPdf
 {
     private const string Ink = "#0f172a", Muted = "#64748b", Line = "#cbd5e1";
 
+    /// <summary>Tests: receives the F2 pre-report line printed on page 1 (async-local).</summary>
+    public static readonly AsyncLocal<Action<string>?> PrintedLines = new();
+
     /// <param name="header">WP18 S5: the "proces-verbal" header (unit, station, Hardware ID, period, inspector, role, registration number, marking, signatures).</param>
     /// <param name="result">WP18 S5: the five answers, printed on the first page before the checks, together with the evidence gaps.</param>
     public static void Write(ControlReport r, string path, string inspector, string notes = "", VerificationReport? verification = null, LogAnalyzer.Dfir.Case.ReportSeal? seal = null,
-        ControlReportHeader? header = null, ControlResultScreen? result = null, IReadOnlyList<LogAnalyzer.Dfir.Flow.ManualCheckResult>? manual = null, string authorizingAct = "")
+        ControlReportHeader? header = null, ControlResultScreen? result = null, IReadOnlyList<LogAnalyzer.Dfir.Flow.ManualCheckResult>? manual = null, string authorizingAct = "",
+        LogAnalyzer.Dfir.Case.PreReportCheck? preCheck = null)
     {
         QuestPDF.Settings.License = LicenseType.Community;
         var f = r.Facts;
+        // F2: without a case (preCheck null) there is no evidence to re-verify and the line says so; SaveToCase passes the case re-check.
+        var pre = preCheck ?? LogAnalyzer.Dfir.Case.PreReportCheck.ForCase(null);
+        string W(string s) => pre.Unconfirm(s);
         string L(DateTimeOffset? t) => t is { } v ? TimeZoneInfo.ConvertTime(v, TimeZoneInfo.Local).ToString("yyyy-MM-dd HH:mm") : "—";
 
         Document.Create(doc => doc.Page(page =>
@@ -42,6 +49,8 @@ public static class ControlReportPdf
             page.Content().PaddingVertical(8).Column(col =>
             {
                 col.Spacing(8);
+                col.Item().Text(pre.Line).FontSize(8).Bold().FontColor(pre.BlocksConfirmed ? "#b91c1c" : pre.Applicable ? "#065f46" : "#78350f");
+                PrintedLines.Value?.Invoke(pre.Line);
                 col.Item().Row(row =>
                 {
                     Badge(row, "CONFORM", r.Count(ControlStatus.Conform), "#15803d");
@@ -62,13 +71,13 @@ public static class ControlReportPdf
                 if (result is not null)
                     col.Item().Border(0.8f).BorderColor(Line).Padding(6).Column(rc =>
                     {
-                        rc.Item().Text(result.Headline).Bold().FontSize(11).FontColor(Ink);
-                        rc.Item().Text("Există o problemă? " + result.Problem).FontSize(8.5f);
-                        rc.Item().Text("Cât de grav? " + result.Seriousness).FontSize(8.5f);
-                        rc.Item().Text("Sunt probele de încredere? " + result.Trust).FontSize(8.5f);
-                        rc.Item().Text("Ce s-a găsit? " + result.Found).FontSize(8.5f);
+                        rc.Item().Text(W(result.Headline)).Bold().FontSize(11).FontColor(Ink);
+                        rc.Item().Text(W("Există o problemă? " + result.Problem)).FontSize(8.5f);
+                        rc.Item().Text(W("Cât de grav? " + result.Seriousness)).FontSize(8.5f);
+                        rc.Item().Text(W("Sunt probele de încredere? " + (pre.BlocksConfirmed ? "NU — " + pre.Line + " " : "") + result.Trust)).FontSize(8.5f);
+                        rc.Item().Text(W("Ce s-a găsit? " + result.Found)).FontSize(8.5f);
                         rc.Item().Text("Ce urmează?").Bold().FontSize(8.5f);
-                        foreach (var st in result.NextSteps) rc.Item().Text("• " + st).FontSize(8);
+                        foreach (var st in result.NextSteps) rc.Item().Text(W("• " + st)).FontSize(8);
                     });
                 if (header is not null || result is not null)
                 {
@@ -99,10 +108,10 @@ public static class ControlReportPdf
                                 rr.ConstantItem(78).Text(StatusText(c.Status)).Bold().FontColor(StatusColor(c.Status));
                                 rr.RelativeItem().Text($"{c.Id} · {c.Title}").Bold();
                             });
-                            cc.Item().Text(c.Detail);
-                            foreach (var e in c.Evidence.Take(25)) cc.Item().Text("– " + e).FontSize(7).FontColor(Muted);
+                            cc.Item().Text(W(c.Detail));
+                            foreach (var e in c.Evidence.Take(25)) cc.Item().Text("– " + W(e)).FontSize(7).FontColor(Muted);
                             if (c.Evidence.Count > 25) cc.Item().Text($"… încă {LogAnalyzer.Dfir.Language.RoText.Count(c.Evidence.Count - 25, "intrare", "intrări")} (în fișierul JSON al raportului)").FontSize(7).FontColor(Muted);
-                            if (c.Recommendation.Length > 0) cc.Item().Text("Recomandare: " + c.Recommendation).FontSize(7.5f).Italic();
+                            if (c.Recommendation.Length > 0) cc.Item().Text(W("Recomandare: " + c.Recommendation)).FontSize(7.5f).Italic();
                         });
                 }
 
@@ -201,7 +210,8 @@ public static class ControlReportPdf
         File.WriteAllText(json, JsonSerializer.Serialize(new { r.Facts, r.Checks, r.Users, r.Actions, ManualChecks = manual ?? [] },
             new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } }));
         var pdf = Path.Combine(dir, $"Raport_control_{r.Facts.Host}_{r.Facts.CollectedUtc:yyyyMMdd}.pdf");
-        Write(r, pdf, inspector, notes, Investigation.InvestigationReportPdf.ReadVerification(ws.Root), LogAnalyzer.Dfir.Case.ReportSeal.For(ws), header, result, manual, ws.Info.Scope.AuthorizingAct);
+        var pre = LogAnalyzer.Dfir.Case.PreReportCheck.ForCase(ws);   // F2: re-verify the case evidence first; its audit entry is inside the printed chain heads
+        Write(r, pdf, inspector, notes, Investigation.InvestigationReportPdf.ReadVerification(ws.Root), LogAnalyzer.Dfir.Case.ReportSeal.For(ws), header, result, manual, ws.Info.Scope.AuthorizingAct, pre);
         ws.RegisterStored(json, "live:" + r.Facts.Host, "control", "control_report", TemporalType.CurrentSnapshot, "StationFactCollector", DfirInfo.ApplicationVersion);
         ws.RegisterStored(pdf, "live:" + r.Facts.Host, "control", "control_report_pdf", TemporalType.Derived, "ControlReportPdf", DfirInfo.ApplicationVersion);
         // WP3b: the report files are also outputs in the custody chain, listed with the chain heads in a manifest next to them.
