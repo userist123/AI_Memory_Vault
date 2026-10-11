@@ -3,6 +3,17 @@
 // Fiecare textură e desenată în metri (px/m fix), deci o placă de 60 × 120 cm arată ca o placă de 60 × 120 cm.
 import * as THREE from 'three';
 
+// detaliu fotografic (CC0, public/tex): fibra de stejar, desaturată și normalizată, peste culoarea produsului (multiply)
+function detail(src, rotate){ const out = { canvas: null }; if (typeof Image === 'undefined') return out; const img = new Image(); img.onload = () => {
+  const s = img.width, cv = document.createElement('canvas'); cv.width = cv.height = s; const g = cv.getContext('2d'); if (rotate){ g.translate(s, 0); g.rotate(Math.PI / 2); } g.drawImage(img, 0, 0); g.setTransform(1, 0, 0, 1, 0, 0);
+  const id = g.getImageData(0, 0, s, s), d = id.data; let sum = 0; for (let i = 0; i < d.length; i += 4) sum += d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11; const mean = sum / (d.length / 4);
+  for (let i = 0; i < d.length; i += 4){ const l = d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11, v = Math.max(0, Math.min(255, 238 + (l - mean) * 1.25)); d[i] = d[i + 1] = d[i + 2] = v; }
+  g.putImageData(id, 0, 0); out.canvas = cv; cache.clear(); listeners.forEach(f => f()); }; img.src = src; return out; }
+const listeners = new Set();
+/** Motorul se reconstruiește când sosesc detaliile fotografice (prima încărcare). */
+export const onTexturesReady = f => { listeners.add(f); return () => listeners.delete(f); };
+const OAK = detail('/tex/oak_veneer_01_diffuse_web.jpg', true);
+let PPM = 300;
 const cache = new Map(), MAX = 16;   // pânzele mari (până la 2048 px) țin memorie: puține în cache
 function cached(key, make){ if (cache.has(key)){ const t = cache.get(key); cache.delete(key); cache.set(key, t); return t; }
   const t = make(); cache.set(key, t); if (cache.size > MAX){ const [k, old] = cache.entries().next().value; cache.delete(k); old.dispose(); } return t; }
@@ -15,17 +26,23 @@ function canvasTexture(wPx, hPx, draw, repeat){ const cv = document.createElemen
 
 // ---------- pardoseală ----------
 /** O piesă (placă sau lamelă) ca dreptunghi rotit: centru, lungime, lățime, unghi. Desenează fața, rostul și fibra lemnului. */
-function piece(g, cx, cy, L, W, ang, fill, joint, jointPx, wood, rnd){
+function piece(g, cx, cy, L, W, ang, fill, joint, jointPx, wood, rnd, veins = false){
   g.save(); g.translate(cx, cy); g.rotate(ang); g.fillStyle = joint; g.fillRect(-L / 2, -W / 2, L, W);
   const j = jointPx; g.fillStyle = fill; g.fillRect(-L / 2 + j / 2, -W / 2 + j / 2, L - j, W - j);
-  if (wood){ g.globalAlpha = .12; g.strokeStyle = '#3a2412'; g.lineWidth = Math.max(.6, W / 40);
+  // fibra reală a lemnului pe fiecare lamelă, dintr-o zonă la întâmplare a fotografiei (o placă de 1 m ≈ toată imaginea)
+  if (wood && OAK.canvas){ const c = OAK.canvas, s = c.width, sw = Math.min(s, s * L / PPM), sh = Math.min(s, s * W / PPM), sx = rnd() * (s - sw), sy = rnd() * (s - sh);
+    g.save(); g.beginPath(); g.rect(-L / 2 + j / 2, -W / 2 + j / 2, L - j, W - j); g.clip(); g.globalCompositeOperation = 'multiply'; g.globalAlpha = .9; g.drawImage(c, sx, sy, sw, sh, -L / 2, -W / 2, L, W); g.restore(); }
+  else if (wood){ g.globalAlpha = .12; g.strokeStyle = '#3a2412'; g.lineWidth = Math.max(.6, W / 40);
     for (let k = 0; k < 7; k++){ const y = -W / 2 + W * (k + .5) / 7 + (rnd() - .5) * W / 10; g.beginPath(); g.moveTo(-L / 2, y); g.bezierCurveTo(-L / 6, y + (rnd() - .5) * W / 6, L / 6, y + (rnd() - .5) * W / 6, L / 2, y); g.stroke(); }
     g.globalAlpha = 1; }
+  if (veins){ g.save(); g.beginPath(); g.rect(-L / 2 + j / 2, -W / 2 + j / 2, L - j, W - j); g.clip(); g.globalAlpha = .28; g.strokeStyle = '#8f8a82';
+    for (let k = 0; k < 3; k++){ g.lineWidth = .4 + rnd() * 1.4; g.beginPath(); let x = -L / 2 + rnd() * L, y = -W / 2; g.moveTo(x, y); while (y < W / 2){ x += (rnd() - .5) * L * .25; y += W * (.08 + rnd() * .1); g.lineTo(x, y); } g.stroke(); }
+    g.restore(); }
   g.restore(); }
 /** Pardoseala unei camere, desenată o singură dată pe toată suprafața (fără repetare vizibilă), la cel mult 2048 px. */
 export function floorTexture(fin, roomW, roomD, seed){
-  const key = `floor:${seed}:${roomW.toFixed(3)}:${roomD.toFixed(3)}:${JSON.stringify(fin)}`;
-  return cached(key, () => { const ppm = Math.min(320, 2048 / Math.max(roomW, roomD)), Wpx = Math.max(8, Math.round(roomW * ppm)), Hpx = Math.max(8, Math.round(roomD * ppm));
+  const key = `floor:${seed}:${roomW.toFixed(3)}:${roomD.toFixed(3)}:${JSON.stringify(fin)}:${OAK.canvas ? 1 : 0}`;
+  return cached(key, () => { const ppm = Math.min(320, 2048 / Math.max(roomW, roomD)); PPM = ppm; const Wpx = Math.max(8, Math.round(roomW * ppm)), Hpx = Math.max(8, Math.round(roomD * ppm));
     return canvasTexture(Wpx, Hpx, (g, w, h) => { const rnd = rng(seed), wood = fin.kind === 'parquet', L = fin.pieceL * ppm, W = fin.pieceW * ppm, jp = Math.max(wood ? .7 : 1, fin.grout * ppm);
       const tone = () => { const k = wood ? .86 + rnd() * .26 : .96 + rnd() * .06; return shade(fin.color, k); }, joint = fin.groutColor;
       g.fillStyle = joint; g.fillRect(0, 0, w, h); g.save();
@@ -46,7 +63,7 @@ export function floorTexture(fin, roomW, roomD, seed){
         const shift = fin.pattern === 'brick' ? .5 : fin.pattern === 'third' ? 1 / 3 : 0, area = span, pw = L, ph = W;
         for (let r = 0; r * ph < area + ph; r++){ const off = ((r * shift) % 1) * pw;
           for (let c = -1; c * pw < area + pw; c++){ const x = c * pw - off, chk = fin.pattern === 'checker' && (r + c) % 2 === 1;
-            piece(g, x + pw / 2, r * ph + ph / 2, pw, ph, 0, chk ? shade(fin.color, .78) : tone(), joint, jp, wood, rnd); } } }
+            piece(g, x + pw / 2, r * ph + ph / 2, pw, ph, 0, chk ? shade(fin.color, .78) : tone(), joint, jp, wood, rnd, !!fin.marble && !wood); } } }
       g.restore(); }, false); });
 }
 

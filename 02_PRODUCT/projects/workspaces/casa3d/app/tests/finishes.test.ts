@@ -178,7 +178,7 @@ describe('3D', () => {
     const s = set(demo(), 'living', { floor: 'gresie-emarble-60x120', floorLayout: { pattern: 'brick', groutMm: 2, groutColor: '#333333' }, wallFeatures: [{ side: 'E', kind: 'brick', material: 'caramida-bronx-60' }],
       ceiling: { type: 'cove', dropCm: 12, coveCm: 30, cornice: 'cornisa-nmc-nc109', spot: 'spot-mt143-9w', spots: 4 } });
     const v = roomVisual(mc, finishesOf(s, room(s, 'living')), 'living');
-    assert.deepEqual(v.floor, { kind: 'tile', pattern: 'brick', angle: 0, pieceL: 1.2, pieceW: .6, grout: .002, groutColor: '#333333', color: '#e0deda' });
+    assert.deepEqual(v.floor, { kind: 'tile', pattern: 'brick', angle: 0, pieceL: 1.2, pieceW: .6, grout: .002, groutColor: '#333333', color: '#e0deda', marble: true });
     assert.deepEqual(v.walls.map(w => [w.side, w.kind, w.color]), [['E', 'brick', '#8a5a44']]);
     assert.deepEqual(v.ceiling, { type: 'cove', drop: .12, cove: .3, led: '#ffd29a', cornice: [.135, .1], spots: 4 });
     const bath = roomVisual(mc, finishesOf(s, room(s, 'baie')), 'baie'); assert.deepEqual(bath.walls.map(w => [w.side, w.kind, w.heightM]), [['N', 'tile', 2.1], ['E', 'tile', 2.1], ['S', 'tile', 2.1], ['W', 'tile', 2.1]]);
