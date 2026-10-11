@@ -548,6 +548,17 @@ def mesh_torus(name, R, tube, rseg, tseg, arc):
     return me
 
 
+def mesh_sphere(name, r, wseg, hseg):
+    bm = bmesh.new()
+    bmesh.ops.create_uvsphere(bm, u_segments=max(8, int(wseg)), v_segments=max(6, int(hseg)), radius=r)
+    me = bpy.data.meshes.new(name)
+    bm.to_mesh(me)
+    bm.free()
+    for p in me.polygons:
+        p.use_smooth = True
+    return me
+
+
 def build_mesh(g, name):
     t, p = g['t'], g['p']
     if t == 'box':
@@ -561,6 +572,8 @@ def build_mesh(g, name):
         return mesh_cylinder(name, *p), None
     if t == 'torus':
         return mesh_torus(name, *p), None
+    if t == 'sphere':
+        return mesh_sphere(name, *p), None
     return None, None
 
 
