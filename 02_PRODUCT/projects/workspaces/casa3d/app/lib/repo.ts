@@ -135,11 +135,16 @@ async function own(owner: string, id: string){
   const { q } = await getDb(); const { rows } = await q('select * from projects where id=$1 and owner=$2 and deleted_at is null', [id, owner]);   // un proiect din coș nu se deschide
   if (!rows[0]) throw new HttpError(404, 'Proiect inexistent.'); return rows[0];
 }
-export async function getProject(owner: string, id: string){ const r = await own(owner, id); return { id: r.id, name: r.name, updatedAt: r.updated_at, currentRevision: r.current_revision, draft: r.draft as Snapshot, meta: readMeta(r.meta) }; }
-export async function saveDraft(owner: string, id: string, snapshot: unknown){
+export async function getProject(owner: string, id: string){ const r = await own(owner, id); return { id: r.id, name: r.name, updatedAt: r.updated_at, currentRevision: r.current_revision, draftRev: r.draft_rev as number, draft: r.draft as Snapshot, meta: readMeta(r.meta) }; }
+/** Salvarea desenului. Cu `base` (versiunea de la care a pornit editorul) salvarea trece doar dacă nimeni n-a schimbat între timp
+ *  proiectul, de pe alt dispozitiv sau prin restaurarea unei revizii; altfel 409 cu `conflict`, ca designerul să aleagă. */
+export async function saveDraft(owner: string, id: string, snapshot: unknown, base?: unknown){
   const s = checkSnapshot(snapshot); await own(owner, id); const { q } = await getDb();
-  const { rows } = await q('update projects set draft=$1, name=$2, updated_at=now() where id=$3 and owner=$4 returning updated_at', [JSON.stringify(s), s.name, id, owner]);
-  return { updatedAt: rows[0].updated_at };
+  const guarded = Number.isInteger(base) && (base as number) >= 0;
+  const { rows } = await q(`update projects set draft=$1, name=$2, draft_rev=draft_rev+1, updated_at=now() where id=$3 and owner=$4 and deleted_at is null${guarded ? ' and draft_rev=$5' : ''} returning updated_at, draft_rev`,
+    guarded ? [JSON.stringify(s), s.name, id, owner, base] : [JSON.stringify(s), s.name, id, owner]);
+  if (!rows[0]) throw new HttpError(409, 'Proiectul a fost modificat în altă parte (alt dispozitiv sau o revizie restaurată).', { conflict: true });
+  return { updatedAt: rows[0].updated_at, draftRev: rows[0].draft_rev as number };
 }
 /** Erorile care împiedică o revizie, pe tot proiectul (aceeași regulă și pentru aplicarea unui design). */
 export function projectErrors(snap: Snapshot, cat: Catalog){
@@ -168,7 +173,7 @@ export async function listRevisions(owner: string, id: string){ await own(owner,
 export async function restoreRevision(owner: string, id: string, number: number){
   await own(owner, id); const { q } = await getDb();
   const { rows } = await q('select snapshot from revisions where project_id=$1 and number=$2', [id, number]); if (!rows[0]) throw new HttpError(404, 'Revizie inexistentă.');
-  await q('update projects set draft=$1, updated_at=now() where id=$2', [JSON.stringify(rows[0].snapshot), id]); return rows[0].snapshot as Snapshot;
+  await q('update projects set draft=$1, draft_rev=draft_rev+1, updated_at=now() where id=$2', [JSON.stringify(rows[0].snapshot), id]); return rows[0].snapshot as Snapshot;
 }
 /** Ce s-a schimbat între două revizii (sau între o revizie și draftul curent). Aceleași verificări de proprietate ca restaurarea. */
 export async function diffRevisions(owner: string, id: string, from: number, to: number | 'draft'){
@@ -185,7 +190,7 @@ const publicVariants = (evs: ReturnType<typeof evaluateProposal>) => evs.map(e =
 export async function generateProposal(owner: string, id: string, briefInput: unknown, deps: { fetchImpl?: typeof fetch } = {}){
   let brief; try { brief = checkBrief(briefInput); } catch (e: any){ throw new HttpError(400, e.message); }
   const p = await own(owner, id), cat = await getCatalog(), mc = await getMaterials(), snap = p.draft as Snapshot;
-  snap.brief = brief; const { q } = await getDb(); await q('update projects set draft=$1, updated_at=now() where id=$2', [JSON.stringify(snap), id]);
+  snap.brief = brief; const { q } = await getDb(); await q('update projects set draft=$1, draft_rev=draft_rev+1, updated_at=now() where id=$2', [JSON.stringify(snap), id]);
   let raw: RawProposal | null = null, source = 'rules', model: string | null = null; const notes: string[] = [];
   if (aiConfigured()){
     try { const out = await proposeWithClaude(snap, cat, mc, brief, deps.fetchImpl); const parsed = parseProposal(out); notes.push(...parsed.errors);
@@ -206,7 +211,7 @@ export async function applyProposal(owner: string, id: string, pid: string, tier
   const raw = row.raw as RawProposal, v = raw.variants.find(x => x.tier === tier); if (!v) throw new HttpError(404, 'Varianta nu există în propunere.');
   const [ev] = evaluateProposal(p.draft as Snapshot, cat, mc, { variants: [v] }, row.brief);
   const res = applyVariant(ev, confirmWarnings); if (!res.ok) throw new HttpError(409, res.reason, ev.issues);
-  const { q } = await getDb(); await q('update projects set draft=$1, updated_at=now() where id=$2', [JSON.stringify(res.snapshot), id]);
+  const { q } = await getDb(); await q('update projects set draft=$1, draft_rev=draft_rev+1, updated_at=now() where id=$2', [JSON.stringify(res.snapshot), id]);
   await q("update proposals set decisions = decisions || $1::jsonb where id=$2", [JSON.stringify({ [tier]: { decision: 'approved', at: new Date().toISOString() } }), pid]);
   const rev = await createRevision(owner, id, `Varianta ${tier} aplicată (${row.source === 'ai' ? 'propusă de AI' : 'propusă de motorul de reguli'})`);
   return { snapshot: res.snapshot, revision: rev.number };
