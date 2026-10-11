@@ -52,8 +52,10 @@ describe('validare', () => {
     assert.equal(e.status, 'ERROR'); assert.ok(e.issues.some(i => i.code === 'INVALID_PRODUCT')); assert.ok(e.issues.some(i => i.code === 'INVALID_MATERIAL'));
     assert.equal(applyVariant(e, true).ok, false);
   });
-  test('mobilier prea mare (masa LANEBERG 130 cm) → DOES_NOT_FIT, blocat', () => {
-    const e = evaluateVariant(demo(), cat, mc, { tier: 'premium', title: '', summary: '', palette: [], selections: { masa: 'masa-2' }, finishes: {}, reasons: [] });
+  test('mobilier prea mare (masa Tonia 180 cm) → DOES_NOT_FIT, blocat', () => {
+    // a doua trecere de amenajare (core/furnish.ts) face loc pentru mesele de 120–130 cm din demo; masa de 180 × 90 cm
+    // (cu scaune: 3,1 × 2,1 m) nu încape în livingul de 4,4 × 4,2 m al șablonului cu 4 camere
+    const e = evaluateVariant(newSnapshot(cat, 'Design', 'three-bedroom'), cat, mc, { tier: 'premium', title: '', summary: '', palette: [], selections: { masa: 'masa-11' }, finishes: {}, reasons: [] });
     assert.ok(e.issues.some(i => i.code === 'DOES_NOT_FIT')); assert.equal(applyVariant(e, true).ok, false);
   });
   test('depășire de buget → WARNING; aplicarea cere confirmare', () => {

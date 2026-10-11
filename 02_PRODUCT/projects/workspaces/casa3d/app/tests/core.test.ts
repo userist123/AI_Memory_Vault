@@ -16,7 +16,9 @@ describe('amenajare automată în noul model', () => {
     for (const p of s.placements) assert.notEqual(severityOf(validatePlacement(s, cat, p)), 'ERROR', `${p.group}: ${JSON.stringify(validatePlacement(s, cat, p))}`);
   });
   test('LACUNA 5 reparată: motorul nu mai schimbă selecția utilizatorului', () => {
-    const s = demo(); assert.equal(s.selections.masa, 'masa-0');
+    // în demo masa aleasă încape acum (livingul e reorganizat ca TV-ul să nu stea la fereastră); în livingul de 4,4 × 4,2 m al
+    // șablonului cu 4 camere nu încape, deci motorul folosește altă variantă fără să schimbe selecția
+    const s = newSnapshot(cat, 'Test', 'three-bedroom'); assert.equal(s.selections.masa, 'masa-0');
     assert.notEqual(byGroup(s, 'masa').variantId, 'masa-0', 'varianta care încape e salvată pe plasare');
   });
   test('LACUNA 3 reparată: ID-urile pieselor sunt stabile (UUID salvat), nu depind de ordine', () => {
@@ -38,8 +40,9 @@ describe('validare (ERROR / WARNING)', () => {
     const iss = validatePlacement(s, cat, d); assert.ok(iss.some(i => i.code === 'WINDOW_BLOCKED' && i.severity === 'WARNING'), JSON.stringify(iss));
   });
   test('LACUNA 2 reparată: măsuța lipită de canapea → WARNING de circulație', () => {
-    const s = demo(), m = byGroup(s, 'masuta'), sofa = byGroup(s, 'canapea'), rs = resolve(cat, sofa.variantId)!;
-    Object.assign(m, { x: sofa.x, z: sofa.z - rs.d / 2 - .39 - .02, rotation: 0 });
+    // măsuța (78 cm adâncime) la 2 cm în fața canapelei, oricum ar fi orientată canapeaua (rotația 0 privește spre +z)
+    const s = demo(), m = byGroup(s, 'masuta'), sofa = byGroup(s, 'canapea'), rs = resolve(cat, sofa.variantId)!, k = rs.d / 2 + .39 + .02;
+    Object.assign(m, { x: sofa.x + Math.round(Math.sin(sofa.rotation)) * k, z: sofa.z + Math.round(Math.cos(sofa.rotation)) * k, rotation: sofa.rotation });
     assert.ok(validatePlacement(s, cat, m).some(i => i.code === 'CLEARANCE'));
   });
   test('dulap peste ușă → ERROR', () => { const s = demo(), d = byGroup(s, 'dulap'); Object.assign(d, { x: 3.2 + .6, z: 4.4, rotation: Math.PI / 2 }); assert.equal(severityOf(validatePlacement(s, cat, d)), 'ERROR'); });

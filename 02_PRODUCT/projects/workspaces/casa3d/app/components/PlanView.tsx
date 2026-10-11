@@ -154,8 +154,8 @@ export default function PlanView(p: Props){
     {/* etichetele camerelor deasupra mobilierului, cu contur de hârtie ca să rămână lizibile */}
     {floor.rooms.map(r => { const w = r.rect.x1 - r.rect.x0, d = r.rect.z1 - r.rect.z0, cx = (r.rect.x0 + r.rect.x1) / 2, cz = (r.rect.z0 + r.rect.z1) / 2;
       return (<g key={`lbl-${r.id}`} pointerEvents="none" stroke="#f6f3ee" strokeWidth={fs * .35} strokeLinejoin="round" paintOrder="stroke">
-        <text x={cx} y={cz - fs * .2} textAnchor="middle" fontSize={fs * 1.15} fontFamily="Newsreader, Georgia, serif" fill="#1E1C19">{r.name}</text>
-        <text x={cx} y={cz + fs * 1.1} textAnchor="middle" fontSize={fs * .78} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#766F66">{formatArea(area(r.rect), units, lang)} · {wl(w)}×{wl(d)}</text></g>); })}
+        <text x={cx} y={cz - fs * .2} textAnchor="middle" fontSize={fs * 1.15} fontFamily="Newsreader, Georgia, serif" fill="#1E1C19" stroke="#F6F3EE" strokeWidth={fs * .3} strokeLinejoin="round" paintOrder="stroke">{r.name}</text>
+        <text x={cx} y={cz + fs * 1.1} textAnchor="middle" fontSize={fs * .78} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#766F66" stroke="#F6F3EE" strokeWidth={fs * .3} strokeLinejoin="round" paintOrder="stroke">{formatArea(area(r.rect), units, lang)} · {wl(w)}×{wl(d)}</text></g>); })}
     {floor.walls.map(w => { const L = wallLength(w.a, w.b); if (L < .01) return null; const ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L, nx = -uz, nz = ux, sel = isSel('wall', w.id);
       const mid = [(w.a[0] + w.b[0]) / 2 + nx * (w.thickness / 2 + fs * .9), (w.a[1] + w.b[1]) / 2 + nz * (w.thickness / 2 + fs * .9)];
       return (<g key={w.id}>
@@ -167,7 +167,7 @@ export default function PlanView(p: Props){
                 // foaia deschisă (linie) și arcul de deschidere, de partea și cu balamaua alese
                 const Px = H[0] + sx * o.width, Pz = H[1] + sz * o.width, cr = (Px - H[0]) * (E[1] - H[1]) - (Pz - H[1]) * (E[0] - H[0]);
                 return <path d={`M${H[0]} ${H[1]} L${Px} ${Pz} A${o.width} ${o.width} 0 0 ${cr > 0 ? 1 : 0} ${E[0]} ${E[1]}`} fill="none" stroke="#3a352f" strokeWidth={.012} pointerEvents="none" />; })()}</g>); })}
-        <text x={mid[0]} y={mid[1] + fs * .3} textAnchor="middle" fontSize={fs * .78} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={sel ? '#8B6A45' : '#5E636B'} pointerEvents="none">{wl(L)}</text>
+        <text x={mid[0]} y={mid[1] + fs * .3} textAnchor="middle" fontSize={fs * .78} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={sel ? '#8B6A45' : '#5E636B'} stroke="#F6F3EE" strokeWidth={fs * .3} strokeLinejoin="round" paintOrder="stroke" pointerEvents="none">{wl(L)}</text>
         {sel && ([['a', w.a], ['b', w.b]] as const).map(([end, pt]) => <circle key={end} data-k="handle" data-w={w.id} data-end={end} data-id={w.id} cx={pt[0]} cy={pt[1]} r={fs * .6} fill="#fff" stroke="#8B6A45" strokeWidth={.03} style={{ cursor: 'grab' }} />)}
       </g>); })}
     {preview && <line x1={preview.a[0]} y1={preview.a[1]} x2={preview.b[0]} y2={preview.b[1]} stroke="#6E8798" strokeWidth={.15} strokeOpacity={.5} strokeDasharray=".1 .06" />}

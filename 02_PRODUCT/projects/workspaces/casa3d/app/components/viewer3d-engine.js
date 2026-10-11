@@ -27,13 +27,13 @@ export function createViewer(canvas, { onPick } = {}){
   const R = new THREE.WebGLRenderer({ canvas, antialias: true });
   R.setPixelRatio(Math.min(devicePixelRatio, 2)); R.outputEncoding = THREE.sRGBEncoding; R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = .78;
   R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap;
-  const scene = new THREE.Scene(); scene.background = new THREE.Color('#e9ebe7'); scene.fog = new THREE.Fog('#e9ebe7', 25, 60);
+  const scene = new THREE.Scene(); scene.background = new THREE.Color('#d9d3c8'); scene.fog = new THREE.Fog('#d9d3c8', 25, 60);
   const cam = new THREE.PerspectiveCamera(68, 1, .05, 200);
   // calitate înaltă: ocluzie ambientală (umbre de contact în colțuri și sub mobilă). Distanțele SSAO sunt în adâncime
   // normalizată la (far - near) = ~200 m: 0.0015 ≈ 0,3 m, 0.0001 ≈ 2 cm (sub atât, suprafețele plane s-ar umbri singure); raza nucleului e în metri.
   let quality = 'normal', composer = null, ssao = null, finish = null;
   function setupComposer(){ const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1; composer = new EffectComposer(R); composer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); composer.setSize(w, h);
-    ssao = new SSAOPass(scene, cam, w, h); ssao.kernelRadius = .3; ssao.minDistance = .0001; ssao.maxDistance = .0015; composer.addPass(ssao);
+    ssao = new SSAOPass(scene, cam, w, h); ssao.kernelRadius = .45; ssao.minDistance = .0001; ssao.maxDistance = .002; composer.addPass(ssao);
     finish = new ShaderPass(FinishShader); composer.addPass(finish); }
   // SSAOPass (r128) copiază proiecția camerei doar la creare și la setSize; o sincronizăm la fiecare cadru,
   // altfel umbrele de contact folosesc un aspect/fov vechi (după redimensionare sau în imaginile de export)
@@ -43,21 +43,21 @@ export function createViewer(canvas, { onPick } = {}){
   const pm = new THREE.PMREMGenerator(R); scene.environment = pm.fromScene(new RoomEnvironment(), .04).texture;
   // lumina de mediu dintr-un interior real (HDRI CC0, public/tex): reflexii și umbre moi credibile; până se încarcă rămâne camera sintetică
   try { new RGBELoader().setDataType(THREE.UnsignedByteType).load('/tex/lebombo_1k.hdr', t => { if (!alive) { t.dispose(); return; } const env = pm.fromEquirectangular(t).texture; t.dispose(); const old = scene.environment; scene.environment = env; old?.dispose?.(); }, undefined, () => {}); } catch { /* fără HDRI: rămâne mediul sintetic */ }
-  const hemi = new THREE.HemisphereLight(0xffffff, 0xcfc8bc, .22); scene.add(hemi);
+  const hemi = new THREE.HemisphereLight(0xfff6ea, 0x8f8272, .3); scene.add(hemi);
   let light = null; const interiorLights = []; // parametrii de iluminare primiți din core/lighting.ts
-  const sun = new THREE.DirectionalLight(0xfff3e2, 1.1); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12, near: 1, far: 50 }); sun.shadow.bias = -.0005; scene.add(sun, sun.target);
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), new THREE.MeshStandardMaterial({ color: '#dcdfd9', roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.position.y = -.02; ground.receiveShadow = true; scene.add(ground);
+  const sun = new THREE.DirectionalLight(0xfff0dc, 1.5); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12, near: 1, far: 50 }); sun.shadow.bias = -.0004; sun.shadow.normalBias = .03; sun.shadow.radius = 3; scene.add(sun, sun.target);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), new THREE.MeshStandardMaterial({ color: new THREE.Color('#b9afa0').convertSRGBToLinear(), roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.position.y = -.02; ground.receiveShadow = true; scene.add(ground);
   const lin = c => new THREE.Color(c).convertSRGBToLinear();
-  const M = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: lin(c), roughness: .75 }, o || {}));
+  const M = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: lin(c), roughness: .75, envMapIntensity: .7 }, o || {}));
   const tex = (w, h, draw) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d'), w, h); const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t; };
   const parquet = tex(512, 512, (g, w, h) => { const cols = ['#b88a5a', '#a97c4f', '#c29665', '#9f7248', '#b5855a'];
     for (let y = 0; y < h; y += 32) for (let x = -((y / 32) % 3) * 64; x < w; x += 192){ g.fillStyle = cols[(x / 64 + y / 32 * 7 & 7) % 5]; g.fillRect(x, y, 190, 30);
       for (let k = 0; k < 6; k++){ g.strokeStyle = 'rgba(70,40,20,.10)'; g.beginPath(); g.moveTo(x, y + 4 + k * 4.5); g.bezierCurveTo(x + 60, y + 2 + k * 4.5, x + 120, y + 8 + k * 4.5, x + 190, y + 4 + k * 4.5); g.stroke(); } } });
   const tiles = tex(512, 512, (g, w, h) => { g.fillStyle = '#b9bab5'; g.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 128) for (let x = 0; x < w; x += 128){ const v = 222 + (Math.random() * 12 | 0); g.fillStyle = `rgb(${v},${v - 1},${v - 4})`; g.fillRect(x + 2, y + 2, 124, 124); } });
   const plaster = plasterN ? { normalMap: plasterN, normalScale: new THREE.Vector2(.18, .18) } : {};
-  const wallMat = M('#f4f3ef', { roughness: .92, ...plaster }), extMat = M('#ecebe6', { roughness: .95 }), glass = new THREE.MeshPhysicalMaterial({ color: lin('#cfe3ee'), transparent: true, opacity: .28, roughness: .05, metalness: 0 });
-  const frameMat = M('#ffffff', { roughness: .5 }), ceilMat = M('#fbfbf9', { roughness: 1 });
-  const skirtMat = M('#f7f6f2', { roughness: .45 });
+  const wallMat = M('#ddd3c3', { roughness: .92, ...plaster }), extMat = M('#cdc3b3', { roughness: .95 }), glass = new THREE.MeshPhysicalMaterial({ color: lin('#cfe3ee'), transparent: true, opacity: .28, roughness: .05, metalness: 0 });
+  const frameMat = M('#f5f2ea', { roughness: .5 }), ceilMat = M('#f3efe7', { roughness: 1 });
+  const skirtMat = M('#efe9de', { roughness: .45 });
   // materiale pe culoare, cu cache: fețe de perete, tavane, rame (culorile vin din core/appearance.ts prin plan)
   const lookCache = {}; const lookMat = (kind, hex, rough) => lookCache[kind + hex] ||= M(hex, { roughness: rough, ...(kind === 'wall' ? plaster : {}) });
   const faceMat = (hex, ext) => hex ? lookMat('wall', hex, ext ? .95 : .92) : (ext ? extMat : wallMat);
@@ -667,15 +667,39 @@ function model(it){
     interiorLights.forEach(l => { l.intensity = p.interior; }); placeSun(); }
   // captură PNG: randează cadrul curent și îl citește imediat (fără preserveDrawingBuffer)
   function capture(){ draw(); return canvas.toDataURL('image/png'); }
+  // Cadrul de prezentare al unei camere: ochiul la ~1,5 m, FOV moderat, privirea spre piesele principale. Candidați: colțurile și pereții
+  // camerei; câștigă poziția din care intră cele mai multe piese principale (ponderate ca în tools/blender/casa3d_render.py:room_camera),
+  // fără o ușă (canat) mare în cadru și fără obiectivul într-o piesă sau lipit de ea.
+  const SHOT_KEY = { bucatarie: 3, pat: 3, canapea: 3, wc: 2.5, lavoar: 2.5, dus: 2, masa: 1.5, dulap: 1.5, frigider: 1, birou: 1.2, comodaTv: 1, pantofar: 1, oglinda: .8, biblioteca: .6, masuta: .8, noptiera: .4 };
+  function roomShot(r){ const cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2, EYE_Y = 1.5, FOV = 66, k = .32, asp = cam.aspect || 1.6;
+    const half = Math.atan(Math.tan(FOV * Math.PI / 360) * asp), inRoom = (x, z, e = .05) => x > r.x0 - e && x < r.x1 + e && z > r.z0 - e && z < r.z1 + e;
+    const its = (lastItems || []).filter(it => it.fp && inRoom((it.fp.x0 + it.fp.x1) / 2, (it.fp.z0 + it.fp.z1) / 2)), key = its.filter(it => SHOT_KEY[it.group] >= 1).map(it => ({ w: SHOT_KEY[it.group], f: it.fp, cx: (it.fp.x0 + it.fp.x1) / 2, cz: (it.fp.z0 + it.fp.z1) / 2 }));
+    const doors = plan.pereti.flatMap(w => { const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1; return w.goluri.filter(g => g.tip === 'usa').map(g => { const t = g.la + g.l / 2; return [w.a[0] + (w.b[0] - w.a[0]) / L * t, w.a[1] + (w.b[1] - w.a[1]) / L * t]; }); }).filter(d => inRoom(d[0], d[1], .3));
+    const cands = [], xs = [r.x0 + k, cx, r.x1 - k], zs = [r.z0 + k, cz, r.z1 - k]; xs.forEach(x => zs.forEach(z => { if (x !== cx || z !== cz) cands.push([x, z]); }));
+    [.25, .75].forEach(f => { const x = r.x0 + (r.x1 - r.x0) * f, z = r.z0 + (r.z1 - r.z0) * f; cands.push([x, r.z0 + k], [x, r.z1 - k], [r.x0 + k, z], [r.x1 - k, z]); });
+    const tooClose = ([x, z]) => its.some(it => x > it.fp.x0 - .3 && x < it.fp.x1 + .3 && z > it.fp.z0 - .3 && z < it.fp.z1 + .3) || doors.some(d => Math.hypot(d[0] - x, d[1] - z) < 1.1);
+    let pool = cands.filter(c => !tooClose(c)); if (!pool.length) pool = cands.filter(c => !its.some(it => c[0] > it.fp.x0 && c[0] < it.fp.x1 && c[1] > it.fp.z0 && c[1] < it.fp.z1)); if (!pool.length) pool = [[cx, cz]];
+    // zona din cadru pentru un punct: [înainte, unghi lateral] față de direcția privirii
+    const frame = (c, lx, lz, px, pz) => { const n = Math.hypot(lx, lz) || 1, fx = lx / n, fz = lz / n, dx = px - c[0], dz = pz - c[1], fwd = dx * fx + dz * fz; return { fwd, side: Math.abs(Math.atan2(dx * fz - dz * fx, fwd)) }; };
+    const aimsOf = c => { const out = [[cx + (cx - c[0]) * .35, cz + (cz - c[1]) * .35]]; if (key.length){ const ws = key.reduce((a, m) => a + m.w, 0); out.push([key.reduce((a, m) => a + m.w * m.cx, 0) / ws, key.reduce((a, m) => a + m.w * m.cz, 0) / ws]); key.forEach(m => out.push([m.cx, m.cz])); } return out; };
+    let best = null;
+    for (const c of pool) for (const t of aimsOf(c)){ const lx = t[0] - c[0], lz = t[1] - c[1], d0 = Math.hypot(lx, lz); if (d0 < 1.1) continue;
+      let sc = Math.min(d0, 5) * .5;
+      for (const m of key){ const pts = [[m.cx, m.cz], [m.f.x0, m.f.z0], [m.f.x1, m.f.z0], [m.f.x1, m.f.z1], [m.f.x0, m.f.z1]]; let seen = 0, near = false;
+        for (const q of pts){ const f = frame(c, lx, lz, q[0], q[1]); if (f.fwd > .45 && f.side < half * .92) seen++; if (f.fwd < 1.5) near = true; }
+        sc += m.w * seen / 5 - (near ? m.w * .8 : 0); }
+      for (const d of doors){ const f = frame(c, lx, lz, d[0], d[1]); if (f.fwd > .3 && f.fwd < 4 && f.side < half) sc -= 1.4 * (1 - f.side / half) + (f.side < half * .8 && f.fwd < 3.2 ? 4 : 0); }
+      // peretele din fața obiectivului: privirea să aibă adâncime (nu un perete lipit)
+      { const ux = lx / d0, uz = lz / d0, tx = ux > 1e-6 ? (r.x1 - c[0]) / ux : ux < -1e-6 ? (r.x0 - c[0]) / ux : 1e9, tz = uz > 1e-6 ? (r.z1 - c[1]) / uz : uz < -1e-6 ? (r.z0 - c[1]) / uz : 1e9; sc += Math.min(Math.min(tx, tz), 5) * .15; }
+      if (!best || sc > best.sc) best = { sc, c, t }; }
+    if (!best){ const c = pool[0]; best = { c, t: [r.x0 + r.x1 - c[0], r.z0 + r.z1 - c[1]] }; }
+    return { x: best.c[0], y: EYE_Y, z: best.c[1], tx: best.t[0], ty: .85, tz: best.t[1], fov: FOV }; }
   // imagini fixe pentru export: ansamblu (machetă) sau o cameră văzută din colțul ei cel mai liber, la înălțimea ochilor
   function renderView(view, w = 1200, h = 800){ if (!plan) return null;
     const prevMode = mode, prevSize = new THREE.Vector2(); R.getSize(prevSize); const prevAspect = cam.aspect;
     R.setSize(w, h, false); if (composer) composer.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix();
     if (view && view.roomId){ const r = plan.camere.find(x => x.id === view.roomId); if (!r){ R.setSize(prevSize.x, prevSize.y, false); if (composer) composer.setSize(prevSize.x, prevSize.y); cam.aspect = prevAspect; cam.updateProjectionMatrix(); return null; }
-      setMode('walk'); const inset = .35, corners = [[r.x0 + inset, r.z0 + inset], [r.x1 - inset, r.z0 + inset], [r.x1 - inset, r.z1 - inset], [r.x0 + inset, r.z1 - inset]];
-      const blocked = ([x, z]) => blockers.some(b => x > b.x0 - .2 && x < b.x1 + .2 && z > b.z0 - .2 && z < b.z1 + .2);
-      const pick = corners.find(c => !blocked(c)) || corners[0]; const opp = [r.x0 + r.x1 - pick[0], r.z0 + r.z1 - pick[1]];
-      cam.fov = 75; cam.updateProjectionMatrix(); cam.position.set(pick[0], 1.65, pick[1]); cam.lookAt(opp[0], .85, opp[1]);
+      setMode('walk'); const sh = roomShot(r); cam.fov = sh.fov; cam.updateProjectionMatrix(); cam.position.set(sh.x, sh.y, sh.z); cam.lookAt(sh.tx, sh.ty, sh.tz);
     } else { setMode('house'); const t = { th: -.7, ph: .85, r: Math.max(W, D, 4) * 1.25 };
       cam.position.set(C.x + Math.sin(t.th) * Math.sin(t.ph) * t.r, Math.cos(t.ph) * t.r, C.z + Math.cos(t.th) * Math.sin(t.ph) * t.r); cam.lookAt(C); }
     draw(); const url = canvas.toDataURL('image/png');

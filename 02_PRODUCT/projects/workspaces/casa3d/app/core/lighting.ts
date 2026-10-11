@@ -2,7 +2,7 @@
 export type TimeOfDay = 'day' | 'evening' | 'night';
 export interface LightingParams { background: string; hemi: number; sunColor: string; sun: number; interior: number; exposure: number; elevationDeg: number; azimuthDeg: number }
 const PRESETS: Record<TimeOfDay, Omit<LightingParams, 'azimuthDeg'>> = {
-  day: { background: '#e9ebe7', hemi: 0.22, sunColor: '#fff3e2', sun: 1.1, interior: 0.35, exposure: 0.78, elevationDeg: 50 },
+  day: { background: '#d9d3c8', hemi: 0.3, sunColor: '#fff0dc', sun: 1.5, interior: 0.35, exposure: 0.66, elevationDeg: 50 },
   evening: { background: '#e7d3c0', hemi: 0.12, sunColor: '#ffb070', sun: 0.7, interior: 0.6, exposure: 0.85, elevationDeg: 12 },
   night: { background: '#1b2029', hemi: 0.04, sunColor: '#9fb3d9', sun: 0.08, interior: 0.9, exposure: 1.0, elevationDeg: 35 },
 };

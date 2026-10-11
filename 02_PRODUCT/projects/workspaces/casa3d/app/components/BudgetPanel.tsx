@@ -28,6 +28,7 @@ export default function BudgetPanel({ snap, catalog, mc, out, onBudget }: { snap
   const roomName = (id: string | null) => id ? snap.floor.rooms.find(r => r.id === id)?.name || '' : t('budget.wholeHouse');
   const numIn = (v: string) => v.trim() === '' ? null : Math.max(0, Number(v.replace(',', '.')) || 0);
   const parts = [...Object.entries(b.categories).map(([k, v]) => [t(CAT_LABEL[k]!), v] as const), [t('budget.labor'), c.labor] as const, ...b.extras.map(e => [e.label, e.amount || 0] as const), [t('budget.contingencyPct', { pct: s.contingencyPct }), c.contingency] as const].filter(([, v]) => v > 0);
+  const maxPart = Math.max(1, ...parts.map(([, v]) => v));
   function csv(){
     const rows = [[t('budget.csv.category'), t('budget.csv.room'), t('budget.csv.item'), t('budget.csv.netQty'), t('budget.csv.unit'), t('budget.csv.waste'), t('budget.csv.orderedQty'), t('budget.csv.packs'), t('budget.csv.unitPrice', { cur }), t('budget.csv.total', { cur }), t('budget.csv.supplier'), t('budget.csv.source'), t('budget.csv.verified'), t('budget.csv.confidence')],
       ...b.items.map(i => [t(CAT_LABEL[i.category]!), roomName(i.roomId), i.label, i.netQty, i.unit, Math.round(i.wastePct * 100), i.orderedQty, i.packs != null ? `${i.packs} × ${i.packLabel}` : '', i.unitPrice ?? t('budget.csv.unknown'), i.total ?? t('budget.csv.unknown'), i.supplier, i.sourceUrl ?? '', i.verifiedAt ?? '', i.confidence]),
@@ -40,7 +41,7 @@ export default function BudgetPanel({ snap, catalog, mc, out, onBudget }: { snap
     {out?.disclosure && <div className="issue WARNING">{t('budget.affiliateNote')} <a href="/despre-linkuri" target="_blank">{t('budget.details')}</a></div>}
     <div className="bigtotal"><span>{t('budget.totalEstimated')}</span><b>{lei(c.total)}</b><small>{t('budget.rangeVat', { low: lei(b.scenarios.low.total), high: lei(b.scenarios.high.total), vat: lei(c.vat) })}</small></div>
     {b.target != null && <div className={`issue ${b.status === 'over' ? 'ERROR' : 'PASS'}`}>{b.status === 'over' ? t('budget.overTarget', { amount: lei(-b.diff!) }) : t('budget.underTarget', { amount: lei(b.diff!) })}</div>}
-    <div className="bars">{parts.map(([l, v]) => <div key={l} className="bar"><span>{l}</span><i style={{ width: `${Math.max(2, v / c.total * 100)}%` }} /><b className="mono">{lei(v)}</b></div>)}</div>
+    <div className="bars">{parts.map(([l, v]) => <div key={l} className="bar"><span>{l}</span><b className="mono">{lei(v)}</b><em className="track"><i style={{ width: `${Math.max(2, v / maxPart * 100)}%` }} /></em></div>)}</div>
     {(b.unknownLines.length > 0 || b.unknownItems.length > 0) && <div className="issue WARNING">{t('budget.excluded', { list: [...b.unknownLines.map(u => u.label), ...b.unknownItems].join(', ') })}</div>}
     <h4>{t('budget.settings')}</h4>
     <div className="grid2">
