@@ -34,6 +34,6 @@ test('se salvează lângă proiect, apare în listă, doar pentru proprietar, ș
   const row = (await repo.listProjects(A)).find((r: any) => r.id === id)!; assert.equal(row.status, 'execution'); assert.equal(row.client, 'Ana Pop'); assert.equal(row.dueDate, '2026-12-15');
   await assert.rejects(repo.saveMeta(B, id, { status: 'done' })); await assert.rejects(repo.saveMeta(A, id, { status: 'nu' }), (e: any) => e.status === 400);
   const link = await clientLink(A, id), shared = await resolveShare(link.token);
-  assert.ok(!JSON.stringify(shared).includes('0722'), 'telefonul clientului nu e pe linkul public');
+  assert.ok(!JSON.stringify(shared).includes('0722 123 456'), 'telefonul clientului nu e pe linkul public');   // numărul întreg: '0722' singur poate apărea întâmplător într-un id
   assert.ok(!('meta' in (shared.snapshot as any)));
 });
