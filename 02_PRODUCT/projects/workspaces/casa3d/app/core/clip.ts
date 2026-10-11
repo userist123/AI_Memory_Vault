@@ -26,7 +26,7 @@ function findProduct(node: any, depth = 0): any { if (!node || typeof node !== '
   if (Array.isArray(node)){ for (const n of node){ const p = findProduct(n, depth + 1); if (p) return p; } return null; }
   const t = node['@type']; if (t === 'Product' || (Array.isArray(t) && t.includes('Product'))) return node;
   for (const k of ['@graph', 'mainEntity', 'itemListElement', 'item']) if (node[k]){ const p = findProduct(node[k], depth + 1); if (p) return p; } return null; }
-const meta = (html: string, prop: string) => { const re = new RegExp(`<meta[^>]+(?:property|name)=["']${prop.replace(/[.:]/g, '\\$&')}["'][^>]*>`, 'i'), m = html.match(re)?.[0]; return m?.match(/content=["']([^"']*)["']/i)?.[1] ?? null; };
+const meta = (html: string, prop: string) => { const re = new RegExp(`<meta[^>]+(?:property|name)=["']${prop.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["'][^>]*>`, 'i'), m = html.match(re)?.[0]; return m?.match(/content=["']([^"']*)["']/i)?.[1] ?? null; };
 
 /** Produsul din pagină; null dacă pagina nu are nici măcar un nume de produs. */
 export function parseProductPage(html: string, url: string, shop: string): ClippedProduct | null {
