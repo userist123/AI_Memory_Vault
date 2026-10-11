@@ -2,6 +2,32 @@
 
 This file is the execution ledger for non-trivial Claude tasks.
 
+## Current task — Casa3D: professional studio redesign (2026-10-11)
+
+Owner request: "make the app as if built by a professional human developer to an interior designer's spec; it should not look AI-made".
+Owner decisions (AskUserQuestion): visual direction = editorial studio; scope = workflow by project stages.
+
+Diagnosis (screenshots of home, editor, room panel, tabs):
+- monospace labels/stats everywhere (developer look), long explanatory sentences in panels, generic centered landing;
+- 8 flat tabs with dev jargon ("Twin", "Consilier"), no notion of design phases;
+- finishes chosen from long text dropdowns (truncated product names) instead of visual swatches;
+- furniture on the plan drawn as labelled rectangles with brand names, not architectural symbols;
+- default browser selects, blue "SaaS" buttons, demo banner tone.
+
+Plan (each step: tsc + vitest + build + screenshots; no change to core calculations):
+- [ ] A. Design system: tokens (warm paper, ink, walnut accent, hairline rules), Newsreader (headings) + Instrument Sans (UI),
+      tabular numbers instead of mono, restyled buttons/inputs/selects/tabs/cards; print pack in the same identity.
+- [ ] B. Stage navigation in the editor: Releveu · Concept · Finisaje · Mobilier & lumini · Instalații · Planșe · Ofertă · Prezentare;
+      each stage sets the default view (plan / 3D), the visible tools and the side panel; existing panels reused, "Twin" folded
+      into Concept as "Variante", advisor checks shown where they apply.
+- [ ] C. MaterialPicker: swatch tiles (colour + pattern preview, name, brand, price/unit) replacing the long selects in finishes,
+      textiles, kitchen and bath.
+- [ ] D. Copy pass RO/EN: trade vocabulary, short labels, explanations moved to tooltips; no sentences inside forms.
+- [ ] E. Home = studio dashboard: project cards with plan thumbnails, "new project" from typologies with plan miniatures.
+- [ ] F. Plan: furniture as architectural symbols (bed, sofa, table+chairs, wardrobe, kitchen run, sanitary), dimension style.
+- [ ] G. Verification: full suite, build, screenshots of every stage at 1440 and 1280, independent design review, PC update.
+Risks: large UI diff touching Editor.tsx/FinishesPanel.tsx; e2e selectors in tests may depend on tab labels; keep i18n keys parity.
+
 ## Current task — Claude Code model router (cost-aware model/effort routing)
 
 Objective: give Claude Code (and its subagents) an explicit, testable policy for which
