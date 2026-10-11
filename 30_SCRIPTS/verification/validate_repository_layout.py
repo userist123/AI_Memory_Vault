@@ -15,7 +15,7 @@ NUMBERED_ROOTS = {
 }
 ROOT_ALLOWLIST = {
     "README.md", "README.en.md", "LICENSE", "AGENTS.md", "CLAUDE.md", "GEMINI.md", "pyproject.toml", ".gitignore", ".gitattributes",
-    ".editorconfig", ".env.example", ".pre-commit-config.yaml", ".gitleaks.toml", ".mcp.json", "pytest.ini",
+    ".editorconfig", ".env.example", ".pre-commit-config.yaml", ".gitleaks.toml", ".gitleaksignore", ".mcp.json", "pytest.ini",
     "requirements.txt", "requirements-memory-v6.txt", "cognitive_core", "scripts", "tests", "docs", "security",
     ".github", ".agents", ".claude-plugin", ".obsidian",
     # Claude Code project settings and the owner-authority PreToolUse hook.
