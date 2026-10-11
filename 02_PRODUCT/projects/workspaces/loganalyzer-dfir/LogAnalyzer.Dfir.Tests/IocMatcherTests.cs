@@ -33,8 +33,8 @@ public sealed class IocMatcherTests(ITestOutputHelper output) : IDisposable
         File.WriteAllText(p, """
             Type,Value,Context,Classification,Confidence,Source
             sha1,2832AD566FA1A3B12A70341F2D7B34422E76EDE0,bootstrap_7d57.cmd,DIRECT,HIGH,MPLog
-            path,C:\Users\user\AppData\Local\Conexant\CxUtilSvc Helper\,Loader directory,DIRECT,HIGH,fs
-            path,C:\Users\user\AppData\Local\Temp\6q5x6m*\6q5x6m*.msi,Random MSI drop,DIRECT,HIGH,MsiInstaller
+            path,C:\Users\Marius\AppData\Local\Conexant\CxUtilSvc Helper\,Loader directory,DIRECT,HIGH,fs
+            path,C:\Users\Marius\AppData\Local\Temp\6q5x6m*\6q5x6m*.msi,Random MSI drop,DIRECT,HIGH,MsiInstaller
             domain,tzd4is.cyou,landing domain,DIRECT,MEDIUM,history
             task,\orchestratormaintain,Persistence,DIRECT,HIGH,Defender
             ip,203.0.113.7,c2,DIRECT,LOW,pcap
@@ -52,11 +52,11 @@ public sealed class IocMatcherTests(ITestOutputHelper output) : IDisposable
         var events = new List<TimelineEvent>
         {
             E("pf", "", "", "", "", ("ReferencedFiles", @"\VOLUME{x}\WINDOWS\SYSTEM32\MSIEXEC.EXE|\VOLUME{x}\USERS\MARIUS\APPDATA\LOCAL\CONEXANT\CXUTILSVC HELPER\BOOTSTRAP_7D57.CMD")),
-            E("msi", path: @"C:\Users\user\AppData\Local\Temp\6q5x6mab\6q5x6mab.msi"),
+            E("msi", path: @"C:\Users\Marius\AppData\Local\Temp\6q5x6mab\6q5x6mab.msi"),
             E("visit", dns: "mailjilq.tzd4is.cyou"),
             E("amcache", hash: "2832ad566fa1a3b12a70341f2d7b34422e76ede0"),
             E("task", task: @"\orchestratormaintain"),
-            E("benign", path: @"C:\Users\user\AppData\Local\Temp\other\setup.msi", dns: "nottzd4is.cyou"),
+            E("benign", path: @"C:\Users\Marius\AppData\Local\Temp\other\setup.msi", dns: "nottzd4is.cyou"),
         };
         var r = m.MatchEvents(events).ToList();
 

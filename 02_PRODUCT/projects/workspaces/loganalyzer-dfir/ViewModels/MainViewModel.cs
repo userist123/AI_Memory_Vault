@@ -642,11 +642,11 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 Timestamp = baseDate,
                 Title = "Proces legitim lansat",
-                Description = "explorer.exe a fost lansat de către utilizator LAB-PC\\Marius",
+                Description = "explorer.exe a fost lansat de către utilizator MARIUS-PC\\Marius",
                 Category = "Proces",
                 Severity = "Informativ",
                 Source = "EDR",
-                UserOrHost = "LAB-PC\\Marius"
+                UserOrHost = "MARIUS-PC\\Marius"
             });
             TimelineItems.Add(new TimelineItem
             {
@@ -656,7 +656,7 @@ namespace LogAnalyzer.UI.ViewModels
                 Category = "Rețea",
                 Severity = "Informativ",
                 Source = "Sysmon Network",
-                UserOrHost = "LAB-PC\\Marius"
+                UserOrHost = "MARIUS-PC\\Marius"
             });
             TimelineItems.Add(new TimelineItem
             {
@@ -666,7 +666,7 @@ namespace LogAnalyzer.UI.ViewModels
                 Category = "Script",
                 Severity = "Avertizare",
                 Source = "PowerShell ScriptBlock (EID 4104)",
-                UserOrHost = "LAB-PC\\Marius"
+                UserOrHost = "MARIUS-PC\\Marius"
             });
             TimelineItems.Add(new TimelineItem
             {
@@ -2332,7 +2332,7 @@ namespace LogAnalyzer.UI.ViewModels
                 MachineName = Environment.MachineName,
                 ProviderName = "Microsoft-Windows-Security-Auditing",
                 TimeCreated = DateTime.Now,
-                Message = "An attempt was made to access an object.\nProcess Name: C:\\Users\\user\\AppData\\Local\\Temp\\stealc.exe (Lumma / Stealc Infostealer)\nObject Name: %LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Network\\Cookies (OAuth Session Tokens & MFA Bypass Cookies)\nAccess Request: ReadData / Extract SQLite DB"
+                Message = "An attempt was made to access an object.\nProcess Name: C:\\Users\\Marius\\AppData\\Local\\Temp\\stealc.exe (Lumma / Stealc Infostealer)\nObject Name: %LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Network\\Cookies (OAuth Session Tokens & MFA Bypass Cookies)\nAccess Request: ReadData / Extract SQLite DB"
             };
 
             TotalLiveEventsCaptured++;

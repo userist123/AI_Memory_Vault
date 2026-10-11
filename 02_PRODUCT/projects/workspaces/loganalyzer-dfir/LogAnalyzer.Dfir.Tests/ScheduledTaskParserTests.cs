@@ -29,7 +29,7 @@ public sealed class ScheduledTaskParserTests : IDisposable
         <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
           <RegistrationInfo>
             <Date>2026-09-19T17:58:12.5+03:00</Date>
-            <Author>LAB-PC\u</Author>
+            <Author>MARIUS-PC\u</Author>
             <URI>\orchestratormaintain</URI>
           </RegistrationInfo>
           <Triggers>

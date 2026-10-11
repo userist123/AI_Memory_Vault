@@ -64,7 +64,7 @@ public sealed class LnkParserTests : IDisposable
     public void Link_is_recognised_by_content()
     {
         var p = Path.Combine(_dir, "SETUP.EXE.lnk");
-        File.WriteAllBytes(p, BuildLnk(@"C:\Users\u\Downloads\TOOL_302044\SETUP.EXE", "", "", "LAB-PC"));
+        File.WriteAllBytes(p, BuildLnk(@"C:\Users\u\Downloads\TOOL_302044\SETUP.EXE", "", "", "marius-pc"));
         Assert.Equal("lnk", EvidenceFingerprint.Detect(p));
     }
 
@@ -72,7 +72,7 @@ public sealed class LnkParserTests : IDisposable
     public void Target_volume_arguments_times_and_machine_are_decoded()
     {
         var p = Path.Combine(_dir, "SETUP.EXE.lnk");
-        File.WriteAllBytes(p, BuildLnk(@"C:\Users\u\Downloads\TOOL_302044\SETUP.EXE", "/silent /x", @"C:\Users\u\Downloads\TOOL_302044", "LAB-PC"));
+        File.WriteAllBytes(p, BuildLnk(@"C:\Users\u\Downloads\TOOL_302044\SETUP.EXE", "/silent /x", @"C:\Users\u\Downloads\TOOL_302044", "marius-pc"));
         var sink = new ListSink();
         var r = new LnkParser().Parse(Item(p), p, sink, default);
 
@@ -89,7 +89,7 @@ public sealed class LnkParserTests : IDisposable
         Assert.Equal("FIXED", e.Fields["DriveType"]);
         Assert.Equal("1234ABCD", e.Fields["VolumeSerial"]);
         Assert.Equal("OS", e.Fields["VolumeLabel"]);
-        Assert.Equal("LAB-PC", e.Fields["MachineId"]);
+        Assert.Equal("marius-pc", e.Fields["MachineId"]);
     }
 
     [Fact]
