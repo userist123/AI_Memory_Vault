@@ -83,6 +83,8 @@ namespace LogAnalyzer.Infrastructure.Services
                 CREATE INDEX IF NOT EXISTS idx_events_eid ON Events(EventId);
                 CREATE INDEX IF NOT EXISTS idx_events_time ON Events(TimeCreated);
                 CREATE INDEX IF NOT EXISTS idx_reg_key ON RegistryArtifacts(KeyPath);
+                CREATE INDEX IF NOT EXISTS idx_timeline_time ON Timeline(Timestamp);
+                CREATE INDEX IF NOT EXISTS idx_events_machine ON Events(MachineName);
             ";
             command.ExecuteNonQuery();
         }
@@ -93,6 +95,23 @@ namespace LogAnalyzer.Infrastructure.Services
             var command = connection.CreateCommand();
             command.CommandText = "DELETE FROM Events; DELETE FROM RegistryArtifacts; DELETE FROM Timeline;";
             command.ExecuteNonQuery();
+            // give the freed pages back to the disk (senior review 2026-10-11: a cleared database stayed ~990 MB, 98.5 % empty pages)
+            command.CommandText = "VACUUM;";
+            command.ExecuteNonQuery();
+        }
+
+        /// <summary>
+        /// Compacts the database when more than half of it is empty pages and it is larger than 64 MB. Meant to run in the background after start-up;
+        /// returns the bytes given back to the disk (0 when nothing was done).
+        /// </summary>
+        public long CompactIfWasteful()
+        {
+            using var connection = OpenConnection();
+            long Pragma(string name) { using var c = connection.CreateCommand(); c.CommandText = "PRAGMA " + name + ";"; return Convert.ToInt64(c.ExecuteScalar()); }
+            long pages = Pragma("page_count"), free = Pragma("freelist_count"), size = Pragma("page_size");
+            if (pages == 0 || free * 2 < pages || pages * size < 64L * 1024 * 1024) return 0;
+            using (var v = connection.CreateCommand()) { v.CommandText = "VACUUM;"; v.ExecuteNonQuery(); }
+            return free * size;
         }
 
         public void SaveEvents(IEnumerable<ParsedEvent> events)

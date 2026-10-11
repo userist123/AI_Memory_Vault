@@ -661,6 +661,12 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 try
                 {
+                    try
+                    {
+                        var freed = _databaseService.CompactIfWasteful();
+                        if (freed > 0) Application.Current?.Dispatcher?.BeginInvoke(() => StatusMessage = $"Baza locală a fost compactată: {freed / (1024 * 1024)} MB eliberați pe disc.");
+                    }
+                    catch (Exception ex) when (ex is Microsoft.Data.Sqlite.SqliteException or IOException) { }
                     // queued at Background priority: the first frame of the window is drawn before the stored data is reloaded
                     Application.Current?.Dispatcher?.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
                     {
