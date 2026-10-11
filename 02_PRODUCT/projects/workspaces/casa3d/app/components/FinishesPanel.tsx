@@ -14,12 +14,16 @@ import { kitchenOf, kitchenRun, kitchenQuantities, kitchenIssues } from '@/core/
 import KitchenModules from './KitchenModules';
 import MaterialPicker from './MaterialPicker';
 import { bathOf, bathIssues, METAL_COLOR, TILE_ZONE_M } from '@/core/bath';
+import { groups } from '@/core/catalog';
 import { fixtureIssues, fixtureCount, FIXTURE_KINDS, FIXTURE_ANCHORS } from '@/core/fixtures';
 import { usePrefs } from '@/lib/prefs';
 
 const KINDS = Object.keys(FEATURE_CATEGORY) as WallFeatureKind[];
 
-export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish }: { room: Room; snap: Snapshot; cat: Catalog; mc: MaterialsCatalog; cur: string; onFinish(p: Partial<RoomFinishes>): void }){
+/** Piesele unei băi, în ordinea în care le alege un designer; fiecare se schimbă cu orice produs real din grupa ei. */
+const BATH_GROUPS = ['wc', 'lavoar', 'dus', 'cada', 'bideu', 'dulapOglinda', 'caloriferBaie', 'coloanaBaie', 'boiler'];
+
+export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish, onSwap, onAdd }: { room: Room; snap: Snapshot; cat: Catalog; mc: MaterialsCatalog; cur: string; onFinish(p: Partial<RoomFinishes>): void; onSwap?(placementId: string, variantId: string): void; onAdd?(variantId: string): void }){
   const { t, lang, units } = usePrefs();
   const f = finishesOf(snap, room), g = roomGeometry(snap, room), fl = floorOfRoom(snap, room.id), wet = room.type === 'baie' || room.type === 'bucatarie';
   const by = (...c: Material['category'][]) => mc.materials.filter(m => c.includes(m.category));
@@ -38,7 +42,8 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish }: { 
   const setK = (p: Partial<NonNullable<RoomFinishes['kitchen']>>) => onFinish({ kitchen: { ...(f.kitchen || {}), ...p } });
   const fxs = f.fixtures || [], fxIss = fixtureIssues(snap, cat, mc, room, f), setFx = (i: number, p: Partial<NonNullable<RoomFinishes['fixtures']>[number]>) => onFinish({ fixtures: fxs.map((x, k) => k === i ? { ...x, ...p } : x) });
   const FX_CATS = { pendant: ['pendant', 'lighting'], sconce: ['wall_light'], track: ['led_profile', 'spot'] } as const;
-  const bs = bathOf(f), bIss = bathIssues(snap, mc, room, f), setB = (p: Partial<NonNullable<RoomFinishes['bath']>>) => onFinish({ bath: { ...(f.bath || {}), ...p } });
+  const bathGroups = useMemo(() => groups(cat), [cat]);
+  const bs = bathOf(f), bIss = bathIssues(snap, mc, room, f, cat), setB = (p: Partial<NonNullable<RoomFinishes['bath']>>) => onFinish({ bath: { ...(f.bath || {}), ...p } });
   const treat = (id: string) => (f.windows || []).find(t => t.openingId === id) ?? { openingId: id };
   const setTreat = (id: string, p: Partial<WindowTreatment>) => onFinish({ windows: [...(f.windows || []).filter(t => t.openingId !== id), { ...treat(id), ...p }] });
   const sideLen = (s: WallFeature['side']) => formatLength(sideGeometry(fl, room, s).lengthM, units, lang);
@@ -139,9 +144,14 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish }: { 
       <div className="grid2">
         <label className="f"><span>{t('bath.metal')}</span><select value={bs.metal} onChange={e => setB({ metal: e.target.value as any })}>{Object.keys(METAL_COLOR).map(x => <option key={x} value={x}>{t(`bath.metal.${x}`)}</option>)}</select></label>
         <label className="f"><span>{t('bath.tileZone')}</span><select value={bs.tileZone} onChange={e => setB({ tileZone: e.target.value as any })}>{Object.keys(TILE_ZONE_M).map(x => <option key={x} value={x}>{t(`bath.tileZone.${x}`)}</option>)}</select></label>
-        <label className="f"><span>{t('bath.shower')}</span><select value={bs.showerType} onChange={e => setB({ showerType: e.target.value as any })}>{(['cabin', 'walkin'] as const).map(x => <option key={x} value={x}>{t(`bath.shower.${x}`)}</option>)}</select></label>
-        <label className="f"><span>{t('bath.wc')}</span><select value={bs.wc} onChange={e => setB({ wc: e.target.value as any })}>{(['floor', 'wall'] as const).map(x => <option key={x} value={x}>{t(`bath.wc.${x}`)}</option>)}</select></label>
       </div>
+      {onSwap && <div className="bath-pieces"><h5>{t('bath.pieces')}</h5>
+        {snap.placements.filter(p => p.roomId === room.id && BATH_GROUPS.includes(p.group)).map(p => { const vs = bathGroups[p.group]?.variants ?? [];
+          return <label key={p.id} className="f"><span>{bathGroups[p.group]?.label ?? p.group}</span><select value={p.variantId} onChange={e => onSwap(p.id, e.target.value)}>
+            {vs.map(v => { const o = cat.offers.find(x => x.variantId === v.id); return <option key={v.id} value={v.id}>{v.name}{o ? ` — ${formatMoney(o.price, cur, lang)}` : ''}</option>; })}</select></label>; })}
+        {onAdd && <div className="pcard-act">{BATH_GROUPS.filter(g => bathGroups[g] && !snap.placements.some(p => p.roomId === room.id && p.group === g)).map(g =>
+          <button key={g} className="btn" onClick={() => onAdd(bathGroups[g]!.variants[0]!.id)}>+ {bathGroups[g]!.label}</button>)}</div>}
+        <p className="prov">{t('bath.piecesNote')}</p></div>}
       <div className="grid2">
         <label className="f"><span>{t('bath.tap')}</span><MaterialPicker cur={cur} value={bs.tap || ''} options={by('bath_tap')} none={t('fin.none')} onChange={v => setB({ tap: v || null })} /></label>
         <label className="f"><span>{t('bath.showerSet')}</span><MaterialPicker cur={cur} value={bs.shower || ''} options={by('shower_set')} none={t('fin.none')} onChange={v => setB({ shower: v || null })} /></label>

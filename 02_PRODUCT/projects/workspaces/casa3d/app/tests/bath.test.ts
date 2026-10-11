@@ -48,9 +48,16 @@ test('validare', () => {
 });
 
 // regresie: dușul walk-in și WC-ul suspendat înlocuiesc piesele din catalog, nu se adaugă peste ele
-test('walk-in / WC suspendat: cabina și vasul pe pardoseală nu mai sunt plătite', () => {
-  const s = demo(), ids = (g: string) => s.placements.filter(p => p.roomId === 'baie' && p.group === g).map(p => p.id);
+test('piesele băii sunt produsele alese: devizul plătește exact peretele walk-in sau vasul suspendat ales, nu o setare generală', () => {
+  const s = set(demo(), { bath: { showerType: 'walkin', wc: 'wall' } }), ids = (g: string) => s.placements.filter(p => p.roomId === 'baie' && p.group === g).map(p => p.id);
   const plain = computeBOQ(s, cat, mc); assert.ok(ids('dus').every(id => plain.items.some(i => i.key === id)) && ids('wc').every(id => plain.items.some(i => i.key === id)));
-  const b = computeBOQ(set(demo(), { bath: { showerType: 'walkin', wc: 'wall' } }), cat, mc);
-  assert.ok(!b.items.some(i => ids('dus').includes(i.key) || ids('wc').includes(i.key))); assert.ok(b.unknown.some(u => /panou de sticlă/.test(u)) && b.unknown.some(u => /Vas WC suspendat/.test(u)));
+  assert.ok(!plain.unknown.some(u => /panou de sticlă|Vas WC suspendat/.test(u)));
+  // schimbarea produsului schimbă linia: perete walk-in Kadda, vas suspendat Cersanit Zen — cu prețul lor
+  const walk = cat.variants.find(v => v.style?.walkin)!, zen = cat.variants.find(v => /Zen S701/.test(v.name))!;
+  for (const p of s.placements){ if (p.group === 'dus') p.variantId = walk.id; if (p.group === 'wc') p.variantId = zen.id; }
+  const b = computeBOQ(s, cat, mc), line = (id: string) => b.items.find(i => i.key === id)!;
+  assert.match(line(ids('dus')[0]!).label, /walk-in/i); assert.match(line(ids('wc')[0]!).label, /Zen/); assert.ok(line(ids('wc')[0]!).total! > 0);
+  // notele de montaj vin din produs: cadru încastrat pentru vasul suspendat, pantă și rigolă pentru walk-in
+  const room = s.floor.rooms.find(r => r.id === 'baie')!, keys = bathIssues(s, mc, room, finishesOf(s, room), cat).map(i => i.key);
+  assert.ok(keys.includes('bath.walkin') && keys.includes('bath.wallFrame'));
 });

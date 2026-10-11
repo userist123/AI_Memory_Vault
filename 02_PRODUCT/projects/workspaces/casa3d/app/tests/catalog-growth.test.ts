@@ -51,3 +51,18 @@ test('repornirea pe o bază existentă adaugă produsele lipsă și prețurile m
   await q("update offers set price = 1500, verified_at = '2026-10-11' where id = 'offer-canapea-0'"); await reseedForTests();
   assert.equal(Number((await q("select price from offers where id = 'offer-canapea-0'")).rows[0].price), 1500);
 });
+test('baia completă (2026-10-11): cadă, bideu, walk-in, calorifer, coloană, dulap cu oglindă, boiler — cu model 3D, simbol, preț citit pe pagină', async () => {
+  const { planSymbol } = await import('../core/plan-symbols');
+  const { FRONT_CLEARANCE, WALL_HIGH } = await import('../core/rules');
+  const ev11 = (await import('../data/catalog-evidence.2026-10-11.json')).default as { items: { url: string; price: number }[] };
+  const g = groups(cat), eng = toEngineCatalog(cat);
+  for (const k of ['cada', 'bideu', 'caloriferBaie', 'coloanaBaie', 'dulapOglinda', 'boiler']){ assert.ok(g[k]!.variants.length >= 1, k); assert.ok(eng[k]!.model, k); assert.ok(FRONT_CLEARANCE[k] !== undefined, k);
+    const v = g[k]!.variants[0]!.dimensionsCm!; assert.ok(planSymbol(k, v.w / 100, v.d / 100).detail || planSymbol(k, v.w / 100, v.d / 100).outline, k); }
+  assert.ok(g['dus']!.variants.some(v => v.style?.walkin), 'perete walk-in în catalog');
+  // fiecare WC are montajul, rezervorul și forma vasului scrise pe produs (nu dintr-o setare a băii)
+  for (const v of g['wc']!.variants) assert.ok(['wall', 'floor'].includes(v.style.mount) && ['concealed', 'ceramic'].includes(v.style.cistern) && ['oval', 'square'].includes(v.style.shape), v.id);
+  // ofertele din 2026-10-11 au prețul citit pe pagina produsului
+  const byUrl = new Map(ev11.items.map(x => [x.url, x.price]));
+  for (const o of cat.offers) if (o.provenance.verifiedAt === '2026-10-11') assert.equal(byUrl.get(o.provenance.sourceUrl!), o.price, o.id);
+  assert.ok(WALL_HIGH.has('dulapOglinda') && WALL_HIGH.has('boiler'));
+});

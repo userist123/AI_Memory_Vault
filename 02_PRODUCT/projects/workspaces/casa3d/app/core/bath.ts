@@ -1,6 +1,6 @@
 // Baia ca sistem: aceleași armături peste tot (crom, negru mat, alamă, gun metal), duș walk-in sau cabină, WC suspendat sau pe
 // pardoseală, faianța până la 1,2 m / 2,1 m / tavan, calorifer port-prosop și oglindă cu LED.
-import type { BathSpec, MaterialsCatalog, Room, RoomFinishes, Snapshot } from './types';
+import type { BathSpec, Catalog, MaterialsCatalog, Room, RoomFinishes, Snapshot } from './types';
 import { materialOf } from './finishes';
 
 export const METAL_COLOR: Record<NonNullable<BathSpec['metal']>, string> = { chrome: '#cfcfcf', black: '#1c1c1c', brass: '#b08d57', gunmetal: '#55585c' };
@@ -12,10 +12,12 @@ export const bathOf = (f: RoomFinishes) => ({ metal: 'chrome' as const, showerTy
 export const bathTileHeight = (f: RoomFinishes): number | undefined => TILE_ZONE_M[bathOf(f).tileZone];
 
 export interface BathIssue { key: string; roomId: string; vars?: Record<string, string | number> }
-export function bathIssues(snap: Snapshot, mc: MaterialsCatalog, room: Room, f: RoomFinishes): BathIssue[] {
+export function bathIssues(snap: Snapshot, mc: MaterialsCatalog, room: Room, f: RoomFinishes, cat?: Catalog): BathIssue[] {
   if (room.type !== 'baie' || !f.bath) return []; const b = bathOf(f), out: BathIssue[] = [], hasShower = snap.placements.some(p => p.roomId === room.id && p.group === 'dus');
-  if (b.showerType === 'walkin') out.push({ key: 'bath.walkin', roomId: room.id });
-  if (b.wc === 'wall') out.push({ key: 'bath.wallFrame', roomId: room.id });
+  // cu catalogul, notele vin din produsele alese (perete walk-in, vas suspendat); fără el, din preferința băii
+  const styleOf = (g: string) => snap.placements.filter(p => p.roomId === room.id && p.group === g).map(p => (cat?.variants.find(v => v.id === p.variantId)?.style ?? {}) as Record<string, unknown>);
+  if (cat ? styleOf('dus').some(s => s.walkin) : b.showerType === 'walkin') out.push({ key: 'bath.walkin', roomId: room.id });
+  if (cat ? styleOf('wc').some(s => s.mount === 'wall') || styleOf('bideu').some(s => s.mount === 'wall') : b.wc === 'wall') out.push({ key: 'bath.wallFrame', roomId: room.id });
   if (hasShower && b.tileZone === 'h120') out.push({ key: 'bath.tileLow', roomId: room.id });
   const m = materialOf(mc, b.mirror), ip = m?.specs?.ip ? Number(m.specs.ip.replace(/\D/g, '').slice(-1)) : null; if (m && ip != null && ip < 4) out.push({ key: 'bath.mirrorIp', roomId: room.id, vars: { ip: m.specs!.ip! } });
   for (const id of [b.tap, b.shower]){ const m = materialOf(mc, id), fin = m?.specs?.finish; if (m && fin && !METAL_FINISH[b.metal].test(fin)) out.push({ key: 'bath.metalMismatch', roomId: room.id, vars: { finish: fin } }); }

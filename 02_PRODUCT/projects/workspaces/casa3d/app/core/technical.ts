@@ -77,6 +77,10 @@ export function suggestTechPoints(snap: Snapshot): TechPoint[] {
         case 'lavoar': add('water_cold', room, w, 'lavoar'); add('water_hot', room, w, 'lavoar'); add('drain', room, w, 'lavoar'); add('outlet', room, w, 'lângă oglindă (protejată la umezeală)', 1.2); break;
         case 'wc': add('water_cold', room, w, 'rezervor WC', 0.2); add('drain', room, w, 'WC', 0.1); break;
         case 'dus': add('water_cold', room, w, 'baterie duș', 1.1); add('water_hot', room, w, 'baterie duș', 1.1); add('drain', room, w, 'sifon duș', 0); break;
+        case 'cada': add('water_cold', room, w, 'baterie cadă', 0.75); add('water_hot', room, w, 'baterie cadă', 0.75); add('drain', room, w, 'sifon cadă', 0); break;
+        case 'bideu': add('water_cold', room, w, 'bideu', 0.2); add('water_hot', room, w, 'bideu', 0.2); add('drain', room, w, 'bideu', 0.1); break;
+        case 'boiler': add('outlet', room, w, 'boiler (circuit propriu, protejat la umezeală)', 1.8); add('water_cold', room, w, 'intrare boiler', 1.2); add('water_hot', room, w, 'ieșire boiler', 1.2); break;
+        case 'caloriferBaie': add('outlet', room, w, 'calorifer electric port-prosop (protejat la umezeală)', 0.3); break;
       } }
     // completează până la minimul uzual pe tipul camerei, pe pereți, la distanță de cele existente
     const outlets = () => out.filter(t => t.roomId === room.id && (t.kind === 'outlet' || t.kind === 'outlet_double')).length, need = MIN_OUTLETS[room.type] ?? 1;

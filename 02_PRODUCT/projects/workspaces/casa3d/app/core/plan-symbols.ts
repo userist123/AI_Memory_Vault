@@ -50,6 +50,13 @@ export function planSymbol(group: string, w: number, d: number, chairs = 4): Pla
     case 'lavoar': { parts.push(ellipse(0, Y * .15, X * .7, Y * .55), circle(0, -Y + .07, .02)); return { outline: fmt(rrect(-X, -Y, X, Y, .04)), detail: fmt(parts.join('')) }; }
     case 'wc': { const tank = Math.min(.18, d * .3); parts.push(rect(-X, -Y, X, -Y + tank), ellipse(0, -Y + tank + (d - tank) / 2, X * .82, (d - tank) / 2 - .01));
       return { outline: '', detail: fmt(parts.join('')) }; }
+    case 'cada': { // cada: marginea și cuva rotunjită, sifonul la capăt
+      parts.push(rrect(-X + .07, -Y + .07, X - .07, Y - .07, Math.min(.25, Y * .7)), circle(-X + .2, 0, .025));
+      return { outline: fmt(rrect(-X, -Y, X, Y, .04)), detail: fmt(parts.join('')) }; }
+    case 'bideu': { parts.push(ellipse(0, Y * .1, X * .8, Y * .8), circle(0, -Y + .08, .02)); return { outline: '', detail: fmt(parts.join('')) }; }
+    case 'dulapOglinda': case 'boiler': // pe perete, deasupra altor piese: doar conturul punctat
+      return { outline: '', detail: fmt(box), fill: 'none' };
+    case 'caloriferBaie': return { outline: fmt(box), detail: '' };
     case 'birou': return { outline: fmt(box), detail: fmt(line(-X, Y - .03, X, Y - .03)) };
     case 'scaunBirou': { const r = Math.min(X, Y); parts.push(circle(0, .03, r * .78), `M${-r * .7} ${-r * .55}Q0 ${-r * 1.05} ${r * .7} ${-r * .55}`); return { outline: '', detail: fmt(parts.join('')) }; }
     case 'oglinda': return { outline: fmt(box), detail: '' };
