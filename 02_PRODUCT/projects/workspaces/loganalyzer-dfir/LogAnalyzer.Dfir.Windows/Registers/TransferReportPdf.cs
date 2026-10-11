@@ -16,7 +16,7 @@ namespace LogAnalyzer.Dfir.Windows.Registers;
 public static class TransferReportPdf
 {
     public static void Write(string path, TransferRegister register, IReadOnlyList<TransferFinding> findings, ReportHeaderProfile header, string marking, bool isolated,
-                             DateTime? from = null, DateTime? to = null)
+                             DateTime? from = null, DateTime? to = null, TransferVerification? verification = null)
     {
         QuestPDF.Settings.License = LicenseType.Community;
         var rows = register.Rows.Where(r => !TransferRegister.TryDateTime(r.DateTime, out var d) || ((from is null || d >= from) && (to is null || d <= to)))
@@ -73,6 +73,22 @@ public static class TransferReportPdf
                 col.Item().PaddingTop(4).Text("Verificări automate").Bold().FontSize(9.5f);
                 if (findings.Count == 0) col.Item().Text("Fiecare transfer a folosit un mediu din registrul de medii, activ și valabil, cu nivel cel puțin egal cu al conținutului.");
                 foreach (var f in findings) col.Item().Text($"• {f.RegistrationNumber}: {f.Message}").FontColor(f.IsError ? "#b91c1c" : "#92400e");
+
+                if (verification is not null)
+                {
+                    col.Item().PaddingTop(8).Text("Anexă — verificarea transferului după conținut").Bold().FontSize(9.5f);
+                    col.Item().Text(verification.SummaryText).FontSize(8);
+                    col.Item().Text($"Efectuată la {verification.StartedUtc.ToLocalTime():yyyy-MM-dd HH:mm} de {LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified}. Suportul a fost citit doar pentru citire; nu a fost modificat.").FontSize(7).FontColor("#4b5563");
+                    foreach (var d in verification.Declared)
+                        col.Item().Text($"• [{d.StatusText}] {d.Text}").FontColor(d.IsProblem ? "#b91c1c" : "#111827");
+                    if (verification.UnlistedChecked)
+                    {
+                        col.Item().PaddingTop(2).Text("Fișiere de pe suport care nu apar în niciun transfer declarat").Bold();
+                        if (verification.Unlisted.Count == 0) col.Item().Text("Niciunul.");
+                        foreach (var u in verification.Unlisted.Take(200)) col.Item().Text($"• {u.RelativePath} · {u.Sha256}").FontColor("#92400e").FontSize(7.5f);
+                        if (verification.Unlisted.Count > 200) col.Item().Text($"… și încă {verification.Unlisted.Count - 200}.").FontSize(7.5f);
+                    }
+                }
 
                 col.Item().PaddingTop(28).Row(rw =>
                 {

@@ -22,6 +22,9 @@ namespace LogAnalyzer.UI.ViewModels
         public string TimeText => TimeUtc.ToLocalTime().ToString("HH:mm:ss");
     }
 
+    /// <summary>Result line of the quick check of one inserted removable volume, shown on the medium card.</summary>
+    public sealed record MediumCheckLine(string Device, string Text, bool Suspicious);
+
     /// <summary>
     /// "Medii de stocare" (owner 2026-10-11: „ceva viu ca la Endpoint Protector”): what is connected now, every device the station knows with all its
     /// data compared with the media register, a live feed with an alert when an unregistered medium is connected, and the Windows protections.
@@ -81,9 +84,43 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (_activated) return;
             _activated = true;
-            _ = RefreshAsync();
+            _ = RefreshThenInspectAsync();
             StartLive();
         }
+
+        // ---- inspection of an inserted stick (research 2026-10-12, item 4): read-only, root + one level --------------------------------
+
+        public ObservableCollection<MediumCheckLine> MediumChecks { get; } = new();
+        private readonly HashSet<string> _inspected = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>Checks every removable volume connected now that has not been checked yet (<paramref name="force"/> = all); raises the live alert on anything suspicious.</summary>
+        public async Task InspectConnectedAsync(bool force = false)
+        {
+            foreach (var a in ConnectedNow.Where(a => a.Device.Kind is DeviceKind.UsbStorage or DeviceKind.MemoryCard).ToList())
+            {
+                var letter = a.Device.DriveLetters.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(l => l.Length == 2 && l[1] == ':');
+                if (letter is null) continue;
+                var key = a.Device.InstanceId + "|" + letter;
+                if (!force && !_inspected.Add(key)) continue;
+                _inspected.Add(key);
+                var label = a.Device.VolumeLabel;
+                var result = await Task.Run(() => RemovableMediaInspector.Inspect(letter + "\\", label));
+                var line = new MediumCheckLine(a.Device.DisplayName, result.Text, result.IsSuspicious);
+                var old = MediumChecks.FirstOrDefault(m => m.Device == line.Device);
+                if (old is not null) MediumChecks.Remove(old);
+                MediumChecks.Add(line);
+                Log(new LiveDeviceEntry(DateTimeOffset.UtcNow, "verificare suport", a.Device.DisplayName, a.Device.Serial, result.Text, result.IsSuspicious));
+                if (result.IsSuspicious)
+                {
+                    AlertText = $"ATENȚIE {DateTime.Now:HH:mm:ss}: pe „{a.Device.DisplayName}” ({letter}) s-au găsit semne suspecte: {string.Join("; ", result.Findings.Take(5).Select(f => f.Message))}. Nu deschideți nimic de pe suport; anunțați responsabilul de securitate.";
+                    System.Media.SystemSounds.Exclamation.Play();
+                }
+            }
+        }
+
+        [RelayCommand] private Task InspectMedia() => InspectConnectedAsync(force: true);
+
+        private async Task RefreshThenInspectAsync() { await RefreshAsync(); await InspectConnectedAsync(); }
 
         private Task? _running;
 
@@ -196,6 +233,7 @@ namespace LogAnalyzer.UI.ViewModels
                 if (match is not null) used.Add(match.Device.InstanceId);
                 AddFeed(p, match);
             }
+            if (batch.Any(p => p.Arrived)) await InspectConnectedAsync();
         }
 
         private void AddFeed(DeviceChange c, DeviceAssessment? a)
