@@ -275,7 +275,7 @@
                     </Grid>
                 </DockPanel>
             </TabItem>
-            <TabItem Header="Anti-forensics" Style="{StaticResource InspectorTabItemStyle}">
+            <TabItem Header="Ascunderea sau ștergerea urmelor" Style="{StaticResource InspectorTabItemStyle}">
                 <DataGrid AutomationProperties.Name="Verificări anti-forensics" Margin="8" ItemsSource="{Binding AntiForensics}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="55"/>
@@ -319,8 +319,8 @@
                     <TextBlock Text="{Binding RemoteStatus}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/>
                 </StackPanel>
             </TabItem>
-            <TabItem Header="Goluri de probă" Style="{StaticResource InspectorTabItemStyle}">
-                <TextBox AutomationProperties.Name="Goluri de probă" Margin="8" Text="{Binding GapsText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+            <TabItem Header="Surse lipsă sau incomplete" Style="{StaticResource InspectorTabItemStyle}">
+                <TextBox AutomationProperties.Name="Surse lipsă sau incomplete" Margin="8" Text="{Binding GapsText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
                          Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="12"/>
             </TabItem>
         </TabControl>

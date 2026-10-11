@@ -160,7 +160,7 @@ public sealed class HashChain(string path)
             chained++; expectSeq = seq + 1; expectPrev = hash;
         }
         if (chained == 0 && legacy > 0) return new(name, ChainStatus.Legacy, 0, legacy, null, "", LegacyMessage);
-        var msg = legacy > 0 ? $"{chained} intrări verificate; {legacy} linii anterioare: {LegacyMessage}" : $"{chained} intrări verificate";
+        var msg = legacy > 0 ? $"{LogAnalyzer.Dfir.Language.RoText.Count(chained, "intrare", "intrări")} verificate; {legacy} linii anterioare: {LegacyMessage}" : $"{LogAnalyzer.Dfir.Language.RoText.Count(chained, "intrare", "intrări")} verificate";
         return new(name, ChainStatus.Valid, chained, legacy, null, "", msg);
     }
 

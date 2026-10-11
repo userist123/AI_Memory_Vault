@@ -87,7 +87,7 @@ public sealed class RawRegistry
         if (count > 0)
         {
             var list = Cell(BinaryPrimitives.ReadInt32LittleEndian(key.AsSpan(0x28)));
-            if ((long)count * 4 > list.Length) throw new InvalidDataException($"Lista de valori ({count} intrări) depășește celula ({list.Length} octeți).");
+            if ((long)count * 4 > list.Length) throw new InvalidDataException($"Lista de valori ({LogAnalyzer.Dfir.Language.RoText.Count(count, "intrare", "intrări")}) depășește celula ({list.Length} octeți).");
             for (int i = 0; i < count; i++)
             {
                 var vk = Cell(BinaryPrimitives.ReadInt32LittleEndian(list.AsSpan(i * 4)));
@@ -127,7 +127,7 @@ public sealed class RawRegistry
         if (sig is not ("lf" or "lh" or "li" or "ri")) throw new InvalidDataException($"Listă de subchei necunoscută: {sig}");
         int n = BinaryPrimitives.ReadUInt16LittleEndian(l.AsSpan(2));
         int stride = sig is "lf" or "lh" ? 8 : 4;
-        if (4 + (long)n * stride > l.Length) throw new InvalidDataException($"Lista „{sig}” declară {n} intrări, dar celula 0x{listOffset:X} are doar {l.Length} octeți.");
+        if (4 + (long)n * stride > l.Length) throw new InvalidDataException($"Lista „{sig}” declară {LogAnalyzer.Dfir.Language.RoText.Count(n, "intrare", "intrări")}, dar celula 0x{listOffset:X} are doar {l.Length} octeți.");
         for (int i = 0; i < n; i++)
         {
             int off = BinaryPrimitives.ReadInt32LittleEndian(l.AsSpan(4 + i * stride));

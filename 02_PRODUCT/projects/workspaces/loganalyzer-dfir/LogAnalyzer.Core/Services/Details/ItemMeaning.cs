@@ -107,7 +107,7 @@ namespace LogAnalyzer.Core.Services.Details
             foreach (var n in DoProps) if (P(n) is { Length: > 0 } d) into.Add($"Ce faceți: {d}");
             if (t.Name is "CorrelatedProcessNode" && P("IsSuspicious") == "True") into.Add("Procesul a fost marcat ca suspect; motivul este scris mai sus. Arătați-l unui specialist înainte de orice acțiune.");
             if (t.Name is "AptActorProfile") into.Add("Ce faceți: nimic pe baza asemănării singure; folosiți-o doar ca indiciu pentru ce să mai căutați.");
-            if (t.Name is "ProvenanceLedgerEntry") into.Add("Ce faceți: nimic; intrarea este o dovadă a ce s-a făcut cu proba. Verificarea lanțului se face din pagina „Istoricul probei”.");
+            if (t.Name is "ProvenanceLedgerEntry") into.Add("Ce faceți: nimic; intrarea este o dovadă a ce s-a făcut cu proba. Verificarea lanțului se face din pagina „Lanțul de custodie”.");
 
             if (into.Count == 0)
                 into.Add($"Acest element ({t.Name}) nu are încă o explicație scrisă în aplicație. Valorile lui sunt în fila „Toate câmpurile”.");
@@ -169,7 +169,7 @@ namespace LogAnalyzer.Core.Services.Details
             ["T1048"] = "scoaterea datelor printr-un protocol neobișnuit",
             ["T1052"] = "scoaterea datelor pe un suport fizic (de exemplu stick USB)",
             ["T1052.001"] = "scoaterea datelor pe un stick USB",
-            ["T1053"] = "pornirea automată a unui program prin task programat",
+            ["T1053"] = "pornirea automată a unui program prin activitate planificată",
             ["T1053.002"] = "pornirea unui program la o oră fixă prin comanda „at”",
             ["T1053.005"] = "pornirea automată a unui program prin Task Scheduler",
             ["T1055"] = "ascunderea codului în alt proces care rulează",

@@ -138,7 +138,7 @@ public static class Checks
             {
                 var lo = first - o.WindowTolerance; var hi = last + o.WindowTolerance;
                 if (!known.Any(x => (lo is null || x.Time >= lo) && (hi is null || x.Time <= hi)))
-                    bad.Add($"evenimentul {r.Ref.EvidenceId} {r.Ref.Locator} ({Ids(known.Select(x => T(x.Time!.Value)).Distinct())}) iese din fereastra revendicată [{(first is { } fv ? T(fv) : "…")} – {(last is { } lv ? T(lv) : "…")}]");
+                    bad.Add($"evenimentul {r.Ref.EvidenceId} {r.Ref.Locator} ({Ids(known.Select(x => T(x.Time!.Value)).Distinct())}) iese din intervalul declarat [{(first is { } fv ? T(fv) : "…")} – {(last is { } lv ? T(lv) : "…")}]");
             }
         }
         if (bad.Count > 0 && facts.ManipulatedWindows.Count > 0)
@@ -152,7 +152,7 @@ public static class Checks
             var hit = lo is { } a0 && hi is { } b0 ? facts.ManipulatedWindows.Where(w => a0 <= w.End && b0 >= w.Start).ToList() : [];
             if (hit.Count > 0)
                 return CheckResult.Unknown(CheckIds.Temporal,
-                    "Ceasul sistemului nu e de încredere în intervalul acestei constatări (" + string.Join("; ", hit.Take(3).Select(w => $"{w.Kind} {T(w.Start)} – {T(w.End)}: {w.Description}")) +
+                    "Ceasul sistemului nu este de încredere în intervalul acestei constatări (" + string.Join("; ", hit.Take(3).Select(w => $"{w.Kind} {T(w.Start)} – {T(w.End)}: {w.Description}")) +
                     "): ordinea în timp nu se poate judeca; ar fi fost semnalat: " + string.Join("; ", bad.Distinct()) + ".", bad.Concat(unknown));
         }
         if (bad.Count > 0) return CheckResult.Fail(CheckIds.Temporal, StandardState.Contradicted, "Încălcări de ordine în timp: " + string.Join("; ", bad.Distinct()) + ".", bad.Concat(unknown));

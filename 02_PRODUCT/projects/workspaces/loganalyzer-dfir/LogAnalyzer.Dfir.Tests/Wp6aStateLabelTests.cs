@@ -20,15 +20,15 @@ public class Wp6aStateLabelTests
     }
 
     [Theory]
-    [InlineData(Classification.Direct, "Observat")]
-    [InlineData(Classification.Correlated, "Corelat")]
-    [InlineData(Classification.Candidate, "Deducție")]
-    [InlineData(Classification.Unproven, "Nedemonstrat")]
-    [InlineData(Classification.BenignKnown, "Observat")]
+    [InlineData(Classification.Direct, "Observată direct")]
+    [InlineData(Classification.Correlated, "Asociată (în timp sau cale)")]
+    [InlineData(Classification.Candidate, "Indiciu – de confirmat")]
+    [InlineData(Classification.Unproven, "Nedemonstrată")]
+    [InlineData(Classification.BenignKnown, "Observată direct")]
     public void A_classification_is_shown_through_the_same_mapping_as_the_finding_state(Classification c, string label)
     {
         Assert.Equal(label, StateLabels.ForClassification(c));
-        Assert.Equal(StateLabels.Romanian(FindingContract.StatusFor(c)), StateLabels.ForClassification(c));
+        if (c != Classification.Candidate) Assert.Equal(StateLabels.Romanian(FindingContract.StatusFor(c)), StateLabels.ForClassification(c));   // a candidate is shown as "indiciu – de confirmat", not as the state "dedusă"
     }
 
     [Fact]
@@ -39,7 +39,7 @@ public class Wp6aStateLabelTests
         var b = g.Add("File", @"C:\t\b.exe");
         g.LinkStored(a, RelationType.DerivedFrom, b, Timestamp.Unknown(), "EV-1", "row=1", "derivat din test", Classification.Candidate, Confidence.Low, "test");
         var row = Assert.Single(GraphExplorer.EdgesOf(g, a.Id));
-        Assert.Equal("Deducție", row.Classification);
+        Assert.Equal("Indiciu – de confirmat", row.Classification);
     }
 
     [Fact]
@@ -54,11 +54,11 @@ public class Wp6aStateLabelTests
     }
 
     [Fact]
-    public void The_verification_line_shown_to_the_operator_uses_the_romanian_labels_and_keeps_the_spec_name()
+    public void The_verification_line_shown_to_the_operator_uses_the_romanian_labels_and_the_spec_codes_only_live_in_the_report_legend()
     {
         var counts = LogAnalyzer.Verification.VerificationReport.CountVerdicts([StandardState.Verified, StandardState.Unproven, StandardState.Unproven, StandardState.Rejected]);
         var line = LogAnalyzer.Verification.VerificationReport.LineRomanian(counts);
-        Assert.Equal("Verificare: 1 Verificat (VERIFIED), 2 Nedemonstrat (UNPROVEN), 1 Respins (REJECTED)", line);
+        Assert.Equal("Verificare: 1 coroborată, 2 nedemonstrate, 1 respinsă", line);
         Assert.Equal("Verificare: nicio constatare de verificat", LogAnalyzer.Verification.VerificationReport.LineRomanian(LogAnalyzer.Verification.VerificationReport.CountVerdicts([])));
     }
 }

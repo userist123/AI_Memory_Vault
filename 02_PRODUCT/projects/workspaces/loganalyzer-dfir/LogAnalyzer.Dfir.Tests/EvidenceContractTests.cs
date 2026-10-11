@@ -138,7 +138,7 @@ public sealed class EvidenceContractTests : IDisposable
         Assert.DoesNotContain("nu mai pot fi atribuite", check.Banner);
         Assert.Contains("fișier gol sau format neașteptat", check.Banner);
         Assert.Contains("amprenta este intactă", check.Banner);
-        Assert.Contains("proba nu a fost interpretată", check.Banner);
+        Assert.Contains("elementul de probă nu a fost interpretat", check.Banner);
 
         var gap = Assert.Single(r.Gaps, g => g.Artifact == Path.GetFileName(ev.StoredPath));
         Assert.DoesNotContain("nu provină din sursa achiziționată", gap.Impact);

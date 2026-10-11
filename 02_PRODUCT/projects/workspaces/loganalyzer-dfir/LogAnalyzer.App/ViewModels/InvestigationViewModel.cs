@@ -367,7 +367,7 @@ namespace LogAnalyzer.UI.ViewModels
                 $"{Environment.NewLine}  Legătură: {f.Sequence?.Link}{Environment.NewLine}  Constatări componente: {string.Join(", ", f.RelatedFindingIds)}"));
             RegisterLine = _result.RegisterLine;
             AirGapSummary = AirGapFindings.Count == 0
-                ? "Integritate air-gap: nu s-a observat nimic în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (jurnalele au o istorie limitată; unele canale pot lipsi, vezi „Goluri de probă”)."
+                ? "Integritate air-gap: nu s-a observat nimic în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (jurnalele au o istorie limitată; unele canale pot lipsi, vezi „Surse lipsă sau incomplete”)."
                 : $"Integritate air-gap: {AirGapFindings.Count} constatări ({AirGapFindings.Count(a => a.Severity >= Severity.High)} ridicate).";
             ResultChanged?.Invoke(this, EventArgs.Empty);
             FillTimeline();

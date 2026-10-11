@@ -136,15 +136,15 @@ public static class LogClearAssessment
         var pair = ShutdownPair(stop.TimeUtc, systemEvents);
         if (pair is not null)
             return new(clear, LogClearLifecycle.Routine, [], Severity.Info,
-                $"serviciul de jurnalizare oprit (Security 1100) la {stop.TimeUtc:yyyy-MM-dd HH:mm} UTC, în cadrul unei opriri/reporniri a sistemului (System {pair.EventId} la {pair.TimeUtc:yyyy-MM-dd HH:mm} UTC): planificată.");
+                $"Serviciul de jurnalizare oprit (Security 1100) la {stop.TimeUtc:yyyy-MM-dd HH:mm} UTC, în cadrul unei opriri/reporniri a sistemului (System {pair.EventId} la {pair.TimeUtc:yyyy-MM-dd HH:mm} UTC): planificată.");
         if (policy is not null && ApprovedInWindow(stop.TimeUtc, stop.SubjectUser, stop.SubjectDomain, policy))
             return new(clear, LogClearLifecycle.Routine, [], Severity.Info,
-                $"serviciul de jurnalizare oprit (Security 1100) la {stop.TimeUtc:yyyy-MM-dd HH:mm} UTC de un cont aprobat, în fereastra de mentenanță: planificată.");
+                $"Serviciul de jurnalizare oprit (Security 1100) la {stop.TimeUtc:yyyy-MM-dd HH:mm} UTC de un cont aprobat, în fereastra de mentenanță: planificată.");
         return policy is null
             ? new(clear, LogClearLifecycle.NotAssessed, [], Severity.Medium,
-                $"serviciul de jurnalizare oprit (Security 1100) la {stop.TimeUtc:yyyy-MM-dd HH:mm} UTC fără o oprire/repornire a sistemului în ±10 min; necesită verificare: nu există profil de procedură care să arate dacă oprirea a fost planificată.")
+                $"Serviciul de jurnalizare oprit (Security 1100) la {stop.TimeUtc:yyyy-MM-dd HH:mm} UTC fără o oprire/repornire a sistemului în ±10 min; necesită verificare: nu există profil de procedură care să arate dacă oprirea a fost planificată.")
             : new(clear, LogClearLifecycle.Unexpected, [], Severity.High,
-                $"serviciul de jurnalizare oprit (Security 1100) la {stop.TimeUtc:yyyy-MM-dd HH:mm} UTC fără o oprire/repornire a sistemului în ±10 min și fără un cont aprobat în fereastra de mentenanță: neașteptată.");
+                $"Serviciul de jurnalizare oprit (Security 1100) la {stop.TimeUtc:yyyy-MM-dd HH:mm} UTC fără o oprire/repornire a sistemului în ±10 min și fără un cont aprobat în fereastra de mentenanță: neașteptată.");
     }
 
     /// <summary>

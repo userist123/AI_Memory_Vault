@@ -22,7 +22,7 @@ public static class StationIdentity
         var same = main.Equals(Short(analysisHost), StringComparison.OrdinalIgnoreCase);
         var line = hosts.Count == 1
             ? $"stația {main}" + (same ? "" : $" (din probe; analiza a rulat pe {analysisHost})")
-            : $"stațiile din probe: {string.Join(", ", hosts.Take(5).Select(h => $"{h.Host} ({h.Events} evenimente)"))}" + (hosts.Count > 5 ? "…" : "") + $"; analiza a rulat pe {analysisHost}";
+            : $"stațiile din probe: {string.Join(", ", hosts.Take(5).Select(h => $"{h.Host} ({LogAnalyzer.Dfir.Language.RoText.Count(h.Events, "eveniment", "evenimente")})"))}" + (hosts.Count > 5 ? "…" : "") + $"; analiza a rulat pe {analysisHost}";
         return new(main, line, hosts);
     }
 }

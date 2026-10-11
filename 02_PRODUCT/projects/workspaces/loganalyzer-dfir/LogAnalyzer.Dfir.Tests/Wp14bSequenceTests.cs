@@ -517,7 +517,7 @@ public class Wp14bPortableUsbArchiveTests
     {
         var ev = new List<TimelineEvent> { Usb("AA001", 0, letter: "E:"), Wp14b.Usn(20, @"C:\Users\ion\Documents\data.zip"), Wp14b.Usn(40, @"E:\data.zip") };
         var f = Wp14b.One(Wp14b.Seq(ev), Rule);
-        var prog = f.Sequence!.Steps.Single(s => s.Name == "software portabil sau de pe mediu amovibil");
+        var prog = f.Sequence!.Steps.Single(s => s.Name == "software portabil sau de pe suport de stocare amovibil");
         Assert.False(prog.Observed);
         Assert.Contains("indisponibilă", prog.Note); Assert.Contains("Prefetch", prog.Note);
         Assert.DoesNotContain("absent", prog.Note, StringComparison.OrdinalIgnoreCase);

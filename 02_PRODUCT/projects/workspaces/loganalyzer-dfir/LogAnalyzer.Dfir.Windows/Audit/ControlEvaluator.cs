@@ -234,7 +234,7 @@ public static class ControlEvaluator
 
         var auditChanges = Logs(f, "Security", 4719).ToList();
         if (auditChanges.Count > 0)
-            Add(r, "A06", "Audit", "Politica de audit a fost modificată", ControlStatus.DeVerificat, $"{auditChanges.Count} modificări.",
+            Add(r, "A06", "Audit", "Politica de audit a fost modificată", ControlStatus.DeVerificat, $"{LogAnalyzer.Dfir.Language.RoText.Count(auditChanges.Count, "modificare", "modificări")}.",
                 auditChanges.Select(l => $"{Ev(l)} de {Who(l)}: {AuditName(V(l, "SubcategoryGuid"))} {V(l, "AuditPolicyChanges")}"));
         foreach (var l in auditChanges) r.Actions.Add(new ActionEntry(l.TimeUtc, Who(l), "a modificat politica de audit", AuditName(V(l, "SubcategoryGuid")), Ev(l)));
 
@@ -270,7 +270,7 @@ public static class ControlEvaluator
         var adminChanges = changes.Where(adminGroup).ToList();
         Add(r, "U01", "Utilizatori", "Modificări ale grupului Administrators",
             !ChannelReadable(f, "Security") ? ControlStatus.Nedeterminat : adminChanges.Count == 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
-            adminChanges.Count == 0 ? "Nicio modificare în perioada controlată." : $"{adminChanges.Count} modificări: cine a primit sau a pierdut drepturi de administrator.",
+            adminChanges.Count == 0 ? "Nicio modificare în perioada controlată." : $"{LogAnalyzer.Dfir.Language.RoText.Count(adminChanges.Count, "modificare", "modificări")}: cine a primit sau a pierdut drepturi de administrator.",
             adminChanges.Select(l => $"{Ev(l)}: {Who(l)} {AccountActions[l.Id]} Administrators: {V(l, "MemberName")} {V(l, "MemberSid")}"),
             "Fiecare acordare de drepturi de administrator trebuie să aibă aprobare.");
         var lifecycle = changes.Where(l => l.Id is 4720 or 4726 or 4722 or 4725 or 4724).ToList();
@@ -389,7 +389,7 @@ public static class ControlEvaluator
             Add(r, "N01", "Rețea", "Stația izolată nu s-a conectat la nicio rețea",
                 connected ? ControlStatus.Neconform : profilesKnown && eventsKnown ? ControlStatus.DeVerificat : ControlStatus.Nedeterminat,
                 connected
-                    ? $"Conectări în perioada controlată: {inPeriod.Count} profiluri, {evts.Count} evenimente de conectare; interfețe active acum: {f.ConnectedInterfacesNow.Count}."
+                    ? $"Conectări în perioada controlată: {LogAnalyzer.Dfir.Language.RoText.Count(inPeriod.Count, "profil", "profiluri")}, {LogAnalyzer.Dfir.Language.RoText.Count(evts.Count, "eveniment", "evenimente")} de conectare; interfețe active acum: {f.ConnectedInterfacesNow.Count}."
                     : profilesKnown && eventsKnown
                         ? "Conectare la rețea: nu s-a observat în sursele colectate (profiluri de rețea, NetworkProfile, WLAN-AutoConfig) și nicio interfață activă acum; absența observațiilor nu dovedește că stația nu s-a conectat (istorie limitată a jurnalelor, adaptoare fără urme în aceste surse)."
                         : "Conectare la rețea: nu se poate stabili, deoarece profilurile de rețea sau jurnalele NetworkProfile / WLAN-AutoConfig nu au putut fi citite.",
@@ -401,7 +401,7 @@ public static class ControlEvaluator
             !profilesKnown ? ControlStatus.Nedeterminat : ControlStatus.DeVerificat,
             !profilesKnown ? "Istoricul rețelelor (registry NetworkList) nu a putut fi citit; rulați ca administrator."
                 : f.NetworkProfiles.Count == 0 ? "Rețele cunoscute: nu s-a observat în sursele colectate (NetworkList); absența profilurilor nu dovedește că stația nu s-a conectat (profilurile pot fi șterse)."
-                : $"{f.NetworkProfiles.Count} profiluri de rețea salvate.",
+                : $"{LogAnalyzer.Dfir.Language.RoText.Count(f.NetworkProfiles.Count, "profil", "profiluri")} de rețea salvate.",
             f.NetworkProfiles.OrderByDescending(p => p.LastConnectedLocal).Select(p => $"{p.Name} ({p.Kind}) creat {p.CreatedLocal:yyyy-MM-dd} · ultima conectare {p.LastConnectedLocal:yyyy-MM-dd HH:mm}"));
     }
 
@@ -421,9 +421,9 @@ public static class ControlEvaluator
         foreach (var l in drivers) r.Actions.Add(new ActionEntry(l.TimeUtc, V(l, "AccountName"), "driver instalat", $"{V(l, "ServiceName")}: {V(l, "ImagePath")}", Ev(l)));
         var tasks = Logs(f, "Security", 4698).ToList();
         foreach (var l in services) r.Actions.Add(new ActionEntry(l.TimeUtc, V(l, "AccountName"), "serviciu nou instalat", $"{V(l, "ServiceName")}: {V(l, "ImagePath")}", Ev(l)));
-        foreach (var l in tasks) r.Actions.Add(new ActionEntry(l.TimeUtc, Who(l), "a creat taskul programat", V(l, "TaskName"), Ev(l)));
-        Add(r, "S02", "Software", "Servicii noi și task-uri programate create", services.Count + tasks.Count == 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
-            $"{services.Count} servicii noi, {tasks.Count} task-uri create ({drivers.Count} drivere instalate, listate separat în cronologie).",
+        foreach (var l in tasks) r.Actions.Add(new ActionEntry(l.TimeUtc, Who(l), "a creat activitatea planificată", V(l, "TaskName"), Ev(l)));
+        Add(r, "S02", "Software", "Servicii noi și activități planificate create", services.Count + tasks.Count == 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
+            $"{LogAnalyzer.Dfir.Language.RoText.Count(services.Count, "serviciu", "servicii")} noi, {tasks.Count} activități planificate create ({LogAnalyzer.Dfir.Language.RoText.Count(drivers.Count, "driver", "drivere")} instalate, listate separat în cronologie).",
             services.Select(l => $"{Ev(l)}: {V(l, "ServiceName")} → {V(l, "ImagePath")}").Concat(tasks.Select(l => $"{Ev(l)}: {Who(l)} → {V(l, "TaskName")}")),
             "Serviciile și task-urile sunt metode frecvente de persistență: verificați fiecare intrare necunoscută.");
 

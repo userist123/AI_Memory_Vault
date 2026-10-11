@@ -138,7 +138,7 @@ public sealed class FindingContractTests : IDisposable
     public void Parser_limits_are_attached_to_the_findings_that_rest_on_the_parser()
     {
         var f = FindingContract.Enrich([F("EXEC-USERPATH")], new FindingContractContext { ParsersOf = _ => ["AmcacheParser"] }).Single();
-        Assert.Contains(f.Limitations, l => l == "AmcacheParser nu poate dovedi: Că fișierul a fost executat.");
+        Assert.Contains(f.Limitations, l => l == "Amcache nu poate dovedi că fișierul a fost executat.");
         Assert.Equal(["AmcacheParser"], f.Provenance!.Parsers);
     }
 
@@ -321,10 +321,10 @@ public sealed class FindingContractTests : IDisposable
     {
         var expected = new Dictionary<StandardState, string>
         {
-            [StandardState.Observed] = "Observat", [StandardState.Correlated] = "Corelat", [StandardState.Supported] = "Susținut de dovezi",
-            [StandardState.Verified] = "Verificat", [StandardState.Inferred] = "Deducție", [StandardState.Unproven] = "Nedemonstrat",
-            [StandardState.Contradicted] = "Contrazis", [StandardState.Rejected] = "Respins", [StandardState.Unknown] = "Necunoscut",
-            [StandardState.NotAssessed] = "Neevaluat",
+            [StandardState.Observed] = "Observată direct", [StandardState.Correlated] = "Asociată (în timp sau cale)", [StandardState.Supported] = "Susținută de o singură sursă",
+            [StandardState.Verified] = "Coroborată", [StandardState.Inferred] = "Dedusă", [StandardState.Unproven] = "Nedemonstrată",
+            [StandardState.Contradicted] = "Contrazisă", [StandardState.Rejected] = "Respinsă", [StandardState.Unknown] = "Nedeterminată",
+            [StandardState.NotAssessed] = "Neevaluată",
         };
         Assert.Equal(10, Enum.GetValues<StandardState>().Length);
         Assert.Equal(expected, StateLabels.RomanianTable.ToDictionary(k => k.Key, k => k.Value));
@@ -450,7 +450,7 @@ public sealed class FindingContractTests : IDisposable
         Assert.Equal(StandardState.Observed, task.Status);
         Assert.Single(task.ContradictingEvidence);   // the task is disabled: computed from the parsed XML, not assumed
         Assert.Contains("ScheduledTaskParser", task.Provenance!.Parsers);
-        Assert.Contains(task.Limitations, l => l.StartsWith("ScheduledTaskParser nu poate dovedi: Că taskul a rulat"));
+        Assert.Contains(task.Limitations, l => l.StartsWith("Definițiile activităților planificate nu poate dovedi că taskul a rulat"));
 
         var analysis = Path.Combine(ws.Root, "Analysis");
         Assert.Equal(SchemaVersions.Findings, SchemaVersions.ReadVersion(r.FindingsJson));

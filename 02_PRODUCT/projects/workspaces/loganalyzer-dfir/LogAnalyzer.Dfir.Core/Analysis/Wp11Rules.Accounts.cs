@@ -105,7 +105,7 @@ public static partial class Wp11Rules
                 Severity = sev, Category = "Persistence", Classification = sidMatched ? Classification.Correlated : Classification.Candidate,
                 Confidence = sidMatched ? Confidence.High : Confidence.Medium, MitreTechniqueId = "T1078",
                 FirstSeenUtc = createdAt, LastSeenUtc = T(uses[^1]), User = name, Ip = remoteUses.Count > 0 ? F(remoteUses[0], "IpAddress") : "",
-                Description = $"{name} creat {Time(createdAt)}; prima folosire {Time(T(firstUse))} ({firstUse.EventId}); {uses.Count} evenimente 4624/4648 ulterioare" +
+                Description = $"{name} creat {Time(createdAt)}; prima folosire {Time(T(firstUse))} ({firstUse.EventId}); {LogAnalyzer.Dfir.Language.RoText.Count(uses.Count, "eveniment", "evenimente")} 4624/4648 ulterioare" +
                               (types.Count > 0 ? $" ({string.Join(", ", types)})" : "") + "." +
                               (remoteUses.Count > 0 ? $" Folosit de la distanță din {Join(remoteUses.Select(u => F(u, "IpAddress")))}." : " Nicio autentificare de la distanță în dovezile colectate.") +
                               (privileged ? $" Apartenență privilegiată în caz: {Join(privAdds.Where(e => { var m = Member(e); return SameAccount(name, sid, m.Name, m.Sid); }).Select(e => F(e, "TargetUserName")))}." : "") +

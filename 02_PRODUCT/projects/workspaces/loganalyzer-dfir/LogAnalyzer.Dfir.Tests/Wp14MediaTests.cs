@@ -200,7 +200,7 @@ public class Wp14MediaTests
     public void Without_write_evidence_the_finding_says_presence_not_copy_and_there_is_no_file_activity_finding()
     {
         var f = Go([Usb("AA001", letter: "E:")], media: W14.Media(Row("AA001")));
-        Assert.Contains("prezență, nu copiere", Only(f, "MEDIA-AUTHORIZED").Description);
+        Assert.Contains("Prezență, nu copiere", Only(f, "MEDIA-AUTHORIZED").Description);
         Assert.DoesNotContain(f, x => x.RuleId == "MEDIA-FILE-ACTIVITY");
     }
 

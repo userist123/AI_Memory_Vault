@@ -259,7 +259,7 @@ public sealed partial class CaseWorkspace
                 audit = audit with
                 {
                     Status = audit.Entries == 0 ? ChainStatus.Legacy : ChainStatus.Valid, LegacyLines = audit.LegacyLines + old,
-                    Message = audit.Entries == 0 ? HashChain.LegacyMessage : $"{audit.Entries} intrări verificate; {old} linii anterioare: {HashChain.LegacyMessage}",
+                    Message = audit.Entries == 0 ? HashChain.LegacyMessage : $"{LogAnalyzer.Dfir.Language.RoText.Count(audit.Entries, "intrare", "intrări")} verificate; {old} linii anterioare: {HashChain.LegacyMessage}",
                 };
             }
         }

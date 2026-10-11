@@ -256,7 +256,7 @@ namespace LogAnalyzer.UI.ViewModels
                 Summary = $"NECONFORM {_report.Count(ControlStatus.Neconform)} · DE VERIFICAT {_report.Count(ControlStatus.DeVerificat)} · " +
                           $"NEDETERMINAT {_report.Count(ControlStatus.Nedeterminat)} · CONFORM {_report.Count(ControlStatus.Conform)}";
                 GapsText = _report.Facts.Gaps.Count == 0 ? "" :
-                    "Goluri de probă: " + string.Join("; ", _report.Facts.Gaps.Select(g => $"{g.Artifact} ({g.Reason})"));
+                    "Surse lipsă sau incomplete: " + string.Join("; ", _report.Facts.Gaps.Select(g => $"{g.Artifact} ({g.Reason})"));
                 Status = _report.Facts.IsAdministrator
                     ? $"Control finalizat: {_report.Checks.Count} verificări, {_report.Actions.Count} acțiuni în cronologie. Dublu-click pe orice rând pentru detalii."
                     : "Control finalizat FĂRĂ drepturi de administrator: jurnalul Security și o parte din setări nu au putut fi citite (verificările respective sunt NEDETERMINATE). Reporniți aplicația ca administrator.";

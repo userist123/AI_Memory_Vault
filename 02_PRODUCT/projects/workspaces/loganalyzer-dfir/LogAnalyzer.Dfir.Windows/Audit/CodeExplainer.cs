@@ -38,8 +38,8 @@ public static class CodeExplainer
             "Multe eșecuri la rând pot însemna că cineva încearcă să ghicească parola.", "Câteva eșecuri izolate sunt de obicei parole tastate greșit."),
         [("Security", 4672)] = E("Security 4672", "eveniment Windows", "O sesiune a primit drepturi speciale (de administrator).",
             "Arată cine a lucrat cu drepturi de administrator, adică putea schimba orice pe stație.", "Apare la fiecare autentificare a unui cont de administrator."),
-        [("Security", 4698)] = E("Security 4698", "eveniment Windows", "A fost creat un task programat (o comandă care pornește singură la o oră sau la pornire).",
-            "Task-urile programate sunt o metodă frecventă prin care un program rău-intenționat repornește singur.", "Programele legitime (actualizări) creează și ele task-uri; comparați numele cu software-ul aprobat."),
+        [("Security", 4698)] = E("Security 4698", "eveniment Windows", "A fost creată o activitate planificată (o comandă care pornește singură la o oră sau la pornire).",
+            "Activitățile planificate sunt o metodă frecventă prin care un program rău-intenționat repornește singur.", "Programele legitime (actualizări) creează și ele task-uri; comparați numele cu software-ul aprobat."),
         [("Security", 4719)] = E("Security 4719", "eveniment Windows", "Politica de audit a fost modificată (ce anume înregistrează stația în jurnal).",
             "Cine reduce auditul poate face lucruri care nu mai lasă urme.", "Codul GUID arată ce categorie s-a schimbat; %%8449/%%8451 = s-a activat, %%8448/%%8450 = s-a dezactivat."),
         [("Security", 4720)] = E("Security 4720", "eveniment Windows", "A fost creat un cont de utilizator nou.", "Orice cont nou trebuie să aibă aprobare.", ""),
@@ -184,7 +184,7 @@ public static class CodeExplainer
         ["Removable Storage"] = "citirea și scrierea fișierelor pe stick-uri și discuri externe",
         ["Plug and Play Events"] = "conectarea dispozitivelor externe",
         ["Security State Change"] = "pornirea și oprirea sistemului, schimbarea orei",
-        ["Other Object Access Events"] = "task-urile programate și alte obiecte",
+        ["Other Object Access Events"] = "activitățile planificate și alte obiecte",
         ["Credential Validation"] = "verificarea parolelor (inclusiv pentru conturi de domeniu)",
         ["File System"] = "accesul la fișierele marcate pentru audit",
         ["Registry"] = "accesul la cheile de registru marcate pentru audit",
@@ -236,7 +236,7 @@ public static class CodeExplainer
 
     private static readonly Dictionary<string, string> LogonTypes = new()
     {
-        ["2"] = "la tastatura stației", ["3"] = "din rețea (de exemplu acces la un folder partajat)", ["4"] = "task programat", ["5"] = "serviciu Windows",
+        ["2"] = "la tastatura stației", ["3"] = "din rețea (de exemplu acces la un folder partajat)", ["4"] = "activitate planificată", ["5"] = "serviciu Windows",
         ["7"] = "deblocarea ecranului", ["8"] = "din rețea cu parola trimisă în clar", ["9"] = "cu alte credențiale (runas /netonly)",
         ["10"] = "de la distanță (Remote Desktop)", ["11"] = "cu parola păstrată local (fără server de domeniu)",
     };

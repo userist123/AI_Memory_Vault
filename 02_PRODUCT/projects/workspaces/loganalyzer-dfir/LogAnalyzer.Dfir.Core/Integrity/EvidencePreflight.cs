@@ -97,8 +97,8 @@ public sealed record PreflightResult(string EvidenceId, PreflightStatus Status, 
     /// <summary>Reader-facing notice for a format mismatch; empty for every other state.</summary>
     public string FormatNotice => Status != PreflightStatus.FormatMismatch ? ""
         : ExpectedSha256.Length > 0
-            ? "fișier gol sau format neașteptat; amprenta este intactă; proba nu a fost interpretată"
-            : "fișier gol sau format neașteptat; nu există amprentă de la achiziție; proba nu a fost interpretată";
+            ? "fișier gol sau format neașteptat; amprenta este intactă; elementul de probă nu a fost interpretat"
+            : "fișier gol sau format neașteptat; nu există amprentă de la achiziție; elementul de probă nu a fost interpretat";
 
     /// <summary>Code used in errors, gaps and the audit log.</summary>
     public string Code => Status switch
@@ -164,7 +164,7 @@ public static class EvidencePreflight
         var expected = acceptedFormats ?? EvidenceFingerprint.Expected(item);
         if (expected is not null && !expected.Contains(fingerprint))
             return new(item.EvidenceId, PreflightStatus.FormatMismatch, size, sha, item.Sha256, fingerprint,
-                $"Conținutul are formatul „{fingerprint}”, dar proba este declarată {item.SourceType} (așteptat: {string.Join("/", expected)}).", fileTime);
+                (fingerprint == "empty" ? "Fișierul este gol" : $"Conținutul are formatul „{fingerprint}”") + $", dar elementul de probă este declarat {item.SourceType} (așteptat: {string.Join("/", expected)}).", fileTime);
         if (item.Sha256.Length == 0)
             return new(item.EvidenceId, PreflightStatus.Unverified, size, sha, "", fingerprint,
                 "Proba nu are un SHA-256 de la achiziție; integritatea nu poate fi verificată.", fileTime);

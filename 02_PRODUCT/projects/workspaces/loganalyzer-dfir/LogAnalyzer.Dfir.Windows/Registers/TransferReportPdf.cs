@@ -32,7 +32,7 @@ public static class TransferReportPdf
                 if (header.Unit.Length > 0) h.Item().AlignCenter().Text(header.Unit).Bold().FontSize(11);
                 if (header.Structure.Length > 0) h.Item().AlignCenter().Text(header.Structure).FontSize(9);
                 h.Item().AlignCenter().Text("REGISTRUL DE EVIDENȚĂ A TRANSFERURILOR DE DATE PE MEDII DE STOCARE").Bold().FontSize(12);
-                h.Item().AlignCenter().Text($"Generat {DateTime.Now:yyyy-MM-dd HH:mm} pe {Environment.MachineName} · {rows.Count} înregistrări" +
+                h.Item().AlignCenter().Text($"Generat {DateTime.Now:yyyy-MM-dd HH:mm} pe {Environment.MachineName} · {LogAnalyzer.Dfir.Language.RoText.Count(rows.Count, "înregistrare", "înregistrări")}" +
                                             (from is not null || to is not null ? $" · perioada {from:yyyy-MM-dd} – {to:yyyy-MM-dd}" : "") +
                                             $" · {(isolated ? "stație izolată (fără rețea)" : "stație conectată")}").FontSize(7.5f).FontColor("#4b5563");
                 foreach (var f in header.ExtraFields.Where(f => f.Label.Length > 0)) h.Item().AlignCenter().Text($"{f.Label}: {f.Value}").FontSize(7.5f);

@@ -497,7 +497,7 @@ public static class PolicyTimeline
             var applied = security.Where(e => e.EventId == "4719" && e.Time.Utc >= c.TimeUtc && e.Time.Utc <= c.TimeUtc + ApplicationWindow
                                               && (F(e, "SubjectUserName").EndsWith('$') || F(e, "SubjectUserName").Equals("SYSTEM", StringComparison.OrdinalIgnoreCase))).ToList();
             if (applied.Count > 0)
-                return (BehaviorState.Observed, $"GPO-ul a adăugat extensia de audit și {applied.Count} evenimente 4719 aplicate de sistem/contul calculatorului apar după modificare (stații: {string.Join(", ", applied.Select(e => e.Host).Distinct())}).",
+                return (BehaviorState.Observed, $"GPO-ul a adăugat extensia de audit și {LogAnalyzer.Dfir.Language.RoText.Count(applied.Count, "eveniment", "evenimente")} 4719 aplicate de sistem/contul calculatorului apar după modificare (stații: {string.Join(", ", applied.Select(e => e.Host).Distinct())}).",
                         applied.Take(5).Select(e => Ref(e, "politică de audit aplicată prin GPO")).ToList());
             var last = security.LastOrDefault(e => e.Time.Utc is not null);
             if (last is not null && last.Time.Utc >= c.TimeUtc + RefreshObservation)
@@ -541,7 +541,7 @@ public static class PolicyTimeline
                 return (BehaviorState.NotEvaluable, $"Înainte de modificare nu apar evenimente {idText} pe stație: nu se poate vedea o oprire.", []);
             return after.Count == 0
                 ? (BehaviorState.Observed, $"Evenimentele {idText} apăreau înainte ({before.Count}) și nu mai apar în {hours:0.#}h după modificare, deși jurnalul Security continuă.", [Ref(before[^1], "ultimul eveniment auditat înainte"), Ref(lastAfter, "jurnalul continuă după modificare")])
-                : (BehaviorState.NotObserved, $"{after.Count} evenimente {idText} apar și după modificare: auditarea continuă.", after.Take(3).Select(e => Ref(e, "eveniment auditat după modificare")).ToList());
+                : (BehaviorState.NotObserved, $"{LogAnalyzer.Dfir.Language.RoText.Count(after.Count, "eveniment", "evenimente")} {idText} apar și după modificare: auditarea continuă.", after.Take(3).Select(e => Ref(e, "eveniment auditat după modificare")).ToList());
         }
         if (after.Count > 0 && before.Count == 0)
             return (BehaviorState.Observed, $"Evenimentele {idText} nu apăreau înainte și apar după modificare ({after.Count}).", after.Take(3).Select(e => Ref(e, "eveniment auditat după modificare")).ToList());
@@ -599,14 +599,14 @@ public static class PolicyTimeline
             var withTime = security.Where(e => e.Time.Utc is not null).ToList();
             double spanH = withTime.Count > 1 ? (withTime[^1].Time.Utc!.Value - withTime[0].Time.Utc!.Value).TotalHours : 0;
             if (!wantS && !wantF)
-                observed = hits.Count > 0 ? new() { State = LevelState.NotObserved, Reason = $"Se cere „No Auditing”, dar apar {hits.Count} evenimente {idText}.", Evidence = hits.Take(3).Select(e => Ref(e, "eveniment auditat deși nu ar trebui")).ToList() }
+                observed = hits.Count > 0 ? new() { State = LevelState.NotObserved, Reason = $"Se cere „No Auditing”, dar apar {LogAnalyzer.Dfir.Language.RoText.Count(hits.Count, "eveniment", "evenimente")} {idText}.", Evidence = hits.Take(3).Select(e => Ref(e, "eveniment auditat deși nu ar trebui")).ToList() }
                                          : new() { Reason = $"Se cere „No Auditing”: lipsa evenimentelor {idText} e compatibilă, dar nu o dovedește (poate lipsi activitatea)." };
             else if (hits.Count > 0)
-                observed = new() { State = LevelState.Observed, Reason = $"{hits.Count} evenimente {idText} în jurnalul Security ({hits[0].Time.UtcIso} – {hits[^1].Time.UtcIso}).", Evidence = [Ref(hits[0], "primul eveniment auditat"), Ref(hits[^1], "ultimul eveniment auditat")] };
+                observed = new() { State = LevelState.Observed, Reason = $"{LogAnalyzer.Dfir.Language.RoText.Count(hits.Count, "eveniment", "evenimente")} {idText} în jurnalul Security ({hits[0].Time.UtcIso} – {hits[^1].Time.UtcIso}).", Evidence = [Ref(hits[0], "primul eveniment auditat"), Ref(hits[^1], "ultimul eveniment auditat")] };
             else if (withTime.Count > 1 && spanH >= MinObservation.TotalHours && wantS && !wantF && fx.FrequentSuccess || withTime.Count > 1 && spanH >= MinObservation.TotalHours && wantS && wantF && fx.FrequentSuccess)
-                observed = new() { State = LevelState.NotObserved, Reason = $"Niciun eveniment {idText} în {spanH:0.#}h de jurnal Security ({withTime.Count} evenimente), deși activitatea auditată e frecventă.", Evidence = [Ref(withTime[0], "începutul jurnalului Security"), Ref(withTime[^1], "sfârșitul jurnalului Security")] };
+                observed = new() { State = LevelState.NotObserved, Reason = $"Niciun eveniment {idText} în {spanH:0.#}h de jurnal Security ({LogAnalyzer.Dfir.Language.RoText.Count(withTime.Count, "eveniment", "evenimente")}), deși activitatea auditată e frecventă.", Evidence = [Ref(withTime[0], "începutul jurnalului Security"), Ref(withTime[^1], "sfârșitul jurnalului Security")] };
             else
-                observed = new() { Reason = withTime.Count > 1 && spanH >= MinObservation.TotalHours ? $"Niciun eveniment {idText}, dar lipsa lor poate însemna lipsa activității auditate." : $"Jurnalul Security din probe e prea scurt sau lipsește ({withTime.Count} evenimente, {spanH:0.#}h) pentru a judeca lipsa evenimentelor {idText}." };
+                observed = new() { Reason = withTime.Count > 1 && spanH >= MinObservation.TotalHours ? $"Niciun eveniment {idText}, dar lipsa lor poate însemna lipsa activității auditate." : $"Jurnalul Security din probe e prea scurt sau lipsește ({LogAnalyzer.Dfir.Language.RoText.Count(withTime.Count, "eveniment", "evenimente")}, {spanH:0.#}h) pentru a judeca lipsa evenimentelor {idText}." };
         }
         else observed = new() { Reason = s.Type == "audit" ? $"Subcategoria „{s.Name}” nu are evenimente asociate în catalogul instrumentului." : $"Setarea de tip „{s.Type}” nu are evenimente asociate în catalogul instrumentului: nivelul observed nu poate fi evaluat." };
 
@@ -648,7 +648,7 @@ public static class PolicyTimeline
         var sev = disablesAuditing && highs > 0 ? Severity.High : Severity.Medium;
         var levels = string.Join(", ", SettingLevels.Names.Select(n => $"{n}={l.Level(n).State.ToString().Aggregate("", (acc, ch) => acc + (acc.Length > 0 && char.IsUpper(ch) ? "_" : "") + char.ToUpperInvariant(ch))}"));
         string summary = $"„{s.Title}” ({s.Source}) cere {s.DesiredDisplay}. Niveluri: {levels}. Se rupe la nivelul „{broken}”: {l.Level(broken).Reason}" +
-                         (sev == Severity.High ? $" Auditarea e dezactivată în fereastra {start:yyyy-MM-dd HH:mm} – {end:yyyy-MM-dd HH:mm} UTC și {highs} constatări High cad în ea." : disablesAuditing ? " Nicio constatare High nu cade în fereastra decalajului." : "");
+                         (sev == Severity.High ? $" Auditarea e dezactivată în fereastra {start:yyyy-MM-dd HH:mm} – {end:yyyy-MM-dd HH:mm} UTC și {LogAnalyzer.Dfir.Language.RoText.Count(highs, "constatare", "constatări")} High cad în ea." : disablesAuditing ? " Nicio constatare High nu cade în fereastra decalajului." : "");
         var missing = SettingLevels.Names.Where(n => l.Level(n).State == LevelState.Unknown).Select(n => n switch
         {
             "applied" => "Microsoft-Windows-GroupPolicy/Operational de la stație (5016/5312)",
