@@ -1,5 +1,10 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-11T20:15:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-11T18:30:00Z
+RENDERS (2026-10-11, owner: "randarile nu sunt perfecte… sa fie exact cu piesa"): 20fc5512 + be8554ad. Kitchen sink recessed in a
+  cut worktop (ExtrudeGeometry exported as 'mesh' triangles), vanity = ceramic deck with oval cut-out + lathe bowl, fronts from product
+  name (sertare/uși), hung at 86 cm; oak veneer doors; office chair one-piece back; room_camera: wide lens for small rooms, aim at key
+  items, vertical-crop check, second view <room>-2.png for key items left out. Local check: scratchpad/tools/closeup.py (close-ups).
+  NEXT: PC render with new code and show owner; product-by-product builders (KIVIK, BESTÅ, MALM, HEMNES, WC variants, showers).
 LATEST (2026-10-11 night): research round 2 plan steps 1-10 ALL committed (last 79ef7819, 388/388 tests): client delivery
   status, priced change orders (decision bound to the seen version), order/decide-by dates, handover pack, trade checks (NKBA/I5/I7),
   tile setting-out, title blocks + sheet list, site survey, time tracking, wardrobe PAL cut list (CSV), GLB export, kitchen modules
