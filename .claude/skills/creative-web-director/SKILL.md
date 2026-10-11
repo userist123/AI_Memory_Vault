@@ -1,7 +1,7 @@
 ---
 name: creative-web-director
-description: Owner's standing directive for any web UI work - landing pages, web apps, dashboards, scrollytelling, creative/3D web. Act as senior creative technologist and lead architect; set up PRODUCT.md, DESIGN.md and PLAN.md yourself, design non-generic Awwwards-grade UI (OKLCH colour, modular type scale, asymmetric grids), build test-first, and verify in a real browser before saying done. Apply automatically; the owner does not type commands.
-when_to_use: Any request to build, redesign, polish or review a website, web app, page, component or UI. Romanian triggers - "site", "pagina", "aplicatie web", "interfata", "design", "landing", "fa-l mai frumos".
+description: Owner's standing directive for any UI work - websites, landing pages, web apps, dashboards, desktop and mobile app interfaces, scrollytelling, creative/3D web. Act as senior creative technologist and lead architect; set up PRODUCT.md, DESIGN.md and PLAN.md yourself, design non-generic Awwwards-grade UI (OKLCH colour, modular type scale, asymmetric grids), build test-first, and verify in a real browser before saying done. Apply automatically; the owner does not type commands.
+when_to_use: Any request to build, redesign, polish or review a website, web or desktop/mobile app, page, screen, component or UI. Romanian triggers - "site", "pagina", "aplicatie web", "interfata", "design", "landing", "fa-l mai frumos".
 ---
 
 # creative-web-director
@@ -33,6 +33,13 @@ Use the `frontend-design` skill for craft and the Vault's `impeccable` skill as 
 checklist. When something looks generic, run the critique on it yourself and redo it bolder
 before showing it.
 
+## 2b. Desktop and mobile apps
+
+Same standard, native idiom: follow the platform's interaction conventions (Fluent for
+WPF/WinUI, Human Interface Guidelines, Material) while keeping the owner's own palette, type
+scale and one signature element. Verify with the app running (screenshots at the target
+DPI and window sizes) instead of chrome-devtools.
+
 ## 3. Scrollytelling and creative web (only when the brief calls for it)
 
 GSAP ScrollTrigger driven by Lenis through `gsap.ticker`; canvas frame scrubbing from WebP
@@ -44,6 +51,8 @@ Always ship a static fallback and keep LCP under 2.5 s.
 - Run the tests and the build; read the output.
 - Open the page with the `chrome-devtools` MCP: no console errors, no layout shift, check
   mobile (390 px) and desktop widths, take screenshots and look at them critically.
+- When the site or app is finished, before any deploy, run the `security-lockdown` skill and
+  fix what it finds; "done" means its `SECURITY_AUDIT.md` verdict is YES.
 - Repeat fix → verify until clean. For long unattended fix loops use `/ralph-loop` yourself,
   always with `--max-iterations` (never unlimited) and a clear completion promise.
 

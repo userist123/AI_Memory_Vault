@@ -1,0 +1,16 @@
+{
+ "skill_id": "skill:replica-skill:replica-recon",
+ "source_url": "https://github.com/Jakeschincariol/replica-skill",
+ "source_commit": "77c9436fb3d18c3d58169efb8caf4fe906b0dc51",
+ "source_path": "replica-recon",
+ "license_file": "LICENSE",
+ "license": "MIT",
+ "retrieved": "2026-10-11",
+ "retrieved_by": "claude-code cloud session; shallow git clone; nothing executed",
+ "extraction_status": "CANDIDATE_PENDING_OWNER_REVIEW",
+ "files": {
+  "SKILL.md": "b1fd6a60cf0bcd481f6828453da24b9d9f0935ec6e883741e5f620259f13ff40",
+  "features.csv": "7903cc4887fc8f8a3b5d47de5d038b3fd05e79f2d990527b9d3b6123c3985ab0",
+  "recon-map.md": "5864395958d147ef8a9b96019591fdd3943a230e7ee4d977e7a7b053728b4d3e"
+ }
+}
