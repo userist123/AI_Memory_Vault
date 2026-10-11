@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { readAuth, checkPassword, makeSession, loginAllowed, loginFailed, SESSION_COOKIE, SESSION_DAYS } from '@/lib/auth';
+import { readAuth, checkPassword, makeSession, takeLoginAttempt, loginSucceeded, SESSION_COOKIE, SESSION_DAYS } from '@/lib/auth';
+import { sameOriginJson } from '@/lib/public-gate';
 import { readJsonLimited } from '@/lib/body-limit';
 import { HttpError } from '@/lib/repo';
 export const dynamic = 'force-dynamic';
@@ -8,9 +9,12 @@ const H = { 'cache-control': 'no-store', 'x-robots-tag': 'noindex' };
 export const POST = async (req: Request) => {
   try {
     const cfg = readAuth(); if (!cfg) throw new HttpError(404, 'Accesul de pe telefon nu e activat. Pune o parolă din aplicație, pe calculator.');
-    const ip = req.headers.get('cf-connecting-ip') || 'local'; if (!loginAllowed(ip)) throw new HttpError(429, 'Prea multe încercări. Încearcă din nou peste 15 minute.');
+    if (!sameOriginJson(req.headers)) throw new HttpError(403, 'Cerere refuzată.');
+    // încercarea se rezervă înainte de prima așteptare: cererile simultane nu pot trece de limită
+    const ip = req.headers.get('cf-connecting-ip') || 'local'; if (!takeLoginAttempt(ip)) throw new HttpError(429, 'Prea multe încercări. Încearcă din nou peste 15 minute.');
     const b = await readJsonLimited(req, 2048) as any;
-    if (!checkPassword(cfg, b?.password)){ loginFailed(ip); throw new HttpError(401, 'Parolă greșită.'); }
+    if (!(await checkPassword(cfg, b?.password))) throw new HttpError(401, 'Parolă greșită.');
+    loginSucceeded(ip);
     const res = NextResponse.json({ ok: true }, { headers: H }), secure = process.env.NODE_ENV === 'production';
     res.cookies.set(SESSION_COOKIE, makeSession(cfg), { httpOnly: true, sameSite: 'lax', secure, path: '/', maxAge: SESSION_DAYS * 86400 });
     res.cookies.set('casa_owner', cfg.owner, { httpOnly: true, sameSite: 'lax', secure, path: '/', maxAge: 60 * 60 * 24 * 365 * 2 });

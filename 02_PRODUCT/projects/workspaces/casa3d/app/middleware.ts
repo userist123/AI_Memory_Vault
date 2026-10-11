@@ -11,7 +11,7 @@ export function middleware(req: NextRequest){
   if (d === 'allow') return NextResponse.next();
   // pagina de login se arată chiar la adresa cerută (fără redirecționare: serverul nu știe adresa publică a tunelului);
   // după login, pagina se reîncarcă pe aceeași adresă, acum cu sesiune
-  if (d === 'login'){ const u = req.nextUrl.clone(); u.pathname = '/login'; u.search = ''; return NextResponse.rewrite(u, { headers: H }); }
+  if (d === 'login'){ const u = req.nextUrl.clone(); u.pathname = '/login'; u.search = ''; u.protocol = 'http:'; return NextResponse.rewrite(u, { headers: H }); } // intern: serverul vorbește http, chiar dacă tunelul a venit pe https
   if (d === 'unauthorized') return NextResponse.json({ error: 'Autentifică-te.' }, { status: 401, headers: H });
   return new NextResponse('Not found', { status: 404, headers: H });
 }
