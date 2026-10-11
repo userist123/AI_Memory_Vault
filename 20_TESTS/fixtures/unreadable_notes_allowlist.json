@@ -696,6 +696,12 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Plain markdown project document (WP18); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_UI_SI_POLITICI.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research document (WP18, owner request 2026-10-11); not a note."
     }
   ]
 }
