@@ -117,6 +117,9 @@ namespace LogAnalyzer.UI.Views
             try
             {
                 var pw = PasswordBox.Password;
+                // Controls belong to the window's thread: read them here, never inside Task.Run (the background thread would throw).
+                var accountText = AccountBox.Text;
+                var personText = PersonBox.Text;
                 switch (_mode)
                 {
                     case SignInWindowMode.FirstRun:
@@ -124,10 +127,10 @@ namespace LogAnalyzer.UI.Views
                     {
                         if (pw != ConfirmBox.Password) { StatusText.Text = "Parolele nu coincid."; return; }
                         var r = _mode == SignInWindowMode.FirstRun
-                            ? await Task.Run(() => AuthApp.Service.CreatePrimaryAdmin(AccountBox.Text, PersonBox.Text, pw))
+                            ? await Task.Run(() => AuthApp.Service.CreatePrimaryAdmin(accountText, personText, pw))
                             : await Task.Run(() => AuthApp.Service.RecoverPrimaryPassword(pw));
                         if (!r.Ok) { StatusText.Text = r.Message; return; }
-                        var account = _mode == SignInWindowMode.FirstRun ? AccountBox.Text : AuthApp.Service.PrimaryAdmin!.Account;
+                        var account = _mode == SignInWindowMode.FirstRun ? accountText : AuthApp.Service.PrimaryAdmin!.Account;
                         Finish(await Task.Run(() => AuthApp.Service.SignInWithPassword(account, pw)));
                         break;
                     }
@@ -138,7 +141,7 @@ namespace LogAnalyzer.UI.Views
                         break;
                     }
                     default:
-                        Finish(await Task.Run(() => AuthApp.Service.SignInWithPassword(AccountBox.Text, pw)));
+                        Finish(await Task.Run(() => AuthApp.Service.SignInWithPassword(accountText, pw)));
                         break;
                 }
             }
