@@ -138,12 +138,19 @@ public static class MediaUsageRules
     /// Hint: same drive letter while connected but no matching serial. Files written outside every connection window are not linked at all.
     /// Only removable (or unknown) drive types count. A window runs from an arrival to its recorded removal, or to the next arrival of the same medium.
     /// </summary>
-    public static IReadOnlyList<FileLink<T>> Link<T>(string volumeSerial, string driveLetter, IReadOnlyList<MediumConnection> connections, IEnumerable<LinkedFile<T>> files)
+    public static IReadOnlyList<FileLink<T>> Link<T>(string volumeSerial, string driveLetter, IReadOnlyList<MediumConnection> connections, IEnumerable<LinkedFile<T>> files) =>
+        Link(volumeSerial.Trim().Length > 0 ? [volumeSerial.Trim()] : [], driveLetter, connections, files);
+
+    /// <summary>
+    /// Same, for a medium with several known volume serials (Partition/Diagnostic 1006 logs the boot record of every volume, and a reformat changes the serial).
+    /// A link names the medium when its serial equals any of them.
+    /// </summary>
+    public static IReadOnlyList<FileLink<T>> Link<T>(IReadOnlyCollection<string> volumeSerials, string driveLetter, IReadOnlyList<MediumConnection> connections, IEnumerable<LinkedFile<T>> files)
     {
         var ordered = connections.OrderBy(c => c.ConnectUtc).ToList();
         var result = new List<FileLink<T>>();
         var letter = NormalizeLetter(driveLetter);
-        var serial = volumeSerial.Trim();
+        var serials = volumeSerials.Select(v => v.Trim()).Where(v => v.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var f in files)
         {
             if (f.WhenUtc is not { } when) continue;
@@ -154,7 +161,7 @@ public static class MediaUsageRules
             var openEnded = ConnectionEnd(ordered, idx) is null;
             var timeNote = openEnded ? " Ora deconectării nu este cunoscută: fișierul ar putea fi scris și după ce stick-ul a fost scos." : "";
             var fileLetter = NormalizeLetter(f.Path.Length >= 2 && f.Path[1] == ':' ? f.Path[..1] : "");
-            if (serial.Length > 0 && f.VolumeSerial.Length > 0 && f.VolumeSerial.Equals(serial, StringComparison.OrdinalIgnoreCase))
+            if (f.VolumeSerial.Length > 0 && serials.Contains(f.VolumeSerial.Trim()))
             {
                 result.Add(new(f.Item, f.Path, FileLinkKind.OpenedFromMedium, when, conn,
                     $"Scurtătura indică volumul cu seria {f.VolumeSerial}, aceeași cu a suportului, și a fost scrisă cât timp suportul era conectat: fișierul a fost deschis de pe acest suport.{timeNote}"));
