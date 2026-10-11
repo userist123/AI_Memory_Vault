@@ -9,6 +9,7 @@ import { formatArea, formatLength } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
 import type { Calib } from './UnderlayPanel';
 import { TECH_SYMBOL } from './TechPanel';
+import { pinchViewBox, midpoint, distance, type Pt } from '@/core/gesture';
 import { stairGeometry, SLAB } from '@/core/levels';
 import { planSymbol, symbolAngle } from '@/core/plan-symbols';
 import { doorSwing } from '@/core/doors';
@@ -50,6 +51,11 @@ export default function PlanView(p: Props){
   const [ruler, setRuler] = useState<{ a: [number, number]; b: [number, number] | null } | null>(null);
   useEffect(() => { setRuler(null); }, [p.tool]);
   const drag = useRef<any>(null), pan = useRef<any>(null);
+  // atingeri: două degete = zoom și deplasare; un deget pe un loc gol (la selecție) = deplasare, atingere scurtă = deselectare
+  const touches = useRef(new Map<number, Pt>()), pinch = useRef<{ vb: typeof vb; ctm: { a: number; d: number; e: number; f: number }; mid: Pt; dist: number } | null>(null);
+  const startPinch = () => { const [a, b] = [...touches.current.values()] as [Pt, Pt], m = svg.current!.getScreenCTM()!;
+    if (drag.current?.moved) p.onEdit(() => {}, 'end'); drag.current = null; pan.current = null; setRoomDraft(null);
+    pinch.current = { vb, ctm: { a: m.a, d: m.d, e: m.e, f: m.f }, mid: midpoint(a, b), dist: distance(a, b) }; };
 
   const toWorld = (e: { clientX: number; clientY: number }): [number, number] => { const s = svg.current!, pt = s.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const w = pt.matrixTransform(s.getScreenCTM()!.inverse()); return [w.x, w.y]; };
   useEffect(() => { const el = svg.current!; const wheel = (e: WheelEvent) => { e.preventDefault(); const [wx, wz] = toWorld(e), k = e.deltaY > 0 ? 1.12 : 1 / 1.12;
@@ -61,6 +67,8 @@ export default function PlanView(p: Props){
     for (const w of floor.walls){ const L = wallLength(w.a, w.b); if (L < .01) continue; const ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L, s = Math.max(0, Math.min(L, (pt[0] - w.a[0]) * ux + (pt[1] - w.a[1]) * uz)), d = Math.hypot(pt[0] - (w.a[0] + ux * s), pt[1] - (w.a[1] + uz * s));
       if (d < maxD && (!best || d < best.d)) best = { id: w.id, offset: s, d }; } return best; }
   function down(e: React.PointerEvent){
+    if (e.pointerType === 'touch'){ touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY }); svg.current!.setPointerCapture(e.pointerId);
+      if (touches.current.size === 2){ startPinch(); return; } if (touches.current.size > 2 || pinch.current) return; }
     if (e.button === 1 || (e.button === 0 && e.altKey)){ pan.current = { x: e.clientX, y: e.clientY, vb }; (e.target as Element).setPointerCapture?.(e.pointerId); return; }
     if (e.button !== 0) return; const pt = toWorld(e);
     if (p.calib?.stage === 'pick'){ const q: [number, number] = [r3(pt[0]), r3(pt[1])]; if (!calA) setCalA(q); else if (Math.hypot(q[0] - calA[0], q[1] - calA[1]) > .05){ p.onCalibPick?.(calA, q); setCalA(null); } return; }
@@ -70,7 +78,7 @@ export default function PlanView(p: Props){
     if (p.tool === 'room'){ const s: [number, number] = [snapG(pt[0]), snapG(pt[1])]; setRoomDraft({ a: s, b: s }); svg.current!.setPointerCapture(e.pointerId); return; }
     if (p.tool === 'door' || p.tool === 'window'){ const w = nearestWall(pt); if (w) p.onAddOpening(w.id, w.offset, p.tool); return; }
     const t = (e.target as Element).closest('[data-k]') as HTMLElement | null;
-    if (!t){ p.onSelect(null); return; }
+    if (!t){ p.onSelect(null); if (e.pointerType === 'touch') pan.current = { x: e.clientX, y: e.clientY, vb }; return; }
     const kind = t.dataset.k!, id = t.dataset.id!;
     if (kind === 'underlay'){ p.onSelect(null); drag.current = { kind, start: pt, moved: false, orig: null }; svg.current!.setPointerCapture(e.pointerId); return; }
     if (kind === 'handle'){ drag.current = { kind, wallId: t.dataset.w, end: t.dataset.end, start: pt, moved: false }; }
@@ -79,6 +87,8 @@ export default function PlanView(p: Props){
     svg.current!.setPointerCapture(e.pointerId);
   }
   function move(e: React.PointerEvent){
+    if (e.pointerType === 'touch' && touches.current.has(e.pointerId)){ touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch.current){ if (touches.current.size >= 2){ const [a, b] = [...touches.current.values()] as [Pt, Pt], g = pinch.current; setVb(pinchViewBox(g.vb, g.ctm, g.mid, g.dist, midpoint(a, b), distance(a, b))); } return; } }
     const pt = toWorld(e); setCursor(pt);
     if (pan.current){ const s = svg.current!.getScreenCTM()!, k = 1 / s.a; setVb({ ...pan.current.vb, x: pan.current.vb.x - (e.clientX - pan.current.x) * k, y: pan.current.vb.y - (e.clientY - pan.current.y) * k }); return; }
     if (ruler && !ruler.b) { setRulerHover(snapPoint(pt, floor)); }
@@ -105,6 +115,7 @@ export default function PlanView(p: Props){
     }, phase);
   }
   function up(e: React.PointerEvent){
+    if (e.pointerType === 'touch'){ touches.current.delete(e.pointerId); if (pinch.current){ if (touches.current.size < 2) pinch.current = null; return; } }
     if (pan.current){ pan.current = null; return; }
     if (roomDraft){ const { a, b } = roomDraft; setRoomDraft(null); const r = { x0: Math.min(a[0], b[0]), x1: Math.max(a[0], b[0]), z0: Math.min(a[1], b[1]), z1: Math.max(a[1], b[1]) }; if (r.x1 - r.x0 >= .6 && r.z1 - r.z0 >= .6) p.onAddRoom(r); return; }
     const d = drag.current; drag.current = null; if (d?.moved) p.onEdit(() => {}, 'end');
@@ -112,7 +123,7 @@ export default function PlanView(p: Props){
   const ortho = (a: [number, number], b: [number, number]): [number, number] => { const dx = b[0] - a[0], dz = b[1] - a[1]; if (Math.abs(dx) < Math.abs(dz) * .15) return [a[0], b[1]]; if (Math.abs(dz) < Math.abs(dx) * .15) return [b[0], a[1]]; return b; };
 
   const fs = Math.max(.12, vb.w / 70), isSel = (k: string, id: string) => p.sel && p.sel.kind === k && p.sel.id === id;
-  return (<svg ref={svg} className="plan" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onContextMenu={e => { e.preventDefault(); setPreview(null); }}
+  return (<svg ref={svg} className="plan" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onContextMenu={e => { e.preventDefault(); setPreview(null); }}
     style={{ cursor: p.tool === 'select' ? 'default' : 'crosshair' }} role="application" aria-label={t('plan.aria')}>
     <defs><pattern id="g" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M1 0H0V1" fill="none" stroke="#e4e5e0" strokeWidth=".01" /></pattern></defs>
     <rect x={vb.x} y={vb.y} width={vb.w} height={vb.h} fill="url(#g)" />

@@ -553,16 +553,24 @@ function model(it){
   const kd = e => { if (e.target.closest && e.target.closest('input,select,textarea')) return; keys[e.key.toLowerCase()] = true; }, ku = e => { keys[e.key.toLowerCase()] = false; };
   addEventListener('keydown', kd); addEventListener('keyup', ku);
   let drag = false, lx = 0, ly = 0, moved = 0; const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-  const pd = e => { drag = true; lx = e.clientX; ly = e.clientY; moved = 0; canvas.setPointerCapture(e.pointerId); };
-  const pmv = e => { if (!drag) return; const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
+  // două degete: ciupire = zoom (machetă) sau pas înainte/înapoi (tur); nu se rotește și nu se alege nimic în timpul gestului
+  const ptrs = new Map(); let pinchD = 0;
+  const pdist = () => { const [a, b] = [...ptrs.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+  const pd = e => { ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); canvas.setPointerCapture(e.pointerId);
+    if (ptrs.size === 2){ pinchD = pdist(); drag = false; moved = 99; return; } drag = true; lx = e.clientX; ly = e.clientY; moved = 0; };
+  const pmv = e => { if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (ptrs.size >= 2 && pinchD > 0){ const d = pdist(), k = pinchD / Math.max(1, d); pinchD = d;
+      if (mode === 'house') orbit.r = Math.max(4, Math.min(40, orbit.r * k)); else { const step = (1 - k) * 2.2, [x, z] = collide(player.x - Math.sin(yaw) * step, player.z - Math.cos(yaw) * step); player.x = x; player.z = z; } return; }
+    if (!drag) return; const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
     if (mode === 'walk'){ yaw -= dx * .0045; pitch = Math.max(-1.2, Math.min(1.1, pitch - dy * .0035)); } else { orbit.th -= dx * .006; orbit.ph = Math.max(.12, Math.min(1.45, orbit.ph - dy * .005)); } };
-  const pu = e => { drag = false; if (moved >= 6) return; const r = canvas.getBoundingClientRect(); ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
+  const pu = e => { const wasPinch = ptrs.size >= 2 || pinchD > 0; ptrs.delete(e.pointerId); if (ptrs.size < 2) pinchD = 0; if (wasPinch){ drag = false; return; }
+    drag = false; if (moved >= 6) return; const r = canvas.getBoundingClientRect(); ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
     // clic pe o ușă: se deschide sau se închide (înaintea mobilierului, ca într-un tur real)
     const dh = ray.intersectObjects(doorLeaves.map(d => d.pivot), true)[0], fh = onPick ? ray.intersectObjects(pickables, true)[0] : null;
     if (dh && (!fh || dh.distance <= fh.distance)){ const d = doorLeaves[dh.object.userData.door]; if (d) d.target = d.target > .5 ? 0 : 1; return; }
     if (onPick) onPick(fh ? fh.object.userData.item.userData.pid : null); };
   const wh = e => { if (mode === 'house'){ orbit.r = Math.max(4, Math.min(40, orbit.r + e.deltaY * .01)); e.preventDefault(); } };
-  canvas.addEventListener('pointerdown', pd); canvas.addEventListener('pointermove', pmv); canvas.addEventListener('pointerup', pu); canvas.addEventListener('wheel', wh, { passive: false });
+  canvas.addEventListener('pointerdown', pd); canvas.addEventListener('pointermove', pmv); canvas.addEventListener('pointerup', pu); canvas.addEventListener('pointercancel', pu); canvas.style.touchAction = 'none'; canvas.addEventListener('wheel', wh, { passive: false });
   // fibra fotografică a parchetului sosește după prima construire: reconstruim casa o singură dată
   const unTex = onTexturesReady(() => { if (alive && plan) buildHouse(plan); });
   function resize(){ const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1; R.setSize(w, h, false); if (composer) composer.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix(); }
@@ -627,6 +635,6 @@ function model(it){
     setMode, goRoom, getMode: () => mode, setLighting, capture, renderView, renderPanorama, exportScene,
     setQuality(q){ quality = q === 'high' ? 'high' : 'normal'; if (quality === 'high' && !composer){ try { setupComposer(); } catch (e){ quality = 'normal'; composer = null; } } return quality; },
     setMove(forward, strafe){ joy.f = Number.isFinite(forward) ? Math.max(-1, Math.min(1, forward)) : 0; joy.s = Number.isFinite(strafe) ? Math.max(-1, Math.min(1, strafe)) : 0; },
-    dispose(){ alive = false; unTex(); cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('wheel', wh); if (composer){ ssao.dispose(); composer.renderTarget1.dispose(); composer.renderTarget2.dispose(); composer = null; } R.dispose(); }
+    dispose(){ alive = false; unTex(); cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('pointercancel', pu); canvas.removeEventListener('wheel', wh); if (composer){ ssao.dispose(); composer.renderTarget1.dispose(); composer.renderTarget2.dispose(); composer = null; } R.dispose(); }
   };
 }
