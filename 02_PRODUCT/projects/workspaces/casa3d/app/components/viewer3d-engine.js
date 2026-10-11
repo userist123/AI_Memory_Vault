@@ -627,12 +627,19 @@ function model(it){
       sun: { dir: light && light.dir ? light.dir : [.45, .75, -.48], time: meta.time || 'day', azimuthDeg: meta.azimuthDeg ?? null },
       lights: interiorLights.map(l => ({ p: [l.position.x, l.position.y, l.position.z].map(r4), i: r4(l.intensity) })), ...meta };
     setMode(prevMode); return out; }
+  // modelul 3D ca fișier GLB (glTF binar), pentru vizualizatori (3ds Max, SketchUp, Blender, Twinmotion): aceeași geometrie și
+  // materiale PBR ca în vedere, în metri, cu Y în sus; fără cer, umbre și lumina mediului.
+  async function exportGLB(){ if (!plan) return null; const prevMode = mode; setMode('walk'); scene.updateMatrixWorld(true);
+    const { GLTFExporter } = await import('three/examples/jsm/exporters/GLTFExporter.js');
+    const roots = scene.children.filter(o => !o.isLight && !o.isCamera && o.visible);
+    try { return await new Promise((res, rej) => { try { new GLTFExporter().parse(roots, r => res(r), { binary: true, onlyVisible: true, maxTextureSize: 2048 }); } catch (e){ rej(e); } }); }
+    finally { setMode(prevMode); } }
 
   return {
     setState(p, items){ plan = p; buildHouse(p); buildFurniture(items); },
     setDecor(on){ decorOn = !!on; buildDecor(lastItems); },
     setDoors(open){ doorsOpen = !!open; for (const d of doorLeaves){ d.target = d.open = doorsOpen ? 1 : 0; d.pivot.rotation.y = d.closed + (doorsOpen ? d.maxOpen : 0); } },
-    setMode, goRoom, getMode: () => mode, setLighting, capture, renderView, renderPanorama, exportScene,
+    setMode, goRoom, getMode: () => mode, setLighting, capture, renderView, renderPanorama, exportScene, exportGLB,
     setQuality(q){ quality = q === 'high' ? 'high' : 'normal'; if (quality === 'high' && !composer){ try { setupComposer(); } catch (e){ quality = 'normal'; composer = null; } } return quality; },
     setMove(forward, strafe){ joy.f = Number.isFinite(forward) ? Math.max(-1, Math.min(1, forward)) : 0; joy.s = Number.isFinite(strafe) ? Math.max(-1, Math.min(1, strafe)) : 0; },
     dispose(){ alive = false; unTex(); cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('pointercancel', pu); canvas.removeEventListener('wheel', wh); if (composer){ ssao.dispose(); composer.renderTarget1.dispose(); composer.renderTarget2.dispose(); composer = null; } R.dispose(); }

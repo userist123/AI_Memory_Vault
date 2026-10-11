@@ -534,4 +534,7 @@ export const en: Dict = {
   "wd.csv": "Cutting list (CSV)",
   "wd.disable": "Remove",
   "wd.note": "Common construction (full-height sides, HDF back fixed at the rear); check dimensions with the workshop before cutting.",
+  "viewer.glb": "3D model (GLB)",
+  "viewer.glbTitle": "Download the 3D model (binary glTF) for 3ds Max, SketchUp, Blender or Twinmotion",
+  "viewer.glbFailed": "The 3D model could not be exported.",
 };

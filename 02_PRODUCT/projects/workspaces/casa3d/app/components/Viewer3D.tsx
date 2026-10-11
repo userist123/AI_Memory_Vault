@@ -46,6 +46,10 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
         if (r.status === 202){ setPanoMsg(t('render.started')); return; } if (r.status !== 501){ const j = await r.json().catch(() => ({})); setPanoMsg(j.error || t('render.failed')); return; } } catch { /* fără server: descărcăm */ } }
     const a = document.createElement('a'), url = URL.createObjectURL(new Blob([JSON.stringify(sc)], { type: 'application/json' }));
     a.href = url; a.download = captureFileName(`${snap.name}-blender`).replace(/\.png$/, '.casa3d.json'); document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
+  async function exportGlb(){ try { const buf: ArrayBuffer | null = await v.current?.exportGLB?.(); if (!buf) return;
+      const a = document.createElement('a'), url = URL.createObjectURL(new Blob([buf], { type: 'model/gltf-binary' })); a.href = url; a.download = captureFileName(snap.name).replace(/\.png$/, '.glb');
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
+    catch (e){ setPanoMsg(t('viewer.glbFailed')); } }
   function capture(){ const url: string | undefined = v.current?.capture(); if (!url) return;
     const a = document.createElement('a'); a.href = url; a.download = captureFileName(snap.name); document.body.appendChild(a); a.click(); a.remove(); }
   // Joystick-ul dispare când ieși din tur: orice mișcare rămasă e anulată, altfel jucătorul ar aluneca la următorul tur.
@@ -67,6 +71,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
       <button className="btn" aria-expanded={lightOpen} onClick={() => setLightOpen(o => !o)} title={t('viewer.lightTitle')}>{t('viewer.light')}</button>
       <button className="btn" onClick={capture} disabled={!!err} title={t('viewer.captureTitle')}>{t('viewer.capture')}</button>
       <button className="btn" onClick={exportBlender} disabled={!!err} title={t('viewer.blenderTitle')}>{t('viewer.blender')}</button>
+      <button className="btn" onClick={exportGlb} disabled={!!err} title={t('viewer.glbTitle')}>{t('viewer.glb')}</button>
     </div>
     {lightOpen && <div className="v3light" role="group" aria-label={t('viewer.lighting')}>
       {(['day', 'evening', 'night'] as const).map(tod => <button key={tod} className="btn" aria-pressed={time === tod} onClick={() => setTime(tod)}>{t(tod === 'day' ? 'viewer.day' : tod === 'evening' ? 'viewer.evening' : 'viewer.night')}</button>)}
