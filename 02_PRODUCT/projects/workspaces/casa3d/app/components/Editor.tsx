@@ -13,6 +13,7 @@ import { adviseProject, type Advice } from '@/core/advisor';
 import RevisionDiff from './RevisionDiff';
 import TechPanel from './TechPanel';
 import FinishesPanel from './FinishesPanel';
+import RoomOptionsPanel from './RoomOptionsPanel';
 import MaterialPicker from './MaterialPicker';
 import { downloadSchedule } from './FinishSchedule';
 import { finishSchedule } from '@/core/finish-schedule';
@@ -263,6 +264,7 @@ export default function Editor({ id }: { id: string }){
           {selRoom && roomStage && <RoomPanel part={stage} room={selRoom} snap={snap} G={G} cat={catalog} mc={mc} cur={cur} onSwap={(pid: string, vid: string) => changePiece(pid, q => { q.variantId = vid; }, t('editor.variantNoFit'))} onFinish={(patch: Partial<RoomFinishes>) => mutate(s => { s.finishes = { ...(s.finishes || {}), [selRoom.id]: { ...finishesOf(s, selRoom), ...patch } }; })} onChange={(fn: (r: any) => void) => mutate(s => fn(s.floor.rooms.find(r => r.id === selRoom.id)!))}
             onAuto={() => { const r = autoLayout(snap, catalog, { roomId: selRoom.id }); commit(r.snapshot); say(r.notFit.length ? t('editor.someNotFit') : t('editor.roomAutoApplied', { room: selRoom.name })); }}
             onAdd={(vid: string) => { const r = addPlacement(snap, catalog, selRoom.id, vid); if (!r){ say(t('editor.noFreeSpot')); return; } commit(r); setSel({ kind: 'placement', id: r.placements.at(-1)!.id }); }} num={num} />}
+          {selRoom && (stage === 'finishes' || stage === 'ffe') && <RoomOptionsPanel id={id} room={selRoom} snap={snap} cat={catalog} mc={mc} cur={cur} onSnap={n => commit(n)} say={say} />}
           {selRoom && stage === 'survey' && <button className="btn" title={t('stair.addTitle')} onClick={() => onAddStair(selRoom)}>{t('stair.add')}</button>}
           {selStair && stage === 'survey' && (() => { const g = stairGeometry(selStair, snap.floor.ceilingHeight + SLAB), cm1 = (m: number) => Math.round(m * 1000) / 10; return (<div style={{ display: 'grid', gap: 8 }}>
             <h3>{t('stair.title')}</h3>

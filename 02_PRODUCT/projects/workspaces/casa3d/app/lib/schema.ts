@@ -74,4 +74,7 @@ alter table projects add column if not exists deleted_at timestamptz;
 create index if not exists projects_trash on projects(owner, deleted_at) where deleted_at is not null;
 create table if not exists studio_profile(owner text primary key, data jsonb not null, updated_at timestamptz not null default now());
 alter table projects add column if not exists draft_rev int not null default 0;
+create table if not exists room_choices(token text not null references shares(token) on delete cascade, project_id uuid not null references projects(id) on delete cascade, room_id text not null,
+  option_id text not null, label text not null, author text not null, note text not null default '', chosen_at timestamptz not null default now(), primary key(token, room_id));
+create index if not exists room_choices_project on room_choices(project_id, chosen_at desc);
 `;

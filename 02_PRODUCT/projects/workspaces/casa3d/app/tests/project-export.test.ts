@@ -31,7 +31,7 @@ test('exportul proiectului: tot ce trebuie, fără cheile linkurilor, doar pentr
   const { filename, data } = await exportProject(A, id); assert.match(filename, /^Apartament-Stefanescu-casa3d-\d{4}-\d{2}-\d{2}\.zip$/);
   const dir = mkdtempSync(path.join(os.tmpdir(), 'c3d-exp2-')), f = path.join(dir, 'e.zip'); writeFileSync(f, data);
   const out = execFileSync('python3', ['-c', 'import zipfile,sys,json;z=zipfile.ZipFile(sys.argv[1]);assert z.testzip() is None;n=z.namelist();print(json.dumps(n));print(z.read("linkuri-client.json").decode());print(z.read("deviz.csv").decode("utf-8-sig")[:200])', f], PY).toString('utf8');
-  for (const n of ['proiect.json', 'revizii/revizia-1.json', 'comenzi.csv', 'deviz.csv', 'randari/1791700000000/living.png', 'CITESTE-MA.txt']) assert.ok(out.includes(`"${n}"`), n);
+  for (const n of ['proiect.json', 'revizii/revizia-1.json', 'comenzi.csv', 'deviz.csv', 'randari/1791700000000/living.png', 'CITESTE-MA.txt', 'alegeri-variante.json']) assert.ok(out.includes(`"${n}"`), n);
   assert.ok(!out.includes(sh.token), 'cheia linkului clientului nu intră în arhivă'); assert.match(out, /Categorie;Cameră;Articol/);
   await assert.rejects(exportProject(B, id), (e: any) => e.status === 404);
 });
