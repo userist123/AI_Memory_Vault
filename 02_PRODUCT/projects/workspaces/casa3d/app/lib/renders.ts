@@ -29,7 +29,9 @@ export async function startRender(owner: string, projectId: string, body: string
   const scenePath = path.join(dir, 'scene.casa3d.json'); await fs.writeFile(scenePath, body);
   await fs.writeFile(path.join(dir, 'status.json'), JSON.stringify({ status: 'running', startedAt: new Date().toISOString(), samples }));
   const log = createWriteStream(path.join(dir, 'blender.log'));
-  const p = spawn(process.env.CASA3D_BLENDER!, ['-b', '-P', SCRIPT(), '--', scenePath, dir, '--samples', String(samples), '--width', '1600', '--height', '1000', '--rooms', rooms], { windowsHide: true });
+  // un fișier .js/.mjs (înlocuitor de Blender, ex. în teste) rulează cu Node-ul curent; altfel e executabilul Blender
+  const bin = process.env.CASA3D_BLENDER!, viaNode = /\.m?js$/i.test(bin);
+  const p = spawn(viaNode ? process.execPath : bin, [...(viaNode ? [bin] : []), '-b', '-P', SCRIPT(), '--', scenePath, dir, '--samples', String(samples), '--width', '1600', '--height', '1000', '--rooms', rooms], { windowsHide: true });
   running.set(projectId, p); p.stdout?.pipe(log); p.stderr?.pipe(log);
   const timer = setTimeout(() => p.kill(), TIMEOUT_MS);
   p.on('close', async code => { clearTimeout(timer); running.delete(projectId);
