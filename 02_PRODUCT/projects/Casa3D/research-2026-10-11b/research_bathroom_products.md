@@ -1,3 +1,23 @@
+---
+id: "3aa89918-80b2-43ae-9b6e-7256b3718e04"
+type: resource
+lifecycle: REVIEW
+category: digital_twin
+tags: [casa3d, research, bathroom]
+created: "2026-10-11"
+updated: "2026-10-11"
+provenance:
+  source_type: web
+  source_ref: "Web research by a Claude subagent on 2026-10-11; every source URL is cited inline in the body"
+  source_date: "2026-10-11"
+  redaction: not_applicable
+  provenance_status: complete
+confidence: medium
+verification: unverified
+relations:
+  - type: related_to
+    target_id: "f09fc736-92ae-472e-9f6b-395293bfbed8"
+---
 # Casa3D — Bathroom product variants on the Romanian market (research 2026-10-11)
 
 Scope: every bathroom element, the shape/type variants sold in RO, typical dimensions (cm, W x D x H) and the attributes that change the 3D mesh, with real Dedeman examples.

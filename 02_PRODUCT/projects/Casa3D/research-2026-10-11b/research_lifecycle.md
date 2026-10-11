@@ -1,3 +1,23 @@
+---
+id: "dc3a864f-c09c-47b5-8b08-1933ccf7b2e2"
+type: resource
+lifecycle: REVIEW
+category: digital_twin
+tags: [casa3d, research, lifecycle]
+created: "2026-10-11"
+updated: "2026-10-11"
+provenance:
+  source_type: web
+  source_ref: "Web research by a Claude subagent on 2026-10-11; every source URL is cited inline in the body"
+  source_date: "2026-10-11"
+  redaction: not_applicable
+  provenance_status: complete
+confidence: medium
+verification: unverified
+relations:
+  - type: related_to
+    target_id: "f09fc736-92ae-472e-9f6b-395293bfbed8"
+---
 # Casa3D: project and data lifecycle, plus other non-design product hygiene (research 2026-10-11)
 
 Status: web research, CLAIMED_ONLY (secondary sources unless noted). Not legal advice. Facts marked [verified] were checked on the vendor page itself.

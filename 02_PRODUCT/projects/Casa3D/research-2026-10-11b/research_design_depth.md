@@ -1,3 +1,23 @@
+---
+id: "693ea7e5-480a-490a-9399-eca8fa9e2c03"
+type: resource
+lifecycle: REVIEW
+category: digital_twin
+tags: [casa3d, research, design]
+created: "2026-10-11"
+updated: "2026-10-11"
+provenance:
+  source_type: web
+  source_ref: "Web research by a Claude subagent on 2026-10-11; every source URL is cited inline in the body"
+  source_date: "2026-10-11"
+  redaction: not_applicable
+  provenance_status: complete
+confidence: medium
+verification: unverified
+relations:
+  - type: related_to
+    target_id: "f09fc736-92ae-472e-9f6b-395293bfbed8"
+---
 # Casa3D: design-depth research (2026-10-11)
 
 Status: web research, `DOCUMENT_VERIFIED` against vendor pages, reviews and guides only. Not checked against Casa3D code. Most competitor feature claims come from vendor marketing. Reddit could not be fetched (domain blocked for the crawler), so the pain points come from Capterra, G2, GetApp and the SketchUp/ChiefTalk forums.
