@@ -24,7 +24,7 @@ namespace LogAnalyzer.UI.ViewModels
         public ProfileTable Table { get; }
         public string Title => ProfileTables.Title(Table);
         public string Section => ProfileTables.Section(Table);
-        public string Columns => string.Join(" | ", ProfileTables.Columns(Table));
+        public string Columns => string.Join(" · ", ProfileTables.Columns(Table).Select(LogAnalyzer.UI.Views.ColumnLabels.For));
         public DataTable Data { get; }
         public DataView View => Data.DefaultView;
 

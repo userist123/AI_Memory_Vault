@@ -73,7 +73,7 @@ namespace LogAnalyzer.Core.Services.Edition
         /// <summary>Short text for the header badge.</summary>
         public string BadgeText => EffectiveRole == StationRole.Csirt
             ? (Mode == AppMode.AirGapped ? "CSIRT fără rețea" : "CSIRT")
-            : "STAȚIE DE CONTROL";
+            : "Stație de control";
 
         public string HumanRole => StationRoles.Human(EffectiveRole);
 
