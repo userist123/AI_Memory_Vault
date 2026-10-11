@@ -121,6 +121,9 @@ function model(it){
       for (let i = 0; i < n; i++) RB(seatW / n - .02, .44, .2, .09, x0 + seatW / n * (i + .5), .62, -ad / 2 + .15, up); // perne spătar
       RB(sw - .02, .38, .16, .03, 0, .45, -ad / 2 + .08, up);          // spătar
       if (s.chaise){ const cd = d, cx = sw / 2 - .45; RB(.9, .22, cd, .03, cx, .17, (cd - ad) / 2, up); RB(.86, .17, cd - .24, .07, cx, .365, (cd - ad) / 2 + .1, up); }
+      // perne decorative la capete, în culori care se potrivesc tapițeriei (deschisă → teracota și salvie, închisă → in)
+      { const light = lumOf(s.col || '#cccccc') > .5, cols = light ? ['#a8714a', '#7d8a72'] : ['#d9cfc0', '#b9a58a'];
+        [[-1, 0], [1, 1]].forEach(([a, i]) => { if (s.chaise && a > 0) return; const c = RB(.44, .42, .13, .07, a * (sw / 2 - arm - .26), .6, -ad / 2 + .32, MAT('velvet', cols[i])); c.rotation.x = -.28; c.rotation.z = a * -.12; }); }
       g.children.forEach(o => { o.position.z -= (d - ad) / 2 * (s.chaise ? 1 : 0); }); if (s.chaise) g.children.forEach(o => { o.position.z += 0; });
       if (s.chaise) g.position.z = 0; break; }
     case 'coffee': { const c = s.col;
@@ -155,9 +158,15 @@ function model(it){
       [[-1, 1], [1, 1]].forEach(([a, b]) => B(.03, .05, .03, a * (w / 2 - .03), .025, b * (d / 2 - .03), MAT('paint', '#222')));
       if (s.boxes){ for (let i = 0; i < 2; i++) [-1, 1].forEach(sd => B(.02, .16, .9, sd * (w / 2 + .012), .12, -.35 + i * .95, fr)); }
       RB(w - .1, .2, d - .14, .05, 0, .44, .05, MAT('fabric', '#f7f7f5'));                   // saltea
-      RB(w - .08, .07, d * .6, .03, 0, .565, d * .18, MAT('fabric', '#8a9fb1'));               // pilotă
-      RB(w - .08, .04, .25, .02, 0, .545, d * .18 - d * .3 + .1, MAT('fabric', '#8a9fb1'));
-      [-1, 1].forEach(a => RB(.62, .13, .38, .06, a * (w / 4 - .02), .61, -d / 2 + .3, MAT('fabric', '#ffffff'))); break; }
+      // lenjeria: pilota groasă care cade peste margini, întoarsă la cap, pled la picioare, perne și perne decorative
+      const duvet = MAT('fabric', '#eeeae3'), throwC = MAT('velvet', s.throw || '#9a7b5c');
+      RB(w + .02, .1, d * .68, .05, 0, .58, d * .14, duvet); RB(w + .02, .22, .05, .025, 0, .5, d * .14 + d * .34, duvet);       // pilota + căderea la picioare
+      [-1, 1].forEach(a => RB(.05, .22, d * .68, .025, a * (w / 2 + .005), .5, d * .14, duvet));                                   // căderea pe laterale
+      RB(w - .02, .05, .22, .025, 0, .64, d * .14 - d * .34 + .1, MAT('fabric', '#f7f5f0'));                                      // cearșaful întors
+      RB(w + .05, .03, .42, .015, 0, .645, d * .3, throwC); RB(w + .05, .18, .03, .015, 0, .56, d * .3 + .21, throwC);              // pled
+      [-1, 1].forEach(a => { const pl = RB(.6, .15, .4, .07, a * (w / 4 - .02), .66, -d / 2 + .3, MAT('fabric', '#ffffff')); pl.rotation.x = -.25; });
+      [-1, 1].forEach((a, i) => { const c = RB(.42, .36, .12, .06, a * (w / 6), .76, -d / 2 + .5, MAT('velvet', i ? '#c9b79c' : (s.throw || '#9a7b5c'))); c.rotation.x = -.35; c.rotation.z = a * .06; });
+      break; }
     case 'night': { const m = body(s.col);
       if (s.type === 'hemnes'){ B(w, .03, d, 0, h - .015, 0, MAT('wood', '#b98f63')); B(w - .02, .22, d - .02, 0, h - .14, 0, m); B(w - .04, .02, d - .04, 0, .2, 0, m); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.04, h - .03, .04, a * (w / 2 - .025), (h - .03) / 2, b * (d / 2 - .025), m)); CY(.012, .012, .02, 0, h - .14, d / 2, MAT('metal', '#8a7a64'), 10); }
       else if (s.type === 'songesand'){ B(w, h - .06, d, 0, (h - .06) / 2 + .06, 0, m); [0, 1].forEach(i => B(w - .03, (h - .1) / 2 - .01, .015, 0, .08 + (h - .1) / 4 + i * (h - .1) / 2, d / 2 + .008, m)); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.03, .06, .03, a * (w / 2 - .03), .03, b * (d / 2 - .03), m)); }
