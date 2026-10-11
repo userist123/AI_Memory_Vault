@@ -28,3 +28,13 @@ export function gate(o: { local: boolean; path: string; method: string; session:
 }
 /** Unde se întoarce după login: doar o cale din aplicație (nu alt site). */
 export const safeNext = (v: unknown) => typeof v === 'string' && /^\/(?![/\\])[\w\-./%?=&]*$/.test(v) && !v.startsWith('/login') ? v : '/';
+
+/** Cerere trimisă de aplicația însăși (fetch din aceeași origine), nu de o pagină străină: Sec-Fetch-Site (pus de
+ *  browser, nu se poate falsifica dintr-o pagină) trebuie să fie same-origin când există, Origin (dacă există) trebuie
+ *  să fie aceeași gazdă, iar corpul JSON (un formular străin nu poate trimite application/json fără preflight CORS). */
+export function sameOriginJson(headers: { get(k: string): string | null }, noBody = false){
+  const site = headers.get('sec-fetch-site'); if (site && site !== 'same-origin') return false;
+  const origin = headers.get('origin'), host = headers.get('host');
+  if (origin){ try { if (new URL(origin).host !== host) return false; } catch { return false; } }
+  return noBody || /^application\/json(;|$)/i.test(headers.get('content-type') ?? '');
+}

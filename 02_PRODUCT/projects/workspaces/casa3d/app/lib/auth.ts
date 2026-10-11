@@ -2,7 +2,7 @@
 // se deschide numai după login. Parola se ține doar ca hash scrypt, în .data/auth.json (în afara git, lizibil doar de
 // utilizator), alături de proprietarul proiectelor și cheia sesiunilor. Schimbarea parolei schimbă cheia: toate
 // sesiunile vechi (telefoanele logate) se închid.
-import { scryptSync, randomBytes, timingSafeEqual, createHmac } from 'node:crypto';
+import { scrypt, scryptSync, randomBytes, timingSafeEqual, createHmac } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -30,10 +30,11 @@ export function setPassword(password: unknown, owner: string): void {
   const tmp = `${f}.${process.pid}.tmp`; fs.writeFileSync(tmp, JSON.stringify(cfg), { mode: 0o600 }); fs.renameSync(tmp, f); cache = null;
 }
 export function removePassword(){ try { fs.unlinkSync(file()); } catch { /* deja lipsă */ } cache = null; }
-export function checkPassword(cfg: AuthConfig, password: unknown): boolean {
+/** Verificarea e asincronă (scrypt în fundal): serverul nu se blochează cât se verifică o parolă. */
+export async function checkPassword(cfg: AuthConfig, password: unknown): Promise<boolean> {
   if (typeof password !== 'string' || password.length > PASSWORD_MAX) return false;
-  const a = Buffer.from(hashOf(password, cfg.salt), 'base64'), b = Buffer.from(cfg.hash, 'base64');
-  return a.length === b.length && timingSafeEqual(a, b);
+  const a = await new Promise<Buffer>((res, rej) => scrypt(password.normalize('NFC'), Buffer.from(cfg.salt, 'base64'), 64, SCRYPT, (e, k) => e ? rej(e) : res(k)));
+  const b = Buffer.from(cfg.hash, 'base64'); return a.length === b.length && timingSafeEqual(a, b);
 }
 
 const sign = (cfg: AuthConfig, exp: number) => createHmac('sha256', cfg.secret).update(`${exp}.${cfg.owner}`).digest('base64url');
@@ -44,10 +45,18 @@ export function verifySession(cfg: AuthConfig | null, token: string | undefined 
   const a = Buffer.from(m[2]!), b = Buffer.from(sign(cfg, exp)); return a.length === b.length && timingSafeEqual(a, b);
 }
 
-// încercări greșite: cel mult 5 în 15 minute de la aceeași adresă și 30 în total (împotriva ghicitului parolei)
-const WINDOW = 15 * 60e3, PER_IP = 5, GLOBAL = 30;
-const fails = new Map<string, number[]>();
-const recent = (k: string, now: number) => (fails.get(k) ?? []).filter(t => now - t < WINDOW);
-export function loginAllowed(ip: string, now = Date.now()){ return recent(ip, now).length < PER_IP && recent('*', now).length < GLOBAL; }
-export function loginFailed(ip: string, now = Date.now()){ for (const k of [ip, '*']) fails.set(k, [...recent(k, now), now]); if (fails.size > 5000) fails.clear(); }
-export function resetLoginLimits(){ fails.clear(); }
+// Ghicitul parolei: fiecare încercare se rezervă ÎNAINTE de orice așteptare (cereri simultane nu trec de limită),
+// cel mult 5 în 15 minute de la aceeași adresă; o reușită șterge încercările adresei. Fără limită globală: altfel
+// oricine ar putea bloca intrarea designerului cu încercări greșite de pe multe adrese.
+const WINDOW = 15 * 60e3, PER_IP = 5, MAX_IPS = 10000;
+const attempts = new Map<string, number[]>();
+const recent = (k: string, now: number) => (attempts.get(k) ?? []).filter(t => now - t < WINDOW);
+/** Rezervă o încercare pentru adresă; false dacă adresa și-a epuizat încercările. */
+export function takeLoginAttempt(ip: string, now = Date.now()){
+  const r = recent(ip, now); if (r.length >= PER_IP){ attempts.set(ip, r); return false; }
+  attempts.delete(ip); attempts.set(ip, [...r, now]);                    // reinserat la coadă: cele mai vechi adrese ies primele
+  for (const k of attempts.keys()){ if (attempts.size <= MAX_IPS) break; attempts.delete(k); }   // memoria rămâne mărginită
+  return true;
+}
+export function loginSucceeded(ip: string){ attempts.delete(ip); }
+export function resetLoginLimits(){ attempts.clear(); }
