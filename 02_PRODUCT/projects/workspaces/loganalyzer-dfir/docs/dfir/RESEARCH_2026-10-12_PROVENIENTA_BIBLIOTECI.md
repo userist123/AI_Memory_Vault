@@ -5,6 +5,17 @@ package was restored, built or executed. Evidence states follow the repository
 convention: `DOCUMENT_VERIFIED` (read from a primary source), `CODE_VERIFIED` (read
 from package metadata or a signature), `CLAIMED_ONLY` (secondary source), `UNVERIFIED`.
 
+**Whose libraries are these.** The document covers two separate groups:
+1. **Section 3 — Eric Zimmerman's libraries:** these are the libraries the third-party tool InspectraVeritas ships
+   (found next to its executable). LogAnalyzer does **not** use them today; they were vetted as *candidates* for
+   LogAnalyzer to adopt. They are open-source projects of their own author, separate from InspectraVeritas' code.
+2. **Section 4 — current LogAnalyzer dependencies:** what LogAnalyzer already uses today.
+
+**Stage of the application (owner, 2026-10-12).** LogAnalyzer is currently for **local testing only**. The commercial
+licences (e.g. a QuestPDF licence, see section 4) will be obtained, and the application accredited, **before** any use
+inside an institution. The licence and dependency findings below are therefore pre-deployment actions, not blockers for
+local testing.
+
 ## 1. The rule being applied
 
 A third-party library may ship in LogAnalyzer only if neither the library nor any
