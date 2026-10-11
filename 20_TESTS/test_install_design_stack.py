@@ -50,3 +50,21 @@ def test_directive_skill_is_automatic_and_bounded():
     for must in ("PRODUCT.md", "DESIGN.md", "PLAN.md", "OKLCH", "chrome-devtools", "--max-iterations",
                  "never `npx skills add`", "bypass-permissions", "memory_propose"):
         assert must in text, must
+
+
+
+def test_a_cp1252_console_does_not_crash_the_run(tmp_path):
+    """Seen on the owner's PC: `claude plugin enable` prints ✘ and the cp1252 console crashed print()."""
+    import os
+    if os.name == "nt":
+        import pytest
+        pytest.skip("fake claude is a POSIX shell script")
+    fake = tmp_path / "bin" / "claude"
+    fake.parent.mkdir()
+    fake.write_text("#!/bin/sh\necho '\u2718 already enabled'\nexit 1\n", encoding="utf-8")
+    fake.chmod(0o755)
+    env = dict(os.environ, PYTHONIOENCODING="cp1252", PATH=f"{fake.parent}{os.pathsep}{os.environ['PATH']}")
+    r = subprocess.run([sys.executable, str(SCRIPT), "--home", str(tmp_path / "home"), "--apply"],
+                       capture_output=True, text=True, encoding="cp1252", errors="replace", env=env)
+    assert "Traceback" not in r.stderr, r.stderr
+    assert "ok   enable plugin frontend-design" in r.stdout
