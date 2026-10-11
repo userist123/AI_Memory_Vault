@@ -196,7 +196,8 @@ namespace LogAnalyzer.Core.Services.Details
             if (ra.LastWriteTime is null) sheet.Meaning.Add("Ora ultimei scrieri a cheii nu este disponibilă în această sursă.");
             else sheet.Meaning.Add("Ora afișată este ultima scriere a CHEII (LastWriteTime), nu neapărat momentul în care a fost setată această valoare.");
             var path = (ra.KeyPath ?? "").ToLowerInvariant();
-            if (path.Contains(@"\run")) sheet.Meaning.Add("Cheie de pornire automată: programul din valoare rulează la fiecare autentificare/pornire. Mecanism frecvent de persistență (MITRE T1547.001).");
+            // \Run, \RunOnce, \RunServices only: "\RunMRU" is what the user typed in Win+R, not a start-up entry (senior review A.5)
+            if (System.Text.RegularExpressions.Regex.IsMatch(path, @"\\run(once|services)?(\\|$)")) sheet.Meaning.Add("Cheie de pornire automată: programul din valoare rulează la fiecare autentificare/pornire. Mecanism frecvent de persistență (MITRE T1547.001).");
             if (path.Contains(@"\services\")) sheet.Meaning.Add("Configurație de serviciu Windows: ImagePath/ServiceDll indică ce rulează ca serviciu (MITRE T1543.003).");
             if (path.Contains("userassist")) sheet.Meaning.Add("UserAssist: programe lansate din interfața grafică de utilizator (numele sunt codate ROT13).");
             sheet.Raw = JsonSerializer.Serialize(ra, new JsonSerializerOptions { WriteIndented = true });
