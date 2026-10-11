@@ -394,6 +394,7 @@ namespace LogAnalyzer.UI.ViewModels
                 ? "Integritate air-gap: nu s-a observat nimic în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (jurnalele au o istorie limitată; unele canale pot lipsi, vezi „Surse lipsă sau incomplete”)."
                 : $"Integritate air-gap: {AirGapFindings.Count} constatări ({AirGapFindings.Count(a => a.Severity >= Severity.High)} ridicate).";
             ResultChanged?.Invoke(this, EventArgs.Empty);
+            LogAnalyzer.UI.Services.CollectAllState.Instance.Publish(result);   // G3: one result, reused by every page
             FillTimeline();
             var chains = _result.Findings.Where(f => f.RuleId == "INCIDENT-CHAIN").ToList();
             Chains = chains.Count == 0 ? "Niciun lanț de incident (constatări grave grupate în timp)." :
@@ -436,8 +437,11 @@ namespace LogAnalyzer.UI.ViewModels
             var dlg = new SaveFileDialog { FileName = $"Raport_{_result.Case.Info.CaseId}.pdf", Filter = "PDF (*.pdf)|*.pdf", InitialDirectory = _result.Case.Root };
             if (dlg.ShowDialog() != true) return;
             var audience = (LogAnalyzer.Dfir.Reporting.ReportAudience)Math.Clamp(ReportAudienceIndex, 0, ReportAudienceLabels.Length - 1);
+            // F2: Write re-verifies every evidence hash first and prints the result on page 1; F3: the PDF is then signed when a key is configured.
             InvestigationReportPdf.Write(_result, dlg.FileName, LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified, audience: audience);
             _result.Case.Audit("report.pdf", $"{dlg.FileName} · {LogAnalyzer.Dfir.Reporting.ReportAudiences.Label(audience)}");
+            ReportStatus = SignReport(dlg.FileName, _result.Case);
+            IntegrityLine = _result.Case.LastRecheck?.Summary ?? IntegrityLine;
             Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });
         }
 

@@ -15,10 +15,16 @@ namespace LogAnalyzer.Dfir.Windows.Registers;
 /// </summary>
 public static class TransferReportPdf
 {
+    /// <summary>Tests: receives the F2 pre-report line printed on page 1 (async-local).</summary>
+    public static readonly AsyncLocal<Action<string>?> PrintedLines = new();
+
     public static void Write(string path, TransferRegister register, IReadOnlyList<TransferFinding> findings, ReportHeaderProfile header, string marking, bool isolated,
-                             DateTime? from = null, DateTime? to = null, TransferVerification? verification = null)
+                             DateTime? from = null, DateTime? to = null, TransferVerification? verification = null, LogAnalyzer.Dfir.Case.PreReportCheck? preCheck = null)
     {
         QuestPDF.Settings.License = LicenseType.Community;
+        // F2: the declared SHA-256 are re-verified on the medium just before the report (null = do it now from the last content verification).
+        var pre = preCheck ?? LogAnalyzer.Dfir.Case.PreReportCheck.ForTransfer(verification, register.Rows);
+        PrintedLines.Value?.Invoke(pre.Line);
         var rows = register.Rows.Where(r => !TransferRegister.TryDateTime(r.DateTime, out var d) || ((from is null || d >= from) && (to is null || d <= to)))
                                 .OrderBy(r => r.DateTime, StringComparer.Ordinal).ToList();
         Document.Create(doc => doc.Page(page =>
@@ -41,6 +47,7 @@ public static class TransferReportPdf
             page.Content().PaddingVertical(6).Column(col =>
             {
                 col.Spacing(6);
+                col.Item().Text(pre.Line).Bold().FontSize(8).FontColor(pre.BlocksConfirmed ? "#b91c1c" : pre.Applicable ? "#065f46" : "#78350f");
                 col.Item().Table(t =>
                 {
                     float[] widths = [1.3f, 1f, 1.1f, 0.7f, 1.6f, 1.6f, 1.4f, 1.4f, 2f, 1.2f, 1.1f];

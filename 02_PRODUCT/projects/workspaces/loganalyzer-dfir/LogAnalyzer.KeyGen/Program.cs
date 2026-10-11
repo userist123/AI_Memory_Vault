@@ -17,6 +17,11 @@ public static class Program
         // Offline detection data packs (docs/dfir/ANALYSIS_2026-10-11_APPLICATION_UPDATES.md): run on the owner's offline machine only.
         if (args.Length >= 1 && args[0] == "datapack-keygen") { DataPackKeygen(args); return; }
         if (args.Length >= 1 && args[0] == "datapack-sign") { DataPackSign(args); return; }
+        // F3: report signing key of the operator / organisation, and the independent verifier of a signed report.
+        if (args.Length >= 1 && args[0] == "report-keygen") { Environment.ExitCode = ReportCli.Keygen(args, Console.Out); return; }
+        if (args.Length >= 1 && args[0] == "report-sign") { Environment.ExitCode = ReportCli.Sign(args, Console.Out); return; }
+        if (args.Length >= 1 && args[0] == "verify-report") { Environment.ExitCode = ReportCli.Verify(args, Console.Out); return; }
+        if (args.Length >= 1 && args[0] == "verify-archive") { Environment.ExitCode = ReportCli.VerifyArchive(args, Console.Out); return; }
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.WriteLine("===================================================================");
         Console.WriteLine(" 🛡️ LOGANALYZER DFIR ENTERPRISE — KEY GENERATOR & LICENSE MANAGER");
@@ -137,6 +142,12 @@ public static class Program
         Console.WriteLine("Exemple:");
         Console.WriteLine("  LogAnalyzer.KeyGen");
         Console.WriteLine("  LogAnalyzer.KeyGen ABCD1234EFGH5678 2027-12-31");
+        Console.WriteLine();
+        Console.WriteLine("Rapoarte semnate digital:");
+        Console.WriteLine("  LogAnalyzer.KeyGen report-keygen <fișier-cheie-privată> [<fișier-cheie-publică>]");
+        Console.WriteLine("  LogAnalyzer.KeyGen report-sign <fișier-cheie-privată> <raport.pdf> <semnatar>");
+        Console.WriteLine("  LogAnalyzer.KeyGen verify-report <raport.pdf> <cheie-publică-base64 | fișier-cheie-publică>...");
+        Console.WriteLine("  LogAnalyzer.KeyGen verify-archive <arhivă-caz.zip>");
     }
 
     /// <summary>datapack-keygen &lt;private-key-file&gt;: creates the ECDSA P-256 signing key (PKCS#8, keep offline) and prints the public key to compile into the application.</summary>

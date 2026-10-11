@@ -312,14 +312,22 @@ namespace LogAnalyzer.UI.ViewModels
             if (Result is null) BuildResult();
             var (_, pdf) = ControlReportPdf.SaveToCase(_report, ws, Inspector, Notes, BuildHeader(_report), Result, ManualItems.Select(m => m.ToResult()).ToList());
             var dlg = new SaveFileDialog { FileName = Path.GetFileName(pdf), Filter = "PDF (*.pdf)|*.pdf", Title = "Salvați o copie a raportului (originalul rămâne în caz)" };
+            // F3: the report in the case is signed when the operator configured a signing key; a copy carries a copy of the same signature.
+            var signLine = LogAnalyzer.Dfir.Reporting.ReportSigningSettings.Load().SignIfConfigured(pdf);
+            ws.Audit("report.signature", $"{Path.GetFileName(pdf)}: {signLine}");
             if (dlg.ShowDialog() == true && !string.Equals(dlg.FileName, pdf, StringComparison.OrdinalIgnoreCase))
+            {
                 File.Copy(pdf, dlg.FileName, overwrite: true);
+                var sig = LogAnalyzer.Dfir.Reporting.ReportSignature.SigPath(pdf);
+                if (File.Exists(sig)) File.Copy(sig, LogAnalyzer.Dfir.Reporting.ReportSignature.SigPath(dlg.FileName), overwrite: true);
+            }
             // confirmation page in words (UX research R19): where it is, its fingerprint as the reference for the official report, what comes next
             string sha;
             using (var fs = File.OpenRead(pdf)) sha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fs));
             SavedReportInfo = $"Raportul a fost salvat.{Environment.NewLine}" +
                               $"Unde: {pdf}{Environment.NewLine}" +
                               $"Amprenta fișierului (SHA-256): {sha}{Environment.NewLine}" +
+                              $"{signLine}{Environment.NewLine}" +
                               "Ce urmează: tipăriți raportul, treceți amprenta în procesul-verbal ca referință și semnați. Dacă cineva modifică fișierul, amprenta nu se mai potrivește. " +
                               "Originalul rămâne în cazul stației; orice copie se verifică prin aceeași amprentă.";
             Status = "Raport salvat în caz.";

@@ -21,7 +21,10 @@ public static class InvestigationReportPdf
     /// <summary>Tests: receives every text block the report prints, joined by new lines, after the PDF is produced (async-local, so parallel tests do not mix).</summary>
     public static readonly AsyncLocal<Action<string>?> TextObserver = new();
 
-    public static void Write(InvestigationResult r, string path, string investigator, string notes = "", LogAnalyzer.Dfir.Reporting.ReportAudience audience = LogAnalyzer.Dfir.Reporting.ReportAudience.Everything)
+    /// <param name="preCheck">F2: the evidence re-check made just before this report; null = run it now on the case (every PDF re-verifies first).</param>
+    /// <param name="masker">F10: when given, every printed text goes through it (user, host, IP, e-mail and the user segment of paths become consistent pseudonyms) for sharing.</param>
+    public static void Write(InvestigationResult r, string path, string investigator, string notes = "", LogAnalyzer.Dfir.Reporting.ReportAudience audience = LogAnalyzer.Dfir.Reporting.ReportAudience.Everything,
+                             LogAnalyzer.Dfir.Case.PreReportCheck? preCheck = null, LogAnalyzer.Dfir.Privacy.PiiMasker? masker = null)
     {
         QuestPDF.Settings.License = LicenseType.Community;
         var sec = LogAnalyzer.Dfir.Reporting.ReportAudiences.Sections(audience);
@@ -32,7 +35,11 @@ public static class InvestigationReportPdf
         string L(DateTimeOffset? t) => t is { } v ? RoText.LocalWithUtc(v, zone) : "—";
         var chains = r.Findings.Where(f => f.RuleId == "INCIDENT-CHAIN").ToList();
         var others = r.Findings.Where(f => f.RuleId != "INCIDENT-CHAIN").ToList();
+        var pre = preCheck ?? LogAnalyzer.Dfir.Case.PreReportCheck.ForCase(r.Case);   // F2: re-verify every evidence hash before anything is printed
         var integrity = ReportIntegrity.Check(r);
+        if (pre.BlocksConfirmed && integrity.AllIntact) integrity = integrity with { AllIntact = false, Banner = integrity.Banner + " " + pre.Line };
+        string W(string text) { var t = pre.Unconfirm(text); return masker is null ? t : masker.Mask(t); }
+        var footprint = LogAnalyzer.Dfir.Case.AnalysisFootprint.ForCase(r.Case);
         var seal = LogAnalyzer.Dfir.Case.ReportSeal.For(r.Case);   // chain heads at the moment the report is printed (decision 30)
         var evidence = r.Case.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal);
         var verification = r.Verification ?? ReadVerification(r.Case.Root);
@@ -48,8 +55,9 @@ public static class InvestigationReportPdf
             page.DefaultTextStyle(x => x.FontSize(8.5f).FontFamily("Segoe UI").FontColor("#1e293b"));
             page.Header().Column(h =>
             {
-                string title = $"Raport de investigație — {info.Name}" + (audience == LogAnalyzer.Dfir.Reporting.ReportAudience.Everything ? "" : $" · {LogAnalyzer.Dfir.Reporting.ReportAudiences.Label(audience)}");
-                string sub = $"Caz {info.CaseId} · {station.Line} · investigator {investigator} · orele sunt în {RoText.ZoneName(zone, DateTimeOffset.Now)}, cu ora UTC între paranteze";
+                string title = W($"Raport de investigație — {info.Name}" + (audience == LogAnalyzer.Dfir.Reporting.ReportAudience.Everything ? "" : $" · {LogAnalyzer.Dfir.Reporting.ReportAudiences.Label(audience)}"));
+                string sub = W($"Caz {info.CaseId} · {station.Line} · investigator {investigator} · orele sunt în {RoText.ZoneName(zone, DateTimeOffset.Now)}, cu ora UTC între paranteze") +
+                             (masker is null ? "" : " · EXPORT CU DATE PERSONALE MASCATE (pseudonime consecvente)");
                 printed.Add(title); printed.Add(sub);
                 h.Item().Text(title).Bold().FontSize(14).FontColor(Ink);
                 h.Item().Text(sub).FontSize(7.5f).FontColor(Muted);
@@ -58,11 +66,14 @@ public static class InvestigationReportPdf
             page.Content().PaddingVertical(8).Column(col =>
             {
                 col.Spacing(7);
-                TextBlockDescriptor P(ColumnDescriptor c, string text) { printed.Add(text); return c.Item().Text(text); }
+                TextBlockDescriptor P(ColumnDescriptor c, string text) { text = W(text); printed.Add(text); return c.Item().Text(text); }
                 // Heading: numbered in print order, whatever sections the audience includes.
                 void Head(string title) => P(col, numbers.Next(title)).Bold().FontSize(11).FontColor(Ink);
 
                 // ---- Page 1: "Concluzie pe scurt" before everything else ----
+                // F2: the result of the re-verification made just before this report, first on page 1.
+                var preColor = pre.BlocksConfirmed ? "#b91c1c" : pre.Applicable && pre.Unverified == 0 ? "#065f46" : "#78350f";
+                P(col, pre.Line).FontSize(8).Bold().FontColor(preColor);
                 col.Item().Background("#f8fafc").Border(1.2f).BorderColor(Ink).Padding(8).Column(sc =>
                 {
                     sc.Spacing(3);
@@ -88,7 +99,7 @@ public static class InvestigationReportPdf
                 var (ibg, iborder, ifg) = !integrity.AllIntact ? ("#fef2f2", "#b91c1c", "#7f1d1d")
                                         : integrity.HasNotices ? ("#fffbeb", "#d97706", "#78350f")
                                         : ("#ecfdf5", "#10b981", "#065f46");
-                var banner = RoText.FixSentences(integrity.Banner);
+                var banner = W(RoText.FixSentences(integrity.Banner));
                 printed.Add(banner);
                 col.Item().Background(ibg).Border(1).BorderColor(iborder).Padding(6).Text(banner).FontSize(8).Bold().FontColor(ifg);
                 // WP4: one verification line (automatic cross-check by a separate module of this application, not an external verification) and a warning when needed.
@@ -104,7 +115,7 @@ public static class InvestigationReportPdf
                 });
                 col.Item().Row(row =>
                 {
-                    void Box(RowDescriptor rw, string value, string label, string sub, string color) { printed.Add($"{value} {label} {sub}".Trim()); InvestigationReportPdf.Box(rw, value, label, sub, color); }
+                    void Box(RowDescriptor rw, string value, string label, string sub, string color) { sub = W(sub); printed.Add($"{value} {label} {sub}".Trim()); InvestigationReportPdf.Box(rw, value, label, sub, color); }
                     Box(row, r.Findings.Count(f => f.Severity == Severity.Critical).ToString(), "CRITICE", $"{RoText.Count(summary.CriticalConfirmed, "confirmată", "confirmate")} · {RoText.Count(summary.CriticalIndicative, "indicativă", "indicative")}", "#7f1d1d");
                     Box(row, r.Findings.Count(f => f.Severity == Severity.High).ToString(), "RIDICATE", $"{RoText.Count(summary.HighConfirmed, "confirmată", "confirmate")} · {RoText.Count(summary.HighIndicative, "doar indicativă", "doar indicative")}", "#b45309");
                     Box(row, r.Findings.Count(f => f.Severity == Severity.Medium).ToString(), "MEDII", "", "#78716c");
@@ -262,6 +273,10 @@ public static class InvestigationReportPdf
                 P(col, "Lanțul de custodie și jurnalul de audit au amprente în subsolul fiecărei pagini; amprenta fiecărui element de probă este în anexă. Orice modificare ulterioară a unui element de probă schimbă amprenta și este semnalată la reverificare.").FontSize(7.5f);
 
                 }
+                // F10: what this application wrote or changed on the analysed station, paths generalised.
+                Head("Amprenta analizei pe țintă");
+                foreach (var l in footprint.Lines()) P(col, l).FontSize(7.5f);
+
                 Head("Legendă coduri");
                 P(col, "Corpul raportului folosește termeni în română; codurile în engleză din datele cazului (findings.json și celelalte fișiere din Analysis) se potrivesc astfel:").FontSize(7.5f);
                 foreach (var l in InvestigationReportText.Legend()) P(col, l).FontSize(7).FontColor(Muted);

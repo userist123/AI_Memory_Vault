@@ -77,7 +77,7 @@ public sealed class InvestigationPipeline
     public InvestigationPipeline(ParserRegistry? registry = null) => _registry = registry ?? WindowsParsers.Registry;
 
     public static IReadOnlyList<ICollector> AllCollectors { get; } =
-        [new LiveStateCollector(), new EventLogCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector()];
+        [new LiveStateCollector(), new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector()];
 
     /// <summary>Creates a case. <paramref name="scope"/> is mandatory (owner decision 23): an incomplete scope is refused with <see cref="CaseScopeIncompleteException"/>.</summary>
     public static CaseWorkspace NewCase(string casesRoot, string name, CaseScope scope)
@@ -100,9 +100,12 @@ public sealed class InvestigationPipeline
         foreach (var f in files)
         {
             var type = ImportType(f);
-            var source = type == "evtx" ? Path.GetFileNameWithoutExtension(f).Replace('%', '/') : type;
+            // E1: an archived log ("Archive-Security-<date>.evtx") is the Security channel; E1/E10: the origin (archived log, Windows.old, shadow copy) goes into the notes and custody.
+            var source = type == "evtx" ? LogAnalyzer.Dfir.Windows.Acquisition.HistoricalSources.ChannelFromFileName(f) : type;
+            var origin = LogAnalyzer.Dfir.Analysis.EvidenceOrigin.Label(f);
             list.Add(ws.ImportFile(f, "Import:" + source, type == "evtx" ? "EventLog:" + source : type, TemporalType.Historical, "Import", DfirInfo.ApplicationVersion,
-                notes: "Importat de operator din: " + f));
+                notes: (origin.Length > 0 ? $"Sursă istorică ({origin}). " : "") + "Importat de operator din: " + f));
+            if (origin.Contains("VSS", StringComparison.Ordinal)) ws.Audit("vss.import", $"{list[^1].EvidenceId} din {f}");
         }
         return list;
     }

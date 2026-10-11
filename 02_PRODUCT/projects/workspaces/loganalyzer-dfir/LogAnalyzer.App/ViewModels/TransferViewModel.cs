@@ -315,8 +315,11 @@ namespace LogAnalyzer.UI.ViewModels
             var dlg = new SaveFileDialog { FileName = $"Registru_transferuri_{DateTime.Now:yyyyMMdd}.pdf", Filter = "PDF (*.pdf)|*.pdf", Title = "Raportul registrului de transferuri" };
             if (dlg.ShowDialog() != true) return;
             var findings = TransferChecks.Check(_register, _media.Register.Snapshot());
-            TransferReportPdf.Write(dlg.FileName, _register, findings, _header, "", AppModeContext.IsAirGapped, ReportFrom, ReportTo?.Date.AddDays(1).AddTicks(-1), _lastVerification);
-            Status = $"Raportul a fost salvat: {dlg.FileName}";
+            // F2: the declared SHA-256 are re-verified on the medium just before the report; F3: then the PDF is signed when a key is configured.
+            var pre = LogAnalyzer.Dfir.Case.PreReportCheck.ForTransfer(_lastVerification, _register.Rows);
+            TransferReportPdf.Write(dlg.FileName, _register, findings, _header, "", AppModeContext.IsAirGapped, ReportFrom, ReportTo?.Date.AddDays(1).AddTicks(-1), _lastVerification, pre);
+            var signLine = LogAnalyzer.Dfir.Reporting.ReportSigningSettings.Load().SignIfConfigured(dlg.FileName);
+            Status = $"Raportul a fost salvat: {dlg.FileName}. {pre.Line} {signLine}";
             Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });
         }
     }

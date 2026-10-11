@@ -1,7 +1,8 @@
 <UserControl x:Class="LogAnalyzer.UI.Views.StationControlView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:LogAnalyzer.UI.Views">
+             xmlns:local="clr-namespace:LogAnalyzer.UI.Views"
+             xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
@@ -23,6 +24,7 @@
         </DockPanel>
 
         <StackPanel Grid.Row="1" MaxWidth="900" HorizontalAlignment="Left">
+            <ctrl:NoDataPanel/>
         <!-- WP18 S4: the guided control in three steps -->
         <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,12">
             <StackPanel>

@@ -19,6 +19,8 @@ public sealed class Wp14Input
     public string SystemZone { get; init; } = "";
     /// <summary>What the facts collector read from the station (adapters, burn tooling, printers, screenshots, virtual machines, archivers, camera / microphone); null = not collected.</summary>
     public AirGapFacts? Facts { get; init; }
+    /// <summary>E1: evidence id → origin label for sources that are not the current system (archived log, Windows.old, shadow copy); see <see cref="EvidenceOrigin"/>.</summary>
+    public IReadOnlyDictionary<string, string>? EvidenceOrigins { get; init; }
 }
 
 /// <summary>
@@ -38,6 +40,8 @@ public static partial class Wp14Rules
         Media(c, found);
         MediaUsageFindings(c, found);
         DeletedTraceFindings(c, found);
+        HistoryFindings(c, found);        // E1: every source, earliest evidence first
+        AfterConnectFindings(c, found);   // E5: what followed each connection (linked to the medium's findings above)
         Optical(c, found);
         AirGap(c, found);
         Channels(c, found);

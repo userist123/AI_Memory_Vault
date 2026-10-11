@@ -4,6 +4,7 @@
         xmlns:vm="clr-namespace:LogAnalyzer.UI.ViewModels"
         xmlns:views="clr-namespace:LogAnalyzer.UI.Views"
         xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls"
+        xmlns:services="clr-namespace:LogAnalyzer.UI.Services"
         Title="LogAnalyzer Enterprise — Threat Triage &amp; Incident Response Command Center"
         Height="900" Width="1500" MinHeight="720" MinWidth="1100"
         WindowStartupLocation="CenterScreen" Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}">
@@ -99,6 +100,9 @@
                                       AutomationProperties.HelpText="Bifat: Expert, numele tehnice rămân lângă cele simple. Nebifat: Simplu." Foreground="{StaticResource TextPrimaryBrush}" FontSize="12" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
+                    <!-- G3: one „Colectează tot” for the station's role; every page reuses the result -->
+                    <Button Content="Colectează tot" Command="{x:Static services:CollectAllState.Command}" Style="{StaticResource AccentButtonStyle}" Padding="10,5" Margin="0,0,10,0"
+                            AutomationProperties.HelpText="Colectare și analiză completă pentru rolul acestei stații; rezultatul este folosit de toate paginile."/>
                     <Button Content="Ce înseamnă?" Command="{Binding OpenGlossaryCommand}" Style="{StaticResource ActionButtonStyle}" Padding="10,5" Margin="0,0,10,0"
                             AutomationProperties.HelpText="Deschide glosarul: fiecare termen tehnic, cu numele pe înțelesul tuturor și o explicație scurtă."/>
 

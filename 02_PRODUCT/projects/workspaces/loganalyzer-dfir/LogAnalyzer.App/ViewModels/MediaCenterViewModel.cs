@@ -37,7 +37,12 @@ namespace LogAnalyzer.UI.ViewModels
         private List<DeviceAssessment> _all = [];
         private CancellationTokenSource? _debounce;
 
-        public MediaCenterViewModel(MediaRegisterViewModel register) { _register = register; }
+        public MediaCenterViewModel(MediaRegisterViewModel register)
+        {
+            _register = register;
+            // G3: a new analysis result refreshes the medium detail (history, what followed the connection) without collecting again.
+            LogAnalyzer.UI.Services.CollectAllState.Instance.Published += _ => OnSelectedDeviceChanged(SelectedDevice);
+        }
 
         /// <summary>Set by the main window: opens the separate "Registrul de transferuri" page (owner 2026-10-11: the transfer register is not part of this page).</summary>
         public Action? NavigateToTransferRegister { get; set; }
@@ -75,6 +80,29 @@ namespace LogAnalyzer.UI.ViewModels
             SelectedDetails.Clear();
             if (value is null) return;
             foreach (var d in DeviceDetails.For(value)) SelectedDetails.Add(d);
+            foreach (var d in AnalysisDetails(value.Device.Serial, LogAnalyzer.UI.Services.CollectAllState.Instance.Current?.Timeline)) SelectedDetails.Add(d);
+        }
+
+        /// <summary>
+        /// E1 / E5 on the medium detail, from the result of the last analysis (G3: the same result every page uses): the connection history from every source
+        /// with the earliest evidence, and „Ce a urmat după conectare”. Without an analysis it says so and the page offers „Colectează tot”.
+        /// </summary>
+        public static IReadOnlyList<DeviceDetail> AnalysisDetails(string serial, IReadOnlyList<LogAnalyzer.Dfir.Model.TimelineEvent>? timeline)
+        {
+            if (serial.Length == 0) return [];
+            if (timeline is null)
+                return [new DeviceDetail("Istoric și ce a urmat după conectare", LogAnalyzer.UI.Services.CollectAllState.EmptyText,
+                    "Apăsați „Colectează tot”: jurnalele (inclusiv cele arhivate și Windows.old), Prefetch, scurtăturile și istoricul browserului sunt analizate o singură dată și folosite aici.")];
+            var history = LogAnalyzer.Dfir.Analysis.Wp14Rules.History(timeline, serial);
+            var after = LogAnalyzer.Dfir.Analysis.AfterConnect.DetailLines(timeline, serial);
+            return
+            [
+                new DeviceDetail("Istoricul conectărilor (toate sursele)",
+                    history.Count == 0 ? "Nicio urmă datată în cronologia analizată." : $"Cea mai veche dovadă: {history[0].Text}" + Environment.NewLine + string.Join(Environment.NewLine, history.Take(30).Select(h => "• " + h.Text)),
+                    "Cea mai veche urmă nu este neapărat prima conectare: sursele mai vechi (jurnale suprascrise) pot lipsi."),
+                new DeviceDetail("Ce a urmat după conectare (−10 min … +2 h)", string.Join(Environment.NewLine, after),
+                    "Execuții (Prefetch, 4688, Sysmon), fișiere deschise (LNK, Jump Lists) și descărcări, cu scor; activitatea altor utilizatori este exclusă când utilizatorul sesiunii este cunoscut. Apropierea în timp nu dovedește legătura."),
+            ];
         }
 
         private bool _activated;
