@@ -19,6 +19,15 @@ LOCAL_CLASSES = {"summarize"}  # text in -> short text out: work a local model d
 TRIVIAL = {"da", "nu", "yes", "no", "ok", "continua", "continue", "merci", "thanks", "mulțumesc", "multumesc"}
 
 
+def owner_language() -> str:
+    """The owner's reply language from ~/.claude/settings.json (`language`), or '' when unset."""
+    try:
+        value = json.loads((Path.home() / ".claude" / "settings.json").read_text(encoding="utf-8")).get("language")
+    except Exception:
+        return ""
+    return value.strip() if isinstance(value, str) else ""
+
+
 def main() -> int:
     try:
         data = json.load(sys.stdin)
@@ -36,6 +45,9 @@ def main() -> int:
     except Exception:
         return 0
     ctx = one_line(d) + "."
+    lang = owner_language()
+    if lang:  # the injected context is English; without this the reply drifts to English
+        ctx += f" Write every message to the owner in {lang}; code, commits and files keep their own language."
     if d.subagent:
         ctx += (f" Do the work in a subagent of any type ({d.subagent} fits); the Agent hook sets its model"
                 f" to {d.model}. Keep only its conclusion in this session.")

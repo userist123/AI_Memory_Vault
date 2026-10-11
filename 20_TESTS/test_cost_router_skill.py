@@ -189,3 +189,20 @@ def test_chat_skill_is_uploadable_and_not_installed_into_claude_code(tmp_path):
     home = tmp_path / "home"
     assert _run([str(INSTALL), "--home", str(home), "--no-hook"]).returncode == 0
     assert not (home / ".claude" / "skills" / "cost-router" / "chat").exists()
+
+
+def test_hook_reminds_the_reply_language_from_user_settings(tmp_path):
+    """Owner report 2026-10-11: replies drifted to English because every injected line is English."""
+    import os
+    home = tmp_path / "home"
+    (home / ".claude").mkdir(parents=True)
+    (home / ".claude" / "settings.json").write_text(json.dumps({"language": "Romanian"}), encoding="utf-8")
+    env = dict(os.environ, HOME=str(home), USERPROFILE=str(home))
+    r = subprocess.run([sys.executable, str(HOOK)], input=json.dumps({"prompt": "find which files import memory_controller and list them"}),
+                       capture_output=True, text=True, timeout=60, env=env)
+    ctx = json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert "Write every message to the owner in Romanian" in ctx and len(ctx) <= 1000
+    (home / ".claude" / "settings.json").write_text("{}", encoding="utf-8")
+    r = subprocess.run([sys.executable, str(HOOK)], input=json.dumps({"prompt": "find which files import memory_controller and list them"}),
+                       capture_output=True, text=True, timeout=60, env=env)
+    assert "Write every message" not in r.stdout
