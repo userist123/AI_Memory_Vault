@@ -40,7 +40,7 @@ public static class InvestigationReportPdf
             page.Header().Column(h =>
             {
                 h.Item().Text($"Raport de investigație — {info.Name}" + (audience == LogAnalyzer.Dfir.Reporting.ReportAudience.Everything ? "" : $" · {LogAnalyzer.Dfir.Reporting.ReportAudiences.Label(audience)}")).Bold().FontSize(14).FontColor(Ink);
-                h.Item().Text($"Caz {info.CaseId} · stația {info.Host} · rolul stației: {(info.StationRole.Length == 0 ? "necunoscut (caz anterior WP18)" : LogAnalyzer.Core.Services.Edition.StationRoles.TryParse(info.StationRole, out var sr) ? LogAnalyzer.Core.Services.Edition.StationRoles.Human(sr) : info.StationRole)} · investigator {investigator} · ore în {zone.Id}").FontSize(7.5f).FontColor(Muted);
+                h.Item().Text($"Caz {info.CaseId} · stația {info.Host} · investigator {investigator} · ore în {zone.Id}").FontSize(7.5f).FontColor(Muted);
                 h.Item().PaddingTop(4).LineHorizontal(1).LineColor(Ink);
             });
             page.Content().PaddingVertical(8).Column(col =>

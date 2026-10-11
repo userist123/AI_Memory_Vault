@@ -84,7 +84,9 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private bool _isNetworkMode = !AppModeContext.IsAirGapped;
         [ObservableProperty] private string _systemModeBadgeText = AppModeContext.IsAirGapped ? "Mod: izolat (fără rețea)" : "Mod: conectat";
         /// <summary>Header subtitle: the station this application runs on.</summary>
-        public string StationSubtitle => $"Analiză de jurnale și probe · stația {Environment.MachineName}";
+        public string StationSubtitle => "Analiză de jurnale și probe";
+        /// <summary>The name of this PC, shown in the header instead of the station role (owner, 2026-10-11).</summary>
+        public string StationName => Environment.MachineName;
         [ObservableProperty] private string _securityShieldStatusText = AppModeContext.IsAirGapped
             ? "Mod AirGapped: rețeaua este blocată de aplicație; izolarea fizică a stației nu este verificată"
             : "Mod Network: serviciile online sunt permise; aplicația nu evaluează siguranța stației";

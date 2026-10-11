@@ -25,7 +25,7 @@ public sealed record ControlReportHeader(
         {
             ("Unitatea", V(Unit)), ("Structura", V(Structure)), ("Stația", V(Station)), ("Identificatorul stației (Hardware ID)", V(HardwareId)),
             ("Perioada controlată", V(Period)), ("Cine a efectuat controlul", V(Inspector) + (string.IsNullOrWhiteSpace(InspectorFunction) ? "" : $", {InspectorFunction.Trim()}")),
-            ("Rolul stației", V(StationRole)), ("Număr de înregistrare", V(RegistrationNumber)),
+            ("Număr de înregistrare", V(RegistrationNumber)),
         };
         foreach (var f in ExtraFields) if (!string.IsNullOrWhiteSpace(f.Label)) l.Add((f.Label.Trim(), V(f.Value)));
         return l;

@@ -73,6 +73,8 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>The role profile this page renders (WP18 S2): data, not decisions.</summary>
         public RoleProfile Profile { get; }
         public string RoleTitle => Profile.Title;
+        /// <summary>Heading of the Home intents: the station's name (owner, 2026-10-11: the role is not shown).</summary>
+        public string StationHeading => $"Stația {Environment.MachineName}";
         public string RoleIntro => Profile.Intro;
         /// <summary>At most five big buttons, in the user's words. Unavailable ones stay visible, disabled, with the reason.</summary>
         public ObservableCollection<HomeIntentView> PrimaryIntents { get; } = new();

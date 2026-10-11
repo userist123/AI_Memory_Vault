@@ -52,21 +52,12 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Station role badge (WP18): CONTROL / CSIRT from the signed policy; the tooltip is the full decision chain -->
-                    <Border Margin="8,0,0,0" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,4" VerticalAlignment="Center"
-                            ToolTip="{Binding StationRoleReasonText}" AutomationProperties.Name="Rolul acestei stații">
+                    <!-- Station name (owner 2026-10-11: show the station's name, not its role) -->
+                    <Border Margin="8,0,0,0" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="3" Padding="10,4" VerticalAlignment="Center"
+                            AutomationProperties.Name="Numele acestei stații">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Rol: " FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
-                            <TextBlock Text="{Binding StationRoleBadgeText}" FontSize="12" FontWeight="SemiBold">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding HasStationRoleWarning}" Value="True"><Setter Property="Foreground" Value="{StaticResource WarningBrush}"/></DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
+                            <TextBlock Text="Stația: " FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                            <TextBlock Text="{Binding StationName}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
                     </Border>
 
@@ -141,7 +132,7 @@
                             <RadioButton Content="Acasă" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="22" IsChecked="True"/>
 
                             <!-- WP18 S2: the pages of this PC's role, from the role profile (data); unavailable ones stay visible, disabled, with the reason -->
-                            <TextBlock Text="{Binding RoleProfile.Title}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6" TextWrapping="Wrap"/>
+                            <TextBlock Text="Pagini principale" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6" TextWrapping="Wrap"/>
                             <ItemsControl ItemsSource="{Binding RoleNavigation}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>

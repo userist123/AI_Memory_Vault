@@ -44,7 +44,8 @@ public sealed class Wp18ReportTests : IDisposable
         Assert.Contains(lines, l => l.Label == "Structura" && l.Value == "—");
         Assert.Contains(lines, l => l.Label.Contains("Hardware ID") && l.Value == "ABCDEF0123456789");
         Assert.Contains(lines, l => l.Label == "Cine a efectuat controlul" && l.Value == "Pop Ion, ofițer de securitate");
-        Assert.Contains(lines, l => l.Label == "Rolul stației" && l.Value == "Stație de control");
+        Assert.DoesNotContain(lines, l => l.Label.Contains("Rol"));                    // owner 2026-10-11: the station name only, no role
+        Assert.Contains(lines, l => l.Label == "Stația" && l.Value == "PC-CTRL-01");
         Assert.Contains(lines, l => l.Label == "Număr de înregistrare" && l.Value == "—");
         Assert.Contains(lines, l => l.Label == "Dosar" && l.Value == "—");
         Assert.Contains("SECRET DE SERVICIU", h.MarkingLine);
@@ -78,7 +79,8 @@ public sealed class Wp18ReportTests : IDisposable
         while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "LogAnalyzer.Dfir.Windows", "Investigation", "InvestigationReportPdf.cs"))) dir = dir.Parent;
         var src = File.ReadAllText(Path.Combine(dir!.FullName, "LogAnalyzer.Dfir.Windows", "Investigation", "InvestigationReportPdf.cs"));
         Assert.True(src.IndexOf("ReportSection.Gaps))", StringComparison.Ordinal) < src.IndexOf("ReportSection.Findings))", StringComparison.Ordinal));
-        Assert.Contains("rolul stației:", src);
+        Assert.DoesNotContain("rolul stației", src);                                    // owner 2026-10-11: name only
+        Assert.Contains("stația {info.Host}", src);
     }
 
     [Fact]
