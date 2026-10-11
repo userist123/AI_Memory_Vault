@@ -1,0 +1,15 @@
+{
+ "skill_id": "skill:replica-skill:replica-brand",
+ "source_url": "https://github.com/Jakeschincariol/replica-skill",
+ "source_commit": "77c9436fb3d18c3d58169efb8caf4fe906b0dc51",
+ "source_path": "replica-brand",
+ "license_file": "LICENSE",
+ "license": "MIT",
+ "retrieved": "2026-10-11",
+ "retrieved_by": "claude-code cloud session; shallow git clone; nothing executed",
+ "extraction_status": "CANDIDATE_PENDING_OWNER_REVIEW",
+ "files": {
+  "SKILL.md": "3838f17043dc395f75cf3c4f615f2a64455f15e1e9693f499b8b5b0d28711ead",
+  "sweep.py": "e70165b721ff19465a820dfdb1fab5f8604ff7fed9515c245703ba21a707330d"
+ }
+}

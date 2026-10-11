@@ -1,0 +1,16 @@
+{
+ "skill_id": "skill:replica-skill:replica-entrepreneur",
+ "source_url": "https://github.com/Jakeschincariol/replica-skill",
+ "source_commit": "77c9436fb3d18c3d58169efb8caf4fe906b0dc51",
+ "source_path": "replica-entrepreneur",
+ "license_file": "LICENSE",
+ "license": "MIT",
+ "retrieved": "2026-10-11",
+ "retrieved_by": "claude-code cloud session; shallow git clone; nothing executed",
+ "extraction_status": "CANDIDATE_PENDING_OWNER_REVIEW",
+ "files": {
+  "SKILL.md": "041724878b4c40b1a92e9d077cb31c5f551b85ca7beb3db99b03fe8c772a7d9b",
+  "reviews.py": "4e48d770727d6229ebdc398824bb947b919b5e267c5fcc23a11ab1be63995beb",
+  "themes.json": "008d337c9dd3c33adb1aad24bb4c35feed776c5370b6b295cd67f306aaa3d754"
+ }
+}
