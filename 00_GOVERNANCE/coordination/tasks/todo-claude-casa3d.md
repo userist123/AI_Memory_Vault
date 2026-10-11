@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-11T01:40:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-11T12:10:00Z
 TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / userist123/AI_Memory_Vault_CODEX_READY#258    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
@@ -147,7 +147,17 @@ PLAN multi-level homes (done; kept for reference):
   Editor: level tabs (ground, level 1, +), stair tool; 3D: active level + stairs + stairwell void; DXF/print: one
   plan per level. Twin/design proposals: ground level only, upper-level placements preserved on apply (test).
   Tests first for levels.ts, repo validation, BOQ over two levels, design apply preserving upper placements.
+- 2026-10-11 redesign (owner: "sa nu mai arate ca una facuta de AI"; chose Studio editorial + project-stage flow):
+  editorial tokens/fonts, 8-stage bar (Releveu..Prezentare), MaterialPicker swatches, architectural furniture
+  symbols in plan (core/plan-symbols.ts), client presentation deck (/p/[id]/present), studio dashboard.
+- 2026-10-11 Blender renders from the app (lib/renders.ts, /api/projects/[id]/renders): verified on Marius-PC,
+  5 rooms ~2 min (job 1791718918059). Decor glTF exported as references.
+- 2026-10-11 realism pass (owner: "fa totul mai realist ... usile ... nu din desen animat"): door leaves on pivots
+  with hinges, architraves, handles, eased open/close + click toggle, doorSwing rule (core/doors.ts); real windows;
+  Poly Haven CC0 textures + HDRI; dressed beds/sofas (d6742332); lived-in kitchen: oven door, hob zones, gooseneck
+  tap, counter items, spheres in Blender export (d2c969e0). vitest 318/318, next build OK.
 NEXT (in order):
+0. Realism: bathroom dressing (towels, toiletries), hood chimney, door grain scale; verify on PC at 1440/1280.
 0. DONE 12:55 UTC (integration): lib/twin.ts adapter, lib/design.ts (room-scoped BOQ, stale over the full twin),
    lib/share.ts, tables design_proposals + shares, routes /design, /design/[pid], /shares, /api/share/[token],
    page /share/[token], editor tab Twin + share buttons, joystick (engine setMove), twin-core overlap policy and
