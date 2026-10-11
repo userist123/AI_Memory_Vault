@@ -19,8 +19,11 @@ export const isPublicPath = (path: string) => PUBLIC_PATHS.some(re => re.test(pa
 const LOGIN_PATHS = [/^\/login\/?$/, /^\/api\/auth\/login$/];
 const LOCAL_ONLY = [/^\/api\/auth\/password$/, /^\/api\/admin(\/|$)/, /^\/admin(\/|$)/];
 export type GateDecision = 'allow' | 'login' | 'unauthorized' | 'notfound';
-export function gate(o: { local: boolean; path: string; method: string; session: boolean }): GateDecision {
+// Demo public: fără login, toată aplicația, în afară de ce e doar pe calculator și de randarea Blender (ține placa video ocupată).
+const DEMO_BLOCKED = [/^\/api\/auth(\/|$)/, /^\/login\/?$/, /^\/api\/projects\/[^/]+\/renders(\/|$)/];
+export function gate(o: { local: boolean; path: string; method: string; session: boolean; demo?: boolean }): GateDecision {
   if (o.local) return 'allow';
+  if (o.demo){ if (LOCAL_ONLY.some(re => re.test(o.path)) || (DEMO_BLOCKED.some(re => re.test(o.path)) && !(o.method === 'GET' && /\/renders$/.test(o.path)))) return 'notfound'; return 'allow'; }
   if (isPublicPath(o.path) || LOGIN_PATHS.some(re => re.test(o.path))) return 'allow';
   if (LOCAL_ONLY.some(re => re.test(o.path))) return 'notfound';
   if (o.session) return 'allow';

@@ -2,6 +2,7 @@ import { sanitizeAppearance, SIZE_LIMITS_CM } from '../core/appearance';
 import { checkMeta, readMeta, type ProjectMeta } from '../core/project-meta';
 import { sanitizeFinishes } from '../core/finishes';
 import { sanitizeRoomOptions } from '../core/room-options';
+import { demoBeforeCreate } from './demo';
 import { sanitizeDoors } from '../core/doors';
 import { sanitizeTech, MAX_TECH_POINTS } from '../core/technical';
 import catalogSeed from '../data/catalog.v1.json';
@@ -129,6 +130,7 @@ export async function createProject(owner: string, name: unknown, template: unkn
   if (typeof template !== 'string' || (template !== 'blank' && !getTemplate(template))) throw new HttpError(400, 'Șablon necunoscut. Alege unul dintre șabloanele din listă sau „Plan gol”.');
   const { q } = await getDb(); const cat = await getCatalog(); const n = cleanName(name);
   const snap = newSnapshot(cat, n, template, lang === 'en' ? 'en' : 'ro');
+  await demoBeforeCreate(q, owner);
   const { rows } = await q('insert into projects(owner, name, draft) values($1,$2,$3) returning id', [owner, n, JSON.stringify(snap)]);
   return rows[0].id as string;
 }

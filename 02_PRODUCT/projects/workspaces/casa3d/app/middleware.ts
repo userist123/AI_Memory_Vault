@@ -7,7 +7,7 @@ export const config = { runtime: 'nodejs' };
 const H = { 'x-robots-tag': 'noindex', 'cache-control': 'no-store' };
 export function middleware(req: NextRequest){
   const path = req.nextUrl.pathname, local = isLocalRequest(req.headers.get('host'), req.headers);
-  const d = gate({ local, path, method: req.method, session: !local && verifySession(readAuth(), req.cookies.get(SESSION_COOKIE)?.value) });
+  const d = gate({ local, path, method: req.method, session: !local && verifySession(readAuth(), req.cookies.get(SESSION_COOKIE)?.value), demo: process.env.CASA3D_DEMO === '1' });
   if (d === 'allow') return NextResponse.next();
   // pagina de login se arată chiar la adresa cerută (fără redirecționare: serverul nu știe adresa publică a tunelului);
   // după login, pagina se reîncarcă pe aceeași adresă, acum cu sesiune
