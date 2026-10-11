@@ -344,7 +344,8 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<string> TargetTypes { get; } = new() { "PC", "Server", "NAS" };
         [ObservableProperty] private string _selectedTargetType = "PC";
         [ObservableProperty] private string _collectionOutputDir = "C:\\fișiere audit";
-        [ObservableProperty] private string _collectionHostname = "PC-AUDIT";
+        // The station this application runs on, read at start-up: never a fixed name (a fixed default name labelled every station's evidence with it).
+        [ObservableProperty] private string _collectionHostname = Environment.MachineName;
         [ObservableProperty] private string _collectionLogs = string.Empty;
         [ObservableProperty] private bool _isCollectionRunning;
         [ObservableProperty] private int _syslogPort = 514;

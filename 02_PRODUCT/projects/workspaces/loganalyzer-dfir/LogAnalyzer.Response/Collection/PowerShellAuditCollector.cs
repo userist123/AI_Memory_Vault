@@ -13,6 +13,15 @@ namespace LogAnalyzer.Response.Collection
 {
     public class PowerShellAuditCollector : IAuditCollector
     {
+        /// <summary>The script's exit codes (AuditCollector.ps1 header): 0 = every section ran, 2 = at least one section failed, 1 = invalid parameters.</summary>
+        public static string CompletionLine(int exitCode) => exitCode switch
+        {
+            0 => "[SUCCESS] Colectarea s-a încheiat: toate secțiunile au fost colectate.",
+            2 => "[ATENȚIE] Colectarea s-a încheiat, dar cel puțin o secțiune a eșuat (cod 2). Vedeți rândurile „EROARE” de mai sus: acele date lipsesc din colectare.",
+            1 => "[ERROR] Colectarea nu a pornit: parametri invalizi (cod 1). Vedeți mesajul de mai sus.",
+            _ => $"[ERROR] Colectarea s-a oprit cu un cod neașteptat ({exitCode}). Datele pot fi incomplete.",
+        };
+
         public async Task RunCollectionAsync(string targetType, string outputDir, string hostname, Action<string> logCallback)
         {
             await Task.Run(() =>
@@ -46,6 +55,8 @@ namespace LogAnalyzer.Response.Collection
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
+                        StandardOutputEncoding = System.Text.Encoding.UTF8,
+                        StandardErrorEncoding = System.Text.Encoding.UTF8,
                         CreateNoWindow = true
                     };
 
@@ -66,7 +77,7 @@ namespace LogAnalyzer.Response.Collection
                     process.BeginErrorReadLine();
                     process.WaitForExit();
 
-                    logCallback($"[SUCCESS] Procesul de colectare s-a încheiat cu codul de ieșire: {process.ExitCode}");
+                    logCallback(CompletionLine(process.ExitCode));
                 }
                 catch (Exception ex)
                 {

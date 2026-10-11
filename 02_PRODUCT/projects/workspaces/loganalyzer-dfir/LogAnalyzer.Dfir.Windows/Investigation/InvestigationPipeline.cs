@@ -66,7 +66,7 @@ public sealed class InvestigationResult
 }
 
 /// <summary>
-/// The full investigation, as done by hand on LAB-PC: acquire (or import) evidence into a case, parse it with the
+/// The full investigation, as done by hand on a development PC: acquire (or import) evidence into a case, parse it with the
 /// real parsers, build one timeline, correlate, record findings and evidence gaps. Every step leaves an audit trail.
 /// </summary>
 public sealed class InvestigationPipeline
