@@ -30,7 +30,7 @@ public sealed class Wp18AccessibilityTests
     }
 
     /// <summary>The five screens, as the prompt's §6.5 names them.</summary>
-    private static readonly string[] Screens = ["Views/HomeView.xaml", "Views/StationControlView.xaml", "Views/InvestigationView.xaml", "Views/ProcedureProfileView.xaml", "Views/AuthView.xaml"];
+    private static readonly string[] Screens = ["Views/HomeView.xaml", "Views/StationControlView.xaml", "Views/InvestigationView.xaml", "Views/ProcedureProfileView.xaml", "Views/AuthView.xaml", "Views/MediaCenterView.xaml"];
 
     private static readonly HashSet<string> Interactive = ["Button", "ToggleButton", "CheckBox", "RadioButton", "TextBox", "ComboBox", "DatePicker", "DataGrid", "ListBox", "ListView", "TabControl", "Expander", "Slider", "PasswordBox"];
     private static readonly HashSet<string> NamedByOwnText = ["Button", "ToggleButton", "CheckBox", "RadioButton"];

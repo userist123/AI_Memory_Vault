@@ -148,6 +148,10 @@ namespace LogAnalyzer.UI.ViewModels
         public ProcedureProfileViewModel ProcedureProfile { get; }
         /// <summary>"Registru medii" (decision 16) and "Registru utilizatori" (decision 17): data the operator enters; observed media are compared with them.</summary>
         public MediaRegisterViewModel MediaRegister { get; }
+        /// <summary>„Medii de stocare”: live inventory and supervision of every medium and connectable device (owner 2026-10-11).</summary>
+        public MediaCenterViewModel MediaCenter { get; }
+
+        [RelayCommand] private void ShowMediaCenter() => SelectedTabIndex = LogAnalyzer.Core.Services.Edition.RoleProfiles.TabMediaRegister;
         public UsersRegisterViewModel UsersRegister { get; }
         public AuthViewModel Auth { get; }
 
@@ -607,6 +611,7 @@ namespace LogAnalyzer.UI.ViewModels
             Policy = new PolicyViewModel(registryWriter);
             ProcedureProfile = new ProcedureProfileViewModel();
             MediaRegister = new MediaRegisterViewModel();
+            MediaCenter = new MediaCenterViewModel(MediaRegister);
             UsersRegister = new UsersRegisterViewModel();
             Auth = new AuthViewModel();
             _eventParser = eventParser;
@@ -2066,13 +2071,14 @@ namespace LogAnalyzer.UI.ViewModels
                         
                         foreach (var ev in _eventParser.ParseEvtxFile(file)) 
                         {
-                            var kbDetails = _kbService.GetDetails(ev.EventId);
+                            // The knowledge base describes Security-log events only; its "EventExample" is a sample event from another computer
+                            // and must never be shown as if it came from this station (owner 2026-10-11).
+                            var kbDetails = (ev.ProviderName ?? "").Contains("Security-Auditing", StringComparison.OrdinalIgnoreCase) ? _kbService.GetDetails(ev.EventId) : null;
                             if (kbDetails != null)
                             {
                                 ev.OfficialDescription = kbDetails.ExtendedDescription;
-                                ev.TacticalExample = kbDetails.EventExample;
                                 ev.ReferenceUrl = kbDetails.ReferenceUrl;
-                                ev.PotentialCriticality = kbDetails.PotentialCriticality;
+                                if (string.IsNullOrWhiteSpace(ev.PotentialCriticality)) ev.PotentialCriticality = kbDetails.PotentialCriticality;
                             }
                             batch.Add(ev);
                             

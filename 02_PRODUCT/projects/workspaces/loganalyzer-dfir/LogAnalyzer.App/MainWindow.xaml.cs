@@ -9,6 +9,9 @@ namespace LogAnalyzer.UI.Views
         {
             InitializeComponent();
             DataContext = viewModel;
+            // the media page is „alive” for the whole session: first inventory and live supervision start with the main window
+            Loaded += (_, _) => viewModel.MediaCenter.Activate();
+            Closed += (_, _) => viewModel.MediaCenter.Dispose();
         }
 
         private void SimulateMenuButton_Click(object sender, RoutedEventArgs e)

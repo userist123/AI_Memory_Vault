@@ -211,8 +211,20 @@
 
             <!-- CENTRAL CONTENT VIEW REGION -->
             <Grid Grid.Column="1" Background="{StaticResource WorkspaceBrush}">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                <!-- a medium that is not in the register was connected: shown on every page (owner 2026-10-11, „ceva viu”) -->
+                <Border Grid.Row="0" Background="#FDECEA" BorderBrush="{StaticResource CriticalBrush}" BorderThickness="0,0,0,1" Padding="16,8"
+                        Visibility="{Binding MediaCenter.HasAlert, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button Content="Vezi dispozitivul" Command="{Binding ShowMediaCenterCommand}" Margin="12,0,8,0"/>
+                            <Button Content="Am văzut" Command="{Binding MediaCenter.DismissAlertCommand}"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding MediaCenter.AlertText}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource CriticalBrush}" VerticalAlignment="Center"/>
+                    </DockPanel>
+                </Border>
                 <!-- TabControl Region Host (Bound to SelectedTabIndex & SelectedModuleIndex) -->
-                <TabControl SelectedIndex="{Binding SelectedTabIndex}" BorderThickness="0" Background="Transparent">
+                <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}" BorderThickness="0" Background="Transparent">
                     <TabControl.ItemContainerStyle>
                         <Style TargetType="TabItem">
                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -256,7 +268,7 @@
                 <TabItem><views:InvestigationView DataContext="{Binding Investigation}"/></TabItem>
                 <TabItem><views:PolicyView DataContext="{Binding Policy}"/></TabItem>
                 <TabItem><views:ProcedureProfileView DataContext="{Binding ProcedureProfile}"/></TabItem>
-                <TabItem><views:RegisterView DataContext="{Binding MediaRegister}"/></TabItem>
+                <TabItem><views:MediaCenterView DataContext="{Binding MediaCenter}"/></TabItem>
                 <TabItem><views:RegisterView DataContext="{Binding UsersRegister}"/></TabItem>
                 <TabItem><views:AuthView DataContext="{Binding Auth}"/></TabItem>
                 <!-- 22: Home (WP5) -->

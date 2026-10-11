@@ -80,7 +80,18 @@ Cererea: „multe dintre opțiuni nu te lasă să faci nimic, sunt acolo doar s�
 - Monitorizarea în timp real își afișează mesajele; comenzile de mai sus spun ce trebuie făcut întâi; mesajul despre scopul cazului spune ce se întâmplă și ce se apasă.
 - `DeadControlsTests` (App.Tests): orice buton fără comandă, clic sau meniu și orice comandă legată care nu există sau e un înlocuitor pică testul.
 
-**Rămas:** paginile vechi de sub „Avansat” (0–13) sunt încă în engleză pe alocuri și au proprietăți calculate dar neafișate. „Conturi locale și USB” și „Active Directory” duc la aceeași pagină. Verificarea vizuală a noului panou se face după un control real, rulat ca administrator.
+**Rămas:** paginile vechi de sub „Avansat” (0–13) sunt încă în engleză pe alocuri și au proprietăți calculate dar neafișate. „Conturi locale și USB” și „Active Directory” duc la aceeași pagină, dar nu e o eroare: prima apare doar în modul izolat, a doua doar în cel conectat (corectat 2026-10-11). Verificarea vizuală a noului panou se face după un control real, rulat ca administrator.
+
+## 7. „Ce înseamnă” era gol la majoritatea elementelor (raportat de proprietar 2026-10-11, cu capturi)
+
+**Constatare.** Fereastra de detalii avea explicații doar pentru evenimentele Windows. Pentru celelalte (registru, factori de risc, alerte, constatări AD/Kerberos/DNS, procese, IOC, profiluri APT, tehnici MITRE, registrul de custodie etc.) spunea „Nu există o explicație predefinită”. La evenimentul 4624, „Exemplu de abuz” arăta evenimentul-model al unei baze de cunoștințe externe, cu calculatorul și contul altcuiva. Arăta și criticitatea în engleză.
+
+**Reparat (`ItemMeaning`, `ItemMeaningTests`):**
+- fiecare tip de element spune ce este, de ce apare, cât de grav e, pe ce se bazează și ce faceți;
+- toate cele 149 de tehnici MITRE folosite în aplicație au o descriere pe înțeles. Un test caută în cod orice ID nou fără descriere. Asocierea cu o tehnică e numită indiciu, nu dovadă;
+- registrul: ce zonă este (BCD, Run, Services, USBSTOR, MountedDevices, UserAssist, ShimCache, BAM, Winlogon, LSA, Defender, firewall, IFEO, ShellBags, MountPoints2 etc.). Valorile `dword:`, `hex(2)`, `hex(7)` și `hex(b)` sunt decodate;
+- 4624: logon-urile sistemului (tip 0/5, SYSTEM, conturi de calculator) sunt numite „operație normală a Windows, NU activitatea unei persoane”; logon-urile persoanelor (2, 7, 10, 11) sunt numite ca atare;
+- textul-model din baza externă nu mai este copiat; baza se aplică doar evenimentelor Security. Evenimentele vechi din baza locală care îl conțin nu îl mai afișează.
 
 ## Surse
 
