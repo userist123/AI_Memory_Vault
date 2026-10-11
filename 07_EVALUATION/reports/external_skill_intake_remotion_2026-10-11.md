@@ -41,11 +41,12 @@ The owner asked for Remotion motion graphics. The proposal listed three sources:
 
 Bash prompts for `npx`, `npm i` and `remotion lambda` stay on; none are allow-listed.
 
-## Vault duplicates removed (owner rule: merge or delete duplicates)
+## Vault copies kept (owner decision)
 
-`.agents/skills/remotion` and `.agents/skills/remotion-best-practices` were older copies of the
-same Remotion skills from a third-party aggregate (`agentic-awesome-skills`). They were deleted;
-the motion-animation index now points to the official plugin and `motion-director`.
+`.agents/skills/remotion` and `.agents/skills/remotion-best-practices` are older copies of the
+same Remotion skills from a third-party aggregate (`agentic-awesome-skills`). They were removed
+in this change and restored at the owner's request; they stay as reference material, and the
+official plugin plus `motion-director` remain the operational path.
 
 ## GPU rendering on the owner's PC
 

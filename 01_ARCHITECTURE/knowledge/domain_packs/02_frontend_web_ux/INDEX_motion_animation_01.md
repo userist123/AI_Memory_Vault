@@ -31,5 +31,4 @@ Indexul capabilităților identificate pentru `motion_animation`.
 - **json-canvas** — Dezvoltare web creativă (3D, WebGL, animații, canvas) — `.agents/skills/json-canvas/SKILL.md` — critical/https://github.com/kepano/obsidian-skills — `8d3e0e2e669944e38e8b16242f7affcb14aa2474`
 - **motion-design** — Dezvoltare web creativă (3D, WebGL, animații, canvas) — `.agents/skills/motion-design/SKILL.md` — / — `b60a632a9f7d2d4d4abe16b75e6521b48653cf8c`
 - **osterwalder-canvas-architect** — Dezvoltare web creativă (3D, WebGL, animații, canvas) — `.agents/skills/osterwalder-canvas-architect/SKILL.md` — safe/self — `49a955500bf3690ca3a5806f361ad31a1c634342`
-
-> Remotion: one source only, the official `remotion` plugin (marketplace `remotion-dev/claude-code-plugin`) driven by `.claude/skills/motion-director`; the older aggregate copies were removed 2026-10-11 (see `07_EVALUATION/reports/external_skill_intake_remotion_2026-10-11.md`).
+- **remotion** — Dezvoltare web creativă (3D, WebGL, animații, canvas) — `.agents/skills/remotion/SKILL.md` — critical/community — `ae160fac48a8419eaacd09d0ea638e96eb566a7e`
