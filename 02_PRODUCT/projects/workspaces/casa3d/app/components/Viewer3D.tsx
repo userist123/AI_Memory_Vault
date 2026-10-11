@@ -9,7 +9,7 @@ const NO_VOIDS: PlateVoid[] = [];
 import { toEngineCatalog } from '@/core/catalog';
 import { lighting, sunDirection, captureFileName, type TimeOfDay } from '@/core/lighting';
 
-export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_VOIDS }: { snap: Snapshot; catalog: Catalog; mc?: MaterialsCatalog | null; onPick(id: string | null): void; voids?: PlateVoid[] }){
+export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_VOIDS, projectId }: { snap: Snapshot; catalog: Catalog; mc?: MaterialsCatalog | null; onPick(id: string | null): void; voids?: PlateVoid[]; projectId?: string }){
   const { t, lang } = usePrefs();
   const [room, setRoom] = useState<string | null>(null), [pano, setPano] = useState<{ url: string; title: string; file: string } | null>(null), [panoBusy, setPanoBusy] = useState(false), [panoMsg, setPanoMsg] = useState('');
   const ref = useRef<HTMLCanvasElement>(null), v = useRef<any>(null), pickRef = useRef(onPick);
@@ -40,7 +40,10 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
       catch (e){ setPanoMsg(t('pano.failed', { msg: e instanceof Error ? e.message : String(e) })); }
       finally { setPanoBusy(false); } }, 30); }
   // scena pentru randarea fotorealistă în Blender (tools/blender/casa3d_render.py): aceleași forme, materiale și lumină
-  function exportBlender(){ const p = lighting(time, azimuth), sc = v.current?.exportScene?.({ name: snap.name, time, azimuthDeg: p.azimuthDeg, level: snap.floor.name, lang }); if (!sc) return;
+  async function exportBlender(){ const p = lighting(time, azimuth), sc = v.current?.exportScene?.({ name: snap.name, time, azimuthDeg: p.azimuthDeg, level: snap.floor.name, lang }); if (!sc) return;
+    // pe calculatorul cu Blender: randarea pornește direct, imaginile apar în etapa Prezentare; altfel se descarcă scena
+    if (projectId){ try { const r = await fetch(`/api/projects/${projectId}/renders`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(sc) });
+        if (r.status === 202){ setPanoMsg(t('render.started')); return; } if (r.status !== 501){ const j = await r.json().catch(() => ({})); setPanoMsg(j.error || t('render.failed')); return; } } catch { /* fără server: descărcăm */ } }
     const a = document.createElement('a'), url = URL.createObjectURL(new Blob([JSON.stringify(sc)], { type: 'application/json' }));
     a.href = url; a.download = captureFileName(`${snap.name}-blender`).replace(/\.png$/, '.casa3d.json'); document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
   function capture(){ const url: string | undefined = v.current?.capture(); if (!url) return;

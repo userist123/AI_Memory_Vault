@@ -31,6 +31,12 @@ export default function PresentView({ id }: { id: string }){
         for (const r of v.floor.rooms){ const u = viewer.renderView({ roomId: r.id }, 1600, 1000); if (u) out[r.id] = u; } }
       if (alive) setImages(out); } catch { /* fără WebGL: planșele rămân fără imagini */ } finally { try { viewer?.dispose(); } catch { /* deja eliberat */ } if (alive) setBusy(false); } })();
     return () => { alive = false; }; }, [data]);
+  // randările fotorealiste (Blender, pe acest calculator) au întâietate față de imaginile din motorul 3D
+  const [photos, setPhotos] = useState<Record<string, string>>({});
+  useEffect(() => { fetch(`/api/projects/${id}/renders`).then(r => r.ok ? r.json() : null).then(j => { const out: Record<string, string> = {};
+    for (const job of (j?.jobs ?? []).filter((x: any) => x.status === 'done').reverse()) for (const f of job.images) out[f.replace(/\.png$/, '')] = `/api/projects/${id}/renders/${job.job}/${f}`;
+    setPhotos(out); }).catch(() => {}); }, [id]);
+  const imgFor = (roomId: string) => photos[roomId.replace(/[^\w-]/g, '_')] ?? images[roomId];
   const pres = useMemo(() => data ? presentation(data.snap, data.catalog, data.mc) : null, [data]);
   // săgețile / PageDown trec la planșa următoare
   useEffect(() => { const on = (e: KeyboardEvent) => { if (!['ArrowRight', 'ArrowLeft', 'PageDown', 'PageUp'].includes(e.key)) return; const s = [...document.querySelectorAll<HTMLElement>('.slide')];
@@ -54,7 +60,7 @@ export default function PresentView({ id }: { id: string }){
         {g.items.slice(0, 6).map((it, i) => <figure key={i}><i style={it.material ? { ...swatchStyle(it.material), backgroundColor: it.color } : { background: it.color }} /><figcaption>{it.material ? title(it.material.name) : it.color}<small>{it.material?.supplier}</small></figcaption></figure>)}</div>)}</div>
       <footer>{num(2)}</footer></section>
     {pres.rooms.map((r, i) => <section key={r.id} className="slide room">
-      <div className="room-img">{images[r.id] ? <img src={images[r.id]} alt={r.name} /> : <div className="ph" />}</div>
+      <div className="room-img">{imgFor(r.id) ? <img src={imgFor(r.id)} alt={r.name} /> : <div className="ph" />}</div>
       <div className="room-txt"><span className="kicker">{t(`roomType.${r.type}`)} · {formatArea(r.areaM2, units, lang)}</span><h2>{r.name}</h2>
         <ul className="sw-list">{r.swatches.slice(0, 9).map((s, k) => <li key={k}><i style={s.material ? { ...swatchStyle(s.material), backgroundColor: s.color } : { background: s.color }} /><span><small>{role(s.role)}</small>{s.material ? title(s.material.name) : s.color}</span></li>)}</ul>
         {r.products.length > 0 && <p className="prod">{r.products.slice(0, 6).map(p => p.name).join(' · ')}</p>}</div>
