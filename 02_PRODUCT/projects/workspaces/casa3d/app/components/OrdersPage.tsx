@@ -30,7 +30,7 @@ export default function OrdersPage({ id, cur, say, projectName, rooms = [] }: { 
   if (!data) return <div className="orders"><p className="muted">{t('orders.loading')}</p></div>;
   const s = data.summary;
   return (<div className="orders">
-    <header className="orders-head"><div><h1>{t('orders.title')}</h1><p className="muted">{t('orders.sub')}</p></div>
+    <header className="orders-head"><div><h1>{t('orders.title')}</h1><p className="muted">{t('orders.sub')}</p><p><a className="btn" href={`/p/${id}/handover`} target="_blank" rel="noopener">{t('ho.kicker')}</a></p></div>
       <dl className="orders-sum"><div><dt>{t('orders.sum.todo')}</dt><dd>{s.todo}</dd></div><div><dt>{t('orders.sum.ordered')}</dt><dd>{s.ordered}</dd></div><div><dt>{t('orders.sum.delivered')}</dt><dd>{s.delivered}</dd></div>
         <div className={s.overdue ? 'late' : ''}><dt>{t('orders.sum.overdue')}</dt><dd>{s.overdue}</dd></div>
         {(s.orderLate + s.orderSoon) > 0 && <div className="late"><dt>{t('orders.sum.orderNow')}</dt><dd>{s.orderLate + s.orderSoon}</dd></div>}<div><dt>{t('orders.sum.value')}</dt><dd>{money(s.ordersValue)}</dd></div></dl></header>
@@ -66,6 +66,7 @@ function OrderEditor({ row, today, onSave, onQty, onRemove }: { row: Procurement
       <label className="f"><span>{t('orders.deliveredAt')}</span><input type="date" value={s.deliveredAt ?? ''} onChange={e => set({ deliveredAt: e.target.value || undefined })} /></label></div>
     <div className="grid2">
       <label className="f"><span>{t('orders.neededBy')}</span><input type="date" value={s.neededBy ?? ''} onChange={e => set({ neededBy: e.target.value || undefined })} /></label>
+      <label className="f"><span>{t('orders.warranty')}</span><input type="number" inputMode="numeric" min={0} max={240} value={s.warrantyMonths ?? ''} placeholder="24" onChange={e => set({ warrantyMonths: e.target.value === '' ? undefined : Math.max(0, Math.min(240, Math.round(Number(e.target.value)))) })} /></label>
       <label className="f"><span>{t('orders.leadDays')}</span><input type="number" inputMode="numeric" min={0} max={365} value={s.leadDays ?? ''} placeholder={String(row.leadDays)} onChange={e => set({ leadDays: e.target.value === '' ? undefined : Math.max(0, Math.min(365, Math.round(Number(e.target.value)))) })} /></label></div>
     <label className="f"><span>{t('orders.note')}</span><input value={s.note ?? ''} maxLength={500} onChange={e => set({ note: e.target.value })} /></label>
     {row.kind === 'custom' && <div className="oedit-item"><label className="f"><span>{t('orders.col.qty')} ({row.unit})</span><input type="number" inputMode="decimal" min="0.01" step="any" value={qty} onChange={e => setQty(e.target.value)} /></label>
