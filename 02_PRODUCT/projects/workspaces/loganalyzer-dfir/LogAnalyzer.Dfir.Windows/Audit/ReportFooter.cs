@@ -14,11 +14,35 @@ public static class ReportFooter
     /// <summary>Test hook: called with (report kind, footer text) when a footer is composed. Per async flow, so parallel tests do not see each other's reports.</summary>
     public static readonly AsyncLocal<Action<string, string>?> Observer = new();
 
+    /// <summary>
+    /// What produced the report, on every page (legal research G2/G3, docs/dfir/RESEARCH_2026-10-11_PROBE_VALOARE_JURIDICA.md): the program file and its
+    /// SHA-256, the detection lists used (shipped or a signed data pack) and the station's time zone with its UTC offset, so times can be read correctly.
+    /// </summary>
+    public static string Provenance => ProvenanceLine.Value;
+
+    private static readonly Lazy<string> ProvenanceLine = new(() =>
+    {
+        string program;
+        try
+        {
+            var exe = Environment.ProcessPath ?? "";
+            program = exe.Length > 0 && File.Exists(exe)
+                ? $"{Path.GetFileName(exe)} SHA-256 {Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(exe)))[..16]}…"
+                : "program necunoscut";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { program = "amprenta programului nu a putut fi citită"; }
+        var tz = TimeZoneInfo.Local;
+        var off = tz.GetUtcOffset(DateTime.Now);
+        return $"Generat de {program} · liste de detecție: {LogAnalyzer.Dfir.Analysis.ShippedData.Description} · " +
+               $"fus orar al stației: {tz.Id}, UTC{(off < TimeSpan.Zero ? "-" : "+")}{Math.Abs(off.Hours):00}:{Math.Abs(off.Minutes):00}; orele marcate UTC sunt universale";
+    });
+
     /// <param name="marking">WP18 S5: the marking line entered by hand ("Marcaj: … (marcaj introdus manual, neverificat de aplicație)"), printed first on every page.</param>
     public static void Compose(IContainer footer, string kind, string appLine, ReportSeal? seal, string? marking = null)
     {
         var lines = (seal ?? new ReportSeal(null, null)).Lines().ToList();
         if (!string.IsNullOrWhiteSpace(marking)) lines.Insert(0, marking);
+        lines.Add(Provenance);
         Observer.Value?.Invoke(kind, string.Join("\n", lines));
         footer.Column(col =>
         {
