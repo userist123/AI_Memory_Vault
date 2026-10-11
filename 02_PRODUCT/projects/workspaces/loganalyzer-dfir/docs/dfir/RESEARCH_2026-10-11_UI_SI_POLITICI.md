@@ -38,6 +38,12 @@ Sursele sunt bloguri de designeri și dezvoltatori din 2026, nu cercetare formal
 4. Fiecare tabel gol spune ce urmează; fiecare eroare spune cauza și ce se poate face.
 5. Întâi Acasă și primul pas al controlului, cu capturi pentru proprietar; restul doar după aprobare.
 
+**Stare 2026-10-11 (primul pas, trimis proprietarului spre aprobare):**
+- tema Fluent luminoasă (`Fluent.Light.xaml` explicit: `Fluent.xaml` urmează modul închis din Windows, activ pe stația proprietarului, și ar pune fundal închis sub textul nostru închis); stilurile implicite proprii pentru butoane, câmpuri, liste, grile și bare de derulare au fost scoase; stilurile cu cheie se bazează pe cele native;
+- Acasă: numele stației, întrebarea „Ce doriți să faceți?” și rânduri de acțiuni în stilul aplicației Setări din Windows (fără grilă de fișe, fără bordură pe o latură); fără caz deschis nu se mai afișează cele patru răspunsuri „niciun caz deschis”;
+- Verifică această stație: în timpul pașilor doar Înapoi, Înainte, Oprește; raportul, comparația, folderul și „Control nou” apar în rezultat; tabelele brute doar după un control;
+- testele WPF rulează pe un singur fir STA comun (resursele Fluent aparțin firului aplicației).
+
 ## 4. Politicile GPO ale proprietarului (3 backup-uri, stații Intranet W11)
 
 Hash-urile arhivelor primite (SHA-256): computer `509FF895…7484`, user `2C706C1C…758E`, AppLocker `E01F1B38…8F1A`. Defender: nicio detecție. Scripturile din backup au fost citite ca text, nu rulate.
