@@ -138,3 +138,10 @@ front matter (id, type, lifecycle REVIEW, provenance, verification unverified, r
 with the new `.next` underneath, so every `/_next/static/*` chunk returned 400 and the editor hung on "Loading project…".
 Rule: stop the app (by command line and by port, retry until the port is free) *before* `npm run build`, then start the
 new server; after an update, check one static chunk returns 200, not just `update.done`.
+
+## 2026-10-11 — Casa3D PC update: the old server survived again (Access denied)
+- Symptom: after update.ps1, /_next/static chunks returned 400 because the server started at 23:55 kept port 3123.
+- Cause: Stop-Process and even `taskkill /PID <node> /T /F` got "Access denied" on the node process; killing its parent
+  cmd.exe with `taskkill /PID <parent> /T /F` worked.
+- Rule: stop the app by killing the port owner's PARENT tree, then verify a static chunk returns 200 through the tunnel
+  before telling the owner the PC is updated.
