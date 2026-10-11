@@ -131,6 +131,7 @@ public sealed class UserHiveParser : EvidenceParserBase
             Hive.RunKey(reg, "NTUSER", key, item, sink, result);
 
         EmitMountPoints2(reg, item, sink, result, ct);
+        DeletedRegistryTraces.Emit(fullPath, "NTUSER", item, sink, result, ct);
     }
 
     /// <summary>
@@ -270,6 +271,8 @@ public sealed class SoftwareHiveParser : EvidenceParserBase
                 result.Records++;
             }
         }
+
+        DeletedRegistryTraces.Emit(fullPath, "SOFTWARE", item, sink, result, ct);
     }
 
     private static bool IsDefaultUserinit(string v)

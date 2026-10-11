@@ -35,6 +35,7 @@ public static partial class Wp14Rules
         var found = new List<Finding>();
         Media(c, found);
         MediaUsageFindings(c, found);
+        DeletedTraceFindings(c, found);
         Optical(c, found);
         AirGap(c, found);
         return found;

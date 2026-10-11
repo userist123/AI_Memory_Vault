@@ -29,6 +29,7 @@ public sealed class UsbDevicesParser : EvidenceParserBase
             "Utilizatorul care a folosit dispozitivul nu este în SYSTEM (vezi MountPoints2 din NTUSER).",
             "Dispozitivele MTP (telefoane) nu apar în USBSTOR.",
             "Un dispozitiv șters din Enum (de ex. de curățarea Plug and Play) rămâne doar ca identitate din MountedDevices, fără ore.",
+            "Cheile și valorile șterse (Enum\\USBSTOR, Enum\\USB, MountedDevices) sunt recuperate din spațiul liber al hive-ului cu biblioteca Registry; ce a fost suprascris nu mai poate fi recuperat, iar hive-ul nu păstrează ora ștergerii.",
         ],
         Status = ParserMaturity.Validated,
         Validation = "UsbDevicesParserTests: SYSTEM.hiv real comparat cu jurnalul Partition/Diagnostic 1006 (seria, producătorul, ultima conectare) și hive sintetic",
@@ -41,6 +42,8 @@ public sealed class UsbDevicesParser : EvidenceParserBase
         int current = reg.ReadValue("Select", "Current") is { Length: >= 4 } c ? BinaryPrimitives.ReadInt32LittleEndian(c) : 1;
         var cs = $"ControlSet{current:D3}";
         var usbstor = $@"{cs}\Enum\USBSTOR";
+        // Deleted device keys live in free cells that RawRegistry does not read; recovered first because a wiped USBSTOR returns below.
+        DeletedRegistryTraces.Emit(fullPath, "SYSTEM", item, sink, result, ct);
         if (reg.OpenKey(usbstor) is null)
         {
             result.Gaps.Add(new EvidenceGap("USBSTOR", EvidenceStatus.Empty, $"cheia {usbstor} lipsește: niciun dispozitiv de stocare USB înregistrat sau cheia a fost ștearsă",
