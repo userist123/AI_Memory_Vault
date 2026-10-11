@@ -389,6 +389,182 @@
 - **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Enum\USBSTOR; Microsoft-Windows-Partition/Diagnostic 1006`
 - **Cum se citește rezultatul:** Întotdeauna de verificat: comparați seriile cu registrul suporturilor. Lipsa urmelor nu dovedește că nu s-au folosit suporturi.
 
+### DM01
+
+- **Ce verificăm:** Ce conturi de persoane (nu de calculatoare) au un nume de serviciu (SPN) atașat.
+- **De ce contează:** Oricine are un cont în domeniu poate cere pentru aceste conturi un „bilet” Kerberos și poate încerca apoi, pe calculatorul lui, să ghicească parola (Kerberoasting). O parolă scurtă cade în câteva ore.
+- **Cum verifică aplicația:** A citit din Active Directory conturile de utilizator active care au atributul servicePrincipalName, fără contul krbtgt.
+- **Sursa tehnică:** `LDAP: servicePrincipalName pe obiectele user active`
+- **Cum se citește rezultatul:** Conform = niciun cont. De verificat = există conturi, dar niciunul privilegiat; parola lor trebuie să fie foarte lungă. Neconform = un cont privilegiat (administrator) are SPN.
+
+### DM02
+
+- **Ce verificăm:** Ce conturi pot primi un bilet Kerberos fără să dovedească întâi că știu parola.
+- **De ce contează:** Pentru aceste conturi oricine poate obține, fără nicio parolă, date din care încearcă apoi să ghicească parola (AS-REP roasting).
+- **Cum verifică aplicația:** A citit indicatorul „Do not require Kerberos preauthentication” al conturilor active.
+- **Sursa tehnică:** `LDAP: userAccountControl, indicatorul DONT_REQ_PREAUTH (0x400000)`
+- **Cum se citește rezultatul:** Conform = niciun cont. Neconform = cel puțin un cont; indicatorul trebuie scos dacă nu există o justificare scrisă.
+
+### DM03
+
+- **Ce verificăm:** Ce conturi din domeniu au voie să aibă parolă goală.
+- **De ce contează:** Un cont fără parolă poate fi folosit de oricine îi știe numele.
+- **Cum verifică aplicația:** A citit indicatorul „parola nu este obligatorie” al conturilor active.
+- **Sursa tehnică:** `LDAP: userAccountControl, indicatorul PASSWD_NOTREQD (0x20)`
+- **Cum se citește rezultatul:** Conform = niciun cont. Neconform = conturi cu indicatorul; nu înseamnă că parola chiar e goală, dar trebuie verificat și indicatorul scos.
+
+### DM04
+
+- **Ce verificăm:** Ce conturi au parola păstrată într-o formă care poate fi transformată înapoi în text.
+- **De ce contează:** Cine ajunge la baza de date a domeniului poate citi direct aceste parole.
+- **Cum verifică aplicația:** A citit indicatorul „stocare a parolei cu criptare reversibilă” al conturilor active.
+- **Sursa tehnică:** `LDAP: userAccountControl, indicatorul ENCRYPTED_TEXT_PWD_ALLOWED (0x80)`
+- **Cum se citește rezultatul:** Conform = niciun cont. Neconform = conturi cu indicatorul; după scoaterea lui parola trebuie schimbată.
+
+### DM05
+
+- **Ce verificăm:** Ce conturi folosesc doar criptarea veche DES la autentificare.
+- **De ce contează:** DES se sparge ușor cu calculatoarele de azi; biletele acestor conturi pot fi falsificate sau citite.
+- **Cum verifică aplicația:** A citit indicatorul „folosește doar chei DES” al conturilor active.
+- **Sursa tehnică:** `LDAP: userAccountControl, indicatorul USE_DES_KEY_ONLY (0x200000)`
+- **Cum se citește rezultatul:** Apare doar când există conturi: Neconform; indicatorul trebuie scos și parola schimbată.
+
+### DM10
+
+- **Ce verificăm:** Cine este membru (direct sau prin alte grupuri) al grupului privilegiat „Domain Admins”.
+- **De ce contează:** Membrii acestui grup pot controla tot domeniul sau o parte importantă din el. Lista trebuie să fie scurtă și aprobată în scris.
+- **Cum verifică aplicația:** A citit membrii grupului, inclusiv pe cei primiți prin alte grupuri, și a verificat la fiecare dacă este activ, dacă a mai fost folosit recent și dacă parola îi expiră.
+- **Sursa tehnică:** `LDAP: membrii recursivi ai grupului Domain Admins (-512); userAccountControl, lastLogonTimestamp`
+- **Cum se citește rezultatul:** De verificat = comparați numele cu lista aprobată. Neconform = există membri dezactivați, nefolosiți de mult sau cu parolă care nu expiră; trebuie scoși sau corectați.
+
+### DM11
+
+- **Ce verificăm:** Cine este membru (direct sau prin alte grupuri) al grupului privilegiat „Enterprise Admins”.
+- **De ce contează:** Membrii acestui grup pot controla tot domeniul sau o parte importantă din el. Lista trebuie să fie scurtă și aprobată în scris.
+- **Cum verifică aplicația:** A citit membrii grupului, inclusiv pe cei primiți prin alte grupuri, și a verificat la fiecare dacă este activ, dacă a mai fost folosit recent și dacă parola îi expiră.
+- **Sursa tehnică:** `LDAP: membrii recursivi ai grupului Enterprise Admins (-519); userAccountControl, lastLogonTimestamp`
+- **Cum se citește rezultatul:** De verificat = comparați numele cu lista aprobată. Neconform = există membri dezactivați, nefolosiți de mult sau cu parolă care nu expiră; trebuie scoși sau corectați.
+
+### DM12
+
+- **Ce verificăm:** Cine este membru (direct sau prin alte grupuri) al grupului privilegiat „Schema Admins”.
+- **De ce contează:** Membrii acestui grup pot controla tot domeniul sau o parte importantă din el. Lista trebuie să fie scurtă și aprobată în scris.
+- **Cum verifică aplicația:** A citit membrii grupului, inclusiv pe cei primiți prin alte grupuri, și a verificat la fiecare dacă este activ, dacă a mai fost folosit recent și dacă parola îi expiră.
+- **Sursa tehnică:** `LDAP: membrii recursivi ai grupului Schema Admins (-518); userAccountControl, lastLogonTimestamp`
+- **Cum se citește rezultatul:** De verificat = comparați numele cu lista aprobată. Neconform = există membri dezactivați, nefolosiți de mult sau cu parolă care nu expiră; trebuie scoși sau corectați.
+
+### DM13
+
+- **Ce verificăm:** Cine este membru (direct sau prin alte grupuri) al grupului privilegiat „Group Policy Creator Owners”.
+- **De ce contează:** Membrii acestui grup pot controla tot domeniul sau o parte importantă din el. Lista trebuie să fie scurtă și aprobată în scris.
+- **Cum verifică aplicația:** A citit membrii grupului, inclusiv pe cei primiți prin alte grupuri, și a verificat la fiecare dacă este activ, dacă a mai fost folosit recent și dacă parola îi expiră.
+- **Sursa tehnică:** `LDAP: membrii recursivi ai grupului Group Policy Creator Owners (-520); userAccountControl, lastLogonTimestamp`
+- **Cum se citește rezultatul:** De verificat = comparați numele cu lista aprobată. Neconform = există membri dezactivați, nefolosiți de mult sau cu parolă care nu expiră; trebuie scoși sau corectați.
+
+### DM14
+
+- **Ce verificăm:** Cine este membru (direct sau prin alte grupuri) al grupului privilegiat „Administrators”.
+- **De ce contează:** Membrii acestui grup pot controla tot domeniul sau o parte importantă din el. Lista trebuie să fie scurtă și aprobată în scris.
+- **Cum verifică aplicația:** A citit membrii grupului, inclusiv pe cei primiți prin alte grupuri, și a verificat la fiecare dacă este activ, dacă a mai fost folosit recent și dacă parola îi expiră.
+- **Sursa tehnică:** `LDAP: membrii recursivi ai grupului Administrators (S-1-5-32-544); userAccountControl, lastLogonTimestamp`
+- **Cum se citește rezultatul:** De verificat = comparați numele cu lista aprobată. Neconform = există membri dezactivați, nefolosiți de mult sau cu parolă care nu expiră; trebuie scoși sau corectați.
+
+### DM15
+
+- **Ce verificăm:** Cine este membru (direct sau prin alte grupuri) al grupului privilegiat „Account Operators”.
+- **De ce contează:** Membrii acestui grup pot controla tot domeniul sau o parte importantă din el. Lista trebuie să fie scurtă și aprobată în scris.
+- **Cum verifică aplicația:** A citit membrii grupului, inclusiv pe cei primiți prin alte grupuri, și a verificat la fiecare dacă este activ, dacă a mai fost folosit recent și dacă parola îi expiră.
+- **Sursa tehnică:** `LDAP: membrii recursivi ai grupului Account Operators (S-1-5-32-548); userAccountControl, lastLogonTimestamp`
+- **Cum se citește rezultatul:** De verificat = comparați numele cu lista aprobată. Neconform = există membri dezactivați, nefolosiți de mult sau cu parolă care nu expiră; trebuie scoși sau corectați.
+
+### DM16
+
+- **Ce verificăm:** Cine este membru (direct sau prin alte grupuri) al grupului privilegiat „Server Operators”.
+- **De ce contează:** Membrii acestui grup pot controla tot domeniul sau o parte importantă din el. Lista trebuie să fie scurtă și aprobată în scris.
+- **Cum verifică aplicația:** A citit membrii grupului, inclusiv pe cei primiți prin alte grupuri, și a verificat la fiecare dacă este activ, dacă a mai fost folosit recent și dacă parola îi expiră.
+- **Sursa tehnică:** `LDAP: membrii recursivi ai grupului Server Operators (S-1-5-32-549); userAccountControl, lastLogonTimestamp`
+- **Cum se citește rezultatul:** De verificat = comparați numele cu lista aprobată. Neconform = există membri dezactivați, nefolosiți de mult sau cu parolă care nu expiră; trebuie scoși sau corectați.
+
+### DM17
+
+- **Ce verificăm:** Cine este membru (direct sau prin alte grupuri) al grupului privilegiat „Print Operators”.
+- **De ce contează:** Membrii acestui grup pot controla tot domeniul sau o parte importantă din el. Lista trebuie să fie scurtă și aprobată în scris.
+- **Cum verifică aplicația:** A citit membrii grupului, inclusiv pe cei primiți prin alte grupuri, și a verificat la fiecare dacă este activ, dacă a mai fost folosit recent și dacă parola îi expiră.
+- **Sursa tehnică:** `LDAP: membrii recursivi ai grupului Print Operators (S-1-5-32-550); userAccountControl, lastLogonTimestamp`
+- **Cum se citește rezultatul:** De verificat = comparați numele cu lista aprobată. Neconform = există membri dezactivați, nefolosiți de mult sau cu parolă care nu expiră; trebuie scoși sau corectați.
+
+### DM18
+
+- **Ce verificăm:** Cine este membru (direct sau prin alte grupuri) al grupului privilegiat „Backup Operators”.
+- **De ce contează:** Membrii acestui grup pot controla tot domeniul sau o parte importantă din el. Lista trebuie să fie scurtă și aprobată în scris.
+- **Cum verifică aplicația:** A citit membrii grupului, inclusiv pe cei primiți prin alte grupuri, și a verificat la fiecare dacă este activ, dacă a mai fost folosit recent și dacă parola îi expiră.
+- **Sursa tehnică:** `LDAP: membrii recursivi ai grupului Backup Operators (S-1-5-32-551); userAccountControl, lastLogonTimestamp`
+- **Cum se citește rezultatul:** De verificat = comparați numele cu lista aprobată. Neconform = există membri dezactivați, nefolosiți de mult sau cu parolă care nu expiră; trebuie scoși sau corectați.
+
+### DM20
+
+- **Ce verificăm:** Ce conturi active nu au mai fost folosite de mult timp (implicit 90 de zile).
+- **De ce contează:** Un cont uitat, dar activ, poate fi folosit de un fost angajat sau de un atacator fără ca titularul să observe.
+- **Cum verifică aplicația:** A comparat data ultimei autentificări a fiecărui cont activ cu data colectării.
+- **Sursa tehnică:** `LDAP: lastLogonTimestamp (se actualizează cu o întârziere de până la 14 zile)`
+- **Cum se citește rezultatul:** Conform = niciun cont. De verificat = conturi nefolosite; dezactivați-le dacă nu mai sunt necesare.
+
+### DM21
+
+- **Ce verificăm:** Când a fost schimbată ultima dată parola contului krbtgt (contul care semnează toate biletele Kerberos din domeniu).
+- **De ce contează:** Cine a aflat vreodată această parolă poate crea bilete false pentru orice cont („golden ticket”), până când parola este schimbată.
+- **Cum verifică aplicația:** A citit data ultimei schimbări a parolei contului krbtgt.
+- **Sursa tehnică:** `LDAP: pwdLastSet pe contul krbtgt`
+- **Cum se citește rezultatul:** Conform = schimbată în ultimele 180 de zile. Neconform = mai veche. Schimbarea se face de două ori, la distanță de timpul de replicare, de un administrator al domeniului.
+
+### DM22
+
+- **Ce verificăm:** Ce calculatoare sau conturi (în afara controlerelor de domeniu) au voie să folosească în numele altora biletele oricui se conectează la ele.
+- **De ce contează:** Dacă un astfel de calculator este compromis, atacatorul poate prelua conturile tuturor celor care se conectează la el, inclusiv ale administratorilor.
+- **Cum verifică aplicația:** A citit indicatorul „de încredere pentru delegare” al conturilor active, fără controlerele de domeniu.
+- **Sursa tehnică:** `LDAP: userAccountControl, indicatorul TRUSTED_FOR_DELEGATION (0x80000)`
+- **Cum se citește rezultatul:** Conform = niciun cont. Neconform = conturi cu delegare neconstrânsă; trebuie înlocuită cu delegare constrânsă.
+
+### DM23
+
+- **Ce verificăm:** Ce conturi au fost cândva administratori și au păstrat drepturile speciale de protecție după ce au fost scoase din grupuri.
+- **De ce contează:** Aceste conturi rămân cu setări speciale moștenite; de obicei sunt urme ale unor drepturi date temporar și uitate.
+- **Cum verifică aplicația:** A căutat conturile active cu adminCount = 1 care nu mai sunt în niciun grup privilegiat.
+- **Sursa tehnică:** `LDAP: adminCount; membrii recursivi ai grupurilor privilegiate`
+- **Cum se citește rezultatul:** Apare doar când există conturi: De verificat; cereți administratorului să confirme că drepturile nu mai sunt necesare și să curețe contul.
+
+### DM24
+
+- **Ce verificăm:** Ce calculatoare active nu s-au mai conectat la domeniu de mult timp (implicit 90 de zile).
+- **De ce contează:** Un calculator dispărut (pierdut, furat, scos din uz) care rămâne activ în domeniu poate fi folosit pentru acces.
+- **Cum verifică aplicația:** A comparat data ultimei conectări a fiecărui calculator activ (fără controlerele de domeniu) cu data colectării.
+- **Sursa tehnică:** `LDAP: lastLogonTimestamp pe obiectele computer`
+- **Cum se citește rezultatul:** Conform = niciunul. De verificat = calculatoare nefolosite; aflați unde sunt fizic și dezactivați-le dacă nu mai există.
+
+### DM25
+
+- **Ce verificăm:** Ce calculatoare din domeniu rulează sisteme de operare care nu mai primesc actualizări de securitate (de exemplu Windows 7, Windows Server 2008 sau 2012).
+- **De ce contează:** Pe aceste sisteme defectele de securitate cunoscute nu se mai repară niciodată.
+- **Cum verifică aplicația:** A citit sistemul de operare declarat de fiecare calculator activ.
+- **Sursa tehnică:** `LDAP: operatingSystem pe obiectele computer`
+- **Cum se citește rezultatul:** Apare doar când există calculatoare: Neconform; fiecare trebuie actualizat, izolat sau scos din uz, cu o decizie scrisă.
+
+### DM30
+
+- **Ce verificăm:** Câte caractere trebuie să aibă cel puțin o parolă în domeniu, câte parole vechi nu pot fi refolosite și când expiră parola.
+- **De ce contează:** Parolele scurte se ghicesc ușor.
+- **Cum verifică aplicația:** A citit politica de parole a domeniului.
+- **Sursa tehnică:** `LDAP: minPwdLength, pwdHistoryLength, maxPwdAge pe obiectul domeniului`
+- **Cum se citește rezultatul:** Conform = cel puțin 12 caractere. De verificat = 8–11. Neconform = sub 8.
+
+### DM31
+
+- **Ce verificăm:** După câte parole greșite se blochează un cont din domeniu.
+- **De ce contează:** Fără blocare, cineva poate încerca la nesfârșit parole până o nimerește.
+- **Cum verifică aplicația:** A citit pragul de blocare din politica domeniului.
+- **Sursa tehnică:** `LDAP: lockoutThreshold pe obiectul domeniului`
+- **Cum se citește rezultatul:** Conform = blocare după cel mult 10 încercări. Neconform = conturile nu se blochează niciodată (0) sau pragul e prea mare.
+
 ### N01
 
 - **Ce verificăm:** Dacă stația izolată s-a conectat la vreo rețea în perioada controlată.
@@ -420,6 +596,46 @@
 - **Cum verifică aplicația:** A căutat dispozitivele Bluetooth cunoscute de Windows și a citit modul de pornire al serviciului Bluetooth.
 - **Sursa tehnică:** `WMI Win32_PnPEntity (clasa Bluetooth); HKLM\SYSTEM\CurrentControlSet\Services\bthserv → Start`
 - **Cum se citește rezultatul:** Conform = nu există Bluetooth. Neconform = pe stația izolată Bluetooth există și serviciul poate porni. De verificat = există dar serviciul este oprit; opriți-l sau cereți aprobarea scrisă.
+
+### EM01
+
+- **Ce verificăm:** Dacă din cutia poștală au plecat 50 de mesaje sau mai multe într-o singură oră.
+- **De ce contează:** Un cont de e-mail furat este folosit des pentru a trimite rapid mesaje înșelătoare către mulți destinatari, în numele titularului.
+- **Cum verifică aplicația:** A numărat, pe fiecare oră, mesajele trimise de cutia poștală în perioada aleasă.
+- **Sursa tehnică:** `Urmărirea mesajelor serverului de e-mail (Exchange: message trace)`
+- **Cum se citește rezultatul:** Conform = nicio oră cu 50 sau mai multe mesaje. Neconform = cel puțin o oră; întrebați titularul și, dacă nu el le-a trimis, schimbați parola și închideți sesiunile.
+
+### EM02
+
+- **Ce verificăm:** De pe câte adrese IP diferite s-au trimis mesaje din cutia poștală.
+- **De ce contează:** Mesaje trimise din locuri diferite în același timp pot arăta că altcineva folosește contul.
+- **Cum verifică aplicația:** A grupat mesajele trimise după adresa IP a calculatorului care le-a trimis.
+- **Sursa tehnică:** `Urmărirea mesajelor: adresa IP a clientului`
+- **Cum se citește rezultatul:** Conform = cel mult 3 adrese. De verificat = mai multe; comparați adresele cu locurile de unde lucrează titularul.
+
+### EM03
+
+- **Ce verificăm:** Dacă în cutia poștală există reguli care trimit mesajele altcuiva, le șterg sau le mută în foldere puțin folosite.
+- **De ce contează:** Cine fură un cont creează astfel de reguli ca să copieze corespondența sau ca titularul să nu vadă răspunsurile.
+- **Cum verifică aplicația:** A citit regulile active ale cutiei poștale și le-a păstrat pe cele care redirecționează, șterg, mută în foldere ascunse sau au nume de 1–2 caractere.
+- **Sursa tehnică:** `Exchange: Get-InboxRule`
+- **Cum se citește rezultatul:** Conform = nicio regulă riscantă. De verificat = reguli interne; întrebați titularul. Neconform = o regulă trimite mesaje în afara organizației.
+
+### EM04
+
+- **Ce verificăm:** Dacă toată corespondența cutiei poștale este copiată automat către altă adresă.
+- **De ce contează:** O redirecționare automată scoate din organizație fiecare mesaj primit, fără ca cineva să observe.
+- **Cum verifică aplicația:** A citit setările de redirecționare ale cutiei poștale.
+- **Sursa tehnică:** `Exchange: ForwardingSmtpAddress, ForwardingAddress, DeliverToMailboxAndForward`
+- **Cum se citește rezultatul:** Conform = nicio redirecționare. De verificat = către o adresă internă. Neconform = către o adresă din afara organizației.
+
+### EM05
+
+- **Ce verificăm:** Câte mesaje au fost trimise către adrese din afara organizației și către ce domenii.
+- **De ce contează:** Arată unde ar fi putut ajunge informațiile trimise pe e-mail.
+- **Cum verifică aplicația:** A comparat destinatarii mesajelor trimise cu domeniile interne declarate.
+- **Sursa tehnică:** `Urmărirea mesajelor: destinatari; domeniile interne introduse de controlor`
+- **Cum se citește rezultatul:** Apare doar când există astfel de mesaje: De verificat; comparați domeniile cu partenerii cunoscuți ai organizației.
 
 ### S01
 
@@ -469,6 +685,7 @@
 | S-1-5-32-555 | identificator de securitate (SID) | Remote Desktop Users: cine are voie să lucreze de la distanță. | SID-ul identifică sigur contul sau grupul, chiar dacă a fost redenumit. |  |
 | Partition 1006 | eveniment Windows | Un disc a fost conectat la stație; jurnalul păstrează producătorul, modelul, seria și capacitatea. | Este cea mai bună urmă a unui stick USB sau disc extern conectat, cu numărul de serie de comparat cu registrul suporturilor. | BusType 7 = USB, 12 = card SD, 13 = card MMC. |
 | Enum\\USBSTOR | cheie de registru | Lista tuturor dispozitivelor de stocare USB conectate vreodată la stație, cu seria lor. | Arată ce stick-uri au fost folosite, chiar dacă jurnalele s-au pierdut. | Ștergerea acestei liste este o urmă de ascundere. |
+| PASSWD_NOTREQD | indicator de cont | Contul are voie să aibă parolă goală. | Un cont fără parolă poate fi folosit de oricine. | Indicatorul nu dovedește că parola chiar este goală; se verifică. |
 | NetworkProfile 10000 | eveniment Windows | Stația s-a conectat la o rețea (numele rețelei este în eveniment). | Pe o stație izolată, orice conectare la rețea este o abatere. |  |
 | WLAN 8001 | eveniment Windows | Stația s-a conectat la o rețea fără fir (Wi-Fi); SSID = numele rețelei. | Pe o stație izolată, o conectare Wi-Fi este o abatere. |  |
 | NetworkList\\Profiles | cheie de registru | Lista rețelelor la care stația s-a conectat vreodată, cu data primei și ultimei conectări. | Pe o stație izolată arată dacă a fost vreodată conectată la o rețea. | Profilurile pot fi șterse manual; lipsa lor nu dovedește nimic. |
