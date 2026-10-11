@@ -6,23 +6,25 @@ import { computeBOQ, finishesOf } from './boq';
 import { floors } from './levels';
 import { layoutOf, materialOf, pieceSizeCm, ceilingOf, bandOf } from './finishes';
 
-export type ScheduleElement = 'floor' | 'walltile' | 'wall' | 'paint' | 'baseboard' | 'ceiling' | 'led' | 'cornice' | 'spots' | 'light' | 'fixture' | 'curtain' | 'sheer' | 'blind' | 'rug' | 'door' | 'door_handle' | 'adhesive';
+export type ScheduleElement = 'floor' | 'walltile' | 'wall' | 'paint' | 'baseboard' | 'ceiling' | 'led' | 'cornice' | 'spots' | 'light' | 'fixture' | 'countertop' | 'sink' | 'tap' | 'kitchen-led' | 'bath-tap' | 'shower-set' | 'towel-radiator' | 'led-mirror' | 'curtain' | 'sheer' | 'blind' | 'rug' | 'door' | 'door_handle' | 'adhesive';
 export interface ScheduleRow { level: number; roomId: string | null; room: string; element: ScheduleElement; side?: string; kind?: string;
   product: string; supplier: string; code: string | null; details: { key: string; vars?: Record<string, string | number> }[];
   netQty: number; unit: string; wastePct: number; orderedQty: number; packs: string | null; unitPrice: number | null; total: number | null;
   url: string | null; verifiedAt: string | null; confidence: Confidence }
 
-const ELEMENT_ORDER: ScheduleElement[] = ['floor', 'walltile', 'wall', 'paint', 'baseboard', 'ceiling', 'cornice', 'led', 'spots', 'light', 'fixture', 'curtain', 'sheer', 'blind', 'rug', 'door', 'door_handle', 'adhesive'];
+/** Categoriile de buget care intră în fișă (aceleași pe care le arată bugetul la finisaje). */
+export const SCHEDULE_CATEGORIES = new Set(['finishes', 'lighting', 'textiles']);
+const ELEMENT_ORDER: ScheduleElement[] = ['floor', 'walltile', 'wall', 'paint', 'baseboard', 'ceiling', 'cornice', 'led', 'spots', 'light', 'fixture', 'countertop', 'sink', 'tap', 'kitchen-led', 'bath-tap', 'shower-set', 'towel-radiator', 'led-mirror', 'curtain', 'sheer', 'blind', 'rug', 'door', 'door_handle', 'adhesive'];
 /** Codul de produs al magazinului, din link: Dedeman …/p/4026660 (sau 1070874-1048524), IKEA …/p/virrmo-…-70430780/ → 70430780. */
 export function productCode(url: string | null): string | null { const seg = url?.match(/\/p\/([\w-]+)\/?$/)?.[1]; if (!seg) return null;
   return /[a-z]/i.test(seg) ? seg.match(/-s?(\d{6,})$/)?.[1] ?? seg : seg; }
 const elementOf = (key: string): ScheduleElement | null => { if (key.startsWith('door:')) return 'door'; if (key.startsWith('handle:')) return 'door_handle'; const k = key.split(':')[1] ?? key;
-  return k === 'adhesive' || key === 'adhesive' ? 'adhesive' : (['floor', 'walltile', 'wall', 'paint', 'baseboard', 'ceiling', 'led', 'cornice', 'spots', 'light', 'fixture', 'curtain', 'sheer', 'blind', 'rug'] as const).find(e => e === k) ?? null; };
+  return k === 'adhesive' || key === 'adhesive' ? 'adhesive' : (['floor', 'walltile', 'wall', 'paint', 'baseboard', 'ceiling', 'led', 'cornice', 'spots', 'light', 'fixture', 'countertop', 'sink', 'tap', 'kitchen-led', 'bath-tap', 'shower-set', 'towel-radiator', 'led-mirror', 'curtain', 'sheer', 'blind', 'rug'] as const).find(e => e === k) ?? null; };
 
 export function finishSchedule(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog): ScheduleRow[] {
   const b = computeBOQ(snap, cat, mc), fl = floors(snap), rooms = fl.flatMap((f, i) => f.rooms.map(r => ({ r, level: i })));
   const rows: ScheduleRow[] = [];
-  for (const it of b.items){ if (it.category !== 'finishes' && it.category !== 'lighting' && it.category !== 'textiles') continue;
+  for (const it of b.items){ if (!SCHEDULE_CATEGORIES.has(it.category)) continue;
     const el = elementOf(it.key); if (!el) continue;
     const at = rooms.find(x => x.r.id === it.roomId), m = materialOf(mc, it.refId), details: ScheduleRow['details'] = [];
     let side: string | undefined, kind: string | undefined;

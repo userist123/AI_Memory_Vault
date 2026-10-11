@@ -50,3 +50,11 @@ test('CSV: textul care ar porni o formulă în Excel e neutralizat; numerele ră
   const s = project(); s.floor.rooms.find(r => r.id === 'living')!.name = '+cmd|calc';
   assert.match(scheduleCsv(finishSchedule(s, cat, mc), t, 'RON', () => 'Parter'), /"'\+cmd\|calc"/);
 });
+
+// regresie din review: fiecare linie de finisaj, iluminat și textile din buget apare în fișă (baie, bucătărie, corpuri)
+test('fișa are același total ca bugetul pentru finisaje, iluminat și textile, în fiecare stil', async () => {
+  const { applyStyle, STYLE_PACKAGES } = await import('../core/styles'); const { SCHEDULE_CATEGORIES } = await import('../core/finish-schedule');
+  for (const pkg of STYLE_PACKAGES){ const s = applyStyle(newSnapshot(cat, 'F', 'demo'), cat, mc, pkg), b = computeBOQ(s, cat, mc);
+    const boq = b.items.filter(i => SCHEDULE_CATEGORIES.has(i.category)).reduce((a, i) => a + (i.total ?? 0), 0), sch = finishSchedule(s, cat, mc).reduce((a, r) => a + (r.total ?? 0), 0);
+    assert.ok(Math.abs(boq - sch) < .01, `${pkg.id}: ${boq} vs ${sch}`); }
+});

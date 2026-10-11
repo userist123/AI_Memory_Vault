@@ -215,7 +215,8 @@ function model(it){
   let house = new THREE.Group(), ceilings = new THREE.Group(), walls = new THREE.Group(), furniture = new THREE.Group(); scene.add(house, furniture);
   let colliders = [], blockers = [], structBlockers = [], plan = null, W = 1, D = 1, C = new THREE.Vector3(), pickables = [];
   // la reconstruire: geometria și texturile clonate pentru finisaje (fiecare clonă e o încărcare separată pe GPU)
-  const disposeGroup = g => g.traverse(o => { if (o.geometry) o.geometry.dispose(); const m = o.material; if (m && m.map && m.map.userData && m.map.userData.owned){ m.map.dispose(); m.dispose(); } });
+  const disposeGroup = g => g.traverse(o => { if (o.geometry) o.geometry.dispose(); const m = o.material; if (m && m.map && m.map.userData && m.map.userData.owned){ m.map.dispose(); m.dispose(); } else if (m && m.userData && m.userData.ownedMat) m.dispose(); });
+  const owned = m => { m.userData = { ...(m.userData || {}), ownedMat: true }; return m; };
   function box(w, h, d, mat, x, y, z, rotY, parent){ const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.rotation.y = rotY || 0; m.castShadow = m.receiveShadow = true; parent.add(m); return m; }
   function buildHouse(p){
     disposeGroup(house); scene.remove(house); interiorLights.length = 0; house = new THREE.Group(); ceilings = new THREE.Group(); walls = new THREE.Group(); house.add(ceilings, walls); scene.add(house); colliders = [];
@@ -261,19 +262,20 @@ function model(it){
       const w = r.x1 - r.x0, d = r.z1 - r.z0;
       const pl = new THREE.PointLight(0xfff0dc, light ? light.interior : .35, 7, 2); interiorLights.push(pl); pl.position.set((r.x0 + r.x1) / 2, H - .3, (r.z0 + r.z1) / 2); ceilings.add(pl); });
     // corpurile de iluminat plasate: pendul (cablu + abajur + bec), aplică (bază pe perete + abajur), șină cu spoturi
-    const bulb = new THREE.MeshStandardMaterial({ color: lin('#fff6e6'), emissive: lin('#ffd9a8'), emissiveIntensity: 1.6 }), cord = MAT('paint', '#222222');
-    (p.lumini || []).forEach(f => { const sm = MAT('paint', f.color || '#1c1c1c');
-      if (f.kind === 'pendant'){ const drop = Math.max(.1, H - f.y - .22), c = new THREE.Mesh(new THREE.CylinderGeometry(.004, .004, drop, 6), cord); c.position.set(f.x, H - drop / 2, f.z); ceilings.add(c);
-        const sh = new THREE.Mesh(new THREE.ConeGeometry(.17, .22, 28, 1, true), sm); sh.material.side = THREE.DoubleSide; sh.position.set(f.x, f.y + .11, f.z); sh.castShadow = true; ceilings.add(sh);
+    const bulb = owned(new THREE.MeshStandardMaterial({ color: lin('#fff6e6'), emissive: lin('#ffd9a8'), emissiveIntensity: 1.6 })), cord = MAT('paint', '#222222');
+    (p.lumini || []).forEach(f => { const sm = MAT('paint', f.color || '#1c1c1c'), shade = owned(sm.clone()); shade.side = THREE.DoubleSide;
+      const T = f.top || H;
+      if (f.kind === 'pendant'){ const drop = Math.max(.1, T - f.y - .22), c = new THREE.Mesh(new THREE.CylinderGeometry(.004, .004, drop, 6), cord); c.position.set(f.x, T - drop / 2, f.z); ceilings.add(c);
+        const sh = new THREE.Mesh(new THREE.ConeGeometry(.17, .22, 28, 1, true), shade); sh.position.set(f.x, f.y + .11, f.z); sh.castShadow = true; ceilings.add(sh);
         const b = new THREE.Mesh(new THREE.SphereGeometry(.045, 16, 10), bulb); b.position.set(f.x, f.y + .05, f.z); ceilings.add(b);
-        const cp = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, .02, 16), sm); cp.position.set(f.x, H - .01, f.z); ceilings.add(cp); }
+        const cp = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, .02, 16), sm); cp.position.set(f.x, T - .01, f.z); ceilings.add(cp); }
       else if (f.kind === 'sconce'){ const x = f.x + f.nx * .02, z = f.z + f.nz * .02, rot = Math.atan2(f.nx, f.nz);
-        box(.1, .14, .02, sm, x, f.y, z, rot, house); const sh = new THREE.Mesh(new THREE.CylinderGeometry(.06, .08, .14, 20, 1, true), sm); sh.material.side = THREE.DoubleSide; sh.position.set(f.x + f.nx * .12, f.y + .03, f.z + f.nz * .12); house.add(sh);
+        box(.1, .14, .02, sm, x, f.y, z, rot, house); const sh = new THREE.Mesh(new THREE.CylinderGeometry(.06, .08, .14, 20, 1, true), shade); sh.position.set(f.x + f.nx * .12, f.y + .03, f.z + f.nz * .12); house.add(sh);
         const b = new THREE.Mesh(new THREE.SphereGeometry(.03, 12, 8), bulb); b.position.set(f.x + f.nx * .12, f.y, f.z + f.nz * .12); house.add(b); }
-      else if (f.kind === 'track'){ const L = f.len || 2, bar = box(f.alongX ? L : .035, .035, f.alongX ? .035 : L, sm, f.x, H - .02, f.z, 0, ceilings); bar.castShadow = false;
+      else if (f.kind === 'track'){ const L = f.len || 2, bar = box(f.alongX ? L : .035, .035, f.alongX ? .035 : L, sm, f.x, T - .02, f.z, 0, ceilings); bar.castShadow = false;
         const n = Math.max(2, Math.round(L / .5)); for (let k = 0; k < n; k++){ const o = ((k + .5) / n - .5) * L, x = f.alongX ? f.x + o : f.x, z = f.alongX ? f.z : f.z + o;
-          const sp = new THREE.Mesh(new THREE.CylinderGeometry(.035, .035, .11, 16), sm); sp.position.set(x, H - .1, z); sp.rotation.x = (k % 2 ? .35 : -.35); ceilings.add(sp);
-          const b = new THREE.Mesh(new THREE.CircleGeometry(.03, 16), bulb); b.rotation.x = Math.PI / 2; b.position.set(x, H - .156, z); ceilings.add(b); } } });
+          const sp = new THREE.Mesh(new THREE.CylinderGeometry(.035, .035, .11, 16), sm); sp.position.set(x, T - .1, z); sp.rotation.x = (k % 2 ? .35 : -.35); ceilings.add(sp);
+          const b = new THREE.Mesh(new THREE.CircleGeometry(.03, 16), bulb); b.rotation.x = Math.PI / 2; b.position.set(x, T - .156, z); ceilings.add(b); } } });
     const leafMat = MAT('paint', '#f4f2ed'), entranceMat = MAT('wood', '#4a3324'), handleMat = MAT('chrome', '#d8d8d8');
     const pMinX = Math.min(...p.camere.map(r => r.x0)), pMaxX = Math.max(...p.camere.map(r => r.x1)), pMinZ = Math.min(...p.camere.map(r => r.z0)), pMaxZ = Math.max(...p.camere.map(r => r.z1));
     p.pereti.forEach(wl => {

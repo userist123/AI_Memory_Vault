@@ -56,3 +56,19 @@ test('plan/3D primesc corpurile; validare', () => {
   for (const bad of [{}, [{ kind: 'lamp', anchor: 'table' }], [{ kind: 'pendant', anchor: 'roof' }], [{ kind: 'pendant', anchor: 'table', count: 50 }], [{ kind: 'sconce', anchor: 'wall', side: 'X' }], [{ kind: 'track', anchor: 'center', lengthM: 20 }]])
     assert.equal(sanitizeFixtures(bad), 'Corpurile de iluminat sunt invalide.', JSON.stringify(bad));
 });
+
+// regresii din review: peretele din spatele patului vine din rotație, nu din cel mai apropiat perete; aplicele rămân în cameră
+test('pat împins în colț (rotație 0, tăblia la N): aplicele stau pe peretele N, în cameră', () => {
+  const s = demo(), bed = s.placements.find(p => p.group === 'pat')!, r = room(s, 'dormitor').rect; bed.rotation = 0;
+  const fp0 = footprintOf(cat, bed)!, w = fp0.x1 - fp0.x0, d = fp0.z1 - fp0.z0; bed.x = r.x0 + w / 2 + .03; bed.z = r.z0 + d / 2 + .1;
+  const pts = fixturePoints(s, cat, room(s, 'dormitor'), { kind: 'sconce', anchor: 'bed' });
+  assert.ok(pts.every(p => p.nz === 1 && p.nx === 0), 'peretele N'); assert.ok(pts.every(p => p.x >= r.x0 && p.x <= r.x1 && Math.abs(p.z - r.z0) < .15), JSON.stringify(pts));
+});
+test('șina și pendulele stau sub tavanul fals; pendulele de lângă pat sunt cel mult 2; pendule peste blat cu suspendate = avertisment', () => {
+  const s = set(demo(), 'living', [{ kind: 'track', anchor: 'center' }]); s.finishes!.living!.ceiling = { type: 'cove', dropCm: 10, coveCm: 30 };
+  const [tr] = fixturePoints(s, cat, room(s, 'living'), { kind: 'track', anchor: 'center' }); assert.ok(tr!.y < s.floor.ceilingHeight - .1 && tr!.top === s.floor.ceilingHeight - .1);
+  assert.equal(fixtureCount({ kind: 'pendant', anchor: 'bed', count: 3 }), 2);
+  const b = set(demo(), 'dormitor', [{ kind: 'pendant', anchor: 'bed', count: 3, material: 'pendul' }]); assert.equal(computeBOQ(b, cat, mc).items.find(i => i.key === 'dormitor:fixture:0')!.orderedQty, 2);
+  const k = set(demo(), 'bucatarie', [{ kind: 'pendant', anchor: 'counter', material: 'pendul' }]);
+  assert.ok(fixtureIssues(k, cat, mc, room(k, 'bucatarie'), finishesOf(k, room(k, 'bucatarie'))).some(i => i.key === 'fix.counterUpper'));
+});
