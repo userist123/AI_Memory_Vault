@@ -34,6 +34,8 @@ export const BED_SIDE_CLEARANCE_M = 0.6;      // culoar uzual de ~60 cm pe cel p
 export const ACCESSIBLE_CLEARANCE_M = 1.2;    // culoar uzual pentru scaun cu rotile / mers asistat
 export const SOFA_TABLE_MIN_M = 0.35;         // distanță uzuală sofa–măsuță de cafea: sub 35 cm nu treci, peste 60 cm nu ajungi la ea
 export const SOFA_TABLE_MAX_M = 0.6;
+export const COFFEE_TO_SOFA = [0.5, 2 / 3] as const;   // măsuța are de obicei ½–⅔ din lungimea canapelei
+export const DINING_PULL_M = 0.9;                      // în spatele scaunelor: 90 cm ca să tragi scaunul (105–120 cm dacă se trece prin spate)
 export const CROWDED_RATIO = 0.55;            // peste 55% din podea ocupată de mobilier = cameră aglomerată
 export const EMPTY_LIVING_RATIO = 0.15;       // sub 15% într-un living = cameră „goală”
 export const BIG_BED_WIDTH_M = 1.6;           // pat matrimonial (160 cm+)
@@ -152,6 +154,19 @@ export function adviseProject(snap: Snapshot, cat: Catalog, opts: AdvisorOptions
       const refs = { roomId: rid, placementIds: [s.id, best.m.id] }, range = { rn, lo_m: cm(SOFA_TABLE_MIN_M) / 100, hi_m: cm(SOFA_TABLE_MAX_M) / 100, d_m: cm(best.d) / 100 };
       if (best.d < SOFA_TABLE_MIN_M - 1e-6) add('SOFA_TABLE', { severity: 'TIP', category: 'circulatie', refs, code: 'SOFA_TABLE_NEAR', vars: { ...range, by_mu: SOFA_TABLE_MIN_M - best.d } });
       else if (best.d > SOFA_TABLE_MAX_M + 1e-6) add('SOFA_TABLE', { severity: 'TIP', category: 'circulatie', refs, code: 'SOFA_TABLE_FAR', vars: { ...range, by_mu: best.d - SOFA_TABLE_MAX_M } }); }
+
+    // masa: în spatele scaunelor trebuie loc să tragi scaunul (pe laturile lungi, unde stau scaunele)
+    for (const t of ofGroup('masa')){ const fp = fps.get(t.id)!, rv = resolve(cat, t.variantId); if (!rv) continue;
+      const chairs = rv.variant.chairs ?? (/scaun/i.test(rv.variant.name) ? 4 : 0); if (!chairs) continue;
+      const long: Side[] = fp.x1 - fp.x0 >= fp.z1 - fp.z0 ? ['N', 'S'] : ['W', 'E'], need = DINING_PULL_M + .12, ignore = new Set([t.id]);   // scaunul ocupă ~12 cm în afara blatului
+      const tight = long.filter(sd => !freeRect(room, sideStrip(fp, sd, need), ignore));
+      if (tight.length) add('DINING_PULL', { severity: 'TIP', category: 'circulatie', refs: { roomId: rid, placementIds: [t.id] }, code: 'DINING_PULL', vars: { rn, d_m: DINING_PULL_M, n: tight.length } }); }
+    // măsuța față de canapea: ½–⅔ din lungimea ei
+    for (const sf of ofGroup('canapea')){ const ms = ofGroup('masuta'); if (!ms.length) continue; const fs = fps.get(sf.id)!, sw = Math.max(fs.x1 - fs.x0, fs.z1 - fs.z0);
+      const m = ms.map(x => ({ x, d: rectGap(fs, fps.get(x.id)!) })).sort((a, b) => a.d - b.d)[0]!.x, fm = fps.get(m.id)!, tl = Math.max(fm.x1 - fm.x0, fm.z1 - fm.z0), r = tl / sw;
+      const vars = { rn, t_m: cm(tl) / 100, s_m: cm(sw) / 100, lo_m: cm(sw * COFFEE_TO_SOFA[0]) / 100, hi_m: cm(sw * COFFEE_TO_SOFA[1]) / 100 }, refs = { roomId: rid, placementIds: [sf.id, m.id] };
+      if (r < COFFEE_TO_SOFA[0] - .05) add('COFFEE_RATIO', { severity: 'TIP', category: 'proportii', refs, code: 'COFFEE_SMALL', vars });
+      else if (r > COFFEE_TO_SOFA[1] + .08) add('COFFEE_RATIO', { severity: 'TIP', category: 'proportii', refs, code: 'COFFEE_LARGE', vars }); }
 
     // Proporții
     const used = ps.filter(p => p.group !== 'scaunBirou').reduce((a, p) => { const f = fps.get(p.id)!; return a + area(f); }, 0);
