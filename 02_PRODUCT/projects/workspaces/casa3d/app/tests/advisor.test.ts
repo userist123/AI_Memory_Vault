@@ -228,3 +228,22 @@ describe('proprietăți generale', () => {
     assert.deepEqual(a, [...a].sort((x, y) => x - y)); assert.ok(a.includes(0) && a.includes(1) && a.includes(2));
   });
 });
+
+describe('reguli de design cu cifre (cercetarea 2026-10-11b)', () => {
+  test('măsuța: ½–⅔ din lungimea canapelei — mică, potrivită, mare', () => {
+    const c = mkCat({ 'masuta-1': [60, 50, 40], 'masuta-2': [180, 60, 40] }), at = (v: string) => adviseProject(mkSnap('living', 6, 5, { windows: BIG_WIN, placements: [{ variantId: 'canapea-0', x: 3, z: 4.5 }, { variantId: v, x: 3, z: 3.5 }] }), c);
+    assert.equal(has(at('masuta-1'), 'COFFEE_RATIO')[0]?.code, 'COFFEE_SMALL');   // 60 cm la o canapea de 200
+    assert.equal(has(at('masuta-0'), 'COFFEE_RATIO').length, 0);                  // 100 cm = ½
+    assert.equal(has(at('masuta-2'), 'COFFEE_RATIO')[0]?.code, 'COFFEE_LARGE');   // 180 cm
+    assert.match(ro(has(at('masuta-1'), 'COFFEE_RATIO')[0]!).why, /1,00 m–1,33 m/);
+  });
+  test('masa cu scaune: 90 cm în spate ca să tragi scaunul; masa vândută fără scaune nu e verificată', () => {
+    const c = mkCat({ 'masa-1': [140, 80, 75] }); c.variants.find(v => v.id === 'masa-1')!.chairs = 4;
+    const near = adviseProject(mkSnap('living', 5, 4, { windows: BIG_WIN, placements: [{ variantId: 'masa-1', x: 2.5, z: 0.6 }] }), c);
+    assert.equal(has(near, 'DINING_PULL').length, 1, 'lipită de perete: nu ai unde trage scaunul');
+    const mid = adviseProject(mkSnap('living', 5, 4, { windows: BIG_WIN, placements: [{ variantId: 'masa-1', x: 2.5, z: 2 }] }), c);
+    assert.equal(has(mid, 'DINING_PULL').length, 0);
+    c.variants.find(v => v.id === 'masa-1')!.chairs = 0;
+    assert.equal(has(adviseProject(mkSnap('living', 5, 4, { windows: BIG_WIN, placements: [{ variantId: 'masa-1', x: 2.5, z: 0.6 }] }), c), 'DINING_PULL').length, 0);
+  });
+});
