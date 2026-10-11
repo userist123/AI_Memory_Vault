@@ -27,3 +27,11 @@ test('sarcini: creare, bifare, termen, proiect doar al proprietarului, izolare',
   assert.equal((await listTasks(B)).length, 0);
   await deleteTask(A, t1.id); assert.equal((await listTasks(A)).length, 1);
 });
+
+test('limita de sarcini deschise ține și la cereri simultane (review de securitate)', async () => {
+  const { TASK_LIMITS } = await import('../core/tasks'); const O = '12121212-1212-4212-8212-121212121212';
+  for (let i = 0; i < TASK_LIMITS.perOwner - 3; i++) await addTask(O, { title: `t${i}` });
+  const rs = await Promise.allSettled(Array.from({ length: 20 }, (_, i) => addTask(O, { title: `p${i}` })));
+  assert.equal(rs.filter(r => r.status === 'fulfilled').length, 3);
+  assert.ok(rs.filter(r => r.status === 'rejected').every(r => (r as PromiseRejectedResult).reason.status === 429));
+});

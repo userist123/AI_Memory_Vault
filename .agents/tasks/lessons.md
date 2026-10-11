@@ -120,3 +120,9 @@ CI failed once on `tests/project-meta.test.ts`: it asserted the shared JSON does
 UUIDs and the 43-char share token are random and can contain that substring by chance. Rule: when asserting
 that private data is absent, search for a value that cannot occur in ids/tokens (the full formatted string,
 with spaces or non-hex letters), never a short digit run.
+
+## 2026-10-11 — Casa3D: a public decision must name the version it decides
+Review finding: a client's approval only sent {decision, author}; the designer could withdraw, change the amount and
+re-send under the same id, and a stale client tab would approve the new amount. Rule: any public approve/accept action
+carries the version the person saw (here the ms-truncated `sent_at`) and the update is conditional on it (409 otherwise).
+Also: `res.pipe(decoder)` does not forward `res` errors (use `stream.pipeline`), and a socket `timeout` is not an overall deadline.

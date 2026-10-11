@@ -21,12 +21,14 @@ export function checkChange(x: unknown, partial = false): Partial<Pick<ChangeOrd
   return out;
 }
 /** Decizia clientului pe link: aprob / refuz, cu numele lui și, opțional, un motiv. */
-export function checkDecision(x: unknown): { status: 'approved' | 'rejected'; author: string; note: string | null } {
+/** `seen` = data trimiterii variantei pe care a văzut-o clientul: o decizie se aplică doar acelei variante. */
+export function checkDecision(x: unknown): { status: 'approved' | 'rejected'; author: string; note: string | null; seen: string } {
   const o = x as any; if (!o || typeof o !== 'object') throw new ChangeError('Decizia nu e validă.');
   if (o.decision !== 'approved' && o.decision !== 'rejected') throw new ChangeError('Alege: aprob sau refuz.');
   const author = clean(o.author, CHANGE_LIMITS.author); if (!author || author.length > CHANGE_LIMITS.author) throw new ChangeError('Scrieți numele (cel mult 60 de caractere).');
   const note = clean(o.note ?? '', CHANGE_LIMITS.note); if (note == null || note.length > CHANGE_LIMITS.note) throw new ChangeError('Motivul e prea lung.');
-  return { status: o.decision, author, note: note || null };
+  if (typeof o.seen !== 'string' || o.seen.length > 40 || Number.isNaN(Date.parse(o.seen))) throw new ChangeError('Pagina e veche; reîncărcați-o și decideți din nou.');
+  return { status: o.decision, author, note: note || null, seen: new Date(o.seen).toISOString() };
 }
 const r2 = (v: number) => Math.round(v * 100) / 100;
 /** Bugetul cu modificări: oferta, ce s-a aprobat (cu semn), ce așteaptă decizia, totalul actual și zilele adăugate. */

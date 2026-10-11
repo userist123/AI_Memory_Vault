@@ -31,7 +31,7 @@ export async function updateChange(owner: string, projectId: string, id: unknown
   await getProject(owner, projectId); if (typeof id !== 'string' || !ID_RE.test(id)) throw notFound();
   const { q } = await getDb(), action = (patch as any)?.action;
   if (action === 'send' || action === 'withdraw'){
-    const [from, to, sent] = action === 'send' ? ['draft', 'sent', 'now()'] : ['sent', 'draft', 'null'];
+    const [from, to, sent] = action === 'send' ? ['draft', 'sent', "date_trunc('milliseconds', now())"] : ['sent', 'draft', 'null'];   // ms: aceeași precizie ca data trimisă clientului
     const { rows } = await q(`update change_orders set status=$3, sent_at=${sent} where id=$1 and project_id=$2 and status=$4 returning *`, [id, projectId, to, from]);
     if (!rows[0]) throw new HttpError(409, action === 'send' ? 'Se poate trimite doar o ciornă.' : 'Se poate retrage doar o modificare trimisă și nedecisă.');
     return row(rows[0]); }
@@ -62,8 +62,9 @@ export async function decideChange(token: unknown, id: unknown, input: unknown):
   const pid = await shareProject(token); if (typeof id !== 'string' || !ID_RE.test(id)) throw notFound();
   const d = v(() => checkDecision(input)), { q } = await getDb();
   // doar o modificare trimisă și nedecisă; o a doua decizie (sau una simultană) nu o suprascrie pe prima
-  const { rows } = await q(`update change_orders set status=$3, decided_at=now(), decided_by=$4, client_note=$5 where id=$1 and project_id=$2 and status='sent' returning *`, [id, pid, d.status, d.author, d.note]);
+  // doar varianta pe care a văzut-o clientul (retrasă și retrimisă = altă variantă, altă dată de trimitere)
+  const { rows } = await q(`update change_orders set status=$3, decided_at=now(), decided_by=$4, client_note=$5 where id=$1 and project_id=$2 and status='sent' and sent_at=$6::timestamptz returning *`, [id, pid, d.status, d.author, d.note, d.seen]);
   if (!rows[0]){ const { rows: [e] } = await q(`select status from change_orders where id=$1 and project_id=$2 and status <> 'draft'`, [id, pid]);
-    if (!e) throw notFound(); throw new HttpError(409, 'Modificarea a fost deja decisă.'); }
+    if (!e) throw notFound(); throw new HttpError(409, e.status === 'sent' ? 'Modificarea s-a schimbat între timp; reîncărcați pagina și decideți din nou.' : 'Modificarea a fost deja decisă.'); }
   return row(rows[0]);
 }

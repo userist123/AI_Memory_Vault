@@ -18,7 +18,7 @@ export function ClientChanges({ token, offered, cur }: { token: string; offered:
   useEffect(() => { setName(savedName()); load(); }, [token]); // eslint-disable-line
   async function decide(c: ChangeOrder, decision: 'approved' | 'rejected'){
     if (!name.trim()){ setMsg(t('co.nameFirst')); return; } setBusy(c.id); setMsg('');
-    try { const r = await fetch(`/api/share/${token}/changes/${c.id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ decision, author: name, note: note[c.id] ?? '' }) }), j = await r.json().catch(() => ({}));
+    try { const r = await fetch(`/api/share/${token}/changes/${c.id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ decision, author: name, note: note[c.id] ?? '', seen: c.sentAt }) }), j = await r.json().catch(() => ({}));
       if (!r.ok){ setMsg(j.error || t('co.error')); } else { try { localStorage.setItem(NAME_KEY, name.trim()); } catch { /* fără stocare */ } setMsg(t(decision === 'approved' ? 'co.thanksOk' : 'co.thanksNo')); }
       load(); } finally { setBusy(''); } }
   if (!list || list.length === 0) return null;

@@ -18,10 +18,14 @@ export async function listTasks(owner: string, projectId?: string | null): Promi
 export async function addTask(owner: string, input: unknown): Promise<Task> {
   const s = v(() => checkTask(input)), pid = (input as any)?.projectId ?? null;
   if (pid !== null){ if (typeof pid !== 'string' || !ID_RE.test(pid)) throw new HttpError(400, 'Proiect invalid.'); await getProject(owner, pid); }
-  const { q } = await getDb(), { rows: [c] } = await q('select count(*)::int as n from tasks where owner=$1 and done_at is null', [owner]);
-  if (c.n >= TASK_LIMITS.perOwner) throw new HttpError(429, 'Prea multe sarcini deschise.');
-  const { rows } = await q('insert into tasks(owner, project_id, title, due) values($1,$2,$3,$4) returning *', [owner, pid, s.title, s.due ?? null]);
-  return row(rows[0]);
+  // numărătoarea și inserarea sub același blocaj pe proprietar: cererile simultane nu trec de limită
+  const { tx } = await getDb();
+  return tx(async q => {
+    await q('select pg_advisory_xact_lock(hashtext($1))', [owner]);
+    const { rows: [c] } = await q('select count(*)::int as n from tasks where owner=$1 and done_at is null', [owner]);
+    if (c.n >= TASK_LIMITS.perOwner) throw new HttpError(429, 'Prea multe sarcini deschise.');
+    const { rows } = await q('insert into tasks(owner, project_id, title, due) values($1,$2,$3,$4) returning *', [owner, pid, s.title, s.due ?? null]);
+    return row(rows[0]); });
 }
 export async function updateTask(owner: string, id: unknown, patch: unknown): Promise<Task> {
   if (typeof id !== 'string' || !ID_RE.test(id)) throw new HttpError(404, 'Sarcină inexistentă.');
