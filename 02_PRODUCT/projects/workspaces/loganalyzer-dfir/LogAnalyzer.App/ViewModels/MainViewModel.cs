@@ -661,7 +661,8 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 try
                 {
-                    Application.Current?.Dispatcher?.Invoke(() =>
+                    // queued at Background priority: the first frame of the window is drawn before the stored data is reloaded
+                    Application.Current?.Dispatcher?.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
                     {
                         UpdateDatabaseSize();
                         ReloadEvtxFromDb();
@@ -2523,14 +2524,40 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
+        private bool _aiRunning;
+
+        /// <summary>
+        /// The legacy analysis over up to 50 000 stored events. The reading and every engine run off the UI thread (senior review 2026-10-11: it froze
+        /// the window ~0.45 s with 7.6k events and ~1.25 s with 50k, right after start-up); only filling the lists happens on the UI thread.
+        /// </summary>
         [RelayCommand]
-        public void RunAiAnalysis()
+        public async void RunAiAnalysis()
         {
-            if (_analysisEngine is AnalysisEngine ae)
+            if (_analysisEngine is not AnalysisEngine ae || _aiRunning) return;
+            _aiRunning = true;
+            try
             {
-                var eventsForAnalysis = _databaseService.GetEvents(50000, 0, null, null, null).ToList();
-                var anomalies = ae.AnomalyEngine.DetectAnomalies(eventsForAnalysis);
-                var yaraMatches = ae.YaraEngine.Evaluate(eventsForAnalysis);
+                var wh = LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.WorkingHours;
+                var bg = await Task.Run(() =>
+                {
+                    var ev = _databaseService.GetEvents(50000, 0, null, null, null).ToList();
+                    var anomalies = ae.AnomalyEngine.DetectAnomalies(ev);
+                    var yara = ae.YaraEngine.Evaluate(ev);
+                    var ad = _kerberosEngine.GetAuditSummary(ev);
+                    var samSummary = _samAuditEngine.GetSummary(ev);
+                    return new
+                    {
+                        Events = ev, Anomalies = anomalies, Yara = yara, Ad = ad, Kerb = _kerberosEngine.AnalyzeEvents(ev), Uba = _ubaEngine.Evaluate(ev, wh),
+                        SamSummary = samSummary, Sam = _samAuditEngine.Analyze(ev), Dns = _dnsAuditEngine.Analyze(ev),
+                        Compliance = _complianceAuditEngine.Evaluate(ev, ad, samSummary, yara.Count, anomalies.Count),
+                        Deltas = _adDeltaEngine.ExtractDeltas(ev), Azure = _azureAdEngine.Analyze(ev), Files = _fileServerEngine.Analyze(ev),
+                        Employees = _employeeActivityEngine.AnalyzeWorkHours(ev), Storage = _storageAnalyticsEngine.AnalyzeStorageRisks(ev),
+                        Lolbas = _lolbasEngine.Analyze(ev), Processes = _processLineageCorrelator.BuildLineageTrees(ev), Multi = _correlationEngine.CorrelateEvents(ev),
+                    };
+                });
+                var eventsForAnalysis = bg.Events;
+                var anomalies = bg.Anomalies;
+                var yaraMatches = bg.Yara;
 
                 AiAnomalies.Clear();
                 int entropyCount = 0;
@@ -2610,7 +2637,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză ADAudit Plus & Kerberos Active Directory
-                var adSummary = _kerberosEngine.GetAuditSummary(eventsForAnalysis);
+                var adSummary = bg.Ad;
                 AdEventsAnalyzedCount = adSummary.TotalAdEventsAnalyzed;
                 AdAccountsCreatedCount = adSummary.UserAccountsCreated;
                 AdAccountsModifiedCount = adSummary.UserAccountsModified;
@@ -2621,7 +2648,7 @@ namespace LogAnalyzer.UI.ViewModels
                 AdGpoPolicyChangesCount = adSummary.GpoPolicyChanges;
                 AdKerberosAttacksCount = adSummary.KerberosAttacksDetected;
 
-                var kerbFindings = _kerberosEngine.AnalyzeEvents(eventsForAnalysis);
+                var kerbFindings = bg.Kerb;
                 KerberosFindings.Clear();
                 foreach (var kf in kerbFindings)
                 {
@@ -2629,7 +2656,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză Comportamentală Utilizatori UBA (User Behavior Analytics)
-                var ubaFindings = _ubaEngine.Evaluate(eventsForAnalysis, LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.WorkingHours);
+                var ubaFindings = bg.Uba;
                 UbaAnomalies.Clear();
                 foreach (var uf in ubaFindings)
                 {
@@ -2637,7 +2664,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză ADAudit Standalone PC & SAM Forensics (pentru PC-uri izolate / fără domeniu)
-                var samSummary = _samAuditEngine.GetSummary(eventsForAnalysis);
+                var samSummary = bg.SamSummary;
                 SamAccountsCreatedCount = samSummary.LocalAccountsCreated;
                 SamAccountsDeletedCount = samSummary.LocalAccountsDeleted;
                 SamAdminGroupModificationsCount = samSummary.LocalAdminGroupModifications;
@@ -2645,7 +2672,7 @@ namespace LogAnalyzer.UI.ViewModels
                 SamUsbStorageEventsCount = samSummary.UsbStorageEventsCount;
                 SamHighPrivilegeAssignmentsCount = samSummary.HighPrivilegeAssignmentsCount;
 
-                var samFindings = _samAuditEngine.Analyze(eventsForAnalysis);
+                var samFindings = bg.Sam;
                 StandaloneSamFindings.Clear();
                 foreach (var sf in samFindings)
                 {
@@ -2653,7 +2680,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză ADAudit DNS Server & Zone Changes
-                var dnsFindings = _dnsAuditEngine.Analyze(eventsForAnalysis);
+                var dnsFindings = bg.Dns;
                 DnsFindings.Clear();
                 foreach (var df in dnsFindings)
                 {
@@ -2661,7 +2688,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Evaluare Conformitate Automată (HG 585/2002, NIS2, ISO 27042, GDPR, PCI-DSS)
-                var compResults = _complianceAuditEngine.Evaluate(eventsForAnalysis, adSummary, samSummary, yaraMatches.Count, anomalies.Count);
+                var compResults = bg.Compliance;
                 ComplianceResults.Clear();
                 foreach (var cr in compResults)
                 {
@@ -2669,7 +2696,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză ADAudit Delta Valori Atribute Active Directory (Before / After)
-                var deltas = _adDeltaEngine.ExtractDeltas(eventsForAnalysis);
+                var deltas = bg.Deltas;
                 AdAttributeDeltas.Clear();
                 foreach (var d in deltas)
                 {
@@ -2677,7 +2704,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză ADAudit Azure AD & Cloud Hybrid Identity
-                var azure = _azureAdEngine.Analyze(eventsForAnalysis);
+                var azure = bg.Azure;
                 AzureAdFindings.Clear();
                 foreach (var az in azure)
                 {
@@ -2685,7 +2712,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză ADAudit File Server, NAS & Ransomware Pattern
-                var files = _fileServerEngine.Analyze(eventsForAnalysis);
+                var files = bg.Files;
                 FileServerFindings.Clear();
                 foreach (var fs in files)
                 {
@@ -2693,7 +2720,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză ADAudit Employee Work Hours & Session Activity
-                var emp = _employeeActivityEngine.AnalyzeWorkHours(eventsForAnalysis);
+                var emp = bg.Employees;
                 EmployeeActivities.Clear();
                 foreach (var ea in emp)
                 {
@@ -2701,7 +2728,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză ADAudit File Storage, Open ACLs & Orphaned SIDs
-                var stor = _storageAnalyticsEngine.AnalyzeStorageRisks(eventsForAnalysis);
+                var stor = bg.Storage;
                 StorageAuditItems.Clear();
                 foreach (var si in stor)
                 {
@@ -2709,7 +2736,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză LOLBAS & Relații Anomale Părinte-Copil
-                var lolbas = _lolbasEngine.Analyze(eventsForAnalysis);
+                var lolbas = bg.Lolbas;
                 LolbasFindings.Clear();
                 foreach (var lf in lolbas)
                 {
@@ -2717,7 +2744,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Corelare Arbore Procese (Process Lineage Tree - Sysmon EID 1 & 4688)
-                var procs = _processLineageCorrelator.BuildLineageTrees(eventsForAnalysis);
+                var procs = bg.Processes;
                 CorrelatedProcessLineage.Clear();
                 foreach (var p in procs)
                 {
@@ -2725,7 +2752,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Corelare Multi-Eveniment Temporală (ex: Brute-Force -> Logon Success, Ransomware VSS Delete)
-                var multiCorrelations = _correlationEngine.CorrelateEvents(eventsForAnalysis);
+                var multiCorrelations = bg.Multi;
                 MultiEventCorrelations.Clear();
                 foreach (var mc in multiCorrelations)
                 {
@@ -2752,6 +2779,11 @@ namespace LogAnalyzer.UI.ViewModels
                 StatusMessage = $"✅ Analiză AI finalizată: Risc {AiRiskScore}/100 | {kerbFindings.Count} Kerberos | {lolbas.Count} LOLBAS | {multiCorrelations.Count} Lanțuri Corelate";
                 UpdateStorylineAndAptAttribution();
             }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                StatusMessage = "Analiza nu a putut fi făcută: " + ex.Message;
+            }
+            finally { _aiRunning = false; }
         }
 
         [RelayCommand]
