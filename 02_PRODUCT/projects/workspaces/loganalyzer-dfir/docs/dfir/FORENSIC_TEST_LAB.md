@@ -4,7 +4,7 @@ Starea la 2026-10-05. Cod: `LogAnalyzer.Dfir.Tests/Corpus.cs`, `ForensicValidati
 
 ## Corpusul
 
-- Corpusul real (incidentul NanAgent de pe LAB-PC, 19.09.2026) este probă locală. **Nu se adaugă niciodată în repository.**
+- Corpusul real (incidentul NanAgent de pe <stația de test>, 19.09.2026) este probă locală. **Nu se adaugă niciodată în repository.**
 - Testele îl găsesc prin `LADFIR_CORPUS` (implicit `D:\FORENSIC_CASE`).
 - `targets.json` conține doar căile relative și valorile așteptate, extrase manual din investigație:
   - nume, număr de rulări, ore;
