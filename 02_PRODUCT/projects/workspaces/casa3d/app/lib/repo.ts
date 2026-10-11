@@ -1,4 +1,5 @@
 import { sanitizeAppearance, SIZE_LIMITS_CM } from '../core/appearance';
+import { checkMeta, readMeta, type ProjectMeta } from '../core/project-meta';
 import { sanitizeFinishes } from '../core/finishes';
 import { sanitizeDoors } from '../core/doors';
 import { sanitizeTech, MAX_TECH_POINTS } from '../core/technical';
@@ -110,7 +111,13 @@ export function checkSnapshot(s: any): Snapshot {
   return s as Snapshot;
 }
 export async function listProjects(owner: string){
-  const { q } = await getDb(); const { rows } = await q('select id, name, updated_at, current_revision from projects where owner=$1 order by updated_at desc', [owner]); return rows;
+  const { q } = await getDb(); const { rows } = await q('select id, name, updated_at, current_revision, meta from projects where owner=$1 order by updated_at desc', [owner]);
+  return rows.map(r => { const m = readMeta(r.meta); return { id: r.id, name: r.name, updated_at: r.updated_at, current_revision: r.current_revision, status: m.status, client: m.client?.name ?? null, dueDate: m.dueDate ?? null }; });
+}
+/** Fișa proiectului (client, etapă, termene, onorariu): doar proprietarul o citește și o schimbă. */
+export async function saveMeta(owner: string, id: string, meta: unknown){
+  let m: ProjectMeta; try { m = checkMeta(meta); } catch (e: any){ throw new HttpError(400, e.message); }
+  await own(owner, id); const { q } = await getDb(); await q('update projects set meta=$1, updated_at=now() where id=$2 and owner=$3', [JSON.stringify(m), id, owner]); return m;
 }
 export async function createProject(owner: string, name: unknown, template: unknown = 'demo', lang: unknown = 'ro'){
   if (typeof template !== 'string' || (template !== 'blank' && !getTemplate(template))) throw new HttpError(400, 'Șablon necunoscut. Alege unul dintre șabloanele din listă sau „Plan gol”.');
@@ -124,7 +131,7 @@ async function own(owner: string, id: string){
   const { q } = await getDb(); const { rows } = await q('select * from projects where id=$1 and owner=$2', [id, owner]);
   if (!rows[0]) throw new HttpError(404, 'Proiect inexistent.'); return rows[0];
 }
-export async function getProject(owner: string, id: string){ const r = await own(owner, id); return { id: r.id, name: r.name, updatedAt: r.updated_at, currentRevision: r.current_revision, draft: r.draft as Snapshot }; }
+export async function getProject(owner: string, id: string){ const r = await own(owner, id); return { id: r.id, name: r.name, updatedAt: r.updated_at, currentRevision: r.current_revision, draft: r.draft as Snapshot, meta: readMeta(r.meta) }; }
 export async function saveDraft(owner: string, id: string, snapshot: unknown){
   const s = checkSnapshot(snapshot); await own(owner, id); const { q } = await getDb();
   const { rows } = await q('update projects set draft=$1, name=$2, updated_at=now() where id=$3 and owner=$4 returning updated_at', [JSON.stringify(s), s.name, id, owner]);
