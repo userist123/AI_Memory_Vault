@@ -12,6 +12,9 @@ export const JOB_RE = /^\d{13}$/, FILE_RE = /^[\w-]{1,80}\.png$/, ID_RE = /^[\w-
 const MAX_SCENE = 40 * 1024 * 1024, TIMEOUT_MS = 45 * 60 * 1000;
 const running = new Map<string, ChildProcess>();   // proiect → procesul Blender
 
+/** Șterge toate randările unui proiect de pe disc (la ștergerea definitivă). */
+export async function removeRenders(projectId: string){ if (!ID_RE.test(projectId)) return; await fs.rm(path.join(ROOT(), projectId), { recursive: true, force: true }); }
+
 export function blenderAvailable(){ const b = process.env.CASA3D_BLENDER; return !!b && existsSync(b); }
 export interface RenderJob { job: string; status: 'running' | 'done' | 'failed'; images: string[]; startedAt: string; samples: number }
 
