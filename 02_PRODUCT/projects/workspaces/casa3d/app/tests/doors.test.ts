@@ -48,3 +48,18 @@ test('salvare: golurile inexistente se elimină; forma greșită dă 400', async
   assert.deepEqual((await repo.getProject(A, id)).draft.doors, { [d.id]: { product: 'usa-r80-stejar-gri-86' } });
   (s as any).doors = 'rău'; await assert.rejects(repo.saveDraft(A, id, s), (e: any) => e.status === 400);
 });
+
+// sensul de deschidere: intrarea spre interior, ușile din hol în cameră, balamaua spre colț; alegerea utilizatorului câștigă
+test('ușile se deschid ca în realitate: intrarea spre interior, din hol în cameră, balamaua spre colț', async () => {
+  const { doorSwing } = await import('../core/doors');
+  const s = newSnapshot(cat, 'Uși', 'demo'), fl = s.floor, probe = (wi: number, oi: number, sg: number) => { const w = fl.walls[wi]!, o = w.openings[oi]!, L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]), ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L, m = o.offset + o.width / 2;
+    const x = w.a[0] + ux * m - uz * sg * .3, z = w.a[1] + uz * m + ux * sg * .3; return fl.rooms.find(r => x > r.rect.x0 && x < r.rect.x1 && z > r.rect.z0 && z < r.rect.z1); };
+  let checked = 0;
+  fl.walls.forEach((w, wi) => w.openings.forEach((o, oi) => { if (o.kind !== 'door') return; const sw = doorSwing(fl, wi, oi), into = probe(wi, oi, sw.swing), from = probe(wi, oi, -sw.swing);
+    assert.ok(into, `ușa ${o.id} se deschide într-o cameră`); assert.ok(sw.auto);
+    if (o.entrance) assert.equal(from, undefined, 'intrarea se deschide spre interior');
+    else if (from?.type === 'hol') { assert.notEqual(into!.type, 'hol', 'din hol în cameră'); checked++; } }));
+  assert.ok(checked >= 2);
+  const wi = fl.walls.findIndex(w => w.openings.some(o => o.kind === 'door')), oi = fl.walls[wi]!.openings.findIndex(o => o.kind === 'door');
+  fl.walls[wi]!.openings[oi]!.hinge = 'end'; fl.walls[wi]!.openings[oi]!.swing = -1; assert.deepEqual(doorSwing(fl, wi, oi), { hinge: 'end', swing: -1, auto: false });
+});

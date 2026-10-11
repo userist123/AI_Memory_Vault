@@ -213,13 +213,14 @@ function model(it){
 
   // ---------- casa (reconstruită la fiecare schimbare de plan) ----------
   let house = new THREE.Group(), ceilings = new THREE.Group(), walls = new THREE.Group(), furniture = new THREE.Group(); scene.add(house, furniture);
+  let doorLeaves = [], doorsOpen = true; // ușile cu balamale: deschise/închise, animate în bucla de randare
   let colliders = [], blockers = [], structBlockers = [], plan = null, W = 1, D = 1, C = new THREE.Vector3(), pickables = [];
   // la reconstruire: geometria și texturile clonate pentru finisaje (fiecare clonă e o încărcare separată pe GPU)
   const disposeGroup = g => g.traverse(o => { if (o.geometry) o.geometry.dispose(); const m = o.material; if (m && m.map && m.map.userData && m.map.userData.owned){ m.map.dispose(); m.dispose(); } else if (m && m.userData && m.userData.ownedMat) m.dispose(); });
   const owned = m => { m.userData = { ...(m.userData || {}), ownedMat: true }; return m; };
   function box(w, h, d, mat, x, y, z, rotY, parent){ const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.rotation.y = rotY || 0; m.castShadow = m.receiveShadow = true; parent.add(m); return m; }
   function buildHouse(p){
-    disposeGroup(house); scene.remove(house); interiorLights.length = 0; house = new THREE.Group(); ceilings = new THREE.Group(); walls = new THREE.Group(); house.add(ceilings, walls); scene.add(house); colliders = [];
+    disposeGroup(house); scene.remove(house); interiorLights.length = 0; doorLeaves = []; house = new THREE.Group(); ceilings = new THREE.Group(); walls = new THREE.Group(); house.add(ceilings, walls); scene.add(house); colliders = [];
     const H = p.inaltime;
     // scări (blocuri pline) și goluri de placă; deschiderile din podea/tavan se taie ca bucăți dreptunghiulare
     const stairs = p.scari || [], voids = p.goluriPlaca || []; structBlockers = [];
@@ -295,17 +296,32 @@ function model(it){
       const seg = (s0, s1, y0, y1) => { let q0 = s0; for (const t of breaks){ if (t > q0 + .005 && t < s1 - .005){ piece(q0, t, y0, y1); q0 = t; } } piece(q0, s1, y0, y1); };
       gs.forEach(g => { seg(q, g.la, 0, H);
         if (g.tip === 'usa'){ const dh = Math.min(H - .05, g.h || 2.1), fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat; seg(g.la, g.la + g.l, dh, H); const m = g.la + g.l / 2; [g.la, g.la + g.l].forEach(s => box(.05, dh, th + .02, fm, ax + ux * s, dh / 2, az + uz * s, rot, walls)); box(g.l, .05, th + .02, fm, ax + ux * m, dh, az + uz * m, rot, walls);
-          // foaia ușii, deschisă ~75° spre interior (opusul normalei exterioare, ca arcul din DXF), balamaua la începutul golului
-          const cmx = (pMinX + pMaxX) / 2, cmz = (pMinZ + pMaxZ) / 2, mx = ax + ux * m, mz = az + uz * m, sIn = ((mx - cmx) * nx + (mz - cmz) * nz) > 0 ? -1 : 1;
-          const R = rot - sIn * 1.31, dx = Math.cos(R), dz = -Math.sin(R), lw = Math.max(.3, g.l - .06), hx = ax + ux * (g.la + .03), hz = az + uz * (g.la + .03), lh = dh - .015;
-          // ușa aleasă din catalog: culoarea foii, geam mat sau panouri în relief, culoarea mânerului
+          // foaia ușii pe balamale reale: capătul și partea din plan (core/doors.ts doorSwing), deschisă sau închisă (clic pe ușă)
+          const sw = g.sw || { hinge: 'start', swing: ((mx0, mz0) => { const cmx = (pMinX + pMaxX) / 2, cmz = (pMinZ + pMaxZ) / 2; return ((mx0 - cmx) * nx + (mz0 - cmz) * nz) > 0 ? -1 : 1; })(ax + ux * m, az + uz * m) };
+          const atStart = sw.hinge !== 'end', hs = atStart ? g.la + .025 : g.la + g.l - .025, hx = ax + ux * hs, hz = az + uz * hs, lw = Math.max(.3, g.l - .05), lh = dh - .012;
+          const cdx = atStart ? ux : -ux, cdz = atStart ? uz : -uz, odx = nx * sw.swing, odz = nz * sw.swing, faceOff = sw.swing * (th / 2 - .03);
           const us = g.usa, lm = us && us.color ? (us.wood ? MAT('wood', us.color) : MAT('paint', us.color)) : (g.intrare ? entranceMat : leafMat), hm = us && us.handle ? MAT('chrome', us.handle) : handleMat;
-          const cxL = hx + dx * lw / 2, czL = hz + dz * lw / 2, px = -dz, pz = dx;
-          box(lw, lh, .04, lm, cxL, lh / 2, czL, R, walls);
-          if (us && us.style === 'glass') [1, -1].forEach(sg => { box(lw * .55, lh * .55, .006, MAT('frost', '#e9ecec'), cxL + px * sg * .022, lh * .58, czL + pz * sg * .022, R, walls).castShadow = false; });
-          if (us && us.style === 'panel') [1, -1].forEach(sg => { [lh * .72, lh * .3].forEach((y, i) => box(lw * .62, lh * (i ? .36 : .3), .008, lm, cxL + px * sg * .024, y, czL + pz * sg * .024, R, walls).castShadow = false); });
-          const kx = hx + dx * (lw - .07), kz = hz + dz * (lw - .07);
-          [1, -1].forEach(sg => box(.12, .02, .02, hm, kx + px * sg * .045, 1.02, kz + pz * sg * .045, R, walls).castShadow = false); }
+          // pivotul: pe linia balamalelor, la fața peretelui dinspre care se deschide; x local = de-a lungul foii
+          const pivot = new THREE.Group(); pivot.position.set(hx + nx * faceOff, 0, hz + nz * faceOff); walls.add(pivot);
+          const P = (bw, bh, bd, x, y, z, mat, shadow = true) => { const o = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), mat); o.position.set(x, y, z); o.castShadow = shadow; o.receiveShadow = true; pivot.add(o); return o; };
+          const lt = g.intrare ? .07 : .04; P(lw, lh, lt, lw / 2, lh / 2 + .006, 0, lm);
+          if (us && us.style === 'glass') [1, -1].forEach(sg => P(lw * .55, lh * .55, .006, lw / 2, lh * .58, sg * (lt / 2 + .002), MAT('frost', '#e9ecec'), false));
+          if (us && us.style === 'panel' || g.intrare) [1, -1].forEach(sg => [lh * .72, lh * .3].forEach((y, i) => P(lw * .66, lh * (i ? .36 : .3), .006, lw / 2, y, sg * (lt / 2 + .003), lm, false)));
+          // mâner cu rozetă pe ambele fețe, balamale vizibile, vizor la ușa de intrare
+          [1, -1].forEach(sg => { const z0 = sg * (lt / 2 + .006); P(.05, .05, .008, lw - .07, 1.02, z0, hm, false); const lev = P(.13, .018, .018, lw - .07 - .05, 1.02, sg * (lt / 2 + .03), hm, false); lev.rotation.x = 0;
+            P(.018, .03, .02, lw - .07, 1.02, sg * (lt / 2 + .016), hm, false); P(.035, .09, .008, lw - .07, .9, z0, hm, false); });
+          [.25, lh - .25].forEach(y => P(.012, .1, lt + .008, .006, y, 0, MAT('metal', '#8f8a80'), false));
+          if (g.intrare) [1, -1].forEach(sg => { const o = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, .01, 12), MAT('chrome', '#bdbdbd')); o.rotation.x = Math.PI / 2; o.position.set(lw / 2, 1.55, sg * (lt / 2 + .004)); pivot.add(o); });
+          const closed = -Math.atan2(cdz, cdx), openDir = Math.atan2(odz, odx), sweep = -(openDir - Math.atan2(cdz, cdx));
+          // unghiul de deschidere: de la direcția închisă spre partea de deschidere, cu cel mai scurt sens
+          const dAng = Math.atan2(Math.sin(sweep), Math.cos(sweep)), maxOpen = Math.sign(dAng) * Math.PI * .48;
+          pivot.rotation.y = closed + (doorsOpen ? maxOpen : 0); doorLeaves.push({ pivot, closed, maxOpen, open: doorsOpen ? 1 : 0, target: doorsOpen ? 1 : 0 });
+          pivot.traverse(o => { if (o.isMesh) o.userData.door = doorLeaves.length - 1; });
+          // pervazuri (ancadramente) pe ambele fețe ale golului
+          [1, -1].forEach(sg => { const k = th / 2 + .008, ex = ax + nx * sg * k, ez = az + nz * sg * k;
+            [g.la - .035, g.la + g.l + .035].forEach(sv => box(.07, dh + .07, .016, fm, ex + ux * sv, (dh + .07) / 2, ez + uz * sv, rot, walls).castShadow = false);
+            box(g.l + .14, .07, .016, fm, ex + ux * m, dh + .035, ez + uz * m, rot, walls).castShadow = false; });
+          if (g.intrare) box(g.l, .02, th + .02, MAT('metal', '#7b766e'), ax + ux * m, .01, az + uz * m, rot, walls); }
         else { const sl = g.sill != null ? g.sill : .9, top = Math.min(H - .05, sl + (g.h || 1.3)), wh = top - sl, cy = (sl + top) / 2, fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat;
           seg(g.la, g.la + g.l, 0, sl); seg(g.la, g.la + g.l, top, H); const m = g.la + g.l / 2; box(g.l, wh, .02, glass, ax + ux * m, cy, az + uz * m, rot, walls).castShadow = false;
           box(g.l, .05, th + .04, fm, ax + ux * m, sl, az + uz * m, rot, walls); box(g.l, .05, th + .02, fm, ax + ux * m, top, az + uz * m, rot, walls); box(.04, wh, th + .02, fm, ax + ux * m, cy, az + uz * m, rot, walls);
@@ -449,14 +465,19 @@ function model(it){
   const pd = e => { drag = true; lx = e.clientX; ly = e.clientY; moved = 0; canvas.setPointerCapture(e.pointerId); };
   const pmv = e => { if (!drag) return; const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
     if (mode === 'walk'){ yaw -= dx * .0045; pitch = Math.max(-1.2, Math.min(1.1, pitch - dy * .0035)); } else { orbit.th -= dx * .006; orbit.ph = Math.max(.12, Math.min(1.45, orbit.ph - dy * .005)); } };
-  const pu = e => { drag = false; if (moved < 6 && onPick){ const r = canvas.getBoundingClientRect(); ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
-    const hit = ray.intersectObjects(pickables, true)[0]; onPick(hit ? hit.object.userData.item.userData.pid : null); } };
+  const pu = e => { drag = false; if (moved >= 6) return; const r = canvas.getBoundingClientRect(); ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
+    // clic pe o ușă: se deschide sau se închide (înaintea mobilierului, ca într-un tur real)
+    const dh = ray.intersectObjects(doorLeaves.map(d => d.pivot), true)[0], fh = onPick ? ray.intersectObjects(pickables, true)[0] : null;
+    if (dh && (!fh || dh.distance <= fh.distance)){ const d = doorLeaves[dh.object.userData.door]; if (d) d.target = d.target > .5 ? 0 : 1; return; }
+    if (onPick) onPick(fh ? fh.object.userData.item.userData.pid : null); };
   const wh = e => { if (mode === 'house'){ orbit.r = Math.max(4, Math.min(40, orbit.r + e.deltaY * .01)); e.preventDefault(); } };
   canvas.addEventListener('pointerdown', pd); canvas.addEventListener('pointermove', pmv); canvas.addEventListener('pointerup', pu); canvas.addEventListener('wheel', wh, { passive: false });
   let raf = 0, last = performance.now(), alive = true;
   function resize(){ const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1; R.setSize(w, h, false); if (composer) composer.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix(); }
   const ro = new ResizeObserver(resize); ro.observe(canvas);
   (function loop(){ if (!alive) return; raf = requestAnimationFrame(loop); const now = performance.now(), dt = Math.min(.05, (now - last) / 1000); last = now;
+    for (const d of doorLeaves) if (d.open !== d.target){ d.open = d.target > d.open ? Math.min(d.target, d.open + dt * 1.4) : Math.max(d.target, d.open - dt * 1.4);
+      const e = d.open * d.open * (3 - 2 * d.open); d.pivot.rotation.y = d.closed + d.maxOpen * e; }
     if (mode === 'walk'){ let f = 0, s = 0; if (keys.w || keys.arrowup) f += 1; if (keys.s || keys.arrowdown) f -= 1; if (keys.a || keys.arrowleft) s -= 1; if (keys.d || keys.arrowright) s += 1; f = Math.max(-1, Math.min(1, f + joy.f)); s = Math.max(-1, Math.min(1, s + joy.s));
       if (f || s){ const sp = 1.7 * dt, fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw); const [x, z] = collide(player.x + (fx * f + rx * s) * sp, player.z + (fz * f + rz * s) * sp); player.x = x; player.z = z; }
       cam.position.set(player.x, EYE, player.z); cam.rotation.order = 'YXZ'; cam.rotation.set(pitch, yaw, 0);
@@ -506,6 +527,7 @@ function model(it){
 
   return {
     setState(p, items){ plan = p; buildHouse(p); buildFurniture(items); },
+    setDoors(open){ doorsOpen = !!open; for (const d of doorLeaves){ d.target = d.open = doorsOpen ? 1 : 0; d.pivot.rotation.y = d.closed + (doorsOpen ? d.maxOpen : 0); } },
     setMode, goRoom, getMode: () => mode, setLighting, capture, renderView, renderPanorama, exportScene,
     setQuality(q){ quality = q === 'high' ? 'high' : 'normal'; if (quality === 'high' && !composer){ try { setupComposer(); } catch (e){ quality = 'normal'; composer = null; } } return quality; },
     setMove(forward, strafe){ joy.f = Number.isFinite(forward) ? Math.max(-1, Math.min(1, forward)) : 0; joy.s = Number.isFinite(strafe) ? Math.max(-1, Math.min(1, strafe)) : 0; },

@@ -17,7 +17,7 @@ import MaterialPicker from './MaterialPicker';
 import { downloadSchedule } from './FinishSchedule';
 import { finishSchedule } from '@/core/finish-schedule';
 import { materialOf } from '@/core/finishes';
-import { doorIssues } from '@/core/doors';
+import { doorIssues, doorSwing } from '@/core/doors';
 import { suggestTechPoints, placeTechPoint, type TechKind } from '@/core/technical';
 import { RoomLookPanel, WallLookPanel, OpeningLookPanel, ItemLookPanel } from './AppearanceControls';
 import { finishesOf, budgetOf, roomGeometry, computeBudget } from '@/core/boq';
@@ -271,6 +271,12 @@ export default function Editor({ id }: { id: string }){
             </div>
             <OpeningLookPanel op={selOp} snap={snap} num={num} onPatch={patch => mutate(s => { Object.assign(s.floor.walls.find(w => w.id === (sel as any).wallId)!.openings.find(o => o.id === selOp.id)!, patch); })}
               onFrame={hex => look(a => { a.openings = setFinish(a.openings, selOp.id, { color: hex }); })} />
+            {selOp.kind === 'door' && (() => { const wi = snap.floor.walls.findIndex(w => w.id === (sel as any).wallId), oi = snap.floor.walls[wi]?.openings.findIndex(o => o.id === selOp.id) ?? -1;
+              if (wi < 0 || oi < 0) return null; const sw = doorSwing(snap.floor, wi, oi), patchOp = (p: object) => mutate(s => { Object.assign(s.floor.walls[wi]!.openings[oi]!, p); });
+              return <div className="grid2">
+                <button className="btn" onClick={() => patchOp({ hinge: sw.hinge === 'start' ? 'end' : 'start', swing: sw.swing })}>{t('door.flipHinge')}</button>
+                <button className="btn" onClick={() => patchOp({ swing: sw.swing === 1 ? -1 : 1, hinge: sw.hinge })}>{t('door.flipSwing')}</button>
+                <small className="prov" style={{ gridColumn: '1/-1' }}>{sw.auto ? t('door.swingAuto') : t('door.swingSet')}</small></div>; })()}
             {selOp.kind === 'door' && mc && <DoorPanel op={selOp} snap={house!} mc={mc} cur={cur} onChange={(p: { product?: string | null; handle?: string | null }) => mutate(s => { const cur0 = s.doors?.[selOp.id] ?? {}, next = { ...cur0, ...p };
               const clean = { ...(next.product ? { product: next.product } : {}), ...(next.handle ? { handle: next.handle } : {}) }; s.doors = { ...(s.doors || {}) }; if (Object.keys(clean).length) s.doors[selOp.id] = clean; else delete s.doors[selOp.id]; })} />}
             <button className="btn danger" onClick={del}>{t('editor.deleteOpening')}</button>
