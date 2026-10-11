@@ -1,6 +1,7 @@
 'use client';
 // Pagină de tipărire (A4 landscape → „Salvează ca PDF”): plan la scară reală, tabel camere, listă de cumpărături și buget.
 import { finishSchedule } from '@/core/finish-schedule';
+import { settingOut, type AxisPlan } from '@/core/setting-out';
 import { ScheduleTable } from './FinishSchedule';
 import { CeilingSheet, FloorSheet, ElevationSheet } from './Drawings';
 import { wallElevations } from '@/core/drawings';
@@ -88,7 +89,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
   if (err) return <main className="print-page"><p>{t('print.loadError')}</p></main>;
   if (!data || !view) return <main className="print-page">{canvas}<p>{t('print.loading')}</p></main>;
 
-  const { p, catalog, mc } = data, snap = p.draft, budget = view.budget, finishRows = finishSchedule(snap, catalog, mc);
+  const { p, catalog, mc } = data, snap = p.draft, budget = view.budget, finishRows = finishSchedule(snap, catalog, mc), tilePlans = settingOut(snap, catalog, mc);
   // câte o vedere pe nivel: planul, camerele și culorile se desenează pe nivelul lor
   const views = floors(snap).map((_, i) => levelView(snap, i)), multi = views.length > 1, allRooms = views.flatMap(v => v.floor.rooms);
   const levelName = (i: number) => i === 0 ? t('level.ground') : views[i]!.floor.name || t('level.n', { n: i });
@@ -180,6 +181,13 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
     {allRooms.map(r => { const lv = levelOf.get(r.id) ?? 0, v = views[lv]!; return (<section key={'el' + r.id} className="print-sec print-break" data-testid={`elev-${r.id}`}>
       <h2>{t('draw.elevations', { room: r.name })} <small>1:50 · {t('draw.elevNote')}</small></h2>
       <ElevationSheet elevs={wallElevations(v, mc, catalog, v.floor, r)} t={t} units={units} locale={locale} /></section>); })}
+
+    {tilePlans.length > 0 && <section className="print-sec print-break" data-testid="setting-out"><h2>{t('so.title')}</h2><p className="muted">{t('so.intro')}</p>
+      <table className="so-table"><thead><tr><th>{t('so.col.where')}</th><th>{t('so.col.tile')}</th><th>{t('so.col.size')}</th><th>{t('so.col.across')}</th><th>{t('so.col.along')}</th><th>{t('so.col.tiles')}</th></tr></thead>
+        <tbody>{tilePlans.map((x, k) => { const ax = (a: AxisPlan, vertical: boolean) => <>{t(`so.start.${a.start}${vertical && a.start === 'edge' ? 'Floor' : ''}`)}<small>{a.cuts.length ? t('so.cuts', { list: [...new Set(a.cuts.map(c => Math.round(c * 1000) / 10))].join(' / ') }) : t('so.noCuts')}{a.sliver ? ' · ' + t('so.sliver') : ''}</small></>;
+          return <tr key={k} className={x.sliver ? 'warn' : ''}><td>{x.room}<small>{t(`so.surface.${x.surface}`)}</small></td><td>{x.material}<small>{x.tileCm[0]}×{x.tileCm[1]} cm · {t('so.grout', { mm: x.groutMm })}</small></td>
+            <td>{formatLength(x.widthM, units, locale)} × {formatLength(x.heightM, units, locale)}</td><td>{ax(x.across, false)}</td><td>{ax(x.along, x.surface !== 'floor')}</td><td><b>{x.tiles}</b><small>{t('so.tilesSub', { full: x.across.full * x.along.full })}</small></td></tr>; })}</tbody></table>
+      <p className="muted small">{t('so.note')}</p></section>}
 
     <section className="print-sec print-break" data-testid="finish-schedule"><h2>{t('sched.title')}</h2><p className="muted">{t('sched.intro')}</p>
       <ScheduleTable rows={finishRows} t={t} cur={cur} locale={locale} /></section>

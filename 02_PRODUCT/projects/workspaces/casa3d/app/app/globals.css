@@ -444,3 +444,5 @@ input[type=file]{font-size:12px;color:var(--lead)} input[type=file]::file-select
 .handover .small{font-size:12px} .ho-care{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px 24px;margin:0} .ho-care dt{font-weight:600} .ho-care dd{margin:2px 0 0}
 .ho-pv{break-before:page} .ho-lines div{border-bottom:1px solid var(--ink);min-height:26px;padding-top:6px} .ho-sign{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px} .ho-sign div{border-top:1px solid var(--ink);padding-top:6px;font-size:12px}
 @media (max-width:700px){ .handover .ho-table{font-size:12px} .handover .ho-table th:nth-child(3),.handover .ho-table td:nth-child(3){display:none} }
+.so-table{width:100%;border-collapse:collapse;font-size:12.5px} .so-table th{text-align:left;font:500 10px var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--lead);border-bottom:1px solid var(--ink);padding:5px 8px 5px 0}
+.so-table td{border-bottom:1px solid var(--rule);padding:6px 8px 6px 0;vertical-align:top} .so-table small{display:block;color:var(--lead);font-size:11px} .so-table tr.warn td small{color:var(--err)}

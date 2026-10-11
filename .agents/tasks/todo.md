@@ -12,7 +12,7 @@ Plan (each step: tests first for logic, tsc + vitest + build + phone/desktop che
 - [x] 3. Decision deadlines: decide-by = needed-on-site date − lead time (per-category defaults, editable).
 - [x] 4. Handover pack PDF: installed products, supplier/code/order ref, warranty defaults per category, care notes, PV with open snags.
 - [x] 5. Trade checks (grout consumption still missing: no grout products in the catalog): kitchen triangle/aisle/dishwasher, bathroom clearances, bath electrical zones (warning), I5 ventilation; adhesive/grout/paint consumption.
-- [ ] 6. Tile setting-out: start point, slivers < 1/3 tile, cut list, grid on sheet, real tile count.
+- [x] 6. Tile setting-out: start point, slivers < 1/3 tile, cut list, grid on sheet, real tile count.
 - [ ] 7. Title block + numbered sheet set + revision table.
 - [ ] 8. Site survey mode: sides + diagonals, closure/squareness check, verified dimensions + drawing freeze.
 - [ ] 9. Time tracking per project vs design fee.
