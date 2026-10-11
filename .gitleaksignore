@@ -1,0 +1,3 @@
+# Excepție gitleaks pe amprentă exactă, aprobată de proprietar (2026-10-11): alarmă falsă generic-api-key
+# pe un rând de tabel din documentația loganalyzer-dfir (nume de reguli de detecție), nu o cheie.
+667f76d7744ed4c9b7697d25b2ef16f02b2b7935:02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/REVIEW_2026-10-11_SENIOR_DETECTION_AND_PERFORMANCE.md:generic-api-key:393
