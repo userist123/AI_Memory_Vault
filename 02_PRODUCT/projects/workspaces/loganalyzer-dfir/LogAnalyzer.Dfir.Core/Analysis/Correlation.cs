@@ -104,13 +104,6 @@ public static class Correlation
     /// <summary>A Defender 5007 "new value" that weakens protection: an exclusion, a protection-disabling switch (explicit list) set to 1, Tamper Protection off, cloud reporting off.</summary>
     private static bool WeakensDefender(string newValue) => newValue.Length > 0 && DefenderWeakeningValue.IsMatch(newValue);
 
-    private static readonly System.Text.RegularExpressions.Regex OwnCollectionFolder = new(
-        @"\\(?:ladfir_remote_[0-9a-f]{8}(?:-?[0-9a-f]{4}){3}-?[0-9a-f]{12}\\|temp\\loganalyzer\\)",
-        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
-
-    /// <summary>True for artifacts of LogAnalyzer's own collection (the remote-collection package folder in %TEMP%, the app's temp work folders).</summary>
-    public static bool IsOwnCollectionArtifact(string path) => OwnCollectionFolder.IsMatch(path.Replace('/', '\\'));
-
     private static readonly System.Text.RegularExpressions.Regex CommandExecutableRx = new(
         @"^\s*(?:""(?<q>[^""]*)""|(?<p>.+?\.(?:exe|sys|dll)(?=\s|$)|\S+))",
         System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
@@ -403,20 +396,9 @@ public static class Correlation
                     SupportingEvidence = [Ref(e, "Prefetch")],
                     AlternativeExplanations = ["Instalator sau aplicație legitimă instalată per utilizator."],
                 });
-            var allScripts = refsFiles.Where(r => ScriptExtensions.Any(x => r.EndsWith(x, StringComparison.OrdinalIgnoreCase)) && IsUserWritable(r)).ToList();
-            var scripts = allScripts.Where(r => !IsOwnCollectionArtifact(r)).ToList();
-            // LogAnalyzer's own remote-collection script: tool activity, Info at most, never a correlation anchor (strong findings are High+).
-            if (allScripts.Count > scripts.Count && scripts.Count == 0 && Lolbins.Contains(e.Process))
-                f.Add(new Finding
-                {
-                    FindingId = Id(), RuleId = "EXEC-SCRIPT-VIA-LOLBIN", Title = "activitatea uneltei LogAnalyzer (colectarea în curs)",
-                    Severity = Severity.Info, Category = "Execution", Classification = Classification.Direct, Confidence = Confidence.High,
-                    LastSeenUtc = e.Time.Utc, Process = e.Process, File = string.Join("; ", allScripts.Take(5)),
-                    Description = $"{e.Process} a lucrat cu scriptul de colectare al LogAnalyzer: {string.Join(", ", allScripts.Take(5))}. Este activitatea aplicației în timpul colectării, nu o constatare.",
-                    ClassificationReason = "Calea scriptului este folderul pachetului de colectare LogAnalyzer din %TEMP%.",
-                    SupportingEvidence = [Ref(e, "Prefetch ReferencedFiles")],
-                    AlternativeExplanations = ["Un script cu același nume de folder plasat de altcineva; verificați semnătura pachetului de colectare."],
-                });
+            // No exclusion by folder name: a script run from a user-writable folder is always reported, even when it looks like one of our own
+            // (the LADFIR_REMOTE_ folders seen on a developer PC come from the test suite, and any name can be imitated by an attacker).
+            var scripts = refsFiles.Where(r => ScriptExtensions.Any(x => r.EndsWith(x, StringComparison.OrdinalIgnoreCase)) && IsUserWritable(r)).ToList();
             if (scripts.Count > 0 && Lolbins.Contains(e.Process))
                 f.Add(new Finding
                 {
