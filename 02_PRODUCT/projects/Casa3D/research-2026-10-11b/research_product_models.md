@@ -1,3 +1,23 @@
+---
+id: "740998bd-d812-45fb-a936-e5c5ad03fa75"
+type: resource
+lifecycle: REVIEW
+category: digital_twin
+tags: [casa3d, research, rendering]
+created: "2026-10-11"
+updated: "2026-10-11"
+provenance:
+  source_type: web
+  source_ref: "Web research by a Claude subagent on 2026-10-11; every source URL is cited inline in the body"
+  source_date: "2026-10-11"
+  redaction: not_applicable
+  provenance_status: complete
+confidence: medium
+verification: unverified
+relations:
+  - type: related_to
+    target_id: "f09fc736-92ae-472e-9f6b-395293bfbed8"
+---
 # Casa3D: product-accurate 3D models (research, 2026-10-11)
 
 Status: web research, `DOCUMENT_VERIFIED` only where a URL is cited. This is not legal advice. Every licence row must be re-checked on the live page before anything ships.
