@@ -43,7 +43,7 @@ namespace LogAnalyzer.UI.ViewModels
         }
 
         public string Title => _register.Title;
-        public string Columns => string.Join(" | ", _register.Columns);
+        public string Columns => string.Join(" · ", System.Linq.Enumerable.Select(_register.Columns, LogAnalyzer.UI.Views.ColumnLabels.For));
         /// <summary>A shown-always line under the title (for the users register: who may edit it, and that the application cannot enforce it yet).</summary>
         public virtual string Notice => "";
         /// <summary>Shown when the signed-in user may read but not change this register (only the global administrator edits; decision 33).</summary>

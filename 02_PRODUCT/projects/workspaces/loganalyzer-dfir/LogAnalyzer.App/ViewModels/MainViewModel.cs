@@ -82,7 +82,9 @@ namespace LogAnalyzer.UI.ViewModels
         // Operating mode: decided once at startup from the station's connectivity (or forced), see App.OnStartup.
         [ObservableProperty] private bool _isAirGappedMode = AppModeContext.IsAirGapped;
         [ObservableProperty] private bool _isNetworkMode = !AppModeContext.IsAirGapped;
-        [ObservableProperty] private string _systemModeBadgeText = AppModeContext.IsAirGapped ? "🛡️ AIR-GAPPED STANDALONE" : "🌐 NETWORK SOC";
+        [ObservableProperty] private string _systemModeBadgeText = AppModeContext.IsAirGapped ? "Mod: izolat (fără rețea)" : "Mod: conectat";
+        /// <summary>Header subtitle: the station this application runs on.</summary>
+        public string StationSubtitle => $"Analiză de jurnale și probe · stația {Environment.MachineName}";
         [ObservableProperty] private string _securityShieldStatusText = AppModeContext.IsAirGapped
             ? "Mod AirGapped: rețeaua este blocată de aplicație; izolarea fizică a stației nu este verificată"
             : "Mod Network: serviciile online sunt permise; aplicația nu evaluează siguranța stației";
@@ -632,7 +634,7 @@ namespace LogAnalyzer.UI.ViewModels
             InitializeSigmaRules();
             PopulateMitreMatrix();
 
-            OperatorName = $"{LogAnalyzer.Dfir.Auth.OperatorIdentity.Who.ToUpper()} @ {Environment.MachineName.ToUpper()}";   // the signed-in identity (decision 33)
+            OperatorName = LogAnalyzer.Dfir.Auth.OperatorIdentity.Who;   // the signed-in identity (decision 33)
             // Detail windows look for related events among the events loaded in this session.
             LogAnalyzer.Core.Services.Details.DetailSheetBuilder.EventCorpus = () => Events.ToList();
             if (IsNetworkMode)

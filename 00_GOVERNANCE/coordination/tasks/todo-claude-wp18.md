@@ -62,6 +62,10 @@ VERIFICATION (S1, local, Windows):
 - Windows Defender flags `LogAnalyzer.Dfir.Tests.dll` as `Ransom:Win32/Clop.SIB!MTB` on every rebuild (test data contains the literal
   `vssadmin delete shadows /all /quiet` lines of WP11 tests). False positive on the test assembly; owner restored the file from quarantine.
 - `Sign-EditionPolicy.ps1` change: parsed OK with Windows PowerShell; end-to-end run UNVERIFIED here (needs pwsh 7, not installed).
+- 2026-10-11 owner run on the real PC found 4 defects, all fixed with regression tests: first-run sign-in crash (control read on a
+  background thread, pre-existing WP-AUTH), investigation crash (IPEndPoint serialized to JSON), whole Security log a gap (XPath > 22 OR
+  conditions), plus redesign request. Redesign 'Registru': light paper theme, ink-blue accent, no glow/emoji/marketing badges, readable
+  fonts, Romanian sidebar and table headers (ColumnLabels), intent cards on Home. Owner GPO backups (3) re-validated: same counts as 2026-10-05.
 NEXT: CI on PR #266; owner review and merge; real-person usability run (S6). Earlier plan was: S2 Home + navigation per role → S3 language levels/terms/glossary → S4 guided flows → S5 reports → S6 accessibility → S7 docs.
 BLOCKERS: none.
 KEY FILES: see DONE; prompt §2 reading list.

@@ -67,7 +67,7 @@ public sealed class Wp18AccessibilityTests
     }
 
     /// <summary>Runs <paramref name="body"/> on an STA thread with the application's theme loaded, as the real application has it.</summary>
-    private static T OnSta<T>(Func<T> body)
+    internal static T OnSta<T>(Func<T> body)
     {
         T result = default!; Exception? error = null;
         var t = new Thread(() =>

@@ -3,9 +3,9 @@
 
     <!-- High-Contrast Dark TextBox -->
     <Style TargetType="TextBox">
-        <Setter Property="Background" Value="{StaticResource Surface1Brush}"/>
+        <Setter Property="Background" Value="{StaticResource Surface2Brush}"/>
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource StrongBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="8,4"/>
         <Setter Property="CaretBrush" Value="{StaticResource PrimaryAccentBrush}"/>
@@ -18,7 +18,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
                     <Border x:Name="border"
-                            Background="{StaticResource Surface1Brush}"
+                            Background="{StaticResource Surface2Brush}"
                             BorderBrush="{StaticResource BorderBrush}"
                             BorderThickness="1"
                             CornerRadius="6"
@@ -38,7 +38,7 @@
                             <Setter TargetName="border" Property="Background" Value="{StaticResource Surface2Brush}"/>
                         </Trigger>
                         <Trigger Property="IsReadOnly" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="{StaticResource CanvasBrush}"/>
+                            <Setter TargetName="border" Property="Background" Value="{StaticResource Surface1Brush}"/>
                             <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
                             <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
                         </Trigger>
@@ -51,7 +51,7 @@
     <!-- CheckBox with Crisp Vector Box -->
     <Style TargetType="CheckBox">
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-        <Setter Property="Background" Value="{StaticResource Surface1Brush}"/>
+        <Setter Property="Background" Value="{StaticResource Surface2Brush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="FontFamily" Value="{StaticResource UiFontFamily}"/>
@@ -69,7 +69,7 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Border x:Name="CheckBorder" Grid.Column="0" Width="16" Height="16" CornerRadius="4"
-                                Background="{StaticResource Surface1Brush}"
+                                Background="{StaticResource Surface2Brush}"
                                 BorderBrush="{StaticResource BorderBrush}"
                                 BorderThickness="1"
                                 HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -106,10 +106,10 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Thumb}">
-                    <Border x:Name="thumbBorder" Background="#1E293B" CornerRadius="3" Margin="2"/>
+                    <Border x:Name="thumbBorder" Background="{StaticResource StrongBorderBrush}" CornerRadius="3" Margin="2"/>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="true">
-                            <Setter TargetName="thumbBorder" Property="Background" Value="#334155"/>
+                            <Setter TargetName="thumbBorder" Property="Background" Value="{StaticResource TextMutedBrush}"/>
                         </Trigger>
                         <Trigger Property="IsDragging" Value="true">
                             <Setter TargetName="thumbBorder" Property="Background" Value="{StaticResource PrimaryAccentBrush}"/>
@@ -205,9 +205,9 @@
 
     <!-- Modern Dark ComboBox -->
     <Style TargetType="ComboBox">
-        <Setter Property="Background" Value="{StaticResource Surface1Brush}"/>
+        <Setter Property="Background" Value="{StaticResource Surface2Brush}"/>
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource StrongBorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="10,5"/>
         <Setter Property="MinHeight" Value="28"/>
@@ -218,7 +218,7 @@
                 <ControlTemplate TargetType="ComboBox">
                     <Grid>
                         <ToggleButton x:Name="ToggleButton"
-                                      Background="{StaticResource Surface1Brush}"
+                                      Background="{StaticResource Surface2Brush}"
                                       BorderBrush="{StaticResource BorderBrush}"
                                       BorderThickness="1"
                                       Focusable="false"
@@ -227,7 +227,7 @@
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
                                     <Border x:Name="border"
-                                            Background="{StaticResource Surface1Brush}"
+                                            Background="{StaticResource Surface2Brush}"
                                             BorderBrush="{StaticResource BorderBrush}"
                                             BorderThickness="1"
                                             CornerRadius="6">

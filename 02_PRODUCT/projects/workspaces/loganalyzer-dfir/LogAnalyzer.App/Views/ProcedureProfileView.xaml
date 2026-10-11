@@ -72,7 +72,7 @@
                     <DockPanel Margin="8">
                         <TextBlock DockPanel.Dock="Top" Text="{Binding Section}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         <TextBlock DockPanel.Dock="Top" Text="{Binding Hint}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,2,0,8"/>
-                        <DataGrid AutomationProperties.Name="{Binding Title}" ItemsSource="{Binding View}" AutoGenerateColumns="True" CanUserAddRows="True" CanUserDeleteRows="True"
+                        <DataGrid AutomationProperties.Name="{Binding Title}" ItemsSource="{Binding View}" AutoGenerateColumns="True" AutoGeneratingColumn="Grid_AutoGeneratingColumn" CanUserAddRows="True" CanUserDeleteRows="True"
                                   HeadersVisibility="Column" SelectionUnit="CellOrRowHeader" ClipboardCopyMode="IncludeHeader"/>
                     </DockPanel>
                 </DataTemplate>
