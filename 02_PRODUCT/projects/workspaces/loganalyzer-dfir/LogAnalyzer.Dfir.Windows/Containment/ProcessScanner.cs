@@ -396,7 +396,7 @@ public static class PersistenceSearch
         }
         catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
         {
-            gaps.Add(new EvidenceGap("Activități planificate", EvidenceStatus.Partial, ProcessScanner.Reason(ex), "Task-urile care pornesc programul pot lipsi din rezultat", "schtasks /query /xml (administrator)", "Cu drepturi de administrator"));
+            gaps.Add(new EvidenceGap("Activități planificate", EvidenceStatus.Partial, ProcessScanner.Reason(ex), "Activitățile planificate care pornesc programul pot lipsi din rezultat", "schtasks /query /xml (administrator)", "Cu drepturi de administrator"));
         }
 
         foreach (var startup in new[] { Environment.GetFolderPath(Environment.SpecialFolder.Startup), Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup) })

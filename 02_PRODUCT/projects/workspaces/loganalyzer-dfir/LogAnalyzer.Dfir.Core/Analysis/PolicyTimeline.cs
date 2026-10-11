@@ -160,7 +160,7 @@ public sealed class PolicyTimelineResult
         Confidence = g.Evidence.Count > 0 ? Confidence.Medium : Confidence.Low,
         FirstSeenUtc = g.WindowStart, LastSeenUtc = g.WindowEnd,
         Description = g.Summary,
-        ClassificationReason = "Politica așteptată (configured) comparată cu dovezile de aplicare, de stare efectivă și de evenimente; fiecare nivel e OBSERVED / NOT_OBSERVED / UNKNOWN, iar un nivel UNKNOWN nu produce decalaj.",
+        ClassificationReason = "Politica așteptată (nivelul configurat) comparată cu probele de aplicare, de stare efectivă și de evenimente; fiecare nivel este observat, neobservat sau nedeterminat, iar un nivel nedeterminat nu produce decalaj.",
         SupportingEvidence = g.Evidence.Take(30).ToList(),
         MissingEvidence = g.MissingEvidence,
         AlternativeExplanations =
@@ -286,7 +286,7 @@ public static class PolicyTimeline
         var levels = options.Expected.Select(s => Levels(s, timed, apps, security, options)).ToList();
         var gaps = levels.Select(l => Gap(l, changes, apps, security, options)).Where(g => g is not null).Select(g => g!).ToList();
         string note = options.Expected.Count > 0 ? "" :
-            "Politica așteptată: nedefinit (profilul de proceduri nu leagă nicio politică sau fișierul nu a putut fi citit); nivelurile configured / applied / enforced / observed nu se evaluează, iar asta nu înseamnă conform."
+            "Politica așteptată: nedefinită (profilul de proceduri nu leagă nicio politică sau fișierul nu a putut fi citit); nivelurile configurat / aplicat / impus / observat nu se evaluează, iar asta nu înseamnă conform."
             + (options.ExpectedIssues.Count > 0 ? " Motiv: " + string.Join("; ", options.ExpectedIssues) : "");
         return new PolicyTimelineResult
         {

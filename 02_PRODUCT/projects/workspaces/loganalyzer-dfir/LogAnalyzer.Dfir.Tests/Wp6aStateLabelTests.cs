@@ -24,11 +24,11 @@ public class Wp6aStateLabelTests
     [InlineData(Classification.Correlated, "Asociată (în timp sau cale)")]
     [InlineData(Classification.Candidate, "Indiciu – de confirmat")]
     [InlineData(Classification.Unproven, "Nedemonstrată")]
-    [InlineData(Classification.BenignKnown, "Observată direct")]
+    [InlineData(Classification.BenignKnown, "Cunoscută, fără risc")]
     public void A_classification_is_shown_through_the_same_mapping_as_the_finding_state(Classification c, string label)
     {
         Assert.Equal(label, StateLabels.ForClassification(c));
-        if (c != Classification.Candidate) Assert.Equal(StateLabels.Romanian(FindingContract.StatusFor(c)), StateLabels.ForClassification(c));   // a candidate is shown as "indiciu – de confirmat", not as the state "dedusă"
+        if (c is not (Classification.Candidate or Classification.BenignKnown)) Assert.Equal(StateLabels.Romanian(FindingContract.StatusFor(c)), StateLabels.ForClassification(c));   // a candidate is shown as "indiciu – de confirmat", not as the state "dedusă"
     }
 
     [Fact]

@@ -49,6 +49,11 @@ public static class FindingContract
         _ => parserId,
     };
 
+    /// <summary>"nu poate" for a singular label, "nu pot" for the plural ones ("Jurnalele …", "Definițiile …", "Dispozitivele …").</summary>
+    public static string CannotProveVerb(string label) =>
+        label.StartsWith("Jurnalele ", StringComparison.Ordinal) || label.StartsWith("Definițiile ", StringComparison.Ordinal) || label.StartsWith("Dispozitivele ", StringComparison.Ordinal)
+            ? "nu pot" : "nu poate";
+
     public static string KeyBase(string ruleId) => "finding." + ruleId.ToLowerInvariant().Replace('-', '_');
 
     public static IEnumerable<Finding> Enrich(IEnumerable<Finding> findings, FindingContractContext? ctx = null)
@@ -95,10 +100,10 @@ public static class FindingContract
         var parsers = refs.SelectMany(r => ctx.ParsersOf(r.EvidenceId)).Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal).ToList();
         foreach (var p in parsers)
             if (ParserCapabilities.For(p) is { } cap)
-                foreach (var c in cap.CannotProve) lim.Add($"{ParserLabel(p)} nu poate dovedi {(c.Length > 0 ? char.ToLowerInvariant(c[0]) + c[1..] : c)}");
+                foreach (var c in cap.CannotProve) lim.Add($"{ParserLabel(p)} {CannotProveVerb(ParserLabel(p))} dovedi {(c.Length > 0 ? char.ToLowerInvariant(c[0]) + c[1..] : c)}");
         if (rule is not null && rule.ContradictionCheck is null)
-            lim.Add("Dovezi contradictorii: regula nu le evaluează; lipsa lor în listă nu înseamnă că nu există.");
-        lim.Add("Verificare independentă: neefectuată (NOT_ASSESSED).");
+            lim.Add("Probe contradictorii: regula nu le evaluează; lipsa lor în listă nu înseamnă că nu există.");
+        lim.Add("Verificare independentă: neefectuată.");
         foreach (var l in lim.Where(l => l.Length > 0))
             if (!f.Limitations.Contains(l)) f.Limitations.Add(l);
 
@@ -182,7 +187,12 @@ public static class StateLabels
     /// The label of a classification, through the same mapping the finding contract uses (<see cref="FindingContract.StatusFor"/>) and the same table
     /// as <see cref="Romanian"/>. The grids, the graph view and the finding card use this instead of any wording of their own.
     /// </summary>
-    public static string ForClassification(Classification c) => c == Classification.Candidate ? "Indiciu – de confirmat" : Romanian(FindingContract.StatusFor(c));
+    public static string ForClassification(Classification c) => c switch
+    {
+        Classification.Candidate => "Indiciu – de confirmat",
+        Classification.BenignKnown => "Cunoscută, fără risc",
+        _ => Romanian(FindingContract.StatusFor(c)),
+    };
 
     /// <summary>One sentence on what a state means and does not mean, for tooltips and the finding card; so a state is never only a word or a colour.</summary>
     public static string Meaning(StandardState s) => MeaningTable[s];

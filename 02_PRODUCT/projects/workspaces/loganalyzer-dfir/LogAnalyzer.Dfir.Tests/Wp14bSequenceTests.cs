@@ -583,7 +583,7 @@ public class Wp14bContractTests
             Assert.Equal(SemanticType.Correlation, f.SemanticType);
             Assert.NotEmpty(f.Limitations); Assert.NotEmpty(f.AlternativeExplanations); Assert.NotEmpty(f.SupportingEvidence); Assert.NotEmpty(f.RelatedFindingIds);
             Assert.Empty(AntiOverclaim.Violations(f));
-            Assert.Contains(f.Limitations, l => l.Contains("NOT_ASSESSED"));
+            Assert.Contains(f.Limitations, l => l.StartsWith("Verificare independentă: neefectuată"));
             Assert.Equal(SequenceRules.Category, f.Category);
             Assert.NotNull(f.Sequence);
         }

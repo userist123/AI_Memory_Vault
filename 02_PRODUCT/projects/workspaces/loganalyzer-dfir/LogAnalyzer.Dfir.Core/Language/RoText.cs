@@ -22,10 +22,38 @@ public static class RoText
     public static string Count(long n, string singular, string plural)
     {
         if (n == 1) return "1 " + singular;
-        long mod = Math.Abs(n) % 100;
-        bool de = n != 0 && (mod == 0 || mod >= 20);
-        return Number(n) + (de ? " de " : " ") + plural;
+        return Number(n) + (NeedsDe(n) ? " de " : " ") + plural;
     }
+
+    /// <summary>True when the Romanian "de" is needed between the number and the noun: last two digits 20-99 or 00, number not zero.</summary>
+    public static bool NeedsDe(long n)
+    {
+        long mod = Math.Abs(n) % 100;
+        return n != 0 && (mod == 0 || mod >= 20);
+    }
+
+    /// <summary>Feminine noun at the start of a sentence: "o constatare" / "3 constatări" / "20 de constatări".</summary>
+    public static string CountFem(long n, string singular, string plural) => n == 1 ? "o " + singular : Count(n, singular, plural);
+
+    /// <summary>Masculine noun: "un fișier" / "3 fișiere".</summary>
+    public static string CountMasc(long n, string singular, string plural) => n == 1 ? "un " + singular : Count(n, singular, plural);
+
+    /// <summary>
+    /// A number standing for something already named, with its adjective in the right gender: "niciuna confirmată" / "una confirmată" /
+    /// "3 confirmate" (feminine) or "niciunul confirmat" / "unul confirmat" / "3 confirmați" (masculine, plural given by the caller).
+    /// </summary>
+    public static string Pronoun(long n, string singular, string plural, bool feminine = true) => n switch
+    {
+        0 => (feminine ? "niciuna " : "niciunul ") + singular,
+        1 => (feminine ? "una " : "unul ") + singular,
+        _ => Number(n) + (NeedsDe(n) ? " de " : " ") + plural,
+    };
+
+    /// <summary>"încă una de același fel" / "încă 4 de același fel" (the "de" of "de același fel" follows the number).</summary>
+    public static string MoreOfSameKind(long n) => n == 1 ? "încă una de același fel" : $"încă {Number(n)} de același fel";
+
+    /// <summary>First letter upper-case (Romanian culture).</summary>
+    public static string Capitalize(string s) => s.Length == 0 ? s : char.ToUpper(s[0], CultureInfo.GetCultureInfo("ro-RO")) + s[1..];
 
     /// <summary>"3 ori" / "70 de ori" / "o dată".</summary>
     public static string Times(long n) => n == 1 ? "o dată" : Count(n, "dată", "ori");
@@ -38,14 +66,14 @@ public static class RoText
         return Regex.Replace(s, @"(?<=[\p{Ll}\)\d]\.) +(\p{Ll})", m => " " + m.Groups[1].Value.ToUpper(CultureInfo.GetCultureInfo("ro-RO")));
     }
 
-    /// <summary>The common Windows error codes in Romanian; any other code is shown as "cod N" with the system's own message in brackets.</summary>
+    /// <summary>The common Windows error codes in Romanian ("cod 87: parametru incorect", no nested brackets); any other code is shown as "cod N" with the system's own message.</summary>
     public static string OsError(int code, string systemMessage = "") => code switch
     {
-        5 => "cod 5 (acces refuzat)",
-        87 => "cod 87 (parametru incorect)",
-        2 => "cod 2 (fișierul nu a fost găsit)",
-        32 => "cod 32 (fișierul este folosit de alt proces)",
-        _ => systemMessage.Length > 0 ? $"cod {code} (mesaj Windows: {systemMessage.TrimEnd('.', ' ')})" : $"cod {code}",
+        5 => "cod 5: acces refuzat",
+        87 => "cod 87: parametru incorect",
+        2 => "cod 2: fișierul nu a fost găsit",
+        32 => "cod 32: fișierul este folosit de alt proces",
+        _ => systemMessage.Length > 0 ? $"cod {code}: mesaj Windows, {systemMessage.TrimEnd('.', ' ')}" : $"cod {code}",
     };
 
 
@@ -78,6 +106,16 @@ public static class RoText
         t = NtPrefixInText.Replace(t, "");
         if (vols.Count == 0) return t;
         return t.TrimEnd() + (vols.Count == 1 ? $" (volumul {vols[0]})" : $" (volume: {string.Join(", ", vols)})");
+    }
+
+    /// <summary>
+    /// Like <see cref="CleanPathsInText"/> but the volume is dropped altogether: for titles and one-line summaries, where the volume
+    /// identifier is noise; the evidence line and the annex still show it.
+    /// </summary>
+    public static string StripVolumes(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text ?? "";
+        return NtPrefixInText.Replace(VolumeInText.Replace(text, ""), "");
     }
 
     /// <summary>"X (volumul …)" for text; the path alone when there is no volume.</summary>

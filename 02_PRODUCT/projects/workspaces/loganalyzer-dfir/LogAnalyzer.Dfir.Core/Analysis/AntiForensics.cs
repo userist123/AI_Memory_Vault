@@ -298,7 +298,7 @@ public static class AntiForensics
             if (hits.Count > 0)
                 Add("AF12", "Ștergerea unei activități planificate", "T1070.009", AntiForensicResult.Detected,
                     $"{hits.Count} ștergeri: " + string.Join("; ", hits.Take(15).Select(e => $"{e.Time.UtcIso} {F(e, "TaskName")} de {F(e, "SubjectUserName")}{F(e, "UserName")}")),
-                    hits.Select(e => Ref(e, "task șters")));
+                    hits.Select(e => Ref(e, "activitate planificată ștearsă")));
             else if (Has(TaskOps))
                 Add("AF12", "Ștergerea unei activități planificate", "T1070.009", AntiForensicResult.NotDetected, "TaskScheduler/Operational analizat: niciun eveniment 141.");
             else Add("AF12", "Ștergerea unei activități planificate", "T1070.009", AntiForensicResult.Undetermined,

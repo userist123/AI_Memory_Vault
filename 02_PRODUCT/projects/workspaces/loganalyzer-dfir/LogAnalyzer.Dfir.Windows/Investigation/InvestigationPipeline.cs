@@ -41,14 +41,14 @@ public sealed class InvestigationResult
     public ProcedureProfile? Procedure { get; set; }
     /// <summary>WP15b: policy change timeline, configured/applied/enforced/observed levels, control gaps and unreliable-time windows (Analysis/policy_timeline.json).</summary>
     public PolicyTimelineResult? PolicyTimeline { get; set; }
-    public string PolicyTimelineLine => PolicyTimeline is null ? "Cronologie politici: nedefinit (nu a fost calculată)."
+    public string PolicyTimelineLine => PolicyTimeline is null ? "Cronologie politici: nedefinită (nu a fost calculată)."
         : $"Cronologie politici: {LogAnalyzer.Dfir.Language.RoText.Count(PolicyTimeline.Changes.Count, "modificare", "modificări")} de politică, {LogAnalyzer.Dfir.Language.RoText.Count(PolicyTimeline.Applications.Count, "înregistrare", "înregistrări")} de aplicare GroupPolicy, {PolicyTimeline.Gaps.Count} decalaje de control, {PolicyTimeline.TimeWindows.Count} ferestre de oră nesigură."
-          + (PolicyTimeline.ExpectedNote.Length > 0 ? " Politica așteptată: nedefinit." : "");
+          + (PolicyTimeline.ExpectedNote.Length > 0 ? " Politica așteptată: nedefinită." : "");
     /// <summary>WP14a: SHA-256 of the copies of the media / users registers in the case ("" = register not defined, nothing copied).</summary>
     public string MediaRegisterSha256 { get; set; } = "";
     public string UsersRegisterSha256 { get; set; } = "";
     /// <summary>What the report says about the registers: each defined (with the SHA-256 of its copy) or "nedefinit" (never "conform").</summary>
-    public string RegisterLine { get; set; } = "Registre: nedefinit (nu au fost folosite).";
+    public string RegisterLine { get; set; } = "Registre: nedefinite (nu au fost folosite).";
     public string ProcedureProfileSha256 { get; set; } = "";
     /// <summary>What the report says about the profile: each section defined or "nedefinit" (never "conform"), and the SHA-256 of the copy in the case.</summary>
     public string ProcedureProfileLine => "Profil de proceduri: " + (Procedure is null ? "niciun profil (toate secțiunile nedefinite)" : LogAnalyzer.Dfir.Profile.ProfileOps.Describe(Procedure)
@@ -308,7 +308,7 @@ public sealed class InvestigationPipeline
             if (!pre.CanParse)
             {
                 r.Gaps.Add(new EvidenceGap(Path.GetFileName(live.StoredPath), EvidenceStatus.Failed, $"{pre.Code}: {pre.Detail}",
-                    "Constatările din starea live lipsesc", "O nouă fotografie a stării live", "Doar prin reachiziție"));
+                    "Constatările din starea live lipsesc", "Un nou instantaneu al stării live", "Doar prin reachiziție"));
                 ws.Audit(pre.Code == "EVIDENCE_MUTATED" ? "evidence.mutated" : "evidence.preflight_failed", $"{live.EvidenceId} {pre.Code} {pre.Detail}");
                 continue;
             }
@@ -440,7 +440,7 @@ public static class LiveStateAnalyzer
             yield return new Finding
             {
                 FindingId = Id(), RuleId = conns.Count > 0 ? "LIVE-UNSIGNED-USERPATH-NET" : "LIVE-UNSIGNED-USERPATH",
-                Title = $"Proces nesemnat din locație în care utilizatorii pot scrie{(conns.Count > 0 ? ", cu conexiuni în Internet" : "")}: {p.Name}",
+                Title = $"Proces nesemnat dintr-o locație în care utilizatorii pot scrie{(conns.Count > 0 ? ", cu conexiuni în Internet" : "")}: {p.Name}",
                 Severity = conns.Count > 0 ? Severity.High : Severity.Medium, Category = "Execution", Classification = Classification.Direct,
                 Confidence = conns.Count > 0 ? Confidence.High : Confidence.Medium, Process = p.Name, Pid = p.Pid, File = p.Path,
                 Ip = string.Join(", ", conns.Take(10)), FirstSeenUtc = snap.TakenUtc,
@@ -465,16 +465,16 @@ public static class LiveStateAnalyzer
         foreach (var t in snap.Tasks.Where(t => t.UserWritable))
             yield return new Finding
             {
-                FindingId = Id(), RuleId = "LIVE-TASK-USERPATH", Title = $"Activitate planificată care rulează din locație în care utilizatorii pot scrie: {Path.GetFileName(t.Path)}",
+                FindingId = Id(), RuleId = "LIVE-TASK-USERPATH", Title = $"Activitate planificată care rulează dintr-o locație în care utilizatorii pot scrie: {Path.GetFileName(t.Path)}",
                 Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1053.005",
                 File = t.Command, FirstSeenUtc = snap.TakenUtc, Description = $"{t.Path}: {t.Command}",
-                ClassificationReason = "Definiția curentă a taskului.",
+                ClassificationReason = "Definiția curentă a activității planificate.",
                 SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Tasks[{t.Path}]", "instantaneu al stării live")],
             };
         foreach (var a in snap.Autoruns.Where(a => a.UserWritable))
             yield return new Finding
             {
-                FindingId = Id(), RuleId = "LIVE-AUTORUN-USERPATH", Title = $"Pornire automată din locație în care utilizatorii pot scrie: {a.Name}",
+                FindingId = Id(), RuleId = "LIVE-AUTORUN-USERPATH", Title = $"Pornire automată dintr-o locație în care utilizatorii pot scrie: {a.Name}",
                 Severity = Severity.Medium, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1547.001",
                 File = a.Value, FirstSeenUtc = snap.TakenUtc, Description = $"{a.Location}\\{a.Name} = {a.Value}",
                 ClassificationReason = "Cheile Run curente.",

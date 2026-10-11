@@ -49,7 +49,7 @@ public static class InvestigationReportPdf
             page.Header().Column(h =>
             {
                 string title = $"Raport de investigație — {info.Name}" + (audience == LogAnalyzer.Dfir.Reporting.ReportAudience.Everything ? "" : $" · {LogAnalyzer.Dfir.Reporting.ReportAudiences.Label(audience)}");
-                string sub = $"Caz {info.CaseId} · {station.Line} · investigator {investigator} · ora afișată: {RoText.ZoneName(zone, DateTimeOffset.Now)}, cu UTC între paranteze";
+                string sub = $"Caz {info.CaseId} · {station.Line} · investigator {investigator} · orele sunt în {RoText.ZoneName(zone, DateTimeOffset.Now)}, cu ora UTC între paranteze";
                 printed.Add(title); printed.Add(sub);
                 h.Item().Text(title).Bold().FontSize(14).FontColor(Ink);
                 h.Item().Text(sub).FontSize(7.5f).FontColor(Muted);
@@ -79,11 +79,6 @@ public static class InvestigationReportPdf
                     P(sc, summary.Meaning).FontSize(8);
                     P(sc, "Pași următori").Bold().FontSize(8.5f);
                     foreach (var s in summary.NextSteps) P(sc, "• " + s).FontSize(8);
-                    if (summary.KeyFindings.Count > 0)
-                    {
-                        P(sc, "Cele mai importante constatări, pe scurt").Bold().FontSize(8.5f);
-                        foreach (var s in summary.KeyFindings) P(sc, "• " + s).FontSize(7.5f).FontColor(Muted);
-                    }
                     P(sc, "Ce poate și ce nu poate dovedi acest raport").Bold().FontSize(8.5f);
                     P(sc, summary.CanProve).FontSize(8);
                     P(sc, summary.CannotProve).FontSize(8);
@@ -109,13 +104,14 @@ public static class InvestigationReportPdf
                 });
                 col.Item().Row(row =>
                 {
-                    Box(row, r.Findings.Count(f => f.Severity == Severity.Critical).ToString(), "CRITICE", $"{summary.CriticalConfirmed} confirmate · {summary.CriticalIndicative} indicative", "#7f1d1d");
-                    Box(row, r.Findings.Count(f => f.Severity == Severity.High).ToString(), "RIDICATE", $"{summary.HighConfirmed} confirmate · {summary.HighIndicative} doar indicative", "#b45309");
+                    void Box(RowDescriptor rw, string value, string label, string sub, string color) { printed.Add($"{value} {label} {sub}".Trim()); InvestigationReportPdf.Box(rw, value, label, sub, color); }
+                    Box(row, r.Findings.Count(f => f.Severity == Severity.Critical).ToString(), "CRITICE", $"{RoText.Count(summary.CriticalConfirmed, "confirmată", "confirmate")} · {RoText.Count(summary.CriticalIndicative, "indicativă", "indicative")}", "#7f1d1d");
+                    Box(row, r.Findings.Count(f => f.Severity == Severity.High).ToString(), "RIDICATE", $"{RoText.Count(summary.HighConfirmed, "confirmată", "confirmate")} · {RoText.Count(summary.HighIndicative, "doar indicativă", "doar indicative")}", "#b45309");
                     Box(row, r.Findings.Count(f => f.Severity == Severity.Medium).ToString(), "MEDII", "", "#78716c");
                     Box(row, RoText.Number(r.Timeline.Count), "EVENIMENTE", "", "#334155");
                     Box(row, r.Gaps.Count.ToString(), "SURSE LIPSĂ SAU INCOMPLETE", "", "#475569");
                 });
-                P(col, "Confirmat = susținută sau coroborată de verificarea automată; indicativ = încă neconfirmată, de verificat.").FontSize(7).FontColor(Muted);
+                P(col, "Confirmată = susținută sau coroborată de verificarea automată; indicativă = încă neconfirmată, de verificat.").FontSize(7).FontColor(Muted);
                 P(col, r.ProcedureProfileLine).FontSize(7.5f).FontColor(Muted);
                 if (notes.Length > 0) P(col, "Observații: " + notes);
 
@@ -126,8 +122,8 @@ public static class InvestigationReportPdf
                 foreach (var c in chains)
                     col.Item().Border(0.8f).BorderColor("#7f1d1d").Padding(6).Column(cc =>
                     {
-                        P(cc, $"{RoText.CleanPathsInText(c.Title)}  [{RoLabels.Severity(c.Severity)} · {RoLabels.Classification(c.Classification)}]").Bold();
-                        foreach (var step in c.Description.Split(" → ")) P(cc, "→ " + RoText.CleanPathsInText(step)).FontSize(8);
+                        P(cc, $"{RoText.StripVolumes(c.Title)}  [{RoLabels.Severity(c.Severity)} · {RoLabels.Classification(c.Classification)}]").Bold();
+                        foreach (var step in c.Description.Split(" → ")) P(cc, "→ " + RoText.StripVolumes(step)).FontSize(8);
                         P(cc, "Atenție: " + string.Join(" ", c.AlternativeExplanations)).FontSize(7).Italic().FontColor(Muted);
                     });
 
@@ -149,7 +145,7 @@ public static class InvestigationReportPdf
                         col.Item().Column(sc =>
                         {
                             var f = g.Lead;
-                            P(sc, $"{f.FindingId} · {RoText.CleanPathsInText(f.Title)}{(g.Members.Count > 1 ? $" (și alte {g.Members.Count - 1} de același fel)" : "")} — {RoLabels.Severity(f.Severity)} · {StateLabels.Romanian(f.Status)}").FontSize(8);
+                            P(sc, $"{f.FindingId} · {RoText.StripVolumes(f.Title)}{(g.Members.Count > 1 ? $" (și {RoText.MoreOfSameKind(g.Members.Count - 1)})" : "")} — {RoLabels.Severity(f.Severity)} · {StateLabels.Romanian(f.Status)}").FontSize(8);
                             foreach (var m in f.MissingEvidence) P(sc, "Lipsește: " + m).FontSize(7).Italic();
                             foreach (var c in f.ContradictingEvidence) P(sc, "Contrazice: " + c).FontSize(7).Italic().FontColor("#92400e");
                             foreach (var l in InvestigationReportText.SpecificLimitations(f, 2).Specific.Take(3)) P(sc, "Limită: " + l).FontSize(7).Italic().FontColor(Muted);
@@ -159,18 +155,18 @@ public static class InvestigationReportPdf
                     col.Item().Border(0.5f).BorderColor(Line).Padding(5).Column(cc =>
                     {
                         var f = g.Lead;
-                        P(cc, $"{f.FindingId} · {RoText.CleanPathsInText(f.Title)}{(g.Members.Count > 1 ? $" (și alte {g.Members.Count - 1} de același fel)" : "")}").Bold();
+                        P(cc, $"{f.FindingId} · {RoText.StripVolumes(f.Title)}{(g.Members.Count > 1 ? $" (și {RoText.MoreOfSameKind(g.Members.Count - 1)})" : "")}").Bold();
                         P(cc, $"{RoLabels.Severity(f.Severity)} · {RoLabels.Classification(f.Classification)} · {RoLabels.Confidence(f.Confidence)} · {RoLabels.Category(f.Category)}{(f.MitreTechniqueId.Length > 0 ? " · MITRE " + f.MitreTechniqueId : "")} · {L(f.FirstSeenUtc)} – {L(f.LastSeenUtc)}")
                             .FontSize(7.5f).FontColor(Muted);
                         P(cc, $"Stare: {StateLabels.Romanian(f.Status)} · tip: {RoLabels.Semantic(f.SemanticType)} · verificare automată: {StateLabels.Romanian(f.Verification.State)}")
                             .FontSize(7.5f).FontColor(Muted);
                         if (f.Verification.State != StandardState.NotAssessed && f.Verification.Reason.Length > 0) P(cc, "Verificare: " + f.Verification.Reason).FontSize(7).FontColor(Muted);
-                        P(cc, RoText.CleanPathsInText(f.Description));
-                        if (f.ClassificationReason.Length > 0) P(cc, "De ce: " + RoText.CleanPathsInText(f.ClassificationReason)).FontSize(7.5f);
+                        P(cc, RoText.StripVolumes(f.Description));
+                        if (f.ClassificationReason.Length > 0) P(cc, "De ce: " + RoText.StripVolumes(f.ClassificationReason)).FontSize(7.5f);
                         if (g.Members.Count > 1)
                         {
                             P(cc, $"Constatări de același fel ({g.Members.Count}):").FontSize(7.5f).Bold();
-                            foreach (var m in g.Members.Take(15)) P(cc, $"{m.FindingId} · {RoText.CleanPathsInText(m.Title)}").FontSize(7);
+                            foreach (var m in g.Members.Take(15)) P(cc, $"{m.FindingId} · {RoText.StripVolumes(m.Title)}").FontSize(7);
                             if (g.Members.Count > 15) P(cc, $"… încă {g.Members.Count - 15} (lista completă în Analysis/findings.json)").FontSize(7).Italic().FontColor(Muted);
                         }
                         var refs = InvestigationReportText.GroupEvidence(g);
@@ -199,10 +195,10 @@ public static class InvestigationReportPdf
                 foreach (var c in r.Collection)
                     P(col, $"{c.Collector}: {RoLabels.Source(c.Status)}, {RoText.Count(c.EvidenceCount, "element de probă", "elemente de probă")} ({L(c.StartUtc)} – {L(c.EndUtc)}) {InvestigationReportText.GroupErrors(c.Errors)}").FontSize(7.5f);
                 foreach (var g in r.Parsing.Where(p => p.Status != EvidenceStatus.SkippedByDesign).GroupBy(p => (p.Parser, p.ParserVersion, p.ParserStatus)))
-                    P(col, $"{g.Key.Parser} {g.Key.ParserVersion} ({(g.Key.ParserStatus.Length > 0 ? g.Key.ParserStatus : "—")}): {RoText.Count(g.Count(), "fișier", "fișiere")}, {RoText.Count(g.Sum(p => p.Records), "înregistrare", "înregistrări")}, stări: {string.Join(", ", g.Select(p => RoLabels.Source(p.Status)).Distinct())}").FontSize(7.5f);
+                    P(col, $"{g.Key.Parser} {g.Key.ParserVersion} ({(g.Key.ParserStatus.Length > 0 ? InvestigationReportText.ParserStatusRomanian(g.Key.ParserStatus) : "—")}): {RoText.Count(g.Count(), "fișier", "fișiere")}, {RoText.Count(g.Sum(p => p.Records), "înregistrare", "înregistrări")}, stări: {string.Join(", ", g.Select(p => RoLabels.Source(p.Status)).Distinct())}").FontSize(7.5f);
                 foreach (var s in r.Parsing.Where(p => p.Status == EvidenceStatus.SkippedByDesign))
                     P(col, $"{s.EvidenceId} necitit (omis intenționat): {s.Error}").FontSize(7.5f).FontColor(Muted);
-                P(col, "VALIDATED = test de regresie pe un corpus real; TESTED = doar teste pe date sintetice; descrierea completă a fiecărui parser: Analysis/parsers.json.").FontSize(7).Italic().FontColor(Muted);
+                P(col, "Starea unui parser: „validat pe date reale” = test de regresie pe un corpus real; „testat doar pe date sintetice” = doar teste pe date create pentru test; descrierea completă a fiecărui parser: Analysis/parsers.json.").FontSize(7).Italic().FontColor(Muted);
 
                 }
                 if (S(LogAnalyzer.Dfir.Reporting.ReportSection.Detections))
@@ -238,7 +234,7 @@ public static class InvestigationReportPdf
                         {
                             PolicyLineStyle.Bad => "#b91c1c", PolicyLineStyle.Warn => "#92400e", PolicyLineStyle.Muted => Muted, _ => "#1e293b",
                         });
-                P(col, "Comportament: observat / neobservat / neevaluabil, cu motivul; niciodată dedus dincolo de probe. Un nivel nedeterminat (UNKNOWN) nu înseamnă conform. Detalii: Analysis/policy_timeline.json.")
+                P(col, "Comportament: observat / neobservat / neevaluabil, cu motivul; niciodată dedus dincolo de probe. Un nivel nedeterminat nu înseamnă conform. Detalii: Analysis/policy_timeline.json.")
                     .FontSize(7).Italic().FontColor(Muted);
 
                 }
@@ -248,7 +244,7 @@ public static class InvestigationReportPdf
                 foreach (var i in integrity.Items)
                 {
                     var e = evidence[i.EvidenceId];
-                    P(col, $"{i.EvidenceId} {InvestigationReportText.SpecStatusRomanian(i.SpecStatus)} · {RoText.ReadablePath(e.StoredPath)} · {RoText.Count(e.Size, "octet", "octeți")} · {e.AcquisitionMethod} {L(e.AcquiredAtUtc)}" +
+                    P(col, $"{i.EvidenceId} {InvestigationReportText.SpecStatusRomanian(i.SpecStatus)} · {RoText.ReadablePath(e.StoredPath)} · {RoText.Count(e.Size, "octet", "octeți")} · {InvestigationReportText.AcquisitionRomanian(e.AcquisitionMethod)} {L(e.AcquiredAtUtc)}" +
                                     (i.Detail.Length > 0 ? $" · {RoText.CleanPathsInText(i.Detail)}" : "") + " · amprenta completă în anexă").FontSize(6.5f).FontColor(i.CanParse ? "#1e293b" : "#b91c1c");
                 }
                 if (r.RejectedFindings.Count > 0)
@@ -258,7 +254,10 @@ public static class InvestigationReportPdf
                 if (S(LogAnalyzer.Dfir.Reporting.ReportSection.LegalNotes))
                 {
                 Head("Note juridice");
-                P(col, "Ce poate și ce nu poate dovedi acest raport: " + summary.CanProve + " " + summary.CannotProve).FontSize(7.5f);
+                if (audience == LogAnalyzer.Dfir.Reporting.ReportAudience.Legal)
+                    P(col, "Ce poate și ce nu poate dovedi acest raport: " + summary.CanProve + " " + summary.CannotProve).FontSize(7.5f);
+                else
+                    P(col, "Ce poate și ce nu poate dovedi acest raport: vezi caseta „Concluzie pe scurt” de pe prima pagină.").FontSize(7.5f);
                 P(col, "Stările constatărilor folosesc cuvinte cu sens precis: „coroborată” înseamnă susținută de cel puțin două surse independente; „susținută de o singură sursă” nu este coroborată; „asociată” înseamnă doar legătură în timp sau în cale; „indiciu – de confirmat” cere confirmarea unui analist. Nicio stare nu stabilește intenția sau vinovăția.").FontSize(7.5f);
                 P(col, "Lanțul de custodie și jurnalul de audit au amprente în subsolul fiecărei pagini; amprenta fiecărui element de probă este în anexă. Orice modificare ulterioară a unui element de probă schimbă amprenta și este semnalată la reverificare.").FontSize(7.5f);
 
@@ -269,7 +268,7 @@ public static class InvestigationReportPdf
 
                 Head("Anexă: elemente de probă și amprente SHA-256");
                 foreach (var e in evidence.Values.OrderBy(e => e.EvidenceId, StringComparer.Ordinal))
-                    P(col, $"{e.EvidenceId} · {RoText.ReadablePath(e.StoredPath)} · {RoText.Count(e.Size, "octet", "octeți")} · SHA-256 {e.Sha256} · {e.AcquisitionMethod} {L(e.AcquiredAtUtc)}").FontSize(6.5f);
+                    P(col, $"{e.EvidenceId} · {RoText.ReadablePath(e.StoredPath)} · {RoText.Count(e.Size, "octet", "octeți")} · SHA-256 {e.Sha256} · {InvestigationReportText.AcquisitionRomanian(e.AcquisitionMethod)} {L(e.AcquiredAtUtc)}").FontSize(6.5f);
                 if (evidence.Count == 0) P(col, "Niciun element de probă în caz.").FontColor(Muted);
 
                 P(col, $"Cronologia completă: Analysis/timeline.csv · constatări: Analysis/findings.json · lanțul de custodie: Logs/chain_of_custody.csv (în {r.Case.Root}). " +

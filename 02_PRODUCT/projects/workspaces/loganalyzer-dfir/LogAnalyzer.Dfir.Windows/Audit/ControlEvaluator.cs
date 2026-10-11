@@ -423,9 +423,9 @@ public static class ControlEvaluator
         foreach (var l in services) r.Actions.Add(new ActionEntry(l.TimeUtc, V(l, "AccountName"), "serviciu nou instalat", $"{V(l, "ServiceName")}: {V(l, "ImagePath")}", Ev(l)));
         foreach (var l in tasks) r.Actions.Add(new ActionEntry(l.TimeUtc, Who(l), "a creat activitatea planificată", V(l, "TaskName"), Ev(l)));
         Add(r, "S02", "Software", "Servicii noi și activități planificate create", services.Count + tasks.Count == 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
-            $"{LogAnalyzer.Dfir.Language.RoText.Count(services.Count, "serviciu", "servicii")} noi, {tasks.Count} activități planificate create ({LogAnalyzer.Dfir.Language.RoText.Count(drivers.Count, "driver", "drivere")} instalate, listate separat în cronologie).",
+            $"{LogAnalyzer.Dfir.Language.RoText.Count(services.Count, "serviciu", "servicii")} noi, {LogAnalyzer.Dfir.Language.RoText.Count(tasks.Count, "activitate planificată", "activități planificate")} create ({LogAnalyzer.Dfir.Language.RoText.Count(drivers.Count, "driver", "drivere")} instalate, listate separat în cronologie).",
             services.Select(l => $"{Ev(l)}: {V(l, "ServiceName")} → {V(l, "ImagePath")}").Concat(tasks.Select(l => $"{Ev(l)}: {Who(l)} → {V(l, "TaskName")}")),
-            "Serviciile și task-urile sunt metode frecvente de persistență: verificați fiecare intrare necunoscută.");
+            "Serviciile și activitățile planificate sunt metode frecvente de persistență: verificați fiecare intrare necunoscută.");
 
         foreach (var l in Logs(f, "System", 1074))
             r.Actions.Add(new ActionEntry(l.TimeUtc, V(l, "param7") is { Length: > 0 } u ? u : l.UserSid, "a oprit/repornit stația", $"{V(l, "param1")} {V(l, "param3")}", Ev(l)));

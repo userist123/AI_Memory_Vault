@@ -17,7 +17,7 @@ public static class StationIdentity
         var hosts = timeline.Select(e => e.Host).Where(h => !string.IsNullOrWhiteSpace(h) && h != "-")
                             .GroupBy(Short).Select(g => (Host: g.Key, Events: g.Count())).OrderByDescending(x => x.Events).ToList();
         if (hosts.Count == 0)
-            return new(analysisHost, $"stația {analysisHost} (probele nu numesc calculatorul; s-a folosit calculatorul pe care s-a făcut colectarea)", hosts);
+            return new(analysisHost, $"stația {analysisHost} (numele nu apare în probe; s-a folosit numele calculatorului pe care s-a făcut colectarea)", hosts);
         var main = hosts[0].Host;
         var same = main.Equals(Short(analysisHost), StringComparison.OrdinalIgnoreCase);
         var line = hosts.Count == 1

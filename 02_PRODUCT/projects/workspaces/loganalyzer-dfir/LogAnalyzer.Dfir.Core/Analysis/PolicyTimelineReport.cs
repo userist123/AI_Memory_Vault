@@ -28,7 +28,7 @@ public static class PolicyTimelineReport
             l.Add(new($"    Comportament: {PolicyChain.BehaviorText(c.Behavior)} — {c.BehaviorReason}",
                 c.Behavior == BehaviorState.NotObserved ? PolicyLineStyle.Warn : PolicyLineStyle.Muted));
         }
-        if (r.Chains.Count > maxChains) l.Add(new($"… {r.Chains.Count - maxChains} modificări suplimentare în Analysis/policy_timeline.json.", PolicyLineStyle.Muted));
+        if (r.Chains.Count > maxChains) l.Add(new($"… încă {LogAnalyzer.Dfir.Language.RoText.Count(r.Chains.Count - maxChains, "modificare", "modificări")} în Analysis/policy_timeline.json.", PolicyLineStyle.Muted));
 
         if (r.Levels.Count > 0) l.Add(new("Configurat / aplicat / impus / observat (per setare din politica așteptată)", PolicyLineStyle.Heading));
         foreach (var s in r.Levels.Take(maxOther))
@@ -38,7 +38,7 @@ public static class PolicyTimelineReport
             foreach (var n in SettingLevels.Names.Skip(1).Where(n => s.Level(n).State != LevelState.Observed))
                 l.Add(new($"    {n}: {s.Level(n).Reason}", s.Level(n).State == LevelState.NotObserved ? PolicyLineStyle.Warn : PolicyLineStyle.Muted));
         }
-        if (r.Levels.Count > maxOther) l.Add(new($"… {r.Levels.Count - maxOther} setări suplimentare în Analysis/policy_timeline.json.", PolicyLineStyle.Muted));
+        if (r.Levels.Count > maxOther) l.Add(new($"… încă {LogAnalyzer.Dfir.Language.RoText.Count(r.Levels.Count - maxOther, "setare", "setări")} în Analysis/policy_timeline.json.", PolicyLineStyle.Muted));
 
         foreach (var g in r.Gaps.Take(maxOther))
             l.Add(new($"Decalaj de control [{g.Severity}] {g.SettingId} „{g.Title}”: se rupe la nivelul „{g.BrokenLevel}” — {g.Reason}", PolicyLineStyle.Bad));
@@ -52,7 +52,7 @@ public static class PolicyTimelineReport
         foreach (var v in r.Time.Inversions.Take(maxOther))
             l.Add(new($"Ordine contrazisă de oră: {v.Source["EventLog:".Length..]} RecordID {v.PreviousRecordId} → {v.RecordId}, ora a coborât cu {TimeManipulation.Human(v.Back)}", PolicyLineStyle.Bad));
         if (r.Time.Windows.Count > 0)
-            l.Add(new($"{r.Time.Windows.Count} ferestre de oră nesigură: verificarea TEMPORAL raportează UNKNOWN (nu CONTRADICTED) pentru constatările din ele.", PolicyLineStyle.Warn));
+            l.Add(new($"{LogAnalyzer.Dfir.Language.RoText.Count(r.Time.Windows.Count, "fereastră", "ferestre")} de oră nesigură: verificarea orei raportează „nedeterminat” (nu „contrazis”) pentru constatările din {(r.Time.Windows.Count == 1 ? "ea" : "ele")}.", PolicyLineStyle.Warn));
         if (l.Count == 0) l.Add(new("Nicio modificare de politică și nicio manipulare a orei în probele analizate (asta nu dovedește că nu au existat: jurnalele relevante pot lipsi).", PolicyLineStyle.Muted));
         return l;
     }

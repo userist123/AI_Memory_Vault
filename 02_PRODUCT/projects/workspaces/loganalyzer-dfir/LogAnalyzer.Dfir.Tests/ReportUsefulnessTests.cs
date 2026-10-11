@@ -65,11 +65,11 @@ public sealed class ReportUsefulnessTests : IDisposable
     [Fact]
     public void Common_windows_error_codes_are_translated_and_others_keep_the_system_message_in_brackets()
     {
-        Assert.Equal("cod 87 (parametru incorect)", RoText.OsError(87, "The parameter is incorrect."));
-        Assert.Equal("cod 5 (acces refuzat)", RoText.OsError(5));
-        Assert.Equal("cod 2 (fișierul nu a fost găsit)", RoText.OsError(2));
-        Assert.Equal("cod 32 (fișierul este folosit de alt proces)", RoText.OsError(32));
-        Assert.Equal("cod 1450 (mesaj Windows: Insufficient system resources)", RoText.OsError(1450, "Insufficient system resources."));
+        Assert.Equal("cod 87: parametru incorect", RoText.OsError(87, "The parameter is incorrect."));
+        Assert.Equal("cod 5: acces refuzat", RoText.OsError(5));
+        Assert.Equal("cod 2: fișierul nu a fost găsit", RoText.OsError(2));
+        Assert.Equal("cod 32: fișierul este folosit de alt proces", RoText.OsError(32));
+        Assert.Equal("cod 1450: mesaj Windows, Insufficient system resources", RoText.OsError(1450, "Insufficient system resources."));
     }
 
     [Fact]
@@ -120,7 +120,7 @@ public sealed class ReportUsefulnessTests : IDisposable
     [Fact]
     public void Identical_collector_errors_become_one_line_with_the_list_of_channels()
     {
-        var errors = string.Join("; ", Enumerable.Range(1, 23).Select(i => $"Canal{i}: export eșuat (Failed, cod 87 (parametru incorect))").Append("Security: necesită drepturi de administrator"));
+        var errors = string.Join("; ", Enumerable.Range(1, 23).Select(i => $"Canal{i}: export eșuat (cod 87: parametru incorect)").Append("Security: necesită drepturi de administrator"));
         var g = InvestigationReportText.GroupErrors(errors);
         Assert.Equal(1, Regex.Count(g, "cod 87"));
         Assert.Contains("23 de canale: Canal1, Canal2", g);
@@ -140,12 +140,12 @@ public sealed class ReportUsefulnessTests : IDisposable
     public void Generic_limitations_are_separated_and_a_parser_limit_stays_only_where_that_parser_supplied_the_evidence()
     {
         var semantic = FindingContract.SemanticLimitation(SemanticType.Execution);
-        var usb = F("F-1", "MEDIA-X", "USB", limitations: [semantic, "Regula nu vede copierea.", "Verificare independentă: neefectuată (NOT_ASSESSED).",
+        var usb = F("F-1", "MEDIA-X", "USB", limitations: [semantic, "Regula nu vede copierea.", "Verificare independentă: neefectuată.",
             "Instantaneul serviciilor nu poate dovedi că serviciul a pornit", "Amcache nu poate dovedi că fișierul a fost executat."]);
         usb.Provenance = new FindingProvenance("MEDIA-X", "1", "p", "1", ["EV-1"], [], ["UsbDevicesParser", "AmcacheParser"], "1.0");
         var other = F("F-2", "EXEC", "Program", limitations: [semantic, "Alta"]);
 
-        Assert.Equal([semantic, "Verificare independentă: neefectuată (NOT_ASSESSED)."], InvestigationReportText.GenericLimitations([usb, other]));
+        Assert.Equal([semantic, "Verificare independentă: neefectuată."], InvestigationReportText.GenericLimitations([usb, other]));
         var (specific, omitted) = InvestigationReportText.SpecificLimitations(usb);
         Assert.Equal(["Regula nu vede copierea.", "Amcache nu poate dovedi că fișierul a fost executat."], specific);   // the services-snapshot limit is not relevant to this finding
         Assert.Equal(1, omitted);
@@ -203,19 +203,19 @@ public sealed class ReportUsefulnessTests : IDisposable
         {
             var serious = new Finding
             {
-                FindingId = "F-0001", RuleId = "PERSIST-TASK", Title = $"Activitate planificată dintr-o locație \\VOLUME{{1a2b3c4d-0000-1111-2222-333344445555}}\\Users\\x\\Temp\\run.cmd", Severity = Severity.High, Category = "Persistence",
+                FindingId = "F-0001", RuleId = "PERSIST-TASK", Title = $"Activitate planificată care rulează dintr-o locație în care utilizatorii pot scrie: \\VOLUME{{1a2b3c4d-0000-1111-2222-333344445555}}\\Users\\x\\Temp\\run.cmd", Severity = Severity.High, Category = "Persistence",
                 Classification = Classification.Candidate, Confidence = Confidence.Medium, FirstSeenUtc = T0, LastSeenUtc = T0.AddMinutes(5),
                 Description = "O activitate planificată pornește run.cmd.", ClassificationReason = "Acțiunea indică o locație în care utilizatorii pot scrie.",
-                SupportingEvidence = [new(ev.EvidenceId, "task=1", "definiția activității", ev.Sha256)],
+                SupportingEvidence = [new(ev.EvidenceId, "activitatea nr. 1", "definiția activității din \\VOLUME{1a2b3c4d-0000-1111-2222-333344445555}\\Users\\x\\Temp\\run.cmd", ev.Sha256)],
                 RecommendedNextSteps = ["Citiți scriptul complet și identificați contul care l-a creat."],
                 AlternativeExplanations = ["Administrare legitimă."], MissingEvidence = ["Conținutul scriptului."],
             };
-            var vendorA = new Finding { FindingId = "F-0002", RuleId = "PERSIST-TASK-CONFIG", Title = "Activitate planificată Lenovo A", Severity = Severity.Medium, Category = "Persistence", Classification = Classification.Candidate, Description = "A", ClassificationReason = "producător cunoscut", SupportingEvidence = [new(ev.EvidenceId, "task=2", "A", ev.Sha256)] };
-            var vendorB = new Finding { FindingId = "F-0003", RuleId = "PERSIST-TASK-CONFIG", Title = "Activitate planificată Lenovo B", Severity = Severity.Medium, Category = "Persistence", Classification = Classification.Candidate, Description = "B", ClassificationReason = "producător cunoscut", SupportingEvidence = [new(ev.EvidenceId, "task=3", "B", ev.Sha256)] };
+            var vendorA = new Finding { FindingId = "F-0002", RuleId = "PERSIST-TASK-CONFIG", Title = "Activitate planificată Lenovo A", Severity = Severity.Medium, Category = "Persistence", Classification = Classification.Candidate, Description = "A", ClassificationReason = "producător cunoscut", SupportingEvidence = [new(ev.EvidenceId, "activitatea nr. 2", "A", ev.Sha256)] };
+            var vendorB = new Finding { FindingId = "F-0003", RuleId = "PERSIST-TASK-CONFIG", Title = "Activitate planificată Lenovo B", Severity = Severity.Medium, Category = "Persistence", Classification = Classification.Candidate, Description = "B", ClassificationReason = "producător cunoscut", SupportingEvidence = [new(ev.EvidenceId, "activitatea nr. 3", "B", ev.Sha256)] };
             r.Findings.AddRange(FindingContract.Enrich([serious, vendorA, vendorB]));
             r.Gaps.Add(new EvidenceGap("Security.evtx", EvidenceStatus.NotAvailable, "canalul nu a putut fi exportat", "nu se poate verifica auditarea", "export manual cu wevtutil", "Recuperabil"));
             r.AntiForensics.Add(new AntiForensicCheck("AF01", "Jurnal șters", "T1070.001", AntiForensicResult.NotDetected, "Nicio ștergere observată.", []));
-            r.Collection.Add(new CollectionRow("EventLogCollector", EvidenceStatus.Partial, 3, string.Join("; ", Enumerable.Range(1, 5).Select(i => $"Canal{i}: export eșuat (Failed, cod 87 (parametru incorect))")), T0, T0.AddMinutes(1)));
+            r.Collection.Add(new CollectionRow("EventLogCollector", EvidenceStatus.Partial, 3, string.Join("; ", Enumerable.Range(1, 5).Select(i => $"Canal{i}: export eșuat (cod 87: parametru incorect)")), T0, T0.AddMinutes(1)));
         }
         return r;
     }
@@ -279,9 +279,9 @@ public sealed class ReportUsefulnessTests : IDisposable
         Assert.Equal(1, Regex.Count(text, "cod 87"));
         Assert.Contains("5 canale: Canal1, Canal2", text);
         // two vendor tasks of the same rule and reason: one finding listing both, evidence references kept
-        Assert.Contains("(și alte 1 de același fel)", text);
+        Assert.Contains("(și încă una de același fel)", text);
         Assert.Contains("F-0003 · Activitate planificată Lenovo B", text);
-        Assert.Contains("task=3", text);
+        Assert.Contains("activitatea nr. 3", text);
         // Romanian labels in the body; the English codes only in the legend (the last two sections)
         var body = text[..text.IndexOf("Legendă coduri", StringComparison.Ordinal)];
         foreach (var code in new[] { "HIGH", "CORRELATED", "CANDIDATE", "NOT_AVAILABLE", "UNDETERMINED", "tip: Configuration", "încredere MEDIUM" })
@@ -293,9 +293,12 @@ public sealed class ReportUsefulnessTests : IDisposable
         Assert.Contains("Sursă alternativă: export manual cu wevtutil.", body);
         Assert.DoesNotContain("Alternativă:", body.Replace("Sursă alternativă:", ""));
         Assert.Contains("RIDICATĂ = HIGH", text);
-        // readable path: no raw volume guid in the title, the volume is named once
+        // readable path: no raw volume guid anywhere; the volume is named only on the evidence line, never in a title or a one-line summary
         Assert.DoesNotContain("\\VOLUME{", text);
         Assert.Contains("(volumul 1a2b3c4d-0000-1111-2222-333344445555)", text);
+        foreach (var line in text.Split('\n').Where(l => l.StartsWith("F-0001") || l.StartsWith("• F-0001")))
+            Assert.DoesNotContain("volumul", line);
+        Assert.Contains("Activitate planificată care rulează dintr-o locație în care utilizatorii pot scrie: Users\\x\\Temp\\run.cmd", text);
         // the full SHA-256 of every evidence item once, in the annex
         foreach (var e in r.Case.LoadEvidence())
         {
@@ -335,5 +338,170 @@ public sealed class ReportUsefulnessTests : IDisposable
         if (string.IsNullOrEmpty(target)) return;   // only when a person asks for the sample (see the report of the change)
         InvestigationReportPdf.Write(Fixture("sample"), target, "investigator de probă");
         Assert.True(File.Exists(target));
+    }
+
+    // ---- Agreement, vocabulary and layout fixes (review of the sample PDF) ----
+
+    [Fact]
+    public void Numerals_agree_in_gender_with_una_o_niciuna_and_the_same_kind_phrase_counts_correctly()
+    {
+        Assert.Equal("o constatare", RoText.CountFem(1, "constatare", "constatări"));
+        Assert.Equal("3 constatări", RoText.CountFem(3, "constatare", "constatări"));
+        Assert.Equal("un fișier", RoText.CountMasc(1, "fișier", "fișiere"));
+        Assert.Equal("niciuna confirmată", RoText.Pronoun(0, "confirmată", "confirmate"));
+        Assert.Equal("una doar indicativă", RoText.Pronoun(1, "doar indicativă", "doar indicative"));
+        Assert.Equal("2 confirmate", RoText.Pronoun(2, "confirmată", "confirmate"));
+        Assert.Equal("25 de confirmate", RoText.Pronoun(25, "confirmată", "confirmate"));
+        Assert.Equal("niciunul confirmat", RoText.Pronoun(0, "confirmat", "confirmați", feminine: false));
+        Assert.Equal("încă una de același fel", RoText.MoreOfSameKind(1));
+        Assert.Equal("încă 4 de același fel", RoText.MoreOfSameKind(4));
+        Assert.Equal("O constatare", RoText.Capitalize("o constatare"));
+        Assert.Equal(@"Users\x\a.exe rulat", RoText.StripVolumes(@"\VOLUME{1a2b3c4d-0000-1111-2222-333344445555}\Users\x\a.exe rulat"));
+    }
+
+    private static Finding Grave(string id, Classification cls) => new()
+    {
+        FindingId = id, RuleId = "PERSIST-TASK-CONFIG", Title = "Activitate planificată " + id, Severity = Severity.High, Category = "Persistence", Classification = cls,
+        Description = "d" + id, ClassificationReason = "motiv " + id,
+    };
+
+    [Fact]
+    public void The_verdict_uses_exista_o_constatare_and_niciuna_una_agreement_for_every_count()
+    {
+        var one = Fixture("v1");
+        var v1 = InvestigationReportText.Summarize(one, ReportIntegrity.Check(one)).Verdict;
+        Assert.StartsWith("Există o constatare de severitate ridicată sau critică: niciuna confirmată de verificarea automată și una doar indicativă (de confirmat).", v1);
+        Assert.DoesNotContain("Sunt 1", v1);
+
+        var three = Fixture("v3");
+        three.Findings.Clear();
+        three.Findings.AddRange(FindingContract.Enrich([Grave("F-1", Classification.Candidate), Grave("F-2", Classification.Candidate), Grave("F-3", Classification.Candidate)]));
+        var v3 = InvestigationReportText.Summarize(three, ReportIntegrity.Check(three)).Verdict;
+        Assert.StartsWith("Există 3 constatări de severitate ridicată sau critică: niciuna confirmată de verificarea automată și 3 doar indicative (de confirmat).", v3);
+    }
+
+    [Fact]
+    public void Headline_boxes_agree_with_the_count_and_the_legend_text_is_feminine()
+    {
+        var (text, _) = Render(Fixture("box"), ReportAudience.Everything);
+        Assert.Contains("0 confirmate · 1 doar indicativă", text.Replace("\n", " "));
+        Assert.Contains("Confirmată = susținută sau coroborată", text);
+        Assert.Contains("indicativă = încă neconfirmată", text);
+    }
+
+    [Fact]
+    public void The_report_uses_only_romanian_words_for_the_agreed_vocabulary()
+    {
+        var (text, _) = Render(Fixture("vocab"), ReportAudience.Everything);
+        var body = text[..text.IndexOf("Legendă coduri", StringComparison.Ordinal)];
+        Assert.DoesNotMatch(@"(?i)\btask(ul|uri|urile|ului)?\b", body);
+        Assert.DoesNotContain("Dovezi contradictorii", text);
+        Assert.Contains("Probe contradictorii", body);
+        Assert.Contains("orele sunt în ", text);
+        Assert.Contains(", cu ora UTC între paranteze", text);
+        Assert.Contains("(numele nu apare în probe; s-a folosit numele calculatorului pe care s-a făcut colectarea)", text.Replace("\n", " "));
+        Assert.Contains("Cronologie politici: nedefinită", body);
+        Assert.DoesNotContain("nedefinit (", body);
+        Assert.Contains("export eșuat (cod 87: parametru incorect)", body);
+        Assert.DoesNotContain("Failed", body);
+        Assert.DoesNotContain("(cod 87 (", text);
+        Assert.Contains("importat la", body);
+        Assert.DoesNotContain("imported ", body);
+        Assert.Contains("Verificare independentă: neefectuată.", body);
+        Assert.DoesNotContain("NOT_ASSESSED", body);
+        Assert.DoesNotContain("și alte ", body);
+    }
+
+    private InvestigationResult FixtureWithAllStates()
+    {
+        var r = Fixture("all");
+        var ev = r.Case.LoadEvidence().First();
+        var T0 = new DateTimeOffset(2026, 10, 11, 9, 30, 0, TimeSpan.Zero);
+        var extra = new List<Finding>();
+        int n = 10;
+        foreach (var cls in Enum.GetValues<Classification>())
+            foreach (var sev in new[] { Severity.Critical, Severity.High, Severity.Medium, Severity.Low, Severity.Info })
+            {
+                var id = $"F-{++n:0000}";
+                extra.Add(new Finding
+                {
+                    FindingId = id, RuleId = "PERSIST-TASK-CONFIG", Title = $"Activitate planificată {id}", Severity = sev, Category = "Persistence", Classification = cls,
+                    Description = "descriere " + id, ClassificationReason = $"motiv {cls} {sev}", FirstSeenUtc = T0, SupportingEvidence = [new(ev.EvidenceId, "activitatea nr. " + n, "x", ev.Sha256)],
+                });
+            }
+        r.Findings.AddRange(FindingContract.Enrich(extra));
+        r.AntiForensics.Add(new AntiForensicCheck("AF02", "Ceas schimbat", "T1070.006", AntiForensicResult.Detected, "Ceasul a fost mutat.", []));
+        r.AntiForensics.Add(new AntiForensicCheck("AF03", "Jurnal oprit", "T1562.002", AntiForensicResult.Undetermined, "Sursa lipsește.", []));
+        foreach (var st in new[] { EvidenceStatus.Success, EvidenceStatus.Empty, EvidenceStatus.Failed, EvidenceStatus.Partial, EvidenceStatus.SkippedByDesign })
+            r.Gaps.Add(new EvidenceGap("Sursa " + st, st, "motiv", "impact", "alternativă", "Posibil"));
+        foreach (var status in new[] { "VALIDATED", "TESTED", "EXPERIMENTAL" })
+            r.Parsing.Add(new ParseResult { EvidenceId = ev.EvidenceId, Parser = "P" + status, ParserVersion = "1", ParserStatus = status, Status = EvidenceStatus.Success, Records = 3 });
+        return r;
+    }
+
+    [Theory]
+    [MemberData(nameof(Audiences))]
+    public void No_english_code_from_the_legend_appears_in_the_body_of_a_report_with_every_state(ReportAudience audience)
+    {
+        var (text, _) = Render(FixtureWithAllStates(), audience);
+        int legendAt = text.IndexOf("Legendă coduri", StringComparison.Ordinal);
+        Assert.True(legendAt > 0);
+        var body = text[..legendAt];
+        var codes = InvestigationReportText.Legend().SelectMany(l => Regex.Matches(l, @"= ([A-Z][A-Z_]*(?:/[A-Z][A-Z_]*)?)").Select(m => m.Groups[1].Value))
+            .SelectMany(c => c.Split('/')).Distinct().ToList();
+        Assert.Contains("BENIGN", codes);
+        Assert.Contains("VALIDATED", codes);
+        foreach (var code in codes)
+            Assert.False(Regex.IsMatch(body, $@"(?<![A-Za-z_]){Regex.Escape(code)}(?![A-Za-z_])"), $"English code {code} appears in the body of the {audience} report");
+    }
+
+    [Fact]
+    public void Legend_labels_are_unique_in_each_group_and_the_benign_known_class_has_its_own()
+    {
+        Assert.Equal("Cunoscută, fără risc", RoLabels.Classification(Classification.BenignKnown));
+        Assert.NotEqual(RoLabels.Classification(Classification.Direct), RoLabels.Classification(Classification.BenignKnown));
+        foreach (var line in InvestigationReportText.Legend())
+        {
+            var labels = Regex.Matches(line.Substring(line.IndexOf(": ", StringComparison.Ordinal) + 2), @"(?:^|, )(?<l>[^=,]+?) = ").Select(m => m.Groups["l"].Value.Trim()).ToList();
+            Assert.True(labels.Count >= 2, line);
+            Assert.Equal(labels.Count, labels.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        }
+    }
+
+    [Fact]
+    public void Page_one_lists_each_serious_finding_once_and_the_legal_notes_point_back_to_it_unless_the_audience_is_legal()
+    {
+        var (all, _) = Render(Fixture("p1"), ReportAudience.Everything);
+        Assert.DoesNotContain("Cele mai importante constatări", all);
+        string page1 = all[..all.IndexOf("Integritatea elementelor de probă verificată", StringComparison.Ordinal)];
+        Assert.Equal(1, Regex.Count(page1, "Activitate planificată care rulează dintr-o locație"));
+        Assert.Equal(1, Regex.Count(all, Regex.Escape(InvestigationReportText.CannotProveText)));
+        Assert.Contains("vezi caseta „Concluzie pe scurt” de pe prima pagină", all);
+        var (legal, _) = Render(Fixture("p1l"), ReportAudience.Legal);
+        Assert.Equal(2, Regex.Count(legal, Regex.Escape(InvestigationReportText.CannotProveText)));
+    }
+
+    [Fact]
+    public void The_serious_list_on_page_one_is_capped_at_five()
+    {
+        var r = Fixture("cap");
+        r.Findings.Clear();
+        r.Findings.AddRange(FindingContract.Enrich(Enumerable.Range(1, 8).Select(i => Grave($"F-{i}", Classification.Candidate)).ToList()));
+        Assert.Equal(5, InvestigationReportText.Summarize(r, ReportIntegrity.Check(r)).Serious.Count);
+    }
+
+    [Fact]
+    public void Footer_lines_are_short_enough_not_to_be_cut_at_the_page_edge()
+    {
+        Assert.NotEmpty(LogAnalyzer.Dfir.Windows.Audit.ReportFooter.ProvenanceLines);
+        foreach (var l in LogAnalyzer.Dfir.Windows.Audit.ReportFooter.ProvenanceLines)
+            Assert.True(l.Length <= LogAnalyzer.Dfir.Windows.Audit.ReportFooter.MaxLineLength, $"footer line too long ({l.Length}): {l}");
+        var seen = new List<string>();
+        LogAnalyzer.Dfir.Windows.Audit.ReportFooter.Observer.Value = (_, t) => seen.AddRange(t.Split('\n'));
+        try { Render(Fixture("foot"), ReportAudience.Everything); }
+        finally { LogAnalyzer.Dfir.Windows.Audit.ReportFooter.Observer.Value = null; }
+        Assert.NotEmpty(seen);
+        Assert.All(seen, l => Assert.True(l.Length <= 140, $"footer line too long ({l.Length}): {l}"));
+        Assert.Contains(seen, l => l.StartsWith("Generat de "));
     }
 }
