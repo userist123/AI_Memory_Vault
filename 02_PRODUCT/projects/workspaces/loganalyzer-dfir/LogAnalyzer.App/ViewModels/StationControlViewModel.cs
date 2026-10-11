@@ -41,6 +41,32 @@ namespace LogAnalyzer.UI.ViewModels
 
         partial void OnStatusFilterChanged(string value) => FillChecks();
 
+        // Owner 2026-10-11: every code explained on screen (what, why, how, when) for controllers without IT training: list on the left, explanation on the right.
+        [ObservableProperty] private ControlCheck? _selectedCheck;
+        [ObservableProperty] private CheckExplanation? _selectedExplanation;
+        partial void OnSelectedCheckChanged(ControlCheck? value) => SelectedExplanation = value is null ? null : CheckGuides.Explain(value);
+        partial void OnSelectedExplanationChanged(CheckExplanation? value) => OnPropertyChanged(nameof(HasSelectedCheck));
+        public bool HasSelectedCheck => SelectedExplanation is not null;
+
+        [ObservableProperty] private ActionEntry? _selectedAction;
+        public ObservableCollection<CodeExplanation> SelectedActionCodes { get; } = new();
+        partial void OnSelectedActionChanged(ActionEntry? value)
+        {
+            SelectedActionCodes.Clear();
+            if (value is null) return;
+            foreach (var c in CodeExplainer.FindIn($"{value.Source} {value.Detail}")) SelectedActionCodes.Add(c);
+            if (SelectedActionCodes.Count == 0)
+                SelectedActionCodes.Add(new CodeExplanation(value.Source, "sursă", "Această sursă nu are încă o explicație în aplicație.", "Arătați înregistrarea unui specialist IT dacă este nevoie.", ""));
+        }
+
+        [RelayCommand]
+        private void CopyExplanation()
+        {
+            if (SelectedExplanation is null) { Status = "Alegeți întâi o verificare din listă."; return; }
+            try { Clipboard.SetText(SelectedExplanation.ToPlainText()); Status = "Explicația a fost copiată; o puteți lipi în procesul-verbal."; }
+            catch (System.Runtime.InteropServices.COMException) { Status = "Clipboard-ul este ocupat de alt program; încercați din nou."; }
+        }
+
         // ───────── WP18 S4: the guided control, "Verifică această stație", in three steps ─────────
 
         public sealed record PeriodOption(ControlPeriodChoice Choice, string Label);
@@ -236,6 +262,7 @@ namespace LogAnalyzer.UI.ViewModels
             foreach (var c in _report.Checks.OrderBy(c => Array.IndexOf(order, c.Status)).ThenBy(c => c.Id))
                 if (StatusFilter == "Toate" || ControlReportPdf.StatusText(c.Status) == StatusFilter)
                     Checks.Add(c);
+            SelectedCheck = Checks.FirstOrDefault();   // the explanation panel is never empty after a control
         }
 
         [RelayCommand]

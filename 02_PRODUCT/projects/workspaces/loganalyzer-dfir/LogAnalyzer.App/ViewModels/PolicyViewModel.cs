@@ -40,6 +40,38 @@ namespace LogAnalyzer.UI.ViewModels
 
         public string Operator => _bench.Operator;
 
+        // Owner 2026-10-11: one "next step" with its reason, instead of ten buttons the operator has to know the order of.
+        [ObservableProperty] private PolicyNextStep _nextStep = PolicyNextStep.For(false, null, "", false, false, 0, false);
+        partial void OnApprovalReasonChanged(string value) => UpdateNextStep();
+
+        private void UpdateNextStep() =>
+            NextStep = PolicyNextStep.For(_policy is not null, _policy is null ? null : _bench.Store.Get(_policy), _bench.Operator,
+                                          !string.IsNullOrWhiteSpace(ApprovalReason), _plan is not null, _plan?.ToChange ?? 0, _registryWriter is not null);
+
+        [RelayCommand]
+        private async Task DoNextStep()
+        {
+            switch (NextStep.Kind)
+            {
+                case PolicyStepKind.Open: OpenFile(); break;
+                case PolicyStepKind.Register: Register(); break;
+                case PolicyStepKind.Validate: Validate(); break;
+                case PolicyStepKind.DryRun: await DryRun(); break;
+                case PolicyStepKind.Approve: if (NextStep.CanAct) Approve(); else Status = NextStep.Text; break;
+                case PolicyStepKind.ComputePlan: await ComputePlan(); break;
+                case PolicyStepKind.Apply: ApplyPlan(); break;
+                case PolicyStepKind.Assess: await AssessAgainstPolicy(); break;
+                default: Status = NextStep.Text; break;
+            }
+            UpdateNextStep();
+        }
+
+        // Plain-language explanation of the selected plan row (registry value, audit category, service, security policy key).
+        [ObservableProperty] private ControlPlan? _selectedPlanRow;
+        [ObservableProperty] private LogAnalyzer.Dfir.Windows.Audit.CodeExplanation? _selectedSettingExplanation;
+        partial void OnSelectedPlanRowChanged(ControlPlan? value) =>
+            SelectedSettingExplanation = value is null ? null : LogAnalyzer.Dfir.Windows.Audit.CodeExplainer.Setting(value.Setting);
+
         /// <param name="registryWriter">Null in the classified edition: policies can be opened, validated and compared but not applied to the registry.</param>
         public PolicyViewModel(LogAnalyzer.Dfir.Windows.Policy.IRegistryValueWriter? registryWriter = null)
         {
@@ -93,7 +125,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task DryRun()
         {
-            if (_policy is null) { Status = "Deschideți întâi o politică."; return; }
+            if (_policy is null) { Status = "Ca să faceți acest pas, deschideți întâi politica: butonul „Deschide politica…” de sus."; return; }
             var p = _policy;
             IsBusy = true;
             try
@@ -110,7 +142,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task ComputePlan()
         {
-            if (_policy is null) { Status = "Deschideți întâi o politică."; return; }
+            if (_policy is null) { Status = "Ca să faceți acest pas, deschideți întâi politica: butonul „Deschide politica…” de sus."; return; }
             var p = _policy;
             IsBusy = true;
             try
@@ -125,7 +157,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ApplyPlan()
         {
-            if (_policy is null || _plan is null) { Status = "Calculați întâi planul."; return; }
+            if (_policy is null || _plan is null) { Status = "Ca să aplicați, calculați întâi planul: butonul „Calculează planul” arată exact ce se va schimba."; return; }
             if (_plan.ToChange == 0) { Status = "Planul nu are nicio modificare de aplicat."; return; }
             var text = $"Se vor modifica {_plan.ToChange} setări pe {_plan.Station} ca {_bench.Operator}.\n" +
                        $"Politica {_plan.PolicyId} {_plan.PolicyVersion}\nSHA-256 politică: {_plan.PolicySha256}\nSHA-256 plan: {_plan.Sha256}\n\n" +
@@ -165,7 +197,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         private async Task Assess(string? mapping)
         {
-            if (_policy is null) { Status = "Deschideți întâi o politică."; return; }
+            if (_policy is null) { Status = "Ca să faceți acest pas, deschideți întâi politica: butonul „Deschide politica…” de sus."; return; }
             var p = _policy;
             IsBusy = true;
             try
@@ -202,6 +234,8 @@ namespace LogAnalyzer.UI.ViewModels
             _plan = plan;
             PlanRows.Clear();
             foreach (var c in plan.Controls) PlanRows.Add(c);
+            SelectedPlanRow = PlanRows.FirstOrDefault();
+            UpdateNextStep();
             PlanSummary = $"Conforme {plan.Compliant} · de modificat {plan.ToChange} · manual {plan.Manual} · necitite {plan.Unreadable}";
         }
 
@@ -213,7 +247,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         private void WithPolicy(Func<PolicyDocument, string> action)
         {
-            if (_policy is null) { Status = "Deschideți întâi o politică."; return; }
+            if (_policy is null) { Status = "Ca să faceți acest pas, deschideți întâi politica: butonul „Deschide politica…” de sus."; return; }
             var p = _policy;
             Step(() => action(p));
         }
@@ -232,6 +266,7 @@ namespace LogAnalyzer.UI.ViewModels
         private void Refresh()
         {
             OnPropertyChanged(nameof(Operator));
+            UpdateNextStep();
             History.Clear();
             if (_policy is null) { PolicyInfo = "Nicio politică deschisă."; return; }
             var rec = _bench.Store.Get(_policy);

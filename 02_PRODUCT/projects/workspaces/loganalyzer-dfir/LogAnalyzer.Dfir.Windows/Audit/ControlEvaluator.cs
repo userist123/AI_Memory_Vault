@@ -234,8 +234,8 @@ public static class ControlEvaluator
         var auditChanges = Logs(f, "Security", 4719).ToList();
         if (auditChanges.Count > 0)
             Add(r, "A06", "Audit", "Politica de audit a fost modificată", ControlStatus.DeVerificat, $"{auditChanges.Count} modificări.",
-                auditChanges.Select(l => $"{Ev(l)} de {Who(l)}: {V(l, "SubcategoryGuid")} {V(l, "AuditPolicyChanges")}"));
-        foreach (var l in auditChanges) r.Actions.Add(new ActionEntry(l.TimeUtc, Who(l), "a modificat politica de audit", V(l, "SubcategoryGuid"), Ev(l)));
+                auditChanges.Select(l => $"{Ev(l)} de {Who(l)}: {AuditName(V(l, "SubcategoryGuid"))} {V(l, "AuditPolicyChanges")}"));
+        foreach (var l in auditChanges) r.Actions.Add(new ActionEntry(l.TimeUtc, Who(l), "a modificat politica de audit", AuditName(V(l, "SubcategoryGuid")), Ev(l)));
 
         var timeChanges = Logs(f, "Security", 4616).Where(l => !V(l, "ProcessName").EndsWith("svchost.exe", StringComparison.OrdinalIgnoreCase) &&
                                                              !SystemAccounts.Contains(V(l, "SubjectUserName"))).ToList();
@@ -429,6 +429,10 @@ public static class ControlEvaluator
         foreach (var l in Logs(f, "System", 1074))
             r.Actions.Add(new ActionEntry(l.TimeUtc, V(l, "param7") is { Length: > 0 } u ? u : l.UserSid, "a oprit/repornit stația", $"{V(l, "param1")} {V(l, "param3")}", Ev(l)));
     }
+
+    /// <summary>"Logon {0CCE9215-…}": the subcategory name next to the GUID Windows writes in 4719, so the timeline is readable.</summary>
+    private static string AuditName(string guid) =>
+        Guid.TryParse(guid.Trim('{', '}'), out var g) && LogAnalyzer.Dfir.Policy.AuditSubcategories.ByName.FirstOrDefault(kv => kv.Value == g).Key is { } n ? $"{n} {guid}" : guid;
 
     private static string Clean(string s) => s.Trim().Trim('.').Replace("NULL", "", StringComparison.Ordinal).Trim();
     private static string FormatBytes(string s) => long.TryParse(s, out var b) ? $"{b / 1_000_000_000.0:0.#} GB" : s;

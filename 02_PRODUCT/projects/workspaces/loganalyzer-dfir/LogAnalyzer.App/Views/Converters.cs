@@ -6,6 +6,15 @@ using System.Windows.Data;
 
 namespace LogAnalyzer.UI.Views
 {
+    /// <summary>Visible when the bound value is false (the hint shown before a selection is made).</summary>
+    public sealed class InverseBoolToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value is true ? System.Windows.Visibility.Collapsed : System.Windows.Visibility.Visible;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+    }
+
     /// <summary>Shows a list of strings in one grid cell.</summary>
     public sealed class JoinConverter : IValueConverter
     {
