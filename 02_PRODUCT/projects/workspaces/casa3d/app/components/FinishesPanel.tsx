@@ -11,6 +11,7 @@ import { normalizeHex } from '@/core/appearance';
 import { lightReport } from '@/core/light-design';
 import { roomWindows, curtainPlan, blindPlan, TEXTILE_RULES } from '@/core/textiles';
 import { kitchenOf, kitchenRun, kitchenQuantities, kitchenIssues } from '@/core/kitchen';
+import KitchenModules from './KitchenModules';
 import MaterialPicker from './MaterialPicker';
 import { bathOf, bathIssues, METAL_COLOR, TILE_ZONE_M } from '@/core/bath';
 import { fixtureIssues, fixtureCount, FIXTURE_KINDS, FIXTURE_ANCHORS } from '@/core/fixtures';
@@ -150,8 +151,9 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish }: { 
     </fieldset>}
 
     {run && <fieldset className="fin-group"><legend>{t('kit.title')}</legend>
-      {kIss.map((i, k) => <div key={k} className="issue WARNING">{t(i.key, i.vars)}</div>)}
+      {kIss.filter(i => !i.key.startsWith('kmod.')).map((i, k) => <div key={k} className="issue WARNING">{t(i.key, i.vars)}</div>)}
       <div className="prov">{t('kit.run', { len: formatLength(run.lengthM, units, lang), n: run.modules, fronts: kq!.fronts })}</div>
+      <KitchenModules runCm={run.lengthM * 100} modules={f.kitchen?.modules} onChange={m => setK({ modules: m })} />
       <div className="grid2">
         <label className="f"><span>{t('kit.fronts')}</span><input type="color" value={ks.frontColor} onChange={e => { const h = normalizeHex(e.target.value); if (h) setK({ frontColor: h }); }} /></label>
         <label className="f"><span>{t('kit.finish')}</span><select value={ks.frontFinish} onChange={e => setK({ frontFinish: e.target.value as any })}>{(['matt', 'gloss', 'wood'] as const).map(x => <option key={x} value={x}>{t(`kit.finish.${x}`)}</option>)}</select></label>

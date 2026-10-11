@@ -3,6 +3,7 @@
 import type { Catalog, FurniturePlacement, KitchenSpec, Material, MaterialsCatalog, RoomFinishes, Snapshot } from './types';
 import { resolve } from './catalog';
 import { materialOf } from './finishes';
+import { checkModules, moduleIssues } from './kitchen-modules';
 
 export const KITCHEN_DEFAULT: Required<Pick<KitchenSpec, 'frontColor' | 'frontFinish' | 'handle' | 'handleColor' | 'upper' | 'countertopColor' | 'countertopMm' | 'backsplash'>> =
   { frontColor: '#f4f4f1', frontFinish: 'matt', handle: 'bar', handleColor: '#222222', upper: 'open', countertopColor: '#cdb592', countertopMm: 38, backsplash: 'tile' };
@@ -28,6 +29,7 @@ export function kitchenIssues(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog
   if (k.underLed && k.upper === 'none') out.push({ key: 'kit.ledNoUpper', roomId });
   if (top?.specs?.sizeCm && top.specs.sizeCm[1] / 100 < .6) out.push({ key: 'kit.topShallow', roomId, vars: { cm: top.specs.sizeCm[1] } });
   if (k.frontFinish === 'gloss' && k.handle === 'none') out.push({ key: 'kit.glossNoHandle', roomId });
+  if (k.modules?.length) for (const i of moduleIssues(k.modules, run.lengthM * 100)) out.push({ key: i.key, roomId, vars: i.vars });
   return out;
 }
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -38,6 +40,7 @@ export function sanitizeKitchen(k: any): string | null {
   if (!hex(k.frontColor) || !hex(k.handleColor) || !hex(k.countertopColor) || !hex(k.backsplashColor) || !one(k.frontFinish, ['matt', 'gloss', 'wood']) || !one(k.handle, ['bar', 'knob', 'profile', 'none'])
     || !one(k.upper, ['open', 'closed', 'none']) || !one(k.backsplash, ['tile', 'countertop', 'glass', 'paint']) || !id(k.countertop) || !id(k.sink) || !id(k.tap) || !id(k.underLed)
     || (k.countertopMm !== undefined && !(typeof k.countertopMm === 'number' && k.countertopMm >= 8 && k.countertopMm <= 80))) return 'Bucătăria este invalidă.';
+  if (k.modules !== undefined){ try { k.modules = checkModules(k.modules); } catch { return 'Modulele bucătăriei sunt invalide.'; } }
   return null;
 }
 /** Ce desenează motorul 3D pe piesa de bucătărie. */
