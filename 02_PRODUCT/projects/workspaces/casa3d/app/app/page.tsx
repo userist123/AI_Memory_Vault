@@ -21,7 +21,8 @@ export default function Home(){
   const loadTrash = () => fetch('/api/projects/trash').then(r => r.ok ? r.json() : []).then(setTrash).catch(() => {});
   const thumbs = (ps: P[]) => { for (const p of ps.slice(0, 24)) fetch(`/api/projects/${p.id}`).then(r => r.ok ? r.json() : null).then(j => { if (j?.draft?.floor) setPlans(m => m[p.id] ? m : ({ ...m, [p.id]: j.draft.floor })); }).catch(() => {}); };
   const reload = () => fetch('/api/projects').then(r => r.json()).then((ps: P[]) => { setList(ps); thumbs(ps); }).catch(() => setErr(t('home.loadFailed')));
-  useEffect(() => { loadTrash(); }, []); // eslint-disable-line
+  const [demo, setDemo] = useState(false);
+  useEffect(() => { loadTrash(); fetch('/api/health').then(r => r.json()).then(h => setDemo(!!h.demo)).catch(() => {}); }, []); // eslint-disable-line
   useEffect(() => { if (!undo) return; const tm = setTimeout(() => setUndo(null), 10000); return () => clearTimeout(tm); }, [undo]);
   // ștergerea mută în coș (30 de zile) și se poate anula imediat; ștergerea definitivă cere numele tastat
   async function toTrash(p: P){ const r = await fetch(`/api/projects/${p.id}`, { method: 'DELETE' }); if (!r.ok){ setErr(t('home.error')); return; } setUndo({ id: p.id, name: p.name }); reload(); loadTrash(); }
@@ -50,6 +51,9 @@ export default function Home(){
   const when = (d: string) => new Date(d).toLocaleDateString(intlLocale(lang), { day: 'numeric', month: 'short', year: 'numeric' });
   return (<main className="home">
     <header className="home-head"><span className="wordmark">Casa<b>3D</b></span><span className="home-sub">{t('home.studio')}</span><PrefsSwitcher /></header>
+    {demo && <section className="demo-hero"><span className="kicker">{t('demo.kicker')}</span><h1>{t('demo.title')}</h1><p>{t('demo.lead')}</p>
+      <ul>{['plan', 'products', 'finishes', 'budget', 'client', 'docs'].map(k => <li key={k}>{t(`demo.f.${k}`)}</li>)}</ul>
+      <div className="row"><button className="btn primary" disabled={busy} onClick={() => create('demo')}>{t('demo.open')}</button><span className="muted">{t('demo.note')}</span></div></section>}
     {list !== null && <TasksPanel projects={(list ?? []).map(p => ({ id: p.id, name: p.name }))} />}
     <section>
       <div className="home-sec"><h1>{t('home.projects')}</h1>{list && list.length > 0 && <span className="muted">{tp('home.count', list.length)}</span>}</div>
@@ -80,6 +84,6 @@ export default function Home(){
       </div>
     </section>
     <section><StudioProfileForm /></section>
-    <PhoneAccess />
+    {!demo && <PhoneAccess />}
   </main>);
 }
