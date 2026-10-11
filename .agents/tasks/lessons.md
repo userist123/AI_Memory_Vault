@@ -55,3 +55,12 @@ When the owner corrects an agent or a real incident reveals a reusable failure p
   When a scanner flags a literal that is only parsed, keep the code exact and add an explicit, documented exception bound to
   that exact literal in that one assembly, with a test that the exception does not leak (`ParsingOnlyLiterals`). Agent prompts
   must say: a red security gate is fixed in the gate's own allowlist with a reason, never by obfuscation.
+
+## 2026-10-12 — owner rule: nothing about the owner's own PC or handed-over material goes into git
+- Relayed from the LogAnalyzer session at the owner's request. Never commit, push or publish machine names,
+  Windows user names, `C:\Users\<user>` paths, device or USB serials, SIDs, Wi-Fi names, case ids from real runs,
+  or the content of reports, logs, screenshots or files the owner hands over. Applies to files, test fixtures, docs,
+  commit messages and PR or issue text; repositories may be public. Use placeholders (`LAB-PC`, `user`,
+  `C:\Users\user`, fake serials). Pasted terminal output is the usual leak (pytest prints `rootdir:`); scrub it
+  before committing. If something already slipped into a pushed branch, tell the owner; history rewrites and
+  repository visibility are the owner's decision, never mine.
