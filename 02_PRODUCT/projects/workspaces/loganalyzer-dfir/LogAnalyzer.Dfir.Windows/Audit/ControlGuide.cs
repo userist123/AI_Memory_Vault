@@ -143,7 +143,7 @@ public sealed record ControlResultScreen(string Headline, string Problem, string
         var readable = f.Coverage.Count(c => c.Readable);
         var coverage = f.Coverage.Count == 0 ? "Acoperire: nicio sursă citită."
             : $"Surse citite: {readable} din {f.Coverage.Count}" + (unreadable.Count == 0 ? "." : $"; necitite: {string.Join(", ", unreadable)}.")
-              + (f.Gaps.Count == 0 ? "" : $" Goluri de probă: {f.Gaps.Count}.");
+              + (f.Gaps.Count == 0 ? "" : $" Surse lipsă sau incomplete: {f.Gaps.Count}.");
         bool nothing = nc == 0 && dv == 0;
 
         string headline = nc > 0 ? $"ATENȚIE — {nc} verificări NECONFORME"

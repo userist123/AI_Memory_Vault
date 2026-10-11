@@ -159,7 +159,7 @@ public static class Correlation
                 Title = $"Microsoft Defender a detectat {(threats.Count == 1 ? threats[0] : $"{threats.Count} amenințări")} în {WinPath.GetFileName(g.Key.TrimEnd('\\'))}",
                 Severity = Severity.High, Category = "Execution", Classification = Classification.Direct, Confidence = Confidence.High,
                 FirstSeenUtc = g.Min(e => e.Time.Utc), LastSeenUtc = g.Max(e => e.Time.Utc), File = g.Key, User = F(first, "Detection User"),
-                Description = $"{g.Count()} evenimente Defender pentru {g.Key}: {string.Join(", ", threats.Take(15))}. Acțiuni: {string.Join(", ", g.Select(e => F(e, "Action Name")).Where(a => a.Length > 0).Distinct())}.",
+                Description = $"{LogAnalyzer.Dfir.Language.RoText.Count(g.Count(), "eveniment", "evenimente")} Defender pentru {g.Key}: {string.Join(", ", threats.Take(15))}. Acțiuni: {string.Join(", ", g.Select(e => F(e, "Action Name")).Where(a => a.Length > 0).Distinct())}.",
                 ClassificationReason = "Înregistrare directă în jurnalul Defender.",
                 SupportingEvidence = g.Take(20).Select(e => Ref(e, $"Defender {e.EventId}")).ToList(),
                 RecommendedNextSteps = ["Verificați dacă fișierul mai există și dacă rulează.", "Căutați același hash pe alte stații."],
@@ -236,7 +236,7 @@ public static class Correlation
         foreach (var e in services.Where(e => IsUserWritableCommand(F(e, "ImagePath") + F(e, "ServiceFileName"))))
             f.Add(new Finding
             {
-                FindingId = Id(), RuleId = "PERSIST-SERVICE-USERPATH", Title = $"Serviciu instalat dintr-o locație scriabilă de utilizatori: {F(e, "ServiceName")}",
+                FindingId = Id(), RuleId = "PERSIST-SERVICE-USERPATH", Title = $"Serviciu instalat dintr-o locație în care utilizatorii pot scrie: {F(e, "ServiceName")}",
                 Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1543.003",
                 FirstSeenUtc = e.Time.Utc, File = F(e, "ImagePath") + F(e, "ServiceFileName"), User = F(e, "AccountName"),
                 Description = $"Serviciul {F(e, "ServiceName")} rulează {F(e, "ImagePath")}{F(e, "ServiceFileName")} ca {F(e, "AccountName")}{F(e, "ServiceAccount")}.",
@@ -261,13 +261,13 @@ public static class Correlation
             var ran = g.Where(e => Ev(e, TaskChannel, 200, 129)).OrderBy(e => e.Time.Utc).FirstOrDefault();
             f.Add(new Finding
             {
-                FindingId = Id(), RuleId = "PERSIST-TASK", Title = $"Task programat care rulează din locație scriabilă sau un script: {taskName}",
+                FindingId = Id(), RuleId = "PERSIST-TASK", Title = $"Activitate planificată care rulează din locație în care utilizatorii pot scrie sau un script: {taskName}",
                 Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1053.005",
                 FirstSeenUtc = created.Time.Utc, User = user,
                 Description = $"Task {taskName} creat {(user.Length > 0 ? "de " + user : "(creatorul nu apare în jurnal)")}" +
                               (ran?.Time.Utc is { } at ? $"; a rulat la {at:yyyy-MM-dd HH:mm} UTC" : "") +
-                              ". Acțiunea indică o cale scriabilă de utilizatori sau un script. Ce verificați: ce rulează taskul, cine l-a creat și dacă a pornit (TaskScheduler 200).",
-                ClassificationReason = "Eveniment de creare a taskului (106 / 4698) și acțiunea lui (4698 TaskContent, 200, 129): indică o cale scriabilă sau un script.",
+                              ". Acțiunea indică o cale în care utilizatorii pot scrie sau un script. Ce verificați: ce rulează taskul, cine l-a creat și dacă a pornit (TaskScheduler 200).",
+                ClassificationReason = "Eveniment de creare a taskului (106 / 4698) și acțiunea lui (4698 TaskContent, 200, 129): indică o cale în care utilizatorii pot scrie sau un script.",
                 SupportingEvidence = g.Take(6).Select(e => Ref(e, $"task {e.EventId}")).ToList(),
             });
         }
@@ -279,11 +279,11 @@ public static class Correlation
             bool hidden = F(e, "Hidden") == "true";
             f.Add(new Finding
             {
-                FindingId = Id(), RuleId = "PERSIST-TASK-CONFIG", Title = $"Task programat{(hidden ? " ascuns" : "")} care rulează din locație scriabilă: {e.Task}",
+                FindingId = Id(), RuleId = "PERSIST-TASK-CONFIG", Title = $"Activitate planificată{(hidden ? " ascunsă" : "")} care rulează din locație în care utilizatorii pot scrie: {e.Task}",
                 Severity = hidden ? Severity.High : Severity.Medium, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High,
                 MitreTechniqueId = "T1053.005", FirstSeenUtc = e.Time.Utc, File = e.Path, Process = e.Process, User = e.User,
                 Description = $"{e.Task} rulează {F(e, "Command")} {F(e, "Arguments")} ca {e.User} ({F(e, "RunLevel")}); declanșatori: {F(e, "Triggers")}; autor {F(e, "Author")}.",
-                ClassificationReason = "Definiția taskului (XML din System32\\Tasks) indică o cale scriabilă de utilizatori. Arată configurația, nu o rulare.",
+                ClassificationReason = "Definiția taskului (XML din System32\\Tasks) indică o cale în care utilizatorii pot scrie. Arată configurația, nu o rulare.",
                 SupportingEvidence = [Ref(e, "definiție task")],
                 AlternativeExplanations = ["Actualizatoare legitime instalate per utilizator (AppData) creează astfel de taskuri."],
                 MissingEvidence = ["Rulări ale taskului: TaskScheduler/Operational (200/201) sau Prefetch pentru executabil."],
@@ -297,12 +297,12 @@ public static class Correlation
             var file = IsUserWritable(F(e, "ServiceDll")) ? F(e, "ServiceDll") : e.Path;
             f.Add(new Finding
             {
-                FindingId = Id(), RuleId = "PERSIST-SERVICE-CONFIG", Title = $"Serviciu configurat din locație scriabilă: {e.Service}",
+                FindingId = Id(), RuleId = "PERSIST-SERVICE-CONFIG", Title = $"Serviciu configurat din locație în care utilizatorii pot scrie: {e.Service}",
                 Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High,
                 MitreTechniqueId = "T1543.003", FirstSeenUtc = e.Time.Utc, File = file, User = e.User,
                 Description = $"{e.Service} ({F(e, "ServiceType")}, {F(e, "StartMode")}) rulează {F(e, "ImagePath")}" +
                               (F(e, "ServiceDll").Length > 0 ? $" cu ServiceDll {F(e, "ServiceDll")}" : "") + $" ca {e.User}.",
-                ClassificationReason = "Configurația serviciului din hive-ul SYSTEM indică o cale scriabilă de utilizatori. Arată configurația, nu o rulare.",
+                ClassificationReason = "Configurația serviciului din hive-ul SYSTEM indică o cale în care utilizatorii pot scrie. Arată configurația, nu o rulare.",
                 SupportingEvidence = [Ref(e, "configurație serviciu")],
                 AlternativeExplanations = ["Unele produse legitime își instalează serviciul în ProgramData."],
                 MissingEvidence = ["Instalarea (System 7045) și pornirile (7036), semnătura binarului."],
@@ -320,11 +320,11 @@ public static class Correlation
             f.Add(new Finding
             {
                 FindingId = Id(), RuleId = "FIREWALL-RULE-USERPATH",
-                Title = $"Regulă de firewall care permite {(inbound ? "intrarea" : "ieșirea")} pentru un program din locație scriabilă: {WinPath.GetFileName(F(e, "ApplicationPath"))}",
+                Title = $"Regulă de firewall care permite {(inbound ? "intrarea" : "ieșirea")} pentru un program din locație în care utilizatorii pot scrie: {WinPath.GetFileName(F(e, "ApplicationPath"))}",
                 Severity = inbound ? Severity.High : Severity.Medium, Category = "DefenseEvasion", Classification = Classification.Direct, Confidence = Confidence.High,
                 MitreTechniqueId = "T1562.004", FirstSeenUtc = e.Time.Utc, File = F(e, "ApplicationPath"), User = F(e, "ModifyingUser"),
                 Description = $"Regula „{F(e, "RuleName")}” ({(inbound ? "Inbound" : "Outbound")}, Allow) pentru {F(e, "ApplicationPath")}, adăugată/modificată de {F(e, "ModifyingApplication")}.",
-                ClassificationReason = "Evenimentul de firewall arată o regulă de tip Allow pentru o cale scriabilă de utilizatori.",
+                ClassificationReason = "Evenimentul de firewall arată o regulă de tip Allow pentru o cale în care utilizatorii pot scrie.",
                 SupportingEvidence = [Ref(e, "regulă firewall")],
                 AlternativeExplanations = ["Aplicații per utilizator (de ex. jocuri, clienți de chat) își adaugă reguli la instalare."],
             });
@@ -355,11 +355,11 @@ public static class Correlation
         foreach (var e in events.Where(e => e.Source == "RunKey" && IsUserWritable(e.Path)))
             f.Add(new Finding
             {
-                FindingId = Id(), RuleId = "PERSIST-RUNKEY-USERPATH", Title = $"Pornire automată din locație scriabilă: {F(e, "ValueName")}",
+                FindingId = Id(), RuleId = "PERSIST-RUNKEY-USERPATH", Title = $"Pornire automată din locație în care utilizatorii pot scrie: {F(e, "ValueName")}",
                 Severity = Severity.Medium, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High,
                 MitreTechniqueId = "T1547.001", FirstSeenUtc = e.Time.Utc, File = e.Path, Process = e.Process,
                 Description = $"{F(e, "Hive")}\\{F(e, "Key")}: {F(e, "ValueName")} = {F(e, "Command")}",
-                ClassificationReason = "Valoarea din cheia Run/RunOnce indică o cale scriabilă de utilizatori. Ora este LastWriteTime al cheii.",
+                ClassificationReason = "Valoarea din cheia Run/RunOnce indică o cale în care utilizatorii pot scrie. Ora este LastWriteTime al cheii.",
                 SupportingEvidence = [Ref(e, "valoare Run")],
                 AlternativeExplanations = ["Multe aplicații per utilizator (actualizatoare, sincronizare) pornesc legitim din AppData."],
             });
@@ -395,7 +395,7 @@ public static class Correlation
             if (IsUserWritable(exePath))
                 userPathExec.Add(new Finding
                 {
-                    FindingId = "", RuleId = "EXEC-USERPATH", Title = $"Program rulat dintr-o locație scriabilă: {e.Process}",
+                    FindingId = "", RuleId = "EXEC-USERPATH", Title = $"Program rulat dintr-o locație în care utilizatorii pot scrie: {e.Process}",
                     Severity = Severity.Medium, Category = "Execution", Classification = Classification.Direct, Confidence = Confidence.High,
                     LastSeenUtc = e.Time.Utc, File = exePath, Process = e.Process,
                     Description = $"{exePath} a rulat de {F(e, "RunCount")} ori; ultima rulare {e.Time.Utc:yyyy-MM-dd HH:mm} UTC.",
@@ -409,10 +409,10 @@ public static class Correlation
             if (scripts.Count > 0 && Lolbins.Contains(e.Process))
                 f.Add(new Finding
                 {
-                    FindingId = Id(), RuleId = "EXEC-SCRIPT-VIA-LOLBIN", Title = $"{e.Process} a lucrat cu scripturi din locații scriabile",
+                    FindingId = Id(), RuleId = "EXEC-SCRIPT-VIA-LOLBIN", Title = $"{e.Process} a lucrat cu scripturi din locații în care utilizatorii pot scrie",
                     Severity = Severity.High, Category = "Execution", Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1218",
                     LastSeenUtc = e.Time.Utc, Process = e.Process, File = string.Join("; ", scripts.Take(5)),
-                    Description = $"Prefetch-ul lui {e.Process} referă: {string.Join(", ", scripts.Take(10))}.",
+                    Description = $"Prefetch-ul lui {e.Process} face referire la: {string.Join(", ", scripts.Take(10))}.",
                     ClassificationReason = "Fișiere referite în Prefetch în timpul execuției programului.",
                     SupportingEvidence = [Ref(e, "Prefetch ReferencedFiles")],
                 });
@@ -423,7 +423,7 @@ public static class Correlation
                                 .GroupBy(e => (e.Source, e.Path.ToLowerInvariant())).Select(g => g.OrderByDescending(x => x.Time.Utc).First()))
             userPathExec.Add(new Finding
             {
-                FindingId = "", RuleId = "EXEC-USERPATH", Title = $"{(e.Source == "BAM" ? "Program rulat" : "Program prezent")} dintr-o locație scriabilă: {e.Process}",
+                FindingId = "", RuleId = "EXEC-USERPATH", Title = $"{(e.Source == "BAM" ? "Program rulat" : "Program prezent")} dintr-o locație în care utilizatorii pot scrie: {e.Process}",
                 Severity = Severity.Medium, Category = "Execution", Classification = Classification.Direct,
                 Confidence = e.Source == "BAM" ? Confidence.High : Confidence.Medium, LastSeenUtc = e.Time.Utc, File = e.Path, Process = e.Process, User = e.User,
                 Description = e.Source == "BAM"
@@ -447,7 +447,7 @@ public static class Correlation
                 f.Add(new Finding
                 {
                     FindingId = Id(), RuleId = Lolbins.Contains(exe) ? "NET-LOLBIN-TRAFFIC" : "NET-USERPATH-UPLOAD",
-                    Title = Lolbins.Contains(exe) ? $"{exe} (unealtă Windows abuzată frecvent) a transferat date în rețea" : $"{exe} (din locație scriabilă) a trimis {sent / 1_000_000.0:0.#} MB",
+                    Title = Lolbins.Contains(exe) ? $"{exe} (unealtă Windows abuzată frecvent) a transferat date în rețea" : $"{exe} (din locație în care utilizatorii pot scrie) a trimis {sent / 1_000_000.0:0.#} MB",
                     Severity = Severity.High, Category = "Command and Control / Exfiltration",
                     Classification = prefetch.Count > 0 ? Classification.Correlated : Classification.Candidate, Confidence = prefetch.Count > 0 ? Confidence.High : Confidence.Medium,
                     FirstSeenUtc = g.Min(e => e.Time.Utc), LastSeenUtc = g.Max(e => e.Time.Utc), Process = exe, File = g.Key,
@@ -593,8 +593,8 @@ public static class Correlation
             f.Add(new Finding
             {
                 FindingId = Id(), RuleId = "EXEC-USERPATH-CORRELATED",
-                Title = Ran(x) ? $"Program rulat din locație scriabilă, legat de alte constatări: {x.Process}"
-                               : $"Program prezent ({src}) în locație scriabilă, legat de alte constatări: {x.Process}",
+                Title = Ran(x) ? $"Program rulat din locație în care utilizatorii pot scrie, legat de alte constatări: {x.Process}"
+                               : $"Program prezent ({src}) în locație în care utilizatorii pot scrie, legat de alte constatări: {x.Process}",
                 Severity = Severity.High, Category = "Execution", Classification = Classification.Correlated, Confidence = Confidence.Medium,
                 FirstSeenUtc = span.Count > 0 ? span.Min() : null, LastSeenUtc = span.Count > 0 ? span.Max() : x.LastSeenUtc, File = x.File, Process = x.Process,
                 Description = x.Description + " Legături: " + string.Join("; ", touching.Take(5).Select(s => s.Title)),
@@ -612,12 +612,13 @@ public static class Correlation
             {
                 FindingId = Id(), RuleId = "EXEC-USERPATH",
                 SemanticType = rest.All(Ran) ? SemanticType.Execution : SemanticType.Presence,
-                Title = rest.All(Ran) ? $"{rest.Count} programe au rulat din locații scriabile (fără alte semnale)"
-                      : rest.Any(Ran) ? $"{rest.Count} programe au rulat sau sunt doar prezente în locații scriabile (fără alte semnale)"
-                      : $"{rest.Count} programe prezente în locații scriabile, fără dovadă de execuție (fără alte semnale)",
+                Title = rest.All(Ran) ? $"{LogAnalyzer.Dfir.Language.RoText.Count(rest.Count, "program", "programe")} au rulat din locații în care utilizatorii pot scrie (fără alte semnale)"
+                      : rest.Any(Ran) ? $"{LogAnalyzer.Dfir.Language.RoText.Count(rest.Count, "program", "programe")} au rulat sau sunt doar prezente în locații în care utilizatorii pot scrie (fără alte semnale)"
+                      : $"{LogAnalyzer.Dfir.Language.RoText.Count(rest.Count, "program", "programe")} prezente în locații în care utilizatorii pot scrie, fără dovadă de execuție (fără alte semnale)",
                 Severity = Severity.Low, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Low,
                 FirstSeenUtc = rest.Min(T), LastSeenUtc = rest.Max(T),
-                Description = string.Join("; ", rest.OrderByDescending(T).Take(60).Select(x => $"{x.Process} ({T(x):yyyy-MM-dd HH:mm}{(Ran(x) ? "" : $", doar prezent ({ExecSource(x)})")})")),
+                Description = string.Join("; ", rest.GroupBy(x => x.Process, StringComparer.OrdinalIgnoreCase).Select(g => (Last: g.OrderByDescending(T).First(), N: g.Count())).OrderByDescending(g => T(g.Last)).Take(60)
+                    .Select(g => $"{g.Last.Process} ({T(g.Last):yyyy-MM-dd HH:mm}{(Ran(g.Last) ? "" : $", doar prezent ({ExecSource(g.Last)})")}{(g.N > 1 ? $", {g.N} apariții" : "")})")),
                 ClassificationReason = string.Join("; ", new[]
                 {
                     rest.Count(Ran) is var ran and > 0 ? $"execuție dovedită pentru {ran} ({string.Join("/", rest.Where(Ran).Select(ExecSource).Distinct())})" : "",
@@ -675,7 +676,7 @@ public static class Correlation
                 f.Add(new Finding
                 {
                     FindingId = Id(), RuleId = "INCIDENT-CHAIN",
-                    Title = $"Lanț de incident {T(cluster[0]):yyyy-MM-dd HH:mm} – {T(cluster[^1]):HH:mm} UTC ({cluster.Count} constatări legate)",
+                    Title = $"Lanț de incident {T(cluster[0]):yyyy-MM-dd HH:mm} – {T(cluster[^1]):HH:mm} UTC ({LogAnalyzer.Dfir.Language.RoText.Count(cluster.Count, "constatare", "constatări")} legate)",
                     Severity = cluster.Any(c => c.RuleId == "DEF-DETECTION") && cluster.Any(c => c.RuleId is "EXEC-SCRIPT-VIA-LOLBIN" or "NET-LOLBIN-TRAFFIC" or "PERSIST-TASK" or "LOG-TAMPER")
                         ? Severity.Critical : Severity.High,
                     Category = "Incident", Classification = Classification.Correlated, Confidence = Confidence.Medium,

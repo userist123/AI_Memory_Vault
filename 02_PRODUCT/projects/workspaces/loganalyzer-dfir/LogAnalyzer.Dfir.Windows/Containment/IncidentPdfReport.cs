@@ -130,7 +130,7 @@ public static class IncidentPdfReport
                 if (i.FirewallRules.Count > 0)
                     col.Item().Text("Reguli de firewall active: " + string.Join(", ", i.FirewallRules)).FontSize(8);
 
-                Section(col, "7. Goluri de probă");
+                Section(col, "7. Surse lipsă sau incomplete");
                 if (s is null || s.Gaps.Count == 0) col.Item().Text("Niciun gol raportat de scanare.").FontColor(Muted);
                 else Table(col, new[] { "Artefact", "Status", "Motiv", "Impact", "Sursă alternativă" },
                     s.Gaps.Select(g => new[] { g.Artifact, g.Status.ToSpec(), g.Reason, g.Impact, g.AlternativeSource }));

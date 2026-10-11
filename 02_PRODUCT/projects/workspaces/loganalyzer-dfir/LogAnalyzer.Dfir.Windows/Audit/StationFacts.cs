@@ -443,7 +443,7 @@ public static class StationFactCollector
                 }
             }
             foreach (var (eid, n) in perId.Where(p => p.Value >= maxPerId))
-                f.Gaps.Add(new EvidenceGap($"{channel} {eid}", EvidenceStatus.Partial, $"limitat la cele mai recente {maxPerId} evenimente",
+                f.Gaps.Add(new EvidenceGap($"{channel} {eid}", EvidenceStatus.Partial, $"limitat la cele mai recente {LogAnalyzer.Dfir.Language.RoText.Count(maxPerId, "eveniment", "evenimente")}",
                     "Numărătorile pentru acest eveniment sunt minime, nu totale", "Analiză offline a jurnalului exportat", "Da"));
             f.Coverage.Add(new ChannelCoverage(channel, oldest, count, true,
                 oldest is { } o && o > since ? $"jurnalul începe abia la {o:yyyy-MM-dd HH:mm} UTC (după începutul perioadei)" : ""));

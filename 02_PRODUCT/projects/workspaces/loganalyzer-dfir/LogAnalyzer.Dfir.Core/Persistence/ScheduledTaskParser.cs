@@ -18,7 +18,7 @@ public sealed partial class ScheduledTaskParser : EvidenceParserBase
 
     public override ParserDescriptor Descriptor { get; } = new()
     {
-        ParserId = "ScheduledTaskParser", Version = "1.0", Artifact = "Definiție de task programat (System32\\Tasks, XML)",
+        ParserId = "ScheduledTaskParser", Version = "1.0", Artifact = "Definiție de activitate planificată (System32\\Tasks, XML)",
         SourceTypes = ["task_xml"], Fingerprints = ["task_xml"],
         SupportedOs = "Oricare (XML citit offline)",
         FormatVersions = ["Task Scheduler schema 1.1–1.6 (Windows Vista – 11)"],
@@ -91,7 +91,7 @@ public sealed partial class ScheduledTaskParser : EvidenceParserBase
                 Source = "ScheduledTask", EvidenceId = item.EvidenceId, Task = uri, User = user,
                 // Path is the executable without the quotes the XML may carry; the raw command stays in Fields["Command"].
                 Path = command.Trim().Trim('"'), Process = command.Length > 0 ? LogAnalyzer.Dfir.FileSystem.WinPath.GetFileName(command.Trim().Trim('"')) : "",
-                Summary = $"Task programat {uri}: {what}" + (common["Hidden"] == "true" ? " (ascuns)" : "") +
+                Summary = $"Activitate planificată {uri}: {what}" + (common["Hidden"] == "true" ? " (ascunsă)" : "") +
                           (triggers.Count > 0 ? $"; declanșatori: {common["Triggers"]}" : ""),
                 TemporalType = TemporalType.CurrentSnapshot, Classification = Classification.Direct, Confidence = Confidence.High,
                 Locator = a is null ? "Actions" : $"Actions/{kind}[{index}]", Fields = fields,

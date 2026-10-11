@@ -67,7 +67,19 @@ public static class ArtifactKinds
     /// <summary>Kinds an execution claim can rest on, for the "missing" list.</summary>
     public static readonly string[] ExecutionKinds = ["Prefetch", "BAM", "UserAssist", "EventLog:Security 4688", "Sysmon 1 (EventLog:Microsoft-Windows-Sysmon/Operational)", "Live:Processes"];
 
-    public static readonly string ConfigurationKindsText = "ScheduledTask, Service, RunKey, Winlogon, IFEO, SystemConfig, fotografia live (servicii, taskuri, autorun) sau o înregistrare de jurnal despre ele";
+    /// <summary>Reader-facing name of an evidence family ("Live:Services" → "instantaneu servicii", "EventLog:System" → "jurnalul Sistem").</summary>
+    public static string FamilyLabel(string family) => family switch
+    {
+        "Live:Services" => "instantaneu servicii",
+        "Live:Tasks" => "instantaneu activități planificate",
+        "Live:Autoruns" => "instantaneu pornire automată",
+        "task_xml" => "definiție activitate planificată (XML)",
+        "AmcacheParser" => "Amcache",
+        var f when f.StartsWith("EventLog:", StringComparison.Ordinal) => "jurnalul " + (f[9..] switch { "System" => "Sistem", "Application" => "Aplicație", var n => n }),
+        _ => family,
+    };
+
+    public static readonly string ConfigurationKindsText = "ScheduledTask, Service, RunKey, Winlogon, IFEO, SystemConfig, instantaneul stării live (servicii, taskuri, autorun) sau o înregistrare de jurnal despre ele";
 
     /// <summary>Artifact kinds a claim of this type would expect to find in the case, and whether the case contains them. (label, present)</summary>
     public static IEnumerable<(string Label, bool Present)> Expected(SemanticType t, CaseFacts f)

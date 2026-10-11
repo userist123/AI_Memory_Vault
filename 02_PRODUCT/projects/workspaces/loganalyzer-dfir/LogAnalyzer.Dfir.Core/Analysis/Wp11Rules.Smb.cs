@@ -77,10 +77,10 @@ public static partial class Wp11Rules
             o.Add(new Finding
             {
                 FindingId = c.NextId(), RuleId = "SMB-SHARE-PERMS-CHANGED",
-                Title = $"Permisiuni modificate pe {names.Count} obiecte de fișier/director de {acc}" + (broad ? " (acces nou pentru Everyone/Authenticated Users)" : ""),
+                Title = $"Permisiuni modificate pe {LogAnalyzer.Dfir.Language.RoText.Count(names.Count, "obiect", "obiecte")} de fișier/director de {acc}" + (broad ? " (acces nou pentru Everyone/Authenticated Users)" : ""),
                 Severity = broad ? Severity.Medium : Severity.Low, Category = "Defense Evasion", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1222.001",
                 FirstSeenUtc = T(items[0]), LastSeenUtc = T(items[^1]), User = acc, Process = WinPath.GetFileName(F(items[0], "ProcessName")),
-                Description = $"{names.Count} obiecte, {items.Count} evenimente 4670 de {acc} prin {F(items[0], "ProcessName")}: {Join(names, 8)}." +
+                Description = $"{LogAnalyzer.Dfir.Language.RoText.Count(names.Count, "obiect", "obiecte")}, {LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "eveniment", "evenimente")} 4670 de {acc} prin {F(items[0], "ProcessName")}: {Join(names, 8)}." +
                               (broad ? " Descriptorul nou acordă drepturi de scriere/control total pentru Everyone sau Authenticated Users, absente din cel vechi." : ""),
                 ClassificationReason = "Evenimente Security 4670 (permisiuni schimbate) pe obiecte de tip fișier/director/partajare; descriptorii vechi și noi sunt comparați doar pentru acordări largi noi.",
                 SemanticType = SemanticType.Observation,

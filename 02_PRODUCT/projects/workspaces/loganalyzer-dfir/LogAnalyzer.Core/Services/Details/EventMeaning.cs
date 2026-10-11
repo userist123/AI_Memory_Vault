@@ -12,7 +12,7 @@ namespace LogAnalyzer.Core.Services.Details
     {
         public static readonly Dictionary<string, string> LogonTypes = new()
         {
-            ["0"] = "System", ["2"] = "interactiv (tastatură/ecran)", ["3"] = "rețea (ex. share SMB)", ["4"] = "batch (task programat)",
+            ["0"] = "System", ["2"] = "interactiv (tastatură/ecran)", ["3"] = "rețea (ex. share SMB)", ["4"] = "batch (activitate planificată)",
             ["5"] = "serviciu", ["7"] = "deblocare ecran", ["8"] = "rețea cu parolă în clar (ex. IIS basic)",
             ["9"] = "NewCredentials (runas /netonly)", ["10"] = "RemoteInteractive (RDP)", ["11"] = "CachedInteractive (fără controler de domeniu)",
             ["12"] = "CachedRemoteInteractive", ["13"] = "CachedUnlock",
@@ -51,10 +51,10 @@ namespace LogAnalyzer.Core.Services.Details
             [4688] = "Proces nou creat. NewProcessName și CommandLine (dacă auditul liniei de comandă e activ) arată ce s-a rulat; ParentProcessName arată cine l-a pornit.",
             [4689] = "Proces încheiat.",
             [4697] = "Serviciu instalat în sistem (persistență frecventă).",
-            [4698] = "Task programat creat (persistență frecventă).",
-            [4699] = "Task programat șters.",
-            [4700] = "Task programat activat.",
-            [4702] = "Task programat modificat.",
+            [4698] = "Activitate planificată creată (persistență frecventă).",
+            [4699] = "Activitate planificată ștearsă.",
+            [4700] = "Activitate planificată activată.",
+            [4702] = "Activitate planificată modificată.",
             [4719] = "Politica de audit a sistemului a fost modificată (cineva poate reduce ce se înregistrează).",
             [4720] = "Cont de utilizator creat.",
             [4722] = "Cont de utilizator activat.",

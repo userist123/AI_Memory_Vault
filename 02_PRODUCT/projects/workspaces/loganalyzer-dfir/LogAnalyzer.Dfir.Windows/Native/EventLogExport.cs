@@ -35,7 +35,7 @@ public static class EventLogExport
         }, err);
     }
 
-    public static string Describe(int win32Error) => new Win32Exception(win32Error).Message;
+    public static string Describe(int win32Error) => LogAnalyzer.Dfir.Language.RoText.OsError(win32Error, new Win32Exception(win32Error).Message);
 
     [DllImport("wevtapi.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]

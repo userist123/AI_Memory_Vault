@@ -42,7 +42,7 @@ public sealed class InvestigationResult
     /// <summary>WP15b: policy change timeline, configured/applied/enforced/observed levels, control gaps and unreliable-time windows (Analysis/policy_timeline.json).</summary>
     public PolicyTimelineResult? PolicyTimeline { get; set; }
     public string PolicyTimelineLine => PolicyTimeline is null ? "Cronologie politici: nedefinit (nu a fost calculată)."
-        : $"Cronologie politici: {PolicyTimeline.Changes.Count} modificări de politică, {PolicyTimeline.Applications.Count} înregistrări de aplicare GroupPolicy, {PolicyTimeline.Gaps.Count} decalaje de control, {PolicyTimeline.TimeWindows.Count} ferestre de oră nesigură."
+        : $"Cronologie politici: {LogAnalyzer.Dfir.Language.RoText.Count(PolicyTimeline.Changes.Count, "modificare", "modificări")} de politică, {LogAnalyzer.Dfir.Language.RoText.Count(PolicyTimeline.Applications.Count, "înregistrare", "înregistrări")} de aplicare GroupPolicy, {PolicyTimeline.Gaps.Count} decalaje de control, {PolicyTimeline.TimeWindows.Count} ferestre de oră nesigură."
           + (PolicyTimeline.ExpectedNote.Length > 0 ? " Politica așteptată: nedefinit." : "");
     /// <summary>WP14a: SHA-256 of the copies of the media / users registers in the case ("" = register not defined, nothing copied).</summary>
     public string MediaRegisterSha256 { get; set; } = "";
@@ -266,10 +266,10 @@ public sealed class InvestigationPipeline
                 else
                     ProvenanceBinder.BindEvents(sink.Events.Skip(mark), ev, parser.Descriptor.ParserId, parser.Descriptor.Version);
                 r.Parsing.Add(pr);
-                ws.RecordTransformation(ev.EvidenceId, parser.Descriptor.ParserId, parser.Descriptor.Version, "Analysis/timeline.csv", $"{pr.Records} înregistrări, status {pr.Status.ToSpec()}");
+                ws.RecordTransformation(ev.EvidenceId, parser.Descriptor.ParserId, parser.Descriptor.Version, "Analysis/timeline.csv", $"{LogAnalyzer.Dfir.Language.RoText.Count(pr.Records, "înregistrare", "înregistrări")}, status {pr.Status.ToSpec()}");
                 r.Gaps.AddRange(pr.Gaps);
                 if (pr.Status is EvidenceStatus.Failed or EvidenceStatus.Partial)
-                    r.Gaps.Add(new EvidenceGap(Path.GetFileName(ev.StoredPath), pr.Status, pr.Error.Length > 0 ? pr.Error : $"{pr.MalformedRecords} înregistrări corupte",
+                    r.Gaps.Add(new EvidenceGap(Path.GetFileName(ev.StoredPath), pr.Status, pr.Error.Length > 0 ? pr.Error : $"{LogAnalyzer.Dfir.Language.RoText.Count(pr.MalformedRecords, "înregistrare", "înregistrări")} corupte",
                         "Evenimente lipsă din cronologie", "Alt parser / copie a probei", "Posibil"));
             }
         }
@@ -297,7 +297,7 @@ public sealed class InvestigationPipeline
         }
         var found = new List<Finding>(Correlation.Run(r.Timeline, maintenance, procedureProfile));
         // WP14a: removable media against the media register, CD/DVD, and NIC / Wi-Fi / Bluetooth / DHCP on an air-gapped or standalone scope.
-        progress?.Report("Medii amovibile și integritate air-gap");
+        progress?.Report("Suporturi de stocare amovibile și integritate air-gap");
         int wp14No = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n0) ? n0 : 0).DefaultIfEmpty(0).Max();
         var wp14 = Wp14Analysis.Run(ws, r.Timeline, () => $"F-{++wp14No:D4}", mediaRegister, usersRegister, procedureProfile, systemZone);
         found.AddRange(wp14.Findings);
@@ -390,7 +390,7 @@ public sealed class InvestigationPipeline
         File.WriteAllText(Path.Combine(analysisDir, "policy_timeline.json"), policyTimeline.ToJson());
         ws.RecordOutput("Analysis/policy_timeline.json", "PolicyTimeline", "1.0", evidenceIds);
         ws.RecordTransformation("CASE", "PolicyTimeline", "1.0", "Analysis/policy_timeline.json",
-            $"{policyTimeline.Changes.Count} modificări, {policyTimeline.Applications.Count} aplicări, {policyTimeline.Gaps.Count} decalaje, {policyTimeline.TimeWindows.Count} ferestre de oră nesigură");
+            $"{LogAnalyzer.Dfir.Language.RoText.Count(policyTimeline.Changes.Count, "modificare", "modificări")}, {policyTimeline.Applications.Count} aplicări, {policyTimeline.Gaps.Count} decalaje, {policyTimeline.TimeWindows.Count} ferestre de oră nesigură");
         // WP4 verification layer (R9.7): after graph, detections and anti-forensics, before the Vault export. The verifier reads the case back from disk
         // (it is a separate module); dependencies.json is written first so it can confirm the finding -> evidence dependencies (rewritten with the proposals below).
         progress?.Report("Verificare");
@@ -440,13 +440,13 @@ public static class LiveStateAnalyzer
             yield return new Finding
             {
                 FindingId = Id(), RuleId = conns.Count > 0 ? "LIVE-UNSIGNED-USERPATH-NET" : "LIVE-UNSIGNED-USERPATH",
-                Title = $"Proces nesemnat din locație scriabilă{(conns.Count > 0 ? ", cu conexiuni în Internet" : "")}: {p.Name}",
+                Title = $"Proces nesemnat din locație în care utilizatorii pot scrie{(conns.Count > 0 ? ", cu conexiuni în Internet" : "")}: {p.Name}",
                 Severity = conns.Count > 0 ? Severity.High : Severity.Medium, Category = "Execution", Classification = Classification.Direct,
                 Confidence = conns.Count > 0 ? Confidence.High : Confidence.Medium, Process = p.Name, Pid = p.Pid, File = p.Path,
                 Ip = string.Join(", ", conns.Take(10)), FirstSeenUtc = snap.TakenUtc,
                 Description = $"PID {p.Pid}, părinte {p.Ppid}; linie de comandă: {p.CommandLine}" + (conns.Count > 0 ? $"; conexiuni: {string.Join(", ", conns.Take(10))}" : ""),
                 ClassificationReason = "Observat în fotografia stării live (semnătură verificată, tabela TCP).",
-                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Processes[pid={p.Pid}]", "fotografie live")],
+                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Processes[pid={p.Pid}]", "instantaneu al stării live")],
                 AlternativeExplanations = ["Aplicație legitimă instalată per utilizator, fără semnătură."],
                 RecommendedNextSteps = ["Izolați programul din fila „Izolare procese suspecte” pentru scanare completă."],
             };
@@ -454,31 +454,31 @@ public static class LiveStateAnalyzer
         foreach (var s in snap.Services.Where(s => s.UserWritable))
             yield return new Finding
             {
-                FindingId = Id(), RuleId = "LIVE-SERVICE-USERPATH", Title = $"Serviciu configurat dintr-o locație scriabilă: {s.Name}",
+                FindingId = Id(), RuleId = "LIVE-SERVICE-USERPATH", Title = $"Serviciu configurat dintr-o locație în care utilizatorii pot scrie: {s.Name}",
                 Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1543.003",
                 File = s.Path, User = s.Account, FirstSeenUtc = snap.TakenUtc,
                 Description = $"{s.DisplayName}: {s.Path} ({s.StartMode}, {s.State}, cont {s.Account}).",
                 ClassificationReason = "Configurația curentă a serviciilor.",
-                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Services[{s.Name}]", "fotografie live")],
+                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Services[{s.Name}]", "instantaneu al stării live")],
                 ContradictingEvidence = s.StartMode.Equals("Disabled", StringComparison.OrdinalIgnoreCase) ? ["Serviciul este dezactivat (StartMode=Disabled): nu pornește singur."] : [],
             };
         foreach (var t in snap.Tasks.Where(t => t.UserWritable))
             yield return new Finding
             {
-                FindingId = Id(), RuleId = "LIVE-TASK-USERPATH", Title = $"Task programat care rulează din locație scriabilă: {Path.GetFileName(t.Path)}",
+                FindingId = Id(), RuleId = "LIVE-TASK-USERPATH", Title = $"Activitate planificată care rulează din locație în care utilizatorii pot scrie: {Path.GetFileName(t.Path)}",
                 Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1053.005",
                 File = t.Command, FirstSeenUtc = snap.TakenUtc, Description = $"{t.Path}: {t.Command}",
                 ClassificationReason = "Definiția curentă a taskului.",
-                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Tasks[{t.Path}]", "fotografie live")],
+                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Tasks[{t.Path}]", "instantaneu al stării live")],
             };
         foreach (var a in snap.Autoruns.Where(a => a.UserWritable))
             yield return new Finding
             {
-                FindingId = Id(), RuleId = "LIVE-AUTORUN-USERPATH", Title = $"Pornire automată din locație scriabilă: {a.Name}",
+                FindingId = Id(), RuleId = "LIVE-AUTORUN-USERPATH", Title = $"Pornire automată din locație în care utilizatorii pot scrie: {a.Name}",
                 Severity = Severity.Medium, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1547.001",
                 File = a.Value, FirstSeenUtc = snap.TakenUtc, Description = $"{a.Location}\\{a.Name} = {a.Value}",
                 ClassificationReason = "Cheile Run curente.",
-                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Autoruns[{a.Name}]", "fotografie live")],
+                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Autoruns[{a.Name}]", "instantaneu al stării live")],
                 AlternativeExplanations = ["Multe aplicații per utilizator (actualizatoare, sincronizare) pornesc legitim din AppData."],
             };
     }

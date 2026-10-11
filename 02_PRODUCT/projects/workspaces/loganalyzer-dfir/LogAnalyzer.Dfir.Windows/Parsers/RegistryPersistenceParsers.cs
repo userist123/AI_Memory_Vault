@@ -111,7 +111,7 @@ public sealed class UserHiveParser : EvidenceParserBase
                         Time = Timestamp.FromFileTime(ft, "UserAssist FILETIME"),
                         TimeSemantics = "last run from Explorer / Start menu (GUI, UserAssist)",
                         Source = "UserAssist", EvidenceId = item.EvidenceId, Path = path, Process = SafeFileName(path),
-                        Summary = $"UserAssist: {path} pornit din interfață de {runs} ori",
+                        Summary = $"UserAssist: {path} pornit din interfață de {LogAnalyzer.Dfir.Language.RoText.Times(runs)}",
                         TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.Medium,
                         Locator = $@"NTUSER\{keyPath}\{v.Name}",
                         Fields =

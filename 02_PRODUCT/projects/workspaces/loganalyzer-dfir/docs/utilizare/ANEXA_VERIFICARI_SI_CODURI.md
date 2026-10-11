@@ -647,9 +647,9 @@
 
 ### S02
 
-- **Ce verificăm:** Ce servicii noi (programe permanente în fundal) și task-uri programate au fost create.
+- **Ce verificăm:** Ce servicii noi (programe permanente în fundal) și activități planificate au fost create.
 - **De ce contează:** Sunt metodele obișnuite prin care un program rău-intenționat rămâne activ după repornire.
-- **Cum verifică aplicația:** A căutat instalările de servicii (fără drivere, listate separat în cronologie) și crearea de task-uri programate.
+- **Cum verifică aplicația:** A căutat instalările de servicii (fără drivere, listate separat în cronologie) și crearea de activități planificate.
 - **Sursa tehnică:** `System 7045; Security 4698`
 - **Cum se citește rezultatul:** Conform = niciunul. De verificat = fiecare nume necunoscut trebuie explicat.
 
@@ -737,7 +737,7 @@
 | Application 1033 | eveniment Windows | Windows Installer: instalare încheiată (cu codul de rezultat). | Software-ul instalat trebuie să fie pe lista aprobată. | Codul de stare 0 = reușit. |
 | Application 1034 | eveniment Windows | Windows Installer: dezinstalare încheiată. | Dezinstalarea poate ascunde un program folosit anterior. |  |
 | System 7045 | eveniment Windows | Un serviciu nou (program care rulează permanent în fundal) a fost instalat. | Serviciile noi sunt o metodă frecventă de a păstra un program rău-intenționat activ după repornire. | Calea executabilului (ImagePath) arată ce program rulează. |
-| Security 4698 | eveniment Windows | A fost creat un task programat (o comandă care pornește singură la o oră sau la pornire). | Task-urile programate sunt o metodă frecventă prin care un program rău-intenționat repornește singur. | Programele legitime (actualizări) creează și ele task-uri; comparați numele cu software-ul aprobat. |
+| Security 4698 | eveniment Windows | A fost creată o activitate planificată (o comandă care pornește singură la o oră sau la pornire). | Activitățile planificate sunt o metodă frecventă prin care un program rău-intenționat repornește singur. | Programele legitime (actualizări) creează și ele task-uri; comparați numele cu software-ul aprobat. |
 | CurrentVersion\\DisplayVersion | valoare de registru | Versiunea Windows pe înțelesul utilizatorilor (de exemplu 24H2). | Arată cât de nouă este versiunea și dacă mai primește actualizări. | Se compară cu tabelul versiunilor suportate al organizației. |
 | CurrentVersion\\CurrentBuild | valoare de registru | Numărul de build al Windows. | Identifică exact versiunea; 22000 sau mai mult înseamnă Windows 11. | Numele produsului din registru poate spune „Windows 10” și pe Windows 11. |
 | CurrentVersion\\UBR | valoare de registru | Numărul de revizie al actualizărilor instalate peste build. | Crește cu fiecare actualizare lunară instalată. | Se citește împreună cu build-ul: 26100.1234 înseamnă revizia 1234. |

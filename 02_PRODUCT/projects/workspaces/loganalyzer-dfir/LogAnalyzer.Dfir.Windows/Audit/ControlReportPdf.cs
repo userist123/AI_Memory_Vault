@@ -72,7 +72,7 @@ public static class ControlReportPdf
                     });
                 if (header is not null || result is not null)
                 {
-                    col.Item().Text("Goluri de probă și surse necitite (înaintea verificărilor, pentru că limitează ce se poate afirma)").Bold().FontSize(9.5f).FontColor("#b45309");
+                    col.Item().Text("Surse lipsă sau incomplete și surse necitite (înaintea verificărilor, pentru că limitează ce se poate afirma)").Bold().FontSize(9.5f).FontColor("#b45309");
                     if (f.Gaps.Count == 0 && f.Coverage.All(c => c.Readable)) col.Item().Text("Niciun gol raportat; toate sursele au fost citite.").FontSize(8).FontColor(Muted);
                     foreach (var c in f.Coverage.Where(c => !c.Readable)) col.Item().Text($"Sursă necitită: {c.Channel} {c.Note}").FontSize(8).FontColor("#b45309");
                     foreach (var g in f.Gaps) col.Item().Text($"Gol: {g.Artifact} — {g.Status.ToSpec()}: {g.Reason}. Impact: {g.Impact}").FontSize(8).FontColor("#b45309");
@@ -145,9 +145,9 @@ public static class ControlReportPdf
                     }
                 });
 
-                col.Item().Text("4. Acoperirea jurnalelor și goluri de probă").Bold().FontSize(11).FontColor(Ink);
+                col.Item().Text("4. Acoperirea jurnalelor și surse lipsă sau incomplete").Bold().FontSize(11).FontColor(Ink);
                 foreach (var c in f.Coverage)
-                    col.Item().Text($"{c.Channel}: {(c.Readable ? $"{c.Records} evenimente citite, cel mai vechi {L(c.OldestUtc)}" : "NECITIT")} {c.Note}").FontSize(7.5f);
+                    col.Item().Text($"{c.Channel}: {(c.Readable ? $"{LogAnalyzer.Dfir.Language.RoText.Count(c.Records, "eveniment", "evenimente")} citite, cel mai vechi {L(c.OldestUtc)}" : "NECITIT")} {c.Note}").FontSize(7.5f);
                 foreach (var g in f.Gaps)
                     col.Item().Text($"Gol: {g.Artifact} — {g.Status.ToSpec()}: {g.Reason}. Impact: {g.Impact}").FontSize(7.5f).FontColor("#b45309");
                 col.Item().PaddingTop(6).Text("„DE VERIFICAT” înseamnă că faptele sunt prezentate, dar numai organizația poate spune dacă au fost autorizate. " +
@@ -184,10 +184,10 @@ public static class ControlReportPdf
             "Lipsa unei urme nu dovedește că un fapt nu a avut loc: jurnalele au o capacitate limitată, se suprascriu și pot fi șterse.",
             "Windows păstrează pentru fiecare dispozitiv doar ultima conectare; istoricul complet depinde de jurnale.",
             "Faptele „DE VERIFICAT” trebuie confirmate cu documentele organizației (aprobări, registre); aplicația nu le poate califica singură.",
-            "Orele marcate UTC sunt universale; ora locală a stației și fusul ei orar sunt trecute în subsolul fiecărei pagini.",
+            "Orele cu „UTC” sunt în timp universal, restul în ora stației; ora locală a stației și fusul ei orar sunt trecute în subsolul fiecărei pagini.",
         };
         if (!f.IsAdministrator) l.Insert(0, "Controlul a rulat FĂRĂ drepturi de administrator: jurnalul Security, politica de audit și o parte din setări nu au putut fi citite.");
-        if (f.Gaps.Count > 0) l.Add($"Există {f.Gaps.Count} goluri de probă (punctul 4); verificările care depind de ele sunt NEDETERMINATE.");
+        if (f.Gaps.Count > 0) l.Add($"Există {f.Gaps.Count} surse lipsă sau incomplete (punctul 4); verificările care depind de ele sunt NEDETERMINATE.");
         return l;
     }
 
