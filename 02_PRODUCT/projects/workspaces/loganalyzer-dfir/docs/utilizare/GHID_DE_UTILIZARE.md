@@ -106,6 +106,7 @@ Pagina **„Medii de stocare și dispozitive”** (din meniu, „Registru medii�
 - **„Toate dispozitivele”**: fiecare dispozitiv cunoscut de stație, inclusiv cele conectate în trecut. La clic, în dreapta apar toate datele lui, fiecare cu explicația: ce este, dacă e în registru, ce faceți, producător, model, serie, VID:PID, capacitate, literă, etichetă (descifrată după convenția `xxxx-yyyyL`), criptare, prima și ultima conectare, ultima deconectare, istoricul conectărilor din jurnal, sursele. „Copiază datele” le pune gata de lipit în procesul-verbal.
 - **„Protecțiile Windows”**: dacă Windows însuși blochează stick-urile, CD/DVD-urile sau telefoanele, dacă cere stick-uri criptate și dacă **înregistrează copierea fișierelor** pe suporturi. Dacă nu o înregistrează, controlul nu poate spune ce fișiere au ieșit, iar pagina spune asta.
 - **„Registrul de medii”**: registrul propriu-zis (vezi mai jos).
+- **Registrul de transferuri** nu mai este o filă a acestei pagini: are pagina lui, „Registrul de transferuri”, lângă „Registru medii” în meniu. Citește din registrul de medii și din mediile conectate acum, fără să deschideți întâi pagina de medii. Din „Medii de stocare” îl deschideți cu butonul „Deschide registrul de transferuri”.
 
 Aplicația **nu blochează** dispozitive; pentru blocare se folosesc politicile Windows (GPO) sau un produs dedicat. Windows păstrează în fișa unui dispozitiv doar **ultima** conectare; istoricul complet vine din jurnal și are o durată limitată.
 

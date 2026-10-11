@@ -65,7 +65,7 @@ namespace LogAnalyzer.Core.Services.Edition
 
         // Tab indexes of the main window (MainWindow.xaml TabControl order; Home was appended last, WP5).
         public const int TabTimeline = 4, TabChainOfCustody = 9, TabContainment = 13, TabStationControl = 14, TabDomainMail = 15,
-            TabInvestigation = 16, TabPolicies = 17, TabProcedureProfile = 18, TabMediaRegister = 19, TabUsersRegister = 20, TabAccounts = 21, TabHome = 22;
+            TabInvestigation = 16, TabPolicies = 17, TabProcedureProfile = 18, TabMediaRegister = 19, TabUsersRegister = 20, TabAccounts = 21, TabHome = 22, TabTransferRegister = 23;
 
         public const string NeedsNetworkReason = "necesită modul conectat; această stație este izolată (air-gap)";
 
@@ -165,6 +165,7 @@ namespace LogAnalyzer.Core.Services.Edition
                 {
                     N("Control stație", TabStationControl),
                     N("Registru medii", TabMediaRegister),
+                    N("Registrul de transferuri", TabTransferRegister),
                     N("Registru utilizatori", TabUsersRegister),
                     N("Profil de proceduri", TabProcedureProfile),
                     N("Investigație completă (caz)", TabInvestigation),

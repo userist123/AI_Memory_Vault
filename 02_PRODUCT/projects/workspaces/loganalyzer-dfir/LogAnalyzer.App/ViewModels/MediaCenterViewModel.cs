@@ -34,12 +34,12 @@ namespace LogAnalyzer.UI.ViewModels
         private List<DeviceAssessment> _all = [];
         private CancellationTokenSource? _debounce;
 
-        public MediaCenterViewModel(MediaRegisterViewModel register) { _register = register; Transfer = new TransferViewModel(this); }
+        public MediaCenterViewModel(MediaRegisterViewModel register) { _register = register; }
 
-        /// <summary>The transfer register form, fed by the media connected now.</summary>
-        public TransferViewModel Transfer { get; }
-        [ObservableProperty] private int _selectedTab;
-        [RelayCommand] private void RecordTransfer() { SelectedTab = 4; AlertText = ""; }
+        /// <summary>Set by the main window: opens the separate "Registrul de transferuri" page (owner 2026-10-11: the transfer register is not part of this page).</summary>
+        public Action? NavigateToTransferRegister { get; set; }
+        [RelayCommand] private void OpenTransferRegister() => NavigateToTransferRegister?.Invoke();
+        [RelayCommand] private void RecordTransfer() { AlertText = ""; NavigateToTransferRegister?.Invoke(); }
 
         public MediaRegisterViewModel Register => _register;
         public ObservableCollection<DeviceAssessment> Devices { get; } = new();
