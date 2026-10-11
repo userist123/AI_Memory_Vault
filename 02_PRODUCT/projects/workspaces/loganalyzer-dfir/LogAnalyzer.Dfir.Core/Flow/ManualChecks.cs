@@ -76,6 +76,10 @@ public static class ManualChecks
             "O abatere aprobată documentat nu este neconformitate; una neaprobată este.",
             "Pentru fiecare constatare de tip excepție, cereți documentul de aprobare și notați-i numărul în observație.",
             "Verificările DE VERIFICAT ale acestui control."),
+        new("M16", "Fiecare conectare a unui stick sau disc extern din perioada controlată are un transfer înregistrat în registrul de transferuri?",
+            "Un stick folosit fără înregistrare poate fi o cale prin care au ieșit date din zonă.",
+            "Deschideți pagina „Registrul de transferuri”: lista „Conectări fără transfer înregistrat” trebuie să fie goală. Pentru fiecare rând rămas, cereți explicația sau înregistrați transferul.",
+            "Pagina „Registrul de transferuri”, lista „Conectări fără transfer înregistrat” (conectările USB din jurnalul stației față de registru)."),
     ];
 
     public static string AnswerText(ManualAnswer a) => a switch

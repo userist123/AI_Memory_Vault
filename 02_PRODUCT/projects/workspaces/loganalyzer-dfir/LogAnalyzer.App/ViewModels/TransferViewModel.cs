@@ -31,6 +31,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             _media = media;
             _media.ConnectedNow.CollectionChanged += (_, _) => RefreshMedia();
+            _media.DevicesRefreshed += RefreshUnregistered;
             Reload();
             RefreshMedia();
         }
@@ -43,6 +44,20 @@ namespace LogAnalyzer.UI.ViewModels
         public IReadOnlyList<string> Directions { get; } = ["ieșire", "intrare"];
         public ObservableCollection<string> KnownDestinations { get; } = new();
         public ObservableCollection<string> KnownWitnesses { get; } = new();
+
+        /// <summary>USB/card connections in the last <see cref="ReconcileDays"/> days with no transfer on that medium (same day or +-1 day).</summary>
+        public ObservableCollection<UnregisteredConnection> UnregisteredConnections { get; } = new();
+        public const int ReconcileDays = 30;
+
+        /// <summary>One line for a non-IT controller: which stick, when, and what is missing.</summary>
+        public sealed record UnregisteredConnection(UsbSessionCheck Check)
+        {
+            public string Text => $"{Check.Device.DisplayName} · S/N {Check.Device.Serial} · conectat {Check.Connected.ToLocalTime():yyyy-MM-dd HH:mm} · {Check.Message}";
+        }
+
+        [ObservableProperty] private string _unregisteredSummary = "";
+        /// <summary>Date of the transfer being recorded; empty = now. Pre-filled from an unregistered connection.</summary>
+        [ObservableProperty] private DateTime? _transferDate;
 
         public sealed record HashedFile(string Name, string Sha256, long Bytes)
         {
@@ -117,6 +132,34 @@ namespace LogAnalyzer.UI.ViewModels
             PersonFunction = PersonFunction.Length > 0 ? PersonFunction : _header.InspectorFunction;
             NextNumber = _register.NextNumber(Prefix, DateTime.Now.Year);
             foreach (var f in TransferChecks.Check(_register, _media.Register.Snapshot())) Problems.Add($"{f.RegistrationNumber}: {f.Message}");
+            RefreshUnregistered();
+        }
+
+        private void RefreshUnregistered()
+        {
+            UnregisteredConnections.Clear();
+            var today = DateOnly.FromDateTime(DateTime.Now);
+            var all = _media.AllDevices;
+            var regOf = all.ToDictionary(a => a.Device.InstanceId, a => a.RegistrationNumber, StringComparer.OrdinalIgnoreCase);
+            var checks = TransferReconciliation.CheckUsbSessions(all.Select(a => a.Device), _register.Rows, today.AddDays(-ReconcileDays), today,
+                d => regOf.TryGetValue(d.InstanceId, out var n) ? n : "");
+            foreach (var c in checks.Where(c => c.Status == UsbSessionStatus.ToVerify).OrderByDescending(c => c.Connected)) UnregisteredConnections.Add(new UnregisteredConnection(c));
+            UnregisteredSummary = all.Count == 0 ? "Mediile stației nu au fost citite încă (deschideți pagina „Medii de stocare”)."
+                : UnregisteredConnections.Count == 0 ? $"Toate conectările din ultimele {ReconcileDays} de zile au un transfer înregistrat."
+                : $"{UnregisteredConnections.Count} conectări din ultimele {ReconcileDays} de zile nu au un transfer înregistrat.";
+        }
+
+        [RelayCommand]
+        private void RegisterTransferFor(UnregisteredConnection? item)
+        {
+            if (item is null) return;
+            var d = item.Check.Device;
+            SelectedMedium = Media.FirstOrDefault(m => m.Device.InstanceId == d.InstanceId);
+            MediumType = d.Kind == DeviceKind.MemoryCard ? "Card de memorie" : "Stick / disc USB";
+            MediumSerial = d.Serial;
+            MediumRegistration = _media.AllDevices.FirstOrDefault(a => a.Device.InstanceId == d.InstanceId)?.RegistrationNumber ?? "";
+            TransferDate = item.Check.Connected.ToLocalTime().DateTime.Date;
+            Status = $"Formularul este pregătit pentru mediul {d.DisplayName}, data {TransferDate:yyyy-MM-dd}. Alegeți fișierele, scrieți destinația și martorul.";
         }
 
         [RelayCommand]
@@ -157,7 +200,7 @@ namespace LogAnalyzer.UI.ViewModels
             var row = new TransferRow
             {
                 RegistrationNumber = NextNumber,
-                DateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+                DateTime = TransferDate is { } td ? td.Date.Add(DateTime.Now.TimeOfDay).ToString("yyyy-MM-dd HH:mm") : DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
                 Classification = Classification == "nemarcat" ? "" : Classification,
                 Direction = Direction,
                 Source = Source, SourceStation = SourceStation, Destination = Destination, DestinationStation = DestinationStation,
@@ -174,6 +217,7 @@ namespace LogAnalyzer.UI.ViewModels
                 Status = "Transferul NU a fost înregistrat: " + string.Join("; ", errors.Select(e => e.Message)) + ".";
                 return;
             }
+            TransferDate = null;
             Reload();
             Files.Clear();
             Destination = ""; DestinationStation = Direction == "intrare" ? Environment.MachineName : ""; Notes = "";
