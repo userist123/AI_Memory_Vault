@@ -44,7 +44,7 @@ Pe lângă mod, fiecare PC are un **rol de stație**, stabilit tot de politica s
 
 Fila **„Izolare procese suspecte”** (sau `LogAnalyzer.exe --tab=13`) funcționează în ambele moduri, fără să deschidă nicio conexiune:
 
-1. **Caută procese suspecte.** Încredere mare înseamnă un program nesemnat, care rulează dintr-o locație în care orice utilizator poate scrie (AppData, Temp, ProgramData, Downloads) și are conexiuni în Internet. Este tiparul din cazul NanAgent.
+1. **Caută procese suspecte.** Încredere mare înseamnă un program nesemnat, care rulează dintr-o locație în care orice utilizator poate scrie (AppData, Temp, ProgramData, Downloads) și are conexiuni în Internet. Este tiparul din cazul VendorAgent.
 2. **Izolează și scanează.**
    - O regulă Windows Firewall (ieșire și intrare) blochează **doar programul**; restul PC-ului rămâne conectat.
    - Opțional, procesul se suspendă.
@@ -99,7 +99,7 @@ Fila **„Investigație domeniu și e-mail”** (`LogAnalyzer.exe --tab=15`) are
 Toate interogările de rețea trec prin `NetworkPolicy`. În modul AirGapped sunt blocate; pe o rețea izolată cu domeniu, porniți aplicația cu `--mode=network`. Rezultatele se salvează în cazul stației (`Investigations/`), ca probe, și se pot exporta ca PDF.
 ## Investigația completă (caz)
 
-Fila **„Investigație completă (caz)”** (`LogAnalyzer.exe --tab=16`) reface cap-coadă o investigație ca cea de pe LAB-PC:
+Fila **„Investigație completă (caz)”** (`LogAnalyzer.exe --tab=16`) reface cap-coadă o investigație ca cea de pe o stație de laborator:
 
 1. **Colectare de pe stație.**
    - Jurnalele de evenimente sunt exportate brut cu `wevtutil` (17 canale).
@@ -118,7 +118,7 @@ Fila **„Investigație completă (caz)”** (`LogAnalyzer.exe --tab=16`) reface
 4. **Lanțul incidentului (INCIDENT-CHAIN).** Constatările grave apropiate în timp sunt legate într-o poveste ordonată.
 5. **Raport PDF**, cu lanțurile la început, apoi constatările cu probe, starea colectării și golurile de probă.
 
-Validare pe cazul real NanAgent: 348.000 de evenimente procesate în circa 19 secunde. Lanțul din 19.09.2026, 14:53–15:21 UTC (`SETUP.EXE` SamFW → detecții Defender → comportament `NanAgent32.exe` → `msiexec` cu `bootstrap_7d57.cmd` → trafic `msbuild.exe`) este găsit automat. Testul de regresie `InvestigationTests` verifică acest rezultat.
+Validare pe cazul de laborator VendorAgent: 348.000 de evenimente procesate în circa 19 secunde. Lanțul din 19.09.2026, 14:53–15:21 UTC (`SETUP.EXE` SamFW → detecții Defender → comportament `VendorAgent32.exe` → `msiexec` cu `vendor_helper.cmd` → trafic `msbuild.exe`) este găsit automat. Testul de regresie `InvestigationTests` verifică acest rezultat.
 ## Cerințe
 
 - Rulare: Windows 10/11 x64. Pachetul este self-contained și nu necesită .NET instalat.

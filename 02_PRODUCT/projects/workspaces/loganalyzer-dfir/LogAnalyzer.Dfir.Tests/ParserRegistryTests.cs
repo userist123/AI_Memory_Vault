@@ -66,7 +66,7 @@ public sealed class ParserRegistryTests : IDisposable
     [InlineData("system_hive", "SYSTEM", "SystemHiveExecutionParser")]
     [InlineData("amcache", "Amcache.hve", "AmcacheParser")]
     [InlineData("task_xml", "orchestratormaintain", "ScheduledTaskParser")]
-    [InlineData("ntuser_hive", "NTUSER_Owner.hiv", "UserHiveParser")]
+    [InlineData("ntuser_hive", "NTUSER_user.hiv", "UserHiveParser")]
     [InlineData("software_hive", "SOFTWARE.hiv", "SoftwareHiveParser")]
     [InlineData("system_hive", "SYSTEM", "ServicesParser")]
     [InlineData("system_hive", "SYSTEM", "UsbDevicesParser")]

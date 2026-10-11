@@ -25,7 +25,7 @@ public sealed class PrefetchParser : EvidenceParserBase
             "Prefetch arată că un program a rulat, nu cine l-a pornit sau de ce.",
         ],
         Status = ParserMaturity.Validated,
-        Validation = "CorpusRegressionTests (prefetch, prefetchMsiexec), InvestigationTests pe corpusul NanAgent",
+        Validation = "CorpusRegressionTests (prefetch, prefetchMsiexec), InvestigationTests pe corpusul VendorAgent",
     };
 
     public sealed record PrefetchInfo(int Version, string ExeName, uint Hash, int RunCount, IReadOnlyList<DateTimeOffset> RunTimesUtc,

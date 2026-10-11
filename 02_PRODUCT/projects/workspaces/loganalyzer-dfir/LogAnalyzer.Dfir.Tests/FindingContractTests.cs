@@ -390,13 +390,13 @@ public sealed class FindingContractTests : IDisposable
         <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
           <RegistrationInfo>
             <Date>2026-09-19T17:58:12.5+03:00</Date>
-            <Author>LAB-PC\u</Author>
+            <Author>WS-01\u</Author>
             <URI>\orchestratormaintain</URI>
           </RegistrationInfo>
           <Triggers><LogonTrigger><Enabled>true</Enabled></LogonTrigger></Triggers>
           <Principals><Principal id="Author"><UserId>S-1-5-21-1-2-3-1001</UserId><LogonType>InteractiveToken</LogonType><RunLevel>HighestAvailable</RunLevel></Principal></Principals>
           <Settings><Hidden>true</Hidden><Enabled>false</Enabled></Settings>
-          <Actions Context="Author"><Exec><Command>C:\Users\u\AppData\Local\Conexant\pro_cmd_core.exe</Command><Arguments>-run silent</Arguments></Exec></Actions>
+          <Actions Context="Author"><Exec><Command>C:\Users\u\AppData\Local\VendorX\pro_cmd_core.exe</Command><Arguments>-run silent</Arguments></Exec></Actions>
         </Task>
         """;
 

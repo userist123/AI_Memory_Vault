@@ -28,9 +28,9 @@ public class InvestigationTests
             E("Prefetch", "", 3, "EV-PF1", "pf", "SETUP.EXE", "", ("PrefetchHash", "C0F23475"), ("RunCount", "4"),
               ("ReferencedFiles", @"\VOLUME{x}\USERS\U\DOWNLOADS\TOOL_302044\SETUP.EXE|\VOLUME{x}\WINDOWS\SYSTEM32\NTDLL.DLL")),
             E("EventLog:Microsoft-Windows-Windows Defender/Operational", "1116", 14, "EV-DEF", "", "", "",
-              ("Threat Name", "Behavior:Win32/GenCodeInjected.H"), ("Path", @"process:_pid:52196; file:_C:\Users\U\Downloads\TOOL_302044\NanAgent32.exe"), ("Action Name", "Not Applicable")),
+              ("Threat Name", "Behavior:Win32/GenCodeInjected.H"), ("Path", @"process:_pid:52196; file:_C:\Users\U\Downloads\TOOL_302044\VendorAgent32.exe"), ("Action Name", "Not Applicable")),
             E("Prefetch", "", 19, "EV-PF2", "pf", "MSIEXEC.EXE", "", ("PrefetchHash", "8FFB1633"), ("RunCount", "9"),
-              ("ReferencedFiles", @"\VOLUME{x}\WINDOWS\SYSTEM32\MSIEXEC.EXE|\VOLUME{x}\USERS\U\APPDATA\LOCAL\CONEXANT\CXUTILSVC HELPER\BOOTSTRAP_7D57.CMD")),
+              ("ReferencedFiles", @"\VOLUME{x}\WINDOWS\SYSTEM32\MSIEXEC.EXE|\VOLUME{x}\USERS\U\APPDATA\LOCAL\VENDORX\VXUTILSVC HELPER\VENDOR_HELPER.CMD")),
             E("SRUM", "", 25, "EV-SRUM", "row1", "msbuild.exe", @"\device\harddiskvolume3\windows\microsoft.net\framework\v4.0.30319\msbuild.exe",
               ("BytesSent", "7764746"), ("BytesRecvd", "100581358")),
             // benign noise: PowerShell's own policy probe and a Microsoft-owned writable path
@@ -39,7 +39,7 @@ public class InvestigationTests
         };
         var findings = Correlation.Run(events);
 
-        Assert.Contains(findings, f => f.RuleId == "DEF-DETECTION" && f.File.EndsWith("NanAgent32.exe") && f.Title.Contains("GenCodeInjected"));
+        Assert.Contains(findings, f => f.RuleId == "DEF-DETECTION" && f.File.EndsWith("VendorAgent32.exe") && f.Title.Contains("GenCodeInjected"));
         Assert.Contains(findings, f => f.RuleId == "EXEC-SCRIPT-VIA-LOLBIN" && f.Process == "MSIEXEC.EXE");
         Assert.Contains(findings, f => f.RuleId == "NET-LOLBIN-TRAFFIC" && f.Process == "msbuild.exe");
         Assert.Contains(findings, f => f.RuleId == "EXEC-USERPATH-CORRELATED" && f.Process == "SETUP.EXE");
@@ -75,7 +75,7 @@ public class InvestigationTests
     }
 
     [CorpusFact("defenderEvtx")]
-    public void NanAgent_corpus_yields_the_known_incident_chain()
+    public void VendorAgent_corpus_yields_the_known_incident_chain()
     {
         var root = Corpus.Root;
         var files = new[] { "Application", "Microsoft-Windows-Windows Defender%4Operational" }
@@ -83,7 +83,7 @@ public class InvestigationTests
         files.AddRange(Directory.GetFiles(Path.Combine(root, "09_PREFETCH", "Prefetch"), "*.pf"));
         files.Add(Path.Combine(root, "07_EXECUTION", "SRUM", "SRUDB.dat"));
         files.Add(Path.Combine(root, "21_BROWSER", "Chrome", "Default", "History"));
-        files.Add(Path.Combine(root, "25_TARGET_MSBUILD", "Conexant_CxUtilSvcHelper_COPY", "CxUtilSvc Helper", "NetworkMonitor.targets"));
+        files.Add(Path.Combine(root, "25_TARGET_MSBUILD", "VendorX_VxUtilSvcHelper_COPY", "VxUtilSvc Helper", "NetworkMonitor.targets"));
         var casesRoot = Path.Combine(Path.GetTempPath(), "la-inv-" + Guid.NewGuid().ToString("N"));
         try
         {
@@ -94,13 +94,13 @@ public class InvestigationTests
             File.Copy(Path.Combine(root, "29_IOC", "IOC_INVENTORY.csv"), Path.Combine(ws.Root, "Rules", "ioc", "IOC_INVENTORY.csv"));
             var r = new InvestigationPipeline().Run(ws, CollectionProfile.Standard, collect: false);
 
-            Assert.Contains(r.Findings, f => f.RuleId == "DEF-DETECTION" && f.Description.Contains("NanAgent32.exe"));
-            Assert.Contains(r.Findings, f => f.RuleId == "EXEC-SCRIPT-VIA-LOLBIN" && f.Description.Contains("BOOTSTRAP_7D57.CMD"));
+            Assert.Contains(r.Findings, f => f.RuleId == "DEF-DETECTION" && f.Description.Contains("VendorAgent32.exe"));
+            Assert.Contains(r.Findings, f => f.RuleId == "EXEC-SCRIPT-VIA-LOLBIN" && f.Description.Contains("VENDOR_HELPER.CMD"));
             Assert.Contains(r.Findings, f => f.RuleId == "NET-LOLBIN-TRAFFIC" && f.Process == "msbuild.exe");
             var chain = r.Findings.First(f => f.RuleId == "INCIDENT-CHAIN" && f.FirstSeenUtc!.Value.UtcDateTime.Date == new DateTime(2026, 9, 19));
             Assert.Equal(Severity.Critical, chain.Severity);
             Assert.Contains("SETUP.EXE", chain.Description);
-            Assert.Contains("NanAgent32.exe", chain.Description);
+            Assert.Contains("VendorAgent32.exe", chain.Description);
             Assert.Contains("msbuild.exe", chain.Description);
             // Initial access: the archive downloaded from tzd4is.cyou, then SETUP.EXE run from its extracted folder.
             var access = Assert.Single(r.Findings, f => f.RuleId == "DOWNLOAD-THEN-EXEC" && f.File.Contains("302044"));
@@ -115,14 +115,14 @@ public class InvestigationTests
             var domain = g.Find("Domain", "tzd4is.cyou")!;
             Assert.Contains(g.Edges(domain.Id), x => x.Type == RelationType.Downloaded && x.TargetEntity.Contains("302044.ZIP") && x.Classification == Classification.Direct && x.Reason.Contains("tab"));
             Assert.Contains(g.Relationships, x => x.Type == RelationType.Downloaded && x.SourceEntity == "Domain:130af8a83568f840a6ae55fd.192169503.com" && x.TargetEntity.Contains("302044.ZIP"));
-            Assert.Contains(g.Relationships, x => x.Type == RelationType.Detected && x.TargetEntity.Contains("NANAGENT32.EXE"));
-            Assert.Contains(g.Relationships, x => x.Type == RelationType.Loaded && x.TargetEntity.Contains("BOOTSTRAP_7D57.CMD"));
+            Assert.Contains(g.Relationships, x => x.Type == RelationType.Detected && x.TargetEntity.Contains("VENDORAGENT32.EXE"));
+            Assert.Contains(g.Relationships, x => x.Type == RelationType.Loaded && x.TargetEntity.Contains("VENDOR_HELPER.CMD"));
             Assert.Contains(g.Relationships, x => x.Type == RelationType.DerivedFrom && x.SourceEntity.EndsWith(@"\DOWNLOADS\SAMFW_FRP_TOOL_V5.9_SETUP_DOWNLOAD_LATES_ARCHIVE_FILE_302044\SETUP.EXE") && x.Classification == Classification.Correlated);
             Assert.True(File.Exists(Path.Combine(ws.Root, "Analysis", "graph.json")));
 
             // P5 detection on the real case: Sigma (Defender), IOC path in Prefetch, hash IOC and YARA on the MSBuild loader.
             Assert.Contains(r.Detections, d => d.Kind == LogAnalyzer.Dfir.Detection.DetectionKind.Sigma && d.RuleId.Contains("8c3e2b4a") && d.EvidenceId.Length > 0);
-            Assert.Contains(r.Detections, d => d.Kind == LogAnalyzer.Dfir.Detection.DetectionKind.Ioc && d.Match.Contains("BOOTSTRAP_7D57.CMD"));
+            Assert.Contains(r.Detections, d => d.Kind == LogAnalyzer.Dfir.Detection.DetectionKind.Ioc && d.Match.Contains("VENDOR_HELPER.CMD"));
             Assert.Contains(r.Detections, d => d.Kind == LogAnalyzer.Dfir.Detection.DetectionKind.Hash && d.Match.Contains("NetworkMonitor.targets"));
             Assert.Contains(r.Detections, d => d.Kind == LogAnalyzer.Dfir.Detection.DetectionKind.Yara && d.RuleId == "YARA:MSBuild_PropertyFunction_EntityObfuscation");
             Assert.All(r.Detections, d => Assert.True(d.RuleSha256.Length == 64 && d.EvidenceId.Length > 0));
@@ -144,7 +144,7 @@ public class InvestigationTests
             var refusedForVault = JsonDocument.Parse(File.ReadAllText(Path.Combine(ws.Root, "Exports", "vault_refused.json"))).RootElement;
             Assert.DoesNotContain(refusedForVault.EnumerateArray(), x => x.GetProperty("Kind").GetString() is "Finding" or "Incident" or "Inference");
             Assert.Equal(r.Findings.Count, vault.Count(l => l.Contains(":Finding:F-") || l.Contains(":Incident:F-") || l.Contains(":Inference:F-")));
-            Assert.Contains(vault, l => l.Contains(":Incident:") && l.Contains("NanAgent32.exe"));
+            Assert.Contains(vault, l => l.Contains(":Incident:") && l.Contains("VendorAgent32.exe"));
 
             var pdf = Path.Combine(ws.Root, "raport.pdf");
             InvestigationReportPdf.Write(r, pdf, "test");

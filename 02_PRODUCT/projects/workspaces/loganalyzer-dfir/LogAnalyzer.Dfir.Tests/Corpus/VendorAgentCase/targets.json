@@ -1,6 +1,6 @@
 {
-  "_comment": "TEST FIXTURE ONLY (spec §73). Expected results from the real 2026-09-19 LAB-PC incident. Never referenced by production code.",
-  "corpusRoot": "D:\\FORENSIC_CASE",
+  "_comment": "TEST FIXTURE ONLY (spec §73). Expected results from the real 2026-09-19 WS-01 incident. Never referenced by production code.",
+  "corpusRoot": "D:\\LAB_CORPUS",
   "corpusRootEnvVar": "LADFIR_CORPUS",
   "prefetch": {
     "file": "09_PREFETCH\\Prefetch\\SETUP.EXE-C0F23475.pf",
@@ -11,7 +11,7 @@
   },
   "prefetchMsiexec": {
     "file": "09_PREFETCH\\Prefetch\\MSIEXEC.EXE-8FFB1633.pf",
-    "referencedFileContains": "CONEXANT\\CXUTILSVC HELPER\\BOOTSTRAP_7D57.CMD"
+    "referencedFileContains": "VENDORX\\VXUTILSVC HELPER\\VENDOR_HELPER.CMD"
   },
   "srum": {
     "file": "07_EXECUTION\\SRUM\\SRUDB.dat",
@@ -23,14 +23,14 @@
   "defenderEvtx": {
     "file": "01_RAW_EVENTLOGS\\Microsoft-Windows-Windows Defender%4Operational.evtx",
     "eventId": "1116",
-    "pathContains": "NanAgent32.exe",
+    "pathContains": "VendorAgent32.exe",
     "threatName": "Behavior:Win32/GenCodeInjected.H"
   },
   "msiEvtx": {
     "file": "01_RAW_EVENTLOGS\\Application.evtx",
     "provider": "MsiInstaller",
     "eventId": "1033",
-    "messageContains": "CxUtilSvc Helper"
+    "messageContains": "VxUtilSvc Helper"
   },
   "pcapng": {
     "file": "20_NETWORK\\PCAP\\pktmon_20261003_2347341.pcapng",
@@ -43,9 +43,9 @@
     "minEntries": 6000
   },
   "systemHive": {
-    "file": "NanAgent-Forensic-V11_20261003_221532\\24_RAW_REGISTRY\\HKLM_SYSTEM.hiv",
-    "bamRegQuery": "NanAgent-Forensic-V11_20261003_221532\\27_BAM\\bam_all.txt",
-    "shimcacheRegQuery": "NanAgent-Forensic-V11_20261003_221532\\28_APPCOMPAT\\shimcache.txt"
+    "file": "VendorAgent-Forensic-V11_20261003_221532\\24_RAW_REGISTRY\\HKLM_SYSTEM.hiv",
+    "bamRegQuery": "VendorAgent-Forensic-V11_20261003_221532\\27_BAM\\bam_all.txt",
+    "shimcacheRegQuery": "VendorAgent-Forensic-V11_20261003_221532\\28_APPCOMPAT\\shimcache.txt"
   },
   "tasks": {
     "file": "05_TASKS\\Tasks_XML\\Adobe Acrobat Update Task",
@@ -53,7 +53,7 @@
     "schtasksCsv": "05_TASKS\\schtasks_csv_v.csv"
   },
   "userHive": {
-    "file": "06_REGISTRY\\hives\\NTUSER_Owner.hiv",
+    "file": "06_REGISTRY\\hives\\NTUSER_user.hiv",
     "userAssistExport": "06_REGISTRY\\exports\\27_UserAssist.reg",
     "runExports": "06_REGISTRY\\exports\\05_Run.reg|06_REGISTRY\\exports\\06_RunOnce.reg"
   },
@@ -92,7 +92,7 @@
   },
   "iocInventory": {
     "file": "29_IOC\\IOC_INVENTORY.csv",
-    "samples": "25_TARGET_MSBUILD\\MSI_CxUtilSvcHelper\\9520444.msi|25_TARGET_MSBUILD\\Conexant_CxUtilSvcHelper_COPY|24_TARGET_NANAGENT\\RenPy_COPY"
+    "samples": "25_TARGET_MSBUILD\\MSI_VxUtilSvcHelper\\9520444.msi|25_TARGET_MSBUILD\\VendorX_VxUtilSvcHelper_COPY|24_TARGET_VENDORAGENT\\RenPy_COPY"
   },
   "antiForensics": {
     "file": "01_RAW_EVENTLOGS\\System.evtx",
@@ -111,7 +111,7 @@
   },
   "usn": {
     "file": "17_USN_MFT\\usn_readjournal_C.csv",
-    "second": "NanAgent-Forensic-V11_20261003_221532\\19_RECOVERY\\usn_readjournal.txt",
+    "second": "VendorAgent-Forensic-V11_20261003_221532\\19_RECOVERY\\usn_readjournal.txt",
     "prefetch": "09_PREFETCH\\Prefetch",
     "softwareHive": "06_REGISTRY\\hives\\SOFTWARE.hiv",
     "zone": "GTB Standard Time",
@@ -122,6 +122,6 @@
     "prefetchBulkDeleteUtc": "2026-10-03T13:54:27",
     "prefetchBulkDeleteCount": 349
   },
-  "huntTargets": ["NanAgent32.exe", "Hub-Distributed.exe", "XPFix.exe", "pro_cmd_core", "com_pro_connector", "orchestratormaintain",
-                  "MSBuild.exe", "Wacatac.H!ml", "LummaStealer.A", "SuspEtherRpcConn.B", "GenCodeInjected.H", "CxUtilSvc", "NetworkMonitor.csproj"]
+  "huntTargets": ["VendorAgent32.exe", "Hub-Distributed.exe", "XPFix.exe", "pro_cmd_core", "com_pro_connector", "orchestratormaintain",
+                  "MSBuild.exe", "Wacatac.H!ml", "LummaStealer.A", "SuspEtherRpcConn.B", "GenCodeInjected.H", "VxUtilSvc", "NetworkMonitor.csproj"]
 }

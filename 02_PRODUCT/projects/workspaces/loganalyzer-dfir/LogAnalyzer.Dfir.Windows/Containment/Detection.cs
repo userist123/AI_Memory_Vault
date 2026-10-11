@@ -14,7 +14,7 @@ public sealed record SuspectProcess(int Pid, string Name, string Path, IReadOnly
 }
 
 /// <summary>
-/// Finds third-party processes worth containing. The pattern is the one seen in the NanAgent case: an unsigned
+/// Finds third-party processes worth containing. The pattern is the one seen in the VendorAgent case: an unsigned
 /// program, running from a location any user can write to, talking to the Internet. A process is
 /// <see cref="SuspectProcess.HighConfidence"/> only when all three hold; that is the only case automatic
 /// containment may act on.
