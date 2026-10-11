@@ -534,4 +534,7 @@ export const ro: Dict = {
   "wd.csv": "Listă de debitare (CSV)",
   "wd.disable": "Renunță",
   "wd.note": "Construcție uzuală (laterale pe toată înălțimea, spate HDF prins în spate); verifică dimensiunile cu atelierul înainte de debitare.",
+  "viewer.glb": "Model 3D (GLB)",
+  "viewer.glbTitle": "Descarcă modelul 3D (glTF binar) pentru 3ds Max, SketchUp, Blender sau Twinmotion",
+  "viewer.glbFailed": "Modelul 3D nu s-a putut exporta.",
 };
