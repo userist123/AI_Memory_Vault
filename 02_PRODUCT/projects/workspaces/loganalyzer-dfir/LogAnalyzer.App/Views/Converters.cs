@@ -58,4 +58,13 @@ namespace LogAnalyzer.UI.Views
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }
+
+    /// <summary>The one-line „Ce face" of a policy setting, for the tooltip of a plan row.</summary>
+    public sealed class PolicySettingOneLineConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value is LogAnalyzer.Dfir.Policy.SettingRef s ? LogAnalyzer.Dfir.Windows.Policy.PolicySettingCatalogue.OneLine(s) : "";
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+    }
 }

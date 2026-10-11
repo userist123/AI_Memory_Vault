@@ -1,8 +1,11 @@
 <UserControl x:Class="LogAnalyzer.UI.Views.PolicyView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:LogAnalyzer.UI.Views">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
+        <local:PolicySettingOneLineConverter x:Key="SettingOneLine"/>
     </UserControl.Resources>
     <Grid Margin="24">
         <Grid.RowDefinitions>
@@ -66,18 +69,41 @@
             <TabItem Header="Plan (curent / dorit / diferență)" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <TextBlock DockPanel.Dock="Top" Text="{Binding PlanSummary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                    <Border DockPanel.Dock="Bottom" Margin="0,8,0,0" Padding="10" Background="{StaticResource CanvasBrush}" CornerRadius="6">
-                        <StackPanel>
-                            <TextBlock Text="Dați clic pe un rând ca să vedeți, pe înțeles, ce înseamnă setarea." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
-                            <StackPanel DataContext="{Binding SelectedSettingExplanation}">
-                                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0"><Run Text="{Binding Code, Mode=OneWay}" FontWeight="SemiBold"/> <Run Text="{Binding Kind, Mode=OneWay, StringFormat='({0})'}" Foreground="{StaticResource TextMutedBrush}"/></TextBlock>
-                                <TextBlock Text="{Binding What}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                <TextBlock Text="{Binding Why, StringFormat='De ce contează: {0}'}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                <TextBlock Text="{Binding When}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <!-- owner 2026-10-12: „ce face fiecare politică în parte": list + explanation panel, as on Control stație -->
+                    <Border DockPanel.Dock="Right" Width="420" Margin="8,0,0,0" Padding="12" Background="{StaticResource CanvasBrush}" CornerRadius="6">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel>
+                                <TextBlock Text="Dați clic pe un rând ca să vedeți, pe înțeles, ce face setarea." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"
+                                           Visibility="{Binding HasSelectedSetting, Converter={StaticResource InverseBoolToVis}}"/>
+                                <StackPanel DataContext="{Binding SelectedSettingExplanation}" Visibility="{Binding DataContext.HasSelectedSetting, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVis}}"
+                                            AutomationProperties.Name="Explicația setării alese">
+                                    <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBox Text="{Binding Setting, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextMutedBrush}" AutomationProperties.Name="Setarea tehnică"/>
+                                    <TextBlock Text="Ce face" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
+                                    <TextBlock Text="{Binding What}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="De ce contează pe o stație izolată" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
+                                    <TextBlock Text="{Binding Why}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Valoarea recomandată" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
+                                    <TextBlock Text="{Binding Recommended}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="{Binding Required}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0"/>
+                                    <TextBlock Text="Ce înseamnă valoarea de acum" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
+                                    <TextBlock Text="{Binding CurrentMeaning}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Unde se setează" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
+                                    <TextBox Text="{Binding Where, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}" AutomationProperties.Name="Unde se setează"/>
+                                    <TextBlock Text="Pentru IT" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
+                                    <TextBox Text="{Binding ForIt, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}" AutomationProperties.Name="Detalii pentru IT"/>
+                                    <Button Content="Copiază explicația (pentru procesul-verbal)" Command="{Binding DataContext.CopyExplanationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            HorizontalAlignment="Left" Margin="0,10,0,0" Style="{StaticResource OutlineButtonStyle}" AutomationProperties.Name="Copiază explicația"/>
+                                </StackPanel>
                             </StackPanel>
-                        </StackPanel>
+                        </ScrollViewer>
                     </Border>
                     <DataGrid ItemsSource="{Binding PlanRows}" SelectedItem="{Binding SelectedPlanRow}" SelectionMode="Single" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                <Setter Property="ToolTip" Value="{Binding Setting, Converter={StaticResource SettingOneLine}}"/>
+                            </Style>
+                        </DataGrid.RowStyle>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Control" Binding="{Binding ControlId}" Width="90"/>
                             <DataGridTextColumn Header="Titlu" Binding="{Binding Title}" Width="2*">

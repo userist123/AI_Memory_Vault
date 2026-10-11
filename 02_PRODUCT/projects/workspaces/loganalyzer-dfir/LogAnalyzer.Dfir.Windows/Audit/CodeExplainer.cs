@@ -322,6 +322,12 @@ public static class CodeExplainer
         ["ForceLogoffWhenHourExpire"] = ("Deconectarea forțată la expirarea orelor permise.", "Aplică restricțiile de program."),
     };
 
+    /// <summary>The service names this explainer knows (the policy catalogue keeps one entry for each; checked by a sync test).</summary>
+    public static IReadOnlyCollection<string> KnownServices => Services.Keys;
+
+    /// <summary>The registry codes this explainer knows, as "parent\value" (the policy catalogue covers each or lists it as information only).</summary>
+    public static IEnumerable<string> KnownRegistryCodes => RegistryValues.Select(r => r.Code);
+
     /// <summary>
     /// A policy setting in plain words: a known registry value, an audit subcategory, a service or a security-policy key; for any other registry
     /// value, what kind of setting it is (computer/user, imposed by Group Policy or not), never a guessed meaning.
