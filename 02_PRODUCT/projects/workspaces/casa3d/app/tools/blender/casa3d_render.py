@@ -128,12 +128,14 @@ class Materials:
             # contrast moderat al fibrei (0,55 + 0,45·v) și plafon 1,3: petele luminoase ale furnirului nu mai ies albe
             soft = nt.nodes.new('ShaderNodeMath')
             soft.operation = 'MULTIPLY_ADD'
-            soft.inputs[1].default_value = 0.45
-            soft.inputs[2].default_value = 0.55
+            # pe lemn deschis (stejar alb, bej, sonoma) culoarea e deja aproape de alb: fibra doar umbrește, nu luminează
+            light = sum(col[:3]) / 3 > 0.25   # liniar: stejar artisan ~0,38, nuc ~0,09
+            soft.inputs[1].default_value = 0.22 if light else 0.45
+            soft.inputs[2].default_value = 0.8 if light else 0.55
             nt.links.new(div.outputs['Value'], soft.inputs[0])
             cap = nt.nodes.new('ShaderNodeMath')
             cap.operation = 'MINIMUM'
-            cap.inputs[1].default_value = 1.3
+            cap.inputs[1].default_value = 1.05 if light else 1.3
             nt.links.new(soft.outputs['Value'], cap.inputs[0])
             cc = nt.nodes.new('ShaderNodeCombineColor')
             for i in range(3):
