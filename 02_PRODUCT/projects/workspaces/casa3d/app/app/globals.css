@@ -508,3 +508,7 @@ input[type=file]{font-size:12px;color:var(--lead)} input[type=file]::file-select
 .ropt-new{display:flex;gap:6px;flex-wrap:wrap} .ropt-new input{flex:1 1 180px;min-width:0}
 .ropt-client-box{max-width:1100px;margin:12px auto 24px;padding:16px} .ropt-grid{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
 .ropt .err{color:#9a3b2f;margin:0;font-size:12px}
+/* demo public: prezentarea de pe prima pagină */
+.demo-hero{display:grid;gap:10px;padding:20px;border:1px solid var(--rule);border-radius:12px;background:var(--surface);margin:12px 0}
+.demo-hero h1{margin:0;font-size:clamp(22px,4vw,32px);line-height:1.15} .demo-hero p{margin:0;max-width:70ch}
+.demo-hero ul{margin:0;padding-left:18px;display:grid;gap:4px} .demo-hero .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
