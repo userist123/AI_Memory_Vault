@@ -404,7 +404,7 @@ function DocsPanel({ id, lang, onSchedule }: { id: string; lang: string; onSched
 
 /** Randările fotorealiste făcute pe acest calculator (Blender Cycles), cele mai noi întâi; se reîmprospătează cât timp lucrează. */
 // Linkul pentru client și părerile venite pe el: un buton care salvează versiunea și copiază linkul; părerile grupate pe camere, de bifat.
-type ClientFeedback = { id: string; roomId: string | null; verdict: 'like' | 'change' | 'question'; author: string; text: string; createdAt: string; resolvedAt: string | null; revisionNumber: number };
+type ClientFeedback = { id: string; roomId: string | null; verdict: 'like' | 'change' | 'question'; author: string; text: string; createdAt: string; resolvedAt: string | null; revisionNumber: number; item?: { key: string; label: string; role: string | null } | null };
 function ClientPanel({ id, say, onLinked, flush, roomNames }: { id: string; say(s: string): void; onLinked(): void; flush(): Promise<void>; roomNames: Record<string, string> }){
   const { t, lang } = usePrefs(), [link, setLink] = useState<{ url: string; local: boolean } | null>(null), [busy, setBusy] = useState(false), [items, setItems] = useState<ClientFeedback[] | null>(null);
   useEffect(() => { let alive = true; const load = () => fetch(`/api/projects/${id}/feedback`).then(r => r.ok ? r.json() : null).then(j => { if (alive && j) setItems(j); }).catch(() => {});
@@ -426,7 +426,7 @@ function ClientPanel({ id, say, onLinked, flush, roomNames }: { id: string; say(
     <h3>{t('client.feedback')}{open > 0 && <span className="pill">{t('client.open', { n: open })}</span>}</h3>
     {items && items.length === 0 && <p className="muted">{t('client.noFeedback')}</p>}
     {[...groups.entries()].map(([room, fs]) => <div key={room} className="fbg"><h4>{room ? roomNames[room] ?? room : t('client.general')}</h4>
-      {fs.map(f => <div key={f.id} className={`fbi ${f.resolvedAt ? 'done' : ''}`}><span className={`fb-tag fb-${f.verdict}`}>{t(`fb.${f.verdict}`)}</span>{f.text && <q>{f.text}</q>}
+      {fs.map(f => <div key={f.id} className={`fbi ${f.resolvedAt ? 'done' : ''}`}><span className={`fb-tag fb-${f.verdict}`}>{f.item && f.verdict === 'like' ? t('fb.isApproved') : t(`fb.${f.verdict}`)}{f.item ? ` · ${f.item.label}` : ''}</span>{f.text && <q>{f.text}</q>}
         <small>{f.author} · {new Date(f.createdAt).toLocaleString(intlLocale(lang), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · {t('client.rev', { n: f.revisionNumber })}</small>
         <button className="btn" onClick={() => toggle(f)}>{f.resolvedAt ? t('client.reopen') : t('client.resolve')}</button></div>)}</div>)}
   </div>);

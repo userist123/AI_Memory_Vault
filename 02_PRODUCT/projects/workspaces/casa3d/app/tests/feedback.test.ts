@@ -86,3 +86,19 @@ test('numele nu poate ascunde alt nume (caractere invizibile / inversare), id-ur
   assert.equal(pb('https://casa.example.com/'), 'https://casa.example.com'); assert.equal(pb('http://x.trycloudflare.com'), 'http://x.trycloudflare.com');
   for (const bad of ['https://h#', 'https://h/?a=1', 'https://u:p@h', 'https://h/cale', 'ftp://h', 'nu e url', undefined]) assert.equal(pb(bad), null, String(bad));
 });
+
+test('aprobare pe produs: doar produse din camera partajată, numele îl pune serverul', async () => {
+  const { presentation, approvalItems } = await import('../core/presentation');
+  const { getCatalog, getMaterials } = await import('../lib/repo');
+  const id = await repo.createProject(A, 'Aprobări', 'demo'), { number } = await repo.createRevision(A, id, 'v1'), { token } = await createShare(A, id, number);
+  const snap = (await repo.getProject(A, id)).draft, slide = presentation(snap, await getCatalog(), await getMaterials()).rooms.find(r => r.products.length > 0)!;
+  const items = approvalItems(slide), prod = items.find(i => i.key.startsWith('p:'))!, fin = items.find(i => i.key.startsWith('f:'))!;
+  const a = await addFeedback(token, { roomId: slide.id, verdict: 'like', author: 'Ana', text: '', item: { key: prod.key, label: 'ETICHETA FALSĂ' } });
+  assert.equal(a.item?.key, prod.key); assert.equal(a.item?.label, prod.label, 'eticheta vine de pe server');
+  const b = await addFeedback(token, { roomId: slide.id, verdict: 'change', author: 'Ana', text: 'altă culoare', item: { key: fin.key } }); assert.equal(b.item?.role, fin.role);
+  for (const bad of [{ roomId: slide.id, item: { key: 'p:nu-exista' } }, { roomId: null, item: { key: prod.key } }, { roomId: slide.id, item: { key: 'x'.repeat(200) } }, { roomId: slide.id, item: 'p:1' }])
+    await assert.rejects(addFeedback(token, { verdict: 'like', author: 'Ana', text: '', ...bad } as any), (e: any) => e.status === 400, JSON.stringify(bad));
+  const other = presentation(snap, await getCatalog(), await getMaterials()).rooms.find(r => r.id !== slide.id && r.products.length)!;
+  await assert.rejects(addFeedback(token, { roomId: other.id, verdict: 'like', author: 'Ana', text: '', item: { key: prod.key } }), (e: any) => e.status === 400, 'produsul altei camere');
+  assert.equal((await listFeedback(A, id)).filter(f => f.item).length, 2);
+});

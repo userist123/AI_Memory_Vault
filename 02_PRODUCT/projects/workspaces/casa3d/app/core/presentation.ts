@@ -8,14 +8,14 @@ import { roomLook } from './appearance';
 import { resolve, pricedOffer } from './catalog';
 import { area } from './geometry';
 
-export interface Swatch { role: string; material: Material | null; color: string; note?: string }
-export interface RoomSlide { id: string; name: string; type: string; level: number; areaM2: number; swatches: Swatch[]; products: { name: string; variant: string; price: number | null; currency: string | null }[] }
+export interface Swatch { role: string; material: Material | null; color: string; note?: string; /** cheie stabilă în cameră, pentru aprobarea clientului */ key: string }
+export interface RoomSlide { id: string; name: string; type: string; level: number; areaM2: number; swatches: Swatch[]; products: { id: string; name: string; variant: string; price: number | null; currency: string | null }[] }
 export interface BoardGroup { role: 'floors' | 'walls' | 'textiles' | 'fittings' | 'lighting'; items: { material: Material | null; color: string }[] }
 
 /** Mostrele camerei, în ordinea în care le citește clientul: pardoseală, pereți, accente, tavan, lumină, textile, obiecte. */
 export function roomSwatches(snap: Snapshot, mc: MaterialsCatalog, room: Room): Swatch[] {
   const f = finishesOf(snap, room), out: Swatch[] = [], add = (role: string, id: string | null | undefined, color?: string, note?: string) => {
-    const m = materialOf(mc, id) ?? null; if (!m && !color) return; out.push({ role, material: m, color: color ?? m?.specs?.color ?? '#e2ddd4', ...(note ? { note } : {}) }); };
+    const m = materialOf(mc, id) ?? null; if (!m && !color) return; const c = color ?? m?.specs?.color ?? '#e2ddd4'; out.push({ role, material: m, color: c, key: `${role}:${m?.id ?? c}`.slice(0, 120), ...(note ? { note } : {}) }); };
   const fm = materialOf(mc, f.floor); add('floor', f.floor, undefined, layoutOf(f, fm).pattern);
   add('walls', f.wallPaint, roomLook(snap, room.id).walls);
   for (const w of f.wallFeatures || []) add(`accent.${w.kind}`, w.material, w.color);
@@ -34,7 +34,7 @@ export function presentation(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog)
   const rooms: RoomSlide[] = floors(snap).flatMap((fl, level) => fl.rooms.map(r => ({ id: r.id, name: r.name, type: r.type, level, areaM2: Math.round(area(r.rect) * 10) / 10,
     swatches: roomSwatches(snap, mc, r),
     products: snap.placements.filter(p => p.roomId === r.id).map(p => { const rv = resolve(cat, p.variantId), o = pricedOffer(cat, p);
-      return { name: rv?.product.name ?? p.group, variant: rv?.variant.name ?? '', price: o?.price ?? null, currency: o?.currency ?? null }; }) })));
+      return { id: p.id, name: rv?.product.name ?? p.group, variant: rv?.variant.name ?? '', price: o?.price ?? null, currency: o?.currency ?? null }; }) })));
   const ROLE: Record<string, BoardGroup['role']> = { floor: 'floors', walls: 'walls', walltile: 'walls', cornice: 'walls', curtain: 'textiles', sheer: 'textiles', blind: 'textiles', rug: 'textiles',
     countertop: 'fittings', sink: 'fittings', tap: 'fittings', bathTap: 'fittings', shower: 'fittings', mirror: 'fittings', light: 'lighting' };
   const board: BoardGroup[] = (['floors', 'walls', 'textiles', 'fittings', 'lighting'] as const).map(role => ({ role, items: [] as BoardGroup['items'] }));
@@ -43,4 +43,10 @@ export function presentation(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog)
   const b = computeBudget(snap, cat, mc);
   return { rooms, board: board.filter(g => g.items.length), budget: { total: b.chosen.total, categories: b.categories, labor: b.chosen.labor, contingency: b.chosen.contingency, unknown: b.unknownItems.length + b.unknownLines.length },
     totalArea: Math.round(rooms.reduce((a, r) => a + r.areaM2, 0) * 10) / 10 };
+}
+
+/** Ce poate aproba clientul într-o cameră: fiecare finisaj (f:<cheie>) și fiecare piesă (p:<id>), cu numele afișat. */
+export function approvalItems(slide: RoomSlide): { key: string; label: string; role: string | null }[] {
+  return [...slide.swatches.map(s => ({ key: `f:${s.key}`, label: s.material ? s.material.name.split(',')[0]! : s.color, role: s.role })),
+    ...slide.products.map(p => ({ key: `p:${p.id}`.slice(0, 120), label: !p.variant ? p.name : p.variant.toLowerCase().startsWith(p.name.toLowerCase()) ? p.variant : `${p.name} · ${p.variant}`, role: null }))];
 }
