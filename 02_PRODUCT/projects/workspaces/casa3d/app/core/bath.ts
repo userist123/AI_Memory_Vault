@@ -4,6 +4,8 @@ import type { BathSpec, MaterialsCatalog, Room, RoomFinishes, Snapshot } from '.
 import { materialOf } from './finishes';
 
 export const METAL_COLOR: Record<NonNullable<BathSpec['metal']>, string> = { chrome: '#cfcfcf', black: '#1c1c1c', brass: '#b08d57', gunmetal: '#55585c' };
+/** Cum își numesc magazinele finisajul: crom/cromat, negru (mat), alamă/auriu, grafit/gri periat/gun metal. */
+export const METAL_FINISH: Record<NonNullable<BathSpec['metal']>, RegExp> = { chrome: /crom|inox/i, black: /negru|black/i, brass: /alam|auri|gold|brass/i, gunmetal: /gun|grafit|gri/i };
 export const TILE_ZONE_M: Record<NonNullable<BathSpec['tileZone']>, number | undefined> = { h120: 1.2, h210: 2.1, full: undefined };
 export const bathOf = (f: RoomFinishes) => ({ metal: 'chrome' as const, showerType: 'cabin' as const, wc: 'floor' as const, tileZone: 'h210' as const, ...(f.bath || {}) });
 /** Înălțimea faianței din baie (`undefined` = până la tavan). */
@@ -16,7 +18,7 @@ export function bathIssues(snap: Snapshot, mc: MaterialsCatalog, room: Room, f: 
   if (b.wc === 'wall') out.push({ key: 'bath.wallFrame', roomId: room.id });
   if (hasShower && b.tileZone === 'h120') out.push({ key: 'bath.tileLow', roomId: room.id });
   const m = materialOf(mc, b.mirror), ip = m?.specs?.ip ? Number(m.specs.ip.replace(/\D/g, '').slice(-1)) : null; if (m && ip != null && ip < 4) out.push({ key: 'bath.mirrorIp', roomId: room.id, vars: { ip: m.specs!.ip! } });
-  const tap = materialOf(mc, b.tap), fin = tap?.specs?.finish; if (tap && fin && !fin.toLowerCase().includes(b.metal === 'chrome' ? 'crom' : b.metal === 'black' ? 'negru' : b.metal === 'brass' ? 'alam' : 'gun')) out.push({ key: 'bath.metalMismatch', roomId: room.id, vars: { finish: fin } });
+  for (const id of [b.tap, b.shower]){ const m = materialOf(mc, id), fin = m?.specs?.finish; if (m && fin && !METAL_FINISH[b.metal].test(fin)) out.push({ key: 'bath.metalMismatch', roomId: room.id, vars: { finish: fin } }); }
   return out;
 }
 export function sanitizeBath(b: any): string | null {

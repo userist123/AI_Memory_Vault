@@ -23,38 +23,38 @@ export interface StylePackage { id: 'scandi' | 'modern' | 'japandi' | 'industria
   ceilingLiving?: RoomFinishes['ceiling']; cornice?: string;
   door: string; handle: string; curtain?: string; sheer?: string; blind?: 'fonsterblad' | 'ringblomma' | 'vecklarfly' | null;
   rugLiving?: string; rugBed?: string;
-  kitchen: KitchenSpec; bath: BathSpec; fixtureColor: string; pendantTable: boolean; trackLiving: boolean; bedSconces: boolean; counterPendants: boolean }
+  kitchen: KitchenSpec; bath: BathSpec; fixtureColor: string; pendant?: string; sconce?: string; counterPendant?: string; pendantTable: boolean; trackLiving: boolean; bedSconces: boolean; counterPendants: boolean }
 
 export const STYLE_PACKAGES: StylePackage[] = [
   { id: 'scandi', floor: { dry: 'parchet-egger-h2099', dryLayout: { pattern: 'third' }, wet: 'gresie-mckinley' }, walls: '#f4f3ef', ceiling: '#fbfbf9', paint: 'vopsea-innenweiss', wallTile: 'faianta-lane-blanco', baseboard: 'plinta-mdf-90', light: 'lampa-virrmo',
     accentLiving: [{ kind: 'paint', material: 'vopsea-savana-super', color: '#c9d3cc' }], door: 'usa-megadoor-clasic-alb-87', handle: 'maner-sterk-sm1703-inox', curtain: 'draperie-annakajsa-bej', sheer: 'perdea-bergnejlika-alb', blind: null,
     rugLiving: 'covor-stoense-200x300', rugBed: 'covor-morum-bej-160x230',
-    kitchen: { frontColor: '#f2f1ec', frontFinish: 'matt', handle: 'bar', handleColor: '#c9c9c6', upper: 'closed', countertopColor: '#c9a77c', countertopMm: 38, backsplash: 'tile', underLed: 'banda-led-hoff-3000k' },
-    bath: { metal: 'chrome', tileZone: 'h210', showerType: 'cabin', wc: 'floor' }, fixtureColor: '#f2f1ec', pendantTable: true, trackLiving: false, bedSconces: true, counterPendants: false },
+    kitchen: { frontColor: '#f2f1ec', frontFinish: 'matt', handle: 'bar', handleColor: '#c9c9c6', upper: 'closed', countertop: 'dedeman-kronodesign-k003fp-blat-stejar-3040x600x28', countertopColor: '#c9a77c', countertopMm: 28, backsplash: 'tile', underLed: 'banda-led-hoff-3000k', sink: 'dedeman-sandonna-lena-chiuveta-quartz-alb-rotunda', tap: 'dedeman-kadda-clover-my1708-42-bucatarie-cromat' },
+    bath: { metal: 'chrome', tileZone: 'h210', showerType: 'cabin', wc: 'floor', tap: 'dedeman-hansgrohe-logis-e-71160000-lavoar-cromat', shower: 'dedeman-kadda-girard-my2061-77c-sistem-dus-cromat', towelRadiator: 'dedeman-radox-scala-portprosop-alb-500x1200', mirror: 'ikea-faxalven-oglinda-iluminat-60x95' }, pendant: 'ikea-akterspring-lustra-opalin-alamit-73', sconce: 'dedeman-smarter-kaya-01-4741-aplica-e14-negru-alb', fixtureColor: '#f2f1ec', pendantTable: true, trackLiving: false, bedSconces: true, counterPendants: false },
   { id: 'modern', floor: { dry: 'gresie-emarble-60x120', dryLayout: { pattern: 'brick', groutMm: 2, groutColor: '#9a9894' }, wet: 'gresie-emarble-60x120', wetLayout: { pattern: 'straight', groutMm: 2, groutColor: '#9a9894' } },
     walls: '#ecebe8', ceiling: '#fbfbf9', paint: 'vopsea-caparol-alb', wallTile: 'faianta-lane-blanco', baseboard: 'plinta-mdf-60', light: 'lampa-kabomba',
     accentLiving: [{ kind: 'slats', material: 'riflaj-mdf-unic-alb', color: '#3c3f41' }], accentBed: [{ kind: 'paint', material: 'vopsea-savana-super', color: '#5e646b' }],
     ceilingLiving: { type: 'cove', dropCm: 10, coveCm: 30, led: 'banda-led-hoff-3000k', spot: 'spot-mt143-9w', spots: 6 },
     door: 'usa-bestimp-g6-gri-88', handle: 'maner-kuchinox-sombra-negru', sheer: 'perdea-bergnejlika-alb', blind: 'fonsterblad', rugLiving: 'covor-arende-gri-160x230', rugBed: 'covor-arende-gri-160x230',
-    kitchen: { frontColor: '#3c3f41', frontFinish: 'matt', handle: 'profile', handleColor: '#1c1c1c', upper: 'closed', countertopColor: '#e8e4dc', countertopMm: 20, backsplash: 'countertop', underLed: 'banda-led-hoff-3000k' },
-    bath: { metal: 'black', tileZone: 'full', showerType: 'walkin', wc: 'wall' }, fixtureColor: '#1c1c1c', pendantTable: true, trackLiving: true, bedSconces: true, counterPendants: true },
+    kitchen: { frontColor: '#3c3f41', frontFinish: 'matt', handle: 'profile', handleColor: '#1c1c1c', upper: 'closed', countertop: 'ikea-ekbacken-blat-alb-aspect-marmura-246x2-8', countertopColor: '#e8e4dc', countertopMm: 28, backsplash: 'countertop', underLed: 'banda-led-hoff-3000k', sink: 'dedeman-franke-bsg-611-78-s-chiuveta-fragranit-negru', tap: 'ikea-almaren-baterie-bucatarie-negru' },
+    bath: { metal: 'black', tileZone: 'full', showerType: 'walkin', wc: 'wall', tap: 'dedeman-grohe-start-235502432-lavoar-negru-mat', shower: 'dedeman-ideal-standard-ceratherm-alu-bd583-sistem-dus-negru-mat', towelRadiator: 'dedeman-purmo-banga-portprosop-negru-500x1222', mirror: 'dedeman-savini-due-br-80-60-oglinda-led-80x60' }, pendant: 'dedeman-smarter-boom-01-3480-suspensie-3xgu10-negru-mat', counterPendant: 'dedeman-smarter-boom-01-3480-suspensie-3xgu10-negru-mat', sconce: 'dedeman-smarter-kaya-01-4741-aplica-e14-negru-alb', fixtureColor: '#1c1c1c', pendantTable: true, trackLiving: true, bedSconces: true, counterPendants: true },
   { id: 'japandi', floor: { dry: 'parchet-pergo-5006', dryLayout: { pattern: 'brick' }, wet: 'gresie-glocal-bianco' }, walls: '#ebe5da', ceiling: '#f6f3ee', paint: 'vopsea-innenweiss', wallTile: 'faianta-grafen', baseboard: 'plinta-mdf-60', light: 'lampa-virrmo',
     accentLiving: [{ kind: 'plaster', material: 'tencuiala-kober-bob-orez', color: '#cfc6b8' }], accentBed: [{ kind: 'slats', material: 'riflaj-mdf-unic-alb', color: '#b08a62' }],
     door: 'usa-r80-stejar-gri-86', handle: 'maner-kuchinox-sombra-negru', curtain: 'draperie-annakajsa-bej', blind: 'ringblomma', rugLiving: 'covor-bronden-170x240', rugBed: 'covor-morum-bej-160x230',
-    kitchen: { frontColor: '#b8936a', frontFinish: 'wood', handle: 'profile', handleColor: '#55585c', upper: 'open', countertopColor: '#e3ddd0', countertopMm: 20, backsplash: 'countertop' },
-    bath: { metal: 'gunmetal', tileZone: 'h120', showerType: 'cabin', wc: 'wall' }, fixtureColor: '#c8b79a', pendantTable: true, trackLiving: false, bedSconces: false, counterPendants: false },
+    kitchen: { frontColor: '#b8936a', frontFinish: 'wood', handle: 'profile', handleColor: '#55585c', upper: 'open', countertop: 'ikea-karlby-blat-stejar-furnir-186x3-8', countertopColor: '#c49a6c', countertopMm: 38, backsplash: 'countertop', sink: 'ikea-kilsviken-chiuveta-1-cuva-gri-bej-compozit-cuart', tap: 'ikea-taksjon-baterie-bucatarie-aspect-inox' },
+    bath: { metal: 'gunmetal', tileZone: 'h120', showerType: 'cabin', wc: 'wall', tap: 'dedeman-kadda-girard-my2061-p2h-lavoar-gri-periat', towelRadiator: 'dedeman-radox-scala-portprosop-alb-500x1200', mirror: 'dedeman-kadda-nw-18-oglinda-led-rotunda-60' }, pendant: 'ikea-narrkolv-lustra-ratan-56', fixtureColor: '#c8b79a', pendantTable: true, trackLiving: false, bedSconces: false, counterPendants: false },
   { id: 'industrial', floor: { dry: 'parchet-krono-herringbone-k450', dryLayout: { pattern: 'herringbone' }, wet: 'gresie-glocal-bianco' }, walls: '#dcdad5', ceiling: '#f2f1ee', paint: 'vopsea-caparol-alb', wallTile: 'faianta-lane-blanco', baseboard: 'plinta-mdf-60', light: 'lampa-kabomba',
     accentLiving: [{ kind: 'brick', material: 'caramida-bronx-60' }], accentBed: [{ kind: 'plaster', material: 'tencuiala-kober-bob-orez', color: '#8d8b86' }],
     door: 'usa-bestimp-g6-gri-88', handle: 'maner-kuchinox-sombra-negru', curtain: 'draperie-annakajsa-bej', blind: 'vecklarfly', rugLiving: 'covor-arende-gri-160x230', rugBed: 'covor-morum-80x200',
-    kitchen: { frontColor: '#2b2b2b', frontFinish: 'matt', handle: 'bar', handleColor: '#1c1c1c', upper: 'open', countertopColor: '#8f6243', countertopMm: 38, backsplash: 'tile', underLed: 'banda-led-hoff-3000k' },
-    bath: { metal: 'black', tileZone: 'h210', showerType: 'walkin', wc: 'floor' }, fixtureColor: '#1c1c1c', pendantTable: true, trackLiving: true, bedSconces: true, counterPendants: true },
+    kitchen: { frontColor: '#2b2b2b', frontFinish: 'matt', handle: 'bar', handleColor: '#1c1c1c', upper: 'open', countertop: 'dedeman-kronodesign-k003fp-blat-stejar-3040x600x28', countertopColor: '#8f6243', countertopMm: 28, backsplash: 'tile', underLed: 'banda-led-hoff-3000k', sink: 'dedeman-evido-quadro-6-chiuveta-granit-antracit', tap: 'dedeman-ferro-fitness-nero-bfs4blb-bucatarie-negru' },
+    bath: { metal: 'black', tileZone: 'h210', showerType: 'walkin', wc: 'floor', tap: 'ikea-dalskar-baterie-lavoar-negru', shower: 'dedeman-kadda-girard-my2061-77b-sistem-dus-negru', towelRadiator: 'dedeman-radox-scala-portprosop-negru-mat-600x1200', mirror: 'dedeman-savini-due-br-80-60-oglinda-led-80x60' }, pendant: 'dedeman-smarter-boom-01-3480-suspensie-3xgu10-negru-mat', counterPendant: 'dedeman-smarter-boom-01-3480-suspensie-3xgu10-negru-mat', sconce: 'dedeman-smarter-timber-01-1663-aplica-e27-negru-fag', fixtureColor: '#1c1c1c', pendantTable: true, trackLiving: true, bedSconces: true, counterPendants: true },
   { id: 'classic', floor: { dry: 'parchet-classen-herringbone-ve96', dryLayout: { pattern: 'herringbone' }, wet: 'gresie-mckinley', wetLayout: { pattern: 'diagonal' } }, walls: '#efe9df', ceiling: '#fbfaf6', paint: 'vopsea-savana-super', wallTile: 'faianta-lumiere', baseboard: 'plinta-mdf-90', light: 'lampa-virrmo',
-    accentLiving: [{ kind: 'panel', material: 'riflaj-mdf-unic-alb', color: '#e6dfd2', heightM: 1 }, { kind: 'paint', material: 'vopsea-savana-super', color: '#d6c8b0' }],
-    accentBed: [{ kind: 'wallpaper', material: 'tapet-grandeco-marmor' }], hallWainscot: [{ kind: 'panel', material: 'riflaj-mdf-unic-alb', color: '#e6dfd2', heightM: 1 }],
+    accentLiving: [{ kind: 'panel', material: 'riflaj-mdf-unic-alb', color: '#e6dfd2', heightM: 1 }, { kind: 'rail', material: 'dedeman-bagheta-polimer-dur-wood-class-chp2040-alb-200cm', color: '#f3f1ec', heightM: 1 }, { kind: 'paint', material: 'vopsea-savana-super', color: '#d6c8b0' }],
+    accentBed: [{ kind: 'wallpaper', material: 'tapet-grandeco-marmor' }], hallWainscot: [{ kind: 'panel', material: 'riflaj-mdf-unic-alb', color: '#e6dfd2', heightM: 1 }, { kind: 'rail', material: 'dedeman-bagheta-polimer-dur-wood-class-chp2040-alb-200cm', color: '#f3f1ec', heightM: 1 }],
     cornice: 'cornisa-nmc-nc109', door: 'usa-megadoor-clasic-alb-87', handle: 'maner-sterk-sm1703-inox', curtain: 'draperie-pelarkorsbar-floral', sheer: 'perdea-bergnejlika-alb', blind: null,
     rugLiving: 'covor-arende-alb-200x300', rugBed: 'covor-bronden-170x240',
-    kitchen: { frontColor: '#e9e4d8', frontFinish: 'matt', handle: 'knob', handleColor: '#b08d57', upper: 'closed', countertopColor: '#e0deda', countertopMm: 30, backsplash: 'tile' },
-    bath: { metal: 'brass', tileZone: 'h120', showerType: 'cabin', wc: 'floor' }, fixtureColor: '#b08d57', pendantTable: true, trackLiving: false, bedSconces: true, counterPendants: false },
+    kitchen: { frontColor: '#e9e4d8', frontFinish: 'matt', handle: 'knob', handleColor: '#b08d57', upper: 'closed', countertop: 'ikea-ekbacken-blat-alb-aspect-marmura-246x2-8', countertopColor: '#e0deda', countertopMm: 28, backsplash: 'tile', sink: 'dedeman-franke-bsg-611-78-chiuveta-fragranit-avena-bej', tap: 'dedeman-grohe-minta-31375gn0-bucatarie-auriu-mat' },
+    bath: { metal: 'brass', tileZone: 'h120', showerType: 'cabin', wc: 'floor', tap: 'ikea-runskar-baterie-lavoar-alama', shower: 'dedeman-kadda-girard-my2061-77g-sistem-dus-auriu', towelRadiator: 'dedeman-radox-scala-portprosop-auriu-600x1200', mirror: 'ikea-faxalven-oglinda-iluminat-60x95' }, pendant: 'ikea-stockholm-2025-lustra-sticla-alamit-38', fixtureColor: '#b08d57', pendantTable: true, trackLiving: false, bedSconces: true, counterPendants: false },
 ];
 export const styleById = (id: string) => STYLE_PACKAGES.find(s => s.id === id) ?? null;
 
@@ -65,7 +65,7 @@ export function wallBehind(snap: Snapshot, cat: Catalog, room: Room, group: stri
   return ([['N', fp.z0 - r.z0], ['S', r.z1 - fp.z1], ['W', fp.x0 - r.x0], ['E', r.x1 - fp.x1]] as const).reduce((a, b) => b[1] < a[1] ? b : a)[0];
 }
 const bands = (side: Side, xs: Accent[]): WallFeature[] => { let from = 0;
-  return xs.map(a => { const w: WallFeature = { side, kind: a.kind, material: a.material, ...(a.color ? { color: a.color } : {}), ...(from > 0 ? { fromM: from } : {}), ...(a.heightM ? { heightM: a.heightM } : {}) }; from = a.heightM ?? from; return w; }); };
+  return xs.map(a => { const w: WallFeature = { side, kind: a.kind, material: a.material, ...(a.color ? { color: a.color } : {}), ...(from > 0 && a.kind !== 'rail' ? { fromM: from } : {}), ...(a.heightM ? { heightM: a.heightM } : {}) }; if (a.kind !== 'rail') from = a.heightM ?? from; return w; }); };
 /** Storul potrivit: cel mai îngust care acoperă fereastra (sau cel mai lat din serie). */
 function blindFor(mc: MaterialsCatalog, family: string, widthM: number): string | null {
   const xs = mc.materials.filter(m => m.category === 'blind' && m.id.includes(family) && m.specs?.sizeCm).sort((a, b) => a.specs!.sizeCm![0] - b.specs!.sizeCm![0]);
@@ -95,13 +95,16 @@ export function applyStyle(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, p
         ...(has(pkg.curtain) ? { curtain: pkg.curtain } : {}), ...(has(pkg.sheer) ? { sheer: pkg.sheer } : {}), ...(pkg.blind ? { blind: blindFor(mc, pkg.blind, w.widthM) } : {}) }));
       if (win.length) f.windows = win;
       const rug = room.type === 'living' ? pkg.rugLiving : pkg.rugBed; if (has(rug)) f.rug = { material: rug }; }
-    if (room.type === 'bucatarie') f.kitchen = { ...pkg.kitchen, ...(pkg.kitchen.underLed && !has(pkg.kitchen.underLed) ? { underLed: null } : {}) };
-    if (room.type === 'baie') f.bath = { ...pkg.bath };
+    // produsele care lipsesc din catalog rămân neprecizate (null), nu se inventează
+    const only = <T extends object>(o: T, keys: (keyof T)[]): T => ({ ...o, ...Object.fromEntries(keys.filter(k => o[k] != null && !has(o[k] as string)).map(k => [k, null])) });
+    if (room.type === 'bucatarie') f.kitchen = only(pkg.kitchen, ['countertop', 'sink', 'tap', 'underLed']);
+    if (room.type === 'baie') f.bath = only(pkg.bath, ['tap', 'shower', 'towelRadiator', 'mirror']);
     const fx: LightFixture[] = [], here = (g: string) => s.placements.some(p => p.roomId === room.id && p.group === g), color = pkg.fixtureColor;
-    if (pkg.pendantTable && here('masa')) fx.push({ kind: 'pendant', anchor: 'table', color });
+    const prod = (id?: string) => has(id) ? { material: id } : {};
+    if (pkg.pendantTable && here('masa')) fx.push({ kind: 'pendant', anchor: 'table', color, ...prod(pkg.pendant) });
     if (pkg.trackLiving && room.type === 'living') fx.push({ kind: 'track', anchor: 'center', lengthM: 2, color });
-    if (pkg.bedSconces && here('pat')) fx.push({ kind: 'sconce', anchor: 'bed', color });
-    if (pkg.counterPendants && here('bucatarie') && room.type === 'bucatarie') fx.push({ kind: 'pendant', anchor: 'counter', color });
+    if (pkg.bedSconces && here('pat')) fx.push({ kind: 'sconce', anchor: 'bed', color, ...prod(pkg.sconce) });
+    if (pkg.counterPendants && here('bucatarie') && room.type === 'bucatarie') fx.push({ kind: 'pendant', anchor: 'counter', color, ...prod(pkg.counterPendant) });
     if (fx.length) f.fixtures = fx;
     finishes[room.id] = f; rooms[room.id] = { walls: { color: pkg.walls }, ceiling: { color: pkg.ceiling } };
   }

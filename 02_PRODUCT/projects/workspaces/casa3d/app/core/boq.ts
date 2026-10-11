@@ -79,7 +79,7 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
       if (sg.netM2 <= 0) continue;
       if (!m || m.category !== FEATURE_CATEGORY[wf.kind]){ unknown.push(`${room.name}: ${wf.kind} ${wf.side}`); continue; }
       featureArea += sg.netM2; const key = `${room.id}:wall:${wf.side}:${i}`, where = `${room.name}, perete ${wf.side} (${r2(sg.lengthM)} m × ${r2(sg.fromM)}–${r2(sg.toM)} m)`;
-      if (wf.kind === 'paint'){ if (m.coverage) items.push(materialLine(m, key, room.id, `Vopsea${wf.color ? ` nuanța ${wf.color}` : ''} · ${where} (${r2(sg.netM2)} m², ${PAINT_COATS} straturi)`, sg.netM2 * PAINT_COATS / m.coverage, mc.verifiedAt)); addLabor(room.id, 'manopera-zugravit', sg.netM2); continue; }
+      if (wf.kind === 'paint'){ if (m.coverage) items.push(materialLine(m, key, room.id, `Vopsea${wf.color ? ` nuanța ${wf.color}` : ''} · ${where} (${r2(sg.netM2)} m², ${PAINT_COATS} straturi)`, sg.netM2 * PAINT_COATS / m.coverage, mc.verifiedAt)); else unknown.push(`Vopsea ${m.name} · ${where}: randamentul nu e publicat (${r2(sg.netM2)} m²)`); addLabor(room.id, 'manopera-zugravit', sg.netM2); continue; }
       if (wf.kind === 'panel' && m.specs?.sizeCm){ items.push(materialLine(m, key, room.id, `Lambriu · ${where}`, panelCount(sg.lengthM, sg.heightM, m.specs.sizeCm), mc.verifiedAt, 0)); unknown.push(`Manoperă lambriu · ${where}`); continue; }
       if (wf.kind === 'wallpaper' && m.specs?.roll){ const rr = wallpaperRolls(sg.lengthM, sg.heightM, m.specs.roll); items.push({ ...materialLine(m, key, room.id, `Tapet · ${where}: ${rr.strips} fâșii, ${rr.perRoll} pe rolă`, rr.rolls, mc.verifiedAt, 0) }); }
       else if (wf.kind === 'slats' && m.specs?.sizeCm) items.push(materialLine(m, key, room.id, `Riflaj · ${where}`, panelCount(sg.lengthM, sg.heightM, m.specs.sizeCm), mc.verifiedAt, 0));
@@ -129,6 +129,7 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
     // vopsea: pereți (fără zona placată) + tavan (și marginea tavanului fals), 2 straturi
     const paintArea = Math.max(0, g.wallNet - wallsHidden - (wt ? tileArea : 0) - featureArea) + g.ceiling + ceilingBand, pm = M(f.wallPaint);
     if (pm && pm.coverage){ const litres = paintArea * PAINT_COATS / pm.coverage; const line = materialLine(pm, `${room.id}:paint`, room.id, `Vopsea pereți + tavan · ${room.name} (${r2(paintArea)} m², ${PAINT_COATS} straturi)`, litres, mc.verifiedAt); items.push(line); addLabor(room.id, 'manopera-zugravit', paintArea); }
+    else if (pm){ unknown.push(`Vopsea ${pm.name} · ${room.name}: randamentul nu e publicat (${r2(paintArea)} m²)`); addLabor(room.id, 'manopera-zugravit', paintArea); }
     // plintă (doar unde nu e placat)
     const bm = M(f.baseboard); if (bm && !WET_ROOMS.has(room.type)){ const len = Math.max(0, g.perimeter - g.doorWidth); items.push(materialLine(bm, `${room.id}:baseboard`, room.id, `Plintă · ${room.name}`, len, mc.verifiedAt)); addLabor(room.id, 'manopera-plinta', len); }
     // iluminat general
