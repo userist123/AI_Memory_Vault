@@ -404,20 +404,10 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
+        // A stream row is an event, not an alert: open the standard event detail, never a made-up alert with an invented technique (senior review L13).
         partial void OnSelectedLiveStreamingEventChanged(ParsedEvent? value)
         {
-            if (value != null)
-            {
-                var dummyAlert = new DetectedIssue
-                {
-                    Title = $"Eveniment Securitate EID {value.EventId} ({value.ProviderName})",
-                    Severity = value.Level ?? "Information",
-                    Explanation = value.Message ?? string.Empty,
-                    MitreTechniqueId = "T1059 (Event Log Triage)",
-                    RelatedEvents = new List<ParsedEvent> { value }
-                };
-                OpenAlertModal(dummyAlert, value.MachineName ?? Environment.MachineName);
-            }
+            if (value != null) OpenGenericDetail(value);
         }
 
         [RelayCommand]
@@ -1776,90 +1766,85 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 Application.Current?.Dispatcher?.Invoke(() => LiveMonitoringStatusText = $"Eroare live: {ex.Message}");
             };
+            // Events arrive on thread-pool threads, possibly hundreds per second: queue them and let one UI timer apply them in batches
+            // instead of one synchronous Dispatcher.Invoke per event (senior review L11).
             _liveWatcher.OnEventReceived += ev =>
             {
-                Application.Current?.Dispatcher?.Invoke(() =>
-                {
-                    TotalLiveEventsCaptured++;
-                    TotalEventsCount++;
-
-                    // 1. Live stream table
-                    if (LiveStreamingEvents.Count > 200)
-                    {
-                        LiveStreamingEvents.RemoveAt(LiveStreamingEvents.Count - 1);
-                    }
-                    LiveStreamingEvents.Insert(0, ev);
-
-                    // 2. Main EVTX table (Auto Live Ingestion)
-                    if (Events.Count > 300)
-                    {
-                        Events.RemoveAt(Events.Count - 1);
-                    }
-                    Events.Insert(0, ev);
-
-                    // 3. Timeline stream (Live Chronology)
-                    if (TimelineItems.Count > 300)
-                    {
-                        TimelineItems.RemoveAt(TimelineItems.Count - 1);
-                    }
-                    TimelineItems.Insert(0, new TimelineItem
-                    {
-                        Timestamp = ev.TimeCreated,
-                        Source = ev.ProviderName,
-                        Category = "Live Event",
-                        UserOrHost = ev.MachineName,
-                        Description = ev.Message
-                    });
-
-                    // 4. Real-time Security Evaluation
-                    _liveEngine.MaintenancePolicy = LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.MaintenancePolicyFor([new DateTimeOffset(ev.TimeCreated.ToUniversalTime())]);
-                    var alert = _liveEngine.EvaluateLiveEvent(ev);
-                    if (alert != null)
-                    {
-                        LiveAlerts.Insert(0, alert);
-                        DetectedIssues.Insert(0, alert);
-                        CurrentLiveToastAlert = alert;
-                        IsLiveToastVisible = true;
-                        StatusMessage = $"🚨 ALERTĂ LIVE DETECTATĂ: {alert.Title}";
-
-                        // Highlight MITRE ATT&CK Matrix live
-                        if (!string.IsNullOrEmpty(alert.MitreTechniqueId))
-                        {
-                            var tech = AttackTechniques.FirstOrDefault(t => t.TechId.Equals(alert.MitreTechniqueId, StringComparison.OrdinalIgnoreCase));
-                            if (tech != null)
-                            {
-                                tech.DetectionColor = "#3f1218";
-                                tech.BorderColor = "#ef4444";
-                                tech.Severity = alert.Severity;
-                            }
-                        }
-
-                        // Open interactive emergency countermeasure & detail inspection modal for ALL alerts
-                        if (alert != null)
-                        {
-                            // No automatic action on the station: containment is the operator's decision (tab "Izolare procese suspecte").
-                            IsAutoShieldTriggered = false;
-
-                            OpenAlertModal(alert, ev.MachineName, show: false);
-
-                        }
-
-                        try { System.Media.SystemSounds.Exclamation.Play(); } catch (InvalidOperationException) { /* sound is optional */ }
-
-                        _toastAutoDismissTimer?.Stop();
-                        _toastAutoDismissTimer = new System.Timers.Timer(7000);
-                        _toastAutoDismissTimer.AutoReset = false;
-                        _toastAutoDismissTimer.Elapsed += (s, e) =>
-                        {
-                            Application.Current?.Dispatcher?.Invoke(() => IsLiveToastVisible = false);
-                        };
-                        _toastAutoDismissTimer.Start();
-                    }
-                });
+                _liveQueue.Enqueue(ev);
+                while (_liveQueue.Count > LiveQueueLimit && _liveQueue.TryDequeue(out _)) System.Threading.Interlocked.Increment(ref _liveDropped);
             };
+            if (Application.Current is not null)
+            {
+                _liveDrainTimer ??= new System.Windows.Threading.DispatcherTimer(TimeSpan.FromMilliseconds(250), System.Windows.Threading.DispatcherPriority.Background,
+                    (_, _) => DrainLiveQueue(), Application.Current.Dispatcher);
+                _liveDrainTimer.Start();
+            }
 
             _liveWatcher.StartWatching(LiveRemoteTargetHost);
             IsLiveMonitoringActive = true;
+        }
+
+        private const int LiveQueueLimit = 20_000, LiveStreamRows = 200, LiveAlertRows = 500, LiveBatch = 2_000;
+        private readonly System.Collections.Concurrent.ConcurrentQueue<ParsedEvent> _liveQueue = new();
+        private readonly LiveAlertThrottle _liveThrottle = new();
+        private System.Windows.Threading.DispatcherTimer? _liveDrainTimer;
+        private int _liveDropped;
+
+        /// <summary>
+        /// Applies the queued live events in one batch on the UI thread: stream rows, evaluation, de-duplication, at most one toast and one sound per batch,
+        /// and the sound only for High/Critical. Live events stay on the live page; they are not mixed into the case tables, whose counts must match the
+        /// store (senior review L10, L12).
+        /// </summary>
+        internal void DrainLiveQueue()
+        {
+            int n = 0;
+            DetectedIssue? loudest = null;
+            while (n < LiveBatch && _liveQueue.TryDequeue(out var ev))
+            {
+                n++;
+                TotalLiveEventsCaptured++;
+                LiveStreamingEvents.Insert(0, ev);
+                _liveEngine.MaintenancePolicy = LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.MaintenancePolicyFor([new DateTimeOffset(ev.TimeCreated.ToUniversalTime())]);
+                var alert = _liveEngine.EvaluateLiveEvent(ev);
+                if (alert is null || !_liveThrottle.Admit(alert, ev)) continue;
+                LiveAlerts.Insert(0, alert);
+                DetectedIssues.Insert(0, alert);
+                HighlightTechnique(alert);
+                OpenAlertModal(alert, ev.MachineName, show: false);   // no automatic action on the station: containment is the operator's decision
+                if (loudest is null || SeverityRank(alert.Severity) > SeverityRank(loudest.Severity)) loudest = alert;
+            }
+            while (LiveStreamingEvents.Count > LiveStreamRows) LiveStreamingEvents.RemoveAt(LiveStreamingEvents.Count - 1);
+            while (LiveAlerts.Count > LiveAlertRows) LiveAlerts.RemoveAt(LiveAlerts.Count - 1);
+            int dropped = System.Threading.Interlocked.Exchange(ref _liveDropped, 0);
+            if (dropped > 0) LiveMonitoringStatusText = $"Prea multe evenimente deodată: {dropped} nu au mai putut fi evaluate. Pe această stație, monitorizarea live nu este completă.";
+            else if (_liveThrottle.Suppressed > 0) LiveMonitoringStatusText = $"🔴 Monitorizare activă · {_liveThrottle.Suppressed} repetări ale unor alerte deja afișate au fost adăugate la alerta inițială (nu au deschis alerte noi).";
+            if (loudest is null) return;
+
+            IsAutoShieldTriggered = false;
+            CurrentLiveToastAlert = loudest;
+            IsLiveToastVisible = true;
+            StatusMessage = $"🚨 ALERTĂ LIVE: {loudest.Title}";
+            if (SeverityRank(loudest.Severity) >= 3)
+                try { System.Media.SystemSounds.Exclamation.Play(); } catch (InvalidOperationException) { /* sound is optional */ }
+            _toastAutoDismissTimer?.Stop();
+            _toastAutoDismissTimer = new System.Timers.Timer(7000) { AutoReset = false };
+            _toastAutoDismissTimer.Elapsed += (s, e) => Application.Current?.Dispatcher?.Invoke(() => IsLiveToastVisible = false);
+            _toastAutoDismissTimer.Start();
+        }
+
+        private static int SeverityRank(string? s) => s?.ToLowerInvariant() switch { "critical" => 4, "high" => 3, "medium" => 2, "low" => 1, _ => 0 };
+
+        // The live MITRE matrix: highlight by the base technique, so "T1059.001" lights "T1059.001" and composite ids never miss (senior review L15).
+        private void HighlightTechnique(DetectedIssue alert)
+        {
+            var id = (alert.MitreTechniqueId ?? "").Split([' ', '/', ','], StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+            if (string.IsNullOrEmpty(id)) return;
+            var tech = AttackTechniques.FirstOrDefault(t => t.TechId.Equals(id, StringComparison.OrdinalIgnoreCase))
+                       ?? AttackTechniques.FirstOrDefault(t => t.TechId.Equals(id.Split('.')[0], StringComparison.OrdinalIgnoreCase));
+            if (tech is null) return;
+            tech.DetectionColor = "#3f1218";
+            tech.BorderColor = "#ef4444";
+            tech.Severity = alert.Severity;
         }
 
         [RelayCommand]
@@ -1869,6 +1854,8 @@ namespace LogAnalyzer.UI.ViewModels
             _liveWatcher?.StopWatching();
             _liveWatcher?.Dispose();
             _liveWatcher = null;
+            _liveDrainTimer?.Stop();
+            DrainLiveQueue();
             IsLiveMonitoringActive = false;
             LiveMonitoringStatusText = "⏹ Monitorizare în timp real oprită.";
         }
