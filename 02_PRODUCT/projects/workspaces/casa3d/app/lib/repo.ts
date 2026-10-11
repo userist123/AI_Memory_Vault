@@ -13,6 +13,7 @@ import { validateFloor, validatePlacement } from '../core/validate';
 import { floors, levelView, levelOfRoom, stairIssues, MAX_LEVELS } from '../core/levels';
 import type { Catalog, Snapshot, MaterialsCatalog, Underlay } from '../core/types';
 import { checkBrief } from '../core/brief';
+import { checkWardrobe } from '../core/joinery';
 import { diffSnapshots } from '../core/diff';
 import { parseProposal, evaluateProposal, applyVariant, TIERS, type Tier, type RawProposal } from '../core/proposal';
 import { proposeByRules } from '../core/proposer-rules';
@@ -107,6 +108,9 @@ export function checkSnapshot(s: any): Snapshot {
   if (s.budget != null){ const b = s.budget; const okNum = (v: unknown) => v == null || (typeof v === 'number' && Number.isFinite(v) && v >= 0);
     if (typeof b !== 'object' || !okNum(b.target) || !okNum(b.contingencyPct) || !okNum(b.deliveryDedeman) || !okNum(b.furnitureAssembly) || !okNum(b.design) || (b.contingencyPct ?? 0) > 100) throw new HttpError(400, 'Setările de buget sunt invalide.'); }
   if (s.brief != null){ try { s.brief = checkBrief(s.brief); } catch { delete s.brief; } }
+  if (s.joinery != null){ const out: Record<string, unknown> = {}, ids = new Set((s.placements as any[]).map(p => p?.id));
+    if (typeof s.joinery === 'object' && !Array.isArray(s.joinery)) for (const [k, v] of Object.entries(s.joinery).slice(0, 200)){ if (!ids.has(k)) continue; try { out[k] = checkWardrobe(v); } catch (e: any){ throw new HttpError(400, e.message); } }
+    if (Object.keys(out).length) s.joinery = out; else delete s.joinery; }
   s.name = cleanName(s.name); s.picked = Array.isArray(s.picked) ? s.picked.filter((x: unknown) => typeof x === 'string') : [];
   return s as Snapshot;
 }
