@@ -76,9 +76,10 @@ CONTEXT_RULES = f"""{RULES_START}
 - One task per session. At a milestone write a short checkpoint (task, branch, done, next, key
   files) and start the next task with /clear from that checkpoint, not from the old transcript.
 - Do not re-read a file you already have unchanged in context; do not paste whole files back.
-- Write every message to the owner in the language set by `language` in ~/.claude/settings.json
-  (Romanian for this owner), including short progress notes. Everything internal stays in
-  English: subagent briefs, self check-ins, skills, prompts, code, commits and repository files.
+- Write to the owner in the language set by `language` in ~/.claude/settings.json (Romanian for
+  this owner): replies, short progress notes, commit messages, PR titles, descriptions and
+  comments. File contents and internal text stay in English: code, skills, prompts, .md files,
+  subagent briefs and self check-ins.
 {RULES_END}
 """
 DISABLED_MARKER = "cost-router.disabled"  # written by --uninstall under ~/.claude; honoured by --session-start

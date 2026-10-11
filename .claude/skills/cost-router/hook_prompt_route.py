@@ -47,8 +47,9 @@ def main() -> int:
     ctx = one_line(d) + "."
     lang = owner_language()
     if lang:  # the injected context is English; without this the reply drifts to English
-        ctx += (f" Write every message to the owner in {lang}; keep internal text (subagent briefs, self check-ins,"
-                " skills, prompts, code, commits, files) in English.")
+        ctx += (f" Write to the owner in {lang}: replies, commit messages, PR titles, descriptions and comments."
+                " Keep file contents and internal text in English: code, skills, prompts, .md files, subagent"
+                " briefs, self check-ins.")
     if d.subagent:
         ctx += (f" Do the work in a subagent of any type ({d.subagent} fits); the Agent hook sets its model"
                 f" to {d.model}. Keep only its conclusion in this session.")
