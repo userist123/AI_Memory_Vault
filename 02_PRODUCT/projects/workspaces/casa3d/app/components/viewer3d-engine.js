@@ -420,7 +420,7 @@ function model(it){
   // vaze pe comoda TV și pe masă, o ramă pe noptieră. Determinist (aceleași poziții la fiecare reconstruire), fără coliziuni.
   let decor = new THREE.Group(), lastItems = [], decorOn = true;
   function buildDecor(items){ scene.remove(decor); decor = new THREE.Group(); scene.add(decor); if (!decorOn || !plan) return;
-    const put = (key, x, y, z, rotY) => { const m = decoModel(key); if (!m) return; const o = m.clone(); o.position.set(x, y, z); o.rotation.y = rotY || 0; decor.add(o); };
+    const put = (key, x, y, z, rotY) => { const m = decoModel(key); if (!m) return; const o = m.clone(); o.position.set(x, y, z); o.rotation.y = rotY || 0; o.userData.deco = DECO[key][0]; decor.add(o); };
     const back = r => [-Math.sin(r), -Math.cos(r)], fps = items.filter(i => i.fp).map(i => i.fp);
     for (const it of items){ const v = it.variant; if (!v || !v.w) continue; const h = v.h / 100, d = v.d / 100, room = plan.camere.find(c => it.x > c.x0 && it.x < c.x1 && it.z > c.z0 && it.z < c.z1); if (!room) continue;
       const [bx, bz] = back(it.rotation), wallAt = () => { // fața peretelui din spatele piesei
@@ -563,7 +563,9 @@ function model(it){
       const m = Array.isArray(o.material) ? o.material.map(matOf) : matOf(o.material);
       meshes.push({ g, m, p: [P.x, P.y, P.z].map(r4), q: [Q.x, Q.y, Q.z, Q.w].map(r4), s: [Sc.x, Sc.y, Sc.z].map(r4) }); });
     const rooms = plan.camere.map(r => ({ id: r.id, name: r.nume, type: r.tip, rect: [r.x0, r.z0, r.x1, r.z1] }));
-    const out = { format: 'casa3d-scene', version: 1, units: 'm', up: 'Y', height: plan.inaltime, rooms, materials: mats, meshes,
+    // decorul: trimitem doar modelul glTF și matricea lui (Blender îl importă din public/models), nu mii de triunghiuri
+    decor.updateMatrixWorld(true); const decorRefs = decor.children.filter(o => o.userData.deco && o.children[0]).map(o => ({ model: o.userData.deco, m: o.children[0].matrixWorld.elements.map(r4) }));
+    const out = { format: 'casa3d-scene', version: 1, units: 'm', up: 'Y', height: plan.inaltime, rooms, materials: mats, meshes, decor: decorRefs,
       sun: { dir: light && light.dir ? light.dir : [.45, .75, -.48], time: meta.time || 'day', azimuthDeg: meta.azimuthDeg ?? null },
       lights: interiorLights.map(l => ({ p: [l.position.x, l.position.y, l.position.z].map(r4), i: r4(l.intensity) })), ...meta };
     setMode(prevMode); return out; }

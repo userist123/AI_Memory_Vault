@@ -44,6 +44,8 @@ def parse_args(argv):
     p.add_argument('--blend', action='store_true')
     p.add_argument('--assets', default=os.environ.get('CASA3D_ASSETS', ''),
                    help='dosar cu texturi Poly Haven (CC0): laminate_floor_02, large_grey_tiles, plastered_wall, rough_linen, velour_velvet, leather_white și cerurile *.hdr')
+    p.add_argument('--models', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'public', 'models'),
+                   help='dosarul cu modelele decorative glTF (implicit public/models din aplicație)')
     p.add_argument('--no-render', action='store_true')
     return p.parse_args(argv)
 
@@ -563,6 +565,45 @@ def build_mesh(g, name):
 
 
 # ---------------------------------------------------------------- scena
+def import_decor(scene_data, models_dir):
+    """Decorul din aplicație (plante, tablouri, vaze): fiecare model glTF importat o dată și instanțiat cu matricea din three.js."""
+    refs = scene_data.get('decor') or []
+    if not refs or not os.path.isdir(models_dir):
+        return
+    conv = Y_UP_TO_Z_UP
+    loaded = {}
+    for ref in refs:
+        name = ref.get('model', '')
+        if not name.replace('_', '').isalnum():
+            continue
+        if name not in loaded:
+            path = os.path.join(models_dir, name, f'{name}.gltf')
+            if not os.path.isfile(path):
+                loaded[name] = None
+                continue
+            before = set(bpy.data.objects)
+            bpy.ops.import_scene.gltf(filepath=path)
+            objs = [o for o in bpy.data.objects if o not in before]
+            coll = bpy.data.collections.new(f'decor_{name}')
+            for o in objs:
+                for c in o.users_collection:
+                    c.objects.unlink(o)
+                coll.objects.link(o)
+            loaded[name] = coll
+        coll = loaded[name]
+        if coll is None:
+            continue
+        e = ref['m']
+        m3 = Matrix(((e[0], e[4], e[8], e[12]), (e[1], e[5], e[9], e[13]), (e[2], e[6], e[10], e[14]), (e[3], e[7], e[11], e[15])))
+        inst = bpy.data.objects.new(f'decor_{name}', None)
+        inst.instance_type = 'COLLECTION'
+        inst.instance_collection = coll
+        # glTF-ul importat e deja în Z-sus; matricea din three.js lucrează în Y-sus: o conjugăm cu schimbarea de axe
+        inst.matrix_world = conv @ m3 @ conv.inverted()
+        bpy.context.scene.collection.objects.link(inst)
+    print(f'[casa3d] decor: {len(refs)} obiecte')
+
+
 def clear_scene():
     bpy.ops.wm.read_factory_settings(use_empty=True)
 
@@ -762,6 +803,7 @@ def main():
     os.makedirs(args.out, exist_ok=True)
     clear_scene()
     build(data, args.assets)
+    import_decor(data, args.models)
     light_scene(data, args.assets)
     setup_render(args)
     sc = bpy.context.scene
