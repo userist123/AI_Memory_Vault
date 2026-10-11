@@ -115,7 +115,7 @@ export function checkSnapshot(s: any): Snapshot {
   return s as Snapshot;
 }
 export async function listProjects(owner: string){
-  const { q } = await getDb(); const { rows } = await q('select id, name, updated_at, current_revision, meta from projects where owner=$1 order by updated_at desc', [owner]);
+  const { q } = await getDb(); const { rows } = await q('select id, name, updated_at, current_revision, meta from projects where owner=$1 and deleted_at is null order by updated_at desc', [owner]);
   return rows.map(r => { const m = readMeta(r.meta); return { id: r.id, name: r.name, updated_at: r.updated_at, current_revision: r.current_revision, status: m.status, client: m.client?.name ?? null, dueDate: m.dueDate ?? null }; });
 }
 /** Fișa proiectului (client, etapă, termene, onorariu): doar proprietarul o citește și o schimbă. */
@@ -132,7 +132,7 @@ export async function createProject(owner: string, name: unknown, template: unkn
 }
 async function own(owner: string, id: string){
   if (!/^[0-9a-f-]{36}$/i.test(id)) throw new HttpError(404, 'Proiect inexistent.');
-  const { q } = await getDb(); const { rows } = await q('select * from projects where id=$1 and owner=$2', [id, owner]);
+  const { q } = await getDb(); const { rows } = await q('select * from projects where id=$1 and owner=$2 and deleted_at is null', [id, owner]);   // un proiect din coș nu se deschide
   if (!rows[0]) throw new HttpError(404, 'Proiect inexistent.'); return rows[0];
 }
 export async function getProject(owner: string, id: string){ const r = await own(owner, id); return { id: r.id, name: r.name, updatedAt: r.updated_at, currentRevision: r.current_revision, draft: r.draft as Snapshot, meta: readMeta(r.meta) }; }
@@ -179,7 +179,6 @@ export async function diffRevisions(owner: string, id: string, from: number, to:
   const before = await load(from), after = to === 'draft' ? p.draft as Snapshot : await load(to);
   return { from, to, ...diffSnapshots(before, after, await getCatalog()) };
 }
-export async function deleteProject(owner: string, id: string){ await own(owner, id); const { q } = await getDb(); await q('delete from projects where id=$1', [id]); }
 
 // ---------- Faza 3: propuneri de design ----------
 const publicVariants = (evs: ReturnType<typeof evaluateProposal>) => evs.map(e => ({ ...e }));

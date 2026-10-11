@@ -11,7 +11,7 @@ const v = <T>(fn: () => T) => { try { return fn(); } catch (e: any){ if (e insta
 export async function listTasks(owner: string, projectId?: string | null): Promise<(Task & { projectName: string | null })[]> {
   const { q } = await getDb();
   if (projectId){ await getProject(owner, projectId); }
-  const { rows } = await q(`select t.*, p.name as project_name from tasks t left join projects p on p.id = t.project_id where t.owner=$1 ${projectId ? 'and t.project_id=$2' : ''}
+  const { rows } = await q(`select t.*, p.name as project_name from tasks t left join projects p on p.id = t.project_id where t.owner=$1 and (t.project_id is null or p.deleted_at is null) ${projectId ? 'and t.project_id=$2' : ''}
     and (t.done_at is null or t.done_at > now() - interval '14 days') order by t.done_at nulls first, t.due nulls last, t.created_at`, projectId ? [owner, projectId] : [owner]);
   return rows.map(r => ({ ...row(r), projectName: r.project_name ?? null }));
 }

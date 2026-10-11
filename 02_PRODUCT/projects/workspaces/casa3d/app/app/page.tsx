@@ -16,6 +16,20 @@ const ACTIVE: ProjectStatus[] = ['lead', 'offer', 'design', 'execution'];
 export default function Home(){
   const { t, tp, lang, units } = usePrefs(), L = lang === 'en' ? 'en' : 'ro';
   const [filter, setFilter] = useState<'all' | 'active' | ProjectStatus>('active'), [list, setList] = useState<P[] | null>(null), [plans, setPlans] = useState<Record<string, Floor>>({}), [name, setName] = useState(''), [err, setErr] = useState(''), [busy, setBusy] = useState(false);
+  const [q, setQ] = useState(''), [sort, setSort] = useState<'due' | 'updated' | 'name'>('due'), [trash, setTrash] = useState<{ id: string; name: string; purgeAt: string }[]>([]), [undo, setUndo] = useState<{ id: string; name: string } | null>(null);
+  const loadTrash = () => fetch('/api/projects/trash').then(r => r.ok ? r.json() : []).then(setTrash).catch(() => {});
+  const thumbs = (ps: P[]) => { for (const p of ps.slice(0, 24)) fetch(`/api/projects/${p.id}`).then(r => r.ok ? r.json() : null).then(j => { if (j?.draft?.floor) setPlans(m => m[p.id] ? m : ({ ...m, [p.id]: j.draft.floor })); }).catch(() => {}); };
+  const reload = () => fetch('/api/projects').then(r => r.json()).then((ps: P[]) => { setList(ps); thumbs(ps); }).catch(() => setErr(t('home.loadFailed')));
+  useEffect(() => { loadTrash(); }, []); // eslint-disable-line
+  useEffect(() => { if (!undo) return; const tm = setTimeout(() => setUndo(null), 10000); return () => clearTimeout(tm); }, [undo]);
+  // ștergerea mută în coș (30 de zile) și se poate anula imediat; ștergerea definitivă cere numele tastat
+  async function toTrash(p: P){ const r = await fetch(`/api/projects/${p.id}`, { method: 'DELETE' }); if (!r.ok){ setErr(t('home.error')); return; } setUndo({ id: p.id, name: p.name }); reload(); loadTrash(); }
+  async function restore(id: string){ const r = await fetch(`/api/projects/${id}/restore`, { method: 'POST' }); if (!r.ok){ setErr(t('home.error')); return; } setUndo(null); reload(); loadTrash(); }
+  async function purge(x: { id: string; name: string }){ const typed = prompt(t('home.purgeConfirm', { name: x.name })); if (typed == null) return;
+    const r = await fetch(`/api/projects/${x.id}/purge`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: typed }) }); const j = await r.json().catch(() => ({}));
+    if (!r.ok){ setErr(j.error || t('home.error')); return; } loadTrash(); }
+  async function duplicate(p: P){ const r = await fetch(`/api/projects/${p.id}/duplicate`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }); const j = await r.json().catch(() => ({}));
+    if (!r.ok){ setErr(j.error || t('home.error')); return; } reload(); }
   useEffect(() => { fetch('/api/projects').then(r => r.json()).then((ps: P[]) => { setList(ps);
     // miniaturile: planul din ciorna fiecărui proiect (primele 12)
     for (const p of ps.slice(0, 12)) fetch(`/api/projects/${p.id}`).then(r => r.ok ? r.json() : null).then(j => { if (j?.draft?.floor) setPlans(m => ({ ...m, [p.id]: j.draft.floor })); }).catch(() => {}); })
@@ -25,8 +39,12 @@ export default function Home(){
     if (!r.ok){ setErr(j.error || t('home.error')); setBusy(false); return; } location.href = `/p/${j.id}`; }
   const today = new Date().toISOString().slice(0, 10);
   // active: cele cu termen mai întâi (cel mai apropiat), apoi după ultima modificare
+  const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(), needle = norm(q.trim());
   const shown = (list ?? []).filter(p => filter === 'all' ? true : filter === 'active' ? ACTIVE.includes(p.status) : p.status === filter)
-    .sort((a, b) => (a.dueDate && b.dueDate ? a.dueDate.localeCompare(b.dueDate) : a.dueDate ? -1 : b.dueDate ? 1 : 0));
+    .filter(p => !needle || norm(`${p.name} ${p.client ?? ''}`).includes(needle))
+    .sort((a, b) => sort === 'name' ? a.name.localeCompare(b.name, lang) : sort === 'updated' ? b.updated_at.localeCompare(a.updated_at)
+      : (a.dueDate && b.dueDate ? a.dueDate.localeCompare(b.dueDate) : a.dueDate ? -1 : b.dueDate ? 1 : 0));
+  const daysTo = (iso: string) => Math.max(0, Math.ceil((Date.parse(iso) - Date.now()) / 864e5));
   const count = (f: typeof filter) => (list ?? []).filter(p => f === 'all' ? true : f === 'active' ? ACTIVE.includes(p.status) : p.status === f).length;
   const when = (d: string) => new Date(d).toLocaleDateString(intlLocale(lang), { day: 'numeric', month: 'short', year: 'numeric' });
   return (<main className="home">
@@ -37,12 +55,19 @@ export default function Home(){
       {err && <p className="issue ERROR">{err}</p>}
       {list && list.length > 0 && <div className="filters" role="tablist">{(['active', 'all', ...PROJECT_STATUSES] as const).filter(f => f === 'active' || f === 'all' || count(f) > 0).map(f =>
         <button key={f} role="tab" aria-selected={filter === f} onClick={() => setFilter(f)}>{f === 'all' ? t('home.filterAll') : f === 'active' ? t('home.filterActive') : t(`pstatus.${f}`)} <i>{count(f)}</i></button>)}</div>}
+      {list && list.length > 3 && <div className="home-tools"><input type="search" value={q} onChange={e => setQ(e.target.value)} placeholder={t('home.search')} aria-label={t('home.search')} />
+        <select value={sort} onChange={e => setSort(e.target.value as any)} aria-label={t('home.sort')}><option value="due">{t('home.sortDue')}</option><option value="updated">{t('home.sortUpdated')}</option><option value="name">{t('home.sortName')}</option></select></div>}
+      {undo && <div className="undo-toast" role="status">{t('home.trashed', { name: undo.name })} <button className="btn" onClick={() => restore(undo.id)}>{t('home.undo')}</button></div>}
       {list === null ? <p className="muted">{t('home.loading')}</p> : list.length === 0 ? <p className="muted">{t('home.none')}</p> : shown.length === 0 ? <p className="muted">{t('home.noneFilter')}</p> :
-        <div className="pgrid">{shown.map(p => { const left = daysLeft({ status: p.status, dueDate: p.dueDate ?? undefined }, today); return <a key={p.id} className="pcard" href={`/p/${p.id}`}>
+        <div className="pgrid">{shown.map(p => { const left = daysLeft({ status: p.status, dueDate: p.dueDate ?? undefined }, today); return <div key={p.id} className="pcard-wrap"><a className="pcard" href={`/p/${p.id}`}>
           {plans[p.id] ? <PlanThumb floor={plans[p.id]!} label={p.name} /> : <div className="thumb empty" />}
           <span className={`st st-${p.status}`}>{t(`pstatus.${p.status}`)}</span>
           <b>{p.name}</b>{p.client && <span className="pclient">{p.client}</span>}
-          <small>{left != null ? <em className={left < 0 ? 'late' : left <= 7 ? 'soon' : ''}>{left < 0 ? t('pcard.late', { n: -left }) : t('pcard.left', { n: left })} · </em> : null}{p.current_revision ? t('home.revision', { n: p.current_revision }) : t('home.noRevisions')} · {when(p.updated_at)}</small></a>; })}</div>}
+          <small>{left != null ? <em className={left < 0 ? 'late' : left <= 7 ? 'soon' : ''}>{left < 0 ? t('pcard.late', { n: -left }) : t('pcard.left', { n: left })} · </em> : null}{p.current_revision ? t('home.revision', { n: p.current_revision }) : t('home.noRevisions')} · {when(p.updated_at)}</small></a>
+          <div className="pcard-tools"><button className="link" onClick={() => duplicate(p)}>{t('home.duplicate')}</button><button className="link danger" onClick={() => toTrash(p)}>{t('home.toTrash')}</button></div></div>; })}</div>}
+      {trash.length > 0 && <details className="trash"><summary>{t('home.trash', { n: trash.length })}</summary><p className="prov">{t('home.trashNote')}</p>
+        <ul>{trash.map(x => <li key={x.id}><b>{x.name}</b><small>{t('home.purgeIn', { n: daysTo(x.purgeAt) })}</small>
+          <button className="btn" onClick={() => restore(x.id)}>{t('home.restore')}</button><button className="btn danger" onClick={() => purge(x)}>{t('home.purge')}</button></li>)}</ul></details>}
     </section>
     <section>
       <div className="home-sec"><h2>{t('home.newProject')}</h2></div>
