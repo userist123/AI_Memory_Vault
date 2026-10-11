@@ -263,21 +263,23 @@ public static class StationFactCollector
             using (var first = r.ReadEvent())
                 oldest = first?.TimeCreated?.ToUniversalTime();
 
-            var idFilter = string.Join(" or ", ids.Select(i => $"EventID={i}"));
-            var q = new EventLogQuery(channel, PathType.LogName,
-                $"*[System[({idFilter}) and TimeCreated[@SystemTime>='{since.UtcDateTime:yyyy-MM-ddTHH:mm:ss.fffZ}']]]") { ReverseDirection = true };
             var perId = new Dictionary<int, int>();
-            using var reader = new EventLogReader(q);
-            for (var rec = reader.ReadEvent(); rec is not null; rec = reader.ReadEvent())
+            // Windows rejects an event-log XPath with more than 22 OR-ed conditions ("The specified query is invalid"); Security asks for 25 IDs.
+            foreach (var xpath in EventLogXPath.ForIds(ids, since))
             {
-                using (rec)
+                var q = new EventLogQuery(channel, PathType.LogName, xpath) { ReverseDirection = true };
+                using var reader = new EventLogReader(q);
+                for (var rec = reader.ReadEvent(); rec is not null; rec = reader.ReadEvent())
                 {
-                    perId.TryGetValue(rec.Id, out var n);
-                    if (n >= maxPerId) continue;
-                    perId[rec.Id] = n + 1;
-                    count++;
-                    f.Logs.Add(new LogFact(channel, rec.Id, rec.TimeCreated?.ToUniversalTime() ?? DateTime.MinValue, rec.RecordId ?? 0,
-                        rec.UserId?.Value ?? "", ReadData(rec)));
+                    using (rec)
+                    {
+                        perId.TryGetValue(rec.Id, out var n);
+                        if (n >= maxPerId) continue;
+                        perId[rec.Id] = n + 1;
+                        count++;
+                        f.Logs.Add(new LogFact(channel, rec.Id, rec.TimeCreated?.ToUniversalTime() ?? DateTime.MinValue, rec.RecordId ?? 0,
+                            rec.UserId?.Value ?? "", ReadData(rec)));
+                    }
                 }
             }
             foreach (var (eid, n) in perId.Where(p => p.Value >= maxPerId))
@@ -312,5 +314,21 @@ public static class StationFactCollector
         }
         catch (System.Xml.XmlException ex) { d["_XmlError"] = ex.Message; }
         return d;
+    }
+}
+
+/// <summary>
+/// Event-log XPath for a list of event IDs. The Windows event-log query engine refuses more than 22 OR-ed conditions in one expression
+/// ("The specified query is invalid", measured on Windows 11), so the IDs are split into groups of at most <see cref="MaxIdsPerQuery"/>.
+/// </summary>
+public static class EventLogXPath
+{
+    public const int MaxIdsPerQuery = 20;
+
+    public static IEnumerable<string> ForIds(IReadOnlyCollection<int> ids, DateTimeOffset since)
+    {
+        var time = since.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", System.Globalization.CultureInfo.InvariantCulture);
+        foreach (var chunk in ids.Distinct().Chunk(MaxIdsPerQuery))
+            yield return $"*[System[({string.Join(" or ", chunk.Select(i => $"EventID={i}"))}) and TimeCreated[@SystemTime>='{time}']]]";
     }
 }
