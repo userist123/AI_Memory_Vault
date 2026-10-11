@@ -287,4 +287,5 @@ export const ro: Dict = {
   "site.count.one": "1 remediere",
   "fb.approveTitle": "Aprobați pe rând", "fb.approved": "{n} din {total} aprobate", "fb.approve": "Aprob", "fb.isApproved": "✓ Aprobat", "fb.changeShort": "Aș schimba", "fb.about": "Despre: {what}", "fb.nameFirst": "Scrieți-vă întâi numele.",
   "site.tooMany": "Cel mult 8 poze pe remediere; s-au luat primele 8.",
+  "tasks.today": "Azi", "tasks.title": "Sarcini", "tasks.placeholder": "Ce e de făcut? (ex. trimite oferta, sună electricianul)", "tasks.due": "Termen", "tasks.project": "Proiect", "tasks.noProject": "General", "tasks.add": "Adaugă", "tasks.error": "Sarcina nu s-a salvat.", "tasks.none": "Nicio sarcină. Adaugă ce ai de făcut, cu termen.", "tasks.overdue": "Întârziate", "tasks.dueToday": "Azi", "tasks.week": "Săptămâna aceasta", "tasks.later": "Mai târziu", "tasks.noDate": "Fără termen", "tasks.done": "Făcute recent", "tasks.openProject": "Deschide proiectul",
 };

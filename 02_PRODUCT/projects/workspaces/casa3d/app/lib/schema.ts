@@ -52,6 +52,9 @@ create table if not exists snags(id uuid primary key default gen_random_uuid(), 
   title text not null, body text not null default '', room_id text, trade text not null, status text not null default 'open', photos jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(), updated_at timestamptz not null default now(), resolved_at timestamptz, unique(project_id, number));
 create index if not exists snags_project on snags(project_id, number);
+create table if not exists tasks(id uuid primary key default gen_random_uuid(), owner text not null, project_id uuid references projects(id) on delete cascade,
+  title text not null, due date, done_at timestamptz, created_at timestamptz not null default now());
+create index if not exists tasks_owner on tasks(owner, done_at, due);
 create table if not exists procurement(project_id uuid not null references projects(id) on delete cascade, key text not null, state jsonb not null,
   updated_at timestamptz not null default now(), primary key(project_id, key));
 `;

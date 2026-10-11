@@ -287,4 +287,5 @@ export const en: Dict = {
   "site.count.one": "1 snag",
   "fb.approveTitle": "Approve item by item", "fb.approved": "{n} of {total} approved", "fb.approve": "Approve", "fb.isApproved": "✓ Approved", "fb.changeShort": "Change", "fb.about": "About: {what}", "fb.nameFirst": "Please write your name first.",
   "site.tooMany": "At most 8 photos per snag; the first 8 were taken.",
+  "tasks.today": "Today", "tasks.title": "Tasks", "tasks.placeholder": "What needs doing? (e.g. send the quote, call the electrician)", "tasks.due": "Due", "tasks.project": "Project", "tasks.noProject": "General", "tasks.add": "Add", "tasks.error": "The task was not saved.", "tasks.none": "No tasks. Add what you need to do, with a date.", "tasks.overdue": "Overdue", "tasks.dueToday": "Today", "tasks.week": "This week", "tasks.later": "Later", "tasks.noDate": "No date", "tasks.done": "Recently done", "tasks.openProject": "Open the project",
 };

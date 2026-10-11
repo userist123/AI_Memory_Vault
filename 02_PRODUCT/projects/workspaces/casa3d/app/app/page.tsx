@@ -9,6 +9,7 @@ import { intlLocale } from '@/lib/i18n';
 import PrefsSwitcher from '@/components/PrefsSwitcher';
 import PlanThumb from '@/components/PlanThumb';
 import PhoneAccess from '@/components/PhoneAccess';
+import TasksPanel from '@/components/TasksPanel';
 import { PROJECT_STATUSES, daysLeft, type ProjectStatus } from '../core/project-meta';
 type P = { id: string; name: string; updated_at: string; current_revision: number; status: ProjectStatus; client: string | null; dueDate: string | null };
 const ACTIVE: ProjectStatus[] = ['lead', 'offer', 'design', 'execution'];
@@ -30,6 +31,7 @@ export default function Home(){
   const when = (d: string) => new Date(d).toLocaleDateString(intlLocale(lang), { day: 'numeric', month: 'short', year: 'numeric' });
   return (<main className="home">
     <header className="home-head"><span className="wordmark">Casa<b>3D</b></span><span className="home-sub">{t('home.studio')}</span><PrefsSwitcher /></header>
+    {list !== null && <TasksPanel projects={(list ?? []).map(p => ({ id: p.id, name: p.name }))} />}
     <section>
       <div className="home-sec"><h1>{t('home.projects')}</h1>{list && list.length > 0 && <span className="muted">{tp('home.count', list.length)}</span>}</div>
       {err && <p className="issue ERROR">{err}</p>}
