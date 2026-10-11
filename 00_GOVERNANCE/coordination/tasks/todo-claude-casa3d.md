@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-10T23:05:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-11T01:40:00Z
 TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / userist123/AI_Memory_Vault_CODEX_READY#258    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
@@ -124,6 +124,18 @@ PLAN v8 REBUILD (2026-10-10; owner decisions 10:58 UTC: code in Vault workspace 
   budget category, 3D), d7169ed0 interior doors + handles (5 Dedeman doors, 2 handles; warnings; 3D leaf styles). Evidence: vitest
   283/283, tsc 0, build OK, browser screenshots; PC app rebuilt at d7169ed0. Open: kitchen as a system (fronts, countertop, handles,
   tap finish) — no verified countertop product yet; independent review of 6d47a274..d7169ed0.
+2026-10-11 01:40 UTC — owner "Trebuie mai complex de atat" (7-part plan), all 7 parts pushed:
+  cd054301 kitchen system; bathroom system (metal finish, walk-in/cabin, wall-hung WC, tile zone 1.2/2.1/full);
+  placed fixtures (core/fixtures.ts: pendants over table/counter/bed, sconces, track; plan symbols, 3D, BOQ, lux);
+  style packages (core/styles.ts + StylePanel: Scandi/Modern/Japandi/Industrial/Classic, cost per style on this house);
+  94 products read on live Dedeman/IKEA pages 2026-10-11 (evidence: app/data/materials-evidence.2026-10-11.json;
+  hex colours approximate, paint coverage from product sheet, Oskar coverage unpublished -> listed unpriced);
+  e8c70026 drawings in the print pack (core/drawings.ts + components/Drawings.tsx: ceiling/lighting plan, floor finishes
+  plan, wall elevations 1:50); cfd0b505 fixes from independent Opus review (bed wall from rotation, schedule = BOQ total,
+  fixtures under dropped ceiling, counter pendant warning, bed pendants <=2, owned 3D materials), regressions red on old code.
+  Evidence: vitest 311/311, tsc 0, next build OK, browser screenshots of each feature. PC update started (update.ps1).
+  Open: walk-in/wall-hung keep the cabin/WC catalog price (possible double count of tray); styleCosts ~6 ms per house change;
+  Blender export does not yet carry fixtures; no gunmetal shower set in the catalog.
 PLAN multi-level homes (done; kept for reference):
   Model: Snapshot.floor stays the ground level (saved projects and the API unchanged); new Snapshot.levels?: Floor[]
   for the levels above; Floor.stairs?: Stair {id, x, z, width, length, rotation} on the lower level, leading to the
@@ -164,6 +176,7 @@ BLOCKERS / OWNER QUESTIONS:
 - v8 source archive not on this machine (manifest path /mnt/data/casa3d-v8/app was the Claude.ai sandbox). Where is it saved locally?
 - ANTHROPIC_API_KEY not set in the environment.
 KEY FILES:
+- 02_PRODUCT/projects/workspaces/casa3d/app/core/{bath,fixtures,styles,drawings}.ts, components/{StylePanel,Drawings}.tsx
 - 02_PRODUCT/projects/Casa3D.md
 - 00_GOVERNANCE/coordination/tasks/todo-claude-casa3d.md
 VERIFICATION SO FAR: pytest 20_TESTS/test_vault_state_accuracy.py 20_TESTS/test_lifecycle_schema_parity.py security/tests/test_memory_integrity.py -> 31 passed (2026-10-10, Windows and cloud)
