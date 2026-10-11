@@ -67,6 +67,8 @@ const gray = (w, h, draw) => { const cv = document.createElement('canvas'); cv.w
 const weave = gray(256, 256, (g, w, h) => { const id = g.createImageData(w, h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++){ const i = (y * w + x) * 4, v = 205 + ((x % 4 < 2) ^ (y % 4 < 2) ? 18 : 0) + Math.random() * 30; id.data[i] = id.data[i + 1] = id.data[i + 2] = Math.min(255, v); id.data[i + 3] = 255; } g.putImageData(id, 0, 0); });
 weave.repeat.set(6, 6);
 const grain = gray(512, 512, (g, w, h) => { g.fillStyle = '#d8d8d8'; g.fillRect(0, 0, w, h); for (let i = 0; i < 260; i++){ const y = Math.random() * h, a = .05 + Math.random() * .12; g.strokeStyle = `rgba(0,0,0,${a})`; g.lineWidth = .6 + Math.random() * 1.8; g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= w; x += 32) g.lineTo(x, y + Math.sin(x / 70 + i) * 3); g.stroke(); } });
+// fibra pe verticală, ca la foile de ușă furniruite (furnirul curge pe înălțimea ușii, nu de-a latul ei)
+const grainV = grain.clone(); grainV.center.set(.5, .5); grainV.rotation = Math.PI / 2; grainV.needsUpdate = true;
 const rattan = gray(128, 128, (g, w, h) => { g.fillStyle = '#b8b8b8'; g.fillRect(0, 0, w, h); g.strokeStyle = '#6d6d6d'; g.lineWidth = 2; for (let i = -w; i < w * 2; i += 10){ g.beginPath(); g.moveTo(i, 0); g.lineTo(i + h, h); g.stroke(); g.beginPath(); g.moveTo(i + h, 0); g.lineTo(i, h); g.stroke(); } });
 rattan.repeat.set(3, 3);
 // obiecte decorative (CC0, public/models): încărcate o dată, normalizate (bază la y=0, centrate, la înălțimea sau lățimea dorită)
@@ -87,6 +89,7 @@ function MAT(kind, col){ const k = kind + col; if (matCache[k]) return matCache[
     case 'velvet': m = new THREE.MeshPhysicalMaterial({ color: c, map: weave, roughness: .85, sheen: lin('#9fc3c2'), ...(boucleN ? { normalMap: boucleN, normalScale: new THREE.Vector2(.6, .6) } : {}) }); break;
     case 'leather': m = new THREE.MeshPhysicalMaterial({ color: c, roughness: .42, clearcoat: .35, clearcoatRoughness: .5, bumpMap: weave, bumpScale: .001 }); break;
     case 'wood': m = new THREE.MeshStandardMaterial({ color: c, map: grain, roughness: .58 }); break;
+    case 'woodV': m = new THREE.MeshStandardMaterial({ color: c, map: grainV, roughness: .5 }); break;
     case 'paint': m = new THREE.MeshStandardMaterial({ color: c, roughness: .48 }); break;
     case 'metal': m = new THREE.MeshStandardMaterial({ color: c, metalness: .9, roughness: .32 }); break;
     case 'chrome': m = new THREE.MeshStandardMaterial({ color: c, metalness: 1, roughness: .12 }); break;
@@ -231,6 +234,8 @@ function model(it){
       break; }
     case 'fridge': { const m = s.inox ? MAT('metal', s.col) : MAT('paint', s.col); RB(w, h, d, .02, 0, h / 2, 0, m); B(w - .01, .004, .01, 0, h * .64, d / 2 + .001, MAT('paint', '#bdbdbd')); B(.02, .4, .03, w / 2 - .05, h * .8, d / 2 + .015, MAT('metal', '#aaa')); B(.02, .3, .03, w / 2 - .05, h * .45, d / 2 + .015, MAT('metal', '#aaa')); break; }
     case 'shower': { const bm = s.b || null, pm = MAT('metal', bm ? bm.metal : s.prof), fit = MAT('chrome', bm ? bm.metal : '#cfcfcf'), gl = MAT(s.frost ? 'frost' : 'glass', '#dcecf2');
+      // poliță de nișă în perete cu sticle (șampon, gel, ulei de corp)
+      B(.3, .012, .1, -w / 2 + .45, 1.0, -d / 2 + .05, MAT('ceramic', '#f2f0eb')); [['#e9e3d8', .17], ['#5f6b5c', .2], ['#b9824f', .14]].forEach(([c, hh], i) => CY(.026, .026, hh, -w / 2 + .37 + i * .08, 1.006 + hh / 2, -d / 2 + .06, MAT('ceramic', c), 16));
       // walk-in: fără cădiță și fără ușă, doar un panou fix de sticlă cu profil sus și o bară de rigidizare
       if (bm && bm.walkin){ const p = new THREE.Mesh(new THREE.BoxGeometry(.008, h - .06, d * .8), gl); p.position.set(w / 2 - .004, h / 2 + .01, -d * .1); g.add(p); B(.02, .02, d * .8, w / 2 - .004, h - .02, -d * .1, pm);
         B(w * .6, .004, .06, w * .1, .003, d / 2 - .05, MAT('metal', '#444')); CY(.012, .012, h - .4, -w / 2 + .12, h / 2 + .1, -d / 2 + .04, fit, 10); CY(.12, .12, .012, -w / 2 + .25, h - .08, -d / 2 + .25, fit, 24); break; }
@@ -242,11 +247,17 @@ function model(it){
     case 'vanity': { const m = body(s.col), y0 = s.hang ? .3 : 0; if (s.legs) [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.03, .15, .03, a * (w / 2 - .04), .075, b * (d / 2 - .04), MAT('metal', '#222')));
       const hb = (s.hang ? h - .15 : h - .15) - (s.legs ? .15 : 0); B(w, hb, d, 0, y0 + (s.legs ? .15 : 0) + hb / 2, 0, m); B(w / 2 - .01, hb - .03, .015, -w / 4, y0 + (s.legs ? .15 : 0) + hb / 2, d / 2 + .008, m); B(w / 2 - .01, hb - .03, .015, w / 4, y0 + (s.legs ? .15 : 0) + hb / 2, d / 2 + .008, m);
       const ty = y0 + (s.legs ? .15 : 0) + hb; RB(w + .01, .14, d + .06, .03, 0, ty + .07, .03, MAT('ceramic', '#fdfdfd')); CY(.012, .012, .15, 0, ty + .2, -d / 2 + .05, MAT('chrome', s.b ? s.b.metal : '#cfcfcf'), 10);
-      B(w * .85, .6, .02, 0, 1.55, -d / 2 + .01, MAT('mirror', '#dde6ea')); if (s.legs) B(w * .6, .04, .06, 0, 1.9, -d / 2 + .04, MAT('paint', '#f4f4f1')); break; }
+      B(w * .85, .6, .02, 0, 1.55, -d / 2 + .01, MAT('mirror', '#dde6ea')); if (s.legs) B(w * .6, .04, .06, 0, 1.9, -d / 2 + .04, MAT('paint', '#f4f4f1'));
+      // ce stă pe un lavoar folosit: dozatorul de săpun, paharul, prosopul de mâini pe muchia blatului
+      const tt = ty + .14; CY(.032, .032, .13, w / 2 - .1, tt + .065, -d / 2 + .07, MAT('ceramic', '#7c8a7d'), 20); CY(.006, .006, .03, w / 2 - .1, tt + .145, -d / 2 + .07, MAT('chrome', '#bbb'), 8); B(.04, .006, .006, w / 2 - .085, tt + .158, -d / 2 + .07, MAT('chrome', '#bbb'));
+      CY(.035, .03, .1, w / 2 - .19, tt + .05, -d / 2 + .07, MAT('glass', '#d8e2e0'), 20);
+      if (w > .45){ const tw = MAT('velvet', s.towel || '#e6ddcf'); B(.3, .016, .1, -w / 4, tt + .008, d / 2 - .02, tw); B(.3, .32, .016, -w / 4, tt - .16, d / 2 + .04, tw); } break; }
     case 'wc': { const cer = MAT('ceramic', '#fdfdfd'), hung = s.b && s.b.wallHung, lift = hung ? .1 : 0;
       // WC suspendat: vasul ridicat de la pardoseală, fără picior; clapeta în culoarea armăturilor
       if (s.square || hung){ RB(.36, .3, .52, .06, 0, .27 + lift, .05, cer); } else { const b = new THREE.Mesh(new THREE.CylinderGeometry(.18, .13, .32, 32), cer); b.scale.z = 1.4; b.position.set(0, .24, .06); b.castShadow = true; g.add(b); }
-      RB(.37, .03, .5, .015, 0, .42 + lift, .06, cer); B(.42, .9, .12, 0, .75, -d / 2 + .06, MAT('paint', '#efefec')); B(.24, .16, .01, 0, 1.0, -d / 2 + .125, MAT('chrome', s.b ? s.b.metal : '#d4d4d4')); break; }
+      RB(.37, .03, .5, .015, 0, .42 + lift, .06, cer); B(.42, .9, .12, 0, .75, -d / 2 + .06, MAT('paint', '#efefec')); B(.24, .16, .01, 0, 1.0, -d / 2 + .125, MAT('chrome', s.b ? s.b.metal : '#d4d4d4'));
+      // suportul de hârtie pe peretele din spate, lângă vas
+      { const hm = MAT('chrome', s.b ? s.b.metal : '#cfcfcf'); B(.012, .05, .03, .3, .72, -d / 2 + .015, hm); B(.11, .008, .008, .35, .72, -d / 2 + .05, hm); const roll = CY(.055, .055, .1, .36, .72, -d / 2 + .06, MAT('paint', '#f7f6f2'), 24); roll.rotation.z = Math.PI / 2; } break; }
     case 'shoe': { const m = body(s.col); B(w, h - .04, d, 0, (h - .04) / 2 + .04, 0, m); B(w + .02, .025, d + .02, 0, h - .012, 0, m); [[-1, 1], [1, 1]].forEach(([a, b]) => B(.03, .04, .03, a * (w / 2 - .03), .02, b * (d / 2 - .03), m));
       const rows = s.two ? 2 : 2, cols = s.two ? 1 : 2; for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++){ const fw = w / cols - .01, fh = (h - .1) / rows - .015, x = -w / 2 + w / cols * (c + .5), y = .06 + (h - .1) / rows * (r + .5); B(fw, fh, .018, x, y, d / 2 + .009, m); CY(.012, .012, .02, x, y + fh / 2 - .05, d / 2 + .025, MAT('metal', '#7c6a55'), 10).rotation.x = Math.PI / 2; }
       break; }
@@ -322,7 +333,7 @@ function model(it){
         const n = Math.max(2, Math.round(L / .5)); for (let k = 0; k < n; k++){ const o = ((k + .5) / n - .5) * L, x = f.alongX ? f.x + o : f.x, z = f.alongX ? f.z : f.z + o;
           const sp = new THREE.Mesh(new THREE.CylinderGeometry(.035, .035, .11, 16), sm); sp.position.set(x, T - .1, z); sp.rotation.x = (k % 2 ? .35 : -.35); ceilings.add(sp);
           const b = new THREE.Mesh(new THREE.CircleGeometry(.03, 16), bulb); b.rotation.x = Math.PI / 2; b.position.set(x, T - .156, z); ceilings.add(b); } } });
-    const leafMat = MAT('paint', '#f4f2ed'), entranceMat = MAT('wood', '#4a3324'), handleMat = MAT('chrome', '#d8d8d8');
+    const leafMat = MAT('paint', '#f4f2ed'), entranceMat = MAT('woodV', '#4a3324'), handleMat = MAT('chrome', '#d8d8d8');
     const pMinX = Math.min(...p.camere.map(r => r.x0)), pMaxX = Math.max(...p.camere.map(r => r.x1)), pMinZ = Math.min(...p.camere.map(r => r.z0)), pMaxZ = Math.max(...p.camere.map(r => r.z1));
     p.pereti.forEach(wl => {
       const [ax, az] = wl.a, [bx, bz] = wl.b, L = Math.hypot(bx - ax, bz - az); if (L < .01) return; const ux = (bx - ax) / L, uz = (bz - az) / L, rot = -Math.atan2(uz, ux), th = wl.ext ? .25 : .15, edge = wl.ext ? extMat : wallMat;
@@ -345,7 +356,7 @@ function model(it){
           const sw = g.sw || { hinge: 'start', swing: ((mx0, mz0) => { const cmx = (pMinX + pMaxX) / 2, cmz = (pMinZ + pMaxZ) / 2; return ((mx0 - cmx) * nx + (mz0 - cmz) * nz) > 0 ? -1 : 1; })(ax + ux * m, az + uz * m) };
           const atStart = sw.hinge !== 'end', hs = atStart ? g.la + .025 : g.la + g.l - .025, hx = ax + ux * hs, hz = az + uz * hs, lw = Math.max(.3, g.l - .05), lh = dh - .012;
           const cdx = atStart ? ux : -ux, cdz = atStart ? uz : -uz, odx = nx * sw.swing, odz = nz * sw.swing, faceOff = sw.swing * (th / 2 - .03);
-          const us = g.usa, lm = us && us.color ? (us.wood ? MAT('wood', us.color) : MAT('paint', us.color)) : (g.intrare ? entranceMat : leafMat), hm = us && us.handle ? MAT('chrome', us.handle) : handleMat;
+          const us = g.usa, lm = us && us.color ? (us.wood ? MAT('woodV', us.color) : MAT('paint', us.color)) : (g.intrare ? entranceMat : leafMat), hm = us && us.handle ? MAT('chrome', us.handle) : handleMat;
           // pivotul: pe linia balamalelor, la fața peretelui dinspre care se deschide; x local = de-a lungul foii
           const pivot = new THREE.Group(); pivot.position.set(hx + nx * faceOff, 0, hz + nz * faceOff); walls.add(pivot);
           const P = (bw, bh, bd, x, y, z, mat, shadow = true) => { const o = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), mat); o.position.set(x, y, z); o.castShadow = shadow; o.receiveShadow = true; pivot.add(o); return o; };
@@ -572,7 +583,7 @@ function model(it){
     const mats = [], matIx = new Map(), meshes = [], P = new THREE.Vector3(), Q = new THREE.Quaternion(), Sc = new THREE.Vector3();
     const kindOf = m => { if (m.userData && m.userData.kind) return m.userData.kind; const img = m.map && m.map.image;
       if (img && img === parquet.image) return 'parquet'; if (img && img === tiles.image) return 'tile';
-      if (m.map === grain) return 'wood'; if (m.map === rattan) return 'rattan'; if (m.map === weave) return m.sheen ? 'velvet' : 'fabric'; if (m.bumpMap === weave) return 'leather';
+      if (m.map === grain || m.map === grainV) return 'wood'; if (m.map === rattan) return 'rattan'; if (m.map === weave) return m.sheen ? 'velvet' : 'fabric'; if (m.bumpMap === weave) return 'leather';
       if (m.emissive && (m.emissive.r + m.emissive.g + m.emissive.b) > .05) return 'emit';
       if (m.transparent && m.opacity < .4) return 'glass'; if (m.transparent) return 'frost';
       if (m.metalness >= .95) return m.roughness < .06 ? 'mirror' : 'chrome'; if (m.metalness >= .8) return 'metal';
