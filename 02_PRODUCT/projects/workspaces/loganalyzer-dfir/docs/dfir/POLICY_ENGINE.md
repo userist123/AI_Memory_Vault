@@ -74,6 +74,13 @@ Rezultat pe cele 3 backup-uri furnizate (2026-10-05):
 | Intranet Computer W11 | 637 (590 registry, 40 audit, 7 secpol) | 46 (35 intrări Registry.pol speciale/binare, 9 chei `[System Access]`, `[Privilege Rights]` 38, `[Service General Setting]` 1) |
 | Intranet User W11 | 7 (registry) | 0 |
 
+Revalidare 2026-10-11, după citirea preferințelor GPO (WP18): Intranet Computer W11 are **642** controale (595 registry, 40 audit, 7 secpol) și 52 neacceptate.
+Preferințele (`Preferences/Registry/Registry.xml`, `Preferences/Services/Services.xml`) erau ignorate fără să apară în raport: blocarea stocării USB
+(`USBSTOR Start=4`), dezactivarea serviciilor `bthserv` și `WlanSvc` și două chei de marcaj al politicii de bază nu deveneau controale. Acum Registry.xml
+devine controale `registry` (o ștergere = „absent”), iar tipul de pornire din Services.xml devine valoarea `Start` a serviciului (2 automat, 3 manual,
+4 dezactivat). Scripturile din GPO (`Scripts/…`) nu sunt executate și nu sunt evaluate: apar nominal printre cele neacceptate, ca și acțiunile de oprire
+a serviciilor și orice alt fișier din backup pe care motorul nu îl citește. Test: `GpoPreferencesImportTests`.
+
 Limită cunoscută: cele 391 de politici ADMX din gpreport.xml nu conțin calea din registru, deci nu sunt comparate una câte
 una cu controalele; acoperirea lor este dovedită doar indirect, prin contabilitatea completă a intrărilor Registry.pol.
 
