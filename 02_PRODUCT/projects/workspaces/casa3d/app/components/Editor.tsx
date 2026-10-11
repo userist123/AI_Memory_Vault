@@ -36,6 +36,7 @@ import KeyboardHelp from './KeyboardHelp';
 import UnderlayPanel, { type Calib } from './UnderlayPanel';
 import ProjectCard from './ProjectCard';
 import OrdersPage from './OrdersPage';
+import SitePage from './SitePage';
 import type { ProjectMeta } from '@/core/project-meta';
 import { scaleFromPoints, anchorAfterScale } from '@/core/underlay';
 import { duplicatePlacement, nudgePlacement, NUDGE_CM, NUDGE_BIG_CM } from '@/core/edit-ops';
@@ -49,12 +50,12 @@ const ICON: Record<Tool, string> = { select: 'M5 3l12 8-6 1 3 7-2 1-3-7-4 4z', w
 const TOOL_LABEL: Record<Tool, string> = { select: 'tool.select', wall: 'tool.wall', room: 'tool.room', door: 'tool.door', window: 'tool.window', measure: 'tool.measure', tech: 'tool.tech' };
 
 /** Etapele unui proiect de amenajare, în ordinea în care lucrează un designer: fiecare are vederea, uneltele și panoul ei. */
-type Stage = 'survey' | 'concept' | 'finishes' | 'ffe' | 'mep' | 'docs' | 'quote' | 'present' | 'orders';
+type Stage = 'survey' | 'concept' | 'finishes' | 'ffe' | 'mep' | 'docs' | 'quote' | 'present' | 'orders' | 'site';
 const STAGES: { id: Stage; view: '2d' | '3d' | 'split'; tools: Tool[]; page?: true }[] = [
   { id: 'survey', view: '2d', tools: ['select', 'wall', 'room', 'door', 'window', 'measure'] }, { id: 'concept', view: 'split', tools: ['select', 'measure'] },
   { id: 'finishes', view: 'split', tools: ['select', 'measure'] }, { id: 'ffe', view: 'split', tools: ['select', 'measure'] },
   { id: 'mep', view: '2d', tools: ['select', 'tech', 'measure'] }, { id: 'docs', view: '2d', tools: ['select', 'measure'] },
-  { id: 'quote', view: '2d', tools: ['select'] }, { id: 'present', view: '3d', tools: ['select'] }, { id: 'orders', view: '2d', tools: [], page: true }];
+  { id: 'quote', view: '2d', tools: ['select'] }, { id: 'present', view: '3d', tools: ['select'] }, { id: 'orders', view: '2d', tools: [], page: true }, { id: 'site', view: '2d', tools: [], page: true }];
 export default function Editor({ id }: { id: string }){
   const { t, tp, lang, units } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units);
   const [meta, setMeta] = useState<ProjectMeta | null>(null), [house, setHouse] = useState<Snapshot | null>(null), [lvl, setLvl] = useState(0), [catalog, setCatalog] = useState<Catalog | null>(null), [mc, setMc] = useState<MaterialsCatalog | null>(null), [out, setOut] = useState<Outbound | null>(null);
@@ -208,7 +209,7 @@ export default function Editor({ id }: { id: string }){
     <nav className="stagebar" aria-label={t('stage.aria')}>
       {STAGES.map((st, i) => <button key={st.id} aria-current={stage === st.id ? 'step' : undefined} onClick={() => setStage(st.id)}><i>{String(i + 1).padStart(2, '0')}</i>{t(`stage.${st.id}`)}{st.id === 'docs' && warnCount > 0 && <b className="count" title={t('stage.checks')}>{warnCount}</b>}</button>)}
     </nav>
-    {stageDef.page ? <div className="pagebody">{stage === 'orders' && <OrdersPage id={id} cur={cur} say={say} projectName={snap.name} />}</div> :
+    {stageDef.page ? <div className="pagebody">{stage === 'orders' && <OrdersPage id={id} cur={cur} say={say} projectName={snap.name} />}{stage === 'site' && <SitePage id={id} rooms={floors(house!).flatMap(f => f.rooms)} say={say} />}</div> :
     <div className="body">
       <nav className="tools" aria-label={t('editor.tools')}>
         {(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk)).map(tk => <button key={tk} aria-pressed={tool === tk} onClick={() => setTool(tk)} title={t(TOOL_LABEL[tk])}><svg viewBox="0 0 24 24"><path d={ICON[tk]} /></svg>{t(TOOL_LABEL[tk])}</button>)}
