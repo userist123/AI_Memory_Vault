@@ -31,7 +31,7 @@ namespace LogAnalyzer.UI.Services
         public static Func<CaseScope?, bool, CaseScope?>? ScopePrompt { get; set; }
 
         /// <summary>Shown by the screens when the operator closes the scope dialog without confirming.</summary>
-        public const string ScopeRequiredMessage = "Scopul cazului nu este confirmat: completați scopul (de ce, perioadă, sisteme, aprobator) înainte de prima utilizare LIVE.";
+        public const string ScopeRequiredMessage = "Nu s-a salvat nimic: ca să lucrați pe această stație, trebuie completat o dată scopul (de ce se face, perioada, ce sisteme, cine a aprobat). Apăsați din nou butonul și completați fereastra care se deschide.";
 
         /// <summary>Folder of the station's live case (may not exist yet). WP18: used to list previous controls without confirming a scope.</summary>
         public static string Root => RootPath();

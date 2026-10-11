@@ -61,6 +61,27 @@ Hash-urile arhivelor primite (SHA-256): computer `509FF895…7484`, user `2C706C
 | Crash la investigație („Eroare critică internă”) | `IPEndPoint` serializat în JSON (citirea `ScopeId` IPv4 aruncă excepție) | convertor text; `LiveStateSerializationTests` |
 | Jurnalul Security mereu gol de probă („The specified query is invalid”) | 25 de coduri de eveniment într-un XPath; Windows acceptă cel mult 22 (măsurat) | grupuri de cel mult 20; `EventLogXPathTests` |
 
+## 6. Audit: opțiuni care nu fac nimic și explicații care lipsesc (cerut de proprietar 2026-10-11)
+
+Cererea: „multe dintre opțiuni nu te lasă să faci nimic, sunt acolo doar să fie”; „unde am spus să îmi spună ce, de ce, cum, când nu îmi arată nimic”; „detaliile codurilor pe toate domeniile (coduri de identificare Windows EVTX, regiștri etc.)”, pentru controlorii care nu stăpânesc IT-ul; „să nu fie nevoie de 800 de clicuri, să spună omului: ca să faci aia trebuie să faci aia”.
+
+**Metodă.** Două audituri statice pe codul aplicației (toate fișierele XAML și C# din `LogAnalyzer.App`), apoi citirea fiecărui caz în cod.
+- 180 de legături de comandă: toate există; niciun corp de comandă nu e un înlocuitor (constatarea inițială pe `ShowTodo` era falsă: „Todo” ≠ „TODO”). Butonul „Restaurare rețea” are meniu, nu e mort.
+- Proprietăți setate în cod dar neafișate nicăieri: `LiveMonitoringStatusText` (mesajele de pornire/oprire/eroare și „indisponibil în această ediție” ale monitorizării în timp real nu ajungeau pe ecran), `SelectedEventThreatScenario` și `SelectedEventMitreMapping` (la evenimentul ales), plus câteva din paginile vechi (`AiTacticalRecommendation`, `DatabaseSize`, `LicenseTier`, `WorkbenchCompileResult`).
+- Comenzi care ieșeau fără niciun mesaj: raportul de incident înainte de investigație, importul/lipirea în profil fără tabel ales, exportul CSV fără evenimente, pornirea monitorizării deja pornite.
+- **Cea mai mare lipsă:** în rezultatul controlului, tabelul arăta doar codul (C01, P04…), un titlu scurt și numărul probelor; probele (cu ID-uri de eveniment, GUID-uri de audit, SID-uri) nu se vedeau deloc, iar recomandarea nu apărea pe ecran.
+
+**Reparat (cu teste):**
+- `CodeExplainer` (Dfir.Windows): fiecare cod în cuvinte simple, cu ce este, de ce contează și când apare. Acoperă 35 de evenimente Windows pe jurnale (Security, System, Application, PowerShell, TerminalServices, Partition, NetworkProfile, WLAN), valorile de registru verificate, categoriile de audit (nume și GUID, inclusiv codurile %%8448–%%8451), SID-urile cunoscute, tipurile de logon, setările Defender și firewall, serviciile, cheile de politică de securitate. Un cod necunoscut nu primește un sens inventat (`CheckGuideTests`).
+- `CheckGuides`: pentru fiecare dintre cele 38 de verificări ale controlului: ce verificăm, de ce contează, cum a verificat aplicația, sursa tehnică exactă, cum se citește rezultatul și ce faceți. Un test compară lista cu verificările pe care le poate produce `ControlEvaluator`.
+- Ecranul „Verifică această stație”: lista de verificări în stânga, explicația în dreapta (listă-și-detaliu, §2), cu prima verificare deja aleasă. Panoul arată probele și codurile din ele decodate și are butonul „Copiază explicația”, gata de lipit în procesul-verbal. Cronologia acțiunilor explică codul din coloana „Probă” al rândului ales. A06 arată numele categoriei de audit lângă GUID.
+- Ecranul Politici: un singur „Pasul următor” spune ce urmează și de ce, cu un buton care îl face (deschide → înregistrează → validează → probă → aprobare → plan → aplicare → conformitate). Dacă pasul nu se poate face din contul curent, de exemplu aprobarea propriei politici, se spune cine trebuie să-l facă și butonul lipsește. Pașii manuali rămân sub „Toți pașii, manual”. Setarea din rândul ales al planului e explicată după tip: registru, audit, serviciu sau politică de securitate (`PolicyNextStepTests`).
+- Exploratorul de evenimente: fila „Ce înseamnă” (prima) cu explicația evenimentului, scenariul și tehnica de atac; filele în română.
+- Monitorizarea în timp real își afișează mesajele; comenzile de mai sus spun ce trebuie făcut întâi; mesajul despre scopul cazului spune ce se întâmplă și ce se apasă.
+- `DeadControlsTests` (App.Tests): orice buton fără comandă, clic sau meniu și orice comandă legată care nu există sau e un înlocuitor pică testul.
+
+**Rămas:** paginile vechi de sub „Avansat” (0–13) sunt încă în engleză pe alocuri și au proprietăți calculate dar neafișate. „Conturi locale și USB” și „Active Directory” duc la aceeași pagină. Verificarea vizuală a noului panou se face după un control real, rulat ca administrator.
+
 ## Surse
 
 - [Why everything your AI builds looks the same](https://geekyants.com/blog/why-everything-your-ai-builds-looks-the-same)

@@ -234,7 +234,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ImportCsv()
         {
-            if (SelectedTable is null) return;
+            if (SelectedTable is null) { Status = "Ca să importați un CSV, alegeți întâi tabelul în care intră datele (dați clic pe el în listă)."; return; }
             var dlg = new OpenFileDialog { Filter = "CSV / text (*.csv;*.tsv;*.txt)|*.csv;*.tsv;*.txt|Toate fișierele|*.*", Title = $"Importați CSV în „{SelectedTable.Title}”" };
             if (dlg.ShowDialog() == true) ImportText(File.ReadAllText(dlg.FileName), dlg.FileName);
         }
@@ -242,7 +242,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void Paste()
         {
-            if (SelectedTable is null) return;
+            if (SelectedTable is null) { Status = "Ca să lipiți date, alegeți întâi tabelul în care intră (dați clic pe el în listă)."; return; }
             string text;
             try { text = Clipboard.GetText(); }
             catch (System.Runtime.InteropServices.COMException) { Status = "Clipboard-ul nu este disponibil."; return; }

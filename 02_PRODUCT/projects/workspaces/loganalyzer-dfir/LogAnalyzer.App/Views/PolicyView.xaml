@@ -34,12 +34,18 @@
         </Border>
 
         <Border Grid.Row="2" Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,12">
-            <WrapPanel VerticalAlignment="Center">
+            <StackPanel>
+            <!-- the next step, in words, with one button (owner 2026-10-11) -->
+            <DockPanel Margin="0,0,0,8">
+                <Button DockPanel.Dock="Right" Content="{Binding NextStep.Button}" Command="{Binding DoNextStepCommand}" Style="{StaticResource AccentButtonStyle}" Margin="12,0,0,0" VerticalAlignment="Center"
+                        Visibility="{Binding NextStep.CanAct, Converter={StaticResource BoolToVis}}" AutomationProperties.Name="Fă pasul următor"/>
+                <TextBlock Text="{Binding NextStep.Text}" TextWrapping="Wrap" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+            </DockPanel>
+            <Expander Header="Toți pașii, manual (pentru cine cunoaște ciclul politicii)" Foreground="{StaticResource TextSecondaryBrush}">
+            <WrapPanel VerticalAlignment="Center" Margin="0,6,0,0">
                 <Button Content="1. Înregistrează" Command="{Binding RegisterCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                 <Button Content="2. Validează" Command="{Binding ValidateCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                 <Button Content="3. Rulare de probă" Command="{Binding DryRunCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
-                <TextBlock Text="Justificare aprobare:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                <TextBox Text="{Binding ApprovalReason, UpdateSourceTrigger=PropertyChanged}" Width="200" Margin="0,0,6,0"/>
                 <Button Content="4. Aprobă" Command="{Binding ApproveCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
                 <Button Content="Calculează planul" Command="{Binding ComputePlanCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                 <Button Content="Aplică planul…" Command="{Binding ApplyPlanCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
@@ -48,16 +54,36 @@
                 <Button Content="Conformitate față de politică" Command="{Binding AssessAgainstPolicyCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                 <Button Content="Conformitate față de benchmark…" Command="{Binding AssessAgainstBenchmarkCommand}" Style="{StaticResource OutlineButtonStyle}"/>
             </WrapPanel>
+            </Expander>
+            <DockPanel Margin="0,6,0,0">
+                <TextBlock Text="Justificare aprobare:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBox Text="{Binding ApprovalReason, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Justificare aprobare"/>
+            </DockPanel>
+            </StackPanel>
         </Border>
 
         <TabControl Grid.Row="3" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
             <TabItem Header="Plan (curent / dorit / diferență)" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <TextBlock DockPanel.Dock="Top" Text="{Binding PlanSummary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
-                    <DataGrid ItemsSource="{Binding PlanRows}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                    <Border DockPanel.Dock="Bottom" Margin="0,8,0,0" Padding="10" Background="{StaticResource CanvasBrush}" CornerRadius="6">
+                        <StackPanel>
+                            <TextBlock Text="Dați clic pe un rând ca să vedeți, pe înțeles, ce înseamnă setarea." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+                            <StackPanel DataContext="{Binding SelectedSettingExplanation}">
+                                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0"><Run Text="{Binding Code, Mode=OneWay}" FontWeight="SemiBold"/> <Run Text="{Binding Kind, Mode=OneWay, StringFormat='({0})'}" Foreground="{StaticResource TextMutedBrush}"/></TextBlock>
+                                <TextBlock Text="{Binding What}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <TextBlock Text="{Binding Why, StringFormat='De ce contează: {0}'}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <TextBlock Text="{Binding When}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    <DataGrid ItemsSource="{Binding PlanRows}" SelectedItem="{Binding SelectedPlanRow}" SelectionMode="Single" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Control" Binding="{Binding ControlId}" Width="90"/>
-                            <DataGridTextColumn Header="Setare" Binding="{Binding Setting.Display}" Width="3*"/>
+                            <DataGridTextColumn Header="Titlu" Binding="{Binding Title}" Width="2*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Setare" Binding="{Binding Setting.Display}" Width="2*"/>
                             <DataGridTextColumn Header="Curent" Binding="{Binding Current.Display}" Width="1.3*"/>
                             <DataGridTextColumn Header="Dorit" Binding="{Binding Desired}" Width="1.3*"/>
                             <DataGridTextColumn Header="Stare" Binding="{Binding State}" Width="105"/>

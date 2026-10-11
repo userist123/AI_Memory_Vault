@@ -403,7 +403,12 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ExportPdf()
         {
-            if (_result is null) return;
+            if (_result is null)
+            {
+                Summary = "Ca să faceți raportul de incident, analizați întâi probele: alegeți mai jos de unde vin probele, apoi apăsați „Înainte” până la „Pornește analiza”.";
+                System.Windows.MessageBox.Show(Summary, "Raportul nu se poate face încă", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                return;
+            }
             var dlg = new SaveFileDialog { FileName = $"Raport_{_result.Case.Info.CaseId}.pdf", Filter = "PDF (*.pdf)|*.pdf", InitialDirectory = _result.Case.Root };
             if (dlg.ShowDialog() != true) return;
             var audience = (LogAnalyzer.Dfir.Reporting.ReportAudience)Math.Clamp(ReportAudienceIndex, 0, ReportAudienceLabels.Length - 1);

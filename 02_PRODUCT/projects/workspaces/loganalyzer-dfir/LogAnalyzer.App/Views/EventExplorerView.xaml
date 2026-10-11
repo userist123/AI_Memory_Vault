@@ -141,8 +141,22 @@
             </Grid.RowDefinitions>
             
             <TabControl Grid.Row="0" Margin="0,0,0,8" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                <!-- Tab 0: the event in plain words (owner 2026-10-11) -->
+                <TabItem Header="Ce înseamnă" Style="{StaticResource InspectorTabItemStyle}" IsSelected="True">
+                    <ScrollViewer Margin="10" VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock Text="{Binding SelectedEventMeaning}" TextWrapping="Wrap" FontSize="13" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="Ce ar putea însemna" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,12,0,0"/>
+                            <TextBlock Text="{Binding SelectedEventThreatScenario, TargetNullValue='—'}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="Tehnica de atac asociată (MITRE ATT&amp;CK)" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
+                            <TextBlock Text="{Binding SelectedEventMitreMapping, TargetNullValue='—'}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="Asocierea nu înseamnă că a avut loc un atac; arată doar la ce să fiți atenți." TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
                 <!-- Tab 1: Parsed Properties -->
-                <TabItem Header="Properties" Style="{StaticResource InspectorTabItemStyle}">
+                <TabItem Header="Câmpuri" Style="{StaticResource InspectorTabItemStyle}">
                     <Grid Margin="10">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -159,7 +173,7 @@
                 </TabItem>
 
                 <!-- Tab 2: Full Message -->
-                <TabItem Header="Full Message" Style="{StaticResource InspectorTabItemStyle}">
+                <TabItem Header="Mesaj complet" Style="{StaticResource InspectorTabItemStyle}">
                     <Grid Margin="10">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -178,9 +192,9 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <TextBlock Text="TACTICAL MITIGATION &amp; PLAYBOOK" FontSize="11" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,4"/>
+                    <TextBlock Text="Ce faceți" FontSize="11" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,4"/>
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <TextBlock Text="{Binding SelectedEventMitigation, FallbackValue='Select an event row to inspect relevant mitigation and containment guidance.'}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding SelectedEventMitigation, FallbackValue='Dați clic pe un eveniment ca să vedeți ce este de făcut.'}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" TextWrapping="Wrap"/>
                     </ScrollViewer>
                 </Grid>
             </Border>

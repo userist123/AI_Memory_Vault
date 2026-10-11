@@ -4,6 +4,7 @@
              xmlns:local="clr-namespace:LogAnalyzer.UI.Views">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
     </UserControl.Resources>
     <Grid Margin="24">
         <Grid.RowDefinitions>
@@ -150,18 +151,73 @@
                         <ComboBox AutomationProperties.Name="Filtru după rezultat" DockPanel.Dock="Right" ItemsSource="{Binding StatusFilters}" SelectedItem="{Binding StatusFilter}" Width="160"/>
                         <TextBlock Text="{Binding Summary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                     </DockPanel>
-                    <DataGrid AutomationProperties.Name="Verificările controlului" ItemsSource="{Binding Checks}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Rezultat" Binding="{Binding Status}" Width="110"/>
-                            <DataGridTextColumn Header="Cod" Binding="{Binding Id}" Width="55"/>
-                            <DataGridTextColumn Header="Domeniu" Binding="{Binding Area}" Width="100"/>
-                            <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*"/>
-                            <DataGridTextColumn Header="Constatare" Binding="{Binding Detail}" Width="4*">
-                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            <DataGridTextColumn Header="Probe" Binding="{Binding Evidence.Count}" Width="55"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="5*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="4*"/></Grid.ColumnDefinitions>
+                        <!-- list (owner 2026-10-11: every code explained on screen; list on the left, explanation on the right) -->
+                        <DataGrid AutomationProperties.Name="Verificările controlului" ItemsSource="{Binding Checks}" SelectedItem="{Binding SelectedCheck}" SelectionMode="Single"
+                                  AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" ToolTip="Dați clic pe o verificare: în dreapta apare ce înseamnă, pe înțeles.">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Rezultat" Binding="{Binding Status}" Width="110"/>
+                                <DataGridTextColumn Header="Cod" Binding="{Binding Id}" Width="50"/>
+                                <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*">
+                                    <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="Ce s-a găsit" Binding="{Binding Detail}" Width="3*">
+                                    <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="Transparent"/>
+                        <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Explicația verificării alese">
+                            <StackPanel Margin="8,0,4,0">
+                                <TextBlock Text="Dați clic pe o verificare din listă ca să vedeți ce înseamnă." TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"
+                                           Visibility="{Binding HasSelectedCheck, Converter={StaticResource InverseBoolToVis}}"/>
+                                <StackPanel DataContext="{Binding SelectedExplanation}" Visibility="{Binding DataContext.HasSelectedCheck, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}">
+                                        <Run Text="{Binding Check.Id, Mode=OneWay}"/> <Run Text="·"/> <Run Text="{Binding Check.Title, Mode=OneWay}"/>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding StatusMeaning}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,6,0,0"/>
+
+                                    <TextBlock Text="Ce verificăm" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,12,0,0"/>
+                                    <TextBlock Text="{Binding Guide.What}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="De ce contează" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
+                                    <TextBlock Text="{Binding Guide.Why}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Cum a verificat aplicația" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
+                                    <TextBlock Text="{Binding Guide.How}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Ce s-a găsit" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
+                                    <TextBlock Text="{Binding Check.Detail}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Cum se citește rezultatul" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
+                                    <TextBlock Text="{Binding Guide.Meaning}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    <TextBlock Text="Ce faceți" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
+                                    <TextBlock Text="{Binding NextStep}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+
+                                    <TextBlock Text="Codurile care apar, pe înțeles" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,12,0,2"/>
+                                    <ItemsControl ItemsSource="{Binding Codes}" AutomationProperties.Name="Codurile explicate">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Margin="0,0,0,8">
+                                                    <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"><Run Text="{Binding Code, Mode=OneWay}" FontWeight="SemiBold"/> <Run Text="{Binding Kind, StringFormat='({0})', Mode=OneWay}" Foreground="{StaticResource TextMutedBrush}"/></TextBlock>
+                                                    <TextBlock Text="{Binding What}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                    <TextBlock Text="{Binding Why, StringFormat='De ce contează: {0}'}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                    <TextBlock Text="{Binding When}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <Expander AutomationProperties.Name="Probele verificării" Header="{Binding Check.Evidence.Count}" HeaderStringFormat="Probele ({0} înregistrări)" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Guide.Source, StringFormat='Sursa tehnică: {0}'}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,4"/>
+                                            <ItemsControl ItemsSource="{Binding Check.Evidence}">
+                                                <ItemsControl.ItemTemplate><DataTemplate><TextBox AutomationProperties.Name="O probă" Text="{Binding Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}"/></DataTemplate></ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Expander>
+                                    <Button Content="Copiază explicația (pentru procesul-verbal)" Command="{Binding DataContext.CopyExplanationCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" HorizontalAlignment="Left" Margin="0,10,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
                 </DockPanel>
             </TabItem>
             <TabItem Header="Utilizatori" Style="{StaticResource InspectorTabItemStyle}">
@@ -180,7 +236,20 @@
                 </DataGrid>
             </TabItem>
             <TabItem Header="Cronologia acțiunilor" Style="{StaticResource InspectorTabItemStyle}">
-                <DataGrid AutomationProperties.Name="Cronologia acțiunilor" Margin="8" ItemsSource="{Binding Actions}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                <DockPanel Margin="8">
+                    <ScrollViewer DockPanel.Dock="Bottom" MaxHeight="190" Margin="0,8,0,0" VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock Text="Dați clic pe un rând ca să vedeți ce înseamnă codul din coloana „Probă”." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+                            <ItemsControl ItemsSource="{Binding SelectedActionCodes}" AutomationProperties.Name="Explicația probei alese">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0"><Run Text="{Binding Code, Mode=OneWay}" FontWeight="SemiBold"/><Run Text=": "/><Run Text="{Binding What, Mode=OneWay}"/> <Run Text="{Binding Why, Mode=OneWay}" Foreground="{StaticResource TextSecondaryBrush}"/> <Run Text="{Binding When, Mode=OneWay}" Foreground="{StaticResource TextSecondaryBrush}"/></TextBlock>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                    <DataGrid AutomationProperties.Name="Cronologia acțiunilor" ItemsSource="{Binding Actions}" SelectedItem="{Binding SelectedAction}" SelectionMode="Single" ToolTip="Dați clic pe un rând: dedesubt apare ce înseamnă codul din coloana Probă." AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding TimeUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140"/>
                         <DataGridTextColumn Header="Cine" Binding="{Binding Who}" Width="1.3*"/>
@@ -189,6 +258,7 @@
                         <DataGridTextColumn Header="Probă" Binding="{Binding Source}" Width="2*"/>
                     </DataGrid.Columns>
                 </DataGrid>
+                </DockPanel>
             </TabItem>
         </TabControl>
 

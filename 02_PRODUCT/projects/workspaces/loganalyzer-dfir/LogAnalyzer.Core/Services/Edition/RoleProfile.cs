@@ -158,7 +158,7 @@ namespace LogAnalyzer.Core.Services.Edition
                         "Import de jurnale și artefacte dintr-un folder sau de pe un suport.", TabInvestigation, IntentSource.ImportEvidence)),
                     A(new("procedure_profile", "Profilul de proceduri",
                         "Orele de lucru, rotația jurnalelor, software aprobat, zone și transferuri, după care se judecă controlul.", TabProcedureProfile)),
-                    A(new("users_register", "Registrul utilizatorilor", "Persoanele cu acces la stație și autorizațiile lor, introduse de organizație.", TabUsersRegister)),
+                    A(new("users_register", "Registrul utilizatorilor", "Persoanele cu acces la stație: conturile se preiau de pe stație cu un clic, organizația adaugă autorizațiile.", TabUsersRegister)),
                     A(new("accounts", "Persoane și carduri", "Conturile aplicației și cardurile înregistrate (numai administratorul).", TabAccounts)),
                 };
                 var nav = new[]

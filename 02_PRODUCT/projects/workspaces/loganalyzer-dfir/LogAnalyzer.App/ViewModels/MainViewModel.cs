@@ -1194,7 +1194,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task StartCollectionAsync()
         {
-            if (IsCollectionRunning) return;
+            if (IsCollectionRunning) { StatusMessage = "Colectarea rulează deja; așteptați să se termine."; return; }
             IsCollectionRunning = true;
             CollectionLogs = string.Empty;
 
@@ -1282,6 +1282,7 @@ namespace LogAnalyzer.UI.ViewModels
                 SelectedEventThreatScenario = string.Empty;
                 SelectedEventMitreMapping = string.Empty;
                 SelectedEventMitigation = string.Empty;
+                SelectedEventMeaning = "Dați clic pe un eveniment din listă: aici apare ce înseamnă, pe înțeles.";
                 return;
             }
 
@@ -1317,7 +1318,13 @@ namespace LogAnalyzer.UI.ViewModels
             SelectedEventThreatScenario = assessment.ThreatScenarioRo;
             SelectedEventMitreMapping = assessment.MitreTtpRo;
             SelectedEventMitigation = assessment.ContainmentPlaybookRo;
+            // Owner 2026-10-11: the event in plain words (what it is, the codes inside it decoded), shown first, not behind a right-click.
+            var meaning = LogAnalyzer.Core.Services.Details.DetailSheetBuilder.Build(value).Meaning;
+            SelectedEventMeaning = meaning.Count > 0 ? string.Join(Environment.NewLine, meaning)
+                : $"Evenimentul {value.EventId} ({value.ProviderName}) nu are încă o explicație în aplicație. Câmpurile lui sunt în fila „Câmpuri”; mesajul Windows complet în fila „Mesaj complet”.";
         }
+
+        [ObservableProperty] private string _selectedEventMeaning = "Dați clic pe un eveniment din listă: aici apare ce înseamnă, pe înțeles.";
 
         partial void OnSelectedArtifactChanged(RegistryArtifact? value)
         {
@@ -1538,7 +1545,7 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 var targetIds = SelectedProfile?.TargetEventIds ?? new List<int>();
                 int count = _databaseService.GetEventsCount(SearchEventsText, null, targetIds);
-                if (count == 0) return;
+                if (count == 0) { StatusMessage = "Nu există evenimente de exportat: încărcați întâi jurnale sau schimbați filtrul."; return; }
 
                 var dialog = new SaveFileDialog { Filter = "Raport CSV (*.csv)|*.csv", FileName = "Raport_Incident.csv" };
                 if (dialog.ShowDialog() == true)
@@ -1738,7 +1745,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void StartLiveMonitoring()
         {
-            if (IsLiveMonitoringActive) return;
+            if (IsLiveMonitoringActive) { StatusMessage = "Monitorizarea rulează deja."; return; }
 
             _liveWatcher = _liveSourceFactory.Create();
             if (_liveWatcher is null)
@@ -1843,7 +1850,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void StopLiveMonitoring()
         {
-            if (!IsLiveMonitoringActive) return;
+            if (!IsLiveMonitoringActive) { StatusMessage = "Monitorizarea nu este pornită."; return; }
             _liveWatcher?.StopWatching();
             _liveWatcher?.Dispose();
             _liveWatcher = null;
