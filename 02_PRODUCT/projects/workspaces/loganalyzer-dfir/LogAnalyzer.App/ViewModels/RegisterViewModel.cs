@@ -38,8 +38,9 @@ namespace LogAnalyzer.UI.ViewModels
             ImportJsonCommand = new RelayCommand(ImportJson);
             ImportCsvCommand = new RelayCommand(ImportCsv);
             PasteCommand = new RelayCommand(Paste);
+            DiscoverCommand = new AsyncRelayCommand(DiscoverAsync, () => CanEdit);
             LoadFrom(_registerPath, startup: true);
-            Services.AuthApp.SessionChanged += () => { OnPropertyChanged(nameof(AccessNotice)); OnPropertyChanged(nameof(CanEdit)); };
+            Services.AuthApp.SessionChanged += () => { OnPropertyChanged(nameof(AccessNotice)); OnPropertyChanged(nameof(CanEdit)); DiscoverCommand.NotifyCanExecuteChanged(); };
         }
 
         public string Title => _register.Title;
@@ -68,6 +69,27 @@ namespace LogAnalyzer.UI.ViewModels
         public IRelayCommand ImportJsonCommand { get; }
         public IRelayCommand ImportCsvCommand { get; }
         public IRelayCommand PasteCommand { get; }
+        /// <summary>"Preia de pe stație": reads what exists on this station (read-only) and adds the missing rows; never changes an existing row.</summary>
+        public IAsyncRelayCommand DiscoverCommand { get; }
+
+        /// <summary>Reads the station on a background task. Returns the observed items for <see cref="MergeObserved"/>.</summary>
+        protected abstract System.Collections.Generic.IReadOnlyList<object> Discover();
+        /// <summary>Adds the observed items that are not yet in the register; returns the Romanian status line.</summary>
+        protected abstract string MergeObserved(T register, System.Collections.Generic.IReadOnlyList<object> observed);
+
+        private async System.Threading.Tasks.Task DiscoverAsync()
+        {
+            if (!CanEdit) { Status = AccessNotice; return; }
+            Status = "Se citește stația…";
+            System.Collections.Generic.IReadOnlyList<object> observed;
+            try { observed = await System.Threading.Tasks.Task.Run(Discover); }
+            catch (Exception ex) { Status = "Stația nu a putut fi citită: " + ex.Message; return; }
+            Pull();
+            var line = MergeObserved(_register, observed);
+            Push();
+            ShowIssues(_register.Validate());
+            Status = line;
+        }
 
         /// <summary>Rows of the grid, without the completely empty ones.</summary>
         public System.Collections.Generic.List<string[]> Rows() =>
@@ -184,7 +206,19 @@ namespace LogAnalyzer.UI.ViewModels
     public sealed class MediaRegisterViewModel : RegisterViewModel<MediaRegister>
     {
         public MediaRegisterViewModel(string? path = null) : base(path) { }
+
+        protected override System.Collections.Generic.IReadOnlyList<object> Discover() =>
+            LogAnalyzer.Dfir.Windows.Registers.StationDiscovery.ObservedMedia().Cast<object>().ToList();
+
+        protected override string MergeObserved(MediaRegister register, System.Collections.Generic.IReadOnlyList<object> observed)
+        {
+            var unit = LogAnalyzer.Dfir.Registers.StationName.Parse(Environment.MachineName).UnitCode;
+            var c = LogAnalyzer.Dfir.Registers.RegisterAutoFill.MergeMedia(register, observed.Cast<LogAnalyzer.Dfir.Registers.ObservedMedium>(), unit, DateTimeOffset.UtcNow);
+            return $"Preluat de pe stație: {c.Added} medii noi, {c.AlreadyPresent} erau deja în registru. Salvați ca să păstrați.";
+        }
+
         public override string Hint =>
+            "Rândurile vin de pe stație (mediile conectate sau văzute pe ea); persoana completează doar ce stația nu poate ști: autorizația (nivelul), zona și utilizatorul atribuit. " +
             "RegistrationNumber (unic); Serial; VidPid (0951:1666, opțional); Type: USB | HDD | SSD | CD | DVD | other; Classification: nivel NATO, UE sau național (gol = nemarcat; nu există nivel neclasificat); " +
             "AssignedUser: DOMENIU\\utilizator; Zone; ValidFrom/ValidTo: yyyy-MM-dd; Status: active | withdrawn | destroyed. Mediile observate se compară cu acest registru: AUTHORIZED / REGISTERED / UNREGISTERED / UNAUTHORIZED / UNKNOWN.";
     }
@@ -193,8 +227,19 @@ namespace LogAnalyzer.UI.ViewModels
     public sealed class UsersRegisterViewModel : RegisterViewModel<UsersRegister>
     {
         public UsersRegisterViewModel(string? path = null) : base(path) { }
+
+        protected override System.Collections.Generic.IReadOnlyList<object> Discover() =>
+            LogAnalyzer.Dfir.Windows.Registers.StationDiscovery.ObservedAccounts().Cast<object>().ToList();
+
+        protected override string MergeObserved(UsersRegister register, System.Collections.Generic.IReadOnlyList<object> observed)
+        {
+            var c = LogAnalyzer.Dfir.Registers.RegisterAutoFill.MergeUsers(register, observed.Cast<LogAnalyzer.Dfir.Registers.ObservedAccount>(), DateTimeOffset.UtcNow);
+            return $"Preluat de pe stație: {c.Added} conturi noi, {c.AlreadyPresent} erau deja în registru. Salvați ca să păstrați.";
+        }
+
         public override string Notice => UsersRegister.EditNotice;
         public override string Hint =>
+            "Rândurile vin de pe stație (conturile existente sau folosite pe ea); persoana completează doar ce stația nu poate ști: autorizația (nivelul), zonele și nevoia de a cunoaște. " +
             "Person; Accounts: DOMENIU\\utilizator, separate prin ; sau |; Sids: opțional; Clearance: nivel NATO, UE sau național (un rând pentru fiecare abilitare; gol = fără abilitare); " +
             "ClearanceValidFrom/To: yyyy-MM-dd; NeedToKnow: note; ZonesAllowed: zone separate prin ; sau |. Abilitările se introduc manual; nu se deduc din nimic.";
     }
