@@ -10,6 +10,7 @@ import PrefsSwitcher from '@/components/PrefsSwitcher';
 import PlanThumb from '@/components/PlanThumb';
 import PhoneAccess from '@/components/PhoneAccess';
 import TasksPanel from '@/components/TasksPanel';
+import StudioProfileForm from '@/components/StudioProfileForm';
 import { PROJECT_STATUSES, daysLeft, type ProjectStatus } from '../core/project-meta';
 type P = { id: string; name: string; updated_at: string; current_revision: number; status: ProjectStatus; client: string | null; dueDate: string | null };
 const ACTIVE: ProjectStatus[] = ['lead', 'offer', 'design', 'execution'];
@@ -78,6 +79,7 @@ export default function Home(){
           <PlanThumb floor={tm.floor} label={tm.name[L]} /><b>{tm.name[L]}</b><small>{tp('home.rooms', tm.floor.rooms.length)} · {formatArea(floorArea(tm.floor), units, lang)}</small></button>)}
       </div>
     </section>
+    <section><StudioProfileForm /></section>
     <PhoneAccess />
   </main>);
 }

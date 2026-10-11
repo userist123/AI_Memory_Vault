@@ -72,4 +72,5 @@ create table if not exists time_entries(id uuid primary key default gen_random_u
 create index if not exists time_entries_project on time_entries(project_id, date desc);
 alter table projects add column if not exists deleted_at timestamptz;
 create index if not exists projects_trash on projects(owner, deleted_at) where deleted_at is not null;
+create table if not exists studio_profile(owner text primary key, data jsonb not null, updated_at timestamptz not null default now());
 `;
