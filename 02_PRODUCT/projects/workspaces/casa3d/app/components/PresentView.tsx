@@ -16,6 +16,7 @@ import { PlanSvg } from './PrintView';
 import FeedbackBox, { type FeedbackItem } from './FeedbackBox';
 import ClientDeliveries from './ClientDeliveries';
 import { ClientChanges } from './ChangeOrders';
+import RoomChoiceBox, { type ClientChoice } from './RoomChoiceBox';
 import type { ClientProgress } from '@/core/client-progress';
 
 const nextFrame = () => new Promise<void>(res => requestAnimationFrame(() => res()));
@@ -31,6 +32,8 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   useEffect(() => { if (share) fetch(`/api/share/${share.token}/feedback`).then(r => r.ok ? r.json() : []).then(setFeedback).catch(() => {}); }, [share]);
   const added = (f: FeedbackItem) => setFeedback(xs => [...xs, f]);
+  const [choices, setChoices] = useState<ClientChoice[]>([]);
+  useEffect(() => { if (share) fetch(`/api/share/${share.token}/choices`).then(r => r.ok ? r.json() : []).then(setChoices).catch(() => {}); }, [share]);
   useEffect(() => { if (!data) return; let alive = true, viewer: any = null;
     (async () => { try { const m = await import('./viewer3d-engine.js'); if (!alive || !canvasRef.current) return;
       viewer = m.createViewer(canvasRef.current); const lp = lighting('day'); viewer.setLighting({ ...lp, dir: sunDirection(lp.azimuthDeg, lp.elevationDeg) }); viewer.setQuality?.('high');
@@ -76,6 +79,7 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
         <ul className="sw-list">{r.swatches.slice(0, 9).map((s, k) => <li key={k}><i style={s.material ? { ...swatchStyle(s.material), backgroundColor: s.color } : { background: s.color }} /><span><small>{role(s.role)}</small>{s.material ? title(s.material.name) : s.color}</span></li>)}</ul>
         {r.products.length > 0 && <p className="prod">{r.products.slice(0, 6).map(p => p.name).join(' · ')}</p>}</div>
       <footer>{num(i + 3)}</footer></section>
+      {share && <RoomChoiceBox token={share.token} roomId={r.id} roomName={r.name} snap={data.snap} cat={data.catalog} mc={data.mc} cur={cur} chosen={choices.find(c => c.roomId === r.id)} onChosen={c => setChoices(xs => [...xs.filter(x => x.roomId !== c.roomId), c])} />}
       {share && <FeedbackBox token={share.token} roomId={r.id} title={`${t('fb.title')} · ${r.name}`} items={feedback.filter(f => f.roomId === r.id)} onAdded={added}
         approvals={approvalItems(r).map(a => { const sw = r.swatches.find(s => `f:${s.key}` === a.key); return { ...a, swatch: sw ? (sw.material ? { ...swatchStyle(sw.material), backgroundColor: sw.color } : { background: sw.color }) : undefined }; })} />}</Fragment>)}
     <section className="slide planslide"><header><span className="kicker">{t('pres.planKicker')}</span><h2>{t('pres.plan')}</h2></header>

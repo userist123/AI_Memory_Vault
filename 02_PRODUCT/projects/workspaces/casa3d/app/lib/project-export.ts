@@ -11,6 +11,7 @@ import { listChanges } from './change-orders';
 import { getTimesheet } from './timesheet';
 import { listSurveys } from './surveys';
 import { listFeedback } from './feedback';
+import { listChoices } from './room-choices';
 import { listTasks } from './tasks';
 import { computeBOQ } from '../core/boq';
 import { zip, type ZipEntry } from './zip';
@@ -40,11 +41,12 @@ export async function exportProject(owner: string, id: string): Promise<{ filena
   files.push({ name: 'pontaj.json', data: JSON.stringify(await getTimesheet(owner, id), null, 2) });
   files.push({ name: 'releveu.json', data: JSON.stringify(await listSurveys(owner, id), null, 2) });
   files.push({ name: 'pareri-client.json', data: JSON.stringify(await listFeedback(owner, id), null, 2) });
+  files.push({ name: 'alegeri-variante.json', data: JSON.stringify(await listChoices(owner, id), null, 2) });
   files.push({ name: 'sarcini.json', data: JSON.stringify(await listTasks(owner, id), null, 2) });
   // randările de pe disc (doar imaginile, nu scena intermediară)
   const root = path.join(process.env.CASA3D_RENDER_DIR || path.join(process.cwd(), '.data', 'renders'), id);
   for (const job of await fs.readdir(root).catch(() => [] as string[])){ if (!/^\d{13}$/.test(job)) continue;
     for (const f of await fs.readdir(path.join(root, job)).catch(() => [] as string[])) if (/^[\w-]{1,80}\.png$/.test(f)) files.push({ name: `randari/${job}/${f}`, data: await fs.readFile(path.join(root, job, f)) }); }
-  files.push({ name: 'CITESTE-MA.txt', data: `Exportul complet al proiectului „${p.name}” din Casa3D (${new Date().toISOString().slice(0, 10)}).\r\n\r\nproiect.json — planul, finisajele, mobilierul și fișa proiectului (se poate reimporta)\r\nrevizii/ — fiecare revizie salvată\r\ncomenzi.csv, deviz.csv — se deschid în Excel (separator ;)\r\nsantier/ — remedieri și poze\r\nrandari/ — imaginile randate\r\nmodificari, pontaj, releveu, pareri-client, sarcini — JSON\r\nlinkuri-client.json — doar datele linkurilor, fără cheile de acces\r\n` });
+  files.push({ name: 'CITESTE-MA.txt', data: `Exportul complet al proiectului „${p.name}” din Casa3D (${new Date().toISOString().slice(0, 10)}).\r\n\r\nproiect.json — planul, finisajele, mobilierul și fișa proiectului (se poate reimporta)\r\nrevizii/ — fiecare revizie salvată\r\ncomenzi.csv, deviz.csv — se deschid în Excel (separator ;)\r\nsantier/ — remedieri și poze\r\nrandari/ — imaginile randate\r\nmodificari, pontaj, releveu, pareri-client, alegeri-variante, sarcini — JSON\r\nlinkuri-client.json — doar datele linkurilor, fără cheile de acces\r\n` });
   return { filename: `${safe(p.name)}-casa3d-${new Date().toISOString().slice(0, 10)}.zip`, data: zip(files) };
 }
