@@ -27,7 +27,7 @@ const MARGIN = 0.5;   // m în jurul planului pentru cote
 
 type PlanProps = { snap: Snapshot; catalog: Catalog; box: { x0: number; z0: number; w: number; d: number }; widthMm: number; heightMm: number; mm: number; units: Units; locale: Lang; roomId?: string; showDims?: boolean; aria: string; voids?: { x0: number; z0: number; x1: number; z1: number }[] };
 // Planul (complet sau decupat pe o cameră): pereți, deschideri, amprentele mobilierului și etichete; `mm` = metri pe plan per mm de hârtie.
-function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, locale, roomId, showDims, aria, voids = [] }: PlanProps){
+export function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, locale, roomId, showDims, aria, voids = [] }: PlanProps){
   const f = snap.floor, fs = (v: number) => v * mm, dims = showDims ? wallDimensions(f) : [], rooms = roomId ? f.rooms.filter(r => r.id === roomId) : f.rooms, pls = roomId ? snap.placements.filter(pl => pl.roomId === roomId) : snap.placements;
   return (<svg viewBox={`${box.x0} ${box.z0} ${box.w} ${box.d}`} width={`${widthMm}mm`} height={`${heightMm}mm`} overflow={roomId ? 'hidden' : 'visible'} role="img" aria-label={aria} style={{ background: '#fbfaf7' }}>
     {f.rooms.map(r => <rect key={r.id} x={r.rect.x0} y={r.rect.z0} width={r.rect.x1 - r.rect.x0} height={r.rect.z1 - r.rect.z0} fill={roomId && r.id !== roomId ? '#f6f4ef' : ROOM_FILL[r.type] || '#f3f1ec'} stroke="#c9c4b8" strokeWidth={fs(0.2)} />)}

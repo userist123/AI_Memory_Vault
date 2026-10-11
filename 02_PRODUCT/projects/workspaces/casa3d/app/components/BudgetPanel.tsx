@@ -36,7 +36,7 @@ export default function BudgetPanel({ snap, catalog, mc, out, onBudget }: { snap
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' })); a.download = `${snap.name.replace(/[^\w\- ]+/g, '').trim() || t('budget.csv.fileFallback')}-${t('budget.csv.fileSuffix')}.csv`; a.click(); URL.revokeObjectURL(a.href);
   }
   return (<div className="budget">
-    <h3>{t('tab.budget')}</h3>
+    <h3>{t('budget.estimate')}</h3>
     {out?.disclosure && <div className="issue WARNING">{t('budget.affiliateNote')} <a href="/despre-linkuri" target="_blank">{t('budget.details')}</a></div>}
     <div className="bigtotal"><span>{t('budget.totalEstimated')}</span><b>{lei(c.total)}</b><small>{t('budget.rangeVat', { low: lei(b.scenarios.low.total), high: lei(b.scenarios.high.total), vat: lei(c.vat) })}</small></div>
     {b.target != null && <div className={`issue ${b.status === 'over' ? 'ERROR' : 'PASS'}`}>{b.status === 'over' ? t('budget.overTarget', { amount: lei(-b.diff!) }) : t('budget.underTarget', { amount: lei(b.diff!) })}</div>}
