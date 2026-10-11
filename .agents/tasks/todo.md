@@ -15,7 +15,7 @@ Plan (each step: tests first for logic, tsc + vitest + build + phone/desktop che
 - [x] 6. Tile setting-out: start point, slivers < 1/3 tile, cut list, grid on sheet, real tile count.
 - [x] 7. Title block + numbered sheet set + revision table.
 - [x] 8. Site survey mode: sides + diagonals, closure/squareness check, verified dimensions + drawing freeze.
-- [ ] 9. Time tracking per project vs design fee.
+- [x] 9. Time tracking per project vs design fee.
 - [ ] 10. Later: kitchen modules + worktop, wardrobe PAL cut list, GLB export.
 Risks: stale ETAs on the client link (show "updated at"); buy prices never reach the client; I7 values stay editable warnings.
 

@@ -460,3 +460,9 @@ input[type=file]{font-size:12px;color:var(--lead)} input[type=file]::file-select
 .sv-res{border:1px solid var(--rule);padding:8px 12px;background:#fff} .sv-res p{margin:0} .sv-res ul{margin:4px 0 0;padding-left:18px;font-size:13px}
 .sv-ok{border-color:#4f6b4a} .sv-ok b{color:#4f6b4a} .sv-warn{border-color:#b08d57} .sv-warn b{color:#8a6a2f} .sv-bad{border-color:var(--err)} .sv-bad b{color:var(--err)}
 .sv-print{margin:2px 0 8px;font-size:12px} .sv-print.sv-bad{color:var(--err)} .sv-print.sv-warn{color:#8a6a2f}
+/* Pontaj */
+.timep{display:grid;gap:8px;margin:14px 0;border-top:1px solid var(--rule);padding-top:12px} .timep h3{display:flex;gap:8px;align-items:center;margin:0}
+.timep-sum{margin:0;font-size:13px} .timep-sum small{display:block;color:var(--lead);font-size:12px;margin-top:2px}
+.timep-add{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr) minmax(0,1fr);gap:6px} .timep-add input[name],.timep-add input:nth-child(4){grid-column:1/-1} .timep-add .btn{grid-column:1/-1} .timep-add .bad{border-color:var(--err)}
+.timep-list{list-style:none;margin:0;padding:0;font-size:12.5px} .timep-list li{display:flex;justify-content:space-between;gap:8px;align-items:center;border-top:1px solid var(--rule);padding:4px 0}
+.timep .btn-x{border:0;background:none;font-size:18px;line-height:1;cursor:pointer;color:var(--lead);min-width:32px;min-height:32px} .timep .btn.link{border:0;background:none;padding:0;text-decoration:underline;justify-self:start}
