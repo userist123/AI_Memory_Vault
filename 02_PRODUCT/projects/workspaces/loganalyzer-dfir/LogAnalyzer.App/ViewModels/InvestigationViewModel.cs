@@ -43,19 +43,19 @@ namespace LogAnalyzer.UI.ViewModels
         }
         /// <summary>WP14a: the findings of the "Air-gap integrity" category (Finding.AirGap carries channel, authorised?, who, when, object, classification, direction, destination, evidence).</summary>
         public ObservableCollection<Finding> AirGapFindings { get; } = new();
-        [ObservableProperty] private string _airGapSummary = "Integritate air-gap: nedefinit (nicio analiză încă).";
+        [ObservableProperty] private string _airGapSummary = "Integritate air-gap: nedefinită (nicio analiză încă).";
         /// <summary>WP14b: the findings of the "Combined sequences" category (control gap + media, SMB + staging + USB, portable software + archive + USB); Finding.Sequence carries the ordered steps.</summary>
         public ObservableCollection<Finding> SequenceFindings { get; } = new();
-        [ObservableProperty] private string _sequenceSummary = "Secvențe combinate: nedefinit (nicio analiză încă).";
+        [ObservableProperty] private string _sequenceSummary = "Secvențe combinate: nedefinite (nicio analiză încă).";
         [ObservableProperty] private string _sequenceSteps = "";
         /// <summary>WP14a: the zone of the analysed system, as the operator declares it (compared with the zone in the media register).</summary>
         [ObservableProperty] private string _systemZone = "";
-        [ObservableProperty] private string _registerLine = "Registre: nedefinit (nicio analiză încă).";
+        [ObservableProperty] private string _registerLine = "Registre: nedefinite (nicio analiză încă).";
         public ObservableCollection<TimelineEvent> Timeline { get; } = new();
         public ObservableCollection<LogAnalyzer.Dfir.Analysis.AntiForensicCheck> AntiForensics { get; } = new();
         /// <summary>WP15b: "Cronologie politici" (same lines as the investigation PDF).</summary>
         public ObservableCollection<LogAnalyzer.Dfir.Analysis.PolicyReportLine> PolicyTimelineLines { get; } = new();
-        [ObservableProperty] private string _policyTimelineSummary = "Cronologie politici: nedefinit (nicio analiză încă).";
+        [ObservableProperty] private string _policyTimelineSummary = "Cronologie politici: nedefinită (nicio analiză încă).";
         public ObservableCollection<LogAnalyzer.Dfir.Graph.Entity> GraphEntities { get; } = new();
         public ObservableCollection<LogAnalyzer.Dfir.Graph.GraphEdgeRow> GraphEdges { get; } = new();
 

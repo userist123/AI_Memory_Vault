@@ -24,10 +24,10 @@ public sealed partial class ScheduledTaskParser : EvidenceParserBase
         FormatVersions = ["Task Scheduler schema 1.1–1.6 (Windows Vista – 11)"],
         Limitations =
         [
-            "Configurația taskului la momentul copierii; nu dovedește că a rulat (vezi TaskScheduler/Operational, 4698/4702).",
-            "Data din RegistrationInfo este scrisă de cel care creează taskul și poate fi falsificată; fără fus orar rămâne neconvertită.",
+            "Configurația activității planificate la momentul copierii; nu dovedește că a rulat (vezi TaskScheduler/Operational, 4698/4702).",
+            "Data din RegistrationInfo este scrisă de cel care creează activitatea planificată și poate fi falsificată; fără fus orar rămâne neconvertită.",
             "Variabilele de mediu din comandă nu sunt expandate.",
-            "Nu citește TaskCache din registru (taskuri fără fișier XML sau cu XML șters).",
+            "Nu citește TaskCache din registru (activități planificate fără fișier XML sau cu XML șters).",
         ],
         Status = ParserMaturity.Validated,
         Validation = "ScheduledTaskParserTests: 303 fișiere reale din corpus comparate cu schtasks /query /v; XML sintetic cu valori exacte",
@@ -68,8 +68,8 @@ public sealed partial class ScheduledTaskParser : EvidenceParserBase
 
         var actions = task.Element(Ns + "Actions")?.Elements().ToList() ?? [];
         if (actions.Count == 0)
-            result.Gaps.Add(new EvidenceGap(uri, EvidenceStatus.Partial, "taskul nu are nicio acțiune în XML",
-                "Nu se știe ce rulează taskul", "TaskCache din hive-ul SOFTWARE", "Posibil"));
+            result.Gaps.Add(new EvidenceGap(uri, EvidenceStatus.Partial, "activitatea planificată nu are nicio acțiune în XML",
+                "Nu se știe ce rulează activitatea planificată", "TaskCache din hive-ul SOFTWARE", "Posibil"));
 
         int index = 0;
         foreach (var a in actions.DefaultIfEmpty())

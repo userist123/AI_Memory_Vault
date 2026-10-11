@@ -101,7 +101,7 @@ public static class ControlReportPdf
                             });
                             cc.Item().Text(c.Detail);
                             foreach (var e in c.Evidence.Take(25)) cc.Item().Text("– " + e).FontSize(7).FontColor(Muted);
-                            if (c.Evidence.Count > 25) cc.Item().Text($"… încă {c.Evidence.Count - 25} intrări (în fișierul JSON al raportului)").FontSize(7).FontColor(Muted);
+                            if (c.Evidence.Count > 25) cc.Item().Text($"… încă {LogAnalyzer.Dfir.Language.RoText.Count(c.Evidence.Count - 25, "intrare", "intrări")} (în fișierul JSON al raportului)").FontSize(7).FontColor(Muted);
                             if (c.Recommendation.Length > 0) cc.Item().Text("Recomandare: " + c.Recommendation).FontSize(7.5f).Italic();
                         });
                 }
@@ -187,7 +187,7 @@ public static class ControlReportPdf
             "Orele cu „UTC” sunt în timp universal, restul în ora stației; ora locală a stației și fusul ei orar sunt trecute în subsolul fiecărei pagini.",
         };
         if (!f.IsAdministrator) l.Insert(0, "Controlul a rulat FĂRĂ drepturi de administrator: jurnalul Security, politica de audit și o parte din setări nu au putut fi citite.");
-        if (f.Gaps.Count > 0) l.Add($"Există {f.Gaps.Count} surse lipsă sau incomplete (punctul 4); verificările care depind de ele sunt NEDETERMINATE.");
+        if (f.Gaps.Count > 0) l.Add($"{(f.Gaps.Count == 1 ? "Există o sursă lipsă sau incompletă" : "Există " + LogAnalyzer.Dfir.Language.RoText.Count(f.Gaps.Count, "sursă lipsă sau incompletă", "surse lipsă sau incomplete"))} (punctul 4); verificările care depind de {(f.Gaps.Count == 1 ? "ea" : "ele")} sunt NEDETERMINATE.");
         return l;
     }
 

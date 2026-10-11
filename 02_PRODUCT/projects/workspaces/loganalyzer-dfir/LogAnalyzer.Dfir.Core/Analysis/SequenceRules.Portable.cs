@@ -33,7 +33,7 @@ public static partial class SequenceRules
             if (removable.Contains(letter)) where = $"unitate amovibilă {letter}:";
             else if (d.UserWritablePathParts.Any(p => p.Length > 0 && path.Contains(p, StringComparison.OrdinalIgnoreCase)) &&
                      (tools.Contains(Low(name)) || d.PortableNameWords.Any(w => w.Length > 0 && name.Contains(w, StringComparison.OrdinalIgnoreCase))))
-                where = "cale în care utilizatorii pot scrie de utilizator";
+                where = "cale în care utilizatorii pot scrie";
             else continue;
             var first = g.Min(x => T(x.E))!.Value;
             // First seen in the case period: the earliest row for the path must fall inside it (when the scope gives a period).

@@ -79,7 +79,7 @@ public static class ArtifactKinds
         _ => family,
     };
 
-    public static readonly string ConfigurationKindsText = "ScheduledTask, Service, RunKey, Winlogon, IFEO, SystemConfig, instantaneul stării live (servicii, taskuri, autorun) sau o înregistrare de jurnal despre ele";
+    public static readonly string ConfigurationKindsText = "ScheduledTask, Service, RunKey, Winlogon, IFEO, SystemConfig, instantaneul stării live (servicii, activități planificate, autorun) sau o înregistrare de jurnal despre ele";
 
     /// <summary>Artifact kinds a claim of this type would expect to find in the case, and whether the case contains them. (label, present)</summary>
     public static IEnumerable<(string Label, bool Present)> Expected(SemanticType t, CaseFacts f)

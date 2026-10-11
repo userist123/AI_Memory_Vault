@@ -74,7 +74,7 @@ public static partial class Wp11Rules
         o.Add(new Finding
         {
             FindingId = c.NextId(), RuleId = "VSS-SNAPSHOT-DELETED",
-            Title = aborted ? "Copii umbră (VSS) abandonate de sistem: spațiul de stocare nu a putut crește" : "Cea mai veche copie umbră (Volume Shadow Copy) (VSS) ștearsă de sistem pentru limita de spațiu",
+            Title = aborted ? "Copii umbră (VSS) abandonate de sistem: spațiul de stocare nu a putut crește" : "Cea mai veche copie umbră (VSS) ștearsă de sistem pentru limita de spațiu",
             Severity = aborted ? Severity.Low : Severity.Info, Category = "Impact", Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1490",
             FirstSeenUtc = T(vol[0]), LastSeenUtc = T(vol[^1]),
             Description = $"volsnap: {Join(vol.Select(e => e.EventId))} ({LogAnalyzer.Dfir.Language.RoText.Count(vol.Count, "eveniment", "evenimente")}). 33 = cea mai veche copie a fost ștearsă pentru a respecta limita de spațiu setată; 25 = copii abandonate pentru că spațiul nu a putut crește peste limită. " +

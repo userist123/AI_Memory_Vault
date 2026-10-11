@@ -21,7 +21,7 @@ public class StationIdentityTests
     public void Several_stations_are_all_listed_and_no_host_falls_back_with_a_note()
     {
         Assert.Contains("stațiile din probe: A (2 evenimente), B (1 eveniment)", StationIdentity.FromEvidence([E("A"), E("A"), E("B")], "X").Line);
-        Assert.Contains("probele nu numesc calculatorul", StationIdentity.FromEvidence([E(""), E("-")], "X").Line);
+        Assert.Contains("numele nu apare în probe", StationIdentity.FromEvidence([E(""), E("-")], "X").Line);
         Assert.Equal("stația X", StationIdentity.FromEvidence([E("x")], "X").Line);
     }
 }

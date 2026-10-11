@@ -11,7 +11,7 @@ public sealed record FindingGroup(Finding Lead, IReadOnlyList<Finding> Members);
 /// <summary>What the first page of the investigation report says (review 2026-10-12, A and D2): verdict, meaning for the reader, next steps, scope of the report.</summary>
 public sealed record ReportSummary(
     string Verdict, IReadOnlyList<string> Serious, IReadOnlyList<string> NotChecked, string Meaning, IReadOnlyList<string> NextSteps,
-    IReadOnlyList<string> KeyFindings, string CanProve, string CannotProve,
+    string CanProve, string CannotProve,
     int CriticalConfirmed, int CriticalIndicative, int HighConfirmed, int HighIndicative);
 
 /// <summary>
@@ -47,8 +47,8 @@ public static class InvestigationReportText
 
     // ---- Limitations: general once, specific per finding ----
 
-    private static readonly string[] GenericPrefixes = ["Dovezi contradictorii: regula nu le evaluează", "Verificare independentă: neefectuată"];
-    private static readonly Regex ParserLimit = new(@"^(?<p>.+?) nu poate dovedi ", RegexOptions.Compiled);
+    private static readonly string[] GenericPrefixes = ["Probe contradictorii: regula nu le evaluează", "Dovezi contradictorii: regula nu le evaluează", "Verificare independentă: neefectuată"];
+    private static readonly Regex ParserLimit = new(@"^(?<p>.+?) nu (?:poate|pot) dovedi ", RegexOptions.Compiled);
 
     /// <summary>A limitation every finding of a kind carries (the semantic type's own limit, the unevaluated contradiction check, no independent verification).</summary>
     public static bool IsGenericLimitation(string limitation) =>
@@ -96,8 +96,6 @@ public static class InvestigationReportText
     public static List<EvidenceRef> GroupEvidence(FindingGroup g) =>
         g.Members.SelectMany(m => m.SupportingEvidence).GroupBy(e => (e.EvidenceId, e.Locator)).Select(x => x.First()).ToList();
 
-    private static readonly Regex StateSuffix = new(@"\s*Stare: [^.]*\.?$", RegexOptions.Compiled);
-
     // ---- First-page summary ----
 
     private static bool Solid(Finding f) => f.Verification.State is StandardState.Verified or StandardState.Supported;
@@ -123,23 +121,23 @@ public static class InvestigationReportText
         else
         {
             int conf = all.Count(f => f.Severity >= Severity.High && Solid(f)), ind = h - conf;
-            verdict = $"Sunt {RoText.Count(h, "constatare", "constatări")} de severitate ridicată sau critică: {RoText.Count(conf, "confirmată", "confirmate")} de verificarea automată și {RoText.Count(ind, "doar indicativă", "doar indicative")} (de confirmat). " +
+            verdict = $"Există {RoText.CountFem(h, "constatare", "constatări")} de severitate ridicată sau critică: {RoText.Pronoun(conf, "confirmată", "confirmate")} de verificarea automată și {RoText.Pronoun(ind, "doar indicativă", "doar indicative")} (de confirmat). " +
                       "Un indiciu nu stabilește singur o compromitere.";
         }
-        if (contradicted > 0) verdict += $" {RoText.Count(contradicted, "constatare", "constatări")} {(contradicted == 1 ? "este contrazisă" : "sunt contrazise")} de alte probe.";
+        if (contradicted > 0) verdict += $" {RoText.Capitalize(RoText.CountFem(contradicted, "constatare", "constatări"))} {(contradicted == 1 ? "este contrazisă" : "sunt contrazise")} de alte probe.";
 
         var serious = new List<string>();
-        foreach (var f in graveF.OrderByDescending(f => f.Severity).ThenByDescending(Solid).GroupBy(f => f.Title).Select(g => g.First()).Take(3))
-            serious.Add($"{f.FindingId} · {RoText.CleanPathsInText(f.Title)} ({RoLabels.Severity(f.Severity).ToLowerInvariant()}, {(Solid(f) ? "confirmată" : "doar indicativă")})");
+        foreach (var f in graveF.OrderByDescending(f => f.Severity).ThenByDescending(Solid).GroupBy(f => f.Title).Select(g => g.First()).Take(5))
+            serious.Add($"{f.FindingId} · {RoText.StripVolumes(f.Title)} ({RoLabels.Severity(f.Severity).ToLowerInvariant()}, {(Solid(f) ? "confirmată" : "doar indicativă")})");
         int detected = r.AntiForensics.Count(a => a.Result == AntiForensicResult.Detected);
-        if (detected > 0) serious.Add($"{RoText.Count(detected, "verificare", "verificări")} de ascundere sau ștergere a urmelor {(detected == 1 ? "a dat" : "au dat")} rezultatul DETECTAT (o urmă observată, nu dovada intenției).");
+        if (detected > 0) serious.Add($"{RoText.Capitalize(RoText.CountFem(detected, "verificare", "verificări"))} de ascundere sau ștergere a urmelor {(detected == 1 ? "a găsit" : "au găsit")} o urmă observată (nu dovada intenției).");
 
         var notChecked = new List<string>();
         var gapNames = r.Gaps.Where(g => g.Status != EvidenceStatus.Success).Select(g => g.Artifact).Distinct(StringComparer.Ordinal).ToList();
         if (gapNames.Count > 0)
             notChecked.Add($"{RoText.Count(gapNames.Count, "sursă lipsă sau incompletă", "surse lipsă sau incomplete")}: " + string.Join(", ", gapNames.Take(5).Select(RoText.CleanPathsInText)) + (gapNames.Count > 5 ? $" și încă {gapNames.Count - 5}" : "") + ".");
         int undetermined = r.AntiForensics.Count(a => a.Result == AntiForensicResult.Undetermined);
-        if (undetermined > 0) notChecked.Add($"{RoText.Count(undetermined, "verificare", "verificări")} de ascundere a urmelor {(undetermined == 1 ? "este nedeterminată" : "sunt nedeterminate")} (sursa lipsește sau nu a putut fi citită).");
+        if (undetermined > 0) notChecked.Add($"{RoText.Capitalize(RoText.CountFem(undetermined, "verificare", "verificări"))} de ascundere a urmelor {(undetermined == 1 ? "este nedeterminată" : "sunt nedeterminate")} (sursa lipsește sau nu a putut fi citită).");
         if (integrity.HasNotices) notChecked.Add("Unele elemente de probă sunt goale sau de format neașteptat și nu au fost interpretate.");
         if (notChecked.Count == 0) notChecked.Add("Nicio sursă lipsă raportată pentru această analiză.");
 
@@ -157,10 +155,7 @@ public static class InvestigationReportText
         if (h > 0) steps.Add("Hotărâți măsurile (izolare, schimbarea parolelor, sesizare) doar după ce un specialist a verificat constatările.");
         if (steps.Count == 0) steps.Add("Nicio acțiune urgentă; păstrați cazul și lanțul de custodie.");
 
-        var key = graveF.OrderByDescending(f => f.Severity).ThenByDescending(Solid).GroupBy(f => f.Title).Select(g => g.First()).Take(3)
-            .Select(f => RoText.CleanPathsInText(f.HumanSummary.Length > 0 ? StateSuffix.Replace(f.HumanSummary, "") : f.Description)).ToList();
-
-        return new ReportSummary(RoText.FixSentences(verdict), serious, notChecked, meaning, steps, key, CanProveText, CannotProveText,
+        return new ReportSummary(RoText.FixSentences(verdict), serious, notChecked, meaning, steps, CanProveText, CannotProveText,
             Conf(Severity.Critical), Ind(Severity.Critical), Conf(Severity.High), Ind(Severity.High));
     }
 
@@ -190,11 +185,23 @@ public static class InvestigationReportText
             "Clasificare: " + string.Join(", ", Enum.GetValues<Classification>().Select(c => $"{RoLabels.Classification(c)} = {c.ToSpec()}")) + ".",
             "Rezultat al verificărilor de ascundere a urmelor: " + string.Join(", ", Enum.GetValues<AntiForensicResult>().Select(a => $"{RoLabels.AntiForensic(a)} = {a.ToString().ToUpperInvariant().Replace("NOTDETECTED", "NOT_DETECTED")}")) + ".",
             "Stare a unei surse: " + string.Join(", ", Enum.GetValues<EvidenceStatus>().Select(s => $"{RoLabels.Source(s)} = {s.ToSpec()}")) + ".",
+            "Starea unui parser: " + string.Join(", ", new[] { "VALIDATED", "TESTED", "EXPERIMENTAL" }.Select(c => $"{ParserStatusRomanian(c)} = {c}")) + ".",
             "Stare a unui element de probă la reverificare: " + string.Join(", ", new[] { "AVAILABLE", "UNVERIFIED", "NO_EVIDENCE", "READ_ERROR", "MUTATED" }.Select(c => $"{SpecStatusRomanian(c)} = {c}")) + ".",
             "Tip de afirmație: " + string.Join(", ", Enum.GetValues<SemanticType>().Select(t => $"{RoLabels.Semantic(t)} = {t.ToSpec()}")) + ".",
         };
         return l;
     }
+
+    /// <summary>How an evidence item entered the case, in words: "importat la" / "achiziționat la" (the data keeps "imported" / "acquired").</summary>
+    public static string AcquisitionRomanian(string method) => method switch
+    {
+        "imported" => "importat la", "acquired" => "achiziționat la", "" => "intrat în caz la", _ => method,
+    };
+
+    public static string ParserStatusRomanian(string status) => status.ToUpperInvariant() switch
+    {
+        "VALIDATED" => "validat pe date reale", "TESTED" => "testat doar pe date sintetice", "EXPERIMENTAL" => "experimental", _ => status,
+    };
 
     public static string SpecStatusRomanian(string spec) => spec switch
     {

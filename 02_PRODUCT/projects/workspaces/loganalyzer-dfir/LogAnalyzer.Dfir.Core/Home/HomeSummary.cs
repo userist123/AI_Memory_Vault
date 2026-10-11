@@ -103,9 +103,9 @@ public static class HomeAggregator
         string problem;
         if (!i.CaseOpen) problem = "Nedeterminat: nu este deschis niciun caz.";
         else if (level == AttentionLevel.Undetermined && total == 0) problem = label + ".";
-        else if (total == 0) problem = $"{NothingDetected}. Aceasta nu înseamnă că sistemul este curat: acoperire {cov.OverallLabel.ToLowerInvariant()}, {i.GapCount} surse lipsă sau incomplete.";
-        else problem = level >= AttentionLevel.High ? $"Da: {N(Severity.Critical) + N(Severity.High)} constatări de severitate ridicată sau critică."
-                     : level == AttentionLevel.Medium ? $"Posibil: {N(Severity.Medium)} constatări de severitate medie de revizuit."
+        else if (total == 0) problem = $"{NothingDetected}. Aceasta nu înseamnă că sistemul este curat: acoperire {cov.OverallLabel.ToLowerInvariant()}, {LogAnalyzer.Dfir.Language.RoText.Count(i.GapCount, "sursă lipsă sau incompletă", "surse lipsă sau incomplete")}.";
+        else problem = level >= AttentionLevel.High ? $"Da: {LogAnalyzer.Dfir.Language.RoText.Count(N(Severity.Critical) + N(Severity.High), "constatare", "constatări")} de severitate ridicată sau critică."
+                     : level == AttentionLevel.Medium ? $"Posibil: {LogAnalyzer.Dfir.Language.RoText.Count(N(Severity.Medium), "constatare", "constatări")} de severitate medie de revizuit."
                      : "Doar observații de severitate scăzută; verificați acoperirea înainte de a le considera neînsemnate.";
         if (trustState == TrustState.Compromised) problem += " În plus, integritatea probelor este compromisă.";
 

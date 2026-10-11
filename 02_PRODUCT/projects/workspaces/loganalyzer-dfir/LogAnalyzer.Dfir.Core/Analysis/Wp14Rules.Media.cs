@@ -88,7 +88,7 @@ public static partial class Wp14Rules
         if (reg is null || !reg.IsDefined) return new(ObservedMediaStatus.Unknown, ["registrul de evidență a suporturilor nu este definit: nu există un registru cu rânduri, deci observația nu poate fi comparată (un registru gol nu dovedește autorizarea)"], null);
         if (o.Serial.Length == 0) return new(ObservedMediaStatus.Unknown, ["fără serie: suportul nu poate fi regăsit în registru"], null);
         var rows = reg.Rows.Where(r => MediaRegister.NormalizeSerial(r.Serial) == o.Serial).ToList();
-        if (rows.Count == 0) return new(ObservedMediaStatus.Unregistered, [$"seria {o.Serial} nu este în registrul de evidență a suporturilor ({reg.Rows.Count} rânduri)"], null);
+        if (rows.Count == 0) return new(ObservedMediaStatus.Unregistered, [$"seria {o.Serial} nu este în registrul de evidență a suporturilor ({LogAnalyzer.Dfir.Language.RoText.Count(reg.Rows.Count, "rând", "rânduri")})"], null);
         var row = rows.FirstOrDefault(r => r.StatusValue == MediaStatus.Active) ?? rows[0];
         var times = o.Times;
 

@@ -18,9 +18,15 @@ public static class ReportFooter
     /// What produced the report, on every page (legal research G2/G3, docs/dfir/RESEARCH_2026-10-11_PROBE_VALOARE_JURIDICA.md): the program file and its
     /// SHA-256, the detection lists used (shipped or a signed data pack) and the station's time zone with its UTC offset, so times can be read correctly.
     /// </summary>
-    public static string Provenance => ProvenanceLine.Value;
+    public static string Provenance => string.Join("\n", ProvenanceLines);
 
-    private static readonly Lazy<string> ProvenanceLine = new(() =>
+    /// <summary>The provenance as short lines (each well under the page width at the footer's font size), so no line is cut at the page edge.</summary>
+    public static IReadOnlyList<string> ProvenanceLines => ProvenanceValue.Value;
+
+    /// <summary>Longest footer line the layout is designed for; the test keeps every line under it.</summary>
+    public const int MaxLineLength = 120;
+
+    private static readonly Lazy<IReadOnlyList<string>> ProvenanceValue = new(() =>
     {
         string program;
         try
@@ -32,8 +38,13 @@ public static class ReportFooter
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { program = "amprenta programului nu a putut fi citită"; }
         var tz = TimeZoneInfo.Local;
-        return $"Generat de {program} · liste de detecție: {LogAnalyzer.Dfir.Analysis.ShippedData.Description} · " +
-               $"fus orar al stației: {LogAnalyzer.Dfir.Language.RoText.ZoneName(tz, DateTimeOffset.Now)}; orele cu „UTC” sunt în timp universal, restul în ora stației";
+        return (IReadOnlyList<string>)
+        [
+            $"Generat de {program}",
+            $"liste de detecție: {LogAnalyzer.Dfir.Analysis.ShippedData.Description}",
+            $"fus orar al stației: {LogAnalyzer.Dfir.Language.RoText.ZoneName(tz, DateTimeOffset.Now)}",
+            "orele cu „UTC” sunt în timp universal, restul în ora stației",
+        ];
     });
 
     /// <param name="marking">WP18 S5: the marking line entered by hand ("Marcaj: … (marcaj introdus manual, neverificat de aplicație)"), printed first on every page.</param>
@@ -41,7 +52,7 @@ public static class ReportFooter
     {
         var lines = (seal ?? new ReportSeal(null, null)).Lines().ToList();
         if (!string.IsNullOrWhiteSpace(marking)) lines.Insert(0, marking);
-        lines.Add(Provenance);
+        lines.AddRange(ProvenanceLines);
         Observer.Value?.Invoke(kind, string.Join("\n", lines));
         footer.Column(col =>
         {

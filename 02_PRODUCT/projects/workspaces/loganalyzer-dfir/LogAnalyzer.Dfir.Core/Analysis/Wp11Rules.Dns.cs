@@ -79,7 +79,7 @@ public static partial class Wp11Rules
                 Severity = highInterest ? Severity.Medium : Severity.Low, Category = "Command and Control", Classification = byPid ? Classification.Candidate : Classification.Direct,
                 Confidence = byPid ? Confidence.Low : Confidence.Medium, MitreTechniqueId = "T1071.004",
                 FirstSeenUtc = T(items[0].Event), LastSeenUtc = T(items[^1].Event), Process = file, File = g.First().Image, Domain = domains[0],
-                Description = $"{file} ({(lolbin ? "unealtă Windows abuzată frecvent" : "locație în care utilizatorii pot scrie")}) a rezolvat {Join(domains, 8)}; fiecare domeniu apare cel mult de {LogAnalyzer.Dfir.Language.RoText.Times(c.Options.DnsRareMaxCount)} în tot cazul. " +
+                Description = $"{file} ({(lolbin ? "unealtă Windows abuzată frecvent" : "program rulat dintr-o locație în care utilizatorii pot scrie")}) a rezolvat {Join(domains, 8)}; fiecare domeniu apare cel mult de {LogAnalyzer.Dfir.Language.RoText.Times(c.Options.DnsRareMaxCount)} în tot cazul. " +
                               (byPid ? $"Procesul a fost dedus din PID {items.First(q => q.ByPid).Pid} (cel mai recent proces cu acest PID pornit înainte de interogare; PID-urile se reutilizează). " : "Procesul este cel din Sysmon 22. ") +
                               "Rezolvarea unui nume nu dovedește o conexiune sau un transfer.",
                 ClassificationReason = byPid ? "DNS-Client 3006/3008 + proces dedus din PID; atribuire nesigură." : "Sysmon 22: interogare DNS cu imaginea procesului.",

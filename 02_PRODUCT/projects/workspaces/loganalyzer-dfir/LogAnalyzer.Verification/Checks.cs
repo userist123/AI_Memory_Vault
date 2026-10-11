@@ -38,7 +38,7 @@ public static class Checks
         }
         if (rejected.Count > 0) return CheckResult.Fail(CheckIds.Provenance, StandardState.Rejected, "Proveniența nu e valabilă: " + string.Join("; ", rejected.Distinct()) + ".", rejected.Concat(unknown));
         if (unknown.Count > 0) return CheckResult.Unknown(CheckIds.Provenance, "Proveniența nu poate fi confirmată complet: " + string.Join("; ", unknown.Distinct()) + ".", unknown);
-        return CheckResult.Pass(CheckIds.Provenance, $"{refs.Select(r => r.Ref.EvidenceId).Distinct().Count()} probe: în index, cu hash intact și cu parser înregistrat.");
+        return CheckResult.Pass(CheckIds.Provenance, $"{LogAnalyzer.Dfir.Language.RoText.Count(refs.Select(r => r.Ref.EvidenceId).Distinct().Count(), "probă", "probe")}: în index, cu hash intact și cu parser înregistrat.");
     }
 
     private static bool ParserRecorded(Finding f, EvidenceItem e, CaseFacts facts, out string note)
@@ -209,7 +209,7 @@ public static class Checks
         // Caveats the producing rule itself recorded (e.g. "taskul este dezactivat") are shown, not scored: they qualify the claim, they do not refute it.
         var declared = f.ContradictingEvidence.Count == 0 ? "" : $" Rezerve declarate de regula producătoare ({f.ContradictingEvidence.Count}), păstrate ca atare și nepunctate: {string.Join(" | ", f.ContradictingEvidence)}.";
         return (new CheckResult(CheckIds.Contradictions, CheckOutcome.Pass, null,
-            $"Nicio contradicție găsită de {ran.Count} reguli ({Ids(ran)}); lipsa unei contradicții nu dovedește că nu există.{note}{declared}", f.ContradictingEvidence.ToList()), found);
+            $"Nicio contradicție găsită de {LogAnalyzer.Dfir.Language.RoText.Count(ran.Count, "regulă", "reguli")} ({Ids(ran)}); lipsa unei contradicții nu dovedește că nu există.{note}{declared}", f.ContradictingEvidence.ToList()), found);
     }
 
     // ---- R10.7 MISSING EVIDENCE ----
@@ -220,6 +220,6 @@ public static class Checks
         if (facts.Timeline is not null && f.HasSemanticType && absent.Count > 0)
             missing.Add($"Artefacte așteptate pentru o afirmație de tip {f.SemanticType.ToSpec()}, absente din caz: {Ids(absent)}.");
         missing = missing.Distinct(StringComparer.Ordinal).ToList();
-        return (CheckResult.Info(CheckIds.MissingEvidence, missing.Count == 0 ? "Nicio probă lipsă cunoscută; asta nu înseamnă că nu mai există probe relevante." : $"{missing.Count} elemente de probă lipsă (nu schimbă singure verdictul).", missing), missing);
+        return (CheckResult.Info(CheckIds.MissingEvidence, missing.Count == 0 ? "Nicio probă lipsă cunoscută; asta nu înseamnă că nu mai există probe relevante." : $"{LogAnalyzer.Dfir.Language.RoText.Count(missing.Count, "element de probă lipsă", "elemente de probă lipsă")} (nu schimbă singure verdictul).", missing), missing);
     }
 }

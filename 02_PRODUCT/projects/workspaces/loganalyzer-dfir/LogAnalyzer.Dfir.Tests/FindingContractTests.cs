@@ -99,8 +99,8 @@ public sealed class FindingContractTests : IDisposable
             Assert.NotEmpty(f.HumanSummary);
             Assert.Contains(f.RuleId, f.TechnicalSummary);
             // A rule without a contradiction test must say so; a rule with one must say what it tests.
-            if (rule.ContradictionCheck is null) Assert.Contains(f.Limitations, l => l.StartsWith("Dovezi contradictorii: regula nu le evaluează", StringComparison.Ordinal));
-            else Assert.DoesNotContain(f.Limitations, l => l.StartsWith("Dovezi contradictorii", StringComparison.Ordinal));
+            if (rule.ContradictionCheck is null) Assert.Contains(f.Limitations, l => l.StartsWith("Probe contradictorii: regula nu le evaluează", StringComparison.Ordinal));
+            else Assert.DoesNotContain(f.Limitations, l => l.StartsWith("Probe contradictorii", StringComparison.Ordinal));
         }
     }
 
@@ -179,11 +179,11 @@ public sealed class FindingContractTests : IDisposable
     [Fact]
     public void An_incident_chain_inherits_the_contradictions_of_its_steps()
     {
-        var step = F("PERSIST-TASK-CONFIG"); step.ContradictingEvidence.Add("taskul este dezactivat");
+        var step = F("PERSIST-TASK-CONFIG"); step.ContradictingEvidence.Add("activitatea planificată este dezactivată");
         var other = new Finding { FindingId = "F-2", RuleId = "DEF-DETECTION", Title = "t", Description = "d", Classification = Classification.Direct, SupportingEvidence = step.SupportingEvidence };
         var chain = new Finding { FindingId = "F-3", RuleId = "INCIDENT-CHAIN", Title = "t", Description = "d", Classification = Classification.Correlated, RelatedFindingIds = ["F-1", "F-2"], SupportingEvidence = step.SupportingEvidence };
         FindingContract.Enrich([step, other, chain]);
-        Assert.Equal(["F-1: taskul este dezactivat"], chain.ContradictingEvidence);
+        Assert.Equal(["F-1: activitatea planificată este dezactivată"], chain.ContradictingEvidence);
         Assert.Equal(SemanticType.Correlation, chain.SemanticType);
     }
 
@@ -450,7 +450,7 @@ public sealed class FindingContractTests : IDisposable
         Assert.Equal(StandardState.Observed, task.Status);
         Assert.Single(task.ContradictingEvidence);   // the task is disabled: computed from the parsed XML, not assumed
         Assert.Contains("ScheduledTaskParser", task.Provenance!.Parsers);
-        Assert.Contains(task.Limitations, l => l.StartsWith("Definițiile activităților planificate nu poate dovedi că taskul a rulat"));
+        Assert.Contains(task.Limitations, l => l.StartsWith("Definițiile activităților planificate nu pot dovedi că activitatea planificată a rulat"));
 
         var analysis = Path.Combine(ws.Root, "Analysis");
         Assert.Equal(SchemaVersions.Findings, SchemaVersions.ReadVersion(r.FindingsJson));

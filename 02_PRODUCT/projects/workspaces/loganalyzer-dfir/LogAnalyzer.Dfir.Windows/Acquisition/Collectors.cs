@@ -53,7 +53,7 @@ public sealed class EventLogCollector : ICollector
             }
             if (status != EventLogExportStatus.Exported || !File.Exists(dest))
             {
-                o.Errors.Add($"{ch}: export eșuat ({status}, {EventLogExport.Describe(err)})");
+                o.Errors.Add($"{ch}: {(status == EventLogExportStatus.AccessDenied ? "export refuzat" : "export eșuat")} ({EventLogExport.Describe(err)})");
                 continue;
             }
             o.Evidence.Add(ctx.Case.RegisterStored(dest, ch, "EventLog:" + ch, "evtx", TemporalType.Historical, Name, Version));
