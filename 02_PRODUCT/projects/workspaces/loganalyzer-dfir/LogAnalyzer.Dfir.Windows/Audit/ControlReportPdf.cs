@@ -152,6 +152,11 @@ public static class ControlReportPdf
                     col.Item().Text($"Gol: {g.Artifact} — {g.Status.ToSpec()}: {g.Reason}. Impact: {g.Impact}").FontSize(7.5f).FontColor("#b45309");
                 col.Item().PaddingTop(6).Text("„DE VERIFICAT” înseamnă că faptele sunt prezentate, dar numai organizația poate spune dacă au fost autorizate. " +
                                               "„NEDETERMINAT” înseamnă că sursa necesară nu a putut fi citită; nu înseamnă că activitatea nu a avut loc.").FontSize(7).Italic().FontColor(Muted);
+
+                // mandatory "Limitări" (legal research G7): what this report can and cannot prove, stated every time
+                col.Item().PaddingTop(6).Text("5. Limitări").Bold().FontSize(11).FontColor(Ink);
+                foreach (var lim in Limitations(f))
+                    col.Item().Text("• " + lim).FontSize(7.5f);
                 if (header is not null)
                     col.Item().PaddingTop(28).Row(row =>
                     {
@@ -163,6 +168,22 @@ public static class ControlReportPdf
 
             ReportFooter.Compose(page.Footer(), "control", $"LogAnalyzer {DfirInfo.ApplicationVersion} · control {f.Host}", seal, header?.MarkingLine);
         })).GeneratePdf(path);
+    }
+
+    /// <summary>The limits of a control report, always printed (legal research G7, docs/dfir/RESEARCH_2026-10-11_PROBE_VALOARE_JURIDICA.md).</summary>
+    public static IReadOnlyList<string> Limitations(StationFacts f)
+    {
+        var l = new List<string>
+        {
+            "Controlul a citit stația; nu a modificat nimic pe ea. Concluziile se sprijină doar pe sursele enumerate la punctul 4.",
+            "Lipsa unei urme nu dovedește că un fapt nu a avut loc: jurnalele au o capacitate limitată, se suprascriu și pot fi șterse.",
+            "Windows păstrează pentru fiecare dispozitiv doar ultima conectare; istoricul complet depinde de jurnale.",
+            "Faptele „DE VERIFICAT” trebuie confirmate cu documentele organizației (aprobări, registre); aplicația nu le poate califica singură.",
+            "Orele marcate UTC sunt universale; ora locală a stației și fusul ei orar sunt trecute în subsolul fiecărei pagini.",
+        };
+        if (!f.IsAdministrator) l.Insert(0, "Controlul a rulat FĂRĂ drepturi de administrator: jurnalul Security, politica de audit și o parte din setări nu au putut fi citite.");
+        if (f.Gaps.Count > 0) l.Add($"Există {f.Gaps.Count} goluri de probă (punctul 4); verificările care depind de ele sunt NEDETERMINATE.");
+        return l;
     }
 
     /// <summary>Saves the report (JSON) and its PDF in the case, registered as evidence with SHA-256.</summary>
