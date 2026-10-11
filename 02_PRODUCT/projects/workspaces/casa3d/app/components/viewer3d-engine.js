@@ -340,7 +340,8 @@ function model(it){
       const tt = ty + .14; CY(.032, .032, .13, w / 2 - .1, tt + .065, -d / 2 + .07, MAT('ceramic', '#7c8a7d'), 20); CY(.006, .006, .03, w / 2 - .1, tt + .145, -d / 2 + .07, MAT('chrome', '#bbb'), 8); B(.04, .006, .006, w / 2 - .085, tt + .158, -d / 2 + .07, MAT('chrome', '#bbb'));
       CY(.035, .03, .1, w / 2 - .19, tt + .05, -d / 2 + .07, MAT('glass', '#d8e2e0'), 20);
       break; }
-    case 'wc': { const cer = MAT('ceramic', '#fbfbfa'), metal = MAT('chrome', s.b ? s.b.metal : '#d4d4d4'), nm = name.toLowerCase();
+    case 'wc': { const cer = MAT('ceramic', s.col || '#fbfbfa'),   // vasele negre mat (Dura Petra) rămân negre
+      metal = MAT('chrome', s.b ? s.b.metal : '#d4d4d4'), nm = name.toLowerCase();
       // după produs: montaj (suspendat / pe pardoseală), rezervor (încastrat cu clapetă pe perete / ceramic pe vas), forma vasului
       const hung = s.mount ? s.mount === 'wall' : /suspendat/.test(nm) || !!(s.b && s.b.wallHung);
       const tank = s.cistern ? s.cistern === 'ceramic' : /cu rezervor|monobloc/.test(nm) && !/[îi]ncastrat/.test(nm);
