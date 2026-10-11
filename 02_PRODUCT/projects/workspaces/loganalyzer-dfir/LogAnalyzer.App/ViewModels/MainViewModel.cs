@@ -429,7 +429,10 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
-        public void OpenAlertModal(DetectedIssue alert, string hostname)
+        /// <param name="show">True when the operator asked for it (a click): the alert opens in the standard detail window with „Ce înseamnă”, the raw
+        /// event and the related events. Alerts that arrive by themselves never open a window over the operator's work (senior review L1: the old
+        /// modal was bound to nothing, so a click showed nothing).</param>
+        public void OpenAlertModal(DetectedIssue alert, string hostname, bool show = true)
         {
             ActiveCountermeasureAlert = alert;
             ActiveCountermeasurePlaybook = _countermeasureEngine.GeneratePlaybook(alert, hostname);
@@ -439,7 +442,7 @@ namespace LogAnalyzer.UI.ViewModels
             RawEventProvider = ev?.ProviderName ?? "nedisponibil";
             RawEventTimestamp = ev is null ? "nedisponibil" : ev.TimeCreated == default ? "necunoscut (lipsește din eveniment)" : ev.TimeCreated.ToString("yyyy-MM-dd HH:mm:ss.fff");
             RawEventHost = ev?.MachineName ?? hostname;
-            IsCountermeasureModalVisible = true;
+            if (show) OpenGenericDetail(alert);
         }
 
         [RelayCommand]
@@ -1485,7 +1488,7 @@ namespace LogAnalyzer.UI.ViewModels
                 IssuesView?.Refresh();
                 ReloadDashboardStats();
                 StatusMessage = "🚨 Alertă escaladată în Centrul de Combatere & Live SOC!";
-                OpenAlertModal(newAlert, host);
+                OpenAlertModal(newAlert, host, show: false);
             });
         }
 
@@ -1837,7 +1840,7 @@ namespace LogAnalyzer.UI.ViewModels
                             // No automatic action on the station: containment is the operator's decision (tab "Izolare procese suspecte").
                             IsAutoShieldTriggered = false;
 
-                            OpenAlertModal(alert, ev.MachineName);
+                            OpenAlertModal(alert, ev.MachineName, show: false);
 
                         }
 
