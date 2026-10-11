@@ -46,3 +46,11 @@ test('validare', () => {
   for (const bad of [[], 'x', { metal: 'gold' }, { tileZone: 'h300' }, { wc: 'x' }, { tap: 5 }, { mirror: 'x'.repeat(81) }]) assert.equal(sanitizeBath(bad), 'Baia este invalidă.', JSON.stringify(bad));
   const s = set(demo(), { bath: { metal: 'gold' } as any }); assert.equal(sanitizeFinishes(s.finishes as any), 'Baia este invalidă.');
 });
+
+// regresie: dușul walk-in și WC-ul suspendat înlocuiesc piesele din catalog, nu se adaugă peste ele
+test('walk-in / WC suspendat: cabina și vasul pe pardoseală nu mai sunt plătite', () => {
+  const s = demo(), ids = (g: string) => s.placements.filter(p => p.roomId === 'baie' && p.group === g).map(p => p.id);
+  const plain = computeBOQ(s, cat, mc); assert.ok(ids('dus').every(id => plain.items.some(i => i.key === id)) && ids('wc').every(id => plain.items.some(i => i.key === id)));
+  const b = computeBOQ(set(demo(), { bath: { showerType: 'walkin', wc: 'wall' } }), cat, mc);
+  assert.ok(!b.items.some(i => ids('dus').includes(i.key) || ids('wc').includes(i.key))); assert.ok(b.unknown.some(u => /panou de sticlă/.test(u)) && b.unknown.some(u => /Vas WC suspendat/.test(u)));
+});

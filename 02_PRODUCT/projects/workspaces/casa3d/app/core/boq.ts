@@ -148,7 +148,11 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
     if (!rv){ unknown.push(vid); return; } const price = custom ? null : rv.offer?.price ?? null; const label = custom ? `${rv.variant.name} — pe comandă ${custom.w}×${custom.d}×${custom.h} cm` : rv.variant.name; if (price == null) unknown.push(label);
     items.push({ key, category: SANITARY.has(g) ? 'sanitary' : APPLIANCES.has(g) ? 'appliances' : 'furniture', roomId, label, refId: vid, netQty: 1, unit: 'buc', wastePct: 0, orderedQty: 1, packs: null, packLabel: null,
       unitPrice: price, total: price, supplier: rv.offer?.provenance.source || 'UNKNOWN', sourceUrl: rv.offer?.provenance.sourceUrl ?? null, verifiedAt: rv.offer?.provenance.verifiedAt ?? null, confidence: rv.offer?.provenance.confidence ?? 'UNKNOWN' }); };
-  for (const p of snap.placements) lineFor(p.id, p.roomId, p.variantId, p.size);
+  // baia ca sistem: dușul walk-in înlocuiește cabina din catalog, iar WC-ul suspendat vasul pe pardoseală — nu se plătesc de două ori
+  for (const p of snap.placements){ const room = p.roomId ? floors(snap).flatMap(f => f.rooms).find(r => r.id === p.roomId) : undefined, bb = room?.type === 'baie' && snap.finishes?.[room.id]?.bath ? bathOf(finishesOf(snap, room)) : null;
+    if (bb && p.group === 'dus' && bb.showerType === 'walkin'){ unknown.push(`Duș walk-in: panou de sticlă și rigolă (în locul cabinei din catalog) · ${room!.name}`); continue; }
+    if (bb && p.group === 'wc' && bb.wc === 'wall'){ unknown.push(`Vas WC suspendat (în locul vasului pe pardoseală din catalog) · ${room!.name}`); continue; }
+    lineFor(p.id, p.roomId, p.variantId, p.size); }
   const kitchen = snap.placements.find(p => p.group === 'bucatarie');
   if (kitchen) for (const g of ['plita', 'cuptor', 'hota']) lineFor(`${kitchen.id}:${g}`, kitchen.roomId, snap.selections[g] || `${g}-0`);
   return { items, labor, geometry, unknown };
