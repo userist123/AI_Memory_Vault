@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-11T12:10:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-11T12:45:00Z
 TASK: Casa3D — rebuild the missing v8 layer on top of faza4, better than before (owner 2026-10-10: "Refacem ce nu este si mai bun decat era")
 BRANCH / PR: codex/casa3d-memory (continues claude/casa3d-opinion-52d7cf, pushed 2026-10-10) / userist123/AI_Memory_Vault_CODEX_READY#258    BASE: 21da5bbf2
 SPEC: 02_PRODUCT/projects/Casa3D.md (section "Reconciliere F4-F8"), 02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md, 02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md
@@ -156,8 +156,16 @@ PLAN multi-level homes (done; kept for reference):
   with hinges, architraves, handles, eased open/close + click toggle, doorSwing rule (core/doors.ts); real windows;
   Poly Haven CC0 textures + HDRI; dressed beds/sofas (d6742332); lived-in kitchen: oven door, hob zones, gooseneck
   tap, counter items, spheres in Blender export (d2c969e0). vitest 318/318, next build OK.
+- 2026-10-11 client link (owner: "exportul din aplicatie ... link, ii dau link-ul se uita imi spune daca e bine"):
+  Presentation stage -> "Link pentru client" (lib/share.ts clientLink: revision only if draft changed, reuses active link);
+  /share/<token> = client deck + FeedbackBox per room + general (lib/feedback.ts, table share_feedback, cap 200/link in a
+  locked tx, 16 KB real body limit); designer inbox ClientPanel (resolve/reopen). Public gate middleware.ts +
+  lib/public-gate.ts: via tunnel only /share/*, /api/share/*, static assets. vault-reviewer findings 1-7 fixed with
+  red-first tests (d78c40ab, 65df12f8). vitest 327/327. CI fixes: render stub as Node script (Windows), LICENSE.txt.
+  PC: D:\casa3d-render\public-link.ps1 (cloudflared quick tunnel, sets CASA3D_PUBLIC_URL) and public-link-off.ps1
+  written but NOT run: exposing the PC publicly waits for the owner's OK.
 NEXT (in order):
-0. Realism: bathroom dressing (towels, toiletries), hood chimney, door grain scale; verify on PC at 1440/1280.
+0. Owner OK -> run public-link.ps1 on the PC, verify the public URL from outside (only /share works). Realism: hood chimney; verify on PC at 1440/1280.
 0. DONE 12:55 UTC (integration): lib/twin.ts adapter, lib/design.ts (room-scoped BOQ, stale over the full twin),
    lib/share.ts, tables design_proposals + shares, routes /design, /design/[pid], /shares, /api/share/[token],
    page /share/[token], editor tab Twin + share buttons, joystick (engine setMove), twin-core overlap policy and
