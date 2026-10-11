@@ -125,9 +125,19 @@ class Materials:
             mix.blend_type = 'MULTIPLY'
             mix.inputs['Factor'].default_value = 1.0
             mix.inputs['A'].default_value = col
+            # contrast moderat al fibrei (0,55 + 0,45·v) și plafon 1,3: petele luminoase ale furnirului nu mai ies albe
+            soft = nt.nodes.new('ShaderNodeMath')
+            soft.operation = 'MULTIPLY_ADD'
+            soft.inputs[1].default_value = 0.45
+            soft.inputs[2].default_value = 0.55
+            nt.links.new(div.outputs['Value'], soft.inputs[0])
+            cap = nt.nodes.new('ShaderNodeMath')
+            cap.operation = 'MINIMUM'
+            cap.inputs[1].default_value = 1.3
+            nt.links.new(soft.outputs['Value'], cap.inputs[0])
             cc = nt.nodes.new('ShaderNodeCombineColor')
             for i in range(3):
-                nt.links.new(div.outputs['Value'], cc.inputs[i])
+                nt.links.new(cap.outputs['Value'], cc.inputs[i])
             nt.links.new(cc.outputs['Color'], mix.inputs['B'])
             nt.links.new(mix.outputs['Result'], inp['Base Color'])
             inp['Coat Weight'].default_value = 0.15
