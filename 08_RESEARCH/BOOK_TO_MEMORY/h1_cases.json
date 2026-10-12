@@ -1,6 +1,6 @@
 {
   "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-  "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+  "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
   "cases": [
     {
       "id": "H1-DIR-001",
@@ -17,7 +17,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Direct key term overlap query targeting canonical note."
     },
     {
@@ -35,7 +35,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Direct key term overlap query targeting canonical note."
     },
     {
@@ -53,7 +53,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Direct key term overlap query targeting canonical note."
     },
     {
@@ -71,7 +71,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Direct key term overlap query targeting canonical note."
     },
     {
@@ -89,7 +89,7 @@
       "principal": "HUMAN",
       "split": "calibration",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Direct key term overlap query targeting canonical note."
     },
     {
@@ -107,7 +107,7 @@
       "principal": "HUMAN",
       "split": "calibration",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Direct key term overlap query targeting canonical note."
     },
     {
@@ -125,7 +125,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Direct key term overlap query targeting canonical note."
     },
     {
@@ -143,7 +143,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Direct key term overlap query targeting canonical note."
     },
     {
@@ -161,7 +161,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Direct key term overlap query targeting canonical note."
     },
     {
@@ -179,7 +179,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Direct key term overlap query targeting canonical note."
     },
     {
@@ -197,7 +197,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
     },
     {
@@ -215,7 +215,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
     },
     {
@@ -233,7 +233,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
     },
     {
@@ -251,7 +251,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
     },
     {
@@ -269,7 +269,7 @@
       "principal": "HUMAN",
       "split": "calibration",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
     },
     {
@@ -287,7 +287,7 @@
       "principal": "HUMAN",
       "split": "calibration",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
     },
     {
@@ -305,7 +305,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
     },
     {
@@ -323,7 +323,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
     },
     {
@@ -341,7 +341,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
     },
     {
@@ -359,7 +359,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Paraphrased query preserving core meaning with altered lexical surface."
     },
     {
@@ -377,7 +377,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
     },
     {
@@ -395,7 +395,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
     },
     {
@@ -413,7 +413,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
     },
     {
@@ -431,7 +431,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
     },
     {
@@ -449,7 +449,7 @@
       "principal": "HUMAN",
       "split": "calibration",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
     },
     {
@@ -467,7 +467,7 @@
       "principal": "HUMAN",
       "split": "calibration",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
     },
     {
@@ -485,7 +485,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
     },
     {
@@ -503,7 +503,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
     },
     {
@@ -521,7 +521,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
     },
     {
@@ -539,7 +539,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Indirect cue pointing to target through functional consequence without surface terms."
     },
     {
@@ -557,7 +557,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
     },
     {
@@ -575,7 +575,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
     },
     {
@@ -593,7 +593,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
     },
     {
@@ -611,7 +611,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
     },
     {
@@ -629,7 +629,7 @@
       "principal": "HUMAN",
       "split": "calibration",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
     },
     {
@@ -647,7 +647,7 @@
       "principal": "HUMAN",
       "split": "calibration",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
     },
     {
@@ -665,7 +665,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
     },
     {
@@ -683,7 +683,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
     },
     {
@@ -701,7 +701,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
     },
     {
@@ -719,7 +719,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Contextual query leveraging framework, toolchain, or system domain entities."
     },
     {
@@ -749,7 +749,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
     },
     {
@@ -779,7 +779,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
     },
     {
@@ -809,7 +809,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
     },
     {
@@ -839,7 +839,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
     },
     {
@@ -869,7 +869,7 @@
       "principal": "HUMAN",
       "split": "calibration",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
     },
     {
@@ -899,7 +899,7 @@
       "principal": "HUMAN",
       "split": "calibration",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
     },
     {
@@ -929,7 +929,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
     },
     {
@@ -959,7 +959,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
     },
     {
@@ -989,7 +989,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
     },
     {
@@ -1019,7 +1019,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "2-hop connected graph traversal query recovering target through intermediary relation."
     },
     {
@@ -1041,7 +1041,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Conflicting dual-target context disambiguation task."
     },
     {
@@ -1063,7 +1063,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Conflicting dual-target context disambiguation task."
     },
     {
@@ -1085,7 +1085,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Conflicting dual-target context disambiguation task."
     },
     {
@@ -1107,7 +1107,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Conflicting dual-target context disambiguation task."
     },
     {
@@ -1129,7 +1129,7 @@
       "principal": "HUMAN",
       "split": "calibration",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Conflicting dual-target context disambiguation task."
     },
     {
@@ -1151,7 +1151,7 @@
       "principal": "HUMAN",
       "split": "calibration",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Conflicting dual-target context disambiguation task."
     },
     {
@@ -1173,7 +1173,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Conflicting dual-target context disambiguation task."
     },
     {
@@ -1195,7 +1195,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Conflicting dual-target context disambiguation task."
     },
     {
@@ -1217,7 +1217,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Conflicting dual-target context disambiguation task."
     },
     {
@@ -1239,7 +1239,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "Conflicting dual-target context disambiguation task."
     },
     {
@@ -1260,7 +1260,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "High lexical overlap distractor competing against true semantic gold target."
     },
     {
@@ -1281,7 +1281,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "High lexical overlap distractor competing against true semantic gold target."
     },
     {
@@ -1302,7 +1302,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "High lexical overlap distractor competing against true semantic gold target."
     },
     {
@@ -1323,7 +1323,7 @@
       "principal": "HUMAN",
       "split": "development",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "High lexical overlap distractor competing against true semantic gold target."
     },
     {
@@ -1344,7 +1344,7 @@
       "principal": "HUMAN",
       "split": "calibration",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "High lexical overlap distractor competing against true semantic gold target."
     },
     {
@@ -1365,7 +1365,7 @@
       "principal": "HUMAN",
       "split": "calibration",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "High lexical overlap distractor competing against true semantic gold target."
     },
     {
@@ -1386,7 +1386,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "High lexical overlap distractor competing against true semantic gold target."
     },
     {
@@ -1407,7 +1407,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "High lexical overlap distractor competing against true semantic gold target."
     },
     {
@@ -1428,7 +1428,7 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "High lexical overlap distractor competing against true semantic gold target."
     },
     {
@@ -1449,9 +1449,9 @@
       "principal": "HUMAN",
       "split": "held_out",
       "corpus_commit": "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0",
-      "corpus_hash": "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398",
+      "corpus_hash": "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336",
       "rationale": "High lexical overlap distractor competing against true semantic gold target."
     }
   ],
-  "benchmark_hash": "59bc81e42c0f703bdfb7e966df75a496590669bbeb82c5eafa2d18aef7c3a37f"
+  "benchmark_hash": "83ab2f4f96f64c69d347fc5b80332213e34a3c9a4f623743f280793f708074a8"
 }

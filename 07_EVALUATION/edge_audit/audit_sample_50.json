@@ -400,7 +400,7 @@
         "memorycontroller"
       ],
       "source_quote": "In recent security hardening commits (54e85f20a, 4fbc35dd9), a check was introduced into MemoryController.promote() (memory_controller/controller.py:379):",
-      "target_quote": "Location & Environment\n- **Path**: `C:\\Users\\Marius\\finscope`\n- **Orchestration**: Multi-Agent Orchestrator via secure delegation (`cognitive_core/dispatch_cli.py`, gated by `MemoryController` enforcing `I-001..I-012` and `I-RETRIEVAL`).",
+      "target_quote": "Location & Environment\n- **Path**: `C:\\Users\\user\\finscope`\n- **Orchestration**: Multi-Agent Orchestrator via secure delegation (`cognitive_core/dispatch_cli.py`, gated by `MemoryController` enforcing `I-001..I-012` and `I-RETRIEVAL`).",
       "source_path": "00_GOVERNANCE/coordination/antigravity/ADR_DRAFT_lifecycle_transition.md",
       "target_path": "02_PRODUCT/projects/FinScope.md",
       "extraction_run_id": "edgeprop_4ce309daae7b",
@@ -430,7 +430,7 @@
         "memorycontroller"
       ],
       "source_quote": "Phase 5 successfully executes and verifies the production wiring of `MemoryController.search()` to `RetrievalIntegrationAdapter`.",
-      "target_quote": "Location & Environment\n- **Path**: `C:\\Users\\Marius\\finscope`\n- **Orchestration**: Multi-Agent Orchestrator via secure delegation (`cognitive_core/dispatch_cli.py`, gated by `MemoryController` enforcing `I-001..I-012` and `I-RETRIEVAL`).",
+      "target_quote": "Location & Environment\n- **Path**: `C:\\Users\\user\\finscope`\n- **Orchestration**: Multi-Agent Orchestrator via secure delegation (`cognitive_core/dispatch_cli.py`, gated by `MemoryController` enforcing `I-001..I-012` and `I-RETRIEVAL`).",
       "source_path": "00_GOVERNANCE/coordination/antigravity/P5_SEARCH_INTEGRATION_REPORT.md",
       "target_path": "02_PRODUCT/projects/FinScope.md",
       "extraction_run_id": "edgeprop_4ce309daae7b",

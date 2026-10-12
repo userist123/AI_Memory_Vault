@@ -30,8 +30,8 @@ CASES_PATH = REPO_ROOT / "artifacts" / "h1" / "h1_cases.json"
 CORPUS_PATH = REPO_ROOT / "artifacts" / "h1" / "current_labeling_corpus.json"
 RESULTS_PATH = REPO_ROOT / "artifacts" / "h1" / "h1_associative_experiment_results.json"
 
-FROZEN_CORPUS_HASH = "bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398"
-FROZEN_BENCHMARK_HASH = "59bc81e42c0f703bdfb7e966df75a496590669bbeb82c5eafa2d18aef7c3a37f"
+FROZEN_CORPUS_HASH = "78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336"
+FROZEN_BENCHMARK_HASH = "83ab2f4f96f64c69d347fc5b80332213e34a3c9a4f623743f280793f708074a8"
 FROZEN_CORPUS_COMMIT = "5d2d36640b7dcb37ed70c7f96a20607bc6d895f0"
 
 

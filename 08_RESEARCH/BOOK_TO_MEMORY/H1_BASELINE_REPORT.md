@@ -6,8 +6,8 @@
 ## Executive Summary
 
 - **Corpus Commit**: `5d2d36640b7dcb37ed70c7f96a20607bc6d895f0`
-- **Corpus Hash**: `bd6eabcfd6ba3a1292365f078705fdb6a3b036e81dca8bdff4e58d9de654e398`
-- **Benchmark Hash**: `59bc81e42c0f703bdfb7e966df75a496590669bbeb82c5eafa2d18aef7c3a37f`
+- **Corpus Hash**: `78ddf796279125959042ff3b362e4fa6a57fc18aaf7a3b716a687f7378e30336`
+- **Benchmark Hash**: `83ab2f4f96f64c69d347fc5b80332213e34a3c9a4f623743f280793f708074a8`
 - **Total Benchmark Cases**: `70`
 - **Production Ranking Arm**: `fused_score` (BM25 + Entity RRF, production default)
 - **Principal**: `Principal.HUMAN`
