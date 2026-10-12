@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -22,12 +23,59 @@ namespace LogAnalyzer.Response.Collection
             _ => $"[ERROR] Colectarea s-a oprit cu un cod neașteptat ({exitCode}). Datele pot fi incomplete.",
         };
 
+        /// <summary>The host-name pattern of AuditCollector.ps1, enforced here too before anything is started (security audit #6).</summary>
+        public const string HostnamePattern = "^[A-Za-z0-9][A-Za-z0-9._-]{0,62}$";
+
+        private static readonly System.Text.RegularExpressions.Regex HostnameRegex =
+            new(HostnamePattern, System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
+
+        private static readonly string[] TargetTypes = ["PC", "Server", "NAS", "DataCenter"];
+
+        public static bool IsValidHostname(string? hostname) => hostname is not null && HostnameRegex.IsMatch(hostname);
+
+        /// <summary>
+        /// The process start for the collection script: every value is one element of <see cref="ProcessStartInfo.ArgumentList"/>, so .NET quotes it
+        /// (a trailing backslash such as "E:\", spaces, quotes) and nothing typed by the operator can add or shift script parameters.
+        /// </summary>
+        public static ProcessStartInfo BuildStartInfo(string powershell, string scriptPath, string targetType, string outputDir, string hostname)
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = powershell,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                StandardOutputEncoding = System.Text.Encoding.UTF8,
+                StandardErrorEncoding = System.Text.Encoding.UTF8,
+                CreateNoWindow = true,
+            };
+            foreach (var a in new[] { "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", scriptPath,
+                                      "-TargetType", targetType, "-OutputDirectory", outputDir, "-Hostname", hostname })
+                psi.ArgumentList.Add(a);
+            return psi;
+        }
+
         public async Task RunCollectionAsync(string targetType, string outputDir, string hostname, Action<string> logCallback)
         {
             await Task.Run(() =>
             {
                 try
                 {
+                    if (!IsValidHostname(hostname))
+                    {
+                        logCallback("[ERROR] Hostname invalid: se acceptă doar litere, cifre, „.”, „_” și „-” (cel mult 63 de caractere, începe cu literă sau cifră). Colectarea nu a pornit.");
+                        return;
+                    }
+                    if (!TargetTypes.Contains(targetType, StringComparer.Ordinal))
+                    {
+                        logCallback($"[ERROR] Tip de țintă necunoscut: „{targetType}” (PC, Server, NAS, DataCenter). Colectarea nu a pornit.");
+                        return;
+                    }
+                    if (string.IsNullOrWhiteSpace(outputDir) || outputDir.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
+                    {
+                        logCallback("[ERROR] Folderul de destinație este gol sau conține caractere nepermise. Colectarea nu a pornit.");
+                        return;
+                    }
                     string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Scripts", "AuditCollector.ps1");
                     
                     if (!File.Exists(scriptPath))
@@ -48,17 +96,7 @@ namespace LogAnalyzer.Response.Collection
                         return;
                     }
 
-                    var startInfo = new ProcessStartInfo
-                    {
-                        FileName = powershell,
-                        Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -TargetType \"{targetType}\" -OutputDirectory \"{outputDir}\" -Hostname \"{hostname}\"",
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        StandardOutputEncoding = System.Text.Encoding.UTF8,
-                        StandardErrorEncoding = System.Text.Encoding.UTF8,
-                        CreateNoWindow = true
-                    };
+                    var startInfo = BuildStartInfo(powershell, scriptPath, targetType, outputDir, hostname);
 
                     using var process = new Process { StartInfo = startInfo };
                     
