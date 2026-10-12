@@ -44,7 +44,8 @@ public sealed class StationConfigChecksTests
         {
             var c = report.Checks.Single(x => x.Id == id);
             Assert.True(c.Status == ControlStatus.Nedeterminat, $"{id} gave {c.Status} with nothing readable");
-            Assert.Contains("administrator", c.Detail);
+            // A10 without folders from the procedure profile is not a rights problem (owner report 2026-10-12): it names the profile instead
+            Assert.Contains(id == "A10" ? "profilul de proceduri" : "administrator", c.Detail, StringComparison.OrdinalIgnoreCase);
         }
     }
 
@@ -296,7 +297,7 @@ public sealed class StationConfigChecksTests
     }
 
     [Fact]
-    public void A10_unread_rules_are_Nedeterminat_and_an_empty_profile_is_DeVerificat_never_Conform()
+    public void A10_unread_rules_and_an_empty_profile_are_Nedeterminat_never_Conform()
     {
         var f = Station();
         f.AuditPolicy = new() { ["File System"] = AuditSetting.Success };
@@ -304,7 +305,7 @@ public sealed class StationConfigChecksTests
         Assert.Equal(ControlStatus.Nedeterminat, Check(f, "A10").Status);
         f.FolderAudits = [];
         var empty = Check(f, "A10");
-        Assert.Equal(ControlStatus.DeVerificat, empty.Status);
+        Assert.Equal(ControlStatus.Nedeterminat, empty.Status);   // owner rule 2026-10-12: no folders in the profile = cannot be determined, not "to verify"
         Assert.Contains("Foldere clasificate", empty.Detail);
         f.FolderAudits = [new(@"Z:\Lipsa", false, null, "", "")];
         Assert.Equal(ControlStatus.DeVerificat, Check(f, "A10").Status);

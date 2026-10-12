@@ -16,6 +16,7 @@
 | # | Severity | Finding | File | Fix (commit) | Evidence |
 |---|---|---|---|---|---|
 | – | – | (filled in as fixes land) | | | |
+| 16 | low | WQL built by interpolating group Domain/Name | LogAnalyzer.Dfir.Windows/Audit/StationFacts.cs (`GroupUserQuery`) | Domain and name escaped twice (object-path key: `\` `'`; WQL string: `\` `"`); commit "loganalyzer: raportul de control …" of 2026-10-12 | ControlReportFixesTests.Group_member_query_escapes_quotes_and_backslashes_in_the_group_name (query builder; runtime WMI with a renamed group not tested) |
 
 ## Findings
 

@@ -49,6 +49,23 @@ public static class RoText
         _ => Number(n) + (NeedsDe(n) ? " de " : " ") + plural,
     };
 
+    /// <summary>
+    /// A duration in days, rounded: "mai puțin de o zi" (under half a day), "o zi", "2 zile", "42 de zile". Never "0 zile" or "1 zile".
+    /// </summary>
+    public static string Days(double days)
+    {
+        long n = (long)Math.Round(Math.Max(0, days), MidpointRounding.AwayFromZero);
+        return n == 0 ? "mai puțin de o zi" : n == 1 ? "o zi" : Count(n, "zi", "zile");
+    }
+
+    /// <summary>"un minut" / "15 minute" / "30 de minute"; a fraction keeps one decimal ("1,5 minute").</summary>
+    public static string Minutes(double minutes)
+    {
+        if (Math.Abs(minutes - Math.Round(minutes)) > 0.05) return minutes.ToString("0.#", RoNumbers) + " minute";
+        long n = (long)Math.Round(minutes);
+        return n == 1 ? "un minut" : Count(n, "minut", "minute");
+    }
+
     /// <summary>"încă una de același fel" / "încă 4 de același fel" (the "de" of "de același fel" follows the number).</summary>
     public static string MoreOfSameKind(long n) => n == 1 ? "încă una de același fel" : $"încă {Number(n)} de același fel";
 

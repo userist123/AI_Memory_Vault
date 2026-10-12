@@ -1,6 +1,7 @@
 using System.Globalization;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Windows.Native;
+using Ro = LogAnalyzer.Dfir.Language.RoText;
 
 namespace LogAnalyzer.Dfir.Windows.Audit;
 
@@ -101,7 +102,7 @@ public static class ControlEvaluator
 
         var admins = f.Accounts.Where(a => a.IsAdministrator && !a.Disabled).ToList();
         Add(r, "C02", "Conturi", "Administratori locali activi", ControlStatus.DeVerificat,
-            $"{admins.Count} conturi active cu drepturi de administrator: {string.Join(", ", admins.Select(a => a.Name))}. Comparați cu lista aprobată.",
+            $"{Ro.Capitalize(Ro.CountMasc(admins.Count, "cont activ", "conturi active"))} cu drepturi de administrator: {string.Join(", ", admins.Select(a => a.Name))}. Comparați cu lista aprobată.",
             admins.Select(a => $"{a.Name} ({a.Sid}), ultima autentificare {a.LastLogonUtc?.ToString("yyyy-MM-dd HH:mm") ?? "necunoscută"}"),
             "Fiecare administrator trebuie să aibă aprobare scrisă; conturile de administrator nu se folosesc pentru lucrul zilnic.");
 
@@ -135,18 +136,34 @@ public static class ControlEvaluator
         if (f.PasswordPolicy is { } p)
         {
             Add(r, "P01", "Politici", "Lungimea minimă a parolei", p.MinLength >= 12 ? ControlStatus.Conform : p.MinLength >= 8 ? ControlStatus.DeVerificat : ControlStatus.Neconform,
-                $"Lungime minimă: {p.MinLength} caractere.", rec: "Minimum 12 caractere (minimum absolut 8).");
+                $"Lungime minimă: {Ro.Count(p.MinLength, "caracter", "caractere")}.", rec: "Minimum 12 caractere (minimum absolut 8).");
             Add(r, "P02", "Politici", "Blocarea contului după încercări eșuate",
                 p.LockoutThreshold is > 0 and <= 10 ? ControlStatus.Conform : ControlStatus.Neconform,
-                p.LockoutThreshold == 0 ? "Conturile NU se blochează niciodată (parolele pot fi ghicite la nesfârșit)." : $"Blocare după {p.LockoutThreshold} încercări, pentru {(p.LockoutDuration == TimeSpan.MaxValue ? "până la deblocarea de către administrator" : p.LockoutDuration.TotalMinutes + " minute")}.",
+                p.LockoutThreshold == 0 ? "Conturile NU se blochează niciodată (parolele pot fi ghicite la nesfârșit)." : $"Blocare după {Ro.CountFem(p.LockoutThreshold, "încercare", "încercări")}, pentru {(p.LockoutDuration == TimeSpan.MaxValue ? "până la deblocarea de către administrator" : Ro.Minutes(p.LockoutDuration.TotalMinutes))}.",
                 rec: "Blocare după cel mult 10 încercări.");
             Add(r, "P03", "Politici", "Expirarea parolei", p.MaxAge is null ? ControlStatus.DeVerificat : ControlStatus.Conform,
-                p.MaxAge is null ? "Parolele nu expiră niciodată." : $"Parolele expiră după {p.MaxAge.Value.TotalDays:0} zile; istoric {p.History}.");
+                p.MaxAge is null ? "Parolele nu expiră niciodată." : $"Parolele expiră după {Ro.Days(p.MaxAge.Value.TotalDays)}; {(p.History == 0 ? "fără istoric (o parolă veche poate fi refolosită imediat)" : p.History == 1 ? "istoric: ultima parolă nu poate fi refolosită" : $"istoric: ultimele {Ro.Count(p.History, "parolă", "parole")} nu pot fi refolosite")}.");
         }
         else Add(r, "P01", "Politici", "Politica de parole", ControlStatus.Nedeterminat, "Nu a putut fi citită.");
 
-        Add(r, "P04", "Politici", "UAC (Control cont utilizator) activ", S("UAC.EnableLUA") == "1" ? ControlStatus.Conform : S("UAC.EnableLUA") == "" ? ControlStatus.Nedeterminat : ControlStatus.Neconform,
-            S("UAC.EnableLUA") == "1" ? $"Activ (ConsentPromptBehaviorAdmin={S("UAC.ConsentPromptBehaviorAdmin")})." : "UAC este dezactivat: orice program al unui administrator rulează cu drepturi complete.");
+        // UAC protects an administrator only when it is on, asks before elevating (ConsentPromptBehaviorAdmin 1-5) and asks on the secure desktop.
+        string lua = S("UAC.EnableLUA"), consent = S("UAC.ConsentPromptBehaviorAdmin"), secure = S("UAC.PromptOnSecureDesktop");
+        bool prompts = consent is "1" or "2" or "3" or "4" or "5";
+        var (uacStatus, uacDetail) =
+            lua == "" ? (ControlStatus.Nedeterminat, "Valoarea EnableLUA nu a putut fi citită din registru.")
+            : lua != "1" ? (ControlStatus.Neconform, "UAC este dezactivat (EnableLUA=0): orice program al unui administrator rulează cu drepturi complete.")
+            : consent == "0" ? (ControlStatus.Neconform, "UAC nu cere confirmare la ridicarea drepturilor (ConsentPromptBehaviorAdmin=0): orice program pornit de un administrator capătă drepturi depline fără întrebare.")
+            : !prompts ? (ControlStatus.DeVerificat, consent == "" || consent == Absent
+                ? "UAC este activ, dar modul în care întreabă un administrator (ConsentPromptBehaviorAdmin) nu a putut fi citit; verificați la stație că se cere confirmarea."
+                : $"UAC este activ, dar ConsentPromptBehaviorAdmin are valoarea neașteptată {consent}; verificați la stație că se cere confirmarea.")
+            : secure == "1" ? (ControlStatus.Conform, $"UAC este activ și cere confirmarea administratorului pe ecranul securizat (ConsentPromptBehaviorAdmin={consent}, PromptOnSecureDesktop=1).")
+            : secure == "0" ? (ControlStatus.DeVerificat, $"UAC este activ și cere confirmarea (ConsentPromptBehaviorAdmin={consent}), dar întrebarea apare pe ecranul obișnuit (PromptOnSecureDesktop=0), unde un program rău-intenționat poate răspunde singur.")
+            : (ControlStatus.DeVerificat, $"UAC este activ și cere confirmarea (ConsentPromptBehaviorAdmin={consent}), dar valoarea PromptOnSecureDesktop nu a putut fi citită; verificați la stație că întrebarea apare pe ecranul securizat.");
+        Add(r, "P04", "Politici", "UAC (Control cont utilizator) activ", uacStatus, uacDetail,
+            [@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System → EnableLUA = " + (lua == "" ? "necitit" : lua),
+             @"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System → ConsentPromptBehaviorAdmin = " + (consent == "" ? "necitit" : consent),
+             @"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System → PromptOnSecureDesktop = " + (secure == "" ? "necitit" : secure)],
+            "Porniți UAC (EnableLUA=1), cereți confirmarea administratorului (ConsentPromptBehaviorAdmin=2) și afișați întrebarea pe ecranul securizat (PromptOnSecureDesktop=1).");
 
         bool autologon = S("Winlogon.AutoAdminLogon") == "1";
         Add(r, "P05", "Politici", "Autentificare automată fără parolă", autologon || S("Winlogon.DefaultPasswordPresent") == "da" ? ControlStatus.Neconform : ControlStatus.Conform,
@@ -171,12 +188,12 @@ public static class ControlEvaluator
         {
             var age = f.CollectedUtc - sig;
             Add(r, "P09", "Politici", "Semnături antivirus actualizate", age.TotalDays <= 7 ? ControlStatus.Conform : ControlStatus.DeVerificat,
-                $"Ultima actualizare: {sig:yyyy-MM-dd} ({age.TotalDays:0} zile).",
+                $"Ultima actualizare: {sig:yyyy-MM-dd} (acum {Ro.Days(age.TotalDays)}).",
                 rec: f.StationShouldBeIsolated ? "Pe stația izolată semnăturile se actualizează offline, periodic, după o procedură documentată." : "Verificați actualizarea automată.");
         }
         if (f.DefenderExclusions.Count > 0)
             Add(r, "P10", "Politici", "Excluderi Microsoft Defender", ControlStatus.DeVerificat,
-                $"{f.DefenderExclusions.Count} excluderi configurate. Excluderile sunt folosite des de atacatori pentru a-și ascunde programele.", f.DefenderExclusions);
+                $"{Ro.Capitalize(Ro.CountFem(f.DefenderExclusions.Count, "excludere configurată", "excluderi configurate"))}. Excluderile sunt folosite des de atacatori pentru a-și ascunde programele.", f.DefenderExclusions);
 
         var bl = S("BitLocker.SystemDrive");
         Add(r, "P11", "Politici", "Criptarea discului de sistem (BitLocker)", bl == "1" ? ControlStatus.Conform : bl == "" ? ControlStatus.Nedeterminat : ControlStatus.Neconform,
@@ -230,20 +247,20 @@ public static class ControlEvaluator
         var clears = Logs(f, "Security", 1102).Concat(Logs(f, "System", 104)).ToList();
         Add(r, "A05", "Audit", "Jurnale șterse în perioada controlată",
             !ChannelReadable(f, "Security") ? ControlStatus.Nedeterminat : clears.Count == 0 ? ControlStatus.Conform : ControlStatus.Neconform,
-            clears.Count == 0 ? "Nicio ștergere de jurnal înregistrată." : $"{clears.Count} ștergeri de jurnal.", clears.Select(l => $"{Ev(l)} de {Who(l)} {V(l, "Channel")}"),
+            clears.Count == 0 ? "Nicio ștergere de jurnal înregistrată." : $"{Ro.Capitalize(Ro.CountFem(clears.Count, "ștergere de jurnal", "ștergeri de jurnal"))}.", clears.Select(l => $"{Ev(l)} de {Who(l)} {V(l, "Channel")}"),
             "Fiecare ștergere de jurnal trebuie justificată.");
         foreach (var l in clears) r.Actions.Add(new ActionEntry(l.TimeUtc, Who(l), "a șters un jurnal", l.Id == 1102 ? "Security" : V(l, "Channel"), Ev(l)));
 
         var auditChanges = Logs(f, "Security", 4719).ToList();
         if (auditChanges.Count > 0)
-            Add(r, "A06", "Audit", "Politica de audit a fost modificată", ControlStatus.DeVerificat, $"{LogAnalyzer.Dfir.Language.RoText.Count(auditChanges.Count, "modificare", "modificări")}.",
+            Add(r, "A06", "Audit", "Politica de audit a fost modificată", ControlStatus.DeVerificat, $"{Ro.Capitalize(Ro.CountFem(auditChanges.Count, "modificare", "modificări"))}.",
                 auditChanges.Select(l => $"{Ev(l)} de {Who(l)}: {AuditName(V(l, "SubcategoryGuid"))} {V(l, "AuditPolicyChanges")}"));
         foreach (var l in auditChanges) r.Actions.Add(new ActionEntry(l.TimeUtc, Who(l), "a modificat politica de audit", AuditName(V(l, "SubcategoryGuid")), Ev(l)));
 
         var timeChanges = Logs(f, "Security", 4616).Where(l => !V(l, "ProcessName").EndsWith("svchost.exe", StringComparison.OrdinalIgnoreCase) &&
                                                              !SystemAccounts.Contains(V(l, "SubjectUserName"))).ToList();
         Add(r, "A07", "Audit", "Ora sistemului schimbată manual", timeChanges.Count == 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
-            timeChanges.Count == 0 ? "Nicio schimbare manuală a orei." : $"{timeChanges.Count} schimbări ale orei făcute de utilizatori (pot afecta cronologia).",
+            timeChanges.Count == 0 ? "Nicio schimbare manuală a orei." : $"{Ro.Capitalize(Ro.CountFem(timeChanges.Count, "schimbare a orei făcută", "schimbări ale orei făcute"))} de utilizatori (pot afecta cronologia).",
             timeChanges.Select(l => $"{Ev(l)} de {Who(l)} prin {V(l, "ProcessName")}: {V(l, "PreviousTime")} → {V(l, "NewTime")}"));
         foreach (var l in timeChanges) r.Actions.Add(new ActionEntry(l.TimeUtc, Who(l), "a schimbat ora sistemului", $"{V(l, "PreviousTime")} → {V(l, "NewTime")}", Ev(l)));
     }
@@ -278,7 +295,7 @@ public static class ControlEvaluator
         var lifecycle = changes.Where(l => l.Id is 4720 or 4726 or 4722 or 4725 or 4724).ToList();
         Add(r, "U02", "Utilizatori", "Conturi create, șterse, activate, dezactivate sau parole resetate",
             !ChannelReadable(f, "Security") ? ControlStatus.Nedeterminat : lifecycle.Count == 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
-            lifecycle.Count == 0 ? "Nicio astfel de operație." : $"{lifecycle.Count} operații pe conturi.",
+            lifecycle.Count == 0 ? "Nicio astfel de operație." : $"{Ro.Capitalize(Ro.CountFem(lifecycle.Count, "operație pe conturi", "operații pe conturi"))}.",
             lifecycle.Select(l => $"{Ev(l)}: {Who(l)} {AccountActions[l.Id]} {V(l, "TargetUserName")}"));
     }
 
@@ -326,13 +343,13 @@ public static class ControlEvaluator
                                               .Where(g => g.Count() >= 5).ToList();
         Add(r, "U04", "Utilizatori", "Serii de parole greșite (5+ într-o oră)",
             !ChannelReadable(f, "Security") ? ControlStatus.Nedeterminat : bursts.Count == 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
-            bursts.Count == 0 ? "Nicio serie de eșecuri." : $"{bursts.Count} serii — posibilă ghicire a parolei sau parolă uitată.",
-            bursts.Select(g => $"{g.Key.Item1}: {g.Count()} eșecuri în ora {g.Key.Item2} UTC, de la {string.Join(", ", g.Select(l => V(l, "IpAddress")).Distinct())}"));
+            bursts.Count == 0 ? "Nicio serie de eșecuri." : $"{Ro.Capitalize(Ro.CountFem(bursts.Count, "serie", "serii"))} — posibilă ghicire a parolei sau parolă uitată.",
+            bursts.Select(g => $"{g.Key.Item1}: {Ro.Count(g.Count(), "eșec", "eșecuri")} în ora {g.Key.Item2} UTC, de la {string.Join(", ", g.Select(l => V(l, "IpAddress")).Distinct())}"));
 
         var priv = r.Users.Where(u => u.PrivilegedSessions > 0).ToList();
         if (priv.Count > 0)
             Add(r, "U05", "Utilizatori", "Cine a lucrat cu drepturi de administrator", ControlStatus.DeVerificat,
-                string.Join("; ", priv.Select(u => $"{u.User}: {u.PrivilegedSessions} sesiuni privilegiate")));
+                string.Join("; ", priv.Select(u => $"{u.User}: {Ro.CountFem(u.PrivilegedSessions, "sesiune privilegiată", "sesiuni privilegiate")}")));
 
         var ps = Logs(f, "Microsoft-Windows-PowerShell/Operational", 4104)
             .Where(l => V(l, "ScriptBlockText") is var t && (t.Contains("DownloadString", StringComparison.OrdinalIgnoreCase) || t.Contains("FromBase64String", StringComparison.OrdinalIgnoreCase) ||
@@ -340,7 +357,7 @@ public static class ControlEvaluator
                        t.Contains("Set-MpPreference", StringComparison.OrdinalIgnoreCase) || t.Contains("-EncodedCommand", StringComparison.OrdinalIgnoreCase)))
             .ToList();
         if (ps.Count > 0)
-            Add(r, "U06", "Utilizatori", "Scripturi PowerShell cu tehnici frecvent abuzate", ControlStatus.DeVerificat, $"{ps.Count} blocuri de script.",
+            Add(r, "U06", "Utilizatori", "Scripturi PowerShell cu tehnici frecvent abuzate", ControlStatus.DeVerificat, $"{Ro.Capitalize(Ro.CountMasc(ps.Count, "bloc de script", "blocuri de script"))}.",
                 ps.Select(l => $"{Ev(l)} (utilizator {l.UserSid}): {Shorten(V(l, "ScriptBlockText"), 160)}"));
     }
 
@@ -362,7 +379,7 @@ public static class ControlEvaluator
         bool usbSourcesKnown = ChannelReadable(f, "Microsoft-Windows-Partition/Diagnostic") && !f.Gaps.Any(g => g.Artifact == "Dispozitive USB (USBSTOR)");
         var d01Status = any > 0 ? ControlStatus.DeVerificat : usbSourcesKnown ? ControlStatus.DeVerificat : ControlStatus.Nedeterminat;
         var d01Detail = any > 0
-            ? $"{f.UsbDevices.Count} dispozitive în istoricul USBSTOR; {partition.Count} conectări înregistrate în perioada controlată."
+            ? $"{Ro.Capitalize(Ro.CountMasc(f.UsbDevices.Count, "dispozitiv", "dispozitive"))} în istoricul USBSTOR; {Ro.CountFem(partition.Count, "conectare înregistrată", "conectări înregistrate")} în perioada controlată."
             : usbSourcesKnown
                 ? "Dispozitive USB: nu s-a observat în sursele colectate (istoricul USBSTOR și jurnalul Partition/Diagnostic); absența observațiilor nu dovedește că nu au fost folosite suporturi (jurnalul are o istorie limitată, iar dispozitivele pot lăsa urme doar în alte surse)."
                 : "Dispozitive USB: nu se poate stabili, deoarece istoricul USBSTOR sau jurnalul Partition/Diagnostic nu a putut fi citit; rulați ca administrator.";
@@ -391,7 +408,7 @@ public static class ControlEvaluator
             Add(r, "N01", "Rețea", "Stația izolată nu s-a conectat la nicio rețea",
                 connected ? ControlStatus.Neconform : profilesKnown && eventsKnown ? ControlStatus.DeVerificat : ControlStatus.Nedeterminat,
                 connected
-                    ? $"Conectări în perioada controlată: {LogAnalyzer.Dfir.Language.RoText.Count(inPeriod.Count, "profil", "profiluri")}, {LogAnalyzer.Dfir.Language.RoText.Count(evts.Count, "eveniment", "evenimente")} de conectare; interfețe active acum: {f.ConnectedInterfacesNow.Count}."
+                    ? $"Conectări în perioada controlată: {Ro.CountMasc(inPeriod.Count, "profil", "profiluri")}, {Ro.CountMasc(evts.Count, "eveniment", "evenimente")} de conectare; interfețe active acum: {f.ConnectedInterfacesNow.Count}."
                     : profilesKnown && eventsKnown
                         ? "Conectare la rețea: nu s-a observat în sursele colectate (profiluri de rețea, NetworkProfile, WLAN-AutoConfig) și nicio interfață activă acum; absența observațiilor nu dovedește că stația nu s-a conectat (istorie limitată a jurnalelor, adaptoare fără urme în aceste surse)."
                         : "Conectare la rețea: nu se poate stabili, deoarece profilurile de rețea sau jurnalele NetworkProfile / WLAN-AutoConfig nu au putut fi citite.",
@@ -403,7 +420,7 @@ public static class ControlEvaluator
             !profilesKnown ? ControlStatus.Nedeterminat : ControlStatus.DeVerificat,
             !profilesKnown ? "Istoricul rețelelor (registry NetworkList) nu a putut fi citit; rulați ca administrator."
                 : f.NetworkProfiles.Count == 0 ? "Rețele cunoscute: nu s-a observat în sursele colectate (NetworkList); absența profilurilor nu dovedește că stația nu s-a conectat (profilurile pot fi șterse)."
-                : $"{LogAnalyzer.Dfir.Language.RoText.Count(f.NetworkProfiles.Count, "profil", "profiluri")} de rețea salvate.",
+                : $"{Ro.Capitalize(Ro.CountMasc(f.NetworkProfiles.Count, "profil de rețea salvat", "profiluri de rețea salvate"))}.",
             f.NetworkProfiles.OrderByDescending(p => p.LastConnectedLocal).Select(p => $"{p.Name} ({p.Kind}) creat {p.CreatedLocal:yyyy-MM-dd} · ultima conectare {p.LastConnectedLocal:yyyy-MM-dd HH:mm}"));
     }
 
@@ -413,7 +430,7 @@ public static class ControlEvaluator
         foreach (var l in msi)
             r.Actions.Add(new ActionEntry(l.TimeUtc, l.UserSid, l.Id is 11707 or 1033 ? "a instalat" : "a dezinstalat", V(l, "Data0") is { Length: > 0 } d ? d : string.Join(" ", l.Data.Values.Take(2)), Ev(l)));
         Add(r, "S01", "Software", "Programe instalate sau dezinstalate", msi.Count == 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
-            $"{msi.Count} operații Windows Installer în perioada controlată.", msi.Select(l => $"{Ev(l)}: {string.Join(" ", l.Data.Values.Take(2))}"),
+            $"{Ro.Capitalize(Ro.CountFem(msi.Count, "operație Windows Installer", "operații Windows Installer"))} în perioada controlată.", msi.Select(l => $"{Ev(l)}: {string.Join(" ", l.Data.Values.Take(2))}"),
             "Comparați cu lista de software aprobat.");
 
         var allServices = Logs(f, "System", 7045).ToList();
@@ -460,9 +477,9 @@ public static class ControlEvaluator
             if (usbE.Length > 0) parts.Add($"placă Ethernet pe USB: {usbE}");
             Add(r, "N05", "Rețea", "Adaptoare de telefon, modem celular sau Ethernet pe USB",
                 parts.Count == 0 ? ControlStatus.Conform : outbound && isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
-                parts.Count == 0 ? $"Dintre cele {nCount} adaptoare de rețea active, niciunul nu este telefon folosit ca modem, modem celular sau placă Ethernet pe USB (adaptoarele virtuale nu se numără)."
+                parts.Count == 0 ? (N("Net.AdapterCount") == 1 ? "Singurul adaptor de rețea activ nu este" : $"Dintre cele {Ro.Count(N("Net.AdapterCount"), "adaptor", "adaptoare")} de rețea active, niciunul nu este") + " telefon folosit ca modem, modem celular sau placă Ethernet pe USB (adaptoarele virtuale nu se numără)."
                     : "Au fost găsite: " + string.Join("; ", parts) + "." + (isolated ? " Un astfel de adaptor dă stației izolate o cale de internet sau către altă rețea, ocolind rețeaua stației." : " Verificați că adaptorul este cel aprobat."),
-                [$"WMI Win32_PnPEntity (clasa Net): {nCount} adaptoare active", "tip stabilit din identificatori compatibili, serviciu și descriere"],
+                [$"WMI Win32_PnPEntity (clasa Net): {Ro.CountMasc(N("Net.AdapterCount"), "adaptor activ", "adaptoare active")}", "tip stabilit din identificatori compatibili, serviciu și descriere"],
                 "Scoateți telefonul / modemul / placa USB; dacă sunt aprobate, notați documentul de aprobare.");
         }
 
@@ -479,10 +496,10 @@ public static class ControlEvaluator
                              @"Policies\Explorer → NoCDBurning (mașină) = " + Shown(S("Optical.NoCDBurningMachine")) + "; (utilizator) = " + Shown(S("Optical.NoCDBurningUser")), "WMI Win32_CDROMDrive → Capabilities (4 = scrie discuri)" };
             Add(r, "P28", "Politici", "Inscripționarea de CD/DVD blocată",
                 writers == 0 || denyWrite ? ControlStatus.Conform : isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
-                writers == 0 ? $"Stația nu are nicio unitate optică cu capacitate de scriere ({N("Optical.DriveCount")} unități optice)."
+                writers == 0 ? $"Stația nu are nicio unitate optică cu capacitate de scriere ({Ro.CountFem(N("Optical.DriveCount"), "unitate optică", "unități optice")})."
                     : denyWrite ? $"Scrierea pe CD/DVD este refuzată prin politica de stocare amovibilă (unități cu scriere: {S("Optical.WriterNames")})."
-                    : explorerOnly ? $"ATENȚIE: stația are {writers} unitate/unități care scriu discuri ({S("Optical.WriterNames")}), iar politica NoCDBurning blochează doar inscripționarea din Explorer. Un program de inscripționare sau serviciul IMAPI pot scrie în continuare; blocarea reală este politica „CD și DVD: refuzare scriere”, care nu este setată."
-                    : $"Stația are {writers} unitate/unități care scriu discuri ({S("Optical.WriterNames")}) și nicio politică nu oprește scrierea (nici NoCDBurning, nici „CD și DVD: refuzare scriere”).",
+                    : explorerOnly ? $"ATENȚIE: stația are {Ro.CountFem(writers, "unitate care scrie discuri", "unități care scriu discuri")} ({S("Optical.WriterNames")}), iar politica NoCDBurning blochează doar inscripționarea din Explorer. Un program de inscripționare sau serviciul IMAPI pot scrie în continuare; blocarea reală este politica „CD și DVD: refuzare scriere”, care nu este setată."
+                    : $"Stația are {Ro.CountFem(writers, "unitate care scrie discuri", "unități care scriu discuri")} ({S("Optical.WriterNames")}) și nicio politică nu oprește scrierea (nici NoCDBurning, nici „CD și DVD: refuzare scriere”).",
                 ev, "Setați politica „CD și DVD: refuzare scriere” (Deny_Write); NoCDBurning singur nu este suficient.");
         }
 
@@ -499,10 +516,10 @@ public static class ControlEvaluator
             Add(r, "P29", "Audit", "Tipărirea este înregistrată",
                 printers == 0 ? ControlStatus.Conform : log == "" ? ControlStatus.Nedeterminat : issues.Count == 0 ? ControlStatus.Conform : isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
                 printers == 0 ? "Nu este instalată nicio imprimantă."
-                    : log == "" ? $"Starea jurnalului de tipărire nu a putut fi citită ({printers} imprimante instalate)." + NoRead
-                    : issues.Count == 0 ? $"Jurnalul de tipărire este pornit ({printers} imprimante instalate: {S("Print.PrinterNames")}); fiecare document tipărit lasă evenimentul 307 (document, utilizator, imprimantă, pagini)."
+                    : log == "" ? $"Starea jurnalului de tipărire nu a putut fi citită ({Ro.CountFem(printers, "imprimantă instalată", "imprimante instalate")})." + NoRead
+                    : issues.Count == 0 ? $"Jurnalul de tipărire este pornit ({Ro.CountFem(printers, "imprimantă instalată", "imprimante instalate")}: {S("Print.PrinterNames")}); fiecare document tipărit lasă evenimentul 307 (document, utilizator, imprimantă, pagini)."
                     : "Probleme: " + string.Join("; ", issues) + (log == "0" ? ". Jurnalul este oprit implicit în Windows și trebuie pornit; fără el absența evenimentelor nu dovedește că nu s-a tipărit." : "."),
-                [$"canalul Microsoft-Windows-PrintService/Operational → activat = {(log == "1" ? "da" : log == "0" ? "nu" : "necitit")}", $"WMI Win32_Printer: {pc} imprimante"],
+                [$"canalul Microsoft-Windows-PrintService/Operational → activat = {(log == "1" ? "da" : log == "0" ? "nu" : "necitit")}", $"WMI Win32_Printer: {(pc == "" ? "necitit" : Ro.CountFem(printers, "imprimantă", "imprimante"))}"],
                 "Porniți jurnalul PrintService/Operational și țineți registrul foilor tipărite; imprimantele de rețea se scot dintr-o stație izolată.");
         }
 
@@ -538,7 +555,7 @@ public static class ControlEvaluator
             Add(r, "P31", "Politici", "Cameră, microfon și difuzoare prezente și active",
                 cams + mics + spk == 0 ? ControlStatus.Conform : exposed && isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
                 cams + mics + spk == 0 ? "Nu a fost găsită nicio cameră, niciun microfon și nicio ieșire audio activă."
-                    : $"Active: {cams} camere ({S("Hardware.CameraNames")}), {mics} microfoane ({S("Hardware.MicrophoneNames")}), {spk} ieșiri audio. Politica de acces (P19): cameră {(camDeny ? "blocată" : "NEblocată")}, microfon {(micDeny ? "blocat" : "NEblocat")}. " +
+                    : $"Active: {Ro.CountFem(cams, "cameră", "camere")} ({S("Hardware.CameraNames")}), {Ro.CountMasc(mics, "microfon", "microfoane")} ({S("Hardware.MicrophoneNames")}), {Ro.CountFem(spk, "ieșire audio", "ieșiri audio")}. Politica de acces (P19): cameră {(camDeny ? "blocată" : "NEblocată")}, microfon {(micDeny ? "blocat" : "NEblocat")}. " +
                       (exposed ? "Cel puțin una dintre ele este lăsată aplicațiilor." : "Politica blochează aplicațiile, dar dispozitivele rămân pornite în driver.") + " Acoperirea fizică a camerei și a microfonului se verifică separat (verificarea manuală M09).",
                 [$"WMI Win32_PnPEntity (clasele Camera, Image, MEDIA, AudioEndpoint): {cams} + {mics} + {spk}", @"…\ConsentStore\webcam → Value = " + Shown(S("Privacy.Webcam")), @"…\ConsentStore\microphone → Value = " + Shown(S("Privacy.Microphone"))],
                 "Dezactivați în BIOS camera și microfonul neaprobate, acoperiți camera și completați verificarea manuală M09.");
@@ -561,11 +578,12 @@ public static class ControlEvaluator
             var profiles = S("Wlan.ProfileCount");
             var svc = S("Wlan.ServiceStart");
             var svcText = svc switch { "" => "starea serviciului Wi-Fi nu a putut fi citită", Absent => "serviciul Wi-Fi nu există pe această stație", "4" => "serviciul Wi-Fi este dezactivat", "2" => "serviciul Wi-Fi pornește singur", _ => "serviciul Wi-Fi poate porni la cerere" };
-            var profText = profiles == "" ? "profilurile Wi-Fi salvate nu au putut fi numărate (necesită administrator)" : $"{profiles} profiluri Wi-Fi salvate";
+            int profN = int.TryParse(profiles, out var profParsed) ? profParsed : 0;
+            var profText = profiles == "" ? "profilurile Wi-Fi salvate nu au putut fi numărate (necesită administrator)" : profN == 1 ? "un profil Wi-Fi salvat" : $"{Ro.Count(profN, "profil", "profiluri")} Wi-Fi salvate";
             var status = wifi == 0 ? ControlStatus.Conform : isolated && wifiUp > 0 ? ControlStatus.Neconform : ControlStatus.DeVerificat;
             Add(r, "N03", "Rețea", "Adaptor Wi-Fi (rețea fără fir)", status,
                 wifi == 0 ? $"Stația nu are niciun adaptor Wi-Fi; {profText}."
-                    : $"Stația are {wifi} adaptor(oare) Wi-Fi ({wifiUp} pornit/pornite acum); {svcText}; {profText}." + (isolated ? " Pe o stație izolată un adaptor Wi-Fi poate crea o legătură cu exteriorul." : ""),
+                    : $"Stația are {Ro.CountMasc(wifi, "adaptor Wi-Fi", "adaptoare Wi-Fi")} ({(wifiUp == 0 ? "niciunul pornit acum" : wifiUp == 1 ? (wifi == 1 ? "pornit acum" : "unul pornit acum") : $"{wifiUp} pornite acum")}); {svcText}; {profText}." + (isolated ? " Pe o stație izolată un adaptor Wi-Fi poate crea o legătură cu exteriorul." : ""),
                 (wifi > 0 ? S("Wifi.Adapters").Split("; ", StringSplitOptions.RemoveEmptyEntries) : []).Concat([@"HKLM\SYSTEM\CurrentControlSet\Services\WlanSvc → Start = " + Shown(svc)]),
                 "Adaptorul Wi-Fi se scoate fizic sau se dezactivează din BIOS; dacă este aprobat, notați documentul de aprobare.");
         }
@@ -582,7 +600,7 @@ public static class ControlEvaluator
             var status = bt == 0 ? ControlStatus.Conform : isolated && !svcOff ? ControlStatus.Neconform : ControlStatus.DeVerificat;
             Add(r, "N04", "Rețea", "Bluetooth", status,
                 bt == 0 ? "Stația nu are componente Bluetooth."
-                    : $"Stația are Bluetooth ({bt} componente: {S("Bluetooth.Components")}); serviciul Bluetooth este {(svcOff ? "dezactivat" : svc == "" ? "într-o stare necitită" : "permis să pornească")}." +
+                    : $"Stația are Bluetooth ({Ro.CountFem(bt, "componentă", "componente")}: {S("Bluetooth.Components")}); serviciul Bluetooth este {(svcOff ? "dezactivat" : svc == "" ? "într-o stare necitită" : "permis să pornească")}." +
                       (isolated ? " Prin Bluetooth se pot trimite fișiere fără cablu." : ""),
                 [@"HKLM\SYSTEM\CurrentControlSet\Services\bthserv → Start = " + Shown(svc)],
                 "Bluetooth trebuie oprit dacă organizația nu l-a aprobat în scris.");
@@ -611,8 +629,8 @@ public static class ControlEvaluator
                 : lockV == Absent ? "Nu este setată o politică de blocare după inactivitate. Ecranul poate fi blocat prin screensaver cu parolă, pe care aplicația nu îl citește; verificați la stație."
                 : !lockNum ? $"Valoare neașteptată: {lockV}."
                 : lockSecs == 0 ? "Blocarea după inactivitate este dezactivată: dacă utilizatorul pleacă, ecranul rămâne deschis."
-                : lockSecs <= 900 ? $"Ecranul se blochează după {lockSecs / 60.0:0.#} minute de inactivitate."
-                : $"Ecranul se blochează abia după {lockSecs / 60.0:0.#} minute; regula este cel mult 15 minute.",
+                : lockSecs <= 900 ? $"Ecranul se blochează după {Ro.Minutes(lockSecs / 60.0)} de inactivitate."
+                : $"Ecranul se blochează abia după {Ro.Minutes(lockSecs / 60.0)}; regula este cel mult 15 minute.",
             [@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System → InactivityTimeoutSecs = " + Shown(lockV)],
             "Setați blocarea la cel mult 15 minute (900 de secunde).");
 
@@ -745,7 +763,7 @@ public static class ControlEvaluator
             cap == "" && txt == "" ? ControlStatus.Nedeterminat : noCap && noTxt ? ControlStatus.Neconform : ControlStatus.DeVerificat,
             cap == "" && txt == "" ? "Mesajul de avertizare nu a putut fi citit." + NoRead
                 : noCap && noTxt ? "La pornire nu apare niciun mesaj de avertizare că stația tratează informații clasificate."
-                : $"La pornire apare titlul „{(noCap ? "—" : cap)}” și un text de {(noTxt ? 0 : txt.Length)} caractere. Comparați-l cu marcajul de clasificare aprobat pentru stație.",
+                : $"La pornire apare titlul „{(noCap ? "—" : cap)}” și un text de {Ro.Count(noTxt ? 0 : txt.Length, "caracter", "caractere")}. Comparați-l cu marcajul de clasificare aprobat pentru stație.",
             [@"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System → LegalNoticeCaption = " + (noCap ? "nesetat" : cap),
              @"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System → LegalNoticeText = " + (noTxt ? "nesetat" : txt)],
             "Setați un mesaj care indică nivelul maxim de clasificare al stației.");
@@ -862,8 +880,8 @@ public static class ControlEvaluator
                 fixedVols.Count == 0 ? "Windows nu a raportat niciun disc fix." + NoRead
                 : problems.Count > 0 ? char.ToUpperInvariant(problems[0][0]) + string.Join("; ", problems)[1..] + "."
                 : unknown.Count > 0 ? $"Starea BitLocker nu a putut fi citită pentru: {string.Join(", ", unknown.Select(v => v.Drive))}." + NoRead
-                : pin is null ? $"Toate cele {fixedVols.Count} discuri fixe sunt criptate, dar tipul protecției discului de sistem nu a putut fi citit; verificați la stație că se cere un PIN la pornire."
-                : $"Toate cele {fixedVols.Count} discuri fixe sunt criptate, iar discul de sistem cere PIN la pornire.",
+                : pin is null ? (fixedVols.Count == 1 ? "Discul fix este criptat" : $"Toate cele {Ro.Count(fixedVols.Count, "disc fix", "discuri fixe")} sunt criptate") + ", dar tipul protecției discului de sistem nu a putut fi citit; verificați la stație că se cere un PIN la pornire."
+                : (fixedVols.Count == 1 ? "Discul fix este criptat" : $"Toate cele {Ro.Count(fixedVols.Count, "disc fix", "discuri fixe")} sunt criptate") + ", iar discul de sistem cere PIN la pornire.",
                 vols.Select(VolumeLine).Prepend("WMI Win32_EncryptableVolume (ProtectionStatus, ConversionStatus, GetKeyProtectorType)"),
                 "Criptați fiecare disc fix cu BitLocker și adăugați discului de sistem protecția „TPM și PIN” (PIN de cel puțin 6 cifre).");
         }
@@ -964,7 +982,7 @@ public static class ControlEvaluator
         double? Age(string v) => DateTimeOffset.TryParse(v, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var t) ? (f.CollectedUtc - t).TotalDays : null;
         var fullAge = Age(full);
         var quickAge = Age(quick);
-        string When(string v, double? age) => v == Absent ? "niciodată" : age is { } a ? $"{DateTimeOffset.Parse(v, CultureInfo.InvariantCulture):yyyy-MM-dd} ({a:0} zile)" : "necitită";
+        string When(string v, double? age) => v == Absent ? "niciodată" : age is { } a ? $"{DateTimeOffset.Parse(v, CultureInfo.InvariantCulture):yyyy-MM-dd} (acum {Ro.Days(a)})" : "necitită";
         Add(r, "P38", "Politici", "Ultima scanare antivirus completă și rapidă",
             full == "" && quick == "" ? ControlStatus.Nedeterminat : full == Absent ? ControlStatus.Neconform
                 : fullAge is null || fullAge > 30 || quick == Absent || quickAge > 7 ? ControlStatus.DeVerificat : ControlStatus.Conform,
@@ -1028,10 +1046,14 @@ public static class ControlEvaluator
         bool listening = wLis is not ("" or Absent or "(niciuna)"), running = wState.Equals("Running", StringComparison.OrdinalIgnoreCase);
         var wStartText = wStart switch { "2" => "pornire automată", "3" => "pornire manuală", "4" => "dezactivat", Absent => "serviciul nu există", "" => "necitit", var x => $"pornire {x}" };
         Add(r, "N08", "Rețea", "Administrarea la distanță (WinRM)",
-            wStart == "" && wLis == "" && wState == "" ? ControlStatus.Nedeterminat : listening || running ? (isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat)
+            wStart == "" && wLis == "" && wState == "" ? ControlStatus.Nedeterminat : listening && running ? (isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat)
+                : listening || running ? ControlStatus.DeVerificat
                 : wStart is "4" || wStart == Absent || wState.Length > 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
             wStart == "" && wLis == "" && wState == "" ? "Starea serviciului WinRM nu a putut fi citită." + NoRead
-                : listening || running ? $"Administrarea la distanță (WinRM) {(running ? "rulează" : "nu rulează acum")}{(listening ? $" și are configurate puncte de ascultare ({wLis})" : "")}: din rețea se pot rula comenzi pe stație." + (isolated ? " Pe o stație izolată trebuie oprită." : "")
+                : listening && running ? $"Administrarea la distanță (WinRM) rulează și are configurate puncte de ascultare ({wLis}): din rețea se pot rula comenzi pe stație." + (isolated ? " Pe o stație izolată trebuie oprită." : "")
+                : listening && wState.Length == 0 ? $"Serviciul WinRM are configurate puncte de ascultare ({wLis}), dar dacă rulează acum nu s-a putut afla ({wStartText}); dacă rulează, stația acceptă administrare de la distanță." + (isolated ? " Pe o stație izolată ștergeți punctele de ascultare și dezactivați serviciul." : "")
+                : listening ? $"Serviciul WinRM este oprit acum, dar are configurate puncte de ascultare ({wLis}); dacă pornește, stația acceptă administrare de la distanță ({wStartText})." + (isolated ? " Pe o stație izolată ștergeți punctele de ascultare și dezactivați serviciul." : "")
+                : running ? $"Serviciul WinRM rulează, dar nu are puncte de ascultare configurate ({wStartText}); stația nu acceptă încă administrare de la distanță, dar un punct de ascultare adăugat o pornește imediat." + (isolated ? " Pe o stație izolată serviciul trebuie oprit." : "")
                 : wStart is "4" || wStart == Absent ? $"Administrarea la distanță (WinRM) este oprită ({wStartText})."
                 : wState.Length > 0 ? $"Serviciul WinRM nu rulează și nu are puncte de ascultare configurate ({wStartText})."
                 : $"Serviciul WinRM: {wStartText}; dacă rulează acum nu s-a putut afla.",
@@ -1062,10 +1084,13 @@ public static class ControlEvaluator
         // A10 (A16) audit rules (SACL) on the classified folders of the procedure profile.
         const string a10 = "Auditarea accesului la folderele clasificate (SACL)";
         if (f.FolderAudits is not { } folders)
-            Add(r, "A10", "Audit", a10, ControlStatus.Nedeterminat, "Folderele clasificate din profilul de proceduri nu au fost citite." + NoRead);
+            // not collected: the control ran without the procedure profile's folders (not a rights problem)
+            Add(r, "A10", "Audit", a10, ControlStatus.Nedeterminat,
+                "Folderele clasificate din profilul de proceduri nu au fost transmise controlului, deci regulile lor de audit nu au fost citite. Deschideți profilul de proceduri și repetați controlul.",
+                rec: "Treceți în profilul de proceduri folderele cu documente clasificate.");
         else if (folders.Count == 0)
-            Add(r, "A10", "Audit", a10, ControlStatus.DeVerificat,
-                "Profilul de proceduri nu are tabelul „Foldere clasificate” completat, deci aplicația nu știe ce foldere să verifice. Completați profilul și repetați controlul.",
+            Add(r, "A10", "Audit", a10, ControlStatus.Nedeterminat,
+                "Profilul de proceduri nu definește foldere clasificate; completați tabelul «Foldere clasificate» și repetați controlul. Fără el aplicația nu știe ce foldere să verifice.",
                 rec: "Treceți în profilul de proceduri folderele cu documente clasificate.");
         else
         {
@@ -1079,10 +1104,11 @@ public static class ControlEvaluator
             Add(r, "A10", "Audit", a10,
                 problems.Count > 0 ? ControlStatus.Neconform : unread.Count > 0 || fs is null ? ControlStatus.Nedeterminat : missing.Count > 0 ? ControlStatus.DeVerificat : ControlStatus.Conform,
                 problems.Count > 0 ? "Nu se va ști cine a deschis documentele: " + string.Join("; ", problems) + "."
-                    : unread.Count > 0 || fs is null ? $"Nu s-a putut stabili: {string.Join(", ", unread.Select(x => x.Path).Concat(fs is null ? ["politica de audit «File System»"] : []))}." + NoRead
+                    : unread.Count > 0 || fs is null ? $"Nu s-a putut stabili: {string.Join(", ", unread.Select(x => x.Path).Concat(fs is null ? ["politica de audit «File System»"] : []))}."
+                        + (f.IsAdministrator ? " Nu au putut fi citite deși aplicația rulează cu drepturi de administrator; verificați la stație dreptul „Manage auditing and security log” și accesul la folder." : NoRead)
                     : missing.Count > 0 ? $"Folderele din profil care nu există pe stație: {string.Join(", ", missing.Select(x => x.Path))}. Corectați profilul sau verificați unde sunt documentele."
-                    : $"Toate cele {folders.Count} foldere clasificate au reguli de audit, iar subcategoria „File System” este auditată.",
-                folders.Select(x => $"{x.Path}: " + (!x.Exists ? "nu există" : x.AuditRules is null ? x.Error : x.AuditRules == 0 ? "nicio regulă de audit" : $"{x.AuditRules} reguli de audit: {x.Rules}"))
+                    : (folders.Count == 1 ? "Folderul clasificat are reguli de audit" : $"Toate cele {Ro.Count(folders.Count, "folder clasificat", "foldere clasificate")} au reguli de audit") + ", iar subcategoria „File System” este auditată.",
+                folders.Select(x => $"{x.Path}: " + (!x.Exists ? "nu există" : x.AuditRules is null ? x.Error : x.AuditRules == 0 ? "nicio regulă de audit" : $"{Ro.CountFem(x.AuditRules.Value, "regulă de audit", "reguli de audit")}: {x.Rules}"))
                        .Append($"File System: {(fs is null ? "necitit" : fs.ToString())}"),
                 "Pe fiecare folder clasificat adăugați o regulă de audit (Proprietăți → Securitate → Complex → Auditare) pentru citire, scriere și ștergere, și porniți subcategoria „File System”.");
         }
@@ -1123,8 +1149,8 @@ public static class ControlEvaluator
             !d03Readable ? "Jurnalul antivirusului (Defender) sau jurnalul conectărilor de discuri nu a putut fi citit." + NoRead
                 : foundAfter.Count > 0 ? $"Antivirusul a găsit {LogAnalyzer.Dfir.Language.RoText.Count(foundAfter.Count, "program rău-intenționat", "programe rău-intenționate")} în cel mult o oră după conectarea unui suport: {string.Join("; ", foundAfter.Select(d => V(d, "Threat Name")).Where(n => n.Length > 0).Distinct())}."
                 : arrivals.Count == 0 ? "Nu s-a observat nicio conectare de suport în perioada controlată (jurnalul Partition/Diagnostic), deci nu există scanări de comparat."
-                : unscanned.Count > 0 ? $"{unscanned.Count} din {arrivals.Count} conectări de suport nu sunt urmate, în 10 minute, de o scanare antivirus pe această stație. Scanarea poate fi făcută înainte, pe stația de decontaminare; comparați cu registrul acelei stații (verificarea M04)."
-                : $"Fiecare din cele {arrivals.Count} conectări de suport este urmată, în cel mult 10 minute, de o scanare antivirus pe această stație.",
+                : unscanned.Count > 0 ? $"{unscanned.Count} din {Ro.Count(arrivals.Count, "conectare de suport", "conectări de suport")} {(unscanned.Count == 1 ? "nu este urmată" : "nu sunt urmate")}, în 10 minute, de o scanare antivirus pe această stație. Scanarea poate fi făcută înainte, pe stația de decontaminare; comparați cu registrul acelei stații (verificarea M04)."
+                : (arrivals.Count == 1 ? "Conectarea de suport este urmată" : $"Fiecare din cele {Ro.Count(arrivals.Count, "conectare", "conectări")} de suport este urmată") + ", în cel mult 10 minute, de o scanare antivirus pe această stație.",
             arrivals.Select(a => $"{EvShort(a)}: {Clean(V(a, "Manufacturer"))} {Clean(V(a, "Model"))} SN {Clean(V(a, "SerialNumber"))} → " +
                                  (scans.FirstOrDefault(s => s.TimeUtc >= a.TimeUtc && s.TimeUtc <= a.TimeUtc.AddMinutes(10)) is { } sc ? $"scanat: {EvShort(sc)} {V(sc, "Scan Resources")}".TrimEnd() : "nicio scanare în 10 minute"))
                     .Concat(foundAfter.Select(d => $"{EvShort(d)}: {V(d, "Threat Name")} {V(d, "Path")}".TrimEnd())),
@@ -1163,10 +1189,10 @@ public static class ControlEvaluator
                 ? $" Semnăturile antivirus de pe stație sunt din {sigAt:yyyy-MM-dd}; ultima actualizare antivirus din registru: {lastAv ?? "niciuna"}." : "";
             Add(r, "S04", "Software", "Actualizări offline aplicate și registrul actualizărilor",
                 reg is not { Count: > 0 } ? ControlStatus.DeVerificat : notInRegister.Count > 0 ? ControlStatus.Neconform : inPeriod.Count == 0 ? ControlStatus.DeVerificat : ControlStatus.Conform,
-                reg is not { Count: > 0 } ? $"Registrul actualizărilor offline nu este completat în aplicație; comparați manual cele {inPeriod.Count} actualizări Windows instalate în perioadă cu registrul organizației (verificarea M05)."
-                    : notInRegister.Count > 0 ? $"{LogAnalyzer.Dfir.Language.RoText.Count(notInRegister.Count, "actualizare instalată", "actualizări instalate")} în perioadă nu apar în registrul actualizărilor offline: {string.Join(", ", notInRegister.Select(u => u.HotFixId))}. Aflați cine le-a adus și de pe ce suport." + avNote
+                reg is not { Count: > 0 } ? $"Registrul actualizărilor offline nu este completat în aplicație; comparați manual {(inPeriod.Count == 1 ? "actualizarea Windows instalată" : $"cele {Ro.Count(inPeriod.Count, "actualizare Windows instalată", "actualizări Windows instalate")}")} în perioadă cu registrul organizației (verificarea M05)."
+                    : notInRegister.Count > 0 ? $"{Ro.Capitalize(Ro.CountFem(notInRegister.Count, "actualizare instalată", "actualizări instalate"))} în perioadă {(notInRegister.Count == 1 ? "nu apare" : "nu apar")} în registrul actualizărilor offline: {string.Join(", ", notInRegister.Select(u => u.HotFixId))}. Aflați cine le-a adus și de pe ce suport." + avNote
                     : inPeriod.Count == 0 ? "În lista Windows nu apare nicio actualizare instalată în perioada controlată; comparați cu registrul: dacă registrul are actualizări în perioadă, ele nu au ajuns pe stație." + avNote
-                    : $"Toate cele {inPeriod.Count} actualizări Windows instalate în perioadă apar în registrul actualizărilor offline." + avNote,
+                    : (inPeriod.Count == 1 ? "Actualizarea Windows instalată în perioadă apare" : $"Toate cele {Ro.Count(inPeriod.Count, "actualizare Windows instalată", "actualizări Windows instalate")} în perioadă apar") + " în registrul actualizărilor offline." + avNote,
                 inPeriod.Select(u => $"{u.HotFixId} instalată {u.InstalledOn:yyyy-MM-dd} ({u.Description})" + (reg is { Count: > 0 } ? regKbs.Contains(u.HotFixId.Trim()) ? " · în registru" : " · NU este în registru" : ""))
                         .Prepend("WMI Win32_QuickFixEngineering → HotFixID, InstalledOn"),
                 "Fiecare actualizare adusă pe stație se trece în registrul actualizărilor offline (data, pachetul, amprenta, cine a adus suportul).");

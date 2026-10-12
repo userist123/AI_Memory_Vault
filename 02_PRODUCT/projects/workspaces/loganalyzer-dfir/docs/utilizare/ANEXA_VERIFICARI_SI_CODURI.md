@@ -79,11 +79,11 @@
 
 ### P04
 
-- **Ce verificăm:** Dacă UAC este pornit (fereastra care cere confirmare înainte ca un program să primească drepturi de administrator).
-- **De ce contează:** Fără UAC, orice program pornit de un administrator — inclusiv unul rău-intenționat — primește control total fără întrebare.
-- **Cum verifică aplicația:** A citit valoarea EnableLUA din registru.
-- **Sursa tehnică:** `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System → EnableLUA, ConsentPromptBehaviorAdmin`
-- **Cum se citește rezultatul:** Conform = 1 (pornit). Neconform = 0 (oprit). Nedeterminat = valoarea nu a putut fi citită.
+- **Ce verificăm:** Dacă UAC este pornit și chiar întreabă (fereastra care cere confirmare înainte ca un program să primească drepturi de administrator), pe ecranul securizat.
+- **De ce contează:** Fără UAC, sau cu UAC care dă drepturile fără întrebare, orice program pornit de un administrator — inclusiv unul rău-intenționat — primește control total pe neobservate.
+- **Cum verifică aplicația:** A citit din registru dacă UAC este pornit (EnableLUA), cum întreabă un administrator (ConsentPromptBehaviorAdmin) și dacă întrebarea apare pe ecranul securizat (PromptOnSecureDesktop).
+- **Sursa tehnică:** `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System → EnableLUA, ConsentPromptBehaviorAdmin, PromptOnSecureDesktop`
+- **Cum se citește rezultatul:** Conform = EnableLUA = 1, ConsentPromptBehaviorAdmin între 1 și 5 (se cere parola sau confirmarea) și PromptOnSecureDesktop = 1. Neconform = EnableLUA = 0 (UAC oprit) sau ConsentPromptBehaviorAdmin = 0 (drepturile se dau fără nicio întrebare). De verificat = întrebarea apare pe ecranul obișnuit (PromptOnSecureDesktop = 0) sau una dintre valori nu a putut fi citită. Nedeterminat = EnableLUA nu a putut fi citită.
 
 ### P05
 
@@ -443,7 +443,7 @@
 - **De ce contează:** Fără reguli de audit pe folder, nimeni nu va ști cine a deschis, a copiat sau a șters documentele clasificate.
 - **Cum verifică aplicația:** A citit regulile de audit ale fiecărui folder din tabelul „Foldere clasificate” al profilului și politica de audit pentru subcategoria „File System”. Citirea regulilor cere drepturi de administrator; folderele nu se modifică.
 - **Sursa tehnică:** `Regulile de audit ale folderului (echivalentul Get-Acl -Audit); auditpol: subcategoria File System`
-- **Cum se citește rezultatul:** Conform = fiecare folder are reguli de audit și „File System” este auditată. Neconform = un folder nu are reguli sau „File System” nu este auditată. De verificat = profilul nu are foldere clasificate sau un folder din profil nu există. Nedeterminat = regulile nu au putut fi citite (administrator).
+- **Cum se citește rezultatul:** Conform = fiecare folder are reguli de audit și „File System” este auditată. Neconform = un folder nu are reguli sau „File System” nu este auditată. De verificat = un folder din profil nu există. Nedeterminat = profilul nu definește foldere clasificate (se completează tabelul „Foldere clasificate”) sau regulile nu au putut fi citite (administrator).
 
 ### U01
 
@@ -755,7 +755,7 @@
 - **De ce contează:** Prin WinRM se pot rula comenzi pe stație din rețea.
 - **Cum verifică aplicația:** A citit modul de pornire al serviciului WinRM, dacă rulează acum și dacă are puncte de ascultare configurate.
 - **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Services\WinRM → Start; HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WSMAN\Listener; WMI Win32_Service`
-- **Cum se citește rezultatul:** Conform = serviciul este oprit și nu ascultă. Neconform = rulează sau ascultă pe o stație izolată. De verificat = rulează pe o stație neizolată. Locul punctelor de ascultare trebuie confirmat în laborator.
+- **Cum se citește rezultatul:** Conform = serviciul este oprit și nu are puncte de ascultare. Neconform = rulează și are puncte de ascultare, pe o stație izolată. De verificat = este oprit acum, dar are puncte de ascultare (dacă pornește, stația acceptă administrare de la distanță), rulează fără puncte de ascultare, sau rulează pe o stație neizolată. Locul punctelor de ascultare trebuie confirmat în laborator.
 
 ### N09
 
@@ -906,7 +906,8 @@
 | HNetCfg.HNetShare | interfață Windows | Interfața Windows care arată ce conexiuni au partajarea conexiunii la Internet pornită. | Arată dacă stația face legătura între două rețele. | Aplicația doar citește, nu schimbă nimic. |
 | NetUserModalsGet | funcție Windows | Citește politica de parole a stației (aceeași pe care o arată comanda „net accounts”). | Arată regulile efective pentru parole și blocarea conturilor. |  |
 | Policies\\System\\EnableLUA | valoare de registru | Pornește sau oprește UAC (fereastra care cere confirmare înainte ca un program să primească drepturi de administrator). | Cu UAC oprit, orice program pornit de un administrator are control total, fără întrebare. | 1 = activ (corect), 0 = oprit. |
-| Policies\\System\\ConsentPromptBehaviorAdmin | valoare de registru | Cum întreabă UAC un administrator înainte de a da drepturi complete. | 0 înseamnă că nu se mai întreabă nimic. | 0 = fără întrebare, 1/3 = cere parola, 2/4 = cere confirmare, 5 = cere confirmare doar pentru programe din afara Windows (implicit). |
+| Policies\\System\\ConsentPromptBehaviorAdmin | valoare de registru | Cum întreabă UAC un administrator înainte de a da drepturi complete. | 0 înseamnă că nu se mai întreabă nimic: orice program pornit de un administrator capătă drepturi depline fără întrebare. | 0 = fără întrebare (neconform), 1/3 = cere parola, 2/4 = cere confirmare, 5 = cere confirmare doar pentru programe din afara Windows (implicit). |
+| Policies\\System\\PromptOnSecureDesktop | valoare de registru | Dacă întrebarea UAC apare pe ecranul securizat (ecranul se întunecă și numai utilizatorul poate răspunde). | Pe ecranul obișnuit, un program rău-intenționat poate apăsa singur „Da” în locul utilizatorului. | 1 = pe ecranul securizat (corect), 0 = pe ecranul obișnuit. |
 | Winlogon\\AutoAdminLogon | valoare de registru | Pornire automată în cont, fără să se tasteze parola. | Oricine pornește stația intră în cont. | 1 = activă (abatere), 0 sau lipsă = dezactivată. |
 | Winlogon\\DefaultPassword | valoare de registru | Parolă salvată în registru pentru pornirea automată. | Parola stă în clar și poate fi citită de oricine are acces la registru. | Aplicația verifică doar dacă există, nu o citește. |
 | Terminal Server\\fDenyTSConnections | valoare de registru | Permite sau interzice conectarea de la distanță (Remote Desktop). | Remote Desktop deschis permite lucrul pe stație din altă parte. | 1 = interzis (corect pe stația izolată), 0 = permis. |
