@@ -1177,10 +1177,11 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
+        /// <summary>Content of an always-quoted CSV cell: formulas neutralised (security audit #8), quotes doubled.</summary>
         private string EscapeCsv(string? field)
         {
             if (field == null) return string.Empty;
-            return field.Replace("\"", "\"\"");
+            return LogAnalyzer.Dfir.IO.CsvWriter.NeutraliseFormula(field).Replace("\"", "\"\"");
         }
 
         [RelayCommand]

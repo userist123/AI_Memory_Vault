@@ -107,12 +107,10 @@ namespace LogAnalyzer.Core.Services
               .Append(EscapeCsv(notes)).Append("\r\n");
         }
 
-        /// <summary>RFC 4180: quote when needed, double the quotes, keep embedded line breaks inside the quotes.</summary>
-        public static string EscapeCsv(string field)
-        {
-            if (string.IsNullOrEmpty(field)) return string.Empty;
-            if (field.IndexOfAny(new[] { ',', '"', '\r', '\n' }) < 0) return field;
-            return "\"" + field.Replace("\"", "\"\"") + "\"";
-        }
+        /// <summary>
+        /// RFC 4180 quoting through the Dfir.Core CSV writer, which also neutralises spreadsheet formulas (security audit #8): an event message or
+        /// user starting with = + - @ TAB or CR is written with a leading apostrophe.
+        /// </summary>
+        public static string EscapeCsv(string field) => string.IsNullOrEmpty(field) ? string.Empty : LogAnalyzer.Dfir.IO.CsvWriter.Escape(field);
     }
 }
