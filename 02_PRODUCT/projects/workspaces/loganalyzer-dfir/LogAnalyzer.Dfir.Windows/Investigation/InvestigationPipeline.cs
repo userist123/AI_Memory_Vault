@@ -362,6 +362,7 @@ public sealed class InvestigationPipeline
         var sequences = SequenceRules.Run(r.Timeline, found, () => $"F-{++sequenceNo:D4}", new SequenceInput { Scope = ws.Info.Scope });
         found.AddRange(sequences);
         var (kept, rejected) = ProvenanceBinder.BindFindings(found, ws.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal));
+        LogAnalyzer.Dfir.Case.ClockMemory.Refresh();
         TimeReliability.Apply(kept, r.Timeline, LogAnalyzer.Dfir.Case.ClockMemory.StartupWarning.Length > 0);
         // Finding contract: semantic type, standard state, limitations, provenance, audit trail (added beside Classification).
         var parsersByEvidence = r.Parsing.Where(p => p.Parser != "-" && p.Status is EvidenceStatus.Success or EvidenceStatus.Partial or EvidenceStatus.Empty)

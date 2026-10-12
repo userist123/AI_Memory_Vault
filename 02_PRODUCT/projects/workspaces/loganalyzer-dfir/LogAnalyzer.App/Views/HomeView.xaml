@@ -73,6 +73,11 @@
                 <TextBlock Text="{Binding ClockWarning}" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" Margin="0,0,0,8">
                     <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding ClockWarning}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
                 </TextBlock>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                    <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding ClockWarning}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                    <TextBox AutomationProperties.Name="Motiv corectare ceas" Text="{Binding ClockAckReason, UpdateSourceTrigger=PropertyChanged}" Width="260" Margin="0,0,6,0" ToolTip="Motivul: cum a fost corectat ceasul"/>
+                    <Button Content="Confirm că ceasul a fost corectat" Command="{Binding ConfirmClockCorrectedCommand}"/>
+                </StackPanel>
                 <Grid Margin="0,0,0,12">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>

@@ -80,6 +80,10 @@ public sealed class StationFacts
     public List<LogAnalyzer.Dfir.Registers.UpdateRow>? OfflineUpdateRegister { get; set; }
     /// <summary>The latest time the application itself recorded in its chained audit logs ("time memory", check S05); null = no earlier record.</summary>
     public DateTimeOffset? LatestAppRecordUtc { get; set; }
+    /// <summary>Set when a recorded time was made under a wrong clock and the correction is not yet confirmed (check S05).</summary>
+    public string ClockSuspectNote { get; set; } = "";
+    /// <summary>"corectat de ... la ..., motiv: ..." when the operator confirmed a clock correction (check S05); empty otherwise.</summary>
+    public string ClockAckText { get; set; } = "";
 }
 
 public static class StationFactCollector

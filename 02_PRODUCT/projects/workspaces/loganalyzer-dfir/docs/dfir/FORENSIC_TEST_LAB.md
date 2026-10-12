@@ -111,6 +111,10 @@ deci 31 de RecordID-uri sunt folosite de două ori. Jurnalul System arată în a
 refolosirea ca gol de probă și face locatorul unic (`EventRecordID=44760;occurrence=2`), iar AF04 o raportează împreună cu
 oprirea necurată.
 
+## Live facts dump (runtime verification)
+
+Setting the environment variable `LA_DUMP_FACTS` to an output directory outside the repository enables one extra test in `LogAnalyzer.Dfir.Tests` (`LiveFactsDumpTests`; without the variable it is skipped). It reads the live facts of the machine it runs on, read-only (`StationFactCollector` and `AirGapFactsCollector`, with administrator rights detected at run time), and writes `station_facts.json`, `airgap_facts.json`, `checks.json` (id, status, one-line reason for each station check) and `control_report.pdf` to that directory. Nothing is written inside the repository; the files describe the machine, so keep them out of version control and review them before sharing. Without administrator rights the checks that need it are reported as NEDETERMINAT, which is what the dump is meant to show.
+
 ## Ce lipsește (planificat)
 
 - **Validare diferențială** cu instrumente forensice dedicate (EZTools, Plaso) pentru Prefetch, SRUM și Jump Lists. Nu sunt instalate, iar aplicația nu descarcă și nu rulează instrumente externe din proprie inițiativă. EVTX este comparat cu `wevtutil`.

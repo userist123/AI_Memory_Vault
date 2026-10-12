@@ -144,7 +144,10 @@
                 <TextBox AutomationProperties.Name="Observații" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Width="220" Margin="0,0,16,0"/>
                 <Button Content="Rulează controlul" Command="{Binding RunCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
                 <Button Content="Salvează raportul (PDF)" Command="{Binding SaveReportCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                <Button Content="Folder rapoarte" Command="{Binding OpenCaseFolderCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                <Button Content="Folder rapoarte" Command="{Binding OpenCaseFolderCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
+                <TextBlock Text="Motiv corectare ceas:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <TextBox AutomationProperties.Name="Motiv corectare ceas" Text="{Binding ClockAckReason, UpdateSourceTrigger=PropertyChanged}" Width="200" Margin="0,0,6,0"/>
+                <Button Content="Confirm că ceasul a fost corectat" Command="{Binding ConfirmClockCorrectedCommand}" Style="{StaticResource OutlineButtonStyle}"/>
             </WrapPanel>
         </Border>
         </Expander>

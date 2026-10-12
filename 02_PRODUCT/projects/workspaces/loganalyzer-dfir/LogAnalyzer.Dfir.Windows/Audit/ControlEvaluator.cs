@@ -1136,14 +1136,17 @@ public static class ControlEvaluator
         Add(r, "S05", "Software", "Ceasul stației față de memoria de timp a aplicației",
             clockMem.State switch
             {
-                LogAnalyzer.Dfir.Case.ClockMemoryState.Ok => ControlStatus.Conform,
+                LogAnalyzer.Dfir.Case.ClockMemoryState.Ok => f.ClockSuspectNote.Length > 0 ? ControlStatus.DeVerificat : ControlStatus.Conform,
                 LogAnalyzer.Dfir.Case.ClockMemoryState.Behind or LogAnalyzer.Dfir.Case.ClockMemoryState.BeforeInstall => ControlStatus.Neconform,
                 LogAnalyzer.Dfir.Case.ClockMemoryState.ForwardJump => ControlStatus.DeVerificat,
                 _ => ControlStatus.Nedeterminat,
             },
-            clockMem.Message + (clockMem.TimeUnreliable ? " Constatările care depind de oră au încredere redusă." : ""),
+            clockMem.Message + (clockMem.TimeUnreliable ? " Constatările care depind de oră au încredere redusă." : "")
+                + (f.ClockSuspectNote.Length > 0 ? " " + f.ClockSuspectNote + " Confirmați corectarea ceasului în aplicație." : "")
+                + (f.ClockAckText.Length > 0 ? " " + f.ClockAckText + "." : ""),
             new[] { $"Ora stației (UTC): {f.CollectedUtc:yyyy-MM-dd HH:mm:ss}", $"Ultima oră înregistrată de aplicație (UTC): {(f.LatestAppRecordUtc is { } la ? la.ToString("yyyy-MM-dd HH:mm:ss") : "niciuna")}",
-                    $"Data instalării Windows (UTC): {(installAt is { } ia ? ia.ToString("yyyy-MM-dd HH:mm:ss") : "necitită")}" },
+                    $"Data instalării Windows (UTC): {(installAt is { } ia ? ia.ToString("yyyy-MM-dd HH:mm:ss") : "necitită")}" }
+                .Concat(f.ClockAckText.Length > 0 ? [f.ClockAckText] : []),
             "Dacă ceasul este în urmă, corectați ora (sursă de timp aprobată) și verificați bateria CMOS; treceți incidentul în registrul stației.");
 
         // S04 (C8) Windows updates installed in the period, compared with the register of offline updates.

@@ -41,6 +41,25 @@ namespace LogAnalyzer.UI.Services
         }
 
         public static void NotifyChanged() => SessionChanged?.Invoke();
+
+        /// <summary>
+        /// The operator confirms that the station clock was corrected: appends "clock.ack" to the chained audit (operator, reason, previous and
+        /// current time) and refreshes the clock warning. Returns the message to show.
+        /// </summary>
+        public static string ConfirmClockCorrected(string reason)
+        {
+            if (string.IsNullOrWhiteSpace(reason)) return "Scrieți motivul (cum a fost corectat ceasul) înainte de confirmare.";
+            try
+            {
+                var who = Session is { } s ? $"{s.Role} ({s.Account})" : "operator";
+                LogAnalyzer.Dfir.Case.ClockMemory.Acknowledge(Service.AuditPath, DateTimeOffset.UtcNow, who, reason, LogAnalyzer.Dfir.Windows.Audit.StationFactCollector.ReadInstallDate());
+                return "Corectarea ceasului a fost confirmată și trecută în jurnalul de audit.";
+            }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or InvalidOperationException)
+            {
+                return "Confirmarea nu a putut fi scrisă în jurnalul de audit: " + ex.Message;
+            }
+        }
     }
 
     /// <summary>
