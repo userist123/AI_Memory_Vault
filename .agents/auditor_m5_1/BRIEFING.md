@@ -6,7 +6,7 @@ Conduct a forensic anti-cheating and integrity audit of Milestone 5 deliverables
 ## 🔒 My Identity
 - Archetype: forensic_auditor
 - Roles: critic, specialist, auditor
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m5_1
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m5_1
 - Original parent: 4b331fbc-eb8c-41a5-8ea8-e64218064557
 - Target: Milestone 5 (Continual Learning, TRACe/IR Evaluation, Full Pytest Suite)
 
@@ -45,8 +45,8 @@ Conduct a forensic anti-cheating and integrity audit of Milestone 5 deliverables
 - **Untested angles**: [TBD]
 
 ## Loaded Skills
-- **Source**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`
-- **Local copy**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m5_1\SKILL_vault_security_audit.md`
+- **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`
+- **Local copy**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m5_1\SKILL_vault_security_audit.md`
 - **Core methodology**: Security verification and forensic validation runbook for testing trust boundaries and invariants P0-P15.
 
 ## Key Decisions Made

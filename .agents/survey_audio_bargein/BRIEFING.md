@@ -6,7 +6,7 @@ Comprehensive technical survey and specification mining for Requirement R2 (Casc
 ## 🔒 My Identity
 - Archetype: Explorer
 - Roles: Audio Pipeline & Real-Time Barge-In Specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_audio_bargein
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_audio_bargein
 - Original parent: 5a625f23-4992-4b00-bb13-1f4b316b216c
 - Milestone: Audio Pipeline & Barge-In Specification Mining
 

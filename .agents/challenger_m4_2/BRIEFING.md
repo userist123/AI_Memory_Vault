@@ -6,7 +6,7 @@ Empirically stress-test the remediated FastMCP and Home Assistant modules in `pr
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
 - Roles: critic, specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_2
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_2
 - Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
 - Milestone: Milestone 4 Remediation Stress Verification (challenger_m4_2)
 - Instance: 1 of 1

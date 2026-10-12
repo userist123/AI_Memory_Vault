@@ -1,6 +1,6 @@
 # Empirical Challenge Report — Challenger 2 (Milestone 1)
 
-**Working Directory**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m1_challenger_2`  
+**Working Directory**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m1_challenger_2`  
 **Target Module**: `xau_kinetic/financial_ingestion/adapter.py`  
 **Evaluation Scope**: Deduplication Determinism, Contradiction Detection, Canonical Draft7 Schema Enforcement, SHA-256 Collision Resistance, and Invariants P0-P18 Trust Boundaries.  
 **Verdict**: `APPROVE`

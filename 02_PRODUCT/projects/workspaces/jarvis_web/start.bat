@@ -1,6 +1,6 @@
 @echo off
 setlocal
-set "VAULT_ROOT=C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY"
+set "VAULT_ROOT=C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY"
 set "COGNITIVE_ROOT=%VAULT_ROOT%\projects\jarvis_cognitive_brain"
 set "PYTHONPATH=%VAULT_ROOT%;%COGNITIVE_ROOT%"
 set "JARVIS_UNIFIED_PORT=3000"

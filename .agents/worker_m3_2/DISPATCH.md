@@ -2,16 +2,16 @@
 
 <USER_REQUEST>
 You are teamwork_preview_worker (worker_m3_2).
-Your Working Directory for metadata is: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_2`
-The Project Working Directory is: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
+Your Working Directory for metadata is: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_2`
+The Project Working Directory is: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 
-Authoritative User Request: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
-Project Architecture & Contracts: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-Cognitive Rules: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\rules\vault_cognitive_rules.md`
+Authoritative User Request: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+Project Architecture & Contracts: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+Cognitive Rules: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\rules\vault_cognitive_rules.md`
 
 Feedback from Challenger & Reviewer:
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m3_1\handoff.md`
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m3_2\handoff.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m3_1\handoff.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m3_2\handoff.md`
 
 MANDATORY INTEGRITY WARNING:
 DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A teamwork_preview_auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.

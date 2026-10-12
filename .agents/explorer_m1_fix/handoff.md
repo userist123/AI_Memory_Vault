@@ -1,7 +1,7 @@
 # Milestone 1 Fix Strategy Handoff Report
 
 **Agent**: Explorer M1 Fix (`teamwork_preview_explorer`)  
-**Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m1_fix`  
+**Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m1_fix`  
 **Milestone Target**: M1 Financial Schema & Domain Models Hardening  
 **Timestamp**: 2026-08-26T16:15:00Z  
 **Type**: Hard Handoff (Investigation & Fix Strategy Complete)

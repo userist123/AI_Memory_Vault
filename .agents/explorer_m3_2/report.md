@@ -2,7 +2,7 @@
 
 **Author**: Explorer Agent (`explorer_m3_2`)  
 **Target Subsystem**: `jarvis.agents`  
-**Target Codebase**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
+**Target Codebase**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
 **Date**: 2026-08-28  
 **Status**: SPECIFICATION COMPLETE / READY FOR IMPLEMENTATION  
 

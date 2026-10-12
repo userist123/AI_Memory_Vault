@@ -6,7 +6,7 @@ Empirically challenge, stress-test, and verify Milestone 2 (Cascaded Audio Pipel
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
 - Roles: critic, specialist
-- Working directory: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_2
+- Working directory: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_2
 - Original parent: 0bbc34c1-eddc-44cf-8e9e-c4d23195d41e
 - Milestone: Milestone 2 (Cascaded Audio Pipeline & Barge-In)
 - Instance: 2 of 2
@@ -41,8 +41,8 @@ Empirically challenge, stress-test, and verify Milestone 2 (Cascaded Audio Pipel
 - **Untested angles**: Hardware soundcard loopback with physical microphone (tested via deterministic high-precision virtual drivers and SoundDevice error handlers).
 
 ## Loaded Skills
-- **Source**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\unit-test-generation-contract\SKILL.md
-  - **Local copy**: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_2\skills\unit-test-generation-contract.md
+- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\unit-test-generation-contract\SKILL.md
+  - **Local copy**: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_2\skills\unit-test-generation-contract.md
   - **Core methodology**: Deterministic unit test generation, boundary condition coverage, and isolated mocking.
 
 ## Key Decisions Made

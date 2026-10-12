@@ -6,13 +6,13 @@ Orchestrate the development, testing, verification, and hardening of the Jarvis 
 ## 🔒 My Identity
 - Archetype: orchestrator
 - Roles: orchestrator, user_liaison, human_reporter, successor
-- Working directory: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis_gen2
+- Working directory: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis_gen2
 - Original parent: parent
 - Original parent conversation ID: 6abcf96e-13d5-47c3-9fc0-4f309d0d1385
 
 ## 🔒 My Workflow
 - **Pattern**: Project Pattern (Dual Track: Implementation Track + E2E Testing Track)
-- **Scope document**: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
+- **Scope document**: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
 1. **Decompose**: 6 Milestones (M1-M6) decomposed by module boundary per PROJECT.md.
 2. **Dispatch & Execute**:
    - **Direct (iteration loop)**: For each milestone: Explorer(s) -> Worker -> Reviewer(s) -> Challenger(s) -> Forensic Auditor -> Gate Check.
@@ -74,8 +74,8 @@ Orchestrate the development, testing, verification, and hardening of the Jarvis 
 - Safety timer: none
 
 ## Artifact Index
-- C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md — Global architecture and milestone plan
-- C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md — Authoritative user requirements
-- C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis_gen2\DISPATCH.md — Dispatch log
-- C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis_gen2\progress.md — Liveness & progress tracking
-- C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis_gen2\GATE_STATUS.md — Gate records
+- C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md — Global architecture and milestone plan
+- C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md — Authoritative user requirements
+- C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis_gen2\DISPATCH.md — Dispatch log
+- C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis_gen2\progress.md — Liveness & progress tracking
+- C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis_gen2\GATE_STATUS.md — Gate records

@@ -2,10 +2,10 @@
 
 <USER_REQUEST>
 You are Explorer 1 (Cognitive Core & Persistent Memory Specialist) for the Cognitive Brain ('Creier Vorbitor') project.
-Your assigned working directory is `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_cognitive_memory`.
-The target project codebase is `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`.
+Your assigned working directory is `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_cognitive_memory`.
+The target project codebase is `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`.
 
-Read the authoritative requirements in `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md` (specifically timestamp 2026-08-27T19:19:42Z).
+Read the authoritative requirements in `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md` (specifically timestamp 2026-08-27T19:19:42Z).
 Also inspect existing vault memory structures (`00_CORE`, `01_KNOWLEDGE`, `02_PROJECTS`, `03_PROCEDURES`, `04_MEMORY`, `05_RESOURCES`, `06_INBOX/RAW_IMPORTS`, `AGENTS.md`, and any memory_controller files in the workspace).
 
 Conduct a comprehensive technical survey and specification mining for:

@@ -1,7 +1,7 @@
 # Orchestrator Handoff Report (Generation 1 -> Generation 2)
 
 **Orchestrator**: Generation 1 Project Orchestrator (`teamwork_preview_orchestrator`)  
-**Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_financial`  
+**Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_financial`  
 **Parent Conversation ID**: `8f1dd307-f59b-4416-8532-3dc7d78040ca`  
 **Timestamp**: 2026-08-26T16:29:00Z  
 **Handoff Type**: Soft Handoff (Self-Succession at 16 Spawns Threshold)  

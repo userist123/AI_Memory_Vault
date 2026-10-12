@@ -1,6 +1,6 @@
 # LogAnalyzer — cercetare și plan de lucru
 
-Data: 2026-10-04. Documentul pleacă de la cerințele proprietarului, formulate după investigația NanAgent de pe MARIUS-PC. Scopul aplicației este ca acea investigație să poată fi refăcută cu aplicația, pe orice stație, conectată sau izolată.
+Data: 2026-10-04. Documentul pleacă de la cerințele proprietarului, formulate după investigația NanAgent de pe LAB-PC. Scopul aplicației este ca acea investigație să poată fi refăcută cu aplicația, pe orice stație, conectată sau izolată.
 
 ## 1. Cerințele, în ordinea în care au fost cerute
 
@@ -12,7 +12,7 @@ Data: 2026-10-04. Documentul pleacă de la cerințele proprietarului, formulate 
 | 4 | Într-un domeniu: cercetare pe utilizatori, e-mailuri și alte module | **Făcut** (Etapa D: fila „Investigație domeniu și e-mail”) |
 | 5 | Pe o stație izolată (un singur PC, fără domeniu): ce pot face utilizatorii și administratorii, pentru verificările de control | **Făcut** (Etapa C: fila „Control stație”, raport PDF de control) |
 | 6 | Click pe orice eveniment deschide fișa lui completă, cu toate detaliile, ca în analiza făcută manual | **Făcut** (Etapa B: dublu-click pe orice rând → fișa completă, cu PDF) |
-| 7 | Aplicația să poată reface investigația de pe MARIUS-PC: achiziție, parsare, timeline, corelare, findings, raport | **Făcut** (Etapa E: fila „Investigație completă”, validată pe corpusul NanAgent) |
+| 7 | Aplicația să poată reface investigația de pe LAB-PC: achiziție, parsare, timeline, corelare, findings, raport | **Făcut** (Etapa E: fila „Investigație completă”, validată pe corpusul NanAgent) |
 
 ## 2. Ce fac alte suite și ce preluăm
 

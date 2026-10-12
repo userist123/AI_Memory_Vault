@@ -1,7 +1,7 @@
 ﻿# Handoff Report: Financial Research & Trading Journal Survey
 
 **Agent**: Survey Explorer 1  
-**Working Directory**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_1`  
+**Working Directory**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_1`  
 **Parent Agent**: `fe349d87-bb77-42da-8379-001833bc54af` (parent)  
 **Date**: 2026-08-25  
 **Type**: Hard Handoff (Investigation & Survey Complete)
@@ -11,7 +11,7 @@
 ## 1. Observation
 
 ### 1.1 Source Code Inspection (`ghid.py`)
-- **Path**: `C:\Users\Marius\Desktop\Nu sterge\nusterge\ghid.py` (1954 lines).
+- **Path**: `C:\Users\user\Desktop\Nu sterge\nusterge\ghid.py` (1954 lines).
 - **Hardcoded Secret Observed**: Line 29 contains:
   ```python
   FRED_API_KEY = "e372c6879cce084b8c3601f76adbe78d"
@@ -35,7 +35,7 @@
   - Narrative generators: `explica_miscare` (lines 1484–1520), `identifica_oportunitate` (lines 1522–1538), `extrage_lectie` (lines 1540–1559), `write_ghid_grafice` (lines 1560–1647).
 
 ### 1.2 Spreadsheet Structure Inspection (`Analiza_Piata_Profesionala.xlsx`)
-- **Path**: `C:\Users\Marius\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx`.
+- **Path**: `C:\Users\user\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx`.
 - **15 Sheets Inspected**: `DASHBOARD`, `FISA ACTIV`, `REZUMAT EXECUTIV`, `SEMNALE INTRARE`, `INDICATORI TEHNICI`, `INDICATORI MACRO`, `COMPETITORI SECTOR`, `PRETURI VOLUME`, `RISCURI OPORTUNITATI`, `CALENDAR ECONOMIC`, `JURNAL TRANZACTII`, `ISTORIC TRENDING`, `LEGENDA`, `LIST_ACTIVE`, `GHID INVATARE`.
 - **`JURNAL TRANZACTII` 21 Columns Verified**:
   - `ID`, `Data`, `Ora`, `Activ`, `L/S`, `Setup`, `Entry`, `SL`, `TP`, `Mărime poz.`, `Risc $`, `Exit`, `Data ieșire`, `P&L $`, `P&L %`, `RR Realizat`, `Cal. exec (1-10)`, `Emoție`, `Plan respectat?`, `Lecție`, `Link/SS`.
@@ -81,8 +81,8 @@ The external financial analytics and trading journal system can be fully adapted
 To independently verify all observations and design specs:
 
 1. **Verify Source Files**:
-   - Inspect `C:\Users\Marius\Desktop\Nu sterge\nusterge\ghid.py` (lines 29, 44–150, 413–532, 1484–1647).
-   - Inspect `C:\Users\Marius\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx` sheet names and column headers.
+   - Inspect `C:\Users\user\Desktop\Nu sterge\nusterge\ghid.py` (lines 29, 44–150, 413–532, 1484–1647).
+   - Inspect `C:\Users\user\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx` sheet names and column headers.
 2. **Verify Memory Schema Compatibility**:
    - Inspect `memory_controller/validation/schema.py` and verify that generated frontmatter matches `_CANONICAL_SCHEMA`.
 3. **Run Existing Test Suite**:
@@ -91,6 +91,6 @@ To independently verify all observations and design specs:
    ```
    Must yield 498 passed tests.
 4. **Inspect Survey Reports**:
-   - `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_1\analysis.md`
-   - `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_1\handoff.md`
+   - `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_1\analysis.md`
+   - `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_1\handoff.md`
 

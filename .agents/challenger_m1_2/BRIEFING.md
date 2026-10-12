@@ -6,7 +6,7 @@ Adversarially stress-test SQLite WAL persistence, multi-threading concurrency, m
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
 - Roles: critic, specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m1_2
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m1_2
 - Original parent: 5a625f23-4992-4b00-bb13-1f4b316b216c
 - Milestone: Milestone 1 (Jarvis Cognitive Brain Core & Storage Layer)
 - Instance: Challenger 2 of 2
@@ -49,9 +49,9 @@ Adversarially stress-test SQLite WAL persistence, multi-threading concurrency, m
   - Real hardware audio devices (Silero VAD / Kokoro ONNX on physical sound card) will be tested in Milestone 2.
 
 ## Loaded Skills
-- Source: vault-security-audit (`c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`)
+- Source: vault-security-audit (`c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`)
   - Core methodology: Verification and forensic validation for trust boundaries and invariants P0-P18.
-- Source: skill-sqlite-wal-optimization (`c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\skill-sqlite-wal-optimization\SKILL.md`)
+- Source: skill-sqlite-wal-optimization (`c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\skill-sqlite-wal-optimization\SKILL.md`)
   - Core methodology: Pragmas, WAL concurrency, busy_timeout, atomic transactions.
 
 ## Key Decisions Made

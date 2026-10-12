@@ -6,7 +6,7 @@ Conduct the Milestone 4 Forensic Audit: Verify genuine implementation across cog
 ## 🔒 My Identity
 - Archetype: forensic_auditor
 - Roles: critic, specialist, auditor
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_3
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_3
 - Original parent: 4d8619ff-fda6-4c9e-8801-2dbe0fd86141
 - Target: Milestone 4 (Cognitive Loop & Multi-Agent Coordination)
 
@@ -41,11 +41,11 @@ Conduct the Milestone 4 Forensic Audit: Verify genuine implementation across cog
 - **Untested angles**: None within Milestone 4 scope.
 
 ## Loaded Skills
-- **Source**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`
-  - Local copy: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_3\skill_vault_security_audit.md`
+- **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`
+  - Local copy: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_3\skill_vault_security_audit.md`
   - Core methodology: Security verification and forensic validation runbook for testing trust boundaries and invariants P0-P15.
-- **Source**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
-  - Local copy: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_3\skill_vault_operations.md`
+- **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
+  - Local copy: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_3\skill_vault_operations.md`
   - Core methodology: Runbook and multi-step procedure for interacting with the AI Memory Vault cognitive operating system.
 
 ## Key Decisions Made

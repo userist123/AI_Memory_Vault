@@ -5,8 +5,8 @@
 <USER_REQUEST>
 You are the top-level Project Orchestrator for the autonomous implementation of the local Cognitive Brain ("Creier Vorbitor").
 Read the authoritative user request in `.agents/ORIGINAL_REQUEST.md` (specifically the section with the latest timestamp 2026-08-27T19:19:42Z).
-Your assigned working directory is `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis`.
-The target project codebase working directory is `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`.
+Your assigned working directory is `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis`.
+The target project codebase working directory is `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`.
 
 Execute the project following your standard orchestration protocol:
 1. Initialize your `BRIEFING.md`, `plan.md`, `progress.md`, and `context.md` in your working directory.

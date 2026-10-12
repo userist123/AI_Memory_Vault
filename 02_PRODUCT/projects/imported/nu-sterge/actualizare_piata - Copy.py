@@ -31,7 +31,7 @@ from openpyxl.styles import PatternFill, Font
 # CONFIGURARE — modifică doar această secțiune
 # ══════════════════════════════════════════════════════════════════════════════
 
-EXCEL_PATH = Path(r"C:\Users\Marius\Desktop\Nu sterge\Analiza_Piata_Profesionala.xlsx")
+EXCEL_PATH = Path(r"C:\Users\user\Desktop\Nu sterge\Analiza_Piata_Profesionala.xlsx")
 
 # Cheie FRED API (gratuit la fred.stlouisfed.org) — lasă "" dacă nu ai
 FRED_API_KEY = os.environ.get("FRED_API_KEY", "")

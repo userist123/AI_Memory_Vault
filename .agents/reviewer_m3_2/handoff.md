@@ -86,7 +86,7 @@ The multi-agent RBAC security boundaries, invariant checks, and specialized agen
 To reproduce and verify:
 
 ```powershell
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 
 # 1. Run least-privilege & invariant tests (Passes)
 python -m pytest tests/unit/test_agent_least_privilege.py -v

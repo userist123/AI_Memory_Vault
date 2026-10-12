@@ -22,5 +22,5 @@ Implement Milestone 2:
    `python -m pytest tests/financial/test_financial_search.py -v`
    `python -m pytest tests/financial/ -v`
    `python -m pytest`
-6. Write your handoff report to `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m2_worker_1\handoff.md`.
+6. Write your handoff report to `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m2_worker_1\handoff.md`.
 7. Send a message to parent when complete.

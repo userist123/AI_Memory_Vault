@@ -15,7 +15,7 @@ from openpyxl.utils import get_column_letter
 # CONFIGURARE
 # ══════════════════════════════════════════════════════════════════════════════
 
-EXCEL_PATH = Path(r"C:\\Users\\Marius\\Desktop\\Nu sterge\\Analiza_Piata_Profesionala.xlsx")
+EXCEL_PATH = Path(r"C:\\Users\\user\\Desktop\\Nu sterge\\Analiza_Piata_Profesionala.xlsx")
 FRED_API_KEY = os.environ.get("FRED_API_KEY", "")
 
 INDICI = {

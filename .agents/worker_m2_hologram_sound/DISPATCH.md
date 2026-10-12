@@ -2,13 +2,13 @@
 
 <USER_REQUEST>
 You are Worker 2 (3D Hologram & Tactical Sound Specialist).
-Working Directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m2_hologram_sound
-Original Request Path: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md
-Project Master Plan: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator\PROJECT.md
-Survey Spec: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_2\handoff.md
+Working Directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m2_hologram_sound
+Original Request Path: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md
+Project Master Plan: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator\PROJECT.md
+Survey Spec: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_2\handoff.md
 Target Files:
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_web\js\hologram.js
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_web\js\sound_engine.js
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_web\js\hologram.js
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_web\js\sound_engine.js
 
 Exclusive Write Ownership: `projects/jarvis_web/js/hologram.js` and `projects/jarvis_web/js/sound_engine.js`
 
@@ -31,7 +31,7 @@ Tasks:
      - `playErrorAlert()`: Dissonant alert buzz.
      - `playStandbyChirp()`: Soft descending standby tone.
    - Autoplay policy unlocking on first user interaction with seamless state management.
-4. Document all implementation details in `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m2_hologram_sound\handoff.md`.
+4. Document all implementation details in `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m2_hologram_sound\handoff.md`.
 5. Send a completion message to the orchestrator.
 
 MANDATORY INTEGRITY WARNING:

@@ -15,7 +15,7 @@ if exist main.py (
     echo [EROARE] main.py NU este in directorul curent!
     echo.
     echo SOLUTIE: Muta-te in directorul corect:
-    echo   cd "C:\Users\Marius\Desktop\aplicatie transfer"
+    echo   cd "C:\Users\user\Desktop\aplicatie transfer"
     echo   SAU
     echo   cd "Aplicatie transfer"
     echo.

@@ -279,7 +279,7 @@ When identical concepts across multiple books are aggregated across the entire c
 
 ## 5. Summary of the 11 Slot Conflict Decisions
 
-Full architectural justifications and textual citations are documented in [`00_GOVERNANCE/coordination/antigravity/SLOT_DECISIONS.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/00_GOVERNANCE/coordination/antigravity/SLOT_DECISIONS.md).
+Full architectural justifications and textual citations are documented in [`00_GOVERNANCE/coordination/antigravity/SLOT_DECISIONS.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/00_GOVERNANCE/coordination/antigravity/SLOT_DECISIONS.md).
 
 | # | Concept | Conflicting Slots | Chosen Slot | Core Rationale & Canonical Question |
 |---|---|---|---|---|

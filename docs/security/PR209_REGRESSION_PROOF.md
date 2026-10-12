@@ -160,7 +160,7 @@ If the scanner exited with an error, crashed, or detected security flaws, the wo
 ```text
 ============================= test session starts =============================
 platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0
-rootdir: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY
+rootdir: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
 configfile: pytest.ini
 collected 209 items
 

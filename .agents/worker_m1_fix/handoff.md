@@ -1,7 +1,7 @@
 # Milestone 1 Remediation Handoff Report
 
 **Agent**: Worker M1 Fix (`teamwork_preview_worker`)  
-**Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_fix`  
+**Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_fix`  
 **Target Files**:
 - `memory_controller/financial_schema.py`
 - `tests/financial/test_schema.py`

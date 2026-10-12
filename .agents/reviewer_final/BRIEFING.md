@@ -6,7 +6,7 @@ Comprehensive code and architecture review of the Financial Ingestion Pipeline a
 ## 🔒 My Identity
 - Archetype: teamwork_preview_reviewer
 - Roles: reviewer, critic
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_final
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_final
 - Original parent: e87bdef8-bfc1-4e8e-a965-ccd159cf02a1
 - Milestone: Final Integration Review
 - Instance: 1 of 1

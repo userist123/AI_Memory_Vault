@@ -15,14 +15,14 @@ A forensic audit was conducted across the source-of-truth order (`99_SYSTEM/`, `
 1. **No sequential 1-to-1 invariant specification exists for P0 through P15**:  
    There is **no canonical specification document** in the repository defining 16 discrete, sequentially numbered security invariants as `P0 = ...`, `P1 = ...`, `P2 = ...`, ..., `P15 = ...`.
 2. **The true origin of "P0-P15"**:  
-   - In [`99_SYSTEM/Phase43_P0_Implementation_Contract.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/99_SYSTEM/Phase43_P0_Implementation_Contract.md), **"P0"** designated the **Priority-0** security remediation task ("Phase 4.3 P0 Security Hardening") targeting OMEGA-001 (AI self-verification), OMEGA-002 (provenance forgery), and OMEGA-006 (lifecycle escalation).
+   - In [`99_SYSTEM/Phase43_P0_Implementation_Contract.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/99_SYSTEM/Phase43_P0_Implementation_Contract.md), **"P0"** designated the **Priority-0** security remediation task ("Phase 4.3 P0 Security Hardening") targeting OMEGA-001 (AI self-verification), OMEGA-002 (provenance forgery), and OMEGA-006 (lifecycle escalation).
    - Part 11 of that contract defined **15 adversarial test contracts** numbered **`P0-001` through `P0-015`**.
    - Part 14 codified **12 security invariants** numbered **`I-001` through `I-012`**.
-   - These 15 test contracts were implemented in [`memory_controller/tests/test_security_hardening.py`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/memory_controller/tests/test_security_hardening.py) and [`cognitive_core/tests/test_tool_router_security.py`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/cognitive_core/tests/test_tool_router_security.py), and evaluated comprehensively in [`memory_controller/tests/test_adversarial_p0_p15_invariants.py`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/memory_controller/tests/test_adversarial_p0_p15_invariants.py).
+   - These 15 test contracts were implemented in [`memory_controller/tests/test_security_hardening.py`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/memory_controller/tests/test_security_hardening.py) and [`cognitive_core/tests/test_tool_router_security.py`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/cognitive_core/tests/test_tool_router_security.py), and evaluated comprehensively in [`memory_controller/tests/test_adversarial_p0_p15_invariants.py`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/memory_controller/tests/test_adversarial_p0_p15_invariants.py).
    - In subsequent documentation, authors adopted **`P0-P15` as an umbrella shorthand** referring collectively to the 15 Phase 4.3 P0 test contracts and their underlying trust boundaries.
 3. **The true origin of "P16-P18"**:  
    - In commit `c97e64eca` and the desktop forensics project `projects/registru-transferuri`, developer Marius introduced three physical hardware invariants.
-   - These were formally codified in [`.agents/rules/vault_cognitive_rules.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/rules/vault_cognitive_rules.md#L30-L34) under Section 4:
+   - These were formally codified in [`.agents/rules/vault_cognitive_rules.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/rules/vault_cognitive_rules.md#L30-L34) under Section 4:
      - **`P16`**: Hardware Telemetry Immutability
      - **`P17`**: Friendly Name Isolation
      - **`P18`**: Forensics & Chain of Custody Integrity
@@ -243,7 +243,7 @@ cognitive_core/tests/test_secure_recall_cli.py::test_recall_cli_cli_subprocess P
 ## 7. Answers to Mandatory Questions
 
 ### 1. Is there a canonical P-numbered specification?
-**PARTIAL / NO for sequential P0–P15.** There is no document defining 16 discrete invariant rules numbered `P0`, `P1`, `P2`, ..., `P15`. The authoritative document for P0 is [`99_SYSTEM/Phase43_P0_Implementation_Contract.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/99_SYSTEM/Phase43_P0_Implementation_Contract.md), which defines **15 adversarial test contracts** (`P0-001` through `P0-015`) and **12 security invariants** (`I-001` through `I-012`). For `P16`, `P17`, and `P18`, the canonical specification is Section 4 of [`.agents/rules/vault_cognitive_rules.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/rules/vault_cognitive_rules.md#L30-L34).
+**PARTIAL / NO for sequential P0–P15.** There is no document defining 16 discrete invariant rules numbered `P0`, `P1`, `P2`, ..., `P15`. The authoritative document for P0 is [`99_SYSTEM/Phase43_P0_Implementation_Contract.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/99_SYSTEM/Phase43_P0_Implementation_Contract.md), which defines **15 adversarial test contracts** (`P0-001` through `P0-015`) and **12 security invariants** (`I-001` through `I-012`). For `P16`, `P17`, and `P18`, the canonical specification is Section 4 of [`.agents/rules/vault_cognitive_rules.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/rules/vault_cognitive_rules.md#L30-L34).
 
 ### 2. Is it P0-P15, P0-P18, or another numbering?
 It is a **composite umbrella term**:
@@ -258,12 +258,12 @@ All **18 memory controller and cognitive core security controls** (Principal aut
 All 18 memory security controls are covered by passing automated unit and integration tests (37 passing security-specific tests; 1,671 tests passing clean overall in the repository).
 
 ### 5. Which documentation is stale?
-- [`memory_controller/financial_schema.py`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/memory_controller/financial_schema.py#L573-L575): Uses an informal, incomplete mapping (`P0`, `P2`, `P3`) that omits `P1` and `P4-P15`.
-- [`README.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/README.md#L6): Refers to `P0-P18 Invariants` without explaining the distinction between the 15 memory test contracts and the 3 hardware telemetry invariants.
-- [`99_SYSTEM/MCP_Memory_Server_Specification.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/99_SYSTEM/MCP_Memory_Server_Specification.md#L52): Cites `Invariantele P0-P18` without referencing the underlying specifications.
+- [`memory_controller/financial_schema.py`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/memory_controller/financial_schema.py#L573-L575): Uses an informal, incomplete mapping (`P0`, `P2`, `P3`) that omits `P1` and `P4-P15`.
+- [`README.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/README.md#L6): Refers to `P0-P18 Invariants` without explaining the distinction between the 15 memory test contracts and the 3 hardware telemetry invariants.
+- [`99_SYSTEM/MCP_Memory_Server_Specification.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/99_SYSTEM/MCP_Memory_Server_Specification.md#L52): Cites `Invariantele P0-P18` without referencing the underlying specifications.
 
 ### 6. What is the exact minimum corrective action required?
-Commit this reconciliation report and its machine-readable JSON counterpart to establish the authoritative mapping. In subsequent documentation tasks (outside this scope), update [`.agents/rules/vault_cognitive_rules.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/rules/vault_cognitive_rules.md) and [`README.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/README.md) to explicitly cite [`99_SYSTEM/Phase43_P0_Implementation_Contract.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/99_SYSTEM/Phase43_P0_Implementation_Contract.md) (`I-001` through `I-012` and `P0-001` through `P0-015`), preventing future agents from inferring that a non-existent sequential `P0–P15` list exists.
+Commit this reconciliation report and its machine-readable JSON counterpart to establish the authoritative mapping. In subsequent documentation tasks (outside this scope), update [`.agents/rules/vault_cognitive_rules.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/rules/vault_cognitive_rules.md) and [`README.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/README.md) to explicitly cite [`99_SYSTEM/Phase43_P0_Implementation_Contract.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/99_SYSTEM/Phase43_P0_Implementation_Contract.md) (`I-001` through `I-012` and `P0-001` through `P0-015`), preventing future agents from inferring that a non-existent sequential `P0–P15` list exists.
 
 
 ## 🔗 Legături Sinaptice

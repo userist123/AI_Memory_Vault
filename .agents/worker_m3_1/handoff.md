@@ -29,7 +29,7 @@ Output verbatim:
 ```
 ============================= test session starts =============================
 platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0
-rootdir: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+rootdir: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 configfile: pyproject.toml
 testpaths: tests
 plugins: anyio-4.12.1, langsmith-0.11.0, asyncio-1.4.0
@@ -121,7 +121,7 @@ To independently reproduce and verify the implementation:
 
 1. Change directory to project root:
    ```powershell
-   cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+   cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
    ```
 
 2. Run pytest:

@@ -6,7 +6,7 @@ Implement production-grade AI Memory Vault REST Client & Offline Cache (`project
 ## 🔒 My Identity
 - Archetype: worker
 - Roles: implementer, qa, specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_vault_client
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_vault_client
 - Original parent: 95f7bf7e-c539-4492-b214-af221cca8379
 - Milestone: M3 (AI Memory Vault REST Client & Cache)
 
@@ -40,7 +40,7 @@ Implement production-grade AI Memory Vault REST Client & Offline Cache (`project
 - **Code layout**: `projects/jarvis_web/js/vault_client.js`
 
 ## Loaded Skills
-- **Source**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
+- **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
 - **Core methodology**: Vault query, propose, review, and citation extraction workflows.
 
 ## Change Tracker

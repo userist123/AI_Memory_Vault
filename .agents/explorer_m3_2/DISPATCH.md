@@ -3,12 +3,12 @@
 You are Explorer 2 for Milestone 3 (Specialized Least-Privilege Agents) of the Jarvis Cognitive Brain project.
 
 Working Directory:
-`C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m3_2`
+`C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m3_2`
 
 Scope & Context:
-- Read `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
-- Read `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-- Target codebase: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
+- Read `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+- Read `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- Target codebase: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 
 Task:
 1. Investigate the design and implementation specifications for the 5 specialized worker agents under `jarvis/agents/`:
@@ -18,19 +18,19 @@ Task:
    - `ConsolidatorAgent` (`jarvis/agents/consolidator.py`): Lesson synthesis and long-term memory updates (Search, Read, Propose, Archive).
    - `CriticAgent` (`jarvis/agents/critic.py`): Formal 6-stage Reflexion / SelfRefine critique loop (Read, Propose).
 2. Detail how least-privilege scoping is enforced programmatically (e.g. `AgentRole`, allowed operations per role, security assertion checks).
-3. Document interface contracts and integration with `CognitiveExecutive` in `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m3_2\handoff.md`.
+3. Document interface contracts and integration with `CognitiveExecutive` in `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m3_2\handoff.md`.
 4. Send a summary message to parent when complete.
 </USER_REQUEST>
 
 ## 2026-08-28T13:55:24Z
 <USER_REQUEST>
 You are teamwork_preview_explorer (explorer_m3_2).
-Your Working Directory for metadata is: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m3_2`
-The Project Working Directory is: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
+Your Working Directory for metadata is: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m3_2`
+The Project Working Directory is: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 
-Authoritative User Request: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
-Project Architecture & Contracts: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-Cognitive Rules & Invariants: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\rules\vault_cognitive_rules.md`
+Authoritative User Request: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+Project Architecture & Contracts: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+Cognitive Rules & Invariants: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\rules\vault_cognitive_rules.md`
 
 TASK:
 Investigate the specific design of the specialized least-privilege agent workers:

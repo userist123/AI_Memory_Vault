@@ -1,13 +1,13 @@
 ## 2026-08-27T19:36:40Z
 
 You are Worker for Milestone 1 Iteration 2 of the Jarvis Cognitive Brain project.
-Your assigned working directory is `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_iter2`.
-The target project codebase is `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`.
+Your assigned working directory is `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_iter2`.
+The target project codebase is `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`.
 
 Read:
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md` (timestamp 2026-08-27T19:19:42Z)
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m1_iter2\handoff.md` (FULL REMEDIATION SPECIFICATION)
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md` (timestamp 2026-08-27T19:19:42Z)
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m1_iter2\handoff.md` (FULL REMEDIATION SPECIFICATION)
 
 MANDATORY INTEGRITY WARNING:
 DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A teamwork_preview_auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.

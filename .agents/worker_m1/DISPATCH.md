@@ -1,12 +1,12 @@
 ## 2026-08-27T19:24:10Z
 You are Worker 1 (Cognitive Core & Memory Storage Specialist) for the Cognitive Brain ('Creier Vorbitor') project.
-Your assigned working directory is `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1`.
-The target project codebase is `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`.
+Your assigned working directory is `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1`.
+The target project codebase is `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`.
 
 Read the authoritative requirements and architecture:
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md` (specifically timestamp 2026-08-27T19:19:42Z)
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_cognitive_memory\handoff.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md` (specifically timestamp 2026-08-27T19:19:42Z)
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_cognitive_memory\handoff.md`
 
 MANDATORY INTEGRITY WARNING:
 DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A teamwork_preview_auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.

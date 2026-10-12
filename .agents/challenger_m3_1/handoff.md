@@ -78,7 +78,7 @@ To independently verify the bugs and subsequent fixes:
 
 1. Change directory to project root:
    ```powershell
-   cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+   cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
    ```
 
 2. Run the reproducer test suite:
