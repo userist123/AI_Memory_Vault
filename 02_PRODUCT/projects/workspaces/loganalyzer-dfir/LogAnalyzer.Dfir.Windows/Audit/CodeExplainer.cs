@@ -79,6 +79,25 @@ public static class CodeExplainer
             "Pe o stație izolată, orice conectare la rețea este o abatere.", ""),
         [("Microsoft-Windows-WLAN-AutoConfig/Operational", 8001)] = E("WLAN 8001", "eveniment Windows", "Stația s-a conectat la o rețea fără fir (Wi-Fi); SSID = numele rețelei.",
             "Pe o stație izolată, o conectare Wi-Fi este o abatere.", ""),
+        [("AppLocker", 8003)] = E("AppLocker 8003", "eveniment Windows", "AppLocker (lista albă) ar fi oprit pornirea unui program, dar este doar în mod audit, așa că programul a rulat.",
+            "Arată programe neaprobate care rulează pe stație; în mod de blocare ar fi fost oprite.", "Jurnalul „AppLocker/EXE and DLL”; câmpul FilePath arată programul."),
+        [("AppLocker", 8004)] = E("AppLocker 8004", "eveniment Windows", "AppLocker (lista albă) a OPRIT pornirea unui program neaprobat.",
+            "Cineva a încercat să pornească un program care nu este aprobat pe stație.", "Jurnalul „AppLocker/EXE and DLL”; câmpul FilePath arată programul."),
+        [("AppLocker", 8006)] = E("AppLocker 8006", "eveniment Windows", "AppLocker ar fi oprit un script sau un pachet de instalare (MSI), dar este doar în mod audit, așa că a rulat.",
+            "Arată scripturi sau instalări neaprobate care au rulat.", "Jurnalul „AppLocker/MSI and Script”."),
+        [("AppLocker", 8007)] = E("AppLocker 8007", "eveniment Windows", "AppLocker a OPRIT un script sau un pachet de instalare (MSI) neaprobat.",
+            "Cineva a încercat să ruleze un script sau să instaleze un program neaprobat.", "Jurnalul „AppLocker/MSI and Script”."),
+        [(StationFactCollector.CodeIntegrityChannel, 3076)] = E("CodeIntegrity 3076", "eveniment Windows", "App Control (WDAC) ar fi oprit un fișier neaprobat, dar politica este doar în mod audit, așa că fișierul a rulat.",
+            "Arată programe sau biblioteci neaprobate care au rulat pe stație.", "Câmpul „File Name” arată fișierul."),
+        [(StationFactCollector.CodeIntegrityChannel, 3077)] = E("CodeIntegrity 3077", "eveniment Windows", "App Control (WDAC) a OPRIT încărcarea unui fișier neaprobat.",
+            "Cineva sau ceva a încercat să ruleze un fișier care nu este aprobat pe stație.", "Câmpul „File Name” arată fișierul."),
+        [(StationFactCollector.DefenderChannel, 1000)] = E("Defender 1000", "eveniment Windows", "Microsoft Defender a început o scanare (rapidă, completă sau a unui suport anume).",
+            "Arată dacă un suport a fost verificat cu antivirusul imediat după conectare.", "Câmpul „Scan Resources” arată ce s-a scanat (de exemplu E:\\)."),
+        [(StationFactCollector.DefenderChannel, 1001)] = E("Defender 1001", "eveniment Windows", "Microsoft Defender a terminat o scanare.", "Arată că scanarea s-a încheiat.", ""),
+        [(StationFactCollector.DefenderChannel, 1116)] = E("Defender 1116", "eveniment Windows", "Microsoft Defender a găsit un program rău-intenționat sau nedorit.",
+            "Un program rău-intenționat a ajuns pe stație; trebuie aflat de unde (de exemplu de pe un suport conectat).", "Câmpurile „Threat Name” și „Path” arată ce și unde."),
+        [(StationFactCollector.DefenderChannel, 1117)] = E("Defender 1117", "eveniment Windows", "Microsoft Defender a luat o măsură împotriva unui program rău-intenționat (carantină, ștergere).",
+            "Arată că amenințarea a fost tratată; originea ei trebuie totuși investigată.", ""),
     };
 
     private static readonly Dictionary<string, string> ChannelAliases = new(StringComparer.OrdinalIgnoreCase)
@@ -88,6 +107,7 @@ public static class CodeExplainer
         ["WLAN"] = "Microsoft-Windows-WLAN-AutoConfig/Operational",
         ["TerminalServices-LocalSessionManager"] = "Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", ["Partition/Diagnostic"] = "Microsoft-Windows-Partition/Diagnostic",
         ["WLAN-AutoConfig"] = "Microsoft-Windows-WLAN-AutoConfig/Operational",
+        ["CodeIntegrity"] = StationFactCollector.CodeIntegrityChannel, ["Defender"] = StationFactCollector.DefenderChannel,
     };
 
     /// <summary>The plain explanation of an event, or null when this log/id pair is not in the catalogue (never guessed).</summary>
@@ -145,6 +165,18 @@ public static class CodeExplainer
             "Arată ce stick-uri au fost folosite, chiar dacă jurnalele s-au pierdut.", "Ștergerea acestei liste este o urmă de ascundere."),
         E(@"NetworkList\Profiles", "cheie de registru", "Lista rețelelor la care stația s-a conectat vreodată, cu data primei și ultimei conectări.",
             "Pe o stație izolată arată dacă a fost vreodată conectată la o rețea.", "Profilurile pot fi șterse manual; lipsa lor nu dovedește nimic."),
+        E(@"FVE\RDVDenyWriteAccess", "valoare de registru", "Politica BitLocker care interzice scrierea pe suporturi amovibile necriptate.", "Datele pot ieși de pe stație doar pe suporturi criptate.", "1 = scrierea pe suporturi necriptate este blocată (de pe ele se poate doar citi)."),
+        E(@"Kernel DMA Protection\DeviceEnumerationPolicy", "valoare de registru", "Ce se întâmplă cu dispozitivele Thunderbolt/USB4 care nu suportă protecția memoriei.", "Un astfel de dispozitiv poate citi direct memoria stației.", "0 = blocate, 1 = permise după autentificare (implicit), 2 = permise toate."),
+        E(@"Terminal Services\fAllowToGetHelp", "valoare de registru", "Politica pentru Asistența la distanță (Remote Assistance).", "Prin ea altă persoană poate prelua stația din rețea.", "0 = interzisă (corect pe stația izolată), 1 = permisă."),
+        E(@"Remote Assistance\fAllowToGetHelp", "valoare de registru", "Setarea stației pentru Asistența la distanță (Proprietăți sistem → Acces de la distanță).", "Prin ea altă persoană poate prelua stația din rețea.", "0 = oprită, 1 = permisă; politica Terminal Services\\fAllowToGetHelp are întâietate."),
+        E(@"Services\WinRM\Start", "valoare de registru", "Modul de pornire al serviciului de administrare la distanță (WinRM).", "Cu serviciul pornit se pot rula comenzi pe stație din rețea.", "4 = dezactivat, 3 = la cerere, 2 = automat."),
+        E(@"WSMAN\Listener", "cheie de registru", "Punctele de ascultare ale administrării la distanță (WinRM), create de „winrm quickconfig”.", "Un punct de ascultare înseamnă că stația acceptă comenzi din rețea.", "Lipsa cheii sau a subcheilor = nu ascultă."),
+        E(@"Services\PortProxy", "cheie de registru", "Redirecționările de porturi create cu „netsh interface portproxy”.", "O redirecționare face din stație o punte între rețele.", "Fiecare valoare: adresa/portul ascultat → adresa/portul către care se trimite."),
+        E(@"Network Connections\NC_ShowSharedAccessUI", "valoare de registru", "Politica care interzice pornirea partajării conexiunii la Internet (ICS).", "Partajarea face din stație o punte între rețele.", "0 = interzisă (corect pe stația izolată)."),
+        E(@"Services\SharedAccess\Start", "valoare de registru", "Modul de pornire al serviciului de partajare a conexiunii la Internet (ICS).", "Serviciul transmite traficul dintr-o rețea în alta.", "4 = dezactivat, 3 = la cerere, 2 = automat."),
+        E(@"0e796bdb-100d-47d6-a2d5-f7d2daa51f51\ACSettingIndex", "valoare de registru", "Politica „parolă la trezire” pentru stația alimentată din priză.", "Fără parolă, oricine trezește stația intră în sesiunea deschisă.", "1 = se cere parola, 0 = nu se cere."),
+        E(@"0e796bdb-100d-47d6-a2d5-f7d2daa51f51\DCSettingIndex", "valoare de registru", "Politica „parolă la trezire” pentru stația alimentată din baterie.", "Fără parolă, oricine trezește stația intră în sesiunea deschisă.", "1 = se cere parola, 0 = nu se cere."),
+        E(@"Desktop\DelayLockInterval", "valoare de registru", "Setarea „Solicitare autentificare” a utilizatorului (după cât timp de somn se cere parola).", "Valoarea „niciodată” lasă sesiunea deschisă la trezire.", "0 = la fiecare trezire; 4294967295 (sau -1) = niciodată."),
     ];
 
     private static readonly Dictionary<string, CodeExplanation> Settings = new(StringComparer.Ordinal)
@@ -166,6 +198,20 @@ public static class CodeExplainer
         ["HNetCfg.FwPolicy2"] = E("HNetCfg.FwPolicy2", "interfață Windows", "Starea firewall-ului Windows pe fiecare profil de rețea.", "Arată dacă firewall-ul este pornit.", ""),
         ["Win32_EncryptableVolume"] = E("Win32_EncryptableVolume", "interogare BitLocker", "Starea criptării BitLocker a discului.", "Arată dacă datele sunt protejate dacă discul este scos din stație.", "ProtectionStatus 1 = protejat, 0 = neprotejat."),
         ["EventLogConfiguration"] = E("Configurația jurnalului", "setare Windows", "Dimensiunea maximă a jurnalului și ce face când se umple.", "Un jurnal mic pierde repede evenimentele vechi.", ""),
+        ["GetKeyProtectorType"] = E("Tipuri de protecție BitLocker", "interogare BitLocker", "Cum se deblochează discul criptat la pornire.", "Doar TPM (fără PIN) deblochează discul singur, chiar dacă stația este furată întreagă.",
+            "1 = TPM, 2 = cheie pe stick, 3 = parolă de recuperare, 4 = TPM și PIN, 5 = TPM și cheie pe stick, 6 = TPM, PIN și cheie pe stick, 8 = parolă."),
+        ["ConversionStatus"] = E("ConversionStatus", "interogare BitLocker", "Cât de criptat este volumul.", "Un volum în curs de criptare nu este încă protejat complet.", "0 = necriptat, 1 = criptat complet, 2 = criptare în curs, 3 = decriptare în curs, 4/5 = oprită temporar."),
+        ["Win32_Tpm"] = E("Win32_Tpm", "interogare Windows (WMI)", "Starea cipului de securitate TPM: dacă există, dacă este pornit, pregătit și ce versiune are.", "TPM păstrează cheile de criptare legate de placa de bază.", "Necesită drepturi de administrator."),
+        ["VirtualizationBasedSecurityStatus"] = E("VirtualizationBasedSecurityStatus", "interogare Windows (WMI)", "Starea securității bazate pe virtualizare (VBS).", "Fără VBS, Credential Guard și protecția integrității codului nu funcționează.", "0 = oprită, 1 = cerută dar nu rulează, 2 = rulează."),
+        ["UsermodeCodeIntegrityPolicyEnforcementStatus"] = E("UsermodeCodeIntegrityPolicyEnforcementStatus", "interogare Windows (WMI)", "Cum aplică App Control (WDAC) lista albă pentru programe.", "Doar modul de aplicare oprește programele neaprobate.", "0 = oprită, 1 = doar audit (notează), 2 = aplicată (blochează)."),
+        ["Kernel DMA Protection”"] = E("Kernel DMA Protection", "informație Windows", "Protecția memoriei la porturile Thunderbolt/USB4, așa cum o afișează „Informații sistem” (msinfo32).", "Fără ea, un dispozitiv conectat la port poate citi memoria stației.", "Pornită / oprită; depinde de placa de bază și de setările UEFI."),
+        ["CONSOLELOCK"] = E("CONSOLELOCK", "setare de alimentare", "Setarea planului de alimentare care cere parola la revenirea din somn (powercfg).", "Fără ea, oricine trezește stația intră în sesiunea deschisă.", "1 = se cere parola, 0 = nu se cere."),
+        ["FullScanEndTime"] = E("FullScanEndTime", "interogare Microsoft Defender", "Data la care s-a terminat ultima scanare completă a stației.", "O scanare veche poate lăsa nedescoperit un program adus înainte de ultima actualizare.", "Gol = nicio scanare completă, niciodată."),
+        ["AntiVirusProduct"] = E("AntiVirusProduct", "interogare Windows (WMI)", "Antivirusurile înregistrate în Centrul de securitate Windows, inclusiv ale altor producători.", "Arată ce antivirus protejează efectiv stația.", "productState: un cod numeric; aplicația îl citește ca pornit/oprit și semnături la zi/vechi (decodare nedocumentată oficial)."),
+        ["Win32_Share"] = E("Win32_Share", "interogare Windows (WMI)", "Lista folderelor și imprimantelor partajate de stație în rețea.", "O partajare permite altui calculator să citească sau să scrie pe stație.", "C$, ADMIN$, IPC$ sunt partajările administrative implicite ale Windows."),
+        ["HNetCfg.HNetShare"] = E("HNetCfg.HNetShare", "interfață Windows", "Interfața Windows care arată ce conexiuni au partajarea conexiunii la Internet pornită.", "Arată dacă stația face legătura între două rețele.", "Aplicația doar citește, nu schimbă nimic."),
+        ["Win32_QuickFixEngineering"] = E("Win32_QuickFixEngineering", "interogare Windows (WMI)", "Lista actualizărilor Windows instalate, cu numărul KB și data.", "Se compară cu registrul actualizărilor offline.", "Nu cuprinde actualizările antivirusului și nici toate componentele Windows."),
+        ["Get-Acl -Audit"] = E("Reguli de audit (SACL)", "setare Windows", "Lista care spune ce acces la fișierele unui folder se înregistrează în jurnalul Security, și pentru cine.", "Fără reguli, accesul la documente nu lasă nicio urmă.", "Citirea ei cere drepturi de administrator; aplicația nu o schimbă."),
     };
 
     // ---- audit, SIDs, codes ----------------------------------------------------------------------------------------------------------------
@@ -247,7 +293,7 @@ public static class CodeExplainer
 
     // ---- finding the codes in a line of text --------------------------------------------------------------------------------------------
 
-    private static readonly Regex EventRef = new(@"(?<log>Security|System|Application|Microsoft-Windows-[\w\-]+/\w+|PowerShell|TerminalServices(?:-LocalSessionManager)?|Partition(?:/Diagnostic)?|NetworkProfile|WLAN(?:-AutoConfig)?) (?<ids>\d{1,5}(?:\s*,\s*\d{1,5})*)\b", RegexOptions.Compiled);
+    private static readonly Regex EventRef = new(@"(?<log>Security|System|Application|Microsoft-Windows-[\w\-]+/\w+|PowerShell|TerminalServices(?:-LocalSessionManager)?|Partition(?:/Diagnostic)?|NetworkProfile|WLAN(?:-AutoConfig)?|AppLocker|CodeIntegrity|Defender) (?<ids>\d{1,5}(?:\s*,\s*\d{1,5})*)\b", RegexOptions.Compiled);
     private static readonly Regex GuidRef = new(@"\{?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\}?", RegexOptions.Compiled);
     private static readonly Regex SidRef = new(@"S-1-\d+(?:-\d+)+", RegexOptions.Compiled);
     private static readonly Regex AuditCode = new(@"%%84(?:48|49|50|51)", RegexOptions.Compiled);
@@ -300,6 +346,7 @@ public static class CodeExplainer
         ["MapsBroker"] = ("Serviciul pentru hărți descărcate.", "Inutil pe o stație izolată."),
         ["XblGameSave"] = ("Serviciu Xbox (jocuri).", "Inutil pe o stație de lucru."),
         ["icssvc"] = ("Hotspot mobil Windows (partajarea conexiunii).", "Ar transforma stația într-un punct de acces la rețea."),
+        ["SharedAccess"] = ("Partajarea conexiunii la Internet (ICS).", "Face din stație o punte între rețele; pe o stație izolată trebuie oprit."),
         ["WMPNetworkSvc"] = ("Partajarea în rețea a Windows Media Player.", "Inutil; deschide stația către rețea."),
     };
 

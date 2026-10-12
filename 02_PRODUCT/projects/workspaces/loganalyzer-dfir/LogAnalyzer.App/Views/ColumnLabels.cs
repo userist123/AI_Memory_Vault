@@ -22,6 +22,7 @@ namespace LogAnalyzer.UI.Views
             ["Publisher"] = "Producător", ["PathPattern"] = "Cale (model)", ["Sha256"] = "Amprentă (SHA-256)",
             ["PolicyPath"] = "Calea politicii", ["Description"] = "Descriere",
             ["FromZone"] = "Din zona", ["ToZone"] = "În zona", ["Medium"] = "Suport", ["Address"] = "Adresă", ["Purpose"] = "Scop",
+            ["Path"] = "Calea folderului", ["Package"] = "Pachet (nume sau KB)", ["Origin"] = "Proveniență", ["BroughtBy"] = "Adus de",
         };
 
         public static string For(string column) => Romanian.TryGetValue(column, out var ro) ? ro : column;

@@ -51,6 +51,7 @@ public static class ProfileOps
             S("Software aprobat", ProfileTable.ApprovedSoftware),
             S("Politică GPO așteptată", ProfileTable.ExpectedPolicies),
             S("Zone și transferuri", ProfileTable.Zones, ProfileTable.TransferChannels, ProfileTable.NetworkDestinations),
+            S("Foldere clasificate", ProfileTable.ClassifiedFolders),
         ];
     }
 

@@ -146,6 +146,14 @@
             </WrapPanel>
         </Border>
         </Expander>
+
+        <!-- Register of offline updates (control research P5): compared with the installed updates by check S04 -->
+        <Expander Header="Registrul actualizărilor offline (actualizările aduse pe stație pe un suport)" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12"
+                  AutomationProperties.HelpText="Fiecare actualizare Windows, antivirus sau de aplicație adusă pe stație se trece aici. Controlul stației compară actualizările instalate în perioadă cu acest registru.">
+            <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,6,0,0" Height="460">
+                <local:RegisterView DataContext="{Binding UpdateRegister}"/>
+            </Border>
+        </Expander>
         </StackPanel>
 
         <TabControl Grid.Row="2" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" Visibility="{Binding HasResult, Converter={StaticResource BoolToVis}}">

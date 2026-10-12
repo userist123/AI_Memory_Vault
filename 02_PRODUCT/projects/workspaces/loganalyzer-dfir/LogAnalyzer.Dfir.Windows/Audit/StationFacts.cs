@@ -21,6 +21,30 @@ public sealed record UsbDeviceFact(string Device, string Serial, string Friendly
 
 public sealed record ChannelCoverage(string Channel, DateTimeOffset? OldestUtc, long Records, bool Readable, string Note);
 
+public enum VolumeKind { Sistem, Fix, Amovibil }
+
+/// <summary>
+/// One volume as BitLocker reports it (Win32_EncryptableVolume). ProtectionStatus: 0 = neprotejat, 1 = protejat, 2 = necunoscut (for example an
+/// encrypted medium that is still locked); null = Windows reported nothing for this drive. Protectors: KeyProtectorType codes (1 = TPM, 4 = TPM + PIN,
+/// 3 = recovery password, ...); null = they could not be read.
+/// </summary>
+public sealed record VolumeFact(string Drive, VolumeKind Kind, int? ProtectionStatus, int? ConversionStatus, IReadOnlyList<int>? Protectors, string Note = "");
+
+/// <summary>An antivirus registered in Windows Security Center (root\SecurityCenter2 AntiVirusProduct); ProductState is the raw bit field.</summary>
+public sealed record AntivirusProductFact(string Name, uint? ProductState);
+
+/// <summary>A shared folder or device (Win32_Share). Type 0x80000000 and above = the default administrative shares (C$, ADMIN$, IPC$).</summary>
+public sealed record ShareFact(string Name, string Path, uint Type)
+{
+    public bool IsDefaultAdminShare => Type >= 0x80000000u;
+}
+
+/// <summary>The audit rules (SACL) of one classified folder from the procedure profile. AuditRules null = not read (see Error).</summary>
+public sealed record FolderAuditFact(string Path, bool Exists, int? AuditRules, string Rules, string Error);
+
+/// <summary>One installed Windows update (Win32_QuickFixEngineering).</summary>
+public sealed record InstalledUpdateFact(string HotFixId, DateTime? InstalledOn, string Description);
+
 /// <summary>Everything collected from the station for a control audit. Collection never changes the station.</summary>
 public sealed class StationFacts
 {
@@ -41,6 +65,19 @@ public sealed class StationFacts
     public List<LogFact> Logs { get; init; } = [];
     public List<ChannelCoverage> Coverage { get; init; } = [];
     public List<EvidenceGap> Gaps { get; init; } = [];
+
+    // Air-gap station requirements (comparison 2026-10-12, rows A2-A16, B8, C8). For every list, null = the source could not be read.
+    /// <summary>Every volume with a drive letter and its BitLocker state; null = BitLocker could not be queried (administrator).</summary>
+    public List<VolumeFact>? Volumes { get; set; }
+    /// <summary>Drive letters of the removable volumes connected now (readable without administrator rights).</summary>
+    public List<string> RemovableDrivesNow { get; init; } = [];
+    public List<AntivirusProductFact>? AntivirusProducts { get; set; }
+    public List<ShareFact>? Shares { get; set; }
+    /// <summary>One entry per classified folder of the procedure profile; an empty list = the profile lists no folder; null = not collected.</summary>
+    public List<FolderAuditFact>? FolderAudits { get; set; }
+    public List<InstalledUpdateFact>? InstalledUpdates { get; set; }
+    /// <summary>The register of offline updates kept by the organisation; an empty list = the register is not filled in; null = not given.</summary>
+    public List<LogAnalyzer.Dfir.Registers.UpdateRow>? OfflineUpdateRegister { get; set; }
 }
 
 public static class StationFactCollector
@@ -57,9 +94,23 @@ public static class StationFactCollector
         ["Microsoft-Windows-TerminalServices-LocalSessionManager/Operational"] = [21, 24, 25],
         ["Microsoft-Windows-WLAN-AutoConfig/Operational"] = [8001, 8003],
         ["Microsoft-Windows-NetworkProfile/Operational"] = [10000, 10001],
+        // Application allow-listing: AppLocker would-block (8003, 8006) / blocked (8004, 8007); App Control (WDAC) audit (3076) / blocked (3077).
+        [AppLockerExeChannel] = [8003, 8004],
+        [AppLockerMsiChannel] = [8006, 8007],
+        [CodeIntegrityChannel] = [3076, 3077],
+        // Defender scans (1000 started, 1001 finished) and detections (1116, 1117): was a medium scanned right after it was connected?
+        [DefenderChannel] = [1000, 1001, 1116, 1117],
     };
 
-    public static StationFacts Collect(DateTimeOffset periodStartUtc, bool stationShouldBeIsolated, int maxPerId = 5000, CancellationToken ct = default)
+    public const string AppLockerExeChannel = "Microsoft-Windows-AppLocker/EXE and DLL";
+    public const string AppLockerMsiChannel = "Microsoft-Windows-AppLocker/MSI and Script";
+    public const string CodeIntegrityChannel = "Microsoft-Windows-CodeIntegrity/Operational";
+    public const string DefenderChannel = "Microsoft-Windows-Windows Defender/Operational";
+
+    /// <param name="classifiedFolders">The classified folders of the procedure profile (their audit rules are read); null = not collected.</param>
+    /// <param name="offlineUpdates">The organisation's register of offline updates (compared with the installed updates); null = not given.</param>
+    public static StationFacts Collect(DateTimeOffset periodStartUtc, bool stationShouldBeIsolated, int maxPerId = 5000, CancellationToken ct = default,
+                                       IReadOnlyList<string>? classifiedFolders = null, IReadOnlyList<LogAnalyzer.Dfir.Registers.UpdateRow>? offlineUpdates = null)
     {
         using var id = WindowsIdentity.GetCurrent();
         var facts = new StationFacts
@@ -77,6 +128,10 @@ public static class StationFactCollector
                 "Nu se poate spune ce activitate înregistrează stația", "auditpol /get /category:* (administrator)", "Cu drepturi de administrator"));
         Try(facts, "Setări de securitate", () => ReadSettings(facts));
         Try(facts, "Setări de securitate (extinse)", () => ReadSettingsWave2(facts));
+        Try(facts, "Setări de securitate (stație izolată)", () => ReadSettingsWave3(facts));
+        Try(facts, "Volume și BitLocker", () => ReadVolumes(facts));
+        if (classifiedFolders is not null) facts.FolderAudits = ReadFolderAudits(classifiedFolders);
+        if (offlineUpdates is not null) facts.OfflineUpdateRegister = [.. offlineUpdates];
         Try(facts, "Profiluri de rețea", () => facts.NetworkProfiles.AddRange(ReadNetworkProfiles()));
         Try(facts, "Interfețe de rețea", () => facts.ConnectedInterfacesNow.AddRange(ReadConnectedInterfaces()));
         Try(facts, "Dispozitive USB (USBSTOR)", () => facts.UsbDevices.AddRange(ReadUsbStor()));
@@ -442,6 +497,314 @@ public static class StationFactCollector
         if (DateTime.TryParse(text, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var d)) return d.Date;
         if (DateTime.TryParse(text, System.Globalization.CultureInfo.CurrentCulture, System.Globalization.DateTimeStyles.None, out d)) return d.Date;
         return null;
+    }
+
+    // ---- settings, third wave: air-gap station requirements (read-only) ---------------------------------------------
+
+    private static readonly Guid SubNoneGuid = new("fea3413e-7e05-4911-9a71-700331f1c294");        // powercfg SUB_NONE
+    private static readonly Guid ConsoleLockGuid = new("0e796bdb-100d-47d6-a2d5-f7d2daa51f51");    // powercfg CONSOLELOCK: password on wake
+
+    private static void ReadSettingsWave3(StationFacts f)
+    {
+        var s = f.Settings;
+
+        // TPM (WMI class readable by administrators only; without rights the keys stay empty = not read).
+        Guard(() =>
+        {
+            using var tpm = new ManagementObjectSearcher(@"root\CIMV2\Security\MicrosoftTpm", "SELECT * FROM Win32_Tpm");
+            var list = tpm.Get().Cast<ManagementObject>().ToList();
+            if (list.Count == 0) { s["TPM.Present"] = "nu"; return; }
+            var o = list[0];
+            s["TPM.Present"] = "da";
+            s["TPM.Enabled"] = o["IsEnabled_InitialValue"]?.ToString() ?? "";
+            s["TPM.Activated"] = o["IsActivated_InitialValue"]?.ToString() ?? "";
+            s["TPM.SpecVersion"] = o["SpecVersion"]?.ToString() ?? "";
+            try { using var ready = o.InvokeMethod("IsReady", null, null); s["TPM.Ready"] = ready?["IsReady"]?.ToString() ?? ""; }
+            catch (ManagementException) { s["TPM.Ready"] = ""; }
+        });
+
+        // Kernel DMA protection (what msinfo32 shows) and the device enumeration policy.
+        s["DMA.KernelProtection"] = KernelDmaProtection();
+        s["DMA.EnumerationPolicy"] = Hklm(@"SOFTWARE\Policies\Microsoft\Windows\Kernel DMA Protection", "DeviceEnumerationPolicy");
+
+        // Virtualization-based security and App Control (WDAC) enforcement, from the same WMI class as Credential Guard.
+        Guard(() =>
+        {
+            using var dg = new ManagementObjectSearcher(@"root\Microsoft\Windows\DeviceGuard",
+                "SELECT VirtualizationBasedSecurityStatus, CodeIntegrityPolicyEnforcementStatus, UsermodeCodeIntegrityPolicyEnforcementStatus FROM Win32_DeviceGuard");
+            foreach (ManagementBaseObject o in dg.Get())
+            {
+                s["DeviceGuard.VbsStatus"] = o["VirtualizationBasedSecurityStatus"]?.ToString() ?? "";
+                s["CI.KernelEnforcement"] = o["CodeIntegrityPolicyEnforcementStatus"]?.ToString() ?? "";
+                s["CI.UserModeEnforcement"] = o["UsermodeCodeIntegrityPolicyEnforcementStatus"]?.ToString() ?? "";
+            }
+        });
+        Guard(() =>
+        {
+            // Only the number of active policy files; their content is never opened.
+            var ci = Path.Combine(Environment.SystemDirectory, "CodeIntegrity");
+            var active = Path.Combine(ci, "CiPolicies", "Active");
+            s["WDAC.ActivePolicyFiles"] = Directory.Exists(active) ? Directory.EnumerateFiles(active, "*.cip").Count().ToString() : "0";
+            s["WDAC.LegacyPolicy"] = File.Exists(Path.Combine(ci, "SIPolicy.p7b")) ? "da" : "nu";
+        });
+
+        // Password on wake: the policy (STIG WN11-CC-000145 / -000150), the value of the active power plan, and the current user's sign-in delay.
+        const string wakePolicy = @"SOFTWARE\Policies\Microsoft\Power\PowerSettings\0e796bdb-100d-47d6-a2d5-f7d2daa51f51";
+        s["Wake.PolicyAC"] = Hklm(wakePolicy, "ACSettingIndex");
+        s["Wake.PolicyDC"] = Hklm(wakePolicy, "DCSettingIndex");
+        (s["Wake.EffectiveAC"], s["Wake.EffectiveDC"]) = ActiveSchemeConsoleLock();
+        s["Wake.DelayLockInterval"] = RegRead(Registry.CurrentUser, @"Control Panel\Desktop", "DelayLockInterval");   // current user only
+
+        // Defender scans (a separate query: an old Defender without these properties must not hide the main status read above).
+        Guard(() =>
+        {
+            using var mp = new ManagementObjectSearcher(@"root\Microsoft\Windows\Defender", "SELECT FullScanEndTime, QuickScanEndTime, AMProductVersion FROM MSFT_MpComputerStatus");
+            foreach (ManagementBaseObject o in mp.Get())
+            {
+                s["Defender.FullScanEndUtc"] = WmiTime(o["FullScanEndTime"]);
+                s["Defender.QuickScanEndUtc"] = WmiTime(o["QuickScanEndTime"]);
+                s["Defender.ProductVersion"] = o["AMProductVersion"]?.ToString() ?? "";
+            }
+        });
+        Guard(() =>
+        {
+            using var sc = new ManagementObjectSearcher(@"root\SecurityCenter2", "SELECT displayName, productState FROM AntiVirusProduct");
+            f.AntivirusProducts = sc.Get().Cast<ManagementBaseObject>()
+                .Select(o => new AntivirusProductFact(o["displayName"]?.ToString() ?? "", o["productState"] is { } ps ? Convert.ToUInt32(ps, System.Globalization.CultureInfo.InvariantCulture) : null)).ToList();
+        });
+
+        // Other interconnection paths (STIG WN11-00-000060, WN11-CC-000155, WN11-00-000395, WN11-CC-000044).
+        Guard(() =>
+        {
+            using var sh = new ManagementObjectSearcher("SELECT Name, Path, Type FROM Win32_Share");
+            f.Shares = sh.Get().Cast<ManagementBaseObject>()
+                .Select(o => new ShareFact(o["Name"]?.ToString() ?? "", o["Path"]?.ToString() ?? "", o["Type"] is { } t ? Convert.ToUInt32(t, System.Globalization.CultureInfo.InvariantCulture) : 0u)).ToList();
+        });
+        s["RA.AllowToGetHelp"] = Hklm(@"SYSTEM\CurrentControlSet\Control\Remote Assistance", "fAllowToGetHelp");
+        s["RA.PolicyAllowToGetHelp"] = Hklm(@"SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services", "fAllowToGetHelp");
+        s["WinRM.ServiceStart"] = Hklm(@"SYSTEM\CurrentControlSet\Services\WinRM", "Start");
+        s["WinRM.Listeners"] = SubKeyNames(@"SOFTWARE\Microsoft\Windows\CurrentVersion\WSMAN\Listener");   // [NESIGUR] listener location; confirm with „winrm enumerate” in the lab
+        Guard(() =>
+        {
+            using var svc = new ManagementObjectSearcher("SELECT State FROM Win32_Service WHERE Name = 'WinRM'");
+            foreach (ManagementBaseObject o in svc.Get()) s["WinRM.State"] = o["State"]?.ToString() ?? "";
+        });
+        s["PortProxy.Entries"] = PortProxyEntries();
+        s["ICS.ServiceStart"] = Hklm(@"SYSTEM\CurrentControlSet\Services\SharedAccess", "Start");
+        s["ICS.PolicyShowUI"] = Hklm(@"SOFTWARE\Policies\Microsoft\Windows\Network Connections", "NC_ShowSharedAccessUI");
+        s["ICS.Shared"] = IcsSharedConnections();
+
+        // BitLocker To Go: write access to unencrypted removable drives (same keys as DevicePolicyCheck).
+        var rdv = Hklm(@"SYSTEM\CurrentControlSet\Policies\Microsoft\FVE", "RDVDenyWriteAccess");
+        var rdvPolicy = Hklm(@"SOFTWARE\Policies\Microsoft\FVE", "RDVDenyWriteAccess");
+        s["BitLocker.RDVDenyWriteAccess"] = rdv == Absent || (rdv == "" && rdvPolicy != Absent) ? rdvPolicy : rdv;
+
+        // Installed Windows updates, compared with the register of offline updates.
+        Guard(() => f.InstalledUpdates = ReadInstalledUpdates());
+    }
+
+    /// <summary>The installed Windows updates (Win32_QuickFixEngineering), read-only. Throws ManagementException when WMI cannot be read.</summary>
+    public static List<InstalledUpdateFact> ReadInstalledUpdates()
+    {
+        using var q = new ManagementObjectSearcher("SELECT HotFixID, InstalledOn, Description FROM Win32_QuickFixEngineering");
+        return q.Get().Cast<ManagementBaseObject>()
+            .Select(o => new InstalledUpdateFact(o["HotFixID"]?.ToString() ?? "", ParseInstalledOn(o["InstalledOn"]?.ToString()), o["Description"]?.ToString() ?? "")).ToList();
+    }
+
+    /// <summary>A WMI date as UTC ISO text; <see cref="Absent"/> when there is none (a scan that never ran is reported as empty or as the year 1601).</summary>
+    private static string WmiTime(object? v)
+    {
+        if (v is not string d || d.Length < 14) return Absent;
+        try { var t = ManagementDateTimeConverter.ToDateTime(d).ToUniversalTime(); return t.Year < 2000 ? Absent : t.ToString("o", System.Globalization.CultureInfo.InvariantCulture); }
+        catch (ArgumentOutOfRangeException) { return Absent; }
+    }
+
+    /// <summary>Subkey names joined by "; ", "(niciuna)" when the key has none, <see cref="Absent"/> when the key does not exist, "" when it cannot be read.</summary>
+    private static string SubKeyNames(string key)
+    {
+        try
+        {
+            using var k = Registry.LocalMachine.OpenSubKey(key);
+            if (k is null) return Absent;
+            var names = k.GetSubKeyNames();
+            return names.Length == 0 ? "(niciuna)" : string.Join("; ", names);
+        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException) { return ""; }
+    }
+
+    /// <summary>netsh interface portproxy entries, read from the registry: "v4tov4/tcp: 0.0.0.0/8080 → 10.0.0.5/80"; <see cref="Absent"/> when there is none.</summary>
+    private static string PortProxyEntries()
+    {
+        try
+        {
+            using var root = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\PortProxy");
+            if (root is null) return Absent;
+            var list = new List<string>();
+            foreach (var kind in root.GetSubKeyNames())
+            {
+                using var k = root.OpenSubKey(kind);
+                if (k is null) continue;
+                foreach (var proto in k.GetSubKeyNames())
+                {
+                    using var p = k.OpenSubKey(proto);
+                    if (p is null) continue;
+                    foreach (var n in p.GetValueNames()) list.Add($"{kind}/{proto}: {n} → {p.GetValue(n)}");
+                }
+            }
+            return list.Count == 0 ? Absent : string.Join("; ", list);
+        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException) { return ""; }
+    }
+
+    /// <summary>Connections with Internet Connection Sharing on, read through the Windows sharing interface (no change): "da: …", "nu", or "" when unreadable.</summary>
+    private static string IcsSharedConnections()
+    {
+        try
+        {
+            var t = Type.GetTypeFromProgID("HNetCfg.HNetShare", false);
+            if (t is null) return "";
+            dynamic mgr = Activator.CreateInstance(t)!;
+            var names = new List<string>();
+            foreach (var conn in mgr.EnumEveryConnection)
+            {
+                dynamic cfg = mgr.INetSharingConfigurationForINetConnection[conn];
+                if (!(bool)cfg.SharingEnabled) continue;
+                dynamic props = mgr.NetConnectionProps[conn];
+                names.Add($"{(string)props.Name} ({((int)cfg.SharingConnectionType == 0 ? "își partajează conexiunea" : "primește conexiunea partajată")})");
+            }
+            return names.Count == 0 ? "nu" : "da: " + string.Join("; ", names);
+        }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or Microsoft.CSharp.RuntimeBinder.RuntimeBinderException or InvalidCastException or UnauthorizedAccessException) { return ""; }
+    }
+
+    // [NESIGUR] SystemDmaGuardPolicyInformation = 202, from the public Windows headers (phnt); it is the value msinfo32 shows as „Kernel DMA Protection”. Confirm in the lab.
+    private const int SystemDmaGuardPolicyInformation = 202;
+    [System.Runtime.InteropServices.DllImport("ntdll.dll")] private static extern int NtQuerySystemInformation(int infoClass, out byte info, int length, out int returnLength);
+
+    /// <summary>"1" = on, "0" = off, "" = unknown (the call failed or the Windows version does not know the information class).</summary>
+    private static string KernelDmaProtection()
+    {
+        try { return NtQuerySystemInformation(SystemDmaGuardPolicyInformation, out var on, 1, out _) == 0 ? (on != 0 ? "1" : "0") : ""; }
+        catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException) { return ""; }
+    }
+
+    [System.Runtime.InteropServices.DllImport("powrprof.dll")] private static extern uint PowerGetActiveScheme(IntPtr userRootPowerKey, out IntPtr activePolicyGuid);
+    [System.Runtime.InteropServices.DllImport("powrprof.dll")] private static extern uint PowerReadACValueIndex(IntPtr rootPowerKey, ref Guid schemeGuid, ref Guid subGroupGuid, ref Guid settingGuid, out uint value);
+    [System.Runtime.InteropServices.DllImport("powrprof.dll")] private static extern uint PowerReadDCValueIndex(IntPtr rootPowerKey, ref Guid schemeGuid, ref Guid subGroupGuid, ref Guid settingGuid, out uint value);
+    [System.Runtime.InteropServices.DllImport("kernel32.dll")] private static extern IntPtr LocalFree(IntPtr memory);
+
+    /// <summary>CONSOLELOCK of the active power plan, on mains (AC) and on battery (DC): "1" = password on wake, "0" = no password, "" = not read.</summary>
+    private static (string Ac, string Dc) ActiveSchemeConsoleLock()
+    {
+        try
+        {
+            if (PowerGetActiveScheme(IntPtr.Zero, out var p) != 0 || p == IntPtr.Zero) return ("", "");
+            try
+            {
+                var scheme = System.Runtime.InteropServices.Marshal.PtrToStructure<Guid>(p);
+                Guid sub = SubNoneGuid, setting = ConsoleLockGuid;
+                var ac = PowerReadACValueIndex(IntPtr.Zero, ref scheme, ref sub, ref setting, out var a) == 0 ? a.ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
+                var dc = PowerReadDCValueIndex(IntPtr.Zero, ref scheme, ref sub, ref setting, out var d) == 0 ? d.ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
+                return (ac, dc);
+            }
+            finally { LocalFree(p); }
+        }
+        catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException) { return ("", ""); }
+    }
+
+    // ---- volumes (BitLocker on every fixed volume, BitLocker To Go on connected media) -------------------------
+
+    private static void ReadVolumes(StationFacts f)
+    {
+        var drives = DriveInfo.GetDrives().Where(d => d.DriveType is DriveType.Fixed or DriveType.Removable).ToList();
+        foreach (var d in drives.Where(d => d.DriveType == DriveType.Removable)) f.RemovableDrivesNow.Add(d.Name.TrimEnd('\\'));
+        var sys = Path.GetPathRoot(Environment.SystemDirectory)!.TrimEnd('\\');
+        try
+        {
+            var list = new List<VolumeFact>();
+            using var s = new ManagementObjectSearcher(@"root\cimv2\Security\MicrosoftVolumeEncryption", "SELECT * FROM Win32_EncryptableVolume");
+            foreach (ManagementObject v in s.Get())
+            {
+                using (v)
+                {
+                    // Volumes without a letter (recovery or system partitions) hold no user data that can be opened directly; they are not evaluated.
+                    if (v["DriveLetter"]?.ToString() is not { Length: > 0 } drive) continue;
+                    int? type = Int(v.Properties.Cast<PropertyData>().Any(p => p.Name == "VolumeType") ? v["VolumeType"] : null);
+                    var kind = drive.Equals(sys, StringComparison.OrdinalIgnoreCase) || type == 0 ? VolumeKind.Sistem
+                        : type == 2 || f.RemovableDrivesNow.Contains(drive, StringComparer.OrdinalIgnoreCase) ? VolumeKind.Amovibil : VolumeKind.Fix;
+                    list.Add(new VolumeFact(drive, kind, Int(v["ProtectionStatus"]), Int(v["ConversionStatus"]), Protectors(v)));
+                }
+            }
+            foreach (var d in drives)
+            {
+                var letter = d.Name.TrimEnd('\\');
+                if (!list.Any(x => x.Drive.Equals(letter, StringComparison.OrdinalIgnoreCase)))
+                    list.Add(new VolumeFact(letter, d.DriveType == DriveType.Removable ? VolumeKind.Amovibil : letter.Equals(sys, StringComparison.OrdinalIgnoreCase) ? VolumeKind.Sistem : VolumeKind.Fix,
+                        null, null, null, "Windows nu raportează starea BitLocker pentru această unitate"));
+            }
+            f.Volumes = list;
+        }
+        catch (Exception ex) when (ex is ManagementException or System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
+        {
+            f.Settings["BitLocker.Volumes.Error"] = ex.Message;
+        }
+
+        static int? Int(object? o) => o is null ? null : Convert.ToInt32(o, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>The key protector types of a volume (read-only WMI methods GetKeyProtectors / GetKeyProtectorType); null when they cannot be read.</summary>
+    private static IReadOnlyList<int>? Protectors(ManagementObject v)
+    {
+        try
+        {
+            using var input = v.GetMethodParameters("GetKeyProtectors");
+            input["KeyProtectorType"] = 0u;
+            using var output = v.InvokeMethod("GetKeyProtectors", input, null);
+            if (output?["VolumeKeyProtectorID"] is not string[] ids) return [];
+            var types = new List<int>();
+            foreach (var id in ids)
+            {
+                using var ti = v.GetMethodParameters("GetKeyProtectorType");
+                ti["VolumeKeyProtectorID"] = id;
+                using var to = v.InvokeMethod("GetKeyProtectorType", ti, null);
+                if (to?["KeyProtectorType"] is { } kt) types.Add(Convert.ToInt32(kt, System.Globalization.CultureInfo.InvariantCulture));
+            }
+            return types;
+        }
+        catch (ManagementException) { return null; }
+    }
+
+    // ---- classified folders: audit rules (SACL) -----------------------------------------------------------------
+
+    /// <summary>
+    /// Reads the audit rules of each folder. Reading a SACL needs the "Manage auditing and security log" right (administrators); the .NET call turns it
+    /// on in this process only, for the read, and nothing on the folder changes. Without the right the folder is reported as not read.
+    /// </summary>
+    internal static List<FolderAuditFact> ReadFolderAudits(IEnumerable<string> folders)
+    {
+        var r = new List<FolderAuditFact>();
+        foreach (var path in folders.Select(p => p.Trim()).Where(p => p.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            try
+            {
+                var di = new DirectoryInfo(path);
+                if (!di.Exists) { r.Add(new FolderAuditFact(path, false, null, "", "")); continue; }
+                var sec = di.GetAccessControl(System.Security.AccessControl.AccessControlSections.Audit);
+                var rules = sec.GetAuditRules(true, true, typeof(SecurityIdentifier)).Cast<System.Security.AccessControl.FileSystemAuditRule>().ToList();
+                r.Add(new FolderAuditFact(path, true, rules.Count, string.Join("; ", rules.Select(x => $"{Account(x.IdentityReference)}: {x.FileSystemRights} ({x.AuditFlags})")), ""));
+            }
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or ArgumentException or NotSupportedException or InvalidOperationException)
+            {
+                r.Add(new FolderAuditFact(path, true, null, "", ex is UnauthorizedAccessException ? "regulile de audit nu au putut fi citite (necesită administrator)" : ex.Message));
+            }
+        }
+        return r;
+
+        static string Account(IdentityReference id)
+        {
+            try { return id.Translate(typeof(NTAccount)).Value; }
+            catch (Exception ex) when (ex is IdentityNotMappedException or SystemException) { return id.Value; }
+        }
     }
 
     // ---- network ----------------------------------------------------------------------------------------------

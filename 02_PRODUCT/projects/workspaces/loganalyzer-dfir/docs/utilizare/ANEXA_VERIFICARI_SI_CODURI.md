@@ -187,7 +187,7 @@
 - **De ce contează:** Cu o listă albă blocată, pe stație rulează doar programele aprobate; fără ea poate porni orice program adus pe un stick.
 - **Cum verifică aplicația:** A citit colecțiile de reguli AppLocker din politică, modul fiecăreia (1 = blochează, 0 = doar notează) și modul de pornire al serviciului care le aplică.
 - **Sursa tehnică:** `HKLM\SOFTWARE\Policies\Microsoft\Windows\SrpV2 → EnforcementMode; HKLM\SYSTEM\CurrentControlSet\Services\AppIDSvc → Start`
-- **Cum se citește rezultatul:** Conform = toate colecțiile blochează. Neconform = lista cere blocare, dar serviciul care o aplică este dezactivat. De verificat = lipsește, este doar în mod audit sau fără mod; App Control (WDAC) nu este verificat de aplicație.
+- **Cum se citește rezultatul:** Conform = toate colecțiile blochează. Neconform = lista cere blocare, dar serviciul care o aplică este dezactivat. De verificat = lipsește, este doar în mod audit sau fără mod. Lista albă App Control (WDAC) este verificată separat, la P37.
 
 ### P18
 
@@ -301,6 +301,70 @@
 - **Sursa tehnică:** `WMI Win32_PnPEntity → PNPClass, ConfigManagerErrorCode; HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam și microphone → Value`
 - **Cum se citește rezultatul:** Conform = niciun dispozitiv activ. Neconform = pe stația izolată există cameră sau microfon activ, iar accesul aplicațiilor nu este blocat. De verificat = politica blochează, dar dispozitivul rămâne pornit în driver; acoperirea fizică se verifică la M09.
 
+### P32
+
+- **Ce verificăm:** Dacă fiecare disc fix al stației (nu doar C:) este criptat cu BitLocker și dacă discul de sistem cere un PIN la pornire.
+- **De ce contează:** Un disc necriptat poate fi scos și citit pe alt calculator; fără PIN, un calculator furat întreg pornește singur și discul de sistem se deblochează.
+- **Cum verifică aplicația:** A cerut Windows starea BitLocker a fiecărui volum cu literă și tipurile de protecție ale fiecăruia (de exemplu „TPM și PIN”, „parolă de recuperare”). Volumele fără literă (partiția de recuperare) nu sunt evaluate.
+- **Sursa tehnică:** `WMI root\cimv2\Security\MicrosoftVolumeEncryption Win32_EncryptableVolume → ProtectionStatus, ConversionStatus; metodele GetKeyProtectors / GetKeyProtectorType (doar citire)`
+- **Cum se citește rezultatul:** Conform = toate discurile fixe sunt protejate și discul de sistem are protecția „TPM și PIN”. Neconform = un disc fix nu este criptat sau discul de sistem pornește fără PIN. De verificat = tipul protecției nu a putut fi citit. Nedeterminat = necesită administrator.
+
+### P33
+
+- **Ce verificăm:** Dacă stația are cipul de securitate TPM, dacă este pornit și pregătit, și ce versiune are.
+- **De ce contează:** Cipul TPM păstrează cheile de criptare legate de placa de bază; fără el criptarea discului este mai slabă.
+- **Cum verifică aplicația:** A întrebat Windows starea cipului TPM: dacă există, dacă este pornit și activat, dacă este pregătit de folosire și versiunea.
+- **Sursa tehnică:** `WMI root\CIMV2\Security\MicrosoftTpm Win32_Tpm → IsEnabled_InitialValue, IsActivated_InitialValue, SpecVersion; metoda IsReady`
+- **Cum se citește rezultatul:** Conform = TPM 2.0 prezent, pornit și pregătit. Neconform = lipsește, este oprit sau nu este pregătit. De verificat = versiunea veche 1.2 sau starea „pregătit” necunoscută. Nedeterminat = necesită administrator.
+
+### P34
+
+- **Ce verificăm:** Dacă stația are pornită protecția memoriei la porturile Thunderbolt și USB4 (Kernel DMA Protection).
+- **De ce contează:** Un dispozitiv conectat la un astfel de port poate citi direct memoria stației, inclusiv parole și documente deschise, chiar cu ecranul blocat.
+- **Cum verifică aplicația:** A citit starea protecției DMA așa cum o afișează Windows în „Informații sistem” și politica pentru dispozitivele externe care nu suportă protecția.
+- **Sursa tehnică:** `Windows (informația afișată de msinfo32 ca „Kernel DMA Protection”); HKLM\SOFTWARE\Policies\Microsoft\Windows\Kernel DMA Protection → DeviceEnumerationPolicy`
+- **Cum se citește rezultatul:** Conform = pornită. Neconform = oprită pe o stație izolată. De verificat = oprită pe o stație neizolată, sau pornită dar politica permite toate dispozitivele. Dacă stația nu are porturi Thunderbolt/USB4, notați acest lucru. Metoda de citire trebuie confirmată în laborator.
+
+### P35
+
+- **Ce verificăm:** Dacă securitatea bazată pe virtualizare (VBS) rulează pe stație.
+- **De ce contează:** Ea izolează într-o zonă protejată a memoriei parolele (Credential Guard) și verificarea driverelor; fără ea aceste protecții nu pot funcționa.
+- **Cum verifică aplicația:** A cerut Windows starea securității bazate pe virtualizare.
+- **Sursa tehnică:** `WMI root\Microsoft\Windows\DeviceGuard Win32_DeviceGuard → VirtualizationBasedSecurityStatus`
+- **Cum se citește rezultatul:** Conform = rulează (2). Neconform = este cerută, dar nu rulează (1), de obicei pentru că virtualizarea este oprită din BIOS. De verificat = nu este pornită (0).
+
+### P36
+
+- **Ce verificăm:** Dacă stația cere parola când revine din somn.
+- **De ce contează:** Dacă nu cere, oricine trezește o stație lăsată în somn ajunge direct în sesiunea deschisă a utilizatorului.
+- **Cum verifică aplicația:** A citit politica „parolă la trezire” (în priză și pe baterie), valoarea din planul de alimentare activ și setarea „Solicitare autentificare” a utilizatorului care a pornit aplicația.
+- **Sursa tehnică:** `HKLM\SOFTWARE\Policies\Microsoft\Power\PowerSettings\0e796bdb-100d-47d6-a2d5-f7d2daa51f51 → ACSettingIndex, DCSettingIndex; planul de alimentare activ (CONSOLELOCK); HKCU\Control Panel\Desktop → DelayLockInterval`
+- **Cum se citește rezultatul:** Conform = politica cere parola în ambele cazuri. Neconform = politica sau setarea stației nu cere parola. De verificat = parola se cere acum, dar nu prin politică (utilizatorul o poate schimba).
+
+### P37
+
+- **Ce verificăm:** Dacă stația are lista albă App Control for Business (WDAC) și dacă ea blochează sau doar notează.
+- **De ce contează:** Cu lista albă în mod de blocare pe stație pornesc doar programele aprobate; un program adus pe un stick nu mai poate rula.
+- **Cum verifică aplicația:** A cerut Windows modul în care se aplică App Control pentru programe și a numărat fișierele de politică active (fără să le deschidă).
+- **Sursa tehnică:** `WMI Win32_DeviceGuard → UsermodeCodeIntegrityPolicyEnforcementStatus, CodeIntegrityPolicyEnforcementStatus; C:\Windows\System32\CodeIntegrity\CiPolicies\Active`
+- **Cum se citește rezultatul:** Conform = blochează (2). De verificat = doar mod audit (1), sau nu se folosește dar AppLocker blochează. Neconform = nici App Control, nici AppLocker nu blochează programele neaprobate.
+
+### P38
+
+- **Ce verificăm:** Când a făcut antivirusul ultima scanare completă și ultima scanare rapidă a stației.
+- **De ce contează:** Semnăturile la zi nu ajută dacă discul nu este scanat: un program adus înainte de actualizare rămâne nedescoperit.
+- **Cum verifică aplicația:** A citit din Microsoft Defender data de sfârșit a ultimei scanări complete și a ultimei scanări rapide.
+- **Sursa tehnică:** `MSFT_MpComputerStatus → FullScanEndTime, QuickScanEndTime`
+- **Cum se citește rezultatul:** Conform = scanare completă în ultimele 30 de zile și rapidă în ultimele 7. Neconform = nicio scanare completă, niciodată. De verificat = scanări mai vechi; comparați cu frecvența din procedură. Dacă stația folosește alt antivirus, datele lui se verifică în consola lui.
+
+### P39
+
+- **Ce verificăm:** Ce antivirus este înregistrat în Centrul de securitate Windows (inclusiv al altui producător) și dacă este pornit, cu semnături la zi.
+- **De ce contează:** Dacă stația folosește alt antivirus decât Defender, starea lui reală se vede doar aici.
+- **Cum verifică aplicația:** A citit lista produselor antivirus înregistrate în Windows și starea raportată de fiecare.
+- **Sursa tehnică:** `WMI root\SecurityCenter2 AntiVirusProduct → displayName, productState`
+- **Cum se citește rezultatul:** Conform = cel puțin un antivirus pornit, cu semnături la zi. Neconform = niciun antivirus înregistrat sau toate oprite. De verificat = pornit, dar cu semnături vechi. Decodarea stării nu este documentată oficial de Microsoft; confirmați vizual în consola antivirusului.
+
 ### A01
 
 - **Ce verificăm:** Dacă stația înregistrează în jurnal tot ce are nevoie un control (autentificări, conturi, programe, USB etc.).
@@ -365,6 +429,22 @@
 - **Sursa tehnică:** `auditpol: subcategoria Removable Storage; HKLM\SYSTEM\CurrentControlSet\Control\Storage → HotPlugSecureOpen`
 - **Cum se citește rezultatul:** Conform = auditarea succeselor este pornită. Neconform = nu se înregistrează nimic despre copieri. Auditarea pornită nu garantează lista completă a fișierelor pe toate versiunile de Windows; verificați cu o copiere de probă.
 
+### A09
+
+- **Ce verificăm:** Câte programe neaprobate au fost oprite (sau ar fi fost oprite) de lista albă în perioada controlată, și care anume.
+- **De ce contează:** Fiecare încercare arată că cineva a vrut să pornească un program care nu este aprobat pe stație.
+- **Cum verifică aplicația:** A numărat în jurnalele AppLocker și CodeIntegrity evenimentele de blocare și de audit din perioada controlată și a listat fișierele.
+- **Sursa tehnică:** `AppLocker 8003, 8004, 8006, 8007; CodeIntegrity 3076, 3077`
+- **Cum se citește rezultatul:** Conform = lista albă există și nu s-a înregistrat nicio încercare. De verificat = există încercări (aflați cine și de ce) sau stația nu are listă albă, deci nu pot exista urme. Nedeterminat = jurnalele nu au putut fi citite.
+
+### A10
+
+- **Ce verificăm:** Dacă pe fiecare folder clasificat din profilul de proceduri este setat ce acces la fișiere se înregistrează (reguli de audit, SACL).
+- **De ce contează:** Fără reguli de audit pe folder, nimeni nu va ști cine a deschis, a copiat sau a șters documentele clasificate.
+- **Cum verifică aplicația:** A citit regulile de audit ale fiecărui folder din tabelul „Foldere clasificate” al profilului și politica de audit pentru subcategoria „File System”. Citirea regulilor cere drepturi de administrator; folderele nu se modifică.
+- **Sursa tehnică:** `Regulile de audit ale folderului (echivalentul Get-Acl -Audit); auditpol: subcategoria File System`
+- **Cum se citește rezultatul:** Conform = fiecare folder are reguli de audit și „File System” este auditată. Neconform = un folder nu are reguli sau „File System” nu este auditată. De verificat = profilul nu are foldere clasificate sau un folder din profil nu există. Nedeterminat = regulile nu au putut fi citite (administrator).
+
 ### U01
 
 - **Ce verificăm:** Cine a fost adăugat sau scos din grupul administratorilor în perioada controlată.
@@ -420,6 +500,22 @@
 - **Cum verifică aplicația:** A citit lista dispozitivelor USB din registru și conectările de discuri din jurnal, cu producător, model și număr de serie.
 - **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Enum\USBSTOR; Microsoft-Windows-Partition/Diagnostic 1006`
 - **Cum se citește rezultatul:** Întotdeauna de verificat: comparați seriile cu registrul suporturilor. Lipsa urmelor nu dovedește că nu s-au folosit suporturi.
+
+### D02
+
+- **Ce verificăm:** Dacă fiecare suport amovibil conectat acum (stick, disc extern) este criptat cu BitLocker To Go și dacă scrierea pe suporturi necriptate este blocată.
+- **De ce contează:** Un suport necriptat pierdut poate fi citit de oricine; blocarea scrierii împiedică ieșirea datelor pe suporturi necriptate.
+- **Cum verifică aplicația:** A listat suporturile amovibile conectate, starea BitLocker a fiecăruia și politica de interzicere a scrierii pe suporturi necriptate.
+- **Sursa tehnică:** `WMI Win32_EncryptableVolume (suporturi amovibile); HKLM\SYSTEM\CurrentControlSet\Policies\Microsoft\FVE → RDVDenyWriteAccess`
+- **Cum se citește rezultatul:** Conform = toate suporturile conectate sunt criptate, sau politica blochează scrierea pe cele necriptate. Neconform = un suport necriptat conectat și scrierea permisă. De verificat = niciun suport conectat și politica nu blochează scrierea. Nedeterminat = necesită administrator.
+
+### D03
+
+- **Ce verificăm:** Dacă fiecare suport conectat în perioada controlată a fost scanat cu antivirusul imediat după conectare și dacă antivirusul a găsit ceva.
+- **De ce contează:** Un suport care intră pe stația izolată fără scanare poate aduce un program rău-intenționat.
+- **Cum verifică aplicația:** A comparat fiecare conectare de disc din jurnalul Partition/Diagnostic cu scanările Defender începute în următoarele 10 minute și cu detecțiile din următoarea oră.
+- **Sursa tehnică:** `Partition 1006; Defender 1000, 1001, 1116, 1117`
+- **Cum se citește rezultatul:** Conform = fiecare conectare este urmată de o scanare. Neconform = antivirusul a găsit un program rău-intenționat după conectare. De verificat = conectări fără scanare pe această stație (scanarea se poate face înainte, pe stația de decontaminare: comparați cu registrul ei, verificarea M04). Aplicația nu vede stația de decontaminare.
 
 ### DM01
 
@@ -637,6 +733,46 @@
 - **Sursa tehnică:** `WMI Win32_PnPEntity (clasa Net) → Service, CompatibleID, HardwareID`
 - **Cum se citește rezultatul:** Conform = niciunul dintre aceste tipuri. Neconform = pe stația izolată există telefon-modem sau modem celular. De verificat = placă Ethernet pe USB, sau stație neizolată; cereți aprobarea scrisă sau scoaterea dispozitivului.
 
+### N06
+
+- **Ce verificăm:** Dacă stația partajează foldere sau imprimante în rețea, în afara partajărilor administrative implicite ale Windows.
+- **De ce contează:** O partajare permite altui calculator să citească sau să scrie fișiere pe stație.
+- **Cum verifică aplicația:** A citit lista partajărilor stației și le-a separat pe cele create de cineva de cele implicite (C$, ADMIN$, IPC$).
+- **Sursa tehnică:** `WMI Win32_Share (Name, Path, Type)`
+- **Cum se citește rezultatul:** Conform = nicio partajare creată. Neconform = partajări pe o stație izolată. De verificat = partajări pe o stație neizolată; fiecare trebuie aprobată.
+
+### N07
+
+- **Ce verificăm:** Dacă este permisă Asistența la distanță (Remote Assistance).
+- **De ce contează:** Prin ea altă persoană poate vedea și controla ecranul stației din rețea.
+- **Cum verifică aplicația:** A citit politica care interzice Asistența la distanță și setarea stației.
+- **Sursa tehnică:** `HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services → fAllowToGetHelp; HKLM\SYSTEM\CurrentControlSet\Control\Remote Assistance → fAllowToGetHelp`
+- **Cum se citește rezultatul:** Conform = interzisă prin politică sau oprită. Neconform = permisă pe o stație izolată. De verificat = permisă pe o stație neizolată sau setarea lipsește.
+
+### N08
+
+- **Ce verificăm:** Dacă administrarea la distanță Windows (WinRM) rulează sau ascultă conexiuni.
+- **De ce contează:** Prin WinRM se pot rula comenzi pe stație din rețea.
+- **Cum verifică aplicația:** A citit modul de pornire al serviciului WinRM, dacă rulează acum și dacă are puncte de ascultare configurate.
+- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Services\WinRM → Start; HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WSMAN\Listener; WMI Win32_Service`
+- **Cum se citește rezultatul:** Conform = serviciul este oprit și nu ascultă. Neconform = rulează sau ascultă pe o stație izolată. De verificat = rulează pe o stație neizolată. Locul punctelor de ascultare trebuie confirmat în laborator.
+
+### N09
+
+- **Ce verificăm:** Dacă stația redirecționează conexiuni de rețea către alte adrese (comanda netsh interface portproxy).
+- **De ce contează:** O redirecționare face din stație o punte între rețele și este folosită pentru a ocoli separarea lor.
+- **Cum verifică aplicația:** A citit din registru lista redirecționărilor configurate (aceeași pe care o arată „netsh interface portproxy show all”).
+- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Services\PortProxy`
+- **Cum se citește rezultatul:** Conform = nicio redirecționare. Neconform = redirecționări pe o stație izolată. De verificat = redirecționări pe o stație neizolată.
+
+### N10
+
+- **Ce verificăm:** Dacă partajarea conexiunii la Internet (ICS) este pornită pe vreo conexiune.
+- **De ce contează:** Cu ICS pornită, stația transmite traficul dintr-o rețea în alta.
+- **Cum verifică aplicația:** A întrebat Windows care conexiuni au partajarea pornită și a citit politica care o interzice.
+- **Sursa tehnică:** `Interfața Windows de partajare (HNetCfg.HNetShare); HKLM\SOFTWARE\Policies\Microsoft\Windows\Network Connections → NC_ShowSharedAccessUI`
+- **Cum se citește rezultatul:** Conform = nepornită. Neconform = pornită pe o stație izolată. De verificat = pornită pe o stație neizolată, sau starea nu a putut fi citită dar politica o interzice.
+
 ### EM01
 
 - **Ce verificăm:** Dacă din cutia poștală au plecat 50 de mesaje sau mai multe într-o singură oră.
@@ -701,6 +837,14 @@
 - **Sursa tehnică:** `HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion → DisplayVersion, CurrentBuild, UBR; WMI Win32_QuickFixEngineering → InstalledOn`
 - **Cum se citește rezultatul:** Întotdeauna „de verificat”: aplicația arată faptele, dar nu are tabelul oficial al versiunilor încă suportate. Compară cu registrul actualizărilor offline al organizației. Numele din registru poate spune „Windows 10” și pe Windows 11; un build de la 22000 în sus este Windows 11.
 
+### S04
+
+- **Ce verificăm:** Ce actualizări Windows s-au instalat în perioada controlată și dacă fiecare apare în registrul actualizărilor offline.
+- **De ce contează:** Pe o stație izolată fiecare actualizare vine pe un suport adus de cineva; o actualizare care nu apare în registru a intrat necontrolat.
+- **Cum verifică aplicația:** A citit lista actualizărilor Windows instalate (cu data) și a căutat numărul KB al fiecăreia în registrul actualizărilor offline completat în aplicație.
+- **Sursa tehnică:** `WMI Win32_QuickFixEngineering → HotFixID, InstalledOn; registrul actualizărilor offline (pagina Control stație)`
+- **Cum se citește rezultatul:** Conform = toate actualizările din perioadă apar în registru. Neconform = actualizări instalate care nu apar în registru. De verificat = registrul nu este completat în aplicație (comparați manual, verificarea M05) sau nu s-a instalat nimic în perioadă. Lista Windows nu cuprinde actualizările de antivirus; data semnăturilor se compară separat.
+
 ## Ce înseamnă rezultatele
 
 - CONFORM: ce s-a verificat corespunde regulii.
@@ -719,18 +863,39 @@
 | Security 4719 | eveniment Windows | Politica de audit a fost modificată (ce anume înregistrează stația în jurnal). | Cine reduce auditul poate face lucruri care nu mai lasă urme. | Codul GUID arată ce categorie s-a schimbat; %%8449/%%8451 = s-a activat, %%8448/%%8450 = s-a dezactivat. |
 | Security 4616 | eveniment Windows | Ora sistemului a fost schimbată. | Cu ora schimbată, orele din toate jurnalele devin greșite; poate fi folosită pentru a ascunde când s-a întâmplat ceva. | Windows își corectează singur ora (svchost.exe, cont SYSTEM) — acelea nu sunt listate. Listate sunt doar schimbările făcute de o persoană. |
 | Storage\\HotPlugSecureOpen | valoare de registru | Setare folosită de unele versiuni de Windows pentru a înregistra accesul la fișiere pe suporturi amovibile. | Fără ea, auditarea pe suporturi amovibile poate să nu noteze fișierele copiate. | 1 = pornită; lipsa înseamnă comportamentul implicit al versiunii. |
+| AppLocker 8003 | eveniment Windows | AppLocker (lista albă) ar fi oprit pornirea unui program, dar este doar în mod audit, așa că programul a rulat. | Arată programe neaprobate care rulează pe stație; în mod de blocare ar fi fost oprite. | Jurnalul „AppLocker/EXE and DLL”; câmpul FilePath arată programul. |
+| AppLocker 8004 | eveniment Windows | AppLocker (lista albă) a OPRIT pornirea unui program neaprobat. | Cineva a încercat să pornească un program care nu este aprobat pe stație. | Jurnalul „AppLocker/EXE and DLL”; câmpul FilePath arată programul. |
+| AppLocker 8006 | eveniment Windows | AppLocker ar fi oprit un script sau un pachet de instalare (MSI), dar este doar în mod audit, așa că a rulat. | Arată scripturi sau instalări neaprobate care au rulat. | Jurnalul „AppLocker/MSI and Script”. |
+| AppLocker 8007 | eveniment Windows | AppLocker a OPRIT un script sau un pachet de instalare (MSI) neaprobat. | Cineva a încercat să ruleze un script sau să instaleze un program neaprobat. | Jurnalul „AppLocker/MSI and Script”. |
+| CodeIntegrity 3076 | eveniment Windows | App Control (WDAC) ar fi oprit un fișier neaprobat, dar politica este doar în mod audit, așa că fișierul a rulat. | Arată programe sau biblioteci neaprobate care au rulat pe stație. | Câmpul „File Name” arată fișierul. |
+| CodeIntegrity 3077 | eveniment Windows | App Control (WDAC) a OPRIT încărcarea unui fișier neaprobat. | Cineva sau ceva a încercat să ruleze un fișier care nu este aprobat pe stație. | Câmpul „File Name” arată fișierul. |
+| Reguli de audit (SACL) | setare Windows | Lista care spune ce acces la fișierele unui folder se înregistrează în jurnalul Security, și pentru cine. | Fără reguli, accesul la documente nu lasă nicio urmă. | Citirea ei cere drepturi de administrator; aplicația nu o schimbă. |
 | Win32_UserAccount | interogare Windows (WMI) | Lista conturilor locale ale stației, cu starea lor (activ, dezactivat, parolă obligatorie, expirare). | Este lista reală a conturilor, chiar dacă unele sunt ascunse din ecranul de pornire. |  |
 | S-1-5-32-544 | identificator de securitate (SID) | Administrators: grupul administratorilor locali: control total. | SID-ul identifică sigur contul sau grupul, chiar dacă a fost redenumit. |  |
 | Win32_Group | interogare Windows (WMI) | Grupurile locale ale stației și membrii lor. | Arată cine are drepturi de administrator sau de acces la distanță. |  |
 | S-1-5-32-555 | identificator de securitate (SID) | Remote Desktop Users: cine are voie să lucreze de la distanță. | SID-ul identifică sigur contul sau grupul, chiar dacă a fost redenumit. |  |
 | Partition 1006 | eveniment Windows | Un disc a fost conectat la stație; jurnalul păstrează producătorul, modelul, seria și capacitatea. | Este cea mai bună urmă a unui stick USB sau disc extern conectat, cu numărul de serie de comparat cu registrul suporturilor. | BusType 7 = USB, 12 = card SD, 13 = card MMC. |
 | Enum\\USBSTOR | cheie de registru | Lista tuturor dispozitivelor de stocare USB conectate vreodată la stație, cu seria lor. | Arată ce stick-uri au fost folosite, chiar dacă jurnalele s-au pierdut. | Ștergerea acestei liste este o urmă de ascundere. |
+| FVE\\RDVDenyWriteAccess | valoare de registru | Politica BitLocker care interzice scrierea pe suporturi amovibile necriptate. | Datele pot ieși de pe stație doar pe suporturi criptate. | 1 = scrierea pe suporturi necriptate este blocată (de pe ele se poate doar citi). |
+| Win32_EncryptableVolume | interogare BitLocker | Starea criptării BitLocker a discului. | Arată dacă datele sunt protejate dacă discul este scos din stație. | ProtectionStatus 1 = protejat, 0 = neprotejat. |
+| Defender 1000 | eveniment Windows | Microsoft Defender a început o scanare (rapidă, completă sau a unui suport anume). | Arată dacă un suport a fost verificat cu antivirusul imediat după conectare. | Câmpul „Scan Resources” arată ce s-a scanat (de exemplu E:\\). |
+| Defender 1001 | eveniment Windows | Microsoft Defender a terminat o scanare. | Arată că scanarea s-a încheiat. |  |
+| Defender 1116 | eveniment Windows | Microsoft Defender a găsit un program rău-intenționat sau nedorit. | Un program rău-intenționat a ajuns pe stație; trebuie aflat de unde (de exemplu de pe un suport conectat). | Câmpurile „Threat Name” și „Path” arată ce și unde. |
+| Defender 1117 | eveniment Windows | Microsoft Defender a luat o măsură împotriva unui program rău-intenționat (carantină, ștergere). | Arată că amenințarea a fost tratată; originea ei trebuie totuși investigată. |  |
 | PASSWD_NOTREQD | indicator de cont | Contul are voie să aibă parolă goală. | Un cont fără parolă poate fi folosit de oricine. | Indicatorul nu dovedește că parola chiar este goală; se verifică. |
 | NetworkProfile 10000 | eveniment Windows | Stația s-a conectat la o rețea (numele rețelei este în eveniment). | Pe o stație izolată, orice conectare la rețea este o abatere. |  |
 | WLAN 8001 | eveniment Windows | Stația s-a conectat la o rețea fără fir (Wi-Fi); SSID = numele rețelei. | Pe o stație izolată, o conectare Wi-Fi este o abatere. |  |
 | NetworkList\\Profiles | cheie de registru | Lista rețelelor la care stația s-a conectat vreodată, cu data primei și ultimei conectări. | Pe o stație izolată arată dacă a fost vreodată conectată la o rețea. | Profilurile pot fi șterse manual; lipsa lor nu dovedește nimic. |
 | Services\\WlanSvc\\Start | valoare de registru | Modul de pornire al serviciului Wi-Fi (WLAN AutoConfig). | Fără serviciu pornit, stația nu se poate conecta la rețele fără fir. | 4 = dezactivat, 3 = la cerere, 2 = automat; lipsa înseamnă că serviciul nu există. |
 | Services\\bthserv\\Start | valoare de registru | Modul de pornire al serviciului Bluetooth. | Bluetooth permite trimiterea de fișiere fără cablu. | 4 = dezactivat, 3 = la cerere, 2 = automat. |
+| Win32_Share | interogare Windows (WMI) | Lista folderelor și imprimantelor partajate de stație în rețea. | O partajare permite altui calculator să citească sau să scrie pe stație. | C$, ADMIN$, IPC$ sunt partajările administrative implicite ale Windows. |
+| Terminal Services\\fAllowToGetHelp | valoare de registru | Politica pentru Asistența la distanță (Remote Assistance). | Prin ea altă persoană poate prelua stația din rețea. | 0 = interzisă (corect pe stația izolată), 1 = permisă. |
+| Remote Assistance\\fAllowToGetHelp | valoare de registru | Setarea stației pentru Asistența la distanță (Proprietăți sistem → Acces de la distanță). | Prin ea altă persoană poate prelua stația din rețea. | 0 = oprită, 1 = permisă; politica Terminal Services\\fAllowToGetHelp are întâietate. |
+| Services\\WinRM\\Start | valoare de registru | Modul de pornire al serviciului de administrare la distanță (WinRM). | Cu serviciul pornit se pot rula comenzi pe stație din rețea. | 4 = dezactivat, 3 = la cerere, 2 = automat. |
+| WSMAN\\Listener | cheie de registru | Punctele de ascultare ale administrării la distanță (WinRM), create de „winrm quickconfig”. | Un punct de ascultare înseamnă că stația acceptă comenzi din rețea. | Lipsa cheii sau a subcheilor = nu ascultă. |
+| Services\\PortProxy | cheie de registru | Redirecționările de porturi create cu „netsh interface portproxy”. | O redirecționare face din stație o punte între rețele. | Fiecare valoare: adresa/portul ascultat → adresa/portul către care se trimite. |
+| Network Connections\\NC_ShowSharedAccessUI | valoare de registru | Politica care interzice pornirea partajării conexiunii la Internet (ICS). | Partajarea face din stație o punte între rețele. | 0 = interzisă (corect pe stația izolată). |
+| HNetCfg.HNetShare | interfață Windows | Interfața Windows care arată ce conexiuni au partajarea conexiunii la Internet pornită. | Arată dacă stația face legătura între două rețele. | Aplicația doar citește, nu schimbă nimic. |
 | NetUserModalsGet | funcție Windows | Citește politica de parole a stației (aceeași pe care o arată comanda „net accounts”). | Arată regulile efective pentru parole și blocarea conturilor. |  |
 | Policies\\System\\EnableLUA | valoare de registru | Pornește sau oprește UAC (fereastra care cere confirmare înainte ca un program să primească drepturi de administrator). | Cu UAC oprit, orice program pornit de un administrator are control total, fără întrebare. | 1 = activ (corect), 0 = oprit. |
 | Policies\\System\\ConsentPromptBehaviorAdmin | valoare de registru | Cum întreabă UAC un administrator înainte de a da drepturi complete. | 0 înseamnă că nu se mai întreabă nimic. | 0 = fără întrebare, 1/3 = cere parola, 2/4 = cere confirmare, 5 = cere confirmare doar pentru programe din afara Windows (implicit). |
@@ -743,7 +908,6 @@
 | ExclusionProcess | setare Defender | Un program pe care antivirusul NU îl verifică. | Programul exclus poate face orice fără să fie oprit de antivirus. |  |
 | ExclusionExtension | setare Defender | Un tip de fișier pe care antivirusul NU îl verifică. | Toate fișierele de acel tip scapă de verificare. |  |
 | MSFT_MpPreference | interogare Microsoft Defender | Setările Defender, inclusiv excluderile. | Excluderile sunt locuri pe care antivirusul nu le verifică. |  |
-| Win32_EncryptableVolume | interogare BitLocker | Starea criptării BitLocker a discului. | Arată dacă datele sunt protejate dacă discul este scos din stație. | ProtectionStatus 1 = protejat, 0 = neprotejat. |
 | LanmanServer\\Parameters\\SMB1 | valoare de registru | Versiunea veche (1) a protocolului de partajare a fișierelor. | SMBv1 are vulnerabilități cunoscute folosite de viruși (de exemplu WannaCry). | 0 sau lipsă = dezactivat. |
 | Services\\mrxsmb10\\Start | valoare de registru | Pornirea componentei client SMBv1. | Vezi SMB1. | 4 = dezactivat; 2 sau 3 = poate porni. |
 | WDigest\\UseLogonCredential | valoare de registru | Dacă Windows păstrează parolele în memorie în formă care poate fi citită. | Cu valoarea 1, un program rău-intenționat poate extrage parolele în clar (tehnică Mimikatz). | 0 sau lipsă = sigur (implicit pe Windows 10/11). |
@@ -772,6 +936,19 @@
 | System\\LegalNoticeText | valoare de registru | Textul mesajului de avertizare afișat înainte de autentificare. | Vezi LegalNoticeCaption. | Trebuie să indice nivelul maxim de clasificare. |
 | Parameters\\NtpServer | valoare de registru | Serverul de timp configurat pentru ceasul stației. | Ora din jurnale este de încredere doar dacă ceasul este sincronizat cu o sursă aprobată. | Lipsa înseamnă că niciun server nu este configurat. |
 | Parameters\\Type | valoare de registru | Tipul de sincronizare a ceasului stației. | Un ceas lăsat liber se abate în timp. | NTP = server de timp, NT5DS = domeniu, NoSync = fără sincronizare. |
+| Tipuri de protecție BitLocker | interogare BitLocker | Cum se deblochează discul criptat la pornire. | Doar TPM (fără PIN) deblochează discul singur, chiar dacă stația este furată întreagă. | 1 = TPM, 2 = cheie pe stick, 3 = parolă de recuperare, 4 = TPM și PIN, 5 = TPM și cheie pe stick, 6 = TPM, PIN și cheie pe stick, 8 = parolă. |
+| ConversionStatus | interogare BitLocker | Cât de criptat este volumul. | Un volum în curs de criptare nu este încă protejat complet. | 0 = necriptat, 1 = criptat complet, 2 = criptare în curs, 3 = decriptare în curs, 4/5 = oprită temporar. |
+| Win32_Tpm | interogare Windows (WMI) | Starea cipului de securitate TPM: dacă există, dacă este pornit, pregătit și ce versiune are. | TPM păstrează cheile de criptare legate de placa de bază. | Necesită drepturi de administrator. |
+| Kernel DMA Protection\\DeviceEnumerationPolicy | valoare de registru | Ce se întâmplă cu dispozitivele Thunderbolt/USB4 care nu suportă protecția memoriei. | Un astfel de dispozitiv poate citi direct memoria stației. | 0 = blocate, 1 = permise după autentificare (implicit), 2 = permise toate. |
+| Kernel DMA Protection | informație Windows | Protecția memoriei la porturile Thunderbolt/USB4, așa cum o afișează „Informații sistem” (msinfo32). | Fără ea, un dispozitiv conectat la port poate citi memoria stației. | Pornită / oprită; depinde de placa de bază și de setările UEFI. |
+| VirtualizationBasedSecurityStatus | interogare Windows (WMI) | Starea securității bazate pe virtualizare (VBS). | Fără VBS, Credential Guard și protecția integrității codului nu funcționează. | 0 = oprită, 1 = cerută dar nu rulează, 2 = rulează. |
+| 0e796bdb-100d-47d6-a2d5-f7d2daa51f51\\ACSettingIndex | valoare de registru | Politica „parolă la trezire” pentru stația alimentată din priză. | Fără parolă, oricine trezește stația intră în sesiunea deschisă. | 1 = se cere parola, 0 = nu se cere. |
+| 0e796bdb-100d-47d6-a2d5-f7d2daa51f51\\DCSettingIndex | valoare de registru | Politica „parolă la trezire” pentru stația alimentată din baterie. | Fără parolă, oricine trezește stația intră în sesiunea deschisă. | 1 = se cere parola, 0 = nu se cere. |
+| Desktop\\DelayLockInterval | valoare de registru | Setarea „Solicitare autentificare” a utilizatorului (după cât timp de somn se cere parola). | Valoarea „niciodată” lasă sesiunea deschisă la trezire. | 0 = la fiecare trezire; 4294967295 (sau -1) = niciodată. |
+| CONSOLELOCK | setare de alimentare | Setarea planului de alimentare care cere parola la revenirea din somn (powercfg). | Fără ea, oricine trezește stația intră în sesiunea deschisă. | 1 = se cere parola, 0 = nu se cere. |
+| UsermodeCodeIntegrityPolicyEnforcementStatus | interogare Windows (WMI) | Cum aplică App Control (WDAC) lista albă pentru programe. | Doar modul de aplicare oprește programele neaprobate. | 0 = oprită, 1 = doar audit (notează), 2 = aplicată (blochează). |
+| FullScanEndTime | interogare Microsoft Defender | Data la care s-a terminat ultima scanare completă a stației. | O scanare veche poate lăsa nedescoperit un program adus înainte de ultima actualizare. | Gol = nicio scanare completă, niciodată. |
+| AntiVirusProduct | interogare Windows (WMI) | Antivirusurile înregistrate în Centrul de securitate Windows, inclusiv ale altor producători. | Arată ce antivirus protejează efectiv stația. | productState: un cod numeric; aplicația îl citește ca pornit/oprit și semnături la zi/vechi (decodare nedocumentată oficial). |
 | Application 11707 | eveniment Windows | Windows Installer: un program a fost instalat cu succes. | Software-ul instalat trebuie să fie pe lista aprobată. |  |
 | Application 11724 | eveniment Windows | Windows Installer: un program a fost dezinstalat cu succes. | Dezinstalarea poate ascunde un program folosit anterior. |  |
 | Application 1033 | eveniment Windows | Windows Installer: instalare încheiată (cu codul de rezultat). | Software-ul instalat trebuie să fie pe lista aprobată. | Codul de stare 0 = reușit. |
@@ -781,6 +958,7 @@
 | CurrentVersion\\DisplayVersion | valoare de registru | Versiunea Windows pe înțelesul utilizatorilor (de exemplu 24H2). | Arată cât de nouă este versiunea și dacă mai primește actualizări. | Se compară cu tabelul versiunilor suportate al organizației. |
 | CurrentVersion\\CurrentBuild | valoare de registru | Numărul de build al Windows. | Identifică exact versiunea; 22000 sau mai mult înseamnă Windows 11. | Numele produsului din registru poate spune „Windows 10” și pe Windows 11. |
 | CurrentVersion\\UBR | valoare de registru | Numărul de revizie al actualizărilor instalate peste build. | Crește cu fiecare actualizare lunară instalată. | Se citește împreună cu build-ul: 26100.1234 înseamnă revizia 1234. |
+| Win32_QuickFixEngineering | interogare Windows (WMI) | Lista actualizărilor Windows instalate, cu numărul KB și data. | Se compară cu registrul actualizărilor offline. | Nu cuprinde actualizările antivirusului și nici toate componentele Windows. |
 | Security 4732 | eveniment Windows | Un membru a fost adăugat într-un grup local (de exemplu Administrators). | Adăugarea în Administrators dă control total asupra stației. | SID-ul S-1-5-32-544 înseamnă grupul Administrators. |
 | Security 4733 | eveniment Windows | Un membru a fost eliminat dintr-un grup local. | Schimbă drepturile contului. |  |
 | Security 4720 | eveniment Windows | A fost creat un cont de utilizator nou. | Orice cont nou trebuie să aibă aprobare. |  |

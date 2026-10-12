@@ -180,6 +180,26 @@ namespace LogAnalyzer.UI.ViewModels
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { PreviousNote = "Controalele anterioare nu au putut fi citite: " + ex.Message; }
         }
 
+        /// <summary>
+        /// What the control reads from the organisation's own data: the classified folders of the procedure profile (their audit rules are checked)
+        /// and the register of offline updates (compared with the installed updates). Missing data gives empty lists, which the checks report as
+        /// "not filled in", never as compliant.
+        /// </summary>
+        internal static (System.Collections.Generic.List<string> Folders, System.Collections.Generic.List<LogAnalyzer.Dfir.Registers.UpdateRow> Updates) ControlInputs()
+        {
+            ProcedureProfile? p = null;
+            try { p = ProfileProvider.Shared.Current; } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { }
+            var folders = p?.ClassifiedFolders.Select(x => x.Path.Trim()).Where(x => x.Length > 0).ToList() ?? [];
+            var updates = new System.Collections.Generic.List<LogAnalyzer.Dfir.Registers.UpdateRow>();
+            try { updates = LogAnalyzer.Dfir.Registers.RegisterStore.Load<LogAnalyzer.Dfir.Registers.UpdateRegister>().Register?.Rows ?? updates; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { }
+            return (folders, updates);
+        }
+
+        private UpdateRegisterViewModel? _updateRegister;
+        /// <summary>"Registrul actualizărilor offline" (control research P5), edited on the control page; created when the page first shows it.</summary>
+        public UpdateRegisterViewModel UpdateRegister => _updateRegister ??= new UpdateRegisterViewModel();
+
         private void LoadProfileSections()
         {
             ProfileSections.Clear();
@@ -250,7 +270,8 @@ namespace LogAnalyzer.UI.ViewModels
                 var start = DateTimeOffset.UtcNow.AddDays(-PeriodDays);
                 var isolated = StationShouldBeIsolated;
                 SavedReportInfo = "";
-                _report = await Task.Run(() => ControlEvaluator.Evaluate(StationFactCollector.Collect(start, isolated)));
+                var (folders, updates) = ControlInputs();
+                _report = await Task.Run(() => ControlEvaluator.Evaluate(StationFactCollector.Collect(start, isolated, classifiedFolders: folders, offlineUpdates: updates)));
                 FillChecks();
                 Users.Clear();
                 foreach (var u in _report.Users) Users.Add(u);
