@@ -1,23 +1,25 @@
 # todo-claude-loganalyzer-review
 
-- **Task:** apply the senior review `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/REVIEW_2026-10-11_SENIOR_DETECTION_AND_PERFORMANCE.md`
-  (detection, collection, alerting, attribution, explanation, performance) to LogAnalyzer.
-- **Branch:** `claude/loganalyzer-dfir-roles-ui-0a71fb` (pushed; no PR yet).
-- **Updated:** 2026-10-11.
+- **Task:** make LogAnalyzer fully useful for air-gap station control and DFIR; close the 87-requirement comparison
+  (docs/dfir/RESEARCH_2026-10-12_COMPARATIE_AIRGAP_LOGANALYZER_INSPECTRA.md).
+- **Branch:** `claude/loganalyzer-dfir-roles-ui-0a71fb` (pushed; no PR). Scrub of the rest of the repo: PR #280 (open, owner merges).
+- **Stage:** local testing only; licences (QuestPDF) and accreditation before institutional use.
+- **Updated:** 2026-10-12.
 
-## Done (committed)
-- Performance actions 1–2 (analysis off the UI thread, DB compaction + indexes), L1, L3, L4, L5, L8, L9, I1, A5 (RunMRU), C3.
-
-## In progress
-- Detection batch D11–D23 (Dfir rules) — worker, uncommitted until it reports.
-- L10/L11/L12/L13/L15 live alerts: queue + batched UI timer, de-duplication (`LiveAlertThrottle`), per-station/per-source failed-logon
-  counters, spray rule, no bare-keyword alerts, one technique per alert. MainViewModel edited; Core patch and tests staged in the session scratchpad.
+## Done (pushed, all four test suites green at 967ddcd48)
+- Senior review items, report usefulness (page 1 verdict, glossary, grammar), five false statements fixed.
+- Event-log export fix (EvtExportLog flag), collector labels evidence with the real station name.
+- Transfer register page, reconciliation, content verification, stick inspection, scope at start, Timesketch export.
+- Policy explanations (129 settings), code/event explanations, check guides.
+- Vetted libraries Registry + Serilog (pinned, lock file, notices); deleted registry traces, VBR volume serial links, MountPoints2 times.
+- Station checks P32–P39, N06–N10, A09, A10, D02, D03, S04; air-gap rules (adapter kinds, optical, print, screenshots, BadUSB, VM, archivers, uploads, covert hardware, zones, lifecycle); report signing, verifiable archive, footprint, PII masking, history and after-connect rules, Collect-all.
+- Two independent reviews and their fixes; unique check-id test; privacy guard test (local untracked identifier list).
 
 ## Next
-- E1–E3 explanation gaps (EventMeaning ids, ItemMeaning kinds, domain/mail check guides).
-- Legacy engine noise D1, D2, D4–D7.
-- L2 persist live alerts; L6, L7; C4, C5; D8–D10, D16–D18, D20.
+- E6/E7/E8 (read the stick itself, ShellBags/Recycle Bin, deleted $MFT) — candidate libraries are vetted.
+- Run on a real station as administrator and as a standard user; recompute the 87-row table from real output (kept local).
+- Remaining partial rows: C8, D7, D12, D13, D14, E10, G3; B12 is manual by nature.
 
-## Blockers
-- System disk C: ~150 MB free: worktree isolation for parallel workers is impossible (each worktree ~605 MB); one worker at a time in this tree.
-  Cleanup is the owner's decision (temp folder 8.4 GB, NuGet cache 0.7 GB, old worktrees).
+## Blockers / owner decisions
+- Git history still contains old private data (history rewrite or private repo = owner's decision).
+- Commit author name still shows the Windows user name (owner may switch it to the GitHub login).
