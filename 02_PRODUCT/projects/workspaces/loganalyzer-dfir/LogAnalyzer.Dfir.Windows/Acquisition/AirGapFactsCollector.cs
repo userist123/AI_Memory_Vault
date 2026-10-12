@@ -294,9 +294,9 @@ public sealed class AirGapFactsCollector : ICollector
     {
         if (!elevated || workDir is null) return;
         var logDir = Path.Combine(workDir, "Logs", "tools");
-        var run = ToolRunner.Run(ToolRunner.System32("bcdedit.exe"), ["/enum", "osloader"], logDir, "bcdedit_osloader", TimeSpan.FromSeconds(30), ct);
+        var run = ToolRunner.Run(ToolRunner.System32("bcdedit.exe"), ["/enum", "all", "/v"], logDir, "bcdedit_all", TimeSpan.FromSeconds(30), ct, ToolRunner.ConsoleOemEncoding());
         if (run.ExitCode != 0 || !File.Exists(run.StdoutPath)) throw new IOException($"bcdedit: cod de ieșire {run.ExitCode}");
-        var names = BootEntries.OsLoaderDescriptions(File.ReadAllText(run.StdoutPath));
+        var names = BootEntries.OsLoaderDescriptions(File.ReadAllText(run.StdoutPath));   // parsed by element names, not by the localised section headers
         v.BootEntryNames.AddRange(names);
         v.BootOsEntries = names.Count;
     }

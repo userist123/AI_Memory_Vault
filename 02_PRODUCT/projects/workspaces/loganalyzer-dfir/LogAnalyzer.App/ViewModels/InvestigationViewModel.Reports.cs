@@ -101,7 +101,7 @@ namespace LogAnalyzer.UI.ViewModels
             var label = SignerName.Trim();
             var op = LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified.Split('\\').Last();
             masker.KnownUser(op);
-            return label.Length > 0 ? masker.Mask(label) : masker.User(op);
+            return label.Length > 0 ? masker.MaskSignerLabel(label) : masker.User(op);   // a person's display name becomes a pseudonym; an organisation label stays
         }
 
         [RelayCommand]

@@ -21,4 +21,9 @@
     <!-- Detection rules shipped with the application (YARA-lite, Sigma-lite); hashed and versioned when loaded. -->
     <None Include="Rules\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- test seams (CaseArchive.ImportCore) stay internal -->
+    <InternalsVisibleTo Include="LogAnalyzer.App.Tests" />
+    <InternalsVisibleTo Include="LogAnalyzer.Dfir.Tests" />
+  </ItemGroup>
 </Project>

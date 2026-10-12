@@ -248,7 +248,7 @@ public sealed class ReviewFixIntegrityTests : IDisposable
     {
         var (_, zip) = MakeCase(null, out var res);
         var dest = Path.Combine(_k.Dir, "imported");
-        var (ws, check) = CaseArchive.Import(zip, dest, res.ManifestSha256, afterExtract: folder =>
+        var (ws, check) = CaseArchive.ImportCore(zip, dest, res.ManifestSha256, null, false, afterExtract: folder =>
         {
             var victim = Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories).First(f => f.Contains("Raw", StringComparison.Ordinal));
             File.SetAttributes(victim, FileAttributes.Normal);
@@ -335,7 +335,7 @@ public sealed class ReviewFixIntegrityTests : IDisposable
     public void Report_keygen_can_protect_the_key_with_a_passphrase_and_a_wrong_one_fails()
     {
         var priv = Path.Combine(_k.Dir, "keys", "parola.key"); var pubFile = Path.Combine(_k.Dir, "keys", "parola.pub");
-        Assert.Equal(0, ReportCli.Keygen(["report-keygen", priv, pubFile, "--passphrase"], new StringWriter(), new StringReader("parola de test 123\n")));
+        Assert.Equal(0, ReportCli.Keygen(["report-keygen", priv, pubFile, "--passphrase"], new StringWriter(), new StringReader("parola de test 123\nparola de test 123\n")));   // typed twice
         var text = File.ReadAllText(priv);
         Assert.StartsWith(ReportKeyProtection.PassphrasePrefix, text);
         Assert.True(ReportKeyProtection.NeedsPassphrase(text));

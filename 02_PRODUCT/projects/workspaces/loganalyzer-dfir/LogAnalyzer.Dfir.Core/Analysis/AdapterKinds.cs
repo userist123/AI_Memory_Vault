@@ -63,36 +63,81 @@ public static class HardwareKinds
     }
 }
 
-/// <summary>Reads the operating-system entries from the text of <c>bcdedit /enum osloader</c> (D12). Pure.</summary>
+/// <summary>
+/// Reads the operating-system entries from the text of <c>bcdedit /enum all /v</c> (D12). Pure. Language-independent: section headers are localised ("Încărcător de pornire Windows",
+/// "Windows-Startladeprogramm"), but the element names (identifier, device, path, osdevice, recoverysequence ...) are not, so a block is recognised by its elements.
+/// </summary>
 public static class BootEntries
 {
-    /// <summary>The description of every Windows Boot Loader section (sections are separated by blank lines; the first line is the section title).</summary>
-    public static List<string> OsLoaderDescriptions(string bcdText)
+    /// <summary>Description of an entry that boots a WinPE / RAM disk image which is not the Windows Recovery Environment linked to the current system.</summary>
+    public const string ExtraRamdiskEntry = "intrare de pornire WinPE/ramdisk suplimentară";
+
+    private sealed record Block(string Header, Dictionary<string, string> El);
+
+    private static List<Block> Parse(string bcdText)
     {
-        var res = new List<string>();
-        foreach (var block in bcdText.Replace("\r", "").Split("\n\n"))
+        var res = new List<Block>();
+        foreach (var raw in System.Text.RegularExpressions.Regex.Split(bcdText.Replace("\r", ""), @"\n[ \t]*\n"))
         {
-            var lines = block.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).ToList();
-            if (lines.Count == 0 || !(lines[0].StartsWith("Windows Boot Loader", StringComparison.OrdinalIgnoreCase) || lines[0].StartsWith("Înc", StringComparison.OrdinalIgnoreCase))) continue;
-            if (IsRecoveryOrResume(lines)) continue;
-            var d = lines.FirstOrDefault(l => l.StartsWith("description", StringComparison.OrdinalIgnoreCase));
-            res.Add(d is null ? "(fără descriere)" : d["description".Length..].Trim() is { Length: > 0 } t ? t : "(fără descriere)");
+            var lines = raw.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).ToList();
+            if (lines.Count == 0) continue;
+            var header = lines[0];
+            int start = lines.Count > 1 && lines[1].Length >= 3 && lines[1].All(ch => ch == '-') ? 2 : (header.Contains(' ') && !header.StartsWith("identifier", StringComparison.OrdinalIgnoreCase) ? 1 : 0);
+            var el = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var l in lines.Skip(start))
+            {
+                int sp = l.IndexOfAny([' ', '\t']);
+                var name = sp < 0 ? l : l[..sp];
+                var val = sp < 0 ? "" : l[sp..].Trim();
+                el.TryAdd(name, val);   // the first occurrence wins; a repeated element name is not a second value
+            }
+            res.Add(new Block(start > 0 ? header : "", el));
         }
         return res;
     }
 
-    /// <summary>The Windows Recovery Environment loader (RAM-disk boot of Winre.wim) and the hibernation resume loader exist on every station: they are not a second operating system.</summary>
-    private static bool IsRecoveryOrResume(List<string> lines)
+    private static string Get(Block b, string n) => b.El.TryGetValue(n, out var v) ? v : "";
+
+    /// <summary>A boot loader (as opposed to the boot manager, the resume application, memory tests ...): it names a system device or a winload image.</summary>
+    private static bool IsLoader(Block b)
     {
-        foreach (var l in lines)
+        var path = Get(b, "path").ToLowerInvariant();
+        if (path.Contains("winresume")) return false;   // the hibernation resume application is not an operating system
+        if (path.Contains("winload")) return true;
+        if (b.El.ContainsKey("osdevice") || b.El.ContainsKey("systemroot")) return true;
+        return b.Header.StartsWith("Windows Boot Loader", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsWinreRamdisk(Block b) =>
+        (Get(b, "device") + " " + Get(b, "osdevice")).Replace('/', '\\').Contains("\\Recovery\\WindowsRE\\Winre.wim", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsRamdiskOrWinPe(Block b) =>
+        (Get(b, "device") + " " + Get(b, "osdevice")).Contains("ramdisk=", StringComparison.OrdinalIgnoreCase) ||
+        Get(b, "winpe").Equals("Yes", StringComparison.OrdinalIgnoreCase) || Get(b, "winpe").Equals("Da", StringComparison.OrdinalIgnoreCase) || Get(b, "winpe").Equals("Ja", StringComparison.OrdinalIgnoreCase) || Get(b, "winpe").Equals("true", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// The description of every real operating-system loader. Excluded: the loader the current system's <c>recoverysequence</c> points to, a loader whose RAM-disk image is
+    /// \Recovery\WindowsRE\Winre.wim, and the hibernation resume application. A description or a "winpe" flag proves nothing (an attacker sets both), so any other ramdisk / WinPE
+    /// loader counts and is named <see cref="ExtraRamdiskEntry"/>.
+    /// </summary>
+    public static List<string> OsLoaderDescriptions(string bcdText)
+    {
+        var blocks = Parse(bcdText);
+        var loaders = blocks.Where(IsLoader).ToList();
+        // the current system: {current}, else the boot manager's "default", else the first non-ramdisk loader
+        var defaults = blocks.Select(b => Get(b, "default")).Where(d => d.Length > 0).ToList();
+        var current = loaders.Where(b => Get(b, "identifier").Equals("{current}", StringComparison.OrdinalIgnoreCase) || defaults.Contains(Get(b, "identifier"), StringComparer.OrdinalIgnoreCase)).ToList();
+        if (current.Count == 0 && loaders.FirstOrDefault(b => !IsRamdiskOrWinPe(b)) is { } first) current = [first];
+        var recoveryIds = current.Select(b => Get(b, "recoverysequence")).Where(r => r.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var res = new List<string>();
+        foreach (var b in loaders)
         {
-            var t = l.ToLowerInvariant();
-            if (t.StartsWith("device", StringComparison.Ordinal) || t.StartsWith("osdevice", StringComparison.Ordinal))
-                if (t.Contains("ramdisk=") || t.Contains("winre.wim")) return true;
-            if (t.StartsWith("path", StringComparison.Ordinal) && (t.Contains("winresume.efi") || t.Contains("winresume.exe"))) return true;
-            if (t.StartsWith("description", StringComparison.Ordinal) && (t.Contains("recovery environment") || t.Contains("mediul de recuperare") || t.Contains("resume from hibernate") || t.Contains("windows resume"))) return true;
-            if (t.StartsWith("winpe", StringComparison.Ordinal) && t.EndsWith("yes", StringComparison.Ordinal)) return true;
+            var id = Get(b, "identifier");
+            if (recoveryIds.Contains(id) || IsWinreRamdisk(b) && !current.Contains(b)) continue;
+            var d = Get(b, "description");
+            if (d.Length == 0) d = "(fără descriere)";
+            res.Add(IsRamdiskOrWinPe(b) ? $"{ExtraRamdiskEntry}: {d}" : d);
         }
-        return false;
+        return res;
     }
 }
