@@ -275,7 +275,7 @@ def test_text_normalizer_domain_expansions():
 def test_sentence_chunker_punctuation_and_clause_streaming():
     """Verify SentenceChunker streams on sentence terminals and clause commas."""
     chunker = SentenceChunker(clause_split=True, min_clause_words=4)
-    tokens = ["Hello", " Owner.", " The", " lights", " have", " been", " adjusted,", " and", " the", " heating", " is", " active."]
+    tokens = ["Hello", " User.", " The", " lights", " have", " been", " adjusted,", " and", " the", " heating", " is", " active."]
 
     emitted = []
     for tok in tokens:
@@ -284,7 +284,7 @@ def test_sentence_chunker_punctuation_and_clause_streaming():
     emitted.extend(chunker.flush())
 
     assert len(emitted) >= 3
-    assert emitted[0] == "Hello Owner."
+    assert emitted[0] == "Hello User."
     assert "adjusted," in emitted[1]
 
 

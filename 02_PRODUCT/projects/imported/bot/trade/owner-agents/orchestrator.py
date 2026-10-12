@@ -12,7 +12,7 @@ AGENTS = {
 
 BANNER = """
 ╔══════════════════════════════════════════════════════════╗
-║           OWNER AI AGENT TEAM - Powered by Gemini       ║
+║           OWNER  AI AGENT TEAM - Powered by Gemini       ║
 ╠══════════════════════════════════════════════════════════╣
 ║  1. Trading Agent     - bots, strategii, backtesting     ║
 ║  2. Web Dev Agent     - Next.js, React, FastAPI, APIs    ║

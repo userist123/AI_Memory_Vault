@@ -3,7 +3,7 @@ import hashlib
 
 report_text = """# RAPORT FINAL DE NOAPTE — CAMPANIA POLYMARKET (`OVERNIGHT_CAMPAIGN_REPORT.md`)
 
-> **Destinatar**: OWNER · **Operator**: ANTIGRAVITY  
+> **Destinatar**: PROPRIETAR · **Operator**: ANTIGRAVITY  
 > **Data / Interval**: 2026-09-14, 00:05 – 00:25 (UTC+3)  
 > **Ramură Git**: `antigravity/pm-overnight-campaign`  
 > **Etape Executate**: 7 din 7 (Etapa 1 – Etapa 7)  
@@ -145,7 +145,7 @@ $ python -m pytest -q 20_TESTS/polymarket
 ```
 """
 
-target = "C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/OVERNIGHT_CAMPAIGN_REPORT.md"
+target = str(__import__("pathlib").Path(__file__).resolve().parents[5] / "07_EVALUATION/polymarket/OVERNIGHT_CAMPAIGN_REPORT.md")
 with open(target, "w", encoding="utf-8") as f:
     f.write(report_text)
 

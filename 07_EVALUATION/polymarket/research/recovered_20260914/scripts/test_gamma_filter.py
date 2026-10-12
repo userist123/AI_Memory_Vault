@@ -21,7 +21,7 @@ with urllib.request.urlopen(req1, timeout=10) as resp:
 
 # 2. What about the transition point? When did enableOrderBook become true?
 # Let's inspect the 1 market in offset 1500 that had enableOrderBook=True
-with open("C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/sampled_500_markets.json", "r", encoding="utf-8") as f:
+with open(str(__import__("pathlib").Path.home() / ".gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/sampled_500_markets.json"), "r", encoding="utf-8") as f:
     sampled = json.load(f)
 
 era_1500_clob = [m for m in sampled if m.get("_era") == "era_2024_offset1500" and m.get("enableOrderBook") is True]

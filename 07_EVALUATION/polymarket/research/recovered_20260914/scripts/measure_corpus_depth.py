@@ -36,7 +36,7 @@ for name, params in batches:
 print(f"Total raw markets fetched: {len(all_markets)}")
 
 # Save sampled 500 raw markets to scratch
-scratch_path = "C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch"
+scratch_path = str(__import__("pathlib").Path.home() / ".gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch")
 with open(f"{scratch_path}/sampled_500_markets.json", "w", encoding="utf-8") as f:
     json.dump(all_markets, f, indent=2)
 

@@ -1,12 +1,12 @@
 import json
 import math
 import sys
-sys.path.insert(0, "C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages")
+sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[5] / "03_IMPLEMENTATION/packages"))
 
 from polymarket.historical_paper_replay import HistoricalMarketBundle, HistoricalTapePoint, run_mechanical_control
 
 # Load dataset
-dataset_path = "C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json"
+dataset_path = str(__import__("pathlib").Path(__file__).resolve().parents[5] / "07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json")
 with open(dataset_path, "r", encoding="utf-8") as f:
     data = json.load(f)
 
@@ -100,7 +100,7 @@ entry_prices = [r["entry_price"] for r in results]
 print(f"\nEntry price distribution: min={min(entry_prices):.4f}, max={max(entry_prices):.4f}, mean={sum(entry_prices)/len(entry_prices):.4f}")
 
 # Save detailed results to scratch
-scratch_path = "C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch"
+scratch_path = str(__import__("pathlib").Path.home() / ".gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch")
 with open(f"{scratch_path}/mechanical_control_summary.json", "w", encoding="utf-8") as f:
     json.dump({
         "total_markets": n,

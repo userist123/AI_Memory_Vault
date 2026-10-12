@@ -53,7 +53,7 @@ async def test_scenario_good_morning_routine(
             return {"status": "success", "temp": temp_state["state"]}
         return {"status": "success"}
 
-    mock_llm.set_next_response("Good morning Owner. The kitchen light and coffee maker are on, outdoor temperature is 19.5 degrees.")
+    mock_llm.set_next_response("Good morning User. The kitchen light and coffee maker are on, outdoor temperature is 19.5 degrees.")
     engine = OODACognitiveEngine(llm_provider=mock_llm, storage_engine=sqlite_storage, tool_executor=tool_router)
 
     event = PerceptionEvent(channel="voice", raw_data="Turn on kitchen light and coffee maker for morning routine")

@@ -281,7 +281,7 @@ def test_chunker_emojis_and_multilingual_unicode():
     chunker = SentenceChunker(clause_split=True, min_clause_words=4)
     text = (
         "🚀 Sistemul Jarvis funcționează perfect! ⚡ Bateria este la 98% și temperatura este 23 °C. "
-        "🤖 Toate luminile din casă sunt aprinse. ¿Está todo listo? Da, domnule Owner! 👍"
+        "🤖 Toate luminile din casă sunt aprinse. ¿Está todo listo? Da, domnule User! 👍"
     )
 
     chunks = []

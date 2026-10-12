@@ -81,7 +81,7 @@ class SimulatedKokoroTTS:
 def test_sentence_chunker_punctuation_boundaries():
     """Test SentenceChunker splits streaming tokens on full stops and question marks."""
     chunker = SimulatedSentenceChunker()
-    tokens = ["Hello", " Owner.", " How", " can", " I", " assist", " you", " today?"]
+    tokens = ["Hello", " User.", " How", " can", " I", " assist", " you", " today?"]
 
     chunks = []
     for tok in tokens:
@@ -89,7 +89,7 @@ def test_sentence_chunker_punctuation_boundaries():
     chunks.extend(chunker.flush())
 
     assert len(chunks) == 2
-    assert chunks[0] == "Hello Owner."
+    assert chunks[0] == "Hello User."
     assert chunks[1] == "How can I assist you today?"
 
 

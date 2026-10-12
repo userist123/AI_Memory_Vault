@@ -1,6 +1,6 @@
 import json
 
-with open("C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/corpus_depth_results.json", "r", encoding="utf-8") as f:
+with open(str(__import__("pathlib").Path.home() / ".gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/corpus_depth_results.json"), "r", encoding="utf-8") as f:
     d = json.load(f)
 
 markets = d["f5_qualifying_markets"]

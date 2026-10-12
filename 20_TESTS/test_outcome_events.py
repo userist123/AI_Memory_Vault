@@ -42,7 +42,7 @@ def test_outcome_event_immutability_and_validation():
         source='human',
         confidence='high',
         evidence='All checks verified',
-        labeled_by='owner',
+        labeled_by='annotator',
     )
     with pytest.raises(FrozenInstanceError):
         evt.outcome = 'failure'

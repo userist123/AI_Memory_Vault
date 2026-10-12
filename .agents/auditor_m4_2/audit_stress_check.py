@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-sys.path.insert(0, r"C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain")
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "projects" / "jarvis_cognitive_brain"))
 
 import json
 import asyncio
