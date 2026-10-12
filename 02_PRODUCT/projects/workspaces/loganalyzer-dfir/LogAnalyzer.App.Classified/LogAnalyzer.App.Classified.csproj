@@ -65,4 +65,7 @@
       <_Parameter2>$(ClassifiedIncludeLocalAi)</_Parameter2>
     </AssemblyAttribute>
   </ItemGroup>
+  <!-- Security audit #5: SHA-256 manifest of the native libraries next to the published exe, verified at startup. -->
+  <Import Project="..\eng\NativeLibraryManifest.targets" />
+
 </Project>

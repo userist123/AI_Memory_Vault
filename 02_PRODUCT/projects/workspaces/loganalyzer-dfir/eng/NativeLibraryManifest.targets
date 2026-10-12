@@ -1,0 +1,18 @@
+<Project>
+  <!--
+    Security audit #5: after a single-file publish (native libraries NOT self-extracted, they sit next to the exe), write
+    native-libraries.sha256 = "SHA256  name.dll" for every DLL in the publish folder. The published application checks it at startup
+    (LogAnalyzer.Dfir.IO.NativeLibraryManifest) and refuses to start on any difference, missing or extra DLL.
+  -->
+  <Target Name="WriteNativeLibraryManifest" AfterTargets="Publish" Condition="'$(PublishSingleFile)' == 'true'">
+    <ItemGroup>
+      <_LaPublishedDll Include="$(PublishDir)*.dll" />
+    </ItemGroup>
+    <GetFileHash Files="@(_LaPublishedDll)" Algorithm="SHA256" HashEncoding="hex">
+      <Output TaskParameter="Items" ItemName="_LaPublishedDllHash" />
+    </GetFileHash>
+    <Error Condition="'@(_LaPublishedDll)' == ''" Text="Publicarea nu a produs nicio bibliotecă nativă lângă executabil; manifestul nativ nu poate fi scris." />
+    <WriteLinesToFile File="$(PublishDir)native-libraries.sha256" Lines="@(_LaPublishedDllHash->'%(FileHash)  %(Filename)%(Extension)')" Overwrite="true" />
+    <Message Importance="high" Text="Manifest biblioteci native: $(PublishDir)native-libraries.sha256 (@(_LaPublishedDll->Count()) fișiere)" />
+  </Target>
+</Project>
