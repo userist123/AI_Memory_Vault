@@ -1,6 +1,6 @@
 # RAPORT FINAL DE NOAPTE — CAMPANIA POLYMARKET (`OVERNIGHT_CAMPAIGN_REPORT.md`)
 
-> **Destinatar**: MARIUS · **Operator**: ANTIGRAVITY  
+> **Destinatar**: PROPRIETAR · **Operator**: ANTIGRAVITY  
 > **Data / Interval**: 2026-09-14, 00:05 – 00:25 (UTC+3)  
 > **Ramură Git**: `antigravity/pm-overnight-campaign`  
 > **Etape Executate**: 7 din 7 (Etapa 1 – Etapa 7)  

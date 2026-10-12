@@ -21,7 +21,7 @@ A forensic audit was conducted across the source-of-truth order (`99_SYSTEM/`, `
    - These 15 test contracts were implemented in [`memory_controller/tests/test_security_hardening.py`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/memory_controller/tests/test_security_hardening.py) and [`cognitive_core/tests/test_tool_router_security.py`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/cognitive_core/tests/test_tool_router_security.py), and evaluated comprehensively in [`memory_controller/tests/test_adversarial_p0_p15_invariants.py`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/memory_controller/tests/test_adversarial_p0_p15_invariants.py).
    - In subsequent documentation, authors adopted **`P0-P15` as an umbrella shorthand** referring collectively to the 15 Phase 4.3 P0 test contracts and their underlying trust boundaries.
 3. **The true origin of "P16-P18"**:  
-   - In commit `c97e64eca` and the desktop forensics project `projects/registru-transferuri`, developer Marius introduced three physical hardware invariants.
+   - In commit `c97e64eca` and the desktop forensics project `projects/registru-transferuri`, the owner (developer) introduced three physical hardware invariants.
    - These were formally codified in [`.agents/rules/vault_cognitive_rules.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/rules/vault_cognitive_rules.md#L30-L34) under Section 4:
      - **`P16`**: Hardware Telemetry Immutability
      - **`P17`**: Friendly Name Isolation

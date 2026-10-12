@@ -36,7 +36,7 @@ Email-ul HTML trăiește în 1999: fără flexbox garantat, fără fonturi custo
 
 - Raport text:imagine sănătos (min ~60% text). Email-ul doar-imagine = spam folder.
 - Link de unsubscribe vizibil (legal + protejează reputația domeniului).
-- Adresa expeditor umană (`marius@`, nu `no-reply@`) unde e posibil.
+- Adresa expeditor umană (`owner@`, nu `no-reply@`) unde e posibil.
 - Testează în: Gmail web, Gmail app dark mode, Outlook desktop. Minim aceste trei.
 
 ## Anti-pattern-uri

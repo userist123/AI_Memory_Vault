@@ -161,7 +161,7 @@ Pentru a menține o pistă de audit ireproșabilă, cele 8 rânduri destinate el
 
 ---
 
-## 5. Sinteza Decizională pentru Marius
+## 5. Sinteza Decizională pentru proprietar
 
 1. **Pentru Curățare (8 concepte)**:
    - Sunt adăugate în catalogul [`30_SCRIPTS/ingestion/purge_batches_catalog.json`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/30_SCRIPTS/ingestion/purge_batches_catalog.json) ca loturile **D1** (5 rânduri) și **D2** (3 rânduri).

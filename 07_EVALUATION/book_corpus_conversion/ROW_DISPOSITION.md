@@ -1,6 +1,6 @@
 # Dispoziția Completă a celor 213 Rânduri de Slot din Ontologie
 
-> **Status**: FINALIZAT — PENTRU DECIZIA LUI MARIUS  
+> **Status**: FINALIZAT — PENTRU DECIZIA PROPRIETARULUI  
 > **Dată**: 2026-09-12  
 > **Autor**: ANTIGRAVITY  
 > **Ramură**: `antigravity/r064-row-disposition` (bază: `antigravity/r064-manifest-conversion`)  
@@ -24,7 +24,7 @@ Fiecare dintre cele 213 rânduri primește o dispoziție explicită, susținută
 | **`PĂSTREAZĂ-PROMOVEAZĂ`** | **84** | 39.4% | **43** deja promovate (commit `596aabfb5`, neatinse, protejate de I-003) + **41** candidați admiși prin `PROMOTE` în manifest. |
 | **`ȘTERGE`** | **112** | 52.6% | **28** respinse prin acord catalog-manifest (Lot A) + **62** zgomot sub prag $occ < 3$ (Lot B) + **14** din Lot C (13 ML report + 1 Synergy) + **8** unverified (Lot D1+D2). |
 | **`FUZIONEAZĂ-ÎN(țintă)`** | **8** | 3.8% | Concepte din Lotul A cu verdict `MERGE` în manifest; izomorfe cu concepte promovate (occurrences se comasează în țintă). |
-| **`NEDECIS`** | **6** | 2.8% | Cele 6 concepte din manifest reținute ca `UNSURE` (necesită decizie arhitecturală de la Marius). |
+| **`NEDECIS`** | **6** | 2.8% | Cele 6 concepte din manifest reținute ca `UNSURE` (necesită decizie arhitecturală de la proprietarul). |
 | **`DESPARTE`** | **1** | 0.5% | Cazul homonimic `familiarity` (`10_confidence.md:30`), care acoperă două concepte diferite. |
 | **`PĂSTREAZĂ-PROPOSED`** | **2** | 0.9% | Cele 2 rânduri autentice din `unverified_source` (`Synaptic Consolidation` și `Complementary Learning Systems`), salvate conform triajului. |
 | **TOTAL** | **213** | **100%** | Toate cele 213 rânduri de pe disc sunt acoperite fără excepție. |
@@ -77,7 +77,7 @@ Dacă rândul candidat sosește pentru slotul `retrieval`, poarta îl respinge a
 
 ### Cazul `familiarity` (`10_confidence.md:30`)
 - Manifestul atribuie `SPLIT`. În tabelul de dispoziții este marcat `DESPARTE`.
-- La execuție, Marius va aproba înlocuirea acestui rând unic cu cele două concepte calificate distincte.
+- La execuție, proprietarul va aproba înlocuirea acestui rând unic cu cele două concepte calificate distincte.
 
 ### Analiza celor 85 de Rânduri Nejudecate din Loturile B și C
 - **Lotul B (62 de rânduri)**: Toate cele 62 de rânduri au $occurrences < 3$ (53 cu $occ=1$ și 9 cu $occ=2$). Toate reprezintă zgomot de extracție sau mențiuni accidentale injectate en-gros la commit `3de7fff3e`. Niciunul nu a atins pragul minim de recurență pentru a fi supus recenziei calitative. **Suntem 100% de acord cu ștergerea lor (`ȘTERGE`)** pe baza temeiului explicit de frecvență sub prag.

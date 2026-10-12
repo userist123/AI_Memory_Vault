@@ -97,7 +97,7 @@ Sarcina asta e aproape numai raportare de valori observate. **Fiecare cifră și
 
 ## 6. De ce asta, acum
 
-Lanțul ontologiei e închis: 213 rânduri cu dispoziție, poartă, manifeste, PR verde. Ce rămâne acolo sunt decizii ale lui Marius, nu muncă.
+Lanțul ontologiei e închis: 213 rânduri cu dispoziție, poartă, manifeste, PR verde. Ce rămâne acolo sunt decizii ale proprietarului, nu muncă.
 
 Polymarket e opusul: 24 de module, 21 de faze, mii de teste — și niciun contact cu realitatea. Fiecare fază construită peste cea dinainte a moștenit aceleași presupuneri despre forma datelor, nevalidate niciodată. Dacă `known_at` nu are sursă reală, asta nu invalidează o funcție; invalidează premisa temporală pe care stau backtestul, calibrarea și apărarea împotriva scurgerii.
 

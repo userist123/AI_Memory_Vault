@@ -1,7 +1,7 @@
 # RAPORT EMPIRIC: BANDA DE PREȚURI ȘI CELE DOUĂ CÂMPURI (PRICE_TAPE_FINDINGS.md)
 
 > **Document de analiză empirică și investigație arhitecturală (Etapa 1)**  
-> **Destinatar**: Marius  
+> **Destinatar**: proprietar  
 > **Data**: 2026-09-14  
 > **Ramură**: `antigravity/pm-overnight-campaign`  
 > **Capturi de referință**:  

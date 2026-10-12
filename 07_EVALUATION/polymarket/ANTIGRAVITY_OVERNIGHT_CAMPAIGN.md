@@ -57,7 +57,7 @@ Proveniența trebuie să spună, per piață: URL-urile interogate, momentele UT
 
 **Nu folosi `collect_resolved_bundles`.** Face zeci de cereri necontrolate și ștanțează `datetime.now()` peste tot. Scrie un script de captură separat, în `scratch/`, care nu atinge pachetul de producție.
 
-**Nu inventa `acquired_at` și `known_as_of`.** Lasă-le `null` în captură. Ce ar trebui să conțină e răspunsul de la etapa 1 și decizia lui Marius.
+**Nu inventa `acquired_at` și `known_as_of`.** Lasă-le `null` în captură. Ce ar trebui să conțină e răspunsul de la etapa 1 și decizia proprietarului.
 
 ---
 

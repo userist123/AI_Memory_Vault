@@ -90,7 +90,7 @@ Argumentează în ambele direcții, cu ce e pe disc:
 - *Pentru*: `experience replay` e deja nereprezentabil, iar `SPLIT`-ul pe `familiarity` cere prin definiție două destinații pentru un nume.
 - *Împotriva*: un concept care există în două sloturi poate fi el însuși defectul, iar o cheie care îl face exprimabil îl și legitimează. Un singur caz în 213 rânduri nu e neapărat o clasă.
 
-Spune care variantă o recomanzi și **ce s-ar strica** dacă se alege cealaltă. Decizia e a lui Marius; `promotion_verdicts.py` nu se modifică în această sarcină.
+Spune care variantă o recomanzi și **ce s-ar strica** dacă se alege cealaltă. Decizia e a proprietarului; `promotion_verdicts.py` nu se modifică în această sarcină.
 
 ---
 
@@ -121,7 +121,7 @@ Notă practică: pe Windows, `print` pe un slot cu diacritice crapă cu `Unicode
 ## 6. Reguli care nu se negociază
 
 - **Nu atinge `01_ARCHITECTURE/ontology/slots/`.** `git diff --stat` pe el trebuie să fie gol la final; include ieșirea în raport.
-- **Nu rula `purge_rejected_rows.py` fără `--dry-run`**, și nici măcar cu, pe directorul real. Execuția purjării este decizia lui Marius.
+- **Nu rula `purge_rejected_rows.py` fără `--dry-run`**, și nici măcar cu, pe directorul real. Execuția purjării este decizia proprietarului.
 - **Nu propune dispoziții pentru rânduri `promoted`.**
 - **Nu modifica manifestul.** Dacă recitind un verdict îl consideri acum greșit, listează-l separat — nu îl rescrie.
 - **Nu folosi modele locale.** Citește fișierele tu.

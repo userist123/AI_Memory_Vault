@@ -55,7 +55,7 @@ Spune, cu dovada pe text, ce trebuie să facă o fuziune:
 4. **Ce urmă rămâne.** După fuziune, cineva care caută `factual memory` în ontologie nu-l va găsi. E acceptabil? Dacă nu, unde se înregistrează că termenul a existat și unde a plecat?
 5. **Reversibilitatea.** Dacă fuziunea e greșită, cum se desface? Dacă răspunsul e „nu se poate", spune-o — e un argument important pentru ca decizia să fie luată încet.
 
-**Nu implementa nimic.** Specificația e livrabilul. Codul vine după ce Marius alege.
+**Nu implementa nimic.** Specificația e livrabilul. Codul vine după ce proprietarul alege.
 
 ---
 

@@ -173,7 +173,7 @@
 - **Status**: **`UNVERIFIED`**
 - **Component**: Workstation OS Security / PR #207
 - **Evidence**:
-  Running `icacls .` on the development workstation reveals `LAB-PC\Marius:(F)` with zero DENY access control entries.
+  Running `icacls .` on the development workstation reveals `LAB-PC\user:(F)` with zero DENY access control entries.
 - **Remediation**:
   PR #207 must be reviewed and deployed by the human machine administrator.
 

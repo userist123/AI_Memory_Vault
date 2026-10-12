@@ -27,7 +27,7 @@ Programul Polymarket de azi a eșuat la verificare din motive care se vor repeta
 
 ---
 
-## Ce trebuie să facă Marius înainte (nu tu)
+## Ce trebuie să facă proprietarul înainte (nu tu)
 
 Tu nu creezi conturi, nu introduci parole și nu atingi date de autentificare.
 
@@ -41,7 +41,7 @@ Scripturile tale se conectează la terminalul deja autentificat cu `mt5.initiali
 
 ---
 
-## Material existent: botul anterior al lui Marius
+## Material existent: botul anterior al proprietarului
 
 În `02_PRODUCT/projects/imported/bot/trade/` există munca anterioară de trading: „Elite Quant Bot" pentru MT5, versiunile v10–v12, axat pe XAUUSD, cu o bibliotecă de strategii, un model ML și rapoarte zilnice. Nu sunt date de preț, ci cod și rezultate. Programul pornește de la ele, cu regulile de mai jos.
 
@@ -57,7 +57,7 @@ Trei constatări, fiecare obligatorie pentru program:
 
 1. **Modelul ML era complet necalibrat.** A dat în medie o probabilitate de câștig de 0,999 pe o zi cu 3 câștiguri din 50. Orice componentă ML intră în program doar cu un test de calibrare pe date nevăzute, raportat înaintea oricărui rezultat de profit.
 2. **Contabilitatea botului nu e de încredere.** Pe 12 iunie, contorul cumulat arată 0 câștiguri din 21. Pe 13 iunie, cu 0 câștiguri în ziua respectivă, arată 35 din 47. Rapoartele nu pot servi drept istoric de performanță.
-3. **Istoricul autoritar e cel al contului MT5**, nu cel scris de bot. Dacă Marius exportă istoricul contului, e sursa de adevăr. **Depozitul e public:** exportul nu se comite. Rămâne local, iar în depozit intră doar statistici agregate, fără număr de cont, nume sau sume identificabile.
+3. **Istoricul autoritar e cel al contului MT5**, nu cel scris de bot. Dacă proprietarul exportă istoricul contului, e sursa de adevăr. **Depozitul e public:** exportul nu se comite. Rămâne local, iar în depozit intră doar statistici agregate, fără număr de cont, nume sau sume identificabile.
 
 ### Strategiile existente
 
@@ -106,7 +106,7 @@ Controlul S0 cu intrări aleatoare e obligatoriu: o strategie care nu bate intr�
 ### A3. Execuția și costurile
 
 - Semnal la închiderea barei `t`, execuție la **deschiderea barei `t+1`**. Nimic de la bara `t+1` nu intră în semnal.
-- Cost pe tranzacție = spread **măsurat** (B3) + comision (de la Marius; dacă lipsește, testul se rulează la mai multe niveluri declarate și se raportează toate) + swap real pe durata deținerii.
+- Cost pe tranzacție = spread **măsurat** (B3) + comision (de la proprietarul; dacă lipsește, testul se rulează la mai multe niveluri declarate și se raportează toate) + swap real pe durata deținerii.
 - Fără levier în evaluare: randamentele se raportează pe expunere nominală. Levierul nu creează avantaj, doar îl amplifică.
 
 ### A4. Împărțirea în timp
@@ -247,4 +247,4 @@ Dacă programul se oprește într-un punct din motive legitime — de exemplu br
 
 ---
 
-*Nu este sfat de investiții. Programul măsoară dacă datele susțin o afirmație; orice decizie cu bani reali e a lui Marius.*
+*Nu este sfat de investiții. Programul măsoară dacă datele susțin o afirmație; orice decizie cu bani reali e a proprietarului.*

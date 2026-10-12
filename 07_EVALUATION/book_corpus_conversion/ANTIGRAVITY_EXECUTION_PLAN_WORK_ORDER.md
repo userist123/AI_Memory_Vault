@@ -131,7 +131,7 @@ Apoi `diff -r` între copie și originalul, pentru a arăta exact ce s-ar schimb
 ## 6. Reguli care nu se negociază
 
 - **Nu atinge `01_ARCHITECTURE/ontology/slots/`.** `git diff --stat` gol la final, inclus în raport.
-- **Nu rula cu `--apply`**, pe niciun director. Execuția e decizia lui Marius.
+- **Nu rula cu `--apply`**, pe niciun director. Execuția e decizia proprietarului.
 - **Nu implementa fuziunea și nu modifica manifestul de verdicte.**
 - **Nu folosi modele locale.** Citește fișierele tu.
 - **Anunță fiecare fișier de cod pe care îl adaugi**, în raport, pe nume. `test_staging_invariants.py` a intrat în CI nedeclarat; testele erau bune, dar cod care ajunge înăuntru pentru că a rulat un proces, nu pentru că a decis cineva, este fix problema pe care o reparăm.
@@ -144,4 +144,4 @@ Apoi `diff -r` între copie și originalul, pentru a arăta exact ce s-ar schimb
 
 Planul există și e complet. Instrumentul care l-ar executa nu-l poate citi, șterge 8 rânduri care ar trebui fuzionate, refuză 8 pe care planul le dă la ștergere, și raportează un total corect din motive greșite.
 
-Atât timp cât rămâne așa, aprobarea lui Marius ar declanșa o execuție care seamănă cu planul la nivel de cifră și diferă de el la nivel de rând. Livrabilul tău închide distanța dintre ce s-a decis și ce s-ar întâmpla.
+Atât timp cât rămâne așa, aprobarea proprietarului ar declanșa o execuție care seamănă cu planul la nivel de cifră și diferă de el la nivel de rând. Livrabilul tău închide distanța dintre ce s-a decis și ce s-ar întâmpla.

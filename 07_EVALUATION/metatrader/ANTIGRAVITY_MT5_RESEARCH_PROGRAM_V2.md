@@ -23,7 +23,7 @@ Verificat independent de Claude, pe ramura `antigravity/mt5-universe-study` (PR 
 
 1. **Brokerul e descris greșit.** `PREREGISTRATION.md`, linia 14, spune „un broker reglementat UE (RoboForex Ltd)". RoboForex Ltd e licențiat de FSC Belize. Entitățile UE ale grupului sunt RoboMarkets Ltd (CySEC) și RoboMarkets Deutschland GmbH (BaFin).
 2. **O regulă preînregistrată nu a fost aplicată și nici declarată.** Preînregistrarea exclude instrumentele cu „spread egal cu zero pe instrumente CFD/FX fără comision fix". **Toate cele 28 de instrumente eligibile au bare D1 cu spread zero** (până la 3.429 la ETHUSD). Aplicată literal, regula ar fi golit universul. Poate a fost considerată inaplicabilă pentru că modelul de cost include un comision de 2 $/lot — dar atunci trebuia declarat în `DEVIATIONS`, iar secțiunea spune „nicio altă abatere".
-3. **Botul anterior al lui Marius nu a fost testat.** Programul V1 permitea includerea celor patru familii XAU din `elite_quant_bot_v12`; raportul nu le menționează.
+3. **Botul anterior al proprietarului nu a fost testat.** Programul V1 permitea includerea celor patru familii XAU din `elite_quant_bot_v12`; raportul nu le menționează.
 
 Și o problemă de mediu: **istoricul depozitului a fost rescris** ca să fie eliminate fișiere personale. Directorul tău de lucru are istoricul vechi. **Clonează din nou înainte de orice lucru.** Înainte de fiecare push, verifică că niciun commit accesibil nu conține `Buget_Personal_2026` sau `account-statement_2026`; dacă găsește ceva, nu faci push și raportezi.
 
@@ -70,7 +70,7 @@ V1 a estimat spread-ul din câmpul `spread` al barelor. Existența a mii de bare
 
 ---
 
-## PARTEA D — Botul lui Marius: un singur test, pe date nevăzute
+## PARTEA D — Botul proprietarului: un singur test, pe date nevăzute
 
 Singurul set de strategii care a existat **înainte** de perioada sigilată.
 
@@ -79,7 +79,7 @@ Singurul set de strategii care a existat **înainte** de perioada sigilată.
 - Fereastra de test: **de la 2026-06-20** (după ultimul raport al botului) **până la 2026-09-14** — adică partea din holdout-ul V1 ulterioară creării strategiilor. Aceasta **consumă holdout-ul**; se consemnează că nu mai poate fi folosit pentru nimic altceva.
 - Rulat **o singură dată**. Nicio ajustare după. Un rezultat negativ e rezultatul.
 - Dacă modelul ML al botului poate fi reconstruit din cod fără reantrenare: **test de calibrare** pe aceeași fereastră — probabilitate prezisă față de frecvența reală, pe intervale. Rapoartele au arătat 0,999 prezis într-o zi cu 3 câștiguri din 50.
-- Dacă Marius exportă istoricul contului pe care a rulat botul: comparație între ce spune backtest-ul și ce s-a întâmplat. **Exportul rămâne local; depozitul e public.** În depozit intră doar statistici agregate, fără număr de cont, nume sau sume identificabile.
+- Dacă proprietarul exportă istoricul contului pe care a rulat botul: comparație între ce spune backtest-ul și ce s-a întâmplat. **Exportul rămâne local; depozitul e public.** În depozit intră doar statistici agregate, fără număr de cont, nume sau sume identificabile.
 
 Trei luni de date XAU dau puține tranzacții. **Calculează întâi, în preînregistrare, câte tranzacții sunt necesare** pentru a distinge un avantaj real de zero la puterea din partea B. Dacă fereastra nu le conține, spune-o înainte de rulare — și atunci testul e informativ doar pentru o eroare mare, nu pentru un avantaj mic.
 
@@ -113,7 +113,7 @@ Singura dovadă cu adevărat curată sunt datele care vor apărea de acum încol
 
 V1 a rulat pe o entitate din Belize cu 37 de instrumente, fără acțiuni și indici.
 
-- **Dacă** Marius deschide un cont demo la o entitate autorizată ASF sau cu pașaport UE, verificată în registrul ASF: refaci recensământul și calitatea datelor (B1–B3 din V1) pe acel server, inclusiv acțiuni și indici dacă există.
+- **Dacă** proprietarul deschide un cont demo la o entitate autorizată ASF sau cu pașaport UE, verificată în registrul ASF: refaci recensământul și calitatea datelor (B1–B3 din V1) pe acel server, inclusiv acțiuni și indici dacă există.
 - Grila V1 **nu se reia** pe acel univers ca nouă căutare. Se raportează universul, costurile și calitatea; orice test de strategie pe el intră sub regulile din partea E.
 - Dacă nu există cont, partea G se consemnează ca neexecutată.
 
@@ -127,7 +127,7 @@ V1 a rulat pe o entitate din Belize cu 37 de instrumente, fără acțiuni și in
 2. Corecțiile la V1.
 3. **Sharpe-ul minim detectabil** și ce înseamnă pentru nulul din V1.
 4. Costurile din tick-uri față de cele din bare.
-5. Botul lui Marius pe fereastra nevăzută, inclusiv calibrarea ML — cu numărul de tranzacții și puterea statistică lângă rezultat.
+5. Botul proprietarului pe fereastra nevăzută, inclusiv calibrarea ML — cu numărul de tranzacții și puterea statistică lângă rezultat.
 6. Explorarea, etichetată ca atare, cu numărul cumulat de teste.
 7. Starea testului prospectiv: pornit, preînregistrat, fără evaluare până la pragul stabilit.
 8. `DEVIATIONS`.
@@ -155,4 +155,4 @@ V1 a rulat pe o entitate din Belize cu 37 de instrumente, fără acțiuni și in
 
 ---
 
-*Nu este sfat de investiții. Orice decizie cu bani reali e a lui Marius.*
+*Nu este sfat de investiții. Orice decizie cu bani reali e a proprietarului.*

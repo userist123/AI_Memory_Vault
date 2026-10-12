@@ -1,7 +1,7 @@
 # DOSARUL CELOR 7 RÂNDURI ÎN AȘTEPTARE (PENDING_DECISIONS.md)
 
 > **Dosar de decizie arhitecturală și analiză contextuală**  
-> **Destinatar**: Marius  
+> **Destinatar**: proprietar  
 > **Status**: Proiect de decizie — ZERO modificări în sloturi, ZERO execuții nesancționate.  
 > **Precedent**: `disposition_manifest.json` (6 UNDECIDED + 1 SPLIT)  
 > **Data**: 2026-09-12
@@ -83,7 +83,7 @@ Proveniența conceptului este viciată de un text marcat în auditurile preceden
   - *Ce câștigă*: Furnizează un fundament formal pentru măsurarea coerenței memoriei globale.
   - *Ce pierde*: Încalcă principiul că un concept promovat trebuie să fie susținut de evidențe empirice curate din cărțile corpusului.
 
-> **Evaluare la recitire**: Ambiguitatea este rezolvabilă clar: citatul din staging este pură bibliografie (`"References 1. Tononi..."`). Un concept a cărui unică probă este un rând bibliografic dintr-un preprint speculativ **trebuie respins (`DELETE`)**. Dacă Marius dorește IIT în sistem, acesta trebuie extras dintr-un tratat autentic de neuroștiințe.
+> **Evaluare la recitire**: Ambiguitatea este rezolvabilă clar: citatul din staging este pură bibliografie (`"References 1. Tononi..."`). Un concept a cărui unică probă este un rând bibliografic dintr-un preprint speculativ **trebuie respins (`DELETE`)**. Dacă proprietarul dorește IIT în sistem, acesta trebuie extras dintr-un tratat autentic de neuroștiințe.
 
 ---
 
@@ -143,7 +143,7 @@ Termenul `dual memory` este utilizat în Sarfraz et al. ca adjectiv compus pentr
   - *Ce câștigă*: Curăță un termen care în carte reprezintă doar o schiță bibliografică.
   - *Ce pierde*: Oportunitatea de a avea o primitivă ontologică pentru cooperarea multi-agent.
 
-> **Evaluare la recitire**: Dacă AI Memory Vault este explicit un sistem multi-agent (după cum atestă `AGENTS.md` și cele 21 de roluri din Consiliu), `shared memory` este exact ceea ce este acest Vault. Dacă Marius dorește un nod ontologic pentru acest mecanism, **Opțiunea A este legitimă ca decizie de proiectare**. Dacă se dorește puritate pe textul cărții, citatul fiind slab, **Opțiunea C sau B este indicată**.
+> **Evaluare la recitire**: Dacă AI Memory Vault este explicit un sistem multi-agent (după cum atestă `AGENTS.md` și cele 21 de roluri din Consiliu), `shared memory` este exact ceea ce este acest Vault. Dacă proprietarul dorește un nod ontologic pentru acest mecanism, **Opțiunea A este legitimă ca decizie de proiectare**. Dacă se dorește puritate pe textul cărții, citatul fiind slab, **Opțiunea C sau B este indicată**.
 
 ---
 
@@ -229,7 +229,7 @@ Acest rând combină două concepte complet diferite, derivate din două paradig
 
 ### 2.2. Specificația Exactă a Celor Două Rânduri Rezultate
 
-Pentru momentul în care Marius va decide aplicarea despărțirii, specificăm bit-cu-bit cele două rânduri care vor rezulta în sloturi:
+Pentru momentul în care proprietarul va decide aplicarea despărțirii, specificăm bit-cu-bit cele două rânduri care vor rezulta în sloturi:
 
 #### Rândul 1 (Înlocuiește rândul vechi din `10_confidence.md`):
 ```markdown
@@ -248,7 +248,7 @@ Pentru momentul în care Marius va decide aplicarea despărțirii, specificăm b
 
 ---
 
-## 3. Matricea Sintetică a Opțiunilor pentru Marius
+## 3. Matricea Sintetică a Opțiunilor pentru proprietar
 
 | Concept | Slot Curent | Opțiunea Recomandată | Alternativă Plauzibilă | Justificare Sintetică |
 |---|---|:---:|:---:|---|
@@ -264,4 +264,4 @@ Pentru momentul în care Marius va decide aplicarea despărțirii, specificăm b
 
 ## 4. Concluzie
 
-Cele 7 rânduri nu sunt blocate tehnologic; ele sunt blocate pe delimitări conceptuale. Cu acest dosar complet, Marius deține toate elementele (citate, măsurători de recurență, argumente pro și contra) pentru a decide destinația fiecărui termen dintr-o singură privire.
+Cele 7 rânduri nu sunt blocate tehnologic; ele sunt blocate pe delimitări conceptuale. Cu acest dosar complet, proprietarul deține toate elementele (citate, măsurători de recurență, argumente pro și contra) pentru a decide destinația fiecărui termen dintr-o singură privire.
