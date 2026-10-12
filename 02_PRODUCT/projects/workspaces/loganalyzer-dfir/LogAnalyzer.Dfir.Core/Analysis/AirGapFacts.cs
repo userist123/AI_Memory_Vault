@@ -132,6 +132,70 @@ public sealed class HardwareFact
 }
 
 /// <summary>Everything the facts collector read from the station, with the reads that failed.</summary>
+/// <summary>One file or folder of a removable volume as listed read-only by <see cref="Devices.RemovableMediaInspector.List"/>; a shortcut carries its decoded target.</summary>
+public sealed class MediaEntryFact
+{
+    /// <summary>Path relative to the volume root ("Docs\a.pdf").</summary>
+    public string RelativePath { get; set; } = "";
+    public bool IsDirectory { get; set; }
+    public bool Hidden { get; set; }
+    public bool System { get; set; }
+    public long Size { get; set; }
+    public DateTimeOffset? CreatedUtc { get; set; }
+    public DateTimeOffset? LastWriteUtc { get; set; }
+    /// <summary>SHA-256 (hex) for small files only; "" when not computed.</summary>
+    public string Sha256 { get; set; } = "";
+    /// <summary>For a .lnk: the target, arguments and working directory decoded by LnkParser (nothing is run); "" otherwise or when undecodable.</summary>
+    public string LnkTarget { get; set; } = "";
+    public string LnkArguments { get; set; } = "";
+    public string LnkWorkingDir { get; set; } = "";
+}
+
+/// <summary>The listing of one removable volume connected at collection time (root and two levels; reparse points not followed).</summary>
+public sealed class MediaListingFact
+{
+    /// <summary>Drive letter without colon ("E").</summary>
+    public string Letter { get; set; } = "";
+    public string Label { get; set; } = "";
+    /// <summary>Volume serial (hex, as in LNK / Prefetch); "" when unknown.</summary>
+    public string VolumeSerial { get; set; } = "";
+    /// <summary>Device serial from the media inventory when known; "" otherwise.</summary>
+    public string DeviceSerial { get; set; } = "";
+    public bool Truncated { get; set; }
+    public List<MediaEntryFact> Entries { get; set; } = [];
+    /// <summary>A short identity for the reader: serial, else letter and label.</summary>
+    [System.Text.Json.Serialization.JsonIgnore] public string Identity => DeviceSerial.Length > 0 ? DeviceSerial : VolumeSerial.Length > 0 ? $"{Letter}: (volum {VolumeSerial})" : $"{Letter}: „{Label}”";
+}
+
+/// <summary>One entry of a Startup folder (per user or common), read from the live file system; shortcuts carry their decoded target.</summary>
+public sealed class StartupEntryFact
+{
+    /// <summary>"utilizator" or "comun".</summary>
+    public string Scope { get; set; } = "";
+    /// <summary>Profile folder name for a per-user entry; "" for the common folder.</summary>
+    public string Profile { get; set; } = "";
+    public string Path { get; set; } = "";
+    public DateTimeOffset? CreatedUtc { get; set; }
+    public DateTimeOffset? LastWriteUtc { get; set; }
+    public long Size { get; set; }
+    public string LnkTarget { get; set; } = "";
+    public string LnkArguments { get; set; } = "";
+    /// <summary>Authenticode result for the target (or the file itself): true signed, false not signed, null not checked.</summary>
+    public bool? TargetSigned { get; set; }
+}
+
+/// <summary>A top-level file of a profile's Downloads or Desktop folder (for MEDIA-SAME-DROP).</summary>
+public sealed class ProfileFileFact
+{
+    public string Profile { get; set; } = "";
+    /// <summary>"Downloads" or "Desktop".</summary>
+    public string Folder { get; set; } = "";
+    public string Name { get; set; } = "";
+    public long Size { get; set; }
+    public DateTimeOffset? LastWriteUtc { get; set; }
+    public string Sha256 { get; set; } = "";
+}
+
 public sealed class AirGapFacts
 {
     public const string SourceType = "airgap_facts";
@@ -147,6 +211,12 @@ public sealed class AirGapFacts
     /// <summary>Drive letters ("E") that Windows has assigned to removable media (MountedDevices pointing at USB storage, or a removable / optical drive now).</summary>
     public List<string> RemovableLetters { get; set; } = [];
     public List<HardwareFact> Hardware { get; set; } = [];
+    /// <summary>Listings of the removable volumes connected at collection time (P1 payload rules).</summary>
+    public List<MediaListingFact> MediaListings { get; set; } = [];
+    /// <summary>Entries of the per-user and common Startup folders.</summary>
+    public List<StartupEntryFact> StartupEntries { get; set; } = [];
+    /// <summary>Top-level files of the profiles' Downloads and Desktop folders.</summary>
+    public List<ProfileFileFact> ProfileFiles { get; set; } = [];
     /// <summary>Machine-level consent for camera and microphone (CapabilityAccessManager): "Deny", "Allow" or "" when not set / not read. This is the value of control P19.</summary>
     public string WebcamPolicy { get; set; } = "";
     public string MicrophonePolicy { get; set; } = "";

@@ -47,6 +47,46 @@ public sealed class ChannelLists
     public List<string> BurnLogHints { get; set; } = ["imgburn", "burn", "write", "disc", "drive"];
 }
 
+/// <summary>One weighted text pattern of CLICKFIX-RUNMRU (regular expression, case-insensitive) with the plain-Romanian name shown in the finding.</summary>
+public sealed class WeightedPattern
+{
+    public string Regex { get; set; } = "";
+    public int Weight { get; set; } = 1;
+    public string Label { get; set; } = "";
+}
+
+/// <summary>
+/// Lists of the P1 payload rules (MEDIA-LNK-PAYLOAD, LNK-ARGS-PADDED, MEDIA-HIDDEN-MAILBOX, MEDIA-SAME-DROP, EXEC-FROM-REMOVABLE, PERSIST-STARTUP-FOLDER,
+/// CLICKFIX-RUNMRU). Only numbers and neutral words have defaults in code: program names and command patterns live in the data file, so the published
+/// assembly does not carry attack-like strings (security research 2026-10-12, backlog item 7). A data pack without this section gets the embedded one.
+/// </summary>
+public sealed class PayloadLists
+{
+    /// <summary>Program names (file name, lower case) that a shortcut or a Run-dialog command should not start on its own: interpreters and signed proxies.</summary>
+    public List<string> Lolbins { get; set; } = [];
+    /// <summary>Extensions of files that run when opened (scripts, programs, libraries).</summary>
+    public List<string> RunnableExtensions { get; set; } = [];
+    /// <summary>Extensions of plain data files (documents, archives, images) counted in a hidden folder.</summary>
+    public List<string> DataExtensions { get; set; } = [];
+    /// <summary>File names in a Startup folder that Windows itself writes.</summary>
+    public List<string> StartupBenignNames { get; set; } = [];
+    /// <summary>Weighted patterns of a pasted command (CLICKFIX-RUNMRU); a value is reported when the weights add up to <see cref="ClickFixMinWeight"/>.</summary>
+    public List<WeightedPattern> ClickFixPatterns { get; set; } = [];
+    public int ClickFixMinWeight { get; set; } = 2;
+    /// <summary>Minutes after the Run-dialog entry in which a PowerShell 4104 or a process start counts as its consequence.</summary>
+    public int ClickFixMinutes { get; set; } = 5;
+    /// <summary>LNK-ARGS-PADDED: leading invisible characters, or the share of invisible characters in an argument field of at least that many.</summary>
+    public int PaddingMinRun { get; set; } = 20;
+    public double PaddingRatio { get; set; } = 0.8;
+    /// <summary>MEDIA-HIDDEN-MAILBOX: days before the collection in which a data file counts as recently changed; the count from which the finding is High.</summary>
+    public int MailboxRecentDays { get; set; } = 30;
+    public int MailboxHighCount { get; set; } = 10;
+    /// <summary>MEDIA-SAME-DROP: smaller files are not compared (empty or tiny files repeat by chance).</summary>
+    public long SameDropMinBytes { get; set; } = 1024;
+    /// <summary>PERSIST-STARTUP-FOLDER: days before the collection in which a Startup entry counts as new.</summary>
+    public int StartupNewDays { get; set; } = 30;
+}
+
 /// <summary>
 /// The data the WP14a rules read: the 19 subcategories of the AIR-GAP INTEGRITY category, optical-media and burn-tool lists, and the network keywords
 /// used to match a profile's transfer channels. Loaded from JSON embedded in this assembly (<c>Analysis/Data/airgap_lists.json</c>); a caller or a test can
@@ -59,12 +99,14 @@ public sealed class Wp14Data
     public OpticalLists Optical { get; set; } = new();
     public AirGapNetworkLists Network { get; set; } = new();
     public ChannelLists Channels { get; set; } = new();
+    public PayloadLists Payload { get; set; } = new();
 
     private static readonly JsonSerializerOptions Opts = new() { PropertyNameCaseInsensitive = true, ReadCommentHandling = JsonCommentHandling.Skip };
 
     public static Wp14Data FromJson(string json) => JsonSerializer.Deserialize<Wp14Data>(json, Opts) ?? new();
 
-    private static readonly Lazy<Wp14Data> Shipped = new(() => FromJson(Read("airgap_lists.json")));
+    // a data pack written before a section existed (for example "payload") gets that section from the embedded file instead of an empty list
+    private static readonly Lazy<Wp14Data> Shipped = new(() => FromJson(Wp11Data.WithMissingSections(Read("airgap_lists.json"), ShippedData.ReadEmbedded("airgap_lists.json"))));
 
     /// <summary>The data shipped with the application.</summary>
     public static Wp14Data Default => Shipped.Value;

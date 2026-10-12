@@ -21,5 +21,33 @@
     "netClassGuid": "{4d36e972-e325-11ce-bfc1-08002be10318}",
     "bluetoothClassGuids": ["{e0cbf06c-cd8b-4647-bb8a-263b43f0f974}"],
     "ignoredNetworkNamePrefixes": ["Identifying", "Se identific"]
+  },
+  "payload": {
+    "_comment": "P1 payload rules (research 2026-10-11 section 4). Program names and command patterns are data so the published assembly does not carry them as code strings.",
+    "lolbins": ["powershell.exe", "pwsh.exe", "powershell_ise.exe", "cmd.exe", "mshta.exe", "wscript.exe", "cscript.exe", "rundll32.exe", "regsvr32.exe", "certutil.exe", "bitsadmin.exe", "msiexec.exe", "conhost.exe", "forfiles.exe", "curl.exe", "wmic.exe", "explorer.exe"],
+    "runnableExtensions": [".exe", ".scr", ".com", ".pif", ".dll", ".cpl", ".bat", ".cmd", ".ps1", ".vbs", ".vbe", ".js", ".jse", ".wsf", ".wsh", ".hta", ".msi", ".lnk", ".url", ".jar"],
+    "dataExtensions": [".doc", ".docx", ".docm", ".xls", ".xlsx", ".xlsm", ".ppt", ".pptx", ".pdf", ".rtf", ".txt", ".odt", ".ods", ".csv", ".xml", ".jpg", ".jpeg", ".png", ".bmp", ".zip", ".rar", ".7z", ".cab", ".tar", ".gz", ".dat", ".bin", ".tmp", ".enc"],
+    "startupBenignNames": ["desktop.ini"],
+    "clickFixPatterns": [
+      { "regex": "(^|[\\s\\\\/\"'])(powershell|pwsh)(\\.exe)?\\b", "weight": 1, "label": "pornește PowerShell" },
+      { "regex": "(^|[\\s\\\\/\"'])mshta(\\.exe)?\\b", "weight": 1, "label": "pornește mshta (rulează pagini HTA)" },
+      { "regex": "(^|[\\s\\\\/\"'])(curl|wget|bitsadmin|certutil)(\\.exe)?\\b", "weight": 1, "label": "pornește un program care descarcă fișiere" },
+      { "regex": "(^|[\\s\\\\/\"'])(cmd|conhost)(\\.exe)?\\s+(/c|/k|--headless)", "weight": 1, "label": "rulează o comandă prin cmd" },
+      { "regex": "(^|[\\s\\\\/\"'])(rundll32|regsvr32|msiexec|wscript|cscript)(\\.exe)?\\b", "weight": 1, "label": "pornește un program de sistem care rulează cod din alt fișier" },
+      { "regex": "https?://|\\\\\\\\[^\\\\\\s]+@", "weight": 1, "label": "conține o adresă de internet sau WebDAV" },
+      { "regex": "\\s-(e|en|enc|enco|encodedcommand)\\s+[A-Za-z0-9+/=]{16,}", "weight": 2, "label": "comandă codificată (Base64), ca să nu poată fi citită" },
+      { "regex": "\\s-(w|wi|win|windowstyle)\\s+(h|hid|hidden|1)\\b|--headless", "weight": 2, "label": "fereastră ascunsă" },
+      { "regex": "\\biex\\b|invoke-expression|invoke-restmethod|\\birm\\b|\\biwr\\b|invoke-webrequest|downloadstring|downloadfile|frombase64string", "weight": 2, "label": "descarcă și rulează text ca o comandă" },
+      { "regex": "\\s-(nop|noprofile|ep|exec|executionpolicy)\\b", "weight": 1, "label": "ocolește setările PowerShell" },
+      { "regex": "\\s{20,}|#\\s*[^\\s]", "weight": 1, "label": "spații sau un comentariu care ascund restul comenzii (FileFix)" }
+    ],
+    "clickFixMinWeight": 2,
+    "clickFixMinutes": 5,
+    "paddingMinRun": 20,
+    "paddingRatio": 0.8,
+    "mailboxRecentDays": 30,
+    "mailboxHighCount": 10,
+    "sameDropMinBytes": 1024,
+    "startupNewDays": 30
   }
 }
