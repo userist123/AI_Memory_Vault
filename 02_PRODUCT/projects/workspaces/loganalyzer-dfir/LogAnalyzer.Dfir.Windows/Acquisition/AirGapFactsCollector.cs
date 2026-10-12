@@ -12,7 +12,8 @@ namespace LogAnalyzer.Dfir.Windows.Acquisition;
 /// Reads, read-only, what the event logs cannot say about the air gap: the network adapters and their kind, the optical writer and the burn staging folder, printers
 /// and the print log state, screenshots and clipboard / activity history, virtual machines and boot entries, archiver histories, and the camera / microphone / speaker
 /// inventory. Every read that fails is named in <see cref="AirGapFacts.Errors"/>: an empty list never means "looked and found nothing" unless the read is not in Errors.
-/// The user-specific reads (screenshots, clipboard, WSL, archivers, burn folder) cover the account that runs the collector only.
+/// The user-specific reads (screenshots, clipboard, WSL, archivers, burn folder) cover the account that runs the collector only. The P1 reads (listing of the
+/// connected removable volumes, the Startup folders, the top-level files of Downloads and Desktop) cover every profile the account can read, and are bounded.
 /// </summary>
 public sealed class AirGapFactsCollector : ICollector
 {
@@ -59,6 +60,9 @@ public sealed class AirGapFactsCollector : ICollector
         Try("istoricul arhivatoarelor", () => f.Archivers.AddRange(ReadArchivers()));
         Try("litere de unități amovibile", () => f.RemovableLetters.AddRange(ReadRemovableLetters()));
         Try("cameră, microfon, difuzoare", () => f.Hardware.AddRange(ReadHardware()));
+        Try("listarea suporturilor amovibile conectate", () => f.MediaListings.AddRange(ReadMediaListings(ct)));
+        Try("folderele Startup", () => f.StartupEntries.AddRange(ReadStartupEntries(ct)));
+        Try("fișierele din Downloads și Desktop", () => f.ProfileFiles.AddRange(ReadProfileFiles(ct)));
         f.WebcamPolicy = Reg(Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam", "Value");
         f.MicrophonePolicy = Reg(Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone", "Value");
         return f;
@@ -342,6 +346,115 @@ public sealed class AirGapFactsCollector : ICollector
                 if (md.GetValue(n) is byte[] data && Encoding.Unicode.GetString(data) is var text && (text.Contains("USBSTOR", StringComparison.OrdinalIgnoreCase) || text.Contains("USB#", StringComparison.OrdinalIgnoreCase)))
                     letters.Add(n[^2..^1]);
         return letters.OrderBy(l => l);
+    }
+
+    // ---- P1 payload rules: removable volumes, Startup folders, Downloads / Desktop ----
+
+    public const int MaxMedia = 8, MaxMediaEntries = 3000, MaxMediaHashed = 300, MaxStartupPerFolder = 100, MaxProfileFiles = 500;
+    /// <summary>Hash limits: per file, and in total for Downloads / Desktop (so a profile full of large files cannot stall the collection; the rest are listed without a hash).</summary>
+    public const long MediaHashMaxBytes = 16L * 1024 * 1024, ProfileHashMaxBytes = 64L * 1024 * 1024, ProfileHashTotalBytes = 1024L * 1024 * 1024;
+
+    /// <summary>Profile folders that are not a person's profile.</summary>
+    private static readonly string[] NotProfiles = ["Public", "Default", "Default User", "All Users", "defaultuser0"];
+
+    /// <summary>Every removable volume connected now: root and one folder level, bounded (<see cref="MaxMediaEntries"/>, hashes up to <see cref="MediaHashMaxBytes"/>). Nothing on the volume is opened by the shell or run.</summary>
+    private static List<MediaListingFact> ReadMediaListings(CancellationToken ct)
+    {
+        var list = new List<MediaListingFact>();
+        foreach (var d in DriveInfo.GetDrives().Where(d => d.DriveType == DriveType.Removable).Take(MaxMedia))
+        {
+            ct.ThrowIfCancellationRequested();
+            string label;
+            try { if (!d.IsReady) continue; label = d.VolumeLabel; } catch (IOException) { continue; }
+            var m = LogAnalyzer.Dfir.Devices.RemovableMediaInspector.List(d.RootDirectory.FullName, label, MaxMediaEntries, MediaHashMaxBytes, MaxMediaHashed, maxDepth: 1);
+            m.VolumeSerial = VolumeSerial(d.RootDirectory.FullName);
+            list.Add(m);
+        }
+        return list;
+    }
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
+    private static extern bool GetVolumeInformationW(string rootPathName, IntPtr volumeNameBuffer, uint volumeNameSize, out uint volumeSerialNumber, out uint maximumComponentLength, out uint fileSystemFlags, IntPtr fileSystemNameBuffer, uint fileSystemNameSize);
+
+    /// <summary>The volume serial as Windows stores it in shortcuts and Prefetch (8 hex digits); "" when it cannot be read.</summary>
+    private static string VolumeSerial(string root) =>
+        GetVolumeInformationW(root, IntPtr.Zero, 0, out var serial, out _, out _, IntPtr.Zero, 0) ? serial.ToString("X8", System.Globalization.CultureInfo.InvariantCulture) : "";
+
+    /// <summary>Profile folders of the system drive (one per account that has logged on); reparse points and the template profiles are skipped.</summary>
+    private static List<string> ProfileDirs()
+    {
+        var users = Path.Combine(Path.GetPathRoot(Environment.SystemDirectory) ?? "C:\\", "Users");
+        if (!Directory.Exists(users)) return [];
+        return [.. SafeDirs(users).Where(p => !NotProfiles.Contains(Path.GetFileName(p), StringComparer.OrdinalIgnoreCase) && !new DirectoryInfo(p).Attributes.HasFlag(FileAttributes.ReparsePoint))];
+    }
+
+    /// <summary>The per-user Startup folder of every profile and the common one; shortcuts decoded from their bytes (never resolved by the shell), targets checked with Authenticode.</summary>
+    private static List<StartupEntryFact> ReadStartupEntries(CancellationToken ct)
+    {
+        var list = new List<StartupEntryFact>();
+        var folders = ProfileDirs().Select(p => (Scope: "utilizator", Profile: Path.GetFileName(p), Dir: Path.Combine(p, @"AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup"))).ToList();
+        folders.Add(("comun", "", Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup)));
+        foreach (var (scope, profile, dir) in folders)
+        {
+            ct.ThrowIfCancellationRequested();
+            if (dir.Length == 0 || !Directory.Exists(dir)) continue;
+            IEnumerable<FileInfo> files;
+            try { files = new DirectoryInfo(dir).EnumerateFiles().Take(MaxStartupPerFolder).ToList(); }
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException) { continue; }
+            foreach (var fi in files)
+            {
+                var e = new StartupEntryFact
+                {
+                    Scope = scope, Profile = profile, Path = fi.FullName, Size = fi.Length,
+                    CreatedUtc = new DateTimeOffset(fi.CreationTimeUtc, TimeSpan.Zero), LastWriteUtc = new DateTimeOffset(fi.LastWriteTimeUtc, TimeSpan.Zero),
+                };
+                if (fi.Extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase) && fi.Length is > 0 and <= 1024 * 1024)
+                    try
+                    {
+                        var link = LogAnalyzer.Dfir.FileSystem.LnkParser.Decode(File.ReadAllBytes(fi.FullName));
+                        e.LnkTarget = link.Target; e.LnkArguments = link.Arguments;
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or ArgumentException or IndexOutOfRangeException) { }
+                var signTarget = e.LnkTarget.Length > 0 ? Environment.ExpandEnvironmentVariables(e.LnkTarget) : fi.FullName;
+                if (!fi.Name.Equals("desktop.ini", StringComparison.OrdinalIgnoreCase) && File.Exists(signTarget))
+                    try { var s = Native.Authenticode.Verify(signTarget); e.TargetSigned = s.IsSigned && s.IsValid; }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception) { }
+                list.Add(e);
+            }
+        }
+        return list;
+    }
+
+    /// <summary>Top-level files of every profile's Downloads and Desktop (names, sizes, times; SHA-256 up to <see cref="ProfileHashMaxBytes"/>), at most <see cref="MaxProfileFiles"/> files in total.</summary>
+    private static List<ProfileFileFact> ReadProfileFiles(CancellationToken ct)
+    {
+        var list = new List<ProfileFileFact>();
+        long hashedBytes = 0;
+        foreach (var p in ProfileDirs())
+            foreach (var folder in new[] { "Downloads", "Desktop" })
+            {
+                ct.ThrowIfCancellationRequested();
+                var dir = Path.Combine(p, folder);
+                if (!Directory.Exists(dir)) continue;
+                List<FileInfo> files;
+                try { files = new DirectoryInfo(dir).EnumerateFiles().Where(f => !f.Attributes.HasFlag(FileAttributes.ReparsePoint)).Take(MaxProfileFiles - list.Count).ToList(); }
+                catch (Exception ex) when (ex is UnauthorizedAccessException or IOException) { continue; }
+                foreach (var fi in files)
+                {
+                    var e = new ProfileFileFact { Profile = Path.GetFileName(p), Folder = folder, Name = fi.Name, Size = fi.Length, LastWriteUtc = new DateTimeOffset(fi.LastWriteTimeUtc, TimeSpan.Zero) };
+                    if (fi.Length <= ProfileHashMaxBytes && hashedBytes + fi.Length <= ProfileHashTotalBytes)
+                        try
+                        {
+                            using var fs = new FileStream(fi.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                            e.Sha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fs));
+                            hashedBytes += fi.Length;
+                        }
+                        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+                    list.Add(e);
+                }
+                if (list.Count >= MaxProfileFiles) return list;
+            }
+        return list;
     }
 
     // ---- D15 ----
