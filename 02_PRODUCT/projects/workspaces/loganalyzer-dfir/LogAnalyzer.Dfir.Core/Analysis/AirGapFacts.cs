@@ -131,7 +131,6 @@ public sealed class HardwareFact
     public string Status { get; set; } = "";
 }
 
-/// <summary>Everything the facts collector read from the station, with the reads that failed.</summary>
 /// <summary>One file or folder of a removable volume as listed read-only by <see cref="Devices.RemovableMediaInspector.List"/>; a shortcut carries its decoded target.</summary>
 public sealed class MediaEntryFact
 {
@@ -196,6 +195,7 @@ public sealed class ProfileFileFact
     public string Sha256 { get; set; } = "";
 }
 
+/// <summary>Everything the facts collector read from the station, with the reads that failed.</summary>
 public sealed class AirGapFacts
 {
     public const string SourceType = "airgap_facts";

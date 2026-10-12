@@ -189,7 +189,7 @@ public static class Correlation
                 FirstSeenUtc = all.Count > 0 ? all.Min(e => e.Time.Utc) : null, LastSeenUtc = all.Count > 0 ? all.Max(e => e.Time.Utc) : null, MitreTechniqueId = "T1562.001",
                 Description = string.Join("; ", tamper.Concat(tamperCommands).Take(10).Select(Describe)) +
                               ". Ce s-a întâmplat: protecția antivirus a fost oprită sau slăbită, ori s-a încercat. De ce contează: atacatorii o fac înainte să ruleze programe dăunătoare, ca să nu fie detectați.",
-                ClassificationReason = "Înregistrări directe: jurnalul Defender (5001 protecție dezactivată, 5007 configurație modificată, 5013 modificare blocată de Tamper Protection) sau o linie de comandă / script PowerShell (Set-MpPreference, Add-MpPreference).",
+                ClassificationReason = "Înregistrări directe: jurnalul Defender (5001 protecție dezactivată, 5007 configurație modificată, 5013 modificare blocată de Tamper Protection) sau o linie de comandă / script PowerShell care apelează comenzile Defender de modificare a preferințelor (din lista de date a regulii).",
                 SupportingEvidence = tamper.Concat(tamperCommands).Take(20).Select(e => Ref(e, $"Defender {e.EventId}")).ToList(),
                 AlternativeExplanations = ["Excludere sau modificare făcută intenționat de un administrator pentru un program legitim."],
                 RecommendedNextSteps = ["Stabiliți cine a modificat setarea (Security 4688/4657, contul din eveniment) și dacă există o justificare aprobată.", "Verificați starea actuală a protecției și a listei de excluderi în Windows Security."],
