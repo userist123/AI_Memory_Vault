@@ -211,6 +211,20 @@ namespace LogAnalyzer.UI.ViewModels
                 Sha256 = string.Join(" ", Files.Select(f => f.Sha256)),
                 Witness = Witness, Approver = Approver, Notes = Notes,
             };
+            // Control research P2: only the channels approved in the procedure profile (zone to zone, medium). A transfer outside them is stopped
+            // once with a plain message; pressing again records it, with the deviation written in the notes for the controller.
+            var channel = TransferChannelCheck.Check(row, CurrentProfile());
+            var signature = $"{row.Source}|{row.SourceStation}|{row.Destination}|{row.DestinationStation}|{row.MediumType}";
+            if (channel.NeedsConfirmation && _confirmedChannelDeviation != signature)
+            {
+                _confirmedChannelDeviation = signature;
+                Status = "Transferul NU a fost încă înregistrat. " + channel.Message +
+                         " Dacă transferul are o aprobare specială, apăsați din nou „Înregistrează transferul”: abaterea va fi trecută la observații.";
+                return;
+            }
+            if (channel.NeedsConfirmation)
+                row.Notes = (row.Notes.Length > 0 ? row.Notes + " " : "") + "[Canal neaprobat în profilul de proceduri: " + channel.Message + "]";
+            _confirmedChannelDeviation = null;
             var issues = TransferStore.Append(row, null, out _);
             var errors = issues.Where(i => i.IsError).ToList();
             if (errors.Count > 0)
@@ -222,8 +236,18 @@ namespace LogAnalyzer.UI.ViewModels
             Reload();
             Files.Clear();
             Destination = ""; DestinationStation = Direction == "intrare" ? Environment.MachineName : ""; Notes = "";
-            Status = $"Transferul {row.RegistrationNumber} a fost înregistrat." + (issues.Count > 0 ? " Atenție: " + string.Join("; ", issues.Select(i => i.Message)) : "");
+            Status = $"Transferul {row.RegistrationNumber} a fost înregistrat. {channel.Message}" + (issues.Count > 0 ? " Atenție: " + string.Join("; ", issues.Select(i => i.Message)) : "");
         }
+
+        /// <summary>The route of a transfer the operator was warned about (outside the approved channels); a second press with the same route records it.</summary>
+        private string? _confirmedChannelDeviation;
+
+        /// <summary>The procedure profile in force; null when there is none or it cannot be read (the channel check then says it is not defined).</summary>
+        internal Func<LogAnalyzer.Dfir.Profile.ProcedureProfile?> CurrentProfile { get; set; } = () =>
+        {
+            try { return LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.Current; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { return null; }
+        };
 
         // ---- verification by content (research 2026-10-12, item 1) ------------------------------------------------------------------
 

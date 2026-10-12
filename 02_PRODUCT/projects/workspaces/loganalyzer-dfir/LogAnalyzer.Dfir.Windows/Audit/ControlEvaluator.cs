@@ -58,6 +58,7 @@ public static class ControlEvaluator
         Software(f, r);
         StationHardening(f, r);
         AirGapChannels(f, r);
+        AirGapStation(f, r);
         r.Actions.Sort((a, b) => a.TimeUtc.CompareTo(b.TimeUtc));
         return r;
     }
@@ -622,7 +623,7 @@ public static class ControlEvaluator
         Add(r, "P17", "Politici", "Listă albă de aplicații (AppLocker)",
             al == "" ? ControlStatus.Nedeterminat : al == Absent || al.StartsWith('(') ? ControlStatus.DeVerificat : alEnforced && alSvc == "4" ? ControlStatus.Neconform : alEnforced ? ControlStatus.Conform : ControlStatus.DeVerificat,
             al == "" ? "Politica AppLocker nu a putut fi citită." + NoRead
-                : al == Absent ? "Nu s-a găsit nicio politică AppLocker. Aplicația nu verifică și App Control (WDAC); dacă organizația îl folosește, constatarea se completează manual."
+                : al == Absent ? "Nu s-a găsit nicio politică AppLocker. Lista albă App Control (WDAC) este verificată separat (P37)."
                 : al.StartsWith('(') ? "Există o politică AppLocker, dar fără colecții de reguli."
                 : alEnforced && alSvc == "4" ? $"Politica AppLocker cere blocarea ({al}), dar serviciul care o aplică (AppIDSvc) este dezactivat: lista albă nu funcționează."
                 : alEnforced ? $"Lista albă blochează programele neaprobate: {al}."
@@ -799,6 +800,357 @@ public static class ControlEvaluator
                 [@"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion → ProductName = " + Shown(S("OS.ProductName")), @"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion → DisplayVersion = " + Shown(S("OS.DisplayVersion")),
                  @"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion → CurrentBuild = " + build, @"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion → UBR = " + Shown(ubr), "WMI Win32_QuickFixEngineering → InstalledOn = " + Shown(upd)],
                 "Verificați că versiunea mai primește actualizări de securitate și că ultima actualizare corespunde procedurii.");
+        }
+    }
+
+    // ---- air-gap station requirements (comparison 2026-10-12, rows A2, A3, A4, A5, A7, A14, A16, B8, C8) ------------
+
+    private static readonly Dictionary<int, string> ProtectorNames = new()
+    {
+        [1] = "TPM", [2] = "cheie pe stick", [3] = "parolă de recuperare", [4] = "TPM și PIN", [5] = "TPM și cheie pe stick", [6] = "TPM, PIN și cheie pe stick",
+        [7] = "cheie publică", [8] = "parolă", [9] = "certificat TPM", [10] = "cheie protejată de Windows (CNG)",
+    };
+
+    private static string ProtectionText(int? p) => p switch { 1 => "protejat", 0 => "NEPROTEJAT", 2 => "stare necunoscută (de exemplu suport criptat încă blocat)", _ => "stare necitită" };
+    private static string ConversionText(int c) => c switch
+    {
+        0 => "necriptat", 1 => "criptat complet", 2 => "criptare în curs", 3 => "decriptare în curs", 4 => "criptare oprită temporar", 5 => "decriptare oprită temporar", _ => $"stare de criptare {c}",
+    };
+    private static string KindText(VolumeKind k) => k switch { VolumeKind.Sistem => "discul de sistem", VolumeKind.Fix => "disc fix", _ => "suport amovibil" };
+
+    /// <summary>"D: (disc fix): protejat, criptat complet, protecții: TPM și PIN, parolă de recuperare".</summary>
+    internal static string VolumeLine(VolumeFact v) =>
+        $"{v.Drive} ({KindText(v.Kind)}): {ProtectionText(v.ProtectionStatus)}" + (v.ConversionStatus is { } c ? $", {ConversionText(c)}" : "") +
+        (v.Protectors is { Count: > 0 } p ? $", protecții: {string.Join(", ", p.Select(x => ProtectorNames.GetValueOrDefault(x, $"tip {x}")))}"
+            : v.Protectors is { Count: 0 } ? ", nicio protecție configurată" : v.ProtectionStatus is not null ? ", tipul protecțiilor nu a putut fi citit" : "") +
+        (v.Note.Length > 0 ? $" ({v.Note})" : "");
+
+    private static string ShortChannel(string channel) => channel switch
+    {
+        StationFactCollector.AppLockerExeChannel or StationFactCollector.AppLockerMsiChannel => "AppLocker",
+        StationFactCollector.CodeIntegrityChannel => "CodeIntegrity",
+        StationFactCollector.DefenderChannel => "Defender",
+        "Microsoft-Windows-Partition/Diagnostic" => "Partition",
+        _ => channel,
+    };
+    private static string EvShort(LogFact l) => $"{ShortChannel(l.Channel)} {l.Id} RecordID {l.RecordId} ({l.TimeUtc:yyyy-MM-dd HH:mm:ss} UTC)";
+    private static string FileOf(LogFact l) => V(l, "FullFilePath") is { Length: > 0 } a ? a : V(l, "FilePath") is { Length: > 0 } b ? b : V(l, "File Name") is { Length: > 0 } c ? c : "(fișier necunoscut)";
+
+    private static void AirGapStation(StationFacts f, ControlReport r)
+    {
+        string S(string k) => f.Settings.TryGetValue(k, out var v) ? v : "";
+        bool isolated = f.StationShouldBeIsolated;
+        string Shown(string v) => v == Absent ? "nesetat" : v == "" ? "necitit" : v;
+
+        // P32 (A2) BitLocker on every fixed volume, PIN at boot.
+        const string p28 = "BitLocker pe toate discurile fixe, cu PIN la pornire";
+        if (f.Volumes is not { } vols)
+            Add(r, "P32", "Politici", p28, ControlStatus.Nedeterminat,
+                "Starea BitLocker a discurilor nu a putut fi citită." + (S("BitLocker.Volumes.Error") is { Length: > 0 } ve ? " " + ve + "." : "") + NoRead);
+        else
+        {
+            var fixedVols = vols.Where(v => v.Kind != VolumeKind.Amovibil).ToList();
+            var unprotected = fixedVols.Where(v => v.ProtectionStatus == 0).ToList();
+            var unknown = fixedVols.Where(v => v.ProtectionStatus is null or 2).ToList();
+            var sysVol = fixedVols.FirstOrDefault(v => v.Kind == VolumeKind.Sistem);
+            bool? pin = sysVol is { ProtectionStatus: 1, Protectors: { } pr } ? pr.Any(x => x is 4 or 6) : null;
+            var problems = unprotected.Select(v => $"{v.Drive} ({KindText(v.Kind)}) NU este criptat").ToList();
+            if (pin == false) problems.Add($"discul de sistem {sysVol!.Drive} este criptat, dar pornește fără PIN: dacă stația este furată întreagă, discul poate fi citit");
+            var status = fixedVols.Count == 0 ? ControlStatus.Nedeterminat : problems.Count > 0 ? ControlStatus.Neconform : unknown.Count > 0 ? ControlStatus.Nedeterminat
+                : pin is null ? ControlStatus.DeVerificat : ControlStatus.Conform;
+            Add(r, "P32", "Politici", p28, status,
+                fixedVols.Count == 0 ? "Windows nu a raportat niciun disc fix." + NoRead
+                : problems.Count > 0 ? char.ToUpperInvariant(problems[0][0]) + string.Join("; ", problems)[1..] + "."
+                : unknown.Count > 0 ? $"Starea BitLocker nu a putut fi citită pentru: {string.Join(", ", unknown.Select(v => v.Drive))}." + NoRead
+                : pin is null ? $"Toate cele {fixedVols.Count} discuri fixe sunt criptate, dar tipul protecției discului de sistem nu a putut fi citit; verificați la stație că se cere un PIN la pornire."
+                : $"Toate cele {fixedVols.Count} discuri fixe sunt criptate, iar discul de sistem cere PIN la pornire.",
+                vols.Select(VolumeLine).Prepend("WMI Win32_EncryptableVolume (ProtectionStatus, ConversionStatus, GetKeyProtectorType)"),
+                "Criptați fiecare disc fix cu BitLocker și adăugați discului de sistem protecția „TPM și PIN” (PIN de cel puțin 6 cifre).");
+        }
+
+        // P33 (A3) TPM present, enabled, ready, version.
+        var tpm = S("TPM.Present");
+        var tpmVersion = S("TPM.SpecVersion").Split(',')[0].Trim();
+        bool tpmOn = S("TPM.Enabled") == "True" && S("TPM.Activated") == "True";
+        var tpmReady = S("TPM.Ready");
+        Add(r, "P33", "Politici", "Cipul de securitate TPM prezent și pregătit",
+            tpm == "" ? ControlStatus.Nedeterminat : tpm == "nu" || !tpmOn || tpmReady == "False" ? ControlStatus.Neconform
+                : tpmVersion.StartsWith("1.", StringComparison.Ordinal) || tpmReady == "" ? ControlStatus.DeVerificat : ControlStatus.Conform,
+            tpm == "" ? "Starea cipului TPM nu a putut fi citită." + NoRead
+                : tpm == "nu" ? "Stația nu are cip TPM sau acesta este oprit din BIOS: criptarea discului nu se poate lega de placa de bază."
+                : !tpmOn ? "Cipul TPM există, dar este dezactivat sau neactivat din BIOS."
+                : tpmReady == "False" ? "Cipul TPM este pornit, dar nu este pregătit de folosire (nu a fost inițializat)."
+                : tpmVersion.StartsWith("1.", StringComparison.Ordinal) ? $"Cipul TPM are versiunea veche {tpmVersion}; cerința este TPM 2.0."
+                : tpmReady == "" ? $"Cipul TPM {tpmVersion} este pornit; dacă este pregătit de folosire nu s-a putut afla."
+                : $"Cipul TPM {tpmVersion} este prezent, pornit și pregătit.",
+            [$"WMI Win32_Tpm → IsEnabled_InitialValue = {Shown(S("TPM.Enabled"))}, IsActivated_InitialValue = {Shown(S("TPM.Activated"))}, SpecVersion = {Shown(S("TPM.SpecVersion"))}, IsReady = {Shown(tpmReady)}"],
+            "Porniți și inițializați cipul TPM 2.0 din setările UEFI/BIOS (protejate cu parolă).");
+
+        // P34 (A3) Kernel DMA protection.
+        var dma = S("DMA.KernelProtection");
+        var dmaPol = S("DMA.EnumerationPolicy");
+        var dmaPolText = dmaPol switch { "0" => "blochează toate dispozitivele externe care nu suportă protecția", "1" => "le permite doar după autentificare", "2" => "le permite pe toate", Absent => "nesetată", "" => "necitită", var x => $"valoarea {x}" };
+        Add(r, "P34", "Politici", "Protecția memoriei la porturile Thunderbolt/USB4 (Kernel DMA Protection)",
+            dma == "" ? ControlStatus.Nedeterminat : dma == "1" ? (dmaPol == "2" ? ControlStatus.DeVerificat : ControlStatus.Conform) : isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+            dma == "" ? "Starea protecției DMA nu a putut fi citită." + NoRead
+                : dma == "1" ? $"Protecția DMA în nucleu este pornită; politica pentru dispozitivele externe incompatibile: {dmaPolText}."
+                : "Protecția DMA în nucleu este OPRITĂ sau stația nu o are: un dispozitiv conectat la un port Thunderbolt/USB4 poate citi memoria stației. Dacă stația nu are astfel de porturi, notați acest lucru în procesul-verbal.",
+            ["Windows (informația afișată de msinfo32 ca „Kernel DMA Protection”) = " + (dma == "1" ? "pornită" : dma == "0" ? "oprită" : "necitită"),
+             @"HKLM\SOFTWARE\Policies\Microsoft\Windows\Kernel DMA Protection → DeviceEnumerationPolicy = " + Shown(dmaPol)],
+            "Porniți protecția DMA din UEFI/BIOS (VT-d / IOMMU); dacă nu există, porturile Thunderbolt se dezactivează sau se sigilează.");
+
+        // P35 (A3) virtualization-based security.
+        var vbs = S("DeviceGuard.VbsStatus");
+        Add(r, "P35", "Politici", "Securitatea bazată pe virtualizare (VBS) rulează",
+            vbs == "" ? ControlStatus.Nedeterminat : vbs == "2" ? ControlStatus.Conform : vbs == "1" ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+            vbs == "" ? "Starea securității bazate pe virtualizare nu a putut fi citită." + NoRead
+                : vbs == "2" ? $"Securitatea bazată pe virtualizare rulează (servicii active: {Shown(S("DeviceGuard.ServicesRunning"))})."
+                : vbs == "1" ? "Securitatea bazată pe virtualizare este cerută în configurare, dar NU rulează; de obicei virtualizarea este oprită din BIOS."
+                : "Securitatea bazată pe virtualizare nu este pornită: Credential Guard și protecția integrității codului nu pot funcționa.",
+            [@"WMI root\Microsoft\Windows\DeviceGuard Win32_DeviceGuard → VirtualizationBasedSecurityStatus = " + Shown(vbs)],
+            "Porniți virtualizarea în UEFI/BIOS și securitatea bazată pe virtualizare prin politică.");
+
+        // P36 (A4) password on wake.
+        string pAc = S("Wake.PolicyAC"), pDc = S("Wake.PolicyDC"), eAc = S("Wake.EffectiveAC"), eDc = S("Wake.EffectiveDC"), dli = S("Wake.DelayLockInterval");
+        bool polOn = pAc == "1" && pDc == "1", polOff = pAc == "0" || pDc == "0", effOff = eAc == "0" || eDc == "0", never = dli is "-1" or "4294967295";
+        bool wakeUnread = pAc == "" && pDc == "" && eAc == "" && eDc == "";
+        Add(r, "P36", "Politici", "Parolă cerută la revenirea din somn",
+            wakeUnread ? ControlStatus.Nedeterminat : polOff ? ControlStatus.Neconform : polOn ? ControlStatus.Conform : effOff || never ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+            wakeUnread ? "Setarea de parolă la trezire nu a putut fi citită." + NoRead
+                : polOff ? "Politica stației spune că la revenirea din somn NU se cere parola: oricine trezește stația ajunge în sesiunea deschisă."
+                : polOn ? "Politica stației cere parola la revenirea din somn, atât în priză, cât și pe baterie."
+                : effOff || never ? "La revenirea din somn NU se cere parola (setarea planului de alimentare sau „Solicitare autentificare: niciodată”): oricine trezește stația ajunge în sesiunea deschisă."
+                : "Stația cere acum parola la revenirea din somn, dar regula nu este impusă prin politică, deci utilizatorul o poate schimba.",
+            [$@"HKLM\SOFTWARE\Policies\Microsoft\Power\PowerSettings\0e796bdb-100d-47d6-a2d5-f7d2daa51f51 → ACSettingIndex = {Shown(pAc)}, DCSettingIndex = {Shown(pDc)}",
+             $"Planul de alimentare activ, CONSOLELOCK → în priză = {Shown(eAc)}, pe baterie = {Shown(eDc)}",
+             @"HKCU\Control Panel\Desktop → DelayLockInterval = " + Shown(dli) + " (doar utilizatorul care a pornit aplicația)"],
+            "Setați prin politică „Require a password when a computer wakes” (în priză și pe baterie) = Enabled.");
+
+        // P37 (A5) App Control for Business (WDAC).
+        var um = S("CI.UserModeEnforcement");
+        var al = S("AppLocker.Collections");
+        bool appLockerBlocks = al.Contains("mod 1", StringComparison.Ordinal) && !al.Contains("mod 0", StringComparison.Ordinal) && !al.Contains("nesetat", StringComparison.Ordinal) && S("AppLocker.AppIDSvcStart") != "4";
+        Add(r, "P37", "Politici", "Listă albă de aplicații App Control (WDAC)",
+            um == "" ? ControlStatus.Nedeterminat : um == "2" ? ControlStatus.Conform : um == "1" ? ControlStatus.DeVerificat : appLockerBlocks ? ControlStatus.DeVerificat : ControlStatus.Neconform,
+            um == "" ? "Modul App Control nu a putut fi citit." + NoRead
+                : um == "2" ? "App Control blochează programele neaprobate (mod de aplicare)."
+                : um == "1" ? "App Control este doar în mod audit: notează programele neaprobate, dar nu le oprește."
+                : appLockerBlocks ? "App Control nu se folosește pentru programe; lista albă este asigurată de AppLocker (vezi P17)."
+                : "Nici App Control, nici AppLocker nu opresc programele neaprobate: pe stație poate porni orice program adus pe un stick.",
+            [@"WMI Win32_DeviceGuard → UsermodeCodeIntegrityPolicyEnforcementStatus = " + Shown(um) + ", CodeIntegrityPolicyEnforcementStatus = " + Shown(S("CI.KernelEnforcement")),
+             @"C:\Windows\System32\CodeIntegrity\CiPolicies\Active → fișiere de politică active: " + Shown(S("WDAC.ActivePolicyFiles")) + "; SIPolicy.p7b: " + Shown(S("WDAC.LegacyPolicy"))],
+            "Pe o stație clasificată doar programele aprobate trebuie să poată porni: App Control sau AppLocker în mod de blocare.");
+
+        // A09 (A5) blocked or would-be-blocked programs in the control period.
+        var allow = Logs(f, StationFactCollector.AppLockerExeChannel, 8003, 8004).Concat(Logs(f, StationFactCollector.AppLockerMsiChannel, 8006, 8007))
+                   .Concat(Logs(f, StationFactCollector.CodeIntegrityChannel, 3076, 3077)).OrderBy(l => l.TimeUtc).ToList();
+        bool allowReadable = ChannelReadable(f, StationFactCollector.AppLockerExeChannel) || ChannelReadable(f, StationFactCollector.AppLockerMsiChannel) || ChannelReadable(f, StationFactCollector.CodeIntegrityChannel);
+        int blocked = allow.Count(l => l.Id is 8004 or 8007 or 3077), audited = allow.Count - blocked;
+        bool hasAllowList = (al.Length > 0 && al != Absent && !al.StartsWith('(')) || um is "1" or "2";
+        foreach (var l in allow.Where(l => l.Id is 8004 or 8007 or 3077))
+            r.Actions.Add(new ActionEntry(l.TimeUtc, l.UserSid, "pornire de program oprită de lista albă", FileOf(l), EvShort(l)));
+        Add(r, "A09", "Audit", "Programe oprite sau semnalate de lista albă",
+            !allowReadable ? ControlStatus.Nedeterminat : allow.Count > 0 ? ControlStatus.DeVerificat : hasAllowList ? ControlStatus.Conform : ControlStatus.DeVerificat,
+            !allowReadable ? "Jurnalele listei albe (AppLocker, CodeIntegrity) nu au putut fi citite." + NoRead
+                : allow.Count > 0 ? $"{LogAnalyzer.Dfir.Language.RoText.Count(blocked, "pornire oprită", "porniri oprite")} și {LogAnalyzer.Dfir.Language.RoText.Count(audited, "program care ar fi fost oprit", "programe care ar fi fost oprite")} (mod audit: au rulat totuși) în perioada controlată. Cineva a încercat să pornească programe neaprobate; aflați cine și de ce."
+                : hasAllowList ? "Nicio încercare de a porni un program neaprobat nu a fost înregistrată în perioada controlată."
+                : "Stația nu are o listă albă activă, deci jurnalele nu pot înregistra încercări de a porni programe neaprobate (vezi P17 și P37).",
+            allow.Select(l => $"{EvShort(l)}: {FileOf(l)}" + (l.UserSid.Length > 0 ? $" (utilizator {l.UserSid})" : V(l, "TargetUser") is { Length: > 0 } tu ? $" (utilizator {tu})" : "")),
+            "Fiecare încercare de a porni un program neaprobat se explică de utilizator; programele necesare se aprobă în scris și se adaugă în listă.");
+
+        // P38 (A7) last full and quick antivirus scan.
+        var full = S("Defender.FullScanEndUtc");
+        var quick = S("Defender.QuickScanEndUtc");
+        double? Age(string v) => DateTimeOffset.TryParse(v, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var t) ? (f.CollectedUtc - t).TotalDays : null;
+        var fullAge = Age(full);
+        var quickAge = Age(quick);
+        string When(string v, double? age) => v == Absent ? "niciodată" : age is { } a ? $"{DateTimeOffset.Parse(v, CultureInfo.InvariantCulture):yyyy-MM-dd} ({a:0} zile)" : "necitită";
+        Add(r, "P38", "Politici", "Ultima scanare antivirus completă și rapidă",
+            full == "" && quick == "" ? ControlStatus.Nedeterminat : full == Absent ? ControlStatus.Neconform
+                : fullAge is null || fullAge > 30 || quick == Absent || quickAge > 7 ? ControlStatus.DeVerificat : ControlStatus.Conform,
+            full == "" && quick == "" ? "Data ultimelor scanări antivirus nu a putut fi citită (poate exista alt antivirus)." + NoRead
+                : full == Absent ? $"Microsoft Defender nu a făcut NICIODATĂ o scanare completă a stației. Ultima scanare rapidă: {When(quick, quickAge)}."
+                : $"Ultima scanare completă: {When(full, fullAge)}; ultima scanare rapidă: {When(quick, quickAge)}." +
+                  (fullAge is null || fullAge > 30 || quick == Absent || quickAge > 7 ? " Comparați cu frecvența cerută de procedură (reper: scanare completă lunar, rapidă săptămânal)." : ""),
+            ["MSFT_MpComputerStatus → FullScanEndTime = " + Shown(full) + ", QuickScanEndTime = " + Shown(quick) + ", AMProductVersion = " + Shown(S("Defender.ProductVersion"))],
+            "Programați o scanare completă periodică, după procedură, și notați-o în registrul stației.");
+
+        // P39 (A7) antivirus registered in Windows Security Center (including another vendor's).
+        if (f.AntivirusProducts is not { } avs)
+            Add(r, "P39", "Politici", "Antivirus înregistrat în Centrul de securitate Windows", ControlStatus.Nedeterminat,
+                "Lista antivirusurilor înregistrate în Windows nu a putut fi citită (pe Windows Server această listă nu există)." + NoRead);
+        else
+        {
+            // [NESIGUR] productState decoding (bits 12-15 = on, bits 4-7 = signatures out of date) is community documentation, not an official Microsoft source.
+            static bool On(AntivirusProductFact a) => a.ProductState is { } s && ((s >> 12) & 0xF) == 1;
+            static bool Current(AntivirusProductFact a) => a.ProductState is { } s && ((s >> 4) & 0xF) == 0;
+            string Line(AntivirusProductFact a) => $"{a.Name}: {(a.ProductState is null ? "stare necunoscută" : $"{(On(a) ? "pornit" : "oprit")}, semnături {(Current(a) ? "la zi" : "vechi")}")} (productState = {a.ProductState?.ToString(CultureInfo.InvariantCulture) ?? "—"})";
+            var on = avs.Where(On).ToList();
+            Add(r, "P39", "Politici", "Antivirus înregistrat în Centrul de securitate Windows",
+                avs.Count == 0 || on.Count == 0 ? ControlStatus.Neconform : on.Any(Current) ? ControlStatus.Conform : ControlStatus.DeVerificat,
+                avs.Count == 0 ? "Niciun antivirus nu este înregistrat în Centrul de securitate Windows."
+                    : on.Count == 0 ? $"Antivirusurile înregistrate sunt OPRITE: {string.Join("; ", avs.Select(Line))}."
+                    : on.Any(Current) ? $"Antivirus pornit: {string.Join("; ", on.Where(Current).Select(a => a.Name))}."
+                    : $"Antivirusul este pornit, dar Windows raportează semnături vechi: {string.Join("; ", on.Select(Line))}.",
+                avs.Select(Line).Prepend(@"WMI root\SecurityCenter2 AntiVirusProduct (displayName, productState)"),
+                "Pe stație trebuie să ruleze un antivirus pornit, cu semnături actualizate după procedura offline.");
+        }
+
+        // N06 (A14) shared folders other than the default administrative shares.
+        if (f.Shares is not { } shares)
+            Add(r, "N06", "Rețea", "Foldere partajate în rețea", ControlStatus.Nedeterminat, "Lista folderelor partajate nu a putut fi citită." + NoRead);
+        else
+        {
+            var extra = shares.Where(x => !x.IsDefaultAdminShare).ToList();
+            Add(r, "N06", "Rețea", "Foldere partajate în rețea",
+                extra.Count == 0 ? ControlStatus.Conform : isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+                extra.Count == 0 ? "Stația nu partajează niciun folder sau imprimantă în rețea, în afara partajărilor administrative implicite ale Windows (C$, ADMIN$, IPC$)."
+                    : $"Stația partajează în rețea: {string.Join(", ", extra.Select(x => x.Name))}." + (isolated ? " Pe o stație izolată nu trebuie să existe partajări." : ""),
+                shares.Select(x => $"{x.Name} → {(x.Path.Length > 0 ? x.Path : "—")} ({(x.IsDefaultAdminShare ? "partajare administrativă implicită" : "partajare creată")})").Prepend("WMI Win32_Share (Name, Path, Type)"),
+                "Ștergeți partajările care nu sunt aprobate în scris.");
+        }
+
+        // N07 (A14) Remote Assistance.
+        string raPol = S("RA.PolicyAllowToGetHelp"), raCtl = S("RA.AllowToGetHelp");
+        Add(r, "N07", "Rețea", "Asistența la distanță (Remote Assistance)",
+            raPol == "" && raCtl == "" ? ControlStatus.Nedeterminat : raPol == "0" ? ControlStatus.Conform : raPol == "1" || raCtl == "1" ? (isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat)
+                : raCtl == "0" ? ControlStatus.Conform : ControlStatus.DeVerificat,
+            raPol == "" && raCtl == "" ? "Setarea Asistenței la distanță nu a putut fi citită." + NoRead
+                : raPol == "0" ? "Asistența la distanță este interzisă prin politică."
+                : raPol == "1" || raCtl == "1" ? "Asistența la distanță este PERMISĂ: altcineva poate prelua stația de la distanță, la invitație." + (isolated ? " Pe o stație izolată trebuie dezactivată." : "")
+                : raCtl == "0" ? "Asistența la distanță este oprită din setările stației (nu prin politică)."
+                : "Setarea Asistenței la distanță nu există în registru; pe multe instalări Windows o permite implicit. Verificați în Proprietăți sistem → Acces de la distanță.",
+            [@"HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services → fAllowToGetHelp = " + Shown(raPol), @"HKLM\SYSTEM\CurrentControlSet\Control\Remote Assistance → fAllowToGetHelp = " + Shown(raCtl)],
+            "Interziceți prin politică „Configure Solicited Remote Assistance” (Disabled).");
+
+        // N08 (A14) WinRM.
+        string wStart = S("WinRM.ServiceStart"), wLis = S("WinRM.Listeners"), wState = S("WinRM.State");
+        bool listening = wLis is not ("" or Absent or "(niciuna)"), running = wState.Equals("Running", StringComparison.OrdinalIgnoreCase);
+        var wStartText = wStart switch { "2" => "pornire automată", "3" => "pornire manuală", "4" => "dezactivat", Absent => "serviciul nu există", "" => "necitit", var x => $"pornire {x}" };
+        Add(r, "N08", "Rețea", "Administrarea la distanță (WinRM)",
+            wStart == "" && wLis == "" && wState == "" ? ControlStatus.Nedeterminat : listening || running ? (isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat)
+                : wStart is "4" || wStart == Absent || wState.Length > 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
+            wStart == "" && wLis == "" && wState == "" ? "Starea serviciului WinRM nu a putut fi citită." + NoRead
+                : listening || running ? $"Administrarea la distanță (WinRM) {(running ? "rulează" : "nu rulează acum")}{(listening ? $" și are configurate puncte de ascultare ({wLis})" : "")}: din rețea se pot rula comenzi pe stație." + (isolated ? " Pe o stație izolată trebuie oprită." : "")
+                : wStart is "4" || wStart == Absent ? $"Administrarea la distanță (WinRM) este oprită ({wStartText})."
+                : wState.Length > 0 ? $"Serviciul WinRM nu rulează și nu are puncte de ascultare configurate ({wStartText})."
+                : $"Serviciul WinRM: {wStartText}; dacă rulează acum nu s-a putut afla.",
+            [@"HKLM\SYSTEM\CurrentControlSet\Services\WinRM → Start = " + Shown(wStart), @"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WSMAN\Listener → " + Shown(wLis), "WMI Win32_Service WinRM → State = " + Shown(wState)],
+            "Dezactivați serviciul WinRM pe stația izolată.");
+
+        // N09 (A14) netsh portproxy.
+        var pp = S("PortProxy.Entries");
+        Add(r, "N09", "Rețea", "Redirecționări de porturi (portproxy)",
+            pp == "" ? ControlStatus.Nedeterminat : pp == Absent ? ControlStatus.Conform : isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+            pp == "" ? "Redirecționările de porturi nu au putut fi citite." + NoRead
+                : pp == Absent ? "Nu există redirecționări de porturi (portproxy)."
+                : $"Stația redirecționează conexiuni de rețea către alte adrese: {pp}. Este o metodă folosită pentru a ocoli separarea rețelelor.",
+            [@"HKLM\SYSTEM\CurrentControlSet\Services\PortProxy → " + Shown(pp)],
+            "Ștergeți redirecționările neaprobate și aflați cine le-a creat.");
+
+        // N10 (A14) Internet Connection Sharing.
+        string ics = S("ICS.Shared"), icsPol = S("ICS.PolicyShowUI"), icsSvc = S("ICS.ServiceStart");
+        Add(r, "N10", "Rețea", "Partajarea conexiunii la Internet (ICS)",
+            ics == "" ? (icsPol == "0" ? ControlStatus.DeVerificat : ControlStatus.Nedeterminat) : ics.StartsWith("da", StringComparison.Ordinal) ? (isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat) : ControlStatus.Conform,
+            ics == "" ? (icsPol == "0" ? "Starea partajării nu a putut fi citită; politica interzice activarea ei." : "Starea partajării conexiunii nu a putut fi citită." + NoRead)
+                : ics.StartsWith("da", StringComparison.Ordinal) ? $"Partajarea conexiunii la Internet este PORNITĂ ({ics[3..].Trim()}): stația face legătura între două rețele."
+                : "Partajarea conexiunii la Internet nu este pornită pe nicio conexiune." + (icsPol == "0" ? " Politica interzice și activarea ei." : ""),
+            ["Interfața Windows de partajare (HNetCfg.HNetShare) → " + Shown(ics), @"HKLM\SOFTWARE\Policies\Microsoft\Windows\Network Connections → NC_ShowSharedAccessUI = " + Shown(icsPol),
+             @"HKLM\SYSTEM\CurrentControlSet\Services\SharedAccess → Start = " + Shown(icsSvc)],
+            "Opriți partajarea și interziceți-o prin politică („Prohibit use of Internet Connection Sharing”).");
+
+        // A10 (A16) audit rules (SACL) on the classified folders of the procedure profile.
+        const string a10 = "Auditarea accesului la folderele clasificate (SACL)";
+        if (f.FolderAudits is not { } folders)
+            Add(r, "A10", "Audit", a10, ControlStatus.Nedeterminat, "Folderele clasificate din profilul de proceduri nu au fost citite." + NoRead);
+        else if (folders.Count == 0)
+            Add(r, "A10", "Audit", a10, ControlStatus.DeVerificat,
+                "Profilul de proceduri nu are tabelul „Foldere clasificate” completat, deci aplicația nu știe ce foldere să verifice. Completați profilul și repetați controlul.",
+                rec: "Treceți în profilul de proceduri folderele cu documente clasificate.");
+        else
+        {
+            AuditSetting? fs = f.AuditPolicy?.GetValueOrDefault("File System");
+            var noRule = folders.Where(x => x.Exists && x.AuditRules == 0).ToList();
+            var missing = folders.Where(x => !x.Exists).ToList();
+            var unread = folders.Where(x => x.Exists && x.AuditRules is null).ToList();
+            var problems = noRule.Select(x => $"folderul {x.Path} nu are nicio regulă de audit").ToList();
+            if (fs is { } fsv && (fsv & AuditSetting.Success) != AuditSetting.Success)
+                problems.Add("subcategoria de audit „File System” nu este pornită, deci regulile de pe foldere nu produc niciun eveniment");
+            Add(r, "A10", "Audit", a10,
+                problems.Count > 0 ? ControlStatus.Neconform : unread.Count > 0 || fs is null ? ControlStatus.Nedeterminat : missing.Count > 0 ? ControlStatus.DeVerificat : ControlStatus.Conform,
+                problems.Count > 0 ? "Nu se va ști cine a deschis documentele: " + string.Join("; ", problems) + "."
+                    : unread.Count > 0 || fs is null ? $"Nu s-a putut stabili: {string.Join(", ", unread.Select(x => x.Path).Concat(fs is null ? ["politica de audit «File System»"] : []))}." + NoRead
+                    : missing.Count > 0 ? $"Folderele din profil care nu există pe stație: {string.Join(", ", missing.Select(x => x.Path))}. Corectați profilul sau verificați unde sunt documentele."
+                    : $"Toate cele {folders.Count} foldere clasificate au reguli de audit, iar subcategoria „File System” este auditată.",
+                folders.Select(x => $"{x.Path}: " + (!x.Exists ? "nu există" : x.AuditRules is null ? x.Error : x.AuditRules == 0 ? "nicio regulă de audit" : $"{x.AuditRules} reguli de audit: {x.Rules}"))
+                       .Append($"File System: {(fs is null ? "necitit" : fs.ToString())}"),
+                "Pe fiecare folder clasificat adăugați o regulă de audit (Proprietăți → Securitate → Complex → Auditare) pentru citire, scriere și ștergere, și porniți subcategoria „File System”.");
+        }
+
+        // D02 (B8) BitLocker To Go on each connected removable volume; write access to unencrypted media.
+        var rdv = S("BitLocker.RDVDenyWriteAccess");
+        bool deny = rdv == "1";
+        var removable = f.Volumes?.Where(v => v.Kind == VolumeKind.Amovibil).ToList();
+        var letters = removable?.Select(v => v.Drive).ToList() ?? f.RemovableDrivesNow;
+        var unprot = removable?.Where(v => v.ProtectionStatus == 0).ToList() ?? [];
+        var unknownRem = removable?.Where(v => v.ProtectionStatus is null or 2).ToList() ?? [];
+        var rdvText = deny ? "scrierea pe suporturi necriptate este blocată prin politică" : rdv == "" ? "politica de scriere nu a putut fi citită" : "politica nu blochează scrierea pe suporturi necriptate";
+        ControlStatus d02 = letters.Count == 0 ? (deny ? ControlStatus.Conform : rdv == "" ? ControlStatus.Nedeterminat : ControlStatus.DeVerificat)
+            : removable is null ? (deny ? ControlStatus.Conform : ControlStatus.Nedeterminat)
+            : unprot.Count > 0 ? (deny ? ControlStatus.Conform : ControlStatus.Neconform)
+            : unknownRem.Count > 0 ? (deny ? ControlStatus.Conform : ControlStatus.DeVerificat) : ControlStatus.Conform;
+        Add(r, "D02", "Dispozitive", "Suporturile amovibile conectate sunt criptate (BitLocker To Go)", d02,
+            letters.Count == 0 ? $"Niciun suport amovibil nu este conectat acum; {rdvText}." + (rdv == "" ? NoRead : "")
+                : removable is null ? $"Suporturi conectate acum: {string.Join(", ", letters)}. Starea lor de criptare nu a putut fi citită; {rdvText}." + (deny ? "" : NoRead)
+                : unprot.Count > 0 ? $"Suporturi NECRIPTATE conectate acum: {string.Join(", ", unprot.Select(v => v.Drive))}; {rdvText}." + (deny ? " De pe ele se poate doar citi." : " Pe ele se pot copia date care, dacă suportul se pierde, pot fi citite de oricine.")
+                : unknownRem.Count > 0 ? $"Starea criptării nu este cunoscută pentru: {string.Join(", ", unknownRem.Select(v => v.Drive))}; {rdvText}."
+                : $"Toate suporturile conectate acum sunt criptate ({string.Join(", ", letters)}); {rdvText}.",
+            (removable?.Select(VolumeLine) ?? letters.Select(l => $"{l} (suport amovibil): stare necitită"))
+                .Append(@"HKLM\SYSTEM\CurrentControlSet\Policies\Microsoft\FVE (sau SOFTWARE\Policies\Microsoft\FVE) → RDVDenyWriteAccess = " + Shown(rdv)),
+            "Folosiți doar suporturi criptate cu BitLocker To Go și setați prin politică interzicerea scrierii pe suporturi necriptate (RDVDenyWriteAccess = 1).");
+
+        // D03 (C8) medium scanned with the antivirus right after it was connected.
+        var arrivals = Logs(f, "Microsoft-Windows-Partition/Diagnostic", 1006)
+            .Where(l => V(l, "Capacity") is not ("0" or "") && V(l, "BusType") is "7" or "12" or "13" or "").OrderBy(l => l.TimeUtc).ToList();
+        var scans = Logs(f, StationFactCollector.DefenderChannel, 1000, 1001).ToList();
+        var detections = Logs(f, StationFactCollector.DefenderChannel, 1116, 1117).ToList();
+        bool d03Readable = ChannelReadable(f, StationFactCollector.DefenderChannel) && ChannelReadable(f, "Microsoft-Windows-Partition/Diagnostic");
+        var unscanned = arrivals.Where(a => !scans.Any(s => s.TimeUtc >= a.TimeUtc && s.TimeUtc <= a.TimeUtc.AddMinutes(10))).ToList();
+        var foundAfter = detections.Where(d => arrivals.Any(a => d.TimeUtc >= a.TimeUtc && d.TimeUtc <= a.TimeUtc.AddMinutes(60))).ToList();
+        foreach (var d in foundAfter) r.Actions.Add(new ActionEntry(d.TimeUtc, V(d, "Detection User"), "antivirusul a găsit un program rău-intenționat", $"{V(d, "Threat Name")} {V(d, "Path")}".Trim(), EvShort(d)));
+        Add(r, "D03", "Dispozitive", "Suporturile au fost scanate cu antivirusul la conectare",
+            !d03Readable ? ControlStatus.Nedeterminat : foundAfter.Count > 0 ? ControlStatus.Neconform : arrivals.Count == 0 || unscanned.Count > 0 ? ControlStatus.DeVerificat : ControlStatus.Conform,
+            !d03Readable ? "Jurnalul antivirusului (Defender) sau jurnalul conectărilor de discuri nu a putut fi citit." + NoRead
+                : foundAfter.Count > 0 ? $"Antivirusul a găsit {LogAnalyzer.Dfir.Language.RoText.Count(foundAfter.Count, "program rău-intenționat", "programe rău-intenționate")} în cel mult o oră după conectarea unui suport: {string.Join("; ", foundAfter.Select(d => V(d, "Threat Name")).Where(n => n.Length > 0).Distinct())}."
+                : arrivals.Count == 0 ? "Nu s-a observat nicio conectare de suport în perioada controlată (jurnalul Partition/Diagnostic), deci nu există scanări de comparat."
+                : unscanned.Count > 0 ? $"{unscanned.Count} din {arrivals.Count} conectări de suport nu sunt urmate, în 10 minute, de o scanare antivirus pe această stație. Scanarea poate fi făcută înainte, pe stația de decontaminare; comparați cu registrul acelei stații (verificarea M04)."
+                : $"Fiecare din cele {arrivals.Count} conectări de suport este urmată, în cel mult 10 minute, de o scanare antivirus pe această stație.",
+            arrivals.Select(a => $"{EvShort(a)}: {Clean(V(a, "Manufacturer"))} {Clean(V(a, "Model"))} SN {Clean(V(a, "SerialNumber"))} → " +
+                                 (scans.FirstOrDefault(s => s.TimeUtc >= a.TimeUtc && s.TimeUtc <= a.TimeUtc.AddMinutes(10)) is { } sc ? $"scanat: {EvShort(sc)} {V(sc, "Scan Resources")}".TrimEnd() : "nicio scanare în 10 minute"))
+                    .Concat(foundAfter.Select(d => $"{EvShort(d)}: {V(d, "Threat Name")} {V(d, "Path")}".TrimEnd())),
+            "Fiecare suport se scanează înainte de prima conectare la stație (pe stația de decontaminare sau pe stație, imediat la conectare), iar scanarea se notează.");
+
+        // S04 (C8) Windows updates installed in the period, compared with the register of offline updates.
+        if (f.InstalledUpdates is not { } installed)
+            Add(r, "S04", "Software", "Actualizări offline aplicate și registrul actualizărilor", ControlStatus.Nedeterminat, "Lista actualizărilor instalate nu a putut fi citită." + NoRead);
+        else
+        {
+            var inPeriod = installed.Where(u => u.InstalledOn is { } d && d >= f.PeriodStartUtc.UtcDateTime.Date).OrderBy(u => u.InstalledOn).ToList();
+            var reg = f.OfflineUpdateRegister;
+            var regKbs = reg?.SelectMany(x => x.KbNumbers).ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
+            var notInRegister = reg is { Count: > 0 } ? inPeriod.Where(u => u.HotFixId.StartsWith("KB", StringComparison.OrdinalIgnoreCase) && !regKbs.Contains(u.HotFixId.Trim())).ToList() : [];
+            var lastAv = reg?.Where(x => LogAnalyzer.Dfir.Registers.UpdateRegister.NormalizeKind(x.Kind) == "antivirus").Select(x => x.Date).Where(d => d.Length > 0).Order().LastOrDefault();
+            var avNote = reg is { Count: > 0 } && S("Defender.SignaturesUtc") is { Length: > 0 } sigText && DateTimeOffset.TryParse(sigText, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var sigAt)
+                ? $" Semnăturile antivirus de pe stație sunt din {sigAt:yyyy-MM-dd}; ultima actualizare antivirus din registru: {lastAv ?? "niciuna"}." : "";
+            Add(r, "S04", "Software", "Actualizări offline aplicate și registrul actualizărilor",
+                reg is not { Count: > 0 } ? ControlStatus.DeVerificat : notInRegister.Count > 0 ? ControlStatus.Neconform : inPeriod.Count == 0 ? ControlStatus.DeVerificat : ControlStatus.Conform,
+                reg is not { Count: > 0 } ? $"Registrul actualizărilor offline nu este completat în aplicație; comparați manual cele {inPeriod.Count} actualizări Windows instalate în perioadă cu registrul organizației (verificarea M05)."
+                    : notInRegister.Count > 0 ? $"{LogAnalyzer.Dfir.Language.RoText.Count(notInRegister.Count, "actualizare instalată", "actualizări instalate")} în perioadă nu apar în registrul actualizărilor offline: {string.Join(", ", notInRegister.Select(u => u.HotFixId))}. Aflați cine le-a adus și de pe ce suport." + avNote
+                    : inPeriod.Count == 0 ? "În lista Windows nu apare nicio actualizare instalată în perioada controlată; comparați cu registrul: dacă registrul are actualizări în perioadă, ele nu au ajuns pe stație." + avNote
+                    : $"Toate cele {inPeriod.Count} actualizări Windows instalate în perioadă apar în registrul actualizărilor offline." + avNote,
+                inPeriod.Select(u => $"{u.HotFixId} instalată {u.InstalledOn:yyyy-MM-dd} ({u.Description})" + (reg is { Count: > 0 } ? regKbs.Contains(u.HotFixId.Trim()) ? " · în registru" : " · NU este în registru" : ""))
+                        .Prepend("WMI Win32_QuickFixEngineering → HotFixID, InstalledOn"),
+                "Fiecare actualizare adusă pe stație se trece în registrul actualizărilor offline (data, pachetul, amprenta, cine a adus suportul).");
         }
     }
 

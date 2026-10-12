@@ -50,21 +50,21 @@ Columns: requirement | source | LA status + evidence | IV status + evidence stri
 | # | Requirement | Source | LogAnalyzer | InspectraVeritas | Better |
 |---|---|---|---|---|---|
 | A1 | Secure Boot on, UEFI mode | CTRL B1/B2 | HAVE: check P15 | NOT FOUND | LA |
-| A2 | BitLocker on every fixed volume, PIN at boot | CTRL B4 | PARTIAL: P11 reads only the system drive (`StationFacts.cs:201`); no PIN, no other volumes | NOT FOUND (only "fișier criptat EFS" as a read obstacle) | LA |
-| A3 | TPM present/ready, Kernel DMA protection | CTRL B3/B5 | MISSING: no TPM or DMA code | NOT FOUND | tie |
-| A4 | Screen lock at 15 min or less, password on wake | CTRL G1/G2 | PARTIAL: P16 inactivity lock; wake password not found | NOT FOUND | LA |
-| A5 | Application allowlisting present, mode, blocked attempts | CTRL D1/D2 | PARTIAL: P17 AppLocker present and mode; App Control and 8003/8004/3076/3077 not verified | NOT FOUND | LA |
+| A2 | BitLocker on every fixed volume, PIN at boot | CTRL B4 | HAVE (updated, see note U1): P32 reads every lettered volume (`Win32_EncryptableVolume` + read-only `GetKeyProtectorType`), reports per volume, flags a system drive without TPM+PIN; P11 kept. Needs administrator, else NEDETERMINAT | NOT FOUND (only "fișier criptat EFS" as a read obstacle) | LA |
+| A3 | TPM present/ready, Kernel DMA protection | CTRL B3/B5 | HAVE (U1): P33 TPM present/enabled/ready/version (`Win32_Tpm`, administrator), P34 Kernel DMA Protection + `DeviceEnumerationPolicy`, P35 VBS running state. The DMA read uses the information class msinfo32 shows; to confirm in the lab | NOT FOUND | LA |
+| A4 | Screen lock at 15 min or less, password on wake | CTRL G1/G2 | HAVE (U1): P16 inactivity lock; P36 password on wake (policy AC/DC, active power plan CONSOLELOCK, current user's sign-in delay) | NOT FOUND | LA |
+| A5 | Application allowlisting present, mode, blocked attempts | CTRL D1/D2 | HAVE (U1): P17 AppLocker; P37 App Control (WDAC) mode from `Win32_DeviceGuard` + active policy files; A09 counts AppLocker 8003/8004/8006/8007 and CodeIntegrity 3076/3077 in the control period, with the files | NOT FOUND | LA |
 | A6 | AutoPlay/AutoRun off | CTRL D3; MED §4.5 | HAVE: P18 (`ControlEvaluator.cs:526`) | NOT FOUND | LA |
-| A7 | Antivirus on, signature age, exclusions, last full scan, third-party AV | CTRL I3/I4 | PARTIAL: P08-P10; no last-full-scan or SecurityCenter2 read | NOT FOUND | LA |
+| A7 | Antivirus on, signature age, exclusions, last full scan, third-party AV | CTRL I3/I4 | HAVE (U1): P08-P10; P38 last full / quick scan age (`FullScanEndTime`, `QuickScanEndTime`); P39 every antivirus registered in `root\SecurityCenter2` with its state (productState decoding is community documentation) | NOT FOUND | LA |
 | A8 | Supported Windows build, date of last update | CTRL I1/I2 | HAVE: S03 | PARTIAL: "Update-uri si hotfix-uri" (history, investigative, no compliance verdict) | LA |
 | A9 | Credential protection and account hygiene (LSA PPL, Credential Guard, WDigest, Guest, built-in admin, blank/never-expiring passwords, password and lockout policy) | CTRL C1-C5 | HAVE: P01-P05, P13, P21, P22, C01-C05 | NOT FOUND | LA |
 | A10 | PowerShell 2.0 removed, script block logging and transcription | CTRL D5/D6 | HAVE: P23, P24 | NOT FOUND | LA |
 | A11 | Data remanence: pagefile cleared at shutdown, hibernation, crash dumps | CTRL F1-F3 | HAVE: P25 | PARTIAL: "Programe blocate si dump-uri (WER)" (dumps listed as artefacts) | LA |
 | A12 | Recall/Copilot off; camera and microphone blocked by policy | CTRL F4, E4/E5 | HAVE: P19, P20 | NOT FOUND | LA |
 | A13 | Logon banner stating the classification level | CTRL G3 | HAVE: P26 | NOT FOUND | LA |
-| A14 | Interconnection paths off: RDP, firewall, SMBv1, shares, Remote Assistance, WinRM, portproxy, ICS | CTRL A4 | PARTIAL: P06, P07, P12, C06; shares/Remote Assistance/WinRM/portproxy/ICS not found | NOT FOUND | LA |
+| A14 | Interconnection paths off: RDP, firewall, SMBv1, shares, Remote Assistance, WinRM, portproxy, ICS | CTRL A4 | HAVE (U1): P06, P07, P12, C06; N06 shares other than C$/ADMIN$/IPC$, N07 Remote Assistance (policy + system setting), N08 WinRM service/state/listeners, N09 portproxy entries, N10 ICS enabled connections + policy. Optional features (Telnet/TFTP/SNMP/IIS) not read | NOT FOUND | LA |
 | A15 | Audit policy complete; Security/System logs large enough to cover the control period | CTRL H2/H4; MED §4.5 | HAVE: A01-A04 | PARTIAL: "VERIFICARE PRELIMINARĂ A SURSEI" (log coverage period) | LA |
-| A16 | File-access auditing (SACL) on classified folders | CTRL H1 | MISSING: SACL appears only in explanation texts and capability lists | NOT FOUND | tie |
+| A16 | File-access auditing (SACL) on classified folders | CTRL H1 | HAVE (U1): profile table „Foldere clasificate” (`ProfileTable.ClassifiedFolders`); A10 reads each folder's SACL (administrator, read-only) and names the folders without an audit rule, together with the „File System” audit subcategory | NOT FOUND | LA |
 | A17 | Time source configured, drift against a reference clock | CTRL H5, P10 | HAVE: P27 + manual M10 | PARTIAL: time-change events, target time zone, DST "oră repetată" | LA |
 | A18 | Station compared with the organisation's approved profile / GPO baseline | CTRL §1.1 conclusion, J2 | HAVE: GPO import/validate/approve and procedure profile (`Dfir.Core/Profile/`) | NOT FOUND | LA |
 | A19 | Procedural checks answered and printed (accreditation, approved procedures, BIOS password, seals, camera covered, approved exceptions) | CTRL §3 P1-P15 | HAVE: M01-M15 (`ManualChecks.cs`) | NOT FOUND | LA |
@@ -80,7 +80,7 @@ Columns: requirement | source | LA status + evidence | IV status + evidence stri
 | B5 | Real-time alert when a medium is connected, with register verdict and sound; feed kept | MED §3, §4.3 | HAVE: `Devices/DeviceWatcher.cs`; `MediaCenterViewModel.cs:212-213` (alert + sound) | NOT FOUND ("LIVE" strings mean analysing a running system) | LA |
 | B6 | Native blocking policies read: RemovableStorageDevices per class (disks, CD/DVD, WPD, Deny_All), USBSTOR Start, Device Installation Restrictions, RDVDenyWriteAccess | MED §4.5; EXF X5; CTRL E1/E2 | HAVE: `DevicePolicyCheck.cs:22-45`, P14 | PARTIAL: "Security: instalare BLOCATA de politica de sistem" (events only, not the policy) | LA |
 | B7 | "Is copying to removable media recorded?" (Removable Storage and PnP audit) | EXF X1; MED §4.5 | HAVE: A08 | PARTIAL: "Cel mai probabil auditarea accesului la obiecte nu era activata" (after the fact) | LA |
-| B8 | BitLocker To Go state of each medium; write blocked on unencrypted media | MED §4.5 | PARTIAL: `DeviceInventory.cs:288` (admin only) + RDVDenyWriteAccess | NOT FOUND | LA |
+| B8 | BitLocker To Go state of each medium; write blocked on unencrypted media | MED §4.5 | HAVE (U1): D02 lists each removable volume connected at control time with its BitLocker state and applies the RDVDenyWriteAccess effect (unencrypted + write allowed = NECONFORM). Media not connected at control time are not seen | NOT FOUND | LA |
 | B9 | Users register compared with accounts and logons | CTRL P11; M11 | HAVE: UsersRegister used by `Analysis/Wp14Rules.cs` | PARTIAL: account reconstruction, no register | LA |
 | B10 | Round-trip media: where a medium may be used, flag when also used on a connected network | EXF §3, X19 | HAVE (this station only): MEDIA-ZONE-ROUNDTRIP (`Wp14Rules.OpticalAndZones.cs`): a medium registered for a zone or level that was connected while this station was on a network (NetworkProfile window or Wi-Fi association, 10-minute window when the disconnect was not logged), or whose register zone differs from the declared station zone. Not available: evidence from the other station or network (a medium seen on a connected PC is invisible here). Tests: `AirGapChannelTests` | NOT FOUND | LA |
 | B11 | Media lifecycle: validity, withdrawal, destruction record | CTRL P14; M14 | HAVE: history = `Compare` in `Wp14Rules.Media.cs` (withdrawn / destroyed / observation outside ValidFrom-ValidTo -> MEDIA-UNAUTHORIZED, High on a classified scope); live = `DeviceRules.Assess` (Withdrawn / Expired) and the `MediaCenterViewModel` alert with sound. Already in the code before this row was written; now covered by positive and negative tests in `AirGapChannelTests`. Limit: the register has no withdrawal date, so an observation before the withdrawal is also flagged and the text says so | NOT FOUND | LA |
@@ -95,9 +95,9 @@ Columns: requirement | source | LA status + evidence | IV status + evidence stri
 | C3 | SHA-256 of each transferred file at registration | EXF §4 ("hash-ul listei") | HAVE: `TransferViewModel.cs:181-189` via `TransferReportPdf.HashFiles` | NOT FOUND (hashes exist only for the disk search, C7) | LA |
 | C4 | Transfer form and period register as PDF with signature lines | CMP §4.2 | HAVE: `TransferReportPdf.Write` (`TransferViewModel.cs:233`) | NOT FOUND | LA |
 | C5 | Every medium connection in the period has a register entry; unmatched list with pre-fill | M16; CMP §4.2 | HAVE: `Registers/TransferReconciliation.cs`, `TransferViewModel.cs:144-149` (added 2026-10-12, commit 4696c6e90) | NOT FOUND | LA |
-| C6 | Only approved channels (zone to zone, medium) accepted | CTRL P2; profile `TransferChannels` | PARTIAL: channels in `ProcedureProfile.cs:36`, used by AIRGAP rules (`Wp14Rules.AirGap.cs:22-28`), not checked when a transfer row is saved | NOT FOUND | LA |
+| C6 | Only approved channels (zone to zone, medium) accepted | CTRL P2; profile `TransferChannels` | HAVE (U1): `Registers/TransferChannelCheck.cs` runs when a transfer row is saved; a route or medium outside the approved channels is stopped once with a plain message, and saving again records it with the deviation in the notes. Zones are matched by name against the source/destination fields | NOT FOUND | LA |
 | C7 | Verify a declared transfer by content: medium files found on the station disk by SHA-256, with strength | CMP §3 #2; EXF R6/R7 | MISSING | DESCRIBED: "Conținutul unui USB pe un disc"; "Listing: fișierele de pe USB găsite pe disc" | IV |
-| C8 | Inbound controls: scan station before first connection; offline update register | CTRL P4/P5; M04, M05 | PARTIAL: manual M04/M05, plus P09 and S03 data | NOT FOUND | LA |
+| C8 | Inbound controls: scan station before first connection; offline update register | CTRL P4/P5; M04, M05 | PARTIAL (U1): D03 checks each medium connection (Partition 1006) for a Defender scan within 10 minutes and a detection within an hour on this station; register of offline updates (`Registers/UpdateRegister.cs`, edited on the control page) compared by S04 with the Windows updates installed in the period. Still manual: the scan on the decontamination station before first connection (M04) and antivirus signature packages (date shown, not matched) | NOT FOUND | LA |
 
 ### D. Detection of air-gap breaches
 
@@ -181,6 +181,16 @@ Full = HAVE (LA) or DESCRIBED (IV). Score = full + 0.5 × partial.
 | F. Integrity and legal value | 10 | 6 | 2 | 2 | 7.0 (70%) | 7 | 2 | 1 | 8.0 (80%) |
 | G. Non-IT usability | 8 | 7 | 1 | 0 | 7.5 (94%) | 3 | 4 | 1 | 5.0 (63%) |
 | **Total** | **87** | **49** | **23** | **15** | **60.5 (70%)** | **29** | **19** | **39** | **38.5 (44%)** |
+
+**Note U1 (2026-10-12, branch `wk-gaps-station`).** Rows A2, A3, A4, A5, A7, A14, A16, B8 and C6 moved to HAVE and
+C8 stays PARTIAL after new station checks P32-P39, A09, A10, N06-N10, D02, D03, S04 (StationFacts → ControlEvaluator →
+CheckGuide + CodeExplainer → report), the profile table „Foldere clasificate”, the transfer channel check and the
+register of offline updates. Evidence state: `CODE_VERIFIED` and `TEST_VERIFIED` on synthetic facts
+(`LogAnalyzer.App.Tests/StationConfigChecksTests.cs`: compliant, non-compliant and undetermined cases); not yet
+`RUNTIME_VERIFIED` on a test station. Points to confirm in the lab: the Kernel DMA information class, the WinRM
+listener registry location, the SecurityCenter2 productState decoding. The tables above keep the original scores;
+recomputed with U1: A 19/0/0 = 19.0 (100%), B 9/3/0 = 10.5 (88%), C 6/1/1 = 6.5 (81%), total LA 58/16/13 = 66.0 (76%);
+weighted LA 80.7 (periodic control) and 66.5 (leak investigation), IV unchanged.
 
 Reading: rows were chosen from the air-gap requirement documents, not from either tool's feature list, so the
 total reflects coverage of the requirements. IV's forensic breadth outside these requirements (browsers, chat

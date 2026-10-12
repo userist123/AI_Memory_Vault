@@ -248,6 +248,28 @@ namespace LogAnalyzer.UI.ViewModels
             "AssignedUser: DOMENIU\\utilizator; Zone; ValidFrom/ValidTo: yyyy-MM-dd; Status: active | withdrawn | destroyed. Mediile observate se compară cu acest registru: AUTHORIZED / REGISTERED / UNREGISTERED / UNAUTHORIZED / UNKNOWN.";
     }
 
+    /// <summary>
+    /// "Registrul actualizărilor offline" (control research P5, manual check M05): every update brought to the isolated station on a medium. The station
+    /// control compares the Windows updates installed in the control period with it (check S04).
+    /// </summary>
+    public sealed class UpdateRegisterViewModel : RegisterViewModel<UpdateRegister>
+    {
+        public UpdateRegisterViewModel(string? path = null) : base(path) { }
+
+        protected override System.Collections.Generic.IReadOnlyList<object> Discover() =>
+            LogAnalyzer.Dfir.Windows.Audit.StationFactCollector.ReadInstalledUpdates().Cast<object>().ToList();
+
+        protected override string MergeObserved(UpdateRegister register, System.Collections.Generic.IReadOnlyList<object> observed)
+        {
+            var c = register.MergeInstalled(observed.Cast<LogAnalyzer.Dfir.Windows.Audit.InstalledUpdateFact>().Select(u => (u.HotFixId, u.InstalledOn)));
+            return $"Preluat de pe stație: {c.Added} actualizări Windows noi, {c.AlreadyPresent} erau deja în registru. Completați proveniența și cine a adus suportul, apoi salvați.";
+        }
+
+        public override string Hint =>
+            "Date: yyyy-MM-dd (ziua aplicării); Kind: windows | antivirus | aplicatie; Package: numele pachetului, iar pentru Windows numărul KB (ex. KB5031234); " +
+            "Sha256: amprenta pachetului (64 hex); Origin: de unde provine pachetul; BroughtBy: cine a adus suportul; Medium: numărul suportului din registrul de medii; Notes.";
+    }
+
     /// <summary>"Registru utilizatori" (decision 17): persons, accounts and clearances, entered by hand by the global administrator.</summary>
     public sealed class UsersRegisterViewModel : RegisterViewModel<UsersRegister>
     {

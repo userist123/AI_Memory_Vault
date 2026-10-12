@@ -41,6 +41,7 @@ namespace LogAnalyzer.UI.ViewModels
             ProfileTable.Zones => "Zonele organizației (ex. ROSU, PUBLIC). Fără zone, orice conectivitate pe un sistem air-gapped este „conectivitate observată, necesită explicație”.",
             ProfileTable.TransferChannels => "FromZone/ToZone: zone definite mai sus; Medium: suport sau cale de transfer aprobată.",
             ProfileTable.NetworkDestinations => "Address: IP, rețea CIDR sau nume; Zone: zona în care se află.",
+            ProfileTable.ClassifiedFolders => "Path: calea completă a unui folder cu documente clasificate (ex. D:\\Clasificat). La controlul stației se verifică dacă accesul la fișierele din el este auditat.",
             _ => "",
         };
 
