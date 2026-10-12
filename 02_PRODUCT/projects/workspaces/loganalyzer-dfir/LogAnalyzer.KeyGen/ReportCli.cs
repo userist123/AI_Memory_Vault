@@ -39,7 +39,14 @@ public static class ReportCli
         if (usePass)
         {
             pass = Environment.GetEnvironmentVariable(PassphraseEnvironmentVariable);
-            if (string.IsNullOrEmpty(pass)) { o.WriteLine("Parola cheii (nu se afișează în jurnal):"); pass = (input ?? Console.In).ReadLine(); }
+            if (string.IsNullOrEmpty(pass))
+            {
+                o.WriteLine("Parola cheii (nu se afișează pe ecran și nu se scrie în jurnal):");
+                pass = ReadSecret(input);
+                if (string.IsNullOrEmpty(pass)) { o.WriteLine("[-] Parola nu poate fi goală."); return 1; }
+                o.WriteLine("Repetați parola:");
+                if (!string.Equals(pass, ReadSecret(input), StringComparison.Ordinal)) { o.WriteLine("[-] Cele două parole nu coincid; nu s-a scris nicio cheie."); return 1; }
+            }
             if (string.IsNullOrEmpty(pass)) { o.WriteLine("[-] Parola nu poate fi goală."); return 1; }
         }
         try
@@ -86,7 +93,7 @@ public static class ReportCli
             if (ReportKeyProtection.NeedsPassphrase(text))
             {
                 pass = Environment.GetEnvironmentVariable(PassphraseEnvironmentVariable);
-                if (string.IsNullOrEmpty(pass)) { o.WriteLine("Parola cheii:"); pass = (input ?? Console.In).ReadLine(); }
+                if (string.IsNullOrEmpty(pass)) { o.WriteLine("Parola cheii (nu se afișează pe ecran):"); pass = ReadSecret(input); }
             }
             using var key = ReportSignature.LoadPrivateKey(text, pass);
             var s = ReportSignature.Sign(args[2], key, args[3]);
@@ -137,7 +144,12 @@ public static class ReportCli
             foreach (var a in args.Skip(2))
             {
                 var t = File.Exists(a) ? File.ReadAllText(a).Trim() : a.Trim();
-                if (t.Length == 64 && t.All(Uri.IsHexDigit)) expected = t; else keys.Add(t);
+                if (t.Length == 64 && t.All(Uri.IsHexDigit))
+                {
+                    if (expected is not null && !expected.Equals(t, StringComparison.OrdinalIgnoreCase)) { o.WriteLine("Se acceptă o singură valoare SHA-256 așteptată pentru manifest; s-au dat mai multe valori diferite. Nu se verifică nimic."); return 1; }
+                    expected = t;
+                }
+                else keys.Add(t);
             }
             var r = LogAnalyzer.Dfir.Case.CaseArchive.Verify(args[1], expected, keys);
             o.WriteLine(!r.Ok ? "NOT VERIFIED" : r.Authenticated ? "VERIFIED" : "UNAUTHENTICATED");
@@ -151,6 +163,21 @@ public static class ReportCli
             o.WriteLine("Arhiva nu poate fi citită: " + ex.Message);
             return 2;
         }
+    }
+
+    /// <summary>One line of secret input. From a supplied reader (tests, piped input) it is read as is; from an interactive console the typed characters are not echoed.</summary>
+    private static string? ReadSecret(TextReader? input)
+    {
+        if (input is not null) return input.ReadLine();
+        if (Console.IsInputRedirected) return Console.In.ReadLine();
+        var sb = new System.Text.StringBuilder();
+        for (var k = Console.ReadKey(intercept: true); k.Key != ConsoleKey.Enter; k = Console.ReadKey(intercept: true))
+        {
+            if (k.Key == ConsoleKey.Backspace) { if (sb.Length > 0) sb.Length--; }
+            else if (!char.IsControl(k.KeyChar)) sb.Append(k.KeyChar);
+        }
+        Console.WriteLine();
+        return sb.ToString();
     }
 
     private static bool InsideGitRepository(string path)

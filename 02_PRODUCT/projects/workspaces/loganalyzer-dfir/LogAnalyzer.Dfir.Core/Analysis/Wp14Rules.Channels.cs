@@ -179,10 +179,10 @@ public static partial class Wp14Rules
                 images.Take(5).Select(d => $"airgap_facts virtual/diskimage/{WinPath.GetFileName(d.Path)}").ToList(), "", SemanticType.Presence));
         }
         if (v.BootOsEntries is > 1)
-            o.Add(Chan(c, "AIRGAP-MULTIBOOT", $"Mai multe sisteme de operare la pornire: {v.BootOsEntries}", Sev(c, Severity.High), "NETWORK INTERFACE", "BCD (bcdedit /enum osloader)",
+            o.Add(Chan(c, "AIRGAP-MULTIBOOT", $"Mai multe sisteme de operare la pornire: {v.BootOsEntries}", Sev(c, Severity.High), "NETWORK INTERFACE", "BCD (bcdedit /enum all /v)",
                 $"{v.BootOsEntries} intrări de pornire ({string.Join(", ", v.BootEntryNames.Take(5))})", c.Facts!.CollectedUtc, null, "necunoscut: configurația de pornire nu conține contul", "configurația de pornire (BCD)", "necunoscută: al doilea sistem nu este vizibil din primul", "al doilea sistem de operare",
                 $"Configurația de pornire a sistemului {ScopeWord(c)} conține {v.BootOsEntries} intrări de sistem de operare: {string.Join("; ", v.BootEntryNames.Take(6))}. Dacă stația pornește în alt sistem, nimic din controalele, jurnalele și securitatea primului sistem nu mai este activ, iar discurile pot fi citite și copiate liber (inclusiv, dacă nu sunt cifrate, volumele celuilalt sistem).",
-                "Mai mult de o secțiune Windows Boot Loader în ieșirea bcdedit /enum osloader.",
+                "Mai mult de o intrare de încărcător de sistem (recunoscută după elementele osdevice / path, nu după titlul localizat al secțiunii) în ieșirea bcdedit /enum all /v; intrarea Windows Recovery Environment legată prin recoverysequence nu se numără.",
                 ["O a doua intrare poate fi un mediu de recuperare Windows sau o versiune anterioară păstrată după o actualizare majoră.", "Stația poate fi o stație de dezvoltare cu două sisteme aprobate."],
                 [FactRef(c, "virtual/bcd", "intrări de pornire BCD")], v.BootEntryNames.Take(5).ToList(), "", SemanticType.Configuration));
     }

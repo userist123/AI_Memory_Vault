@@ -32,13 +32,14 @@ public class ReviewFixPrivacyTests
     }
 
     [Fact]
-    public void The_same_IPv6_address_in_full_and_compressed_form_is_one_pseudonym_and_clock_times_and_macs_are_left_alone()
+    public void The_same_IPv6_address_in_full_and_compressed_form_is_one_pseudonym_and_clock_times_are_left_alone()
     {
         var m = new PiiMasker();
         var a = m.Mask("2001:0db8:0000:0000:0000:0000:0000:0001");
         var b = m.Mask("2001:db8::1");
         Assert.Equal(a, b);
-        Assert.Equal("la 10:23:45 și 00:11:22:33:44:55 și ::1 și [System.Convert]::Add", m.Mask("la 10:23:45 și 00:11:22:33:44:55 și ::1 și [System.Convert]::Add"));
+        Assert.Equal("la 10:23:45 și ::1 și [System.Convert]::Add", m.Mask("la 10:23:45 și ::1 și [System.Convert]::Add"));
+        Assert.Equal("MAC-1", m.Mask("00:11:22:33:44:55"));   // MAC addresses are masked since the second review (see ReviewFix2Tests)
     }
 
     [Fact]

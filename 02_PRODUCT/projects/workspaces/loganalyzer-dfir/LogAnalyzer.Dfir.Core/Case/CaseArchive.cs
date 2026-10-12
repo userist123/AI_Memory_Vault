@@ -223,6 +223,9 @@ public static class CaseArchive
             }
             else if (auth == CaseArchiveAuth.None) authDetail = "arhiva nu este semnată și nu s-a furnizat SHA-256 al manifestului din registrul de custodie";
 
+            // two entries with one name (also across case and / versus \) would let the file that is hashed differ from the file that is read back by name
+            foreach (var dup in zip.Entries.Where(e => !e.FullName.EndsWith('/') && !e.FullName.EndsWith('\\')).GroupBy(e => e.FullName.Replace('\\', '/').ToUpperInvariant()).Where(g => g.Count() > 1))
+                problems.Add("intrare dublată în arhivă: " + dup.First().FullName);
             var listed = new HashSet<string>(StringComparer.Ordinal);
             foreach (var f in manifest.Files)
             {
@@ -238,9 +241,9 @@ public static class CaseArchive
                 if (!listed.Contains(e.FullName) && e.FullName is not (ManifestName or ManifestHashName or ReadmeName or SignatureName) && !e.FullName.EndsWith('/'))
                     problems.Add("ÎN PLUS (nu e în manifest): " + e.FullName);
             var ok = problems.Count == 0;
-            var summary = ok ? $"Arhivă verificată: {manifest.Files.Count} fișiere, fiecare cu SHA-256 identic cu manifestul; SHA-256 manifest {msha}. " +
-                               (auth == CaseArchiveAuth.None ? "Autenticitate NEVERIFICATĂ: " + authDetail + "." : "Autenticitate: " + authDetail + ".")
-                             : $"Arhiva NU este verificată: {problems.Count} probleme din {manifest.Files.Count} fișiere listate.";
+            var summary = !ok ? $"Arhiva NU este verificată: {problems.Count} probleme din {manifest.Files.Count} fișiere listate."
+                : auth == CaseArchiveAuth.None ? $"Arhivă integră, dar neautentificată (nimeni nu garantează pentru ea): {manifest.Files.Count} fișiere, fiecare cu SHA-256 identic cu manifestul; SHA-256 manifest {msha}. Autenticitate NEVERIFICATĂ: {authDetail}."
+                : $"Arhivă verificată: {manifest.Files.Count} fișiere, fiecare cu SHA-256 identic cu manifestul; SHA-256 manifest {msha}. Autenticitate: {authDetail}.";
             return new(ok, summary, problems, msha, manifest.Files.Count, manifest, auth, authDetail);
         }
         catch (Exception ex) when (ex is InvalidDataException or JsonException or IOException or UnauthorizedAccessException or NotSupportedException)
@@ -271,7 +274,11 @@ public static class CaseArchive
     /// <paramref name="afterExtract"/> is a test seam called with the folder once all files are written.
     /// </summary>
     public static (CaseWorkspace? Case, CaseArchiveVerification Check) Import(string zipPath, string casesRoot, string? expectedManifestSha256 = null,
-        IReadOnlyList<string>? trustedPublicKeys = null, bool importAsUnverified = false, Action<string>? afterExtract = null)
+        IReadOnlyList<string>? trustedPublicKeys = null, bool importAsUnverified = false) =>
+        ImportCore(zipPath, casesRoot, expectedManifestSha256, trustedPublicKeys, importAsUnverified, null);
+
+    internal static (CaseWorkspace? Case, CaseArchiveVerification Check) ImportCore(string zipPath, string casesRoot, string? expectedManifestSha256,
+        IReadOnlyList<string>? trustedPublicKeys, bool importAsUnverified, Action<string>? afterExtract)
     {
         var check = Verify(zipPath, expectedManifestSha256, trustedPublicKeys);
         if (!check.Ok) return (null, check);
@@ -280,7 +287,10 @@ public static class CaseArchive
             var msg = "Arhivă neverificabilă: " + check.AuthDetail + ". Importul este refuzat; furnizați SHA-256 al manifestului din registrul de custodie sau cheia publică a emitentului, ori alegeți explicit „importă ca neverificată”.";
             return (null, check with { Ok = false, Summary = msg, Problems = [.. check.Problems, "arhivă neverificabilă"] });
         }
-        var id = string.Concat(check.Manifest!.CaseId.Where(c => !Path.GetInvalidFileNameChars().Contains(c)));
+        var rawId = check.Manifest!.CaseId;
+        if (rawId.Length > 0 && (rawId.All(ch => ch == '.') || rawId.IndexOfAny(['/', '\\', ':']) >= 0))
+            return (null, check with { Ok = false, Summary = "Arhiva NU a fost importată: identificatorul cazului din manifest nu este un nume de folder permis.", Problems = [.. check.Problems, "identificator de caz nepermis în manifest: " + rawId] });
+        var id = string.Concat(rawId.Where(c => !Path.GetInvalidFileNameChars().Contains(c))).Trim().TrimEnd('.');
         if (id.Length == 0) id = "CASE-IMPORT";
         var dest = Path.GetFullPath(Path.Combine(casesRoot, id));
         for (int i = 2; Directory.Exists(dest) && Directory.EnumerateFileSystemEntries(dest).Any(); i++) dest = Path.GetFullPath(Path.Combine(casesRoot, $"{id}-import{i}"));
@@ -312,7 +322,7 @@ public static class CaseArchive
             foreach (var f in check.Manifest.Files)
             {
                 var target = Path.GetFullPath(Path.Combine(dest, f.Path[Prefix.Length..].Replace('/', Path.DirectorySeparatorChar)));
-                if (!File.Exists(target)) continue;
+                if (!File.Exists(target)) { if (!bad.Any(b => b.EndsWith(f.Path, StringComparison.Ordinal))) bad.Add("LIPSĂ după extragere: " + f.Path); continue; }
                 if (!Sha256File(target).Equals(f.Sha256, StringComparison.OrdinalIgnoreCase) && !bad.Any(b => b.EndsWith(f.Path, StringComparison.Ordinal)))
                     bad.Add("MODIFICAT după extragere: " + f.Path);
             }
@@ -333,6 +343,7 @@ public static class CaseArchive
             ws.Audit("case.imported_unverified_archive", $"{Path.GetFileName(zipPath)} importată ca NEVERIFICATĂ la alegerea operatorului; manifest_sha256={check.ManifestSha256}");
             ws.Custody(new CustodyEntry(DateTimeOffset.UtcNow, LogAnalyzer.Dfir.Auth.OperatorIdentity.Who, "archive.imported_unverified", "", Path.GetFileName(zipPath), ws.Info.CaseId, check.ManifestSha256,
                 "LogAnalyzer", "", "", "arhivă neverificabilă importată la alegerea explicită a operatorului: " + check.AuthDetail));
+            return (ws, check with { Summary = $"Importată ca NEVERIFICATĂ: {check.FileCount} fișiere identice cu manifestul, dar nimeni nu garantează pentru manifest ({check.AuthDetail}); SHA-256 manifest {check.ManifestSha256}." });
         }
         return (ws, check);
     }

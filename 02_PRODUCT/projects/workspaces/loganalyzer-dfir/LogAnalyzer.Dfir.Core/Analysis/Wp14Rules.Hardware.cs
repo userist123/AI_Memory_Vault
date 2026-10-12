@@ -51,10 +51,11 @@ public static partial class Wp14Rules
         var l = c.Data.Channels;
         bool IsExternal(string inst, TimelineEvent e)
         {
-            // internal keyboards: ACPI / PS/2 / I2C-attached HID, or a parent that is an ACPI / I2C / PCI controller
-            if (inst.StartsWith("ACPI\\", StringComparison.OrdinalIgnoreCase) || inst.Contains("I2C", StringComparison.OrdinalIgnoreCase)) return false;
-            var parent = F(e, "ParentId", "ParentInstanceId", "Parent");
-            if (parent.Length > 0 && (parent.StartsWith("ACPI\\", StringComparison.OrdinalIgnoreCase) || parent.StartsWith("PCI\\", StringComparison.OrdinalIgnoreCase) || parent.Contains("I2C", StringComparison.OrdinalIgnoreCase))) return false;
+            // Internal keyboards are recognised by the enumerator prefix only (ACPI\ device, or a HID child whose parent is an ACPI\ / PCI\ controller, as an I2C-HID keyboard is).
+            // Never by a substring such as "I2C" in the instance id or the parent: a USB serial number is chosen by whoever builds the device.
+            if (inst.StartsWith("ACPI\\", StringComparison.OrdinalIgnoreCase)) return false;
+            var parent = F(e, "ParentDeviceInstanceId", "ParentId", "ParentInstanceId", "Parent");
+            if (parent.StartsWith("ACPI\\", StringComparison.OrdinalIgnoreCase) || parent.StartsWith("PCI\\", StringComparison.OrdinalIgnoreCase)) return false;
             return inst.StartsWith("HID\\VID_", StringComparison.OrdinalIgnoreCase) || inst.StartsWith("USB\\VID_", StringComparison.OrdinalIgnoreCase) || inst.StartsWith("HID\\{",StringComparison.OrdinalIgnoreCase) || inst.StartsWith("BTHLE", StringComparison.OrdinalIgnoreCase);
         }
         var arrivals = new List<(TimelineEvent E, string Inst, string Name)>();
@@ -70,8 +71,18 @@ public static partial class Wp14Rules
             if (kb && T(e) is not null) arrivals.Add((e, inst, name));
         }
         if (arrivals.Count == 0) return;
-        // a device whose first appearance is earlier than the arrival being examined was present before: only the first arrival of an instance is "new"
-        arrivals = arrivals.GroupBy(a => a.Inst, StringComparer.OrdinalIgnoreCase).Select(g => g.OrderBy(x => T(x.E)).First()).ToList();
+        // A device that appeared earlier was present before: only the first arrival of an instance is "new". Exceptions: an instance with a Windows-generated id (no real serial: the last
+        // segment contains '&') is just a port, and a different device can sit in it, so it is new again after a gap of more than 24 hours. A known VID/PID on a different port has a
+        // different instance id and is therefore its own first arrival.
+        static bool SerialLess(string inst) => inst[(inst.LastIndexOf('\\') + 1)..].Contains('&');
+        var fresh = new List<(TimelineEvent E, string Inst, string Name)>();
+        foreach (var g in arrivals.GroupBy(a => a.Inst, StringComparer.OrdinalIgnoreCase))
+        {
+            var ord = g.OrderBy(x => T(x.E)).ToList();
+            for (int i = 0; i < ord.Count; i++)
+                if (i == 0 || SerialLess(g.Key) && (T(ord[i].E)!.Value - T(ord[i - 1].E)!.Value).TotalHours > 24) fresh.Add(ord[i]);
+        }
+        arrivals = fresh;
         var logonTypes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var le in c.Events.Where(x => Ev(x, "Security", 4624)))
             if (F(le, "TargetLogonId") is { Length: > 0 } lid) logonTypes[lid] = F(le, "LogonType").Trim();
@@ -86,26 +97,38 @@ public static partial class Wp14Rules
             if (lid.Length > 0 && logonTypes.TryGetValue(lid, out var lt) && lt.Length > 0 && lt is not ("2" or "10" or "11")) return false;
             return true;
         }
+        // Prefetch rows rarely name the user: take it from the row, else from a BAM row of the same program within a minute; unresolved means "de verificat", never High.
+        var bam = c.Events.Where(x => x.Source == "BAM" && x.User.Length > 0 && T(x) is not null).ToList();
+        string PrefetchUser(TimelineEvent pf)
+        {
+            if (pf.User.Length > 0) return pf.User;
+            var exe = pf.Process;
+            return bam.Where(b => (b.Process.Length > 0 ? b.Process : WinPath.GetFileName(b.Path)).Equals(exe, StringComparison.OrdinalIgnoreCase) && Math.Abs((T(b)!.Value - T(pf)!.Value).TotalSeconds) <= 60)
+                      .Select(b => b.User).FirstOrDefault() ?? "";
+        }
         bool IsShell(string image) => image.Length > 0 && l.ShellImages.Contains(WinPath.GetFileName(image.TrimEnd('\\')), StringComparer.OrdinalIgnoreCase);
-        var shells = ProcessStarts(c.Events).Where(p => IsShell(p.Image) && T(p.Event) is not null && IsInteractiveUser(p)).Select(p => (p.Event, Name: WinPath.GetFileName(p.Image), Kind: $"{p.Event.Source[9..]} {p.Event.EventId}"))
-            .Concat(c.Events.Where(e => e.Source == "Prefetch" && IsShell(e.Process) && T(e) is not null).Select(e => (e, e.Process, "Prefetch"))).ToList();
+        var shells = ProcessStarts(c.Events).Where(p => IsShell(p.Image) && T(p.Event) is not null && IsInteractiveUser(p)).Select(p => (p.Event, Name: WinPath.GetFileName(p.Image), Kind: $"{p.Event.Source[9..]} {p.Event.EventId}", UserKnown: true))
+            .Concat(c.Events.Where(e => e.Source == "Prefetch" && IsShell(e.Process) && T(e) is not null)
+                .Select(e => (E: e, U: PrefetchUser(e))).Where(x => x.U.Length == 0 || IsInteractiveUser(new ProcStart(x.E, x.E.Process, "", null, "", x.U)))
+                .Select(x => (x.E, x.E.Process, "Prefetch", x.U.Length > 0))).ToList();
         if (shells.Count == 0) return;
         foreach (var g in arrivals.GroupBy(a => a.Inst, StringComparer.OrdinalIgnoreCase))
         {
-            (TimelineEvent Key, TimelineEvent Shell, string ShellName, string ShellKind, double Seconds)? best = null;
+            (TimelineEvent Key, TimelineEvent Shell, string ShellName, string ShellKind, double Seconds, bool UserKnown)? best = null;
             foreach (var a in g.OrderBy(x => T(x.E)))
-                foreach (var s in shells.OrderBy(x => T(x.Item1)))
+                foreach (var s in shells.OrderBy(x => x.Item4 ? 0 : 1).ThenBy(x => T(x.Item1)))
                 {
                     var dt = (T(s.Item1)!.Value - T(a.E)!.Value).TotalSeconds;
                     if (dt < 0 || dt > l.BadUsbSeconds) continue;
-                    best = (a.E, s.Item1, s.Item2, s.Item3, dt);
+                    best = (a.E, s.Item1, s.Item2, s.Item3, dt, s.Item4);
                     break;
                 }
             if (best is not { } b) continue;
             var name = g.Select(x => x.Name).FirstOrDefault(n => n.Length > 0) ?? "tastatură";
             var desc = $"Tastatura „{name}” ({g.Key}) a fost configurată de Windows la {Time(T(b.Key))}, iar {b.ShellName} a pornit la {Time(T(b.Shell))}, la {b.Seconds:0} secunde după ({b.ShellKind}), într-un interval de cel mult {l.BadUsbSeconds} secunde, pe un sistem {ScopeWord(c)}. " +
+                       (b.UserKnown ? "" : "Utilizatorul consolei este de verificat: Prefetch nu spune ce utilizator a pornit consola și nu există o urmă BAM a aceluiași program în același interval, deci nu se poate exclude un serviciu sau un cont de sistem. ") +
                        "Un dispozitiv USB programat să se prezinte drept tastatură poate scrie și porni o comandă fără intervenția utilizatorului în câteva secunde. Ordinea în timp nu dovedește că dispozitivul a tastat comanda: un utilizator care conectează o tastatură și deschide o consolă produce același șir de evenimente.";
-            o.Add(Chan(c, "AIRGAP-BADUSB-PATTERN", $"Tastatură nouă urmată de o consolă în {b.Seconds:0} secunde: {name}", Sev(c, Severity.High), "USB", "Kernel-PnP 400 / DriverFrameworks / 6416 și 4688 / Sysmon 1 / Prefetch",
+            o.Add(Chan(c, "AIRGAP-BADUSB-PATTERN", $"Tastatură nouă urmată de o consolă în {b.Seconds:0} secunde: {name}", Sev(c, b.UserKnown ? Severity.High : Severity.Medium), "USB", "Kernel-PnP 400 / DriverFrameworks / 6416 și 4688 / Sysmon 1 / Prefetch",
                 $"tastatură nouă, {b.ShellName} pornit după {b.Seconds:0} secunde", T(b.Key), T(b.Shell), UnknownWho, g.Key, "execuție de comenzi posibilă, comandă necunoscută", "necunoscută: evenimentul nu arată ce s-a tastat",
                 desc, "Corelație în timp între conectarea unui dispozitiv din clasa tastatură (extern, HID / USB) și pornirea unui interpretor de comenzi în fereastra din fișierul de date.",
                 ["Un utilizator conectează o tastatură externă și deschide o consolă, ca la o intervenție obișnuită.", "Un comutator KVM sau o stație de andocare reîntoarce tastatura și produce evenimentul de configurare fără un dispozitiv nou.", "Un administrator conectează o tastatură și rulează un script de mentenanță aprobat."],

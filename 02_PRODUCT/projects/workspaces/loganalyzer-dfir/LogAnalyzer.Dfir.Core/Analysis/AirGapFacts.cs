@@ -107,7 +107,7 @@ public sealed class VirtualFacts
     public bool DiskImageSearchTruncated { get; set; }
     public List<string> WslDistributions { get; set; } = [];
     public List<string> Hypervisors { get; set; } = [];
-    /// <summary>Operating-system entries of the boot configuration (bcdedit /enum osloader); null = not read.</summary>
+    /// <summary>Operating-system entries of the boot configuration (bcdedit /enum all /v); null = not read.</summary>
     public int? BootOsEntries { get; set; }
     public List<string> BootEntryNames { get; set; } = [];
 }
