@@ -81,7 +81,7 @@ The implementation in `jarvis/memory/invariants.py` and `jarvis/memory/sqlite_en
 To independently reproduce and verify this review:
 
 ```powershell
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 
 # 1. Run unit storage & adversarial concurrency tests
 python -m pytest tests/unit/test_memory_storage.py tests/unit/test_adversarial_storage_concurrency.py -v

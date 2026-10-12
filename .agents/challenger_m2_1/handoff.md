@@ -166,7 +166,7 @@ To verify all adversarial suites and repro tests independently:
 
 ```powershell
 # 1. Run the entire standard and adversarial test suite:
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 python -m pytest tests/unit/test_adversarial_m2_audio.py -v -s
 
 # 2. Run the empirical bug reproduction suite:

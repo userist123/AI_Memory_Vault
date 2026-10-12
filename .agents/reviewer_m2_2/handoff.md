@@ -73,7 +73,7 @@ To independently reproduce and verify this review:
 
 1. **Run full unit & integration test suite**:
    ```powershell
-   cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+   cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
    python -m pytest -v
    ```
    *Expected*: `189 passed in ~3s`.
@@ -86,6 +86,6 @@ To independently reproduce and verify this review:
 
 3. **Run Reviewer 2 Adversarial Stress Verification**:
    ```powershell
-   python C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m2_2\verify_m2.py
+   python C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m2_2\verify_m2.py
    ```
    *Expected*: All 5 stress tests report `[PASS]` and confirm TTFB < 150ms, Barge-in < 0.05ms, and 100% language auto-detection accuracy.

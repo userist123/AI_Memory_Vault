@@ -6,7 +6,7 @@ Adversarially challenge and stress-test the remediated `memory_controller/financ
 ## 🔒 My Identity
 - Archetype: empirical_challenger
 - Roles: critic, specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m1_fix
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m1_fix
 - Original parent: e87bdef8-bfc1-4e8e-a965-ccd159cf02a1
 - Milestone: M1 Fix
 - Instance: 1 of 1

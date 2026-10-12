@@ -1,15 +1,15 @@
 ## 2026-08-26T16:18:56Z
 You are Forensic Auditor M1 Fix (teamwork_preview_auditor).
-Your working directory is: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_fix`
+Your working directory is: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_fix`
 
 Scope & Mission:
 Perform a forensic integrity re-audit on Milestone 1: `memory_controller/financial_schema.py` and `tests/financial/test_schema.py`.
 
 Authoritative Documents:
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_1\report.md`
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_fix\handoff.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_1\report.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_fix\handoff.md`
 
 Tasks:
 1. Conduct static and dynamic forensic analysis on `memory_controller/financial_schema.py`:

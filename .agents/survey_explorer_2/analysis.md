@@ -3,8 +3,8 @@
 
 **Author**: Survey Explorer 2  
 **Date**: 2026-08-25  
-**Working Directory**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_2`  
-**Target Repository**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY`  
+**Working Directory**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_2`  
+**Target Repository**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY`  
 **System Status**: 498/498 pytest unit and adversarial security tests passing (0 failures).
 
 ---

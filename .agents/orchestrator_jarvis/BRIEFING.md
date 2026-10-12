@@ -6,14 +6,14 @@ Autonomous end-to-end implementation and comprehensive empirical verification of
 ## 🔒 My Identity
 - Archetype: orchestrator
 - Roles: orchestrator, user_liaison, human_reporter, successor
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis
-- Target project directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis
+- Target project directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 - Original parent: parent
 - Original parent conversation ID: d18736f7-9588-4189-9b2a-f12e42e8a615
 
 ## 🔒 My Workflow
 - **Pattern**: Project Orchestration (Dual Track: Implementation Track + E2E Testing Track)
-- **Scope document**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
+- **Scope document**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
 1. **Survey**: [COMPLETED] 3 parallel Explorers delivered comprehensive specifications for R1-R5.
 2. **Decompose & Plan**: [COMPLETED] `PROJECT.md` and `TEST_INFRA.md` created with Feature Inventory and 6 Milestones.
 3. **Dispatch & Execute**:

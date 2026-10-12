@@ -3,12 +3,12 @@ Scope & Mission:
 Implement and integrate Milestones M2, M3, and M4 for the Financial Ingestion Pipeline and Multi-Layered Financial Query Engine, adhering to ORIGINAL_REQUEST.md and PROJECT.md.
 
 Authoritative Documents:
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2\survey_spec.md`
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_3\survey_financial_architecture.md`
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_INFRA.md`
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_READY.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2\survey_spec.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_3\survey_financial_architecture.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_INFRA.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_READY.md`
 
 Tasks:
 1. Milestone 2 (Multi-Layered Financial Query Engine):
@@ -19,7 +19,7 @@ Tasks:
    - Verify with `tests/financial/test_query_engine.py`.
 2. Milestone 3 (Financial Ingestion Pipeline):
    - Implement `memory_controller/financial_ingestion.py` (or extend `xau_kinetic/financial_ingestion/pipeline.py` & `adapter.py`).
-   - Ingest from `C:\Users\Marius\Desktop\Nu sterge\nusterge\ghid.py` and `Analiza_Piata_Profesionala.xlsx` (with offline synthetic fallback).
+   - Ingest from `C:\Users\user\Desktop\Nu sterge\nusterge\ghid.py` and `Analiza_Piata_Profesionala.xlsx` (with offline synthetic fallback).
    - Enforce Secret Scrubber (`os.getenv("FRED_API_KEY")`, zero hardcoded secrets).
    - Output canonical notes in `01_KNOWLEDGE/FINANCIAL/` with `verification: partially_verified`, `lifecycle: REVIEW`, `provenance: {source_type: execution, ...}`.
    - Verify with `tests/financial/test_ingestion_pipeline.py`.

@@ -1,7 +1,7 @@
 # Milestone 1 Adversarial Challenge Report: Financial Ingestion
 
 **Challenger Agent**: Challenger 1 (Milestone 1)  
-**Working Directory**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m1_challenger_1`  
+**Working Directory**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m1_challenger_1`  
 **Timestamp**: `2026-08-25T19:37:00Z`  
 **Final Verdict**: `REQUEST_CHANGES`
 

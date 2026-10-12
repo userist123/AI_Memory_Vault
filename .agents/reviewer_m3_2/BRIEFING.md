@@ -6,7 +6,7 @@ Independent adversarial security and compliance review of Milestone 3: ScopedSto
 ## 🔒 My Identity
 - Archetype: reviewer_critic
 - Roles: reviewer, critic
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m3_2
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m3_2
 - Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
 - Milestone: Milestone 3
 - Instance: 1 of 1

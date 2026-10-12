@@ -23,7 +23,7 @@ Verbatim output:
 ```
 ============================= test session starts =============================
 platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0
-rootdir: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+rootdir: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 configfile: pyproject.toml
 plugins: anyio-4.12.1, langsmith-0.11.0, asyncio-1.4.0
 asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
@@ -115,7 +115,7 @@ Milestone 3 specialized agent worker implementations (`RouterAgent`, `RetrievalA
 
 To independently verify:
 ```powershell
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 python -m pytest tests/unit/test_challenger_m3_2_workers.py -v
 python -m pytest
 ```

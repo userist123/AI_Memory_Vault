@@ -71,7 +71,7 @@ To achieve true autonomy, the Cognitive Core must survive restarts and handle mu
 
 **Proposed Next Steps:**
 1. **BRAIN-7: Persistent Working Memory**
-   - Introduce a state file (e.g., `C:\Users\Marius\.gemini\antigravity\brain\...\active_context.json` or within `04_MEMORY/`) to serialize `WorkingMemory` (node IDs, activation, attention, tick).
+   - Introduce a state file (e.g., `C:\Users\user\.gemini\antigravity\brain\...\active_context.json` or within `04_MEMORY/`) to serialize `WorkingMemory` (node IDs, activation, attention, tick).
    - Implement `save_state()` and `load_state()` in `WorkingMemory`.
 2. **BRAIN-8: Persistent Task Tracker**
    - Upgrade `Planner` to output a stateful plan object.

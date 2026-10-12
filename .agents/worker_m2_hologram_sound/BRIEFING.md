@@ -6,7 +6,7 @@ Build production-grade 3D WebGL Holographic Arc-Reactor UI (`hologram.js`) and p
 ## 🔒 My Identity
 - Archetype: worker
 - Roles: [implementer, qa, specialist]
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m2_hologram_sound
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m2_hologram_sound
 - Original parent: 95f7bf7e-c539-4492-b214-af221cca8379
 - Milestone: M2 (3D Hologram & Tactical Sound)
 
@@ -36,9 +36,9 @@ Build production-grade 3D WebGL Holographic Arc-Reactor UI (`hologram.js`) and p
 - **Code layout**: `.agents/orchestrator/PROJECT.md` § Code Layout
 
 ## Loaded Skills
-- **Source**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\threejs\SKILL.md`
+- **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\threejs\SKILL.md`
 - **Core methodology**: Procedural 3D scene setup, geometry caching, additive materials, animation loops, memory cleanup.
-- **Source**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\build-game-audio-feedback\SKILL.md`
+- **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\build-game-audio-feedback\SKILL.md`
 - **Core methodology**: Web Audio API oscillator synthesis, ADSR envelopes, filter modulation, unlocking autoplay policy.
 
 ## Change Tracker

@@ -6,7 +6,7 @@ Mine and extract comprehensive specifications from financial source data (`ghid.
 ## 🔒 My Identity
 - Archetype: teamwork_preview_spec_miner
 - Roles: Specification Miner, Financial Domain Analyst, Schema Architect
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2
 - Original parent: e87bdef8-bfc1-4e8e-a965-ccd159cf02a1
 - Milestone: Financial Ingestion & Schema Specification (Survey 2)
 
@@ -34,13 +34,13 @@ Mine and extract comprehensive specifications from financial source data (`ghid.
 - Identified hardcoded secret in `ghid.py:29` and specified strict environment variable injection (`os.environ.get("FRED_API_KEY")`) with offline fallbacks.
 
 ## Artifact Index
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2\survey_spec.md` — Complete specification mining report.
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2\handoff.md` — 5-component self-contained handoff report.
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2\progress.md` — Liveness heartbeat and completed task tracker.
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2\DISPATCH.md` — UTC timestamped dispatch history.
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2\survey_spec.md` — Complete specification mining report.
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2\handoff.md` — 5-component self-contained handoff report.
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2\progress.md` — Liveness heartbeat and completed task tracker.
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2\DISPATCH.md` — UTC timestamped dispatch history.
 
 ## Loaded Skills
-- **Source**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\python-trading-systems\SKILL.md`
+- **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\python-trading-systems\SKILL.md`
 - **Core methodology**: Risk discipline, indicator calculation standards, separation of strategy and execution.
-- **Source**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
+- **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
 - **Core methodology**: Cognitive Operating System rules, memory type lifecycles, and frontmatter validation.

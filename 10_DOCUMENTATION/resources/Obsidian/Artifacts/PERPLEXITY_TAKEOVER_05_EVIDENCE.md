@@ -400,11 +400,11 @@ memory_controller/validation/supersession.py
 .........                                                                [100%]
 ============================== warnings summary ===============================
 memory_controller/tests/test_lifecycle.py: 17 warnings
-  C:\Users\Marius\Documents\Codex\AI_Memory_VAULT_CODEX_READY\memory_controller\tests\test_lifecycle.py:15: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  C:\Users\user\Documents\Codex\AI_Memory_VAULT_CODEX_READY\memory_controller\tests\test_lifecycle.py:15: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
     "created": datetime.utcnow().date().isoformat(),
 
 memory_controller/tests/test_lifecycle.py: 17 warnings
-  C:\Users\Marius\Documents\Codex\AI_Memory_VAULT_CODEX_READY\memory_controller\tests\test_lifecycle.py:16: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  C:\Users\user\Documents\Codex\AI_Memory_VAULT_CODEX_READY\memory_controller\tests\test_lifecycle.py:16: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
     "updated": datetime.utcnow().date().isoformat(),
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

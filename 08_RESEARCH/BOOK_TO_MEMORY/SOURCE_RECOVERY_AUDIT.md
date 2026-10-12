@@ -62,7 +62,7 @@ Conform contractului de operare:
 
 ### 5.1 Blocker B-0001: Norbert Wiener — *Cybernetics* (2nd ed. 1961, MIT Press)
 - **Căutare pe mașina locală / workspace**:
-  - Scanare completă executată recursiv pe partițiile `C:\` (`c:\Users\Marius\Documents`, `Downloads`, `AppData`) și `D:\` (`D:\AI_Memory_Vault_CODEX_READY`, `D:\user`).
+  - Scanare completă executată recursiv pe partițiile `C:\` (`c:\Users\user\Documents`, `Downloads`, `AppData`) și `D:\` (`D:\AI_Memory_Vault_CODEX_READY`, `D:\user`).
   - Singurul artefact existent local este fișierul `06_INBOX/Carti/Creier cibernetic/ilide.info-wiener-cybernetics-pr_14c41245c1e661efb9361d53417d2473.pdf` (2,589,693 bytes) și `.txt` (7.7 KB).
   - Inspecția criminalistică directă prin `pypdf` a stabilit: PDF-ul conține exact 8 pagini (`Num pages: 8`), reprezentând exclusiv note academice/citate studențești (ex. `(WIENER, 1961, p. 01)`), nu monografia completă de 212 pagini.
 - **Căutare în istoricul Git**:

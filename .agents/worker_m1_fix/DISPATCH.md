@@ -3,11 +3,11 @@ Scope & Mission:
 Remediate Milestone 1: Financial Schema & Domain Models in `memory_controller/financial_schema.py` and `tests/financial/test_schema.py` according to the fix strategy.
 
 Authoritative Documents:
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m1_fix\fix_strategy.md`
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m1_fix\handoff.md`
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_1\report.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m1_fix\fix_strategy.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m1_fix\handoff.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_1\report.md`
 
 Tasks:
 1. Update `memory_controller/financial_schema.py`:

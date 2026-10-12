@@ -6,7 +6,7 @@ Empirically stress-test and challenge Milestone 4 deliverables: FastMCP JarvisCo
 ## 🔒 My Identity
 - Archetype: empirical_challenger
 - Roles: critic, specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_1
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_1
 - Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
 - Milestone: milestone_4
 - Instance: 1 of 1

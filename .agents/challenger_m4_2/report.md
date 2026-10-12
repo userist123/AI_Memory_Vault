@@ -56,7 +56,7 @@ All 10 previously identified failure modes have been verified as completely reme
 ```
 ============================= test session starts =============================
 platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0
-rootdir: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+rootdir: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 configfile: pyproject.toml
 testpaths: tests
 plugins: anyio-4.12.1, langsmith-0.11.0, asyncio-1.4.0
@@ -72,7 +72,7 @@ tests/unit/test_challenger_m4_stress.py ........................................
 ```
 ============================= test session starts =============================
 platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0
-rootdir: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+rootdir: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 configfile: pyproject.toml
 testpaths: tests
 plugins: anyio-4.12.1, langsmith-0.11.0, asyncio-1.4.0

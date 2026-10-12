@@ -69,7 +69,7 @@ Milestone 4 (FastMCP IoT & Home Assistant Integration) is **APPROVED**. Code qua
 
 ## 5. Verification Method
 
-Execute the following commands from `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`:
+Execute the following commands from `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`:
 
 ```powershell
 # 1. Run all FastMCP and IoT unit & tier tests:

@@ -71,7 +71,7 @@ To independently verify the Milestone 2 implementation:
 
 1. **Run full unit test suite**:
    ```powershell
-   cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+   cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
    python -m pytest tests/unit/ -v
    ```
    *Expected Result*: 76 passed in ~2.00s.

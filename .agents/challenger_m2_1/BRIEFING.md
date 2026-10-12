@@ -6,7 +6,7 @@ Empirically stress-test and challenge Milestone 2 of Jarvis Cognitive Brain (Bar
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
 - Roles: critic, specialist
-- Working directory: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_1
+- Working directory: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_1
 - Original parent: 0bbc34c1-eddc-44cf-8e9e-c4d23195d41e
 - Milestone: Milestone 2 (Barge-In Interruption & Audio Pipeline)
 - Instance: 1 of 2

@@ -1,7 +1,7 @@
 # Milestone 1 Implementation Handoff Report: Financial Ingestion Pipeline & Canonical Memory Adapter
 
 **Worker**: M1 Worker  
-**Working Directory**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m1_worker_1`  
+**Working Directory**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m1_worker_1`  
 **Date**: 2026-08-25  
 **Milestone**: M1 (Financial Ingestion Pipeline & Canonical Memory Adapter)
 
@@ -26,7 +26,7 @@
    ```
    ============================= test session starts =============================
    platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
-   rootdir: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY
+   rootdir: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
    configfile: pytest.ini
    plugins: anyio-4.12.1, langsmith-0.11.0
    collected 37 items

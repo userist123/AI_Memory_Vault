@@ -6,7 +6,7 @@ Author high-fidelity browser API mocks and 225-test comprehensive test suite for
 ## 🔒 My Identity
 - Archetype: test_writer
 - Roles: specialist, qa
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\test_writer_track
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\test_writer_track
 - Original parent: 95f7bf7e-c539-4492-b214-af221cca8379
 - Milestone: TEST_WRITING_COMPLETE
 
@@ -21,8 +21,8 @@ Author high-fidelity browser API mocks and 225-test comprehensive test suite for
 - Updated: 2026-08-25T22:42:00+03:00
 
 ## Loaded Skills
-- **Source**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\unit-test-generation-contract\SKILL.md`
-- **Local copy**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\test_writer_track\skills\unit-test-generation-contract.md`
+- **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\unit-test-generation-contract\SKILL.md`
+- **Local copy**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\test_writer_track\skills\unit-test-generation-contract.md`
 - **Core methodology**: AAA structure, deterministic execution, isolated test doubles, and adversarial boundary coverage.
 
 ## Quality Status

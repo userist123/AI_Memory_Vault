@@ -6,7 +6,7 @@ Implement Milestone 3: Multi-Agent Subsystem, Agent Roles, RBAC Scoping, Supervi
 ## 🔒 My Identity
 - Archetype: implementer / qa / specialist
 - Roles: implementer, qa, specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_1
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_1
 - Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
 - Milestone: Milestone 3 - Multi-Agent Architecture
 
@@ -65,7 +65,7 @@ Implement Milestone 3: Multi-Agent Subsystem, Agent Roles, RBAC Scoping, Supervi
 - **Tests added/modified**: 50 tests added/updated
 
 ## Loaded Skills
-- **Source**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
+- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
   - **Core methodology**: Security verification and forensic validation runbook for testing trust boundaries and invariants P0-P15.
-- **Source**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
+- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
   - **Core methodology**: Runbook for interacting with the AI Memory Vault cognitive operating system.

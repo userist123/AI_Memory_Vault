@@ -2,8 +2,8 @@
 
 **Author**: `teamwork_preview_explorer` (`explorer_m4_1`)  
 **Target Milestone**: Milestone 4 (FastMCP & IoT Home Assistant Integration)  
-**Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m4_1`  
-**Project Path**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
+**Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m4_1`  
+**Project Path**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 
 ---
 

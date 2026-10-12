@@ -6,7 +6,7 @@ Apply remediation fixes for Jarvis Cognitive Brain Milestone 1 Iteration 2: conf
 ## 🔒 My Identity
 - Archetype: worker
 - Roles: implementer, qa, specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_iter2
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_iter2
 - Original parent: 5a625f23-4992-4b00-bb13-1f4b316b216c
 - Milestone: Milestone 1 Iteration 2
 
@@ -23,7 +23,7 @@ Apply remediation fixes for Jarvis Cognitive Brain Milestone 1 Iteration 2: conf
 ## Task Summary
 - **What to build**: Remediation fixes across `conftest.py`, `invariants.py`, `sqlite_engine.py`, `models.py`, `ooda.py`.
 - **Success criteria**: 100% of unit tests and e2e test runner passing without errors.
-- **Interface contracts**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`, `.agents/explorer_m1_iter2/handoff.md`
+- **Interface contracts**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`, `.agents/explorer_m1_iter2/handoff.md`
 - **Code layout**: `projects/jarvis_cognitive_brain/`
 
 ## Key Decisions Made
@@ -55,6 +55,6 @@ Apply remediation fixes for Jarvis Cognitive Brain Milestone 1 Iteration 2: conf
 - **Tests added/modified**: Fixtures and tests fully covered.
 
 ## Loaded Skills
-- **Source**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
+- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
 - **Local copy**: .agents/skills/vault-operations/SKILL.md
 - **Core methodology**: Cognitive operating system rules and procedures

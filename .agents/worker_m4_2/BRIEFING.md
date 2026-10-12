@@ -6,7 +6,7 @@ Remediate 3 edge cases in `jarvis/iot/fastmcp_server.py` and `jarvis/iot/ha_clie
 ## 🔒 My Identity
 - Archetype: teamwork_preview_worker
 - Roles: implementer, qa, specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_2
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_2
 - Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
 - Milestone: M4 Remediation (worker_m4_2)
 

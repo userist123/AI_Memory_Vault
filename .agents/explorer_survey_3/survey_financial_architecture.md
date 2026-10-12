@@ -14,8 +14,8 @@
 This report establishes the complete architectural survey, data schema, multi-layered retrieval algorithm, REST API integration contracts, and verification test harnesses for integrating financial quantitative intelligence into the **AI Memory Vault (`AI_Memory_Vault_CODEX_READY`)**.
 
 The target domain source data encompasses:
-1. `C:\Users\Marius\Desktop\Nu sterge\nusterge\ghid.py`: A 1,954-line Python algorithmic guide and execution system defining 95 financial instruments (14 indices, 30 equities, 25 cryptocurrencies, 12 FX pairs, 14 commodities), 5 macroeconomic benchmark tickers (^VIX, ^TNX, ^IRX, ^TYX, DX-Y.NYB), 4 St. Louis Fed FRED series (FEDFUNDS, CPIAUCSL, UNRATE, GDP), a 30-factor structured risk matrix, competitor relationships, economic calendar events, and technical indicator scoring engines.
-2. `C:\Users\Marius\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx`: An enterprise financial workbook (1.6 MB) containing multi-asset technical dashboards, macro regime correlations, conditional formatting rules, trade execution journals, and learning guides.
+1. `C:\Users\user\Desktop\Nu sterge\nusterge\ghid.py`: A 1,954-line Python algorithmic guide and execution system defining 95 financial instruments (14 indices, 30 equities, 25 cryptocurrencies, 12 FX pairs, 14 commodities), 5 macroeconomic benchmark tickers (^VIX, ^TNX, ^IRX, ^TYX, DX-Y.NYB), 4 St. Louis Fed FRED series (FEDFUNDS, CPIAUCSL, UNRATE, GDP), a 30-factor structured risk matrix, competitor relationships, economic calendar events, and technical indicator scoring engines.
+2. `C:\Users\user\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx`: An enterprise financial workbook (1.6 MB) containing multi-asset technical dashboards, macro regime correlations, conditional formatting rules, trade execution journals, and learning guides.
 
 The architecture strictly adheres to **AGENTS.md**, **PROJECT.md**, **Canonical Frontmatter (Draft 7)**, and the **P0–P18 Cognitive Trust Boundary Invariants**, guaranteeing zero hardcoded secret leaks, deterministic deduplication, contradiction handling, and tamper-evident SHA-256 audit logging.
 
@@ -28,8 +28,8 @@ The architecture strictly adheres to **AGENTS.md**, **PROJECT.md**, **Canonical 
 |                                      INGESTION PIPELINE                                       |
 +-----------------------------------------------------------------------------------------------+
 |  RAW SOURCES:                                                                                 |
-|  - C:\Users\Marius\Desktop\Nu sterge\nusterge\ghid.py                                         |
-|  - C:\Users\Marius\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx                  |
+|  - C:\Users\user\Desktop\Nu sterge\nusterge\ghid.py                                         |
+|  - C:\Users\user\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx                  |
 +-----------------------------------------------------------------------------------------------+
                                                 |
                                                 v
