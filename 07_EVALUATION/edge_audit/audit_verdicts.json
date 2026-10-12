@@ -4,7 +4,7 @@
   "evaluator_kind": "AI model (independent of the rule engine edge_proposer.py that proposed the edges; not a human review)",
   "evaluated_at": "2026-09-19T11:57:07Z",
   "sample_file": "07_EVALUATION/edge_audit/audit_sample_50.json",
-  "sample_sha256": "a46484f1c47148529f712602b05b5fff8960c1008af7cc60cfb189fbe6c71252",
+  "sample_sha256": "dfe6f031186a5492067ee47fee7688a849b1cec0dbf89f572ff1a88ac2066d3c",
   "criterion": "ACCEPT only if the relation type (depends_on, part_of, related_to, supersedes, ...) is true for the content of both notes and the note content supports it; words in common without a link of meaning, wrong direction, wrong type and duplicate content are REJECT.",
   "method": "Per relation: the two notes' text was read from the working tree (frontmatter, body), plus the relation type and both quotes; where the notes cross-reference each other this was checked with grep. Nothing was tuned to a target precision.",
   "limitations": [
