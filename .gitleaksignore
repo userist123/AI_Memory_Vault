@@ -2,3 +2,7 @@
 # generic-api-key matched ordinary prose in a detection review table on the owner's loganalyzer
 # branch; no secret. Checked 2026-10-11 with gitleaks 8.28.0; exception approved by the owner.
 667f76d7744ed4c9b7697d25b2ef16f02b2b7935:02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/REVIEW_2026-10-11_SENIOR_DETECTION_AND_PERFORMANCE.md:generic-api-key:393
+# generic-api-key matched the public download token (base64 of "token-2017") in the EU consolidated
+# sanctions list URL on the owner's loganalyzer branch; documented public value, no secret. Checked
+# 2026-10-12; exception approved by the owner ("Modifici la toate").
+21241d38ca97d08978d56fca39bc34286fab2768:02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-12_PROVENIENTA_BIBLIOTECI.md:generic-api-key:49
