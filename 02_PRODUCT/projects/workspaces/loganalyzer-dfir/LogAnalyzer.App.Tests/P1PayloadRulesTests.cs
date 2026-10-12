@@ -481,11 +481,17 @@ public class P1PayloadRulesTests
         var needles = Wp11Data.Default.Lists.Vss.CommandPatterns.Select(p => p.Regex)
             .Concat(Wp11Data.Default.Lists.Powershell.Keywords.Select(k => k.Text).Where(t => t.Length >= 8))
             .Concat(Wp14Data.Default.Payload.ClickFixPatterns.Select(p => p.Regex))
-            .Distinct().ToList();
+            .Distinct().Where(n => !FrameworkMemberNames.Contains(n)).ToList();
         Assert.True(needles.Count >= 10, $"only {needles.Count} patterns loaded");
         var found = needles.Where(n => Contains(dll, System.Text.Encoding.UTF8.GetBytes(n)) || Contains(dll, System.Text.Encoding.Unicode.GetBytes(n))).ToList();
         Assert.True(found.Count == 0, "raw patterns in the compiled assembly: " + string.Join(" | ", found));
     }
+
+    /// <summary>
+    /// Names of public .NET framework members the assembly calls itself (for example the Base64 conversion method of <see cref="Convert"/>): the metadata of
+    /// any assembly that calls them carries the name, so they cannot be kept out and do not make the tool look like what it detects. Read by reflection, not listed.
+    /// </summary>
+    private static readonly HashSet<string> FrameworkMemberNames = [.. typeof(Convert).GetMethods().Select(m => m.Name)];
 
     private static bool Contains(byte[] hay, byte[] needle) => hay.AsSpan().IndexOf(needle) >= 0;
 }

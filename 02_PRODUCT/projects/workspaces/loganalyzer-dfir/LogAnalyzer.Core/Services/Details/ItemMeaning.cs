@@ -229,6 +229,7 @@ namespace LogAnalyzer.Core.Services.Details
             ["T1200"] = "conectarea unui dispozitiv fizic străin (tastatură falsă, stick care tastează singur, placă de rețea)",
             ["T1204"] = "rularea unui fișier rău-intenționat de către utilizator",
             ["T1204.002"] = "deschiderea unui fișier atașat sau descărcat rău-intenționat",
+            ["T1204.004"] = "lipirea și rularea de către utilizator a unei comenzi copiate dintr-o pagină înșelătoare (de exemplu în fereastra Executare, Win+R)",
             ["T1207"] = "înregistrarea unui controler de domeniu fals",
             ["T1218"] = "rularea codului prin programe semnate ale Windows, ca să treacă de protecții",
             ["T1218.001"] = "rularea codului prin fișiere de ajutor compilate (CHM)",
