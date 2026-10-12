@@ -79,6 +79,7 @@ public sealed class PolicyStore
 
     public PolicyRecord Approve(PolicyDocument p, string approver, string reason)
     {
+        LogAnalyzer.Dfir.Auth.OperatorIdentity.RequireHostChange(); // approving authorises a change of the station
         var r = Require(p, PolicyStatus.Tested);
         if (Same(approver, r.Author) || Same(approver, r.RegisteredBy))
             throw new PolicyLifecycleException($"Auto-aprobarea nu este permisă: {approver} este autorul sau cel care a înregistrat politica.");

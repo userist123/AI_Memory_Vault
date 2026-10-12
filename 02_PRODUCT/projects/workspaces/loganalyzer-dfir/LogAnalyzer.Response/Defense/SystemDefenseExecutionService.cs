@@ -53,17 +53,18 @@ namespace LogAnalyzer.Infrastructure.Services
 
         /// <summary>Blocks all outbound traffic of the station with one firewall rule.</summary>
         public static DefenseActionResult IsolateHostFromNetwork(IFirewallCommandRunner? runner = null) =>
-            AddRule(runner ?? Default, FirewallIsolationRuleName, $"dir=out action=block profile=any",
+            NotAuthorized() ?? AddRule(runner ?? Default, FirewallIsolationRuleName, $"dir=out action=block profile=any",
                 "Stația este izolată: regula „{0}” blochează tot traficul de ieșire.", "Izolarea stației");
 
         /// <summary>Removes the isolation rule and checks that it is gone.</summary>
         public static DefenseActionResult RestoreNetworkAccess(IFirewallCommandRunner? runner = null) =>
-            DeleteRule(runner ?? Default, FirewallIsolationRuleName,
+            NotAuthorized() ?? DeleteRule(runner ?? Default, FirewallIsolationRuleName,
                 "Izolarea a fost ridicată: regula „{0}” nu mai există.", "Regula de izolare „{0}” nu există; nu era nimic de ridicat.", "Ridicarea izolării");
 
         /// <summary>Blocks outbound traffic to one IP address or CIDR range. Nothing is run for an empty or invalid target.</summary>
         public static DefenseActionResult BlockMaliciousIoC(string iocTarget, IFirewallCommandRunner? runner = null)
         {
+            if (NotAuthorized() is { } refused) return refused;
             var target = (iocTarget ?? string.Empty).Trim();
             if (!IsIpOrCidr(target))
                 return new DefenseActionResult
@@ -75,6 +76,14 @@ namespace LogAnalyzer.Infrastructure.Services
                 "Traficul de ieșire către {1} este blocat de regula „{0}”. Se șterge din Windows Defender Firewall sau cu: netsh advfirewall firewall delete rule name=\"{0}\".",
                 $"Blocarea {target}", target);
         }
+
+        /// <summary>Role gate (security audit #2): a signed-in operator never changes the station's firewall; nothing is run.</summary>
+        private static DefenseActionResult? NotAuthorized() =>
+            LogAnalyzer.Dfir.Auth.OperatorIdentity.MayChangeHost ? null : new DefenseActionResult
+            {
+                Status = DefenseActionResult.NotAuthorized,
+                Message = LogAnalyzer.Dfir.Auth.OperatorIdentity.HostChangeRefusedMessage,
+            };
 
         public static bool IsIpOrCidr(string s)
         {
