@@ -915,3 +915,6 @@
   - **Evaluator**: ____________________  **Dată**: ______________
 
 ---
+
+
+> 2026-10-12: audit_sample_50.json re-frozen after removing the owner's private paths (privacy rule); content otherwise unchanged. The `sample_sha256` in audit_verdicts.json was re-recorded.

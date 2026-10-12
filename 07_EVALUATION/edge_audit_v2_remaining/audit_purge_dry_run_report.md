@@ -2,7 +2,7 @@
 
 - **Dată generare**: 2026-10-04T19:23:57+00:00
 - **Eșantion auditat**: `07_EVALUATION\edge_audit_v2_remaining\audit_sample_declared_remaining_65.json`
-- **SHA-256 Eșantion (verificat)**: `06bfd856e4b794bec75bd4a6b9e0e8474e74722e103893cfdeb8638a80d928f5`
+- **SHA-256 Eșantion (verificat)**: `6f7e4b75122a9e972ffe2ce379f4bb102de04428fa19378ea74dfde29f866194`
 - **Muchii propuse spre ștergere**: 55
 - **Mod de execuție**: DRY-RUN (nicio modificare aplicată asupra depozitului sau grafului)
 
