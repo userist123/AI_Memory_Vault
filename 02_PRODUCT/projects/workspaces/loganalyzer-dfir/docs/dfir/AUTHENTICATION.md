@@ -98,7 +98,19 @@ The administrator must re-import before `nextUpdate`; an expired CRL counts as a
 | Analysis, cases, reports, read of registers/profile | yes | yes |
 | Edit/import/save media register, users register, procedure profile | **no** | yes |
 | Users, cards, roles, trust store, CRLs, authentication parameters | no (own card enrolment only) | yes |
+| Policies: open, register, validate, dry run, plan (read-only) | yes | yes |
+| Policies: approve, apply, roll back (unclassified edition) | **no** | yes; the account that **approved** a policy version cannot also **apply** it (a second administrator applies) |
+| Contain / release a program (firewall rule per program, process suspension) | **no** | yes |
+| Isolate the station / lift isolation / block an IoC address | **no** | yes |
+| Change the station audit policy (auditpol, blocked-connection auditing) | **no** | yes |
+
 The gate is enforced in `RegisterStore.Save` and `ProfileStore.Save` (core), not only in the UI; the authentication service re-checks the role on every admin call.
+Station-changing actions are gated in the core too (`OperatorIdentity.RequireHostChange` / `MayChangeHost`): `PolicyStore.Approve`,
+`PolicyExecutor.Apply` / `Rollback`, `ProcessContainmentService.Contain` / `Release`, `SystemDefenseExecutionService` (isolate, restore,
+block IoC: status `NOT_AUTHORIZED`) and `AuditPolicyChange`. A refused action writes nothing and says so in Romanian. Windows elevation is still
+required on top of the role. The policy workbench records the signed-in application account (not the Windows account) as registrar,
+approver and applier, so two people sharing a Windows session are still distinct; the policy approver must differ from the author/registrar
+and from the applier.
 
 ## Session lock
 - Inactivity lock (default 10 min, 1..480) for **every** session.

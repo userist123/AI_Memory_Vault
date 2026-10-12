@@ -266,7 +266,7 @@ namespace LogAnalyzer.UI.ViewModels
         private void Step(Func<string> action)
         {
             try { Status = action(); }
-            catch (Exception ex) when (ex is PolicyLifecycleException or FormatException or InvalidDataException or NotSupportedException or IOException
+            catch (Exception ex) when (ex is PolicyLifecycleException or LogAnalyzer.Dfir.Auth.HostChangeNotAuthorizedException or FormatException or InvalidDataException or NotSupportedException or IOException
                                           or UnauthorizedAccessException or YamlDotNet.Core.YamlException)
             {
                 Status = "Oprit: " + ex.Message;

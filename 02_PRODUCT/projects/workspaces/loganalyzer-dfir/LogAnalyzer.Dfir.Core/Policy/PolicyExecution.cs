@@ -113,6 +113,7 @@ public sealed class PolicyExecutor(IEnumerable<ISettingProvider> providers, stri
     public ExecutionRecord Apply(PolicyDocument policy, PolicyPlan plan, PolicyStore store, string operatorName, string confirmedPlanSha256,
         IReadOnlySet<string>? onlyControls = null)
     {
+        LogAnalyzer.Dfir.Auth.OperatorIdentity.RequireHostChange();
         if (string.IsNullOrWhiteSpace(operatorName)) throw new PolicyLifecycleException("Aplicarea cere numele operatorului.");
         var record = store.RequireApplicable(policy);
         if (!plan.PolicySha256.Equals(policy.Sha256, StringComparison.OrdinalIgnoreCase))
@@ -125,6 +126,9 @@ public sealed class PolicyExecutor(IEnumerable<ISettingProvider> providers, stri
             throw new PolicyLifecycleException($"Planul este pentru stația {plan.Station}, nu {_station}.");
         var approval = record.History.LastOrDefault(t => t.To == PolicyStatus.Approved && t.PolicySha256.Equals(policy.Sha256, StringComparison.OrdinalIgnoreCase))
             ?? throw new PolicyLifecycleException("Nu există o aprobare înregistrată pentru acest SHA-256.");
+        // Separation of duties: the account that approved this version does not also apply it.
+        if (string.Equals(operatorName.Trim(), approval.Operator.Trim(), StringComparison.OrdinalIgnoreCase))
+            throw new PolicyLifecycleException($"Contul {operatorName.Trim()} a aprobat această politică, deci nu o poate și aplica. Nu s-a schimbat nimic. Aplicarea o face alt administrator.");
 
         var execId = $"{DateTime.UtcNow:yyyyMMddTHHmmssZ}-{Guid.NewGuid().ToString("N")[..8]}";
         var started = DateTimeOffset.UtcNow;
@@ -202,6 +206,7 @@ public sealed class PolicyExecutor(IEnumerable<ISettingProvider> providers, stri
     /// <summary>Restores the "before" state of every control an execution wrote, unless it changed again since then.</summary>
     public ExecutionRecord Rollback(PolicyDocument policy, string executionId, string operatorName)
     {
+        LogAnalyzer.Dfir.Auth.OperatorIdentity.RequireHostChange();
         if (string.IsNullOrWhiteSpace(operatorName)) throw new PolicyLifecycleException("Rollback-ul cere numele operatorului.");
         var source = Load(executionId);
         if (!source.PolicySha256.Equals(policy.Sha256, StringComparison.OrdinalIgnoreCase))

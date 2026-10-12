@@ -43,6 +43,7 @@ public sealed class ProcessContainmentService
 
     public ProcessIncident Contain(string programPath, int? pid, string trigger, ContainmentOptions options, CancellationToken ct = default)
     {
+        LogAnalyzer.Dfir.Auth.OperatorIdentity.RequireHostChange(); // before any rule, suspension or case write
         programPath = Path.GetFullPath(programPath);
         var incident = new ProcessIncident
         {
@@ -128,6 +129,7 @@ public sealed class ProcessContainmentService
 
     public ProcessIncident Release(ProcessIncident incident, string reason)
     {
+        LogAnalyzer.Dfir.Auth.OperatorIdentity.RequireHostChange();
         if (incident.ProcessSuspended && incident.Pid is int p && _resume is not null)
         {
             try { _resume(p); incident.ProcessSuspended = false; Record(incident, "process.resume", p.ToString(), true, reason); }
