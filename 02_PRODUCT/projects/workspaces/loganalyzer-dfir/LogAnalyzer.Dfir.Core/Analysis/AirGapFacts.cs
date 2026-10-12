@@ -150,7 +150,7 @@ public sealed class MediaEntryFact
     public string LnkWorkingDir { get; set; } = "";
 }
 
-/// <summary>The listing of one removable volume connected at collection time (root and two levels; reparse points not followed).</summary>
+/// <summary>The listing of one removable volume connected at collection time (root and a bounded number of folder levels, one for the facts collector; reparse points not followed).</summary>
 public sealed class MediaListingFact
 {
     /// <summary>Drive letter without colon ("E").</summary>

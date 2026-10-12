@@ -136,8 +136,14 @@ public class AirGapStationChecksTests
         var f = AirGapFactsCollector.Read(false, null);
         Assert.True(f.CollectedUtc > DateTimeOffset.UtcNow.AddMinutes(-5));
         Assert.All(f.Errors, e => Assert.Contains(":", e));
-        Assert.Equal(12, f.StepMs.Count);   // every read is timed, so a slow one is visible
+        Assert.Equal(15, f.StepMs.Count);   // every read is timed, so a slow one is visible (12 + the three P1 reads: media listings, Startup, Downloads/Desktop)
         Assert.All(f.Adapters, a => Assert.Equal("Net", a.PnpClass));
+        // P1 reads stay inside their bounds (structure only)
+        Assert.True(f.MediaListings.Count <= AirGapFactsCollector.MaxMedia);
+        Assert.All(f.MediaListings, m => Assert.True(m.Entries.Count <= AirGapFactsCollector.MaxMediaEntries));
+        Assert.True(f.ProfileFiles.Count <= AirGapFactsCollector.MaxProfileFiles);
+        Assert.All(f.ProfileFiles, p => Assert.Contains(p.Folder, new[] { "Downloads", "Desktop" }));
+        Assert.All(f.StartupEntries, s => Assert.Contains(s.Scope, new[] { "utilizator", "comun" }));
         // the JSON the collector stores is the JSON the pipeline reads
         Assert.Equal(f.Adapters.Count, AirGapFacts.FromJson(f.ToJson()).Adapters.Count);
     }

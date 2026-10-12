@@ -96,7 +96,8 @@ public static class RemovableMediaInspector
     /// attributes, sizes and times; SHA-256 of files up to <paramref name="hashMaxBytes"/>; shortcuts decoded by <see cref="FileSystem.LnkParser.Decode"/>
     /// (read as bytes, never opened by the shell, never run). Reparse points are listed but not followed; Windows' own folders are not entered.
     /// </summary>
-    public static LogAnalyzer.Dfir.Analysis.MediaListingFact List(string root, string volumeLabel = "", int maxEntries = 3000, long hashMaxBytes = 16 * 1024 * 1024, int maxHashed = 300)
+    /// <param name="maxDepth">Folder levels entered below the root (2 = root, its folders and their folders; the facts collector uses 1).</param>
+    public static LogAnalyzer.Dfir.Analysis.MediaListingFact List(string root, string volumeLabel = "", int maxEntries = 3000, long hashMaxBytes = 16 * 1024 * 1024, int maxHashed = 300, int maxDepth = 2)
     {
         var rootPath = root.TrimEnd('\\', '/') + "\\";
         var listing = new LogAnalyzer.Dfir.Analysis.MediaListingFact
@@ -133,7 +134,7 @@ public static class RemovableMediaInspector
                 }
                 listing.Entries.Add(entry);
             }
-            if (depth >= 2) return;
+            if (depth >= maxDepth) return;
             foreach (var d in items.OfType<DirectoryInfo>().Where(d => !d.Attributes.HasFlag(FileAttributes.ReparsePoint) && !Benign.Contains(d.Name, StringComparer.OrdinalIgnoreCase)))
                 Walk(d.FullName, rel.Length == 0 ? d.Name : rel + "\\" + d.Name, depth + 1);
         }
