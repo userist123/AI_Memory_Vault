@@ -18,7 +18,7 @@ public static class SelfTest
 {
     public const string Switch = "--self-test";
 
-    public sealed record Step(string Name, bool Ok, string Detail);
+    public sealed record Step(string Name, bool Ok, string Detail, long Ms = 0);
 
     public static bool IsRequested(IEnumerable<string> args) => args.Any(a => a.Equals(Switch, StringComparison.OrdinalIgnoreCase));
 
@@ -31,8 +31,9 @@ public static class SelfTest
         var steps = new List<Step>();
         void Do(string name, Func<string> body)
         {
-            try { steps.Add(new Step(name, true, body())); }
-            catch (Exception ex) { steps.Add(new Step(name, false, ex.GetType().Name + ": " + ex.Message)); }
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            try { var detail = body(); steps.Add(new Step(name, true, detail, sw.ElapsedMilliseconds)); }
+            catch (Exception ex) { steps.Add(new Step(name, false, ex.GetType().Name + ": " + ex.Message, sw.ElapsedMilliseconds)); }
         }
 
         Do("assemblies", () =>
@@ -101,6 +102,10 @@ public static class SelfTest
         return steps;
     }
 
+    public static string FormatTimings(IEnumerable<Step> steps) =>
+        string.Join(Environment.NewLine, steps.Select(s => $"{s.Ms,7} ms  {(s.Ok ? "OK  " : "FAIL")} {s.Name}")) + Environment.NewLine +
+        $"{steps.Sum(s => s.Ms),7} ms  total" + Environment.NewLine;
+
     public static string Format(IEnumerable<Step> steps) =>
         string.Join(Environment.NewLine, steps.Select(s => $"{(s.Ok ? "OK  " : "FAIL")} {s.Name} {s.Detail}")) + Environment.NewLine +
         (steps.All(s => s.Ok) ? "SELF-TEST PASSED" : "SELF-TEST FAILED") + Environment.NewLine;
@@ -111,6 +116,9 @@ public static class SelfTest
         var text = Format(steps);
         try { Console.Out.Write(text); } catch (IOException) { }
         if (OutputPath(args) is { Length: > 0 } p) File.WriteAllText(p, text, new UTF8Encoding(false));
+        // The step timings, next to the executable like startup_debug.log (best effort: the folder may be read-only).
+        try { File.WriteAllText(Path.Combine(baseDirectory, "startup_debug_selftest.log"), FormatTimings(steps), new UTF8Encoding(false)); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         return steps.All(s => s.Ok) ? 0 : 1;
     }
 

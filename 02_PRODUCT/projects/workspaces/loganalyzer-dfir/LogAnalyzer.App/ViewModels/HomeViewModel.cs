@@ -44,6 +44,12 @@ namespace LogAnalyzer.UI.ViewModels
             foreach (var i in Profile.PrimaryIntents) PrimaryIntents.Add(new HomeIntentView(i));
             foreach (var i in Profile.MoreIntents) MoreIntents.Add(new HomeIntentView(i));
             _investigation.StateChanged += (_, _) => Refresh();
+            ClockMemory.WarningChanged += () =>
+            {
+                var d = System.Windows.Application.Current?.Dispatcher;
+                if (d is null || d.CheckAccess()) OnPropertyChanged(nameof(ClockWarning));
+                else d.BeginInvoke(new Action(() => OnPropertyChanged(nameof(ClockWarning))));
+            };
             Refresh();
             ReloadRecent();
         }
@@ -63,6 +69,16 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _openStatus = "";
         /// <summary>Non-blocking warning from the application's time memory (clock behind its own record or before the Windows install); empty when fine.</summary>
         public string ClockWarning => ClockMemory.StartupWarning;
+        /// <summary>Why the clock is confirmed as corrected (required; written to the chained audit).</summary>
+        [ObservableProperty] private string _clockAckReason = "";
+
+        /// <summary>The operator confirms the clock was corrected: writes "clock.ack" and re-evaluates the warning.</summary>
+        [RelayCommand]
+        private void ConfirmClockCorrected()
+        {
+            OpenStatus = LogAnalyzer.UI.Services.AuthApp.ConfirmClockCorrected(ClockAckReason);
+            if (ClockWarning.Length == 0) ClockAckReason = "";
+        }
         [ObservableProperty] private bool _isBusy;
 
         /// <summary>Short, data-driven next steps (at most <see cref="HomeAggregator.MaxNextSteps"/>).</summary>

@@ -259,6 +259,16 @@ namespace LogAnalyzer.UI.ViewModels
             Result = ControlResultScreen.Build(_report, ProfileSections.ToList(), Comparison);
         }
 
+        /// <summary>Why the clock is confirmed as corrected (written to the chained audit with the confirmation).</summary>
+        [ObservableProperty] private string _clockAckReason = "";
+
+        [RelayCommand]
+        private void ConfirmClockCorrected()
+        {
+            Status = LogAnalyzer.UI.Services.AuthApp.ConfirmClockCorrected(ClockAckReason);
+            if (LogAnalyzer.Dfir.Case.ClockMemory.StartupWarning.Length == 0) ClockAckReason = "";
+        }
+
         [RelayCommand]
         private async Task Run()
         {
@@ -279,8 +289,15 @@ namespace LogAnalyzer.UI.ViewModels
                     try { auditPath = LogAnalyzer.UI.Services.AuthApp.Service.AuditPath; } catch (InvalidOperationException) { }
                     if (auditPath is not null)
                     {
-                        try { facts.LatestAppRecordUtc = LogAnalyzer.Dfir.Case.ClockMemory.LatestRecorded(auditPath); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+                        try
+                        {
+                            var cb = LogAnalyzer.Dfir.Case.ClockMemory.ReadBaseline(auditPath);
+                            facts.LatestAppRecordUtc = cb.Baseline; facts.ClockSuspectNote = cb.SuspectNote; facts.ClockAckText = cb.AckText;
+                        }
+                        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
                         try { LogAnalyzer.Dfir.Case.ClockMemory.RecordSeen(auditPath, facts.CollectedUtc, "raport de control stație"); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+                        // The warning (and with it the confidence of timed findings) follows the chain at every report, not only the start.
+                        try { LogAnalyzer.Dfir.Case.ClockMemory.Reevaluate(auditPath, facts.CollectedUtc, StationFactCollector.ReadInstallDate()); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
                     }
                     return ControlEvaluator.Evaluate(facts);
                 });

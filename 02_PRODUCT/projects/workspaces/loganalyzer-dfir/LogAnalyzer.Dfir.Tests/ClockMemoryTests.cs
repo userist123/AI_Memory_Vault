@@ -1,4 +1,7 @@
+using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.Case;
+using LogAnalyzer.Dfir.Model;
+using LogAnalyzer.Dfir.Windows.Investigation;
 using LogAnalyzer.Dfir.Windows.Audit;
 using Xunit;
 
@@ -71,7 +74,7 @@ public class ClockMemoryTests
 
             var behind = ClockMemory.CheckAndRecord(audit, Now.AddMinutes(-60), null, "test");
             Assert.Equal(ClockMemoryState.Behind, behind.State);
-            Assert.Equal(Now.AddMinutes(5), ClockMemory.LatestRecorded(audit));   // an earlier clock never lowers the record
+            Assert.Equal(Now.AddMinutes(-60), ClockMemory.LatestRecorded(audit));   // the baseline is the LAST appended record; the later-timed one before it is suspect
 
             var v = new HashChain(audit).Verify();
             Assert.Equal(ChainStatus.Valid, v.Status);
@@ -103,5 +106,126 @@ public class ClockMemoryTests
         var g = CheckGuides.For("S05");
         Assert.DoesNotContain("nu are încă o descriere", g.What);
         Assert.All(new[] { g.What, g.Why, g.How, g.Source, g.Meaning }, t => Assert.True(t.Length > 20));
+    }
+
+    private static string TempAudit(out string dir)
+    {
+        dir = Path.Combine(Path.GetTempPath(), "clockmem_" + Guid.NewGuid().ToString("N"));
+        return Path.Combine(dir, "auth_audit.jsonl");
+    }
+
+    [Fact]
+    public void Wrong_forward_then_corrected_is_Behind_once_and_Ok_after_the_acknowledgement()
+    {
+        var audit = TempAudit(out var dir);
+        try
+        {
+            ClockMemory.RecordSeen(audit, Now, "start");
+            ClockMemory.RecordSeen(audit, Now.AddDays(10), "start");          // clock set wrongly forward
+            var corrected = Now.AddHours(1);
+            var first = ClockMemory.Startup(audit, corrected, null);
+            Assert.Equal(ClockMemoryState.Behind, first.State);
+            Assert.NotEqual("", ClockMemory.StartupWarning);
+
+            var next = ClockMemory.Evaluate(audit, corrected.AddMinutes(5), null);
+            Assert.Equal(ClockMemoryState.Ok, next.State);                    // no more Behind forever: the baseline is the last appended record
+            Assert.Contains("ceasul greșit", next.SuspectNote);               // ... but the bad record is reported until the correction is confirmed
+            ClockMemory.Reevaluate(audit, corrected.AddMinutes(5), null);
+            Assert.Contains("ceasul greșit", ClockMemory.StartupWarning);
+
+            ClockMemory.Acknowledge(audit, corrected.AddMinutes(6), "Administrator (admin1)", "bateria CMOS înlocuită, ora setată de la sursa aprobată");
+            Assert.Equal("", ClockMemory.StartupWarning);
+            var after = ClockMemory.Evaluate(audit, corrected.AddMinutes(7), null);
+            Assert.Equal(ClockMemoryState.Ok, after.State);
+            Assert.Equal("", after.SuspectNote);
+
+            Assert.Equal(ChainStatus.Valid, new HashChain(audit).Verify().Status);
+            var text = File.ReadAllText(audit);
+            Assert.Contains("\"clock.ack\"", text);
+            Assert.Contains("anterior=", text);
+        }
+        finally { ClockMemory.StartupWarning = ""; try { Directory.Delete(dir, true); } catch (IOException) { } }
+    }
+
+    [Fact]
+    public void A_record_dated_after_the_next_record_is_suspect_and_skipped_as_baseline()
+    {
+        var audit = TempAudit(out var dir);
+        try
+        {
+            ClockMemory.RecordSeen(audit, Now, "a");
+            ClockMemory.RecordSeen(audit, Now.AddDays(3), "b");     // made under a wrong clock
+            ClockMemory.RecordSeen(audit, Now.AddMinutes(10), "c");
+            var b = ClockMemory.ReadBaseline(audit);
+            Assert.Equal(Now.AddMinutes(10), b.Baseline);
+            Assert.Contains("S-a detectat o înregistrare făcută cu ceasul greșit la", b.SuspectNote);
+            Assert.Contains(Now.AddDays(3).ToString("yyyy-MM-dd HH:mm:ss"), b.SuspectNote);
+        }
+        finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
+    }
+
+    [Fact]
+    public void A_chain_without_clock_records_is_Nedeterminat_and_other_entries_are_ignored()
+    {
+        var audit = TempAudit(out var dir);
+        try
+        {
+            Directory.CreateDirectory(dir);
+            new HashChain(audit).Append(new LogAnalyzer.Dfir.Auth.AuthAuditEntry("auth.signin", "x", "x", "", "", "ok", "", Now.AddYears(5), "", ""));
+            Assert.Null(ClockMemory.ReadBaseline(audit).Baseline);
+            Assert.Equal(ClockMemoryState.Nedeterminat, ClockMemory.Evaluate(audit, Now, null).State);
+        }
+        finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
+    }
+
+    [Fact]
+    public void Acknowledge_requires_a_reason_and_the_control_text_names_who_when_and_why()
+    {
+        var audit = TempAudit(out var dir);
+        try
+        {
+            ClockMemory.RecordSeen(audit, Now.AddDays(10), "a");
+            Assert.Throws<ArgumentException>(() => ClockMemory.Acknowledge(audit, Now, "op", "  "));
+            ClockMemory.Acknowledge(audit, Now, "Administrator (admin1)", "ceas corectat");
+            var b = ClockMemory.ReadBaseline(audit);
+            Assert.Equal(Now, b.Baseline);
+            Assert.Contains("corectată de Administrator (admin1) la 2026-10-12 12:00:00 UTC, motiv: ceas corectat", b.AckText);
+
+            var f = new StationFacts { CollectedUtc = Now.AddMinutes(1), LatestAppRecordUtc = b.Baseline, ClockAckText = b.AckText };
+            var s05 = ControlEvaluator.Evaluate(f).Checks.Single(c => c.Id == "S05");
+            Assert.Equal(ControlStatus.Conform, s05.Status);
+            Assert.Contains("motiv: ceas corectat", s05.Detail);
+            var pending = ControlEvaluator.Evaluate(new StationFacts { CollectedUtc = Now, LatestAppRecordUtc = Now.AddMinutes(-1), ClockSuspectNote = "S-a detectat o înregistrare făcută cu ceasul greșit la x" })
+                .Checks.Single(c => c.Id == "S05");
+            Assert.Equal(ControlStatus.DeVerificat, pending.Status);
+        }
+        finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
+    }
+
+    [Fact]
+    public void Investigation_confidence_is_lowered_by_the_unconfirmed_clock_and_restored_after_the_acknowledgement()
+    {
+        var audit = TempAudit(out var dir);
+        try
+        {
+            ClockMemory.RecordSeen(audit, Now.AddDays(10), "a");
+            ClockMemory.Startup(audit, Now, null);                 // Behind: warning set, then the corrected time is recorded
+            Finding Timed() => new()
+            {
+                FindingId = "F-9", RuleId = "DEF-DETECTION", Title = "t", Description = "d", Severity = Severity.High, Confidence = Confidence.High,
+                FirstSeenUtc = Now, LastSeenUtc = Now, SupportingEvidence = [new EvidenceRef("EV-1", "L", "x")],
+            };
+            var before = Timed();
+            ClockMemory.Refresh(Now.AddMinutes(1));
+            Assert.Equal(1, TimeReliability.Apply([before], [], ClockMemory.StartupWarning.Length > 0));
+            Assert.Equal(Confidence.Medium, before.Confidence);
+
+            ClockMemory.Acknowledge(audit, Now.AddMinutes(2), "operator", "ora corectată");
+            var after = Timed();
+            ClockMemory.Refresh(Now.AddMinutes(3));
+            Assert.Equal(0, TimeReliability.Apply([after], [], ClockMemory.StartupWarning.Length > 0));
+            Assert.Equal(Confidence.High, after.Confidence);
+        }
+        finally { ClockMemory.StartupWarning = ""; try { Directory.Delete(dir, true); } catch (IOException) { } }
     }
 }
