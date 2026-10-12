@@ -182,6 +182,60 @@
       "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
     },
     {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/packages/twin-core/README.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Package README of the Casa3D twin-core workspace; developer documentation, not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/CONSTITUTION.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Casa3D constitution (product rules), developer documentation of the imported app; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/README.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "README of the imported Casa3D application; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/tools/blender/README.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Usage notes of the Casa3D Blender render script; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE5.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Phase 5 plan of the imported Casa3D application; developer documentation, not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE1.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Casa3D phase 1 STOP GATE report, developer documentation; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE2.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Casa3D phase 2 STOP GATE report, developer documentation; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE3.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Casa3D phase 3 STOP GATE report, developer documentation; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE4.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Casa3D phase 4 STOP GATE report, developer documentation; not a vault note."
+    },
+    {
       "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/README.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
@@ -489,6 +543,12 @@
     },
     {
       "path": "00_GOVERNANCE/coordination/tasks/todo-claude-orchestrator.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."

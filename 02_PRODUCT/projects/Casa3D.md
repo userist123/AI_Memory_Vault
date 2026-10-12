@@ -5,7 +5,7 @@ lifecycle: REVIEW
 category: digital_twin
 tags: [project, casa3d, digital_twin, interior_design, geometry, boq, budget, ai, monetization, romania]
 created: "2026-10-01"
-updated: "2026-10-07"
+updated: "2026-10-10"
 provenance:
   source_type: user
   source_ref: "Casa3D Faza 0-3 ZIP artifacts + supplied Claude conversation"
@@ -17,6 +17,8 @@ verification: unverified
 relations:
   - type: depends_on
     target_id: "d0f3ac43-9b23-4152-999b-8dee06b43c71"
+  - type: related_to
+    target_id: "28890ae9-095d-4d32-a374-54cd7996d9aa"
 ---
 
 # Casa3D
@@ -39,9 +41,12 @@ Principiul central: **AI-ul propune, Geometry Engine valideaza, utilizatorul apr
 | F1 | aplicatie persistenta, editor, 3D, API, DB, revizii, undo/redo | DONE |
 | F2 | BOQ, materiale, cantitati, buget, provenance | DONE |
 | F3 | Design Brief, 3 variante, validare, preview, reject/apply, AI optional | DONE |
-| F4 | monetizare/link layer, oferte si retaileri | NEXT / TEST MODE |
+| F4 | monetizare/link layer, oferte si retaileri, redirect `/go/*`, admin cu token | DONE (TEST MODE) — verificat local 2026-10-10 pe `casa3d-faza4.zip` |
+| v8 (original) | Digital Twin v1.0, DSL 1.1, Solver, approval, share, boq-search, catalog-feed | SURSA NEGASITA; inlocuit de reconstructie |
+| v8 (reconstruit) | `workspaces/casa3d/packages/twin-core`: aceleasi capabilitati + camere in L + joystick | TEST_VERIFIED (53 teste, tsc, CI); integrarea in aplicatie urmeaza |
+| F5-F8 | documente `PHASE5.md`-`PHASE8.md` in manifestul v8; continut necunoscut in Vault | UNKNOWN |
 
-F0-F3 sunt sustinute de artefactele furnizate. F4 nu este tratata ca implementata.
+F0-F4 sunt sustinute de artefactele furnizate si verificate local (ledger `Casa3D/VERIFICATION_2026-10-10.md`). "TEST MODE" inseamna: fara conturi de afiliere reale, fara abonamente/plati si fara date comerciale live; fluxul tehnic (oferte, redirect, tracking anonim, admin) este implementat si testat. Stratul v8 de peste F4 ramane neverificat pentru ca sursa lui nu a fost gasita.
 
 ## Constitutia
 
@@ -129,7 +134,87 @@ Layer propus:
 - fara copierea imaginilor retailerilor fara drept;
 - afilierea ulterioara poate introduce `rel="sponsored"` si disclosure.
 
-Aceasta este decizie de proiectare/test mode, nu dovada implementarii F4 si nici dovada curenta a programelor de afiliere ale retailerilor.
+Aceasta a fost decizia de proiectare din 2026-10-02. Paragraful de mai jos inregistreaza ce s-a verificat din ea.
+
+### Implementare verificata (casa3d-faza4.zip, 2026-10-10)
+
+Arhiva `casa3d-faza4.zip` (SHA-256 `334d195a...56054d2`, 81 fisiere) este aplicatia cumulativa F1-F4.
+Fata de F3 aduce `PHASE4.md`, `core/outbound.ts`, rutele `/go/*` si `/api/admin/*`.
+
+Verificat local de agent, pe masina proprietarului (detalii si limite in `Casa3D/VERIFICATION_2026-10-10.md`):
+- Vitest 64/64, din care testele de outbound acopera: link de afiliere si UTM, protectie open-redirect,
+  anonimizarea click-urilor (fara IP brut, fara cookie-uri) si acces admin numai cu `ADMIN_TOKEN`;
+- `tsc --noEmit` si `next build` (22 rute) trec dupa redenumirea locala `components/viewer3d.js` ->
+  `viewer3d-engine.js` (coliziune de majuscule cu `Viewer3D.tsx` pe NTFS/APFS; pe Linux nu apare).
+
+Verificat si pe server, la 10:15 UTC, pe build-ul de productie cu PGlite in memorie: `/api/health` 200, rutele
+`/api/admin/*` 401 fara token si 200 cu token, `/go/o/offer-canapea-0` 302 catre IKEA cu `utm_source=casamea3d`,
+`no-store`, `noindex`, fara `Set-Cookie`, clic numarat agregat fara IP, robotii nenumarati, oferta lipsa 404.
+Nu s-a verificat: testul din browser (interfata, mesajul de informare) si niciun program real de afiliere. Afilierea reala, `rel="sponsored"` si disclosure-ul raman roadmap.
+Patch-ul `0001-casa3d-f4.patch` si varianta notei din Downloads (auto-declarata ACTIVE/verified)
+nu au fost importate; sectiunea de mai sus este scrisa din dovezile ledger-ului, nu din patch.
+
+## Reconstructia stratului v8 in Vault (2026-10-10)
+
+Decizia proprietarului: "Refacem ce nu este si mai bun decat era". Sursa v8 nu a fost gasita, asa ca stratul a
+fost reconstruit din specificatia de mai jos ("Implementare continua") ca pachet fara framework, in Vault:
+`02_PRODUCT/projects/workspaces/casa3d/packages/twin-core` (TypeScript strict, Vitest, CI pe Ubuntu si Windows
+prin `.github/workflows/casa3d-build.yml`). Aplicatia Next.js faza4 se importa separat in `workspaces/casa3d/app`
+si consuma pachetul.
+
+| Modul | Ce face | Dovada |
+|---|---|---|
+| `geometry.ts`, `twin.ts` | Digital Twin v1.0 pe poligoane rectilinii (dreptunghi, L, U), amprenta SHA-256, pereti generati din camere, **legare automata perete-camera** cu pereti comuni | 15 teste |
+| `engine.ts` | validare cu 16 coduri ERROR/WARNING (nu incape, suprapunere, usa blocata, fereastra acoperita, circulatie), `findPosition` determinist pe grila de 5 cm | 9 teste |
+| `dsl.ts`, `solver.ts` | DSL 1.1 (ADD/REMOVE/REPLACE/MOVE; near, againstWall, alignedWith, keepClear, orientation), validator care respinge coordonatele si ID-urile inventate, Solver determinist, 1-3 alternative fara castigator automat | 9 teste |
+| `approval.ts` | preview nepersistent, Accept revalideaza pe twin-ul curent, STALE la amprenta schimbata, ERROR blocheaza, WARNING cere confirmare, revizii | 4 teste |
+| `view-state.ts` | un singur ViewerState pentru 2D si 3D, overlay de preview, **joystick** determinist pentru mobil | 5 teste |
+| `boq-eval.ts` | cantitati pe camera, total doar din preturi RON cunoscute, UNKNOWN numarat, verdict de buget UNKNOWN cand lipseste un pret, provenienta pastrata | 3 teste |
+| `share.ts`, `catalog-feed.ts` | share read-only pe o revizie cu token, feed furnizor fara scraping, pret fara data de verificare respins | 4 teste |
+| `designer.ts` | contractul `DesignProvider` si motorul de reguli (Economic / Echilibrat / Premium) care emite doar DSL; furnizorul cu model real nu e cablat (amanat de proprietar) | 3 teste |
+| `tests/e2e.test.ts` | brief -> reguli -> 3 alternative -> BOQ -> preview -> accept -> revizie -> share, pe o camera in L | 1 test |
+
+Starea la 2026-10-10 12:05 UTC: 53 de teste trec, `tsc --noEmit` curat, `npm audit` 0 vulnerabilitati, commit-uri
+`b16ef221` .. `adf2c659` pe `codex/casa3d-memory`. Nivel: CODE_VERIFIED + TEST_VERIFIED in container si prin CI;
+RUNTIME_VERIFIED in aplicatie abia dupa importul sursei faza4 si cablarea rutelor `/design`, `/shares`, `/share/[token]`.
+
+Ce nu e inca facut: importul aplicatiei faza4 in `workspaces/casa3d/app` (push-ul din PC-ul proprietarului e in
+asteptare), adaptorul intre modelul twin-core si `core/types.ts` din faza4, UI-ul de joystick peste `Viewer3D.tsx`,
+apelul real al modelului.
+
+## Reconciliere v8 / F5-F8 (2026-10-10)
+
+Pana la 2026-10-10 nota declara F4 "NEXT / TEST MODE". F4 a fost inchisa prin verificarea arhivei
+`casa3d-faza4.zip` (sectiunea F4). Ramane deschis stratul v8, singurul loc unde apar F5-F8. Manifestul `02_PRODUCT/projects/Casa3D/SOURCE_SNAPSHOT_v8.md` (143 fisiere, arhiva
+`7bb34bf3...9628bc`) contine insa artefacte care corespund F4 si F5:
+
+| Artefact in manifestul v8 | Faza careia ii corespunde |
+|---|---|
+| `lib/offers.ts`, `tests/offers.test.ts` | F4 — layer `retailers`/`offers`/`offer_links` |
+| `app/api/go/[offerId]/route.ts` | F4 — redirect `/go/:offerId` |
+| `data/supplier-offer-feed.example.json`, `core/catalog-feed.ts`, `tests/catalog-feed.test.ts`, `app/api/catalog/import/route.ts` | F4/F5 — feed furnizor |
+| `scripts/verify-f4.mjs`, `scripts/verify-f5.mjs` | scripturi de verificare F4 si F5 |
+| `PHASE4.md` ... `PHASE8.md` | documentatie de faza, continut necunoscut in Vault |
+
+Stare stabilita:
+- **F4 este TEST_VERIFIED pe `casa3d-faza4.zip`** (Vitest 64/64, tsc, build), nu pe arhiva v8.
+- **Codul F5 (feed furnizor) exista doar in manifestul v8** (DOCUMENT_VERIFIED prin manifest).
+  `verify-f4.mjs`, `verify-f5.mjs`, `offers.test.ts` si `catalog-feed.test.ts` din v8 nu au fost rulate;
+  nu apar in ledger-ul `CORE_IMPLEMENTATION_v8.md`. Stratul v8 ramane **UNVERIFIED**.
+- **Sursa v8 nu este stocata in Vault si nu a fost gasita pe masina proprietarului la 2026-10-10**
+  (cautare dupa numele `casa3d*` in profilul utilizatorului, pe D: si in istoricul git; arhiva salvata
+  sub alt nume nu ar fi fost gasita). Hash-urile din ledger nu pot fi reverificate local.
+- `ANTHROPIC_API_KEY` nu era setata la 2026-10-10; integrarea AI reala ramane CLAIMED_ONLY.
+
+Ce ar inchide reconcilierea:
+1. arhiva v8 depusa intr-un loc accesibil si hash-ul ei comparat cu `7bb34bf3...9628bc`;
+2. `npm ci`, Vitest complet si `next build` rulate pe arhiva v8, cu iesirea salvata in ledger;
+3. `node scripts/verify-f4.mjs` si `verify-f5.mjs` rulate, cu rezultatul in ledger;
+4. un apel real al modelului pe fluxul Brief -> DSL -> Solver, cu procentul de DSL valid inregistrat;
+5. abia apoi randul v8 din tabel poate trece la DONE, iar F5-F8 pot primi o descriere.
+
+Pana atunci, un agent trateaza Digital Twin v1.0, DSL 1.1, approval, share si feed-ul furnizor ca
+neverificate; oferta si redirectul din F4 sunt disponibile in test mode.
 
 ## Decizii canonice
 
@@ -145,7 +230,10 @@ Aceasta este decizie de proiectare/test mode, nu dovada implementarii F4 si nici
 
 ## Roadmap
 
-Urmatorul pas: F4 test mode cu retaileri/oferte, provenance pret, redirect tracking si teste.
+F4 test mode (retaileri/oferte, provenance pret, redirect tracking, teste) este facuta si verificata.
+
+Urmatorul pas: importul aplicatiei faza4 in `workspaces/casa3d/app`, redenumirea `components/viewer3d.js`,
+apoi cablarea `twin-core` in rutele aplicatiei (adaptor de model, `/design`, `/shares`, joystick in `Viewer3D.tsx`).
 
 Dupa validare comerciala: afiliere reala, Pro Designer, integrare furnizori.
 
@@ -162,7 +250,8 @@ Roadmap-ul nu reprezinta capabilitati implementate.
 | F1 | aplicatia Next.js, editor 2D/3D, API, DB/PGlite/Postgres, revision history, undo/redo, validare, teste | persistenta, editor, revizii si validare |
 | F2 | `core/boq.ts`, `core/rules.boq.ts`, `BudgetPanel.tsx`, catalog materiale | BOQ, cantitati, costuri, manopera si provenance |
 | F3 | `core/brief`, `core/proposal`, `core/proposer-rules`, `lib/ai.ts`, DesignPanel si teste | Design Brief, propuneri, contract AI, validare si Apply/Reject |
-| F4 | discutia de proiect furnizata de utilizator | design/test mode si roadmap; nu dovada de implementare |
+| F4 | `casa3d-faza4.zip`: `PHASE4.md`, `core/outbound.ts`, rute `/go/*` si `/api/admin/*`, teste outbound; ledger `VERIFICATION_2026-10-10.md` | oferte, redirect, tracking anonim, admin cu token; Vitest 64/64, tsc, build |
+| v8 | `SOURCE_SNAPSHOT_v8.md`, `CORE_IMPLEMENTATION_v8.md` (manifest si hash-uri, sursa negasita) | existenta fisierelor; nu dovada de test |
 
 ## Gaps cunoscute si limite de continuitate
 
@@ -170,7 +259,9 @@ Roadmap-ul nu reprezinta capabilitati implementate.
 - F1 nu trebuie interpretat ca avand auth completa sau colaborare multi-user.
 - F2 nu reprezinta un feed comercial live si nu acopera toate categoriile de lucrari/materiale; valorile necunoscute trebuie pastrate ca UNKNOWN.
 - F3 are integrarea AI reala configurata, dar fara `ANTHROPIC_API_KEY` executia modelului nu a fost runtime-verificata; fallback-ul rules engine si testele de siguranta sunt cele verificate.
-- F4 ramane test mode pana cand exista implementare si dovezi pentru redirect, tracking, provenance si fluxurile comerciale.
+- F4 este verificata in test mode, inclusiv pe server (`PHASE4.md`); afilierea reala, programele retailerilor si testul din browser raman nedovedite.
+- Stratul v8 (Digital Twin v1.0, DSL 1.1, approval, share, feed furnizor) are doar manifest si hash-uri; sursa nu a fost gasita la 2026-10-10.
+- `components/viewer3d.js` se ciocneste cu `Viewer3D.tsx` pe sisteme de fisiere insensibile la majuscule; `tsc` si `next build` pica pe Windows/macOS fara redenumire.
 - Orice informatie comerciala sau de afiliere din conversatii trebuie revalidata inainte de a deveni fapt curent.
 
 ## Gate-uri de faza
@@ -258,5 +349,6 @@ Un agent nu transforma o propunere de conversatie in functionalitate implementat
 ## Provenienta
 
 Memoria a fost reconstruita din `casa3d-faza0.zip`, `casa3d-faza1.zip`, `casa3d-faza2.zip`, `casa3d-faza3.zip` si conversatia Claude furnizata de utilizator.
+Sectiunea F4 si reconcilierea din 2026-10-10 provin din `casa3d-faza0.zip`, `casa3d-faza2.zip` si `casa3d-faza4.zip`, verificate local (`Casa3D/VERIFICATION_2026-10-10.md`).
 
 Distinctiile implementat/verificat, proiectat/discutat, simulat si roadmap sunt intentionate pentru a preveni inflatia de capabilitati.

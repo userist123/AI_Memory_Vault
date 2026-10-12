@@ -5,9 +5,9 @@ on the working tree of `claude/vault-universal-access` (base commit in the JSON)
 
 | Measure | Value |
 |---|---:|
-| Routes (files reachable by `vault://`) | 4433 |
-| Domains (`04_CONFIG/vault_domains.yaml`, `expand: subdirs` included) | 114 (113 before the Casa3D sub-directory landed on main: `expand: subdirs` adds one domain per sub-directory). `VAULT_STATE.md` states the current count (4433 routes, 117 domains; by URI 4433/4433, re-measured 2026-10-10) and a test checks it; the by-name rows below were re-measured 2026-10-10 on 4433 routes |
-| `vault_resolve(uri)` returns that route | 4433 / 4433 |
+| Routes (files reachable by `vault://`) | 4442 |
+| Domains (`04_CONFIG/vault_domains.yaml`, `expand: subdirs` included) | 114 (113 before the Casa3D sub-directory landed on main: `expand: subdirs` adds one domain per sub-directory). `VAULT_STATE.md` states the current count (4442 routes, 117 domains; by URI 4442/4442, re-measured 2026-10-10) and a test checks it; the by-name rows below were re-measured 2026-10-10 on 4433 routes |
+| `vault_resolve(uri)` returns that route | 4442 / 4442 |
 | `vault_resolve(<last slug segment>)` returns that route | 4199 / 4433 (94.7%) |
 | … returns AMBIGUOUS (name shared by several files) | 234 (readme 116, agent 22, current 10, …) |
 | … RESOLVED to a different file | **0** |

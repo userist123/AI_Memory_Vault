@@ -94,7 +94,7 @@ class FileStorageEngine:
                 set(glob.glob(os.path.join(folder_path, "**", "*.md"), recursive=True))
             )
             for filepath in sorted(found_files):
-                if "RAW_IMPORTS" in filepath or "Obsidian" in filepath:
+                if "RAW_IMPORTS" in filepath or "Obsidian" in filepath or "node_modules" in filepath:
                     continue
                 try:
                     with open(filepath, 'r', encoding='utf-8') as f:

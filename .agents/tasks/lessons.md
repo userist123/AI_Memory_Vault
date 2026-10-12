@@ -107,3 +107,47 @@ When the owner corrects an agent or a real incident reveals a reusable failure p
   Rule: ship one install step per surface (PC: user-scope installer; cloud: environment Setup script; chat: uploadable skill
   zip), make that install keep itself current, never fan out copies of the same line into many repos, and test the install
   line on every shell the owner uses (Git Bash on Windows) before calling it done.
+
+## 2026-10-11 — Casa3D: commit gated on grep output, backup by basename
+- Incident 1: `npx vitest run | grep ... && git commit` committed 21e7a07b while 1 test failed (grep exits 0 even on failures).
+  Rule: gate commits on the test command's own exit status (`npx vitest run > log; [ $? -eq 0 ] && git commit`), never on a pipe into grep.
+- Incident 2: a temporary "revert to HEAD to prove the regression test is red" loop saved backups as `keep_$(basename f)`;
+  core/procurement.ts and lib/procurement.ts collided and one file was overwritten. Rule: back up by full path
+  (`git stash push -- <paths>` or `cp --parents`), never by basename.
+
+## 2026-10-11 — "not present" assertions on random data are flaky
+CI failed once on `tests/project-meta.test.ts`: it asserted the shared JSON does not contain `'0722'`, but
+UUIDs and the 43-char share token are random and can contain that substring by chance. Rule: when asserting
+that private data is absent, search for a value that cannot occur in ids/tokens (the full formatted string,
+with spaces or non-hex letters), never a short digit run.
+
+## 2026-10-11 — Casa3D: a public decision must name the version it decides
+Review finding: a client's approval only sent {decision, author}; the designer could withdraw, change the amount and
+re-send under the same id, and a stale client tab would approve the new amount. Rule: any public approve/accept action
+carries the version the person saw (here the ms-truncated `sent_at`) and the update is conditional on it (409 otherwise).
+Also: `res.pipe(decoder)` does not forward `res` errors (use `stream.pipeline`), and a socket `timeout` is not an overall deadline.
+
+## 2026-10-11 — Every .md written into the content tree needs the vault YAML front matter, including subagent research
+CI `regression-and-heldout` failed on `test_notes_strict_yaml`: four research notes written by subagents had no front
+matter, so the storage engine could not read them. Rule: before committing any new .md under 01_/02_/10_ trees, add the
+front matter (id, type, lifecycle REVIEW, provenance, verification unverified, relations) and run
+`python3 -m pytest -q 20_TESTS/test_notes_strict_yaml.py`. Tell research subagents to write the front matter themselves.
+
+## 2026-10-11 — Casa3D PC: an update must stop the old server before the build, and verify it is gone
+`update.ps1` killed the port-3123 listener after `git pull` but the kill did not take; the old `next start` kept serving
+with the new `.next` underneath, so every `/_next/static/*` chunk returned 400 and the editor hung on "Loading project…".
+Rule: stop the app (by command line and by port, retry until the port is free) *before* `npm run build`, then start the
+new server; after an update, check one static chunk returns 200, not just `update.done`.
+
+## 2026-10-11 — Casa3D PC update: the old server survived again (Access denied)
+- Symptom: after update.ps1, /_next/static chunks returned 400 because the server started at 23:55 kept port 3123.
+- Cause: Stop-Process and even `taskkill /PID <node> /T /F` got "Access denied" on the node process; killing its parent
+  cmd.exe with `taskkill /PID <parent> /T /F` worked.
+- Rule: stop the app by killing the port owner's PARENT tree, then verify a static chunk returns 200 through the tunnel
+  before telling the owner the PC is updated.
+
+## 2026-10-12 — Owner rule: nothing about the owner's own PC in the repo
+- Never commit, push or publish the machine name, Windows user name, C:\Users\<user> paths, device ids/serials, SIDs,
+  Wi-Fi names, real case ids or content of material the owner hands over: not in files, fixtures, docs, commit messages
+  or PR/issue text (repositories may be public). Use placeholders: LAB-PC, user, C:\Users\user, fake serials.
+- If something already slipped into a pushed branch, tell the owner; history rewrites and visibility are their decision.
