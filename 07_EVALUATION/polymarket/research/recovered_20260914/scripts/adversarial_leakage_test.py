@@ -1,8 +1,9 @@
+import os
 import json
 import sys
 from datetime import datetime, timezone
 
-sys.path.insert(0, "C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages")
+sys.path.insert(0, os.path.expanduser("~/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages"))
 
 from polymarket.historical_paper_replay import HistoricalMarketBundle, HistoricalTapePoint, run_mechanical_control
 from polymarket.phase12_temporal_contract import TemporalReplayCase, validate_temporal_replay_case
@@ -11,7 +12,7 @@ from polymarket.resolutions import ResolutionRecord, parse_resolution
 from polymarket.backtest import score_decisions, build_leakage_proof, LeakageProof, Decision, Outcome, BACKTEST_SCHEMA_VERSION
 
 # Load real dataset
-with open("C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json", "r", encoding="utf-8") as f:
+with open(os.path.expanduser("~/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json"), "r", encoding="utf-8") as f:
     dataset = json.load(f)
 
 first_market = dataset["markets"][0]

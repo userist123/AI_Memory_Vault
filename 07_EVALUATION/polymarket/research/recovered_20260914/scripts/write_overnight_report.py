@@ -145,7 +145,7 @@ $ python -m pytest -q 20_TESTS/polymarket
 ```
 """
 
-target = "C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/OVERNIGHT_CAMPAIGN_REPORT.md"
+target = os.path.expanduser("~/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/OVERNIGHT_CAMPAIGN_REPORT.md")
 with open(target, "w", encoding="utf-8") as f:
     f.write(report_text)
 

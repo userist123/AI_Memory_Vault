@@ -102,7 +102,7 @@ Cascada aplicată corespunde exact contractului din `historical_paper_replay.py`
    - **Condiție critică**: Backtestul este fezabil **exclusiv dacă** folosește `interval="all"` la extragerea benzii CLOB. Dacă se apelează codul existent din `historical_paper_replay.py:97` cu `fidelity=1440`, tavanul este **0 piețe**.
 """
 
-target = "C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/CORPUS_DEPTH_FINDINGS.md"
+target = os.path.expanduser("~/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/CORPUS_DEPTH_FINDINGS.md")
 with open(target, "w", encoding="utf-8") as f:
     f.write(content)
 

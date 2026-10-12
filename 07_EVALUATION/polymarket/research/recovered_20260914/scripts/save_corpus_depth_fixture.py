@@ -1,22 +1,23 @@
+import os
 import json
 import hashlib
 from datetime import datetime, timezone
 
-scratch_path = "C:/Users/Marius/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch"
+scratch_path = os.path.expanduser("~/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch")
 with open(f"{scratch_path}/sampled_500_markets.json", "r", encoding="utf-8") as f:
     markets_500 = json.load(f)
 
 with open(f"{scratch_path}/corpus_depth_results.json", "r", encoding="utf-8") as f:
     depth_res = json.load(f)
 
-target_fixture = "C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/corpus_depth_sample_500.json"
+target_fixture = os.path.expanduser("~/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/corpus_depth_sample_500.json")
 with open(target_fixture, "w", encoding="utf-8") as f:
     json.dump(markets_500, f, indent=2)
 
 with open(target_fixture, "rb") as f:
     sha256_hash = hashlib.sha256(f.read()).hexdigest()
 
-target_prov = "C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/corpus_depth_sample_500.provenance.json"
+target_prov = os.path.expanduser("~/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/corpus_depth_sample_500.provenance.json")
 prov_data = {
     "target_file": "corpus_depth_sample_500.json",
     "sha256": sha256_hash,
