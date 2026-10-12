@@ -271,7 +271,19 @@ namespace LogAnalyzer.UI.ViewModels
                 var isolated = StationShouldBeIsolated;
                 SavedReportInfo = "";
                 var (folders, updates) = ControlInputs();
-                _report = await Task.Run(() => ControlEvaluator.Evaluate(StationFactCollector.Collect(start, isolated, classifiedFolders: folders, offlineUpdates: updates)));
+                _report = await Task.Run(() =>
+                {
+                    var facts = StationFactCollector.Collect(start, isolated, classifiedFolders: folders, offlineUpdates: updates);
+                    // Time memory (S05): the latest time the application recorded, read BEFORE this report adds its own "clock.seen" entry.
+                    string? auditPath = null;
+                    try { auditPath = LogAnalyzer.UI.Services.AuthApp.Service.AuditPath; } catch (InvalidOperationException) { }
+                    if (auditPath is not null)
+                    {
+                        try { facts.LatestAppRecordUtc = LogAnalyzer.Dfir.Case.ClockMemory.LatestRecorded(auditPath); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+                        try { LogAnalyzer.Dfir.Case.ClockMemory.RecordSeen(auditPath, facts.CollectedUtc, "raport de control stație"); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+                    }
+                    return ControlEvaluator.Evaluate(facts);
+                });
                 FillChecks();
                 Users.Clear();
                 foreach (var u in _report.Users) Users.Add(u);

@@ -78,6 +78,8 @@ public sealed class StationFacts
     public List<InstalledUpdateFact>? InstalledUpdates { get; set; }
     /// <summary>The register of offline updates kept by the organisation; an empty list = the register is not filled in; null = not given.</summary>
     public List<LogAnalyzer.Dfir.Registers.UpdateRow>? OfflineUpdateRegister { get; set; }
+    /// <summary>The latest time the application itself recorded in its chained audit logs ("time memory", check S05); null = no earlier record.</summary>
+    public DateTimeOffset? LatestAppRecordUtc { get; set; }
 }
 
 public static class StationFactCollector
@@ -287,6 +289,11 @@ public static class StationFactCollector
 
     private static string Hklm(string key, string name) => RegRead(Registry.LocalMachine, key, name);
 
+    /// <summary>Windows install date (HKLM\...\CurrentVersion\InstallDate, Unix seconds); null when it cannot be read.</summary>
+    public static DateTimeOffset? ReadInstallDate() =>
+        long.TryParse(Hklm(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion", "InstallDate"), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var secs) && secs > 0
+            ? DateTimeOffset.FromUnixTimeSeconds(secs) : null;
+
     private static void Guard(Action a)
     {
         try { a(); }
@@ -440,6 +447,7 @@ public static class StationFactCollector
         s["OS.DisplayVersion"] = Hklm(cv, "DisplayVersion");
         s["OS.Build"] = Hklm(cv, "CurrentBuild");
         s["OS.UBR"] = Hklm(cv, "UBR");
+        s["OS.InstallDate"] = ReadInstallDate() is { } inst ? inst.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", System.Globalization.CultureInfo.InvariantCulture) : Absent;
         Guard(() =>
         {
             using var qfe = new ManagementObjectSearcher("SELECT InstalledOn FROM Win32_QuickFixEngineering");

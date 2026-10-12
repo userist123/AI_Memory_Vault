@@ -291,6 +291,11 @@ public static class CheckGuides
           "A citit lista actualizărilor Windows instalate (cu data) și a căutat numărul KB al fiecăreia în registrul actualizărilor offline completat în aplicație.",
           "WMI Win32_QuickFixEngineering → HotFixID, InstalledOn; registrul actualizărilor offline (pagina Control stație)",
           "Conform = toate actualizările din perioadă apar în registru. Neconform = actualizări instalate care nu apar în registru. De verificat = registrul nu este completat în aplicație (comparați manual, verificarea M05) sau nu s-a instalat nimic în perioadă. Lista Windows nu cuprinde actualizările de antivirus; data semnăturilor se compară separat."),
+        G("S05", "Ce verificăm: dacă ceasul stației este în ordine față de ultima oră pe care aplicația însăși a notat-o (la pornire și la fiecare raport), în jurnalul ei protejat împotriva modificărilor, și față de data instalării Windows.",
+          "De ce contează: toate orele din jurnale și din constatări se bazează pe ceas; un ceas dat înapoi sau resetat (de exemplu baterie CMOS descărcată) face ca evenimentele să pară în altă ordine și poate ascunde ce s-a întâmplat.",
+          "Ce faceți: dacă ceasul este în urmă, corectați ora dintr-o sursă aprobată, verificați bateria CMOS și notați incidentul. Un salt mare înainte (peste 30 de zile) nu este o eroare: stația poate fi oprită mult timp; doar confirmați că data este cea reală.",
+          "Jurnalul de audit al aplicației (intrările clock.seen, lanț de amprente); jurnalul de custodie al cazului; HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion → InstallDate",
+          "Conform = ora este în ordine. Neconform = ceasul este mai vechi cu peste 2 minute decât ultima activitate a aplicației sau dinaintea instalării Windows. De verificat = salt înainte de peste 30 de zile. Nedeterminat = aplicația nu are încă nicio înregistrare (prima rulare). Aplicația nu poate vedea o schimbare a ceasului făcută cât timp era oprită."),
 
         // ---- domain (DomainEvaluator) — senior review E3 ----
         G("DM01", "Ce conturi de persoane (nu de calculatoare) au un nume de serviciu (SPN) atașat.", "Oricine are un cont în domeniu poate cere pentru aceste conturi un „bilet” Kerberos și poate încerca apoi, pe calculatorul lui, să ghicească parola (Kerberoasting). O parolă scurtă cade în câteva ore.",

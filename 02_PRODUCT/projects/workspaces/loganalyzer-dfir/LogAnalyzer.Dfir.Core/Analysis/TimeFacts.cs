@@ -73,7 +73,8 @@ public static class TimeReliability
     private static string Field(TimelineEvent e, string k) => e.Fields.TryGetValue(k, out var v) ? v : "";
 
     /// <summary>Lowers the confidence of findings resting on unreliable times; returns how many were lowered.</summary>
-    public static int Apply(IEnumerable<Finding> findings, IReadOnlyList<TimelineEvent> timeline)
+    /// <param name="stationClockUnreliable">The analysis station's own clock disagrees with the application's time memory (ClockMemory): every finding with a time is lowered.</param>
+    public static int Apply(IEnumerable<Finding> findings, IReadOnlyList<TimelineEvent> timeline, bool stationClockUnreliable = false)
     {
         var rows = timeline.GroupBy(e => (e.EvidenceId, e.Locator)).ToDictionary(g => g.Key, g => g.ToList());
         var clock = timeline.Where(e => IsClockChange(e) && e.Time.IsKnown).Select(e => e.Time.Utc!.Value).ToList();
@@ -84,6 +85,8 @@ public static class TimeReliability
             string? why = null;
             if (f.SupportingEvidence.Any(r => rows.TryGetValue((r.EvidenceId, r.Locator), out var l) && l.Any(IsUnreliable)))
                 why = "o probă are oră lipsă sau ambiguă";
+            else if (stationClockUnreliable && (f.FirstSeenUtc ?? f.LastSeenUtc) is not null)
+                why = "ceasul stației de analiză nu corespunde memoriei de timp a aplicației (dat înapoi sau resetat)";
             else if ((f.FirstSeenUtc ?? f.LastSeenUtc) is { } from)
             {
                 var to = f.LastSeenUtc ?? from;
