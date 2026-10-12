@@ -162,6 +162,13 @@ public static class ShippedData
     public static string ReadEmbedded(string file)
     {
         var asm = typeof(ShippedData).Assembly;
+        // the lists are embedded gzip-compressed (no plain command patterns in the DLL); a plain resource is still read for older builds
+        if (asm.GetManifestResourceStream("LogAnalyzer.Dfir.Analysis.Data." + file + ".gz") is { } gz)
+        {
+            using var z = new GZipStream(gz, CompressionMode.Decompress);
+            using var zr = new StreamReader(z, Encoding.UTF8);
+            return zr.ReadToEnd();
+        }
         using var s = asm.GetManifestResourceStream("LogAnalyzer.Dfir.Analysis.Data." + file)
                       ?? throw new InvalidOperationException($"Resursa încorporată {file} lipsește din {asm.GetName().Name}.");
         using var r = new StreamReader(s);

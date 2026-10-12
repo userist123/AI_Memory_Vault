@@ -23,7 +23,8 @@ public sealed class MediaInspection
 /// <summary>
 /// Quick, read-only check of a removable volume (research 2026-10-12, item 4): root plus one level. Only names and attributes are listed; nothing is
 /// opened or executed and reparse points (junctions, symlinks) are not followed. Flags autorun.inf, hidden/system folders, blank-named entries,
-/// RECYCLER on removable media, a lone shortcut named like the drive or label (classic USB-worm trick) and executables/scripts at the root.
+/// RECYCLER on removable media, a lone shortcut named like the drive or label (classic USB-worm trick), executables/scripts at the root, and shortcuts
+/// (root and level 1) whose decoded target is a system interpreter / proxy program or whose arguments are padded (decoded as bytes, never run).
 /// </summary>
 public static class RemovableMediaInspector
 {
@@ -65,6 +66,7 @@ public static class RemovableMediaInspector
                     findings.Add(new(name, $"o singură scurtătură „{name}” cu numele unității sau etichetei (truc clasic de vierme USB)"));
                 else if (RiskyExtensions.Contains(ext))
                     findings.Add(new(name, $"fișier executabil sau script la rădăcină: {name}"));
+                if (ext == ".lnk" && ShortcutSign(name, e) is { Length: > 0 } sign) findings.Add(new(name, sign));
             }
         }
 
@@ -83,10 +85,87 @@ public static class RemovableMediaInspector
                     findings.Add(new($"{rel}\\{e.Name}", $"folderul {e.Name} în „{rel}”"));
                 else if (e is FileInfo && (e.Attributes & FileAttributes.Hidden) != 0 && RiskyExtensions.Contains(Path.GetExtension(e.Name).ToLowerInvariant()))
                     findings.Add(new($"{rel}\\{e.Name}", $"executabil sau script ASCUNS „{e.Name}” în folderul „{rel}”"));
+                if (e.Name.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase) && ShortcutSign(e.Name, e) is { Length: > 0 } sign1) findings.Add(new($"{rel}\\{e.Name}", sign1));
             }
         }
         return new MediaInspection { Root = rootPath, Findings = findings };
     }
+
+    /// <summary>
+    /// Read-only listing of a removable volume for the P1 rules (MEDIA-LNK-PAYLOAD, MEDIA-HIDDEN-MAILBOX, MEDIA-SAME-DROP): root and two levels, names,
+    /// attributes, sizes and times; SHA-256 of files up to <paramref name="hashMaxBytes"/>; shortcuts decoded by <see cref="FileSystem.LnkParser.Decode"/>
+    /// (read as bytes, never opened by the shell, never run). Reparse points are listed but not followed; Windows' own folders are not entered.
+    /// </summary>
+    public static LogAnalyzer.Dfir.Analysis.MediaListingFact List(string root, string volumeLabel = "", int maxEntries = 3000, long hashMaxBytes = 16 * 1024 * 1024, int maxHashed = 300)
+    {
+        var rootPath = root.TrimEnd('\\', '/') + "\\";
+        var listing = new LogAnalyzer.Dfir.Analysis.MediaListingFact
+        {
+            Letter = rootPath.Length >= 2 && rootPath[1] == ':' ? char.ToUpperInvariant(rootPath[0]).ToString() : "", Label = volumeLabel,
+        };
+        int hashed = 0;
+        void Walk(string dir, string rel, int depth)
+        {
+            List<FileSystemInfo> items;
+            try { items = Read(dir); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return; }
+            foreach (var e in items)
+            {
+                if (listing.Entries.Count >= maxEntries) { listing.Truncated = true; return; }
+                var entry = new LogAnalyzer.Dfir.Analysis.MediaEntryFact
+                {
+                    RelativePath = rel.Length == 0 ? e.Name : rel + "\\" + e.Name, IsDirectory = e is DirectoryInfo,
+                    Hidden = e.Attributes.HasFlag(FileAttributes.Hidden), System = e.Attributes.HasFlag(FileAttributes.System),
+                    CreatedUtc = Utc(e.CreationTimeUtc), LastWriteUtc = Utc(e.LastWriteTimeUtc),
+                };
+                if (e is FileInfo fi)
+                {
+                    entry.Size = fi.Length;
+                    if (fi.Length <= hashMaxBytes && hashed < maxHashed && !e.Attributes.HasFlag(FileAttributes.ReparsePoint))
+                        try
+                        {
+                            using var fs = new FileStream(fi.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                            entry.Sha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fs));
+                            hashed++;
+                        }
+                        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+                    if (fi.Extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase) && fi.Length is > 0 and <= MaxLinkBytes && ReadLink(fi.FullName) is { } link)
+                    { entry.LnkTarget = link.Target; entry.LnkArguments = link.Arguments; entry.LnkWorkingDir = link.WorkingDir; }
+                }
+                listing.Entries.Add(entry);
+            }
+            if (depth >= 2) return;
+            foreach (var d in items.OfType<DirectoryInfo>().Where(d => !d.Attributes.HasFlag(FileAttributes.ReparsePoint) && !Benign.Contains(d.Name, StringComparer.OrdinalIgnoreCase)))
+                Walk(d.FullName, rel.Length == 0 ? d.Name : rel + "\\" + d.Name, depth + 1);
+        }
+        Walk(rootPath, "", 0);
+        return listing;
+    }
+
+    private const int MaxLinkBytes = 1024 * 1024;
+
+    private static DateTimeOffset? Utc(DateTime t) => t.Year > 1601 ? new DateTimeOffset(DateTime.SpecifyKind(t, DateTimeKind.Utc)) : null;
+
+    /// <summary>The decoded shortcut, or null when the bytes are not a valid link (nothing is executed; the shell is not involved).</summary>
+    internal static FileSystem.LnkParser.Link? ReadLink(string path)
+    {
+        try { return FileSystem.LnkParser.Decode(File.ReadAllBytes(path)); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or ArgumentException or IndexOutOfRangeException) { return null; }
+    }
+
+    /// <summary>What a shortcut on the medium starts, in plain Romanian, when it is a system interpreter / proxy program or its arguments are padded; "" otherwise.</summary>
+    internal static string ShortcutSign(string name, FileSystemInfo file)
+    {
+        if (file is not FileInfo { Length: > 0 and <= MaxLinkBytes } || ReadLink(file.FullName) is not { } link) return "";
+        var exe = Path.GetFileName(link.Target.Replace('/', '\\')).ToLowerInvariant();
+        var depad = FileSystem.LnkText.Depad(link.Arguments);
+        var parts = new List<string>();
+        if (exe.Length > 0 && LogAnalyzer.Dfir.Analysis.Wp14Data.Default.Payload.Lolbins.Contains(exe, StringComparer.OrdinalIgnoreCase))
+            parts.Add($"scurtătura „{name}” pornește {exe} ({link.Target}{(depad.Text.Length > 0 ? " " + Short(depad.Text) : "")}), nu un document");
+        if (depad.Padded) parts.Add($"argumentele scurtăturii „{name}” încep cu {depad.Leading} caractere invizibile (comanda e ascunsă în fereastra Proprietăți): {Short(depad.Text)}");
+        return string.Join("; ", parts);
+    }
+
+    private static string Short(string s) => s.Length <= 160 ? s : s[..160] + "…";
 
     private static List<FileSystemInfo> Read(string dir) =>
         new DirectoryInfo(dir).EnumerateFileSystemInfos().Take(MaxEntriesPerFolder).ToList();

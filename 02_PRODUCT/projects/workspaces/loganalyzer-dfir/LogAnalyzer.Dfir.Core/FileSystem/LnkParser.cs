@@ -45,7 +45,7 @@ public sealed class LnkParser : EvidenceParserBase
             Time = link.Modified > 0 ? Timestamp.FromFileTime(link.Modified, "LNK header target WriteTime") : Timestamp.Unknown(),
             TimeSemantics = "target file last modified, as recorded in the link header",
             Source = "LNK", EvidenceId = item.EvidenceId, Path = target, Process = target.Length > 0 ? WinPath.GetFileName(target) : "",
-            Summary = $"Shortcut către {(target.Length > 0 ? target : "(țintă nedecodată)")}" + (link.Arguments.Length > 0 ? $" {link.Arguments}" : "") +
+            Summary = $"Shortcut către {(target.Length > 0 ? target : "(țintă nedecodată)")}" + ArgsText(link.Arguments) +
                       (link.Machine.Length > 0 ? $"; creat pe {link.Machine}" : ""),
             TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.High,
             Locator = "MS-SHLLINK",
@@ -58,9 +58,19 @@ public sealed class LnkParser : EvidenceParserBase
                 ["DriveType"] = link.DriveType, ["VolumeSerial"] = link.Serial, ["VolumeLabel"] = link.Label, ["NetName"] = link.NetName,
                 ["MachineId"] = link.Machine, ["LinkFlags"] = $"0x{link.Flags:X}",
                 ["LnkFileModifiedUtc"] = File.GetLastWriteTimeUtc(fullPath).ToString("o", CultureInfo.InvariantCulture),
+                // where the link itself was on the examined system (from the acquisition); the P1 rules read it (link on a removable medium, in a Startup folder)
+                ["LnkPath"] = item.OriginalPath,
             },
         });
         result.Records++;
+    }
+
+    /// <summary>The arguments as a reader should see them: padding (CVE-2025-9491) collapsed and counted; the field itself stays verbatim.</summary>
+    private static string ArgsText(string args)
+    {
+        if (args.Length == 0) return "";
+        var d = LnkText.Depad(args);
+        return d.Padded ? $" {d.Text} [argumente cu {d.Removed} caractere invizibile de umplutură eliminate la afișare]" : $" {args}";
     }
 
     private static string Iso(long ft) => ft is > 0 and <= Timestamp.MaxFileTime ? DateTime.FromFileTimeUtc(ft).ToString("o", CultureInfo.InvariantCulture) : "";

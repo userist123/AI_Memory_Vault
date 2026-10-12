@@ -45,6 +45,7 @@ public static partial class Wp14Rules
         Optical(c, found);
         AirGap(c, found);
         Channels(c, found);
+        PayloadFindings(c, found);        // P1: shortcuts and hidden folders on media, execution from media, Startup folder, Run-dialog commands
         return found;
     }
 
