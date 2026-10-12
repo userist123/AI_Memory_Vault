@@ -74,9 +74,25 @@ public static class BootEntries
         {
             var lines = block.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0).ToList();
             if (lines.Count == 0 || !(lines[0].StartsWith("Windows Boot Loader", StringComparison.OrdinalIgnoreCase) || lines[0].StartsWith("Înc", StringComparison.OrdinalIgnoreCase))) continue;
+            if (IsRecoveryOrResume(lines)) continue;
             var d = lines.FirstOrDefault(l => l.StartsWith("description", StringComparison.OrdinalIgnoreCase));
             res.Add(d is null ? "(fără descriere)" : d["description".Length..].Trim() is { Length: > 0 } t ? t : "(fără descriere)");
         }
         return res;
+    }
+
+    /// <summary>The Windows Recovery Environment loader (RAM-disk boot of Winre.wim) and the hibernation resume loader exist on every station: they are not a second operating system.</summary>
+    private static bool IsRecoveryOrResume(List<string> lines)
+    {
+        foreach (var l in lines)
+        {
+            var t = l.ToLowerInvariant();
+            if (t.StartsWith("device", StringComparison.Ordinal) || t.StartsWith("osdevice", StringComparison.Ordinal))
+                if (t.Contains("ramdisk=") || t.Contains("winre.wim")) return true;
+            if (t.StartsWith("path", StringComparison.Ordinal) && (t.Contains("winresume.efi") || t.Contains("winresume.exe"))) return true;
+            if (t.StartsWith("description", StringComparison.Ordinal) && (t.Contains("recovery environment") || t.Contains("mediul de recuperare") || t.Contains("resume from hibernate") || t.Contains("windows resume"))) return true;
+            if (t.StartsWith("winpe", StringComparison.Ordinal) && t.EndsWith("yes", StringComparison.Ordinal)) return true;
+        }
+        return false;
     }
 }

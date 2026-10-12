@@ -1,5 +1,6 @@
 using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
+using LogAnalyzer.Dfir.Privacy;
 using static LogAnalyzer.Dfir.Analysis.Wp11Rules;
 
 namespace LogAnalyzer.Dfir.Analysis;
@@ -48,7 +49,14 @@ public static partial class Wp14Rules
     private static void BadUsb(Ctx c, List<Finding> o)
     {
         var l = c.Data.Channels;
-        bool IsExternal(string inst) => inst.StartsWith("HID\\VID_", StringComparison.OrdinalIgnoreCase) || inst.StartsWith("USB\\VID_", StringComparison.OrdinalIgnoreCase) || inst.StartsWith("HID\\{", StringComparison.OrdinalIgnoreCase) || inst.StartsWith("BTHLE", StringComparison.OrdinalIgnoreCase);
+        bool IsExternal(string inst, TimelineEvent e)
+        {
+            // internal keyboards: ACPI / PS/2 / I2C-attached HID, or a parent that is an ACPI / I2C / PCI controller
+            if (inst.StartsWith("ACPI\\", StringComparison.OrdinalIgnoreCase) || inst.Contains("I2C", StringComparison.OrdinalIgnoreCase)) return false;
+            var parent = F(e, "ParentId", "ParentInstanceId", "Parent");
+            if (parent.Length > 0 && (parent.StartsWith("ACPI\\", StringComparison.OrdinalIgnoreCase) || parent.StartsWith("PCI\\", StringComparison.OrdinalIgnoreCase) || parent.Contains("I2C", StringComparison.OrdinalIgnoreCase))) return false;
+            return inst.StartsWith("HID\\VID_", StringComparison.OrdinalIgnoreCase) || inst.StartsWith("USB\\VID_", StringComparison.OrdinalIgnoreCase) || inst.StartsWith("HID\\{",StringComparison.OrdinalIgnoreCase) || inst.StartsWith("BTHLE", StringComparison.OrdinalIgnoreCase);
+        }
         var arrivals = new List<(TimelineEvent E, string Inst, string Name)>();
         foreach (var e in c.Events)
         {
@@ -57,13 +65,29 @@ public static partial class Wp14Rules
             var inst = Instance(e);
             var cls = F(e, "ClassGuid", "ClassId");
             var name = F(e, "DriverDescription", "DeviceDescription");
-            if (!IsExternal(inst)) continue;
+            if (!IsExternal(inst, e)) continue;
             bool kb = l.KeyboardClassGuids.Any(g => g.Equals(cls, StringComparison.OrdinalIgnoreCase)) || l.KeyboardWords.Any(w => name.Contains(w, StringComparison.OrdinalIgnoreCase));
             if (kb && T(e) is not null) arrivals.Add((e, inst, name));
         }
         if (arrivals.Count == 0) return;
+        // a device whose first appearance is earlier than the arrival being examined was present before: only the first arrival of an instance is "new"
+        arrivals = arrivals.GroupBy(a => a.Inst, StringComparer.OrdinalIgnoreCase).Select(g => g.OrderBy(x => T(x.E)).First()).ToList();
+        var logonTypes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var le in c.Events.Where(x => Ev(x, "Security", 4624)))
+            if (F(le, "TargetLogonId") is { Length: > 0 } lid) logonTypes[lid] = F(le, "LogonType").Trim();
+        bool IsInteractiveUser(ProcStart p)
+        {
+            var u = p.User.Trim();
+            var bare = u.Contains('\\') ? u[(u.LastIndexOf('\\') + 1)..] : u;
+            if (bare.Length > 0 && (PiiMasker.IsBuiltIn(bare) || bare.EndsWith('$') || bare.Equals("SYSTEM", StringComparison.OrdinalIgnoreCase) || bare.Equals("LOCAL SERVICE", StringComparison.OrdinalIgnoreCase) || bare.Equals("NETWORK SERVICE", StringComparison.OrdinalIgnoreCase))) return false;
+            if (u.StartsWith("S-1-5-18", StringComparison.Ordinal) || u.StartsWith("S-1-5-19", StringComparison.Ordinal) || u.StartsWith("S-1-5-20", StringComparison.Ordinal)) return false;
+            var lid = p.LogonId.Trim();
+            if (lid.Equals("0x3e7", StringComparison.OrdinalIgnoreCase) || lid.Equals("0x3e5", StringComparison.OrdinalIgnoreCase) || lid.Equals("0x3e4", StringComparison.OrdinalIgnoreCase)) return false;
+            if (lid.Length > 0 && logonTypes.TryGetValue(lid, out var lt) && lt.Length > 0 && lt is not ("2" or "10" or "11")) return false;
+            return true;
+        }
         bool IsShell(string image) => image.Length > 0 && l.ShellImages.Contains(WinPath.GetFileName(image.TrimEnd('\\')), StringComparer.OrdinalIgnoreCase);
-        var shells = ProcessStarts(c.Events).Where(p => IsShell(p.Image) && T(p.Event) is not null).Select(p => (p.Event, Name: WinPath.GetFileName(p.Image), Kind: $"{p.Event.Source[9..]} {p.Event.EventId}"))
+        var shells = ProcessStarts(c.Events).Where(p => IsShell(p.Image) && T(p.Event) is not null && IsInteractiveUser(p)).Select(p => (p.Event, Name: WinPath.GetFileName(p.Image), Kind: $"{p.Event.Source[9..]} {p.Event.EventId}"))
             .Concat(c.Events.Where(e => e.Source == "Prefetch" && IsShell(e.Process) && T(e) is not null).Select(e => (e, e.Process, "Prefetch"))).ToList();
         if (shells.Count == 0) return;
         foreach (var g in arrivals.GroupBy(a => a.Inst, StringComparer.OrdinalIgnoreCase))
