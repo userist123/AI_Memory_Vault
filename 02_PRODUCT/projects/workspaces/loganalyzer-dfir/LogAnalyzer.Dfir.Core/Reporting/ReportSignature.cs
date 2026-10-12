@@ -54,10 +54,11 @@ public static class ReportSignature
     /// <summary>Short fingerprint of a public key: first 16 hex characters of the SHA-256 of its SubjectPublicKeyInfo.</summary>
     public static string KeyId(string publicKeyBase64) => Convert.ToHexString(SHA256.HashData(Convert.FromBase64String(publicKeyBase64.Trim())))[..16];
 
-    public static ECDsa LoadPrivateKey(string pkcs8Base64)
+    /// <summary>Loads the key from a key file's text: bare PKCS#8 base64, or a DPAPI / passphrase protected file (see <see cref="ReportKeyProtection"/>).</summary>
+    public static ECDsa LoadPrivateKey(string pkcs8Base64, string? passphrase = null)
     {
         var k = ECDsa.Create();
-        k.ImportPkcs8PrivateKey(Convert.FromBase64String(pkcs8Base64.Trim()), out _);
+        k.ImportPkcs8PrivateKey(Convert.FromBase64String(ReportKeyProtection.Unprotect(pkcs8Base64, passphrase)), out _);
         if (k.KeySize != 256) { k.Dispose(); throw new CryptographicException("Cheia de semnare trebuie să fie ECDSA P-256."); }
         return k;
     }
@@ -89,13 +90,26 @@ public static class ReportSignature
     public static ReportSignatureResult Verify(string reportPath, IReadOnlyList<string> trustedPublicKeys, string? sigPath = null)
     {
         sigPath ??= SigPath(reportPath);
-        if (!File.Exists(reportPath)) return new(ReportSignatureStatus.Missing, "Raportul nu există: " + Path.GetFileName(reportPath), null, "");
-        var actual = Sha256File(reportPath);
-        if (!File.Exists(sigPath)) return new(ReportSignatureStatus.Missing, "Raportul nu are fișier de semnătură (" + Path.GetFileName(sigPath) + ").", null, actual);
+        string actual = "";
         ReportSignatureFile? s;
-        try { s = JsonSerializer.Deserialize<ReportSignatureFile>(File.ReadAllText(sigPath)); }
-        catch (JsonException) { s = null; }
-        if (s is null || s.Schema != Schema || s.Signature.Length == 0 || s.PublicKey.Length == 0)
+        try
+        {
+            if (!File.Exists(reportPath)) return new(ReportSignatureStatus.Missing, "Raportul nu există: " + Path.GetFileName(reportPath), null, "");
+            actual = Sha256File(reportPath);
+            if (!File.Exists(sigPath)) return new(ReportSignatureStatus.Missing, "Raportul nu are fișier de semnătură (" + Path.GetFileName(sigPath) + ").", null, actual);
+            try { s = JsonSerializer.Deserialize<ReportSignatureFile>(File.ReadAllText(sigPath)); }
+            catch (JsonException) { s = null; }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return new(ReportSignatureStatus.Invalid, "Fișierul nu poate fi citit (" + ex.Message + "): verificarea nu s-a putut face.", null, actual);
+        }
+        if (s is not null)
+        {
+            // "field":null in the JSON assigns null to a non-nullable string: treat it as empty, never dereference it
+            s.Schema ??= ""; s.File ??= ""; s.Sha256 ??= ""; s.Signer ??= ""; s.KeyId ??= ""; s.PublicKey ??= ""; s.Algorithm ??= ""; s.Signature ??= "";
+        }
+        if (s is null || s.Schema != Schema || s.Signature.Length == 0 || s.PublicKey.Length == 0 || s.Sha256.Length == 0)
             return new(ReportSignatureStatus.Invalid, "Fișierul de semnătură nu poate fi citit (format necunoscut).", s, actual);
 
         string? trusted = null;
@@ -158,14 +172,15 @@ public sealed class ReportSigningSettings
     public bool CanSign => PrivateKeyPath.Length > 0 && File.Exists(PrivateKeyPath);
 
     /// <summary>Signs a just-generated report when a key is configured; returns the line to show (never throws for a missing or bad key: it says so).</summary>
-    public string SignIfConfigured(string reportPath)
+    /// <param name="signerOverride">When given, written as the signer instead of the configured label or the Windows user name (masked exports pass the pseudonym).</param>
+    public string SignIfConfigured(string reportPath, string? signerOverride = null)
     {
         if (PrivateKeyPath.Length == 0) return "Raportul NU este semnat digital: nu este configurată o cheie de semnare (Setări semnătură rapoarte).";
         if (!File.Exists(PrivateKeyPath)) return "Raportul NU este semnat digital: fișierul cheii de semnare nu este accesibil (mediul cu cheia nu este conectat?).";
         try
         {
             using var key = ReportSignature.LoadPrivateKey(File.ReadAllText(PrivateKeyPath));
-            var s = ReportSignature.Sign(reportPath, key, Signer.Length > 0 ? Signer : Environment.UserName);
+            var s = ReportSignature.Sign(reportPath, key, !string.IsNullOrWhiteSpace(signerOverride) ? signerOverride : Signer.Length > 0 ? Signer : Environment.UserName);
             return $"Raport semnat digital ({s.Signer}, cheia {s.KeyId}); semnătura: {Path.GetFileName(ReportSignature.SigPath(reportPath))}.";
         }
         catch (Exception ex) when (ex is CryptographicException or FormatException or IOException or UnauthorizedAccessException)

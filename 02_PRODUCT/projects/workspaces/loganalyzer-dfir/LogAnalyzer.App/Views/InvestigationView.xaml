@@ -355,6 +355,9 @@
                         <TextBlock Text="Arhiva verificabilă a cazului" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
                         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,6"
                                    Text="ZIP cu tot cazul, manifest.json (SHA-256 al fiecărui fișier), amprenta manifestului (SHA-256) și README cu comenzile de verificare manuală (Get-FileHash, certutil), care merg fără LogAnalyzer. La import se verifică totul înainte."/>
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,2"
+                                   Text="La import, arhiva trebuie autentificată: semnătura manifestului cu una dintre cheile de încredere de mai sus, sau amprenta manifestului (SHA-256) din registrul de custodie, scrisă aici. Altfel este „neverificabilă” și se refuză, afară de cazul în care alegeți explicit importul ca neverificat."/>
+                        <TextBox AutomationProperties.Name="Amprenta manifestului din registrul de custodie" Text="{Binding ExpectedArchiveSha256, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas" Margin="0,2,0,6"/>
                         <WrapPanel Margin="0,0,0,12">
                             <Button Content="Exportă arhiva cazului…" Command="{Binding ExportCaseArchiveCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                             <Button Content="Importă arhivă de caz…" Command="{Binding ImportCaseArchiveCommand}" Style="{StaticResource OutlineButtonStyle}"/>

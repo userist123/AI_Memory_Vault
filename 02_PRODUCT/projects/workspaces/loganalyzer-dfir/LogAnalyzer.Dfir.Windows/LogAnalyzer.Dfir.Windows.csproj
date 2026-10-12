@@ -7,6 +7,8 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <!-- CI and Release restore only what packages.lock.json records (exact versions and content hashes); a changed dependency must be committed as a lock-file change. -->
+    <RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true' Or '$(CI)' == 'true' Or '$(Configuration)' == 'Release'">true</RestoreLockedMode>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Diagnostics.EventLog" Version="10.0.10" />
@@ -15,8 +17,8 @@
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="9.0.0" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlcipher" Version="2.1.10" />
     <!-- Eric Zimmerman Registry (MIT): deleted key/value recovery in offline hives. Cleared in the owner's provenance record 2026-10-12; Serilog pinned to the record's version. -->
-    <PackageReference Include="Registry" Version="2026.5.0" PrivateAssets="compile;analyzers;build;contentfiles" />
-    <PackageReference Include="Serilog" Version="4.3.1" />
+    <PackageReference Include="Registry" Version="[2026.5.0]" PrivateAssets="compile;analyzers;build;contentfiles" />
+    <PackageReference Include="Serilog" Version="[4.3.1]" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\THIRD_PARTY_NOTICES.md" Link="THIRD_PARTY_NOTICES.md" CopyToOutputDirectory="PreserveNewest" />

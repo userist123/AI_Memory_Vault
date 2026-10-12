@@ -102,12 +102,15 @@ public sealed class AirGapFactsCollector : ICollector
 
     // ---- D7 ----
 
+    /// <summary>Deny_Write = 1 is "blocked", any other number is "not blocked", and a value that is missing or unreadable is undetermined (null), never false.</summary>
+    public static bool? DenyWriteFromRegistry(int? raw) => raw is { } v ? v == 1 : null;
+
     private static void ReadBurn(BurnFacts b)
     {
         const string Pol = @"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer";
         b.NoCdBurningMachine = RegInt(Registry.LocalMachine, Pol, "NoCDBurning");
         b.NoCdBurningUser = RegInt(Registry.CurrentUser, Pol, "NoCDBurning");
-        b.CdDvdDenyWrite = RegInt(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices\{53f56308-b6bf-11d0-94f2-00a0c91efb8b}", "Deny_Write") is { } v ? v == 1 : false;
+        b.CdDvdDenyWrite = DenyWriteFromRegistry(RegInt(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices\{53f56308-b6bf-11d0-94f2-00a0c91efb8b}", "Deny_Write"));
         using (var s = new ManagementObjectSearcher("SELECT Name, Drive, Capabilities, CapabilityDescriptions FROM Win32_CDROMDrive"))
             foreach (ManagementObject mo in s.Get())
             {

@@ -144,10 +144,10 @@ public static class Program
         Console.WriteLine("  LogAnalyzer.KeyGen ABCD1234EFGH5678 2027-12-31");
         Console.WriteLine();
         Console.WriteLine("Rapoarte semnate digital:");
-        Console.WriteLine("  LogAnalyzer.KeyGen report-keygen <fișier-cheie-privată> [<fișier-cheie-publică>]");
+        Console.WriteLine("  LogAnalyzer.KeyGen report-keygen <fișier-cheie-privată> [<fișier-cheie-publică>] [--passphrase | --plain]");
         Console.WriteLine("  LogAnalyzer.KeyGen report-sign <fișier-cheie-privată> <raport.pdf> <semnatar>");
         Console.WriteLine("  LogAnalyzer.KeyGen verify-report <raport.pdf> <cheie-publică-base64 | fișier-cheie-publică>...");
-        Console.WriteLine("  LogAnalyzer.KeyGen verify-archive <arhivă-caz.zip>");
+        Console.WriteLine("  LogAnalyzer.KeyGen verify-archive <arhivă-caz.zip> [<sha256-manifest> | <cheie-publică>]...");
     }
 
     /// <summary>datapack-keygen &lt;private-key-file&gt;: creates the ECDSA P-256 signing key (PKCS#8, keep offline) and prints the public key to compile into the application.</summary>

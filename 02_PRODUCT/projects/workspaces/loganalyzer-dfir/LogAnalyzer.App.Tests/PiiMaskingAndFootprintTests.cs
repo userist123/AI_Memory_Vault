@@ -53,7 +53,7 @@ public sealed class PiiMaskingAndFootprintTests : IDisposable
         Assert.Contains("SYSTEM", masked[4].Fields["SubjectUserName"]);                // built-in accounts are not personal data
         Assert.Contains(@"C:\Windows\System32\svchost.exe", masked[4].Fields["NewProcessName"]);
         Assert.Equal(m.Host("WS-ALFA-07"), masked[4].Fields["Computer"]);              // FQDN reduced to the same host pseudonym
-        Assert.All(m.Mapping.Values, v => Assert.Matches(@"^(Utilizator|Statie|IP|SID|email)-\d+", v));
+        Assert.All(m.Mapping.Values, v => Assert.Matches(@"^(Utilizator|Statie|IP|SID|email|Serial|Domeniu)-\d+", v));
         // the mapping stays with the operator; it is not part of the masked output
         Assert.DoesNotContain("ana.pop", string.Join(" ", masked.Select(e => e.Summary)));
     }

@@ -19,7 +19,7 @@
       },
       "Registry": {
         "type": "Direct",
-        "requested": "[2026.5.0, )",
+        "requested": "[2026.5.0, 2026.5.0]",
         "resolved": "2026.5.0",
         "contentHash": "ETgi/AvoA7vnI8uXRSWpCDo2+ogcAJg4MXFqeX2XuqmXSqJNEM0i0dwWTzXLVxWnpsdJEkqzehsXefOUSKdbrA==",
         "dependencies": {
@@ -28,7 +28,7 @@
       },
       "Serilog": {
         "type": "Direct",
-        "requested": "[4.3.1, )",
+        "requested": "[4.3.1, 4.3.1]",
         "resolved": "4.3.1",
         "contentHash": "savYe7h5yRlkqBVOwP8cIRDOdqKiPmYCU4W87JH38sBmcKD5EBoXvQIw6bNEvZ/pTe1gsiye3VFCzBsoppGkXQ=="
       },
@@ -114,6 +114,7 @@
         "type": "Project",
         "dependencies": {
           "System.IO.Hashing": "[9.0.0, )",
+          "System.Security.Cryptography.ProtectedData": "[10.0.10, )",
           "YamlDotNet": "[18.1.0, )"
         }
       },
