@@ -2,7 +2,7 @@
 
 > **Status**: AUDIT DE FOND & SIMULARE SANDBOX FINALIZATĂ  
 > **Integritate Repository**: `01_ARCHITECTURE/ontology/slots/` este **100% NEMODIFICAT** (`git status --porcelain` = gol)  
-> **Data**: 2026-09-12 | **Destinație**: Owner  
+> **Data**: 2026-09-12 | **Destinație**: proprietarul  
 
 ---
 
@@ -225,7 +225,7 @@ Am verificat întregul director `01_ARCHITECTURE/` și graful de sinapse din `Sy
 
 ## 4. SECȚIUNEA A: Diff-ul Exact pentru un Nou Merge (Varianta A: Cele 48 `PROMOVEAZĂ`)
 
-Dacă Owner execută `merge_candidate_concepts.py` filtrat strict pe cele 48 de concepte `PROMOVEAZĂ`:
+Dacă proprietarul execută `merge_candidate_concepts.py` filtrat strict pe cele 48 de concepte `PROMOVEAZĂ`:
 
 - **41 de concepte** sunt **deja prezente** fizic în tabele (sărite automat prin deduplicare).
 - **Exact 7 concepte** sunt adăugate (provin din cartea nouă `cryptoassets` Burniske & Tatar):

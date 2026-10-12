@@ -1,6 +1,6 @@
 # CEI 19 PUNCTE PROCENTUALE: REALITATE SAU ARTEFACT? (`NINETEEN_PERCENTAGE_POINTS_FINDINGS.md`)
 
-> **Destinatar**: OWNER · **Operator**: ANTIGRAVITY  
+> **Destinatar**: PROPRIETAR · **Operator**: ANTIGRAVITY  
 > **Data**: 2026-09-14, 00:39 UTC+3  
 > **Referință Mandat**: MANDAT — ANTIGRAVITY: cei 19 puncte procentuale  
 > **Seturi de Date pe Disc**:

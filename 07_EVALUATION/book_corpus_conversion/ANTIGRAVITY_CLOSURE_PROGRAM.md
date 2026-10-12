@@ -160,7 +160,7 @@ Condiții, toate obligatorii:
    eșuează dacă nu. Aceasta este garda pentru `I-003`.
 4. **Cele 7 rânduri în așteptare nu se ating.** Cele 6 `UNDECIDED` și `SPLIT`-ul
    `familiarity` rămân exact cum sunt pe disc. Executorul le numără și le
-   raportează, dar nu le scrie. Decizia lor este a lui Owner și nu a fost dată.
+   raportează, dar nu le scrie. Decizia lor este a proprietarului și nu a fost dată.
 5. **Fuziunea comasează, nu suprascrie.** Cele 8 `MERGE` adună `occurrences` și
    `evidence` în ținta lor. Un `MERGE` care pierde o apariție este un defect.
 6. **Reversibil printr-un singur commit.** Execuția intră într-un commit separat,

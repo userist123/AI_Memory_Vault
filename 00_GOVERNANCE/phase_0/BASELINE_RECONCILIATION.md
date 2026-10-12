@@ -28,7 +28,7 @@ over from an earlier audit.
 | Local `main` | `3b2991344`, clean working tree, **2 commits behind**, 0 ahead |
 | Remotes | one: `origin` → `github.com/userist123/AI_Memory_Vault_CODEX_READY` |
 | Active git hooks | none (only `.sample`) |
-| Authors across all branches | `userist123`, `Owner`, `github-actions[bot]`, `dependabot[bot]` — no unknown author |
+| Authors across all branches | `userist123`, `owner`, `github-actions[bot]`, `dependabot[bot]` — no unknown author |
 | Open PRs | #135 `r025/readme-rewrite`, #90 `r053-pm-phase7-risk-abstention` — both stale |
 
 **D1 recommendation: fast-forward.** The working tree is clean and there is

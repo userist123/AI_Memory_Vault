@@ -32,7 +32,7 @@ Sarcina ta este să transformi judecățile tale — care există deja, în proz
 
 și conține rândurile #1–#91.
 
-**Nu reciti cărțile. Nu reevalua conceptele. Nu schimba verdictele.** Acesta este un exercițiu de transcriere fidelă, nu de re-judecare. Dacă în timpul transcrierii găsești un verdict pe care îl consideri greșit, **nu-l corecta în JSON** — notează-l separat, la secțiunea 6, și lasă decizia lui Owner.
+**Nu reciti cărțile. Nu reevalua conceptele. Nu schimba verdictele.** Acesta este un exercițiu de transcriere fidelă, nu de re-judecare. Dacă în timpul transcrierii găsești un verdict pe care îl consideri greșit, **nu-l corecta în JSON** — notează-l separat, la secțiunea 6, și lasă decizia proprietarului.
 
 ---
 
@@ -69,7 +69,7 @@ Dacă numărătoarea ta finală nu dă exact aceste cifre, **oprește-te și rap
 
 ## 3. Patru reguli pe care poarta le impune, și de ce
 
-**`PROMOTE` singur admite.** `UNSURE` deliberat nu. O decizie pe care nimeni n-a putut s-o ia nu e o decizie de a continua, iar tratarea ei ca atare este exact modul în care „ne uităm mai târziu" devine rând permanent în ontologie. Cele 6 `NESIGUR` ale tale rămân afară până când Owner decide arhitectura.
+**`PROMOTE` singur admite.** `UNSURE` deliberat nu. O decizie pe care nimeni n-a putut s-o ia nu e o decizie de a continua, iar tratarea ei ca atare este exact modul în care „ne uităm mai târziu" devine rând permanent în ontologie. Cele 6 `NESIGUR` ale tale rămân afară până când proprietarul decide arhitectura.
 
 **Un concept absent din manifest e reținut sub `NO_VERDICT` și numărat**, niciodată aruncat în tăcere. O rulare care le-ar fi sărit fără urmă ar arăta identic cu una în care fuseseră judecate — fix mecanismul prin care cele 160 au devenit invizibile.
 
@@ -142,7 +142,7 @@ Un fișier scurt, `07_EVALUATION/book_corpus_conversion/VERDICTS_MANIFEST_REPORT
 ## 7. Reguli de lucru care nu se negociază
 
 - **Nu atinge `01_ARCHITECTURE/ontology/slots/`.** Nici o scriere, nici una. Sloturile rămân bit-cu-bit identice la finalul acestei sarcini; verifică cu `git diff --stat 01_ARCHITECTURE/ontology/slots/` și include rezultatul (trebuie să fie gol) în raport.
-- **Nu rula merge-ul cu `--slots-dir` pe directorul real.** Nu există `--dry-run`; scriptul scrie. Copia temporară din secțiunea 5 este singura protecție. Adoptarea porții și execuția merge-ului real sunt decizia lui Owner, nu a ta.
+- **Nu rula merge-ul cu `--slots-dir` pe directorul real.** Nu există `--dry-run`; scriptul scrie. Copia temporară din secțiunea 5 este singura protecție. Adoptarea porții și execuția merge-ului real sunt decizia proprietarului, nu a ta.
 - **Nu folosi modele locale.** Citește fișierele tu.
 - **Nu construi peste ce există deja.** `promotion_verdicts.py`, `slot_rows.py` și `merge_candidate_concepts.py` sunt scrise și testate (1960 de teste trec). Nu rescrie un parser propriu pentru fișierele de slot — importă-l pe cel existent.
 - **Lucrează pe o ramură proprie**, cuttă din `origin/main`, niciodată în arborele principal care e permanent murdar. Fără `git stash`, fără `git checkout` peste modificări nesalvate.

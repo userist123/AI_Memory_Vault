@@ -95,7 +95,7 @@ La recitirea meticuloasă a justificărilor din Tabelul 2:
 - **Niciun verdict nu a fost modificat sau considerat greșit.**
 - Cazul `familiarity` (#3) rămâne strict `SPLIT`, reflectând homonimia dintre semnalul epistemic perceptual ($occ=3$, `why_we_forget`) și filtrul de RL ($occ=6$, `2504.05840v1`).
 - Cazul `plasticity` (#44) rămâne corect clasificat ca `REJECT` (sintagmă generică fără structură ontologică autonomă nouă, mecanismul fizic fiind captat de `synaptic plasticity`).
-- Toate cele 6 intrări `UNSURE` (`component process`, `dual memory`, `in-context learning`, `integrated information`, `shared memory`, `symbolic`) rămân reținute la poartă până la decizia arhitecturală a lui Owner.
+- Toate cele 6 intrări `UNSURE` (`component process`, `dual memory`, `in-context learning`, `integrated information`, `shared memory`, `symbolic`) rămân reținute la poartă până la decizia arhitecturală a proprietarului.
 
 ---
 

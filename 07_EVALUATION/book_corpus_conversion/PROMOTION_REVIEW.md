@@ -1,10 +1,10 @@
 # Evaluarea Celor 91 de Concepte Candidate (Occurrences >= 3) pentru Promovare
 
-> **Status**: FINALIZAT — PENTRU DECIZIA LUI OWNER  
+> **Status**: FINALIZAT — PENTRU DECIZIA PROPRIETARULUI  
 > **Autor**: ANTIGRAVITY  
 > **Data**: 2026-09-12  
 > **Scop**: Recenzie critică a candidaților nepromovați din staging/*.json  
-> **Regulă**: Recomandări calitative grounded pe text; decizia de promovare aparține lui Owner.
+> **Regulă**: Recomandări calitative grounded pe text; decizia de promovare aparține proprietarului.
 
 ---
 
@@ -205,7 +205,7 @@ Ca urmare a cerinței explicite de a evalua dacă vreunul dintre cele 43 de conc
 
 ---
 
-## 6. Concluzie & Pași Următori pentru Owner
+## 6. Concluzie & Pași Următori pentru proprietar
 
-- Raportul de față oferă baza de decizie pentru Owner: se poate citi coloana de verdicte și justificări pentru a promova selectiv doar cele **44 de concepte valide**, aplicând fuziunile și despărțirea recomandate.
+- Raportul de față oferă baza de decizie pentru proprietar: se poate citi coloana de verdicte și justificări pentru a promova selectiv doar cele **44 de concepte valide**, aplicând fuziunile și despărțirea recomandate.
 - Fișierele din `01_ARCHITECTURE/ontology/slots/*.md` rămân neatinse până la decizia ta de execuție a merge-ului.

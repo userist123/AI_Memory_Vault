@@ -1,7 +1,7 @@
 # RAPORT EMPIRIC: FORMA REALĂ A DATELOR POLYMARKET (REAL_DATA_FINDINGS.md)
 
 > **Document de analiză empirică și constatare arhitecturală**  
-> **Destinatar**: Owner  
+> **Destinatar**: proprietar  
 > **Data**: 2026-09-13  
 > **Ramură**: `antigravity/pm-real-data-capture`  
 > **Capturi de referință**:  

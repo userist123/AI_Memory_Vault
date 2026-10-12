@@ -105,7 +105,7 @@ Contrastul pe care îl documentează: vechiul `historical_replay.HistoricalPrice
 - Fiecare breșă confirmată: test marcat `pytest.mark.xfail(strict=True, reason=...)`, care descrie exact comportamentul greșit. Astfel CI rămâne verde, iar ziua în care cineva repară breșa, testul trece neașteptat și forțează eliminarea marcajului.
 - Minimum cele trei breșe deja găsite: `known_as_of` null acceptat, puncte după închidere acceptate de `HistoricalMarketBundle`, rezoluția unei piețe-soră folosibilă ca informație pentru alta pe același eveniment.
 
-**Nu repara breșele.** Niciun fișier din `03_IMPLEMENTATION/packages/polymarket/` nu se modifică. Testele le documentează; reparația e decizia lui Owner.
+**Nu repara breșele.** Niciun fișier din `03_IMPLEMENTATION/packages/polymarket/` nu se modifică. Testele le documentează; reparația e decizia proprietarului.
 
 ---
 

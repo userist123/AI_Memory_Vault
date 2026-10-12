@@ -1,7 +1,7 @@
 # SPECIFICAȚIA SEMANTICII DE FUZIUNE (MERGE_SEMANTICS.md)
 
 > **Document de proiectare și analiză empirică**  
-> **Destinatar**: Owner  
+> **Destinatar**: proprietar  
 > **Status**: Proiect de specificație — ZERO cod de fuziune implementat, ZERO scrieri în ontologie.  
 > **Precedent**: `disposition_manifest.json` (213 ancore verificate)  
 > **Data**: 2026-09-12

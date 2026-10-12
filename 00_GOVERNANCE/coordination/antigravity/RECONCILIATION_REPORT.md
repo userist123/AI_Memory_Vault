@@ -13,7 +13,7 @@
 Following user approval of **Variant A**, the staging environment for candidate concept ingestion has been fully reconciled. Merging candidate concepts into the 16 ontology slot files is now mechanically possible and conflict-free.
 
 ### Scope Boundaries Strictly Respected
-1. **Actual merge remains with Owner**: No modifications were made to `01_ARCHITECTURE/ontology/slots/*.md`. The merge is enabled, but not executed.
+1. **Actual merge remains with the owner**: No modifications were made to `01_ARCHITECTURE/ontology/slots/*.md`. The merge is enabled, but not executed.
 2. **Zero concept deletions**: All 264 candidate concept rows across the 21 active book extractions are preserved intact.
 3. **Protected trading extractions**: `staging/cryptoassets.json` (10 rows) and `staging/quantitative_momentum.json` (3 rows) were not modified.
 4. **Single Source of Truth**: The aggregate file `staging/corpus_reconciled.json` (264 duplicate rows) was permanently removed. The atomic per-book files (`staging/<book_slug>.json`) remain the sole authoritative source of truth.
@@ -177,10 +177,10 @@ To verify whether moving the 11 concepts altered the review order or ranking pri
 
 ---
 
-## 6. Conclusion & Handoff to Owner
+## 6. Conclusion & Handoff to the owner
 
 The staging corpus is 100% verified, clean, and architecturally aligned:
 - **Zero conflicts**: `find_slot_conflicts()` returns 0.
 - **Zero double-counting**: Staging purity enforced via `test_staging_invariants.py`.
 - **Zero verifier failures**: All 21 books pass 100% source-text verification.
-- **Merge readiness**: Owner can execute the merge into `01_ARCHITECTURE/ontology/slots/` at any time with full confidence in occurrence accuracy and slot integrity.
+- **Merge readiness**: the owner can execute the merge into `01_ARCHITECTURE/ontology/slots/` at any time with full confidence in occurrence accuracy and slot integrity.

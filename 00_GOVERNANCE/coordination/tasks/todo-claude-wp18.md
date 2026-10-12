@@ -57,7 +57,7 @@ VERIFICATION (S1, local, Windows):
 - `dotnet build LogAnalyzer.slnx -c Release`: Build succeeded (TEST_VERIFIED).
 - App.Tests 28/28, Edition.Tests 15/15, UI.Tests 179/179 passed.
 - Dfir.Tests 1045 passed, 4 skipped, 2 FAILED on the real local corpus: `AntiForensicsTests.Real_corpus_traces_match_wevtutil…` (28 vs 64)
-  and `InvestigationTests.NanAgent_corpus_yields_the_known_incident_chain` (chain text lacks NanAgent32.exe). Neither test touches WP18 code
+  and `InvestigationTests.<sample>_corpus_yields_the_known_incident_chain` (chain text lacks <sample>32.exe). Neither test touches WP18 code
   (parsers / AntiForensics.Evaluate / incident chain); treated as PRE-EXISTING local corpus drift, NOT fixed here. CI never runs them (no corpus).
 - Windows Defender flags `LogAnalyzer.Dfir.Tests.dll` as `Ransom:Win32/Clop.SIB!MTB` on every rebuild (test data contains the literal
   `vssadmin delete shadows /all /quiet` lines of WP11 tests). False positive on the test assembly; owner restored the file from quarantine.
