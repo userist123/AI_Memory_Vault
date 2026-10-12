@@ -1,7 +1,7 @@
 # Forensic Audit Handoff Report
 
 **Agent**: Teamwork Final Forensic Auditor (`teamwork_preview_auditor`)  
-**Target Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_final`  
+**Target Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_final`  
 **Date**: 2026-08-26  
 **Status**: COMPLETE (Hard Handoff)  
 **Verdict**: **CLEAN**

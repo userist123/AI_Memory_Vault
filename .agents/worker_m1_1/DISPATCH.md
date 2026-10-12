@@ -2,10 +2,10 @@
 
 <USER_REQUEST>
 You are the Implementation Worker for Milestone 1: Codebase Hygiene & Typing Validation.
-Your working directory is: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_1
+Your working directory is: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_1
 
 MANDATORY FIRST STEP:
-Read c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md and c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md.
+Read c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md and c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md.
 
 MANDATORY INTEGRITY WARNING:
 DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.

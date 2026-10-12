@@ -6,7 +6,7 @@ Empirically challenge and stress-test the full Cognitive Loop (OODA) and Multi-A
 ## 🔒 My Identity
 - Archetype: empirical-challenger
 - Roles: critic, specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_4
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_4
 - Original parent: 4d8619ff-fda6-4c9e-8801-2dbe0fd86141
 - Milestone: Milestone 4 (Cognitive Loop & Multi-Agent Coordination)
 - Instance: 1 of 1
@@ -35,11 +35,11 @@ Empirically challenge and stress-test the full Cognitive Loop (OODA) and Multi-A
   - Cross-process multiprocessing SQLite lock contention (covered in M2/M3 via single-process multi-threading).
 
 ## Loaded Skills
-- **Source**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
-- **Local copy**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_4\skills\vault-operations\SKILL.md
+- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
+- **Local copy**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_4\skills\vault-operations\SKILL.md
 - **Core methodology**: Procedures for associative recall, safe proposal, attestation, and reflexion.
-- **Source**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
-- **Local copy**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_4\skills\vault-security-audit\SKILL.md
+- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
+- **Local copy**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_4\skills\vault-security-audit\SKILL.md
 - **Core methodology**: Security verification and forensic validation runbook for testing trust boundaries and invariants P0-P15.
 
 ## Review Scope

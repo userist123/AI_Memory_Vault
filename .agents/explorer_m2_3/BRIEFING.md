@@ -6,7 +6,7 @@ Deep-dive exploration for Milestone 2: TTS (Kokoro-82M ONNX), Streaming Audio Ch
 ## 🔒 My Identity
 - Archetype: explorer
 - Roles: [explorer, analyst, architect]
-- Working directory: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m2_3
+- Working directory: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m2_3
 - Original parent: 0bbc34c1-eddc-44cf-8e9e-c4d23195d41e
 - Milestone: Milestone 2 — Creier Vorbitor (TTS, Chunker, Barge-In)
 

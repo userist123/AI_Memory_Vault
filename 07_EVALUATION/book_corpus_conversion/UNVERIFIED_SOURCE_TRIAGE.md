@@ -27,8 +27,8 @@ Cazul `Experience Replay` ilustrează exact ce se întâmplă când un artefact 
 
 | Slot | Linie | Denumire în Tabelă | Status | Sursă | Evidence | Occurrences |
 | :--- | :---: | :--- | :--- | :--- | :---: | :---: |
-| [`15_retrieval.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_ARCHITECTURE/ontology/slots/15_retrieval.md#L43) | L43 | `Experience Replay` | `unverified_source` | Sarfraz et al. (2022) | *(gol)* | *(gol)* |
-| [`16_consolidation.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_ARCHITECTURE/ontology/slots/16_consolidation.md#L43) | L43 | `experience replay` | `proposed` | memory_in_the_age_of_ai_agents; sarfraz22a | Citat valid | 3 |
+| [`15_retrieval.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_ARCHITECTURE/ontology/slots/15_retrieval.md#L43) | L43 | `Experience Replay` | `unverified_source` | Sarfraz et al. (2022) | *(gol)* | *(gol)* |
+| [`16_consolidation.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_ARCHITECTURE/ontology/slots/16_consolidation.md#L43) | L43 | `experience replay` | `proposed` | memory_in_the_age_of_ai_agents; sarfraz22a | Citat valid | 3 |
 
 **Consecințe**:
 1. **Același concept figurează de două ori**: o dată cu majuscule în slotul `15_retrieval.md` și o dată cu minuscule în `16_consolidation.md`.
@@ -76,30 +76,30 @@ Total Concepte Neverificate: 10
 
 #### 3. `Episodic Memory Buffer` (`11_history.md:L36`)
 - **Frecvență Reală în Text**: **2 apariții** în Chunks 0 și 2 (*„an episodic memory buffer that stores past experiences"*).
-- **Echivalent Canonic pe Disc**: [`11_history.md:L30`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_ARCHITECTURE/ontology/slots/11_history.md#L30) conține deja promovat conceptul umbrelă **`episodic memory`** cu **50 de apariții** în 7 cărți.
+- **Echivalent Canonic pe Disc**: [`11_history.md:L30`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_ARCHITECTURE/ontology/slots/11_history.md#L30) conține deja promovat conceptul umbrelă **`episodic memory`** cu **50 de apariții** în 7 cărți.
 - **Decizie**: **COMASARE definitivă** în `episodic memory`. 2 apariții izolate într-o singură lucrare nu justifică fragmentarea ontologică a conceptului deja promovat cu 50 de apariții. Rândul se purjează în Lotul D1.
 
 #### 4. `Experience Replay` (`15_retrieval.md:L43`)
 - **Stare în Text**: 16 apariții ca `experience replay`.
-- **Echivalent Canonic pe Disc**: Deja prezent în [`16_consolidation.md:L43`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_ARCHITECTURE/ontology/slots/16_consolidation.md#L43) ca `experience replay` (`proposed`, 3 occurrences).
+- **Echivalent Canonic pe Disc**: Deja prezent în [`16_consolidation.md:L43`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_ARCHITECTURE/ontology/slots/16_consolidation.md#L43) ca `experience replay` (`proposed`, 3 occurrences).
 - **Decizie**: Se purjează din `15_retrieval.md` pentru a elimina duplicatul și conflictul de clasificare.
 
 #### 5. `Semantic Memory Store` (`03_ontology.md:L71`)
 - **Căutare Textuală**: `semantic memory store` = 0 apariții, `semantic store` = 0 apariții.
 - **Termen Real în Text**: **`semantic memory`** (52 apariții).
-- **Echivalent Canonic pe Disc**: Deja prezent și **promovat** în [`03_ontology.md:L33`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_ARCHITECTURE/ontology/slots/03_ontology.md#L33) (`semantic memory`, `status=promoted`, 25 occurrences).
+- **Echivalent Canonic pe Disc**: Deja prezent și **promovat** în [`03_ontology.md:L33`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_ARCHITECTURE/ontology/slots/03_ontology.md#L33) (`semantic memory`, `status=promoted`, 25 occurrences).
 - **Decizie**: Redenumire redundantă inventată de dicționar. Se purjează.
 
 #### 6. `Continual Incremental Learning` (`06_procedures.md:L56`)
 - **Căutare Textuală**: `continual incremental learning` = 0 apariții.
 - **Termen Real în Text**: **`continual learning`** (14 apariții) și `incremental learning` (7 apariții).
-- **Echivalent Canonic pe Disc**: Deja prezent în [`06_procedures.md:L47`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_ARCHITECTURE/ontology/slots/06_procedures.md#L47) (`continual learning`, `status=proposed`, 3 occurrences).
+- **Echivalent Canonic pe Disc**: Deja prezent în [`06_procedures.md:L47`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_ARCHITECTURE/ontology/slots/06_procedures.md#L47) (`continual learning`, `status=proposed`, 3 occurrences).
 - **Decizie**: Fuziune lexicală artificială. Se purjează.
 
 #### 7. `Catastrophic Forgetting Mitigation` (`08_constraints.md:L45`)
 - **Căutare Textuală**: `catastrophic forgetting mitigation` = 0 apariții, `mitigate catastrophic forgetting` = 0 apariții.
 - **Termen Real în Text**: **`catastrophic forgetting`** (8 apariții).
-- **Echivalent Canonic pe Disc**: Conceptul umbrelă `forgetting` este deja promovat în [`16_consolidation.md:L34`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_ARCHITECTURE/ontology/slots/16_consolidation.md#L34).
+- **Echivalent Canonic pe Disc**: Conceptul umbrelă `forgetting` este deja promovat în [`16_consolidation.md:L34`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_ARCHITECTURE/ontology/slots/16_consolidation.md#L34).
 - **Decizie**: Sintagmă compusă fabricată prin alipirea sufixului *Mitigation*. Se purjează.
 
 ---
@@ -164,7 +164,7 @@ Pentru a menține o pistă de audit ireproșabilă, cele 8 rânduri destinate el
 ## 5. Sinteza Decizională pentru Marius
 
 1. **Pentru Curățare (8 concepte)**:
-   - Sunt adăugate în catalogul [`30_SCRIPTS/ingestion/purge_batches_catalog.json`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/30_SCRIPTS/ingestion/purge_batches_catalog.json) ca loturile **D1** (5 rânduri) și **D2** (3 rânduri).
+   - Sunt adăugate în catalogul [`30_SCRIPTS/ingestion/purge_batches_catalog.json`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/30_SCRIPTS/ingestion/purge_batches_catalog.json) ca loturile **D1** (5 rânduri) și **D2** (3 rânduri).
    - Rularea deliberată a scriptului cu garda explicită:
      ```bash
      python 30_SCRIPTS/ingestion/purge_rejected_rows.py --batch D1 --allow-status unverified_source --apply

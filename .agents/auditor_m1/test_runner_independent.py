@@ -6,7 +6,7 @@ import asyncio
 from pathlib import Path
 
 # Add project root to path
-PROJECT_DIR = r"c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain"
+PROJECT_DIR = os.path.expanduser(r"~\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain")
 if PROJECT_DIR not in sys.path:
     sys.path.insert(0, PROJECT_DIR)
 

@@ -6,7 +6,7 @@ Adversarially challenge and stress-test deduplication determinism, contradiction
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
 - Roles: critic, specialist
-- Working directory: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m1_challenger_2
+- Working directory: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m1_challenger_2
 - Original parent: fe349d87-bb77-42da-8379-001833bc54af
 - Milestone: Milestone 1 (JARVIS Web Ecosystem & Financial Ingestion Adapter Verification)
 - Instance: 1 of 1
@@ -38,7 +38,7 @@ Adversarially challenge and stress-test deduplication determinism, contradiction
 - **Untested angles**: Hardware-level physical volume attacks (P16-P18) covered separately in specialized storage suites.
 
 ## Loaded Skills
-- **Source**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`
+- **Source**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`
 - **Core methodology**: Security verification and forensic validation runbook for testing trust boundaries and invariants P0-P15.
 
 ## Key Decisions Made

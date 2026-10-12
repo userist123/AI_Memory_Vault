@@ -64,7 +64,7 @@ To independently reproduce this verification:
 
 ```powershell
 # Navigate to project directory
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 
 # 1. Run the entire test suite (233/233 tests)
 python -m pytest -v

@@ -6,7 +6,7 @@ Extract and comprehensively enumerate all functional, architectural, and securit
 ## 🔒 My Identity
 - Archetype: Specification Miner
 - Roles: Specification Miner, Domain Expert
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1
 - Original parent: e71a16ec-5ebc-4ca2-ab0f-6beddef86e94
 - Milestone: Milestone 1 - Specification Mining & Architecture Formalization
 
@@ -29,10 +29,10 @@ Extract and comprehensively enumerate all functional, architectural, and securit
 - **Code layout**: .agents/survey_miner_1/
 
 ## Loaded Skills
-- **Source**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
+- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
 - **Local copy**: referenced directly
 - **Core methodology**: Runbook and multi-step procedure for interacting with the AI Memory Vault cognitive operating system
-- **Source**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
+- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
 - **Local copy**: referenced directly
 - **Core methodology**: Security verification and forensic validation runbook for testing trust boundaries and invariants P0-P15
 
@@ -42,9 +42,9 @@ Extract and comprehensively enumerate all functional, architectural, and securit
 - Generated complete specification document in report.md and self-contained handoff in handoff.md.
 
 ## Artifact Index
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\report.md — Full specification mining report
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\handoff.md — 5-component handoff report
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\progress.md — Liveness & progress tracking
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\report.md — Full specification mining report
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\handoff.md — 5-component handoff report
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\progress.md — Liveness & progress tracking
 
 ---
 

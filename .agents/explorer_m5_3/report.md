@@ -2,7 +2,7 @@
 
 **Agent**: Explorer M5-3  
 **Date**: 2026-08-14T23:26:00Z  
-**Target Workspace**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY`  
+**Target Workspace**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY`  
 **Authoritative References**: `ORIGINAL_REQUEST.md`, `PROJECT.md`, `AGENTS.md`, `vault_cognitive_rules.md`
 
 ---

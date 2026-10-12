@@ -6,13 +6,13 @@ Transform the AI Memory Vault into an autonomous, self-improving Cognitive Brain
 ## 🔒 My Identity
 - Archetype: orchestrator
 - Roles: [orchestrator, user_liaison, human_reporter, successor]
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_gen3
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_gen3
 - Original parent: parent
 - Original parent conversation ID: 72226d68-bdea-4026-bf4c-dfb6ed565e6b
 
 ## 🔒 My Workflow
 - **Pattern**: Project Orchestration
-- **Scope document**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
+- **Scope document**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
 1. **Decompose**: 5 Milestones (M1: Typing Hygiene, M2: WAL & Audit, M3: P0-P15 Invariants, M4: Cognitive Loop & Multi-Agent, M5: Continual Learning & E2E Pytest)
 2. **Dispatch & Execute**: Iteration loop (Explorer x3 -> Worker -> Reviewer x2 -> Challenger x2 -> Forensic Auditor -> Gate)
 3. **On failure**: Retry -> Replace -> Skip -> Redistribute -> Redesign

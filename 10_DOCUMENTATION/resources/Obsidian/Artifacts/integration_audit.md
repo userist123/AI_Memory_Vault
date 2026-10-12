@@ -87,19 +87,19 @@ propose_synapse()     — never invoked by Executive or Reflection.evaluate_outc
 ## 3. Missing Connections (14 Critical Gaps)
 
 ### GAP-1: RecallEngine is orphaned
-[recall.py](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/recall.py) exists but is never instantiated or called by `Executive`. The Executive uses `ActivationEngine.activate_from_query()` directly and never applies RecallEngine's multi-signal scoring.
+[recall.py](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/recall.py) exists but is never instantiated or called by `Executive`. The Executive uses `ActivationEngine.activate_from_query()` directly and never applies RecallEngine's multi-signal scoring.
 
 > [!IMPORTANT]
 > RecallEngine was designed to combine semantic similarity, activation, confidence, and WM relevance. None of these signals currently influence retrieval beyond ActivationEngine's rank-order decay.
 
 ### GAP-2: Consolidator is orphaned
-[consolidation.py](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/consolidation.py) exists but is never triggered by the cognitive loop. There is no periodic trigger, no post-task hook, and no Executive call.
+[consolidation.py](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/consolidation.py) exists but is never triggered by the cognitive loop. There is no periodic trigger, no post-task hook, and no Executive call.
 
 ### GAP-3: Deduplicator is orphaned
-[deduplication.py](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/deduplication.py) exists but is never triggered.
+[deduplication.py](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/deduplication.py) exists but is never triggered.
 
 ### GAP-4: LearningEngine is orphaned
-[learning.py](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/learning.py) exists but is never triggered. A learned confidence promotion can never influence a future recall because it is never executed.
+[learning.py](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/learning.py) exists but is never triggered. A learned confidence promotion can never influence a future recall because it is never executed.
 
 ### GAP-5: Dynamic Synapses never fire
 `ReflectionPipeline.propose_synapse()` exists but `evaluate_outcome()` never calls it. The only callers are unit tests. **No new graph edges are ever created autonomously.**
@@ -116,7 +116,7 @@ All three call `MemoryController` directly, bypassing:
 This means Consolidator could archive a human-verified memory if called directly.
 
 ### GAP-8: Consolidator archive signature mismatch
-`Consolidator.consolidate_lessons()` at [line 75](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/consolidation.py#L75) calls:
+`Consolidator.consolidate_lessons()` at [line 75](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/consolidation.py#L75) calls:
 ```python
 self.controller.archive(principal, lesson["id"])
 ```
@@ -124,7 +124,7 @@ But `MemoryController.archive()` requires **3 arguments**: `(principal, note_id,
 **This will crash at runtime.**
 
 ### GAP-9: Planner produces only single-step plans
-[planning.py](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/planning.py#L53-L64) always creates a 1-step plan with a fixed `search` action. Multi-step task execution is structurally supported by `ActivePlan` but functionally impossible because the Planner never generates multi-step plans from context.
+[planning.py](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/planning.py#L53-L64) always creates a 1-step plan with a fixed `search` action. Multi-step task execution is structurally supported by `ActivePlan` but functionally impossible because the Planner never generates multi-step plans from context.
 
 ### GAP-10: Failed tasks cannot be replanned
 When `step_loop()` encounters an error or block, it returns the result but does **not**:
@@ -140,17 +140,17 @@ The Executive simply stops.
 > This is the single most critical gap. The learning loop is broken: the system can reflect and produce lessons, but those lessons are permanently invisible to future cognitive operations.
 
 ### GAP-12: No crash-before-checkpoint protection
-`Executive.step_loop()` executes the action at [line 73](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py#L73), then calls `complete_current_step()` at [line 80](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py#L80), but `save_state()` is **never called automatically**. If the process crashes between action execution and the next explicit `save_state()` call, the step completion is lost. On restart, the step will be re-executed (non-idempotent).
+`Executive.step_loop()` executes the action at [line 73](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py#L73), then calls `complete_current_step()` at [line 80](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py#L80), but `save_state()` is **never called automatically**. If the process crashes between action execution and the next explicit `save_state()` call, the step completion is lost. On restart, the step will be re-executed (non-idempotent).
 
 ### GAP-13: Duplicate Lifecycle enum definitions
 `Lifecycle` is defined in **both**:
-- [controller.py L53-L61](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/controller.py#L53-L61)
-- [core.py L23-L31](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/core.py#L23-L31)
+- [controller.py L53-L61](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/controller.py#L53-L61)
+- [core.py L23-L31](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/core.py#L23-L31)
 
 The Cognitive Core imports from `memory_controller.core.Lifecycle`. Some modules import from `memory_controller.controller.Lifecycle`. These are separate classes that happen to have the same values. Cross-module comparisons may fail unexpectedly.
 
 ### GAP-14: Duplicate StorageEngine definitions
-`StorageEngine` is defined in both [controller.py L30-L51](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/controller.py#L30-L51) and [core.py L10-L21](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/core.py#L10-L21). The production singleton uses the one from `controller.py`. `core.py` is a dead duplicate.
+`StorageEngine` is defined in both [controller.py L30-L51](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/controller.py#L30-L51) and [core.py L10-L21](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/core.py#L10-L21). The production singleton uses the one from `controller.py`. `core.py` is a dead duplicate.
 
 ---
 

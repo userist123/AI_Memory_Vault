@@ -6,7 +6,7 @@ Investigate test suite and test infrastructure in `projects/jarvis_cognitive_bra
 ## 🔒 My Identity
 - Archetype: explorer
 - Roles: [investigation, synthesis, test architecture design]
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m3_3
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m3_3
 - Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
 - Milestone: milestone_3_test_infrastructure_and_design
 

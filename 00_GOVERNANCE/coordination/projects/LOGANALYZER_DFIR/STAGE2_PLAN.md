@@ -120,7 +120,7 @@ Spec: `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/CONTRACT_AUDIT_
 
 ## Security fixes found by the accreditation analysis (confirmed by orchestrator, 2026-10-08)
 - [ ] `LogAnalyzer.Infrastructure/Services/AuditCollectionService.cs:33` falls back to a developer path
-      (`C:\Users\Marius\Desktop\LogAnalyzer.MVP\Scripts\AuditCollector.ps1`) and runs it with
+      (`C:\Users\user\Desktop\LogAnalyzer.MVP\Scripts\AuditCollector.ps1`) and runs it with
       `-ExecutionPolicy Bypass` (line 49); `AuditCollector.ps1` is not in the repo, so the feature is broken
       and any file at that path would run. Fix: drop the fallback, fail closed with a clear error, resolve the
       script only from the app's own signed install dir. Small PR after WP1 merges (avoid conflicts).
@@ -129,7 +129,7 @@ Spec: `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/CONTRACT_AUDIT_
       asymmetric signing (owner keeps the private key offline, app ships only the public key). Then rotate,
       remove the committed licence file from the tree.
       **Owner (2026-10-08): do it after the app is finished; orchestrator explains the procedure to the owner then.**
-- [ ] Hardcoded demo identity "MARIUS-PC\Marius" in `ViewModels/MainViewModel.cs:645-659` (workspace-root legacy
+- [ ] Hardcoded demo identity "LAB-PC\Marius" in `ViewModels/MainViewModel.cs:645-659` (workspace-root legacy
       demo data): label as demo or drop from production views (decision 4: legacy root files untouched unless
       they present fake data as real → WP1 scope).
 

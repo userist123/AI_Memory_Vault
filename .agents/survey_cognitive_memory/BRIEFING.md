@@ -6,7 +6,7 @@ Conduct a comprehensive technical survey and specification mining for Requiremen
 ## 🔒 My Identity
 - Archetype: explorer
 - Roles: Cognitive Core & Persistent Memory Specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_cognitive_memory
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_cognitive_memory
 - Original parent: 5a625f23-4992-4b00-bb13-1f4b316b216c
 - Milestone: Survey & Architectural Specification Mining
 

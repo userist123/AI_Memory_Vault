@@ -1,12 +1,12 @@
 ﻿## 2026-08-27T19:24:10Z
 You are Test Writer (E2E Testing Track Specialist) for the Cognitive Brain ('Creier Vorbitor') project.
-Your assigned working directory is c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\test_writer_e2e.
-The target project codebase is c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain.
+Your assigned working directory is c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\test_writer_e2e.
+The target project codebase is c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain.
 
 Read the authoritative requirements and architecture:
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md (specifically timestamp 2026-08-27T19:19:42Z)
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_INFRA.md
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md (specifically timestamp 2026-08-27T19:19:42Z)
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_INFRA.md
 
 Your task is to build the Dual-Track E2E Test Suite infrastructure and test cases:
 1. 	ests/conftest.py: Root pytest fixtures including temporary vault directories, mock LLM providers, virtual audio I/O drivers, and Home Assistant simulator fixtures.

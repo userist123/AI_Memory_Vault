@@ -5,7 +5,7 @@
 
 ## Tasks
 - [x] Initialize briefing, dispatch, and progress
-- [ ] List all files and directories in `C:\Users\Marius\teamwork_projects\otp_flight_finder`
+- [ ] List all files and directories in `C:\Users\user\teamwork_projects\otp_flight_finder`
 - [ ] Inspect package definitions / dependencies / configs (`requirements.txt`, `pyproject.toml`, `.env`, etc.)
 - [ ] Inspect backend architecture (framework, entry points, route handlers, deep link generation, scrapers/APIs)
 - [ ] Inspect frontend architecture (HTML, CSS, JS, templates, static files)

@@ -6,7 +6,7 @@ Execute Milestone 5: Continual Learning, TRACe/IR Benchmarks & Full Pytest Pass.
 ## 🔒 My Identity
 - Archetype: worker
 - Roles: implementer, qa, specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m5_1
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m5_1
 - Original parent: 4b331fbc-eb8c-41a5-8ea8-e64218064557
 - Milestone: Milestone 5 (Continual Learning, TRACe/IR Benchmarks & Full Pytest Pass)
 
@@ -47,9 +47,9 @@ Execute Milestone 5: Continual Learning, TRACe/IR Benchmarks & Full Pytest Pass.
 - **Tests added/modified**: `cognitive_core/tests/test_milestone5_continual_learning_eval.py` (23 new tests)
 
 ## Loaded Skills
-- **Source**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
+- **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
   - **Core methodology**: Operational runbook for recall, safe AI proposal, human attestation, and formal reflexion.
-- **Source**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`
+- **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`
   - **Core methodology**: Security audit invariants P0-P15, audit log tamper checking, SQLite concurrency constraints.
 
 ## Key Decisions Made

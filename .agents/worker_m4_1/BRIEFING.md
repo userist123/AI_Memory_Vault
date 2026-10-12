@@ -6,7 +6,7 @@ Implement Milestone 4: FastMCP IoT Server & Home Assistant Integration (`JarvisC
 ## 🔒 My Identity
 - Archetype: implementer
 - Roles: implementer, qa, specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_1
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_1
 - Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
 - Milestone: Milestone 4 (FastMCP IoT & Home Assistant Integration)
 

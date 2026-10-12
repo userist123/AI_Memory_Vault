@@ -96,7 +96,7 @@ The Milestone 1 Iteration 2 work product is robust, compliant with all user cons
 To independently reproduce the empirical evidence:
 
 ```powershell
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 
 # 1. Run full test suite
 python -m pytest tests/ -v

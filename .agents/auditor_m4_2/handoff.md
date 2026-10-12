@@ -27,7 +27,7 @@
 ## 5. Verification Method
 To independently reproduce and verify this audit:
 ```powershell
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 python -m pytest -v
 ```
 **Expected Outcome**: 434 passed, 0 failed.

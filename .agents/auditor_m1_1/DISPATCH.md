@@ -3,9 +3,9 @@ Scope & Mission:
 Perform a forensic integrity audit on Milestone 1: `memory_controller/financial_schema.py` and `tests/financial/test_schema.py`.
 
 Authoritative Documents:
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_schema\handoff.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_schema\handoff.md`
 
 Tasks:
 1. Perform forensic static and dynamic analysis:

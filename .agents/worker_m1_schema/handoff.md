@@ -1,7 +1,7 @@
 # Milestone 1 Handoff Report: Financial Schema & Domain Models
 
 **Agent**: Worker M1 (`teamwork_preview_worker`)  
-**Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_schema`  
+**Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_schema`  
 **Milestone**: M1 Financial Schema & Domain Models  
 **Timestamp**: 2026-08-26T16:09:40Z  
 **Type**: Hard Handoff (Task Complete)

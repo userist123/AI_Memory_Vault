@@ -32,7 +32,7 @@
    - `memory_controller/financial_query.py`: 111-line skeleton with `ingest_financial_note()` and `search()`.
    - `memory_controller/financial_schema.py`: Stub with `FINANCIAL_NOTE_SCHEMA = {}`.
    - `xau_kinetic/financial_ingestion/`: Production catalog (`catalog.py`), mathematical indicators (`indicators.py`), data fetchers (`pipeline.py`), and Draft7 schema memory note adapter with deduplication (`adapter.py`).
-   - `C:\Users\Marius\Desktop\Nu sterge\nusterge\ghid.py`: 1,954-line market update script containing hardcoded `FRED_API_KEY = "e372c6879cce084b8c3601f76adbe78d"` (line 29).
+   - `C:\Users\user\Desktop\Nu sterge\nusterge\ghid.py`: 1,954-line market update script containing hardcoded `FRED_API_KEY = "e372c6879cce084b8c3601f76adbe78d"` (line 29).
 
 7. **Test Executions**:
    - `python -m pytest -q memory_controller/tests/`: 215 passed in 7.31s (100% pass).
@@ -60,7 +60,7 @@
 
 1. **Air-Gapped & Offline Testing**: When running test suites, external network calls to yfinance or FRED should be mocked or use the offline fallback generator (`generate_synthetic_ohlcv`) present in `xau_kinetic/financial_ingestion/pipeline.py`.
 2. **Existing Non-UUID Mocks in Search Tests**: The 14 failures in `tests/financial/test_financial_search.py` are purely due to mock ID formatting (`"note-gold-1"` instead of standard UUIDs). The core `MultiLayeredFinancialSearchEngine` itself is fully functional.
-3. **Desktop Path Availability**: Desktop source files exist at `C:\Users\Marius\Desktop\Nu sterge\nusterge\`, but in automated CI environments these should be referenced via configurable paths or environment variables.
+3. **Desktop Path Availability**: Desktop source files exist at `C:\Users\user\Desktop\Nu sterge\nusterge\`, but in automated CI environments these should be referenced via configurable paths or environment variables.
 
 ---
 
@@ -93,4 +93,4 @@ The implementation path for the Financial Ingestion Pipeline and Multi-Layered F
    assert is_valid, f"Violations: {violations}"
    ```
 3. **Inspect Survey Report**:
-   View `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_1\survey_codebase.md`.
+   View `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_1\survey_codebase.md`.

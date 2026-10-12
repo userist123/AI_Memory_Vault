@@ -1,7 +1,7 @@
 # Specification Mining Report: Financial Data Ingestion & Schema Architecture
 
 **Author**: Spec Miner Survey 2 (`teamwork_preview_spec_miner`)  
-**Target Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2`  
+**Target Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2`  
 **Date**: 2026-08-26  
 **Status**: Authoritative Discovery & Schema Specification  
 
@@ -9,11 +9,11 @@
 
 ## 1. Executive Summary & Authoritative Specification Sources
 
-This specification defines the complete structural, mathematical, behavioral, and schema requirements for integrating financial market data into the **AI Memory Vault** (`AI_Memory_Vault_CODEX_READY`). The pipeline ingests financial scripts and multi-sheet workbooks from `C:\Users\Marius\Desktop\Nu sterge\nusterge\` (`ghid.py`, `Analiza_Piata_Profesionala.xlsx`), computes 10 quantitative technical indicators, evaluates multi-factor confluence scoring and dynamic risk parameters, produces schema-valid canonical memory notes (`knowledge`, `decision`, `experience`, `error`, `lesson`, `resource`, `hypothesis`), and exposes layered retrieval via `FinancialQueryEngine` and REST endpoints in `vault_api.py`.
+This specification defines the complete structural, mathematical, behavioral, and schema requirements for integrating financial market data into the **AI Memory Vault** (`AI_Memory_Vault_CODEX_READY`). The pipeline ingests financial scripts and multi-sheet workbooks from `C:\Users\user\Desktop\Nu sterge\nusterge\` (`ghid.py`, `Analiza_Piata_Profesionala.xlsx`), computes 10 quantitative technical indicators, evaluates multi-factor confluence scoring and dynamic risk parameters, produces schema-valid canonical memory notes (`knowledge`, `decision`, `experience`, `error`, `lesson`, `resource`, `hypothesis`), and exposes layered retrieval via `FinancialQueryEngine` and REST endpoints in `vault_api.py`.
 
 ### Authoritative Specification Sources Inspected
-1. **Primary Python Script**: `C:\Users\Marius\Desktop\Nu sterge\nusterge\ghid.py` (1,954 lines, unified quantitative analysis engine).
-2. **Primary Excel Model**: `C:\Users\Marius\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx` (15 specialized sheets, 95 tracked instruments, macro benchmarks, and hedge fund trading journal).
+1. **Primary Python Script**: `C:\Users\user\Desktop\Nu sterge\nusterge\ghid.py` (1,954 lines, unified quantitative analysis engine).
+2. **Primary Excel Model**: `C:\Users\user\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx` (15 specialized sheets, 95 tracked instruments, macro benchmarks, and hedge fund trading journal).
 3. **Cognitive Vault Rules**: `AGENTS.md` and `.agents/rules/vault_cognitive_rules.md` (P0–P18 Trust Boundary Invariants).
 4. **Canonical Frontmatter Schema**: `99_SYSTEM/Canonical_Frontmatter.md` and `memory_controller/validation/schema.py`.
 5. **Memory Controller Architecture**: `memory_controller/controller.py`, `memory_controller/financial_search.py`, `memory_controller/financial_query.py`.
@@ -693,7 +693,7 @@ Every ingested financial note must strictly adhere to the Vault operating rules 
 ## 8. Zero Hardcoded Secrets & Environment Variable Policy
 
 ### Audit Finding
-- In source file `C:\Users\Marius\Desktop\Nu sterge\nusterge\ghid.py`, line 29 contains a plaintext API key:
+- In source file `C:\Users\user\Desktop\Nu sterge\nusterge\ghid.py`, line 29 contains a plaintext API key:
   ```python
   FRED_API_KEY = "e372c6879cce084b8c3601f76adbe78d"
   ```

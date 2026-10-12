@@ -1,7 +1,7 @@
 # Milestone 5 Exploration & Design Handoff Report
 
-**Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m5_1`  
-**Target Project Root**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
+**Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m5_1`  
+**Target Project Root**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
 **Author**: `teamwork_preview_explorer` (`explorer_m5_1`)  
 **Recipient**: `parent` (`8b531079-7cca-4ec6-a0e3-4ce625943430`)  
 **Date**: 2026-08-28  

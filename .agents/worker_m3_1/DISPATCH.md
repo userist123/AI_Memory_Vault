@@ -1,7 +1,7 @@
 ## 2026-08-28T13:58:25Z
 Task: Implement Milestone 3 (Multi-Agent Subsystem, Agent Roles, RBAC Scoping, Supervisor, and Full Test Suite) for jarvis_cognitive_brain.
-Working metadata dir: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_1
-Project root: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+Working metadata dir: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_1
+Project root: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 
 Deliverables:
 1. jarvis/agents/models.py

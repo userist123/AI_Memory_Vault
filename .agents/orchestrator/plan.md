@@ -6,7 +6,7 @@ Rebuild the OTP Flight Finder web application to strictly enforce Bucharest Henr
 ## Work Breakdown & Phasing
 
 ### Phase 0: Survey & Discovery (Parallel)
-- **Explorer 1 (Codebase & Architecture)**: Probe `C:\Users\Marius\teamwork_projects\otp_flight_finder` to map existing architecture, backend, frontend, build tools, and test harness.
+- **Explorer 1 (Codebase & Architecture)**: Probe `C:\Users\user\teamwork_projects\otp_flight_finder` to map existing architecture, backend, frontend, build tools, and test harness.
 - **Explorer 2 (Deep-links & Airline API Invariants)**: Analyze current deep-link generation logic, Ryanair URL schema (`origin`/`originIata=OTP`, `destination`/`destinationIata`), query params, and eliminate BBU leakages.
 - **Spec Miner 3 (UI/UX, Assets & Test Requirements)**: Mine UI/UX specifications, Tailwind config, accessibility guidelines, asset BOM checks, Lighthouse criteria, and test fixtures.
 

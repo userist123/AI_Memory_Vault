@@ -11,7 +11,7 @@
 
 ## 1. Overview & Objective
 
-This report establishes end-to-end traceability between the **17 Canonical Vault Engineering Problems** defined in [PROBLEM_MATRIX.md](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/PROBLEM_MATRIX.md) and the operational hypotheses managed by the `BookToMemoryHypothesisRegistry`.
+This report establishes end-to-end traceability between the **17 Canonical Vault Engineering Problems** defined in [PROBLEM_MATRIX.md](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/PROBLEM_MATRIX.md) and the operational hypotheses managed by the `BookToMemoryHypothesisRegistry`.
 
 In accordance with `POLICY-LEARNING-QUALITY-02` Section 14, every hypothesis track bridges:
 $$\text{Biological Observation} \longrightarrow \text{Engineering Hypothesis} \longrightarrow \text{Controlled Experiment} \longrightarrow \text{Vault Mechanism}$$

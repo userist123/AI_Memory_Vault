@@ -5,7 +5,7 @@ import json
 import sqlite3
 import math
 
-PROJECT_DIR = r"c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain"
+PROJECT_DIR = os.path.expanduser(r"~\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain")
 
 print("=" * 80)
 print("FORENSIC INTEGRITY AUDIT - JARVIS COGNITIVE BRAIN (MILESTONE 1)")

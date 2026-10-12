@@ -6,7 +6,7 @@ Thoroughly explore the existing Cognitive Brain system codebase, evaluate subsys
 ## 🔒 My Identity
 - Archetype: explorer
 - Roles: Codebase Architect Explorer, Read-only investigator
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_codebase_explorer_1
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_codebase_explorer_1
 - Original parent: e71a16ec-5ebc-4ca2-ab0f-6beddef86e94
 - Milestone: Codebase Architecture Survey & Analysis Complete
 

@@ -1,7 +1,7 @@
 # Technical Survey & Specification Mining Report: Requirement R1 (Cognitive Core & Persistent Memory)
 
 **Project**: Jarvis Cognitive Brain ('Creier Vorbitor')  
-**Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
+**Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
 **Investigator**: Explorer 1 (Cognitive Core & Persistent Memory Specialist)  
 **Date**: 2026-08-27  
 **Status**: COMPLETE (Hard Handoff)
@@ -13,7 +13,7 @@
 Direct observations extracted from the authoritative requirements, vault architecture, core governance policies, and existing prototype modules:
 
 ### 1.1 Authoritative Requirement (R1)
-From `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md` (lines 134–141):
+From `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md` (lines 134–141):
 ```text
 ### R1. Cognitive Loop Self-Execution & Memory Persistent Storage
 Establish a local daemon utilizing the Google Antigravity SDK. Configured out-of-the-box to prioritize local LLMs (e.g., via Ollama running local models like `qwen2.5-coder`), but structured modularly to allow simple configuration-level swapping to external API models (Gemini API, Claude API, etc.) in the future. Implement a full stateful OODA cycle:

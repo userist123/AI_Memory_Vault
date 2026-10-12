@@ -80,7 +80,7 @@ All remediation requirements for Milestone 1 Iteration 2 are complete, verified,
 To independently verify this implementation:
 
 ```powershell
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 
 # 1. Run all tests via pytest
 python -m pytest tests/ -v

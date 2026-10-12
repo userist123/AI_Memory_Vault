@@ -6,7 +6,7 @@ Build and verify the complete standalone frontend dashboard, cyberpunk HUD UI, f
 ## 🔒 My Identity
 - Archetype: Dashboard UI & Task Dispatcher Specialist (Worker 4)
 - Roles: [implementer, qa, specialist]
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_dashboard
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_dashboard
 - Original parent: 95f7bf7e-c539-4492-b214-af221cca8379
 - Milestone: M4 (Standalone Dashboard HUD & Dispatcher)
 

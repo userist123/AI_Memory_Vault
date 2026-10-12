@@ -5,7 +5,7 @@ Coordinate, monitor, and verify the autonomous implementation of the Financial R
 
 ## 🔒 My Identity
 - Archetype: sentinel
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\sentinel_1
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\sentinel_1
 - Orchestrator: fe349d87-bb77-42da-8379-001833bc54af / orchestrator_fin1
 - Victory Auditor: to be spawned on victory claim
 

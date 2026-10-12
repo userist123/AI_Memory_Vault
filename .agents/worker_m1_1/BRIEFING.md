@@ -6,7 +6,7 @@ Complete Milestone 1: Codebase Hygiene & Typing Validation (fix missing Tuple im
 ## 🔒 My Identity
 - Archetype: worker
 - Roles: implementer, qa, specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_1
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_1
 - Original parent: e71a16ec-5ebc-4ca2-ab0f-6beddef86e94
 - Milestone: Milestone 1: Codebase Hygiene & Typing Validation
 

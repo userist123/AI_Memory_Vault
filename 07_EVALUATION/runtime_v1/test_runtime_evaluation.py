@@ -1,8 +1,9 @@
+import os
 import json
 from pathlib import Path
 import pytest
 
-root = Path(r"C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY")
+root = Path(os.path.expanduser(r"~\Documents\Codex\AI_Memory_Vault_CODEX_READY"))
 runtime_dir = root / "07_EVALUATION" / "runtime_v1"
 quality_dir = root / "07_EVALUATION" / "skills_quality_v1"
 

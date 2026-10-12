@@ -42,9 +42,9 @@ Voi folosi un script Python dedicat (Rulează pe Node-ul Local) pentru a executa
 
 Aceste profiluri globale descriu cum vrei tu să lucreze agenții indiferent de proiect. Vor fi adăugate ca standarde canonice:
 
-#### [NEW] [Global_Antigravity_Agent_Profile.md](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Antigravity_Agent_Profile.md)
-#### [NEW] [Global_Claude_Code_Profile.md](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Claude_Code_Profile.md)
-#### [NEW] [Global_Gemini_CLI_Profile.md](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Gemini_CLI_Profile.md)
+#### [NEW] [Global_Antigravity_Agent_Profile.md](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Antigravity_Agent_Profile.md)
+#### [NEW] [Global_Claude_Code_Profile.md](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Claude_Code_Profile.md)
+#### [NEW] [Global_Gemini_CLI_Profile.md](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Gemini_CLI_Profile.md)
 
 ### 2. Exporturile `claude_original/` și `perplexity_original/`
 

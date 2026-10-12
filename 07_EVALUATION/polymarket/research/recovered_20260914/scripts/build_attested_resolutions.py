@@ -1,9 +1,10 @@
+import os
 import json
 import sys
 import hashlib
 from datetime import datetime, timezone, timedelta
 
-sys.path.insert(0, "C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages")
+sys.path.insert(0, os.path.expanduser("~/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages"))
 
 from polymarket.resolutions import (
     RESOLUTION_SCHEMA_VERSION,
@@ -15,12 +16,12 @@ from polymarket.resolutions import (
 )
 
 # Load dataset
-dataset_path = "C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json"
+dataset_path = os.path.expanduser("~/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json")
 with open(dataset_path, "r", encoding="utf-8") as f:
     dataset = json.load(f)
 
 # Also load raw markets for exact closedTime
-scratch_path = "C:/Users/Marius/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch"
+scratch_path = os.path.expanduser("~/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch")
 with open(f"{scratch_path}/sampled_500_markets.json", "r", encoding="utf-8") as f:
     sampled = json.load(f)
 raw_by_id = {str(m["id"]): m for m in sampled}
@@ -69,7 +70,7 @@ print(f"by_status: {res_set.by_status()}")
 print(f"Scorable count: {len(res_set.scorable())}")
 
 # Save to fixture
-out_file = "C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/resolutions_attested_50.json"
+out_file = os.path.expanduser("~/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/resolutions_attested_50.json")
 serialised = [r.as_dict() for r in records]
 with open(out_file, "w", encoding="utf-8") as f:
     json.dump(serialised, f, indent=2)
@@ -77,7 +78,7 @@ with open(out_file, "w", encoding="utf-8") as f:
 with open(out_file, "rb") as f:
     sha256_hash = hashlib.sha256(f.read()).hexdigest()
 
-prov_file = "C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/resolutions_attested_50.provenance.json"
+prov_file = os.path.expanduser("~/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/resolutions_attested_50.provenance.json")
 prov_data = {
     "target_file": "resolutions_attested_50.json",
     "sha256": sha256_hash,
