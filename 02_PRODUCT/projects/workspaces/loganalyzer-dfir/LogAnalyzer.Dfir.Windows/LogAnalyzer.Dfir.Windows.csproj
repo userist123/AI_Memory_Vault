@@ -6,9 +6,7 @@
     <RootNamespace>LogAnalyzer.Dfir.Windows</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
-    <!-- CI and Release restore only what packages.lock.json records (exact versions and content hashes); a changed dependency must be committed as a lock-file change. -->
-    <RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true' Or '$(CI)' == 'true' Or '$(Configuration)' == 'Release'">true</RestoreLockedMode>
+    <!-- Lock file and locked restore (CI / Release): Directory.Build.props, for every project. -->
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Diagnostics.EventLog" Version="10.0.10" />

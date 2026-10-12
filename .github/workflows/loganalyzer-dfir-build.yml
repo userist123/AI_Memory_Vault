@@ -55,8 +55,29 @@ jobs:
         with:
           dotnet-version: '10.x'
 
-      - name: Restore
-        run: dotnet restore LogAnalyzer.slnx
+      # Security audit #9: every project restores from its committed packages.lock.json (Directory.Build.props).
+      - name: Every project has a committed lock file
+        shell: pwsh
+        run: |
+          $projects = Select-String -Path LogAnalyzer.slnx -Pattern 'Path="([^"]+)\.csproj"' -AllMatches | ForEach-Object { $_.Matches } | ForEach-Object { Split-Path $_.Groups[1].Value }
+          if (-not $projects) { Write-Host "::error::Nu s-a găsit niciun proiect în LogAnalyzer.slnx"; exit 1 }
+          $missing = $projects | Where-Object { -not (Test-Path (Join-Path $_ 'packages.lock.json')) }
+          if ($missing) { Write-Host "::error::packages.lock.json lipsește pentru: $($missing -join ', ')"; exit 1 }
+          Write-Host "OK: $($projects.Count) proiecte, fiecare cu packages.lock.json"
+
+      - name: Restore (locked mode)
+        run: dotnet restore LogAnalyzer.slnx --locked-mode
+
+      # Security audit #9: any known-vulnerable package, direct or transitive, fails the build.
+      - name: Vulnerable packages (direct and transitive)
+        shell: pwsh
+        run: |
+          $out = (dotnet list LogAnalyzer.slnx package --vulnerable --include-transitive 2>&1 | Out-String)
+          $code = $LASTEXITCODE
+          Write-Host $out
+          if ($code -ne 0) { Write-Host "::error::dotnet list package --vulnerable a eșuat (cod $code)"; exit 1 }
+          if ($out -match 'has the following vulnerable packages') { Write-Host "::error::Pachete cu vulnerabilități cunoscute (vezi lista de mai sus)"; exit 1 }
+          Write-Host "OK: niciun pachet vulnerabil cunoscut"
 
       - name: Build (Release)
         run: dotnet build LogAnalyzer.slnx --no-restore --configuration Release
@@ -205,9 +226,26 @@ jobs:
           if (Test-Path $report) { Get-Content $report | ForEach-Object { Write-Host $_ } }
           if ($p.ExitCode -ne 0) { Write-Host "::error::self-test exited with $($p.ExitCode)"; exit 1 }
 
+      # Security audit #9: CycloneDX SBOM of the edition (packages from the lock files, project references followed), tool pinned in .config/dotnet-tools.json.
+      - name: SBOM (CycloneDX)
+        shell: pwsh
+        run: |
+          dotnet tool restore
+          if ($LASTEXITCODE -ne 0) { Write-Host "::error::dotnet tool restore a eșuat"; exit 1 }
+          dotnet tool run dotnet-CycloneDX ${{ matrix.project }} --recursive --output sbom --filename "$env:EDITION.cdx.json" --output-format Json --disable-package-restore --set-name "$env:EDITION"
+          if ($LASTEXITCODE -ne 0 -or -not (Test-Path "sbom/$env:EDITION.cdx.json")) { Write-Host "::error::SBOM-ul nu a fost generat"; exit 1 }
+
       - name: Upload package
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ matrix.artifact }}
           path: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/publish/${{ matrix.edition }}/win-x64
           retention-days: 30
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ matrix.artifact }}-sbom
+          path: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/sbom/${{ matrix.edition }}.cdx.json
+          if-no-files-found: error
+          retention-days: 90

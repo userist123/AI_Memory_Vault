@@ -2,4 +2,14 @@
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
+
+  <!--
+    Supply chain (security audit #9): every project restores from its committed packages.lock.json (exact versions and content
+    hashes, transitive packages included). CI and Release restore in locked mode: a dependency that is not in the lock file, or whose
+    hash changed, fails the restore; a dependency change must be committed as a lock-file change (dotnet restore force-evaluate).
+  -->
+  <PropertyGroup>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true' Or '$(CI)' == 'true' Or '$(GITHUB_ACTIONS)' == 'true' Or '$(Configuration)' == 'Release'">true</RestoreLockedMode>
+  </PropertyGroup>
 </Project>

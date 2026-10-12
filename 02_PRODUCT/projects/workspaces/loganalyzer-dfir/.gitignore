@@ -21,3 +21,6 @@ publish/
 # Licence files are per station and never committed (security audit #3)
 license.lic
 *.lic
+
+# CycloneDX SBOM output (CI artefact, security audit #9)
+sbom/
