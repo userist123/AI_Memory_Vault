@@ -166,7 +166,7 @@ public static class ReportCli
     }
 
     /// <summary>One line of secret input. From a supplied reader (tests, piped input) it is read as is; from an interactive console the typed characters are not echoed.</summary>
-    private static string? ReadSecret(TextReader? input)
+    internal static string? ReadSecret(TextReader? input)
     {
         if (input is not null) return input.ReadLine();
         if (Console.IsInputRedirected) return Console.In.ReadLine();
@@ -180,7 +180,7 @@ public static class ReportCli
         return sb.ToString();
     }
 
-    private static bool InsideGitRepository(string path)
+    internal static bool InsideGitRepository(string path)
     {
         for (var d = new DirectoryInfo(Path.GetDirectoryName(path)!); d is not null; d = d.Parent)
             if (Directory.Exists(Path.Combine(d.FullName, ".git")) || File.Exists(Path.Combine(d.FullName, ".git"))) return true;

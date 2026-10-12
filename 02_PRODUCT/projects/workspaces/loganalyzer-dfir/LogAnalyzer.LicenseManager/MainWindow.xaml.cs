@@ -12,7 +12,7 @@ public partial class MainWindow : Window
     // The application shows a 16-hex-digit Hardware ID (LicenseService.GetHardwareId); accept exactly that.
     private static readonly Regex HwidFormat = new("^[0-9A-F]{16}$", RegexOptions.Compiled);
 
-    private readonly LicenseService _license = new();
+    private readonly LicenseService _license = new(); // hardware id of this PC only; signing uses the chosen offline key
     private readonly LicenseLedger _ledger = new();
     private IssuedLicense? _current;
 
@@ -54,12 +54,31 @@ public partial class MainWindow : Window
             expiry = DateTime.UtcNow.Date.AddYears(years);
         }
 
-        var licenseString = _license.BuildLicenseString(hwid, expiry);
-
-        // Self-check with the exact verification the application performs at activation and at every start.
-        if (!_license.VerifyLicenseString(hwid, licenseString, DateTime.UtcNow))
+        if (!File.Exists(TxtKeyPath.Text.Trim()))
         {
-            ShowStatus("Auto-verificarea a eșuat: licența nu ar fi acceptată de aplicație. Nu o distribui.", ok: false);
+            ShowStatus("Alege fișierul cheii private de licență (creat cu LogAnalyzer.KeyGen license-keygen).", ok: false);
+            return;
+        }
+        string licenseString;
+        try
+        {
+            var keyText = File.ReadAllText(TxtKeyPath.Text.Trim());
+            using var key = LogAnalyzer.Dfir.Reporting.ReportSignature.LoadPrivateKey(keyText,
+                LogAnalyzer.Dfir.Reporting.ReportKeyProtection.NeedsPassphrase(keyText) ? PwdKey.Password : null);
+            licenseString = LicenseService.Sign(key, hwid, expiry);
+            // Self-check with the exact verification the application performs at activation and at every start.
+            var verifier = new LicenseService([Convert.ToBase64String(key.ExportSubjectPublicKeyInfo())]);
+            if (!verifier.VerifyLicenseString(hwid, licenseString, DateTime.UtcNow))
+            {
+                ShowStatus("Auto-verificarea a eșuat: licența nu ar fi acceptată de aplicație. Nu o distribui.", ok: false);
+                return;
+            }
+            if (!LogAnalyzer.Dfir.Reporting.ReportKeyProtection.IsProtected(keyText))
+                ShowStatus("Atenție: cheia privată este stocată necriptat.", ok: false);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException or System.Security.Cryptography.CryptographicException or ArgumentException)
+        {
+            ShowStatus("Cheia privată nu poate fi folosită: " + ex.Message, ok: false);
             return;
         }
 
@@ -69,6 +88,12 @@ public partial class MainWindow : Window
         BtnCopy.IsEnabled = BtnSave.IsEnabled = true;
         ShowStatus($"Licență validă pentru {hwid}, până la {expiry:yyyy-MM-dd} (verificată cu aceeași logică ca aplicația). Înregistrată în registru.", ok: true);
         RefreshLedger();
+    }
+
+    private void BrowseKey_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new OpenFileDialog { Title = "Cheia privată de licență (license-keygen)", Filter = "Toate fișierele|*.*" };
+        if (dlg.ShowDialog(this) == true) TxtKeyPath.Text = dlg.FileName;
     }
 
     private void Copy_Click(object sender, RoutedEventArgs e)
