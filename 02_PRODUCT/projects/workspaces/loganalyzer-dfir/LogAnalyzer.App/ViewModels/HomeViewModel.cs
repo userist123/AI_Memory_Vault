@@ -61,6 +61,8 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private bool _isReadOnly;
         [ObservableProperty] private string _readOnlyNotice = "";
         [ObservableProperty] private string _openStatus = "";
+        /// <summary>Non-blocking warning from the application's time memory (clock behind its own record or before the Windows install); empty when fine.</summary>
+        public string ClockWarning => ClockMemory.StartupWarning;
         [ObservableProperty] private bool _isBusy;
 
         /// <summary>Short, data-driven next steps (at most <see cref="HomeAggregator.MaxNextSteps"/>).</summary>

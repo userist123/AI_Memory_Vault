@@ -178,6 +178,14 @@ namespace LogAnalyzer.UI
                 // 2b. Autentificare (decizia 33): card + PIN pentru utilizatori; cont + parolă numai pentru administratorul principal.
                 splash.Hide();
                 AuthApp.Initialize();
+                // The application's own time memory: compare the clock with the last recorded time BEFORE sign-in writes its own entries,
+                // then record "clock.seen" in the chained auth audit.
+                try
+                {
+                    var clock = LogAnalyzer.Dfir.Case.ClockMemory.Startup(AuthApp.Service.AuditPath, DateTimeOffset.UtcNow, LogAnalyzer.Dfir.Windows.Audit.StationFactCollector.ReadInstallDate());
+                    Step(debugLogPath, $"Clock memory: {clock.State} — {clock.Message}\n");
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { Step(debugLogPath, $"Clock memory unavailable: {ex.Message}\n"); }
                 var signedIn = SignInBeforeMainWindow(debugLogPath);
                 if (!signedIn)
                 {

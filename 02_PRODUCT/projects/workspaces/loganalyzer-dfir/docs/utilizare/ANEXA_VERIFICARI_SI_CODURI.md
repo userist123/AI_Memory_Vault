@@ -845,6 +845,14 @@
 - **Sursa tehnică:** `WMI Win32_QuickFixEngineering → HotFixID, InstalledOn; registrul actualizărilor offline (pagina Control stație)`
 - **Cum se citește rezultatul:** Conform = toate actualizările din perioadă apar în registru. Neconform = actualizări instalate care nu apar în registru. De verificat = registrul nu este completat în aplicație (comparați manual, verificarea M05) sau nu s-a instalat nimic în perioadă. Lista Windows nu cuprinde actualizările de antivirus; data semnăturilor se compară separat.
 
+### S05
+
+- **Ce verificăm:** Ce verificăm: dacă ceasul stației este în ordine față de ultima oră pe care aplicația însăși a notat-o (la pornire și la fiecare raport), în jurnalul ei protejat împotriva modificărilor, și față de data instalării Windows.
+- **De ce contează:** De ce contează: toate orele din jurnale și din constatări se bazează pe ceas; un ceas dat înapoi sau resetat (de exemplu baterie CMOS descărcată) face ca evenimentele să pară în altă ordine și poate ascunde ce s-a întâmplat.
+- **Cum verifică aplicația:** Ce faceți: dacă ceasul este în urmă, corectați ora dintr-o sursă aprobată, verificați bateria CMOS și notați incidentul. Un salt mare înainte (peste 30 de zile) nu este o eroare: stația poate fi oprită mult timp; doar confirmați că data este cea reală.
+- **Sursa tehnică:** `Jurnalul de audit al aplicației (intrările clock.seen, lanț de amprente); jurnalul de custodie al cazului; HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion → InstallDate`
+- **Cum se citește rezultatul:** Conform = ora este în ordine. Neconform = ceasul este mai vechi cu peste 2 minute decât ultima activitate a aplicației sau dinaintea instalării Windows. De verificat = salt înainte de peste 30 de zile. Nedeterminat = aplicația nu are încă nicio înregistrare (prima rulare). Aplicația nu poate vedea o schimbare a ceasului făcută cât timp era oprită.
+
 ## Ce înseamnă rezultatele
 
 - CONFORM: ce s-a verificat corespunde regulii.

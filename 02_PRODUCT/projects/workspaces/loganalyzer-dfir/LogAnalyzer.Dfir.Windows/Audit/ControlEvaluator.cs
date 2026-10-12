@@ -1130,6 +1130,22 @@ public static class ControlEvaluator
                     .Concat(foundAfter.Select(d => $"{EvShort(d)}: {V(d, "Threat Name")} {V(d, "Path")}".TrimEnd())),
             "Fiecare suport se scanează înainte de prima conectare la stație (pe stația de decontaminare sau pe stație, imediat la conectare), iar scanarea se notează.");
 
+        // S05 the application's own time memory: station clock against the latest time the application recorded in its chained audit.
+        DateTimeOffset? installAt = DateTimeOffset.TryParse(S("OS.InstallDate"), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var instParsed) ? instParsed : null;
+        var clockMem = LogAnalyzer.Dfir.Case.ClockMemoryCheck.Evaluate(f.CollectedUtc, f.LatestAppRecordUtc, installAt);
+        Add(r, "S05", "Software", "Ceasul stației față de memoria de timp a aplicației",
+            clockMem.State switch
+            {
+                LogAnalyzer.Dfir.Case.ClockMemoryState.Ok => ControlStatus.Conform,
+                LogAnalyzer.Dfir.Case.ClockMemoryState.Behind or LogAnalyzer.Dfir.Case.ClockMemoryState.BeforeInstall => ControlStatus.Neconform,
+                LogAnalyzer.Dfir.Case.ClockMemoryState.ForwardJump => ControlStatus.DeVerificat,
+                _ => ControlStatus.Nedeterminat,
+            },
+            clockMem.Message + (clockMem.TimeUnreliable ? " Constatările care depind de oră au încredere redusă." : ""),
+            new[] { $"Ora stației (UTC): {f.CollectedUtc:yyyy-MM-dd HH:mm:ss}", $"Ultima oră înregistrată de aplicație (UTC): {(f.LatestAppRecordUtc is { } la ? la.ToString("yyyy-MM-dd HH:mm:ss") : "niciuna")}",
+                    $"Data instalării Windows (UTC): {(installAt is { } ia ? ia.ToString("yyyy-MM-dd HH:mm:ss") : "necitită")}" },
+            "Dacă ceasul este în urmă, corectați ora (sursă de timp aprobată) și verificați bateria CMOS; treceți incidentul în registrul stației.");
+
         // S04 (C8) Windows updates installed in the period, compared with the register of offline updates.
         if (f.InstalledUpdates is not { } installed)
             Add(r, "S04", "Software", "Actualizări offline aplicate și registrul actualizărilor", ControlStatus.Nedeterminat, "Lista actualizărilor instalate nu a putut fi citită." + NoRead);
