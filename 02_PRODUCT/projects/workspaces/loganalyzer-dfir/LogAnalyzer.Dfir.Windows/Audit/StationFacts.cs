@@ -180,6 +180,18 @@ public static class StationFactCollector
         }
     }
 
+    /// <summary>
+    /// The WQL query for the members of a local group (security audit #16). The domain and name come from WMI but a group can be renamed to
+    /// contain a quote or a backslash, so both are escaped twice: as key values of the object path (single quotes: \ and ') and then as the
+    /// WQL string that holds the path (double quotes: \ and "). Without it a renamed group breaks the query and its members come back empty.
+    /// </summary>
+    public static string GroupUserQuery(string domain, string name)
+    {
+        static string Key(string v) => v.Replace("\\", "\\\\").Replace("'", "\\'");
+        var path = $"Win32_Group.Domain='{Key(domain)}',Name='{Key(name)}'";
+        return $"SELECT PartComponent FROM Win32_GroupUser WHERE GroupComponent = \"{path.Replace("\\", "\\\\").Replace("\"", "\\\"")}\"";
+    }
+
     /// <summary>Members (user and group names) of the local group with the given well-known SID; the group name is localized.</summary>
     private static HashSet<string> GroupMembers(string groupSid)
     {
@@ -187,8 +199,7 @@ public static class StationFactCollector
         using var g = new ManagementObjectSearcher($"SELECT Name, Domain FROM Win32_Group WHERE LocalAccount = TRUE AND SID = '{groupSid}'");
         foreach (ManagementObject grp in g.Get())
         {
-            var q = $"SELECT PartComponent FROM Win32_GroupUser WHERE GroupComponent = \"Win32_Group.Domain='{grp["Domain"]}',Name='{grp["Name"]}'\"";
-            using var m = new ManagementObjectSearcher(q);
+            using var m = new ManagementObjectSearcher(GroupUserQuery(grp["Domain"]?.ToString() ?? "", grp["Name"]?.ToString() ?? ""));
             foreach (ManagementObject gu in m.Get())
             {
                 var part = gu["PartComponent"] as string ?? "";
@@ -207,6 +218,7 @@ public static class StationFactCollector
         var s = f.Settings;
         s["UAC.EnableLUA"] = Reg(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "EnableLUA") ?? "";
         s["UAC.ConsentPromptBehaviorAdmin"] = Reg(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "ConsentPromptBehaviorAdmin") ?? "";
+        s["UAC.PromptOnSecureDesktop"] = Reg(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System", "PromptOnSecureDesktop") ?? "";
         s["Winlogon.AutoAdminLogon"] = Reg(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon", "AutoAdminLogon") ?? "";
         // Only the presence of a stored autologon password is recorded, never its value.
         s["Winlogon.DefaultPasswordPresent"] = Reg(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon", "DefaultPassword") is { Length: > 0 } ? "da" : "nu";
@@ -433,7 +445,7 @@ public static class StationFactCollector
                 using var c = srp.OpenSubKey(col);
                 var mode = c?.GetValue("EnforcementMode")?.ToString() ?? "nesetat";
                 var rules = c?.GetSubKeyNames().Length ?? 0;
-                parts.Add($"{col}: mod {mode}, {rules} reguli");
+                parts.Add($"{col}: mod {mode}, {LogAnalyzer.Dfir.Language.RoText.CountFem(rules, "regulă", "reguli")}");
             }
             s["AppLocker.Collections"] = parts.Count == 0 ? "(fără colecții)" : string.Join("; ", parts);
         });

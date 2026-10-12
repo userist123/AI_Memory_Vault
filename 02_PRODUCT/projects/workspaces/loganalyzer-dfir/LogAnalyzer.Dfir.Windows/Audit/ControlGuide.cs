@@ -32,12 +32,12 @@ public static class ControlPeriods
             case ControlPeriodChoice.Days30: return 30;
             case ControlPeriodChoice.Days90: return 90;
             case ControlPeriodChoice.Custom:
-                if (customDays is < 1 or > MaxDays) { note = $"Intervalul trebuie să fie între 1 și {MaxDays} zile."; return 0; }
+                if (customDays is < 1 or > MaxDays) { note = $"Intervalul trebuie să fie între 1 și {LogAnalyzer.Dfir.Language.RoText.Count(MaxDays, "zi", "zile")}."; return 0; }
                 return customDays;
             default:
                 if (previous is null) { note = "Nu există un control anterior pe această stație; se verifică ultimele 90 de zile."; return DefaultDays; }
                 var days = (int)Math.Ceiling((nowUtc - previous.CollectedUtc).TotalDays) + 1;
-                if (days > MaxDays) { note = $"Ultimul control este mai vechi de {MaxDays} zile; se verifică {MaxDays} zile."; return MaxDays; }
+                if (days > MaxDays) { note = $"Ultimul control este mai vechi de {LogAnalyzer.Dfir.Language.RoText.Count(MaxDays, "zi", "zile")}; se verifică {LogAnalyzer.Dfir.Language.RoText.Count(MaxDays, "zi", "zile")}."; return MaxDays; }
                 note = $"De la controlul din {previous.CollectedUtc.ToLocalTime():yyyy-MM-dd HH:mm} (cu o zi de suprapunere).";
                 return Math.Max(1, days);
         }
@@ -47,7 +47,7 @@ public static class ControlPeriods
 /// <summary>A control saved earlier in the station's case (Control/CONTROL_&lt;date&gt;/control_report.json), as far as the checks are concerned.</summary>
 public sealed record PreviousControl(string Folder, DateTimeOffset CollectedUtc, string Host, IReadOnlyList<ControlCheck> Checks)
 {
-    public string Label => $"{CollectedUtc.ToLocalTime():yyyy-MM-dd HH:mm} · {Checks.Count} verificări";
+    public string Label => $"{CollectedUtc.ToLocalTime():yyyy-MM-dd HH:mm} · {LogAnalyzer.Dfir.Language.RoText.CountFem(Checks.Count, "verificare", "verificări")}";
 }
 
 public static class ControlArchive
@@ -146,24 +146,24 @@ public sealed record ControlResultScreen(string Headline, string Problem, string
               + (f.Gaps.Count == 0 ? "" : $" Surse lipsă sau incomplete: {f.Gaps.Count}.");
         bool nothing = nc == 0 && dv == 0;
 
-        string headline = nc > 0 ? $"ATENȚIE — {nc} verificări NECONFORME"
-            : dv > 0 ? $"DE LĂMURIT — {dv} verificări cer confirmarea organizației"
+        string headline = nc > 0 ? $"ATENȚIE — {LogAnalyzer.Dfir.Language.RoText.CountFem(nc, "verificare NECONFORMĂ", "verificări NECONFORME")}"
+            : dv > 0 ? $"DE LĂMURIT — {LogAnalyzer.Dfir.Language.RoText.CountFem(dv, "verificare cere", "verificări cer")} confirmarea organizației"
             : nd == r.Checks.Count && r.Checks.Count > 0 ? "NEDETERMINAT — nicio verificare nu a putut fi făcută"
             : "NIMIC NECONFORM GĂSIT în sursele citite";
-        string problem = nc > 0 ? $"Da. {nc} verificări sunt NECONFORME" + (dv > 0 ? $" și {dv} sunt DE VERIFICAT." : ".")
-            : dv > 0 ? $"De lămurit. {dv} verificări arată fapte pe care numai organizația le poate confirma ca autorizate (DE VERIFICAT)."
+        string problem = nc > 0 ? $"Da. {LogAnalyzer.Dfir.Language.RoText.Capitalize(LogAnalyzer.Dfir.Language.RoText.CountFem(nc, "verificare este NECONFORMĂ", "verificări sunt NECONFORME"))}" + (dv > 0 ? (dv == 1 ? " și una este DE VERIFICAT." : $" și {LogAnalyzer.Dfir.Language.RoText.Number(dv)} sunt DE VERIFICAT.") : ".")
+            : dv > 0 ? $"De lămurit. {LogAnalyzer.Dfir.Language.RoText.Capitalize(LogAnalyzer.Dfir.Language.RoText.CountFem(dv, "verificare arată", "verificări arată"))} fapte pe care numai organizația le poate confirma ca autorizate (DE VERIFICAT)."
             : $"Nimic neconform găsit în sursele citite. {coverage}";
         var areas = r.Checks.Where(c => c.Status == ControlStatus.Neconform).Select(c => c.Area).Distinct().ToList();
-        string seriousness = nc > 0 ? $"Neconformitățile privesc: {string.Join(", ", areas)}." + (nd > 0 ? $" {nd} verificări sunt NEDETERMINATE (sursa nu a putut fi citită)." : "")
-            : nd > 0 ? $"{nd} verificări NEDETERMINATE: sursa nu a putut fi citită, deci nu se poate spune nici că totul este în ordine."
-            : ok > 0 ? $"{ok} verificări CONFORME, {dv} DE VERIFICAT." : "Nu există verificări evaluate.";
+        string seriousness = nc > 0 ? $"Neconformitățile privesc: {string.Join(", ", areas)}." + (nd > 0 ? $" {LogAnalyzer.Dfir.Language.RoText.Capitalize(LogAnalyzer.Dfir.Language.RoText.CountFem(nd, "verificare este NEDETERMINATĂ", "verificări sunt NEDETERMINATE"))} (sursa nu a putut fi citită)." : "")
+            : nd > 0 ? $"{LogAnalyzer.Dfir.Language.RoText.Capitalize(LogAnalyzer.Dfir.Language.RoText.CountFem(nd, "verificare NEDETERMINATĂ", "verificări NEDETERMINATE"))}: sursa nu a putut fi citită, deci nu se poate spune nici că totul este în ordine."
+            : ok > 0 ? $"{LogAnalyzer.Dfir.Language.RoText.Capitalize(LogAnalyzer.Dfir.Language.RoText.CountFem(ok, "verificare CONFORMĂ", "verificări CONFORME"))}, {dv} DE VERIFICAT." : "Nu există verificări evaluate.";
         string trust = !f.IsAdministrator
             ? "Probe parțiale: controlul a rulat FĂRĂ drepturi de administrator, deci jurnalul de securitate și o parte din setări nu au putut fi citite."
             : unreadable.Count > 0 || f.Gaps.Count > 0 ? $"Probe parțiale. {coverage}"
             : $"Probele sunt complete pentru acest control. {coverage}";
         var top = r.Checks.Where(c => c.Status == ControlStatus.Neconform).Take(3).Select(c => c.Title).ToList();
         // plain counts, no score (docs/dfir/RESEARCH_2026-10-11_UX_NESPECIALISTI.md R9); what could not be checked is never counted as „în regulă”
-        string found = $"{nc} probleme · {dv} de lămurit cu organizația · {nd} nu s-au putut verifica · {ok} în regulă" + (top.Count > 0 ? $". De exemplu: {string.Join("; ", top)}." : ".")
+        string found = $"{LogAnalyzer.Dfir.Language.RoText.CountFem(nc, "problemă", "probleme")} · {dv} de lămurit cu organizația · {nd} nu s-au putut verifica · {ok} în regulă" + (top.Count > 0 ? $". De exemplu: {string.Join("; ", top)}." : ".")
             + (comparison is null ? "" : " " + comparison.Summary);
 
         var steps = new List<string>();
@@ -172,7 +172,7 @@ public sealed record ControlResultScreen(string Headline, string Problem, string
         if (dv > 0) steps.Add("Confirmați cu organizația faptele DE VERIFICAT (cine a autorizat, pe ce bază).");
         var undefined = profile.Where(s => !s.Defined).Select(s => s.Section).ToList();
         if (undefined.Count > 0) steps.Add($"Completați profilul de proceduri ({string.Join(", ", undefined.Take(3))}{(undefined.Count > 3 ? "…" : "")}): fără el, verificările respective nu pot da CONFORM.");
-        if (comparison is { Worse.Count: > 0 }) steps.Add($"Priviți întâi cele {comparison.Worse.Count} verificări înrăutățite față de controlul anterior.");
+        if (comparison is { Worse.Count: > 0 }) steps.Add((comparison.Worse.Count == 1 ? "Priviți întâi verificarea înrăutățită față de controlul anterior." : $"Priviți întâi cele {LogAnalyzer.Dfir.Language.RoText.Count(comparison.Worse.Count, "verificare înrăutățită", "verificări înrăutățite")} față de controlul anterior."));
         steps.Add("Salvați raportul pentru procesul-verbal: PDF și JSON rămân în caz, cu amprentă de integritate.");
         return new ControlResultScreen(headline, problem, seriousness, trust, found, steps.Take(MaxNextSteps).ToList(), coverage, nothing);
     }

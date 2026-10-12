@@ -125,7 +125,7 @@ public sealed class Wp18FlowTests : IDisposable
         Assert.True(n.NothingFound);
         Assert.StartsWith("NIMIC NECONFORM GĂSIT", n.Headline);
         Assert.Contains("necitite: Security", n.Problem);          // the coverage travels with "nothing found"
-        Assert.Contains("NEDETERMINATE", n.Seriousness);
+        Assert.Contains("O verificare NEDETERMINATĂ", n.Seriousness);   // one check: singular (count grammar, 2026-10-12)
         Assert.DoesNotContain("SAFE", n.Headline + n.Problem + n.Trust + n.Found);
         Assert.DoesNotContain("sistem curat", (n.Headline + n.Problem).ToLowerInvariant());
     }

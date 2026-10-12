@@ -17,6 +17,9 @@ public static class ControlReportPdf
     /// <summary>Tests: receives the F2 pre-report line printed on page 1 (async-local).</summary>
     public static readonly AsyncLocal<Action<string>?> PrintedLines = new();
 
+    /// <summary>Tests: receives the texts of the page-1 "Concluzie pe scurt" box and the section headings, in print order (async-local).</summary>
+    public static readonly AsyncLocal<Action<string>?> TextObserver = new();
+
     /// <param name="header">WP18 S5: the "proces-verbal" header (unit, station, Hardware ID, period, inspector, role, registration number, marking, signatures).</param>
     /// <param name="result">WP18 S5: the five answers, printed on the first page before the checks, together with the evidence gaps.</param>
     public static void Write(ControlReport r, string path, string inspector, string notes = "", VerificationReport? verification = null, LogAnalyzer.Dfir.Case.ReportSeal? seal = null,
@@ -29,6 +32,8 @@ public static class ControlReportPdf
         var pre = preCheck ?? LogAnalyzer.Dfir.Case.PreReportCheck.ForCase(null);
         string W(string s) => pre.Unconfirm(s);
         string L(DateTimeOffset? t) => t is { } v ? TimeZoneInfo.ConvertTime(v, TimeZoneInfo.Local).ToString("yyyy-MM-dd HH:mm") : "—";
+        // every text printed through P is also given to TextObserver (tests read the page-1 box without parsing the PDF)
+        TextBlockDescriptor P(ColumnDescriptor c, string text) { TextObserver.Value?.Invoke(text); return c.Item().Text(text); }
 
         Document.Create(doc => doc.Page(page =>
         {
@@ -51,6 +56,25 @@ public static class ControlReportPdf
                 col.Spacing(8);
                 col.Item().Text(pre.Line).FontSize(8).Bold().FontColor(pre.BlocksConfirmed ? "#b91c1c" : pre.Applicable ? "#065f46" : "#78350f");
                 PrintedLines.Value?.Invoke(pre.Line);
+                // page 1: "Concluzie pe scurt", as in the investigation report (review 2026-10-12)
+                var box = ControlConclusion.Build(r);
+                col.Item().Background("#f8fafc").Border(1.2f).BorderColor(Ink).Padding(8).Column(sc =>
+                {
+                    sc.Spacing(3);
+                    P(sc, "Concluzie pe scurt").Bold().FontSize(12).FontColor(Ink);
+                    P(sc, W(box.Verdict)).Bold().FontSize(9);
+                    if (box.Serious.Count > 0)
+                    {
+                        P(sc, "Ce nu este conform (pe domenii)").Bold().FontSize(8.5f);
+                        foreach (var s in box.Serious) P(sc, "• " + W(s)).FontSize(8);
+                    }
+                    P(sc, "Ce înseamnă pentru dumneavoastră").Bold().FontSize(8.5f);
+                    P(sc, box.Meaning).FontSize(8);
+                    P(sc, "Pași următori").Bold().FontSize(8.5f);
+                    foreach (var s in box.NextSteps) P(sc, "• " + W(s)).FontSize(8);
+                    P(sc, "Ce nu s-a putut verifica").Bold().FontSize(8.5f);
+                    foreach (var s in box.NotChecked) P(sc, "• " + W(s)).FontSize(8);
+                });
                 col.Item().Row(row =>
                 {
                     Badge(row, "CONFORM", r.Count(ControlStatus.Conform), "#15803d");
@@ -96,7 +120,7 @@ public static class ControlReportPdf
                             vc.Item().PaddingTop(3).Background("#fef2f2").Border(1).BorderColor("#b91c1c").Padding(4).Text(warn).FontSize(8).Bold().FontColor("#7f1d1d");
                     });
 
-                col.Item().Text("1. Verificări").Bold().FontSize(11).FontColor(Ink);
+                P(col, "1. Verificări").Bold().FontSize(11).FontColor(Ink);
                 foreach (var area in r.Checks.GroupBy(c => c.Area))
                 {
                     col.Item().Text(area.Key).Bold().FontSize(9.5f);
