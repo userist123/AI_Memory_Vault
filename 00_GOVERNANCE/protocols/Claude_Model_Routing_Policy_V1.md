@@ -84,7 +84,7 @@ Rules applied after classification (`rules` in the policy; can only raise a tier
   of the same hook is registered (`is_shadowed` in `lib/route.py`).
 - **Local tier.** `lib/local_llm.py` sends text-in/short-text-out work to Ollama on loopback
   (`local_llm` in the policy: `qwen2.5:7b-instruct` / `mistral:7b-instruct` for text,
-  `qwen2.5-coder:7b` / `qwen2.5-coder:3b` for code; measured on the owner's PC, RTX 5060 8 GB,
+  `qwen2.5-coder:7b` / `qwen2.5-coder:3b` for code; measured on the owner's PC, an 8 GB laptop GPU,
   3.6–7.4 s cold). Files are read by the local model, never by Claude; input over
   `max_input_chars` is refused, not truncated; exit 3 = unavailable → Haiku subagent. The prompt hook
   advertises it for `summarize` only when a configured model answers on 127.0.0.1:11434. Never used
