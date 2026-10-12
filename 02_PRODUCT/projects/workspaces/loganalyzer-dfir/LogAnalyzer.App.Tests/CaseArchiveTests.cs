@@ -99,7 +99,7 @@ public sealed class CaseArchiveTests : IDisposable
     public void A_verified_archive_imports_as_a_case_that_opens_and_rechecks_valid()
     {
         var (ws, a) = Make();
-        var (imported, check) = CaseArchive.Import(a.ZipPath, Path.Combine(_k.Dir, "imported"));
+        var (imported, check) = CaseArchive.Import(a.ZipPath, Path.Combine(_k.Dir, "imported"), a.ManifestSha256);
         Assert.True(check.Ok);
         Assert.NotNull(imported);
         Assert.Equal(ws.Info.CaseId, imported!.Info.CaseId);
@@ -113,7 +113,7 @@ public sealed class CaseArchiveTests : IDisposable
     {
         var (_, a) = Make();
         var o = new StringWriter();
-        Assert.Equal(0, ReportCli.VerifyArchive(["verify-archive", a.ZipPath], o));
+        Assert.Equal(0, ReportCli.VerifyArchive(["verify-archive", a.ZipPath, a.ManifestSha256], o));
         Assert.StartsWith("VERIFIED", o.ToString());
         Rewrite(a.ZipPath, "manifest.sha256", "00  manifest.json");
         var bad = new StringWriter();

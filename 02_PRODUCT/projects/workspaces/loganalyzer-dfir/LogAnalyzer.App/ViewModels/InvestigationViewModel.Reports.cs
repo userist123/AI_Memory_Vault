@@ -31,6 +31,9 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>Trusted public keys (base64 SubjectPublicKeyInfo), one per line.</summary>
         [ObservableProperty] private string _trustedKeysText = string.Join(Environment.NewLine, ReportSigningSettings.Load().TrustedPublicKeys);
 
+        /// <summary>The manifest SHA-256 the operator copies from the custody register to authenticate an archive being imported.</summary>
+        [ObservableProperty] private string _expectedArchiveSha256 = "";
+
         internal static string? SigningSettingsPathOverride { get; set; }
 
         private ReportSigningSettings CurrentSigning() => new()
@@ -55,9 +58,9 @@ namespace LogAnalyzer.UI.ViewModels
         }
 
         /// <summary>Signs a report just written, audits it in the case and returns the line to show.</summary>
-        internal string SignReport(string pdf, CaseWorkspace? ws)
+        public string SignReport(string pdf, CaseWorkspace? ws, string? signerOverride = null)
         {
-            var line = CurrentSigning().SignIfConfigured(pdf);
+            var line = CurrentSigning().SignIfConfigured(pdf, signerOverride);
             ws?.Audit("report.signature", $"{Path.GetFileName(pdf)}: {line}");
             return line;
         }
@@ -89,7 +92,16 @@ namespace LogAnalyzer.UI.ViewModels
             var audience = (LogAnalyzer.Dfir.Reporting.ReportAudience)Math.Clamp(ReportAudienceIndex, 0, ReportAudienceLabels.Length - 1);
             InvestigationReportPdf.Write(_result, dlg.FileName, masker.User(LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified.Split('\\').Last()), audience: audience, masker: masker);
             _result.Case.Audit("report.pdf_masked", $"{Path.GetFileName(dlg.FileName)} pseudonime={masker.Mapping.Count}");
-            ReportStatus = $"Raport cu date personale mascate salvat ({masker.Mapping.Count} valori înlocuite cu pseudonime consecvente). " + SignReport(dlg.FileName, _result.Case);
+            ReportStatus = $"Raport cu date personale mascate salvat ({masker.Mapping.Count} valori înlocuite cu pseudonime consecvente). " + SignReport(dlg.FileName, _result.Case, MaskedSigner(masker));
+        }
+
+        /// <summary>The signer written into the .sig of a masked export: the configured signer label passed through the masker, else the operator's pseudonym. Never the raw Windows user name.</summary>
+        public string MaskedSigner(PiiMasker masker)
+        {
+            var label = SignerName.Trim();
+            var op = LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified.Split('\\').Last();
+            masker.KnownUser(op);
+            return label.Length > 0 ? masker.Mask(label) : masker.User(op);
         }
 
         [RelayCommand]
@@ -114,10 +126,12 @@ namespace LogAnalyzer.UI.ViewModels
             if (dlg.ShowDialog() != true) return;
             try
             {
-                var a = CaseArchive.Export(_result.Case, dlg.FileName);
-                var check = CaseArchive.Verify(a.ZipPath);
+                var signing = CurrentSigning();
+                var a = CaseArchive.Export(_result.Case, dlg.FileName, signing: signing);
+                var check = CaseArchive.Verify(a.ZipPath, a.ManifestSha256, signing.TrustedPublicKeys);
                 ReportStatus = (check.Ok ? "Arhivă creată și verificată: " : "Arhivă creată, dar VERIFICAREA A EȘUAT: ") +
                                $"{a.FileCount} fișiere; SHA-256 manifest {a.ManifestSha256}; SHA-256 arhivă {a.ZipSha256} (și în {Path.GetFileName(CaseArchive.SidecarPath(a.ZipPath))}). " +
+                               (a.Signed ? "Manifestul este semnat digital (manifest.json.sig). " : "Arhiva NU este semnată (" + a.SignNote + "): la import va trebui autentificată cu SHA-256 al manifestului. ") +
                                "README.txt din arhivă arată cum se verifică fără LogAnalyzer (Get-FileHash, certutil). Treceți SHA-256 al manifestului în registrul de custodie.";
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException) { ReportStatus = "Arhiva nu a putut fi creată: " + ex.Message; }
@@ -131,11 +145,20 @@ namespace LogAnalyzer.UI.ViewModels
             var casesRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LogAnalyzer", "Cases");
             try
             {
-                var (ws, check) = await Task.Run(() => CaseArchive.Import(dlg.FileName, casesRoot));
+                var trusted = CurrentSigning().TrustedPublicKeys;
+                var expected = ExpectedArchiveSha256.Trim();
+                var (ws, check) = await Task.Run(() => CaseArchive.Import(dlg.FileName, casesRoot, expected.Length > 0 ? expected : null, trusted));
+                if (ws is null && check.Problems.Contains("arhivă neverificabilă"))
+                {
+                    var choice = System.Windows.MessageBox.Show(check.Summary + Environment.NewLine + Environment.NewLine + "Importați totuși ca neverificată? Alegerea se înregistrează în custodie.", "Arhivă neverificabilă",
+                        System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning, System.Windows.MessageBoxResult.No);
+                    if (choice == System.Windows.MessageBoxResult.Yes)
+                        (ws, check) = await Task.Run(() => CaseArchive.Import(dlg.FileName, casesRoot, expected.Length > 0 ? expected : null, trusted, importAsUnverified: true));
+                }
                 if (ws is null) { ReportStatus = "Arhiva NU a fost importată: " + check.Summary + " " + string.Join("; ", check.Problems.Take(10)); return; }
                 var res = await CaseLoader.OpenAsync(ws.Root, new LogAnalyzer.Dfir.Case.RecentCases(LogAnalyzer.Dfir.Case.RecentCases.DefaultFile()));
                 if (res.Opened) ShowLoaded(res.Case!);
-                ReportStatus = "Arhivă verificată și importată: " + check.Summary;
+                ReportStatus = (check.Authenticated ? "Arhivă verificată și importată: " : "Arhivă importată ca NEVERIFICATĂ (înregistrat în custodie): ") + check.Summary;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { ReportStatus = "Arhiva nu a putut fi importată: " + ex.Message; }
         }

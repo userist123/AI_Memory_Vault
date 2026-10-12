@@ -9,6 +9,8 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.IO.Hashing" Version="9.0.0" />
+    <!-- Report signing key protected for the current Windows user (DPAPI); same package and version as LogAnalyzer.Core. -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.10" />
     <PackageReference Include="YamlDotNet" Version="18.1.0" />
   </ItemGroup>
   <ItemGroup>

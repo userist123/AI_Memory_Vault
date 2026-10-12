@@ -147,4 +147,29 @@ public class ReviewFixAirGapTests
         var again = Pnp(1, @"HID\VID_1234&PID_5678\7&1&0&0000", "HID Keyboard Device");
         Assert.False(Bad(Run([first, again, Shell(5, Cmd, "utilizator-test")])));
     }
+
+    // ---- CD/DVD policy: a missing value is undetermined, not "not blocked" ----
+
+    [Fact]
+    public void A_missing_or_unreadable_Deny_Write_value_is_undetermined_not_false()
+    {
+        Assert.Null(LogAnalyzer.Dfir.Windows.Acquisition.AirGapFactsCollector.DenyWriteFromRegistry(null));
+        Assert.False(LogAnalyzer.Dfir.Windows.Acquisition.AirGapFactsCollector.DenyWriteFromRegistry(0));
+        Assert.False(LogAnalyzer.Dfir.Windows.Acquisition.AirGapFactsCollector.DenyWriteFromRegistry(2));
+        Assert.True(LogAnalyzer.Dfir.Windows.Acquisition.AirGapFactsCollector.DenyWriteFromRegistry(1));
+    }
+
+    [Fact]
+    public void The_optical_finding_says_unread_for_an_undetermined_policy_and_not_set_for_a_false_one()
+    {
+        string Observed(bool? deny)
+        {
+            var f = new AirGapFacts { CollectedUtc = new DateTimeOffset(T0) };
+            f.Burn.CdDvdDenyWrite = deny;
+            f.Burn.Writers.Add(new() { Name = "W", CanWrite = true });
+            return Assert.Single(Run([], f), x => x.RuleId == "AIRGAP-OPTICAL-WRITE-UNBLOCKED").AirGap!.Observed;
+        }
+        Assert.Contains("Deny_Write CD/DVD=necitit", Observed(null));
+        Assert.Contains("Deny_Write CD/DVD=nesetat", Observed(false));
+    }
 }
