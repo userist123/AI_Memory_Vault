@@ -15,7 +15,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List
 
-vault_root = Path(r"c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY")
+vault_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(vault_root / "03_IMPLEMENTATION" / "packages"))
 
 os.environ.setdefault("MEMORY_CONTROLLER_HMAC_SECRET", "test_hmac_secret_for_eval_harness_32bytes_long")

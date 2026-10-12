@@ -1,7 +1,7 @@
 import json
 from datetime import datetime, timezone, timedelta
 
-with open("C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json", "r", encoding="utf-8") as f:
+with open(str(__import__("pathlib").Path(__file__).resolve().parents[5] / "07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json"), "r", encoding="utf-8") as f:
     dataset = json.load(f)
 
 now_utc = datetime.now(timezone.utc)

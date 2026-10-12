@@ -42,7 +42,7 @@ def test_verified_tool_execution():
     """Prove that real tool calls result in VERIFIED status."""
     verified_transcript = """
     {"type": "USER_INPUT", "content": "Check storage rules"}
-    {"type": "PLANNER_RESPONSE", "content": "Inspecting rules", "tool_calls": [{"name": "view_file", "args": {"AbsolutePath": "c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/00_CORE/Memory_Protocol.md"}}]}
+    {"type": "PLANNER_RESPONSE", "content": "Inspecting rules", "tool_calls": [{"name": "view_file", "args": {"AbsolutePath": "c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/00_CORE/Memory_Protocol.md"}}]}
     {"type": "PLANNER_RESPONSE", "content": "Running tests", "tool_calls": [{"name": "run_command", "args": {"CommandLine": "python -m pytest evaluation/tests/ -q"}}]}
     """
     auditor = ConversationAuditor(verified_transcript, case_id="test_verified")

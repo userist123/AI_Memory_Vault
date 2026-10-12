@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import pytest
 
-root = Path(r"C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY")
+root = Path(__file__).resolve().parents[2]
 ledger_file = root / "07_EVALUATION" / "skills_quality_v1" / "skill_quality_ledger.jsonl"
 
 @pytest.fixture(scope="module")

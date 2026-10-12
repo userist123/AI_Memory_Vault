@@ -357,7 +357,7 @@ def test_pairwise_supersession_lineage_to_recall_filtering(sqlite_storage: SQLit
 
 def test_pairwise_audio_chunker_to_kokoro_streaming_playback(virtual_audio: VirtualAudioDriver):
     """Pairwise 12: Streamed sentence chunks synthesize into 24kHz audio chunks pushed to driver."""
-    chunks = ["Hello Marius.", "System diagnostics indicate all sub-services operational."]
+    chunks = ["Hello User.", "System diagnostics indicate all sub-services operational."]
     for c in chunks:
         audio = virtual_audio.generate_sine_wave(duration_s=0.2)
         virtual_audio.push_output_audio(audio)

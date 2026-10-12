@@ -2,7 +2,7 @@
 chcp 65001 >nul
 echo.
 echo  ╔══════════════════════════════════════════════════════╗
-echo  ║        MARIUS AI AGENT TEAM - Setup Check           ║
+echo  ║        OWNER  AI AGENT TEAM - Setup Check           ║
 echo  ╚══════════════════════════════════════════════════════╝
 echo.
 

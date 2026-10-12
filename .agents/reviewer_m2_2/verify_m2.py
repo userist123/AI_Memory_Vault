@@ -2,7 +2,7 @@
 import sys, os, time, asyncio, threading
 import numpy as np
 
-sys.path.insert(0, r"C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain")
+sys.path.insert(0, os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "projects", "jarvis_cognitive_brain")))
 
 from jarvis.audio.chunker import SentenceChunker, TextNormalizer
 from jarvis.audio.vad import VADSegmenter, EnergyVADEngine, SileroONNXVADEngine, VADState

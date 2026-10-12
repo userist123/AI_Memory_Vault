@@ -263,7 +263,7 @@ def test_chunker_urls_and_file_paths():
     chunker = SentenceChunker(clause_split=True, min_clause_words=4)
     text = (
         "Please visit https://api.vault.local/v1/search?query=neural%20net&limit=50 for documentation. "
-        "The local configuration is saved at C:\\Users\\Marius\\Documents\\Codex\\config.json on Windows."
+        "The local configuration is saved at C:\\Users\\user\\Documents\\Codex\\config.json on Windows."
     )
 
     chunks = []
@@ -281,7 +281,7 @@ def test_chunker_emojis_and_multilingual_unicode():
     chunker = SentenceChunker(clause_split=True, min_clause_words=4)
     text = (
         "🚀 Sistemul Jarvis funcționează perfect! ⚡ Bateria este la 98% și temperatura este 23 °C. "
-        "🤖 Toate luminile din casă sunt aprinse. ¿Está todo listo? Da, domnule Marius! 👍"
+        "🤖 Toate luminile din casă sunt aprinse. ¿Está todo listo? Da, domnule User! 👍"
     )
 
     chunks = []

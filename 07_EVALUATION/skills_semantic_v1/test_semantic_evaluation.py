@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import pytest
 
-root = Path(r"C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY")
+root = Path(__file__).resolve().parents[2]
 sem_dir = root / "07_EVALUATION" / "skills_semantic_v1"
 ledger_f = sem_dir / "semantic_evaluation_ledger.jsonl"
 cohorts_f = sem_dir / "cohorts.json"
