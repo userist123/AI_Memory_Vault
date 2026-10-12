@@ -1,7 +1,7 @@
 # The remaining 65 typed relations in the live graph, audited
 
 Evaluator: **perplexity** — wrote neither the notes, the proposer, nor the sampling script.  
-Sample: All 65 remaining unjudged typed relations in the graph (completing the full 114-relation census), frozen at `06bfd856e4b794be…` before labelling.
+Sample: All 65 remaining unjudged typed relations in the graph (completing the full 114-relation census), frozen at `6f7e4b75122a9e97…` before labelling. 2026-10-12: re-frozen after removing the owner's private paths (privacy rule); content otherwise unchanged.
 
 | Relation | Accepted | Precision |
 |---|---:|---:|
