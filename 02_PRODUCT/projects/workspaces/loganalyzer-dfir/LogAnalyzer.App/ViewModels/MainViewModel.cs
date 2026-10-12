@@ -349,6 +349,10 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _collectionLogs = string.Empty;
         [ObservableProperty] private bool _isCollectionRunning;
         [ObservableProperty] private int _syslogPort = 514;
+        // Security audit #7: the receiver listens on one chosen local address (loopback by default) and accepts only the listed senders
+        // (comma-separated IPs; empty = loopback senders only).
+        [ObservableProperty] private string _syslogBindAddress = "127.0.0.1";
+        [ObservableProperty] private string _syslogAllowedSources = string.Empty;
         [ObservableProperty] private bool _isSyslogActive;
 
         public bool IsCollectionNotRunning => !IsCollectionRunning;
@@ -1223,7 +1227,7 @@ namespace LogAnalyzer.UI.ViewModels
                     SelectedTargetType,
                     CollectionOutputDir,
                     CollectionHostname,
-                    log => App.Current.Dispatcher.Invoke(() => CollectionLogs += log + Environment.NewLine)
+                    log => App.Current.Dispatcher.Invoke(() => CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, log))
                 );
             }
             catch (Exception ex)
@@ -1242,11 +1246,24 @@ namespace LogAnalyzer.UI.ViewModels
             CollectionLogs = string.Empty;
             try
             {
+                if (!System.Net.IPAddress.TryParse(SyslogBindAddress?.Trim(), out var bind))
+                {
+                    CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, $"[SYSLOG ERROR] Adresa de ascultare „{SyslogBindAddress}” nu este o adresă IP.");
+                    return;
+                }
+                var allowed = new System.Collections.Generic.List<System.Net.IPAddress>();
+                foreach (var part in (SyslogAllowedSources ?? "").Split(',', ';', ' ').Where(x => x.Length > 0))
+                {
+                    if (!System.Net.IPAddress.TryParse(part, out var ip))
+                    {
+                        CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, $"[SYSLOG ERROR] „{part}” din lista surselor permise nu este o adresă IP.");
+                        return;
+                    }
+                    allowed.Add(ip);
+                }
                 _collectionService.StartSyslogListener(
-                    SyslogPort,
-                    CollectionOutputDir,
-                    CollectionHostname,
-                    log => App.Current.Dispatcher.Invoke(() => CollectionLogs += log + Environment.NewLine)
+                    new SyslogListenerOptions(SyslogPort, CollectionOutputDir, CollectionHostname, bind, allowed),
+                    log => App.Current.Dispatcher.Invoke(() => CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, log))
                 );
             }
             catch (NetworkBlockedException ex)
