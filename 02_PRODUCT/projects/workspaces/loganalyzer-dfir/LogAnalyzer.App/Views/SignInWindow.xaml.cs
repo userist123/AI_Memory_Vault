@@ -28,6 +28,7 @@ namespace LogAnalyzer.UI.Views
             InitializeComponent();
             _mode = mode; _locked = lockedSession;
             Configure();
+            ShowStoreProtection();
             Loaded += async (_, _) => await RefreshCardsAsync();
         }
 
@@ -65,6 +66,20 @@ namespace LogAnalyzer.UI.Views
             }
         }
 
+        /// <summary>Security audit #4: "magazia de conturi neprotejată" is shown before anyone signs in; only an administrator may continue, after ticking the box.</summary>
+        private void ShowStoreProtection()
+        {
+            if (_mode == SignInWindowMode.Unlock) return;
+            StoreAclResult store;
+            try { store = AuthApp.Service.StoreProtection; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { store = new StoreAclResult(false, [ex.Message]); }
+            if (store.Protected) return;
+            StorePanel.Visibility = Visibility.Visible;
+            StoreText.Text = store.Message;
+        }
+
+        private bool Acknowledged => StorePanel.Visibility == Visibility.Visible && StoreAck.IsChecked == true;
+
         private static string Describe(CardCertificate c) => $"{c.Certificate.GetNameInfo(System.Security.Cryptography.X509Certificates.X509NameType.SimpleName, false)}  |  {c.Reader}  |  seria {c.SerialHex}";
 
         private async Task RefreshCardsAsync()
@@ -96,7 +111,8 @@ namespace LogAnalyzer.UI.Views
                     StatusText.Text = u.Message;
                     return;
                 }
-                var r = await Task.Run(() => AuthApp.Service.SignInWithCard(AuthApp.Cards, thumb));
+                var ack = Acknowledged;
+                var r = await Task.Run(() => AuthApp.Service.SignInWithCard(AuthApp.Cards, thumb, ack));
                 if (r.Reason == "choose_card" && r.Choices is { Count: > 0 } ch)
                 {
                     _choices = ch.ToList();
@@ -120,6 +136,7 @@ namespace LogAnalyzer.UI.Views
                 // Controls belong to the window's thread: read them here, never inside Task.Run (the background thread would throw).
                 var accountText = AccountBox.Text;
                 var personText = PersonBox.Text;
+                var ack = Acknowledged;
                 switch (_mode)
                 {
                     case SignInWindowMode.FirstRun:
@@ -131,7 +148,7 @@ namespace LogAnalyzer.UI.Views
                             : await Task.Run(() => AuthApp.Service.RecoverPrimaryPassword(pw));
                         if (!r.Ok) { StatusText.Text = r.Message; return; }
                         var account = _mode == SignInWindowMode.FirstRun ? accountText : AuthApp.Service.PrimaryAdmin!.Account;
-                        Finish(await Task.Run(() => AuthApp.Service.SignInWithPassword(account, pw)));
+                        Finish(await Task.Run(() => AuthApp.Service.SignInWithPassword(account, pw, ack)));
                         break;
                     }
                     case SignInWindowMode.Unlock:
@@ -141,7 +158,7 @@ namespace LogAnalyzer.UI.Views
                         break;
                     }
                     default:
-                        Finish(await Task.Run(() => AuthApp.Service.SignInWithPassword(accountText, pw)));
+                        Finish(await Task.Run(() => AuthApp.Service.SignInWithPassword(accountText, pw, ack)));
                         break;
                 }
             }

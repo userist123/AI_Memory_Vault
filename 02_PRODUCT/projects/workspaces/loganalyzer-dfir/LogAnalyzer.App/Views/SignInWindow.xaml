@@ -9,6 +9,14 @@
             <StackPanel DockPanel.Dock="Top" Margin="0,0,0,14">
                 <TextBlock x:Name="TitleText" Text="Autentificare" FontSize="26" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <TextBlock x:Name="IntroText" FontSize="13" TextWrapping="Wrap" Margin="0,6,0,0" Foreground="{StaticResource TextSecondaryBrush}"/>
+                <!-- Security audit #4: the auth folder can be written by non-administrators -->
+                <Border x:Name="StorePanel" Visibility="Collapsed" Margin="0,10,0,0" Padding="10" BorderThickness="1" BorderBrush="{StaticResource CriticalBrush}" CornerRadius="4">
+                    <StackPanel>
+                        <TextBlock x:Name="StoreText" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource CriticalBrush}"/>
+                        <CheckBox x:Name="StoreAck" Margin="0,8,0,0" Foreground="{StaticResource TextPrimaryBrush}"
+                                  Content="Sunt administrator și continui conștient cu magazia de conturi neprotejată (se înregistrează în audit)"/>
+                    </StackPanel>
+                </Border>
             </StackPanel>
 
             <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">

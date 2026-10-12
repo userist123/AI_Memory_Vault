@@ -34,14 +34,42 @@ public sealed partial class AuthService
     private readonly Func<DateTimeOffset> _clock;
     private readonly bool _classified;
     private readonly Dictionary<Guid, AuthSession> _sessions = [];
+    private readonly AuthStoreSecurity _security;
 
-    public AuthService(string? dir = null, bool classifiedEdition = false, Func<DateTimeOffset>? clock = null)
+    /// <param name="security">
+    /// DACL check of the folder and the key sealing the audit head (security audit #4). Default: the real Windows checks for the production folder
+    /// (<paramref name="dir"/> null), none for an explicit folder (tests, tools) unless given.
+    /// </param>
+    public AuthService(string? dir = null, bool classifiedEdition = false, Func<DateTimeOffset>? clock = null, AuthStoreSecurity? security = null)
     {
         Dir = dir ?? DefaultDir;
         _classified = classifiedEdition;
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
         Trust = new CertificateTrust(TrustDir, CrlDir, () => Policy.MissingCrl, _clock);
+        _security = security ?? (dir is null && OperatingSystem.IsWindows() ? AuthStoreSecurity.Windows() : AuthStoreSecurity.None);
+        if (!ReferenceEquals(_security, AuthStoreSecurity.None)) SealAudit();
     }
+
+    /// <summary>Registers the audit head seal; when the key was just created, an existing intact chain is sealed once (trusted on first use) and that is audited.</summary>
+    private void SealAudit()
+    {
+        var (key, created) = _security.ChainKey(Dir);
+        HashChain.RegisterHeadSeal(AuditPath, key);
+        if (key is null || !created || !File.Exists(AuditPath)) return;
+        var chain = new HashChain(AuditPath);
+        if (File.Exists(HashChain.HeadPath(AuditPath)) || chain.Head().Seq == 0) return;
+        try
+        {
+            chain.Reseal();
+            Audit("auth.chain_sealed", "aplicație", "", "ok", "first_key", "cheia de sigilare a auditului a fost creată; lanțul existent, intact, a fost sigilat");
+        }
+        catch (InvalidOperationException) { /* plain chain broken: left broken, VerifyAudit reports it */ }
+    }
+
+    /// <summary>Whether only Administrators / SYSTEM can change the auth folder (checked at every call; the state is shown at sign-in).</summary>
+    public StoreAclResult StoreProtection => _security.CheckAcl(Dir);
+
+    private const string UnprotectedRefusal = "store_unprotected";
 
     /// <summary>%PROGRAMDATA%\LogAnalyzer\auth</summary>
     public static string DefaultDir => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "LogAnalyzer", "auth");
@@ -92,6 +120,7 @@ public sealed partial class AuthService
         get
         {
             if (!File.Exists(AccountsPath)) return true;
+            if (VerifyAudit().Status == ChainStatus.Broken) return false;   // a forged or broken audit cannot vouch for accounts.json
             var last = Json.ReadLines<AuthAuditEntry>(AuditPath).Select(e => e.AccountsSha256).LastOrDefault(s => s.Length > 0);
             return last is not null && string.Equals(last, AccountsSha256, StringComparison.Ordinal);
         }
@@ -167,12 +196,18 @@ public sealed partial class AuthService
 
     // ───────────────────────── password sign-in (primary administrator only) ─────────────────────────
 
-    public SignInResult SignInWithPassword(string account, string password)
+    public SignInResult SignInWithPassword(string account, string password, bool acknowledgeUnprotectedStore = false)
     {
         lock (_gate)
         {
             account = (account ?? "").Trim();
             var now = _clock();
+            var store = StoreProtection;
+            if (!store.Protected && !acknowledgeUnprotectedStore)
+            {
+                Audit("auth.signin", "(neautentificat)", account, "refused", UnprotectedRefusal, "mod=parolă; " + string.Join("; ", store.Problems.Take(5)));
+                return new SignInResult(false, UnprotectedRefusal, store.Message);
+            }
             var acc = Find(account);
             if (acc is null)
             {
@@ -224,6 +259,11 @@ public sealed partial class AuthService
             Json.Write(PasswordPath, rec);
             var warnings = new List<string>();
             if (!AccountsIntegrityOk) warnings.Add("accounts.json a fost modificat în afara aplicației; autentificarea cu card este refuzată până când administratorul principal acceptă starea curentă (Administrare)");
+            if (!store.Protected)
+            {
+                Audit("auth.store_unprotected_ack", acc.Account, acc.Account, "ok", "acknowledged", string.Join("; ", store.Problems.Take(10)));
+                warnings.Add(store.Message);
+            }
             var s = NewSession(acc, SignInMode.Password, null, null);
             Audit("auth.signin", acc.Account, acc.Account, "ok", "password", "mod=parolă");
             return new SignInResult(true, "ok", "autentificat cu parolă", s, warnings);
@@ -238,18 +278,32 @@ public sealed partial class AuthService
     /// Card + PIN: lists certificates with a private key on inserted smart cards, validates the chain/revocation offline, asks the card to sign a random
     /// challenge (Windows / SafeNet shows the PIN prompt) and verifies the signature with the certificate's public key.
     /// </summary>
-    public SignInResult SignInWithCard(ICardProvider provider, string? sha256Thumbprint = null)
+    public SignInResult SignInWithCard(ICardProvider provider, string? sha256Thumbprint = null, bool acknowledgeUnprotectedStore = false)
     {
         lock (_gate)
         {
             var picked = SelectCard(provider, sha256Thumbprint, out var early);
             if (early is not null) return early;
             var (card, acc, binding) = picked!.Value;
+            // Unprotected store: an operator never signs in; an administrator only after an explicit acknowledgement. Refused before the PIN prompt.
+            var store = StoreProtection;
+            if (!store.Protected && (acc.Role != AuthRole.Administrator || !acknowledgeUnprotectedStore))
+            {
+                Audit("auth.signin", acc.Account, acc.Account, "refused", UnprotectedRefusal, "mod=card+PIN; " + string.Join("; ", store.Problems.Take(5)), Short(card.Sha256Thumbprint), card.Reader);
+                return new SignInResult(false, UnprotectedRefusal, acc.Role == AuthRole.Administrator ? store.Message
+                    : store.Message + " Un operator nu se poate autentifica până când IT nu restrânge drepturile folderului.");
+            }
             var v = VerifyCard(provider, card, acc, binding, "auth.signin");
             if (!v.Ok) return new SignInResult(false, v.Reason, v.Message, Warnings: v.Warnings);
+            var warnings = v.Warnings.ToList();
+            if (!store.Protected)
+            {
+                Audit("auth.store_unprotected_ack", acc.Account, acc.Account, "ok", "acknowledged", string.Join("; ", store.Problems.Take(10)), Short(card.Sha256Thumbprint), card.Reader);
+                warnings.Add(store.Message);
+            }
             var s = NewSession(acc, SignInMode.Card, card.Sha256Thumbprint, card.Reader);
             Audit("auth.signin", acc.Account, acc.Account, "ok", "card", "mod=card+PIN", Short(card.Sha256Thumbprint), card.Reader);
-            return new SignInResult(true, "ok", "autentificat cu card", s, v.Warnings);
+            return new SignInResult(true, "ok", "autentificat cu card", s, warnings);
         }
     }
 
