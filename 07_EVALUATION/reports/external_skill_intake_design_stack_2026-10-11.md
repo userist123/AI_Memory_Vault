@@ -10,7 +10,7 @@ created: 2026-10-11
 
 # External skill intake: design stack (2026-10-11)
 
-Owner request: install 4 Claude Code plugins and 3 `npx` skill installers on LAB-PC, but only
+Owner request: install 4 Claude Code plugins and 3 `npx` skill installers on the owner's PC, but only
 after the sources pass a review recorded in git. Every source was shallow-cloned into an isolated
 directory. Nothing in them was executed. Two checks ran on them: the repository's
 `untrusted_content_guard` rules, and an independent read-only security review on Opus. The review
