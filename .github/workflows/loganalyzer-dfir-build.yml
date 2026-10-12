@@ -186,6 +186,9 @@ jobs:
           Write-Host "OK: $($exe.Name) ($([math]::Round($exe.Length/1MB,1)) MB)"
           if (-not (Test-Path "$out/Categories")) { Write-Host "::error::Categories lipsește din $out"; exit 1 }
           if (Test-Path "$out/license.lic") { Write-Host "::error::license.lic nu trebuie livrat în pachet"; exit 1 }
+          # Security audit #5: native libraries next to the exe (no self-extraction) and their SHA-256 manifest, checked at startup.
+          if (-not (Test-Path "$out/native-libraries.sha256")) { Write-Host "::error::native-libraries.sha256 lipsește din $out"; exit 1 }
+          if (-not (Test-Path "$out/e_sqlcipher.dll")) { Write-Host "::error::e_sqlcipher.dll nu este lângă executabil (auto-extragere activă?)"; exit 1 }
 
       # Decision 14: the package must run on a bare PC. No .NET on PATH, DOTNET_ROOT unset, outbound traffic blocked for the exe.
       - name: Smoke test of the published executable (no .NET, no network)

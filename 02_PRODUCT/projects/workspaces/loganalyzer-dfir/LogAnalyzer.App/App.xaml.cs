@@ -17,6 +17,31 @@ namespace LogAnalyzer.UI
 {
     public partial class App : Application
     {
+        /// <summary>Runs before WPF creates the application object, i.e. before any of the application's own native libraries is loaded.</summary>
+        static App()
+        {
+            VerifyNativeLibrariesOrExit();
+        }
+
+        /// <summary>
+        /// Security audit #5: the published single-file executable (elevated, highestAvailable) loads SQLCipher / WPF / QuestPDF native libraries from
+        /// its own folder; they must match the SHA-256 manifest written at publish, and no other DLL may be there. Otherwise the app does not start.
+        /// Development and test builds (assemblies on disk, no manifest) are not checked.
+        /// </summary>
+        private static void VerifyNativeLibrariesOrExit()
+        {
+#pragma warning disable IL3000 // Location is empty exactly when running as a single-file bundle: that is what is tested here.
+            if (!string.IsNullOrEmpty(typeof(App).Assembly.Location)) return;
+#pragma warning restore IL3000
+            var check = LogAnalyzer.Dfir.IO.NativeLibraryManifest.Verify(AppContext.BaseDirectory);
+            if (check.Ok) return;
+            NativeMessageBox(IntPtr.Zero, check.Message, "LogAnalyzer – biblioteci native neverificate", 0x10 /* MB_ICONERROR */);
+            Environment.Exit(3);
+        }
+
+        [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "MessageBoxW", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+        private static extern int NativeMessageBox(IntPtr owner, string text, string caption, uint type);
+
         private static void OnGridRowDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
             if (e.Handled || sender is not System.Windows.Controls.DataGridRow { Item: { } item } row) return;
