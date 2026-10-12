@@ -32,7 +32,7 @@ from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 # CONFIGURARE
 # ══════════════════════════════════════════════════════════════════════════════
 
-EXCEL_PATH = Path(r"C:\Users\user\Desktop\Nu sterge\Analiza_Piata_Profesionala.xlsx")
+EXCEL_PATH = Path(r"C:\Users\Marius\Desktop\Nu sterge\Analiza_Piata_Profesionala.xlsx")
 
 # ── ACTIVE ────────────────────────────────────────────────────────────────────
 INDICI = {

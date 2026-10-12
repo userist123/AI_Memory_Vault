@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import pytest
 
-root = Path(r"C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY")
+root = Path(r"C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY")
 sec_removal_dir = root / "07_EVALUATION" / "security_removal_v1"
 active_skills_dir = root / ".agents" / "skills"
 raw_skills_dir = root / "06_INBOX" / "RAW_IMPORTS" / "skills"

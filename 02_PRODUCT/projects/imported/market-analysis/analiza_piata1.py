@@ -44,7 +44,7 @@ from openpyxl.formatting.rule import ColorScaleRule, CellIsRule, FormulaRule
 # ============================================================================
 
 # Calea template-ului initial (gol sau aproape gol, scriptul il populeaza)
-TEMPLATE_PATH = r"C:\Users\user\Desktop\Analiza_Piata_Profesionala.xlsx"
+TEMPLATE_PATH = r"C:\Users\Marius\Desktop\Analiza_Piata_Profesionala.xlsx"
 
 # Parametri yfinance
 YF_PERIOD = "1y"

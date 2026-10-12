@@ -58,7 +58,7 @@ Valorile de mai jos sunt recalculate de test cu `wevtutil`, iar AF11 este compar
 
 | id | rezultat | ce arată |
 |---|---|---|
-| AF01 | DETECTED | 2026-02-25 22:10:08 UTC: jurnalele System, Application și ForwardedEvents golite de LAB-PC\Marius |
+| AF01 | DETECTED | 2026-02-25 22:10:08 UTC: jurnalele System, Application și ForwardedEvents golite de MARIUS-PC\Marius |
 | AF02, AF03 | NOT_DETECTED | Security (103.631), System (31.420), Application, Firewall (864): structură intactă |
 | AF04 | DETECTED | Application: după RecordID 44790 (2026-08-08 17:50:08 UTC) urmează 44760 (17:51:21); 31 de ID-uri sunt folosite de două ori. Coincide cu oprirea necurată din System (6008, Kernel-Power 41, repornire la 17:51:05). Security, System și Firewall au RecordID continuu |
 | AF05 | DETECTED | 14 schimbări de oră făcute din Setări (SystemSettingsAdminFlows.exe, utilizatorul Marius), în 4616 și în Kernel-General 1 |

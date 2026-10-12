@@ -18,7 +18,7 @@ public class VaultProcessSupervisor : IDisposable
 
     public bool IsRunning { get; private set; }
 
-    public VaultProcessSupervisor(string vaultPath = @"c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY", int port = 8765)
+    public VaultProcessSupervisor(string vaultPath = @"c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY", int port = 8765)
     {
         _vaultPath = vaultPath;
         _port = port;
