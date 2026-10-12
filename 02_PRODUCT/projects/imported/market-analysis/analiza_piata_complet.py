@@ -43,7 +43,7 @@ from openpyxl.utils import get_column_letter
 # CONFIGURARE
 # ══════════════════════════════════════════════════════════════════════════════
 
-EXCEL_TEMPLATE = Path(r"C:\Users\user\Desktop\Analiza_Piata_Profesionala.xlsx")
+EXCEL_TEMPLATE = Path(os.path.expanduser(r"~\Desktop\Analiza_Piata_Profesionala.xlsx"))
 FRED_API_KEY   = os.environ.get("FRED_API_KEY", "")   # Gratuit la fred.stlouisfed.org — lasă "" dacă nu ai
 
 # ── ACTIVE ────────────────────────────────────────────────────────────────────

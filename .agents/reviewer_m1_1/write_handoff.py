@@ -1,4 +1,5 @@
 ﻿import os
+import os
 
 content = """# Handoff Report - Reviewer 1 (M1 Code Correctness & Architecture Specialist)
 
@@ -242,7 +243,7 @@ python tests/e2e/test_runner.py
 ```
 """
 
-target = r"c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m1_1\handoff.md"
+target = os.path.expanduser(r"~\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m1_1\handoff.md")
 with open(target, "w", encoding="utf-8") as f:
     f.write(content)
 print("handoff.md generated successfully")
