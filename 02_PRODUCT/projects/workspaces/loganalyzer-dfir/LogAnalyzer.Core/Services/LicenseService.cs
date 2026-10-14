@@ -13,7 +13,13 @@ using System.Text.RegularExpressions;
 namespace LogAnalyzer.Core.Services
 {
     /// <summary>Outcome of a licence check. Only <see cref="Valid"/> activates the application.</summary>
-    public enum LicenseCheck { Valid, Malformed, LegacyScheme, NoTrustedKey, BadSignature, WrongHardware, Expired, WrongProduct }
+    public enum LicenseCheck { Valid, Malformed, LegacyScheme, NoTrustedKey, BadSignature, WrongHardware, Expired, WrongProduct, HardwareIdUnavailable }
+
+    /// <summary>
+    /// The processor or base-board identity could not be read through WMI (independent review, finding 6). There is no fallback id: a constant
+    /// would make one licence valid on every station where WMI fails.
+    /// </summary>
+    public sealed class HardwareIdUnavailableException(string message) : InvalidOperationException(message);
 
     /// <summary>What a signed licence states.</summary>
     public sealed record LicenseClaims(string LicenseId, string HardwareId, DateTime ExpiresUtcDate, string Product);
@@ -60,11 +66,25 @@ namespace LogAnalyzer.Core.Services
             return r.ReadToEnd().Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0 && !l.StartsWith('#')).ToList();
         }
 
-        public string GetHardwareId()
+        /// <summary>The hardware id of this PC; throws <see cref="HardwareIdUnavailableException"/> when WMI cannot be read.</summary>
+        public string GetHardwareId() => ComputeHardwareId(GetWmiProperty("Win32_Processor", "ProcessorId"), GetWmiProperty("Win32_BaseBoard", "SerialNumber"));
+
+        public const string HardwareIdUnavailableMessage =
+            "Hardware ID-ul acestei stații nu poate fi citit (interogarea WMI a procesorului sau a plăcii de bază a eșuat), deci licența nu poate fi activată " +
+            "sau verificată. Reporniți stația sau serviciul Windows Management Instrumentation și încercați din nou; dacă problema rămâne, contactați administratorul.";
+
+        /// <summary>The 16-hex-character id from the processor and base-board values; a value that could not be read (null) is refused, never replaced.</summary>
+        public static string ComputeHardwareId(string? cpuId, string? boardId)
         {
-            string cpuId = GetWmiProperty("Win32_Processor", "ProcessorId");
-            string boardId = GetWmiProperty("Win32_BaseBoard", "SerialNumber");
+            if (cpuId is null || boardId is null) throw new HardwareIdUnavailableException(HardwareIdUnavailableMessage);
             return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(cpuId + boardId)))[..16];
+        }
+
+        /// <summary>Runs the hardware-id provider; null when it cannot be read.</summary>
+        private string? TryHardwareId()
+        {
+            try { return _hardwareId(); }
+            catch (HardwareIdUnavailableException) { return null; }
         }
 
         private sealed record Payload(
@@ -142,6 +162,7 @@ namespace LogAnalyzer.Core.Services
             LicenseCheck.WrongHardware => "Licența a fost emisă pentru altă stație (alt Hardware ID). Cereți o licență pentru Hardware ID-ul afișat mai sus.",
             LicenseCheck.Expired => "Licența a expirat. Cereți o licență nouă pentru Hardware ID-ul afișat mai sus.",
             LicenseCheck.WrongProduct => "Licența este pentru alt produs.",
+            LicenseCheck.HardwareIdUnavailable => HardwareIdUnavailableMessage,
             _ => "Textul introdus nu este o licență: o licență începe cu „LA1.” și se copiază întreagă, exact cum a fost primită.",
         };
 
@@ -150,7 +171,8 @@ namespace LogAnalyzer.Core.Services
         /// <summary>Checks the licence for this PC and, only when it is valid, saves it to license.lic.</summary>
         public bool ValidateAndSaveKey(string fullInput, out LicenseCheck result)
         {
-            result = Check(_hardwareId(), fullInput, DateTime.UtcNow, out _);
+            if (TryHardwareId() is not { } hw) { result = LicenseCheck.HardwareIdUnavailable; return false; }
+            result = Check(hw, fullInput, DateTime.UtcNow, out _);
             if (result != LicenseCheck.Valid) return false;
             try { File.WriteAllText(_licenseFilePath, fullInput.Trim()); return true; }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { result = LicenseCheck.Malformed; return false; }
@@ -164,7 +186,8 @@ namespace LogAnalyzer.Core.Services
             try
             {
                 if (!File.Exists(_licenseFilePath)) return LicenseCheck.Malformed;
-                return Check(_hardwareId(), File.ReadAllText(_licenseFilePath), DateTime.UtcNow, out _);
+                if (TryHardwareId() is not { } hw) return LicenseCheck.HardwareIdUnavailable;
+                return Check(hw, File.ReadAllText(_licenseFilePath), DateTime.UtcNow, out _);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return LicenseCheck.Malformed; }
         }
@@ -178,7 +201,8 @@ namespace LogAnalyzer.Core.Services
             return Convert.FromBase64String(t + new string('=', (4 - t.Length % 4) % 4));
         }
 
-        private static string GetWmiProperty(string wmiClass, string property)
+        /// <summary>The first value of the WMI property; null when WMI cannot be queried or returns no instance (never a constant placeholder).</summary>
+        private static string? GetWmiProperty(string wmiClass, string property)
         {
             try
             {
@@ -189,7 +213,7 @@ namespace LogAnalyzer.Core.Services
                 }
             }
             catch (Exception ex) when (ex is ManagementException or UnauthorizedAccessException or System.Runtime.InteropServices.COMException or PlatformNotSupportedException) { }
-            return "UNKNOWN_HW_ID_001";
+            return null;
         }
     }
 }

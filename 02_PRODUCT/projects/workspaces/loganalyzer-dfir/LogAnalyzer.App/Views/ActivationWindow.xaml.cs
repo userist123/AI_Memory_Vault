@@ -13,7 +13,14 @@ namespace LogAnalyzer.UI.Views
             InitializeComponent();
             _licenseService = licenseService;
 
-            TxtHardwareId.Text = _licenseService.GetHardwareId();
+            try { TxtHardwareId.Text = _licenseService.GetHardwareId(); }
+            catch (LogAnalyzer.Core.Services.HardwareIdUnavailableException)
+            {
+                // Independent review #6: no placeholder id; activation is refused with the reason.
+                TxtHardwareId.Text = "";
+                ShowError(LicenseService.Explain(LicenseCheck.HardwareIdUnavailable));
+                return;
+            }
             if (!_licenseService.HasTrustedKey)
                 ShowError(LicenseService.Explain(LicenseCheck.NoTrustedKey));
             else if (_licenseService.CheckSaved() == LicenseCheck.LegacyScheme)
