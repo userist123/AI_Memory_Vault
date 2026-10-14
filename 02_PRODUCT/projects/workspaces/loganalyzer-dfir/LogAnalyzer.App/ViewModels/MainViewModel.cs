@@ -937,7 +937,7 @@ namespace LogAnalyzer.UI.ViewModels
                     var allTimeline = _databaseService.GetTimeline(10000, 0, filteredSearch);
                     foreach (var item in allTimeline)
                     {
-                        var line = $"\"{item.Timestamp:yyyy-MM-dd HH:mm:ss}\",\"{EscapeCsv(item.Source)}\",\"{EscapeCsv(item.Category)}\",\"{EscapeCsv(item.Severity)}\",\"{EscapeCsv(item.MitreTags)}\",\"{EscapeCsv(item.UserOrHost)}\",\"{EscapeCsv(item.Description)}\"";
+                        var line = $"{item.Timestamp:yyyy-MM-dd HH:mm:ss},{CsvCell(item.Source)},{CsvCell(item.Category)},{CsvCell(item.Severity)},{CsvCell(item.MitreTags)},{CsvCell(item.UserOrHost)},{CsvCell(item.Description)}";
                         sb.AppendLine(line);
                     }
 
@@ -1177,12 +1177,11 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
-        /// <summary>Content of an always-quoted CSV cell: formulas neutralised (security audit #8), quotes doubled.</summary>
-        private string EscapeCsv(string? field)
-        {
-            if (field == null) return string.Empty;
-            return LogAnalyzer.Dfir.IO.CsvWriter.NeutraliseFormula(field).Replace("\"", "\"\"");
-        }
+        /// <summary>
+        /// One CSV cell of the Audit_Report export through the shared escaping (independent review #4): hidden characters removed and marked,
+        /// formulas neutralised (security audit #8), RFC 4180 quoting.
+        /// </summary>
+        internal static string CsvCell(string? field) => LogAnalyzer.Dfir.IO.CsvWriter.Escape(field ?? "");
 
         [RelayCommand]
         private void OpenAuditFolder()
