@@ -40,6 +40,8 @@ public static class ApprovedSoftwareMatcher
     public static bool PathMatches(string pattern, string path)
     {
         var rx = "^" + Regex.Escape(WithoutVolume(pattern)).Replace(@"\*", ".*").Replace(@"\?", ".") + "$";
-        return Regex.IsMatch(WithoutVolume(path), rx, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, LogAnalyzer.Dfir.RegexDefaults.RuleMatchTimeout);
+        // Linear engine (review finding 1): a glob with several '*' cannot backtrack catastrophically on a padded path. Should it still time out,
+        // the path is "not approved", which keeps the finding at its full severity (fail-safe), never downgrades it.
+        return RulePatterns.Match(RulePatterns.Cached(rx), WithoutVolume(path)) == true;
     }
 }

@@ -87,8 +87,8 @@ public static class LogClearAssessment
             var n = System.Text.RegularExpressions.Regex.Escape(name);
             try
             {
-                var m = System.Text.RegularExpressions.Regex.Match(x, $"(?:<Data\\s+Name=\"{n}\"\\s*>|<{n}>)([^<]*)<", System.Text.RegularExpressions.RegexOptions.IgnoreCase,
-                    RegexDefaults.RuleMatchTimeout);
+                var m = System.Text.RegularExpressions.Regex.Match(x, $"(?:<Data\\s+Name=\"{n}\"\\s*>|<{n}>)([^<]*)<", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.NonBacktracking,
+                    RegexDefaults.RuleMatchTimeout);   // linear engine; a timeout leaves the subject unknown (""), it is not a detection decision
                 return m.Success ? System.Net.WebUtility.HtmlDecode(m.Groups[1].Value).Trim() : "";
             }
             catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return ""; }
