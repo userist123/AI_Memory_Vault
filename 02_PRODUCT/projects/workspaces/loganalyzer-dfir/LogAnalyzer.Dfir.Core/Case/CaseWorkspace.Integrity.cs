@@ -184,11 +184,8 @@ public sealed partial class CaseWorkspace
 
     private EvidenceCheck CheckEvidence(EvidenceItem e, CancellationToken ct)
     {
-        string full;
-        try { full = FullPath(e.StoredPath); }
-        catch (ArgumentException) { return new(e.EvidenceId, e.StoredPath, e.Sha256, null, EvidenceCheckStatus.Missing, "cale invalidă"); }
-        if (!full.StartsWith(Root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
-            return new(e.EvidenceId, e.StoredPath, e.Sha256, null, EvidenceCheckStatus.Missing, "calea probei iese din folderul cazului");
+        if (!TryFullPath(e.StoredPath, out var full))
+            return new(e.EvidenceId, e.StoredPath, e.Sha256, null, EvidenceCheckStatus.Missing, OutsideCaseReason);
         if (!File.Exists(full)) return new(e.EvidenceId, e.StoredPath, e.Sha256, null, EvidenceCheckStatus.Missing);
         if (e.Sha256.Length == 0) return new(e.EvidenceId, e.StoredPath, e.Sha256, null, EvidenceCheckStatus.NoBaseline, "indexul nu are SHA-256 de referință");
         try
@@ -203,9 +200,8 @@ public sealed partial class CaseWorkspace
 
     private OutputCheck CheckOutput(OutputRecord o, CancellationToken ct)
     {
-        var full = FullPath(o.Path);
         var deps = o.DependsOn;
-        if (!File.Exists(full)) return new(o.Path, o.Producer, o.Sha256, null, OutputCheckStatus.Missing, deps);
+        if (!TryFullPath(o.Path, out var full) || !File.Exists(full)) return new(o.Path, o.Producer, o.Sha256, null, OutputCheckStatus.Missing, deps);
         try
         {
             var actual = Hashing.Sha256File(full, ct);
