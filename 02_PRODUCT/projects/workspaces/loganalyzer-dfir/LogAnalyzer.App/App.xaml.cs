@@ -68,7 +68,7 @@ namespace LogAnalyzer.UI
         public static IServiceProvider? ServiceProvider { get; private set; }
 
         /// <summary>First run creates the primary administrator; after an offline password recovery a new password is set; otherwise the normal sign-in.</summary>
-        private static bool SignInBeforeMainWindow(string debugLogPath)
+        private static bool SignInBeforeMainWindow(string? debugLogPath)
         {
             var mode = AuthApp.Service.SetupState switch
             {
@@ -125,11 +125,8 @@ namespace LogAnalyzer.UI
         // Startup timing (owner 2026-10-11: "the other app feels faster"): every step of startup_debug.log carries the milliseconds since start,
         // so slow steps are measured, not guessed. The sign-in and licence dialogs show as gaps that are the user's time, not the application's.
         private static readonly System.Diagnostics.Stopwatch StartupClock = System.Diagnostics.Stopwatch.StartNew();
-        private static void Step(string path, string message)
-        {
-            try { File.AppendAllText(path, $"{StartupClock.ElapsedMilliseconds,7} ms  {message}"); }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
-        }
+        // Security audit #15: the log lives in %LOCALAPPDATA%\LogAnalyzer\logs and every line is redacted (StartupLog).
+        private static void Step(string? path, string message) => StartupLog.Append(path, $"{StartupClock.ElapsedMilliseconds,7} ms  {message}");
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -137,13 +134,15 @@ namespace LogAnalyzer.UI
             if (LogAnalyzer.Dfir.Windows.Investigation.SelfTest.IsRequested(e.Args))
                 Environment.Exit(LogAnalyzer.Dfir.Windows.Investigation.SelfTest.Execute(e.Args, AppContext.BaseDirectory));
 
-            string debugLogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_debug.log");
-            string crashLogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log");
+            // Security audit #15: per-user log folder, never the (shared) folder of the executable; null when it cannot be created (no log).
+            var logDir = StartupLog.EnsureDirectory();
+            string? debugLogPath = StartupLog.PathIn(logDir, "startup_debug.log");
+            string? crashLogPath = StartupLog.PathIn(logDir, "startup_crash.log");
 
             SplashWindow? splash = null;
             try
             {
-                File.WriteAllText(debugLogPath, "OnStartup starting...\n");
+                StartupLog.Append(debugLogPath, "OnStartup starting...\n", reset: true);
                 base.OnStartup(e);
                 LogAnalyzer.UI.Services.LiveCase.ScopePrompt = LogAnalyzer.UI.Views.ScopeDialog.Ask;   // owner decision 28
                 LogAnalyzer.UI.Services.DataPackTrust.Apply();                                         // keys for offline detection data packs
@@ -160,11 +159,21 @@ namespace LogAnalyzer.UI
                     $"Connectivity: {decision.Snapshot.State} via {decision.Snapshot.Source}: {string.Join("; ", decision.Snapshot.Details)}\n" +
                     $"Station role: {startup.Role.EffectiveRole} — {startup.Role.Summary}\n");
 
+                // Security audit #15: known, recoverable failures are reported and the application continues; anything else is logged and
+                // the application closes (fail closed) instead of running on in an unknown state.
                 this.DispatcherUnhandledException += (sender, args) =>
                 {
-                    Step(debugLogPath, $"Dispatcher unhandled exception: {args.Exception}\n");
-                    MessageBox.Show($"Eroare critică internă:\n{args.Exception.Message}", "Crash", MessageBoxButton.OK, MessageBoxImage.Error);
+                    var decision = StartupLog.Classify(args.Exception);
+                    Step(debugLogPath, $"Dispatcher unhandled exception ({decision}): {args.Exception}\n");
                     args.Handled = true;
+                    if (decision == UnhandledDecision.ContinueWithMessage)
+                    {
+                        MessageBox.Show($"Operația nu a putut fi finalizată:\n{StartupLog.Redact(args.Exception.Message)}\n\nAplicația continuă; repetați operația după ce cauza este înlăturată.",
+                            "LogAnalyzer", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+                    try { MessageBox.Show(StartupLog.CloseMessage, "LogAnalyzer – eroare internă", MessageBoxButton.OK, MessageBoxImage.Error); }
+                    finally { Shutdown(2); }
                 };
 
                 // Double-click on a row of ANY grid opens the full detail of that item (event, artifact, incident…).
@@ -257,8 +266,9 @@ namespace LogAnalyzer.UI
             }
             catch (Exception ex)
             {
-                File.WriteAllText(crashLogPath, $"CRASH: {ex.ToString()}");
-                MessageBox.Show($"Eroare critică la pornire:\n\n{ex.Message}\n\n{ex.StackTrace}", "Eroare LogAnalyzer", MessageBoxButton.OK, MessageBoxImage.Error);
+                StartupLog.Append(crashLogPath, $"CRASH: {ex}", reset: true);
+                MessageBox.Show($"Eroare critică la pornire:\n\n{StartupLog.Redact(ex.Message)}\n\nDetaliile tehnice sunt în %LOCALAPPDATA%\\LogAnalyzer\\logs\\startup_crash.log.",
+                    "Eroare LogAnalyzer", MessageBoxButton.OK, MessageBoxImage.Error);
                 try { splash?.Close(); } catch {}
                 this.Shutdown();
             }
