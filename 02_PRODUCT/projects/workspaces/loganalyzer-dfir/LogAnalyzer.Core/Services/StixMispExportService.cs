@@ -36,7 +36,11 @@ namespace LogAnalyzer.Core.Services
             _ => "ip-dst",
         };
 
-        public static void ExportToStix21(string filePath, List<DetectedIssue> issues, List<IocItem> iocs, object? sessionHashes = null)
+        public static void ExportToStix21(string filePath, List<DetectedIssue> issues, List<IocItem> iocs, object? sessionHashes = null) =>
+            File.WriteAllText(filePath, BuildStix21(issues, iocs, sessionHashes), Encoding.UTF8);
+
+        /// <summary>The STIX 2.1 bundle as text (security audit #14: the string-returning exports no longer go through a temporary file).</summary>
+        public static string BuildStix21(List<DetectedIssue> issues, List<IocItem> iocs, object? sessionHashes = null)
         {
             var bundleId = $"bundle--{Guid.NewGuid()}";
             var identityId = $"identity--{Guid.NewGuid()}";
@@ -133,11 +137,14 @@ namespace LogAnalyzer.Core.Services
                 objects = objects
             };
 
-            var json = JsonSerializer.Serialize(bundle, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(filePath, json, Encoding.UTF8);
+            return JsonSerializer.Serialize(bundle, new JsonSerializerOptions { WriteIndented = true });
         }
 
-        public static void ExportToMispJson(string filePath, List<DetectedIssue> issues, List<IocItem> iocs, string operatorName)
+        public static void ExportToMispJson(string filePath, List<DetectedIssue> issues, List<IocItem> iocs, string operatorName) =>
+            File.WriteAllText(filePath, BuildMispJson(issues, iocs, operatorName), Encoding.UTF8);
+
+        /// <summary>The MISP event as text (no temporary file).</summary>
+        public static string BuildMispJson(List<DetectedIssue> issues, List<IocItem> iocs, string operatorName)
         {
             var attributes = new List<object>();
 
@@ -184,8 +191,7 @@ namespace LogAnalyzer.Core.Services
                 }
             };
 
-            var json = JsonSerializer.Serialize(mispEvent, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(filePath, json, Encoding.UTF8);
+            return JsonSerializer.Serialize(mispEvent, new JsonSerializerOptions { WriteIndented = true });
         }
 
         public string ExportToStixJson(
@@ -198,11 +204,7 @@ namespace LogAnalyzer.Core.Services
                 .Concat((samFindings ?? Enumerable.Empty<StandaloneSamFinding>()).Select(s => new DetectedIssue { Title = s.FindingType, Severity = s.Severity, Explanation = s.Description, MitreTechniqueId = s.MitreTechniqueId }))
                 .ToList();
 
-            var tempPath = Path.GetTempFileName();
-            ExportToStix21(tempPath, dummyIssues, new List<IocItem>());
-            var content = File.ReadAllText(tempPath, Encoding.UTF8);
-            try { File.Delete(tempPath); } catch { }
-            return content;
+            return BuildStix21(dummyIssues, new List<IocItem>());
         }
 
         public string ExportToStix21(
@@ -221,11 +223,7 @@ namespace LogAnalyzer.Core.Services
                 .Concat((samFindings ?? Enumerable.Empty<StandaloneSamFinding>()).Select(s => new DetectedIssue { Title = s.FindingType, Severity = s.Severity, Explanation = s.Description, MitreTechniqueId = s.MitreTechniqueId }))
                 .ToList();
 
-            var tempPath = Path.GetTempFileName();
-            ExportToMispJson(tempPath, dummyIssues, new List<IocItem>(), "Forensic Analyst");
-            var content = File.ReadAllText(tempPath, Encoding.UTF8);
-            try { File.Delete(tempPath); } catch { }
-            return content;
+            return BuildMispJson(dummyIssues, new List<IocItem>(), "Forensic Analyst");
         }
     }
 }

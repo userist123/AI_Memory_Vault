@@ -83,7 +83,8 @@ public sealed class PiiMaskingAndFootprintTests : IDisposable
         Assert.False(fp.LiveCollection);
         Assert.Contains("Nicio colectare live", text);
         Assert.Contains("Registry: doar citire", text);
-        Assert.Contains(@"%TEMP%\LogAnalyzer\evtx_repair", text);
+        Assert.Contains(@"<caz>\Derived\evtx_repair", text);                         // security audit #14: no working copy in %TEMP%
+        Assert.DoesNotContain(@"%TEMP%\LogAnalyzer", text);
         Assert.Contains("Fișiere aduse de operator", text);
         Assert.Contains("%TEMP%", fp.CaseFolder);                                     // the test case lives under the temp folder
         Assert.DoesNotContain(Environment.UserName, text, StringComparison.OrdinalIgnoreCase);

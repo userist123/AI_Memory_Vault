@@ -21,6 +21,13 @@ namespace LogAnalyzer.Core.Services
             string outputPath,
             IEnumerable<ParsedEvent> events,
             IEnumerable<ForensicArtifact> artifacts,
+            IEnumerable<RegistryArtifact> registryEntries) =>
+            File.WriteAllText(outputPath, BuildPlasoCsv(events, artifacts, registryEntries), new UTF8Encoding(false));
+
+        /// <summary>The same CSV as <see cref="ExportPlasoCsv"/>, in memory (security audit #14: no temporary file with evidence in %TEMP%).</summary>
+        public string BuildPlasoCsv(
+            IEnumerable<ParsedEvent> events,
+            IEnumerable<ForensicArtifact> artifacts,
             IEnumerable<RegistryArtifact> registryEntries)
         {
             var sb = new StringBuilder();
@@ -74,7 +81,7 @@ namespace LogAnalyzer.Core.Services
                 }
             }
 
-            File.WriteAllText(outputPath, sb.ToString(), new UTF8Encoding(false));
+            return sb.ToString();
         }
 
         /// <summary>ISO 8601 in UTC. Unspecified kind is treated as UTC (the pipeline stores UTC).</summary>

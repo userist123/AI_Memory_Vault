@@ -2936,12 +2936,10 @@ namespace LogAnalyzer.UI.ViewModels
                     TotalAlertsCount,
                     iocs: CurrentIocs.ToList());
 
-                string tempCsv = Path.GetTempFileName();
+                // Security audit #14: the timeline is built in memory and written only into the sealed package (no plaintext copy in %TEMP%).
                 var events = _databaseService.GetEvents(20000, 0, null, null, null);
                 var reg = _databaseService.GetRegistryArtifacts(10000, 0, null);
-                _timelineExportService.ExportPlasoCsv(tempCsv, events, new List<ForensicArtifact>(), reg);
-                string csvContent = File.ReadAllText(tempCsv);
-                try { File.Delete(tempCsv); } catch (IOException) { /* temp copy only; the exported content is already read */ }
+                string csvContent = _timelineExportService.BuildPlasoCsv(events, new List<ForensicArtifact>(), reg);
 
                 string zipSha = _casePackagingService.PackageAndSealCase(
                     dialog.FileName,

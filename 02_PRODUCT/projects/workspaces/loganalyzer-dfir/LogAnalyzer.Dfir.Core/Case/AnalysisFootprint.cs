@@ -11,7 +11,9 @@ namespace LogAnalyzer.Dfir.Case;
 public sealed record AnalysisFootprint(string CaseFolder, bool LiveCollection, int ExportedLogs, int SavedHives, int OtherCopies, int Imported, int ReportsWritten)
 {
     /// <summary>Temporary working folders the parsers create (and remove) on the machine that runs the analysis.</summary>
-    public static readonly string[] TempFolders = [@"%TEMP%\LogAnalyzer\evtx_repair", @"%TEMP%\LogAnalyzer\sqlite_work", @"%TEMP%\ladfir_srum_*"];
+    /// Security audit #14: never %TEMP%; inside the case, or the per-user work folder when a file is read outside a case.
+    public static readonly string[] TempFolders = [@"<caz>\Work\sqlite_*, srum_*, evtx_repair_* (șterse după citire)", @"<caz>\Derived\evtx_repair (copii reparate păstrate ca probe derivate, cu SHA-256 în custodie)",
+                                                   @"%LOCALAPPDATA%\LogAnalyzer\work (doar pentru fișiere citite în afara unui caz; șterse după citire)"];
 
     /// <summary>Registry areas read during live collection. Read only: nothing is created, changed or deleted.</summary>
     public static readonly string[] RegistryReads =
@@ -47,7 +49,7 @@ public sealed record AnalysisFootprint(string CaseFolder, bool LiveCollection, i
                 ? $"Colectare de pe stația analizată: {ExportedLogs} jurnale exportate (.evtx, EvtExportLog: copie, canalul nu este golit sau modificat), " +
                   $"{SavedHives} copii de hive (reg save: copie, registrul nu este modificat), {OtherCopies} alte copii de fișiere — toate în folderul cazului."
                 : "Nicio colectare live: probele au fost aduse ca fișiere; pe stația de proveniență aplicația nu a scris nimic.",
-            "Foldere temporare de lucru (create la nevoie, șterse la sfârșitul citirii): " + string.Join(", ", TempFolders) + ".",
+            "Foldere de lucru (create la nevoie; niciuna în %TEMP%): " + string.Join("; ", TempFolders) + ".",
             "Registry: doar citire — " + string.Join("; ", RegistryReads) + ". Aplicația nu creează, nu modifică și nu șterge chei sau valori pe țintă.",
             "Efecte secundare inevitabile: sistemul de operare poate înregistra singur pornirea aplicației și a uneltelor ei (de ex. 4688, Prefetch, jurnalul Application); " +
             "acestea aparțin analizei, nu incidentului, și au ora de după începerea cazului.",
