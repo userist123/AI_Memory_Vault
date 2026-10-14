@@ -114,7 +114,10 @@ public sealed class PolicyExecutor(IEnumerable<ISettingProvider> providers, stri
         IReadOnlySet<string>? onlyControls = null)
     {
         LogAnalyzer.Dfir.Auth.OperatorIdentity.RequireHostChange();
-        if (string.IsNullOrWhiteSpace(operatorName)) throw new PolicyLifecycleException("Aplicarea cere numele operatorului.");
+        if (string.IsNullOrWhiteSpace(operatorName) && !LogAnalyzer.Dfir.Auth.OperatorIdentity.AuthenticationRequired)
+            throw new PolicyLifecycleException("Aplicarea cere numele operatorului.");
+        operatorName = PolicyApprovals.ActingAccount(operatorName);   // review #2: the signed-in account, never a typed name
+        var ledger = PolicyApprovals.RequiredLedger();
         var record = store.RequireApplicable(policy);
         if (!plan.PolicySha256.Equals(policy.Sha256, StringComparison.OrdinalIgnoreCase))
             throw new PolicyLifecycleException($"Planul a fost făcut pentru politica cu SHA-256 {plan.PolicySha256[..12]}…, nu {policy.Sha256[..12]}…: aplicarea este blocată.");
@@ -126,6 +129,17 @@ public sealed class PolicyExecutor(IEnumerable<ISettingProvider> providers, stri
             throw new PolicyLifecycleException($"Planul este pentru stația {plan.Station}, nu {_station}.");
         var approval = record.History.LastOrDefault(t => t.To == PolicyStatus.Approved && t.PolicySha256.Equals(policy.Sha256, StringComparison.OrdinalIgnoreCase))
             ?? throw new PolicyLifecycleException("Nu există o aprobare înregistrată pentru acest SHA-256.");
+        // The approval in the per-user store is only a cache: it must be confirmed by the sealed authentication audit (review #2).
+        if (ledger is not null)
+        {
+            var sealedApprovals = ledger.Approvals(policy.Id, policy.Version, policy.Sha256);
+            if (!sealedApprovals.Any(a => string.Equals(a.Approver.Trim(), approval.Operator.Trim(), StringComparison.OrdinalIgnoreCase)))
+                throw new PolicyLifecycleException($"Aprobarea din magazinul de politici (de {approval.Operator}) nu apare în jurnalul de autentificare sigilat pentru acest SHA-256: " +
+                    "aplicarea este blocată. Nu s-a schimbat nimic. Aprobați din nou politica din aplicație, cu contul aprobatorului.");
+            foreach (var a in sealedApprovals)
+                if (string.Equals(operatorName.Trim(), a.Approver.Trim(), StringComparison.OrdinalIgnoreCase))
+                    throw new PolicyLifecycleException($"Contul {operatorName.Trim()} a aprobat această politică, deci nu o poate și aplica. Nu s-a schimbat nimic. Aplicarea o face alt administrator.");
+        }
         // Separation of duties: the account that approved this version does not also apply it.
         if (string.Equals(operatorName.Trim(), approval.Operator.Trim(), StringComparison.OrdinalIgnoreCase))
             throw new PolicyLifecycleException($"Contul {operatorName.Trim()} a aprobat această politică, deci nu o poate și aplica. Nu s-a schimbat nimic. Aplicarea o face alt administrator.");
@@ -207,7 +221,9 @@ public sealed class PolicyExecutor(IEnumerable<ISettingProvider> providers, stri
     public ExecutionRecord Rollback(PolicyDocument policy, string executionId, string operatorName)
     {
         LogAnalyzer.Dfir.Auth.OperatorIdentity.RequireHostChange();
-        if (string.IsNullOrWhiteSpace(operatorName)) throw new PolicyLifecycleException("Rollback-ul cere numele operatorului.");
+        if (string.IsNullOrWhiteSpace(operatorName) && !LogAnalyzer.Dfir.Auth.OperatorIdentity.AuthenticationRequired)
+            throw new PolicyLifecycleException("Rollback-ul cere numele operatorului.");
+        operatorName = PolicyApprovals.ActingAccount(operatorName);   // the evidence names the signed-in account (review #2)
         var source = Load(executionId);
         if (!source.PolicySha256.Equals(policy.Sha256, StringComparison.OrdinalIgnoreCase))
             throw new PolicyLifecycleException("Execuția aparține altei versiuni a politicii (SHA-256 diferit).");
