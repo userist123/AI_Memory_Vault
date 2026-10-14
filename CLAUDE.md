@@ -97,6 +97,8 @@ Obsidian is a human-readable navigation and visualization layer over the same ca
 
 ## Provenance and safety
 
+Owner privacy: nothing about the owner's own machine or material the owner hands over is ever committed or published; follow the "Owner privacy" section of `AGENTS.md` before every commit.
+
 Preserve source repository, URL/path, license when known, discovery origin, commit/ref when available, SHA-256 and validation status for external knowledge.
 
 Do not execute external scripts, binaries, installers, package managers or build steps merely to inspect or ingest imported skills. Ingestion is read/analyze/hash/classify/validate/promote.
