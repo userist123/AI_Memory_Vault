@@ -48,7 +48,7 @@ public static class IncidentPdfReport
                 Section(col, "1. Rezumat");
                 col.Item().Text(t =>
                 {
-                    t.Span("Declanșator: ").Bold(); t.Span(i.Trigger + ". ");
+                    t.Span("Declanșator: ").Bold(); t.Span(LogAnalyzer.Dfir.Language.ReportText.Clean(i.Trigger) + ". ");
                     t.Span("Izolat la: ").Bold(); t.Span(Local(i.CreatedUtc) + ". ");
                     t.Span("Proces suspendat: ").Bold(); t.Span(i.ProcessSuspended ? "da" : "nu");
                 });

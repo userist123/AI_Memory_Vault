@@ -40,7 +40,7 @@ public sealed class CsvWriter : IDisposable
         _ => v.ToString() ?? "",
     };
 
-    public static string Escape(string s) => Quote(NeutraliseFormula(s));
+    public static string Escape(string s) => Quote(NeutraliseFormula(LogAnalyzer.Dfir.Language.ReportText.Clean(s)));   // hidden characters removed (research backlog #3)
 
     /// <summary>
     /// Neutralises spreadsheet formula injection from evidence-derived text (spec §116/§118, security audit #8): a cell starting with
