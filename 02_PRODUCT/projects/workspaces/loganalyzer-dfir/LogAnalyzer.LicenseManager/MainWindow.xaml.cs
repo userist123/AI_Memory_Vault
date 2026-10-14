@@ -25,7 +25,12 @@ public partial class MainWindow : Window
 
     private void UseLocalHwid_Click(object sender, RoutedEventArgs e)
     {
-        TxtHwid.Text = _license.GetHardwareId();
+        try { TxtHwid.Text = _license.GetHardwareId(); }
+        catch (HardwareIdUnavailableException ex)   // review #6: no placeholder id
+        {
+            TxtHwid.Text = "";
+            MessageBox.Show(ex.Message, "Hardware ID indisponibil", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
         if (string.IsNullOrWhiteSpace(TxtClient.Text)) TxtClient.Text = Environment.MachineName;
     }
 

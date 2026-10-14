@@ -24,6 +24,42 @@ namespace LogAnalyzer.UI.Tests
             return (k, Convert.ToBase64String(k.ExportSubjectPublicKeyInfo()));
         }
 
+        // ---- independent review, finding 6: no constant hardware id when WMI fails ----
+
+        [Fact]
+        public void A_hardware_id_is_never_computed_from_an_unreadable_wmi_value()
+        {
+            Assert.Throws<LogAnalyzer.Core.Services.HardwareIdUnavailableException>(() => CoreLicenseService.ComputeHardwareId(null, "board"));
+            Assert.Throws<LogAnalyzer.Core.Services.HardwareIdUnavailableException>(() => CoreLicenseService.ComputeHardwareId("cpu", null));
+            var id = CoreLicenseService.ComputeHardwareId("cpu", "board");
+            Assert.True(CoreLicenseService.IsHardwareId(id));
+            Assert.NotEqual(id, CoreLicenseService.ComputeHardwareId("cpu2", "board"));
+        }
+
+        [Fact]
+        public void Activation_and_validation_are_refused_with_a_romanian_message_when_the_hardware_id_cannot_be_read()
+        {
+            var (key, pub) = NewKey();
+            using var keyScope = key;
+            var dir = Path.Combine(Path.GetTempPath(), "la-lic-hw-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(dir);
+            try
+            {
+                var file = Path.Combine(dir, "license.lic");
+                var s = new CoreLicenseService([pub], file, () => throw new LogAnalyzer.Core.Services.HardwareIdUnavailableException("WMI indisponibil"));
+                var lic = CoreLicenseService.Sign(key, Hwid, Expiry, "LIC-1");
+                Assert.False(s.ValidateAndSaveKey(lic, out var r));
+                Assert.Equal(LicenseCheck.HardwareIdUnavailable, r);
+                Assert.False(File.Exists(file));
+                File.WriteAllText(file, lic);
+                Assert.Equal(LicenseCheck.HardwareIdUnavailable, s.CheckSaved());
+                Assert.False(s.IsActivated());
+                Assert.Contains("Hardware ID", CoreLicenseService.Explain(LicenseCheck.HardwareIdUnavailable));
+                Assert.Contains("nu poate fi citit", CoreLicenseService.Explain(LicenseCheck.HardwareIdUnavailable));
+            }
+            finally { Directory.Delete(dir, true); }
+        }
+
         [Fact]
         public void Key_from_the_old_salted_scheme_is_rejected_even_though_it_matched_before()
         {

@@ -23,7 +23,12 @@ public static class Program
         // Security audit #3: licences are ECDSA signatures made with an offline key (the former salted-hash scheme is gone).
         if (args.Length >= 1 && args[0] == "license-keygen") { Environment.ExitCode = LicenseCli.Keygen(args, Console.Out); return; }
         if (args.Length >= 1 && args[0] == "license-sign") { Environment.ExitCode = LicenseCli.Sign(args, Console.Out); return; }
-        if (args.Length >= 1 && args[0] == "hardware-id") { Console.WriteLine(new LicenseService().GetHardwareId()); return; }
+        if (args.Length >= 1 && args[0] == "hardware-id")
+        {
+            try { Console.WriteLine(new LicenseService().GetHardwareId()); }
+            catch (HardwareIdUnavailableException ex) { Console.WriteLine("[-] " + ex.Message); Environment.ExitCode = 2; }
+            return;
+        }
 
         ShowUsage();
         if (!(args.Length == 1 && (args[0] == "--help" || args[0] == "-h"))) Environment.ExitCode = 1;
