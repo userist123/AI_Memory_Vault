@@ -58,16 +58,29 @@ public sealed partial class AuthService
         if (key is null || !created || !File.Exists(AuditPath)) return;
         var chain = new HashChain(AuditPath);
         if (File.Exists(HashChain.HeadPath(AuditPath)) || chain.Head().Seq == 0) return;
-        try
-        {
-            chain.Reseal();
-            Audit("auth.chain_sealed", "aplicație", "", "ok", "first_key", "cheia de sigilare a auditului a fost creată; lanțul existent, intact, a fost sigilat");
-        }
-        catch (InvalidOperationException) { /* plain chain broken: left broken, VerifyAudit reports it */ }
+        try { chain.Reseal(); }
+        catch (InvalidOperationException) { return; /* plain chain broken: left broken, VerifyAudit reports it */ }
         // This process may not write the store (e.g. a standard user while the audit file was written by an administrator): the constructor must
         // not stop the application from starting. Nothing is hidden: the same write failure is raised by the first audited operation (sign-in).
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return; }
+        try
+        {
+            Audit("auth.chain_sealed", "aplicație", "", "ok", "first_key", "cheia de sigilare a auditului a fost creată; lanțul existent, intact, a fost sigilat");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            // Review #5: the head is sealed but the record of the sealing is missing. Not silent: the sign-in window shows it, the startup log records it.
+            SealNotRecorded = $"{ex.GetType().Name}: {ex.Message}";
+        }
     }
+
+    public const string SealNotRecordedMessage = "Sigilarea jurnalului nu a putut fi consemnată; verificați drepturile folderului.";
+
+    /// <summary>
+    /// Non-null when this start sealed the audit head but could not append the auth.chain_sealed line (the reason, for the startup log).
+    /// The sign-in window shows <see cref="SealNotRecordedMessage"/>.
+    /// </summary>
+    public string? SealNotRecorded { get; private set; }
 
     /// <summary>Whether only Administrators / SYSTEM can change the auth folder (checked at every call; the state is shown at sign-in).</summary>
     public StoreAclResult StoreProtection => _security.CheckAcl(Dir);

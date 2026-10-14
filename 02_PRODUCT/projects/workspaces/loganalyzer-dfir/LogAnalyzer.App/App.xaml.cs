@@ -245,6 +245,8 @@ namespace LogAnalyzer.UI
                 // 2b. Autentificare (decizia 33): card + PIN pentru utilizatori; cont + parolă numai pentru administratorul principal.
                 splash.Hide();
                 AuthApp.Initialize();
+                // Independent review #5: the audit head was sealed but the record of it could not be appended (shown again at sign-in).
+                if (AuthApp.Service.SealNotRecorded is { } sealIssue) Step(debugLogPath, $"Auth audit seal not recorded: {sealIssue}\n");
                 // Security audit #18: the accepted signed policy's version goes into the hash-chained auth audit (anti-rollback mark).
                 if (startup.PolicyVersion > 0)
                 {
