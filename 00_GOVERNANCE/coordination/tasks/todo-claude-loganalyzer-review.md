@@ -23,3 +23,9 @@
 ## Blockers / owner decisions
 - Git history still contains old private data (history rewrite or private repo = owner's decision).
 - Commit author name still shows the Windows user name (owner may switch it to the GitHub login).
+
+## CI fixes on PR #284 (2026-10-15)
+- Locked restore: `global.json` in the LogAnalyzer project pins SDK 10.0.301 exactly (`rollForward: disable`); the three workflows read it with `global-json-file`. The runner image already has 10.0.303, whose implicit ILLink pack version (10.0.11) differs from the lock files (10.0.9).
+- Rule catalog: contracts added for MEDIA-HISTORY, MEDIA-USAGE, MEDIA-AFTER-CONNECT; the test now also discovers rule ids emitted through `Chan`/`Plain`/`NotEvaluated` and `*RuleId` constants.
+- Storage-engine readability: 22 new plain documents are on the allowlist; the state card note count is updated.
+- Gitleaks history scan: two old false positives allowlisted by exact value in `.gitleaks.toml` (no history rewrite).
