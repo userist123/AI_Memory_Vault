@@ -74,6 +74,9 @@ namespace LogAnalyzer.Infrastructure.Engines
             });
         }
 
+        /// <summary>Explicit timeout of every rule pattern (security audit #11): patterns come from the rule list, the text from evidence.</summary>
+        public static TimeSpan MatchTimeout => LogAnalyzer.Dfir.RegexDefaults.RuleMatchTimeout;
+
         public List<DetectedIssue> Evaluate(IEnumerable<ParsedEvent> events)
         {
             var issues = new List<DetectedIssue>();
@@ -83,6 +86,26 @@ namespace LogAnalyzer.Infrastructure.Engines
                 rule.MatchCount = 0;
             }
 
+            // Compile each rule's patterns once, with the timeout. An invalid pattern or a timeout makes the rule "not evaluated": it is reported,
+            // never counted as a match and never silently treated as clean, and it is not run on the remaining events.
+            var compiled = new Dictionary<YaraRule, List<Regex>>();
+            var disabled = new HashSet<YaraRule>();
+            foreach (var rule in Rules)
+            {
+                var list = new List<Regex>();
+                foreach (var rp in rule.RegexPatterns)
+                {
+                    try { list.Add(new Regex(rp, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, MatchTimeout)); }
+                    catch (ArgumentException ex)
+                    {
+                        issues.Add(NotEvaluated(rule, $"expresie regulată invalidă ({ex.Message})"));
+                        disabled.Add(rule);
+                        break;
+                    }
+                }
+                compiled[rule] = list;
+            }
+
             foreach (var ev in events)
             {
                 string text = $"{ev.Message} {ev.XmlData}";
@@ -90,6 +113,7 @@ namespace LogAnalyzer.Infrastructure.Engines
 
                 foreach (var rule in Rules)
                 {
+                    if (disabled.Contains(rule)) continue;
                     bool matched = false;
 
                     foreach (var sp in rule.StringPatterns)
@@ -103,13 +127,22 @@ namespace LogAnalyzer.Infrastructure.Engines
 
                     if (!matched)
                     {
-                        foreach (var rp in rule.RegexPatterns)
+                        try
                         {
-                            if (Regex.IsMatch(text, rp, RegexOptions.IgnoreCase))
+                            foreach (var rx in compiled[rule])
                             {
-                                matched = true;
-                                break;
+                                if (rx.IsMatch(text))
+                                {
+                                    matched = true;
+                                    break;
+                                }
                             }
+                        }
+                        catch (RegexMatchTimeoutException ex)
+                        {
+                            issues.Add(NotEvaluated(rule, $"expresia regulată a depășit {ex.MatchTimeout.TotalMilliseconds:0} ms pe evenimentul {ev.EventId}; regula nu a mai fost rulată pe evenimentele rămase", ev));
+                            disabled.Add(rule);
+                            continue;
                         }
                     }
 
@@ -133,6 +166,18 @@ namespace LogAnalyzer.Infrastructure.Engines
 
             return issues;
         }
+
+        private static DetectedIssue NotEvaluated(YaraRule rule, string why, ParsedEvent? ev = null) => new()
+        {
+            Title = $"Regulă YARA neevaluată: {rule.Name}",
+            Severity = "Medium",
+            Explanation = $"Regula „{rule.Name}” nu a fost evaluată: {why}. Absența unei potriviri pentru această regulă NU înseamnă că evenimentele sunt curate.",
+            ComplianceTag = $"YARA Signature - {rule.Name} (neevaluată)",
+            MitreTechniqueId = rule.MitreId,
+            MitreTacticName = "Threat Detection",
+            Status = AlertStatus.Nouă,
+            RelatedEvents = ev is null ? new List<ParsedEvent>() : new List<ParsedEvent> { ev },
+        };
 
         private static string Truncate(string str, int maxLen)
         {

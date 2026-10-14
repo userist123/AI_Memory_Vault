@@ -19,7 +19,7 @@ public static partial class Wp14Rules
     /// <summary>Folders Windows or other systems create on a volume by themselves (hidden by design, never a mailbox).</summary>
     private static readonly string[] SystemMediaFolders = ["System Volume Information", "$RECYCLE.BIN", "RECYCLER", ".Trashes", ".Spotlight-V100", ".fseventsd", ".TemporaryItems"];
 
-    private static readonly Regex VolumeRx = new(@"\\VOLUME\{[0-9a-f]+-(?<s>[0-9a-f]{8})\}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+    private static readonly Regex VolumeRx = new(@"\\VOLUME\{[0-9a-f]+-(?<s>[0-9a-f]{8})\}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, LogAnalyzer.Dfir.RegexDefaults.RuleMatchTimeout);
 
     private static void PayloadFindings(Ctx c, List<Finding> o)
     {
@@ -377,7 +377,7 @@ public static partial class Wp14Rules
     {
         var list = new List<(Regex, WeightedPattern)>();
         foreach (var p in l.ClickFixPatterns.Where(p => p.Regex.Length > 0))
-            try { list.Add((new Regex(p.Regex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200)), p)); }
+            try { list.Add((new Regex(p.Regex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, LogAnalyzer.Dfir.RegexDefaults.RuleMatchTimeout), p)); }
             catch (ArgumentException) { }   // an invalid pattern in a data pack is skipped, not fatal
         return list;
     }

@@ -40,6 +40,6 @@ public static class ApprovedSoftwareMatcher
     public static bool PathMatches(string pattern, string path)
     {
         var rx = "^" + Regex.Escape(WithoutVolume(pattern)).Replace(@"\*", ".*").Replace(@"\?", ".") + "$";
-        return Regex.IsMatch(WithoutVolume(path), rx, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+        return Regex.IsMatch(WithoutVolume(path), rx, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, LogAnalyzer.Dfir.RegexDefaults.RuleMatchTimeout);
     }
 }
