@@ -129,11 +129,11 @@ public sealed class NativeLibraryManifestTests : IDisposable
     [InlineData(false, false, false, true,  NativeStartupVerdict.Warn,   0)]
     [InlineData(false, false, false, false, NativeStartupVerdict.Warn,   0)]
     [InlineData(true,  true,  true,  true,  NativeStartupVerdict.Start,  0)]
-    [InlineData(true,  true,  true,  false, NativeStartupVerdict.Refuse, 4)]
+    [InlineData(true,  true,  true,  false, NativeStartupVerdict.Warn,   0)]   // Debug elevated in a writable folder: warn only
     [InlineData(true,  true,  false, true,  NativeStartupVerdict.Start,  0)]
     [InlineData(true,  true,  false, false, NativeStartupVerdict.Warn,   0)]
     [InlineData(true,  false, true,  true,  NativeStartupVerdict.Start,  0)]
-    [InlineData(true,  false, true,  false, NativeStartupVerdict.Refuse, 4)]   // elevated: the folder is checked even without a manifest
+    [InlineData(true,  false, true,  false, NativeStartupVerdict.Warn,   0)]   // Debug elevated: the folder is checked, warn only
     [InlineData(true,  false, false, true,  NativeStartupVerdict.Start,  0)]
     [InlineData(true,  false, false, false, NativeStartupVerdict.Start,  0)]   // development build from bin, not elevated
     public void Startup_decision_matrix(bool debug, bool manifest, bool elevated, bool folderProtected, NativeStartupVerdict expected, int exit)
@@ -150,6 +150,50 @@ public sealed class NativeLibraryManifestTests : IDisposable
             if (exit == 3) Assert.Contains("încorporat", d.Message);
             if (exit == 4) Assert.Contains("BUILTIN\\Users", d.Message);
         }
+    }
+
+    private sealed class CountingNotifier : IStartupNotifier
+    {
+        public int Calls;
+        public void Warn(NativeStartupDecision d) => Calls++;
+        public void Refuse(NativeStartupDecision d) => Calls++;
+    }
+
+    [Theory]
+    [InlineData(NativeStartupVerdict.Start, 0)]
+    [InlineData(NativeStartupVerdict.Warn, 0)]
+    [InlineData(NativeStartupVerdict.Refuse, 4)]
+    public void Headless_startup_never_calls_the_notifier_and_fails_only_on_refusal(NativeStartupVerdict verdict, int exit)
+    {
+        var n = new CountingNotifier();
+        var (code, lines) = StartupGate.Apply(new(verdict, "mesaj\nrand doi", exit, "cap", "install-folder"), headless: true, n);
+        Assert.Equal(0, n.Calls);
+        Assert.Equal(exit, code);
+        var line = Assert.Single(lines);
+        Assert.StartsWith("CHECK install-folder:", line);
+        Assert.DoesNotContain('\n', line);
+        if (verdict == NativeStartupVerdict.Warn) Assert.Contains("unprotected (warning)", line);
+        if (verdict == NativeStartupVerdict.Refuse) Assert.Contains("REFUSED", line);
+    }
+
+    [Fact]
+    public void Interactive_startup_uses_the_notifier()
+    {
+        var n = new CountingNotifier();
+        Assert.Equal(4, StartupGate.Apply(new(NativeStartupVerdict.Refuse, "m", 4, "c", "install-folder"), false, n).ExitCode);
+        Assert.Equal(0, StartupGate.Apply(new(NativeStartupVerdict.Warn, "w", 0, "c", "install-folder"), false, n).ExitCode);
+        Assert.Equal(2, n.Calls);
+        Assert.Equal("w", StartupNotice.Text);
+        StartupNotice.Text = "";
+    }
+
+    [Fact]
+    public void App_startup_decides_headless_before_any_dialog()
+    {
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var startup = File.ReadAllText(Path.Combine(root, "LogAnalyzer.App", "App.xaml.cs"));
+        Assert.Contains("StartupGate.Apply(decision, headless", startup);
+        Assert.DoesNotContain("NativeMessageBox(IntPtr.Zero, decision", startup);
     }
 
     [Fact]

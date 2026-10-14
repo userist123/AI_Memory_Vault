@@ -69,6 +69,8 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _openStatus = "";
         /// <summary>Non-blocking warning from the application's time memory (clock behind its own record or before the Windows install); empty when fine.</summary>
         public string ClockWarning => ClockMemory.StartupWarning;
+        /// <summary>Non-blocking startup warning (unprotected install folder in a Debug build, unverified libraries); empty when fine.</summary>
+        public string StartupNotice => LogAnalyzer.Dfir.IO.StartupNotice.Text;
         /// <summary>Why the clock is confirmed as corrected (required; written to the chained audit).</summary>
         [ObservableProperty] private string _clockAckReason = "";
 
