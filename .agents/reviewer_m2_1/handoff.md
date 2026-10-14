@@ -130,7 +130,7 @@ The reviewer independently inspected all source code and test implementations un
 To reproduce and verify this review independently:
 
 ```powershell
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 
 # 1. Run dedicated audio and barge-in unit tests
 python -m pytest tests/unit/test_audio_pipeline.py tests/unit/test_bargein.py -v

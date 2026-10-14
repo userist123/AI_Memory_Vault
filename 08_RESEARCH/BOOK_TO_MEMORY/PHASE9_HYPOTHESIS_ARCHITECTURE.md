@@ -11,7 +11,7 @@
 
 ## 1. Architectural Purpose & Scope
 
-The **Systematic Hypothesis Validation Engine** (`BookToMemoryHypothesisRegistry`), implemented in [book_to_memory_hypothesis.py](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_hypothesis.py), fulfills the authoritative requirement of `00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md` Section 14:
+The **Systematic Hypothesis Validation Engine** (`BookToMemoryHypothesisRegistry`), implemented in [book_to_memory_hypothesis.py](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_hypothesis.py), fulfills the authoritative requirement of `00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md` Section 14:
 
 ```text
 BIOLOGICAL FACT

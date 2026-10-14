@@ -14,7 +14,7 @@
 Phase 8 implements the **Book-to-Memory Corpus Catalog and Reversible Consolidation** system (`BookToMemoryCatalog`), resolving the architectural gap between legacy informal book maps and the rigorous, schema-compliant `type: book_map` standard mandated by `00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md`.
 
 With Phase 8:
-1. The centralized `BookToMemoryCatalog` is fully operational in [book_to_memory_catalog.py](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_catalog.py).
+1. The centralized `BookToMemoryCatalog` is fully operational in [book_to_memory_catalog.py](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_catalog.py).
 2. All 7 core monographs from `06_INBOX/Carti/` have been registered and validated.
 3. Chapter coverage and gap analysis are quantitatively measured and auditable.
 4. Bidirectional linkage connects atomic concept notes in the `VERIFIED` state to their parent book maps.

@@ -5,7 +5,7 @@ Coordinate and monitor the autonomous implementation of the local, self-improvin
 
 ## 🔒 My Identity
 - Archetype: sentinel
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\sentinel
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\sentinel
 - Orchestrator: 8b531079-7cca-4ec6-a0e3-4ce625943430 / .agents/orchestrator_jarvis_gen3
 - Victory Auditor: [to be spawned on victory claim]
 
@@ -23,7 +23,7 @@ Coordinate and monitor the autonomous implementation of the local, self-improvin
 ## Project Status
 - **Phase**: in progress (Milestone 3: Multi-Agent Workers, M4 FastMCP/IoT, M5 3D Web HUD)
 - **Routing Decision**: teamwork_preview_orchestrator (General path)
-- **Target Working Directory**: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+- **Target Working Directory**: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 - **Active Crons**:
   - Cron 1 (Progress Reporting, `*/8 * * * *`): task-37
   - Cron 2 (Liveness Check, `*/10 * * * *`): task-39
@@ -34,6 +34,6 @@ Coordinate and monitor the autonomous implementation of the local, self-improvin
 - **Retry count**: 0
 
 ## Artifact Index
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md — Authoritative record of user request
-- C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain — Project working directory
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis_gen3 — Orchestrator working directory
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md — Authoritative record of user request
+- C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain — Project working directory
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis_gen3 — Orchestrator working directory

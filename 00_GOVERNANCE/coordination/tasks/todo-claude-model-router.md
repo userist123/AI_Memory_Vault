@@ -19,6 +19,16 @@ DONE:
   type (live-verified: general-purpose spawn without model ran on claude-haiku-5-5); project hooks shadowed
   by the user install (one route line per prompt); local tier lib/local_llm.py on Ollama loopback with the
   4 models measured on the owner's PC; dispatcher rule in CLAUDE.md; 20_TESTS/test_cost_router_enforce.py
+- 2026-10-10 PC (PR #264 merged 0eb82905): installed on LAB-PC by the owner in Git Bash; settings has
+  both hooks once, local_llm --probe exit 0 (qwen2.5:7b-instruct / qwen2.5-coder:7b / qwen2.5-coder:3b),
+  agent hook explore->haiku, risky fable->opus. Bootstrap line fixed: no leading '/' in sparse patterns
+  (MSYS rewrote them, install stopped on 'missing source'); python3/python loop. The 9 other repos'
+  SessionStart copies still carry the old line.
+- 2026-10-10 owner correction: one install per surface, then it runs and stays current. PC: install.py adds a
+  SessionStart self-update hook (owner-approved; hourly sparse clone of main + `install.py --self-update`, lock +
+  atomic swap, agent manifest keeps owner edits). Cloud: bootstrap line in the environment Setup script. Chat:
+  `.claude/skills/cost-router/chat/` zipped and uploaded in claude.ai. vault-reviewer found a reproducible
+  concurrency race in the first draft; fixed and covered by 20_TESTS/test_cost_router_self_update.py.
 NEXT (in order):
 1. owner: paste the bootstrap line (protocol §4) into the cloud environment Setup script
 2. owner: approve the install in the PC Remote Control session (approval must be given there)

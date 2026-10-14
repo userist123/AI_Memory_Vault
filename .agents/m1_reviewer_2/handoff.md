@@ -1,7 +1,7 @@
 # Milestone 1 Independent Review & Adversarial Critic Report
 
 **Reviewer**: Reviewer 2 (Reviewer & Critic)  
-**Working Directory**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m1_reviewer_2`  
+**Working Directory**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m1_reviewer_2`  
 **Target Subsystem**: `xau_kinetic/financial_ingestion/`  
 **Milestone**: M1 (Financial Ingestion Pipeline & Canonical Memory Adapter)  
 **Date**: 2026-08-25  

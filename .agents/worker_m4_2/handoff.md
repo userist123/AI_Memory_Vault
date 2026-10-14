@@ -29,7 +29,7 @@ All 3 identified edge cases are resolved:
 ## 5. Verification Method
 Execute the adversarial stress test suite and the complete test suite:
 ```powershell
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 python -m pytest tests/unit/test_challenger_m4_stress.py -v
 python -m pytest
 ```

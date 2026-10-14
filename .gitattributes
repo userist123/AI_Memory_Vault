@@ -1,3 +1,6 @@
 
 # Recovered evidence: bytes must match MANIFEST.json exactly, so no line-ending conversion.
 07_EVALUATION/polymarket/research/recovered_20260914/** -text
+
+# Vendored Replica skills: bytes must match PROVENANCE.json sha256, so no line-ending conversion.
+.agents/skills/replica-*/** -text

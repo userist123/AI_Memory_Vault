@@ -11,9 +11,9 @@ Conduct the definitive verification review of Milestone 4: Cognitive Loop & Mult
 5. Verify zero regressions against security invariants P0-P15.
 
 ## Mandatory Reference Documents
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md`
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_3\handoff.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_3\handoff.md`
 
 ## Working Directory
 `.agents/reviewer_m4_5`
@@ -21,7 +21,7 @@ Conduct the definitive verification review of Milestone 4: Cognitive Loop & Mult
 ## Verification Requirements
 1. Run pytest suite (`python -m pytest`) and record results.
 2. State your explicit verdict (`APPROVE` or `REQUEST_CHANGES`).
-3. Write your handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m4_5\handoff.md`.
+3. Write your handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m4_5\handoff.md`.
 
 ---
 

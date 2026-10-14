@@ -69,7 +69,7 @@ def main() -> None:
     extract.add_argument("--ollama-host", default="http://localhost:11434")
 
     index = sub.add_parser("index-repo")
-    index.add_argument("--output", default="99_SYSTEM/spatial_index.json")
+    index.add_argument("--output", default="08_OBSERVABILITY/reports/spatial_index.json")
 
     query = sub.add_parser("query-path")
     query.add_argument("term")

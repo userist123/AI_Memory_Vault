@@ -6,7 +6,7 @@ Remediate the two defects and test signature fix identified by reviewer_m4_4 for
 ## 🔒 My Identity
 - Archetype: worker
 - Roles: implementer, qa, specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_3
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_3
 - Original parent: 4d8619ff-fda6-4c9e-8801-2dbe0fd86141
 - Milestone: Milestone 4 Remediation
 
@@ -54,9 +54,9 @@ Remediate the two defects and test signature fix identified by reviewer_m4_4 for
 - **Tests added/modified**: `test_milestone4_adversarial_challenger_m4_4.py`, `test_milestone4_adversarial_challenger.py`
 
 ## Loaded Skills
-- **Source**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
+- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
 - **Core methodology**: Cognitive vault operations runbook
-- **Source**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
+- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
 - **Core methodology**: Security verification and P0-P15 invariants audit
 
 ---

@@ -33,7 +33,8 @@ def test_skill_md_contract():
     assert len(fm["description"]) + len(fm.get("when_to_use", "")) <= 1536, "skill listing truncates at 1,536 chars"
     assert "model" not in fm and "effort" not in fm, "the skill must not override the owner's session model/effort"
     assert text.count("\n") < 500
-    for must in ("Explore", "vault-worker", "vault-reviewer", "Never skip, weaken or delete a test", "UNVERIFIED"):
+    for must in ("Explore", "vault-worker", "vault-reviewer", "Never skip, weaken or delete a test", "UNVERIFIED",
+                 "You are the entrepreneur", "Inspect before you pay"):
         assert must in text, must
 
 
@@ -109,13 +110,17 @@ def test_install_is_self_contained_idempotent_and_reversible(tmp_path):
     _run([str(INSTALL), "--home", str(home)])
     entries = json.loads((home / ".claude" / "settings.json").read_text())["hooks"]["UserPromptSubmit"]
     assert len(entries) == 2 and entries[0]["hooks"][0]["command"] == "echo mine"
-    # --no-hook leaves settings alone; existing agents are kept unless --force
+    # --no-hook leaves settings alone; an agent edited by the owner is kept unless --force, the others stay current
+    edited = home / ".claude" / "agents" / "vault-worker.md"
+    edited.write_text(edited.read_text(encoding="utf-8") + "\nmy note\n", encoding="utf-8")
     r = _run([str(INSTALL), "--home", str(home), "--no-hook"])
-    assert "kept existing" in r.stdout
+    assert "vault-worker.md (kept existing: edited here" in r.stdout and "Explore.md (already current)" in r.stdout
+    assert edited.read_text(encoding="utf-8").endswith("my note\n")
     # uninstall removes what it installed and nothing else
     r = _run([str(INSTALL), "--home", str(home), "--uninstall"])
     assert r.returncode == 0 and not skill.exists()
     assert not (home / ".claude" / "agents" / "Explore.md").exists()
+    assert edited.exists(), "an owner-edited agent survives uninstall"
     settings = json.loads((home / ".claude" / "settings.json").read_text())
     assert settings["hooks"]["UserPromptSubmit"][0]["hooks"][0]["command"] == "echo mine"
 
@@ -172,3 +177,32 @@ def test_install_refuses_a_settings_file_it_cannot_parse_without_touching_anythi
     assert (home / ".claude" / "settings.json").read_text() == '{ // comment\n "model": "opus" }'
     # --no-hook still works without reading settings
     assert _run([str(INSTALL), "--home", str(home), "--no-hook"]).returncode == 0
+
+
+def test_chat_skill_is_uploadable_and_not_installed_into_claude_code(tmp_path):
+    """claude.ai custom skills: name + short description; the Claude Code install leaves chat/ out."""
+    text = (SKILL / "chat" / "SKILL.md").read_text(encoding="utf-8")
+    fm = _frontmatter(text)
+    assert fm["name"] == "cost-router" and 0 < len(fm["description"]) <= 200
+    for must in ("Haiku", "Sonnet", "Opus", "Fable", "UNVERIFIED", "model selector"):
+        assert must in text, must
+    home = tmp_path / "home"
+    assert _run([str(INSTALL), "--home", str(home), "--no-hook"]).returncode == 0
+    assert not (home / ".claude" / "skills" / "cost-router" / "chat").exists()
+
+
+def test_hook_reminds_the_reply_language_from_user_settings(tmp_path):
+    """Owner report 2026-10-11: replies drifted to English because every injected line is English."""
+    import os
+    home = tmp_path / "home"
+    (home / ".claude").mkdir(parents=True)
+    (home / ".claude" / "settings.json").write_text(json.dumps({"language": "Romanian"}), encoding="utf-8")
+    env = dict(os.environ, HOME=str(home), USERPROFILE=str(home))
+    r = subprocess.run([sys.executable, str(HOOK)], input=json.dumps({"prompt": "find which files import memory_controller and list them"}),
+                       capture_output=True, text=True, timeout=60, env=env)
+    ctx = json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert "Write to the owner in Romanian" in ctx and "commit messages" in ctx and len(ctx) <= 1000
+    (home / ".claude" / "settings.json").write_text("{}", encoding="utf-8")
+    r = subprocess.run([sys.executable, str(HOOK)], input=json.dumps({"prompt": "find which files import memory_controller and list them"}),
+                       capture_output=True, text=True, timeout=60, env=env)
+    assert "Write to the owner" not in r.stdout

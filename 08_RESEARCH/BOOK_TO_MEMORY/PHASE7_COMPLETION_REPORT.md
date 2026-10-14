@@ -28,7 +28,7 @@ All individual building blocks developed, with their unit tests passing, across 
 5. Phase 5: Paired Ablation Testing ($\text{Delta} \ge 0$)
 6. Phase 6: Retrieval & Working Memory Context Packaging
 
-have now been united into a single, cohesive, production-ready pipeline class: `BookToMemoryPipeline` in [book_to_memory_pipeline.py](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_pipeline.py).
+have now been united into a single, cohesive, production-ready pipeline class: `BookToMemoryPipeline` in [book_to_memory_pipeline.py](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_pipeline.py).
 
 ---
 

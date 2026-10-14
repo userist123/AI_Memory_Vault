@@ -1,3 +1,7 @@
+import pytest
+
+pytestmark = pytest.mark.mock_transport
+
 from routing.dispatcher import AgentDispatcher
 from routing.models import DispatchResult, DispatchStatus, TaskRequest, RouteStatus, VerifierDescriptor
 from routing.agent_router import AgentRouter

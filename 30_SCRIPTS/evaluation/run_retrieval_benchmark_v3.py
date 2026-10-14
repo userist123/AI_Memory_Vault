@@ -27,7 +27,7 @@ BENCH_SHA = BENCH_DIR / "retrieval_benchmark_v3.json.sha256"
 RESULTS_JSON = BENCH_DIR / "results_v3_arms.json"
 REPORT_MD = BENCH_DIR / "BENCHMARK_V3_REPORT.md"
 
-DEFAULT_WORKTREE = Path(r"c:\Users\Marius\Documents\Codex\vault_b3ada1b54")
+DEFAULT_WORKTREE = Path(os.path.expanduser(r"~\Documents\Codex\vault_b3ada1b54"))
 
 sys.path.insert(0, str(REPO / "03_IMPLEMENTATION" / "packages"))
 os.environ.setdefault("MEMORY_CONTROLLER_HMAC_SECRET", "0" * 32)

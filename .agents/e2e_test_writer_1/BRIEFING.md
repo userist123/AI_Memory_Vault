@@ -6,7 +6,7 @@ Design and implement the E2E Test Infrastructure (`TEST_INFRA.md`), comprehensiv
 ## 🔒 My Identity
 - Archetype: specialist, qa
 - Roles: specialist, qa
-- Working directory: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\e2e_test_writer_1
+- Working directory: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\e2e_test_writer_1
 - Original parent: fe349d87-bb77-42da-8379-001833bc54af
 - Milestone: E2E Testing Track
 
@@ -35,10 +35,10 @@ Design and implement the E2E Test Infrastructure (`TEST_INFRA.md`), comprehensiv
 - **Code layout**: `tests/financial/` for test code, `TEST_INFRA.md` at root, `TEST_READY.md` at root.
 
 ## Loaded Skills
-- **python-trading-systems**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\python-trading-systems\SKILL.md` (Risk management discipline, separation of concerns, anti-look-ahead bar[N-1], strict P&L / R-multiple math)
-- **vault-operations**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md` (Vault CRUD, canonical note structures, search pipelines)
-- **vault-security-audit**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md` (P0-P18 invariant verification, adversarial attack testing, SHA-256 audit chaining)
-- **unit-test-generation-contract**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\unit-test-generation-contract\SKILL.md` (AAA pattern, boundary edge cases, deterministic isolated mocking)
+- **python-trading-systems**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\python-trading-systems\SKILL.md` (Risk management discipline, separation of concerns, anti-look-ahead bar[N-1], strict P&L / R-multiple math)
+- **vault-operations**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md` (Vault CRUD, canonical note structures, search pipelines)
+- **vault-security-audit**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md` (P0-P18 invariant verification, adversarial attack testing, SHA-256 audit chaining)
+- **unit-test-generation-contract**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\unit-test-generation-contract\SKILL.md` (AAA pattern, boundary edge cases, deterministic isolated mocking)
 
 ## Quality Status
 - **Build/test result**: 101/101 E2E tests passing (100% pass rate in ~0.66s).
@@ -56,11 +56,11 @@ Design and implement the E2E Test Infrastructure (`TEST_INFRA.md`), comprehensiv
 - Published `TEST_INFRA.md` and `TEST_READY.md` at root repository level.
 
 ## Artifact Index
-- `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_INFRA.md` — Test infrastructure documentation.
-- `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_READY.md` — Test readiness certification.
-- `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\tests\financial\conftest.py` — Test fixtures.
-- `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\tests\financial\test_tier1_features.py` — Tier 1 Feature Coverage suite.
-- `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\tests\financial\test_tier2_boundary_corner.py` — Tier 2 Boundary & Corner Cases suite.
-- `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\tests\financial\test_tier3_cross_feature_interactions.py` — Tier 3 Cross-Feature Interactions suite.
-- `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\tests\financial\test_tier4_real_world_workloads.py` — Tier 4 Real-World Workloads suite.
-- `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\e2e_test_writer_1\handoff.md` — Full handoff report.
+- `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_INFRA.md` — Test infrastructure documentation.
+- `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_READY.md` — Test readiness certification.
+- `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\tests\financial\conftest.py` — Test fixtures.
+- `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\tests\financial\test_tier1_features.py` — Tier 1 Feature Coverage suite.
+- `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\tests\financial\test_tier2_boundary_corner.py` — Tier 2 Boundary & Corner Cases suite.
+- `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\tests\financial\test_tier3_cross_feature_interactions.py` — Tier 3 Cross-Feature Interactions suite.
+- `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\tests\financial\test_tier4_real_world_workloads.py` — Tier 4 Real-World Workloads suite.
+- `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\e2e_test_writer_1\handoff.md` — Full handoff report.

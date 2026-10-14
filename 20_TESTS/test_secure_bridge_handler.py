@@ -2,6 +2,8 @@ import base64
 import json
 import time
 import pytest
+
+pytestmark = pytest.mark.mock_transport
 from cryptography.hazmat.primitives import serialization
 from agent_bridge.bridge import SecureBridge, BridgeRequestError
 from agent_bridge.crypto import Ed25519Signer, X25519Envelope, packet_bytes, packet_sha256

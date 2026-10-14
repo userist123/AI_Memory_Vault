@@ -6,14 +6,14 @@ Orchestrate the complete rebuild, verification, UI polish, and rigorous E2E test
 ## 🔒 My Identity
 - Archetype: teamwork_preview
 - Roles: orchestrator, user_liaison, human_reporter, successor
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator
 - Original parent: Sentinel / top-level
 - Original parent conversation ID: a8904332-c15b-46a3-808c-e14d0269bc7c
 
 ## 🔒 My Workflow
 - **Pattern**: Project (Greenfield Build / Rebuild)
-- **Scope document**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\PROJECT.md
-1. **Survey**: Spawn 3 Explorers/Spec Miners in parallel to map full project scope, existing codebase at C:\Users\Marius\teamwork_projects\otp_flight_finder, deep-link structures, UI specs, and test criteria.
+- **Scope document**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\PROJECT.md
+1. **Survey**: Spawn 3 Explorers/Spec Miners in parallel to map full project scope, existing codebase at C:\Users\user\teamwork_projects\otp_flight_finder, deep-link structures, UI specs, and test criteria.
 2. **Decompose**: Create PROJECT.md with architecture, feature inventory, milestone definitions, and interface contracts.
 3. **Dispatch & Execute (Dual Track)**:
    - Track A: E2E Testing Orchestrator (Tiers 1-4 requirement-driven test suite, TEST_READY.md)
@@ -42,7 +42,7 @@ Orchestrate the complete rebuild, verification, UI polish, and rigorous E2E test
 - Updated: 2026-08-26T16:41:19Z
 
 ## Key Decisions Made
-- Initiating Survey phase with 3 parallel subagents (2 Explorers + 1 Spec Miner) to thoroughly inspect `C:\Users\Marius\teamwork_projects\otp_flight_finder` and specifications.
+- Initiating Survey phase with 3 parallel subagents (2 Explorers + 1 Spec Miner) to thoroughly inspect `C:\Users\user\teamwork_projects\otp_flight_finder` and specifications.
 
 ## Team Roster
 | Agent | Type | Work Item | Status | Conv ID |
@@ -63,7 +63,7 @@ Orchestrate the complete rebuild, verification, UI polish, and rigorous E2E test
 - Safety timer: covered by heartbeat cron
 
 ## Artifact Index
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md` — Authoritative requirements
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator\DISPATCH.md` — Dispatch request log
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator\progress.md` — Progress tracker
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator\plan.md` — Orchestrator plan
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md` — Authoritative requirements
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator\DISPATCH.md` — Dispatch request log
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator\progress.md` — Progress tracker
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator\plan.md` — Orchestrator plan

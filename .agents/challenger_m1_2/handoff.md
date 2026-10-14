@@ -1,8 +1,8 @@
 # Milestone 1 Adversarial Challenge Report: Storage, Concurrency & Invariants
 
 **Agent**: Challenger 2 (Adversarial Storage & Concurrency Specialist)  
-**Assigned Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m1_2`  
-**Target Codebase**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
+**Assigned Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m1_2`  
+**Target Codebase**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
 **Verdict**: **APPROVE**  
 **Date**: 2026-08-27  
 
@@ -116,7 +116,7 @@ To independently reproduce and verify the adversarial storage and concurrency te
 
 ```powershell
 # Navigate to the target project directory
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 
 # Run the Challenger 2 adversarial storage and concurrency test suite
 python -m pytest -v tests/unit/test_adversarial_storage_concurrency.py

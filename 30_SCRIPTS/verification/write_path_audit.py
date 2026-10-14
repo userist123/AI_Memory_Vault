@@ -47,10 +47,11 @@ def call_name(node: ast.Call) -> str:
     return "<dynamic>"
 
 def classify(path: Path, name: str) -> str:
-    text = path.as_posix()
-    if text.endswith("memory_controller/controller.py"):
+    # The real modules; memory_controller/ and cognitive_core/ only re-export them.
+    tail = tuple(path.parts[-2:])
+    if tail == ("memory", "controller.py"):
         return "CANONICAL_CONTROLLER"
-    if text.endswith("cognitive_core/consolidation.py"):
+    if tail == ("learning", "consolidation.py"):
         return "CANONICAL_RECONSOLIDATION_BOUNDARY"
     if _is_file_mutator(name):
         return "FILE_WRITE"

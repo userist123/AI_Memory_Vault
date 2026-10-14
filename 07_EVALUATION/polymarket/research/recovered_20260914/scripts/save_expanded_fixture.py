@@ -1,13 +1,14 @@
+import os
 import json
 import hashlib
 from datetime import datetime, timezone
 
-scratch_path = "C:/Users/Marius/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch"
+scratch_path = os.path.expanduser("~/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch")
 
 with open(f"{scratch_path}/calibration_analysis_483.json", "r", encoding="utf-8") as f:
     cal_data = json.load(f)
 
-fixture_file = "C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/expanded_dataset_483markets.json"
+fixture_file = os.path.expanduser("~/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/expanded_dataset_483markets.json")
 with open(fixture_file, "w", encoding="utf-8") as f:
     json.dump(cal_data, f, indent=2)
 
@@ -16,7 +17,7 @@ with open(fixture_file, "rb") as f:
 
 now_iso = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
-prov_file = "C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/expanded_dataset_483markets.provenance.json"
+prov_file = os.path.expanduser("~/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/expanded_dataset_483markets.provenance.json")
 prov_data = {
     "target_file": "expanded_dataset_483markets.json",
     "sha256": sha256_hash,

@@ -2,10 +2,10 @@
 
 <USER_REQUEST>
 You are Explorer 2 (Audio Pipeline & Real-Time Barge-In Specialist) for the Cognitive Brain ('Creier Vorbitor') project.
-Your assigned working directory is `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_audio_bargein`.
-The target project codebase is `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`.
+Your assigned working directory is `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_audio_bargein`.
+The target project codebase is `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`.
 
-Read the authoritative requirements in `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md` (specifically timestamp 2026-08-27T19:19:42Z).
+Read the authoritative requirements in `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md` (specifically timestamp 2026-08-27T19:19:42Z).
 
 Conduct a comprehensive technical survey and specification mining for:
 1. Requirement R2: Cascaded Audio Pipeline with Barge-in:

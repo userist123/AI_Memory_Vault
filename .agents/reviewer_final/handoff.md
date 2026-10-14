@@ -1,7 +1,7 @@
 # Handoff Report: Final Architecture & Code Review
 
 **Agent**: Preview Reviewer & Adversarial Critic (`teamwork_preview_reviewer`)  
-**Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_final`  
+**Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_final`  
 **Date**: 2026-08-26  
 **Status**: REVIEW COMPLETE — VERDICT: **REQUEST_CHANGES**  
 

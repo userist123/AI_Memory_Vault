@@ -6,7 +6,7 @@ Implement Milestone 1: Financial Schema & Domain Models in `memory_controller/fi
 ## 🔒 My Identity
 - Archetype: teamwork_preview_worker
 - Roles: implementer, qa, specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_schema
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_schema
 - Original parent: e87bdef8-bfc1-4e8e-a965-ccd159cf02a1
 - Milestone: M1 Financial Schema & Domain Models
 

@@ -28,7 +28,7 @@ Un substrat de memorie externă persistentă pentru agenți AI: memorie cu prove
 |---|---|---|
 | Vault canonic | memorie în Markdown, cunoștințe, competențe, agenți, proceduri, proveniență | **IMPLEMENTAT** |
 | Memory V6 | extragere, propuneri, detectare de conflicte, ciclu de viață, consolidare, întreținerea regăsirii | **IMPLEMENTAT / ACTIV** |
-| Nucleul cognitiv | recall, activare, memorie de lucru, spațiu global de lucru, grafuri, activare prin difuzie, primitive de planificare | **IMPLEMENTAT ȘI TESTAT — NECONECTAT LA CĂUTAREA DIN PRODUCȚIE** (activarea prin difuzie e în spatele unui flag oprit; `executive` și spațiul global de lucru nu au niciun consumator în producție) |
+| Nucleul cognitiv | recall, activare, memorie de lucru, spațiu global de lucru, grafuri, activare prin difuzie, primitive de planificare | **IMPLEMENTAT, TESTAT ȘI CONECTAT LA CĂUTARE ÎN SPATELE UNOR FLAG-URI, OPRIT implicit** (`search()` le apelează doar cu flag-ul activ; activarea prin difuzie e tot în spatele unui flag oprit; `executive` și `reasoning` doar adnotează urma căutării; memoria de lucru și spațiul global de lucru reordonează și taie rezultatele când sunt activate) |
 | Memory Controller | granița de stocare, politica de citire/scriere, pachete de context, dezvăluire progresivă, control pe ciclu de viață | **IMPLEMENTAT** |
 | Execuția modelelor | abstracții de furnizor fake, local/Ollama, OpenAI, rutare pe niveluri, telemetrie de consum | **IMPLEMENTAT** |
 | Ingestia de competențe externe | descoperire, proveniență, clasificare, validare, promovare controlată | **IMPLEMENTAT** |
@@ -163,7 +163,7 @@ Aceste interfețe de execuție sunt arhitectura-țintă. Unele există ca primit
 | `02_PRODUCT/` | contextul și continuitatea proiectelor |
 | `03_IMPLEMENTATION/` | `03_IMPLEMENTATION/packages/` — nucleu cognitiv, memory controller, regăsire, polymarket, furnizori |
 | `04_CONFIG/` · `05_DATA/` | configurație și artefacte de date |
-| `04_MEMORY/` | înregistrări canonice de memorie |
+| `04_MEMORY/` | rădăcina de scriere legacy (`storage/path_resolver.py`): creată la rulare, în `.gitignore`, absentă dintr-un checkout curat |
 | `06_INBOX/` | material brut și importat, înainte de recenzie |
 | `07_EVALUATION/` | audituri, experimente, benchmark-uri, MVE, dovezi forensice, capturi de date |
 | `08_OBSERVABILITY/` · `09_SECURITY/` | telemetrie și suprafețe de securitate |
@@ -548,7 +548,7 @@ sursă cu licență verificabilă → text + hash → extragere cu citate verifi
         → întrebări înghețate înainte de extragere → control ↔ tratament → rezultat
 ```
 
-Primul capitol trecut prin tot lanțul: OpenStax *Psychology 2e*, capitolul 8 („Memory"), licență CC BY 4.0. Întrebările sunt cele de recapitulare ale autorilor cărții, cu cheia lor de răspuns, înghețate într-un commit anterior extragerii. Capcanele au răspunsul absent din capitol și nicio variantă care să indice ieșirea. Un cititor-model primește doar notele recuperate de vault și trebuie să răspundă cu o variantă **plus o propoziție citată textual dintr-o notă**, sau `INSUFFICIENT`.
+Primul capitol trecut prin tot lanțul: OpenStax *Psychology 2e*, capitolul 8 („Memory"), licență CC BY 4.0. Întrebările sunt cele de recapitulare ale autorilor cărții, cu cheia lor de răspuns, înghețate în commitul `0bb6791a5`, același cu extragerea și rezultatele (ordinea dintre ele nu se poate verifica din istoric). Capcanele au răspunsul absent din capitol și nicio variantă care să indice ieșirea. Un cititor-model primește doar notele recuperate de vault și trebuie să răspundă cu o variantă **plus o propoziție citată textual dintr-o notă**, sau `INSUFFICIENT`.
 
 | Braț | Întrebări susținute | Abțineri la capcane | Răspunsuri greșite |
 |---|---|---|---|
@@ -705,7 +705,7 @@ APOI
  ├─ legarea notelor izolate: majoritatea memoriei nu are nicio sinapsă
  ├─ de la carte la procedură și poartă, pentru cărțile de metodă
  ├─ pereche susținută de model: agent real, căutare, acțiune, rezultat verificat
- ├─ nucleul cognitiv conectat la calea reală și măsurat — sau retras dacă nu ajută
+ ├─ nucleul cognitiv (conectat în spatele unor flag-uri oprite) pornit implicit doar dacă măsurarea arată că ajută — sau retras
  │
  ▼
 MAI TÂRZIU

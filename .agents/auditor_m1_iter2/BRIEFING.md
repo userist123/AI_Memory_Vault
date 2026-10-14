@@ -6,7 +6,7 @@ Perform comprehensive forensic integrity audit for Milestone 1 Iteration 2 of Ja
 ## 🔒 My Identity
 - Archetype: forensic_auditor
 - Roles: critic, specialist, auditor
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_iter2
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_iter2
 - Original parent: 5a625f23-4992-4b00-bb13-1f4b316b216c
 - Target: Milestone 1 Iteration 2
 
@@ -26,8 +26,8 @@ Perform comprehensive forensic integrity audit for Milestone 1 Iteration 2 of Ja
 - **Audit type**: forensic integrity check
 
 ## Loaded Skills
-- Source: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
-- Local copy: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
+- Source: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
+- Local copy: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
 - Core methodology: Security verification and forensic validation for testing trust boundaries and invariants P0-P18.
 
 ## Attack Surface

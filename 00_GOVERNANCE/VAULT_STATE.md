@@ -47,11 +47,11 @@ in its constructor. Corrected 2026-09-06.
 
 | Component | State | Evidence |
 |---|---|---|
-| `memory/controller.py` — `search()` | real, in production | ~1000 lines, `search()` at line 274 |
+| `memory/controller.py` — `search()` | real, in production | ~2000 lines, `def search` at line 536 (2026-10-14). A retrieval-cache hit now returns the fused ranking with the notes: before 2026-10-14 a hit under the default `fused_score` arm sorted by `(0.0, id)` and reversed the order (`20_TESTS/test_retrieval_cache_ranking.py`). `propose()` refuses an id that already exists; re-saves go through `update()` (`20_TESTS/test_controller_propose_no_overwrite.py`). `archive`/`supersede`/`update`/`propose`/`attest`/`review`/`promote`, and `Consolidator.challenge`/`resolve_challenge`, on an ontology slot (`slot-*` id or `type: ontology_definition`) raise `PermissionError` for every principal; the manifest-gated `30_SCRIPTS/ingestion/` writers are the only path (`_refuse_ontology_slot`, `20_TESTS/test_controller_slot_path.py`, closed 2026-10-14; before, an `AI_AGENT` could retire a slot with no manifest) |
 | Query-driven candidate generation | real | r004; before it, `retrieve()` never read the query text |
 | `lifecycle/policy.py` | real, sole authority | r001; 7/7 mutation paths gated, AST-verified |
-| `FileStorageEngine` | real, repaired | scanned 7 dead folders and loaded **0** notes until `da99af0` |
-| Graph expansion in `search()` | **implemented, OFF by default** | `controller.py:118` builds the store, `:406` traverses; `enable_graph_expansion=False` |
+| `FileStorageEngine` | real, repaired; skips are counted since 2026-10-14 | scanned 7 dead folders and loaded **0** notes until `da99af0`. Every file it cannot index (missing/invalid `id`, malformed YAML, decode or read error) is recorded in `load_report` (`scanned`, `indexed`, `skipped[{path, reason}]`) and emits a `storage_skipped` audit event; `MemoryController.storage_diagnostics()` returns it. Measured 2026-10-14 on the real vault: 1357 `.md` scanned, 1064 indexed, 293 skipped (176 no id, 117 malformed YAML). Before, every skip was a bare `continue`. Duplicate UUID still raises (`20_TESTS/test_storage_load_report.py`) |
+| Graph expansion in `search()` | **implemented, OFF by default; a no-op is reported as a no-op** | `controller.py:278` builds the store, `:1037-1160` traverses; `enable_graph_expansion=False`, `graph_expansion_budget=None`. With the default budget (`None`, resolved from the seed count, see `_search_impl`) no node is added once there are ≥ 20 lexical matches, and a neighbour already among the seeds is never re-added, so in the owner view (candidate limit 2000 > corpus) expansion adds nothing for any budget. Measured 2026-10-14 (`07_EVALUATION`-style temp vaults): 26 notes / AI_AGENT → 0 expanded for every budget; 256 notes / AI_AGENT (neighbours cut by the 200-candidate limit) → 0/0/1/5/5 for B = None/0/1/5/200 (`20_TESTS/test_graph_expansion_noop_status.py`). Status vocabulary since 2026-10-14: `ok` only when ≥ 1 node was added, otherwise `ok_noop_budget_zero`, `ok_noop_all_neighbours_seeded` or `ok_noop_no_eligible_neighbours` (`graph_expansion_budget_resolved` is in the trace; `20_TESTS/test_graph_expansion_noop_status.py`). Whether the budget should be decoupled from the candidate limit is an open owner decision |
 | Cognitive core (`PlanComplexityAnalyzer`, `CouncilBudgetController`, `ContextPackBuilder`) | **wired, OFF by default** | `03_IMPLEMENTATION/packages/memory/controller.py`; evaluated on heldout v2 in `07_EVALUATION/cognitive_core/EVALUATION_REPORT.md` (52% envelope token reduction, zero recall loss); `enable_cognitive_core=False` |
 | `graph/plasticity.py` | real, **wired in production** | wired into `synapse_store.py` and `controller.py`; transactional prune and byte-for-byte rollback active |
 | `executive`, `global_workspace`, `reasoning`, `working_memory` | **wired, OFF by default** | `03_IMPLEMENTATION/packages/memory/controller.py`; evaluated on benchmark v3 in `07_EVALUATION/cognitive_core/MODULE_EVALUATION_REPORT.md`; OFF by default |
@@ -74,7 +74,7 @@ in its constructor. Corrected 2026-09-06.
 | `03_IMPLEMENTATION/packages/routing/` (agent router + dispatcher) | real and tested, **NOT wired into production** | reachable only through the manual CLI `python -m routing.route_cli` (`probe` / `route` / `dispatch --execute`); no production module imports it, it does not call `memory_search`, and nothing dispatches the verifier it selects (`PENDING_VERIFICATION` is terminal). Dispatch is tested against the real `04_CONFIG/agent_router.json` with fake executables only; no real agent was invoked (`20_TESTS/test_agent_dispatch_real_config.py`) |
 | `03_IMPLEMENTATION/packages/agent_bridge/` (secure bridge) | library + tests, **NOT wired, no transport** | `transport: windows_named_pipe` is validated in `04_CONFIG/agent_bridge.json` but no pipe server exists; `load_bridge_config()` / `build_bridge()` and `AntigravitySession` have no consumer outside `20_TESTS`; nothing runs it end to end. `minimum_ttl_seconds` is enforced and an AGY session never carries context across tasks (`20_TESTS/test_agent_bridge_hardening.py`), verified against fakes, not the real `agy` |
 | Direct routes `vault://` (`vault_access/`, 04_CONFIG/vault_domains.yaml) | real, **in the MCP server, CLI and Telegram bot** | measured 2026-10-10: 4433 routes in 117 domains (clean checkout; re-checked by `test_route_and_domain_counts_are_current`); by URI 4433/4433; by file name (measured 2026-10-10 on 4433 routes) 4199 resolve to themselves, 234 AMBIGUOUS, **0 wrong**; `07_EVALUATION/vault_routing/`. Names and titles only — topical questions still go to `memory_search`. The first call needs the metadata of every route: the MCP server warms it in a background thread at start (C YAML loader when PyYAML has it, one frontmatter parse per file; `20_TESTS/test_vault_access_perf.py`) |
-| Access policy per egress channel (`04_CONFIG/access_policy.yaml`) | real, enforced on every `vault_*` call | cloud CLIs ≤ INTERNAL, Telegram ≤ INTERNAL, web export PUBLIC; inbox, archive, RAW skills never served to agents, and a refusal is returned as NOT_FOUND (real reason only in the audit); MCP and the CLI cannot assert the owner or the local channel (owner needs an interactive terminal). Single-user machine: an agent with a shell can still read files directly — this policy binds the vault tools, OS permissions bind the rest |
+| Access policy per egress channel (`04_CONFIG/access_policy.yaml`) | real, enforced on every `vault_*` call; **two rule sets on one server** | cloud CLIs ≤ INTERNAL, Telegram ≤ INTERNAL, web export PUBLIC; inbox, archive, RAW skills never served to agents, and a refusal is returned as NOT_FOUND (real reason only in the audit); MCP and the CLI cannot assert the owner or the local channel (owner needs an interactive terminal). Single-user machine: an agent with a shell can still read files directly — this policy binds the vault tools, OS permissions bind the rest. Since 2026-10-14 a `quarantined: true` note is withheld by `vault_read`/`vault_get_metadata`/`vault_check_quotes` (and the Telegram bot) exactly as by `memory_get`: one predicate, `interfaces/vault_cli.eligible_for_agent` (`20_TESTS/test_vault_routes_quarantine_parity.py`); before, the vault routes served its body. Still divergent, not changed: `memory_search`/`memory_get`/`recall_cli` do not apply the domain/classification ceilings of `access_policy.yaml` nor `redact()` (0 notes carry a `classification` label today), and the REST gateway reads `storage` directly with no lifecycle floor, quarantine, audit or redaction. Unifying them is an architecture decision for the owner |
 | Ollama/Telegram assistant (`vault_access/ollama_assistant.py`) | real, **not yet run against a live Ollama** | reads are extractive (no model call); questions use native `/api/chat` with explicit `num_ctx`, truncation check and verbatim-quote verification; proved with a fake transport (assistant + Telegram: 39 tests) |
 | Book-to-Memory research modules (`lifecycle/validation/book_to_memory_*.py`, 19 modules: the 11 of phases 1-11 and 8 evaluation-integrity modules for PR #209 B03-B08: run config, leakage, paired statistics, raters, blind packet, real-model ablation harness, prompt audit, human labels) | **present, research-only, NOT wired** | no production consumer: only each other, the research runners and scripts (`08_RESEARCH/BOOK_TO_MEMORY/`, `30_SCRIPTS/evaluation/*b2m*`) and `20_TESTS/test_book_to_memory_*.py` import them. Their usage-test and ablation gates have no built-in scores: without supplied observations they report `INSUFFICIENT_DATA`, and without a recorded run config an ablation is refused as not comparable. The B03 task packet (`08_RESEARCH/BOOK_TO_MEMORY/b03_task_packet/`, 51 tasks, 204 trials, prompts only) has not been run: no real-model ablation, no multi-rater scoring and no human-label calibration exists (B03, B05, B06 wait on the owner). B07 was measured: 2 exact text overlaps in the frozen v1/v2 benchmarks (flagged), 0 in the H1 sets (`07_EVALUATION/b2m_leakage/`). Passing unit tests is not empirical evidence (PR #209 B01, B09); open items in `08_RESEARCH/BOOK_TO_MEMORY/OPEN_BLOCKERS.md`. Their owner-approval token is bound to the exact note: it signs the SHA-256 of the canonical note, its revision marker and an expiry, and an edit after approval, a replay, an expired or an old-format token is refused (B02; `20_TESTS/test_book_to_memory_lifecycle_gates.py::test_32_*`). A blocker's severity cannot be lowered, nor a blocker deleted, without an owner attestation in `08_RESEARCH/BOOK_TO_MEMORY/SEVERITY_ATTESTATIONS.md`; the `Repository Hygiene` workflow enforces it on pull requests (B12; `20_TESTS/research/test_blocker_severity_downgrade.py`) |
 | `retrieval/interference_gate.py` | **present, NOT wired** | no production consumer at all; only `20_TESTS/test_interference_gate.py` imports it |
@@ -115,6 +115,14 @@ whole-corpus retrieval numbers.
   an existing note in the legacy tree keeps its legacy destination on update; existing notes in the
   content roots stay pinned in place (`db08b847`). Nothing has been moved: the legacy folders are not
   migrated, only new writes are redirected.
+- **The coordination state cards are dated snapshots.** Every `current_main_sha`/
+  `base_main_sha` in `00_GOVERNANCE/coordination/**/CURRENT.md` except
+  `LOGANALYZER_DFIR` was unreachable on 2026-10-14; those files are marked
+  `status: HISTORICAL_SNAPSHOT` (`20_TESTS/test_coordination_state_sha.py`).
+  `BOOTSTRAP_ALL_AGENTS_V1.md` and the universal protocol pointed at the retired
+  `09_COORDINATION/AGENT_MEMORY/` tree until 2026-10-14
+  (`20_TESTS/test_bootstrap_cold_start_paths.py`). The 21 `.agents/agents/*/agent.md`
+  profiles and several skills still cite `99_SYSTEM/*` files that do not exist.
 - **Agents now have direct routes, but no live agent turn has used them yet.** The `vault_*` tools are
   registered for Claude Code, Codex, Antigravity and Gemini CLI (`AGENTS.md`, "Direct routes for every AI");
   the stdio contract is tested, no client session has been observed calling them. The 8 coordination files
@@ -148,6 +156,29 @@ whole-corpus retrieval numbers.
   and undoing that is `git revert`, not `PlasticityEngine.rollback()`.
 - `06_INBOX/RAW_IMPORTS/` is allowlisted in `.gitleaks.toml`. Anything
   force-added from there is not secret-scanned.
+  `repository_hygiene.py` fails the build if anything but `README.md`/`.gitkeep`
+  is tracked under `06_INBOX/` (`20_TESTS/test_inbox_tracked_gate.py`).
+- **Four personal financial documents are still in the public git history**
+  (`02_PRODUCT/projects/imported/bot/trade/`, added `039e490cb`, deleted
+  `40a2b473a`; two of them carry mod-97-valid Romanian IBANs — measured 2026-10-14 by `personal_data_guard.py --history` on the `main` history only). `personal_data_guard.py`
+  scans only the working tree in the blocking job; since 2026-10-14 its
+  `--history` mode scans every reachable blob and runs as a separate
+  non-blocking job in `repository-hygiene.yml`, and the guard now detects the
+  spaced/lowercase IBAN form that those documents use (it did not before).
+  Removing them needs a history rewrite and a force-push: owner approval,
+  procedure `09_SECURITY/incident_register/R001_HISTORY_REWRITE_PROCEDURE.md`.
+  Only `main` was fetched for that scan; the remote has ~190 other branches.
+- **`04_CONFIG/agent_budgets.json` is never loaded.** `load_agent_budget()`
+  defaults to the CWD-relative `config/agent_budgets.json`, which does not
+  exist, so every principal gets `max_notes=50` instead of the configured 5.
+  Not changed on 2026-10-14: loading it would change every benchmark's
+  operating point (`page_size`/cache eligibility), so it is an owner decision
+  to re-baseline.
+- **The verifier a route selects is never dispatched.** `PENDING_VERIFICATION`
+  is terminal (`routing/dispatcher.py`); nothing runs the verifier. The CLI now
+  exits 2 for pending verification and 1 for failed/blocked
+  (`20_TESTS/test_route_cli_exit_codes.py`), so automation cannot mistake it for
+  success; building the verification step is open work.
 - **All 114 declared typed relations in the live graph have been audited once; the audit is single-rater and unreplicated.** The remaining 65
   relations were evaluated by one LLM rater (Perplexity) in Wave 2: 10 accepted, 55 rejected (15.4% precision).
   A second rater, or a sample re-labelled by the owner, has not been run, so "100% audited" means "every edge was

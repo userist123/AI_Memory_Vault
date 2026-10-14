@@ -1,11 +1,11 @@
 ## 2026-08-28T14:03:55Z
 You are teamwork_preview_challenger (challenger_m3_1).
-Your Working Directory for metadata is: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m3_1`
-The Project Working Directory is: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
+Your Working Directory for metadata is: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m3_1`
+The Project Working Directory is: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 
-Authoritative User Request: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
-Project Architecture & Contracts: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-Worker Handoff: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_1\handoff.md`
+Authoritative User Request: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+Project Architecture & Contracts: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+Worker Handoff: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_1\handoff.md`
 
 TASK:
 Empirically stress-test the MultiAgentSupervisor and worker pool:

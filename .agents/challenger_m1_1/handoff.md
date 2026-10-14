@@ -1,8 +1,8 @@
 # Milestone 1 Adversarial Review Report: OODA Stress & Correctness
 
 **Agent**: Challenger 1 (Adversarial Correctness & OODA Stress Specialist)  
-**Assigned Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m1_1`  
-**Target Codebase**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
+**Assigned Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m1_1`  
+**Target Codebase**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
 **Date**: 2026-08-27  
 **Verdict**: `REQUEST_CHANGES` (2 Fixes Required)
 
@@ -131,7 +131,7 @@ Update legacy method invocations (`propose_note` -> `propose`, `update_note` -> 
 To independently verify these adversarial findings and run the full suite:
 
 ```powershell
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 
 # Run complete unit and adversarial test suite
 python -m pytest tests/unit -v

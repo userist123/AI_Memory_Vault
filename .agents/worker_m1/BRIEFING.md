@@ -6,7 +6,7 @@ Implement Milestone 1 (Cognitive Core & Memory Storage) for Jarvis Cognitive Bra
 ## 🔒 My Identity
 - Archetype: Cognitive Core & Memory Storage Specialist
 - Roles: implementer, qa, specialist
-- Working directory: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1`
+- Working directory: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1`
 - Original parent: 5a625f23-4992-4b00-bb13-1f4b316b216c
 - Milestone: M1 — Cognitive OODA Engine & Memory Storage
 

@@ -2,13 +2,13 @@
 You are Worker 2 for Milestone 2 remediation of the Jarvis Cognitive Brain project.
 
 Working Directory:
-`C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m2_2`
+`C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m2_2`
 
 Input Context:
-- Read `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
-- Read `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-- Read Challenger 1 handoff report at: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_1\handoff.md`
-- Target codebase: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
+- Read `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+- Read `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- Read Challenger 1 handoff report at: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_1\handoff.md`
+- Target codebase: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 
 MANDATORY INTEGRITY WARNING:
 DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A teamwork_preview_auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.
@@ -26,5 +26,5 @@ Remediation Tasks:
    - `python -m pytest tests/unit/test_adversarial_m2_edge_bugs.py -v`
    - `python -m pytest -v`
    Verify 100% pass rate across all tests.
-6. Write handoff report to `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m2_2\handoff.md`.
+6. Write handoff report to `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m2_2\handoff.md`.
 7. Send message to parent when complete.

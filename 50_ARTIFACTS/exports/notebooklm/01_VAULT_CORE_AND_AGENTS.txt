@@ -4311,7 +4311,7 @@ acted upon in this document; it is a proposal for a future work session with tes
 
 # Obsidian Knowledge Graph Health & Artifact Sync Report
 
-**Vault Directory**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY`  
+**Vault Directory**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY`  
 **Execution Timestamp**: 2026-08-24T18:31:36.389103+00:00  
 **Sync Status**: 100% VERIFIED & SYNCHRONIZED ACROSS ALL ARTIFACTS
 

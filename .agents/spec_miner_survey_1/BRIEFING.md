@@ -6,7 +6,7 @@ Discover and document the complete, authoritative specification for the JARVIS W
 ## 🔒 My Identity
 - Archetype: Specification Miner (Survey Agent 1)
 - Roles: External domain expert, specification mining, requirements probing, API contract analysis
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_1
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_1
 - Original parent: 95f7bf7e-c539-4492-b214-af221cca8379
 - Milestone: Specification Discovery & Contract Mining
 
@@ -21,11 +21,11 @@ Discover and document the complete, authoritative specification for the JARVIS W
 - Updated: 2026-08-25T19:31:00Z
 
 ## Loaded Skills
-- **Source**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
+- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
   - **Core methodology**: Runbook and multi-step procedure for interacting with AI Memory Vault cognitive operating system.
-- **Source**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\threejs\SKILL.md
+- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\threejs\SKILL.md
   - **Core methodology**: WebGL 3D scenes, camera controls, shader animations, resource lifecycle management, 60fps render loops.
-- **Source**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\unit-test-generation-contract\SKILL.md
+- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\unit-test-generation-contract\SKILL.md
   - **Core methodology**: Deterministic unit test generation, boundary condition coverage, and isolated contract verification.
 
 ## Task Summary

@@ -88,7 +88,7 @@
 To independently reproduce and verify:
 
 ```powershell
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 
 # 1. Run all challenger reproducer and deep stress suites
 python -m pytest tests/unit/test_challenger_m3_bug_retry.py tests/unit/test_challenger_m3_bug_cancellation.py tests/unit/test_challenger_m3_bug_pending_cancel.py tests/unit/test_challenger_m3_adversarial_deep.py tests/unit/test_challenger_m3_stress_exhaustive.py -v

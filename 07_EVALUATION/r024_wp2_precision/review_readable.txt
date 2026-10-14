@@ -1442,7 +1442,7 @@ entities: ['begin', 'immediate', 'sdk', 'sha-256', 'wal']
 
 Transform the AI Memory Vault into a fully self-improving, autonomous Cognitive Brain with integrated multi-agent execution, continuous self-reflection, and robust memory governance.
 
-Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY
+Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
 
 ## Requirements
 
@@ -1596,7 +1596,7 @@ relations:
   - type: related_to
     target_id: 86cbfde2-e9f9-4f3d-9cb5-4dc8e8850e07
   - type: related_to
-    target_id: path:C:/Users/Marius/Documents
+    target_id: path:C:/Users/user/Documents
 ================================================================================
 REVIEW 41 relation=related_to conf=1.0 origin=proposed_weak
 SRC: 01_ARCHITECTURE/knowledge/legal/atomic/ATOMIC_HG585_Art236_258_Acreditare_Securitate_SIC.md
@@ -1676,7 +1676,7 @@ Acest protocol stabile
 
 Transform the AI Memory Vault into a fully self-improving, autonomous Cognitive Brain with integrated multi-agent execution, continuous self-reflection, and robust memory governance.
 
-Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY
+Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
 
 ## Requirements
 

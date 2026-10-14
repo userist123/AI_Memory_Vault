@@ -1,7 +1,7 @@
 # Handoff Report — Challenger 2 (Milestone 2 Verification)
 
 **Milestone**: Milestone 2 — Cascaded Audio Pipeline (VAD, STT, Sentence Chunker, TTS Streaming, Sub-50ms Barge-In, and Audio Drivers)  
-**Target Codebase**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
+**Target Codebase**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
 **Verdict**: **`APPROVE`**
 
 ---
@@ -19,7 +19,7 @@ python -m pytest -v tests/unit/test_challenger_m2_stress.py
 ```text
 ============================= test session starts =============================
 platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0 -- C:\Python314\python.exe
-rootdir: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+rootdir: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 collected 20 items
 
 tests/unit/test_challenger_m2_stress.py::test_vad_silence_100ms_does_not_endpoint PASSED [  5%]
@@ -143,7 +143,7 @@ To independently verify all findings and reproduce empirical benchmarks:
 
 1. **Run the Challenger Stress Test Suite**:
    ```powershell
-   cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+   cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
    python -m pytest -v tests/unit/test_challenger_m2_stress.py
    ```
 2. **Run the Statistical Empirical Benchmark**:

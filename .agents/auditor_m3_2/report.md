@@ -63,13 +63,13 @@ The full repository test suite (323 tests) and targeted multi-agent suite (81 te
 
 ### 4.1 Full Repository Test Suite
 - **Command**: `python -m pytest`
-- **Working Directory**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
+- **Working Directory**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 - **Result**: **323 passed in 10.90s** (100% PASS)
 
 ```
 ============================= test session starts =============================
 platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0
-rootdir: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+rootdir: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 configfile: pyproject.toml
 testpaths: tests
 plugins: anyio-4.12.1, langsmith-0.11.0, asyncio-1.4.0

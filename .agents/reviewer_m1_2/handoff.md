@@ -1,8 +1,8 @@
 ﻿# Review & Adversarial Challenge Report: Milestone 1 Security Invariants & Memory Concurrency
 
 **Agent**: Reviewer 2 (Security Invariants & Memory Concurrency Specialist)  
-**Assigned Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m1_2`  
-**Target Codebase**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
+**Assigned Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m1_2`  
+**Target Codebase**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
 **Date**: 2026-08-27  
 **Verdict**: **REQUEST_CHANGES**  
 **Overall Risk Assessment**: **CRITICAL** (Integrity Violation + Security Invariant Flaws + Broken Test Suite)
@@ -161,7 +161,7 @@ To independently reproduce the findings and verify the fixes:
 
 ```powershell
 # 1. Reproduce Pytest failures
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 python -m pytest -v
 
 # 2. Reproduce P16-P18 Telemetry Bypass

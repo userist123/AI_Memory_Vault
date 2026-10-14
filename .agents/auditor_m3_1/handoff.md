@@ -28,7 +28,7 @@ Result verbatim:
 ```
 ============================= test session starts =============================
 platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0
-rootdir: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+rootdir: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 configfile: pyproject.toml
 plugins: anyio-4.12.1, langsmith-0.11.0, asyncio-1.4.0
 collected 50 items
@@ -82,7 +82,7 @@ To independently verify this audit:
 
 1. Navigate to project root:
    ```powershell
-   cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+   cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
    ```
 
 2. Run targeted Milestone 3 test suite:
@@ -92,5 +92,5 @@ To independently verify this audit:
 
 3. Review detailed audit report:
    ```powershell
-   Get-Content C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m3_1\report.md
+   Get-Content C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m3_1\report.md
    ```

@@ -60,7 +60,24 @@ class FileStorageEngine:
         self.vault_root = vault_root
         self.id_to_path: Dict[str, str] = {}
         self._cache: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+        #: What the last index build saw: every .md file scanned, how many were
+        #: indexed, and one entry per file skipped (relative path, reason, exception
+        #: type -- never the content). Each skip also leaves a ``storage_skipped``
+        #: audit event. Before this existed, unreadable or id-less notes vanished
+        #: from the index without a trace (D-01).
+        self.load_report: Dict[str, Any] = {"scanned": 0, "indexed": 0, "skipped": []}
         self._initialize_index()
+
+    def _record_skip(self, filepath: str, reason: str, exc: Optional[BaseException]) -> None:
+        try:
+            rel = os.path.relpath(filepath, self.vault_root)
+        except ValueError:
+            rel = os.path.basename(filepath)
+        rel = rel.replace("\\", "/")
+        entry = {"path": rel, "reason": reason,
+                 "exception": type(exc).__name__ if exc is not None else None}
+        self.load_report["skipped"].append(entry)
+        audit_event("storage_skipped", "system", "unknown", success=False, details=dict(entry))
 
     def _tree_label(self, filepath: str) -> str:
         """Which of CONTENT_ROOTS / LEGACY_WRITE_ROOTS `filepath` falls under,
@@ -96,35 +113,58 @@ class FileStorageEngine:
             for filepath in sorted(found_files):
                 if "RAW_IMPORTS" in filepath or "Obsidian" in filepath:
                     continue
+                self.load_report["scanned"] += 1
                 try:
                     with open(filepath, 'r', encoding='utf-8') as f:
                         content = f.read()
+                except UnicodeDecodeError as e:
+                    self._record_skip(filepath, "decode_error", e)
+                    continue
+                except OSError as e:
+                    self._record_skip(filepath, "read_error", e)
+                    continue
+                try:
                     data = deserialize(content)
                     note_id = data.get("id")
-                    if note_id:
-                        if note_id in self.id_to_path:
-                            existing_path = self.id_to_path[note_id]
-                            raise ValueError(
-                                f"Duplicate UUID found: {note_id}\n"
-                                f"  existing: {existing_path} -- {self._tree_label(existing_path)}\n"
-                                f"  new:      {filepath} -- {self._tree_label(filepath)}\n"
-                                "Content roots (01_ARCHITECTURE, 02_PRODUCT, 10_DOCUMENTATION, "
-                                "00_GOVERNANCE) are the canonical corpus; legacy write roots are "
-                                "scanned only because path_resolver.py still writes new notes "
-                                "there (see storage/path_resolver.py). Two notes cannot share an "
-                                "id -- remove or renumber whichever copy is not meant to be "
-                                "canonical."
-                            )
-                        self.id_to_path[note_id] = filepath
-                        mtime = os.path.getmtime(filepath)
-                        self._cache[note_id] = (mtime, data)
+                    if not note_id:
+                        self._record_skip(filepath, "missing_id", None)
+                        continue
+                    try:
+                        hash(note_id)
+                    except TypeError:
+                        # An unhashable id (a YAML list or mapping) used to die on the
+                        # dict lookup below as a silent TypeError; keep that exception
+                        # name for the report.
+                        raise TypeError(f"invalid id type {type(note_id).__name__}") from None
+                    if note_id in self.id_to_path:
+                        existing_path = self.id_to_path[note_id]
+                        raise ValueError(
+                            f"Duplicate UUID found: {note_id}\n"
+                            f"  existing: {existing_path} -- {self._tree_label(existing_path)}\n"
+                            f"  new:      {filepath} -- {self._tree_label(filepath)}\n"
+                            "Content roots (01_ARCHITECTURE, 02_PRODUCT, 10_DOCUMENTATION, "
+                            "00_GOVERNANCE) are the canonical corpus; legacy write roots are "
+                            "scanned only because path_resolver.py still writes new notes "
+                            "there (see storage/path_resolver.py). Two notes cannot share an "
+                            "id -- remove or renumber whichever copy is not meant to be "
+                            "canonical."
+                        )
+                    self.id_to_path[note_id] = filepath
+                    mtime = os.path.getmtime(filepath)
+                    self._cache[note_id] = (mtime, data)
+                    self.load_report["indexed"] += 1
                 except Exception as e:
                     if "Duplicate UUID" in str(e):
                         raise e
                     if "Malformed YAML" in str(e):
                         audit_event("storage_error", "system", "unknown", success=False,
                                     details={"error": "Malformed YAML", "path": filepath, "message": str(e)})
+                        self._record_skip(filepath, "malformed_yaml", e)
                         continue
+                    if isinstance(e, TypeError) and "invalid id" in str(e):
+                        self._record_skip(filepath, "invalid_id", e)
+                        continue
+                    self._record_skip(filepath, "other", e)
                     continue
 
     def get(self, note_id: str) -> Optional[Dict[str, Any]]:

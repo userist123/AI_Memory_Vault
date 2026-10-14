@@ -1,7 +1,7 @@
 # Forensic Integrity Audit Report: Milestone 1 (Financial Schema & Domain Models)
 
 **Auditor**: Forensic Auditor M1 (`teamwork_preview_auditor`)  
-**Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_1`  
+**Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_1`  
 **Target Files**:
 - `memory_controller/financial_schema.py`
 - `tests/financial/test_schema.py`

@@ -1,10 +1,10 @@
 ## 2026-08-28T14:13:10Z
 You are teamwork_preview_explorer (explorer_m4_1).
-Your Working Directory for metadata is: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m4_1`
-The Project Working Directory is: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
+Your Working Directory for metadata is: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m4_1`
+The Project Working Directory is: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 
-Authoritative User Request: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
-Project Architecture & Contracts: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+Authoritative User Request: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+Project Architecture & Contracts: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
 
 TASK:
 Explore and design Milestone 4: FastMCP & IoT Home Assistant Integration:

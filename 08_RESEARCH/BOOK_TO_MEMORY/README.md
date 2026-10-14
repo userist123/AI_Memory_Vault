@@ -4,7 +4,7 @@
 > **Branch**: `research/book-to-memory`  
 > **Pull Request**: [#206](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/pull/206)  
 > **Authority**: `00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md`  
-> **Master Report**: [`MASTER_RESEARCH_TRACK_CLOSURE_REPORT.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/MASTER_RESEARCH_TRACK_CLOSURE_REPORT.md)
+> **Master Report**: [`MASTER_RESEARCH_TRACK_CLOSURE_REPORT.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/MASTER_RESEARCH_TRACK_CLOSURE_REPORT.md)
 
 > **What this status means.** The code of the track is written and its unit tests pass. No real-model
 > ablation, multi-rater evaluation or calibration on human-attested ground truth has been run; findings
@@ -26,17 +26,17 @@ The **Book-to-Memory** research track provides a formal cognitive architecture (
 
 | Phase | Description | Architecture Spec | Core Module |
 |---|---|---|---|
-| **Phase 1** | Schema & Ontology Parity | [`PHASE1_SCHEMA_SPEC.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE1_SCHEMA_SPEC.md) | `book_to_memory_schema.py` |
-| **Phase 2** | Lifecycle State Machine | [`PHASE2_LIFECYCLE_SPEC.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE2_LIFECYCLE_SPEC.md) | `book_to_memory_lifecycle.py` |
-| **Phase 3** | Conflict Registry | [`PHASE3_CONFLICT_REGISTRY.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE3_CONFLICT_REGISTRY.md) | `book_to_memory_conflict.py` |
-| **Phase 4** | Usage Test Engine | [`PHASE4_USAGE_TEST_SPEC.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE4_USAGE_TEST_SPEC.md) | `book_to_memory_usage_test.py` |
-| **Phase 5** | Paired Ablation Engine | [`PHASE5_ABLATION_SPEC.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE5_ABLATION_SPEC.md) | `book_to_memory_ablation.py` |
-| **Phase 6** | Retrieval & Working Memory | [`PHASE6_RETRIEVAL_SPEC.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE6_RETRIEVAL_SPEC.md) | `book_to_memory_retrieval.py` |
-| **Phase 7** | End-to-End Pipeline & Pilot | [`PHASE7_PIPELINE_SPEC.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE7_PIPELINE_SPEC.md) | `book_to_memory_pipeline.py` |
-| **Phase 8** | Corpus Catalog & Consolidation | [`PHASE8_CATALOG_SPEC.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE8_CATALOG_SPEC.md) | `book_to_memory_catalog.py` |
-| **Phase 9** | Problem Matrix & Hypotheses | [`PHASE9_PROBLEM_MATRIX_SPEC.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE9_PROBLEM_MATRIX_SPEC.md) | `book_to_memory_hypothesis.py` |
-| **Phase 10** | Controlled Experimentation Harness | [`PHASE10_EXPERIMENT_HARNESS_SPEC.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE10_EXPERIMENT_HARNESS_SPEC.md) | `book_to_memory_experiment.py` |
-| **Phase 11** | Unified Facade & Master Closure | [`PHASE11_FACADE_ARCHITECTURE.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE11_FACADE_ARCHITECTURE.md) | `book_to_memory_facade.py` |
+| **Phase 1** | Schema & Ontology Parity | [`PHASE1_SCHEMA_SPEC.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE1_SCHEMA_SPEC.md) | `book_to_memory_schema.py` |
+| **Phase 2** | Lifecycle State Machine | [`PHASE2_LIFECYCLE_SPEC.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE2_LIFECYCLE_SPEC.md) | `book_to_memory_lifecycle.py` |
+| **Phase 3** | Conflict Registry | [`PHASE3_CONFLICT_REGISTRY.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE3_CONFLICT_REGISTRY.md) | `book_to_memory_conflict.py` |
+| **Phase 4** | Usage Test Engine | [`PHASE4_USAGE_TEST_SPEC.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE4_USAGE_TEST_SPEC.md) | `book_to_memory_usage_test.py` |
+| **Phase 5** | Paired Ablation Engine | [`PHASE5_ABLATION_SPEC.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE5_ABLATION_SPEC.md) | `book_to_memory_ablation.py` |
+| **Phase 6** | Retrieval & Working Memory | [`PHASE6_RETRIEVAL_SPEC.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE6_RETRIEVAL_SPEC.md) | `book_to_memory_retrieval.py` |
+| **Phase 7** | End-to-End Pipeline & Pilot | [`PHASE7_PIPELINE_SPEC.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE7_PIPELINE_SPEC.md) | `book_to_memory_pipeline.py` |
+| **Phase 8** | Corpus Catalog & Consolidation | [`PHASE8_CATALOG_SPEC.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE8_CATALOG_SPEC.md) | `book_to_memory_catalog.py` |
+| **Phase 9** | Problem Matrix & Hypotheses | [`PHASE9_PROBLEM_MATRIX_SPEC.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE9_PROBLEM_MATRIX_SPEC.md) | `book_to_memory_hypothesis.py` |
+| **Phase 10** | Controlled Experimentation Harness | [`PHASE10_EXPERIMENT_HARNESS_SPEC.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE10_EXPERIMENT_HARNESS_SPEC.md) | `book_to_memory_experiment.py` |
+| **Phase 11** | Unified Facade & Master Closure | [`PHASE11_FACADE_ARCHITECTURE.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/PHASE11_FACADE_ARCHITECTURE.md) | `book_to_memory_facade.py` |
 
 ---
 

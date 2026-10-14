@@ -84,21 +84,58 @@ Rules applied after classification (`rules` in the policy; can only raise a tier
   of the same hook is registered (`is_shadowed` in `lib/route.py`).
 - **Local tier.** `lib/local_llm.py` sends text-in/short-text-out work to Ollama on loopback
   (`local_llm` in the policy: `qwen2.5:7b-instruct` / `mistral:7b-instruct` for text,
-  `qwen2.5-coder:7b` / `qwen2.5-coder:3b` for code; measured on the owner's PC, RTX 5060 8 GB,
+  `qwen2.5-coder:7b` / `qwen2.5-coder:3b` for code; measured on the owner's PC, an 8 GB laptop GPU,
   3.6–7.4 s cold). Files are read by the local model, never by Claude; input over
   `max_input_chars` is refused, not truncated; exit 3 = unavailable → Haiku subagent. The prompt hook
   advertises it for `summarize` only when a configured model answers on 127.0.0.1:11434. Never used
   for multi-step code, design, risky work or verification; unreachable from cloud sessions.
 
+## 3B. Context economy in every project (2026-10-10, owner-approved)
+
+Sessions spent 300–400k tokens exploring repositories (owner report, not measured here). The user
+install now adds, for every project on the machine (and every cloud session via the bootstrap):
+- **Repository map** — `SessionStart` hook `hook_repo_map.py` (matcher `startup|clear|compact`)
+  injects `lib/repo_map.py`'s map of the current git repository: root files, test command, each
+  top-level directory with file count, size, main types, README line and largest subdirectories;
+  ⚠ marks directories over 300 files or 50 MB. Built from `git ls-files` and file sizes only,
+  capped at 4,000 characters (about 1k tokens), cached in `~/.claude/cache/repo-map/` by path and
+  HEAD (this repository, 17,562 files: 0.35 s uncached). Silent outside git; never blocks.
+- **Reading rules** — a marked block in `~/.claude/CLAUDE.md` (rest of the file untouched): use the
+  map, grep narrowly, no wholesale reads of ⚠ directories, one task per session with `/clear` from
+  a checkpoint.
+- **Read deny rules** in `~/.claude/settings.json` for pure tool caches only (`__pycache__`,
+  `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `.git/objects`). Dependency and build trees
+  (node_modules, virtualenvs, dist) stay readable: a deny beats any project allow, and debugging
+  needs them. The rules actually added are recorded in `~/.claude/cost-router.deny-added.json`.
+`--no-context` skips the last two; `--uninstall` removes exactly what was added. Tests:
+`20_TESTS/test_cost_router_repo_map.py`.
+
 ## 4. How to use it
 
-**Install once, every project on the machine** (user scope, idempotent, reversible):
+**One install per surface, then it runs and stays current** (owner rule, 2026-10-10):
+
+| Surface | Install once | Takes effect | Stays current |
+|---|---|---|---|
+| PC (Claude Code CLI/desktop, every project) | `install.py` below, or the bootstrap line in any shell | next session | `SessionStart` hook `hook_self_update.py`: at most hourly, sparse clone of `main` + its `install.py` |
+| Cloud sessions (any repository, or none) | bootstrap line in the environment *Setup script* | next new session | every new session runs it |
+| claude.ai chat | zip `.claude/skills/cost-router/chat/` (folder `cost-router` with `SKILL.md`) and upload it under Settings > Capabilities > Skills | next chat | re-upload when it changes (rare); chat has no hooks |
 
 ```text
-python3 .claude/skills/cost-router/install.py            # skill + agents + prompt hook into ~/.claude
-python3 .claude/skills/cost-router/install.py --no-hook  # without the per-prompt hint
+python3 .claude/skills/cost-router/install.py            # skill + agents + 3 hooks into ~/.claude
+python3 .claude/skills/cost-router/install.py --no-hook  # skill + agents only, no hooks, no self-update
 python3 .claude/skills/cost-router/install.py --uninstall
 ```
+
+The self-update fetches only from the canonical repository URL fixed in the hook, prints nothing,
+gives up silently offline (the installed copy keeps working), never runs after `--uninstall`, writes
+the source commit to `~/.claude/skills/cost-router/VERSION`, and replaces an agent file only while it
+is still the copy an install wrote (owner edits are kept). Every install holds
+`~/.claude/cost-router.lock` and swaps the skill directory in by rename, so two sessions starting at
+once or a run killed by the 60 s hook timeout never leave a half-deleted skill; an update never undoes
+`--uninstall`. Tests: `20_TESTS/test_cost_router_self_update.py` (including the concurrency race the
+independent review reproduced on the first draft).
+Chat cannot switch its own model or spawn model-pinned subagents: the chat skill only names the
+cheaper model in one line and keeps the conversation short.
 
 Inside this repository nothing needs installing: the project skill, agents and the hook in
 `.claude/settings.json` are versioned, and a `SessionStart` hook (startup and resume) runs
@@ -112,8 +149,14 @@ sparse clone of just the skill's files (9 files, about 2 seconds, measured 2026-
 container), the installer, then cleanup. It never touches the current project's git state.
 
 ```bash
-d=$(mktemp -d) && git clone -q --filter=blob:none --sparse --depth 1 https://github.com/userist123/AI_Memory_Vault_CODEX_READY "$d" && git -C "$d" sparse-checkout set --no-cone .claude/skills/cost-router .claude/agents /03_IMPLEMENTATION/packages/routing/claude_model_router.py /04_CONFIG/claude_model_routing.json >/dev/null 2>&1 && python3 "$d/.claude/skills/cost-router/install.py"; rm -rf "$d"; exit 0
+d=$(mktemp -d) && git clone -q --filter=blob:none --sparse --depth 1 https://github.com/userist123/AI_Memory_Vault_CODEX_READY "$d" && git -C "$d" sparse-checkout set --no-cone .claude/skills/cost-router .claude/agents 03_IMPLEMENTATION/packages/routing/claude_model_router.py 04_CONFIG/claude_model_routing.json >/dev/null 2>&1 && for py in python3 python; do if "$py" -c "import sys" >/dev/null 2>&1; then "$py" "$d/.claude/skills/cost-router/install.py"; break; fi; done; rm -rf "$d"; exit 0
 ```
+
+The patterns carry no leading `/`: Git Bash (MSYS) rewrites an argument that starts with `/` into a
+Windows path, so `/03_IMPLEMENTATION/...` never reached git and `install.py` stopped on "missing
+source" (seen on the owner's PC, 2026-10-10). A slash inside the pattern anchors it to the root
+just the same (gitignore rules; git prints a harmless warning, discarded). The `python3`/`python`
+loop covers Windows, where `python3` may be the Store stub.
 
 - **Every cloud session, any repository:** paste that line into the cloud environment's *Setup
   script* (session title bar, cloud environment menu, Edit). New sessions run it at start.

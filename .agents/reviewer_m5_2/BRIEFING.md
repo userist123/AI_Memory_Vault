@@ -6,7 +6,7 @@ Adversarial and quality review of Milestone 5 (TRACe Metrics & IR Ranking Benchm
 ## 🔒 My Identity
 - Archetype: reviewer_critic
 - Roles: reviewer, critic
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m5_2
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m5_2
 - Original parent: 4b331fbc-eb8c-41a5-8ea8-e64218064557
 - Milestone: Milestone 5 (TRACe Metrics & IR Ranking Benchmarks)
 - Instance: 2 of 2

@@ -6,7 +6,7 @@ Implement Milestone 2: Core Memory Controller & Multi-layered Financial Search (
 ## 🔒 My Identity
 - Archetype: worker
 - Roles: implementer, qa, specialist
-- Working directory: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m2_worker_1
+- Working directory: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m2_worker_1
 - Original parent: fe349d87-bb77-42da-8379-001833bc54af
 - Milestone: Milestone 2 (Core Memory Controller & Multi-layered Financial Search)
 
@@ -52,7 +52,7 @@ Implement Milestone 2: Core Memory Controller & Multi-layered Financial Search (
 - **Tests added/modified**: Pending
 
 ## Loaded Skills
-- **Source**: vault-operations (c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md)
+- **Source**: vault-operations (c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md)
   - **Core methodology**: Cognitive OS operations, search, and validation.
-- **Source**: vault-security-audit (c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md)
+- **Source**: vault-security-audit (c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md)
   - **Core methodology**: Invariants P0-P18 audit and tamper-evident controls.

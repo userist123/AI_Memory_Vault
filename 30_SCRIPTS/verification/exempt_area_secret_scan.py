@@ -1,9 +1,10 @@
-"""Scan the 83% of the repository that gitleaks is told to skip.
+"""Scan the part of the repository that gitleaks is told to skip.
 
 `.gitleaks.toml` exempts `.agents/`, `50_ARTIFACTS/`, `07_EVALUATION/`,
-`06_INBOX/RAW_IMPORTS/`, `20_TESTS/` and the test trees — 16,675 of 20,030
-tracked files. The exemptions are reasonable on their own terms: a corpus of
-3,661 imported skills, a security-review skill whose whole job is to list
+`06_INBOX/RAW_IMPORTS/`, `20_TESTS/` and the test trees — about three quarters
+of tracked files (the exact share moves with the tree; see `.gitleaks.toml`).
+The exemptions are reasonable on their own terms: a corpus of thousands of
+imported skills, a security-review skill whose whole job is to list
 secret patterns, and test fixtures full of deliberately fake keys would drown a
 scanner in false positives.
 

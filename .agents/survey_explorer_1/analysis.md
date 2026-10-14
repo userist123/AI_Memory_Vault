@@ -1,12 +1,12 @@
 ﻿# Deep Survey & Architectural Analysis: Financial Research & Trading Journal Integration
 
 **Agent**: Survey Explorer 1  
-**Working Directory**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_1`  
+**Working Directory**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_1`  
 **Date**: 2026-08-25  
-**Target Repository**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY`  
+**Target Repository**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY`  
 **Source Artifacts Analyzed**:  
-1. `C:\Users\Marius\Desktop\Nu sterge\nusterge\ghid.py` (1954 lines)
-2. `C:\Users\Marius\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx` (15 sheets, 14,000+ data/formula cells)
+1. `C:\Users\user\Desktop\Nu sterge\nusterge\ghid.py` (1954 lines)
+2. `C:\Users\user\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx` (15 sheets, 14,000+ data/formula cells)
 
 ---
 
@@ -231,7 +231,7 @@ provenance:
   source_type: "execution"
   source_ref: "financial_ingestion_pipeline:get_full_data"
   source_date: "2026-08-25"
-  original_path: "C:\\Users\\Marius\\Desktop\\Nu sterge\\nusterge\\ghid.py"
+  original_path: "C:\\Users\\user\\Desktop\\Nu sterge\\nusterge\\ghid.py"
   extraction_date: "2026-08-25"
   redaction: "none"
   provenance_status: "complete"

@@ -28,7 +28,7 @@ A persistent external memory substrate for AI agents: provenance-aware memory, s
 |---|---|---|
 | Canonical Vault | Markdown memory, knowledge, skills, agents, procedures, provenance | **IMPLEMENTED** |
 | Memory V6 | extraction, proposals, conflict detection, lifecycle, consolidation, retrieval maintenance | **IMPLEMENTED / ACTIVE** |
-| Cognitive Core | recall, activation, working memory, global workspace, graphs, spreading activation, planning primitives | **IMPLEMENTED AND TESTED — NOT WIRED INTO PRODUCTION SEARCH** (spreading activation sits behind a flag that is off; `executive` and the global workspace have no production consumer) |
+| Cognitive Core | recall, activation, working memory, global workspace, graphs, spreading activation, planning primitives | **IMPLEMENTED, TESTED AND WIRED INTO SEARCH BEHIND FLAGS, OFF by default** (`search()` calls them only when the flag is on; spreading activation also sits behind a flag that is off; `executive` and `reasoning` only annotate the search trace; working memory and the global workspace reorder and trim the results when enabled) |
 | Memory Controller | storage boundary, read/write policy, context packs, progressive disclosure, lifecycle gating | **IMPLEMENTED** |
 | Model execution | fake, local/Ollama, OpenAI provider abstractions, tier routing, usage telemetry | **IMPLEMENTED** |
 | External skill ingestion | discovery, provenance, classification, validation, controlled promotion | **IMPLEMENTED** |
@@ -163,7 +163,7 @@ These runtime interfaces are the target architecture. Some are present as isolat
 | `02_PRODUCT/` | project context and continuity |
 | `03_IMPLEMENTATION/` | `03_IMPLEMENTATION/packages/` — cognitive core, memory controller, retrieval, polymarket, providers |
 | `04_CONFIG/` · `05_DATA/` | configuration and data artifacts |
-| `04_MEMORY/` | canonical memory records |
+| `04_MEMORY/` | legacy write root (`storage/path_resolver.py`): created at runtime, gitignored, absent from a clean checkout |
 | `06_INBOX/` | raw and imported material, pre-review |
 | `07_EVALUATION/` | audits, experiments, benchmarks, MVE, forensic evidence, captured fixtures |
 | `08_OBSERVABILITY/` · `09_SECURITY/` | telemetry and security surfaces |
@@ -563,7 +563,7 @@ source with a verifiable licence → text + hash → extraction with verified qu
         → questions frozen before extraction → control ↔ treatment → result
 ```
 
-The first chapter through the whole chain: OpenStax *Psychology 2e*, chapter 8 ("Memory"), CC BY 4.0. The questions are the authors' own review questions, with their answer key, frozen in a commit before extraction. The traps have answers absent from the chapter and no option that hints at an exit. A reader model gets only the notes the vault retrieves and must answer with a choice **plus a sentence quoted verbatim from a note**, or `INSUFFICIENT`.
+The first chapter through the whole chain: OpenStax *Psychology 2e*, chapter 8 ("Memory"), CC BY 4.0. The questions are the authors' own review questions, with their answer key, frozen in commit `0bb6791a5`, the same commit as the extraction and the results (their order cannot be verified from history). The traps have answers absent from the chapter and no option that hints at an exit. A reader model gets only the notes the vault retrieves and must answer with a choice **plus a sentence quoted verbatim from a note**, or `INSUFFICIENT`.
 
 | Arm | Questions supported | Abstentions on traps | Wrong answers |
 |---|---|---|---|
@@ -737,7 +737,7 @@ THEN
  ├─ connecting isolated notes: most of the memory has no synapse
  ├─ from book to procedure and gate, for method books
  ├─ model-backed pairing: real agent, retrieval, action, verified outcome
- ├─ the cognitive core wired into the real path and measured — or retired if it does not help
+ ├─ the cognitive core (wired behind flags that are off) switched on by default only if measurement shows it helps — or retired
  │
  ▼
 LATER
