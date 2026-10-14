@@ -53,7 +53,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: '10.x'
+          global-json-file: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/global.json
 
       # Security audit #9: every project restores from its committed packages.lock.json (Directory.Build.props).
       - name: Every project has a committed lock file
@@ -193,7 +193,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: '10.x'
+          global-json-file: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/global.json
 
       - name: Publish (win-x64 self-contained single-file)
         run: dotnet publish ${{ matrix.project }} -c Release -p:PublishProfile=win-x64-singlefile

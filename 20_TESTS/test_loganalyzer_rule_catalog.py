@@ -19,6 +19,11 @@ CATALOG = ROOT / "LogAnalyzer.Dfir.Core/Analysis/RuleContracts.cs"
 ID = re.compile(r'"([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)"')
 # WP14a builds its air-gap findings through one shared helper, Net(c, "<RULE-ID>", ...), so the id is an argument and not on a `RuleId = ` line.
 NET_CALL = re.compile(r'\bNet\(c, "([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)"')
+# WP14 also builds findings through the other shared helpers that take the context first (Chan(c, "<ID>", ...), Plain(c, "<ID>", ...)),
+# through `NotEvaluated(c.NextId(), "<ID>", ...)`, and through per-rule constants (`internal const string XRuleId = "<ID>"`).
+HELPER_CALL = re.compile(r'\b(?:Chan|Plain)\(c, "([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)"')
+NOT_EVALUATED = re.compile(r'\bNotEvaluated\(c\.NextId\(\), "([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)"')
+RULE_ID_CONST = re.compile(r'\bconst string \w*RuleId = "([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)"')
 # WP14b builds its sequence findings through one shared helper, Build(c, "<RULE-ID>", ...), so the id is an argument as well.
 BUILD_CALL = re.compile(r'\bBuild\(c, "([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)"')
 
@@ -31,6 +36,9 @@ def emitted_rule_ids():
                 ids.update(ID.findall(line.split("RuleId = ", 1)[1]))
             if p.name.startswith("Wp14Rules"):
                 ids.update(NET_CALL.findall(line))
+                ids.update(HELPER_CALL.findall(line))
+                ids.update(NOT_EVALUATED.findall(line))
+                ids.update(RULE_ID_CONST.findall(line))
             if p.name.startswith("SequenceRules"):
                 ids.update(BUILD_CALL.findall(line))
     return ids
