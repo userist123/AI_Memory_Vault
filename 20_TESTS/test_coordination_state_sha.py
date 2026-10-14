@@ -40,9 +40,20 @@ pytestmark = pytest.mark.skipif(not _git_available(), reason="not a git checkout
 FILES = sorted(COORD.rglob("CURRENT.md"))
 
 
+def _is_shallow(repo: Path = REPO) -> bool:
+    r = subprocess.run(["git", "-C", str(repo), "rev-parse", "--is-shallow-repository"],
+                       capture_output=True, text=True)
+    return r.stdout.strip() == "true"
+
+
 @pytest.mark.parametrize("path", FILES, ids=lambda p: p.relative_to(COORD).as_posix())
 def test_sha_reachable_or_marked_historical(path):
     bad = violations(path.read_text(encoding="utf-8"))
+    if bad and _is_shallow():
+        # A shallow checkout (CI with fetch-depth 1) cannot tell "unreachable" from
+        # "not fetched". The full-history jobs (r001 enforce, fetch-depth 0) still
+        # enforce this; here it is explicitly not a verdict.
+        pytest.skip(f"shallow clone: cannot verify {bad} against history")
     assert not bad, f"{path.name}: unreachable SHA(s) {bad} without status: HISTORICAL_SNAPSHOT"
 
 
