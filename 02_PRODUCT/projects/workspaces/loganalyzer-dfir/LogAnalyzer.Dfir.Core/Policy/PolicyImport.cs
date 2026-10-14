@@ -159,7 +159,7 @@ public static class PolicyImport
         var source = "Preferences/" + Short(path).Split("/Preferences/", StringSplitOptions.None).Last();
         var scope = path.Contains("/User/", StringComparison.OrdinalIgnoreCase) ? "user" : "machine";
         XDocument x;
-        try { x = XDocument.Parse(text); }
+        try { x = LogAnalyzer.Dfir.IO.SafeXml.Parse(text); }
         catch (System.Xml.XmlException ex) { b.Unsupported.Add($"{source}: XML invalid ({ex.Message})"); return; }
         var root = x.Root!;
         switch (root.Name.LocalName)

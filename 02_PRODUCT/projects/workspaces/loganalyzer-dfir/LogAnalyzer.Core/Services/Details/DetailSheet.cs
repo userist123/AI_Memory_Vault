@@ -299,7 +299,7 @@ namespace LogAnalyzer.Core.Services.Details
         {
             doc = null;
             if (string.IsNullOrWhiteSpace(xml) || !xml.TrimStart().StartsWith('<')) return false;
-            try { doc = XDocument.Parse(xml); return doc.Root is not null; }
+            try { doc = LogAnalyzer.Dfir.IO.SafeXml.Parse(xml); return doc.Root is not null; }
             catch (System.Xml.XmlException) { return false; }
         }
 

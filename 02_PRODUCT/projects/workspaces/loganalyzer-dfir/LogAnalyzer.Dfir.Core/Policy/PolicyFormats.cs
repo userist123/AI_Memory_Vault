@@ -202,7 +202,9 @@ public sealed record GpoBackup(string DisplayName, string Guid, byte[]? MachineP
         string display = "", guid = "";
         if (backup is not null)
         {
-            var x = XDocument.Parse(Policy.SecurityTemplate.Decode(backup));
+            XDocument x;
+            try { x = LogAnalyzer.Dfir.IO.SafeXml.Parse(Policy.SecurityTemplate.Decode(backup)); }
+            catch (System.Xml.XmlException ex) { throw new InvalidDataException($"Backup.xml nu este un XML acceptat (DTD/entități interzise sau XML invalid): {ex.Message}", ex); }
             display = x.Descendants().FirstOrDefault(e => e.Name.LocalName == "DisplayName")?.Value ?? "";
             guid = x.Descendants().FirstOrDefault(e => e.Name.LocalName == "ID")?.Value ?? "";
         }
