@@ -113,6 +113,30 @@ def main() -> int:
         add("No arm was void: the sabotage control changed every arm's output.")
     add("")
 
+    recheck_path = REPORT.parent / "post_282_recheck.json"
+    if recheck_path.exists():
+        rc = json.loads(recheck_path.read_text(encoding="utf-8"))
+        before, ceil = rc["before_282"], rc["ceiling"]
+        add("## Re-checked after PR #282 (retrieval-cache fix D-04)")
+        add("")
+        add("The tables above are the original run (before #282). " + rc["why"])
+        add("")
+        add("| measure, agent point | before #282 | after #282 |")
+        add("|---|---|---|")
+        add(f"| `fused_score` context_recall | {before['fused_score']['context_recall']} | {rc['fused_score']['context_recall']} |")
+        add(f"| `fused_score` sabotage Δ | {before['fused_score']['sabotage_changed_cases']} | {rc['fused_score']['sabotage_changed_cases']} |")
+        add(f"| `baseline` context_recall | {before['baseline']['context_recall']} | {rc['baseline']['context_recall']} |")
+        add(f"| `baseline` sabotage Δ | {before['baseline']['sabotage_changed_cases']} | {rc['baseline']['sabotage_changed_cases']} |")
+        add(f"| gold anywhere in the fusion pool | {before['gold_anywhere_in_pool']} | {ceil['gold_anywhere_in_pool']} |")
+        add(f"| notes in the index | {before['n_notes_in_index']} | {rc['n_notes_in_index']} |")
+        add("")
+        verdict = ("still holds: the cache bug was not its cause"
+                   if rc["fused_score"]["sabotage_changed_cases"] == 0
+                   else "does NOT hold after the fix")
+        add(f"The no-op finding {verdict}. Not re-run: {rc['not_rerun']}. "
+            "Source: `post_282_recheck.json`; see `DEVIATIONS.md` D-5.")
+        add("")
+
     REPORT.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     print(f"written {REPORT.relative_to(REPO)} ({len(lines)} lines)")
     return 0

@@ -103,3 +103,18 @@ Reference arm `fused_score` at operating point `agent`.
 
 Pinned by `20_TESTS/test_fused_score_ranking_is_a_noop.py`, including the one known divergence (ties: generation ascends by id, the arm descends), which no benchmark page exercised.
 
+## Re-checked after PR #282 (retrieval-cache fix D-04)
+
+The tables above are the original run (before #282). PR #282 fixed D-04 (a retrieval-cache hit returned an empty fused_ranking, collapsing the fused_score key to (0.0, id)). That bug could produce the same no-op symptom, so the sabotage control and the arm-independent ceiling were re-run on the rebased tree.
+
+| measure, agent point | before #282 | after #282 |
+|---|---|---|
+| `fused_score` context_recall | 24/130 | 24/130 |
+| `fused_score` sabotage Δ | 0 | 0 |
+| `baseline` context_recall | 22/130 | 22/130 |
+| `baseline` sabotage Δ | 154 | 158 |
+| gold anywhere in the fusion pool | 94/130 | 92/130 |
+| notes in the index | 1134 | 1258 |
+
+The no-op finding still holds: the cache bug was not its cause. Not re-run: the other three arms, the human point and the 3-run determinism check (about 35 min per arm per point on the shared runner); results.json and REPORT.md tables are the pre-#282 run. Source: `post_282_recheck.json`; see `DEVIATIONS.md` D-5.
+

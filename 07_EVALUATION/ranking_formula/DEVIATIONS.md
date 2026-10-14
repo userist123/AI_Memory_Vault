@@ -94,3 +94,25 @@ report presents as a finding, at 21/130 three times over.
 
 This is a hazard for anything in this repository that monkeypatches a module
 attribute, not just that one script.
+
+## D-5 — re-checked after PR #282 fixed the retrieval cache
+
+PR #282 (D-04 in `docs/security/FABLE_REMEDIATION_REPORT_2026-10-14.md`) found that a
+retrieval-cache hit returned `fused_ranking: []`, so under `fused_score` every key
+collapsed to `(0.0, id)`. That bug could produce the same symptom this experiment
+reported as a no-op, so the finding was re-measured on the tree rebased onto #282
+(2026-10-15, 1258 notes in the index, benchmark v3 SHA unchanged), using this
+directory's own scripts:
+
+- `run_ranking_arm_experiment.py` functions, agent point: `fused_score` 24/130, sabotage
+  changed **0** of 160 pages; `baseline` 22/130, sabotage changed 158 (154 before).
+- `measure_reranker_ceiling.py`: gold anywhere in the pool 92/130 (94 before); 68 cases
+  in the pool below rank 5 (70 before), 38 not in the pool (36 before).
+
+The no-op finding still holds, and does not depend on the cache bug. The pool figures
+moved slightly; the index grew by 124 notes in between, and the change is not
+attributed further. Not re-run: the other three arms, the human point and the
+three-run determinism check (about 35 minutes per arm per point on the shared
+runner). `results.json`, `reranker_ceiling.json` and the tables in `REPORT.md` are the
+pre-#282 run and are kept as history; the re-check is `post_282_recheck.json` and the
+last section of `REPORT.md`.
