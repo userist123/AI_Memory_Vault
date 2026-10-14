@@ -19,10 +19,16 @@ So this guard looks for the other category: documents about a person.
 
 1. **Document names.** A `.pdf`, `.docx`, `.xlsx`, image or similar whose name
    says what it is — `factura`, `invoice`, `account-statement`, `extras`,
-   `repayment_plan`, `buget_personal`, `salariu`, `buletin`, `passport`, `cnp`.
+   `repayment_plan`, `buget_personal`, `salariu`, `buletin`, `passport`, `cnp`,
+   `carte_identitate`, `contract_de_munca`, `adeverinta`, `fisa`, `rambursare`.
+   The same names are refused on `.txt`, `.md`, `.zip`, `.eml`, `.msg` and
+   `.csv` exports. Short tokens that are common words in engineering notes —
+   `CI`, `CV`, `diploma`, `certificat` — count only on scans and office
+   documents, where `ci-policy.md` cannot be meant.
 2. **Validated identifiers in content.** A Romanian CNP with a correct control
    digit and a real birth date; a Romanian IBAN that passes mod-97; a payment
-   card number that passes Luhn and has a real issuer prefix. Validation is the
+   card number that passes Luhn and has a real issuer prefix. An IBAN is found
+   compact or printed in groups of four, in either case. Validation is the
    point: a 13-digit number is common in data, a 13-digit number with a valid
    CNP checksum and date is not. Digits that follow a decimal point are never
    treated as a start, because spreadsheet floats were the first false
@@ -37,8 +43,20 @@ judged by its name.
 It prints the path, the rule and a count — never a value. A report that echoed
 the CNP it found would publish it a second time.
 
-It does not scan history. Removing a file from `main` does not remove it from
-the repository; that takes a history rewrite, recorded separately.
+By default it does not scan history. Removing a file from `main` does not
+remove it from the repository; that takes a history rewrite, recorded
+separately.
+
+## History mode
+
+`--history` applies the same rules to every blob reachable from any ref
+(`git rev-list --all --objects`, read through one `git cat-file --batch`).
+Binary blobs (a NUL byte, unless the format has an extractor: PDF, docx/xlsx)
+are not content-scanned, and neither are blobs over `--max-blob-bytes`
+(default 2 MB); their names are still checked. Each finding is
+`RULE:path@blob` — the path git first lists the blob under and a short blob id,
+never the value. The exit code is 1 on any finding. CI runs it as a
+non-blocking report: history findings need a rewrite, not a code change.
 
 ## Exceptions
 
@@ -65,17 +83,35 @@ DOCUMENT_SUFFIXES = {
     ".pdf", ".doc", ".docx", ".odt", ".rtf", ".xls", ".xlsx", ".ods", ".csv",
     ".jpg", ".jpeg", ".png", ".heic", ".webp", ".tif", ".tiff",
 }
+#: Text exports and archives a personal document also travels as. Only the
+#: unambiguous name rule applies to them; content is scanned as for any file.
+TEXT_EXPORT_SUFFIXES = {".txt", ".md", ".zip", ".eml", ".msg", ".csv"}
 PERSONAL_DOCUMENT_NAME = re.compile(
-    r"(factur[aăi]|invoice|account[-_ ]?statement|extras[-_ ]?de[-_ ]?cont|\bextras\b|"
-    r"repayment[-_ ]?plan|plan[-_ ]?(de[-_ ]?)?rambursare|grafic[-_ ]?rambursare|"
+    r"(factur[aăi]|invoice|account[-_ ]?statement|extras[-_ ]?(de[-_ ]?)?cont|\bextras\b|"
+    r"repayment|rambursare|"
     r"buget[-_ ]?personal|personal[-_ ]?budget|salariu|fluturas|payslip|"
-    r"buletin|carte[-_ ]?de[-_ ]?identitate|passport|pasaport|\bcnp\b|\biban\b)",
+    r"buletin|carte[-_ ]?(de[-_ ]?)?identitate|passport|pasaport|\bcnp\b|\biban\b|"
+    r"contract[-_ ]?(de[-_ ]?)?munc|adeverin|fi[sș]a)",
+    re.IGNORECASE,
+)
+#: Short or everyday tokens: a name rule only on scans and office documents.
+#: `_` counts as a separator, so `CI_fata.jpg` matches and `decimal.pdf` does not.
+SCAN_ONLY_DOCUMENT_NAME = re.compile(
+    r"((?<![a-z0-9])(ci|cv)(?![a-z0-9])|diplom|certificat)",
     re.IGNORECASE,
 )
 
-_CNP = re.compile(r"(?<![\w.,/=#-])[1-8]\d{12}(?![\w]|[.,]\d)")
+#: A CNP may follow `=`, `:` or `-` (`cnp=…`, `CNP-…`), but not a digit run
+#: joined by a dash or a decimal point (order numbers, floats).
+_CNP = re.compile(r"(?<![\w.,/#])(?<!\d-)[1-8]\d{12}(?![\w]|[.,]\d)")
 _CNP_KEY = "279146358279"
-_IBAN_RO = re.compile(r"(?<![A-Z0-9])RO\d{2}[A-Z]{4}[A-Z0-9]{16}(?![A-Z0-9])")
+#: Compact or grouped in fours (`RO49 AAAA 1B31 …`), any case; normalised
+#: before mod-97.
+_IBAN_RO = re.compile(
+    r"(?<![A-Za-z0-9])RO\d{2} ?[A-Z]{4}(?: ?[A-Z0-9]{4}){4}(?![A-Za-z0-9])",
+    re.IGNORECASE,
+)
+HISTORY_MAX_BLOB_BYTES = 2_000_000
 #: Plain 13-19 digit runs, or the grouped layouts cards are actually printed in
 #: (4-4-4-4[-3] and Amex 4-6-5). Arbitrary hyphenation matched order numbers.
 _CARD = re.compile(
@@ -111,6 +147,7 @@ def valid_cnp(s: str) -> bool:
 
 
 def valid_iban(s: str) -> bool:
+    s = s.replace(" ", "").upper()
     rearranged = s[4:] + s[:4]
     return int("".join(str(int(c, 36)) for c in rearranged)) % 97 == 1
 
@@ -168,10 +205,18 @@ def extract_text(path: str, data: bytes) -> str | None:
     return data.decode("utf-8", "replace")
 
 
+def personal_document_name(path: str) -> bool:
+    name, suffix = Path(path).name, Path(path).suffix.lower()
+    if suffix in DOCUMENT_SUFFIXES:
+        return bool(PERSONAL_DOCUMENT_NAME.search(name) or SCAN_ONLY_DOCUMENT_NAME.search(name))
+    if suffix in TEXT_EXPORT_SUFFIXES:
+        return bool(PERSONAL_DOCUMENT_NAME.search(name))
+    return False
+
+
 def inspect(path: str, data: bytes) -> list[str]:
     findings: list[str] = []
-    name = Path(path).name
-    if Path(path).suffix.lower() in DOCUMENT_SUFFIXES and PERSONAL_DOCUMENT_NAME.search(name):
+    if personal_document_name(path):
         findings.append("PERSONAL_DOCUMENT_NAME")
     if len(data) <= MAX_BYTES:
         text = extract_text(path, data)
@@ -217,13 +262,78 @@ def run(root: Path, paths: list[str]) -> list[str]:
     return failures
 
 
+def history_blobs(root: Path) -> list[tuple[str, str, int]]:
+    """(blob id, path, size) for every (blob, path) pair reachable from any ref.
+
+    A blob is listed once per distinct path it ever had: the name rule and the allowlist
+    are judged per path, so a blob first seen under a benign name and later under a
+    personal-document name is not missed (R-09)."""
+    listing = subprocess.run(["git", "rev-list", "--all", "--objects"], cwd=root,
+                             capture_output=True, check=True).stdout.decode("utf-8", "replace")
+    paths: dict[str, list[str]] = {}
+    for line in listing.splitlines():
+        sha, _, path = line.partition(" ")
+        if path and path not in paths.setdefault(sha, []):
+            paths[sha].append(path)
+    if not paths:
+        return []
+    check = subprocess.run(
+        ["git", "cat-file", "--batch-check=%(objectname) %(objecttype) %(objectsize)"],
+        cwd=root, input="\n".join(paths).encode(), capture_output=True, check=True,
+    ).stdout.decode().splitlines()
+    blobs = []
+    for line in check:
+        sha, kind, size = line.split()
+        if kind == "blob":
+            for path in paths[sha]:
+                blobs.append((sha, path, int(size)))
+    return blobs
+
+
+def run_history(root: Path, max_blob_bytes: int = HISTORY_MAX_BLOB_BYTES) -> list[str]:
+    allowed, failures = load_allowlist(root)
+    blobs = [b for b in history_blobs(root) if b[1] not in allowed]
+    wanted_shas: list[str] = []
+    for sha, _, size in blobs:
+        if size <= max_blob_bytes and sha not in wanted_shas:
+            wanted_shas.append(sha)
+    wanted = [(sha, None, None) for sha in wanted_shas]
+    contents: dict[str, bytes] = {}
+    if wanted:
+        proc = subprocess.Popen(["git", "cat-file", "--batch"], cwd=root,
+                                stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        out, _ = proc.communicate("".join(f"{sha}\n" for sha, _, _ in wanted).encode())
+        if proc.returncode:
+            raise subprocess.CalledProcessError(proc.returncode, "git cat-file --batch")
+        pos = 0
+        for sha, _, _ in wanted:
+            header_end = out.index(b"\n", pos)
+            size = int(out[pos:header_end].split()[2])
+            contents[sha] = out[header_end + 1:header_end + 1 + size]
+            pos = header_end + 1 + size + 1
+    for sha, path, _ in blobs:
+        data = contents.get(sha)
+        findings = inspect(path, data) if data is not None else (
+            ["PERSONAL_DOCUMENT_NAME"] if personal_document_name(path) else [])
+        for finding in findings:
+            failures.append(f"{finding}:{path}@{sha[:12]}")
+    return failures
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--root", default=".")
+    parser.add_argument("--history", action="store_true",
+                        help="scan every blob reachable from any ref instead of the working tree")
+    parser.add_argument("--max-blob-bytes", type=int, default=HISTORY_MAX_BLOB_BYTES,
+                        help="history mode: blobs larger than this are judged by name only")
     parser.add_argument("paths", nargs="*", help="files to check; default: every tracked file")
     args = parser.parse_args()
     root = Path(args.root).resolve()
-    failures = run(root, args.paths or tracked_files(root))
+    if args.history:
+        failures = run_history(root, args.max_blob_bytes)
+    else:
+        failures = run(root, args.paths or tracked_files(root))
     if failures:
         print("PERSONAL_DATA_STATUS=FAIL")
         print(f"FAILURE_COUNT={len(failures)}")
