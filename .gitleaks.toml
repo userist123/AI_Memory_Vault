@@ -89,3 +89,19 @@ regexTarget = "match"
 regexes = [
   '''(?:private|public)_key:\s*(?:Ed25519|X25519)(?:Private|Public)Key\b''',
 ]
+
+# Two historical false positives in LogAnalyzer documents (generic-api-key). CI scans every ref in
+# history, so one finding on a branch fails the history scan of every PR; rewriting history is the
+# owner's decision, so the two values are allowlisted by exact secret match.
+#
+# 1. "dG9rZW4tMjAxNw" is the public, documented query parameter of the European Commission's
+#    consolidated financial sanctions list download URL (base64 of a fixed word published in the
+#    EU's own documentation), quoted in a library-provenance table (commit 21241d38c, since removed).
+# 2. "RunMRU/ClickFix" is a rule name in a prose table row ("LSASS access, RunMRU/ClickFix parser"),
+#    matched because the word "access" is a generic-api-key keyword (commit 667f76d77).
+[[allowlists]]
+description = "Public EU sanctions-list URL parameter and a rule name in LogAnalyzer prose (not credentials)"
+regexes = [
+  '''^dG9rZW4tMjAxNw$''',
+  '''^RunMRU/ClickFix$''',
+]
