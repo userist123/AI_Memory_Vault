@@ -16,7 +16,10 @@ public static class ReportIntegrity
 
     public static Result Check(InvestigationResult r)
     {
-        var items = r.Case.LoadEvidence().Select(e => EvidencePreflight.Check(e, r.Case.FullPath(e.StoredPath))).ToList();
+        // A stored path outside the case folder (audit #17) counts as missing evidence: it is never read.
+        var items = r.Case.LoadEvidence().Select(e => r.Case.TryFullPath(e.StoredPath, out var full)
+            ? EvidencePreflight.Check(e, full)
+            : new PreflightResult(e.EvidenceId, PreflightStatus.Missing, 0, "", e.Sha256, "", $"{LogAnalyzer.Dfir.Case.CaseWorkspace.OutsideCaseReason}: {e.StoredPath}")).ToList();
         var invalid = items.Where(i => i.IsIntegrityFailure).ToList();
         var unreadable = items.Where(i => i.Status is PreflightStatus.Unreadable or PreflightStatus.Locked).ToList();
         var notices = items.Where(i => i.Status == PreflightStatus.FormatMismatch).ToList();

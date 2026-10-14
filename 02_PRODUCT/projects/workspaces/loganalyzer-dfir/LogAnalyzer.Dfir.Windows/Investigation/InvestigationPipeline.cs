@@ -164,12 +164,25 @@ public sealed class InvestigationPipeline
         return new WindowsPrincipal(id).IsInRole(WindowsBuiltInRole.Administrator);
     }
 
+    /// <summary>Security audit #17: an evidence index entry whose stored path resolves outside the case folder is reported and audited, never read.</summary>
+    private static EvidenceGap OutsideCaseGap(CaseWorkspace ws, EvidenceItem ev)
+    {
+        ws.Audit("evidence.path_outside_case", $"{ev.EvidenceId} {ev.StoredPath}");
+        return new EvidenceGap(ev.EvidenceId, EvidenceStatus.Failed, CaseWorkspace.OutsideCaseReason,
+            "Proba nu a fost citită: indexul probelor indică un fișier din afara cazului (index modificat sau caz importat necorespunzător)",
+            "Verificați indexul probelor și reimportați proba în caz", "Doar prin reachiziție");
+    }
+
     /// <summary>The newest facts file of the case (adapters, burn tooling, printers, screenshots, virtual machines, archivers, camera / microphone), checked against its acquisition hash first; null when the case has none or it is unreadable.</summary>
     private static AirGapFacts? LoadAirGapFacts(CaseWorkspace ws, InvestigationResult r)
     {
         var item = ws.LoadEvidence().Where(e => e.SourceType == AirGapFacts.SourceType).OrderByDescending(e => e.AcquiredAtUtc).FirstOrDefault();
         if (item is null) return null;
-        var full = ws.FullPath(item.StoredPath);
+        if (!ws.TryFullPath(item.StoredPath, out var full))
+        {
+            r.Gaps.Add(OutsideCaseGap(ws, item));
+            return null;
+        }
         var pre = EvidencePreflight.Check(item, full);
         if (!pre.CanParse)
         {
@@ -242,7 +255,16 @@ public sealed class InvestigationPipeline
         foreach (var ev in ws.LoadEvidence())
         {
             ct.ThrowIfCancellationRequested();
-            var full = ws.FullPath(ev.StoredPath);
+            if (!ws.TryFullPath(ev.StoredPath, out var full))
+            {
+                r.Parsing.Add(new ParseResult
+                {
+                    EvidenceId = ev.EvidenceId, Parser = "-", ParserVersion = "-", Status = EvidenceStatus.Failed,
+                    Error = CaseWorkspace.OutsideCaseReason, ExpectedSha256 = ev.Sha256,
+                });
+                r.Gaps.Add(OutsideCaseGap(ws, ev));
+                continue;
+            }
             var sel = _registry.Select(ev, full);
             if (!sel.HasCandidate)
             {
@@ -333,7 +355,8 @@ public sealed class InvestigationPipeline
         r.MediaRegisterSha256 = wp14.MediaSha256; r.UsersRegisterSha256 = wp14.UsersSha256; r.RegisterLine = wp14.Line;
         foreach (var live in ws.LoadEvidence().Where(e => e.SourceType == "live_snapshot"))
         {
-            var pre = EvidencePreflight.Check(live, ws.FullPath(live.StoredPath));
+            if (!ws.TryFullPath(live.StoredPath, out var liveFull)) { r.Gaps.Add(OutsideCaseGap(ws, live)); continue; }
+            var pre = EvidencePreflight.Check(live, liveFull);
             if (!pre.CanParse)
             {
                 r.Gaps.Add(new EvidenceGap(Path.GetFileName(live.StoredPath), EvidenceStatus.Failed, $"{pre.Code}: {pre.Detail}",
@@ -341,7 +364,7 @@ public sealed class InvestigationPipeline
                 ws.Audit(pre.Code == "EVIDENCE_MUTATED" ? "evidence.mutated" : "evidence.preflight_failed", $"{live.EvidenceId} {pre.Code} {pre.Detail}");
                 continue;
             }
-            found.AddRange(LiveStateAnalyzer.Analyze(live, ws.FullPath(live.StoredPath), found.Count));
+            found.AddRange(LiveStateAnalyzer.Analyze(live, liveFull, found.Count));
         }
         // WP15b: policy change timeline, configured/applied/enforced/observed and control gaps, from the case timeline alone (EVTX is enough; the expected policy comes from the profile link).
         progress?.Report("Cronologie politici");
@@ -398,6 +421,7 @@ public sealed class InvestigationPipeline
         var scannable = new List<EvidenceItem>();
         foreach (var e in evidenceItems)
         {
+            if (!ws.TryFullPath(e.StoredPath, out _)) continue; // already reported as a gap by the parsing loop (audit #17)
             if (e.SourceType != "file") { scannable.Add(e); continue; }
             var pre = EvidencePreflight.Check(e, ws.FullPath(e.StoredPath));
             if (pre.CanParse) scannable.Add(e);
