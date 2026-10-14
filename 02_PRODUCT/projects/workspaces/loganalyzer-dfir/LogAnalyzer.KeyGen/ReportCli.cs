@@ -70,6 +70,63 @@ public static class ReportCli
         }
     }
 
+    /// <summary>
+    /// report-key-protect &lt;key-file&gt; [--passphrase] (security audit #20): rewrites a legacy bare PKCS#8 key file as a protected one holding the
+    /// same key: DPAPI for the current Windows user by default, or a passphrase (LOGANALYZER_KEY_PASSPHRASE or typed twice). The protected copy is
+    /// written next to the original with an owner-only ACL, then replaces it. A key that is already protected is left unchanged (exit 0);
+    /// a file that is not a P-256 key is left unchanged (exit 1). The plaintext may still be recoverable from the disk: retire the medium if that matters.
+    /// </summary>
+    public static int Protect(string[] args, TextWriter o, TextReader? input = null)
+    {
+        var flags = args.Skip(1).Where(a => a.StartsWith("--", StringComparison.Ordinal)).ToList();
+        var pos = args.Skip(1).Where(a => !a.StartsWith("--", StringComparison.Ordinal)).ToList();
+        bool usePass = flags.Contains("--passphrase");
+        if (pos.Count != 1 || flags.Except(["--passphrase"]).Any())
+        {
+            o.WriteLine("Utilizare: report-key-protect <fișier-cheie-privată> [--passphrase]");
+            return 1;
+        }
+        var file = Path.GetFullPath(pos[0]);
+        var tmp = file + ".protect-" + Guid.NewGuid().ToString("N")[..8];
+        try
+        {
+            var text = File.ReadAllText(file);
+            if (ReportKeyProtection.IsProtected(text))
+            {
+                o.WriteLine("[=] Cheia este deja protejată (" + (ReportKeyProtection.NeedsPassphrase(text) ? "parolă" : "DPAPI") + "); nu s-a schimbat nimic.");
+                return 0;
+            }
+            string pub;
+            using (var key = ReportSignature.LoadPrivateKey(text)) pub = Convert.ToBase64String(key.ExportSubjectPublicKeyInfo());
+            string? pass = null;
+            if (usePass)
+            {
+                pass = Environment.GetEnvironmentVariable(PassphraseEnvironmentVariable);
+                if (string.IsNullOrEmpty(pass))
+                {
+                    o.WriteLine("Parola cheii (nu se afișează pe ecran și nu se scrie în jurnal):");
+                    pass = ReadSecret(input);
+                    if (string.IsNullOrEmpty(pass)) { o.WriteLine("[-] Parola nu poate fi goală."); return 1; }
+                    o.WriteLine("Repetați parola:");
+                    if (!string.Equals(pass, ReadSecret(input), StringComparison.Ordinal)) { o.WriteLine("[-] Cele două parole nu coincid; cheia nu a fost schimbată."); return 1; }
+                }
+            }
+            var stored = usePass ? ReportKeyProtection.ProtectWithPassphrase(text.Trim(), pass!) : ReportKeyProtection.ProtectForCurrentUser(text.Trim());
+            WriteOwnerOnly(tmp, stored);
+            File.Move(tmp, file, overwrite: true);
+            o.WriteLine("[+] Cheia din " + file + " este acum " + (usePass ? "criptată cu parolă" : "criptată pentru utilizatorul Windows curent (DPAPI)") +
+                        "; aceeași cheie, amprenta " + ReportSignature.KeyId(pub) + ". Semnăturile existente rămân valide.");
+            o.WriteLine("    Copia necriptată poate rămâne recuperabilă de pe disc: dacă mediul a fost partajat, generați o cheie nouă și retrageți-o pe aceasta.");
+            return 0;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException or CryptographicException or PlatformNotSupportedException or ArgumentException)
+        {
+            try { if (File.Exists(tmp)) File.Delete(tmp); } catch (Exception e2) when (e2 is IOException or UnauthorizedAccessException) { }
+            o.WriteLine("[-] Cheia nu a fost schimbată: " + ex.Message);
+            return 1;
+        }
+    }
+
     /// <summary>Creates the file with an ACL that grants FullControl to the current user only (inheritance removed), then writes the content.</summary>
     internal static void WriteOwnerOnly(string path, string content)
     {
@@ -98,6 +155,7 @@ public static class ReportCli
             using var key = ReportSignature.LoadPrivateKey(text, pass);
             var s = ReportSignature.Sign(args[2], key, args[3]);
             o.WriteLine($"[+] Semnat: {ReportSignature.SigPath(args[2])} (SHA-256 {s.Sha256}, cheia {s.KeyId})");
+            if (ReportKeyProtection.IsLegacyBareKey(text)) o.WriteLine("[!] " + ReportKeyProtection.LegacyBareKeyWarning);
             return 0;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException or CryptographicException)

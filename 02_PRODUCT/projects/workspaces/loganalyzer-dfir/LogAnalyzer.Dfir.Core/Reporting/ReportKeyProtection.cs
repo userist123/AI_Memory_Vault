@@ -14,6 +14,14 @@ public static class ReportKeyProtection
     private const int Iterations = 600_000;
 
     public static bool IsProtected(string fileText) => fileText.TrimStart().StartsWith("LAPK1-", StringComparison.Ordinal);
+    /// <summary>True for the legacy bare PKCS#8 key file (no LAPK1 envelope): usable, but readable by anyone who can read the file (security audit #20).</summary>
+    public static bool IsLegacyBareKey(string fileText) => !IsProtected(fileText);
+
+    /// <summary>Shown every time a legacy bare key is used; names the command that re-protects it in place.</summary>
+    public const string LegacyBareKeyWarning =
+        "ATENȚIE: cheia de semnare este stocată NECRIPTAT (format vechi PKCS#8): oricine poate citi fișierul poate semna în numele dumneavoastră. " +
+        "Protejați-o acum cu: LogAnalyzer.KeyGen report-key-protect <fișier-cheie> [--passphrase].";
+
     public static bool NeedsPassphrase(string fileText) => fileText.TrimStart().StartsWith(PassphrasePrefix, StringComparison.Ordinal);
 
     /// <summary>Encrypts the PKCS#8 base64 key for the current Windows user (DPAPI).</summary>

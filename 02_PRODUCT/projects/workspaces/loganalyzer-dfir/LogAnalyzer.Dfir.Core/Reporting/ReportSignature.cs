@@ -179,9 +179,11 @@ public sealed class ReportSigningSettings
         if (!File.Exists(PrivateKeyPath)) return "Raportul NU este semnat digital: fișierul cheii de semnare nu este accesibil (mediul cu cheia nu este conectat?).";
         try
         {
-            using var key = ReportSignature.LoadPrivateKey(File.ReadAllText(PrivateKeyPath));
+            var keyText = File.ReadAllText(PrivateKeyPath);
+            using var key = ReportSignature.LoadPrivateKey(keyText);
             var s = ReportSignature.Sign(reportPath, key, !string.IsNullOrWhiteSpace(signerOverride) ? signerOverride : Signer.Length > 0 ? Signer : Environment.UserName);
-            return $"Raport semnat digital ({s.Signer}, cheia {s.KeyId}); semnătura: {Path.GetFileName(ReportSignature.SigPath(reportPath))}.";
+            var line = $"Raport semnat digital ({s.Signer}, cheia {s.KeyId}); semnătura: {Path.GetFileName(ReportSignature.SigPath(reportPath))}.";
+            return ReportKeyProtection.IsLegacyBareKey(keyText) ? line + " " + ReportKeyProtection.LegacyBareKeyWarning : line;
         }
         catch (Exception ex) when (ex is CryptographicException or FormatException or IOException or UnauthorizedAccessException)
         {
