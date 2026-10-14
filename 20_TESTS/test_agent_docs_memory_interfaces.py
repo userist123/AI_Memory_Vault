@@ -27,7 +27,15 @@ _MODULE_CMD = re.compile(r"python3?\s+-m\s+([A-Za-z_][\w.]*)([^`\n]*)")
 _FLAG = re.compile(r"(--[a-z][a-z0-9-]*)")
 _TOOL = re.compile(r"\b((?:memory|vault)_[a-z_]+)\s*\(|`((?:memory|vault)_[a-z_]+)`")
 _REST = re.compile(r"localhost:8000/memory\S*")
-_PATH = re.compile(r"`((?:\d\d_[A-Z_]+|\.github)/[^`\s<>*]+)`")
+_ROOTS = (
+    r"\d\d_[A-Z_]+|\.github|docs|scripts|security|telemetry"
+    r"|\.agents|\.claude-plugin|\.claude|\.codex|\.gemini"
+)
+# Zero characters after the slash is a bare directory (`09_COORDINATION/`): it must exist too.
+_PATH = re.compile(rf"`((?:{_ROOTS})/[^`\s<>*]*)`")
+# A bare retired directory may be NAMED only on a line that says it is retired (AGENTS.md:23,52).
+_RETIRED_DIRS = ("99_SYSTEM/", "09_COORDINATION/", "00_CORE/")
+_RETIRED_MARKERS = ("retired", "retirat")
 _NOT_EXISTING_MARKERS = ("nu există", "does not exist", "not exist")
 
 
@@ -78,6 +86,8 @@ def problems_in(text: str, repo: Path = REPO) -> list[str]:
             if not any(marker in line for marker in _NOT_EXISTING_MARKERS):
                 found.append(f"{url} is cited as if it existed")
         for path in _PATH.findall(line):
+            if path.startswith(_RETIRED_DIRS) and any(m in line.lower() for m in _RETIRED_MARKERS):
+                continue
             if not path.startswith(UNTRACKED_BY_DESIGN) and not (repo / path.rstrip("/")).exists():
                 found.append(f"path {path} does not exist")
     return found
@@ -138,3 +148,12 @@ def test_the_check_would_have_caught_the_original_claude_md():
                 "`http://localhost:8000/memory/search?query=subiectul_cautat`\n"
                 "`http://localhost:8000/memory/propose`\n")
     assert len(problems_in(original)) == 2
+
+
+def test_bare_nonexistent_directory_is_reported():
+    text = "use `99_NOPE/` and `docs/` and `09_COORDINATION/` here\nthe old `99_SYSTEM/` is retired\n"
+    out = problems_in(text)
+    assert "path 99_NOPE/ does not exist" in out
+    assert "path 09_COORDINATION/ does not exist" in out
+    assert "path 99_SYSTEM/ does not exist" not in out
+    assert not any("docs/" in o for o in out)

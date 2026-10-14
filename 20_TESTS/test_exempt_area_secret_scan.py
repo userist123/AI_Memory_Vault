@@ -1,7 +1,8 @@
-"""The 83% of the repository gitleaks skips is scanned by something.
+"""The part of the repository gitleaks skips is scanned by something.
 
 `.gitleaks.toml` exempts `.agents/`, `50_ARTIFACTS/`, `07_EVALUATION/`,
-`06_INBOX/RAW_IMPORTS/` and the test trees — 16,675 of 20,030 tracked files.
+`06_INBOX/RAW_IMPORTS/` and the test trees — about three quarters of tracked
+files (see `.gitleaks.toml`).
 Each exemption is defensible; together they leave most of a public repository
 unscanned. A short list of high-confidence patterns now covers exactly those
 paths, with an allowlist naming every known-benign hit.

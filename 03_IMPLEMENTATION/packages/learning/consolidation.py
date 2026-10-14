@@ -28,7 +28,9 @@ class Consolidator:
         note = self.controller.storage.get(note_id)
         if not note:
             return None
-            
+        # An ontology slot is never reconsolidated through the controller (A-05, R-01).
+        self.controller._refuse_ontology_slot('challenge', note_id, note)
+
         current_lifecycle = note.get("lifecycle")
         if current_lifecycle not in [Lifecycle.ACTIVE.value, Lifecycle.VERIFIED.value, "CANONICAL"]:
             return None
@@ -94,7 +96,8 @@ class Consolidator:
         note = self.controller.storage.get(note_id)
         if not note:
             raise ValueError(f"Note with ID {note_id} not found")
-            
+        self.controller._refuse_ontology_slot('resolve_challenge', note_id, note, resolved_node)
+
         if note.get("lifecycle") != Lifecycle.RECONSOLIDATING.value:
             return note
 

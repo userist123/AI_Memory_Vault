@@ -27,7 +27,7 @@ from routing.registry import RegistryError, RouteRegistry
 ROOT = Path(__file__).resolve().parents[1]
 REAL_CONFIG = ROOT / "04_CONFIG" / "agent_router.json"
 
-pytestmark = pytest.mark.skipif(os.name == "nt", reason="fake executables are POSIX scripts")
+pytestmark = [pytest.mark.fake_executable, pytest.mark.skipif(os.name == "nt", reason="fake executables are POSIX scripts")]
 
 FAKE_SCRIPT = """#!{python}
 import json, os, sys
