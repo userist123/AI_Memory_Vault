@@ -9,7 +9,7 @@ Intrări: `AI_Memory_Vault_Audit.md` (audit extern limitat la pagina GitHub + RE
 | Repository | `https://github.com/userist123/ai_memory_vault_codex_ready` (GitHub rezolvă case-insensitive; ID-001 este un defect de referință externă, nu al repo-ului) |
 | Branch de bază / de lucru | `main` → `fable/remediation-2026-10-14` |
 | SHA de bază | `0b967fe88195b3df76072cb178b6d7388119751c` (commit din 2026-10-12) |
-| SHA final | niciun commit creat; modificările sunt în working tree pe branch-ul de lucru (vezi §10) |
+| SHA final | `c883858a370f36c3e86fe9098928aac6945137d1` — un singur commit pe `fable/remediation-2026-10-14`; nimic push-uit/merge-uit |
 | Working tree inițial | curat (`git status --short` gol, remote `origin` fetch/push) |
 | Istoric local | 2 025 commits pe `main` (un singur root); doar `main` fetch-uit — remote-ul are ~190 alte branch-uri |
 | Mediu | Python 3.13.16, `requirements.txt` instalat; `gitleaks` indisponibil; `gh` fără acces la repo (HTTP 403) |
@@ -217,7 +217,7 @@ Raportat fără acțiune: B-07, C-07, C-08, E-03, E-04, E-05, F-04.
 
 ## 10. Git status și diff
 
-- Branch `fable/remediation-2026-10-14` pe baza `0b967fe8`; `main` neatins; nimic push-uit, merge-uit sau comis (la cerere pot comite pe branch).
+- Branch `fable/remediation-2026-10-14` pe baza `0b967fe8`; `main` neatins; un commit local `c883858a` (checkpoint + raport incluse); nimic push-uit sau merge-uit. Working tree final: curat.
 - `git diff --stat`: 60 fișiere, +948/−152; 17 fișiere noi (14 teste, 1 sidecar `.sha256`, 1 checkpoint, acest raport). `git diff --check`: curat.
 - Fișiere noi de test: `test_bootstrap_cold_start_paths`, `test_controller_propose_no_overwrite`, `test_coordination_state_sha`, `test_curriculum_frozen_set_hash`, `test_graph_expansion_noop_status`, `test_inbox_tracked_gate`, `test_personal_data_guard_formats`, `test_readme_cognitive_core_claim`, `test_retrieval_cache_ranking`, `test_route_cli_exit_codes`, `test_storage_load_report`, `test_suite_does_not_write_telemetry`, `test_vault_routes_quarantine_parity`, `test_workflow_policy_real_files`, `test_write_path_audit_classify`.
 - Suita completă finală (după review, pe diff-ul final, `--strict-markers`): **4072 passed, 22 skipped, 6 xfailed, exit 0** (695 s). Față de bază: +242 teste, −3 xfail (A-05 închis), 0 regresii. Suita nu mai modifică fișiere din checkout (E-08).
