@@ -169,29 +169,96 @@ public static class LgpoText
 /// A GPO backup (folder or zip): display name and the Machine/User Registry.pol, GptTmpl.inf and audit.csv it contains, plus the Group Policy
 /// Preferences (Registry.xml, Services.xml, ...) and the scripts. <see cref="NotRead"/> lists every other file, so nothing is dropped silently.
 /// </summary>
+/// <summary>Caps applied when reading a GPO backup (security audit #13). The defaults are far above any real GPO backup.</summary>
+public sealed record GpoZipLimits
+{
+    public static readonly GpoZipLimits Default = new();
+    public int MaxEntries { get; init; } = 5_000;
+    public long MaxEntryBytes { get; init; } = 64L * 1024 * 1024;
+    public long MaxTotalBytes { get; init; } = 256L * 1024 * 1024;
+    public long MaxCompressionRatio { get; init; } = 100;
+    /// <summary>Entries smaller than this are not ratio-checked (small text files legitimately compress very well).</summary>
+    public long RatioCheckFromBytes { get; init; } = 1024 * 1024;
+}
+
 public sealed record GpoBackup(string DisplayName, string Guid, byte[]? MachinePol, byte[]? UserPol, string? SecurityTemplate, string? AuditCsv, string? GpReport,
     IReadOnlyList<(string Path, string Text)>? Preferences = null, IReadOnlyList<(string Path, string Text)>? Scripts = null, IReadOnlyList<string>? NotRead = null)
 {
-    public static GpoBackup FromZip(Stream zip)
+    public static GpoBackup FromZip(Stream zip) => FromZip(zip, GpoZipLimits.Default);
+
+    /// <summary>
+    /// Reads a GPO backup zip within <paramref name="limits"/> (security audit #13): entry count, declared and actual uncompressed size per entry
+    /// and in total, and compression ratio are checked before and while reading; two entries with the same name (case and slash direction ignored)
+    /// are refused. Every refusal is an <see cref="InvalidDataException"/> with a Romanian message naming the entry.
+    /// </summary>
+    public static GpoBackup FromZip(Stream zip, GpoZipLimits limits)
     {
         using var z = new ZipArchive(zip, ZipArchiveMode.Read, leaveOpen: true);
-        var files = z.Entries.Where(e => e.Length > 0).ToDictionary(e => e.FullName.Replace('\\', '/'), e => e, StringComparer.OrdinalIgnoreCase);
-        byte[]? Read(Func<string, bool> pick) => files.Keys.FirstOrDefault(pick) is { } k ? ReadAll(files[k]) : null;
-        return Build(Read, files.Keys, n => files.TryGetValue(n, out var e) ? ReadAll(e) : null);
+        if (z.Entries.Count > limits.MaxEntries)
+            throw new InvalidDataException($"Arhiva GPO are prea multe intrări ({z.Entries.Count}; limita este {limits.MaxEntries}). Nu a fost importată.");
+        var files = new Dictionary<string, ZipArchiveEntry>(StringComparer.OrdinalIgnoreCase);
+        long declared = 0;
+        foreach (var e in z.Entries)
+        {
+            if (e.Length == 0) continue;                                     // folder entries and empty files carry nothing
+            var name = e.FullName.Replace('\\', '/');
+            if (!files.TryAdd(name, e))
+                throw new InvalidDataException($"Arhiva GPO conține de două ori intrarea „{name}” (nume identice ignorând majusculele și sensul barei); nu se poate alege una. Nu a fost importată.");
+            if (e.Length > limits.MaxEntryBytes)
+                throw new InvalidDataException($"Intrarea „{name}” este prea mare ({e.Length:N0} octeți necomprimat; limita este {limits.MaxEntryBytes:N0}). Arhiva GPO nu a fost importată.");
+            if (e.Length > limits.RatioCheckFromBytes && e.CompressedLength > 0 && e.Length / e.CompressedLength > limits.MaxCompressionRatio)
+                throw new InvalidDataException($"Intrarea „{name}” are un raport de comprimare suspect ({e.Length / e.CompressedLength}:1; limita este {limits.MaxCompressionRatio}:1). Arhiva GPO nu a fost importată.");
+            declared += e.Length;
+            if (declared > limits.MaxTotalBytes)
+                throw new InvalidDataException($"Arhiva GPO depășește mărimea totală necomprimată permisă ({limits.MaxTotalBytes:N0} octeți). Nu a fost importată.");
+        }
+        long readTotal = 0;
+        byte[] ReadAll(string name, ZipArchiveEntry e)
+        {
+            var data = ReadBounded(e.Open, name, limits.MaxEntryBytes);
+            readTotal += data.Length;
+            if (readTotal > limits.MaxTotalBytes)
+                throw new InvalidDataException($"Arhiva GPO depășește mărimea totală necomprimată permisă ({limits.MaxTotalBytes:N0} octeți). Nu a fost importată.");
+            return data;
+        }
+        byte[]? Read(Func<string, bool> pick) => files.Keys.FirstOrDefault(pick) is { } k ? ReadAll(k, files[k]) : null;
+        return Build(Read, files.Keys, n => files.TryGetValue(n, out var e) ? ReadAll(n, e) : null);
     }
 
-    public static GpoBackup FromFolder(string folder)
+    public static GpoBackup FromFolder(string folder) => FromFolder(folder, GpoZipLimits.Default);
+
+    /// <summary>A GPO backup folder, with the same count and size caps as a zip.</summary>
+    public static GpoBackup FromFolder(string folder, GpoZipLimits limits)
     {
         var files = Directory.GetFiles(folder, "*", SearchOption.AllDirectories).Select(f => Path.GetRelativePath(folder, f).Replace('\\', '/')).ToList();
-        byte[]? Read(Func<string, bool> pick) => files.FirstOrDefault(pick) is { } k ? File.ReadAllBytes(Path.Combine(folder, k)) : null;
-        return Build(Read, files, n => File.ReadAllBytes(Path.Combine(folder, n)));
+        if (files.Count > limits.MaxEntries)
+            throw new InvalidDataException($"Folderul GPO are prea multe fișiere ({files.Count}; limita este {limits.MaxEntries}). Nu a fost importat.");
+        long readTotal = 0;
+        byte[] ReadFile(string n)
+        {
+            var data = ReadBounded(() => File.OpenRead(Path.Combine(folder, n)), n, limits.MaxEntryBytes);
+            readTotal += data.Length;
+            if (readTotal > limits.MaxTotalBytes)
+                throw new InvalidDataException($"Folderul GPO depășește mărimea totală permisă ({limits.MaxTotalBytes:N0} octeți). Nu a fost importat.");
+            return data;
+        }
+        byte[]? Read(Func<string, bool> pick) => files.FirstOrDefault(pick) is { } k ? ReadFile(k) : null;
+        return Build(Read, files, ReadFile);
     }
 
-    private static byte[] ReadAll(ZipArchiveEntry e)
+    /// <summary>Reads at most <paramref name="max"/> bytes, counting what is actually read (a zip header can lie about the size).</summary>
+    private static byte[] ReadBounded(Func<Stream> open, string name, long max)
     {
-        using var s = e.Open();
+        using var s = open();
         using var ms = new MemoryStream();
-        s.CopyTo(ms);
+        var buf = new byte[81920];
+        int n;
+        while ((n = s.Read(buf, 0, buf.Length)) > 0)
+        {
+            if (ms.Length + n > max)
+                throw new InvalidDataException($"Intrarea „{name}” este prea mare (peste {max:N0} octeți necomprimat). Importul GPO a fost oprit.");
+            ms.Write(buf, 0, n);
+        }
         return ms.ToArray();
     }
 
