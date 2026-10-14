@@ -211,6 +211,12 @@ namespace LogAnalyzer.UI
                 // 2b. Autentificare (decizia 33): card + PIN pentru utilizatori; cont + parolă numai pentru administratorul principal.
                 splash.Hide();
                 AuthApp.Initialize();
+                // Security audit #18: the accepted signed policy's version goes into the hash-chained auth audit (anti-rollback mark).
+                if (startup.PolicyVersion > 0)
+                {
+                    try { if (AuthApp.Service.RecordEditionPolicyVersion(startup.PolicyVersion)) Step(debugLogPath, $"Edition policy version {startup.PolicyVersion} recorded in the auth audit.\n"); }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { Step(debugLogPath, $"Edition policy version not recorded in the auth audit: {ex.GetType().Name}\n"); }
+                }
                 // The application's own time memory: compare the clock with the last recorded time BEFORE sign-in writes its own entries,
                 // then record "clock.seen" in the chained auth audit.
                 try

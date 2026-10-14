@@ -131,7 +131,8 @@ namespace LogAnalyzer.Core.Services.Edition
     }
 
     /// <summary>What the edition composition decides at startup: the mode and the station role, from the same policy read.</summary>
-    public sealed record StartupDecision(ModeDecision Mode, StationRoleDecision Role);
+    /// <param name="PolicyVersion">Version of the signed edition policy accepted at this start (0: none); recorded in the auth audit as the anti-rollback mark (security audit #18).</param>
+    public sealed record StartupDecision(ModeDecision Mode, StationRoleDecision Role, long PolicyVersion = 0);
 
     /// <summary>The station role chosen at startup. Set once; never switched while the application runs.</summary>
     public static class StationRoleContext
