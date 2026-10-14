@@ -702,6 +702,12 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Plain markdown project document (WP18); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-fable-remediation.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (00_GOVERNANCE/coordination/tasks/README.md template); not a memory note, intentionally has no note frontmatter."
     }
   ]
 }

@@ -22,8 +22,8 @@
     {
       "path": "30_SCRIPTS/ingestion/promote_verified_batch.py",
       "role": "writer",
-      "gate": "verdict manifest (`07_EVALUATION/book_corpus_conversion/promotion_verdicts.json`)",
-      "conclusion": "Gated. Reads pre-registered human/expert promotion verdicts before updating slots or emitting notes."
+      "gate": "verdict manifest (`07_EVALUATION/book_corpus_conversion/promotion_verdicts.json`, `decided_by: antigravity`, an agent); the slot rewrite runs only behind `--update-slots`, with no `UngatedCanonicalWrite`/`validate_against_slots` check, and must be followed by the owner's `active_note_integrity.py --record`",
+      "conclusion": "Gated by a CLI flag and the owner's integrity record, not by the shared manifest gate. Emits REVIEW notes by default; slot rows change only with `--update-slots`. Listed among the controller's `ONTOLOGY_SLOT_WRITERS` since 2026-10-14."
     },
     {
       "path": "30_SCRIPTS/ingestion/purge_rejected_rows.py",
@@ -131,8 +131,8 @@
   "not_visible_to_the_scan": [
     {
       "path": "`MemoryController.archive` / `supersede` -> `FileStorageEngine.set()` on the 16 `slot-*` notes",
-      "gate": "Authorizer and lifecycle policy only (archive: HUMAN, ADMIN; supersede: HUMAN, ADMIN, AI_AGENT); no verdict or disposition manifest",
-      "conclusion": "OPEN, not changed here. Corrects the earlier wording: `update`/`propose` on the slot notes are refused, but only because their `id` is not a uuid, not by policy; `archive` and `supersede` succeed and rewrite the slot file's `lifecycle` (ARCHIVED/SUPERSEDED). Trace, tests and closing options: 07_EVALUATION/ontology_write_paths/CONTROLLER_SLOT_PATH.md."
+      "gate": "Controller slot rule (`MemoryController._refuse_ontology_slot`): `archive`, `supersede`, `update`, `propose`, `attest`, `review`, `promote` and the Consolidator's `challenge`/`resolve_challenge` raise `PermissionError` for every principal on an id starting with `slot-` or a note with `type: ontology_definition`; the manifest-gated `30_SCRIPTS/ingestion/` writers are the only path. Before 2026-10-14: authorizer and lifecycle policy only, no manifest",
+      "conclusion": "CLOSED 2026-10-14 (Option A), `20_TESTS/test_controller_slot_path.py::test_controller_refuses_to_retire_an_ontology_slot` (strict xfail removed) the `*_refused_by_the_slot_rule_*` tests and `test_every_other_controller_side_write_is_refused_by_the_slot_rule`. History: was OPEN. Corrects the earlier wording: `update`/`propose` on the slot notes are refused, but only because their `id` is not a uuid, not by policy; `archive` and `supersede` succeed and rewrite the slot file's `lifecycle` (ARCHIVED/SUPERSEDED). Trace, tests and closing options: 07_EVALUATION/ontology_write_paths/CONTROLLER_SLOT_PATH.md."
     }
   ]
 }

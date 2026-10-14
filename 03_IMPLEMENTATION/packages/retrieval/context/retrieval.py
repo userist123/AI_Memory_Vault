@@ -114,19 +114,28 @@ class RetrievalEngine:
             # neither may an arm change silently reuse another arm's entry.
             cached = self.cache.get(principal, query_fp, hard_lifecycle, hard_types, disclosure_level,
                                      classifier_filter_arm=arm)
-            if cached is not None:
+            # D-04: an entry is {"notes": [...], "fused_ranking": [...]}. The fused
+            # ranking travels with the notes because the controller's default
+            # `fused_score` arm sorts by it; a hit that dropped it collapsed every
+            # score to 0.0 and the order to reverse id. A bare list (an entry
+            # written before this change) carries no ranking and is treated as a miss.
+            cached_notes = cached.get("notes") if isinstance(cached, dict) else None
+            if isinstance(cached_notes, list):
                 # Never let stale/oversized cache entries bypass the current budget.
-                if budget.serialized_size(cached) <= budget.soft_limit_bytes:
+                if budget.serialized_size(cached_notes) <= budget.soft_limit_bytes:
+                    served = list(cached_notes)[:budget.max_notes]
                     if trace_sink is not None:
+                        served_ids = {n.get("id") for n in served if isinstance(n, dict)}
                         trace_sink.update({
                             "source": "cache",
                             "query": query or "",
                             "candidate_limit": None,
                             "candidates_considered": None,
                             "per_generator": {},
-                            "fused_ranking": [],
+                            "fused_ranking": [dict(e) for e in (cached.get("fused_ranking") or [])
+                                              if isinstance(e, dict) and e.get("id") in served_ids],
                         })
-                    return list(cached)[:budget.max_notes]
+                    return served
 
         # HARD GATE: RAW exclusion is unconditional inside storage.query()
         # itself (see StorageEngine.query / FileStorageEngine.query),
@@ -189,7 +198,12 @@ class RetrievalEngine:
 
         if self.cache and principal is not None and query_fp is not None and disclosure_level is not None and offset == 0:
             cache_limit = budget.max_notes if budget is not None else 5
-            self.cache.set(results[:cache_limit], principal, query_fp, hard_lifecycle, hard_types, disclosure_level,
+            cached_notes = results[:cache_limit]
+            cached_ids = {n.get("id") for n in cached_notes if isinstance(n, dict)}
+            cached_fused = [dict(e) for e in trace.fused_ranking
+                            if isinstance(e, dict) and e.get("id") in cached_ids]
+            self.cache.set({"notes": cached_notes, "fused_ranking": cached_fused},
+                           principal, query_fp, hard_lifecycle, hard_types, disclosure_level,
                            classifier_filter_arm=arm, events=["memory_updated"])  # type: ignore
 
         return results

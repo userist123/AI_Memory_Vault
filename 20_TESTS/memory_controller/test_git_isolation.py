@@ -15,6 +15,7 @@ import shutil
 import subprocess
 import sys
 import importlib.util
+import uuid
 from pathlib import Path
 
 import pytest
@@ -44,7 +45,12 @@ def _load_controller_module(pkg_path: Path):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     sys.path.pop(0)
-    return module.MemoryController, module.controller
+    # `find_spec` resolves the already-imported real package, whose module singleton
+    # would persist the proposed note under 03_IMPLEMENTATION/packages/ on every run.
+    # Give this test its own vault inside the gitignored copy instead (R-03).
+    from memory_controller.storage.file_engine import FileStorageEngine
+    engine = FileStorageEngine(str(pkg_path / "_vault"))
+    return module.MemoryController, module.MemoryController(engine)
 
 
 def test_git_isolation(tmp_path: Path):
@@ -70,8 +76,9 @@ def test_git_isolation(tmp_path: Path):
     # Load controller from copied package
     MemoryController, controller = _load_controller_module(pkg_path)
 
-    # Perform a propose operation (should not touch filesystem)
-    note_id = "00000000-0000-0000-0000-000000000000"
+    # Perform a propose operation: it writes only into the gitignored copy's vault.
+    # A fresh id on every run: propose() refuses an existing id (it never overwrites).
+    note_id = str(uuid.uuid4())
     note_data = {
         "id": note_id,
         "type": "knowledge",

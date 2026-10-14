@@ -1,4 +1,7 @@
 ---
+# HISTORICAL SNAPSHOT (verified 2026-10-14): the SHA recorded below (ada06cfd6) was not reachable from the refs
+# fetched on 2026-10-14 (only `main`; the remote has other branches). This is a dated snapshot, not live state. The live measured state is
+# 00_GOVERNANCE/VAULT_STATE.md.
 agent: ANTIGRAVITY
 last_updated_utc: 2026-09-07T18:57:00Z
 repository: userist123/AI_Memory_Vault_CODEX_READY
@@ -38,3 +41,8 @@ NEXT: read project CURRENT and take the next assigned task on main
 - [[00 Core Map]]
 - [[14 Subagents Council Map]]
 - [[Knowledge Graph Home]]
+
+
+status: HISTORICAL_SNAPSHOT
+
+> Dated snapshot (not live state): the recorded SHA was not reachable from the refs fetched on 2026-10-14 (only `main`). Live measured state: `00_GOVERNANCE/VAULT_STATE.md`.
