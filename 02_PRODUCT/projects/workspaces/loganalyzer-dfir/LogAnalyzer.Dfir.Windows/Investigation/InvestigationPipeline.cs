@@ -301,6 +301,13 @@ public sealed class InvestigationPipeline
                 progress?.Report($"Parsare: {Path.GetFileName(ev.StoredPath)} ({parser.Descriptor.ParserId})");
                 var mark = sink.Events.Count;
                 var pr = parser.Parse(ev, full, sink, ct);
+                // Derived files a parser kept in the case (e.g. a repaired EVTX, security audit #14) are hashed into custody, linked to their evidence.
+                foreach (var derived in pr.DerivedOutputs)
+                {
+                    try { ws.RecordOutput(derived, parser.Descriptor.ParserId, parser.Descriptor.Version, [ev.EvidenceId]); }
+                    catch (Exception dex) when (dex is ArgumentException or IOException or UnauthorizedAccessException)
+                    { r.Gaps.Add(new EvidenceGap(derived, EvidenceStatus.Partial, $"proba derivată nu a putut fi înregistrată în custodie: {dex.Message}", "Copia derivată nu are SHA-256 în lanțul de custodie", "Rularea din nou a analizei", "Posibil")); }
+                }
                 pr.ExpectedSha256 = ev.Sha256;
                 pr.SourceSha256Before = pre.Sha256;
                 pr.SourceFingerprint = pre.Fingerprint;
