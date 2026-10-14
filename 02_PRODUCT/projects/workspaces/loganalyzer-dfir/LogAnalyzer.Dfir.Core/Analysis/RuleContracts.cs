@@ -418,6 +418,18 @@ public static class RuleContracts
             ["Intrarea arată textul tastat, nu că s-a apăsat Enter.", "Doar intrarea cea mai nouă are ora cheii din registru; pentru celelalte nu se poate căuta ce a urmat.", "Legătura cu un bloc de script PowerShell sau o pornire de proces este doar în timp."],
             ["PowerShell 4104 / 4688 cu linia de comandă din același moment, istoricul browserului (pagina momeală), conexiunile la adresa din comandă."],
             ["Căutați adresa din comandă în DNS și în firewall.", "Verificați ce fișiere au fost create imediat după.", "Întrebați utilizatorul ce pagină i-a cerut să lipească o comandă."]),
+        R("MEDIA-HISTORY", W14, SemanticType.Presence, "Istoricul conectărilor unui suport amovibil, adunat din toate sursele (registrul SYSTEM, jurnale, jurnale arhivate, Windows.old, copii de umbră), cu cea mai veche dovadă găsită numită.",
+            ["Cea mai veche urmă găsită nu este neapărat prima conectare: jurnalele mai vechi pot fi suprascrise, șterse sau neaduse.", "Unele urme (instalarea driverului, proprietățile dispozitivului) se reînnoiesc fără o conectare nouă.", "Istoricul arată prezența suportului pe stație, nu cine l-a folosit și nici ce s-a copiat."],
+            ["Jurnalele arhivate (Archive-*.evtx), Windows.old și copiile de umbră, dacă nu au fost aduse."],
+            ["Aduceți sursele istorice lipsă și reluați analiza.", "Corelați perioada cu registrul de medii (MEDIA-AUTHORIZED / MEDIA-UNREGISTERED).", "Căutați activitatea pe volum (MEDIA-FILE-ACTIVITY)."]),
+        R("MEDIA-USAGE", W14, SemanticType.Observation, "Cine a folosit suportul amovibil: corelație între MountPoints2 al fiecărui profil, MountedDevices, sesiunile de logon la momentul conectării și scurtăturile LNK care poartă seria volumului.",
+            ["MountPoints2 arată cine a montat volumul, nu ora conectării; un profil poate fi folosit de mai multe persoane.", "O sesiune deschisă la conectare nu dovedește că persoana a conectat suportul.", "Un LNK după literă de unitate poate veni de la un alt suport cu aceeași literă; doar seria volumului este o legătură sigură."],
+            ["Seria volumului (Partition/Diagnostic 1006), MountPoints2 al tuturor profilurilor, sesiunile de logon din jurul conectării."],
+            ["Confirmați utilizatorul cu persoana responsabilă de suport.", "Verificați sesiunile de logon din jurul fiecărei conectări.", "Examinați fișierele legate de suport (LNK, Jump Lists)."]),
+        R("MEDIA-AFTER-CONNECT", W14, SemanticType.Observation, "Execuții, fișiere deschise și descărcări apărute în fereastra de timp din jurul conectării unui suport amovibil (de la 10 minute înainte până la 2 ore după), ordonate după scor.",
+            ["Apropierea în timp nu dovedește legătura: activitatea putea avea loc și fără suport.", "Când utilizatorul sesiunii nu este cunoscut, evenimentele altor conturi nu pot fi excluse.", "Scorul este o euristică de ordonare, nu o probă."],
+            ["Conținutul și destinația copierilor, hash-urile fișierelor, sesiunea exactă a utilizatorului."],
+            ["Deschideți pagina suportului și verificați evenimentele cu scor mare.", "Corelați cu MEDIA-FILE-ACTIVITY și EXEC-FROM-REMOVABLE.", "Verificați dacă activitatea este aprobată prin procedură."]),
     ];
 
     private static readonly Dictionary<string, RuleContract> ById = All.ToDictionary(r => r.RuleId, StringComparer.Ordinal);

@@ -84,7 +84,7 @@ in its constructor. Corrected 2026-09-06.
 
 | Measure | Value |
 |---|---:|
-| Notes in the index (`VaultIndex`, export residue excluded) | 1209 |
+| Notes in the index (`VaultIndex`, export residue excluded) | 1280 |
 | Notes visible to `FileStorageEngine` | 858 |
 | Graph edges | 483 |
 | — declared / inferred / wikilink | 152 / 153 / 178 |
