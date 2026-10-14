@@ -74,6 +74,65 @@ public sealed class NativeLibraryManifestTests : IDisposable
         Assert.Contains(NativeLibraryManifest.Verify(_dir).Problems, x => x.Contains("evil.dll"));
     }
 
+    // ---- independent review, finding 3: the manifest embedded in the executable is the authority ----
+
+    private string ManifestText(params string[] names) => string.Join("\n", names.Select(n => $"{Hex(Path.Combine(_dir, n))}  {n}"));
+
+    [Fact]
+    public void The_embedded_manifest_is_used_and_a_rewritten_file_next_to_the_exe_does_not_override_it()
+    {
+        var p = Dll("e_sqlcipher.dll", "native-1");
+        var embedded = ManifestText("e_sqlcipher.dll");
+        File.WriteAllText(p, "planted");
+        Manifest("e_sqlcipher.dll");   // the attacker also rewrites the text file
+        foreach (var debug in new[] { false, true })
+            foreach (var singleFile in new[] { false, true })
+            {
+                var r = NativeLibraryManifest.VerifyInstall(_dir, embedded, debugBuild: debug, singleFile: singleFile);
+                Assert.True(r.Checked);
+                Assert.False(r.Ok);
+                Assert.Contains(r.Problems, x => x.Contains("e_sqlcipher.dll") && x.Contains("modificat"));
+            }
+    }
+
+    [Fact]
+    public void Without_an_embedded_manifest_a_release_single_file_fails_closed_and_the_file_is_used_only_in_debug()
+    {
+        Dll("a.dll", "1");
+        Manifest("a.dll");
+        var release = NativeLibraryManifest.VerifyInstall(_dir, null, debugBuild: false, singleFile: true);
+        Assert.True(release.Checked); Assert.False(release.Ok);
+        Assert.Contains(release.Problems, x => x.Contains("încorporat"));
+        var debug = NativeLibraryManifest.VerifyInstall(_dir, null, debugBuild: true, singleFile: true);
+        Assert.True(debug.Checked); Assert.True(debug.Ok, string.Join("; ", debug.Problems));
+        var releaseFromBin = NativeLibraryManifest.VerifyInstall(_dir, null, debugBuild: false, singleFile: false);
+        Assert.False(releaseFromBin.Checked);   // a development build run from bin: there is no manifest to check against
+    }
+
+    [Fact]
+    public void Install_folder_writable_by_standard_users_refuses_an_elevated_start_and_warns_otherwise()
+    {
+        var weak = new LogAnalyzer.Dfir.Auth.StoreAclResult(false, ["LogAnalyzer: BUILTIN\\Users poate scrie"]);
+        Assert.Equal(InstallFolderVerdict.RefuseElevated, NativeLibraryManifest.DecideInstallFolder(weak, elevated: true).Verdict);
+        var warn = NativeLibraryManifest.DecideInstallFolder(weak, elevated: false);
+        Assert.Equal(InstallFolderVerdict.Warn, warn.Verdict);
+        Assert.Contains("BUILTIN\\Users", warn.Message);
+        Assert.Equal(InstallFolderVerdict.Ok, NativeLibraryManifest.DecideInstallFolder(LogAnalyzer.Dfir.Auth.StoreAclResult.Ok, elevated: true).Verdict);
+    }
+
+    [Fact]
+    public void The_publish_targets_embed_the_manifest_into_the_main_assembly()
+    {
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var targets = File.ReadAllText(Path.Combine(root, "eng", "NativeLibraryManifest.targets"));
+        Assert.Contains($"LogicalName=\"{NativeLibraryManifest.ResourceName}\"", targets);
+        Assert.Contains("<EmbeddedResource", targets);
+        var app = File.ReadAllText(Path.Combine(root, "LogAnalyzer.App", "App.xaml.cs"));
+        Assert.Contains("NativeLibraryManifest.VerifyInstall", app);
+        Assert.Contains("NativeLibraryManifest.ResourceName", app);
+        Assert.DoesNotContain("if (!string.IsNullOrEmpty(typeof(App).Assembly.Location)) return;", app);
+    }
+
     [Fact]
     public void Both_publish_profiles_ship_native_libraries_next_to_the_exe_and_write_the_manifest()
     {
