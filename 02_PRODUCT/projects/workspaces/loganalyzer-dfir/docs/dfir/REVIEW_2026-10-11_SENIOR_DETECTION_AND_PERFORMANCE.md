@@ -390,7 +390,7 @@ The expected gain is measured where marked; otherwise it is estimated with the r
 | 7 | Route all imports through the Dfir pipeline, or at minimum report the 20k/50k caps and the unparsed file types | C3, C4, D3 | P1 | S |
 | 8 | Remove the contradicting SigmaLite log-clear rules; one RecordID-gap threshold | D21, D22 | P1 | S |
 | 9 | New P1 rules, S-effort batch: WMI 5861, password spray, AMSI and PowerShell keyword list, Defender 5013/5007 values, RMM catalog extension | D11–D15 | P1 | S |
-| 10 | New P1 rules, M-effort batch: LSASS access, RunMRU/ClickFix parser + rule, BYOVD (collect CodeIntegrity), EXFIL-TOOL | D8, D9, D10, D16 | P1 | M |
+| 10 | New P1 rules, M-effort batch: LSASS memory reads, RunMRU/ClickFix parser + rule, BYOVD (collect CodeIntegrity), EXFIL-TOOL | D8, D9, D10, D16 | P1 | M |
 | 11 | Separate the source host from the examiner host in case, report and graph | I1 | P1 | M |
 | 12 | Logon-session builder plus a case-wide SID→name identity map; fix the 4688 user field | I2, I3, I4 | P1 | M |
 | 13 | USB→user through MountPoints2 + MountedDevices + overlapping session; treat pseudo-serials as "no serial"; correct the ParserCapabilities claims | I5, I7 | P1 | M |
