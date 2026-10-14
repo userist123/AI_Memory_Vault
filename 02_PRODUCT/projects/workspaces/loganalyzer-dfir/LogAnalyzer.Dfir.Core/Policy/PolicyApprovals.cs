@@ -15,8 +15,29 @@ public interface IPolicyApprovalLedger
     /// <summary>Appends the approval; throws when it cannot be written (the approval is then not made).</summary>
     void RecordApproval(string policyId, string version, string policySha256, string approver);
 
-    /// <summary>The approvals recorded for this exact text; throws <see cref="PolicyLifecycleException"/> when the audit cannot be trusted (broken chain).</summary>
+    /// <summary>
+    /// The approvals recorded for this exact text and not cancelled by a later retirement of the same text; throws
+    /// <see cref="PolicyLifecycleException"/> when the audit cannot be trusted (broken chain).
+    /// </summary>
     IReadOnlyList<PolicyApprovalEntry> Approvals(string policyId, string version, string policySha256);
+
+    /// <summary>Appends the registration of this text (author as written in the hashed text, registering account); throws when it cannot be written.</summary>
+    void RecordRegistration(string policyId, string version, string policySha256, string author, string account);
+
+    /// <summary>The accounts that registered this exact text (with this author) according to the sealed audit.</summary>
+    IReadOnlyList<string> RegisteringAccounts(string policyId, string version, string policySha256, string author);
+
+    /// <summary>Appends the retirement of this text; approvals recorded before it no longer count. Throws when it cannot be written.</summary>
+    void RecordRetirement(string policyId, string version, string policySha256, string account);
+
+    /// <summary>Appends one application of this text: the execution id, the SHA-256 of the execution record and of its before/after values.</summary>
+    void RecordApplied(string policyId, string version, string policySha256, string executionId, string recordSha256, string valuesSha256, string account);
+
+    /// <summary>True when the sealed audit holds exactly this application (same execution id, record hash, values hash and operator).</summary>
+    bool WasApplied(string policyId, string version, string policySha256, string executionId, string recordSha256, string valuesSha256, string account);
+
+    /// <summary>Appends a rollback of an application.</summary>
+    void RecordRolledBack(string policyId, string version, string policySha256, string rollbackId, string sourceExecutionId, string recordSha256, string account);
 }
 
 /// <summary>

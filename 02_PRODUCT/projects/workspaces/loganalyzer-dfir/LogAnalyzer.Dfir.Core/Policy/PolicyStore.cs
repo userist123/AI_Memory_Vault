@@ -46,12 +46,24 @@ public sealed class PolicyStore
 
     public PolicyRecord Register(PolicyDocument p, string op)
     {
+        // Review of the remediations #3: the registration is sealed in the authentication audit (who registered which text, which author), so the
+        // self-approval check does not rely on the Author / RegisteredBy fields of this per-user file.
+        var ledger = PolicyApprovals.Ledger;
+        if (ledger is not null || LogAnalyzer.Dfir.Auth.OperatorIdentity.AuthenticationRequired)
+        {
+            op = PolicyApprovals.ActingAccount(op);
+            ledger = PolicyApprovals.RequiredLedger();
+        }
         if (Get(p) is { } existing)
         {
             if (!existing.Sha256.Equals(p.Sha256, StringComparison.OrdinalIgnoreCase))
                 throw new PolicyLifecycleException($"Politica {p.Id} versiunea {p.Version} există deja cu alt conținut (SHA-256 {existing.Sha256[..12]}…). Creșteți versiunea.");
+            // Registered earlier outside the application (or before sealing existed): registering again from the application seals it.
+            if (ledger is not null && ledger.RegisteringAccounts(p.Id, p.Version, p.Sha256, p.Author).Count == 0)
+                ledger.RecordRegistration(p.Id, p.Version, p.Sha256, p.Author, op);
             return existing;
         }
+        ledger?.RecordRegistration(p.Id, p.Version, p.Sha256, p.Author, op); // written first: if it fails, nothing is registered
         var r = new PolicyRecord { Id = p.Id, Version = p.Version, Sha256 = p.Sha256, Author = p.Author, RegisteredBy = op, Status = PolicyStatus.Draft };
         r.History.Add(new PolicyTransition(PolicyStatus.Draft, PolicyStatus.Draft, op, DateTimeOffset.UtcNow, "înregistrată", p.Sha256));
         _records[Key(p.Id, p.Version)] = r;
@@ -83,8 +95,19 @@ public sealed class PolicyStore
         approver = PolicyApprovals.ActingAccount(approver);          // review #2: the signed-in account, never a typed name
         var ledger = PolicyApprovals.RequiredLedger();
         var r = Require(p, PolicyStatus.Tested);
-        if (Same(approver, r.Author) || Same(approver, r.RegisteredBy))
+        // Review of the remediations #3: the author is the one inside the hashed policy text, and the registering account is the one sealed in the
+        // authentication audit; the store fields are checked too, but an edit of them can no longer make a self-approval pass.
+        if (Same(approver, p.Author) || Same(approver, r.Author) || Same(approver, r.RegisteredBy))
             throw new PolicyLifecycleException($"Auto-aprobarea nu este permisă: {approver} este autorul sau cel care a înregistrat politica.");
+        if (ledger is not null)
+        {
+            var registering = ledger.RegisteringAccounts(p.Id, p.Version, p.Sha256, p.Author);
+            if (registering.Count == 0 && LogAnalyzer.Dfir.Auth.OperatorIdentity.AuthenticationRequired)
+                throw new PolicyLifecycleException("Înregistrarea acestei politici (acest SHA-256) nu apare în jurnalul de autentificare sigilat, deci nu se poate verifica cine a înregistrat-o. " +
+                    "Nu s-a schimbat nimic. Înregistrați din nou politica din aplicație, apoi cereți aprobarea altui administrator.");
+            if (registering.Any(a => Same(approver, a)))
+                throw new PolicyLifecycleException($"Auto-aprobarea nu este permisă: {approver} este autorul sau cel care a înregistrat politica.");
+        }
         if (reason.Trim().Length == 0) throw new PolicyLifecycleException("Aprobarea cere o justificare.");
         // The sealed audit is the authority for the approval; this store is the lifecycle cache. Written first: if it fails, nothing is approved.
         ledger?.RecordApproval(p.Id, p.Version, p.Sha256, approver);
@@ -100,6 +123,15 @@ public sealed class PolicyStore
     public PolicyRecord Retire(PolicyDocument p, string op, string reason)
     {
         var r = Get(p) ?? throw new PolicyLifecycleException($"Politica {p.Id} {p.Version} nu este înregistrată.");
+        // Review of the remediations #2: the retirement is sealed; it cancels every earlier sealed approval of this text, so setting the
+        // status back to APPROVED in this file does not make the policy applicable again (a new sealed approval would be needed).
+        var ledger = PolicyApprovals.Ledger;
+        if (ledger is not null || LogAnalyzer.Dfir.Auth.OperatorIdentity.AuthenticationRequired)
+        {
+            op = PolicyApprovals.ActingAccount(op);
+            ledger = PolicyApprovals.RequiredLedger();
+        }
+        ledger?.RecordRetirement(p.Id, p.Version, p.Sha256, op);   // written first: if it fails, the store is not changed either
         return Move(r, p, PolicyStatus.Retired, op, reason);
     }
 

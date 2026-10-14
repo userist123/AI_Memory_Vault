@@ -47,12 +47,14 @@ public sealed class PolicyApprovalAuthorityTests : IDisposable
         var fake = new FakeSettings();
         var x = new PolicyExecutor([fake], Path.Combine(_dir, "evidence"));
         var p = PolicyLoader.Parse(Yaml);
+        var auth = new AuthService(Path.Combine(_dir, "auth"));
         var store = new PolicyStore(StorePath);
-        store.Register(p, "registrator");
+        // Registered from the application (signed in): the registration is sealed (review of the remediations #3).
+        As("STATIE\\registrator", auth, () => store.Register(p, "STATIE\\registrator"));
         store.Validate(p, "registrator");
         var dry = x.Plan(p);
         store.MarkTested(p, "registrator", dry.Controls.Count - dry.Unreadable, dry.Unreadable);
-        return (x, fake, p, new AuthService(Path.Combine(_dir, "auth")));
+        return (x, fake, p, auth);
     }
 
     private static T As<T>(string account, IPolicyApprovalLedger? ledger, Func<T> step)
