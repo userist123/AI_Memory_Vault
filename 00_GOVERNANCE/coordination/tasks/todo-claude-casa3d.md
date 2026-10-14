@@ -10,7 +10,7 @@ DONE:
 - Reconciled F4-F8 state in Casa3D.md: phase table row F4 -> "code present in v8 manifest, UNVERIFIED",
   new row F5-F8 UNKNOWN, new section listing the F4/F5 artefacts from the manifest and the evidence
   still missing. Note stays REVIEW/unverified.
-- Searched for the v8 source on the owner's machine (C:\Users\user, D:\, git history, names casa3d*): not found.
+- Searched for the v8 source on the owner's machine (C:\Users\<user>, D:\, git history, names casa3d*): not found.
 NEXT (in order):
 0. Apply scratchpad/update_casa3d.py to Casa3D.md (F4 row -> DONE (TEST MODE), F4 section from 0001-casa3d-f4.patch, evidence matrix); fix its anchor bug first. Then run the 3 vault test files and commit.
 1. Owner supplies the v8 archive (or its path); compare SHA-256 with 7bb34bf3...9628bc.
