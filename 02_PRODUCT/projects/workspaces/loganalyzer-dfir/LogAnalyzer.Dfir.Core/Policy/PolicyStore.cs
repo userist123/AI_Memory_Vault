@@ -80,10 +80,14 @@ public sealed class PolicyStore
     public PolicyRecord Approve(PolicyDocument p, string approver, string reason)
     {
         LogAnalyzer.Dfir.Auth.OperatorIdentity.RequireHostChange(); // approving authorises a change of the station
+        approver = PolicyApprovals.ActingAccount(approver);          // review #2: the signed-in account, never a typed name
+        var ledger = PolicyApprovals.RequiredLedger();
         var r = Require(p, PolicyStatus.Tested);
         if (Same(approver, r.Author) || Same(approver, r.RegisteredBy))
             throw new PolicyLifecycleException($"Auto-aprobarea nu este permisă: {approver} este autorul sau cel care a înregistrat politica.");
         if (reason.Trim().Length == 0) throw new PolicyLifecycleException("Aprobarea cere o justificare.");
+        // The sealed audit is the authority for the approval; this store is the lifecycle cache. Written first: if it fails, nothing is approved.
+        ledger?.RecordApproval(p.Id, p.Version, p.Sha256, approver);
         return Move(r, p, PolicyStatus.Approved, approver, reason);
     }
 

@@ -125,9 +125,22 @@ public sealed class HostChangeRoleGateTests : IDisposable
     [Fact]
     public void Administrator_other_than_the_approver_applies_the_policy()
     {
-        var (x, fake, p, store) = Approved(approver: "STATIE\\sef");
+        // Review #2: with sign-in required the approval must be in the sealed auth audit, made by the signed-in approver.
+        var auth = new AuthService(Path.Combine(_dir, "auth"));
+        var fake = new FakeSettings();
+        var x = new PolicyExecutor([fake], Path.Combine(_dir, "evidence"));
+        var p = PolicyLoader.Parse(Yaml);
+        var store = new PolicyStore(Path.Combine(_dir, "store.json"));
+        store.Register(p, "registrator");
+        store.Validate(p, "registrator");
+        var dry = x.Plan(p);
+        store.MarkTested(p, "registrator", dry.Controls.Count - dry.Unreadable, dry.Unreadable);
+        using (OperatorIdentity.Scope(Admin("STATIE\\sef"), authenticationRequired: true))
+        using (PolicyApprovals.Scope(auth))
+            store.Approve(p, "STATIE\\sef", "aprobată pentru test");
         var plan = x.Plan(p);
         using (OperatorIdentity.Scope(Admin("STATIE\\admin2"), authenticationRequired: true))
+        using (PolicyApprovals.Scope(auth))
         {
             var exec = x.Apply(p, plan, store, "STATIE\\admin2", plan.Sha256);
             Assert.Equal(ExecutionStatus.Verified, exec.Status);

@@ -36,6 +36,7 @@ namespace LogAnalyzer.UI.Services
         internal static void Initialize(string? storeDirectory)
         {
             _service = new AuthService(storeDirectory, Classified);
+            LogAnalyzer.Dfir.Policy.PolicyApprovals.Ledger = _service;   // review #2: policy approvals are recorded in and verified against the sealed auth audit
             OperatorIdentity.AuthenticationRequired = true;     // from now on registers / profile edits fail closed without an administrator session
         }
 
