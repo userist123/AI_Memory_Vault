@@ -119,7 +119,7 @@ Pre-commit: un singur hook local `gitleaks` (`language: system`, fără versiune
 | `30_SCRIPTS/verification/write_path_audit.py` | A-10 | `classify()` recunoaște `memory/controller.py`, `learning/consolidation.py` |
 | `30_SCRIPTS/verification/exempt_area_secret_scan.py` | B-04 | docstring fără numere care putrezesc |
 | `.github/workflows/write-path-audit.yml` | A-10 | pas blocant: `test_ontology_slot_writers`, `test_controller_slot_path`, `test_write_path_audit_classify` |
-| `.github/workflows/repository-hygiene.yml` | B-03 | job separat `personal-data-history` (`continue-on-error`, `fetch-depth: 0`); testele noi ale guard-ului în pasul blocant |
+| `.github/workflows/repository-hygiene.yml` | B-03 | job separat `personal-data-history` (`fetch-depth: 0`): scanarea istoricului nu blochează și nu înroșește check-ul — constatările (doar căi + id-uri de blob) merg în job summary + un `::warning::`; testele noi ale guard-ului în pasul blocant |
 | `.github/workflows/security-boundary.yml` + 15 workflow-uri | F-01, F-03 | audit pe `.github/workflows/**`; `persist-credentials: false` |
 | `00_GOVERNANCE/VAULT_STATE.md` | sursa de adevăr | rânduri `search()`, `FileStorageEngine`, graph expansion, access policy; defecte deschise noi (istoric, budgets, verifier, state cards) |
 | `00_GOVERNANCE/coordination/{BOOTSTRAP_ALL_AGENTS_V1,UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1}.md` | C-01 | căi către `00_GOVERNANCE/coordination/` |
