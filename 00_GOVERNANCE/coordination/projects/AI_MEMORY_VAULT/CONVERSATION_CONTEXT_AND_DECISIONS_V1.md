@@ -82,7 +82,7 @@ The terminal outcome must be exactly one of RESOLVED, ABSTAINED, HUMAN_CONFIRMAT
 
 ### 3.6 Qdrant stability and recovery
 
-A recovery worktree exists at C:\Users\Marius\Projects\AI_Memory_Vault_QdrantFix, branch fix/qdrant-stable-point-ids, based on main SHA c5f939185f05c516e1cd46e11b3763026a6137d5. It contains uncommitted Qdrant changes and untracked audit/tests/scripts. Preserve it and hash every artifact before integration. Never run destructive git commands in it.
+A recovery worktree exists at C:\Users\<user>\Projects\AI_Memory_Vault_QdrantFix, branch fix/qdrant-stable-point-ids, based on main SHA c5f939185f05c516e1cd46e11b3763026a6137d5. It contains uncommitted Qdrant changes and untracked audit/tests/scripts. Preserve it and hash every artifact before integration. Never run destructive git commands in it.
 
 Changes under review include stable SHA-256-derived 63-bit point IDs instead of Python randomized hash, collection vector dimension/distance validation, pagination, fail-closed reindex, correct upsert semantics, legacy point migration and reconciliation. Historical modified-worktree tests: 2620 passed, 13 skipped, 9 xfailed in 515.46s; Qdrant targeted 27 passed, SkillRouter 3 passed, strict YAML 10 passed, diff check passed. These are not a fresh clean-main baseline.
 
@@ -90,7 +90,7 @@ Before integration, run clean-main baseline, back up and hash the recovery chang
 
 ## 4. Local runtime and model findings (2026-10-09)
 
-Observed device: Marius-PC. Codex CLI version/model must be rechecked live; a prior report showed 0.162.0 and gpt-6-luna.
+Observed device: LAB-PC. Codex CLI version/model must be rechecked live; a prior report showed 0.162.0 and gpt-6-luna.
 
 Antigravity:
 - CLI: %LOCALAPPDATA%\agy\bin\agy.exe, version 1.3.1.
@@ -244,8 +244,8 @@ The live GitHub PR metadata was fetched on 2026-10-09. These are recorded PR sta
 ### 11.3 October 9 local-runtime and Qdrant evidence already recorded
 
 The earlier context supplied to this audit records the following, which must not be presented as a fresh run unless reproduced:
-- A local validation report was referenced as `C:\Users\Marius\Projects\AI_Memory_Vault_VALIDATION_REPORT_20261009.md`.
-- A separate recovery worktree exists at `C:\Users\Marius\Projects\AI_Memory_Vault_QdrantFix`, branch `fix/qdrant-stable-point-ids`, with uncommitted tracked and untracked artifacts. Never stash, clean, reset, delete, overwrite, or checkout main inside that worktree.
+- A local validation report was referenced as `C:\Users\<user>\Projects\AI_Memory_Vault_VALIDATION_REPORT_20261009.md`.
+- A separate recovery worktree exists at `C:\Users\<user>\Projects\AI_Memory_Vault_QdrantFix`, branch `fix/qdrant-stable-point-ids`, with uncommitted tracked and untracked artifacts. Never stash, clean, reset, delete, overwrite, or checkout main inside that worktree.
 - Historical modified-recovery-worktree suite: 2,620 passed, 13 skipped, 9 xfailed in 515.46s; targeted Qdrant 27 passed; SkillRouter 3 passed; strict YAML 10 passed; `git diff --check` exit 0. This was not a clean-main baseline.
 - Qdrant recovery changes concern stable SHA-256-based 63-bit IDs instead of Python randomized hash, dimension/distance validation, pagination, fail-closed reindex, upsert semantics, legacy ID migration/reconciliation. Live tests must use temporary collections. Production `vault_memory` writes/reindex need separate explicit owner approval.
 - Local CLI audit: Antigravity 1.3.1 read-only audit succeeded with gemini-3.8-flash-high (71.7s; four successful view_file calls and one failed read); it selected writing-plans and agent-memory, the latter being a poor fit for a skill-routing audit.
@@ -281,7 +281,7 @@ This section records a new, direct execution after the local checkout was recove
 
 ### 12.1 Main baseline and environment
 
-- Repository: `C:\Users\Marius\Projects\AI_Memory_Vault_CODEX_READY`.
+- Repository: `C:\Users\<user>\Projects\AI_Memory_Vault_CODEX_READY`.
 - Branch: `main`.
 - Before update, checkout was clean at `c5f939185f05c516e1cd46e11b3763026a6137d5`.
 - Ran `git fetch origin main` and `git merge --ff-only origin/main`; fast-forward completed without reset. New HEAD and `origin/main`: `154dc4274b3b3d634a50c6e9f30b86a77b798590`.
@@ -366,19 +366,19 @@ The retained history confirms, among other things:
 - The separate Qdrant worktree was tested and iteratively fixed; a final full suite on that modified worktree returned 2620 passed, 13 skipped, 9 xfailed, exit 0 in 515.46 s.
 - The local CLI audit attempts and Qwen allocation failures described in the AI-agent workflow audit were actually attempted, with outcomes recorded there. A CLI/model appearing in the installed inventory is not evidence that it completed the requested audit.
 - Attempts to compile/write a second `FULL_FUNCTIONAL_AGENT_COMPLETION_PROMPT_V1.md` into the local main checkout stopped on validation errors (an unfilled TODO placeholder, then invalid Requirements-section bounds). These attempts are **not** a successful committed artifact. The usable master prompt is the version committed on PR #248 as `FULL_FUNCTIONAL_COMPLETION_PROMPT_V1.md`.
-- A compiled prompt source was referenced at `C:\Users\Marius\AppData\Local\Temp\AI_MEMORY_VAULT_FULL_FUNCTIONALITY_IMPLEMENT_PROMPT_COMPILED.md` in history. Its current existence was not rechecked, and it is not treated as a durable result.
+- A compiled prompt source was referenced at `C:\Users\<user>\AppData\Local\Temp\AI_MEMORY_VAULT_FULL_FUNCTIONALITY_IMPLEMENT_PROMPT_COMPILED.md` in history. Its current existence was not rechecked, and it is not treated as a durable result.
 
 ### 13.2 Recovered local files and their evidentiary scope
 
 | Artifact | Path | Recovered content / status |
 |---|---|---|
-| Initial validation report | `C:\Users\Marius\Projects\AI_Memory_Vault_VALIDATION_REPORT_20261009.md` | Read successfully; 125 lines. Records historical main SHA `c5f9391...`, 2597 passed / 13 skipped / 9 xfailed in 779.13 s, live `qwen2.5-coder:3b` council smoke test, 768-dimension embeddings, then-unavailable Qdrant, system `pip check` problems, and a clean old main checkout. |
-| Qdrant stability audit | `C:\Users\Marius\Projects\AI_Memory_Vault_QdrantFix\10_DOCUMENTATION\audits\2026-10-09-qdrant-stability-audit.md` | Read successfully; 133 lines. Records QDR-001 through QDR-007, temporary-collection live integration, full-suite result on the modified worktree, and the explicit non-use of the production collection. |
-| Agent workflow audit | `C:\Users\Marius\Projects\AI_Memory_Vault_QdrantFix\10_DOCUMENTATION\audits\2026-10-09-ai-agent-workflow-audit.md` | Read successfully; 368 lines. Records CLI/model inventory, observable audit attempts, skill-routing findings, Qwen allocation failures, and limitations of the traces. |
-| Qdrant technical journal | `C:\Users\Marius\Projects\AI_Memory_Vault_QdrantFix\10_DOCUMENTATION\journal\2026-10-09-qdrant-stability-fix.md` | Read successfully; 105 lines. Records RED/GREEN iterations and the worktree's test sequence. |
+| Initial validation report | `C:\Users\<user>\Projects\AI_Memory_Vault_VALIDATION_REPORT_20261009.md` | Read successfully; 125 lines. Records historical main SHA `c5f9391...`, 2597 passed / 13 skipped / 9 xfailed in 779.13 s, live `qwen2.5-coder:3b` council smoke test, 768-dimension embeddings, then-unavailable Qdrant, system `pip check` problems, and a clean old main checkout. |
+| Qdrant stability audit | `C:\Users\<user>\Projects\AI_Memory_Vault_QdrantFix\10_DOCUMENTATION\audits\2026-10-09-qdrant-stability-audit.md` | Read successfully; 133 lines. Records QDR-001 through QDR-007, temporary-collection live integration, full-suite result on the modified worktree, and the explicit non-use of the production collection. |
+| Agent workflow audit | `C:\Users\<user>\Projects\AI_Memory_Vault_QdrantFix\10_DOCUMENTATION\audits\2026-10-09-ai-agent-workflow-audit.md` | Read successfully; 368 lines. Records CLI/model inventory, observable audit attempts, skill-routing findings, Qwen allocation failures, and limitations of the traces. |
+| Qdrant technical journal | `C:\Users\<user>\Projects\AI_Memory_Vault_QdrantFix\10_DOCUMENTATION\journal\2026-10-09-qdrant-stability-fix.md` | Read successfully; 105 lines. Records RED/GREEN iterations and the worktree's test sequence. |
 | Historical full-suite log (modified worktree) | `%LOCALAPPDATA%\AI_Memory_Vault_QdrantFix\pytest_full_final_after_upsert_guard.log` | Its tail and final summary were read from history: 2620 passed, 13 skipped, 9 xfailed in 515.46 s. This log is historical and not the fresh main run. |
 | Historical main test log reference | `50_ARTIFACTS\local_test_run_20261009.log` relative to the old main checkout | Mentioned by the initial validation report as an ignored log. Its complete current contents were not independently re-read during this recovery; do not infer more than the report states. |
-| Qdrant worktree code/test artifacts | `C:\Users\Marius\Projects\AI_Memory_Vault_QdrantFix` | The recovered worktree inventory reported modified tracked files `03_IMPLEMENTATION/packages/retrieval/qdrant_retrieval.py`, `20_TESTS/fixtures/unreadable_notes_allowlist.json`, `20_TESTS/test_qdrant_retrieval.py`; and untracked audit/journal docs, `20_TESTS/test_qdrant_live_integration.py`, `20_TESTS/test_qdrant_stable_point_ids.py`, `60_DEPLOYMENT/start_local_qdrant.ps1`. These changes were not copied, stashed, reset, or edited by this fresh main validation. |
+| Qdrant worktree code/test artifacts | `C:\Users\<user>\Projects\AI_Memory_Vault_QdrantFix` | The recovered worktree inventory reported modified tracked files `03_IMPLEMENTATION/packages/retrieval/qdrant_retrieval.py`, `20_TESTS/fixtures/unreadable_notes_allowlist.json`, `20_TESTS/test_qdrant_retrieval.py`; and untracked audit/journal docs, `20_TESTS/test_qdrant_live_integration.py`, `20_TESTS/test_qdrant_stable_point_ids.py`, `60_DEPLOYMENT/start_local_qdrant.ps1`. These changes were not copied, stashed, reset, or edited by this fresh main validation. |
 | Master prompt and context ledger | PR #248 branch `docs/full-functional-completion-prompt-v1` | Directly committed and fetched from GitHub. The current ledger includes sections 12 and 13; PR #248 remains open and unmerged. |
 
 ### 13.3 What was temporary in the fresh validation
@@ -443,7 +443,7 @@ Every durable finding from this audit must be committed to branch `docs/full-fun
 
 ### 15.1 Full pytest run — `qwen2.5-coder:3b`
 
-- **Date:** 2026-10-09 (local machine, Marius-PC; exact wall-clock start/end timestamps were not captured by the process wrapper).
+- **Date:** 2026-10-09 (local machine, LAB-PC; exact wall-clock start/end timestamps were not captured by the process wrapper).
 - **Source under test:** branch `main`, SHA `154dc4274b3b3d634a50c6e9f30b86a77b798590`. This was a test run only; no changes were committed to main.
 - **Ollama model tag / ID:** `qwen2.5-coder:3b` / `f72c60cabf62`.
 - **Configuration:** temporary JSON config set `light`, `standard`, and `heavy` tiers to `{"provider":"local","model":"qwen2.5-coder:3b"}`; environment `RUN_LIVE_OLLAMA_TESTS=1`, `OLLAMA_MODEL=qwen2.5-coder:3b`, `OLLAMA_MODEL_TIERS_CONFIG=<TEMP>\mv_model_tiers_test.json`.
@@ -478,7 +478,7 @@ This section consolidates the operational instructions repeated in the conversat
 - Clearly separate observed evidence from inference. Never invent a final test count, exit code, model response, or root cause. A smoke test is not a full suite; a model configured in the environment is not proof that every test invoked it.
 - Keep each full-suite run serial. Wait for the current process to exit, capture the final pytest summary and exit code, append its record to this ledger, verify that publication succeeded, and only then start the next model.
 - Do not edit application source during the model comparison matrix. After the matrix, triage confirmed defects and implement fixes with regression tests on a dedicated feature branch/PR.
-- Preserve `C:\Users\Marius\Projects\AI_Memory_Vault_QdrantFix` exactly as found; do not clean, reset, stash, overwrite, or silently discard its uncommitted recovery work.
+- Preserve `C:\Users\<user>\Projects\AI_Memory_Vault_QdrantFix` exactly as found; do not clean, reset, stash, overwrite, or silently discard its uncommitted recovery work.
 - Do not write to or reindex production Qdrant collection `vault_memory` without explicit owner approval.
 
 ### 16.2 Required order and classification of local model validation
@@ -495,7 +495,7 @@ For every run, preserve model tag and Ollama ID, branch/source SHA, exact comman
 - Modified Qdrant recovery worktree: 2,620 passed, 13 skipped, 9 xfailed in a previously reported run. This is not a clean-main result and must not be represented as one.
 - Current `main` source used for the model matrix: `154dc4274b3b3d634a50c6e9f30b86a77b798590`.
 - Completed full suite with `qwen2.5-coder:3b`: 3,682 passed, 43 skipped, 9 xfailed, 15 failed, 2 errors; 993.47 seconds; exit code 1. Full failing test IDs and caveats are in section 15.1. Preliminary categories are not confirmed root causes.
-- `qwen2.5-coder:7b`: the first launch attempt failed due to PowerShell quoting and did not run tests. A corrected multiline here-string launch started the actual full suite as PID 30080 on Marius-PC. In the latest captured output available while preparing this entry, progress had reached 88%; failures and skips had appeared, but no final summary or exit code had yet been captured. This is an in-progress observation, not a final verdict. Update this entry only after collecting the actual terminal output.
+- `qwen2.5-coder:7b`: the first launch attempt failed due to PowerShell quoting and did not run tests. A corrected multiline here-string launch started the actual full suite as PID 30080 on LAB-PC. In the latest captured output available while preparing this entry, progress had reached 88%; failures and skips had appeared, but no final summary or exit code had yet been captured. This is an in-progress observation, not a final verdict. Update this entry only after collecting the actual terminal output.
 - Previously reported smoke tests are separate from full-suite results: `qwen2.5-coder:3b` PASS 3.57 s; `qwen2.5-coder:7b` PASS 7.82 s; `qwen2.5:7b-instruct` PASS 10.34 s; `mistral:7b-instruct` PASS 8.25 s; `llama3.1:8b` PASS 17.40 s; `qwen3:30b-a3b` failed before generation in 4.38 s due to a CUDA host-buffer allocation error. These smoke tests do not satisfy the full-suite matrix.
 - Current next action: continue monitoring PID 30080 until it exits; capture the real summary/exit code; verify temporary tier-config cleanup if possible; append the final `qwen2.5-coder:7b` result to section 15.2 and verify the PR update; then continue one model at a time.
 
@@ -527,9 +527,9 @@ Recommended evaluation metrics included Recall@k, MRR, nDCG@k, irrelevant-result
 
 ### 17.3 Local test environment discovery and repository identity
 
-The supplied conversation records an initial mistaken path, `C:\Users\Marius\AI_Memory_Vault_CODEX_READY`, which contained only `.git`, an invalid HEAD reference and an `index.lock`; no tests were found there. The user corrected the location context to the Codex Projects copy. The repository actually used for later tests was identified as:
+The supplied conversation records an initial mistaken path, `C:\Users\<user>\AI_Memory_Vault_CODEX_READY`, which contained only `.git`, an invalid HEAD reference and an `index.lock`; no tests were found there. The user corrected the location context to the Codex Projects copy. The repository actually used for later tests was identified as:
 
-- Path: `C:\Users\Marius\Projects\AI_Memory_Vault_CODEX_READY`
+- Path: `C:\Users\<user>\Projects\AI_Memory_Vault_CODEX_READY`
 - Branch for historical clean baseline: `main`
 - Historical SHA: `c5f939185f05c516e1cd46e11b3763026a6137d5`
 - Python: 3.14.2; pytest: 9.0.2; Ollama endpoint: `http://127.0.0.1:11434`
@@ -539,7 +539,7 @@ The first historical full-suite report recorded 2,597 passed, 13 skipped and 9 x
 
 ### 17.4 Qdrant repair worktree — preserve as separate evidence
 
-The conversation records work in a separate worktree and branch, `fix/qdrant-stable-point-ids`, at `C:\Users\Marius\Projects\AI_Memory_Vault_QdrantFix`. It must remain untouched during the current model matrix unless the owner explicitly changes this instruction.
+The conversation records work in a separate worktree and branch, `fix/qdrant-stable-point-ids`, at `C:\Users\<user>\Projects\AI_Memory_Vault_QdrantFix`. It must remain untouched during the current model matrix unless the owner explicitly changes this instruction.
 
 Reported changes in that worktree:
 - Replace process-randomized `hash()` point IDs with deterministic SHA-256-derived IDs.
