@@ -17,6 +17,8 @@
                                   Content="Sunt administrator și continui conștient cu magazia de conturi neprotejată (se înregistrează în audit)"/>
                     </StackPanel>
                 </Border>
+                <!-- Independent review #5: the audit head was sealed but the record of it could not be written -->
+                <TextBlock x:Name="SealText" Visibility="Collapsed" Margin="0,10,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource CriticalBrush}"/>
             </StackPanel>
 
             <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">

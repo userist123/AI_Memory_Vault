@@ -227,6 +227,30 @@ public sealed class AuthStoreProtectionTests : IDisposable
         finally { File.SetAttributes(AuditPath, FileAttributes.Normal); }
     }
 
+    /// <summary>
+    /// Independent review, finding 5: when the head was sealed but the auth.chain_sealed line could not be appended, the loss is not silent:
+    /// the service keeps a state that the sign-in window shows and the startup log records.
+    /// </summary>
+    [Fact]
+    public void A_seal_that_could_not_be_recorded_is_reported_not_silent()
+    {
+        Activity(Plain());
+        File.SetAttributes(AuditPath, FileAttributes.ReadOnly);
+        try
+        {
+            _keyCreated = true;
+            var svc = Svc();
+            _keyCreated = false;
+            Assert.True(File.Exists(HashChain.HeadPath(AuditPath)));              // the head was sealed…
+            Assert.DoesNotContain("auth.chain_sealed", File.ReadAllText(AuditPath));   // …but the record of it is missing
+            Assert.NotNull(svc.SealNotRecorded);
+            Assert.Contains("UnauthorizedAccessException", svc.SealNotRecorded);
+            Assert.Equal("Sigilarea jurnalului nu a putut fi consemnată; verificați drepturile folderului.", AuthService.SealNotRecordedMessage);
+        }
+        finally { File.SetAttributes(AuditPath, FileAttributes.Normal); }
+        Assert.Null(Svc().SealNotRecorded);   // a normal start has nothing to report
+    }
+
     [Fact]
     public void Without_a_readable_key_nothing_is_appended_and_the_cause_is_given()
     {

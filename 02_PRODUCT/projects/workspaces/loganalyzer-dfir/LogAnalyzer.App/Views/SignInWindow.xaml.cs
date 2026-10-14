@@ -70,6 +70,15 @@ namespace LogAnalyzer.UI.Views
         private void ShowStoreProtection()
         {
             if (_mode == SignInWindowMode.Unlock) return;
+            try
+            {
+                if (AuthApp.Service.SealNotRecorded is not null)
+                {
+                    SealText.Text = LogAnalyzer.Dfir.Auth.AuthService.SealNotRecordedMessage;
+                    SealText.Visibility = Visibility.Visible;
+                }
+            }
+            catch (InvalidOperationException) { /* service not initialised: the store check below reports it */ }
             StoreAclResult store;
             try { store = AuthApp.Service.StoreProtection; }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { store = new StoreAclResult(false, [ex.Message]); }
