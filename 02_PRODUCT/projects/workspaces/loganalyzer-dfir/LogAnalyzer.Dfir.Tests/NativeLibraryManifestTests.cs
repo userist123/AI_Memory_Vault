@@ -105,8 +105,105 @@ public sealed class NativeLibraryManifestTests : IDisposable
         Assert.Contains(release.Problems, x => x.Contains("încorporat"));
         var debug = NativeLibraryManifest.VerifyInstall(_dir, null, debugBuild: true, singleFile: true);
         Assert.True(debug.Checked); Assert.True(debug.Ok, string.Join("; ", debug.Problems));
+        // Review of the remediations #4: a non-Debug build without the embedded manifest is a failure whether single-file or not
+        // (framework-dependent publish embeds it too); only a Debug build without any manifest is "not checked".
         var releaseFromBin = NativeLibraryManifest.VerifyInstall(_dir, null, debugBuild: false, singleFile: false);
-        Assert.False(releaseFromBin.Checked);   // a development build run from bin: there is no manifest to check against
+        Assert.False(releaseFromBin.Ok);
+        Assert.True(releaseFromBin.ManifestMissing);
+        File.Delete(Path.Combine(_dir, NativeLibraryManifest.FileName));
+        var debugFromBin = NativeLibraryManifest.VerifyInstall(_dir, null, debugBuild: true, singleFile: false);
+        Assert.False(debugFromBin.Checked);
+    }
+
+    private static readonly LogAnalyzer.Dfir.Auth.StoreAclResult Weak = new(false, ["LogAnalyzer: BUILTIN\\Users poate scrie"]);
+
+    /// <summary>Review of the remediations #4: Debug/Release × manifest present/absent × elevated or not × folder protected or writable.</summary>
+    [Theory]
+    //          debug  manifest elevated protected  expected                     exit
+    [InlineData(false, true,  true,  true,  NativeStartupVerdict.Start,  0)]
+    [InlineData(false, true,  true,  false, NativeStartupVerdict.Refuse, 4)]
+    [InlineData(false, true,  false, true,  NativeStartupVerdict.Start,  0)]
+    [InlineData(false, true,  false, false, NativeStartupVerdict.Warn,   0)]
+    [InlineData(false, false, true,  true,  NativeStartupVerdict.Refuse, 3)]
+    [InlineData(false, false, true,  false, NativeStartupVerdict.Refuse, 3)]
+    [InlineData(false, false, false, true,  NativeStartupVerdict.Warn,   0)]
+    [InlineData(false, false, false, false, NativeStartupVerdict.Warn,   0)]
+    [InlineData(true,  true,  true,  true,  NativeStartupVerdict.Start,  0)]
+    [InlineData(true,  true,  true,  false, NativeStartupVerdict.Refuse, 4)]
+    [InlineData(true,  true,  false, true,  NativeStartupVerdict.Start,  0)]
+    [InlineData(true,  true,  false, false, NativeStartupVerdict.Warn,   0)]
+    [InlineData(true,  false, true,  true,  NativeStartupVerdict.Start,  0)]
+    [InlineData(true,  false, true,  false, NativeStartupVerdict.Refuse, 4)]   // elevated: the folder is checked even without a manifest
+    [InlineData(true,  false, false, true,  NativeStartupVerdict.Start,  0)]
+    [InlineData(true,  false, false, false, NativeStartupVerdict.Start,  0)]   // development build from bin, not elevated
+    public void Startup_decision_matrix(bool debug, bool manifest, bool elevated, bool folderProtected, NativeStartupVerdict expected, int exit)
+    {
+        Dll("a.dll", "1");
+        var embedded = manifest ? ManifestText("a.dll") : null;
+        foreach (var singleFile in new[] { false, true })
+        {
+            var d = NativeLibraryManifest.DecideStartup(_dir, embedded, debug, singleFile, elevated,
+                () => folderProtected ? LogAnalyzer.Dfir.Auth.StoreAclResult.Ok : Weak);
+            Assert.Equal(expected, d.Verdict);
+            Assert.Equal(exit, d.ExitCode);
+            if (expected != NativeStartupVerdict.Start) Assert.False(string.IsNullOrWhiteSpace(d.Message));
+            if (exit == 3) Assert.Contains("încorporat", d.Message);
+            if (exit == 4) Assert.Contains("BUILTIN\\Users", d.Message);
+        }
+    }
+
+    [Fact]
+    public void Framework_dependent_publish_exempts_only_the_main_assembly_that_carries_the_manifest()
+    {
+        Dll("a.dll", "1");
+        var embedded = ManifestText("a.dll");
+        Dll("LogAnalyzer.App.dll", "main");          // the assembly the manifest is embedded in cannot list its own hash
+        Assert.True(NativeLibraryManifest.VerifyInstall(_dir, embedded, false, false, selfFileName: "LogAnalyzer.App.dll").Ok);
+        Assert.False(NativeLibraryManifest.VerifyInstall(_dir, embedded, false, false).Ok);
+        Dll("planted.dll", "x");
+        var r = NativeLibraryManifest.VerifyInstall(_dir, embedded, false, false, selfFileName: "LogAnalyzer.App.dll");
+        Assert.False(r.Ok);
+        Assert.Contains(r.Problems, p => p.Contains("planted.dll"));
+        Assert.Equal(NativeStartupVerdict.Refuse,
+            NativeLibraryManifest.DecideStartup(_dir, embedded, false, false, false, () => LogAnalyzer.Dfir.Auth.StoreAclResult.Ok, "LogAnalyzer.App.dll").Verdict);
+    }
+
+    [Fact]
+    public void A_changed_library_refuses_the_start_elevated_or_not()
+    {
+        var p = Dll("a.dll", "1");
+        var embedded = ManifestText("a.dll");
+        File.WriteAllText(p, "planted");
+        foreach (var elevated in new[] { false, true })
+            Assert.Equal(NativeStartupVerdict.Refuse, NativeLibraryManifest.DecideStartup(_dir, embedded, false, true, elevated, () => LogAnalyzer.Dfir.Auth.StoreAclResult.Ok).Verdict);
+    }
+
+    [Fact]
+    public void Startup_restricts_the_dll_search_order_and_uses_the_decision()
+    {
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        // LogAnalyzer.App.Classified compiles every LogAnalyzer.App\**\*.cs (linked), so this one file serves both editions.
+        var appCode = File.ReadAllText(Path.Combine(root, "LogAnalyzer.App", "DllSearchOrder.cs"));
+        Assert.Contains("SetDefaultDllDirectories", appCode);
+        Assert.Contains("[System.Runtime.CompilerServices.ModuleInitializer]", appCode);
+        Assert.Contains("0x00000200", appCode);   // LOAD_LIBRARY_SEARCH_APPLICATION_DIR
+        Assert.Contains("0x00000800", appCode);   // LOAD_LIBRARY_SEARCH_SYSTEM32
+        var startup = File.ReadAllText(Path.Combine(root, "LogAnalyzer.App", "App.xaml.cs"));
+        Assert.Contains("NativeLibraryManifest.DecideStartup", startup);
+        Assert.DoesNotContain("if (!check.Checked) return;", startup);
+        var targets = File.ReadAllText(Path.Combine(root, "eng", "NativeLibraryManifest.targets"));
+        Assert.DoesNotContain("Condition=\"'$(PublishSingleFile)' == 'true'\"", targets);
+    }
+
+    [Fact]
+    public void Legacy_root_projects_no_longer_ask_for_elevation()
+    {
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var manifest = File.ReadAllText(Path.Combine(root, "app.manifest"));
+        var active = System.Text.RegularExpressions.Regex.Replace(manifest, "<!--.*?-->", "", System.Text.RegularExpressions.RegexOptions.Singleline);
+        Assert.Contains("level=\"asInvoker\"", active);
+        Assert.DoesNotContain("requireAdministrator", active);
+        Assert.DoesNotContain("highestAvailable", active);
     }
 
     [Fact]
@@ -128,7 +225,7 @@ public sealed class NativeLibraryManifestTests : IDisposable
         Assert.Contains($"LogicalName=\"{NativeLibraryManifest.ResourceName}\"", targets);
         Assert.Contains("<EmbeddedResource", targets);
         var app = File.ReadAllText(Path.Combine(root, "LogAnalyzer.App", "App.xaml.cs"));
-        Assert.Contains("NativeLibraryManifest.VerifyInstall", app);
+        Assert.Contains("NativeLibraryManifest.DecideStartup", app);   // DecideStartup runs VerifyInstall (review of the remediations #4)
         Assert.Contains("NativeLibraryManifest.ResourceName", app);
         Assert.DoesNotContain("if (!string.IsNullOrEmpty(typeof(App).Assembly.Location)) return;", app);
     }

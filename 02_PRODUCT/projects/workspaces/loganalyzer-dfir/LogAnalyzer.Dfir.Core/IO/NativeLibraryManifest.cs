@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace LogAnalyzer.Dfir.IO;
 
-public sealed record NativeManifestCheck(bool Ok, IReadOnlyList<string> Problems, bool Checked = true)
+public sealed record NativeManifestCheck(bool Ok, IReadOnlyList<string> Problems, bool Checked = true, bool ManifestMissing = false)
 {
     public string Message => Ok
         ? "Bibliotecile native corespund manifestului de publicare."
@@ -23,6 +23,11 @@ public enum InstallFolderVerdict { Ok, Warn, RefuseElevated }
 
 public sealed record InstallFolderDecision(InstallFolderVerdict Verdict, string Message);
 
+public enum NativeStartupVerdict { Start, Warn, Refuse }
+
+/// <summary>What the application does at startup: start, start after a warning, or refuse (exit code 3 = libraries, 4 = install folder).</summary>
+public sealed record NativeStartupDecision(NativeStartupVerdict Verdict, string Message, int ExitCode, string Caption);
+
 public static class NativeLibraryManifest
 {
     public const string FileName = "native-libraries.sha256";
@@ -36,16 +41,56 @@ public static class NativeLibraryManifest
     private static readonly Regex Line = new(@"^(?<h>[0-9A-Fa-f]{64})\s+(?<n>[^\\/:*?""<>|]+\.dll)$", RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
 
     /// <summary>
-    /// The startup decision. The embedded manifest, when present, is always used (single-file or not). Without one: a Debug build may use the
-    /// file next to the exe; a Release single-file executable fails closed (it was published without the embedded manifest); a build run from
-    /// its bin folder (not single-file, no manifest) has nothing to check against and returns <see cref="NativeManifestCheck.Checked"/> = false.
+    /// The library check. The embedded manifest, when present, is always used (single-file or not). Without one: a Debug build may use the
+    /// file next to the exe, and a Debug build without any manifest has nothing to check against (<see cref="NativeManifestCheck.Checked"/> =
+    /// false). A non-Debug build without the embedded manifest is a failure, single-file or framework-dependent (review of the remediations #4:
+    /// both publish modes embed it, so its absence means an incomplete or altered build).
     /// </summary>
-    public static NativeManifestCheck VerifyInstall(string directory, string? embeddedManifest, bool debugBuild, bool singleFile)
+    public static NativeManifestCheck VerifyInstall(string directory, string? embeddedManifest, bool debugBuild, bool singleFile, string? selfFileName = null)
     {
-        if (embeddedManifest is not null) return VerifyText(directory, embeddedManifest);
+        if (embeddedManifest is not null) return VerifyText(directory, embeddedManifest, selfFileName);
         if (debugBuild && File.Exists(Path.Combine(directory, FileName))) return Verify(directory);
-        if (singleFile) return new(false, ["manifestul bibliotecilor native nu este încorporat în executabil (publicare incompletă)"]);
+        if (!debugBuild)
+            return new(false, [$"manifestul bibliotecilor native nu este încorporat în executabil (publicare incompletă{(singleFile ? "" : ", build fără manifest")})"],
+                ManifestMissing: true);
         return new(true, ["build de dezvoltare rulat din folderul bin: fără manifest de publicare, bibliotecile nu au fost verificate"], Checked: false);
+    }
+
+    public const string UnverifiedStandardStartWarning =
+        "Atenție: bibliotecile native ale aplicației nu au putut fi verificate, pentru că manifestul lor nu este încorporat în executabil " +
+        "(publicare incompletă). Aplicația pornește fără drepturi de administrator, dar NU trebuie pornită ca administrator: o pornire ca " +
+        "administrator este refuzată. Reinstalați aplicația din pachetul original.";
+
+    /// <summary>
+    /// The whole startup decision (review of the remediations #4):
+    /// <list type="bullet">
+    /// <item>libraries that differ from the manifest: refused, elevated or not;</item>
+    /// <item>a non-Debug build without the embedded manifest: an elevated start is refused with the library message, a standard start warns;</item>
+    /// <item>an elevated process: the install folder must be writable only by Administrators / SYSTEM, whether a manifest was checked or not;</item>
+    /// <item>a standard process: a writable folder warns when a manifest was checked (a Debug build run from bin is not checked).</item>
+    /// </list>
+    /// <paramref name="installFolderAcl"/> is called only when the folder decision is needed.
+    /// </summary>
+    public static NativeStartupDecision DecideStartup(string directory, string? embeddedManifest, bool debugBuild, bool singleFile, bool elevated,
+        Func<LogAnalyzer.Dfir.Auth.StoreAclResult> installFolderAcl, string? selfFileName = null)
+    {
+        const string libCaption = "LogAnalyzer – biblioteci native neverificate";
+        const string folderCaption = "LogAnalyzer – folder de instalare neprotejat";
+        var check = VerifyInstall(directory, embeddedManifest, debugBuild, singleFile, selfFileName);
+        string? warning = null;
+        if (!check.Ok)
+        {
+            if (!check.ManifestMissing || elevated) return new(NativeStartupVerdict.Refuse, check.Message, 3, libCaption);
+            warning = UnverifiedStandardStartWarning;
+        }
+        if (elevated || check.Checked)
+        {
+            var folder = DecideInstallFolder(installFolderAcl(), elevated);
+            if (folder.Verdict == InstallFolderVerdict.RefuseElevated) return new(NativeStartupVerdict.Refuse, folder.Message, 4, folderCaption);
+            if (folder.Verdict == InstallFolderVerdict.Warn)
+                return new(NativeStartupVerdict.Warn, warning is null ? folder.Message : warning + "\n\n" + folder.Message, 0, warning is null ? folderCaption : libCaption);
+        }
+        return warning is null ? new(NativeStartupVerdict.Start, "", 0, "") : new(NativeStartupVerdict.Warn, warning, 0, libCaption);
     }
 
     /// <summary>
@@ -74,7 +119,11 @@ public static class NativeLibraryManifest
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return new(false, ["manifestul nu poate fi citit: " + ex.Message]); }
     }
 
-    public static NativeManifestCheck VerifyText(string directory, string manifestText)
+    /// <param name="selfFileName">
+    /// Framework-dependent publish: the file name of the main assembly, which carries the embedded manifest and so cannot be listed in it.
+    /// Exactly that one name is exempt from "not in the manifest"; null in a single-file bundle.
+    /// </param>
+    public static NativeManifestCheck VerifyText(string directory, string manifestText, string? selfFileName = null)
     {
         var problems = new List<string>();
         var expected = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -97,7 +146,7 @@ public static class NativeLibraryManifest
                 if (!Convert.ToHexString(SHA256.HashData(fs)).Equals(hash, StringComparison.OrdinalIgnoreCase)) problems.Add($"{name} a fost modificat (SHA-256 diferit)");
             }
             foreach (var dll in Directory.EnumerateFiles(directory, "*.dll"))
-                if (!expected.ContainsKey(Path.GetFileName(dll))) problems.Add($"{Path.GetFileName(dll)} nu este în manifest");
+                if (!expected.ContainsKey(Path.GetFileName(dll)) && !string.Equals(Path.GetFileName(dll), selfFileName, StringComparison.OrdinalIgnoreCase)) problems.Add($"{Path.GetFileName(dll)} nu este în manifest");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
