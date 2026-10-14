@@ -95,7 +95,7 @@ public sealed class PolicyWorkbench
     public PolicyRecord Approve(PolicyDocument p, string reason) => Store.Approve(p, Operator, reason);
     public PolicyPlan Plan(PolicyDocument p) => Executor.Plan(p);
     public ExecutionRecord Apply(PolicyDocument p, PolicyPlan plan, string confirmedPlanSha256) => Executor.Apply(p, plan, Store, Operator, confirmedPlanSha256);
-    public ExecutionRecord Rollback(PolicyDocument p, string executionId) => Executor.Rollback(p, executionId, Operator);
+    public ExecutionRecord Rollback(PolicyDocument p, string executionId) => Executor.Rollback(p, executionId, Operator, Store);
     public PolicyRecord Retire(PolicyDocument p, string reason) => Store.Retire(p, Operator, reason);
 
     public string ComplianceDir => Path.Combine(EvidenceDir, "compliance");

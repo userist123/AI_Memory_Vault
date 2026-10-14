@@ -209,7 +209,18 @@ public sealed class PolicyExecutor(IEnumerable<ISettingProvider> providers, stri
 
         var exec = new ExecutionRecord(execId, "apply", policy.Id, policy.Version, policy.Sha256, plan.Sha256, _station, operatorName, approval.Operator,
             approval.AtUtc, started, DateTimeOffset.UtcNow, status, compliantAfter, results);
-        Save(exec);
+        var recordSha = Save(exec);
+        // Review of the remediations #1: the execution record and its sidecar are per-user files; the sealed audit keeps the hash of the
+        // record (and of its before/after values), so a rollback can only restore values this application really wrote.
+        if (ledger is not null)
+        {
+            try { ledger.RecordApplied(policy.Id, policy.Version, policy.Sha256, execId, recordSha, ValuesSha256(exec), operatorName); }
+            catch (Exception ex) when (ex is not PolicyLifecycleException)
+            {
+                throw new PolicyLifecycleException($"Execuția {execId} a schimbat stația, dar nu a putut fi consemnată în jurnalul de autentificare sigilat " +
+                    $"({ex.GetType().Name}): rollback-ul ei va fi refuzat. Verificați drepturile folderului de autentificare.");
+            }
+        }
 
         if (applied > 0 && record.Status == PolicyStatus.Approved) store.MarkDeployed(policy, operatorName, execId);
         if (compliantAfter && (status is ExecutionStatus.Verified or ExecutionStatus.NothingApplied) && store.Get(policy)!.Status == PolicyStatus.Deployed)
@@ -217,16 +228,36 @@ public sealed class PolicyExecutor(IEnumerable<ISettingProvider> providers, stri
         return exec;
     }
 
-    /// <summary>Restores the "before" state of every control an execution wrote, unless it changed again since then.</summary>
-    public ExecutionRecord Rollback(PolicyDocument policy, string executionId, string operatorName)
+    /// <summary>
+    /// Restores the "before" state of every control an execution wrote, unless it changed again since then. With sign-in required (or a sealed
+    /// ledger registered) the execution must be one whose record hash the sealed audit holds as "policy.applied", the policy must still be
+    /// registered, unchanged and approved (sealed approval not cancelled by a retirement), and the operator a signed-in administrator; every check
+    /// runs before anything is read or written.
+    /// </summary>
+    public ExecutionRecord Rollback(PolicyDocument policy, string executionId, string operatorName, PolicyStore? store = null)
     {
         LogAnalyzer.Dfir.Auth.OperatorIdentity.RequireHostChange();
         if (string.IsNullOrWhiteSpace(operatorName) && !LogAnalyzer.Dfir.Auth.OperatorIdentity.AuthenticationRequired)
             throw new PolicyLifecycleException("Rollback-ul cere numele operatorului.");
         operatorName = PolicyApprovals.ActingAccount(operatorName);   // the evidence names the signed-in account (review #2)
-        var source = Load(executionId);
+        var ledger = PolicyApprovals.RequiredLedger();
+        var (source, sourceSha) = LoadWithHash(executionId);
         if (!source.PolicySha256.Equals(policy.Sha256, StringComparison.OrdinalIgnoreCase))
             throw new PolicyLifecycleException("Execuția aparține altei versiuni a politicii (SHA-256 diferit).");
+        if (ledger is not null)
+        {
+            const string nothing = " Nu s-a schimbat nimic.";
+            if (store is null)
+                throw new PolicyLifecycleException("Rollback-ul cere magazinul de politici pentru a verifica aprobarea." + nothing);
+            store.RequireApplicable(policy);               // still registered, same SHA-256, APPROVED / DEPLOYED / VERIFIED
+            if (ledger.Approvals(policy.Id, policy.Version, policy.Sha256).Count == 0)
+                throw new PolicyLifecycleException("Politica nu are o aprobare valabilă în jurnalul de autentificare sigilat (lipsește sau a fost anulată la retragere): rollback-ul este blocat." + nothing);
+            if (source.Kind != "apply" || source.RollbackOf is not null
+                || !ledger.WasApplied(policy.Id, policy.Version, policy.Sha256, source.ExecutionId, sourceSha, ValuesSha256(source), source.Operator)
+                || !string.Equals(source.ExecutionId, executionId, StringComparison.Ordinal))
+                throw new PolicyLifecycleException($"Execuția {executionId} nu corespunde unei aplicări consemnate în jurnalul de autentificare sigilat " +
+                    "(înregistrarea a fost modificată, inventată sau nu provine din această aplicație): rollback-ul este blocat." + nothing);
+        }
         var byId = policy.Controls.ToDictionary(c => c.Id);
         var rbId = $"{DateTime.UtcNow:yyyyMMddTHHmmssZ}-{Guid.NewGuid().ToString("N")[..8]}";
         var started = DateTimeOffset.UtcNow;
@@ -262,31 +293,47 @@ public sealed class PolicyExecutor(IEnumerable<ISettingProvider> providers, stri
             : results.Any(r => r.Outcome == ControlOutcome.RolledBack) ? ExecutionStatus.Verified : ExecutionStatus.NothingApplied;
         var exec = new ExecutionRecord(rbId, "rollback", policy.Id, policy.Version, policy.Sha256, source.PlanSha256, _station, operatorName, source.Approver,
             source.ApprovedUtc, started, DateTimeOffset.UtcNow, status, false, results, executionId);
-        Save(exec);
+        var rbSha = Save(exec);
+        ledger?.RecordRolledBack(policy.Id, policy.Version, policy.Sha256, rbId, executionId, rbSha, operatorName);
         return exec;
     }
 
     private string RecordPath(string id) => Path.Combine(evidenceDir, "executions", id + ".json");
 
-    private void Save(ExecutionRecord e)
+    /// <summary>SHA-256 of the before/after values of every control of an execution (what a rollback would restore).</summary>
+    internal static string ValuesSha256(ExecutionRecord e) =>
+        Sha(string.Join("\n", e.Results.Select(r => $"{r.ControlId}\u001f{r.Setting}\u001f{r.Outcome}\u001f{r.Before?.Value}\u001f{r.Before?.Kind}\u001f{r.Before is null}\u001f{r.After?.Value}\u001f{r.After?.Kind}\u001f{r.After is null}")));
+
+    /// <summary>Writes the record and its sidecar; returns the SHA-256 of the record text.</summary>
+    private string Save(ExecutionRecord e)
     {
         var path = RecordPath(e.ExecutionId);
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         var text = JsonSerializer.Serialize(e, Json);
+        var sha = Sha(text);
         File.WriteAllText(path, text, new UTF8Encoding(false));
-        File.WriteAllText(path + ".sha256", Sha(text) + "\n");
+        File.WriteAllText(path + ".sha256", sha + "\n");
+        return sha;
     }
 
-    /// <summary>Loads an execution record; refuses one whose content no longer matches the hash written beside it.</summary>
-    public ExecutionRecord Load(string executionId)
+    /// <summary>
+    /// Loads an execution record; refuses one whose content no longer matches the hash written beside it. The sidecar is a per-user file too:
+    /// it detects accidental damage, not a deliberate edit (rollback checks the sealed audit for that).
+    /// </summary>
+    public ExecutionRecord Load(string executionId) => LoadWithHash(executionId).Record;
+
+    private (ExecutionRecord Record, string Sha256) LoadWithHash(string executionId)
     {
+        if (executionId.Length == 0 || executionId.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || executionId.Contains(".."))
+            throw new PolicyLifecycleException($"Identificatorul de execuție „{executionId}” nu este valid.");
         var path = RecordPath(executionId);
         if (!File.Exists(path)) throw new PolicyLifecycleException($"Execuția {executionId} nu există.");
         var text = File.ReadAllText(path);
+        var sha = Sha(text);
         var expected = File.Exists(path + ".sha256") ? File.ReadAllText(path + ".sha256").Trim() : "";
-        if (!expected.Equals(Sha(text), StringComparison.OrdinalIgnoreCase))
+        if (!expected.Equals(sha, StringComparison.OrdinalIgnoreCase))
             throw new PolicyLifecycleException($"Înregistrarea execuției {executionId} a fost modificată (SHA-256 nu corespunde).");
-        return JsonSerializer.Deserialize<ExecutionRecord>(text, Json)!;
+        return (JsonSerializer.Deserialize<ExecutionRecord>(text, Json)!, sha);
     }
 }
 

@@ -131,7 +131,9 @@ public sealed class HostChangeRoleGateTests : IDisposable
         var x = new PolicyExecutor([fake], Path.Combine(_dir, "evidence"));
         var p = PolicyLoader.Parse(Yaml);
         var store = new PolicyStore(Path.Combine(_dir, "store.json"));
-        store.Register(p, "registrator");
+        using (OperatorIdentity.Scope(Admin("STATIE\\registrator"), authenticationRequired: true))
+        using (PolicyApprovals.Scope(auth))
+            store.Register(p, "STATIE\\registrator");      // sealed registration (review of the remediations #3)
         store.Validate(p, "registrator");
         var dry = x.Plan(p);
         store.MarkTested(p, "registrator", dry.Controls.Count - dry.Unreadable, dry.Unreadable);
