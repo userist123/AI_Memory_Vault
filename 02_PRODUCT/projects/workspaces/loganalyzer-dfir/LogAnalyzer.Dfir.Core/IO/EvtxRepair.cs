@@ -22,34 +22,47 @@ public static class EvtxRepair
     private static readonly byte[] FileMagic = "ElfFile\0"u8.ToArray();
     private static readonly byte[] ChunkMagic = "ElfChnk\0"u8.ToArray();
 
+    /// <summary>Checks every chunk, reading the log one 64 KiB chunk at a time (never the whole file into memory: research backlog #4).</summary>
     public static IReadOnlyList<EvtxChunkInfo> Inspect(string path)
     {
-        var data = File.ReadAllBytes(path);
         var list = new List<EvtxChunkInfo>();
-        for (int i = 0, off = FileHeaderSize; off + ChunkSize <= data.Length; i++, off += ChunkSize)
-            list.Add(CheckChunk(data.AsSpan(off, ChunkSize), i));
+        using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 1 << 16, FileOptions.SequentialScan);
+        if (fs.Length < FileHeaderSize) return list;
+        fs.Position = FileHeaderSize;
+        var chunk = new byte[ChunkSize];
+        for (int i = 0; ReadFull(fs, chunk); i++) list.Add(CheckChunk(chunk, i));
         return list;
     }
 
+    private static bool ReadFull(Stream s, byte[] buffer)
+    {
+        int got = 0;
+        while (got < buffer.Length) { int n = s.Read(buffer, got, buffer.Length - got); if (n == 0) return false; got += n; }
+        return true;
+    }
+
+    /// <summary>Writes a copy without the invalid chunks, streaming chunk by chunk; the source is opened read-only and never changed.</summary>
     public static EvtxRepairResult Repair(string sourcePath, string outputPath)
     {
-        var data = File.ReadAllBytes(sourcePath);
-        if (data.Length < FileHeaderSize || !data.AsSpan(0, 8).SequenceEqual(FileMagic))
+        using var src = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 1 << 16, FileOptions.SequentialScan);
+        var header = new byte[FileHeaderSize];
+        if (src.Length < FileHeaderSize || !ReadFull(src, header) || !header.AsSpan(0, 8).SequenceEqual(FileMagic))
             throw new InvalidDataException("Nu este un fișier EVTX (antet ElfFile absent).");
 
+        // First pass: which chunks are valid (only their offsets are kept in memory).
         var chunks = new List<EvtxChunkInfo>();
-        var kept = new List<int>();
-        for (int i = 0, off = FileHeaderSize; off + ChunkSize <= data.Length; i++, off += ChunkSize)
+        var kept = new List<long>();
+        var buf = new byte[ChunkSize];
+        for (int i = 0; ReadFull(src, buf); i++)
         {
-            var info = CheckChunk(data.AsSpan(off, ChunkSize), i);
+            var info = CheckChunk(buf, i);
             chunks.Add(info);
-            if (info.Valid) kept.Add(off);
+            if (info.Valid) kept.Add(FileHeaderSize + (long)i * ChunkSize);
         }
         if (kept.Count == 0) throw new InvalidDataException("Niciun chunk EVTX valid nu poate fi recuperat.");
         // The header stores the chunk count in 16 bits.
         if (kept.Count > ushort.MaxValue) kept = kept.Take(ushort.MaxValue).ToList();
 
-        var header = data.AsSpan(0, FileHeaderSize).ToArray();
         long lastKeptChunk = kept.Count - 1;
         long nextRecordId = chunks.Where(c => c.Valid).Max(c => c.LastRecordId) + 1;
         BinaryPrimitives.WriteInt64LittleEndian(header.AsSpan(8), 0);                       // first chunk number
@@ -63,7 +76,12 @@ public static class EvtxRepair
         using (var fs = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
         {
             fs.Write(header);
-            foreach (var off in kept) fs.Write(data, off, ChunkSize);
+            foreach (var off in kept)
+            {
+                src.Position = off;
+                if (!ReadFull(src, buf)) throw new InvalidDataException("Jurnalul EVTX s-a scurtat în timpul reparării.");
+                fs.Write(buf, 0, ChunkSize);
+            }
         }
         return new EvtxRepairResult(outputPath, chunks.Count, kept.Count, chunks);
     }
