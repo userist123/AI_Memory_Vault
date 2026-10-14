@@ -51,5 +51,38 @@ jobs:
           python -m pip install --disable-pip-version-check pytest==9.1.1 pyyaml==6.0.3
           pytest 20_TESTS/regression/test_repository_hygiene.py -q
           pytest 20_TESTS/regression/test_personal_data_guard.py -q
+          pytest 20_TESTS/test_personal_data_guard_formats.py 20_TESTS/test_inbox_tracked_gate.py -q
           pytest 20_TESTS/test_r031_repairs.py -q
           pytest 20_TESTS/research/test_blocker_registry_validator.py -q
+
+  personal-data-history:
+    # Report only. Public history still holds documents pending an owner-run
+    # rewrite; a finding here needs that rewrite, not a code change, so it
+    # must not block pull requests and must not turn the check red: the
+    # findings go to the job summary and a warning annotation (paths and blob
+    # ids only, never values). The job itself always succeeds.
+    name: Personal data in history (report only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Scan every reachable blob
+        run: |
+          python -m pip install pypdf==6.16.2
+          set +e
+          python 30_SCRIPTS/verification/personal_data_guard.py --history > history_scan.txt 2>&1
+          rc=$?
+          set -e
+          count=$(grep -c '@' history_scan.txt || true)
+          if [ "$rc" -ne 0 ]; then
+            echo "::warning title=Personal data in git history::${count} finding(s) in reachable history (paths and blob ids in the job summary). Needs the owner-run history rewrite (09_SECURITY/incident_register/R001_HISTORY_REWRITE_PROCEDURE.md), not a code change."
+            { echo "## Personal data in git history: ${count} finding(s), report only"; echo; echo '```'; cat history_scan.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## Personal data in git history: none" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          cat history_scan.txt

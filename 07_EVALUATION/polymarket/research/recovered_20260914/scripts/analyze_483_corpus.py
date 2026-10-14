@@ -1,8 +1,9 @@
+import os
 import json
 import math
 from datetime import datetime, timezone
 
-scratch_path = "C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch"
+scratch_path = os.path.expanduser("~/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch")
 
 with open(f"{scratch_path}/qualified_clob_markets_500.json", "r", encoding="utf-8") as f:
     raw_markets = json.load(f)

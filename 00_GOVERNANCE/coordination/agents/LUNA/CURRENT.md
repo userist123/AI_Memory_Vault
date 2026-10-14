@@ -1,4 +1,7 @@
 ---
+# HISTORICAL SNAPSHOT (verified 2026-10-14): the SHA recorded below (1c794ccf79bff3022c08164fbd18a371aa5253d2) was not reachable from the refs
+# fetched on 2026-10-14 (only `main`; the remote has other branches). This is a dated snapshot, not live state. The live measured state is
+# 00_GOVERNANCE/VAULT_STATE.md.
 agent: LUNA
 last_updated_utc: 2026-09-04T19:29:00Z
 repository: userist123/AI_Memory_Vault_CODEX_READY
@@ -40,6 +43,10 @@ Evidence_refs:
 related_agents: CODEX, ANTIGRAVITY, PERPLEXITY
 NEXT: verify CI for corrected MVE and GAP-011, then proceed to model-backed causal MVE design
 ---
+
+status: HISTORICAL_SNAPSHOT
+
+> Dated snapshot (not live state): the recorded SHA was not reachable from the refs fetched on 2026-10-14 (only `main`). Live measured state: `00_GOVERNANCE/VAULT_STATE.md`.
 
 
 ## 🔗 Legături Sinaptice

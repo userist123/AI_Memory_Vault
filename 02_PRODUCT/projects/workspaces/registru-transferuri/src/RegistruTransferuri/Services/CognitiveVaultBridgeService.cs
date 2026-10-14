@@ -17,7 +17,7 @@ public sealed class CognitiveVaultBridgeService
 
     public CognitiveVaultBridgeService(string? vaultPath = null)
     {
-        _vaultPath = vaultPath ?? @"c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY";
+        _vaultPath = vaultPath ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Documents", "Codex", "AI_Memory_Vault_CODEX_READY");
     }
 
     public bool IsVaultAvailable => Directory.Exists(_vaultPath);

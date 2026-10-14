@@ -1,4 +1,7 @@
 ---
+# HISTORICAL SNAPSHOT (verified 2026-10-14): the SHA recorded below (e7659d510) was not reachable from the refs
+# fetched on 2026-10-14 (only `main`; the remote has other branches). This is a dated snapshot, not live state. The live measured state is
+# 00_GOVERNANCE/VAULT_STATE.md.
 agent: CLAUDE_SONNET
 last_updated_utc: 2026-09-07T01:10:00Z
 repository: userist123/AI_Memory_Vault_CODEX_READY
@@ -32,6 +35,10 @@ Evidence_refs:
 related_agents: ANTIGRAVITY, CODEX, LUNA, PERPLEXITY, CLAUDE_OPUS
 NEXT: an owner reviews/merges the 6 finished package branches independently, then decides WP-6's promotion semantics before anyone starts it
 ---
+
+status: HISTORICAL_SNAPSHOT
+
+> Dated snapshot (not live state): the recorded SHA was not reachable from the refs fetched on 2026-10-14 (only `main`). Live measured state: `00_GOVERNANCE/VAULT_STATE.md`.
 
 # CLAUDE_SONNET — r024 session log (night of 2026-09-07)
 

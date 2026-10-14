@@ -14,6 +14,7 @@ Nota:
 - Fisierul Excel este generat integral de acest script, pornind de la un template gol.
 - Office tinta: Excel 2021 (XLOOKUP disponibil, fara LAMBDA).
 """
+import os
 
 from __future__ import annotations
 
@@ -44,7 +45,7 @@ from openpyxl.formatting.rule import ColorScaleRule, CellIsRule, FormulaRule
 # ============================================================================
 
 # Calea template-ului initial (gol sau aproape gol, scriptul il populeaza)
-TEMPLATE_PATH = r"C:\Users\user\Desktop\Analiza_Piata_Profesionala.xlsx"
+TEMPLATE_PATH = os.path.expanduser(r"~\Desktop\Analiza_Piata_Profesionala.xlsx")
 
 # Parametri yfinance
 YF_PERIOD = "1y"

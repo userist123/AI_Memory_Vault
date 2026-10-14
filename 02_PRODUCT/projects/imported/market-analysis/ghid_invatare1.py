@@ -17,6 +17,7 @@ Ce face:
     • Adaugă sheet-ul "GHID INVATARE" în Excel
     • La finalul sheet-ului: ghid complet permanent de citire grafice
 """
+import os
 
 import sys
 import logging
@@ -32,7 +33,7 @@ from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 # CONFIGURARE
 # ══════════════════════════════════════════════════════════════════════════════
 
-EXCEL_PATH = Path(r"C:\Users\user\Desktop\Analiza_Piata_Profesionala.xlsx")
+EXCEL_PATH = Path(os.path.expanduser(r"~\Desktop\Analiza_Piata_Profesionala.xlsx"))
 
 # ── ACTIVE ────────────────────────────────────────────────────────────────────
 INDICI = {

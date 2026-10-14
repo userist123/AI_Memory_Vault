@@ -5626,94 +5626,94 @@
   ],
   "sets": [
     {
-      "file_sha256": "59dc6b0d6b00bf578824c593f7e77dae69a234ddc9e330429bd8354eec227114",
+      "file_sha256": "bdbefb86f4e3b2d14b75d6228285274e2076747878e3b075ae693cdf9f9c0ead",
       "items": 28,
       "name": "h1_development",
-      "path": "/home/user/AI_Memory_Vault_CODEX_READY/.claude/worktrees/agent-a8727335500d8640e/08_RESEARCH/BOOK_TO_MEMORY/h1_cases.json",
+      "path": "/home/user/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/h1_cases.json",
       "role": "scenario"
     },
     {
-      "file_sha256": "59dc6b0d6b00bf578824c593f7e77dae69a234ddc9e330429bd8354eec227114",
+      "file_sha256": "bdbefb86f4e3b2d14b75d6228285274e2076747878e3b075ae693cdf9f9c0ead",
       "items": 14,
       "name": "h1_calibration",
-      "path": "/home/user/AI_Memory_Vault_CODEX_READY/.claude/worktrees/agent-a8727335500d8640e/08_RESEARCH/BOOK_TO_MEMORY/h1_cases.json",
+      "path": "/home/user/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/h1_cases.json",
       "role": "scenario"
     },
     {
-      "file_sha256": "59dc6b0d6b00bf578824c593f7e77dae69a234ddc9e330429bd8354eec227114",
+      "file_sha256": "bdbefb86f4e3b2d14b75d6228285274e2076747878e3b075ae693cdf9f9c0ead",
       "items": 28,
       "name": "h1_held_out",
-      "path": "/home/user/AI_Memory_Vault_CODEX_READY/.claude/worktrees/agent-a8727335500d8640e/08_RESEARCH/BOOK_TO_MEMORY/h1_cases.json",
+      "path": "/home/user/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/h1_cases.json",
       "role": "heldout"
     },
     {
       "file_sha256": "90702a1a773ae46de2c14923b98d4ca99f23b7b11530f7535a1611e8fdeddd39",
       "items": 12,
       "name": "heldout_v2_dev",
-      "path": "/home/user/AI_Memory_Vault_CODEX_READY/.claude/worktrees/agent-a8727335500d8640e/07_EVALUATION/heldout_retrieval_benchmark_v2/dev.json",
+      "path": "/home/user/AI_Memory_Vault_CODEX_READY/07_EVALUATION/heldout_retrieval_benchmark_v2/dev.json",
       "role": "scenario"
     },
     {
       "file_sha256": "0222d5e858dfca5bbae6db4559eafe0d43b133380a912664aaa7e4ea6c0d8418",
       "items": 32,
       "name": "heldout_v2_heldout",
-      "path": "/home/user/AI_Memory_Vault_CODEX_READY/.claude/worktrees/agent-a8727335500d8640e/07_EVALUATION/heldout_retrieval_benchmark_v2/heldout.json",
+      "path": "/home/user/AI_Memory_Vault_CODEX_READY/07_EVALUATION/heldout_retrieval_benchmark_v2/heldout.json",
       "role": "heldout"
     },
     {
       "file_sha256": "793ed0766775440d9d08f748c311db4c5cbe6526360d6b387a5a8953eed8ee50",
       "items": 12,
       "name": "heldout_v1_dev",
-      "path": "/home/user/AI_Memory_Vault_CODEX_READY/.claude/worktrees/agent-a8727335500d8640e/07_EVALUATION/heldout_retrieval_benchmark_v1/dev.json",
+      "path": "/home/user/AI_Memory_Vault_CODEX_READY/07_EVALUATION/heldout_retrieval_benchmark_v1/dev.json",
       "role": "scenario"
     },
     {
       "file_sha256": "242c400222509a2d58deb999e8c655c75b000f3abe9b5a860a1d96ea2db9e00f",
       "items": 36,
       "name": "heldout_v1_heldout",
-      "path": "/home/user/AI_Memory_Vault_CODEX_READY/.claude/worktrees/agent-a8727335500d8640e/07_EVALUATION/heldout_retrieval_benchmark_v1/heldout.json",
+      "path": "/home/user/AI_Memory_Vault_CODEX_READY/07_EVALUATION/heldout_retrieval_benchmark_v1/heldout.json",
       "role": "heldout"
     },
     {
       "file_sha256": "eeb53822ae5f022df89290d6fca789c1d4387b7572ed70103a7c08aae5b57eaa",
       "items": 160,
       "name": "retrieval_v3",
-      "path": "/home/user/AI_Memory_Vault_CODEX_READY/.claude/worktrees/agent-a8727335500d8640e/07_EVALUATION/retrieval_benchmark_v3/retrieval_benchmark_v3.json",
+      "path": "/home/user/AI_Memory_Vault_CODEX_READY/07_EVALUATION/retrieval_benchmark_v3/retrieval_benchmark_v3.json",
       "role": "heldout"
     },
     {
       "file_sha256": "a5662e4d896007630a291dd6fb0806e546dcdb27d2c757fc0f8d623daeffd7fd",
       "items": 30,
       "name": "model_memory_challenge",
-      "path": "/home/user/AI_Memory_Vault_CODEX_READY/.claude/worktrees/agent-a8727335500d8640e/07_EVALUATION/model_memory_benchmark_v1/retrieval_challenge_cases.jsonl",
+      "path": "/home/user/AI_Memory_Vault_CODEX_READY/07_EVALUATION/model_memory_benchmark_v1/retrieval_challenge_cases.jsonl",
       "role": "scenario"
     },
     {
       "file_sha256": "ab5a23b11a7bd6551a4dd91b0348b35ba30db6db0d361137fd29b2b71c6e3548",
       "items": 10,
       "name": "golden_tasks",
-      "path": "/home/user/AI_Memory_Vault_CODEX_READY/.claude/worktrees/agent-a8727335500d8640e/07_EVALUATION/golden_memory_effectiveness_v1/golden_tasks.json",
+      "path": "/home/user/AI_Memory_Vault_CODEX_READY/07_EVALUATION/golden_memory_effectiveness_v1/golden_tasks.json",
       "role": "scenario"
     },
     {
       "file_sha256": "07b4a338619672cfd1f8ef44319c29cc61cc8c87d2770565f05499f7c087796d",
       "items": 22,
       "name": "curriculum_psychology_ch08",
-      "path": "/home/user/AI_Memory_Vault_CODEX_READY/.claude/worktrees/agent-a8727335500d8640e/07_EVALUATION/curriculum/openstax_ch08_frozen_test_set.json",
+      "path": "/home/user/AI_Memory_Vault_CODEX_READY/07_EVALUATION/curriculum/openstax_ch08_frozen_test_set.json",
       "role": "scenario"
     },
     {
       "file_sha256": "7574dfc34c19137bb789afe85b07bba36da3eae00495eb0eb6b7dd34158936dd",
       "items": 22,
       "name": "curriculum_statistics_ch08",
-      "path": "/home/user/AI_Memory_Vault_CODEX_READY/.claude/worktrees/agent-a8727335500d8640e/07_EVALUATION/curriculum/openstax_statistics_frozen_test_set.json",
+      "path": "/home/user/AI_Memory_Vault_CODEX_READY/07_EVALUATION/curriculum/openstax_statistics_frozen_test_set.json",
       "role": "scenario"
     },
     {
       "file_sha256": "c8fb1c2173f196e6bf2aa42e9160e1168455c7dd41bf458b6aac4295a98e2576",
       "items": 51,
       "name": "b03_tasks",
-      "path": "/home/user/AI_Memory_Vault_CODEX_READY/.claude/worktrees/agent-a8727335500d8640e/08_RESEARCH/BOOK_TO_MEMORY/b03_task_packet/scoring/tasks.json",
+      "path": "/home/user/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/b03_task_packet/scoring/tasks.json",
       "role": "scenario"
     }
   ],
