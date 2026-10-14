@@ -26,7 +26,46 @@ public sealed record InstallFolderDecision(InstallFolderVerdict Verdict, string 
 public enum NativeStartupVerdict { Start, Warn, Refuse }
 
 /// <summary>What the application does at startup: start, start after a warning, or refuse (exit code 3 = libraries, 4 = install folder).</summary>
-public sealed record NativeStartupDecision(NativeStartupVerdict Verdict, string Message, int ExitCode, string Caption);
+public sealed record NativeStartupDecision(NativeStartupVerdict Verdict, string Message, int ExitCode, string Caption, string Check = "");
+
+/// <summary>Shows a startup decision to a person. The interactive implementation is a modal box; headless runs never reach it.</summary>
+public interface IStartupNotifier
+{
+    void Warn(NativeStartupDecision decision);
+    void Refuse(NativeStartupDecision decision);
+}
+
+/// <summary>Non-blocking startup warning kept for the Home banner of a running application (empty when there is none).</summary>
+public static class StartupNotice
+{
+    public static string Text { get; set; } = "";
+}
+
+/// <summary>
+/// Applies a <see cref="NativeStartupDecision"/>. Interactive: refusal and warning go to the notifier. Headless (self-test, CI): the notifier is
+/// never called; the decision becomes "CHECK" lines for the self-test report and a non-zero code only for a refusal.
+/// </summary>
+public static class StartupGate
+{
+    public static (int ExitCode, IReadOnlyList<string> Lines) Apply(NativeStartupDecision decision, bool headless, IStartupNotifier notifier)
+    {
+        var name = string.IsNullOrEmpty(decision.Check) ? "startup" : decision.Check;
+        if (headless)
+        {
+            return decision.Verdict switch
+            {
+                NativeStartupVerdict.Refuse => (decision.ExitCode, [$"CHECK {name}: REFUSED (exit {decision.ExitCode}) {OneLine(decision.Message)}"]),
+                NativeStartupVerdict.Warn => (0, [$"CHECK {name}: unprotected (warning) {OneLine(decision.Message)}"]),
+                _ => (0, [$"CHECK {name}: ok"]),
+            };
+        }
+        if (decision.Verdict == NativeStartupVerdict.Refuse) { notifier.Refuse(decision); return (decision.ExitCode, []); }
+        if (decision.Verdict == NativeStartupVerdict.Warn) { StartupNotice.Text = decision.Message; notifier.Warn(decision); }
+        return (0, []);
+    }
+
+    private static string OneLine(string s) => s.Replace("\r", " ").Replace("\n", " ");
+}
 
 public static class NativeLibraryManifest
 {
@@ -67,6 +106,7 @@ public static class NativeLibraryManifest
     /// <item>libraries that differ from the manifest: refused, elevated or not;</item>
     /// <item>a non-Debug build without the embedded manifest: an elevated start is refused with the library message, a standard start warns;</item>
     /// <item>an elevated process: the install folder must be writable only by Administrators / SYSTEM, whether a manifest was checked or not;</item>
+    /// <item>a Debug build elevated in a writable folder only warns (never a modal refusal);</item>
     /// <item>a standard process: a writable folder warns when a manifest was checked (a Debug build run from bin is not checked).</item>
     /// </list>
     /// <paramref name="installFolderAcl"/> is called only when the folder decision is needed.
@@ -80,17 +120,20 @@ public static class NativeLibraryManifest
         string? warning = null;
         if (!check.Ok)
         {
-            if (!check.ManifestMissing || elevated) return new(NativeStartupVerdict.Refuse, check.Message, 3, libCaption);
+            if (!check.ManifestMissing || elevated) return new(NativeStartupVerdict.Refuse, check.Message, 3, libCaption, "native-libraries");
             warning = UnverifiedStandardStartWarning;
         }
         if (elevated || check.Checked)
         {
             var folder = DecideInstallFolder(installFolderAcl(), elevated);
-            if (folder.Verdict == InstallFolderVerdict.RefuseElevated) return new(NativeStartupVerdict.Refuse, folder.Message, 4, folderCaption);
+            // A Debug build run from a user-writable folder is a developer's build: warn (banner + log), never a modal refusal. Release keeps the refusal.
+            if (folder.Verdict == InstallFolderVerdict.RefuseElevated && debugBuild)
+                folder = new(InstallFolderVerdict.Warn, "Build de dezvoltare pornit ca administrator dintr-un folder inscriptibil de alte conturi (un build Release ar refuza pornirea). " + folder.Message);
+            if (folder.Verdict == InstallFolderVerdict.RefuseElevated) return new(NativeStartupVerdict.Refuse, folder.Message, 4, folderCaption, "install-folder");
             if (folder.Verdict == InstallFolderVerdict.Warn)
-                return new(NativeStartupVerdict.Warn, warning is null ? folder.Message : warning + "\n\n" + folder.Message, 0, warning is null ? folderCaption : libCaption);
+                return new(NativeStartupVerdict.Warn, warning is null ? folder.Message : warning + "\n\n" + folder.Message, 0, warning is null ? folderCaption : libCaption, "install-folder");
         }
-        return warning is null ? new(NativeStartupVerdict.Start, "", 0, "") : new(NativeStartupVerdict.Warn, warning, 0, libCaption);
+        return warning is null ? new(NativeStartupVerdict.Start, "", 0, "", "native-libraries") : new(NativeStartupVerdict.Warn, warning, 0, libCaption, "native-libraries");
     }
 
     /// <summary>

@@ -70,6 +70,9 @@
                 <TextBlock Text="{Binding ReadOnlyNotice}" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" Margin="0,0,0,8">
                     <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsReadOnly}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
                 </TextBlock>
+                <TextBlock Text="{Binding StartupNotice}" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" Margin="0,0,0,8">
+                    <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding StartupNotice}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                </TextBlock>
                 <TextBlock Text="{Binding ClockWarning}" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" Margin="0,0,0,8">
                     <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding ClockWarning}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
                 </TextBlock>

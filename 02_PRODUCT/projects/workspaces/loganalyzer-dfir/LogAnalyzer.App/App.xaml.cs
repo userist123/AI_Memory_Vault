@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -56,13 +57,30 @@ namespace LogAnalyzer.UI
             // and a non-Debug build without the embedded manifest never starts elevated.
             var decision = LogAnalyzer.Dfir.IO.NativeLibraryManifest.DecideStartup(dir, embedded, debugBuild, singleFile, elevated,
                 () => LogAnalyzer.Dfir.Auth.AuthStoreProtection.CheckDirectory(dir), singleFile ? null : selfFile);
-            if (decision.Verdict == LogAnalyzer.Dfir.IO.NativeStartupVerdict.Refuse)
+            // Headless (--self-test, --self-test-out): never a modal. The checks become CHECK lines in the self-test report.
+            var cmd = Environment.GetCommandLineArgs();
+            bool headless = LogAnalyzer.Dfir.Windows.Investigation.SelfTest.IsRequested(cmd)
+                || LogAnalyzer.Dfir.Windows.Investigation.SelfTest.OutputPath(cmd) is not null;
+            var (exit, lines) = LogAnalyzer.Dfir.IO.StartupGate.Apply(decision, headless, new MessageBoxNotifier());
+            if (headless) { HeadlessStartupLines = lines; HeadlessStartupExit = exit; }
+            else if (exit != 0) Environment.Exit(exit);
+            else if (decision.Verdict == LogAnalyzer.Dfir.IO.NativeStartupVerdict.Warn)
+                StartupLog.Append(StartupLog.PathIn(StartupLog.EnsureDirectory(), "startup_debug.log"), "Startup warning: " + StartupLog.Redact(decision.Message) + "\n");
+        }
+
+        private static IReadOnlyList<string>? HeadlessStartupLines;   // no initializer: a static initializer would run before the regex default (RegexDefaultAtStartupTests)
+        private static int HeadlessStartupExit;
+
+        private sealed class MessageBoxNotifier : LogAnalyzer.Dfir.IO.IStartupNotifier
+        {
+            public void Refuse(LogAnalyzer.Dfir.IO.NativeStartupDecision d) => NativeMessageBox(IntPtr.Zero, d.Message, d.Caption, 0x10 /* MB_ICONERROR */);
+            public void Warn(LogAnalyzer.Dfir.IO.NativeStartupDecision d)
             {
-                NativeMessageBox(IntPtr.Zero, decision.Message, decision.Caption, 0x10 /* MB_ICONERROR */);
-                Environment.Exit(decision.ExitCode);
+                // Release warns with a modal box (standard user, writable folder); a Debug build only logs and shows the Home banner.
+#if !DEBUG
+                NativeMessageBox(IntPtr.Zero, d.Message, d.Caption, 0x30 /* MB_ICONWARNING */);
+#endif
             }
-            if (decision.Verdict == LogAnalyzer.Dfir.IO.NativeStartupVerdict.Warn)
-                NativeMessageBox(IntPtr.Zero, decision.Message, decision.Caption, 0x30 /* MB_ICONWARNING */);
         }
 
         [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "MessageBoxW", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
@@ -157,7 +175,7 @@ namespace LogAnalyzer.UI
         {
             // `--self-test`: prove the published executable runs on a bare machine, then exit without opening any window.
             if (LogAnalyzer.Dfir.Windows.Investigation.SelfTest.IsRequested(e.Args))
-                Environment.Exit(LogAnalyzer.Dfir.Windows.Investigation.SelfTest.Execute(e.Args, AppContext.BaseDirectory));
+                Environment.Exit(LogAnalyzer.Dfir.Windows.Investigation.SelfTest.Execute(e.Args, AppContext.BaseDirectory, HeadlessStartupLines, HeadlessStartupExit));
 
             // Security audit #15: per-user log folder, never the (shared) folder of the executable; null when it cannot be created (no log).
             var logDir = StartupLog.EnsureDirectory();
