@@ -27,9 +27,15 @@ namespace LogAnalyzer.UI.Services
         public static AuthSession? Session { get; private set; }
         public static event Action? SessionChanged;
 
-        public static void Initialize()
+        public static void Initialize() => Initialize(null);
+
+        /// <summary>
+        /// Test seam (internal, visible only to LogAnalyzer.App.Tests): <paramref name="storeDirectory"/> points the service at a temporary store so the
+        /// startup test never writes the machine's %PROGRAMDATA%\LogAnalyzer\auth. Production calls only <see cref="Initialize()"/> (null: the fixed folder).
+        /// </summary>
+        internal static void Initialize(string? storeDirectory)
         {
-            _service = new AuthService(null, Classified);
+            _service = new AuthService(storeDirectory, Classified);
             OperatorIdentity.AuthenticationRequired = true;     // from now on registers / profile edits fail closed without an administrator session
         }
 

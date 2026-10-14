@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -83,7 +83,13 @@ namespace LogAnalyzer.UI
         }
 
         /// <summary>The application's services, exactly as startup registers them (also used by the startup timing test).</summary>
-        public static ServiceCollection BuildServices()
+        public static ServiceCollection BuildServices() => BuildServices(null);
+
+        /// <summary>
+        /// Test seam (internal, visible only to LogAnalyzer.App.Tests): <paramref name="applicationDataRoot"/> replaces %LOCALAPPDATA%\LogAnalyzer so the
+        /// startup test does not write the machine's database or chain of custody. Null (the only value production passes) keeps the fixed folder.
+        /// </summary>
+        internal static ServiceCollection BuildServices(string? applicationDataRoot)
         {
             var services = new ServiceCollection();
             
@@ -93,7 +99,7 @@ namespace LogAnalyzer.UI
             services.AddSingleton<KnowledgeBaseService>();
             services.AddSingleton<LogAnalyzer.Core.Services.LicenseService>();
 
-            var applicationDataPath = Path.Combine(
+            var applicationDataPath = applicationDataRoot ?? Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "LogAnalyzer");
             Directory.CreateDirectory(applicationDataPath);
@@ -104,7 +110,8 @@ namespace LogAnalyzer.UI
             services.AddSingleton<IEventParser, EvtxParser>();
             services.AddSingleton<IAnalysisEngine, AnalysisEngine>();
             services.AddSingleton<IRegistryParser, OfflineRegistryParser>();
-            services.AddSingleton<IDatabaseService, DatabaseService>();
+            if (applicationDataRoot is null) services.AddSingleton<IDatabaseService, DatabaseService>();
+            else services.AddSingleton<IDatabaseService>(_ => new DatabaseService(applicationDataRoot));
             EditionComposition.Register(services);
             
             // Componentele MVVM și Ferestrele din UI
