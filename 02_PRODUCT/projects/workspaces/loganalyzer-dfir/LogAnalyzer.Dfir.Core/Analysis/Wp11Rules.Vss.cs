@@ -90,7 +90,8 @@ public static partial class Wp11Rules
     }
 
     private static bool IsImpactFinding(Finding f, VssLists lists) =>
-        lists.ImpactMitreIds.Contains(f.MitreTechniqueId, StringComparer.OrdinalIgnoreCase) ||
+        f.RuleId != RulePatterns.NotEvaluatedRuleId &&   // a "neevaluat" gap shares the category but is never impact evidence
+        (lists.ImpactMitreIds.Contains(f.MitreTechniqueId, StringComparer.OrdinalIgnoreCase) ||
         lists.ImpactCategories.Contains(f.Category, StringComparer.OrdinalIgnoreCase) && f.RuleId != "VSS-SNAPSHOT-DELETED" ||
-        f.RuleId == "DEF-DETECTION" && lists.ImpactDetectionKeywords.Any(k => (f.Title + " " + f.Description).Contains(k, StringComparison.OrdinalIgnoreCase));
+        f.RuleId == "DEF-DETECTION" && lists.ImpactDetectionKeywords.Any(k => (f.Title + " " + f.Description).Contains(k, StringComparison.OrdinalIgnoreCase)));
 }

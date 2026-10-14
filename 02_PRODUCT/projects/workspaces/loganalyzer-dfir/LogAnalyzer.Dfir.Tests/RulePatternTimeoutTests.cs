@@ -81,6 +81,18 @@ public sealed class RulePatternTimeoutTests
         Assert.NotNull(RuleContracts.For(RulePatterns.NotEvaluatedRuleId));
     }
 
+    [Fact]
+    public void A_not_evaluated_gap_is_never_counted_as_impact_evidence()
+    {
+        var data = Wp11Data.FromJson("""{"agents":[]}""", """{"tools":[]}""",
+            """{"vss":{"commandPatterns":[{"kind":"delete","tool":"t","regex":"^(?=a)(a+)+$"},{"kind":"delete","tool":"t2","regex":"zzremove"}],"impactCategories":["Impact"]}}""");
+        var found = Within(() => Run([Proc4688(0, new string('a', 48) + "!"), Proc4688(1, "tool zzremove all")], data: data));
+        One(found, RulePatterns.NotEvaluatedRuleId);
+        var f = One(found, "VSS-SNAPSHOT-DELETED");
+        Assert.Equal(Severity.Medium, f.Severity);   // the gap shares the Impact category but is not impact evidence
+        Assert.Empty(f.RelatedFindingIds);
+    }
+
     private static TimelineEvent RunMru(string command) =>
         Row("RunMRU", 10, "", "", "", ("Command", command), ("MruPosition", "0"), ("Account", "u"), ("ValueName", "a"));
 
