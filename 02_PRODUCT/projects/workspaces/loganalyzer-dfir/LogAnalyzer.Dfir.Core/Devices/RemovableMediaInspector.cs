@@ -149,7 +149,11 @@ public static class RemovableMediaInspector
     /// <summary>The decoded shortcut, or null when the bytes are not a valid link (nothing is executed; the shell is not involved).</summary>
     internal static FileSystem.LnkParser.Link? ReadLink(string path)
     {
-        try { return FileSystem.LnkParser.Decode(File.ReadAllBytes(path)); }
+        try
+        {
+            if (new FileInfo(path).Length > FileSystem.LnkParser.MaxLinkFileBytes) return null;   // a shortcut this large is not read into memory
+            return FileSystem.LnkParser.Decode(File.ReadAllBytes(path));
+        }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or ArgumentException or IndexOutOfRangeException) { return null; }
     }
 

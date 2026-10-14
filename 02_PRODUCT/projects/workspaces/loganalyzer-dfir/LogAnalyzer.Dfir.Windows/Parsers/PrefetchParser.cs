@@ -16,6 +16,7 @@ public sealed class PrefetchParser : EvidenceParserBase
     {
         ParserId = "PrefetchParser", Version = "1.0", Artifact = "Prefetch Windows (.pf)",
         SourceTypes = ["prefetch"], FileNames = [".pf"], Fingerprints = ["prefetch", "prefetch_mam"],
+        MaxInputBytes = MaxPrefetchBytes,   // read whole; MAM decompression is capped at 64 MiB too
         SupportedOs = "Windows 10 / 11 (decompresia MAM folosește API-ul Windows)",
         FormatVersions = ["SCCA v30", "SCCA v31", "comprimat MAM (Xpress Huffman)"],
         Limitations =
@@ -34,8 +35,13 @@ public sealed class PrefetchParser : EvidenceParserBase
         public string? ExePathGuess => ReferencedFiles.FirstOrDefault(f => f.EndsWith("\\" + ExeName, StringComparison.OrdinalIgnoreCase));
     }
 
+    /// <summary>Largest prefetch file read into memory (also by the live process scanner).</summary>
+    public const long MaxPrefetchBytes = 64L * 1024 * 1024;
+
     public static PrefetchInfo Read(string path)
     {
+        if (new FileInfo(path).Length > MaxPrefetchBytes)
+            throw new InvalidDataException($"{LogAnalyzer.Dfir.Parsing.EvidenceParserBase.TooLargeReason} (peste {MaxPrefetchBytes:N0} octeți).");
         var raw = File.ReadAllBytes(path);
         var d = raw.Length >= 3 && raw[0] == 'M' && raw[1] == 'A' && raw[2] == 'M' ? NtCompression.DecompressMam(raw) : raw;
         if (d.Length < 0x100 || Encoding.ASCII.GetString(d, 4, 4) != "SCCA") throw new InvalidDataException("Not an SCCA prefetch file.");

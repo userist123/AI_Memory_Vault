@@ -13,12 +13,16 @@ namespace LogAnalyzer.Dfir.FileSystem;
 /// </summary>
 public sealed class LnkParser : EvidenceParserBase
 {
+    /// <summary>Largest shortcut file read (parser and removable-media inspection).</summary>
+    public const long MaxLinkFileBytes = 16L * 1024 * 1024;
+
     private static readonly Guid LinkClsid = new("00021401-0000-0000-C000-000000000046");
     private static readonly string[] DriveTypes = ["UNKNOWN", "NO_ROOT_DIR", "REMOVABLE", "FIXED", "REMOTE", "CDROM", "RAMDISK"];
 
     public override ParserDescriptor Descriptor { get; } = new()
     {
         ParserId = "LnkParser", Version = "1.0", Artifact = "Fișier shortcut Windows (.lnk)",
+        MaxInputBytes = MaxLinkFileBytes,   // read whole: real shortcuts are a few KiB; padded ones stay far below
         SourceTypes = ["lnk"], FileNames = [".lnk"], Fingerprints = ["lnk"],
         SupportedOs = "Oricare (format binar citit în cod gestionat)",
         FormatVersions = ["MS-SHLLINK: antet, LinkInfo (cale locală / rețea, volum), StringData, TrackerDataBlock, EnvironmentVariableDataBlock"],

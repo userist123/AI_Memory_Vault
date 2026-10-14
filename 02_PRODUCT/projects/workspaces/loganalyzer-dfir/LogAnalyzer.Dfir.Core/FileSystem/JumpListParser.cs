@@ -18,6 +18,7 @@ public sealed class JumpListParser : EvidenceParserBase
     {
         ParserId = "JumpListParser", Version = "1.0", Artifact = "Jump List automată (*.automaticDestinations-ms)",
         SourceTypes = ["jumplist_auto"], FileNames = [".automaticDestinations-ms"], Fingerprints = ["cfb"],
+        MaxInputBytes = 256L * 1024 * 1024,   // compound file read whole
         SupportedOs = "Oricare (OLE Compound File citit în cod gestionat)",
         FormatVersions = ["DestList versiunea 3 – 6 (Windows 10 / 11; intrare de 130 de octeți + cale UTF-16 + 4 octeți)"],
         Limitations =
