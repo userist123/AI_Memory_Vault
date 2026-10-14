@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using LogAnalyzer.Core.Models;
 using LogAnalyzer.Core.Services.Connectivity;
 using LogAnalyzer.Core.Services.Network;
 using Xunit;
@@ -73,7 +75,8 @@ namespace LogAnalyzer.UI.Tests
         {
             AppModeTestScope.Use(AppMode.AirGapped);
             var ex = await Assert.ThrowsAsync<NetworkBlockedException>(
-                () => new LiveThreatIntelService().CheckIpReputationAsync("198.51.100.24", "key"));
+                () => new SiemForwarderService().ForwardAlertsToSplunkHecAsync(
+                    new List<DetectedIssue>(), new SiemForwarderConfig { SplunkHecUrl = "https://siem.invalid/x", SplunkHecToken = "t" }));
             Assert.Contains("AirGapped", ex.Message);
             Assert.Throws<NetworkBlockedException>(() =>
                 new LogAnalyzer.Connectors.Collection.UdpSyslogReceiver().StartSyslogListener(0, ".", "h", _ => { }));
