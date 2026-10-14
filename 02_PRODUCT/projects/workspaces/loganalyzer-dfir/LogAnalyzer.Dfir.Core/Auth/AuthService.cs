@@ -64,6 +64,9 @@ public sealed partial class AuthService
             Audit("auth.chain_sealed", "aplicație", "", "ok", "first_key", "cheia de sigilare a auditului a fost creată; lanțul existent, intact, a fost sigilat");
         }
         catch (InvalidOperationException) { /* plain chain broken: left broken, VerifyAudit reports it */ }
+        // This process may not write the store (e.g. a standard user while the audit file was written by an administrator): the constructor must
+        // not stop the application from starting. Nothing is hidden: the same write failure is raised by the first audited operation (sign-in).
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
     }
 
     /// <summary>Whether only Administrators / SYSTEM can change the auth folder (checked at every call; the state is shown at sign-in).</summary>

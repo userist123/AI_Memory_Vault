@@ -205,6 +205,28 @@ public sealed class AuthStoreProtectionTests : IDisposable
         Assert.Equal(ChainStatus.Valid, svc.VerifyAudit().Status);
     }
 
+    /// <summary>
+    /// Regression (2026-10-14): the first start after the key is created, by a process that may not write the existing audit file (a standard
+    /// user; the file was written earlier by an administrator), threw from the AuthService constructor, so the application could not start.
+    /// The constructor must survive; the write failure surfaces where it already did, at the first audited operation.
+    /// </summary>
+    [Fact]
+    public void First_key_creation_by_a_process_that_cannot_write_the_audit_does_not_stop_startup()
+    {
+        Activity(Plain());
+        var before = File.ReadAllText(AuditPath);
+        File.SetAttributes(AuditPath, FileAttributes.ReadOnly);
+        try
+        {
+            _keyCreated = true;
+            var svc = Svc();
+            _keyCreated = false;
+            Assert.Equal(before, File.ReadAllText(AuditPath));
+            Assert.Throws<UnauthorizedAccessException>(() => svc.SignInWithPassword(Admin, Pw));
+        }
+        finally { File.SetAttributes(AuditPath, FileAttributes.Normal); }
+    }
+
     [Fact]
     public void Without_a_readable_key_nothing_is_appended_and_the_cause_is_given()
     {
