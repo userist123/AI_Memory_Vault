@@ -6,6 +6,9 @@ then sorts that same list by `(fused_score, id)` with `reverse=True`. The list i
 already in that order, so the sort is a no-op: on benchmark v3 the sabotage
 control, which replaces the sort key with a constant, changed 0 of 160 returned
 pages under this arm while changing 154 under `baseline`.
+Re-measured after PR #282 fixed the retrieval cache (an empty `fused_ranking` on a
+cache hit, which could have mimicked this): still 0 of 160, and 158 under
+`baseline` (07_EVALUATION/ranking_formula/post_282_recheck.json).
 
 Two things follow, and both are worth a test rather than a note in a report:
 
