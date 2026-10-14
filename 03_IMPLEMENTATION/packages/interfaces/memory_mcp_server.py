@@ -169,7 +169,8 @@ def _note_eligibility(note_id: str) -> Optional[bool]:
         controller = _get_controller()
     except Exception:  # noqa: BLE001 - no secret yet: the policy's lifecycle gates still apply
         return None
-    return memory_access._readable(controller, note_id) is not None
+    from interfaces.vault_cli import eligible_for_agent
+    return eligible_for_agent(controller, note_id)
 
 
 def _get_access():

@@ -94,6 +94,7 @@ def fake_agy(tmp_path):
     return str(exe)
 
 
+pytestmark = pytest.mark.fake_executable
 pytestmark_posix = pytest.mark.skipif(os.name == "nt", reason="fake agy is a POSIX script")
 
 

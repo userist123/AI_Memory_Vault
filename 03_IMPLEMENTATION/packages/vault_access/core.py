@@ -22,6 +22,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import time
 import unicodedata
 import uuid
@@ -150,7 +151,27 @@ class VaultAccess:
                 eligible = None
             if eligible is False:
                 raise VaultAccessError(ErrorCode.DENIED_TRUST, "MemoryController does not serve this note to agents")
+            if eligible is None and self._frontmatter_says_quarantined(route):
+                # No controller verdict is not a verdict to serve: the explicit flag in the
+                # note's own frontmatter still withholds it (R-02, 2026-10-14).
+                raise VaultAccessError(ErrorCode.DENIED_TRUST, "note is flagged quarantined")
         return parsed, route
+
+    _QUARANTINE_FLAG = re.compile(r"^quarantined:\s*true\s*$", re.M | re.I)
+
+    def _frontmatter_says_quarantined(self, route: Route) -> bool:
+        """The note's own `quarantined: true` flag, read from its frontmatter; any read
+        error counts as quarantined (fail closed)."""
+        try:
+            data = self._read_bytes(route)
+            head = data[:8192].decode("utf-8", errors="replace")
+            if not head.startswith("---"):
+                return False
+            end = head.find("\n---", 3)
+            block = head[3:end] if end != -1 else head[3:]
+            return bool(self._QUARANTINE_FLAG.search(block))
+        except Exception:  # noqa: BLE001
+            return True
 
     def _read_bytes(self, route: Route) -> bytes:
         base = self.router.base_dir(route.base)

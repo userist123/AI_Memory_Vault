@@ -1,4 +1,7 @@
 ---
+# HISTORICAL SNAPSHOT (verified 2026-10-14): the SHA recorded below (7224e6ac32b4130383135735d09fd674b863ef88) was not reachable from the refs
+# fetched on 2026-10-14 (only `main`; the remote has other branches). This is a dated snapshot, not live state. The live measured state is
+# 00_GOVERNANCE/VAULT_STATE.md.
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
 repository: userist123/AI_Memory_Vault_CODEX_READY
@@ -50,6 +53,10 @@ next_actions:
   - run exact MVE and hygiene tests on the latest main source
   - preserve one reversible, evidence-backed change set at a time
 ---
+
+status: HISTORICAL_SNAPSHOT
+
+> Dated snapshot (2026-09-04), not live state: `current_main_sha` above was not reachable from the refs fetched on 2026-10-14 (only `main`). Live measured state: `00_GOVERNANCE/VAULT_STATE.md`.
 
 
 ## 🔗 Legături Sinaptice
