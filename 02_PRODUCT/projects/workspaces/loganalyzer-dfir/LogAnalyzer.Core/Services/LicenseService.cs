@@ -73,10 +73,40 @@ namespace LogAnalyzer.Core.Services
             "Hardware ID-ul acestei stații nu poate fi citit (interogarea WMI a procesorului sau a plăcii de bază a eșuat), deci licența nu poate fi activată " +
             "sau verificată. Reporniți stația sau serviciul Windows Management Instrumentation și încercați din nou; dacă problema rămâne, contactați administratorul.";
 
-        /// <summary>The 16-hex-character id from the processor and base-board values; a value that could not be read (null) is refused, never replaced.</summary>
+        public const string HardwareIdPlaceholderMessage =
+            "Hardware ID-ul acestei stații nu poate fi calculat: nici procesorul, nici placa de bază nu raportează o valoare care identifică stația " +
+            "(valoare goală sau text generic al producătorului, de exemplu „To be filled by O.E.M.” sau „Default string”). Un astfel de Hardware ID ar fi " +
+            "același pe multe stații, deci licența nu poate fi activată sau verificată. Contactați administratorul sau furnizorul stației.";
+
+        /// <summary>
+        /// Values firmware reports when the real one was never written (review of the remediations #5): empty, a known placeholder text, or only
+        /// zeros / only F's (ignoring spaces, dashes, dots and colons). Such a value identifies no station.
+        /// </summary>
+        public static bool IsPlaceholderHardwareValue(string? value)
+        {
+            if (value is null) return true;
+            var v = value.Trim();
+            if (v.Length == 0) return true;
+            if (PlaceholderHardwareValues.Contains(v)) return true;
+            var compact = new string(v.Where(c => c is not (' ' or '-' or '.' or ':' or '_')).ToArray());
+            return compact.Length > 0 && (compact.All(c => c == '0') || compact.All(c => c is 'F' or 'f'));
+        }
+
+        private static readonly HashSet<string> PlaceholderHardwareValues = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "To be filled by O.E.M.", "To be filled by OEM", "O.E.M.", "OEM", "Default string", "None", "System Serial Number",
+            "Base Board Serial Number", "Not Specified", "Not Applicable", "Not Available", "N/A", "NA", "Unknown", "Invalid", "Serial", "SerialNumber",
+        };
+
+        /// <summary>
+        /// The 16-hex-character id from the processor and base-board values. A value that could not be read (null) is refused, never replaced; when
+        /// both values are empty or placeholders the id would be the same on many stations and is refused too. Otherwise the id is computed exactly
+        /// as before from both raw values, so licences already issued stay valid.
+        /// </summary>
         public static string ComputeHardwareId(string? cpuId, string? boardId)
         {
             if (cpuId is null || boardId is null) throw new HardwareIdUnavailableException(HardwareIdUnavailableMessage);
+            if (IsPlaceholderHardwareValue(cpuId) && IsPlaceholderHardwareValue(boardId)) throw new HardwareIdUnavailableException(HardwareIdPlaceholderMessage);
             return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(cpuId + boardId)))[..16];
         }
 

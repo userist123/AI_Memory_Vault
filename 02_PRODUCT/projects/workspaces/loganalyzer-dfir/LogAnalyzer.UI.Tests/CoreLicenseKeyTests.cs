@@ -36,6 +36,66 @@ namespace LogAnalyzer.UI.Tests
             Assert.NotEqual(id, CoreLicenseService.ComputeHardwareId("cpu2", "board"));
         }
 
+        /// <summary>
+        /// Review of the remediations #5: an empty value or a firmware placeholder identifies no station. When neither the processor nor the
+        /// base board gives a real value, every such station would share one Hardware ID, so activation is refused. One real value is enough
+        /// (the id is computed exactly as before, so licences issued for such stations stay valid).
+        /// </summary>
+        [Theory]
+        [InlineData("")]
+        [InlineData("   ")]
+        [InlineData("To be filled by O.E.M.")]
+        [InlineData("TO BE FILLED BY O.E.M.")]
+        [InlineData("Default string")]
+        [InlineData("None")]
+        [InlineData("0")]
+        [InlineData("00000000")]
+        [InlineData("0000-0000-0000")]
+        [InlineData("System Serial Number")]
+        [InlineData("Not Specified")]
+        [InlineData("FFFFFFFFFFFFFFFF")]
+        [InlineData("ffff ffff")]
+        public void A_placeholder_or_empty_component_does_not_identify_the_station(string placeholder)
+        {
+            Assert.True(CoreLicenseService.IsPlaceholderHardwareValue(placeholder));
+            Assert.Throws<LogAnalyzer.Core.Services.HardwareIdUnavailableException>(() => CoreLicenseService.ComputeHardwareId(placeholder, placeholder));
+            Assert.Throws<LogAnalyzer.Core.Services.HardwareIdUnavailableException>(() => CoreLicenseService.ComputeHardwareId(placeholder, "Default string"));
+            // one real component remains: the id is the same as computed before this change
+            Assert.Equal(CoreLicenseService.ComputeHardwareId("BFEBFBFF000906EA", placeholder),
+                Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes("BFEBFBFF000906EA" + placeholder)))[..16]);
+            Assert.True(CoreLicenseService.IsHardwareId(CoreLicenseService.ComputeHardwareId(placeholder, "PM1A2B3C4D5E6F")));
+        }
+
+        [Fact]
+        public void Real_component_values_are_not_placeholders()
+        {
+            foreach (var v in new[] { "BFEBFBFF000906EA", "178BFBFF00A50F00", "PM1A2B3C4D5E6F", "L1HF9AB0123", "/7XJ8Z22/CNWS2007AB01EZ/" })
+                Assert.False(CoreLicenseService.IsPlaceholderHardwareValue(v), v);
+        }
+
+        [Fact]
+        public void Activation_is_refused_with_a_romanian_message_when_no_component_identifies_the_station()
+        {
+            var (key, pub) = NewKey();
+            using var keyScope = key;
+            var dir = Path.Combine(Path.GetTempPath(), "la-lic-ph-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(dir);
+            try
+            {
+                var file = Path.Combine(dir, "license.lic");
+                var s = new CoreLicenseService([pub], file, () => CoreLicenseService.ComputeHardwareId("To be filled by O.E.M.", "Default string"));
+                var lic = CoreLicenseService.Sign(key, Hwid, Expiry, "LIC-PH");
+                Assert.False(s.ValidateAndSaveKey(lic, out var r));
+                Assert.Equal(LicenseCheck.HardwareIdUnavailable, r);
+                Assert.False(File.Exists(file));
+                var ex = Assert.Throws<LogAnalyzer.Core.Services.HardwareIdUnavailableException>(() => CoreLicenseService.ComputeHardwareId("", "None"));
+                Assert.Equal(CoreLicenseService.HardwareIdPlaceholderMessage, ex.Message);
+                Assert.Contains("nu poate fi activată", ex.Message);
+                Assert.Contains("To be filled by O.E.M.", ex.Message);
+            }
+            finally { Directory.Delete(dir, true); }
+        }
+
         [Fact]
         public void Activation_and_validation_are_refused_with_a_romanian_message_when_the_hardware_id_cannot_be_read()
         {

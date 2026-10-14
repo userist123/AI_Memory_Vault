@@ -14,11 +14,12 @@ namespace LogAnalyzer.UI.Views
             _licenseService = licenseService;
 
             try { TxtHardwareId.Text = _licenseService.GetHardwareId(); }
-            catch (LogAnalyzer.Core.Services.HardwareIdUnavailableException)
+            catch (LogAnalyzer.Core.Services.HardwareIdUnavailableException ex)
             {
-                // Independent review #6: no placeholder id; activation is refused with the reason.
+                // Independent review #6 + review of the remediations #5: no placeholder id; activation is refused with the exact reason
+                // (WMI unreadable, or only empty / placeholder processor and base-board values).
                 TxtHardwareId.Text = "";
-                ShowError(LicenseService.Explain(LicenseCheck.HardwareIdUnavailable));
+                ShowError(string.IsNullOrWhiteSpace(ex.Message) ? LicenseService.Explain(LicenseCheck.HardwareIdUnavailable) : ex.Message);
                 return;
             }
             if (!_licenseService.HasTrustedKey)
