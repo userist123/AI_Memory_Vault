@@ -48,6 +48,9 @@ namespace LogAnalyzer.UI.ViewModels
             var s = CurrentSigning();
             s.Save(SigningSettingsPathOverride);
             ReportStatus = $"Setările semnăturii au fost salvate: {(s.CanSign ? "cheia de semnare este accesibilă" : "fără cheie de semnare accesibilă (rapoartele nu vor fi semnate)")}, {s.TrustedPublicKeys.Count} chei de încredere.";
+            // Security audit #20: a legacy bare key is accepted but never silently; the warning names the re-protection command.
+            try { if (s.CanSign && ReportKeyProtection.IsLegacyBareKey(File.ReadAllText(s.PrivateKeyPath))) ReportStatus += " " + ReportKeyProtection.LegacyBareKeyWarning; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         }
 
         [RelayCommand]

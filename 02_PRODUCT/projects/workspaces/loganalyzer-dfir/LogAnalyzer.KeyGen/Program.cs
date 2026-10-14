@@ -16,6 +16,7 @@ public static class Program
         if (args.Length >= 1 && args[0] == "datapack-sign") { DataPackSign(args); return; }
         // F3: report signing key of the operator / organisation, and the independent verifier of a signed report.
         if (args.Length >= 1 && args[0] == "report-keygen") { Environment.ExitCode = ReportCli.Keygen(args, Console.Out); return; }
+        if (args.Length >= 1 && args[0] == "report-key-protect") { Environment.ExitCode = ReportCli.Protect(args, Console.Out); return; }
         if (args.Length >= 1 && args[0] == "report-sign") { Environment.ExitCode = ReportCli.Sign(args, Console.Out); return; }
         if (args.Length >= 1 && args[0] == "verify-report") { Environment.ExitCode = ReportCli.Verify(args, Console.Out); return; }
         if (args.Length >= 1 && args[0] == "verify-archive") { Environment.ExitCode = ReportCli.VerifyArchive(args, Console.Out); return; }
@@ -39,6 +40,7 @@ public static class Program
         Console.WriteLine();
         Console.WriteLine("Rapoarte semnate digital:");
         Console.WriteLine("  LogAnalyzer.KeyGen report-keygen <fișier-cheie-privată> [<fișier-cheie-publică>] [--passphrase | --plain]");
+        Console.WriteLine("  LogAnalyzer.KeyGen report-key-protect <fișier-cheie-privată> [--passphrase]   (criptează o cheie veche necriptată)");
         Console.WriteLine("  LogAnalyzer.KeyGen report-sign <fișier-cheie-privată> <raport.pdf> <semnatar>");
         Console.WriteLine("  LogAnalyzer.KeyGen verify-report <raport.pdf> <cheie-publică-base64 | fișier-cheie-publică>...");
         Console.WriteLine("  LogAnalyzer.KeyGen verify-archive <arhivă-caz.zip> [<sha256-manifest> | <cheie-publică>]...");

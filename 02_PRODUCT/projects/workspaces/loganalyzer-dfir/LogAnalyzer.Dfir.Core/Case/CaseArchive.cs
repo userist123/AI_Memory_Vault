@@ -117,8 +117,10 @@ public static class CaseArchive
             Directory.CreateDirectory(tmp);
             var mp = Path.Combine(tmp, ManifestName);
             File.WriteAllBytes(mp, manifestBytes);
-            using var key = ReportSignature.LoadPrivateKey(File.ReadAllText(signing.PrivateKeyPath));
+            var keyText = File.ReadAllText(signing.PrivateKeyPath);
+            using var key = ReportSignature.LoadPrivateKey(keyText);
             ReportSignature.Sign(mp, key, signing.Signer.Length > 0 ? signing.Signer : Environment.UserName);
+            if (ReportKeyProtection.IsLegacyBareKey(keyText)) note = ReportKeyProtection.LegacyBareKeyWarning;
             return File.ReadAllBytes(ReportSignature.SigPath(mp));
         }
         catch (Exception ex) when (ex is CryptographicException or FormatException or IOException or UnauthorizedAccessException)
