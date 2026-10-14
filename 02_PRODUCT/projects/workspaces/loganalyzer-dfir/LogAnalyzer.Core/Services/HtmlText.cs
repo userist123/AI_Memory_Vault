@@ -27,7 +27,8 @@ namespace LogAnalyzer.Core.Services
         {
             if (value is null) return string.Empty;
             var text = value is IFormattable f ? f.ToString(null, CultureInfo.CurrentCulture) : value.ToString();
-            return WebUtility.HtmlEncode(text ?? string.Empty);
+            // Hidden bidi / zero-width / control characters are removed and named before encoding (research backlog #3).
+            return WebUtility.HtmlEncode(LogAnalyzer.Dfir.Language.ReportText.Clean(text));
         }
     }
 }
