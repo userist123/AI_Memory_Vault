@@ -50,6 +50,11 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Test seams (App.BuildServices(root), AuthApp.Initialize(dir)) stay internal: the startup test runs against a temporary folder. -->
+    <InternalsVisibleTo Include="LogAnalyzer.App.Tests" />
+  </ItemGroup>
+
   <!-- Security audit #5: SHA-256 manifest of the native libraries next to the published exe, verified at startup. -->
   <Import Project="..\eng\NativeLibraryManifest.targets" />
 
