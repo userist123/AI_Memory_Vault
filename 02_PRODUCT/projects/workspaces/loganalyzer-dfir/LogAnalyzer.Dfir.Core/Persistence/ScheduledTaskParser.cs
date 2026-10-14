@@ -35,9 +35,7 @@ public sealed partial class ScheduledTaskParser : EvidenceParserBase
 
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
     {
-        XDocument doc;
-        using (var r = XmlReader.Create(fullPath, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null }))
-            doc = XDocument.Load(r);
+        var doc = LogAnalyzer.Dfir.IO.SafeXml.Load(fullPath);
         var task = doc.Root ?? throw new InvalidDataException("XML fără element rădăcină.");
         if (task.Name != Ns + "Task") throw new InvalidDataException($"Rădăcina este {task.Name.LocalName}, nu Task.");
 

@@ -180,7 +180,7 @@ public sealed class EvtxParser : EvidenceParserBase
 
     internal static void ExtractFields(string xml, Dictionary<string, string> fields)
     {
-        var doc = XDocument.Parse(xml);
+        var doc = LogAnalyzer.Dfir.IO.SafeXml.Parse(xml);
         XNamespace ns = doc.Root?.Name.Namespace ?? XNamespace.None;
         var data = doc.Root?.Element(ns + "EventData");
         if (data is not null)

@@ -127,7 +127,7 @@ public static class DeviceInventory
             for (var e = reader.ReadEvent(); e is not null && list.Count < max; e = reader.ReadEvent())
                 using (e)
                 {
-                    var x = System.Xml.Linq.XDocument.Parse(e.ToXml());
+                    var x = LogAnalyzer.Dfir.IO.SafeXml.Parse(e.ToXml());
                     string D(string n) => x.Descendants().FirstOrDefault(d => d.Name.LocalName == "Data" && (string?)d.Attribute("Name") == n)?.Value?.Trim() ?? "";
                     if (D("Capacity") is "0" or "") continue;   // a card reader without a card, or an empty slot
                     list.Add(new(e.TimeCreated is { } t ? new DateTimeOffset(t.ToUniversalTime()) : DateTimeOffset.MinValue,

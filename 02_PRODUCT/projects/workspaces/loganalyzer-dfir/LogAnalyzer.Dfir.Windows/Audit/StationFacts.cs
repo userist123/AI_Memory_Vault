@@ -933,7 +933,7 @@ public static class StationFactCollector
         var d = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         try
         {
-            var x = XDocument.Parse(rec.ToXml());
+            var x = LogAnalyzer.Dfir.IO.SafeXml.Parse(rec.ToXml());
             var root = x.Root!;
             int i = 0;
             foreach (var section in root.Elements().Where(e => e.Name.LocalName is "EventData" or "UserData"))
