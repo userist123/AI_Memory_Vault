@@ -708,6 +708,12 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Agent checkpoint file (00_GOVERNANCE/coordination/tasks/README.md template); not a memory note, intentionally has no note frontmatter."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-retrieval-ceiling.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (cold-resume protocol in 00_GOVERNANCE/coordination/tasks/README.md); plain markdown by design, not a note."
     }
   ]
 }
