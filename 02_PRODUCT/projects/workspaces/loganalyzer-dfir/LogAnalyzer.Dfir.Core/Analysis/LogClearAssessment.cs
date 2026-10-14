@@ -84,8 +84,14 @@ public static class LogClearAssessment
         static string Field(string? x, string name)
         {
             if (string.IsNullOrEmpty(x)) return "";
-            var m = System.Text.RegularExpressions.Regex.Match(x, $"(?:<Data\\s+Name=\"{name}\"\\s*>|<{name}>)([^<]*)<", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-            return m.Success ? System.Net.WebUtility.HtmlDecode(m.Groups[1].Value).Trim() : "";
+            var n = System.Text.RegularExpressions.Regex.Escape(name);
+            try
+            {
+                var m = System.Text.RegularExpressions.Regex.Match(x, $"(?:<Data\\s+Name=\"{n}\"\\s*>|<{n}>)([^<]*)<", System.Text.RegularExpressions.RegexOptions.IgnoreCase,
+                    RegexDefaults.RuleMatchTimeout);
+                return m.Success ? System.Net.WebUtility.HtmlDecode(m.Groups[1].Value).Trim() : "";
+            }
+            catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return ""; }
         }
         return (Field(xml, "SubjectUserName"), Field(xml, "SubjectDomainName"));
     }

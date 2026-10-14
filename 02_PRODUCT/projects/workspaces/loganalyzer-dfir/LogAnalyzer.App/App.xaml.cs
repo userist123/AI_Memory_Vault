@@ -20,6 +20,7 @@ namespace LogAnalyzer.UI
         /// <summary>Runs before WPF creates the application object, i.e. before any of the application's own native libraries is loaded.</summary>
         static App()
         {
+            LogAnalyzer.Dfir.RegexDefaults.Apply();     // security audit #11: before the first regex of the process is built
             VerifyNativeLibrariesOrExit();
         }
 

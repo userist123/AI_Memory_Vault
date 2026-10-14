@@ -18,7 +18,7 @@ public static partial class Wp11Rules
     private static void Vss(Ctx c, List<Finding> o)
     {
         var lists = c.Data.Lists.Vss;
-        var patterns = lists.CommandPatterns.Select(p => (P: p, Rx: new Regex(p.Regex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200)))).ToList();
+        var patterns = lists.CommandPatterns.Select(p => (P: p, Rx: new Regex(p.Regex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, LogAnalyzer.Dfir.RegexDefaults.RuleMatchTimeout))).ToList();
         var hits = new List<VssHit>();
         foreach (var e in c.Events)
         {
