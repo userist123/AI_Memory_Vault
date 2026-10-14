@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Analysis;
@@ -18,8 +17,9 @@ public static partial class Wp11Rules
     private static void Vss(Ctx c, List<Finding> o)
     {
         var lists = c.Data.Lists.Vss;
-        var patterns = lists.CommandPatterns.Select(p => (P: p, Rx: new Regex(p.Regex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, LogAnalyzer.Dfir.RegexDefaults.RuleMatchTimeout))).ToList();
+        var patterns = lists.CommandPatterns.Select(p => (P: p, Rx: RulePatterns.Compile(p.Regex))).ToList();
         var hits = new List<VssHit>();
+        var notEvaluated = new List<TimelineEvent>();
         foreach (var e in c.Events)
         {
             string cmd; bool start;
@@ -28,13 +28,16 @@ public static partial class Wp11Rules
             else if (Ev(e, "Microsoft-Windows-PowerShell/Operational", 4104)) { cmd = F(e, "ScriptBlockText"); start = false; }
             else continue;
             if (cmd.Length == 0) continue;
+            bool timedOut = false, matched = false;
             foreach (var (p, rx) in patterns)
             {
-                bool m;
-                try { m = rx.IsMatch(cmd); } catch (RegexMatchTimeoutException) { m = false; }
-                if (m) { hits.Add(new(e, p, cmd, start)); break; }
+                var m = RulePatterns.Match(rx, cmd);
+                if (m is null) { timedOut = true; continue; }   // "neevaluat" for this pattern, never "no match"
+                if (m.Value) { hits.Add(new(e, p, cmd, start)); matched = true; break; }
             }
+            if (timedOut && !matched) notEvaluated.Add(e);
         }
+        if (notEvaluated.Count > 0) o.Add(RulePatterns.NotEvaluated(c.NextId(), "VSS-SNAPSHOT-DELETED", "Impact", notEvaluated));
         var sysEvents = c.Events.Where(e => (Ev(e, "System", 25, 33) && e.Provider.Equals("volsnap", StringComparison.OrdinalIgnoreCase)) ||
                                             (Ev(e, "Application", 8193, 8194) && e.Provider.Equals("VSS", StringComparison.OrdinalIgnoreCase))).ToList();
 

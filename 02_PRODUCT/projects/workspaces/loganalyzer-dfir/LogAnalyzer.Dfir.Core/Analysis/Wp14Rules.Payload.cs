@@ -377,15 +377,9 @@ public static partial class Wp14Rules
     {
         var list = new List<(Regex, WeightedPattern)>();
         foreach (var p in l.ClickFixPatterns.Where(p => p.Regex.Length > 0))
-            try { list.Add((new Regex(p.Regex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, LogAnalyzer.Dfir.RegexDefaults.RuleMatchTimeout), p)); }
+            try { list.Add((RulePatterns.Compile(p.Regex), p)); }
             catch (ArgumentException) { }   // an invalid pattern in a data pack is skipped, not fatal
         return list;
-    }
-
-    private static bool SafeMatch(Regex rx, string text)
-    {
-        try { return rx.IsMatch(text); }
-        catch (RegexMatchTimeoutException) { return false; }
     }
 
     private static void PastedCommands(Ctx c, List<Finding> o)
@@ -394,11 +388,18 @@ public static partial class Wp14Rules
         var rows = c.Events.Where(e => e.Source is "RunMRU" or "TypedPaths" && F(e, "Command").Length > 0).ToList();
         if (rows.Count == 0) return;
         var patterns = ClickFixRegexes(l);
+        var notEvaluated = new List<TimelineEvent>();
         foreach (var e in rows)
         {
             var cmd = F(e, "Command");
-            var hit = patterns.Where(p => SafeMatch(p.Rx, cmd)).Select(p => p.P).ToList();
-            if (hit.Sum(p => p.Weight) < l.ClickFixMinWeight) continue;
+            var results = patterns.Select(p => (p.P, M: RulePatterns.Match(p.Rx, cmd))).ToList();
+            var hit = results.Where(r => r.M == true).Select(r => r.P).ToList();
+            if (hit.Sum(p => p.Weight) < l.ClickFixMinWeight)
+            {
+                // a timed-out pattern could have added the missing weight: the value is "neevaluat", not clean
+                if (results.Any(r => r.M is null)) notEvaluated.Add(e);
+                continue;
+            }
             var consequences = new List<TimelineEvent>();
             if (T(e) is { } t0)
             {
@@ -426,5 +427,6 @@ public static partial class Wp14Rules
                 ["Un administrator poate rula din Win+R o comandă PowerShell legitimă pentru o sarcină de întreținere.", "Comanda poate fi copiată dintr-o documentație internă de încredere.", "Textul poate fi lipit și apoi abandonat fără să fie rulat."],
                 refs, "T1204.004", corr ? SemanticType.Correlation : SemanticType.Observation, Confidence.Medium, corr ? Classification.Correlated : Classification.Direct));
         }
+        if (notEvaluated.Count > 0) o.Add(RulePatterns.NotEvaluated(c.NextId(), "CLICKFIX-RUNMRU", "Execution", notEvaluated));
     }
 }
