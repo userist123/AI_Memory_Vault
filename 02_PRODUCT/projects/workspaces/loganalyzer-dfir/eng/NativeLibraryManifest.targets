@@ -9,17 +9,22 @@
     LaNativeManifestPath pointing at it, so the main assembly is recompiled with the manifest as an embedded resource and re-bundled. Pass 2
     re-hashes the publish folder and fails the publish if the libraries differ from what it embedded. The text file next to the exe is still
     written for auditors; a Release build does not trust it (only a Debug build falls back to it).
+
+    Review of the remediations #4: the same runs for a framework-dependent (not single-file) publish, where the managed assemblies are DLLs
+    next to the exe too. The main assembly ($(TargetFileName)) is the one that carries the embedded manifest, so it cannot list its own hash:
+    it is left out of the manifest and the startup check exempts exactly that one file name (a replaced main assembly would replace the
+    checker as well; the install-folder ACL check covers that case). A non-Debug build without the embedded manifest refuses an elevated start.
   -->
   <ItemGroup Condition="'$(LaNativeManifestPath)' != ''">
     <EmbeddedResource Include="$(LaNativeManifestPath)" LogicalName="native-libraries.sha256" />
   </ItemGroup>
 
-  <Target Name="WriteNativeLibraryManifest" AfterTargets="Publish" Condition="'$(PublishSingleFile)' == 'true'">
+  <Target Name="WriteNativeLibraryManifest" AfterTargets="Publish">
     <PropertyGroup>
       <_LaManifestObj>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\$(IntermediateOutputPath)native-libraries.sha256'))</_LaManifestObj>
     </PropertyGroup>
     <ItemGroup>
-      <_LaPublishedDll Include="$(PublishDir)*.dll" />
+      <_LaPublishedDll Include="$(PublishDir)*.dll" Exclude="$(PublishDir)$(TargetFileName)" />
     </ItemGroup>
     <Error Condition="'@(_LaPublishedDll)' == ''" Text="Publicarea nu a produs nicio bibliotecă nativă lângă executabil; manifestul nativ nu poate fi scris." />
     <GetFileHash Files="@(_LaPublishedDll)" Algorithm="SHA256" HashEncoding="hex">

@@ -28,8 +28,10 @@ namespace LogAnalyzer.UI
         /// Security audit #5 + independent review #3: the executable (elevated, highestAvailable) loads SQLCipher / WPF / QuestPDF native libraries
         /// from its own folder; they must match the SHA-256 manifest EMBEDDED in this assembly at publish (eng/NativeLibraryManifest.targets), and
         /// no other DLL may be there. The embedded manifest is checked whenever it is present, single-file or not; only a Debug build falls back to
-        /// the text file next to the exe. When a manifest was checked, the install folder must also be writable only by Administrators / SYSTEM:
-        /// otherwise an elevated start is refused and a standard start warns. A development build run from bin (no manifest) is not checked.
+        /// the text file next to the exe; a non-Debug build without the embedded manifest never starts elevated (review of the remediations #4).
+        /// An elevated process always has its install folder checked (writable only by Administrators / SYSTEM, otherwise refused); a standard
+        /// start warns. A Debug build run from bin (no manifest, not elevated) is not checked. The DLL search order is restricted earlier still,
+        /// by the module initializer in DllSearchOrder.cs.
         /// </summary>
         private static void VerifyNativeLibrariesOrExit()
         {
@@ -38,31 +40,29 @@ namespace LogAnalyzer.UI
                 if (s is not null) using (var r = new System.IO.StreamReader(s)) embedded = r.ReadToEnd();
 #pragma warning disable IL3000 // Location is empty exactly when running as a single-file bundle.
             bool singleFile = string.IsNullOrEmpty(typeof(App).Assembly.Location);
+            // Framework-dependent publish: this assembly carries the manifest and is the one DLL it cannot list (eng/NativeLibraryManifest.targets).
+            var selfFile = singleFile ? null : System.IO.Path.GetFileName(typeof(App).Assembly.Location);
 #pragma warning restore IL3000
 #if DEBUG
             const bool debugBuild = true;
 #else
             const bool debugBuild = false;
 #endif
-            var dir = AppContext.BaseDirectory;
-            var check = LogAnalyzer.Dfir.IO.NativeLibraryManifest.VerifyInstall(dir, embedded, debugBuild, singleFile);
-            if (!check.Ok)
-            {
-                NativeMessageBox(IntPtr.Zero, check.Message, "LogAnalyzer – biblioteci native neverificate", 0x10 /* MB_ICONERROR */);
-                Environment.Exit(3);
-            }
-            if (!check.Checked) return;
             bool elevated;
             using (var id = System.Security.Principal.WindowsIdentity.GetCurrent())
                 elevated = new System.Security.Principal.WindowsPrincipal(id).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
-            var folder = LogAnalyzer.Dfir.IO.NativeLibraryManifest.DecideInstallFolder(LogAnalyzer.Dfir.Auth.AuthStoreProtection.CheckDirectory(dir), elevated);
-            if (folder.Verdict == LogAnalyzer.Dfir.IO.InstallFolderVerdict.RefuseElevated)
+            var dir = AppContext.BaseDirectory;
+            // Review of the remediations #4: one decision for libraries and folder; an elevated process always has its install folder checked,
+            // and a non-Debug build without the embedded manifest never starts elevated.
+            var decision = LogAnalyzer.Dfir.IO.NativeLibraryManifest.DecideStartup(dir, embedded, debugBuild, singleFile, elevated,
+                () => LogAnalyzer.Dfir.Auth.AuthStoreProtection.CheckDirectory(dir), singleFile ? null : selfFile);
+            if (decision.Verdict == LogAnalyzer.Dfir.IO.NativeStartupVerdict.Refuse)
             {
-                NativeMessageBox(IntPtr.Zero, folder.Message, "LogAnalyzer – folder de instalare neprotejat", 0x10 /* MB_ICONERROR */);
-                Environment.Exit(4);
+                NativeMessageBox(IntPtr.Zero, decision.Message, decision.Caption, 0x10 /* MB_ICONERROR */);
+                Environment.Exit(decision.ExitCode);
             }
-            if (folder.Verdict == LogAnalyzer.Dfir.IO.InstallFolderVerdict.Warn)
-                NativeMessageBox(IntPtr.Zero, folder.Message, "LogAnalyzer – folder de instalare neprotejat", 0x30 /* MB_ICONWARNING */);
+            if (decision.Verdict == LogAnalyzer.Dfir.IO.NativeStartupVerdict.Warn)
+                NativeMessageBox(IntPtr.Zero, decision.Message, decision.Caption, 0x30 /* MB_ICONWARNING */);
         }
 
         [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "MessageBoxW", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
