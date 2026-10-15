@@ -4,7 +4,7 @@
 const LOCAL_HOST = /^(localhost|127\.\d+\.\d+\.\d+|\[::1\])(:\d+)?$/i;
 const PUBLIC_PATHS = [
   /^\/share\/[A-Za-z0-9_-]{43}\/?$/,                 // prezentarea pentru client
-  /^\/api\/share\/[A-Za-z0-9_-]{43}(\/feedback|\/changes(\/[0-9a-f-]{36})?)?$/,  // revizia partajată, părerile și modificările de aprobat
+  /^\/api\/share\/[A-Za-z0-9_-]{43}(\/feedback|\/choices|\/changes(\/[0-9a-f-]{36})?)?$/,  // revizia partajată, părerile, alegerea variantelor pe cameră și modificările de aprobat
   /^\/_next\//, /^\/tex\//, /^\/models\//, /^\/favicon\.(ico|svg)$/,
 ];
 /** Cererea vine de pe acest calculator (nu prin tunel): gazda e locală, fără antetul pus de tunel; x-forwarded-host
