@@ -21,21 +21,27 @@ public sealed record EgressPathFact(string Kind, string Description, bool? Inter
 /// </summary>
 internal static class EgressPathCollector
 {
-    public static List<EgressPathFact> Collect()
+    /// <summary>The paths found. A source that could not be read is added to <paramref name="unread"/> ("name (reason)"), never treated as empty.</summary>
+    public static List<EgressPathFact> Collect(List<string> unread)
     {
         var paths = new List<EgressPathFact>();
-        Guard(() => Adapters(paths));
-        Guard(() => StaticConfiguration(paths));
-        Guard(() => Proxies(paths));
-        Guard(() => RasProfiles(paths));
+        Guard(unread, "proprietățile adaptoarelor de rețea", () => Adapters(paths));
+        Guard(unread, "configurația interfețelor și rutele permanente din registru", () => StaticConfiguration(paths));
+        Guard(unread, "setările proxy", () => Proxies(paths));
+        Guard(unread, "profilurile VPN / acces la distanță", () => RasProfiles(paths));
         return paths;
     }
 
-    private static void Guard(Action a)
+    /// <summary>Runs one source; a failure is recorded in <paramref name="unread"/> so that N11 can say NEDETERMINAT instead of "nothing found".</summary>
+    internal static void Guard(List<string> unread, string source, Action a)
     {
         try { a(); }
         catch (Exception ex) when (ex is NetworkInformationException or UnauthorizedAccessException or System.Security.SecurityException or IOException
-                                      or System.Runtime.InteropServices.COMException or InvalidOperationException) { }
+                                      or System.Runtime.InteropServices.COMException or InvalidOperationException
+                                      or ArgumentException or FormatException or IndexOutOfRangeException or OverflowException)
+        {
+            unread.Add($"{source} ({ex.Message})");
+        }
     }
 
     // ---- adapters (active gateways and DNS servers; radios and tunnels even when down) -------------------------------

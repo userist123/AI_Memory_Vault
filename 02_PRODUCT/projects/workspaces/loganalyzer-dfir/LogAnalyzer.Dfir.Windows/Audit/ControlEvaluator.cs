@@ -100,43 +100,60 @@ public static class ControlEvaluator
 
     private static void Accounts(StationFacts f, ControlReport r)
     {
+        // A gap on the accounts source means the list may be PARTIAL (enumeration stopped midway): a check is never CONFORM on it, only what was
+        // actually found is reported (an active Guest stays NECONFORM), the rest is NEDETERMINATE with the reason of the gap.
+        var gap = f.Gaps.FirstOrDefault(g => g.Artifact == "Conturi locale");
+        string partial = gap is null ? "" : $"Lista conturilor locale este incompletă ({gap.Reason}), deci verificarea nu se poate face pe ea.";
         if (f.Accounts.Count == 0)
         {
-            Add(r, "C01", "Conturi", "Conturi locale", ControlStatus.Nedeterminat, "Lista conturilor locale nu a putut fi citită.");
+            Add(r, "C01", "Conturi", "Conturi locale", ControlStatus.Nedeterminat, "Lista conturilor locale nu a putut fi citită." + (gap is null ? "" : $" ({gap.Reason})"));
             return;
         }
         var guest = f.Accounts.FirstOrDefault(a => a.Sid.EndsWith("-501", StringComparison.Ordinal));
         Add(r, "C01", "Conturi", "Contul Guest este dezactivat",
-            guest is null || guest.Disabled ? ControlStatus.Conform : ControlStatus.Neconform,
-            guest is null ? "Contul Guest nu există." : guest.Disabled ? $"Contul {guest.Name} este dezactivat." : $"Contul {guest.Name} este ACTIV.",
+            guest is { Disabled: false } ? ControlStatus.Neconform : gap is not null ? ControlStatus.Nedeterminat : ControlStatus.Conform,
+            guest is { Disabled: false } ? $"Contul {guest.Name} este ACTIV." : gap is not null ? partial
+                : guest is null ? "Contul Guest nu există." : $"Contul {guest.Name} este dezactivat.",
             rec: "Dezactivați contul Guest.");
 
         var admins = f.Accounts.Where(a => a.IsAdministrator && !a.Disabled).ToList();
         Add(r, "C02", "Conturi", "Administratori locali activi", ControlStatus.DeVerificat,
-            $"{Ro.Capitalize(Ro.CountMasc(admins.Count, "cont activ", "conturi active"))} cu drepturi de administrator: {string.Join(", ", admins.Select(a => a.Name))}. Comparați cu lista aprobată.",
+            $"{Ro.Capitalize(Ro.CountMasc(admins.Count, "cont activ", "conturi active"))} cu drepturi de administrator: {string.Join(", ", admins.Select(a => a.Name))}. Comparați cu lista aprobată."
+            + (gap is null ? "" : $" Atenție: lista conturilor locale este incompletă ({gap.Reason}); pot exista și alți administratori."),
             admins.Select(a => $"{a.Name} ({a.Sid}), ultima autentificare {a.LastLogonUtc?.ToString("yyyy-MM-dd HH:mm") ?? "necunoscută"}"),
             "Fiecare administrator trebuie să aibă aprobare scrisă; conturile de administrator nu se folosesc pentru lucrul zilnic.");
 
         var builtin = f.Accounts.FirstOrDefault(a => a.Sid.EndsWith("-500", StringComparison.Ordinal));
-        if (builtin is not null)
-            Add(r, "C03", "Conturi", "Contul Administrator încorporat", builtin.Disabled ? ControlStatus.Conform : ControlStatus.DeVerificat,
-                builtin.Disabled ? "Dezactivat." : $"Contul încorporat {builtin.Name} este activ.", rec: "Dezactivați sau redenumiți contul Administrator încorporat dacă nu este necesar.");
+        if (builtin is { Disabled: false })
+            Add(r, "C03", "Conturi", "Contul Administrator încorporat", ControlStatus.DeVerificat,
+                $"Contul încorporat {builtin.Name} este activ.", rec: "Dezactivați sau redenumiți contul Administrator încorporat dacă nu este necesar.");
+        else if (gap is not null)
+            Add(r, "C03", "Conturi", "Contul Administrator încorporat", ControlStatus.Nedeterminat, partial);
+        else if (builtin is not null)
+            Add(r, "C03", "Conturi", "Contul Administrator încorporat", ControlStatus.Conform, "Dezactivat.", rec: "Dezactivați sau redenumiți contul Administrator încorporat dacă nu este necesar.");
 
         var noPwd = f.Accounts.Where(a => !a.Disabled && !a.PasswordRequired).ToList();
-        Add(r, "C04", "Conturi", "Conturi active pentru care parola nu este obligatorie", noPwd.Count == 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
-            noPwd.Count == 0 ? "Toate conturile active necesită parolă."
-                : $"Conturi cu indicatorul PASSWD_NOTREQD: {string.Join(", ", noPwd.Select(a => a.Name))}. Indicatorul permite o parolă goală; nu dovedește că parola este goală.",
+        Add(r, "C04", "Conturi", "Conturi active pentru care parola nu este obligatorie",
+            noPwd.Count > 0 ? ControlStatus.DeVerificat : gap is not null ? ControlStatus.Nedeterminat : ControlStatus.Conform,
+            noPwd.Count > 0 ? $"Conturi cu indicatorul PASSWD_NOTREQD: {string.Join(", ", noPwd.Select(a => a.Name))}. Indicatorul permite o parolă goală; nu dovedește că parola este goală."
+                + (gap is null ? "" : $" Lista conturilor este incompletă ({gap.Reason}).")
+                : gap is not null ? partial : "Toate conturile active necesită parolă.",
             noPwd.Select(a => a.Name), "Verificați că fiecare cont are parolă; eliminați indicatorul (net user <cont> /passwordreq:yes).");
 
         var neverExpire = f.Accounts.Where(a => !a.Disabled && !a.PasswordExpires && !a.Sid.EndsWith("-503") && !a.Sid.EndsWith("-504")).ToList();
         if (neverExpire.Count > 0)
             Add(r, "C05", "Conturi", "Parole care nu expiră", ControlStatus.DeVerificat,
-                $"Conturi active cu parolă care nu expiră: {string.Join(", ", neverExpire.Select(a => a.Name))}.", neverExpire.Select(a => a.Name),
-                "Justificați fiecare excepție sau activați expirarea parolei.");
+                $"Conturi active cu parolă care nu expiră: {string.Join(", ", neverExpire.Select(a => a.Name))}." + (gap is null ? "" : $" Lista conturilor este incompletă ({gap.Reason})."),
+                neverExpire.Select(a => a.Name), "Justificați fiecare excepție sau activați expirarea parolei.");
+        else if (gap is not null)
+            Add(r, "C05", "Conturi", "Parole care nu expiră", ControlStatus.Nedeterminat, partial);
 
         var rdpUsers = f.Accounts.Where(a => a.IsRemoteDesktopUser).ToList();
         if (rdpUsers.Count > 0)
-            Add(r, "C06", "Conturi", "Membri Remote Desktop Users", ControlStatus.DeVerificat, string.Join(", ", rdpUsers.Select(a => a.Name)));
+            Add(r, "C06", "Conturi", "Membri Remote Desktop Users", ControlStatus.DeVerificat,
+                string.Join(", ", rdpUsers.Select(a => a.Name)) + (gap is null ? "" : $". Lista conturilor este incompletă ({gap.Reason})."));
+        else if (gap is not null)
+            Add(r, "C06", "Conturi", "Membri Remote Desktop Users", ControlStatus.Nedeterminat, partial);
     }
 
     // ---- configuration ----------------------------------------------------------------------------------------
@@ -452,24 +469,42 @@ public static class ControlEvaluator
         }
         string S(string k) => f.Settings.TryGetValue(k, out var v) ? v : "";
         var paths = new List<EgressPathFact>(f.EgressPaths);
-        if (int.TryParse(S("Wlan.ProfileCount"), out var wp) && wp > 0) paths.Add(new("Profil Wi-Fi salvat", $"{Ro.CountMasc(wp, "profil Wi-Fi salvat", "profiluri Wi-Fi salvate")}", false, false));
-        if (S("ICS.Shared").StartsWith("da", StringComparison.Ordinal)) paths.Add(new("Partajarea conexiunii (ICS)", S("ICS.Shared"), false, true));
+        // An empty value means the source was NOT read, never "nothing there": every unread source is named, and with any of them N11 is never CONFORM.
+        var unread = new List<string>(f.EgressUnread);
+        if (!int.TryParse(S("Wlan.ProfileCount"), out var wp))
+            unread.Add("profilurile Wi-Fi salvate nu au putut fi citite (necesită drepturi de administrator)");
+        else if (wp > 0) paths.Add(new("Profil Wi-Fi salvat", $"{Ro.CountMasc(wp, "profil Wi-Fi salvat", "profiluri Wi-Fi salvate")}", false, false));
+        var ics = S("ICS.Shared");
+        if (ics.StartsWith("da", StringComparison.Ordinal)) paths.Add(new("Partajarea conexiunii (ICS)", ics, false, true));
+        else if (ics == "" && S("ICS.PolicyShowUI") == "0")   // as N10: unread, but the policy forbids turning it on
+            paths.Add(new("Partajarea conexiunii (ICS)", "starea partajării conexiunii nu a putut fi citită; politica interzice activarea ei", null, false));
+        else if (ics == "") unread.Add("partajarea conexiunii (ICS): starea ei nu a putut fi citită");
+        if (S("Net.AdapterCount") == "")
+            unread.Add("lista adaptoarelor de rețea (modemuri celulare, telefoane folosite ca modem) nu a putut fi citită");
         if (S("Net.CellularAdapters").Length > 0) paths.Add(new("Date mobile (WWAN)", S("Net.CellularAdapters"), false, true));
         if (S("Net.PhoneAdapters").Length > 0) paths.Add(new("Telefon folosit ca modem", S("Net.PhoneAdapters"), false, true));
+        string unreadText = unread.Count == 0 ? "" : $" Surse necitite: {string.Join("; ", unread)}.";
 
         // Kinds that lead outside by nature: a path found while active is a finding; present but inactive needs a look.
         static bool ByNature(EgressPathFact p) => p.Kind is not ("Gateway" or "Server DNS" or "Rută permanentă" or "Proxy");
         bool standalone = f.Posture == StationPosture.Standalone;
-        var bad = paths.Where(p => standalone || (p.Internal == false && (!ByNature(p) || p.Active))).ToList();
-        var review = standalone ? [] : paths.Where(p => !bad.Contains(p) && (p.Internal is null || (p.Internal == false && ByNature(p)))).ToList();
+        // an ICS state that could not be read (policy forbids it) is a review item in every posture, as in N10, never a path found
+        static bool UnreadIcs(EgressPathFact p) => p.Kind == "Partajarea conexiunii (ICS)" && p.Internal is null;
+        var bad = paths.Where(p => !UnreadIcs(p) && (standalone || (p.Internal == false && (!ByNature(p) || p.Active)))).ToList();
+        var review = paths.Where(p => !bad.Contains(p) && (UnreadIcs(p) || (!standalone && (p.Internal is null || (p.Internal == false && ByNature(p)))))).ToList();
         var evidence = paths.Select(p => $"{p.Kind}: {p.Description}{(p.Internal is true ? " (adresă internă)" : p.Internal is null ? " (nu se poate stabili fără trafic)" : "")}{(p.Active ? "" : " [neactiv acum]")}");
         string rec = standalone
             ? "Scoateți adaptorul, ștergeți configurația (gateway, DNS, proxy, profil VPN sau Wi-Fi) și dezactivați radiourile; investigați cine a configurat-o."
             : "Scoateți sau dezactivați calea care duce în afara rețelei interne (proxy, VPN, radio, modem, gateway sau DNS public) și investigați cine a configurat-o.";
         if (bad.Count > 0)
             Add(r, id, area, title, ControlStatus.Neconform,
-                $"{Ro.Capitalize(Ro.CountFem(bad.Count, "cale spre exterior găsită", "căi spre exterior găsite"))}: {string.Join("; ", bad.Take(8).Select(p => $"{p.Kind} — {p.Description}"))}." + (standalone ? " O stație Standalone nu trebuie să aibă nicio cale." : " Rețeaua izolată nu trebuie să aibă nicio cale spre internet.") + limits,
+                $"{Ro.Capitalize(Ro.CountFem(bad.Count, "cale spre exterior găsită", "căi spre exterior găsite"))}: {string.Join("; ", bad.Take(8).Select(p => $"{p.Kind} — {p.Description}"))}." + (standalone ? " O stație Standalone nu trebuie să aibă nicio cale." : " Rețeaua izolată nu trebuie să aibă nicio cale spre internet.") + unreadText + limits,
                 evidence, rec);
+        else if (unread.Count > 0)
+            Add(r, id, area, title, ControlStatus.Nedeterminat,
+                $"Nu se poate spune că nu există o cale spre internet: {string.Join("; ", unread)}."
+                + (review.Count > 0 ? $" De lămurit și: {string.Join("; ", review.Take(8).Select(p => $"{p.Kind} — {p.Description}"))}." : "") + limits,
+                evidence, "Rulați controlul ca administrator, ca toate sursele să poată fi citite.");
         else if (review.Count > 0)
             Add(r, id, area, title, ControlStatus.DeVerificat,
                 $"{Ro.Capitalize(Ro.CountFem(review.Count, "configurație nu poate fi încadrată automat", "configurații nu pot fi încadrate automat"))}: {string.Join("; ", review.Take(8).Select(p => $"{p.Kind} — {p.Description}"))}. Confirmați că nu duc în afara rețelei interne." + limits,

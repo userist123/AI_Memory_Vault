@@ -110,6 +110,7 @@ public class ControlApplicabilityTests
     {
         var f = Facts(posture);
         f.EgressPaths = [.. paths];
+        ControlMissingSourceTests.N11SourcesRead(f);   // every N11 source read: an unread one makes N11 NEDETERMINAT (ControlMissingSourceTests)
         return Assert.Single(ControlEvaluator.Evaluate(f).Checks, c => c.Id == "N11");
     }
 
