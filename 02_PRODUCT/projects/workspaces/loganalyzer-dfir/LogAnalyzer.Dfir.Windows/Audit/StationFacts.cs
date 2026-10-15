@@ -113,6 +113,12 @@ public sealed class StationFacts
     public string ClockSuspectNote { get; set; } = "";
     /// <summary>"corectat de ... la ..., motiv: ..." when the operator confirmed a clock correction (check S05); empty otherwise.</summary>
     public string ClockAckText { get; set; } = "";
+    /// <summary>Check A11: the previous anchor code checked against the application's audit log; null = not checked (the check is NEDETERMINAT).</summary>
+    public LogAnalyzer.Dfir.Case.AnchorContinuity? PreviousAnchor { get; set; }
+    /// <summary>True when the previous code checked in A11 is the one the station proposed (unsafe), false when it was typed from the paper.</summary>
+    public bool PreviousAnchorFromStation { get; set; }
+    /// <summary>Check A13: the officer list and trust folder against the state at the paper anchor; null = the audit log was not available.</summary>
+    public LogAnalyzer.Dfir.Reporting.OfficerStateAssessment? OfficerAssessment { get; set; }
 }
 
 public static class StationFactCollector
@@ -121,7 +127,7 @@ public static class StationFactCollector
     public static readonly IReadOnlyDictionary<string, int[]> Queries = new Dictionary<string, int[]>
     {
         ["Security"] = [4624, 4625, 4648, 4672, 4720, 4722, 4723, 4724, 4725, 4726, 4738, 4740, 4732, 4733, 4728, 4729, 4756, 4757,
-                        4719, 1102, 4616, 4697, 4698, 4702, 6416,
+                        4719, 1102, 1100, 4616, 4697, 4698, 4702, 6416,
                         // classified folders: handle requested, access, object deleted, permissions / audit rules changed, process creation, share access.
                         // 4658 (handle closed) is not read live: on a station with handle auditing it floods the log and adds only the closing time.
                         4656, 4660, 4663, 4670, 4907, 4688, 5145],

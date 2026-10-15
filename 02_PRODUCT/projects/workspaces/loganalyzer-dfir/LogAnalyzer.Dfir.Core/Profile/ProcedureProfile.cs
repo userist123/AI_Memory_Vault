@@ -38,6 +38,7 @@ public sealed class ProcedureProfile
 
     // Classified folders (control research H1): the folders whose file access must be audited (SACL). The station control reads their audit rules.
     public List<ClassifiedFolderRow> ClassifiedFolders { get; set; } = [];
+
 }
 
 public sealed class WorkingHoursRow { public string Day { get; set; } = ""; public string Start { get; set; } = ""; public string End { get; set; } = ""; }

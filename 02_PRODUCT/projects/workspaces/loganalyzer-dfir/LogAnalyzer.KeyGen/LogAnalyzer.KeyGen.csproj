@@ -7,10 +7,18 @@
     <Nullable>enable</Nullable>
     <AssemblyName>LogAnalyzer.KeyGen</AssemblyName>
     <RootNamespace>LogAnalyzer.KeyGen</RootNamespace>
+    <DefineConstants>$(DefineConstants);LOGANALYZER_KEYGEN</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Management" Version="10.0.10" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- SignedCms for verify-report on officer-signed PDFs: the Microsoft WPF shared framework, no NuGet package (owner-approved 2026-10-16).
+         The CMS verifier is the application's own source file, linked, so the command line and the app check signatures identically. -->
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App" />
+    <Compile Include="..\LogAnalyzer.App\Services\OfficerCms.cs" Link="OfficerCms.cs" />
   </ItemGroup>
 
   <ItemGroup>
