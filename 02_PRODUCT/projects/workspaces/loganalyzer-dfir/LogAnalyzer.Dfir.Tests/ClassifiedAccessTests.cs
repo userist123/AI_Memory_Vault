@@ -367,7 +367,7 @@ public sealed class ClassifiedAccessTests
         Assert.DoesNotContain(all, x => x.Verdict == ExitVerdict.Approved);   // the temporal coincidence it also produces is never approved either
         var noZone = One(Register("a.docx", "2026-10-14 09:01"), noZone: true);
         Assert.Equal(ExitVerdict.ToVerify, noZone.Verdict);
-        Assert.Contains("fusul orar", noZone.Detail);
+        Assert.Contains("fus orar al stației nedeclarat — comparația orelor nu este posibilă", noZone.Detail);
     }
 
     [Fact]
@@ -515,5 +515,76 @@ public sealed class ClassifiedAccessTests
         Assert.Empty(broken.Valid);
         Assert.Equal(4, broken.Invalid.Count);
         Directory.Delete(dir, true);
+    }
+
+    // ---- third review of PR #291: forged (backdated) hashing windows, R5b -----------------------------------------------------------------------
+
+    [Fact]
+    public void R5b_a_hidden_read_still_makes_the_name_classified_so_the_same_process_writing_it_to_a_stick_is_an_exit()
+    {
+        var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 5, "run-1");
+        var rep = ClassifiedAccess.Analyze(new ClassifiedInput
+        {
+            Folders = [new ClassifiedRoot(Root)], SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc, RemovableDrives = new HashSet<string>(["E:"], StringComparer.OrdinalIgnoreCase),
+            Records = [Own(T0, @"D:\Clasificat\a.docx", "0x1"), Own(T0.AddMinutes(1), @"E:\a.docx", "0x2", "0x7")],   // no KnownFiles: the file is gone from the folder
+        });
+        Assert.Single(rep.SelfActivity);
+        var exit = Assert.Single(rep.Exits);
+        Assert.Equal((ExitChannel.RemovableMedia, ExitVerdict.Unjustified), (exit.Channel, exit.Verdict));
+    }
+
+    [Fact]
+    public void R5_a_window_whose_process_was_started_as_another_program_is_invalid()
+    {
+        var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 5, "run-1");
+        var start = new AccessRecord("event", "Security", 4688, T0.AddMinutes(-2), "Security 4688", new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            { ["NewProcessId"] = "0x4d2", ["NewProcessName"] = @"C:\Users\x\AppData\Local\Temp\tool.exe", ["SubjectUserName"] = "x" });
+        var rep = ClassifiedAccess.Analyze(new ClassifiedInput { Folders = [new ClassifiedRoot(Root)], SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc, Records = [start, Own(T0, @"D:\Clasificat\a.docx", "0x1")] });
+        Assert.Empty(rep.SelfActivity);
+        Assert.Contains(rep.InvalidSelfWindows, x => x.Contains("fereastră de calcul amprente nevalidă") && x.Contains("tool.exe"));
+        // started as the application itself: accepted
+        var ok = start with { Data = new Dictionary<string, string>(start.Data, StringComparer.OrdinalIgnoreCase) { ["NewProcessName"] = Image } };
+        Assert.Single(ClassifiedAccess.Analyze(new ClassifiedInput { Folders = [new ClassifiedRoot(Root)], SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc, Records = [ok, Own(T0, @"D:\Clasificat\a.docx", "0x1")] }).SelfActivity);
+    }
+
+    private static string AuditFile(params string[] lines)
+    {
+        var dir = Path.Combine(AppContext.BaseDirectory, "classified-audit-" + Guid.NewGuid().ToString("N")[..8]);
+        Directory.CreateDirectory(dir);
+        var path = Path.Combine(dir, "audit.jsonl");
+        File.WriteAllLines(path, lines);
+        return path;
+    }
+
+    private static string[] Control(string run, DateTimeOffset start, SelfActivityWindow w, DateTimeOffset end) =>
+    [
+        AuditLine("control.started", start, LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail("Standalone", "Standalone", true, 30, 1, run)),
+        AuditLine("control.hashing", w.EndUtc, LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashingDetail(w)),
+        AuditLine("control.finished", end, LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinishedDetail("WS", true, 1, 0, 0, 0, run)),
+    ];
+
+    [Fact]
+    public void R5_a_backdated_control_appended_to_the_chain_is_refused_and_the_clock_regression_is_reported()
+    {
+        var honest = new SelfActivityWindow(T0, T0.AddMinutes(3), 77, Image, "inspector", 2, "run-A");
+        var forged = new SelfActivityWindow(T0.AddDays(-3), T0.AddDays(-3).AddMinutes(30), 999, Image, "admin", 500, "run-F");
+        var path = AuditFile([.. Control("run-A", T0.AddMinutes(-1), honest, T0.AddMinutes(5)), .. Control("run-F", T0.AddDays(-3).AddMinutes(-1), forged, T0.AddDays(-3).AddMinutes(40))]);
+        var read = LogAnalyzer.Dfir.Auth.OperationAudit.ReadControlHashing(path, chainValid: true);
+        Assert.Equal(honest, Assert.Single(read.Valid));
+        Assert.Contains(read.Invalid, x => x.Contains("run-F"));
+        Assert.Contains(read.Regressions, x => x.Contains("înregistrări cu oră în urmă în jurnalul aplicației"));
+    }
+
+    [Fact]
+    public void R5_a_control_that_starts_before_the_preceding_audit_anchor_is_refused()
+    {
+        var w = new SelfActivityWindow(T0.AddMinutes(1), T0.AddMinutes(3), 77, Image, "inspector", 2, "run-A");
+        // the anchor is one minute AFTER the start that follows it: inside the clock tolerance, but a control cannot start before the anchor that precedes it
+        var path = AuditFile([AuditLine("audit.anchor", T0.AddMinutes(1), "anchor=AAAAA-BBBBB-CCCCC-DDDDD"), .. Control("run-A", T0, w, T0.AddMinutes(5))]);
+        var read = LogAnalyzer.Dfir.Auth.OperationAudit.ReadControlHashing(path, chainValid: true);
+        Assert.Empty(read.Valid);
+        Assert.Contains(read.Invalid, x => x.Contains("ancor"));
+        var fine = AuditFile([AuditLine("audit.anchor", T0.AddMinutes(-10), "anchor=AAAAA-BBBBB-CCCCC-DDDDD"), .. Control("run-A", T0, w, T0.AddMinutes(5))]);
+        Assert.Single(LogAnalyzer.Dfir.Auth.OperationAudit.ReadControlHashing(fine, chainValid: true).Valid);
     }
 }

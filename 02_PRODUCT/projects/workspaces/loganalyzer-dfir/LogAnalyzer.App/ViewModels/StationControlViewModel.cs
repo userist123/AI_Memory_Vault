@@ -313,6 +313,7 @@ namespace LogAnalyzer.UI.ViewModels
                             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { chainValid = false; }
                             var windows = LogAnalyzer.Dfir.Auth.OperationAudit.ReadControlHashing(auditPath, chainValid);
                             facts.SelfWindows.AddRange(windows.Valid);
+                            facts.InvalidSelfWindows.AddRange(windows.Regressions);
                             facts.InvalidSelfWindows.AddRange(windows.Invalid);
                         }
                         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
@@ -346,14 +347,16 @@ namespace LogAnalyzer.UI.ViewModels
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
             {
-                Status = "Eroare la colectare: " + ex.Message;
+                var audited = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlFailed, $"error={ex.GetType().Name}; message={ex.Message}");
+                Status = "Eroare la colectare: " + ex.Message + (audited ? " Eroarea a fost trecută în jurnalul de audit." : " ATENȚIE: eroarea NU a putut fi trecută în jurnalul de audit.");
             }
             catch (Exception ex)
             {
                 // an unexpected error must not take the application down: it is written to the trace and to the sealed audit and shown to the operator
                 System.Diagnostics.Trace.TraceError($"Controlul stației a eșuat: {ex}");
-                LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlFailed, $"error={ex.GetType().Name}; message={ex.Message}");
-                Status = $"Controlul s-a oprit din cauza unei erori neașteptate ({ex.GetType().Name}: {ex.Message}). Eroarea a fost trecută în jurnalul de audit; repetați controlul.";
+                var audited = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlFailed, $"error={ex.GetType().Name}; message={ex.Message}");
+                Status = $"Controlul s-a oprit din cauza unei erori neașteptate ({ex.GetType().Name}: {ex.Message}). " +
+                         (audited ? "Eroarea a fost trecută în jurnalul de audit; repetați controlul." : "ATENȚIE: eroarea NU a putut fi trecută în jurnalul de audit (vezi avertismentul de sus); repetați controlul.");
             }
             finally { IsBusy = false; }
         }

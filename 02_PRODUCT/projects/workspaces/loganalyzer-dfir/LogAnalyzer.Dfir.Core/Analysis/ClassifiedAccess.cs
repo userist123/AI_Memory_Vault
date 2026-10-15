@@ -305,6 +305,14 @@ public static class ClassifiedAccess
         var windows = new List<SelfActivityWindow>();
         foreach (var w in input.SelfWindows)
         {
+            // the process of the window must have been started as the application (4688 for that process id, the latest before the window), when the log has it
+            var started = events.Where(r => r.Channel == "Security" && r.EventId == 4688 && r.TimeUtc is { } st && st <= w.StartUtc.AddMinutes(1) && st >= w.StartUtc.AddDays(-7)
+                                             && ParsePid(r.V("NewProcessId")) == w.ProcessId).OrderBy(r => r.TimeUtc).LastOrDefault();
+            if (started is not null && !Normalize(started.V("NewProcessName")).Equals(Normalize(w.ImagePath), StringComparison.OrdinalIgnoreCase))
+            {
+                rep.InvalidSelfWindows.Add($"fereastră de calcul amprente nevalidă: procesul {w.ProcessId} a fost pornit ca {started.V("NewProcessName")} ({started.Evidence}), nu ca aplicația {w.ImagePath} (control {(w.RunId.Length > 0 ? w.RunId : "fără identificator")}); înregistrările lui sunt tratate ca accese obișnuite.");
+                continue;
+            }
             var read = events.Where(r => r.Channel == "Security" && Candidate(w, r)).Select(r => Normalize(r.V("ObjectName"), input.VolumeMap)).Distinct(StringComparer.OrdinalIgnoreCase).Count();
             if (read > w.Files)
                 rep.InvalidSelfWindows.Add($"fereastră de calcul amprente nevalidă: procesul {w.ProcessId} ({w.ImagePath}) a citit {read} fișiere clasificate, dar fereastra declară {w.Files} (control {(w.RunId.Length > 0 ? w.RunId : "fără identificator")}); înregistrările ei sunt tratate ca accese obișnuite.");
@@ -315,7 +323,10 @@ public static class ClassifiedAccess
             if (windows.Any(w => Candidate(w, r)))
             {
                 // the application's own READ of a classified file (SHA-256 at a control): listed apart, never someone's access, never an exit or a coincidence
-                rep.SelfActivity.Add(new(r.TimeUtc, Who(r), Proc(r), $"{SelfLabel}: {Normalize(r.V("ObjectName"), input.VolumeMap)} — {MaskText(Mask(r))}", false, r.Evidence, r.Origin));
+                var ownPath = roots.Classify(Normalize(r.V("ObjectName"), input.VolumeMap), input.LongPath)!;
+                rep.SelfActivity.Add(new(r.TimeUtc, Who(r), Proc(r), $"{SelfLabel}: {ownPath} — {MaskText(Mask(r))}", false, r.Evidence, r.Origin));
+                // the name stays a classified name: a later write of it elsewhere (a stick) is an exit even when the file is gone from the folder
+                classifiedNames.TryAdd(FileName(ownPath), ownPath);
                 continue;
             }
             switch (r.EventId)
@@ -539,9 +550,11 @@ public static class ClassifiedAccess
     public const string SelfLabel = "activitate proprie a aplicației (calcul amprente)";
 
     /// <summary>The process id of a record ("0x4d2" or "1234"); -1 when absent.</summary>
-    private static int Pid(AccessRecord r)
+    private static int Pid(AccessRecord r) => ParsePid(r.V("ProcessId"));
+
+    private static int ParsePid(string raw)
     {
-        var v = r.V("ProcessId").Trim();
+        var v = raw.Trim();
         if (v.StartsWith("0x", StringComparison.OrdinalIgnoreCase) && int.TryParse(v.AsSpan(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var h)) return h;
         return int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var d) ? d : -1;
     }
@@ -675,7 +688,7 @@ public static class ClassifiedAccess
                 var unknown = new List<string>();
                 if (t is null) unknown.Add("ora ieșirii nu este cunoscută");
                 if (MediumChannel(ch) && serial.Length == 0) unknown.Add("seria suportului pe care a ieșit fișierul nu este cunoscută");
-                if (input.RegisterZone is null) unknown.Add("fusul orar al stației nu este declarat, deci ora din registru nu poate fi comparată");
+                if (input.RegisterZone is null) unknown.Add("fus orar al stației nedeclarat — comparația orelor nu este posibilă");
                 if (rowHashes.Count > 0 && hash.Length != 64) unknown.Add("intrarea are amprentă SHA-256, dar amprenta fișierului nu este cunoscută");
                 if (unknown.Count > 0) { unknownNotes.Add($"Intrarea {row.RegistrationNumber} din registru ar putea acoperi ieșirea, dar nu poate fi confirmată: {string.Join("; ", unknown)}."); continue; }
 
