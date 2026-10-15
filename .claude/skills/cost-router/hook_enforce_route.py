@@ -36,7 +36,9 @@ ROUTER_CALL = re.compile(
 
 
 def invokes_router(command: str) -> bool:
-    return bool(ROUTER_CALL.search(command or ""))
+    # A real router call is short; scanning only the head keeps the regex linear-time in practice
+    # (a long run of separators, e.g. inline minified JSON, made it quadratic past the hook timeout).
+    return bool(ROUTER_CALL.search((command or "")[:2000]))
 
 
 def from_subagent(data: dict) -> bool:
