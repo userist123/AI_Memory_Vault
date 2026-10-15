@@ -708,6 +708,12 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Agent checkpoint file (00_GOVERNANCE/coordination/tasks/README.md template); not a memory note, intentionally has no note frontmatter."
+    },
+    {
+      "path": "10_DOCUMENTATION/journal/2026-10-09-local-model-teacher-student.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Dated journal record (prose, not a memory note); intentionally has no note frontmatter."
     }
   ]
 }
