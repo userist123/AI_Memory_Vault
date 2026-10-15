@@ -40,7 +40,11 @@ public sealed class PdfSignatureCheck
     public static PdfSignatureCheck Check(byte[] pdf, ICmsDetachedVerifier cms)
     {
         var r = new PdfSignatureCheck { _bytes = pdf, SignedFileSha256 = Convert.ToHexString(SHA256.HashData(pdf)) };
-        r.Problem = r.Run(cms);
+        // total on untrusted input: any malformed structure is a reason, never an exception
+        try { r.Problem = r.Run(cms); }
+        catch (Exception ex) when (ex is FormatException or ArgumentException or OverflowException or IndexOutOfRangeException or InvalidOperationException
+                                       or NotSupportedException or System.Security.Cryptography.CryptographicException)
+        { r.Problem = "documentul semnat nu poate fi citit (" + ex.Message + ")"; r.Signer = null; }
         return r;
     }
 
@@ -64,12 +68,12 @@ public sealed class PdfSignatureCheck
         return null;
     }
 
-    public bool OriginalContainsMarker(string marker)
-    {
-        if (OriginalLengths.Count == 0) return false;
-        var m = Encoding.ASCII.GetBytes(marker);
-        return _bytes.AsSpan(0, (int)OriginalLengths.Max()).IndexOf(m) >= 0;
-    }
+    /// <summary>Whether the first <paramref name="length"/> bytes (an original) contain <paramref name="marker"/>.</summary>
+    public bool PrefixContains(long length, string marker) =>
+        length > 0 && length <= _bytes.Length && _bytes.AsSpan(0, (int)length).IndexOf(Encoding.ASCII.GetBytes(marker)) >= 0;
+
+    /// <summary>The whole signed file (for the inspection of what follows the original).</summary>
+    public byte[] Bytes => _bytes;
 
     private string? Run(ICmsDetachedVerifier cms)
     {
@@ -93,9 +97,14 @@ public sealed class PdfSignatureCheck
         if (SubFilter.Length == 0) return "tipul semnăturii nu este acceptat (se acceptă doar ETSI.CAdES.detached și adbe.pkcs7.detached)";
         ClaimedSigningTime = ReadSigningTime(b);
 
-        var der = Convert.FromHexString(Encoding.ASCII.GetString(b, (int)l0 + 1, (int)(a1 - l0 - 2)));
-        der = TrimDer(der);
-        if (der.Length == 0) return "semnătura (/Contents) este goală";
+        var hex = Encoding.ASCII.GetString(b, (int)l0 + 1, (int)(a1 - l0 - 2));
+        if (hex.Length == 0 || hex.Length % 2 != 0) return "semnătura (/Contents) are o lungime greșită";
+        var raw = Convert.FromHexString(hex);
+        var derLength = DerLength(raw);
+        if (derLength is null) return "semnătura (/Contents) nu este o structură CMS cu lungime definită";
+        // the bytes after the CMS must be the zero padding only: otherwise two different files would carry the same signature
+        if (hex.AsSpan((int)(derLength.Value * 2)).IndexOfAnyExcept('0') >= 0) return "umplutura de după semnătură (/Contents) a fost modificată";
+        var der = raw.AsSpan(0, (int)derLength.Value).ToArray();
         var content = new byte[l0 + l1];
         Buffer.BlockCopy(b, 0, content, 0, (int)l0);
         Buffer.BlockCopy(b, (int)a1, content, (int)l0, (int)l1);
@@ -172,31 +181,27 @@ public sealed class PdfSignatureCheck
                 var off = TimeSpan.Zero;
                 int z = s + 14;
                 if (z < b.Length && (b[z] == '+' || b[z] == '-') && z + 6 <= b.Length && int.TryParse(Encoding.ASCII.GetString(b, z + 1, 2), out var hh) && int.TryParse(Encoding.ASCII.GetString(b, z + 4, 2), out var mm))
+                {
+                    if (hh > 14 || mm > 59) return null;   // not a valid UTC offset: the time is treated as not declared
                     off = new TimeSpan(hh, mm, 0) * (b[z] == '-' ? -1 : 1);
+                }
                 return new DateTimeOffset(dt, off).ToUniversalTime();
             }
         }
         return null;
     }
 
-    /// <summary>The DER SEQUENCE at the start of the zero-padded /Contents (definite length); the whole buffer without trailing zeros otherwise.</summary>
-    private static byte[] TrimDer(byte[] d)
+    /// <summary>Length of the DER SEQUENCE at the start of the zero-padded /Contents (definite length only); null when it is not one or does not fit.</summary>
+    private static long? DerLength(byte[] d)
     {
-        if (d.Length >= 2 && d[0] == 0x30)
-        {
-            int lenByte = d[1];
-            if (lenByte < 0x80) return d.AsSpan(0, Math.Min(d.Length, 2 + lenByte)).ToArray();
-            int n = lenByte & 0x7f;
-            if (n is > 0 and <= 4 && d.Length >= 2 + n)
-            {
-                long len = 0;
-                for (int k = 0; k < n; k++) len = (len << 8) | d[2 + k];
-                long total = 2 + n + len;
-                if (total <= d.Length) return d.AsSpan(0, (int)total).ToArray();
-            }
-        }
-        int end = d.Length;
-        while (end > 0 && d[end - 1] == 0) end--;
-        return d.AsSpan(0, end).ToArray();
+        if (d.Length < 2 || d[0] != 0x30) return null;
+        int lenByte = d[1];
+        if (lenByte < 0x80) return 2 + lenByte <= d.Length ? 2 + lenByte : null;
+        int n = lenByte & 0x7f;
+        if (n is 0 or > 4 || d.Length < 2 + n) return null;
+        long len = 0;
+        for (int k = 0; k < n; k++) len = (len << 8) | d[2 + k];
+        long total = 2 + n + len;
+        return total <= d.Length ? total : null;
     }
 }

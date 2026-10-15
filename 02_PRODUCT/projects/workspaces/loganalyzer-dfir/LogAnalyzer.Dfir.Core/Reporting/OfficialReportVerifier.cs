@@ -11,9 +11,14 @@ public sealed record VerificationLine(bool? Passed, string Text)
 public sealed record OfficialVerification(OfficialVerdict Verdict, string Headline, IReadOnlyList<VerificationLine> Lines, string SignerFingerprint, string SignerName,
                                           string OriginalSha256, string SignedSha256, DateTimeOffset? ClaimedSigningTime)
 {
+    /// <summary>"semnătură electronică calificată (…)" only when the certificate declares it (QcStatements); otherwise "avansată".</summary>
+    public string QualifiedLabel { get; init; } = "";
+    /// <summary>Warnings that do not change the verdict (e.g. an outdated runtime).</summary>
+    public IReadOnlyList<string> Warnings { get; init; } = [];
     public string VerdictWord => Verdict switch { OfficialVerdict.Oficial => "OFICIAL", OfficialVerdict.ValidNeoficial => "VALID, DAR NEOFICIAL", _ => "INVALID" };
 
-    public string ToPlainText() => VerdictWord + " — " + Headline + Environment.NewLine + string.Join(Environment.NewLine, Lines.Select(l => $"[{l.Mark}] {l.Text}"));
+    public string ToPlainText() => VerdictWord + " — " + Headline + (QualifiedLabel.Length > 0 ? $" ({QualifiedLabel})" : "") + Environment.NewLine +
+        string.Join(Environment.NewLine, Lines.Select(l => $"[{l.Mark}] {l.Text}").Concat(Warnings.Select(w => "[ATENȚIE] " + w)));
 }
 
 /// <summary>
@@ -25,13 +30,28 @@ public sealed record OfficialVerification(OfficialVerdict Verdict, string Headli
 public static class OfficialReportVerifier
 {
     public static OfficialVerification Verify(byte[] signedPdf, ICmsDetachedVerifier cms, IReadOnlyCollection<string> generatedReportSha256s,
-                                              IReadOnlyList<SecurityOfficerRow> trustedOfficers, string? paperFingerprint, QualifiedSignatureTrust trust)
+                                              IReadOnlyList<SecurityOfficerRow> trustedOfficers, string? paperFingerprint, QualifiedSignatureTrust trust,
+                                              Version? runtime = null)
+    {
+        var warnings = new List<string>();
+        if (RuntimeGuard.Warning(runtime ?? Environment.Version) is { } rw) warnings.Add(rw);
+        try { return Run(signedPdf, cms, generatedReportSha256s, trustedOfficers, paperFingerprint, trust, warnings); }
+        catch (Exception ex) when (ex is FormatException or ArgumentException or OverflowException or IndexOutOfRangeException or InvalidOperationException
+                                       or NotSupportedException or System.Security.Cryptography.CryptographicException)
+        {
+            return new(OfficialVerdict.Invalid, "documentul nu poate fi verificat: " + ex.Message, [new(false, "Documentul nu poate fi citit: " + ex.Message + ".")], "", "", "", "", null) { Warnings = warnings };
+        }
+    }
+
+    private static OfficialVerification Run(byte[] signedPdf, ICmsDetachedVerifier cms, IReadOnlyCollection<string> generatedReportSha256s,
+                                            IReadOnlyList<SecurityOfficerRow> trustedOfficers, string? paperFingerprint, QualifiedSignatureTrust trust, List<string> warnings)
     {
         var lines = new List<VerificationLine>();
+        string label = "";
         var pdf = PdfSignatureCheck.Check(signedPdf, cms);
         string fp = pdf.Signer is { } sc ? OfficerFingerprint.Of(sc) : "", name = pdf.Signer is { } sn ? OfficerFingerprint.CommonName(sn) : "";
         OfficialVerification Done(OfficialVerdict v, string headline, string orig = "") =>
-            new(v, headline, lines, fp, name, orig, pdf.SignedFileSha256, pdf.ClaimedSigningTime);
+            new(v, headline, lines, fp, name, orig, pdf.SignedFileSha256, pdf.ClaimedSigningTime) { Warnings = warnings, QualifiedLabel = label };
 
         if (pdf.Problem is { } why)
         {
@@ -48,9 +68,15 @@ public static class OfficialReportVerifier
                 : "Raportul original: partea semnată nu este identică cu niciun raport generat de aplicație (amprentele din jurnal) — raportul a fost modificat înainte de semnare."));
             return Done(OfficialVerdict.Invalid, "raportul a fost modificat înainte de semnare sau nu este un raport generat de aplicație");
         }
-        lines.Add(new(true, $"Raportul original este exact cel generat de aplicație (SHA-256 {orig.Value.Sha256}); semnătura a fost adăugată la sfârșit, fără să-l schimbe."));
+        if (PdfUpdateInspector.Check(signedPdf, orig.Value.Length) is { } changed)
+        {
+            lines.Add(new(false, "Raportul original este urmat de modificări care nu țin de semnătură: " + changed + "."));
+            return Done(OfficialVerdict.Invalid, "raportul a fost modificat înainte de semnare: " + changed);
+        }
+        lines.Add(new(true, $"Raportul original este exact cel generat de aplicație (SHA-256 {orig.Value.Sha256}), urmat doar de semnătură, fără nicio altă schimbare."));
 
         var cert = pdf.Signer!;
+        label = QualifiedSignatureTrust.QualifiedLabel(cert);
         var at = pdf.ClaimedSigningTime ?? DateTimeOffset.UtcNow;
         if (pdf.ClaimedSigningTime is null) lines.Add(new(null, "Documentul nu declară ora semnării; valabilitatea certificatului s-a verificat la ora de acum."));
         var v = trust.Validate(cert, at);
@@ -64,7 +90,7 @@ public static class OfficialReportVerifier
             : "Lanțul certificatului sau revocarea: " + v.Message + " — importați certificatul autorității și lista de revocare (CRL) a emitentului."));
 
         bool onStationList = trustedOfficers.Any(t => OfficerFingerprint.Same(t.Fingerprint, fp));
-        lines.Add(new(onStationList, onStationList ? $"Semnatarul este ofițer de securitate înregistrat pe această stație (amprenta {fp})."
+        lines.Add(new(onStationList, onStationList ? $"Semnatarul este ofițer de securitate declarat pe stație (neconfirmat), amprenta {fp}; doar amprenta de pe procesul-verbal îl confirmă."
                                                     : $"Semnatarul (amprenta {fp}) NU este în lista ofițerilor de securitate a acestei stații."));
         bool paperGiven = OfficerFingerprint.Normalize(paperFingerprint).Length > 0;
         bool paperMatches = paperGiven && OfficerFingerprint.Same(paperFingerprint, fp);

@@ -50,6 +50,9 @@ namespace LogAnalyzer.UI.ViewModels
 
         private static QualifiedSignatureTrust Trust() => QualifiedSignatureTrust.FromDirectory();
 
+        /// <summary>Officer, trust and anchor events carry the state of the officer store and the trust folder, so A13 sees files changed outside the application.</summary>
+        internal static void RecordOfficerEvent(string ev, string detail) => AuthApp.Record(ev, detail + "; " + OfficerState.Current().Detail);
+
         [RelayCommand]
         private void ShowStationAnchorHint()
         {
@@ -72,6 +75,9 @@ namespace LogAnalyzer.UI.ViewModels
         {
             facts.PreviousAnchor = AuditAnchor.Verify(auditPath, previousCode);
             facts.PreviousAnchorFromStation = fromStation;
+            facts.OfficerStateNow = OfficerState.Current().Detail;
+            try { facts.OfficerStateRecorded = OfficerState.LastRecorded(auditPath); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { facts.OfficerStateNow = null; }
             try
             {
                 var since = facts.PreviousAnchor.MatchedSeq;
@@ -99,7 +105,7 @@ namespace LogAnalyzer.UI.ViewModels
             try
             {
                 var a = AuditAnchor.Current(log);
-                if (a is not null) AuthApp.Record(OperationAudit.AnchorRecorded, OperationAudit.AnchorRecordedDetail(a, reason));
+                if (a is not null) RecordOfficerEvent(OperationAudit.AnchorRecorded, OperationAudit.AnchorRecordedDetail(a, reason));
                 return a;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return null; }
@@ -213,7 +219,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     var kind = QualifiedSignatureTrust.Import(f);
                     done.Add($"{Path.GetFileName(f)}: {kind}");
-                    AuthApp.Record(OperationAudit.OfficerTrustImported, $"file={Path.GetFileName(f)}; kind={kind}; sha256={Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(f)))}");
+                    RecordOfficerEvent(OperationAudit.OfficerTrustImported, $"file={Path.GetFileName(f)}; kind={kind}; sha256={Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(f)))}");
                 }
                 catch (Exception ex) when (ex is FormatException or IOException or UnauthorizedAccessException) { done.Add($"{Path.GetFileName(f)}: NU — {ex.Message}"); }
             }
@@ -259,7 +265,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     var row = OfficerRegistry.RegisterFirst(data, identity, DateTimeOffset.UtcNow);
                     store.Save(data);
-                    AuthApp.Record(OperationAudit.OfficerRegistered, OperationAudit.OfficerRegisteredDetail(row.Fingerprint, row.Name, row.Basis, ""));
+                    RecordOfficerEvent(OperationAudit.OfficerRegistered, OperationAudit.OfficerRegisteredDetail(row.Fingerprint, row.Name, row.Basis, ""));
                     OfficerInfo = $"Primul ofițer de securitate: {row.Name}{Environment.NewLine}AMPRENTA CERTIFICATULUI: {row.Fingerprint}{Environment.NewLine}" +
                                   "Treceți amprenta pe procesul-verbal și semnați lângă ea. La verificare, semnătura se compară cu amprenta de pe hârtie.";
                     MessageBox.Show($"AMPRENTA CERTIFICATULUI OFIȚERULUI {row.Name}:\n\n{row.Fingerprint}\n\nTreceți-o pe procesul-verbal și semnați lângă ea.", "Primul ofițer de securitate", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -271,7 +277,7 @@ namespace LogAnalyzer.UI.ViewModels
                 OfficerRequestPdf.Write(requestPath, identity, Environment.MachineName, DateTimeOffset.UtcNow);
                 var pending = OfficerRegistry.AddRequest(data, identity, requestPath, DateTimeOffset.UtcNow);
                 store.Save(data);
-                AuthApp.Record(OperationAudit.OfficerRequested, $"cert_fingerprint={pending.Fingerprint}; name={pending.Name}; request_sha256={pending.RequestSha256}");
+                RecordOfficerEvent(OperationAudit.OfficerRequested, $"cert_fingerprint={pending.Fingerprint}; name={pending.Name}; request_sha256={pending.RequestSha256}");
                 OfficerInfo = $"Cererea de înregistrare pentru {identity.Name} (amprenta {identity.Fingerprint}) este în {requestPath}. Un ofițer deja înregistrat trebuie să o semneze cu cardul lui.";
                 if (MessageBox.Show("Cererea trebuie semnată de un ofițer de securitate deja înregistrat.\nEste prezent acum, cu cardul în cititor?\nNu = cererea se semnează mai târziu (aici sau în Adobe) și se alege apoi din acest buton.",
                                     "Aprobarea unui ofițer înregistrat", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
@@ -292,7 +298,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             var row = OfficerRegistry.CompleteRequest(data, signedRequest, SignedCmsVerifier.Instance, DateTimeOffset.UtcNow);
             store.Save(data);
-            AuthApp.Record(OperationAudit.OfficerRegistered, OperationAudit.OfficerRegisteredDetail(row.Fingerprint, row.Name, row.Basis, row.ApprovedBy));
+            RecordOfficerEvent(OperationAudit.OfficerRegistered, OperationAudit.OfficerRegisteredDetail(row.Fingerprint, row.Name, row.Basis, row.ApprovedBy));
             OfficerInfo = $"Ofițer de securitate înregistrat: {row.Name}{Environment.NewLine}Amprenta certificatului: {row.Fingerprint}{Environment.NewLine}Aprobat de ofițerul cu amprenta {row.ApprovedBy}.";
             Status = "Ofițerul de securitate a fost înregistrat.";
         }

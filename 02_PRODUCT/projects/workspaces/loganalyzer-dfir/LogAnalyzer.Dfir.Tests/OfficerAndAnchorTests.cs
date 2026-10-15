@@ -343,8 +343,8 @@ public sealed class OfficerAndAnchorTests : IDisposable
         var signed = PdfIncrementalSigner.Sign(bytes, Look, cms);
         var check = PdfSignatureCheck.Check(signed, cms);
         Assert.Null(check.Problem);
-        Assert.True(check.OriginalContainsMarker(OfficerRegistry.RequestMarker(row.Fingerprint)));
-        Assert.False(check.OriginalContainsMarker(OfficerRegistry.RequestMarker(new string('A', 64))));
+        Assert.True(check.PrefixContains(bytes.Length, OfficerRegistry.RequestMarker(row.Fingerprint)));
+        Assert.False(check.PrefixContains(bytes.Length, OfficerRegistry.RequestMarker(new string((char)65, 64))));
     }
 
     private static System.Security.Cryptography.X509Certificates.X509Certificate2 TestCert()

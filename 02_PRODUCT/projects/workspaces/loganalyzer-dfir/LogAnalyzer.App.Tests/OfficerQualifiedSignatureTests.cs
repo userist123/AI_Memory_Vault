@@ -19,7 +19,7 @@ namespace LogAnalyzer.App.Tests;
 /// with SignedCms) and the same verifier accepts our output and Adobe's. A software test CA, test certificates (with and without non-repudiation) and
 /// test CRLs are made in memory; the smart card is replaced by a certificate with a software key through the same code path. Test material only.
 /// </summary>
-public sealed class OfficerQualifiedSignatureTests : IDisposable
+public sealed partial class OfficerQualifiedSignatureTests : IDisposable
 {
     private readonly GapsTestKit _k = new();
     public void Dispose() => _k.Dispose();
@@ -41,10 +41,20 @@ public sealed class OfficerQualifiedSignatureTests : IDisposable
             return new Pki { Ca = req.CreateSelfSigned(Now.AddDays(-30), Now.AddYears(5)) };
         }
 
-        public X509Certificate2 Issue(string cn, bool nonRepudiation)
+        public X509Certificate2 Issue(string cn, bool nonRepudiation, bool qcStatements = false)
         {
             var key = RSA.Create(2048);
             var req = new CertificateRequest($"CN={cn}, O=Test", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            if (qcStatements)
+            {
+                var w = new System.Formats.Asn1.AsnWriter(System.Formats.Asn1.AsnEncodingRules.DER);
+                using (w.PushSequence())
+                {
+                    using (w.PushSequence()) w.WriteObjectIdentifier("0.4.0.1862.1.1");   // QcCompliance
+                    using (w.PushSequence()) w.WriteObjectIdentifier("0.4.0.1862.1.4");   // QcSSCD
+                }
+                req.CertificateExtensions.Add(new X509Extension("1.3.6.1.5.5.7.1.3", w.Encode(), false));
+            }
             req.CertificateExtensions.Add(new X509KeyUsageExtension(nonRepudiation ? X509KeyUsageFlags.NonRepudiation | X509KeyUsageFlags.DigitalSignature : X509KeyUsageFlags.DigitalSignature, true));
             req.CertificateExtensions.Add(X509AuthorityKeyIdentifierExtension.CreateFromCertificate(Ca, true, false));
             using var pub = req.Create(Ca, Now.AddDays(-10), Now.AddYears(2), RandomNumberGenerator.GetBytes(8));
