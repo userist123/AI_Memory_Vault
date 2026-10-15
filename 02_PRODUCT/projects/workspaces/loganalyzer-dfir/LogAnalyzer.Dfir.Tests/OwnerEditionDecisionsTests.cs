@@ -151,11 +151,15 @@ public class OwnerEditionDecisionsTests
     {
         int connects = 0;
         var probe = new DomainControllerProbe(
-            locate: _ => ("dc1.corp.example", [IPAddress.Parse("10.0.0.10"), IPAddress.Parse("203.0.113.5")]),
+            locate: _ => ("dc1.corp.example", [IPAddress.Parse("10.0.0.10"), IPAddress.Parse("203.0.113.5")], "servere DNS configurate: 10.0.0.2"),
             connect: (_, _) => { connects++; return true; }, networkAllowed: () => true);
         var r = probe.Probe("corp.example", CancellationToken.None);
         Assert.Equal(DcProbeOutcome.PublicAddress, r.Outcome);
         Assert.Equal(0, connects);
+        // accurate wording: the locator itself already sent Windows' normal domain-locator traffic; only the probe's TCP connection is withheld
+        Assert.DoesNotContain("nicio adresă nu a fost contactată", r.Detail);
+        Assert.Contains("nicio conexiune TCP", r.Detail);
+        Assert.Contains("servere DNS configurate: 10.0.0.2", r.Detail);   // what was used, when known
     }
 
     [Fact]
@@ -163,13 +167,13 @@ public class OwnerEditionDecisionsTests
     {
         var tried = new List<IPAddress>();
         var probe = new DomainControllerProbe(
-            locate: _ => ("dc1.corp.example", [IPAddress.Parse("fe80::1"), IPAddress.Parse("10.0.0.10")]),
+            locate: _ => ("dc1.corp.example", [IPAddress.Parse("fe80::1"), IPAddress.Parse("10.0.0.10")], ""),
             connect: (ip, _) => { tried.Add(ip); return true; }, networkAllowed: () => true);
         var r = probe.Probe("corp.example", CancellationToken.None);
         Assert.Equal(DcProbeOutcome.Reachable, r.Outcome);
         Assert.Equal([IPAddress.Parse("10.0.0.10")], tried);
 
-        var down = new DomainControllerProbe(locate: _ => ("dc1", [IPAddress.Parse("10.0.0.10")]), connect: (_, _) => false, networkAllowed: () => true);
+        var down = new DomainControllerProbe(locate: _ => ("dc1", [IPAddress.Parse("10.0.0.10")], ""), connect: (_, _) => false, networkAllowed: () => true);
         Assert.Equal(DcProbeOutcome.Unreachable, down.Probe("corp.example", CancellationToken.None).Outcome);
 
         var none = new DomainControllerProbe(locate: _ => null, connect: (_, _) => true, networkAllowed: () => true);
@@ -181,10 +185,78 @@ public class OwnerEditionDecisionsTests
     {
         LogAnalyzer.Core.Services.Connectivity.AppModeContext.ResetForTests();   // default: AirGapped
         bool located = false, connected = false;
-        var probe = new DomainControllerProbe(locate: _ => { located = true; return ("dc1", [IPAddress.Parse("10.0.0.10")]); }, connect: (_, _) => connected = true);
+        var probe = new DomainControllerProbe(locate: _ => { located = true; return ("dc1", [IPAddress.Parse("10.0.0.10")], ""); }, connect: (_, _) => connected = true);
         var r = probe.Probe("corp.example", CancellationToken.None);
         Assert.Equal(DcProbeOutcome.Skipped, r.Outcome);
         Assert.False(located);
         Assert.False(connected);
+    }
+
+    // ---- review round: overall deadline, cancellation, accurate texts -------------------------------------------------------------
+
+    [Fact]
+    public void A_stalled_locator_is_cut_by_the_overall_deadline_and_reported_for_review()
+    {
+        using var release = new ManualResetEventSlim(false);
+        var probe = new DomainControllerProbe(
+            locate: _ => { release.Wait(TimeSpan.FromSeconds(30)); return ("dc1", [IPAddress.Parse("10.0.0.10")], ""); },
+            connect: (_, _) => true, networkAllowed: () => true, deadline: TimeSpan.FromMilliseconds(300));
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var r = probe.Probe("corp.example", CancellationToken.None);
+        sw.Stop();
+        release.Set();
+        Assert.Equal(DcProbeOutcome.TimedOut, r.Outcome);
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5), "the collection was blocked: " + sw.Elapsed);
+
+        var f = Joined();
+        f.DomainController = r;
+        var c = N13(f);
+        Assert.Equal(ControlStatus.DeVerificat, c.Status);
+        Assert.Contains("controlerul de domeniu nu a răspuns în", c.Detail);
+    }
+
+    [Fact]
+    public void A_stalled_connection_is_cut_by_the_same_deadline()
+    {
+        using var release = new ManualResetEventSlim(false);
+        var probe = new DomainControllerProbe(
+            locate: _ => ("dc1", [IPAddress.Parse("10.0.0.10")], ""),
+            connect: (_, _) => { release.Wait(TimeSpan.FromSeconds(30)); return true; }, networkAllowed: () => true, deadline: TimeSpan.FromMilliseconds(300));
+        var r = probe.Probe("corp.example", CancellationToken.None);
+        release.Set();
+        Assert.Equal(DcProbeOutcome.TimedOut, r.Outcome);
+    }
+
+    [Fact]
+    public void A_cancelled_run_is_reported_as_cancelled_not_unreachable()
+    {
+        using var cts = new CancellationTokenSource();
+        var probe = new DomainControllerProbe(
+            locate: _ => ("dc1", [IPAddress.Parse("10.0.0.10")], ""),
+            connect: (_, ct) => { cts.Cancel(); ct.ThrowIfCancellationRequested(); return false; }, networkAllowed: () => true);
+        var r = probe.Probe("corp.example", cts.Token);
+        Assert.Equal(DcProbeOutcome.Cancelled, r.Outcome);
+
+        using var before = new CancellationTokenSource();
+        before.Cancel();
+        Assert.Equal(DcProbeOutcome.Cancelled, new DomainControllerProbe(locate: _ => ("dc1", [IPAddress.Parse("10.0.0.10")], ""), connect: (_, _) => true, networkAllowed: () => true)
+            .Probe("corp.example", before.Token).Outcome);
+
+        var f = Joined();
+        f.DomainController = r;
+        var c = N13(f);
+        Assert.Equal(ControlStatus.Nedeterminat, c.Status);
+        Assert.Contains("verificarea a fost anulată", c.Detail);
+    }
+
+    [Fact]
+    public void Texts_say_that_locating_the_dc_uses_windows_locator_traffic()
+    {
+        var g = CheckGuides.For("N13");
+        Assert.Contains("Netlogon", g.How);
+        Assert.Contains("serverul DNS configurat", g.How);
+        Assert.DoesNotContain("nu contactează nimic", g.How);
+        Assert.Contains("Netlogon", ControlApplicability.All.Single(e => e.Id == "N13").Reason);
+        Assert.DoesNotContain("WMI", CheckGuides.For("N11").Source);
     }
 }
