@@ -44,7 +44,7 @@ public class ControlApplicabilityTests
     [Fact]
     public void Every_check_id_written_in_the_evaluator_source_has_an_entry()
     {
-        var src = File.ReadAllText(RepoFile(Path.Combine("LogAnalyzer.Dfir.Windows", "Audit", "ControlEvaluator.cs")));
+        var src = File.ReadAllText(RepoFile(Path.Combine("LogAnalyzer.Dfir.Windows", "Audit", "ControlEvaluator.cs"))) + File.ReadAllText(RepoFile(Path.Combine("LogAnalyzer.Dfir.Windows", "Audit", "ControlEvaluator.Classified.cs")));
         var ids = Regex.Matches(src, "\"([ACDNPSU][0-9]{2})\"").Select(m => m.Groups[1].Value).Distinct().ToList();
         Assert.True(ids.Count >= 79, "the source scan found too few ids: " + ids.Count);
         foreach (var id in ids) Assert.True(ControlApplicability.TryGet(id, out _), $"no applicability entry for {id}");
