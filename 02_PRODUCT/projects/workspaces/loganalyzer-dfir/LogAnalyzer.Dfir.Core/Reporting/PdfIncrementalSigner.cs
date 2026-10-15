@@ -29,9 +29,12 @@ public static class PdfIncrementalSigner
 
     /// <summary>
     /// Tests only: <paramref name="allowPriorUpdates"/> signs a file that already has incremental updates (what Adobe does with any file), and
-    /// <paramref name="extraObjects"/> are written into the same update (an object number below /Size replaces an original object), to reproduce attacks.
+    /// <paramref name="extraObjects"/> are written into the same update (an object number below /Size replaces an original object), <paramref name="rewrite"/>
+    /// changes the body of any object before it is written, and <paramref name="raw"/> adds raw text with its own header (or, with null text, a FREE xref
+    /// entry), to reproduce attacks.
     /// </summary>
-    internal static byte[] Sign(byte[] original, SignatureAppearance look, ICmsDetachedSigner signer, bool allowPriorUpdates, IReadOnlyDictionary<int, string>? extraObjects)
+    internal static byte[] Sign(byte[] original, SignatureAppearance look, ICmsDetachedSigner signer, bool allowPriorUpdates, IReadOnlyDictionary<int, string>? extraObjects,
+                                Func<int, string, string>? rewrite = null, IReadOnlyList<(int Num, string? Text)>? raw = null)
     {
         if (original.AsSpan().IndexOf("/ByteRange"u8) >= 0) throw new NotSupportedException("documentul este deja semnat");
         var st = PdfStructure.Parse(original, allowPriorUpdates ? 16 : 1);
@@ -68,19 +71,26 @@ public static class PdfIncrementalSigner
         ms.Write(original);
         if (original[^1] != (byte)'\n') ms.WriteByte((byte)'\n');
         var offsets = new SortedDictionary<int, long>();
+        var free = new HashSet<int>();
         foreach (var (num, body) in objects)
         {
             offsets[num] = ms.Position;
-            ms.Write(Encoding.Latin1.GetBytes($"{num} 0 obj\n{body}\nendobj\n"));
+            ms.Write(Encoding.Latin1.GetBytes($"{num} 0 obj\n{(rewrite is null ? body : rewrite(num, body))}\nendobj\n"));
+        }
+        foreach (var (num, text) in raw ?? [])
+        {
+            if (text is null) { free.Add(num); offsets[num] = 0; continue; }
+            offsets[num] = ms.Position;
+            ms.Write(Encoding.Latin1.GetBytes(text));
         }
         long xref = ms.Position;
         var x = new StringBuilder("xref\n");
         foreach (var run in Runs(offsets.Keys.ToList()))
         {
             x.Append(CultureInfo.InvariantCulture, $"{run[0]} {run.Count}\n");
-            foreach (var num in run) x.Append(CultureInfo.InvariantCulture, $"{offsets[num]:D10} 00000 n \n");
+            foreach (var num in run) x.Append(free.Contains(num) ? $"0000000000 00001 f \n" : $"{offsets[num]:D10} 00000 n \n");
         }
-        x.Append(CultureInfo.InvariantCulture, $"trailer\n<</Size {fontObj + 1} /Root {tail.Root} 0 R{(tail.Info > 0 ? $" /Info {tail.Info} 0 R" : "")}{tail.IdEntry} /Prev {tail.StartXref}>>\nstartxref\n{xref}\n%%EOF\n");
+        x.Append(CultureInfo.InvariantCulture, $"trailer\n<</Size {Math.Max(fontObj, offsets.Keys.Max()) + 1} /Root {tail.Root} 0 R{(tail.Info > 0 ? $" /Info {tail.Info} 0 R" : "")}{tail.IdEntry} /Prev {tail.StartXref}>>\nstartxref\n{xref}\n%%EOF\n");
         ms.Write(Encoding.ASCII.GetBytes(x.ToString()));
         var bytes = ms.ToArray();
 

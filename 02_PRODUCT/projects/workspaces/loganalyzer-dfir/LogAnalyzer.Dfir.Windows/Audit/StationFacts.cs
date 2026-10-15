@@ -95,12 +95,8 @@ public sealed class StationFacts
     public LogAnalyzer.Dfir.Case.AnchorContinuity? PreviousAnchor { get; set; }
     /// <summary>True when the previous code checked in A11 is the one the station proposed (unsafe), false when it was typed from the paper.</summary>
     public bool PreviousAnchorFromStation { get; set; }
-    /// <summary>Check A13: changes to the officer list in the sealed audit since the previous anchor (or the period); null = the audit log was not available.</summary>
-    public List<string>? OfficerListChanges { get; set; }
-    /// <summary>What <see cref="OfficerListChanges"/> covers, in words ("de la înregistrarea nr. N" / "în perioada controlată").</summary>
-    public string OfficerListChangesSince { get; set; } = "";
-    public string? OfficerStateRecorded { get; set; }
-    public string? OfficerStateNow { get; set; }
+    /// <summary>Check A13: the officer list and trust folder against the state at the paper anchor; null = the audit log was not available.</summary>
+    public LogAnalyzer.Dfir.Reporting.OfficerStateAssessment? OfficerAssessment { get; set; }
 }
 
 public static class StationFactCollector

@@ -124,18 +124,19 @@ public sealed class OfficerAndAnchorTests : IDisposable
     }
 
     [Fact]
-    public void The_station_hint_is_the_last_recorded_anchor_and_officer_events_are_listed_since_the_anchor()
+    public void The_station_hint_is_the_last_recorded_anchor_and_officer_changes_since_the_paper_anchor_are_listed()
     {
         var s = new AuthService(Path.Combine(_dir, "auth"));
-        s.AuditOperation(null, OperationAudit.OfficerRegistered, OperationAudit.OfficerRegisteredDetail("AAAA", "Unu", OfficerRegistry.BasisFirst, ""));
+        var empty = OfficerState.Compute(Path.Combine(_dir, "none.json"), Path.Combine(_dir, "none")).Detail;
+        s.AuditOperation(null, OperationAudit.OfficerRegistered, OperationAudit.OfficerRegisteredDetail("AAAA", "Unu", OfficerRegistry.BasisFirst, "") + "; " + empty);
         var a = AuditAnchor.Current(s.AuditPath)!;
-        s.AuditOperation(null, OperationAudit.AnchorRecorded, OperationAudit.AnchorRecordedDetail(a, "control"));
+        s.AuditOperation(null, OperationAudit.AnchorRecorded, OperationAudit.AnchorRecordedDetail(a, "control") + "; " + empty);
         Assert.Equal(a.Code, AuditAnchor.LastRecorded(s.AuditPath));
-        s.AuditOperation(null, OperationAudit.OfficerRegistered, OperationAudit.OfficerRegisteredDetail("BBBB", "Doi", OfficerRegistry.BasisApproved, "AAAA"));
-        var since = AuditAnchor.EventsSince(s.AuditPath, OperationAudit.OfficerListEvents, a.Seq, Now);
-        Assert.Single(since);
-        Assert.Contains("Doi", since[0]);
-        Assert.Equal(2, AuditAnchor.EventsSince(s.AuditPath, OperationAudit.OfficerListEvents, null, DateTimeOffset.MinValue).Count);
+        s.AuditOperation(null, OperationAudit.OfficerRegistered, OperationAudit.OfficerRegisteredDetail("BBBB", "Doi", OfficerRegistry.BasisApproved, "AAAA") + "; " + empty);
+        var assessed = OfficerState.Assess(s.AuditPath, a.Seq, empty);
+        Assert.True(assessed.Determinable);
+        Assert.Empty(assessed.Outside);
+        Assert.Contains("Doi", Assert.Single(assessed.Changes));
         Assert.Equal(ChainStatus.Valid, s.VerifyAudit().Status);
     }
 
@@ -203,9 +204,9 @@ public sealed class OfficerAndAnchorTests : IDisposable
     {
         var f = Facts();
         Assert.Equal(ControlStatus.Nedeterminat, Check(ControlEvaluator.Evaluate(f), "A13").Status);
-        f.OfficerListChanges = []; f.OfficerListChangesSince = "de la înregistrarea nr. 7 (controlul anterior)";
+        f.OfficerAssessment = new OfficerStateAssessment(true, [], [], "de la înregistrarea nr. 7 (codul de pe procesul-verbal)");
         Assert.Equal(ControlStatus.Conform, Check(ControlEvaluator.Evaluate(f), "A13").Status);
-        f.OfficerListChanges = ["înregistrarea nr. 9, profile.officer_registered: cert_fingerprint=AAAA"];
+        f.OfficerAssessment = new OfficerStateAssessment(true, [], ["înregistrarea nr. 9, profile.officer_registered: cert_fingerprint=AAAA"], "de la înregistrarea nr. 7");
         var a13 = Check(ControlEvaluator.Evaluate(f), "A13");
         Assert.Equal(ControlStatus.DeVerificat, a13.Status);
         Assert.Single(a13.Evidence);
@@ -233,7 +234,6 @@ public sealed class OfficerAndAnchorTests : IDisposable
         Assert.False(w.IsError);
         Assert.DoesNotContain("securityOfficers", ProfileStore.ToJson(r.Profile!), StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(r.Issues, i => i.Message == ProfileImport.OfficerEntriesIgnored && ProfileImport.FromJson(ProfileStore.ToJson(new ProcedureProfile())).Issues.Count > 0);
-        Assert.Contains(OperationAudit.OfficerImportIgnored, OperationAudit.OfficerListEvents);
     }
 
     [Fact]

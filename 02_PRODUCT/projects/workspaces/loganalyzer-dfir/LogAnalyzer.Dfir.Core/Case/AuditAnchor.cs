@@ -134,25 +134,11 @@ public static class AuditAnchor
         return last;
     }
 
-    /// <summary>
-    /// The entries with one of <paramref name="events"/> written after entry <paramref name="sinceSeq"/> (when the previous anchor was found) or else after
-    /// <paramref name="sinceUtc"/>: "înregistrarea nr. N, data, eveniment, detalii".
-    /// </summary>
-    public static List<string> EventsSince(string logPath, IReadOnlyCollection<string> events, long? sinceSeq, DateTimeOffset sinceUtc)
-    {
-        var list = new List<string>();
-        foreach (var o in Objects(logPath))
-        {
-            var ev = Str(o, "event");
-            if (!events.Contains(ev)) continue;
-            long seq = o["seq"] is { } s ? s.GetValue<long>() : 0;
-            DateTimeOffset? when = null;
-            if (DateTimeOffset.TryParse(Str(o, "whenUtc"), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out var w)) when = w;
-            if (sinceSeq is { } ss ? seq <= ss : when is { } t && t < sinceUtc) continue;
-            list.Add($"înregistrarea nr. {seq}, {when:yyyy-MM-dd HH:mm} UTC, {ev}: {Str(o, "detail")} (de {Str(o, "who")})");
-        }
-        return list;
-    }
+    /// <summary>One entry of the audit log: seq, event, detail, who, when (as written).</summary>
+    public sealed record AuditEvent(long Seq, string Event, string Detail, string Who, string WhenUtc);
+
+    public static List<AuditEvent> Events(string logPath) =>
+        Objects(logPath).Select(o => new AuditEvent(o["seq"] is { } s ? s.GetValue<long>() : 0, Str(o, "event"), Str(o, "detail"), Str(o, "who"), Str(o, "whenUtc"))).ToList();
 
     /// <summary>The detail texts of every entry, in order.</summary>
     public static List<string> AllDetails(string logPath) => Objects(logPath).Select(o => Str(o, "detail")).ToList();

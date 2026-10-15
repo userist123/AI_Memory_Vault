@@ -336,25 +336,32 @@ public static class ControlEvaluator
         foreach (var l in unexplained) r.Actions.Add(new ActionEntry(l.TimeUtc, Who(l), "a oprit serviciul de jurnalizare", "fără închiderea calculatorului", Ev(l)));
     }
 
-    /// <summary>A13: who may sign as security officer must not change unnoticed between controls (changes are listed from the sealed audit).</summary>
+    /// <summary>
+    /// A13: who may sign as security officer must not change unnoticed between controls. The baseline is the state at the anchor typed from the paper; files
+    /// changed outside the application are NECONFORM, changes made through the application are listed for review.
+    /// </summary>
     private static void OfficerListCheck(StationFacts f, ControlReport r)
     {
         const string title = "Lista ofițerilor de securitate schimbată de la controlul anterior";
-        if (f.OfficerListChanges is not { } ch) { Add(r, "A13", "Audit", title, ControlStatus.Nedeterminat, "Jurnalul aplicației nu a fost disponibil, deci schimbările listei de ofițeri nu s-au putut verifica."); return; }
-        // files edited or dropped by hand: the state now differs from the last state the application recorded in its sealed audit
-        var outside = LogAnalyzer.Dfir.Reporting.OfficerState.Differences(f.OfficerStateRecorded, f.OfficerStateNow);
-        if (outside.Count > 0)
+        if (f.OfficerAssessment is not { } a) { Add(r, "A13", "Audit", title, ControlStatus.Nedeterminat, "Jurnalul aplicației nu a fost disponibil, deci lista ofițerilor nu s-a putut verifica."); return; }
+        if (!a.Determinable)
         {
-            Add(r, "A13", "Audit", title, ControlStatus.Neconform,
-                "Lista ofițerilor / autoritățile de încredere modificate în afara aplicației: fișierele nu mai corespund ultimei stări înregistrate de aplicație în jurnalul ei sigilat. " +
-                "Cine poate semna raportul oficial a putut fi schimbat fără urmă în aplicație.",
-                outside.Concat(ch), "Tratați stația ca incident de securitate: comparați lista ofițerilor și certificatele autorităților cu procesele-verbale semnate; ofițerii se înregistrează din nou doar din aplicație.");
+            Add(r, "A13", "Audit", title, ControlStatus.Nedeterminat, "Fără codul de ancorare tastat de pe procesul-verbal anterior nu există o stare de referință sigură: " + a.Since + ".",
+                rec: "Introduceți la începutul controlului codul de ancorare de pe procesul-verbal semnat al controlului anterior.");
             return;
         }
-        Add(r, "A13", "Audit", title, ch.Count == 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
-            ch.Count == 0 ? $"Nicio schimbare a listei ofițerilor de securitate {f.OfficerListChangesSince}."
-                          : $"{Ro.Capitalize(Ro.CountFem(ch.Count, "schimbare", "schimbări"))} privind lista ofițerilor de securitate {f.OfficerListChangesSince}. Fiecare trebuie confirmată de ofițer: cine este pe listă poate semna raportul oficial.",
-            ch, "Comparați amprentele ofițerilor din raport cu cele de pe procesele-verbale semnate; o înregistrare necunoscută ofițerului este un incident de securitate.");
+        if (a.Outside.Count > 0)
+        {
+            Add(r, "A13", "Audit", title, ControlStatus.Neconform,
+                "Lista ofițerilor / autoritățile de încredere modificate în afara aplicației: fișierele nu corespund stării de la controlul anterior, iar schimbarea nu a fost făcută din aplicație. " +
+                "Cine poate semna raportul oficial a putut fi schimbat fără urmă în aplicație.",
+                a.Outside.Concat(a.Changes), "Tratați stația ca incident de securitate: comparați lista ofițerilor și certificatele autorităților cu procesele-verbale semnate; ofițerii se înregistrează din nou doar din aplicație.");
+            return;
+        }
+        Add(r, "A13", "Audit", title, a.Changes.Count == 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
+            a.Changes.Count == 0 ? $"Nicio schimbare a listei ofițerilor de securitate sau a autorităților de încredere {a.Since}."
+                                 : $"{Ro.Capitalize(Ro.CountFem(a.Changes.Count, "schimbare făcută", "schimbări făcute"))} din aplicație {a.Since}. Fiecare trebuie confirmată de ofițer: cine este pe listă poate semna raportul oficial.",
+            a.Changes, "Comparați amprentele ofițerilor din raport cu cele de pe procesele-verbale semnate; o înregistrare necunoscută ofițerului este un incident de securitate.");
     }
 
     /// <summary>A11: the anchor code of the previous control (from the signed paper) is still in the application's audit log (see LogAnalyzer.Dfir.Case.AuditAnchor).</summary>
