@@ -60,6 +60,10 @@ def _run_dir(root: Path, task_id: str) -> Path:
     run.mkdir(parents=True,exist_ok=True)
     return run
 
+#: An Ollama model reference: `name[:tag]` with an optional `namespace/` prefix. Anything else
+#: (option-like, path-like, whitespace, shell metacharacters) is refused before the allowlist check.
+_LOCAL_MODEL_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*(?:/[A-Za-z0-9][A-Za-z0-9._-]*)?(?::[A-Za-z0-9][A-Za-z0-9._-]*)?")
+
 class RuntimeAdapter(Protocol):
     def dispatch(self, packet: WorkPacket, run_dir: Path|None=None) -> DispatchResult: ...
 
@@ -132,7 +136,7 @@ class CommandAdapter:
             local_model = os.environ.get("AI_MEMORY_VAULT_LOCAL_MODEL", "").strip() or self.model
             if not local_model:
                 return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",error="local_llm model is not configured")
-            if local_model.startswith("-"):
+            if local_model.startswith("-") or ".." in local_model or not _LOCAL_MODEL_RE.fullmatch(local_model):
                 return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",error="invalid local model")
             allowed = {self.model}
             config = Path(__file__).resolve().parents[3] / "04_CONFIG" / "model_tiers_local.json"
@@ -141,6 +145,7 @@ class CommandAdapter:
                 allowed.update(str(v.get("model")) for v in payload.values() if isinstance(v, dict) and v.get("model"))
             except (OSError, ValueError, AttributeError):
                 pass
+            allowed.discard(None)
             if local_model not in allowed:
                 return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",error="local model is not allowlisted")
             cmd=[self.binary,"run",local_model]; stdin=text
@@ -175,6 +180,7 @@ class CommandAdapter:
             final=raw_output
         status=DispatchStatus.COMPLETED if proc.returncode==0 else DispatchStatus.FAILED
         model_meta = {}
+        contract_error = None
         if self.runtime_id == "local_llm":
             model = cmd[-1]
             model_meta = {"model": model, "model_digest": "sha256:" + hashlib.sha256(model.encode()).hexdigest()}
@@ -182,9 +188,10 @@ class CommandAdapter:
             required = ("RESULT:", "EVIDENCE:", "CHANGES:", "FAILURES:", "UNKNOWNS:")
             if proc.returncode == 0 and (len(status_line) != 1 or status_line[0].casefold() not in {"pass", "passed"} or not all(x in final for x in required)):
                 status = DispatchStatus.FAILED
+                contract_error = "local_llm output violates the execution contract (STATUS: PASS + RESULT/EVIDENCE/CHANGES/FAILURES/UNKNOWNS)"
         result.write_text(json.dumps({"schema":"agent-dispatch.result.v1","task_id":p.task_id,"route_id":p.route_id,
-            "status":status.value,"exit_code":proc.returncode,"final_message":final,"brief_sha256":brief, **model_meta},ensure_ascii=False,indent=2),encoding="utf-8")
-        return DispatchResult(p.task_id,p.route_id,status,p.target_runtime,p.target_agent,proc.returncode,final,str(result),metadata={"brief_sha256":brief, **model_meta})
+            "status":status.value,"exit_code":proc.returncode,"final_message":final,"brief_sha256":brief, **model_meta, **({"error":contract_error} if contract_error else {})},ensure_ascii=False,indent=2),encoding="utf-8")
+        return DispatchResult(p.task_id,p.route_id,status,p.target_runtime,p.target_agent,proc.returncode,final,str(result),error=contract_error,metadata={"brief_sha256":brief, **model_meta})
 
 class A2AAdapter:
     def __init__(self, endpoint:str, timeout_seconds:int=3600, protocol_version:str="1.0"):

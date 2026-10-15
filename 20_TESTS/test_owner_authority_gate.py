@@ -11,14 +11,27 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 HOOK = REPO_ROOT / ".claude" / "hooks" / "owner_authority_gate.py"
 SETTINGS = REPO_ROOT / ".claude" / "owner-authority.settings.example.json"
-if os.name == "nt":
-    _windows_bash = next((candidate for candidate in (
-        r"C:\Program Files\Git\bin\bash.exe",
-        r"C:\Program Files\Git\usr\bin\bash.exe",
-    ) if Path(candidate).exists()), None)
-    BASH = _windows_bash or shutil.which("bash")
-else:
-    BASH = shutil.which("bash")
+
+
+def _find_bash():
+    """Locate bash; on Windows prefer Git for Windows' bash over WSL's `bash.exe` launcher.
+
+    `OWNER_GATE_TEST_BASH` overrides the lookup. No install path is hard-coded: Git's
+    location is derived from %ProgramFiles% / %ProgramW6432%.
+    """
+    override = os.environ.get("OWNER_GATE_TEST_BASH", "").strip()
+    if override:
+        return override
+    if os.name == "nt":
+        for base in dict.fromkeys(filter(None, (os.environ.get("ProgramFiles"), os.environ.get("ProgramW6432")))):
+            for sub in (("Git", "bin", "bash.exe"), ("Git", "usr", "bin", "bash.exe")):
+                candidate = Path(base).joinpath(*sub)
+                if candidate.exists():
+                    return str(candidate)
+    return shutil.which("bash")
+
+
+BASH = _find_bash()
 
 
 def run_hook(payload, env=None, raw=None):
