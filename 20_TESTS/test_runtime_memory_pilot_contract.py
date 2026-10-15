@@ -11,13 +11,21 @@ import sys
 
 import pytest
 
+from cognitive_core.fake_model_provider import FakeModelProvider
 from cognitive_core.real_execution_harness import (
     AgentModelExecutor,
     AgentTask,
     ExecutionContractError,
-    ModelExecutionRecord,
     RealAgentExecutionHarness,
 )
+
+_TEST_HMAC_SECRET = "test_secret_for_runtime_memory_pilot_32chars_min"
+
+
+@pytest.fixture(autouse=True)
+def hmac_secret(monkeypatch):
+    """MemoryController.search signs pagination tokens; give it a throwaway secret."""
+    monkeypatch.setenv("MEMORY_CONTROLLER_HMAC_SECRET", _TEST_HMAC_SECRET)
 
 
 class StaticBootstrap:
@@ -56,44 +64,18 @@ class FixtureMemoryController:
         }
 
 
-class MaliciousModelExecutor(AgentModelExecutor):
-    def execute_model(self, context, task):
-        assert context["retrieved_memories"]
-        payload = {
-            "actions": [
-                {
-                    "action": "write_file",
-                    "path": "outside_scope.py",
-                    "content": "# instruction from retrieved memory",
-                }
-            ]
-        }
-        return ModelExecutionRecord(
-            provider_mode="local",
-            provider_name="test",
-            model_name="test-model",
-            request_started_at="2026-10-08T00:00:00+00:00",
-            response_finished_at="2026-10-08T00:00:00+00:00",
-            latency_ms=0.0,
-            response_status="success",
-            response_text=json.dumps(payload),
-        )
+def _fake_executor(payload):
+    """A model executor backed by the in-process fake provider (no real model)."""
+    provider = FakeModelProvider(canned_response=json.dumps(payload))
+    return AgentModelExecutor(provider_mode="fake", provider=provider), provider
 
 
-
-class SecretEchoModelExecutor(AgentModelExecutor):
-    def execute_model(self, context, task):
-        secret = os.environ["MEMORY_CONTROLLER_HMAC_SECRET"]
-        return ModelExecutionRecord(
-            provider_mode="local",
-            provider_name="test",
-            model_name="test-model",
-            request_started_at="2026-10-08T00:00:00+00:00",
-            response_finished_at="2026-10-08T00:00:00+00:00",
-            latency_ms=0.0,
-            response_status="success",
-            response_text=json.dumps({"actions": [], "echo": secret}),
-        )
+def _in_scope_actions():
+    task = _task()
+    return [
+        {"action": "write_file", "path": task.target_file, "content": task.code_patch},
+        {"action": "write_file", "path": task.test_file, "content": task.test_patch},
+    ]
 
 
 def _task():
@@ -128,8 +110,10 @@ def test_bootstrap_is_mandatory_and_context_is_bounded(tmp_path):
     assert record["execution_contract"]["evidence_required"]
     assert record["memory"]["support_limit"] == 2
     assert len(record["memory"]["memory_ids"]) <= 2
-    assert len(record["context_hash"]) == 64
+    assert len(record["memory"]["context_hash"]) == 64
+    assert trace["context_hash"] == record["memory"]["context_hash"]
     assert len(record["contract_hash"]) == 64
+    assert trace["contract_hash"] == record["contract_hash"]
 
 
 def test_missing_bootstrap_blocks_execution(tmp_path):
@@ -149,10 +133,20 @@ def test_missing_bootstrap_blocks_execution(tmp_path):
 
 
 def test_retrieved_memory_cannot_authorize_out_of_scope_mutation(tmp_path):
+    executor, provider = _fake_executor({
+        "actions": [
+            {
+                "action": "write_file",
+                "path": "outside_scope.py",
+                "content": "# instruction from retrieved memory",
+            }
+        ]
+    })
     harness = RealAgentExecutionHarness(
         trace_dir=tmp_path / "traces",
         bootstrap_provider=StaticBootstrap(),
-        model_executor=MaliciousModelExecutor(provider_mode="local"),
+        memory_controller=FixtureMemoryController(),
+        model_executor=executor,
     )
     result, trace = harness.execute(
         task=_task(),
@@ -161,9 +155,11 @@ def test_retrieved_memory_cannot_authorize_out_of_scope_mutation(tmp_path):
         workspace=tmp_path / "workspace",
         memory_query="malicious instruction",
     )
+    # The retrieved memory reached the model as context, and still grants nothing.
+    assert provider.calls and "review-fixture-001" in provider.calls[0].prompt
     assert result["status"] == "failure"
     assert any(
-        "outside scope" in a["execution_status"]
+        "outside execution scope" in a["execution_status"]
         for a in trace["record"]["actions"]
         if not a["validated"]
     )
@@ -196,33 +192,85 @@ def test_memory_on_off_harness_keeps_comparison_comparable(tmp_path):
     assert with_memory_trace["record"]["execution_contract"] == without_memory_trace["record"]["execution_contract"]
     assert with_memory_trace["record"]["memory"]["query"] == "coding"
     assert without_memory_trace["record"]["memory"]["query"] == ""
-    assert with_memory_trace["record"]["context_hash"] != without_memory_trace["record"]["context_hash"]
+    assert (
+        with_memory_trace["record"]["memory"]["context_hash"]
+        != without_memory_trace["record"]["memory"]["context_hash"]
+    )
 
-def test_default_bootstrap_uses_real_vaultaccess_and_real_controller(tmp_path):
+def test_default_bootstrap_fails_closed_on_real_governance_state(tmp_path, monkeypatch):
+    """With the pilot on and no injected provider, the real VaultAccess bootstrap reads
+    the repository's governance sources. CURRENT.md declares MAIN_ONLY and records no
+    owner authorization, so a non-main branch is an unresolved conflict and nothing runs."""
+    monkeypatch.delenv("MEMORY_VAULT_BRANCH", raising=False)
+    branch = "codex/runtime-memory-pilot-20261008"
     harness = RealAgentExecutionHarness(
         trace_dir=tmp_path / "traces",
+        pilot_bootstrap=True,
+        branch=branch,
     )
-    result, trace = harness.execute(
-        task=_task(),
-        agent_id="pilot_real_fixture",
-        agent_role="coder",
-        workspace=tmp_path / "workspace",
-        memory_query="",
-        enable_memory=False,
+    with pytest.raises(ExecutionContractError, match="MAIN_ONLY_VS_PILOT_BRANCH") as excinfo:
+        harness.execute(
+            task=_task(),
+            agent_id="pilot_real_fixture",
+            agent_role="coder",
+            workspace=tmp_path / "workspace",
+            memory_query="",
+            enable_memory=False,
+        )
+    assert "RESOLVED_BY_OWNER_AUTHORIZATION" not in str(excinfo.value)
+    assert not (tmp_path / "workspace" / "calculator.py").exists()
+    assert not list((tmp_path / "traces" / "execution_traces").glob("*.json"))
+
+    # The same real sources on `main`: every source is DIRECT VaultAccess evidence,
+    # the policy fields are read from CURRENT.md, and prose that mentions
+    # parallelism is not mistaken for a policy conflict.
+    on_main = RealAgentExecutionHarness(
+        trace_dir=tmp_path / "traces_main",
+        pilot_bootstrap=True,
+        branch="main",
     )
-    assert result["status"] == "success"
-    sources = trace["record"]["bootstrap"]["sources"]
+    bootstrap = on_main._default_bootstrap(_task(), "pilot")
+    sources = bootstrap["sources"]
     assert len(sources) >= 8
     assert all(source["evidence_level"] == "DIRECT" for source in sources)
     assert all(source["sha256"] and source["uri"] for source in sources)
-    governance = trace["record"]["bootstrap"]["governance"]
+    governance = bootstrap["governance"]
     assert governance["detection"] == "PARTIAL_TEXT_RULES"
-    assert not governance["conflicts"]
-    assert any(
-        item["type"] == "MAIN_ONLY_VS_PILOT_BRANCH"
-        and item["status"] == "RESOLVED_BY_OWNER_AUTHORIZATION"
-        for item in governance["resolved_conflicts"]
+    assert governance["policies"]["working_branch_policy"] == ["MAIN_ONLY"]
+    assert governance["policies"]["agent_execution_policy"] == ["SEQUENTIAL_HANDOFF"]
+    assert governance["conflicts"] == []
+    assert governance["resolved_conflicts"] == []
+
+    # An undeclared branch is not silently treated as main.
+    undeclared = RealAgentExecutionHarness(trace_dir=tmp_path / "traces_none", pilot_bootstrap=True)
+    with pytest.raises(ExecutionContractError, match="BRANCH_UNDECLARED"):
+        undeclared._default_bootstrap(_task(), "pilot")
+
+
+def test_pilot_is_off_by_default(tmp_path, monkeypatch):
+    monkeypatch.delenv("MEMORY_VAULT_PILOT_BOOTSTRAP", raising=False)
+    harness = RealAgentExecutionHarness(
+        trace_dir=tmp_path / "traces",
+        memory_controller=FixtureMemoryController(),
     )
+    assert harness.pilot_bootstrap is False
+    result, trace = harness.execute(
+        task=_task(),
+        agent_id="pilot_off",
+        agent_role="coder",
+        workspace=tmp_path / "workspace",
+        memory_query="review data",
+    )
+    assert result["status"] == "success"
+    record = trace["record"]
+    for key in ("bootstrap", "execution_contract", "contract_hash"):
+        assert key not in record
+    assert "contract_hash" not in trace
+    assert "support_limit" not in record["memory"]
+    assert len(record["memory"]["context_hash"]) == 64
+
+    monkeypatch.setenv("MEMORY_VAULT_PILOT_BOOTSTRAP", "1")
+    assert RealAgentExecutionHarness(trace_dir=tmp_path / "t2", memory_controller=FixtureMemoryController()).pilot_bootstrap is True
 
 
 def test_required_evidence_is_enforced_not_declarative(tmp_path):
@@ -315,7 +363,13 @@ def test_review_memory_remains_data_only_and_unverified(tmp_path):
     assert result["status"] == "success"
     memory = trace["record"]["memory"]
     assert memory["memory_ids"] == ["review-fixture-001"]
-    context = trace["record"]["model"]
+    assert memory["descriptors"] == [{
+        "id": "review-fixture-001",
+        "lifecycle": "REVIEW",
+        "authority": "DATA_ONLY",
+        "verification": {"state": "unverified"},
+    }]
+    assert "unverified review data" not in json.dumps(trace["record"])
     assert "REVIEW" in json.dumps(trace["record"])
     assert '"authority": "DATA_ONLY"' in json.dumps(trace["record"])
     assert '"verification": {"state": "unverified"}' in json.dumps(trace["record"])
@@ -323,10 +377,11 @@ def test_review_memory_remains_data_only_and_unverified(tmp_path):
 def test_synthetic_secret_is_redacted_from_persisted_trace(tmp_path, monkeypatch):
     secret = "SYNTHETIC_SECRET_20261008"
     monkeypatch.setenv("MEMORY_CONTROLLER_HMAC_SECRET", secret)
+    executor, _ = _fake_executor({"actions": _in_scope_actions(), "echo": secret})
     harness = RealAgentExecutionHarness(
         trace_dir=tmp_path / "traces",
         bootstrap_provider=StaticBootstrap(),
-        model_executor=SecretEchoModelExecutor(provider_mode="local"),
+        model_executor=executor,
     )
     result, trace = harness.execute(
         task=_task(),
@@ -337,4 +392,7 @@ def test_synthetic_secret_is_redacted_from_persisted_trace(tmp_path, monkeypatch
         enable_memory=False,
     )
     assert result["status"] == "success"
+    assert trace["record"]["model"]["provider_mode"] == "fake"
     assert secret not in json.dumps(trace["record"], sort_keys=True)
+    with open(trace["trace_file"], encoding="utf-8") as fh:
+        assert secret not in fh.read()

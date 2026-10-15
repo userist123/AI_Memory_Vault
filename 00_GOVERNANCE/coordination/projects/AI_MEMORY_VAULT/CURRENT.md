@@ -5,43 +5,13 @@
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
 repository: userist123/AI_Memory_Vault_CODEX_READY
-last_updated_utc: 2026-10-08T19:48:31Z
-current_main_sha: 94020777d75f5d2fa5e1d01921548941a294cfa1
+last_updated_utc: 2026-09-04T21:30:00Z
+current_main_sha: 7224e6ac32b4130383135735d09fd674b863ef88
 status: ACTIVE
 working_branch_policy: MAIN_ONLY
 agent_execution_policy: SEQUENTIAL_HANDOFF
-pilot_branch_override:
-  branch: codex/runtime-memory-pilot-20261008
-  reason: explicit owner request for a dedicated pilot branch
-  base_main_sha: 94020777d75f5d2fa5e1d01921548941a294cfa1
-  auto_merge: false
 current_round: R001
-pilot_integration_status: NOT_VERIFIED
-pilot_verification_snapshot:
-  head_sha: bcfba0ce2121df96333d55b750e0816f369c610d3
-  base_main_sha: 94020777d75f5d2fa5e1d01921548941a294cfa1
-  code_review_status: CODE_INSPECTED
-  local_execution_status: BLOCKED_NO_LOCAL_CHECKOUT
-  desktop_runtime_status: BLOCKED_DEVICE_OFFLINE
-  ci_status_at_snapshot: NOT_YET_REPORTED_FOR_FINAL_HEAD
-  live_client_status: NOT_VERIFIED
-  memory_on_off_status: INSUFFICIENT_DATA
-authorization_record:
-  authorized_at_utc: 2026-10-08T19:39:23Z
-  authority: OWNER
-  scope: "Continue PR #231 exclusively on codex/runtime-memory-pilot-20261008 for finalization, testing, and review of this pilot."
-  main_only_derogation: LIMITED
-  constraints:
-    - "Does not change global MAIN_ONLY."
-    - "Does not permit creation of other branches."
-    - "Does not authorize merge, auto-merge, or GitHub administrative changes."
-    - "Does not permit bypass of protected core or security limits."
-    - "Does not cancel SEQUENTIAL_HANDOFF."
-    - "Is not retroactive approval of prior actions."
-  chronology: "This authorization applies from the timestamp above; prior actions remain governed by their prior authority state."
 active_work:
-  - 'operational Memory Vault pilot: VaultAccess bootstrap -> bounded MemoryController context -> execution contract -> action gate -> verification'
-  - 'pilot evidence classification remains CODE_INSPECTED / CONTRACT_TESTED / LIVE_VERIFIED / NOT_VERIFIED / BLOCKED'
   - repository remediation, security hardening and structural rebuild on main
   - bounded terminal resolution contract and deterministic MVE calibration
   - single-main sequential execution
@@ -61,9 +31,6 @@ recent_state:
   - repository hygiene validator and regression tests were added; local reconstructed execution passed 4/4 tests
   - strict hygiene CI workflow was added, but CI runtime has not yet been verified
 open_requirements:
-  - verify PR #231 acceptance tests with fresh CI stdout/log evidence for final HEAD bcfba0ce2121df96333d55b750e0816f369c610d3
-  - execute one real external client/runtime pilot and record LIVE_VERIFIED only if the client actually receives the bootstrap/context pack
-  - run the controlled memory on/off comparison with the same task and predeclared rubric; otherwise keep INSUFFICIENT_DATA
   - finish metadata-driven cleanup of remaining 06_INBOX/RAW_IMPORTS nested tracked files
   - verify secret-scanning and hygiene CI runs with exact stdout/log evidence
   - audit all existing numbered roots and create exact before/after structural map
