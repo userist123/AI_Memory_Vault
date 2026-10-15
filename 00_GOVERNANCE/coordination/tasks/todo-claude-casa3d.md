@@ -1,5 +1,11 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-11T20:30:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-15T15:40:00Z
+ROUND 5 (2026-10-15, owner: "mergi in ordinea recomandata" = business features first): DONE 12fa60d4 + 246d3503:
+  supplier markup/discount + profit report, payment schedule, proforma (+generic CSV; not a fiscal invoice), contract &
+  offer with fee calculator (template, not legal advice), own products with cost price + CSV import/export. Independent
+  review found fee-VAT mismatch, custom items missing from proforma, prototype pollution, CSV injection gaps, silent
+  fallback; all fixed with regression tests. 478/478, tsc clean. PC NOT updated: Desktop Commander offline.
+  NEXT: update PC when online; then design leftovers (rug position, ceilings/panelling), then accounts/hosting for sale.
 ROUND 4 (2026-10-11 late, owner: "nu te opresti pana nu faci ceva real si gata pentru vanzare, ai grija la limitele de utilizare"):
   DONE: 73262cf5 bathroom camera frames the WC bowl (PC render out7 shown to owner); b028ca5d A/B/C options per room
   (core/room-options.ts, snapshot.roomOptions, client choice table room_choices + /api/share/[token]/choices, owner
