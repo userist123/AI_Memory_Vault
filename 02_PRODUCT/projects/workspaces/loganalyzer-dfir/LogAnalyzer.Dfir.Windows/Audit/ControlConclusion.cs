@@ -37,7 +37,8 @@ public sealed record ControlConclusion(string Verdict, IReadOnlyList<string> Ser
                       + (nd > 0 ? $" {Ro.Capitalize(Ro.CountFem(nd, "verificare nu a putut fi făcută", "verificări nu au putut fi făcute"))} (NEDETERMINAT)." : "");
         string verdict = nc > 0
             ? $"{Ro.Capitalize(Ro.CountFem(nc, "verificare este NECONFORMĂ", "verificări sunt NECONFORME"))}: stația nu respectă toate regulile verificate." + others
-            : r.Checks.Count == 0 ? "Nu există verificări evaluate."
+            : r.Applicable == 0 ? "Nu există verificări evaluate."   // NU SE APLICĂ rows are not evaluated checks
+            : nd == r.Applicable ? $"{Ro.Capitalize(Ro.CountFem(nd, "verificare aplicabilă nu a putut fi făcută", "verificări aplicabile nu au putut fi făcute"))} (NEDETERMINAT): nu se poate spune nici că stația respectă regulile, nici că nu le respectă."
             : "Nicio verificare neconformă în sursele citite." + others;
 
         // the non-compliant checks grouped by area, the most important area first, at most five lines

@@ -1,4 +1,3 @@
-using System.Management;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
@@ -16,8 +15,9 @@ public sealed record EgressPathFact(string Kind, string Description, bool? Inter
 
 /// <summary>
 /// PASSIVE collection for check N11 ("no path to the internet"). It opens no socket, sends no packet and resolves no name: it reads
-/// adapter properties (the managed wrapper over the IP Helper read APIs), the registry, a local file and WMI. The Standalone edition runs
-/// it too, so it must stay free of anything the edition build test bans (sockets, HTTP, Ping, Dns, NetworkChange, ws2_32/dnsapi P/Invoke).
+/// adapter properties (the managed wrapper over the IP Helper read APIs), the registry and the RAS phonebook files. It uses no WMI. (N11 also
+/// reads facts collected elsewhere: saved Wi-Fi profiles counted from files, the ICS state through the HNetCfg COM object and the cellular and
+/// phone adapters from the Plug and Play device list.) The Standalone edition runs it too, so it must stay free of anything the edition build test bans (sockets, HTTP, Ping, Dns, NetworkChange, ws2_32/dnsapi P/Invoke).
 /// </summary>
 internal static class EgressPathCollector
 {
@@ -35,7 +35,7 @@ internal static class EgressPathCollector
     {
         try { a(); }
         catch (Exception ex) when (ex is NetworkInformationException or UnauthorizedAccessException or System.Security.SecurityException or IOException
-                                      or ManagementException or System.Runtime.InteropServices.COMException or InvalidOperationException) { }
+                                      or System.Runtime.InteropServices.COMException or InvalidOperationException) { }
     }
 
     // ---- adapters (active gateways and DNS servers; radios and tunnels even when down) -------------------------------
@@ -123,13 +123,13 @@ internal static class EgressPathCollector
             using var k = hive.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings");
             if (k is null) continue;
             if (Convert.ToString(k.GetValue("ProxyEnable")) == "1" && k.GetValue("ProxyServer") is string server && server.Length > 0)
-                paths.Add(new("Proxy", $"WinINet ({label}): {server}", ProxyIsInternal(server), true));
+                paths.Add(ProxyFact($"WinINet ({label})", server));
             if (k.GetValue("AutoConfigURL") is string pac && pac.Length > 0)
                 paths.Add(new("Proxy", $"script de configurare automată a proxy-ului ({label}): {pac}", null, true));
         }
         using var wh = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Connections");
         if (wh?.GetValue("WinHttpSettings") is byte[] blob && ParseWinHttpProxy(blob) is { } winHttp)
-            paths.Add(new("Proxy", $"WinHTTP: {winHttp}", ProxyIsInternal(winHttp), true));
+            paths.Add(ProxyFact("WinHTTP", winHttp));
     }
 
     /// <summary>The proxy server string of a WinHttpSettings blob, or null when the blob says "direct access" or is not understood.</summary>
@@ -138,26 +138,73 @@ internal static class EgressPathCollector
         // Layout: DWORD version, DWORD counter, DWORD flags (0x1 direct, 0x2 proxy, 0x8 auto-detect), DWORD length, proxy string, DWORD length, bypass string.
         if (blob.Length < 16 || (blob[8] & 0x02) == 0) return null;
         int len = BitConverter.ToInt32(blob, 12);
-        if (len <= 0 || 16 + len > blob.Length) return null;
+        if (len <= 0 || len > blob.Length - 16) return null;   // no overflow on a huge length
         return Encoding.ASCII.GetString(blob, 16, len);
     }
 
     /// <summary>
     /// Proxy string ("host:port" or "http=host:port;https=host:port"). True when every host is an IP literal inside the internal ranges, false when
     /// any is an IP literal outside them, null when a host is a name (resolving it would send traffic).
+    /// A malformed value (unbalanced brackets, empty host, bad port) is never an exception: that part counts as "cannot be told" (null), and an IP
+    /// literal outside the internal ranges in another part still makes the result false.
     /// </summary>
     internal static bool? ProxyIsInternal(string proxy)
     {
         bool? result = true;
-        foreach (var part in proxy.Split(';', StringSplitOptions.RemoveEmptyEntries))
+        foreach (var host in ProxyHosts(proxy, out _))
         {
-            var hostPort = part.Contains('=') ? part[(part.IndexOf('=') + 1)..] : part;
-            hostPort = hostPort.Contains("://", StringComparison.Ordinal) ? hostPort[(hostPort.IndexOf("://", StringComparison.Ordinal) + 3)..] : hostPort;
-            var host = hostPort.StartsWith('[') ? hostPort[1..hostPort.IndexOf(']')] : (hostPort.Count(c => c == ':') == 1 ? hostPort[..hostPort.IndexOf(':')] : hostPort);
-            if (!IPAddress.TryParse(host, out var ip)) { result = null; continue; }
+            if (host is null || !IPAddress.TryParse(host, out var ip)) { result = null; continue; }
             if (IsInternal(ip) == false) return false;
         }
         return result;
+    }
+
+    /// <summary>The proxy fact of one source. A value that does not parse is shown for review as "valoare proxy nevalidă", never dropped and never thrown.</summary>
+    internal static EgressPathFact ProxyFact(string source, string proxy)
+    {
+        ProxyHosts(proxy, out var malformed);
+        return new("Proxy", malformed ? $"{source}: valoare proxy nevalidă: {proxy}" : $"{source}: {proxy}", ProxyIsInternal(proxy), true);
+    }
+
+    /// <summary>The host of every part of a proxy string; null for a part that does not parse. Pure string work, no exceptions.</summary>
+    private static List<string?> ProxyHosts(string proxy, out bool malformed)
+    {
+        var hosts = new List<string?>();
+        foreach (var raw in proxy.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            hosts.Add(ProxyHost(raw));
+        if (hosts.Count == 0) hosts.Add(null);
+        malformed = hosts.Any(h => h is null);
+        return hosts;
+    }
+
+    private static string? ProxyHost(string part)
+    {
+        var eq = part.IndexOf('=');
+        var hostPort = eq >= 0 ? part[(eq + 1)..] : part;
+        var scheme = hostPort.IndexOf("://", StringComparison.Ordinal);
+        if (scheme >= 0) hostPort = hostPort[(scheme + 3)..];
+        hostPort = hostPort.TrimEnd('/');
+        if (hostPort.Length == 0) return null;
+        string host, port;
+        if (hostPort[0] == '[')
+        {
+            var close = hostPort.IndexOf(']');
+            if (close < 0) return null;                                   // "[fe80::1" without the closing bracket
+            host = hostPort[1..close];
+            var rest = hostPort[(close + 1)..];
+            if (rest.Length > 0 && rest[0] != ':') return null;             // "[fe80::1]junk"
+            port = rest.Length > 0 ? rest[1..] : "";
+            if (rest.Length > 0 && port.Length == 0) return null;
+        }
+        else
+        {
+            var colons = hostPort.Count(c => c == ':');
+            if (colons == 1) { var i = hostPort.IndexOf(':'); host = hostPort[..i]; port = hostPort[(i + 1)..]; if (port.Length == 0) return null; }
+            else { host = hostPort; port = ""; }                             // a name, an IPv4 literal or a bare IPv6 literal
+        }
+        if (host.Length == 0 || host.Any(c => char.IsWhiteSpace(c) || c is '[' or ']' or '/' or '=')) return null;
+        if (port.Length > 0 && !(int.TryParse(port, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var p) && p is >= 1 and <= 65535)) return null;
+        return host;
     }
 
     // ---- RAS / VPN phonebooks ---------------------------------------------------------------------------------------------

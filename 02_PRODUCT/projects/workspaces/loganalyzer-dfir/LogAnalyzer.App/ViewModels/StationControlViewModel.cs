@@ -243,7 +243,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (prev is null) { Status = "Nu există un control anterior cu care să compar."; return; }
             Comparison = ControlComparison.Compare(prev, _report.Checks);
             ComparisonChanges.Clear();
-            foreach (var ch in Comparison.Worse.Concat(Comparison.Better).Concat(Comparison.New).Concat(Comparison.Removed)) ComparisonChanges.Add(ch);
+            foreach (var ch in Comparison.Worse.Concat(Comparison.Better).Concat(Comparison.New).Concat(Comparison.Removed).Concat(Comparison.ApplicabilityChanged)) ComparisonChanges.Add(ch);
             BuildResult();
             Status = Comparison.Summary;
         }
@@ -256,7 +256,7 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 Comparison = ControlComparison.Compare(PreviousControls[0], _report.Checks);
                 ComparisonChanges.Clear();
-                foreach (var ch in Comparison.Worse.Concat(Comparison.Better).Concat(Comparison.New).Concat(Comparison.Removed)) ComparisonChanges.Add(ch);
+                foreach (var ch in Comparison.Worse.Concat(Comparison.Better).Concat(Comparison.New).Concat(Comparison.Removed).Concat(Comparison.ApplicabilityChanged)) ComparisonChanges.Add(ch);
             }
             Result = ControlResultScreen.Build(_report, ProfileSections.ToList(), Comparison);
         }

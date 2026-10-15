@@ -39,6 +39,8 @@ public sealed class ControlReport
     public List<UserActivity> Users { get; } = [];
     public List<ActionEntry> Actions { get; } = [];
     public int Count(ControlStatus s) => Checks.Count(c => c.Status == s);
+    /// <summary>The checks that apply to the posture (every status except NU SE APLICĂ): the only ones counted in summaries and verdicts.</summary>
+    public int Applicable => Checks.Count(c => c.Status != ControlStatus.NuSeAplica);
 }
 
 /// <summary>
@@ -442,7 +444,7 @@ public static class ControlEvaluator
     private static void InternetEgress(StationFacts f, ControlReport r)
     {
         const string id = "N11", area = "Rețea", title = "Nicio cale spre internet (verificare pasivă a configurației)";
-        const string limits = " Verificarea citește doar configurația locală (registru, proprietățile adaptoarelor, WMI) și nu trimite trafic: absența unei căi găsite nu dovedește că nu există una, iar ce se află dincolo de gateway nu poate fi stabilit așa.";
+        const string limits = " Verificarea citește doar configurația locală (registru, proprietățile adaptoarelor, lista dispozitivelor, fișiere locale) și nu trimite trafic: absența unei căi găsite nu dovedește că nu există una, iar ce se află dincolo de gateway nu poate fi stabilit așa.";
         if (f.EgressPaths is null)
         {
             Add(r, id, area, title, ControlStatus.Nedeterminat, "Configurația adaptoarelor, a rutelor, a proxy-urilor și a profilurilor VPN nu a putut fi citită." + limits);
