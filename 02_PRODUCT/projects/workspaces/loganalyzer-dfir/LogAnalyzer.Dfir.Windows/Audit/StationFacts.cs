@@ -154,10 +154,15 @@ public static class StationFactCollector
         return facts;
     }
 
-    private static void Try(StationFacts f, string what, Action a)
+    /// <summary>
+    /// Runs one source. A source that cannot be read, or whose content cannot be parsed (a malformed registry value, a truncated blob), becomes a
+    /// gap and the checks that depend on it NEDETERMINATE; it never aborts the whole control run.
+    /// </summary>
+    internal static void Try(StationFacts f, string what, Action a)
     {
         try { a(); }
-        catch (Exception ex) when (ex is ManagementException or UnauthorizedAccessException or System.Security.SecurityException or IOException or System.Runtime.InteropServices.COMException or InvalidOperationException)
+        catch (Exception ex) when (ex is ManagementException or UnauthorizedAccessException or System.Security.SecurityException or IOException or System.Runtime.InteropServices.COMException or InvalidOperationException
+                                      or ArgumentException or FormatException or IndexOutOfRangeException or OverflowException)
         {
             f.Gaps.Add(new EvidenceGap(what, EvidenceStatus.Failed, ex.Message, "Verificările care depind de această sursă sunt NEDETERMINATE", "Rulare ca administrator", "Posibil"));
         }
