@@ -128,6 +128,17 @@ public static class DeviceRules
         return null;
     }
 
+    /// <summary>
+    /// A "virtual" disk that holds the Windows system volume is the station's own disk, not a mounted image: on a Hyper-V guest (or a
+    /// native-VHD boot) the boot disk reports the same MSFT Virtual Disk ids as a mounted VHD. Any other virtual disk keeps its kind.
+    /// </summary>
+    public static DeviceKind WithSystemVolume(DeviceKind kind, IEnumerable<string> driveLetters, string systemDrive)
+    {
+        if (kind != DeviceKind.VirtualDisk || systemDrive.Length < 2) return kind;
+        var system = systemDrive[..2];
+        return driveLetters.Any(l => l.TrimEnd('\\').Equals(system, StringComparison.OrdinalIgnoreCase)) ? DeviceKind.InternalDisk : kind;
+    }
+
     /// <summary>USBSTOR\Disk&amp;Ven_X&amp;Prod_Y&amp;Rev_1.00\AA0011&amp;0 → "AA0011"; other ids: the last segment unless Windows generated it (second char '&amp;').</summary>
     public static string Serial(string instanceId)
     {

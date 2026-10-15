@@ -22,7 +22,16 @@ public class DeviceInventoryTests(ITestOutputHelper output)
         Assert.Equal(expected, DeviceRules.Classify(id, cls, hw, name));
 
     [Theory]
-    [InlineData(@"HID\VID_046D&PID_C52B\7&1", "HIDClass")]                                                              // a mouse
+    [InlineData(DeviceKind.VirtualDisk, "C: D:", @"C:\", DeviceKind.InternalDisk)]   // Hyper-V guest: the boot disk is MSFT Virtual Disk
+    [InlineData(DeviceKind.VirtualDisk, "c:", @"C:\", DeviceKind.InternalDisk)]
+    [InlineData(DeviceKind.VirtualDisk, "E:", @"C:\", DeviceKind.VirtualDisk)]        // a VHD mounted as E: stays a mounted image
+    [InlineData(DeviceKind.VirtualDisk, "", @"C:\", DeviceKind.VirtualDisk)]
+    [InlineData(DeviceKind.UsbStorage, "C:", @"C:\", DeviceKind.UsbStorage)]         // only virtual disks are reconsidered
+    public void A_virtual_disk_holding_the_system_volume_is_the_station_disk(DeviceKind kind, string letters, string systemDrive, DeviceKind expected) =>
+        Assert.Equal(expected, DeviceRules.WithSystemVolume(kind, letters.Split(' ', StringSplitOptions.RemoveEmptyEntries), systemDrive));
+
+    [Theory]
+    [InlineData(@"HID\VID_046D&PID_C52B\7&1", "HIDClass")]                                                             // a mouse
     [InlineData(@"BTHENUM\{0000111e-0000-1000-8000-00805f9b34fb}_LOCALMFG&0002\7&1", "Bluetooth")]                   // a Bluetooth service entry, not a device
     [InlineData(@"SWD\WPDBUSENUM\_??_USBSTOR#DISK&VEN_KINGSTON#60A4&0#{53f56307-b6bf-11d0-94f2-00a0c91efb8b}", "WPD")] // the volume of a stick already listed
     public void Things_that_are_not_media_are_left_out(string id, string cls) => Assert.Null(DeviceRules.Classify(id, cls, "", ""));
