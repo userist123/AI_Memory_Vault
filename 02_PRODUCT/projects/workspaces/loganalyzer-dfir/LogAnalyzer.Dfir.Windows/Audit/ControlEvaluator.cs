@@ -523,10 +523,33 @@ public static class ControlEvaluator
         Add(r, "N12", "Rețea", "Stația este membră a domeniului",
             member == "" ? ControlStatus.Nedeterminat : member == "da" ? ControlStatus.Conform : ControlStatus.Neconform,
             member == "" ? "Apartenența la domeniu nu a putut fi citită." + NoRead
-                : member == "da" ? $"Stația este membră a domeniului {name}. Accesibilitatea controlerului de domeniu nu se verifică (ar cere trafic)."
+                : member == "da" ? $"Stația este membră a domeniului {name}. Accesibilitatea controlerului de domeniu se verifică separat, activ (N13)."
                 : $"Stația nu este membră a unui domeniu (grup de lucru „{name}”), deși ediția așteaptă o stație dintr-o rețea de domeniu.",
             [$"WMI Win32_ComputerSystem → PartOfDomain = {(member == "" ? "necitit" : member)}, Domain = {name}"],
             "Alăturați stația la domeniul rețelei izolate sau folosiți ediția Standalone.");
+
+        // N13: ACTIVE check, run only by the Network edition's probe (LogAnalyzer.Connectors) and only on a domain-joined station.
+        const string n13 = "Controlerul de domeniu este accesibil (verificare activă, doar citire)";
+        const string n13Rec = "Verificați rezolvarea DNS a domeniului și legătura cu controlerul de domeniu; un controler care se rezolvă la o adresă publică indică o configurare greșită sau o deturnare.";
+        var dc = f.DomainController;
+        if (member != "da")
+            Add(r, "N13", "Rețea", n13, ControlStatus.Nedeterminat,
+                "Verificarea nu a rulat: stația nu este membră a unui domeniu (vezi N12), deci nu are un controler de domeniu de contactat.", rec: n13Rec);
+        else if (dc is null || dc.Outcome == DcProbeOutcome.Skipped)
+            Add(r, "N13", "Rețea", n13, ControlStatus.Nedeterminat,
+                "Verificarea activă nu a rulat" + (dc is null ? " (nu este disponibilă în această rulare)." : $": {dc.Detail}"), rec: n13Rec);
+        else
+        {
+            var ev = new[] { $"Controler: {(dc.DcName.Length > 0 ? dc.DcName : "—")}", $"Adrese: {(dc.Addresses.Count > 0 ? string.Join(", ", dc.Addresses) : "—")}" };
+            var (status, detail) = dc.Outcome switch
+            {
+                DcProbeOutcome.Reachable => (ControlStatus.Conform, $"Controlerul de domeniu {dc.DcName} al domeniului {name} se află la o adresă internă și răspunde pe LDAP (389). {dc.Detail}".TrimEnd()),
+                DcProbeOutcome.PublicAddress => (ControlStatus.Neconform, $"Atenție: controlerul de domeniu se rezolvă la o adresă publică ({string.Join(", ", dc.Addresses)}); nu a fost contactat. {dc.Detail}".TrimEnd()),
+                DcProbeOutcome.Unreachable => (ControlStatus.DeVerificat, $"Controlerul de domeniu {dc.DcName} se află la o adresă internă, dar nu a răspuns pe LDAP (389): {dc.Detail}".TrimEnd()),
+                _ => (ControlStatus.DeVerificat, $"Nu s-a găsit niciun controler de domeniu la o adresă internă pentru domeniul {name}. {dc.Detail}".TrimEnd()),
+            };
+            Add(r, "N13", "Rețea", n13, status, detail, ev, n13Rec);
+        }
     }
 
     private static void Software(StationFacts f, ControlReport r)

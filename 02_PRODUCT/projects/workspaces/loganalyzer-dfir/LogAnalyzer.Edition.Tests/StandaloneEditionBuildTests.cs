@@ -68,6 +68,7 @@ public sealed class StandaloneEditionBuildTests
         "AuditPolicyChange", "RegistryValueWriter", "PowerShellAuditCollector", "UdpSyslogReceiver", "LiveEventLogWatcherService", "LiveEventSourceFactory",
         "NetworkChangeWatcher", "M365LiveConnectorService", "SiemForwarderService", "LiveThreatIntelService", "DirectoryCollector", "UserInvestigation",
         "EvidenceReasoner", "LocalModelClient", "AiCaseAnalysis", "WindowsConnectivityProbe", "ContainmentViewModel", "DomainInvestigationViewModel",
+        "DomainControllerProbe",   // the active N13 probe of the Network edition (LogAnalyzer.Connectors)
     ];
 
     private static string StandaloneDir => BuildOutputInspector.Output("StandaloneOutput");
@@ -157,6 +158,20 @@ public sealed class StandaloneEditionBuildTests
         Assert.Contains("NtSuspendProcess", text);                   // process suspension
         Assert.Contains("HNetCfg.FWRule", text);                     // firewall rules
         Assert.Contains("SetValue", text);                           // registry writes
+    }
+
+    [Fact]
+    public void Standalone_does_not_contain_the_active_domain_controller_probe_and_the_Network_build_does()
+    {
+        foreach (var path in BuildOutputInspector.OwnAssemblies(StandaloneDir).Concat(Directory.EnumerateFiles(StandaloneDir, "LogAnalyzer*.exe")))
+        {
+            AssemblyFacts f;
+            try { f = BuildOutputInspector.Read(path); } catch (BadImageFormatException) { continue; }
+            Assert.DoesNotContain(f.DefinedTypes, t => t.EndsWith(".DomainControllerProbe", StringComparison.Ordinal));
+        }
+        Assert.False(File.Exists(Path.Combine(StandaloneDir, "LogAnalyzer.Connectors.dll")));
+        var connectors = BuildOutputInspector.Read(Path.Combine(BuildOutputInspector.Output("NetworkOutput"), "LogAnalyzer.Connectors.dll"));
+        Assert.Contains("LogAnalyzer.Connectors.Domain.DomainControllerProbe", connectors.DefinedTypes);   // positive control
     }
 
     [Fact]

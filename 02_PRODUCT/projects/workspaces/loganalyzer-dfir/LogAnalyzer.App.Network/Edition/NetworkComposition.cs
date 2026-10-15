@@ -66,6 +66,8 @@ namespace LogAnalyzer.UI.Services
             services.AddSingleton<IAuditCollector, PowerShellAuditCollector>();
             services.AddSingleton<ISyslogReceiver, UdpSyslogReceiver>();
             services.AddSingleton<IAuditCollectionService, AuditCollectionService>();
+            // N13: active, read-only domain-controller reachability (private addresses only; behind NetworkPolicy). Network edition only.
+            services.AddSingleton<LogAnalyzer.Dfir.Windows.Audit.IDomainControllerProbe, LogAnalyzer.Connectors.Domain.DomainControllerProbe>();
         }
     }
 

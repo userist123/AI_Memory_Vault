@@ -14,6 +14,9 @@ public sealed record ControlReportHeader(
     public const string MarkingNote = "marcaj introdus manual, neverificat de aplicație";
     public const string NoMarking = "fără marcaj introdus";
 
+    /// <summary>"Ediție nepotrivită" (see <see cref="EditionFit"/>), or empty. Printed as a header line; it never changes a check result.</summary>
+    public string EditionWarning { get; init; } = "";
+
     /// <summary>The marking line printed on every page.</summary>
     public string MarkingLine => string.IsNullOrWhiteSpace(Marking) ? $"Marcaj: {NoMarking} ({MarkingNote})" : $"Marcaj: {Marking.Trim()} ({MarkingNote})";
 
@@ -38,6 +41,7 @@ public sealed record ControlReportHeader(
             l.Add(("Rețea", sn.Network)); l.Add(("Număr stație", sn.Number));
         }
         foreach (var f in ExtraFields) if (!string.IsNullOrWhiteSpace(f.Label)) l.Add((f.Label.Trim(), V(f.Value)));
+        if (!string.IsNullOrWhiteSpace(EditionWarning)) l.Add(("Avertisment ediție", EditionWarning));
         return l;
     }
 
@@ -47,6 +51,10 @@ public sealed record ControlReportHeader(
         string L(DateTimeOffset t) => TimeZoneInfo.ConvertTime(t, TimeZoneInfo.Local).ToString("yyyy-MM-dd HH:mm");
         return new ControlReportHeader(profile.Unit, profile.Structure, facts.Host, hardwareId, $"{L(facts.PeriodStartUtc)} – {L(facts.PeriodEndUtc)} (ora locală)",
             inspector, string.IsNullOrWhiteSpace(inspectorFunction) ? profile.InspectorFunction : inspectorFunction, stationRole, registrationNumber, marking,
-            profile.SignatureLeft, profile.SignatureRight, profile.ExtraFields);
+            profile.SignatureLeft, profile.SignatureRight, profile.ExtraFields)
+        {
+            // an unread egress source: no guess, no warning
+            EditionWarning = EditionFit.Warning(facts.Posture, facts.EgressUnread.Count > 0 ? null : facts.EgressPaths) ?? "",
+        };
     }
 }
