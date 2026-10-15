@@ -35,7 +35,7 @@ def owner_language() -> str:
     return value.strip() if isinstance(value, str) else ""
 
 
-def persist(data: dict, prompt: str, d=None) -> None:
+def persist(data: dict, prompt: str, d=None, direct: bool = False) -> None:
     """Write the session's route state; never raises."""
     try:
         import route_state  # noqa: E402
@@ -43,8 +43,8 @@ def persist(data: dict, prompt: str, d=None) -> None:
         if not sid:
             return
         digest = hashlib.sha256(prompt.encode("utf-8")).hexdigest()[:16]
-        if d is None:  # the router failed on a real prompt: no enforcement rather than a stale one
-            state = route_state.new_state("unrouted", None, None, digest)
+        if d is None:  # "#direct" or the router failed: no enforcement rather than a stale one
+            state = route_state.new_state("direct" if direct else "unrouted", None, None, digest, direct=direct)
         else:
             state = route_state.new_state(d.task_class, d.model, d.subagent, digest,
                                           direct=route_state.DIRECT_MARK in prompt.lower())
@@ -67,6 +67,9 @@ def main() -> int:
         if is_shadowed(Path(__file__)):
             return 0
     except Exception:
+        return 0
+    if "#direct" in prompt.lower() and len(words) < 4:
+        persist(data, prompt, None, direct=True)  # owner override, however short the prompt
         return 0
     if not prompt or prompt.startswith("/") or len(words) < 4 or prompt.lower().rstrip(".!") in TRIVIAL:
         return 0  # a short follow-up continues the current task: keep its route

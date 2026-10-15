@@ -23,10 +23,16 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-# python[3][.exe] -m routing.route_cli route|dispatch, at the command start or after a separator;
-# leading VAR=value assignments (e.g. PYTHONPATH=...) are allowed before the interpreter.
+# An actual interpreter call of `-m routing.route_cli route|dispatch`, at the command start or after
+# a separator. Accepted launchers: python/python3[.x][.exe] (any path), `py [-3[.x]]`, `uv run python`,
+# `env [VAR=x ...]`, leading VAR=value assignments, and interpreter flags before -m (`-I`, `-X utf8`).
 ROUTER_CALL = re.compile(
-    r"(?:^|[;&|\n(])\s*(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*\S*python[0-9.]*(?:\.exe)?\s+-m\s+routing\.route_cli\s+(?:route|dispatch)\b")
+    r"(?:^|[;&|\n(])\s*"
+    r"(?:env\s+)?(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*"
+    r"(?:uv\s+run\s+)?"
+    r"(?:\S*python[0-9.]*(?:\.exe)?|py(?:\.exe)?(?:\s+-[0-9][0-9.]*)?)"
+    r"(?:\s+-[XW]\s+[^\s;&|-][^\s;&|]*|\s+-(?!m\b)[A-Za-z]+)*"  # only -X/-W take a value
+    r"\s+-m\s+routing\.route_cli\s+(?:route|dispatch)\b")
 
 
 def invokes_router(command: str) -> bool:

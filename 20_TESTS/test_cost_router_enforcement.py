@@ -295,3 +295,69 @@ def test_invoking_the_router_marks_vault_routed(home, command):
 def test_policy_doc_states_the_opus_ceiling():
     text = (ROOT / "00_GOVERNANCE" / "protocols" / "Claude_Model_Routing_Policy_V1.md").read_text(encoding="utf-8")
     assert "Fable is reachable only for the `frontier` class" in text
+
+
+# -- re-review fixes ---------------------------------------------------------------
+
+def _route_state():
+    sys.path.insert(0, str(SKILL / "lib"))
+    try:
+        import route_state
+    finally:
+        sys.path.remove(str(SKILL / "lib"))
+    return route_state
+
+
+def test_short_direct_prompt_switches_enforcement_off(home):
+    _prompt(home, IMPLEMENT)
+    _prompt(home, "#direct do it")
+    assert _state(home)["subagent"] is None
+    assert all(_tool(home) is None for _ in range(6))
+
+
+@pytest.mark.parametrize("command", [
+    "py -3 -m routing.route_cli route --goal x",
+    "py -m routing.route_cli dispatch --goal x",
+    "uv run python -m routing.route_cli route --goal x",
+    "env PYTHONPATH=03_IMPLEMENTATION/packages python -m routing.route_cli route --goal x",
+    "python -I -m routing.route_cli route --goal x",
+    "python3 -X utf8 -m routing.route_cli route --goal x",
+])
+def test_other_launchers_mark_vault_routed(home, command):
+    _prompt(home, IMPLEMENT)
+    assert _tool(home, "Bash", {"command": command}) is None
+    assert _state(home)["vault_routed"] is True
+
+
+def test_reset_overwrites_state_and_voids_markers_it_cannot_delete(home, monkeypatch):
+    rs = _route_state()
+    _prompt(home, EXPLORE)  # explore is not Vault-gated: the spawn marks delegated
+    _agent(home, EXPLORE)
+    assert rs.load(SID)["delegated"] is True
+    real_unlink = Path.unlink
+
+    def deny_markers(self, *a, **kw):
+        if self.suffix in (".delegated", ".vault_routed"):
+            raise PermissionError("locked")
+        return real_unlink(self, *a, **kw)
+
+    monkeypatch.setattr(Path, "unlink", deny_markers)
+    new = rs.new_state("implement", "sonnet", "vault-worker", "feedbeef")
+    assert rs.reset(SID, new) is True
+    s = rs.load(SID)
+    assert s["prompt_hash"] == "feedbeef" and s["delegated"] is False
+
+
+def test_reset_prunes_cache_files_older_than_seven_days(home):
+    cache = home / ".claude" / "cache" / "cost-router"
+    cache.mkdir(parents=True)
+    old = [cache / "route-old.json", cache / "route-old.delegated", cache / "route-old.vault_routed"]
+    fresh = cache / "route-fresh.json"
+    for p in (*old, fresh):
+        p.write_text("{}", encoding="utf-8")
+    stamp = __import__("time").time() - 8 * 86400
+    for p in old:
+        os.utime(p, (stamp, stamp))
+    _prompt(home, IMPLEMENT)
+    assert not any(p.exists() for p in old)
+    assert fresh.exists() and _state(home) is not None

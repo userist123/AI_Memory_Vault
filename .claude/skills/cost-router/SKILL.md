@@ -122,7 +122,9 @@ for multi-step code, design, risky work or verification. Cloud sessions have no 
 - **Route state**: the prompt hook stores the route per session in
   `~/.claude/cache/cost-router/route-<session_id>.json`. A short follow-up (`continua`, `ok`, under
   4 words, a slash command) keeps it; only a new non-trivial prompt replaces it. `delegated` and
-  `vault_routed` are marker files next to it, so a concurrent counter write never clears them.
+  `vault_routed` are marker files next to it, so a concurrent counter write never clears them; each
+  holds the prompt's epoch nonce, so a marker that could not be deleted is void for the next
+  prompt. Cache files older than 7 days are pruned on each new prompt.
 - **Main session dispatches**: when the route names a subagent, `hook_enforce_route.py`
   (PreToolUse on Edit/Write/NotebookEdit/Bash/Read/Grep/Glob) allows 3 direct tool calls, then
   denies until the work is delegated with the Agent tool (any Agent/Task spawn unlocks it for the
@@ -132,7 +134,12 @@ for multi-step code, design, risky work or verification. Cloud sessions have no 
   implement/review/design/frontier route is denied until
   `python -m routing.route_cli route|dispatch` actually ran in Bash (at the command start or after a
   separator; merely mentioning it does not count; `PYTHONPATH=03_IMPLEMENTATION/packages`).
-- **Overrides**: `#direct` in the prompt (owner: the main session does it itself) or
+  Launchers recognised: `python`/`python3` (any path, flags such as `-I`, `-X utf8`), `py [-3]`,
+  `uv run python`, `env VAR=x python`. Known limitation: the mark is set in PreToolUse, when the
+  command is about to run, not after it succeeded (the Bash PostToolUse input does not reliably
+  expose an exit code), so a router call that fails still counts as routed.
+- **Overrides**: `#direct` in the prompt, even a short one such as `#direct do it` (owner: the
+  main session does it itself), or
   `COST_ROUTER_ENFORCE=0` in the environment. Any hook error allows the call.
 
 ## 5. Report shape (end of task)

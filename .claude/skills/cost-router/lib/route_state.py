@@ -7,7 +7,10 @@ function here swallows its own errors: a broken state file must never block a to
 
 `delegated` and `vault_routed` are monotonic within one prompt: each is a separate marker file
 (route-<sid>.delegated, route-<sid>.vault_routed) that a concurrent counter write of the JSON can
-never clear. load() ORs them in; only reset() (a new non-trivial prompt) removes them.
+never clear. load() ORs them in; only reset() (a new non-trivial prompt) removes them. Each marker
+holds the `epoch` (a random nonce reset() puts in the state) of the prompt that set it; a marker
+whose content differs from the current epoch is void, so a marker reset() could not delete never
+leaks into the next prompt. reset() also prunes cache files older than CACHE_MAX_AGE_SECONDS.
 """
 from __future__ import annotations
 
@@ -15,6 +18,8 @@ import json
 import os
 import re
 import tempfile
+import time
+import uuid
 from pathlib import Path
 from typing import Optional
 
@@ -22,6 +27,7 @@ VAULT_GATED_CLASSES = {"implement", "review", "design", "frontier"}
 DIRECT_MARK = "#direct"
 FREE_MAIN_CALLS = 3  # one-minute work stays in the main session
 MARKERS = ("delegated", "vault_routed")
+CACHE_MAX_AGE_SECONDS = 7 * 86400
 
 
 def state_dir() -> Path:
@@ -45,10 +51,22 @@ def mark(session_id, name: str) -> bool:
     path = marker_path(session_id, name)
     if path is None:
         return False
+    state = load(session_id)
+    epoch = str((state or {}).get("epoch") or "")
+    if not epoch:
+        return False  # no current prompt to attach the flag to
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.touch()
+        path.write_text(epoch, encoding="utf-8")
         return True
+    except Exception:
+        return False
+
+
+def _marker_valid(session_id, name: str, epoch: str) -> bool:
+    try:
+        path = marker_path(session_id, name)
+        return bool(epoch) and path is not None and path.read_text(encoding="utf-8").strip() == epoch
     except Exception:
         return False
 
@@ -63,26 +81,43 @@ def load(session_id) -> Optional[dict]:
         return None
     if not isinstance(data, dict):
         return None
+    epoch = str(data.get("epoch") or "")
     for name in MARKERS:
-        try:
-            data[name] = bool(data.get(name)) or marker_path(session_id, name).exists()
-        except Exception:
-            data[name] = bool(data.get(name))
+        data[name] = bool(data.get(name)) or _marker_valid(session_id, name, epoch)
     return data
 
 
+def prune_cache(keep: Optional[Path] = None, max_age: float = CACHE_MAX_AGE_SECONDS) -> None:
+    """Best effort: delete route-* files older than max_age seconds. Never raises."""
+    try:
+        cutoff = time.time() - max_age
+        for path in state_dir().glob("route-*"):
+            try:
+                if keep is not None and path.stem == keep.stem:
+                    continue
+                if path.is_file() and path.stat().st_mtime < cutoff:
+                    path.unlink()
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+
 def reset(session_id, state: dict) -> bool:
-    """Replace the state for a new prompt: markers of the previous prompt are removed first."""
+    """Replace the state for a new prompt. A fresh epoch voids every marker of the previous prompt
+    even when deleting it fails; deletion is only tidiness. Old cache files are pruned."""
+    state = dict(state)
+    state["epoch"] = uuid.uuid4().hex
     for name in MARKERS:
         path = marker_path(session_id, name)
         if path is not None:
             try:
                 path.unlink()
-            except FileNotFoundError:
-                pass
             except Exception:
-                return False
-    return save(session_id, state)
+                pass  # void anyway: its content is the old epoch
+    ok = save(session_id, state)
+    prune_cache(keep=state_path(session_id))
+    return ok
 
 
 def save(session_id, state: dict) -> bool:
