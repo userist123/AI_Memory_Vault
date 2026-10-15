@@ -283,6 +283,9 @@ namespace LogAnalyzer.UI.ViewModels
                 var posture = Posture;
                 SavedReportInfo = "";
                 var (folders, updates) = ControlInputs();
+                LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlStarted,
+                    LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail(LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(posture), posture.ToString(),
+                        new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent()).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator), PeriodDays, folders.Count));
                 _report = await Task.Run(() =>
                 {
                     // N13: only the Network edition registers the active probe (LogAnalyzer.Connectors); the other editions have none.
@@ -305,6 +308,9 @@ namespace LogAnalyzer.UI.ViewModels
                     }
                     return ControlEvaluator.Evaluate(facts);
                 });
+                LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinished,
+                    LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinishedDetail(_report.Facts.Host, _report.Facts.IsAdministrator, _report.Checks.Count,
+                        _report.Count(ControlStatus.Neconform), _report.Count(ControlStatus.DeVerificat), _report.Count(ControlStatus.Nedeterminat)));
                 FillChecks();
                 Users.Clear();
                 foreach (var u in _report.Users) Users.Add(u);
