@@ -1,4 +1,7 @@
+using System.Globalization;
+using System.IO.Compression;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace LogAnalyzer.Dfir.Reporting;
 
@@ -6,29 +9,30 @@ namespace LogAnalyzer.Dfir.Reporting;
 public sealed record UpdateInspection(string? Problem, IReadOnlyDictionary<int, string> Roles);
 
 /// <summary>
-/// What may follow the generated report in a signed file: EXACTLY ONE incremental update, read with a real PDF parser (<see cref="PdfParser"/>), whose
-/// cross-reference table is checked entry by entry, and whose objects pass a strict WHITELIST:
+/// What may follow the generated report in a signed file: EXACTLY ONE incremental update, read with a real PDF parser (<see cref="PdfParser"/>) and an
+/// exact classic cross-reference grammar, which only FILLS the signature field reserved at generation (<see cref="SignatureField"/>):
 /// <list type="bullet">
-/// <item>original objects: only the catalog (identical except an added /AcroForm) and the one page that receives the widget (identical except an added /Annots);</item>
-/// <item>new objects, each reachable from /AcroForm or /Annots and with an allowed set of keys for its role: the AcroForm, exactly one signature widget
-/// (inside the page, at most a quarter of it), exactly one signature dictionary, appearance form XObjects (scale/translate matrix only) and their fonts.</item>
+/// <item>original objects: only the reserved widget (identical, plus /V and /AP) and the AcroForm (identical, plus /SigFlags, /DR, /DA); never the page or the catalog;</item>
+/// <item>new objects, each reachable from the widget's /V or /AP (or the AcroForm's /DR), with an allowed set of keys for its role: exactly one signature
+/// dictionary, appearance form XObjects the size of the reserved box (no matrix other than identity, no images, no XObject calls, only text and simple
+/// path operators) and their fonts.</item>
 /// </list>
-/// Anything else (a free xref entry, an object the xref does not point at, an action, a link, XFA, a second widget, compressed object streams…) is refused:
-/// "raportul a fost modificat înainte de semnare".
+/// Anything else is refused: "raportul a fost modificat înainte de semnare".
 /// </summary>
 public static class PdfUpdateInspector
 {
     private static readonly HashSet<string> SigKeys = ["Type", "Filter", "SubFilter", "ByteRange", "Contents", "M", "Name", "Reason", "Location", "ContactInfo", "Prop_Build"];
-    private static readonly HashSet<string> WidgetKeys = ["Type", "Subtype", "FT", "Rect", "P", "F", "T", "V", "AP", "DA", "MK", "Ff"];
-    private static readonly HashSet<string> AcroFormKeys = ["Fields", "SigFlags", "DR", "DA"];
+    private static readonly HashSet<string> AcroFormMayAdd = ["SigFlags", "DR", "DA"];
     private static readonly HashSet<string> XObjectKeys = ["Type", "Subtype", "BBox", "Resources", "Matrix", "Length", "Filter", "FormType"];
-    private static readonly HashSet<string> ResourceKeys = ["Font", "ProcSet", "XObject", "ExtGState", "ColorSpace"];
+    private static readonly HashSet<string> ResourceKeys = ["Font", "ProcSet"];
     private static readonly HashSet<string> FontKeys = ["Type", "Subtype", "BaseFont", "Encoding", "FirstChar", "LastChar", "Widths", "FontDescriptor", "ToUnicode", "DescendantFonts", "Name", "CIDSystemInfo", "W", "DW", "CIDToGIDMap"];
     private static readonly HashSet<string> FontDescriptorKeys = ["Type", "FontName", "Flags", "FontBBox", "ItalicAngle", "Ascent", "Descent", "CapHeight", "StemV", "StemH", "XHeight", "Leading", "MaxWidth", "AvgWidth", "MissingWidth", "FontFamily", "FontStretch", "FontWeight", "CharSet", "FontFile", "FontFile2", "FontFile3", "CIDSet"];
-    private static readonly HashSet<string> FontFileKeys = ["Length", "Length1", "Length2", "Length3", "Filter", "Subtype", "DecodeParms"];
+    private static readonly HashSet<string> FontFileKeys = ["Length", "Length1", "Length2", "Length3", "Filter", "Subtype"];
     private static readonly HashSet<string> EncodingKeys = ["Type", "BaseEncoding", "Differences"];
-    private static readonly HashSet<string> GStateKeys = ["Type", "CA", "ca", "LW", "LC", "LJ", "ML", "BM"];
     private static readonly HashSet<string> TrailerKeys = ["Size", "Root", "Info", "Prev", "ID"];
+    /// <summary>Content operators allowed in the appearance: text and simple paths only (no images, no XObjects, no graphics-state dictionaries).</summary>
+    private static readonly HashSet<string> Operators = ["BT", "ET", "Tf", "Td", "TD", "Tm", "T*", "Tj", "TJ", "'", "\"", "Tc", "Tw", "Tz", "TL", "Ts",
+                                                         "g", "G", "rg", "RG", "k", "K", "re", "m", "l", "c", "h", "S", "s", "f", "F", "f*", "B", "B*", "b", "b*", "n", "q", "Q", "cm", "w", "W", "W*"];
 
     public static string? Check(byte[] file, long originalLength) => Inspect(file, originalLength).Problem;
 
@@ -36,7 +40,8 @@ public static class PdfUpdateInspector
     {
         var roles = new Dictionary<int, string>();
         try { return new(new Run(file, originalLength, roles).Go(), roles); }
-        catch (Exception ex) when (ex is FormatException or NotSupportedException or ArgumentException or OverflowException or IndexOutOfRangeException or InvalidOperationException or KeyNotFoundException)
+        catch (Exception ex) when (ex is FormatException or NotSupportedException or ArgumentException or OverflowException or IndexOutOfRangeException
+                                       or InvalidOperationException or KeyNotFoundException or InvalidDataException)
         { return new("structura actualizării nu poate fi citită (" + ex.Message + ")", roles); }
     }
 
@@ -44,17 +49,17 @@ public static class PdfUpdateInspector
     {
         private PdfStructure _st = null!;
         private readonly Dictionary<int, PdfIndirectObject> _new = [];
-        private int _page = -1, _widget = -1;
-        private double[] _media = [0, 0, 595, 842];
+        private double _boxW, _boxH;
 
         public string? Go()
         {
             int L = (int)originalLength;
-            var original = file.AsSpan(0, L).ToArray();
-            _st = PdfStructure.Parse(original);
+            _st = PdfStructure.Parse(file.AsSpan(0, L).ToArray(), 2);
+            var field = SignatureField.Find(_st) ?? throw new FormatException("raportul generat nu are câmpul de semnătură rezervat");
+            _boxW = Math.Abs(field.Rect[2] - field.Rect[0]); _boxH = Math.Abs(field.Rect[3] - field.Rect[1]);
             var p = new PdfParser(file, L, file.Length);
 
-            // 1. the objects of the update, in order, then exactly one classic xref table, the trailer, startxref and %%EOF
+            // 1. the objects of the update, then exactly one classic xref table, the trailer, startxref and %%EOF
             var objects = new List<PdfIndirectObject>();
             while (true)
             {
@@ -63,33 +68,23 @@ public static class PdfUpdateInspector
                 objects.Add(p.ReadIndirect());
             }
             p.SkipWhiteAndComments();
-            long xrefAt = p.Position;
-            p.ExpectKeyword("xref");
-            var entries = new List<(int Num, long Offset, int Gen, bool InUse)>();
-            while (p.PeekKeyword() != "trailer")
-            {
-                if (p.ReadValue() is not PdfNumber { Text: var s } || p.ReadValue() is not PdfNumber { Text: var c } || !int.TryParse(s, out var start) || !int.TryParse(c, out var count) || count is < 0 or > 10000)
-                    return "tabelul de referințe al actualizării nu poate fi citit";
-                for (int i = 0; i < count; i++)
-                {
-                    if (p.ReadValue() is not PdfNumber off || p.ReadValue() is not PdfNumber gen || p.ReadValue() is not PdfKeyword { Value: "n" or "f" } kind)
-                        return "intrare invalidă în tabelul de referințe al actualizării";
-                    entries.Add((start + i, (long)off.Value, (int)gen.Value, kind.Value == "n"));
-                }
-            }
+            int xrefAt = p.Position;
+            var entries = ReadXref(xrefAt, out int afterXref);
+            p.Position = afterXref;
             p.ExpectKeyword("trailer");
             if (p.ReadValue() is not PdfDict trailer) return "trailer invalid";
             p.ExpectKeyword("startxref");
-            if (p.ReadValue() is not PdfNumber sx || (long)sx.Value != xrefAt) return "startxref nu indică tabelul de referințe al actualizării";
+            if (p.ReadValue() is not PdfNumber sx || !IsInt(sx) || (long)sx.Value != xrefAt) return "startxref nu indică tabelul de referințe al actualizării";
             var rest = Encoding.Latin1.GetString(file, p.Position, file.Length - p.Position);
             if (rest.Trim('\r', '\n', ' ', '\t', '\0', '\f') != "%%EOF") return "după actualizare urmează altceva decât %%EOF";
 
             if (trailer.Entries.Keys.Any(k => !TrailerKeys.Contains(k))) return "trailerul actualizării are chei neașteptate (" + string.Join(", ", trailer.Entries.Keys.Except(TrailerKeys)) + ")";
-            if (trailer["Prev"] is not PdfNumber prev || (long)prev.Value != _st.StartXref) return "actualizarea nu continuă raportul generat (/Prev)";
-            if (trailer["Root"] is not PdfRef root || root.Num != _st.Root) return "actualizarea schimbă rădăcina documentului";
-            if (_st.Info > 0 && (trailer["Info"] is not PdfRef info || info.Num != _st.Info)) return "actualizarea schimbă informațiile documentului";
+            if (trailer["Prev"] is not PdfNumber prev || !IsInt(prev) || (long)prev.Value != _st.StartXref) return "actualizarea nu continuă raportul generat (/Prev)";
+            if (trailer["Root"] is not PdfRef root || root.Num != _st.Root || root.Gen != 0) return "actualizarea schimbă rădăcina documentului";
+            if (_st.Info > 0 && (trailer["Info"] is not PdfRef info || info.Num != _st.Info || info.Gen != 0)) return "actualizarea schimbă informațiile documentului";
+            if (_st.Info == 0 && trailer["Info"] is not null) return "actualizarea adaugă informații documentului";
 
-            // 2. xref ⇔ parsed objects: every in-use entry points exactly at a parsed object, no free entry, every object has its entry
+            // 2. xref ⇔ parsed objects
             var byNum = new Dictionary<int, PdfIndirectObject>();
             foreach (var o in objects)
             {
@@ -101,43 +96,98 @@ public static class PdfUpdateInspector
             foreach (var e in entries)
                 if (!byNum.TryGetValue(e.Num, out var o) || o.Offset != e.Offset || e.Gen != 0) return $"intrarea {e.Num} din tabelul de referințe nu indică obiectul parsat";
             if (byNum.Keys.Any(k => !entries.Any(e => e.Num == k))) return "un obiect al actualizării nu are intrare în tabelul de referințe";
-            if (trailer["Size"] is not PdfNumber size || size.Value <= byNum.Keys.Max()) return "/Size al actualizării este prea mic";
+            if (trailer["Size"] is not PdfNumber size || !IsInt(size) || size.Value <= byNum.Keys.Max()) return "/Size al actualizării este prea mic";
 
-            // 3. original objects: only the catalog and the one page that gets the widget
+            // 3. original objects: only the reserved widget and the AcroForm
             foreach (var (num, o) in byNum)
             {
                 if (num >= _st.Size) { _new[num] = o; continue; }
-                if (num == _st.Root) continue;
-                if (_st.Pages.Contains(num) && _page < 0) { _page = num; continue; }
-                return $"obiectul {num} din raportul generat a fost înlocuit";
+                if (num == field.Widget || num == field.Form) continue;
+                return $"obiectul {num} din raportul generat a fost înlocuit (doar câmpul de semnătură rezervat se completează)";
             }
-            if (!byNum.TryGetValue(_st.Root, out var catNew) || catNew.Value is not PdfDict cat) return "catalogul nu a primit formularul semnăturii";
-            if (_page < 0 || byNum[_page].Value is not PdfDict page) return "nicio pagină nu a primit semnătura";
-            var catOld = Original(_st.Root); var pageOld = Original(_page);
-            if (catOld.Entries.ContainsKey("AcroForm") || !SameExcept(catOld, cat, "AcroForm")) return "catalogul documentului a fost schimbat dincolo de semnătură";
-            if (pageOld.Entries.ContainsKey("Annots") || !SameExcept(pageOld, page, "Annots")) return $"pagina (obiectul {_page}) a fost schimbată";
-            if (pageOld["MediaBox"] is PdfArray mb && Nums(mb, 4) is { } m) _media = m;
-            roles[_st.Root] = "catalog"; roles[_page] = "page";
+            if (!byNum.TryGetValue(field.Widget, out var wNew) || wNew.Value is not PdfDict widget) return "câmpul de semnătură rezervat nu a fost completat";
+            var wOld = Original(field.Widget);
+            if (wOld.Entries.ContainsKey("V") || wOld.Entries.ContainsKey("AP")) return "câmpul rezervat al raportului generat nu era gol";
+            if (!SameExcept(wOld, widget, ["V", "AP"], required: true)) return "widgetul semnăturii a fost schimbat (doar /V și /AP se pot adăuga câmpului rezervat)";
+            roles[field.Widget] = "widget";
+            if (byNum.TryGetValue(field.Form, out var fNew))
+            {
+                if (fNew.Value is not PdfDict form || !SameExcept(Original(field.Form), form, AcroFormMayAdd, required: false)) return "formularul (AcroForm) a fost schimbat dincolo de semnătură";
+                if (form["SigFlags"] is not (null or PdfNumber) || form["DA"] is not (null or PdfString)) return "AcroForm invalid";
+                if (form["DR"] is { } drv)
+                {
+                    var dr = Deref(drv, "dr") as PdfDict ?? throw new FormatException("DR invalid");
+                    if (Resources(dr) is { } bad) return bad;
+                }
+                roles[field.Form] = "acroform";
+            }
 
-            // 4. from the catalog's /AcroForm and the page's /Annots: every new object reached exactly once, with its role's key whitelist
-            var form = Deref(cat["AcroForm"], "acroform") as PdfDict ?? throw new FormatException("/AcroForm nu este un dicționar");
-            if (Keys(form, AcroFormKeys) is { } bad1) return "formularul (AcroForm) are chei nepermise: " + bad1;
-            if (form["Fields"] is not PdfArray { Items: [PdfRef fieldRef] }) return "formularul trebuie să aibă exact un câmp, semnătura";
-            if (form["SigFlags"] is not (null or PdfNumber)) return "SigFlags invalid";
-            if (form["DA"] is not (null or PdfString)) return "DA invalid";
-            if (form["DR"] is PdfDict dr) { if (Resources(dr) is { } bad) return bad; } else if (form["DR"] is not null) return "DR invalid";
-            if (page["Annots"] is not PdfArray { Items: [PdfRef annotRef] } || !annotRef.Is(fieldRef)) return "pagina trebuie să primească exact o adnotare: widgetul semnăturii";
-            if (Widget(fieldRef) is { } bad2) return bad2;
+            // 4. the signature and its appearance, reached from the widget
+            if (widget["V"] is not PdfRef sigRef) return "widgetul nu are semnătură";
+            if (Sig(sigRef) is { } badSig) return badSig;
+            var ap = Deref(widget["AP"], "ap") as PdfDict ?? throw new FormatException("AP invalid");
+            if (ap.Entries.Keys.Any(k => k != "N") || ap["N"] is not PdfRef n) return "aspectul semnăturii trebuie să fie un singur formular grafic (/N)";
+            if (Appearance(n) is { } badAp) return badAp;
+            if (_new.Values.Count(o => o.Value is PdfDict d && d.NameOf("Type") == "Sig") != 1) return "actualizarea trebuie să conțină exact o semnătură";
             foreach (var num in _new.Keys) if (!roles.ContainsKey(num)) return $"actualizarea conține un obiect în plus (obiectul {num})";
+            return null;
+        }
+
+        private static bool IsInt(PdfNumber n) => n.Text.Length is > 0 and <= 12 && n.Text.All(char.IsAsciiDigit);
+
+        /// <summary>The exact classic xref grammar: "xref" EOL; "N M" EOL; entries of exactly 20 bytes "nnnnnnnnnn ggggg n|f" + (SP CR | SP LF | CR LF); no comments.</summary>
+        private List<(int Num, long Offset, int Gen, bool InUse)> ReadXref(int at, out int end)
+        {
+            var list = new List<(int, long, int, bool)>();
+            int pos = at;
+            if (!Match(pos, "xref")) throw new FormatException("lipsește tabelul de referințe");
+            pos += 4;
+            pos = Eol(pos) ?? throw new FormatException("după „xref” trebuie un sfârșit de linie");
+            while (!Match(pos, "trailer"))
+            {
+                int lineEnd = pos;
+                while (lineEnd < file.Length && file[lineEnd] is not ((byte)'\r' or (byte)'\n') && lineEnd - pos < 32) lineEnd++;
+                var header = Encoding.ASCII.GetString(file, pos, lineEnd - pos);
+                var m = Regex.Match(header, @"^(\d{1,9}) (\d{1,5})$");
+                if (!m.Success) throw new FormatException("antet de subsecțiune invalid în tabelul de referințe");
+                pos = Eol(lineEnd) ?? throw new FormatException("antet de subsecțiune fără sfârșit de linie");
+                int start = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture), count = int.Parse(m.Groups[2].Value, CultureInfo.InvariantCulture);
+                if (count > 10000) throw new FormatException("subsecțiune prea mare");
+                for (int i = 0; i < count; i++)
+                {
+                    if (pos + 20 > file.Length) throw new FormatException("tabel de referințe trunchiat");
+                    var e = Encoding.ASCII.GetString(file, pos, 20);
+                    var em = Regex.Match(e, @"^(\d{10}) (\d{5}) ([nf])( \r| \n|\r\n)$");
+                    if (!em.Success) throw new FormatException("intrare care nu are exact 20 de octeți în tabelul de referințe");
+                    list.Add((start + i, long.Parse(em.Groups[1].Value, CultureInfo.InvariantCulture), int.Parse(em.Groups[2].Value, CultureInfo.InvariantCulture), em.Groups[3].Value == "n"));
+                    pos += 20;
+                }
+                if (list.Count > 20000) throw new FormatException("tabel de referințe prea mare");
+            }
+            end = pos;
+            return list;
+        }
+
+        private bool Match(int pos, string s) => pos + s.Length <= file.Length && Encoding.ASCII.GetString(file, pos, s.Length) == s;
+
+        private int? Eol(int pos)
+        {
+            if (pos < file.Length && file[pos] == '\r') return pos + 1 < file.Length && file[pos + 1] == '\n' ? pos + 2 : pos + 1;
+            if (pos < file.Length && file[pos] == '\n') return pos + 1;
             return null;
         }
 
         private PdfDict Original(int num) =>
             PdfParser.ObjectAt(file, _st.Offsets[num], (int)originalLength).Value as PdfDict ?? throw new FormatException($"obiectul original {num} nu este un dicționar");
 
-        private static bool SameExcept(PdfDict before, PdfDict after, string added) =>
-            after.Entries.ContainsKey(added) && after.Entries.Count == before.Entries.Count + 1 &&
-            before.Entries.All(kv => after.Entries.TryGetValue(kv.Key, out var v) && PdfParser.Same(kv.Value, v));
+        /// <summary>Same entries, except <paramref name="added"/> keys that may be added (all of them when <paramref name="required"/>).</summary>
+        private static bool SameExcept(PdfDict before, PdfDict after, IReadOnlyCollection<string> added, bool required)
+        {
+            if (required && added.Any(k => !after.Entries.ContainsKey(k))) return false;
+            if (before.Entries.Keys.Any(added.Contains)) return false;
+            return after.Entries.Keys.All(k => before.Entries.ContainsKey(k) || added.Contains(k)) &&
+                   before.Entries.All(kv => after.Entries.TryGetValue(kv.Key, out var v) && PdfParser.Same(kv.Value, v));
+        }
 
         private static string? Keys(PdfDict d, HashSet<string> allowed) =>
             d.Entries.Keys.Where(k => !allowed.Contains(k)).ToList() is { Count: > 0 } extra ? string.Join(", ", extra) : null;
@@ -156,32 +206,6 @@ public static class PdfUpdateInspector
             return o.Value;
         }
 
-        private string? Widget(PdfRef r)
-        {
-            var w = Deref(r, "widget") as PdfDict ?? throw new FormatException("widget invalid");
-            _widget = r.Num;
-            if (Keys(w, WidgetKeys) is { } bad) return "widgetul semnăturii are chei nepermise: " + bad;
-            if (w.NameOf("Subtype") != "Widget" || w.NameOf("FT") != "Sig" || w["Type"] is not (null or PdfName { Value: "Annot" })) return "adnotarea nu este widgetul unei semnături";
-            if (w["P"] is not (null or PdfRef) || w["P"] is PdfRef pr && pr.Num != _page) return "widgetul indică altă pagină";
-            if (w["MK"] is not (null or PdfDict) || w["MK"] is PdfDict mk && HasRef(mk)) return "MK invalid";
-            if (w["T"] is not (null or PdfString) || w["DA"] is not (null or PdfString) || w["F"] is not (null or PdfNumber) || w["Ff"] is not (null or PdfNumber)) return "câmpuri invalide în widget";
-            if (w["Rect"] is not PdfArray ra || Nums(ra, 4) is not { } rect) return "Rect invalid";
-            double x0 = Math.Min(rect[0], rect[2]), x1 = Math.Max(rect[0], rect[2]), y0 = Math.Min(rect[1], rect[3]), y1 = Math.Max(rect[1], rect[3]);
-            double mx0 = Math.Min(_media[0], _media[2]), mx1 = Math.Max(_media[0], _media[2]), my0 = Math.Min(_media[1], _media[3]), my1 = Math.Max(_media[1], _media[3]);
-            if (x0 < mx0 || y0 < my0 || x1 > mx1 || y1 > my1) return "zona semnăturii iese din pagină";
-            if ((x1 - x0) * (y1 - y0) > (mx1 - mx0) * (my1 - my0) / 4) return "zona vizibilă a semnăturii acoperă o parte prea mare din pagină";
-            if (w["V"] is not PdfRef sigRef) return "widgetul nu are semnătură";
-            if (Sig(sigRef) is { } bad2) return bad2;
-            if (w["AP"] is { } apv)
-            {
-                var ap = Deref(apv, "ap") as PdfDict ?? throw new FormatException("AP invalid");
-                if (Keys(ap, ["N"]) is { } bad3) return "aspectul semnăturii are chei nepermise: " + bad3;
-                if (ap["N"] is not PdfRef n) return "aspectul semnăturii trebuie să fie un flux";
-                if (Appearance(n, 0) is { } bad4) return bad4;
-            }
-            return null;
-        }
-
         private string? Sig(PdfRef r)
         {
             var s = Deref(r, "sig") as PdfDict ?? throw new FormatException("semnătură invalidă");
@@ -193,52 +217,68 @@ public static class PdfUpdateInspector
             return null;
         }
 
-        private string? Appearance(PdfRef r, int depth)
+        /// <summary>The appearance: a form XObject exactly the size of the reserved box, identity matrix, fonts only, text and simple path operators only.</summary>
+        private string? Appearance(PdfRef r)
         {
-            if (depth > 4) return "aspect imbricat prea adânc";
             var x = Deref(r, "appearance", stream: true) as PdfDict ?? throw new FormatException("aspect invalid");
             if (Keys(x, XObjectKeys) is { } bad) return "aspectul semnăturii are chei nepermise: " + bad;
             if (x.NameOf("Subtype") != "Form" || x.NameOf("Type") is not (null or "XObject")) return "aspectul semnăturii nu este un formular grafic";
-            if (x["BBox"] is not PdfArray bb || Nums(bb, 4) is null) return "BBox invalid";
-            if (x["Matrix"] is PdfArray ma)
-            {
-                if (Nums(ma, 6) is not { } m || m[1] != 0 || m[2] != 0 || m[0] <= 0 || m[3] <= 0) return "matricea aspectului rotește sau deformează semnătura";
-            }
+            if (x["BBox"] is not PdfArray bb || Nums(bb, 4) is not { } box) return "BBox invalid";
+            if (Math.Abs(Math.Abs(box[2] - box[0]) - _boxW) > 0.5 || Math.Abs(Math.Abs(box[3] - box[1]) - _boxH) > 0.5) return "aspectul semnăturii nu are dimensiunea câmpului rezervat";
+            if (x["Matrix"] is PdfArray ma) { if (Nums(ma, 6) is not { } m || !m.SequenceEqual([1d, 0, 0, 1, 0, 0])) return "aspectul semnăturii are o matrice de transformare"; }
             else if (x["Matrix"] is not null) return "Matrix invalid";
-            if (x["Filter"] is not (null or PdfName { Value: "FlateDecode" })) return "filtru nepermis în aspect";
             if (x["Resources"] is { } rv)
             {
                 var res = Deref(rv, "resources") as PdfDict ?? throw new FormatException("Resources invalid");
-                if (Keys(res, ResourceKeys) is { } bad2) return "resursele aspectului au chei nepermise: " + bad2;
-                if (Resources(res, depth) is { } bad3) return bad3;
+                if (Resources(res) is { } bad2) return bad2;
             }
-            return null;
+            var o = _new[r.Num];
+            return Content(Decode(o, x));
         }
 
-        private string? Resources(PdfDict res, int depth = 0)
+        private byte[] Decode(PdfIndirectObject o, PdfDict d)
         {
-            if (Keys(res, ResourceKeys) is { } bad0) return "resurse cu chei nepermise: " + bad0;
+            var raw = file.AsSpan((int)o.StreamStart, (int)o.StreamLength).ToArray();
+            var filter = d["Filter"];
+            if (filter is null) return raw;
+            if (filter is not PdfName { Value: "FlateDecode" }) throw new FormatException("filtru nepermis în aspectul semnăturii");
+            using var z = new ZLibStream(new MemoryStream(raw), CompressionMode.Decompress);
+            using var outp = new MemoryStream();
+            var buf = new byte[8192];
+            for (int k; (k = z.Read(buf)) > 0;)
+            {
+                outp.Write(buf, 0, k);
+                if (outp.Length > 1_000_000) throw new FormatException("aspect prea mare");
+            }
+            return outp.ToArray();
+        }
+
+        private static string? Content(byte[] data)
+        {
+            var p = new PdfParser(data, 0, data.Length);
+            int ops = 0;
+            while (true)
+            {
+                p.SkipWhiteAndComments();
+                if (p.Position >= data.Length) return null;
+                var v = p.ReadValue();
+                if (v is PdfKeyword k)
+                {
+                    if (!Operators.Contains(k.Value)) return $"aspectul semnăturii folosește operatorul nepermis „{k.Value}” (se permit doar text și linii simple)";
+                    if (++ops > 20000) return "aspect prea complex";
+                }
+                else if (v is PdfDict or PdfRef) return "aspectul semnăturii conține dicționare sau trimiteri nepermise";
+            }
+        }
+
+        private string? Resources(PdfDict res)
+        {
+            if (Keys(res, ResourceKeys) is { } bad0) return "resursele aspectului au chei nepermise: " + bad0;
             if (res["ProcSet"] is not (null or PdfArray) || res["ProcSet"] is PdfArray ps && ps.Items.Any(i => i is not PdfName)) return "ProcSet invalid";
-            if (res["ColorSpace"] is not (null or PdfDict) || res["ColorSpace"] is PdfDict cs && HasRef(cs)) return "ColorSpace invalid";
             if (res["Font"] is { } fv)
             {
                 var fonts = Deref(fv, "fonts") as PdfDict ?? throw new FormatException("Font invalid");
                 foreach (var f in fonts.Entries.Values) { if (f is not PdfRef fr) return "font inline nepermis"; if (Font(fr) is { } bad) return bad; }
-            }
-            if (res["XObject"] is { } xv)
-            {
-                var xs = Deref(xv, "xobjects") as PdfDict ?? throw new FormatException("XObject invalid");
-                foreach (var v in xs.Entries.Values) { if (v is not PdfRef xr) return "XObject inline nepermis"; if (Appearance(xr, depth + 1) is { } bad) return bad; }
-            }
-            if (res["ExtGState"] is { } gv)
-            {
-                var gs = Deref(gv, "extgstates") as PdfDict ?? throw new FormatException("ExtGState invalid");
-                foreach (var v in gs.Entries.Values)
-                {
-                    var g = Deref(v, "extgstate") as PdfDict ?? throw new FormatException("ExtGState invalid");
-                    if (Keys(g, GStateKeys) is { } bad) return "starea grafică are chei nepermise: " + bad;
-                    if (HasRef(g)) return "starea grafică trimite la alte obiecte";
-                }
             }
             return null;
         }
@@ -250,23 +290,32 @@ public static class PdfUpdateInspector
             if (f.NameOf("Type") is not (null or "Font")) return "font invalid";
             if (f["Widths"] is PdfRef wr) Deref(wr, "widths");
             if (f["W"] is PdfRef w2) Deref(w2, "widths");
-            if (f["Encoding"] is PdfRef er || f["Encoding"] is PdfDict)
+            if (f["Encoding"] is PdfRef || f["Encoding"] is PdfDict)
             {
                 var e = Deref(f["Encoding"], "encoding") as PdfDict ?? throw new FormatException("Encoding invalid");
                 if (Keys(e, EncodingKeys) is { } be) return "codificarea fontului are chei nepermise: " + be;
                 if (HasRef(e)) return "codificarea fontului trimite la alte obiecte";
             }
-            if (f["ToUnicode"] is PdfRef tu) { var t = Deref(tu, "tounicode", stream: true) as PdfDict; if (t is null || Keys(t, FontFileKeys) is not null) return "ToUnicode invalid"; }
-            if (f["CIDToGIDMap"] is PdfRef cg) { var t = Deref(cg, "cidtogid", stream: true) as PdfDict; if (t is null || Keys(t, FontFileKeys) is not null) return "CIDToGIDMap invalid"; }
+            if (f["ToUnicode"] is PdfRef tu && FontFile(tu, "tounicode") is { } b1) return b1;
+            if (f["CIDToGIDMap"] is PdfRef cg && FontFile(cg, "cidtogid") is { } b2) return b2;
             if (f["CIDSystemInfo"] is not (null or PdfDict)) return "CIDSystemInfo invalid";
-            if (f["DescendantFonts"] is PdfArray dfs) foreach (var d in dfs.Items) { if (d is not PdfRef dr || Font(dr) is { } bd) return "font descendent invalid"; }
+            if (f["DescendantFonts"] is PdfArray dfs) foreach (var d in dfs.Items) { if (d is not PdfRef dr || Font(dr) is not null) return "font descendent invalid"; }
             if (f["FontDescriptor"] is PdfRef fdr)
             {
                 var fd = Deref(fdr, "fontdescriptor") as PdfDict ?? throw new FormatException("FontDescriptor invalid");
                 if (Keys(fd, FontDescriptorKeys) is { } bf) return "descriptorul fontului are chei nepermise: " + bf;
                 foreach (var k in new[] { "FontFile", "FontFile2", "FontFile3", "CIDSet" })
-                    if (fd[k] is PdfRef ff) { var t = Deref(ff, "fontfile", stream: true) as PdfDict; if (t is null || Keys(t, FontFileKeys) is not null) return "fișierul fontului are chei nepermise"; }
+                    if (fd[k] is PdfRef ff && FontFile(ff, "fontfile") is { } b3) return b3;
             }
+            return null;
+        }
+
+        /// <summary>Font program, ToUnicode or CIDToGIDMap stream: allowed keys only, /Filter only FlateDecode or none, no /DecodeParms.</summary>
+        private string? FontFile(PdfRef r, string role)
+        {
+            var t = Deref(r, role, stream: true) as PdfDict;
+            if (t is null || Keys(t, FontFileKeys) is not null) return $"fluxul fontului ({role}) are chei nepermise";
+            if (t["Filter"] is not (null or PdfName { Value: "FlateDecode" })) return $"fluxul fontului ({role}) folosește un filtru nepermis";
             return null;
         }
 

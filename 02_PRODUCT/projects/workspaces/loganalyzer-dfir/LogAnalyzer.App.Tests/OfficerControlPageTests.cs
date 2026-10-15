@@ -19,7 +19,7 @@ public sealed class OfficerControlPageTests
     {
         var xaml = View();
         foreach (var bind in new[] { "SignAsOfficerCommand", "CopyAnchorCodeCommand", "ExportAnchorCommand", "ManageOfficersCommand", "VerifySignedReportCommand",
-                                     "ImportOfficerTrustCommand", "ShowStationAnchorHintCommand", "PreviousAnchorCode", "StationAnchorHint", "AnchorLine", "OfficerStatus", "VerifyFingerprint" })
+                                     "ImportOfficerTrustCommand", "UseStationAnchorCodeCommand", "PreviousAnchorCode", "StationAnchorHint", "AnchorLine", "OfficerStatus", "VerifyFingerprint" })
             Assert.Contains("{Binding " + bind, xaml);
         Assert.Contains("Content=\"Semnează ca ofițer de securitate\"", xaml);
         Assert.Contains("Content=\"Copiază codul\"", xaml);

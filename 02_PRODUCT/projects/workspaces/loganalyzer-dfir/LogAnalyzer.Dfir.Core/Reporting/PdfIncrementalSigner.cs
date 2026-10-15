@@ -14,11 +14,11 @@ public interface ICmsDetachedSigner
 public sealed record SignatureAppearance(string SignerName, string Issuer, DateTimeOffset SigningTime, string Location, string Reason);
 
 /// <summary>
-/// PAdES B-B signature of a PDF that LogAnalyzer generated (QuestPDF: PDF 1.4, classic cross-reference table, uncompressed object dictionaries), as ONE
-/// incremental update appended to the unchanged original bytes: signature dictionary (/Filter /Adobe.PPKLite /SubFilter /ETSI.CAdES.detached, /ByteRange,
-/// /Contents, /M), a signature field merged with its widget on the last page with a visible appearance, the last page and the catalog rewritten with
-/// /Annots and /AcroForm, an xref section for only those objects and a trailer with /Prev. Anything else (cross-reference streams, object streams, an existing
-/// form or annotations array by reference) is refused rather than guessed.
+/// PAdES B-B signature of a report that LogAnalyzer generated, into the signature field RESERVED at generation (<see cref="SignatureField"/>), as ONE
+/// incremental update appended to the unchanged original bytes: the signature dictionary (/Filter /Adobe.PPKLite /SubFilter /ETSI.CAdES.detached,
+/// /ByteRange, /Contents, /M), the existing widget with /V and /AP added (nothing else of it changes), an appearance form XObject the size of the box, its
+/// font, an xref section for only those objects and a trailer with /Prev. The page and the catalog are not touched. A document without the reserved,
+/// unsigned field is refused.
 /// </summary>
 public static class PdfIncrementalSigner
 {
@@ -28,45 +28,44 @@ public static class PdfIncrementalSigner
     public static byte[] Sign(byte[] original, SignatureAppearance look, ICmsDetachedSigner signer) => Sign(original, look, signer, allowPriorUpdates: false, extraObjects: null);
 
     /// <summary>
-    /// Tests only: <paramref name="allowPriorUpdates"/> signs a file that already has incremental updates (what Adobe does with any file), and
-    /// <paramref name="extraObjects"/> are written into the same update (an object number below /Size replaces an original object), <paramref name="rewrite"/>
-    /// changes the body of any object before it is written, and <paramref name="raw"/> adds raw text with its own header (or, with null text, a FREE xref
-    /// entry), to reproduce attacks.
+    /// Tests only, to reproduce attacks: <paramref name="allowPriorUpdates"/> signs a file with more updates (what Adobe does with any file),
+    /// <paramref name="extraObjects"/> are written into the same update (a number below /Size replaces an original object), <paramref name="rewrite"/> changes
+    /// the body of any object before it is written, <paramref name="raw"/> adds raw text with its own header (null text = a FREE xref entry), and
+    /// <paramref name="rewriteXrefAndTrailer"/> rewrites the xref table and trailer text.
     /// </summary>
     internal static byte[] Sign(byte[] original, SignatureAppearance look, ICmsDetachedSigner signer, bool allowPriorUpdates, IReadOnlyDictionary<int, string>? extraObjects,
-                                Func<int, string, string>? rewrite = null, IReadOnlyList<(int Num, string? Text)>? raw = null)
+                                Func<int, string, string>? rewrite = null, IReadOnlyList<(int Num, string? Text)>? raw = null, Func<string, string>? rewriteXrefAndTrailer = null)
     {
         if (original.AsSpan().IndexOf("/ByteRange"u8) >= 0) throw new NotSupportedException("documentul este deja semnat");
-        var st = PdfStructure.Parse(original, allowPriorUpdates ? 16 : 1);
-        var tail = (Size: st.Size, Root: st.Root, Info: st.Info, LastPage: st.Pages[^1], StartXref: st.StartXref, IdEntry: st.IdEntry,
-                    RootDict: st.Dict(st.Root), LastPageDict: st.Dict(st.Pages[^1]));
-        int n = tail.Size;
-        int sigObj = n, fieldObj = n + 1, apObj = n + 2, fontObj = n + 3;
+        var st = PdfStructure.Parse(original, allowPriorUpdates ? 16 : 2);
+        var field = SignatureField.Find(st) ?? throw new NotSupportedException("raportul nu are câmpul de semnătură rezervat (a fost generat cu o versiune mai veche): generați raportul din nou");
+        var widgetDict = st.Dict(field.Widget);
+        if (Regex.IsMatch(widgetDict, @"/(V|AP)\b")) throw new NotSupportedException("câmpul de semnătură este deja completat");
+        double w = Math.Abs(field.Rect[2] - field.Rect[0]), h = Math.Abs(field.Rect[3] - field.Rect[1]);
+        int n = st.Size;
+        int sigObj = n, apObj = n + 1, fontObj = n + 2;
         var objects = new SortedDictionary<int, string>();
 
-        var rect = "[300 55 569 110]";
         var lines = new[]
         {
-            $"Semnat de {Ascii(look.SignerName)} - ofiter de securitate",
+            $"Semnat de {Ascii(look.SignerName)}",
+            "ofiter de securitate",
             $"Data: {look.SigningTime.ToUniversalTime():yyyy-MM-dd HH:mm} UTC",
             $"Emitent certificat: {Ascii(look.Issuer)}",
         };
-        var stream = new StringBuilder("q 0.95 0.95 0.95 rg 0 0 269 55 re f 0.2 0.2 0.2 RG 0.8 w 0.4 0.4 268.2 54.2 re S Q\nBT /F1 7.5 Tf 0 0 0 rg\n");
-        for (int i = 0; i < lines.Length; i++) stream.Append(CultureInfo.InvariantCulture, $"1 0 0 1 6 {42 - i * 14} Tm ({Esc(Trim(lines[i], 70))}) Tj\n");
+        var stream = new StringBuilder(string.Create(CultureInfo.InvariantCulture, $"q 0.95 0.95 0.95 rg 0 0 {w:0.##} {h:0.##} re f 0.2 0.2 0.2 RG 0.8 w 0.4 0.4 {w - 0.8:0.##} {h - 0.8:0.##} re S Q\nBT /F1 8 Tf 0 0 0 rg\n"));
+        for (int i = 0; i < lines.Length; i++) stream.Append(CultureInfo.InvariantCulture, $"1 0 0 1 8 {h - 18 - i * 16:0.##} Tm ({Esc(Trim(lines[i], (int)(w / 4.6)))}) Tj\n");
         stream.Append("ET\n");
         var streamText = stream.ToString();
 
         objects[fontObj] = "<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>";
-        objects[apObj] = $"<</Type /XObject /Subtype /Form /BBox [0 0 269 55] /Resources <</Font <</F1 {fontObj} 0 R>>>> /Length {Encoding.ASCII.GetByteCount(streamText)}>>\nstream\n{streamText}endstream";
-        objects[fieldObj] = $"<</Type /Annot /Subtype /Widget /FT /Sig /T (Semnatura ofiter de securitate) /V {sigObj} 0 R /Rect {rect} /F 132 /P {tail.LastPage} 0 R /AP <</N {apObj} 0 R>>>>";
-        objects[tail.LastPage] = AddEntry(tail.LastPageDict, "/Annots", tail.LastPageDict.Contains("/Annots") ? throw new NotSupportedException("pagina are deja adnotări") : $"[{fieldObj} 0 R]");
-        objects[tail.Root] = AddEntry(tail.RootDict, "/AcroForm", tail.RootDict.Contains("/AcroForm") ? throw new NotSupportedException("documentul are deja un formular") : $"<</Fields [{fieldObj} 0 R] /SigFlags 3>>");
+        objects[apObj] = string.Create(CultureInfo.InvariantCulture, $"<</Type /XObject /Subtype /Form /BBox [0 0 {w:0.###} {h:0.###}] /Resources <</Font <</F1 {fontObj} 0 R>>>> /Length {Encoding.ASCII.GetByteCount(streamText)}>>\nstream\n{streamText}endstream");
+        objects[field.Widget] = SignatureField.AddEntry(SignatureField.AddEntry(widgetDict, "/V", $"{sigObj} 0 R"), "/AP", $"<</N {apObj} 0 R>>");
         foreach (var (num, body) in extraObjects ?? new Dictionary<int, string>()) objects[num] = body;
         var placeholder = new string('0', ContentsBytes * 2);
         objects[sigObj] = $"<</Type /Sig /Filter /Adobe.PPKLite /SubFilter /ETSI.CAdES.detached /ByteRange {ByteRangePlaceholder} /Contents <{placeholder}> " +
                           $"/M ({PdfDate(look.SigningTime)}) /Name ({Esc(Ascii(look.SignerName))}) /Reason ({Esc(Ascii(look.Reason))}) /Location ({Esc(Ascii(look.Location))})>>";
 
-        // body of the update, offsets measured as written
         using var ms = new MemoryStream();
         ms.Write(original);
         if (original[^1] != (byte)'\n') ms.WriteByte((byte)'\n');
@@ -85,13 +84,14 @@ public static class PdfIncrementalSigner
         }
         long xref = ms.Position;
         var x = new StringBuilder("xref\n");
-        foreach (var run in Runs(offsets.Keys.ToList()))
+        foreach (var run in SignatureField.Runs(offsets.Keys.ToList()))
         {
-            x.Append(CultureInfo.InvariantCulture, $"{run[0]} {run.Count}\n");
-            foreach (var num in run) x.Append(free.Contains(num) ? $"0000000000 00001 f \n" : $"{offsets[num]:D10} 00000 n \n");
+            x.Append(run[0].ToString(CultureInfo.InvariantCulture)).Append(' ').Append(run.Count.ToString(CultureInfo.InvariantCulture)).Append('\n');
+            foreach (var num in run) x.Append(free.Contains(num) ? "0000000000 00001 f \n" : offsets[num].ToString("D10", CultureInfo.InvariantCulture) + " 00000 n \n");
         }
-        x.Append(CultureInfo.InvariantCulture, $"trailer\n<</Size {Math.Max(fontObj, offsets.Keys.Max()) + 1} /Root {tail.Root} 0 R{(tail.Info > 0 ? $" /Info {tail.Info} 0 R" : "")}{tail.IdEntry} /Prev {tail.StartXref}>>\nstartxref\n{xref}\n%%EOF\n");
-        ms.Write(Encoding.ASCII.GetBytes(x.ToString()));
+        x.Append(CultureInfo.InvariantCulture, $"trailer\n<</Size {Math.Max(fontObj, offsets.Keys.Max()) + 1} /Root {st.Root} 0 R{(st.Info > 0 ? $" /Info {st.Info} 0 R" : "")}{st.IdEntry} /Prev {st.StartXref}>>\nstartxref\n{xref}\n%%EOF\n");
+        var tailText = rewriteXrefAndTrailer is null ? x.ToString() : rewriteXrefAndTrailer(x.ToString());
+        ms.Write(Encoding.ASCII.GetBytes(tailText));
         var bytes = ms.ToArray();
 
         // /ByteRange: everything except the /Contents hex string (with its < >), then the CMS over exactly those bytes
@@ -110,23 +110,6 @@ public static class PdfIncrementalSigner
         if (cms.Length > ContentsBytes) throw new InvalidOperationException($"semnătura ({cms.Length} octeți) nu încape în spațiul rezervat ({ContentsBytes} octeți)");
         Encoding.ASCII.GetBytes(Convert.ToHexString(cms)).CopyTo(bytes, lt + 1);
         return bytes;
-    }
-
-    private static IEnumerable<List<int>> Runs(List<int> nums)
-    {
-        var run = new List<int>();
-        foreach (var n in nums)
-        {
-            if (run.Count > 0 && n != run[^1] + 1) { yield return run; run = []; }
-            run.Add(n);
-        }
-        if (run.Count > 0) yield return run;
-    }
-
-    private static string AddEntry(string dict, string key, string value)
-    {
-        int end = dict.LastIndexOf(">>", StringComparison.Ordinal);
-        return dict[..end] + $"\n{key} {value}" + dict[end..];
     }
 
     private static string PdfDate(DateTimeOffset t) => "D:" + t.ToUniversalTime().ToString("yyyyMMddHHmmss", CultureInfo.InvariantCulture) + "+00'00'";

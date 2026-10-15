@@ -35,7 +35,7 @@ public static class ControlReportPdf
         // every text printed through P is also given to TextObserver (tests read the page-1 box without parsing the PDF)
         TextBlockDescriptor P(ColumnDescriptor c, string text) { TextObserver.Value?.Invoke(text); return c.Item().Text(text); }
 
-        Document.Create(doc => doc.Page(page =>
+        var generated = Document.Create(doc => { doc.Page(page =>
         {
             page.Size(PageSizes.A4);
             page.Margin(26);
@@ -210,10 +210,16 @@ public static class ControlReportPdf
             });
 
             ReportFooter.Compose(page.Footer(), "control", $"LogAnalyzer {DfirInfo.ApplicationVersion} · control {f.Host}", seal, header?.MarkingLine);
-        })).GeneratePdf(path);
+        });
+        // the officer's signature place: an empty box on a last page of its own, and the empty signature field over it (owner decision, review round 3)
+        SignatureBoxPage.Add(doc, header?.MarkingLine, SignHere); }).GeneratePdf();
+        File.WriteAllBytes(path, LogAnalyzer.Dfir.Reporting.SignatureField.Reserve(generated));
     }
 
     /// <summary>Printed on every page: the report is official only with the security officer's qualified electronic signature (owner decision 2026-10-16).</summary>
+    /// <summary>The line under "Semnătura ofițerului de securitate" on the signature page.</summary>
+    public const string SignHere = "Se semnează doar în acest câmp, cu certificatul calificat de pe card: în LogAnalyzer („Semnează ca ofițer de securitate”) sau în Adobe, alegând câmpul existent „Semnatura ofiterului de securitate”.";
+
     public const string OfficialLabel = "Fără semnătura electronică calificată a ofițerului de securitate acesta NU este raport oficial";
 
     /// <summary>The lines of section 6: the anchor code to copy on the proces-verbal, how the report becomes official, and the registered officers' fingerprints.</summary>

@@ -53,22 +53,36 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>Officer, trust and anchor events carry the state of the officer store and the trust folder, so A13 sees files changed outside the application.</summary>
         internal static void RecordOfficerEvent(string ev, string detail) => AuthApp.Record(ev, detail + "; " + OfficerState.Current().Detail);
 
+        /// <summary>Set only by "Folosește codul propus de stație (nesigur)"; any edit of the field by the officer clears it. A11 and A13 read this, never a value comparison.</summary>
+        private bool _codeFromStation;
+        private bool _applyingStationCode;
+        internal bool PreviousCodeFromStation => _codeFromStation;
+
+        partial void OnPreviousAnchorCodeChanged(string value)
+        {
+            if (!_applyingStationCode) _codeFromStation = false;
+        }
+
+        /// <summary>Puts the station's own suggestion in the field, marked as coming from the station (unsafe).</summary>
+        internal void ApplyStationCode(string code)
+        {
+            _applyingStationCode = true;
+            try { PreviousAnchorCode = code; _codeFromStation = code.Length > 0; }
+            finally { _applyingStationCode = false; }
+        }
+
         [RelayCommand]
-        private void ShowStationAnchorHint()
+        private void UseStationAnchorCode()
         {
             var log = AuditLogPath();
             var code = log is null ? "" : AuditAnchor.LastRecorded(log);
-            StationAnchorHint = code.Length == 0 ? "Stația nu are un cod propus (niciun control anterior înregistrat)."
-                : $"Cod propus de stație (nesigur): {code}. Folosiți-l doar dacă este identic cu cel de pe procesul-verbal; cine a rescris jurnalul poate schimba și propunerea.";
+            if (code.Length == 0) { StationAnchorHint = "Stația nu are un cod propus (niciun control anterior înregistrat)."; return; }
+            ApplyStationCode(code);
+            StationAnchorHint = $"S-a completat codul propus de stație (nesigur): {code}. Rezultatul A11 va spune că nu a fost tastat de pe procesul-verbal, iar A13 nu se poate stabili. Ca să fie sigur, scrieți codul de pe hârtie.";
         }
 
-        /// <summary>True when the code to check is the one the station proposes (A11 then says so).</summary>
-        private bool PreviousCodeIsStationHint()
-        {
-            var log = AuditLogPath();
-            if (log is null || StationAnchorHint.Length == 0) return false;
-            return AuditAnchor.TryNormalize(PreviousAnchorCode, out var typed) && typed == AuditAnchor.LastRecorded(log);
-        }
+        /// <summary>True when the code to check came from the station's suggestion (explicit button), false when the officer typed it.</summary>
+        private bool PreviousCodeIsStationHint() => _codeFromStation;
 
         /// <summary>Before the facts are evaluated: A11 (previous code, typed or proposed) and A13 (officer list changes since that anchor, or in the period).</summary>
         private void PrepareAnchorFacts(StationFacts facts, string auditPath, string previousCode, bool fromStation)

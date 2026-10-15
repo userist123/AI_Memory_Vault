@@ -19,14 +19,14 @@ public sealed partial class OfficerQualifiedSignatureTests
 
     private static int ContentStreamOf(byte[] pdf, int pageIndex)
     {
-        var st = PdfStructure.Parse(pdf);
+        var st = PdfStructure.Parse(pdf, 2);
         return int.Parse(Regex.Match(st.Dict(st.Pages[pageIndex]), @"/Contents\s+(\d+)\s+0\s+R").Groups[1].Value, CultureInfo.InvariantCulture);
     }
 
     /// <summary>Probe 1: the administrator appends an UNSIGNED incremental update that replaces a page content stream, then the officer signs (Adobe signs any file).</summary>
     private static byte[] WithAdministratorUpdate(byte[] original)
     {
-        var st = PdfStructure.Parse(original);
+        var st = PdfStructure.Parse(original, 2);
         int obj = ContentStreamOf(original, 0);
         const string content = "BT /F4 24 Tf 72 700 Td (RAPORT FALS - TOTUL CONFORM) Tj ET";
         var sb = new StringBuilder();
@@ -67,7 +67,7 @@ public sealed partial class OfficerQualifiedSignatureTests
         Assert.Contains("modificat înainte de semnare", v1.Headline);
 
         // the first page dictionary rewritten with another content stream and size
-        var st = PdfStructure.Parse(original);
+        var st = PdfStructure.Parse(original, 2);
         var page = st.Dict(st.Pages[0]).Replace("/MediaBox [0 0 595 842]", "/MediaBox [0 0 300 300]");
         var s2 = PdfIncrementalSigner.Sign(original, Look, new SignedCmsSigner(officer), false, new Dictionary<int, string> { [st.Pages[0]] = page });
         Assert.Equal(OfficialVerdict.Invalid, OfficialReportVerifier.Verify(s2, SignedCmsVerifier.Instance, [Sha(original)], trusted, OfficerFingerprint.Of(officer), trust).Verdict);
