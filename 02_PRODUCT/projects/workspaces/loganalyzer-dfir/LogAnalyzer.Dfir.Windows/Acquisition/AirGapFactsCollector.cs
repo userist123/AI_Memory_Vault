@@ -63,6 +63,13 @@ public sealed class AirGapFactsCollector : ICollector
         Try("listarea suporturilor amovibile conectate", () => f.MediaListings.AddRange(ReadMediaListings(ct)));
         Try("folderele Startup", () => f.StartupEntries.AddRange(ReadStartupEntries(ct)));
         Try("fișierele din Downloads și Desktop", () => f.ProfileFiles.AddRange(ReadProfileFiles(ct)));
+        Try("profilurile și semnăturile de rețea (NetworkList)", () => ReadNetworkList(f.Network));
+        Try("setarea de sondare NCSI", () => ReadNcsi(f.Network));
+        Try("jurnalizarea firewall-ului (pfirewall.log)", () => ReadFirewallLogging(f.Network));
+        Try("auditul conexiunilor WFP (Security 5156/5157, cere drepturi de administrator)", () => ReadWfpAudit(f.Network));
+        Try("retenția jurnalelor de evenimente", () => f.Network.EventLogs.AddRange(ReadEventLogInfo()));
+        var install = LogAnalyzer.Dfir.Case.AppInstallDate.Read();
+        f.AppInstalledUtc = install.Utc; f.AppInstallBasis = install.Basis;
         f.WebcamPolicy = Reg(Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam", "Value");
         f.MicrophonePolicy = Reg(Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone", "Value");
         return f;
@@ -463,5 +470,109 @@ public sealed class AirGapFactsCollector : ICollector
     {
         foreach (var n in PnpEnumerator.Present("Camera", "Image", "MEDIA", "AudioEndpoint"))
             yield return new HardwareFact { Name = n.Name, InstanceId = n.InstanceId, PnpClass = n.SetupClass, Status = n.Disabled ? "dezactivat" : "activ", Enabled = !n.Disabled };
+    }
+
+    // ---- network evidence sources (owner directive 2026-10-16): local, read-only; nothing is sent ----
+
+    private const string NetworkListKey = @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList";
+
+    /// <summary>NetworkList\Profiles joined with NetworkList\Signatures\Managed|Unmanaged on ProfileGuid.</summary>
+    public static void ReadNetworkList(NetworkEvidenceFacts n)
+    {
+        using var root = Registry.LocalMachine.OpenSubKey(NetworkListKey + @"\Profiles");
+        n.ProfilesRead = true;
+        if (root is null) return;
+        var sigs = new Dictionary<string, (string Kind, string Mac, string Dns, string First)>(StringComparer.OrdinalIgnoreCase);
+        foreach (var kind in new[] { "Managed", "Unmanaged" })
+        {
+            using var sk = Registry.LocalMachine.OpenSubKey(NetworkListKey + @"\Signatures\" + kind);
+            if (sk is null) continue;
+            foreach (var name in sk.GetSubKeyNames())
+            {
+                using var s = sk.OpenSubKey(name);
+                if (s?.GetValue("ProfileGuid")?.ToString() is not { Length: > 0 } pg) continue;
+                var mac = s.GetValue("DefaultGatewayMac") is byte[] { Length: > 0 } m ? string.Join("-", m.Select(b => b.ToString("X2", System.Globalization.CultureInfo.InvariantCulture))) : "";
+                sigs[pg] = (kind, mac, s.GetValue("DnsSuffix")?.ToString() ?? "", s.GetValue("FirstNetwork")?.ToString() ?? "");
+            }
+        }
+        foreach (var guid in root.GetSubKeyNames())
+        {
+            using var k = root.OpenSubKey(guid);
+            if (k is null) continue;
+            var p = new NetworkListProfileFact
+            {
+                ProfileGuid = guid, ProfileName = k.GetValue("ProfileName")?.ToString() ?? "", Description = k.GetValue("Description")?.ToString() ?? "",
+                Category = k.GetValue("Category") as int?, NameType = k.GetValue("NameType") as int?,
+                DateCreatedUtc = LocalToUtc(LogAnalyzer.Dfir.Windows.Audit.StationFactCollector.SystemTime(k.GetValue("DateCreated") as byte[])),
+                DateLastConnectedUtc = LocalToUtc(LogAnalyzer.Dfir.Windows.Audit.StationFactCollector.SystemTime(k.GetValue("DateLastConnected") as byte[])),
+            };
+            if (sigs.TryGetValue(guid, out var sig)) { p.SignatureKind = sig.Kind; p.DefaultGatewayMac = sig.Mac; p.DnsSuffix = sig.Dns; p.FirstNetwork = sig.First; }
+            n.Profiles.Add(p);
+        }
+    }
+
+    private static DateTimeOffset? LocalToUtc(DateTime? local) => local is { } d ? new DateTimeOffset(DateTime.SpecifyKind(d, DateTimeKind.Local)).ToUniversalTime() : null;
+
+    public static void ReadNcsi(NetworkEvidenceFacts n)
+    {
+        n.NcsiEnableActiveProbing = RegInt(Registry.LocalMachine, @"SYSTEM\CurrentControlSet\Services\NlaSvc\Parameters\Internet", "EnableActiveProbing");
+        n.NcsiPolicyNoActiveProbe = RegInt(Registry.LocalMachine, @"SOFTWARE\Policies\Microsoft\Windows\NetworkConnectivityStatusIndicator", "NoActiveProbe");
+    }
+
+    /// <summary>Firewall logging per profile: the policy value wins over the local one; the default log is %SystemRoot%\System32\LogFiles\Firewall\pfirewall.log.</summary>
+    public static void ReadFirewallLogging(NetworkEvidenceFacts n)
+    {
+        n.FirewallRead = true;
+        foreach (var (profile, local, policy) in new[] { ("Domain", "DomainProfile", "DomainProfile"), ("Private", "StandardProfile", "PrivateProfile"), ("Public", "PublicProfile", "PublicProfile") })
+        {
+            string L(string name) => Reg(Registry.LocalMachine, $@"SYSTEM\CurrentControlSet\Services\SharedAccess\Parameters\FirewallPolicy\{local}\Logging", name);
+            string P(string name) => Reg(Registry.LocalMachine, $@"SOFTWARE\Policies\Microsoft\WindowsFirewall\{policy}\Logging", name);
+            string V(string name) => P(name) is { Length: > 0 } pv ? pv : L(name);
+            var path = V("LogFilePath") is { Length: > 0 } lp ? lp : @"%systemroot%\system32\LogFiles\Firewall\pfirewall.log";
+            path = Environment.ExpandEnvironmentVariables(path);
+            var fi = new FileInfo(path);
+            bool exists = false; long size = 0;
+            try { exists = fi.Exists; size = exists ? fi.Length : 0; } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+            n.FirewallLogs.Add(new FirewallLogFact
+            {
+                Profile = profile, Path = path, FileExists = exists, Size = size,
+                LogAllowed = int.TryParse(V("LogSuccessfulConnections"), out var a) ? a == 1 : null,
+                LogDropped = int.TryParse(V("LogDroppedPackets"), out var d) ? d == 1 : null,
+            });
+        }
+    }
+
+    public static void ReadWfpAudit(NetworkEvidenceFacts n)
+    {
+        try
+        {
+            var flags = LogAnalyzer.Dfir.Windows.Native.AuditPolicy.QueryFlags(LogAnalyzer.Dfir.Windows.Native.AuditPolicy.Subcategories["Filtering Platform Connection"]);
+            var setting = (LogAnalyzer.Dfir.Windows.Native.AuditSetting)(flags & 3);
+            n.WfpAuditSuccess = (setting & LogAnalyzer.Dfir.Windows.Native.AuditSetting.Success) != 0;
+            n.WfpAuditFailure = (setting & LogAnalyzer.Dfir.Windows.Native.AuditSetting.Failure) != 0;
+        }
+        catch (System.ComponentModel.Win32Exception ex) { throw new UnauthorizedAccessException($"politica de audit nu poate fi citită ({ex.NativeErrorCode}); este necesar un cont de administrator", ex); }
+    }
+
+    /// <summary>Retention mode, maximum size, record count, oldest record number and "full" flag of every channel the event-log collector exports.</summary>
+    public static IEnumerable<EventLogInfoFact> ReadEventLogInfo()
+    {
+        foreach (var ch in EventLogCollector.Channels)
+        {
+            var e = new EventLogInfoFact { Channel = ch };
+            try
+            {
+                using (var cfg = new EventLogConfiguration(ch))
+                {
+                    e.Enabled = cfg.IsEnabled; e.LogMode = cfg.LogMode.ToString(); e.MaxSizeBytes = cfg.MaximumSizeInBytes;
+                }
+                // The oldest record kept, read with a local reader (no EventLogSession: the Standalone build holds no session type that could open a remote log).
+                using var reader = new EventLogReader(new EventLogQuery(ch, PathType.LogName));
+                using var oldest = reader.ReadEvent();
+                e.OldestRecordNumber = oldest?.RecordId;
+            }
+            catch (Exception ex) when (ex is EventLogException or UnauthorizedAccessException or InvalidOperationException) { e.Error = ex.Message; }
+            yield return e;
+        }
     }
 }

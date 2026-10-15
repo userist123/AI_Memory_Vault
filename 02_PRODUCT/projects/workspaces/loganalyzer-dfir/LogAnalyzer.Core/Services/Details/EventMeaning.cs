@@ -119,6 +119,9 @@ namespace LogAnalyzer.Core.Services.Details
         private static readonly (string Provider, int Id, string Text)[] ByProvider =
         [
             ("Kernel-Power", 41, "Stația a repornit fără o oprire corectă (pană de curent, blocare, buton de pornire ținut apăsat). Ce rula atunci s-a întrerupt brusc."),
+            ("WLAN-AutoConfig", 8001, "Wi-Fi: stația s-a conectat la o rețea fără fir; evenimentul are numele rețelei (SSID), adaptorul folosit și tipul de autentificare."),
+            ("WLAN-AutoConfig", 8003, "Wi-Fi: stația s-a deconectat de la o rețea fără fir (marchează sfârșitul conectării)."),
+            ("NCSI", 4042, "Windows a schimbat verdictul de acces al unei rețele: internet, doar rețea locală sau fără conectivitate."),
             ("WinRM", 6, "WinRM: această stație a deschis o sesiune de comenzi de la distanță către alt calculator."),
             ("WinRM", 91, "WinRM: pe această stație s-a creat o sesiune de comenzi de la distanță (cineva a rulat comenzi aici de pe alt calculator)."),
             ("WinRM", 142, "WinRM: o operație de comenzi de la distanță a eșuat."),

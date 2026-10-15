@@ -410,7 +410,7 @@ public static class ControlEvaluator
             ? $"{Ro.Capitalize(Ro.CountMasc(f.UsbDevices.Count, "dispozitiv", "dispozitive"))} în istoricul USBSTOR; {Ro.CountFem(partition.Count, "conectare înregistrată", "conectări înregistrate")} în perioada controlată."
             : usbSourcesKnown
                 ? "Dispozitive USB: nu s-a observat în sursele colectate (istoricul USBSTOR și jurnalul Partition/Diagnostic); absența observațiilor nu dovedește că nu au fost folosite suporturi (jurnalul are o istorie limitată, iar dispozitivele pot lăsa urme doar în alte surse)."
-                : "Dispozitive USB: nu se poate stabili, deoarece istoricul USBSTOR sau jurnalul Partition/Diagnostic nu a putut fi citit; rulați ca administrator.";
+                : "Dispozitive USB: nedeterminat. Sursă lipsă: istoricul USBSTOR sau jurnalul Partition/Diagnostic, de ce lipsește: nu a putut fi citit la colectare, cum se pornește: rulați controlul ca administrator.";
         Add(r, "D01", "Dispozitive", "Dispozitive de stocare USB folosite pe stație", d01Status,
             d01Detail,
             f.UsbDevices.Select(u => $"{u.FriendlyName} [{u.Device}] SN {u.Serial}").Concat(partition.Select(l => $"{Ev(l)}: {V(l, "Manufacturer")} {V(l, "Model")} SN {V(l, "SerialNumber")}")),
@@ -430,7 +430,39 @@ public static class ControlEvaluator
 
         bool profilesKnown = !f.Gaps.Any(g => g.Artifact == "Profiluri de rețea");
         bool eventsKnown = ChannelReadable(f, "Microsoft-Windows-NetworkProfile/Operational") || ChannelReadable(f, "Microsoft-Windows-WLAN-AutoConfig/Operational");
+        // Owner directive 2026-10-16: on a Standalone station the boundary is the installation date of the application (first chained record of its audit chain).
+        // Every connection after it is NECONFORM, whatever the controlled period; a connection only before it is the station's history (DE VERIFICAT).
+        if (f.Posture == LogAnalyzer.Core.Services.Edition.StationPosture.Standalone && f.AppInstalledUtc is { } inst)
+        {
+            static DateTimeOffset Utc(DateTime local) => new DateTimeOffset(local).ToUniversalTime();
+            var profAfter = f.NetworkProfiles.Where(p => p.LastConnectedLocal is { } d && Utc(d) >= inst).ToList();
+            var profBefore = f.NetworkProfiles.Where(p => p.LastConnectedLocal is { } d && Utc(d) < inst).ToList();
+            var evAfter = evts.Where(l => l.TimeUtc >= inst).ToList();
+            var evBefore = evts.Where(l => l.TimeUtc < inst).ToList();
+            string at = $"instalarea aplicației: {inst:yyyy-MM-dd HH:mm} UTC ({f.AppInstallBasis})";
+            bool after = profAfter.Count > 0 || evAfter.Count > 0 || f.ConnectedInterfacesNow.Count > 0;
+            bool before = profBefore.Count > 0 || evBefore.Count > 0;
+            Add(r, "N01", "Rețea", "Stația izolată nu s-a conectat la nicio rețea",
+                after ? ControlStatus.Neconform : before || profilesKnown && eventsKnown ? ControlStatus.DeVerificat : ControlStatus.Nedeterminat,
+                after
+                    ? $"NECONFORM: stația Standalone a fost conectată la rețea după {at}: {Ro.CountMasc(profAfter.Count, "profil", "profiluri")} cu ultima conectare după instalare, " +
+                      $"{Ro.CountMasc(evAfter.Count, "eveniment", "evenimente")} de conectare după instalare, interfețe active acum: {f.ConnectedInterfacesNow.Count}. Pe o stație Standalone nicio conectare nu este aprobată." +
+                      (before ? $" Separat, {Ro.CountFem(profBefore.Count + evBefore.Count, "urmă", "urme")} de conectare sunt dinaintea instalării (istoric, de verificat)." : "")
+                    : before
+                        ? $"DE VERIFICAT (istoric): există conectări doar înainte de {at} ({Ro.CountMasc(profBefore.Count, "profil", "profiluri")}, {Ro.CountMasc(evBefore.Count, "eveniment", "evenimente")}); " +
+                          "nicio conectare după instalare în sursele citite. Verificați că stația a fost pregătită (reinstalată sau curățată) înainte de izolare."
+                        : profilesKnown && eventsKnown
+                            ? $"Conectare la rețea după {at}: nu s-a observat în sursele colectate (profiluri de rețea, NetworkProfile, WLAN-AutoConfig) și nicio interfață activă acum; jurnalele acoperă doar intervalul lor de retenție."
+                            : "Conectare la rețea: nedeterminat. Sursă lipsă: profilurile de rețea (NetworkList) sau jurnalele NetworkProfile / WLAN-AutoConfig, de ce lipsește: nu au putut fi citite la colectare, cum se pornește: rulați controlul ca administrator (canalul WLAN-AutoConfig există doar pe stațiile cu Wi-Fi).",
+                profAfter.Select(p => $"după instalare: {p.Name} ({p.Kind}) ultima conectare {p.LastConnectedLocal:yyyy-MM-dd HH:mm} ora locală")
+                    .Concat(evAfter.Select(l => $"după instalare: {Ev(l)}: {V(l, "Name")}{V(l, "SSID")}")).Concat(f.ConnectedInterfacesNow.Select(i => "acum: " + i))
+                    .Concat(profBefore.Select(p => $"înainte de instalare (istoric): {p.Name} ({p.Kind}) ultima conectare {p.LastConnectedLocal:yyyy-MM-dd HH:mm} ora locală"))
+                    .Concat(evBefore.Select(l => $"înainte de instalare (istoric): {Ev(l)}: {V(l, "Name")}{V(l, "SSID")}")),
+                after ? "Orice conectare a unei stații Standalone după instalarea aplicației se trece în procesul-verbal: cine, când, cu ce echipament, ce s-a transferat (vezi constatarea de conectare din investigație: adaptor, volum SRUM, NCSI, firewall)."
+                      : "Comparați conectările dinaintea instalării cu procesul-verbal de pregătire a stației.");
+        }
         // Emitted in every posture (ControlApplicability turns it into "Nu se aplică" where a connection is expected).
+        else
         {
             bool connected = inPeriod.Count > 0 || evts.Count > 0 || f.ConnectedInterfacesNow.Count > 0;
             Add(r, "N01", "Rețea", "Stația izolată nu s-a conectat la nicio rețea",
@@ -439,7 +471,7 @@ public static class ControlEvaluator
                     ? $"Conectări în perioada controlată: {Ro.CountMasc(inPeriod.Count, "profil", "profiluri")}, {Ro.CountMasc(evts.Count, "eveniment", "evenimente")} de conectare; interfețe active acum: {f.ConnectedInterfacesNow.Count}."
                     : profilesKnown && eventsKnown
                         ? "Conectare la rețea: nu s-a observat în sursele colectate (profiluri de rețea, NetworkProfile, WLAN-AutoConfig) și nicio interfață activă acum; absența observațiilor nu dovedește că stația nu s-a conectat (istorie limitată a jurnalelor, adaptoare fără urme în aceste surse)."
-                        : "Conectare la rețea: nu se poate stabili, deoarece profilurile de rețea sau jurnalele NetworkProfile / WLAN-AutoConfig nu au putut fi citite.",
+                        : "Conectare la rețea: nedeterminat. Sursă lipsă: profilurile de rețea (NetworkList) sau jurnalele NetworkProfile / WLAN-AutoConfig, de ce lipsește: nu au putut fi citite la colectare, cum se pornește: rulați controlul ca administrator (canalul WLAN-AutoConfig există doar pe stațiile cu Wi-Fi).",
                 inPeriod.Select(p => $"{p.Name} ({p.Kind}) ultima conectare {p.LastConnectedLocal:yyyy-MM-dd HH:mm} ora locală")
                         .Concat(evts.Select(l => $"{Ev(l)}: {V(l, "Name")}{V(l, "SSID")}")).Concat(f.ConnectedInterfacesNow.Select(i => "acum: " + i)),
                 "Orice conectare a unei stații izolate trebuie investigată (cine, când, ce s-a transferat).");
