@@ -445,7 +445,7 @@
 - **Sursa tehnică:** `Regulile de audit ale folderului (echivalentul Get-Acl -Audit); auditpol: subcategoria File System`
 - **Cum se citește rezultatul:** Conform = fiecare folder are reguli pentru Everyone sau Authenticated Users care înregistrează citirea, scrierea și ștergerea, la succes și la eșec, moștenite de fișiere, iar „File System” este auditată. Neconform = un folder nu are reguli, regulile nu acoperă un tip de acces sau „File System” nu este auditată. De verificat = un folder din profil nu există. Nedeterminat = profilul nu definește foldere clasificate (se completează tabelul „Foldere clasificate”) sau regulile nu au putut fi citite (administrator).
 
-### A11
+### A14
 
 - **Ce verificăm:** Dacă stația înregistrează căile pe care un document clasificat poate ieși: copierea pe stick-uri, deschiderea și închiderea fișierelor, programele pornite (cu linia lor de comandă, ca să se vadă ce a primit un program de arhivare), tipărirea și, pe stațiile din rețea, citirea prin partajări.
 - **De ce contează:** Fără aceste surse, un document copiat pe un stick, tipărit sau arhivat nu lasă nicio urmă în jurnale; HG 585 cere evidența automată a accesului la informațiile clasificate în format electronic.
@@ -453,7 +453,7 @@
 - **Sursa tehnică:** `auditpol: Removable Storage, Handle Manipulation, Process Creation, Detailed File Share; HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Audit → ProcessCreationIncludeCmdLine_Enabled; HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\Microsoft-Windows-PrintService/Operational → Enabled`
 - **Cum se citește rezultatul:** Conform = toate sursele sunt pornite. Neconform = cel puțin o sursă este oprită: rezultatul spune „sursă lipsă” și cum se pornește. Nedeterminat = politica de audit nu a putut fi citită (administrator).
 
-### A12
+### A15
 
 - **Ce verificăm:** Cine a deschis, a modificat sau a șters fișierele din folderele clasificate și dacă vreunul a ieșit de pe stație fără aprobare: scris pe un suport amovibil, tipărit, arhivat sau copiat, mutat ori redenumit, citit prin rețea, deschis de pe un stick.
 - **De ce contează:** Orice ieșire a unui document clasificat trebuie să aibă o intrare în registrul transferurilor; o ieșire fără intrare este un posibil incident de securitate.

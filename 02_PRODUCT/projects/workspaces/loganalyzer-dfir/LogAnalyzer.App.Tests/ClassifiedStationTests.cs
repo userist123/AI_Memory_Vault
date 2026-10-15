@@ -9,8 +9,8 @@ using Xunit;
 namespace LogAnalyzer.App.Tests;
 
 /// <summary>
-/// Station control of classified folders (owner request 2026-10-15): A10 (SACL covers read / write / delete, success and failure), A11 (the sources that
-/// make exits visible, "sursă lipsă: … cum se pornește"), A12 (accesses and exits against the transfer register), the PDF section and the UI tab.
+/// Station control of classified folders (owner request 2026-10-15): A10 (SACL covers read / write / delete, success and failure), A14 (the sources that
+/// make exits visible, "sursă lipsă: … cum se pornește"), A15 (accesses and exits against the transfer register), the PDF section and the UI tab.
 /// StationFacts are built in memory with records shaped like the EVTX EventData.
 /// </summary>
 public sealed class ClassifiedStationTests
@@ -73,17 +73,17 @@ public sealed class ClassifiedStationTests
         Assert.Contains(@"F:\Real", c.Detail);
     }
 
-    // ---- A11 ---------------------------------------------------------------------------------------------------------------------
+    // ---- A14 ---------------------------------------------------------------------------------------------------------------------
 
     [Fact]
     public void A11_all_sources_on_is_Conform_a_missing_one_is_Neconform_with_how_to_turn_it_on_and_unread_is_Nedeterminat()
     {
-        Assert.Equal(ControlStatus.Conform, Check(Station(), "A11").Status);
+        Assert.Equal(ControlStatus.Conform, Check(Station(), "A14").Status);
 
         var f = Station();
         f.AuditPolicy!["Removable Storage"] = AuditSetting.None;
         f.Settings["Audit.ProcessCreationIncludeCmdLine"] = StationFactCollector.Absent;
-        var c = Check(f, "A11");
+        var c = Check(f, "A14");
         Assert.Equal(ControlStatus.Neconform, c.Status);
         Assert.Contains("Sursă lipsă", c.Detail);
         Assert.Contains("cum se pornește", c.Detail);
@@ -92,7 +92,7 @@ public sealed class ClassifiedStationTests
 
         var u = Station();
         u.AuditPolicy = null;
-        Assert.Equal(ControlStatus.Nedeterminat, Check(u, "A11").Status);
+        Assert.Equal(ControlStatus.Nedeterminat, Check(u, "A14").Status);
     }
 
     [Fact]
@@ -100,13 +100,13 @@ public sealed class ClassifiedStationTests
     {
         var f = Station();
         f.AuditPolicy!.Remove("Detailed File Share");
-        Assert.Equal(ControlStatus.Conform, Check(f, "A11").Status);
+        Assert.Equal(ControlStatus.Conform, Check(f, "A14").Status);
         var n = Station(StationPosture.IsolatedNetwork);
         n.AuditPolicy!["Detailed File Share"] = AuditSetting.None;
-        Assert.Equal(ControlStatus.Neconform, Check(n, "A11").Status);
+        Assert.Equal(ControlStatus.Neconform, Check(n, "A14").Status);
     }
 
-    // ---- A12 ---------------------------------------------------------------------------------------------------------------------
+    // ---- A15 ---------------------------------------------------------------------------------------------------------------------
 
     [Fact]
     public void A12_a_classified_file_written_to_a_stick_without_a_register_entry_is_Neconform_with_the_chain_in_the_report_and_the_tab()
@@ -117,7 +117,7 @@ public sealed class ClassifiedStationTests
         f.Logs.Add(new LogFact("Microsoft-Windows-Partition/Diagnostic", 1006, Now.AddHours(-2).AddMinutes(-5), 1, "",
             new Dictionary<string, string> { ["SerialNumber"] = "AA11", ["Capacity"] = "16000000000", ["BusType"] = "7", ["Manufacturer"] = "Kingston", ["Model"] = "DT" }));
         var report = ControlEvaluator.Evaluate(f);
-        var a12 = report.Checks.Single(c => c.Id == "A12");
+        var a12 = report.Checks.Single(c => c.Id == "A15");
         Assert.Equal(ControlStatus.Neconform, a12.Status);
         Assert.Contains("NEJUSTIFICAT", a12.Detail);
         Assert.Contains(a12.Evidence, e => e.Contains("plan.docx") && e.Contains("AA11"));
@@ -144,15 +144,15 @@ public sealed class ClassifiedStationTests
         f.Transfers = new TransferRegister { Rows = [new TransferRow { RegistrationNumber = "TR-2026-0001", DateTime = when, Direction = "ieșire", Content = "plan.docx", Person = "ion" }] };
         var report = ControlEvaluator.Evaluate(f);
         Assert.Equal(1, report.Classified!.Approved);
-        Assert.Equal(ControlStatus.DeVerificat, report.Checks.Single(c => c.Id == "A12").Status);   // owner decision 24: absence is never CONFORM
+        Assert.Equal(ControlStatus.DeVerificat, report.Checks.Single(c => c.Id == "A15").Status);   // owner decision 24: absence is never CONFORM
 
         var empty = Station();
-        Assert.Equal(ControlStatus.DeVerificat, Check(empty, "A12").Status);
-        Assert.Contains("Absența observațiilor", Check(empty, "A12").Detail);
+        Assert.Equal(ControlStatus.DeVerificat, Check(empty, "A15").Status);
+        Assert.Contains("Absența observațiilor", Check(empty, "A15").Detail);
         empty.Coverage.Clear();
-        Assert.Equal(ControlStatus.Nedeterminat, Check(empty, "A12").Status);
+        Assert.Equal(ControlStatus.Nedeterminat, Check(empty, "A15").Status);
         empty.FolderAudits = [];
-        Assert.Equal(ControlStatus.Nedeterminat, Check(empty, "A12").Status);
+        Assert.Equal(ControlStatus.Nedeterminat, Check(empty, "A15").Status);
         Assert.Contains(ControlReportPdf.ClassifiedSectionLines(ControlEvaluator.Evaluate(empty)), l => l.Text.Contains("nu definește foldere clasificate"));
     }
 
@@ -163,7 +163,7 @@ public sealed class ClassifiedStationTests
         f.Logs.Add(File4663(Now.AddHours(-2), @"D:\Clasificat\plan.docx", "0x1", "0x1"));
         f.Logs.Add(new LogFact("Microsoft-Windows-Partition/Diagnostic", 1006, Now.AddHours(-1), 1, "",
             new Dictionary<string, string> { ["SerialNumber"] = "AA11", ["Capacity"] = "16000000000", ["BusType"] = "7" }));
-        var c = Check(f, "A12");
+        var c = Check(f, "A15");
         Assert.Equal(ControlStatus.DeVerificat, c.Status);
         Assert.Contains(c.Evidence, e => e.Contains(ClassifiedAccess.TemporalNote));
     }
@@ -175,22 +175,22 @@ public sealed class ClassifiedStationTests
         f.Logs.Add(Sec(4907, Now.AddHours(-1), ("SubjectUserName", "admin"), ("ObjectType", "File"), ("ObjectName", Root), ("ProcessName", "x.exe")));
         f.ShellTraces = [new ShellTraceFact("ion", @"C:\Users\ion\Recent\plan.lnk", @"D:\Clasificat\plan.docx", "FIXED", "", Now.AddHours(-3))];
         var report = ControlEvaluator.Evaluate(f);
-        Assert.Equal(ControlStatus.Neconform, report.Checks.Single(c => c.Id == "A12").Status);
+        Assert.Equal(ControlStatus.Neconform, report.Checks.Single(c => c.Id == "A15").Status);
         Assert.Contains(report.Classified!.Files, x => x.Accesses.Any(a => a.Weak));
     }
 
     [Fact]
     public void The_new_checks_have_guides_and_apply_only_to_the_controlled_editions()
     {
-        foreach (var id in new[] { "A10", "A11", "A12" })
+        foreach (var id in new[] { "A10", "A14", "A15" })
         {
             Assert.Contains(id, CheckGuides.Ids);
             Assert.True(ControlApplicability.Applies(id, StationPosture.Standalone));
             Assert.True(ControlApplicability.Applies(id, StationPosture.IsolatedNetwork));
             Assert.False(ControlApplicability.Applies(id, StationPosture.Internet));
         }
-        Assert.Contains("sursă lipsă", CheckGuides.For("A11").Meaning);
-        Assert.Contains("corelare temporală", CheckGuides.For("A12").Meaning);
+        Assert.Contains("sursă lipsă", CheckGuides.For("A14").Meaning);
+        Assert.Contains("corelare temporală", CheckGuides.For("A15").Meaning);
     }
 
     [Fact]

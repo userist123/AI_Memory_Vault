@@ -7,8 +7,8 @@ namespace LogAnalyzer.Dfir.Windows.Audit;
 
 /// <summary>
 /// Classified folders (owner request 2026-10-15; HG 585 art. 291: automatic, unconditional access records for classified electronic information;
-/// art. 294: media accounting). A10: the folders' audit rules cover read, write and delete for everybody, on success and failure. A11: the other
-/// sources that make exits visible are on. A12: who accessed the files and whether any left the station without an entry in the transfer register.
+/// art. 294: media accounting). A10: the folders' audit rules cover read, write and delete for everybody, on success and failure. A14: the other
+/// sources that make exits visible are on. A15: who accessed the files and whether any left the station without an entry in the transfer register.
 /// </summary>
 public static partial class ControlEvaluator
 {
@@ -36,8 +36,8 @@ public static partial class ControlEvaluator
     private static void ClassifiedFolders(StationFacts f, ControlReport r)
     {
         A10(f, r);
-        A11(f, r);
-        A12(f, r);
+        A14(f, r);
+        A15(f, r);
     }
 
     private static void A10(StationFacts f, ControlReport r)
@@ -85,7 +85,7 @@ public static partial class ControlEvaluator
             "aplicată „Acestui folder, subfolderelor și fișierelor”; porniți subcategoria „File System” (succes și eșec). Aplicația nu schimbă setările stației.");
     }
 
-    /// <summary>The sources A11 needs, each with how to turn it on (the application never changes host settings); On = null when not read.</summary>
+    /// <summary>The sources A14 needs, each with how to turn it on (the application never changes host settings); On = null when not read.</summary>
     internal static List<(string Name, bool? On, string How)> ClassifiedPrerequisites(StationFacts f)
     {
         bool? Sub(string name) => f.AuditPolicy is { } ap ? (ap.GetValueOrDefault(name) & AuditSetting.Success) == AuditSetting.Success : null;
@@ -107,13 +107,13 @@ public static partial class ControlEvaluator
         return l;
     }
 
-    private static void A11(StationFacts f, ControlReport r)
+    private static void A14(StationFacts f, ControlReport r)
     {
         const string title = "Surse pentru urmărirea ieșirii informațiilor clasificate";
         var items = ClassifiedPrerequisites(f);
         var off = items.Where(x => x.On == false).ToList();
         var unknown = items.Where(x => x.On is null).ToList();
-        Add(r, "A11", "Audit", title,
+        Add(r, "A14", "Audit", title,
             off.Count > 0 ? ControlStatus.Neconform : unknown.Count > 0 ? ControlStatus.Nedeterminat : ControlStatus.Conform,
             off.Count > 0
                 ? "Ieșirea unui document clasificat nu poate fi văzută complet. " + string.Join(" ", off.Select(x => $"Sursă lipsă: {x.Name}; cum se pornește: {x.How}."))
@@ -150,12 +150,12 @@ public static partial class ControlEvaluator
         };
     }
 
-    private static void A12(StationFacts f, ControlReport r)
+    private static void A15(StationFacts f, ControlReport r)
     {
         const string title = "Informații clasificate: acces și ieșiri fără aprobare";
         if (f.FolderAudits is not { Count: > 0 })
         {
-            Add(r, "A12", "Audit", title, ControlStatus.Nedeterminat,
+            Add(r, "A15", "Audit", title, ControlStatus.Nedeterminat,
                 "Profilul de proceduri nu definește foldere clasificate (sau nu a fost transmis controlului): nu se știe ale cui fișiere trebuie urmărite. Completați tabelul «Foldere clasificate».",
                 rec: "Treceți în profilul de proceduri folderele cu documente clasificate.");
             return;
@@ -180,9 +180,9 @@ public static partial class ControlEvaluator
         var detail = !secReadable
             ? "Jurnalul Security nu a putut fi citit, deci accesul la fișierele clasificate nu poate fi verificat." + NoRead
             : parts.Count > 0 ? Ro.Capitalize(string.Join("; ", parts)) + $". Fișiere clasificate cu accese înregistrate: {accessed}."
-            : $"Nu s-a observat nicio ieșire a unui fișier clasificat în sursele colectate; fișiere cu accese înregistrate: {accessed}. Absența observațiilor nu dovedește că nu au existat ieșiri: vezi A10 și A11 pentru sursele care lipsesc.";
+            : $"Nu s-a observat nicio ieșire a unui fișier clasificat în sursele colectate; fișiere cu accese înregistrate: {accessed}. Absența observațiilor nu dovedește că nu au existat ieșiri: vezi A10 și A14 pentru sursele care lipsesc.";
         if (rep.Notes.Count > 0) detail += " " + string.Join(" ", rep.Notes);
-        Add(r, "A12", "Audit", title, status, detail,
+        Add(r, "A15", "Audit", title, status, detail,
             rep.Ordered.SelectMany(fr => fr.Exits.OrderBy(x => x.Verdict).Select(x => $"{x.VerdictText} · {x.ChannelText} · {fr.Path} → {x.Target} · {(x.TimeUtc is { } t ? t.ToString("yyyy-MM-dd HH:mm") + " UTC" : "ora necunoscută")} · {x.Who}"))
                .Concat(rep.SecurityChanges.Select(s => $"{(s.AuditRules ? "SACL schimbat" : "permisiuni schimbate")} · {s.Object} · {s.Who} · {s.Evidence}")),
             "Pentru fiecare ieșire nejustificată cereți intrarea din registrul transferurilor și aprobarea; dacă nu există, tratați-o ca posibil incident de securitate. Fila „Informații clasificate” arată fiecare fișier.");
