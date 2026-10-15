@@ -50,13 +50,19 @@ namespace LogAnalyzer.UI.Views.Controls
                 Content = view,
             };
             host.SizeChanged += (_, _) => Fit(host, view);
+            // a page that grows past the viewport (PageFill raises its MinHeight) gets the vertical scroll bar: its width comes off the page width
+            System.ComponentModel.DependencyPropertyDescriptor.FromProperty(MinHeightProperty, typeof(FrameworkElement))
+                .AddValueChanged(view, (_, _) => Fit(host, view));
             Content = host;
         }
 
         /// <summary>The size the view is given for a viewport: the viewport itself, but never below the minimum page size (the scroll bars then appear).</summary>
-        public static Size PageSize(double viewportWidth, double viewportHeight)
+        public static Size PageSize(double viewportWidth, double viewportHeight) => PageSize(viewportWidth, viewportHeight, 0);
+
+        /// <summary>As <see cref="PageSize(double, double)"/> for a view that needs at least <paramref name="viewMinHeight"/> (it then scrolls vertically).</summary>
+        public static Size PageSize(double viewportWidth, double viewportHeight, double viewMinHeight)
         {
-            bool vbar = viewportHeight < MinPageHeight;
+            bool vbar = viewportHeight < Math.Max(MinPageHeight, viewMinHeight);
             double w = Math.Max(viewportWidth - (vbar ? SystemParameters.VerticalScrollBarWidth : 0), MinPageWidth);
             double h = Math.Max(viewportHeight - (w > viewportWidth ? SystemParameters.HorizontalScrollBarHeight : 0), MinPageHeight);
             return new Size(w, h);
@@ -65,7 +71,7 @@ namespace LogAnalyzer.UI.Views.Controls
         private static void Fit(ScrollViewer host, FrameworkElement view)
         {
             if (host.ActualWidth <= 0 || host.ActualHeight <= 0) return;
-            var s = PageSize(host.ActualWidth, host.ActualHeight);
+            var s = PageSize(host.ActualWidth, host.ActualHeight, view.MinHeight);
             view.Width = s.Width; view.Height = s.Height;
         }
     }

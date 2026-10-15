@@ -161,7 +161,7 @@
         </Expander>
         </StackPanel>
 
-        <TabControl Grid.Row="2" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" Visibility="{Binding HasResult, Converter={StaticResource BoolToVis}}">
+        <TabControl Grid.Row="2" ctrl:PageFill.MinHeight="440" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" Visibility="{Binding HasResult, Converter={StaticResource BoolToVis}}">
             <TabItem Header="Verificări" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
