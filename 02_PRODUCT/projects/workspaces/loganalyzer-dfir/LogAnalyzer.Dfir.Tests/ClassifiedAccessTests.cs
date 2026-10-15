@@ -1,4 +1,6 @@
 using LogAnalyzer.Dfir.Analysis;
+using LogAnalyzer.Dfir.Model;
+using LogAnalyzer.Dfir.Profile;
 using LogAnalyzer.Dfir.Registers;
 using Xunit;
 
@@ -215,5 +217,41 @@ public sealed class ClassifiedAccessTests
         var empty = ClassifiedAccess.Analyze(Input([]));
         Assert.Contains(empty.Notes, n => n.Contains("Windows nu înregistrează retroactiv"));
         Assert.Contains(empty.Notes, n => n.Contains("Registrul transferurilor"));
+    }
+
+    // ---- investigation timeline (WP14 rules, production consumer: Wp14Analysis in the investigation pipeline) -------------------------------------
+
+    private static TimelineEvent Row(int id, DateTimeOffset t, params (string K, string V)[] f) => new()
+    {
+        Time = Timestamp.FromUtc(t.UtcDateTime, t.ToString("o"), "test"), Source = "EventLog:Security", EvidenceId = "EV-1", EventId = id.ToString(),
+        Summary = $"Security {id}", Locator = $"RecordID={id}", Fields = f.ToDictionary(x => x.K, x => x.V, StringComparer.OrdinalIgnoreCase),
+    };
+
+    [Fact]
+    public void The_timeline_rules_emit_unjustified_approved_access_and_audit_change_findings_with_evidence()
+    {
+        var profile = new ProcedureProfile { ClassifiedFolders = [new ClassifiedFolderRow { Path = Root }] };
+        var events = new List<TimelineEvent>
+        {
+            Row(4663, T0, ("SubjectUserName", "ion"), ("ObjectType", "File"), ("ObjectName", @"D:\Clasificat\plan.docx"), ("AccessMask", "0x1"), ("HandleId", "0x1"), ("ProcessId", "0x2"), ("ProcessName", "winword.exe")),
+            Row(4663, T0.AddMinutes(1), ("SubjectUserName", "ion"), ("ObjectType", "File"), ("ObjectName", @"\Device\HarddiskVolume9\plan.docx"), ("AccessMask", "0x2"), ("HandleId", "0x3"), ("ProcessId", "0x2"), ("ProcessName", "explorer.exe")),
+            Row(4907, T0.AddMinutes(2), ("SubjectUserName", "admin"), ("ObjectType", "File"), ("ObjectName", Root), ("ProcessName", "x.exe")),
+        };
+        int n = 0;
+        var scope = new CaseScope { Network = NetworkCategory.StandalonePc, Classification = ClassificationLevel.Classified };
+        var f = Wp14Rules.Run(events, () => $"F-{++n:D4}", new Wp14Input { Scope = scope, Profile = profile });
+        var bad = Assert.Single(f, x => x.RuleId == "CLASSIFIED-EXPORT-UNJUSTIFIED");
+        Assert.Equal(Severity.High, bad.Severity);
+        Assert.NotEmpty(bad.SupportingEvidence);
+        Assert.Single(f, x => x.RuleId == "CLASSIFIED-AUDIT-CHANGED");
+        Assert.Contains(f, x => x.RuleId == "CLASSIFIED-ACCESS");
+        Assert.All(f.Where(x => x.RuleId.StartsWith("CLASSIFIED-")), x => Assert.NotNull(RuleContracts.For(x.RuleId)));
+
+        var reg = new LogAnalyzer.Dfir.Registers.TransferRegister { Rows = [new() { RegistrationNumber = "TR-1", DateTime = T0.ToLocalTime().ToString("yyyy-MM-dd HH:mm"), Direction = "ieșire", Content = "plan.docx" }] };
+        var ok = Wp14Rules.Run(events, () => $"F-{++n:D4}", new Wp14Input { Scope = scope, Profile = profile, Transfers = reg });
+        Assert.Single(ok, x => x.RuleId == "CLASSIFIED-EXPORT-APPROVED");
+        Assert.DoesNotContain(ok, x => x.RuleId == "CLASSIFIED-EXPORT-UNJUSTIFIED");
+        // without classified folders in the profile the rules say nothing (A10 of the station control reports the missing table)
+        Assert.DoesNotContain(Wp14Rules.Run(events, () => "F", new Wp14Input { Scope = scope }), x => x.RuleId.StartsWith("CLASSIFIED-"));
     }
 }

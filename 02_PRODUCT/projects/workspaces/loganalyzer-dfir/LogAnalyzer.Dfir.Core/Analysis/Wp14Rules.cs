@@ -13,6 +13,8 @@ public sealed class Wp14Input
     /// <summary>The media register; null or without rows = "registru nedefinit".</summary>
     public MediaRegister? Media { get; init; }
     public UsersRegister? Users { get; init; }
+    /// <summary>The approved transfer register; null or without rows = no exit of a classified file can be shown as approved.</summary>
+    public TransferRegister? Transfers { get; init; }
     public ProcedureProfile? Profile { get; init; }
     public Wp14Data? Data { get; init; }
     /// <summary>The zone the analysed system is in, as entered by the operator; "" = not stated.</summary>
@@ -46,6 +48,7 @@ public static partial class Wp14Rules
         AirGap(c, found);
         Channels(c, found);
         PayloadFindings(c, found);        // P1: shortcuts and hidden folders on media, execution from media, Startup folder, Run-dialog commands
+        ClassifiedFindings(c, found);     // classified folders: accesses and exits against the transfer register
         return found;
     }
 
