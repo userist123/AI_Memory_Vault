@@ -120,6 +120,38 @@ key. Neither is detectable from the station alone.
 - The certificate line uses the same "calificată / avansată" label; a signature dictionary ending with its hex
   `/Contents` is read correctly.
 
+## Security review of PR #289, round 3 (fixed; the reviewer's overlay probe and the others are regression tests)
+
+- **The signature place is reserved when the report is generated.** The report ends with a page of its own that
+  holds only the heading "Semnătura ofițerului de securitate" and an empty framed box (`SignatureBoxPage`), and
+  the generated file already contains an empty signature field `Semnatura ofiterului de securitate` whose widget
+  covers exactly that box (`SignatureField.Reserve`, an incremental section appended before the report hash is
+  recorded). The approval request PDFs for new officers are generated the same way.
+- **Signing only fills that field.** Our signer and the inspector allow, after the generated file, exactly: the
+  signature dictionary, the reserved widget with `/V` and `/AP` added (nothing else of it, Rect unchanged), the
+  AcroForm with `/SigFlags`, `/DR`, `/DA` added, and new appearance form XObjects and fonts. The page and the
+  catalog must not appear in the update; no new widget or annotation is possible.
+- **The appearance stays in the box.** `/BBox` must have the size of the reserved box and `/Matrix` must be
+  identity or absent; resources are fonts only; the content stream is decoded (none or FlateDecode) and may use
+  only text and simple path operators (BT ET Tf Td TD Tm T* Tj TJ ' " Tc Tw Tz TL Ts g G rg RG k K re m l c h S s f
+  F f* B B* b b* n q Q cm w W W*). Images (BI/ID/EI), XObject calls (Do) and graphics-state dictionaries (gs) are
+  refused.
+- **Exact xref grammar** for the update: "xref" end of line, subsection headers "N M", entries of exactly 20
+  bytes "nnnnnnnnnn ggggg n|f" with SP CR, SP LF or CR LF, no comments, integers only; `/Root`, `/Info` must be
+  generation 0 and `/Prev`, `/Size`, startxref integers.
+- **Fonts:** font programs, ToUnicode and CIDToGIDMap streams only with no filter or FlateDecode, no /DecodeParms.
+- **Provenance of the previous anchor code** is the action, not a value comparison: the field is empty; only the
+  button "Folosește codul propus de stație (nesigur)" fills it with the station's suggestion and marks it; any
+  edit by the officer clears the mark.
+- **Supported signatures:** signed in LogAnalyzer, or in Adobe Acrobat/Reader **in the existing field**
+  "Semnatura ofiterului de securitate" (Adobe: Tools → Certificates/Fill & Sign → click the field → choose the
+  card certificate). A signature added in a new field drawn by hand, or with an image appearance, is INVALID.
+- **CI:** the malformed-input tests now run each case on a dedicated thread (`TaskCreationOptions.LongRunning`):
+  on the runner a thread-pool item could wait in the queue past the 15 s limit and be reported as a hang. The
+  pcapng reader was checked and is bounded (every block advances the stream, every option loop advances, DNS
+  name pointers are depth-limited); the exact CI case (last block cut inside its trailing length) has its own
+  test that finishes at once and keeps every frame.
+
 ## Verifying outside the application (OpenSSL)
 
 The signature is a standard PAdES / CAdES detached signature. On a separate machine:
@@ -150,9 +182,8 @@ signature in its Signatures panel.
   under the administrator's session): the officer must read what they sign.
 - Import a CA certificate of their own: the chain check then passes for certificates from that CA, but
   the fingerprint from paper still decides OFICIAL.
-- The visible signature box (at most a quarter of the page, inside it) may draw anything the signer's tool
-  puts in its appearance stream; its content stream is not interpreted. Everything else in the signing update
-  is whitelisted (see round 2 below).
+- The signature appearance draws only inside the box reserved on the last page of its own (round 3 below);
+  that page holds no report content, so the appearance cannot cover any finding, anchor code or fingerprint.
 - The whitelist is strict: if Adobe Reader writes extra keys or objects when signing (e.g. /Info or /Metadata
   updates, image appearances), an Adobe-signed report is INVALID until the whitelist is widened after the
   manual Adobe test. Our own signature passes.
@@ -174,6 +205,8 @@ signature in its Signatures panel.
 6. "Verifică raport semnat…" with the fingerprint typed from the proces-verbal: expected OFICIAL.
 7. Open the signed file in Adobe Reader: Signatures panel must show the signature as valid, the
    document as unmodified since signing, and the certificate chain (Adobe trust list permitting).
-8. In Adobe, sign a copy of an unsigned report with the same card and verify it in the application:
-   expected the same verdicts. Then add a comment in Adobe after signing and verify: expected INVALID
+8. In Adobe, sign a copy of an unsigned report with the same card, IN THE EXISTING FIELD "Semnatura
+   ofiterului de securitate", and verify it in the application: expected the same verdicts. If Adobe adds
+   objects the whitelist does not know, the verdict is INVALID with the reason: report it, the whitelist is
+   widened only after review. Then add a comment in Adobe after signing and verify: expected INVALID
    "modificat după semnare".

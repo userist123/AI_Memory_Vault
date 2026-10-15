@@ -69,7 +69,9 @@ public sealed partial class OfficerQualifiedSignatureTests
     public void P11_XFA_in_the_form_is_refused()
     {
         using var s = NewSetup();
-        var signed = SignWith(s, rewrite: (num, body) => body.Contains("/SigFlags 3>>") ? body.Replace("/SigFlags 3>>", "/SigFlags 3 /XFA [(preamble) (x)]>>") : body);
+        var st = PdfStructure.Parse(s.Original, 2);
+        var field = SignatureField.Find(st)!.Value;
+        var signed = SignWith(s, extra: new Dictionary<int, string> { [field.Form] = $"<</Fields [{field.Widget} 0 R] /SigFlags 3 /XFA [(preamble) (x)]>>" });
         AssertModified(VerifyWithPaper(s, signed));
     }
 
@@ -77,7 +79,7 @@ public sealed partial class OfficerQualifiedSignatureTests
     public void P7_a_second_widget_is_refused()
     {
         using var s = NewSetup();
-        var st = PdfStructure.Parse(s.Original);
+        var st = PdfStructure.Parse(s.Original, 2);
         int extra = st.Size + 10;
         var signed = SignWith(s,
             extra: new Dictionary<int, string> { [extra] = $"<</Type /Annot /Subtype /Widget /FT /Sig /Rect [0 0 10 10] /P {st.Pages[^1]} 0 R>>" },
@@ -89,8 +91,8 @@ public sealed partial class OfficerQualifiedSignatureTests
     public void A_widget_covering_the_page_or_a_rotating_appearance_matrix_is_refused()
     {
         using var s = NewSetup();
-        AssertModified(VerifyWithPaper(s, SignWith(s, rewrite: (n, b) => b.Replace("/Rect [300 55 569 110]", "/Rect [0 0 595 842]"))));
-        AssertModified(VerifyWithPaper(s, SignWith(s, rewrite: (n, b) => b.Contains("/Subtype /Form") ? b.Replace("/BBox [0 0 269 55]", "/BBox [0 0 269 55] /Matrix [0 1 -1 0 0 0]") : b)));
+        AssertModified(VerifyWithPaper(s, SignWith(s, rewrite: (n, b) => b.Contains("/Subtype /Widget") ? Regex.Replace(b, @"/Rect \[[^\]]*\]", "/Rect [0 0 595 842]") : b)));
+        AssertModified(VerifyWithPaper(s, SignWith(s, rewrite: (n, b) => b.Contains("/Subtype /Form") ? b.Replace("/BBox", "/Matrix [0 1 -1 0 0 0] /BBox") : b)));
     }
 
     [Fact]
@@ -101,7 +103,7 @@ public sealed partial class OfficerQualifiedSignatureTests
         Assert.True(signed.AsSpan(0, s.Original.Length).SequenceEqual(s.Original));
         var inspection = PdfUpdateInspector.Inspect(signed, s.Original.Length);
         Assert.Null(inspection.Problem);
-        Assert.Equal(["appearance", "catalog", "font", "page", "sig", "widget"], inspection.Roles.Values.Order(StringComparer.Ordinal).ToArray());
+        Assert.Equal(["appearance", "font", "sig", "widget"], inspection.Roles.Values.Order(StringComparer.Ordinal).ToArray());
         Assert.Equal(OfficialVerdict.Oficial, VerifyWithPaper(s, signed).Verdict);
     }
 

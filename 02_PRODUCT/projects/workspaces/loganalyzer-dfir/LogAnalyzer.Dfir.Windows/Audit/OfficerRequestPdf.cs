@@ -18,7 +18,7 @@ public static class OfficerRequestPdf
     {
         QuestPDF.Settings.License = LicenseType.Community;
         var cert = System.Security.Cryptography.X509Certificates.X509CertificateLoader.LoadCertificate(Convert.FromBase64String(candidate.Certificate));
-        var pdf = Document.Create(doc => doc.Page(page =>
+        var pdf = Document.Create(doc => { doc.Page(page =>
         {
             page.Size(PageSizes.A4);
             page.Margin(40);
@@ -33,8 +33,9 @@ public static class OfficerRequestPdf
                 c.Item().Text($"Amprenta certificatului (SHA-256): {candidate.Fingerprint}").Bold();
                 c.Item().PaddingTop(10).Text("Semnând acest document cu certificatul meu calificat, eu, ofițer de securitate deja înregistrat pe această stație, aprob ca titularul certificatului de mai sus să poată semna rapoartele oficiale de control.");
             });
-        })).GeneratePdf();
-        File.WriteAllBytes(path, InsertMarker(pdf, OfficerRegistry.RequestMarker(candidate.Fingerprint)));
+        });
+        SignatureBoxPage.Add(doc, null, "Semnează un ofițer de securitate deja înregistrat, doar în acest câmp (în LogAnalyzer sau în Adobe, câmpul „Semnatura ofiterului de securitate”)."); }).GeneratePdf();
+        File.WriteAllBytes(path, SignatureField.Reserve(InsertMarker(pdf, OfficerRegistry.RequestMarker(candidate.Fingerprint))));
         cert.Dispose();
     }
 

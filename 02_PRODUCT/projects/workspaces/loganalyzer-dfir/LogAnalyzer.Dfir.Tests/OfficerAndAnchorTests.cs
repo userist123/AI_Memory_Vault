@@ -307,9 +307,10 @@ public sealed class OfficerAndAnchorTests : IDisposable
             Assert.StartsWith($"{cur} 0 obj", text[(int)long.Parse(p[0])..]);
             cur++; checkedEntries++;
         }
-        Assert.Equal(6, checkedEntries);                                               // sig, field, appearance, font, last page, catalog
-        Assert.Contains("/AcroForm <</Fields [", text[original.Length..]);
-        Assert.Contains("/Annots [", text[original.Length..]);
+        Assert.Equal(4, checkedEntries);                                               // sig, the reserved widget (filled), appearance, font
+        Assert.DoesNotContain("/AcroForm", text[original.Length..]);                   // catalog and page are not touched
+        Assert.DoesNotContain("/Annots", text[original.Length..]);
+        Assert.Contains("/V ", text[original.Length..]);
 
         var check = PdfSignatureCheck.Check(signed, cms);
         Assert.Null(check.Problem);
