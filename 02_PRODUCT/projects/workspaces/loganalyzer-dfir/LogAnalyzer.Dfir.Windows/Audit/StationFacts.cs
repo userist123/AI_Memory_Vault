@@ -64,6 +64,8 @@ public sealed class StationFacts
     public List<string> ConnectedInterfacesNow { get; init; } = [];
     /// <summary>Configured or present ways out of the station, read passively (check N11); null = not collected.</summary>
     public List<EgressPathFact>? EgressPaths { get; set; }
+    /// <summary>The sources of check N11 that could not be read ("name (reason)"): with any of them N11 is never CONFORM.</summary>
+    public List<string> EgressUnread { get; init; } = [];
     public List<UsbDeviceFact> UsbDevices { get; init; } = [];
     public List<LogFact> Logs { get; init; } = [];
     public List<ChannelCoverage> Coverage { get; init; } = [];
@@ -139,7 +141,7 @@ public static class StationFactCollector
         Try(facts, "Setări de securitate (extinse)", () => ReadSettingsWave2(facts));
         Try(facts, "Setări de securitate (stație izolată)", () => ReadSettingsWave3(facts));
         Try(facts, "Volume și BitLocker", () => ReadVolumes(facts));
-        Try(facts, "Căi spre internet (configurație locală)", () => facts.EgressPaths = EgressPathCollector.Collect());
+        Try(facts, "Căi spre internet (configurație locală)", () => facts.EgressPaths = EgressPathCollector.Collect(facts.EgressUnread));
         Try(facts, "Apartenența la domeniu", () => ReadDomainMembership(facts));
         if (classifiedFolders is not null) facts.FolderAudits = ReadFolderAudits(classifiedFolders);
         if (offlineUpdates is not null) facts.OfflineUpdateRegister = [.. offlineUpdates];
