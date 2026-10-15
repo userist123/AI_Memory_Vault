@@ -16,7 +16,7 @@ public static class AuditPolicy
         ["Process Creation"] = G(0x2B), ["Audit Policy Change"] = G(0x2F),
         ["User Account Management"] = G(0x35), ["Security Group Management"] = G(0x37),
         ["Credential Validation"] = G(0x3F), ["Removable Storage"] = G(0x45), ["Plug and Play Events"] = G(0x48),
-        // classified folders (A10, A11): file access, handle open/close, shares
+        // classified folders (A10, A14): file access, handle open/close, shares
         ["File System"] = G(0x1D), ["Handle Manipulation"] = G(0x23), ["File Share"] = G(0x24), ["Detailed File Share"] = G(0x44),
     };
 

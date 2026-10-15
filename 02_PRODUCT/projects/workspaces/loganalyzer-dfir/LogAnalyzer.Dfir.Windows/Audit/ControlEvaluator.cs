@@ -38,7 +38,7 @@ public sealed class ControlReport
     public List<ControlCheck> Checks { get; } = [];
     public List<UserActivity> Users { get; } = [];
     public List<ActionEntry> Actions { get; } = [];
-    /// <summary>Accesses to the classified folders' files and their exits (A12); null when the profile defines no classified folders.</summary>
+    /// <summary>Accesses to the classified folders' files and their exits (A15); null when the profile defines no classified folders.</summary>
     public LogAnalyzer.Dfir.Analysis.ClassifiedAccessReport? Classified { get; set; }
     public int Count(ControlStatus s) => Checks.Count(c => c.Status == s);
     /// <summary>The checks that apply to the posture (every status except NU SE APLICĂ): the only ones counted in summaries and verdicts.</summary>
@@ -1216,7 +1216,7 @@ public static partial class ControlEvaluator
              @"HKLM\SYSTEM\CurrentControlSet\Services\SharedAccess → Start = " + Shown(icsSvc)],
             "Opriți partajarea și interziceți-o prin politică („Prohibit use of Internet Connection Sharing”).");
 
-        // A10, A11, A12: classified folders - audit rules, the sources that make exits visible, and the accesses and exits themselves.
+        // A10, A14, A15: classified folders - audit rules, the sources that make exits visible, and the accesses and exits themselves.
         ClassifiedFolders(f, r);
 
         // D02 (B8) BitLocker To Go on each connected removable volume; write access to unencrypted media.

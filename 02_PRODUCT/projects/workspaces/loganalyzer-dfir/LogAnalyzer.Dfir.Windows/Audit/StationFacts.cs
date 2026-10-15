@@ -182,7 +182,7 @@ public static class StationFactCollector
             Try(facts, "Fișierele din folderele clasificate", () => ClassifiedFactCollector.ReadFiles(facts, classifiedFolders));
             Try(facts, "Scurtături recente (LNK) ale profilurilor", () => facts.ShellTraces = ClassifiedFactCollector.ShellTraces(classifiedFolders));
         }
-        // A11: the sources that let classified exits be seen (read always; the check names what is missing)
+        // A14: the sources that let classified exits be seen (read always; the check names what is missing)
         Try(facts, "Linia de comandă în 4688 și jurnalul de tipărire", () =>
         {
             facts.Settings["Audit.ProcessCreationIncludeCmdLine"] = Hklm(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Audit", "ProcessCreationIncludeCmdLine_Enabled");

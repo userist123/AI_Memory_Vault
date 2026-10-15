@@ -32,8 +32,8 @@
 
 ## Classified folders: access and exits (2026-10-15, branch `claude/loganalyzer-classified-folder-audit`, on PR #287 head; not pushed)
 - Done: `ClassifiedAccess` engine (Dfir.Core/Analysis), `Wp14Rules.Classified` (CLASSIFIED-* findings with catalog entries), station checks A10 (SACL
-  covers read/write/delete, success and failure, inherited), A11 (sources: Removable Storage, Handle Manipulation, Process Creation + command line, print
-  log, Detailed File Share off-Standalone), A12 (exits vs the transfer register), PDF section 3b, UI tab "Informații clasificate".
+  covers read/write/delete, success and failure, inherited), A14 (sources: Removable Storage, Handle Manipulation, Process Creation + command line, print
+  log, Detailed File Share off-Standalone), A15 (exits vs the transfer register), PDF section 3b, UI tab "Informații clasificate".
 - Fix found on the way: `AuditPolicy.Query` never read "File System", so A10 could never be CONFORM.
 - Next: RecentDocs / Office MRU / ShellBags and live Jump Lists are not read; run on a real station with auditing on; owner review of severities.
 - Key files: LogAnalyzer.Dfir.Core/Analysis/ClassifiedAccess.cs, Wp14Rules.Classified.cs; LogAnalyzer.Dfir.Windows/Audit/ControlEvaluator.Classified.cs, ClassifiedFacts.cs.

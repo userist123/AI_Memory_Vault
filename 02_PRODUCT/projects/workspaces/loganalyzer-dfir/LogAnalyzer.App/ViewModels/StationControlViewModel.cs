@@ -195,7 +195,7 @@ namespace LogAnalyzer.UI.ViewModels
             var updates = new System.Collections.Generic.List<LogAnalyzer.Dfir.Registers.UpdateRow>();
             try { updates = LogAnalyzer.Dfir.Registers.RegisterStore.Load<LogAnalyzer.Dfir.Registers.UpdateRegister>().Register?.Rows ?? updates; }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { }
-            // the transfer register: the classified exits (A12) are compared with it; an unreadable register is "not defined", never "approved"
+            // the transfer register: the classified exits (A15) are compared with it; an unreadable register is "not defined", never "approved"
             LogAnalyzer.Dfir.Registers.TransferRegister? transfers = null;
             try { transfers = LogAnalyzer.Dfir.Registers.TransferStore.Load(null, out _); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { }
