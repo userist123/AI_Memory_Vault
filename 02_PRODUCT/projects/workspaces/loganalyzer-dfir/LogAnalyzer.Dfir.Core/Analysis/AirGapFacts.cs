@@ -232,6 +232,8 @@ public sealed class FirewallLogFact
     public bool? LogDropped { get; set; }
     public bool FileExists { get; set; }
     public long Size { get; set; }
+    /// <summary>Why the configured path was not read ("" = accepted): only a local absolute path on a fixed drive is read (no UNC, device or network-drive path).</summary>
+    public string Rejected { get; set; } = "";
 }
 
 /// <summary>The configuration of one event-log channel (EventLogConfiguration: retention mode, maximum size) and the number of its oldest record.</summary>
@@ -294,6 +296,8 @@ public sealed class AirGapFacts
     /// <summary>Installation date of the application on the station (first chained record of its audit chain); null = not known, see <see cref="AppInstallBasis"/>.</summary>
     public DateTimeOffset? AppInstalledUtc { get; set; }
     public string AppInstallBasis { get; set; } = "";
+    /// <summary>What contradicts the installation date (store re-initialised, chain not starting at the store creation, other traces older than the chain): NECONFORM on Standalone.</summary>
+    public List<string> AppInstallViolations { get; set; } = [];
     public List<string> Errors { get; set; } = [];
     /// <summary>Milliseconds each read took (diagnostic: shows which read is slow on a given station).</summary>
     public Dictionary<string, long> StepMs { get; set; } = [];

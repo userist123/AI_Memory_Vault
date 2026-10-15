@@ -52,13 +52,13 @@ public sealed class StandaloneNetworkEvidenceTests : IDisposable
     {
         var path = Path.Combine(_dir, "auth_audit.jsonl");
         var chain = new HashChain(path);
-        chain.Append(new { @event = "admin.created", whenUtc = Install });
-        chain.Append(new { @event = "clock.seen", whenUtc = Install.AddDays(3) });
-        var r = AppInstallDate.Read(path);
+        chain.Append(new LogAnalyzer.Dfir.Auth.AuthAuditEntry(AppInstallDate.StoreCreatedEvent, "x", "admin", "", "", "ok", "", Install, "", ""));
+        chain.Append(new LogAnalyzer.Dfir.Auth.AuthAuditEntry(ClockMemory.Event, "aplicație", "", "", "", "ok", "", Install.AddDays(3), "", ""));
+        var r = AppInstallDate.Read(path, [], Install.AddDays(4));
         Assert.Equal(Install, r.Utc);
         Assert.Contains("seq 1", r.Basis);
 
-        var missing = AppInstallDate.Read(Path.Combine(_dir, "nu-exista.jsonl"));
+        var missing = AppInstallDate.Read(Path.Combine(_dir, "nu-exista.jsonl"), []);
         Assert.Null(missing.Utc);
         Assert.StartsWith("sursă lipsă:", missing.Basis);
         Assert.Contains("cum se pornește", missing.Basis);
@@ -128,7 +128,7 @@ public sealed class StandaloneNetworkEvidenceTests : IDisposable
         var events = new List<TimelineEvent>
         {
             NetUp(40),
-            Ev("Microsoft-Windows-WLAN-AutoConfig/Operational", 8001, 40.5, "", ("SSID", "Rețea-X"), ("InterfaceDescription", "Intel Wi-Fi 6 AX201"), ("InterfaceGuid", "{1111}"), ("BSSID", "11:22:33:44:55:66")),
+            Ev("Microsoft-Windows-WLAN-AutoConfig/Operational", 8001, 40.5, "", ("SSID", "Rețea-X"), ("InterfaceDescription", "Intel Wi-Fi 6 AX201"), ("InterfaceGuid", "{1111}"), ("AuthenticationAlgorithm", "WPA2-Personal"), ("CipherAlgorithm", "AES-CCMP")),
             Ev("Microsoft-Windows-Dhcp-Client/Operational", 50036, 41, "", ("InterfaceGuid", "{1111}"), ("IPAddress", "192.168.1.20"), ("Gateway", "192.168.1.1")),
             Sec(5156, 45, ("DestAddress", "93.184.216.34"), ("Application", @"\device\harddiskvolume3\program files\browser\browser.exe")),
             Ev("Microsoft-Windows-NCSI/Operational", 4042, 41.5, "", ("Capability", "Internet")),
@@ -138,12 +138,13 @@ public sealed class StandaloneNetworkEvidenceTests : IDisposable
         };
         var x = Assert.Single(Run(events, install: Install, facts: facts), f => f.RuleId == "AIRGAP-NETWORK-CONNECTED");
         Assert.Contains("Intel Wi-Fi 6 AX201", x.Description);                 // adapter used (WLAN 8001)
-        Assert.Contains("BSSID 11:22:33:44:55:66", x.Description);
-        Assert.Contains("gateway 192.168.1.1", x.Description);                  // DHCP
+        Assert.Contains("autentificare „WPA2-Personal”", x.Description);
+        Assert.Contains("BSSID-ul punctului de acces nu face parte din evenimentul 8001", x.Description);
+        Assert.Contains("gateway 192.168.1.1", x.Description);                  // DHCP (only because the field is in the event)
         Assert.Contains("MAC gateway AA-BB-CC-DD-EE-FF", x.Description);        // NetworkList signature
         Assert.Contains("93.184.216.34", x.Description);                        // firewall 5156
         Assert.Contains("50.0 MB primiți", x.Description);                      // SRUM volume
-        Assert.Contains("AVEA ieșire la internet", x.Description);              // NCSI 4042
+        Assert.Contains("NCSI a raportat acces la internet", x.Description);    // NCSI 4042 (rendered text value)
         Assert.Contains("20 min din 1 conectări", x.Description);               // 10001 duration
         Assert.Contains("SRUM Network Connectivity: 20 min", x.Description);    // SRUM duration
         Assert.Contains("Aprobare: în postura Standalone nu există nicio conectare aprobată", x.Description);
@@ -195,7 +196,7 @@ public sealed class StandaloneNetworkEvidenceTests : IDisposable
     public void A_log_with_continuous_record_numbers_covering_the_period_is_complete()
     {
         var tl = new List<TimelineEvent> { Rec(NetCh, 1, 0), Rec(NetCh, 2, 5), Rec(NetCh, 3, 9) };
-        var v = EvtxCompleteness.Assess(NetCh, tl, new DateTimeOffset(T0));
+        var v = EvtxCompleteness.Assess(NetCh, tl, new DateTimeOffset(T0), new DateTimeOffset(T0).AddMinutes(9));
         Assert.True(v.Complete);
         Assert.StartsWith($"Jurnalul {NetCh}: complet", v.Text);
     }
@@ -208,14 +209,14 @@ public sealed class StandaloneNetworkEvidenceTests : IDisposable
         Assert.Contains("RecordID 3–6 (4 înregistrări)", gap.Text);
         Assert.Contains("incomplet", gap.Text);
 
-        var cleared = EvtxCompleteness.Assess("Security", [Rec("Security", 1, 0, 1102), Rec("Security", 2, 1, 4624)], null);
+        var cleared = EvtxCompleteness.Assess("Security", [Rec("Security", 1, 0, 1102), Rec("Security", 2, 1, 4624)], new DateTimeOffset(T0), new DateTimeOffset(T0).AddMinutes(1));
         Assert.False(cleared.Complete);
         Assert.Contains("golit", cleared.Text);
 
-        var otherLog = EvtxCompleteness.Assess(NetCh, [Rec(NetCh, 1, 5), Rec("System", 9, 4, 104, "EV-S", ("Channel", NetCh))], null);
+        var otherLog = EvtxCompleteness.Assess(NetCh, [Rec(NetCh, 1, 5), Rec("System", 9, 4, 104, "EV-S", ("Channel", NetCh))], new DateTimeOffset(T0), new DateTimeOffset(T0).AddMinutes(5));
         Assert.False(otherLog.Complete);
 
-        var wrapped = EvtxCompleteness.Assess(NetCh, [Rec(NetCh, 500, 60), Rec(NetCh, 501, 61)], new DateTimeOffset(T0));
+        var wrapped = EvtxCompleteness.Assess(NetCh, [Rec(NetCh, 500, 60), Rec(NetCh, 501, 61)], new DateTimeOffset(T0), new DateTimeOffset(T0).AddMinutes(61));
         Assert.False(wrapped.Complete);
         Assert.Contains("suprascris", wrapped.Text);
         Assert.Contains("interval lipsă", wrapped.Text);
@@ -231,11 +232,11 @@ public sealed class StandaloneNetworkEvidenceTests : IDisposable
         var up = Rec(NetCh, 1, 40, 10000, "EV-N", ("Name", "Rețea-X"));
         var tl = new List<TimelineEvent> { up, Rec(NetCh, 2, 41, 10001, "EV-N", ("Name", "Rețea-X")) };
         var f = new Finding { Description = "d", FindingId = "F-1", RuleId = "AIRGAP-NETWORK-CONNECTED", Title = "t", Classification = Classification.Direct, SupportingEvidence = [new EvidenceRef("EV-N", up.Locator, "10000")] };
-        var ok = KnowThinkDontKnow.Build(f, new EvidenceContext { Timeline = tl });
+        var ok = KnowThinkDontKnow.Build(f, new EvidenceContext { Timeline = tl, PeriodFromUtc = new DateTimeOffset(T0).AddMinutes(40), PeriodToUtc = new DateTimeOffset(T0).AddMinutes(41) });
         Assert.Contains(ok.Know, s => s.Text.StartsWith($"Jurnalul {NetCh}: complet") && s.Basis == EvtxCompleteness.Basis);
 
         var tl2 = new List<TimelineEvent> { up, Rec(NetCh, 9, 50, 10001, "EV-N", ("Name", "Rețea-X")) };
-        var bad = KnowThinkDontKnow.Build(f, new EvidenceContext { Timeline = tl2 });
+        var bad = KnowThinkDontKnow.Build(f, new EvidenceContext { Timeline = tl2, PeriodFromUtc = new DateTimeOffset(T0), PeriodToUtc = new DateTimeOffset(T0).AddMinutes(50) });
         Assert.Contains(bad.DontKnow, s => s.Text.StartsWith($"Jurnalul {NetCh}: incomplet") && s.Text.Contains("RecordID 2–8"));
     }
 

@@ -3,39 +3,47 @@ using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Analysis;
 
-/// <summary>The completeness verdict of one event-log channel: <see cref="Complete"/> true / false, or null when it cannot be judged (then <see cref="Detail"/> is a „sursă lipsă: …”).</summary>
+/// <summary>
+/// The completeness verdict of one event-log channel: <see cref="Complete"/> true („complet”), false („incomplet”, with the reason and the missing interval),
+/// or null („neevaluat”: it cannot be judged, and <see cref="Detail"/> says why, as „sursă lipsă: …” when a source is missing).
+/// </summary>
 public sealed record EvtxCompletenessResult(string Channel, bool? Complete, string Detail, IReadOnlyList<string> MissingIntervals)
 {
     public string Text => Complete switch
     {
         true => $"Jurnalul {Channel}: complet ({Detail})",
         false => $"Jurnalul {Channel}: incomplet ({Detail})",
-        _ => $"Jurnalul {Channel}: completitudine nedeterminată ({Detail})",
+        _ => $"Jurnalul {Channel}: neevaluat ({Detail})",
     };
 }
 
 /// <summary>
-/// EVTX completeness check (owner directive 2026-10-16, item 2d), instead of the blanket „jurnalele nu pot dovedi că jurnalul e complet”. For one channel, over the
-/// records of the case timeline:
+/// EVTX completeness check (owner directive 2026-10-16, item 2d; tightened after the review of PR #288). For one channel, over the records of the case timeline:
 /// <list type="bullet">
-/// <item>EventRecordID continuity per evidence file: every hole is an interval of removed or lost records (with the times around it);</item>
-/// <item>clearing: Security 1102 (Security cleared), System 104 naming the channel (another log cleared): the records before it are gone from this file;</item>
-/// <item>Security 1100 (event-log service shut down): no record is written while the service is down (normal at system shutdown, so listed, not judged);</item>
-/// <item>overwrite: when the oldest record is newer than the start of the controlled period, the log wrapped (or was cleared) and the period is only partly covered.</item>
+/// <item>EventRecordID continuity per evidence file: every hole is an interval of removed or lost records (incomplete, whatever the period);</item>
+/// <item>clearing: Security 1102, or System 104 naming the channel, AT OR AFTER the start of the controlled period (a clear long before the period, with the period
+/// fully covered after it, does not make the period incomplete);</item>
+/// <item>start: the oldest record must be at or before the start of the period, otherwise the log wrapped or was cleared and the start is missing;</item>
+/// <item>end: the newest record must reach the end of the period (or the collection time) within <see cref="TailTolerance"/>. For a channel that always writes
+/// (Security, System, Application) a shorter tail means the channel was stopped or the log service killed: incomplete. A quiet channel may simply have had
+/// nothing to write, so its tail cannot be confirmed: neevaluat;</item>
+/// <item>Security 1100 (service shut down) is listed, not judged (it is normal at shutdown).</item>
 /// </list>
-/// The file header (record count, dirty / full flags, truncation, corrupt chunks) is checked by the EVTX parser and reported as an evidence gap of the file.
-/// Output: „complet / incomplet (motiv, interval lipsă)”. Nothing is guessed: with no record of the channel in the case the verdict is undetermined, with the source named.
+/// „Complet” is said only when the period is known and every condition holds. Without a period the verdict is „neevaluat” (a gap still makes it „incomplet”).
+/// The file header (truncation, corrupt chunks, repeated ids) is checked by the EVTX parser and reported as an evidence gap of the file.
 /// </summary>
 public static class EvtxCompleteness
 {
-    public const string Basis = "verificarea completitudinii jurnalului (numerotarea EventRecordID, golire 1102/104, oprire 1100, suprascriere față de începutul perioadei)";
+    public const string Basis = "verificarea completitudinii jurnalului (numerotarea EventRecordID, golire 1102/104 în perioadă, început și sfârșit față de perioada controlată)";
+    public static readonly TimeSpan TailTolerance = TimeSpan.FromDays(1);
+    /// <summary>Channels Windows writes to all the time while it runs: a tail that stops early means the log was stopped.</summary>
+    public static readonly IReadOnlyList<string> AlwaysActiveChannels = ["Security", "System", "Application"];
 
     private static long RecordId(TimelineEvent e)
     {
         if (!e.Locator.StartsWith("EventRecordID=", StringComparison.Ordinal)) return -1;
         var s = e.Locator.AsSpan(14);
-        int semi = s.IndexOf(';');
-        if (semi >= 0) return -1;                     // a repeated id (";occurrence=n") is not part of the sequence
+        if (s.IndexOf(';') >= 0) return -1;                     // a repeated id (";occurrence=n") is not part of the sequence
         return long.TryParse(s, NumberStyles.None, CultureInfo.InvariantCulture, out var id) ? id : -1;
     }
 
@@ -44,7 +52,8 @@ public static class EvtxCompleteness
     /// <summary>The channel of a timeline row ("" when the row is not from an event log).</summary>
     public static string ChannelOf(TimelineEvent e) => e.Source.StartsWith("EventLog:", StringComparison.OrdinalIgnoreCase) ? e.Source[9..] : "";
 
-    public static EvtxCompletenessResult Assess(string channel, IReadOnlyList<TimelineEvent> timeline, DateTimeOffset? periodFromUtc)
+    /// <param name="periodToUtc">End of the controlled period, or the collection time when the period is open; null = unknown (the tail is then not judged).</param>
+    public static EvtxCompletenessResult Assess(string channel, IReadOnlyList<TimelineEvent> timeline, DateTimeOffset? periodFromUtc, DateTimeOffset? periodToUtc = null)
     {
         var evs = timeline.Where(e => ChannelOf(e).Equals(channel, StringComparison.OrdinalIgnoreCase)).ToList();
         if (evs.Count == 0)
@@ -52,9 +61,9 @@ public static class EvtxCompleteness
                                       $"cum se pornește: colectarea cu drepturi de administrator și activarea canalului (wevtutil sl \"{channel}\" /e:true)", []);
         var reasons = new List<string>();
         var missing = new List<string>();
-        bool incomplete = false;
+        bool incomplete = false, undetermined = false;
 
-        // 1. EventRecordID continuity, per file.
+        // 1. EventRecordID continuity, per file: a hole is missing records whatever the period.
         int numbered = 0;
         foreach (var file in evs.GroupBy(e => e.EvidenceId))
         {
@@ -73,40 +82,71 @@ public static class EvtxCompleteness
                                       "cum se pornește: colectarea fișierului .evtx original cu aplicația (EvtExportLog)", []);
         if (missing.Count > 0) reasons.Add($"{missing.Count} goluri în numerotarea înregistrărilor (înregistrări șterse sau pierdute)");
 
-        // 2. Clearing of this log.
+        // 2. Clearing of this log, judged only at or after the period start (without a period: listed, the verdict stays neevaluat).
         bool security = channel.Equals("Security", StringComparison.OrdinalIgnoreCase);
         var clears = timeline.Where(e => security && ChannelOf(e).Equals("Security", StringComparison.OrdinalIgnoreCase) && e.EventId == "1102"
                                          || ChannelOf(e).Equals("System", StringComparison.OrdinalIgnoreCase) && e.EventId == "104" &&
                                             (e.Fields.TryGetValue("Channel", out var ch) || e.Fields.TryGetValue("LogName", out ch)) && ch.Equals(channel, StringComparison.OrdinalIgnoreCase))
                              .OrderBy(e => e.Time.Utc).ToList();
-        foreach (var c in clears)
+        var relevantClears = periodFromUtc is { } ps ? clears.Where(c => c.Time.Utc is not { } t || t >= ps).ToList() : clears;
+        foreach (var c in relevantClears)
         {
-            incomplete = true;
+            if (periodFromUtc is not null) incomplete = true;
             missing.Add($"tot ce era în jurnal înainte de golirea din {Time(c.Time.Utc)} ({(c.EventId == "1102" ? "Security 1102" : "System 104")})");
         }
-        if (clears.Count > 0) reasons.Add($"jurnalul a fost golit de {clears.Count} {(clears.Count == 1 ? "dată" : "ori")}");
+        if (relevantClears.Count > 0) reasons.Add($"jurnalul a fost golit de {relevantClears.Count} {(relevantClears.Count == 1 ? "dată" : "ori")}{(periodFromUtc is null ? "" : " în perioada controlată")}");
+        if (clears.Count > relevantClears.Count) reasons.Add($"{clears.Count - relevantClears.Count} goliri înainte de perioada controlată (nu afectează perioada)");
 
         // 3. Event-log service shut down (Security 1100): listed, not judged.
         var stops = security ? evs.Count(e => e.EventId == "1100") : 0;
         if (stops > 0) reasons.Add($"serviciul de jurnalizare s-a oprit de {stops} {(stops == 1 ? "dată" : "ori")} (1100; normal la închiderea sistemului, cât timp e oprit nu se scrie nimic)");
 
-        // 4. Overwrite against the controlled period.
-        var oldest = evs.Where(e => e.Time.Utc is not null).OrderBy(e => e.Time.Utc).FirstOrDefault();
+        // 4. Start of the period.
+        var timed = evs.Where(e => e.Time.Utc is not null).OrderBy(e => e.Time.Utc).ToList();
+        var oldest = timed.FirstOrDefault()?.Time.Utc;
+        var newest = timed.LastOrDefault()?.Time.Utc;
         long firstId = evs.Select(RecordId).Where(x => x > 0).DefaultIfEmpty(0).Min();
-        if (periodFromUtc is { } p && oldest?.Time.Utc is { } o && o > p)
+        if (periodFromUtc is not { } p)
+        {
+            undetermined = true;
+            reasons.Add("perioada controlată nu este stabilită, deci acoperirea ei nu se poate judeca");
+        }
+        else if (oldest is { } o && o > p)
         {
             incomplete = true;
             missing.Add($"{Time(p)} – {Time(o)} (începutul perioadei controlate până la cea mai veche înregistrare păstrată)");
             reasons.Add(firstId > 1
-                ? $"cea mai veche înregistrare păstrată (RecordID {firstId}, {Time(o)}) este după începutul perioadei: jurnalul a fost suprascris (circular) sau golit, perioada este acoperită parțial"
+                ? $"cea mai veche înregistrare păstrată (RecordID {firstId}, {Time(o)}) este după începutul perioadei: jurnalul a fost suprascris (circular) sau golit"
                 : $"cea mai veche înregistrare ({Time(o)}) este după începutul perioadei: jurnalul nu acoperă începutul perioadei");
         }
-        else if (periodFromUtc is null)
-            reasons.Add("perioada controlată nu este stabilită, deci acoperirea ei nu se poate judeca; s-au verificat doar numerotarea și golirile");
-        else reasons.Add($"cea mai veche înregistrare ({Time(oldest?.Time.Utc)}) acoperă începutul perioadei");
+        else reasons.Add($"cea mai veche înregistrare ({Time(oldest)}) acoperă începutul perioadei");
 
-        if (!incomplete) reasons.Insert(0, $"{numbered} înregistrări numerotate continuu, nicio golire");
+        // 5. End of the period.
+        bool active = AlwaysActiveChannels.Contains(channel, StringComparer.OrdinalIgnoreCase);
+        if (periodToUtc is not { } end)
+        {
+            undetermined = true;
+            reasons.Add("sfârșitul perioadei (sau ora colectării) nu este cunoscut, deci nu se poate confirma că jurnalul ajunge până la el");
+        }
+        else if (newest is { } n && n < end - TailTolerance)
+        {
+            if (active)
+            {
+                incomplete = true;
+                missing.Add($"{Time(n)} – {Time(end)} (de la ultima înregistrare până la sfârșitul perioadei)");
+                reasons.Add($"ultima înregistrare ({Time(n)}) este cu mult înainte de sfârșitul perioadei ({Time(end)}) pe un jurnal în care Windows scrie permanent: jurnalul a fost oprit sau serviciul de jurnalizare a fost oprit");
+            }
+            else
+            {
+                undetermined = true;
+                reasons.Add($"ultima înregistrare este din {Time(n)}, înainte de sfârșitul perioadei ({Time(end)}): canalul poate să nu fi avut nimic de scris sau poate fi fost oprit, deci sfârșitul nu se poate confirma");
+            }
+        }
+        else reasons.Add($"ultima înregistrare ({Time(newest)}) ajunge la sfârșitul perioadei");
+
+        bool? verdict = incomplete ? false : undetermined ? null : true;
+        if (verdict == true) reasons.Insert(0, $"{numbered} înregistrări numerotate continuu, nicio golire în perioadă");
         var detail = string.Join("; ", reasons) + (missing.Count > 0 ? "; interval lipsă: " + string.Join("; ", missing.Take(10)) + (missing.Count > 10 ? $"; încă {missing.Count - 10}" : "") : "");
-        return new(channel, !incomplete, detail, missing);
+        return new(channel, verdict, detail, missing);
     }
 }

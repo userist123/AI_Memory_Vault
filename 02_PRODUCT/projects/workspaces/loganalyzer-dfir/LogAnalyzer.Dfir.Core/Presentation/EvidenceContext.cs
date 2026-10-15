@@ -17,6 +17,8 @@ public sealed class EvidenceContext
     public IReadOnlyList<EvidenceGap> Gaps { get; init; } = [];
     /// <summary>Start of the controlled period of the case (scope); null = not set. Used by the EVTX completeness check (a log that starts after it wrapped).</summary>
     public DateTimeOffset? PeriodFromUtc { get; init; }
+    /// <summary>End of the controlled period; null = open (the EVTX check then uses the time the channel's log was acquired).</summary>
+    public DateTimeOffset? PeriodToUtc { get; init; }
 
     public EvidenceItem? ItemOf(string evidenceId) => Items.FirstOrDefault(i => i.EvidenceId == evidenceId);
 

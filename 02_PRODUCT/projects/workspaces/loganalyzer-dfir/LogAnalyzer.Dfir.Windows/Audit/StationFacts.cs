@@ -97,6 +97,8 @@ public sealed class StationFacts
     /// </summary>
     public DateTimeOffset? AppInstalledUtc { get; set; }
     public string AppInstallBasis { get; set; } = "";
+    /// <summary>What contradicts the installation date (see <see cref="LogAnalyzer.Dfir.Case.AppInstall.Violations"/>); NECONFORM on Standalone.</summary>
+    public List<string> AppInstallViolations { get; set; } = [];
 }
 
 public static class StationFactCollector
@@ -143,7 +145,7 @@ public static class StationFactCollector
             Posture = posture,
         };
         var install = LogAnalyzer.Dfir.Case.AppInstallDate.Read();
-        facts.AppInstalledUtc = install.Utc; facts.AppInstallBasis = install.Basis;
+        facts.AppInstalledUtc = install.Utc; facts.AppInstallBasis = install.Basis; facts.AppInstallViolations.AddRange(install.Violations);
         Try(facts, "Conturi locale", () => facts.Accounts.AddRange(ReadAccounts()));
         Try(facts, "Politica de parole", () => facts.PasswordPolicy = LocalPasswordPolicy.Query());
         facts.AuditPolicy = AuditPolicy.Query() is { } ap ? new Dictionary<string, AuditSetting>(ap) : null;
