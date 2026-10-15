@@ -57,7 +57,7 @@ public sealed class DomainCheckGuideTests
     [Fact]
     public void Double_click_on_a_domain_check_shows_its_guide_not_the_generic_lines()
     {
-        global::LogAnalyzer.UI.App.RegisterMeaningExplainers();
+        global::LogAnalyzer.UI.AppComposition.RegisterMeaningExplainers();
         var check = new ControlCheck("DM01", "Domeniu", "Conturi de utilizator cu SPN (vulnerabile la Kerberoasting)", ControlStatus.DeVerificat,
                                      "2 conturi: oricine din domeniu poate cere un tichet.", ["svc_backup: MSSQLSvc/srv01"], "Parole de cel puțin 25 de caractere.");
         var m = DetailSheetBuilder.Build(check).Meaning;

@@ -98,17 +98,8 @@ namespace LogAnalyzer.UI
             e.Handled = true;
         }
 
-        /// <summary>
-        /// The detail window's „Ce înseamnă” tab lives in Core, which cannot see the control-check guides (Dfir.Windows): the guide of a station,
-        /// domain or mailbox check (what, why, how, result, what to do) is plugged in here (senior review E2/E3).
-        /// </summary>
-        public static void RegisterMeaningExplainers() =>
-            LogAnalyzer.Core.Services.Details.ItemMeaning.RegisterExplainer(nameof(LogAnalyzer.Dfir.Windows.Audit.ControlCheck), item =>
-                item is LogAnalyzer.Dfir.Windows.Audit.ControlCheck check
-                    ? LogAnalyzer.Dfir.Windows.Audit.CheckGuides.Explain(check).ToPlainText().Split(Environment.NewLine)
-                    : Array.Empty<string>());
-
-        public static IServiceProvider? ServiceProvider { get; private set; }
+        // Composition (services, explainers, provider) lives in AppComposition so tests never touch this type and never run its static constructor.
+        private static IServiceProvider? ServiceProvider { get => AppComposition.ServiceProvider; set => AppComposition.ServiceProvider = value; }
 
         /// <summary>First run creates the primary administrator; after an offline password recovery a new password is set; otherwise the normal sign-in.</summary>
         private static bool SignInBeforeMainWindow(string? debugLogPath)
@@ -124,45 +115,6 @@ namespace LogAnalyzer.UI
             if (window.ShowDialog() != true || window.Session is null) return false;
             AuthApp.SetSession(window.Session);
             return true;
-        }
-
-        /// <summary>The application's services, exactly as startup registers them (also used by the startup timing test).</summary>
-        public static ServiceCollection BuildServices() => BuildServices(null);
-
-        /// <summary>
-        /// Test seam (internal, visible only to LogAnalyzer.App.Tests): <paramref name="applicationDataRoot"/> replaces %LOCALAPPDATA%\LogAnalyzer so the
-        /// startup test does not write the machine's database or chain of custody. Null (the only value production passes) keeps the fixed folder.
-        /// </summary>
-        internal static ServiceCollection BuildServices(string? applicationDataRoot)
-        {
-            var services = new ServiceCollection();
-            
-            // Servicii Core (Utilitare)
-            services.AddSingleton<AuditLogService>();
-            services.AddSingleton<PluginManagerService>();
-            services.AddSingleton<KnowledgeBaseService>();
-            services.AddSingleton<LogAnalyzer.Core.Services.LicenseService>();
-
-            var applicationDataPath = applicationDataRoot ?? Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "LogAnalyzer");
-            Directory.CreateDirectory(applicationDataPath);
-            services.AddSingleton<SecurePathService>();
-            services.AddSingleton(sp => new ChainOfCustodyService(Path.Combine(applicationDataPath, "chain-of-custody.ndjson")));
-            services.AddSingleton<EvidenceIntakeService>();
-            // Motoarele din Infrastructure
-            services.AddSingleton<IEventParser, EvtxParser>();
-            services.AddSingleton<IAnalysisEngine, AnalysisEngine>();
-            services.AddSingleton<IRegistryParser, OfflineRegistryParser>();
-            if (applicationDataRoot is null) services.AddSingleton<IDatabaseService, DatabaseService>();
-            else services.AddSingleton<IDatabaseService>(_ => new DatabaseService(applicationDataRoot));
-            EditionComposition.Register(services);
-            
-            // Componentele MVVM și Ferestrele din UI
-            services.AddTransient<MainViewModel>();
-            services.AddTransient<MainWindow>();
-            services.AddTransient<ActivationWindow>();
-            return services;
         }
 
         // Startup timing (owner 2026-10-11: "the other app feels faster"): every step of startup_debug.log carries the milliseconds since start,
@@ -222,9 +174,9 @@ namespace LogAnalyzer.UI
                 // Double-click on a row of ANY grid opens the full detail of that item (event, artifact, incident…).
                 EventManager.RegisterClassHandler(typeof(System.Windows.Controls.DataGridRow), System.Windows.Controls.Control.MouseDoubleClickEvent,
                     new System.Windows.Input.MouseButtonEventHandler(OnGridRowDoubleClick));
-                RegisterMeaningExplainers();
+                AppComposition.RegisterMeaningExplainers();
 
-                var services = BuildServices();
+                var services = AppComposition.BuildServices();
 
                 Step(debugLogPath, "Building ServiceProvider...\n");
                 ServiceProvider = services.BuildServiceProvider();

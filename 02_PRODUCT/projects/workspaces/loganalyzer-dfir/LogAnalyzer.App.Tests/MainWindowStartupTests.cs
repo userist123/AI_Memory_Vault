@@ -11,7 +11,7 @@ using Xunit.Abstractions;
 namespace LogAnalyzer.App.Tests;
 
 /// <summary>
-/// The main window is built with the application's real service registrations (App.BuildServices), as startup does after sign-in. Added after a
+/// The main window is built with the application's real service registrations (AppComposition.BuildServices), as startup does after sign-in. Added after a
 /// wrong resource key in MainWindow.xaml (2026-10-11) would have crashed the application on opening the main window while every other test passed.
 /// The timings are written to the test output for the startup-speed work; they are not asserted (machine dependent).
 /// </summary>
@@ -62,7 +62,7 @@ public sealed class MainWindowStartupTests(ITestOutputHelper output)
             try
             {
                 var sw = Stopwatch.StartNew();
-                var provider = LogAnalyzer.UI.App.BuildServices(appData).BuildServiceProvider();
+                var provider = LogAnalyzer.UI.AppComposition.BuildServices(appData).BuildServiceProvider();
                 provider.GetRequiredService<LogAnalyzer.Core.Interfaces.IDatabaseService>().InitializeDatabase();
                 LogAnalyzer.UI.Services.AuthApp.Initialize(authStore);
                 Assert.Equal(Path.GetFullPath(authStore), Path.GetFullPath(LogAnalyzer.UI.Services.AuthApp.Service.Dir));
