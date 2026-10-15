@@ -846,6 +846,12 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Agent checkpoint file (00_GOVERNANCE/coordination/tasks/README.md template); not a memory note, intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/EDITIONS_AND_POSTURE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown project document (three editions and per-posture check applicability); not a note. Frontmatter would require owner lifecycle/verification values."
     }
   ]
 }
