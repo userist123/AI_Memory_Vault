@@ -69,6 +69,34 @@ key. Neither is detectable from the station alone.
    a cancelled shutdown explains nothing), **A13** (officer-list events in the sealed audit since the
    previous anchor, DE VERIFICAT).
 
+## Security review of PR #289 (fixed, regression tests reproduce each probe)
+
+- **Original vs. what follows it.** The original is the prefix whose SHA-256 equals a recorded report hash, and
+  exactly one incremental update may follow it (`PdfUpdateInspector`): the signature dictionary, signature
+  widgets (at most a quarter of a page), appearance streams and fonts, the AcroForm, the catalog changed only by
+  `/AcroForm` (`/Perms`, `/DSS`, `/Metadata`, `/Extensions`), pages changed only by `/Annots` (new entries must be
+  signature widgets) and the document information. A second update, compressed object streams, a replaced
+  original object (content stream, font, page tree), another annotation or any action (`/JavaScript`,
+  `/OpenAction`, `/AA`, `/Launch` …) gives INVALID "raportul a fost modificat înainte de semnare". Approval PDFs of
+  officers follow the same rule, bound to the SHA-256 of the generated request.
+- **Files changed outside the application.** Every officer / trust event and every `audit.anchor` carries
+  `officer_state=store:<sha>,trust:<sha>,files:<names>` (SHA-256 of `security_officers.json` and of the
+  `officer_trust` folder). A13 recomputes it; a difference from the last recorded state is NECONFORM
+  "lista ofițerilor / autoritățile de încredere modificate în afara aplicației", with the files named. Officers
+  from the station list are shown as "declarat pe stație (neconfirmat)"; only the paper fingerprint confirms.
+- **Total parsing.** Malformed `/M`, odd-length or truncated `/Contents`, damaged structure and planted approval
+  files give INVALID with a reason (or an untrusted row), never an exception.
+- **Padding.** Everything after the DER CMS in `/Contents` must be `0`; otherwise INVALID.
+- **"Calificată" only when declared.** The label is "semnătură electronică calificată" only when the certificate
+  carries QcStatements with QcCompliance (0.4.0.1862.1.1) and QcSSCD (0.4.0.1862.1.4); otherwise "semnătură
+  electronică avansată (certificatul nu declară că e calificat)". The verdict is unchanged.
+- **Runtime.** Below .NET 10.0.13 every verdict carries "actualizați .NET la 10.0.13+ (remediere de securitate
+  pentru verificarea semnăturilor)".
+- **KeyGen.** `verify-report <signed.pdf> --officer-fingerprint <fp> --report-sha256 <sha> [--ca …] [--crl …]`
+  runs the same verifier (the CMS source file is linked; KeyGen references the Microsoft
+  `Microsoft.WindowsDesktop.App` shared framework, no package). Exit 0 OFICIAL, 5 valid but not official,
+  2 INVALID, 1 usage.
+
 ## Verifying outside the application (OpenSSL)
 
 The signature is a standard PAdES / CAdES detached signature. On a separate machine:

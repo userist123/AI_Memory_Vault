@@ -59,6 +59,28 @@ public sealed class QualifiedSignatureTrust(IReadOnlyList<X509Certificate2> anch
         return "certificat CA";
     }
 
+    /// <summary>
+    /// What the certificate declares about itself (ETSI EN 319 412-5 QcStatements, OID 1.3.6.1.5.5.7.1.3): "calificată" only with QcCompliance (0.4.0.1862.1.1)
+    /// and QcSSCD (0.4.0.1862.1.4); otherwise "avansată". The label does not change the verdict; it keeps the wording honest.
+    /// </summary>
+    public static string QualifiedLabel(X509Certificate2 cert)
+    {
+        var ids = new HashSet<string>();
+        try
+        {
+            var ext = cert.Extensions.Cast<X509Extension>().FirstOrDefault(e => e.Oid?.Value == "1.3.6.1.5.5.7.1.3");
+            if (ext is not null)
+            {
+                var r = new System.Formats.Asn1.AsnReader(ext.RawData, System.Formats.Asn1.AsnEncodingRules.DER).ReadSequence();
+                while (r.HasData) { var st = r.ReadSequence(); ids.Add(st.ReadObjectIdentifier()); }
+            }
+        }
+        catch (System.Formats.Asn1.AsnContentException) { ids.Clear(); }
+        return ids.Contains("0.4.0.1862.1.1") && ids.Contains("0.4.0.1862.1.4")
+            ? "semnătură electronică calificată (certificatul declară QcCompliance și dispozitiv calificat QcSSCD)"
+            : "semnătură electronică avansată (certificatul nu declară că e calificat)";
+    }
+
     public static bool HasNonRepudiation(X509Certificate2 cert) =>
         cert.Extensions.OfType<X509KeyUsageExtension>().FirstOrDefault() is { } ku && ku.KeyUsages.HasFlag(X509KeyUsageFlags.NonRepudiation);
 

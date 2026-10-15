@@ -465,9 +465,9 @@
 
 - **Ce verificăm:** Dacă lista ofițerilor de securitate (cei care pot semna raportul oficial) s-a schimbat de la controlul anterior.
 - **De ce contează:** Cine reușește să se treacă pe listă poate semna rapoarte „oficiale”; de aceea orice schimbare trebuie confirmată de ofițer, cu procesul-verbal în mână.
-- **Cum verifică aplicația:** A citit din jurnalul aplicației, sigilat și înlănțuit, înregistrările și eliminările de ofițeri, importurile de profil care conțineau ofițeri (ignorate) și importurile de certificate de autoritate pentru semnătura calificată, scrise după înregistrarea găsită la verificarea A11 (sau, fără cod anterior, în perioada controlată).
+- **Cum verifică aplicația:** A recalculat amprenta fișierului listei de ofițeri și a folderului autorităților de încredere și a comparat-o cu ultima stare înregistrată de aplicație în jurnalul ei sigilat; apoi a citit din jurnal înregistrările și eliminările de ofițeri, importurile de profil care conțineau ofițeri (ignorate) și importurile de certificate de autoritate pentru semnătura calificată, scrise după înregistrarea găsită la verificarea A11 (sau, fără cod anterior, în perioada controlată).
 - **Sursa tehnică:** `Jurnalul de audit al aplicației: profile.officer_registered, profile.officer_removed, profile.officer_import_ignored, officer_trust.imported`
-- **Cum se citește rezultatul:** Conform = nicio schimbare. De verificat = schimbări; fiecare apare în probe cu data, amprenta și cine a făcut-o. Nedeterminat = jurnalul aplicației nu a fost disponibil.
+- **Cum se citește rezultatul:** Conform = nicio schimbare. De verificat = schimbări făcute din aplicație; fiecare apare în probe cu data, amprenta și cine a făcut-o. Neconform = fișierul listei de ofițeri sau folderul autorităților de încredere nu mai corespunde ultimei stări înregistrate de aplicație (au fost modificate de mână, în afara aplicației). Nedeterminat = jurnalul aplicației nu a fost disponibil.
 
 ### U01
 

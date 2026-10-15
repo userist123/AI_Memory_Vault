@@ -341,6 +341,16 @@ public static class ControlEvaluator
     {
         const string title = "Lista ofițerilor de securitate schimbată de la controlul anterior";
         if (f.OfficerListChanges is not { } ch) { Add(r, "A13", "Audit", title, ControlStatus.Nedeterminat, "Jurnalul aplicației nu a fost disponibil, deci schimbările listei de ofițeri nu s-au putut verifica."); return; }
+        // files edited or dropped by hand: the state now differs from the last state the application recorded in its sealed audit
+        var outside = LogAnalyzer.Dfir.Reporting.OfficerState.Differences(f.OfficerStateRecorded, f.OfficerStateNow);
+        if (outside.Count > 0)
+        {
+            Add(r, "A13", "Audit", title, ControlStatus.Neconform,
+                "Lista ofițerilor / autoritățile de încredere modificate în afara aplicației: fișierele nu mai corespund ultimei stări înregistrate de aplicație în jurnalul ei sigilat. " +
+                "Cine poate semna raportul oficial a putut fi schimbat fără urmă în aplicație.",
+                outside.Concat(ch), "Tratați stația ca incident de securitate: comparați lista ofițerilor și certificatele autorităților cu procesele-verbale semnate; ofițerii se înregistrează din nou doar din aplicație.");
+            return;
+        }
         Add(r, "A13", "Audit", title, ch.Count == 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
             ch.Count == 0 ? $"Nicio schimbare a listei ofițerilor de securitate {f.OfficerListChangesSince}."
                           : $"{Ro.Capitalize(Ro.CountFem(ch.Count, "schimbare", "schimbări"))} privind lista ofițerilor de securitate {f.OfficerListChangesSince}. Fiecare trebuie confirmată de ofițer: cine este pe listă poate semna raportul oficial.",

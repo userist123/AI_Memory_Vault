@@ -13,7 +13,13 @@ namespace LogAnalyzer.UI.Services
     /// attribute (PAdES baseline; the claimed time is /M in the PDF). With a smart-card certificate the key never leaves the card: Windows / SafeNet asks for
     /// the PIN while signing; the application never sees it.
     /// </summary>
-    public sealed class SignedCmsSigner(X509Certificate2 certWithKey) : ICmsDetachedSigner
+    // linked into LogAnalyzer.KeyGen as well: internal there, so a project that references both does not see two public types
+#if LOGANALYZER_KEYGEN
+    internal
+#else
+    public
+#endif
+    sealed class SignedCmsSigner(X509Certificate2 certWithKey) : ICmsDetachedSigner
     {
         public const string SigningCertificateV2Oid = "1.2.840.113549.1.9.16.2.47";
 
@@ -52,7 +58,13 @@ namespace LogAnalyzer.UI.Services
     }
 
     /// <summary>Detached CMS verification with SignedCms: exactly one signer, its certificate present, signature and message digest checked over the content.</summary>
-    public sealed class SignedCmsVerifier : ICmsDetachedVerifier
+    // linked into LogAnalyzer.KeyGen as well: internal there, so a project that references both does not see two public types
+#if LOGANALYZER_KEYGEN
+    internal
+#else
+    public
+#endif
+    sealed class SignedCmsVerifier : ICmsDetachedVerifier
     {
         public static SignedCmsVerifier Instance { get; } = new();
 

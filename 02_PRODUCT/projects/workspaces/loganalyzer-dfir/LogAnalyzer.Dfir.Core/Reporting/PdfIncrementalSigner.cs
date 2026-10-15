@@ -25,9 +25,18 @@ public static class PdfIncrementalSigner
     public const int ContentsBytes = 16384;
     private const string ByteRangePlaceholder = "[0 ********** ********** **********]";
 
-    public static byte[] Sign(byte[] original, SignatureAppearance look, ICmsDetachedSigner signer)
+    public static byte[] Sign(byte[] original, SignatureAppearance look, ICmsDetachedSigner signer) => Sign(original, look, signer, allowPriorUpdates: false, extraObjects: null);
+
+    /// <summary>
+    /// Tests only: <paramref name="allowPriorUpdates"/> signs a file that already has incremental updates (what Adobe does with any file), and
+    /// <paramref name="extraObjects"/> are written into the same update (an object number below /Size replaces an original object), to reproduce attacks.
+    /// </summary>
+    internal static byte[] Sign(byte[] original, SignatureAppearance look, ICmsDetachedSigner signer, bool allowPriorUpdates, IReadOnlyDictionary<int, string>? extraObjects)
     {
-        var tail = Tail.Parse(original);
+        if (original.AsSpan().IndexOf("/ByteRange"u8) >= 0) throw new NotSupportedException("documentul este deja semnat");
+        var st = PdfStructure.Parse(original, allowPriorUpdates ? 16 : 1);
+        var tail = (Size: st.Size, Root: st.Root, Info: st.Info, LastPage: st.Pages[^1], StartXref: st.StartXref, IdEntry: st.IdEntry,
+                    RootDict: st.Dict(st.Root), LastPageDict: st.Dict(st.Pages[^1]));
         int n = tail.Size;
         int sigObj = n, fieldObj = n + 1, apObj = n + 2, fontObj = n + 3;
         var objects = new SortedDictionary<int, string>();
@@ -49,6 +58,7 @@ public static class PdfIncrementalSigner
         objects[fieldObj] = $"<</Type /Annot /Subtype /Widget /FT /Sig /T (Semnatura ofiter de securitate) /V {sigObj} 0 R /Rect {rect} /F 132 /P {tail.LastPage} 0 R /AP <</N {apObj} 0 R>>>>";
         objects[tail.LastPage] = AddEntry(tail.LastPageDict, "/Annots", tail.LastPageDict.Contains("/Annots") ? throw new NotSupportedException("pagina are deja adnotări") : $"[{fieldObj} 0 R]");
         objects[tail.Root] = AddEntry(tail.RootDict, "/AcroForm", tail.RootDict.Contains("/AcroForm") ? throw new NotSupportedException("documentul are deja un formular") : $"<</Fields [{fieldObj} 0 R] /SigFlags 3>>");
+        foreach (var (num, body) in extraObjects ?? new Dictionary<int, string>()) objects[num] = body;
         var placeholder = new string('0', ContentsBytes * 2);
         objects[sigObj] = $"<</Type /Sig /Filter /Adobe.PPKLite /SubFilter /ETSI.CAdES.detached /ByteRange {ByteRangePlaceholder} /Contents <{placeholder}> " +
                           $"/M ({PdfDate(look.SigningTime)}) /Name ({Esc(Ascii(look.SignerName))}) /Reason ({Esc(Ascii(look.Reason))}) /Location ({Esc(Ascii(look.Location))})>>";
@@ -125,87 +135,5 @@ public static class PdfIncrementalSigner
     {
         int i = b.AsSpan(from).IndexOf(pattern);
         return i < 0 ? throw new InvalidOperationException("structură PDF neașteptată") : from + i;
-    }
-
-    /// <summary>What the update needs from the end of the original: the last cross-reference table, trailer, catalog and last page (bounded parsing).</summary>
-    private sealed class Tail
-    {
-        public int Size, Root, Info, LastPage;
-        public long StartXref;
-        public string RootDict = "", LastPageDict = "", IdEntry = "";
-        private readonly Dictionary<int, long> _offsets = [];
-        private byte[] _b = [];
-
-        public static Tail Parse(byte[] b)
-        {
-            var t = new Tail { _b = b };
-            if (b.Length < 16 || !b.AsSpan(0, 5).SequenceEqual("%PDF-"u8)) throw new NotSupportedException("fișierul nu este un PDF");
-            if (b.AsSpan().IndexOf("/ByteRange"u8) >= 0) throw new NotSupportedException("documentul este deja semnat");
-            int sx = b.AsSpan().LastIndexOf("startxref"u8);
-            if (sx < 0) throw new NotSupportedException("PDF fără startxref");
-            var after = Encoding.ASCII.GetString(b, sx + 9, Math.Min(40, b.Length - sx - 9));
-            var m = Regex.Match(after, @"^\s*(\d{1,12})\s*%%EOF");
-            if (!m.Success) throw new NotSupportedException("sfârșitul PDF-ului nu poate fi citit");
-            t.StartXref = long.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture);
-            if (t.StartXref <= 0 || t.StartXref >= sx || !b.AsSpan((int)t.StartXref).StartsWith("xref"u8))
-                throw new NotSupportedException("PDF-ul nu are un tabel clasic de referințe (xref); doar rapoartele generate de aplicație pot fi semnate");
-            int tr = b.AsSpan((int)t.StartXref, sx - (int)t.StartXref).IndexOf("trailer"u8);
-            if (tr < 0) throw new NotSupportedException("PDF fără trailer");
-            var xrefText = Encoding.ASCII.GetString(b, (int)t.StartXref + 4, tr - 4);
-            var lines = xrefText.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            int cur = -1;
-            foreach (var line in lines)
-            {
-                var p = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                if (p.Length == 2) { cur = int.Parse(p[0], CultureInfo.InvariantCulture); continue; }
-                if (p.Length == 3 && cur >= 0) { if (p[2] == "n") t._offsets[cur] = long.Parse(p[0], CultureInfo.InvariantCulture); cur++; continue; }
-                throw new NotSupportedException("tabelul de referințe nu poate fi citit");
-            }
-            var trailer = Encoding.ASCII.GetString(b, (int)t.StartXref + tr, sx - (int)t.StartXref - tr);
-            t.Size = Int(trailer, @"/Size\s+(\d+)");
-            t.Root = Int(trailer, @"/Root\s+(\d+)\s+0\s+R");
-            t.Info = Regex.Match(trailer, @"/Info\s+(\d+)\s+0\s+R") is { Success: true } im ? int.Parse(im.Groups[1].Value, CultureInfo.InvariantCulture) : 0;
-            t.IdEntry = Regex.Match(trailer, @"/ID\s*\[[^\]]{0,200}\]") is { Success: true } idm ? " " + idm.Value : "";
-            if (Regex.IsMatch(trailer, @"/(Prev|Encrypt|XRefStm)\b")) throw new NotSupportedException("PDF cu actualizări anterioare sau criptat: nu este un raport generat de aplicație");
-            t.RootDict = t.Dict(t.Root);
-            var pages = Int(t.RootDict, @"/Pages\s+(\d+)\s+0\s+R");
-            var leaves = new List<int>();
-            t.Walk(pages, leaves, 0);
-            if (leaves.Count == 0) throw new NotSupportedException("documentul nu are pagini");
-            t.LastPage = leaves[^1];
-            t.LastPageDict = t.Dict(t.LastPage);
-            return t;
-        }
-
-        private void Walk(int obj, List<int> leaves, int depth)
-        {
-            if (depth > 16 || leaves.Count > 10000) throw new NotSupportedException("arborele de pagini este prea adânc");
-            var d = Dict(obj);
-            if (Regex.IsMatch(d, @"/Type\s*/Page\b")) { leaves.Add(obj); return; }
-            var kids = Regex.Match(d, @"/Kids\s*\[([^\]]*)\]");
-            if (!kids.Success) throw new NotSupportedException("nodul de pagini nu are /Kids");
-            foreach (Match k in Regex.Matches(kids.Groups[1].Value, @"(\d+)\s+0\s+R")) Walk(int.Parse(k.Groups[1].Value, CultureInfo.InvariantCulture), leaves, depth + 1);
-        }
-
-        /// <summary>The dictionary text of object <paramref name="num"/> ("&lt;&lt; … &gt;&gt;"), which must not be a stream.</summary>
-        public string Dict(int num)
-        {
-            if (!_offsets.TryGetValue(num, out var off) || off <= 0 || off >= _b.Length) throw new NotSupportedException($"obiectul {num} lipsește din tabelul de referințe");
-            int len = (int)Math.Min(8192, _b.Length - off);
-            var text = Encoding.Latin1.GetString(_b, (int)off, len);
-            var m = Regex.Match(text, $@"^{num}\s+0\s+obj\s*");
-            if (!m.Success) throw new NotSupportedException($"obiectul {num} nu este la poziția din tabelul de referințe");
-            int s = m.Length, depth = 0;
-            if (!text.AsSpan(s).StartsWith("<<")) throw new NotSupportedException($"obiectul {num} nu este un dicționar");
-            for (int i = s; i < text.Length - 1; i++)
-            {
-                if (text[i] == '<' && text[i + 1] == '<') { depth++; i++; continue; }
-                if (text[i] == '>' && text[i + 1] == '>') { depth--; i++; if (depth == 0) return text[s..(i + 1)]; }
-            }
-            throw new NotSupportedException($"obiectul {num} nu poate fi citit");
-        }
-
-        private static int Int(string s, string pattern) =>
-            Regex.Match(s, pattern) is { Success: true } m ? int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture) : throw new NotSupportedException("PDF incomplet (" + pattern + ")");
     }
 }

@@ -99,6 +99,8 @@ public sealed class StationFacts
     public List<string>? OfficerListChanges { get; set; }
     /// <summary>What <see cref="OfficerListChanges"/> covers, in words ("de la înregistrarea nr. N" / "în perioada controlată").</summary>
     public string OfficerListChangesSince { get; set; } = "";
+    public string? OfficerStateRecorded { get; set; }
+    public string? OfficerStateNow { get; set; }
 }
 
 public static class StationFactCollector

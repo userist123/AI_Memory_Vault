@@ -224,8 +224,9 @@ public static class ControlReportPdf
             ? a.Line + ". Treceți codul pe procesul-verbal; la controlul următor se introduce în aplicație ca să se verifice că jurnalul aplicației nu a fost rescris (verificarea A11)."
             : "Cod de ancorare: indisponibil (jurnalul aplicației nu a putut fi citit).");
         l.Add(OfficialLabel + ". Ofițerul de securitate semnează fișierul cu certificatul calificat de pe cardul său („Semnează ca ofițer de securitate” în aplicație, sau în Adobe); semnătura se verifică cu „Verifică raport semnat”, comparând amprenta certificatului cu cea de pe procesul-verbal.");
-        if (r.RegisteredOfficers.Count == 0) l.Add("Ofițeri de securitate înregistrați: niciunul.");
-        foreach (var o in r.RegisteredOfficers) l.Add($"Ofițer de securitate înregistrat: {o.Name}, amprenta certificatului {o.Fingerprint} ({o.Basis}).");
+        if (r.RegisteredOfficers.Count == 0) l.Add("Ofițeri de securitate declarați pe stație: niciunul.");
+        foreach (var o in r.RegisteredOfficers)
+            l.Add($"Ofițer de securitate declarat pe stație (neconfirmat): {o.Name}, amprenta certificatului {o.Fingerprint} ({o.Basis}). Se confirmă doar prin amprenta de pe procesul-verbal semnat.");
         return l;
     }
 

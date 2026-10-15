@@ -165,9 +165,59 @@ public static class ReportCli
         }
     }
 
+    /// <summary>
+    /// verify-report &lt;signed.pdf&gt; --officer-fingerprint &lt;fp&gt; --report-sha256 &lt;sha&gt;... [--ca &lt;file&gt;]... [--crl &lt;file&gt;]...: the security officer's qualified
+    /// signature inside the PDF (made in the application or in Adobe), checked exactly as the application does: fingerprint from the proces-verbal, the SHA-256 of
+    /// the generated report (also on the proces-verbal), chain to the given qualified CA certificates and revocation in the given CRLs.
+    /// Exit codes: 0 OFICIAL, 5 VALID, DAR NEOFICIAL, 2 INVALID, 1 usage or I/O error.
+    /// </summary>
+    public static int VerifyOfficerPdf(string[] args, TextWriter o)
+    {
+        var fps = new System.Collections.Generic.List<string>(); var shas = new System.Collections.Generic.List<string>();
+        var cas = new System.Collections.Generic.List<string>(); var crls = new System.Collections.Generic.List<string>();
+        string? pdf = null; bool bad = false;
+        for (int i = 1; i < args.Length; i++)
+        {
+            switch (args[i])
+            {
+                case "--officer-fingerprint" when i + 1 < args.Length: fps.Add(args[++i]); break;
+                case "--report-sha256" when i + 1 < args.Length: shas.Add(args[++i].Trim().ToUpperInvariant()); break;
+                case "--ca" when i + 1 < args.Length: cas.Add(args[++i]); break;
+                case "--crl" when i + 1 < args.Length: crls.Add(args[++i]); break;
+                default: if (pdf is null && !args[i].StartsWith("--", StringComparison.Ordinal)) pdf = args[i]; else bad = true; break;
+            }
+        }
+        if (bad || pdf is null || fps.Count != 1 || OfficerFingerprint.Normalize(fps[0]).Length == 0 || shas.Count == 0 || shas.Any(s => s.Length != 64 || !s.All(Uri.IsHexDigit)))
+        {
+            o.WriteLine("Utilizare: verify-report <raport-semnat.pdf> --officer-fingerprint <amprenta certificatului, de pe procesul-verbal> --report-sha256 <amprenta raportului> [--ca <CA calificat>]... [--crl <CRL>]...");
+            return 1;
+        }
+        try
+        {
+            var trust = new QualifiedSignatureTrust(
+                cas.Select(f => LogAnalyzer.Dfir.Auth.CertificateTrust.LoadCertificate(File.ReadAllBytes(f))).ToList(),
+                crls.Select(f => LogAnalyzer.Dfir.Auth.ParsedCrl.Parse(File.ReadAllBytes(f))).ToList());
+            // verifying away from the station: the officer is the one whose fingerprint is on the paper
+            var bytes = File.ReadAllBytes(pdf);
+            var signer = PdfSignatureCheck.Check(bytes, LogAnalyzer.UI.Services.SignedCmsVerifier.Instance).Signer;
+            var paperOfficer = signer is not null && OfficerFingerprint.Same(OfficerFingerprint.Of(signer), fps[0])
+                ? new[] { new SecurityOfficerRow { Name = OfficerFingerprint.CommonName(signer), Fingerprint = OfficerFingerprint.Of(signer), Certificate = Convert.ToBase64String(signer.RawData), Basis = OfficerRegistry.BasisFirst } }
+                : [];
+            var v = OfficialReportVerifier.Verify(bytes, LogAnalyzer.UI.Services.SignedCmsVerifier.Instance, shas, paperOfficer, fps[0], trust);
+            o.WriteLine(v.ToPlainText());
+            return v.Verdict switch { OfficialVerdict.Oficial => 0, OfficialVerdict.ValidNeoficial => 5, _ => 2 };
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or CryptographicException or FormatException)
+        {
+            o.WriteLine("[-] Fișierele nu au putut fi citite: " + ex.Message);
+            return 1;
+        }
+    }
+
     /// <summary>verify-report &lt;report.pdf&gt; &lt;public key base64 or file&gt;...: prints VALID / MODIFIED / UNKNOWN KEY and the reason.</summary>
     public static int Verify(string[] args, TextWriter o)
     {
+        if (args.Contains("--officer-fingerprint") || args.Contains("--report-sha256")) return VerifyOfficerPdf(args, o);
         if (args.Length < 3) { o.WriteLine("Utilizare: verify-report <raport.pdf> <cheie-publică-base64 | fișier-cheie-publică>..."); return 1; }
         try
         {

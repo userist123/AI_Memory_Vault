@@ -154,6 +154,9 @@ public static class AuditAnchor
         return list;
     }
 
+    /// <summary>The detail texts of every entry, in order.</summary>
+    public static List<string> AllDetails(string logPath) => Objects(logPath).Select(o => Str(o, "detail")).ToList();
+
     /// <summary>The detail texts of every entry with event <paramref name="eventName"/>, in order.</summary>
     public static List<string> EventDetails(string logPath, string eventName) =>
         Objects(logPath).Where(o => Str(o, "event") == eventName).Select(o => Str(o, "detail")).ToList();

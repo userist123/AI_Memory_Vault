@@ -40,6 +40,8 @@ public sealed class SecurityOfficerRow
     public string ApprovedBy { get; set; } = "";
     /// <summary>For an approved officer: the registration request PDF signed by <see cref="ApprovedBy"/> (base64), kept so the approval can be re-checked any time.</summary>
     public string ApprovalPdf { get; set; } = "";
+    /// <summary>For an approved officer: SHA-256 of the request PDF as generated here (the unsigned part of <see cref="ApprovalPdf"/>).</summary>
+    public string ApprovalRequestSha256 { get; set; } = "";
 }
 
 /// <summary>A registration request waiting for the signature of an already registered officer.</summary>
@@ -138,23 +140,27 @@ public static class OfficerRegistry
         if (pdf.Problem is { } why) throw new InvalidOperationException("Cererea semnată nu este valabilă: " + why);
         var pending = data.Pending.FirstOrDefault(p => pdf.OriginalLengthFor(p.RequestSha256) is not null)
             ?? throw new InvalidOperationException("Fișierul semnat nu este o cerere de înregistrare generată pe această stație și aflată în așteptare.");
-        var row = Approved(data.Officers, pending.Name, pending.Fingerprint, pending.Certificate, pdf, signedRequestPdf, cms, nowUtc);
+        if (ApprovalProblem(pdf, pending.Fingerprint, pending.RequestSha256) is { } bad) throw new InvalidOperationException("Cererea semnată nu este valabilă: " + bad);
+        var signerFp = OfficerFingerprint.Of(pdf.Signer!);
+        if (!Trusted(data.Officers, cms, out _).Any(t => OfficerFingerprint.Same(t.Fingerprint, signerFp)))
+            throw new InvalidOperationException($"Cererea este semnată cu certificatul cu amprenta {signerFp}, care nu aparține unui ofițer de securitate înregistrat.");
+        var row = new SecurityOfficerRow
+        {
+            Name = pending.Name, Fingerprint = pending.Fingerprint, Certificate = pending.Certificate, RegisteredUtc = nowUtc.ToUniversalTime(), Basis = BasisApproved,
+            ApprovedBy = signerFp, ApprovalPdf = Convert.ToBase64String(signedRequestPdf), ApprovalRequestSha256 = pending.RequestSha256,
+        };
         data.Officers.Add(row);
         data.Pending.Remove(pending);
         return row;
     }
 
-    private static SecurityOfficerRow Approved(List<SecurityOfficerRow> officers, string name, string fp, string cert, PdfSignatureCheck pdf, byte[] signedPdf, ICmsDetachedVerifier cms, DateTimeOffset nowUtc)
+    /// <summary>Why a signed request is not the approval of <paramref name="fingerprint"/>: its original part must be the generated request, carry the marker and be followed only by the signature.</summary>
+    private static string? ApprovalProblem(PdfSignatureCheck pdf, string fingerprint, string requestSha256)
     {
-        var signerFp = OfficerFingerprint.Of(pdf.Signer!);
-        if (!Trusted(officers, cms, out _).Any(t => OfficerFingerprint.Same(t.Fingerprint, signerFp)))
-            throw new InvalidOperationException($"Cererea este semnată cu certificatul cu amprenta {signerFp}, care nu aparține unui ofițer de securitate înregistrat.");
-        if (!pdf.OriginalContainsMarker(RequestMarker(fp))) throw new InvalidOperationException("Cererea semnată nu este cea pentru acest certificat.");
-        return new SecurityOfficerRow
-        {
-            Name = name, Fingerprint = fp, Certificate = cert, RegisteredUtc = nowUtc.ToUniversalTime(), Basis = BasisApproved, ApprovedBy = signerFp,
-            ApprovalPdf = Convert.ToBase64String(signedPdf),
-        };
+        if (pdf.Problem is { } why) return why;
+        if (pdf.OriginalLengthFor(requestSha256) is not { } len) return "partea semnată nu este cererea generată";
+        if (!pdf.PrefixContains(len, RequestMarker(fingerprint))) return "cererea semnată nu este cea pentru acest certificat";
+        return PdfUpdateInspector.Check(pdf.Bytes, len);
     }
 
     /// <summary>
@@ -176,13 +182,14 @@ public static class OfficerRegistry
             bool ok = r.Basis == BasisApproved && trusted.Any(t => OfficerFingerprint.Same(t.Fingerprint, r.ApprovedBy));
             if (ok)
             {
+                // a planted or damaged approval file makes only this row untrusted; reading the list never fails because of it
                 try
                 {
-                    var bytes = Convert.FromBase64String(r.ApprovalPdf ?? "");
-                    var pdf = PdfSignatureCheck.Check(bytes, cms);
-                    ok = pdf.Problem is null && pdf.Signer is not null && OfficerFingerprint.Same(OfficerFingerprint.Of(pdf.Signer), r.ApprovedBy) && pdf.OriginalContainsMarker(RequestMarker(r.Fingerprint));
+                    var pdf = PdfSignatureCheck.Check(Convert.FromBase64String(r.ApprovalPdf ?? ""), cms);
+                    ok = pdf.Signer is not null && ApprovalProblem(pdf, r.Fingerprint, r.ApprovalRequestSha256 ?? "") is null
+                         && OfficerFingerprint.Same(OfficerFingerprint.Of(pdf.Signer), r.ApprovedBy);
                 }
-                catch (FormatException) { ok = false; }
+                catch (Exception ex) when (ex is FormatException or ArgumentException or InvalidOperationException or NotSupportedException or CryptographicException) { ok = false; }
             }
             if (ok) trusted.Add(r);
             else problems.Add($"„{r.Name}” (amprenta {r.Fingerprint}) nu are o aprobare validă a unui ofițer înregistrat: nu este de încredere.");
