@@ -201,24 +201,6 @@
         "resolved": "18.1.0",
         "contentHash": "5K+9KFg2TdTl7VXv88Qzi/0lqK6JFoNP3lRuImPYGRV7K/QYklDyTrj4+A+KAki1JsQi6qKY+hDyY7d6WRqjrw=="
       },
-      "LogAnalyzer": {
-        "type": "Project",
-        "dependencies": {
-          "CommunityToolkit.Mvvm": "[8.4.2, )",
-          "DiscUtils.Registry": "[0.16.13, )",
-          "LogAnalyzer.Ai": "[1.0.0, )",
-          "LogAnalyzer.Connectors": "[1.0.0, )",
-          "LogAnalyzer.Core": "[1.0.0, )",
-          "LogAnalyzer.Dfir.Windows": "[1.0.0, )",
-          "LogAnalyzer.Infrastructure": "[1.0.0, )",
-          "LogAnalyzer.Response": "[1.0.0, )",
-          "Microsoft.Data.Sqlite.Core": "[9.0.0, )",
-          "Microsoft.Extensions.DependencyInjection": "[10.0.10, )",
-          "QuestPDF": "[2026.7.2, )",
-          "SQLitePCLRaw.bundle_e_sqlcipher": "[2.1.10, )",
-          "System.Management": "[10.0.10, )"
-        }
-      },
       "loganalyzer.ai": {
         "type": "Project",
         "dependencies": {
@@ -273,6 +255,24 @@
           "LogAnalyzer.Dfir.Core": "[1.0.0, )",
           "Microsoft.Data.Sqlite.Core": "[9.0.0, )",
           "SQLitePCLRaw.bundle_e_sqlcipher": "[2.1.10, )"
+        }
+      },
+      "LogAnalyzer.Internet": {
+        "type": "Project",
+        "dependencies": {
+          "CommunityToolkit.Mvvm": "[8.4.2, )",
+          "DiscUtils.Registry": "[0.16.13, )",
+          "LogAnalyzer.Ai": "[1.0.0, )",
+          "LogAnalyzer.Connectors": "[1.0.0, )",
+          "LogAnalyzer.Core": "[1.0.0, )",
+          "LogAnalyzer.Dfir.Windows": "[1.0.0, )",
+          "LogAnalyzer.Infrastructure": "[1.0.0, )",
+          "LogAnalyzer.Response": "[1.0.0, )",
+          "Microsoft.Data.Sqlite.Core": "[9.0.0, )",
+          "Microsoft.Extensions.DependencyInjection": "[10.0.10, )",
+          "QuestPDF": "[2026.7.2, )",
+          "SQLitePCLRaw.bundle_e_sqlcipher": "[2.1.10, )",
+          "System.Management": "[10.0.10, )"
         }
       },
       "loganalyzer.keygen": {

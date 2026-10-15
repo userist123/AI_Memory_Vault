@@ -4,11 +4,11 @@ using Xunit;
 namespace LogAnalyzer.Edition.Tests;
 
 /// <summary>
-/// Owner decision 13: the classified edition (P1) must not contain network code, any AI, host-modifying actions or updates -
+/// Owner decision 13 (three editions): the Standalone edition (formerly classified, P1) must not contain network code, any AI, host-modifying actions or updates -
 /// absent from the build, not disabled. These tests read the metadata of every LogAnalyzer assembly in the P1 build output.
-/// The same scan runs on the unclassified output as a positive control, so a scanner that finds nothing cannot pass silently.
+/// The same scan runs on the Internet output as a positive control, so a scanner that finds nothing cannot pass silently.
 /// </summary>
-public sealed class ClassifiedEditionBuildTests
+public sealed class StandaloneEditionBuildTests
 {
     // Assemblies that exist only in the unclassified edition.
     private static readonly string[] ExcludedAssemblies = ["LogAnalyzer.Connectors", "LogAnalyzer.Response", "LogAnalyzer.Ai"];
@@ -68,10 +68,11 @@ public sealed class ClassifiedEditionBuildTests
         "AuditPolicyChange", "RegistryValueWriter", "PowerShellAuditCollector", "UdpSyslogReceiver", "LiveEventLogWatcherService", "LiveEventSourceFactory",
         "NetworkChangeWatcher", "M365LiveConnectorService", "SiemForwarderService", "LiveThreatIntelService", "DirectoryCollector", "UserInvestigation",
         "EvidenceReasoner", "LocalModelClient", "AiCaseAnalysis", "WindowsConnectivityProbe", "ContainmentViewModel", "DomainInvestigationViewModel",
+        "DomainControllerProbe",   // the active N13 probe of the Network edition (LogAnalyzer.Connectors)
     ];
 
-    private static string ClassifiedDir => BuildOutputInspector.Output("ClassifiedOutput");
-    private static string UnclassifiedDir => BuildOutputInspector.Output("UnclassifiedOutput");
+    private static string StandaloneDir => BuildOutputInspector.Output("StandaloneOutput");
+    private static string InternetDir => BuildOutputInspector.Output("InternetOutput");
 
     /// <summary>True only when the test run was started with -p:ClassifiedIncludeLocalAi=true (the explicit, owner-approved option).</summary>
     private static bool ClassifiedIncludesLocalAi() =>
@@ -91,7 +92,7 @@ public sealed class ClassifiedEditionBuildTests
             AssemblyFacts f;
             try { f = BuildOutputInspector.Read(path); } catch (BadImageFormatException) { continue; }   // apphost stub is not managed
             // With the explicit local-AI option the Ai assembly and the exe's AI screen may use loopback HTTP; nothing else is relaxed.
-            var aiAllowedHere = allowAiAssembly && (f.File.StartsWith("LogAnalyzer.Ai", StringComparison.OrdinalIgnoreCase) || f.File.StartsWith("LogAnalyzer.Classified", StringComparison.OrdinalIgnoreCase));
+            var aiAllowedHere = allowAiAssembly && (f.File.StartsWith("LogAnalyzer.Ai", StringComparison.OrdinalIgnoreCase) || f.File.StartsWith("LogAnalyzer.Standalone", StringComparison.OrdinalIgnoreCase));
             foreach (var r in f.AssemblyRefs)
             {
                 if (ExcludedAssemblies.Contains(r) && !(r == "LogAnalyzer.Ai" && allowAiAssembly)) found.Add($"{f.File}: references {r}");
@@ -111,12 +112,12 @@ public sealed class ClassifiedEditionBuildTests
     }
 
     [Fact]
-    public void Classified_build_output_contains_no_network_ai_or_host_modifying_code()
+    public void Standalone_build_output_contains_no_network_ai_or_host_modifying_code()
     {
-        Assert.True(Directory.Exists(ClassifiedDir), "classified build output not found: " + ClassifiedDir);
-        Assert.True(BuildOutputInspector.OwnAssemblies(ClassifiedDir).Any(), "no LogAnalyzer assemblies in " + ClassifiedDir);
-        var violations = Violations(ClassifiedDir, allowAiAssembly: ClassifiedIncludesLocalAi());
-        Assert.True(violations.Count == 0, "The classified edition contains excluded code:\n" + string.Join("\n", violations.Distinct()));
+        Assert.True(Directory.Exists(StandaloneDir), "Standalone build output not found: " + StandaloneDir);
+        Assert.True(BuildOutputInspector.OwnAssemblies(StandaloneDir).Any(), "no LogAnalyzer assemblies in " + StandaloneDir);
+        var violations = Violations(StandaloneDir, allowAiAssembly: ClassifiedIncludesLocalAi());
+        Assert.True(violations.Count == 0, "The Standalone edition contains excluded code:\n" + string.Join("\n", violations.Distinct()));
     }
 
     [Fact]
@@ -134,21 +135,21 @@ public sealed class ClassifiedEditionBuildTests
     {
         // The default build has no Ai assembly. A build made with -p:ClassifiedIncludeLocalAi=true is an explicit, documented
         // option that requires owner approval (docs/dfir/EDITIONS.md); CI never builds it.
-        if (ClassifiedIncludesLocalAi()) Assert.True(File.Exists(Path.Combine(ClassifiedDir, "LogAnalyzer.Ai.dll")));
-        else Assert.False(File.Exists(Path.Combine(ClassifiedDir, "LogAnalyzer.Ai.dll")), "LogAnalyzer.Ai.dll is in the classified output without the explicit option");
+        if (ClassifiedIncludesLocalAi()) Assert.True(File.Exists(Path.Combine(StandaloneDir, "LogAnalyzer.Ai.dll")));
+        else Assert.False(File.Exists(Path.Combine(StandaloneDir, "LogAnalyzer.Ai.dll")), "LogAnalyzer.Ai.dll is in the Standalone output without the explicit option");
     }
 
     [Fact]
-    public void Classified_deps_manifest_lists_no_excluded_assembly()
+    public void Standalone_deps_manifest_lists_no_excluded_assembly()
     {
-        var deps = File.ReadAllText(Path.Combine(ClassifiedDir, "LogAnalyzer.Classified.deps.json"));
+        var deps = File.ReadAllText(Path.Combine(StandaloneDir, "LogAnalyzer.Standalone.deps.json"));
         foreach (var a in new[] { "LogAnalyzer.Connectors", "LogAnalyzer.Response" }) Assert.DoesNotContain(a, deps);
     }
 
     [Fact]
     public void Scanner_positive_control_finds_the_excluded_code_in_the_unclassified_build()
     {
-        var violations = Violations(UnclassifiedDir, allowAiAssembly: false);
+        var violations = Violations(InternetDir, allowAiAssembly: false);
         var text = string.Join("\n", violations);
         Assert.Contains("LogAnalyzer.Connectors.dll", text);
         Assert.Contains("LogAnalyzer.Response.dll", text);
@@ -160,9 +161,23 @@ public sealed class ClassifiedEditionBuildTests
     }
 
     [Fact]
-    public void Classified_exe_shares_the_ui_sources_but_not_the_edition_specific_ones()
+    public void Standalone_does_not_contain_the_active_domain_controller_probe_and_the_Network_build_does()
     {
-        var f = BuildOutputInspector.Read(Path.Combine(ClassifiedDir, "LogAnalyzer.Classified.dll"));
+        foreach (var path in BuildOutputInspector.OwnAssemblies(StandaloneDir).Concat(Directory.EnumerateFiles(StandaloneDir, "LogAnalyzer*.exe")))
+        {
+            AssemblyFacts f;
+            try { f = BuildOutputInspector.Read(path); } catch (BadImageFormatException) { continue; }
+            Assert.DoesNotContain(f.DefinedTypes, t => t.EndsWith(".DomainControllerProbe", StringComparison.Ordinal));
+        }
+        Assert.False(File.Exists(Path.Combine(StandaloneDir, "LogAnalyzer.Connectors.dll")));
+        var connectors = BuildOutputInspector.Read(Path.Combine(BuildOutputInspector.Output("NetworkOutput"), "LogAnalyzer.Connectors.dll"));
+        Assert.Contains("LogAnalyzer.Connectors.Domain.DomainControllerProbe", connectors.DefinedTypes);   // positive control
+    }
+
+    [Fact]
+    public void Standalone_exe_shares_the_ui_sources_but_not_the_edition_specific_ones()
+    {
+        var f = BuildOutputInspector.Read(Path.Combine(StandaloneDir, "LogAnalyzer.Standalone.dll"));
         Assert.Contains("LogAnalyzer.UI.ViewModels.MainViewModel", f.DefinedTypes);
         Assert.Contains("LogAnalyzer.UI.Services.EditionComposition", f.DefinedTypes);
         Assert.DoesNotContain("LogAnalyzer.UI.ViewModels.ContainmentViewModel", f.DefinedTypes);

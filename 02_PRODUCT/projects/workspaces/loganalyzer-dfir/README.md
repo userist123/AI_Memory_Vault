@@ -2,7 +2,15 @@
 
 Aplicație desktop WPF (.NET 10) pentru analiză DFIR locală pe Windows: achiziție și import de probe, parsere de artefacte, timeline, corelare, findings, rapoarte și export — cu SHA-256, chain of custody și raportarea explicită a golurilor de probă.
 
-O singură aplicație, `LogAnalyzer.exe`, care își alege singură modul de lucru la pornire:
+Un singur cod, **trei executabile**, fiecare în folderul lui de ieșire. Postura stației este fixată la compilare (nu o alege operatorul, nici un fișier, nici o politică) și apare în titlul ferestrei și în rapoarte („Ediția: …”):
+
+| Ediție | Executabil | Postură | Ce conține |
+|---|---|---|---|
+| **Standalone** | `LogAnalyzer.Standalone.exe` | stație izolată, fără rețea și fără internet | Fără cod de rețea (nici socket, nici HTTP, nici LDAP, nici syslog, nici AI) |
+| **Rețea air-gap** | `LogAnalyzer.Retea.exe` | LAN izolat (controlere de domeniu, servere, domenii), fără internet | Standalone + conectori interni (AD în citire, syslog, SIEM intern, monitorizare live) și acțiuni CSIRT; fără AI și fără cod de internet |
+| **Internet** | `LogAnalyzer.Internet.exe` | stație conectată | Totul (modul AirGapped/Network vine dintr-o politică semnată, ca mai jos) |
+
+Verificările de control se aplică după postură; ce nu se aplică apare ca „Nu se aplică” și nu se numără ca abatere. Tabelul și regulile: `docs/dfir/EDITIONS_AND_POSTURE.md`. Modul de lucru de mai jos descrie ediția **Internet**:
 
 | Mod | Când | Ce face |
 |---|---|---|
@@ -12,7 +20,7 @@ O singură aplicație, `LogAnalyzer.exe`, care își alege singură modul de luc
 Cum se decide:
 - **Detectarea este pasivă.** Aplicația citește starea din Windows Network List Manager (rezultatul verificării pe care o face deja sistemul de operare) și nu trimite niciun pachet.
 - **La nesiguranță alege AirGapped.** Dacă starea nu poate fi determinată, se folosește modul sigur.
-- **Modul se poate forța:** `LogAnalyzer.exe --mode=airgapped|network|auto` sau fișierul `LogAnalyzer.mode` lângă executabil, care conține `airgapped`, `network` sau `auto`. Ordinea de prioritate: argumentul din linia de comandă, apoi fișierul, apoi detectarea.
+- **Modul se poate forța:** `LogAnalyzer.Internet.exe --mode=airgapped|network|auto` sau fișierul `LogAnalyzer.mode` lângă executabil, care conține `airgapped`, `network` sau `auto`. Ordinea de prioritate: argumentul din linia de comandă, apoi fișierul, apoi detectarea.
 - **Modul nu se schimbă singur în timpul rulării.** Dacă o stație pornită în AirGapped primește conexiune, aplicația afișează avertizarea „STAȚIE IZOLATĂ CONECTATĂ LA REȚEA”, iar funcțiile de rețea rămân blocate.
 
 Aplicația este licențiată per stație (Hardware ID).
@@ -42,7 +50,7 @@ Pe lângă mod, fiecare PC are un **rol de stație**, stabilit tot de politica s
 
 ## Izolarea proceselor suspecte
 
-Fila **„Izolare procese suspecte”** (sau `LogAnalyzer.exe --tab=13`) funcționează în ambele moduri, fără să deschidă nicio conexiune:
+Fila **„Izolare procese suspecte”** (sau `LogAnalyzer.Internet.exe --tab=13`) funcționează în ambele moduri, fără să deschidă nicio conexiune:
 
 1. **Caută procese suspecte.** Încredere mare înseamnă un program nesemnat, care rulează dintr-o locație în care orice utilizator poate scrie (AppData, Temp, ProgramData, Downloads) și are conexiuni în Internet. Este tiparul din cazul VendorAgent.
 2. **Izolează și scanează.**
@@ -60,7 +68,7 @@ Câteva reguli de funcționare:
 
 ## Controlul stației (utilizatori și administratori)
 
-Fila **„Control stație”** (`LogAnalyzer.exe --tab=14`) pregătește verificările de conformitate. Funcționează pe stații izolate (AirGapped) și pe stații conectate. Aplicația doar citește din stație; nu modifică nimic.
+Fila **„Control stație”** (`LogAnalyzer.Internet.exe --tab=14`) pregătește verificările de conformitate. Funcționează pe stații izolate (AirGapped) și pe stații conectate. Aplicația doar citește din stație; nu modifică nimic.
 
 - **Ce verifică:**
   - conturi și administratori, Guest, politica de parole și de blocare;
@@ -80,7 +88,7 @@ Fila **„Control stație”** (`LogAnalyzer.exe --tab=14`) pregătește verific
 - Pentru jurnalul Security și politica de audit, aplicația trebuie rulată ca administrator.
 ## Investigație în domeniu și e-mail
 
-Fila **„Investigație domeniu și e-mail”** (`LogAnalyzer.exe --tab=15`) are trei părți:
+Fila **„Investigație domeniu și e-mail”** (`LogAnalyzer.Internet.exe --tab=15`) are trei părți:
 
 - **Domeniu.** Inventar LDAP doar în citire, făcut cu contul Windows curent. Verificările sunt implementate de noi, după modelul PingCastle:
   - conturi cu SPN (Kerberoasting) și conturi fără pre-autentificare (AS-REP roasting);
@@ -99,7 +107,7 @@ Fila **„Investigație domeniu și e-mail”** (`LogAnalyzer.exe --tab=15`) are
 Toate interogările de rețea trec prin `NetworkPolicy`. În modul AirGapped sunt blocate; pe o rețea izolată cu domeniu, porniți aplicația cu `--mode=network`. Rezultatele se salvează în cazul stației (`Investigations/`), ca probe, și se pot exporta ca PDF.
 ## Investigația completă (caz)
 
-Fila **„Investigație completă (caz)”** (`LogAnalyzer.exe --tab=16`) reface cap-coadă o investigație ca cea de pe o stație de laborator:
+Fila **„Investigație completă (caz)”** (`LogAnalyzer.Internet.exe --tab=16`) reface cap-coadă o investigație ca cea de pe o stație de laborator:
 
 1. **Colectare de pe stație.**
    - Jurnalele de evenimente sunt exportate brut cu `wevtutil` (17 canale).
@@ -136,11 +144,13 @@ Testele pe corpusul real (`LogAnalyzer.Dfir.Tests`, `[CorpusFact]`) rulează doa
 ## Publicare
 
 ```powershell
-dotnet publish LogAnalyzer.App/LogAnalyzer.App.csproj -c Release -p:PublishProfile=win-x64-singlefile
+dotnet publish LogAnalyzer.App.Classified/LogAnalyzer.App.Classified.csproj -c Release -p:PublishProfile=win-x64-singlefile   # Standalone
+dotnet publish LogAnalyzer.App.Network/LogAnalyzer.App.Network.csproj -c Release -p:PublishProfile=win-x64-singlefile        # Rețea air-gap
+dotnet publish LogAnalyzer.App/LogAnalyzer.App.csproj -c Release -p:PublishProfile=win-x64-singlefile                        # Internet
 ```
 
-Rezultatul: `publish\LogAnalyzer\win-x64\` — `LogAnalyzer.exe` (~150 MB, single-file, self-contained) plus `Categories\`, `Data\` și `LatoFont\`.
-CI-ul (`.github/workflows/loganalyzer-dfir-build.yml`, la rădăcina vault-ului) produce același artefact la PR-uri și la push pe `main`.
+Rezultatul, câte un folder pe ediție: `publish\LogAnalyzer.Standalone\win-x64\` (`LogAnalyzer.Standalone.exe`), `publish\LogAnalyzer.Retea\win-x64\` (`LogAnalyzer.Retea.exe`) și `publish\LogAnalyzer.Internet\win-x64\` (`LogAnalyzer.Internet.exe`), fiecare ~150 MB, single-file, self-contained, plus `Categories\`, `Data\` și `LatoFont\`.
+CI-ul (`.github/workflows/loganalyzer-dfir-build.yml`, la rădăcina vault-ului) produce cele trei artefacte la PR-uri și la push pe `main`.
 
 ## Licențe
 
@@ -169,7 +179,7 @@ Emiterea unei licențe:
      Licența este verificată automat cu logica aplicației și trecută în registrul `%APPDATA%\LogAnalyzer\LicenseManager\issued_licenses.csv`.
    - `LogAnalyzer.KeyGen license-sign <cheie-privată> --hardware-id <HWID> --expires <YYYY-MM-DD> [--out license.lic]` (consolă).
    - `Generate-LicenseKey.ps1 -PrivateKey <cheie-privată> -HardwareId <HWID> -ExpiryDate <YYYY-MM-DD>` (apelează KeyGen).
-3. Clientul lipește licența `LA1.…` în fereastra de activare sau pune `license.lic` lângă `LogAnalyzer.exe`.
+3. Clientul lipește licența `LA1.…` în fereastra de activare sau pune `license.lic` lângă executabilul ediției.
 
 ## Structura
 

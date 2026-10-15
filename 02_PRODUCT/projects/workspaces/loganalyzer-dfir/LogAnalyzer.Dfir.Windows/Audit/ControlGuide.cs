@@ -47,7 +47,7 @@ public static class ControlPeriods
 /// <summary>A control saved earlier in the station's case (Control/CONTROL_&lt;date&gt;/control_report.json), as far as the checks are concerned.</summary>
 public sealed record PreviousControl(string Folder, DateTimeOffset CollectedUtc, string Host, IReadOnlyList<ControlCheck> Checks)
 {
-    public string Label => $"{CollectedUtc.ToLocalTime():yyyy-MM-dd HH:mm} · {LogAnalyzer.Dfir.Language.RoText.CountFem(Checks.Count, "verificare", "verificări")}";
+    public string Label => $"{CollectedUtc.ToLocalTime():yyyy-MM-dd HH:mm} · {LogAnalyzer.Dfir.Language.RoText.CountFem(Checks.Count(c => c.Status != ControlStatus.NuSeAplica), "verificare", "verificări")}";
 }
 
 public static class ControlArchive
@@ -87,29 +87,39 @@ public sealed record CheckChange(string Id, string Title, ControlStatus? Before,
     public string AfterText => ControlReportPdf.StatusText(After);
 }
 
-/// <summary>"Compară cu controlul anterior": what got worse, what got better, what is new, what is unchanged. A difference, not two reports.</summary>
+/// <summary>
+/// "Compară cu controlul anterior": what got worse, what got better, what is new, what is unchanged. A difference, not two reports.
+/// A change to or from NU SE APLICĂ (the two controls ran under different editions) is listed apart, in <see cref="ApplicabilityChanged"/>:
+/// it is never an improvement or a regression.
+/// </summary>
 public sealed record ControlComparison(DateTimeOffset PreviousUtc, IReadOnlyList<CheckChange> Worse, IReadOnlyList<CheckChange> Better, IReadOnlyList<CheckChange> New,
-    IReadOnlyList<CheckChange> Removed, int Unchanged)
+    IReadOnlyList<CheckChange> Removed, int Unchanged, IReadOnlyList<CheckChange> ApplicabilityChanged)
 {
-    public string Summary =>
-        $"Față de controlul din {PreviousUtc.ToLocalTime():yyyy-MM-dd}: {Worse.Count} înrăutățite, {Better.Count} îmbunătățite, {New.Count} noi, {Removed.Count} dispărute, {Unchanged} neschimbate.";
+    public const string NoLongerApplies = "nu se mai aplică (ediție diferită)", AppliesNow = "se aplică acum (ediție diferită)";
 
+    public string Summary =>
+        $"Față de controlul din {PreviousUtc.ToLocalTime():yyyy-MM-dd}: {Worse.Count} înrăutățite, {Better.Count} îmbunătățite, {New.Count} noi, {Removed.Count} dispărute, {Unchanged} neschimbate"
+        + (ApplicabilityChanged.Count > 0 ? $", {ApplicabilityChanged.Count} cu aplicabilitate schimbată (ediție diferită)." : ".");
+
+    // Only for two APPLICABLE statuses; NU SE APLICĂ has no rank (it is neither compliant nor non-compliant).
     private static int Rank(ControlStatus s) => s switch { ControlStatus.Neconform => 3, ControlStatus.DeVerificat => 2, ControlStatus.Nedeterminat => 1, _ => 0 };
 
     public static ControlComparison Compare(PreviousControl previous, IReadOnlyList<ControlCheck> current)
     {
         var before = previous.Checks.ToDictionary(c => c.Id, c => c);
-        var worse = new List<CheckChange>(); var better = new List<CheckChange>(); var @new = new List<CheckChange>(); int same = 0;
+        var worse = new List<CheckChange>(); var better = new List<CheckChange>(); var @new = new List<CheckChange>(); var applicability = new List<CheckChange>(); int same = 0;
         foreach (var c in current)
         {
             if (!before.TryGetValue(c.Id, out var b)) { @new.Add(new(c.Id, c.Title, null, c.Status, "nouă")); continue; }
+            bool wasNa = b.Status == ControlStatus.NuSeAplica, isNa = c.Status == ControlStatus.NuSeAplica;
+            if (wasNa != isNa) { applicability.Add(new(c.Id, c.Title, b.Status, c.Status, isNa ? NoLongerApplies : AppliesNow)); continue; }
             if (Rank(c.Status) > Rank(b.Status)) worse.Add(new(c.Id, c.Title, b.Status, c.Status, "înrăutățită"));
             else if (Rank(c.Status) < Rank(b.Status)) better.Add(new(c.Id, c.Title, b.Status, c.Status, "îmbunătățită"));
             else same++;
         }
         var ids = current.Select(c => c.Id).ToHashSet();
         var removed = previous.Checks.Where(c => !ids.Contains(c.Id)).Select(c => new CheckChange(c.Id, c.Title, c.Status, c.Status, "dispărută")).ToList();
-        return new ControlComparison(previous.CollectedUtc, worse, better, @new, removed, same);
+        return new ControlComparison(previous.CollectedUtc, worse, better, @new, removed, same, applicability);
     }
 }
 
@@ -144,14 +154,20 @@ public sealed record ControlResultScreen(string Headline, string Problem, string
         var coverage = f.Coverage.Count == 0 ? "Acoperire: nicio sursă citită."
             : $"Surse citite: {readable} din {f.Coverage.Count}" + (unreadable.Count == 0 ? "." : $"; necitite: {string.Join(", ", unreadable)}.")
               + (f.Gaps.Count == 0 ? "" : $" Surse lipsă sau incomplete: {f.Gaps.Count}.");
-        bool nothing = nc == 0 && dv == 0;
+        // NU SE APLICĂ rows are not counted anywhere: only the checks that apply to the posture decide the headline
+        int applicable = r.Applicable;
+        bool allUndetermined = applicable > 0 && nd == applicable;
+        bool nothing = nc == 0 && dv == 0 && !allUndetermined && applicable > 0;
 
         string headline = nc > 0 ? $"ATENȚIE — {LogAnalyzer.Dfir.Language.RoText.CountFem(nc, "verificare NECONFORMĂ", "verificări NECONFORME")}"
             : dv > 0 ? $"DE LĂMURIT — {LogAnalyzer.Dfir.Language.RoText.CountFem(dv, "verificare cere", "verificări cer")} confirmarea organizației"
-            : nd == r.Checks.Count && r.Checks.Count > 0 ? "NEDETERMINAT — nicio verificare nu a putut fi făcută"
+            : allUndetermined ? "NEDETERMINAT — nicio verificare aplicabilă nu a putut fi făcută"
+            : applicable == 0 ? "NICIO VERIFICARE EVALUATĂ — nicio verificare nu se aplică acestei ediții"
             : "NIMIC NECONFORM GĂSIT în sursele citite";
         string problem = nc > 0 ? $"Da. {LogAnalyzer.Dfir.Language.RoText.Capitalize(LogAnalyzer.Dfir.Language.RoText.CountFem(nc, "verificare este NECONFORMĂ", "verificări sunt NECONFORME"))}" + (dv > 0 ? (dv == 1 ? " și una este DE VERIFICAT." : $" și {LogAnalyzer.Dfir.Language.RoText.Number(dv)} sunt DE VERIFICAT.") : ".")
             : dv > 0 ? $"De lămurit. {LogAnalyzer.Dfir.Language.RoText.Capitalize(LogAnalyzer.Dfir.Language.RoText.CountFem(dv, "verificare arată", "verificări arată"))} fapte pe care numai organizația le poate confirma ca autorizate (DE VERIFICAT)."
+            : allUndetermined ? $"Nu se știe. Nicio verificare aplicabilă nu a putut fi făcută (NEDETERMINAT), deci nu se poate spune nici că totul este în ordine. {coverage}"
+            : applicable == 0 ? $"Nu se știe. Nicio verificare nu a fost evaluată. {coverage}"
             : $"Nimic neconform găsit în sursele citite. {coverage}";
         var areas = r.Checks.Where(c => c.Status == ControlStatus.Neconform).Select(c => c.Area).Distinct().ToList();
         string seriousness = nc > 0 ? $"Neconformitățile privesc: {string.Join(", ", areas)}." + (nd > 0 ? $" {LogAnalyzer.Dfir.Language.RoText.Capitalize(LogAnalyzer.Dfir.Language.RoText.CountFem(nd, "verificare este NEDETERMINATĂ", "verificări sunt NEDETERMINATE"))} (sursa nu a putut fi citită)." : "")

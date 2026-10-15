@@ -15,7 +15,7 @@ public class StationChecksWave2Tests
 
     private static StationFacts Station(bool isolated, params (string K, string V)[] settings)
     {
-        var f = new StationFacts { StationShouldBeIsolated = isolated, IsAdministrator = true };
+        var f = new StationFacts { Posture = isolated ? LogAnalyzer.Core.Services.Edition.StationPosture.Standalone : LogAnalyzer.Core.Services.Edition.StationPosture.Internet, IsAdministrator = true };
         foreach (var (k, v) in settings) f.Settings[k] = v;
         return f;
     }

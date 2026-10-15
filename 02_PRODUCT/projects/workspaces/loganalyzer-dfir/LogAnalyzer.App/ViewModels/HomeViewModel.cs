@@ -34,9 +34,12 @@ namespace LogAnalyzer.UI.ViewModels
 
         /// <param name="profile">The role profile (WP18): which intents this PC offers. Default: the role decided at startup, on the unclassified edition.</param>
         public HomeViewModel(InvestigationViewModel investigation, Action<int>? navigate = null, RecentCases? recent = null, Func<string?>? pickFolder = null,
-            RoleProfile? profile = null)
+            RoleProfile? profile = null, Func<string?>? editionWarning = null)
         {
             _investigation = investigation;
+            // Owner decision: the Internet edition on an isolated-looking station says so (passive facts only; never changes a result).
+            try { EditionWarning = (editionWarning ?? (() => LogAnalyzer.Dfir.Windows.Audit.EditionFit.WarningForThisStation(StationPostureContext.Current)))() ?? ""; }
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or InvalidOperationException) { EditionWarning = ""; }
             _navigate = navigate ?? (_ => { });
             _recent = recent ?? new RecentCases(RecentCases.DefaultFile());
             _pickFolder = pickFolder ?? PickFolderWithDialog;
@@ -53,6 +56,10 @@ namespace LogAnalyzer.UI.ViewModels
             Refresh();
             ReloadRecent();
         }
+
+        /// <summary>"Ediție nepotrivită: …" when the Internet edition runs on a station that looks isolated; empty otherwise.</summary>
+        public string EditionWarning { get; } = "";
+        public bool HasEditionWarning => EditionWarning.Length > 0;
 
         // The five answers.
         [ObservableProperty] private string _attentionLabel = "";

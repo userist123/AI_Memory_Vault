@@ -144,6 +144,8 @@ namespace LogAnalyzer.UI
 
                 // Operating mode: decided by the edition. The unclassified edition takes it only from the signed policy
                 // (fail closed to AirGapped); --mode= and LogAnalyzer.mode are ignored. The classified edition is always AirGapped.
+                // Posture of this executable: fixed at compile time by the edition, before anything else reads it.
+                LogAnalyzer.Core.Services.Edition.StationPostureContext.Initialize(EditionComposition.Posture);
                 var startup = EditionComposition.DecideStartup(e.Args, AppDomain.CurrentDomain.BaseDirectory);
                 var decision = startup.Mode;
                 AppModeContext.Initialize(decision);

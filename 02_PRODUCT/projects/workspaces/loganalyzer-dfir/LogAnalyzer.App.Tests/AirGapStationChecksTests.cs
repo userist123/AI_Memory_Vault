@@ -13,9 +13,12 @@ public class AirGapStationChecksTests
 {
     private const string Absent = StationFactCollector.Absent;
 
-    private static ControlCheck Check(bool isolated, string id, params (string K, string V)[] settings)
+    private static ControlCheck Check(bool isolated, string id, params (string K, string V)[] settings) =>
+        CheckAt(isolated ? LogAnalyzer.Core.Services.Edition.StationPosture.Standalone : LogAnalyzer.Core.Services.Edition.StationPosture.Internet, id, settings);
+
+    private static ControlCheck CheckAt(LogAnalyzer.Core.Services.Edition.StationPosture posture, string id, params (string K, string V)[] settings)
     {
-        var f = new StationFacts { StationShouldBeIsolated = isolated };
+        var f = new StationFacts { Posture = posture };
         foreach (var (k, v) in settings) f.Settings[k] = v;
         return ControlEvaluator.Evaluate(f).Checks.Single(c => c.Id == id);
     }
@@ -29,7 +32,9 @@ public class AirGapStationChecksTests
         Assert.Equal(ControlStatus.Neconform, c.Status);
         Assert.Contains("telefon folosit ca modem", c.Detail);
         Assert.Contains("Remote NDIS", c.Detail);
-        Assert.Equal(ControlStatus.DeVerificat, Check(false, "N05", ("Net.AdapterCount", "3"), ("Net.PhoneAdapters", "x"), ("Net.CellularAdapters", ""), ("Net.UsbEthernetAdapters", "")).Status);
+        // A phone used as a modem is an internet path: non-conform on the isolated LAN too, and it does not apply to an internet station.
+        Assert.Equal(ControlStatus.Neconform, CheckAt(LogAnalyzer.Core.Services.Edition.StationPosture.IsolatedNetwork, "N05", ("Net.AdapterCount", "3"), ("Net.PhoneAdapters", "x"), ("Net.CellularAdapters", ""), ("Net.UsbEthernetAdapters", "")).Status);
+        Assert.Equal(ControlStatus.NuSeAplica, Check(false, "N05", ("Net.AdapterCount", "3"), ("Net.PhoneAdapters", "x"), ("Net.CellularAdapters", ""), ("Net.UsbEthernetAdapters", "")).Status);
     }
 
     [Fact]
@@ -56,7 +61,8 @@ public class AirGapStationChecksTests
     {
         Assert.Equal(ControlStatus.Conform, Check(true, "P28", ("Optical.WriterCount", "1"), ("Optical.WriterNames", "W"), ("Optical.DenyWrite", "1")).Status);
         Assert.Equal(ControlStatus.Conform, Check(true, "P28", ("Optical.WriterCount", "0"), ("Optical.DriveCount", "1")).Status);
-        Assert.Equal(ControlStatus.DeVerificat, Check(false, "P28", ("Optical.WriterCount", "1"), ("Optical.WriterNames", "W"), ("Optical.DenyWrite", Absent)).Status);
+        Assert.Equal(ControlStatus.DeVerificat, CheckAt(LogAnalyzer.Core.Services.Edition.StationPosture.IsolatedNetwork, "P28", ("Optical.WriterCount", "1"), ("Optical.WriterNames", "W"), ("Optical.DenyWrite", Absent)).Status);
+        Assert.Equal(ControlStatus.NuSeAplica, Check(false, "P28", ("Optical.WriterCount", "1"), ("Optical.WriterNames", "W"), ("Optical.DenyWrite", Absent)).Status);
         Assert.Equal(ControlStatus.Nedeterminat, Check(true, "P28").Status);
     }
 
@@ -79,7 +85,8 @@ public class AirGapStationChecksTests
         Assert.Equal(ControlStatus.Conform, Check(true, "P29", ("Print.LogEnabled", "1"), ("Print.PrinterCount", "1"), ("Print.PrinterNames", "A"), ("Print.NetworkPrinters", "")).Status);
         Assert.Equal(ControlStatus.Conform, Check(true, "P29", ("Print.LogEnabled", "0"), ("Print.PrinterCount", "0")).Status);
         Assert.Equal(ControlStatus.Nedeterminat, Check(true, "P29", ("Print.PrinterCount", "2")).Status);
-        Assert.Equal(ControlStatus.DeVerificat, Check(false, "P29", ("Print.LogEnabled", "0"), ("Print.PrinterCount", "2")).Status);
+        Assert.Equal(ControlStatus.DeVerificat, CheckAt(LogAnalyzer.Core.Services.Edition.StationPosture.IsolatedNetwork, "P29", ("Print.LogEnabled", "0"), ("Print.PrinterCount", "2")).Status);
+        Assert.Equal(ControlStatus.NuSeAplica, Check(false, "P29", ("Print.LogEnabled", "0"), ("Print.PrinterCount", "2")).Status);
     }
 
     // ---- P30 ----

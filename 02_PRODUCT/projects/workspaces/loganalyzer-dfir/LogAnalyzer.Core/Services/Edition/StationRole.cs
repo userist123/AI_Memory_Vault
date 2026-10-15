@@ -78,7 +78,7 @@ namespace LogAnalyzer.Core.Services.Edition
         public string HumanRole => StationRoles.Human(EffectiveRole);
 
         public string Summary =>
-            $"Rol de stație: {HumanRole} ({StationRoles.Name(EffectiveRole)}). Ediție: {(Edition == EditionKind.Classified ? "clasificată (P1)" : "neclasificată (P2/P3)")}. " +
+            $"Rol de stație: {HumanRole} ({StationRoles.Name(EffectiveRole)}). Ediția: {StationPostures.EditionLabel(StationPostureContext.Current)}. " +
             $"Mod: {(Mode == AppMode.AirGapped ? "izolat (air-gap)" : "conectat")}. " +
             (PolicySha256 is null ? "Politică semnată: niciuna acceptată. " : $"Politică semnată acceptată: SHA-256 {PolicySha256[..12]}. ") +
             string.Join(" ", Reasons);

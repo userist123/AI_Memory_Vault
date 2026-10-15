@@ -773,6 +773,30 @@
 - **Sursa tehnică:** `Interfața Windows de partajare (HNetCfg.HNetShare); HKLM\SOFTWARE\Policies\Microsoft\Windows\Network Connections → NC_ShowSharedAccessUI`
 - **Cum se citește rezultatul:** Conform = nepornită. Neconform = pornită pe o stație izolată. De verificat = pornită pe o stație neizolată, sau starea nu a putut fi citită dar politica o interzice.
 
+### N11
+
+- **Ce verificăm:** Dacă stația are configurată sau prezentă vreo cale spre internet: gateway, servere DNS, rute permanente, proxy, profil VPN, adaptor Wi-Fi sau modem celular, profiluri Wi-Fi salvate, partajarea conexiunii.
+- **De ce contează:** O singură cale spre exterior anulează izolarea unei stații Standalone sau a unei rețele air-gap, chiar dacă acum nu este folosită.
+- **Cum verifică aplicația:** A citit doar configurația locală: proprietățile adaptoarelor, registrul (gateway și DNS ale fiecărei interfețe, inclusiv ale adaptoarelor oprite acum, rute permanente, proxy WinINet și WinHTTP), fișierele rasphone.pbk, lista dispozitivelor Plug and Play (modemuri celulare, telefoane folosite ca modem), numărul profilurilor Wi-Fi salvate și starea partajării conexiunii (ICS); nu folosește WMI. Nu a deschis nicio conexiune, nu a trimis niciun pachet și nu a rezolvat niciun nume.
+- **Sursa tehnică:** `Adaptoarele de rețea; HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters (Interfaces, PersistentRoutes); HKLM/HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings; rasphone.pbk; lista dispozitivelor Plug and Play (SetupAPI); %ProgramData%\Microsoft\Wlansvc\Profiles (număr de fișiere); HNetCfg.HNetShare`
+- **Cum se citește rezultatul:** Pe Standalone: Conform = nicio configurație găsită; Neconform = orice cale găsită, chiar un gateway intern sau un radio oprit. Pe Rețea air-gap: Conform = doar gateway și DNS interne (10/8, 172.16/12, 192.168/16, link-local, unique-local); Neconform = gateway sau DNS public, proxy spre exterior, VPN, radio pornit, modem celular, partajare a conexiunii; De verificat = proxy dat prin nume (nu se rezolvă fără trafic) sau radio prezent dar oprit. Nu se aplică pe Internet. Absența unei căi găsite nu dovedește că nu există una.
+
+### N12
+
+- **Ce verificăm:** Dacă stația este membră a domeniului rețelei izolate.
+- **De ce contează:** Într-o rețea air-gap cu domeniu, stațiile se administrează și se autentifică prin controlerele de domeniu; o stație în grup de lucru iese din politicile domeniului.
+- **Cum verifică aplicația:** A citit din WMI dacă calculatorul face parte dintr-un domeniu și numele domeniului. Nu a contactat controlerul de domeniu.
+- **Sursa tehnică:** `WMI Win32_ComputerSystem → PartOfDomain, Domain`
+- **Cum se citește rezultatul:** Conform = membră a unui domeniu. Neconform = grup de lucru. Nedeterminat = nu a putut fi citit. Nu se aplică pe Standalone și Internet. Accesibilitatea controlerului de domeniu se verifică separat, activ, în N13 (doar ediția Rețea).
+
+### N13
+
+- **Ce verificăm:** Dacă controlerul domeniului la care este alăturată stația poate fi găsit la o adresă internă și răspunde (verificare activă, doar citire).
+- **De ce contează:** Fără controler de domeniu accesibil, stația nu primește politicile domeniului și autentificarea se face din memorie; un controler care se rezolvă la o adresă publică indică o configurare greșită sau o deturnare a rezolvării de nume.
+- **Cum verifică aplicația:** Doar în ediția Rețea, doar pe o stație membră a domeniului și doar dacă modul de lucru permite traficul. Localizarea controlerului folosește traficul obișnuit al Windows, cel de la fiecare autentificare în domeniu: localizatorul (DsGetDcName, Netlogon) întreabă serverul DNS configurat de înregistrarea _ldap._tcp.dc._msdcs a domeniului, trimite controlerelor găsite pingul UDP Netlogon (389), iar numele controlerului se rezolvă prin același server DNS; acest trafic pleacă înainte să se cunoască vreo adresă. Conexiunea proprie a aplicației este una singură, TCP la LDAP (389), numai spre o adresă privată, fără autentificare și fără date trimise. Dacă vreo adresă rezolvată este publică, aplicația nu deschide nicio conexiune TCP. Totul are o limită de timp de 10 secunde.
+- **Sursa tehnică:** `DsGetDcName (netapi32) → numele și adresa controlerului; rezolvarea numelui; conexiune TCP la portul 389`
+- **Cum se citește rezultatul:** Conform = controler găsit la o adresă privată, LDAP răspunde. Neconform = controlerul se rezolvă la o adresă publică (aplicația nu deschide conexiunea TCP). De verificat = controlerul nu a răspuns, nu a fost găsit sau limita de timp a trecut. Nedeterminat = stația nu este membră a unui domeniu (N12), verificarea nu a rulat sau a fost anulată. Nu se aplică pe Standalone și Internet.
+
 ### EM01
 
 - **Ce verificăm:** Dacă din cutia poștală au plecat 50 de mesaje sau mai multe într-o singură oră.
