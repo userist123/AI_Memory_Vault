@@ -37,11 +37,21 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Agent",
+        "matcher": "Agent|Task",
         "hooks": [
           {
             "type": "command",
             "command": "for py in python3 python; do if \"$py\" -c \"import sys\" >/dev/null 2>&1; then \"$py\" \"${CLAUDE_PROJECT_DIR:-.}/.claude/skills/cost-router/hook_agent_model.py\"; exit 0; fi; done; exit 0",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|NotebookEdit|Bash|Read|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "for py in python3 python; do if \"$py\" -c \"import sys\" >/dev/null 2>&1; then \"$py\" \"${CLAUDE_PROJECT_DIR:-.}/.claude/skills/cost-router/hook_enforce_route.py\"; exit 0; fi; done; exit 0",
             "timeout": 10
           }
         ]

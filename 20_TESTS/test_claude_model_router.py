@@ -114,6 +114,22 @@ def test_fable_is_never_a_subagent_model():
     assert sub.escalate_to is None
 
 
+def test_opus_is_the_escalation_ceiling_outside_frontier():
+    d = route(POLICY, "diagnose the root cause of the flaky graph expansion")
+    assert d.task_class == "design" and d.model == "opus"
+    assert d.escalate_to is None, "only frontier sessions may escalate to Fable"
+    raised = route(POLICY, "find which files import X", risk="high")
+    assert raised.model == "opus" and raised.escalate_to is None
+
+
+def test_frontier_may_escalate_to_fable_only_in_the_main_session():
+    goal = "orchestrate an end-to-end long-horizon migration"
+    main = route(POLICY, goal, requested_model="opus")
+    assert main.task_class == "frontier" and main.model == "opus" and main.escalate_to == "fable"
+    sub = route(POLICY, goal, requested_model="opus", for_subagent=True)
+    assert sub.model == "opus" and sub.escalate_to is None
+
+
 def test_security_work_gets_an_opus_verifier_never_fable():
     d = route(POLICY, "implement the new token handling in the auth module")
     assert d.model == "opus" and d.verifier_model == "opus"
