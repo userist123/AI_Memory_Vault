@@ -44,6 +44,7 @@ export default function ProformaView({ id }: { id: string }){
       <tr><td><b>{t('com.totalGross')}</b></td><td className="n"><b>{n2(p.gross)}</b></td></tr>
       {p.milestone && <tr><td>{t('com.milestoneLine', { l: p.milestone.label + (p.milestone.pct != null ? ` (${p.milestone.pct}%)` : '') })}</td><td className="n">{n2(p.milestone.net)} + {n2(p.milestone.vat)}</td></tr>}
       <tr className="pf-due"><td>{p.milestone ? t('com.dueNowMilestone') : t('com.dueNowFull')}</td><td className="n">{n2(p.due)} RON</td></tr></tbody></table>
+    {!p.feeVatPayer && p.groups.some(g => g.category === 'fee') && <p className="small">{t('com.feeNoVat')}</p>}
     {p.unknownLines > 0 && <p className="muted small">{t('com.pfUnknown', { n: p.unknownLines })}</p>}
     <p className="muted small">{t('com.notFiscal')}</p>
   </main>);

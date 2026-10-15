@@ -6,11 +6,11 @@ import { ORDER_STATUSES, type OrderState, type ProcurementRow, type SupplierGrou
 import { formatMoney } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
 import { intlLocale } from '@/lib/i18n';
-import { safeCell } from '@/core/custom-csv';
+import { safeCell, quoteCell } from '@/core/csv-safe';
 import { ImportCsvButtons } from './CustomItemsImport';
 
 type Data = { rows: ProcurementRow[]; groups: SupplierGroup[]; summary: { lines: number; todo: number; ordered: number; delivered: number; installed: number; overdue: number; orderLate: number; orderSoon: number; ordersValue: number } };
-const csvCell = (v: unknown) => { const s = safeCell(v); return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+const csvCell = (v: unknown) => quoteCell(safeCell(v));   // protecția comună: formule, tab/CR în față, ghilimele
 type RoomRef = { id: string; name: string };
 export default function OrdersPage({ id, cur, say, projectName, rooms = [] }: { id: string; cur: string; say(s: string): void; projectName: string; rooms?: RoomRef[] }){
   const { t, lang } = usePrefs(), [data, setData] = useState<Data | null>(null), [open, setOpen] = useState<string | null>(null), [filter, setFilter] = useState<'all' | 'open' | 'overdue'>('all');

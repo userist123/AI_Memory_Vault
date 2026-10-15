@@ -1,6 +1,8 @@
 // Produsele proprii în CSV: citire (separator ; sau ,, virgulă zecimală, ghilimele, BOM, antete RO/EN fără diacritice),
 // export protejat împotriva injecției de formule și fișierul-șablon. Validarea de autoritate rămâne checkCustomItem (server).
 import { checkCustomItem, ClipError, type CustomItemInput } from './clip';
+import { safeCell, FORMULA_START } from './csv-safe';
+export { safeCell };
 
 export const CSV_LIMITS = { rows: 500, bytes: 200 * 1024 };
 export type CsvField = 'name' | 'supplier' | 'sku' | 'url' | 'unit' | 'qty' | 'costPrice' | 'price' | 'roomId' | 'leadDays' | 'dimension' | 'currency';
@@ -39,7 +41,7 @@ export function parseNumber(raw: string): number | null {
   else t = s.match(/\./g)?.length! > 1 ? s.replace(/\./g, '') : s;
   const n = Number(t); return Number.isFinite(n) ? n : NaN;
 }
-const unq = (s: string) => /^'[=+\-@\t\r]/.test(s) ? s.slice(1) : s;   // inversul protecției de la export
+const unq = (s: string) => s.startsWith("'") && FORMULA_START.test(s.slice(1)) ? s.slice(1) : s;   // inversul protecției de la export (exporturile o pun la loc)
 
 export interface CsvRow { line: number; item: CustomItemInput | null; errors: string[]; roomName: string | null }
 export interface CsvParse { rows: CsvRow[]; columns: CsvField[]; ok: number; failed: number }
@@ -69,8 +71,7 @@ export function parseCustomCsv(input: string, resolveRoom: (name: string) => str
   const ok = rows.filter(r => r.item).length; return { rows, columns: [...idx.keys()], ok, failed: rows.length - ok };
 }
 
-/** Celulă de export: text care începe cu = + - @ (sau tab/CR) primește apostrof în față, ca Excel să nu o execute ca formulă. */
-export const safeCell = (v: unknown): string => { if (v == null) return ''; const s = String(v); return /^[=+\-@\t\r]/.test(s) ? "'" + s : s; };
+// safeCell (core/csv-safe.ts): text care începe cu = + - @ (sau tab/CR) primește apostrof în față, ca Excel să nu o execute ca formulă.
 const cell = (s: string) => /[";\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 const dec = (v: number | null | undefined) => v == null ? '' : String(v).replace('.', ',');
 const toCsv = (rows: string[][]) => '﻿' + rows.map(r => r.map(cell).join(';')).join('\r\n') + '\r\n';
@@ -83,7 +84,7 @@ export function customItemsCsv(items: ExportItem[]): string {
 
 /** Totaluri pentru buget: vânzare (către client), achiziție (ce plătește studioul) și marja; produsele fără preț se numără separat. */
 export function customBudget(items: Pick<CustomItemInput, 'price' | 'costPrice' | 'qty' | 'supplier'>[]){
-  const r2 = (v: number) => Math.round(v * 100) / 100; let sell = 0, cost = 0, noPrice = 0, noCost = 0; const by: Record<string, number> = {};
-  for (const i of items){ if (i.price == null) noPrice++; else { sell += i.price * i.qty; by[i.supplier] = (by[i.supplier] ?? 0) + i.price * i.qty; } if (i.costPrice == null) noCost++; else cost += i.costPrice * i.qty; }
-  return { count: items.length, sell: r2(sell), cost: r2(cost), margin: r2(sell - cost), noPrice, noCost, bySupplier: Object.fromEntries(Object.entries(by).map(([k, v]) => [k, r2(v)])) };
+  const r2 = (v: number) => Math.round(v * 100) / 100; let sell = 0, cost = 0, noPrice = 0, noCost = 0; const by = new Map<string, number>();   // Map: un furnizor „__proto__” nu atinge prototipul
+  for (const i of items){ if (i.price == null) noPrice++; else { sell += i.price * i.qty; by.set(i.supplier, (by.get(i.supplier) ?? 0) + i.price * i.qty); } if (i.costPrice == null) noCost++; else cost += i.costPrice * i.qty; }
+  return { count: items.length, sell: r2(sell), cost: r2(cost), margin: r2(sell - cost), noPrice, noCost, bySupplier: Object.fromEntries([...by].map(([k, v]) => [k, r2(v)])) as Record<string, number> };
 }

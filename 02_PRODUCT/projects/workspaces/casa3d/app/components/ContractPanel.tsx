@@ -8,15 +8,15 @@ import { usePrefs } from '@/lib/prefs';
 
 type Calc = { net: number | null; vat: number; gross: number | null; reason?: string };
 export default function ContractPanel({ id, meta, say }: { id: string; meta: ProjectMeta; say(s: string): void }){
-  const { t, lang } = usePrefs(), [d, setD] = useState<ContractData | null>(null), [calc, setCalc] = useState<Calc | null>(null), [sched, setSched] = useState<PayRow[]>([]), [state, setState] = useState<'saved' | 'saving' | 'error'>('saved');
+  const { t, lang } = usePrefs(), [d, setD] = useState<ContractData | null>(null), [calc, setCalc] = useState<Calc | null>(null), [sched, setSched] = useState<PayRow[]>([]), [state, setState] = useState<'saved' | 'saving' | 'error'>('saved'), [loadErr, setLoadErr] = useState<string | null>(null);
   const timer = useRef<any>(null), dirty = useRef(false), money = (n: number | null) => formatMoney(n, 'RON', lang);
   const apply = (j: any) => { setCalc(j.calc); setSched(j.schedule); };
-  useEffect(() => { fetch(`/api/projects/${id}/contract`).then(r => r.ok ? r.json() : Promise.reject()).then(j => { const fee = j.data.fee ?? (meta.fee ? { kind: meta.fee.kind, amount: meta.fee.amount } : undefined); setD({ ...j.data, fee }); apply(j); }).catch(() => setState('error')); }, [id]); // eslint-disable-line
+  useEffect(() => { fetch(`/api/projects/${id}/contract`).then(async r => { if (r.ok) return r.json(); const j = await r.json().catch(() => null); setLoadErr(j?.error || t('ctr.loadError')); return Promise.reject(); }).then(j => { const fee = j.data.fee ?? (meta.fee ? { kind: meta.fee.kind, amount: meta.fee.amount } : undefined); setD({ ...j.data, fee }); apply(j); }).catch(() => setState('error')); }, [id]); // eslint-disable-line
   useEffect(() => { if (!d || !dirty.current) return; setState('saving'); clearTimeout(timer.current);
     timer.current = setTimeout(async () => { const r = await fetch(`/api/projects/${id}/contract`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(d) }).catch(() => null);
       if (r?.ok){ apply(await r.json()); setState('saved'); } else { setState('error'); const j = await r?.json().catch(() => null); say(j?.error || t('ctr.saveError')); } }, 700);
     return () => clearTimeout(timer.current); }, [d]); // eslint-disable-line
-  if (!d) return <div className="ctr-panel"><h3>{t('ctr.title')}</h3><p className="muted">{state === 'error' ? t('ctr.saveError') : t('print.loading')}</p></div>;
+  if (!d) return <div className="ctr-panel"><h3>{t('ctr.title')}</h3>{loadErr ? <p className="bad" role="alert">{loadErr}</p> : <p className="muted">{state === 'error' ? t('ctr.saveError') : t('print.loading')}</p>}</div>;
   const set = (p: Partial<ContractData>) => { dirty.current = true; setD(x => ({ ...(x ?? DEFAULT_CONTRACT), ...p })); };
   const fee = d.fee, setFee = (p: Partial<NonNullable<ContractData['fee']>>) => set({ fee: { kind: 'fixed', amount: 0, ...fee, ...p } });
   const hint = fee ? FEE_HINTS[fee.kind] : null, pos = hintPosition(fee), num = (v: string) => { const n = Number(v); return Number.isFinite(n) && n >= 0 ? n : null; };
