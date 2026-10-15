@@ -15,6 +15,8 @@ public sealed class EvidenceContext
     public IReadOnlyList<TimelineEvent> Timeline { get; init; } = [];
     public IReadOnlyList<ParseResult> Parsing { get; init; } = [];
     public IReadOnlyList<EvidenceGap> Gaps { get; init; } = [];
+    /// <summary>Start of the controlled period of the case (scope); null = not set. Used by the EVTX completeness check (a log that starts after it wrapped).</summary>
+    public DateTimeOffset? PeriodFromUtc { get; init; }
 
     public EvidenceItem? ItemOf(string evidenceId) => Items.FirstOrDefault(i => i.EvidenceId == evidenceId);
 

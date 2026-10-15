@@ -285,11 +285,17 @@ public static class RuleContracts
              "ID-urile evenimentelor de montare (VHDMP / Storage) variază cu versiunea Windows și nu sunt fixate; sunt citite după extensia imaginii."],
             ["Conținutul discului, jurnalele instrumentului de inscripționare, registrul discurilor (serie imposibilă)."],
             ["Verificați dacă discul a fost predat și înregistrat.", "Obțineți jurnalele instrumentului de inscripționare."]),
-        R("AIRGAP-NETWORK-CONNECTED", W14, SemanticType.Observation, "Un profil de rețea a fost conectat (NetworkProfile 10000) pe un sistem air-gapped sau autonom.",
-            ["Arată conectarea, nu ce s-a transferat și nu dacă rețeaua avea ieșire în afară.", "Autorizarea vine din destinațiile și canalele profilului de proceduri; fără ele, rămâne „conectivitate observată, necesită explicație”.",
-             "Durata se calculează doar dacă deconectarea (10001) a fost colectată."],
-            ["Traficul (firewall 5156, PCAP), adaptorul folosit, aprobarea conectării."],
-            ["Cereți explicația conectării.", "Verificați ce s-a transferat în fereastra de timp (Security 5156, SRUM)."]),
+        // Owner directive 2026-10-16: the adapter (WLAN-AutoConfig, DHCP-Client, NetworkList), the volume (SRUM, Security 5156/5157, pfirewall.log), the internet egress (NCSI 4042)
+        // and the duration (10001, WLAN 8003, SRUM Network Connectivity, NetworkList) are collected by the rule and written into the finding; a source that could not be
+        // read is listed by the rule itself as „sursă lipsă: …, de ce lipsește, cum se pornește”. What stays here is only what no source on the station can give.
+        R("AIRGAP-NETWORK-CONNECTED", W14, SemanticType.Observation, "Un profil de rețea a fost conectat (NetworkProfile 10000) pe un sistem air-gapped sau autonom; pe o stație Standalone, după instalarea aplicației, este NECONFORM.",
+            ["SRUM, Security 5156/5157 și pfirewall.log dau volumul, programele și destinațiile traficului, nu conținutul fișierelor transferate."],
+            ["sursă lipsă: conținutul traficului (captură de pachete, PCAP), de ce lipsește: Windows nu păstrează conținutul traficului și o captură nu se poate face după fapt, cum se pornește: doar o captură pornită în timpul conectării (pktmon / netsh trace); pe o stație Standalone nu există."],
+            ["Cereți explicația conectării și predarea echipamentului folosit (cablu, adaptor, telefon).", "Comparați volumul SRUM și destinațiile din fereastra conectării cu suporturile și documentele stației."]),
+        R("AIRGAP-NETWORK-HISTORY", W14, SemanticType.Observation, "O conectare la rețea (NetworkProfile, Wi-Fi sau DHCP) de pe o stație Standalone este dinaintea instalării aplicației: istoric al stației, de verificat, nu o încălcare a posturii.",
+            ["Data instalării este ora primului rând al jurnalului de audit al aplicației; dacă ceasul stației era greșit atunci, granița se mută la fel."],
+            ["sursă lipsă: starea stației înainte de instalare (imaginea sau procesul-verbal de pregătire), de ce lipsește: nu este o sursă Windows, cum se pornește: se cere procesul-verbal de pregătire / reinstalare a stației."],
+            ["Verificați procesul-verbal de pregătire a stației (reinstalare sau curățare înainte de izolare).", "Verificați că nimic din perioada conectată nu a rămas pe stație (fișiere descărcate, programe instalate)."]),
         R("AIRGAP-WIFI-ASSOCIATED", W14, SemanticType.Observation, "S-a asociat o conexiune Wi-Fi (WLAN-AutoConfig 8001 / 11001 / 11005) pe un sistem air-gapped sau autonom.",
             ["Arată asocierea la rețeaua radio, nu traficul.", "Încercările eșuate (11000, 11002–11004 fără 8001/11001/11005) nu sunt raportate ca asociere.", "Canalul WLAN-AutoConfig poate lipsi pe sisteme fără Wi-Fi."],
             ["Traficul în fereastră, BSSID-ul, adaptorul și cine l-a activat."],

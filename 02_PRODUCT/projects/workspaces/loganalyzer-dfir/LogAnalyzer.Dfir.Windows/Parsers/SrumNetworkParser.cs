@@ -21,7 +21,7 @@ public sealed class SrumNetworkParser : EvidenceParserBase
         FormatVersions = ["ESE, tabela Network Data Usage {973F5D5C-1D90-4944-BE8E-24B94231A174}"],
         Limitations =
         [
-            "Doar tabela Network Data Usage; celelalte tabele SRUM nu sunt citite.",
+            "Se citesc tabelele Network Data Usage (octeți per aplicație și interfață) și Network Connectivity (durata conectării per interfață); celelalte tabele SRUM nu sunt citite.",
             "Ora unui rând este sfârșitul intervalului de agregare (aproximativ 1 h), nu momentul transferului.",
             "O bază „murdară” fără jurnalele ESE poate pierde ultimele înregistrări.",
         ],
@@ -31,7 +31,38 @@ public sealed class SrumNetworkParser : EvidenceParserBase
 
     public sealed record SrumNetRow(DateTime TimestampUtc, int AppId, string App, int UserId, string User, long InterfaceLuid, long BytesSent, long BytesRecvd);
 
-    public static IEnumerable<SrumNetRow> Read(string srudbPath, CancellationToken ct = default)
+    /// <summary>One row of the Network Connectivity table: how long (seconds) an interface was connected to a profile in the interval ending at <see cref="TimestampUtc"/>.</summary>
+    public sealed record SrumConnRow(DateTime TimestampUtc, long InterfaceLuid, int L2ProfileId, int ConnectedSeconds, DateTime? ConnectStartUtc);
+
+    public const string ConnectivityTable = "{DD6636C4-8929-4683-974E-22C046A43763}";
+
+    public static IEnumerable<SrumNetRow> Read(string srudbPath, CancellationToken ct = default) => ReadAll(srudbPath, ct).Network;
+
+    /// <summary>Both SRUM network tables. <c>ConnectivityError</c> is "" when the Network Connectivity table was read, else why not (the usage rows are still returned).</summary>
+    public static (List<SrumNetRow> Network, List<SrumConnRow> Connectivity, string ConnectivityError) ReadAll(string srudbPath, CancellationToken ct = default)
+    {
+        var conn = new List<SrumConnRow>();
+        string connError = "";
+        var rows = ReadCore(srudbPath, ct, db =>
+        {
+            try
+            {
+                using var t = db.OpenTable(ConnectivityTable);
+                uint cTs = t.Column("TimeStamp"), cIf = t.Column("InterfaceLuid"), cProf = t.Column("L2ProfileId"), cConn = t.Column("ConnectedTime"), cStart = t.Column("ConnectStartTime");
+                foreach (var r in t.Rows())
+                {
+                    ct.ThrowIfCancellationRequested();
+                    if (r.Double(cTs) is not double oa) continue;
+                    var start = r.Int64(cStart) is long ft && ft > 0 && ft < DateTime.MaxValue.ToFileTimeUtc() ? DateTime.FromFileTimeUtc(ft) : (DateTime?)null;
+                    conn.Add(new SrumConnRow(DateTime.SpecifyKind(DateTime.FromOADate(oa), DateTimeKind.Utc), r.Int64(cIf) ?? 0, r.Int32(cProf) ?? -1, r.Int32(cConn) ?? 0, start));
+                }
+            }
+            catch (InvalidOperationException ex) { connError = ex.Message; }
+        });
+        return (rows, conn, connError);
+    }
+
+    private static List<SrumNetRow> ReadCore(string srudbPath, CancellationToken ct, Action<EseReadOnlyDatabase> extra)
     {
         var work = LogAnalyzer.Dfir.IO.WorkFolders.NewWorkDirectory(srudbPath, "srum");   // security audit #14: never %TEMP%
         try
@@ -66,6 +97,7 @@ public sealed class SrumNetworkParser : EvidenceParserBase
                                                 user, idmap.GetValueOrDefault(user, ""), r.Int64(cIf) ?? 0, r.Int64(cSent) ?? 0, r.Int64(cRecv) ?? 0));
                     }
                 }
+                extra(db);
             }
             return rows;
         }
@@ -78,7 +110,31 @@ public sealed class SrumNetworkParser : EvidenceParserBase
 
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
     {
-        foreach (var row in Read(fullPath, ct))
+        var (network, connectivity, connError) = ReadAll(fullPath, ct);
+        foreach (var c in connectivity)
+        {
+            sink.Add(new TimelineEvent
+            {
+                Time = Timestamp.FromUtc(c.TimestampUtc, c.TimestampUtc.ToString("o"), "SRUM OLE date (interval end)"),
+                Source = "SRUM", EvidenceId = item.EvidenceId, Provider = "SRUM Network Connectivity",
+                Summary = $"SRUM: interfața {c.InterfaceLuid} conectată {c.ConnectedSeconds} s la profilul L2 {c.L2ProfileId} în intervalul care se încheie la această oră",
+                TimeSemantics = "SRUM interval end (~1h aggregate)", TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.Medium,
+                Locator = $"{ConnectivityTable}/InterfaceLuid={c.InterfaceLuid}/ts={c.TimestampUtc:o}",
+                Fields =
+                {
+                    ["InterfaceLuid"] = c.InterfaceLuid.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    ["L2ProfileId"] = c.L2ProfileId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    ["ConnectedTime"] = c.ConnectedSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    ["ConnectStartTime"] = c.ConnectStartUtc is { } s ? s.ToString("o") : "",
+                },
+            });
+            result.Records++;
+        }
+        if (connError.Length > 0)
+            result.Gaps.Add(new EvidenceGap("SRUM Network Connectivity", EvidenceStatus.Partial,
+                $"sursă lipsă: tabela SRUM Network Connectivity {ConnectivityTable}, de ce lipsește: {connError}",
+                "Durata conectărilor nu se poate lua din SRUM", "o copie SRUDB.dat completă (cu jurnalele ESE), luată cu esentutl /vss ca administrator", "Posibil"));
+        foreach (var row in network)
         {
             var app = string.IsNullOrEmpty(row.App) ? $"(unresolved AppId {row.AppId})" : row.App;
             sink.Add(new TimelineEvent

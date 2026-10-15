@@ -91,6 +91,12 @@ public sealed class StationFacts
     public string ClockSuspectNote { get; set; } = "";
     /// <summary>"corectat de ... la ..., motiv: ..." when the operator confirmed a clock correction (check S05); empty otherwise.</summary>
     public string ClockAckText { get; set; } = "";
+    /// <summary>
+    /// Installation date of the application on this station: the time of the first chained record of its audit chain (owner directive 2026-10-16).
+    /// On a Standalone station every network connection after it is NECONFORM; earlier ones are history (DE VERIFICAT). Null = unknown, see <see cref="AppInstallBasis"/>.
+    /// </summary>
+    public DateTimeOffset? AppInstalledUtc { get; set; }
+    public string AppInstallBasis { get; set; } = "";
 }
 
 public static class StationFactCollector
@@ -136,6 +142,8 @@ public static class StationFactCollector
             IsAdministrator = new WindowsPrincipal(id).IsInRole(WindowsBuiltInRole.Administrator),
             Posture = posture,
         };
+        var install = LogAnalyzer.Dfir.Case.AppInstallDate.Read();
+        facts.AppInstalledUtc = install.Utc; facts.AppInstallBasis = install.Basis;
         Try(facts, "Conturi locale", () => facts.Accounts.AddRange(ReadAccounts()));
         Try(facts, "Politica de parole", () => facts.PasswordPolicy = LocalPasswordPolicy.Query());
         facts.AuditPolicy = AuditPolicy.Query() is { } ap ? new Dictionary<string, AuditSetting>(ap) : null;

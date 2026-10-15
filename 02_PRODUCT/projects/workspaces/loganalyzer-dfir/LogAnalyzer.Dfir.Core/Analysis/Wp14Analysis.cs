@@ -22,11 +22,27 @@ public static class Wp14Analysis
         users = Resolve(ws, users, usersPath);
         var mediaSha = media is { IsDefined: true } ? RegisterSnapshot.WriteTo(ws, media) : RegisterSnapshot.WriteTo(ws, new MediaRegister());
         var usersSha = users is { IsDefined: true } ? RegisterSnapshot.WriteTo(ws, users) : RegisterSnapshot.WriteTo(ws, new UsersRegister());
+        var evidence = ws.LoadEvidence();
         var findings = Wp14Rules.Run(timeline, nextId, new Wp14Input { Scope = ws.Info.Scope, Media = media, Users = users, Profile = profile, SystemZone = systemZone, Data = data, Facts = facts,
-                                                               EvidenceOrigins = EvidenceOrigin.Map(ws.LoadEvidence()) });
+                                                               EvidenceOrigins = EvidenceOrigin.Map(evidence), CollectedSources = CollectedSources(evidence) });
         string Part(string title, IRegisterData? r, string sha) => $"{title}: " + (r is { IsDefined: true } ? $"definit ({r.Cells().Count} rânduri; copie în caz Analysis/{r.Kind}_register.json, SHA-256 {sha})" : "nedefinit (nu există rânduri; observațiile nu se compară cu un registru)");
         var zone = systemZone.Length > 0 ? $" Zona sistemului declarată: {systemZone}." : " Zona sistemului nu este declarată.";
         return new Wp14Result(findings, mediaSha, usersSha, Part("Registru medii", media, mediaSha) + "; " + Part("Registru utilizatori", users, usersSha) + "." + zone);
+    }
+
+    /// <summary>The source names the rules compare with: every event-log channel, SRUM, the firewall log and the station facts present in the case.</summary>
+    public static IReadOnlyCollection<string> CollectedSources(IEnumerable<EvidenceItem> evidence)
+    {
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var e in evidence)
+        {
+            if (e.Source.StartsWith("EventLog:", StringComparison.OrdinalIgnoreCase)) set.Add(e.Source);
+            if (e.SourceType.StartsWith("EventLog:", StringComparison.OrdinalIgnoreCase)) set.Add(e.SourceType);
+            if (e.SourceType == "srum") set.Add("SRUM");
+            if (e.SourceType == LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName) set.Add(LogAnalyzer.Dfir.Network.FirewallLogParser.SourceName);
+            if (e.SourceType == AirGapFacts.SourceType) set.Add("AirGapFacts");
+        }
+        return set;
     }
 
     private static T? Resolve<T>(CaseWorkspace ws, T? given, string? path) where T : class, IRegisterData, new()
