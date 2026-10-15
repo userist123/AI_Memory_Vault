@@ -36,6 +36,7 @@ def test_b3_live_ollama_council_execution():
         config = json.load(handle)
 
     assert all(entry.get("provider") == "local" for entry in config.values())
+    assert {entry.get("model") for entry in config.values()} == {model}
 
     provider = LocalProvider(model_name=model)
     health = provider.health()
@@ -63,3 +64,4 @@ def test_b3_live_ollama_council_execution():
     assert result.actual_usage.has_real_provider_usage is True
     assert len(result.actual_usage.events) == 2
     assert result.actual_usage.actual_total_tokens > 0
+    assert {event.model for event in result.actual_usage.events} == {model}

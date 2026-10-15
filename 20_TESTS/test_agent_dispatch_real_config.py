@@ -37,6 +37,11 @@ with open(os.environ["FAKE_AGENT_LOG"], "a", encoding="utf-8") as fh:
     fh.write(json.dumps({{"prog": name, "argv": sys.argv[1:], "stdin": stdin}}) + "\\n")
 if name == "agy":
     print(json.dumps({{"event": "result", "result": {{"response": "agy fake ok"}}}}))
+elif name == "ollama" and os.environ.get("FAKE_OLLAMA_MODE") == "plain":
+    print("ollama fake ok")
+elif name == "ollama":
+    # The local_llm route enforces an execution contract: one STATUS line and the five sections.
+    print("STATUS: PASS\\nRESULT: ollama fake ok\\nEVIDENCE: fake executable\\nCHANGES: none\\nFAILURES: none\\nUNKNOWNS: none")
 else:
     print(name + " fake ok")
 """
@@ -97,6 +102,25 @@ def test_real_config_route_then_dispatch_reaches_the_adapter(real_registry, tmp_
     assert goal in call["stdin"]
     assert all(goal not in arg for arg in call["argv"])
     assert "fake ok" in result.final_message
+
+
+def test_real_config_local_llm_non_compliant_output_fails(real_registry, tmp_path, monkeypatch):
+    """Exit 0 with plain text is NOT success for local_llm: the contract is enforced, not opt-in."""
+    log = _install_fakes(tmp_path, monkeypatch)
+    monkeypatch.setenv("FAKE_OLLAMA_MODE", "plain")
+    available = {rid: route_cli._runtime_available(rt) for rid, rt in real_registry.runtimes.items()}
+    goal = "REAL CONFIG GOAL local_llm plain"
+    decision = AgentRouter(real_registry).route(TaskRequest(goal=goal, requested_runtime="local_llm"), available)
+    assert decision.status.value == "ROUTED"
+    dispatcher = AgentDispatcher(real_registry, artifact_root=tmp_path / "out")
+    result = dispatcher.dispatch(decision, dispatcher.make_packet(decision, goal, "test"))
+    (call,) = _calls(log)
+    assert call["prog"] == "ollama"
+    assert "EXECUTION CONTRACT" in call["stdin"]
+    assert result.status is DispatchStatus.FAILED
+    assert "execution contract" in (result.error or "")
+    receipt = json.loads(Path(result.result_path).read_text(encoding="utf-8"))
+    assert receipt["status"] == DispatchStatus.FAILED.value and receipt["exit_code"] == 0
 
 
 def test_route_cli_dispatch_execute_with_real_config(tmp_path, monkeypatch, capsys):

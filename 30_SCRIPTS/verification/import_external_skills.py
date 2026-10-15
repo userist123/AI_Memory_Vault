@@ -47,7 +47,16 @@ def copy_tree(src,dst,skipped=None):
   if any(x.startswith('.') for x in rel.parts): violations.append('hidden path: '+str(rel)); continue
   suffix=p.suffix.lower()
   if suffix in FORBIDDEN: violations.append('script or binary ('+suffix+'): '+str(rel)); continue
-  if p.stat().st_mode & 0o111: violations.append('executable bit: '+str(rel)); continue
+  # Windows may not preserve POSIX mode bits through pathlib.chmod().  Treat a
+  # shebang as executable intent as well, so the import remains fail-closed on
+  # both POSIX and Windows filesystems.
+  mode_executable = bool(p.stat().st_mode & 0o111)
+  try:
+   first_line = p.open('rb').readline(256).lstrip()
+  except OSError:
+   first_line = b''
+  shebang_executable = first_line.startswith(b'#!')
+  if mode_executable or shebang_executable: violations.append('executable bit: '+str(rel)); continue
   if suffix not in ALLOWED: filtered.append(str(rel).replace(os.sep,'/')); continue
   accepted.append((p,rel))
  if violations:
