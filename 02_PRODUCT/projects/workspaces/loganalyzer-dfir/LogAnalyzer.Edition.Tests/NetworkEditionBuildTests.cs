@@ -35,19 +35,39 @@ public sealed class NetworkEditionBuildTests
     private static readonly string[] BannedStrings = ["http://127.0.0.1:11434", "api.openai.com", "api.anthropic.com", "generativelanguage.googleapis.com", "huggingface.co", "github.com/repos", "api.github.com"];
 
     /// <summary>
-    /// A literal that is an absolute http(s) URL with a host (the application would have an address to reach). Not counted: the bare scheme prefixes
-    /// "http://" and "https://" (text patterns used to recognise URLs in log lines) and namespace identifiers, which are names and are never fetched.
+    /// A literal that contains, ANYWHERE, an absolute http(s) URL with a host (the application would have an address to reach). Every occurrence of
+    /// "http://" or "https://" in the literal is examined, not only a prefix. Not counted: a bare scheme with no host (text patterns used to recognise
+    /// URLs in log lines) and a namespace identifier, which is a name and is never fetched. A namespace identifier is recognised only by an EXACT host
+    /// from <see cref="NamespaceHosts"/> immediately followed by "/": no substring match, no port, no user-info, no longer host.
     /// </summary>
-    internal static bool IsExternalUrlLiteral(string s) =>
-        (s.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || s.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-        && !s.Equals("http://", StringComparison.OrdinalIgnoreCase) && !s.Equals("https://", StringComparison.OrdinalIgnoreCase)
-        && !IsNamespaceIdentifier(s);
+    internal static bool IsExternalUrlLiteral(string s) => ExternalUrls(s).Any();
 
-    private static bool IsNamespaceIdentifier(string s) =>
-        s.Contains("schemas.microsoft.com", StringComparison.OrdinalIgnoreCase) || s.Contains("www.w3.org", StringComparison.OrdinalIgnoreCase) ||
-        s.Contains("schemas.openxmlformats.org", StringComparison.OrdinalIgnoreCase) || s.Contains("purl.org", StringComparison.OrdinalIgnoreCase) ||
+    // Hosts of XML / JSON-LD namespace IRIs. Exact host match only.
+    internal static readonly string[] NamespaceHosts =
+    [
+        "schemas.microsoft.com", "www.w3.org", "schemas.openxmlformats.org", "purl.org",
         // JSON-LD context IRIs of the CASE / UCO ontology written by the CASE export (LogAnalyzer.Core CaseUcoExportService): identifiers, not addresses.
-        s.StartsWith("https://ontology.caseontology.org/", StringComparison.OrdinalIgnoreCase) || s.StartsWith("https://ontology.unifiedcyberontology.org/", StringComparison.OrdinalIgnoreCase);
+        "ontology.caseontology.org", "ontology.unifiedcyberontology.org",
+    ];
+
+    // A URL ends at white space, a quote or an angle bracket.
+    private static readonly char[] TokenEnd = [' ', '\t', '\r', '\n', '"', '\'', '<', '>', '`'];
+
+    internal static IEnumerable<string> ExternalUrls(string s)
+    {
+        foreach (var scheme in new[] { "http://", "https://" })
+            for (var i = s.IndexOf(scheme, StringComparison.OrdinalIgnoreCase); i >= 0; i = s.IndexOf(scheme, i + 1, StringComparison.OrdinalIgnoreCase))
+            {
+                var rest = s[(i + scheme.Length)..];
+                var tokenEnd = rest.IndexOfAny(TokenEnd);
+                var token = tokenEnd < 0 ? rest : rest[..tokenEnd];
+                var hostEnd = token.IndexOfAny(['/', '?', '#']);
+                var host = hostEnd < 0 ? token : token[..hostEnd];
+                if (!host.Any(char.IsLetterOrDigit)) continue;                                 // bare scheme ("http://", "(… http://)"): a pattern, not an address
+                bool identifier = hostEnd >= 0 && token[hostEnd] == '/' && NamespaceHosts.Any(h => h.Equals(host, StringComparison.OrdinalIgnoreCase));
+                if (!identifier) yield return s.Substring(i, scheme.Length + token.Length);
+            }
+    }
 
     internal static List<string> Violations(string dir, bool allowAiAssembly)
     {
@@ -121,7 +141,35 @@ public sealed class NetworkEditionBuildTests
         Assert.Contains("EvidenceReasoner", text);                   // its model client
         Assert.Contains("web client type System.Net.Http.HttpClient", text);   // HTTP client outside Connectors
         Assert.Contains("http://127.0.0.1:11434", text);             // the local model endpoint
+        Assert.Contains("URL literal", text);                        // the URL-literal scan itself fires on the Internet build
     }
+
+    [Theory]
+    [InlineData("https://evil/x?schemas.microsoft.com")]               // review finding: an allowed namespace host anywhere in the string passed
+    [InlineData("see https://download.example/setup.exe for the update")] // review finding: a URL inside a longer string was missed
+    [InlineData("Error: http://evil.example/www.w3.org/")]
+    [InlineData("http://schemas.microsoft.com.evil.example/xaml")]       // allowed host as a prefix of another host
+    [InlineData("http://schemas.microsoft.com@evil.example/xaml")]       // user-info trick
+    [InlineData("http://schemas.microsoft.com:8080/xaml")]               // a port turns an identifier into an address
+    [InlineData("http://www.w3.org/2000/svg https://evil.example/")]     // second URL in the same literal
+    [InlineData("HTTPS://EVIL.EXAMPLE/")]
+    [InlineData("(vezi http://evil.example)")]
+    public void Scanner_finds_urls_anywhere_and_does_not_accept_an_allowed_host_out_of_place(string literal) =>
+        Assert.True(IsExternalUrlLiteral(literal), literal);
+
+    [Theory]
+    [InlineData("http://schemas.microsoft.com/winfx/2006/xaml")]
+    [InlineData("xmlns=\"http://www.w3.org/2000/svg\"")]
+    [InlineData("https://ontology.unifiedcyberontology.org/uco/core#")]
+    [InlineData("https://ontology.caseontology.org/case/investigation/")]
+    [InlineData("http://purl.org/dc/elements/1.1/")]
+    [InlineData("http://schemas.openxmlformats.org/officeDocument/2006/relationships")]
+    [InlineData("^https?://")]
+    [InlineData("https://")]
+    [InlineData("prefix http:// or https:// is a URL")]
+    [InlineData("pachete MSI de la distanță (/q /i http://) sau")]
+    public void Scanner_accepts_only_exact_namespace_identifiers_and_bare_scheme_patterns(string literal) =>
+        Assert.False(IsExternalUrlLiteral(literal), literal);
 
     [Fact]
     public void Scanner_rules_are_exact_synthetic_cases()
