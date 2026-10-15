@@ -93,6 +93,9 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | A08 | File copies to removable media are audited | Audited | Audited | Audited | Owner decision: data leakage through removable media is a risk on every station, connected ones included. |
 | A09 | Programs stopped or flagged by the allow-list | Review | Review | Review |  |
 | A10 | Access auditing (SACL) on classified folders | SACL present | SACL present | n/a | Classified folders exist only in the controlled editions. |
+| A11 | Application audit log continuous since the previous control (anchor code) | Previous anchor found | Previous anchor found | Previous anchor found |  |
+| A12 | Windows event log service stopped outside a shutdown | None or explained | None or explained | None or explained |  |
+| A13 | Security officer list changed since the previous control | Review | Review | Review |  |
 | U01 | Changes to the Administrators group | Review | Review | Review |  |
 | U02 | Accounts created, deleted, enabled, disabled or reset | Review | Review | Review |  |
 | U03 | Remote (RDP) logons | Review | Review (administration over the LAN is normal) | Review |  |

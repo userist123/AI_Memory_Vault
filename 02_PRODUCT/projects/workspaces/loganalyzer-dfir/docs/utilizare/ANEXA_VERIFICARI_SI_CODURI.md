@@ -411,7 +411,7 @@
 - **De ce contează:** Cine reduce auditul poate acționa fără urme.
 - **Cum verifică aplicația:** A căutat evenimentele de modificare a politicii de audit.
 - **Sursa tehnică:** `Security 4719`
-- **Cum se citește rezultatul:** De verificat: fiecare schimbare trebuie să fie aprobată; în probe codul GUID arată categoria schimbată.
+- **Cum se citește rezultatul:** Conform = nicio schimbare în perioadă. De verificat: fiecare schimbare trebuie să fie aprobată; în probe codul GUID arată categoria schimbată. Nedeterminat = jurnalul Security nu a putut fi citit.
 
 ### A07
 
@@ -444,6 +444,30 @@
 - **Cum verifică aplicația:** A citit regulile de audit ale fiecărui folder din tabelul „Foldere clasificate” al profilului și politica de audit pentru subcategoria „File System”. Citirea regulilor cere drepturi de administrator; folderele nu se modifică.
 - **Sursa tehnică:** `Regulile de audit ale folderului (echivalentul Get-Acl -Audit); auditpol: subcategoria File System`
 - **Cum se citește rezultatul:** Conform = fiecare folder are reguli de audit și „File System” este auditată. Neconform = un folder nu are reguli sau „File System” nu este auditată. De verificat = un folder din profil nu există. Nedeterminat = profilul nu definește foldere clasificate (se completează tabelul „Foldere clasificate”) sau regulile nu au putut fi citite (administrator).
+
+### A11
+
+- **Ce verificăm:** Dacă jurnalul propriu al aplicației (cine a pornit controale, ce s-a exportat, ce s-a schimbat în profil) este același pe care l-a văzut controlul anterior, doar cu înregistrări adăugate după el.
+- **De ce contează:** Un administrator al stației poate rescrie jurnalul aplicației și îl poate sigila din nou, pentru că are acces la cheia de sigilare de pe stație. Singurul lucru pe care nu-l poate schimba este codul de ancorare tipărit pe procesul-verbal semnat al controlului anterior, care se află la ofițerul de securitate.
+- **Cum verifică aplicația:** La începutul controlului ați introdus codul de ancorare de pe procesul-verbal anterior. Aplicația a recalculat, pentru fiecare înregistrare din jurnalul de acum, codul ei și a căutat-o pe cea cu același cod. Fiecare înregistrare conține amprenta tuturor celor dinaintea ei, deci orice modificare a trecutului schimbă codul.
+- **Sursa tehnică:** `Jurnalul de audit al aplicației (auth_audit.jsonl), lanț de amprente SHA-256; codul = 20 de caractere din SHA-256(identificator lanț | număr înregistrare | amprenta înregistrării), ultimul caracter fiind de control`
+- **Cum se citește rezultatul:** Rezultatul spune și de unde vine codul: tastat de pe procesul-verbal (sigur) sau propus de stație (nesigur, trebuie confirmat cu hârtia). Conform = înregistrarea de la controlul anterior este în jurnal, neschimbată. Neconform = nicio înregistrare nu are codul de pe procesul-verbal: jurnalul a fost rescris sau înlocuit după controlul anterior. Nedeterminat = nu s-a introdus niciun cod (primul control sau procesul-verbal anterior lipsește) ori codul a fost tastat greșit. Verificarea arată doar că trecutul nu s-a schimbat; nu poate arăta ce s-a petrecut cât timp aplicația nu a rulat.
+
+### A12
+
+- **Ce verificăm:** Dacă serviciul Windows care scrie jurnalele (Event Log) a fost oprit fără ca acel calculator să fie închis sau repornit.
+- **De ce contează:** Cât timp serviciul de jurnalizare este oprit, Windows nu înregistrează nimic: este un mod de a lucra fără urme.
+- **Cum verifică aplicația:** A căutat evenimentele de oprire a serviciului de jurnalizare și, pentru fiecare, dacă a fost o închidere efectivă a calculatorului: oprirea jurnalelor la închidere în cel mult 5 minute, sau o cerere de închidere ori repornire în ultimele 30 de minute urmată de o pornire a calculatorului. O cerere de închidere anulată nu explică oprirea (Windows scrie aceeași oprire la fiecare închidere normală).
+- **Sursa tehnică:** `Security 1100 (serviciul de jurnalizare s-a oprit); System 6006 (jurnalele oprite la închidere), 1074 (închidere sau repornire cerută), 6005 (pornire)`
+- **Cum se citește rezultatul:** Conform = nicio oprire, sau toate la o închidere efectivă a calculatorului. De verificat = opriri fără închidere cerută înainte; cereți explicația. Nedeterminat = jurnalul Security nu a putut fi citit. Atenție: dacă serviciul este omorât forțat, Windows nu scrie nimic, deci lipsa evenimentului nu dovedește că serviciul a mers tot timpul.
+
+### A13
+
+- **Ce verificăm:** Dacă lista ofițerilor de securitate (cei care pot semna raportul oficial) s-a schimbat de la controlul anterior.
+- **De ce contează:** Cine reușește să se treacă pe listă poate semna rapoarte „oficiale”; de aceea orice schimbare trebuie confirmată de ofițer, cu procesul-verbal în mână.
+- **Cum verifică aplicația:** A pornit de la starea listei de ofițeri și a folderului autorităților de încredere înregistrată la codul de ancorare tastat de pe procesul-verbal anterior. După acel punct, o stare nouă este acceptată doar dacă a fost scrisă de o operație a aplicației pentru ofițeri sau autorități (înregistrare, cerere, import de certificate); apoi a comparat cu fișierele de acum.
+- **Sursa tehnică:** `Jurnalul de audit al aplicației (sigilat): profile.officer_registered, profile.officer_requested, profile.officer_removed, officer_trust.imported, audit.anchor; amprentele SHA-256 ale fișierului listei de ofițeri și ale folderului autorităților de încredere`
+- **Cum se citește rezultatul:** Conform = nicio schimbare de la controlul anterior. De verificat = schimbări făcute din aplicație; fiecare apare în probe cu data, amprenta și cine a făcut-o. Neconform = lista de ofițeri sau autoritățile de încredere au fost schimbate în afara aplicației (fișiere modificate de mână), chiar dacă o operație ulterioară a aplicației le-a consemnat starea. Nedeterminat = nu s-a tastat codul de ancorare de pe procesul-verbal anterior, deci nu există o stare de referință sigură.
 
 ### U01
 

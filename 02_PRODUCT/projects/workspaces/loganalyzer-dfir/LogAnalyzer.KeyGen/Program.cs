@@ -48,6 +48,7 @@ public static class Program
         Console.WriteLine("  LogAnalyzer.KeyGen report-key-protect <fișier-cheie-privată> [--passphrase]   (criptează o cheie veche necriptată)");
         Console.WriteLine("  LogAnalyzer.KeyGen report-sign <fișier-cheie-privată> <raport.pdf> <semnatar>");
         Console.WriteLine("  LogAnalyzer.KeyGen verify-report <raport.pdf> <cheie-publică-base64 | fișier-cheie-publică>...");
+        Console.WriteLine("  LogAnalyzer.KeyGen verify-report <raport-semnat.pdf> --officer-fingerprint <amprenta certificatului> --report-sha256 <amprenta raportului> [--ca <CA>]... [--crl <CRL>]...");
         Console.WriteLine("  LogAnalyzer.KeyGen verify-archive <arhivă-caz.zip> [<sha256-manifest> | <cheie-publică>]...");
         Console.WriteLine();
         Console.WriteLine("Pachete de date de detecție:");
