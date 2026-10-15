@@ -194,7 +194,7 @@ public class ControlReportFixesTests
         Assert.Equal("Dezactivați Remote Desktop.", box.NextSteps[1]);                      // then remote access
         Assert.Equal("Criptați discul cu BitLocker.", box.NextSteps[2]);                    // then encryption
         Assert.Contains(box.NotChecked, s => s.Contains("A10") && s.Contains("Profilul nu definește foldere"));
-        Assert.Contains(box.NotChecked, s => s.Contains("cu drepturi de administrator"));
+        Assert.DoesNotContain(box.NotChecked, s => s.Contains("drepturi de administrator"));   // elevated is a fact, not a limitation
         Assert.False(string.IsNullOrWhiteSpace(box.Meaning));
 
         var printed = new List<string>();
@@ -220,7 +220,35 @@ public class ControlReportFixesTests
         var box = ControlConclusion.Build(r);
         Assert.Empty(box.Serious);
         Assert.Contains("nicio verificare neconformă", box.Verdict, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains(box.NotChecked, s => s.Contains("FĂRĂ drepturi de administrator"));
+        Assert.Contains(box.NotChecked, s => s.Contains("FĂRĂ drepturi de administrator") && s.Contains("nu au putut fi citite"));
+    }
+
+    [Fact]
+    public void Elevated_run_states_no_admin_line_in_limitations_and_lists_unreadable_checks_when_not_elevated()
+    {
+        var elevated = new ControlReport { Facts = Station(admin: true) };
+        elevated.Checks.Add(new("C02", "Conturi", "Administratori", ControlStatus.Conform, "ok", [], ""));
+        Assert.DoesNotContain(ControlConclusion.Build(elevated).NotChecked, s => s.Contains("administrator"));
+
+        var plain = new ControlReport { Facts = Station(admin: false) };
+        plain.Checks.Add(new("A07", "Audit", "Politica de audit", ControlStatus.Nedeterminat, "Nu a putut fi citită (necesită administrator).", [], ""));
+        Assert.Contains(ControlConclusion.Build(plain).NotChecked, s => s.Contains("FĂRĂ drepturi") && s.Contains("A07"));
+    }
+
+    [Fact]
+    public void The_missing_admin_line_lists_only_the_checks_left_undetermined_by_missing_rights()
+    {
+        var r = new ControlReport { Facts = Station(admin: false) };
+        r.Checks.Add(new("A01", "Audit", "Politica de audit", ControlStatus.Nedeterminat, "Nu a putut fi citită (necesită administrator).", [], ""));
+        r.Checks.Add(new("N05", "Rețea", "Adaptoare", ControlStatus.Nedeterminat,
+            "Lista adaptoarelor de rețea nu a putut fi citită. Nu a putut fi citit; pot fi necesare drepturi de administrator. Rulați aplicația ca administrator și repetați controlul.", [], ""));
+        r.Checks.Add(new("A03", "Audit", "Jurnalul Security acoperă perioada controlată", ControlStatus.Nedeterminat, "Attempted to perform an unauthorized operation.", [], ""));
+        r.Checks.Add(new("N13", "Rețea", "Verificare activă", ControlStatus.Nedeterminat, "Verificarea activă nu s-a încheiat: verificarea a fost anulată.", [], ""));
+        r.Checks.Add(new("A04", "Audit", "Jurnalul System acoperă perioada controlată", ControlStatus.Nedeterminat, "jurnalul nu există pe această stație", [], ""));
+        var line = Assert.Single(ControlConclusion.Build(r).NotChecked, s => s.StartsWith("Controlul a rulat FĂRĂ drepturi", StringComparison.Ordinal));
+        Assert.Contains("A01, N05, A03", line);
+        Assert.DoesNotContain("N13", line);                                  // cancelled probe: not a rights problem
+        Assert.DoesNotContain("A04", line);                                  // the log does not exist: not a rights problem
     }
 
     // ---- 4. A10 ------------------------------------------------------------------------------------------------------

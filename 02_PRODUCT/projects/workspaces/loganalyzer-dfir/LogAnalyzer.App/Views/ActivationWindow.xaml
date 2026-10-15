@@ -1,11 +1,13 @@
 ﻿<Window x:Class="LogAnalyzer.UI.Views.ActivationWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Activare licență LogAnalyzer" Height="560" Width="620"
+        xmlns:fit="clr-namespace:LogAnalyzer.UI.Views.Controls"
+        Title="Activare licență LogAnalyzer" fit:WindowFit.ToWorkArea="True" Height="560" Width="620"
         WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="NoResize"
         AllowsTransparency="True" Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}">
 
     <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource PrimaryAccentBrush}" BorderThickness="1.5" CornerRadius="10" Padding="32" Effect="{StaticResource ModalShadow}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -51,5 +53,6 @@
                 <Button Grid.Column="1" Content="Verifică și activează" Click="Activate_Click" Style="{StaticResource AccentButtonStyle}" Margin="8,0,0,0" Height="38"/>
             </Grid>
         </Grid>
+        </ScrollViewer>
     </Border>
 </Window>

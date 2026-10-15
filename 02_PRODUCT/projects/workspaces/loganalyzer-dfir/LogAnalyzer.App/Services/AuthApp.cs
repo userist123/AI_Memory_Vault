@@ -23,6 +23,7 @@ namespace LogAnalyzer.UI.Services
         private static AuthService? _service;
 
         public static AuthService Service => _service ?? throw new InvalidOperationException("Authentication not initialised.");
+        public static bool IsReady => _service is not null;
         public static ICardProvider Cards { get; } = new WindowsSmartCardProvider();
         public static AuthSession? Session { get; private set; }
         public static event Action? SessionChanged;
@@ -45,6 +46,28 @@ namespace LogAnalyzer.UI.Services
             Session = s;
             OperatorIdentity.Current = s;
             SessionChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Appends an operator operation to the sealed audit with the current session. Returns null when it was written, otherwise the reason (in Romanian).
+        /// Nothing is reported here: the caller decides (an export is refused, see <see cref="ExportAudit"/>).
+        /// </summary>
+        public static string? TryRecord(string ev, string detail)
+        {
+            if (_service is null) return "autentificarea aplicației nu este pornită";
+            try { _service.AuditOperation(Session, ev, detail); return null; }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or InvalidOperationException) { return ex.Message; }
+        }
+
+        /// <summary>
+        /// Appends an operator operation to the sealed audit. A failure is never silent: it raises the persistent warning of <see cref="AuditHealth"/>
+        /// (banner in the main window and the status line) and returns false.
+        /// </summary>
+        public static bool Record(string ev, string detail)
+        {
+            if (TryRecord(ev, detail) is not { } error) return true;
+            AuditHealth.Instance.Report(ev, error);
+            return false;
         }
 
         public static void NotifyChanged() => SessionChanged?.Invoke();

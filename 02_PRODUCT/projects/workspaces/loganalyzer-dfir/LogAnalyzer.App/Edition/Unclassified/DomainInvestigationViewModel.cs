@@ -157,11 +157,14 @@ namespace LogAnalyzer.UI.ViewModels
             if (dlg.ShowDialog() != true) return;
             var checks = DomainChecks.Concat(MailChecks).ToList();
             var notes = new[] { DomainStatus, UserSummary, MailSummary }.Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
-            ChecksReportPdf.Write(dlg.FileName, "Investigație domeniu și e-mail", ModeNote, LogAnalyzer.Dfir.Case.ReportSeal.For(liveCase), checks, notes,
-                new ChecksReportPdf.Table($"Cronologia utilizatorului {UserName}", new[] { "Ora (UTC)", "Ce", "Detalii", "Probă" },
-                    UserTimeline.Select(t => new[] { t.TimeUtc.ToString("yyyy-MM-dd HH:mm:ss"), t.Action, t.Detail, t.Source }).ToList()),
-                new ChecksReportPdf.Table($"Mesaje {Mailbox}", new[] { "Ora (UTC)", "Expeditor", "Destinatari", "Subiect", "IP", "Status" },
-                    MailMessages.Take(2000).Select(m => new[] { m.TimeUtc.ToString("yyyy-MM-dd HH:mm:ss"), m.Sender, m.Recipients, m.Subject, m.ClientIp, m.Status }).ToList()));
+            var userTable = new ChecksReportPdf.Table($"Cronologia utilizatorului {UserName}", new[] { "Ora (UTC)", "Ce", "Detalii", "Probă" },
+                UserTimeline.Select(t => new[] { t.TimeUtc.ToString("yyyy-MM-dd HH:mm:ss"), t.Action, t.Detail, t.Source }).ToList());
+            var mailTable = new ChecksReportPdf.Table($"Mesaje {Mailbox}", new[] { "Ora (UTC)", "Expeditor", "Destinatari", "Subiect", "IP", "Status" },
+                MailMessages.Take(2000).Select(m => new[] { m.TimeUtc.ToString("yyyy-MM-dd HH:mm:ss"), m.Sender, m.Recipients, m.Subject, m.ClientIp, m.Status }).ToList());
+            var modeNote = ModeNote;
+            if (LogAnalyzer.UI.Services.ExportAudit.Run(Path.GetFileName(liveCase.Root.TrimEnd('\\', '/')), "pdf-domain", checks.Count + userTable.Rows.Count + mailTable.Rows.Count, dlg.FileName,
+                    () => ChecksReportPdf.Write(dlg.FileName, "Investigație domeniu și e-mail", modeNote, LogAnalyzer.Dfir.Case.ReportSeal.For(liveCase), checks, notes, userTable, mailTable)) is { } refused)
+            { Status = refused; return; }
             Status = "Raport salvat: " + dlg.FileName;
             Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });
         }
