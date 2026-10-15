@@ -39,7 +39,7 @@ namespace LogAnalyzer.UI.ViewModels
             IReadOnlyList<EvidenceItem> items;
             try { items = r.Case.LoadEvidence(); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { items = []; }
-            return new LogAnalyzer.Dfir.Presentation.EvidenceContext { Items = items, Timeline = r.Timeline, Parsing = r.Parsing, Gaps = r.Gaps };
+            return new LogAnalyzer.Dfir.Presentation.EvidenceContext { Items = items, Timeline = r.Timeline, Parsing = r.Parsing, Gaps = r.Gaps, PeriodFromUtc = r.Case.Info.Scope.PeriodFromUtc };
         }
         /// <summary>WP14a: the findings of the "Air-gap integrity" category (Finding.AirGap carries channel, authorised?, who, when, object, classification, direction, destination, evidence).</summary>
         public ObservableCollection<Finding> AirGapFindings { get; } = new();

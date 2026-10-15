@@ -26,6 +26,7 @@ public static class EvidenceFingerprint
         if (n >= 4 && BinaryPrimitives.ReadUInt32LittleEndian(h) == 0x0A0D0D0A) return "pcapng";
         if (IsTaskXml(path)) return "task_xml";
         if (IsUsnExport(path)) return "usn_fsutil";
+        if (IsFirewallLog(path)) return "pfirewall";
         var t = h.TrimStart(" \t\r\n﻿"u8);
         if (t.Length > 0 && (t[0] == (byte)'{' || t[0] == (byte)'[') || StartsWith(h, 0, [0xEF, 0xBB, 0xBF, (byte)'{'])) return "json";
         return "unknown";
@@ -56,6 +57,16 @@ public static class EvidenceFingerprint
         return head.TrimStart('\uFEFF').StartsWith("USN Journal ID", StringComparison.Ordinal);
     }
 
+    /// <summary>Windows Firewall text log: "#Version:" then "#Software: Microsoft Windows Firewall".</summary>
+    private static bool IsFirewallLog(string path)
+    {
+        var buf = new byte[256];
+        int n;
+        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            n = fs.ReadAtLeast(buf, buf.Length, throwOnEndOfStream: false);
+        return LogAnalyzer.Dfir.Network.FirewallLogParser.LooksLikeFirewallLog(System.Text.Encoding.UTF8.GetString(buf, 0, n));
+    }
+
     /// <summary>Formats an evidence item may legitimately have, from its declared type or name; null when not checked.</summary>
     public static IReadOnlyCollection<string>? Expected(EvidenceItem item)
     {
@@ -68,6 +79,7 @@ public static class EvidenceFingerprint
         if (t == "pcapng" || name.EndsWith(".pcapng", StringComparison.OrdinalIgnoreCase)) return ["pcapng"];
         if (t is "live_snapshot" or "airgap_facts") return ["json"];
         if (t == "task_xml") return ["task_xml"];
+        if (t == LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName) return ["pfirewall"];
         if (t == "usn_journal") return ["usn_fsutil"];
         if (t is "chromium_history" or "firefox_places") return ["sqlite"];
         if (t == "jumplist_auto" || name.EndsWith(".automaticDestinations-ms", StringComparison.OrdinalIgnoreCase)) return ["cfb"];
