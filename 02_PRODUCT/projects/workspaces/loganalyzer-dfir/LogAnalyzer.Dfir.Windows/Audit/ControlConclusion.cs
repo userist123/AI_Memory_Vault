@@ -67,7 +67,8 @@ public sealed record ControlConclusion(string Verdict, IReadOnlyList<string> Ser
         var notChecked = new List<string>();
         if (!f.IsAdministrator)
         {
-            var needAdmin = r.Checks.Where(c => c.Status == ControlStatus.Nedeterminat).Select(c => c.Id).ToList();
+            // only the checks left undetermined BECAUSE of missing rights (review 2026-10-15), not every undetermined check
+            var needAdmin = r.Checks.Where(UndeterminedForLackOfRights).Select(c => c.Id).ToList();
             notChecked.Add("Controlul a rulat FĂRĂ drepturi de administrator: jurnalul de securitate și o parte din setări nu au putut fi citite"
                 + (needAdmin.Count > 0 ? $"; verificări rămase nedeterminate: {string.Join(", ", needAdmin)}." : "."));
         }
@@ -81,4 +82,13 @@ public sealed record ControlConclusion(string Verdict, IReadOnlyList<string> Ser
 
         return new ControlConclusion(verdict, serious, meaning, steps.Take(MaxNextSteps).ToList(), notChecked);
     }
+
+    // What the evaluator and the collector write when a source could not be read for lack of rights: the evaluator's "requires administrator"
+    // texts and the access-denied messages of Windows (English and Romanian), which become the detail of the log-coverage checks.
+    private static readonly string[] RightsMarkers =
+        ["administrator", "acces refuzat", "accesul este interzis", "access is denied", "unauthorized operation", "operațiune neautorizată"];
+
+    /// <summary>A check that is NEDETERMINAT because a source could not be read without administrator rights (not cancelled, absent or unsupported).</summary>
+    public static bool UndeterminedForLackOfRights(ControlCheck c) =>
+        c.Status == ControlStatus.Nedeterminat && RightsMarkers.Any(m => c.Detail.Contains(m, StringComparison.OrdinalIgnoreCase));
 }

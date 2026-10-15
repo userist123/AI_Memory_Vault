@@ -231,8 +231,24 @@ public class ControlReportFixesTests
         Assert.DoesNotContain(ControlConclusion.Build(elevated).NotChecked, s => s.Contains("administrator"));
 
         var plain = new ControlReport { Facts = Station(admin: false) };
-        plain.Checks.Add(new("A07", "Audit", "Politica de audit", ControlStatus.Nedeterminat, "necitit", [], ""));
+        plain.Checks.Add(new("A07", "Audit", "Politica de audit", ControlStatus.Nedeterminat, "Nu a putut fi citită (necesită administrator).", [], ""));
         Assert.Contains(ControlConclusion.Build(plain).NotChecked, s => s.Contains("FĂRĂ drepturi") && s.Contains("A07"));
+    }
+
+    [Fact]
+    public void The_missing_admin_line_lists_only_the_checks_left_undetermined_by_missing_rights()
+    {
+        var r = new ControlReport { Facts = Station(admin: false) };
+        r.Checks.Add(new("A01", "Audit", "Politica de audit", ControlStatus.Nedeterminat, "Nu a putut fi citită (necesită administrator).", [], ""));
+        r.Checks.Add(new("N05", "Rețea", "Adaptoare", ControlStatus.Nedeterminat,
+            "Lista adaptoarelor de rețea nu a putut fi citită. Nu a putut fi citit; pot fi necesare drepturi de administrator. Rulați aplicația ca administrator și repetați controlul.", [], ""));
+        r.Checks.Add(new("A03", "Audit", "Jurnalul Security acoperă perioada controlată", ControlStatus.Nedeterminat, "Attempted to perform an unauthorized operation.", [], ""));
+        r.Checks.Add(new("N13", "Rețea", "Verificare activă", ControlStatus.Nedeterminat, "Verificarea activă nu s-a încheiat: verificarea a fost anulată.", [], ""));
+        r.Checks.Add(new("A04", "Audit", "Jurnalul System acoperă perioada controlată", ControlStatus.Nedeterminat, "jurnalul nu există pe această stație", [], ""));
+        var line = Assert.Single(ControlConclusion.Build(r).NotChecked, s => s.StartsWith("Controlul a rulat FĂRĂ drepturi", StringComparison.Ordinal));
+        Assert.Contains("A01, N05, A03", line);
+        Assert.DoesNotContain("N13", line);                                  // cancelled probe: not a rights problem
+        Assert.DoesNotContain("A04", line);                                  // the log does not exist: not a rights problem
     }
 
     // ---- 4. A10 ------------------------------------------------------------------------------------------------------
