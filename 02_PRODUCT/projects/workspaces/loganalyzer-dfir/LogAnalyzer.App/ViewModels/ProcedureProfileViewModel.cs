@@ -200,13 +200,26 @@ namespace LogAnalyzer.UI.ViewModels
             Pull();
             try
             {
+                var before = ProfileStore.Load(path).Profile;
                 var issues = ProfileStore.Save(_profile, path, out var sha);
                 ShowIssues(issues);
                 Refresh();
                 if (issues.Any(i => i.IsError)) { Status = $"Nu s-a salvat nimic: {issues.Count(i => i.IsError)} erori (vezi lista, pe linii)."; return; }
                 Sha256 = sha;
+                // the profile is written at this point: a failure of the audit below is reported as such, never as a failed save (review 2026-10-15)
+                string? auditError = null;
+                if (LogAnalyzer.UI.Services.AuthApp.IsReady)
+                {
+                    try { LogAnalyzer.Dfir.Auth.OperationAudit.AuditProfileSave(LogAnalyzer.UI.Services.AuthApp.Service, LogAnalyzer.UI.Services.AuthApp.Session, before, _profile, Path.GetFileName(path)); }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+                    {
+                        auditError = ex.Message;
+                        LogAnalyzer.UI.Services.AuditHealth.Instance.Report(LogAnalyzer.Dfir.Auth.OperationAudit.ProfileEdited, ex.Message);
+                    }
+                }
                 if (string.Equals(Path.GetFullPath(path), Path.GetFullPath(_provider.Path), StringComparison.OrdinalIgnoreCase)) _provider.Replace(_profile);
-                Status = $"Profil salvat în {path} (SHA-256 {sha}). Se folosește la următoarea analiză; fiecare caz își păstrează o copie și hash-ul în custodie.";
+                Status = $"Profil salvat în {path} (SHA-256 {sha}). Se folosește la următoarea analiză; fiecare caz își păstrează o copie și hash-ul în custodie." +
+                         (auditError is null ? "" : $" ATENȚIE: modificarea nu a putut fi trecută în jurnalul de audit: {auditError}");
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {

@@ -1,7 +1,8 @@
 <Window x:Class="LogAnalyzer.UI.Views.AlertDetailWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Forensic Security Alert Triage" Height="500" Width="720"
+        xmlns:fit="clr-namespace:LogAnalyzer.UI.Views.Controls"
+        Title="Forensic Security Alert Triage" fit:WindowFit.ToWorkArea="True" Height="500" Width="720"
         WindowStartupLocation="CenterOwner" WindowStyle="None" AllowsTransparency="True" Background="Transparent">
 
     <Window.Triggers>

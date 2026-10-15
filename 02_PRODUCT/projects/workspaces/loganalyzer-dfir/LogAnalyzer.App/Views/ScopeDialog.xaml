@@ -1,9 +1,11 @@
 <Window x:Class="LogAnalyzer.UI.Views.ScopeDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Scopul cazului LIVE" Width="640" SizeToContent="Height" MinHeight="360"
+        xmlns:fit="clr-namespace:LogAnalyzer.UI.Views.Controls"
+        Title="Scopul cazului LIVE" fit:WindowFit.ToWorkArea="True" Width="640" SizeToContent="Height" MinHeight="360"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         Background="{StaticResource Surface1Brush}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
     <StackPanel Margin="20">
         <TextBlock Text="Scopul cazului stației" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
         <TextBlock x:Name="Intro" TextWrapping="Wrap" Margin="0,6,0,12" Foreground="{StaticResource TextSecondaryBrush}"
@@ -40,4 +42,5 @@
             <Button Content="Mai târziu" Style="{StaticResource OutlineButtonStyle}" Click="Cancel_Click" IsCancel="True"/>
         </StackPanel>
     </StackPanel>
+    </ScrollViewer>
 </Window>

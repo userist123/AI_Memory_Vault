@@ -170,6 +170,16 @@ public sealed partial class AuthService
     public void AuditSessionContext(AuthSession session, string context) =>
         Audit("session.context", session.Account, session.Account, "ok", "", context, Short(session.CardThumbprint), session.CardReader ?? "");
 
+    /// <summary>
+    /// Appends an operator operation (control run, unmasked export, profile edit ...) to the hash-chained audit. The detail is facts only
+    /// (hashes, counts, ids), never content or secrets. <paramref name="session"/> may be null when no session is open (the account is then the OS operator).
+    /// </summary>
+    public void AuditOperation(AuthSession? session, string ev, string detail)
+    {
+        var who = session?.Account ?? OperatorIdentity.Who;
+        Audit(ev, who, who, "ok", "", detail.ReplaceLineEndings(" "), Short(session?.CardThumbprint), session?.CardReader ?? "");
+    }
+
     // ───────────────────────── first run / recovery ─────────────────────────
 
     /// <summary>First run only: creates the primary administrator with account + password.</summary>

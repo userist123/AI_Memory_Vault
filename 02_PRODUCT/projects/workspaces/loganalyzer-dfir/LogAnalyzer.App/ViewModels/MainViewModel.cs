@@ -598,6 +598,9 @@ namespace LogAnalyzer.UI.ViewModels
             LogAnalyzer.Dfir.Windows.Policy.IRegistryValueWriter? registryWriter = null)
         {
             Edition = edition;
+            // a failure to write the sealed audit is never silent: banner (AuditHealth) and the status line (weak: the health object lives for the process)
+            System.ComponentModel.PropertyChangedEventManager.AddHandler(AuditHealth, (_, e) => { if (AuditHealth.HasWarning) StatusMessage = AuditHealth.Warning; },
+                nameof(LogAnalyzer.UI.Services.AuditHealth.Warning));
             _hostDefense = hostDefense;
             _liveSourceFactory = liveSourceFactory;
             _connectivityWatcher = connectivityWatcher;
@@ -917,6 +920,19 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
+        /// <summary>Failures to write the sealed audit, shown as a persistent banner on every page.</summary>
+        public LogAnalyzer.UI.Services.AuditHealth AuditHealth => LogAnalyzer.UI.Services.AuditHealth.Instance;
+
+        /// <summary>The live case id written in the export audit lines of the main window.</summary>
+        private static string LiveCaseId => LogAnalyzer.UI.Services.ExportAudit.LiveCaseId;
+
+        /// <summary>Shows the refusal of an export whose audit could not be written first (nothing was written).</summary>
+        private void ShowExportRefused(string message)
+        {
+            StatusMessage = message;
+            MessageBox.Show(message, "Export refuzat", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
         [RelayCommand]
         private void ExportCsv()
         {
@@ -941,7 +957,8 @@ namespace LogAnalyzer.UI.ViewModels
                         sb.AppendLine(line);
                     }
 
-                    File.WriteAllText(dialog.FileName, sb.ToString(), Encoding.UTF8);
+                    if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "csv", allTimeline.Count(), dialog.FileName,
+                            () => File.WriteAllText(dialog.FileName, sb.ToString(), Encoding.UTF8)) is { } refused) { ShowExportRefused(refused); return; }
                     MessageBox.Show("Raportul CSV a fost exportat cu succes!", "Export Reușit", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
@@ -978,7 +995,8 @@ namespace LogAnalyzer.UI.ViewModels
                     };
 
                     var csv = _adAuditReportService.GenerateCsvReport(summary, KerberosFindings, UbaAnomalies);
-                    File.WriteAllText(dialog.FileName, csv, Encoding.UTF8);
+                    if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "csv-adaudit", KerberosFindings.Count + UbaAnomalies.Count, dialog.FileName,
+                            () => File.WriteAllText(dialog.FileName, csv, Encoding.UTF8)) is { } refused) { ShowExportRefused(refused); return; }
                     MessageBox.Show("Raportul complet ADAudit Plus (AD & UBA) a fost exportat cu succes!", "Export ADAudit Reușit", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
@@ -1033,7 +1051,8 @@ namespace LogAnalyzer.UI.ViewModels
                         ComplianceResults,
                         IsAirGappedMode);
 
-                    File.WriteAllText(dialog.FileName, html, Encoding.UTF8);
+                    if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "html-adaudit", KerberosFindings.Count + StandaloneSamFindings.Count + UbaAnomalies.Count, dialog.FileName,
+                            () => File.WriteAllText(dialog.FileName, html, Encoding.UTF8)) is { } refused) { ShowExportRefused(refused); return; }
                     MessageBox.Show("Raportul Executiv HTML ADAudit Plus a fost exportat cu succes!", "Export HTML Reușit", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
@@ -1079,17 +1098,18 @@ namespace LogAnalyzer.UI.ViewModels
                         HighPrivilegeAssignmentsCount = SamHighPrivilegeAssignmentsCount
                     };
 
-                    _adAuditPdfReportService.GeneratePdfReport(
-                        dialog.FileName,
-                        adSummary,
-                        samSummary,
-                        KerberosFindings,
-                        StandaloneSamFindings,
-                        UbaAnomalies,
-                        ComplianceResults,
-                        AzureAdFindings,
-                        FileServerFindings,
-                        IsAirGappedMode);
+                    if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "pdf-adaudit", KerberosFindings.Count + StandaloneSamFindings.Count + UbaAnomalies.Count, dialog.FileName,
+                            () => _adAuditPdfReportService.GeneratePdfReport(
+                                dialog.FileName,
+                                adSummary,
+                                samSummary,
+                                KerberosFindings,
+                                StandaloneSamFindings,
+                                UbaAnomalies,
+                                ComplianceResults,
+                                AzureAdFindings,
+                                FileServerFindings,
+                                IsAirGappedMode)) is { } refused) { ShowExportRefused(refused); return; }
 
                     MessageBox.Show("Raportul Executiv PDF ADAudit Plus a fost exportat cu succes!", "Export PDF Reușit", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
@@ -1599,7 +1619,8 @@ namespace LogAnalyzer.UI.ViewModels
                         }
                     }
                     
-                    File.WriteAllText(dialog.FileName, sb.ToString(), Encoding.UTF8);
+                    if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "csv", count, dialog.FileName,
+                            () => File.WriteAllText(dialog.FileName, sb.ToString(), Encoding.UTF8)) is { } refused) { ShowExportRefused(refused); return; }
                     StatusMessage = "Export CSV complet.";
                 }
             }
@@ -1630,7 +1651,8 @@ namespace LogAnalyzer.UI.ViewModels
                     string sessionHashes = !string.IsNullOrWhiteSpace(_currentSessionHashes) 
                         ? _currentSessionHashes 
                         : "Integritate probatorie confirmată (Fără fișiere externe modificate).";
-                    PdfReportService.GenerateReport(dialog.FileName, DetectedIssues.ToList(), timeline, sessionHashes);
+                    if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "pdf-forensic", DetectedIssues.Count, dialog.FileName,
+                            () => PdfReportService.GenerateReport(dialog.FileName, DetectedIssues.ToList(), timeline, sessionHashes)) is { } refused) { ShowExportRefused(refused); return; }
                     StatusMessage = $"✅ Raport PDF generat cu succes!";
                 } 
                 catch (Exception ex) 
@@ -1652,7 +1674,8 @@ namespace LogAnalyzer.UI.ViewModels
                     string sessionHashes = !string.IsNullOrWhiteSpace(_currentSessionHashes) 
                         ? _currentSessionHashes 
                         : "Integritate probatorie confirmată (Fără fișiere externe modificate).";
-                    HtmlReportService.GenerateReport(dialog.FileName, DetectedIssues.ToList(), timeline, sessionHashes, TotalEventsCount, TotalRegistryCount, TotalHostsCount, OperatorName);
+                    if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "html-forensic", DetectedIssues.Count, dialog.FileName,
+                            () => HtmlReportService.GenerateReport(dialog.FileName, DetectedIssues.ToList(), timeline, sessionHashes, TotalEventsCount, TotalRegistryCount, TotalHostsCount, OperatorName)) is { } refused) { ShowExportRefused(refused); return; }
                     StatusMessage = "✅ Raport HTML generat cu succes!";
                 }
                 catch (Exception ex)
@@ -1688,7 +1711,8 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 try
                 {
-                    StixMispExportService.ExportToStix21(dialog.FileName, DetectedIssues.ToList(), CurrentIocs.ToList(), _currentSessionHashes);
+                    if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "json-stix", DetectedIssues.Count, dialog.FileName,
+                            () => StixMispExportService.ExportToStix21(dialog.FileName, DetectedIssues.ToList(), CurrentIocs.ToList(), _currentSessionHashes)) is { } refused) { ShowExportRefused(refused); return; }
                     StatusMessage = "✅ Export STIX 2.1 generat cu succes!";
                 }
                 catch (Exception ex)
@@ -1706,7 +1730,8 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 try
                 {
-                    StixMispExportService.ExportToMispJson(dialog.FileName, DetectedIssues.ToList(), CurrentIocs.ToList(), OperatorName);
+                    if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "json-misp", DetectedIssues.Count, dialog.FileName,
+                            () => StixMispExportService.ExportToMispJson(dialog.FileName, DetectedIssues.ToList(), CurrentIocs.ToList(), OperatorName)) is { } refused) { ShowExportRefused(refused); return; }
                     StatusMessage = "✅ Export MISP JSON generat cu succes!";
                 }
                 catch (Exception ex)
@@ -2838,7 +2863,8 @@ namespace LogAnalyzer.UI.ViewModels
                     TotalAlertsCount,
                     iocs: CurrentIocs.ToList());
 
-                File.WriteAllText(dialog.FileName, draft, Encoding.UTF8);
+                if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "txt-nis2-24h", CurrentIocs.Count, dialog.FileName,
+                        () => File.WriteAllText(dialog.FileName, draft, Encoding.UTF8)) is { } refused) { ShowExportRefused(refused); return; }
                 _provenanceLedger.AppendEntry("NIS2_EXPORTED", dialog.FileName, "-", "Salvat proiectul de avertizare timpurie NIS2 (24h); netransmis, de verificat și transmis prin PNRISC de entitate.");
                 StatusMessage = "✅ Draft Notificare Timpurie NIS2 (24h) exportat cu succes!";
             }
@@ -2863,7 +2889,8 @@ namespace LogAnalyzer.UI.ViewModels
                     TotalAlertsCount,
                     iocs: CurrentIocs.ToList());
 
-                File.WriteAllText(dialog.FileName, draft, Encoding.UTF8);
+                if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "txt-nis2-72h", CurrentIocs.Count, dialog.FileName,
+                        () => File.WriteAllText(dialog.FileName, draft, Encoding.UTF8)) is { } refused) { ShowExportRefused(refused); return; }
                 _provenanceLedger.AppendEntry("NIS2_EXPORTED", dialog.FileName, "-", "Salvat proiectul de notificare NIS2 (72h); netransmis, de verificat și transmis prin PNRISC de entitate.");
                 StatusMessage = "✅ Draft Notificare Incident NIS2 (72h) exportat cu succes!";
             }
@@ -2882,7 +2909,8 @@ namespace LogAnalyzer.UI.ViewModels
                     new List<ForensicArtifact>(),
                     _provenanceLedger.GetEntries());
 
-                File.WriteAllText(dialog.FileName, json, Encoding.UTF8);
+                if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "json-case-uco", 0, dialog.FileName,
+                        () => File.WriteAllText(dialog.FileName, json, Encoding.UTF8)) is { } refused) { ShowExportRefused(refused); return; }
                 _provenanceLedger.AppendEntry("CASE_UCO_EXPORTED", dialog.FileName, "-", "Exportat pachet CASE 1.3 / UCO JSON-LD pentru probatoriu legal.");
                 StatusMessage = "✅ Pachet CASE / UCO JSON-LD exportat cu succes!";
             }
@@ -2904,7 +2932,8 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 var events = _databaseService.GetEvents(100000, 0, null, null, null);
                 var reg = _databaseService.GetRegistryArtifacts(50000, 0, null);
-                _timelineExportService.ExportPlasoCsv(dialog.FileName, events, new List<ForensicArtifact>(), reg);
+                if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "csv-timeline", events.Count(), dialog.FileName,
+                        () => _timelineExportService.ExportPlasoCsv(dialog.FileName, events, new List<ForensicArtifact>(), reg)) is { } refused) { ShowExportRefused(refused); return; }
                 _provenanceLedger.AppendEntry("SUPERTIMELINE_EXPORTED", dialog.FileName, "-", "Exportat Super-Timeline standardizat Plaso / Timesketch CSV.");
                 StatusMessage = "✅ Super-Timeline Plaso CSV exportat cu succes!";
             }
@@ -2940,16 +2969,18 @@ namespace LogAnalyzer.UI.ViewModels
                 var reg = _databaseService.GetRegistryArtifacts(10000, 0, null);
                 string csvContent = _timelineExportService.BuildPlasoCsv(events, new List<ForensicArtifact>(), reg);
 
-                string zipSha = _casePackagingService.PackageAndSealCase(
-                    dialog.FileName,
-                    Guid.NewGuid().ToString("N").Substring(0, 8).ToUpperInvariant(),
-                    CurrentStoryline.IncidentTitle,
-                    "Unitate Forenzică / Echipa SOC",
-                    OperatorName,
-                    _provenanceLedger.GetEntries(),
-                    ucoJson,
-                    nis2Draft,
-                    csvContent);
+                string zipSha = "";
+                if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "zip-sealed-bundle", events.Count(), dialog.FileName,
+                        () => zipSha = _casePackagingService.PackageAndSealCase(
+                            dialog.FileName,
+                            Guid.NewGuid().ToString("N").Substring(0, 8).ToUpperInvariant(),
+                            CurrentStoryline.IncidentTitle,
+                            "Unitate Forenzică / Echipa SOC",
+                            OperatorName,
+                            _provenanceLedger.GetEntries(),
+                            ucoJson,
+                            nis2Draft,
+                            csvContent)) is { } refused) { ShowExportRefused(refused); return; }
 
                 _provenanceLedger.AppendEntry("CASE_SEALED_BUNDLE", dialog.FileName, zipSha, $"Pachet caz forenzic sigilat cu succes. SHA-256 Sigiliu: {zipSha}");
                 StatusMessage = $"🔒 Pachet Caz Sigilat cu Succes! Hash Sigiliu SHA-256: {zipSha.Substring(0, 16)}...";
