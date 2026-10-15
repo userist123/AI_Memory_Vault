@@ -349,6 +349,8 @@ def route(
     escalate_to = policy.higher_tier(model)
     if for_subagent and escalate_to == "fable":
         escalate_to = None  # the main session, not a subagent, would take that step
+    if escalate_to == "fable" and task_class != "frontier":
+        escalate_to = None  # owner rule: Opus is the ceiling; Fable only for frontier sessions
 
     est = estimate_cost(policy, model, input_tokens, output_tokens)
     on_fable = estimate_cost(policy, "fable", input_tokens, output_tokens)

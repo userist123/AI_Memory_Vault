@@ -107,7 +107,7 @@ def test_install_registers_each_hook_once_and_uninstall_removes_them(tmp_path):
     _install(home)
     hooks = json.loads((home / ".claude" / "settings.json").read_text(encoding="utf-8"))["hooks"]
     assert sorted(hooks) == ["PreToolUse", "SessionStart", "UserPromptSubmit"]
-    assert [len(hooks[k]) for k in ("PreToolUse", "SessionStart", "UserPromptSubmit")] == [1, 2, 1]
+    assert [len(hooks[k]) for k in ("PreToolUse", "SessionStart", "UserPromptSubmit")] == [2, 2, 1]
     start = _self_update_entry(hooks)
     assert start["matcher"] == "startup|resume" and start["hooks"][0]["timeout"] == 60
     assert "cost-router/hook_self_update.py" in start["hooks"][0]["command"].replace("\\", "/")
@@ -127,7 +127,7 @@ def test_update_pulls_the_latest_version_silently(tmp_path, origin, capsys):
     # an agent the owner never edited follows the repository
     assert "<!-- agent v2 -->" in (home / ".claude" / "agents" / "Explore.md").read_text(encoding="utf-8")
     hooks = json.loads((home / ".claude" / "settings.json").read_text(encoding="utf-8"))["hooks"]
-    assert [len(hooks[k]) for k in ("PreToolUse", "SessionStart", "UserPromptSubmit")] == [1, 2, 1], \
+    assert [len(hooks[k]) for k in ("PreToolUse", "SessionStart", "UserPromptSubmit")] == [2, 2, 1], \
         "re-install must not duplicate hooks"
     assert not list((home / ".claude").glob("cost-router.staging-*")) and not list((home / ".claude").glob("cost-router.old-*"))
     assert not (home / ".claude" / "cost-router.lock").exists()
