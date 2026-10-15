@@ -215,7 +215,11 @@ jobs:
       - name: Smoke test of the published executable (no .NET, no network)
         shell: pwsh
         run: |
-          $out = (Resolve-Path "publish/$env:EDITION/win-x64").Path
+          # Run it the way it is installed: from a folder only Administrators/SYSTEM can write (under Program Files, ACLs inherited),
+          # because the startup gate refuses to run elevated from a user-writable folder (security audit, native library check).
+          $out = Join-Path $env:ProgramFiles "LogAnalyzerSmoke\$env:EDITION"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          Copy-Item -Path "publish/$env:EDITION/win-x64/*" -Destination $out -Recurse -Force
           $exe = Join-Path $out "$env:EDITION.exe"
           Get-ChildItem Env: | Where-Object { $_.Name -like 'DOTNET*' } | ForEach-Object { Remove-Item "Env:$($_.Name)" }
           $env:PATH = (($env:PATH -split ';') | Where-Object { $_ -and $_ -notmatch 'dotnet' }) -join ';'
