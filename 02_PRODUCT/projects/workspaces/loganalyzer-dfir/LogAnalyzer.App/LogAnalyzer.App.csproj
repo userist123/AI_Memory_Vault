@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AssemblyName>LogAnalyzer</AssemblyName>
+    <AssemblyName>LogAnalyzer.Internet</AssemblyName>
     <RootNamespace>LogAnalyzer.UI</RootNamespace>
     <!-- Restore also sees the win-x64 single-file publish settings, so packages.lock.json covers the publish too and CI can publish in locked mode (security audit #9). -->
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
