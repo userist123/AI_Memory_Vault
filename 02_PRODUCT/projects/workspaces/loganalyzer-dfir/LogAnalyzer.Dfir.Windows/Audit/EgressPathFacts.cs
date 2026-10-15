@@ -28,7 +28,7 @@ internal static class EgressPathCollector
         Guard(unread, "proprietățile adaptoarelor de rețea", () => Adapters(paths));
         Guard(unread, "configurația interfețelor și rutele permanente din registru", () => StaticConfiguration(paths));
         Guard(unread, "setările proxy", () => Proxies(paths));
-        Guard(unread, "profilurile VPN / acces la distanță", () => RasProfiles(paths));
+        Guard(unread, "profilurile VPN / acces la distanță", () => RasProfiles(paths, unread));
         return paths;
     }
 
@@ -215,16 +215,72 @@ internal static class EgressPathCollector
 
     // ---- RAS / VPN phonebooks ---------------------------------------------------------------------------------------------
 
-    private static void RasProfiles(List<EgressPathFact> paths)
+    private static void RasProfiles(List<EgressPathFact> paths, List<string> unread)
     {
-        foreach (var file in new[]
+        ReadPhonebook(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Network", "Connections", "Pbk", "rasphone.pbk"), "toți utilizatorii", paths, unread);
+        ReadPhonebook(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Network", "Connections", "Pbk", "rasphone.pbk"), "utilizatorul curent", paths, unread);
+    }
+
+    /// <summary>
+    /// Reads one phonebook by OPENING it (File.Exists says false on "access denied"). Its entries become paths; a file that cannot be opened is
+    /// recorded in <paramref name="unread"/>; only a file confirmed missing from a folder that could be listed counts as "no profiles".
+    /// </summary>
+    internal static void ReadPhonebook(string file, string owner, List<EgressPathFact> paths, List<string> unread)
+    {
+        string text;
+        try { text = File.ReadAllText(file); }
+        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
         {
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Network", "Connections", "Pbk", "rasphone.pbk"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Microsoft", "Network", "Connections", "Pbk", "rasphone.pbk"),
-        })
-            if (File.Exists(file))
-                foreach (var name in PhonebookEntries(File.ReadAllText(file)))
-                    paths.Add(new("Profil VPN / acces la distanță", $"{name} ({(file.Contains("ProgramData", StringComparison.OrdinalIgnoreCase) ? "toți utilizatorii" : "utilizatorul curent")})", false, false));
+            if (!ConfirmAbsent(file, out var why)) unread.Add($"agenda de conexiuni VPN / acces la distanță ({owner}) nu a putut fi citită: {why}");
+            return;
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or System.Security.SecurityException)
+        {
+            unread.Add($"agenda de conexiuni VPN / acces la distanță ({owner}) nu a putut fi citită: {ex.Message}");
+            return;
+        }
+        foreach (var name in PhonebookEntries(text))
+            paths.Add(new("Profil VPN / acces la distanță", $"{name} ({owner})", false, false));
+    }
+
+    /// <summary>
+    /// The number of saved Wi-Fi profile files under <paramref name="dir"/>; 0 only when the folder is confirmed missing (its parent could be listed
+    /// and does not contain it); null with <paramref name="reason"/> when the folder or a parent cannot be read. The files are counted, never opened.
+    /// </summary>
+    internal static int? CountWifiProfiles(string dir, out string reason)
+    {
+        reason = "";
+        try { return Directory.EnumerateFiles(dir, "*.xml", SearchOption.AllDirectories).Count(); }
+        catch (DirectoryNotFoundException)
+        {
+            if (ConfirmAbsent(dir, out reason)) return 0;
+            return null;
+        }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or System.Security.SecurityException) { reason = ex.Message; return null; }
+    }
+
+    /// <summary>
+    /// True only when <paramref name="path"/> is confirmed missing: the nearest existing ancestor folder could be listed and does not contain the next
+    /// component. False with <paramref name="reason"/> when an ancestor cannot be listed or the entry is listed but could not be opened.
+    /// </summary>
+    internal static bool ConfirmAbsent(string path, out string reason)
+    {
+        reason = "";
+        var parent = Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(path));
+        var name = Path.GetFileName(Path.TrimEndingDirectorySeparator(path));
+        if (string.IsNullOrEmpty(parent) || string.IsNullOrEmpty(name)) { reason = "calea nu poate fi verificată"; return false; }
+        try
+        {
+            foreach (var entry in Directory.EnumerateFileSystemEntries(parent))
+                if (string.Equals(Path.GetFileName(entry), name, StringComparison.OrdinalIgnoreCase))
+                {
+                    reason = $"„{name}” există, dar nu poate fi citit";
+                    return false;
+                }
+            return true;
+        }
+        catch (DirectoryNotFoundException) { return ConfirmAbsent(parent, out reason); }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or System.Security.SecurityException) { reason = ex.Message; return false; }
     }
 
     /// <summary>Entry names of a rasphone.pbk text: the lines of the form [Name].</summary>

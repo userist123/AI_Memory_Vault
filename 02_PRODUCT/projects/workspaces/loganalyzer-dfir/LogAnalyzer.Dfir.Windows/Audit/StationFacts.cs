@@ -425,7 +425,9 @@ public static class StationFactCollector
         {
             // Only the number of saved Wi-Fi profiles (the files are named by GUID); the profile contents are never opened.
             var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Wlansvc", "Profiles", "Interfaces");
-            s["Wlan.ProfileCount"] = Directory.Exists(dir) ? Directory.EnumerateFiles(dir, "*.xml", SearchOption.AllDirectories).Count().ToString() : "0";
+            // Directory.Exists says false on "access denied": a folder is "0 profiles" only when confirmed missing, otherwise the count stays unread.
+            if (EgressPathCollector.CountWifiProfiles(dir, out var why) is { } n) s["Wlan.ProfileCount"] = n.ToString();
+            else s["Wlan.ProfileUnread"] = why;
         });
         Guard(() =>
         {

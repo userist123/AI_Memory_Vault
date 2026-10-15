@@ -472,7 +472,7 @@ public static class ControlEvaluator
         // An empty value means the source was NOT read, never "nothing there": every unread source is named, and with any of them N11 is never CONFORM.
         var unread = new List<string>(f.EgressUnread);
         if (!int.TryParse(S("Wlan.ProfileCount"), out var wp))
-            unread.Add("profilurile Wi-Fi salvate nu au putut fi citite (necesită drepturi de administrator)");
+            unread.Add($"profilurile Wi-Fi salvate nu au putut fi citite: {(S("Wlan.ProfileUnread") is { Length: > 0 } why ? why : "sursa nu a fost citită")}");
         else if (wp > 0) paths.Add(new("Profil Wi-Fi salvat", $"{Ro.CountMasc(wp, "profil Wi-Fi salvat", "profiluri Wi-Fi salvate")}", false, false));
         var ics = S("ICS.Shared");
         if (ics.StartsWith("da", StringComparison.Ordinal)) paths.Add(new("Partajarea conexiunii (ICS)", ics, false, true));
@@ -685,7 +685,7 @@ public static class ControlEvaluator
             var svc = S("Wlan.ServiceStart");
             var svcText = svc switch { "" => "starea serviciului Wi-Fi nu a putut fi citită", Absent => "serviciul Wi-Fi nu există pe această stație", "4" => "serviciul Wi-Fi este dezactivat", "2" => "serviciul Wi-Fi pornește singur", _ => "serviciul Wi-Fi poate porni la cerere" };
             int profN = int.TryParse(profiles, out var profParsed) ? profParsed : 0;
-            var profText = profiles == "" ? "profilurile Wi-Fi salvate nu au putut fi numărate (necesită administrator)" : profN == 1 ? "un profil Wi-Fi salvat" : $"{Ro.Count(profN, "profil", "profiluri")} Wi-Fi salvate";
+            var profText = profiles == "" ? $"profilurile Wi-Fi salvate nu au putut fi numărate ({(S("Wlan.ProfileUnread") is { Length: > 0 } why ? why : "sursa nu a fost citită")})" : profN == 1 ? "un profil Wi-Fi salvat" : $"{Ro.Count(profN, "profil", "profiluri")} Wi-Fi salvate";
             var status = wifi == 0 ? ControlStatus.Conform : noInternet && wifiUp > 0 ? ControlStatus.Neconform : ControlStatus.DeVerificat;
             Add(r, "N03", "Rețea", "Adaptor Wi-Fi (rețea fără fir)", status,
                 wifi == 0 ? $"Stația nu are niciun adaptor Wi-Fi; {profText}."
