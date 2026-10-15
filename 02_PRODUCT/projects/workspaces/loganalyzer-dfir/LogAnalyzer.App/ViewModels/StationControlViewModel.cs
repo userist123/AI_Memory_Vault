@@ -101,6 +101,7 @@ namespace LogAnalyzer.UI.ViewModels
                           (AppModeContext.IsAirGapped ? "fără rețea (izolată)" : "conectată");
             LoadPreviousControls();
             InspectorFunction = _headerProfile.InspectorFunction;
+            InitOfficer();
             RaiseFlow();
         }
 
@@ -283,6 +284,7 @@ namespace LogAnalyzer.UI.ViewModels
                 var posture = Posture;
                 SavedReportInfo = "";
                 var (folders, updates) = ControlInputs();
+                var previousAnchor = PreviousAnchorCode;
                 bool auditedStart = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlStarted,
                     LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail(LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(posture), posture.ToString(),
                         new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent()).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator), PeriodDays, folders.Count));
@@ -296,6 +298,8 @@ namespace LogAnalyzer.UI.ViewModels
                     try { auditPath = LogAnalyzer.UI.Services.AuthApp.Service.AuditPath; } catch (InvalidOperationException) { }
                     if (auditPath is not null)
                     {
+                        // A11: the previous anchor code, checked before this control appends anything (an append never changes earlier entries anyway).
+                        facts.PreviousAnchor = LogAnalyzer.Dfir.Case.AuditAnchor.Verify(auditPath, previousAnchor);
                         try
                         {
                             var cb = LogAnalyzer.Dfir.Case.ClockMemory.ReadBaseline(auditPath);
@@ -311,6 +315,7 @@ namespace LogAnalyzer.UI.ViewModels
                 bool auditedFinish = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinished,
                     LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinishedDetail(_report.Facts.Host, _report.Facts.IsAdministrator, _report.Checks.Count,
                         _report.Count(ControlStatus.Neconform), _report.Count(ControlStatus.DeVerificat), _report.Count(ControlStatus.Nedeterminat)));
+                AfterControlAnchor();
                 FillChecks();
                 Users.Clear();
                 foreach (var u in _report.Users) Users.Add(u);
