@@ -18,6 +18,10 @@ public sealed record ChainReport(ChainVerification Custody, ChainVerification Au
 /// <c>hash = SHA-256(canonical JSON of the line without "hash")</c>; the first <c>prevHash</c> is 64 zeros.
 /// Lines written before WP3 have no chain fields and are counted as legacy.
 /// Limit: removing lines from the END of the log leaves a valid shorter chain; only an external anchor of the head hash detects that.
+/// A log can be <b>sealed</b> (<see cref="RegisterHeadSeal"/>, used for the auth audit, security audit #4): every append then also writes
+/// <c>&lt;log&gt;.head</c> = {seq, hash, mac = HMAC-SHA256(key, …)}, and <see cref="Verify"/> requires the chain to end exactly at that sealed head.
+/// Someone without the key can still recompute the plain chain, but not the seal. An append that finds the file not ending at the sealed head
+/// is still written (evidence is not dropped) but the seal is not moved over it, so the log stays broken until an administrator reseals it.
 /// </summary>
 public sealed class HashChain(string path)
 {
@@ -28,6 +32,62 @@ public sealed class HashChain(string path)
 
     public string Path { get; } = path;
 
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, byte[]?> Seals = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Seals the head of the log at <paramref name="logPath"/> for this process. A null key means "sealed, but the key cannot be read": appends are refused.</summary>
+    public static void RegisterHeadSeal(string logPath, byte[]? key) => Seals[System.IO.Path.GetFullPath(logPath)] = key;
+
+    public static string HeadPath(string logPath) => logPath + ".head";
+
+    private bool IsSealed(out byte[]? key) => Seals.TryGetValue(System.IO.Path.GetFullPath(Path), out key);
+
+    private const string KeyUnavailable = "cheia de sigilare a jurnalului nu poate fi citită (porniți aplicația dintr-un cont de administrator Windows); nu s-a scris nimic";
+
+    private static string Mac(byte[] key, long seq, string hash) =>
+        Convert.ToHexStringLower(HMACSHA256.HashData(key, Encoding.UTF8.GetBytes($"LogAnalyzer-chain-head-v1|{seq}|{hash}")));
+
+    private sealed record SealedHead(long Seq, string Hash, string Mac);
+
+    private SealedHead? ReadSealedHead()
+    {
+        var hp = HeadPath(Path);
+        if (!File.Exists(hp)) return null;
+        try
+        {
+            var o = JsonNode.Parse(File.ReadAllText(hp))!.AsObject();
+            return new SealedHead(o["seq"]!.GetValue<long>(), o["hash"]!.GetValue<string>(), o["mac"]!.GetValue<string>());
+        }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or NullReferenceException) { return new SealedHead(-1, "", ""); }
+    }
+
+    private void WriteSealedHead(byte[] key, long seq, string hash)
+    {
+        var o = new JsonObject { ["seq"] = seq, ["hash"] = hash, ["mac"] = Mac(key, seq, hash) };
+        var tmp = HeadPath(Path) + ".tmp";
+        File.WriteAllText(tmp, o.ToJsonString(Json.Line));
+        File.Move(tmp, HeadPath(Path), overwrite: true);
+    }
+
+    private static bool SealMatches(byte[] key, SealedHead? h, long seq, string head) =>
+        h is null ? seq == 0
+                  : h.Seq == seq && h.Hash == head && CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(h.Mac), Encoding.ASCII.GetBytes(Mac(key, seq, head)));
+
+    /// <summary>
+    /// Seals the head as the log is now (key required). Used once when the key is first created (the existing chain is trusted on first use) and by an
+    /// audited administrator decision after a break. Refuses when the plain chain itself is broken.
+    /// </summary>
+    public void Reseal()
+    {
+        lock (_gate)
+        {
+            if (!IsSealed(out var key)) throw new InvalidOperationException("jurnalul nu este sigilat");
+            if (key is null) throw new UnauthorizedAccessException(KeyUnavailable);
+            if (VerifyPlain().Status == ChainStatus.Broken) throw new InvalidOperationException("lanțul simplu este rupt; nu se sigilează");
+            var (seq, head) = Head();
+            if (seq > 0) WriteSealedHead(key, seq, head);
+        }
+    }
+
     /// <summary>
     /// Appends <paramref name="entry"/> (any serializable object) with chain fields. The head is re-read from the file under an
     /// exclusive lock on every append, so several workspaces (or processes) writing the same case continue one chain instead of forking it.
@@ -36,8 +96,11 @@ public sealed class HashChain(string path)
     {
         lock (_gate)
         {
+            bool sealedLog = IsSealed(out var key);
+            if (sealedLog && key is null) throw new UnauthorizedAccessException(KeyUnavailable);
             using var fs = OpenExclusive();
             var (seq, head) = ReadHead(fs);
+            bool moveSeal = sealedLog && SealMatches(key!, ReadSealedHead(), seq, head);
             var obj = JsonSerializer.SerializeToNode(entry, Json.Line)!.AsObject();
             obj["seq"] = seq + 1;
             obj["prevHash"] = head;
@@ -46,6 +109,7 @@ public sealed class HashChain(string path)
             fs.Seek(0, SeekOrigin.End);
             fs.Write(bytes);
             fs.Flush(true);
+            if (moveSeal) WriteSealedHead(key!, seq + 1, obj["hash"]!.GetValue<string>());
         }
     }
 
@@ -129,7 +193,26 @@ public sealed class HashChain(string path)
         return null;
     }
 
+    /// <summary>The plain chain check and, for a sealed log, that the chain ends exactly at the sealed head.</summary>
     public ChainVerification Verify()
+    {
+        var plain = VerifyPlain();
+        if (!IsSealed(out var key) || plain.Status == ChainStatus.Broken) return plain;
+        var name = System.IO.Path.GetFileName(Path);
+        if (key is null) return Broken(name, plain.Entries, plain.LegacyLines, 0, KeyUnavailable.Replace("; nu s-a scris nimic", ""));
+        var (seq, head) = Head();
+        var h = ReadSealedHead();
+        if (seq == 0 && h is null) return plain;
+        if (h is null) return Broken(name, plain.Entries, plain.LegacyLines, seq, "capul lanțului nu are sigiliu (fișierul .head lipsește)");
+        if (!CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(h.Mac), Encoding.ASCII.GetBytes(Mac(key, h.Seq, h.Hash))))
+            return Broken(name, plain.Entries, plain.LegacyLines, h.Seq, "sigiliul capului lanțului nu este valid (lanț recalculat sau sigiliu falsificat)");
+        if (h.Seq == seq && h.Hash == head) return plain;
+        if (seq > h.Seq && Contains(h.Seq, h.Hash))
+            return Broken(name, plain.Entries, plain.LegacyLines, h.Seq + 1, $"intrări adăugate după ultimul cap sigilat (Seq {h.Seq}) fără cheia de sigilare");
+        return Broken(name, plain.Entries, plain.LegacyLines, Math.Min(seq, h.Seq), $"lanțul nu mai ajunge la capul sigilat (Seq {h.Seq}): trunchiat sau rescris");
+    }
+
+    private ChainVerification VerifyPlain()
     {
         var name = System.IO.Path.GetFileName(Path);
         if (!File.Exists(Path)) return new(name, ChainStatus.Valid, 0, 0, null, "", "gol");
@@ -160,7 +243,7 @@ public sealed class HashChain(string path)
             chained++; expectSeq = seq + 1; expectPrev = hash;
         }
         if (chained == 0 && legacy > 0) return new(name, ChainStatus.Legacy, 0, legacy, null, "", LegacyMessage);
-        var msg = legacy > 0 ? $"{chained} intrări verificate; {legacy} linii anterioare: {LegacyMessage}" : $"{chained} intrări verificate";
+        var msg = legacy > 0 ? $"{LogAnalyzer.Dfir.Language.RoText.Count(chained, "intrare", "intrări")} verificate; {legacy} linii anterioare: {LegacyMessage}" : $"{LogAnalyzer.Dfir.Language.RoText.Count(chained, "intrare", "intrări")} verificate";
         return new(name, ChainStatus.Valid, chained, legacy, null, "", msg);
     }
 

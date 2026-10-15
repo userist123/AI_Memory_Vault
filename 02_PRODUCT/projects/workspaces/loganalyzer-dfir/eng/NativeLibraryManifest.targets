@@ -1,0 +1,56 @@
+<Project>
+  <!--
+    Security audit #5 + independent review, finding 3: after a single-file publish (native libraries NOT self-extracted, they sit next to
+    the exe) the SHA-256 of every DLL in the publish folder ("SHA256  name.dll" per line) is EMBEDDED in the main assembly, i.e. inside the
+    executable, as the resource "native-libraries.sha256" (LogAnalyzer.Dfir.IO.NativeLibraryManifest.ResourceName). The published application
+    checks the folder against that embedded copy at startup and refuses to start on any difference, missing or extra DLL.
+
+    How: pass 1 is the normal publish; its manifest is written to obj, then the same project is published again (pass 2) with
+    LaNativeManifestPath pointing at it, so the main assembly is recompiled with the manifest as an embedded resource and re-bundled. Pass 2
+    re-hashes the publish folder and fails the publish if the libraries differ from what it embedded. The text file next to the exe is still
+    written for auditors; a Release build does not trust it (only a Debug build falls back to it).
+
+    Review of the remediations #4: the same runs for a framework-dependent (not single-file) publish, where the managed assemblies are DLLs
+    next to the exe too. The main assembly ($(TargetFileName)) is the one that carries the embedded manifest, so it cannot list its own hash:
+    it is left out of the manifest and the startup check exempts exactly that one file name (a replaced main assembly would replace the
+    checker as well; the install-folder ACL check covers that case). A non-Debug build without the embedded manifest refuses an elevated start.
+  -->
+  <ItemGroup Condition="'$(LaNativeManifestPath)' != ''">
+    <EmbeddedResource Include="$(LaNativeManifestPath)" LogicalName="native-libraries.sha256" />
+  </ItemGroup>
+
+  <Target Name="WriteNativeLibraryManifest" AfterTargets="Publish">
+    <PropertyGroup>
+      <_LaManifestObj>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\$(IntermediateOutputPath)native-libraries.sha256'))</_LaManifestObj>
+    </PropertyGroup>
+    <ItemGroup>
+      <_LaPublishedDll Include="$(PublishDir)*.dll" Exclude="$(PublishDir)$(TargetFileName)" />
+    </ItemGroup>
+    <Error Condition="'@(_LaPublishedDll)' == ''" Text="Publicarea nu a produs nicio bibliotecă nativă lângă executabil; manifestul nativ nu poate fi scris." />
+    <GetFileHash Files="@(_LaPublishedDll)" Algorithm="SHA256" HashEncoding="hex">
+      <Output TaskParameter="Items" ItemName="_LaPublishedDllHash" />
+    </GetFileHash>
+    <ItemGroup>
+      <_LaManifestLine Include="@(_LaPublishedDllHash->'%(FileHash)  %(Filename)%(Extension)')" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(PublishDir)native-libraries.sha256" Lines="@(_LaManifestLine)" Overwrite="true" />
+
+    <!-- pass 1: write the manifest to obj and publish again with it embedded -->
+    <WriteLinesToFile Condition="'$(LaNativeManifestPath)' == ''" File="$(_LaManifestObj)" Lines="@(_LaManifestLine)" Overwrite="true" />
+    <MSBuild Condition="'$(LaNativeManifestPath)' == ''" Projects="$(MSBuildProjectFullPath)" Targets="Publish"
+             Properties="LaNativeManifestPath=$(_LaManifestObj)" />
+
+    <!-- pass 2: what was embedded must be exactly what is in the folder now -->
+    <ReadLinesFromFile Condition="'$(LaNativeManifestPath)' != ''" File="$(LaNativeManifestPath)">
+      <Output TaskParameter="Lines" ItemName="_LaEmbeddedLine" />
+    </ReadLinesFromFile>
+    <ItemGroup Condition="'$(LaNativeManifestPath)' != ''">
+      <_LaOnlyEmbedded Include="@(_LaEmbeddedLine)" Exclude="@(_LaManifestLine)" />
+      <_LaOnlyPublished Include="@(_LaManifestLine)" Exclude="@(_LaEmbeddedLine)" />
+    </ItemGroup>
+    <Error Condition="'$(LaNativeManifestPath)' != '' and ('@(_LaOnlyEmbedded)' != '' or '@(_LaOnlyPublished)' != '')"
+           Text="Manifestul încorporat nu corespunde bibliotecilor publicate: încorporat fără pereche: @(_LaOnlyEmbedded); publicat fără pereche: @(_LaOnlyPublished)" />
+    <Message Condition="'$(LaNativeManifestPath)' != ''" Importance="high"
+             Text="Manifest biblioteci native încorporat în executabil și scris în $(PublishDir)native-libraries.sha256 (@(_LaPublishedDll->Count()) fișiere)" />
+  </Target>
+</Project>

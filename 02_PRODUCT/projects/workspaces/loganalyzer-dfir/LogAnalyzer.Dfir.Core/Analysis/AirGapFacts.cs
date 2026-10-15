@@ -1,0 +1,233 @@
+using System.Text.Json;
+
+namespace LogAnalyzer.Dfir.Analysis;
+
+// Facts about the station that no event log carries: adapters, burn tooling, printers, screenshots, virtual machines, archiver histories and the
+// camera / microphone / speaker inventory. Collected read-only by the Windows project (AirGapFactsCollector) into one JSON file stored as case evidence
+// (source type "airgap_facts"); the WP14a rules read it next to the timeline. A list that is empty means "nothing was found by that read", never that the
+// read worked: every read that failed is named in <see cref="AirGapFacts.Errors"/>.
+
+/// <summary>A network adapter as Windows lists it (PnP class Net): the data the adapter-kind classifier needs.</summary>
+public sealed class AdapterFact
+{
+    public string Name { get; set; } = "";
+    public string InstanceId { get; set; } = "";
+    public string PnpClass { get; set; } = "";
+    public string Service { get; set; } = "";
+    public string Manufacturer { get; set; } = "";
+    public List<string> CompatibleIds { get; set; } = [];
+    public bool Enabled { get; set; } = true;
+    public DateTimeOffset? FirstInstallUtc { get; set; }
+}
+
+public sealed class OpticalWriterFact
+{
+    public string Name { get; set; } = "";
+    public string Drive { get; set; } = "";
+    /// <summary>True when the drive reports that it can write discs (WMI Win32_CDROMDrive.Capabilities contains "Supports Writing").</summary>
+    public bool CanWrite { get; set; }
+    public List<string> Capabilities { get; set; } = [];
+}
+
+public sealed class BurnStagingFile
+{
+    public string Name { get; set; } = "";
+    public long Size { get; set; }
+    public DateTimeOffset? LastWriteUtc { get; set; }
+}
+
+public sealed class BurnToolLog
+{
+    public string Path { get; set; } = "";
+    public DateTimeOffset? LastWriteUtc { get; set; }
+    /// <summary>The first lines of the log that name a drive, an image or a result (bounded; the log itself is not copied).</summary>
+    public List<string> Excerpt { get; set; } = [];
+}
+
+public sealed class BurnFacts
+{
+    /// <summary>NoCDBurning in the machine policy (Explorer); null = not set.</summary>
+    public int? NoCdBurningMachine { get; set; }
+    public int? NoCdBurningUser { get; set; }
+    public List<OpticalWriterFact> Writers { get; set; } = [];
+    public string StagingPath { get; set; } = "";
+    public bool StagingFolderExists { get; set; }
+    public List<BurnStagingFile> StagingFiles { get; set; } = [];
+    public List<BurnToolLog> ToolLogs { get; set; } = [];
+    /// <summary>True when the removable-storage policy denies write for the CD/DVD class (Deny_Write = 1).</summary>
+    public bool? CdDvdDenyWrite { get; set; }
+}
+
+public sealed class PrinterFact
+{
+    public string Name { get; set; } = "";
+    public string Driver { get; set; } = "";
+    public string Port { get; set; } = "";
+    public bool IsNetwork { get; set; }
+    /// <summary>A virtual printer that writes a file (PDF, XPS, "Print to file", OneNote): the output leaves no paper.</summary>
+    public bool WritesToFile { get; set; }
+}
+
+public sealed class PrintFacts
+{
+    /// <summary>Whether the channel Microsoft-Windows-PrintService/Operational is enabled; null = not read.</summary>
+    public bool? OperationalLogEnabled { get; set; }
+    public List<PrinterFact> Printers { get; set; } = [];
+}
+
+public sealed class ScreenFile
+{
+    public string Path { get; set; } = "";
+    public DateTimeOffset? CreatedUtc { get; set; }
+}
+
+public sealed class ScreenFacts
+{
+    public List<ScreenFile> Screenshots { get; set; } = [];
+    /// <summary>Folders of the Snipping Tool / Screen Sketch packages that hold files (name of folder, newest file time).</summary>
+    public List<ScreenFile> SnippingTraces { get; set; } = [];
+    public int? ClipboardHistoryUser { get; set; }
+    public int? ClipboardHistoryPolicy { get; set; }
+    public bool? ActivitiesCachePresent { get; set; }
+    public int? ActivityFeedPolicy { get; set; }
+}
+
+public sealed class DiskImageFile
+{
+    public string Path { get; set; } = "";
+    public long Size { get; set; }
+    public DateTimeOffset? LastWriteUtc { get; set; }
+}
+
+public sealed class VirtualFacts
+{
+    public bool? HyperVServicePresent { get; set; }
+    public List<string> HyperVMachines { get; set; } = [];
+    public List<DiskImageFile> DiskImages { get; set; } = [];
+    public bool DiskImageSearchTruncated { get; set; }
+    public List<string> WslDistributions { get; set; } = [];
+    public List<string> Hypervisors { get; set; } = [];
+    /// <summary>Operating-system entries of the boot configuration (bcdedit /enum all /v); null = not read.</summary>
+    public int? BootOsEntries { get; set; }
+    public List<string> BootEntryNames { get; set; } = [];
+}
+
+public sealed class ArchiverEntry
+{
+    /// <summary>"WinRAR" or "7-Zip".</summary>
+    public string Tool { get; set; } = "";
+    /// <summary>The history list the value came from (ArcHistory, DialogEditHistory, FolderHistory, CopyHistory, PanelPath).</summary>
+    public string List { get; set; } = "";
+    public string Value { get; set; } = "";
+}
+
+public sealed class HardwareFact
+{
+    public string Name { get; set; } = "";
+    /// <summary>Camera / Image, MEDIA (sound) or AudioEndpoint.</summary>
+    public string PnpClass { get; set; } = "";
+    public string InstanceId { get; set; } = "";
+    public bool Enabled { get; set; } = true;
+    public string Status { get; set; } = "";
+}
+
+/// <summary>One file or folder of a removable volume as listed read-only by <see cref="Devices.RemovableMediaInspector.List"/>; a shortcut carries its decoded target.</summary>
+public sealed class MediaEntryFact
+{
+    /// <summary>Path relative to the volume root ("Docs\a.pdf").</summary>
+    public string RelativePath { get; set; } = "";
+    public bool IsDirectory { get; set; }
+    public bool Hidden { get; set; }
+    public bool System { get; set; }
+    public long Size { get; set; }
+    public DateTimeOffset? CreatedUtc { get; set; }
+    public DateTimeOffset? LastWriteUtc { get; set; }
+    /// <summary>SHA-256 (hex) for small files only; "" when not computed.</summary>
+    public string Sha256 { get; set; } = "";
+    /// <summary>For a .lnk: the target, arguments and working directory decoded by LnkParser (nothing is run); "" otherwise or when undecodable.</summary>
+    public string LnkTarget { get; set; } = "";
+    public string LnkArguments { get; set; } = "";
+    public string LnkWorkingDir { get; set; } = "";
+}
+
+/// <summary>The listing of one removable volume connected at collection time (root and a bounded number of folder levels, one for the facts collector; reparse points not followed).</summary>
+public sealed class MediaListingFact
+{
+    /// <summary>Drive letter without colon ("E").</summary>
+    public string Letter { get; set; } = "";
+    public string Label { get; set; } = "";
+    /// <summary>Volume serial (hex, as in LNK / Prefetch); "" when unknown.</summary>
+    public string VolumeSerial { get; set; } = "";
+    /// <summary>Device serial from the media inventory when known; "" otherwise.</summary>
+    public string DeviceSerial { get; set; } = "";
+    public bool Truncated { get; set; }
+    public List<MediaEntryFact> Entries { get; set; } = [];
+    /// <summary>A short identity for the reader: serial, else letter and label.</summary>
+    [System.Text.Json.Serialization.JsonIgnore] public string Identity => DeviceSerial.Length > 0 ? DeviceSerial : VolumeSerial.Length > 0 ? $"{Letter}: (volum {VolumeSerial})" : $"{Letter}: „{Label}”";
+}
+
+/// <summary>One entry of a Startup folder (per user or common), read from the live file system; shortcuts carry their decoded target.</summary>
+public sealed class StartupEntryFact
+{
+    /// <summary>"utilizator" or "comun".</summary>
+    public string Scope { get; set; } = "";
+    /// <summary>Profile folder name for a per-user entry; "" for the common folder.</summary>
+    public string Profile { get; set; } = "";
+    public string Path { get; set; } = "";
+    public DateTimeOffset? CreatedUtc { get; set; }
+    public DateTimeOffset? LastWriteUtc { get; set; }
+    public long Size { get; set; }
+    public string LnkTarget { get; set; } = "";
+    public string LnkArguments { get; set; } = "";
+    /// <summary>Authenticode result for the target (or the file itself): true signed, false not signed, null not checked.</summary>
+    public bool? TargetSigned { get; set; }
+}
+
+/// <summary>A top-level file of a profile's Downloads or Desktop folder (for MEDIA-SAME-DROP).</summary>
+public sealed class ProfileFileFact
+{
+    public string Profile { get; set; } = "";
+    /// <summary>"Downloads" or "Desktop".</summary>
+    public string Folder { get; set; } = "";
+    public string Name { get; set; } = "";
+    public long Size { get; set; }
+    public DateTimeOffset? LastWriteUtc { get; set; }
+    public string Sha256 { get; set; } = "";
+}
+
+/// <summary>Everything the facts collector read from the station, with the reads that failed.</summary>
+public sealed class AirGapFacts
+{
+    public const string SourceType = "airgap_facts";
+    public string SchemaVersion { get; set; } = "1.0";
+    public DateTimeOffset CollectedUtc { get; set; }
+    public bool IsAdministrator { get; set; }
+    public List<AdapterFact> Adapters { get; set; } = [];
+    public BurnFacts Burn { get; set; } = new();
+    public PrintFacts Print { get; set; } = new();
+    public ScreenFacts Screen { get; set; } = new();
+    public VirtualFacts Virtual { get; set; } = new();
+    public List<ArchiverEntry> Archivers { get; set; } = [];
+    /// <summary>Drive letters ("E") that Windows has assigned to removable media (MountedDevices pointing at USB storage, or a removable / optical drive now).</summary>
+    public List<string> RemovableLetters { get; set; } = [];
+    public List<HardwareFact> Hardware { get; set; } = [];
+    /// <summary>Listings of the removable volumes connected at collection time (P1 payload rules).</summary>
+    public List<MediaListingFact> MediaListings { get; set; } = [];
+    /// <summary>Entries of the per-user and common Startup folders.</summary>
+    public List<StartupEntryFact> StartupEntries { get; set; } = [];
+    /// <summary>Top-level files of the profiles' Downloads and Desktop folders.</summary>
+    public List<ProfileFileFact> ProfileFiles { get; set; } = [];
+    /// <summary>Machine-level consent for camera and microphone (CapabilityAccessManager): "Deny", "Allow" or "" when not set / not read. This is the value of control P19.</summary>
+    public string WebcamPolicy { get; set; } = "";
+    public string MicrophonePolicy { get; set; } = "";
+    public List<string> Errors { get; set; } = [];
+    /// <summary>Milliseconds each read took (diagnostic: shows which read is slow on a given station).</summary>
+    public Dictionary<string, long> StepMs { get; set; } = [];
+
+    /// <summary>Set by the pipeline from the stored evidence item; findings built from the facts cite it. Not part of the file.</summary>
+    [System.Text.Json.Serialization.JsonIgnore] public string EvidenceId { get; set; } = "";
+
+    private static readonly JsonSerializerOptions Opts = new() { PropertyNameCaseInsensitive = true, WriteIndented = true };
+    public string ToJson() => JsonSerializer.Serialize(this, Opts);
+    public static AirGapFacts FromJson(string json) => JsonSerializer.Deserialize<AirGapFacts>(json, Opts) ?? new();
+}

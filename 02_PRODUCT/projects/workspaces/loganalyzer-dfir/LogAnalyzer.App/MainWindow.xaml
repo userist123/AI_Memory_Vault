@@ -4,6 +4,7 @@
         xmlns:vm="clr-namespace:LogAnalyzer.UI.ViewModels"
         xmlns:views="clr-namespace:LogAnalyzer.UI.Views"
         xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls"
+        xmlns:services="clr-namespace:LogAnalyzer.UI.Services"
         Title="LogAnalyzer Enterprise — Threat Triage &amp; Incident Response Command Center"
         Height="900" Width="1500" MinHeight="720" MinWidth="1100"
         WindowStartupLocation="CenterScreen" Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}">
@@ -37,44 +38,27 @@
 
                 <!-- Left: Vector Logo + Identity -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Width="34" Height="34" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource PrimaryAccentBrush}" BorderThickness="1" CornerRadius="6" Margin="0,0,12,0">
-                        <Path Data="M 12 2 L 2 7 L 2 13 C 2 19 6.5 24.5 12 26 C 17.5 24.5 22 19 22 13 L 22 7 Z"
-                              Fill="{StaticResource PrimaryAccentBrush}" Stretch="Uniform" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
                     <StackPanel VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="LOGANALYZER" FontSize="15" FontWeight="Black" Foreground="{StaticResource TextPrimaryBrush}"/>
-                            <Border Margin="10,0,0,0" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource PrimaryAccentBrush}" BorderThickness="1" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
-                                <TextBlock Text="v2.5 PRO" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
-                            </Border>
+                            <TextBlock Text="LogAnalyzer" FontSize="17" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
-                        <TextBlock Text="DFIR &amp; Threat Operations Command Center" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                        <TextBlock Text="{Binding StationSubtitle}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,1,0,0"/>
                     </StackPanel>
                     
                     <!-- Environment Mode Badge -->
                     <Border Margin="18,0,0,0" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,4" VerticalAlignment="Center"
                             ToolTip="{Binding ModeReasonText}">
                         <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="6" Height="6" Fill="{StaticResource SuccessBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding SystemModeBadgeText}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{Binding SystemModeBadgeText}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
                     </Border>
 
-                    <!-- Station role badge (WP18): CONTROL / CSIRT from the signed policy; the tooltip is the full decision chain -->
-                    <Border Margin="8,0,0,0" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,4" VerticalAlignment="Center"
-                            ToolTip="{Binding StationRoleReasonText}" AutomationProperties.Name="Rolul acestei stații">
+                    <!-- Station name (owner 2026-10-11: show the station's name, not its role) -->
+                    <Border Margin="8,0,0,0" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="3" Padding="10,4" VerticalAlignment="Center"
+                            AutomationProperties.Name="Numele acestei stații">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="ROL: " FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}"/>
-                            <TextBlock Text="{Binding StationRoleBadgeText}" FontSize="10.5" FontWeight="Bold">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding HasStationRoleWarning}" Value="True"><Setter Property="Foreground" Value="{StaticResource WarningBrush}"/></DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
+                            <TextBlock Text="Stația: " FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                            <TextBlock Text="{Binding StationName}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
                     </Border>
 
@@ -82,35 +66,28 @@
                     <Border Margin="10,0,0,0" Background="{StaticResource BadgeCriticalBgBrush}" BorderBrush="{StaticResource DangerBrush}" BorderThickness="1" CornerRadius="6" Padding="10,4" VerticalAlignment="Center"
                             Visibility="{Binding HasConnectivityWarning, Converter={StaticResource BooleanToVisibilityConverter}}"
                             ToolTip="{Binding ConnectivityWarningText}">
-                        <TextBlock Text="⚠ STAȚIE IZOLATĂ CONECTATĂ LA REȚEA" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource DangerBrush}"/>
+                        <TextBlock Text="Atenție: stația izolată este conectată la rețea" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource DangerBrush}"/>
                     </Border>
                 </StackPanel>
 
                 <!-- Center: Global Command Palette Search -->
                 <Grid Grid.Column="1" HorizontalAlignment="Center" Width="440" VerticalAlignment="Center">
-                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Height="34" Padding="32,6,10,6" FontSize="11.5" ToolTip="Press Ctrl+K for command palette search across Events, Rules &amp; Artifacts"/>
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Height="34" Padding="32,6,10,6" FontSize="11.5" ToolTip="Căutare în evenimente, reguli și artefacte (Ctrl+K)" AutomationProperties.Name="Căutare"/>
                     <Path Data="M 9 2 C 5.1 2 2 5.1 2 9 C 2 12.9 5.1 16 9 16 C 10.7 16 12.2 15.4 13.4 14.4 L 17.3 18.3 C 17.7 18.7 18.3 18.7 18.7 18.3 C 19.1 17.9 19.1 17.3 18.7 16.9 L 14.8 13 C 15.6 11.8 16 10.5 16 9 C 16 5.1 12.9 2 9 2 Z M 9 4 C 11.8 4 14 6.2 14 9 C 14 11.8 11.8 14 9 14 C 6.2 14 4 11.8 4 9 C 4 6.2 6.2 4 9 4 Z"
                           Fill="{StaticResource TextMutedBrush}" Stretch="Uniform" Width="14" Height="14" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center"/>
                     <Border Background="{StaticResource Surface3Brush}" CornerRadius="3" Padding="4,1" HorizontalAlignment="Right" Margin="0,0,8,0" VerticalAlignment="Center">
-                        <TextBlock Text="Ctrl+K" FontSize="9" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}"/>
+                        <TextBlock Text="Ctrl+K" FontSize="11" Foreground="{StaticResource TextMutedBrush}"/>
                     </Border>
                 </Grid>
 
                 <!-- Right: Telemetry, Cryptographic DB, Operator -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Sensor / Encrypted DB State -->
-                    <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,5" Margin="0,0,10,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="VAULT: " FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}"/>
-                            <TextBlock Text="SQLCIPHER (AES-256)" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource EvidenceAccentBrush}"/>
-                        </StackPanel>
-                    </Border>
 
                     <!-- Operator -->
                     <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,5" Margin="0,0,10,0">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="OPERATOR: " FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}"/>
-                            <TextBlock Text="{Binding OperatorName, FallbackValue='ANALYST'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="Utilizator: " FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                            <TextBlock Text="{Binding OperatorName}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
                     </Border>
 
@@ -118,16 +95,19 @@
                     <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,3" Margin="0,0,10,0" VerticalAlignment="Center"
                             ToolTip="Simplu: cuvinte pe înțelesul tuturor, detaliile tehnice la un click distanță. Expert: numele tehnice rămân lângă cele simple. Datele sunt aceleași.">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="LIMBAJ: " FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="Limbaj: " FontSize="12" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"/>
                             <CheckBox IsChecked="{Binding IsExpertLevel}" Content="{Binding LanguageLevelText}" AutomationProperties.Name="Nivel de limbaj: Simplu sau Expert"
-                                      AutomationProperties.HelpText="Bifat: Expert, numele tehnice rămân lângă cele simple. Nebifat: Simplu." Foreground="{StaticResource TextPrimaryBrush}" FontSize="10.5" FontWeight="Bold" VerticalAlignment="Center"/>
+                                      AutomationProperties.HelpText="Bifat: Expert, numele tehnice rămân lângă cele simple. Nebifat: Simplu." Foreground="{StaticResource TextPrimaryBrush}" FontSize="12" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
+                    <!-- G3: one „Colectează tot” for the station's role; every page reuses the result -->
+                    <Button Content="Colectează tot" Command="{x:Static services:CollectAllState.Command}" Style="{StaticResource AccentButtonStyle}" Padding="10,5" Margin="0,0,10,0"
+                            AutomationProperties.HelpText="Colectare și analiză completă pentru rolul acestei stații; rezultatul este folosit de toate paginile."/>
                     <Button Content="Ce înseamnă?" Command="{Binding OpenGlossaryCommand}" Style="{StaticResource ActionButtonStyle}" Padding="10,5" Margin="0,0,10,0"
                             AutomationProperties.HelpText="Deschide glosarul: fiecare termen tehnic, cu numele pe înțelesul tuturor și o explicație scurtă."/>
 
                     <!-- Analyst Scratchpad Toggle -->
-                    <Button Content="Case Notes ▾" Command="{Binding ToggleAnalystDrawerCommand}" Style="{StaticResource ActionButtonStyle}" Padding="10,5"/>
+                    <Button Content="Notițe" Command="{Binding ToggleAnalystDrawerCommand}" Style="{StaticResource ActionButtonStyle}" Padding="10,5"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -152,11 +132,11 @@
                     <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Margin="8,10">
                         <StackPanel>
                             <!-- GROUP 0: HOME (WP5): the first page; the case answers, coverage matrix and the three starting intents -->
-                            <TextBlock Text="ACASĂ" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="12,10,0,6"/>
-                            <RadioButton Content="Acasă (caz, acoperire, pornire)" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="22" IsChecked="True"/>
+                            <TextBlock Text="Acasă" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="12,10,0,6"/>
+                            <RadioButton Content="Acasă" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="22" IsChecked="True"/>
 
                             <!-- WP18 S2: the pages of this PC's role, from the role profile (data); unavailable ones stay visible, disabled, with the reason -->
-                            <TextBlock Text="{Binding RoleProfile.Title}" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6" TextWrapping="Wrap"/>
+                            <TextBlock Text="Pagini principale" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6" TextWrapping="Wrap"/>
                             <ItemsControl ItemsSource="{Binding RoleNavigation}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
@@ -168,41 +148,42 @@
                             </ItemsControl>
 
                             <!-- Decision 5: every other page stays reachable under "Avansat" -->
-                            <Expander Header="Avansat (toate paginile)" IsExpanded="False" Foreground="{StaticResource TextMutedBrush}" FontSize="9.5" FontWeight="Bold" Margin="12,16,0,0"
+                            <Expander Header="Avansat (toate paginile)" IsExpanded="False" Foreground="{StaticResource TextMutedBrush}" FontSize="12" FontWeight="SemiBold" Margin="12,16,0,0"
                                       AutomationProperties.Name="Avansat: toate paginile aplicației">
                             <StackPanel Margin="-12,0,0,0">
                             <!-- GROUP 1: OPERATIONS -->
-                            <TextBlock Text="OPERATIONS" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6"/>
-                            <RadioButton Content="Command Dashboard" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="0"/>
-                            <RadioButton Content="Live Real-Time SOC" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="11" Visibility="{Binding IsNetworkMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                            <RadioButton Content="Threats &amp; Detections" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="3"/>
-                            <RadioButton Content="Incident Timeline" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="4"/>
+                            <TextBlock Text="Operațiuni" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6"/>
+                            <RadioButton Content="Panou general" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="0"/>
+                            <RadioButton Content="Monitorizare în timp real" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="11" Visibility="{Binding IsNetworkMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            <RadioButton Content="Amenințări și detecții" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="3"/>
+                            <RadioButton Content="Cronologia incidentului" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="4"/>
 
                             <!-- GROUP 2: INVESTIGATION -->
-                            <TextBlock Text="INVESTIGATION" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6"/>
+                            <TextBlock Text="Investigație" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6"/>
                             <RadioButton Content="{views:Term evtx}" ToolTip="{views:Term evtx, Tooltip=True}" AutomationProperties.Name="{views:Term evtx}" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="1"/>
-                            <RadioButton Content="Registry Forensics" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="2"/>
-                            <RadioButton Content="Explainable Risk AI" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="5"/>
-                            <RadioButton Content="Attack Storyline Lineage" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="6"/>
+                            <RadioButton Content="Analiza registrului Windows" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="2"/>
+                            <RadioButton Content="Analiza riscului" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="5"/>
+                            <RadioButton Content="Firul atacului" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="6"/>
 
                             <!-- GROUP 3: DETECTION & INTEL -->
-                            <TextBlock Text="DETECTION &amp; INTEL" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6"/>
-                            <RadioButton Content="Threat Intel &amp; suprapunere tehnici" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="7"/>
-                            <RadioButton Content="Standalone SAM &amp; USB Audit" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="8" Visibility="{Binding IsAirGappedMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                            <RadioButton Content="Active Directory &amp; ADAudit" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="8" Visibility="{Binding IsNetworkMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            <TextBlock Text="Detecție și informații" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6"/>
+                            <RadioButton Content="Informații despre amenințări" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="7"/>
+                            <RadioButton Content="Conturi locale și USB" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="8" Visibility="{Binding IsAirGappedMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            <RadioButton Content="Active Directory" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="8" Visibility="{Binding IsNetworkMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                             <RadioButton Content="{views:Term chain_of_custody, Suffix=' (NIS2)'}" ToolTip="{views:Term chain_of_custody, Tooltip=True}" AutomationProperties.Name="{views:Term chain_of_custody}" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="9"/>
-                            <RadioButton Content="MITRE ATT&amp;CK Matrix" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="10"/>
+                            <RadioButton Content="Tehnici de atac (MITRE ATT&amp;CK)" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="10"/>
 
                             <!-- GROUP 4: TELEMETRY & AUDIT -->
-                            <TextBlock Text="GOVERNANCE" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6"/>
-                            <RadioButton Content="Telemetry &amp; Collector" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="12"/>
+                            <TextBlock Text="Administrare" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6"/>
+                            <RadioButton Content="Colectare date" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="12"/>
                             <RadioButton Content="Izolare procese suspecte" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="13"/>
-                            <RadioButton Content="Control stație (utilizatori și admini)" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="14"/>
+                            <RadioButton Content="Control stație" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="14"/>
                             <RadioButton Content="Investigație domeniu și e-mail" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="15"/>
                             <RadioButton Content="Investigație completă (caz)" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="16"/>
                             <RadioButton Content="Politici (import, aprobare, aplicare)" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="17"/>
                             <RadioButton Content="Profil de proceduri" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="18"/>
                             <RadioButton Content="Registru medii" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="19"/>
+                            <RadioButton Content="Registrul de transferuri" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="23"/>
                             <RadioButton Content="Registru utilizatori" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="20"/>
                             <RadioButton Content="Autentificare și conturi" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="21"/>
                             </StackPanel>
@@ -212,9 +193,9 @@
 
                     <!-- Bottom Quick Intake Actions (Air-Gapped Mode) -->
                     <StackPanel Grid.Row="1" Margin="14,10" Visibility="{Binding IsAirGappedMode, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Button Content="Ingest Triage Folder" Command="{Binding LoadFolderCommand}" Margin="0,3"/>
-                        <Button Content="Load EVTX Files" Command="{Binding LoadFilesCommand}" Margin="0,3"/>
-                        <Button Content="Export Forensic CSV" Command="{Binding ExportCsvCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,3"/>
+                        <Button Content="Încarcă un folder de probe" Command="{Binding LoadFolderCommand}" Margin="0,3"/>
+                        <Button Content="Încarcă jurnale Windows" Command="{Binding LoadFilesCommand}" Margin="0,3"/>
+                        <Button Content="Exportă tabelul (CSV)" Command="{Binding ExportCsvCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,3"/>
                     </StackPanel>
 
                     <!-- Bottom Quick Actions (Network Live Mode) -->
@@ -223,20 +204,32 @@
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
                                     <Ellipse Width="6" Height="6" Fill="{StaticResource SuccessBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="MONITORIZARE LIVE JURNALE" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource SuccessBrush}"/>
+                                    <TextBlock Text="Monitorizare jurnale în timp real" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource SuccessBrush}"/>
                                 </StackPanel>
-                                <TextBlock Text="Urmărește jurnalele Windows ale stației (fără driver de kernel)." FontSize="9" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <TextBlock Text="Urmărește jurnalele Windows ale stației (fără driver de kernel)." FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
-                        <Button Content="Export Live Report" Command="{Binding ExportCsvCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,2"/>
+                        <Button Content="Exportă raportul" Command="{Binding ExportCsvCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,2"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
             <!-- CENTRAL CONTENT VIEW REGION -->
             <Grid Grid.Column="1" Background="{StaticResource WorkspaceBrush}">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                <!-- a medium that is not in the register was connected: shown on every page (owner 2026-10-11, „ceva viu”) -->
+                <Border Grid.Row="0" Background="#FDECEA" BorderBrush="{StaticResource CriticalBrush}" BorderThickness="0,0,0,1" Padding="16,8"
+                        Visibility="{Binding MediaCenter.HasAlert, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button Content="Vezi dispozitivul" Command="{Binding ShowMediaCenterCommand}" Margin="12,0,8,0"/>
+                            <Button Content="Am văzut" Command="{Binding MediaCenter.DismissAlertCommand}"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding MediaCenter.AlertText}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource CriticalBrush}" VerticalAlignment="Center"/>
+                    </DockPanel>
+                </Border>
                 <!-- TabControl Region Host (Bound to SelectedTabIndex & SelectedModuleIndex) -->
-                <TabControl SelectedIndex="{Binding SelectedTabIndex}" BorderThickness="0" Background="Transparent">
+                <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}" BorderThickness="0" Background="Transparent">
                     <TabControl.ItemContainerStyle>
                         <Style TargetType="TabItem">
                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -244,47 +237,49 @@
                     </TabControl.ItemContainerStyle>
 
                     <!-- 0: Command Dashboard -->
-                    <TabItem><views:DashboardView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:DashboardView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 1: EVTX Event Explorer -->
-                    <TabItem><views:EventExplorerView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:EventExplorerView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 2: Offline Registry Forensics -->
-                    <TabItem><views:RegistryForensicsView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:RegistryForensicsView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 3: Threats, Alerts & Sigma Workbench -->
-                    <TabItem><views:AlertsAndRulesView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:AlertsAndRulesView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 4: Incident Timeline Live -->
-                    <TabItem><views:IncidentTimelineView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:IncidentTimelineView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 5: Explainable Risk Analysis -->
-                    <TabItem><views:RiskAnalysisView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:RiskAnalysisView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 6: Attack Storyline & Kill Chain -->
-                    <TabItem><views:AttackStorylineView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:AttackStorylineView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 7: Threat Intel & APT Profiler -->
-                    <TabItem><views:ThreatIntelView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:ThreatIntelView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 8: Kerberos AD & LOLBAS -->
-                    <TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate>
                     <Grid>
                         <views:KerberosAndLateralMovementView Visibility="{Binding IsAirGappedMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                         <views:ActiveDirectoryAuditView Visibility="{Binding IsNetworkMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     </Grid>
-                </TabItem>
+                </DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 9: Chain of Custody & Provenance -->
-                    <TabItem><views:ChainOfCustodyView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:ChainOfCustodyView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 10: MITRE ATT&CK Enterprise Matrix -->
-                    <TabItem><views:MitreMatrixView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:MitreMatrixView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 11: Real-Time Live SOC Monitoring -->
-                    <TabItem><views:LiveSocView/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:LiveSocView/></DataTemplate></ctrl:LazyPage></TabItem>
                     <!-- 12: Telemetry & Forensic Triage Collector -->
-                    <TabItem><views:DataCollectionView/></TabItem>
-                <TabItem><ctrl:FeaturePlaceholder FeatureKey="Containment" Title="Izolare procese suspecte" ViewModel="{Binding Containment}"/></TabItem>
-                <TabItem><views:StationControlView DataContext="{Binding StationControl}"/></TabItem>
-                <TabItem><ctrl:FeaturePlaceholder FeatureKey="DomainInvestigation" Title="Investigație domeniu" ViewModel="{Binding DomainInvestigation}"/></TabItem>
-                <TabItem><views:InvestigationView DataContext="{Binding Investigation}"/></TabItem>
-                <TabItem><views:PolicyView DataContext="{Binding Policy}"/></TabItem>
-                <TabItem><views:ProcedureProfileView DataContext="{Binding ProcedureProfile}"/></TabItem>
-                <TabItem><views:RegisterView DataContext="{Binding MediaRegister}"/></TabItem>
-                <TabItem><views:RegisterView DataContext="{Binding UsersRegister}"/></TabItem>
-                <TabItem><views:AuthView DataContext="{Binding Auth}"/></TabItem>
+                    <TabItem><ctrl:LazyPage><DataTemplate><views:DataCollectionView/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><ctrl:FeaturePlaceholder FeatureKey="Containment" Title="Izolare procese suspecte" ViewModel="{Binding Containment}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><views:StationControlView DataContext="{Binding StationControl}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><ctrl:FeaturePlaceholder FeatureKey="DomainInvestigation" Title="Investigație domeniu" ViewModel="{Binding DomainInvestigation}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><views:InvestigationView DataContext="{Binding Investigation}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><views:PolicyView DataContext="{Binding Policy}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><views:ProcedureProfileView DataContext="{Binding ProcedureProfile}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><views:MediaCenterView DataContext="{Binding MediaCenter}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><views:RegisterView DataContext="{Binding UsersRegister}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><views:AuthView DataContext="{Binding Auth}"/></DataTemplate></ctrl:LazyPage></TabItem>
                 <!-- 22: Home (WP5) -->
-                <TabItem><views:HomeView DataContext="{Binding Home}"/></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><views:HomeView DataContext="{Binding Home}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <!-- 23: Registrul de transferuri (own page; shares the media register with MediaCenter) -->
+                <TabItem><ctrl:LazyPage><DataTemplate><views:TransferRegisterView DataContext="{Binding Transfer}"/></DataTemplate></ctrl:LazyPage></TabItem>
                 </TabControl>
             </Grid>
         </Grid>
@@ -329,7 +324,7 @@
             <Border Style="{StaticResource ModalDialogStyle}" Width="480" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <StackPanel>
                     <DockPanel LastChildFill="False" Margin="0,0,0,14">
-                        <TextBlock DockPanel.Dock="Left" Text="FORENSIC INGESTION &amp; ANALYSIS" Foreground="{StaticResource TextPrimaryBrush}" FontSize="13" FontWeight="Bold"/>
+                        <TextBlock DockPanel.Dock="Left" Text="Încărcare și analiză probe" Foreground="{StaticResource TextPrimaryBrush}" FontSize="13" FontWeight="Bold"/>
                         <TextBlock DockPanel.Dock="Right" Text="{Binding LoadingProgress, StringFormat='{}{0:F0}%'}" Foreground="{StaticResource PrimaryAccentBrush}" FontSize="16" FontWeight="Bold"/>
                     </DockPanel>
                     <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="12,8" Margin="0,0,0,14">

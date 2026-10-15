@@ -55,7 +55,8 @@ namespace LogAnalyzer.Infrastructure.Watchers
                 TrySubscribeChannel(session, "Windows PowerShell", "*", ref _classicPowerShellWatcher);
 
                 // 4. Canal System
-                TrySubscribeChannel(session, "System", "*[System[(EventID=7045)]]", ref _systemWatcher);
+                // 104 = a System-channel log was cleared: the live rule for it could never fire while only 7045 was subscribed (senior review L8)
+                TrySubscribeChannel(session, "System", "*[System[(EventID=7045 or EventID=104)]]", ref _systemWatcher);
 
                 _isRunning = true;
                 OnStatusChanged?.Invoke("🔴 Monitorizare în timp real ACTIVĂ. Se interceptează evenimente...");
@@ -88,6 +89,12 @@ namespace LogAnalyzer.Infrastructure.Watchers
             }
         }
 
+        private static string? TryXml(EventRecord rec)
+        {
+            try { return rec.ToXml(); }
+            catch (Exception ex) when (ex is EventLogException or InvalidOperationException) { return null; }
+        }
+
         private void Watcher_EventRecordWritten(object? sender, EventRecordWrittenEventArgs e)
         {
             if (e.EventRecord == null) return;
@@ -113,7 +120,9 @@ namespace LogAnalyzer.Infrastructure.Watchers
                     Level = rec.LevelDisplayName ?? "Information",
                     ProviderName = rec.ProviderName ?? "SecurityLog",
                     MachineName = rec.MachineName ?? Environment.MachineName,
-                    Message = message ?? $"Eveniment ID {rec.Id}"
+                    Message = message ?? $"Eveniment ID {rec.Id}",
+                    // the record's XML: who did it (SubjectUserName…), so log-clear subjects and field explanations work live too (senior review L9)
+                    XmlData = TryXml(rec),
                 };
 
                 OnEventReceived?.Invoke(parsed);

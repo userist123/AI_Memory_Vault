@@ -40,6 +40,49 @@ namespace LogAnalyzer.UI.ViewModels
 
         public string Operator => _bench.Operator;
 
+        // Owner 2026-10-11: one "next step" with its reason, instead of ten buttons the operator has to know the order of.
+        [ObservableProperty] private PolicyNextStep _nextStep = PolicyNextStep.For(false, null, "", false, false, 0, false);
+        partial void OnApprovalReasonChanged(string value) => UpdateNextStep();
+
+        private void UpdateNextStep() =>
+            NextStep = PolicyNextStep.For(_policy is not null, _policy is null ? null : _bench.Store.Get(_policy), _bench.Operator,
+                                          !string.IsNullOrWhiteSpace(ApprovalReason), _plan is not null, _plan?.ToChange ?? 0, _registryWriter is not null);
+
+        [RelayCommand]
+        private async Task DoNextStep()
+        {
+            switch (NextStep.Kind)
+            {
+                case PolicyStepKind.Open: OpenFile(); break;
+                case PolicyStepKind.Register: Register(); break;
+                case PolicyStepKind.Validate: Validate(); break;
+                case PolicyStepKind.DryRun: await DryRun(); break;
+                case PolicyStepKind.Approve: if (NextStep.CanAct) Approve(); else Status = NextStep.Text; break;
+                case PolicyStepKind.ComputePlan: await ComputePlan(); break;
+                case PolicyStepKind.Apply: ApplyPlan(); break;
+                case PolicyStepKind.Assess: await AssessAgainstPolicy(); break;
+                default: Status = NextStep.Text; break;
+            }
+            UpdateNextStep();
+        }
+
+        // Plain-language explanation of the selected plan row (owner 2026-10-12: „ce face fiecare politică în parte"): what the setting does, why it
+        // matters on an isolated station, the recommended value, what the opened policy requires, what the current value means and where it is set.
+        [ObservableProperty] private ControlPlan? _selectedPlanRow;
+        [ObservableProperty] private PolicySettingExplanation? _selectedSettingExplanation;
+        public bool HasSelectedSetting => SelectedSettingExplanation is not null;
+        partial void OnSelectedPlanRowChanged(ControlPlan? value) =>
+            SelectedSettingExplanation = value is null ? null : PolicySettingCatalogue.Explain(value);
+        partial void OnSelectedSettingExplanationChanged(PolicySettingExplanation? value) => OnPropertyChanged(nameof(HasSelectedSetting));
+
+        [RelayCommand]
+        private void CopyExplanation()
+        {
+            if (SelectedSettingExplanation is null) { Status = "Alegeți întâi o setare din plan."; return; }
+            try { Clipboard.SetText(SelectedSettingExplanation.ToPlainText()); Status = "Explicația a fost copiată; o puteți lipi în procesul-verbal."; }
+            catch (System.Runtime.InteropServices.COMException) { Status = "Clipboard-ul este ocupat de alt program; încercați din nou."; }
+        }
+
         /// <param name="registryWriter">Null in the classified edition: policies can be opened, validated and compared but not applied to the registry.</param>
         public PolicyViewModel(LogAnalyzer.Dfir.Windows.Policy.IRegistryValueWriter? registryWriter = null)
         {
@@ -93,7 +136,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task DryRun()
         {
-            if (_policy is null) { Status = "Deschideți întâi o politică."; return; }
+            if (_policy is null) { Status = "Ca să faceți acest pas, deschideți întâi politica: butonul „Deschide politica…” de sus."; return; }
             var p = _policy;
             IsBusy = true;
             try
@@ -110,7 +153,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task ComputePlan()
         {
-            if (_policy is null) { Status = "Deschideți întâi o politică."; return; }
+            if (_policy is null) { Status = "Ca să faceți acest pas, deschideți întâi politica: butonul „Deschide politica…” de sus."; return; }
             var p = _policy;
             IsBusy = true;
             try
@@ -125,7 +168,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ApplyPlan()
         {
-            if (_policy is null || _plan is null) { Status = "Calculați întâi planul."; return; }
+            if (_policy is null || _plan is null) { Status = "Ca să aplicați, calculați întâi planul: butonul „Calculează planul” arată exact ce se va schimba."; return; }
             if (_plan.ToChange == 0) { Status = "Planul nu are nicio modificare de aplicat."; return; }
             var text = $"Se vor modifica {_plan.ToChange} setări pe {_plan.Station} ca {_bench.Operator}.\n" +
                        $"Politica {_plan.PolicyId} {_plan.PolicyVersion}\nSHA-256 politică: {_plan.PolicySha256}\nSHA-256 plan: {_plan.Sha256}\n\n" +
@@ -165,7 +208,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         private async Task Assess(string? mapping)
         {
-            if (_policy is null) { Status = "Deschideți întâi o politică."; return; }
+            if (_policy is null) { Status = "Ca să faceți acest pas, deschideți întâi politica: butonul „Deschide politica…” de sus."; return; }
             var p = _policy;
             IsBusy = true;
             try
@@ -202,6 +245,8 @@ namespace LogAnalyzer.UI.ViewModels
             _plan = plan;
             PlanRows.Clear();
             foreach (var c in plan.Controls) PlanRows.Add(c);
+            SelectedPlanRow = PlanRows.FirstOrDefault();
+            UpdateNextStep();
             PlanSummary = $"Conforme {plan.Compliant} · de modificat {plan.ToChange} · manual {plan.Manual} · necitite {plan.Unreadable}";
         }
 
@@ -213,7 +258,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         private void WithPolicy(Func<PolicyDocument, string> action)
         {
-            if (_policy is null) { Status = "Deschideți întâi o politică."; return; }
+            if (_policy is null) { Status = "Ca să faceți acest pas, deschideți întâi politica: butonul „Deschide politica…” de sus."; return; }
             var p = _policy;
             Step(() => action(p));
         }
@@ -221,7 +266,7 @@ namespace LogAnalyzer.UI.ViewModels
         private void Step(Func<string> action)
         {
             try { Status = action(); }
-            catch (Exception ex) when (ex is PolicyLifecycleException or FormatException or InvalidDataException or NotSupportedException or IOException
+            catch (Exception ex) when (ex is PolicyLifecycleException or LogAnalyzer.Dfir.Auth.HostChangeNotAuthorizedException or FormatException or InvalidDataException or NotSupportedException or IOException
                                           or UnauthorizedAccessException or YamlDotNet.Core.YamlException)
             {
                 Status = "Oprit: " + ex.Message;
@@ -232,6 +277,7 @@ namespace LogAnalyzer.UI.ViewModels
         private void Refresh()
         {
             OnPropertyChanged(nameof(Operator));
+            UpdateNextStep();
             History.Clear();
             if (_policy is null) { PolicyInfo = "Nicio politică deschisă."; return; }
             var rec = _bench.Store.Get(_policy);

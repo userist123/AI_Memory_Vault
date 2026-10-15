@@ -177,7 +177,7 @@ public sealed class EvidenceGraph
                     if (e.Path.Length > 0)
                     {
                         var file = g.Add("File", e.Path);
-                        g.Link(file, RelationType.Persisted, task, e, reason: "comanda unui task programat");
+                        g.Link(file, RelationType.Persisted, task, e, reason: "comanda unei activități planificate");
                         Note(e, file);
                     }
                     Note(e, task);

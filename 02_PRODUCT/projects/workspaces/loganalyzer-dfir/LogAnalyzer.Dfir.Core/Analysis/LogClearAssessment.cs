@@ -84,8 +84,14 @@ public static class LogClearAssessment
         static string Field(string? x, string name)
         {
             if (string.IsNullOrEmpty(x)) return "";
-            var m = System.Text.RegularExpressions.Regex.Match(x, $"(?:<Data\\s+Name=\"{name}\"\\s*>|<{name}>)([^<]*)<", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-            return m.Success ? System.Net.WebUtility.HtmlDecode(m.Groups[1].Value).Trim() : "";
+            var n = System.Text.RegularExpressions.Regex.Escape(name);
+            try
+            {
+                var m = System.Text.RegularExpressions.Regex.Match(x, $"(?:<Data\\s+Name=\"{n}\"\\s*>|<{n}>)([^<]*)<", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.NonBacktracking,
+                    RegexDefaults.RuleMatchTimeout);   // linear engine; a timeout leaves the subject unknown (""), it is not a detection decision
+                return m.Success ? System.Net.WebUtility.HtmlDecode(m.Groups[1].Value).Trim() : "";
+            }
+            catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return ""; }
         }
         return (Field(xml, "SubjectUserName"), Field(xml, "SubjectDomainName"));
     }
@@ -123,24 +129,28 @@ public static class LogClearAssessment
     /// service stops), or the first System 6005 (next boot) follows within 10 minutes, or an approved account does it inside a maintenance
     /// window. Otherwise NotAssessed (Medium) without a procedure profile and Unexpected (High) with one.
     /// </summary>
+    /// <summary>The shutdown / restart record that makes a Security 1100 at <paramref name="stopUtc"/> part of an orderly shutdown; null when there is none.</summary>
+    public static SystemLifecycleEvent? ShutdownPair(DateTimeOffset stopUtc, IReadOnlyList<SystemLifecycleEvent> systemEvents) =>
+        systemEvents.Where(e => e.EventId is 1074 or 6006 && (e.TimeUtc - stopUtc).Duration() <= ShutdownPairingWindow)
+                    .OrderBy(e => (e.TimeUtc - stopUtc).Duration()).FirstOrDefault()
+        ?? systemEvents.Where(e => e.EventId == 6005 && e.TimeUtc >= stopUtc && e.TimeUtc - stopUtc <= ShutdownPairingWindow)
+                       .OrderBy(e => e.TimeUtc).FirstOrDefault();
+
     public static LogClearAssessmentItem AssessServiceStop(ServiceStopEvent stop, LogMaintenancePolicy? policy, IReadOnlyList<SystemLifecycleEvent> systemEvents)
     {
         var clear = new LogClearEvent("Security (1100)", stop.TimeUtc, stop.SubjectUser, stop.SubjectDomain);
-        var pair = systemEvents.Where(e => e.EventId is 1074 or 6006 && (e.TimeUtc - stop.TimeUtc).Duration() <= ShutdownPairingWindow)
-                               .OrderBy(e => (e.TimeUtc - stop.TimeUtc).Duration()).FirstOrDefault()
-                   ?? systemEvents.Where(e => e.EventId == 6005 && e.TimeUtc >= stop.TimeUtc && e.TimeUtc - stop.TimeUtc <= ShutdownPairingWindow)
-                                  .OrderBy(e => e.TimeUtc).FirstOrDefault();
+        var pair = ShutdownPair(stop.TimeUtc, systemEvents);
         if (pair is not null)
             return new(clear, LogClearLifecycle.Routine, [], Severity.Info,
-                $"serviciul de jurnalizare oprit (Security 1100) la {stop.TimeUtc:yyyy-MM-dd HH:mm} UTC, în cadrul unei opriri/reporniri a sistemului (System {pair.EventId} la {pair.TimeUtc:yyyy-MM-dd HH:mm} UTC): planificată.");
+                $"Serviciul de jurnalizare oprit (Security 1100) la {stop.TimeUtc:yyyy-MM-dd HH:mm} UTC, în cadrul unei opriri/reporniri a sistemului (System {pair.EventId} la {pair.TimeUtc:yyyy-MM-dd HH:mm} UTC): planificată.");
         if (policy is not null && ApprovedInWindow(stop.TimeUtc, stop.SubjectUser, stop.SubjectDomain, policy))
             return new(clear, LogClearLifecycle.Routine, [], Severity.Info,
-                $"serviciul de jurnalizare oprit (Security 1100) la {stop.TimeUtc:yyyy-MM-dd HH:mm} UTC de un cont aprobat, în fereastra de mentenanță: planificată.");
+                $"Serviciul de jurnalizare oprit (Security 1100) la {stop.TimeUtc:yyyy-MM-dd HH:mm} UTC de un cont aprobat, în fereastra de mentenanță: planificată.");
         return policy is null
             ? new(clear, LogClearLifecycle.NotAssessed, [], Severity.Medium,
-                $"serviciul de jurnalizare oprit (Security 1100) la {stop.TimeUtc:yyyy-MM-dd HH:mm} UTC fără o oprire/repornire a sistemului în ±10 min; necesită verificare: nu există profil de procedură care să arate dacă oprirea a fost planificată.")
+                $"Serviciul de jurnalizare oprit (Security 1100) la {stop.TimeUtc:yyyy-MM-dd HH:mm} UTC fără o oprire/repornire a sistemului în ±10 min; necesită verificare: nu există profil de procedură care să arate dacă oprirea a fost planificată.")
             : new(clear, LogClearLifecycle.Unexpected, [], Severity.High,
-                $"serviciul de jurnalizare oprit (Security 1100) la {stop.TimeUtc:yyyy-MM-dd HH:mm} UTC fără o oprire/repornire a sistemului în ±10 min și fără un cont aprobat în fereastra de mentenanță: neașteptată.");
+                $"Serviciul de jurnalizare oprit (Security 1100) la {stop.TimeUtc:yyyy-MM-dd HH:mm} UTC fără o oprire/repornire a sistemului în ±10 min și fără un cont aprobat în fereastra de mentenanță: neașteptată.");
     }
 
     /// <summary>

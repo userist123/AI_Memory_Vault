@@ -48,14 +48,14 @@ spec §26: OBSERVED (probă directă), CORRELATED, INFERRED (candidat), UNPROVEN
 - `Find(type, text)` — căutare de entitate.
 - `Snapshot(caseId)` — JSON determinist, cu hash.
 
-## Ce arată pe cazul NanAgent (test de corpus)
+## Ce arată pe cazul VendorAgent (test de corpus)
 
 - `mailjilq.tzd4is.cyou` (pagina) și `…192169503.com` (URL-ul final `blob:`) → DOWNLOADED → `SamFw_FRP_Tool_…_302044.zip` (DIRECT, Chrome).
 - `…\DOWNLOADS\SAMFW_FRP_TOOL_V5.9_SETUP_DOWNLOAD_LATES_ARCHIVE_FILE_302044\SETUP.EXE` → DERIVED_FROM → arhiva (CORRELATED, DOWNLOAD-THEN-EXEC).
-- MSIEXEC.EXE → LOADED → BOOTSTRAP_7D57.CMD (DIRECT, Prefetch).
-- `Behavior:Win32/GenCodeInjected.H` → DETECTED → NanAgent32.exe (DIRECT, Defender).
+- MSIEXEC.EXE → LOADED → VENDOR_HELPER.CMD (DIRECT, Prefetch).
+- `Behavior:Win32/GenCodeInjected.H` → DETECTED → VendorAgent32.exe (DIRECT, Defender).
 
-**Nu există** o muchie directă SETUP.EXE → NanAgent32.exe: nicio probă din corpus nu o arată (Prefetch-ul lui SETUP.EXE nu face referire la NanAgent32.exe). Cele două sunt legate doar prin lanțul de incident, adică o corelare în timp. Graful păstrează această diferență.
+**Nu există** o muchie directă SETUP.EXE → VendorAgent32.exe: nicio probă din corpus nu o arată (Prefetch-ul lui SETUP.EXE nu face referire la VendorAgent32.exe). Cele două sunt legate doar prin lanțul de incident, adică o corelare în timp. Graful păstrează această diferență.
 
 ## Domeniu (P9)
 

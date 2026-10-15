@@ -17,6 +17,10 @@ public sealed class Wp14Input
     public Wp14Data? Data { get; init; }
     /// <summary>The zone the analysed system is in, as entered by the operator; "" = not stated.</summary>
     public string SystemZone { get; init; } = "";
+    /// <summary>What the facts collector read from the station (adapters, burn tooling, printers, screenshots, virtual machines, archivers, camera / microphone); null = not collected.</summary>
+    public AirGapFacts? Facts { get; init; }
+    /// <summary>E1: evidence id → origin label for sources that are not the current system (archived log, Windows.old, shadow copy); see <see cref="EvidenceOrigin"/>.</summary>
+    public IReadOnlyDictionary<string, string>? EvidenceOrigins { get; init; }
 }
 
 /// <summary>
@@ -34,8 +38,14 @@ public static partial class Wp14Rules
         var c = new Ctx(events, nextId, input, input.Data ?? Wp14Data.Default);
         var found = new List<Finding>();
         Media(c, found);
+        MediaUsageFindings(c, found);
+        DeletedTraceFindings(c, found);
+        HistoryFindings(c, found);        // E1: every source, earliest evidence first
+        AfterConnectFindings(c, found);   // E5: what followed each connection (linked to the medium's findings above)
         Optical(c, found);
         AirGap(c, found);
+        Channels(c, found);
+        PayloadFindings(c, found);        // P1: shortcuts and hidden folders on media, execution from media, Startup folder, Run-dialog commands
         return found;
     }
 
@@ -46,6 +56,9 @@ public static partial class Wp14Rules
         public Wp14Input Input { get; } = input;
         public CaseScope Scope => Input.Scope;
         public Wp14Data Data { get; } = data;
+        public AirGapFacts? Facts => Input.Facts;
+        /// <summary>True when the time is inside the case period (an open end is open); an unknown time is not inside.</summary>
+        public bool InPeriod(DateTimeOffset? t) => t is { } x && (Scope.PeriodFromUtc is not { } a || x >= a) && (Scope.PeriodToUtc is not { } b || x <= b);
         public bool Classified => Scope.Classification == ClassificationLevel.Classified;
         public bool AirGapScope => Scope.Network is NetworkCategory.AirGappedNetwork or NetworkCategory.StandalonePc;
         public ProcedureProfile? Profile => Input.Profile;

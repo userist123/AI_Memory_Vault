@@ -49,7 +49,7 @@ namespace LogAnalyzer.UI.Tests
         public void Related_events_are_found_through_the_logon_session_and_stay_inside_the_time_window()
         {
             var t = new DateTime(2026, 9, 20, 10, 0, 0, DateTimeKind.Utc);
-            var logon = Security(4624, t, D("TargetUserName", "marius") + D("TargetLogonId", "0x8a3f21") + D("LogonType", "2"));
+            var logon = Security(4624, t, D("TargetUserName", "analyst") + D("TargetLogonId", "0x8a3f21") + D("LogonType", "2"));
             var proc = Security(4688, t.AddMinutes(3), D("SubjectLogonId", "0x8a3f21") + D("NewProcessName", @"C:\ProgramData\x\agent.exe"));
             var late = Security(4688, t.AddHours(2), D("SubjectLogonId", "0x8a3f21"));
             var other = Security(4688, t.AddMinutes(1), D("SubjectLogonId", "0x111"));

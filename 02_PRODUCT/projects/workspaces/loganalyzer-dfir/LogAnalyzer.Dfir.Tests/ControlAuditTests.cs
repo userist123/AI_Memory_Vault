@@ -79,7 +79,7 @@ public class ControlAuditTests
         Assert.Equal(ControlStatus.DeVerificat, Check(r, "C03").Status);            // builtin admin enabled
 
         var d01 = Check(r, "D01");
-        Assert.Contains("1 conectări", d01.Detail);                                // internal NVMe (bus 17) excluded
+        Assert.Contains("o conectare înregistrată", d01.Detail);                              // internal NVMe (bus 17) excluded
         Assert.Contains(r.Actions, a => a.Action == "a șters un jurnal" && a.Who.EndsWith("ion"));
         Assert.Contains(r.Actions, a => a.Action == "a adăugat în grupul local" && a.Detail.Contains("Administrators"));
         Assert.Contains(r.Actions, a => a.Action == "serviciu nou instalat" && a.Detail.Contains("UpdSvc"));

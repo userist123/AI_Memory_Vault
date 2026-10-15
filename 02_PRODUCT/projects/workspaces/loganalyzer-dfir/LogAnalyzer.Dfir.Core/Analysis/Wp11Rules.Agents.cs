@@ -95,12 +95,12 @@ public static partial class Wp11Rules
             o.Add(new Finding
             {
                 FindingId = c.NextId(), RuleId = "SECURITY-AGENT-STOPPED",
-                Title = $"{agent.Name} ({agent.Kind}) {ActionText(action)}" + (items.Count > 1 ? $" — {items.Count} evenimente" : ""),
+                Title = $"{agent.Name} ({agent.Kind}) {ActionText(action)}" + (items.Count > 1 ? $" — {LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "eveniment", "evenimente")}" : ""),
                 Severity = sev, Category = "Defense Evasion", Classification = corroborating.Count > 0 ? Classification.Correlated : Classification.Direct,
                 Confidence = Confidence.High, MitreTechniqueId = "T1562.001",
                 FirstSeenUtc = T(items[0].Event), LastSeenUtc = T(items[^1].Event), User = F(items[0].Event, "AccountName", "SubjectUserName"),
-                Description = $"{agent.Name}: {ActionText(action)} — {items.Count} evenimente, {Time(T(items[0].Event))}" + (items.Count > 1 ? $" – {Time(T(items[^1].Event))}" : "") + $". Detalii: {Join(items.Select(h => h.Detail), 4)}." +
-                              (action == AgentAction.Installed && sev == Severity.Medium ? " Imaginea serviciului este într-o locație scriabilă de utilizatori: posibilă suprapunere de nume (nu s-a verificat semnătura)." : "") +
+                Description = $"{agent.Name}: {ActionText(action)} — {LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "eveniment", "evenimente")}, {Time(T(items[0].Event))}" + (items.Count > 1 ? $" – {Time(T(items[^1].Event))}" : "") + $". Detalii: {Join(items.Select(h => h.Detail), 4)}." +
+                              (action == AgentAction.Installed && sev == Severity.Medium ? " Imaginea serviciului este într-o locație în care utilizatorii pot scrie: posibilă suprapunere de nume (nu s-a verificat semnătura)." : "") +
                               (corroborating.Count > 0 ? $" Constatări High în ±{c.Options.CorroborationWindow.TotalMinutes:0} min: {Join(corroborating.Select(f => f.Title), 3)}." : "") +
                               " Evenimentul nu arată cine sau de ce.",
                 ClassificationReason = "Evenimente de serviciu/produs (System 7036/7040/7045, Sysmon 4/16, MsiInstaller 1034/11724) pentru un produs din lista de agenți cunoscuți. Distinct de DEF-TAMPER (jurnalul Defender).",

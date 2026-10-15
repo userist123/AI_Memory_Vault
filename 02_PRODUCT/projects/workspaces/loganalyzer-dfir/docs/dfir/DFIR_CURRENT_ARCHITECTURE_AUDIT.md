@@ -63,10 +63,10 @@ The WPF editions then consume these services (Phase 12) through new views, witho
 
 | Corpus | Path | Notes |
 |---|---|---|
-| Full case 2026-10-03/04 | `D:\FORENSIC_CASE` | 170 raw EVTX, Defender, Prefetch (305), SRUM, MSI, PCAPNG, ETW, hives, tasks, browser history copies, SHA256 manifest |
-| V11 collection | `C:\Users\Marius\Desktop\New folder (3)\NanAgent-Forensic-V11_20261003_221532` | Collection named in the spec |
+| Full case 2026-10-03/04 | `D:\LAB_CORPUS` | 170 raw EVTX, Defender, Prefetch (305), SRUM, MSI, PCAPNG, ETW, hives, tasks, browser history copies, SHA256 manifest |
+| V11 collection | `<director local>VendorAgent-Forensic-V11_20261003_221532` | Collection named in the spec |
 
-Tests that need the corpus are skipped (not failed) when it is absent, so CI stays green on other machines. Expected artifacts live in `LogAnalyzer.Dfir.Tests/Corpus/NanAgentCase/targets.json` and are never hard-coded in production code (§73).
+Tests that need the corpus are skipped (not failed) when it is absent, so CI stays green on other machines. Expected artifacts live in `LogAnalyzer.Dfir.Tests/Corpus/VendorAgentCase/targets.json` and are never hard-coded in production code (§73).
 
 ## 5. Planned modifications (phase order per §166)
 

@@ -9,6 +9,18 @@
                        Text="Utilizatorii se autentifică cu cardul (smart card cu contacte, în slotul tastaturii) și PIN-ul, gestionate de SafeNet Authentication Client. Aplicația nu vede PIN-ul. Administratorul principal se poate autentifica oricând și cu cont + parolă. Fiecare acțiune de aici intră în auditul înlănțuit prin hash al autentificării."/>
             <TextBlock Text="{Binding Status}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
+            <!-- offline update of the detection lists -->
+            <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,10">
+                <StackPanel>
+                    <TextBlock Text="Actualizarea listelor de detecție" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{Binding DataPackLine}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,6"/>
+                    <TextBlock Text="Pachetul (.zip) vine semnat de la administratorul aplicației, pe un mediu înregistrat. Aplicația verifică semnătura, versiunea și amprenta fiecărui fișier; nu rulează nimic din pachet."
+                               TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                    <Button Content="Importă pachetul de date…" Command="{Binding ImportDataPackCommand}" HorizontalAlignment="Left"/>
+                    <TextBlock Text="{Binding DataPackStatus}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,6,0,0"/>
+                </StackPanel>
+            </Border>
+
             <!-- Own card -->
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,10">
                 <StackPanel>

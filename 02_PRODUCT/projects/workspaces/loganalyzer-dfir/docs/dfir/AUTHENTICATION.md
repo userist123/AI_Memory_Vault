@@ -61,6 +61,19 @@ icacls "%PROGRAMDATA%\LogAnalyzer\auth" /inheritance:r /grant:r "*S-1-5-32-544:(
 
 (S-1-5-32-544 = Administrators, S-1-5-18 = SYSTEM, S-1-5-32-545 = Users, read only.)
 
+**Checked at every start (security audit #4).** The application reads the owner and DACL of the folder and of everything in it. If the owner is not
+Administrators/SYSTEM or anyone else has a write-type right (write/append/delete/change permissions/take ownership, including generic rights on
+inherit-only entries; CREATOR OWNER is ignored), the sign-in window shows **"magazia de conturi neprotejată"** with the details, and sign-in is refused.
+An administrator may continue only by ticking the explicit acknowledgement (password or administrator card); `auth.store_unprotected_ack` is written to
+the audit with the details. Operators are always refused until IT applies the command above.
+
+**Sealed audit head.** `auth_audit.jsonl.head` holds the last sequence number and hash of the auth audit with an HMAC-SHA256 made with
+`audit_chain.key` (32 random bytes, DPAPI LocalMachine, file DACL Administrators + SYSTEM only). Verification requires the chain to end exactly at the
+sealed head, so someone who can write the folder but cannot read the key can no longer append a recomputed entry (for example after editing
+`accounts.json`): the audit shows as broken and card sign-in is refused. On the first start with this version the existing intact chain is sealed once
+(`auth.chain_sealed`). After a break, only the primary administrator's audited "accept current state" reseals it. Without a readable key (application
+not started from an administrator account) nothing is written to the audit and sign-in fails with that cause.
+
 Every sign-in writes the auth audit, so LogAnalyzer is started from **Windows accounts in the local Administrators group** (live collection
 needs it anyway; the manifest `highestAvailable` elevates them). Started from a standard account, the sign-in window refuses with the cause
 ("folderul de autentificare nu poate fi scris") and nobody is signed in.
@@ -98,7 +111,19 @@ The administrator must re-import before `nextUpdate`; an expired CRL counts as a
 | Analysis, cases, reports, read of registers/profile | yes | yes |
 | Edit/import/save media register, users register, procedure profile | **no** | yes |
 | Users, cards, roles, trust store, CRLs, authentication parameters | no (own card enrolment only) | yes |
+| Policies: open, register, validate, dry run, plan (read-only) | yes | yes |
+| Policies: approve, apply, roll back (unclassified edition) | **no** | yes; the account that **approved** a policy version cannot also **apply** it (a second administrator applies) |
+| Contain / release a program (firewall rule per program, process suspension) | **no** | yes |
+| Isolate the station / lift isolation / block an IoC address | **no** | yes |
+| Change the station audit policy (auditpol, blocked-connection auditing) | **no** | yes |
+
 The gate is enforced in `RegisterStore.Save` and `ProfileStore.Save` (core), not only in the UI; the authentication service re-checks the role on every admin call.
+Station-changing actions are gated in the core too (`OperatorIdentity.RequireHostChange` / `MayChangeHost`): `PolicyStore.Approve`,
+`PolicyExecutor.Apply` / `Rollback`, `ProcessContainmentService.Contain` / `Release`, `SystemDefenseExecutionService` (isolate, restore,
+block IoC: status `NOT_AUTHORIZED`) and `AuditPolicyChange`. A refused action writes nothing and says so in Romanian. Windows elevation is still
+required on top of the role. The policy workbench records the signed-in application account (not the Windows account) as registrar,
+approver and applier, so two people sharing a Windows session are still distinct; the policy approver must differ from the author/registrar
+and from the applier.
 
 ## Session lock
 - Inactivity lock (default 10 min, 1..480) for **every** session.

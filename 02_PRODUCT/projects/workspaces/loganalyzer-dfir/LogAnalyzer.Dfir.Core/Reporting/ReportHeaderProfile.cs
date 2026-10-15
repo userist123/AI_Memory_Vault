@@ -51,10 +51,10 @@ public sealed class ReportHeaderProfile
 public sealed class ReportHeaderField { public string Label { get; set; } = ""; public string Value { get; set; } = ""; }
 
 /// <summary>"Pentru cine este raportul?" (UX contract §15): the audience chooses the sections, never the facts.</summary>
-public enum ReportAudience { Management, ItSecurity, Forensic, IncidentResponse, Audit, Everything }
+public enum ReportAudience { Management, ItSecurity, Forensic, IncidentResponse, Audit, Legal, Everything }
 
 /// <summary>Sections of the investigation report, by number as the PDF prints them.</summary>
-public enum ReportSection { IncidentChains = 1, Gaps = 2, Findings = 3, EvidenceCollected = 4, Detections = 5, AntiForensics = 6, PolicyTimeline = 7, Integrity = 8 }
+public enum ReportSection { IncidentChains = 1, Gaps = 2, Findings = 3, EvidenceCollected = 4, Detections = 5, AntiForensics = 6, PolicyTimeline = 7, Integrity = 8, LegalNotes = 9 }
 
 public static class ReportAudiences
 {
@@ -67,16 +67,18 @@ public static class ReportAudiences
         ReportAudience.Forensic => "Pentru investigație criminalistică",
         ReportAudience.IncidentResponse => "Pentru răspuns la incident",
         ReportAudience.Audit => "Pentru audit / conformitate",
+        ReportAudience.Legal => "Pentru consilier juridic",
         _ => "Tot (raport complet)",
     };
 
     public static string Description(ReportAudience a) => a switch
     {
-        ReportAudience.Management => "Ce s-a întâmplat, golurile de probă și constatările pe scurt (cu ce lipsește și ce limitează concluziile); fără detalii tehnice.",
-        ReportAudience.ItSecurity => "Lanțul incidentului, constatările cu probe, detecțiile și golurile; fără integritatea probă cu probă.",
-        ReportAudience.Forensic => "Totul, cu accent pe probe: colectare, parsare, integritate, goluri, anti-forensics.",
-        ReportAudience.IncidentResponse => "Lanțul incidentului, constatările, detecțiile și golurile, ca să se decidă următorii pași.",
-        ReportAudience.Audit => "Probele colectate, golurile, cronologia politicilor și integritatea; constatările pe scurt.",
+        ReportAudience.Management => "Ce s-a întâmplat, sursele lipsă sau incomplete și constatările pe scurt (cu ce lipsește și ce limitează concluziile); fără detalii tehnice.",
+        ReportAudience.ItSecurity => "Lanțul incidentului, constatările cu probe, detecțiile și sursele lipsă; fără integritatea element de probă cu element de probă.",
+        ReportAudience.Forensic => "Totul, cu accent pe probe: colectare, citire și interpretare, integritate, surse lipsă, ascunderea sau ștergerea urmelor.",
+        ReportAudience.IncidentResponse => "Lanțul incidentului, constatările, detecțiile și sursele lipsă, ca să se decidă următorii pași.",
+        ReportAudience.Audit => "Probele colectate, sursele lipsă, cronologia politicilor și integritatea; constatările pe scurt.",
+        ReportAudience.Legal => "Aceleași secțiuni ca raportul complet, fără listele brute (detecții, colectare), plus notele juridice: ce poate și ce nu poate dovedi raportul.",
         _ => "Toate secțiunile raportului.",
     };
 
@@ -95,11 +97,12 @@ public static class ReportAudiences
             ReportAudience.ItSecurity => new[] { ReportSection.Detections },
             ReportAudience.IncidentResponse => new[] { ReportSection.Detections },
             ReportAudience.Audit => new[] { ReportSection.EvidenceCollected, ReportSection.PolicyTimeline, ReportSection.Integrity },
+            ReportAudience.Legal => new[] { ReportSection.PolicyTimeline, ReportSection.Integrity, ReportSection.LegalNotes },
             _ => Enum.GetValues<ReportSection>(),
         };
         return new HashSet<ReportSection>(Always.Concat(extra));
     }
 
     /// <summary>Full (Forensic / Everything) reports print every finding; the others keep the findings short.</summary>
-    public static bool FindingsInFull(ReportAudience a) => a is ReportAudience.Forensic or ReportAudience.Everything or ReportAudience.ItSecurity or ReportAudience.IncidentResponse;
+    public static bool FindingsInFull(ReportAudience a) => a is ReportAudience.Forensic or ReportAudience.Legal or ReportAudience.Everything or ReportAudience.ItSecurity or ReportAudience.IncidentResponse;
 }

@@ -7,6 +7,8 @@ namespace LogAnalyzer.Core.Interfaces
         public const string NotVerified = "NOT_VERIFIED";
         public const string Failed = "FAILED";
         public const string Rejected = "REJECTED";
+        /// <summary>The signed-in account may not change the station (operator role); nothing was attempted.</summary>
+        public const string NotAuthorized = "NOT_AUTHORIZED";
         /// <summary>The capability is not part of this edition (nothing was attempted).</summary>
         public const string Unavailable = "UNAVAILABLE";
 

@@ -64,7 +64,7 @@ namespace LogAnalyzer.UI.Views.Controls
         {
             FrameworkElement? view = null;
             if (ViewModel is { } vm && FeatureKey.Length > 0)
-                view = global::LogAnalyzer.UI.App.ServiceProvider?.GetService<IFeatureViewFactory>()?.CreateView(FeatureKey, vm);
+                view = global::LogAnalyzer.UI.AppComposition.ServiceProvider?.GetService<IFeatureViewFactory>()?.CreateView(FeatureKey, vm);
             Content = view ?? Notice(Title);
         }
 

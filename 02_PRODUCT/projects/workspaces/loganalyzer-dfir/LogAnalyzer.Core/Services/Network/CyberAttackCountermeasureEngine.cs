@@ -317,7 +317,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 playbook.AttackCategory = "⚠️ Incident Cibernetic & Activitate Suspectă";
                 playbook.ImmediateObjective = "Limitarea accesului atacatorului, colectarea artefactelor de memorie și blocarea persistenței.";
-                playbook.ForensicsGuidance = "Verificați cheile de autorun din Registru (Run/RunOnce) și Task-urile programate (Scheduled Tasks).";
+                playbook.ForensicsGuidance = "Verificați cheile de autorun din Registru (Run/RunOnce) și Activitățile planificate (Scheduled Tasks).";
 
                 playbook.Actions.Add(new CountermeasureAction
                 {

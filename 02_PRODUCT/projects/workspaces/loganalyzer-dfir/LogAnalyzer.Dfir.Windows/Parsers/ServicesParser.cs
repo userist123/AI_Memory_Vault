@@ -41,7 +41,7 @@ public sealed class ServicesParser : EvidenceParserBase
         if (services is null)
         {
             result.Gaps.Add(new EvidenceGap("Services", EvidenceStatus.NotAvailable, $"cheia {servicesPath} lipsește",
-                "Configurația serviciilor nu este disponibilă", "System 7045, fotografia live", "Nu"));
+                "Configurația serviciilor nu este disponibilă", "System 7045, instantaneul stării live", "Nu"));
             return;
         }
         // Prefetch configuration lives in the same hive; anti-forensics checks whether it was switched off.

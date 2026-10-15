@@ -152,7 +152,7 @@ public sealed class CoverageMatrix
         if (ownAnalyzer && registered.Count == 0)
             Result = R(CoverageState.Collected, $"{ev.Count} fotografii ale stării live, citite de analizorul propriu");
         else if (prs.Count == 0)
-            Result = R(CoverageState.Partial, $"{ev.Count} probe prezente, dar fără niciun rezultat de parser (neparsate)");
+            Result = R(CoverageState.Partial, $"{LogAnalyzer.Dfir.Language.RoText.Count(ev.Count, "probă prezentă", "probe prezente")}, dar fără niciun rezultat de parser (neparsate)");
         else
         {
             int ok = prs.Count(p => p.Status == EvidenceStatus.Success);
@@ -166,7 +166,7 @@ public sealed class CoverageMatrix
             else if (empty == prs.Count)
                 Result = R(CoverageState.Partial, "sursa a fost citită, dar nu conține înregistrări: asta nu dovedește absența activității");
             else if (part == 0 && empty == 0 && failed == 0 && unparsed == 0)
-                Result = R(CoverageState.Collected, $"{ok} probe parsate");
+                Result = R(CoverageState.Collected, $"{LogAnalyzer.Dfir.Language.RoText.Count(ok, "probă parsată", "probe parsate")}");
             else
             {
                 var bits = new List<string>();

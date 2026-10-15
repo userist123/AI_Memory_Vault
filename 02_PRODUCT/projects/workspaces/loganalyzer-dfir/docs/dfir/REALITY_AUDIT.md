@@ -50,7 +50,7 @@ Fișierele de la rădăcina workspace-ului (`Views/`, `ViewModels/`, `Services/`
 | `UsbDevicesParser` (P3) | REAL | USBSTOR, UAS și MountedDevices din SYSTEM, cu orele de primă instalare / ultimă conectare / ultimă deconectare. Validarea a arătat că varianta inițială (doar USBSTOR) rata unitățile UAS și dispozitivele șterse din Enum; ambele sunt acum raportate. |
 | `JumpListParser` + `CompoundFile` (P3) | PARTIAL | Citire reală a Jump Lists automate: ora ultimei folosiri, număr de utilizări, fixare, mașină, linkul fiecărui element. Statusul e TESTED, nu VALIDATED: pe corpus se verifică doar consistența internă. Validarea a corectat cititorul CFB (ultimul sector parțial e valid) și a arătat streamul `DestListPropertyStore` din Windows 11. Jump Lists personalizate nu sunt citite. |
 | `FirefoxHistoryParser` (P3) + `DifferentialFact` (P12) | REAL | Vizite și descărcări Firefox, validate diferențial contra `sqlite3` din Python. Testele diferențiale sunt sărite explicit („DIFFERENTIAL REFERENCE UNAVAILABLE”) când referința lipsește. |
-| Graful de probe (P4: `EvidenceGraph`, `Relationship`, `graph.json`) | REAL | Entități și relații numai din evenimente (DIRECT, cu EvidenceId + Locator) și din constatări (CORRELATED, cu derivare). Muchiile fără probă și fără derivare sunt refuzate de constructor. Pe corpus: descărcarea din tzd4is.cyou, MSIEXEC → BOOTSTRAP_7D57.CMD, detecția NanAgent32.exe; legătura SETUP.EXE → NanAgent32.exe nu e desenată, pentru că nu există probă directă. `docs/dfir/EVIDENCE_GRAPH.md`. |
+| Graful de probe (P4: `EvidenceGraph`, `Relationship`, `graph.json`) | REAL | Entități și relații numai din evenimente (DIRECT, cu EvidenceId + Locator) și din constatări (CORRELATED, cu derivare). Muchiile fără probă și fără derivare sunt refuzate de constructor. Pe corpus: descărcarea din tzd4is.cyou, MSIEXEC → VENDOR_HELPER.CMD, detecția VendorAgent32.exe; legătura SETUP.EXE → VendorAgent32.exe nu e desenată, pentru că nu există probă directă. `docs/dfir/EVIDENCE_GRAPH.md`. |
 | Detecție (P5: `IocMatcher`, `YaraLite`, `SigmaLite`, `DetectionEngine`) | REAL | Reguli versionate și hash-uite; rezultatele indică proba exactă. Validare reală: hash-urile IOC ale celor 9 probe, regula YARA pe loader-ul MSBuild și 0 alarme false pe SDK-ul .NET, regulile Sigma identice cu `wevtutil` pe jurnalele reale. Integrată în investigație (`detections.json`, `rules.json`, secțiunea 5 din raport). YARA și Sigma sunt subseturi documentate (`docs/dfir/DETECTION.md`). |
 | `AmcacheParser` | REAL | Test pe corpus (`CorpusFact("amcache")`): peste 6.000 de intrări, 0 corupte, peste 90% cu SHA-1, toate cu oră. Plus test sintetic pentru SHA-1, cale, locator și semnificația „prezență”. Raportează gap dacă .LOG1/.LOG2 lipsesc. |
 | `Infrastructure/Parsers/EvtxParser` (import vechi) | PARTIAL | Folosit de MainViewModel. Acum raportează înregistrările corupte și folosește `EvtxRepair`. Are 2 × `catch {}`. |
@@ -92,7 +92,7 @@ Fișierele de la rădăcina workspace-ului (`Views/`, `ViewModels/`, `Services/`
 
 | COMPONENT | REAL / PARTIAL / FACADE / UNSAFE | EVIDENCE |
 |---|---|---|
-| `Dfir.Core/Analysis/Correlation` (15 reguli + `INCIDENT-CHAIN`) | REAL | Reconstruiește automat lanțul NanAgent din 19.09.2026 pe corpus (`InvestigationTests`). |
+| `Dfir.Core/Analysis/Correlation` (15 reguli + `INCIDENT-CHAIN`) | REAL | Reconstruiește automat lanțul VendorAgent din 19.09.2026 pe corpus (`InvestigationTests`). |
 | `LiveStateAnalyzer` | REAL | Rulează pe fotografia live colectată. Proveniența e dată de `EvidenceRef`. |
 | `Core/Services/AptAttributionEngine` | PARTIAL | Etichetat „suprapunere de tehnici — NU este atribuire” din #208. Încă are consumator în UI. |
 | `Core/Services/{DnsTunnelingClassifier, LivingOffTheCloudEngine, ProcessInjectionDetector, RansomwareDetectionEngine, SysmonCorrelationEngine}` | FACADE | Fără consumator în calea de producție. |
@@ -154,7 +154,7 @@ Constatări noi pe corpus, făcute în timpul lucrului:
 - `Application.evtx` folosește RecordID-urile 44760–44790 de două ori, după oprirea necurată din 2026-08-08 17:51 UTC
   (System 6008, Kernel-Power 41).
 - 2026-09-19 15:17:02 UTC: Firewall 2059, „toate regulile au fost șterse”.
-- 52 de eliminări de audit (4719) făcute de utilizatorul Marius începând cu 2026-08-08.
+- 52 de eliminări de audit (4719) făcute de un utilizator local începând cu 2026-08-08.
 
 Încă nevalidate: aplicarea politicilor ca administrator (HKLM), citirea auditului ca administrator, un domeniu AD real,
 schema oficială OSCAL, paginile noi ale aplicației exersate manual.

@@ -82,7 +82,11 @@ namespace LogAnalyzer.UI.ViewModels
         // Operating mode: decided once at startup from the station's connectivity (or forced), see App.OnStartup.
         [ObservableProperty] private bool _isAirGappedMode = AppModeContext.IsAirGapped;
         [ObservableProperty] private bool _isNetworkMode = !AppModeContext.IsAirGapped;
-        [ObservableProperty] private string _systemModeBadgeText = AppModeContext.IsAirGapped ? "🛡️ AIR-GAPPED STANDALONE" : "🌐 NETWORK SOC";
+        [ObservableProperty] private string _systemModeBadgeText = AppModeContext.IsAirGapped ? "Mod: izolat (fără rețea)" : "Mod: conectat";
+        /// <summary>Header subtitle: the station this application runs on.</summary>
+        public string StationSubtitle => "Analiză de jurnale și probe";
+        /// <summary>The name of this PC, shown in the header instead of the station role (owner, 2026-10-11).</summary>
+        public string StationName => Environment.MachineName;
         [ObservableProperty] private string _securityShieldStatusText = AppModeContext.IsAirGapped
             ? "Mod AirGapped: rețeaua este blocată de aplicație; izolarea fizică a stației nu este verificată"
             : "Mod Network: serviciile online sunt permise; aplicația nu evaluează siguranța stației";
@@ -144,6 +148,13 @@ namespace LogAnalyzer.UI.ViewModels
         public ProcedureProfileViewModel ProcedureProfile { get; }
         /// <summary>"Registru medii" (decision 16) and "Registru utilizatori" (decision 17): data the operator enters; observed media are compared with them.</summary>
         public MediaRegisterViewModel MediaRegister { get; }
+        /// <summary>„Medii de stocare”: live inventory and supervision of every medium and connectable device (owner 2026-10-11).</summary>
+        public MediaCenterViewModel MediaCenter { get; }
+
+        /// <summary>„Registrul de transferuri”: its own page; reads the media register and the media connected now from <see cref="MediaCenter"/>.</summary>
+        public TransferViewModel Transfer { get; }
+
+        [RelayCommand] private void ShowMediaCenter() => SelectedTabIndex = LogAnalyzer.Core.Services.Edition.RoleProfiles.TabMediaRegister;
         public UsersRegisterViewModel UsersRegister { get; }
         public AuthViewModel Auth { get; }
 
@@ -333,10 +344,15 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<string> TargetTypes { get; } = new() { "PC", "Server", "NAS" };
         [ObservableProperty] private string _selectedTargetType = "PC";
         [ObservableProperty] private string _collectionOutputDir = "C:\\fișiere audit";
-        [ObservableProperty] private string _collectionHostname = "PC-AUDIT";
+        // The station this application runs on, read at start-up: never a fixed name (a fixed default name labelled every station's evidence with it).
+        [ObservableProperty] private string _collectionHostname = Environment.MachineName;
         [ObservableProperty] private string _collectionLogs = string.Empty;
         [ObservableProperty] private bool _isCollectionRunning;
         [ObservableProperty] private int _syslogPort = 514;
+        // Security audit #7: the receiver listens on one chosen local address (loopback by default) and accepts only the listed senders
+        // (comma-separated IPs; empty = loopback senders only).
+        [ObservableProperty] private string _syslogBindAddress = "127.0.0.1";
+        [ObservableProperty] private string _syslogAllowedSources = string.Empty;
         [ObservableProperty] private bool _isSyslogActive;
 
         public bool IsCollectionNotRunning => !IsCollectionRunning;
@@ -396,20 +412,10 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
+        // A stream row is an event, not an alert: open the standard event detail, never a made-up alert with an invented technique (senior review L13).
         partial void OnSelectedLiveStreamingEventChanged(ParsedEvent? value)
         {
-            if (value != null)
-            {
-                var dummyAlert = new DetectedIssue
-                {
-                    Title = $"Eveniment Securitate EID {value.EventId} ({value.ProviderName})",
-                    Severity = value.Level ?? "Information",
-                    Explanation = value.Message ?? string.Empty,
-                    MitreTechniqueId = "T1059 (Event Log Triage)",
-                    RelatedEvents = new List<ParsedEvent> { value }
-                };
-                OpenAlertModal(dummyAlert, value.MachineName ?? Environment.MachineName);
-            }
+            if (value != null) OpenGenericDetail(value);
         }
 
         [RelayCommand]
@@ -421,7 +427,10 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
-        public void OpenAlertModal(DetectedIssue alert, string hostname)
+        /// <param name="show">True when the operator asked for it (a click): the alert opens in the standard detail window with „Ce înseamnă”, the raw
+        /// event and the related events. Alerts that arrive by themselves never open a window over the operator's work (senior review L1: the old
+        /// modal was bound to nothing, so a click showed nothing).</param>
+        public void OpenAlertModal(DetectedIssue alert, string hostname, bool show = true)
         {
             ActiveCountermeasureAlert = alert;
             ActiveCountermeasurePlaybook = _countermeasureEngine.GeneratePlaybook(alert, hostname);
@@ -431,7 +440,7 @@ namespace LogAnalyzer.UI.ViewModels
             RawEventProvider = ev?.ProviderName ?? "nedisponibil";
             RawEventTimestamp = ev is null ? "nedisponibil" : ev.TimeCreated == default ? "necunoscut (lipsește din eveniment)" : ev.TimeCreated.ToString("yyyy-MM-dd HH:mm:ss.fff");
             RawEventHost = ev?.MachineName ?? hostname;
-            IsCountermeasureModalVisible = true;
+            if (show) OpenGenericDetail(alert);
         }
 
         [RelayCommand]
@@ -600,9 +609,20 @@ namespace LogAnalyzer.UI.ViewModels
             IsExpertLevel = LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert;
             RoleProfile = LogAnalyzer.Core.Services.Edition.RoleProfiles.For(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role, edition, AppModeContext.Current.Mode);
             Home = new HomeViewModel(Investigation, tab => SelectedTabIndex = tab, profile: RoleProfile);
+            // G3: „Colectează tot” anywhere in the window runs the complete collection and analysis for the role; the control station also runs its control.
+            LogAnalyzer.UI.Services.CollectAllState.Handler = async () =>
+            {
+                SelectedTabIndex = HomeViewModel.InvestigationTabIndex;
+                await Investigation.CollectAllCommand.ExecuteAsync(null);
+                if (LogAnalyzer.UI.Services.CollectAllState.Plan(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role).RunStationControl)
+                    await StationControl.RunCommand.ExecuteAsync(null);
+            };
             Policy = new PolicyViewModel(registryWriter);
             ProcedureProfile = new ProcedureProfileViewModel();
             MediaRegister = new MediaRegisterViewModel();
+            MediaCenter = new MediaCenterViewModel(MediaRegister);
+            Transfer = new TransferViewModel(MediaCenter);
+            MediaCenter.NavigateToTransferRegister = () => SelectedTabIndex = LogAnalyzer.Core.Services.Edition.RoleProfiles.TabTransferRegister;
             UsersRegister = new UsersRegisterViewModel();
             Auth = new AuthViewModel();
             _eventParser = eventParser;
@@ -632,7 +652,7 @@ namespace LogAnalyzer.UI.ViewModels
             InitializeSigmaRules();
             PopulateMitreMatrix();
 
-            OperatorName = $"{LogAnalyzer.Dfir.Auth.OperatorIdentity.Who.ToUpper()} @ {Environment.MachineName.ToUpper()}";   // the signed-in identity (decision 33)
+            OperatorName = LogAnalyzer.Dfir.Auth.OperatorIdentity.Who;   // the signed-in identity (decision 33)
             // Detail windows look for related events among the events loaded in this session.
             LogAnalyzer.Core.Services.Details.DetailSheetBuilder.EventCorpus = () => Events.ToList();
             if (IsNetworkMode)
@@ -652,14 +672,21 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 try
                 {
-                    Application.Current?.Dispatcher?.Invoke(() =>
+                    try
+                    {
+                        var freed = _databaseService.CompactIfWasteful();
+                        if (freed > 0) Application.Current?.Dispatcher?.BeginInvoke(() => StatusMessage = $"Baza locală a fost compactată: {freed / (1024 * 1024)} MB eliberați pe disc.");
+                    }
+                    catch (Exception ex) when (ex is Microsoft.Data.Sqlite.SqliteException or IOException) { }
+                    // queued at Background priority: the first frame of the window is drawn before the stored data is reloaded
+                    Application.Current?.Dispatcher?.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
                     {
                         UpdateDatabaseSize();
                         ReloadEvtxFromDb();
                         ReloadRegistryFromDb();
                         ReloadTimelineFromDb();
                         ReloadDashboardStats();
-                        RunAiAnalysis();
+                        _ = RunAiAnalysis();
                         if (IsNetworkMode)
                             StartLiveMonitoring();
                     });
@@ -910,7 +937,7 @@ namespace LogAnalyzer.UI.ViewModels
                     var allTimeline = _databaseService.GetTimeline(10000, 0, filteredSearch);
                     foreach (var item in allTimeline)
                     {
-                        var line = $"\"{item.Timestamp:yyyy-MM-dd HH:mm:ss}\",\"{EscapeCsv(item.Source)}\",\"{EscapeCsv(item.Category)}\",\"{EscapeCsv(item.Severity)}\",\"{EscapeCsv(item.MitreTags)}\",\"{EscapeCsv(item.UserOrHost)}\",\"{EscapeCsv(item.Description)}\"";
+                        var line = $"{item.Timestamp:yyyy-MM-dd HH:mm:ss},{CsvCell(item.Source)},{CsvCell(item.Category)},{CsvCell(item.Severity)},{CsvCell(item.MitreTags)},{CsvCell(item.UserOrHost)},{CsvCell(item.Description)}";
                         sb.AppendLine(line);
                     }
 
@@ -1150,11 +1177,11 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
-        private string EscapeCsv(string? field)
-        {
-            if (field == null) return string.Empty;
-            return field.Replace("\"", "\"\"");
-        }
+        /// <summary>
+        /// One CSV cell of the Audit_Report export through the shared escaping (independent review #4): hidden characters removed and marked,
+        /// formulas neutralised (security audit #8), RFC 4180 quoting.
+        /// </summary>
+        internal static string CsvCell(string? field) => LogAnalyzer.Dfir.IO.CsvWriter.Escape(field ?? "");
 
         [RelayCommand]
         private void OpenAuditFolder()
@@ -1190,7 +1217,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task StartCollectionAsync()
         {
-            if (IsCollectionRunning) return;
+            if (IsCollectionRunning) { StatusMessage = "Colectarea rulează deja; așteptați să se termine."; return; }
             IsCollectionRunning = true;
             CollectionLogs = string.Empty;
 
@@ -1200,7 +1227,7 @@ namespace LogAnalyzer.UI.ViewModels
                     SelectedTargetType,
                     CollectionOutputDir,
                     CollectionHostname,
-                    log => App.Current.Dispatcher.Invoke(() => CollectionLogs += log + Environment.NewLine)
+                    log => App.Current.Dispatcher.Invoke(() => CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, log))
                 );
             }
             catch (Exception ex)
@@ -1219,11 +1246,24 @@ namespace LogAnalyzer.UI.ViewModels
             CollectionLogs = string.Empty;
             try
             {
+                if (!System.Net.IPAddress.TryParse(SyslogBindAddress?.Trim(), out var bind))
+                {
+                    CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, $"[SYSLOG ERROR] Adresa de ascultare „{SyslogBindAddress}” nu este o adresă IP.");
+                    return;
+                }
+                var allowed = new System.Collections.Generic.List<System.Net.IPAddress>();
+                foreach (var part in (SyslogAllowedSources ?? "").Split(',', ';', ' ').Where(x => x.Length > 0))
+                {
+                    if (!System.Net.IPAddress.TryParse(part, out var ip))
+                    {
+                        CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, $"[SYSLOG ERROR] „{part}” din lista surselor permise nu este o adresă IP.");
+                        return;
+                    }
+                    allowed.Add(ip);
+                }
                 _collectionService.StartSyslogListener(
-                    SyslogPort,
-                    CollectionOutputDir,
-                    CollectionHostname,
-                    log => App.Current.Dispatcher.Invoke(() => CollectionLogs += log + Environment.NewLine)
+                    new SyslogListenerOptions(SyslogPort, CollectionOutputDir, CollectionHostname, bind, allowed),
+                    log => App.Current.Dispatcher.Invoke(() => CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, log))
                 );
             }
             catch (NetworkBlockedException ex)
@@ -1278,6 +1318,7 @@ namespace LogAnalyzer.UI.ViewModels
                 SelectedEventThreatScenario = string.Empty;
                 SelectedEventMitreMapping = string.Empty;
                 SelectedEventMitigation = string.Empty;
+                SelectedEventMeaning = "Dați clic pe un eveniment din listă: aici apare ce înseamnă, pe înțeles.";
                 return;
             }
 
@@ -1313,7 +1354,13 @@ namespace LogAnalyzer.UI.ViewModels
             SelectedEventThreatScenario = assessment.ThreatScenarioRo;
             SelectedEventMitreMapping = assessment.MitreTtpRo;
             SelectedEventMitigation = assessment.ContainmentPlaybookRo;
+            // Owner 2026-10-11: the event in plain words (what it is, the codes inside it decoded), shown first, not behind a right-click.
+            var meaning = LogAnalyzer.Core.Services.Details.DetailSheetBuilder.Build(value).Meaning;
+            SelectedEventMeaning = meaning.Count > 0 ? string.Join(Environment.NewLine, meaning)
+                : $"Evenimentul {value.EventId} ({value.ProviderName}) nu are încă o explicație în aplicație. Câmpurile lui sunt în fila „Câmpuri”; mesajul Windows complet în fila „Mesaj complet”.";
         }
+
+        [ObservableProperty] private string _selectedEventMeaning = "Dați clic pe un eveniment din listă: aici apare ce înseamnă, pe înțeles.";
 
         partial void OnSelectedArtifactChanged(RegistryArtifact? value)
         {
@@ -1462,7 +1509,7 @@ namespace LogAnalyzer.UI.ViewModels
                 IssuesView?.Refresh();
                 ReloadDashboardStats();
                 StatusMessage = "🚨 Alertă escaladată în Centrul de Combatere & Live SOC!";
-                OpenAlertModal(newAlert, host);
+                OpenAlertModal(newAlert, host, show: false);
             });
         }
 
@@ -1534,7 +1581,7 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 var targetIds = SelectedProfile?.TargetEventIds ?? new List<int>();
                 int count = _databaseService.GetEventsCount(SearchEventsText, null, targetIds);
-                if (count == 0) return;
+                if (count == 0) { StatusMessage = "Nu există evenimente de exportat: încărcați întâi jurnale sau schimbați filtrul."; return; }
 
                 var dialog = new SaveFileDialog { Filter = "Raport CSV (*.csv)|*.csv", FileName = "Raport_Incident.csv" };
                 if (dialog.ShowDialog() == true)
@@ -1734,7 +1781,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void StartLiveMonitoring()
         {
-            if (IsLiveMonitoringActive) return;
+            if (IsLiveMonitoringActive) { StatusMessage = "Monitorizarea rulează deja."; return; }
 
             _liveWatcher = _liveSourceFactory.Create();
             if (_liveWatcher is null)
@@ -1744,105 +1791,103 @@ namespace LogAnalyzer.UI.ViewModels
             }
             _liveWatcher.OnStatusChanged += status =>
             {
-                Application.Current?.Dispatcher?.Invoke(() => LiveMonitoringStatusText = status);
+                Application.Current?.Dispatcher?.Invoke(() => { LiveMonitoringStatusText = status; _liveStatus.Pin(); });
             };
             _liveWatcher.OnErrorOccurred += ex =>
             {
-                Application.Current?.Dispatcher?.Invoke(() => LiveMonitoringStatusText = $"Eroare live: {ex.Message}");
+                Application.Current?.Dispatcher?.Invoke(() => { LiveMonitoringStatusText = $"Eroare live: {ex.Message}"; _liveStatus.Pin(); });
             };
+            // Events arrive on thread-pool threads, possibly hundreds per second: queue them and let one UI timer apply them in batches
+            // instead of one synchronous Dispatcher.Invoke per event (senior review L11).
             _liveWatcher.OnEventReceived += ev =>
             {
-                Application.Current?.Dispatcher?.Invoke(() =>
-                {
-                    TotalLiveEventsCaptured++;
-                    TotalEventsCount++;
-
-                    // 1. Live stream table
-                    if (LiveStreamingEvents.Count > 200)
-                    {
-                        LiveStreamingEvents.RemoveAt(LiveStreamingEvents.Count - 1);
-                    }
-                    LiveStreamingEvents.Insert(0, ev);
-
-                    // 2. Main EVTX table (Auto Live Ingestion)
-                    if (Events.Count > 300)
-                    {
-                        Events.RemoveAt(Events.Count - 1);
-                    }
-                    Events.Insert(0, ev);
-
-                    // 3. Timeline stream (Live Chronology)
-                    if (TimelineItems.Count > 300)
-                    {
-                        TimelineItems.RemoveAt(TimelineItems.Count - 1);
-                    }
-                    TimelineItems.Insert(0, new TimelineItem
-                    {
-                        Timestamp = ev.TimeCreated,
-                        Source = ev.ProviderName,
-                        Category = "Live Event",
-                        UserOrHost = ev.MachineName,
-                        Description = ev.Message
-                    });
-
-                    // 4. Real-time Security Evaluation
-                    _liveEngine.MaintenancePolicy = LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.MaintenancePolicyFor([new DateTimeOffset(ev.TimeCreated.ToUniversalTime())]);
-                    var alert = _liveEngine.EvaluateLiveEvent(ev);
-                    if (alert != null)
-                    {
-                        LiveAlerts.Insert(0, alert);
-                        DetectedIssues.Insert(0, alert);
-                        CurrentLiveToastAlert = alert;
-                        IsLiveToastVisible = true;
-                        StatusMessage = $"🚨 ALERTĂ LIVE DETECTATĂ: {alert.Title}";
-
-                        // Highlight MITRE ATT&CK Matrix live
-                        if (!string.IsNullOrEmpty(alert.MitreTechniqueId))
-                        {
-                            var tech = AttackTechniques.FirstOrDefault(t => t.TechId.Equals(alert.MitreTechniqueId, StringComparison.OrdinalIgnoreCase));
-                            if (tech != null)
-                            {
-                                tech.DetectionColor = "#3f1218";
-                                tech.BorderColor = "#ef4444";
-                                tech.Severity = alert.Severity;
-                            }
-                        }
-
-                        // Open interactive emergency countermeasure & detail inspection modal for ALL alerts
-                        if (alert != null)
-                        {
-                            // No automatic action on the station: containment is the operator's decision (tab "Izolare procese suspecte").
-                            IsAutoShieldTriggered = false;
-
-                            OpenAlertModal(alert, ev.MachineName);
-
-                        }
-
-                        try { System.Media.SystemSounds.Exclamation.Play(); } catch (InvalidOperationException) { /* sound is optional */ }
-
-                        _toastAutoDismissTimer?.Stop();
-                        _toastAutoDismissTimer = new System.Timers.Timer(7000);
-                        _toastAutoDismissTimer.AutoReset = false;
-                        _toastAutoDismissTimer.Elapsed += (s, e) =>
-                        {
-                            Application.Current?.Dispatcher?.Invoke(() => IsLiveToastVisible = false);
-                        };
-                        _toastAutoDismissTimer.Start();
-                    }
-                });
+                _liveQueue.Enqueue(ev);
+                while (_liveQueue.Count > LiveQueueLimit && _liveQueue.TryDequeue(out _)) System.Threading.Interlocked.Increment(ref _liveDropped);
             };
+            if (Application.Current is not null)
+            {
+                _liveDrainTimer ??= new System.Windows.Threading.DispatcherTimer(TimeSpan.FromMilliseconds(250), System.Windows.Threading.DispatcherPriority.Background,
+                    (_, _) => DrainLiveQueue(), Application.Current.Dispatcher);
+                _liveDrainTimer.Start();
+            }
 
             _liveWatcher.StartWatching(LiveRemoteTargetHost);
             IsLiveMonitoringActive = true;
         }
 
+        private const int LiveQueueLimit = 20_000, LiveStreamRows = 200, LiveAlertRows = 500, LiveBatch = 2_000;
+        private readonly System.Collections.Concurrent.ConcurrentQueue<ParsedEvent> _liveQueue = new();
+        private readonly LiveAlertThrottle _liveThrottle = new();
+        private System.Windows.Threading.DispatcherTimer? _liveDrainTimer;
+        private int _liveDropped;
+        private readonly LiveStatusText _liveStatus = new();   // keeps the repeats line from hiding a warning or an error set since the last tick
+
+        /// <summary>
+        /// Applies the queued live events in one batch on the UI thread: stream rows, evaluation, de-duplication, at most one toast and one sound per batch,
+        /// and the sound only for High/Critical. Live events stay on the live page; they are not mixed into the case tables, whose counts must match the
+        /// store (senior review L10, L12).
+        /// </summary>
+        internal void DrainLiveQueue()
+        {
+            var batch = new List<ParsedEvent>();
+            DetectedIssue? loudest = null;
+            while (batch.Count < LiveBatch && _liveQueue.TryDequeue(out var ev)) batch.Add(ev);
+            // Every event is evaluated, but only the newest LiveStreamRows of the batch reach the visible stream.
+            foreach (var shown in LiveStatusText.Newest(batch, LiveStreamRows)) LiveStreamingEvents.Insert(0, shown);
+            foreach (var ev in batch)
+            {
+                TotalLiveEventsCaptured++;
+                _liveEngine.MaintenancePolicy = LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.MaintenancePolicyFor([new DateTimeOffset(ev.TimeCreated.ToUniversalTime())]);
+                var alert = _liveEngine.EvaluateLiveEvent(ev);
+                if (alert is null || !_liveThrottle.Admit(alert, ev)) continue;
+                LiveAlerts.Insert(0, alert);
+                DetectedIssues.Insert(0, alert);
+                HighlightTechnique(alert);
+                OpenAlertModal(alert, ev.MachineName, show: false);   // no automatic action on the station: containment is the operator's decision
+                if (loudest is null || SeverityRank(alert.Severity) > SeverityRank(loudest.Severity)) loudest = alert;
+            }
+            while (LiveStreamingEvents.Count > LiveStreamRows) LiveStreamingEvents.RemoveAt(LiveStreamingEvents.Count - 1);
+            while (LiveAlerts.Count > LiveAlertRows) LiveAlerts.RemoveAt(LiveAlerts.Count - 1);
+            int dropped = System.Threading.Interlocked.Exchange(ref _liveDropped, 0);
+            if (_liveStatus.Next(dropped, _liveThrottle.Suppressed) is { } statusText) LiveMonitoringStatusText = statusText;
+            if (loudest is null) return;
+
+            IsAutoShieldTriggered = false;
+            CurrentLiveToastAlert = loudest;
+            IsLiveToastVisible = true;
+            StatusMessage = $"🚨 ALERTĂ LIVE: {loudest.Title}";
+            if (SeverityRank(loudest.Severity) >= 3)
+                try { System.Media.SystemSounds.Exclamation.Play(); } catch (InvalidOperationException) { /* sound is optional */ }
+            _toastAutoDismissTimer?.Stop();
+            _toastAutoDismissTimer = new System.Timers.Timer(7000) { AutoReset = false };
+            _toastAutoDismissTimer.Elapsed += (s, e) => Application.Current?.Dispatcher?.Invoke(() => IsLiveToastVisible = false);
+            _toastAutoDismissTimer.Start();
+        }
+
+        private static int SeverityRank(string? s) => s?.ToLowerInvariant() switch { "critical" => 4, "high" => 3, "medium" => 2, "low" => 1, _ => 0 };
+
+        // The live MITRE matrix: highlight by the base technique, so "T1059.001" lights "T1059.001" and composite ids never miss (senior review L15).
+        private void HighlightTechnique(DetectedIssue alert)
+        {
+            var id = (alert.MitreTechniqueId ?? "").Split([' ', '/', ','], StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+            if (string.IsNullOrEmpty(id)) return;
+            var tech = AttackTechniques.FirstOrDefault(t => t.TechId.Equals(id, StringComparison.OrdinalIgnoreCase))
+                       ?? AttackTechniques.FirstOrDefault(t => t.TechId.Equals(id.Split('.')[0], StringComparison.OrdinalIgnoreCase));
+            if (tech is null) return;
+            tech.DetectionColor = "#3f1218";
+            tech.BorderColor = "#ef4444";
+            tech.Severity = alert.Severity;
+        }
+
         [RelayCommand]
         private void StopLiveMonitoring()
         {
-            if (!IsLiveMonitoringActive) return;
+            if (!IsLiveMonitoringActive) { StatusMessage = "Monitorizarea nu este pornită."; return; }
             _liveWatcher?.StopWatching();
             _liveWatcher?.Dispose();
             _liveWatcher = null;
+            _liveDrainTimer?.Stop();
+            do DrainLiveQueue(); while (!_liveQueue.IsEmpty);
             IsLiveMonitoringActive = false;
             LiveMonitoringStatusText = "⏹ Monitorizare în timp real oprită.";
         }
@@ -2055,13 +2100,14 @@ namespace LogAnalyzer.UI.ViewModels
                         
                         foreach (var ev in _eventParser.ParseEvtxFile(file)) 
                         {
-                            var kbDetails = _kbService.GetDetails(ev.EventId);
+                            // The knowledge base describes Security-log events only; its "EventExample" is a sample event from another computer
+                            // and must never be shown as if it came from this station (owner 2026-10-11).
+                            var kbDetails = (ev.ProviderName ?? "").Contains("Security-Auditing", StringComparison.OrdinalIgnoreCase) ? _kbService.GetDetails(ev.EventId) : null;
                             if (kbDetails != null)
                             {
                                 ev.OfficialDescription = kbDetails.ExtendedDescription;
-                                ev.TacticalExample = kbDetails.EventExample;
                                 ev.ReferenceUrl = kbDetails.ReferenceUrl;
-                                ev.PotentialCriticality = kbDetails.PotentialCriticality;
+                                if (string.IsNullOrWhiteSpace(ev.PotentialCriticality)) ev.PotentialCriticality = kbDetails.PotentialCriticality;
                             }
                             batch.Add(ev);
                             
@@ -2296,14 +2342,19 @@ namespace LogAnalyzer.UI.ViewModels
             ReloadTimelineFromDb();
             ReloadDashboardStats();
             UpdateDatabaseSize();
-            RunAiAnalysis();
+            _ = RunAiAnalysis();
             
             LoadingProgress = 100;
             SelectedTabIndex = 0; 
             IsLoading = false;
-            StatusMessage = rejectedFiles.Count == 0
-                ? $"✅ Procesare completă: {TotalEventsCount:N0} loguri și {TotalRegistryCount:N0} artefacte registru salvate."
-                : $"✅ Procesare completă: {TotalEventsCount:N0} loguri și {TotalRegistryCount:N0} artefacte salvate ({rejectedFiles.Count} fișiere ignorate/respinse).";
+            // say exactly what was NOT read (senior review C3): accepted types this importer does not parse, and the analysis caps
+            var unparsed = acceptedFiles.Where(f => !(f.EndsWith(".evtx", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".reg", StringComparison.OrdinalIgnoreCase) ||
+                                                      f.EndsWith(".dat", StringComparison.OrdinalIgnoreCase) || f.EndsWith("ntuser", StringComparison.OrdinalIgnoreCase) ||
+                                                      f.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))).ToList();
+            StatusMessage = $"Import terminat: {TotalEventsCount:N0} evenimente și {TotalRegistryCount:N0} artefacte de registru salvate."
+                + (rejectedFiles.Count > 0 ? $" {rejectedFiles.Count} fișiere respinse." : "")
+                + (unparsed.Count > 0 ? $" {unparsed.Count} fișiere NU au fost citite de acest import (tipuri {string.Join(", ", unparsed.Select(f => Path.GetExtension(f).ToLowerInvariant()).Distinct())}): folosiți „Investigație completă (caz)”, care le citește." : "")
+                + (TotalEventsCount > 20000 ? " Regulile de aici au analizat doar cele mai noi 20 000 de evenimente de securitate; investigația completă le analizează pe toate." : "");
             if (importErrors.Count > 0)
             {
                 StatusMessage += $" ATENȚIE: {importErrors.Count} probleme la import.";
@@ -2317,17 +2368,22 @@ namespace LogAnalyzer.UI.ViewModels
 
         private bool FilterIssues(object obj) => !(HideVerifiedAlerts && ((DetectedIssue)obj).IsVerified);
 
-        private void InitializeProcessTree()
+        private async void InitializeProcessTree()
         {
             // Real process tree of this station (WMI, read-only). Processes running from user-writable locations
             // are marked amber; nothing here is a verdict, the detail and containment tabs are.
+            // The WMI query runs off the UI thread: it took ~250 ms of every start-up (measured 2026-10-11, MainWindowStartupTests).
             ProcessTreeNodes.Clear();
             try
             {
-                var rows = new List<(int Pid, int Ppid, string Name, string Path)>();
-                using (var s = new System.Management.ManagementObjectSearcher("SELECT ProcessId, ParentProcessId, Name, ExecutablePath FROM Win32_Process"))
-                    foreach (System.Management.ManagementObject mo in s.Get())
-                        rows.Add((Convert.ToInt32(mo["ProcessId"]), Convert.ToInt32(mo["ParentProcessId"]), mo["Name"] as string ?? "", mo["ExecutablePath"] as string ?? ""));
+                var rows = await Task.Run(() =>
+                {
+                    var list = new List<(int Pid, int Ppid, string Name, string Path)>();
+                    using (var s = new System.Management.ManagementObjectSearcher("SELECT ProcessId, ParentProcessId, Name, ExecutablePath FROM Win32_Process"))
+                        foreach (System.Management.ManagementObject mo in s.Get())
+                            list.Add((Convert.ToInt32(mo["ProcessId"]), Convert.ToInt32(mo["ParentProcessId"]), mo["Name"] as string ?? "", mo["ExecutablePath"] as string ?? ""));
+                    return list;
+                });
                 var pids = rows.Select(r => r.Pid).ToHashSet();
                 var nodes = rows.ToDictionary(r => r.Pid, r => new ProcessNode
                 {
@@ -2342,7 +2398,7 @@ namespace LogAnalyzer.UI.ViewModels
                     else ProcessTreeNodes.Add(nodes[r.Pid]);
                 }
             }
-            catch (System.Management.ManagementException ex)
+            catch (Exception ex) when (ex is System.Management.ManagementException or System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
             {
                 StatusMessage = "Arborele de procese nu a putut fi citit: " + ex.Message;
             }
@@ -2501,14 +2557,40 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
+        private bool _aiRunning;
+
+        /// <summary>
+        /// The legacy analysis over up to 50 000 stored events. The reading and every engine run off the UI thread (senior review 2026-10-11: it froze
+        /// the window ~0.45 s with 7.6k events and ~1.25 s with 50k, right after start-up); only filling the lists happens on the UI thread.
+        /// </summary>
         [RelayCommand]
-        public void RunAiAnalysis()
+        public async Task RunAiAnalysis()
         {
-            if (_analysisEngine is AnalysisEngine ae)
+            if (_analysisEngine is not AnalysisEngine ae || _aiRunning) return;
+            _aiRunning = true;
+            try
             {
-                var eventsForAnalysis = _databaseService.GetEvents(50000, 0, null, null, null).ToList();
-                var anomalies = ae.AnomalyEngine.DetectAnomalies(eventsForAnalysis);
-                var yaraMatches = ae.YaraEngine.Evaluate(eventsForAnalysis);
+                var wh = LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.WorkingHours;
+                var bg = await Task.Run(() =>
+                {
+                    var ev = _databaseService.GetEvents(50000, 0, null, null, null).ToList();
+                    var anomalies = ae.AnomalyEngine.DetectAnomalies(ev);
+                    var yara = ae.YaraEngine.Evaluate(ev);
+                    var ad = _kerberosEngine.GetAuditSummary(ev);
+                    var samSummary = _samAuditEngine.GetSummary(ev);
+                    return new
+                    {
+                        Events = ev, Anomalies = anomalies, Yara = yara, Ad = ad, Kerb = _kerberosEngine.AnalyzeEvents(ev), Uba = _ubaEngine.Evaluate(ev, wh),
+                        SamSummary = samSummary, Sam = _samAuditEngine.Analyze(ev), Dns = _dnsAuditEngine.Analyze(ev),
+                        Compliance = _complianceAuditEngine.Evaluate(ev, ad, samSummary, yara.Count, anomalies.Count),
+                        Deltas = _adDeltaEngine.ExtractDeltas(ev), Azure = _azureAdEngine.Analyze(ev), Files = _fileServerEngine.Analyze(ev),
+                        Employees = _employeeActivityEngine.AnalyzeWorkHours(ev), Storage = _storageAnalyticsEngine.AnalyzeStorageRisks(ev),
+                        Lolbas = _lolbasEngine.Analyze(ev), Processes = _processLineageCorrelator.BuildLineageTrees(ev), Multi = _correlationEngine.CorrelateEvents(ev),
+                    };
+                });
+                var eventsForAnalysis = bg.Events;
+                var anomalies = bg.Anomalies;
+                var yaraMatches = bg.Yara;
 
                 AiAnomalies.Clear();
                 int entropyCount = 0;
@@ -2588,7 +2670,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză ADAudit Plus & Kerberos Active Directory
-                var adSummary = _kerberosEngine.GetAuditSummary(eventsForAnalysis);
+                var adSummary = bg.Ad;
                 AdEventsAnalyzedCount = adSummary.TotalAdEventsAnalyzed;
                 AdAccountsCreatedCount = adSummary.UserAccountsCreated;
                 AdAccountsModifiedCount = adSummary.UserAccountsModified;
@@ -2599,7 +2681,7 @@ namespace LogAnalyzer.UI.ViewModels
                 AdGpoPolicyChangesCount = adSummary.GpoPolicyChanges;
                 AdKerberosAttacksCount = adSummary.KerberosAttacksDetected;
 
-                var kerbFindings = _kerberosEngine.AnalyzeEvents(eventsForAnalysis);
+                var kerbFindings = bg.Kerb;
                 KerberosFindings.Clear();
                 foreach (var kf in kerbFindings)
                 {
@@ -2607,7 +2689,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză Comportamentală Utilizatori UBA (User Behavior Analytics)
-                var ubaFindings = _ubaEngine.Evaluate(eventsForAnalysis, LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.WorkingHours);
+                var ubaFindings = bg.Uba;
                 UbaAnomalies.Clear();
                 foreach (var uf in ubaFindings)
                 {
@@ -2615,7 +2697,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză ADAudit Standalone PC & SAM Forensics (pentru PC-uri izolate / fără domeniu)
-                var samSummary = _samAuditEngine.GetSummary(eventsForAnalysis);
+                var samSummary = bg.SamSummary;
                 SamAccountsCreatedCount = samSummary.LocalAccountsCreated;
                 SamAccountsDeletedCount = samSummary.LocalAccountsDeleted;
                 SamAdminGroupModificationsCount = samSummary.LocalAdminGroupModifications;
@@ -2623,7 +2705,7 @@ namespace LogAnalyzer.UI.ViewModels
                 SamUsbStorageEventsCount = samSummary.UsbStorageEventsCount;
                 SamHighPrivilegeAssignmentsCount = samSummary.HighPrivilegeAssignmentsCount;
 
-                var samFindings = _samAuditEngine.Analyze(eventsForAnalysis);
+                var samFindings = bg.Sam;
                 StandaloneSamFindings.Clear();
                 foreach (var sf in samFindings)
                 {
@@ -2631,7 +2713,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză ADAudit DNS Server & Zone Changes
-                var dnsFindings = _dnsAuditEngine.Analyze(eventsForAnalysis);
+                var dnsFindings = bg.Dns;
                 DnsFindings.Clear();
                 foreach (var df in dnsFindings)
                 {
@@ -2639,7 +2721,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Evaluare Conformitate Automată (HG 585/2002, NIS2, ISO 27042, GDPR, PCI-DSS)
-                var compResults = _complianceAuditEngine.Evaluate(eventsForAnalysis, adSummary, samSummary, yaraMatches.Count, anomalies.Count);
+                var compResults = bg.Compliance;
                 ComplianceResults.Clear();
                 foreach (var cr in compResults)
                 {
@@ -2647,7 +2729,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză ADAudit Delta Valori Atribute Active Directory (Before / After)
-                var deltas = _adDeltaEngine.ExtractDeltas(eventsForAnalysis);
+                var deltas = bg.Deltas;
                 AdAttributeDeltas.Clear();
                 foreach (var d in deltas)
                 {
@@ -2655,7 +2737,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză ADAudit Azure AD & Cloud Hybrid Identity
-                var azure = _azureAdEngine.Analyze(eventsForAnalysis);
+                var azure = bg.Azure;
                 AzureAdFindings.Clear();
                 foreach (var az in azure)
                 {
@@ -2663,7 +2745,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză ADAudit File Server, NAS & Ransomware Pattern
-                var files = _fileServerEngine.Analyze(eventsForAnalysis);
+                var files = bg.Files;
                 FileServerFindings.Clear();
                 foreach (var fs in files)
                 {
@@ -2671,7 +2753,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză ADAudit Employee Work Hours & Session Activity
-                var emp = _employeeActivityEngine.AnalyzeWorkHours(eventsForAnalysis);
+                var emp = bg.Employees;
                 EmployeeActivities.Clear();
                 foreach (var ea in emp)
                 {
@@ -2679,7 +2761,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză ADAudit File Storage, Open ACLs & Orphaned SIDs
-                var stor = _storageAnalyticsEngine.AnalyzeStorageRisks(eventsForAnalysis);
+                var stor = bg.Storage;
                 StorageAuditItems.Clear();
                 foreach (var si in stor)
                 {
@@ -2687,7 +2769,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Analiză LOLBAS & Relații Anomale Părinte-Copil
-                var lolbas = _lolbasEngine.Analyze(eventsForAnalysis);
+                var lolbas = bg.Lolbas;
                 LolbasFindings.Clear();
                 foreach (var lf in lolbas)
                 {
@@ -2695,7 +2777,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Corelare Arbore Procese (Process Lineage Tree - Sysmon EID 1 & 4688)
-                var procs = _processLineageCorrelator.BuildLineageTrees(eventsForAnalysis);
+                var procs = bg.Processes;
                 CorrelatedProcessLineage.Clear();
                 foreach (var p in procs)
                 {
@@ -2703,7 +2785,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // Corelare Multi-Eveniment Temporală (ex: Brute-Force -> Logon Success, Ransomware VSS Delete)
-                var multiCorrelations = _correlationEngine.CorrelateEvents(eventsForAnalysis);
+                var multiCorrelations = bg.Multi;
                 MultiEventCorrelations.Clear();
                 foreach (var mc in multiCorrelations)
                 {
@@ -2730,6 +2812,11 @@ namespace LogAnalyzer.UI.ViewModels
                 StatusMessage = $"✅ Analiză AI finalizată: Risc {AiRiskScore}/100 | {kerbFindings.Count} Kerberos | {lolbas.Count} LOLBAS | {multiCorrelations.Count} Lanțuri Corelate";
                 UpdateStorylineAndAptAttribution();
             }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                StatusMessage = "Analiza nu a putut fi făcută: " + ex.Message;
+            }
+            finally { _aiRunning = false; }
         }
 
         [RelayCommand]
@@ -2738,19 +2825,21 @@ namespace LogAnalyzer.UI.ViewModels
             var dialog = new SaveFileDialog { Filter = "Notificare NIS2 (*.txt)|*.txt", FileName = $"DNSC_Avertizare_Timpurie_24h_{DateTime.Now:yyyyMMdd_HHmmss}.txt" };
             if (dialog.ShowDialog() == true)
             {
+                // No invented entity data, awareness time or measures (audit 2026-10-11): unknown fields are printed as [DE COMPLETAT].
                 string draft = _nis2Service.GenerateDnscDraft(
                     Nis2Stage.EarlyWarning_24h,
-                    "Entitate Esențială / Companie Securizată",
-                    "RO12345678",
+                    new Nis2Entity(),
+                    "",
                     CurrentStoryline.IncidentTitle,
-                    "Stații de Lucru & Servere de Domeniu",
-                    DateTime.UtcNow.AddHours(-3),
+                    "",
+                    null,
                     CurrentStoryline,
                     TotalEventsCount,
-                    TotalAlertsCount);
+                    TotalAlertsCount,
+                    iocs: CurrentIocs.ToList());
 
                 File.WriteAllText(dialog.FileName, draft, Encoding.UTF8);
-                _provenanceLedger.AppendEntry("NIS2_EXPORTED", dialog.FileName, "-", "Exportat draft Notificare Timpurie NIS2 (24h) către DNSC.");
+                _provenanceLedger.AppendEntry("NIS2_EXPORTED", dialog.FileName, "-", "Salvat proiectul de avertizare timpurie NIS2 (24h); netransmis, de verificat și transmis prin PNRISC de entitate.");
                 StatusMessage = "✅ Draft Notificare Timpurie NIS2 (24h) exportat cu succes!";
             }
         }
@@ -2761,19 +2850,21 @@ namespace LogAnalyzer.UI.ViewModels
             var dialog = new SaveFileDialog { Filter = "Notificare NIS2 (*.txt)|*.txt", FileName = $"DNSC_Notificare_Incident_72h_{DateTime.Now:yyyyMMdd_HHmmss}.txt" };
             if (dialog.ShowDialog() == true)
             {
+                // No invented entity data, awareness time or measures (audit 2026-10-11): unknown fields are printed as [DE COMPLETAT].
                 string draft = _nis2Service.GenerateDnscDraft(
                     Nis2Stage.Notification_72h,
-                    "Entitate Esențială / Companie Securizată",
-                    "RO12345678",
+                    new Nis2Entity(),
+                    "",
                     CurrentStoryline.IncidentTitle,
-                    "Stații de Lucru & Servere de Domeniu",
-                    DateTime.UtcNow.AddHours(-12),
+                    "",
+                    null,
                     CurrentStoryline,
                     TotalEventsCount,
-                    TotalAlertsCount);
+                    TotalAlertsCount,
+                    iocs: CurrentIocs.ToList());
 
                 File.WriteAllText(dialog.FileName, draft, Encoding.UTF8);
-                _provenanceLedger.AppendEntry("NIS2_EXPORTED", dialog.FileName, "-", "Exportat draft Notificare Incident NIS2 (72h) către DNSC.");
+                _provenanceLedger.AppendEntry("NIS2_EXPORTED", dialog.FileName, "-", "Salvat proiectul de notificare NIS2 (72h); netransmis, de verificat și transmis prin PNRISC de entitate.");
                 StatusMessage = "✅ Draft Notificare Incident NIS2 (72h) exportat cu succes!";
             }
         }
@@ -2834,21 +2925,20 @@ namespace LogAnalyzer.UI.ViewModels
 
                 string nis2Draft = _nis2Service.GenerateDnscDraft(
                     Nis2Stage.Notification_72h,
-                    "Entitate Esențială / Companie Securizată",
-                    "RO12345678",
+                    new Nis2Entity(),
+                    "",
                     CurrentStoryline.IncidentTitle,
-                    "Stații de Lucru & Servere de Domeniu",
-                    DateTime.UtcNow.AddHours(-6),
+                    "",
+                    null,
                     CurrentStoryline,
                     TotalEventsCount,
-                    TotalAlertsCount);
+                    TotalAlertsCount,
+                    iocs: CurrentIocs.ToList());
 
-                string tempCsv = Path.GetTempFileName();
+                // Security audit #14: the timeline is built in memory and written only into the sealed package (no plaintext copy in %TEMP%).
                 var events = _databaseService.GetEvents(20000, 0, null, null, null);
                 var reg = _databaseService.GetRegistryArtifacts(10000, 0, null);
-                _timelineExportService.ExportPlasoCsv(tempCsv, events, new List<ForensicArtifact>(), reg);
-                string csvContent = File.ReadAllText(tempCsv);
-                try { File.Delete(tempCsv); } catch (IOException) { /* temp copy only; the exported content is already read */ }
+                string csvContent = _timelineExportService.BuildPlasoCsv(events, new List<ForensicArtifact>(), reg);
 
                 string zipSha = _casePackagingService.PackageAndSealCase(
                     dialog.FileName,
