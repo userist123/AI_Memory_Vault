@@ -55,7 +55,7 @@ namespace LogAnalyzer.Core.Services.Edition
             _compiledIn = new HashSet<EditionFeature>(compiledIn ?? Array.Empty<EditionFeature>());
 
         public EditionKind Kind => EditionKind.Classified;
-        public string DisplayName => "Ediția clasificată (P1)";
+        public string DisplayName => "Ediția: Standalone";
         public StationPosture Posture => StationPosture.Standalone;
         public bool Has(EditionFeature feature) => _compiledIn.Contains(feature);
     }
@@ -64,7 +64,7 @@ namespace LogAnalyzer.Core.Services.Edition
     public sealed class UnclassifiedEditionProfile : IEditionProfile
     {
         public EditionKind Kind => EditionKind.Unclassified;
-        public string DisplayName => "Ediția neclasificată (P2/P3)";
+        public string DisplayName => "Ediția: Internet";
         public StationPosture Posture => StationPosture.Internet;
         public bool Has(EditionFeature feature) => true;
     }
@@ -77,8 +77,13 @@ namespace LogAnalyzer.Core.Services.Edition
     public sealed class NetworkEditionProfile : IEditionProfile
     {
         public EditionKind Kind => EditionKind.Unclassified;
-        public string DisplayName => "Ediția rețea air-gap";
+        public string DisplayName => "Ediția: Rețea air-gap";
         public StationPosture Posture => StationPosture.IsolatedNetwork;
-        public bool Has(EditionFeature feature) => feature != EditionFeature.AiAnalysis;
+        private readonly bool _localAi;
+
+        /// <param name="includesLocalAi">Only with the explicit, owner-approved build option -p:NetworkIncludeLocalAi=true (loopback AI).</param>
+        public NetworkEditionProfile(bool includesLocalAi = false) => _localAi = includesLocalAi;
+
+        public bool Has(EditionFeature feature) => feature != EditionFeature.AiAnalysis || _localAi;
     }
 }
