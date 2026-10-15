@@ -87,7 +87,7 @@ public class ClockMemoryTests
     [Fact]
     public void Station_control_check_S05_follows_the_verdict_and_has_a_guide()
     {
-        var f = new StationFacts { StationShouldBeIsolated = true, IsAdministrator = true, CollectedUtc = Now, LatestAppRecordUtc = Now.AddHours(1) };
+        var f = new StationFacts { Posture = LogAnalyzer.Core.Services.Edition.StationPosture.Standalone, IsAdministrator = true, CollectedUtc = Now, LatestAppRecordUtc = Now.AddHours(1) };
         var behind = ControlEvaluator.Evaluate(f).Checks.Single(c => c.Id == "S05");
         Assert.Equal(ControlStatus.Neconform, behind.Status);
         Assert.Contains("CMOS", behind.Detail);

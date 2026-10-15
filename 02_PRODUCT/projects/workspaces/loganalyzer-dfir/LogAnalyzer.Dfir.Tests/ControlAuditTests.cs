@@ -19,7 +19,7 @@ public class ControlAuditTests
         var f = new StationFacts
         {
             Host = "ST-IZOLAT-07", PeriodStartUtc = Start, PeriodEndUtc = Start.AddDays(30), CollectedUtc = Start.AddDays(30),
-            IsAdministrator = securityReadable, StationShouldBeIsolated = true,
+            IsAdministrator = securityReadable, Posture = LogAnalyzer.Core.Services.Edition.StationPosture.Standalone,
             PasswordPolicy = new PasswordPolicy(6, null, TimeSpan.Zero, 0, 0, TimeSpan.FromMinutes(30), TimeSpan.FromMinutes(30)),
             AuditPolicy = AuditPolicy.Subcategories.Keys.ToDictionary(k => k, k => k == "Process Creation" ? AuditSetting.None : AuditSetting.Success | AuditSetting.Failure),
         };
@@ -137,7 +137,7 @@ public class ControlAuditTests
     [Fact]
     public void Live_collection_on_this_station_completes_and_reports_its_own_gaps()
     {
-        var facts = StationFactCollector.Collect(DateTimeOffset.UtcNow.AddDays(-2), stationShouldBeIsolated: false, maxPerId: 200);
+        var facts = StationFactCollector.Collect(DateTimeOffset.UtcNow.AddDays(-2), posture: LogAnalyzer.Core.Services.Edition.StationPosture.Internet, maxPerId: 200);
         Assert.NotEmpty(facts.Accounts);
         Assert.NotEmpty(facts.Coverage);
         if (!facts.IsAdministrator) Assert.Contains(facts.Gaps, g => g.Artifact.Contains("Security") || g.Artifact.Contains("audit"));

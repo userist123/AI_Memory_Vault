@@ -28,7 +28,9 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<ActionEntry> Actions { get; } = new();
 
         [ObservableProperty] private int _periodDays = 90;
-        [ObservableProperty] private bool _stationShouldBeIsolated = AppModeContext.IsAirGapped;
+        /// <summary>Fixed at compile time by the edition (never chosen by the operator).</summary>
+        public LogAnalyzer.Core.Services.Edition.StationPosture Posture { get; } = LogAnalyzer.Core.Services.Edition.StationPostureContext.Current;
+        public string PostureLine => "Ediția: " + LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(Posture) + " — regulile de control se aplică după postura ediției.";
         [ObservableProperty] private string _inspector = LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified;
         [ObservableProperty] private string _notes = "";
         [ObservableProperty] private bool _isBusy;
@@ -49,7 +51,7 @@ namespace LogAnalyzer.UI.ViewModels
         partial void OnSavedReportInfoChanged(string value) => OnPropertyChanged(nameof(HasSavedReport));
         public bool HasSavedReport => SavedReportInfo.Length > 0;
 
-        public string[] StatusFilters { get; } = { "Toate", "NECONFORM", "DE VERIFICAT", "NEDETERMINAT", "CONFORM" };
+        public string[] StatusFilters { get; } = { "Toate", "NECONFORM", "DE VERIFICAT", "NEDETERMINAT", "CONFORM", "NU SE APLICĂ" };
 
         partial void OnStatusFilterChanged(string value) => FillChecks();
 
@@ -278,12 +280,12 @@ namespace LogAnalyzer.UI.ViewModels
             try
             {
                 var start = DateTimeOffset.UtcNow.AddDays(-PeriodDays);
-                var isolated = StationShouldBeIsolated;
+                var posture = Posture;
                 SavedReportInfo = "";
                 var (folders, updates) = ControlInputs();
                 _report = await Task.Run(() =>
                 {
-                    var facts = StationFactCollector.Collect(start, isolated, classifiedFolders: folders, offlineUpdates: updates);
+                    var facts = StationFactCollector.Collect(start, posture, classifiedFolders: folders, offlineUpdates: updates);
                     // Time memory (S05): the latest time the application recorded, read BEFORE this report adds its own "clock.seen" entry.
                     string? auditPath = null;
                     try { auditPath = LogAnalyzer.UI.Services.AuthApp.Service.AuditPath; } catch (InvalidOperationException) { }
@@ -307,7 +309,8 @@ namespace LogAnalyzer.UI.ViewModels
                 Actions.Clear();
                 foreach (var a in _report.Actions.OrderByDescending(a => a.TimeUtc)) Actions.Add(a);
                 Summary = $"NECONFORM {_report.Count(ControlStatus.Neconform)} · DE VERIFICAT {_report.Count(ControlStatus.DeVerificat)} · " +
-                          $"NEDETERMINAT {_report.Count(ControlStatus.Nedeterminat)} · CONFORM {_report.Count(ControlStatus.Conform)}";
+                          $"NEDETERMINAT {_report.Count(ControlStatus.Nedeterminat)} · CONFORM {_report.Count(ControlStatus.Conform)}" +
+                          (_report.Count(ControlStatus.NuSeAplica) > 0 ? $" · NU SE APLICĂ {_report.Count(ControlStatus.NuSeAplica)}" : "");
                 GapsText = _report.Facts.Gaps.Count == 0 ? "" :
                     "Surse lipsă sau incomplete: " + string.Join("; ", _report.Facts.Gaps.Select(g => $"{g.Artifact} ({g.Reason})"));
                 Status = _report.Facts.IsAdministrator
@@ -325,7 +328,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             Checks.Clear();
             if (_report is null) return;
-            var order = new[] { ControlStatus.Neconform, ControlStatus.DeVerificat, ControlStatus.Nedeterminat, ControlStatus.Conform };
+            var order = new[] { ControlStatus.Neconform, ControlStatus.DeVerificat, ControlStatus.Nedeterminat, ControlStatus.Conform, ControlStatus.NuSeAplica };
             foreach (var c in _report.Checks.OrderBy(c => Array.IndexOf(order, c.Status)).ThenBy(c => c.Id))
                 if (StatusFilter == "Toate" || ControlReportPdf.StatusText(c.Status) == StatusFilter)
                     Checks.Add(c);

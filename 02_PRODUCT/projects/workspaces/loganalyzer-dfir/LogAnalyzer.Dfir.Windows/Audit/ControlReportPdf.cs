@@ -45,7 +45,7 @@ public static class ControlReportPdf
                 if (header is not null) h.Item().AlignCenter().Text(header.MarkingLine).Bold().FontSize(8).FontColor("#b91c1c");
                 h.Item().Text(header is null ? $"Raport de control — stația {f.Host}" : $"Raport de control pentru proces-verbal — stația {f.Host}").Bold().FontSize(14).FontColor(Ink);
                 h.Item().Text($"Perioada controlată: {L(f.PeriodStartUtc)} – {L(f.PeriodEndUtc)} (ora locală) · colectat {L(f.CollectedUtc)} · " +
-                              $"{(f.StationShouldBeIsolated ? "stație izolată (AirGapped)" : "stație conectată")} · drepturi de administrator: {(f.IsAdministrator ? "da" : "NU (rezultate incomplete)")}")
+                              $"Ediția: {LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(f.Posture)} · drepturi de administrator: {(f.IsAdministrator ? "da" : "NU (rezultate incomplete)")}")
                     .FontSize(7.5f).FontColor(Muted);
                 h.Item().Text($"Verificator: {inspector}").FontSize(7.5f).FontColor(Muted);
                 h.Item().PaddingTop(4).LineHorizontal(1).LineColor(Ink);
@@ -81,6 +81,7 @@ public static class ControlReportPdf
                     Badge(row, "NECONFORM", r.Count(ControlStatus.Neconform), "#b91c1c");
                     Badge(row, "DE VERIFICAT", r.Count(ControlStatus.DeVerificat), "#b45309");
                     Badge(row, "NEDETERMINAT", r.Count(ControlStatus.Nedeterminat), "#475569");
+                    if (r.Count(ControlStatus.NuSeAplica) > 0) Badge(row, "NU SE APLICĂ", r.Count(ControlStatus.NuSeAplica), "#94a3b8");
                 });
                 if (header is not null)
                     col.Item().Border(0.8f).BorderColor(Ink).Padding(6).Table(t =>
@@ -249,12 +250,12 @@ public static class ControlReportPdf
 
     public static string StatusText(ControlStatus s) => s switch
     {
-        ControlStatus.Conform => "CONFORM", ControlStatus.Neconform => "NECONFORM", ControlStatus.DeVerificat => "DE VERIFICAT", _ => "NEDETERMINAT",
+        ControlStatus.Conform => "CONFORM", ControlStatus.Neconform => "NECONFORM", ControlStatus.DeVerificat => "DE VERIFICAT", ControlStatus.NuSeAplica => "NU SE APLICĂ", _ => "NEDETERMINAT",
     };
 
     private static string StatusColor(ControlStatus s) => s switch
     {
-        ControlStatus.Conform => "#15803d", ControlStatus.Neconform => "#b91c1c", ControlStatus.DeVerificat => "#b45309", _ => "#475569",
+        ControlStatus.Conform => "#15803d", ControlStatus.Neconform => "#b91c1c", ControlStatus.DeVerificat => "#b45309", ControlStatus.NuSeAplica => "#94a3b8", _ => "#475569",
     };
 
     private static void Badge(RowDescriptor row, string label, int n, string color) =>

@@ -39,7 +39,7 @@
                     <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding FlowStepIndex}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
                     <TextBlock Text="{Binding StationLine}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
                     <TextBlock Text="{Binding PreviousNote}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
-                    <CheckBox Content="Stația trebuie să fie izolată (fără rețea)" IsChecked="{Binding StationShouldBeIsolated}" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,6,0,0"/>
+                    <TextBlock Text="{Binding PostureLine}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/>
                 </StackPanel>
                 <!-- step 2: the period -->
                 <StackPanel>
@@ -137,7 +137,7 @@
             <WrapPanel VerticalAlignment="Center">
                 <TextBlock Text="Perioada (zile în urmă):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                 <TextBox AutomationProperties.Name="Perioada în zile" Text="{Binding PeriodDays, UpdateSourceTrigger=PropertyChanged}" Width="60" Margin="0,0,16,0"/>
-                <CheckBox Content="Stația trebuie să fie izolată (fără rețea)" IsChecked="{Binding StationShouldBeIsolated}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                <TextBlock Text="{Binding PostureLine}" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                 <TextBlock Text="Verificator:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                 <TextBox AutomationProperties.Name="Verificator" Text="{Binding Inspector, UpdateSourceTrigger=PropertyChanged}" Width="170" Margin="0,0,16,0"/>
                 <TextBlock Text="Observații:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>

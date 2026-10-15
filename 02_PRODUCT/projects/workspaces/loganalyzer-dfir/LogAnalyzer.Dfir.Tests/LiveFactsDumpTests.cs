@@ -37,7 +37,7 @@ public class LiveFactsDumpTests
         Directory.CreateDirectory(dir);
 
         var elevated = ShadowCopies.IsAdministrator();
-        var station = StationFactCollector.Collect(DateTimeOffset.UtcNow.AddDays(-30), stationShouldBeIsolated: true);
+        var station = StationFactCollector.Collect(DateTimeOffset.UtcNow.AddDays(-30), posture: LogAnalyzer.Core.Services.Edition.StationPosture.Standalone);
         var airgap = AirGapFactsCollector.Read(elevated, null);
         File.WriteAllText(Path.Combine(dir, "station_facts.json"), JsonSerializer.Serialize(station, Out));
         File.WriteAllText(Path.Combine(dir, "airgap_facts.json"), airgap.ToJson());
