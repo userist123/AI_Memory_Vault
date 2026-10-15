@@ -10,10 +10,23 @@ namespace LogAnalyzer.Dfir.Case;
 public sealed record AppInstall(DateTimeOffset? Utc, string Basis, IReadOnlyList<string> Violations)
 {
     public static AppInstall Unknown(string why, IReadOnlyList<string>? violations = null) => new(null, why, violations ?? []);
+
+    /// <summary>
+    /// DE VERIFICAT notes (review of PR #290): a date that does not match but is not proof of a lost history (program files copied long before the first
+    /// configuration), and a check made weaker because the Windows traces of the application are missing (Prefetch off, Amcache unreadable).
+    /// </summary>
+    public IReadOnlyList<string> ToVerify { get; init; } = [];
+
+    /// <summary>The time of the first chained record (seq 1) of the application's audit chain; null when the chain gives none. Printed next to <see cref="Utc"/>.</summary>
+    public DateTimeOffset? ChainFirstUtc { get; init; }
 }
 
-/// <summary>One trace of the application on the station with the time it was created (program files, licence, database, case folder).</summary>
-public sealed record AppTrace(string What, DateTimeOffset Utc);
+/// <summary>What a trace of the application shows: a file the application owns (its creation time can be rewritten by an administrator), a trace Windows keeps
+/// that shows the file was SEEN (Amcache entry), or one that shows it RAN (Prefetch run times, Security 4688).</summary>
+public enum AppTraceKind { AppFile, WindowsSeen, WindowsRun }
+
+/// <summary>One trace of the application on the station with the time it was created or recorded.</summary>
+public sealed record AppTrace(string What, DateTimeOffset Utc, AppTraceKind Kind = AppTraceKind.AppFile);
 
 /// <summary>
 /// The installation date of the application on this station (owner directive 2026-10-16), hardened against a rewritten audit (review of PR #288):
@@ -23,8 +36,9 @@ public sealed record AppTrace(string What, DateTimeOffset Utc);
 /// auth.primary_admin_created), and the chain must contain auth.primary_admin_created; otherwise "unknown";</item>
 /// <item>the date must not be in the future;</item>
 /// <item>the date is the EARLIEST of the chain's first record and the other traces of the application (its program files, licence, database, case folders):
-/// a store deleted and recreated later cannot move the date forward. A difference larger than <see cref="MismatchTolerance"/> is itself a violation
-/// („data instalării nu se potrivește — jurnalul aplicației a fost reinițializat”);</item>
+/// a store deleted and recreated later cannot move the date forward. A Windows RUN trace (Prefetch, Security 4688) earlier
+/// than the chain by more than <see cref="MismatchTolerance"/> is a violation (history lost); an earlier file time or Amcache entry only is DE VERIFICAT
+/// (<see cref="AppInstall.ToVerify"/>), and so is the absence of every Windows trace;</item>
 /// <item>every auth.store_reinitialised record, and every primary administrator created again, is a violation.</item>
 /// </list>
 /// Read-only.
@@ -141,16 +155,29 @@ public static class AppInstallDate
             return AppInstall.Unknown($"data instalării nu poate fi stabilită: primul rând al jurnalului de audit are o oră din viitor ({T(chainDate)})",
                 [.. violations, $"jurnalul de audit al aplicației începe la o oră din viitor ({T(chainDate)}): ceas greșit sau jurnal modificat"]);
 
-        var earliest = traces.Where(t => t.Utc <= now + FutureTolerance).OrderBy(t => t.Utc).FirstOrDefault();
-        if (earliest is not null && earliest.Utc < chainDate - MismatchTolerance)
-        {
-            violations.Add($"data instalării nu se potrivește — jurnalul aplicației a fost reinițializat: primul rând al jurnalului de audit este din {T(chainDate)}, " +
-                           $"dar {earliest.What} există din {T(earliest.Utc)}");
-            return new AppInstall(earliest.Utc, $"data instalării aplicației = cea mai veche urmă a aplicației ({earliest.What}, {T(earliest.Utc)}), mai veche decât primul rând al jurnalului de audit ({T(chainDate)})", violations);
-        }
+        // Review of PR #290: the date is the EARLIEST of the chain and every trace, so re-dating the application's own files can never move it later; what an
+        // earlier trace MEANS depends on its kind. A Windows record that the application RAN before the chain began (Prefetch run, Security 4688) proves the
+        // history before it was lost: NECONFORM. A file time or an Amcache entry only shows the program was there (copied, unpacked) before the first
+        // configuration, which an installation procedure can explain: DE VERIFICAT, to be confirmed from the installation record.
+        var valid = traces.Where(t => t.Utc <= now + FutureTolerance).ToList();
+        var toVerify = new List<string>();
+        if (!valid.Any(t => t.Kind != AppTraceKind.AppFile))
+            toVerify.Add("urmele Windows ale aplicației lipsesc (Prefetch oprit sau necitit, Amcache necitit, nicio pornire în Security 4688): data instalării se sprijină doar pe jurnalul " +
+                         "aplicației și pe orele fișierelor ei, pe care un administrator le poate rescrie; verificarea este mai slabă");
+        var earliestRun = valid.Where(t => t.Kind == AppTraceKind.WindowsRun).OrderBy(t => t.Utc).FirstOrDefault();
+        if (earliestRun is not null && earliestRun.Utc < chainDate - MismatchTolerance)
+            violations.Add($"aplicația a rulat pe stație la {T(earliestRun.Utc)} ({earliestRun.What}), înainte de începutul jurnalului de audit ({T(chainDate)}): " +
+                           "istoricul dinaintea primului rând a fost pierdut — jurnalul aplicației a fost reinițializat");
+        var earliestOther = valid.Where(t => t.Kind != AppTraceKind.WindowsRun).OrderBy(t => t.Utc).FirstOrDefault();
+        if (earliestOther is not null && earliestOther.Utc < chainDate - MismatchTolerance && !(earliestRun is not null && earliestRun.Utc < chainDate - MismatchTolerance))
+            toVerify.Add($"data instalării nu se potrivește: primul rând al jurnalului de audit este din {T(chainDate)}, dar {earliestOther.What} există din {T(earliestOther.Utc)}; " +
+                         "fie jurnalul a fost reinițializat, fie aplicația a fost copiată pe stație cu mult înainte de prima configurare — confirmați din procesul-verbal de instalare");
+        var earliest = valid.OrderBy(t => t.Utc).FirstOrDefault();
         var date = earliest is not null && earliest.Utc < chainDate ? earliest.Utc : chainDate;
-        return new AppInstall(date, $"data instalării aplicației = ora primului rând înlănțuit (seq 1, „{first.Event}”) din {SourceName}, lanț verificat: {T(chainDate)}" +
-                                    (date < chainDate ? $"; urma cea mai veche a aplicației ({earliest!.What}) este puțin mai veche, deci se folosește {T(date)}" : ""), violations);
+        var basis = date < chainDate
+            ? $"data instalării aplicației = cea mai veche urmă a aplicației ({earliest!.What}, {T(date)}), mai veche decât primul rând al jurnalului de audit ({T(chainDate)})"
+            : $"data instalării aplicației = ora primului rând înlănțuit (seq 1, „{first.Event}”) din {SourceName}, lanț verificat: {T(chainDate)}";
+        return new AppInstall(date, basis, violations) { ToVerify = toVerify, ChainFirstUtc = chainDate };
     }
 
     private static string T(DateTimeOffset? t) => t is { } x ? x.ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture) + " UTC" : "oră necunoscută";

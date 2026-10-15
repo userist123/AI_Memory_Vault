@@ -68,8 +68,9 @@ public sealed class AirGapFactsCollector : ICollector
         Try("jurnalizarea firewall-ului (pfirewall.log)", () => ReadFirewallLogging(f.Network));
         Try("auditul conexiunilor WFP (Security 5156/5157, cere drepturi de administrator)", () => ReadWfpAudit(f.Network));
         Try("retenția jurnalelor de evenimente", () => f.Network.EventLogs.AddRange(ReadEventLogInfo()));
-        var install = LogAnalyzer.Dfir.Case.AppInstallDate.Read();
+        var install = AppInstallTraces.ReadInstall();
         f.AppInstalledUtc = install.Utc; f.AppInstallBasis = install.Basis; f.AppInstallViolations.AddRange(install.Violations);
+        f.AppInstallToVerify.AddRange(install.ToVerify); f.AppInstallChainFirstUtc = install.ChainFirstUtc;
         f.WebcamPolicy = Reg(Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam", "Value");
         f.MicrophonePolicy = Reg(Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone", "Value");
         return f;

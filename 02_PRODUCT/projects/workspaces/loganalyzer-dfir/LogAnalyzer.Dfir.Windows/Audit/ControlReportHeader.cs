@@ -17,6 +17,13 @@ public sealed record ControlReportHeader(
     /// <summary>"Ediție nepotrivită" (see <see cref="EditionFit"/>), or empty. Printed as a header line; it never changes a check result.</summary>
     public string EditionWarning { get; init; } = "";
 
+    /// <summary>
+    /// Review of PR #290: the installation date the application computed and the time of the first record of its audit chain, printed on every control
+    /// report so the officer can compare them between controls (a later date on a later report means the history was reset). Empty = not printed.
+    /// </summary>
+    public string AppInstallDate { get; init; } = "";
+    public string AppChainFirst { get; init; } = "";
+
     /// <summary>The marking line printed on every page.</summary>
     public string MarkingLine => string.IsNullOrWhiteSpace(Marking) ? $"Marcaj: {NoMarking} ({MarkingNote})" : $"Marcaj: {Marking.Trim()} ({MarkingNote})";
 
@@ -42,6 +49,8 @@ public sealed record ControlReportHeader(
         }
         foreach (var f in ExtraFields) if (!string.IsNullOrWhiteSpace(f.Label)) l.Add((f.Label.Trim(), V(f.Value)));
         if (!string.IsNullOrWhiteSpace(EditionWarning)) l.Add(("Avertisment ediție", EditionWarning));
+        if (AppInstallDate.Length > 0) l.Add(("Data instalării aplicației (calculată)", AppInstallDate));
+        if (AppChainFirst.Length > 0) l.Add(("Primul rând al jurnalului de audit al aplicației", AppChainFirst));
         return l;
     }
 
@@ -55,6 +64,8 @@ public sealed record ControlReportHeader(
         {
             // an unread egress source: no guess, no warning
             EditionWarning = EditionFit.Warning(facts.Posture, facts.EgressUnread.Count > 0 ? null : facts.EgressPaths) ?? "",
+            AppInstallDate = facts.AppInstalledUtc is { } ai ? $"{L(ai)} (ora locală); {facts.AppInstallBasis}" : facts.AppInstallBasis.Length > 0 ? "necunoscută: " + facts.AppInstallBasis : "",
+            AppChainFirst = facts.AppInstallChainFirstUtc is { } cf ? $"{L(cf)} (ora locală)" : "",
         };
     }
 }

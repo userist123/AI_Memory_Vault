@@ -436,6 +436,13 @@ public static class ControlEvaluator
         // Review of PR #288: a re-initialised or contradicted audit chain makes the boundary itself untrustworthy: NECONFORM on Standalone.
         var installViolations = standalone ? f.AppInstallViolations : [];
         string violationText = installViolations.Count > 0 ? " NECONFORM și pentru data instalării: " + string.Join("; ", installViolations) + "." : "";
+        // Review of PR #290: DE VERIFICAT notes (mismatch without proof, missing Windows traces) and the two dates the officer compares between controls.
+        var installToVerify = standalone ? f.AppInstallToVerify : [];
+        violationText += installToVerify.Count > 0 ? " DE VERIFICAT pentru data instalării: " + string.Join("; ", installToVerify) + "." : "";
+        IEnumerable<string> installDates = standalone
+            ? [$"data instalării calculată: {(f.AppInstalledUtc is { } ci ? ci.ToString("yyyy-MM-dd HH:mm") + " UTC" : "necunoscută")}",
+               $"primul rând al jurnalului de audit: {(f.AppInstallChainFirstUtc is { } cf ? cf.ToString("yyyy-MM-dd HH:mm") + " UTC" : "necunoscut")}"]
+            : [];
         if (standalone && f.AppInstalledUtc is { } inst)
         {
             static DateTimeOffset Utc(DateTime local) => new DateTimeOffset(local).ToUniversalTime();
@@ -458,7 +465,7 @@ public static class ControlEvaluator
                         : profilesKnown && eventsKnown
                             ? $"Conectare la rețea după {at}: nu s-a observat în sursele colectate (profiluri de rețea, NetworkProfile, WLAN-AutoConfig) și nicio interfață activă acum; jurnalele acoperă doar intervalul lor de retenție."
                             : "Conectare la rețea: nedeterminat. Sursă lipsă: profilurile de rețea (NetworkList) sau jurnalele NetworkProfile / WLAN-AutoConfig, de ce lipsește: nu au putut fi citite la colectare, cum se pornește: rulați controlul ca administrator (canalul WLAN-AutoConfig există doar pe stațiile cu Wi-Fi).") + violationText,
-                installViolations.Select(v => "data instalării: " + v).Concat(profAfter.Select(p => $"după instalare: {p.Name} ({p.Kind}) ultima conectare {p.LastConnectedLocal:yyyy-MM-dd HH:mm} ora locală")
+                installDates.Concat(installViolations.Select(v => "data instalării: " + v)).Concat(installToVerify.Select(v => "de verificat: " + v)).Concat(profAfter.Select(p => $"după instalare: {p.Name} ({p.Kind}) ultima conectare {p.LastConnectedLocal:yyyy-MM-dd HH:mm} ora locală")
                     .Concat(evAfter.Select(l => $"după instalare: {Ev(l)}: {V(l, "Name")}{V(l, "SSID")}")).Concat(f.ConnectedInterfacesNow.Select(i => "acum: " + i))
                     .Concat(profBefore.Select(p => $"înainte de instalare (istoric): {p.Name} ({p.Kind}) ultima conectare {p.LastConnectedLocal:yyyy-MM-dd HH:mm} ora locală"))
                     .Concat(evBefore.Select(l => $"înainte de instalare (istoric): {Ev(l)}: {V(l, "Name")}{V(l, "SSID")}"))),
@@ -480,7 +487,7 @@ public static class ControlEvaluator
                     : profilesKnown && eventsKnown
                         ? "Conectare la rețea: nu s-a observat în sursele colectate (profiluri de rețea, NetworkProfile, WLAN-AutoConfig) și nicio interfață activă acum; absența observațiilor nu dovedește că stația nu s-a conectat (istorie limitată a jurnalelor, adaptoare fără urme în aceste surse)."
                         : "Conectare la rețea: nedeterminat. Sursă lipsă: profilurile de rețea (NetworkList) sau jurnalele NetworkProfile / WLAN-AutoConfig, de ce lipsește: nu au putut fi citite la colectare, cum se pornește: rulați controlul ca administrator (canalul WLAN-AutoConfig există doar pe stațiile cu Wi-Fi).") + unknownDate + violationText,
-                installViolations.Select(v => "data instalării: " + v).Concat(inPeriod.Select(p => $"{p.Name} ({p.Kind}) ultima conectare {p.LastConnectedLocal:yyyy-MM-dd HH:mm} ora locală")
+                installDates.Concat(installViolations.Select(v => "data instalării: " + v)).Concat(installToVerify.Select(v => "de verificat: " + v)).Concat(inPeriod.Select(p => $"{p.Name} ({p.Kind}) ultima conectare {p.LastConnectedLocal:yyyy-MM-dd HH:mm} ora locală")
                         .Concat(evts.Select(l => $"{Ev(l)}: {V(l, "Name")}{V(l, "SSID")}")).Concat(f.ConnectedInterfacesNow.Select(i => "acum: " + i))),
                 "Orice conectare a unei stații izolate trebuie investigată (cine, când, ce s-a transferat).");
         }
