@@ -63,11 +63,14 @@ public sealed record ControlConclusion(string Verdict, IReadOnlyList<string> Ser
         if (steps.Count < MaxNextSteps && dv > 0) steps.Add("Confirmați cu organizația faptele DE VERIFICAT (cine le-a autorizat, pe ce bază).");
         if (steps.Count < MaxNextSteps) steps.Add("Salvați raportul pentru procesul-verbal: PDF și JSON rămân în caz, cu amprentă de integritate.");
 
-        var notChecked = new List<string>
+        // Elevation is a positive fact (the report header already shows it): it is a limitation only when missing.
+        var notChecked = new List<string>();
+        if (!f.IsAdministrator)
         {
-            f.IsAdministrator ? "Controlul a rulat cu drepturi de administrator."
-                : "Controlul a rulat FĂRĂ drepturi de administrator: jurnalul de securitate și o parte din setări nu au putut fi citite.",
-        };
+            var needAdmin = r.Checks.Where(c => c.Status == ControlStatus.Nedeterminat).Select(c => c.Id).ToList();
+            notChecked.Add("Controlul a rulat FĂRĂ drepturi de administrator: jurnalul de securitate și o parte din setări nu au putut fi citite"
+                + (needAdmin.Count > 0 ? $"; verificări rămase nedeterminate: {string.Join(", ", needAdmin)}." : "."));
+        }
         var unreadable = f.Coverage.Where(c => !c.Readable).Select(c => c.Channel).ToList();
         if (unreadable.Count > 0) notChecked.Add($"Surse necitite: {string.Join(", ", unreadable)}.");
         var undetermined = r.Checks.Where(c => c.Status == ControlStatus.Nedeterminat).ToList();
