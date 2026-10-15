@@ -27,7 +27,7 @@ public static class ProfileImport
             return Failed($"schema_version „{p.SchemaVersion}” nu este suportată (profil de procedură 1.x)");
         // Null lists in a hand-edited file are empty tables.
         p.WorkingHours ??= []; p.Holidays ??= []; p.Shifts ??= []; p.ApprovedAccounts ??= []; p.MaintenanceWindows ??= []; p.RotationProcedure ??= [];
-        p.ApprovedSoftware ??= []; p.ExpectedPolicies ??= []; p.Zones ??= []; p.TransferChannels ??= []; p.NetworkDestinations ??= []; p.ClassifiedFolders ??= [];
+        p.ApprovedSoftware ??= []; p.ExpectedPolicies ??= []; p.Zones ??= []; p.TransferChannels ??= []; p.NetworkDestinations ??= []; p.ClassifiedFolders ??= []; p.SecurityOfficers ??= []; p.LastAnchorCode ??= "";
         var issues = ProfileOps.Validate(p);
         int rows = ProfileTables.All.Sum(t => ProfileTables.Count(p, t));
         var bad = issues.Where(i => i.IsError && i.Line > 0).Select(i => (i.Table, i.Line)).Distinct().Count();
