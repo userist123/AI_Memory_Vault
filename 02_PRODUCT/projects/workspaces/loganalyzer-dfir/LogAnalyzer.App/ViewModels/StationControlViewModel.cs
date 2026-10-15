@@ -304,6 +304,8 @@ namespace LogAnalyzer.UI.ViewModels
                         {
                             var cb = LogAnalyzer.Dfir.Case.ClockMemory.ReadBaseline(auditPath);
                             facts.LatestAppRecordUtc = cb.Baseline; facts.ClockSuspectNote = cb.SuspectNote; facts.ClockAckText = cb.AckText;
+                            // the application's own reads of the classified files at earlier controls (hashing): listed apart, never as someone's access
+                            facts.SelfWindows.AddRange(LogAnalyzer.Dfir.Auth.OperationAudit.ReadControlHashing(auditPath));
                         }
                         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
                         try { LogAnalyzer.Dfir.Case.ClockMemory.RecordSeen(auditPath, facts.CollectedUtc, "raport de control stație"); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
@@ -312,6 +314,9 @@ namespace LogAnalyzer.UI.ViewModels
                     }
                     return ControlEvaluator.Evaluate(facts);
                 });
+                // the hashing window of this control goes to the sealed audit: the next controls recognise its records in the folders' audit
+                bool auditedHashing = _report.Facts.SelfWindow is not { } own
+                    || LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashing, LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashingDetail(own));
                 bool auditedFinish = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinished,
                     LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinishedDetail(_report.Facts.Host, _report.Facts.IsAdministrator, _report.Checks.Count,
                         _report.Count(ControlStatus.Neconform), _report.Count(ControlStatus.DeVerificat), _report.Count(ControlStatus.Nedeterminat)));
@@ -329,7 +334,7 @@ namespace LogAnalyzer.UI.ViewModels
                 Status = _report.Facts.IsAdministrator
                     ? $"Control finalizat: {_report.Checks.Count} verificări, {_report.Actions.Count} acțiuni în cronologie. Dublu-click pe orice rând pentru detalii."
                     : "Control finalizat FĂRĂ drepturi de administrator: jurnalul Security și o parte din setări nu au putut fi citite (verificările respective sunt NEDETERMINATE). Reporniți aplicația ca administrator.";
-                if (!auditedStart || !auditedFinish) Status += " ATENȚIE: controlul nu a putut fi trecut în jurnalul de audit (vezi avertismentul de sus).";
+                if (!auditedStart || !auditedFinish || !auditedHashing) Status += " ATENȚIE: controlul nu a putut fi trecut în jurnalul de audit (vezi avertismentul de sus).";
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
             {

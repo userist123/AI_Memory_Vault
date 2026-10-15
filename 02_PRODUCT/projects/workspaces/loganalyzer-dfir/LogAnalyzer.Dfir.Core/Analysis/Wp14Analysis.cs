@@ -23,13 +23,21 @@ public static class Wp14Analysis
         users = Resolve(ws, users, usersPath);
         var mediaSha = media is { IsDefined: true } ? RegisterSnapshot.WriteTo(ws, media) : RegisterSnapshot.WriteTo(ws, new MediaRegister());
         var usersSha = users is { IsDefined: true } ? RegisterSnapshot.WriteTo(ws, users) : RegisterSnapshot.WriteTo(ws, new UsersRegister());
-        var findings = Wp14Rules.Run(timeline, nextId, new Wp14Input { Scope = ws.Info.Scope, Media = media, Users = users, Transfers = transfers, Profile = profile, SystemZone = systemZone, Data = data, Facts = facts,
+        var findings = Wp14Rules.Run(timeline, nextId, new Wp14Input { Scope = ws.Info.Scope, Media = media, Users = users, Transfers = transfers, StationZone = DeclaredZone(ws.Info.Timezone), Profile = profile, SystemZone = systemZone, Data = data, Facts = facts,
                                                                EvidenceOrigins = EvidenceOrigin.Map(ws.LoadEvidence()) });
         string Part(string title, IRegisterData? r, string sha) => $"{title}: " + (r is { IsDefined: true } ? $"definit ({r.Cells().Count} rânduri; copie în caz Analysis/{r.Kind}_register.json, SHA-256 {sha})" : "nedefinit (nu există rânduri; observațiile nu se compară cu un registru)");
         var zone = systemZone.Length > 0 ? $" Zona sistemului declarată: {systemZone}." : " Zona sistemului nu este declarată.";
         // the transfer register is copied into the case only when it has rows (the classified-exit findings cite its entries)
         var transfersPart = transfers is { IsDefined: true } ? "; " + Part("Registru transferuri", transfers, RegisterSnapshot.WriteTo(ws, transfers)) : "; Registru transferuri: nedefinit (nicio ieșire a unui fișier clasificat nu poate fi arătată ca aprobată)";
         return new Wp14Result(findings, mediaSha, usersSha, Part("Registru medii", media, mediaSha) + "; " + Part("Registru utilizatori", users, usersSha) + transfersPart + "." + zone);
+    }
+
+    /// <summary>The station's time zone as declared in the case; null when not declared or unknown on this machine (then register times are not compared).</summary>
+    internal static TimeZoneInfo? DeclaredZone(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id)) return null;
+        try { return TimeZoneInfo.FindSystemTimeZoneById(id.Trim()); }
+        catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException) { return null; }
     }
 
     private static T? Resolve<T>(CaseWorkspace ws, T? given, string? path) where T : class, IRegisterData, new()

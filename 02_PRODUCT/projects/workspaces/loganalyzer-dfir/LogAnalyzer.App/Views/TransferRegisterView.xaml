@@ -85,6 +85,8 @@
                             <ComboBox IsEditable="True" Text="{Binding Witness, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding KnownWitnesses}" AutomationProperties.Name="Martorul"/>
                             <TextBlock Text="Aprobat de (opțional)" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
                             <TextBox Text="{Binding Approver, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Aprobat de"/>
+                            <TextBlock Text="Număr de copii (gol = 1)" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                            <TextBox Text="{Binding Copies, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Numărul de copii transferate"/>
                         </StackPanel>
                     </Grid>
                     <TextBlock Text="Observații" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
@@ -152,6 +154,7 @@
                         <DataGridTextColumn Header="Mediu" Binding="{Binding MediumSerial}" Width="*"/>
                         <DataGridTextColumn Header="Conținut" Binding="{Binding Content}" Width="1.6*"/>
                         <DataGridTextColumn Header="Martor" Binding="{Binding Witness}" Width="*"/>
+                        <DataGridTextColumn Header="Copii" Binding="{Binding Copies}" Width="0.5*"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </DockPanel>

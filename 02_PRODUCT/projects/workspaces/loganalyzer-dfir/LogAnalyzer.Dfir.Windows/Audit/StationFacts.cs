@@ -99,6 +99,10 @@ public sealed class StationFacts
     public Dictionary<string, string>? ClassifiedHashes { get; set; }
     /// <summary>The organisation's transfer register (approved exits); null = not given.</summary>
     public LogAnalyzer.Dfir.Registers.TransferRegister? Transfers { get; set; }
+    /// <summary>When this control read the classified files to hash them (the reads appear in the folders' audit at later controls); null = no hashing.</summary>
+    public LogAnalyzer.Dfir.Analysis.SelfActivityWindow? SelfWindow { get; set; }
+    /// <summary>The hashing windows of this and earlier controls (from the sealed audit): their records are the application's own, not someone's access.</summary>
+    public List<LogAnalyzer.Dfir.Analysis.SelfActivityWindow> SelfWindows { get; init; } = [];
     /// <summary>The register of offline updates kept by the organisation; an empty list = the register is not filled in; null = not given.</summary>
     public List<LogAnalyzer.Dfir.Registers.UpdateRow>? OfflineUpdateRegister { get; set; }
     /// <summary>The latest time the application itself recorded in its chained audit logs ("time memory", check S05); null = no earlier record.</summary>
@@ -179,8 +183,6 @@ public static class StationFactCollector
             facts.FolderAudits = ReadFolderAudits(classifiedFolders);
             facts.Transfers = transfers;
             Try(facts, "Volume (nume de dispozitiv și litere)", () => facts.VolumeMap = ClassifiedFactCollector.VolumeMap());
-            Try(facts, "Fișierele din folderele clasificate", () => ClassifiedFactCollector.ReadFiles(facts, classifiedFolders));
-            Try(facts, "Scurtături recente (LNK) ale profilurilor", () => facts.ShellTraces = ClassifiedFactCollector.ShellTraces(classifiedFolders));
         }
         // A14: the sources that let classified exits be seen (read always; the check names what is missing)
         Try(facts, "Linia de comandă în 4688 și jurnalul de tipărire", () =>
@@ -192,10 +194,26 @@ public static class StationFactCollector
         Try(facts, "Profiluri de rețea", () => facts.NetworkProfiles.AddRange(ReadNetworkProfiles()));
         Try(facts, "Interfețe de rețea", () => facts.ConnectedInterfacesNow.AddRange(ReadConnectedInterfaces()));
         Try(facts, "Dispozitive USB (USBSTOR)", () => facts.UsbDevices.AddRange(ReadUsbStor()));
+        // classified folders: their access records have their own budget, so the general cap of 4663 cannot push them out
+        Func<int, IReadOnlyDictionary<string, string>, bool>? classified = null;
+        if (classifiedFolders is not null)
+        {
+            var removable = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var v in facts.Volumes ?? []) if (v.Kind == VolumeKind.Amovibil && v.Drive.Length >= 2) removable.Add(v.Drive[..2].ToUpperInvariant());
+            classified = ClassifiedFactCollector.ClassifiedEventFilter(classifiedFolders,
+                (facts.FolderAudits ?? []).SelectMany(x => new[] { x.LinkTarget, x.ShortPath }).Where(x => x.Length > 0), removable, facts.VolumeMap);
+        }
         foreach (var (channel, ids) in Queries)
         {
             ct.ThrowIfCancellationRequested();
-            ReadChannel(facts, channel, ids, periodStartUtc, maxPerId);
+            ReadChannel(facts, channel, ids, periodStartUtc, maxPerId, channel == "Security" ? classified : null);
+        }
+        // AFTER the logs: hashing reads the classified files, and with their audit rules every read is recorded by Windows; read now, those records are not in
+        // this control's evidence (the window goes to the sealed audit and later controls list them apart)
+        if (classifiedFolders is not null)
+        {
+            Try(facts, "Fișierele din folderele clasificate", () => ClassifiedFactCollector.ReadFiles(facts, classifiedFolders));
+            Try(facts, "Scurtături recente (LNK) ale profilurilor", () => facts.ShellTraces = ClassifiedFactCollector.ShellTraces(classifiedFolders));
         }
         return facts;
     }
@@ -955,8 +973,12 @@ public static class StationFactCollector
 
     // ---- logs -------------------------------------------------------------------------------------------------
 
-    private static void ReadChannel(StationFacts f, string channel, int[] ids, DateTimeOffset since, int maxPerId)
+    /// <summary>Budget of 4656 / 4660 / 4663 records about the classified folders and removable media, separate from the general per-id cap.</summary>
+    public const int ClassifiedBudget = 50000;
+
+    private static void ReadChannel(StationFacts f, string channel, int[] ids, DateTimeOffset since, int maxPerId, Func<int, IReadOnlyDictionary<string, string>, bool>? classified = null)
     {
+        var perClassified = new Dictionary<int, int>();
         DateTimeOffset? oldest = null;
         long count = 0;
         try
@@ -976,10 +998,31 @@ public static class StationFactCollector
                     using (rec)
                     {
                         perId.TryGetValue(rec.Id, out var n);
-                        if (n >= maxPerId) continue;
-                        perId[rec.Id] = n + 1;
+                        Dictionary<string, string>? data = null;
+                        if (classified is not null && rec.Id is 4656 or 4660 or 4663)
+                        {
+                            perClassified.TryGetValue(rec.Id, out var nc);
+                            if (n >= maxPerId && nc >= ClassifiedBudget) { perClassified[rec.Id] = nc + 1; continue; }
+                            data = ReadData(rec);
+                            if (rec.Task is { } t0) data["_Task"] = t0.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                            if (classified(rec.Id, data))
+                            {
+                                perClassified[rec.Id] = nc + 1;
+                                if (nc >= ClassifiedBudget) continue;
+                            }
+                            else
+                            {
+                                if (n >= maxPerId) continue;
+                                perId[rec.Id] = n + 1;
+                            }
+                        }
+                        else
+                        {
+                            if (n >= maxPerId) continue;
+                            perId[rec.Id] = n + 1;
+                        }
                         count++;
-                        var data = ReadData(rec);
+                        data ??= ReadData(rec);
                         // 4656 / 4663 of the "Removable Storage" subcategory (task 12802) are writes on removable media even when the volume is no longer mapped
                         if (rec.Id is 4656 or 4663 && channel == "Security" && rec.Task is { } task) data["_Task"] = task.ToString(System.Globalization.CultureInfo.InvariantCulture);
                         f.Logs.Add(new LogFact(channel, rec.Id, rec.TimeCreated?.ToUniversalTime() ?? DateTime.MinValue, rec.RecordId ?? 0,
@@ -987,6 +1030,9 @@ public static class StationFactCollector
                     }
                 }
             }
+            foreach (var (eid, n) in perClassified.Where(p => p.Value > ClassifiedBudget))
+                f.Gaps.Add(new EvidenceGap($"{channel} {eid} (foldere clasificate)", EvidenceStatus.Partial, $"limitat la cele mai recente {LogAnalyzer.Dfir.Language.RoText.Count(ClassifiedBudget, "eveniment", "evenimente")}",
+                    "Pot lipsi accese mai vechi la fișierele clasificate", "Analiză offline a jurnalului exportat", "Da"));
             foreach (var (eid, n) in perId.Where(p => p.Value >= maxPerId))
                 f.Gaps.Add(new EvidenceGap($"{channel} {eid}", EvidenceStatus.Partial, $"limitat la cele mai recente {LogAnalyzer.Dfir.Language.RoText.Count(maxPerId, "eveniment", "evenimente")}",
                     "Numărătorile pentru acest eveniment sunt minime, nu totale", "Analiză offline a jurnalului exportat", "Da"));
