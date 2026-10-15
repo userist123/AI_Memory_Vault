@@ -7,12 +7,16 @@ public enum DcProbeOutcome
     Reachable,
     /// <summary>Located at an internal address, but LDAP did not answer within the timeout.</summary>
     Unreachable,
-    /// <summary>A resolved address is public: nothing was contacted.</summary>
+    /// <summary>A resolved address is public: the probe opened no TCP connection (the Windows locator traffic had already been sent).</summary>
     PublicAddress,
     /// <summary>No domain controller could be located, or only excluded addresses (loopback, link-local) came back.</summary>
     NotResolved,
     /// <summary>The probe did not run (the network gate refused, or the build has no probe).</summary>
     Skipped,
+    /// <summary>The overall deadline (locator, name resolution, connection) passed.</summary>
+    TimedOut,
+    /// <summary>The control run was cancelled while the probe ran.</summary>
+    Cancelled,
 }
 
 /// <summary>What the N13 probe found. <see cref="Addresses"/> are the resolved addresses as text; <see cref="Detail"/> is the reason in Romanian.</summary>

@@ -535,6 +535,8 @@ public static class ControlEvaluator
         if (member != "da")
             Add(r, "N13", "Rețea", n13, ControlStatus.Nedeterminat,
                 "Verificarea nu a rulat: stația nu este membră a unui domeniu (vezi N12), deci nu are un controler de domeniu de contactat.", rec: n13Rec);
+        else if (dc is { Outcome: DcProbeOutcome.Cancelled })
+            Add(r, "N13", "Rețea", n13, ControlStatus.Nedeterminat, "Verificarea activă nu s-a încheiat: verificarea a fost anulată.", rec: n13Rec);
         else if (dc is null || dc.Outcome == DcProbeOutcome.Skipped)
             Add(r, "N13", "Rețea", n13, ControlStatus.Nedeterminat,
                 "Verificarea activă nu a rulat" + (dc is null ? " (nu este disponibilă în această rulare)." : $": {dc.Detail}"), rec: n13Rec);
@@ -544,7 +546,8 @@ public static class ControlEvaluator
             var (status, detail) = dc.Outcome switch
             {
                 DcProbeOutcome.Reachable => (ControlStatus.Conform, $"Controlerul de domeniu {dc.DcName} al domeniului {name} se află la o adresă internă și răspunde pe LDAP (389). {dc.Detail}".TrimEnd()),
-                DcProbeOutcome.PublicAddress => (ControlStatus.Neconform, $"Atenție: controlerul de domeniu se rezolvă la o adresă publică ({string.Join(", ", dc.Addresses)}); nu a fost contactat. {dc.Detail}".TrimEnd()),
+                DcProbeOutcome.PublicAddress => (ControlStatus.Neconform, $"Atenție: controlerul de domeniu se rezolvă la o adresă publică ({string.Join(", ", dc.Addresses)}). {dc.Detail}".TrimEnd()),
+                DcProbeOutcome.TimedOut => (ControlStatus.DeVerificat, $"Verificarea activă s-a oprit: {dc.Detail}".TrimEnd()),
                 DcProbeOutcome.Unreachable => (ControlStatus.DeVerificat, $"Controlerul de domeniu {dc.DcName} se află la o adresă internă, dar nu a răspuns pe LDAP (389): {dc.Detail}".TrimEnd()),
                 _ => (ControlStatus.DeVerificat, $"Nu s-a găsit niciun controler de domeniu la o adresă internă pentru domeniul {name}. {dc.Detail}".TrimEnd()),
             };
