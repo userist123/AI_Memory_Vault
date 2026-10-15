@@ -76,6 +76,12 @@
                         <TextBox AutomationProperties.Name="Marcajul raportului, introdus manual" Text="{Binding MarkingLevel, UpdateSourceTrigger=PropertyChanged}" Width="180"/>
                     </WrapPanel>
                     <TextBlock Text="{Binding MarkingNote}" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                    <WrapPanel Margin="0,8,0,0">
+                        <TextBlock Text="Codul de ancorare de la controlul anterior:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox AutomationProperties.Name="Codul de ancorare de la controlul anterior, de pe procesul-verbal semnat" Text="{Binding PreviousAnchorCode, UpdateSourceTrigger=PropertyChanged}"
+                                 Width="230" FontFamily="Consolas" ToolTip="{Binding PreviousAnchorHelp}"/>
+                    </WrapPanel>
+                    <TextBlock Text="{Binding PreviousAnchorHelp}" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                 </StackPanel>
 
                 <TextBlock Text="{Binding FlowError}" Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,6,0,0"/>
@@ -113,6 +119,30 @@
                     <Button Content="Deschide folderul rapoartelor" Command="{Binding OpenCaseFolderCommand}" Margin="0,0,8,6"/>
                     <Button Content="Control nou" Command="{Binding FlowRestartCommand}" Margin="0,0,8,6"/>
                 </WrapPanel>
+                <!-- owner decision 2026-10-16: anchor code for the next control and the security officer's signature -->
+                <Border Background="{StaticResource CanvasBrush}" CornerRadius="6" Padding="10" Margin="0,6,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Semnătura ofițerului de securitate și codul de ancorare" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{Binding OfficerStatus}" FontWeight="Bold" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                        <WrapPanel Margin="0,6,0,0" Visibility="{Binding HasAnchor, Converter={StaticResource BoolToVis}}">
+                            <TextBox Text="{Binding AnchorLine, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="15" FontWeight="Bold"
+                                     Foreground="{StaticResource TextPrimaryBrush}" AutomationProperties.Name="Codul de ancorare al acestui control" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <Button Content="Copiază codul" Command="{Binding CopyAnchorCodeCommand}" Margin="0,0,8,0"/>
+                        </WrapPanel>
+                        <TextBlock Text="Codul de ancorare se trece pe procesul-verbal. La controlul următor se introduce din nou și aplicația verifică dacă jurnalul ei nu a fost rescris între timp."
+                                   Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                        <WrapPanel Margin="0,8,0,0">
+                            <Button Content="Semnează ca ofițer de securitate" Command="{Binding SignAsOfficerCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,8,6"
+                                    ToolTip="Doar ofițerul de securitate, cu cheia lui de pe mediul lui și parola. Raportul semnat este raportul oficial."/>
+                            <Button Content="Copiază jurnalul pentru CD-R…" Command="{Binding ExportAnchorCommand}" Margin="0,0,8,6"
+                                    ToolTip="Copiază jurnalul aplicației și codul de ancorare într-un folder ales; folderul se arde pe un CD-R și se predă ofițerului."/>
+                            <Button Content="Înregistrează ofițer de securitate…" Command="{Binding RegisterOfficerCommand}" Margin="0,0,8,6"
+                                    ToolTip="Primul ofițer: amprenta cheii se trece pe procesul-verbal. Următorii: cu aprobarea unui ofițer deja înregistrat."/>
+                        </WrapPanel>
+                        <TextBox Text="{Binding OfficerInfo, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="Transparent" MinHeight="0"
+                                 Foreground="{StaticResource TextPrimaryBrush}" AutomationProperties.Name="Rezultatul semnării, înregistrării sau copierii jurnalului"/>
+                    </StackPanel>
+                </Border>
                 <Border Visibility="{Binding HasSavedReport, Converter={StaticResource BoolToVis}}" Background="{StaticResource CanvasBrush}" CornerRadius="6" Padding="10" Margin="0,6,0,0">
                     <TextBox Text="{Binding SavedReportInfo, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="Transparent" MinHeight="0"
                              Foreground="{StaticResource TextPrimaryBrush}" AutomationProperties.Name="Confirmarea salvării raportului: loc, amprentă și pașii următori"/>
@@ -130,6 +160,23 @@
                 </Expander>
             </StackPanel>
         </Border>
+
+        <!-- "Verifică raport": the officer's signature against a pinned fingerprint (from the paper, or the registered officers) -->
+        <Expander Header="Verifică un raport semnat de ofițerul de securitate" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12">
+        <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,6,0,0">
+            <StackPanel>
+                <TextBlock Text="Scrieți amprenta cheii de pe procesul-verbal semnat (recomandat). Dacă o lăsați goală, se compară cu ofițerii înregistrați pe această stație."
+                           Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+                <WrapPanel Margin="0,6,0,0">
+                    <TextBlock Text="Amprenta cheii ofițerului:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBox AutomationProperties.Name="Amprenta cheii ofițerului de pe procesul-verbal" Text="{Binding VerifyFingerprint, UpdateSourceTrigger=PropertyChanged}" Width="340" FontFamily="Consolas" Margin="0,0,8,0"/>
+                    <Button Content="Verifică raport…" Command="{Binding VerifyReportCommand}" Style="{StaticResource AccentButtonStyle}"/>
+                </WrapPanel>
+                <TextBox Text="{Binding VerifyResult, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="Transparent" MinHeight="0" Margin="0,6,0,0"
+                         Foreground="{StaticResource TextPrimaryBrush}" AutomationProperties.Name="Rezultatul verificării raportului"/>
+            </StackPanel>
+        </Border>
+        </Expander>
 
         <!-- Parameters (the raw form stays under "Avansat") -->
         <Expander Header="Avansat (parametrii controlului)" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12">

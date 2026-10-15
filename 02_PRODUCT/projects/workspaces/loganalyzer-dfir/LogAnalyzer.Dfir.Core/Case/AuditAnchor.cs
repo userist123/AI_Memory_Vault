@@ -75,10 +75,10 @@ public static class AuditAnchor
         if (!TryNormalize(previousCode, out var code))
             return new(AnchorContinuityStatus.InvalidCode, $"Codul introdus („{previousCode.Trim()}”) nu este un cod de ancorare valid (lungime greșită sau o literă tastată greșit). Recitiți-l de pe procesul-verbal semnat.", previousCode.Trim(), null);
         List<(long Seq, string Hash)> entries;
-        try { entries = Entries(logPath); }
+        ChainVerification plain;
+        try { entries = Entries(logPath); plain = new HashChain(logPath).VerifyPlainChain(); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         { return new(AnchorContinuityStatus.Unreadable, "Jurnalul aplicației nu a putut fi citit: " + ex.Message, code, null); }
-        var plain = new HashChain(logPath).VerifyPlainChain();
         if (plain.Status == ChainStatus.Broken)
             return new(AnchorContinuityStatus.Rewritten, $"Jurnalul aplicației are o verigă ruptă ({plain.Reason}), deci a fost modificat după scriere.", code, null);
         if (entries.Count > 0)
