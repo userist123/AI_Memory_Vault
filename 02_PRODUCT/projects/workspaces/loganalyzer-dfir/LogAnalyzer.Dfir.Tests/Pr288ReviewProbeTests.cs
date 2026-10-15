@@ -89,12 +89,13 @@ public sealed class Pr288ReviewProbeTests : IDisposable
     }
 
     [Fact]
-    public void Probe_a_recreated_auth_folder_cannot_move_the_date_forward_and_the_mismatch_is_a_violation()
+    public void Probe_a_recreated_auth_folder_cannot_move_the_date_forward_and_the_mismatch_is_reported()
     {
-        // auth folder deleted, admin created again 10 days after the program was installed
+        // auth folder deleted, admin created again 10 days after the program was installed. Only the application's own file times show it: since PR #290
+        // that is DE VERIFICAT (a long-before copy explains it too); a Windows RUN trace before the chain makes it NECONFORM (Pr290ReviewProbeTests).
         var r = Read(Chain(E(AppInstallDate.StoreCreatedEvent, Install.AddDays(10))), new AppTrace("folderul de caz CASE-1", Install), new AppTrace("licența (license.lic)", Install.AddDays(1)));
         Assert.Equal(Install, r.Utc);
-        Assert.Contains(r.Violations, v => v.StartsWith("data instalării nu se potrivește — jurnalul aplicației a fost reinițializat"));
+        Assert.Contains(r.ToVerify, v => v.StartsWith("data instalării nu se potrivește"));
     }
 
     [Fact]

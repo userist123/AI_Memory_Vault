@@ -298,6 +298,10 @@ public sealed class AirGapFacts
     public string AppInstallBasis { get; set; } = "";
     /// <summary>What contradicts the installation date (store re-initialised, chain not starting at the store creation, other traces older than the chain): NECONFORM on Standalone.</summary>
     public List<string> AppInstallViolations { get; set; } = [];
+    /// <summary>DE VERIFICAT notes about the installation date (mismatch that is not proof, missing Windows traces).</summary>
+    public List<string> AppInstallToVerify { get; set; } = [];
+    /// <summary>Time of the first chained record of the application's audit chain (printed next to the computed date).</summary>
+    public DateTimeOffset? AppInstallChainFirstUtc { get; set; }
     public List<string> Errors { get; set; } = [];
     /// <summary>Milliseconds each read took (diagnostic: shows which read is slow on a given station).</summary>
     public Dictionary<string, long> StepMs { get; set; } = [];

@@ -48,7 +48,7 @@ public sealed class FirewallLogParser : EvidenceParserBase
     /// \\?\UNC\…), device paths (\\?\…, \\.\…), relative paths and paths on a network, removable or unknown drive are refused, so reading the
     /// configured log never contacts another machine. <paramref name="driveType"/> is asked only for a plain "X:\" root.
     /// </summary>
-    public static string RejectPath(string path, Func<string, DriveType> driveType)
+    public static string RejectPath(string path, Func<string, DriveType> driveType, Func<string, bool>? isReparsePoint = null)
     {
         const string prefix = "cale jurnal firewall nepermisă";
         if (string.IsNullOrWhiteSpace(path)) return $"{prefix}: calea este goală";
@@ -58,7 +58,26 @@ public sealed class FirewallLogParser : EvidenceParserBase
         if (p.Length < 3 || !char.IsAsciiLetter(p[0]) || p[1] != ':' || p[2] is not ('\\' or '/') || !Path.IsPathFullyQualified(p))
             return $"{prefix}: „{p}” nu este o cale absolută locală (literă de disc)";
         var type = driveType(p[..3]);
-        return type == DriveType.Fixed ? "" : $"{prefix}: „{p}” este pe o unitate de tip {type} (unitate de rețea, amovibilă sau necunoscută); se citesc doar fișiere de pe un disc local fix";
+        if (type != DriveType.Fixed)
+            return $"{prefix}: „{p}” este pe o unitate de tip {type} (unitate de rețea, amovibilă sau necunoscută); se citesc doar fișiere de pe un disc local fix";
+        // Review of PR #290: a junction or symbolic link anywhere in the path could lead off the disk (to a share or a device). Only local attributes are
+        // read (the drive is a local fixed disk); a component that is a reparse point, or whose attributes cannot be read, refuses the path.
+        isReparsePoint ??= IsReparsePointOnDisk;
+        var cur = p[..3];
+        foreach (var part in p[3..].Split(['\\', '/'], StringSplitOptions.RemoveEmptyEntries))
+        {
+            cur = Path.Combine(cur, part);
+            if (isReparsePoint(cur))
+                return $"{prefix}: „{p}” trece prin legătura „{cur}” (junction sau legătură simbolică, ori atribute necitibile); ținta legăturii nu este urmată";
+        }
+        return "";
+    }
+
+    private static bool IsReparsePointOnDisk(string path)
+    {
+        try { return (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0; }
+        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException) { return false; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException) { return true; }
     }
 
     /// <summary>Reads one line of at most <paramref name="max"/> characters; a longer line is consumed to its end and returned as null with <paramref name="tooLong"/> set.</summary>

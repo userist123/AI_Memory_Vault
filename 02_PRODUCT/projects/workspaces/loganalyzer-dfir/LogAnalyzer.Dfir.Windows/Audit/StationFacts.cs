@@ -99,6 +99,10 @@ public sealed class StationFacts
     public string AppInstallBasis { get; set; } = "";
     /// <summary>What contradicts the installation date (see <see cref="LogAnalyzer.Dfir.Case.AppInstall.Violations"/>); NECONFORM on Standalone.</summary>
     public List<string> AppInstallViolations { get; set; } = [];
+    /// <summary>DE VERIFICAT notes about the installation date (see <see cref="LogAnalyzer.Dfir.Case.AppInstall.ToVerify"/>).</summary>
+    public List<string> AppInstallToVerify { get; set; } = [];
+    /// <summary>Time of the first chained record of the application's audit chain; printed in the report next to the computed date.</summary>
+    public DateTimeOffset? AppInstallChainFirstUtc { get; set; }
 }
 
 public static class StationFactCollector
@@ -144,8 +148,9 @@ public static class StationFactCollector
             IsAdministrator = new WindowsPrincipal(id).IsInRole(WindowsBuiltInRole.Administrator),
             Posture = posture,
         };
-        var install = LogAnalyzer.Dfir.Case.AppInstallDate.Read();
+        var install = LogAnalyzer.Dfir.Windows.Acquisition.AppInstallTraces.ReadInstall();
         facts.AppInstalledUtc = install.Utc; facts.AppInstallBasis = install.Basis; facts.AppInstallViolations.AddRange(install.Violations);
+        facts.AppInstallToVerify.AddRange(install.ToVerify); facts.AppInstallChainFirstUtc = install.ChainFirstUtc;
         Try(facts, "Conturi locale", () => facts.Accounts.AddRange(ReadAccounts()));
         Try(facts, "Politica de parole", () => facts.PasswordPolicy = LocalPasswordPolicy.Query());
         facts.AuditPolicy = AuditPolicy.Query() is { } ap ? new Dictionary<string, AuditSetting>(ap) : null;

@@ -26,6 +26,8 @@ public sealed class Wp14Input
     public string AppInstallBasis { get; init; } = "";
     /// <summary>What contradicts the installation date; null = take it from <see cref="Facts"/>.</summary>
     public IReadOnlyList<string>? AppInstallViolations { get; init; }
+    /// <summary>DE VERIFICAT notes about the installation date; null = take them from <see cref="Facts"/>.</summary>
+    public IReadOnlyList<string>? AppInstallToVerify { get; init; }
     /// <summary>The sources present in the case ("EventLog:&lt;channel&gt;", "SRUM", "Firewall:pfirewall.log", "AirGapFacts"); null = not known, then a source counts as present when the timeline has a row from it.</summary>
     public IReadOnlyCollection<string>? CollectedSources { get; init; }
 }
@@ -77,6 +79,7 @@ public static partial class Wp14Rules
             : Facts is { AppInstallBasis.Length: > 0 } f ? f.AppInstallBasis
             : Input.AppInstallBasis.Length > 0 ? Input.AppInstallBasis
             : "sursă lipsă: data instalării aplicației, de ce lipsește: faptele stației (AirGapFacts) nu sunt în acest caz, cum se pornește: colectarea pe stația pe care este instalată aplicația (colectorul AirGapFacts citește jurnalul de audit al aplicației)";
+        public IReadOnlyList<string> AppInstallToVerify => Input.AppInstallToVerify ?? (IReadOnlyList<string>?)Facts?.AppInstallToVerify ?? [];
         public IReadOnlyList<string> AppInstallViolations => Input.AppInstallViolations ?? (IReadOnlyList<string>?)Facts?.AppInstallViolations ?? [];
         /// <summary>True when the source is in the case (or, when the case did not say, when the timeline has a row from it).</summary>
         public bool Has(string source) => Input.CollectedSources is { } cs

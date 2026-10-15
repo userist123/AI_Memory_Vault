@@ -115,6 +115,16 @@ public static partial class Wp14Rules
 
     private static void AppInstallIntegrity(Ctx c, List<Finding> o)
     {
+        // Review of PR #290: what weakens the date without proving a lost history is DE VERIFICAT, in its own finding.
+        if (c.Standalone && c.AppInstallToVerify.Count > 0)
+            o.Add(Plain(c, "AIRGAP-APP-INSTALL-UNCONFIRMED", "DE VERIFICAT: data instalării aplicației nu este confirmată de toate urmele", Sev(c, Severity.Low), c.FindingCategory,
+                c.AppInstalledUtc, null, "necunoscut: urmele nu arată cine a instalat aplicația",
+                "DE VERIFICAT: " + string.Join("; ", c.AppInstallToVerify) + ". " +
+                (c.AppInstalledUtc is { } d0 ? $"Se folosește data cea mai veche găsită ({Time(d0)}), astfel încât nicio conectare să nu fie mutată în istoric." : "Data instalării este necunoscută, deci orice conectare este NECONFORMĂ.") +
+                $" Temei: {c.AppInstallBasis}.",
+                "Primul rând al jurnalului de audit al aplicației comparat cu urmele aplicației (fișiere, Amcache, Prefetch, Security 4688), pe o stație Standalone.",
+                ["Aplicația a fost copiată pe stație (sau pregătită) cu mult înainte de prima configurare."],
+                [FactRef(c, "app_install", "data instalării aplicației și urmele ei")], "", SemanticType.Inference));
         if (!c.Standalone || c.AppInstallViolations.Count == 0) return;
         var desc = "NECONFORM: data instalării aplicației, granița după care stația Standalone nu are voie să fie conectată, nu este de încredere: " + string.Join("; ", c.AppInstallViolations) + ". " +
                    (c.AppInstalledUtc is { } d ? $"Se folosește data cea mai veche găsită ({Time(d)}), astfel încât nicio conectare să nu fie mutată în istoric." : "Data instalării este necunoscută, deci orice conectare este NECONFORMĂ.") +
