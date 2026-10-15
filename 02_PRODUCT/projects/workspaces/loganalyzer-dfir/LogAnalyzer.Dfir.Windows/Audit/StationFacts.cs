@@ -40,7 +40,14 @@ public sealed record ShareFact(string Name, string Path, uint Type)
 }
 
 /// <summary>The audit rules (SACL) of one classified folder from the procedure profile. AuditRules null = not read (see Error).</summary>
-public sealed record FolderAuditFact(string Path, bool Exists, int? AuditRules, string Rules, string Error);
+public sealed record FolderAuditFact(string Path, bool Exists, int? AuditRules, string Rules, string Error,
+                                     IReadOnlyList<AuditRuleFact>? RuleList = null, string LinkTarget = "", string ShortPath = "");
+
+/// <summary>One audit rule (SACL entry) of a classified folder: whose access is recorded, which rights, on success and / or failure, and whether files inherit it.</summary>
+public sealed record AuditRuleFact(string Sid, string Account, int Rights, bool Success, bool Failure, bool InheritsToFiles);
+
+/// <summary>A shortcut in a profile's Recent folder: the file it points to, the kind of drive and the volume serial (weaker evidence: the file was opened).</summary>
+public sealed record ShellTraceFact(string Profile, string LnkPath, string Target, string DriveType, string VolumeSerial, DateTimeOffset? LnkModifiedUtc);
 
 /// <summary>One installed Windows update (Win32_QuickFixEngineering).</summary>
 public sealed record InstalledUpdateFact(string HotFixId, DateTime? InstalledOn, string Description);
@@ -83,6 +90,15 @@ public sealed class StationFacts
     /// <summary>One entry per classified folder of the procedure profile; an empty list = the profile lists no folder; null = not collected.</summary>
     public List<FolderAuditFact>? FolderAudits { get; set; }
     public List<InstalledUpdateFact>? InstalledUpdates { get; set; }
+    /// <summary>Volume device / GUID names → drive letter (QueryDosDevice, MountedDevices); null = not read.</summary>
+    public Dictionary<string, string>? VolumeMap { get; set; }
+    /// <summary>Shortcuts of every profile's Recent folder that point into a classified folder or to a removable drive; null = not read.</summary>
+    public List<ShellTraceFact>? ShellTraces { get; set; }
+    /// <summary>Files present now in the classified folders (full paths, capped) and the SHA-256 of those small enough to hash; null = not read.</summary>
+    public List<string>? ClassifiedFiles { get; set; }
+    public Dictionary<string, string>? ClassifiedHashes { get; set; }
+    /// <summary>The organisation's transfer register (approved exits); null = not given.</summary>
+    public LogAnalyzer.Dfir.Registers.TransferRegister? Transfers { get; set; }
     /// <summary>The register of offline updates kept by the organisation; an empty list = the register is not filled in; null = not given.</summary>
     public List<LogAnalyzer.Dfir.Registers.UpdateRow>? OfflineUpdateRegister { get; set; }
     /// <summary>The latest time the application itself recorded in its chained audit logs ("time memory", check S05); null = no earlier record.</summary>
@@ -99,7 +115,10 @@ public static class StationFactCollector
     public static readonly IReadOnlyDictionary<string, int[]> Queries = new Dictionary<string, int[]>
     {
         ["Security"] = [4624, 4625, 4648, 4672, 4720, 4722, 4723, 4724, 4725, 4726, 4738, 4740, 4732, 4733, 4728, 4729, 4756, 4757,
-                        4719, 1102, 4616, 4697, 4698, 4702, 6416],
+                        4719, 1102, 4616, 4697, 4698, 4702, 6416,
+                        // classified folders: handle requested, access, object deleted, permissions / audit rules changed, process creation, share access.
+                        // 4658 (handle closed) is not read live: on a station with handle auditing it floods the log and adds only the closing time.
+                        4656, 4660, 4663, 4670, 4907, 4688, 5145],
         ["System"] = [104, 7045, 6005, 6006, 6008, 1074],
         ["Application"] = [11707, 11724, 1033, 1034],
         ["Microsoft-Windows-Partition/Diagnostic"] = [1006],
@@ -113,20 +132,24 @@ public static class StationFactCollector
         [CodeIntegrityChannel] = [3076, 3077],
         // Defender scans (1000 started, 1001 finished) and detections (1116, 1117): was a medium scanned right after it was connected?
         [DefenderChannel] = [1000, 1001, 1116, 1117],
+        // Printed documents (307: document name, user, printer); the log is off by default.
+        [PrintServiceChannel] = [307],
     };
 
     public const string AppLockerExeChannel = "Microsoft-Windows-AppLocker/EXE and DLL";
     public const string AppLockerMsiChannel = "Microsoft-Windows-AppLocker/MSI and Script";
     public const string CodeIntegrityChannel = "Microsoft-Windows-CodeIntegrity/Operational";
     public const string DefenderChannel = "Microsoft-Windows-Windows Defender/Operational";
+    public const string PrintServiceChannel = "Microsoft-Windows-PrintService/Operational";
 
+    /// <param name="transfers">The organisation's transfer register (classified exits are compared with it); null = not given.</param>
     /// <param name="classifiedFolders">The classified folders of the procedure profile (their audit rules are read); null = not collected.</param>
     /// <param name="offlineUpdates">The organisation's register of offline updates (compared with the installed updates); null = not given.</param>
     /// <param name="dcProbe">The ACTIVE domain-controller probe (check N13); only the Network edition has one. Used only on the IsolatedNetwork posture and
     /// only on a domain-joined station; null = not probed.</param>
     public static StationFacts Collect(DateTimeOffset periodStartUtc, LogAnalyzer.Core.Services.Edition.StationPosture posture, int maxPerId = 5000, CancellationToken ct = default,
                                        IReadOnlyList<string>? classifiedFolders = null, IReadOnlyList<LogAnalyzer.Dfir.Registers.UpdateRow>? offlineUpdates = null,
-                                       IDomainControllerProbe? dcProbe = null)
+                                       IDomainControllerProbe? dcProbe = null, LogAnalyzer.Dfir.Registers.TransferRegister? transfers = null)
     {
         using var id = WindowsIdentity.GetCurrent();
         var facts = new StationFacts
@@ -151,7 +174,20 @@ public static class StationFactCollector
         if (dcProbe is not null && posture == LogAnalyzer.Core.Services.Edition.StationPosture.IsolatedNetwork
             && facts.Settings.TryGetValue("Domain.PartOfDomain", out var joined) && joined == "da" && facts.Settings.TryGetValue("Domain.Name", out var domain))
             Try(facts, "Controlerul de domeniu (verificare activă)", () => facts.DomainController = dcProbe.Probe(domain, ct));
-        if (classifiedFolders is not null) facts.FolderAudits = ReadFolderAudits(classifiedFolders);
+        if (classifiedFolders is not null)
+        {
+            facts.FolderAudits = ReadFolderAudits(classifiedFolders);
+            facts.Transfers = transfers;
+            Try(facts, "Volume (nume de dispozitiv și litere)", () => facts.VolumeMap = ClassifiedFactCollector.VolumeMap());
+            Try(facts, "Fișierele din folderele clasificate", () => ClassifiedFactCollector.ReadFiles(facts, classifiedFolders));
+            Try(facts, "Scurtături recente (LNK) ale profilurilor", () => facts.ShellTraces = ClassifiedFactCollector.ShellTraces(classifiedFolders));
+        }
+        // A11: the sources that let classified exits be seen (read always; the check names what is missing)
+        Try(facts, "Linia de comandă în 4688 și jurnalul de tipărire", () =>
+        {
+            facts.Settings["Audit.ProcessCreationIncludeCmdLine"] = Hklm(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Audit", "ProcessCreationIncludeCmdLine_Enabled");
+            facts.Settings["PrintService.OperationalEnabled"] = Hklm(@"SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\" + PrintServiceChannel, "Enabled");
+        });
         if (offlineUpdates is not null) facts.OfflineUpdateRegister = [.. offlineUpdates];
         Try(facts, "Profiluri de rețea", () => facts.NetworkProfiles.AddRange(ReadNetworkProfiles()));
         Try(facts, "Interfețe de rețea", () => facts.ConnectedInterfacesNow.AddRange(ReadConnectedInterfaces()));
@@ -849,7 +885,11 @@ public static class StationFactCollector
                 if (!di.Exists) { r.Add(new FolderAuditFact(path, false, null, "", "")); continue; }
                 var sec = di.GetAccessControl(System.Security.AccessControl.AccessControlSections.Audit);
                 var rules = sec.GetAuditRules(true, true, typeof(SecurityIdentifier)).Cast<System.Security.AccessControl.FileSystemAuditRule>().ToList();
-                r.Add(new FolderAuditFact(path, true, rules.Count, string.Join("; ", rules.Select(x => $"{Account(x.IdentityReference)}: {x.FileSystemRights} ({x.AuditFlags})")), ""));
+                var list = rules.Select(x => new AuditRuleFact(x.IdentityReference.Value, Account(x.IdentityReference), (int)x.FileSystemRights,
+                    x.AuditFlags.HasFlag(System.Security.AccessControl.AuditFlags.Success), x.AuditFlags.HasFlag(System.Security.AccessControl.AuditFlags.Failure),
+                    x.InheritanceFlags.HasFlag(System.Security.AccessControl.InheritanceFlags.ObjectInherit))).ToList();
+                r.Add(new FolderAuditFact(path, true, rules.Count, string.Join("; ", rules.Select(x => $"{Account(x.IdentityReference)}: {x.FileSystemRights} ({x.AuditFlags})")), "",
+                    list, di.LinkTarget ?? "", ClassifiedFactCollector.ShortPath(di.FullName)));
             }
             catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or ArgumentException or NotSupportedException or InvalidOperationException)
             {
@@ -939,8 +979,11 @@ public static class StationFactCollector
                         if (n >= maxPerId) continue;
                         perId[rec.Id] = n + 1;
                         count++;
+                        var data = ReadData(rec);
+                        // 4656 / 4663 of the "Removable Storage" subcategory (task 12802) are writes on removable media even when the volume is no longer mapped
+                        if (rec.Id is 4656 or 4663 && channel == "Security" && rec.Task is { } task) data["_Task"] = task.ToString(System.Globalization.CultureInfo.InvariantCulture);
                         f.Logs.Add(new LogFact(channel, rec.Id, rec.TimeCreated?.ToUniversalTime() ?? DateTime.MinValue, rec.RecordId ?? 0,
-                            rec.UserId?.Value ?? "", ReadData(rec)));
+                            rec.UserId?.Value ?? "", data));
                     }
                 }
             }

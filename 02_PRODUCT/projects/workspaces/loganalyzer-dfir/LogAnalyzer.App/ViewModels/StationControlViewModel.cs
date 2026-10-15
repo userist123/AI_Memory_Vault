@@ -187,7 +187,7 @@ namespace LogAnalyzer.UI.ViewModels
         /// and the register of offline updates (compared with the installed updates). Missing data gives empty lists, which the checks report as
         /// "not filled in", never as compliant.
         /// </summary>
-        internal static (System.Collections.Generic.List<string> Folders, System.Collections.Generic.List<LogAnalyzer.Dfir.Registers.UpdateRow> Updates) ControlInputs()
+        internal static (System.Collections.Generic.List<string> Folders, System.Collections.Generic.List<LogAnalyzer.Dfir.Registers.UpdateRow> Updates, LogAnalyzer.Dfir.Registers.TransferRegister? Transfers) ControlInputs()
         {
             ProcedureProfile? p = null;
             try { p = ProfileProvider.Shared.Current; } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { }
@@ -195,7 +195,11 @@ namespace LogAnalyzer.UI.ViewModels
             var updates = new System.Collections.Generic.List<LogAnalyzer.Dfir.Registers.UpdateRow>();
             try { updates = LogAnalyzer.Dfir.Registers.RegisterStore.Load<LogAnalyzer.Dfir.Registers.UpdateRegister>().Register?.Rows ?? updates; }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { }
-            return (folders, updates);
+            // the transfer register: the classified exits (A12) are compared with it; an unreadable register is "not defined", never "approved"
+            LogAnalyzer.Dfir.Registers.TransferRegister? transfers = null;
+            try { transfers = LogAnalyzer.Dfir.Registers.TransferStore.Load(null, out _); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { }
+            return (folders, updates, transfers);
         }
 
         private UpdateRegisterViewModel? _updateRegister;
@@ -282,7 +286,7 @@ namespace LogAnalyzer.UI.ViewModels
                 var start = DateTimeOffset.UtcNow.AddDays(-PeriodDays);
                 var posture = Posture;
                 SavedReportInfo = "";
-                var (folders, updates) = ControlInputs();
+                var (folders, updates, transfers) = ControlInputs();
                 bool auditedStart = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlStarted,
                     LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail(LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(posture), posture.ToString(),
                         new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent()).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator), PeriodDays, folders.Count));
@@ -290,7 +294,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     // N13: only the Network edition registers the active probe (LogAnalyzer.Connectors); the other editions have none.
                     var dcProbe = global::LogAnalyzer.UI.AppComposition.ServiceProvider?.GetService(typeof(IDomainControllerProbe)) as IDomainControllerProbe;
-                    var facts = StationFactCollector.Collect(start, posture, classifiedFolders: folders, offlineUpdates: updates, dcProbe: dcProbe);
+                    var facts = StationFactCollector.Collect(start, posture, classifiedFolders: folders, offlineUpdates: updates, dcProbe: dcProbe, transfers: transfers);
                     // Time memory (S05): the latest time the application recorded, read BEFORE this report adds its own "clock.seen" entry.
                     string? auditPath = null;
                     try { auditPath = LogAnalyzer.UI.Services.AuthApp.Service.AuditPath; } catch (InvalidOperationException) { }
@@ -316,6 +320,7 @@ namespace LogAnalyzer.UI.ViewModels
                 foreach (var u in _report.Users) Users.Add(u);
                 Actions.Clear();
                 foreach (var a in _report.Actions.OrderByDescending(a => a.TimeUtc)) Actions.Add(a);
+                FillClassified();
                 Summary = $"NECONFORM {_report.Count(ControlStatus.Neconform)} · DE VERIFICAT {_report.Count(ControlStatus.DeVerificat)} · " +
                           $"NEDETERMINAT {_report.Count(ControlStatus.Nedeterminat)} · CONFORM {_report.Count(ControlStatus.Conform)}" +
                           (_report.Count(ControlStatus.NuSeAplica) > 0 ? $" · NU SE APLICĂ {_report.Count(ControlStatus.NuSeAplica)}" : "");
@@ -331,6 +336,44 @@ namespace LogAnalyzer.UI.ViewModels
                 Status = "Eroare la colectare: " + ex.Message;
             }
             finally { IsBusy = false; }
+        }
+
+        /// <summary>„Informații clasificate”: one row per classified file, unjustified exits first (owner request 2026-10-15: one tab, sorted by severity).</summary>
+        public ObservableCollection<LogAnalyzer.Dfir.Analysis.ClassifiedFileReport> ClassifiedFiles { get; } = new();
+        [ObservableProperty] private LogAnalyzer.Dfir.Analysis.ClassifiedFileReport? _selectedClassifiedFile;
+        [ObservableProperty] private string _classifiedSummary = "";
+        /// <summary>The exits and accesses of the selected file, as plain lines (the detail under the table).</summary>
+        public ObservableCollection<string> SelectedClassifiedLines { get; } = new();
+
+        partial void OnSelectedClassifiedFileChanged(LogAnalyzer.Dfir.Analysis.ClassifiedFileReport? value)
+        {
+            SelectedClassifiedLines.Clear();
+            if (value is null) return;
+            foreach (var x in value.Exits.OrderBy(x => x.Verdict))
+            {
+                SelectedClassifiedLines.Add($"Ieșire {x.VerdictText}: {x.ChannelText} → {x.Target}. {x.Detail}");
+                foreach (var step in x.Chain) SelectedClassifiedLines.Add("    – " + step);
+            }
+            foreach (var a in value.Accesses.OrderByDescending(a => a.TimeUtc).Take(200))
+                SelectedClassifiedLines.Add($"Acces {(a.TimeUtc is { } t ? t.ToString("yyyy-MM-dd HH:mm:ss") + " UTC" : "ora necunoscută")} · {a.Who} · {a.Process} · {a.Access}{(a.Weak ? " (dovadă mai slabă)" : "")}");
+        }
+
+        /// <summary>Fills the „Informații clasificate” tab from a control report (internal for the tests).</summary>
+        internal void FillClassified(ControlReport? report = null)
+        {
+            report ??= _report;
+            ClassifiedFiles.Clear();
+            var c = report?.Classified;
+            if (c is null)
+            {
+                ClassifiedSummary = "Profilul de proceduri nu definește foldere clasificate: completați tabelul «Foldere clasificate» ca să vedeți cine a accesat documentele și dacă au ieșit de pe stație.";
+                SelectedClassifiedFile = null;
+                return;
+            }
+            foreach (var f in c.Ordered) ClassifiedFiles.Add(f);
+            ClassifiedSummary = $"Ieșiri nejustificate: {c.Unjustified} · de verificat: {c.ToVerify} · aprobate: {c.Approved} · fișiere șterse: {c.Deleted} · " +
+                                $"schimbări de reguli de audit sau permisiuni: {c.SecurityChanges.Count}." + (c.Notes.Count > 0 ? " " + string.Join(" ", c.Notes) : "");
+            SelectedClassifiedFile = ClassifiedFiles.FirstOrDefault();
         }
 
         private void FillChecks()
