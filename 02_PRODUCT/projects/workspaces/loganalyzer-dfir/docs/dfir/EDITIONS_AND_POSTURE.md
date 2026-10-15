@@ -120,3 +120,22 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | S03 | Windows version and last update | Known and documented | Known and documented | Recent |  |
 | S04 | Offline updates applied and update register | Register matches installed updates | Register matches installed updates | n/a | The offline update register exists only where updates cannot come online. |
 | S05 | Station clock versus the application's time memory | Consistent | Consistent | Consistent |  |
+
+## Application installation date: residual risk
+
+On a Standalone station every network connection after the installation of the application is NECONFORM, so the installation date is a boundary that an
+administrator could try to move later. What the application does (`AppInstallDate`, `AppInstallTraces`):
+
+- The first start is written into the application's audit chain (`app.first_start`) before licence activation, so a normal deployment (start, read the
+  Hardware ID, wait for the licence, configure) keeps its first run inside the chain.
+- The date is valid only if the whole chain verifies and starts with a store-creation record; it is the EARLIEST of the chain and every trace: the
+  application's own files, Prefetch (creation and run times of the installed edition executable only), Amcache (last-write time of the installed
+  executable's entry, not a first sighting) and the oldest retained Security 4688 start of the installed executable.
+- A Windows run trace before the chain is NECONFORM (history lost). Earlier file or Amcache times, a run of the executable from another folder, a missing
+  Prefetch file while Prefetch is active, and the absence of every Windows trace are DE VERIFICAT.
+- The computed date and the time of the chain's first record are printed in every control report header, so two controls can be compared.
+
+Residual risk: an administrator who recreates the authentication store, reinstalls the application in a new folder, deletes its Prefetch files and lets
+Amcache rewrite its entry can still move the date later; the station then shows only DE VERIFICAT notes (or none if Prefetch is off). The strong protection
+is the paper anchor: from PR #289 the installation date is included in the anchored state, and any later change versus the paper-anchored value is
+NECONFORM. That link is a follow-up after #289 merges.

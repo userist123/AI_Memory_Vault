@@ -14,7 +14,69 @@ namespace LogAnalyzer.Dfir.Windows.Acquisition;
 /// </summary>
 public static class AppInstallTraces
 {
-    public sealed record Result(List<AppTrace> Traces, List<string> Missing);
+    public sealed record Result(List<AppTrace> Traces, List<string> Missing)
+    {
+        /// <summary>DE VERIFICAT notes (a run from another folder, a missing Prefetch file while Prefetch is active).</summary>
+        public List<string> Notes { get; } = [];
+    }
+
+    /// <summary>What one Prefetch file says: its name, creation time, run times, the executable name and the full path of the executable among its referenced files.</summary>
+    public sealed record PrefetchSeen(string FileName, DateTimeOffset CreatedUtc, IReadOnlyList<DateTimeOffset> Runs, string ExeName, string? ExeFullPath);
+
+    /// <summary>
+    /// The executables of the application itself (the three editions and the two older names). LogAnalyzer.LicenseManager, KeyGen and any other program never count.
+    /// </summary>
+    public static readonly IReadOnlyList<string> EditionExeNames =
+        ["LOGANALYZER.STANDALONE.EXE", "LOGANALYZER.RETEA.EXE", "LOGANALYZER.INTERNET.EXE", "LOGANALYZER.EXE", "LOGANALYZER.AIRGAPPED.EXE", "LOGANALYZER.NETWORK.EXE"];
+
+    /// <summary>"\PROGRAM FILES\X\A.EXE" from "C:\Program Files\X\A.exe": Prefetch stores paths as \VOLUME{…}\…, so the drive is compared away.</summary>
+    private static string PathTail(string path)
+    {
+        var p = path.Replace('/', '\\').ToUpperInvariant();
+        if (p.Length >= 2 && p[1] == ':') return p[2..];
+        if (p.StartsWith(@"\VOLUME{", StringComparison.Ordinal) && p.IndexOf('}') is var close and > 0) return p[(close + 1)..];
+        return p;
+    }
+
+    /// <summary>
+    /// Which Prefetch files are traces of the INSTALLED application (review of PR #290, round 2): only the installed edition's executable name, and when the
+    /// .pf names the full path, only the installed path. A run of an edition executable from another folder does not set the date: it is DE VERIFICAT.
+    /// With Prefetch active (and other .pf files present) a missing .pf of the installed executable is DE VERIFICAT: it may have been deleted.
+    /// </summary>
+    public static (List<AppTrace> Traces, List<string> Notes) ClassifyPrefetch(IReadOnlyList<PrefetchSeen> files, string installedExePath, bool prefetchEnabled, int otherPrefetchFiles)
+    {
+        var traces = new List<AppTrace>();
+        var notes = new List<string>();
+        var installedName = Path.GetFileName(installedExePath).ToUpperInvariant();
+        var installedTail = PathTail(installedExePath);
+        bool installedSeen = false;
+        foreach (var f in files)
+        {
+            var exe = f.ExeName.ToUpperInvariant();
+            if (!EditionExeNames.Contains(exe)) continue;                                   // LicenseManager, KeyGen, other programs
+            bool installed = exe == installedName && (f.ExeFullPath is null || PathTail(f.ExeFullPath) == installedTail);
+            if (!installed)
+            {
+                notes.Add($"aplicația a rulat și din altă locație: {f.ExeFullPath ?? exe} ({f.FileName}, prima urmă {f.CreatedUtc:yyyy-MM-dd HH:mm} UTC)");
+                continue;
+            }
+            installedSeen = true;
+            traces.Add(new AppTrace($"Prefetch {f.FileName} (creat la prima rulare înregistrată)", f.CreatedUtc, AppTraceKind.WindowsRun));
+            foreach (var t in f.Runs) traces.Add(new AppTrace($"Prefetch {f.FileName} (rulare)", t, AppTraceKind.WindowsRun));
+        }
+        if (!installedSeen && prefetchEnabled && otherPrefetchFiles > 0)
+            notes.Add($"lipsește urma Prefetch a aplicației deși Prefetch este activ — posibilă ștergere (nu există niciun fișier .pf pentru {installedName}, deși alte {otherPrefetchFiles} programe au)");
+        return (traces, notes);
+    }
+
+    /// <summary>Amcache entries of the INSTALLED executable only. The time is the key's LAST WRITE (Windows rewrites it), not a first sighting.</summary>
+    public static List<AppTrace> ClassifyAmcache(IEnumerable<(string LowerCaseLongPath, DateTime LastWriteUtc)> entries, string installedExePath)
+    {
+        var tail = PathTail(installedExePath);
+        return entries.Where(e => PathTail(e.LowerCaseLongPath) == tail)
+            .Select(e => new AppTrace($"Amcache: {Path.GetFileName(e.LowerCaseLongPath)} (ora ultimei scrieri a intrării; Windows o rescrie)", new DateTimeOffset(DateTime.SpecifyKind(e.LastWriteUtc, DateTimeKind.Utc)), AppTraceKind.WindowsSeen))
+            .ToList();
+    }
 
     public const int MaxPrefetchFiles = 20;
     public const long MaxAmcacheBytes = 256L * 1024 * 1024;
@@ -23,50 +85,52 @@ public static class AppInstallTraces
     {
         var r = new Result([], []);
         exePath ??= Environment.ProcessPath ?? "";
-        var exeName = Path.GetFileName(exePath);
-        Prefetch(r);
-        Amcache(r);
-        if (exeName.Length > 0) Security4688(r, exePath);
+        if (exePath.Length == 0) { r.Missing.Add("sursă lipsă: calea executabilului aplicației, de ce lipsește: procesul nu o raportează, cum se pornește: nu se aplică"); return r; }
+        Prefetch(r, exePath);
+        Amcache(r, exePath);
+        Security4688(r, exePath);
         return r;
     }
 
-    private static void Prefetch(Result r)
+    private static void Prefetch(Result r, string exePath)
     {
         var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Prefetch");
-        string[] files;
-        try { files = Directory.Exists(dir) ? Directory.GetFiles(dir, "LOGANALYZER*.pf").Take(MaxPrefetchFiles).ToArray() : []; }
+        object? enabledValue = null;
+        try { enabledValue = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters", "EnablePrefetcher", null); }
+        catch (Exception ex) when (ex is System.Security.SecurityException or IOException or UnauthorizedAccessException) { }
+        bool enabled = enabledValue is int ev && ev > 0;
+        string[] all;
+        try { all = Directory.Exists(dir) ? Directory.GetFiles(dir, "*.pf") : []; }
         catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
         {
-            r.Missing.Add($"sursă lipsă: Prefetch (LOGANALYZER*.pf), de ce lipsește: folderul nu poate fi citit ({ex.Message}), cum se pornește: rulați ca administrator");
+            r.Missing.Add($"sursă lipsă: Prefetch, de ce lipsește: folderul nu poate fi citit ({ex.Message}), cum se pornește: rulați ca administrator");
             return;
         }
-        if (files.Length == 0)
-        {
-            object? enabled = null;
-            try { enabled = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters", "EnablePrefetcher", null); }
-            catch (Exception ex) when (ex is System.Security.SecurityException or IOException or UnauthorizedAccessException) { }
-            r.Missing.Add(enabled is int v && v == 0
-                ? "sursă lipsă: Prefetch, de ce lipsește: este oprit pe stație (EnablePrefetcher = 0), cum se pornește: administratorul îl pornește (EnablePrefetcher = 3)"
-                : "sursă lipsă: Prefetch al aplicației, de ce lipsește: nu există niciun fișier LOGANALYZER*.pf (curățat sau încă nescris), cum se pornește: nu se poate recrea pentru rulările trecute");
-            return;
-        }
-        foreach (var f in files)
+        var ours = all.Where(f => EditionExeNames.Any(n => Path.GetFileName(f).StartsWith(n + "-", StringComparison.OrdinalIgnoreCase))).Take(MaxPrefetchFiles).ToList();
+        var seen = new List<PrefetchSeen>();
+        foreach (var f in ours)
         {
             var name = Path.GetFileName(f);
             try
             {
-                r.Traces.Add(new AppTrace($"Prefetch {name} (creat la prima rulare înregistrată)", new DateTimeOffset(File.GetCreationTimeUtc(f), TimeSpan.Zero), AppTraceKind.WindowsRun));
                 var pf = PrefetchParser.Read(f);
-                foreach (var t in pf.RunTimesUtc) r.Traces.Add(new AppTrace($"Prefetch {name} (rulare)", t, AppTraceKind.WindowsRun));
+                seen.Add(new PrefetchSeen(name, new DateTimeOffset(File.GetCreationTimeUtc(f), TimeSpan.Zero), pf.RunTimesUtc, pf.ExeName, pf.ExePathGuess));
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or NotSupportedException or ArgumentException)
             {
                 r.Missing.Add($"sursă lipsă: {name}, de ce lipsește: nu a putut fi citit ({ex.Message}), cum se pornește: rulați ca administrator");
             }
         }
+        var (traces, notes) = ClassifyPrefetch(seen, exePath, enabled, all.Length - ours.Count);
+        r.Traces.AddRange(traces);
+        r.Notes.AddRange(notes);
+        if (traces.Count == 0)
+            r.Missing.Add(enabledValue is int v0 && v0 == 0
+                ? "sursă lipsă: Prefetch, de ce lipsește: este oprit pe stație (EnablePrefetcher = 0), cum se pornește: administratorul îl pornește (EnablePrefetcher = 3)"
+                : $"sursă lipsă: Prefetch al aplicației instalate ({Path.GetFileName(exePath)}), de ce lipsește: nu există fișierul .pf (curățat sau încă nescris), cum se pornește: nu se poate recrea pentru rulările trecute");
     }
 
-    private static void Amcache(Result r)
+    private static void Amcache(Result r, string exePath)
     {
         var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "appcompat", "Programs", "Amcache.hve");
         try
@@ -75,15 +139,12 @@ public static class AppInstallTraces
             if (new FileInfo(path).Length > MaxAmcacheBytes) { r.Missing.Add($"sursă lipsă: Amcache.hve, de ce lipsește: fișierul depășește {MaxAmcacheBytes / 1_048_576} MB, cum se pornește: analiza copiei din investigație"); return; }
             using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
             var reg = new RawRegistry(fs);
-            int n = 0;
-            foreach (var k in reg.SubKeys(@"Root\InventoryApplicationFile"))
-            {
-                if (++n > 50_000) break;
-                var p = k.Value("LowerCaseLongPath")?.AsText ?? "";
-                var file = Path.GetFileName(p);
-                if (file.StartsWith("loganalyzer", StringComparison.OrdinalIgnoreCase) && file.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-                    r.Traces.Add(new AppTrace($"Amcache: {file} (intrare scrisă la prima apariție a fișierului)", new DateTimeOffset(k.LastWriteUtc, TimeSpan.Zero), AppTraceKind.WindowsSeen));
-            }
+            var entries = new List<(string, DateTime)>();
+            foreach (var k in reg.SubKeys(@"Root\InventoryApplicationFile").Take(50_000))
+                if (k.Value("LowerCaseLongPath")?.AsText is { Length: > 0 } p) entries.Add((p, k.LastWriteUtc));
+            var t = ClassifyAmcache(entries, exePath);
+            if (t.Count == 0) r.Missing.Add($"sursă lipsă: intrarea Amcache a aplicației instalate ({exePath}), de ce lipsește: Amcache nu o conține (încă nescrisă sau ștearsă), cum se pornește: nu se poate recrea");
+            r.Traces.AddRange(t);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
         {
@@ -115,6 +176,7 @@ public static class AppInstallTraces
         var w = Read();
         var install = AppInstallDate.Read(null, [.. AppInstallDate.DefaultTraces(), .. w.Traces]);
         // When no Windows trace was found, say which sources were missing and why (they are what makes the check weaker).
-        return install.ToVerify.Any(t => t.StartsWith("urmele Windows", StringComparison.Ordinal)) ? install with { ToVerify = [.. install.ToVerify, .. w.Missing] } : install;
+        // The Prefetch notes (a run from another folder, a missing .pf while Prefetch is active) are always DE VERIFICAT.
+        return install with { ToVerify = [.. install.ToVerify, .. w.Notes, .. install.ToVerify.Any(t => t.StartsWith("urmele Windows", StringComparison.Ordinal)) ? w.Missing : []] };
     }
 }

@@ -48,8 +48,26 @@ public static class AppInstallDate
     public const string SourceName = "jurnalul de audit al aplicației (auth_audit.jsonl, primul rând înlănțuit)";
     public const string StoreCreatedEvent = "auth.primary_admin_created";
     public const string StoreReinitialisedEvent = "auth.store_reinitialised";
+    /// <summary>Written at the very beginning of the first start, before licence activation (review of PR #290, round 2).</summary>
+    public const string FirstStartEvent = "app.first_start";
+
+    /// <summary>
+    /// Records the first start of the application in its audit chain, at the very beginning of the start and BEFORE licence activation, when the chain does
+    /// not exist yet (review of PR #290, round 2): a normal deployment (start, read the Hardware ID, wait for the licence, configure) keeps its first run
+    /// inside the chain, so Prefetch / 4688 runs of that first start are not "before the chain". The chain is created unsealed; the authentication service
+    /// seals an intact existing chain when it creates its key (trusted on first use, audited as auth.chain_sealed). Returns true when it wrote the record.
+    /// </summary>
+    public static bool RecordFirstStart(string? auditPath = null, DateTimeOffset? nowUtc = null)
+    {
+        auditPath ??= DefaultAuditPath;
+        if (File.Exists(auditPath) && new FileInfo(auditPath).Length > 0) return false;
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(auditPath))!);
+        new HashChain(auditPath).Append(new LogAnalyzer.Dfir.Auth.AuthAuditEntry(FirstStartEvent, "aplicație", "", "", "", "ok",
+            "prima pornire a aplicației pe stație, înainte de activarea licenței și de crearea administratorului", nowUtc ?? DateTimeOffset.UtcNow, "", ""));
+        return true;
+    }
     /// <summary>Records that are written at the very start of a new store, before or with the primary administrator.</summary>
-    public static readonly IReadOnlyList<string> FirstRecordKinds = [ClockMemory.Event, LogAnalyzer.Dfir.Auth.AuthService.EditionPolicyVersionEvent, StoreCreatedEvent];
+    public static readonly IReadOnlyList<string> FirstRecordKinds = [FirstStartEvent, ClockMemory.Event, LogAnalyzer.Dfir.Auth.AuthService.EditionPolicyVersionEvent, StoreCreatedEvent];
     /// <summary>The program files may be copied some time before the first start: up to this much earlier is normal.</summary>
     public static readonly TimeSpan MismatchTolerance = TimeSpan.FromDays(2);
     private static readonly TimeSpan FutureTolerance = TimeSpan.FromMinutes(5);
@@ -133,7 +151,10 @@ public static class AppInstallDate
 
         // Reinitialisations are reported whatever else is found.
         var violations = new List<string>();
-        foreach (var r in recs.Where(r => r.Event == StoreReinitialisedEvent))
+        // AuthService logs auth.store_reinitialised whenever the audit file already has records when the primary administrator is created. On a genuine first
+        // installation the start-up records (app.first_start, clock.seen) come first, so only a reinitialisation AFTER a primary administrator existed is one.
+        var firstCreationSeq = recs.Where(r => r.Event == StoreCreatedEvent).Select(r => r.Seq).DefaultIfEmpty(long.MaxValue).Min();
+        foreach (var r in recs.Where(r => r.Event == StoreReinitialisedEvent && r.Seq > firstCreationSeq))
             violations.Add($"magazinul de autentificare al aplicației a fost reinițializat offline la {T(r.When)} (rândul seq {r.Seq}, {StoreReinitialisedEvent}): conturile și parola au fost recreate după ștergerea lor");
         var creations = recs.Where(r => r.Event == StoreCreatedEvent).ToList();
         foreach (var r in creations.Skip(1))
