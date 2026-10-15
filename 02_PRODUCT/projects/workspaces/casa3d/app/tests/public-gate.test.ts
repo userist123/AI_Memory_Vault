@@ -15,8 +15,8 @@ test('cererile locale au acces complet; cele prin tunel sau cu alt host nu', () 
   assert.equal(isLocalRequest('localhost.evil.com', H()), false);
 });
 test('din afară: doar prezentarea pentru client și ce îi trebuie', () => {
-  for (const p of [`/share/${tok}`, `/api/share/${tok}`, `/api/share/${tok}/feedback`, `/api/share/${tok}/changes`, `/api/share/${tok}/changes/12345678-1234-4234-8234-123456789abc`, '/_next/static/x.js', '/tex/oak.jpg', '/models/plant.glb']) assert.equal(isPublicPath(p), true, p);
-  for (const p of ['/api/catalog', '/api/materials', '/', '/p/123', '/p/123/present', '/api/projects', `/api/projects/x/feedback`, '/api/projects/x/renders', '/api/admin/x', '/api/outbound', '/share/short', `/api/share/${tok}/../../projects`, `/share/${tok}/x`, '/api/health', `/api/share/${tok}/changes/x`, `/api/share/${tok}/changes/12345678-1234-4234-8234-123456789abc/x`, '/api/projects/x/changes']) assert.equal(isPublicPath(p), false, p);
+  for (const p of [`/share/${tok}`, `/api/share/${tok}`, `/api/share/${tok}/feedback`, `/api/share/${tok}/choices`, `/api/share/${tok}/changes`, `/api/share/${tok}/changes/12345678-1234-4234-8234-123456789abc`, '/_next/static/x.js', '/tex/oak.jpg', '/models/plant.glb']) assert.equal(isPublicPath(p), true, p);
+  for (const p of ['/api/catalog', '/api/materials', '/', '/p/123', '/p/123/present', '/api/projects', `/api/projects/x/feedback`, '/api/projects/x/renders', '/api/admin/x', '/api/outbound', '/share/short', `/api/share/${tok}/../../projects`, `/share/${tok}/x`, '/api/health', `/api/share/${tok}/changes/x`, `/api/share/${tok}/choices/x`, '/api/projects/x/choices', `/api/share/${tok}/changes/12345678-1234-4234-8234-123456789abc/x`, '/api/projects/x/changes']) assert.equal(isPublicPath(p), false, p);
 });
 
 import { gate, safeNext } from '../lib/public-gate';
