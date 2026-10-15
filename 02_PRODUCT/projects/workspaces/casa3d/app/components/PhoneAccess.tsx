@@ -4,14 +4,17 @@
 import { useEffect, useState } from 'react';
 import { usePrefs } from '@/lib/prefs';
 import { intlLocale } from '@/lib/i18n';
+import { isLocalHostname } from '@/lib/public-gate';
 
 type St = { enabled: boolean; updatedAt: string | null; publicUrl: string | null };
 export default function PhoneAccess(){
   const { t, lang } = usePrefs(), [st, setSt] = useState<St | null | 'remote'>(null), [pw, setPw] = useState(''), [pw2, setPw2] = useState(''), [msg, setMsg] = useState<{ ok: boolean; s: string } | null>(null), [busy, setBusy] = useState(false);
-  const load = () => fetch('/api/auth/password').then(async r => setSt(r.ok ? await r.json() : 'remote')).catch(() => setSt('remote'));
+  // setarea parolei există doar pe calculatorul designerului (poarta o ascunde prin tunel): din afară nu o mai cerem deloc
+  const load = () => { if (!isLocalHostname(location.hostname)){ setSt('remote'); return; }
+    fetch('/api/auth/password').then(async r => setSt(r.ok ? await r.json() : 'remote')).catch(() => setSt('remote')); };
   useEffect(() => { load(); }, []);
   if (st === null) return null;
-  if (st === 'remote') return (<p className="phone-out"><button className="btn" onClick={async () => { await fetch('/api/auth/logout', { method: 'POST' }); location.replace('/login'); }}>{t('auth.logout')}</button></p>);
+  if (st === 'remote') return (<p className="phone-out"><button className="btn" onClick={async () => { await fetch('/api/auth/logout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }).catch(() => null); location.replace('/login'); }}>{t('auth.logout')}</button></p>);
   async function save(e: React.FormEvent){ e.preventDefault(); if (pw !== pw2){ setMsg({ ok: false, s: t('phone.mismatch') }); return; } setBusy(true); setMsg(null);
     const r = await fetch('/api/auth/password', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: pw }) }), j = await r.json().catch(() => ({}));
     setBusy(false); if (!r.ok){ setMsg({ ok: false, s: j.error || t('phone.failed') }); return; } setPw(''); setPw2(''); setMsg({ ok: true, s: t('phone.saved') }); load(); }

@@ -1,34 +1,45 @@
 'use client';
 // Panoul „Comercial” din etapa Ofertă (doar pentru designer): discount trade și adaos pe furnizor, profitul proiectului,
 // graficul de plăți și legăturile spre proformă și CSV. Nimic de aici nu ajunge pe linkul clientului.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { formatMoney } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
-import { DEFAULT_MILESTONES, pctOk, pctSum, COMMERCIAL_LIMITS, type CommercialData, type Milestone, type ProfitReport, type ScheduleRow, type Terms } from '@/core/commercial';
+import { DEFAULT_MILESTONES, pctOk, pctSum, COMMERCIAL_LIMITS, type CommercialData, type Milestone, type ProfitReport, type ScheduleRow, type Terms, type ProjectChain } from '@/core/commercial';
+import { ChainTable, TOTALS_EVENT, FEE_EVENT } from './ChainTable';
 
-type Resp = { data: CommercialData; report: ProfitReport; schedule: { rows: ScheduleRow[]; paid: number; outstanding: number; overdue: number; pctSum: number; pctOk: boolean; fixedExceeds: boolean }; suppliers: string[] };
+type Resp = { data: CommercialData; report: ProfitReport; chain: ProjectChain; schedule: { rows: ScheduleRow[]; paid: number; outstanding: number; overdue: number; pctSum: number; pctOk: boolean; fixedExceeds: boolean }; suppliers: string[] };
 const today = () => new Date().toISOString().slice(0, 10);
 const numOrUndef = (s: string) => { const v = Number(s.replace(',', '.')); return s.trim() === '' || !Number.isFinite(v) ? undefined : v; };
 const newId = () => 'm' + Math.random().toString(36).slice(2, 10);
 
 export default function CommercialPanel({ id, cur, say }: { id: string; cur: string; say(s: string): void }){
-  const { t, lang } = usePrefs(), [r, setR] = useState<Resp | null>(null), [d, setD] = useState<CommercialData | null>(null), [busy, setBusy] = useState(false), [dirty, setDirty] = useState(false), [loadErr, setLoadErr] = useState<string | null>(null);
+  const { t, lang } = usePrefs(), [r, setR] = useState<Resp | null>(null), [d, setD] = useState<CommercialData | null>(null), [dirty, setDirty] = useState(false), [loadErr, setLoadErr] = useState<string | null>(null);
+  const [state, setState] = useState<'saved' | 'saving' | 'error'>('saved'), timer = useRef<any>(null), seq = useRef(0), dirtyRef = useRef(false);
   const money = (v: number | null | undefined) => formatMoney(v, cur, lang, t('common.unknownPrice'));
   // la o eroare de citire (de ex. 409: datele salvate nu trec validarea) formularul nu se afișează, deci nimic nu se salvează peste ele
-  const load = () => fetch(`/api/projects/${id}/commercial`).then(async x => { if (x.ok) return x.json(); const j = await x.json().catch(() => null); setLoadErr(j?.error || t('com.loadError')); return null; })
-    .then((j: Resp | null) => { if (j){ setR(j); setD(j.data); setDirty(false); setLoadErr(null); } }).catch(() => setLoadErr(t('com.loadError')));
+  // `keepForm`: după o salvare automată, cifrele se reîmprospătează fără să suprascrie ce s-a tastat între timp
+  const load = (keepForm = false) => fetch(`/api/projects/${id}/commercial`).then(async x => { if (x.ok) return x.json(); const j = await x.json().catch(() => null); setLoadErr(j?.error || t('com.loadError')); return null; })
+    .then((j: Resp | null) => { if (j){ setR(j); if (!keepForm){ setD(j.data); setDirty(false); dirtyRef.current = false; } setLoadErr(null); } }).catch(() => setLoadErr(t('com.loadError')));
   useEffect(() => { load(); }, [id]); // eslint-disable-line
+  // onorariul schimbat din buget sau din contract: cifrele se reîncarcă (formularul rămâne dacă are modificări nesalvate)
+  useEffect(() => { const on = (e: Event) => { if ((e as CustomEvent).detail?.id === id) load(dirtyRef.current); }; window.addEventListener(FEE_EVENT, on); return () => window.removeEventListener(FEE_EVENT, on); }, [id]); // eslint-disable-line
+  // salvare automată, ca în celelalte panouri: la 0,8 s după ultima modificare, doar dacă graficul de plăți e valid (100%)
+  useEffect(() => { if (!dirty || !d) return; if (!pctOk(d.milestones)){ clearTimeout(timer.current); return; } setState('saving'); clearTimeout(timer.current);
+    timer.current = setTimeout(() => save(seq.current), 800); return () => clearTimeout(timer.current); }, [d, dirty]); // eslint-disable-line
   if (loadErr && (!r || !d)) return <section className="commercial"><h3>{t('com.title')}</h3><p className="bad" role="alert">{loadErr}</p></section>;
   if (!r || !d) return <section className="commercial"><h3>{t('com.title')}</h3><p className="muted">{t('print.loading')}</p></section>;
-  const edit = (fn: (x: CommercialData) => void) => { const x: CommercialData = JSON.parse(JSON.stringify(d)); fn(x); setD(x); setDirty(true); };
+  const edit = (fn: (x: CommercialData) => void) => { const x: CommercialData = JSON.parse(JSON.stringify(d)); fn(x); seq.current++; dirtyRef.current = true; setD(x); setDirty(true); };
   const setTerms = (sup: string | null, k: keyof Terms, v: string) => edit(x => { const tgt = sup == null ? x.defaults : (x.suppliers[sup] ??= {}); const n = numOrUndef(v); if (n == null) delete tgt[k]; else tgt[k] = n;
     if (sup != null && !Object.keys(tgt).length) delete x.suppliers[sup]; });
   const setMs = (i: number, patch: Partial<Milestone>) => edit(x => { const m = { ...x.milestones[i], ...patch } as Milestone;
     for (const k of Object.keys(patch) as (keyof Milestone)[]) if (patch[k] === undefined) delete (m as any)[k];
     if (m.status !== 'paid') delete m.paidAt; else if (!m.paidAt) m.paidAt = today(); x.milestones[i] = m; });
-  async function save(){ setBusy(true);
+  async function save(at: number){
     try { const res = await fetch(`/api/projects/${id}/commercial`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(d) }), j = await res.json().catch(() => ({}));
-      if (!res.ok){ say(j.error || t('com.saveError')); return; } say(t('com.saved')); await load(); } finally { setBusy(false); } }
+      if (!res.ok){ setState('error'); say(j.error || t('com.saveError')); return; }
+      const fresh = seq.current === at; await load(!fresh); if (fresh) setState('saved');
+      window.dispatchEvent(new CustomEvent(TOTALS_EVENT, { detail: { id } }));
+    } catch { setState('error'); say(t('com.saveError')); } }
   const rep = r.report, sumOk = pctOk(d.milestones), rowOf = (mid: string) => r.schedule.rows.find(x => x.id === mid);
   const pctInput = (v: number | undefined, on: (s: string) => void, label: string, max: number) =>
     <input inputMode="decimal" type="number" min={0} max={max} step="0.5" value={v ?? ''} placeholder="—" aria-label={label} onChange={e => on(e.target.value)} />;
@@ -47,17 +58,19 @@ export default function CommercialPanel({ id, cur, say }: { id: string; cur: str
       </tbody></table>
 
     <h4>{t('com.profit')}</h4>
-    {dirty && <p className="muted small">{t('com.unsavedNote')}</p>}
+    {dirty && state === 'saving' && <p className="muted small">{t('com.savingNote')}</p>}
     <table className="com-table"><thead><tr><th>{t('com.supplier')}</th><th>{t('com.cost')}</th><th>{t('com.clientPrice')}</th><th>{t('com.profitCol')}</th></tr></thead>
       <tbody>{Object.entries(rep.bySupplier).sort((a, b) => a[0].localeCompare(b[0])).map(([s, g]) => <tr key={s}><td>{s}{g.unknown > 0 && <small> {t('com.unknownN', { n: g.unknown })}</small>}</td><td>{money(g.cost)}</td><td>{money(g.client)}</td><td>{money(g.profit)}</td></tr>)}</tbody></table>
     <table className="com-table"><thead><tr><th>{t('com.category')}</th><th>{t('com.cost')}</th><th>{t('com.clientPrice')}</th><th>{t('com.profitCol')}</th></tr></thead>
       <tbody>{Object.entries(rep.byCategory).map(([c, g]) => <tr key={c}><td>{t(`budget.cat.${c}`)}</td><td>{money(g.cost)}</td><td>{money(g.client)}</td><td>{money(g.profit)}</td></tr>)}
         <tr><td>{t('com.cat.labor')} <small>{t('com.passThrough')}</small></td><td>{money(rep.labor)}</td><td>{money(rep.labor)}</td><td>{money(0)}</td></tr>
+        {rep.extras > 0 && <tr><td>{t('com.cat.extras')} <small>{t('com.passThrough')}</small></td><td>{money(rep.extras)}</td><td>{money(rep.extras)}</td><td>{money(0)}</td></tr>}
         <tr><td>{t('com.cat.fee')}</td><td>—</td><td>{money(rep.fee == null ? null : rep.fee + rep.feeVat)}</td><td>{money(rep.fee)}</td></tr>
-        <tr className="com-total"><td><b>{t('com.total')}</b></td><td><b>{money(rep.totals.cost)}</b></td><td><b>{money(rep.totals.client)}</b></td><td><b>{money(rep.totals.profit)}</b>{rep.totals.marginPct != null && <small> {t('com.margin', { p: rep.totals.marginPct })}</small>}</td></tr></tbody></table>
+        <tr className="com-total"><td><b>{t('chain.invoiceable')}</b></td><td><b>{money(rep.totals.cost)}</b></td><td><b>{money(rep.totals.client)}</b></td><td><b>{money(rep.totals.profit)}</b>{rep.totals.marginPct != null && <small> {t('com.margin', { p: rep.totals.marginPct })}</small>}</td></tr></tbody></table>
     {rep.unknownLines > 0 && <p className="muted small">{t('com.unknownLines', { n: rep.unknownLines })}</p>}
     {rep.feeUnknown && <p className="muted small">{t('com.feeUnknown')}</p>}
     <p className="muted small">{t('com.vatBasis')}</p>
+    <ChainTable chain={r.chain} money={money} />
 
     <h4>{t('com.schedule')} <span className={`pill${sumOk ? '' : ' bad'}`}>{t('com.pctSum', { p: pctSum(d.milestones) })}</span>{r.schedule.overdue > 0 && <span className="pill bad">{t('com.overdueN', { n: r.schedule.overdue })}</span>}</h4>
     {d.milestones.length === 0 && <p><button className="btn" onClick={() => edit(x => { x.milestones = DEFAULT_MILESTONES.map(m => ({ ...m })); })}>{t('com.useTemplate')}</button></p>}
@@ -86,7 +99,8 @@ export default function CommercialPanel({ id, cur, say }: { id: string; cur: str
       <label>{t('com.forMilestone')} <select value={d.proforma.milestoneId ?? ''} onChange={e => edit(x => { if (e.target.value) x.proforma.milestoneId = e.target.value; else delete x.proforma.milestoneId; })}>
         <option value="">{t('com.fullAmount')}</option>{d.milestones.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}</select></label>
     </div>
-    <p><button className="btn primary" disabled={busy || !dirty || !sumOk} onClick={save}>{t('com.save')}</button></p>
+    <p className="muted small" role="status">{!sumOk ? t('com.state.invalid') : t(`com.state.${dirty && state === 'saved' ? 'saving' : state}`)}
+      {state === 'error' && <> <button className="btn" onClick={() => save(seq.current)}>{t('com.retry')}</button></>}</p>
     <div className="docs">
       <a className="docrow" href={`/p/${id}/proforma`} target="_blank" rel="noopener"><b>{t('com.openProforma')}</b><small>{t('com.openProformaSub')}</small></a>
       <a className="docrow" href={`/api/projects/${id}/commercial/proforma.csv`}><b>{t('com.csv')}</b><small>{t('com.csvGeneric')}</small></a>

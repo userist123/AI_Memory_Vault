@@ -9,7 +9,8 @@ import type { StudioProfile } from '@/core/studio-profile';
 import { usePrefs } from '@/lib/prefs';
 import { intlLocale } from '@/lib/i18n';
 
-type Data = { name: string; client: ClientInfo | null; siteAddress: string | null; seller: StudioProfile; series: string; number: number; issueDate: string; dueDate: string | null; proforma: Proforma };
+type Data = { name: string; client: ClientInfo | null; siteAddress: string | null; seller: StudioProfile; series: string; number: number; issueDate: string; dueDate: string | null; proforma: Proforma;
+  chain?: { invoiceable: number; contingency: number; contingencyPct: number; total: number } };
 export default function ProformaView({ id }: { id: string }){
   const { t, lang } = usePrefs(), [d, setD] = useState<Data | null>(null), [err, setErr] = useState(false);
   useEffect(() => { fetch(`/api/projects/${id}/commercial/proforma`).then(r => r.ok ? r.json() : Promise.reject()).then(setD).catch(() => setErr(true)); }, [id]);
@@ -17,13 +18,13 @@ export default function ProformaView({ id }: { id: string }){
   if (!d) return <main className="report"><p className="muted">{t('print.loading')}</p></main>;
   const loc = intlLocale(lang), n2 = (v: number) => new Intl.NumberFormat(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
   const date = (s: string) => new Date(s + 'T12:00:00').toLocaleDateString(loc, { day: 'numeric', month: 'long', year: 'numeric' });
-  const s = d.seller, p = d.proforma, catLabel = (c: string) => c === 'labor' ? t('com.cat.labor') : c === 'fee' ? t('com.cat.fee') : t(`budget.cat.${c}`);
+  const s = d.seller, p = d.proforma, catLabel = (c: string) => c === 'labor' ? t('com.cat.labor') : c === 'fee' ? t('com.cat.fee') : c === 'extras' ? t('com.cat.extras') : t(`budget.cat.${c}`);
   return (<main className="report proforma">
     <style>{`.proforma table{width:100%;border-collapse:collapse;font-size:12px}.proforma th,.proforma td{border-bottom:1px solid var(--rule);padding:4px 6px;text-align:left;vertical-align:top}
 .proforma td.n,.proforma th.n{text-align:right;white-space:nowrap}.pf-parties{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:12px 0}.pf-parties small{display:block}
 .pf-sum{margin-left:auto;max-width:340px}.pf-sum td{border:0}.pf-due td{font-weight:600;border-top:1px solid var(--ink)}.pf-logo{max-height:56px;max-width:180px}
 @page{size:A4;margin:14mm}@media (max-width:560px){.pf-parties{grid-template-columns:1fr}}`}</style>
-    <div className="no-print report-bar"><span className="muted small">{t('com.notFiscal')}</span><button className="btn primary" onClick={() => print()}>{t('pres.pdf')}</button></div>
+    <div className="no-print report-bar"><span className="muted small">{t('com.notFiscal')}{d.chain && <> · {t('pf.chainNote', { inv: n2(d.chain.invoiceable), total: n2(d.chain.total), res: n2(d.chain.contingency), pct: d.chain.contingencyPct })}</>}</span><button className="btn primary" onClick={() => print()}>{t('pres.pdf')}</button></div>
     <header>{s.logo && <img className="pf-logo" src={s.logo} alt="" />}<span className="kicker">{t('com.proformaKicker')}</span>
       <h1>{t('com.proformaNo', { s: d.series, n: d.number })}</h1>
       <p>{t('com.issued', { d: date(d.issueDate) })}{d.dueDate && <> · {t('com.due', { d: date(d.dueDate) })}</>} · {d.name}</p></header>

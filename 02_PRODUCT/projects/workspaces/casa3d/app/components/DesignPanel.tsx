@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Snapshot } from '@/core/types';
 import { STYLES, PRIORITIES, DEFAULT_BRIEF, type DesignBrief } from '@/core/brief';
 import { usePrefs } from '@/lib/prefs';
@@ -7,19 +7,24 @@ import { issueText } from '@/lib/i18n';
 import { formatMoney } from '@/core/format';
 const STATUS: Record<string, string> = { PASS: 'design.status.PASS', WARNING: 'design.status.WARNING', ERROR: 'design.status.ERROR' };
 
-export default function DesignPanel({ id, snap, onPreview, onApplied, say, cur = 'RON' }: { id: string; snap: Snapshot; onPreview(v: any | null, pid: string | null): void; onApplied(s: Snapshot, rev: number): void; say(t: string): void; cur?: string }){
+export default function DesignPanel({ id, snap, onPreview, onApplied, onBrief, flush, say, cur = 'RON' }: { id: string; snap: Snapshot; onPreview(v: any | null, pid: string | null): void; onApplied(s: Snapshot, rev: number, draftRev?: number | null): void; onBrief?(brief: DesignBrief, draftRev?: number | null): void; flush?(): Promise<boolean>; say(t: string): void; cur?: string }){
   const { t, lang, units } = usePrefs(), iT = (i: any) => issueText(lang, i, units), lei = (v: number) => formatMoney(Math.round(v), cur, lang);
   const [b, setB] = useState<DesignBrief>({ ...DEFAULT_BRIEF, ...(snap.brief || {}) }), [busy, setBusy] = useState(false), [res, setRes] = useState<any>(null);
   const [open, setOpen] = useState<Record<string, string>>({}), [ack, setAck] = useState<Record<string, boolean>>({}), [done, setDone] = useState<Record<string, string>>({});
   const set = (p: Partial<DesignBrief>) => setB({ ...b, ...p }), toggle = <T,>(arr: T[], v: T) => arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v];
-  async function generate(){ setBusy(true); onPreview(null, null); setRes(null); setDone({}); setAck({});
-    const r = await fetch(`/api/projects/${id}/proposals`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ brief: b }) }); const j = await r.json(); setBusy(false);
-    if (!r.ok){ say(j.error || t('design.generateFailed')); return; } setRes(j); }
-  async function act(tier: string, action: 'apply' | 'reject'){
-    const r = await fetch(`/api/projects/${id}/proposals/${res.id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ tier, action, confirmWarnings: !!ack[tier] }) }); const j = await r.json();
+  // ciorna din editor se salvează întâi (cu versiunea de bază): propunerea pornește de la ce vede designerul, iar un conflict o oprește
+  const acting = useRef(false);
+  async function generate(){ if (busy) return; setBusy(true); onPreview(null, null); setRes(null); setDone({}); setAck({});
+    if (flush && !(await flush())){ setBusy(false); return; }
+    const r = await fetch(`/api/projects/${id}/proposals`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ brief: b }) }); const j = await r.json().catch(() => ({})); setBusy(false);
+    if (!r.ok){ say(j.error || t('design.generateFailed')); return; } onBrief?.(b, j.draftRev); setRes(j); }
+  async function act(tier: string, action: 'apply' | 'reject'){ if (acting.current) return; acting.current = true;
+    try { if (action === 'apply' && flush && !(await flush())) return;
+    const r = await fetch(`/api/projects/${id}/proposals/${res.id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ tier, action, confirmWarnings: !!ack[tier] }) }); const j = await r.json().catch(() => ({}));
     if (!r.ok){ say(j.error || t('design.actionFailed')); return; }
     setDone({ ...done, [tier]: action }); onPreview(null, null);
-    if (action === 'apply'){ onApplied(j.snapshot, j.revision); say(t('design.applied', { tier: t(`design.tier.${tier}`), n: j.revision })); } else say(t('design.rejectedNote')); }
+    if (action === 'apply'){ onApplied(j.snapshot, j.revision, j.draftRev); say(t('design.applied', { tier: t(`design.tier.${tier}`), n: j.revision })); } else say(t('design.rejectedNote')); }
+    finally { acting.current = false; } }
   return (<div className="design">
     <h3>{t('design.title')}</h3>
     <p className="prov" style={{ margin: 0 }}>{t('design.intro')}</p>

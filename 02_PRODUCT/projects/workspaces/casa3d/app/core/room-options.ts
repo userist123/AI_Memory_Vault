@@ -107,3 +107,13 @@ export function sanitizeRoomOptions(s: Snapshot & { roomOptions?: unknown }): st
   if (Object.keys(out).length) s.roomOptions = out; else delete s.roomOptions;
   return null;
 }
+
+/**
+ * Descrierea unei variante pe linkul clientului și în editor: nota designerului; fără notă, „Varianta B” plus ce schimbă
+ * față de A (numele grupelor / finisajelor, fără dubluri). Nu întoarce niciodată „fără descriere”.
+ */
+export function optionDescription(note: string | undefined, label: string, changeLabels: string[]): { key: 'ropt.defaultNote' | 'ropt.defaultNoteChanges' | null; vars: Record<string, string>; text?: string } {
+  if (note && note.trim()) return { key: null, vars: {}, text: note.trim() };
+  const list = [...new Set(changeLabels.map(s => s.trim()).filter(Boolean))];
+  return list.length ? { key: 'ropt.defaultNoteChanges', vars: { l: label, list: list.join(', ') } } : { key: 'ropt.defaultNote', vars: { l: label } };
+}

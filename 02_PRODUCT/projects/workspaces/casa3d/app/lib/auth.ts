@@ -59,4 +59,6 @@ export function takeLoginAttempt(ip: string, now = Date.now()){
   return true;
 }
 export function loginSucceeded(ip: string){ attempts.delete(ip); }
+/** Cât mai e de așteptat (ms) până când adresa poate încerca din nou; 0 dacă poate acum. */
+export function loginRetryAfterMs(ip: string, now = Date.now()){ const r = recent(ip, now); return r.length < PER_IP ? 0 : Math.max(1000, WINDOW - (now - r[0]!)); }
 export function resetLoginLimits(){ attempts.clear(); }

@@ -541,7 +541,7 @@
     {
       "id": "pat-idanas-pat-tapitat-cu-depozitare-160x200",
       "group": "pat",
-      "name": "IDANÄS pat tapiţat cu depozitare 160x200",
+      "name": "IDANÄS pat tapițat cu depozitare 160x200",
       "brand": "IKEA",
       "category": "Pat",
       "model3d": "bed"
@@ -549,7 +549,7 @@
     {
       "id": "pat-slattum-cadru-pat-tapitat-160x200",
       "group": "pat",
-      "name": "SLATTUM cadru pat tapiţat 160x200",
+      "name": "SLATTUM cadru pat tapițat 160x200",
       "brand": "IKEA",
       "category": "Pat",
       "model3d": "bed"
@@ -597,7 +597,7 @@
     {
       "id": "dulap-kleppstad-dulap-de-haine-cu-usi-glisante",
       "group": "dulap",
-      "name": "KLEPPSTAD dulap de haine cu uşi glisante",
+      "name": "KLEPPSTAD dulap de haine cu uși glisante",
       "brand": "IKEA",
       "category": "Dulap",
       "model3d": "wardrobe"
@@ -837,7 +837,7 @@
     {
       "id": "canapea-canapea-fixa-3-locuri-andy",
       "group": "canapea",
-      "name": "Canapea fixa 3 locuri Andy",
+      "name": "Canapea fixă 3 locuri Andy",
       "brand": "Dedeman",
       "category": "Canapea",
       "model3d": "sofa"
@@ -845,7 +845,7 @@
     {
       "id": "canapea-canapea-fixa-3-locuri-chesterfield",
       "group": "canapea",
-      "name": "Canapea fixa 3 locuri Chesterfield",
+      "name": "Canapea fixă 3 locuri Chesterfield",
       "brand": "Dedeman",
       "category": "Canapea",
       "model3d": "sofa"
@@ -853,7 +853,7 @@
     {
       "id": "canapea-canapea-fixa-3-locuri-panda",
       "group": "canapea",
-      "name": "Canapea fixa 3 locuri Panda",
+      "name": "Canapea fixă 3 locuri Panda",
       "brand": "Dedeman",
       "category": "Canapea",
       "model3d": "sofa"
@@ -861,7 +861,7 @@
     {
       "id": "canapea-canapea-fixa-3-locuri-romano",
       "group": "canapea",
-      "name": "Canapea fixa 3 locuri Romano",
+      "name": "Canapea fixă 3 locuri Romano",
       "brand": "Dedeman",
       "category": "Canapea",
       "model3d": "sofa"
@@ -901,7 +901,7 @@
     {
       "id": "pat-pat-dormitor-dr-home-matrimonial-tapitat-160x200",
       "group": "pat",
-      "name": "Pat dormitor Dr. Home matrimonial tapitat 160x200",
+      "name": "Pat dormitor Dr. Home matrimonial tapițat 160x200",
       "brand": "Dedeman",
       "category": "Pat",
       "model3d": "bed"
@@ -909,7 +909,7 @@
     {
       "id": "pat-pat-dormitor-fidelio-matrimonial-tapitat-cu-lada",
       "group": "pat",
-      "name": "Pat dormitor Fidelio matrimonial tapitat cu lada 160x200",
+      "name": "Pat dormitor Fidelio matrimonial tapițat cu ladă 160x200",
       "brand": "Dedeman",
       "category": "Pat",
       "model3d": "bed"
@@ -917,7 +917,7 @@
     {
       "id": "noptiera-noptiera-corsica-cu-raft-sertar",
       "group": "noptiera",
-      "name": "Noptiera Corsica cu raft + sertar",
+      "name": "Noptieră Corsica cu raft + sertar",
       "brand": "Dedeman",
       "category": "Noptieră",
       "model3d": "night"
@@ -925,7 +925,7 @@
     {
       "id": "noptiera-noptiera-duero-3f-cu-3-sertare",
       "group": "noptiera",
-      "name": "Noptiera Duero 3F cu 3 sertare",
+      "name": "Noptieră Duero 3F cu 3 sertare",
       "brand": "Dedeman",
       "category": "Noptieră",
       "model3d": "night"
@@ -933,7 +933,7 @@
     {
       "id": "noptiera-noptiera-colhida-cu-2-sertare",
       "group": "noptiera",
-      "name": "Noptiera Colhida cu 2 sertare",
+      "name": "Noptieră Colhida cu 2 sertare",
       "brand": "Dedeman",
       "category": "Noptieră",
       "model3d": "night"
@@ -941,7 +941,7 @@
     {
       "id": "dulap-dulap-dormitor-nevis-3k1f1o-cu-oglinda",
       "group": "dulap",
-      "name": "Dulap dormitor Nevis 3K1F1O cu oglinda",
+      "name": "Dulap dormitor Nevis 3K1F1O cu oglindă",
       "brand": "Dedeman",
       "category": "Dulap",
       "model3d": "wardrobe"
@@ -949,7 +949,7 @@
     {
       "id": "dulap-dulap-dormitor-varadero-4k1f1o-cu-oglinda",
       "group": "dulap",
-      "name": "Dulap dormitor Varadero 4K1F1O cu oglinda",
+      "name": "Dulap dormitor Varadero 4K1F1O cu oglindă",
       "brand": "Dedeman",
       "category": "Dulap",
       "model3d": "wardrobe"
@@ -957,7 +957,7 @@
     {
       "id": "dulap-dulap-dormitor-dressing-sierra-220-cu-usi-glisan",
       "group": "dulap",
-      "name": "Dulap dormitor / dressing Sierra 220 cu usi glisante si oglinda",
+      "name": "Dulap dormitor / dressing Sierra 220 cu uși glisante și oglindă",
       "brand": "Dedeman",
       "category": "Dulap",
       "model3d": "wardrobe"
@@ -965,7 +965,7 @@
     {
       "id": "comoda-comoda-dormitor-duero-5f-90-cu-5-sertare",
       "group": "comoda",
-      "name": "Comoda dormitor Duero 5F 90 cu 5 sertare",
+      "name": "Comodă dormitor Duero 5F 90 cu 5 sertare",
       "brand": "Dedeman",
       "category": "Comodă",
       "model3d": "night"
@@ -973,7 +973,7 @@
     {
       "id": "comodaTv-comoda-tv-rex-cu-lumini-si-usi",
       "group": "comodaTv",
-      "name": "Comoda TV Rex cu lumini si usi",
+      "name": "Comodă TV Rex cu lumini și uși",
       "brand": "Dedeman",
       "category": "Comodă TV",
       "model3d": "tv"
@@ -981,7 +981,7 @@
     {
       "id": "comodaTv-comoda-tv-darwen-3k2f2v-cu-usi-si-sertare",
       "group": "comodaTv",
-      "name": "Comoda TV Darwen 3K2F2V cu usi si sertare",
+      "name": "Comodă TV Darwen 3K2F2V cu uși și sertare",
       "brand": "Dedeman",
       "category": "Comodă TV",
       "model3d": "tv"
@@ -989,7 +989,7 @@
     {
       "id": "comodaTv-comoda-tv-arles-3k3v-cu-usi",
       "group": "comodaTv",
-      "name": "Comoda TV Arles 3K3V cu usi",
+      "name": "Comodă TV Arles 3K3V cu uși",
       "brand": "Dedeman",
       "category": "Comodă TV",
       "model3d": "tv"
@@ -997,7 +997,7 @@
     {
       "id": "biblioteca-biblioteca-living-cantal",
       "group": "biblioteca",
-      "name": "Biblioteca living Cantal",
+      "name": "Bibliotecă living Cantal",
       "brand": "Dedeman",
       "category": "Bibliotecă",
       "model3d": "shelf"
@@ -1005,7 +1005,7 @@
     {
       "id": "biblioteca-biblioteca-living-margate-ah",
       "group": "biblioteca",
-      "name": "Biblioteca living Margate AH",
+      "name": "Bibliotecă living Margate AH",
       "brand": "Dedeman",
       "category": "Bibliotecă",
       "model3d": "shelf"
@@ -1013,7 +1013,7 @@
     {
       "id": "biblioteca-biblioteca-living-retimno",
       "group": "biblioteca",
-      "name": "Biblioteca living Retimno",
+      "name": "Bibliotecă living Retimno",
       "brand": "Dedeman",
       "category": "Bibliotecă",
       "model3d": "shelf"
@@ -1021,7 +1021,7 @@
     {
       "id": "biblioteca-biblioteca-living-glen",
       "group": "biblioteca",
-      "name": "Biblioteca living Glen",
+      "name": "Bibliotecă living Glen",
       "brand": "Dedeman",
       "category": "Bibliotecă",
       "model3d": "shelf"
@@ -1029,7 +1029,7 @@
     {
       "id": "biblioteca-biblioteca-living-lorca",
       "group": "biblioteca",
-      "name": "Biblioteca living Lorca",
+      "name": "Bibliotecă living Lorca",
       "brand": "Dedeman",
       "category": "Bibliotecă",
       "model3d": "shelf"
@@ -1037,7 +1037,7 @@
     {
       "id": "masuta-masuta-cafea-oscar-ks-dreptunghiulara",
       "group": "masuta",
-      "name": "Masuta cafea Oscar KS dreptunghiulara",
+      "name": "Măsuță cafea Oscar KS dreptunghiulară",
       "brand": "Dedeman",
       "category": "Măsuță de cafea",
       "model3d": "coffee"
@@ -1045,7 +1045,7 @@
     {
       "id": "masuta-masuta-cafea-aberdeen-dreptunghiulara",
       "group": "masuta",
-      "name": "Masuta cafea Aberdeen dreptunghiulara",
+      "name": "Măsuță cafea Aberdeen dreptunghiulară",
       "brand": "Dedeman",
       "category": "Măsuță de cafea",
       "model3d": "coffee"
@@ -1053,7 +1053,7 @@
     {
       "id": "masuta-masuta-cafea-cirko-rotunda-set-2-in-1",
       "group": "masuta",
-      "name": "Masuta cafea Cirko rotunda set 2 in 1",
+      "name": "Măsuță cafea Cirko rotundă set 2 in 1",
       "brand": "Dedeman",
       "category": "Măsuță de cafea",
       "model3d": "coffee"
@@ -1061,7 +1061,7 @@
     {
       "id": "masuta-masuta-cafea-din-sticla-kugu-rotunda",
       "group": "masuta",
-      "name": "Masuta cafea din sticla Kugu rotunda",
+      "name": "Măsuță cafea din sticlă Kugu rotundă",
       "brand": "Dedeman",
       "category": "Măsuță de cafea",
       "model3d": "coffee"
@@ -1069,7 +1069,7 @@
     {
       "id": "masuta-masuta-cafea-aralyn-dreptunghiulara",
       "group": "masuta",
-      "name": "Masuta cafea Aralyn dreptunghiulara",
+      "name": "Măsuță cafea Aralyn dreptunghiulară",
       "brand": "Dedeman",
       "category": "Măsuță de cafea",
       "model3d": "coffee"
@@ -1077,7 +1077,7 @@
     {
       "id": "masa-masa-bucatarie-dining-fixa-eva-ab2820",
       "group": "masa",
-      "name": "Masa bucatarie / dining fixa Eva AB2820",
+      "name": "Masă bucătărie / dining fixă Eva AB2820",
       "brand": "Dedeman",
       "category": "Masă cu scaune",
       "model3d": "dining"
@@ -1085,7 +1085,7 @@
     {
       "id": "masa-masa-bucatarie-dining-fixa-grandio-mob-tonia",
       "group": "masa",
-      "name": "Masa bucatarie / dining fixa Grandio Mob Tonia",
+      "name": "Masă bucătărie / dining fixă Grandio Mob Tonia",
       "brand": "Dedeman",
       "category": "Masă cu scaune",
       "model3d": "dining"
@@ -1093,7 +1093,7 @@
     {
       "id": "masa-masa-bucatarie-dining-extensibila-mb-13",
       "group": "masa",
-      "name": "Masa bucatarie / dining extensibila MB-13",
+      "name": "Masă bucătărie / dining extensibilă MB-13",
       "brand": "Dedeman",
       "category": "Masă cu scaune",
       "model3d": "dining"
@@ -1101,7 +1101,7 @@
     {
       "id": "masa-masa-bucatarie-dining-extensibila-saxonia",
       "group": "masa",
-      "name": "Masa bucatarie / dining extensibila Saxonia",
+      "name": "Masă bucătărie / dining extensibilă Saxonia",
       "brand": "Dedeman",
       "category": "Masă cu scaune",
       "model3d": "dining"
@@ -1117,7 +1117,7 @@
     {
       "id": "birou-birou-calculator-cu-sertare-si-dulap-alfa",
       "group": "birou",
-      "name": "Birou calculator cu sertare si dulap Alfa",
+      "name": "Birou calculator cu sertare și dulap Alfa",
       "brand": "Dedeman",
       "category": "Birou",
       "model3d": "desk"
@@ -1125,7 +1125,7 @@
     {
       "id": "birou-birou-cu-sertar-si-dulap-bany",
       "group": "birou",
-      "name": "Birou cu sertar si dulap Bany",
+      "name": "Birou cu sertar și dulap Bany",
       "brand": "Dedeman",
       "category": "Birou",
       "model3d": "desk"
@@ -1133,7 +1133,7 @@
     {
       "id": "birou-birou-cu-sertare-si-dulap-eustach",
       "group": "birou",
-      "name": "Birou cu sertare si dulap Eustach",
+      "name": "Birou cu sertare și dulap Eustach",
       "brand": "Dedeman",
       "category": "Birou",
       "model3d": "desk"
@@ -1149,7 +1149,7 @@
     {
       "id": "scaunBirou-scaun-birou-ergonomic-sd-mch801-cu-tetiera",
       "group": "scaunBirou",
-      "name": "Scaun birou ergonomic SD-MCH801 cu tetiera",
+      "name": "Scaun birou ergonomic SD-MCH801 cu tetieră",
       "brand": "Dedeman",
       "category": "Scaun de birou",
       "model3d": "ochair"
@@ -1157,7 +1157,7 @@
     {
       "id": "scaunBirou-scaun-birou-operational-carbo",
       "group": "scaunBirou",
-      "name": "Scaun birou operational Carbo",
+      "name": "Scaun birou operațional Carbo",
       "brand": "Dedeman",
       "category": "Scaun de birou",
       "model3d": "ochair"
@@ -1181,7 +1181,7 @@
     {
       "id": "pantofar-pantofar-hugo-24-cu-oglinda",
       "group": "pantofar",
-      "name": "Pantofar Hugo 24 cu oglinda",
+      "name": "Pantofar Hugo 24 cu oglindă",
       "brand": "Dedeman",
       "category": "Pantofar",
       "model3d": "shoe"
@@ -1197,7 +1197,7 @@
     {
       "id": "pantofar-pantofar-menorca-2k-cu-oglinda",
       "group": "pantofar",
-      "name": "Pantofar Menorca 2K cu oglinda",
+      "name": "Pantofar Menorca 2K cu oglindă",
       "brand": "Dedeman",
       "category": "Pantofar",
       "model3d": "shoe"
@@ -1205,7 +1205,7 @@
     {
       "id": "lavoar-masca-baie-lavoar-savini-due-60w-cu-usi",
       "group": "lavoar",
-      "name": "Masca baie + lavoar Savini Due 60W cu usi",
+      "name": "Mască baie + lavoar Savini Due 60W cu uși",
       "brand": "Dedeman",
       "category": "Lavoar cu mobilier",
       "model3d": "vanity"
@@ -1213,7 +1213,7 @@
     {
       "id": "lavoar-masca-baie-lavoar-savini-due-rimini-cu-usi",
       "group": "lavoar",
-      "name": "Masca baie + lavoar Savini Due Rimini cu usi",
+      "name": "Mască baie + lavoar Savini Due Rimini cu uși",
       "brand": "Dedeman",
       "category": "Lavoar cu mobilier",
       "model3d": "vanity"
@@ -1221,7 +1221,7 @@
     {
       "id": "lavoar-masca-baie-lavoar-roca-a851925529-cu-sertare-sus",
       "group": "lavoar",
-      "name": "Masca baie + lavoar Roca A851925529 cu sertare suspendat",
+      "name": "Mască baie + lavoar Roca A851925529 cu sertare suspendat",
       "brand": "Dedeman",
       "category": "Lavoar cu mobilier",
       "model3d": "vanity"
@@ -1229,7 +1229,7 @@
     {
       "id": "lavoar-masca-baie-lavoar-savini-due-creta-80-cu-sertare",
       "group": "lavoar",
-      "name": "Masca baie + lavoar Savini Due Creta 80 cu sertare",
+      "name": "Mască baie + lavoar Savini Due Creta 80 cu sertare",
       "brand": "Dedeman",
       "category": "Lavoar cu mobilier",
       "model3d": "vanity"
@@ -1237,7 +1237,7 @@
     {
       "id": "lavoar-masca-baie-lavoar-fayans-kuandra-cu-sertare-si-u",
       "group": "lavoar",
-      "name": "Masca baie + lavoar Fayans Kuandra cu sertare si usi",
+      "name": "Mască baie + lavoar Fayans Kuandra cu sertare și uși",
       "brand": "Dedeman",
       "category": "Lavoar cu mobilier",
       "model3d": "vanity"
@@ -1245,7 +1245,7 @@
     {
       "id": "lavoar-masca-baie-lavoar-cersanit-moduo-s801-221-dsm-cu",
       "group": "lavoar",
-      "name": "Masca baie + lavoar Cersanit Moduo S801-221-DSM cu sertare suspendat",
+      "name": "Mască baie + lavoar Cersanit Moduo S801-221-DSM cu sertare suspendat",
       "brand": "Dedeman",
       "category": "Lavoar cu mobilier",
       "model3d": "vanity"
@@ -1261,7 +1261,7 @@
     {
       "id": "frigider-combina-frigorifica-beko-rcsa406k40dxbn-386-l",
       "group": "frigider",
-      "name": "Combina frigorifica Beko RCSA406K40DXBN 386 l",
+      "name": "Combină frigorifică Beko RCSA406K40DXBN 386 l",
       "brand": "Beko",
       "category": "Frigider",
       "model3d": "fridge"
@@ -1269,7 +1269,7 @@
     {
       "id": "frigider-combina-frigorifica-albatros-cf343e-262-l",
       "group": "frigider",
-      "name": "Combina frigorifica Albatros CF343E 262 l",
+      "name": "Combină frigorifică Albatros CF343E 262 l",
       "brand": "Albatros",
       "category": "Frigider",
       "model3d": "fridge"
@@ -1301,7 +1301,7 @@
     {
       "id": "dus-cabina-dus-patrata-kadda-jf-90k",
       "group": "dus",
-      "name": "Cabina dus patrata Kadda JF.90K",
+      "name": "Cabină duș pătrată Kadda JF.90K",
       "brand": "Kadda",
       "category": "Cabină de duș",
       "model3d": "shower"
@@ -1309,7 +1309,7 @@
     {
       "id": "dus-cabina-dus-dreptunghiulara-cadita-seldus-eur5",
       "group": "dus",
-      "name": "Cabina dus dreptunghiulara + cadita Seldus EUR5",
+      "name": "Cabină duș dreptunghiulară + cădiță Seldus EUR5",
       "brand": "Seldus",
       "category": "Cabină de duș",
       "model3d": "shower"
@@ -1317,7 +1317,7 @@
     {
       "id": "dus-cabina-dus-semirotunda-cadita-inalta-kadda-2018-",
       "group": "dus",
-      "name": "Cabina dus semirotunda + cadita inalta Kadda 2018 B",
+      "name": "Cabină duș semirotundă + cădiță înaltă Kadda 2018 B",
       "brand": "Kadda",
       "category": "Cabină de duș",
       "model3d": "shower"
@@ -1325,7 +1325,7 @@
     {
       "id": "dus-cabina-dus-dreptunghiulara-west-cb150wst10gb",
       "group": "dus",
-      "name": "Cabina dus dreptunghiulara West CB150WST10GB",
+      "name": "Cabină duș dreptunghiulară West CB150WST10GB",
       "brand": "West",
       "category": "Cabină de duș",
       "model3d": "shower"
@@ -1365,7 +1365,7 @@
     {
       "id": "wc-vas-wc-cersanit-bonica-k3029-002-pe-pardoseala",
       "group": "wc",
-      "name": "Vas WC Cersanit Bonica K3029-002 pe pardoseala",
+      "name": "Vas WC Cersanit Bonica K3029-002 pe pardoseală",
       "brand": "Cersanit",
       "category": "Vas WC",
       "model3d": "wc"
@@ -1381,7 +1381,7 @@
     {
       "id": "oglinda-oglinda-decorativa-f2203-dreptunghiulara",
       "group": "oglinda",
-      "name": "Oglinda decorativa F2203 dreptunghiulara",
+      "name": "Oglindă decorativă F2203 dreptunghiulară",
       "brand": "Dedeman",
       "category": "Corp cu oglindă",
       "model3d": "mirror"
@@ -1389,7 +1389,7 @@
     {
       "id": "oglinda-oglinda-decorativa-rona-0065lk-cu-suport-de-pode",
       "group": "oglinda",
-      "name": "Oglinda decorativa Rona 0065LK cu suport de podea",
+      "name": "Oglindă decorativă Rona 0065LK cu suport de podea",
       "brand": "Dedeman",
       "category": "Corp cu oglindă",
       "model3d": "mirror"
@@ -1397,7 +1397,7 @@
     {
       "id": "oglinda-oglinda-living-cottage-0162miroc",
       "group": "oglinda",
-      "name": "Oglinda living Cottage 0162MIROC",
+      "name": "Oglindă living Cottage 0162MIROC",
       "brand": "Dedeman",
       "category": "Corp cu oglindă",
       "model3d": "mirror"
@@ -1405,7 +1405,7 @@
     {
       "id": "oglinda-oglinda-decorativa-f2205-rotunda",
       "group": "oglinda",
-      "name": "Oglinda decorativa F2205 rotunda",
+      "name": "Oglindă decorativă F2205 rotundă",
       "brand": "Dedeman",
       "category": "Corp cu oglindă",
       "model3d": "mirror"
@@ -1429,7 +1429,7 @@
     {
       "id": "canapea-oskar-canapea-extensibila-3-locuri",
       "group": "canapea",
-      "name": "OSKAR canapea extensibila 3 locuri",
+      "name": "OSKAR canapea extensibilă 3 locuri",
       "brand": "Mobexpert",
       "category": "Canapea",
       "model3d": "sofa"
@@ -1461,7 +1461,7 @@
     {
       "id": "pat-kenton-pat-tapitat-160x200-cu-somiera-rabatabila",
       "group": "pat",
-      "name": "KENTON pat tapitat 160x200 cu somiera rabatabila si lada",
+      "name": "KENTON pat tapițat 160x200 cu somiera rabatabilă și ladă",
       "brand": "Mobexpert",
       "category": "Pat",
       "model3d": "bed"
@@ -1469,7 +1469,7 @@
     {
       "id": "dulap-dulap-fandrup-96x176-2-usi-3-sertare",
       "group": "dulap",
-      "name": "Dulap FANDRUP 96x176 2 usi 3 sertare",
+      "name": "Dulap FANDRUP 96x176 2 uși 3 sertare",
       "brand": "JYSK",
       "category": "Dulap",
       "model3d": "wardrobe"
@@ -1477,7 +1477,7 @@
     {
       "id": "dulap-dulap-vellerup-200x200-4-usi-3-sertare",
       "group": "dulap",
-      "name": "Dulap VELLERUP 200x200 4 usi 3 sertare",
+      "name": "Dulap VELLERUP 200x200 4 uși 3 sertare",
       "brand": "JYSK",
       "category": "Dulap",
       "model3d": "wardrobe"
@@ -1501,7 +1501,7 @@
     {
       "id": "comodaTv-comoda-tv-vedde",
       "group": "comodaTv",
-      "name": "Comoda TV VEDDE",
+      "name": "Comodă TV VEDDE",
       "brand": "JYSK",
       "category": "Comodă TV",
       "model3d": "tv"
@@ -1517,7 +1517,7 @@
     {
       "id": "comodaTv-jennifer-comoda-tv-2-sertare",
       "group": "comodaTv",
-      "name": "JENNIFER comoda TV 2 sertare",
+      "name": "JENNIFER comodă TV 2 sertare",
       "brand": "Mobexpert",
       "category": "Comodă TV",
       "model3d": "tv"
@@ -1525,7 +1525,7 @@
     {
       "id": "masa-priscilla-masa-dining-extensibila",
       "group": "masa",
-      "name": "PRISCILLA masa dining extensibila",
+      "name": "PRISCILLA masă dining extensibilă",
       "brand": "Mobexpert",
       "category": "Masă cu scaune",
       "model3d": "dining"
@@ -1533,7 +1533,7 @@
     {
       "id": "biblioteca-avenue-biblioteca",
       "group": "biblioteca",
-      "name": "AVENUE biblioteca",
+      "name": "AVENUE bibliotecă",
       "brand": "Mobexpert",
       "category": "Bibliotecă",
       "model3d": "shelf"
@@ -1541,7 +1541,7 @@
     {
       "id": "masuta-lia-masuta-cafea",
       "group": "masuta",
-      "name": "LIA masuta cafea",
+      "name": "LIA măsuță cafea",
       "brand": "Mobexpert",
       "category": "Măsuță de cafea",
       "model3d": "coffee"
@@ -1549,7 +1549,7 @@
     {
       "id": "masuta-whity-masuta-cafea",
       "group": "masuta",
-      "name": "WHITY masuta cafea",
+      "name": "WHITY măsuță cafea",
       "brand": "Mobexpert",
       "category": "Măsuță de cafea",
       "model3d": "coffee"
@@ -1557,7 +1557,7 @@
     {
       "id": "masuta-tuycan-masuta-cafea-rotunda",
       "group": "masuta",
-      "name": "TUYCAN masuta cafea rotunda",
+      "name": "TUYCAN măsuță cafea rotundă",
       "brand": "Mobexpert",
       "category": "Măsuță de cafea",
       "model3d": "coffee"
@@ -1565,7 +1565,7 @@
     {
       "id": "masuta-masuta-cafea-ravnsbjerg-90x90",
       "group": "masuta",
-      "name": "Masuta cafea RAVNSBJERG 90x90",
+      "name": "Măsuță cafea RAVNSBJERG 90x90",
       "brand": "JYSK",
       "category": "Măsuță de cafea",
       "model3d": "coffee"
@@ -1573,7 +1573,7 @@
     {
       "id": "masa-masa-aabenraa-90x160",
       "group": "masa",
-      "name": "Masa AABENRAA 90x160",
+      "name": "Masă AABENRAA 90x160",
       "brand": "JYSK",
       "category": "Masă cu scaune",
       "model3d": "dining"
@@ -1581,7 +1581,7 @@
     {
       "id": "masa-masa-ringsted-100-rotunda",
       "group": "masa",
-      "name": "Masa RINGSTED Ø100 rotunda",
+      "name": "Masă RINGSTED Ø100 rotundă",
       "brand": "JYSK",
       "category": "Masă cu scaune",
       "model3d": "dining"
@@ -1589,7 +1589,7 @@
     {
       "id": "cada-cada-baie-dreptunghiulara-west-elegancia-acril-170-x-70-cm-suport-inclus",
       "group": "cada",
-      "name": "Cada baie dreptunghiulara West Elegancia, acril, 170 x 70 cm, suport inclus",
+      "name": "Cadă baie dreptunghiulară West Elegancia, acril, 170 x 70 cm, suport inclus",
       "brand": "West",
       "category": "Cadă de baie",
       "model3d": "bathtub"
@@ -1597,7 +1597,7 @@
     {
       "id": "cada-cada-baie-dreptunghiulara-west-amalia-acril-170-x-70-cm",
       "group": "cada",
-      "name": "Cada baie dreptunghiulara West Amalia, acril, 170 x 70 cm",
+      "name": "Cadă baie dreptunghiulară West Amalia, acril, 170 x 70 cm",
       "brand": "West",
       "category": "Cadă de baie",
       "model3d": "bathtub"
@@ -1605,7 +1605,7 @@
     {
       "id": "cada-cada-baie-dreptunghiulara-kolo-supero-5343-acril-170-x-70-cm-suport-inclus",
       "group": "cada",
-      "name": "Cada baie dreptunghiulara Kolo Supero 5343, acril, 170 x 70 cm, suport inclus",
+      "name": "Cadă baie dreptunghiulară Kolo Supero 5343, acril, 170 x 70 cm, suport inclus",
       "brand": "Kolo",
       "category": "Cadă de baie",
       "model3d": "bathtub"
@@ -1613,7 +1613,7 @@
     {
       "id": "cada-cada-freestanding-rectangulara-west-hades-acril-178-x-80-cm-alb",
       "group": "cada",
-      "name": "Cada freestanding, rectangulara, West Hades, acril, 178 x 80 cm, alb",
+      "name": "Cadă freestanding, rectangulară, West Hades, acril, 178 x 80 cm, alb",
       "brand": "West",
       "category": "Cadă de baie",
       "model3d": "bathtub"
@@ -1621,7 +1621,7 @@
     {
       "id": "cada-cada-freestanding-ovala-martplast-epoca-compozit-168-x-80-cm-alb",
       "group": "cada",
-      "name": "Cada freestanding, ovala, Martplast Epoca, compozit, 168 x 80 cm, alb",
+      "name": "Cadă freestanding, ovală, Martplast Epoca, compozit, 168 x 80 cm, alb",
       "brand": "Martplast",
       "category": "Cadă de baie",
       "model3d": "bathtub"
@@ -1629,7 +1629,7 @@
     {
       "id": "cada-cada-freestanding-ovala-west-roya-acril-160-x-66-cm-alb",
       "group": "cada",
-      "name": "Cada freestanding, ovala, West Roya, acril, 160 x 66 cm, alb",
+      "name": "Cadă freestanding, ovală, West Roya, acril, 160 x 66 cm, alb",
       "brand": "West",
       "category": "Cadă de baie",
       "model3d": "bathtub"
@@ -1637,7 +1637,7 @@
     {
       "id": "cada-cada-baie-asimetrica-pe-colt-varianta-montaj-pe-dreapta-west-artemide-masca-si-suport-incl",
       "group": "cada",
-      "name": "Cada baie asimetrica, pe colt, varianta montaj pe dreapta, West Artemide, masca si suport incluse, acril, 150 x 100 cm",
+      "name": "Cadă baie asimetrică, pe colț, variantă montaj pe dreapta, West Artemide, mască și suport incluse, acril, 150 x 100 cm",
       "brand": "West",
       "category": "Cadă de baie",
       "model3d": "bathtub"
@@ -1653,7 +1653,7 @@
     {
       "id": "dus-perete-dus-walk-in-kadda-w-66-sticla-transparenta-profil-cromat-90-x-200-cm",
       "group": "dus",
-      "name": "Perete dus walk-in, Kadda W-66, sticla transparenta, profil cromat, 90 x 200 cm",
+      "name": "Perete duș walk-in, Kadda W-66, sticlă transparentă, profil cromat, 90 x 200 cm",
       "brand": "Kadda",
       "category": "Perete duș walk-in",
       "model3d": "shower"
@@ -1661,7 +1661,7 @@
     {
       "id": "dus-perete-dus-tip-walk-in-seldus-emy105-sticla-transparenta-profil-negru-90-x-200-cm",
       "group": "dus",
-      "name": "Perete dus tip walk-in, Seldus EMY105, sticla transparenta, profil negru, 90 x 200 cm",
+      "name": "Perete duș tip walk-in, Seldus EMY105, sticlă transparentă, profil negru, 90 x 200 cm",
       "brand": "Seldus",
       "category": "Perete duș walk-in",
       "model3d": "shower"
@@ -1669,7 +1669,7 @@
     {
       "id": "dus-perete-dus-tip-walk-in-seldus-st6-sticla-transparenta-profil-auriu-120-x-200-cm",
       "group": "dus",
-      "name": "Perete dus tip walk-in, Seldus ST6, sticla transparenta, profil auriu, 120 x 200 cm",
+      "name": "Perete duș tip walk-in, Seldus ST6, sticlă transparentă, profil auriu, 120 x 200 cm",
       "brand": "Seldus",
       "category": "Perete duș walk-in",
       "model3d": "shower"
@@ -1677,7 +1677,7 @@
     {
       "id": "dus-perete-dus-tip-walk-in-west-wst07-sticla-sablata-profil-cromat-90-x-200-cm",
       "group": "dus",
-      "name": "Perete dus tip walk-in, West WST07, sticla sablata, profil cromat, 90 x 200 cm",
+      "name": "Perete duș tip walk-in, West WST07, sticlă sablată, profil cromat, 90 x 200 cm",
       "brand": "West",
       "category": "Perete duș walk-in",
       "model3d": "shower"
@@ -1685,7 +1685,7 @@
     {
       "id": "dus-cabina-dus-semirotunda-cersanit-s158-005-90-x-90-x-185-cm-sticla-securizata-transparenta-p",
       "group": "dus",
-      "name": "Cabina dus semirotunda, Cersanit S158-005, 90 x 90 x 185 cm, sticla securizata transparenta, profil cromat",
+      "name": "Cabină duș semirotundă, Cersanit S158-005, 90 x 90 x 185 cm, sticlă securizată transparentă, profil cromat",
       "brand": "Cersanit",
       "category": "Cabină de duș",
       "model3d": "shower"
@@ -1693,7 +1693,7 @@
     {
       "id": "dus-cabina-dus-dreptunghiulara-west-wst23-profil-gri-120-x-80-x-200-cm",
       "group": "dus",
-      "name": "Cabina dus dreptunghiulara, West WST23, profil gri, 120 x 80 x 200 cm",
+      "name": "Cabină duș dreptunghiulară, West WST23, profil gri, 120 x 80 x 200 cm",
       "brand": "West",
       "category": "Cabină de duș",
       "model3d": "shower"
@@ -1701,7 +1701,7 @@
     {
       "id": "wc-vas-wc-suspendat-cersanit-zen-s701-428-alb-evacuare-orizontala-35-5-x-49-5-x-42-9-cm-capac",
       "group": "wc",
-      "name": "Vas WC suspendat Cersanit Zen S701-428, alb, evacuare orizontala, 35.5 x 49.5 x 42.9 cm, capac WC inclus",
+      "name": "Vas WC suspendat Cersanit Zen S701-428, alb, evacuare orizontală, 35.5 x 49.5 x 42.9 cm, capac WC inclus",
       "brand": "Cersanit",
       "category": "Vas WC",
       "model3d": "wc"
@@ -1709,7 +1709,7 @@
     {
       "id": "wc-vas-wc-cu-functie-de-bideu-roca-nexo-a34664t000-alb-evacuare-orizontala-montaj-suspendat-3",
       "group": "wc",
-      "name": "Vas WC cu functie de bideu Roca Nexo A34664T000, alb, evacuare orizontala, montaj suspendat, 35.5 x 53.5 x 34 cm",
+      "name": "Vas WC cu funcție de bideu Roca Nexo A34664T000, alb, evacuare orizontală, montaj suspendat, 35.5 x 53.5 x 34 cm",
       "brand": "Roca",
       "category": "Vas WC",
       "model3d": "wc"
@@ -1717,7 +1717,7 @@
     {
       "id": "wc-vas-wc-cu-functie-de-bideu-dura-petra-6033mb-negru-mat-evacuare-orizontala-montaj-suspenda",
       "group": "wc",
-      "name": "Vas WC cu functie de bideu Dura Petra 6033MB, negru mat, evacuare orizontala, montaj suspendat, 35.5 x 54 x 40 cm",
+      "name": "Vas WC cu funcție de bideu Dura Petra 6033MB, negru mat, evacuare orizontală, montaj suspendat, 35.5 x 54 x 40 cm",
       "brand": "Dura",
       "category": "Vas WC",
       "model3d": "wc"
@@ -1725,7 +1725,7 @@
     {
       "id": "wc-vas-wc-cu-rezervor-mecanism-capac-set-hansgrohe-gladelake-s-60312450-alb-evacuare-dubla-mo",
       "group": "wc",
-      "name": "Vas wc cu rezervor + mecanism + capac, set Hansgrohe GladeLake S 60312450, alb, evacuare dubla, montaj pe pardoseala",
+      "name": "Vas wc cu rezervor + mecanism + capac, set Hansgrohe GladeLake S 60312450, alb, evacuare dublă, montaj pe pardoseală",
       "brand": "Hansgrohe",
       "category": "Vas WC",
       "model3d": "wc"
@@ -1733,7 +1733,7 @@
     {
       "id": "lavoar-masca-baie-lavoar-geberit-modo-cu-sertare-alb-suspendat-60-x-48-5-x-65-cm-mdf",
       "group": "lavoar",
-      "name": "Masca baie + lavoar Geberit Modo, cu sertare, alb, suspendat, 60 x 48.5 x 65 cm, MDF",
+      "name": "Mască baie + lavoar Geberit Modo, cu sertare, alb, suspendat, 60 x 48.5 x 65 cm, MDF",
       "brand": "Geberit",
       "category": "Lavoar cu mobilier",
       "model3d": "vanity"
@@ -1757,7 +1757,7 @@
     {
       "id": "coloanaBaie-dulap-baie-suspendat-frame-2-usi-rigoletto-gri-143-x-35-x-32-cm",
       "group": "coloanaBaie",
-      "name": "Dulap baie suspendat, Frame, 2 usi, rigoletto gri, 143 x 35 x 32 cm",
+      "name": "Dulap baie suspendat, Frame, 2 uși, rigoletto gri, 143 x 35 x 32 cm",
       "brand": "Frame",
       "category": "Dulap de baie",
       "model3d": "column"
@@ -1765,7 +1765,7 @@
     {
       "id": "coloanaBaie-dulap-pe-sol-pentru-masina-de-spalat-badenmob-eco-19537-2-usi-alb-64-x-195-x-27-cm",
       "group": "coloanaBaie",
-      "name": "Dulap pe sol, pentru masina de spalat, Badenmob Eco 19537, 2 usi, alb, 64 x 195 x 27 cm",
+      "name": "Dulap pe sol, pentru mașină de spălat, Badenmob Eco 19537, 2 uși, alb, 64 x 195 x 27 cm",
       "brand": "Badenmob",
       "category": "Dulap de baie",
       "model3d": "column"
@@ -1773,7 +1773,7 @@
     {
       "id": "dulapOglinda-dulap-baie-cu-oglinda-iluminare-si-polita-1-usa-dreapta-neo-alb-55-x-14-x-71-cm",
       "group": "dulapOglinda",
-      "name": "Dulap baie cu oglinda, iluminare si polita, 1 usa, dreapta, Neo, alb, 55 x 14 x 71 cm",
+      "name": "Dulap baie cu oglindă, iluminare și poliță, 1 ușă, dreapta, Neo, alb, 55 x 14 x 71 cm",
       "brand": "Neo",
       "category": "Dulap cu oglindă",
       "model3d": "mirrorcab"
@@ -1781,7 +1781,7 @@
     {
       "id": "dulapOglinda-dulap-baie-cu-oglinda-si-iluminare-3-usi-savini-due-fly-77-x-16-x-71-cm",
       "group": "dulapOglinda",
-      "name": "Dulap baie cu oglinda si iluminare, 3 usi, Savini Due Fly, 77 x 16 x 71 cm",
+      "name": "Dulap baie cu oglindă și iluminare, 3 uși, Savini Due Fly, 77 x 16 x 71 cm",
       "brand": "Savini Due",
       "category": "Dulap cu oglindă",
       "model3d": "mirrorcab"
@@ -1789,7 +1789,7 @@
     {
       "id": "dulapOglinda-oglinda-baie-cu-led-goodmob-avonia-diametru-60-cm-actionare-touch-rotunda",
       "group": "dulapOglinda",
-      "name": "Oglinda baie cu LED, Goodmob Avonia, diametru 60 cm, actionare touch, rotunda",
+      "name": "Oglindă baie cu LED, Goodmob Avonia, diametru 60 cm, acționare touch, rotundă",
       "brand": "Goodmob",
       "category": "Oglindă baie LED",
       "model3d": "mirrorcab"
@@ -1797,7 +1797,7 @@
     {
       "id": "dulapOglinda-oglinda-baie-cu-led-h-501-80-x-65-cm-actionare-touch-rotunda-cu-etajera-alb",
       "group": "dulapOglinda",
-      "name": "Oglinda baie cu LED, H-501, 80 x 65 cm, actionare touch, rotunda, cu etajera, alb",
+      "name": "Oglindă baie cu LED, H-501, 80 x 65 cm, acționare touch, rotundă, cu etajeră, alb",
       "brand": "H",
       "category": "Oglindă baie LED",
       "model3d": "mirrorcab"
@@ -1805,7 +1805,7 @@
     {
       "id": "boiler-boiler-electric-ariston-velis-tech-100-afisaj-digital-ipx4-functie-eco-80-l-1500-w",
       "group": "boiler",
-      "name": "Boiler electric Ariston Velis Tech 100, afisaj digital, IPX4, functie eco, 80 L, 1500 W",
+      "name": "Boiler electric Ariston Velis Tech 100, afișaj digital, IPX4, funcție eco, 80 L, 1500 W",
       "brand": "Ariston",
       "category": "Boiler electric",
       "model3d": "boiler"
@@ -2979,7 +2979,7 @@
     {
       "id": "fotoliu-4",
       "productId": "fotoliu-oskarshamn-fotoliu",
-      "name": "OSKARSHAMN fotoliu, Tonerud roşu",
+      "name": "OSKARSHAMN fotoliu, Tonerud roșu",
       "legacyIndex": 4,
       "dimensionsCm": {
         "w": 82,
@@ -3043,7 +3043,7 @@
     {
       "id": "pat-7",
       "productId": "pat-idanas-pat-tapitat-cu-depozitare-160x200",
-      "name": "IDANÄS pat tapiţat cu depozitare 160x200, Gunnared gri închis",
+      "name": "IDANÄS pat tapițat cu depozitare 160x200, Gunnared gri închis",
       "legacyIndex": 7,
       "dimensionsCm": {
         "w": 170,
@@ -3059,7 +3059,7 @@
     {
       "id": "pat-8",
       "productId": "pat-slattum-cadru-pat-tapitat-160x200",
-      "name": "SLATTUM cadru pat tapiţat 160x200, Vissle gri închis",
+      "name": "SLATTUM cadru pat tapițat 160x200, Vissle gri închis",
       "legacyIndex": 8,
       "dimensionsCm": {
         "w": 164,
@@ -3154,7 +3154,7 @@
     {
       "id": "dulap-3",
       "productId": "dulap-kleppstad-dulap-de-haine-cu-usi-glisante",
-      "name": "KLEPPSTAD dulap de haine cu uşi glisante, alb",
+      "name": "KLEPPSTAD dulap de haine cu uși glisante, alb",
       "legacyIndex": 3,
       "dimensionsCm": {
         "w": 117,
@@ -3280,7 +3280,7 @@
     {
       "id": "comodaTv-4",
       "productId": "comodaTv-besta-comoda-tv-usi",
-      "name": "BESTÅ comodă TV+uşi, alb Björköviken / furnir stejar",
+      "name": "BESTÅ comodă TV+uși, alb Björköviken / furnir stejar",
       "legacyIndex": 4,
       "dimensionsCm": {
         "w": 180,
@@ -3632,7 +3632,7 @@
     {
       "id": "canapea-9",
       "productId": "canapea-canapea-fixa-3-locuri-andy",
-      "name": "Canapea fixa 3 locuri Andy, cappuccino, stofa",
+      "name": "Canapea fixă 3 locuri Andy, cappuccino, stofă",
       "legacyIndex": 9,
       "dimensionsCm": {
         "w": 215,
@@ -3648,7 +3648,7 @@
     {
       "id": "canapea-10",
       "productId": "canapea-canapea-fixa-3-locuri-chesterfield",
-      "name": "Canapea fixa 3 locuri Chesterfield, maro, stofa",
+      "name": "Canapea fixă 3 locuri Chesterfield, maro, stofă",
       "legacyIndex": 10,
       "dimensionsCm": {
         "w": 215,
@@ -3664,7 +3664,7 @@
     {
       "id": "canapea-11",
       "productId": "canapea-canapea-fixa-3-locuri-panda",
-      "name": "Canapea fixa 3 locuri Panda, maro taupe (specs: bej), stofa",
+      "name": "Canapea fixă 3 locuri Panda, maro taupe (specs: bej), stofă",
       "legacyIndex": 11,
       "dimensionsCm": {
         "w": 280,
@@ -3680,7 +3680,7 @@
     {
       "id": "canapea-12",
       "productId": "canapea-canapea-fixa-3-locuri-romano",
-      "name": "Canapea fixa 3 locuri Romano, maro deschis, textil",
+      "name": "Canapea fixă 3 locuri Romano, maro deschis, textil",
       "legacyIndex": 12,
       "dimensionsCm": {
         "w": 215,
@@ -3696,7 +3696,7 @@
     {
       "id": "fotoliu-5",
       "productId": "fotoliu-fotoliu-extensibil-eva-kt1908bd-1",
-      "name": "Fotoliu extensibil Eva KT1908BD-1, gri inchis",
+      "name": "Fotoliu extensibil Eva KT1908BD-1, gri închis",
       "legacyIndex": 5,
       "dimensionsCm": {
         "w": 65,
@@ -3759,7 +3759,7 @@
     {
       "id": "pat-11",
       "productId": "pat-pat-dormitor-dr-home-matrimonial-tapitat-160x200",
-      "name": "Pat dormitor Dr. Home matrimonial tapitat 160x200, crem, textil",
+      "name": "Pat dormitor Dr. Home matrimonial tapițat 160x200, crem, textil",
       "legacyIndex": 11,
       "dimensionsCm": {
         "w": 164,
@@ -3775,7 +3775,7 @@
     {
       "id": "pat-12",
       "productId": "pat-pat-dormitor-fidelio-matrimonial-tapitat-cu-lada",
-      "name": "Pat dormitor Fidelio matrimonial tapitat cu lada 160x200, bej deschis",
+      "name": "Pat dormitor Fidelio matrimonial tapițat cu ladă 160x200, bej deschis",
       "legacyIndex": 12,
       "dimensionsCm": {
         "w": 172,
@@ -3791,7 +3791,7 @@
     {
       "id": "noptiera-7",
       "productId": "noptiera-noptiera-corsica-cu-raft-sertar",
-      "name": "Noptiera Corsica cu raft + sertar, bej (specs: crem)",
+      "name": "Noptieră Corsica cu raft + sertar, bej (specs: crem)",
       "legacyIndex": 7,
       "dimensionsCm": {
         "w": 50,
@@ -3807,7 +3807,7 @@
     {
       "id": "noptiera-8",
       "productId": "noptiera-noptiera-duero-3f-cu-3-sertare",
-      "name": "Noptiera Duero 3F cu 3 sertare, stejar gri",
+      "name": "Noptieră Duero 3F cu 3 sertare, stejar gri",
       "legacyIndex": 8,
       "dimensionsCm": {
         "w": 45,
@@ -3823,7 +3823,7 @@
     {
       "id": "noptiera-9",
       "productId": "noptiera-noptiera-colhida-cu-2-sertare",
-      "name": "Noptiera Colhida cu 2 sertare, bej cashmere + stejar inchis",
+      "name": "Noptieră Colhida cu 2 sertare, bej cashmere + stejar închis",
       "legacyIndex": 9,
       "dimensionsCm": {
         "w": 48,
@@ -3839,7 +3839,7 @@
     {
       "id": "dulap-6",
       "productId": "dulap-dulap-dormitor-nevis-3k1f1o-cu-oglinda",
-      "name": "Dulap dormitor Nevis 3K1F1O cu oglinda, stejar artisan",
+      "name": "Dulap dormitor Nevis 3K1F1O cu oglindă, stejar artisan",
       "legacyIndex": 6,
       "dimensionsCm": {
         "w": 117,
@@ -3855,7 +3855,7 @@
     {
       "id": "dulap-7",
       "productId": "dulap-dulap-dormitor-varadero-4k1f1o-cu-oglinda",
-      "name": "Dulap dormitor Varadero 4K1F1O cu oglinda, stejar artisan + negru",
+      "name": "Dulap dormitor Varadero 4K1F1O cu oglindă, stejar artisan + negru",
       "legacyIndex": 7,
       "dimensionsCm": {
         "w": 158,
@@ -3871,7 +3871,7 @@
     {
       "id": "dulap-8",
       "productId": "dulap-dulap-dormitor-dressing-sierra-220-cu-usi-glisan",
-      "name": "Dulap dormitor / dressing Sierra 220 cu usi glisante si oglinda, gri grafit",
+      "name": "Dulap dormitor / dressing Sierra 220 cu uși glisante și oglindă, gri grafit",
       "legacyIndex": 8,
       "dimensionsCm": {
         "w": 217,
@@ -3887,7 +3887,7 @@
     {
       "id": "comoda-5",
       "productId": "comoda-comoda-dormitor-duero-5f-90-cu-5-sertare",
-      "name": "Comoda dormitor Duero 5F 90 cu 5 sertare, stejar gri",
+      "name": "Comodă dormitor Duero 5F 90 cu 5 sertare, stejar gri",
       "legacyIndex": 5,
       "dimensionsCm": {
         "w": 90,
@@ -3903,7 +3903,7 @@
     {
       "id": "comodaTv-10",
       "productId": "comodaTv-comoda-tv-rex-cu-lumini-si-usi",
-      "name": "Comoda TV Rex cu lumini si usi, alb mat + negru + folie lucioasa alba",
+      "name": "Comodă TV Rex cu lumini și uși, alb mat + negru + folie lucioasă albă",
       "legacyIndex": 10,
       "dimensionsCm": {
         "w": 170,
@@ -3920,7 +3920,7 @@
     {
       "id": "comodaTv-11",
       "productId": "comodaTv-comoda-tv-darwen-3k2f2v-cu-usi-si-sertare",
-      "name": "Comoda TV Darwen 3K2F2V cu usi si sertare, bej cashmere + stejar artisan",
+      "name": "Comodă TV Darwen 3K2F2V cu uși și sertare, bej cashmere + stejar artisan",
       "legacyIndex": 11,
       "dimensionsCm": {
         "w": 180,
@@ -3937,7 +3937,7 @@
     {
       "id": "comodaTv-12",
       "productId": "comodaTv-comoda-tv-arles-3k3v-cu-usi",
-      "name": "Comoda TV Arles 3K3V cu usi, bej cashmere + stejar artisan",
+      "name": "Comodă TV Arles 3K3V cu uși, bej cashmere + stejar artisan",
       "legacyIndex": 12,
       "dimensionsCm": {
         "w": 192,
@@ -3954,7 +3954,7 @@
     {
       "id": "biblioteca-9",
       "productId": "biblioteca-biblioteca-living-cantal",
-      "name": "Biblioteca living Cantal, stejar artisan + gri",
+      "name": "Bibliotecă living Cantal, stejar artisan + gri",
       "legacyIndex": 9,
       "dimensionsCm": {
         "w": 259,
@@ -3970,7 +3970,7 @@
     {
       "id": "biblioteca-10",
       "productId": "biblioteca-biblioteca-living-margate-ah",
-      "name": "Biblioteca living Margate AH, stejar artisan + negru",
+      "name": "Bibliotecă living Margate AH, stejar artisan + negru",
       "legacyIndex": 10,
       "dimensionsCm": {
         "w": 208,
@@ -3986,7 +3986,7 @@
     {
       "id": "biblioteca-11",
       "productId": "biblioteca-biblioteca-living-retimno",
-      "name": "Biblioteca living Retimno, stejar artisan + negru",
+      "name": "Bibliotecă living Retimno, stejar artisan + negru",
       "legacyIndex": 11,
       "dimensionsCm": {
         "w": 208,
@@ -4002,7 +4002,7 @@
     {
       "id": "biblioteca-12",
       "productId": "biblioteca-biblioteca-living-glen",
-      "name": "Biblioteca living Glen, stejar gri + alb mat",
+      "name": "Bibliotecă living Glen, stejar gri + alb mat",
       "legacyIndex": 12,
       "dimensionsCm": {
         "w": 170,
@@ -4018,7 +4018,7 @@
     {
       "id": "biblioteca-13",
       "productId": "biblioteca-biblioteca-living-lorca",
-      "name": "Biblioteca living Lorca, stejar gri + lemn negru",
+      "name": "Bibliotecă living Lorca, stejar gri + lemn negru",
       "legacyIndex": 13,
       "dimensionsCm": {
         "w": 196,
@@ -4034,7 +4034,7 @@
     {
       "id": "masuta-4",
       "productId": "masuta-masuta-cafea-oscar-ks-dreptunghiulara",
-      "name": "Masuta cafea Oscar KS dreptunghiulara, stejar alb",
+      "name": "Măsuță cafea Oscar KS dreptunghiulară, stejar alb",
       "legacyIndex": 4,
       "dimensionsCm": {
         "w": 120,
@@ -4049,7 +4049,7 @@
     {
       "id": "masuta-5",
       "productId": "masuta-masuta-cafea-aberdeen-dreptunghiulara",
-      "name": "Masuta cafea Aberdeen dreptunghiulara, alb + stejar porto",
+      "name": "Măsuță cafea Aberdeen dreptunghiulară, alb + stejar porto",
       "legacyIndex": 5,
       "dimensionsCm": {
         "w": 120,
@@ -4064,7 +4064,7 @@
     {
       "id": "masuta-6",
       "productId": "masuta-masuta-cafea-cirko-rotunda-set-2-in-1",
-      "name": "Masuta cafea Cirko rotunda set 2 in 1, alb marmorat + negru",
+      "name": "Măsuță cafea Cirko rotundă set 2 in 1, alb marmorat + negru",
       "legacyIndex": 6,
       "dimensionsCm": {
         "w": 80,
@@ -4079,7 +4079,7 @@
     {
       "id": "masuta-7",
       "productId": "masuta-masuta-cafea-din-sticla-kugu-rotunda",
-      "name": "Masuta cafea din sticla Kugu rotunda, crom aramiu",
+      "name": "Măsuță cafea din sticlă Kugu rotundă, crom aramiu",
       "legacyIndex": 7,
       "dimensionsCm": {
         "w": 75,
@@ -4094,7 +4094,7 @@
     {
       "id": "masuta-8",
       "productId": "masuta-masuta-cafea-aralyn-dreptunghiulara",
-      "name": "Masuta cafea Aralyn dreptunghiulara, stejar + negru",
+      "name": "Măsuță cafea Aralyn dreptunghiulară, stejar + negru",
       "legacyIndex": 8,
       "dimensionsCm": {
         "w": 110,
@@ -4109,7 +4109,7 @@
     {
       "id": "masa-10",
       "productId": "masa-masa-bucatarie-dining-fixa-eva-ab2820",
-      "name": "Masa bucatarie / dining fixa Eva AB2820, natur + negru",
+      "name": "Masă bucătărie / dining fixă Eva AB2820, natur + negru",
       "legacyIndex": 10,
       "dimensionsCm": {
         "w": 160,
@@ -4126,7 +4126,7 @@
     {
       "id": "masa-11",
       "productId": "masa-masa-bucatarie-dining-fixa-grandio-mob-tonia",
-      "name": "Masa bucatarie / dining fixa Grandio Mob Tonia, negru + stejar",
+      "name": "Masă bucătărie / dining fixă Grandio Mob Tonia, negru + stejar",
       "legacyIndex": 11,
       "dimensionsCm": {
         "w": 180,
@@ -4143,7 +4143,7 @@
     {
       "id": "masa-12",
       "productId": "masa-masa-bucatarie-dining-extensibila-mb-13",
-      "name": "Masa bucatarie / dining extensibila MB-13, stejar sonoma",
+      "name": "Masă bucătărie / dining extensibilă MB-13, stejar sonoma",
       "legacyIndex": 12,
       "dimensionsCm": {
         "w": 120,
@@ -4160,7 +4160,7 @@
     {
       "id": "masa-13",
       "productId": "masa-masa-bucatarie-dining-extensibila-saxonia",
-      "name": "Masa bucatarie / dining extensibila Saxonia, nuc",
+      "name": "Masă bucătărie / dining extensibilă Saxonia, nuc",
       "legacyIndex": 13,
       "dimensionsCm": {
         "w": 165,
@@ -4190,7 +4190,7 @@
     {
       "id": "birou-8",
       "productId": "birou-birou-calculator-cu-sertare-si-dulap-alfa",
-      "name": "Birou calculator cu sertare si dulap Alfa, stejar sonoma",
+      "name": "Birou calculator cu sertare și dulap Alfa, stejar sonoma",
       "legacyIndex": 8,
       "dimensionsCm": {
         "w": 145,
@@ -4203,7 +4203,7 @@
     {
       "id": "birou-9",
       "productId": "birou-birou-cu-sertar-si-dulap-bany",
-      "name": "Birou cu sertar si dulap Bany, alb",
+      "name": "Birou cu sertar și dulap Bany, alb",
       "legacyIndex": 9,
       "dimensionsCm": {
         "w": 140,
@@ -4216,7 +4216,7 @@
     {
       "id": "birou-10",
       "productId": "birou-birou-cu-sertare-si-dulap-eustach",
-      "name": "Birou cu sertare si dulap Eustach, alb",
+      "name": "Birou cu sertare și dulap Eustach, alb",
       "legacyIndex": 10,
       "dimensionsCm": {
         "w": 137,
@@ -4242,7 +4242,7 @@
     {
       "id": "scaunBirou-9",
       "productId": "scaunBirou-scaun-birou-ergonomic-sd-mch801-cu-tetiera",
-      "name": "Scaun birou ergonomic SD-MCH801 cu tetiera, negru, mesh",
+      "name": "Scaun birou ergonomic SD-MCH801 cu tetieră, negru, mesh",
       "legacyIndex": 9,
       "dimensionsCm": {
         "w": 61,
@@ -4255,7 +4255,7 @@
     {
       "id": "scaunBirou-10",
       "productId": "scaunBirou-scaun-birou-operational-carbo",
-      "name": "Scaun birou operational Carbo, gri, textil",
+      "name": "Scaun birou operațional Carbo, gri, textil",
       "legacyIndex": 10,
       "dimensionsCm": {
         "w": 49,
@@ -4300,7 +4300,7 @@
     {
       "id": "pantofar-5",
       "productId": "pantofar-pantofar-hugo-24-cu-oglinda",
-      "name": "Pantofar Hugo 24 cu oglinda, stejar gri",
+      "name": "Pantofar Hugo 24 cu oglindă, stejar gri",
       "legacyIndex": 5,
       "dimensionsCm": {
         "w": 67,
@@ -4332,7 +4332,7 @@
     {
       "id": "pantofar-7",
       "productId": "pantofar-pantofar-menorca-2k-cu-oglinda",
-      "name": "Pantofar Menorca 2K cu oglinda, alb texturat",
+      "name": "Pantofar Menorca 2K cu oglindă, alb texturat",
       "legacyIndex": 7,
       "dimensionsCm": {
         "w": 90,
@@ -4348,7 +4348,7 @@
     {
       "id": "lavoar-4",
       "productId": "lavoar-masca-baie-lavoar-savini-due-60w-cu-usi",
-      "name": "Masca baie + lavoar Savini Due 60W cu usi, alb",
+      "name": "Mască baie + lavoar Savini Due 60W cu uși, alb",
       "legacyIndex": 4,
       "dimensionsCm": {
         "w": 60,
@@ -4363,7 +4363,7 @@
     {
       "id": "lavoar-5",
       "productId": "lavoar-masca-baie-lavoar-savini-due-rimini-cu-usi",
-      "name": "Masca baie + lavoar Savini Due Rimini cu usi, alb",
+      "name": "Mască baie + lavoar Savini Due Rimini cu uși, alb",
       "legacyIndex": 5,
       "dimensionsCm": {
         "w": 56,
@@ -4378,7 +4378,7 @@
     {
       "id": "lavoar-6",
       "productId": "lavoar-masca-baie-lavoar-roca-a851925529-cu-sertare-sus",
-      "name": "Masca baie + lavoar Roca A851925529 cu sertare suspendat, alb",
+      "name": "Mască baie + lavoar Roca A851925529 cu sertare suspendat, alb",
       "legacyIndex": 6,
       "dimensionsCm": {
         "w": 61,
@@ -4394,7 +4394,7 @@
     {
       "id": "lavoar-7",
       "productId": "lavoar-masca-baie-lavoar-savini-due-creta-80-cu-sertare",
-      "name": "Masca baie + lavoar Savini Due Creta 80 cu sertare, stejar auriu",
+      "name": "Mască baie + lavoar Savini Due Creta 80 cu sertare, stejar auriu",
       "legacyIndex": 7,
       "dimensionsCm": {
         "w": 82,
@@ -4409,7 +4409,7 @@
     {
       "id": "lavoar-8",
       "productId": "lavoar-masca-baie-lavoar-fayans-kuandra-cu-sertare-si-u",
-      "name": "Masca baie + lavoar Fayans Kuandra cu sertare si usi, gri + negru",
+      "name": "Mască baie + lavoar Fayans Kuandra cu sertare și uși, gri + negru",
       "legacyIndex": 8,
       "dimensionsCm": {
         "w": 65,
@@ -4424,7 +4424,7 @@
     {
       "id": "lavoar-9",
       "productId": "lavoar-masca-baie-lavoar-cersanit-moduo-s801-221-dsm-cu",
-      "name": "Masca baie + lavoar Cersanit Moduo S801-221-DSM cu sertare suspendat, alb",
+      "name": "Mască baie + lavoar Cersanit Moduo S801-221-DSM cu sertare suspendat, alb",
       "legacyIndex": 9,
       "dimensionsCm": {
         "w": 80,
@@ -4456,7 +4456,7 @@
     {
       "id": "frigider-4",
       "productId": "frigider-combina-frigorifica-beko-rcsa406k40dxbn-386-l",
-      "name": "Combina frigorifica Beko RCSA406K40DXBN 386 l, argintiu",
+      "name": "Combină frigorifică Beko RCSA406K40DXBN 386 l, argintiu",
       "legacyIndex": 4,
       "dimensionsCm": {
         "w": 60,
@@ -4472,7 +4472,7 @@
     {
       "id": "frigider-5",
       "productId": "frigider-combina-frigorifica-albatros-cf343e-262-l",
-      "name": "Combina frigorifica Albatros CF343E 262 l, alb",
+      "name": "Combină frigorifică Albatros CF343E 262 l, alb",
       "legacyIndex": 5,
       "dimensionsCm": {
         "w": 55,
@@ -4533,7 +4533,7 @@
     {
       "id": "dus-4",
       "productId": "dus-cabina-dus-patrata-kadda-jf-90k",
-      "name": "Cabina dus patrata Kadda JF.90K, sticla transparenta, profil cromat",
+      "name": "Cabină duș pătrată Kadda JF.90K, sticlă transparentă, profil cromat",
       "legacyIndex": 4,
       "dimensionsCm": {
         "w": 90,
@@ -4548,7 +4548,7 @@
     {
       "id": "dus-5",
       "productId": "dus-cabina-dus-dreptunghiulara-cadita-seldus-eur5",
-      "name": "Cabina dus dreptunghiulara + cadita Seldus EUR5, sticla transparenta, profil negru",
+      "name": "Cabină duș dreptunghiulară + cădiță Seldus EUR5, sticlă transparentă, profil negru",
       "legacyIndex": 5,
       "dimensionsCm": {
         "w": 100,
@@ -4563,7 +4563,7 @@
     {
       "id": "dus-6",
       "productId": "dus-cabina-dus-semirotunda-cadita-inalta-kadda-2018-",
-      "name": "Cabina dus semirotunda + cadita inalta Kadda 2018 B, sticla mata, profil alb",
+      "name": "Cabină duș semirotundă + cădiță înaltă Kadda 2018 B, sticlă mată, profil alb",
       "legacyIndex": 6,
       "dimensionsCm": {
         "w": 90,
@@ -4578,7 +4578,7 @@
     {
       "id": "dus-7",
       "productId": "dus-cabina-dus-dreptunghiulara-west-cb150wst10gb",
-      "name": "Cabina dus dreptunghiulara West CB150WST10GB, sticla fumurie, profil negru",
+      "name": "Cabină duș dreptunghiulară West CB150WST10GB, sticlă fumurie, profil negru",
       "legacyIndex": 7,
       "dimensionsCm": {
         "w": 150,
@@ -4661,7 +4661,7 @@
     {
       "id": "wc-6",
       "productId": "wc-vas-wc-cersanit-bonica-k3029-002-pe-pardoseala",
-      "name": "Vas WC Cersanit Bonica K3029-002 pe pardoseala, alb",
+      "name": "Vas WC Cersanit Bonica K3029-002 pe pardoseală, alb",
       "legacyIndex": 6,
       "dimensionsCm": {
         "w": 39,
@@ -4695,7 +4695,7 @@
     {
       "id": "oglinda-2",
       "productId": "oglinda-oglinda-decorativa-f2203-dreptunghiulara",
-      "name": "Oglinda decorativa F2203 dreptunghiulara, negru mat, cadru metalic",
+      "name": "Oglindă decorativă F2203 dreptunghiulară, negru mat, cadru metalic",
       "legacyIndex": 2,
       "dimensionsCm": {
         "w": 55,
@@ -4710,7 +4710,7 @@
     {
       "id": "oglinda-3",
       "productId": "oglinda-oglinda-decorativa-rona-0065lk-cu-suport-de-pode",
-      "name": "Oglinda decorativa Rona 0065LK cu suport de podea, auriu",
+      "name": "Oglindă decorativă Rona 0065LK cu suport de podea, auriu",
       "legacyIndex": 3,
       "dimensionsCm": {
         "w": 60,
@@ -4723,7 +4723,7 @@
     {
       "id": "oglinda-4",
       "productId": "oglinda-oglinda-living-cottage-0162miroc",
-      "name": "Oglinda living Cottage 0162MIROC, stejar natur",
+      "name": "Oglindă living Cottage 0162MIROC, stejar natur",
       "legacyIndex": 4,
       "dimensionsCm": {
         "w": 160,
@@ -4738,7 +4738,7 @@
     {
       "id": "oglinda-5",
       "productId": "oglinda-oglinda-decorativa-f2205-rotunda",
-      "name": "Oglinda decorativa F2205 rotunda, negru",
+      "name": "Oglindă decorativă F2205 rotundă, negru",
       "legacyIndex": 5,
       "dimensionsCm": {
         "w": 60,
@@ -4785,7 +4785,7 @@
     {
       "id": "canapea-15",
       "productId": "canapea-oskar-canapea-extensibila-3-locuri",
-      "name": "OSKAR canapea extensibila 3 locuri, stofa galben",
+      "name": "OSKAR canapea extensibilă 3 locuri, stofă galben",
       "legacyIndex": 15,
       "dimensionsCm": {
         "w": 225,
@@ -4801,7 +4801,7 @@
     {
       "id": "pat-13",
       "productId": "pat-cadru-pat-markskel-160x200",
-      "name": "Cadru pat MARKSKEL 160x200, stejar salbatic/alb",
+      "name": "Cadru pat MARKSKEL 160x200, stejar sălbatic/alb",
       "legacyIndex": 13,
       "dimensionsCm": {
         "w": 170,
@@ -4849,7 +4849,7 @@
     {
       "id": "pat-16",
       "productId": "pat-kenton-pat-tapitat-160x200-cu-somiera-rabatabila",
-      "name": "KENTON pat tapitat 160x200 cu somiera rabatabila si lada, negru",
+      "name": "KENTON pat tapițat 160x200 cu somiera rabatabilă și ladă, negru",
       "legacyIndex": 16,
       "dimensionsCm": {
         "w": 174,
@@ -4865,7 +4865,7 @@
     {
       "id": "dulap-9",
       "productId": "dulap-dulap-fandrup-96x176-2-usi-3-sertare",
-      "name": "Dulap FANDRUP 96x176 2 usi 3 sertare, stejar deschis",
+      "name": "Dulap FANDRUP 96x176 2 uși 3 sertare, stejar deschis",
       "legacyIndex": 9,
       "dimensionsCm": {
         "w": 97,
@@ -4881,7 +4881,7 @@
     {
       "id": "dulap-10",
       "productId": "dulap-dulap-vellerup-200x200-4-usi-3-sertare",
-      "name": "Dulap VELLERUP 200x200 4 usi 3 sertare, alb",
+      "name": "Dulap VELLERUP 200x200 4 uși 3 sertare, alb",
       "legacyIndex": 10,
       "dimensionsCm": {
         "w": 200,
@@ -4923,7 +4923,7 @@
     {
       "id": "comodaTv-13",
       "productId": "comodaTv-comoda-tv-vedde",
-      "name": "Comoda TV VEDDE, stejar salbatic inchis",
+      "name": "Comodă TV VEDDE, stejar sălbatic închis",
       "legacyIndex": 13,
       "dimensionsCm": {
         "w": 130,
@@ -4956,7 +4956,7 @@
     {
       "id": "comodaTv-14",
       "productId": "comodaTv-jennifer-comoda-tv-2-sertare",
-      "name": "JENNIFER comoda TV 2 sertare, cappuccino",
+      "name": "JENNIFER comodă TV 2 sertare, cappuccino",
       "legacyIndex": 14,
       "dimensionsCm": {
         "w": 163,
@@ -4973,7 +4973,7 @@
     {
       "id": "masa-14",
       "productId": "masa-priscilla-masa-dining-extensibila",
-      "name": "PRISCILLA masa dining extensibila, cappuccino/stejar",
+      "name": "PRISCILLA masă dining extensibilă, cappuccino/stejar",
       "legacyIndex": 14,
       "dimensionsCm": {
         "w": 160,
@@ -4990,7 +4990,7 @@
     {
       "id": "biblioteca-14",
       "productId": "biblioteca-avenue-biblioteca",
-      "name": "AVENUE biblioteca, gri, stejar",
+      "name": "AVENUE bibliotecă, gri, stejar",
       "legacyIndex": 14,
       "dimensionsCm": {
         "w": 331,
@@ -5006,7 +5006,7 @@
     {
       "id": "masuta-9",
       "productId": "masuta-lia-masuta-cafea",
-      "name": "LIA masuta cafea, sticla transparenta",
+      "name": "LIA măsuță cafea, sticlă transparentă",
       "legacyIndex": 9,
       "dimensionsCm": {
         "w": 110,
@@ -5021,7 +5021,7 @@
     {
       "id": "masuta-10",
       "productId": "masuta-whity-masuta-cafea",
-      "name": "WHITY masuta cafea, alb mat",
+      "name": "WHITY măsuță cafea, alb mat",
       "legacyIndex": 10,
       "dimensionsCm": {
         "w": 80,
@@ -5036,7 +5036,7 @@
     {
       "id": "masuta-11",
       "productId": "masuta-tuycan-masuta-cafea-rotunda",
-      "name": "TUYCAN masuta cafea rotunda, blat alb, baza neagra",
+      "name": "TUYCAN măsuță cafea rotundă, blat alb, bază neagră",
       "legacyIndex": 11,
       "dimensionsCm": {
         "w": 69,
@@ -5051,7 +5051,7 @@
     {
       "id": "masuta-12",
       "productId": "masuta-masuta-cafea-ravnsbjerg-90x90",
-      "name": "Masuta cafea RAVNSBJERG 90x90, stejar cald",
+      "name": "Măsuță cafea RAVNSBJERG 90x90, stejar cald",
       "legacyIndex": 12,
       "dimensionsCm": {
         "w": 90,
@@ -5066,7 +5066,7 @@
     {
       "id": "masa-15",
       "productId": "masa-masa-aabenraa-90x160",
-      "name": "Masa AABENRAA 90x160, stejar cald/negru",
+      "name": "Masă AABENRAA 90x160, stejar cald/negru",
       "legacyIndex": 15,
       "dimensionsCm": {
         "w": 160,
@@ -5083,7 +5083,7 @@
     {
       "id": "masa-16",
       "productId": "masa-masa-ringsted-100-rotunda",
-      "name": "Masa RINGSTED Ø100 rotunda, alba",
+      "name": "Masă RINGSTED Ø100 rotundă, albă",
       "legacyIndex": 16,
       "dimensionsCm": {
         "w": 100,
@@ -5100,7 +5100,7 @@
     {
       "id": "cada-0",
       "productId": "cada-cada-baie-dreptunghiulara-west-elegancia-acril-170-x-70-cm-suport-inclus",
-      "name": "Cada baie dreptunghiulara West Elegancia, acril, 170 x 70 cm, suport inclus",
+      "name": "Cadă baie dreptunghiulară West Elegancia, acril, 170 x 70 cm, suport inclus",
       "legacyIndex": 0,
       "dimensionsCm": {
         "w": 170,
@@ -5116,7 +5116,7 @@
     {
       "id": "cada-1",
       "productId": "cada-cada-baie-dreptunghiulara-west-amalia-acril-170-x-70-cm",
-      "name": "Cada baie dreptunghiulara West Amalia, acril, 170 x 70 cm",
+      "name": "Cadă baie dreptunghiulară West Amalia, acril, 170 x 70 cm",
       "legacyIndex": 1,
       "dimensionsCm": {
         "w": 170,
@@ -5132,7 +5132,7 @@
     {
       "id": "cada-2",
       "productId": "cada-cada-baie-dreptunghiulara-kolo-supero-5343-acril-170-x-70-cm-suport-inclus",
-      "name": "Cada baie dreptunghiulara Kolo Supero 5343, acril, 170 x 70 cm, suport inclus",
+      "name": "Cadă baie dreptunghiulară Kolo Supero 5343, acril, 170 x 70 cm, suport inclus",
       "legacyIndex": 2,
       "dimensionsCm": {
         "w": 170,
@@ -5148,7 +5148,7 @@
     {
       "id": "cada-3",
       "productId": "cada-cada-freestanding-rectangulara-west-hades-acril-178-x-80-cm-alb",
-      "name": "Cada freestanding, rectangulara, West Hades, acril, 178 x 80 cm, alb",
+      "name": "Cadă freestanding, rectangulară, West Hades, acril, 178 x 80 cm, alb",
       "legacyIndex": 3,
       "dimensionsCm": {
         "w": 178,
@@ -5164,7 +5164,7 @@
     {
       "id": "cada-4",
       "productId": "cada-cada-freestanding-ovala-martplast-epoca-compozit-168-x-80-cm-alb",
-      "name": "Cada freestanding, ovala, Martplast Epoca, compozit, 168 x 80 cm, alb",
+      "name": "Cadă freestanding, ovală, Martplast Epoca, compozit, 168 x 80 cm, alb",
       "legacyIndex": 4,
       "dimensionsCm": {
         "w": 168,
@@ -5181,7 +5181,7 @@
     {
       "id": "cada-5",
       "productId": "cada-cada-freestanding-ovala-west-roya-acril-160-x-66-cm-alb",
-      "name": "Cada freestanding, ovala, West Roya, acril, 160 x 66 cm, alb",
+      "name": "Cadă freestanding, ovală, West Roya, acril, 160 x 66 cm, alb",
       "legacyIndex": 5,
       "dimensionsCm": {
         "w": 160,
@@ -5197,7 +5197,7 @@
     {
       "id": "cada-6",
       "productId": "cada-cada-baie-asimetrica-pe-colt-varianta-montaj-pe-dreapta-west-artemide-masca-si-suport-incl",
-      "name": "Cada baie asimetrica, pe colt, varianta montaj pe dreapta, West Artemide, masca si suport incluse, acril, 150 x 100 cm",
+      "name": "Cadă baie asimetrică, pe colț, variantă montaj pe dreapta, West Artemide, mască și suport incluse, acril, 150 x 100 cm",
       "legacyIndex": 6,
       "dimensionsCm": {
         "w": 150,
@@ -5230,7 +5230,7 @@
     {
       "id": "dus-8",
       "productId": "dus-perete-dus-walk-in-kadda-w-66-sticla-transparenta-profil-cromat-90-x-200-cm",
-      "name": "Perete dus walk-in, Kadda W-66, sticla transparenta, profil cromat, 90 x 200 cm",
+      "name": "Perete duș walk-in, Kadda W-66, sticlă transparentă, profil cromat, 90 x 200 cm",
       "legacyIndex": 8,
       "dimensionsCm": {
         "w": 90,
@@ -5246,7 +5246,7 @@
     {
       "id": "dus-9",
       "productId": "dus-perete-dus-tip-walk-in-seldus-emy105-sticla-transparenta-profil-negru-90-x-200-cm",
-      "name": "Perete dus tip walk-in, Seldus EMY105, sticla transparenta, profil negru, 90 x 200 cm",
+      "name": "Perete duș tip walk-in, Seldus EMY105, sticlă transparentă, profil negru, 90 x 200 cm",
       "legacyIndex": 9,
       "dimensionsCm": {
         "w": 90,
@@ -5262,7 +5262,7 @@
     {
       "id": "dus-10",
       "productId": "dus-perete-dus-tip-walk-in-seldus-st6-sticla-transparenta-profil-auriu-120-x-200-cm",
-      "name": "Perete dus tip walk-in, Seldus ST6, sticla transparenta, profil auriu, 120 x 200 cm",
+      "name": "Perete duș tip walk-in, Seldus ST6, sticlă transparentă, profil auriu, 120 x 200 cm",
       "legacyIndex": 10,
       "dimensionsCm": {
         "w": 120,
@@ -5278,7 +5278,7 @@
     {
       "id": "dus-11",
       "productId": "dus-perete-dus-tip-walk-in-west-wst07-sticla-sablata-profil-cromat-90-x-200-cm",
-      "name": "Perete dus tip walk-in, West WST07, sticla sablata, profil cromat, 90 x 200 cm",
+      "name": "Perete duș tip walk-in, West WST07, sticlă sablată, profil cromat, 90 x 200 cm",
       "legacyIndex": 11,
       "dimensionsCm": {
         "w": 90,
@@ -5295,7 +5295,7 @@
     {
       "id": "dus-12",
       "productId": "dus-cabina-dus-semirotunda-cersanit-s158-005-90-x-90-x-185-cm-sticla-securizata-transparenta-p",
-      "name": "Cabina dus semirotunda, Cersanit S158-005, 90 x 90 x 185 cm, sticla securizata transparenta, profil cromat",
+      "name": "Cabină duș semirotundă, Cersanit S158-005, 90 x 90 x 185 cm, sticlă securizată transparentă, profil cromat",
       "legacyIndex": 12,
       "dimensionsCm": {
         "w": 90,
@@ -5311,7 +5311,7 @@
     {
       "id": "dus-13",
       "productId": "dus-cabina-dus-dreptunghiulara-west-wst23-profil-gri-120-x-80-x-200-cm",
-      "name": "Cabina dus dreptunghiulara, West WST23, profil gri, 120 x 80 x 200 cm",
+      "name": "Cabină duș dreptunghiulară, West WST23, profil gri, 120 x 80 x 200 cm",
       "legacyIndex": 13,
       "dimensionsCm": {
         "w": 120,
@@ -5327,7 +5327,7 @@
     {
       "id": "wc-8",
       "productId": "wc-vas-wc-suspendat-cersanit-zen-s701-428-alb-evacuare-orizontala-35-5-x-49-5-x-42-9-cm-capac",
-      "name": "Vas WC suspendat Cersanit Zen S701-428, alb, evacuare orizontala, 35.5 x 49.5 x 42.9 cm, capac WC inclus",
+      "name": "Vas WC suspendat Cersanit Zen S701-428, alb, evacuare orizontală, 35.5 x 49.5 x 42.9 cm, capac WC inclus",
       "legacyIndex": 8,
       "dimensionsCm": {
         "w": 35.5,
@@ -5344,7 +5344,7 @@
     {
       "id": "wc-9",
       "productId": "wc-vas-wc-cu-functie-de-bideu-roca-nexo-a34664t000-alb-evacuare-orizontala-montaj-suspendat-3",
-      "name": "Vas WC cu functie de bideu Roca Nexo A34664T000, alb, evacuare orizontala, montaj suspendat, 35.5 x 53.5 x 34 cm",
+      "name": "Vas WC cu funcție de bideu Roca Nexo A34664T000, alb, evacuare orizontală, montaj suspendat, 35.5 x 53.5 x 34 cm",
       "legacyIndex": 9,
       "dimensionsCm": {
         "w": 36,
@@ -5362,7 +5362,7 @@
     {
       "id": "wc-10",
       "productId": "wc-vas-wc-cu-functie-de-bideu-dura-petra-6033mb-negru-mat-evacuare-orizontala-montaj-suspenda",
-      "name": "Vas WC cu functie de bideu Dura Petra 6033MB, negru mat, evacuare orizontala, montaj suspendat, 35.5 x 54 x 40 cm",
+      "name": "Vas WC cu funcție de bideu Dura Petra 6033MB, negru mat, evacuare orizontală, montaj suspendat, 35.5 x 54 x 40 cm",
       "legacyIndex": 10,
       "dimensionsCm": {
         "w": 35.5,
@@ -5381,7 +5381,7 @@
     {
       "id": "wc-11",
       "productId": "wc-vas-wc-cu-rezervor-mecanism-capac-set-hansgrohe-gladelake-s-60312450-alb-evacuare-dubla-mo",
-      "name": "Vas wc cu rezervor + mecanism + capac, set Hansgrohe GladeLake S 60312450, alb, evacuare dubla, montaj pe pardoseala",
+      "name": "Vas wc cu rezervor + mecanism + capac, set Hansgrohe GladeLake S 60312450, alb, evacuare dublă, montaj pe pardoseală",
       "legacyIndex": 11,
       "dimensionsCm": {
         "w": 37,
@@ -5398,7 +5398,7 @@
     {
       "id": "lavoar-10",
       "productId": "lavoar-masca-baie-lavoar-geberit-modo-cu-sertare-alb-suspendat-60-x-48-5-x-65-cm-mdf",
-      "name": "Masca baie + lavoar Geberit Modo, cu sertare, alb, suspendat, 60 x 48.5 x 65 cm, MDF",
+      "name": "Mască baie + lavoar Geberit Modo, cu sertare, alb, suspendat, 60 x 48.5 x 65 cm, MDF",
       "legacyIndex": 10,
       "dimensionsCm": {
         "w": 60,
@@ -5447,7 +5447,7 @@
     {
       "id": "coloanaBaie-0",
       "productId": "coloanaBaie-dulap-baie-suspendat-frame-2-usi-rigoletto-gri-143-x-35-x-32-cm",
-      "name": "Dulap baie suspendat, Frame, 2 usi, rigoletto gri, 143 x 35 x 32 cm",
+      "name": "Dulap baie suspendat, Frame, 2 uși, rigoletto gri, 143 x 35 x 32 cm",
       "legacyIndex": 0,
       "dimensionsCm": {
         "w": 35,
@@ -5464,7 +5464,7 @@
     {
       "id": "coloanaBaie-1",
       "productId": "coloanaBaie-dulap-pe-sol-pentru-masina-de-spalat-badenmob-eco-19537-2-usi-alb-64-x-195-x-27-cm",
-      "name": "Dulap pe sol, pentru masina de spalat, Badenmob Eco 19537, 2 usi, alb, 64 x 195 x 27 cm",
+      "name": "Dulap pe sol, pentru mașină de spălat, Badenmob Eco 19537, 2 uși, alb, 64 x 195 x 27 cm",
       "legacyIndex": 1,
       "dimensionsCm": {
         "w": 64,
@@ -5481,7 +5481,7 @@
     {
       "id": "dulapOglinda-0",
       "productId": "dulapOglinda-dulap-baie-cu-oglinda-iluminare-si-polita-1-usa-dreapta-neo-alb-55-x-14-x-71-cm",
-      "name": "Dulap baie cu oglinda, iluminare si polita, 1 usa, dreapta, Neo, alb, 55 x 14 x 71 cm",
+      "name": "Dulap baie cu oglindă, iluminare și poliță, 1 ușă, dreapta, Neo, alb, 55 x 14 x 71 cm",
       "legacyIndex": 0,
       "dimensionsCm": {
         "w": 55,
@@ -5498,7 +5498,7 @@
     {
       "id": "dulapOglinda-1",
       "productId": "dulapOglinda-dulap-baie-cu-oglinda-si-iluminare-3-usi-savini-due-fly-77-x-16-x-71-cm",
-      "name": "Dulap baie cu oglinda si iluminare, 3 usi, Savini Due Fly, 77 x 16 x 71 cm",
+      "name": "Dulap baie cu oglindă și iluminare, 3 uși, Savini Due Fly, 77 x 16 x 71 cm",
       "legacyIndex": 1,
       "dimensionsCm": {
         "w": 77,
@@ -5515,7 +5515,7 @@
     {
       "id": "dulapOglinda-2",
       "productId": "dulapOglinda-oglinda-baie-cu-led-goodmob-avonia-diametru-60-cm-actionare-touch-rotunda",
-      "name": "Oglinda baie cu LED, Goodmob Avonia, diametru 60 cm, actionare touch, rotunda",
+      "name": "Oglindă baie cu LED, Goodmob Avonia, diametru 60 cm, acționare touch, rotundă",
       "legacyIndex": 2,
       "dimensionsCm": {
         "w": 60,
@@ -5531,7 +5531,7 @@
     {
       "id": "dulapOglinda-3",
       "productId": "dulapOglinda-oglinda-baie-cu-led-h-501-80-x-65-cm-actionare-touch-rotunda-cu-etajera-alb",
-      "name": "Oglinda baie cu LED, H-501, 80 x 65 cm, actionare touch, rotunda, cu etajera, alb",
+      "name": "Oglindă baie cu LED, H-501, 80 x 65 cm, acționare touch, rotundă, cu etajeră, alb",
       "legacyIndex": 3,
       "dimensionsCm": {
         "w": 80,
@@ -5548,7 +5548,7 @@
     {
       "id": "boiler-0",
       "productId": "boiler-boiler-electric-ariston-velis-tech-100-afisaj-digital-ipx4-functie-eco-80-l-1500-w",
-      "name": "Boiler electric Ariston Velis Tech 100, afisaj digital, IPX4, functie eco, 80 L, 1500 W",
+      "name": "Boiler electric Ariston Velis Tech 100, afișaj digital, IPX4, funcție eco, 80 L, 1500 W",
       "legacyIndex": 0,
       "dimensionsCm": {
         "w": 51,

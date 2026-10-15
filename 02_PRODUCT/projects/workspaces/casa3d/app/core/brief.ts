@@ -1,5 +1,6 @@
 // Design Brief structurat. Toate câmpurile au valori finite și controlate (fără text liber în logica de decizie).
-export const STYLES = { modern: 'Modern', scandinav: 'Scandinav', natural: 'Natural / Japandi', clasic: 'Clasic' } as const;
+// aceleași nume ca pachetele de stil din etapa Concept (core/styles.ts STYLE_BRIEF): „Aplică” un pachet schimbă și stilul din brief
+export const STYLES = { modern: 'Modern', scandinav: 'Scandinav', natural: 'Japandi', industrial: 'Industrial', clasic: 'Clasic' } as const;
 export const PRIORITIES = { depozitare: 'Mult spațiu de depozitare', spatiu: 'Spațiu liber de circulație', birou: 'Birou acasă', musafiri: 'Primesc des musafiri' } as const;
 export type Style = keyof typeof STYLES; export type Priority = keyof typeof PRIORITIES;
 export interface DesignBrief { propertyType: 'apartament' | 'casa' | 'studio'; occupants: number; children: boolean; pets: boolean; accessibility: boolean;

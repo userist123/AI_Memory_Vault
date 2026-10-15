@@ -47,7 +47,8 @@ test('1. onorariul: contractul și proforma dau același net și brut (plătitor
     assert.equal(pf.feeVatPayer, vatPayer, `${label}: proforma spune dacă studioul e plătitor de TVA`);
     // totalul de client conține onorariul brut; profitul doar onorariul net (TVA-ul nu e venit)
     const goods = c.report.goods, lab = c.report.labor;
-    assert.equal(c.report.totals.client, r2((goods.client ?? 0) + lab + calc.gross!), label);
+    // (transportul și montajul cunoscute din buget sunt în același total, fără adaos: lanțul canonic din core/commercial.ts)
+    assert.equal(c.report.totals.client, r2((goods.client ?? 0) + lab + c.report.extras + calc.gross!), label);
     assert.equal(c.report.totals.profit, r2((goods.profit ?? 0) + calc.net!), label);
   }
   // onorariul din contract (data.fee) are prioritate față de fișa proiectului

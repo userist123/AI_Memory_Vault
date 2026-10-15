@@ -6,20 +6,18 @@ import { budgetWithChanges, type ChangeOrder } from '@/core/change-orders';
 import { formatMoney } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
 import { intlLocale } from '@/lib/i18n';
-
-const NAME_KEY = 'casa3d.fb.name';
-const savedName = () => { try { return localStorage.getItem(NAME_KEY) ?? ''; } catch { return ''; } };
+import ClientNameBox, { useClientNameBox } from './ClientNameBox';
 const signed = (v: number, f: (v: number) => string) => (v > 0 ? '+' : v < 0 ? '−' : '') + f(Math.abs(v));
 
 export function ClientChanges({ token, offered, cur }: { token: string; offered: number; cur: string }){
-  const { t, lang } = usePrefs(), [list, setList] = useState<ChangeOrder[] | null>(null), [name, setName] = useState(''), [note, setNote] = useState<Record<string, string>>({}), [busy, setBusy] = useState(''), [msg, setMsg] = useState('');
+  const { t, lang } = usePrefs(), [list, setList] = useState<ChangeOrder[] | null>(null), box = useClientNameBox(token), [note, setNote] = useState<Record<string, string>>({}), [busy, setBusy] = useState(''), [msg, setMsg] = useState('');
   const money = (v: number) => formatMoney(v, cur, lang, '—');
   const load = () => fetch(`/api/share/${token}/changes`).then(r => r.ok ? r.json() : []).then(setList).catch(() => setList([]));
-  useEffect(() => { setName(savedName()); load(); }, [token]); // eslint-disable-line
+  useEffect(() => { load(); }, [token]); // eslint-disable-line
   async function decide(c: ChangeOrder, decision: 'approved' | 'rejected'){
-    if (!name.trim()){ setMsg(t('co.nameFirst')); return; } setBusy(c.id); setMsg('');
-    try { const r = await fetch(`/api/share/${token}/changes/${c.id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ decision, author: name, note: note[c.id] ?? '', seen: c.sentAt }) }), j = await r.json().catch(() => ({}));
-      if (!r.ok){ setMsg(j.error || t('co.error')); } else { try { localStorage.setItem(NAME_KEY, name.trim()); } catch { /* fără stocare */ } setMsg(t(decision === 'approved' ? 'co.thanksOk' : 'co.thanksNo')); }
+    const author = box.ensure(); if (!author){ setMsg(t('co.nameFirst')); return; } setBusy(c.id); setMsg('');
+    try { const r = await fetch(`/api/share/${token}/changes/${c.id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ decision, author, note: note[c.id] ?? '', seen: c.sentAt }) }), j = await r.json().catch(() => ({}));
+      if (!r.ok){ setMsg(j.error || t('co.error')); } else { setMsg(t(decision === 'approved' ? 'co.thanksOk' : 'co.thanksNo')); }
       load(); } finally { setBusy(''); } }
   if (!list || list.length === 0) return null;
   const b = budgetWithChanges(offered, list), open = list.filter(c => c.status === 'sent'), done = list.filter(c => c.status !== 'sent');
@@ -31,7 +29,7 @@ export function ClientChanges({ token, offered, cur }: { token: string; offered:
       {b.days !== 0 && <div><dt>{t('co.days')}</dt><dd>{b.days > 0 ? '+' : ''}{b.days}</dd></div>}</dl>
     {open.length > 0 && <>
       <p className="cco-hint">{t('co.hint')}</p>
-      <label className="f cco-name"><span>{t('fb.name')}</span><input value={name} maxLength={60} onChange={e => setName(e.target.value)} autoComplete="name" /></label>
+      <div className="cco-name"><ClientNameBox box={box} /></div>
       {open.map(c => <article key={c.id} className="cco-item"><header><b>{t('co.no', { n: c.number })} · {c.title}</b><span className={c.amount > 0 ? 'up' : 'down'}>{signed(c.amount, money)}</span></header>
         {c.body && <p>{c.body}</p>}{c.days !== 0 && <small>{t('co.moves', { n: c.days })}</small>}
         <input className="cco-note" value={note[c.id] ?? ''} maxLength={1000} onChange={e => setNote(x => ({ ...x, [c.id]: e.target.value }))} placeholder={t('co.notePh')} aria-label={t('co.notePh')} />

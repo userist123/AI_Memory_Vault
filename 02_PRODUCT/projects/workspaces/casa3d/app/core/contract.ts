@@ -112,6 +112,17 @@ const BLANK = '………………………';
 export const roDate = (d?: string) => d && DATE_RE.test(d) ? `${d.slice(8, 10)}.${d.slice(5, 7)}.${d.slice(0, 4)}` : BLANK;
 const money = (n: number | null | undefined) => n == null ? BLANK : formatMoney(n, 'RON', 'ro');
 const num = (n: number) => n.toLocaleString('ro-RO', { maximumFractionDigits: 2 });
+/**
+ * Onorariul are O SINGURĂ sursă: contractul (ContractData.fee, tabelul project_contract). Datele vechi se migrează la citire:
+ * onorariul din fișa proiectului (meta.fee) și, doar pentru un proiect fără contract salvat, „Proiectare” din buget (sumă fixă).
+ * `stored` = datele de contract salvate (null dacă nu există rând).
+ */
+export function migratedFee(stored: Pick<ContractData, 'fee'> | null, meta: Pick<ProjectMeta, 'fee'>, budgetDesign = 0): ContractFee | undefined {
+  if (stored?.fee) return stored.fee;
+  if (meta.fee) return { kind: meta.fee.kind, amount: meta.fee.amount };
+  if (stored == null && budgetDesign > 0) return { kind: 'fixed', amount: r2(budgetDesign) };
+  return undefined;
+}
 export function effectiveFee(meta: Pick<ProjectMeta, 'fee'>, data: ContractData): ContractFee | undefined { return data.fee ?? (meta.fee ? { kind: meta.fee.kind, amount: meta.fee.amount } : undefined); }
 export function feeFor(ctx: DocContext): FeeResult { return computeFee({ fee: effectiveFee(ctx.meta, ctx.data), areaM2: ctx.areaM2, budgetBase: ctx.budgetBase, vatPayer: ctx.data.vatPayer }); }
 const studioName = (s: StudioProfile) => s.name || BLANK;

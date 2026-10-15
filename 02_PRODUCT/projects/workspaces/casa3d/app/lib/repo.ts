@@ -124,7 +124,10 @@ export async function listProjects(owner: string){
 /** Fișa proiectului (client, etapă, termene, onorariu): doar proprietarul o citește și o schimbă. */
 export async function saveMeta(owner: string, id: string, meta: unknown){
   let m: ProjectMeta; try { m = checkMeta(meta); } catch (e: any){ throw new HttpError(400, e.message); }
-  await own(owner, id); const { q } = await getDb(); await q('update projects set meta=$1, updated_at=now() where id=$2 and owner=$3', [JSON.stringify(m), id, owner]); return m;
+  const row = await own(owner, id);
+  // onorariul are o singură sursă (contractul, lib/contract.ts); fișa nu-l mai trimite, deci o fișă fără cheia `fee` nu șterge un onorariu vechi încă nemigrat
+  if (meta && typeof meta === 'object' && !('fee' in meta)){ const prev = readMeta(row.meta).fee; if (prev) m.fee = prev; }
+  const { q } = await getDb(); await q('update projects set meta=$1, updated_at=now() where id=$2 and owner=$3', [JSON.stringify(m), id, owner]); return m;
 }
 export async function createProject(owner: string, name: unknown, template: unknown = 'demo', lang: unknown = 'ro'){
   if (typeof template !== 'string' || (template !== 'blank' && !getTemplate(template))) throw new HttpError(400, 'Șablon necunoscut. Alege unul dintre șabloanele din listă sau „Plan gol”.');
@@ -195,7 +198,8 @@ const publicVariants = (evs: ReturnType<typeof evaluateProposal>) => evs.map(e =
 export async function generateProposal(owner: string, id: string, briefInput: unknown, deps: { fetchImpl?: typeof fetch } = {}){
   let brief; try { brief = checkBrief(briefInput); } catch (e: any){ throw new HttpError(400, e.message); }
   const p = await own(owner, id), cat = await getCatalog(), mc = await getMaterials(), snap = p.draft as Snapshot;
-  snap.brief = brief; const { q } = await getDb(); await q('update projects set draft=$1, draft_rev=draft_rev+1, updated_at=now() where id=$2', [JSON.stringify(snap), id]);
+  snap.brief = brief; const { q } = await getDb(); const bumped = await q('update projects set draft=$1, draft_rev=draft_rev+1, updated_at=now() where id=$2 returning draft_rev', [JSON.stringify(snap), id]);
+  const draftRev = bumped.rows[0]?.draft_rev as number | undefined;   // editorul continuă de la această versiune (brief-ul e acum în ciornă)
   let raw: RawProposal | null = null, source = 'rules', model: string | null = null; const notes: string[] = [];
   if (aiConfigured()){
     try { const out = await proposeWithClaude(snap, cat, mc, brief, deps.fetchImpl); const parsed = parseProposal(out); notes.push(...parsed.errors);
@@ -205,7 +209,7 @@ export async function generateProposal(owner: string, id: string, briefInput: un
   if (!raw) raw = proposeByRules(snap, cat, mc, brief);
   const evs = evaluateProposal(snap, cat, mc, raw, brief);
   const { rows } = await q('insert into proposals(project_id, source, model, brief, raw, notes) values($1,$2,$3,$4,$5,$6) returning id, created_at', [id, source, model, JSON.stringify(brief), JSON.stringify(raw), JSON.stringify(notes)]);
-  return { id: rows[0].id as string, createdAt: rows[0].created_at, source, model, aiGenerated: source === 'ai', notes, variants: publicVariants(evs) };
+  return { id: rows[0].id as string, createdAt: rows[0].created_at, source, model, aiGenerated: source === 'ai', notes, variants: publicVariants(evs), draftRev: draftRev ?? null };
 }
 async function proposalOf(id: string, pid: string){ if (!/^[0-9a-f-]{36}$/i.test(pid)) throw new HttpError(404, 'Propunere inexistentă.');
   const { q } = await getDb(); const { rows } = await q('select * from proposals where id=$1 and project_id=$2', [pid, id]); if (!rows[0]) throw new HttpError(404, 'Propunere inexistentă.'); return rows[0]; }
@@ -216,10 +220,10 @@ export async function applyProposal(owner: string, id: string, pid: string, tier
   const raw = row.raw as RawProposal, v = raw.variants.find(x => x.tier === tier); if (!v) throw new HttpError(404, 'Varianta nu există în propunere.');
   const [ev] = evaluateProposal(p.draft as Snapshot, cat, mc, { variants: [v] }, row.brief);
   const res = applyVariant(ev, confirmWarnings); if (!res.ok) throw new HttpError(409, res.reason, ev.issues);
-  const { q } = await getDb(); await q('update projects set draft=$1, draft_rev=draft_rev+1, updated_at=now() where id=$2', [JSON.stringify(res.snapshot), id]);
+  const { q } = await getDb(); const upd = await q('update projects set draft=$1, draft_rev=draft_rev+1, updated_at=now() where id=$2 returning draft_rev', [JSON.stringify(res.snapshot), id]);
   await q("update proposals set decisions = decisions || $1::jsonb where id=$2", [JSON.stringify({ [tier]: { decision: 'approved', at: new Date().toISOString() } }), pid]);
   const rev = await createRevision(owner, id, `Varianta ${tier} aplicată (${row.source === 'ai' ? 'propusă de AI' : 'propusă de motorul de reguli'})`);
-  return { snapshot: res.snapshot, revision: rev.number };
+  return { snapshot: res.snapshot, revision: rev.number, draftRev: (upd.rows[0]?.draft_rev as number | undefined) ?? null };
 }
 export async function rejectProposal(owner: string, id: string, pid: string, tier: string){
   await own(owner, id); await proposalOf(id, pid); if (!TIERS.includes(tier as Tier)) throw new HttpError(400, 'Variantă necunoscută.');

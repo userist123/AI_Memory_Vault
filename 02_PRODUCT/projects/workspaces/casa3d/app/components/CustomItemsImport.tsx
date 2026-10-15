@@ -2,7 +2,9 @@
 // Produse proprii: dialogul „Importă CSV” (previzualizare cu erori pe rând, apoi import), export, șablon,
 // și devizul cu produsele proprii. Validarea de autoritate e pe server; aici doar se arată rezultatul ei.
 import { useEffect, useRef, useState } from 'react';
-import BudgetPanel from './BudgetPanel';
+import BudgetPanel, { type CommercialInputs } from './BudgetPanel';
+import { TOTALS_EVENT, FEE_EVENT } from './ChainTable';
+import type { CustomSource } from '@/core/commercial';
 import { usePrefs } from '@/lib/prefs';
 import { formatMoney, catalogCurrency } from '@/core/format';
 import { CSV_LIMITS } from '@/core/custom-csv';
@@ -38,9 +40,14 @@ export function ImportCsvButtons({ id, say, onDone }: { id: string; say(s: strin
 
 /** Devizul cu produsele proprii (la prețul de client); costul de achiziție și marja se arată doar aici, în aplicația proprietarului. */
 export default function BudgetWithCustom(props: React.ComponentProps<typeof BudgetPanel> & { id: string }){
-  const { id, ...rest } = props, { t, lang } = usePrefs(), [data, setData] = useState<{ items: { price: number | null; qty: number }[]; budget: { count: number; sell: number; cost: number; margin: number; noPrice: number } } | null>(null);
+  const { id, ...rest } = props, { t, lang } = usePrefs(), [data, setData] = useState<{ items: CustomSource[]; budget: { count: number; sell: number; cost: number; margin: number; noPrice: number } } | null>(null);
+  const [com, setCom] = useState<CommercialInputs | null>(null);
   useEffect(() => { let alive = true; fetch(`/api/projects/${id}/items`).then(r => r.ok ? r.json() : null).then(j => { if (alive && j) setData(j); }).catch(() => {}); return () => { alive = false; }; }, [id]);
+  // termenii comerciali (adaos) și onorariul contractului: totalul bugetului e același lanț ca în panoul comercial și pe proformă
+  const loadCom = () => fetch(`/api/projects/${id}/commercial`).then(r => r.ok ? r.json() : null).then(j => setCom(j ? { data: j.data, fee: j.fee } : null)).catch(() => setCom(null));
+  useEffect(() => { loadCom(); const on = (e: Event) => { if ((e as CustomEvent).detail?.id === id) loadCom(); };
+    window.addEventListener(TOTALS_EVENT, on); window.addEventListener(FEE_EVENT, on); return () => { window.removeEventListener(TOTALS_EVENT, on); window.removeEventListener(FEE_EVENT, on); }; }, [id]); // eslint-disable-line
   const b = data?.budget, cur = catalogCurrency(rest.catalog), m = (v: number) => formatMoney(v, cur, lang);
-  return (<><BudgetPanel {...rest} custom={data?.items} />
+  return (<><BudgetPanel {...rest} custom={data?.items} com={com} projectId={id} />
     {b && b.count > 0 && <p className="muted" role="note">{t('cprod.budget')}: {m(b.sell)} · {t('cprod.budgetCost')}: {m(b.cost)} · {t('cprod.margin')}: {m(b.margin)}{b.noPrice ? ` · ${t('cprod.noPrice', { n: b.noPrice })}` : ''}</p>}</>);
 }

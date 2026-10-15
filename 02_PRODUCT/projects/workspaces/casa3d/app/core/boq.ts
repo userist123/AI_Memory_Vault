@@ -176,7 +176,8 @@ export function computeBudget(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog
   const kit = snap.placements.find(p => p.group === 'bucatarie'), kitW = kit ? (resolve(cat, kit.variantId)?.w || 0) : 0;
   if (kit && s.kitchenAssembly){ const k = svc('montaj-bucatarie-ikea'); extra.push({ key: 'montaj-bucatarie', label: `Montaj bucătărie (${r2(kitW)} ml)`, amount: k?.pricePerMeter ? r2(k.pricePerMeter * kitW) : null, confidence: k?.confidence ?? 'UNKNOWN', note: k?.note, sourceUrl: k?.sourceUrl }); }
   extra.push({ key: 'montaj-mobilier', label: 'Montaj mobilier', amount: s.furnitureAssembly, confidence: s.furnitureAssembly == null ? 'UNKNOWN' : 'MEDIUM', note: s.furnitureAssembly == null ? 'Depinde de ofertă (platformele de servicii arată intervale foarte largi); introdu valoarea primită.' : 'Valoare introdusă manual.' });
-  if (s.design > 0) extra.push({ key: 'proiectare', label: 'Proiectare / design', amount: s.design, confidence: 'MEDIUM', note: 'Valoare introdusă manual.' });
+  // onorariul de proiectare NU mai e o linie a bugetului: are o singură sursă, contractul (core/contract.ts migratedFee preia
+  // vechiul `design` de aici), și intră în total prin lanțul canonic (core/commercial.ts projectChain)
   const known = extra.filter(e => e.amount != null), unknownLines = extra.filter(e => e.amount == null);
   const extrasTotal = r2(known.reduce((a, e) => a + (e.amount || 0), 0));
   const mk = (scen: 'low' | 'expected' | 'high') => { const lab = s.includeLabor ? laborTotals[scen] : 0; const subtotal = r2(Object.values(cats).reduce((a, v) => a + v, 0) + lab + extrasTotal);
