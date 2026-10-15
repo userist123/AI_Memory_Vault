@@ -97,6 +97,29 @@ key. Neither is detectable from the station alone.
   `Microsoft.WindowsDesktop.App` shared framework, no package). Exit 0 OFICIAL, 5 valid but not official,
   2 INVALID, 1 usage.
 
+## Security review of PR #289, round 2 (fixed, probes P7–P12 are regression tests)
+
+- **Real parser instead of text search** (`PdfParser`, `PdfUpdateInspector`): the update after the generated
+  report is tokenised (white space incl. NUL and form feed, comments between any tokens, names with `#xx`
+  decoded, literal and hex strings, dictionaries, arrays, references, streams by their direct `/Length`). Its
+  classic xref table is read: every in-use entry must point exactly at a parsed object, every object must have
+  its entry, a FREE entry is refused (P8 comment inside an object header, P9 page content marked free).
+- **Whitelist.** Original objects that may appear: only the catalog (identical, plus `/AcroForm`) and the one
+  page that gets the widget (identical, plus `/Annots`), compared as parsed dictionaries. New objects must be
+  reachable from `/AcroForm` or `/Annots` and keep to their role's keys: AcroForm {Fields, SigFlags, DR, DA};
+  exactly one widget {Type, Subtype, FT, Rect, P, F, T, V, AP, DA, MK, Ff}, inside the page and at most a quarter
+  of it; exactly one signature {Type, Filter, SubFilter, ByteRange, Contents, M, Name, Reason, Location,
+  ContactInfo, Prop_Build}; form XObjects {Type, Subtype, BBox, Resources, Matrix, Length, Filter, FormType}
+  with a scale/translate Matrix only; fonts and their descriptors, files and encodings. Anything else (actions
+  even with escaped names `/Java#53cript`, `/J#53`, links `/URI`, `/XFA`, a second widget) is INVALID (P7, P10,
+  P11).
+- **A13 baseline from the paper** (P12): the state is the one recorded with the anchor whose code was TYPED
+  from the proces-verbal; after it only an officer / trust event of the application may introduce a new state.
+  A state that changes on an anchor or any other event, or differs now, is NECONFORM. Without a typed code A13
+  is NEDETERMINAT.
+- The certificate line uses the same "calificată / avansată" label; a signature dictionary ending with its hex
+  `/Contents` is read correctly.
+
 ## Verifying outside the application (OpenSSL)
 
 The signature is a standard PAdES / CAdES detached signature. On a separate machine:
@@ -127,8 +150,14 @@ signature in its Signatures panel.
   under the administrator's session): the officer must read what they sign.
 - Import a CA certificate of their own: the chain check then passes for certificates from that CA, but
   the fingerprint from paper still decides OFICIAL.
-- The signing incremental update could in principle carry other objects (e.g. an overlay annotation)
-  if produced by a hostile tool; only the original prefix is compared with the generated report.
+- The visible signature box (at most a quarter of the page, inside it) may draw anything the signer's tool
+  puts in its appearance stream; its content stream is not interpreted. Everything else in the signing update
+  is whitelisted (see round 2 below).
+- The whitelist is strict: if Adobe Reader writes extra keys or objects when signing (e.g. /Info or /Metadata
+  updates, image appearances), an Adobe-signed report is INVALID until the whitelist is widened after the
+  manual Adobe test. Our own signature passes.
+- A13 trusts the officer / trust events that the application wrote in its sealed log; an administrator who
+  rewrites the log after the paper anchor (with the machine key) is caught by A11, not by A13.
 - A certificate revoked after signing makes older signatures fail too (the imported CRL parser keeps
   serial numbers, not revocation dates): conservative.
 - Without a timestamp authority the signing time `/M` is only claimed (PAdES B-B).

@@ -5,6 +5,9 @@ using System.Text.RegularExpressions;
 namespace LogAnalyzer.Dfir.Reporting;
 
 /// <summary>The recorded form "officer_state=store:&lt;sha|none&gt;,trust:&lt;sha|none&gt;,files:&lt;a|b&gt;" and its parts.</summary>
+/// <summary>A13: whether it could be assessed, files changed outside the application, and the changes made by the application (for review).</summary>
+public sealed record OfficerStateAssessment(bool Determinable, List<string> Outside, List<string> Changes, string Since);
+
 public sealed record OfficerStateSnapshot(string Detail, string Store, string Trust, IReadOnlyList<string> TrustFiles)
 {
     public bool IsEmpty => Store == "none" && Trust == "none";
@@ -55,16 +58,57 @@ public static class OfficerState
         return new OfficerStateSnapshot(m.Value, m.Groups[1].Value, m.Groups[2].Value, files);
     }
 
-    /// <summary>The last state recorded in the sealed audit (the "officer_state=…" tail of the newest event that carries one); null when none.</summary>
-    public static string? LastRecorded(string auditPath)
+    /// <summary>Events that legitimately change the officer list or the trust folder (sealed, made by the application's own flows).</summary>
+    public static readonly IReadOnlySet<string> ChangeEvents = new HashSet<string> { LogAnalyzer.Dfir.Auth.OperationAudit.OfficerRegistered, LogAnalyzer.Dfir.Auth.OperationAudit.OfficerRequested, LogAnalyzer.Dfir.Auth.OperationAudit.OfficerRemoved, LogAnalyzer.Dfir.Auth.OperationAudit.OfficerTrustImported };
+
+    /// <summary>
+    /// Check A13. The baseline is the state recorded with the anchor whose code was TYPED from the signed paper (entry <paramref name="paperAnchorSeq"/>); after
+    /// it, a new state is accepted only from an officer / trust event of the application. A state that changes on any other event (an anchor, an import that
+    /// was refused…) or differs now from the last accepted one was made outside the application. Without a typed code nothing can be asserted.
+    /// </summary>
+    public static OfficerStateAssessment Assess(string auditPath, long? paperAnchorSeq, string? nowDetail)
     {
-        string? last = null;
-        foreach (var d in LogAnalyzer.Dfir.Case.AuditAnchor.AllDetails(auditPath))
+        if (paperAnchorSeq is not { } n)
+            return new(false, [], [], "nu s-a introdus codul de ancorare de pe procesul-verbal, deci nu există o stare de referință sigură");
+        var events = LogAnalyzer.Dfir.Case.AuditAnchor.Events(auditPath);
+        // the baseline: the anchor event written right after entry N (it carries the state at N); otherwise the last state recorded up to N
+        var anchorEvent = events.FirstOrDefault(e => e.Seq > n && e.Event == LogAnalyzer.Dfir.Auth.OperationAudit.AnchorRecorded && System.Text.RegularExpressions.Regex.IsMatch(e.Detail, $@"(^|; )seq={n};"));
+        string expected; long from;
+        if (anchorEvent is not null && StateOf(anchorEvent.Detail) is { } st0) { expected = st0; from = anchorEvent.Seq; }
+        else
         {
-            int i = d.IndexOf(Prefix, StringComparison.Ordinal);
-            if (i >= 0) last = d[i..];
+            var before = events.LastOrDefault(e => e.Seq <= n && StateOf(e.Detail) is not null);
+            expected = before is null ? $"{Prefix}store:none,trust:none,files:" : StateOf(before.Detail)!;
+            from = n;
         }
-        return last;
+        var outside = new List<string>();
+        var changes = new List<string>();
+        foreach (var e in events.Where(e => e.Seq > from))
+        {
+            var st = StateOf(e.Detail);
+            if (ChangeEvents.Contains(e.Event))
+            {
+                changes.Add($"înregistrarea nr. {e.Seq}, {e.WhenUtc}, {e.Event}: {Strip(e.Detail)} (de {e.Who})");
+                if (st is not null) expected = st;
+                continue;
+            }
+            if (st is not null && st != expected && outside.Count < 20)
+                foreach (var d in Differences(expected, st)) outside.Add($"la înregistrarea nr. {e.Seq} ({e.Event}) starea nu mai corespunde, fără o operație a aplicației: {d}");
+        }
+        if (nowDetail is not null) outside.AddRange(Differences(expected, nowDetail).Select(d => "acum: " + d));
+        return new(true, outside, changes, $"de la înregistrarea nr. {n} (codul de pe procesul-verbal)");
+    }
+
+    private static string? StateOf(string detail)
+    {
+        int i = detail.IndexOf(Prefix, StringComparison.Ordinal);
+        return i < 0 ? null : detail[i..];
+    }
+
+    private static string Strip(string detail)
+    {
+        int i = detail.IndexOf("; " + Prefix, StringComparison.Ordinal);
+        return i < 0 ? detail : detail[..i];
     }
 
     /// <summary>The differences between the recorded and the current state, in words; empty when they are the same.</summary>
@@ -73,12 +117,7 @@ public static class OfficerState
         var diff = new List<string>();
         var n = Parse(now);
         if (n is null) return diff;
-        var r = Parse(recorded);
-        if (r is null)
-        {
-            if (!n.IsEmpty) diff.Add("lista ofițerilor sau autoritățile de încredere există, dar aplicația nu a înregistrat niciodată starea lor: au fost puse în afara aplicației");
-            return diff;
-        }
+        var r = Parse(recorded) ?? Parse($"{Prefix}store:none,trust:none,files:")!;
         if (r.Store != n.Store) diff.Add($"lista ofițerilor de securitate (security_officers.json) diferă de ultima stare înregistrată de aplicație (înregistrat {Short(r.Store)}, acum {Short(n.Store)})");
         if (r.Trust != n.Trust)
         {

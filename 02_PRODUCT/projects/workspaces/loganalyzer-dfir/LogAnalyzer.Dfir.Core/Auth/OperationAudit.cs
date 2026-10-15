@@ -18,8 +18,6 @@ public static class OperationAudit
                         OfficerImportIgnored = "profile.officer_import_ignored", OfficerTrustImported = "officer_trust.imported",
                         ReportGenerated = "report.generated", OfficerRequested = "profile.officer_requested";
 
-    /// <summary>The events that change who may sign as security officer (check A13 lists them since the previous anchor).</summary>
-    public static readonly IReadOnlyList<string> OfficerListEvents = [OfficerRegistered, OfficerRequested, OfficerRemoved, OfficerImportIgnored, OfficerTrustImported];
 
     public static string AnchorRecordedDetail(LogAnalyzer.Dfir.Case.AuditAnchorPoint a, string reason) => $"seq={a.Seq}; anchor={a.Code}; chain={a.ChainId}; reason={reason}";
 

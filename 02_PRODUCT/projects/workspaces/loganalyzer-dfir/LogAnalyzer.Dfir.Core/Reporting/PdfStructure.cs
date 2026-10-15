@@ -113,6 +113,7 @@ public sealed class PdfStructure
         {
             if (text[i] == '(') { i = SkipString(text, i); continue; }
             if (text[i] == '<' && text[i + 1] == '<') { depth++; i++; continue; }
+            if (text[i] == '<') { int e = text.IndexOf('>', i + 1); if (e < 0) return null; i = e; continue; }   // a hex string: its '>' does not close a dictionary
             if (text[i] == '>' && text[i + 1] == '>') { depth--; i++; if (depth == 0) return text[start..(i + 1)]; }
         }
         return null;

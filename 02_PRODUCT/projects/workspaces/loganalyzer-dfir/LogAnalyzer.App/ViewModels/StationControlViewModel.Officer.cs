@@ -75,16 +75,10 @@ namespace LogAnalyzer.UI.ViewModels
         {
             facts.PreviousAnchor = AuditAnchor.Verify(auditPath, previousCode);
             facts.PreviousAnchorFromStation = fromStation;
-            facts.OfficerStateNow = OfficerState.Current().Detail;
-            try { facts.OfficerStateRecorded = OfficerState.LastRecorded(auditPath); }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { facts.OfficerStateNow = null; }
-            try
-            {
-                var since = facts.PreviousAnchor.MatchedSeq;
-                facts.OfficerListChanges = AuditAnchor.EventsSince(auditPath, OperationAudit.OfficerListEvents, since, facts.PeriodStartUtc);
-                facts.OfficerListChangesSince = since is { } s ? $"de la înregistrarea nr. {s} (controlul anterior)" : "în perioada controlată (nu există un cod anterior confirmat)";
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { facts.OfficerListChanges = null; }
+            // A13: the baseline is the anchor TYPED from the paper (never the code the station proposes)
+            long? paperSeq = !fromStation && facts.PreviousAnchor.Status == AnchorContinuityStatus.Continuous ? facts.PreviousAnchor.MatchedSeq : null;
+            try { facts.OfficerAssessment = OfficerState.Assess(auditPath, paperSeq, OfficerState.Current().Detail); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { facts.OfficerAssessment = null; }
         }
 
         /// <summary>After the control: the anchor of the head of the audit log, recorded in the log itself ("audit.anchor"), and the trusted officers to print.</summary>

@@ -85,7 +85,7 @@ public static class OfficialReportVerifier
             lines.Add(new(false, "Certificatul semnatarului: " + v.Message + "."));
             return Done(OfficialVerdict.Invalid, "certificatul semnatarului nu este acceptat: " + v.Message, orig.Value.Sha256);
         }
-        lines.Add(new(true, $"Certificatul semnatarului „{name}” este de semnătură calificată (nerepudiere) și era valabil la {at:yyyy-MM-dd HH:mm} UTC."));
+        lines.Add(new(true, $"Certificatul semnatarului „{name}” are utilizarea „nerepudiere” și era valabil la {at:yyyy-MM-dd HH:mm} UTC: {label}."));
         lines.Add(new(v.Status == QualifiedCheck.Ok ? true : null, v.Status == QualifiedCheck.Ok ? "Lanțul certificatului și revocarea: " + v.Message + "."
             : "Lanțul certificatului sau revocarea: " + v.Message + " — importați certificatul autorității și lista de revocare (CRL) a emitentului."));
 
