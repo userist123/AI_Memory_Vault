@@ -43,7 +43,7 @@ public static class ControlReportPdf
             page.Header().Column(h =>
             {
                 if (header is not null) h.Item().AlignCenter().Text(header.MarkingLine).Bold().FontSize(8).FontColor("#b91c1c");
-                if (r.Officer is null) h.Item().AlignCenter().Text(LogAnalyzer.Dfir.Reporting.OfficerSignature.UnsignedLabel).Bold().FontSize(9).FontColor("#b91c1c");
+                h.Item().AlignCenter().Text(OfficialLabel).Bold().FontSize(9).FontColor("#b91c1c");
                 h.Item().Text(header is null ? $"Raport de control — stația {f.Host}" : $"Raport de control pentru proces-verbal — stația {f.Host}").Bold().FontSize(14).FontColor(Ink);
                 h.Item().Text($"Perioada controlată: {L(f.PeriodStartUtc)} – {L(f.PeriodEndUtc)} (ora locală) · colectat {L(f.CollectedUtc)} · " +
                               $"Ediția: {LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(f.Posture)} · drepturi de administrator: {(f.IsAdministrator ? "da" : "NU (rezultate incomplete)")}")
@@ -213,24 +213,19 @@ public static class ControlReportPdf
         })).GeneratePdf(path);
     }
 
-    /// <summary>The lines of section 6: the anchor code to copy on the proces-verbal, and either the officer who signed or the unsigned label with the registered fingerprints.</summary>
+    /// <summary>Printed on every page: the report is official only with the security officer's qualified electronic signature (owner decision 2026-10-16).</summary>
+    public const string OfficialLabel = "Fără semnătura electronică calificată a ofițerului de securitate acesta NU este raport oficial";
+
+    /// <summary>The lines of section 6: the anchor code to copy on the proces-verbal, how the report becomes official, and the registered officers' fingerprints.</summary>
     public static IReadOnlyList<string> OfficerSectionLines(ControlReport r)
     {
         var l = new List<string>();
         l.Add(r.Anchor is { } a
             ? a.Line + ". Treceți codul pe procesul-verbal; la controlul următor se introduce în aplicație ca să se verifice că jurnalul aplicației nu a fost rescris (verificarea A11)."
             : "Cod de ancorare: indisponibil (jurnalul aplicației nu a putut fi citit).");
-        if (r.Officer is { } o)
-        {
-            l.Add($"Semnat digital de ofițerul de securitate: {o.Officer}, la {TimeZoneInfo.ConvertTime(o.SignedUtc, TimeZoneInfo.Local):yyyy-MM-dd HH:mm} (ora stației).");
-            l.Add($"Amprenta cheii ofițerului: {o.Fingerprint}. Semnătura este în fișierul alăturat cu același nume și terminația „{LogAnalyzer.Dfir.Reporting.OfficerSignature.Extension}”; se verifică în aplicație („Verifică raport”) sau cu LogAnalyzer.KeyGen verify-report <raport.pdf> --officer-fingerprint {o.Fingerprint}.");
-        }
-        else
-        {
-            l.Add(LogAnalyzer.Dfir.Reporting.OfficerSignature.UnsignedLabel + ". Raportul devine oficial doar după ce ofițerul de securitate îl semnează cu cheia sa („Semnează ca ofițer de securitate”).");
-            if (r.RegisteredOfficers.Count == 0) l.Add("Ofițeri de securitate înregistrați: niciunul.");
-            foreach (var o2 in r.RegisteredOfficers) l.Add($"Ofițer de securitate înregistrat: {o2.Name}, amprenta {o2.Fingerprint} ({o2.Basis}).");
-        }
+        l.Add(OfficialLabel + ". Ofițerul de securitate semnează fișierul cu certificatul calificat de pe cardul său („Semnează ca ofițer de securitate” în aplicație, sau în Adobe); semnătura se verifică cu „Verifică raport semnat”, comparând amprenta certificatului cu cea de pe procesul-verbal.");
+        if (r.RegisteredOfficers.Count == 0) l.Add("Ofițeri de securitate înregistrați: niciunul.");
+        foreach (var o in r.RegisteredOfficers) l.Add($"Ofițer de securitate înregistrat: {o.Name}, amprenta certificatului {o.Fingerprint} ({o.Basis}).");
         return l;
     }
 
@@ -271,25 +266,6 @@ public static class ControlReportPdf
         ws.WriteManifest(Path.Combine(Path.GetDirectoryName(relJson)!, "report_manifest.json"), [relJson, relPdf], "ControlReportPdf", DfirInfo.ApplicationVersion);
         ws.Audit("control.report", $"{r.Facts.Host} {r.Checks.Count} checks, NECONFORM {r.Count(ControlStatus.Neconform)}, {pdf}");
         return (json, pdf);
-    }
-
-    /// <summary>
-    /// The official copy, rendered with the officer's signature section filled in (<see cref="ControlReport.Officer"/> must be set) so the signature covers it.
-    /// Written next to the draft as "…_OFICIAL.pdf" and registered in the case; the draft and its JSON are not touched.
-    /// </summary>
-    public static string SaveOfficialToCase(ControlReport r, CaseWorkspace ws, string inspector, string notes = "", ControlReportHeader? header = null, ControlResultScreen? result = null,
-        IReadOnlyList<LogAnalyzer.Dfir.Flow.ManualCheckResult>? manual = null)
-    {
-        if (r.Officer is null) throw new InvalidOperationException("Copia oficială se generează doar cu datele ofițerului care semnează.");
-        var dir = Path.Combine(ws.Root, "Control", $"CONTROL_{r.Facts.CollectedUtc:yyyyMMdd_HHmmss}");
-        Directory.CreateDirectory(dir);
-        var pdf = Path.Combine(dir, $"Raport_control_{r.Facts.Host}_{r.Facts.CollectedUtc:yyyyMMdd}_OFICIAL_{r.Officer.SignedUtc:HHmmss}.pdf");
-        var pre = LogAnalyzer.Dfir.Case.PreReportCheck.ForCase(ws);
-        Write(r, pdf, inspector, notes, Investigation.InvestigationReportPdf.ReadVerification(ws.Root), LogAnalyzer.Dfir.Case.ReportSeal.For(ws), header, result, manual, ws.Info.Scope.AuthorizingAct, pre);
-        ws.RegisterStored(pdf, "live:" + r.Facts.Host, "control", "control_report_pdf_official", TemporalType.Derived, "ControlReportPdf", DfirInfo.ApplicationVersion);
-        ws.RecordOutput(Path.GetRelativePath(ws.Root, pdf), "ControlReportPdf", DfirInfo.ApplicationVersion);
-        ws.Audit("control.report_official", $"{r.Facts.Host} officer {r.Officer.Fingerprint}, {pdf}");
-        return pdf;
     }
 
     public static string StatusText(ControlStatus s) => s switch

@@ -451,15 +451,23 @@
 - **De ce contează:** Un administrator al stației poate rescrie jurnalul aplicației și îl poate sigila din nou, pentru că are acces la cheia de sigilare de pe stație. Singurul lucru pe care nu-l poate schimba este codul de ancorare tipărit pe procesul-verbal semnat al controlului anterior, care se află la ofițerul de securitate.
 - **Cum verifică aplicația:** La începutul controlului ați introdus codul de ancorare de pe procesul-verbal anterior. Aplicația a recalculat, pentru fiecare înregistrare din jurnalul de acum, codul ei și a căutat-o pe cea cu același cod. Fiecare înregistrare conține amprenta tuturor celor dinaintea ei, deci orice modificare a trecutului schimbă codul.
 - **Sursa tehnică:** `Jurnalul de audit al aplicației (auth_audit.jsonl), lanț de amprente SHA-256; codul = 20 de caractere din SHA-256(identificator lanț | număr înregistrare | amprenta înregistrării), ultimul caracter fiind de control`
-- **Cum se citește rezultatul:** Conform = înregistrarea de la controlul anterior este în jurnal, neschimbată. Neconform = nicio înregistrare nu are codul de pe procesul-verbal: jurnalul a fost rescris sau înlocuit după controlul anterior. Nedeterminat = nu s-a introdus niciun cod (primul control sau procesul-verbal anterior lipsește) ori codul a fost tastat greșit. Verificarea arată doar că trecutul nu s-a schimbat; nu poate arăta ce s-a petrecut cât timp aplicația nu a rulat.
+- **Cum se citește rezultatul:** Rezultatul spune și de unde vine codul: tastat de pe procesul-verbal (sigur) sau propus de stație (nesigur, trebuie confirmat cu hârtia). Conform = înregistrarea de la controlul anterior este în jurnal, neschimbată. Neconform = nicio înregistrare nu are codul de pe procesul-verbal: jurnalul a fost rescris sau înlocuit după controlul anterior. Nedeterminat = nu s-a introdus niciun cod (primul control sau procesul-verbal anterior lipsește) ori codul a fost tastat greșit. Verificarea arată doar că trecutul nu s-a schimbat; nu poate arăta ce s-a petrecut cât timp aplicația nu a rulat.
 
 ### A12
 
 - **Ce verificăm:** Dacă serviciul Windows care scrie jurnalele (Event Log) a fost oprit fără ca acel calculator să fie închis sau repornit.
 - **De ce contează:** Cât timp serviciul de jurnalizare este oprit, Windows nu înregistrează nimic: este un mod de a lucra fără urme.
-- **Cum verifică aplicația:** A căutat evenimentele de oprire a serviciului de jurnalizare și, pentru fiecare, dacă în ultimele 30 de minute s-a cerut închiderea sau repornirea calculatorului (Windows scrie aceeași oprire la fiecare închidere normală).
-- **Sursa tehnică:** `Security 1100 (serviciul de jurnalizare s-a oprit); System 1074 (închidere sau repornire cerută)`
-- **Cum se citește rezultatul:** Conform = nicio oprire, sau toate la o închidere a calculatorului. De verificat = opriri fără închidere cerută înainte; cereți explicația. Nedeterminat = jurnalul Security nu a putut fi citit. Atenție: dacă serviciul este omorât forțat, Windows nu scrie nimic, deci lipsa evenimentului nu dovedește că serviciul a mers tot timpul.
+- **Cum verifică aplicația:** A căutat evenimentele de oprire a serviciului de jurnalizare și, pentru fiecare, dacă a fost o închidere efectivă a calculatorului: oprirea jurnalelor la închidere în cel mult 5 minute, sau o cerere de închidere ori repornire în ultimele 30 de minute urmată de o pornire a calculatorului. O cerere de închidere anulată nu explică oprirea (Windows scrie aceeași oprire la fiecare închidere normală).
+- **Sursa tehnică:** `Security 1100 (serviciul de jurnalizare s-a oprit); System 6006 (jurnalele oprite la închidere), 1074 (închidere sau repornire cerută), 6005 (pornire)`
+- **Cum se citește rezultatul:** Conform = nicio oprire, sau toate la o închidere efectivă a calculatorului. De verificat = opriri fără închidere cerută înainte; cereți explicația. Nedeterminat = jurnalul Security nu a putut fi citit. Atenție: dacă serviciul este omorât forțat, Windows nu scrie nimic, deci lipsa evenimentului nu dovedește că serviciul a mers tot timpul.
+
+### A13
+
+- **Ce verificăm:** Dacă lista ofițerilor de securitate (cei care pot semna raportul oficial) s-a schimbat de la controlul anterior.
+- **De ce contează:** Cine reușește să se treacă pe listă poate semna rapoarte „oficiale”; de aceea orice schimbare trebuie confirmată de ofițer, cu procesul-verbal în mână.
+- **Cum verifică aplicația:** A citit din jurnalul aplicației, sigilat și înlănțuit, înregistrările și eliminările de ofițeri, importurile de profil care conțineau ofițeri (ignorate) și importurile de certificate de autoritate pentru semnătura calificată, scrise după înregistrarea găsită la verificarea A11 (sau, fără cod anterior, în perioada controlată).
+- **Sursa tehnică:** `Jurnalul de audit al aplicației: profile.officer_registered, profile.officer_removed, profile.officer_import_ignored, officer_trust.imported`
+- **Cum se citește rezultatul:** Conform = nicio schimbare. De verificat = schimbări; fiecare apare în probe cu data, amprenta și cine a făcut-o. Nedeterminat = jurnalul aplicației nu a fost disponibil.
 
 ### U01
 
@@ -918,7 +926,6 @@
 | CodeIntegrity 3076 | eveniment Windows | App Control (WDAC) ar fi oprit un fișier neaprobat, dar politica este doar în mod audit, așa că fișierul a rulat. | Arată programe sau biblioteci neaprobate care au rulat pe stație. | Câmpul „File Name” arată fișierul. |
 | CodeIntegrity 3077 | eveniment Windows | App Control (WDAC) a OPRIT încărcarea unui fișier neaprobat. | Cineva sau ceva a încercat să ruleze un fișier care nu este aprobat pe stație. | Câmpul „File Name” arată fișierul. |
 | Reguli de audit (SACL) | setare Windows | Lista care spune ce acces la fișierele unui folder se înregistrează în jurnalul Security, și pentru cine. | Fără reguli, accesul la documente nu lasă nicio urmă. | Citirea ei cere drepturi de administrator; aplicația nu o schimbă. |
-| System 1074 | eveniment Windows | Cineva sau un program a oprit sau a repornit stația. | Arată cine a oprit stația și motivul declarat. |  |
 | Win32_UserAccount | interogare Windows (WMI) | Lista conturilor locale ale stației, cu starea lor (activ, dezactivat, parolă obligatorie, expirare). | Este lista reală a conturilor, chiar dacă unele sunt ascunse din ecranul de pornire. |  |
 | S-1-5-32-544 | identificator de securitate (SID) | Administrators: grupul administratorilor locali: control total. | SID-ul identifică sigur contul sau grupul, chiar dacă a fost redenumit. |  |
 | Win32_Group | interogare Windows (WMI) | Grupurile locale ale stației și membrii lor. | Arată cine are drepturi de administrator sau de acces la distanță. |  |

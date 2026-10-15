@@ -239,6 +239,9 @@ namespace LogAnalyzer.UI.ViewModels
         {
             var r = ProfileImport.FromJson(json);
             ShowIssues(r.Issues);
+            // the officer list is never imported with a profile; that someone tried is itself recorded (check A13)
+            if (r.Issues.Any(i => i.Message == ProfileImport.OfficerEntriesIgnored) && LogAnalyzer.UI.Services.AuthApp.IsReady)
+                LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.OfficerImportIgnored, "source=" + Path.GetFileName(source));
             if (r.Profile is null) { Status = $"Importul din {source} a eșuat; nimic nu s-a schimbat."; return; }
             _profile = r.Profile;
             Push();

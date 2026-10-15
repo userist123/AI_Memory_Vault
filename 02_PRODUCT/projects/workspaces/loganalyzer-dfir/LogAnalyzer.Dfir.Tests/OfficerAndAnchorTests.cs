@@ -1,5 +1,6 @@
-using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using LogAnalyzer.Core.Services.Edition;
 using LogAnalyzer.Dfir.Auth;
 using LogAnalyzer.Dfir.Case;
@@ -12,13 +13,12 @@ using Xunit;
 namespace LogAnalyzer.Dfir.Tests;
 
 /// <summary>
-/// Owner decisions 2026-10-16: the official report is signed by the security officer's own key (verified against a pinned fingerprint), the application's
-/// audit log is anchored by a short code on the signed paper (check A11), and Windows tamper indicators are always in the report (A05, A06, A07, A12).
-/// Test keys only.
+/// Owner decisions 2026-10-16 (library side, no CMS): the audit-log anchor (A11, typed vs proposed code), the Windows tamper indicators (A05, A06, A07, A12),
+/// the officer-list check (A13), the officer list kept out of the profile, and the PDF structure of the in-place PAdES update (ByteRange, xref, original prefix).
+/// The CMS signature itself (SignedCms, WPF framework) is tested in LogAnalyzer.App.Tests.
 /// </summary>
 public sealed class OfficerAndAnchorTests : IDisposable
 {
-    private const string Pass = "parola-ofiter-1", OtherPass = "alta-parola-2";
     private static readonly DateTimeOffset Now = new(2026, 10, 16, 9, 0, 0, TimeSpan.Zero);
     private readonly string _dir = Path.Combine(Path.GetTempPath(), "officer_" + Guid.NewGuid().ToString("N"));
     public OfficerAndAnchorTests() => Directory.CreateDirectory(_dir);
@@ -46,13 +46,6 @@ public sealed class OfficerAndAnchorTests : IDisposable
         }
     }
 
-    private string Pdf(string name = "raport.pdf")
-    {
-        var p = Path.Combine(_dir, name);
-        File.WriteAllBytes(p, "%PDF-1.7\n% test\n%%EOF\n"u8.ToArray());
-        return p;
-    }
-
     // ───────── anchor code ─────────
 
     [Fact]
@@ -64,8 +57,7 @@ public sealed class OfficerAndAnchorTests : IDisposable
         Assert.Equal($"Cod de ancorare: {a.Code} (înregistrarea nr. 3)", a.Line);
         Assert.True(AuditAnchor.TryNormalize(" " + a.Code.Replace("-", " ").ToLowerInvariant() + " ", out var n));
         Assert.Equal(a.Code, n);
-        var last = a.Code[^1];
-        var wrong = a.Code[..^1] + (last == 'A' ? 'B' : 'A');
+        var wrong = a.Code[..^1] + (a.Code[^1] == 'A' ? 'B' : 'A');
         Assert.False(AuditAnchor.TryNormalize(wrong, out _));
         Assert.Equal(AnchorContinuityStatus.InvalidCode, AuditAnchor.Verify(Path.Combine(_dir, "auth_audit.jsonl"), wrong).Status);
     }
@@ -101,7 +93,7 @@ public sealed class OfficerAndAnchorTests : IDisposable
         var log = Log(5);
         var code = AuditAnchor.Current(log)!.Code;
         File.Delete(log);
-        Log(3);   // same file name, started again from zero
+        Log(3);
         Assert.Equal(AnchorContinuityStatus.Rewritten, AuditAnchor.Verify(log, code).Status);
         File.Delete(log);
         Assert.Equal(AnchorContinuityStatus.Rewritten, AuditAnchor.Verify(log, code).Status);
@@ -121,18 +113,33 @@ public sealed class OfficerAndAnchorTests : IDisposable
     {
         var log = Log(3);
         var before = File.ReadAllBytes(log);
-        var dest = Path.Combine(_dir, "cdr");
-        var x = AuditAnchor.Export(log, dest, "ST-1", Now);
+        var x = AuditAnchor.Export(log, Path.Combine(_dir, "cdr"), "ST-1", Now);
         Assert.Equal(before, File.ReadAllBytes(log));
         Assert.Equal(before, File.ReadAllBytes(x.LogCopy));
         var text = File.ReadAllText(x.AnchorFile);
         Assert.Contains(x.Anchor.Line, text);
         Assert.Contains(x.LogSha256, text);
         Assert.Equal(AnchorContinuityStatus.Continuous, AuditAnchor.Verify(x.LogCopy, x.Anchor.Code).Status);
-        Assert.Throws<InvalidOperationException>(() => AuditAnchor.Export(Path.Combine(_dir, "empty.jsonl"), dest, "ST-1", Now));
+        Assert.Throws<InvalidOperationException>(() => AuditAnchor.Export(Path.Combine(_dir, "empty.jsonl"), Path.Combine(_dir, "cdr"), "ST-1", Now));
     }
 
-    // ───────── checks A06, A11, A12 ─────────
+    [Fact]
+    public void The_station_hint_is_the_last_recorded_anchor_and_officer_events_are_listed_since_the_anchor()
+    {
+        var s = new AuthService(Path.Combine(_dir, "auth"));
+        s.AuditOperation(null, OperationAudit.OfficerRegistered, OperationAudit.OfficerRegisteredDetail("AAAA", "Unu", OfficerRegistry.BasisFirst, ""));
+        var a = AuditAnchor.Current(s.AuditPath)!;
+        s.AuditOperation(null, OperationAudit.AnchorRecorded, OperationAudit.AnchorRecordedDetail(a, "control"));
+        Assert.Equal(a.Code, AuditAnchor.LastRecorded(s.AuditPath));
+        s.AuditOperation(null, OperationAudit.OfficerRegistered, OperationAudit.OfficerRegisteredDetail("BBBB", "Doi", OfficerRegistry.BasisApproved, "AAAA"));
+        var since = AuditAnchor.EventsSince(s.AuditPath, OperationAudit.OfficerListEvents, a.Seq, Now);
+        Assert.Single(since);
+        Assert.Contains("Doi", since[0]);
+        Assert.Equal(2, AuditAnchor.EventsSince(s.AuditPath, OperationAudit.OfficerListEvents, null, DateTimeOffset.MinValue).Count);
+        Assert.Equal(ChainStatus.Valid, s.VerifyAudit().Status);
+    }
+
+    // ───────── checks A06, A11, A12, A13 ─────────
 
     private static StationFacts Facts(StationPosture posture = StationPosture.Standalone, bool securityReadable = true)
     {
@@ -151,34 +158,39 @@ public sealed class OfficerAndAnchorTests : IDisposable
     [InlineData(StationPosture.Standalone)]
     [InlineData(StationPosture.IsolatedNetwork)]
     [InlineData(StationPosture.Internet)]
-    public void A11_follows_the_anchor_result_and_applies_in_every_edition(StationPosture posture)
+    public void A11_follows_the_anchor_result_says_where_the_code_came_from_and_applies_in_every_edition(StationPosture posture)
     {
         var f = Facts(posture);
         Assert.Equal(ControlStatus.Nedeterminat, Check(ControlEvaluator.Evaluate(f), "A11").Status);
-        f.PreviousAnchor = new AnchorContinuity(AnchorContinuityStatus.NotGiven, "Nu s-a introdus codul de ancorare.", "", null);
-        Assert.Equal(ControlStatus.Nedeterminat, Check(ControlEvaluator.Evaluate(f), "A11").Status);
-        f.PreviousAnchor = new AnchorContinuity(AnchorContinuityStatus.Continuous, "conține înregistrarea nr. 7", "AAAAA-AAAAA-AAAAA-AAAAA", 7);
-        Assert.Equal(ControlStatus.Conform, Check(ControlEvaluator.Evaluate(f), "A11").Status);
-        f.PreviousAnchor = new AnchorContinuity(AnchorContinuityStatus.Rewritten, "nicio înregistrare nu corespunde", "AAAAA-AAAAA-AAAAA-AAAAA", null);
+        f.PreviousAnchor = new AnchorContinuity(AnchorContinuityStatus.Continuous, "conține înregistrarea nr. 7.", "AAAAA-AAAAA-AAAAA-AAAAA", 7);
+        var typed = Check(ControlEvaluator.Evaluate(f), "A11");
+        Assert.Equal(ControlStatus.Conform, typed.Status);
+        Assert.Contains("tastat de pe procesul-verbal", typed.Detail);
+        f.PreviousAnchorFromStation = true;
+        var proposed = Check(ControlEvaluator.Evaluate(f), "A11");
+        Assert.Contains("propus de stație (nesigur)", proposed.Detail);
+        f.PreviousAnchor = new AnchorContinuity(AnchorContinuityStatus.Rewritten, "nicio înregistrare nu corespunde.", "AAAAA-AAAAA-AAAAA-AAAAA", null);
         var a11 = Check(ControlEvaluator.Evaluate(f), "A11");
         Assert.Equal(ControlStatus.Neconform, a11.Status);
         Assert.Contains("jurnalul aplicației a fost rescris după controlul anterior", a11.Detail, StringComparison.OrdinalIgnoreCase);
-        Assert.True(ControlApplicability.Applies("A11", posture));
-        Assert.True(ControlApplicability.Applies("A12", posture));
+        foreach (var id in new[] { "A11", "A12", "A13" }) Assert.True(ControlApplicability.Applies(id, posture));
     }
 
     [Fact]
-    public void A12_explains_a_log_service_stop_by_a_requested_shutdown_and_flags_the_others()
+    public void A12_needs_an_actual_shutdown_and_a_cancelled_shutdown_explains_nothing()
     {
         var f = Facts();
         Assert.Equal(ControlStatus.Conform, Check(ControlEvaluator.Evaluate(f), "A12").Status);
+        // a normal shutdown: 1074, 1100, 6006, then the next boot 6005
         f.Logs.Add(Ev("System", 1074, Now.AddDays(-5).AddMinutes(-2), 10));
         f.Logs.Add(Ev("Security", 1100, Now.AddDays(-5), 11));
+        f.Logs.Add(Ev("System", 6006, Now.AddDays(-5).AddSeconds(5), 12));
+        f.Logs.Add(Ev("System", 6005, Now.AddDays(-5).AddMinutes(3), 13));
+        Assert.Equal(ControlStatus.Conform, Check(ControlEvaluator.Evaluate(f), "A12").Status);
+        // a requested shutdown that was cancelled (shutdown /a): no 6006 and no boot after the stop
+        f.Logs.Add(Ev("System", 1074, Now.AddDays(-3).AddMinutes(-1), 20));
+        f.Logs.Add(Ev("Security", 1100, Now.AddDays(-3), 21));
         var r = ControlEvaluator.Evaluate(f);
-        Assert.Equal(ControlStatus.Conform, Check(r, "A12").Status);
-        Assert.Contains("toate la o închidere", Check(r, "A12").Detail);
-        f.Logs.Add(Ev("Security", 1100, Now.AddDays(-3), 12));
-        r = ControlEvaluator.Evaluate(f);
         Assert.Equal(ControlStatus.DeVerificat, Check(r, "A12").Status);
         Assert.Single(Check(r, "A12").Evidence);
         Assert.Contains(r.Actions, a => a.Action == "a oprit serviciul de jurnalizare");
@@ -187,163 +199,171 @@ public sealed class OfficerAndAnchorTests : IDisposable
     }
 
     [Fact]
+    public void A13_lists_officer_list_changes_for_review()
+    {
+        var f = Facts();
+        Assert.Equal(ControlStatus.Nedeterminat, Check(ControlEvaluator.Evaluate(f), "A13").Status);
+        f.OfficerListChanges = []; f.OfficerListChangesSince = "de la înregistrarea nr. 7 (controlul anterior)";
+        Assert.Equal(ControlStatus.Conform, Check(ControlEvaluator.Evaluate(f), "A13").Status);
+        f.OfficerListChanges = ["înregistrarea nr. 9, profile.officer_registered: cert_fingerprint=AAAA"];
+        var a13 = Check(ControlEvaluator.Evaluate(f), "A13");
+        Assert.Equal(ControlStatus.DeVerificat, a13.Status);
+        Assert.Single(a13.Evidence);
+    }
+
+    [Fact]
     public void Tamper_indicators_are_always_in_the_report_even_when_nothing_happened()
     {
         var r = ControlEvaluator.Evaluate(Facts());
         foreach (var id in new[] { "A05", "A06", "A07", "A12" }) Assert.Equal(ControlStatus.Conform, Check(r, id).Status);
-        var unreadable = ControlEvaluator.Evaluate(Facts(securityReadable: false));
-        Assert.Equal(ControlStatus.Nedeterminat, Check(unreadable, "A06").Status);
-        foreach (var id in new[] { "A11", "A12" }) Assert.Contains(id, CheckGuides.Ids);
+        Assert.Equal(ControlStatus.Nedeterminat, Check(ControlEvaluator.Evaluate(Facts(securityReadable: false)), "A06").Status);
+        foreach (var id in new[] { "A11", "A12", "A13" }) Assert.Contains(id, CheckGuides.Ids);
     }
 
-    // ───────── officer key and signature ─────────
-
-    private static (string FileText, string Pub) NewOfficer(string pass = Pass) => OfficerKey.Generate(pass);
+    // ───────── officer list outside the profile ─────────
 
     [Fact]
-    public void Officer_key_opens_only_with_its_passphrase_and_a_station_report_key_is_not_an_officer_key()
+    public void A_profile_import_never_carries_officers_or_the_anchor_code_and_says_so()
     {
-        var (file, pub) = NewOfficer();
-        Assert.StartsWith(OfficerKey.Prefix, file);
-        using (var k = OfficerKey.Load(file, Pass)) Assert.Equal(pub, OfficerKey.PublicKeyOf(k));
-        Assert.ThrowsAny<CryptographicException>(() => OfficerKey.Load(file, OtherPass));
-        var (stationPriv, _) = ReportSignature.GenerateKey();
-        Assert.ThrowsAny<CryptographicException>(() => OfficerKey.Load(ReportKeyProtection.ProtectWithPassphrase(stationPriv, Pass), Pass));
-        Assert.ThrowsAny<CryptographicException>(() => OfficerKey.Load(stationPriv, Pass));
-        Assert.Throws<ArgumentException>(() => OfficerKey.Generate("scurt"));
-        Assert.Matches("^([0-9A-F]{4}-){7}[0-9A-F]{4}$", OfficerKey.Fingerprint(pub));
+        var json = ProfileStore.ToJson(new ProcedureProfile { Name = "p" }).TrimEnd().TrimEnd('}') +
+                   ",\"securityOfficers\":[{\"name\":\"Admin\",\"fingerprint\":\"AAAA\",\"basis\":\"" + OfficerRegistry.BasisFirst + "\"}],\"lastAnchorCode\":\"AAAAA-AAAAA-AAAAA-AAAAA\"}";
+        var r = ProfileImport.FromJson(json);
+        Assert.NotNull(r.Profile);
+        var w = Assert.Single(r.Issues, i => i.Message == ProfileImport.OfficerEntriesIgnored);
+        Assert.False(w.IsError);
+        Assert.DoesNotContain("securityOfficers", ProfileStore.ToJson(r.Profile!), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(r.Issues, i => i.Message == ProfileImport.OfficerEntriesIgnored && ProfileImport.FromJson(ProfileStore.ToJson(new ProcedureProfile())).Issues.Count > 0);
+        Assert.Contains(OperationAudit.OfficerImportIgnored, OperationAudit.OfficerListEvents);
     }
 
     [Fact]
-    public void Officer_signature_is_valid_only_against_the_pinned_fingerprint()
+    public void The_officer_store_is_its_own_file_and_round_trips()
     {
-        var (file, pub) = NewOfficer();
-        var fp = OfficerKey.Fingerprint(pub);
-        var pdf = Pdf();
-        using (var k = OfficerKey.Load(file, Pass)) OfficerSignature.Sign(pdf, k, "Ofițer Test", "AAAAA-AAAAA-AAAAA-AAAAA", Now);
-        var ok = OfficerSignature.Verify(pdf, [fp.ToLowerInvariant().Replace("-", "")]);
-        Assert.Equal(ReportSignatureStatus.Valid, ok.Status);
-        Assert.Contains("SEMNĂTURĂ VALIDĂ A OFIȚERULUI DE SECURITATE", ok.Message);
-        Assert.Equal(ReportSignatureStatus.UnknownKey, OfficerSignature.Verify(pdf, []).Status);
+        var store = new OfficerStore(Path.Combine(_dir, "officers", "security_officers.json"));
+        Assert.Empty(store.Load().Officers);
+        var d = store.Load();
+        d.Officers.Add(new SecurityOfficerRow { Name = "Unu", Fingerprint = "AB", Certificate = "", Basis = OfficerRegistry.BasisFirst });
+        store.Save(d);
+        Assert.Equal("Unu", Assert.Single(store.Load().Officers).Name);
+        Assert.NotEqual(Path.GetFullPath(ProfileStore.DefaultPath), Path.GetFullPath(OfficerStore.Shared.Path));
+    }
 
-        // the station administrator re-signs a modified report with a key of their own: the signature is cryptographically fine but not the officer's
-        var (adminFile, _) = NewOfficer(OtherPass);
-        File.AppendAllText(pdf, "% schimbat\n");
-        using (var k = OfficerKey.Load(adminFile, OtherPass)) OfficerSignature.Sign(pdf, k, "Ofițer Test", "", Now);
-        var forged = OfficerSignature.Verify(pdf, [fp]);
-        Assert.Equal(ReportSignatureStatus.UnknownKey, forged.Status);
-        Assert.Contains("NU este amprenta ofițerului", forged.Message);
+    // ───────── PAdES incremental update: structure (CMS faked) ─────────
+
+    private sealed class FakeCms(byte[] sig) : ICmsDetachedSigner, ICmsDetachedVerifier
+    {
+        public byte[]? Signed;
+        public byte[] Sign(byte[] content) { Signed = content; return sig; }
+        public CmsResult Verify(byte[] cms, byte[] content) => new(cms.AsSpan().SequenceEqual(sig) && Signed is not null && content.AsSpan().SequenceEqual(Signed), TestCert(), "fals");
+    }
+
+    private static byte[] Report()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "r_" + Guid.NewGuid().ToString("N") + ".pdf");
+        try
+        {
+            var r = ControlEvaluator.Evaluate(Facts());
+            ControlReportPdf.Write(r, path, "Inspector Test");
+            return File.ReadAllBytes(path);
+        }
+        finally { File.Delete(path); }
+    }
+
+    private static readonly SignatureAppearance Look = new("Ofițer Țest", "Test QTSP CA", Now, "ST-1", "Raport de control");
+
+    [Fact]
+    public void The_signature_is_one_incremental_update_whose_ByteRange_covers_everything_but_Contents_and_whose_xref_offsets_are_right()
+    {
+        var original = Report();
+        var cms = new FakeCms([0x30, 0x03, 0x02, 0x01, 0x05]);
+        var signed = PdfIncrementalSigner.Sign(original, Look, cms);
+
+        Assert.True(signed.AsSpan(0, original.Length).SequenceEqual(original));      // the original is an exact prefix
+        var text = Encoding.Latin1.GetString(signed);
+        var br = Regex.Match(text, @"/ByteRange \[(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s*\]");
+        long a = long.Parse(br.Groups[1].Value), b = long.Parse(br.Groups[2].Value), c = long.Parse(br.Groups[3].Value), d = long.Parse(br.Groups[4].Value);
+        Assert.Equal(0, a);
+        Assert.Equal(signed.Length, c + d);
+        Assert.Equal((byte)'<', signed[b]);
+        Assert.Equal((byte)'>', signed[c - 1]);
+        Assert.Equal((c - b - 2) / 2, PdfIncrementalSigner.ContentsBytes);
+        Assert.StartsWith("3003020105", text.Substring((int)b + 1, 10));
+        Assert.Equal(signed.Length - (c - b), cms.Signed!.Length);                       // exactly everything except /Contents was signed
+        Assert.Contains("/SubFilter /ETSI.CAdES.detached", text);
+        Assert.Contains("/M (D:20261016090000+00'00')", text);
+        Assert.Contains("Semnat de Ofiter Test", text);                                // visible appearance, diacritics transliterated
+        Assert.Matches(@"/Prev \d+", text[original.Length..]);
+
+        // the new xref section: every entry points at "N 0 obj"
+        int sx = text.LastIndexOf("startxref", StringComparison.Ordinal);
+        long xref = long.Parse(Regex.Match(text[sx..], @"startxref\s+(\d+)").Groups[1].Value);
+        Assert.StartsWith("xref", text[(int)xref..]);
+        var section = text[(int)xref..text.IndexOf("trailer", (int)xref, StringComparison.Ordinal)];
+        int checkedEntries = 0, cur = 0;
+        foreach (var line in section.Split('\n', StringSplitOptions.RemoveEmptyEntries).Skip(1))
+        {
+            var p = line.Trim().Split(' ');
+            if (p.Length == 2) { cur = int.Parse(p[0]); continue; }
+            Assert.StartsWith($"{cur} 0 obj", text[(int)long.Parse(p[0])..]);
+            cur++; checkedEntries++;
+        }
+        Assert.Equal(6, checkedEntries);                                               // sig, field, appearance, font, last page, catalog
+        Assert.Contains("/AcroForm <</Fields [", text[original.Length..]);
+        Assert.Contains("/Annots [", text[original.Length..]);
+
+        var check = PdfSignatureCheck.Check(signed, cms);
+        Assert.Null(check.Problem);
+        Assert.Contains((long)original.Length, check.OriginalLengths);
     }
 
     [Fact]
-    public void Officer_signature_detects_a_changed_report_and_a_changed_signature_file()
+    public void Anything_appended_after_the_signature_or_a_second_signature_is_refused()
     {
-        var (file, pub) = NewOfficer();
-        var fp = OfficerKey.Fingerprint(pub);
-        var pdf = Pdf();
-        using (var k = OfficerKey.Load(file, Pass)) OfficerSignature.Sign(pdf, k, "Ofițer Test", "", Now);
-        var sig = OfficerSignature.SigPath(pdf);
-        var original = File.ReadAllText(sig);
-        Assert.Contains("Test", original);
-        File.WriteAllText(sig, original.Replace("Test", "Tost"));
-        Assert.Equal(ReportSignatureStatus.Modified, OfficerSignature.Verify(pdf, [fp]).Status);
-        File.WriteAllText(sig, original);
-        var bytes = File.ReadAllBytes(pdf); bytes[10] ^= 1; File.WriteAllBytes(pdf, bytes);
-        Assert.Equal(ReportSignatureStatus.Modified, OfficerSignature.Verify(pdf, [fp]).Status);
-        File.Delete(sig);
-        Assert.Equal(ReportSignatureStatus.Missing, OfficerSignature.Verify(pdf, [fp]).Status);
-    }
-
-    // ───────── officer registry ─────────
-
-    [Fact]
-    public void First_officer_on_trust_next_ones_only_with_an_officers_approval()
-    {
-        var p = new ProcedureProfile();
-        var (f1, pub1) = NewOfficer();
-        var (f2, pub2) = NewOfficer(OtherPass);
-        var first = OfficerSigning.Register(p, "Ofițer Unu", f1, Pass, null, default, Now);
-        Assert.Equal(OfficerRegistry.BasisFirst, first.Basis);
-        Assert.Throws<InvalidOperationException>(() => OfficerSigning.Register(p, "Ofițer Doi", f2, OtherPass, null, default, Now));
-        // the "approver" is the new officer's own key: refused
-        Assert.Throws<InvalidOperationException>(() => OfficerSigning.Register(p, "Ofițer Doi", f2, OtherPass, f2, OtherPass, Now));
-        var second = OfficerSigning.Register(p, "Ofițer Doi", f2, OtherPass, f1, Pass, Now);
-        Assert.Equal(OfficerRegistry.BasisApproved, second.Basis);
-        Assert.True(OfficerRegistry.IsTrusted(p, OfficerKey.Fingerprint(pub1)));
-        Assert.True(OfficerRegistry.IsTrusted(p, OfficerKey.Fingerprint(pub2)));
-        // a row added to the profile file by hand, with no valid approval, is not trusted
-        var (_, pub3) = NewOfficer("a-treia-parola");
-        p.SecurityOfficers.Add(new SecurityOfficerRow { Name = "Admin", PublicKey = pub3, Fingerprint = OfficerKey.Fingerprint(pub3), Basis = OfficerRegistry.BasisApproved, ApprovedBy = first.Fingerprint, Approval = second.Approval });
-        p.SecurityOfficers.Add(new SecurityOfficerRow { Name = "Admin2", PublicKey = pub3, Fingerprint = OfficerKey.Fingerprint(pub3), Basis = OfficerRegistry.BasisFirst });
-        Assert.False(OfficerRegistry.IsTrusted(p, OfficerKey.Fingerprint(pub3)));
-        Assert.Equal(2, OfficerRegistry.Trusted(p, out var problems).Count);
-        Assert.Equal(2, problems.Count);
-    }
-
-    // ───────── official report ─────────
-
-    private static ControlReport Report()
-    {
-        var r = ControlEvaluator.Evaluate(Facts());
-        r.Anchor = new AuditAnchorPoint("0123456789abcdef", 12, new string('a', 64), AuditAnchor.Code("0123456789abcdef", 12, new string('a', 64)));
-        return r;
-    }
-
-    private static List<string> PrintedText(ControlReport r, string path)
-    {
-        var seen = new List<string>();
-        ControlReportPdf.TextObserver.Value = seen.Add;
-        try { ControlReportPdf.Write(r, path, "Inspector Test"); }
-        finally { ControlReportPdf.TextObserver.Value = null; }
-        return seen;
+        var cms = new FakeCms([0x30, 0x03, 0x02, 0x01, 0x05]);
+        var signed = PdfIncrementalSigner.Sign(Report(), Look, cms);
+        var appended = signed.Concat(Encoding.ASCII.GetBytes("1 0 obj\n<<>>\nendobj\n%%EOF\n")).ToArray();
+        var c1 = PdfSignatureCheck.Check(appended, cms);
+        Assert.True(c1.ModifiedAfterSigning);
+        Assert.Contains("modificat după semnare", c1.Problem);
+        Assert.Throws<NotSupportedException>(() => PdfIncrementalSigner.Sign(signed, Look, cms));      // never signs a signed file again
+        var unsigned = PdfSignatureCheck.Check(Report(), cms);
+        Assert.True(unsigned.NotSigned);
     }
 
     [Fact]
-    public void Draft_is_labelled_unsigned_with_the_anchor_and_the_registered_fingerprints()
+    public void A_request_pdf_carries_its_marker_in_the_original_bytes_and_can_be_signed()
     {
-        var p = new ProcedureProfile();
-        var (f1, pub1) = NewOfficer();
-        OfficerSigning.Register(p, "Ofițer Unu", f1, Pass, null, default, Now);
-        var r = Report();
-        r.RegisteredOfficers = OfficerRegistry.Trusted(p, out _);
-        var text = PrintedText(r, Path.Combine(_dir, "draft.pdf"));
-        Assert.Contains(text, t => t.Contains(r.Anchor!.Line));
-        Assert.Contains(text, t => t.Contains(OfficerSignature.UnsignedLabel));
-        Assert.Contains(text, t => t.Contains(OfficerKey.Fingerprint(pub1)) && t.Contains("primul ofițer"));
+        var path = Path.Combine(_dir, "cerere.pdf");
+        var cert = TestCert();
+        var row = new SecurityOfficerRow { Name = "Doi", Certificate = Convert.ToBase64String(cert.RawData), Fingerprint = OfficerFingerprint.Of(cert) };
+        OfficerRequestPdf.Write(path, row, "ST-1", Now);
+        var bytes = File.ReadAllBytes(path);
+        Assert.Contains(OfficerRegistry.RequestMarker(row.Fingerprint), Encoding.ASCII.GetString(bytes));
+        var cms = new FakeCms([0x30, 0x03, 0x02, 0x01, 0x05]);
+        var signed = PdfIncrementalSigner.Sign(bytes, Look, cms);
+        var check = PdfSignatureCheck.Check(signed, cms);
+        Assert.Null(check.Problem);
+        Assert.True(check.OriginalContainsMarker(OfficerRegistry.RequestMarker(row.Fingerprint)));
+        Assert.False(check.OriginalContainsMarker(OfficerRegistry.RequestMarker(new string('A', 64))));
     }
 
-    [Fact]
-    public void Signing_as_officer_renders_the_official_copy_with_the_fingerprint_and_signs_exactly_it()
+    private static System.Security.Cryptography.X509Certificates.X509Certificate2 TestCert()
     {
-        var p = new ProcedureProfile();
-        var (f1, pub1) = NewOfficer();
-        OfficerSigning.Register(p, "Ofițer Unu", f1, Pass, null, default, Now);
-        var r = Report();
-        List<string>? printed = null;
-        var res = OfficerSigning.SignOfficial(r, p, f1, Pass, rep => { var path = Path.Combine(_dir, "oficial.pdf"); printed = PrintedText(rep, path); return path; }, Now);
-        Assert.Null(r.Officer);   // the in-memory report stays a draft
-        Assert.Equal(OfficerKey.Fingerprint(pub1), res.Fingerprint);
-        Assert.Contains(printed!, t => t.Contains("Amprenta cheii ofițerului: " + res.Fingerprint));
-        Assert.DoesNotContain(printed!, t => t.Contains(OfficerSignature.UnsignedLabel));
-        Assert.Equal(r.Anchor!.Code, res.AnchorCode);
-        Assert.Equal(ReportSignatureStatus.Valid, OfficerSignature.Verify(res.Pdf, [res.Fingerprint]).Status);
-
-        var (stranger, _) = NewOfficer(OtherPass);
-        var ex = Assert.Throws<InvalidOperationException>(() => OfficerSigning.SignOfficial(r, p, stranger, OtherPass, _ => throw new InvalidOperationException("nu trebuia randat"), Now));
-        Assert.Contains("nu aparține unui ofițer de securitate înregistrat", ex.Message);
+        using var k = System.Security.Cryptography.ECDsa.Create(System.Security.Cryptography.ECCurve.NamedCurves.nistP256);
+        var req = new System.Security.Cryptography.X509Certificates.CertificateRequest("CN=Test", k, System.Security.Cryptography.HashAlgorithmName.SHA256);
+        return req.CreateSelfSigned(Now.AddDays(-1), Now.AddDays(10));
     }
 
     [Fact]
     public void Officer_and_anchor_operations_are_written_to_the_sealed_audit()
     {
         var s = new AuthService(Path.Combine(_dir, "auth"));
-        s.AuditOperation(null, OperationAudit.OfficerRegistered, OperationAudit.OfficerRegisteredDetail("AAAA-BBBB", OfficerRegistry.BasisFirst, ""));
-        s.AuditOperation(null, OperationAudit.ReportOfficerSigned, OperationAudit.OfficerSignedDetail("r.pdf", "ab", "AAAA-BBBB", "AAAAA-AAAAA-AAAAA-AAAAA"));
+        s.AuditOperation(null, OperationAudit.ReportGenerated, OperationAudit.ReportGeneratedDetail("r.pdf", new string('A', 64)));
+        s.AuditOperation(null, OperationAudit.ReportOfficerSigned, OperationAudit.OfficerSignedDetail("r_semnat.pdf", new string('A', 64), new string('B', 64), "AAAA", "Ofițer", "OFICIAL"));
         s.AuditOperation(null, OperationAudit.AnchorExported, OperationAudit.AnchorExportedDetail(3, "AAAAA-AAAAA-AAAAA-AAAAA", "cd", "E:\\"));
         var events = LogAnalyzer.Dfir.IO.Json.ReadLines<AuthAuditEntry>(s.AuditPath).Select(e => e.Event).ToList();
-        Assert.Contains("profile.officer_registered", events);
-        Assert.Contains("report.officer_signed", events);
-        Assert.Contains("audit.anchor_exported", events);
+        Assert.Equal(["report.generated", "report.officer_signed", "audit.anchor_exported"], events);
+        Assert.Single(AuditAnchor.EventDetails(s.AuditPath, OperationAudit.ReportGenerated));
         Assert.Equal(ChainStatus.Valid, s.VerifyAudit().Status);
     }
 }

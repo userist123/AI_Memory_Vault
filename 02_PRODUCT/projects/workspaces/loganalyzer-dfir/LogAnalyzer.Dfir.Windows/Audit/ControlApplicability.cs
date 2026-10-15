@@ -90,6 +90,7 @@ public static class ControlApplicability
         Row("A10", "Access auditing (SACL) on classified folders", Yes("SACL present"), Yes("SACL present"), No, "Classified folders exist only in the controlled editions."),
         Row("A11", "Application audit log continuous since the previous control (anchor code)", Yes("Previous anchor found"), Yes("Previous anchor found"), Yes("Previous anchor found"), null),
         Row("A12", "Windows event log service stopped outside a shutdown", Yes("None or explained"), Yes("None or explained"), Yes("None or explained"), null),
+        Row("A13", "Security officer list changed since the previous control", Yes("Review"), Yes("Review"), Yes("Review"), null),
         Row("U01", "Changes to the Administrators group", Yes("Review"), Yes("Review"), Yes("Review"), null),
         Row("U02", "Accounts created, deleted, enabled, disabled or reset", Yes("Review"), Yes("Review"), Yes("Review"), null),
         Row("U03", "Remote (RDP) logons", Yes("Review"), Yes("Review (administration over the LAN is normal)"), Yes("Review"), null),

@@ -122,6 +122,65 @@ public static class AuditAnchor
         return new AnchorExport(folder, copy, anchorFile, sha, anchor);
     }
 
+    /// <summary>
+    /// The code of the last "audit.anchor" event the station itself wrote: only a HINT for the next control ("cod propus de stație, nesigur"), because whoever
+    /// rewrites the log can rewrite this too. Empty when there is none.
+    /// </summary>
+    public static string LastRecorded(string logPath)
+    {
+        string last = "";
+        foreach (var o in Objects(logPath))
+            if (Str(o, "event") == "audit.anchor" && System.Text.RegularExpressions.Regex.Match(Str(o, "detail"), @"anchor=([A-Z2-9-]{23})") is { Success: true } m) last = m.Groups[1].Value;
+        return last;
+    }
+
+    /// <summary>
+    /// The entries with one of <paramref name="events"/> written after entry <paramref name="sinceSeq"/> (when the previous anchor was found) or else after
+    /// <paramref name="sinceUtc"/>: "înregistrarea nr. N, data, eveniment, detalii".
+    /// </summary>
+    public static List<string> EventsSince(string logPath, IReadOnlyCollection<string> events, long? sinceSeq, DateTimeOffset sinceUtc)
+    {
+        var list = new List<string>();
+        foreach (var o in Objects(logPath))
+        {
+            var ev = Str(o, "event");
+            if (!events.Contains(ev)) continue;
+            long seq = o["seq"] is { } s ? s.GetValue<long>() : 0;
+            DateTimeOffset? when = null;
+            if (DateTimeOffset.TryParse(Str(o, "whenUtc"), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out var w)) when = w;
+            if (sinceSeq is { } ss ? seq <= ss : when is { } t && t < sinceUtc) continue;
+            list.Add($"înregistrarea nr. {seq}, {when:yyyy-MM-dd HH:mm} UTC, {ev}: {Str(o, "detail")} (de {Str(o, "who")})");
+        }
+        return list;
+    }
+
+    /// <summary>The detail texts of every entry with event <paramref name="eventName"/>, in order.</summary>
+    public static List<string> EventDetails(string logPath, string eventName) =>
+        Objects(logPath).Where(o => Str(o, "event") == eventName).Select(o => Str(o, "detail")).ToList();
+
+    private static string Str(JsonObject o, string name) =>
+        o.FirstOrDefault(kv => string.Equals(kv.Key, name, StringComparison.OrdinalIgnoreCase)).Value is JsonValue v && v.TryGetValue<string>(out var x) ? x : "";
+
+    private static IEnumerable<JsonObject> Objects(string logPath)
+    {
+        if (!File.Exists(logPath)) yield break;
+        List<string> lines;
+        using (var fs = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+        using (var reader = new StreamReader(fs, Encoding.UTF8))
+        {
+            lines = [];
+            for (var line = reader.ReadLine(); line is not null; line = reader.ReadLine()) lines.Add(line);
+        }
+        foreach (var line in lines)
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            JsonObject? o = null;
+            try { o = JsonNode.Parse(line) as JsonObject; }
+            catch (JsonException) { }
+            if (o is not null) yield return o;
+        }
+    }
+
     private static List<(long Seq, string Hash)> Entries(string logPath)
     {
         var list = new List<(long, string)>();

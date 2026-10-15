@@ -1,5 +1,4 @@
 using System.IO;
-using LogAnalyzer.Dfir.Reporting;
 using LogAnalyzer.UI.ViewModels;
 using Xunit;
 
@@ -19,20 +18,22 @@ public sealed class OfficerControlPageTests
     public void The_control_page_offers_signing_anchor_copy_export_registration_and_verification()
     {
         var xaml = View();
-        foreach (var bind in new[] { "SignAsOfficerCommand", "CopyAnchorCodeCommand", "ExportAnchorCommand", "RegisterOfficerCommand", "VerifyReportCommand",
-                                     "PreviousAnchorCode", "AnchorLine", "OfficerStatus", "VerifyFingerprint" })
+        foreach (var bind in new[] { "SignAsOfficerCommand", "CopyAnchorCodeCommand", "ExportAnchorCommand", "ManageOfficersCommand", "VerifySignedReportCommand",
+                                     "ImportOfficerTrustCommand", "ShowStationAnchorHintCommand", "PreviousAnchorCode", "StationAnchorHint", "AnchorLine", "OfficerStatus", "VerifyFingerprint" })
             Assert.Contains("{Binding " + bind, xaml);
         Assert.Contains("Content=\"Semnează ca ofițer de securitate\"", xaml);
         Assert.Contains("Content=\"Copiază codul\"", xaml);
+        Assert.DoesNotContain("parola", xaml, System.StringComparison.OrdinalIgnoreCase);   // no passphrase key file anywhere on the page
     }
 
     [Fact]
-    public void Before_a_control_the_report_is_unsigned_and_has_no_anchor()
+    public void Before_a_control_the_report_is_not_official_has_no_anchor_and_the_previous_code_is_empty()
     {
         var vm = new StationControlViewModel();
         Assert.False(vm.HasAnchor);
         Assert.Equal("", vm.AnchorLine);
-        Assert.StartsWith(OfficerSignature.UnsignedLabel, vm.OfficerStatus);
+        Assert.Equal("", vm.PreviousAnchorCode);                                           // never pre-filled from the station
+        Assert.StartsWith(LogAnalyzer.Dfir.Windows.Audit.ControlReportPdf.OfficialLabel, vm.OfficerStatus);
         Assert.Contains("procesul-verbal", vm.PreviousAnchorHelp);
         vm.CopyAnchorCodeCommand.Execute(null);
         Assert.Contains("Rulați întâi controlul", vm.Status);

@@ -165,82 +165,9 @@ public static class ReportCli
         }
     }
 
-    /// <summary>
-    /// officer-keygen &lt;private-key-file&gt; [&lt;public-key-file&gt;]: the security officer's own ECDSA P-256 key, always encrypted with a passphrase (at least 8
-    /// characters; LOGANALYZER_KEY_PASSPHRASE or typed twice), written to a path the officer chooses (their removable drive). Never overwrites; never inside a
-    /// git repository. Prints the fingerprint to write on the proces-verbal: it is what verification is pinned to.
-    /// </summary>
-    public static int OfficerKeygen(string[] args, TextWriter o, TextReader? input = null)
-    {
-        var pos = args.Skip(1).ToList();
-        if (pos.Count is < 1 or > 2 || pos.Any(a => a.StartsWith("--", StringComparison.Ordinal)))
-        {
-            o.WriteLine("Utilizare: officer-keygen <fișier-cheie-privată> [<fișier-cheie-publică>]   (cheia este întotdeauna criptată cu parolă)");
-            return 1;
-        }
-        var priv = Path.GetFullPath(pos[0]);
-        if (File.Exists(priv)) { o.WriteLine("[-] Fișierul cheii există deja; nu se suprascrie."); return 1; }
-        if (InsideGitRepository(priv)) { o.WriteLine("[-] Cheia privată nu se scrie într-un depozit git. Alegeți mediul dumneavoastră (stick, disc extern)."); return 1; }
-        var pass = Environment.GetEnvironmentVariable(PassphraseEnvironmentVariable);
-        if (string.IsNullOrEmpty(pass))
-        {
-            o.WriteLine("Parola cheii de ofițer, minimum 8 caractere (nu se afișează pe ecran și nu se scrie în jurnal):");
-            pass = ReadSecret(input);
-            o.WriteLine("Repetați parola:");
-            if (!string.Equals(pass, ReadSecret(input), StringComparison.Ordinal)) { o.WriteLine("[-] Cele două parole nu coincid; nu s-a scris nicio cheie."); return 1; }
-        }
-        if (string.IsNullOrEmpty(pass) || pass.Length < 8) { o.WriteLine("[-] Parola trebuie să aibă cel puțin 8 caractere."); return 1; }
-        try
-        {
-            var (fileText, publicKey) = OfficerKey.Generate(pass);
-            Directory.CreateDirectory(Path.GetDirectoryName(priv)!);
-            using (var fs = new FileStream(priv, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-            using (var w = new StreamWriter(fs)) w.Write(fileText);
-            if (pos.Count == 2) File.WriteAllText(pos[1], publicKey);
-            var fp = OfficerKey.Fingerprint(publicKey);
-            o.WriteLine("[+] Cheia de ofițer de securitate a fost scrisă în " + priv + " (criptată cu parolă).");
-            o.WriteLine("    Păstrați-o doar pe mediul dumneavoastră; nu o copiați pe stație, în depozit sau în caz.");
-            o.WriteLine("[+] AMPRENTA CHEII (treceți-o pe procesul-verbal și semnați lângă ea):");
-            o.WriteLine("    " + fp);
-            o.WriteLine("[+] Cheia publică:");
-            o.WriteLine(publicKey);
-            return 0;
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or CryptographicException or ArgumentException)
-        {
-            o.WriteLine("[-] " + ex.Message);
-            return 1;
-        }
-    }
-
-    /// <summary>
-    /// verify-report &lt;report.pdf&gt; --officer-fingerprint &lt;fp&gt;...: the officer's signature (&lt;report&gt;.pdf.officer.sig) checked against the fingerprint(s)
-    /// from the signed paper; never against a key the signature file brings. Exit codes as <see cref="Verify"/>.
-    /// </summary>
-    public static int VerifyOfficer(string[] args, TextWriter o)
-    {
-        var fps = new System.Collections.Generic.List<string>(); string? pdf = null;
-        for (int i = 1; i < args.Length; i++)
-        {
-            if (args[i] == "--officer-fingerprint" && i + 1 < args.Length) { fps.Add(args[++i]); continue; }
-            if (pdf is null && !args[i].StartsWith("--", StringComparison.Ordinal)) { pdf = args[i]; continue; }
-            pdf = null; break;
-        }
-        if (pdf is null || fps.Count == 0 || fps.Any(f => OfficerKey.Normalize(f).Length == 0))
-        {
-            o.WriteLine("Utilizare: verify-report <raport.pdf> --officer-fingerprint <amprenta, 32 caractere hexazecimale>...");
-            return 1;
-        }
-        var r = OfficerSignature.Verify(pdf, fps);
-        o.WriteLine(r.Word);
-        o.WriteLine(r.Message);
-        return r.Status switch { ReportSignatureStatus.Valid => 0, ReportSignatureStatus.Modified => 2, ReportSignatureStatus.UnknownKey => 3, _ => 4 };
-    }
-
     /// <summary>verify-report &lt;report.pdf&gt; &lt;public key base64 or file&gt;...: prints VALID / MODIFIED / UNKNOWN KEY and the reason.</summary>
     public static int Verify(string[] args, TextWriter o)
     {
-        if (args.Contains("--officer-fingerprint")) return VerifyOfficer(args, o);
         if (args.Length < 3) { o.WriteLine("Utilizare: verify-report <raport.pdf> <cheie-publică-base64 | fișier-cheie-publică>..."); return 1; }
         try
         {
