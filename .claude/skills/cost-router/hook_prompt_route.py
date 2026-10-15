@@ -6,9 +6,15 @@ short line of `additionalContext` telling Claude which class/model/subagent the 
 recommends and to apply the `cost-router` skill. It is silent (no output) on trivial prompts
 (slash commands, fewer than 4 words, plain yes/no) so it costs nothing there. Any internal
 error exits 0 with no output: this hook must never block a prompt.
+
+It also persists the route to ~/.claude/cache/cost-router/route-<session_id>.json (lib/route_state.py)
+so the PreToolUse hooks can make it binding. A trivial prompt overwrites that state with a no-op
+route (subagent null) so an older route never leaks into it; a prompt containing "#direct" stores
+subagent null (owner override: the main session does the work itself).
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -28,22 +34,49 @@ def owner_language() -> str:
     return value.strip() if isinstance(value, str) else ""
 
 
+def persist(data: dict, prompt: str, d=None) -> None:
+    """Write the session's route state; never raises."""
+    try:
+        import route_state  # noqa: E402
+        sid = data.get("session_id")
+        if not sid:
+            return
+        digest = hashlib.sha256(prompt.encode("utf-8")).hexdigest()[:16]
+        if d is None:
+            state = route_state.new_state("trivial", None, None, digest)
+        else:
+            state = route_state.new_state(d.task_class, d.model, d.subagent, digest,
+                                          direct=route_state.DIRECT_MARK in prompt.lower())
+        route_state.save(sid, state)
+    except Exception:
+        pass
+
+
 def main() -> int:
     try:
         data = json.load(sys.stdin)
     except Exception:
         return 0
+    if not isinstance(data, dict):
+        return 0
     prompt = str(data.get("prompt") or data.get("user_prompt") or "").strip()
     words = prompt.split()
-    if not prompt or prompt.startswith("/") or len(words) < 4 or prompt.lower().rstrip(".!") in TRIVIAL:
-        return 0
     try:
-        from route import decide, is_shadowed, one_line  # noqa: E402
+        from route import is_shadowed  # noqa: E402
         if is_shadowed(Path(__file__)):
             return 0
-        d = decide(prompt)
     except Exception:
         return 0
+    if not prompt or prompt.startswith("/") or len(words) < 4 or prompt.lower().rstrip(".!") in TRIVIAL:
+        persist(data, prompt)  # no-op route: old enforcement must not leak into this prompt
+        return 0
+    try:
+        from route import decide, one_line  # noqa: E402
+        d = decide(prompt)
+    except Exception:
+        persist(data, prompt)
+        return 0
+    persist(data, prompt, d)
     ctx = one_line(d) + "."
     lang = owner_language()
     if lang:  # the injected context is English; without this the reply drifts to English
@@ -53,6 +86,8 @@ def main() -> int:
     if d.subagent:
         ctx += (f" Do the work in a subagent of any type ({d.subagent} fits); the Agent hook sets its model"
                 f" to {d.model}. Keep only its conclusion in this session.")
+        if "#direct" not in prompt.lower():
+            ctx += " Enforced: after 3 direct tool calls the main session is blocked until it delegates."
     if d.task_class in LOCAL_CLASSES and not d.verifier_model:
         try:
             from local_llm import probe  # noqa: E402

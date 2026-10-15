@@ -10,7 +10,13 @@ whatever the subagent type is:
   - Fable is never a subagent model -> Opus.
 A brief that matches no task class and carries no risk is left alone (the subagent's own
 frontmatter model applies). A model value it does not recognise is left alone.
-Any error: no output, exit 0. This hook never blocks a spawn; it only rewrites `model`.
+Route state (lib/route_state.py): every spawn sets state.delegated=true, which unlocks the main
+session for hook_enforce_route.py. Inside the AI Memory Vault (the project has
+03_IMPLEMENTATION/packages/routing/route_cli.py) a spawn for an implement/review/design/frontier
+route is denied until the Vault router ran (state.vault_routed, set by hook_enforce_route.py when
+Bash runs `routing.route_cli route|dispatch`); delegated is not set then. "#direct" and
+COST_ROUTER_ENFORCE=0 skip that gate. Outside the Vault it is never required.
+Any other error: no output, exit 0; apart from that gate this hook only rewrites `model`.
 """
 from __future__ import annotations
 
@@ -21,6 +27,28 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
 RISK_PREFIXES = ("risk_detected", "risk_floor")
+VAULT_ROUTER_REASON = ("cost-router: run the Vault router first: python -m routing.route_cli route --goal \"<task>\""
+                       " (PYTHONPATH=03_IMPLEMENTATION/packages), show the owner agent/model/cost, then dispatch.")
+
+
+def gate_and_mark(data: dict):
+    """Return a deny reason for the Vault-router gate, else mark the session delegated and return None."""
+    try:
+        import route_state  # noqa: E402
+        sid = data.get("session_id")
+        state = route_state.load(sid)
+        if state is None:
+            return None
+        if (not route_state.enforcement_disabled() and not state.get("direct")
+                and state.get("task_class") in route_state.VAULT_GATED_CLASSES
+                and not state.get("vault_routed") and route_state.in_vault(data)):
+            return VAULT_ROUTER_REASON
+        if not state.get("delegated"):
+            state["delegated"] = True
+            route_state.save(sid, state)
+    except Exception:
+        return None
+    return None
 
 
 def _alias(policy, value):
@@ -73,6 +101,14 @@ def main() -> int:
         from route import _load_router, is_shadowed, policy_path  # noqa: E402
         if is_shadowed(Path(__file__)):
             return 0
+    except Exception:
+        return 0
+    reason = gate_and_mark(data)
+    if reason:
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny",
+                                                 "permissionDecisionReason": reason}}))
+        return 0
+    try:
         mod = _load_router()
         policy = mod.ClaudeModelPolicy.from_file(policy_path())
         target, d = choose(policy, mod, tool_input)

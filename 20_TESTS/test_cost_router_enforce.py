@@ -106,9 +106,11 @@ def test_installer_registers_both_hooks_once_and_removes_them(tmp_path):
     for _ in range(2):
         assert _run([INSTALL, "--home", home]).returncode == 0
     hooks = json.loads((home / ".claude" / "settings.json").read_text())["hooks"]
-    assert len(hooks["UserPromptSubmit"]) == 1 and len(hooks["PreToolUse"]) == 1
+    assert len(hooks["UserPromptSubmit"]) == 1 and len(hooks["PreToolUse"]) == 2
     assert hooks["PreToolUse"][0]["matcher"] == "Agent"
-    assert "hook_agent_model.py" in json.dumps(hooks["PreToolUse"])
+    assert "hook_agent_model.py" in json.dumps(hooks["PreToolUse"][0])
+    assert hooks["PreToolUse"][1]["matcher"] == "Edit|Write|NotebookEdit|Bash|Read|Grep|Glob"
+    assert "hook_enforce_route.py" in json.dumps(hooks["PreToolUse"][1])
     assert (home / ".claude" / "skills" / "cost-router" / "lib" / "local_llm.py").exists()
     assert _run([INSTALL, "--home", home, "--uninstall"]).returncode == 0
     assert "hooks" not in json.loads((home / ".claude" / "settings.json").read_text())

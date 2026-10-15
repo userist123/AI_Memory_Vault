@@ -115,6 +115,21 @@ for multi-step code, design, risky work or verification. Cloud sessions have no 
   at the top tier, same pass rate).
 - Price per completed task, not per request: a cheap model that needs three retries is not cheap.
 
+## 4A. Enforcement (the route is binding, not advisory)
+
+- **Escalation ceiling**: Opus is the top of the ladder; a route escalates to Fable only for the
+  `frontier` class in the main session. The route line says "stay on Opus" otherwise.
+- **Route state**: the prompt hook stores the route per session in
+  `~/.claude/cache/cost-router/route-<session_id>.json`; a trivial prompt resets it to a no-op.
+- **Main session dispatches**: when the route names a subagent, `hook_enforce_route.py`
+  (PreToolUse on Edit/Write/NotebookEdit/Bash/Read/Grep/Glob) allows 3 direct tool calls, then
+  denies until the work is delegated with the Agent tool (any Agent spawn unlocks it).
+- **Vault router first**: inside the AI Memory Vault, an Agent spawn for an
+  implement/review/design/frontier route is denied until
+  `python -m routing.route_cli route|dispatch` ran in Bash (`PYTHONPATH=03_IMPLEMENTATION/packages`).
+- **Overrides**: `#direct` in the prompt (owner: the main session does it itself) or
+  `COST_ROUTER_ENFORCE=0` in the environment. Any hook error allows the call.
+
 ## 5. Report shape (end of task)
 
 Outcome first, then evidence (commands, exit codes, counts), then what was not verified, then the
