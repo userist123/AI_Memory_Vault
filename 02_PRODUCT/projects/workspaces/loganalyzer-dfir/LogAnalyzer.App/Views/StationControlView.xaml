@@ -82,6 +82,11 @@
                                  Width="230" FontFamily="Consolas" ToolTip="{Binding PreviousAnchorHelp}"/>
                     </WrapPanel>
                     <TextBlock Text="{Binding PreviousAnchorHelp}" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                    <WrapPanel Margin="0,4,0,0">
+                        <Button Content="Arată codul propus de stație (nesigur)" Command="{Binding ShowStationAnchorHintCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,0"
+                                ToolTip="Codul pe care stația și-l amintește de la ultimul control. Nu înlocuiește procesul-verbal: cine a rescris jurnalul poate schimba și propunerea."/>
+                        <TextBlock Text="{Binding StationAnchorHint}" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" VerticalAlignment="Center" MaxWidth="560"/>
+                    </WrapPanel>
                 </StackPanel>
 
                 <TextBlock Text="{Binding FlowError}" Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,6,0,0"/>
@@ -133,11 +138,13 @@
                                    Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0"/>
                         <WrapPanel Margin="0,8,0,0">
                             <Button Content="Semnează ca ofițer de securitate" Command="{Binding SignAsOfficerCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,8,6"
-                                    ToolTip="Doar ofițerul de securitate, cu cheia lui de pe mediul lui și parola. Raportul semnat este raportul oficial."/>
+                                    ToolTip="Ofițerul de securitate introduce cardul în cititorul tastaturii; Windows cere codul PIN. Semnătura calificată se adaugă la sfârșitul raportului, fără să-l schimbe."/>
                             <Button Content="Copiază jurnalul pentru CD-R…" Command="{Binding ExportAnchorCommand}" Margin="0,0,8,6"
                                     ToolTip="Copiază jurnalul aplicației și codul de ancorare într-un folder ales; folderul se arde pe un CD-R și se predă ofițerului."/>
-                            <Button Content="Înregistrează ofițer de securitate…" Command="{Binding RegisterOfficerCommand}" Margin="0,0,8,6"
-                                    ToolTip="Primul ofițer: amprenta cheii se trece pe procesul-verbal. Următorii: cu aprobarea unui ofițer deja înregistrat."/>
+                            <Button Content="Ofițeri de securitate…" Command="{Binding ManageOfficersCommand}" Margin="0,0,8,6"
+                                    ToolTip="Înregistrează certificatul de semnătură al unui ofițer (de pe card sau dintr-un fișier). Primul ofițer: amprenta se trece pe procesul-verbal. Următorii: cu o cerere semnată de un ofițer deja înregistrat."/>
+                            <Button Content="Importă autorități de certificare și liste de revocare…" Command="{Binding ImportOfficerTrustCommand}" Margin="0,0,8,6"
+                                    ToolTip="Certificatele autorităților de certificare calificate și listele lor de revocare (CRL), aduse pe un suport; fără ele lanțul și revocarea nu pot fi confirmate."/>
                         </WrapPanel>
                         <TextBox Text="{Binding OfficerInfo, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="Transparent" MinHeight="0"
                                  Foreground="{StaticResource TextPrimaryBrush}" AutomationProperties.Name="Rezultatul semnării, înregistrării sau copierii jurnalului"/>
@@ -161,19 +168,21 @@
             </StackPanel>
         </Border>
 
-        <!-- "Verifică raport": the officer's signature against a pinned fingerprint (from the paper, or the registered officers) -->
+        <!-- "Verifică raport semnat": the officer's qualified signature (made here or in Adobe) against the fingerprint on the proces-verbal -->
         <Expander Header="Verifică un raport semnat de ofițerul de securitate" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12">
         <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,6,0,0">
             <StackPanel>
-                <TextBlock Text="Scrieți amprenta cheii de pe procesul-verbal semnat (recomandat). Dacă o lăsați goală, se compară cu ofițerii înregistrați pe această stație."
+                <TextBlock Text="Scrieți amprenta certificatului de pe procesul-verbal semnat: doar așa verdictul poate fi OFICIAL. Fără ea, semnătura se compară doar cu lista ofițerilor de pe această stație, pe care un administrator o poate schimba."
                            Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
                 <WrapPanel Margin="0,6,0,0">
-                    <TextBlock Text="Amprenta cheii ofițerului:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <TextBox AutomationProperties.Name="Amprenta cheii ofițerului de pe procesul-verbal" Text="{Binding VerifyFingerprint, UpdateSourceTrigger=PropertyChanged}" Width="340" FontFamily="Consolas" Margin="0,0,8,0"/>
-                    <Button Content="Verifică raport…" Command="{Binding VerifyReportCommand}" Style="{StaticResource AccentButtonStyle}"/>
+                    <TextBlock Text="Amprenta certificatului ofițerului:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBox AutomationProperties.Name="Amprenta certificatului ofițerului de pe procesul-verbal" Text="{Binding VerifyFingerprint, UpdateSourceTrigger=PropertyChanged}" Width="520" FontFamily="Consolas" Margin="0,0,8,0"/>
+                    <Button Content="Verifică raport semnat…" Command="{Binding VerifySignedReportCommand}" Style="{StaticResource AccentButtonStyle}"/>
                 </WrapPanel>
+                <TextBlock Text="Fiecare rând al rezultatului spune ce s-a verificat: DA = în regulă, NU = problemă (raportul nu este valabil), NECONFIRMAT = nu s-a putut confirma pe această stație."
+                           Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/>
                 <TextBox Text="{Binding VerifyResult, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="Transparent" MinHeight="0" Margin="0,6,0,0"
-                         Foreground="{StaticResource TextPrimaryBrush}" AutomationProperties.Name="Rezultatul verificării raportului"/>
+                         Foreground="{StaticResource TextPrimaryBrush}" AutomationProperties.Name="Rezultatul verificării raportului semnat"/>
             </StackPanel>
         </Border>
         </Expander>

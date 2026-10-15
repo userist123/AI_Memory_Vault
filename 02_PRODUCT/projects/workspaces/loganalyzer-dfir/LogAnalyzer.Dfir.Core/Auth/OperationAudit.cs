@@ -13,13 +13,24 @@ public static class OperationAudit
 {
     public const string ControlStarted = "control.started", ControlFinished = "control.finished", ExportUnmasked = "export.unmasked",
                         CaseRemovedFromRecent = "case.removed_from_recent", ProfileEdited = "profile.edited", ClassifiedFoldersChanged = "profile.classified_folders_changed",
-                        ReportOfficerSigned = "report.officer_signed", OfficerRegistered = "profile.officer_registered", AnchorExported = "audit.anchor_exported";
+                        ReportOfficerSigned = "report.officer_signed", OfficerRegistered = "profile.officer_registered", AnchorExported = "audit.anchor_exported",
+                        AnchorRecorded = "audit.anchor", OfficerRemoved = "profile.officer_removed",
+                        OfficerImportIgnored = "profile.officer_import_ignored", OfficerTrustImported = "officer_trust.imported",
+                        ReportGenerated = "report.generated", OfficerRequested = "profile.officer_requested";
 
-    public static string OfficerSignedDetail(string reportFile, string sha256, string fingerprint, string anchorCode) =>
-        $"report={reportFile}; sha256={sha256}; officer_fingerprint={fingerprint}; anchor={anchorCode}";
+    /// <summary>The events that change who may sign as security officer (check A13 lists them since the previous anchor).</summary>
+    public static readonly IReadOnlyList<string> OfficerListEvents = [OfficerRegistered, OfficerRequested, OfficerRemoved, OfficerImportIgnored, OfficerTrustImported];
 
-    public static string OfficerRegisteredDetail(string fingerprint, string basis, string approvedBy) =>
-        $"officer_fingerprint={fingerprint}; basis={basis}; approved_by={(approvedBy.Length > 0 ? approvedBy : "(niciunul: primul ofițer, amprenta pe procesul-verbal)")}";
+    public static string AnchorRecordedDetail(LogAnalyzer.Dfir.Case.AuditAnchorPoint a, string reason) => $"seq={a.Seq}; anchor={a.Code}; chain={a.ChainId}; reason={reason}";
+
+    public static string OfficerSignedDetail(string reportFile, string originalSha256, string signedSha256, string certFingerprint, string signerCn, string verdict) =>
+        $"report={reportFile}; original_sha256={originalSha256}; signed_sha256={signedSha256}; cert_fingerprint={certFingerprint}; signer={signerCn}; verdict={verdict}";
+
+    /// <summary>The SHA-256 of a generated report, kept in the sealed audit: a signed report is accepted only if its original part has one of these hashes.</summary>
+    public static string ReportGeneratedDetail(string reportFile, string sha256) => $"report={reportFile}; sha256={sha256}";
+
+    public static string OfficerRegisteredDetail(string fingerprint, string name, string basis, string approvedBy) =>
+        $"cert_fingerprint={fingerprint}; name={name}; basis={basis}; approved_by={(approvedBy.Length > 0 ? approvedBy : "(niciunul: primul ofițer, amprenta pe procesul-verbal)")}";
 
     public static string AnchorExportedDetail(long seq, string code, string logSha256, string folder) =>
         $"seq={seq}; anchor={code}; log_sha256={logSha256}; folder={folder}";

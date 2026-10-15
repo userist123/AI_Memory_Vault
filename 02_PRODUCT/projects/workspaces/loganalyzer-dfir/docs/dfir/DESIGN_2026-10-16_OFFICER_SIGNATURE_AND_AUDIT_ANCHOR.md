@@ -1,56 +1,122 @@
-# Officer signature and audit-log anchor (Standalone tamper evidence)
+# Officer qualified signature and audit-log anchor (Standalone tamper evidence)
 
-Date: 2026-10-16. Status: implemented, `TEST_VERIFIED` (LogAnalyzer.Dfir.Tests `OfficerAndAnchorTests`,
-LogAnalyzer.App.Tests `OfficerKeyCliTests`, `OfficerControlPageTests`). Background: owner decisions of
-2026-10-16 and `RESEARCH_2026-10-16_STANDARDS_STANDALONE_CLASSIFIED_WORKSTATIONS.md` sections 3-4.
+Date: 2026-10-16. Status: implemented, `TEST_VERIFIED` with software test certificates
+(LogAnalyzer.Dfir.Tests `OfficerAndAnchorTests`, LogAnalyzer.App.Tests `OfficerQualifiedSignatureTests`,
+`OfficerControlPageTests`). Signing with a real SafeNet card and acceptance by Adobe Reader are
+`UNVERIFIED` until the manual steps at the end are run on a station. Background: owner decisions of
+2026-10-16, `RESEARCH_2026-10-16_STANDARDS_STANDALONE_CLASSIFIED_WORKSTATIONS.md` sections 3-4 and
+`PROVENANCE_2026-10-16_PDF_SIGNING_LIBRARIES.md` section 3.1.
 
 ## Problem
 
-A local administrator of the station can read the DPAPI-LocalMachine key that seals the head of the
-application's audit log, rewrite the log and reseal it, and can re-sign a modified report with the
-station's report key. Neither is detectable from the station alone.
+A local administrator can read the DPAPI-LocalMachine key that seals the head of the application's
+audit log, rewrite the log and reseal it, and can re-sign a modified report with the station's report
+key. Neither is detectable from the station alone.
 
 ## Design
 
-1. **Officer key.** `LogAnalyzer.KeyGen officer-keygen <file>` creates an ECDSA P-256 key encrypted with a
-   passphrase (PBKDF2-SHA256 600000 + AES-256-GCM, envelope `LAOK1-PASS:`, different from the station
-   report key so one cannot pass for the other). It lives on the officer's medium; there is no DPAPI or
-   unencrypted variant. The app opens it only inside "Semnează ca ofițer de securitate"; the decrypted
-   PKCS#8 bytes and the derived key are zeroed, the `ECDsa` object is disposed after signing.
-2. **Official report.** The draft report carries "NESEMNAT DE OFIȚERUL DE SECURITATE — nu este raport
-   oficial" on every page. Signing renders an `…_OFICIAL_<time>.pdf` copy whose last section names the
-   officer and the key fingerprint, then writes a detached `<pdf>.officer.sig` over exactly those bytes,
-   and records `report.officer_signed` in the sealed audit.
-3. **Pinned verification.** `verify-report <pdf> --officer-fingerprint <fp>` and the in-app "Verifică
-   raport" accept a signature only when the fingerprint of the key in the signature equals a pinned
-   fingerprint (typed from the paper, or the trusted registered officers). A key made by anyone else gives
-   UNKNOWN KEY, never VALID. Fingerprint = first 128 bits of SHA-256(SubjectPublicKeyInfo), 8 groups of 4 hex.
-4. **Officer list.** Profile table "Ofițeri de securitate": the first officer is registered on trust and the
-   fingerprint is shown to be written on the proces-verbal; every other officer needs an approval signed by
-   an already trusted officer. Rows not reachable through valid approvals are not trusted, whatever the
-   profile file says. Registration is audited (`profile.officer_registered`, plus `profile.edited`).
-5. **Anchor code.** `AuditAnchor`: code = 19 base32 characters of
-   SHA-256("LogAnalyzer-audit-anchor-v1|chainId|seq|hash") + 1 check character, shown as
-   `XXXXX-XXXXX-XXXXX-XXXXX (înregistrarea nr. N)` on the report (section 6) with a copy button. "Copiază
-   jurnalul pentru CD-R" copies the log, its seal file and an `ancorare.txt` to a chosen folder
-   (`audit.anchor_exported`). At the next control the code typed from the signed paper is searched in the
-   current chain (plain chain must also be intact): check **A11** CONFORM / NECONFORM ("jurnalul aplicației a
-   fost rescris după controlul anterior") / NEDETERMINAT (no code or mistyped code).
-6. **Windows tamper indicators** are always reported: A05 (Security 1102, System 104), A06 (4719, now also
-   CONFORM when none), A07 (4616) and the new **A12** (Security 1100 not preceded by a requested shutdown,
-   System 1074, within 30 minutes).
+1. **Only the officer's qualified signature makes a report official.** Every page of the report says
+   "Fără semnătura electronică calificată a ofițerului de securitate acesta NU este raport oficial".
+   There is no passphrase key file and no detached signature file: the signature is inside the PDF.
+2. **Signing in the application.** "Semnează ca ofițer de securitate" lists the certificates on the
+   inserted smart card (CurrentUser\My, key on the card, KeyUsage non-repudiation, valid now; the
+   authentication certificate is not offered) and lets the officer pick one when there are several.
+   A certificate that is not a trusted registered officer is refused. The PIN is asked by Windows /
+   SafeNet; the application never sees the PIN or the key.
+3. **PAdES B-B as one incremental update** (`PdfIncrementalSigner`, Core): the generated report
+   (QuestPDF: PDF 1.4, classic xref table, uncompressed dictionaries) is left byte-for-byte as the
+   prefix of a new `…_semnat_ofiter_<time>.pdf`; appended are the signature dictionary
+   (`/Filter /Adobe.PPKLite /SubFilter /ETSI.CAdES.detached`, fixed-width `/ByteRange`, a 16 KiB
+   `/Contents` placeholder, `/M` = claimed signing time), a signature field merged with a visible widget
+   on the last page ("Semnat de <CN> - ofiter de securitate", date, issuer), the last page with
+   `/Annots`, the catalog with `/AcroForm /SigFlags 3`, an xref section for only those objects and a
+   trailer with `/Prev`. Cross-reference streams, object streams, existing forms or an already signed
+   file are refused, not guessed.
+4. **CMS** (`SignedCmsSigner`, App): `SignedCms` + `CmsSigner` from the WPF shared framework (no
+   package), SHA-256, signer certificate only, signed attributes content-type, message-digest and ESS
+   signing-certificate-v2 (RFC 5035, built with `AsnWriter`); no signing-time attribute.
+5. **Verification** (`PdfSignatureCheck`, `OfficialReportVerifier`; the same for our output and for a
+   file signed in Adobe): exactly one signature; `/ByteRange` starts at 0, covers the whole file except
+   the `/Contents` hex string and nothing is appended after it ("modificat după semnare"); SubFilter
+   `ETSI.CAdES.detached` or `adbe.pkcs7.detached`; the CMS verifies over the covered bytes; the
+   original part (the prefix ending at one of the `%%EOF` before the signature update) has the SHA-256
+   of a report the application generated, read from the sealed audit (`report.generated`), otherwise
+   "raportul a fost modificat înainte de semnare"; the signer certificate has non-repudiation, was
+   valid at `/M`, chains to a qualified CA certificate imported on the station and is not in an imported
+   CRL that was in force at signing time (missing or expired CRL: "nu se poate confirma revocarea").
+   Verdicts: **OFICIAL** only when all pass and the certificate fingerprint typed from the signed
+   proces-verbal matches; **VALID, DAR NEOFICIAL** when it rests only on the station's officer list or
+   the chain / revocation cannot be confirmed; **INVALID** with the reason. A non-INVALID verification
+   appends `report.officer_signed` (cert fingerprint, CN, original and signed SHA-256, verdict) and the
+   log is anchored again (`audit.anchor`), so the new code covers the signature event.
+6. **Officer list** (`OfficerStore`, its own file under `%PROGRAMDATA%\LogAnalyzer\officers`, never part
+   of the procedure profile; a profile import that carries officers or an anchor code is imported without
+   them and audited as `profile.officer_import_ignored`). Officers are identified by the SHA-256 of their
+   certificate (16 groups of 4 hex). The first officer is registered on trust and the fingerprint is
+   shown to be written on the proces-verbal. Every later officer needs a registration request PDF
+   generated by the application, which carries the new fingerprint in its original bytes and is signed
+   by a registered officer (in the application or in Adobe); the signed request is kept and re-verified
+   every time the list is read. Rows not reachable through valid approvals are not trusted. CA
+   certificates and CRLs for the qualified signature are imported from files (`officer_trust.imported`).
+7. **Anchor code** (`AuditAnchor`): 19 base32 characters of
+   SHA-256("LogAnalyzer-audit-anchor-v1|chainId|seq|hash") + 1 check character, printed on the report and
+   shown with a copy button; "Copiază jurnalul pentru CD-R" copies the log, its seal and `ancorare.txt`.
+   At the next control the code is typed from the signed paper (the field is empty by default; the code
+   the station remembers is shown only after an explicit click, labelled unsafe). Check **A11** says
+   whether the code was typed or taken from the station.
+8. **Checks**: A05 (1102, 104), A06 (4719, also CONFORM when none), A07 (4616), **A12** (Security 1100
+   explained only by an actual shutdown: System 6006 within 5 minutes, or 1074 followed by a boot 6005;
+   a cancelled shutdown explains nothing), **A13** (officer-list events in the sealed audit since the
+   previous anchor, DE VERIFICAT).
+
+## Verifying outside the application (OpenSSL)
+
+The signature is a standard PAdES / CAdES detached signature. On a separate machine:
+
+```
+# 1. the ByteRange [a b c d] from the signature dictionary (text search in the PDF)
+# 2. the signed bytes: everything except the /Contents hex string
+head -c b report.pdf >  signed.bin ; tail -c +$((c+1)) report.pdf | head -c d >> signed.bin
+# 3. the CMS: the hex between < > after /Contents, trailing zeros removed
+xxd -r -p contents.hex > sig.p7s
+openssl cms -verify -binary -inform DER -in sig.p7s -content signed.bin -CAfile qualified_ca.pem -crl_check -CRLfile issuer.crl -purpose any -out /dev/null
+openssl pkcs7 -inform DER -in sig.p7s -print_certs | openssl x509 -noout -fingerprint -sha256
+```
+
+Compare the SHA-256 fingerprint with the one on the proces-verbal. Adobe Reader shows the same
+signature in its Signatures panel.
 
 ## What a malicious administrator can still do
 
-- Stop the application, alter or kill Windows logging (no 1100 is written when the service is killed),
-  change the OS before events are written; the anchor only proves the application's own log was not
-  rewritten *before the anchored entry*.
-- Rewrite every entry written *after* the last anchor (no external copy of those yet).
-- Wipe the officer list and register a key of their own as "first officer": the app will then let that key
-  sign. Detected only when the verifier pins the fingerprint from the earlier signed paper (or reads the
-  officer list printed on the draft), which is why the paper fingerprint is the trust anchor.
-- Edit `LastAnchorCode` in the profile to propose a code matching a rewritten log: the officer must type
-  the code from the signed paper, not accept the proposal.
-- Capture the officer's passphrase (keylogger) when the officer types it on the controlled station; the
-  key file itself must never be left on the station. A smart card would remove this; not implemented.
-- Passphrase strings from WPF `PasswordBox`/console cannot be zeroed in managed memory.
+- Stop the application, kill Windows logging (no 1100 is written when the service is killed), change
+  the OS before events are written; the anchor only proves the application's own log was not rewritten
+  *before the anchored entry*, and only when the code is typed from the signed paper.
+- Rewrite entries written *after* the last anchor (no external copy of those yet).
+- Wipe the officer list and register a certificate of their own as "first officer": the app will then
+  let that certificate sign and report "VALID, DAR NEOFICIAL"; OFICIAL still needs the fingerprint from
+  the earlier signed paper, which will not match. A13 lists the registration.
+- Generate a different report and record its hash (`report.generated` is written by the application
+  under the administrator's session): the officer must read what they sign.
+- Import a CA certificate of their own: the chain check then passes for certificates from that CA, but
+  the fingerprint from paper still decides OFICIAL.
+- The signing incremental update could in principle carry other objects (e.g. an overlay annotation)
+  if produced by a hostile tool; only the original prefix is compared with the generated report.
+- A certificate revoked after signing makes older signatures fail too (the imported CRL parser keeps
+  serial numbers, not revocation dates): conservative.
+- Without a timestamp authority the signing time `/M` is only claimed (PAdES B-B).
+
+## Manual test with a real SafeNet card and Adobe Reader (to do on a station)
+
+1. Station runtime `Microsoft.WindowsDesktop.App` 10.0.13 or later (CVE-2026-84008 in SignedCms).
+2. Insert the officer's card; check in `certmgr.msc` → Personal that the qualified certificate is there
+   with "You have a private key" and Key Usage "Non-Repudiation".
+3. Import the QTSP CA certificate(s) and CRL with "Importă autorități de certificare și liste de revocare…".
+4. "Ofițeri de securitate…" → Yes (card) → write the shown fingerprint on the proces-verbal.
+5. Run a control, then "Semnează ca ofițer de securitate": the SafeNet PIN dialog must appear; the
+   signed file opens. Expected verdict: VALID, DAR NEOFICIAL (no paper fingerprint yet).
+6. "Verifică raport semnat…" with the fingerprint typed from the proces-verbal: expected OFICIAL.
+7. Open the signed file in Adobe Reader: Signatures panel must show the signature as valid, the
+   document as unmodified since signing, and the certificate chain (Adobe trust list permitting).
+8. In Adobe, sign a copy of an unsigned report with the same card and verify it in the application:
+   expected the same verdicts. Then add a comment in Adobe after signing and verify: expected INVALID
+   "modificat după semnare".
