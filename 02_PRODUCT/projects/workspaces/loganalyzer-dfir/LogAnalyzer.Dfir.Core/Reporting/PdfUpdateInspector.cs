@@ -233,29 +233,51 @@ public static class PdfUpdateInspector
                 if (Resources(res) is { } bad2) return bad2;
             }
             var o = _new[r.Num];
-            return Content(Decode(o, x));
+            return Content(Decode(o, x, AppearanceLimit), box);
         }
 
-        private byte[] Decode(PdfIndirectObject o, PdfDict d)
+        private const int AppearanceLimit = 1_000_000, FontProgramLimit = 4 * 1024 * 1024;
+
+        /// <summary>The stream data, decoded (none or FlateDecode), refused beyond <paramref name="limit"/> bytes (a small stream can inflate enormously).</summary>
+        private byte[] Decode(PdfIndirectObject o, PdfDict d, int limit)
         {
+            if (o.StreamLength > limit) throw new FormatException("flux prea mare");
             var raw = file.AsSpan((int)o.StreamStart, (int)o.StreamLength).ToArray();
             var filter = d["Filter"];
             if (filter is null) return raw;
-            if (filter is not PdfName { Value: "FlateDecode" }) throw new FormatException("filtru nepermis în aspectul semnăturii");
+            if (filter is not PdfName { Value: "FlateDecode" }) throw new FormatException("filtru nepermis în flux");
             using var z = new ZLibStream(new MemoryStream(raw), CompressionMode.Decompress);
             using var outp = new MemoryStream();
             var buf = new byte[8192];
             for (int k; (k = z.Read(buf)) > 0;)
             {
                 outp.Write(buf, 0, k);
-                if (outp.Length > 1_000_000) throw new FormatException("aspect prea mare");
+                if (outp.Length > limit) throw new FormatException("flux prea mare după decomprimare");
             }
             return outp.ToArray();
         }
 
-        private static string? Content(byte[] data)
+        /// <summary>
+        /// The appearance content: it must START with the clip to its own box ("[q] x0 y0 w h re W n"), so nothing it draws can leave the box, then use only
+        /// text and simple path operators.
+        /// </summary>
+        private static string? Content(byte[] data, double[] box)
         {
             var p = new PdfParser(data, 0, data.Length);
+            var first = new List<PdfValue>();
+            for (int i = 0; i < 8; i++)
+            {
+                p.SkipWhiteAndComments();
+                if (p.Position >= data.Length) break;
+                first.Add(p.ReadValue());
+            }
+            int k0 = first.Count > 0 && first[0] is PdfKeyword { Value: "q" } ? 1 : 0;
+            double[] want = [Math.Min(box[0], box[2]), Math.Min(box[1], box[3]), Math.Abs(box[2] - box[0]), Math.Abs(box[3] - box[1])];
+            bool clip = first.Count >= k0 + 7
+                && Enumerable.Range(0, 4).All(i => first[k0 + i] is PdfNumber nmb && Math.Abs(nmb.Value - want[i]) < 0.01)
+                && first[k0 + 4] is PdfKeyword { Value: "re" } && first[k0 + 5] is PdfKeyword { Value: "W" } && first[k0 + 6] is PdfKeyword { Value: "n" };
+            if (!clip) return "aspectul semnăturii nu începe cu decuparea la chenarul lui (0 0 lățime înălțime re W n)";
+            p = new PdfParser(data, 0, data.Length);
             int ops = 0;
             while (true)
             {
@@ -316,6 +338,8 @@ public static class PdfUpdateInspector
             var t = Deref(r, role, stream: true) as PdfDict;
             if (t is null || Keys(t, FontFileKeys) is not null) return $"fluxul fontului ({role}) are chei nepermise";
             if (t["Filter"] is not (null or PdfName { Value: "FlateDecode" })) return $"fluxul fontului ({role}) folosește un filtru nepermis";
+            try { Decode(_new[r.Num], t, FontProgramLimit); }
+            catch (Exception ex) when (ex is FormatException or InvalidDataException) { return $"fluxul fontului ({role}) este prea mare sau nu poate fi decomprimat ({ex.Message})"; }
             return null;
         }
 
