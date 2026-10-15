@@ -204,9 +204,10 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (entry is null) return;
             _recent.Forget(entry.Entry.Path);
-            LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.CaseDeleted,
-                LogAnalyzer.Dfir.Auth.OperationAudit.CaseDeletedDetail(System.IO.Path.GetFileName(entry.Entry.Path.TrimEnd('\\', '/')), "removed_from_recent_list; folder_untouched"));
+            bool audited = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.CaseRemovedFromRecent,
+                LogAnalyzer.Dfir.Auth.OperationAudit.CaseRemovedFromRecentDetail(System.IO.Path.GetFileName(entry.Entry.Path.TrimEnd('\\', '/')), "removed_from_recent_list; folder_untouched"));
             ReloadRecent();
+            if (!audited) OpenStatus = "Cazul a fost scos din listă (folderul nu a fost atins), dar operația nu a putut fi trecută în jurnalul de audit (vezi avertismentul de sus).";
         }
 
         /// <summary>Opens a case folder on a background task (the integrity re-check can be long) and shows it; a refused folder says why.</summary>

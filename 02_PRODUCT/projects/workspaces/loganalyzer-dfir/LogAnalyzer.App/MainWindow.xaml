@@ -222,7 +222,14 @@
             <Grid Grid.Column="1" Background="{StaticResource WorkspaceBrush}">
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                 <!-- a medium that is not in the register was connected: shown on every page (owner 2026-10-11, „ceva viu”) -->
-                <Border Grid.Row="0" Background="#FDECEA" BorderBrush="{StaticResource CriticalBrush}" BorderThickness="0,0,0,1" Padding="16,8"
+                <StackPanel Grid.Row="0">
+                <!-- the sealed audit could not be written (review 2026-10-15): persistent until the application is closed, never silent -->
+                <Border Background="#FFF4E5" BorderBrush="{StaticResource WarningBrush}" BorderThickness="0,0,0,1" Padding="16,8"
+                        AutomationProperties.Name="Avertisment jurnal de audit"
+                        Visibility="{Binding AuditHealth.HasWarning, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{Binding AuditHealth.Warning}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" VerticalAlignment="Center"/>
+                </Border>
+                <Border Background="#FDECEA" BorderBrush="{StaticResource CriticalBrush}" BorderThickness="0,0,0,1" Padding="16,8"
                         Visibility="{Binding MediaCenter.HasAlert, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <DockPanel>
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
@@ -232,6 +239,7 @@
                         <TextBlock Text="{Binding MediaCenter.AlertText}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource CriticalBrush}" VerticalAlignment="Center"/>
                     </DockPanel>
                 </Border>
+                </StackPanel>
                 <!-- TabControl Region Host (Bound to SelectedTabIndex & SelectedModuleIndex) -->
                 <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}" BorderThickness="0" Background="Transparent">
                     <TabControl.ItemContainerStyle>

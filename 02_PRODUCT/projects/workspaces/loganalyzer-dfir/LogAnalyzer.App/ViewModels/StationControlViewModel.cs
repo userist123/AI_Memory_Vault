@@ -283,7 +283,7 @@ namespace LogAnalyzer.UI.ViewModels
                 var posture = Posture;
                 SavedReportInfo = "";
                 var (folders, updates) = ControlInputs();
-                LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlStarted,
+                bool auditedStart = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlStarted,
                     LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail(LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(posture), posture.ToString(),
                         new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent()).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator), PeriodDays, folders.Count));
                 _report = await Task.Run(() =>
@@ -308,7 +308,7 @@ namespace LogAnalyzer.UI.ViewModels
                     }
                     return ControlEvaluator.Evaluate(facts);
                 });
-                LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinished,
+                bool auditedFinish = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinished,
                     LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinishedDetail(_report.Facts.Host, _report.Facts.IsAdministrator, _report.Checks.Count,
                         _report.Count(ControlStatus.Neconform), _report.Count(ControlStatus.DeVerificat), _report.Count(ControlStatus.Nedeterminat)));
                 FillChecks();
@@ -324,6 +324,7 @@ namespace LogAnalyzer.UI.ViewModels
                 Status = _report.Facts.IsAdministrator
                     ? $"Control finalizat: {_report.Checks.Count} verificări, {_report.Actions.Count} acțiuni în cronologie. Dublu-click pe orice rând pentru detalii."
                     : "Control finalizat FĂRĂ drepturi de administrator: jurnalul Security și o parte din setări nu au putut fi citite (verificările respective sunt NEDETERMINATE). Reporniți aplicația ca administrator.";
+                if (!auditedStart || !auditedFinish) Status += " ATENȚIE: controlul nu a putut fi trecut în jurnalul de audit (vezi avertismentul de sus).";
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
             {
@@ -355,11 +356,16 @@ namespace LogAnalyzer.UI.ViewModels
             // F3: the report in the case is signed when the operator configured a signing key; a copy carries a copy of the same signature.
             var signLine = LogAnalyzer.Dfir.Reporting.ReportSigningSettings.Load().SignIfConfigured(pdf);
             ws.Audit("report.signature", $"{Path.GetFileName(pdf)}: {signLine}");
+            string? copyRefused = null;
             if (dlg.ShowDialog() == true && !string.Equals(dlg.FileName, pdf, StringComparison.OrdinalIgnoreCase))
             {
-                File.Copy(pdf, dlg.FileName, overwrite: true);
-                var sig = LogAnalyzer.Dfir.Reporting.ReportSignature.SigPath(pdf);
-                if (File.Exists(sig)) File.Copy(sig, LogAnalyzer.Dfir.Reporting.ReportSignature.SigPath(dlg.FileName), overwrite: true);
+                // the copy leaves the case unmasked: audited first, refused when the audit cannot be written (the original stays in the case)
+                copyRefused = LogAnalyzer.UI.Services.ExportAudit.Run(Path.GetFileName(ws.Root.TrimEnd('\\', '/')), "pdf-control", _report.Checks.Count, dlg.FileName, () =>
+                {
+                    File.Copy(pdf, dlg.FileName, overwrite: true);
+                    var sig = LogAnalyzer.Dfir.Reporting.ReportSignature.SigPath(pdf);
+                    if (File.Exists(sig)) File.Copy(sig, LogAnalyzer.Dfir.Reporting.ReportSignature.SigPath(dlg.FileName), overwrite: true);
+                });
             }
             // confirmation page in words (UX research R19): where it is, its fingerprint as the reference for the official report, what comes next
             string sha;
@@ -370,9 +376,9 @@ namespace LogAnalyzer.UI.ViewModels
                               $"{signLine}{Environment.NewLine}" +
                               "Ce urmează: tipăriți raportul, treceți amprenta în procesul-verbal ca referință și semnați. Dacă cineva modifică fișierul, amprenta nu se mai potrivește. " +
                               "Originalul rămâne în cazul stației; orice copie se verifică prin aceeași amprentă.";
-            Status = "Raport salvat în caz.";
+            Status = copyRefused is null ? "Raport salvat în caz." : "Raport salvat în caz; copia nu: " + copyRefused;
             LoadPreviousControls();
-            Process.Start(new ProcessStartInfo(dlg.FileName is { Length: > 0 } f && File.Exists(f) ? f : pdf) { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo(copyRefused is null && dlg.FileName is { Length: > 0 } f && File.Exists(f) ? f : pdf) { UseShellExecute = true });
         }
 
         [RelayCommand]

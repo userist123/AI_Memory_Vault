@@ -12,7 +12,7 @@ namespace LogAnalyzer.Dfir.Auth;
 public static class OperationAudit
 {
     public const string ControlStarted = "control.started", ControlFinished = "control.finished", ExportUnmasked = "export.unmasked",
-                        CaseDeleted = "case.deleted", ProfileEdited = "profile.edited", ClassifiedFoldersChanged = "profile.classified_folders_changed";
+                        CaseRemovedFromRecent = "case.removed_from_recent", ProfileEdited = "profile.edited", ClassifiedFoldersChanged = "profile.classified_folders_changed";
 
     public static string Sha256Hex(string text) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
 
@@ -31,7 +31,20 @@ public static class OperationAudit
         return $"case={(caseId.Length > 0 ? caseId : "(fără caz)")}; format={format}; items={items}; sha256={sha}";
     }
 
-    public static string CaseDeletedDetail(string caseId, string mode) => $"case={caseId}; mode={mode}";
+    /// <summary>Audit-first export: the intent, written before the file (the export is refused when this cannot be written).</summary>
+    public static string ExportIntentDetail(string caseId, string format, int items) =>
+        $"case={(caseId.Length > 0 ? caseId : "(fără caz)")}; format={format}; items={items}; phase=intent";
+
+    /// <summary>Audit-first export: the outcome after the file was written, with the SHA-256 of the written file.</summary>
+    public static string ExportWrittenDetail(string caseId, string format, int items, string outputPath) =>
+        ExportUnmaskedDetail(caseId, format, items, outputPath) + "; phase=written";
+
+    /// <summary>Audit-first export: the write failed after the intent was recorded.</summary>
+    public static string ExportFailedDetail(string caseId, string format, int items, string error) =>
+        $"case={(caseId.Length > 0 ? caseId : "(fără caz)")}; format={format}; items={items}; phase=failed; error={error}";
+
+    /// <summary>A case taken off the recent-cases list; the case folder is not touched (nothing is deleted).</summary>
+    public static string CaseRemovedFromRecentDetail(string caseId, string mode) => $"case={caseId}; mode={mode}";
 
     public static string ProfileHash(ProcedureProfile p)
     {
