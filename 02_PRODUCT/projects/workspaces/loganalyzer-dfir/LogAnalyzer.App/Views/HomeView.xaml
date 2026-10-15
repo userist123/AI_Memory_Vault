@@ -8,6 +8,9 @@
             <StackPanel MaxWidth="760" HorizontalAlignment="Left">
                 <ctrl:NoDataPanel/>
                 <TextBlock Text="{Binding StationHeading}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"/>
+                <TextBlock Text="{Binding EditionWarning}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" Margin="0,6,0,0">
+                    <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding HasEditionWarning}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                </TextBlock>
                 <TextBlock Text="Ce doriți să faceți?" FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,2,0,16"/>
 
                 <ItemsControl ItemsSource="{Binding PrimaryIntents}" AutomationProperties.Name="Acțiuni">

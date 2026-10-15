@@ -787,7 +787,15 @@
 - **De ce contează:** Într-o rețea air-gap cu domeniu, stațiile se administrează și se autentifică prin controlerele de domeniu; o stație în grup de lucru iese din politicile domeniului.
 - **Cum verifică aplicația:** A citit din WMI dacă calculatorul face parte dintr-un domeniu și numele domeniului. Nu a contactat controlerul de domeniu.
 - **Sursa tehnică:** `WMI Win32_ComputerSystem → PartOfDomain, Domain`
-- **Cum se citește rezultatul:** Conform = membră a unui domeniu. Neconform = grup de lucru. Nedeterminat = nu a putut fi citit. Nu se aplică pe Standalone și Internet. Accesibilitatea controlerului de domeniu nu se verifică.
+- **Cum se citește rezultatul:** Conform = membră a unui domeniu. Neconform = grup de lucru. Nedeterminat = nu a putut fi citit. Nu se aplică pe Standalone și Internet. Accesibilitatea controlerului de domeniu se verifică separat, activ, în N13 (doar ediția Rețea).
+
+### N13
+
+- **Ce verificăm:** Dacă controlerul domeniului la care este alăturată stația poate fi găsit la o adresă internă și răspunde (verificare activă, doar citire).
+- **De ce contează:** Fără controler de domeniu accesibil, stația nu primește politicile domeniului și autentificarea se face din memorie; un controler care se rezolvă la o adresă publică indică o configurare greșită sau o deturnare a rezolvării de nume.
+- **Cum verifică aplicația:** Doar în ediția Rețea și doar pe o stație membră a domeniului: a localizat controlerul cu DsGetDcName (înregistrarea DNS _ldap._tcp.dc._msdcs a domeniului), i-a rezolvat adresele și a deschis o singură conexiune TCP la LDAP (portul 389) la prima adresă privată, cu limită de 3 secunde, fără autentificare și fără să trimită date. Dacă vreo adresă este publică, nu contactează nimic. Nu rulează când modul de lucru este AirGapped.
+- **Sursa tehnică:** `DsGetDcName (netapi32) → numele și adresa controlerului; rezolvarea numelui; conexiune TCP la portul 389`
+- **Cum se citește rezultatul:** Conform = controler găsit la o adresă privată, LDAP răspunde. Neconform = controlerul se rezolvă la o adresă publică (nu a fost contactat). De verificat = controlerul nu a răspuns sau nu a fost găsit. Nedeterminat = stația nu este membră a unui domeniu (N12) sau verificarea nu a rulat. Nu se aplică pe Standalone și Internet.
 
 ### EM01
 

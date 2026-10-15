@@ -66,6 +66,8 @@ public sealed class StationFacts
     public List<EgressPathFact>? EgressPaths { get; set; }
     /// <summary>The sources of check N11 that could not be read ("name (reason)"): with any of them N11 is never CONFORM.</summary>
     public List<string> EgressUnread { get; init; } = [];
+    /// <summary>Result of the active N13 probe (Network edition only); null = not probed.</summary>
+    public DomainControllerProbeResult? DomainController { get; set; }
     public List<UsbDeviceFact> UsbDevices { get; init; } = [];
     public List<LogFact> Logs { get; init; } = [];
     public List<ChannelCoverage> Coverage { get; init; } = [];
@@ -120,8 +122,11 @@ public static class StationFactCollector
 
     /// <param name="classifiedFolders">The classified folders of the procedure profile (their audit rules are read); null = not collected.</param>
     /// <param name="offlineUpdates">The organisation's register of offline updates (compared with the installed updates); null = not given.</param>
+    /// <param name="dcProbe">The ACTIVE domain-controller probe (check N13); only the Network edition has one. Used only on the IsolatedNetwork posture and
+    /// only on a domain-joined station; null = not probed.</param>
     public static StationFacts Collect(DateTimeOffset periodStartUtc, LogAnalyzer.Core.Services.Edition.StationPosture posture, int maxPerId = 5000, CancellationToken ct = default,
-                                       IReadOnlyList<string>? classifiedFolders = null, IReadOnlyList<LogAnalyzer.Dfir.Registers.UpdateRow>? offlineUpdates = null)
+                                       IReadOnlyList<string>? classifiedFolders = null, IReadOnlyList<LogAnalyzer.Dfir.Registers.UpdateRow>? offlineUpdates = null,
+                                       IDomainControllerProbe? dcProbe = null)
     {
         using var id = WindowsIdentity.GetCurrent();
         var facts = new StationFacts
@@ -143,6 +148,9 @@ public static class StationFactCollector
         Try(facts, "Volume și BitLocker", () => ReadVolumes(facts));
         Try(facts, "Căi spre internet (configurație locală)", () => facts.EgressPaths = EgressPathCollector.Collect(facts.EgressUnread));
         Try(facts, "Apartenența la domeniu", () => ReadDomainMembership(facts));
+        if (dcProbe is not null && posture == LogAnalyzer.Core.Services.Edition.StationPosture.IsolatedNetwork
+            && facts.Settings.TryGetValue("Domain.PartOfDomain", out var joined) && joined == "da" && facts.Settings.TryGetValue("Domain.Name", out var domain))
+            Try(facts, "Controlerul de domeniu (verificare activă)", () => facts.DomainController = dcProbe.Probe(domain, ct));
         if (classifiedFolders is not null) facts.FolderAudits = ReadFolderAudits(classifiedFolders);
         if (offlineUpdates is not null) facts.OfflineUpdateRegister = [.. offlineUpdates];
         Try(facts, "Profiluri de rețea", () => facts.NetworkProfiles.AddRange(ReadNetworkProfiles()));

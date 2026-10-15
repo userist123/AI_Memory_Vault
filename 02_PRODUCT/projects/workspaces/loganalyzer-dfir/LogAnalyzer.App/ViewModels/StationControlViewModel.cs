@@ -285,7 +285,9 @@ namespace LogAnalyzer.UI.ViewModels
                 var (folders, updates) = ControlInputs();
                 _report = await Task.Run(() =>
                 {
-                    var facts = StationFactCollector.Collect(start, posture, classifiedFolders: folders, offlineUpdates: updates);
+                    // N13: only the Network edition registers the active probe (LogAnalyzer.Connectors); the other editions have none.
+                    var dcProbe = global::LogAnalyzer.UI.AppComposition.ServiceProvider?.GetService(typeof(IDomainControllerProbe)) as IDomainControllerProbe;
+                    var facts = StationFactCollector.Collect(start, posture, classifiedFolders: folders, offlineUpdates: updates, dcProbe: dcProbe);
                     // Time memory (S05): the latest time the application recorded, read BEFORE this report adds its own "clock.seen" entry.
                     string? auditPath = null;
                     try { auditPath = LogAnalyzer.UI.Services.AuthApp.Service.AuditPath; } catch (InvalidOperationException) { }

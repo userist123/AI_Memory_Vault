@@ -18,6 +18,14 @@ One codebase builds three executables. The posture of the station each one is ma
 
 The compile-time posture always wins. It is chosen by the edition's composition, never by a file, an argument or a policy. A signed policy can only choose the runtime mode (`AppMode`) inside what the posture permits (`StationPostures.ClampMode`): a Standalone edition is always AirGapped; a Network edition may be narrowed to AirGapped by a policy but never widened beyond the LAN; the Internet edition follows the policy. No policy can widen the posture.
 
+## Owner decisions on the editions
+
+- **Wrong-edition warning (Internet edition).** When the Internet edition runs on a station that looks isolated, Home and the control report header show: "Ediție nepotrivită: stația pare izolată. Pentru o stație fără rețea folosiți LogAnalyzer.Standalone, pentru o rețea internă fără internet LogAnalyzer.Retea." The test reuses the passive N11 facts: the station looks isolated when it has no ACTIVE way out of any kind (no gateway or DNS server on an adapter that is up, no active proxy, VPN, tunnel, radio or cellular modem). An internal gateway counts as a way out (a NAT router behind it may reach the internet), so a connected office station behind NAT is not warned. When a source cannot be read, nothing is guessed and no warning is shown. The warning never changes a check result.
+- **Local AI in the Network edition** stays OUT of the default build. The opt-in build option `-p:NetworkIncludeLocalAi=true` is unchanged (owner approval, loopback only); the edition test proves the default output has no `LogAnalyzer.Ai`.
+- **Removable media on the Internet edition.** Data leakage through USB sticks is a risk on every station, so P14 (USB storage blocked by policy), A08 (copies to removable media audited) and D02 (BitLocker To Go on removable media) apply to the Internet edition too; D01 (USB connection history) already did. The printing log (P29), CD/DVD burning (P28) and the classification banner (P26) stay "NU SE APLICĂ" there.
+- **Active domain-controller check N13 (Network edition only).** Read-only and short: only on a domain-joined station (N12), only when the network gate allows traffic (`NetworkPolicy`), it locates the domain controller with `DsGetDcName` (the DNS SRV record `_ldap._tcp.dc._msdcs.<domain>`), resolves its addresses and opens one TCP connection to LDAP (389) at the first PRIVATE address (RFC 1918 or fc00::/7), with a 3-second timeout, without credentials and without sending data. Loopback and link-local addresses are never contacted. If any resolved address is public, nothing is contacted and N13 is non-conform ("controlerul de domeniu se rezolvă la o adresă publică"). The probe lives in `LogAnalyzer.Connectors`, which the Standalone edition does not contain; the Standalone build test bans its type by name. N13 does not apply to Standalone or Internet.
+- **Default mode of the Internet edition without a signed policy:** still AirGapped. Changing it to the connected mode changes the signed-policy gate of the application and is left to the owner in the main session (not done here).
+
 ## Control check applicability
 
 The audit result type has a fifth state, `NuSeAplica` ("Nu se aplică"). A check that does not apply to the posture is shown as such in the screen and the reports and is never counted as non-compliant (nor as compliant). The table is `ControlApplicability` in `LogAnalyzer.Dfir.Windows/Audit/ControlApplicability.cs`; a test keeps this document and the code equal and fails if the evaluator produces a check id without an entry for all three postures. There is no default.
@@ -26,7 +34,7 @@ Check families: C accounts, P policies, A audit, U users, D devices, N network, 
 
 Applicable checks: Standalone 80, IsolatedNetwork 80, Internet 62 (of 81).
 
-Network checks N11 and N12 are specific to this model. N11 ("no path to the internet") is PASSIVE in every edition that runs it: it reads adapter properties, the registry (interface gateways and DNS servers including adapters that are off now, persistent routes, WinINet and WinHTTP proxy settings), the VPN/RAS phonebooks, the Plug and Play device list (cellular modems, phones used as modems), the count of saved Wi-Fi profile files and the Internet Connection Sharing state (HNetCfg COM object). It uses no WMI. It opens no socket and resolves no name, so a proxy given by name is shown as "review". A source that cannot be read is never taken as "nothing there": a phonebook or the Wi-Fi profile folder counts as absent only when it is confirmed missing from a folder that could be listed (File.Exists and Directory.Exists also answer "no" on access denied), and any unread source (adapters, interface registry and routes, proxies, VPN phonebooks, saved Wi-Fi profiles, ICS state, the adapter list behind cellular and phone modems) makes N11 NEDETERMINAT, with the source and the reason named in the detail. A path actually found still makes it non-conform; an ICS state that cannot be read while policy forbids ICS is "review", as in N10. On Standalone any such path is non-conform; on the Network edition internal gateways and DNS are accepted and a path leading outside the internal ranges is non-conform. Domain controller reachability and internal DNS answers are not checked, because that needs traffic.
+Network checks N11 and N12 are specific to this model. N11 ("no path to the internet") is PASSIVE in every edition that runs it: it reads adapter properties, the registry (interface gateways and DNS servers including adapters that are off now, persistent routes, WinINet and WinHTTP proxy settings), the VPN/RAS phonebooks, the Plug and Play device list (cellular modems, phones used as modems), the count of saved Wi-Fi profile files and the Internet Connection Sharing state (HNetCfg COM object). It uses no WMI. It opens no socket and resolves no name, so a proxy given by name is shown as "review". A source that cannot be read is never taken as "nothing there": a phonebook or the Wi-Fi profile folder counts as absent only when it is confirmed missing from a folder that could be listed (File.Exists and Directory.Exists also answer "no" on access denied), and any unread source (adapters, interface registry and routes, proxies, VPN phonebooks, saved Wi-Fi profiles, ICS state, the adapter list behind cellular and phone modems) makes N11 NEDETERMINAT, with the source and the reason named in the detail. A path actually found still makes it non-conform; an ICS state that cannot be read while policy forbids ICS is "review", as in N10. On Standalone any such path is non-conform; on the Network edition internal gateways and DNS are accepted and a path leading outside the internal ranges is non-conform. Internal DNS answers are not checked passively. Domain controller reachability is checked ACTIVELY by N13, in the Network edition only (see below).
 
 | Check | Name | Standalone | IsolatedNetwork | Internet | Reason when not applicable |
 |---|---|---|---|---|---|
@@ -49,7 +57,7 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | P11 | System disk encryption (BitLocker) | Enabled | Enabled | Enabled |  |
 | P12 | SMBv1 disabled | Disabled | Disabled | Disabled |  |
 | P13 | WDigest does not keep passwords in memory | Off | Off | Off |  |
-| P14 | USB storage blocked by policy | Review (blocked expected) | Review (blocked expected) | n/a | Blocking removable media is a data-handling rule of controlled stations, not a hardening rule of a connected workstation. |
+| P14 | USB storage blocked by policy | Review (blocked expected) | Review (blocked expected) | Review (blocked expected) | Owner decision: data leakage through removable media is a risk on every station, connected ones included. |
 | P15 | Secure Boot | Enabled | Enabled | Enabled |  |
 | P16 | Automatic screen lock | Configured | Configured | Configured |  |
 | P17 | Application allow-list (AppLocker) | Enforced or documented alternative | Enforced or documented alternative | Enforced or documented alternative |  |
@@ -82,7 +90,7 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | A05 | Logs cleared in the period | None | None | None |  |
 | A06 | Audit policy changed | Review | Review | Review |  |
 | A07 | System time changed manually | None or explained | None or explained | None or explained |  |
-| A08 | File copies to removable media are audited | Audited | Audited | n/a | Removable-media copy auditing belongs to controlled stations. |
+| A08 | File copies to removable media are audited | Audited | Audited | Audited | Owner decision: data leakage through removable media is a risk on every station, connected ones included. |
 | A09 | Programs stopped or flagged by the allow-list | Review | Review | Review |  |
 | A10 | Access auditing (SACL) on classified folders | SACL present | SACL present | n/a | Classified folders exist only in the controlled editions. |
 | U01 | Changes to the Administrators group | Review | Review | Review |  |
@@ -92,7 +100,7 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | U05 | Who worked with administrator rights | Review | Review | Review |  |
 | U06 | PowerShell scripts with commonly abused techniques | Review | Review | Review |  |
 | D01 | USB storage devices used on the station | Review | Review | Review |  |
-| D02 | Connected removable media encrypted (BitLocker To Go) | Encrypted | Encrypted | n/a | Media encryption is a controlled-station rule. |
+| D02 | Connected removable media encrypted (BitLocker To Go) | Encrypted | Encrypted | Encrypted | Owner decision: data leakage through removable media is a risk on every station, connected ones included. |
 | D03 | Media scanned with antivirus at connection | Scanned | Scanned | n/a | Scan-at-connection is a controlled-station procedure. |
 | N01 | Isolated station never connected to any network | Never connected; non-conform on any connection | n/a | n/a | Only a standalone station must never touch a network; a LAN station is connected by design. |
 | N02 | Networks known to the station (history) | Review (none expected) | Review (only the domain LAN expected) | Review |  |
@@ -106,6 +114,7 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | N10 | Internet Connection Sharing (ICS) | Off; non-conform if on | Off; non-conform if on (a bridge to another network) | Review if on |  |
 | N11 | No path to the internet (passive configuration check) | No gateway, DNS, proxy, VPN, radio, cellular or ICS configuration found; non-conform on any | Only internal gateway and DNS; non-conform on proxy, VPN, radio, cellular or ICS leading outside the internal ranges | n/a | Reads local configuration only (registry, adapter properties, Plug and Play device list, local files; no WMI) and never opens a socket. Any source it cannot read makes it NEDETERMINAT (never CONFORM) and is named in the detail. An internet station is connected by design. |
 | N12 | Domain membership | n/a | Member of the domain | n/a | Only a station on an isolated domain LAN is expected to be a domain member. |
+| N13 | Domain controller reachable (active, read-only check) | n/a | Located at an internal address and LDAP answers; non-conform on a public address | n/a | Active check: it sends traffic (DC location, one TCP connection to LDAP 389 at a private address, no credentials), so it exists only in the Network edition. |
 | S01 | Programs installed or uninstalled | Review | Review | Review |  |
 | S02 | New services and scheduled tasks | Review | Review | Review |  |
 | S03 | Windows version and last update | Known and documented | Known and documented | Recent |  |
