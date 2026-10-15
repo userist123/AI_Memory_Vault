@@ -103,6 +103,8 @@ public sealed class StationFacts
     public LogAnalyzer.Dfir.Analysis.SelfActivityWindow? SelfWindow { get; set; }
     /// <summary>The hashing windows of this and earlier controls (from the sealed audit): their records are the application's own, not someone's access.</summary>
     public List<LogAnalyzer.Dfir.Analysis.SelfActivityWindow> SelfWindows { get; init; } = [];
+    /// <summary>Hashing windows of the sealed audit that failed validation (reported by A15, never used to hide records).</summary>
+    public List<string> InvalidSelfWindows { get; init; } = [];
     /// <summary>The register of offline updates kept by the organisation; an empty list = the register is not filled in; null = not given.</summary>
     public List<LogAnalyzer.Dfir.Registers.UpdateRow>? OfflineUpdateRegister { get; set; }
     /// <summary>The latest time the application itself recorded in its chained audit logs ("time memory", check S05); null = no earlier record.</summary>

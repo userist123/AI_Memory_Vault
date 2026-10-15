@@ -225,7 +225,7 @@ public sealed class ClassifiedStationTests
     {
         var f = Station();
         const string image = @"C:\Program Files\LogAnalyzer\LogAnalyzer.exe";
-        f.SelfWindows.Add(new SelfActivityWindow(Now.AddDays(-1), Now.AddDays(-1).AddMinutes(2), 4242, image, "inspector"));
+        f.SelfWindows.Add(new SelfActivityWindow(Now.AddDays(-1), Now.AddDays(-1).AddMinutes(2), 4242, image, "inspector", 1));
         f.Logs.Add(Sec(4663, Now.AddDays(-1).AddMinutes(1), ("SubjectUserName", "inspector"), ("ObjectType", "File"), ("ObjectName", @"D:\Clasificat\plan.docx"),
             ("AccessMask", "0x1"), ("HandleId", "0x5"), ("ProcessId", "0x1092"), ("ProcessName", image)));
         f.Logs.Add(new LogFact("Microsoft-Windows-Partition/Diagnostic", 1006, Now.AddDays(-1).AddMinutes(30), 1, "",
@@ -302,5 +302,27 @@ public sealed class ClassifiedStationTests
         Assert.Equal("3", reg.Rows[0].Copies);
         Assert.Equal(3, ClassifiedAccess.Copies(reg.Rows[0]));
         Assert.Contains(reg.ValidateRow([.. reg.Cells()[0][..^1], "zero"], []), m => m.IsError && m.Message.Contains("copii"));
+    }
+
+    [Fact]
+    public void A15_reports_an_invalid_hashing_window_and_is_at_least_to_verify()
+    {
+        var f = Station();
+        f.InvalidSelfWindows.Add("fereastră de calcul amprente nevalidă: nu este în interiorul controlului ei (run-X)");
+        var c = Check(f, "A15");
+        Assert.Equal(ControlStatus.DeVerificat, c.Status);
+        Assert.Contains("fereastră de calcul amprente nevalidă", c.Detail);
+    }
+
+    [Fact]
+    public void A15_never_throws_on_a_register_time_in_the_skipped_dst_hour()
+    {
+        var f = Station();
+        f.Logs.Add(File4663(Now.AddHours(-2), @"D:\Clasificat\plan.docx", "0x1", "0x1"));
+        f.Logs.Add(File4663(Now.AddHours(-2).AddMinutes(1), @"E:\plan.docx", "0x2", "0x2"));
+        // a local time that does not exist in any zone with a spring-forward hour; on a zone without DST it is simply a normal time
+        f.Transfers = new TransferRegister { Rows = [new TransferRow { RegistrationNumber = "TR-1", DateTime = "2026-03-29 03:30", Direction = "ieșire", Content = "plan.docx", MediumSerial = "AA11", Approver = "sef" }] };
+        var ex = Record.Exception(() => ControlEvaluator.Evaluate(f));
+        Assert.Null(ex);
     }
 }

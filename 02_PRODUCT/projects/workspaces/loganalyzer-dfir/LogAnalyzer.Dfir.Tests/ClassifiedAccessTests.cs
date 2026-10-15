@@ -333,11 +333,11 @@ public sealed class ClassifiedAccessTests
     }
 
     [Fact]
-    public void Q3_a_row_without_a_medium_serial_or_an_exit_with_an_unknown_medium_is_only_to_verify()
+    public void Q3_a_row_without_a_medium_serial_does_not_soften_the_exit_an_exit_with_an_unknown_medium_is_only_to_verify()
     {
         var noSerial = One(Register("a.docx", "2026-10-14 09:01", serial: ""));
-        Assert.Equal(ExitVerdict.ToVerify, noSerial.Verdict);
-        Assert.Contains("înregistrare incompletă în registru", noSerial.Detail);
+        Assert.Equal(ExitVerdict.Unjustified, noSerial.Verdict);
+        Assert.Contains("există în registru o înregistrare incompletă pentru acest fișier", noSerial.Detail);
         var unknownMedium = One(Register("a.docx", "2026-10-14 09:01"), media: []);
         Assert.Equal(ExitVerdict.ToVerify, unknownMedium.Verdict);
         Assert.Contains("seria suportului", unknownMedium.Detail);
@@ -349,8 +349,9 @@ public sealed class ClassifiedAccessTests
         var reg = Register("a.docx", "2026-10-14 09:01");
         reg.Rows[0].Approver = "";
         var e = One(reg);
-        Assert.Equal(ExitVerdict.ToVerify, e.Verdict);
-        Assert.Contains("înregistrare incompletă în registru", e.Detail);
+        Assert.Equal(ExitVerdict.Unjustified, e.Verdict);   // R1: whoever edits the register cannot neutralise A15 with an incomplete row
+        Assert.Contains("există în registru o înregistrare incompletă pentru acest fișier", e.Detail);
+        Assert.Contains("aprobarea", e.Detail);
         Assert.DoesNotContain("necompletat", e.Detail);
     }
 
@@ -373,7 +374,7 @@ public sealed class ClassifiedAccessTests
     public void The_applications_own_hashing_reads_are_listed_apart_and_never_become_accesses_exits_or_coincidences()
     {
         const string image = @"C:\Program Files\LogAnalyzer\LogAnalyzer.exe";
-        var window = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(5), 0x4d2, image, "STATIE\\inspector");
+        var window = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(5), 0x4d2, image, "STATIE\\inspector", 1);
         var own = Access(4663, T0, @"D:\Clasificat\a.docx", "0x1", proc: image) with { Data = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             { ["SubjectUserName"] = "inspector", ["ObjectType"] = "File", ["ObjectName"] = @"D:\Clasificat\a.docx", ["AccessMask"] = "0x1", ["HandleId"] = "0x5", ["ProcessId"] = "0x4d2", ["ProcessName"] = image } };
         var otherPid = own with { Data = new Dictionary<string, string>(own.Data, StringComparer.OrdinalIgnoreCase) { ["ProcessId"] = "0x99" } };
@@ -394,9 +395,125 @@ public sealed class ClassifiedAccessTests
     [Fact]
     public void The_hashing_window_round_trips_through_the_audit_detail()
     {
-        var w = new SelfActivityWindow(T0, T0.AddMinutes(3), 1234, @"C:\x\LogAnalyzer.exe", "STATIE\\inspector", 12);
+        var w = new SelfActivityWindow(T0, T0.AddMinutes(3), 1234, @"C:\x\LogAnalyzer.exe", "STATIE\\inspector", 12, "run-1");
         var detail = LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashingDetail(w);
         Assert.True(LogAnalyzer.Dfir.Auth.OperationAudit.TryParseControlHashing(detail, out var back));
         Assert.Equal(w with { Files = 0 }, back with { Files = 0 });
+    }
+
+    // ---- re-review of PR #291: R1, R2, R4, R5 -----------------------------------------------------------------------------------------------------
+
+    [Fact]
+    public void R4_a_register_time_in_the_skipped_dst_hour_does_not_crash_and_does_not_approve()
+    {
+        var zone = TimeZoneInfo.FindSystemTimeZoneById("Europe/Bucharest");
+        var t = new DateTimeOffset(2026, 3, 29, 0, 30, 0, TimeSpan.Zero);   // 03:30 local does not exist that night
+        AccessRecord[] recs = [Access(4663, t, @"D:\Clasificat\a.docx", "0x1"), Access(4663, t.AddMinutes(1), @"E:\a.docx", "0x2", handle: "0x9")];
+        var reg = Register("a.docx", "2026-03-29 03:30");
+        var input = new ClassifiedInput
+        {
+            Folders = [new ClassifiedRoot(Root)], Records = recs, Transfers = reg, Media = [new MediumSeen(t.AddMinutes(-3), "SN1", "k")],
+            RemovableDrives = new HashSet<string>(["E:"], StringComparer.OrdinalIgnoreCase), RegisterZone = zone,
+        };
+        var e = Assert.Single(ClassifiedAccess.Analyze(input).Exits, x => x.Channel == ExitChannel.RemovableMedia);
+        Assert.Equal(ExitVerdict.Unjustified, e.Verdict);
+        Assert.Contains("oră inexistentă la schimbarea orei", e.Detail);
+        // an ambiguous hour (autumn) still compares: either offset within the tolerance matches
+        var amb = new DateTimeOffset(2026, 10, 25, 0, 30, 0, TimeSpan.Zero);   // 03:30 local, first occurrence (UTC+3)
+        AccessRecord[] recs2 = [Access(4663, amb, @"D:\Clasificat\a.docx", "0x1"), Access(4663, amb.AddMinutes(1), @"E:\a.docx", "0x2", handle: "0x9")];
+        var ok = Assert.Single(ClassifiedAccess.Analyze(new ClassifiedInput
+        {
+            Folders = input.Folders, Records = recs2, Transfers = Register("a.docx", "2026-10-25 03:30"), Media = [new MediumSeen(amb.AddMinutes(-3), "SN1", "k")],
+            RemovableDrives = input.RemovableDrives, RegisterZone = zone,
+        }).Exits, x => x.Channel == ExitChannel.RemovableMedia);
+        Assert.Equal(ExitVerdict.Approved, ok.Verdict);
+    }
+
+    private static ClassifiedInput Hashed(TransferRegister reg, string? fileHash) => new()
+    {
+        Folders = [new ClassifiedRoot(Root)], Records = CopyToStick, Media = Stick, RemovableDrives = new HashSet<string>(["E:"], StringComparer.OrdinalIgnoreCase), RegisterZone = TimeZoneInfo.Utc,
+        Transfers = reg, FileHashes = fileHash is null ? null : new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { [@"D:\Clasificat\a.docx"] = fileHash },
+    };
+
+    [Fact]
+    public void R2_a_row_whose_sha256_differs_from_the_file_does_not_approve_and_an_unknown_file_hash_is_only_to_verify()
+    {
+        var reg = Register("a.docx", "2026-10-14 09:01");
+        reg.Rows[0].Sha256 = new string('b', 64);
+        var bad = Assert.Single(ClassifiedAccess.Analyze(Hashed(reg, new string('a', 64))).Exits);
+        Assert.Equal(ExitVerdict.Unjustified, bad.Verdict);
+        Assert.Contains("amprenta din registru nu corespunde fișierului", bad.Detail);
+        Assert.Equal(ExitVerdict.ToVerify, Assert.Single(ClassifiedAccess.Analyze(Hashed(reg, null)).Exits).Verdict);
+        // a row without a fingerprint may still approve by exact name
+        Assert.Equal(ExitVerdict.Approved, Assert.Single(ClassifiedAccess.Analyze(Hashed(Register("a.docx", "2026-10-14 09:01"), new string('a', 64))).Exits).Verdict);
+    }
+
+    private const string Image = @"C:\Program Files\LogAnalyzer\LogAnalyzer.exe";
+
+    private static AccessRecord Own(DateTimeOffset t, string obj, string mask, string handle = "0x5") =>
+        new("event", "Security", 4663, t, "Security 4663 own", new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        { ["SubjectUserName"] = "inspector", ["ObjectType"] = "File", ["ObjectName"] = obj, ["AccessMask"] = mask, ["HandleId"] = handle, ["ProcessId"] = "0x4d2", ["ProcessName"] = Image });
+
+    [Fact]
+    public void R5_a_hashing_window_hides_only_reads_under_the_classified_folders_never_writes_or_removable_media()
+    {
+        var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 5, "run-1");
+        var input = new ClassifiedInput
+        {
+            Folders = [new ClassifiedRoot(Root)], SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc, RemovableDrives = new HashSet<string>(["E:"], StringComparer.OrdinalIgnoreCase),
+            Records = [Own(T0, @"D:\Clasificat\a.docx", "0x120089"), Own(T0.AddMinutes(1), @"D:\Clasificat\a.docx", "0x2", "0x6"), Own(T0.AddMinutes(2), @"E:\a.docx", "0x2", "0x7")],
+        };
+        var rep = ClassifiedAccess.Analyze(input);
+        Assert.Single(rep.SelfActivity);                                       // only the read
+        Assert.Contains(rep.Files.Single().Accesses, a => a.Access.Contains("scriere"));   // the write by the same process is a real access
+        Assert.Contains(rep.Exits, x => x.Channel == ExitChannel.RemovableMedia);           // and the write to the stick a real exit
+    }
+
+    [Fact]
+    public void R5_a_window_that_reads_more_files_than_it_hashed_is_invalid_and_hides_nothing()
+    {
+        var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 1, "run-1");
+        var rep = ClassifiedAccess.Analyze(new ClassifiedInput
+        {
+            Folders = [new ClassifiedRoot(Root)], SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc,
+            Records = [Own(T0, @"D:\Clasificat\a.docx", "0x1"), Own(T0.AddMinutes(1), @"D:\Clasificat\b.docx", "0x1", "0x6")],
+        });
+        Assert.Empty(rep.SelfActivity);
+        Assert.Equal(2, rep.Files.Count);
+        Assert.Contains(rep.InvalidSelfWindows, x => x.Contains("fereastră de calcul amprente nevalidă"));
+    }
+
+    private static string AuditLine(string ev, DateTimeOffset when, string detail) =>
+        System.Text.Json.JsonSerializer.Serialize(new { Event = ev, WhenUtc = when, Detail = detail });
+
+    [Fact]
+    public void R5_hashing_windows_are_accepted_only_inside_their_own_sealed_control()
+    {
+        var dir = Path.Combine(AppContext.BaseDirectory, "classified-audit-" + Guid.NewGuid().ToString("N")[..8]);
+        Directory.CreateDirectory(dir);
+        var path = Path.Combine(dir, "audit.jsonl");
+        var ok = new SelfActivityWindow(T0, T0.AddMinutes(3), 77, Image, "inspector", 2, "run-A");
+        var outside = ok with { StartUtc = T0.AddHours(-5), EndUtc = T0.AddHours(-4.9), RunId = "run-A" };
+        var tooLong = ok with { EndUtc = T0.AddHours(3), RunId = "run-B" };
+        var noRun = ok with { RunId = "" };
+        File.WriteAllLines(path,
+        [
+            AuditLine("control.started", T0.AddMinutes(-1), LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail("Standalone", "Standalone", true, 30, 1, "run-A")),
+            AuditLine("control.hashing", T0.AddMinutes(4), LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashingDetail(ok)),
+            AuditLine("control.hashing", T0.AddMinutes(4), LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashingDetail(outside)),
+            AuditLine("control.hashing", T0.AddMinutes(4), LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashingDetail(noRun)),
+            AuditLine("control.finished", T0.AddMinutes(5), LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinishedDetail("WS", true, 1, 0, 0, 0, "run-A")),
+            AuditLine("control.started", T0.AddMinutes(-1), LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail("Standalone", "Standalone", true, 30, 1, "run-B")),
+            AuditLine("control.hashing", T0.AddHours(3), LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashingDetail(tooLong)),
+            AuditLine("control.finished", T0.AddHours(3.1), LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinishedDetail("WS", true, 1, 0, 0, 0, "run-B")),
+        ]);
+        var read = LogAnalyzer.Dfir.Auth.OperationAudit.ReadControlHashing(path, chainValid: true);
+        Assert.Equal(ok, Assert.Single(read.Valid));
+        Assert.Equal(3, read.Invalid.Count);
+        Assert.All(read.Invalid, x => Assert.Contains("fereastră de calcul amprente nevalidă", x));
+        var broken = LogAnalyzer.Dfir.Auth.OperationAudit.ReadControlHashing(path, chainValid: false);
+        Assert.Empty(broken.Valid);
+        Assert.Equal(4, broken.Invalid.Count);
+        Directory.Delete(dir, true);
     }
 }

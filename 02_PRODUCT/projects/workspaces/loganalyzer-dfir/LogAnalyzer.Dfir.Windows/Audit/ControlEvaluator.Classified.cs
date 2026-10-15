@@ -166,7 +166,17 @@ public static partial class ControlEvaluator
                 rec: "Treceți în profilul de proceduri folderele cu documente clasificate.");
             return;
         }
-        var rep = ClassifiedAccess.Analyze(ClassifiedInputFrom(f));
+        ClassifiedAccessReport rep;
+        try { rep = ClassifiedAccess.Analyze(ClassifiedInputFrom(f)); }
+        catch (Exception ex)
+        {
+            // the analysis must never stop the control: an unexpected failure is a gap and the check says it could not be made
+            f.Gaps.Add(new LogAnalyzer.Dfir.Model.EvidenceGap("Analiza informațiilor clasificate", LogAnalyzer.Dfir.Model.EvidenceStatus.Failed, $"{ex.GetType().Name}: {ex.Message}",
+                "Accesul și ieșirile fișierelor clasificate nu au fost evaluate", "Repetați controlul; trimiteți eroarea dezvoltatorilor", "Posibil"));
+            Add(r, "A15", "Audit", title, ControlStatus.Nedeterminat,
+                $"Analiza accesului la fișierele clasificate a eșuat ({ex.GetType().Name}: {ex.Message}), deci nu se poate spune nimic despre ieșiri. Restul controlului este valabil.");
+            return;
+        }
         r.Classified = rep;
         foreach (var x in rep.Exits.Where(x => x.TimeUtc is not null))
             r.Actions.Add(new ActionEntry(x.TimeUtc!.Value, x.Who, $"informație clasificată: {x.ChannelText} ({x.VerdictText})", $"{x.File} → {x.Target}", x.Chain.LastOrDefault() ?? ""));
@@ -193,6 +203,12 @@ public static partial class ControlEvaluator
         if (capped.Count > 0)
         {
             detail += " Atenție: au fost citite doar ultimele evenimente (" + string.Join("; ", capped.Select(g => $"{g.Artifact}: {g.Reason}")) + "); pot lipsi accese mai vechi.";
+            if (status == ControlStatus.Conform) status = ControlStatus.DeVerificat;
+        }
+        var invalidWindows = f.InvalidSelfWindows.Concat(rep.InvalidSelfWindows).ToList();
+        if (invalidWindows.Count > 0)
+        {
+            detail += " " + string.Join(" ", invalidWindows.Select(x => "Atenție, " + x));
             if (status == ControlStatus.Conform) status = ControlStatus.DeVerificat;
         }
         if (rep.SelfActivity.Count > 0)
