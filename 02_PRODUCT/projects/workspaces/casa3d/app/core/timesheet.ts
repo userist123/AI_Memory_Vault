@@ -24,7 +24,7 @@ export function parseDuration(s: string): number | null {
   return null;
 }
 /** Totalul, pe etape, și tariful efectiv (onorariul fix sau pe m² împărțit la ore; la onorariu pe oră: suma acumulată). */
-export function timeSummary(entries: Pick<TimeEntry, 'minutes' | 'kind'>[], fee: { kind: 'fixed' | 'per_m2' | 'hourly'; amount: number } | undefined, feeTotal: number | null){
+export function timeSummary(entries: Pick<TimeEntry, 'minutes' | 'kind'>[], fee: { kind: 'fixed' | 'per_m2' | 'hourly' | 'percent'; amount: number } | undefined, feeTotal: number | null){
   const minutes = entries.reduce((a, e) => a + e.minutes, 0), hours = Math.round(minutes / 60 * 100) / 100, byKind: Partial<Record<TimeKind, number>> = {};
   for (const e of entries) byKind[e.kind] = (byKind[e.kind] ?? 0) + e.minutes;
   const effectiveRate = fee && fee.kind !== 'hourly' && feeTotal != null && hours > 0 ? Math.round(feeTotal / hours * 100) / 100 : null;

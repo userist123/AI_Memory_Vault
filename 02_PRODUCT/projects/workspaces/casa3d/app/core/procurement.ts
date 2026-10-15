@@ -16,6 +16,8 @@ export interface OrderState { status: OrderStatus; ref?: string; orderedAt?: str
 export interface ProcurementLine {
   key: string; kind: 'finish' | 'furniture' | 'custom'; product: string; supplier: string; code: string | null; url: string | null; image?: string | null; itemId?: string;
   qty: number; unit: string; packs: string | null; unitPrice: number | null; total: number | null; rooms: string[];
+  /** doar produsele proprii: prețul de achiziție (intern, nu ajunge la client), termenul și dimensiunea */
+  costPrice?: number | null; costTotal?: number | null; leadDays?: number | null; dimension?: string | null;
 }
 export interface ProcurementRow extends ProcurementLine { state: OrderState; overdue: boolean;
   /** zilele de livrare folosite (ale designerului sau implicite) și data până la care trebuie comandat/decis */
@@ -41,7 +43,7 @@ const keyOf = (...parts: (string | null | undefined)[]) => parts.map(p => (p ?? 
 
 /** Liniile de cumpărat, stabile între salvări (cheia nu depinde de ordinea camerelor). */
 /** Produs adăugat de designer în afara catalogului (din linkul unui magazin sau de mână). */
-export interface CustomLineItem { id: string; name: string; supplier: string; url: string | null; image: string | null; sku: string | null; price: number | null; qty: number; unit: string; roomId: string | null }
+export interface CustomLineItem { id: string; name: string; supplier: string; url: string | null; image: string | null; sku: string | null; price: number | null; qty: number; unit: string; roomId: string | null; costPrice?: number | null; leadDays?: number | null; dimension?: string | null }
 export function procurementLines(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, custom: CustomLineItem[] = []): ProcurementLine[] {
   const out = new Map<string, ProcurementLine>();
   for (const r of finishSchedule(snap, cat, mc)){ if (!r.product || r.element === 'adhesive' && !r.supplier) continue;
@@ -56,14 +58,15 @@ export function procurementLines(snap: Snapshot, cat: Catalog, mc: MaterialsCata
     out.set(key, { key, kind: 'furniture', product: productLabel(rv.product.name, rv.variant.name), supplier: sup, code: null,
       url: (o ?? rv.offer)?.affiliateUrl ?? (o ?? rv.offer)?.provenance?.sourceUrl ?? null, qty: 1, unit: 'buc', packs: null, unitPrice: o?.price ?? null, total: o ? round2(o.price) : null, rooms: room ? [room] : [] }); }
   for (const c of custom){ const room = roomName.get(c.roomId ?? '') ?? '', key = 'c|' + c.id;
-    out.set(key, { key, kind: 'custom', itemId: c.id, product: c.name, supplier: c.supplier, code: c.sku, url: c.url, image: c.image, qty: c.qty, unit: c.unit, packs: null, unitPrice: c.price, total: c.price != null ? round2(c.price * c.qty) : null, rooms: room ? [room] : [] }); }
+    out.set(key, { key, kind: 'custom', itemId: c.id, product: c.name, supplier: c.supplier, code: c.sku, url: c.url, image: c.image, qty: c.qty, unit: c.unit, packs: null, unitPrice: c.price, total: c.price != null ? round2(c.price * c.qty) : null, rooms: room ? [room] : [],
+      costPrice: c.costPrice ?? null, costTotal: c.costPrice != null ? round2(c.costPrice * c.qty) : null, leadDays: c.leadDays ?? null, dimension: c.dimension ?? null }); }
   return [...out.values()].sort((a, b) => a.supplier.localeCompare(b.supplier) || a.kind.localeCompare(b.kind) || a.product.localeCompare(b.product));
 }
 /** Liniile cu starea lor; o linie fără stare salvată e „de comandat”. */
 /** defaultNeededBy: data de început a lucrărilor din fișa proiectului, pentru liniile fără dată proprie. */
 export function procurementRows(lines: ProcurementLine[], states: Record<string, OrderState>, today: string, defaultNeededBy?: string): ProcurementRow[] {
   return lines.map(l => { const state = states[l.key] ?? { status: 'todo' as const };
-    const leadDays = state.leadDays ?? defaultLeadDays(l), needed = state.neededBy ?? defaultNeededBy, orderBy = needed ? addDays(needed, -leadDays) : null, open = state.status === 'todo' || state.status === 'quoted';
+    const leadDays = state.leadDays ?? l.leadDays ?? defaultLeadDays(l), needed = state.neededBy ?? defaultNeededBy, orderBy = needed ? addDays(needed, -leadDays) : null, open = state.status === 'todo' || state.status === 'quoted';
     const orderUrgency = !open || !orderBy ? null : orderBy < today ? 'late' : orderBy <= addDays(today, ORDER_SOON_DAYS) ? 'soon' : null;
     return { ...l, state, overdue: state.status === 'ordered' && !!state.eta && state.eta < today, leadDays, orderBy, orderUrgency }; });
 }

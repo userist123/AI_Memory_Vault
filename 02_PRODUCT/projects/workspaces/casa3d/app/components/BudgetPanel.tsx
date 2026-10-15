@@ -13,7 +13,7 @@ import { formatNumber } from '@/lib/i18n';
 
 // Cantitățile de materiale rămân în unitățile de comandă ale magazinului (m², ml, L, kg, buc); doar banii, lungimile și suprafețele de proiect urmează limba și unitățile.
 const pc = (x: number) => Math.round(x * 1000) / 10;
-const CAT_LABEL: Record<string, string> = { furniture: 'budget.cat.furniture', finishes: 'budget.cat.finishes', lighting: 'budget.cat.lighting', appliances: 'budget.cat.appliances', sanitary: 'budget.cat.sanitary' , textiles: 'budget.cat.textiles' };
+const CAT_LABEL: Record<string, string> = { furniture: 'budget.cat.furniture', finishes: 'budget.cat.finishes', lighting: 'budget.cat.lighting', appliances: 'budget.cat.appliances', sanitary: 'budget.cat.sanitary' , textiles: 'budget.cat.textiles', custom: 'cprod.budget' };
 const UNIT: Record<string, string> = { m2: 'm²', ml: 'budget.unit.ml', L: 'L', kg: 'kg', buc: 'budget.unit.buc' };
 const CONF: Record<string, string> = { HIGH: 'budget.conf.HIGH', MEDIUM: 'budget.conf.MEDIUM', LOW: 'budget.conf.LOW', UNKNOWN: 'budget.conf.UNKNOWN' };
 
@@ -21,9 +21,9 @@ export type Outbound = { targets: Record<string, 'direct' | 'affiliate'>; disclo
 export function linkFor(i: BoqItem, out: Outbound | null){ const mat = i.category === 'finishes' || i.category === 'lighting' || i.category === 'textiles', key = mat ? `m:${i.refId}` : `o:offer-${i.refId}`, t = out?.targets[key];
   return t ? { href: mat ? `/go/m/${i.refId}` : `/go/o/offer-${i.refId}`, rel: relFor(t), affiliate: t === 'affiliate' } : null; }
 export function Fresh({ at }: { at: string | null }){ const { t } = usePrefs(), f = freshness(at); return f.stale ? <span className="stale">{f.days == null ? t('budget.dateUnknown') : t('budget.staleDays', { days: f.days })}</span> : null; }
-export default function BudgetPanel({ snap, catalog, mc, out, onBudget }: { snap: Snapshot; catalog: Catalog; mc: MaterialsCatalog; out: Outbound | null; onBudget(patch: Partial<BudgetSettings>): void }){
+export default function BudgetPanel({ snap, catalog, mc, out, onBudget, custom }: { snap: Snapshot; catalog: Catalog; mc: MaterialsCatalog; out: Outbound | null; onBudget(patch: Partial<BudgetSettings>): void; custom?: { price: number | null; qty: number }[] }){
   const { t, lang, units } = usePrefs(), cur = catalogCurrency(catalog), lei = (v: number) => formatMoney(v, cur, lang), num = (v: number, d = 2) => formatNumber(v, lang, d), unit = (u: string) => UNIT[u]?.startsWith('budget.') ? t(UNIT[u]!) : UNIT[u] ?? u;
-  const b = useMemo(() => computeBudget(snap, catalog, mc), [snap, catalog, mc]);
+  const b = useMemo(() => computeBudget(snap, catalog, mc, custom), [snap, catalog, mc, custom]);
   const [open, setOpen] = useState<'mat' | 'lab' | 'mob' | null>(null), s = b.settings, c = b.chosen;
   const roomName = (id: string | null) => id ? snap.floor.rooms.find(r => r.id === id)?.name || '' : t('budget.wholeHouse');
   const numIn = (v: string) => v.trim() === '' ? null : Math.max(0, Number(v.replace(',', '.')) || 0);
