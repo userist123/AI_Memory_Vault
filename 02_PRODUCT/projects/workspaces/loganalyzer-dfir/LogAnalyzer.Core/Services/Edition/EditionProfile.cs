@@ -34,6 +34,8 @@ namespace LogAnalyzer.Core.Services.Edition
     {
         EditionKind Kind { get; }
         string DisplayName { get; }
+        /// <summary>The posture this executable is built for. Fixed at compile time by the edition's composition; no policy can widen it (see <see cref="StationPostures.ClampMode"/>).</summary>
+        StationPosture Posture { get; }
         /// <summary>True when the capability is compiled into this edition. Absent code is not "disabled": it is not there.</summary>
         bool Has(EditionFeature feature);
     }
@@ -54,6 +56,7 @@ namespace LogAnalyzer.Core.Services.Edition
 
         public EditionKind Kind => EditionKind.Classified;
         public string DisplayName => "Ediția clasificată (P1)";
+        public StationPosture Posture => StationPosture.Standalone;
         public bool Has(EditionFeature feature) => _compiledIn.Contains(feature);
     }
 
@@ -62,6 +65,20 @@ namespace LogAnalyzer.Core.Services.Edition
     {
         public EditionKind Kind => EditionKind.Unclassified;
         public string DisplayName => "Ediția neclasificată (P2/P3)";
+        public StationPosture Posture => StationPosture.Internet;
         public bool Has(EditionFeature feature) => true;
+    }
+
+    /// <summary>
+    /// Network edition (air-gapped LAN, no internet): internal-network features are compiled in (domain collection, syslog, live
+    /// watchers, response actions) but not the AI layer, which exists only in the Internet edition unless a build option adds it.
+    /// It is "unclassified" for role purposes: the station role still comes from the signed policy.
+    /// </summary>
+    public sealed class NetworkEditionProfile : IEditionProfile
+    {
+        public EditionKind Kind => EditionKind.Unclassified;
+        public string DisplayName => "Ediția rețea air-gap";
+        public StationPosture Posture => StationPosture.IsolatedNetwork;
+        public bool Has(EditionFeature feature) => feature != EditionFeature.AiAnalysis;
     }
 }

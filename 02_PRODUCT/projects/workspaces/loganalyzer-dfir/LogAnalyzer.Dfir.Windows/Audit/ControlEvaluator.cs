@@ -1,11 +1,16 @@
 using System.Globalization;
+using LogAnalyzer.Core.Services.Edition;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Windows.Native;
 using Ro = LogAnalyzer.Dfir.Language.RoText;
 
 namespace LogAnalyzer.Dfir.Windows.Audit;
 
-public enum ControlStatus { Conform, Neconform, DeVerificat, Nedeterminat }
+/// <summary>
+/// NuSeAplica ("Nu se aplică"): the rule does not apply to the posture of this edition (see <see cref="ControlApplicability"/>). It is neither
+/// compliant nor non-compliant and is never counted as a finding. Added last so the numeric values of reports saved earlier are unchanged.
+/// </summary>
+public enum ControlStatus { Conform, Neconform, DeVerificat, Nedeterminat, NuSeAplica }
 
 /// <param name="Subjects">Accounts or hosts the check is about (sAMAccountName), when the evaluator knows them; null otherwise.</param>
 public sealed record ControlCheck(string Id, string Area, string Title, ControlStatus Status, string Detail, IReadOnlyList<string> Evidence, string Recommendation,
@@ -60,6 +65,10 @@ public static class ControlEvaluator
         StationHardening(f, r);
         AirGapChannels(f, r);
         AirGapStation(f, r);
+        InternetEgress(f, r);
+        DomainMembership(f, r);
+        // The posture of the executable decides which rules apply: the rest become "Nu se aplică" (never counted as findings).
+        for (var i = 0; i < r.Checks.Count; i++) r.Checks[i] = ControlApplicability.Resolve(r.Checks[i], f.Posture);
         r.Actions.Sort((a, b) => a.TimeUtc.CompareTo(b.TimeUtc));
         return r;
     }
@@ -172,7 +181,7 @@ public static class ControlEvaluator
             rec: "Dezactivați AutoAdminLogon și ștergeți DefaultPassword.");
 
         var rdp = S("RDP.fDenyTSConnections");
-        Add(r, "P06", "Politici", "Conexiuni Remote Desktop", rdp == "1" ? ControlStatus.Conform : rdp == "" ? ControlStatus.Nedeterminat : f.StationShouldBeIsolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+        Add(r, "P06", "Politici", "Conexiuni Remote Desktop", rdp == "1" ? ControlStatus.Conform : rdp == "" ? ControlStatus.Nedeterminat : f.Posture == StationPosture.Standalone ? ControlStatus.Neconform : ControlStatus.DeVerificat,
             rdp == "1" ? "Dezactivate." : "Remote Desktop este ACTIVAT.", rec: "Pe o stație izolată, Remote Desktop trebuie dezactivat.");
 
         var fw = new[] { "Domain", "Private", "Public" }.Select(p => (p, S("Firewall." + p))).ToList();
@@ -189,7 +198,7 @@ public static class ControlEvaluator
             var age = f.CollectedUtc - sig;
             Add(r, "P09", "Politici", "Semnături antivirus actualizate", age.TotalDays <= 7 ? ControlStatus.Conform : ControlStatus.DeVerificat,
                 $"Ultima actualizare: {sig:yyyy-MM-dd} (acum {Ro.Days(age.TotalDays)}).",
-                rec: f.StationShouldBeIsolated ? "Pe stația izolată semnăturile se actualizează offline, periodic, după o procedură documentată." : "Verificați actualizarea automată.");
+                rec: f.Posture == StationPosture.Standalone ? "Pe stația izolată semnăturile se actualizează offline, periodic, după o procedură documentată." : "Verificați actualizarea automată.");
         }
         if (f.DefenderExclusions.Count > 0)
             Add(r, "P10", "Politici", "Excluderi Microsoft Defender", ControlStatus.DeVerificat,
@@ -206,7 +215,7 @@ public static class ControlEvaluator
             S("WDigest.UseLogonCredential") == "1" ? "UseLogonCredential=1: parolele în clar pot fi extrase din memorie." : "Configurare implicită sigură.");
 
         bool usbBlocked = S("USBSTOR.Start") == "4" || S("RemovableStorage.DenyAll") == "1";
-        Add(r, "P14", "Politici", "Stocare USB blocată prin politică", usbBlocked ? ControlStatus.Conform : f.StationShouldBeIsolated ? ControlStatus.DeVerificat : ControlStatus.DeVerificat,
+        Add(r, "P14", "Politici", "Stocare USB blocată prin politică", usbBlocked ? ControlStatus.Conform : f.Posture == StationPosture.Standalone ? ControlStatus.DeVerificat : ControlStatus.DeVerificat,
             usbBlocked ? "Accesul la stocare amovibilă este blocat." : "Stocarea USB este permisă.", rec: "Pe stațiile izolate, permiteți doar suporturi aprobate și înregistrate.");
     }
 
@@ -336,7 +345,7 @@ public static class ControlEvaluator
 
         var remote = r.Users.Where(u => u.RemoteLogons > 0 || u.RemoteSources.Count > 0).ToList();
         Add(r, "U03", "Utilizatori", "Autentificări de la distanță (RDP)",
-            !ChannelReadable(f, "Security") ? ControlStatus.Nedeterminat : remote.Count == 0 ? ControlStatus.Conform : f.StationShouldBeIsolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+            !ChannelReadable(f, "Security") ? ControlStatus.Nedeterminat : remote.Count == 0 ? ControlStatus.Conform : f.Posture == StationPosture.Standalone ? ControlStatus.Neconform : ControlStatus.DeVerificat,
             remote.Count == 0 ? "Nicio autentificare de la distanță." : string.Join("; ", remote.Select(u => $"{u.User}: {u.RemoteLogons} RDP de la {string.Join(", ", u.RemoteSources)}")));
 
         var bursts = Logs(f, "Security", 4625).GroupBy(l => (Who(l, "TargetUserName", "TargetDomainName"), l.TimeUtc.UtcDateTime.ToString("yyyy-MM-dd HH")))
@@ -402,7 +411,7 @@ public static class ControlEvaluator
 
         bool profilesKnown = !f.Gaps.Any(g => g.Artifact == "Profiluri de rețea");
         bool eventsKnown = ChannelReadable(f, "Microsoft-Windows-NetworkProfile/Operational") || ChannelReadable(f, "Microsoft-Windows-WLAN-AutoConfig/Operational");
-        if (f.StationShouldBeIsolated)
+        // Emitted in every posture (ControlApplicability turns it into "Nu se aplică" where a connection is expected).
         {
             bool connected = inPeriod.Count > 0 || evts.Count > 0 || f.ConnectedInterfacesNow.Count > 0;
             Add(r, "N01", "Rețea", "Stația izolată nu s-a conectat la nicio rețea",
@@ -422,6 +431,65 @@ public static class ControlEvaluator
                 : f.NetworkProfiles.Count == 0 ? "Rețele cunoscute: nu s-a observat în sursele colectate (NetworkList); absența profilurilor nu dovedește că stația nu s-a conectat (profilurile pot fi șterse)."
                 : $"{Ro.Capitalize(Ro.CountMasc(f.NetworkProfiles.Count, "profil de rețea salvat", "profiluri de rețea salvate"))}.",
             f.NetworkProfiles.OrderByDescending(p => p.LastConnectedLocal).Select(p => $"{p.Name} ({p.Kind}) creat {p.CreatedLocal:yyyy-MM-dd} · ultima conectare {p.LastConnectedLocal:yyyy-MM-dd HH:mm}"));
+    }
+
+    /// <summary>
+    /// N11 "no path to the internet", PASSIVE: only local configuration that was read (adapters, gateways, DNS servers, persistent routes, proxies, VPN
+    /// profiles, radios, cellular, saved Wi-Fi profiles, ICS). Nothing is probed, so a clean result means "no configured path found", not proof.
+    /// Standalone: any path at all is non-conform. IsolatedNetwork: internal gateway and DNS are expected; a path that leads outside the internal
+    /// ranges (public gateway or DNS, a proxy or VPN to outside, a radio, cellular, ICS) is non-conform. Internet: does not apply.
+    /// </summary>
+    private static void InternetEgress(StationFacts f, ControlReport r)
+    {
+        const string id = "N11", area = "Rețea", title = "Nicio cale spre internet (verificare pasivă a configurației)";
+        const string limits = " Verificarea citește doar configurația locală (registru, proprietățile adaptoarelor, WMI) și nu trimite trafic: absența unei căi găsite nu dovedește că nu există una, iar ce se află dincolo de gateway nu poate fi stabilit așa.";
+        if (f.EgressPaths is null)
+        {
+            Add(r, id, area, title, ControlStatus.Nedeterminat, "Configurația adaptoarelor, a rutelor, a proxy-urilor și a profilurilor VPN nu a putut fi citită." + limits);
+            return;
+        }
+        string S(string k) => f.Settings.TryGetValue(k, out var v) ? v : "";
+        var paths = new List<EgressPathFact>(f.EgressPaths);
+        if (int.TryParse(S("Wlan.ProfileCount"), out var wp) && wp > 0) paths.Add(new("Profil Wi-Fi salvat", $"{Ro.CountMasc(wp, "profil Wi-Fi salvat", "profiluri Wi-Fi salvate")}", false, false));
+        if (S("ICS.Shared").StartsWith("da", StringComparison.Ordinal)) paths.Add(new("Partajarea conexiunii (ICS)", S("ICS.Shared"), false, true));
+        if (S("Net.CellularAdapters").Length > 0) paths.Add(new("Date mobile (WWAN)", S("Net.CellularAdapters"), false, true));
+        if (S("Net.PhoneAdapters").Length > 0) paths.Add(new("Telefon folosit ca modem", S("Net.PhoneAdapters"), false, true));
+
+        // Kinds that lead outside by nature: a path found while active is a finding; present but inactive needs a look.
+        static bool ByNature(EgressPathFact p) => p.Kind is not ("Gateway" or "Server DNS" or "Rută permanentă" or "Proxy");
+        bool standalone = f.Posture == StationPosture.Standalone;
+        var bad = paths.Where(p => standalone || (p.Internal == false && (!ByNature(p) || p.Active))).ToList();
+        var review = standalone ? [] : paths.Where(p => !bad.Contains(p) && (p.Internal is null || (p.Internal == false && ByNature(p)))).ToList();
+        var evidence = paths.Select(p => $"{p.Kind}: {p.Description}{(p.Internal is true ? " (adresă internă)" : p.Internal is null ? " (nu se poate stabili fără trafic)" : "")}{(p.Active ? "" : " [neactiv acum]")}");
+        string rec = standalone
+            ? "Scoateți adaptorul, ștergeți configurația (gateway, DNS, proxy, profil VPN sau Wi-Fi) și dezactivați radiourile; investigați cine a configurat-o."
+            : "Scoateți sau dezactivați calea care duce în afara rețelei interne (proxy, VPN, radio, modem, gateway sau DNS public) și investigați cine a configurat-o.";
+        if (bad.Count > 0)
+            Add(r, id, area, title, ControlStatus.Neconform,
+                $"{Ro.Capitalize(Ro.CountFem(bad.Count, "cale spre exterior găsită", "căi spre exterior găsite"))}: {string.Join("; ", bad.Take(8).Select(p => $"{p.Kind} — {p.Description}"))}." + (standalone ? " O stație Standalone nu trebuie să aibă nicio cale." : " Rețeaua izolată nu trebuie să aibă nicio cale spre internet.") + limits,
+                evidence, rec);
+        else if (review.Count > 0)
+            Add(r, id, area, title, ControlStatus.DeVerificat,
+                $"{Ro.Capitalize(Ro.CountFem(review.Count, "configurație nu poate fi încadrată automat", "configurații nu pot fi încadrate automat"))}: {string.Join("; ", review.Take(8).Select(p => $"{p.Kind} — {p.Description}"))}. Confirmați că nu duc în afara rețelei interne." + limits,
+                evidence, rec);
+        else
+            Add(r, id, area, title, ControlStatus.Conform,
+                (paths.Count == 0 ? "Nu s-a găsit nicio gateway, server DNS, proxy, profil VPN, radio, modem sau partajare a conexiunii." : "Singurele căi găsite sunt interne (gateway și DNS din domeniile de adrese interne).") + limits,
+                evidence);
+    }
+
+    /// <summary>N12: on an isolated domain LAN the station is expected to be a domain member (domain controller reachability would need traffic and is not checked).</summary>
+    private static void DomainMembership(StationFacts f, ControlReport r)
+    {
+        string S(string k) => f.Settings.TryGetValue(k, out var v) ? v : "";
+        var member = S("Domain.PartOfDomain"); var name = S("Domain.Name");
+        Add(r, "N12", "Rețea", "Stația este membră a domeniului",
+            member == "" ? ControlStatus.Nedeterminat : member == "da" ? ControlStatus.Conform : ControlStatus.Neconform,
+            member == "" ? "Apartenența la domeniu nu a putut fi citită." + NoRead
+                : member == "da" ? $"Stația este membră a domeniului {name}. Accesibilitatea controlerului de domeniu nu se verifică (ar cere trafic)."
+                : $"Stația nu este membră a unui domeniu (grup de lucru „{name}”), deși ediția așteaptă o stație dintr-o rețea de domeniu.",
+            [$"WMI Win32_ComputerSystem → PartOfDomain = {(member == "" ? "necitit" : member)}, Domain = {name}"],
+            "Alăturați stația la domeniul rețelei izolate sau folosiți ediția Standalone.");
     }
 
     private static void Software(StationFacts f, ControlReport r)
@@ -459,7 +527,8 @@ public static class ControlEvaluator
     private static void AirGapChannels(StationFacts f, ControlReport r)
     {
         string S(string k) => f.Settings.TryGetValue(k, out var v) ? v : "";
-        bool isolated = f.StationShouldBeIsolated;
+        bool isolated = f.Posture == StationPosture.Standalone;
+        bool noInternet = f.Posture != StationPosture.Internet;   // Standalone and IsolatedNetwork: no path to the internet is expected
         string Shown(string v) => v == Absent ? "nesetat" : v;
         int N(string k) => int.TryParse(S(k), out var n) ? n : 0;
 
@@ -476,9 +545,9 @@ public static class ControlEvaluator
             if (cell.Length > 0) parts.Add($"modem celular (WWAN): {cell}");
             if (usbE.Length > 0) parts.Add($"placă Ethernet pe USB: {usbE}");
             Add(r, "N05", "Rețea", "Adaptoare de telefon, modem celular sau Ethernet pe USB",
-                parts.Count == 0 ? ControlStatus.Conform : outbound && isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+                parts.Count == 0 ? ControlStatus.Conform : outbound && noInternet ? ControlStatus.Neconform : ControlStatus.DeVerificat,
                 parts.Count == 0 ? (N("Net.AdapterCount") == 1 ? "Singurul adaptor de rețea activ nu este" : $"Dintre cele {Ro.Count(N("Net.AdapterCount"), "adaptor", "adaptoare")} de rețea active, niciunul nu este") + " telefon folosit ca modem, modem celular sau placă Ethernet pe USB (adaptoarele virtuale nu se numără)."
-                    : "Au fost găsite: " + string.Join("; ", parts) + "." + (isolated ? " Un astfel de adaptor dă stației izolate o cale de internet sau către altă rețea, ocolind rețeaua stației." : " Verificați că adaptorul este cel aprobat."),
+                    : "Au fost găsite: " + string.Join("; ", parts) + "." + (noInternet ? " Un astfel de adaptor dă stației izolate o cale de internet sau către altă rețea, ocolind rețeaua stației." : " Verificați că adaptorul este cel aprobat."),
                 [$"WMI Win32_PnPEntity (clasa Net): {Ro.CountMasc(N("Net.AdapterCount"), "adaptor activ", "adaptoare active")}", "tip stabilit din identificatori compatibili, serviciu și descriere"],
                 "Scoateți telefonul / modemul / placa USB; dacă sunt aprobate, notați documentul de aprobare.");
         }
@@ -565,7 +634,7 @@ public static class ControlEvaluator
     private static void StationHardening(StationFacts f, ControlReport r)
     {
         string S(string k) => f.Settings.TryGetValue(k, out var v) ? v : "";
-        bool isolated = f.StationShouldBeIsolated;
+        bool noInternet = f.Posture != StationPosture.Internet;   // Standalone and IsolatedNetwork: no path to the internet is expected
         string Shown(string v) => v == Absent ? "nesetat" : v;
 
         // N03 Wi-Fi
@@ -580,10 +649,10 @@ public static class ControlEvaluator
             var svcText = svc switch { "" => "starea serviciului Wi-Fi nu a putut fi citită", Absent => "serviciul Wi-Fi nu există pe această stație", "4" => "serviciul Wi-Fi este dezactivat", "2" => "serviciul Wi-Fi pornește singur", _ => "serviciul Wi-Fi poate porni la cerere" };
             int profN = int.TryParse(profiles, out var profParsed) ? profParsed : 0;
             var profText = profiles == "" ? "profilurile Wi-Fi salvate nu au putut fi numărate (necesită administrator)" : profN == 1 ? "un profil Wi-Fi salvat" : $"{Ro.Count(profN, "profil", "profiluri")} Wi-Fi salvate";
-            var status = wifi == 0 ? ControlStatus.Conform : isolated && wifiUp > 0 ? ControlStatus.Neconform : ControlStatus.DeVerificat;
+            var status = wifi == 0 ? ControlStatus.Conform : noInternet && wifiUp > 0 ? ControlStatus.Neconform : ControlStatus.DeVerificat;
             Add(r, "N03", "Rețea", "Adaptor Wi-Fi (rețea fără fir)", status,
                 wifi == 0 ? $"Stația nu are niciun adaptor Wi-Fi; {profText}."
-                    : $"Stația are {Ro.CountMasc(wifi, "adaptor Wi-Fi", "adaptoare Wi-Fi")} ({(wifiUp == 0 ? "niciunul pornit acum" : wifiUp == 1 ? (wifi == 1 ? "pornit acum" : "unul pornit acum") : $"{wifiUp} pornite acum")}); {svcText}; {profText}." + (isolated ? " Pe o stație izolată un adaptor Wi-Fi poate crea o legătură cu exteriorul." : ""),
+                    : $"Stația are {Ro.CountMasc(wifi, "adaptor Wi-Fi", "adaptoare Wi-Fi")} ({(wifiUp == 0 ? "niciunul pornit acum" : wifiUp == 1 ? (wifi == 1 ? "pornit acum" : "unul pornit acum") : $"{wifiUp} pornite acum")}); {svcText}; {profText}." + (noInternet ? " Pe o stație izolată un adaptor Wi-Fi poate crea o legătură cu exteriorul." : ""),
                 (wifi > 0 ? S("Wifi.Adapters").Split("; ", StringSplitOptions.RemoveEmptyEntries) : []).Concat([@"HKLM\SYSTEM\CurrentControlSet\Services\WlanSvc → Start = " + Shown(svc)]),
                 "Adaptorul Wi-Fi se scoate fizic sau se dezactivează din BIOS; dacă este aprobat, notați documentul de aprobare.");
         }
@@ -597,11 +666,11 @@ public static class ControlEvaluator
             int bt = int.TryParse(btCount, out var bc) ? bc : 0;
             var svc = S("Bluetooth.ServiceStart");
             bool svcOff = svc is "4" or Absent;
-            var status = bt == 0 ? ControlStatus.Conform : isolated && !svcOff ? ControlStatus.Neconform : ControlStatus.DeVerificat;
+            var status = bt == 0 ? ControlStatus.Conform : noInternet && !svcOff ? ControlStatus.Neconform : ControlStatus.DeVerificat;
             Add(r, "N04", "Rețea", "Bluetooth", status,
                 bt == 0 ? "Stația nu are componente Bluetooth."
                     : $"Stația are Bluetooth ({Ro.CountFem(bt, "componentă", "componente")}: {S("Bluetooth.Components")}); serviciul Bluetooth este {(svcOff ? "dezactivat" : svc == "" ? "într-o stare necitită" : "permis să pornească")}." +
-                      (isolated ? " Prin Bluetooth se pot trimite fișiere fără cablu." : ""),
+                      (noInternet ? " Prin Bluetooth se pot trimite fișiere fără cablu." : ""),
                 [@"HKLM\SYSTEM\CurrentControlSet\Services\bthserv → Start = " + Shown(svc)],
                 "Bluetooth trebuie oprit dacă organizația nu l-a aprobat în scris.");
         }
@@ -857,7 +926,8 @@ public static class ControlEvaluator
     private static void AirGapStation(StationFacts f, ControlReport r)
     {
         string S(string k) => f.Settings.TryGetValue(k, out var v) ? v : "";
-        bool isolated = f.StationShouldBeIsolated;
+        bool isolated = f.Posture == StationPosture.Standalone;
+        bool noInternet = f.Posture != StationPosture.Internet;   // Standalone and IsolatedNetwork: no path to the internet is expected
         string Shown(string v) => v == Absent ? "nesetat" : v == "" ? "necitit" : v;
 
         // P32 (A2) BitLocker on every fixed volume, PIN at boot.
@@ -1073,7 +1143,7 @@ public static class ControlEvaluator
         // N10 (A14) Internet Connection Sharing.
         string ics = S("ICS.Shared"), icsPol = S("ICS.PolicyShowUI"), icsSvc = S("ICS.ServiceStart");
         Add(r, "N10", "Rețea", "Partajarea conexiunii la Internet (ICS)",
-            ics == "" ? (icsPol == "0" ? ControlStatus.DeVerificat : ControlStatus.Nedeterminat) : ics.StartsWith("da", StringComparison.Ordinal) ? (isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat) : ControlStatus.Conform,
+            ics == "" ? (icsPol == "0" ? ControlStatus.DeVerificat : ControlStatus.Nedeterminat) : ics.StartsWith("da", StringComparison.Ordinal) ? (noInternet ? ControlStatus.Neconform : ControlStatus.DeVerificat) : ControlStatus.Conform,
             ics == "" ? (icsPol == "0" ? "Starea partajării nu a putut fi citită; politica interzice activarea ei." : "Starea partajării conexiunii nu a putut fi citită." + NoRead)
                 : ics.StartsWith("da", StringComparison.Ordinal) ? $"Partajarea conexiunii la Internet este PORNITĂ ({ics[3..].Trim()}): stația face legătura între două rețele."
                 : "Partajarea conexiunii la Internet nu este pornită pe nicio conexiune." + (icsPol == "0" ? " Politica interzice și activarea ei." : ""),

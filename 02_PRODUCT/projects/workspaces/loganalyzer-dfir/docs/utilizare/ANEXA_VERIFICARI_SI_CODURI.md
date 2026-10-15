@@ -773,6 +773,22 @@
 - **Sursa tehnică:** `Interfața Windows de partajare (HNetCfg.HNetShare); HKLM\SOFTWARE\Policies\Microsoft\Windows\Network Connections → NC_ShowSharedAccessUI`
 - **Cum se citește rezultatul:** Conform = nepornită. Neconform = pornită pe o stație izolată. De verificat = pornită pe o stație neizolată, sau starea nu a putut fi citită dar politica o interzice.
 
+### N11
+
+- **Ce verificăm:** Dacă stația are configurată sau prezentă vreo cale spre internet: gateway, servere DNS, rute permanente, proxy, profil VPN, adaptor Wi-Fi sau modem celular, profiluri Wi-Fi salvate, partajarea conexiunii.
+- **De ce contează:** O singură cale spre exterior anulează izolarea unei stații Standalone sau a unei rețele air-gap, chiar dacă acum nu este folosită.
+- **Cum verifică aplicația:** A citit doar configurația locală: proprietățile adaptoarelor, registrul (gateway și DNS ale fiecărei interfețe, inclusiv ale adaptoarelor oprite acum, rute permanente, proxy WinINet și WinHTTP), fișierele rasphone.pbk și WMI. Nu a deschis nicio conexiune, nu a trimis niciun pachet și nu a rezolvat niciun nume.
+- **Sursa tehnică:** `Adaptoarele de rețea; HKLM\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters (Interfaces, PersistentRoutes); HKLM/HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings; rasphone.pbk; WMI`
+- **Cum se citește rezultatul:** Pe Standalone: Conform = nicio configurație găsită; Neconform = orice cale găsită, chiar un gateway intern sau un radio oprit. Pe Rețea air-gap: Conform = doar gateway și DNS interne (10/8, 172.16/12, 192.168/16, link-local, unique-local); Neconform = gateway sau DNS public, proxy spre exterior, VPN, radio pornit, modem celular, partajare a conexiunii; De verificat = proxy dat prin nume (nu se rezolvă fără trafic) sau radio prezent dar oprit. Nu se aplică pe Internet. Absența unei căi găsite nu dovedește că nu există una.
+
+### N12
+
+- **Ce verificăm:** Dacă stația este membră a domeniului rețelei izolate.
+- **De ce contează:** Într-o rețea air-gap cu domeniu, stațiile se administrează și se autentifică prin controlerele de domeniu; o stație în grup de lucru iese din politicile domeniului.
+- **Cum verifică aplicația:** A citit din WMI dacă calculatorul face parte dintr-un domeniu și numele domeniului. Nu a contactat controlerul de domeniu.
+- **Sursa tehnică:** `WMI Win32_ComputerSystem → PartOfDomain, Domain`
+- **Cum se citește rezultatul:** Conform = membră a unui domeniu. Neconform = grup de lucru. Nedeterminat = nu a putut fi citit. Nu se aplică pe Standalone și Internet. Accesibilitatea controlerului de domeniu nu se verifică.
+
 ### EM01
 
 - **Ce verificăm:** Dacă din cutia poștală au plecat 50 de mesaje sau mai multe într-o singură oră.

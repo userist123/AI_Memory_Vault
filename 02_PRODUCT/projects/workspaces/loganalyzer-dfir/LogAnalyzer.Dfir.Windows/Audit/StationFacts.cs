@@ -53,7 +53,8 @@ public sealed class StationFacts
     public DateTimeOffset PeriodStartUtc { get; init; }
     public DateTimeOffset PeriodEndUtc { get; init; }
     public bool IsAdministrator { get; init; }
-    public bool StationShouldBeIsolated { get; init; }
+    /// <summary>The edition's compile-time posture; decides which checks apply (see ControlApplicability). Default: the strictest, so a forgotten value never relaxes a rule.</summary>
+    public LogAnalyzer.Core.Services.Edition.StationPosture Posture { get; init; } = LogAnalyzer.Core.Services.Edition.StationPosture.Standalone;
     public List<LocalAccount> Accounts { get; init; } = [];
     public PasswordPolicy? PasswordPolicy { get; set; }
     public Dictionary<string, AuditSetting>? AuditPolicy { get; set; }
@@ -61,6 +62,8 @@ public sealed class StationFacts
     public List<string> DefenderExclusions { get; init; } = [];
     public List<NetworkProfileFact> NetworkProfiles { get; init; } = [];
     public List<string> ConnectedInterfacesNow { get; init; } = [];
+    /// <summary>Configured or present ways out of the station, read passively (check N11); null = not collected.</summary>
+    public List<EgressPathFact>? EgressPaths { get; set; }
     public List<UsbDeviceFact> UsbDevices { get; init; } = [];
     public List<LogFact> Logs { get; init; } = [];
     public List<ChannelCoverage> Coverage { get; init; } = [];
@@ -115,7 +118,7 @@ public static class StationFactCollector
 
     /// <param name="classifiedFolders">The classified folders of the procedure profile (their audit rules are read); null = not collected.</param>
     /// <param name="offlineUpdates">The organisation's register of offline updates (compared with the installed updates); null = not given.</param>
-    public static StationFacts Collect(DateTimeOffset periodStartUtc, bool stationShouldBeIsolated, int maxPerId = 5000, CancellationToken ct = default,
+    public static StationFacts Collect(DateTimeOffset periodStartUtc, LogAnalyzer.Core.Services.Edition.StationPosture posture, int maxPerId = 5000, CancellationToken ct = default,
                                        IReadOnlyList<string>? classifiedFolders = null, IReadOnlyList<LogAnalyzer.Dfir.Registers.UpdateRow>? offlineUpdates = null)
     {
         using var id = WindowsIdentity.GetCurrent();
@@ -124,7 +127,7 @@ public static class StationFactCollector
             PeriodStartUtc = periodStartUtc,
             PeriodEndUtc = DateTimeOffset.UtcNow,
             IsAdministrator = new WindowsPrincipal(id).IsInRole(WindowsBuiltInRole.Administrator),
-            StationShouldBeIsolated = stationShouldBeIsolated,
+            Posture = posture,
         };
         Try(facts, "Conturi locale", () => facts.Accounts.AddRange(ReadAccounts()));
         Try(facts, "Politica de parole", () => facts.PasswordPolicy = LocalPasswordPolicy.Query());
@@ -136,6 +139,8 @@ public static class StationFactCollector
         Try(facts, "Setări de securitate (extinse)", () => ReadSettingsWave2(facts));
         Try(facts, "Setări de securitate (stație izolată)", () => ReadSettingsWave3(facts));
         Try(facts, "Volume și BitLocker", () => ReadVolumes(facts));
+        Try(facts, "Căi spre internet (configurație locală)", () => facts.EgressPaths = EgressPathCollector.Collect());
+        Try(facts, "Apartenența la domeniu", () => ReadDomainMembership(facts));
         if (classifiedFolders is not null) facts.FolderAudits = ReadFolderAudits(classifiedFolders);
         if (offlineUpdates is not null) facts.OfflineUpdateRegister = [.. offlineUpdates];
         Try(facts, "Profiluri de rețea", () => facts.NetworkProfiles.AddRange(ReadNetworkProfiles()));
@@ -527,6 +532,18 @@ public static class StationFactCollector
 
     private static readonly Guid SubNoneGuid = new("fea3413e-7e05-4911-9a71-700331f1c294");        // powercfg SUB_NONE
     private static readonly Guid ConsoleLockGuid = new("0e796bdb-100d-47d6-a2d5-f7d2daa51f51");    // powercfg CONSOLELOCK: password on wake
+
+    /// <summary>Domain membership (check N12), read from WMI Win32_ComputerSystem: "da" / "nu" and the domain or workgroup name. Local read only.</summary>
+    private static void ReadDomainMembership(StationFacts f)
+    {
+        using var cs = new ManagementObjectSearcher("SELECT PartOfDomain, Domain FROM Win32_ComputerSystem");
+        foreach (ManagementObject o in cs.Get())
+        {
+            f.Settings["Domain.PartOfDomain"] = o["PartOfDomain"] is true ? "da" : "nu";
+            f.Settings["Domain.Name"] = o["Domain"]?.ToString() ?? "";
+            break;
+        }
+    }
 
     private static void ReadSettingsWave3(StationFacts f)
     {

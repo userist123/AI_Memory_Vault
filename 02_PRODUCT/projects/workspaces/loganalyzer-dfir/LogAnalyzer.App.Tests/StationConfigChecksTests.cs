@@ -20,7 +20,7 @@ public sealed class StationConfigChecksTests
 
     private static StationFacts Station(bool isolated = true, params (string K, string V)[] settings)
     {
-        var f = new StationFacts { StationShouldBeIsolated = isolated, IsAdministrator = true, CollectedUtc = Now, PeriodStartUtc = Now.AddDays(-90), PeriodEndUtc = Now };
+        var f = new StationFacts { Posture = isolated ? LogAnalyzer.Core.Services.Edition.StationPosture.Standalone : LogAnalyzer.Core.Services.Edition.StationPosture.Internet, IsAdministrator = true, CollectedUtc = Now, PeriodStartUtc = Now.AddDays(-90), PeriodEndUtc = Now };
         foreach (var (k, v) in settings) f.Settings[k] = v;
         return f;
     }
