@@ -66,7 +66,7 @@ public static class EvidenceFingerprint
         if (t == "srum" || name.Equals("SRUDB.dat", StringComparison.OrdinalIgnoreCase)) return ["ese"];
         if (t is "system_hive" or "amcache" or "ntuser_hive" or "software_hive") return ["regf"];
         if (t == "pcapng" || name.EndsWith(".pcapng", StringComparison.OrdinalIgnoreCase)) return ["pcapng"];
-        if (t == "live_snapshot") return ["json"];
+        if (t is "live_snapshot" or "airgap_facts") return ["json"];
         if (t == "task_xml") return ["task_xml"];
         if (t == "usn_journal") return ["usn_fsutil"];
         if (t is "chromium_history" or "firefox_places") return ["sqlite"];
@@ -87,6 +87,18 @@ public sealed record PreflightResult(string EvidenceId, PreflightStatus Status, 
 {
     /// <summary>Unverified = readable and of the declared format, but there is no acquisition hash to compare with.</summary>
     public bool CanParse => Status is PreflightStatus.Ok or PreflightStatus.Unverified;
+
+    /// <summary>
+    /// The file is gone or its content changed after acquisition: results attributed to it no longer belong to the acquired source.
+    /// A format mismatch with an intact hash is not this: the file is the acquired one, it was only not interpreted.
+    /// </summary>
+    public bool IsIntegrityFailure => Status is PreflightStatus.Missing or PreflightStatus.SizeMismatch or PreflightStatus.HashMismatch;
+
+    /// <summary>Reader-facing notice for a format mismatch; empty for every other state.</summary>
+    public string FormatNotice => Status != PreflightStatus.FormatMismatch ? ""
+        : ExpectedSha256.Length > 0
+            ? "fișier gol sau format neașteptat; amprenta este intactă; elementul de probă nu a fost interpretat"
+            : "fișier gol sau format neașteptat; nu există amprentă de la achiziție; elementul de probă nu a fost interpretat";
 
     /// <summary>Code used in errors, gaps and the audit log.</summary>
     public string Code => Status switch
@@ -152,7 +164,7 @@ public static class EvidencePreflight
         var expected = acceptedFormats ?? EvidenceFingerprint.Expected(item);
         if (expected is not null && !expected.Contains(fingerprint))
             return new(item.EvidenceId, PreflightStatus.FormatMismatch, size, sha, item.Sha256, fingerprint,
-                $"Conținutul are formatul „{fingerprint}”, dar proba este declarată {item.SourceType} (așteptat: {string.Join("/", expected)}).", fileTime);
+                (fingerprint == "empty" ? "Fișierul este gol" : $"Conținutul are formatul „{fingerprint}”") + $", dar elementul de probă este declarat {item.SourceType} (așteptat: {string.Join("/", expected)}).", fileTime);
         if (item.Sha256.Length == 0)
             return new(item.EvidenceId, PreflightStatus.Unverified, size, sha, "", fingerprint,
                 "Proba nu are un SHA-256 de la achiziție; integritatea nu poate fi verificată.", fileTime);

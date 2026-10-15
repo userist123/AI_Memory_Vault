@@ -113,7 +113,7 @@ public sealed class Wp18FlowTests : IDisposable
         Assert.Contains("2 verificări sunt NECONFORME", r.Problem);
         Assert.Contains("Conturi", r.Seriousness); Assert.Contains("Politici", r.Seriousness);
         Assert.Contains("FĂRĂ drepturi de administrator", r.Trust);
-        Assert.Contains("NECONFORM 2", r.Found);
+        Assert.Contains("2 probleme · 1 de lămurit cu organizația · 1 nu s-au putut verifica · 1 în regulă", r.Found);   // plain counts, no score (UX research R9)
         Assert.InRange(r.NextSteps.Count, 1, ControlResultScreen.MaxNextSteps);
         Assert.Contains(r.NextSteps, s => s.Contains("administrator"));
         Assert.Contains(r.NextSteps, s => s.Contains("profilul de proceduri"));
@@ -125,7 +125,7 @@ public sealed class Wp18FlowTests : IDisposable
         Assert.True(n.NothingFound);
         Assert.StartsWith("NIMIC NECONFORM GĂSIT", n.Headline);
         Assert.Contains("necitite: Security", n.Problem);          // the coverage travels with "nothing found"
-        Assert.Contains("NEDETERMINATE", n.Seriousness);
+        Assert.Contains("O verificare NEDETERMINATĂ", n.Seriousness);   // one check: singular (count grammar, 2026-10-12)
         Assert.DoesNotContain("SAFE", n.Headline + n.Problem + n.Trust + n.Found);
         Assert.DoesNotContain("sistem curat", (n.Headline + n.Problem).ToLowerInvariant());
     }

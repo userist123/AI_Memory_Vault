@@ -63,8 +63,8 @@ public sealed class EvidenceReasonerTests
     [Fact]
     public void Files_addresses_domains_and_dates_must_be_in_the_cited_items()
     {
-        // The real failure seen with a 7B model: linking NanAgent32.exe to SETUP.EXE while citing only the Prefetch item.
-        Assert.Contains("NanAgent32.exe", Rejected("correlation_explanation", "NanAgent32.exe a fost asociat cu rularea SETUP.EXE.", "E2").Reason);
+        // The real failure seen with a 7B model: linking VendorAgent32.exe to SETUP.EXE while citing only the Prefetch item.
+        Assert.Contains("VendorAgent32.exe", Rejected("correlation_explanation", "VendorAgent32.exe a fost asociat cu rularea SETUP.EXE.", "E2").Reason);
         Assert.Contains("185.220.101.5", Rejected("summary", "SETUP.EXE a contactat 185.220.101.5.", "E2").Reason);
         Assert.Contains("evil.com", Rejected("summary", "Descărcarea a venit de pe evil.com.", "E1").Reason);
         Assert.Contains("2026-09-18", Rejected("summary", "SETUP.EXE a rulat pe 2026-09-18.", "E2").Reason);

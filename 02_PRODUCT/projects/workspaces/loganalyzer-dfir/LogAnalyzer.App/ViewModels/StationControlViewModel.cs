@@ -32,14 +32,52 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _inspector = LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified;
         [ObservableProperty] private string _notes = "";
         [ObservableProperty] private bool _isBusy;
-        [ObservableProperty] private string _status = "Alegeți perioada și apăsați „Rulează controlul”. Colectarea doar citește; nu modifică stația.";
+        [ObservableProperty] private string _status = "Apăsați „Înainte” ca să alegeți perioada. Controlul doar citește; nu modifică stația.";
         [ObservableProperty] private string _summary = "";
         [ObservableProperty] private string _statusFilter = "Toate";
         [ObservableProperty] private string _gapsText = "";
+        [ObservableProperty] private string _savedReportInfo = "";
+
+        // Checks only the controller can do (docs/dfir/RESEARCH_2026-10-11_CONTROL_STATII_CLASIFICATE.md §3), answered here and printed in the report.
+        public ObservableCollection<ManualCheckItem> ManualItems { get; } = new(LogAnalyzer.Dfir.Flow.ManualChecks.All.Select(c => new ManualCheckItem(c)));
+        [ObservableProperty] private string _manualSummary = LogAnalyzer.Dfir.Flow.ManualChecks.Summary([]);
+        private void HookManual()
+        {
+            foreach (var m in ManualItems)
+                m.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(ManualCheckItem.Answer)) ManualSummary = LogAnalyzer.Dfir.Flow.ManualChecks.Summary(ManualItems.Select(x => x.ToResult()).ToList()); };
+        }
+        partial void OnSavedReportInfoChanged(string value) => OnPropertyChanged(nameof(HasSavedReport));
+        public bool HasSavedReport => SavedReportInfo.Length > 0;
 
         public string[] StatusFilters { get; } = { "Toate", "NECONFORM", "DE VERIFICAT", "NEDETERMINAT", "CONFORM" };
 
         partial void OnStatusFilterChanged(string value) => FillChecks();
+
+        // Owner 2026-10-11: every code explained on screen (what, why, how, when) for controllers without IT training: list on the left, explanation on the right.
+        [ObservableProperty] private ControlCheck? _selectedCheck;
+        [ObservableProperty] private CheckExplanation? _selectedExplanation;
+        partial void OnSelectedCheckChanged(ControlCheck? value) => SelectedExplanation = value is null ? null : CheckGuides.Explain(value);
+        partial void OnSelectedExplanationChanged(CheckExplanation? value) => OnPropertyChanged(nameof(HasSelectedCheck));
+        public bool HasSelectedCheck => SelectedExplanation is not null;
+
+        [ObservableProperty] private ActionEntry? _selectedAction;
+        public ObservableCollection<CodeExplanation> SelectedActionCodes { get; } = new();
+        partial void OnSelectedActionChanged(ActionEntry? value)
+        {
+            SelectedActionCodes.Clear();
+            if (value is null) return;
+            foreach (var c in CodeExplainer.FindIn($"{value.Source} {value.Detail}")) SelectedActionCodes.Add(c);
+            if (SelectedActionCodes.Count == 0)
+                SelectedActionCodes.Add(new CodeExplanation(value.Source, "sursă", "Această sursă nu are încă o explicație în aplicație.", "Arătați înregistrarea unui specialist IT dacă este nevoie.", ""));
+        }
+
+        [RelayCommand]
+        private void CopyExplanation()
+        {
+            if (SelectedExplanation is null) { Status = "Alegeți întâi o verificare din listă."; return; }
+            try { Clipboard.SetText(SelectedExplanation.ToPlainText()); Status = "Explicația a fost copiată; o puteți lipi în procesul-verbal."; }
+            catch (System.Runtime.InteropServices.COMException) { Status = "Clipboard-ul este ocupat de alt program; încercați din nou."; }
+        }
 
         // ───────── WP18 S4: the guided control, "Verifică această stație", in three steps ─────────
 
@@ -49,6 +87,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         public StationControlViewModel()
         {
+            HookManual();
             _flow = new GuidedFlow("Verifică această stație",
             [
                 new FlowStep("station", "Ce stație?", "Controlul se face pe acest calculator. Aplicația doar citește; nu modifică nimic."),
@@ -56,7 +95,7 @@ namespace LogAnalyzer.UI.ViewModels
                 new FlowStep("procedures", "Ce proceduri?", "Acestea sunt procedurile după care se judecă stația. O secțiune nedefinită nu poate da CONFORM."),
             ]);
             PeriodOptions = Enum.GetValues<ControlPeriodChoice>().Select(c => new PeriodOption(c, ControlPeriods.Label(c))).ToList();
-            StationLine = $"{Environment.MachineName} · {LogAnalyzer.Core.Services.Edition.StationRoleContext.Current.HumanRole} · " +
+            StationLine = $"{Environment.MachineName} · {LogAnalyzer.Dfir.Registers.StationName.Parse(Environment.MachineName).Describe()} · " +
                           (AppModeContext.IsAirGapped ? "fără rețea (izolată)" : "conectată");
             LoadPreviousControls();
             InspectorFunction = _headerProfile.InspectorFunction;
@@ -141,6 +180,26 @@ namespace LogAnalyzer.UI.ViewModels
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { PreviousNote = "Controalele anterioare nu au putut fi citite: " + ex.Message; }
         }
 
+        /// <summary>
+        /// What the control reads from the organisation's own data: the classified folders of the procedure profile (their audit rules are checked)
+        /// and the register of offline updates (compared with the installed updates). Missing data gives empty lists, which the checks report as
+        /// "not filled in", never as compliant.
+        /// </summary>
+        internal static (System.Collections.Generic.List<string> Folders, System.Collections.Generic.List<LogAnalyzer.Dfir.Registers.UpdateRow> Updates) ControlInputs()
+        {
+            ProcedureProfile? p = null;
+            try { p = ProfileProvider.Shared.Current; } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { }
+            var folders = p?.ClassifiedFolders.Select(x => x.Path.Trim()).Where(x => x.Length > 0).ToList() ?? [];
+            var updates = new System.Collections.Generic.List<LogAnalyzer.Dfir.Registers.UpdateRow>();
+            try { updates = LogAnalyzer.Dfir.Registers.RegisterStore.Load<LogAnalyzer.Dfir.Registers.UpdateRegister>().Register?.Rows ?? updates; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { }
+            return (folders, updates);
+        }
+
+        private UpdateRegisterViewModel? _updateRegister;
+        /// <summary>"Registrul actualizărilor offline" (control research P5), edited on the control page; created when the page first shows it.</summary>
+        public UpdateRegisterViewModel UpdateRegister => _updateRegister ??= new UpdateRegisterViewModel();
+
         private void LoadProfileSections()
         {
             ProfileSections.Clear();
@@ -155,6 +214,9 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (_flow.Completed) { _flow.Restart(); Result = null; Comparison = null; ComparisonChanges.Clear(); RaiseFlow(); return; }
             bool wasLast = _flow.IsLastStep;
+            // The case scope (why, period, systems, approver, act) is asked once, at the start; the report step does not ask again when it is complete.
+            if (_flow.StepIndex == 0 && !LogAnalyzer.UI.Services.LiveCase.EnsureScopeAtStart() && LogAnalyzer.UI.Services.LiveCase.ScopePrompt is not null)
+                Status = "Scopul cazului nu a fost completat; veți fi întrebat din nou la salvarea raportului.";
             if (!_flow.Next()) { RaiseFlow(); return; }
             if (_flow.StepIndex == 2 && !wasLast) LoadProfileSections();
             RaiseFlow();
@@ -197,6 +259,16 @@ namespace LogAnalyzer.UI.ViewModels
             Result = ControlResultScreen.Build(_report, ProfileSections.ToList(), Comparison);
         }
 
+        /// <summary>Why the clock is confirmed as corrected (written to the chained audit with the confirmation).</summary>
+        [ObservableProperty] private string _clockAckReason = "";
+
+        [RelayCommand]
+        private void ConfirmClockCorrected()
+        {
+            Status = LogAnalyzer.UI.Services.AuthApp.ConfirmClockCorrected(ClockAckReason);
+            if (LogAnalyzer.Dfir.Case.ClockMemory.StartupWarning.Length == 0) ClockAckReason = "";
+        }
+
         [RelayCommand]
         private async Task Run()
         {
@@ -207,7 +279,28 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 var start = DateTimeOffset.UtcNow.AddDays(-PeriodDays);
                 var isolated = StationShouldBeIsolated;
-                _report = await Task.Run(() => ControlEvaluator.Evaluate(StationFactCollector.Collect(start, isolated)));
+                SavedReportInfo = "";
+                var (folders, updates) = ControlInputs();
+                _report = await Task.Run(() =>
+                {
+                    var facts = StationFactCollector.Collect(start, isolated, classifiedFolders: folders, offlineUpdates: updates);
+                    // Time memory (S05): the latest time the application recorded, read BEFORE this report adds its own "clock.seen" entry.
+                    string? auditPath = null;
+                    try { auditPath = LogAnalyzer.UI.Services.AuthApp.Service.AuditPath; } catch (InvalidOperationException) { }
+                    if (auditPath is not null)
+                    {
+                        try
+                        {
+                            var cb = LogAnalyzer.Dfir.Case.ClockMemory.ReadBaseline(auditPath);
+                            facts.LatestAppRecordUtc = cb.Baseline; facts.ClockSuspectNote = cb.SuspectNote; facts.ClockAckText = cb.AckText;
+                        }
+                        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+                        try { LogAnalyzer.Dfir.Case.ClockMemory.RecordSeen(auditPath, facts.CollectedUtc, "raport de control stație"); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+                        // The warning (and with it the confidence of timed findings) follows the chain at every report, not only the start.
+                        try { LogAnalyzer.Dfir.Case.ClockMemory.Reevaluate(auditPath, facts.CollectedUtc, StationFactCollector.ReadInstallDate()); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+                    }
+                    return ControlEvaluator.Evaluate(facts);
+                });
                 FillChecks();
                 Users.Clear();
                 foreach (var u in _report.Users) Users.Add(u);
@@ -216,7 +309,7 @@ namespace LogAnalyzer.UI.ViewModels
                 Summary = $"NECONFORM {_report.Count(ControlStatus.Neconform)} · DE VERIFICAT {_report.Count(ControlStatus.DeVerificat)} · " +
                           $"NEDETERMINAT {_report.Count(ControlStatus.Nedeterminat)} · CONFORM {_report.Count(ControlStatus.Conform)}";
                 GapsText = _report.Facts.Gaps.Count == 0 ? "" :
-                    "Goluri de probă: " + string.Join("; ", _report.Facts.Gaps.Select(g => $"{g.Artifact} ({g.Reason})"));
+                    "Surse lipsă sau incomplete: " + string.Join("; ", _report.Facts.Gaps.Select(g => $"{g.Artifact} ({g.Reason})"));
                 Status = _report.Facts.IsAdministrator
                     ? $"Control finalizat: {_report.Checks.Count} verificări, {_report.Actions.Count} acțiuni în cronologie. Dublu-click pe orice rând pentru detalii."
                     : "Control finalizat FĂRĂ drepturi de administrator: jurnalul Security și o parte din setări nu au putut fi citite (verificările respective sunt NEDETERMINATE). Reporniți aplicația ca administrator.";
@@ -236,6 +329,7 @@ namespace LogAnalyzer.UI.ViewModels
             foreach (var c in _report.Checks.OrderBy(c => Array.IndexOf(order, c.Status)).ThenBy(c => c.Id))
                 if (StatusFilter == "Toate" || ControlReportPdf.StatusText(c.Status) == StatusFilter)
                     Checks.Add(c);
+            SelectedCheck = Checks.FirstOrDefault();   // the explanation panel is never empty after a control
         }
 
         [RelayCommand]
@@ -245,11 +339,27 @@ namespace LogAnalyzer.UI.ViewModels
             var ws = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
             if (ws is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
             if (Result is null) BuildResult();
-            var (_, pdf) = ControlReportPdf.SaveToCase(_report, ws, Inspector, Notes, BuildHeader(_report), Result);
+            var (_, pdf) = ControlReportPdf.SaveToCase(_report, ws, Inspector, Notes, BuildHeader(_report), Result, ManualItems.Select(m => m.ToResult()).ToList());
             var dlg = new SaveFileDialog { FileName = Path.GetFileName(pdf), Filter = "PDF (*.pdf)|*.pdf", Title = "Salvați o copie a raportului (originalul rămâne în caz)" };
+            // F3: the report in the case is signed when the operator configured a signing key; a copy carries a copy of the same signature.
+            var signLine = LogAnalyzer.Dfir.Reporting.ReportSigningSettings.Load().SignIfConfigured(pdf);
+            ws.Audit("report.signature", $"{Path.GetFileName(pdf)}: {signLine}");
             if (dlg.ShowDialog() == true && !string.Equals(dlg.FileName, pdf, StringComparison.OrdinalIgnoreCase))
+            {
                 File.Copy(pdf, dlg.FileName, overwrite: true);
-            Status = $"Raport salvat în caz (cu SHA-256 și custodie): {pdf}";
+                var sig = LogAnalyzer.Dfir.Reporting.ReportSignature.SigPath(pdf);
+                if (File.Exists(sig)) File.Copy(sig, LogAnalyzer.Dfir.Reporting.ReportSignature.SigPath(dlg.FileName), overwrite: true);
+            }
+            // confirmation page in words (UX research R19): where it is, its fingerprint as the reference for the official report, what comes next
+            string sha;
+            using (var fs = File.OpenRead(pdf)) sha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fs));
+            SavedReportInfo = $"Raportul a fost salvat.{Environment.NewLine}" +
+                              $"Unde: {pdf}{Environment.NewLine}" +
+                              $"Amprenta fișierului (SHA-256): {sha}{Environment.NewLine}" +
+                              $"{signLine}{Environment.NewLine}" +
+                              "Ce urmează: tipăriți raportul, treceți amprenta în procesul-verbal ca referință și semnați. Dacă cineva modifică fișierul, amprenta nu se mai potrivește. " +
+                              "Originalul rămâne în cazul stației; orice copie se verifică prin aceeași amprentă.";
+            Status = "Raport salvat în caz.";
             LoadPreviousControls();
             Process.Start(new ProcessStartInfo(dlg.FileName is { Length: > 0 } f && File.Exists(f) ? f : pdf) { UseShellExecute = true });
         }

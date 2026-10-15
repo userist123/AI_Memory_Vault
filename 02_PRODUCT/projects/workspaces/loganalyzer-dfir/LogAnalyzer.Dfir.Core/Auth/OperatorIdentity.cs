@@ -45,4 +45,28 @@ public static class OperatorIdentity
     public static bool MayEditAdministration => !_required || Active is { IsAdministrator: true };
 
     public const string AdministratorOnlyMessage = "numai administratorul global autentificat poate modifica această resursă";
+
+    /// <summary>
+    /// Actions that change the station itself (apply / roll back / approve a policy, contain or release a program, isolate the
+    /// station, change the audit policy). Same rule as <see cref="MayEditAdministration"/>: an operator session never may;
+    /// with no required sign-in (tests, headless tools) the operating-system elevation is the only gate, as before.
+    /// </summary>
+    public static bool MayChangeHost => !_required || Active is { IsAdministrator: true };
+
+    /// <summary>The account of the signed-in, unlocked session, or null.</summary>
+    public static string? SignedInAccount => Active?.Account;
+
+    public const string HostChangeRefusedMessage =
+        "Nu aveți dreptul să faceți această modificare. Numai un administrator autentificat în aplicație poate schimba setările stației " +
+        "(aplicarea sau aprobarea unei politici, izolarea unui program sau a stației, politica de audit). Nu s-a schimbat nimic. " +
+        "Cereți unui administrator să facă acest pas.";
+
+    /// <summary>Throws <see cref="HostChangeNotAuthorizedException"/> unless <see cref="MayChangeHost"/>. Call before anything is written.</summary>
+    public static void RequireHostChange()
+    {
+        if (!MayChangeHost) throw new HostChangeNotAuthorizedException(HostChangeRefusedMessage);
+    }
 }
+
+/// <summary>A station-changing action was refused because the signed-in account is not an administrator. Nothing was changed.</summary>
+public sealed class HostChangeNotAuthorizedException(string message) : InvalidOperationException(message);

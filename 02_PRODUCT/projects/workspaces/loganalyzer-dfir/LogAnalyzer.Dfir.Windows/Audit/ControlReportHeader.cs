@@ -25,8 +25,18 @@ public sealed record ControlReportHeader(
         {
             ("Unitatea", V(Unit)), ("Structura", V(Structure)), ("Stația", V(Station)), ("Identificatorul stației (Hardware ID)", V(HardwareId)),
             ("Perioada controlată", V(Period)), ("Cine a efectuat controlul", V(Inspector) + (string.IsNullOrWhiteSpace(InspectorFunction) ? "" : $", {InspectorFunction.Trim()}")),
-            ("Rolul stației", V(StationRole)), ("Număr de înregistrare", V(RegistrationNumber)),
+            ("Număr de înregistrare", V(RegistrationNumber)),
         };
+        var sn = LogAnalyzer.Dfir.Registers.StationName.Parse(Station);
+        if (sn.Kind == LogAnalyzer.Dfir.Registers.StationNameKind.Standalone)
+        {
+            l.Add(("Cod unitate", sn.UnitCode)); l.Add(("Compartiment", sn.Compartment));
+            l.Add(("Număr de înregistrare stație", sn.RegistrationNumber)); l.Add(("Clasificare stație", sn.Classification));
+        }
+        else if (sn.Kind == LogAnalyzer.Dfir.Registers.StationNameKind.Networked)
+        {
+            l.Add(("Rețea", sn.Network)); l.Add(("Număr stație", sn.Number));
+        }
         foreach (var f in ExtraFields) if (!string.IsNullOrWhiteSpace(f.Label)) l.Add((f.Label.Trim(), V(f.Value)));
         return l;
     }

@@ -6,6 +6,7 @@
     <RootNamespace>LogAnalyzer.Dfir.Windows</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Lock file and locked restore (CI / Release): Directory.Build.props, for every project. -->
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Diagnostics.EventLog" Version="10.0.10" />
@@ -13,6 +14,12 @@
     <PackageReference Include="QuestPDF" Version="2026.7.2" />
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="9.0.0" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlcipher" Version="2.1.10" />
+    <!-- Eric Zimmerman Registry (MIT): deleted key/value recovery in offline hives. Cleared in the owner's provenance record 2026-10-12; Serilog pinned to the record's version. -->
+    <PackageReference Include="Registry" Version="[2026.5.0]" PrivateAssets="compile;analyzers;build;contentfiles" />
+    <PackageReference Include="Serilog" Version="[4.3.1]" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\THIRD_PARTY_NOTICES.md" Link="THIRD_PARTY_NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LogAnalyzer.Dfir.Core\LogAnalyzer.Dfir.Core.csproj" />
@@ -21,4 +28,13 @@
     <!-- NetworkPolicy / AppModeContext: networked features obey the AirGapped/Network mode. -->
     <ProjectReference Include="..\LogAnalyzer.Core\LogAnalyzer.Core.csproj" />
   </ItemGroup>
+  <!-- The library's root namespace "Registry" hides Microsoft.Win32.Registry for every file here. It is compiled under the extern alias ezregistry and its
+       compile asset does not flow to referencing projects (runtime assets do, so the DLL is still copied to every output). -->
+  <Target Name="AliasEzRegistry" AfterTargets="ResolveAssemblyReferences" BeforeTargets="FindReferenceAssembliesForReferences">
+    <ItemGroup>
+      <ReferencePath Condition="'%(FileName)' == 'Registry' And '%(ReferencePath.NuGetPackageId)' == 'Registry'">
+        <Aliases>ezregistry</Aliases>
+      </ReferencePath>
+    </ItemGroup>
+  </Target>
 </Project>

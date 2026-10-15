@@ -41,8 +41,7 @@ namespace LogAnalyzer.UI.Services
             var snapshot = new WindowsConnectivityProbe().Probe();
 
             var highWaterPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(EditionPolicyVerifier.DefaultPolicyPath)!, "policy.highwater");
-            long highWater = 0;
-            try { if (System.IO.File.Exists(highWaterPath)) long.TryParse(System.IO.File.ReadAllText(highWaterPath).Trim(), out highWater); } catch (System.IO.IOException) { }
+            var highWater = HighWater(highWaterPath, System.IO.Path.Combine(LogAnalyzer.Dfir.Auth.AuthService.DefaultDir, LogAnalyzer.Dfir.Auth.AuthService.AuditFileName));
 
             string? policyText = null;
             try { if (System.IO.File.Exists(EditionPolicyVerifier.DefaultPolicyPath)) policyText = System.IO.File.ReadAllText(EditionPolicyVerifier.DefaultPolicyPath); }
@@ -61,7 +60,19 @@ namespace LogAnalyzer.UI.Services
             }
             var mode = EditionPolicyVerifier.Decide(result, snapshot, requested);
             var role = StationRoleResolver.Decide(EditionKind.Unclassified, result, mode, DateTimeOffset.UtcNow);
-            return new StartupDecision(mode, role);
+            return new StartupDecision(mode, role, result.Valid ? result.Policy!.Version : 0);
+        }
+
+        /// <summary>
+        /// Effective anti-rollback mark (security audit #18): the maximum of the plain <c>policy.highwater</c> file and of the versions recorded in the
+        /// hash-chained auth audit. A missing, unreadable or lowered file therefore counts as the audit's maximum.
+        /// </summary>
+        internal static long HighWater(string highWaterPath, string authAuditPath)
+        {
+            long file = 0;
+            try { if (System.IO.File.Exists(highWaterPath)) long.TryParse(System.IO.File.ReadAllText(highWaterPath).Trim(), out file); }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException) { }
+            return Math.Max(Math.Max(file, 0), LogAnalyzer.Dfir.Auth.AuthService.EditionPolicyHighWater(authAuditPath));
         }
 
         public static void Register(IServiceCollection services)

@@ -9,14 +9,52 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.IO.Hashing" Version="9.0.0" />
+    <!-- Report signing key protected for the current Windows user (DPAPI); same package and version as LogAnalyzer.Core. -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.10" />
     <PackageReference Include="YamlDotNet" Version="18.1.0" />
   </ItemGroup>
   <ItemGroup>
-    <!-- WP11 rule data (known security agents, remote-access tools, shared lists): data, not code; embedded so the rules never depend on a file next to the exe. -->
-    <EmbeddedResource Include="Analysis\Data\*.json" LogicalName="LogAnalyzer.Dfir.Analysis.Data.%(Filename)%(Extension)" />
+    <!-- WP11 rule data (known security agents, remote-access tools, shared lists): data, not code; embedded so the rules never depend on a file next to the exe.
+         Embedded gzip-compressed (security research 2026-10-12, backlog item 7 / SC8): the published DLL does not carry the command patterns of the
+         detection lists as plain text, so a scanner on the station being checked does not take the tool for what it detects. ShippedData decompresses them. -->
+    <DetectionData Include="Analysis\Data\*.json" />
   </ItemGroup>
+  <UsingTask TaskName="GzipDetectionData" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Files ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+      <OutputDir ParameterType="System.String" Required="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.IO.Compression" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        Directory.CreateDirectory(OutputDir);
+        foreach (var f in Files)
+        {
+            var dst = Path.Combine(OutputDir, Path.GetFileName(f.ItemSpec) + ".gz");
+            using (var input = File.OpenRead(f.ItemSpec))
+            using (var output = File.Create(dst))
+            using (var gz = new GZipStream(output, CompressionLevel.Optimal))
+                input.CopyTo(gz);
+        }
+      ]]></Code>
+    </Task>
+  </UsingTask>
+  <Target Name="CompressDetectionData" BeforeTargets="BeforeBuild" Inputs="@(DetectionData)" Outputs="@(DetectionData->'$(IntermediateOutputPath)detection\%(Filename)%(Extension).gz')">
+    <GzipDetectionData Files="@(DetectionData)" OutputDir="$(IntermediateOutputPath)detection" />
+  </Target>
+  <Target Name="EmbedDetectionData" BeforeTargets="BeforeBuild" DependsOnTargets="CompressDetectionData">
+    <ItemGroup>
+      <EmbeddedResource Include="$(IntermediateOutputPath)detection\%(DetectionData.Filename)%(DetectionData.Extension).gz" LogicalName="LogAnalyzer.Dfir.Analysis.Data.%(DetectionData.Filename)%(DetectionData.Extension).gz" />
+    </ItemGroup>
+  </Target>
   <ItemGroup>
     <!-- Detection rules shipped with the application (YARA-lite, Sigma-lite); hashed and versioned when loaded. -->
     <None Include="Rules\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- test seams (CaseArchive.ImportCore) stay internal -->
+    <InternalsVisibleTo Include="LogAnalyzer.App.Tests" />
+    <InternalsVisibleTo Include="LogAnalyzer.Dfir.Tests" />
   </ItemGroup>
 </Project>

@@ -1,10 +1,14 @@
 <Application x:Class="LogAnalyzer.UI.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:LogAnalyzer.UI">
+             xmlns:local="clr-namespace:LogAnalyzer.UI"
+             ThemeMode="Light">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <!-- Windows 11 controls (WPF Fluent, .NET 9+), light variant: Fluent.xaml would follow the Windows dark mode under our dark text. Our dictionaries add tokens and keyed styles on top. -->
+                <ResourceDictionary Source="pack://application:,,,/PresentationFramework.Fluent;component/Themes/Fluent.Light.xaml"/>
+
                 <!-- Design Tokens (Must be loaded first for StaticResource resolution) -->
                 <ResourceDictionary Source="/Themes/Tokens/ColorTokens.xaml"/>
                 <ResourceDictionary Source="/Themes/Tokens/TypographyTokens.xaml"/>

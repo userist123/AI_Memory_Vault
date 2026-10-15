@@ -65,7 +65,7 @@ namespace LogAnalyzer.Core.Services.Edition
 
         // Tab indexes of the main window (MainWindow.xaml TabControl order; Home was appended last, WP5).
         public const int TabTimeline = 4, TabChainOfCustody = 9, TabContainment = 13, TabStationControl = 14, TabDomainMail = 15,
-            TabInvestigation = 16, TabPolicies = 17, TabProcedureProfile = 18, TabMediaRegister = 19, TabUsersRegister = 20, TabAccounts = 21, TabHome = 22;
+            TabInvestigation = 16, TabPolicies = 17, TabProcedureProfile = 18, TabMediaRegister = 19, TabUsersRegister = 20, TabAccounts = 21, TabHome = 22, TabTransferRegister = 23;
 
         public const string NeedsNetworkReason = "necesită modul conectat; această stație este izolată (air-gap)";
 
@@ -158,13 +158,14 @@ namespace LogAnalyzer.Core.Services.Edition
                         "Import de jurnale și artefacte dintr-un folder sau de pe un suport.", TabInvestigation, IntentSource.ImportEvidence)),
                     A(new("procedure_profile", "Profilul de proceduri",
                         "Orele de lucru, rotația jurnalelor, software aprobat, zone și transferuri, după care se judecă controlul.", TabProcedureProfile)),
-                    A(new("users_register", "Registrul utilizatorilor", "Persoanele cu acces la stație și autorizațiile lor, introduse de organizație.", TabUsersRegister)),
+                    A(new("users_register", "Registrul utilizatorilor", "Persoanele cu acces la stație: conturile se preiau de pe stație cu un clic, organizația adaugă autorizațiile.", TabUsersRegister)),
                     A(new("accounts", "Persoane și carduri", "Conturile aplicației și cardurile înregistrate (numai administratorul).", TabAccounts)),
                 };
                 var nav = new[]
                 {
                     N("Control stație", TabStationControl),
                     N("Registru medii", TabMediaRegister),
+                    N("Registrul de transferuri", TabTransferRegister),
                     N("Registru utilizatori", TabUsersRegister),
                     N("Profil de proceduri", TabProcedureProfile),
                     N("Investigație completă (caz)", TabInvestigation),

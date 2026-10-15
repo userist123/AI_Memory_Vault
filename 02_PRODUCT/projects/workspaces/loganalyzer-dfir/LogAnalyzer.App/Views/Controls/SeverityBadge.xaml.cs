@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
@@ -41,25 +41,25 @@ namespace LogAnalyzer.UI.Views.Controls
             System.Windows.Automation.AutomationProperties.SetName(this, "Severitate: " + BadgeText.Text);
             if (s.Contains("CRIT"))
             {
-                BadgeBorder.Background = new SolidColorBrush(Color.FromRgb(0x2D, 0x12, 0x17));
+                BadgeBorder.Background = (Brush)FindResource("BadgeCriticalBgBrush");
                 BadgeBorder.BorderBrush = Application.Current.TryFindResource("CriticalBrush") as Brush;
                 BadgeText.Foreground = Application.Current.TryFindResource("CriticalBrush") as Brush;
             }
             else if (s.Contains("HIGH") || s.Contains("AVERT"))
             {
-                BadgeBorder.Background = new SolidColorBrush(Color.FromRgb(0x2D, 0x1E, 0x12));
+                BadgeBorder.Background = (Brush)FindResource("BadgeHighBgBrush");
                 BadgeBorder.BorderBrush = Application.Current.TryFindResource("HighBrush") as Brush;
                 BadgeText.Foreground = Application.Current.TryFindResource("HighBrush") as Brush;
             }
             else if (s.Contains("MED"))
             {
-                BadgeBorder.Background = new SolidColorBrush(Color.FromRgb(0x2B, 0x24, 0x10));
+                BadgeBorder.Background = (Brush)FindResource("BadgeMediumBgBrush");
                 BadgeBorder.BorderBrush = Application.Current.TryFindResource("MediumBrush") as Brush;
                 BadgeText.Foreground = Application.Current.TryFindResource("MediumBrush") as Brush;
             }
             else
             {
-                BadgeBorder.Background = new SolidColorBrush(Color.FromRgb(0x15, 0x1E, 0x2E));
+                BadgeBorder.Background = (Brush)FindResource("BadgeLowBgBrush");
                 BadgeBorder.BorderBrush = Application.Current.TryFindResource("PrimaryAccentBrush") as Brush;
                 BadgeText.Foreground = Application.Current.TryFindResource("PrimaryAccentBrush") as Brush;
             }

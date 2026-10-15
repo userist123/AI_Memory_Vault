@@ -102,6 +102,8 @@ public sealed class Finding
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public AirGapDetail? AirGap { get; set; }
     /// <summary>Combined-sequence detail (WP14b): the ordered steps, observed or not, with time, account, object, source and the findings each step comes from. Null for every other finding.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public SequenceDetail? Sequence { get; set; }
+    /// <summary>Machine-readable signals a finding raises for other rules and for the reader (for example <c>TRACES_MAY_BE_CLEANED</c>). Null when the finding raises none.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public List<string>? Signals { get; init; }
     /// <summary>The contract's Contradictions[] is <see cref="ContradictingEvidence"/> (same list, contract name).</summary>
     [JsonIgnore] public List<string> Contradictions => ContradictingEvidence;
 }

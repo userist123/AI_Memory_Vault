@@ -8,6 +8,7 @@ public static class AuditPolicyChange
 {
     public static (bool Ok, string Detail) EnableBlockedConnectionFailureAudit()
     {
+        if (!LogAnalyzer.Dfir.Auth.OperatorIdentity.MayChangeHost) return (false, LogAnalyzer.Dfir.Auth.OperatorIdentity.HostChangeRefusedMessage);
         var psi = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "auditpol.exe"))
         {
             RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true,

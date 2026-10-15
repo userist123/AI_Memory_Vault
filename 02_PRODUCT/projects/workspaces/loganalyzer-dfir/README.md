@@ -44,7 +44,7 @@ Pe lângă mod, fiecare PC are un **rol de stație**, stabilit tot de politica s
 
 Fila **„Izolare procese suspecte”** (sau `LogAnalyzer.exe --tab=13`) funcționează în ambele moduri, fără să deschidă nicio conexiune:
 
-1. **Caută procese suspecte.** Încredere mare înseamnă un program nesemnat, care rulează dintr-o locație în care orice utilizator poate scrie (AppData, Temp, ProgramData, Downloads) și are conexiuni în Internet. Este tiparul din cazul NanAgent.
+1. **Caută procese suspecte.** Încredere mare înseamnă un program nesemnat, care rulează dintr-o locație în care orice utilizator poate scrie (AppData, Temp, ProgramData, Downloads) și are conexiuni în Internet. Este tiparul din cazul VendorAgent.
 2. **Izolează și scanează.**
    - O regulă Windows Firewall (ieșire și intrare) blochează **doar programul**; restul PC-ului rămâne conectat.
    - Opțional, procesul se suspendă.
@@ -99,7 +99,7 @@ Fila **„Investigație domeniu și e-mail”** (`LogAnalyzer.exe --tab=15`) are
 Toate interogările de rețea trec prin `NetworkPolicy`. În modul AirGapped sunt blocate; pe o rețea izolată cu domeniu, porniți aplicația cu `--mode=network`. Rezultatele se salvează în cazul stației (`Investigations/`), ca probe, și se pot exporta ca PDF.
 ## Investigația completă (caz)
 
-Fila **„Investigație completă (caz)”** (`LogAnalyzer.exe --tab=16`) reface cap-coadă o investigație ca cea de pe LAB-PC:
+Fila **„Investigație completă (caz)”** (`LogAnalyzer.exe --tab=16`) reface cap-coadă o investigație ca cea de pe o stație de laborator:
 
 1. **Colectare de pe stație.**
    - Jurnalele de evenimente sunt exportate brut cu `wevtutil` (17 canale).
@@ -118,7 +118,7 @@ Fila **„Investigație completă (caz)”** (`LogAnalyzer.exe --tab=16`) reface
 4. **Lanțul incidentului (INCIDENT-CHAIN).** Constatările grave apropiate în timp sunt legate într-o poveste ordonată.
 5. **Raport PDF**, cu lanțurile la început, apoi constatările cu probe, starea colectării și golurile de probă.
 
-Validare pe cazul real NanAgent: 348.000 de evenimente procesate în circa 19 secunde. Lanțul din 19.09.2026, 14:53–15:21 UTC (`SETUP.EXE` SamFW → detecții Defender → comportament `NanAgent32.exe` → `msiexec` cu `bootstrap_7d57.cmd` → trafic `msbuild.exe`) este găsit automat. Testul de regresie `InvestigationTests` verifică acest rezultat.
+Validare pe cazul de laborator VendorAgent: 348.000 de evenimente procesate în circa 19 secunde. Lanțul din 19.09.2026, 14:53–15:21 UTC (`SETUP.EXE` SamFW → detecții Defender → comportament `VendorAgent32.exe` → `msiexec` cu `vendor_helper.cmd` → trafic `msbuild.exe`) este găsit automat. Testul de regresie `InvestigationTests` verifică acest rezultat.
 ## Cerințe
 
 - Rulare: Windows 10/11 x64. Pachetul este self-contained și nu necesită .NET instalat.
@@ -147,19 +147,29 @@ CI-ul (`.github/workflows/loganalyzer-dfir-build.yml`, la rădăcina vault-ului)
 Toate instrumentele folosesc aceeași logică, cea din `LogAnalyzer.Core/Services/LicenseService.cs`:
 
 - **Hardware ID** = primele 16 caractere hex din SHA-256(ProcessorId + serialul plăcii de bază);
-- **licența** are forma `CHEIE|YYYY-MM-DD`;
-- aplicația o verifică la activare și la fiecare pornire și o păstrează în `license.lic`, lângă executabil.
+- **licența** are forma `LA1.<date>.<semnătură>`: datele (Hardware ID, data de expirare, id licență) sunt semnate ECDSA P-256 cu
+  **cheia privată de licență**, care există doar pe mediul offline al celui care emite licențele; aplicația conține numai cheia publică
+  (`LogAnalyzer.Core/Licensing/license-public-keys.txt`, compilată în aplicație; fără ea nicio licență nu este acceptată);
+- aplicația o verifică la activare și la fiecare pornire și o păstrează în `license.lic`, lângă executabil (`license.lic` nu se pune în git).
+- Cheile din schema veche (`CHEIE|YYYY-MM-DD`, hash cu „sare” în codul public) **nu mai sunt valabile**; fereastra de activare spune asta
+  și cere o licență nouă.
+
+Pregătire (o singură dată, pe mașina offline):
+
+1. `LogAnalyzer.KeyGen license-keygen <cheie-privată> <cheie-publică.txt>` (cheia privată e criptată DPAPI pentru utilizatorul curent,
+   sau cu `--passphrase`; nu se scrie într-un depozit git).
+2. Linia din `<cheie-publică.txt>` se pune în `LogAnalyzer.Core/Licensing/license-public-keys.txt` și se reconstruiește aplicația
+   (două linii permit o rotație a cheii).
 
 Emiterea unei licențe:
 
 1. Clientul pornește aplicația. Fereastra de activare afișează Hardware ID-ul stației.
-2. Pe stația de administrare, alegi unul dintre generatoare:
-   - **`LogAnalyzer.LicenseManager`** (recomandat, interfață grafică). Introduci clientul, Hardware ID-ul, valabilitatea (1/3/10 ani sau o dată aleasă) și note. Licența este verificată automat cu logica aplicației și trecută în registrul `%APPDATA%\LogAnalyzer\LicenseManager\issued_licenses.csv`. O poți copia sau salva direct ca `license.lic`.
-   - `LogAnalyzer.KeyGen` (consolă): `LogAnalyzer.KeyGen <HWID> <YYYY-MM-DD>` sau interactiv.
-   - `Generate-LicenseKey.ps1 -HardwareId <HWID> -ExpiryDate <YYYY-MM-DD>` (fără build).
-3. Clientul lipește șirul `CHEIE|YYYY-MM-DD` în fereastra de activare sau pune `license.lic` lângă `LogAnalyzer.exe`.
-
-> Limitare: schema actuală este hash cu salt inclus în binar. Oprește copierea ocazională, dar nu și pe cineva care decompilează aplicația. Trecerea la semnătură asimetrică (RSA-PSS, cu cheia privată ținută doar pe stația de emitere) este planificată. Vezi `Documentation/MVP-DECISIONS.md`, decizia 9. Atenție: această trecere invalidează licențele deja emise.
+2. Pe mașina offline:
+   - **`LogAnalyzer.LicenseManager`** (interfață grafică): clientul, Hardware ID-ul, valabilitatea, fișierul cheii private (și parola, dacă are).
+     Licența este verificată automat cu logica aplicației și trecută în registrul `%APPDATA%\LogAnalyzer\LicenseManager\issued_licenses.csv`.
+   - `LogAnalyzer.KeyGen license-sign <cheie-privată> --hardware-id <HWID> --expires <YYYY-MM-DD> [--out license.lic]` (consolă).
+   - `Generate-LicenseKey.ps1 -PrivateKey <cheie-privată> -HardwareId <HWID> -ExpiryDate <YYYY-MM-DD>` (apelează KeyGen).
+3. Clientul lipește licența `LA1.…` în fereastra de activare sau pune `license.lic` lângă `LogAnalyzer.exe`.
 
 ## Structura
 

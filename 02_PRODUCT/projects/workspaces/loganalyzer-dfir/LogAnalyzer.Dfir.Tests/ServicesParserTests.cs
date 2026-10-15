@@ -25,12 +25,12 @@ public sealed class ServicesParserTests : IDisposable
         hive.Root.CreateSubKey("Select").SetValue("Current", 2, RegistryValueType.Dword);
         hive.Root.CreateSubKey(@"ControlSet001\Services\Stale").SetValue("ImagePath", @"C:\old.exe", RegistryValueType.String);
         var svc = hive.Root.CreateSubKey(@"ControlSet002\Services");
-        var evil = svc.CreateSubKey("CxUtilSvc");
-        evil.SetValue("ImagePath", "\"C:\\ProgramData\\Conexant\\CxUtilSvc.exe\" -service", RegistryValueType.String);
+        var evil = svc.CreateSubKey("VxUtilSvc");
+        evil.SetValue("ImagePath", "\"C:\\ProgramData\\VendorX\\VxUtilSvc.exe\" -service", RegistryValueType.String);
         evil.SetValue("Type", 0x10, RegistryValueType.Dword);
         evil.SetValue("Start", 2, RegistryValueType.Dword);
         evil.SetValue("ObjectName", "LocalSystem", RegistryValueType.String);
-        evil.SetValue("DisplayName", "CxUtilSvc Helper", RegistryValueType.String);
+        evil.SetValue("DisplayName", "VxUtilSvc Helper", RegistryValueType.String);
         var dll = svc.CreateSubKey("NetHelper");
         dll.SetValue("ImagePath", @"%SystemRoot%\system32\svchost.exe -k netsvcs -p", RegistryValueType.ExpandString);
         dll.SetValue("Type", 0x20, RegistryValueType.Dword);
@@ -58,12 +58,12 @@ public sealed class ServicesParserTests : IDisposable
 
         Assert.Equal(EvidenceStatus.Success, r.Status);
         Assert.DoesNotContain(sink.Events, e => e.Service == "Stale");           // ControlSet001 is not current
-        var cx = Assert.Single(sink.Events, e => e.Service == "CxUtilSvc");
-        Assert.Equal(@"C:\ProgramData\Conexant\CxUtilSvc.exe", cx.Path);
+        var cx = Assert.Single(sink.Events, e => e.Service == "VxUtilSvc");
+        Assert.Equal(@"C:\ProgramData\VendorX\VxUtilSvc.exe", cx.Path);
         Assert.Equal("Auto", cx.Fields["StartMode"]);
         Assert.Equal("Own Process", cx.Fields["ServiceType"]);
         Assert.Equal("LocalSystem", cx.User);
-        Assert.Equal(@"SYSTEM\ControlSet002\Services\CxUtilSvc", cx.Locator);
+        Assert.Equal(@"SYSTEM\ControlSet002\Services\VxUtilSvc", cx.Locator);
         Assert.Contains("key last written", cx.TimeSemantics);
         var net = Assert.Single(sink.Events, e => e.Service == "NetHelper");
         Assert.Equal(@"%SystemRoot%\system32\svchost.exe -k netsvcs -p", net.Fields["ImagePath"]);   // not expanded
@@ -82,7 +82,7 @@ public sealed class ServicesParserTests : IDisposable
         var f = Correlation.Run(sink.Events).Where(x => x.RuleId == "PERSIST-SERVICE-CONFIG").ToList();
 
         Assert.Equal(3, f.Count);
-        Assert.Contains(f, x => x.File == @"C:\ProgramData\Conexant\CxUtilSvc.exe" && x.Severity == Severity.High && x.MitreTechniqueId == "T1543.003");
+        Assert.Contains(f, x => x.File == @"C:\ProgramData\VendorX\VxUtilSvc.exe" && x.Severity == Severity.High && x.MitreTechniqueId == "T1543.003");
         Assert.Contains(f, x => x.File == @"C:\Users\Public\nethelp.dll");
         Assert.Contains(f, x => x.File == @"\??\C:\Windows\Temp\kdrv.sys");
         Assert.DoesNotContain(f, x => x.File.Contains("spoolsv"));

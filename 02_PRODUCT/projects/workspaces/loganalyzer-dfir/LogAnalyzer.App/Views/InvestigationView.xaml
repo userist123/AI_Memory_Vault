@@ -30,6 +30,7 @@
         </DockPanel>
 
         <StackPanel Grid.Row="1">
+        <ctrl:NoDataPanel/>
         <!-- WP18 S4: "Primește probe de la o stație" in three steps; the full form stays below -->
         <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,12">
             <StackPanel>
@@ -104,6 +105,14 @@
                         <Button Content="Pornește investigația" Command="{Binding RunCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
                         <Button Content="Oprește" Command="{Binding CancelCommand}" Style="{StaticResource DangerButtonStyle}" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
                     </WrapPanel>
+                    <!-- E1 / E10: historical sources and shadow copies as the target of the analysis -->
+                    <WrapPanel Margin="0,6,0,0">
+                        <Button Content="Adaugă surse istorice (jurnale arhivate, Windows.old)…" Command="{Binding AddHistoricalFolderCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                        <Button Content="Listează copiile de umbră (VSS)" Command="{Binding ListShadowCopiesCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                        <ComboBox AutomationProperties.Name="Copia de umbră aleasă" ItemsSource="{Binding ShadowCopyList}" SelectedItem="{Binding SelectedShadowCopy}" DisplayMemberPath="Label" Width="260" Margin="0,0,6,0"/>
+                        <Button Content="Analizează copia aleasă" Command="{Binding ImportFromShadowCopyCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                    </WrapPanel>
+                    <TextBlock Text="{Binding ShadowStatus}" TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
                     <TextBlock Text="{Binding ImportFiles.Count, StringFormat='{}{0} fișiere de importat'}" Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,0"/>
                 </StackPanel>
                 <TextBox AutomationProperties.Name="Jurnalul investigației" Grid.Column="2" Text="{Binding Log, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Height="120" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
@@ -275,7 +284,7 @@
                     </Grid>
                 </DockPanel>
             </TabItem>
-            <TabItem Header="Anti-forensics" Style="{StaticResource InspectorTabItemStyle}">
+            <TabItem Header="Ascunderea sau ștergerea urmelor" Style="{StaticResource InspectorTabItemStyle}">
                 <DataGrid AutomationProperties.Name="Verificări anti-forensics" Margin="8" ItemsSource="{Binding AntiForensics}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="55"/>
@@ -319,9 +328,51 @@
                     <TextBlock Text="{Binding RemoteStatus}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/>
                 </StackPanel>
             </TabItem>
-            <TabItem Header="Goluri de probă" Style="{StaticResource InspectorTabItemStyle}">
-                <TextBox AutomationProperties.Name="Goluri de probă" Margin="8" Text="{Binding GapsText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+            <TabItem Header="Surse lipsă sau incomplete" Style="{StaticResource InspectorTabItemStyle}">
+                <TextBox AutomationProperties.Name="Surse lipsă sau incomplete" Margin="8" Text="{Binding GapsText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
                          Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="12"/>
+            </TabItem>
+            <!-- F3 / F4 / F10: signed reports and their verification, verifiable case archive, export with personal data masked -->
+            <TabItem Header="Semnătură, arhivă, partajare" Style="{StaticResource InspectorTabItemStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12">
+                        <TextBlock Text="Semnătura digitală a rapoartelor" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,6"
+                                   Text="Fiecare raport PDF se semnează cu cheia ECDSA P-256 a operatorului sau a organizației (creată cu LogAnalyzer.KeyGen report-keygen, păstrată pe un mediu înregistrat). Semnătura se scrie alături, în fișierul .sig, cu amprenta raportului (SHA-256) și semnatarul."/>
+                        <WrapPanel Margin="0,0,0,6">
+                            <TextBlock Text="Cheia privată:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Fișierul cheii private de semnare" Text="{Binding SigningKeyPath, UpdateSourceTrigger=PropertyChanged}" Width="360" Margin="0,0,6,0"/>
+                            <Button Content="Alege…" Command="{Binding BrowseSigningKeyCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,12,0"/>
+                            <TextBlock Text="Semnatar:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Numele semnatarului" Text="{Binding SignerName, UpdateSourceTrigger=PropertyChanged}" Width="200"/>
+                        </WrapPanel>
+                        <TextBlock Text="Chei publice de încredere (câte una pe rând):" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBox AutomationProperties.Name="Chei publice de încredere" Text="{Binding TrustedKeysText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="60" FontFamily="Consolas" Margin="0,2,0,6"/>
+                        <WrapPanel Margin="0,0,0,12">
+                            <Button Content="Salvează setările semnăturii" Command="{Binding SaveSigningSettingsCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                            <Button Content="Verifică un raport…" Command="{Binding VerifyReportCommand}" Style="{StaticResource AccentButtonStyle}"/>
+                        </WrapPanel>
+                        <TextBlock Text="Arhiva verificabilă a cazului" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,6"
+                                   Text="ZIP cu tot cazul, manifest.json (SHA-256 al fiecărui fișier), amprenta manifestului (SHA-256) și README cu comenzile de verificare manuală (Get-FileHash, certutil), care merg fără LogAnalyzer. La import se verifică totul înainte."/>
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,2"
+                                   Text="La import, arhiva trebuie autentificată: semnătura manifestului cu una dintre cheile de încredere de mai sus, sau amprenta manifestului (SHA-256) din registrul de custodie, scrisă aici. Altfel este „neverificabilă” și se refuză, afară de cazul în care alegeți explicit importul ca neverificat."/>
+                        <TextBox AutomationProperties.Name="Amprenta manifestului din registrul de custodie" Text="{Binding ExpectedArchiveSha256, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas" Margin="0,2,0,6"/>
+                        <WrapPanel Margin="0,0,0,12">
+                            <Button Content="Exportă arhiva cazului…" Command="{Binding ExportCaseArchiveCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                            <Button Content="Importă arhivă de caz…" Command="{Binding ImportCaseArchiveCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                        </WrapPanel>
+                        <TextBlock Text="Export cu date personale mascate" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,6"
+                                   Text="Nume de utilizatori, nume de stații, adrese IP, e-mailuri, SID-uri și segmentul de utilizator din căi sunt înlocuite cu pseudonime consecvente (aceeași valoare, același pseudonim în raport și în cronologie)."/>
+                        <WrapPanel Margin="0,0,0,12">
+                            <Button Content="Raport mascat (PDF)…" Command="{Binding ExportMaskedPdfCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                            <Button Content="Cronologie mascată (CSV)…" Command="{Binding ExportMaskedTimelineCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                        </WrapPanel>
+                        <TextBox AutomationProperties.Name="Rezultatul ultimei operații pe raport sau arhivă" Text="{Binding ReportStatus, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0"
+                                 Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
         </TabControl>
     </Grid>

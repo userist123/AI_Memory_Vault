@@ -1,42 +1,46 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using LogAnalyzer.Core.Models;
 
 namespace LogAnalyzer.Core.Services
 {
+    /// <summary>
+    /// Exports a Timesketch-compatible CSV. Timesketch requires the columns message, datetime (ISO 8601, UTC)
+    /// and timestamp_desc; the remaining columns are extra fields kept for Plaso / Timeline Explorer readers.
+    /// Rows without a recorded time cannot be placed on a timeline and are skipped (never stamped with "now").
+    /// </summary>
     public class SuperTimelineExportService
     {
+        public const string Header =
+            "message,datetime,timestamp_desc,source,source_type,event_type,macb,user,host,short,filename,notes";
+
         public void ExportPlasoCsv(
             string outputPath,
+            IEnumerable<ParsedEvent> events,
+            IEnumerable<ForensicArtifact> artifacts,
+            IEnumerable<RegistryArtifact> registryEntries) =>
+            File.WriteAllText(outputPath, BuildPlasoCsv(events, artifacts, registryEntries), new UTF8Encoding(false));
+
+        /// <summary>The same CSV as <see cref="ExportPlasoCsv"/>, in memory (security audit #14: no temporary file with evidence in %TEMP%).</summary>
+        public string BuildPlasoCsv(
             IEnumerable<ParsedEvent> events,
             IEnumerable<ForensicArtifact> artifacts,
             IEnumerable<RegistryArtifact> registryEntries)
         {
             var sb = new StringBuilder();
-            
-            // Header standard Plaso / Timesketch / Eric Zimmerman Timeline Explorer
-            sb.AppendLine("Date,Time,Timezone,MACB,Source,SourceType,Type,User,Host,Short,Desc,Version,Filename,Inode,Notes,Format,Extra");
+            sb.Append(Header).Append("\r\n");
 
             if (events != null)
             {
                 foreach (var ev in events)
                 {
-                    // An event without a recorded time keeps default(DateTime); it is exported as unknown ("-"), never as "now".
-                    string dateStr = ev.TimeCreated == default ? "-" : ev.TimeCreated.ToString("MM/dd/yyyy");
-                    string timeStr = ev.TimeCreated == default ? "-" : ev.TimeCreated.ToString("HH:mm:ss");
-                    string macb = "M..."; // Event log recorded timestamp
-                    string source = "EVTX";
-                    string sourceType = ev.ProviderName ?? "Windows Event Log";
-                    string type = $"EID {ev.EventId}";
-                    string user = "-";
-                    string host = ev.MachineName ?? "-";
-                    string shortDesc = EscapeCsv(ev.Level ?? "Info");
-                    string desc = EscapeCsv(ev.Message ?? string.Empty);
-                    string filename = "-";
-
-                    sb.AppendLine($"{dateStr},{timeStr},UTC,{macb},{source},{sourceType},{type},{user},{host},{shortDesc},{desc},2,{filename},-,-,LogAnalyzer EVTX Engine,-");
+                    if (ev.TimeCreated == default) continue;
+                    AppendRow(sb, ev.Message ?? string.Empty, ev.TimeCreated, "Event Recorded",
+                        "EVTX", ev.ProviderName ?? "Windows Event Log", $"EID {ev.EventId}", "M...", "-",
+                        ev.MachineName ?? "-", ev.Level ?? "Info", "-", "LogAnalyzer EVTX Engine");
                 }
             }
 
@@ -44,8 +48,7 @@ namespace LogAnalyzer.Core.Services
             {
                 foreach (var art in artifacts)
                 {
-                    string dateStr = art.Timestamp.ToString("MM/dd/yyyy");
-                    string timeStr = art.Timestamp.ToString("HH:mm:ss");
+                    if (art.Timestamp == default) continue;
                     string macb = art.TimestampSemantics switch
                     {
                         TimeSemantics.Created => "..B.",
@@ -53,16 +56,17 @@ namespace LogAnalyzer.Core.Services
                         TimeSemantics.Modified => "M...",
                         _ => "M..."
                     };
-                    string source = art.ArtifactType;
-                    string sourceType = art.Strength.ToString();
-                    string type = "Forensic Artifact";
-                    string user = "-";
-                    string host = art.HostId ?? "-";
-                    string shortDesc = EscapeCsv(art.Name);
-                    string desc = EscapeCsv(art.Summary);
-                    string filename = EscapeCsv(Path.GetFileName(art.SourceFilePath));
-
-                    sb.AppendLine($"{dateStr},{timeStr},UTC,{macb},{source},{sourceType},{type},{user},{host},{shortDesc},{desc},2,{filename},-,-,LogAnalyzer Artifact Engine,-");
+                    string desc = art.TimestampSemantics switch
+                    {
+                        TimeSemantics.Created => "Creation Time",
+                        TimeSemantics.LastExecution => "Last Execution Time",
+                        TimeSemantics.Modified => "Last Modification Time",
+                        _ => "Artifact Time"
+                    };
+                    AppendRow(sb, art.Summary ?? string.Empty, art.Timestamp, desc,
+                        art.ArtifactType ?? "-", art.Strength.ToString(), "Forensic Artifact", macb, "-",
+                        art.HostId ?? "-", art.Name ?? string.Empty, Path.GetFileName(art.SourceFilePath ?? string.Empty),
+                        "LogAnalyzer Artifact Engine");
                 }
             }
 
@@ -70,30 +74,50 @@ namespace LogAnalyzer.Core.Services
             {
                 foreach (var reg in registryEntries)
                 {
-                    string dateStr = reg.LastWriteTime is DateTime regTime ? regTime.ToString("MM/dd/yyyy") : "-";
-                    string timeStr = reg.LastWriteTime is DateTime regTime2 ? regTime2.ToString("HH:mm:ss") : "-";
-                    string macb = "M...";
-                    string source = "Registry";
-                    string sourceType = reg.Category ?? "Registry Key";
-                    string type = "REG_KEY";
-                    string user = "-";
-                    string host = "-";
-                    string shortDesc = EscapeCsv(reg.ValueName ?? string.Empty);
-                    string desc = EscapeCsv($"{reg.KeyPath} -> {reg.ValueData}");
-                    string filename = reg.HiveType ?? "Hive";
-
-                    sb.AppendLine($"{dateStr},{timeStr},UTC,{macb},{source},{sourceType},{type},{user},{host},{shortDesc},{desc},2,{filename},-,-,LogAnalyzer Registry Engine,-");
+                    if (reg.LastWriteTime is not DateTime regTime || regTime == default) continue;
+                    AppendRow(sb, $"{reg.KeyPath} -> {reg.ValueData}", regTime, "Registry Key Last Write",
+                        "Registry", reg.Category ?? "Registry Key", "REG_KEY", "M...", "-", "-",
+                        reg.ValueName ?? string.Empty, reg.HiveType ?? "Hive", "LogAnalyzer Registry Engine");
                 }
             }
 
-            File.WriteAllText(outputPath, sb.ToString(), Encoding.UTF8);
+            return sb.ToString();
         }
 
-        private static string EscapeCsv(string field)
+        /// <summary>ISO 8601 in UTC. Unspecified kind is treated as UTC (the pipeline stores UTC).</summary>
+        public static string ToIsoUtc(DateTime t)
         {
-            if (string.IsNullOrEmpty(field)) return "\"\"";
-            string clean = field.Replace("\"", "\"\"").Replace("\r", " ").Replace("\n", " ");
-            return $"\"{clean}\"";
+            var utc = t.Kind switch
+            {
+                DateTimeKind.Local => t.ToUniversalTime(),
+                DateTimeKind.Utc => t,
+                _ => DateTime.SpecifyKind(t, DateTimeKind.Utc)
+            };
+            return utc.ToString("yyyy-MM-dd'T'HH:mm:ss.ffffff'+00:00'", CultureInfo.InvariantCulture);
         }
+
+        private static void AppendRow(StringBuilder sb, string message, DateTime time, string timestampDesc,
+            string source, string sourceType, string eventType, string macb, string user, string host,
+            string shortDesc, string filename, string notes)
+        {
+            sb.Append(EscapeCsv(message)).Append(',')
+              .Append(ToIsoUtc(time)).Append(',')
+              .Append(EscapeCsv(timestampDesc)).Append(',')
+              .Append(EscapeCsv(source)).Append(',')
+              .Append(EscapeCsv(sourceType)).Append(',')
+              .Append(EscapeCsv(eventType)).Append(',')
+              .Append(EscapeCsv(macb)).Append(',')
+              .Append(EscapeCsv(user)).Append(',')
+              .Append(EscapeCsv(host)).Append(',')
+              .Append(EscapeCsv(shortDesc)).Append(',')
+              .Append(EscapeCsv(filename)).Append(',')
+              .Append(EscapeCsv(notes)).Append("\r\n");
+        }
+
+        /// <summary>
+        /// RFC 4180 quoting through the Dfir.Core CSV writer, which also neutralises spreadsheet formulas (security audit #8): an event message or
+        /// user starting with = + - @ TAB or CR is written with a leading apostrophe.
+        /// </summary>
+        public static string EscapeCsv(string field) => string.IsNullOrEmpty(field) ? string.Empty : LogAnalyzer.Dfir.IO.CsvWriter.Escape(field);
     }
 }

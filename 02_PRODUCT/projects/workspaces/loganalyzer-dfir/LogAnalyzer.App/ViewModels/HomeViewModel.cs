@@ -44,6 +44,12 @@ namespace LogAnalyzer.UI.ViewModels
             foreach (var i in Profile.PrimaryIntents) PrimaryIntents.Add(new HomeIntentView(i));
             foreach (var i in Profile.MoreIntents) MoreIntents.Add(new HomeIntentView(i));
             _investigation.StateChanged += (_, _) => Refresh();
+            ClockMemory.WarningChanged += () =>
+            {
+                var d = System.Windows.Application.Current?.Dispatcher;
+                if (d is null || d.CheckAccess()) OnPropertyChanged(nameof(ClockWarning));
+                else d.BeginInvoke(new Action(() => OnPropertyChanged(nameof(ClockWarning))));
+            };
             Refresh();
             ReloadRecent();
         }
@@ -61,6 +67,20 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private bool _isReadOnly;
         [ObservableProperty] private string _readOnlyNotice = "";
         [ObservableProperty] private string _openStatus = "";
+        /// <summary>Non-blocking warning from the application's time memory (clock behind its own record or before the Windows install); empty when fine.</summary>
+        public string ClockWarning => ClockMemory.StartupWarning;
+        /// <summary>Non-blocking startup warning (unprotected install folder in a Debug build, unverified libraries); empty when fine.</summary>
+        public string StartupNotice => LogAnalyzer.Dfir.IO.StartupNotice.Text;
+        /// <summary>Why the clock is confirmed as corrected (required; written to the chained audit).</summary>
+        [ObservableProperty] private string _clockAckReason = "";
+
+        /// <summary>The operator confirms the clock was corrected: writes "clock.ack" and re-evaluates the warning.</summary>
+        [RelayCommand]
+        private void ConfirmClockCorrected()
+        {
+            OpenStatus = LogAnalyzer.UI.Services.AuthApp.ConfirmClockCorrected(ClockAckReason);
+            if (ClockWarning.Length == 0) ClockAckReason = "";
+        }
         [ObservableProperty] private bool _isBusy;
 
         /// <summary>Short, data-driven next steps (at most <see cref="HomeAggregator.MaxNextSteps"/>).</summary>
@@ -73,6 +93,8 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>The role profile this page renders (WP18 S2): data, not decisions.</summary>
         public RoleProfile Profile { get; }
         public string RoleTitle => Profile.Title;
+        /// <summary>Heading of the Home intents: the station's name (owner, 2026-10-11: the role is not shown).</summary>
+        public string StationHeading => $"Stația {Environment.MachineName}";
         public string RoleIntro => Profile.Intro;
         /// <summary>At most five big buttons, in the user's words. Unavailable ones stay visible, disabled, with the reason.</summary>
         public ObservableCollection<HomeIntentView> PrimaryIntents { get; } = new();

@@ -38,12 +38,13 @@ namespace LogAnalyzer.UI.ViewModels
             ImportJsonCommand = new RelayCommand(ImportJson);
             ImportCsvCommand = new RelayCommand(ImportCsv);
             PasteCommand = new RelayCommand(Paste);
+            DiscoverCommand = new AsyncRelayCommand(DiscoverAsync, () => CanEdit);
             LoadFrom(_registerPath, startup: true);
-            Services.AuthApp.SessionChanged += () => { OnPropertyChanged(nameof(AccessNotice)); OnPropertyChanged(nameof(CanEdit)); };
+            Services.AuthApp.SessionChanged += () => { OnPropertyChanged(nameof(AccessNotice)); OnPropertyChanged(nameof(CanEdit)); DiscoverCommand.NotifyCanExecuteChanged(); };
         }
 
         public string Title => _register.Title;
-        public string Columns => string.Join(" | ", _register.Columns);
+        public string Columns => string.Join(" · ", System.Linq.Enumerable.Select(_register.Columns, LogAnalyzer.UI.Views.ColumnLabels.For));
         /// <summary>A shown-always line under the title (for the users register: who may edit it, and that the application cannot enforce it yet).</summary>
         public virtual string Notice => "";
         /// <summary>Shown when the signed-in user may read but not change this register (only the global administrator edits; decision 33).</summary>
@@ -68,12 +69,36 @@ namespace LogAnalyzer.UI.ViewModels
         public IRelayCommand ImportJsonCommand { get; }
         public IRelayCommand ImportCsvCommand { get; }
         public IRelayCommand PasteCommand { get; }
+        /// <summary>"Preia de pe stație": reads what exists on this station (read-only) and adds the missing rows; never changes an existing row.</summary>
+        public IAsyncRelayCommand DiscoverCommand { get; }
+
+        /// <summary>Reads the station on a background task. Returns the observed items for <see cref="MergeObserved"/>.</summary>
+        protected abstract System.Collections.Generic.IReadOnlyList<object> Discover();
+        /// <summary>Adds the observed items that are not yet in the register; returns the Romanian status line.</summary>
+        protected abstract string MergeObserved(T register, System.Collections.Generic.IReadOnlyList<object> observed);
+
+        private async System.Threading.Tasks.Task DiscoverAsync()
+        {
+            if (!CanEdit) { Status = AccessNotice; return; }
+            Status = "Se citește stația…";
+            System.Collections.Generic.IReadOnlyList<object> observed;
+            try { observed = await System.Threading.Tasks.Task.Run(Discover); }
+            catch (Exception ex) { Status = "Stația nu a putut fi citită: " + ex.Message; return; }
+            Pull();
+            var line = MergeObserved(_register, observed);
+            Push();
+            ShowIssues(_register.Validate());
+            Status = line;
+        }
 
         /// <summary>Rows of the grid, without the completely empty ones.</summary>
         public System.Collections.Generic.List<string[]> Rows() =>
             Data.Rows.Cast<DataRow>().Select(r => r.ItemArray.Select(v => v?.ToString() ?? "").ToArray()).Where(r => r.Any(c => !string.IsNullOrWhiteSpace(c))).ToList();
 
         private void Pull() => _register.SetCells(Rows());
+
+        /// <summary>The register as currently shown (including unsaved edits), for comparisons made elsewhere (e.g. the media page).</summary>
+        public T Snapshot() { Pull(); return _register; }
 
         private void Push()
         {
@@ -184,17 +209,84 @@ namespace LogAnalyzer.UI.ViewModels
     public sealed class MediaRegisterViewModel : RegisterViewModel<MediaRegister>
     {
         public MediaRegisterViewModel(string? path = null) : base(path) { }
+
+        /// <summary>
+        /// Every medium the station knows (full device inventory: internal disks, USB storage, cards, portable devices; with history from the
+        /// partition log), plus the earlier sources (USBSTOR, portable device labels, mounted volumes). One row per serial.
+        /// </summary>
+        protected override System.Collections.Generic.IReadOnlyList<object> Discover()
+        {
+            var observed = new System.Collections.Generic.List<LogAnalyzer.Dfir.Registers.ObservedMedium>();
+            foreach (var d in LogAnalyzer.Dfir.Windows.Devices.DeviceInventory.Collect().Devices)
+            {
+                string? type = d.Kind switch
+                {
+                    LogAnalyzer.Dfir.Devices.DeviceKind.UsbStorage => "USB",
+                    LogAnalyzer.Dfir.Devices.DeviceKind.InternalDisk => d.Name.Contains("SSD", StringComparison.OrdinalIgnoreCase) || d.Name.Contains("NVMe", StringComparison.OrdinalIgnoreCase) || d.Bus.Contains("NVME", StringComparison.OrdinalIgnoreCase) || d.InstanceId.Contains("NVME", StringComparison.OrdinalIgnoreCase) ? "SSD" : "HDD",
+                    LogAnalyzer.Dfir.Devices.DeviceKind.MemoryCard or LogAnalyzer.Dfir.Devices.DeviceKind.PortableDevice or LogAnalyzer.Dfir.Devices.DeviceKind.Thunderbolt => "other",
+                    _ => null,   // optical drives, Bluetooth, network and virtual disks are not media of the register
+                };
+                if (type is null || d.Serial.Length == 0) continue;
+                observed.Add(new(d.Serial, d.VidPid, $"{d.Manufacturer} {d.Model}".Trim() is { Length: > 0 } m ? m : d.Name, d.VolumeLabel, type, d.Sources, d.LastConnectedUtc ?? d.FirstConnectedUtc));
+            }
+            foreach (var o in LogAnalyzer.Dfir.Windows.Registers.StationDiscovery.ObservedMedia())
+                if (o.Serial.Length == 0 || !observed.Any(x => LogAnalyzer.Dfir.Registers.MediaRegister.NormalizeSerial(x.Serial) == LogAnalyzer.Dfir.Registers.MediaRegister.NormalizeSerial(o.Serial)))
+                    observed.Add(o);
+            return observed.Cast<object>().ToList();
+        }
+
+        protected override string MergeObserved(MediaRegister register, System.Collections.Generic.IReadOnlyList<object> observed)
+        {
+            var unit = LogAnalyzer.Dfir.Registers.StationName.Parse(Environment.MachineName).UnitCode;
+            var c = LogAnalyzer.Dfir.Registers.RegisterAutoFill.MergeMedia(register, observed.Cast<LogAnalyzer.Dfir.Registers.ObservedMedium>(), unit, DateTimeOffset.UtcNow);
+            return $"Preluat de pe stație: {c.Added} medii noi, {c.AlreadyPresent} erau deja în registru. Salvați ca să păstrați.";
+        }
+
         public override string Hint =>
+            "Rândurile vin de pe stație (mediile conectate sau văzute pe ea); persoana completează doar ce stația nu poate ști: autorizația (nivelul), zona și utilizatorul atribuit. " +
             "RegistrationNumber (unic); Serial; VidPid (0951:1666, opțional); Type: USB | HDD | SSD | CD | DVD | other; Classification: nivel NATO, UE sau național (gol = nemarcat; nu există nivel neclasificat); " +
             "AssignedUser: DOMENIU\\utilizator; Zone; ValidFrom/ValidTo: yyyy-MM-dd; Status: active | withdrawn | destroyed. Mediile observate se compară cu acest registru: AUTHORIZED / REGISTERED / UNREGISTERED / UNAUTHORIZED / UNKNOWN.";
+    }
+
+    /// <summary>
+    /// "Registrul actualizărilor offline" (control research P5, manual check M05): every update brought to the isolated station on a medium. The station
+    /// control compares the Windows updates installed in the control period with it (check S04).
+    /// </summary>
+    public sealed class UpdateRegisterViewModel : RegisterViewModel<UpdateRegister>
+    {
+        public UpdateRegisterViewModel(string? path = null) : base(path) { }
+
+        protected override System.Collections.Generic.IReadOnlyList<object> Discover() =>
+            LogAnalyzer.Dfir.Windows.Audit.StationFactCollector.ReadInstalledUpdates().Cast<object>().ToList();
+
+        protected override string MergeObserved(UpdateRegister register, System.Collections.Generic.IReadOnlyList<object> observed)
+        {
+            var c = register.MergeInstalled(observed.Cast<LogAnalyzer.Dfir.Windows.Audit.InstalledUpdateFact>().Select(u => (u.HotFixId, u.InstalledOn)));
+            return $"Preluat de pe stație: {c.Added} actualizări Windows noi, {c.AlreadyPresent} erau deja în registru. Completați proveniența și cine a adus suportul, apoi salvați.";
+        }
+
+        public override string Hint =>
+            "Date: yyyy-MM-dd (ziua aplicării); Kind: windows | antivirus | aplicatie; Package: numele pachetului, iar pentru Windows numărul KB (ex. KB5031234); " +
+            "Sha256: amprenta pachetului (64 hex); Origin: de unde provine pachetul; BroughtBy: cine a adus suportul; Medium: numărul suportului din registrul de medii; Notes.";
     }
 
     /// <summary>"Registru utilizatori" (decision 17): persons, accounts and clearances, entered by hand by the global administrator.</summary>
     public sealed class UsersRegisterViewModel : RegisterViewModel<UsersRegister>
     {
         public UsersRegisterViewModel(string? path = null) : base(path) { }
+
+        protected override System.Collections.Generic.IReadOnlyList<object> Discover() =>
+            LogAnalyzer.Dfir.Windows.Registers.StationDiscovery.ObservedAccounts().Cast<object>().ToList();
+
+        protected override string MergeObserved(UsersRegister register, System.Collections.Generic.IReadOnlyList<object> observed)
+        {
+            var c = LogAnalyzer.Dfir.Registers.RegisterAutoFill.MergeUsers(register, observed.Cast<LogAnalyzer.Dfir.Registers.ObservedAccount>(), DateTimeOffset.UtcNow);
+            return $"Preluat de pe stație: {c.Added} conturi noi, {c.AlreadyPresent} erau deja în registru. Salvați ca să păstrați.";
+        }
+
         public override string Notice => UsersRegister.EditNotice;
         public override string Hint =>
+            "Rândurile vin de pe stație (conturile existente sau folosite pe ea); persoana completează doar ce stația nu poate ști: autorizația (nivelul), zonele și nevoia de a cunoaște. " +
             "Person; Accounts: DOMENIU\\utilizator, separate prin ; sau |; Sids: opțional; Clearance: nivel NATO, UE sau național (un rând pentru fiecare abilitare; gol = fără abilitare); " +
             "ClearanceValidFrom/To: yyyy-MM-dd; NeedToKnow: note; ZonesAllowed: zone separate prin ; sau |. Abilitările se introduc manual; nu se deduc din nimic.";
     }

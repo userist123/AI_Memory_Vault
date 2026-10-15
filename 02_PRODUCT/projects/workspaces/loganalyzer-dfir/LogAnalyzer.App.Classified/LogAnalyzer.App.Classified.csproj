@@ -12,6 +12,9 @@
     <ApplicationManifest>..\LogAnalyzer.App\app.manifest</ApplicationManifest>
     <AssemblyName>LogAnalyzer.Classified</AssemblyName>
     <RootNamespace>LogAnalyzer.UI</RootNamespace>
+    <!-- Restore also sees the win-x64 single-file publish settings, so packages.lock.json covers the publish too and CI can publish in locked mode (security audit #9). -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <EnableDefaultPageItems>false</EnableDefaultPageItems>
     <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
@@ -65,4 +68,7 @@
       <_Parameter2>$(ClassifiedIncludeLocalAi)</_Parameter2>
     </AssemblyAttribute>
   </ItemGroup>
+  <!-- Security audit #5: SHA-256 manifest of the native libraries next to the published exe, verified at startup. -->
+  <Import Project="..\eng\NativeLibraryManifest.targets" />
+
 </Project>

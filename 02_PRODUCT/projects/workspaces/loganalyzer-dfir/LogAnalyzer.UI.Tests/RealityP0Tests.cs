@@ -97,9 +97,8 @@ namespace LogAnalyzer.UI.Tests
             {
                 new SuperTimelineExportService().ExportPlasoCsv(csv, new List<ParsedEvent>(), new List<ForensicArtifact>(),
                     new List<RegistryArtifact> { new RegistryArtifact { KeyPath = @"HKLM\X", ValueName = "v", LastWriteTime = null } });
-                var line = File.ReadAllLines(csv)[1];
-                Assert.StartsWith("-,-,", line);
-                Assert.DoesNotContain(DateTime.UtcNow.ToString("MM/dd/yyyy"), line);
+                // A registry value without a last-write time cannot be placed on a timeline: no row, never "now".
+                Assert.Single(File.ReadAllLines(csv));
             }
             finally { File.Delete(csv); }
         }

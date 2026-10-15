@@ -14,14 +14,26 @@ public static class ControlReportPdf
 {
     private const string Ink = "#0f172a", Muted = "#64748b", Line = "#cbd5e1";
 
+    /// <summary>Tests: receives the F2 pre-report line printed on page 1 (async-local).</summary>
+    public static readonly AsyncLocal<Action<string>?> PrintedLines = new();
+
+    /// <summary>Tests: receives the texts of the page-1 "Concluzie pe scurt" box and the section headings, in print order (async-local).</summary>
+    public static readonly AsyncLocal<Action<string>?> TextObserver = new();
+
     /// <param name="header">WP18 S5: the "proces-verbal" header (unit, station, Hardware ID, period, inspector, role, registration number, marking, signatures).</param>
     /// <param name="result">WP18 S5: the five answers, printed on the first page before the checks, together with the evidence gaps.</param>
     public static void Write(ControlReport r, string path, string inspector, string notes = "", VerificationReport? verification = null, LogAnalyzer.Dfir.Case.ReportSeal? seal = null,
-        ControlReportHeader? header = null, ControlResultScreen? result = null)
+        ControlReportHeader? header = null, ControlResultScreen? result = null, IReadOnlyList<LogAnalyzer.Dfir.Flow.ManualCheckResult>? manual = null, string authorizingAct = "",
+        LogAnalyzer.Dfir.Case.PreReportCheck? preCheck = null)
     {
         QuestPDF.Settings.License = LicenseType.Community;
         var f = r.Facts;
+        // F2: without a case (preCheck null) there is no evidence to re-verify and the line says so; SaveToCase passes the case re-check.
+        var pre = preCheck ?? LogAnalyzer.Dfir.Case.PreReportCheck.ForCase(null);
+        string W(string s) => pre.Unconfirm(s);
         string L(DateTimeOffset? t) => t is { } v ? TimeZoneInfo.ConvertTime(v, TimeZoneInfo.Local).ToString("yyyy-MM-dd HH:mm") : "—";
+        // every text printed through P is also given to TextObserver (tests read the page-1 box without parsing the PDF)
+        TextBlockDescriptor P(ColumnDescriptor c, string text) { TextObserver.Value?.Invoke(text); return c.Item().Text(text); }
 
         Document.Create(doc => doc.Page(page =>
         {
@@ -42,6 +54,27 @@ public static class ControlReportPdf
             page.Content().PaddingVertical(8).Column(col =>
             {
                 col.Spacing(8);
+                col.Item().Text(pre.Line).FontSize(8).Bold().FontColor(pre.BlocksConfirmed ? "#b91c1c" : pre.Applicable ? "#065f46" : "#78350f");
+                PrintedLines.Value?.Invoke(pre.Line);
+                // page 1: "Concluzie pe scurt", as in the investigation report (review 2026-10-12)
+                var box = ControlConclusion.Build(r);
+                col.Item().Background("#f8fafc").Border(1.2f).BorderColor(Ink).Padding(8).Column(sc =>
+                {
+                    sc.Spacing(3);
+                    P(sc, "Concluzie pe scurt").Bold().FontSize(12).FontColor(Ink);
+                    P(sc, W(box.Verdict)).Bold().FontSize(9);
+                    if (box.Serious.Count > 0)
+                    {
+                        P(sc, "Ce nu este conform (pe domenii)").Bold().FontSize(8.5f);
+                        foreach (var s in box.Serious) P(sc, "• " + W(s)).FontSize(8);
+                    }
+                    P(sc, "Ce înseamnă pentru dumneavoastră").Bold().FontSize(8.5f);
+                    P(sc, box.Meaning).FontSize(8);
+                    P(sc, "Pași următori").Bold().FontSize(8.5f);
+                    foreach (var s in box.NextSteps) P(sc, "• " + W(s)).FontSize(8);
+                    P(sc, "Ce nu s-a putut verifica").Bold().FontSize(8.5f);
+                    foreach (var s in box.NotChecked) P(sc, "• " + W(s)).FontSize(8);
+                });
                 col.Item().Row(row =>
                 {
                     Badge(row, "CONFORM", r.Count(ControlStatus.Conform), "#15803d");
@@ -62,17 +95,17 @@ public static class ControlReportPdf
                 if (result is not null)
                     col.Item().Border(0.8f).BorderColor(Line).Padding(6).Column(rc =>
                     {
-                        rc.Item().Text(result.Headline).Bold().FontSize(11).FontColor(Ink);
-                        rc.Item().Text("Există o problemă? " + result.Problem).FontSize(8.5f);
-                        rc.Item().Text("Cât de grav? " + result.Seriousness).FontSize(8.5f);
-                        rc.Item().Text("Sunt probele de încredere? " + result.Trust).FontSize(8.5f);
-                        rc.Item().Text("Ce s-a găsit? " + result.Found).FontSize(8.5f);
+                        rc.Item().Text(W(result.Headline)).Bold().FontSize(11).FontColor(Ink);
+                        rc.Item().Text(W("Există o problemă? " + result.Problem)).FontSize(8.5f);
+                        rc.Item().Text(W("Cât de grav? " + result.Seriousness)).FontSize(8.5f);
+                        rc.Item().Text(W("Sunt probele de încredere? " + (pre.BlocksConfirmed ? "NU — " + pre.Line + " " : "") + result.Trust)).FontSize(8.5f);
+                        rc.Item().Text(W("Ce s-a găsit? " + result.Found)).FontSize(8.5f);
                         rc.Item().Text("Ce urmează?").Bold().FontSize(8.5f);
-                        foreach (var st in result.NextSteps) rc.Item().Text("• " + st).FontSize(8);
+                        foreach (var st in result.NextSteps) rc.Item().Text(W("• " + st)).FontSize(8);
                     });
                 if (header is not null || result is not null)
                 {
-                    col.Item().Text("Goluri de probă și surse necitite (înaintea verificărilor, pentru că limitează ce se poate afirma)").Bold().FontSize(9.5f).FontColor("#b45309");
+                    col.Item().Text("Surse lipsă sau incomplete și surse necitite (înaintea verificărilor, pentru că limitează ce se poate afirma)").Bold().FontSize(9.5f).FontColor("#b45309");
                     if (f.Gaps.Count == 0 && f.Coverage.All(c => c.Readable)) col.Item().Text("Niciun gol raportat; toate sursele au fost citite.").FontSize(8).FontColor(Muted);
                     foreach (var c in f.Coverage.Where(c => !c.Readable)) col.Item().Text($"Sursă necitită: {c.Channel} {c.Note}").FontSize(8).FontColor("#b45309");
                     foreach (var g in f.Gaps) col.Item().Text($"Gol: {g.Artifact} — {g.Status.ToSpec()}: {g.Reason}. Impact: {g.Impact}").FontSize(8).FontColor("#b45309");
@@ -87,7 +120,7 @@ public static class ControlReportPdf
                             vc.Item().PaddingTop(3).Background("#fef2f2").Border(1).BorderColor("#b91c1c").Padding(4).Text(warn).FontSize(8).Bold().FontColor("#7f1d1d");
                     });
 
-                col.Item().Text("1. Verificări").Bold().FontSize(11).FontColor(Ink);
+                P(col, "1. Verificări").Bold().FontSize(11).FontColor(Ink);
                 foreach (var area in r.Checks.GroupBy(c => c.Area))
                 {
                     col.Item().Text(area.Key).Bold().FontSize(9.5f);
@@ -99,11 +132,23 @@ public static class ControlReportPdf
                                 rr.ConstantItem(78).Text(StatusText(c.Status)).Bold().FontColor(StatusColor(c.Status));
                                 rr.RelativeItem().Text($"{c.Id} · {c.Title}").Bold();
                             });
-                            cc.Item().Text(c.Detail);
-                            foreach (var e in c.Evidence.Take(25)) cc.Item().Text("– " + e).FontSize(7).FontColor(Muted);
-                            if (c.Evidence.Count > 25) cc.Item().Text($"… încă {c.Evidence.Count - 25} intrări (în fișierul JSON al raportului)").FontSize(7).FontColor(Muted);
-                            if (c.Recommendation.Length > 0) cc.Item().Text("Recomandare: " + c.Recommendation).FontSize(7.5f).Italic();
+                            cc.Item().Text(W(c.Detail));
+                            foreach (var e in c.Evidence.Take(25)) cc.Item().Text("– " + W(e)).FontSize(7).FontColor(Muted);
+                            if (c.Evidence.Count > 25) cc.Item().Text($"… încă {LogAnalyzer.Dfir.Language.RoText.Count(c.Evidence.Count - 25, "intrare", "intrări")} (în fișierul JSON al raportului)").FontSize(7).FontColor(Muted);
+                            if (c.Recommendation.Length > 0) cc.Item().Text(W("Recomandare: " + c.Recommendation)).FontSize(7.5f).Italic();
                         });
+                }
+
+                // checks only the controller can do (physical, documents): every question is printed; unanswered ones as „Neverificat”
+                col.Item().Text("1b. Verificări făcute de controlor (fizic și pe documente)").Bold().FontSize(11).FontColor(Ink);
+                var answers = (manual ?? []).ToDictionary(m => m.Id);
+                col.Item().Text(LogAnalyzer.Dfir.Flow.ManualChecks.Summary(answers.Values)).FontSize(8.5f);
+                foreach (var q in LogAnalyzer.Dfir.Flow.ManualChecks.All)
+                {
+                    var a = answers.GetValueOrDefault(q.Id);
+                    var text = $"{q.Id} · {q.Question} — {LogAnalyzer.Dfir.Flow.ManualChecks.AnswerText(a?.Answer ?? LogAnalyzer.Dfir.Flow.ManualAnswer.NotAnswered)}";
+                    col.Item().Text(text + (a?.Note is { Length: > 0 } n ? $". Observație: {n}" : "")).FontSize(8)
+                        .FontColor(a?.Answer == LogAnalyzer.Dfir.Flow.ManualAnswer.No ? "#b91c1c" : Ink);
                 }
 
                 col.Item().Text("2. Activitatea utilizatorilor").Bold().FontSize(11).FontColor(Ink);
@@ -133,13 +178,23 @@ public static class ControlReportPdf
                     }
                 });
 
-                col.Item().Text("4. Acoperirea jurnalelor și goluri de probă").Bold().FontSize(11).FontColor(Ink);
+                col.Item().Text("4. Acoperirea jurnalelor și surse lipsă sau incomplete").Bold().FontSize(11).FontColor(Ink);
                 foreach (var c in f.Coverage)
-                    col.Item().Text($"{c.Channel}: {(c.Readable ? $"{c.Records} evenimente citite, cel mai vechi {L(c.OldestUtc)}" : "NECITIT")} {c.Note}").FontSize(7.5f);
+                    col.Item().Text($"{c.Channel}: {(c.Readable ? $"{LogAnalyzer.Dfir.Language.RoText.Count(c.Records, "eveniment", "evenimente")} citite, cel mai vechi {L(c.OldestUtc)}" : "NECITIT")} {c.Note}").FontSize(7.5f);
                 foreach (var g in f.Gaps)
                     col.Item().Text($"Gol: {g.Artifact} — {g.Status.ToSpec()}: {g.Reason}. Impact: {g.Impact}").FontSize(7.5f).FontColor("#b45309");
                 col.Item().PaddingTop(6).Text("„DE VERIFICAT” înseamnă că faptele sunt prezentate, dar numai organizația poate spune dacă au fost autorizate. " +
                                               "„NEDETERMINAT” înseamnă că sursa necesară nu a putut fi citită; nu înseamnă că activitatea nu a avut loc.").FontSize(7).Italic().FontColor(Muted);
+
+                // mandatory "Limitări" (legal research G7): what this report can and cannot prove, stated every time
+                col.Item().PaddingTop(6).Text("5. Limitări").Bold().FontSize(11).FontColor(Ink);
+                foreach (var lim in Limitations(f))
+                    col.Item().Text("• " + lim).FontSize(7.5f);
+                // basis and declaration (legal research G1, G4)
+                col.Item().PaddingTop(8).Text("Actul care autorizează controlul: " + (authorizingAct.Length > 0 ? authorizingAct : "nespecificat în scopul cazului")).FontSize(8)
+                    .FontColor(authorizingAct.Length > 0 ? Ink : "#b45309");
+                col.Item().Text($"Declar că am efectuat controlul stației {f.Host} folosind aplicația indicată în subsolul paginii, doar prin citire, fără a modifica stația, " +
+                                "și că rezultatele de mai sus reproduc fidel ce a constatat aplicația și ce am verificat personal.").FontSize(8);
                 if (header is not null)
                     col.Item().PaddingTop(28).Row(row =>
                     {
@@ -153,16 +208,34 @@ public static class ControlReportPdf
         })).GeneratePdf(path);
     }
 
+    /// <summary>The limits of a control report, always printed (legal research G7, docs/dfir/RESEARCH_2026-10-11_PROBE_VALOARE_JURIDICA.md).</summary>
+    public static IReadOnlyList<string> Limitations(StationFacts f)
+    {
+        var l = new List<string>
+        {
+            "Controlul a citit stația; nu a modificat nimic pe ea. Concluziile se sprijină doar pe sursele enumerate la punctul 4.",
+            "Lipsa unei urme nu dovedește că un fapt nu a avut loc: jurnalele au o capacitate limitată, se suprascriu și pot fi șterse.",
+            "Windows păstrează pentru fiecare dispozitiv doar ultima conectare; istoricul complet depinde de jurnale.",
+            "Faptele „DE VERIFICAT” trebuie confirmate cu documentele organizației (aprobări, registre); aplicația nu le poate califica singură.",
+            "Orele cu „UTC” sunt în timp universal, restul în ora stației; ora locală a stației și fusul ei orar sunt trecute în subsolul fiecărei pagini.",
+        };
+        if (!f.IsAdministrator) l.Insert(0, "Controlul a rulat FĂRĂ drepturi de administrator: jurnalul Security, politica de audit și o parte din setări nu au putut fi citite.");
+        if (f.Gaps.Count > 0) l.Add($"{(f.Gaps.Count == 1 ? "Există o sursă lipsă sau incompletă" : "Există " + LogAnalyzer.Dfir.Language.RoText.Count(f.Gaps.Count, "sursă lipsă sau incompletă", "surse lipsă sau incomplete"))} (punctul 4); verificările care depind de {(f.Gaps.Count == 1 ? "ea" : "ele")} sunt NEDETERMINATE.");
+        return l;
+    }
+
     /// <summary>Saves the report (JSON) and its PDF in the case, registered as evidence with SHA-256.</summary>
-    public static (string Json, string Pdf) SaveToCase(ControlReport r, CaseWorkspace ws, string inspector, string notes = "", ControlReportHeader? header = null, ControlResultScreen? result = null)
+    public static (string Json, string Pdf) SaveToCase(ControlReport r, CaseWorkspace ws, string inspector, string notes = "", ControlReportHeader? header = null, ControlResultScreen? result = null,
+        IReadOnlyList<LogAnalyzer.Dfir.Flow.ManualCheckResult>? manual = null)
     {
         var dir = Path.Combine(ws.Root, "Control", $"CONTROL_{r.Facts.CollectedUtc:yyyyMMdd_HHmmss}");
         Directory.CreateDirectory(dir);
         var json = Path.Combine(dir, "control_report.json");
-        File.WriteAllText(json, JsonSerializer.Serialize(new { r.Facts, r.Checks, r.Users, r.Actions },
+        File.WriteAllText(json, JsonSerializer.Serialize(new { r.Facts, r.Checks, r.Users, r.Actions, ManualChecks = manual ?? [] },
             new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } }));
         var pdf = Path.Combine(dir, $"Raport_control_{r.Facts.Host}_{r.Facts.CollectedUtc:yyyyMMdd}.pdf");
-        Write(r, pdf, inspector, notes, Investigation.InvestigationReportPdf.ReadVerification(ws.Root), LogAnalyzer.Dfir.Case.ReportSeal.For(ws), header, result);
+        var pre = LogAnalyzer.Dfir.Case.PreReportCheck.ForCase(ws);   // F2: re-verify the case evidence first; its audit entry is inside the printed chain heads
+        Write(r, pdf, inspector, notes, Investigation.InvestigationReportPdf.ReadVerification(ws.Root), LogAnalyzer.Dfir.Case.ReportSeal.For(ws), header, result, manual, ws.Info.Scope.AuthorizingAct, pre);
         ws.RegisterStored(json, "live:" + r.Facts.Host, "control", "control_report", TemporalType.CurrentSnapshot, "StationFactCollector", DfirInfo.ApplicationVersion);
         ws.RegisterStored(pdf, "live:" + r.Facts.Host, "control", "control_report_pdf", TemporalType.Derived, "ControlReportPdf", DfirInfo.ApplicationVersion);
         // WP3b: the report files are also outputs in the custody chain, listed with the chain heads in a manifest next to them.

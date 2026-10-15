@@ -31,7 +31,7 @@ namespace LogAnalyzer.UI.Services
         public static Func<CaseScope?, bool, CaseScope?>? ScopePrompt { get; set; }
 
         /// <summary>Shown by the screens when the operator closes the scope dialog without confirming.</summary>
-        public const string ScopeRequiredMessage = "Scopul cazului nu este confirmat: completați scopul (de ce, perioadă, sisteme, aprobator) înainte de prima utilizare LIVE.";
+        public const string ScopeRequiredMessage = "Nu s-a salvat nimic: ca să lucrați pe această stație, trebuie completat o dată scopul (de ce se face, perioada, ce sisteme, cine a aprobat). Apăsați din nou butonul și completați fereastra care se deschide.";
 
         /// <summary>Folder of the station's live case (may not exist yet). WP18: used to list previous controls without confirming a scope.</summary>
         public static string Root => RootPath();
@@ -63,6 +63,35 @@ namespace LogAnalyzer.UI.Services
             var ws = Get();
             return ws.Info.Scope.IsConfirmed ? ws : null;
         }
+
+        /// <summary>
+        /// Asks for the case scope at the START of a station control or an investigation (not only when the PDF is requested). The dialog is pre-filled
+        /// from the station's last case on disk (or the case in memory) and defaults; the operator can edit it later by confirming a new scope.
+        /// Returns true when a complete scope is confirmed (already, or just now); once it is, <see cref="GetConfirmed"/> does not ask again at report time.
+        /// Creates no case: the LIVE case is created later by <see cref="GetConfirmed"/>. False in headless use (no prompt set) or when the operator closes the dialog.
+        /// </summary>
+        public static bool EnsureScopeAtStart()
+        {
+            if (ScopeConfirmed) return true;
+            if (ScopePrompt is null || _prompting) return false;
+            _prompting = true;
+            try
+            {
+                CaseScope? current;
+                lock (Gate) current = _case?.Info.Scope ?? ReadScopeOnDisk();
+                var scope = ScopePrompt.Invoke(current, false);
+                if (scope is null || !scope.IsConfirmed) return false;
+                Configure(scope);
+                return ScopeConfirmed;
+            }
+            finally { _prompting = false; }
+        }
+
+        /// <summary>The scope in force in this session (confirmed or not), or null when none was entered or stored.</summary>
+        public static CaseScope? CurrentScope { get { lock (Gate) return _case?.Info.Scope ?? _configured; } }
+
+        /// <summary>Forgets the scope entered in this session (the case on disk is untouched). For tests.</summary>
+        public static void ResetSessionScope() { lock (Gate) { _configured = null; _case = null; } }
 
         /// <summary>
         /// Emergency containment may start on the provisional scope; this is called right after it: opens the scope dialog unless the scope is

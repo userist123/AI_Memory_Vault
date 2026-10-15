@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using LogAnalyzer.Dfir.Case;
 using LogAnalyzer.Dfir.IO;
 
 namespace LogAnalyzer.Dfir.Auth;
@@ -314,7 +315,13 @@ public sealed partial class AuthService
             if (!session.IsPrimaryAdmin) return AuthResult.Fail("not_authorized", "numai administratorul principal poate accepta starea curentă");
             if (AccountsIntegrityOk) return AuthResult.Success("nu era nimic de acceptat");
             var last = Json.ReadLines<AuthAuditEntry>(AuditPath).Select(e => e.AccountsSha256).LastOrDefault(s => s.Length > 0) ?? "(niciunul)";
-            Audit("auth.integrity_accepted", session.Account, session.Account, "ok", "accepted", $"hash auditat {last}; hash curent {AccountsSha256}", accountsChanged: true);
+            var chain = VerifyAudit();
+            Audit("auth.integrity_accepted", session.Account, session.Account, "ok", "accepted",
+                $"hash auditat {last}; hash curent {AccountsSha256}; audit: {chain.Message}", accountsChanged: true);
+            // A sealed audit broken by writes without the key is resealed only by this explicit, audited decision of the primary administrator.
+            if (chain.Status == ChainStatus.Broken)
+                try { new HashChain(AuditPath).Reseal(); }
+                catch (InvalidOperationException ex) { return AuthResult.Fail("chain_broken", "starea conturilor a fost acceptată, dar auditul nu poate fi resigilat: " + ex.Message); }
             return AuthResult.Success();
         }
     }

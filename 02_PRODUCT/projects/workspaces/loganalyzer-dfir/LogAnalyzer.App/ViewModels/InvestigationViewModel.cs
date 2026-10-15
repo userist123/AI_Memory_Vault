@@ -43,19 +43,19 @@ namespace LogAnalyzer.UI.ViewModels
         }
         /// <summary>WP14a: the findings of the "Air-gap integrity" category (Finding.AirGap carries channel, authorised?, who, when, object, classification, direction, destination, evidence).</summary>
         public ObservableCollection<Finding> AirGapFindings { get; } = new();
-        [ObservableProperty] private string _airGapSummary = "Integritate air-gap: nedefinit (nicio analiză încă).";
+        [ObservableProperty] private string _airGapSummary = "Integritate air-gap: nedefinită (nicio analiză încă).";
         /// <summary>WP14b: the findings of the "Combined sequences" category (control gap + media, SMB + staging + USB, portable software + archive + USB); Finding.Sequence carries the ordered steps.</summary>
         public ObservableCollection<Finding> SequenceFindings { get; } = new();
-        [ObservableProperty] private string _sequenceSummary = "Secvențe combinate: nedefinit (nicio analiză încă).";
+        [ObservableProperty] private string _sequenceSummary = "Secvențe combinate: nedefinite (nicio analiză încă).";
         [ObservableProperty] private string _sequenceSteps = "";
         /// <summary>WP14a: the zone of the analysed system, as the operator declares it (compared with the zone in the media register).</summary>
         [ObservableProperty] private string _systemZone = "";
-        [ObservableProperty] private string _registerLine = "Registre: nedefinit (nicio analiză încă).";
+        [ObservableProperty] private string _registerLine = "Registre: nedefinite (nicio analiză încă).";
         public ObservableCollection<TimelineEvent> Timeline { get; } = new();
         public ObservableCollection<LogAnalyzer.Dfir.Analysis.AntiForensicCheck> AntiForensics { get; } = new();
         /// <summary>WP15b: "Cronologie politici" (same lines as the investigation PDF).</summary>
         public ObservableCollection<LogAnalyzer.Dfir.Analysis.PolicyReportLine> PolicyTimelineLines { get; } = new();
-        [ObservableProperty] private string _policyTimelineSummary = "Cronologie politici: nedefinit (nicio analiză încă).";
+        [ObservableProperty] private string _policyTimelineSummary = "Cronologie politici: nedefinită (nicio analiză încă).";
         public ObservableCollection<LogAnalyzer.Dfir.Graph.Entity> GraphEntities { get; } = new();
         public ObservableCollection<LogAnalyzer.Dfir.Graph.GraphEdgeRow> GraphEdges { get; } = new();
 
@@ -164,8 +164,30 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private int _networkIndex = -1;
         [ObservableProperty] private int _classificationIndex = -1;
 
+        // Notes and the authorizing act come from the scope dialog (this form has no fields for them); they are carried so a later Configure does not drop them.
+        private string _scopeNotes = "", _scopeAct = "";
+
+        /// <summary>
+        /// The scope is asked at the start (dialog pre-filled from the last case); this copies a confirmed scope into the form fields when the form is still incomplete,
+        /// so the investigation does not ask for the same answers twice. A form the operator already filled in is never overwritten.
+        /// </summary>
+        public bool AskScopeAtStart()
+        {
+            if (!LogAnalyzer.UI.Services.LiveCase.EnsureScopeAtStart()) return BuildScope().MissingFields().Count == 0;
+            if (BuildScope().MissingFields().Count == 0) return true;
+            if (LogAnalyzer.UI.Services.LiveCase.CurrentScope is not { IsConfirmed: true } s) return false;
+            ScopePurpose = s.Purpose; ScopeApprover = s.Approver; ScopeSystems = string.Join("; ", s.SystemsInScope);
+            ScopeFrom = s.PeriodFromUtc?.UtcDateTime.Date; ScopeTo = s.PeriodToUtc?.UtcDateTime.Date;
+            LegalBasisIndex = s.LegalBasis switch { LegalBasis.Incident => 0, LegalBasis.Audit => 1, LegalBasis.Control => 2, _ => -1 };
+            NetworkIndex = s.Network switch { NetworkCategory.AirGappedNetwork => 0, NetworkCategory.StandalonePc => 1, NetworkCategory.Connected => 2, _ => -1 };
+            ClassificationIndex = s.Classification switch { ClassificationLevel.Classified => 0, ClassificationLevel.Unclassified => 1, _ => -1 };
+            _scopeNotes = s.Notes; _scopeAct = s.AuthorizingAct;
+            return BuildScope().MissingFields().Count == 0;
+        }
+
         private CaseScope BuildScope() => new()
         {
+            Notes = _scopeNotes, AuthorizingAct = _scopeAct,
             Purpose = ScopePurpose.Trim(),
             Approver = ScopeApprover.Trim(),
             SystemsInScope = ScopeSystems.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(),
@@ -266,6 +288,7 @@ namespace LogAnalyzer.UI.ViewModels
         private async Task IntakeNext()
         {
             if (_intake.Completed) { _intake.Restart(); RaiseIntake(); return; }
+            if (_intake.StepIndex == 0) AskScopeAtStart();   // scope first, at the start; the later scope step is then already filled
             var error = ValidateIntakeStep();
             if (error is not null) { IntakeError = error; return; }
             bool wasLast = _intake.IsLastStep;
@@ -290,6 +313,7 @@ namespace LogAnalyzer.UI.ViewModels
         private async Task Run()
         {
             if (!CollectFromThisStation && ImportFiles.Count == 0) { Log += "Alegeți colectarea de pe această stație sau adăugați probe de importat." + Environment.NewLine; return; }
+            if (BuildScope().MissingFields().Count > 0) AskScopeAtStart();
             var scope = BuildScope();
             var missingScope = scope.MissingFields();
             if (missingScope.Count > 0)
@@ -367,9 +391,10 @@ namespace LogAnalyzer.UI.ViewModels
                 $"{Environment.NewLine}  Legătură: {f.Sequence?.Link}{Environment.NewLine}  Constatări componente: {string.Join(", ", f.RelatedFindingIds)}"));
             RegisterLine = _result.RegisterLine;
             AirGapSummary = AirGapFindings.Count == 0
-                ? "Integritate air-gap: nu s-a observat nimic în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (jurnalele au o istorie limitată; unele canale pot lipsi, vezi „Goluri de probă”)."
+                ? "Integritate air-gap: nu s-a observat nimic în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (jurnalele au o istorie limitată; unele canale pot lipsi, vezi „Surse lipsă sau incomplete”)."
                 : $"Integritate air-gap: {AirGapFindings.Count} constatări ({AirGapFindings.Count(a => a.Severity >= Severity.High)} ridicate).";
             ResultChanged?.Invoke(this, EventArgs.Empty);
+            LogAnalyzer.UI.Services.CollectAllState.Instance.Publish(result);   // G3: one result, reused by every page
             FillTimeline();
             var chains = _result.Findings.Where(f => f.RuleId == "INCIDENT-CHAIN").ToList();
             Chains = chains.Count == 0 ? "Niciun lanț de incident (constatări grave grupate în timp)." :
@@ -403,12 +428,20 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ExportPdf()
         {
-            if (_result is null) return;
+            if (_result is null)
+            {
+                Summary = "Ca să faceți raportul de incident, analizați întâi probele: alegeți mai jos de unde vin probele, apoi apăsați „Înainte” până la „Pornește analiza”.";
+                System.Windows.MessageBox.Show(Summary, "Raportul nu se poate face încă", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                return;
+            }
             var dlg = new SaveFileDialog { FileName = $"Raport_{_result.Case.Info.CaseId}.pdf", Filter = "PDF (*.pdf)|*.pdf", InitialDirectory = _result.Case.Root };
             if (dlg.ShowDialog() != true) return;
             var audience = (LogAnalyzer.Dfir.Reporting.ReportAudience)Math.Clamp(ReportAudienceIndex, 0, ReportAudienceLabels.Length - 1);
+            // F2: Write re-verifies every evidence hash first and prints the result on page 1; F3: the PDF is then signed when a key is configured.
             InvestigationReportPdf.Write(_result, dlg.FileName, LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified, audience: audience);
             _result.Case.Audit("report.pdf", $"{dlg.FileName} · {LogAnalyzer.Dfir.Reporting.ReportAudiences.Label(audience)}");
+            ReportStatus = SignReport(dlg.FileName, _result.Case);
+            IntegrityLine = _result.Case.LastRecheck?.Summary ?? IntegrityLine;
             Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });
         }
 

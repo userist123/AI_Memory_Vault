@@ -23,7 +23,7 @@ public sealed class EventLogCollector : ICollector
         "Microsoft-Windows-NetworkProfile/Operational", "Microsoft-Windows-WLAN-AutoConfig/Operational", "Microsoft-Windows-DNS-Client/Operational",
         // WP14a: removable media, CD/DVD and network adapters on air-gapped systems. A channel that does not exist on this system is "indisponibil", not a failure.
         "Microsoft-Windows-Kernel-PnP/Configuration", "Microsoft-Windows-DriverFrameworks-UserMode/Operational", "Microsoft-Windows-Dhcp-Client/Operational",
-        "Microsoft-Windows-VHDMP-Operational",
+        "Microsoft-Windows-VHDMP-Operational", "Microsoft-Windows-PrintService/Operational",
     ];
 
     public string Name => "EventLogCollector";
@@ -53,7 +53,7 @@ public sealed class EventLogCollector : ICollector
             }
             if (status != EventLogExportStatus.Exported || !File.Exists(dest))
             {
-                o.Errors.Add($"{ch}: export eșuat ({status}, cod {err}: {EventLogExport.Describe(err)})");
+                o.Errors.Add($"{ch}: {(status == EventLogExportStatus.AccessDenied ? "export refuzat" : "export eșuat")} ({EventLogExport.Describe(err)})");
                 continue;
             }
             o.Evidence.Add(ctx.Case.RegisterStored(dest, ch, "EventLog:" + ch, "evtx", TemporalType.Historical, Name, Version));
@@ -206,13 +206,7 @@ public sealed class LiveStateCollector : ICollector
     private static string Describe(SignatureInfo s) => s.IsSigned ? (s.IsValid ? $"semnat ({s.Kind}) {s.Signer}" : $"semnătură invalidă: {s.Status}") : "NESEMNAT";
 
     /// <summary>Executable part of a command line or service ImagePath ("C:\a b\x.exe" -arg, or C:\x.exe -arg).</summary>
-    public static string ExePath(string cmd)
-    {
-        cmd = cmd.Trim();
-        if (cmd.StartsWith('"')) { int e = cmd.IndexOf('"', 1); return e > 1 ? cmd[1..e] : cmd.Trim('"'); }
-        int exe = cmd.IndexOf(".exe", StringComparison.OrdinalIgnoreCase);
-        return exe > 0 ? cmd[..(exe + 4)] : cmd.Split(' ')[0];
-    }
+    public static string ExePath(string cmd) => LogAnalyzer.Dfir.Analysis.Correlation.CommandExecutable(cmd);
 
     private static string Between(string s, string a, string b)
     {

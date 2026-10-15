@@ -322,7 +322,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (s is { Gaps.Count: > 0 })
             {
                 sb.AppendLine();
-                sb.AppendLine("GOLURI DE PROBĂ");
+                sb.AppendLine("SURSE LIPSĂ SAU INCOMPLETE");
                 foreach (var g in s.Gaps) sb.AppendLine($"  {g.Artifact}: {g.Status.ToSpec()} — {g.Reason}");
             }
             return sb.ToString();

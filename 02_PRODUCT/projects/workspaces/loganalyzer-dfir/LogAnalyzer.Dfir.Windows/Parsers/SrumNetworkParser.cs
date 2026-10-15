@@ -26,15 +26,14 @@ public sealed class SrumNetworkParser : EvidenceParserBase
             "O bază „murdară” fără jurnalele ESE poate pierde ultimele înregistrări.",
         ],
         Status = ParserMaturity.Validated,
-        Validation = "CorpusRegressionTests (srum), InvestigationTests pe corpusul NanAgent",
+        Validation = "CorpusRegressionTests (srum), InvestigationTests pe corpusul VendorAgent",
     };
 
     public sealed record SrumNetRow(DateTime TimestampUtc, int AppId, string App, int UserId, string User, long InterfaceLuid, long BytesSent, long BytesRecvd);
 
     public static IEnumerable<SrumNetRow> Read(string srudbPath, CancellationToken ct = default)
     {
-        var work = Path.Combine(Path.GetTempPath(), "ladfir_srum_" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(work);
+        var work = LogAnalyzer.Dfir.IO.WorkFolders.NewWorkDirectory(srudbPath, "srum");   // security audit #14: never %TEMP%
         try
         {
             var copy = Path.Combine(work, "SRUDB.dat");
@@ -72,8 +71,8 @@ public sealed class SrumNetworkParser : EvidenceParserBase
         }
         finally
         {
-            try { Directory.Delete(work, recursive: true); }
-            catch (IOException) { /* esent may hold the temp files briefly; leftover temp data is not evidence */ }
+            // esent may hold its files for a moment after detach: one short retry before giving up.
+            if (!LogAnalyzer.Dfir.IO.WorkFolders.TryDelete(work)) { Thread.Sleep(200); LogAnalyzer.Dfir.IO.WorkFolders.TryDelete(work); }
         }
     }
 

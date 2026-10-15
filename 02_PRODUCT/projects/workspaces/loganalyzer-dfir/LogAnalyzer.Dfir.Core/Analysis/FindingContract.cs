@@ -32,6 +32,28 @@ public static class FindingContract
         _ => StandardState.Unknown,
     };
 
+    /// <summary>Reader-facing name of a parser ("AmcacheParser" → "Amcache"); the id stays in the provenance for tools.</summary>
+    public static string ParserLabel(string parserId) => parserId switch
+    {
+        "EvtxParser" => "Jurnalele de evenimente (EVTX)",
+        "ServicesParser" => "Instantaneul serviciilor",
+        "ScheduledTaskParser" => "Definițiile activităților planificate",
+        "UsbDevicesParser" => "Dispozitivele USB din registry",
+        "SystemHiveExecutionParser" => "Registry-ul sistemului (SYSTEM)",
+        "UserHiveParser" => "Registry-ul utilizatorului",
+        "SoftwareHiveParser" => "Registry-ul SOFTWARE",
+        "UsnJournalParser" => "Jurnalul USN",
+        "SrumNetworkParser" => "SRUM (rețea)",
+        "PcapngParser" => "Captura de rețea (PCAPNG)",
+        var p when p.EndsWith("Parser", StringComparison.Ordinal) => p[..^6],
+        _ => parserId,
+    };
+
+    /// <summary>"nu poate" for a singular label, "nu pot" for the plural ones ("Jurnalele …", "Definițiile …", "Dispozitivele …").</summary>
+    public static string CannotProveVerb(string label) =>
+        label.StartsWith("Jurnalele ", StringComparison.Ordinal) || label.StartsWith("Definițiile ", StringComparison.Ordinal) || label.StartsWith("Dispozitivele ", StringComparison.Ordinal)
+            ? "nu pot" : "nu poate";
+
     public static string KeyBase(string ruleId) => "finding." + ruleId.ToLowerInvariant().Replace('-', '_');
 
     public static IEnumerable<Finding> Enrich(IEnumerable<Finding> findings, FindingContractContext? ctx = null)
@@ -78,10 +100,10 @@ public static class FindingContract
         var parsers = refs.SelectMany(r => ctx.ParsersOf(r.EvidenceId)).Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal).ToList();
         foreach (var p in parsers)
             if (ParserCapabilities.For(p) is { } cap)
-                foreach (var c in cap.CannotProve) lim.Add($"{p} nu poate dovedi: {c}");
+                foreach (var c in cap.CannotProve) lim.Add($"{ParserLabel(p)} {CannotProveVerb(ParserLabel(p))} dovedi {(c.Length > 0 ? char.ToLowerInvariant(c[0]) + c[1..] : c)}");
         if (rule is not null && rule.ContradictionCheck is null)
-            lim.Add("Dovezi contradictorii: regula nu le evaluează; lipsa lor în listă nu înseamnă că nu există.");
-        lim.Add("Verificare independentă: neefectuată (NOT_ASSESSED).");
+            lim.Add("Probe contradictorii: regula nu le evaluează; lipsa lor în listă nu înseamnă că nu există.");
+        lim.Add("Verificare independentă: neefectuată.");
         foreach (var l in lim.Where(l => l.Length > 0))
             if (!f.Limitations.Contains(l)) f.Limitations.Add(l);
 
@@ -128,25 +150,49 @@ public static class StateLabels
 {
     public static IReadOnlyDictionary<StandardState, string> RomanianTable { get; } = new Dictionary<StandardState, string>
     {
-        [StandardState.Observed] = "Observat",
-        [StandardState.Correlated] = "Corelat",
-        [StandardState.Supported] = "Susținut de dovezi",
-        [StandardState.Verified] = "Verificat",
-        [StandardState.Inferred] = "Deducție",
-        [StandardState.Unproven] = "Nedemonstrat",
-        [StandardState.Contradicted] = "Contrazis",
-        [StandardState.Rejected] = "Respins",
-        [StandardState.Unknown] = "Necunoscut",
-        [StandardState.NotAssessed] = "Neevaluat",
+        [StandardState.Observed] = "Observată direct",
+        [StandardState.Correlated] = "Asociată (în timp sau cale)",
+        [StandardState.Supported] = "Susținută de o singură sursă",
+        [StandardState.Verified] = "Coroborată",
+        [StandardState.Inferred] = "Dedusă",
+        [StandardState.Unproven] = "Nedemonstrată",
+        [StandardState.Contradicted] = "Contrazisă",
+        [StandardState.Rejected] = "Respinsă",
+        [StandardState.Unknown] = "Nedeterminată",
+        [StandardState.NotAssessed] = "Neevaluată",
+    };
+
+    /// <summary>Feminine plural (agreement with "constatări") for counts: "2 coroborate", "3 contrazise".</summary>
+    public static IReadOnlyDictionary<StandardState, string> RomanianPlural { get; } = new Dictionary<StandardState, string>
+    {
+        [StandardState.Observed] = "observate direct",
+        [StandardState.Correlated] = "asociate (în timp sau cale)",
+        [StandardState.Supported] = "susținute de o singură sursă",
+        [StandardState.Verified] = "coroborate",
+        [StandardState.Inferred] = "deduse",
+        [StandardState.Unproven] = "nedemonstrate",
+        [StandardState.Contradicted] = "contrazise",
+        [StandardState.Rejected] = "respinse",
+        [StandardState.Unknown] = "nedeterminate",
+        [StandardState.NotAssessed] = "neevaluate",
     };
 
     public static string Romanian(StandardState s) => RomanianTable[s];
+
+    /// <summary>"1 coroborată" / "2 coroborate" (a count of findings in that state; the number is written as digits).</summary>
+    public static string RomanianCount(StandardState s, long n) =>
+        n == 1 ? "1 " + RomanianTable[s].ToLowerInvariant() : LogAnalyzer.Dfir.Language.RoText.Number(n) + " " + RomanianPlural[s];
 
     /// <summary>
     /// The label of a classification, through the same mapping the finding contract uses (<see cref="FindingContract.StatusFor"/>) and the same table
     /// as <see cref="Romanian"/>. The grids, the graph view and the finding card use this instead of any wording of their own.
     /// </summary>
-    public static string ForClassification(Classification c) => Romanian(FindingContract.StatusFor(c));
+    public static string ForClassification(Classification c) => c switch
+    {
+        Classification.Candidate => "Indiciu – de confirmat",
+        Classification.BenignKnown => "Cunoscută, fără risc",
+        _ => Romanian(FindingContract.StatusFor(c)),
+    };
 
     /// <summary>One sentence on what a state means and does not mean, for tooltips and the finding card; so a state is never only a word or a colour.</summary>
     public static string Meaning(StandardState s) => MeaningTable[s];
