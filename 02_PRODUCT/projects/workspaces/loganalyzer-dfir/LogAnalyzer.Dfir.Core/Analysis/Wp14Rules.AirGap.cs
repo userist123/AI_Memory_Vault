@@ -103,11 +103,27 @@ public static partial class Wp14Rules
     private static void AirGap(Ctx c, List<Finding> o)
     {
         if (!c.AirGapScope) return;
+        AppInstallIntegrity(c, o);
         NetworkConnected(c, o);
         Wifi(c, o);
         Bluetooth(c, o);
         Dhcp(c, o);
         NicAdded(c, o);
+    }
+
+    // ---- the installation date itself (review of PR #288): a re-initialised or contradicted audit chain is NECONFORM on a Standalone station ----
+
+    private static void AppInstallIntegrity(Ctx c, List<Finding> o)
+    {
+        if (!c.Standalone || c.AppInstallViolations.Count == 0) return;
+        var desc = "NECONFORM: data instalării aplicației, granița după care stația Standalone nu are voie să fie conectată, nu este de încredere: " + string.Join("; ", c.AppInstallViolations) + ". " +
+                   (c.AppInstalledUtc is { } d ? $"Se folosește data cea mai veche găsită ({Time(d)}), astfel încât nicio conectare să nu fie mutată în istoric." : "Data instalării este necunoscută, deci orice conectare este NECONFORMĂ.") +
+                   $" Temei: {c.AppInstallBasis}.";
+        o.Add(Plain(c, "AIRGAP-APP-INSTALL-INTEGRITY", "NECONFORM: jurnalul aplicației a fost reinițializat sau nu se potrivește cu instalarea", Sev(c, Severity.High), c.FindingCategory,
+            c.AppInstalledUtc, null, "necunoscut: jurnalul nu arată cine a reinițializat magazinul", desc,
+            "Lanțul de audit al aplicației (primul rând, reinițializări) comparat cu celelalte urme ale aplicației pe stație, pe o stație Standalone.",
+            ["Ceasul stației era greșit la prima pornire a aplicației (atunci data primului rând este greșită, nu jurnalul)."],
+            [FactRef(c, "app_install", "data instalării aplicației și reinițializările jurnalului de audit")], "T1070", SemanticType.Observation));
     }
 
     // ---- network profile connected (NetworkProfile 10000, with 10001 for the duration) ----
@@ -231,7 +247,7 @@ public static partial class Wp14Rules
             var (auth, basis) = Authorize(c, [.. ips, .. servers, .. gws], c.Data.Network.NetworkKeywords.Where(_ => false).ToList());
             var desc = $"Clientul DHCP a înregistrat {LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "eveniment", "evenimente")} ({string.Join(", ", items.Select(e => e.EventId).Distinct())}) {Time(T(items[0]))} – {Time(T(items[^1]))} pe " +
                        (c.Standalone ? "o stație Standalone (autonomă)" : "un sistem air-gapped") + ". " +
-                       (ips.Count > 0 ? $"Adresă: {string.Join(", ", ips)}" : "detalii: adresa nu este în eveniment") + (servers.Count > 0 ? $"; server DHCP: {string.Join(", ", servers)}" : "") + (gws.Count > 0 ? $"; gateway: {string.Join(", ", gws)}" : "") +
+                       (ips.Count > 0 ? $"Adresă: {string.Join(", ", ips)}" : "câmpul adresei IP lipsește din eveniment (șabloanele DHCP-Client 50036/50037/50065 nu îl conțin)") + (servers.Count > 0 ? $"; server DHCP: {string.Join(", ", servers)}" : "") + (gws.Count > 0 ? $"; gateway: {string.Join(", ", gws)}" : "") +
                        ". Semnificația exactă a ID-ului depinde de versiunea Windows; evenimentul arată activitatea clientului DHCP, nu un transfer de date." +
                        (c.Standalone ? StandaloneVerdict(c) : auth == AirGapAuthorization.Authorized ? $" Autorizat: {basis}." : $" Conectivitate observată, necesită explicație: {basis}.");
             o.Add(Net(c, "AIRGAP-DHCP-LEASE", (c.Standalone ? "NECONFORM: activitate DHCP pe o stație Standalone" : "Activitate DHCP pe un sistem izolat") + (ips.Count > 0 ? ": " + string.Join(", ", ips) : ""), NetSeverity(c, auth, Severity.Medium), "NETWORK INTERFACE", "Dhcp-Client/Operational " + string.Join("/", items.Select(e => e.EventId).Distinct()),

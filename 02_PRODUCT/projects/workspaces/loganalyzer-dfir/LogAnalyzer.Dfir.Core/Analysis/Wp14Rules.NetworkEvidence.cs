@@ -32,7 +32,8 @@ public static partial class Wp14Rules
     private static readonly TimeSpan AssumedWindow = TimeSpan.FromMinutes(60);
     private static readonly TimeSpan SrumBucket = TimeSpan.FromMinutes(60);
 
-    internal const string HowToEnableFirewallLog = "cum se pornește: Set-NetFirewallProfile -All -LogAllowed True -LogBlocked True (sau GPO: Windows Defender Firewall → Logging), ca administrator";
+    // Described, never given as a ready command line (consistent with the WFP remedy below and with the Standalone build scanner).
+    public const string HowToEnableFirewallLog = "cum se pornește: administratorul pornește jurnalizarea conexiunilor permise și blocate pentru fiecare profil al firewall-ului (Windows Defender Firewall cu securitate avansată → Proprietăți → Jurnalizare, sau politica de grup)";
     // The remedy is described, never given as a ready command line: the Standalone build contains no text that would change the station's audit policy.
     internal const string HowToEnableWfpAudit = "cum se pornește: administratorul activează auditul subcategoriei „Filtering Platform Connection” (succes și eșec) prin politica de grup (Advanced Audit Policy → Object Access) sau cu auditpol";
 
@@ -43,6 +44,9 @@ public static partial class Wp14Rules
         var g = values.Where(v => v.Length > 0).GroupBy(v => v, StringComparer.OrdinalIgnoreCase).OrderByDescending(x => x.Count()).ThenBy(x => x.Key, StringComparer.Ordinal).ToList();
         return g.Count == 0 ? "" : string.Join(", ", g.Take(n).Select(x => x.Count() > 1 ? $"{x.Key} ({x.Count()}×)" : x.Key)) + (g.Count > n ? $" și încă {g.Count - n}" : "");
     }
+
+    /// <summary>The field's value, or the plain statement that the event does not carry it (never a guessed value).</summary>
+    private static string Field(TimelineEvent e, string name) => F(e, name) is { Length: > 0 } v ? $"„{v}”" : $"(câmpul {name} lipsește din eveniment, format neașteptat)";
 
     private static string Bytes(long b) => b >= 1_000_000 ? (b / 1_000_000.0).ToString("0.0", CultureInfo.InvariantCulture) + " MB" : b >= 1_000 ? (b / 1_000.0).ToString("0.0", CultureInfo.InvariantCulture) + " kB" : $"{b} B";
 
@@ -65,6 +69,20 @@ public static partial class Wp14Rules
     private static bool In(List<(DateTimeOffset Start, DateTimeOffset End, bool EndObserved, string EndSource)> w, DateTimeOffset? t, TimeSpan before, TimeSpan after) =>
         t is { } x && w.Any(v => x >= v.Start - before && x <= v.End + after);
 
+    /// <summary>A firewall-log path from the registry that was refused (UNC, device, network or removable drive): reported, never read.</summary>
+    private static void FirewallLogPathFindings(Ctx c, List<Finding> o)
+    {
+        var bad = c.Facts?.Network.FirewallLogs.Where(l => l.Rejected.Length > 0).ToList() ?? [];
+        if (bad.Count == 0) return;
+        o.Add(Plain(c, "FIREWALL-LOG-PATH-REJECTED", "Cale jurnal firewall nepermisă", c.AirGapScope ? Sev(c, Severity.Medium) : Severity.Low, c.FindingCategory, c.Facts!.CollectedUtc == default ? null : c.Facts.CollectedUtc, null,
+            "necunoscut: setarea din registru nu arată cine a schimbat-o",
+            $"Calea jurnalului firewall-ului configurată în registru nu a fost citită: {string.Join("; ", bad.Select(l => $"profilul {l.Profile}: {l.Rejected}"))}. " +
+            "O cale de rețea face ca firewall-ul să scrie jurnalul pe alt calculator (sau să încerce), iar aplicația nu o urmează: jurnalul acelor profiluri lipsește din analiză.",
+            "Setările LogFilePath ale profilurilor firewall-ului (politică sau local), verificate înainte de orice acces la fișier.",
+            ["Calea poate fi pusă de un administrator pentru centralizarea jurnalelor, într-o rețea în care asta e permis."],
+            [FactRef(c, "firewall/logpath", "calea jurnalului firewall-ului din registru")], "T1562.004", SemanticType.Configuration));
+    }
+
     internal static NetEvidence GatherNetworkEvidence(Ctx c, string name, IReadOnlyList<TimelineEvent> ups)
     {
         var ev = new NetEvidence();
@@ -78,28 +96,36 @@ public static partial class Wp14Rules
             ev.Known.Add($"Profilul NetworkProfile: „{name}”{(F(first, "Description") is { Length: > 0 } d && !d.Equals(name, StringComparison.OrdinalIgnoreCase) ? $" („{d}”)" : "")}, " +
                          $"categoria {(int.TryParse(cat, out var ci) ? NetworkListProfileFact.CategoryLabel(ci) : cat.Length > 0 ? cat : "necunoscută")}.");
         var wlan = c.Events.Where(e => Ev(e, WlanChannel, 8001, 8003, 11001) && In(win, T(e), Slack, Slack)).OrderBy(e => T(e)).ToList();
+        // Field names from the WLAN-AutoConfig manifest template of event 8001: InterfaceGuid, InterfaceDescription, ConnectionMode, ProfileName, SSID, BSSType,
+        // PHYType, AuthenticationAlgorithm, CipherAlgorithm, OnexEnabled, ConnectionId, NonBroadcast. The template has NO BSSID (the access point's MAC).
         foreach (var w in wlan.Where(e => e.EventId == "8001").Take(3))
-            ev.Known.Add($"Wi-Fi (WLAN-AutoConfig 8001, {Hm(T(w))}): SSID „{F(w, "SSID", "ProfileName")}”, adaptor „{F(w, "InterfaceDescription")}”" +
-                         (F(w, "InterfaceGuid") is { Length: > 0 } g ? $" ({g})" : "") + (F(w, "BSSID", "PeerMac", "Bssid", "APMacAddress") is { Length: > 0 } b ? $", BSSID {b}" : ", BSSID neînregistrat în eveniment") +
-                         (F(w, "AuthenticationAlgorithm", "Authentication") is { Length: > 0 } a ? $", autentificare {a}" : "") + ".");
+            ev.Known.Add($"Wi-Fi (WLAN-AutoConfig 8001, {Hm(T(w))}): SSID {Field(w, "SSID")}, adaptor {Field(w, "InterfaceDescription")} (interfața {Field(w, "InterfaceGuid")}), " +
+                         $"autentificare {Field(w, "AuthenticationAlgorithm")}, criptare {Field(w, "CipherAlgorithm")}; BSSID-ul punctului de acces nu face parte din evenimentul 8001.");
+        foreach (var w in wlan.Where(e => e.EventId == "11001").Take(2))
+            ev.Known.Add($"Wi-Fi (WLAN-AutoConfig 11001, {Hm(T(w))}): adaptor {Field(w, "Adapter")}, MAC local {Field(w, "LocalMac")}, SSID {Field(w, "SSID")}.");
         ev.Refs.AddRange(wlan.Take(5));
         if (wlan.Count == 0)
         {
-            if (c.Has("EventLog:" + WlanChannel)) ev.Known.Add("Nicio asociere Wi-Fi (WLAN-AutoConfig 8001/8003/11001) în fereastra conectării, deși jurnalul este în caz: conexiunea nu a fost prin Wi-Fi (cablu, USB, telefon prin cablu sau alt adaptor).");
-            else ev.Missing.Add($"sursă lipsă: {WlanChannel} (8001/8003/11001: SSID, BSSID, adaptor), de ce lipsește: canalul nu este în caz (lipsește pe stațiile fără Wi-Fi sau nu a fost colectat), cum se pornește: colectarea jurnalelor de evenimente pe stație (canalul este activ implicit unde există Wi-Fi).");
+            if (c.Has("EventLog:" + WlanChannel)) ev.Known.Add("Nicio asociere Wi-Fi (WLAN-AutoConfig 8001/8003/11001) în fereastra conectării, deși jurnalul este în caz: nu s-a observat o conectare prin Wi-Fi (cablu, USB, telefon prin cablu sau alt adaptor rămân posibile).");
+            else ev.Missing.Add($"sursă lipsă: {WlanChannel} (8001/8003/11001: SSID, adaptor, MAC local), de ce lipsește: canalul nu este în caz (lipsește pe stațiile fără Wi-Fi sau nu a fost colectat), cum se pornește: colectarea jurnalelor de evenimente pe stație (canalul este activ implicit unde există Wi-Fi).");
         }
         var dhcp = c.Events.Where(e => (InChannel(e, "Dhcp-Client")) && In(win, T(e), Slack, Slack)).OrderBy(e => T(e)).ToList();
         if (dhcp.Count > 0)
         {
-            ev.Known.Add($"DHCP ({string.Join("/", dhcp.Select(e => e.EventId).Distinct())}): interfața {(Top(dhcp.Select(e => F(e, "InterfaceGuid", "InterfaceName", "Interface", "AdapterName")), 2) is { Length: > 0 } i ? i : "nespecificată în eveniment")}" +
-                         (Top(dhcp.Select(e => F(e, "IPAddress", "IpAddress", "Address", "LeasedAddress"))) is { Length: > 0 } ip ? $", adresa {ip}" : "") +
-                         (Top(dhcp.Select(e => F(e, "Gateway", "DefaultGateway", "Router"))) is { Length: > 0 } gw ? $", gateway {gw}" : "") +
-                         (Top(dhcp.Select(e => F(e, "DhcpServer", "ServerAddress", "DhcpServerAddress", "Server"))) is { Length: > 0 } sv ? $", server DHCP {sv}" : "") +
-                         (Top(dhcp.Select(e => F(e, "LeaseTime", "LeaseDuration", "LeaseObtainedTime"))) is { Length: > 0 } lt ? $", lease {lt}" : "") + ".");
+            // The DHCP-Client manifest templates of 50036 (none), 50037 (DwordVal) and 50065 (NetworkHintString, NetworkHint, HWLength, HWAddress) carry no
+            // address, gateway or lease: those are said only when a field with that name is really in the event, otherwise the absence is stated.
+            var ip = Top(dhcp.Select(e => F(e, "IPAddress", "IpAddress", "Address", "LeasedAddress")));
+            var gw = Top(dhcp.Select(e => F(e, "Gateway", "DefaultGateway", "Router")));
+            var hw = Top(dhcp.Select(e => F(e, "HWAddress")), 2);
+            var hint = Top(dhcp.Select(e => F(e, "NetworkHintString")), 2);
+            ev.Known.Add($"DHCP-Client ({string.Join("/", dhcp.Select(e => e.EventId).Distinct())}) a fost activ în fereastra conectării" +
+                         (hint.Length > 0 ? $"; rețea indicată {hint}" : "") + (hw.Length > 0 ? $"; adresa fizică a interfeței {hw}" : "") +
+                         (ip.Length > 0 ? $"; adresa {ip}" : "; câmpul adresei IP lipsește din eveniment (șabloanele DHCP-Client nu îl conțin)") +
+                         (gw.Length > 0 ? $"; gateway {gw}" : "; câmpul gateway lipsește din eveniment (gateway-ul se vede din MAC-ul NetworkList)") + ".");
             ev.Refs.AddRange(dhcp.Take(5));
         }
         else if (c.Has("EventLog:" + DhcpOperational) || c.Has("EventLog:" + DhcpAdmin))
-            ev.Known.Add("Clientul DHCP nu a înregistrat nimic în fereastra conectării: adresa a fost fixă (configurată manual) sau a fost primită fără eveniment jurnalizat.");
+            ev.Known.Add("Clientul DHCP nu a înregistrat nimic în fereastra conectării (adresă fixă sau eveniment nejurnalizat: această sursă nu le poate deosebi).");
         else ev.Missing.Add($"sursă lipsă: {DhcpOperational} și {DhcpAdmin} (interfața, adresa, gateway-ul, lease-ul), de ce lipsește: canalele nu sunt în caz (Operational este oprit implicit pe unele versiuni), cum se pornește: wevtutil sl {DhcpOperational} /e:true și colectarea jurnalelor de evenimente.");
         if (facts is null)
             ev.Missing.Add("sursă lipsă: registrul NetworkList (Profiles și Signatures: tipul rețelei, data creării, ultima conectare, MAC-ul gateway-ului, sufixul DNS), de ce lipsește: faptele stației (AirGapFacts) nu sunt în acest caz, cum se pornește: colectarea pe stație (colectorul AirGapFacts).");
@@ -143,6 +169,7 @@ public static partial class Wp14Rules
         {
             var logs = facts?.Network.FirewallLogs ?? [];
             var why = facts is null ? "nu este în caz (faptele stației lipsesc, deci nici setarea nu se cunoaște)"
+                    : logs.FirstOrDefault(l => l.Rejected.Length > 0) is { } bad ? bad.Rejected
                     : logs.Count > 0 && logs.All(l => l.LogAllowed != true && l.LogDropped != true) ? "jurnalizarea firewall-ului este oprită pe toate profilurile (implicit în Windows)"
                     : logs.Any(l => l.FileExists) ? "fișierul există pe stație, dar nu a fost colectat (cere drepturi de administrator)"
                     : "jurnalizarea este pornită, dar fișierul nu există (nicio conexiune jurnalizată)";
@@ -165,10 +192,16 @@ public static partial class Wp14Rules
         bool probingOff = facts is { } fa && (fa.Network.NcsiEnableActiveProbing == 0 || fa.Network.NcsiPolicyNoActiveProbe == 1);
         if (ncsi.Count > 0)
         {
-            var caps = ncsi.Select(e => (T: T(e), Cap: F(e, "Capability", "NewCapability", "CapabilityName", "InternetCapability", "Connectivity"))).ToList();
+            // NCSI manifest template of 4042: InterfaceGuid, IfLuid, Family, Capability (UInt32), CapabilityChangeReason, PreviousCapability. The manifest
+            // publishes no value map for Capability, so a number is reported as such and never translated into "internet" / "local" by guesswork.
+            var caps = ncsi.Select(e => (T: T(e), Cap: F(e, "Capability"), Prev: F(e, "PreviousCapability"), Fam: F(e, "Family"))).ToList();
             bool internet = caps.Any(x => x.Cap.Contains("Internet", StringComparison.OrdinalIgnoreCase));
-            ev.Known.Add($"Ieșire spre internet (NCSI 4042): {string.Join("; ", caps.Take(5).Select(x => $"{Hm(x.T)} capacitate „{(x.Cap.Length > 0 ? x.Cap : "nespecificată în eveniment")}”"))}" +
-                         (internet ? " — rețeaua AVEA ieșire la internet." : " — NCSI nu a raportat acces la internet (doar local sau fără conectivitate).") +
+            bool textual = caps.Any(x => x.Cap.Length > 0 && !x.Cap.All(char.IsDigit));
+            string Cap(string v) => v.Length == 0 ? "(câmpul Capability lipsește din eveniment, format neașteptat)" : v.All(char.IsDigit) ? $"valoarea brută {v}" : $"„{v}”";
+            ev.Known.Add($"Schimbări de capacitate NCSI (4042): {string.Join("; ", caps.Take(5).Select(x => $"{Hm(x.T)} capacitate {Cap(x.Cap)} (anterior {(x.Prev.Length > 0 ? x.Prev : "necunoscut")}, familia {(x.Fam.Length > 0 ? x.Fam : "necunoscută")})"))}" +
+                         (internet ? " — NCSI a raportat acces la internet."
+                          : textual ? " — NCSI nu a raportat acces la internet în aceste evenimente."
+                          : " — manifestul NCSI nu publică semnificația valorilor numerice, deci ieșirea spre internet nu se deduce din ele; sursă lipsă: harta valorilor Capability, de ce lipsește: nu este în manifestul publicat, cum se pornește: mesajul afișat de Vizualizatorul de evenimente pentru aceste înregistrări.") +
                          (probingOff ? " Sondarea activă NCSI este oprită pe stație, deci verdictul este pasiv (nu a fost testat cu o cerere)." : ""));
             ev.Refs.AddRange(ncsi.Take(3));
         }

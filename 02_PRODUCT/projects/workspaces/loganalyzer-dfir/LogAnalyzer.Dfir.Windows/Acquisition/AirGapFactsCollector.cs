@@ -69,7 +69,7 @@ public sealed class AirGapFactsCollector : ICollector
         Try("auditul conexiunilor WFP (Security 5156/5157, cere drepturi de administrator)", () => ReadWfpAudit(f.Network));
         Try("retenția jurnalelor de evenimente", () => f.Network.EventLogs.AddRange(ReadEventLogInfo()));
         var install = LogAnalyzer.Dfir.Case.AppInstallDate.Read();
-        f.AppInstalledUtc = install.Utc; f.AppInstallBasis = install.Basis;
+        f.AppInstalledUtc = install.Utc; f.AppInstallBasis = install.Basis; f.AppInstallViolations.AddRange(install.Violations);
         f.WebcamPolicy = Reg(Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\webcam", "Value");
         f.MicrophonePolicy = Reg(Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\microphone", "Value");
         return f;
@@ -530,16 +530,29 @@ public sealed class AirGapFactsCollector : ICollector
             string V(string name) => P(name) is { Length: > 0 } pv ? pv : L(name);
             var path = V("LogFilePath") is { Length: > 0 } lp ? lp : @"%systemroot%\system32\LogFiles\Firewall\pfirewall.log";
             path = Environment.ExpandEnvironmentVariables(path);
-            var fi = new FileInfo(path);
+            // Review of PR #288: the path comes from the registry; it is checked BEFORE any file access, so a UNC or network-drive path never makes the
+            // collector contact another machine. A rejected path is not read at all.
+            var rejected = LogAnalyzer.Dfir.Network.FirewallLogParser.RejectPath(path, LocalDriveType);
             bool exists = false; long size = 0;
-            try { exists = fi.Exists; size = exists ? fi.Length : 0; } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+            if (rejected.Length == 0)
+            {
+                var fi = new FileInfo(path);
+                try { exists = fi.Exists; size = exists ? fi.Length : 0; } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+            }
             n.FirewallLogs.Add(new FirewallLogFact
             {
-                Profile = profile, Path = path, FileExists = exists, Size = size,
+                Profile = profile, Path = path, FileExists = exists, Size = size, Rejected = rejected,
                 LogAllowed = int.TryParse(V("LogSuccessfulConnections"), out var a) ? a == 1 : null,
                 LogDropped = int.TryParse(V("LogDroppedPackets"), out var d) ? d == 1 : null,
             });
         }
+    }
+
+    /// <summary>The drive type of a local drive root ("C:\"), read locally (GetDriveType); never touches a share.</summary>
+    internal static DriveType LocalDriveType(string root)
+    {
+        try { return new DriveInfo(root).DriveType; }
+        catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException) { return DriveType.Unknown; }
     }
 
     public static void ReadWfpAudit(NetworkEvidenceFacts n)

@@ -136,7 +136,8 @@ public sealed class FirewallLogCollector : ICollector
     public bool RequiresElevation => true;
     public CollectionProfile Profiles => CollectionProfile.QuickAndUp;
 
-    public const string HowToEnable = "cum se pornește: Set-NetFirewallProfile -All -LogAllowed True -LogBlocked True (sau GPO: Windows Defender Firewall → Logging), ca administrator";
+    /// <summary>Described, not given as a ready command line (the Standalone build holds no text that changes the station's configuration).</summary>
+    public const string HowToEnable = LogAnalyzer.Dfir.Analysis.Wp14Rules.HowToEnableFirewallLog;
 
     public CollectorOutcome Collect(CollectorContext ctx, CancellationToken ct)
     {
@@ -145,17 +146,31 @@ public sealed class FirewallLogCollector : ICollector
         catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException)
         { return CollectorOutcome.NotAvailable($"sursă lipsă: setările de jurnalizare ale firewall-ului, de ce lipsește: {ex.Message}, cum se pornește: rulați ca administrator"); }
         var enabled = n.FirewallLogs.Where(f => f.LogAllowed == true || f.LogDropped == true).ToList();
-        var files = n.FirewallLogs.Select(f => f.Path).Distinct(StringComparer.OrdinalIgnoreCase).SelectMany(p => new[] { p, p + ".old" }).Where(File.Exists).ToList();
+        // Review of PR #288: a path refused by FirewallLogParser.RejectPath (UNC, device, network or removable drive) is never touched.
+        var rejected = n.FirewallLogs.Where(f => f.Rejected.Length > 0).Select(f => $"{f.Profile}: {f.Rejected}").Distinct().ToList();
+        var files = n.FirewallLogs.Where(f => f.Rejected.Length == 0).Select(f => f.Path).Distinct(StringComparer.OrdinalIgnoreCase)
+                     .SelectMany(p => new[] { p, p + ".old" }).Where(File.Exists).ToList();
         if (files.Count == 0)
-            return CollectorOutcome.NotAvailable(enabled.Count == 0
-                ? $"sursă lipsă: pfirewall.log, de ce lipsește: jurnalizarea firewall-ului este oprită pe toate profilurile (implicit în Windows), {HowToEnable}"
-                : $"sursă lipsă: pfirewall.log, de ce lipsește: jurnalizarea este pornită ({string.Join(", ", enabled.Select(f => f.Profile))}), dar fișierul nu există încă (nicio conexiune jurnalizată), {HowToEnable}",
+            return CollectorOutcome.NotAvailable(
+                (rejected.Count > 0 ? string.Join("; ", rejected) + "; " : "") +
+                (enabled.Count == 0
+                    ? $"sursă lipsă: pfirewall.log, de ce lipsește: jurnalizarea firewall-ului este oprită pe toate profilurile (implicit în Windows), {HowToEnable}"
+                    : $"sursă lipsă: pfirewall.log, de ce lipsește: jurnalizarea este pornită ({string.Join(", ", enabled.Select(f => f.Profile))}), dar fișierul nu există sau calea nu este permisă, {HowToEnable}"),
                 n.FirewallLogs.FirstOrDefault()?.Path ?? "");
         if (!ctx.IsElevated) return CollectorOutcome.NotAvailable("sursă lipsă: pfirewall.log, de ce lipsește: folderul LogFiles\\Firewall se citește doar cu drepturi de administrator, cum se pornește: rulați colectarea ca administrator", files[0]);
         var o = new CollectorOutcome { Source = string.Join("; ", files), Tool = "copy" };
+        o.Errors.AddRange(rejected);
         foreach (var f in files)
         {
             ct.ThrowIfCancellationRequested();
+            long size;
+            try { size = new FileInfo(f).Length; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { o.Errors.Add($"{Path.GetFileName(f)}: {ex.Message}"); continue; }
+            if (size > LogAnalyzer.Dfir.Network.FirewallLogParser.MaxLogBytes)
+            {
+                o.Errors.Add($"{Path.GetFileName(f)}: {size / 1_048_576} MB, peste limita de {LogAnalyzer.Dfir.Network.FirewallLogParser.MaxLogBytes / 1_048_576} MB a unui jurnal de firewall (Windows îl limitează la 32 MB): nu a fost copiat");
+                continue;
+            }
             try { o.Evidence.Add(ctx.Case.ImportFile(f, "Firewall", LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName, TemporalType.Historical, Name, Version)); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { o.Errors.Add($"{Path.GetFileName(f)}: {ex.Message}"); }
         }

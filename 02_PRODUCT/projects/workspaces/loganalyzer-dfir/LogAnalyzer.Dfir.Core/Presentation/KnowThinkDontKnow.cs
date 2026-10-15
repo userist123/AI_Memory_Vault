@@ -67,7 +67,10 @@ public sealed record KnowThinkDontKnow(IReadOnlyList<KtdStatement> Know, IReadOn
                 .Where(c => c.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(c => c, StringComparer.OrdinalIgnoreCase);
             foreach (var ch in channels)
             {
-                var v = EvtxCompleteness.Assess(ch, ctx.Timeline, ctx.PeriodFromUtc);
+                // The end of the period, or (open period) the time this channel's log was acquired; unknown = the tail is not judged.
+                var end = ctx.PeriodToUtc ?? ctx.Items.Where(i => i.Source.Equals("EventLog:" + ch, StringComparison.OrdinalIgnoreCase) || i.SourceType.Equals("EventLog:" + ch, StringComparison.OrdinalIgnoreCase))
+                                                      .Select(i => (DateTimeOffset?)i.AcquiredAtUtc).Where(t => t > DateTimeOffset.MinValue).Max();
+                var v = EvtxCompleteness.Assess(ch, ctx.Timeline, ctx.PeriodFromUtc, end);
                 (v.Complete == true ? know : dont).Add(new(v.Text, EvtxCompleteness.Basis));
             }
         }
