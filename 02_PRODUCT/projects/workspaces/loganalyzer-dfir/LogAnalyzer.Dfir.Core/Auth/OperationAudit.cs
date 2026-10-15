@@ -14,14 +14,14 @@ public static class OperationAudit
     public const string ControlStarted = "control.started", ControlFinished = "control.finished", ExportUnmasked = "export.unmasked",
                         CaseRemovedFromRecent = "case.removed_from_recent", ProfileEdited = "profile.edited", ClassifiedFoldersChanged = "profile.classified_folders_changed";
 
-    public const string ControlHashing = "control.hashing";
+    public const string ControlHashing = "control.hashing", ControlFailed = "control.failed";
 
     /// <summary>
     /// The window in which the application read the classified files to hash them (start / end UTC, process id, image path, account, file count). The next
     /// controls read it back from the sealed audit and list the application's own access records apart (never as someone's access).
     /// </summary>
     public static string ControlHashingDetail(LogAnalyzer.Dfir.Analysis.SelfActivityWindow w) =>
-        $"start={w.StartUtc.UtcDateTime:o}; end={w.EndUtc.UtcDateTime:o}; pid={w.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture)}; files={w.Files.ToString(System.Globalization.CultureInfo.InvariantCulture)}; account={w.Account}; image={w.ImagePath}";
+        $"run={w.RunId}; start={w.StartUtc.UtcDateTime:o}; end={w.EndUtc.UtcDateTime:o}; pid={w.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture)}; files={w.Files.ToString(System.Globalization.CultureInfo.InvariantCulture)}; account={w.Account}; image={w.ImagePath}";
 
     public static bool TryParseControlHashing(string detail, out LogAnalyzer.Dfir.Analysis.SelfActivityWindow window)
     {
@@ -39,45 +39,91 @@ public static class OperationAudit
         if (!parts.TryGetValue("end", out var b) || !DateTimeOffset.TryParse(b, ci, rt, out var end)) return false;
         if (!parts.TryGetValue("pid", out var p) || !int.TryParse(p, System.Globalization.NumberStyles.Integer, ci, out var pid)) return false;
         int.TryParse(parts.GetValueOrDefault("files", "0"), System.Globalization.NumberStyles.Integer, ci, out var files);
-        window = new LogAnalyzer.Dfir.Analysis.SelfActivityWindow(start, end, pid, parts["image"], parts.GetValueOrDefault("account", ""), files);
+        window = new LogAnalyzer.Dfir.Analysis.SelfActivityWindow(start, end, pid, parts["image"], parts.GetValueOrDefault("account", ""), files, parts.GetValueOrDefault("run", ""));
         return true;
     }
 
-    /// <summary>Every hashing window recorded in a sealed audit file (lines of JSON with "event" and "detail"); unreadable lines are skipped.</summary>
-    public static List<LogAnalyzer.Dfir.Analysis.SelfActivityWindow> ReadControlHashing(string auditPath)
+    /// <summary>The longest hashing window accepted: a longer one would hide too much and is reported instead.</summary>
+    public static readonly TimeSpan MaxHashingWindow = TimeSpan.FromHours(2);
+
+    /// <summary>Hashing windows read back from the sealed audit: the ones that pass validation, and why the others were refused.</summary>
+    public sealed record HashingWindows(List<LogAnalyzer.Dfir.Analysis.SelfActivityWindow> Valid, List<string> Invalid);
+
+    /// <summary>
+    /// The hashing windows of the sealed audit. A window is accepted only when the chain verifies, it names its control (run id), it lies between the
+    /// "control.started" and "control.finished" records of that same control, it was recorded inside that control, it lasts at most
+    /// <see cref="MaxHashingWindow"/> and has a process id and an image path. Every refused window is reported ("fereastră de calcul amprente nevalidă").
+    /// </summary>
+    public static HashingWindows ReadControlHashing(string auditPath, bool chainValid)
     {
-        var list = new List<LogAnalyzer.Dfir.Analysis.SelfActivityWindow>();
-        if (!File.Exists(auditPath)) return list;
-        using var fs = new FileStream(auditPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-        using var sr = new StreamReader(fs);
-        while (sr.ReadLine() is { } line)
-        {
-            if (!line.Contains(ControlHashing, StringComparison.Ordinal)) continue;
-            try
+        var valid = new List<LogAnalyzer.Dfir.Analysis.SelfActivityWindow>();
+        var invalid = new List<string>();
+        if (!File.Exists(auditPath)) return new(valid, invalid);
+        var started = new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal);
+        var finished = new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal);
+        var hashing = new List<(LogAnalyzer.Dfir.Analysis.SelfActivityWindow W, DateTimeOffset? When)>();
+        var unreadable = 0;
+        using (var fs = new FileStream(auditPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+        using (var sr = new StreamReader(fs))
+            while (sr.ReadLine() is { } line)
             {
-                using var doc = JsonDocument.Parse(line);
-                if (doc.RootElement.ValueKind != JsonValueKind.Object) continue;
-                string ev = "", detail = "";
-                foreach (var pr in doc.RootElement.EnumerateObject())
+                if (!line.Contains("control.", StringComparison.Ordinal)) continue;
+                try
                 {
-                    if (pr.Value.ValueKind != JsonValueKind.String) continue;
-                    if (pr.Name.Equals("event", StringComparison.OrdinalIgnoreCase)) ev = pr.Value.GetString() ?? "";
-                    else if (pr.Name.Equals("detail", StringComparison.OrdinalIgnoreCase)) detail = pr.Value.GetString() ?? "";
+                    using var doc = JsonDocument.Parse(line);
+                    if (doc.RootElement.ValueKind != JsonValueKind.Object) continue;
+                    string ev = "", detail = ""; DateTimeOffset? when = null;
+                    foreach (var pr in doc.RootElement.EnumerateObject())
+                    {
+                        if (pr.Value.ValueKind != JsonValueKind.String) continue;
+                        if (pr.Name.Equals("event", StringComparison.OrdinalIgnoreCase)) ev = pr.Value.GetString() ?? "";
+                        else if (pr.Name.Equals("detail", StringComparison.OrdinalIgnoreCase)) detail = pr.Value.GetString() ?? "";
+                        else if (pr.Name.Equals("whenUtc", StringComparison.OrdinalIgnoreCase) && pr.Value.TryGetDateTimeOffset(out var t)) when = t;
+                    }
+                    var run = RunOf(detail);
+                    if (ev == ControlStarted && run.Length > 0 && when is { } ws) started[run] = ws;
+                    else if (ev == ControlFinished && run.Length > 0 && when is { } wf) finished[run] = wf;
+                    else if (ev == ControlHashing)
+                    {
+                        if (TryParseControlHashing(detail, out var w)) hashing.Add((w, when));
+                        else unreadable++;
+                    }
                 }
-                if (ev == ControlHashing && TryParseControlHashing(detail, out var w)) list.Add(w);
+                catch (JsonException) { }
             }
-            catch (JsonException) { }
+        const string Bad = "fereastră de calcul amprente nevalidă";
+        for (var k = 0; k < unreadable; k++) invalid.Add($"{Bad}: înregistrarea din jurnalul de audit nu poate fi citită.");
+        foreach (var (w, when) in hashing)
+        {
+            var id = w.RunId.Length > 0 ? w.RunId : "fără identificator";
+            string? why =
+                !chainValid ? "jurnalul de audit nu se verifică (lanț rupt sau sigiliu nevalid)"
+                : w.RunId.Length == 0 ? "nu numește controlul căruia îi aparține"
+                : !started.TryGetValue(w.RunId, out var s0) || !finished.TryGetValue(w.RunId, out var f0) ? "controlul ei nu are început și sfârșit înregistrate"
+                : w.EndUtc < w.StartUtc || w.EndUtc - w.StartUtc > MaxHashingWindow ? $"durează mai mult de {MaxHashingWindow.TotalHours:0} ore sau se termină înainte să înceapă"
+                : w.StartUtc < s0 || w.EndUtc > f0 || when is not { } rec || rec < s0 || rec > f0 ? "nu este în interiorul controlului ei"
+                : w.ProcessId <= 0 || w.ImagePath.Trim().Length == 0 ? "nu are procesul sau programul aplicației"
+                : null;
+            if (why is null) valid.Add(w);
+            else invalid.Add($"{Bad}: {why} (control {id}, {w.StartUtc.UtcDateTime:yyyy-MM-dd HH:mm}–{w.EndUtc.UtcDateTime:HH:mm} UTC); nu ascunde nicio înregistrare.");
         }
-        return list;
+        return new(valid, invalid);
+    }
+
+    private static string RunOf(string detail)
+    {
+        foreach (var kv in detail.Split("; "))
+            if (kv.StartsWith("run=", StringComparison.Ordinal)) return kv[4..].Trim();
+        return "";
     }
 
     public static string Sha256Hex(string text) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
 
-    public static string ControlStartedDetail(string edition, string posture, bool elevated, int periodDays, int classifiedFolders) =>
-        $"edition={edition}; posture={posture}; elevated={(elevated ? "da" : "nu")}; scope=perioada {periodDays} zile, {classifiedFolders} foldere clasificate";
+    public static string ControlStartedDetail(string edition, string posture, bool elevated, int periodDays, int classifiedFolders, string runId = "") =>
+        $"edition={edition}; posture={posture}; elevated={(elevated ? "da" : "nu")}; scope=perioada {periodDays} zile, {classifiedFolders} foldere clasificate" + (runId.Length > 0 ? $"; run={runId}" : "");
 
-    public static string ControlFinishedDetail(string host, bool elevated, int checks, int neconform, int deVerificat, int nedeterminat) =>
-        $"host={host}; elevated={(elevated ? "da" : "nu")}; checks={checks}; neconform={neconform}; de_verificat={deVerificat}; nedeterminat={nedeterminat}";
+    public static string ControlFinishedDetail(string host, bool elevated, int checks, int neconform, int deVerificat, int nedeterminat, string runId = "") =>
+        $"host={host}; elevated={(elevated ? "da" : "nu")}; checks={checks}; neconform={neconform}; de_verificat={deVerificat}; nedeterminat={nedeterminat}" + (runId.Length > 0 ? $"; run={runId}" : "");
 
     /// <summary>Detail of an export that is NOT masked; the hash is of the written file (empty when it cannot be read).</summary>
     public static string ExportUnmaskedDetail(string caseId, string format, int items, string outputPath)

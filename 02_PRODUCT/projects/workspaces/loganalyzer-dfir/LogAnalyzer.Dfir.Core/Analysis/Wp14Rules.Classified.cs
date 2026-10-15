@@ -50,7 +50,20 @@ public static partial class Wp14Rules
             NetworkApplies = c.Scope.Network != NetworkCategory.StandalonePc,
             RegisterZone = c.Input.StationZone,   // the station's declared zone, never the analysis machine's
         };
-        var rep = ClassifiedAccess.Analyze(input);
+        ClassifiedAccessReport rep;
+        try { rep = ClassifiedAccess.Analyze(input); }
+        catch (Exception ex)
+        {
+            // the analysis must never stop the investigation: the failure is reported as a finding that says nothing was evaluated
+            o.Add(new Finding
+            {
+                FindingId = c.NextId(), RuleId = ClassifiedAccessRuleId, Title = "Accesul la fișierele clasificate nu a putut fi analizat",
+                Severity = Severity.Info, Category = c.FindingCategory, Classification = Classification.Unproven, Confidence = Confidence.Low,
+                Description = $"Analiza accesului și a ieșirilor fișierelor clasificate a eșuat ({ex.GetType().Name}: {ex.Message}); nicio ieșire nu a fost evaluată.",
+                ClassificationReason = "Eroare la analiză, nu o observație.", SemanticType = SemanticType.Observation,
+            });
+            return;
+        }
         static List<EvidenceRef> Refs(IEnumerable<object?> origins, string what) =>
             origins.OfType<TimelineEvent>().Distinct().Take(20).Select(e => Ref(e, what + ": " + e.Summary)).ToList();
 

@@ -30,7 +30,7 @@ public sealed record MediumSeen(DateTimeOffset TimeUtc, string Serial, string La
 /// When and as whom the application itself read the classified files (to compute their SHA-256): its own reads must never be shown as someone's access.
 /// Recorded in the sealed audit at every control ("control.hashing").
 /// </summary>
-public sealed record SelfActivityWindow(DateTimeOffset StartUtc, DateTimeOffset EndUtc, int ProcessId, string ImagePath, string Account, int Files = 0);
+public sealed record SelfActivityWindow(DateTimeOffset StartUtc, DateTimeOffset EndUtc, int ProcessId, string ImagePath, string Account, int Files = 0, string RunId = "");
 
 public enum ExitChannel { RemovableMedia, Print, Archive, CopyCommand, MoveOrRename, NetworkShare, OpenedFromMedium, TemporalCoincidence }
 public enum ExitVerdict { Unjustified, ToVerify, Approved }
@@ -103,6 +103,8 @@ public sealed class ClassifiedAccessReport
     public List<string> Notes { get; } = [];
     /// <summary>Records of the application's own reads (hashing), listed apart: "activitate proprie a aplicației (calcul amprente)".</summary>
     public List<ClassifiedAccessEntry> SelfActivity { get; } = [];
+    /// <summary>Hashing windows that failed validation: they hide nothing and are reported ("fereastră de calcul amprente nevalidă").</summary>
+    public List<string> InvalidSelfWindows { get; } = [];
     public IEnumerable<ClassifiedExit> Exits => Files.SelectMany(f => f.Exits);
     public int Unjustified => Files.Sum(f => f.Unjustified);
     public int ToVerify => Files.Sum(f => f.ToVerify);
@@ -296,13 +298,24 @@ public static class ClassifiedAccess
         var deletes = new List<(string Path, AccessRecord Rec)>();
         var writesOutside = new List<(string Path, AccessRecord Rec, int Mask)>();
         var pending = new List<PendingExit>();
+        // the application's own hashing windows: a window is used only if the files its process read do not outnumber the files it says it hashed
+        bool Candidate(SelfActivityWindow w, AccessRecord r) =>
+            r.EventId is 4656 or 4663 && SelfMatch(w, r) && (Mask(r) & ~SelfReadMask) == 0 && Mask(r) != 0 &&
+            roots.Classify(Normalize(r.V("ObjectName"), input.VolumeMap), input.LongPath) is not null;
+        var windows = new List<SelfActivityWindow>();
+        foreach (var w in input.SelfWindows)
+        {
+            var read = events.Where(r => r.Channel == "Security" && Candidate(w, r)).Select(r => Normalize(r.V("ObjectName"), input.VolumeMap)).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+            if (read > w.Files)
+                rep.InvalidSelfWindows.Add($"fereastră de calcul amprente nevalidă: procesul {w.ProcessId} ({w.ImagePath}) a citit {read} fișiere clasificate, dar fereastra declară {w.Files} (control {(w.RunId.Length > 0 ? w.RunId : "fără identificator")}); înregistrările ei sunt tratate ca accese obișnuite.");
+            else windows.Add(w);
+        }
         foreach (var r in events.Where(e => e.Channel == "Security"))
         {
-            if (r.EventId is 4656 or 4658 or 4660 or 4663 or 4670 or 4907 && IsSelf(input, r))
+            if (windows.Any(w => Candidate(w, r)))
             {
-                // the application's own read of the file (SHA-256 at a control): listed apart, never someone's access, never an exit or a coincidence
-                if (r.EventId is 4656 or 4663 && roots.Classify(Normalize(r.V("ObjectName"), input.VolumeMap), input.LongPath) is { } own)
-                    rep.SelfActivity.Add(new(r.TimeUtc, Who(r), Proc(r), $"{SelfLabel}: {own} — {MaskText(Mask(r))}", false, r.Evidence, r.Origin));
+                // the application's own READ of a classified file (SHA-256 at a control): listed apart, never someone's access, never an exit or a coincidence
+                rep.SelfActivity.Add(new(r.TimeUtc, Who(r), Proc(r), $"{SelfLabel}: {Normalize(r.V("ObjectName"), input.VolumeMap)} — {MaskText(Mask(r))}", false, r.Evidence, r.Origin));
                 continue;
             }
             switch (r.EventId)
@@ -533,14 +546,19 @@ public static class ClassifiedAccess
         return int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var d) ? d : -1;
     }
 
-    /// <summary>True when the record was made by the application's own process (same image path, same process id) inside one of its recorded reading windows.</summary>
-    private static bool IsSelf(ClassifiedInput input, AccessRecord r)
+    /// <summary>
+    /// The accesses the application's hashing may produce: ReadData, ReadEA, ReadAttributes, READ_CONTROL, SYNCHRONIZE, and FILE_WRITE_ATTRIBUTES, which the
+    /// hashing handle asks for only to switch off the last-access update (SetFileTime -1; no attribute is changed). Any other bit (write, append, delete,
+    /// WRITE_DAC, WRITE_OWNER) makes the record a real access even inside a hashing window.
+    /// </summary>
+    public const int SelfReadMask = 0x1 | 0x8 | 0x80 | 0x100 | 0x20000 | 0x100000;
+
+    /// <summary>True when the record was made by the window's process (same image path, same process id) inside the window (one minute of slack).</summary>
+    private static bool SelfMatch(SelfActivityWindow w, AccessRecord r)
     {
-        if (input.SelfWindows.Count == 0 || r.TimeUtc is not { } t) return false;
-        var image = Normalize(r.V("ProcessName"));
-        var pid = Pid(r);
+        if (r.TimeUtc is not { } t || Pid(r) != w.ProcessId) return false;
         var slack = TimeSpan.FromMinutes(1);
-        return input.SelfWindows.Any(w => pid == w.ProcessId && t >= w.StartUtc - slack && t <= w.EndUtc + slack && image.Equals(Normalize(w.ImagePath), StringComparison.OrdinalIgnoreCase));
+        return t >= w.StartUtc - slack && t <= w.EndUtc + slack && Normalize(r.V("ProcessName")).Equals(Normalize(w.ImagePath), StringComparison.OrdinalIgnoreCase);
     }
 
     private static string T(DateTimeOffset? t) => t is { } v ? v.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) + " UTC" : "ora necunoscută";
@@ -619,46 +637,84 @@ public static class ClassifiedAccess
             var named = reg.Rows.Where(r => r.DirectionValue == TransferDirection.Out && NamesFile(r, name, hash)).Select(r => r.RegistrationNumber).ToList();
             return new(null, named.Count > 0 ? $"În registrul transferurilor fișierul apare la {string.Join(", ", named)}; verificați dacă acoperă această conectare." : "", false);
         }
-        string mismatch = "", incomplete = "", spent = "";
+        var mismatch = new List<string>(); var incompleteRows = new List<string>(); var unknownNotes = new List<string>(); string spent = "";
         foreach (var row in reg.Rows.Where(r => r.DirectionValue == TransferDirection.Out && NamesFile(r, name, hash)))
         {
-            var reasons = new List<string>();
-            var kind = (row.MediumType + " " + row.Destination).ToLowerInvariant();
-            bool printRow = kind.Contains("imprim") || kind.Contains("print") || kind.Contains("tipăr") || kind.Contains("tipar") || kind.Contains("hârtie") || kind.Contains("hartie");
-            bool netRow = kind.Contains("rețea") || kind.Contains("retea") || kind.Contains("network") || kind.Contains("partajare");
-            if (ch == ExitChannel.Print && !printRow) reasons.Add("intrarea nu este o tipărire");
-            if (ch == ExitChannel.NetworkShare && !netRow) reasons.Add("intrarea nu este un transfer prin rețea");
-            if (MediumChannel(ch) && printRow) reasons.Add("intrarea este o tipărire, nu un suport");
-            if (serial.Length > 0 && row.MediumSerial.Trim().Length > 0 && MediaRegister.NormalizeSerial(row.MediumSerial) != MediaRegister.NormalizeSerial(serial))
-                reasons.Add($"suportul diferă (registru {row.MediumSerial}, observat {serial})");
-            bool timed = TransferRegister.TryDateTime(row.DateTime, out var local);
-            if (timed && t is { } at && input.RegisterZone is { } zone)
+            try
             {
-                var utc = new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(local, DateTimeKind.Unspecified), zone), TimeSpan.Zero);
-                if ((utc - at).Duration() > RegisterTolerance) reasons.Add($"ora diferă (registru {row.DateTime}, observat {at:yyyy-MM-dd HH:mm} UTC, toleranță {RegisterTolerance.TotalHours:0} ore)");
-            }
-            if (reasons.Count > 0) { mismatch = $"În registrul transferurilor există {row.RegistrationNumber} pentru acest fișier, dar nu acoperă această ieșire: {string.Join("; ", reasons)}."; continue; }
+                // 1. the row itself must be complete; an incomplete row is not an approval and does not soften anything
+                var missing = new List<string>();
+                var regTimes = new List<DateTimeOffset>();
+                if (!TransferRegister.TryDateTime(row.DateTime, out var local)) missing.Add("data și ora transferului");
+                else if (input.RegisterZone is { } zone && RegisterUtc(local, zone, regTimes) is { Length: > 0 } problem) missing.Add(problem);
+                if (row.Approver.Trim().Length == 0) missing.Add("aprobarea");
+                if (MediumChannel(ch) ? row.MediumSerial.Trim().Length == 0 && row.MediumRegistration.Trim().Length == 0
+                                      : row.MediumSerial.Trim().Length == 0 && row.MediumRegistration.Trim().Length == 0 && row.Destination.Trim().Length == 0)
+                    missing.Add(MediumChannel(ch) ? "seria sau numărul suportului" : "imprimanta sau destinația");
+                if (MediumChannel(ch) && row.MediumSerial.Trim().Length == 0 && row.MediumRegistration.Trim().Length > 0 && serial.Length > 0)
+                    missing.Add("seria suportului (doar numărul din registrul de medii nu se poate compara cu seria observată)");
+                if (missing.Count > 0) { incompleteRows.Add($"{row.RegistrationNumber}: lipsesc: {string.Join(", ", missing)}"); continue; }
 
-            var missing = new List<string>();
-            if (!timed) missing.Add("data și ora transferului");
-            if (row.Approver.Trim().Length == 0) missing.Add("aprobarea");
-            if (MediumChannel(ch) ? row.MediumSerial.Trim().Length == 0 && row.MediumRegistration.Trim().Length == 0
-                                  : row.MediumSerial.Trim().Length == 0 && row.MediumRegistration.Trim().Length == 0 && row.Destination.Trim().Length == 0)
-                missing.Add(MediumChannel(ch) ? "seria sau numărul suportului" : "imprimanta sau destinația");
-            if (MediumChannel(ch) && row.MediumSerial.Trim().Length == 0 && row.MediumRegistration.Trim().Length > 0 && serial.Length > 0)
-                missing.Add("seria suportului (doar numărul din registrul de medii nu se poate compara cu seria observată)");
-            var unknown = new List<string>();
-            if (t is null) unknown.Add("ora ieșirii nu este cunoscută");
-            if (MediumChannel(ch) && serial.Length == 0) unknown.Add("seria suportului pe care a ieșit fișierul nu este cunoscută");
-            if (input.RegisterZone is null) unknown.Add("fusul orar al stației nu este declarat, deci ora din registru nu poate fi comparată");
-            if (missing.Count > 0) { incomplete = $"Ieșirea nu poate fi confirmată ca aprobată: înregistrare incompletă în registru ({row.RegistrationNumber}: lipsește {string.Join(", ", missing)})."; continue; }
-            if (unknown.Count > 0) { incomplete = $"Intrarea {row.RegistrationNumber} din registru numește fișierul, dar ieșirea nu poate fi confirmată: {string.Join("; ", unknown)}."; continue; }
-            var remaining = left?.TryGetValue(row, out var n) == true ? n : Copies(row);
-            if (remaining <= 0) { spent = $"Intrarea {row.RegistrationNumber} din registru acoperă {Copies(row)} {(Copies(row) == 1 ? "copie" : "copii")}, deja folosite de ieșiri anterioare: această ieșire este în plus."; continue; }
-            return new(row, "", false);
+                // 2. the row must fit this exit
+                var reasons = new List<string>();
+                var kind = (row.MediumType + " " + row.Destination).ToLowerInvariant();
+                bool printRow = kind.Contains("imprim") || kind.Contains("print") || kind.Contains("tipăr") || kind.Contains("tipar") || kind.Contains("hârtie") || kind.Contains("hartie");
+                bool netRow = kind.Contains("rețea") || kind.Contains("retea") || kind.Contains("network") || kind.Contains("partajare");
+                if (ch == ExitChannel.Print && !printRow) reasons.Add("intrarea nu este o tipărire");
+                if (ch == ExitChannel.NetworkShare && !netRow) reasons.Add("intrarea nu este un transfer prin rețea");
+                if (MediumChannel(ch) && printRow) reasons.Add("intrarea este o tipărire, nu un suport");
+                if (serial.Length > 0 && row.MediumSerial.Trim().Length > 0 && MediaRegister.NormalizeSerial(row.MediumSerial) != MediaRegister.NormalizeSerial(serial))
+                    reasons.Add($"suportul diferă (registru {row.MediumSerial}, observat {serial})");
+                var rowHashes = RowHashes(row);
+                if (rowHashes.Count > 0 && hash.Length == 64 && !rowHashes.Contains(hash, StringComparer.OrdinalIgnoreCase)) reasons.Add("amprenta din registru nu corespunde fișierului");
+                if (t is { } at && regTimes.Count > 0 && regTimes.All(u => (u - at).Duration() > RegisterTolerance))
+                    reasons.Add($"ora diferă (registru {row.DateTime}, observat {at:yyyy-MM-dd HH:mm} UTC, toleranță {RegisterTolerance.TotalHours:0} ore)");
+                if (reasons.Count > 0) { mismatch.Add($"În registrul transferurilor există {row.RegistrationNumber} pentru acest fișier, dar nu acoperă această ieșire: {string.Join("; ", reasons)}."); continue; }
+
+                // 3. what was OBSERVED must be known for the row to be confirmed; only this gives DE VERIFICAT
+                var unknown = new List<string>();
+                if (t is null) unknown.Add("ora ieșirii nu este cunoscută");
+                if (MediumChannel(ch) && serial.Length == 0) unknown.Add("seria suportului pe care a ieșit fișierul nu este cunoscută");
+                if (input.RegisterZone is null) unknown.Add("fusul orar al stației nu este declarat, deci ora din registru nu poate fi comparată");
+                if (rowHashes.Count > 0 && hash.Length != 64) unknown.Add("intrarea are amprentă SHA-256, dar amprenta fișierului nu este cunoscută");
+                if (unknown.Count > 0) { unknownNotes.Add($"Intrarea {row.RegistrationNumber} din registru ar putea acoperi ieșirea, dar nu poate fi confirmată: {string.Join("; ", unknown)}."); continue; }
+
+                var remaining = left?.TryGetValue(row, out var n) == true ? n : Copies(row);
+                if (remaining <= 0) { spent = $"Intrarea {row.RegistrationNumber} din registru acoperă {Copies(row)} {(Copies(row) == 1 ? "copie" : "copii")}, deja folosite de ieșiri anterioare: această ieșire este în plus."; continue; }
+                return new(row, "", false);
+            }
+            catch (Exception ex) when (ex is ArgumentException or FormatException or OverflowException or InvalidTimeZoneException)
+            {
+                incompleteRows.Add($"{row.RegistrationNumber}: nu a putut fi evaluată ({ex.Message})");
+            }
         }
-        if (incomplete.Length > 0) return new(null, incomplete, true);
-        return new(null, spent.Length > 0 ? spent : mismatch, false);
+        if (unknownNotes.Count > 0) return new(null, string.Join(" ", unknownNotes), true);
+        var notes = new List<string>();
+        if (spent.Length > 0) notes.Add(spent);
+        notes.AddRange(mismatch);
+        if (incompleteRows.Count > 0)
+            notes.Add($"Ieșirea nu este acoperită: există în registru o înregistrare incompletă pentru acest fișier ({string.Join("; ", incompleteRows)}); o înregistrare incompletă nu aprobă nimic.");
+        return new(null, string.Join(" ", notes), false);
+    }
+
+    private static List<string> RowHashes(TransferRow row) =>
+        [.. row.Sha256.Split([';', ',', ' ', '\n', '\r', '\t'], StringSplitOptions.RemoveEmptyEntries).Where(h => h.Length == 64 && h.All(Uri.IsHexDigit))];
+
+    /// <summary>
+    /// The UTC instants of a local register time in the station's zone: one normally, both offsets for an hour repeated when the clock goes back. A time in
+    /// the hour skipped when the clock goes forward does not exist: the reason is returned ("oră inexistentă la schimbarea orei") and nothing is added.
+    /// </summary>
+    internal static string RegisterUtc(DateTime local, TimeZoneInfo zone, List<DateTimeOffset> into)
+    {
+        var l = DateTime.SpecifyKind(local, DateTimeKind.Unspecified);
+        if (zone.IsInvalidTime(l)) return $"oră inexistentă la schimbarea orei ({l:yyyy-MM-dd HH:mm} nu există în fusul {zone.Id})";
+        if (zone.IsAmbiguousTime(l))
+        {
+            foreach (var off in zone.GetAmbiguousTimeOffsets(l)) into.Add(new DateTimeOffset(l, off).ToUniversalTime());
+            return "";
+        }
+        into.Add(new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(l, zone), TimeSpan.Zero));
+        return "";
     }
 
     public static string VerdictText(ExitVerdict v) => v switch

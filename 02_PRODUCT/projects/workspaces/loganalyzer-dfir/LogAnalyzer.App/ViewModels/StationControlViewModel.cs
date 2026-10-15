@@ -287,9 +287,11 @@ namespace LogAnalyzer.UI.ViewModels
                 var posture = Posture;
                 SavedReportInfo = "";
                 var (folders, updates, transfers) = ControlInputs();
+                // one id per control run: the start, the hashing window and the end carry it, so a hashing window is accepted only inside its own control
+                var runId = Guid.NewGuid().ToString("N");
                 bool auditedStart = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlStarted,
                     LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail(LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(posture), posture.ToString(),
-                        new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent()).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator), PeriodDays, folders.Count));
+                        new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent()).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator), PeriodDays, folders.Count, runId));
                 _report = await Task.Run(() =>
                 {
                     // N13: only the Network edition registers the active probe (LogAnalyzer.Connectors); the other editions have none.
@@ -305,7 +307,13 @@ namespace LogAnalyzer.UI.ViewModels
                             var cb = LogAnalyzer.Dfir.Case.ClockMemory.ReadBaseline(auditPath);
                             facts.LatestAppRecordUtc = cb.Baseline; facts.ClockSuspectNote = cb.SuspectNote; facts.ClockAckText = cb.AckText;
                             // the application's own reads of the classified files at earlier controls (hashing): listed apart, never as someone's access
-                            facts.SelfWindows.AddRange(LogAnalyzer.Dfir.Auth.OperationAudit.ReadControlHashing(auditPath));
+                            // accepted only from a chain that verifies and only inside their own control; the refused ones are reported by A15
+                            bool chainValid;
+                            try { chainValid = LogAnalyzer.UI.Services.AuthApp.Service.VerifyAudit().Status == LogAnalyzer.Dfir.Case.ChainStatus.Valid; }
+                            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { chainValid = false; }
+                            var windows = LogAnalyzer.Dfir.Auth.OperationAudit.ReadControlHashing(auditPath, chainValid);
+                            facts.SelfWindows.AddRange(windows.Valid);
+                            facts.InvalidSelfWindows.AddRange(windows.Invalid);
                         }
                         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
                         try { LogAnalyzer.Dfir.Case.ClockMemory.RecordSeen(auditPath, facts.CollectedUtc, "raport de control stație"); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
@@ -316,10 +324,10 @@ namespace LogAnalyzer.UI.ViewModels
                 });
                 // the hashing window of this control goes to the sealed audit: the next controls recognise its records in the folders' audit
                 bool auditedHashing = _report.Facts.SelfWindow is not { } own
-                    || LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashing, LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashingDetail(own));
+                    || LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashing, LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashingDetail(own with { RunId = runId }));
                 bool auditedFinish = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinished,
                     LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinishedDetail(_report.Facts.Host, _report.Facts.IsAdministrator, _report.Checks.Count,
-                        _report.Count(ControlStatus.Neconform), _report.Count(ControlStatus.DeVerificat), _report.Count(ControlStatus.Nedeterminat)));
+                        _report.Count(ControlStatus.Neconform), _report.Count(ControlStatus.DeVerificat), _report.Count(ControlStatus.Nedeterminat), runId));
                 FillChecks();
                 Users.Clear();
                 foreach (var u in _report.Users) Users.Add(u);
@@ -339,6 +347,13 @@ namespace LogAnalyzer.UI.ViewModels
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
             {
                 Status = "Eroare la colectare: " + ex.Message;
+            }
+            catch (Exception ex)
+            {
+                // an unexpected error must not take the application down: it is written to the trace and to the sealed audit and shown to the operator
+                System.Diagnostics.Trace.TraceError($"Controlul stației a eșuat: {ex}");
+                LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlFailed, $"error={ex.GetType().Name}; message={ex.Message}");
+                Status = $"Controlul s-a oprit din cauza unei erori neașteptate ({ex.GetType().Name}: {ex.Message}). Eroarea a fost trecută în jurnalul de audit; repetați controlul.";
             }
             finally { IsBusy = false; }
         }
