@@ -10,6 +10,7 @@ import { roomWindows } from './textiles';
 import { doorOpenings } from './doors';
 import { materialOf } from './finishes';
 import { backSide } from './fixtures';
+import { DEFAULT_BRIEF, type Style } from './brief';
 
 type Side = WallFeature['side'];
 interface Accent { kind: WallFeature['kind']; material: string; color?: string; heightM?: number }
@@ -58,6 +59,21 @@ export const STYLE_PACKAGES: StylePackage[] = [
     bath: { metal: 'brass', tileZone: 'h120', showerType: 'cabin', wc: 'floor', tap: 'ikea-runskar-baterie-lavoar-alama', shower: 'dedeman-kadda-girard-my2061-77g-sistem-dus-auriu', towelRadiator: 'dedeman-radox-scala-portprosop-auriu-600x1200', mirror: 'ikea-faxalven-oglinda-iluminat-60x95' }, pendant: 'ikea-stockholm-2025-lustra-sticla-alamit-38', fixtureColor: '#b08d57', pendantTable: true, trackLiving: false, bedSconces: true, counterPendants: false },
 ];
 export const styleById = (id: string) => STYLE_PACKAGES.find(s => s.id === id) ?? null;
+/** Stilul din brief care corespunde fiecărui pachet (același nume afișat în Concept și în brief). */
+export const STYLE_BRIEF: Record<StylePackage['id'], Style> = { scandi: 'scandinav', modern: 'modern', japandi: 'natural', industrial: 'industrial', classic: 'clasic' };
+/**
+ * Pachetul aplicat acum pe casă (pentru starea „Aplicat” din Concept): pardoseala și vopseaua din fiecare cameră și culoarea
+ * pereților sunt cele ale pachetului. null dacă designerul a schimbat ceva de atunci sau n-a aplicat niciun pachet.
+ */
+export function appliedStyleId(snap: Snapshot, mc: MaterialsCatalog): StylePackage['id'] | null {
+  const rooms = floors(snap).flatMap(f => f.rooms); if (!rooms.length || !snap.finishes) return null;
+  const has = (id: string | null | undefined) => !!id && !!materialOf(mc, id);
+  for (const pkg of STYLE_PACKAGES){
+    const ok = rooms.every(r => { const f = snap.finishes?.[r.id], wet = WET.has(r.type), floorId = wet ? pkg.floor.wet : pkg.floor.dry;
+      return !!f && (!has(floorId) || f.floor === floorId) && (!has(pkg.paint) || f.wallPaint === pkg.paint) && (snap.appearance?.rooms?.[r.id]?.walls?.color ?? null) === pkg.walls; });
+    if (ok) return pkg.id; }
+  return null;
+}
 
 const WET = new Set(['baie', 'bucatarie']);
 /** Peretele lângă care stă o piesă (cel mai apropiat de amprenta ei). */
@@ -112,6 +128,8 @@ export function applyStyle(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, p
   s.appearance = { ...(s.appearance || {}), rooms: { ...(s.appearance?.rooms || {}), ...Object.fromEntries(Object.entries(rooms).map(([k, v]) => [k, { ...(s.appearance?.rooms?.[k] || {}), ...v }])) } };
   // ușile de interior și mânerele lor (ușa de intrare rămâne cum e)
   if (has(pkg.door)){ const doors = { ...(s.doors || {}) }; for (const o of doorOpenings(s)) if (!o.entrance) doors[o.id] = { product: pkg.door, handle: has(pkg.handle) ? pkg.handle : null }; s.doors = doors; }
+  // brieful ține același stil (propunerile automate și textul lor folosesc stilul ales aici)
+  s.brief = { ...(s.brief ?? DEFAULT_BRIEF), style: STYLE_BRIEF[pkg.id] };
   return s;
 }
 /** Cât costă fiecare stil pe casa asta: materialele de finisaj, iluminat și textile, manopera estimată și câte poziții rămân fără preț. */

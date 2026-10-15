@@ -1,6 +1,7 @@
 'use client';
 // Panoul studioului: proiectele în lucru (cu miniatura planului) și tipologiile de pornire pentru un proiect nou.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { singleFlight } from '@/lib/single-flight';
 import { TEMPLATES, floorArea } from '../core/templates';
 import type { Floor } from '../core/types';
 import { formatArea } from '../core/format';
@@ -20,25 +21,33 @@ export default function Home(){
   const [q, setQ] = useState(''), [sort, setSort] = useState<'due' | 'updated' | 'name'>('due'), [trash, setTrash] = useState<{ id: string; name: string; purgeAt: string }[]>([]), [undo, setUndo] = useState<{ id: string; name: string } | null>(null);
   const loadTrash = () => fetch('/api/projects/trash').then(r => r.ok ? r.json() : []).then(setTrash).catch(() => {});
   const thumbs = (ps: P[]) => { for (const p of ps.slice(0, 24)) fetch(`/api/projects/${p.id}`).then(r => r.ok ? r.json() : null).then(j => { if (j?.draft?.floor) setPlans(m => m[p.id] ? m : ({ ...m, [p.id]: j.draft.floor })); }).catch(() => {}); };
-  const reload = () => fetch('/api/projects').then(r => r.json()).then((ps: P[]) => { setList(ps); thumbs(ps); }).catch(() => setErr(t('home.loadFailed')));
-  const [demo, setDemo] = useState(false);
+  const reload = () => fetch('/api/projects').then(r => r.ok ? r.json() : Promise.reject(r)).then((ps: P[]) => { if (!Array.isArray(ps)) throw new Error('list'); setList(ps); thumbs(ps); }).catch(() => setErr(t('home.loadFailed')));
+  const [demo, setDemo] = useState(false), flight = useRef(singleFlight()).current, [pending, setPending] = useState<Record<string, boolean>>({});
+  // o singură cerere pe buton: dublul click în același tick nu mai creează două proiecte / copii
+  const once = <T,>(key: string, fn: () => Promise<T>, hold?: (r: T) => boolean) => { if (flight.has(key)) return Promise.resolve(undefined); setPending(m => ({ ...m, [key]: true }));
+    return flight.run(key, fn, { hold }).finally(() => { if (!flight.has(key)) setPending(m => { const n = { ...m }; delete n[key]; return n; }); }); };
   useEffect(() => { loadTrash(); fetch('/api/health').then(r => r.json()).then(h => setDemo(!!h.demo)).catch(() => {}); }, []); // eslint-disable-line
   useEffect(() => { if (!undo) return; const tm = setTimeout(() => setUndo(null), 10000); return () => clearTimeout(tm); }, [undo]);
   // ștergerea mută în coș (30 de zile) și se poate anula imediat; ștergerea definitivă cere numele tastat
-  async function toTrash(p: P){ const r = await fetch(`/api/projects/${p.id}`, { method: 'DELETE' }); if (!r.ok){ setErr(t('home.error')); return; } setUndo({ id: p.id, name: p.name }); reload(); loadTrash(); }
+  const toTrash = (p: P) => once(`trash:${p.id}`, () => toTrashNow(p));
+  async function toTrashNow(p: P){ const r = await fetch(`/api/projects/${p.id}`, { method: 'DELETE' }); if (!r.ok){ setErr(t('home.error')); return; } setUndo({ id: p.id, name: p.name }); reload(); loadTrash(); }
   async function restore(id: string){ const r = await fetch(`/api/projects/${id}/restore`, { method: 'POST' }); if (!r.ok){ setErr(t('home.error')); return; } setUndo(null); reload(); loadTrash(); }
   async function purge(x: { id: string; name: string }){ const typed = prompt(t('home.purgeConfirm', { name: x.name })); if (typed == null) return;
     const r = await fetch(`/api/projects/${x.id}/purge`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: typed }) }); const j = await r.json().catch(() => ({}));
     if (!r.ok){ setErr(j.error || t('home.error')); return; } loadTrash(); }
-  async function duplicate(p: P){ const r = await fetch(`/api/projects/${p.id}/duplicate`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }); const j = await r.json().catch(() => ({}));
+  const duplicate = (p: P) => once(`dup:${p.id}`, () => duplicateNow(p));
+  async function duplicateNow(p: P){ const r = await fetch(`/api/projects/${p.id}/duplicate`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }); const j = await r.json().catch(() => ({}));
     if (!r.ok){ setErr(j.error || t('home.error')); return; } reload(); }
-  useEffect(() => { fetch('/api/projects').then(r => r.json()).then((ps: P[]) => { setList(ps);
+  useEffect(() => { fetch('/api/projects').then(r => r.ok ? r.json() : Promise.reject(r)).then((ps: P[]) => { if (!Array.isArray(ps)) throw new Error('list'); setList(ps);
     // miniaturile: planul din ciorna fiecărui proiect (primele 12)
     for (const p of ps.slice(0, 12)) fetch(`/api/projects/${p.id}`).then(r => r.ok ? r.json() : null).then(j => { if (j?.draft?.floor) setPlans(m => ({ ...m, [p.id]: j.draft.floor })); }).catch(() => {}); })
     .catch(() => setErr(t('home.loadFailed'))); }, []); // eslint-disable-line
-  async function create(template: string){ setBusy(true); setErr('');
-    const r = await fetch('/api/projects', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: name.trim() || t('home.defaultName'), template, lang }) }); const j = await r.json();
-    if (!r.ok){ setErr(j.error || t('home.error')); setBusy(false); return; } location.href = `/p/${j.id}`; }
+  // cheia rămâne ocupată după reușită: pagina trece în editor, orice alt click până atunci e ignorat
+  const create = (template: string) => once('create', () => createNow(template), ok => ok === true);
+  async function createNow(template: string){ setBusy(true); setErr('');
+    try { const r = await fetch('/api/projects', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: name.trim() || t('home.defaultName'), template, lang }) }); const j = await r.json().catch(() => ({}));
+      if (!r.ok){ setErr(j.error || t('home.error')); setBusy(false); return false; } location.href = `/p/${j.id}`; return true; }
+    catch { setErr(t('home.error')); setBusy(false); return false; } }
   const today = new Date().toISOString().slice(0, 10);
   // active: cele cu termen mai întâi (cel mai apropiat), apoi după ultima modificare
   const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(), needle = norm(q.trim());
@@ -68,7 +77,7 @@ export default function Home(){
           <span className={`st st-${p.status}`}>{t(`pstatus.${p.status}`)}</span>
           <b>{p.name}</b>{p.client && <span className="pclient">{p.client}</span>}
           <small>{left != null ? <em className={left < 0 ? 'late' : left <= 7 ? 'soon' : ''}>{left < 0 ? t('pcard.late', { n: -left }) : t('pcard.left', { n: left })} · </em> : null}{p.current_revision ? t('home.revision', { n: p.current_revision }) : t('home.noRevisions')} · {when(p.updated_at)}</small></a>
-          <div className="pcard-tools"><button className="link" onClick={() => duplicate(p)}>{t('home.duplicate')}</button><button className="link danger" onClick={() => toTrash(p)}>{t('home.toTrash')}</button></div></div>; })}</div>}
+          <div className="pcard-tools"><button className="link" disabled={!!pending[`dup:${p.id}`]} onClick={() => duplicate(p)}>{t('home.duplicate')}</button><button className="link danger" disabled={!!pending[`trash:${p.id}`]} onClick={() => toTrash(p)}>{t('home.toTrash')}</button></div></div>; })}</div>}
       {trash.length > 0 && <details className="trash"><summary>{t('home.trash', { n: trash.length })}</summary><p className="prov">{t('home.trashNote')}</p>
         <ul>{trash.map(x => <li key={x.id}><b>{x.name}</b><small>{t('home.purgeIn', { n: daysTo(x.purgeAt) })}</small>
           <button className="btn" onClick={() => restore(x.id)}>{t('home.restore')}</button><button className="btn danger" onClick={() => purge(x)}>{t('home.purge')}</button></li>)}</ul></details>}

@@ -47,6 +47,8 @@ export function lightReport(mc: MaterialsCatalog, _fl: Floor, room: Room, f: Roo
 export function lightIssues(mc: MaterialsCatalog, fl: Floor, room: Room, f: RoomFinishes): { key: string; roomId: string; vars?: Record<string, string | number> }[] {
   const rep = lightReport(mc, fl, room, f), out: { key: string; roomId: string; vars?: Record<string, string | number> }[] = [];
   if (rep.target && !rep.unknownLumens && rep.lux < rep.target[0]) out.push({ key: 'light.low', roomId: room.id, vars: { lux: rep.lux, min: rep.target[0], max: rep.target[1], ...(rep.spotsForTarget ? { n: rep.spotsForTarget } : { n: '-' }) } });
+  // și prea multă: peste maximul recomandat camera e orbitoare și plată (de ex. spoturile puse automat într-un dormitor mic)
+  if (rep.target && !rep.unknownLumens && rep.lux > rep.target[1]) out.push({ key: 'light.high', roomId: room.id, vars: { lux: rep.lux, min: rep.target[0], max: rep.target[1] } });
   const cr = CCT_RANGE[room.type];
   if (cr) for (const k of rep.ccts) if (k < cr[0] || k > cr[1]) out.push({ key: 'light.cct', roomId: room.id, vars: { k, lo: cr[0], hi: cr[1] } });
   // straturi: lumina de lucru lipsește unde se lucrează (bucătărie, baie); o singură sursă generală face camera de zi plată

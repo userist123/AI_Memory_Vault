@@ -3,7 +3,7 @@
 // compară costul și ce diferă, aplică oricare. Alegerea clientului de pe link apare lângă varianta aleasă.
 import { useEffect, useMemo, useState } from 'react';
 import type { Catalog, MaterialsCatalog, Room, Snapshot } from '@/core/types';
-import { captureOption, updateOption, removeOption, applyOption, compareOptions, MAX_OPTIONS, OptionError } from '@/core/room-options';
+import { captureOption, updateOption, removeOption, applyOption, compareOptions, optionDescription, MAX_OPTIONS, OptionError } from '@/core/room-options';
 import { groups } from '@/core/catalog';
 import { formatMoney, formatMoneyDelta } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
@@ -25,9 +25,9 @@ export default function RoomOptionsPanel({ id, room, snap, cat, mc, cur, onSnap,
     <h3 id={`ropt-${room.id}`}>{t('ropt.title')}</h3>
     <p className="muted">{list.length ? t('ropt.intro') : t('ropt.empty')}</p>
     {list.length > 0 && <ol className="ropt-list">{list.map((o, i) => <li key={o.option.id} className={o.active ? 'is-active' : ''}>
-      <header><b className="ropt-tag">{o.option.label}</b><span>{o.option.note || t('ropt.noNote')}</span>{o.active && <em>{t('ropt.current')}</em>}</header>
+      <header><b className="ropt-tag">{o.option.label}</b><span>{(d => d.key ? t(d.key, d.vars) : d.text)(optionDescription(o.option.note, o.option.label, o.changes.filter(c => c.label !== 'other').map(what)))}</span>{o.active && <em>{t('ropt.current')}</em>}</header>
       <p className="ropt-cost"><span>{t('ropt.total')}: {money(o.total)}</span>{i > 0 && <b className={o.delta > 0 ? 'up' : o.delta < 0 ? 'down' : ''}>{o.delta === 0 ? t('ropt.sameCost') : t('ropt.vsA', { d: formatMoneyDelta(o.delta, cur, lang) })}</b>}</p>
-      {o.changes.length > 0 && <ul className="ropt-changes">{o.changes.slice(0, 6).map((c, k) => <li key={k}><small>{what(c)}</small>{c.label === 'other' ? t('ropt.otherDiff') : <>{c.from} → <b>{c.to}</b></>}</li>)}</ul>}
+      {o.changes.length > 0 && <ul className="ropt-changes">{o.changes.slice(0, 6).map((c, k) => <li key={k}><small>{what(c)}:</small>{' '}{c.label === 'other' ? t('ropt.otherDiff') : <>{c.from} → <b>{c.to}</b></>}</li>)}</ul>}
       {i > 0 && !o.changes.length && <p className="muted">{t('ropt.noDiff')}</p>}
       {o.missing > 0 && <p className="muted">{t('ropt.missing', { n: o.missing })}</p>}
       {choice?.optionId === o.option.id && <p className="ropt-client">{t('ropt.clientChose', { who: choice.author, d: date(choice.chosenAt), rev: choice.revisionNumber })}{choice.note && <q>{choice.note}</q>}</p>}

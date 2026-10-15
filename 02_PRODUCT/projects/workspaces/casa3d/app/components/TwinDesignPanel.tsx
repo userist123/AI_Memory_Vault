@@ -10,7 +10,7 @@ type Alt = { index: number; title: string; ok: boolean; outcomes: { op: string; 
   boq: { knownTotal: number; unknownCount: number; retailers: string[]; budget?: { target: number; delta: number; status: string } }; issues: { severity: string; code: string; message: string }[]; placements: FurniturePlacement[] };
 const BUDGET: Record<string, string> = { UNDER: 'twin.budget.UNDER', OVER: 'twin.budget.OVER', UNKNOWN: 'twin.budget.UNKNOWN' };
 
-export default function TwinDesignPanel({ id, snap, catalog, onPreview, onApplied, say }: { id: string; snap: Snapshot; catalog: Catalog; onPreview(s: Snapshot | null, label: string | null): void; onApplied(s: Snapshot, rev: number): void; say(t: string): void }){
+export default function TwinDesignPanel({ id, snap, catalog, onPreview, onApplied, flush, say }: { id: string; snap: Snapshot; catalog: Catalog; onPreview(s: Snapshot | null, label: string | null): void; onApplied(s: Snapshot, rev: number, draftRev?: number | null): void; flush?(): Promise<boolean>; say(t: string): void }){
   const { t, lang, units } = usePrefs(), iT = (i: any) => issueText(lang, i, units), cur = catalogCurrency(catalog), lei = (v: number) => formatMoney(Math.round(v), cur, lang);
   const G = groups(catalog), groupKeys = Object.keys(G).filter(k => !G[k].includedWith);
   const typeOf = (rid: string) => snap.floor.rooms.find(r => r.id === rid)?.type;
@@ -21,14 +21,17 @@ export default function TwinDesignPanel({ id, snap, catalog, onPreview, onApplie
   const [busy, setBusy] = useState(false), [acting, setActing] = useState(false), [res, setRes] = useState<{ id: string; baseFingerprint: string; notes: string[]; brief: { roomId: string; replace: boolean }; alternatives: Alt[] } | null>(null), [ack, setAck] = useState<Record<number, boolean>>({}), [done, setDone] = useState<Record<number, string>>({});
   useEffect(() => { if (!snap.floor.rooms.some(r => r.id === roomId)) pickRoom(snap.floor.rooms[0]?.id ?? ''); }, [snap, roomId]);
   const toggle = <T,>(arr: T[], v: T) => arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v];
-  async function generate(){ setBusy(true); onPreview(null, null); setRes(null); setDone({}); setAck({});
+  // ciorna se salvează întâi (cu versiunea de bază): alternativele pornesc de la ce vede designerul; un conflict le oprește
+  async function generate(){ if (busy) return; setBusy(true); onPreview(null, null); setRes(null); setDone({}); setAck({});
+    if (flush && !(await flush())){ setBusy(false); return; }
     const r = await fetch(`/api/projects/${id}/design`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ brief: { roomId, wants, budget: budget === '' ? null : Number(budget), retailers, accessibility, replace } }) });
-    const j = await r.json(); setBusy(false); if (!r.ok){ say(j.error || t('design.generateFailed')); return; } setRes(j); }
+    const j = await r.json().catch(() => ({})); setBusy(false); if (!r.ok){ say(j.error || t('design.generateFailed')); return; } setRes(j); }
   async function act(a: Alt, action: 'apply' | 'reject'){ if (!res || acting) return; setActing(true);
-    const r = await fetch(`/api/projects/${id}/design/${res.id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ index: a.index, action, confirmWarnings: !!ack[a.index] }) }); const j = await r.json(); setActing(false);
+    if (action === 'apply' && flush && !(await flush())){ setActing(false); return; }
+    const r = await fetch(`/api/projects/${id}/design/${res.id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ index: a.index, action, confirmWarnings: !!ack[a.index] }) }); const j = await r.json().catch(() => ({})); setActing(false);
     if (!r.ok){ say(`${j.error || t('design.actionFailed')} ${(j.details || []).slice(0, 2).map((d: any) => iT(d)).join(' ')}`); return; }
     setDone({ ...done, [a.index]: action }); onPreview(null, null);
-    if (action === 'apply'){ onApplied(j.snapshot, j.revision); say(t('twin.applied', { title: a.title, n: j.revision })); } else say(t('design.rejectedNote')); }
+    if (action === 'apply'){ onApplied(j.snapshot, j.revision, j.draftRev); say(t('twin.applied', { title: a.title, n: j.revision })); } else say(t('design.rejectedNote')); }
   // Alternativa conține deja toate piesele proiectului după aplicare (generate pe brief-ul salvat), deci previzualizarea e exact ce se aplică.
   const previewSnap = (a: Alt): Snapshot => ({ ...snap, placements: a.placements });
   return (<div className="design">

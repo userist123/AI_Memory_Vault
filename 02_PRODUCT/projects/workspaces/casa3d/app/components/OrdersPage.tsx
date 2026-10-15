@@ -1,8 +1,8 @@
 'use client';
 // Etapa „Comenzi”: tot ce e de cumpărat, grupat pe furnizor. Pe fiecare linie: starea (de comandat → ofertă cerută →
 // comandat → livrat → montat), nr. comenzii, datele; întârzierile sus. Lista unui furnizor se tipărește sau se descarcă (CSV).
-import { useEffect, useMemo, useState } from 'react';
-import { ORDER_STATUSES, type OrderState, type ProcurementRow, type SupplierGroup } from '@/core/procurement';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ORDER_STATUSES, withOrderState, bySupplier, procurementSummary, type OrderState, type ProcurementRow, type SupplierGroup } from '@/core/procurement';
 import { formatMoney } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
 import { intlLocale } from '@/lib/i18n';
@@ -21,9 +21,11 @@ export default function OrdersPage({ id, cur, say, projectName, rooms = [] }: { 
   async function setQty(r: ProcurementRow, qty: number){ if (!r.itemId) return;
     const res = await fetch(`/api/projects/${id}/items/${r.itemId}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ qty }) });
     if (!res.ok){ const j = await res.json().catch(() => ({})); say(j.error || t('clip.saveError')); return; } load(); }
+  // starea se aplică imediat (contoarele de sus se schimbă la clic); salvarea pe server o face editorul, automat (OrderEditor)
+  function applyLocal(key: string, state: OrderState){ setData(d => { if (!d) return d; const rows = withOrderState(d.rows, key, state, new Date().toISOString().slice(0, 10)); return { rows, groups: bySupplier(rows), summary: procurementSummary(rows) }; }); }
   async function save(key: string, state: OrderState){
-    const r = await fetch(`/api/projects/${id}/orders`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key, state }) });
-    if (!r.ok){ const j = await r.json().catch(() => ({})); say(j.error || t('orders.saveError')); return; } load(); }
+    const r = await fetch(`/api/projects/${id}/orders`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key, state }) }).catch(() => null);
+    if (!r?.ok){ const j = await r?.json().catch(() => ({})); say(j?.error || t('orders.saveError')); load(); return false; } return true; }
   const money = (v: number | null) => formatMoney(v, cur, lang, '—'), today = new Date().toISOString().slice(0, 10);
   const groups = useMemo(() => (data?.groups ?? []).map(g => ({ ...g, rows: g.rows.filter(r => filter === 'all' ? true : filter === 'overdue' ? r.overdue || r.orderUrgency != null : ['todo', 'quoted'].includes(r.state.status)) })).filter(g => g.rows.length), [data, filter]);
   function csv(g: SupplierGroup){ const head = [t('orders.col.product'), t('orders.col.code'), t('orders.col.qty'), t('orders.col.unit'), t('orders.col.packs'), t('orders.col.unitPrice'), t('orders.col.total'), t('orders.col.rooms'), t('orders.col.status'), t('orders.col.ref'), 'URL'];
@@ -51,13 +53,20 @@ export default function OrdersPage({ id, cur, say, projectName, rooms = [] }: { 
           <span className={`st st-o-${r.state.status}`}>{t(`ostatus.${r.state.status}`)}</span>
           {r.orderBy && (r.state.status === 'todo' || r.state.status === 'quoted') && <small className={r.orderUrgency ? 'late' : 'muted'}>{t(r.orderUrgency === 'late' ? 'orders.orderByLate' : 'orders.orderBy', { d: new Date(r.orderBy + 'T12:00:00').toLocaleDateString(intlLocale(lang), { day: 'numeric', month: 'long' }) })}</small>}
           {r.overdue && <small className="late">{t('orders.lateSince', { d: new Date(r.state.eta! + 'T12:00:00').toLocaleDateString(intlLocale(lang), { day: 'numeric', month: 'long' }) })}</small>}</button>
-        {open === r.key && <OrderEditor row={r} today={today} onSave={st => save(r.key, st)} onQty={q => setQty(r, q)} onRemove={() => removeItem(r)} />}</li>)}</ul>
+        {open === r.key && <OrderEditor row={r} today={today} onChange={st => applyLocal(r.key, st)} onSave={st => save(r.key, st)} onQty={q => setQty(r, q)} onRemove={() => removeItem(r)} />}</li>)}</ul>
     </section>)}
   </div>);
 }
-function OrderEditor({ row, today, onSave, onQty, onRemove }: { row: ProcurementRow; today: string; onSave(s: OrderState): void; onQty(q: number): void; onRemove(): void }){
-  const { t } = usePrefs(), [s, setS] = useState<OrderState>(row.state), [qty, setQty] = useState(String(row.qty));
-  const set = (patch: Partial<OrderState>) => setS(x => ({ ...x, ...patch }));
+/**
+ * Editorul unei linii: se salvează singur (ca celelalte panouri), la 0,6 s după ultima modificare; la închidere salvează
+ * imediat ce a rămas. Starea apare imediat în listă și în contoare (onChange), înainte de răspunsul serverului.
+ */
+function OrderEditor({ row, today, onChange, onSave, onQty, onRemove }: { row: ProcurementRow; today: string; onChange(s: OrderState): void; onSave(s: OrderState): Promise<boolean>; onQty(q: number): void; onRemove(): void }){
+  const { t } = usePrefs(), [s, setS] = useState<OrderState>(row.state), [qty, setQty] = useState(String(row.qty)), [st, setSt] = useState<'saved' | 'saving' | 'error'>('saved');
+  const timer = useRef<any>(null), pending = useRef<OrderState | null>(null), saveRef = useRef(onSave); saveRef.current = onSave;
+  const flush = async () => { clearTimeout(timer.current); const p = pending.current; if (!p) return; pending.current = null; const ok = await saveRef.current(p); if (!pending.current) setSt(ok ? 'saved' : 'error'); };
+  useEffect(() => () => { clearTimeout(timer.current); const p = pending.current; if (p){ pending.current = null; void saveRef.current(p); } }, []);
+  const set = (patch: Partial<OrderState>) => { const n = { ...(pending.current ?? s), ...patch }; pending.current = n; setS(n); onChange(n); setSt('saving'); clearTimeout(timer.current); timer.current = setTimeout(flush, 600); };
   // trecerea la „comandat” / „livrat” completează data de azi dacă lipsește
   const status = (st: OrderState['status']) => set({ status: st, ...(st === 'ordered' && !s.orderedAt ? { orderedAt: today } : {}), ...((st === 'delivered' || st === 'installed') && !s.deliveredAt ? { deliveredAt: today } : {}) });
   return (<div className="oedit">
@@ -74,7 +83,7 @@ function OrderEditor({ row, today, onSave, onQty, onRemove }: { row: Procurement
     <label className="f"><span>{t('orders.note')}</span><input value={s.note ?? ''} maxLength={500} onChange={e => set({ note: e.target.value })} /></label>
     {row.kind === 'custom' && <div className="oedit-item"><label className="f"><span>{t('orders.col.qty')} ({row.unit})</span><input type="number" inputMode="decimal" min="0.01" step="any" value={qty} onChange={e => setQty(e.target.value)} /></label>
       <button className="btn" disabled={!(Number(qty) > 0) || Number(qty) === row.qty} onClick={() => onQty(Number(qty))}>{t('clip.updateQty')}</button><button className="btn danger" onClick={onRemove}>{t('clip.remove')}</button></div>}
-    <div className="oedit-act">{row.url && <a className="btn" href={row.url} target="_blank" rel="noopener noreferrer">{t('orders.openShop')}</a>}<button className="btn primary" onClick={() => onSave(s)}>{t('orders.save')}</button></div>
+    <div className="oedit-act">{row.url && <a className="btn" href={row.url} target="_blank" rel="noopener noreferrer">{t('orders.openShop')}</a>}<small className={`prov ${st === 'error' ? 'err' : ''}`} role="status">{t(`orders.state.${st}`)}</small>{st === 'error' && <button className="btn" onClick={() => { pending.current = s; setSt('saving'); void flush(); }}>{t('com.retry')}</button>}</div>
   </div>);
 }
 

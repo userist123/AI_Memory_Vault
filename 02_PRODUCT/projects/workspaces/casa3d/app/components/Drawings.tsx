@@ -37,7 +37,7 @@ export function CeilingSheet({ snap, fl, cat, mc, box, widthMm, heightMm, mm, t,
           {c.fixtures.map((p, k) => <FixtureSymbol key={`f${k}`} kind={p.kind} x={p.x} z={p.z} r={r} nx={p.nx} nz={p.nz} {...(p.len != null ? { len: p.len } : {})} {...(p.alongX != null ? { alongX: p.alongX } : {})} />)}
           <text x={q.x0 + .15} y={q.z0 + fs(4)} fontSize={fs(2.6)} fill={INK} stroke="#fff" strokeWidth={fs(.8)} paintOrder="stroke">{c.name}</text>
           <text x={q.x0 + .15} y={q.z0 + fs(7)} fontSize={fs(2.1)} fill="#555" stroke="#fff" strokeWidth={fs(.8)} paintOrder="stroke">{t(`fin.ceiling.${c.type}`)} · h {formatLength(c.heightM, units, locale)}{c.ledM ? ` · LED ${formatLength(c.ledM, units, locale)}` : ''}</text>
-          <text x={q.x0 + .15} y={q.z0 + fs(9.6)} fontSize={fs(2.1)} fill={c.target && c.lux < c.target[0] ? '#B3261E' : '#555'} stroke="#fff" strokeWidth={fs(.8)} paintOrder="stroke">~{c.lux} lx{c.target ? ` (${c.target[0]}–${c.target[1]})` : ''}</text>
+          <text x={q.x0 + .15} y={q.z0 + fs(9.6)} fontSize={fs(2.1)} fill={c.target && (c.lux < c.target[0] || c.lux > c.target[1]) ? '#B3261E' : '#555'} stroke="#fff" strokeWidth={fs(.8)} paintOrder="stroke">~{c.lux} lx{c.target ? ` (${c.target[0]}–${c.target[1]})` : ''}</text>
         </g>; })}
       <Walls fl={fl} />
     </svg>

@@ -77,6 +77,16 @@ export function bySupplier(rows: ProcurementRow[]): SupplierGroup[] {
     return { supplier, rows: rs, total: act.every(r => r.total != null) ? round2(act.reduce((a, r) => a + (r.total ?? 0), 0)) : null,
       open: act.filter(r => r.state.status === 'todo' || r.state.status === 'quoted').length, overdue: rs.filter(r => r.overdue).length }; });
 }
+/**
+ * Starea nouă a unei linii, aplicată imediat în interfață (înainte de răspunsul serverului): starea, întârzierea și urgența
+ * comenzii se recalculează ca în procurementRows, deci contoarele de sus se schimbă la clic. Celelalte linii rămân neatinse.
+ */
+export function withOrderState(rows: ProcurementRow[], key: string, state: OrderState, today: string): ProcurementRow[] {
+  return rows.map(r => { if (r.key !== key) return r;
+    const leadDays = state.leadDays ?? r.leadDays, orderBy = state.neededBy ? addDays(state.neededBy, -leadDays) : r.orderBy ? addDays(r.orderBy, r.leadDays - leadDays) : null, open = state.status === 'todo' || state.status === 'quoted';
+    const orderUrgency = !open || !orderBy ? null : orderBy < today ? 'late' as const : orderBy <= addDays(today, ORDER_SOON_DAYS) ? 'soon' as const : null;
+    return { ...r, state, leadDays, orderBy, orderUrgency, overdue: state.status === 'ordered' && !!state.eta && state.eta < today }; });
+}
 export function procurementSummary(rows: ProcurementRow[]){
   const act = rows.filter(r => r.state.status !== 'cancelled'), n = (s: OrderStatus) => act.filter(r => r.state.status === s).length;
   return { lines: act.length, todo: n('todo') + n('quoted'), ordered: n('ordered'), delivered: n('delivered') + n('installed'), installed: n('installed'), overdue: rows.filter(r => r.overdue).length, orderLate: rows.filter(r => r.orderUrgency === 'late').length, orderSoon: rows.filter(r => r.orderUrgency === 'soon').length,

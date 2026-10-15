@@ -52,5 +52,7 @@ export async function clientLink(owner: string, id: string){
   const old = await q('select token from shares where project_id=$1 and revision_number=$2 and revoked_at is null order by created_at desc limit 1', [id, number]);
   const s = old.rows[0] ? { token: old.rows[0].token as string, path: `/share/${old.rows[0].token}` } : await createShare(owner, id, number);
   const base = publicBase();
-  return { token: s.token, path: s.path, revisionNumber: number, newRevision: !same, url: base ? base + s.path : null };
+  // publicUrl: false = linkul folosește adresa din browser (pe localhost merge doar pe acest calculator); revisionNote: ce s-a salvat
+  return { token: s.token, path: s.path, revisionNumber: number, newRevision: !same, url: base ? base + s.path : null, publicUrl: !!base,
+    revisionNote: same ? null : `Revizia ${number} — „Predat clientului”` };
 }

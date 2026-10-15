@@ -39,7 +39,7 @@ export function deriveStyle(group: string, name: string): DerivedStyle {
   const dr = num(/(\d+)\s*sertar/i, n); if (dr !== undefined) out.drawers = dr; else if (out.drawers === undefined && /cu sertare/i.test(n)) out.drawers = 2; else if (out.drawers === undefined && /cu sertar\b|\+ sertar|si sertar\b|și sertar\b/i.test(n)) out.drawers = 1;
   const ds = num(/(\d+)\s*u[sș]i/i, n); if (ds !== undefined) out.doors = ds; else if (out.doors === undefined && /cu u[sș]i/i.test(n)) out.doors = 2;
   if (out.mirrors === undefined && /oglind/i.test(n)) out.mirrors = 1;
-  if (/rotund|ovala|\bØ/i.test(n)) out.round = true;
+  if (/rotund|oval[aă]|\bØ/i.test(n)) out.round = true;
   if (/\braft\b|\(deschis/i.test(n)) out.shelf = true;
   if (/tapitat|tapițat|catifea|velvet/i.test(n)){ out.uph = true; out.mat = /catifea|velvet/i.test(n) ? 'velvet' : 'fabric'; }
   if (/piele/i.test(n) && !out.mat) out.mat = 'leather';

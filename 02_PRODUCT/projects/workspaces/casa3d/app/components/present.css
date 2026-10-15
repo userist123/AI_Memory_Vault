@@ -38,3 +38,10 @@
   .pb-col figure{grid-template-columns:48px 1fr;gap:12px;margin:0 0 10px} .pb-col i{width:48px;height:48px} .pb-col figcaption{font-size:14px} .pb-col small{font-size:12px}
   .pb-rooms{margin-top:16px;padding-top:12px} .pb-rooms ul{grid-template-columns:1fr 1fr;gap:10px 14px} .pb-rooms li{font-size:13px} .pb-rooms li i{width:18px;height:18px}
 }
+
+/* imaginile 3D se fac la cerere: locul copertei e un bloc ca .room-img; până la randare, un fundal ușor care „respiră” */
+.slide .shot{min-height:0;min-width:0}
+.slide .ph-wait{background:linear-gradient(100deg,#f1ede6 30%,#f8f5f0 50%,#f1ede6 70%) 0 0/300% 100%;animation:ph-wait 1.6s ease-in-out infinite}
+@keyframes ph-wait{from{background-position:100% 0}to{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){ .slide .ph-wait{animation:none} }
+@media print{ .slide .ph-wait{animation:none;background:#f1ede6} }

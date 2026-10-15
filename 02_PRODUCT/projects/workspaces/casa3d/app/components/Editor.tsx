@@ -51,6 +51,8 @@ import { scaleFromPoints, anchorAfterScale } from '@/core/underlay';
 import { duplicatePlacement, nudgePlacement, NUDGE_CM, NUDGE_BIG_CM } from '@/core/edit-ops';
 import EmptyState from './EmptyState';
 import PlanView, { type Tool, type Sel } from './PlanView';
+import { singleFlight } from '@/lib/single-flight';
+import { putDraft, retryDelay, shouldRetry, stashDraft, readStash, clearStash, stashBase, reloginUrl, type SaveOutcome, type Stash } from '@/lib/draft-sync';
 import { floors, levelView, mergeLevel, addLevel, removeLevel, stairIssues, stairGeometry, stairwells, comfortableStairLength, elevationOf, SLAB, MAX_LEVELS } from '@/core/levels';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 
@@ -70,7 +72,7 @@ export default function Editor({ id }: { id: string }){
   const { t, tp, lang, units } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units);
   const [meta, setMeta] = useState<ProjectMeta | null>(null), [house, setHouse] = useState<Snapshot | null>(null), [lvl, setLvl] = useState(0), [catalog, setCatalog] = useState<Catalog | null>(null), [mc, setMc] = useState<MaterialsCatalog | null>(null), [out, setOut] = useState<Outbound | null>(null);
   const [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('2d'), [help, setHelp] = useState(false), [calib, setCalib] = useState<Calib | null>(null);
-  const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error' | 'conflict'>('saved'), baseRev = useRef<number | null>(null), saveRef = useRef<string>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
+  const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error' | 'conflict' | 'offline' | 'auth'>('saved'), baseRev = useRef<number | null>(null), saveRef = useRef<string>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
   const [showTech, setShowTech] = useState(true), [techKind, setTechKind] = useState<TechKind>('outlet_double');
   const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[] } | null>(null), [persistent, setPersistent] = useState(true), [demo, setDemo] = useState(false), [stage, setStageRaw] = useState<Stage>('survey'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
   const hist = useRef(new History<Snapshot>()), dragStart = useRef<Snapshot | null>(null), timer = useRef<any>(null), latest = useRef<Snapshot | null>(null), [, force] = useState(0);
@@ -81,21 +83,45 @@ export default function Editor({ id }: { id: string }){
   const say = (t: string) => { setToast(t); clearTimeout((say as any).t); (say as any).t = setTimeout(() => setToast(''), 3500); };
 
   useEffect(() => { Promise.all([fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/catalog').then(r => r.json()), fetch('/api/health').then(r => r.json()), fetch('/api/materials').then(r => r.json())])
-    .then(([p, c, h, m]) => { setHouse(p.draft); latest.current = p.draft; baseRev.current = p.draftRev ?? null; setMeta(p.meta ?? { status: 'design' }); setCatalog(c); setMc(m); setRev(p.currentRevision); setPersistent(h.persistent); setDemo(!!h.demo); }).catch(() => say(t('editor.loadError')));
+    .then(([p, c, h, m]) => { setHouse(p.draft); latest.current = p.draft; baseRev.current = p.draftRev ?? null; setMeta(p.meta ?? { status: 'design' }); setCatalog(c); setMc(m); setRev(p.currentRevision); setPersistent(h.persistent); setDemo(!!h.demo); const st = readStash(store(), id); if (st){ stashOpen.current = true; setStash(st); } }).catch(() => say(t('editor.loadError')));
     fetch('/api/outbound').then(r => r.ok ? r.json() : null).then(setOut).catch(() => {});
     loadRevs(); }, [id]); // eslint-disable-line
   const loadRevs = () => { fetch(`/api/projects/${id}/revisions`).then(r => r.ok ? r.json() : []).then(setRevs); fetch(`/api/projects/${id}/shares`).then(r => r.ok ? r.json() : []).then(setShares); };
-  async function shareRevision(n: number){ const r = await fetch(`/api/projects/${id}/shares`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ revision: n }) }); const j = await r.json();
+  const flight = useRef(singleFlight()).current, [revBusy, setRevBusy] = useState(false);
+  async function shareRevision(n: number){ return flight.run(`share:${n}`, () => shareRevisionNow(n)); }
+  async function shareRevisionNow(n: number){ const r = await fetch(`/api/projects/${id}/shares`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ revision: n }) }); if (!authOk(r)) return; const j = await r.json().catch(() => ({}));
     if (!r.ok){ say(j.error || t('editor.shareFailed')); return; } const url = `${location.origin}${j.path}`; try { await navigator.clipboard.writeText(url); say(t('editor.shareCopied')); } catch { say(t('editor.shareLink', { url })); } loadRevs(); }
-  async function revokeShare(token: string){ const r = await fetch(`/api/projects/${id}/shares`, { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token }) }); if (!r.ok){ say(t('editor.revokeFailed')); return; } say(t('editor.revoked')); loadRevs(); }
+  async function revokeShare(token: string){ const r = await fetch(`/api/projects/${id}/shares`, { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token }) }); if (!authOk(r)) return; if (!r.ok){ say(t('editor.revokeFailed')); return; } say(t('editor.revoked')); loadRevs(); }
   // fiecare salvare spune de la ce versiune a pornit; dacă proiectul s-a schimbat între timp (alt dispozitiv), nu suprascrie tăcut
-  const send = async (force = false) => { setSave('saving'); const r = await fetch(`/api/projects/${id}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ snapshot: latest.current, ...(force || baseRev.current == null ? {} : { base: baseRev.current }) }) });
-    const j = await r.json().catch(() => ({})); if (r.ok){ baseRev.current = j.draftRev ?? null; setSave('saved'); return; }
-    if (r.status === 409 && j.details?.conflict){ setSave('conflict'); return; } setSave('error'); say(j.error || t('editor.saveFailed')); };
+  // Salvările merg una după alta (fiecare pornește de la versiunea primită de precedenta); rețeaua căzută nu aruncă: starea devine
+  // „offline · nesalvat”, se reîncearcă cu pauze crescânde și la evenimentul `online`; sesiunea expirată păstrează ciorna local.
+  const inflight = useRef<Promise<SaveOutcome> | null>(null), retryT = useRef<any>(null), attempt = useRef(0), stashOpen = useRef(false), [stash, setStash] = useState<Stash | null>(null);
+  const store = () => { try { return typeof sessionStorage === 'undefined' ? null : sessionStorage; } catch { return null; } };
+  const lostAuth = () => { clearTimeout(retryT.current); setSave('auth'); saveRef.current = 'auth'; if (latest.current) stashDraft(store(), id, latest.current, baseRev.current); };
+  const authOk = (r: Response) => { if (r.status === 401) lostAuth(); return r.status !== 401; };
+  const send = (force = false): Promise<SaveOutcome> => { clearTimeout(retryT.current);
+    const run = (inflight.current ?? Promise.resolve(null)).catch(() => null).then(async (): Promise<SaveOutcome> => { const sent = latest.current; setSave('saving');
+      const o = await putDraft(fetch, id, sent, baseRev.current, force);
+      if (o.kind === 'saved'){ baseRev.current = o.draftRev; attempt.current = 0; if (!stashOpen.current) clearStash(store(), id); setSave(latest.current === sent ? 'saved' : 'dirty'); }
+      else if (o.kind === 'conflict') setSave('conflict');
+      else if (o.kind === 'auth') lostAuth();
+      else { setSave(o.kind === 'offline' ? 'offline' : 'error'); if (o.kind === 'error') say(o.message || t('editor.saveFailed')); else if (sent) stashDraft(store(), id, sent, baseRev.current);
+        if (shouldRetry(o)) retryT.current = setTimeout(() => { if (!['conflict', 'auth', 'saving'].includes(saveRef.current)) send(); }, retryDelay(attempt.current++)); }
+      return o; });
+    inflight.current = run; return run; };
   useEffect(() => { saveRef.current = save; }, [save]);
   const refreshBase = () => fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : null).then(p => { if (p) baseRev.current = p.draftRev ?? null; }).catch(() => {});
-  const persist = useCallback((s: Snapshot) => { latest.current = s; setSave(x => x === 'conflict' ? x : 'dirty'); clearTimeout(timer.current);
-    timer.current = setTimeout(() => { if (saveRef.current !== 'conflict') send(); }, 700); }, [id]); // eslint-disable-line
+  const persist = useCallback((s: Snapshot) => { latest.current = s; setSave(x => x === 'conflict' || x === 'auth' ? x : 'dirty'); clearTimeout(timer.current);
+    timer.current = setTimeout(() => { if (saveRef.current === 'auth') stashDraft(store(), id, latest.current, baseRev.current); else if (saveRef.current !== 'conflict') send(); }, 700); }, [id]); // eslint-disable-line
+  // revenirea rețelei reia salvarea; închiderea paginii cu modificări nesalvate cere confirmare
+  useEffect(() => { const on = () => { if (['offline', 'error', 'dirty'].includes(saveRef.current)){ attempt.current = 0; send(); } };
+    const leave = (e: BeforeUnloadEvent) => { if (saveRef.current !== 'saved'){ e.preventDefault(); e.returnValue = ''; } };
+    addEventListener('online', on); addEventListener('beforeunload', leave);
+    return () => { removeEventListener('online', on); removeEventListener('beforeunload', leave); clearTimeout(retryT.current); }; }, [id]); // eslint-disable-line
+  // ciorna rămasă de dinainte de reconectare: se repune doar la cererea omului și se salvează cu versiunea ei (verificarea normală de conflict)
+  const takeStash = () => { if (!stash || !house) return; const s = stash.snapshot as Snapshot; hist.current.push(house); baseRev.current = stashBase(stash, baseRev.current);
+    stashOpen.current = false; setStash(null); setHouse(s); latest.current = s; setSel(null); force(x => x + 1); send(); };
+  const dropStash = () => { stashOpen.current = false; setStash(null); clearStash(store(), id); };
   const commitHouse = (h: Snapshot, record = true) => { if (record && house) hist.current.push(house); setHouse(h); persist(h); force(x => x + 1); };
   const commit = (next: Snapshot, record = true) => { if (house) commitHouse(mergeLevel(house, L, next), record); };
   const mutate = (fn: (s: Snapshot) => void) => { if (!snap) return; const n = structuredClone(snap); fn(n); commit(n); };
@@ -175,12 +201,20 @@ export default function Editor({ id }: { id: string }){
     addEventListener('keydown', k); return () => removeEventListener('keydown', k); });
 
   // salvarea automată e amânată 700 ms; înainte de o revizie sau de un link pentru client se trimite imediat ultima stare
-  const flushDraft = async () => { if (!house) return; clearTimeout(timer.current); await fetch(`/api/projects/${id}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ snapshot: latest.current ?? house }) }); };
-  async function saveRevision(){ if (!house) return; await flushDraft();
-    const note = prompt(t('editor.notePrompt')) ?? ''; const r = await fetch(`/api/projects/${id}/revisions`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ note }) }); const j = await r.json();
-    if (!r.ok){ say(`${j.error} ${(j.details || []).slice(0, 2).map((d: any) => iT(d)).join(' ')}`); return; } setRev(j.number); setSave('saved'); say(t('editor.revSaved', { n: j.number })); loadRevs(); }
+  // aceeași cale ca salvarea automată (cu versiunea de bază): un conflict oprește revizia / linkul / aplicarea, nu suprascrie
+  const flushDraft = async (): Promise<boolean> => { if (!house) return false; clearTimeout(timer.current);
+    if (saveRef.current === 'conflict'){ say(t('editor.conflict')); return false; } if (saveRef.current === 'auth') return false;
+    if (!latest.current) latest.current = house; const o = await send(); if (o.kind !== 'saved' && o.kind !== 'conflict' && o.kind !== 'auth') say(t('editor.flushBlocked')); return o.kind === 'saved'; };
+  async function saveRevision(){ if (!house) return; if (!(await flushDraft())) return;
+    const note = prompt(t('editor.notePrompt')) ?? ''; const r = await fetch(`/api/projects/${id}/revisions`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ note }) }); if (!authOk(r)) return; const j = await r.json().catch(() => ({}));
+    if (!r.ok){ say(`${j.error || t('editor.saveFailed')} ${(Array.isArray(j.details) ? j.details : []).slice(0, 2).map((d: any) => iT(d)).join(' ')}`); return; } setRev(j.number); say(t('editor.revSaved', { n: j.number })); loadRevs(); }
+  // un design aplicat pe server mută versiunea ciornei: editorul continuă de la ea (altfel următoarea salvare ar fi un conflict fals)
+  const onApplied = (s: Snapshot, n: number, draftRev?: number | null) => { clearTimeout(timer.current); hist.current.push(house!); setHouse(s); latest.current = s; setRev(n); setSave('saved'); setSel(null);
+    if (typeof draftRev === 'number') baseRev.current = draftRev; else refreshBase(); loadRevs(); };
+  const onBrief = (brief: Snapshot['brief'], draftRev?: number | null) => { if (!house) return; const h = { ...(latest.current ?? house), brief }; setHouse(h); latest.current = h;
+    if (typeof draftRev === 'number') baseRev.current = draftRev; else refreshBase(); };
   async function restore(n: number){ if (!confirm(t('editor.restoreConfirm', { n }))) return;
-    const r = await fetch(`/api/projects/${id}/revisions/${n}`, { method: 'POST' }); if (!r.ok){ say(t('editor.restoreFailed')); return; } const s = await r.json(); hist.current.push(house!); setHouse(s); latest.current = s; setSel(null); refreshBase(); say(t('editor.restored', { n })); }
+    clearTimeout(timer.current); const r = await fetch(`/api/projects/${id}/revisions/${n}`, { method: 'POST' }); if (!authOk(r)) return; if (!r.ok){ say(t('editor.restoreFailed')); return; } const s = await r.json(); hist.current.push(house!); setHouse(s); latest.current = s; setSel(null); refreshBase(); say(t('editor.restored', { n })); }
 
   if (!snap || !catalog || !mc) return <div className="home"><p className="muted">{toast || t('editor.loading')}</p></div>;
   const G = groups(catalog);
@@ -212,14 +246,17 @@ export default function Editor({ id }: { id: string }){
     <header className="topbar">
       <a className="btn" href="/" aria-label={t('home.projects')}>←<span className="lbl"> {t('home.projects')}</span></a>
       <input className="name" value={snap.name} aria-label={t('editor.projectName')} maxLength={120} onChange={e => { const n = { ...house!, name: e.target.value }; setHouse(n); persist(n); }} />
-      {save === 'conflict' && <span className="conflict-bar" role="alert">{t('editor.conflict')} <button className="btn" onClick={() => location.reload()}>{t('editor.conflictReload')}</button><button className="btn" onClick={() => send(true)}>{t('editor.conflictKeep')}</button></span>}<span className={`status ${save === 'error' || save === 'conflict' ? 'err' : ''}`}>{save === 'saved' ? t('editor.saved') : save === 'saving' ? t('editor.saving') : save === 'dirty' ? t('editor.dirty') : save === 'conflict' ? t('editor.conflictShort') : t('editor.saveError')} · {rev ? t('editor.revisionN', { n: rev }) : t('editor.noRevisions')}</span>
+      {save === 'conflict' && <span className="conflict-bar" role="alert">{t('editor.conflict')} <button className="btn" onClick={() => { dropStash(); saveRef.current = 'saved'; location.reload(); }}>{t('editor.conflictReload')}</button><button className="btn" onClick={() => send(true)}>{t('editor.conflictKeep')}</button></span>}
+      {save === 'offline' && <span className="conflict-bar save-alert" role="alert">{t('editor.offlineNote')} <button className="btn" onClick={() => { attempt.current = 0; send(); }}>{t('editor.retryNow')}</button></span>}
+      {save === 'auth' && <span className="conflict-bar save-alert" role="alert">{t('editor.sessionExpired')} <a className="btn" href={reloginUrl(`/p/${id}`)} onClick={() => { if (latest.current) stashDraft(store(), id, latest.current, baseRev.current); saveRef.current = 'saved'; }}>{t('editor.relogin')}</a></span>}
+      {stash && <span className="conflict-bar save-alert" role="alert">{t('editor.stashFound', { time: new Date(stash.at).toLocaleTimeString(intlLocale(lang), { hour: '2-digit', minute: '2-digit' }) })} <button className="btn" onClick={takeStash}>{t('editor.stashRestore')}</button><button className="btn" onClick={dropStash}>{t('editor.stashDrop')}</button></span>}<span className={`status ${save === 'error' || save === 'conflict' ? 'err' : ''}`}>{save === 'saved' ? t('editor.saved') : save === 'saving' ? t('editor.saving') : save === 'dirty' ? t('editor.dirty') : save === 'conflict' ? t('editor.conflictShort') : save === 'offline' ? t('editor.offline') : save === 'auth' ? t('editor.authLost') : t('editor.saveError')} · {rev ? t('editor.revisionN', { n: rev }) : t('editor.noRevisions')}</span>
       <button className="btn" onClick={undo} disabled={!hist.current.canUndo} title="Ctrl+Z" aria-label={t('editor.undo')}>↶<span className="lbl"> {t('editor.undo')}</span></button>
       <button className="btn" onClick={redo} disabled={!hist.current.canRedo} title="Ctrl+Y" aria-label={t('editor.redo')}>↷<span className="lbl"> {t('editor.redo')}</span></button>
       <div className="seg" role="group" aria-label={t('editor.view')}>
         {(['2d', 'split', '3d'] as const).map(vv => <button key={vv} className={`v-${vv}`} aria-pressed={view === vv} onClick={() => { setView(vv); if (vv === '3d' && typeof matchMedia === 'function' && matchMedia('(max-width: 900px)').matches) setSideOpen(false); }}>{vv === '2d' ? t('editor.view2d') : vv === '3d' ? '3D' : t('editor.viewSplit')}</button>)}
       </div>
       <PrefsSwitcher />
-      <button className="btn primary" onClick={saveRevision}><span className="lbl">{t('editor.saveRevision')}</span><span className="lbl-s">{t('editor.saveShort')}</span></button>
+      <button className="btn primary" disabled={revBusy} onClick={() => { setRevBusy(true); flight.run('revision', saveRevision).finally(() => setRevBusy(false)); }}><span className="lbl">{t('editor.saveRevision')}</span><span className="lbl-s">{t('editor.saveShort')}</span></button>
     </header>
     <nav className="stagebar" aria-label={t('stage.aria')}>
       {STAGES.map((st, i) => <button key={st.id} aria-current={stage === st.id ? 'step' : undefined} onClick={() => setStage(st.id)}><i>{String(i + 1).padStart(2, '0')}</i>{t(`stage.${st.id}`)}{st.id === 'docs' && warnCount > 0 && <b className="count" title={t('stage.checks')}>{warnCount}</b>}</button>)}
@@ -325,8 +362,8 @@ export default function Editor({ id }: { id: string }){
           {house && <StylePanel house={house} cat={catalog} mc={mc} cur={cur} onApply={(h, id) => { commitHouse(h); say(t('style.applied', { name: t(`style.${id}`) })); }} />}
           <button className="btn" onClick={() => { if (!confirm(t('editor.autoConfirm'))) return; const r = autoLayout(snap, catalog); commit(r.snapshot); say(r.notFit.length ? t('editor.notFit', { list: r.notFit.map(n => t('editor.notFitItem', { key: n.key, room: n.room })).join(', ') }) : t('editor.autoApplied')); }}>{t('editor.autoAll')}</button>
         </>}
-        {stage === 'concept' && !showSel && <DesignPanel id={id} snap={snap} say={say} cur={cur} onPreview={(v: any, pid: string | null) => setPreview(v && pid ? { v, pid } : null)} onApplied={(s: Snapshot, n: number) => { hist.current.push(house!); setHouse(s); latest.current = s; setRev(n); setSave('saved'); setSel(null); refreshBase(); }} />}
-        {stage === 'concept' && !showSel && <TwinDesignPanel id={id} snap={snap} catalog={catalog} say={say} onPreview={(s: Snapshot | null, label: string | null) => setPreview(s && label ? { v: { candidate: s, title: label, tier: 'twin-' + label }, pid: 'twin' } : null)} onApplied={(s: Snapshot, n: number) => { hist.current.push(house!); setHouse(s); latest.current = s; setRev(n); setSave('saved'); setSel(null); loadRevs(); }} />}
+        {stage === 'concept' && !showSel && <DesignPanel id={id} snap={snap} say={say} cur={cur} flush={flushDraft} onBrief={onBrief} onPreview={(v: any, pid: string | null) => setPreview(v && pid ? { v, pid } : null)} onApplied={onApplied} />}
+        {stage === 'concept' && !showSel && <TwinDesignPanel id={id} snap={snap} catalog={catalog} say={say} flush={flushDraft} onPreview={(s: Snapshot | null, label: string | null) => setPreview(s && label ? { v: { candidate: s, title: label, tier: 'twin-' + label }, pid: 'twin' } : null)} onApplied={onApplied} />}
         {stage === 'finishes' && !showSel && <RoomPicker snap={snap} mc={mc} onPick={rid => setSel({ kind: 'room', id: rid })} />}
         {stage === 'ffe' && !showSel && <CatalogPanel locale={lang} units={units} catalog={catalog} snap={snap} onUse={(g, vid) => mutate(s => { s.selections[g] = vid; if (!s.picked.includes(g)) s.picked.push(g); })} onAdd={selRoom ? (vid: string) => { const r = addPlacement(snap, catalog, selRoom.id, vid); if (!r){ say(t('editor.noFreeSpot')); return; } commit(r); setSel({ kind: 'placement', id: r.placements.at(-1)!.id }); } : undefined} />}
         {stage === 'mep' && <TechPanel snap={snap} show={showTech} kind={techKind} onShow={setShowTech} onKind={k => { setTechKind(k); setTool('tech'); }}
@@ -427,16 +464,17 @@ function DocsPanel({ id, lang, onSchedule }: { id: string; lang: string; onSched
 /** Randările fotorealiste făcute pe acest calculator (Blender Cycles), cele mai noi întâi; se reîmprospătează cât timp lucrează. */
 // Linkul pentru client și părerile venite pe el: un buton care salvează versiunea și copiază linkul; părerile grupate pe camere, de bifat.
 type ClientFeedback = { id: string; roomId: string | null; verdict: 'like' | 'change' | 'question'; author: string; text: string; createdAt: string; resolvedAt: string | null; revisionNumber: number; item?: { key: string; label: string; role: string | null } | null };
-function ClientPanel({ id, say, onLinked, flush, roomNames, cur }: { id: string; say(s: string): void; onLinked(): void; flush(): Promise<void>; roomNames: Record<string, string>; cur: string }){
+function ClientPanel({ id, say, onLinked, flush, roomNames, cur }: { id: string; say(s: string): void; onLinked(): void; flush(): Promise<boolean>; roomNames: Record<string, string>; cur: string }){
   const { t, lang } = usePrefs(), [link, setLink] = useState<{ url: string; local: boolean } | null>(null), [busy, setBusy] = useState(false), [items, setItems] = useState<ClientFeedback[] | null>(null);
   useEffect(() => { let alive = true; const load = () => fetch(`/api/projects/${id}/feedback`).then(r => r.ok ? r.json() : null).then(j => { if (alive && j) setItems(j); }).catch(() => {});
     load(); const iv = setInterval(load, 30000); return () => { alive = false; clearInterval(iv); }; }, [id]);
   const copy = async (url: string) => { try { await navigator.clipboard.writeText(url); say(t('client.copied')); } catch { /* fără clipboard: linkul rămâne afișat */ } };
-  async function make(){ setBusy(true); try { await flush(); const r = await fetch(`/api/projects/${id}/client-link`, { method: 'POST' }), j = await r.json();
+  const making = useRef(false);
+  async function make(){ if (making.current) return; making.current = true; setBusy(true); try { if (!(await flush())) return; const r = await fetch(`/api/projects/${id}/client-link`, { method: 'POST' }), j = await r.json();
       if (!r.ok){ say(j.error || t('client.failed')); return; }
       const url = j.url ?? `${location.origin}${j.path}`, local = !j.url && /^(localhost|127\.|\[::1\])/.test(location.hostname);
       setLink({ url, local }); if (j.newRevision) say(t('client.newRev', { n: j.revisionNumber })); await copy(url); onLinked(); }
-    catch { say(t('client.failed')); } finally { setBusy(false); } }
+    catch { say(t('client.failed')); } finally { making.current = false; setBusy(false); } }
   async function toggle(f: ClientFeedback){ const r = await fetch(`/api/projects/${id}/feedback`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: f.id, resolved: !f.resolvedAt }) });
     if (r.ok){ const j = await r.json(); setItems(xs => (xs ?? []).map(x => x.id === f.id ? { ...x, resolvedAt: j.resolvedAt } : x)); } }
   const open = (items ?? []).filter(f => !f.resolvedAt).length, groups = new Map<string, ClientFeedback[]>();

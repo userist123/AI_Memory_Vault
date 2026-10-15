@@ -13,6 +13,8 @@ export function isLocalRequest(host: string | null, headers: { get(k: string): s
   const fwd = headers.get('x-forwarded-host');
   return !!host && LOCAL_HOST.test(host) && !headers.get('cf-connecting-ip') && (!fwd || fwd.split(',').every(h => LOCAL_HOST.test(h.trim())));
 }
+/** Numele gazdei din bara de adresă (location.hostname, fără port) e al acestui calculator; aceeași regulă ca LOCAL_HOST. */
+export const isLocalHostname = (h: string) => LOCAL_HOST.test(h) || h === '::1';
 export const isPublicPath = (path: string) => PUBLIC_PATHS.some(re => re.test(path));
 
 // După login (sesiune validă) se deschide toată aplicația, în afară de ce rămâne doar pe calculatorul designerului.

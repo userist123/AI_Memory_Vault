@@ -18,6 +18,7 @@ import ClientDeliveries from './ClientDeliveries';
 import { ClientChanges } from './ChangeOrders';
 import RoomChoiceBox, { type ClientChoice } from './RoomChoiceBox';
 import type { ClientProgress } from '@/core/client-progress';
+import { FULL_W, renderWidth, renderHeight, presentQuality, isMobileEnv, yieldToBrowser, goodEnough } from '@/lib/present-render';
 import './present.css';
 
 const nextFrame = () => new Promise<void>(res => requestAnimationFrame(() => res()));
@@ -26,7 +27,7 @@ export interface SharedDeck { token: string; name: string; snapshot: Snapshot; r
 export default function PresentView({ id, share }: { id?: string; share?: SharedDeck }){
   const { t, lang, units } = usePrefs();
   const [data, setData] = useState<{ snap: Snapshot; name: string; catalog: Catalog; mc: MaterialsCatalog } | null>(null), [err, setErr] = useState(false);
-  const [images, setImages] = useState<Record<string, string>>({}), [busy, setBusy] = useState(true), canvasRef = useRef<HTMLCanvasElement>(null);
+  const [images, setImages] = useState<Record<string, { url: string; w: number }>>({}), [queued, setQueued] = useState(0), [printing, setPrinting] = useState(false), [noGL, setNoGL] = useState(false), canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => { if (share){ setData({ snap: share.snapshot, name: share.snapshot.name || share.name, catalog: share.catalog, mc: share.mc }); return; }
     Promise.all([fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/catalog').then(r => r.json()), fetch('/api/materials').then(r => r.json())])
       .then(([p, catalog, mc]) => setData({ snap: p.draft, name: p.draft.name || p.name, catalog, mc })).catch(() => setErr(true)); }, [id, share]);
@@ -35,22 +36,48 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
   const added = (f: FeedbackItem) => setFeedback(xs => [...xs, f]);
   const [choices, setChoices] = useState<ClientChoice[]>([]);
   useEffect(() => { if (share) fetch(`/api/share/${share.token}/choices`).then(r => r.ok ? r.json() : []).then(setChoices).catch(() => {}); }, [share]);
-  useEffect(() => { if (!data) return; let alive = true, viewer: any = null;
-    (async () => { try { const m = await import('./viewer3d-engine.js'); if (!alive || !canvasRef.current) return;
-      viewer = m.createViewer(canvasRef.current); const lp = lighting('day'); viewer.setLighting({ ...lp, dir: sunDirection(lp.azimuthDeg, lp.elevationDeg) }); viewer.setQuality?.('high');
-      const out: Record<string, string> = {};
-      for (let i = 0; i < floors(data.snap).length; i++){ const v = levelView(data.snap, i), { plan, items } = viewerInput(v, data.catalog, undefined, { voids: stairwells(data.snap, i), mc: data.mc }); viewer.setState(plan, items);
-        await nextFrame(); await nextFrame(); if (!alive) return;
-        if (i === 0){ const ov = viewer.renderView(undefined, 1600, 900); if (ov) out.overview = ov; }
-        for (const r of v.floor.rooms){ const u = viewer.renderView({ roomId: r.id }, 1600, 1000); if (u) out[r.id] = u; } }
-      if (alive) setImages(out); } catch { /* fără WebGL: planșele rămân fără imagini */ } finally { try { viewer?.dispose(); } catch { /* deja eliberat */ } if (alive) setBusy(false); } })();
-    return () => { alive = false; }; }, [data]);
+  // Imaginile 3D se fac la cerere, câte una (un singur motor WebGL, un lanț de lucrări): o planșă intră în ecran → imaginea ei,
+  // la rezoluția ecranului; între două imagini firul principal e lăsat liber. Pe link / telefon fără ambient occlusion.
+  // „Salvează ca PDF” cere toate imaginile la rezoluția completă (1600) înainte de tipărire.
+  const eng = useRef({ viewer: null as any, level: -1, gen: 0, chain: Promise.resolve() as Promise<void>, done: {} as Record<string, number>, queued: new Set<string>() });
+  const mobile = useMemo(() => typeof window !== 'undefined' && isMobileEnv(window), []);
+  const levelOf = useMemo(() => { const m: Record<string, number> = { overview: 0 }; if (data) for (let i = 0; i < floors(data.snap).length; i++) for (const r of levelView(data.snap, i).floor.rooms) m[r.id] = i; return m; }, [data]);
+  useEffect(() => { const e = eng.current; e.gen++; e.level = -1; e.done = {}; e.queued.clear(); setQueued(0); setImages({});
+    return () => { e.gen++; const v = e.viewer; e.viewer = null; e.level = -1; e.chain = e.chain.then(() => { try { v?.dispose(); } catch { /* deja eliberat */ } }); }; }, [data]);
+  const ensureViewer = async () => { const e = eng.current; if (e.viewer) return e.viewer; if (noGL) return null;
+    try { const m = await import('./viewer3d-engine.js'); if (!canvasRef.current) return null; e.viewer = m.createViewer(canvasRef.current); const lp = lighting('day');
+      e.viewer.setLighting({ ...lp, dir: sunDirection(lp.azimuthDeg, lp.elevationDeg) }); e.viewer.setQuality?.(presentQuality({ share: !!share, mobile })); return e.viewer; }
+    catch { setNoGL(true); return null; } };   // fără WebGL: planșele rămân fără imagini
+  const shoot = (key: string, cssWidth: number, print = false): Promise<void> => { const e = eng.current, g = e.gen, d = data;
+    const w = renderWidth({ cssWidth, dpr: typeof devicePixelRatio === 'number' ? devicePixelRatio : 1, print }), tag = `${key}@${w}`;
+    if (!d || goodEnough(e.done[key], w) || e.queued.has(tag)) return e.chain;
+    e.queued.add(tag); setQueued(n => n + 1);
+    e.chain = e.chain.then(async () => { try { if (g !== e.gen || goodEnough(e.done[key], w)) return; const v = await ensureViewer(); if (!v || g !== e.gen) return;
+        const L = levelOf[key] ?? 0;
+        if (e.level !== L){ const lv = levelView(d.snap, L), { plan, items } = viewerInput(lv, d.catalog, undefined, { voids: stairwells(d.snap, L), mc: d.mc }); v.setState(plan, items); e.level = L;
+          await nextFrame(); await nextFrame(); if (g !== e.gen) return; }
+        const url = key === 'overview' ? v.renderView(undefined, w, renderHeight(w, true)) : v.renderView({ roomId: key }, w, renderHeight(w));
+        if (url && g === e.gen){ e.done[key] = w; setImages(m => ({ ...m, [key]: { url, w } })); } }
+      catch { /* o cameră care nu se poate randa rămâne cu locul gol */ }
+      finally { e.queued.delete(tag); if (g === e.gen) setQueued(n => Math.max(0, n - 1)); await yieldToBrowser(); } });
+    return e.chain; };
   // randările fotorealiste (Blender, pe acest calculator) au întâietate față de imaginile din motorul 3D
   const [photos, setPhotos] = useState<Record<string, string>>({});
   useEffect(() => { if (!id) return; fetch(`/api/projects/${id}/renders`).then(r => r.ok ? r.json() : null).then(j => { const out: Record<string, string> = {};
     for (const job of (j?.jobs ?? []).filter((x: any) => x.status === 'done').reverse()) for (const f of job.images) out[f.replace(/\.png$/, '')] = `/api/projects/${id}/renders/${job.job}/${f}`;
     setPhotos(out); }).catch(() => {}); }, [id]);
-  const imgFor = (roomId: string) => photos[roomId.replace(/[^\w-]/g, '_')] ?? images[roomId];
+  const photoFor = (roomId: string) => photos[roomId.replace(/[^\w-]/g, '_')];
+  const imgFor = (roomId: string) => photoFor(roomId) ?? images[roomId]?.url;
+  // fiecare planșă cu imagine 3D cere imaginea abia când se apropie de ecran
+  useEffect(() => { if (!data) return; const els = [...document.querySelectorAll<HTMLElement>('[data-shot]')];
+    if (typeof IntersectionObserver === 'undefined'){ for (const el of els) shoot(el.dataset.shot!, el.getBoundingClientRect().width); return; }
+    const io = new IntersectionObserver(es => { for (const en of es) if (en.isIntersecting){ io.unobserve(en.target); const el = en.target as HTMLElement; shoot(el.dataset.shot!, en.boundingClientRect.width || el.clientWidth); } }, { rootMargin: '400px 0px' });
+    for (const el of els) io.observe(el); return () => io.disconnect(); }, [data, photos]); // eslint-disable-line
+  async function printDeck(){ if (printing || !data) return; setPrinting(true);
+    try { const keys = ['overview', ...floors(data.snap).flatMap((_, i) => levelView(data.snap, i).floor.rooms.map(r => r.id)).filter(k => !photoFor(k))];
+      for (const k of keys) shoot(k, FULL_W, true); await eng.current.chain; await nextFrame(); await nextFrame(); }
+    finally { setPrinting(false); } print(); }
+  const busy = queued > 0 || printing;
   const pres = useMemo(() => data ? presentation(data.snap, data.catalog, data.mc) : null, [data]);
   // săgețile / PageDown trec la planșa următoare
   useEffect(() => { const on = (e: KeyboardEvent) => { if (!['ArrowRight', 'ArrowLeft', 'PageDown', 'PageUp'].includes(e.key)) return; const s = [...document.querySelectorAll<HTMLElement>('.slide')];
@@ -65,9 +92,9 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
   const n = pres.rooms.length + 4, num = (i: number) => `${String(i).padStart(2, '0')} / ${String(n).padStart(2, '0')}`;
   return (<main className="deck">{canvas}
     {share && <p className="fb-intro no-print">{t('fb.intro')}</p>}
-    <div className="deck-bar no-print"><span>{busy ? t('print.preparing') : t('pres.keys')}</span><button className="btn primary" onClick={() => print()} disabled={busy}>{t('pres.pdf')}</button></div>
+    <div className="deck-bar no-print"><span>{busy ? t('print.preparing') : t('pres.keys')}</span><button className="btn primary" onClick={printDeck} disabled={printing}>{t('pres.pdf')}</button></div>
     <section className="slide cover">
-      {images.overview ? <img src={images.overview} alt="" /> : <div className="ph" />}
+      <div className="shot" data-shot="overview">{images.overview ? <img src={images.overview.url} alt="" /> : <div className={noGL ? 'ph' : 'ph ph-wait'} role="img" aria-label={t('pres.renderWait')} />}</div>
       <div className="cover-txt"><span className="kicker">{t('pres.kicker')}</span>
         <div className="cover-main"><h1>{data.name}</h1><p>{t('pres.coverSub', { rooms: pres.rooms.length, area: formatArea(pres.totalArea, units, lang) })}</p></div>
         {pres.palette.length > 0 && <div className="cover-pal" aria-label={t('pres2.palette')}>{pres.palette.map((c, i) => <i key={i} style={c.material ? { ...swatchStyle(c.material), backgroundColor: c.color } : { background: c.color }} />)}<small>{t('pres2.palette')}</small></div>}
@@ -80,7 +107,7 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
       <div className="pb-rooms"><h3>{t('pres2.byRoom')}</h3><ul>{pres.rooms.slice(0, 8).map(r => <li key={r.id}><b>{r.name}</b><span>{r.swatches.slice(0, 4).map((s, k) => <i key={k} title={s.material ? title(s.material.name) : s.color} style={s.material ? { ...swatchStyle(s.material), backgroundColor: s.color } : { background: s.color }} />)}</span></li>)}</ul></div>
       <footer>{num(2)}</footer></section>
     {pres.rooms.map((r, i) => <Fragment key={r.id}><section className="slide room">
-      <div className="room-img">{imgFor(r.id) ? <img src={imgFor(r.id)} alt={r.name} /> : <div className="ph" />}</div>
+      <div className="room-img" data-shot={photoFor(r.id) ? undefined : r.id}>{imgFor(r.id) ? <img src={imgFor(r.id)} alt={r.name} /> : <div className={noGL ? 'ph' : 'ph ph-wait'} role="img" aria-label={t('pres.renderWait')} />}</div>
       <div className="room-txt"><span className="kicker">{t(`roomType.${r.type}`)} · {formatArea(r.areaM2, units, lang)}</span><h2>{r.name}</h2>
         <ul className="sw-list">{r.swatches.slice(0, 9).map((s, k) => <li key={k}><i style={s.material ? { ...swatchStyle(s.material), backgroundColor: s.color } : { background: s.color }} /><span><small>{role(s.role)}</small>{s.material ? title(s.material.name) : s.color}</span></li>)}</ul>
         {r.products.length > 0 && <p className="prod">{r.products.slice(0, 6).map(p => p.name).join(' · ')}</p>}</div>

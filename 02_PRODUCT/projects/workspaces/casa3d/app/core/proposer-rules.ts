@@ -13,6 +13,7 @@ function styleScore(v: ProductVariant, style: DesignBrief['style']): { s: number
   if (style === 'scandinav'){ if (light) return { s: 2, why: 'culoare deschisă (scandinav)' }; if (wood && !dark) return { s: 2, why: 'lemn deschis (scandinav)' }; if (dark) return { s: -1 }; }
   if (style === 'modern'){ if (dark || /antracit|negru/.test(n)) return { s: 2, why: 'nuanță închisă, contrast (modern)' }; if (light && !wood) return { s: 1, why: 'nuanță deschisă, simplă (modern)' }; }
   if (style === 'natural'){ if (wood || /bej|stejar|ratan/.test(n)) return { s: 2, why: 'material natural / nuanță caldă (natural)' }; if (dark) return { s: -1 }; }
+  if (style === 'industrial'){ if (dark || /antracit|negru|metal|beton|grafit/.test(n)) return { s: 2, why: 'nuanță închisă, metal (industrial)' }; if (wood && dark) return { s: 1, why: 'lemn închis (industrial)' }; }
   if (style === 'clasic'){ if ((wood && (dark || L == null)) || /negru-maro|maro/.test(n)) return { s: 2, why: 'lemn închis (clasic)' }; }
   return { s: 0 };
 }

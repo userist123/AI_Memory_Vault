@@ -47,6 +47,8 @@ def parse_args(argv):
     p.add_argument('--models', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'public', 'models'),
                    help='dosarul cu modelele decorative glTF (implicit public/models din aplicație)')
     p.add_argument('--no-render', action='store_true')
+    p.add_argument('--no-portals', action='store_true', help='fără portaluri de lumină în ferestre')
+    p.add_argument('--exposure', default='auto', help="'auto' (pe cameră, dintr-o trecere rapidă) sau o valoare fixă în EV")
     return p.parse_args(argv)
 
 
@@ -71,8 +73,32 @@ def scaled(rgba, k):
 TEXTURES = {'parquet': ('laminate_floor_02', 2.0, 1.0), 'tile': ('large_grey_tiles', 2.4, 1.0), 'fabric': ('rough_linen', 0.5, 0.8),
             'velvet': ('velour_velvet', 0.5, 0.6), 'leather': ('leather_white', 0.6, 0.8), 'wall': ('plastered_wall', 2.5, 0.12),
             'wood': ('oak_veneer_01', 1.2, 0.35)}
+GREY = (1.0, 1.0, 1.0, 1.0)  # rampa neutră a fibrei (0,72…1)
 # luminanța medie (liniară) a furnirului: fibra foto păstrează desenul lemnului, nuanța vine din culoarea aleasă în aplicație
 WOOD_MEAN_LUM = 0.2374
+
+
+# muchii rotunjite la randare (nodul Bevel, 1,5 mm) pe materialele comune ale mobilierului și pereților: Cycles prinde
+# lumina pe muchie ca la o piesă reală; sticla, oglinda, emisia, parchetul și gresia rămân fără (nu au muchii vizibile)
+BEVEL_KINDS = {'paint', 'wood', 'metal', 'chrome', 'ceramic', 'leather', 'fabric', 'velvet', 'rattan', 'screen'}
+BEVEL_RADIUS = 0.0015
+
+
+def add_bevel(m):
+    nt = m.node_tree
+    bsdf = nt.nodes.get('Principled BSDF')
+    if bsdf is None:
+        return
+    bev = nt.nodes.new('ShaderNodeBevel')
+    bev.inputs['Radius'].default_value = BEVEL_RADIUS
+    bev.samples = 4
+    nrm = bsdf.inputs['Normal']
+    if nrm.is_linked:  # relieful existent (hartă de normale / bump) trece prin Bevel
+        link = nrm.links[0]
+        src = link.from_socket
+        nt.links.remove(link)
+        nt.links.new(src, bev.inputs['Normal'])
+    nt.links.new(bev.outputs['Normal'], nrm)
 
 
 class Materials:
@@ -148,7 +174,11 @@ class Materials:
             mix.data_type = 'RGBA'
             mix.blend_type = 'MULTIPLY'
             mix.inputs['Factor'].default_value = 1.0
-            nt.links.new(tex(diff).outputs['Color'], mix.inputs['A'])
+            # fotografia laminatului e caldă (portocalie sub AgX): saturația redusă, nuanța vine din culoarea aplicației
+            hs = nt.nodes.new('ShaderNodeHueSaturation')
+            hs.inputs['Saturation'].default_value = 0.65 if key == 'parquet' else 1.0
+            nt.links.new(tex(diff).outputs['Color'], hs.inputs['Color'])
+            nt.links.new(hs.outputs['Color'], mix.inputs['A'])
             mix.inputs['B'].default_value = col  # nuanța aleasă în aplicație (alb = textura neschimbată)
             nt.links.new(mix.outputs['Result'], inp['Base Color'])
         if rough is not None:
@@ -267,7 +297,9 @@ class Materials:
                 mx.inputs['B'].default_value = (0.78, 0.78, 0.78, 1.0)
                 color = mx.outputs['Result']
             if wood:
-                r, _w = wood_grain(base, 14.0)
+                # fibra modulează doar luminozitatea (rampă gri): înmulțirea cu o rampă în culoarea lemnului ridica culoarea
+                # la pătrat și parchetul ieșea portocaliu
+                r, _w = wood_grain(GREY, 14.0)
                 mix = nt.nodes.new('ShaderNodeMix')
                 mix.data_type = 'RGBA'
                 mix.blend_type = 'MULTIPLY'
@@ -349,7 +381,10 @@ class Materials:
     def get(self, d):
         key = json.dumps(d, sort_keys=True)
         if key not in self.cache:
-            self.cache[key] = self.build(d)
+            m = self.build(d)
+            if d.get('k', 'paint') in BEVEL_KINDS:
+                add_bevel(m)
+            self.cache[key] = m
         return self.cache[key]
 
     def build(self, d):
@@ -427,7 +462,7 @@ class Materials:
             br.inputs['Color2'].default_value = scaled(base, 1.08)
             br.inputs['Mortar'].default_value = scaled(base, 0.45)
             nt.links.new(world_pos(), br.inputs['Vector'])
-            r, w = wood_grain(base, 14.0)
+            r, w = wood_grain(GREY, 14.0)
             mix = nt.nodes.new('ShaderNodeMix')
             mix.data_type = 'RGBA'
             mix.blend_type = 'MULTIPLY'
@@ -498,6 +533,22 @@ class Materials:
             nt.links.new(bsdf.outputs['BSDF'], mix.inputs[1])
             nt.links.new(tr.outputs['BSDF'], mix.inputs[2])
             nt.links.new(mix.outputs['Shader'], out.inputs['Surface'])
+        elif kind == 'sheer':
+            # perdea: țesătură translucidă (lumina trece difuz), parțial transparentă după opacitatea din aplicație
+            inp['Roughness'].default_value = 0.9
+            inp['Sheen Weight'].default_value = 0.5
+            tl = nt.nodes.new('ShaderNodeBsdfTranslucent')
+            tl.inputs['Color'].default_value = col
+            tr = nt.nodes.new('ShaderNodeBsdfTransparent')
+            m1 = nt.nodes.new('ShaderNodeMixShader')
+            m1.inputs['Fac'].default_value = 0.45
+            nt.links.new(bsdf.outputs['BSDF'], m1.inputs[1])
+            nt.links.new(tl.outputs['BSDF'], m1.inputs[2])
+            m2 = nt.nodes.new('ShaderNodeMixShader')
+            m2.inputs['Fac'].default_value = max(0.0, min(1.0, 1.0 - float(d.get('o', 0.3)) * 1.4))
+            nt.links.new(m1.outputs['Shader'], m2.inputs[1])
+            nt.links.new(tr.outputs['BSDF'], m2.inputs[2])
+            nt.links.new(m2.outputs['Shader'], out.inputs['Surface'])
         elif kind == 'emit':
             inp['Emission Color'].default_value = hex_rgb(d.get('e', '#fff1dc'))
             inp['Emission Strength'].default_value = 6.0 * float(d.get('ei', 1.0))
@@ -655,7 +706,11 @@ def build_mesh(g, name):
     if t == 'lathe':
         return mesh_lathe(name, g.get('pts') or [], *p), None
     if t == 'mesh':
-        return mesh_tris(name, g.get('v') or [], g.get('i')), None
+        me = mesh_tris(name, g.get('v') or [], g.get('i'))
+        if g.get('sm'):  # textile drapate: suprafață netedă
+            for poly in me.polygons:
+                poly.use_smooth = True
+        return me, None
     return None, None
 
 
@@ -719,6 +774,8 @@ def build(scene_data, assets=''):
             for poly in me.polygons:
                 poly.material_index = 0
         ob = bpy.data.objects.new(f'c3d_{i}', me)
+        if isinstance(e['m'], list):  # cutiile de perete au câte un material pe față
+            ob['c3d_wall'] = 1
         q = e['q']
         local = Matrix.Translation(Vector(e['p'])) @ Quaternion((q[3], q[0], q[1], q[2])).to_matrix().to_4x4() @ Matrix.Diagonal((*e['s'], 1.0))
         ob.matrix_world = Y_UP_TO_Z_UP @ local
@@ -743,7 +800,7 @@ def build(scene_data, assets=''):
     return col
 
 
-def light_scene(scene_data, assets=''):
+def light_scene(scene_data, assets='', portals=True):
     sc = bpy.context.scene
     world = bpy.data.worlds.new('cer')
     sc.world = world
@@ -778,16 +835,45 @@ def light_scene(scene_data, assets=''):
         so = bpy.data.objects.new('soare', sl)
         so.rotation_euler = d.to_track_quat('Z', 'Y').to_euler()
         sc.collection.objects.link(so)
-    # lumini în camere: o plafonieră pe încăpere, mai puternică seara și noaptea
-    per_m2 = {'day': 12.0, 'evening': 32.0, 'night': 45.0}.get(time, 12.0)
+    # portaluri de lumină în ferestrele exterioare: Cycles eșantionează cerul prin ele (lumină de zi curată, mai puțin zgomot)
+    rooms = scene_data.get('rooms', [])
+    room_at = lambda x, z: next((r for r in rooms if r['rect'][0] < x < r['rect'][2] and r['rect'][1] < z < r['rect'][3]), None)
+    lit = set()
+    for o in scene_data.get('openings') or []:
+        if o.get('kind') != 'window':
+            continue
+        (px, pz), (nx, nz), th = o['p'], o['n'], float(o.get('th', 0.25))
+        inside = 1 if room_at(px + nx * 0.4, pz + nz * 0.4) else -1   # normala spre interior
+        r = room_at(px + nx * inside * 0.4, pz + nz * inside * 0.4)
+        if r:
+            lit.add(r['id'])
+        if not portals or not o.get('ext', True) or time == 'night':
+            continue
+        pl = bpy.data.lights.new(f"portal_{len(lit)}_{px:.2f}_{pz:.2f}", 'AREA')
+        pl.shape = 'RECTANGLE'
+        pl.size, pl.size_y = float(o['w']), float(o['h'])
+        try:
+            pl.cycles.is_portal = True
+        except AttributeError:  # Blender fără proprietatea portal: lumina rămâne o zonă slabă
+            pl.energy = 0.0
+        po = bpy.data.objects.new(pl.name, pl)
+        po.location = to_blender((px - nx * inside * th / 2, float(o.get('sill', 0.9)) + float(o['h']) / 2, pz - nz * inside * th / 2))
+        po.rotation_euler = to_blender((nx * inside, 0, nz * inside)).normalized().to_track_quat('-Z', 'Y').to_euler()
+        sc.collection.objects.link(po)
+    # lumini în camere: o plafonieră pe încăpere, aprinsă seara și noaptea; ziua stinsă în camerele cu fereastră
+    # (lumina vine de afară), aprinsă doar în cele fără fereastră (baia, holul), cum ar face cineva care face poze
+    per_m2 = {'day': 0.0, 'evening': 32.0, 'night': 45.0}.get(time, 0.0)
     H = float(scene_data.get('height', 2.6))
-    for r in scene_data.get('rooms', []):
+    for r in rooms:
         x0, z0, x1, z1 = r['rect']
         area = max(1.0, (x1 - x0) * (z1 - z0))
+        energy = per_m2 if time != 'day' else (0.0 if r['id'] in lit else 12.0)
+        if energy <= 0:
+            continue
         al = bpy.data.lights.new(f"lumina_{r['id']}", 'AREA')
         al.shape = 'DISK'
         al.size = 0.45
-        al.energy = per_m2 * area
+        al.energy = energy * area
         al.color = (1.0, 0.92, 0.82)
         ao = bpy.data.objects.new(al.name, al)
         ao.location = to_blender(((x0 + x1) / 2, H - 0.05, (z0 + z1) / 2))
@@ -796,11 +882,51 @@ def light_scene(scene_data, assets=''):
 
 MISSING = {}  # cameră → piesele principale care nu au încăput întregi în cadru
 
+# regula comună a cadrelor, aceeași ca în aplicație (viewer3d-engine.js, SHOT): ochiul la 1,5 m, aparatul orizontal
+# (verticale drepte) cu obiectivul deplasat în jos, deschidere orizontală de cel mult ~75°, fără un prim-plan care să
+# acopere peste 15 % din imagine la sub 1 m
+EYE = 1.5
+HFOV = math.radians(72)
+HFOV_MAX = math.radians(75)
+SHIFT_Y = -0.06
+NEAR = 1.0       # pereții
+NEAR_OBJ = 1.5   # piese, uși, perdele, ferestre: prim-plan care domină imaginea
+MAX_COVER = 0.15
+
+
+def frame_dirs(lx, lz, fov, width, height, nx=12, ny=8):
+    """Direcțiile (în Blender) ale unei grile de raze prin tot cadrul camerei, cu deplasarea obiectivului."""
+    fwd = to_blender((lx, 0, lz)).normalized()
+    up = Vector((0, 0, 1))
+    right = fwd.cross(up).normalized()
+    th = math.tan(fov / 2)
+    tv = th * height / width
+    out = []
+    for j in range(ny):
+        for i in range(nx):
+            u = (i + 0.5) / nx * 2 - 1
+            v = (j + 0.5) / ny * 2 - 1
+            out.append((fwd + right * (u * th) + up * (v * tv + SHIFT_Y * 2 * th)).normalized())
+    return out
+
+
+def coverage(sc, deps, c, lx, lz, fov, width, height):
+    """Fracțiunea din cadru ocupată de ceva aflat la sub NEAR metri de obiectiv (canat, perete, draperie, piesă înaltă)."""
+    eye = to_blender((c[0], EYE, c[1]))
+    dirs = frame_dirs(lx, lz, fov, width, height)
+    hit = 0
+    for d in dirs:
+        ok, loc, _n, _i, obj, _m = sc.ray_cast(deps, eye, d, distance=NEAR_OBJ)
+        if ok and (loc - eye).length < (NEAR if obj is not None and obj.get('c3d_wall') else NEAR_OBJ):
+            hit += 1
+    return hit / len(dirs)
+
 
 def room_camera(scene_data, room, width, height, panorama=False, focus=None):
-    """Camera foto a încăperii, la 1,55 m, cu verticalele drepte. Locul se alege dintre colțuri și mijlocul pereților:
-    raze trase prin scenă pe toată deschiderea obiectivului; câștigă poziția cu vederea cea mai liberă și adâncă
-    (fără un perete lipit de obiectiv) și cu cele mai multe piese în cadru."""
+    """Camera foto a încăperii (regula comună: 1,5 m, orizontală, deschidere ≤ 75°, deplasare în jos). Locul se alege dintre
+    colțuri și mijlocul pereților, departe de uși (golurile vin din aplicație, cu ușile închise) și de spaleții de lângă goluri;
+    câștigă poziția cu vederea liberă și adâncă și cu cele mai multe piese principale în cadru, după un test de acoperire
+    cu raze: nimic aflat la sub 1 m nu are voie să acopere peste 15 % din imagine."""
     x0, z0, x1, z1 = room['rect']
     cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
     cam = bpy.data.cameras.new(f"cam_{room['id']}")
@@ -809,22 +935,27 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None):
     if panorama:
         cam.type = 'PANO'
         cam.panorama_type = 'EQUIRECTANGULAR'
-        ob.location = to_blender((cx, 1.6, cz))
+        ob.location = to_blender((cx, EYE, cz))
         ob.rotation_euler = (math.radians(90), 0, 0)
         return ob
-    fov = math.radians(82)
+    fov = HFOV
     # piesele din cameră (exportate din aplicație): obiectivul nu stă niciodată într-o piesă sau lipit de ea, iar piesele
     # principale (bucătăria, patul, canapeaua, WC-ul, lavoarul, dușul) trebuie să intre întregi în cadru
     KEY = {'bucatarie': 3.0, 'pat': 3.0, 'canapea': 3.0, 'wc': 2.5, 'lavoar': 2.5, 'dus': 2.0, 'masa': 1.5, 'dulap': 1.5, 'frigider': 1.0,
            'birou': 1.2, 'comodaTv': 1.0, 'pantofar': 1.0, 'oglinda': 0.8, 'biblioteca': 0.6, 'masuta': 0.8, 'noptiera': 0.4}
     items = [it for it in scene_data.get('items', []) if x0 - .05 <= (it['fp'][0] + it['fp'][2]) / 2 <= x1 + .05 and z0 - .05 <= (it['fp'][1] + it['fp'][3]) / 2 <= z1 + .05]
+    openings = [o for o in (scene_data.get('openings') or []) if x0 - .4 <= o['p'][0] <= x1 + .4 and z0 - .4 <= o['p'][1] <= z1 + .4]
+    doors = [o for o in openings if o.get('kind') == 'door']
+    windows = [o for o in openings if o.get('kind') == 'window']
+    piers = [e for o in openings for e in (o['a'], o['b'])]   # spaleții: capetele golurilor (muchia peretelui lângă ușă/fereastră)
     cands = []
-    for k in (0.3, 0.5):
+    for k in (0.35, 0.6):
         cands += [(x0 + k, z0 + k), (x1 - k, z0 + k), (x1 - k, z1 - k), (x0 + k, z1 - k), (cx, z0 + k), (x1 - k, cz), (cx, z1 - k), (x0 + k, cz)]
     for f in (0.25, 0.75):
-        cands += [(x0 + (x1 - x0) * f, z0 + 0.3), (x0 + (x1 - x0) * f, z1 - 0.3), (x0 + 0.3, z0 + (z1 - z0) * f), (x1 - 0.3, z0 + (z1 - z0) * f)]
+        cands += [(x0 + (x1 - x0) * f, z0 + 0.35), (x0 + (x1 - x0) * f, z1 - 0.35), (x0 + 0.35, z0 + (z1 - z0) * f), (x1 - 0.35, z0 + (z1 - z0) * f)]
+    cands = [c for c in cands if x0 + .2 < c[0] < x1 - .2 and z0 + .2 < c[1] < z1 - .2]
 
-    def blocked(c, margin=0.25):  # obiectivul (la 1,55 m) în interiorul sau prea aproape de o piesă care urcă până acolo
+    def blocked(c, margin=0.25):  # obiectivul (la 1,5 m) în interiorul sau prea aproape de o piesă care urcă până acolo
         for it in items:
             a, b, e, f = it['fp']
             if it['h'] > 0.9 and a - margin < c[0] < e + margin and b - margin < c[1] < f + margin:
@@ -832,7 +963,18 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None):
             if a - 0.45 < c[0] < e + 0.45 and b - 0.45 < c[1] < f + 0.45:  # nici lipit de un WC sau de o masă
                 return True
         return False
-    cands = [c for c in cands if not blocked(c)] or [(cx, cz)]
+
+    near_door = lambda c: any(math.hypot(c[0] - o['p'][0], c[1] - o['p'][1]) < max(0.9, float(o['w']) * 0.5 + 0.55) for o in doors)
+    near_pier = lambda c: any(math.hypot(c[0] - p[0], c[1] - p[1]) < 0.45 for p in piers)
+
+    def seg_dist(c, a, b):
+        ax, az, bx, bz = a[0], a[1], b[0], b[1]
+        L2 = (bx - ax) ** 2 + (bz - az) ** 2 or 1e-9
+        t = max(0.0, min(1.0, ((c[0] - ax) * (bx - ax) + (c[1] - az) * (bz - az)) / L2))
+        return math.hypot(c[0] - ax - t * (bx - ax), c[1] - az - t * (bz - az))
+    near_window = lambda c: any(seg_dist(c, o['a'], o['b']) < 0.75 for o in windows)   # nu în perdele, nu lipit de geam
+    free = [c for c in cands if not blocked(c) and not near_door(c) and not near_pier(c) and not near_window(c)]
+    cands = free or [c for c in cands if not blocked(c) and not near_door(c)] or [c for c in cands if not blocked(c)] or [(cx, cz)]
     pieces = [e['p'] for e in scene_data.get('meshes', []) if x0 < e['p'][0] < x1 and z0 < e['p'][2] < z1 and 0.15 < e['p'][1] < 1.8]
     deps = bpy.context.evaluated_depsgraph_get()
     sc = bpy.context.scene
@@ -855,7 +997,7 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None):
 
     def bottom(fov):  # tangenta marginii de jos a cadrului (cu deplasarea în jos a obiectivului), pe orizontală
         t = math.tan(fov / 2)
-        return t * height / width + 0.08 * 2 * t
+        return t * height / width - SHIFT_Y * 2 * t
 
     # ce trebuie să se vadă din piesă: la WC și bideu vasul (~42 cm), nu cadrul sau rezervorul de deasupra lui
     top = lambda it: min(it['h'], 0.42 if it['g'] in ('wc', 'bideu') else 1.5)
@@ -867,7 +1009,7 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None):
         if math.hypot(lx, lz) < 0.3:
             return -1e9
         base = math.atan2(lz, lx)
-        eye = to_blender((c[0], 1.55, c[1]))
+        eye = to_blender((c[0], EYE, c[1]))
         total = 0.0
         for i in range(11):
             a = base - fov / 2 + fov * i / 10
@@ -881,34 +1023,83 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None):
             hit, loc, *_ = sc.ray_cast(deps, eye, d, distance=30.0)
             if hit and math.hypot(loc.x - eye.x, loc.y - eye.y) < 1.6 and any(it['fp'][0] - near(it) < loc.x < it['fp'][2] + near(it) and it['fp'][1] - near(it) < -loc.y < it['fp'][3] + near(it) for it in items):
                 total -= 3.0
+        # o ușă (gol) în prim-plan: pierde
+        for o in doors:
+            if in_view(c, o['p'][0], o['p'][1], lx, lz, fov / 2, 0.2) and math.hypot(o['p'][0] - c[0], o['p'][1] - c[1]) < 2.0:
+                total -= 4.0
         seen = sum(1 for p in pieces if in_view(c, p[0], p[2], lx, lz, fov / 2))
         keys = 0.0  # piesa principală întreagă în cadru (toate cele patru colțuri ale amprentei), cu o margine de 4°
         for it in items:
             a, b, e, f = it['fp']
             corners = [(a, b), (e, b), (e, f), (a, f)]
             w = KEY.get(it['g'], 0.5) if focus is None else (6.0 if id(it) in focus else 0.2)  # a doua vedere: piesele rămase pe dinafară
-            low = max(0.45, (1.55 - top(it)) / bottom(fov))  # partea de sus a piesei nu e tăiată de marginea de jos
+            low = max(0.45, (EYE - top(it)) / bottom(fov))  # partea de sus a piesei nu e tăiată de marginea de jos
             if all(in_view(c, px, pz, lx, lz, fov / 2 - math.radians(4), low) for px, pz in corners):
                 keys += w
             elif any(in_view(c, px, pz, lx, lz, fov / 2) for px, pz in corners):
                 keys += w * 0.3
-        return total + 0.6 * seen + 8.0 * keys - 6.0 * (fov - math.radians(82))
+        return total + 0.6 * seen + 8.0 * keys - 6.0 * (fov - HFOV)
 
-    # o încăpere mică (baia, holul) nu încape în 82°: se încearcă și obiectivul larg (100°, ca 16 mm la fotografii de interior)
-    fovs = [fov] + ([math.radians(100)] if min(x1 - x0, z1 - z0) < 2.6 or (x1 - x0) * (z1 - z0) < 9 else [])
+    # o încăpere mică (baia, holul): se încearcă și 75° (limita regulii); nu mai folosim 100°, care deforma marginile
+    fovs = [fov] + ([HFOV_MAX] if min(x1 - x0, z1 - z0) < 2.6 or (x1 - x0) * (z1 - z0) < 9 else [])
     ranked = sorted(((score(c, f, a), c, f, a) for c in cands for f in fovs for a in aims), key=lambda t: -t[0])
-    _, c, fov, aim = ranked[0]
-    print(f"[casa3d] cameră {room['id']}: " + '; '.join(f'({p[0]:.2f},{p[1]:.2f}) {math.degrees(f):.0f}° {aims.index(a)} = {v:.1f}' for v, p, f, a in ranked[:int(os.environ.get('CASA3D_CAMDBG', 4))]))
+    # testul de acoperire pe cei mai buni candidați: prima poziție sub prag (scorul scade cu acoperirea); altfel cea mai liberă
+    best = None
+    for v, c, f, a in ranked[:16]:
+        lx, lz = look(c, a)
+        cov = coverage(sc, deps, c, lx, lz, f, width, height)
+        fin = v - 25.0 * cov
+        cand = (cov <= MAX_COVER, fin if cov <= MAX_COVER else -cov, v, c, f, a, cov)
+        if best is None or cand[:2] > best[:2]:
+            best = cand
+    _, _, v, c, fov, aim, cov = best
+    print(f"[casa3d] cameră {room['id']}: ({c[0]:.2f},{c[1]:.2f}) {math.degrees(fov):.0f}° acoperire {cov * 100:.0f}% ; "
+          + '; '.join(f'({p[0]:.2f},{p[1]:.2f}) {math.degrees(f):.0f}° {aims.index(a)} = {s:.1f}' for s, p, f, a in ranked[:int(os.environ.get('CASA3D_CAMDBG', 4))]))
     lx, lz = look(c, aim)
-    low_of = lambda it: max(0.45, (1.55 - top(it)) / bottom(fov))
+    low_of = lambda it: max(0.45, (EYE - top(it)) / bottom(fov))
     MISSING[ob.name] = [it for it in items if KEY.get(it['g'], 0) >= 2 and not all(in_view(c, px, pz, lx, lz, fov / 2 - math.radians(4), low_of(it)) for px, pz in ((it['fp'][0], it['fp'][1]), (it['fp'][2], it['fp'][1]), (it['fp'][2], it['fp'][3]), (it['fp'][0], it['fp'][3])))]
-    ob.location = to_blender((c[0], 1.55, c[1]))
+    ob.location = to_blender((c[0], EYE, c[1]))
     ob.rotation_euler = to_blender((lx, 0, lz)).normalized().to_track_quat('-Z', 'Y').to_euler()
     cam.lens_unit = 'FOV'
+    cam.sensor_fit = 'HORIZONTAL'
     cam.angle = fov
-    cam.shift_y = -0.08  # privire ușor în jos fără să înclinăm aparatul: verticalele rămân verticale
+    cam.shift_y = SHIFT_Y  # privire ușor în jos fără să înclinăm aparatul: verticalele rămân verticale
     cam.clip_start = 0.05
     return ob
+
+
+def auto_exposure(sc, width, height, key=0.18):
+    """Expunerea pe cameră: o trecere rapidă (160 px, 8 eșantioane) scrisă în EXR liniar; media logaritmică a luminanței
+    (fără cele mai luminoase 4 %, ferestrele) adusă la `key`, limitată la ±1,5 EV."""
+    import tempfile
+    r = sc.render
+    keep = (r.resolution_x, r.resolution_y, r.resolution_percentage, sc.cycles.samples, sc.cycles.use_denoising, r.filepath, r.image_settings.file_format, r.image_settings.color_depth)
+    path = os.path.join(tempfile.mkdtemp(prefix='c3d_ae_'), 'ae.exr')
+    try:
+        r.resolution_x, r.resolution_y, r.resolution_percentage = 160, max(1, round(160 * height / width)), 100
+        sc.cycles.samples, sc.cycles.use_denoising = 8, False
+        r.image_settings.file_format, r.image_settings.color_depth = 'OPEN_EXR', '16'
+        r.filepath = path
+        bpy.ops.render.render(write_still=True)
+        img = bpy.data.images.load(path)
+        px = img.pixels[:]
+        bpy.data.images.remove(img)
+        lum = sorted(0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2] for i in range(0, len(px), 4))
+        lum = lum[:max(1, int(len(lum) * 0.96))]
+        avg = sum(lum) / len(lum)   # media (nu cea logaritmică: la 8 eșantioane pixelii negri de zgomot o trag în jos)
+        ev = max(-1.5, min(3.5, math.log2(key / max(1e-4, avg))))
+        print(f'[casa3d] luminanța medie {avg:.4f} -> {ev:+.2f} EV')
+    except Exception as e:  # fără trecerea rapidă: expunerea fixă
+        print(f'[casa3d] expunere automată indisponibilă: {e}')
+        ev = 0.0
+    finally:
+        (r.resolution_x, r.resolution_y, r.resolution_percentage, sc.cycles.samples, sc.cycles.use_denoising, r.filepath, r.image_settings.file_format, r.image_settings.color_depth) = keep
+        try:
+            os.remove(path)
+            os.rmdir(os.path.dirname(path))
+        except OSError:
+            pass
+    return ev
 
 
 def setup_render(args):
@@ -928,8 +1119,12 @@ def setup_render(args):
     sc.render.resolution_x, sc.render.resolution_y = args.width, args.height
     sc.render.image_settings.file_format = 'PNG'
     sc.view_settings.view_transform = 'AgX'
-    sc.view_settings.look = 'AgX - Medium High Contrast'
-    sc.view_settings.exposure = -0.4
+    try:  # contrast de bază: AgX Medium High Contrast satura lemnul spre portocaliu
+        sc.view_settings.look = 'AgX - Base Contrast'
+    except TypeError:
+        sc.view_settings.look = 'None'
+    sc.view_settings.exposure = -0.4   # implicit; fiecare cameră primește expunerea ei (auto_exposure)
+    sc.render.use_persistent_data = True   # BVH-ul rămâne între randări (trecerea de expunere + imaginea)
     device = 'CPU'
     if args.device.upper() != 'CPU':
         prefs = bpy.context.preferences.addons['cycles'].preferences
@@ -963,7 +1158,7 @@ def main():
     clear_scene()
     build(data, args.assets)
     import_decor(data, args.models)
-    light_scene(data, args.assets)
+    light_scene(data, args.assets, portals=not args.no_portals)
     setup_render(args)
     sc = bpy.context.scene
     rooms = data.get('rooms', [])
@@ -987,6 +1182,8 @@ def main():
         safe = ''.join(ch if ch.isalnum() or ch in '-_' else '_' for ch in r['id'])
         sc.camera = room_camera(data, r, args.width, args.height)
         sc.render.resolution_x, sc.render.resolution_y = args.width, args.height
+        sc.view_settings.exposure = auto_exposure(sc, args.width, args.height) if args.exposure == 'auto' else float(args.exposure)
+        print(f"[casa3d] {r['id']}: expunere {sc.view_settings.exposure:+.2f} EV")
         sc.render.filepath = os.path.join(os.path.abspath(args.out), f'{safe}.png')
         bpy.ops.render.render(write_still=True)
         print(f"[casa3d] {r.get('name', r['id'])}: {sc.render.filepath}")

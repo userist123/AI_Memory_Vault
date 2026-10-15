@@ -153,13 +153,13 @@ export async function decideDesign(owner: string, id: string, pid: string, index
   const revision = await tx(async q => {
     const claim = await q('update design_proposals set applied_index=$1 where id=$2 and applied_index is null and not (decisions ? $3) returning id', [index, pid, key]);
     if (!claim.rows[0]) throw new HttpError(409, 'Varianta a fost deja decisă.');
-    const cas = await q('update projects set draft=$1, name=$2, current_revision=current_revision+1, draft_rev=draft_rev+1, updated_at=now() where id=$3 and owner=$4 and draft = $5::jsonb returning current_revision',
+    const cas = await q('update projects set draft=$1, name=$2, current_revision=current_revision+1, draft_rev=draft_rev+1, updated_at=now() where id=$3 and owner=$4 and draft = $5::jsonb returning current_revision, draft_rev',
       [JSON.stringify(next), next.name, id, owner, JSON.stringify(p.draft)]);
     if (!cas.rows[0]) throw new HttpError(409, 'Proiectul s-a schimbat de când a fost generată propunerea; generează din nou.', [{ code: 'STALE', severity: 'ERROR', message: 'Propunere stale.' }]);
     const n = cas.rows[0].current_revision as number;
     await q('update design_proposals set decisions = decisions || $1::jsonb where id=$2', [JSON.stringify({ [key]: { decision: 'approved', at: now } }), pid]);
     await q('insert into revisions(project_id, number, note, snapshot) values($1,$2,$3,$4)', [id, n, `Varianta ${alt.title} (Digital Twin, motor de reguli) aplicată`, JSON.stringify(next)]);
-    return n;
+    return { n, draftRev: cas.rows[0].draft_rev as number };
   });
-  return { snapshot: next, revision, issues };
+  return { snapshot: next, revision: revision.n, draftRev: revision.draftRev, issues };
 }

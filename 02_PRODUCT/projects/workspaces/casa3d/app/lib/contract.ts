@@ -3,8 +3,8 @@ import { getDb } from './db';
 import { HttpError, getProject, getCatalog, getMaterials } from './repo';
 import { getProfile } from './studio-profile';
 import { listCustomItems, type CustomItem } from './custom-items';
-import { checkContract, buildContract, buildOffer, feeFor, effectiveFee, paymentSchedule, ContractError, DEFAULT_CONTRACT, type ContractData, type DocContext } from '../core/contract';
-import { computeBudget } from '../core/boq';
+import { checkContract, buildContract, buildOffer, feeFor, effectiveFee, migratedFee, paymentSchedule, ContractError, DEFAULT_CONTRACT, type ContractData, type ContractFee, type DocContext } from '../core/contract';
+import { computeBudget, budgetOf } from '../core/boq';
 import { floors } from '../core/levels';
 import { area } from '../core/geometry';
 
@@ -17,15 +17,33 @@ export async function readStoredContract(id: string): Promise<unknown> {
  * cu valorile implicite (interfața le-ar salva peste el): 409, iar rândul rămâne neatins.
  */
 export async function getContractData(owner: string, id: string): Promise<ContractData> {
-  await getProject(owner, id); const raw = await readStoredContract(id);
-  if (raw == null) return { ...DEFAULT_CONTRACT, phases: [...DEFAULT_CONTRACT.phases] };
-  try { return checkContract(raw); } catch (e: any){
+  const p = await getProject(owner, id), raw = await readStoredContract(id);
+  // onorariul are o singură sursă (contractul); valorile vechi din fișă (meta.fee) și din buget („Proiectare”) se migrează la citire
+  const withFee = (d: ContractData, stored: ContractData | null): ContractData => { const fee = migratedFee(stored, p.meta, budgetOf(p.draft).design); if (fee) d.fee = fee; else delete d.fee; return d; };
+  if (raw == null) return withFee({ ...DEFAULT_CONTRACT, phases: [...DEFAULT_CONTRACT.phases] }, null);
+  try { const d = checkContract(raw); return withFee(d, d); } catch (e: any){
     if (e instanceof ContractError) throw new HttpError(409, `Datele contractului salvate nu trec validarea (${e.message}). Nu au fost modificate; corectează-le sau salvează din nou contractul.`);
     throw e; }
 }
+/**
+ * Salvarea contractului. `fee: null` = fără onorariu (ales explicit); fără cheia `fee`, onorariul vechi din fișă sau din buget se
+ * mută în contract. După salvare onorariul stă doar aici: meta.fee se șterge, ca să nu existe două valori.
+ */
 export async function saveContract(owner: string, id: string, input: unknown): Promise<ContractData> {
-  await getProject(owner, id); let d: ContractData; try { d = checkContract(input); } catch (e: any){ if (e instanceof ContractError) throw new HttpError(400, e.message); throw e; }
-  const { q } = await getDb(); await q('insert into project_contract(project_id, data) values($1,$2) on conflict(project_id) do update set data=excluded.data, updated_at=now()', [id, JSON.stringify(d)]); return d;
+  const p = await getProject(owner, id); let d: ContractData; try { d = checkContract(input); } catch (e: any){ if (e instanceof ContractError) throw new HttpError(400, e.message); throw e; }
+  if (input && typeof input === 'object' && !('fee' in input) && !d.fee){ const raw = await readStoredContract(id), stored = raw == null ? null : (() => { try { return checkContract(raw); } catch { return null; } })();
+    const fee = migratedFee(raw == null ? null : stored ?? { fee: undefined }, p.meta, budgetOf(p.draft).design); if (fee) d.fee = fee; }
+  const { tx } = await getDb();
+  await tx(async q => {
+    await q('insert into project_contract(project_id, data) values($1,$2) on conflict(project_id) do update set data=excluded.data, updated_at=now()', [id, JSON.stringify(d)]);
+    await q(`update projects set meta = meta - 'fee' where id=$1 and owner=$2 and meta ? 'fee'`, [id, owner]); });
+  return d;
+}
+/** Doar onorariul (din buget): citește contractul (cu migrarea), schimbă onorariul și îl salvează; restul contractului rămâne. */
+export async function setFee(owner: string, id: string, fee: unknown): Promise<ContractData> {
+  const d = await getContractData(owner, id);
+  if (fee != null && (typeof fee !== 'object' || Array.isArray(fee))) throw new HttpError(400, 'Onorariul e invalid.');
+  return saveContract(owner, id, { ...d, fee: (fee as ContractFee | null) ?? null });
 }
 type Project = Awaited<ReturnType<typeof getProject>>;
 /** Bugetul proiectului cu produsele proprii incluse (aceeași bază pentru contract, profit și proformă). */
