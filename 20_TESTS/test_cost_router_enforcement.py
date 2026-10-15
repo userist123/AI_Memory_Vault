@@ -46,23 +46,29 @@ def _run(script, payload, home: Path, project: Path = ROOT, **env_extra):
 
 
 def _state(home: Path, sid: str = SID):
+    """The effective state: the JSON plus the monotonic marker files next to it."""
     path = home / ".claude" / "cache" / "cost-router" / f"route-{sid}.json"
-    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+    if not path.exists():
+        return None
+    s = json.loads(path.read_text(encoding="utf-8"))
+    for name in ("delegated", "vault_routed"):
+        s[name] = bool(s.get(name)) or path.with_suffix("." + name).exists()
+    return s
 
 
 def _prompt(home, prompt, sid=SID):
     return _run(PROMPT_HOOK, {"session_id": sid, "prompt": prompt}, home)
 
 
-def _tool(home, tool="Read", tool_input=None, sid=SID, **env):
-    r = _run(ENFORCE_HOOK, {"session_id": sid, "tool_name": tool, "tool_input": tool_input or {"file_path": "/x"}},
-             home, **env)
+def _tool(home, tool="Read", tool_input=None, sid=SID, extra=None, **env):
+    payload = {"session_id": sid, "tool_name": tool, "tool_input": tool_input or {"file_path": "/x"}, **(extra or {})}
+    r = _run(ENFORCE_HOOK, payload, home, **env)
     return json.loads(r.stdout)["hookSpecificOutput"] if r.stdout.strip() else None
 
 
-def _agent(home, prompt=IMPLEMENT, project: Path = ROOT, sid=SID):
-    r = _run(AGENT_HOOK, {"session_id": sid, "tool_name": "Agent",
-                          "tool_input": {"description": "worker", "prompt": prompt}}, home, project)
+def _agent(home, prompt=IMPLEMENT, project: Path = ROOT, sid=SID, tool_name="Agent", **tool_extra):
+    r = _run(AGENT_HOOK, {"session_id": sid, "tool_name": tool_name,
+                          "tool_input": {"description": "worker", "prompt": prompt, **tool_extra}}, home, project)
     return json.loads(r.stdout)["hookSpecificOutput"] if r.stdout.strip() else None
 
 
@@ -74,12 +80,25 @@ def test_prompt_hook_writes_the_route_state(home):
     assert len(s["prompt_hash"]) == 16 and IMPLEMENT not in json.dumps(s)
 
 
-def test_trivial_prompt_resets_state_to_a_noop_route(home):
+@pytest.mark.parametrize("short", ["ok", "continua", "da", "do it now", "/clear"])
+def test_trivial_prompt_keeps_the_existing_route(home, short):
     _prompt(home, IMPLEMENT)
-    _prompt(home, "ok")
+    before = _state(home)
+    _prompt(home, short)
+    assert _state(home) == before
+    for _ in range(3):
+        _tool(home)
+    assert _tool(home)["permissionDecision"] == "deny"
+
+
+def test_new_nontrivial_prompt_replaces_state_and_markers(home):
+    _prompt(home, IMPLEMENT)
+    _tool(home, "Bash", {"command": "python -m routing.route_cli route --goal x"})
+    _agent(home)
+    assert _state(home)["delegated"] is True and _state(home)["vault_routed"] is True
+    _prompt(home, "implement another bounded change in the cache module and add tests")
     s = _state(home)
-    assert s["subagent"] is None and s["main_calls"] == 0
-    assert all(_tool(home) is None for _ in range(6))
+    assert s["delegated"] is False and s["vault_routed"] is False and s["main_calls"] == 0
 
 
 def test_prompt_without_session_id_writes_nothing(home):
@@ -171,3 +190,108 @@ def test_corrupt_state_file_allows(home):
 def test_session_id_cannot_escape_the_cache_dir(home):
     _prompt(home, IMPLEMENT, sid="../../evil")
     assert not list(home.rglob("*evil*"))
+
+
+# -- review fixes ------------------------------------------------------------------
+
+@pytest.mark.parametrize("field", ["agent_id", "agent_type"])
+def test_subagent_tool_calls_are_never_counted_or_blocked(home, field):
+    _prompt(home, IMPLEMENT)
+    for _ in range(3):
+        _tool(home)
+    before = _state(home)
+    assert all(_tool(home, extra={field: "vault-worker-1"}) is None for _ in range(5))
+    assert _state(home) == before
+    assert _tool(home)["permissionDecision"] == "deny"  # the main session is still bound
+
+
+def test_delegated_survives_a_concurrent_counter_write(home):
+    """Lost update: a counter write based on a pre-spawn read must not clear `delegated`."""
+    sys.path.insert(0, str(SKILL / "lib"))
+    try:
+        import route_state
+    finally:
+        sys.path.remove(str(SKILL / "lib"))
+    _prompt(home, EXPLORE)
+    stale = _state(home)               # the enforce hook read this before the spawn
+    _agent(home, EXPLORE)              # the spawn marks delegated
+    stale["main_calls"] = 1
+    assert route_state.save(SID, stale)  # the enforce hook writes its stale copy back
+    assert route_state.load(SID)["delegated"] is True
+    assert all(_tool(home) is None for _ in range(5))
+
+
+def test_vault_routed_survives_a_concurrent_counter_write(home):
+    sys.path.insert(0, str(SKILL / "lib"))
+    try:
+        import route_state
+    finally:
+        sys.path.remove(str(SKILL / "lib"))
+    _prompt(home, IMPLEMENT)
+    stale = _state(home)
+    _tool(home, "Bash", {"command": "python -m routing.route_cli route --goal x"})
+    stale["main_calls"] = 2
+    route_state.save(SID, stale)
+    assert route_state.load(SID)["vault_routed"] is True
+    out = _agent(home)
+    assert out is None or out["permissionDecision"] == "allow"
+
+
+def test_legacy_task_tool_name_is_handled(home):
+    _prompt(home, EXPLORE)
+    for _ in range(4):
+        _tool(home)
+    out = _agent(home, EXPLORE, tool_name="Task")
+    assert out is not None and out["updatedInput"]["model"] == "haiku"
+    assert _state(home)["delegated"] is True
+
+
+def test_settings_and_installer_match_agent_and_task(tmp_path):
+    s = json.loads((ROOT / ".claude" / "settings.json").read_text(encoding="utf-8"))
+    assert s["hooks"]["PreToolUse"][0]["matcher"] == "Agent|Task"
+    h = tmp_path / "h"
+    r = subprocess.run([sys.executable, str(SKILL / "install.py"), "--home", str(h)], capture_output=True, text=True,
+                       timeout=120)
+    assert r.returncode == 0, r.stderr
+    hooks = json.loads((h / ".claude" / "settings.json").read_text(encoding="utf-8"))["hooks"]["PreToolUse"]
+    agent = [e for e in hooks if "hook_agent_model.py" in json.dumps(e)]
+    assert len(agent) == 1 and agent[0]["matcher"] == "Agent|Task"
+
+
+@pytest.mark.parametrize("subagent_type", ["vault-reviewer", "code-review", "verifier"])
+def test_reviewer_subagents_are_never_below_opus(home, subagent_type):
+    out = _agent(home, IMPLEMENT, project=home, subagent_type=subagent_type)
+    assert out is not None and out["updatedInput"]["model"] == "opus"
+
+
+def test_worker_with_the_same_brief_stays_cheap(home):
+    out = _agent(home, IMPLEMENT, project=home, subagent_type="vault-worker")
+    assert out is not None and out["updatedInput"]["model"] == "sonnet"
+
+
+@pytest.mark.parametrize("command", [
+    "echo routing.route_cli route",
+    "grep -r 'python -m routing.route_cli route' .",
+    "cat notes.txt # routing.route_cli dispatch",
+])
+def test_mentioning_the_router_does_not_mark_vault_routed(home, command):
+    _prompt(home, IMPLEMENT)
+    _tool(home, "Bash", {"command": command})
+    assert _state(home)["vault_routed"] is False
+
+
+@pytest.mark.parametrize("command", [
+    "python -m routing.route_cli route --goal x",
+    "PYTHONPATH=03_IMPLEMENTATION/packages python3 -m routing.route_cli dispatch --goal x --execute",
+    "cd /repo && /usr/bin/python3 -m routing.route_cli route --goal x",
+    "export PYTHONPATH=p; python -m routing.route_cli route --goal x",
+])
+def test_invoking_the_router_marks_vault_routed(home, command):
+    _prompt(home, IMPLEMENT)
+    assert _tool(home, "Bash", {"command": command}) is None
+    assert _state(home)["vault_routed"] is True
+
+
+def test_policy_doc_states_the_opus_ceiling():
+    text = (ROOT / "00_GOVERNANCE" / "protocols" / "Claude_Model_Routing_Policy_V1.md").read_text(encoding="utf-8")
+    assert "Fable is reachable only for the `frontier` class" in text

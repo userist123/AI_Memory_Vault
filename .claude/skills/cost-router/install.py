@@ -17,7 +17,7 @@ What it does (idempotent, prints every path it touched):
      of that name is replaced only when it is still the copy an earlier install wrote (owner edits are
      kept; --force overwrites them too);
   3. merges five hooks into ~/.claude/settings.json (kept out with --no-hook): UserPromptSubmit (one
-     route line per non-trivial prompt; stores the route per session), PreToolUse on Agent (sets each
+     route line per non-trivial prompt; stores the route per session), PreToolUse on Agent|Task (sets each
      subagent's model from the route of its brief, whatever the subagent type), PreToolUse on
      Edit|Write|NotebookEdit|Bash|Read|Grep|Glob (hook_enforce_route.py: makes the route binding),
      SessionStart repo map (a ~1k-token map of the
@@ -55,7 +55,7 @@ AGENTS_SRC = REPO / ".claude" / "agents"
 HOOK_MARK = "cost-router/hook_"  # every hook this installer owns
 HOOK_SPECS = (  # (event, script, matcher)
     ("UserPromptSubmit", "hook_prompt_route.py", None),
-    ("PreToolUse", "hook_agent_model.py", "Agent"),
+    ("PreToolUse", "hook_agent_model.py", "Agent|Task"),
     ("PreToolUse", "hook_enforce_route.py", "Edit|Write|NotebookEdit|Bash|Read|Grep|Glob"),
     ("SessionStart", "hook_repo_map.py", "startup|clear|compact"),
     ("SessionStart", "hook_self_update.py", "startup|resume"),

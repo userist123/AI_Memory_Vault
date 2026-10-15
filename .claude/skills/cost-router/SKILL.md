@@ -120,13 +120,18 @@ for multi-step code, design, risky work or verification. Cloud sessions have no 
 - **Escalation ceiling**: Opus is the top of the ladder; a route escalates to Fable only for the
   `frontier` class in the main session. The route line says "stay on Opus" otherwise.
 - **Route state**: the prompt hook stores the route per session in
-  `~/.claude/cache/cost-router/route-<session_id>.json`; a trivial prompt resets it to a no-op.
+  `~/.claude/cache/cost-router/route-<session_id>.json`. A short follow-up (`continua`, `ok`, under
+  4 words, a slash command) keeps it; only a new non-trivial prompt replaces it. `delegated` and
+  `vault_routed` are marker files next to it, so a concurrent counter write never clears them.
 - **Main session dispatches**: when the route names a subagent, `hook_enforce_route.py`
   (PreToolUse on Edit/Write/NotebookEdit/Bash/Read/Grep/Glob) allows 3 direct tool calls, then
-  denies until the work is delegated with the Agent tool (any Agent spawn unlocks it).
+  denies until the work is delegated with the Agent tool (any Agent/Task spawn unlocks it for the
+  rest of the prompt). A subagent's own calls (`agent_id`/`agent_type` set) are never counted.
+  A reviewer/verifier `subagent_type` is never below Opus.
 - **Vault router first**: inside the AI Memory Vault, an Agent spawn for an
   implement/review/design/frontier route is denied until
-  `python -m routing.route_cli route|dispatch` ran in Bash (`PYTHONPATH=03_IMPLEMENTATION/packages`).
+  `python -m routing.route_cli route|dispatch` actually ran in Bash (at the command start or after a
+  separator; merely mentioning it does not count; `PYTHONPATH=03_IMPLEMENTATION/packages`).
 - **Overrides**: `#direct` in the prompt (owner: the main session does it itself) or
   `COST_ROUTER_ENFORCE=0` in the environment. Any hook error allows the call.
 

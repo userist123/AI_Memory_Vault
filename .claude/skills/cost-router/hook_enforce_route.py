@@ -6,36 +6,50 @@ Makes the route binding: when the current prompt's route (written by hook_prompt
 delegated yet, the main session gets FREE_MAIN_CALLS (3) tool calls of its own (one-minute work);
 the next one is denied with a reason telling it to delegate with the Agent tool.
 
-Allowed silently: no state, route.subagent null (main-session classes, trivial prompts, "#direct"),
-state.delegated true, COST_ROUTER_ENFORCE=0. A Bash command running `routing.route_cli route` or
-`routing.route_cli dispatch` marks state.vault_routed and is always allowed. Any internal error:
+Only the main session is bound: a call carrying a non-empty agent_id or agent_type comes from a
+subagent and is allowed without touching any state. Allowed silently as well: no state, route.subagent null (main-session classes, trivial prompts, "#direct"),
+state.delegated true (monotonic for the rest of the prompt once any Agent/Task spawn happened),
+COST_ROUTER_ENFORCE=0. A Bash command that actually invokes `python -m routing.route_cli route` or
+`... dispatch` (at the start or after ; & | &&, not merely mentioned) marks state.vault_routed and
+is always allowed. Any internal error:
 no output, exit 0 (allow).
 """
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
-ROUTER_MARKS = ("routing.route_cli route", "routing.route_cli dispatch")
+# python[3][.exe] -m routing.route_cli route|dispatch, at the command start or after a separator;
+# leading VAR=value assignments (e.g. PYTHONPATH=...) are allowed before the interpreter.
+ROUTER_CALL = re.compile(
+    r"(?:^|[;&|\n(])\s*(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*\S*python[0-9.]*(?:\.exe)?\s+-m\s+routing\.route_cli\s+(?:route|dispatch)\b")
+
+
+def invokes_router(command: str) -> bool:
+    return bool(ROUTER_CALL.search(command or ""))
+
+
+def from_subagent(data: dict) -> bool:
+    return any(str(data.get(k) or "").strip() for k in ("agent_id", "agent_type"))
 
 
 def decide(data: dict):
     """Return a deny reason, or None to allow. Updates the session state as a side effect."""
     import route_state  # noqa: E402
-    if route_state.enforcement_disabled():
+    if route_state.enforcement_disabled() or from_subagent(data):
         return None
     sid = data.get("session_id")
     state = route_state.load(sid)
     if state is None:
         return None
     tool_input = data.get("tool_input") if isinstance(data.get("tool_input"), dict) else {}
-    if data.get("tool_name") == "Bash" and any(m in str(tool_input.get("command") or "") for m in ROUTER_MARKS):
+    if data.get("tool_name") == "Bash" and invokes_router(str(tool_input.get("command") or "")):
         if not state.get("vault_routed"):
-            state["vault_routed"] = True
-            route_state.save(sid, state)
+            route_state.mark(sid, "vault_routed")
         return None
     if not state.get("subagent") or state.get("delegated"):
         return None

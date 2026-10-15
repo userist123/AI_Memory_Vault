@@ -67,8 +67,9 @@ Rules applied after classification (`rules` in the policy; can only raise a tier
   cheaper-model subagents are not used) and names an independent verifier;
 - **the verifier is always `vault-reviewer` (Opus, fresh context)**, for every high/critical or
   security task that is not itself a review; Fable is never a verifier;
-- **escalation order on failure**: haiku → sonnet → opus → fable, one notch, after the tests
-  say the cheaper attempt failed;
+- **escalation order on failure**: haiku → sonnet → opus, one notch, after the tests say the
+  cheaper attempt failed. Opus is the ceiling: Fable is reachable only for the `frontier` class,
+  in the main session (owner decision, 2026-10-15); every other class stays on Opus;
 - **subagent output contract**: `decision / evidence / risks / unknowns / confidence /
   recommended_action`, under 300 words, so the main session's context stays small.
 

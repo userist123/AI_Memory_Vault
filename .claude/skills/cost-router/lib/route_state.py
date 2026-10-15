@@ -4,6 +4,10 @@ The UserPromptSubmit hook writes the route of the current prompt to
 ~/.claude/cache/cost-router/route-<session_id>.json; the PreToolUse hooks read it to make the route
 binding (hook_enforce_route.py) and to mark delegation (hook_agent_model.py). Stdlib only. Every
 function here swallows its own errors: a broken state file must never block a tool call.
+
+`delegated` and `vault_routed` are monotonic within one prompt: each is a separate marker file
+(route-<sid>.delegated, route-<sid>.vault_routed) that a concurrent counter write of the JSON can
+never clear. load() ORs them in; only reset() (a new non-trivial prompt) removes them.
 """
 from __future__ import annotations
 
@@ -17,6 +21,7 @@ from typing import Optional
 VAULT_GATED_CLASSES = {"implement", "review", "design", "frontier"}
 DIRECT_MARK = "#direct"
 FREE_MAIN_CALLS = 3  # one-minute work stays in the main session
+MARKERS = ("delegated", "vault_routed")
 
 
 def state_dir() -> Path:
@@ -30,6 +35,24 @@ def state_path(session_id) -> Optional[Path]:
     return state_dir() / f"route-{sid}.json"
 
 
+def marker_path(session_id, name: str) -> Optional[Path]:
+    path = state_path(session_id)
+    return None if path is None or name not in MARKERS else path.with_suffix("." + name)
+
+
+def mark(session_id, name: str) -> bool:
+    """Set a monotonic flag for the current prompt. Returns False on any error."""
+    path = marker_path(session_id, name)
+    if path is None:
+        return False
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+        return True
+    except Exception:
+        return False
+
+
 def load(session_id) -> Optional[dict]:
     path = state_path(session_id)
     if path is None:
@@ -38,7 +61,28 @@ def load(session_id) -> Optional[dict]:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
-    return data if isinstance(data, dict) else None
+    if not isinstance(data, dict):
+        return None
+    for name in MARKERS:
+        try:
+            data[name] = bool(data.get(name)) or marker_path(session_id, name).exists()
+        except Exception:
+            data[name] = bool(data.get(name))
+    return data
+
+
+def reset(session_id, state: dict) -> bool:
+    """Replace the state for a new prompt: markers of the previous prompt are removed first."""
+    for name in MARKERS:
+        path = marker_path(session_id, name)
+        if path is not None:
+            try:
+                path.unlink()
+            except FileNotFoundError:
+                pass
+            except Exception:
+                return False
+    return save(session_id, state)
 
 
 def save(session_id, state: dict) -> bool:

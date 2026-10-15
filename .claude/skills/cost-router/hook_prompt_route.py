@@ -8,9 +8,10 @@ recommends and to apply the `cost-router` skill. It is silent (no output) on tri
 error exits 0 with no output: this hook must never block a prompt.
 
 It also persists the route to ~/.claude/cache/cost-router/route-<session_id>.json (lib/route_state.py)
-so the PreToolUse hooks can make it binding. A trivial prompt overwrites that state with a no-op
-route (subagent null) so an older route never leaks into it; a prompt containing "#direct" stores
-subagent null (owner override: the main session does the work itself).
+so the PreToolUse hooks can make it binding. A trivial prompt (continua, ok, fewer than 4 words, a
+slash command) keeps the current route: it continues that task. Only a new non-trivial prompt
+replaces the state; a prompt containing "#direct" stores subagent null (owner override: the main
+session does the work itself).
 """
 from __future__ import annotations
 
@@ -42,12 +43,12 @@ def persist(data: dict, prompt: str, d=None) -> None:
         if not sid:
             return
         digest = hashlib.sha256(prompt.encode("utf-8")).hexdigest()[:16]
-        if d is None:
-            state = route_state.new_state("trivial", None, None, digest)
+        if d is None:  # the router failed on a real prompt: no enforcement rather than a stale one
+            state = route_state.new_state("unrouted", None, None, digest)
         else:
             state = route_state.new_state(d.task_class, d.model, d.subagent, digest,
                                           direct=route_state.DIRECT_MARK in prompt.lower())
-        route_state.save(sid, state)
+        route_state.reset(sid, state)
     except Exception:
         pass
 
@@ -68,8 +69,7 @@ def main() -> int:
     except Exception:
         return 0
     if not prompt or prompt.startswith("/") or len(words) < 4 or prompt.lower().rstrip(".!") in TRIVIAL:
-        persist(data, prompt)  # no-op route: old enforcement must not leak into this prompt
-        return 0
+        return 0  # a short follow-up continues the current task: keep its route
     try:
         from route import decide, one_line  # noqa: E402
         d = decide(prompt)
