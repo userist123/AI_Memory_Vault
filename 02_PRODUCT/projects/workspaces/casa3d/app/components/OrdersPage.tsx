@@ -6,9 +6,11 @@ import { ORDER_STATUSES, type OrderState, type ProcurementRow, type SupplierGrou
 import { formatMoney } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
 import { intlLocale } from '@/lib/i18n';
+import { safeCell } from '@/core/custom-csv';
+import { ImportCsvButtons } from './CustomItemsImport';
 
 type Data = { rows: ProcurementRow[]; groups: SupplierGroup[]; summary: { lines: number; todo: number; ordered: number; delivered: number; installed: number; overdue: number; orderLate: number; orderSoon: number; ordersValue: number } };
-const csvCell = (v: unknown) => { const s = String(v ?? ''); return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+const csvCell = (v: unknown) => { const s = safeCell(v); return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
 type RoomRef = { id: string; name: string };
 export default function OrdersPage({ id, cur, say, projectName, rooms = [] }: { id: string; cur: string; say(s: string): void; projectName: string; rooms?: RoomRef[] }){
   const { t, lang } = usePrefs(), [data, setData] = useState<Data | null>(null), [open, setOpen] = useState<string | null>(null), [filter, setFilter] = useState<'all' | 'open' | 'overdue'>('all');
@@ -35,6 +37,7 @@ export default function OrdersPage({ id, cur, say, projectName, rooms = [] }: { 
         <div className={s.overdue ? 'late' : ''}><dt>{t('orders.sum.overdue')}</dt><dd>{s.overdue}</dd></div>
         {(s.orderLate + s.orderSoon) > 0 && <div className="late"><dt>{t('orders.sum.orderNow')}</dt><dd>{s.orderLate + s.orderSoon}</dd></div>}<div><dt>{t('orders.sum.value')}</dt><dd>{money(s.ordersValue)}</dd></div></dl></header>
     <ClipAdder id={id} rooms={rooms} say={say} onAdded={load} />
+    <ImportCsvButtons id={id} say={say} onDone={load} />
     <div className="filters" role="tablist">{(['all', 'open', 'overdue'] as const).map(f => <button key={f} role="tab" aria-selected={filter === f} onClick={() => setFilter(f)}>{t(`orders.filter.${f}`)}</button>)}</div>
     {groups.length === 0 && <p className="muted">{t('orders.none')}</p>}
     {groups.map(g => <section key={g.supplier} className="supplier">
@@ -75,8 +78,8 @@ function OrderEditor({ row, today, onSave, onQty, onRemove }: { row: Procurement
   </div>);
 }
 
-type Draft = { name: string; supplier: string; url: string; image: string; sku: string; price: string; currency: string; qty: string; unit: string; roomId: string };
-const EMPTY: Draft = { name: '', supplier: '', url: '', image: '', sku: '', price: '', currency: '', qty: '1', unit: 'buc', roomId: '' };
+type Draft = { name: string; supplier: string; url: string; image: string; sku: string; price: string; currency: string; qty: string; unit: string; roomId: string; costPrice: string; leadDays: string; dimension: string };
+const EMPTY: Draft = { name: '', supplier: '', url: '', image: '', sku: '', price: '', currency: '', qty: '1', unit: 'buc', roomId: '', costPrice: '', leadDays: '', dimension: '' };
 /** „+ Produs din link”: lipești adresa paginii din magazin, aplicația citește numele, prețul și poza; le verifici și adaugi. */
 function ClipAdder({ id, rooms, say, onAdded }: { id: string; rooms: RoomRef[]; say(s: string): void; onAdded(): void }){
   const { t } = usePrefs(), [open, setOpen] = useState(false), [link, setLink] = useState(''), [d, setD] = useState<Draft | null>(null), [busy, setBusy] = useState(false), [err, setErr] = useState('');
@@ -87,7 +90,8 @@ function ClipAdder({ id, rooms, say, onAdded }: { id: string; rooms: RoomRef[]; 
       setD({ ...EMPTY, name: j.name ?? '', supplier: j.supplier ?? '', url: j.url ?? link.trim(), image: j.image ?? '', sku: j.sku ?? '', price: j.price != null ? String(j.price) : '', currency: j.currency ?? '' });
     } catch { setErr(t('clip.fetchError')); } finally { setBusy(false); } }
   async function add(){ if (!d) return; setBusy(true); setErr('');
-    const body = { name: d.name, supplier: d.supplier, url: d.url.trim() || null, image: d.image || null, sku: d.sku || null, price: d.price.trim() ? Number(d.price.replace(',', '.')) : null, currency: d.currency || null, qty: Number(d.qty.replace(',', '.')), unit: d.unit, roomId: d.roomId || null };
+    const body = { name: d.name, supplier: d.supplier, url: d.url.trim() || null, image: d.image || null, sku: d.sku || null, price: d.price.trim() ? Number(d.price.replace(',', '.')) : null, currency: d.currency || null, qty: Number(d.qty.replace(',', '.')), unit: d.unit, roomId: d.roomId || null,
+      costPrice: d.costPrice.trim() ? Number(d.costPrice.replace(',', '.')) : null, leadDays: d.leadDays.trim() ? Number(d.leadDays) : null, dimension: d.dimension.trim() || null };
     try { const r = await fetch(`/api/projects/${id}/items`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }), j = await r.json().catch(() => ({}));
       if (!r.ok){ setErr(j.error || t('clip.saveError')); return; } say(t('clip.added', { name: d.name })); setD(null); setLink(''); setOpen(false); onAdded();
     } finally { setBusy(false); } }
@@ -108,6 +112,9 @@ function ClipAdder({ id, rooms, say, onAdded }: { id: string; rooms: RoomRef[]; 
           <label className="f"><span>{t('orders.col.code')}</span><input value={d.sku} maxLength={60} onChange={e => set({ sku: e.target.value })} /></label>
           <label className="f"><span>{t('orders.col.unitPrice')}{d.currency ? ` (${d.currency})` : ''}</span><input inputMode="decimal" value={d.price} onChange={e => set({ price: e.target.value })} /></label>
           <label className="f"><span>{t('orders.col.qty')}</span><span className="qty-unit"><input inputMode="decimal" value={d.qty} onChange={e => set({ qty: e.target.value })} /><input value={d.unit} maxLength={12} onChange={e => set({ unit: e.target.value })} aria-label={t('orders.col.unit')} /></span></label></div>
+        <div className="grid2"><label className="f"><span>{t('cprod.cost')}</span><input inputMode="decimal" value={d.costPrice} onChange={e => set({ costPrice: e.target.value })} /></label>
+          <label className="f"><span>{t('cprod.lead')}</span><input inputMode="numeric" value={d.leadDays} onChange={e => set({ leadDays: e.target.value })} /></label></div>
+        <label className="f"><span>{t('cprod.dimension')}</span><input value={d.dimension} maxLength={80} onChange={e => set({ dimension: e.target.value })} /></label>
         <label className="f"><span>{t('clip.url')}</span><input type="url" inputMode="url" value={d.url} maxLength={1000} onChange={e => set({ url: e.target.value })} /></label>
         {rooms.length > 0 && <label className="f"><span>{t('clip.room')}</span><select value={d.roomId} onChange={e => set({ roomId: e.target.value })}><option value="">{t('clip.noRoom')}</option>{rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}</select></label>}
         <div className="oedit-act"><button className="btn primary" disabled={busy || !d.name.trim() || !d.supplier.trim() || !(Number(d.qty.replace(',', '.')) > 0)} onClick={add}>{t('clip.add')}</button></div>

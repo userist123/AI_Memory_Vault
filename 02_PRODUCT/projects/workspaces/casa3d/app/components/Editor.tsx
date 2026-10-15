@@ -3,7 +3,8 @@ import StylePanel from './StylePanel';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalog, Snapshot, Severity, Issue, FurniturePlacement, MaterialsCatalog, BudgetSettings, RoomFinishes, Appearance, Finish, Room, Stair } from '@/core/types';
-import BudgetPanel, { type Outbound } from './BudgetPanel';
+import { type Outbound } from './BudgetPanel';
+import BudgetWithCustom from './CustomItemsImport';
 import { relFor, freshness } from '@/core/outbound';
 import DesignPanel from './DesignPanel';
 import CatalogPanel from './CatalogPanel';
@@ -39,9 +40,11 @@ import ProjectCard from './ProjectCard';
 import TasksPanel from './TasksPanel';
 import SurveyPanel from './SurveyPanel';
 import TimePanel from './TimePanel';
+import ContractPanel from './ContractPanel';
 import WardrobePanel from './WardrobePanel';
 import { DesignerChanges } from './ChangeOrders';
 import OrdersPage from './OrdersPage';
+import CommercialPanel from './CommercialPanel';
 import SitePage from './SitePage';
 import type { ProjectMeta } from '@/core/project-meta';
 import { scaleFromPoints, anchorAfterScale } from '@/core/underlay';
@@ -251,6 +254,7 @@ export default function Editor({ id }: { id: string }){
             {meta && <ProjectCard id={id} initial={meta} areaM2={floors(house!).flatMap(f => f.rooms).reduce((a, r) => a + area(r.rect), 0)} cur={cur} say={say} />}
             {meta && L === 0 && <TasksPanel projectId={id} />}
             {meta && L === 0 && <TimePanel id={id} cur={cur} say={say} />}
+            {meta && L === 0 && <ContractPanel id={id} meta={meta} say={say} />}
             {meta && <SurveyPanel id={id} rooms={floors(house!).flatMap(f => f.rooms)} say={say} />}
             {L > 0 && <div style={{ display: 'grid', gap: 6 }}>
               <label className="f"><span>{t('level.name')}</span><input value={snap.floor.name} maxLength={60} onChange={e => mutate(s => { s.floor.name = e.target.value; })} /></label>
@@ -330,7 +334,8 @@ export default function Editor({ id }: { id: string }){
           onClear={() => mutate(s => { delete s.tech; })} onDelete={id => mutate(s => { s.tech = (s.tech || []).filter(p => p.id !== id); })} />}
         {stage === 'docs' && <DocsPanel id={id} lang={lang} onSchedule={() => downloadSchedule(finishSchedule(house!, catalog, mc), t, cur, snap.name || 'proiect', levelName)} />}
         {stage === 'docs' && <AdvisorPanel lang={lang} units={units} currency={cur} advice={advice} rooms={snap.floor.rooms} onShow={showAdvice} />}
-        {stage === 'quote' && <BudgetPanel snap={house!} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
+        {stage === 'quote' && <BudgetWithCustom id={id} snap={house!} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
+        {stage === 'quote' && <CommercialPanel id={id} cur={cur} say={say} />}
         {stage === 'present' && !showSel && <ClientPanel id={id} cur={cur} say={say} onLinked={loadRevs} flush={flushDraft} roomNames={Object.fromEntries(floors(house!).flatMap(f => f.rooms).map(r => [r.id, r.name]))} />}
         {stage === 'present' && !showSel && <RenderGallery id={id} />}
         {stage === 'present' && !showSel && <div className="docs"><a className="docrow" href={`/p/${id}/present`} target="_blank" rel="noopener"><b>{t('stage.openPresentation')}</b><small>{t('stage.openPresentationSub')}</small></a><a className="docrow" href={`/p/${id}/board`} target="_blank" rel="noopener"><b>{t('board.open')}</b><small>{t('board.openSub')}</small></a></div>}

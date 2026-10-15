@@ -34,7 +34,7 @@ export default function ProjectCard({ id, initial, areaM2, cur, say }: { id: str
         <label className="f"><span>{t('pcard.due')}</span><input type="date" value={m.dueDate ?? ''} onChange={e => setM(x => ({ ...x, dueDate: e.target.value || undefined }))} /></label></div>
       <div className="grid2">
         <label className="f"><span>{t('pcard.fee')}</span><select value={m.fee?.kind ?? ''} onChange={e => setM(x => ({ ...x, fee: e.target.value ? { kind: e.target.value as any, amount: x.fee?.amount ?? 0 } : undefined }))}>
-          <option value="">{t('pcard.noFee')}</option>{FEE_KINDS.map(k => <option key={k} value={k}>{t(`pcard.fee.${k}`)}</option>)}</select></label>
+          <option value="">{t('pcard.noFee')}</option>{FEE_KINDS.map(k => <option key={k} value={k}>{t(k === 'percent' ? 'ctr.fee.percent' : `pcard.fee.${k}`)}</option>)}</select></label>
         {m.fee && <label className="f"><span>{t('pcard.amount', { cur })}</span><input type="number" inputMode="decimal" min={0} step="any" value={m.fee.amount} onChange={e => { const v = Number(e.target.value); if (Number.isFinite(v) && v >= 0) setM(x => ({ ...x, fee: { ...x.fee!, amount: v } })); }} /></label>}</div>
       {fee != null && <p className="prov">{t('pcard.feeEstimate', { v: formatMoney(fee, cur, lang) })}</p>}
       <label className="chk"><input type="checkbox" checked={!!m.shareOrders} onChange={e => setM(x => ({ ...x, shareOrders: e.target.checked || undefined }))} /><span>{t('pcard.shareOrders')}<small>{t('pcard.shareOrdersSub')}</small></span></label>

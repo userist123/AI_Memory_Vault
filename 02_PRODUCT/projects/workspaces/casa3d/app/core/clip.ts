@@ -65,21 +65,27 @@ export function parseProductPage(html: string, url: string, shop: string): Clipp
 }
 
 // Produsul adăugat de designer în comenzi (preluat din link sau scris de mână): validat aici, pe server.
-export interface CustomItemInput { name: string; supplier: string; url: string | null; image: string | null; sku: string | null; price: number | null; currency: string | null; qty: number; unit: string; roomId: string | null }
+export interface CustomItemInput { name: string; supplier: string; url: string | null; image: string | null; sku: string | null; price: number | null; currency: string | null; qty: number; unit: string; roomId: string | null;
+  /** ce plătește studioul (prețul de achiziție); `price` e prețul de listă / către client */
+  costPrice: number | null; leadDays: number | null; dimension: string | null }
 export class ClipError extends Error {}
 const field = (v: unknown, max: number) => typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f​-‏‪-‮⁠-⁩﻿]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max) : '';
-const optUrl = (v: unknown) => { if (v == null || v === '') return null; if (typeof v !== 'string' || v.length > 1000) throw new ClipError('Adresa nu e validă.');
-  let u: URL; try { u = new URL(v); } catch { throw new ClipError('Adresa nu e validă.'); } if (u.protocol !== 'https:' || u.username || u.password) throw new ClipError('Adresa trebuie să fie https.'); return u.href; };
+const optUrl = (v: unknown, allowHttp = false) => { if (v == null || v === '') return null; if (typeof v !== 'string' || v.length > 1000) throw new ClipError('Adresa nu e validă.');
+  let u: URL; try { u = new URL(v); } catch { throw new ClipError('Adresa nu e validă.'); } if (!(u.protocol === 'https:' || allowHttp && u.protocol === 'http:') || u.username || u.password) throw new ClipError(allowHttp ? 'Adresa trebuie să fie http sau https.' : 'Adresa trebuie să fie https.'); return u.href; };
+const money = (p: unknown, what: string) => { if (p == null || p === '') return null; if (typeof p === 'number' && Number.isFinite(p) && p >= 0 && p < 1e7) return Math.round(p * 100) / 100; throw new ClipError(what + ' nu e valid.'); };
 /** Câmpurile trimise de interfață; la modificare (partial) doar cele prezente. */
 export function checkCustomItem(x: unknown, partial = false): Partial<CustomItemInput> {
   const o = x as any; if (!o || typeof o !== 'object' || Array.isArray(o)) throw new ClipError('Produsul nu e valid.');
   const out: Partial<CustomItemInput> = {}, has = (k: string) => !partial || k in o;
   if (has('name')){ const n = field(o.name, 200); if (!n) throw new ClipError('Scrie numele produsului.'); out.name = n; }
   if (has('supplier')){ const s = field(o.supplier, 80); if (!s) throw new ClipError('Scrie furnizorul.'); out.supplier = s; }
-  if (has('url')) out.url = optUrl(o.url);
+  if (has('url')) out.url = optUrl(o.url, true);
   if (has('image')) out.image = optUrl(o.image);
   if (has('sku')) out.sku = field(o.sku, 60) || null;
-  if (has('price')){ const p = o.price; if (p == null || p === '') out.price = null; else if (typeof p === 'number' && Number.isFinite(p) && p >= 0 && p < 1e7) out.price = Math.round(p * 100) / 100; else throw new ClipError('Prețul nu e valid.'); }
+  if (has('price')) out.price = money(o.price, 'Prețul');
+  if (has('costPrice')) out.costPrice = money(o.costPrice, 'Prețul de achiziție');
+  if (has('leadDays')){ const d = o.leadDays; if (d == null || d === '') out.leadDays = null; else if (typeof d === 'number' && Number.isInteger(d) && d >= 0 && d <= 365) out.leadDays = d; else throw new ClipError('Termenul de livrare nu e valid (0–365 de zile).'); }
+  if (has('dimension')) out.dimension = field(o.dimension, 80) || null;
   if (has('currency')){ const c = o.currency; if (c == null || c === '') out.currency = null; else if (typeof c === 'string' && /^[A-Za-z]{3}$/.test(c)) out.currency = c.toUpperCase(); else throw new ClipError('Moneda nu e validă.'); }
   if (has('qty')){ const q = o.qty ?? 1; if (typeof q !== 'number' || !Number.isFinite(q) || q <= 0 || q > 100000) throw new ClipError('Cantitatea nu e validă.'); out.qty = Math.round(q * 100) / 100; }
   if (has('unit')) out.unit = field(o.unit, 12) || 'buc';

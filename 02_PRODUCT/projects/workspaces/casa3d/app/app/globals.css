@@ -591,3 +591,14 @@ input[type=file]{font-size:12px;color:var(--lead)} input[type=file]::file-select
 }
 @media (hover:none),(pointer:coarse){ .hintbar{display:none} }
 @media (max-width:600px){ .hintbar{display:none} }
+/* Contract și ofertă: A4 portret, tipărit din browser */
+@page contract{size:A4 portrait;margin:18mm}
+.contract-doc{page:contract;max-width:794px;font-size:13.5px;line-height:1.5} .contract-doc header{border-bottom:1px solid var(--ink)} .contract-doc header small{display:block;color:var(--lead);font-size:11.5px}
+.contract-doc h1{font:400 26px var(--serif);margin:12px 0 4px} .contract-doc h2{font:500 15px var(--serif);margin:18px 0 6px;border:0;padding:0;break-after:avoid} .contract-doc section{break-inside:avoid-page}
+.contract-doc ul{margin:4px 0 4px 20px;padding:0} .contract-doc p{margin:6px 0} .contract-doc table{width:100%;border-collapse:collapse;font-size:12.5px;margin:6px 0} .contract-doc th{text-align:left;font:500 10.5px var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--lead);border-bottom:1px solid var(--ink);padding:5px 8px 5px 0}
+.contract-doc td{border-bottom:1px solid var(--rule);padding:5px 8px 5px 0;vertical-align:top} .contract-doc td:last-child,.contract-doc th:last-child{text-align:right}
+.contract-notice{border:1px solid var(--accent);padding:8px 12px;font-size:12px;margin:10px 0;background:var(--surface)} .contract-sign{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:48px;break-inside:avoid} .contract-sign div{border-top:1px solid var(--ink);padding-top:6px;font-size:12px}
+.ctr-panel{border:1px solid var(--rule);background:var(--surface);padding:12px;display:grid;gap:10px} .ctr-panel h3{font:500 16px var(--serif);margin:0} .ctr-panel .chk{display:flex;gap:8px;align-items:flex-start;cursor:pointer;font-size:13px} .ctr-panel .chk input{margin-top:3px}
+.ctr-panel .hint{font-size:11.5px;color:var(--lead)} .ctr-panel .notice{font-size:11.5px;border-left:3px solid var(--accent);padding:4px 8px}
+@media (max-width:700px){ .contract-doc{font-size:13px} .contract-sign{gap:16px} }
+.clip-errors{margin:0;padding-left:18px;max-height:220px;overflow:auto;display:grid;gap:2px} .clip textarea{width:100%;font-family:var(--mono, monospace)}

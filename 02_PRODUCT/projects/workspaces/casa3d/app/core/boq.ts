@@ -158,10 +158,12 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
 
 // ---------- 3) buget ----------
 export interface BudgetLine { key: string; label: string; amount: number | null; confidence: Confidence; note?: string; sourceUrl?: string | null }
-export function computeBudget(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
+export function computeBudget(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, custom: { price: number | null; qty: number }[] = []){
   const s = budgetOf(snap), { items, labor, geometry, unknown } = computeBOQ(snap, cat, mc);
   const sum = (c: BoqCategory) => r2(items.filter(i => i.category === c).reduce((a, i) => a + (i.total ?? 0), 0));
   const cats: Record<string, number> = { furniture: sum('furniture'), finishes: sum('finishes'), lighting: sum('lighting'), appliances: sum('appliances'), sanitary: sum('sanitary'), textiles: sum('textiles') };
+  // produsele proprii (din link, CSV sau scrise de mână) intră în deviz la prețul de vânzare, ca cele din catalog
+  if (custom.length) cats.custom = r2(custom.reduce((a, i) => a + (i.price ?? 0) * i.qty, 0));
   const laborTotals = { low: r2(labor.reduce((a, l) => a + l.low, 0)), expected: r2(labor.reduce((a, l) => a + l.expected, 0)), high: r2(labor.reduce((a, l) => a + l.high, 0)) };
   const svc = (id: string) => mc.services.find(x => x.id === id);
   const extra: BudgetLine[] = [];
