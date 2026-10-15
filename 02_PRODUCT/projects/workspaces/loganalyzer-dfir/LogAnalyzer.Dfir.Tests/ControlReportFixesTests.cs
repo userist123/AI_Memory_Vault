@@ -194,7 +194,7 @@ public class ControlReportFixesTests
         Assert.Equal("Dezactivați Remote Desktop.", box.NextSteps[1]);                      // then remote access
         Assert.Equal("Criptați discul cu BitLocker.", box.NextSteps[2]);                    // then encryption
         Assert.Contains(box.NotChecked, s => s.Contains("A10") && s.Contains("Profilul nu definește foldere"));
-        Assert.Contains(box.NotChecked, s => s.Contains("cu drepturi de administrator"));
+        Assert.DoesNotContain(box.NotChecked, s => s.Contains("drepturi de administrator"));   // elevated is a fact, not a limitation
         Assert.False(string.IsNullOrWhiteSpace(box.Meaning));
 
         var printed = new List<string>();
@@ -220,7 +220,19 @@ public class ControlReportFixesTests
         var box = ControlConclusion.Build(r);
         Assert.Empty(box.Serious);
         Assert.Contains("nicio verificare neconformă", box.Verdict, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains(box.NotChecked, s => s.Contains("FĂRĂ drepturi de administrator"));
+        Assert.Contains(box.NotChecked, s => s.Contains("FĂRĂ drepturi de administrator") && s.Contains("nu au putut fi citite"));
+    }
+
+    [Fact]
+    public void Elevated_run_states_no_admin_line_in_limitations_and_lists_unreadable_checks_when_not_elevated()
+    {
+        var elevated = new ControlReport { Facts = Station(admin: true) };
+        elevated.Checks.Add(new("C02", "Conturi", "Administratori", ControlStatus.Conform, "ok", [], ""));
+        Assert.DoesNotContain(ControlConclusion.Build(elevated).NotChecked, s => s.Contains("administrator"));
+
+        var plain = new ControlReport { Facts = Station(admin: false) };
+        plain.Checks.Add(new("A07", "Audit", "Politica de audit", ControlStatus.Nedeterminat, "necitit", [], ""));
+        Assert.Contains(ControlConclusion.Build(plain).NotChecked, s => s.Contains("FĂRĂ drepturi") && s.Contains("A07"));
     }
 
     // ---- 4. A10 ------------------------------------------------------------------------------------------------------
