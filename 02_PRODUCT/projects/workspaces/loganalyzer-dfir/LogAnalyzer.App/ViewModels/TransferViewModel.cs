@@ -317,7 +317,9 @@ namespace LogAnalyzer.UI.ViewModels
             var findings = TransferChecks.Check(_register, _media.Register.Snapshot());
             // F2: the declared SHA-256 are re-verified on the medium just before the report; F3: then the PDF is signed when a key is configured.
             var pre = LogAnalyzer.Dfir.Case.PreReportCheck.ForTransfer(_lastVerification, _register.Rows);
-            TransferReportPdf.Write(dlg.FileName, _register, findings, _header, "", AppModeContext.IsAirGapped, ReportFrom, ReportTo?.Date.AddDays(1).AddTicks(-1), _lastVerification, pre);
+            if (LogAnalyzer.UI.Services.ExportAudit.Run(LogAnalyzer.UI.Services.ExportAudit.LiveCaseId, "pdf-transfers", _register.Rows.Count, dlg.FileName,
+                    () => TransferReportPdf.Write(dlg.FileName, _register, findings, _header, "", AppModeContext.IsAirGapped, ReportFrom, ReportTo?.Date.AddDays(1).AddTicks(-1), _lastVerification, pre)) is { } refused)
+            { Status = refused; return; }
             var signLine = LogAnalyzer.Dfir.Reporting.ReportSigningSettings.Load().SignIfConfigured(dlg.FileName);
             Status = $"Raportul a fost salvat: {dlg.FileName}. {pre.Line} {signLine}";
             Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });

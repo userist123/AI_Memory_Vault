@@ -42,11 +42,24 @@ public sealed class OperationAuditTests : IDisposable
     }
 
     [Fact]
-    public void Case_deleted_is_appended()
+    public void Removing_a_case_from_the_recent_list_is_appended_under_a_name_that_does_not_claim_a_deletion()
     {
         var s = Svc();
-        s.AuditOperation(null, OperationAudit.CaseDeleted, OperationAudit.CaseDeletedDetail("CASE-9", "removed_from_recent_list"));
-        Assert.Contains("case=CASE-9", Assert.Single(Entries(s), e => e.Event == "case.deleted").Detail);
+        s.AuditOperation(null, OperationAudit.CaseRemovedFromRecent, OperationAudit.CaseRemovedFromRecentDetail("CASE-9", "removed_from_recent_list"));
+        Assert.Contains("case=CASE-9", Assert.Single(Entries(s), e => e.Event == "case.removed_from_recent").Detail);
+        Assert.DoesNotContain(Entries(s), e => e.Event == "case.deleted");
+    }
+
+    [Fact]
+    public void Audit_first_export_details_carry_the_phase_and_the_written_file_hash()
+    {
+        var file = Path.Combine(_dir, "out.pdf");
+        File.WriteAllText(file, "pdf");
+        var sha = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(file)));
+        Assert.Equal("case=C1; format=pdf; items=3; phase=intent", OperationAudit.ExportIntentDetail("C1", "pdf", 3));
+        Assert.Equal($"case=C1; format=pdf; items=3; sha256={sha}; phase=written", OperationAudit.ExportWrittenDetail("C1", "pdf", 3, file));
+        Assert.Contains("phase=failed; error=IOException", OperationAudit.ExportFailedDetail("", "pdf", 3, "IOException"));
+        Assert.StartsWith("case=(fără caz)", OperationAudit.ExportIntentDetail("", "csv", 0));
     }
 
     [Fact]

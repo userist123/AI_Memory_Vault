@@ -438,10 +438,15 @@ namespace LogAnalyzer.UI.ViewModels
             if (dlg.ShowDialog() != true) return;
             var audience = (LogAnalyzer.Dfir.Reporting.ReportAudience)Math.Clamp(ReportAudienceIndex, 0, ReportAudienceLabels.Length - 1);
             // F2: Write re-verifies every evidence hash first and prints the result on page 1; F3: the PDF is then signed when a key is configured.
-            InvestigationReportPdf.Write(_result, dlg.FileName, LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified, audience: audience);
+            var result = _result;
+            if (LogAnalyzer.UI.Services.ExportAudit.Run(result.Case.Info.CaseId, "pdf", result.Findings.Count, dlg.FileName,
+                    () => InvestigationReportPdf.Write(result, dlg.FileName, LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified, audience: audience)) is { } refused)
+            {
+                ReportStatus = refused;
+                System.Windows.MessageBox.Show(refused, "Export refuzat", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return;
+            }
             _result.Case.Audit("report.pdf", $"{dlg.FileName} · {LogAnalyzer.Dfir.Reporting.ReportAudiences.Label(audience)}");
-            LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ExportUnmasked,
-                LogAnalyzer.Dfir.Auth.OperationAudit.ExportUnmaskedDetail(_result.Case.Info.CaseId, "pdf", _result.Findings.Count, dlg.FileName));
             ReportStatus = SignReport(dlg.FileName, _result.Case);
             IntegrityLine = _result.Case.LastRecheck?.Summary ?? IntegrityLine;
             Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });

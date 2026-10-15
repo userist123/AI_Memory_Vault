@@ -130,7 +130,11 @@ namespace LogAnalyzer.UI.ViewModels
             try
             {
                 var signing = CurrentSigning();
-                var a = CaseArchive.Export(_result.Case, dlg.FileName, signing: signing);
+                var caseData = _result.Case;
+                CaseArchiveResult? exported = null;
+                if (LogAnalyzer.UI.Services.ExportAudit.Run(caseData.Info.CaseId, "zip-case", _result.Findings.Count, dlg.FileName,
+                        () => exported = CaseArchive.Export(caseData, dlg.FileName, signing: signing)) is { } refused) { ReportStatus = refused; return; }
+                var a = exported!;
                 var check = CaseArchive.Verify(a.ZipPath, a.ManifestSha256, signing.TrustedPublicKeys);
                 ReportStatus = (check.Ok ? "Arhivă creată și verificată: " : "Arhivă creată, dar VERIFICAREA A EȘUAT: ") +
                                $"{a.FileCount} fișiere; SHA-256 manifest {a.ManifestSha256}; SHA-256 arhivă {a.ZipSha256} (și în {Path.GetFileName(CaseArchive.SidecarPath(a.ZipPath))}). " +
