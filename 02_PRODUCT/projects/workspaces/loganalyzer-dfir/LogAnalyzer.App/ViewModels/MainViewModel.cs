@@ -917,6 +917,11 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
+        /// <summary>Records an export that is not masked in the sealed audit: format, item count and the SHA-256 of the written file.</summary>
+        private static void AuditUnmaskedExport(string format, int items, string path) =>
+            LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ExportUnmasked,
+                LogAnalyzer.Dfir.Auth.OperationAudit.ExportUnmaskedDetail(System.IO.Path.GetFileName(LogAnalyzer.UI.Services.LiveCase.Root), format, items, path));
+
         [RelayCommand]
         private void ExportCsv()
         {
@@ -942,6 +947,7 @@ namespace LogAnalyzer.UI.ViewModels
                     }
 
                     File.WriteAllText(dialog.FileName, sb.ToString(), Encoding.UTF8);
+                    AuditUnmaskedExport("csv", allTimeline.Count(), dialog.FileName);
                     MessageBox.Show("Raportul CSV a fost exportat cu succes!", "Export Reușit", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
                 catch (Exception ex)
@@ -1600,6 +1606,7 @@ namespace LogAnalyzer.UI.ViewModels
                     }
                     
                     File.WriteAllText(dialog.FileName, sb.ToString(), Encoding.UTF8);
+                    AuditUnmaskedExport("csv", count, dialog.FileName);
                     StatusMessage = "Export CSV complet.";
                 }
             }
@@ -1689,6 +1696,7 @@ namespace LogAnalyzer.UI.ViewModels
                 try
                 {
                     StixMispExportService.ExportToStix21(dialog.FileName, DetectedIssues.ToList(), CurrentIocs.ToList(), _currentSessionHashes);
+                    AuditUnmaskedExport("json-stix", DetectedIssues.Count, dialog.FileName);
                     StatusMessage = "✅ Export STIX 2.1 generat cu succes!";
                 }
                 catch (Exception ex)
@@ -1707,6 +1715,7 @@ namespace LogAnalyzer.UI.ViewModels
                 try
                 {
                     StixMispExportService.ExportToMispJson(dialog.FileName, DetectedIssues.ToList(), CurrentIocs.ToList(), OperatorName);
+                    AuditUnmaskedExport("json-misp", DetectedIssues.Count, dialog.FileName);
                     StatusMessage = "✅ Export MISP JSON generat cu succes!";
                 }
                 catch (Exception ex)
@@ -2884,6 +2893,7 @@ namespace LogAnalyzer.UI.ViewModels
 
                 File.WriteAllText(dialog.FileName, json, Encoding.UTF8);
                 _provenanceLedger.AppendEntry("CASE_UCO_EXPORTED", dialog.FileName, "-", "Exportat pachet CASE 1.3 / UCO JSON-LD pentru probatoriu legal.");
+                AuditUnmaskedExport("json-case-uco", 0, dialog.FileName);
                 StatusMessage = "✅ Pachet CASE / UCO JSON-LD exportat cu succes!";
             }
         }
@@ -2906,6 +2916,7 @@ namespace LogAnalyzer.UI.ViewModels
                 var reg = _databaseService.GetRegistryArtifacts(50000, 0, null);
                 _timelineExportService.ExportPlasoCsv(dialog.FileName, events, new List<ForensicArtifact>(), reg);
                 _provenanceLedger.AppendEntry("SUPERTIMELINE_EXPORTED", dialog.FileName, "-", "Exportat Super-Timeline standardizat Plaso / Timesketch CSV.");
+                AuditUnmaskedExport("csv-timeline", events.Count(), dialog.FileName);
                 StatusMessage = "✅ Super-Timeline Plaso CSV exportat cu succes!";
             }
         }

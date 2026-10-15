@@ -204,6 +204,8 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (entry is null) return;
             _recent.Forget(entry.Entry.Path);
+            LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.CaseDeleted,
+                LogAnalyzer.Dfir.Auth.OperationAudit.CaseDeletedDetail(System.IO.Path.GetFileName(entry.Entry.Path.TrimEnd('\\', '/')), "removed_from_recent_list; folder_untouched"));
             ReloadRecent();
         }
 

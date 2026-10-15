@@ -200,11 +200,14 @@ namespace LogAnalyzer.UI.ViewModels
             Pull();
             try
             {
+                var before = ProfileStore.Load(path).Profile;
                 var issues = ProfileStore.Save(_profile, path, out var sha);
                 ShowIssues(issues);
                 Refresh();
                 if (issues.Any(i => i.IsError)) { Status = $"Nu s-a salvat nimic: {issues.Count(i => i.IsError)} erori (vezi lista, pe linii)."; return; }
                 Sha256 = sha;
+                if (LogAnalyzer.UI.Services.AuthApp.IsReady)
+                    LogAnalyzer.Dfir.Auth.OperationAudit.AuditProfileSave(LogAnalyzer.UI.Services.AuthApp.Service, LogAnalyzer.UI.Services.AuthApp.Session, before, _profile, Path.GetFileName(path));
                 if (string.Equals(Path.GetFullPath(path), Path.GetFullPath(_provider.Path), StringComparison.OrdinalIgnoreCase)) _provider.Replace(_profile);
                 Status = $"Profil salvat în {path} (SHA-256 {sha}). Se folosește la următoarea analiză; fiecare caz își păstrează o copie și hash-ul în custodie.";
             }

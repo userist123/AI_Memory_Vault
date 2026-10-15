@@ -23,6 +23,7 @@ namespace LogAnalyzer.UI.Services
         private static AuthService? _service;
 
         public static AuthService Service => _service ?? throw new InvalidOperationException("Authentication not initialised.");
+        public static bool IsReady => _service is not null;
         public static ICardProvider Cards { get; } = new WindowsSmartCardProvider();
         public static AuthSession? Session { get; private set; }
         public static event Action? SessionChanged;
@@ -45,6 +46,14 @@ namespace LogAnalyzer.UI.Services
             Session = s;
             OperatorIdentity.Current = s;
             SessionChanged?.Invoke();
+        }
+
+        /// <summary>Appends an operator operation to the sealed audit with the current session. A failure to write is reported to the caller as false, never hidden as success.</summary>
+        public static bool Record(string ev, string detail)
+        {
+            if (_service is null) return false;
+            try { _service.AuditOperation(Session, ev, detail); return true; }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or InvalidOperationException) { return false; }
         }
 
         public static void NotifyChanged() => SessionChanged?.Invoke();
