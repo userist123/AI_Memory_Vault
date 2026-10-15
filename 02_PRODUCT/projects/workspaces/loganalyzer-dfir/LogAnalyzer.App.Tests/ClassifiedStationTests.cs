@@ -325,4 +325,14 @@ public sealed class ClassifiedStationTests
         var ex = Record.Exception(() => ControlEvaluator.Evaluate(f));
         Assert.Null(ex);
     }
+
+    [Fact]
+    public void A15_reports_backwards_times_in_the_application_journal_and_is_at_least_to_verify()
+    {
+        var f = Station();
+        f.InvalidSelfWindows.Add("înregistrări cu oră în urmă în jurnalul aplicației: înregistrarea 7 are ora 2026-10-11 10:00 UTC, înaintea celei precedente");
+        var c = Check(f, "A15");
+        Assert.Equal(ControlStatus.DeVerificat, c.Status);
+        Assert.Contains("înregistrări cu oră în urmă în jurnalul aplicației", c.Detail);
+    }
 }

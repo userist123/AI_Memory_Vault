@@ -47,27 +47,41 @@ public static class OperationAudit
     public static readonly TimeSpan MaxHashingWindow = TimeSpan.FromHours(2);
 
     /// <summary>Hashing windows read back from the sealed audit: the ones that pass validation, and why the others were refused.</summary>
-    public sealed record HashingWindows(List<LogAnalyzer.Dfir.Analysis.SelfActivityWindow> Valid, List<string> Invalid);
+    public sealed record HashingWindows(List<LogAnalyzer.Dfir.Analysis.SelfActivityWindow> Valid, List<string> Invalid)
+    {
+        /// <summary>Records of the chain whose time goes back from the previous record by more than the tolerance (a backdated or forged entry).</summary>
+        public List<string> Regressions { get; init; } = [];
+    }
 
     /// <summary>
     /// The hashing windows of the sealed audit. A window is accepted only when the chain verifies, it names its control (run id), it lies between the
     /// "control.started" and "control.finished" records of that same control, it was recorded inside that control, it lasts at most
     /// <see cref="MaxHashingWindow"/> and has a process id and an image path. Every refused window is reported ("fereastră de calcul amprente nevalidă").
     /// </summary>
+    /// <summary>How far back a record's time may be from the previous record before it counts as a regression (clock adjustments, rounding).</summary>
+    public static readonly TimeSpan ClockTolerance = TimeSpan.FromMinutes(2);
+
+    private const string AnchorEvent = "audit.anchor";
+
     public static HashingWindows ReadControlHashing(string auditPath, bool chainValid)
     {
         var valid = new List<LogAnalyzer.Dfir.Analysis.SelfActivityWindow>();
         var invalid = new List<string>();
+        var regressions = new List<string>();
         if (!File.Exists(auditPath)) return new(valid, invalid);
-        var started = new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal);
+        var started = new Dictionary<string, (DateTimeOffset When, int Index)>(StringComparer.Ordinal);
         var finished = new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal);
-        var hashing = new List<(LogAnalyzer.Dfir.Analysis.SelfActivityWindow W, DateTimeOffset? When)>();
+        var anchors = new List<(int Index, DateTimeOffset When)>();
+        var hashing = new List<(LogAnalyzer.Dfir.Analysis.SelfActivityWindow W, DateTimeOffset? When, int Index)>();
         var unreadable = 0;
+        int index = 0, firstRegression = int.MaxValue;
+        DateTimeOffset? previous = null;
         using (var fs = new FileStream(auditPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
         using (var sr = new StreamReader(fs))
             while (sr.ReadLine() is { } line)
             {
-                if (!line.Contains("control.", StringComparison.Ordinal)) continue;
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                index++;
                 try
                 {
                     using var doc = JsonDocument.Parse(line);
@@ -80,12 +94,23 @@ public static class OperationAudit
                         else if (pr.Name.Equals("detail", StringComparison.OrdinalIgnoreCase)) detail = pr.Value.GetString() ?? "";
                         else if (pr.Name.Equals("whenUtc", StringComparison.OrdinalIgnoreCase) && pr.Value.TryGetDateTimeOffset(out var t)) when = t;
                     }
+                    // the chain's times never go back: a record earlier than its predecessor (beyond the tolerance) is backdated or forged
+                    if (when is { } w0)
+                    {
+                        if (previous is { } p0 && w0 < p0 - ClockTolerance)
+                        {
+                            regressions.Add($"înregistrări cu oră în urmă în jurnalul aplicației: înregistrarea {index} ({ev}) are ora {w0.UtcDateTime:yyyy-MM-dd HH:mm} UTC, înaintea celei precedente ({p0.UtcDateTime:yyyy-MM-dd HH:mm} UTC); ferestrele de calcul al amprentelor de după ea nu sunt folosite");
+                            firstRegression = Math.Min(firstRegression, index);
+                        }
+                        previous = previous is { } pm && pm > w0 ? pm : w0;
+                    }
                     var run = RunOf(detail);
-                    if (ev == ControlStarted && run.Length > 0 && when is { } ws) started[run] = ws;
+                    if (ev == AnchorEvent && when is { } wa) anchors.Add((index, wa));
+                    else if (ev == ControlStarted && run.Length > 0 && when is { } ws) started[run] = (ws, index);
                     else if (ev == ControlFinished && run.Length > 0 && when is { } wf) finished[run] = wf;
                     else if (ev == ControlHashing)
                     {
-                        if (TryParseControlHashing(detail, out var w)) hashing.Add((w, when));
+                        if (TryParseControlHashing(detail, out var w)) hashing.Add((w, when, index));
                         else unreadable++;
                     }
                 }
@@ -93,21 +118,25 @@ public static class OperationAudit
             }
         const string Bad = "fereastră de calcul amprente nevalidă";
         for (var k = 0; k < unreadable; k++) invalid.Add($"{Bad}: înregistrarea din jurnalul de audit nu poate fi citită.");
-        foreach (var (w, when) in hashing)
+        foreach (var (w, when, at) in hashing)
         {
             var id = w.RunId.Length > 0 ? w.RunId : "fără identificator";
+            var s0 = started.TryGetValue(w.RunId, out var st) ? st : default;
+            var anchorBefore = anchors.Where(a => a.Index < s0.Index).Select(a => (DateTimeOffset?)a.When).LastOrDefault();
             string? why =
                 !chainValid ? "jurnalul de audit nu se verifică (lanț rupt sau sigiliu nevalid)"
+                : at > firstRegression || s0.Index > firstRegression ? "este după o înregistrare cu oră în urmă în jurnal"
                 : w.RunId.Length == 0 ? "nu numește controlul căruia îi aparține"
-                : !started.TryGetValue(w.RunId, out var s0) || !finished.TryGetValue(w.RunId, out var f0) ? "controlul ei nu are început și sfârșit înregistrate"
+                : s0.Index == 0 || !finished.TryGetValue(w.RunId, out var f0) ? "controlul ei nu are început și sfârșit înregistrate"
+                : anchorBefore is { } ab && s0.When < ab ? $"controlul ei începe ({s0.When.UtcDateTime:yyyy-MM-dd HH:mm} UTC) înaintea ancorării care îl precede în jurnal ({ab.UtcDateTime:yyyy-MM-dd HH:mm} UTC)"
                 : w.EndUtc < w.StartUtc || w.EndUtc - w.StartUtc > MaxHashingWindow ? $"durează mai mult de {MaxHashingWindow.TotalHours:0} ore sau se termină înainte să înceapă"
-                : w.StartUtc < s0 || w.EndUtc > f0 || when is not { } rec || rec < s0 || rec > f0 ? "nu este în interiorul controlului ei"
+                : w.StartUtc < s0.When || w.EndUtc > f0 || when is not { } rec || rec < s0.When || rec > f0 ? "nu este în interiorul controlului ei"
                 : w.ProcessId <= 0 || w.ImagePath.Trim().Length == 0 ? "nu are procesul sau programul aplicației"
                 : null;
             if (why is null) valid.Add(w);
             else invalid.Add($"{Bad}: {why} (control {id}, {w.StartUtc.UtcDateTime:yyyy-MM-dd HH:mm}–{w.EndUtc.UtcDateTime:HH:mm} UTC); nu ascunde nicio înregistrare.");
         }
-        return new(valid, invalid);
+        return new(valid, invalid) { Regressions = regressions };
     }
 
     private static string RunOf(string detail)
