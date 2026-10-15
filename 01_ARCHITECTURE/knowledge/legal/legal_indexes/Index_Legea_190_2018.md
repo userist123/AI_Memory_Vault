@@ -3,6 +3,12 @@ id: "idx-leg-ro-legea-190-2018"
 type: legal_index
 lifecycle: REVIEW
 verification: verified_source
+provenance:
+  source_type: ai
+  source_ref: "http://legislatie.just.ro/Public/DetaliiDocument/203170"
+  original_path: "01_ARCHITECTURE/knowledge/legal/primary/Legea_190_2018.md"
+  redaction: none
+  provenance_status: complete
 instruction_trust: NONE
 category: normative_index
 jurisdiction: "România (RO)"

@@ -1,0 +1,1428 @@
+{
+ "tree": "prov",
+ "recall": 24,
+ "n": 130,
+ "short_pages": 4,
+ "empty_pages": 1,
+ "legal_notes_on_pages": 149,
+ "rows": [
+  {
+   "id": "R3-001",
+   "hit": false,
+   "page": [
+    "vault-memory-mesh-architecture-0001",
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "vault-master-index-0001",
+    "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+    "123fe8df-2490-44f0-b695-143c3d5a997f"
+   ]
+  },
+  {
+   "id": "R3-002",
+   "hit": false,
+   "page": [
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "64fd38ce-3a9c-40af-8348-1021ffcb0fca",
+    "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39"
+   ]
+  },
+  {
+   "id": "R3-003",
+   "hit": false,
+   "page": [
+    "leg-ro-hg-585-2002",
+    "leg-eu-gdpr-2016-679",
+    "leg-eu-aiact-2024-1689",
+    "knw-benchmarks-2026-0001",
+    "leg-eu-mica-2023-1114"
+   ]
+  },
+  {
+   "id": "R3-004",
+   "hit": false,
+   "page": [
+    "leg-eu-gdpr-2016-679",
+    "leg-eu-mica-2023-1114",
+    "leg-eu-aiact-2024-1689",
+    "leg-ro-legea-190-2018",
+    "leg-eu-dora-2022-2554"
+   ]
+  },
+  {
+   "id": "R3-005",
+   "hit": false,
+   "page": [
+    "07d27579-d273-4b81-b2b7-25ad820f2535",
+    "vault-memory-mesh-architecture-0001",
+    "0f6d608d-2737-49b4-9818-a695ab43eb61",
+    "0f9affc9-8fac-415c-b059-31a23a284926",
+    "0479ee1a-44b8-41b8-b608-0c232f2f9a31"
+   ]
+  },
+  {
+   "id": "R3-006",
+   "hit": false,
+   "page": [
+    "f10029dc-e28e-4710-bf3a-b2b48bfb84dc",
+    "7cd936b5-69d3-4800-bc58-7b098761fda1",
+    "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+    "reg-retrieval-hypotheses-0001",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840009"
+   ]
+  },
+  {
+   "id": "R3-007",
+   "hit": false,
+   "page": [
+    "vault-memory-mesh-architecture-0001",
+    "cat-skills-251-master",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+    "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+    "moc-imports-0010"
+   ]
+  },
+  {
+   "id": "R3-008",
+   "hit": false,
+   "page": [
+    "7cd936b5-69d3-4800-bc58-7b098761fda1",
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "123fe8df-2490-44f0-b695-143c3d5a997f",
+    "0d0d9f30-fa32-416f-95e3-0149006dae79",
+    "1328c5fb-3316-4c02-ae53-511eb3d3f96b"
+   ]
+  },
+  {
+   "id": "R3-009",
+   "hit": false,
+   "page": [
+    "cat-skills-251-master",
+    "knw-retrieval-bottleneck-p0-0001",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+    "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+   ]
+  },
+  {
+   "id": "R3-010",
+   "hit": false,
+   "page": [
+    "7cd936b5-69d3-4800-bc58-7b098761fda1",
+    "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "123fe8df-2490-44f0-b695-143c3d5a997f",
+    "proc-enterprise-integration-0001"
+   ]
+  },
+  {
+   "id": "R3-011",
+   "hit": true,
+   "page": [
+    "knw-benchmarks-2026-0001",
+    "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+    "735c6b3e-bf68-49db-8746-95cc2660ead4",
+    "1ee292c4-d86b-5927-8242-3bdf0124ab9e",
+    "7435da46-a22e-4a36-b80f-60dcbd18a5df"
+   ]
+  },
+  {
+   "id": "R3-012",
+   "hit": true,
+   "page": [
+    "knw-agent-memory-trace-protocol-0001",
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "0d0d9f30-fa32-416f-95e3-0149006dae79",
+    "vault-memory-mesh-architecture-0001",
+    "1328c5fb-3316-4c02-ae53-511eb3d3f96b"
+   ]
+  },
+  {
+   "id": "R3-013",
+   "hit": false,
+   "page": [
+    "knw-retrieval-bottleneck-p0-0001",
+    "7cd936b5-69d3-4800-bc58-7b098761fda1",
+    "slot-16-consolidation",
+    "07d27579-d273-4b81-b2b7-25ad820f2535",
+    "0479ee1a-44b8-41b8-b608-0c232f2f9a31"
+   ]
+  },
+  {
+   "id": "R3-014",
+   "hit": false,
+   "page": [
+    "leg-eu-mica-2023-1114",
+    "leg-ro-hg-585-2002",
+    "leg-eu-dora-2022-2554",
+    "leg-eu-gdpr-2016-679",
+    "leg-eu-aiact-2024-1689"
+   ]
+  },
+  {
+   "id": "R3-015",
+   "hit": false,
+   "page": [
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+    "0d0d9f30-fa32-416f-95e3-0149006dae79",
+    "07d27579-d273-4b81-b2b7-25ad820f2535",
+    "0479ee1a-44b8-41b8-b608-0c232f2f9a31"
+   ]
+  },
+  {
+   "id": "R3-016",
+   "hit": false,
+   "page": [
+    "idx-leg-eu-gdpr-2016-679",
+    "leg-eu-dora-2022-2554",
+    "leg-ro-hg-585-2002",
+    "leg-eu-gdpr-2016-679",
+    "leg-eu-aiact-2024-1689"
+   ]
+  },
+  {
+   "id": "R3-017",
+   "hit": false,
+   "page": [
+    "leg-eu-mica-2023-1114",
+    "leg-eu-gdpr-2016-679",
+    "leg-eu-dora-2022-2554",
+    "leg-eu-aiact-2024-1689",
+    "leg-ro-legea-190-2018"
+   ]
+  },
+  {
+   "id": "R3-018",
+   "hit": false,
+   "page": [
+    "vault-master-index-0001",
+    "bca30cd9-2208-4c0a-b274-6ec893699666",
+    "c1a01101-7291-49fa-9481-22904c10b003",
+    "123fe8df-2490-44f0-b695-143c3d5a997f",
+    "0d0d9f30-fa32-416f-95e3-0149006dae79"
+   ]
+  },
+  {
+   "id": "R3-019",
+   "hit": false,
+   "page": [
+    "7c22c390-3ae4-43d7-b8b4-ff1ddf5ceecf",
+    "2c1ed306-faa7-48a7-bf28-95917ef959fe",
+    "71a2ef74-8d48-411d-b686-d44746f0515c",
+    "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6",
+    "f3b8cf50-06fb-4c1d-9c4e-ff56e60e762d"
+   ]
+  },
+  {
+   "id": "R3-020",
+   "hit": false,
+   "page": [
+    "123fe8df-2490-44f0-b695-143c3d5a997f",
+    "0056507e-53b9-4d12-9610-a5be259403f5",
+    "0479ee1a-44b8-41b8-b608-0c232f2f9a31",
+    "04953748-4b63-421b-8e02-6cce24e52234",
+    "04e86b85-4346-4c5f-a495-c5a43231b61e"
+   ]
+  },
+  {
+   "id": "R3-021",
+   "hit": false,
+   "page": [
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "0d0d9f30-fa32-416f-95e3-0149006dae79",
+    "bca30cd9-2208-4c0a-b274-6ec893699666",
+    "0056507e-53b9-4d12-9610-a5be259403f5",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+   ]
+  },
+  {
+   "id": "R3-022",
+   "hit": false,
+   "page": [
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+    "moc-council-0014",
+    "7cd936b5-69d3-4800-bc58-7b098761fda1",
+    "0be22e07-e4d2-4fba-90fe-6d8dd0796aed"
+   ]
+  },
+  {
+   "id": "R3-023",
+   "hit": false,
+   "page": [
+    "leg-ro-hg-585-2002",
+    "2c1ed306-faa7-48a7-bf28-95917ef959fe",
+    "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+    "07d27579-d273-4b81-b2b7-25ad820f2535",
+    "10664ba8-39ac-4498-8823-f47014a73efc"
+   ]
+  },
+  {
+   "id": "R3-024",
+   "hit": false,
+   "page": [
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "0d0d9f30-fa32-416f-95e3-0149006dae79",
+    "29fe72cf-57bb-4a5e-a912-3eb8f945e05f",
+    "7fd8ae5b-eabd-4b54-a8fb-63e6daae9557",
+    "7eb6b761-da1e-4e93-9f7d-6bccbbd48686"
+   ]
+  },
+  {
+   "id": "R3-025",
+   "hit": false,
+   "page": [
+    "b0fb6f37-1678-4ae7-8a12-6523925c0ef6",
+    "a203e08f-2057-44af-bc27-948abcd47425",
+    "ef084612-2d02-481e-a7d3-6cbe4608e10d",
+    "d4785be1-7a70-4e45-b7ba-214e460501d4"
+   ]
+  },
+  {
+   "id": "R3-026",
+   "hit": false,
+   "page": [
+    "c1a01101-7291-49fa-9481-22904c10d090",
+    "13ce9272-3ee4-4b34-9e49-cbdfb26c5ce4",
+    "04953748-4b63-421b-8e02-6cce24e52234",
+    "11c08e5f-0ef5-4a36-b273-2743f258b6d1",
+    "1daf0b1a-d8e4-4867-8e5e-fe76ce7e37fe"
+   ]
+  },
+  {
+   "id": "R3-027",
+   "hit": false,
+   "page": [
+    "60a9210f-eb13-4b64-9347-605ce4792ae2",
+    "cat-skills-251-master",
+    "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+    "123fe8df-2490-44f0-b695-143c3d5a997f",
+    "1ee292c4-d86b-5927-8242-3bdf0124ab9e"
+   ]
+  },
+  {
+   "id": "R3-028",
+   "hit": false,
+   "page": [
+    "123fe8df-2490-44f0-b695-143c3d5a997f",
+    "0056507e-53b9-4d12-9610-a5be259403f5",
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+    "0479ee1a-44b8-41b8-b608-0c232f2f9a31"
+   ]
+  },
+  {
+   "id": "R3-029",
+   "hit": false,
+   "page": [
+    "vault-memory-mesh-architecture-0001",
+    "aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e",
+    "1ee292c4-d86b-5927-8242-3bdf0124ab9e",
+    "11111111-1111-4111-a111-111111111111",
+    "67e1cb1d-3e5a-45be-b265-67bb126a2cd3"
+   ]
+  },
+  {
+   "id": "R3-030",
+   "hit": false,
+   "page": [
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "cat-skills-251-master",
+    "moc-master-brain-0001",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+    "vault-memory-mesh-architecture-0001"
+   ]
+  },
+  {
+   "id": "R3-031",
+   "hit": true,
+   "page": [
+    "knw-retrieval-bottleneck-p0-0001",
+    "a81adbaa-68bf-4d8a-a18a-26af82a3d375",
+    "0be22e07-e4d2-4fba-90fe-6d8dd0796aed",
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "0d0d9f30-fa32-416f-95e3-0149006dae79"
+   ]
+  },
+  {
+   "id": "R3-032",
+   "hit": false,
+   "page": []
+  },
+  {
+   "id": "R3-033",
+   "hit": false,
+   "page": [
+    "f82194d2-31a8-4c91-a83d-e42109ab7d12",
+    "bca30cd9-2208-4c0a-b274-6ec893699666",
+    "vault-master-index-0001",
+    "ae0206df-b0cb-4810-b2a2-cea462600561",
+    "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39"
+   ]
+  },
+  {
+   "id": "R3-034",
+   "hit": false,
+   "page": [
+    "7cd936b5-69d3-4800-bc58-7b098761fda1",
+    "vault-memory-mesh-architecture-0001",
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "knw-retrieval-bottleneck-p0-0001",
+    "moc-master-brain-0001"
+   ]
+  },
+  {
+   "id": "R3-035",
+   "hit": false,
+   "page": [
+    "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+    "c1a01101-7291-49fa-9481-22904c10c001",
+    "16a52553-1ef8-46d0-9ce9-4d3e1bb946a0",
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "0d0d9f30-fa32-416f-95e3-0149006dae79"
+   ]
+  },
+  {
+   "id": "R3-036",
+   "hit": true,
+   "page": [
+    "67e1cb1d-3e5a-45be-b265-67bb126a2cd3",
+    "aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e",
+    "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc",
+    "cat-skills-251-master",
+    "b5b8ed33-da3a-42cc-8e94-4dde6b1edb6d"
+   ]
+  },
+  {
+   "id": "R3-037",
+   "hit": false,
+   "page": [
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "cat-skills-251-master",
+    "proc-enterprise-integration-0001",
+    "vault-master-index-0001",
+    "123fe8df-2490-44f0-b695-143c3d5a997f"
+   ]
+  },
+  {
+   "id": "R3-038",
+   "hit": true,
+   "page": [
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "cat-skills-251-master",
+    "7cd936b5-69d3-4800-bc58-7b098761fda1",
+    "knw-benchmarks-2026-0001",
+    "0056507e-53b9-4d12-9610-a5be259403f5"
+   ]
+  },
+  {
+   "id": "R3-039",
+   "hit": false,
+   "page": [
+    "vault-architecture-map-0001",
+    "vault-master-index-0001",
+    "bca30cd9-2208-4c0a-b274-6ec893699666",
+    "e4eca2b5-20e0-4082-aeb3-588d598f10c9",
+    "1ee292c4-d86b-5927-8242-3bdf0124ab9e"
+   ]
+  },
+  {
+   "id": "R3-040",
+   "hit": true,
+   "page": [
+    "finscope-project-core",
+    "vault-master-index-0001",
+    "moc-projects-0012",
+    "b4e88f21-7291-49fa-9481-22904c10a006",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840009"
+   ]
+  },
+  {
+   "id": "R3-041",
+   "hit": false,
+   "page": [
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "5d7b785f-221c-48ba-9e7e-557998c9fefa",
+    "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+    "17e7ea30-a054-4b96-b33e-a42a05115eb8",
+    "4e17d26a-74a6-408a-b0f4-069dfd20ac95"
+   ]
+  },
+  {
+   "id": "R3-042",
+   "hit": false,
+   "page": [
+    "123fe8df-2490-44f0-b695-143c3d5a997f",
+    "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+    "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "0056507e-53b9-4d12-9610-a5be259403f5"
+   ]
+  },
+  {
+   "id": "R3-043",
+   "hit": false,
+   "page": [
+    "proc-enterprise-integration-0001",
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "4e17d26a-74a6-408a-b0f4-069dfd20ac95",
+    "1ee292c4-d86b-5927-8242-3bdf0124ab9e",
+    "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6"
+   ]
+  },
+  {
+   "id": "R3-044",
+   "hit": false,
+   "page": [
+    "0d0d9f30-fa32-416f-95e3-0149006dae79",
+    "cat-skills-251-master",
+    "4c5884fe-f24e-426e-a012-1414dbddae23",
+    "proc-enterprise-integration-0001",
+    "b492a8e1-5c02-4b21-9e12-c7f8a31e9202"
+   ]
+  },
+  {
+   "id": "R3-045",
+   "hit": false,
+   "page": [
+    "c1a01101-7291-49fa-9481-22904c10d010",
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "proc-enterprise-integration-0001",
+    "vault-master-index-0001",
+    "123fe8df-2490-44f0-b695-143c3d5a997f"
+   ]
+  },
+  {
+   "id": "R3-046",
+   "hit": false,
+   "page": [
+    "78884547-f37a-4fab-811d-5d20e63626ce",
+    "knw-agent-memory-trace-protocol-0001",
+    "c1a01101-7291-49fa-9481-22904c10b002",
+    "123fe8df-2490-44f0-b695-143c3d5a997f",
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8"
+   ]
+  },
+  {
+   "id": "R3-047",
+   "hit": false,
+   "page": [
+    "cfca79df-d8f8-4720-bd8f-7f7ea7116b47",
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "knw-agent-memory-trace-protocol-0001",
+    "0056507e-53b9-4d12-9610-a5be259403f5",
+    "0d0d9f30-fa32-416f-95e3-0149006dae79"
+   ]
+  },
+  {
+   "id": "R3-048",
+   "hit": false,
+   "page": [
+    "slot-05-state",
+    "0d68bba6-662b-4633-b065-bf1666889af9",
+    "moc-master-brain-0001",
+    "proc-enterprise-integration-0001",
+    "1a25d3da-57e2-4902-ab35-da8b476d7e7b"
+   ]
+  },
+  {
+   "id": "R3-049",
+   "hit": true,
+   "page": [
+    "0056507e-53b9-4d12-9610-a5be259403f5",
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+    "b777e588-a5ac-47da-83f2-260c7e476a69",
+    "cat-skills-251-master"
+   ]
+  },
+  {
+   "id": "R3-050",
+   "hit": true,
+   "page": [
+    "7cd936b5-69d3-4800-bc58-7b098761fda1",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+    "20c99bfa-82b9-40bb-9c1d-c3027976f409",
+    "0056507e-53b9-4d12-9610-a5be259403f5",
+    "0479ee1a-44b8-41b8-b608-0c232f2f9a31"
+   ]
+  },
+  {
+   "id": "R3-051",
+   "hit": true,
+   "page": [
+    "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+    "7435da46-a22e-4a36-b80f-60dcbd18a5df",
+    "9a16789d-0d21-44da-8df3-a83a100f6160",
+    "7eb6b761-da1e-4e93-9f7d-6bccbbd48686",
+    "cat-skills-251-master"
+   ]
+  },
+  {
+   "id": "R3-052",
+   "hit": true,
+   "page": [
+    "b492a8e1-5c02-4b21-9e12-c7f8a31e9202",
+    "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+    "7cd936b5-69d3-4800-bc58-7b098761fda1"
+   ]
+  },
+  {
+   "id": "R3-053",
+   "hit": false,
+   "page": [
+    "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+    "7b6aae13-83e6-43ec-80df-7c8a202251fd",
+    "b492a8e1-5c02-4b21-9e12-c7f8a31e9202",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+   ]
+  },
+  {
+   "id": "R3-054",
+   "hit": true,
+   "page": [
+    "0479ee1a-44b8-41b8-b608-0c232f2f9a31",
+    "slot-16-consolidation",
+    "23b3793b-fef3-5536-bfc1-da42d6c8a700",
+    "07d27579-d273-4b81-b2b7-25ad820f2535",
+    "2c1ed306-faa7-48a7-bf28-95917ef959fe"
+   ]
+  },
+  {
+   "id": "R3-055",
+   "hit": true,
+   "page": [
+    "37a81ae3-71a3-5bb4-b8e9-351f4edd2450",
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "0056507e-53b9-4d12-9610-a5be259403f5",
+    "0f9affc9-8fac-415c-b059-31a23a284926",
+    "0d0d9f30-fa32-416f-95e3-0149006dae79"
+   ]
+  },
+  {
+   "id": "R3-056",
+   "hit": true,
+   "page": [
+    "123fe8df-2490-44f0-b695-143c3d5a997f",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+    "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+    "2ecc82e6-a508-4db9-9d62-60b9062da602",
+    "67a36e52-a645-57b9-a04e-fb4b1b08fac5"
+   ]
+  },
+  {
+   "id": "R3-057",
+   "hit": false,
+   "page": [
+    "moc-master-brain-0001",
+    "proc-enterprise-integration-0001",
+    "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+    "23b3793b-fef3-5536-bfc1-da42d6c8a700",
+    "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8"
+   ]
+  },
+  {
+   "id": "R3-058",
+   "hit": false,
+   "page": [
+    "7cd936b5-69d3-4800-bc58-7b098761fda1",
+    "vault-memory-mesh-architecture-0001",
+    "aa6cb048-4c56-5d2e-a4d5-10d1cf385d3b",
+    "66559b50-540d-5014-8cad-9d0ea451fc90",
+    "knw-benchmarks-2026-0001"
+   ]
+  },
+  {
+   "id": "R3-059",
+   "hit": false,
+   "page": [
+    "caad870f-00e9-4786-821a-5511ac7ec8e4",
+    "07d27579-d273-4b81-b2b7-25ad820f2535",
+    "f3977411-5918-430f-8099-c4eb254b20db",
+    "d2219383-13a8-4fd8-a409-2da2c4ee1a7a",
+    "d6f5ed57-4f9c-42bd-8868-e7771774291b"
+   ]
+  },
+  {
+   "id": "R3-060",
+   "hit": true,
+   "page": [
+    "b48091d9-4ede-47cf-ada1-6907ff50a363",
+    "9e6da9df-7fca-4cf5-99bf-03fbdee15170",
+    "ac3d2e8a-f55f-404b-ba7d-5157f39ae873",
+    "2ecc82e6-a508-4db9-9d62-60b9062da602",
+    "3a70589a-5778-4a51-a822-e0fcd5f0effa"
+   ]
+  },
+  {
+   "id": "R3-061",
+   "hit": false,
+   "page": [
+    "leg-eu-aiact-2024-1689",
+    "leg-ro-hg-585-2002",
+    "leg-eu-gdpr-2016-679",
+    "idx-leg-eu-gdpr-2016-679",
+    "leg-ro-legea-190-2018"
+   ]
+  },
+  {
+   "id": "R3-062",
+   "hit": false,
+   "page": [
+    "b4e88f21-7291-49fa-9481-22904c10a005",
+    "4e17d26a-74a6-408a-b0f4-069dfd20ac95",
+    "2ab69457-fa0e-4e1e-a79c-cb1fd0d0205d",
+    "a37e77d0-8147-4835-a6d3-4443befdc747",
+    "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6"
+   ]
+  },
+  {
+   "id": "R3-063",
+   "hit": false,
+   "page": [
+    "leg-ro-mapn-m172-2021",
+    "leg-ro-hg-585-2002",
+    "leg-eu-gdpr-2016-679",
+    "idx-leg-eu-gdpr-2016-679",
+    "leg-ro-legea-190-2018"
+   ]
+  },
+  {
+   "id": "R3-064",
+   "hit": false,
+   "page": [
+    "leg-eu-gdpr-2016-679",
+    "leg-eu-aiact-2024-1689",
+    "leg-eu-mica-2023-1114",
+    "leg-eu-dora-2022-2554",
+    "4e17d26a-74a6-408a-b0f4-069dfd20ac95"
+   ]
+  },
+  {
+   "id": "R3-065",
+   "hit": false,
+   "page": [
+    "finscope-project-core",
+    "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+    "c1a01101-7291-49fa-9481-22904c10b001",
+    "atm-m172-art51-evidenta-electronica",
+    "leg-eu-gdpr-2016-679"
+   ]
+  },
+  {
+   "id": "R3-066",
+   "hit": false,
+   "page": [
+    "4e17d26a-74a6-408a-b0f4-069dfd20ac95",
+    "leg-eu-aiact-2024-1689",
+    "leg-eu-dora-2022-2554",
+    "leg-eu-gdpr-2016-679",
+    "leg-eu-mica-2023-1114"
+   ]
+  },
+  {
+   "id": "R3-067",
+   "hit": true,
+   "page": [
+    "leg-ro-legea-190-2018",
+    "c1a01101-7291-49fa-9481-22904c10c001",
+    "leg-eu-aiact-2024-1689",
+    "leg-ro-hg-585-2002",
+    "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+   ]
+  },
+  {
+   "id": "R3-068",
+   "hit": false,
+   "page": [
+    "3d063fab-d6d1-411b-89b2-d31222f4b937",
+    "leg-ro-legea-190-2018",
+    "leg-eu-gdpr-2016-679",
+    "4c5884fe-f24e-426e-a012-1414dbddae23",
+    "leg-eu-dora-2022-2554"
+   ]
+  },
+  {
+   "id": "R3-069",
+   "hit": false,
+   "page": [
+    "b4e88f21-7291-49fa-9481-22904c10a005",
+    "b4e88f21-7291-49fa-9481-22904c10a006",
+    "b4e88f21-7291-49fa-9481-22904c10a001",
+    "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+    "c1a01101-7291-49fa-9481-22904c10c001"
+   ]
+  },
+  {
+   "id": "R3-070",
+   "hit": false,
+   "page": [
+    "c1a01101-7291-49fa-9481-22904c10b002",
+    "proc-stats-reporting-0001",
+    "c1a01101-7291-49fa-9481-22904c10b003",
+    "78884547-f37a-4fab-811d-5d20e63626ce",
+    "c1a01101-7291-49fa-9481-22904c10d060"
+   ]
+  },
+  {
+   "id": "R3-071",
+   "hit": false,
+   "page": [
+    "leg-ro-mapn-m172-2021",
+    "leg-ro-hg-585-2002",
+    "leg-eu-dora-2022-2554",
+    "idx-leg-eu-gdpr-2016-679",
+    "leg-eu-gdpr-2016-679"
+   ]
+  },
+  {
+   "id": "R3-072",
+   "hit": false,
+   "page": [
+    "b492d001-c841-4e12-b5e1-8890471b8991",
+    "leg-ro-legea-190-2018",
+    "idx-leg-eu-gdpr-2016-679",
+    "leg-eu-gdpr-2016-679",
+    "leg-ro-hg-585-2002"
+   ]
+  },
+  {
+   "id": "R3-073",
+   "hit": false,
+   "page": [
+    "leg-eu-gdpr-2016-679",
+    "leg-eu-mica-2023-1114",
+    "leg-ro-hg-585-2002",
+    "leg-ro-legea-190-2018",
+    "leg-eu-aiact-2024-1689"
+   ]
+  },
+  {
+   "id": "R3-074",
+   "hit": false,
+   "page": [
+    "leg-ro-legea-190-2018",
+    "leg-ro-hg-585-2002",
+    "leg-eu-dora-2022-2554",
+    "leg-ro-mapn-m172-2021",
+    "leg-eu-gdpr-2016-679"
+   ]
+  },
+  {
+   "id": "R3-075",
+   "hit": false,
+   "page": [
+    "2ab69457-fa0e-4e1e-a79c-cb1fd0d0205d",
+    "a37e77d0-8147-4835-a6d3-4443befdc747",
+    "ffbe3499-74ef-424e-ab09-0b9558cfa2d0",
+    "b4e88f21-7291-49fa-9481-22904c10a005",
+    "7899b393-6d19-448e-a629-e3c3a64c5aec"
+   ]
+  },
+  {
+   "id": "R3-076",
+   "hit": false,
+   "page": [
+    "leg-eu-mica-2023-1114",
+    "leg-eu-aiact-2024-1689",
+    "leg-eu-dora-2022-2554",
+    "idx-leg-eu-gdpr-2016-679",
+    "leg-eu-gdpr-2016-679"
+   ]
+  },
+  {
+   "id": "R3-077",
+   "hit": false,
+   "page": [
+    "leg-eu-dora-2022-2554",
+    "leg-eu-gdpr-2016-679",
+    "leg-eu-mica-2023-1114",
+    "idx-leg-eu-gdpr-2016-679",
+    "leg-eu-aiact-2024-1689"
+   ]
+  },
+  {
+   "id": "R3-078",
+   "hit": false,
+   "page": [
+    "leg-ro-hg-585-2002",
+    "leg-eu-gdpr-2016-679",
+    "leg-eu-dora-2022-2554",
+    "leg-ro-legea-190-2018",
+    "leg-eu-mica-2023-1114"
+   ]
+  },
+  {
+   "id": "R3-079",
+   "hit": false,
+   "page": [
+    "atm-gdpr-art32-securitate",
+    "f82194d2-31a8-4c91-a83d-e42109ab7d12",
+    "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+    "moc-master-brain-0001",
+    "ae0206df-b0cb-4810-b2a2-cea462600561"
+   ]
+  },
+  {
+   "id": "R3-080",
+   "hit": false,
+   "page": [
+    "c1a01101-7291-49fa-9481-22904c10c001",
+    "leg-eu-dora-2022-2554",
+    "leg-eu-mica-2023-1114",
+    "leg-eu-gdpr-2016-679",
+    "leg-eu-aiact-2024-1689"
+   ]
+  },
+  {
+   "id": "R3-081",
+   "hit": false,
+   "page": [
+    "leg-eu-aiact-2024-1689",
+    "leg-eu-dora-2022-2554",
+    "leg-ro-hg-585-2002",
+    "leg-ro-legea-190-2018",
+    "idx-leg-eu-gdpr-2016-679"
+   ]
+  },
+  {
+   "id": "R3-082",
+   "hit": false,
+   "page": [
+    "leg-eu-aiact-2024-1689",
+    "leg-eu-gdpr-2016-679",
+    "leg-eu-mica-2023-1114",
+    "idx-leg-eu-gdpr-2016-679",
+    "leg-eu-dora-2022-2554"
+   ]
+  },
+  {
+   "id": "R3-083",
+   "hit": false,
+   "page": [
+    "finscope-project-core",
+    "b4e88f21-7291-49fa-9481-22904c10a006",
+    "moc-projects-0012",
+    "leg-ro-legea-190-2018",
+    "leg-ro-hg-585-2002"
+   ]
+  },
+  {
+   "id": "R3-084",
+   "hit": false,
+   "page": [
+    "b492d001-c841-4e12-b5e1-8890471b8991",
+    "leg-ro-legea-190-2018",
+    "leg-eu-aiact-2024-1689",
+    "leg-eu-mica-2023-1114",
+    "leg-eu-dora-2022-2554"
+   ]
+  },
+  {
+   "id": "R3-085",
+   "hit": false,
+   "page": [
+    "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+    "c1a01101-7291-49fa-9481-22904c10c001",
+    "idx-leg-eu-gdpr-2016-679",
+    "leg-ro-legea-190-2018",
+    "leg-ro-mapn-m172-2021"
+   ]
+  },
+  {
+   "id": "R3-086",
+   "hit": false,
+   "page": [
+    "leg-eu-dora-2022-2554",
+    "idx-leg-eu-gdpr-2016-679",
+    "leg-eu-aiact-2024-1689",
+    "leg-eu-gdpr-2016-679",
+    "leg-ro-legea-190-2018"
+   ]
+  },
+  {
+   "id": "R3-087",
+   "hit": true,
+   "page": [
+    "proc-browser-ai-0001",
+    "leg-ro-hg-585-2002",
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+    "0056507e-53b9-4d12-9610-a5be259403f5"
+   ]
+  },
+  {
+   "id": "R3-088",
+   "hit": false,
+   "page": [
+    "b0fb6f37-1678-4ae7-8a12-6523925c0ef6",
+    "a203e08f-2057-44af-bc27-948abcd47425",
+    "d4785be1-7a70-4e45-b7ba-214e460501d4",
+    "ef084612-2d02-481e-a7d3-6cbe4608e10d"
+   ]
+  },
+  {
+   "id": "R3-089",
+   "hit": false,
+   "page": [
+    "proc-brain-arch-0001",
+    "slot-06-procedures",
+    "moc-master-brain-0001",
+    "44dabf4a-e6b7-48f6-b8d3-3d271b93ea0e",
+    "c64da878-30cf-421d-aff0-abcf43053ca6"
+   ]
+  },
+  {
+   "id": "R3-090",
+   "hit": false,
+   "page": [
+    "0be22e07-e4d2-4fba-90fe-6d8dd0796aed",
+    "0056507e-53b9-4d12-9610-a5be259403f5",
+    "0479ee1a-44b8-41b8-b608-0c232f2f9a31",
+    "04953748-4b63-421b-8e02-6cce24e52234",
+    "04e86b85-4346-4c5f-a495-c5a43231b61e"
+   ]
+  },
+  {
+   "id": "R3-091",
+   "hit": false,
+   "page": [
+    "leg-ro-hg-585-2002",
+    "leg-ro-legea-190-2018",
+    "leg-eu-aiact-2024-1689",
+    "leg-eu-dora-2022-2554",
+    "leg-eu-gdpr-2016-679"
+   ]
+  },
+  {
+   "id": "R3-092",
+   "hit": false,
+   "page": [
+    "leg-eu-dora-2022-2554",
+    "leg-eu-gdpr-2016-679",
+    "leg-eu-aiact-2024-1689",
+    "leg-eu-mica-2023-1114",
+    "idx-leg-eu-gdpr-2016-679"
+   ]
+  },
+  {
+   "id": "R3-093",
+   "hit": false,
+   "page": [
+    "leg-eu-mica-2023-1114",
+    "leg-eu-dora-2022-2554",
+    "leg-eu-gdpr-2016-679",
+    "leg-ro-hg-585-2002",
+    "leg-ro-legea-190-2018"
+   ]
+  },
+  {
+   "id": "R3-094",
+   "hit": true,
+   "page": [
+    "c1a01101-7291-49fa-9481-22904c10d003",
+    "leg-ro-mapn-m172-2021",
+    "vault-memory-mesh-architecture-0001",
+    "0479ee1a-44b8-41b8-b608-0c232f2f9a31",
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8"
+   ]
+  },
+  {
+   "id": "R3-095",
+   "hit": false,
+   "page": [
+    "0056507e-53b9-4d12-9610-a5be259403f5",
+    "0479ee1a-44b8-41b8-b608-0c232f2f9a31",
+    "04953748-4b63-421b-8e02-6cce24e52234",
+    "04e86b85-4346-4c5f-a495-c5a43231b61e",
+    "07d27579-d273-4b81-b2b7-25ad820f2535"
+   ]
+  },
+  {
+   "id": "R3-096",
+   "hit": false,
+   "page": [
+    "leg-ro-hg-585-2002",
+    "idx-leg-eu-gdpr-2016-679",
+    "leg-eu-dora-2022-2554",
+    "leg-eu-gdpr-2016-679",
+    "leg-ro-legea-190-2018"
+   ]
+  },
+  {
+   "id": "R3-097",
+   "hit": false,
+   "page": [
+    "f82194d2-31a8-4c91-a83d-e42109ab7d12",
+    "e613709a-3909-421a-9720-782fb73df150",
+    "4b5d72d1-dc4a-43db-b7eb-595faeef85e4",
+    "67e1cb1d-3e5a-45be-b265-67bb126a2cd3",
+    "aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e"
+   ]
+  },
+  {
+   "id": "R3-098",
+   "hit": false,
+   "page": [
+    "leg-ro-hg-585-2002",
+    "leg-ro-legea-190-2018",
+    "leg-eu-mica-2023-1114",
+    "leg-ro-mapn-m172-2021",
+    "leg-eu-aiact-2024-1689"
+   ]
+  },
+  {
+   "id": "R3-099",
+   "hit": false,
+   "page": [
+    "4e17d26a-74a6-408a-b0f4-069dfd20ac95",
+    "leg-eu-dora-2022-2554",
+    "leg-eu-gdpr-2016-679",
+    "bca30cd9-2208-4c0a-b274-6ec893699666",
+    "idx-leg-eu-gdpr-2016-679"
+   ]
+  },
+  {
+   "id": "R3-100",
+   "hit": false,
+   "page": [
+    "leg-eu-mica-2023-1114",
+    "leg-ro-legea-190-2018",
+    "leg-ro-hg-585-2002",
+    "leg-eu-dora-2022-2554",
+    "leg-eu-gdpr-2016-679"
+   ]
+  },
+  {
+   "id": "R3-101",
+   "hit": false,
+   "page": [
+    "cce3323b-2701-4907-ba4c-e5854fcd2bf8",
+    "slot-08-constraints",
+    "slot-06-procedures",
+    "07d27579-d273-4b81-b2b7-25ad820f2535",
+    "slot-05-state"
+   ]
+  },
+  {
+   "id": "R3-102",
+   "hit": false,
+   "page": [
+    "vault-memory-mesh-architecture-0001",
+    "53f27d1c-b47a-5c1e-b963-dcdf3fddd8cb",
+    "5fa452dd-c98b-581d-8ee9-24450ae24390",
+    "cat-skills-251-master",
+    "7cd936b5-69d3-4800-bc58-7b098761fda1"
+   ]
+  },
+  {
+   "id": "R3-103",
+   "hit": false,
+   "page": [
+    "f82194d2-31a8-4c91-a83d-e42109ab7d12",
+    "vault-architecture-map-0001",
+    "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6",
+    "29fe72cf-57bb-4a5e-a912-3eb8f945e05f",
+    "07d27579-d273-4b81-b2b7-25ad820f2535"
+   ]
+  },
+  {
+   "id": "R3-104",
+   "hit": false,
+   "page": [
+    "1328c5fb-3316-4c02-ae53-511eb3d3f96b",
+    "0d0d9f30-fa32-416f-95e3-0149006dae79",
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "cat-skills-251-master",
+    "123fe8df-2490-44f0-b695-143c3d5a997f"
+   ]
+  },
+  {
+   "id": "R3-105",
+   "hit": false,
+   "page": [
+    "slot-16-consolidation",
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "452cc1f0-e03b-42ea-80d3-5f00e944ed8f",
+    "0479ee1a-44b8-41b8-b608-0c232f2f9a31",
+    "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39"
+   ]
+  },
+  {
+   "id": "R3-106",
+   "hit": false,
+   "page": [
+    "7cd936b5-69d3-4800-bc58-7b098761fda1",
+    "bca30cd9-2208-4c0a-b274-6ec893699666",
+    "knw-retrieval-bottleneck-p0-0001",
+    "vault-architecture-map-0001",
+    "29fe72cf-57bb-4a5e-a912-3eb8f945e05f"
+   ]
+  },
+  {
+   "id": "R3-107",
+   "hit": true,
+   "page": [
+    "b2888875-8546-4d42-b262-2c7f779e3cc9",
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "ca5fbf68-d9df-40b0-bbd2-d95f18d00a31",
+    "slot-16-consolidation",
+    "8a12b84d-ec27-44bd-a16c-5a4125b49742"
+   ]
+  },
+  {
+   "id": "R3-108",
+   "hit": false,
+   "page": [
+    "slot-05-state",
+    "adca33fa-2bdc-48ee-bf9b-dbe70c26d20b",
+    "7cd936b5-69d3-4800-bc58-7b098761fda1",
+    "cat-skills-251-master",
+    "knw-retrieval-bottleneck-p0-0001"
+   ]
+  },
+  {
+   "id": "R3-109",
+   "hit": true,
+   "page": [
+    "e045ded5-01fd-4a28-8f85-203ebae670de",
+    "07d27579-d273-4b81-b2b7-25ad820f2535",
+    "caad870f-00e9-4786-821a-5511ac7ec8e4",
+    "slot-15-retrieval",
+    "d6f5ed57-4f9c-42bd-8868-e7771774291b"
+   ]
+  },
+  {
+   "id": "R3-110",
+   "hit": false,
+   "page": [
+    "1a25d3da-57e2-4902-ab35-da8b476d7e7b",
+    "cat-skills-251-master",
+    "moc-imports-0010",
+    "0d0d9f30-fa32-416f-95e3-0149006dae79",
+    "21072af8-9792-4faa-9b9c-f15da7618a37"
+   ]
+  },
+  {
+   "id": "R3-111",
+   "hit": false,
+   "page": [
+    "59280499-cba1-5dd3-b7d8-b33b69d5765e",
+    "67a36e52-a645-57b9-a04e-fb4b1b08fac5",
+    "53f27d1c-b47a-5c1e-b963-dcdf3fddd8cb",
+    "7cd936b5-69d3-4800-bc58-7b098761fda1",
+    "0d0d9f30-fa32-416f-95e3-0149006dae79"
+   ]
+  },
+  {
+   "id": "R3-112",
+   "hit": false,
+   "page": [
+    "7cd936b5-69d3-4800-bc58-7b098761fda1",
+    "knw-retrieval-bottleneck-p0-0001",
+    "moc-master-brain-0001",
+    "53f27d1c-b47a-5c1e-b963-dcdf3fddd8cb",
+    "07d27579-d273-4b81-b2b7-25ad820f2535"
+   ]
+  },
+  {
+   "id": "R3-113",
+   "hit": true,
+   "page": [
+    "2a299363-8d18-48bd-bfa6-fb495686eeba",
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "0d0d9f30-fa32-416f-95e3-0149006dae79",
+    "0056507e-53b9-4d12-9610-a5be259403f5",
+    "0479ee1a-44b8-41b8-b608-0c232f2f9a31"
+   ]
+  },
+  {
+   "id": "R3-114",
+   "hit": false,
+   "page": [
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "0056507e-53b9-4d12-9610-a5be259403f5",
+    "123fe8df-2490-44f0-b695-143c3d5a997f",
+    "10664ba8-39ac-4498-8823-f47014a73efc",
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8"
+   ]
+  },
+  {
+   "id": "R3-115",
+   "hit": false,
+   "page": [
+    "e6bfe28e-9d91-5dd3-a18c-4af282af627b",
+    "53f27d1c-b47a-5c1e-b963-dcdf3fddd8cb",
+    "c34f9935-2cfb-5e86-b39a-8cc5205e140d",
+    "37a81ae3-71a3-5bb4-b8e9-351f4edd2450",
+    "66559b50-540d-5014-8cad-9d0ea451fc90"
+   ]
+  },
+  {
+   "id": "R3-116",
+   "hit": false,
+   "page": [
+    "67a36e52-a645-57b9-a04e-fb4b1b08fac5",
+    "46cfee29-6e38-5dea-b4be-ec220daadf60",
+    "e6bfe28e-9d91-5dd3-a18c-4af282af627b",
+    "bd0e0105-38d9-5373-a176-59f1f454f32f",
+    "c34f9935-2cfb-5e86-b39a-8cc5205e140d"
+   ]
+  },
+  {
+   "id": "R3-117",
+   "hit": true,
+   "page": [
+    "7cd936b5-69d3-4800-bc58-7b098761fda1",
+    "cat-skills-251-master",
+    "11e9fe55-6924-4231-9635-c5629bff6ae3",
+    "moc-master-brain-0001",
+    "23b3793b-fef3-5536-bfc1-da42d6c8a700"
+   ]
+  },
+  {
+   "id": "R3-118",
+   "hit": false,
+   "page": [
+    "7cd936b5-69d3-4800-bc58-7b098761fda1",
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "0d0d9f30-fa32-416f-95e3-0149006dae79",
+    "0056507e-53b9-4d12-9610-a5be259403f5",
+    "1ce095e1-a7b9-48d2-af31-dbb6589db71f"
+   ]
+  },
+  {
+   "id": "R3-119",
+   "hit": false,
+   "page": [
+    "23b3793b-fef3-5536-bfc1-da42d6c8a700",
+    "67a36e52-a645-57b9-a04e-fb4b1b08fac5",
+    "8091d22f-ca07-53d1-aa10-7b2f5c82e861",
+    "slot-16-consolidation",
+    "37a81ae3-71a3-5bb4-b8e9-351f4edd2450"
+   ]
+  },
+  {
+   "id": "R3-120",
+   "hit": false,
+   "page": [
+    "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6"
+   ]
+  },
+  {
+   "id": "R3-121",
+   "hit": false,
+   "page": [
+    "67a36e52-a645-57b9-a04e-fb4b1b08fac5",
+    "46cfee29-6e38-5dea-b4be-ec220daadf60",
+    "e6bfe28e-9d91-5dd3-a18c-4af282af627b",
+    "bd0e0105-38d9-5373-a176-59f1f454f32f",
+    "c34f9935-2cfb-5e86-b39a-8cc5205e140d"
+   ]
+  },
+  {
+   "id": "R3-122",
+   "hit": false,
+   "page": [
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "0d0d9f30-fa32-416f-95e3-0149006dae79",
+    "1328c5fb-3316-4c02-ae53-511eb3d3f96b",
+    "29fe72cf-57bb-4a5e-a912-3eb8f945e05f",
+    "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39"
+   ]
+  },
+  {
+   "id": "R3-123",
+   "hit": false,
+   "page": [
+    "66559b50-540d-5014-8cad-9d0ea451fc90",
+    "c34f9935-2cfb-5e86-b39a-8cc5205e140d",
+    "7cd936b5-69d3-4800-bc58-7b098761fda1",
+    "37a81ae3-71a3-5bb4-b8e9-351f4edd2450",
+    "59280499-cba1-5dd3-b7d8-b33b69d5765e"
+   ]
+  },
+  {
+   "id": "R3-124",
+   "hit": false,
+   "page": [
+    "knw-agent-memory-trace-protocol-0001",
+    "knw-memory-usage-audit-principles-0001",
+    "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "23b3793b-fef3-5536-bfc1-da42d6c8a700"
+   ]
+  },
+  {
+   "id": "R3-125",
+   "hit": false,
+   "page": [
+    "1a25d3da-57e2-4902-ab35-da8b476d7e7b",
+    "0056507e-53b9-4d12-9610-a5be259403f5",
+    "123fe8df-2490-44f0-b695-143c3d5a997f",
+    "0479ee1a-44b8-41b8-b608-0c232f2f9a31",
+    "04953748-4b63-421b-8e02-6cce24e52234"
+   ]
+  },
+  {
+   "id": "R3-126",
+   "hit": true,
+   "page": [
+    "10664ba8-39ac-4498-8823-f47014a73efc",
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "07d27579-d273-4b81-b2b7-25ad820f2535",
+    "29fe72cf-57bb-4a5e-a912-3eb8f945e05f",
+    "0479ee1a-44b8-41b8-b608-0c232f2f9a31"
+   ]
+  },
+  {
+   "id": "R3-127",
+   "hit": false,
+   "page": [
+    "4e17d26a-74a6-408a-b0f4-069dfd20ac95",
+    "d4785be1-7a70-4e45-b7ba-214e460501d4",
+    "0d68bba6-662b-4633-b065-bf1666889af9",
+    "knw-temporal-memory-p2-0001",
+    "2338e60b-8d54-47ff-9e90-c4291377151a"
+   ]
+  },
+  {
+   "id": "R3-128",
+   "hit": false,
+   "page": [
+    "1a25d3da-57e2-4902-ab35-da8b476d7e7b",
+    "229a36c7-2275-52e9-a6a1-3a613db845c0",
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "0d0d9f30-fa32-416f-95e3-0149006dae79",
+    "1ee292c4-d86b-5927-8242-3bdf0124ab9e"
+   ]
+  },
+  {
+   "id": "R3-129",
+   "hit": true,
+   "page": [
+    "0d68bba6-662b-4633-b065-bf1666889af9",
+    "slot-05-state",
+    "07d27579-d273-4b81-b2b7-25ad820f2535",
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "10664ba8-39ac-4498-8823-f47014a73efc"
+   ]
+  },
+  {
+   "id": "R3-130",
+   "hit": true,
+   "page": [
+    "slot-05-state",
+    "1a25d3da-57e2-4902-ab35-da8b476d7e7b",
+    "123fe8df-2490-44f0-b695-143c3d5a997f",
+    "0d68bba6-662b-4633-b065-bf1666889af9",
+    "0056507e-53b9-4d12-9610-a5be259403f5"
+   ]
+  }
+ ]
+}

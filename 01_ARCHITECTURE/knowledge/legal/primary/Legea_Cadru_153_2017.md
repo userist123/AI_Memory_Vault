@@ -3,6 +3,13 @@ id: "leg-ro-legea-153-2017"
 type: legal_source
 lifecycle: REVIEW
 verification: verified_source
+provenance:
+  source_type: official
+  source_ref: "http://legislatie.just.ro/Public/DetaliiDocument/190445"
+  source_date: "2017-06-28"
+  original_path: "06_INBOX/Legi/Lege-cadru_nr153-2017_actualiz_iulie2019.pdf"
+  redaction: none
+  provenance_status: incomplete
 instruction_trust: NONE
 category: normative_external_data
 jurisdiction: "România (RO)"

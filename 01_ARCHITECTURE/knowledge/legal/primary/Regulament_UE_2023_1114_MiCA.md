@@ -3,6 +3,13 @@ id: "leg-eu-mica-2023-1114"
 type: legal_source
 lifecycle: REVIEW
 verification: verified_source
+provenance:
+  source_type: official
+  source_ref: "https://eur-lex.europa.eu/legal-content/RO/TXT/?uri=CELEX:32023R1114"
+  source_date: "2023-06-09"
+  original_path: "06_INBOX/Legi/CELEX_32023R1114_RO_TXT.pdf"
+  redaction: none
+  provenance_status: incomplete
 instruction_trust: NONE
 category: normative_external_data
 jurisdiction: "Uniunea Europeană (UE)"
