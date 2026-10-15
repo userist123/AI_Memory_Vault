@@ -18,6 +18,9 @@ public static partial class Wp14Rules
     /// </summary>
     internal static (AirGapAuthorization Auth, string Basis) Authorize(Ctx c, IEnumerable<string> destinations, IReadOnlyList<string> channelKeywords)
     {
+        // Owner directive 2026-10-16: on a Standalone station no network, no wireless link and no transfer channel is ever authorised; the profile cannot approve one.
+        if (c.Standalone)
+            return (AirGapAuthorization.NotAuthorized, StandaloneNoApproval);
         var p = c.Profile;
         if (p is null || (p.NetworkDestinations.Count == 0 && p.TransferChannels.Count == 0))
             return (AirGapAuthorization.Undefined, "profilul de proceduri nu definește destinații autorizate sau canale de transfer: conectivitate observată, necesită explicație (decizia 19)");
@@ -48,16 +51,48 @@ public static partial class Wp14Rules
 
     private static Severity NetSeverity(Ctx c, AirGapAuthorization auth, Severity classified) => auth == AirGapAuthorization.Authorized ? Severity.Info : Sev(c, classified);
 
+    internal const string StandaloneNoApproval = "postura Standalone: nicio rețea și nicio legătură fără fir nu este autorizată pe o stație autonomă după instalarea aplicației; profilul de proceduri nu poate aproba conectări (directiva proprietarului 2026-10-16)";
+
+    /// <summary>On a Standalone station with a known installation date: the records before it (history, DE VERIFICAT) and the rest (NECONFORM). Otherwise everything is "after".</summary>
+    private static (List<TimelineEvent> Before, List<TimelineEvent> After) SplitAtInstall(Ctx c, List<TimelineEvent> items)
+    {
+        if (!c.Standalone || c.AppInstalledUtc is not { } inst) return ([], items);
+        var before = items.Where(e => T(e) is { } t && t < inst).ToList();
+        return (before, items.Where(e => !before.Contains(e)).ToList());
+    }
+
+    /// <summary>The sentence a Standalone NECONFORM finding states about the installation date.</summary>
+    private static string StandaloneVerdict(Ctx c) => c.AppInstalledUtc is { } inst
+        ? $" NECONFORM: în postura Standalone stația nu trebuie conectată la nicio rețea după instalarea aplicației ({Time(inst)}; {c.AppInstallBasis})."
+        : $" NECONFORM: în postura Standalone stația nu trebuie conectată la nicio rețea; data instalării aplicației nu este cunoscută ({c.AppInstallBasis}), deci nicio conectare nu poate fi pusă înaintea ei.";
+
+    /// <summary>Standalone records from before the installation of the application: station history, DE VERIFICAT, never NECONFORM.</summary>
+    private static Finding NetworkHistory(Ctx c, string kind, string key, List<TimelineEvent> items, string subcategory, string channel, string extra = "")
+    {
+        var inst = c.AppInstalledUtc!.Value;
+        var desc = $"DE VERIFICAT (istoric): {kind} „{key}” a fost observată de {LogAnalyzer.Dfir.Language.RoText.Times(items.Count)} ({Time(T(items[0]))} – {Time(T(items[^1]))}), " +
+                   $"înainte de instalarea aplicației ({Time(inst)}; {c.AppInstallBasis}). Este istoricul stației dinaintea punerii ei în funcțiune ca stație Standalone, nu o încălcare a posturii; " +
+                   "verificați că stația a fost pregătită (reinstalată sau curățată) înainte de izolare și că nimic din acea perioadă nu a rămas pe ea." + extra;
+        return Net(c, "AIRGAP-NETWORK-HISTORY", $"Istoric dinaintea instalării aplicației (DE VERIFICAT): {kind} „{key}”", Sev(c, Severity.Low), subcategory, channel,
+            AirGapAuthorization.Undefined, "conectare dinaintea instalării aplicației: istoric al stației, de verificat (nu se judecă după postura Standalone)",
+            $"{kind} „{key}” înainte de instalarea aplicației ({items.Count}×)", items, $"{kind} „{key}”", key, desc,
+            $"Înregistrări de conectare pe o stație Standalone cu ora înaintea primului rând al jurnalului de audit al aplicației ({Time(inst)}).", []);
+    }
+
     private static Finding Net(Ctx c, string ruleId, string title, Severity sev, string subcategory, string channel, AirGapAuthorization auth, string basis, string observed, List<TimelineEvent> evs,
-        string obj, string destination, string description, string reason, string[] alternatives)
+        string obj, string destination, string description, string reason, string[] alternatives, NetEvidence? extra = null)
     {
         var times = evs.Select(T).Where(t => t is not null).Select(t => t!.Value).OrderBy(t => t).ToList();
+        var refs = evs.Take(20).Select(e => Ref(e, $"{e.EventId} {e.Summary}".Trim())).ToList();
+        if (extra is not null)
+            refs.AddRange(extra.Refs.Where(e => !evs.Contains(e)).Distinct().Take(15).Select(e => Ref(e, $"{(e.Source.StartsWith("EventLog:", StringComparison.Ordinal) ? e.Source[9..] + " " + e.EventId : e.Source)}: {e.Summary}".Trim())));
         return new Finding
         {
             FindingId = c.NextId(), RuleId = ruleId, Title = title, Severity = sev, Category = Category, Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1599",
             FirstSeenUtc = times.Count > 0 ? times[0] : null, LastSeenUtc = times.Count > 0 ? times[^1] : null, User = WhoOf(evs) == UnknownWho ? "" : WhoOf(evs),
             Description = description, ClassificationReason = reason, SemanticType = SemanticType.Observation,
-            SupportingEvidence = evs.Take(20).Select(e => Ref(e, $"{e.EventId} {e.Summary}".Trim())).ToList(),
+            SupportingEvidence = refs,
+            MissingEvidence = extra is null ? [] : [.. extra.Missing, .. RuleContracts.For(ruleId)?.MissingEvidence ?? []],
             AlternativeExplanations = [.. alternatives],
             AirGap = new AirGapDetail(subcategory, channel, auth, basis, observed, times.Count > 0 ? times[0] : null, WhoOf(evs), obj, c.CaseClassText,
                 "nu se aplică (nu este un mediu registrat)", UnknownDirection, destination, evs.Take(5).Select(e => $"{e.Source} {e.EventId} {e.Locator}".Trim()).ToList()),
@@ -85,21 +120,29 @@ public static partial class Wp14Rules
         var downs = c.Events.Where(e => Ev(e, "Microsoft-Windows-NetworkProfile/Operational", 10001)).ToList();
         foreach (var g in ups)
         {
-            var items = g.OrderBy(e => T(e)).ToList();
-            var (auth, basis) = Authorize(c, [g.Key], c.Data.Network.NetworkKeywords);
-            double minutes = 0; int paired = 0;
-            foreach (var u in items)
+            var (before, items) = SplitAtInstall(c, g.OrderBy(e => T(e)).ToList());
+            if (before.Count > 0)
             {
-                var d = downs.Where(x => F(x, "Name").Equals(g.Key, StringComparison.OrdinalIgnoreCase) && T(x) > T(u)).OrderBy(x => T(x)).FirstOrDefault();
-                if (d is not null && T(u) is { } a && T(d) is { } b) { minutes += (b - a).TotalMinutes; paired++; }
+                var hist = GatherNetworkEvidence(c, g.Key, before);
+                var h = NetworkHistory(c, "rețeaua", g.Key, before, "NETWORK INTERFACE", "NetworkProfile/Operational 10000", " " + string.Join(" ", hist.Known.Where(k => !k.StartsWith("Aprobare:", StringComparison.Ordinal))));
+                h.MissingEvidence.AddRange(hist.Missing.Where(m => !h.MissingEvidence.Contains(m)));
+                o.Add(h);
             }
-            var dur = paired > 0 ? $" Durată observată: {Math.Round(minutes)} min ({paired} conectări cu deconectare înregistrată)." : " Deconectarea nu a fost găsită în sursele colectate: durata este necunoscută.";
-            var desc = $"Profilul de rețea „{g.Key}” a fost conectat de {LogAnalyzer.Dfir.Language.RoText.Times(items.Count)} ({Time(T(items[0]))} – {Time(T(items[^1]))}) pe un sistem {(c.Scope.Network == NetworkCategory.StandalonePc ? "autonom" : "air-gapped")}." + dur +
-                       (auth == AirGapAuthorization.Authorized ? $" Autorizat: {basis}." : $" Conectivitate observată, necesită explicație: {basis}.") + " Evenimentul arată conectarea, nu ce s-a transferat.";
-            o.Add(Net(c, "AIRGAP-NETWORK-CONNECTED", $"Conectare la rețea pe un sistem izolat: {g.Key}", NetSeverity(c, auth, Severity.High), "NETWORK INTERFACE", "NetworkProfile/Operational 10000", auth, basis,
+            if (items.Count == 0) continue;
+            var (auth, basis) = Authorize(c, [g.Key], c.Data.Network.NetworkKeywords);
+            var ev = GatherNetworkEvidence(c, g.Key, items);
+            var where = c.Standalone ? "o stație Standalone (autonomă)" : "un sistem air-gapped";
+            var desc = $"Profilul de rețea „{g.Key}” a fost conectat de {LogAnalyzer.Dfir.Language.RoText.Times(items.Count)} ({Time(T(items[0]))} – {Time(T(items[^1]))}) pe {where}." +
+                       (c.Standalone ? StandaloneVerdict(c) : auth == AirGapAuthorization.Authorized ? $" Autorizat: {basis}." : $" Conectivitate observată, necesită explicație: {basis}.") +
+                       (ev.Known.Count > 0 ? " " + string.Join(" ", ev.Known) : "");
+            o.Add(Net(c, "AIRGAP-NETWORK-CONNECTED", c.Standalone ? $"NECONFORM: conectare la rețea pe o stație Standalone: {g.Key}" : $"Conectare la rețea pe un sistem izolat: {g.Key}",
+                NetSeverity(c, auth, Severity.High), "NETWORK INTERFACE", "NetworkProfile/Operational 10000", auth, basis,
                 $"conectare la profilul de rețea „{g.Key}” ({items.Count}×)", items, $"rețea „{g.Key}”", g.Key, desc,
-                "Evenimente NetworkProfile 10000 (rețea conectată) pe un sistem a cărui categorie de rețea din domeniul cazului este air-gapped sau autonom.",
-                ["Sistemul poate fi legat temporar la o rețea aprobată de procedură (mentenanță, transfer autorizat) neînregistrată în profil.", "Evenimentul 10000 apare și pentru rețele fără acces în afară (rețea locală, adaptor virtual)."]));
+                "Evenimente NetworkProfile 10000 (rețea conectată) pe un sistem a cărui categorie de rețea din domeniul cazului este air-gapped sau autonom" +
+                (c.Standalone ? "; în postura Standalone orice conectare după instalarea aplicației este NECONFORMĂ." : "."),
+                // The alternatives below are about an approved network; on a Standalone station no network is approved, so they do not apply there.
+                c.Standalone ? [] : ["Sistemul poate fi legat temporar la o rețea aprobată de procedură (mentenanță, transfer autorizat) neînregistrată în profil.", "Evenimentul 10000 apare și pentru rețele fără acces în afară (rețea locală, adaptor virtual)."],
+                ev));
         }
     }
 
@@ -112,16 +155,19 @@ public static partial class Wp14Rules
         var groups = all.Where(e => Ev(e, Ch, 8001, 11001, 11005)).GroupBy(e => F(e, "SSID", "Name"), StringComparer.OrdinalIgnoreCase).Where(g => g.Key.Length > 0);
         foreach (var g in groups)
         {
-            var items = g.OrderBy(e => T(e)).ToList();
+            var (before, items) = SplitAtInstall(c, g.OrderBy(e => T(e)).ToList());
+            if (before.Count > 0) o.Add(NetworkHistory(c, "rețeaua Wi-Fi", g.Key, before, "WIRELESS", "WLAN-AutoConfig/Operational " + string.Join("/", before.Select(e => e.EventId).Distinct())));
+            if (items.Count == 0) continue;
             var attempts = all.Count(e => Ev(e, Ch, 11000, 11002, 11003, 11004) && F(e, "SSID", "Name").Equals(g.Key, StringComparison.OrdinalIgnoreCase));
             var (auth, basis) = Authorize(c, [g.Key], c.Data.Network.WifiKeywords);
-            var desc = $"Asociere Wi-Fi la „{g.Key}” ({string.Join(", ", items.Select(e => e.EventId).Distinct())}; {LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "eveniment", "evenimente")}, {attempts} încercări/etape asociate) {Time(T(items[0]))} – {Time(T(items[^1]))} pe un sistem " +
-                       (c.Scope.Network == NetworkCategory.StandalonePc ? "autonom" : "air-gapped") + "." +
-                       (auth == AirGapAuthorization.Authorized ? $" Autorizat: {basis}." : $" Conectivitate observată, necesită explicație: {basis}.") + " Evenimentul arată asocierea la rețeaua radio, nu traficul.";
-            o.Add(Net(c, "AIRGAP-WIFI-ASSOCIATED", $"Asociere Wi-Fi pe un sistem izolat: {g.Key}", NetSeverity(c, auth, Severity.High), "WIRELESS", "WLAN-AutoConfig/Operational " + string.Join("/", items.Select(e => e.EventId).Distinct()), auth, basis,
+            var desc = $"Asociere Wi-Fi la „{g.Key}” ({string.Join(", ", items.Select(e => e.EventId).Distinct())}; {LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "eveniment", "evenimente")}, {attempts} încercări/etape asociate) {Time(T(items[0]))} – {Time(T(items[^1]))} pe " +
+                       (c.Standalone ? "o stație Standalone (autonomă)" : "un sistem air-gapped") + "." +
+                       (c.Standalone ? StandaloneVerdict(c) : auth == AirGapAuthorization.Authorized ? $" Autorizat: {basis}." : $" Conectivitate observată, necesită explicație: {basis}.") + " Evenimentul arată asocierea la rețeaua radio, nu traficul.";
+            o.Add(Net(c, "AIRGAP-WIFI-ASSOCIATED", c.Standalone ? $"NECONFORM: asociere Wi-Fi pe o stație Standalone: {g.Key}" : $"Asociere Wi-Fi pe un sistem izolat: {g.Key}", NetSeverity(c, auth, Severity.High), "WIRELESS", "WLAN-AutoConfig/Operational " + string.Join("/", items.Select(e => e.EventId).Distinct()), auth, basis,
                 $"asociere la SSID „{g.Key}” ({items.Count}×)", items, $"SSID „{g.Key}”", g.Key, desc,
                 "Evenimente WLAN-AutoConfig 8001 (conectat) sau 11001/11005 (asociere / securitate reușite) pe un sistem air-gapped sau autonom. Încercările eșuate singure nu sunt raportate ca asociere.",
-                ["Adaptorul Wi-Fi poate fi folosit legitim într-o procedură aprobată (de exemplu rețea dedicată).", "SSID-ul poate aparține unei rețele locale fără ieșire în afară."]));
+                // Both alternatives assume an approved or harmless network; on a Standalone station no wireless link is allowed at all.
+                c.Standalone ? [] : ["Adaptorul Wi-Fi poate fi folosit legitim într-o procedură aprobată (de exemplu rețea dedicată).", "SSID-ul poate aparține unei rețele locale fără ieșire în afară."]));
         }
     }
 
@@ -176,21 +222,25 @@ public static partial class Wp14Rules
         var evs = c.Events.Where(e => InChannel(e, "Dhcp-Client", DhcpIds)).OrderBy(e => T(e)).ToList();
         foreach (var g in evs.GroupBy(e => F(e, "InterfaceGuid", "InterfaceName", "Interface"), StringComparer.OrdinalIgnoreCase))
         {
-            var items = g.ToList();
+            var (before, items) = SplitAtInstall(c, g.ToList());
+            if (before.Count > 0) o.Add(NetworkHistory(c, "activitatea DHCP pe interfața", g.Key.Length > 0 ? g.Key : "nespecificată", before, "NETWORK INTERFACE", "Dhcp-Client/Operational " + string.Join("/", before.Select(e => e.EventId).Distinct())));
+            if (items.Count == 0) continue;
             var ips = items.Select(e => F(e, "IPAddress", "IpAddress", "Address", "LeasedAddress")).Where(x => x.Length > 0).Distinct().ToList();
             var servers = items.Select(e => F(e, "DhcpServer", "ServerAddress", "DhcpServerAddress", "Server")).Where(x => x.Length > 0).Distinct().ToList();
             var gws = items.Select(e => F(e, "Gateway", "DefaultGateway", "Router")).Where(x => x.Length > 0).Distinct().ToList();
             var (auth, basis) = Authorize(c, [.. ips, .. servers, .. gws], c.Data.Network.NetworkKeywords.Where(_ => false).ToList());
-            var desc = $"Clientul DHCP a înregistrat {LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "eveniment", "evenimente")} ({string.Join(", ", items.Select(e => e.EventId).Distinct())}) {Time(T(items[0]))} – {Time(T(items[^1]))} pe un sistem " +
-                       (c.Scope.Network == NetworkCategory.StandalonePc ? "autonom" : "air-gapped") + ". " +
+            var desc = $"Clientul DHCP a înregistrat {LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "eveniment", "evenimente")} ({string.Join(", ", items.Select(e => e.EventId).Distinct())}) {Time(T(items[0]))} – {Time(T(items[^1]))} pe " +
+                       (c.Standalone ? "o stație Standalone (autonomă)" : "un sistem air-gapped") + ". " +
                        (ips.Count > 0 ? $"Adresă: {string.Join(", ", ips)}" : "detalii: adresa nu este în eveniment") + (servers.Count > 0 ? $"; server DHCP: {string.Join(", ", servers)}" : "") + (gws.Count > 0 ? $"; gateway: {string.Join(", ", gws)}" : "") +
                        ". Semnificația exactă a ID-ului depinde de versiunea Windows; evenimentul arată activitatea clientului DHCP, nu un transfer de date." +
-                       (auth == AirGapAuthorization.Authorized ? $" Autorizat: {basis}." : $" Conectivitate observată, necesită explicație: {basis}.");
-            o.Add(Net(c, "AIRGAP-DHCP-LEASE", $"Activitate DHCP pe un sistem izolat{(ips.Count > 0 ? ": " + string.Join(", ", ips) : "")}", NetSeverity(c, auth, Severity.Medium), "NETWORK INTERFACE", "Dhcp-Client/Operational " + string.Join("/", items.Select(e => e.EventId).Distinct()),
+                       (c.Standalone ? StandaloneVerdict(c) : auth == AirGapAuthorization.Authorized ? $" Autorizat: {basis}." : $" Conectivitate observată, necesită explicație: {basis}.");
+            o.Add(Net(c, "AIRGAP-DHCP-LEASE", (c.Standalone ? "NECONFORM: activitate DHCP pe o stație Standalone" : "Activitate DHCP pe un sistem izolat") + (ips.Count > 0 ? ": " + string.Join(", ", ips) : ""), NetSeverity(c, auth, Severity.Medium), "NETWORK INTERFACE", "Dhcp-Client/Operational " + string.Join("/", items.Select(e => e.EventId).Distinct()),
                 auth, basis, $"{LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "eveniment", "evenimente")} DHCP-Client{(ips.Count > 0 ? ", adresă " + string.Join(", ", ips) : "")}", items,
                 ips.Count > 0 ? $"adresă {string.Join(", ", ips)}" : "adresă nespecificată în eveniment", servers.Count > 0 ? string.Join(", ", servers) : "necunoscută: serverul DHCP nu este în eveniment", desc,
                 "Evenimente DHCP-Client (50036, 50037, 50065, 1103) pe un sistem air-gapped sau autonom: clientul DHCP a fost activ pe o interfață.",
-                ["Un server DHCP local al zonei poate atribui legitim adrese și într-un segment izolat.", "Unele ID-uri DHCP-Client raportează eșecuri sau reînnoiri, nu un lease obținut."]));
+                // The first alternative assumes an approved zone network; on a Standalone station there is none. The second is about the event itself and stays.
+                c.Standalone ? ["Unele ID-uri DHCP-Client raportează eșecuri sau reînnoiri, nu un lease obținut."]
+                             : ["Un server DHCP local al zonei poate atribui legitim adrese și într-un segment izolat.", "Unele ID-uri DHCP-Client raportează eșecuri sau reînnoiri, nu un lease obținut."]));
         }
     }
 

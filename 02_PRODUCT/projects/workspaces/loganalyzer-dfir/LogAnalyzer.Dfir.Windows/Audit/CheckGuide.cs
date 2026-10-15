@@ -139,7 +139,7 @@ public static class CheckGuides
         G("N01", "Dacă stația izolată s-a conectat la vreo rețea în perioada controlată.", "O stație izolată conectată la rețea poate transmite sau primi date fără control.",
           "A căutat profiluri de rețea folosite în perioadă, evenimente de conectare și interfețe de rețea active acum.",
           @"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Profiles; NetworkProfile 10000; WLAN-AutoConfig 8001",
-          "Neconform = s-a conectat (cine, când, ce s-a transferat trebuie investigat). Lipsa urmelor = de verificat, nu dovadă."),
+          "Neconform = s-a conectat (cine, când, ce s-a transferat trebuie investigat). Pe stația Standalone granița este data instalării aplicației (primul rând al jurnalului ei de audit): orice conectare după ea este neconformă, fără excepție; conectările doar dinaintea ei sunt istoric, de verificat. Lipsa urmelor = de verificat, nu dovadă."),
         G("N02", "La ce rețele s-a conectat stația vreodată (istoric).", "Arată dacă stația a fost vreodată în altă rețea decât cea permisă.", "A citit lista profilurilor de rețea salvate.",
           @"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Profiles", "De verificat: fiecare rețea din listă trebuie să fie una permisă."),
         G("S01", "Ce programe au fost instalate sau dezinstalate în perioada controlată.", "Pe stație trebuie să existe doar software aprobat.", "A căutat evenimentele Windows Installer.",

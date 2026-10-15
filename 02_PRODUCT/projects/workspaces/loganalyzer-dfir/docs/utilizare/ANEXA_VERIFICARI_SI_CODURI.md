@@ -699,7 +699,7 @@
 - **De ce contează:** O stație izolată conectată la rețea poate transmite sau primi date fără control.
 - **Cum verifică aplicația:** A căutat profiluri de rețea folosite în perioadă, evenimente de conectare și interfețe de rețea active acum.
 - **Sursa tehnică:** `HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Profiles; NetworkProfile 10000; WLAN-AutoConfig 8001`
-- **Cum se citește rezultatul:** Neconform = s-a conectat (cine, când, ce s-a transferat trebuie investigat). Lipsa urmelor = de verificat, nu dovadă.
+- **Cum se citește rezultatul:** Neconform = s-a conectat (cine, când, ce s-a transferat trebuie investigat). Pe stația Standalone granița este data instalării aplicației (primul rând al jurnalului ei de audit): orice conectare după ea este neconformă, fără excepție; conectările doar dinaintea ei sunt istoric, de verificat. Lipsa urmelor = de verificat, nu dovadă.
 
 ### N02
 

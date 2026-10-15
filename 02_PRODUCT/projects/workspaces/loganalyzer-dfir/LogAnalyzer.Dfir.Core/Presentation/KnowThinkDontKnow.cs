@@ -24,6 +24,8 @@ public sealed record KnowThinkDontKnow(IReadOnlyList<KtdStatement> Know, IReadOn
     public const string KnowHeading = "CE ȘTIM";
     public const string ThinkHeading = "CE SUSPECTĂM";
     public const string DontKnowHeading = "CE NU PUTEM DEMONSTRA";
+    /// <summary>Owner wording rule (2026-10-16): what cannot be shown because a source was not read is written „sursă lipsă: &lt;sursa&gt;, de ce lipsește, cum se pornește”.</summary>
+    public const string MissingSourcePrefix = "sursă lipsă:";
 
     public static KnowThinkDontKnow Build(Finding f, EvidenceContext ctx)
     {
@@ -53,8 +55,22 @@ public sealed record KnowThinkDontKnow(IReadOnlyList<KtdStatement> Know, IReadOn
         foreach (var c in f.ContradictingEvidence) know.Add(new("Contrazis de: " + c, "dovadă contrară găsită"));
         foreach (var a in f.AlternativeExplanations) think.Add(new(a, "explicație alternativă care nu poate fi exclusă cu probele din caz"));
 
-        foreach (var m in f.MissingEvidence) dont.Add(new(m, "probă lipsă"));
-        foreach (var l in f.Limitations.Where(l => l.Length > 0)) dont.Add(new(l, "limită a acestui tip de probă sau de afirmație"));
+        foreach (var m in f.MissingEvidence) dont.Add(new(m, m.StartsWith(MissingSourcePrefix, StringComparison.OrdinalIgnoreCase) ? "sursă lipsă (se poate colecta: vezi cum se pornește)" : "probă lipsă"));
+        foreach (var l in f.Limitations.Where(l => l.Length > 0))
+            dont.Add(new(l, l.StartsWith(MissingSourcePrefix, StringComparison.OrdinalIgnoreCase) ? "sursă lipsă" : "limita metodei: ce nu arată această sursă (sursele care completează sunt la „Probe lipsă”)"));
+
+        // EVTX completeness (owner directive 2026-10-16): for every event-log channel the finding rests on, the check says „complet” (a known fact)
+        // or „incomplet (motiv, interval lipsă)” / undetermined with the missing source, instead of the blanket „nu pot dovedi că jurnalul e complet”.
+        if (ctx.Timeline.Count > 0)
+        {
+            var channels = f.SupportingEvidence.Select(r => ctx.EventOf(r)).Where(e => e is not null).Select(e => EvtxCompleteness.ChannelOf(e!))
+                .Where(c => c.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(c => c, StringComparer.OrdinalIgnoreCase);
+            foreach (var ch in channels)
+            {
+                var v = EvtxCompleteness.Assess(ch, ctx.Timeline, ctx.PeriodFromUtc);
+                (v.Complete == true ? know : dont).Add(new(v.Text, EvtxCompleteness.Basis));
+            }
+        }
 
         if (f.Sequence is { } seq)
             foreach (var st in seq.Steps)

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Management;
 using System.Text.Json;
+using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Windows.Containment;
 using LogAnalyzer.Dfir.Windows.Native;
@@ -24,6 +25,8 @@ public sealed class EventLogCollector : ICollector
         // WP14a: removable media, CD/DVD and network adapters on air-gapped systems. A channel that does not exist on this system is "indisponibil", not a failure.
         "Microsoft-Windows-Kernel-PnP/Configuration", "Microsoft-Windows-DriverFrameworks-UserMode/Operational", "Microsoft-Windows-Dhcp-Client/Operational",
         "Microsoft-Windows-VHDMP-Operational", "Microsoft-Windows-PrintService/Operational",
+        // Owner directive 2026-10-16: the adapter, the lease and the internet capability of a network connection (DHCP-Client/Admin, NCSI 4042, NlaSvc).
+        "Microsoft-Windows-Dhcp-Client/Admin", "Microsoft-Windows-NCSI/Operational", "Microsoft-Windows-NlaSvc/Operational",
     ];
 
     public string Name => "EventLogCollector";
@@ -118,6 +121,47 @@ public sealed class SrumCollector : ICollector
         var o = new CollectorOutcome { Tool = "esentutl.exe", ToolVersion = ToolRunner.FileVersion(ToolRunner.System32("esentutl.exe")), Source = src, ExitCode = run.ExitCode, Commands = { run.CommandLine } };
         if (run.ExitCode != 0 || !File.Exists(dest)) { o.Status = EvidenceStatus.Failed; o.Errors.Add($"esentutl exit {run.ExitCode}"); return o; }
         o.Evidence.Add(ctx.Case.RegisterStored(dest, src, "SRUM", "srum", TemporalType.Historical, Name, Version));
+        return o;
+    }
+}
+
+/// <summary>
+/// Windows Firewall text logs (pfirewall.log and its previous generation .old) of every profile, at the path the policy or the local setting names.
+/// When logging is off the source is reported as missing with how to turn it on; nothing is changed on the station.
+/// </summary>
+public sealed class FirewallLogCollector : ICollector
+{
+    public string Name => "FirewallLogCollector";
+    public string Version => "1.0";
+    public bool RequiresElevation => true;
+    public CollectionProfile Profiles => CollectionProfile.QuickAndUp;
+
+    public const string HowToEnable = "cum se pornește: Set-NetFirewallProfile -All -LogAllowed True -LogBlocked True (sau GPO: Windows Defender Firewall → Logging), ca administrator";
+
+    public CollectorOutcome Collect(CollectorContext ctx, CancellationToken ct)
+    {
+        var n = new NetworkEvidenceFacts();
+        try { AirGapFactsCollector.ReadFirewallLogging(n); }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException)
+        { return CollectorOutcome.NotAvailable($"sursă lipsă: setările de jurnalizare ale firewall-ului, de ce lipsește: {ex.Message}, cum se pornește: rulați ca administrator"); }
+        var enabled = n.FirewallLogs.Where(f => f.LogAllowed == true || f.LogDropped == true).ToList();
+        var files = n.FirewallLogs.Select(f => f.Path).Distinct(StringComparer.OrdinalIgnoreCase).SelectMany(p => new[] { p, p + ".old" }).Where(File.Exists).ToList();
+        if (files.Count == 0)
+            return CollectorOutcome.NotAvailable(enabled.Count == 0
+                ? $"sursă lipsă: pfirewall.log, de ce lipsește: jurnalizarea firewall-ului este oprită pe toate profilurile (implicit în Windows), {HowToEnable}"
+                : $"sursă lipsă: pfirewall.log, de ce lipsește: jurnalizarea este pornită ({string.Join(", ", enabled.Select(f => f.Profile))}), dar fișierul nu există încă (nicio conexiune jurnalizată), {HowToEnable}",
+                n.FirewallLogs.FirstOrDefault()?.Path ?? "");
+        if (!ctx.IsElevated) return CollectorOutcome.NotAvailable("sursă lipsă: pfirewall.log, de ce lipsește: folderul LogFiles\\Firewall se citește doar cu drepturi de administrator, cum se pornește: rulați colectarea ca administrator", files[0]);
+        var o = new CollectorOutcome { Source = string.Join("; ", files), Tool = "copy" };
+        foreach (var f in files)
+        {
+            ct.ThrowIfCancellationRequested();
+            try { o.Evidence.Add(ctx.Case.ImportFile(f, "Firewall", LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName, TemporalType.Historical, Name, Version)); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { o.Errors.Add($"{Path.GetFileName(f)}: {ex.Message}"); }
+        }
+        if (enabled.Count < n.FirewallLogs.Count)
+            o.Errors.Add($"jurnalizarea firewall-ului nu este pornită pe toate profilurile (pornită: {(enabled.Count > 0 ? string.Join(", ", enabled.Select(f => f.Profile)) : "niciunul")}); {HowToEnable}");
+        o.Status = o.Evidence.Count == 0 ? EvidenceStatus.Failed : o.Errors.Count > 0 ? EvidenceStatus.Partial : EvidenceStatus.Success;
         return o;
     }
 }
