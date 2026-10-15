@@ -78,6 +78,47 @@ public static class AppInstallTraces
             .ToList();
     }
 
+    /// <summary>
+    /// All Windows traces together (review of PR #290, probe B: store recreated, application reinstalled in a new folder, old .pf deleted):
+    /// <list type="bullet">
+    /// <item>the installed executable's Prefetch, Amcache and 4688 traces set the date (see <see cref="ClassifyPrefetch"/>, <see cref="ClassifyAmcache"/>);</item>
+    /// <item>an Amcache entry of an edition executable at ANOTHER path is DE VERIFICAT „aplicația a existat/rulat anterior în altă locație” with its path and
+    /// last-write time; it does not set the date (a last-write time proves no run, so NECONFORM is not justified);</item>
+    /// <item>a .pf of the installed executable created long after an older Windows trace of an edition executable (another-folder Amcache or Prefetch,
+    /// Security 4688, the installed Amcache entry) is DE VERIFICAT „urmă Prefetch recreată”.</item>
+    /// </list>
+    /// </summary>
+    public static (List<AppTrace> Traces, List<string> Notes) Classify(IReadOnlyList<PrefetchSeen> prefetch, IEnumerable<(string LowerCaseLongPath, DateTime LastWriteUtc)> amcache,
+        IReadOnlyList<AppTrace> security4688, string installedExePath, bool prefetchEnabled, int otherPrefetchFiles)
+    {
+        var am = amcache.ToList();
+        var (traces, notes) = ClassifyPrefetch(prefetch, installedExePath, prefetchEnabled, otherPrefetchFiles);
+        var amInstalled = ClassifyAmcache(am, installedExePath);
+        traces.AddRange(amInstalled);
+        traces.AddRange(security4688);
+        var tail = PathTail(installedExePath);
+        var older = new List<DateTimeOffset>();
+        foreach (var e in am.Where(e => PathTail(e.LowerCaseLongPath) != tail && EditionExeNames.Contains(Path.GetFileName(e.LowerCaseLongPath).ToUpperInvariant())).OrderBy(e => e.LastWriteUtc))
+        {
+            var t = new DateTimeOffset(DateTime.SpecifyKind(e.LastWriteUtc, DateTimeKind.Utc));
+            older.Add(t);
+            notes.Add($"aplicația a existat/rulat anterior în altă locație: {e.LowerCaseLongPath}, {t:yyyy-MM-dd HH:mm} UTC (intrare Amcache, ora ultimei scrieri; nu dovedește o rulare)");
+        }
+        // other-folder Prefetch files of an edition executable also show an older presence
+        older.AddRange(prefetch.Where(f => EditionExeNames.Contains(f.ExeName.ToUpperInvariant()) && f.ExeFullPath is not null && PathTail(f.ExeFullPath) != tail).Select(f => f.CreatedUtc));
+        older.AddRange(security4688.Select(t => t.Utc));
+        older.AddRange(amInstalled.Select(t => t.Utc));
+        var installedName = Path.GetFileName(installedExePath).ToUpperInvariant();
+        foreach (var f in prefetch.Where(f => f.ExeName.Equals(installedName, StringComparison.OrdinalIgnoreCase) && (f.ExeFullPath is null || PathTail(f.ExeFullPath) == tail)))
+            if (older.Count > 0 && older.Min() < f.CreatedUtc - RecreatedTolerance)
+                notes.Add($"urmă Prefetch recreată: {f.FileName} a fost creat la {f.CreatedUtc:yyyy-MM-dd HH:mm} UTC, deși aplicația are urme Windows din {older.Min():yyyy-MM-dd HH:mm} UTC " +
+                          "(fișierul .pf anterior a fost probabil șters)");
+        return (traces, notes);
+    }
+
+    /// <summary>How much older an earlier Windows trace must be than the installed .pf for the .pf to count as recreated.</summary>
+    public static readonly TimeSpan RecreatedTolerance = TimeSpan.FromDays(2);
+
     public const int MaxPrefetchFiles = 20;
     public const long MaxAmcacheBytes = 256L * 1024 * 1024;
 
@@ -86,13 +127,24 @@ public static class AppInstallTraces
         var r = new Result([], []);
         exePath ??= Environment.ProcessPath ?? "";
         if (exePath.Length == 0) { r.Missing.Add("sursă lipsă: calea executabilului aplicației, de ce lipsește: procesul nu o raportează, cum se pornește: nu se aplică"); return r; }
-        Prefetch(r, exePath);
-        Amcache(r, exePath);
-        Security4688(r, exePath);
+        var (pfs, enabled, enabledValue, others) = Prefetch(r);
+        var am = Amcache(r);
+        var sec = new Result([], []);
+        Security4688(sec, exePath);
+        r.Missing.AddRange(sec.Missing);
+        var (traces, notes) = Classify(pfs, am, sec.Traces, exePath, enabled, others);
+        r.Traces.AddRange(traces);
+        r.Notes.AddRange(notes);
+        if (!traces.Any(t => t.What.StartsWith("Prefetch", StringComparison.Ordinal)))
+            r.Missing.Add(enabledValue is int v0 && v0 == 0
+                ? "sursă lipsă: Prefetch, de ce lipsește: este oprit pe stație (EnablePrefetcher = 0), cum se pornește: administratorul îl pornește (EnablePrefetcher = 3)"
+                : $"sursă lipsă: Prefetch al aplicației instalate ({Path.GetFileName(exePath)}), de ce lipsește: nu există fișierul .pf (curățat sau încă nescris), cum se pornește: nu se poate recrea pentru rulările trecute");
+        if (am.Count > 0 && !traces.Any(t => t.What.StartsWith("Amcache", StringComparison.Ordinal)))
+            r.Missing.Add($"sursă lipsă: intrarea Amcache a aplicației instalate ({exePath}), de ce lipsește: Amcache nu o conține (încă nescrisă sau ștearsă), cum se pornește: nu se poate recrea");
         return r;
     }
 
-    private static void Prefetch(Result r, string exePath)
+    private static (List<PrefetchSeen> Files, bool Enabled, object? EnabledValue, int Others) Prefetch(Result r)
     {
         var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Prefetch");
         object? enabledValue = null;
@@ -104,7 +156,7 @@ public static class AppInstallTraces
         catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
         {
             r.Missing.Add($"sursă lipsă: Prefetch, de ce lipsește: folderul nu poate fi citit ({ex.Message}), cum se pornește: rulați ca administrator");
-            return;
+            return ([], enabled, enabledValue, 0);
         }
         var ours = all.Where(f => EditionExeNames.Any(n => Path.GetFileName(f).StartsWith(n + "-", StringComparison.OrdinalIgnoreCase))).Take(MaxPrefetchFiles).ToList();
         var seen = new List<PrefetchSeen>();
@@ -121,35 +173,27 @@ public static class AppInstallTraces
                 r.Missing.Add($"sursă lipsă: {name}, de ce lipsește: nu a putut fi citit ({ex.Message}), cum se pornește: rulați ca administrator");
             }
         }
-        var (traces, notes) = ClassifyPrefetch(seen, exePath, enabled, all.Length - ours.Count);
-        r.Traces.AddRange(traces);
-        r.Notes.AddRange(notes);
-        if (traces.Count == 0)
-            r.Missing.Add(enabledValue is int v0 && v0 == 0
-                ? "sursă lipsă: Prefetch, de ce lipsește: este oprit pe stație (EnablePrefetcher = 0), cum se pornește: administratorul îl pornește (EnablePrefetcher = 3)"
-                : $"sursă lipsă: Prefetch al aplicației instalate ({Path.GetFileName(exePath)}), de ce lipsește: nu există fișierul .pf (curățat sau încă nescris), cum se pornește: nu se poate recrea pentru rulările trecute");
+        return (seen, enabled, enabledValue, all.Length - ours.Count);
     }
 
-    private static void Amcache(Result r, string exePath)
+    private static List<(string, DateTime)> Amcache(Result r)
     {
+        var entries = new List<(string, DateTime)>();
         var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "appcompat", "Programs", "Amcache.hve");
         try
         {
-            if (!File.Exists(path)) { r.Missing.Add("sursă lipsă: Amcache.hve, de ce lipsește: fișierul nu există pe stație, cum se pornește: nu se poate (Windows îl creează singur)"); return; }
-            if (new FileInfo(path).Length > MaxAmcacheBytes) { r.Missing.Add($"sursă lipsă: Amcache.hve, de ce lipsește: fișierul depășește {MaxAmcacheBytes / 1_048_576} MB, cum se pornește: analiza copiei din investigație"); return; }
+            if (!File.Exists(path)) { r.Missing.Add("sursă lipsă: Amcache.hve, de ce lipsește: fișierul nu există pe stație, cum se pornește: nu se poate (Windows îl creează singur)"); return entries; }
+            if (new FileInfo(path).Length > MaxAmcacheBytes) { r.Missing.Add($"sursă lipsă: Amcache.hve, de ce lipsește: fișierul depășește {MaxAmcacheBytes / 1_048_576} MB, cum se pornește: analiza copiei din investigație"); return entries; }
             using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
             var reg = new RawRegistry(fs);
-            var entries = new List<(string, DateTime)>();
             foreach (var k in reg.SubKeys(@"Root\InventoryApplicationFile").Take(50_000))
                 if (k.Value("LowerCaseLongPath")?.AsText is { Length: > 0 } p) entries.Add((p, k.LastWriteUtc));
-            var t = ClassifyAmcache(entries, exePath);
-            if (t.Count == 0) r.Missing.Add($"sursă lipsă: intrarea Amcache a aplicației instalate ({exePath}), de ce lipsește: Amcache nu o conține (încă nescrisă sau ștearsă), cum se pornește: nu se poate recrea");
-            r.Traces.AddRange(t);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
         {
             r.Missing.Add($"sursă lipsă: Amcache.hve, de ce lipsește: fișierul este ținut deschis de registrul Windows sau nu poate fi citit ({ex.Message}), cum se pornește: investigația îl copiază prin VSS ca administrator");
         }
+        return entries;
     }
 
     private static void Security4688(Result r, string exePath)
