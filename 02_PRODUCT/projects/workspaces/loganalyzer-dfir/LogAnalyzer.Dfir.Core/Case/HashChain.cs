@@ -212,6 +212,9 @@ public sealed class HashChain(string path)
         return Broken(name, plain.Entries, plain.LegacyLines, Math.Min(seq, h.Seq), $"lanțul nu mai ajunge la capul sigilat (Seq {h.Seq}): trunchiat sau rescris");
     }
 
+    /// <summary>Only the plain chain (seq, prevHash, hash of every entry), without the seal: what an external anchor relies on.</summary>
+    public ChainVerification VerifyPlainChain() => VerifyPlain();
+
     private ChainVerification VerifyPlain()
     {
         var name = System.IO.Path.GetFileName(Path);

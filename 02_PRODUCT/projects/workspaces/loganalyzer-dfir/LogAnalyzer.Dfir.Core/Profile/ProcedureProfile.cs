@@ -38,6 +38,12 @@ public sealed class ProcedureProfile
 
     // Classified folders (control research H1): the folders whose file access must be audited (SACL). The station control reads their audit rules.
     public List<ClassifiedFolderRow> ClassifiedFolders { get; set; } = [];
+
+    /// <summary>"Ofițeri de securitate": the officers whose key may sign the official control report (see Reporting.OfficerRegistry).</summary>
+    public List<SecurityOfficerRow> SecurityOfficers { get; set; } = [];
+
+    /// <summary>The anchor code of the latest control on this station, proposed at the next control (the code on the signed paper is what counts).</summary>
+    public string LastAnchorCode { get; set; } = "";
 }
 
 public sealed class WorkingHoursRow { public string Day { get; set; } = ""; public string Start { get; set; } = ""; public string End { get; set; } = ""; }
@@ -65,6 +71,18 @@ public sealed class TransferChannelRow { public string Name { get; set; } = ""; 
 public sealed class NetworkDestinationRow { public string Address { get; set; } = ""; public string Zone { get; set; } = ""; public string Purpose { get; set; } = ""; }
 /// <summary>A folder holding classified documents, as a full local path (e.g. D:\Clasificat). File access in it must be audited.</summary>
 public sealed class ClassifiedFolderRow { public string Path { get; set; } = ""; public string Note { get; set; } = ""; }
+
+/// <summary>A registered security officer: name, public key and its fingerprint, and on what basis it was registered (first on paper, or approved by an officer).</summary>
+public sealed class SecurityOfficerRow
+{
+    public string Name { get; set; } = "";
+    public string Fingerprint { get; set; } = "";
+    public string? PublicKey { get; set; } = "";
+    public DateTimeOffset RegisteredUtc { get; set; }
+    public string Basis { get; set; } = "";
+    public string? ApprovedBy { get; set; } = "";
+    public string? Approval { get; set; } = "";
+}
 
 /// <summary>The tables of the profile, in the order the view shows them.</summary>
 public enum ProfileTable

@@ -12,7 +12,17 @@ namespace LogAnalyzer.Dfir.Auth;
 public static class OperationAudit
 {
     public const string ControlStarted = "control.started", ControlFinished = "control.finished", ExportUnmasked = "export.unmasked",
-                        CaseRemovedFromRecent = "case.removed_from_recent", ProfileEdited = "profile.edited", ClassifiedFoldersChanged = "profile.classified_folders_changed";
+                        CaseRemovedFromRecent = "case.removed_from_recent", ProfileEdited = "profile.edited", ClassifiedFoldersChanged = "profile.classified_folders_changed",
+                        ReportOfficerSigned = "report.officer_signed", OfficerRegistered = "profile.officer_registered", AnchorExported = "audit.anchor_exported";
+
+    public static string OfficerSignedDetail(string reportFile, string sha256, string fingerprint, string anchorCode) =>
+        $"report={reportFile}; sha256={sha256}; officer_fingerprint={fingerprint}; anchor={anchorCode}";
+
+    public static string OfficerRegisteredDetail(string fingerprint, string basis, string approvedBy) =>
+        $"officer_fingerprint={fingerprint}; basis={basis}; approved_by={(approvedBy.Length > 0 ? approvedBy : "(niciunul: primul ofițer, amprenta pe procesul-verbal)")}";
+
+    public static string AnchorExportedDetail(long seq, string code, string logSha256, string folder) =>
+        $"seq={seq}; anchor={code}; log_sha256={logSha256}; folder={folder}";
 
     public static string Sha256Hex(string text) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
 
