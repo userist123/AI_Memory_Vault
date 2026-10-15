@@ -43,6 +43,10 @@ public sealed class ControlReport
     public int Count(ControlStatus s) => Checks.Count(c => c.Status == s);
     /// <summary>The checks that apply to the posture (every status except NU SE APLICĂ): the only ones counted in summaries and verdicts.</summary>
     public int Applicable => Checks.Count(c => c.Status != ControlStatus.NuSeAplica);
+    /// <summary>The head of the application's audit log when the control finished, printed as the anchor code for the next control; null = not available.</summary>
+    public LogAnalyzer.Dfir.Case.AuditAnchorPoint? Anchor { get; set; }
+    /// <summary>The trusted officers of the procedure profile, printed so their fingerprints are on paper.</summary>
+    public IReadOnlyList<LogAnalyzer.Dfir.Reporting.SecurityOfficerRow> RegisteredOfficers { get; set; } = [];
 }
 
 /// <summary>
@@ -282,9 +286,15 @@ public static partial class ControlEvaluator
         foreach (var l in clears) r.Actions.Add(new ActionEntry(l.TimeUtc, Who(l), "a șters un jurnal", l.Id == 1102 ? "Security" : V(l, "Channel"), Ev(l)));
 
         var auditChanges = Logs(f, "Security", 4719).ToList();
+        // Always reported (tamper indicators, owner decision 2026-10-16): "no change" is itself evidence the controller can rely on.
         if (auditChanges.Count > 0)
             Add(r, "A06", "Audit", "Politica de audit a fost modificată", ControlStatus.DeVerificat, $"{Ro.Capitalize(Ro.CountFem(auditChanges.Count, "modificare", "modificări"))}.",
-                auditChanges.Select(l => $"{Ev(l)} de {Who(l)}: {AuditName(V(l, "SubcategoryGuid"))} {V(l, "AuditPolicyChanges")}"));
+                auditChanges.Select(l => $"{Ev(l)} de {Who(l)}: {AuditName(V(l, "SubcategoryGuid"))} {V(l, "AuditPolicyChanges")}"),
+                "Cereți aprobarea scrisă a fiecărei modificări; o oprire a auditului urmată de repornire ascunde ce s-a făcut între ele.");
+        else
+            Add(r, "A06", "Audit", "Politica de audit a fost modificată",
+                ChannelReadable(f, "Security") ? ControlStatus.Conform : ControlStatus.Nedeterminat,
+                ChannelReadable(f, "Security") ? "Politica de audit nu a fost modificată în perioada controlată (niciun eveniment 4719)." : "Niciun rezultat: jurnalul Security nu a putut fi citit.");
         foreach (var l in auditChanges) r.Actions.Add(new ActionEntry(l.TimeUtc, Who(l), "a modificat politica de audit", AuditName(V(l, "SubcategoryGuid")), Ev(l)));
 
         var timeChanges = Logs(f, "Security", 4616).Where(l => !V(l, "ProcessName").EndsWith("svchost.exe", StringComparison.OrdinalIgnoreCase) &&
@@ -293,6 +303,89 @@ public static partial class ControlEvaluator
             timeChanges.Count == 0 ? "Nicio schimbare manuală a orei." : $"{Ro.Capitalize(Ro.CountFem(timeChanges.Count, "schimbare a orei făcută", "schimbări ale orei făcute"))} de utilizatori (pot afecta cronologia).",
             timeChanges.Select(l => $"{Ev(l)} de {Who(l)} prin {V(l, "ProcessName")}: {V(l, "PreviousTime")} → {V(l, "NewTime")}"));
         foreach (var l in timeChanges) r.Actions.Add(new ActionEntry(l.TimeUtc, Who(l), "a schimbat ora sistemului", $"{V(l, "PreviousTime")} → {V(l, "NewTime")}", Ev(l)));
+
+        LogServiceStops(f, r);
+        AnchorContinuityCheck(f, r);
+        OfficerListCheck(f, r);
+    }
+
+    /// <summary>
+    /// A12: Security 1100 "serviciul de jurnalizare s-a oprit". Windows writes it at every normal shutdown too, so a stop is explained only by an ACTUAL shutdown:
+    /// System 6006 (the event log stopped at shutdown) within 5 minutes, or a requested shutdown (System 1074) in the 30 minutes before it followed by a boot
+    /// (System 6005) as the next start/stop record. A 1074 that was cancelled (shutdown /a) has no boot after it and explains nothing.
+    /// Killing the service writes nothing, so absence proves nothing.
+    /// </summary>
+    private static void LogServiceStops(StationFacts f, ControlReport r)
+    {
+        const string title = "Serviciul de jurnalizare Windows oprit în afara unei opriri a calculatorului";
+        if (!ChannelReadable(f, "Security")) { Add(r, "A12", "Audit", title, ControlStatus.Nedeterminat, "Niciun rezultat: jurnalul Security nu a putut fi citit."); return; }
+        var stops = Logs(f, "Security", 1100).ToList();
+        var system = Logs(f, "System", 6005, 6006, 1074).OrderBy(l => l.TimeUtc).ToList();
+        bool Explained(LogFact stop)
+        {
+            if (system.Any(l => l.Id == 6006 && (l.TimeUtc - stop.TimeUtc).Duration() <= TimeSpan.FromMinutes(5))) return true;
+            bool requested = system.Any(l => l.Id == 1074 && l.TimeUtc <= stop.TimeUtc.AddMinutes(1) && l.TimeUtc >= stop.TimeUtc.AddMinutes(-30));
+            var next = system.FirstOrDefault(l => l.Id is 6005 or 6006 && l.TimeUtc > stop.TimeUtc);
+            return requested && next?.Id == 6005;
+        }
+        var unexplained = stops.Where(l => !Explained(l)).ToList();
+        string sysNote = ChannelReadable(f, "System") ? "" : " Jurnalul System nu a putut fi citit, deci nicio oprire nu a putut fi pusă pe seama unei închideri a calculatorului.";
+        Add(r, "A12", "Audit", title, unexplained.Count == 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
+            stops.Count == 0 ? "Serviciul de jurnalizare nu s-a oprit în perioada controlată (niciun eveniment 1100)."
+            : unexplained.Count == 0 ? $"{Ro.Capitalize(Ro.CountFem(stops.Count, "oprire a serviciului de jurnalizare", "opriri ale serviciului de jurnalizare"))}, toate la o închidere sau repornire efectivă a calculatorului."
+            : $"{Ro.Capitalize(Ro.CountFem(unexplained.Count, "oprire a serviciului de jurnalizare", "opriri ale serviciului de jurnalizare"))} fără o închidere efectivă a calculatorului (o cerere de închidere anulată nu contează). Cât timp serviciul este oprit, Windows nu înregistrează nimic.{sysNote}",
+            unexplained.Select(Ev), "Cereți explicația fiecărei opriri; comparați cu registrul de intervenții. O oprire neexplicată poate ascunde activitatea din acel interval.");
+        foreach (var l in unexplained) r.Actions.Add(new ActionEntry(l.TimeUtc, Who(l), "a oprit serviciul de jurnalizare", "fără închiderea calculatorului", Ev(l)));
+    }
+
+    /// <summary>
+    /// A13: who may sign as security officer must not change unnoticed between controls. The baseline is the state at the anchor typed from the paper; files
+    /// changed outside the application are NECONFORM, changes made through the application are listed for review.
+    /// </summary>
+    private static void OfficerListCheck(StationFacts f, ControlReport r)
+    {
+        const string title = "Lista ofițerilor de securitate schimbată de la controlul anterior";
+        if (f.OfficerAssessment is not { } a) { Add(r, "A13", "Audit", title, ControlStatus.Nedeterminat, "Jurnalul aplicației nu a fost disponibil, deci lista ofițerilor nu s-a putut verifica."); return; }
+        if (!a.Determinable)
+        {
+            Add(r, "A13", "Audit", title, ControlStatus.Nedeterminat, "Fără codul de ancorare tastat de pe procesul-verbal anterior nu există o stare de referință sigură: " + a.Since + ".",
+                rec: "Introduceți la începutul controlului codul de ancorare de pe procesul-verbal semnat al controlului anterior.");
+            return;
+        }
+        if (a.Outside.Count > 0)
+        {
+            Add(r, "A13", "Audit", title, ControlStatus.Neconform,
+                "Lista ofițerilor / autoritățile de încredere modificate în afara aplicației: fișierele nu corespund stării de la controlul anterior, iar schimbarea nu a fost făcută din aplicație. " +
+                "Cine poate semna raportul oficial a putut fi schimbat fără urmă în aplicație.",
+                a.Outside.Concat(a.Changes), "Tratați stația ca incident de securitate: comparați lista ofițerilor și certificatele autorităților cu procesele-verbale semnate; ofițerii se înregistrează din nou doar din aplicație.");
+            return;
+        }
+        Add(r, "A13", "Audit", title, a.Changes.Count == 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
+            a.Changes.Count == 0 ? $"Nicio schimbare a listei ofițerilor de securitate sau a autorităților de încredere {a.Since}."
+                                 : $"{Ro.Capitalize(Ro.CountFem(a.Changes.Count, "schimbare făcută", "schimbări făcute"))} din aplicație {a.Since}. Fiecare trebuie confirmată de ofițer: cine este pe listă poate semna raportul oficial.",
+            a.Changes, "Comparați amprentele ofițerilor din raport cu cele de pe procesele-verbale semnate; o înregistrare necunoscută ofițerului este un incident de securitate.");
+    }
+
+    /// <summary>A11: the anchor code of the previous control (from the signed paper) is still in the application's audit log (see LogAnalyzer.Dfir.Case.AuditAnchor).</summary>
+    private static void AnchorContinuityCheck(StationFacts f, ControlReport r)
+    {
+        const string title = "Continuitatea jurnalului aplicației față de controlul anterior";
+        var a = f.PreviousAnchor;
+        if (a is null) { Add(r, "A11", "Audit", title, ControlStatus.Nedeterminat, "Continuitatea nu a fost verificată (jurnalul aplicației nu este disponibil)."); return; }
+        string source = a.GivenCode.Length == 0 ? ""
+            : f.PreviousAnchorFromStation ? " ATENȚIE: codul NU a fost tastat de pe procesul-verbal, ci este cel propus de stație (nesigur): cine a rescris jurnalul poate schimba și propunerea. Confirmați codul cu procesul-verbal semnat."
+            : " Codul a fost tastat de pe procesul-verbal.";
+        var status = a.Status switch
+        {
+            LogAnalyzer.Dfir.Case.AnchorContinuityStatus.Continuous => ControlStatus.Conform,
+            LogAnalyzer.Dfir.Case.AnchorContinuityStatus.Rewritten => ControlStatus.Neconform,
+            _ => ControlStatus.Nedeterminat,
+        };
+        Add(r, "A11", "Audit", title, status,
+            (status == ControlStatus.Neconform ? "Jurnalul aplicației a fost rescris după controlul anterior. " + a.Detail : a.Detail) + source,
+            a.GivenCode.Length > 0 ? [$"Cod introdus: {a.GivenCode}" + (a.MatchedSeq is { } s ? $"; găsit la înregistrarea nr. {s}" : "") + (f.PreviousAnchorFromStation ? "; sursa: codul propus de stație (nesigur)" : "; sursa: tastat de pe procesul-verbal")] : null,
+            status == ControlStatus.Neconform ? "Comparați jurnalul de pe CD-R-ul de la controlul anterior cu cel actual; tratați stația ca incident de securitate până la lămurire."
+            : status == ControlStatus.Nedeterminat ? "Introduceți la începutul controlului codul de ancorare de pe procesul-verbal semnat al controlului anterior." : "");
     }
 
     // ---- account management -----------------------------------------------------------------------------------

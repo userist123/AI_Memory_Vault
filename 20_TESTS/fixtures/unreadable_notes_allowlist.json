@@ -852,6 +852,12 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Plain markdown project document (three editions and per-posture check applicability); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/DESIGN_2026-10-16_OFFICER_SIGNATURE_AND_AUDIT_ANCHOR.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown design note (security officer qualified signature, audit-log anchor); not a note. Frontmatter would require owner lifecycle/verification values."
     }
   ]
 }

@@ -36,7 +36,7 @@ public static class ControlReportPdf
         // every text printed through P is also given to TextObserver (tests read the page-1 box without parsing the PDF)
         TextBlockDescriptor P(ColumnDescriptor c, string text) { TextObserver.Value?.Invoke(text); return c.Item().Text(text); }
 
-        Document.Create(doc => doc.Page(page =>
+        var generated = Document.Create(doc => { doc.Page(page =>
         {
             page.Size(PageSizes.A4);
             page.Margin(26);
@@ -44,6 +44,7 @@ public static class ControlReportPdf
             page.Header().Column(h =>
             {
                 if (header is not null) h.Item().AlignCenter().Text(header.MarkingLine).Bold().FontSize(8).FontColor("#b91c1c");
+                h.Item().AlignCenter().Text(OfficialLabel).Bold().FontSize(9).FontColor("#b91c1c");
                 h.Item().Text(header is null ? $"Raport de control — stația {f.Host}" : $"Raport de control pentru proces-verbal — stația {f.Host}").Bold().FontSize(14).FontColor(Ink);
                 h.Item().Text($"Perioada controlată: {L(f.PeriodStartUtc)} – {L(f.PeriodEndUtc)} (ora locală) · colectat {L(f.CollectedUtc)} · " +
                               $"Ediția: {LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(f.Posture)} · drepturi de administrator: {(f.IsAdministrator ? "da" : "NU (rezultate incomplete)")}")
@@ -212,10 +213,36 @@ public static class ControlReportPdf
                         row.ConstantItem(40);
                         row.RelativeItem().Column(c => { c.Item().LineHorizontal(0.8f).LineColor(Ink); c.Item().PaddingTop(3).Text(header.SignatureRight).FontSize(8); c.Item().Text("Nume, semnătura, data").FontSize(7).FontColor(Muted); });
                     });
+                // owner decision 2026-10-16: anchor code for the next control and the security officer's signature (last section, so it is on the last page)
+                P(col, "6. Ancorarea jurnalului aplicației și semnătura ofițerului de securitate").Bold().FontSize(11).FontColor(Ink);
+                foreach (var line in OfficerSectionLines(r)) P(col, line).FontSize(8.5f);
             });
 
             ReportFooter.Compose(page.Footer(), "control", $"LogAnalyzer {DfirInfo.ApplicationVersion} · control {f.Host}", seal, header?.MarkingLine);
-        })).GeneratePdf(path);
+        });
+        // the officer's signature place: an empty box on a last page of its own, and the empty signature field over it (owner decision, review round 3)
+        SignatureBoxPage.Add(doc, header?.MarkingLine, SignHere); }).GeneratePdf();
+        File.WriteAllBytes(path, LogAnalyzer.Dfir.Reporting.SignatureField.Reserve(generated));
+    }
+
+    /// <summary>Printed on every page: the report is official only with the security officer's qualified electronic signature (owner decision 2026-10-16).</summary>
+    /// <summary>The line under "Semnătura ofițerului de securitate" on the signature page.</summary>
+    public const string SignHere = "Se semnează doar în acest câmp, cu certificatul calificat de pe card: în LogAnalyzer („Semnează ca ofițer de securitate”) sau în Adobe, alegând câmpul existent „Semnatura ofiterului de securitate”.";
+
+    public const string OfficialLabel = "Fără semnătura electronică calificată a ofițerului de securitate acesta NU este raport oficial";
+
+    /// <summary>The lines of section 6: the anchor code to copy on the proces-verbal, how the report becomes official, and the registered officers' fingerprints.</summary>
+    public static IReadOnlyList<string> OfficerSectionLines(ControlReport r)
+    {
+        var l = new List<string>();
+        l.Add(r.Anchor is { } a
+            ? a.Line + ". Treceți codul pe procesul-verbal; la controlul următor se introduce în aplicație ca să se verifice că jurnalul aplicației nu a fost rescris (verificarea A11)."
+            : "Cod de ancorare: indisponibil (jurnalul aplicației nu a putut fi citit).");
+        l.Add(OfficialLabel + ". Ofițerul de securitate semnează fișierul cu certificatul calificat de pe cardul său („Semnează ca ofițer de securitate” în aplicație, sau în Adobe); semnătura se verifică cu „Verifică raport semnat”, comparând amprenta certificatului cu cea de pe procesul-verbal.");
+        if (r.RegisteredOfficers.Count == 0) l.Add("Ofițeri de securitate declarați pe stație: niciunul.");
+        foreach (var o in r.RegisteredOfficers)
+            l.Add($"Ofițer de securitate declarat pe stație (neconfirmat): {o.Name}, amprenta certificatului {o.Fingerprint} ({o.Basis}). Se confirmă doar prin amprenta de pe procesul-verbal semnat.");
+        return l;
     }
 
     /// <summary>The classified section for the JSON report (the origins are runtime objects and are left out).</summary>
