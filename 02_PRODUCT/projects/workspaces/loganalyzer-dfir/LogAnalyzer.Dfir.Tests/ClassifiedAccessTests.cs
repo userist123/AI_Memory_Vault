@@ -131,7 +131,7 @@ public sealed class ClassifiedAccessTests
         AccessRecord[] recs = [Access(4663, T0, @"D:\Clasificat\plan.docx", "0x1"), print];
         var exit = Assert.Single(ClassifiedAccess.Analyze(Input(recs)).Exits);
         Assert.Equal((ExitChannel.Print, ExitVerdict.Unjustified), (exit.Channel, exit.Verdict));
-        var approved = Assert.Single(ClassifiedAccess.Analyze(Input(recs, Register("plan.docx", "2026-10-14 09:00", serial: "", type: "imprimantă"))).Exits);
+        var approved = Assert.Single(ClassifiedAccess.Analyze(Input(recs, Register("plan.docx", "2026-10-14 09:00", serial: "HP-Birou", type: "imprimantă"))).Exits);
         Assert.Equal(ExitVerdict.Approved, approved.Verdict);
         // a stick entry for the same file does not cover a print
         Assert.Equal(ExitVerdict.Unjustified, Assert.Single(ClassifiedAccess.Analyze(Input(recs, Register("plan.docx", "2026-10-14 09:00", serial: ""))).Exits).Verdict);
@@ -247,11 +247,156 @@ public sealed class ClassifiedAccessTests
         Assert.Contains(f, x => x.RuleId == "CLASSIFIED-ACCESS");
         Assert.All(f.Where(x => x.RuleId.StartsWith("CLASSIFIED-")), x => Assert.NotNull(RuleContracts.For(x.RuleId)));
 
-        var reg = new LogAnalyzer.Dfir.Registers.TransferRegister { Rows = [new() { RegistrationNumber = "TR-1", DateTime = T0.ToLocalTime().ToString("yyyy-MM-dd HH:mm"), Direction = "ieșire", Content = "plan.docx" }] };
-        var ok = Wp14Rules.Run(events, () => $"F-{++n:D4}", new Wp14Input { Scope = scope, Profile = profile, Transfers = reg });
+        var reg = new LogAnalyzer.Dfir.Registers.TransferRegister { Rows = [new() { RegistrationNumber = "TR-1", DateTime = T0.ToString("yyyy-MM-dd HH:mm"), Direction = "ieșire", Content = "plan.docx", MediumSerial = "SN9", Approver = "sef" }] };
+        var withMedium = events.Append(new TimelineEvent
+        {
+            Time = Timestamp.FromUtc(T0.AddMinutes(-5).UtcDateTime, "", "test"), Source = "EventLog:Microsoft-Windows-Partition/Diagnostic", EvidenceId = "EV-1", EventId = "1006", Summary = "1006", Locator = "RecordID=1",
+            Fields = new(StringComparer.OrdinalIgnoreCase) { ["SerialNumber"] = "SN9", ["Capacity"] = "16000000000", ["BusType"] = "7", ["Model"] = "stick" },
+        }).ToList();
+        var ok = Wp14Rules.Run(withMedium, () => $"F-{++n:D4}", new Wp14Input { Scope = scope, Profile = profile, Transfers = reg, StationZone = TimeZoneInfo.Utc });
         Assert.Single(ok, x => x.RuleId == "CLASSIFIED-EXPORT-APPROVED");
         Assert.DoesNotContain(ok, x => x.RuleId == "CLASSIFIED-EXPORT-UNJUSTIFIED");
+        // the case does not declare the station's time zone: the register's hand-typed time cannot be compared, so nothing is approved
+        var noZone = Wp14Rules.Run(withMedium, () => $"F-{++n:D4}", new Wp14Input { Scope = scope, Profile = profile, Transfers = reg });
+        Assert.DoesNotContain(noZone, x => x.RuleId == "CLASSIFIED-EXPORT-APPROVED");
         // without classified folders in the profile the rules say nothing (A10 of the station control reports the missing table)
         Assert.DoesNotContain(Wp14Rules.Run(events, () => "F", new Wp14Input { Scope = scope }), x => x.RuleId.StartsWith("CLASSIFIED-"));
+    }
+
+    // ---- independent review of PR #291: no false APPROVED (probes Q1-Q5), copies consumed, the application's own reads ------------------------
+
+    private static readonly AccessRecord[] CopyToStick =
+        [Access(4663, T0, @"D:\Clasificat\a.docx", "0x1"), Access(4663, T0.AddMinutes(1), @"E:\a.docx", "0x2", handle: "0x9")];
+    private static readonly MediumSeen[] Stick = [new MediumSeen(T0.AddMinutes(-3), "SN1", "Kingston")];
+
+    private static ClassifiedExit One(TransferRegister reg, AccessRecord[]? recs = null, MediumSeen[]? media = null, TimeZoneInfo? zone = null, bool noZone = false)
+    {
+        var input = Input(recs ?? CopyToStick, reg, media: media ?? Stick);
+        input = new ClassifiedInput
+        {
+            Folders = input.Folders, Records = input.Records, Transfers = input.Transfers, Media = input.Media, RemovableDrives = input.RemovableDrives,
+            RegisterZone = noZone ? null : zone ?? TimeZoneInfo.Utc,
+        };
+        return Assert.Single(ClassifiedAccess.Analyze(input).Exits);
+    }
+
+    [Fact]
+    public void Q1_a_register_row_for_data_docx_does_not_approve_a_docx_names_match_exactly()
+    {
+        var e = One(Register("data.docx", "2026-10-14 09:01"));
+        Assert.Equal(ExitVerdict.Unjustified, e.Verdict);
+        Assert.Equal(ExitVerdict.Approved, One(Register(@"D:\Clasificat\A.DOCX; altul.pdf", "2026-10-14 09:01")).Verdict);   // exact name, case-insensitive, path ignored
+    }
+
+    [Fact]
+    public void Q1_an_exact_sha256_in_the_register_approves_when_the_name_differs()
+    {
+        var hash = new string('a', 64);
+        var input = new ClassifiedInput
+        {
+            Folders = [new ClassifiedRoot(Root)], Records = CopyToStick, Media = Stick, RemovableDrives = new HashSet<string>(["E:"], StringComparer.OrdinalIgnoreCase), RegisterZone = TimeZoneInfo.Utc,
+            FileHashes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { [@"D:\Clasificat\a.docx"] = hash },
+            Transfers = new TransferRegister { Rows = [new TransferRow { RegistrationNumber = "TR-9", DateTime = "2026-10-14 09:01", Direction = "ieșire", Content = "raport final", Sha256 = hash, MediumSerial = "SN1", Approver = "sef" }] },
+        };
+        Assert.Equal(ExitVerdict.Approved, Assert.Single(ClassifiedAccess.Analyze(input).Exits).Verdict);
+        var partial = new TransferRegister { Rows = [new TransferRow { RegistrationNumber = "TR-9", DateTime = "2026-10-14 09:01", Direction = "ieșire", Content = "raport final", Sha256 = hash[..63] + "b", MediumSerial = "SN1", Approver = "sef" }] };
+        Assert.Equal(ExitVerdict.Unjustified, Assert.Single(ClassifiedAccess.Analyze(new ClassifiedInput
+        {
+            Folders = input.Folders, Records = input.Records, Media = input.Media, RemovableDrives = input.RemovableDrives, RegisterZone = input.RegisterZone, FileHashes = input.FileHashes, Transfers = partial,
+        }).Exits).Verdict);
+    }
+
+    [Fact]
+    public void Q2_one_register_row_covers_its_declared_number_of_copies_the_rest_are_unjustified()
+    {
+        AccessRecord[] twice = [.. CopyToStick, Access(4663, T0.AddMinutes(40), @"E:\a.docx", "0x2", handle: "0x10")];
+        var rep = ClassifiedAccess.Analyze(Input(twice, Register("a.docx", "2026-10-14 09:01"), media: Stick));
+        var exits = rep.Exits.OrderBy(x => x.TimeUtc).ToList();
+        Assert.Equal(2, exits.Count);
+        Assert.Equal(ExitVerdict.Approved, exits[0].Verdict);
+        Assert.Equal(ExitVerdict.Unjustified, exits[1].Verdict);
+        Assert.Contains("deja", exits[1].Detail);
+
+        var two = Register("a.docx", "2026-10-14 09:01");
+        two.Rows[0].Copies = "2";
+        Assert.All(ClassifiedAccess.Analyze(Input(twice, two, media: Stick)).Exits, x => Assert.Equal(ExitVerdict.Approved, x.Verdict));
+    }
+
+    [Fact]
+    public void Q2_the_window_is_the_declared_time_plus_minus_two_hours()
+    {
+        Assert.Equal(ExitVerdict.Approved, One(Register("a.docx", "2026-10-14 10:55")).Verdict);
+        var late = One(Register("a.docx", "2026-10-14 11:30"));
+        Assert.Equal(ExitVerdict.Unjustified, late.Verdict);
+        Assert.Contains("ora diferă", late.Detail);
+        Assert.Equal(TimeSpan.FromHours(2), ClassifiedAccess.RegisterTolerance);
+    }
+
+    [Fact]
+    public void Q3_a_row_without_a_medium_serial_or_an_exit_with_an_unknown_medium_is_only_to_verify()
+    {
+        var noSerial = One(Register("a.docx", "2026-10-14 09:01", serial: ""));
+        Assert.Equal(ExitVerdict.ToVerify, noSerial.Verdict);
+        Assert.Contains("înregistrare incompletă în registru", noSerial.Detail);
+        var unknownMedium = One(Register("a.docx", "2026-10-14 09:01"), media: []);
+        Assert.Equal(ExitVerdict.ToVerify, unknownMedium.Verdict);
+        Assert.Contains("seria suportului", unknownMedium.Detail);
+    }
+
+    [Fact]
+    public void Q4_a_row_without_an_approver_never_approves()
+    {
+        var reg = Register("a.docx", "2026-10-14 09:01");
+        reg.Rows[0].Approver = "";
+        var e = One(reg);
+        Assert.Equal(ExitVerdict.ToVerify, e.Verdict);
+        Assert.Contains("înregistrare incompletă în registru", e.Detail);
+        Assert.DoesNotContain("necompletat", e.Detail);
+    }
+
+    [Fact]
+    public void Q5_an_exit_without_a_time_or_a_station_without_a_declared_zone_is_never_approved()
+    {
+        AccessRecord[] untimed = [Access(4663, T0, @"D:\Clasificat\a.docx", "0x1"),
+            new("event", "Security", 4663, null, "Security 4663", new Dictionary<string, string> { ["SubjectUserName"] = "ion", ["ObjectType"] = "File", ["ObjectName"] = @"E:\a.docx", ["AccessMask"] = "0x2", ["HandleId"] = "0x9", ["ProcessId"] = "0x1" })];
+        var all = ClassifiedAccess.Analyze(Input(untimed, Register("a.docx", "2026-10-14 09:01"), media: Stick)).Exits.ToList();
+        var write = Assert.Single(all, x => x.Channel == ExitChannel.RemovableMedia);
+        Assert.Equal(ExitVerdict.ToVerify, write.Verdict);
+        Assert.Contains("ora ieșirii nu este cunoscută", write.Detail);
+        Assert.DoesNotContain(all, x => x.Verdict == ExitVerdict.Approved);   // the temporal coincidence it also produces is never approved either
+        var noZone = One(Register("a.docx", "2026-10-14 09:01"), noZone: true);
+        Assert.Equal(ExitVerdict.ToVerify, noZone.Verdict);
+        Assert.Contains("fusul orar", noZone.Detail);
+    }
+
+    [Fact]
+    public void The_applications_own_hashing_reads_are_listed_apart_and_never_become_accesses_exits_or_coincidences()
+    {
+        const string image = @"C:\Program Files\LogAnalyzer\LogAnalyzer.exe";
+        var window = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(5), 0x4d2, image, "STATIE\\inspector");
+        var own = Access(4663, T0, @"D:\Clasificat\a.docx", "0x1", proc: image) with { Data = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            { ["SubjectUserName"] = "inspector", ["ObjectType"] = "File", ["ObjectName"] = @"D:\Clasificat\a.docx", ["AccessMask"] = "0x1", ["HandleId"] = "0x5", ["ProcessId"] = "0x4d2", ["ProcessName"] = image } };
+        var otherPid = own with { Data = new Dictionary<string, string>(own.Data, StringComparer.OrdinalIgnoreCase) { ["ProcessId"] = "0x99" } };
+        var input = new ClassifiedInput
+        {
+            Folders = [new ClassifiedRoot(Root)], Records = [own], Media = [new MediumSeen(T0.AddMinutes(10), "SN1", "stick")], SelfWindows = [window], RegisterZone = TimeZoneInfo.Utc,
+        };
+        var rep = ClassifiedAccess.Analyze(input);
+        Assert.Empty(rep.Files);
+        Assert.Empty(rep.Exits);
+        var self = Assert.Single(rep.SelfActivity);
+        Assert.Contains("activitate proprie a aplicației (calcul amprente)", self.Access);
+        // the same image with another process id, or outside the window, is a real access
+        Assert.Single(ClassifiedAccess.Analyze(new ClassifiedInput { Folders = input.Folders, Records = [otherPid], SelfWindows = [window], RegisterZone = TimeZoneInfo.Utc }).Files);
+        Assert.Single(ClassifiedAccess.Analyze(new ClassifiedInput { Folders = input.Folders, Records = [own with { TimeUtc = T0.AddHours(1) }], SelfWindows = [window], RegisterZone = TimeZoneInfo.Utc }).Files);
+    }
+
+    [Fact]
+    public void The_hashing_window_round_trips_through_the_audit_detail()
+    {
+        var w = new SelfActivityWindow(T0, T0.AddMinutes(3), 1234, @"C:\x\LogAnalyzer.exe", "STATIE\\inspector", 12);
+        var detail = LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashingDetail(w);
+        Assert.True(LogAnalyzer.Dfir.Auth.OperationAudit.TryParseControlHashing(detail, out var back));
+        Assert.Equal(w with { Files = 0 }, back with { Files = 0 });
     }
 }

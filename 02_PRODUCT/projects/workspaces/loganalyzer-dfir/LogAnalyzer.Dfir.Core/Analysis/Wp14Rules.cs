@@ -15,6 +15,8 @@ public sealed class Wp14Input
     public UsersRegister? Users { get; init; }
     /// <summary>The approved transfer register; null or without rows = no exit of a classified file can be shown as approved.</summary>
     public TransferRegister? Transfers { get; init; }
+    /// <summary>The station's declared time zone (case info); null = not declared, so the transfer register's times cannot be compared.</summary>
+    public TimeZoneInfo? StationZone { get; init; }
     public ProcedureProfile? Profile { get; init; }
     public Wp14Data? Data { get; init; }
     /// <summary>The zone the analysed system is in, as entered by the operator; "" = not stated.</summary>

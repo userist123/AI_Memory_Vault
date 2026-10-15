@@ -48,6 +48,7 @@ public static partial class Wp14Rules
             RemovableDrives = observed.Select(m => m.Letter).Where(x => x.Length > 0).Select(x => x + ":").ToHashSet(StringComparer.OrdinalIgnoreCase),
             Media = observed.SelectMany(m => m.Times.Select(t => new MediumSeen(t, m.Serial, Kind(m), m.Letter))).ToList(),
             NetworkApplies = c.Scope.Network != NetworkCategory.StandalonePc,
+            RegisterZone = c.Input.StationZone,   // the station's declared zone, never the analysis machine's
         };
         var rep = ClassifiedAccess.Analyze(input);
         static List<EvidenceRef> Refs(IEnumerable<object?> origins, string what) =>

@@ -26,6 +26,12 @@ public sealed record ClassifiedRoot(string Path, IReadOnlyList<string>? Aliases 
 /// <summary>A removable medium seen connected at a time (serial from Partition/Diagnostic 1006, USBSTOR or 6416).</summary>
 public sealed record MediumSeen(DateTimeOffset TimeUtc, string Serial, string Label, string Letter = "");
 
+/// <summary>
+/// When and as whom the application itself read the classified files (to compute their SHA-256): its own reads must never be shown as someone's access.
+/// Recorded in the sealed audit at every control ("control.hashing").
+/// </summary>
+public sealed record SelfActivityWindow(DateTimeOffset StartUtc, DateTimeOffset EndUtc, int ProcessId, string ImagePath, string Account, int Files = 0);
+
 public enum ExitChannel { RemovableMedia, Print, Archive, CopyCommand, MoveOrRename, NetworkShare, OpenedFromMedium, TemporalCoincidence }
 public enum ExitVerdict { Unjustified, ToVerify, Approved }
 
@@ -74,8 +80,10 @@ public sealed class ClassifiedInput
     public IReadOnlyList<MediumSeen> Media { get; init; } = [];
     /// <summary>The approved transfer register; null = not defined (no exit can be shown as approved).</summary>
     public TransferRegister? Transfers { get; init; }
-    /// <summary>Time zone of the times typed in the transfer register (the station's).</summary>
-    public TimeZoneInfo RegisterZone { get; init; } = TimeZoneInfo.Local;
+    /// <summary>Time zone of the times typed in the transfer register (the station's declared zone); null = not declared, so no register time can be compared.</summary>
+    public TimeZoneInfo? RegisterZone { get; init; }
+    /// <summary>The application's own reading windows (hashing); records of its process in a window are listed apart, never as accesses.</summary>
+    public IReadOnlyList<SelfActivityWindow> SelfWindows { get; init; } = [];
     /// <summary>Names of the files present now in the classified folders (to recognise a copy whose source read was not audited).</summary>
     public IReadOnlyList<string> KnownFiles { get; init; } = [];
     /// <summary>SHA-256 of the classified files present now, by full path (matched against the register's fingerprints).</summary>
@@ -93,6 +101,8 @@ public sealed class ClassifiedAccessReport
     public List<ClassifiedFileReport> Files { get; } = [];
     public List<ClassifiedSecurityChange> SecurityChanges { get; } = [];
     public List<string> Notes { get; } = [];
+    /// <summary>Records of the application's own reads (hashing), listed apart: "activitate proprie a aplicației (calcul amprente)".</summary>
+    public List<ClassifiedAccessEntry> SelfActivity { get; } = [];
     public IEnumerable<ClassifiedExit> Exits => Files.SelectMany(f => f.Exits);
     public int Unjustified => Files.Sum(f => f.Unjustified);
     public int ToVerify => Files.Sum(f => f.ToVerify);
@@ -116,6 +126,8 @@ public static class ClassifiedAccess
     public static readonly TimeSpan CoincidenceWindow = TimeSpan.FromHours(2);
     /// <summary>The register time is typed by hand: an entry this far from the exit still matches.</summary>
     public static readonly TimeSpan RegisterWindow = TimeSpan.FromHours(12);
+    /// <summary>An exit matches a register row only within this distance from the row's declared transfer time.</summary>
+    public static readonly TimeSpan RegisterTolerance = TimeSpan.FromHours(2);
 
     // ---- access masks ------------------------------------------------------------------------------------------------
 
@@ -283,8 +295,16 @@ public static class ClassifiedAccess
         var openHandles = new Dictionary<string, (string Path, AccessRecord Rec, int Mask)>(StringComparer.Ordinal);
         var deletes = new List<(string Path, AccessRecord Rec)>();
         var writesOutside = new List<(string Path, AccessRecord Rec, int Mask)>();
+        var pending = new List<PendingExit>();
         foreach (var r in events.Where(e => e.Channel == "Security"))
         {
+            if (r.EventId is 4656 or 4658 or 4660 or 4663 or 4670 or 4907 && IsSelf(input, r))
+            {
+                // the application's own read of the file (SHA-256 at a control): listed apart, never someone's access, never an exit or a coincidence
+                if (r.EventId is 4656 or 4663 && roots.Classify(Normalize(r.V("ObjectName"), input.VolumeMap), input.LongPath) is { } own)
+                    rep.SelfActivity.Add(new(r.TimeUtc, Who(r), Proc(r), $"{SelfLabel}: {own} — {MaskText(Mask(r))}", false, r.Evidence, r.Origin));
+                continue;
+            }
             switch (r.EventId)
             {
                 case 4656 or 4663:
@@ -369,7 +389,7 @@ public static class ClassifiedAccess
             var detail = rem
                 ? $"Fișierul „{name}” a fost scris pe un suport amovibil ({path})."
                 : $"Un fișier cu numele „{name}” a fost scris în afara folderelor clasificate ({path}).";
-            AddExit(input, fr, channel, r.TimeUtc, Who(r), target, detail, chain, [r.Origin], medium?.Serial ?? "", forceVerify: !rem && !Moved(r));
+            AddExit(input, pending, fr, channel, r.TimeUtc, Who(r), target, detail, chain, [r.Origin], medium?.Serial ?? "", forceVerify: !rem && !Moved(r));
             bool Moved(AccessRecord w) => deletes.Any(d => FileName(d.Path).Equals(name, StringComparison.OrdinalIgnoreCase) && d.Rec.TimeUtc is { } td && w.TimeUtc is { } tw && Math.Abs((tw - td).TotalMinutes) <= 2);
         }
 
@@ -378,7 +398,7 @@ public static class ClassifiedAccess
         {
             var name = FileName(path);
             if (writesOutside.Any(w => FileName(w.Path).Equals(name, StringComparison.OrdinalIgnoreCase) && w.Rec.TimeUtc is { } tw && r.TimeUtc is { } td && Math.Abs((tw - td).TotalMinutes) <= 2)) continue;
-            AddExit(input, File(path), ExitChannel.MoveOrRename, r.TimeUtc, Who(r), "destinație neînregistrată",
+            AddExit(input, pending, File(path), ExitChannel.MoveOrRename, r.TimeUtc, Who(r), "destinație neînregistrată",
                 $"Fișierul „{name}” a fost deschis pentru ștergere, dar Windows nu a înregistrat eliminarea lui (4660): a fost redenumit sau mutat. Noua cale nu apare în jurnale.",
                 [$"{T(r.TimeUtc)} {Who(r)} {MaskText(Mask(r))} cu {Proc(r)} ({r.Evidence})"], [r.Origin], "", forceVerify: true);
         }
@@ -395,7 +415,7 @@ public static class ClassifiedAccess
                 bool outside = roots.ClassifyRelative(to.Path) is null;
                 bool hidden = !outside && !Path_Ext(FileName(from)).Equals(Path_Ext(FileName(to.Path)), StringComparison.OrdinalIgnoreCase);
                 if (!outside && !hidden) continue;
-                AddExit(input, File(from), ExitChannel.MoveOrRename, to.TimeUtc, "", to.Path,
+                AddExit(input, pending, File(from), ExitChannel.MoveOrRename, to.TimeUtc, "", to.Path,
                     outside ? $"Jurnalul de modificări NTFS arată că „{FileName(from)}” a fost mutat în afara folderului clasificat, ca „{to.Path}”."
                             : $"Jurnalul de modificări NTFS arată că „{FileName(from)}” a fost redenumit cu altă extensie („{FileName(to.Path)}”), ceea ce îl poate ascunde.",
                     [$"{T(recs[i].TimeUtc)} USN {recs[i].Path} RENAME_OLD_NAME ({recs[i].Evidence})", $"{T(to.TimeUtc)} USN {to.Path} RENAME_NEW_NAME ({to.Evidence})"],
@@ -414,7 +434,7 @@ public static class ClassifiedAccess
             if ((exact ?? stem) is not { } name) continue;
             var who = r.V("Param3") is { Length: > 0 } u ? u : Who(r);
             var printer = r.V("Param5");
-            AddExit(input, File(classifiedNames[name]), ExitChannel.Print, r.TimeUtc, who, "imprimanta " + printer,
+            AddExit(input, pending, File(classifiedNames[name]), ExitChannel.Print, r.TimeUtc, who, "imprimanta " + printer,
                 $"Documentul „{doc}” a fost tipărit pe {printer} ({r.V("Param7")} octeți, {r.V("Param8")} pagini)." + (exact is null ? " Numele se potrivește doar parțial (fără extensie)." : ""),
                 [$"{T(r.TimeUtc)} {who} tipărește „{doc}” pe {printer} ({r.Evidence})"], [r.Origin], "", forceVerify: exact is null);
         }
@@ -439,7 +459,7 @@ public static class ClassifiedAccess
             var who = Who(r);
             var medium = remDrive is null ? null : MediumAt(input, r.TimeUtc);
             var target = remDrive is not null ? remDrive + (medium is null ? "" : $" (SN {medium.Serial})") : unc ? "cale de rețea din comandă" : "destinație de verificat în comandă";
-            AddExit(input, File(hit), archive ? ExitChannel.Archive : ExitChannel.CopyCommand, r.TimeUtc, who, target,
+            AddExit(input, pending, File(hit), archive ? ExitChannel.Archive : ExitChannel.CopyCommand, r.TimeUtc, who, target,
                 (archive ? "Un program de arhivare a primit în comandă " : "O comandă de copiere a primit ") + $"fișiere clasificate ({hit})" +
                 (remDrive is not null ? $" și un suport amovibil ({remDrive}) ca destinație." : unc ? " și o cale de rețea." : "; destinația nu este pe un suport amovibil cunoscut."),
                 [$"{T(r.TimeUtc)} {who} pornește {image}: {cmd} ({r.Evidence})"], [r.Origin], medium?.Serial ?? "", forceVerify: remDrive is null && !unc);
@@ -459,7 +479,7 @@ public static class ClassifiedAccess
                 var ip = r.V("IpAddress");
                 File(path).Accesses.Add(new(r.TimeUtc, Who(r), "rețea (" + ip + ")", "prin partajare: " + MaskText(mask), false, r.Evidence, r.Origin));
                 if ((mask & ReadData) == 0) continue;
-                AddExit(input, File(path), ExitChannel.NetworkShare, r.TimeUtc, Who(r), $"{r.V("ShareName")} de la {ip}",
+                AddExit(input, pending, File(path), ExitChannel.NetworkShare, r.TimeUtc, Who(r), $"{r.V("ShareName")} de la {ip}",
                     $"Fișierul a fost citit prin rețea, din partajarea {r.V("ShareName")}, de la adresa {ip}.",
                     [$"{T(r.TimeUtc)} {Who(r)} de la {ip}: {MaskText(mask)} pe {r.V("ShareName")}\\{rel} ({r.Evidence})"], [r.Origin], "");
             }
@@ -472,7 +492,7 @@ public static class ClassifiedAccess
             bool rem = r.V("DriveType").Equals("REMOVABLE", StringComparison.OrdinalIgnoreCase) || removable.Contains(Drive(norm));
             if (!rem || ByName(FileName(norm)) is not { } fr) continue;
             var serial = r.V("VolumeSerial");
-            AddExit(input, fr, ExitChannel.OpenedFromMedium, r.TimeUtc, r.V("Profile", "User"), norm + (serial.Length > 0 ? $" (serie volum {serial})" : ""),
+            AddExit(input, pending, fr, ExitChannel.OpenedFromMedium, r.TimeUtc, r.V("Profile", "User"), norm + (serial.Length > 0 ? $" (serie volum {serial})" : ""),
                 $"Un fișier cu același nume („{FileName(norm)}”) a fost deschis de pe un suport amovibil, deci a fost pe acel suport. Urma este un fișier {r.Kind}: arată deschiderea, nu cine l-a copiat.",
                 [$"{T(r.TimeUtc)} {r.Kind}: {norm} ({r.Evidence})"], [r.Origin], "", forceVerify: true, weak: true);
         }
@@ -488,12 +508,13 @@ public static class ClassifiedAccess
                 if (near.Count == 0) continue;
                 if (fr.Exits.Any(e => e.TimeUtc is { } et && (et - m.TimeUtc).Duration() <= CoincidenceWindow && e.Channel != ExitChannel.TemporalCoincidence)) continue;
                 var a = near.OrderBy(x => (m.TimeUtc - x.TimeUtc!.Value).Duration()).First();
-                AddExit(input, fr, ExitChannel.TemporalCoincidence, m.TimeUtc, a.Who, $"{m.Label} SN {m.Serial}".Trim(),
+                AddExit(input, pending, fr, ExitChannel.TemporalCoincidence, m.TimeUtc, a.Who, $"{m.Label} SN {m.Serial}".Trim(),
                     $"Fișierul a fost citit la {T(a.TimeUtc)}, iar suportul {m.Label} (SN {m.Serial}) a fost conectat la {T(m.TimeUtc)}: {TemporalNote}. Nicio înregistrare nu arată fișierul scris pe suport.",
                     [$"{T(a.TimeUtc)} {a.Who} {a.Access} ({a.Evidence})", $"{T(m.TimeUtc)} suport conectat: {m.Label} SN {m.Serial}"], [a.Origin], m.Serial, forceVerify: true);
             }
         }
 
+        ResolveVerdicts(input, pending);
         rep.Files.AddRange(files.Values);
         if (rep.AuditRecords == 0)
             rep.Notes.Add("Nu există nicio înregistrare de audit (4656/4663/4660/4670/4907) pe folderele clasificate: fie nu s-a lucrat cu ele, fie auditul lor (SACL și subcategoria „File System”) nu era pornit. Windows nu înregistrează retroactiv.");
@@ -502,57 +523,142 @@ public static class ClassifiedAccess
         return rep;
     }
 
+    public const string SelfLabel = "activitate proprie a aplicației (calcul amprente)";
+
+    /// <summary>The process id of a record ("0x4d2" or "1234"); -1 when absent.</summary>
+    private static int Pid(AccessRecord r)
+    {
+        var v = r.V("ProcessId").Trim();
+        if (v.StartsWith("0x", StringComparison.OrdinalIgnoreCase) && int.TryParse(v.AsSpan(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var h)) return h;
+        return int.TryParse(v, NumberStyles.Integer, CultureInfo.InvariantCulture, out var d) ? d : -1;
+    }
+
+    /// <summary>True when the record was made by the application's own process (same image path, same process id) inside one of its recorded reading windows.</summary>
+    private static bool IsSelf(ClassifiedInput input, AccessRecord r)
+    {
+        if (input.SelfWindows.Count == 0 || r.TimeUtc is not { } t) return false;
+        var image = Normalize(r.V("ProcessName"));
+        var pid = Pid(r);
+        var slack = TimeSpan.FromMinutes(1);
+        return input.SelfWindows.Any(w => pid == w.ProcessId && t >= w.StartUtc - slack && t <= w.EndUtc + slack && image.Equals(Normalize(w.ImagePath), StringComparison.OrdinalIgnoreCase));
+    }
+
     private static string T(DateTimeOffset? t) => t is { } v ? v.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) + " UTC" : "ora necunoscută";
 
     private static MediumSeen? MediumAt(ClassifiedInput input, DateTimeOffset? t) =>
         t is not { } at ? null : input.Media.Where(m => m.TimeUtc <= at && at - m.TimeUtc <= TimeSpan.FromDays(1)).OrderByDescending(m => m.TimeUtc).FirstOrDefault();
 
-    private static void AddExit(ClassifiedInput input, ClassifiedFileReport fr, ExitChannel ch, DateTimeOffset? t, string who, string target, string detail,
+    /// <summary>An exit whose verdict is decided at the end, in time order, so each register row is consumed by the earliest exits it covers.</summary>
+    private sealed record PendingExit(ClassifiedFileReport File, int Index, ExitChannel Channel, DateTimeOffset? Time, string Serial, bool ForceVerify, string Detail);
+
+    private static void AddExit(ClassifiedInput input, List<PendingExit> pending, ClassifiedFileReport fr, ExitChannel ch, DateTimeOffset? t, string who, string target, string detail,
                                 List<string> chain, List<object?> origins, string serial, bool forceVerify = false, bool weak = false)
     {
-        var (row, note) = MatchRegister(input, fr.Path, ch, t, serial);
-        var verdict = row is not null ? ExitVerdict.Approved : forceVerify ? ExitVerdict.ToVerify : ExitVerdict.Unjustified;
-        var entry = row is null ? "" : $"{row.RegistrationNumber} ({row.DateTime}, {row.Person}, {row.MediumType} {row.MediumSerial}, aprobat de {(row.Approver.Length > 0 ? row.Approver : "necompletat")})";
-        if (row is null && note.Length > 0) detail += " " + note;
-        else if (row is null) detail += " Nu există o intrare corespunzătoare în registrul transferurilor.";
-        else detail += $" Corespunde transferului înregistrat {entry}.";
-        fr.Exits.Add(new ClassifiedExit(ch, verdict, t, who, fr.Path, target, detail, chain, entry, origins, weak));
+        fr.Exits.Add(new ClassifiedExit(ch, ExitVerdict.ToVerify, t, who, fr.Path, target, detail, chain, "", origins, weak));
+        pending.Add(new PendingExit(fr, fr.Exits.Count - 1, ch, t, serial, forceVerify, detail));
     }
 
-    /// <summary>
-    /// The register entry that covers an exit: direction "ieșire", the file named in the content (or one of its SHA-256), the medium (serial) when both are
-    /// known, a printer / network entry for those channels, and a time within <see cref="RegisterWindow"/>. A row that names the file but not the medium or
-    /// the time is NOT a match; the note says so.
-    /// </summary>
-    internal static (TransferRow? Row, string Note) MatchRegister(ClassifiedInput input, string path, ExitChannel ch, DateTimeOffset? t, string serial)
+    private static void ResolveVerdicts(ClassifiedInput input, List<PendingExit> pending)
     {
-        if (input.Transfers is not { IsDefined: true } reg || ch == ExitChannel.TemporalCoincidence && serial.Length == 0) return (null, "");
+        var left = new Dictionary<TransferRow, int>(ReferenceEqualityComparer.Instance);
+        foreach (var p in pending.OrderBy(p => p.Time ?? DateTimeOffset.MaxValue))
+        {
+            var m = MatchRegister(input, p.File.Path, p.Channel, p.Time, p.Serial, left);
+            string detail = p.Detail, entry = "";
+            ExitVerdict verdict;
+            if (m.Row is { } row)
+            {
+                left[row] = left.GetValueOrDefault(row, Copies(row)) - 1;
+                verdict = ExitVerdict.Approved;
+                entry = $"{row.RegistrationNumber} ({row.DateTime}, {row.Person}, {row.MediumType} {row.MediumSerial}, aprobat de {row.Approver})";
+                detail += $" Corespunde transferului înregistrat {entry}.";
+            }
+            else
+            {
+                verdict = p.ForceVerify || m.Incomplete ? ExitVerdict.ToVerify : ExitVerdict.Unjustified;
+                detail += " " + (m.Note.Length > 0 ? m.Note : "Nu există o intrare corespunzătoare în registrul transferurilor.");
+            }
+            p.File.Exits[p.Index] = p.File.Exits[p.Index] with { Verdict = verdict, Detail = detail, RegisterEntry = entry };
+        }
+    }
+
+    /// <summary>The number of copies (exits) a register row covers: the declared number, 1 when not stated.</summary>
+    public static int Copies(TransferRow row) => int.TryParse(row.Copies.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) && n > 0 ? n : 1;
+
+    private static readonly char[] ContentSeparators = [';', ',', '\n', '\r', '|', '\t'];
+
+    /// <summary>True when the row names exactly this file (a listed name or path whose file name is equal, case-insensitive) or carries exactly its SHA-256.</summary>
+    internal static bool NamesFile(TransferRow row, string name, string hash)
+    {
+        if (row.Content.Split(ContentSeparators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                       .Any(tok => FileName(Normalize(tok)).Equals(name, StringComparison.OrdinalIgnoreCase))) return true;
+        return hash.Length == 64 && row.Sha256.Split([';', ',', ' ', '\n', '\r', '\t'], StringSplitOptions.RemoveEmptyEntries)
+                                              .Any(h => h.Equals(hash, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>Exits that put the file on a medium: the register entry must name the medium and the medium must be known.</summary>
+    private static bool MediumChannel(ExitChannel ch) => ch is ExitChannel.RemovableMedia or ExitChannel.Archive or ExitChannel.CopyCommand or ExitChannel.OpenedFromMedium or ExitChannel.TemporalCoincidence;
+
+    internal sealed record RegisterMatch(TransferRow? Row, string Note, bool Incomplete);
+
+    /// <summary>
+    /// The register entry that covers an exit. A row can approve only when it: is an "ieșire"; names exactly this file (or its exact SHA-256); is complete
+    /// (date and time, approver, the medium - serial or register number - or, for a print / network exit, the printer or destination); fits the channel;
+    /// has the same medium serial; is within <see cref="RegisterTolerance"/> of the exit in the station's declared time zone; and still has copies left.
+    /// An exit with an unknown time, or an unknown medium on a medium channel, is never approved. A row that names the file but is incomplete, or an exit that
+    /// cannot be compared, gives DE VERIFICAT; a row that is spent or does not fit gives the reason.
+    /// </summary>
+    internal static RegisterMatch MatchRegister(ClassifiedInput input, string path, ExitChannel ch, DateTimeOffset? t, string serial, IDictionary<TransferRow, int>? left = null)
+    {
+        if (input.Transfers is not { IsDefined: true } reg) return new(null, "", false);
         var name = FileName(path);
         var hash = input.FileHashes?.GetValueOrDefault(path) ?? "";
-        string near = "";
-        foreach (var row in reg.Rows.Where(r => r.DirectionValue == TransferDirection.Out))
+        if (ch == ExitChannel.TemporalCoincidence)
         {
-            bool content = row.Content.Contains(name, StringComparison.OrdinalIgnoreCase) || (hash.Length == 64 && row.Sha256.Contains(hash, StringComparison.OrdinalIgnoreCase));
-            if (!content) continue;
+            // a coincidence is not an exit: it is never approved and never uses up a register entry; the entries naming the file are only pointed out
+            var named = reg.Rows.Where(r => r.DirectionValue == TransferDirection.Out && NamesFile(r, name, hash)).Select(r => r.RegistrationNumber).ToList();
+            return new(null, named.Count > 0 ? $"În registrul transferurilor fișierul apare la {string.Join(", ", named)}; verificați dacă acoperă această conectare." : "", false);
+        }
+        string mismatch = "", incomplete = "", spent = "";
+        foreach (var row in reg.Rows.Where(r => r.DirectionValue == TransferDirection.Out && NamesFile(r, name, hash)))
+        {
             var reasons = new List<string>();
             var kind = (row.MediumType + " " + row.Destination).ToLowerInvariant();
             bool printRow = kind.Contains("imprim") || kind.Contains("print") || kind.Contains("tipăr") || kind.Contains("tipar") || kind.Contains("hârtie") || kind.Contains("hartie");
             bool netRow = kind.Contains("rețea") || kind.Contains("retea") || kind.Contains("network") || kind.Contains("partajare");
             if (ch == ExitChannel.Print && !printRow) reasons.Add("intrarea nu este o tipărire");
             if (ch == ExitChannel.NetworkShare && !netRow) reasons.Add("intrarea nu este un transfer prin rețea");
-            if (ch is ExitChannel.RemovableMedia or ExitChannel.Archive or ExitChannel.CopyCommand && printRow) reasons.Add("intrarea este o tipărire, nu un suport");
+            if (MediumChannel(ch) && printRow) reasons.Add("intrarea este o tipărire, nu un suport");
             if (serial.Length > 0 && row.MediumSerial.Trim().Length > 0 && MediaRegister.NormalizeSerial(row.MediumSerial) != MediaRegister.NormalizeSerial(serial))
                 reasons.Add($"suportul diferă (registru {row.MediumSerial}, observat {serial})");
-            if (!TransferRegister.TryDateTime(row.DateTime, out var local)) reasons.Add("ora din registru nu poate fi citită");
-            else if (t is { } at)
+            bool timed = TransferRegister.TryDateTime(row.DateTime, out var local);
+            if (timed && t is { } at && input.RegisterZone is { } zone)
             {
-                var utc = new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(local, DateTimeKind.Unspecified), input.RegisterZone), TimeSpan.Zero);
-                if ((utc - at).Duration() > RegisterWindow) reasons.Add($"ora diferă (registru {row.DateTime}, observat {at:yyyy-MM-dd HH:mm} UTC)");
+                var utc = new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(local, DateTimeKind.Unspecified), zone), TimeSpan.Zero);
+                if ((utc - at).Duration() > RegisterTolerance) reasons.Add($"ora diferă (registru {row.DateTime}, observat {at:yyyy-MM-dd HH:mm} UTC, toleranță {RegisterTolerance.TotalHours:0} ore)");
             }
-            if (reasons.Count == 0) return (row, "");
-            near = $"În registrul transferurilor există {row.RegistrationNumber} pentru acest fișier, dar nu acoperă această ieșire: {string.Join("; ", reasons)}.";
+            if (reasons.Count > 0) { mismatch = $"În registrul transferurilor există {row.RegistrationNumber} pentru acest fișier, dar nu acoperă această ieșire: {string.Join("; ", reasons)}."; continue; }
+
+            var missing = new List<string>();
+            if (!timed) missing.Add("data și ora transferului");
+            if (row.Approver.Trim().Length == 0) missing.Add("aprobarea");
+            if (MediumChannel(ch) ? row.MediumSerial.Trim().Length == 0 && row.MediumRegistration.Trim().Length == 0
+                                  : row.MediumSerial.Trim().Length == 0 && row.MediumRegistration.Trim().Length == 0 && row.Destination.Trim().Length == 0)
+                missing.Add(MediumChannel(ch) ? "seria sau numărul suportului" : "imprimanta sau destinația");
+            if (MediumChannel(ch) && row.MediumSerial.Trim().Length == 0 && row.MediumRegistration.Trim().Length > 0 && serial.Length > 0)
+                missing.Add("seria suportului (doar numărul din registrul de medii nu se poate compara cu seria observată)");
+            var unknown = new List<string>();
+            if (t is null) unknown.Add("ora ieșirii nu este cunoscută");
+            if (MediumChannel(ch) && serial.Length == 0) unknown.Add("seria suportului pe care a ieșit fișierul nu este cunoscută");
+            if (input.RegisterZone is null) unknown.Add("fusul orar al stației nu este declarat, deci ora din registru nu poate fi comparată");
+            if (missing.Count > 0) { incomplete = $"Ieșirea nu poate fi confirmată ca aprobată: înregistrare incompletă în registru ({row.RegistrationNumber}: lipsește {string.Join(", ", missing)})."; continue; }
+            if (unknown.Count > 0) { incomplete = $"Intrarea {row.RegistrationNumber} din registru numește fișierul, dar ieșirea nu poate fi confirmată: {string.Join("; ", unknown)}."; continue; }
+            var remaining = left?.TryGetValue(row, out var n) == true ? n : Copies(row);
+            if (remaining <= 0) { spent = $"Intrarea {row.RegistrationNumber} din registru acoperă {Copies(row)} {(Copies(row) == 1 ? "copie" : "copii")}, deja folosite de ieșiri anterioare: această ieșire este în plus."; continue; }
+            return new(row, "", false);
         }
-        return (null, near);
+        if (incomplete.Length > 0) return new(null, incomplete, true);
+        return new(null, spent.Length > 0 ? spent : mismatch, false);
     }
 
     public static string VerdictText(ExitVerdict v) => v switch

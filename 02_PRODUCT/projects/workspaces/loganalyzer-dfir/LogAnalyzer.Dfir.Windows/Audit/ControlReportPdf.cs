@@ -251,6 +251,11 @@ public static class ControlReportPdf
         foreach (var s in c.SecurityChanges)
             l.Add(($"{(s.AuditRules ? "REGULI DE AUDIT SCHIMBATE" : "PERMISIUNI SCHIMBATE")}: {s.Object} — {s.Who}, {s.Process}, {(s.TimeUtc is { } t ? t.ToString("yyyy-MM-dd HH:mm:ss") + " UTC" : "ora necunoscută")} [{s.Evidence}]", false, s.AuditRules ? "#b91c1c" : "#b45309"));
         if (c.Files.Count == 0) l.Add(("Niciun acces și nicio ieșire a unui fișier clasificat în sursele citite.", false, Muted));
+        if (c.SelfActivity.Count > 0)
+        {
+            l.Add(($"Înregistrări lăsate de aplicație la calculul amprentelor ({ClassifiedAccess.SelfLabel}): {c.SelfActivity.Count}; nu sunt accese ale cuiva.", false, Muted));
+            foreach (var a in c.SelfActivity.Take(10)) l.Add(($"  {(a.TimeUtc is { } t ? t.ToString("yyyy-MM-dd HH:mm:ss") + " UTC" : "ora necunoscută")} · {a.Who} · {a.Access} [{a.Evidence}]", false, Muted));
+        }
         foreach (var f in c.Ordered)
         {
             l.Add(($"{f.StatusText} · {f.Path}", true, f.Rank == 0 ? "#b91c1c" : f.Rank == 1 ? "#b45309" : Ink));

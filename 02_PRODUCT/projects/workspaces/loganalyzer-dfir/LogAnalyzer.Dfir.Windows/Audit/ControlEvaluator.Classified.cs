@@ -146,9 +146,15 @@ public static partial class ControlEvaluator
         {
             Folders = folders, Records = recs, VolumeMap = f.VolumeMap, RemovableDrives = removable, Media = media, Transfers = f.Transfers,
             KnownFiles = f.ClassifiedFiles ?? [], FileHashes = f.ClassifiedHashes, NetworkApplies = f.Posture != StationPosture.Standalone,
+            // the control runs on the station itself: its zone is the station's zone, in which the register times are typed
+            RegisterZone = TimeZoneInfo.Local,
+            SelfWindows = [.. f.SelfWindows, .. f.SelfWindow is { } own ? new[] { own } : []],
             SidNames = f.Accounts.Where(a => a.Sid.Length > 0).GroupBy(a => a.Sid).ToDictionary(g => g.Key, g => g.First().Name, StringComparer.OrdinalIgnoreCase),
         };
     }
+
+    private static readonly string[] CappedSources =
+        ["Security 4656", "Security 4660", "Security 4663", "Security 4688", "Security 5145", StationFactCollector.PrintServiceChannel + " 307"];
 
     private static void A15(StationFacts f, ControlReport r)
     {
@@ -182,6 +188,15 @@ public static partial class ControlEvaluator
             : parts.Count > 0 ? Ro.Capitalize(string.Join("; ", parts)) + $". Fișiere clasificate cu accese înregistrate: {accessed}."
             : $"Nu s-a observat nicio ieșire a unui fișier clasificat în sursele colectate; fișiere cu accese înregistrate: {accessed}. Absența observațiilor nu dovedește că nu au existat ieșiri: vezi A10 și A14 pentru sursele care lipsesc.";
         if (rep.Notes.Count > 0) detail += " " + string.Join(" ", rep.Notes);
+        // a capped log can hide older accesses: say so, and never report better than DE VERIFICAT
+        var capped = f.Gaps.Where(g => g.Status == LogAnalyzer.Dfir.Model.EvidenceStatus.Partial && CappedSources.Any(c => g.Artifact.StartsWith(c, StringComparison.Ordinal))).ToList();
+        if (capped.Count > 0)
+        {
+            detail += " Atenție: au fost citite doar ultimele evenimente (" + string.Join("; ", capped.Select(g => $"{g.Artifact}: {g.Reason}")) + "); pot lipsi accese mai vechi.";
+            if (status == ControlStatus.Conform) status = ControlStatus.DeVerificat;
+        }
+        if (rep.SelfActivity.Count > 0)
+            detail += $" {Ro.Capitalize(Ro.CountFem(rep.SelfActivity.Count, "înregistrare", "înregistrări"))} sunt {ClassifiedAccess.SelfLabel} la un control anterior și nu sunt socotite accese.";
         Add(r, "A15", "Audit", title, status, detail,
             rep.Ordered.SelectMany(fr => fr.Exits.OrderBy(x => x.Verdict).Select(x => $"{x.VerdictText} · {x.ChannelText} · {fr.Path} → {x.Target} · {(x.TimeUtc is { } t ? t.ToString("yyyy-MM-dd HH:mm") + " UTC" : "ora necunoscută")} · {x.Who}"))
                .Concat(rep.SecurityChanges.Select(s => $"{(s.AuditRules ? "SACL schimbat" : "permisiuni schimbate")} · {s.Object} · {s.Who} · {s.Evidence}")),

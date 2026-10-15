@@ -141,7 +141,9 @@ public sealed class ClassifiedStationTests
         f.Logs.Add(File4663(Now.AddHours(-2), @"D:\Clasificat\plan.docx", "0x1", "0x1"));
         f.Logs.Add(File4663(Now.AddHours(-2).AddMinutes(1), @"E:\plan.docx", "0x2", "0x2"));
         var when = TimeZoneInfo.ConvertTime(Now.AddHours(-2), TimeZoneInfo.Local).ToString("yyyy-MM-dd HH:mm");
-        f.Transfers = new TransferRegister { Rows = [new TransferRow { RegistrationNumber = "TR-2026-0001", DateTime = when, Direction = "ieșire", Content = "plan.docx", Person = "ion" }] };
+        f.Transfers = new TransferRegister { Rows = [new TransferRow { RegistrationNumber = "TR-2026-0001", DateTime = when, Direction = "ieșire", Content = "plan.docx", Person = "ion", MediumSerial = "AA11", Approver = "sef" }] };
+        f.Logs.Add(new LogFact("Microsoft-Windows-Partition/Diagnostic", 1006, Now.AddHours(-2).AddMinutes(-5), 1, "",
+            new Dictionary<string, string> { ["SerialNumber"] = "AA11", ["Capacity"] = "16000000000", ["BusType"] = "7" }));
         var report = ControlEvaluator.Evaluate(f);
         Assert.Equal(1, report.Classified!.Approved);
         Assert.Equal(ControlStatus.DeVerificat, report.Checks.Single(c => c.Id == "A15").Status);   // owner decision 24: absence is never CONFORM
@@ -203,5 +205,102 @@ public sealed class ClassifiedStationTests
         Assert.NotNull(xaml);
         Assert.Single(System.Text.RegularExpressions.Regex.Matches(xaml!, "TabItem Header=\"Informații clasificate\""));
         Assert.Contains("ItemsSource=\"{Binding ClassifiedFiles}\"", xaml);
+    }
+
+    // ---- independent review of PR #291: capped logs, the application's own reads, files without a fingerprint ---------------------------------------
+
+    [Fact]
+    public void A15_says_when_the_access_log_was_capped_and_is_never_better_than_to_verify()
+    {
+        var f = Station();
+        f.Gaps.Add(new LogAnalyzer.Dfir.Model.EvidenceGap("Security 4663 (foldere clasificate)", LogAnalyzer.Dfir.Model.EvidenceStatus.Partial, "limitat la cele mai recente 50000 de evenimente", "x", "y", "Da"));
+        var c = Check(f, "A15");
+        Assert.Equal(ControlStatus.DeVerificat, c.Status);
+        Assert.Contains("au fost citite doar ultimele", c.Detail);
+        Assert.Contains("pot lipsi accese mai vechi", c.Detail);
+    }
+
+    [Fact]
+    public void Records_of_the_applications_own_hashing_from_a_previous_control_are_listed_apart()
+    {
+        var f = Station();
+        const string image = @"C:\Program Files\LogAnalyzer\LogAnalyzer.exe";
+        f.SelfWindows.Add(new SelfActivityWindow(Now.AddDays(-1), Now.AddDays(-1).AddMinutes(2), 4242, image, "inspector"));
+        f.Logs.Add(Sec(4663, Now.AddDays(-1).AddMinutes(1), ("SubjectUserName", "inspector"), ("ObjectType", "File"), ("ObjectName", @"D:\Clasificat\plan.docx"),
+            ("AccessMask", "0x1"), ("HandleId", "0x5"), ("ProcessId", "0x1092"), ("ProcessName", image)));
+        f.Logs.Add(new LogFact("Microsoft-Windows-Partition/Diagnostic", 1006, Now.AddDays(-1).AddMinutes(30), 1, "",
+            new Dictionary<string, string> { ["SerialNumber"] = "AA11", ["Capacity"] = "16000000000", ["BusType"] = "7" }));
+        var report = ControlEvaluator.Evaluate(f);
+        Assert.Empty(report.Classified!.Files);                       // no access by the inspector, no temporal coincidence with the stick
+        Assert.Single(report.Classified.SelfActivity);
+        Assert.Contains(ControlReportPdf.ClassifiedSectionLines(report), l => l.Text.Contains(ClassifiedAccess.SelfLabel));
+    }
+
+    private static string TempFolder(string name)
+    {
+        var d = Path.Combine(AppContext.BaseDirectory, "classified-tests", name + "-" + Guid.NewGuid().ToString("N")[..8]);
+        Directory.CreateDirectory(d);
+        return d;
+    }
+
+    [Fact]
+    public void Hashing_keeps_the_last_access_time_records_its_window_and_reports_files_without_a_fingerprint()
+    {
+        var dir = TempFolder("hash");
+        var old = new DateTime(2020, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+        foreach (var n in new[] { "a.txt", "b.txt", "c.txt" })
+        {
+            var p = Path.Combine(dir, n);
+            File.WriteAllText(p, n);
+            File.SetLastAccessTimeUtc(p, old);
+        }
+        var f = Station();
+        ClassifiedFactCollector.ReadFiles(f, [dir], maxHashed: 2);
+        Assert.Equal(3, f.ClassifiedFiles!.Count);
+        Assert.Equal(2, f.ClassifiedHashes!.Count);
+        Assert.Contains(f.Gaps, g => g.Reason.Contains("fișiere fără amprentă: 1"));
+        foreach (var p in f.ClassifiedHashes.Keys) Assert.Equal(old, File.GetLastAccessTimeUtc(p));
+        var w = Assert.IsType<SelfActivityWindow>(f.SelfWindow);
+        Assert.Equal(Environment.ProcessId, w.ProcessId);
+        Assert.True(w.EndUtc >= w.StartUtc);
+        Assert.Equal(2, w.Files);
+        Directory.Delete(dir, true);
+    }
+
+    [Fact]
+    public void Files_over_the_size_limit_are_reported_not_skipped_silently()
+    {
+        var dir = TempFolder("big");
+        File.WriteAllText(Path.Combine(dir, "mare.bin"), new string('x', 2048));
+        var f = Station();
+        ClassifiedFactCollector.ReadFiles(f, [dir], maxHashBytes: 1024);
+        Assert.Empty(f.ClassifiedHashes!);
+        Assert.Contains(f.Gaps, g => g.Reason.Contains("fișiere fără amprentă: 1") && g.Reason.Contains("1024"));
+        Directory.Delete(dir, true);
+    }
+
+    [Fact]
+    public void The_classified_event_filter_keeps_classified_removable_and_unmapped_paths_only()
+    {
+        var keep = ClassifiedFactCollector.ClassifiedEventFilter([Root], [@"C:\Alias"], new HashSet<string>(["E:"], StringComparer.OrdinalIgnoreCase), null);
+        Dictionary<string, string> D(string obj, string task = "12800") => new(StringComparer.OrdinalIgnoreCase) { ["ObjectName"] = obj, ["_Task"] = task };
+        Assert.True(keep(4663, D(@"D:\Clasificat\a.docx")));
+        Assert.True(keep(4663, D(@"C:\Alias\a.docx")));
+        Assert.True(keep(4663, D(@"E:\a.docx")));
+        Assert.True(keep(4663, D(@"\Device\HarddiskVolume9\a.docx")));
+        Assert.True(keep(4663, D(@"C:\Users\x\a.docx", "12802")));
+        Assert.True(keep(4660, D("")));
+        Assert.False(keep(4663, D(@"C:\Windows\System32\x.dll")));
+    }
+
+    [Fact]
+    public void A_register_row_declares_its_number_of_copies()
+    {
+        Assert.Equal("Copies", TransferRegister.ColumnNames[^1]);
+        var reg = new TransferRegister();
+        reg.SetCells([["TR-1", "2026-10-14 09:00", "", "ieșire", "s", "", "d", "", "p", "", "stick", "SN", "", "a.docx", new string('a', 64), "w", "sef", "", "3"]]);
+        Assert.Equal("3", reg.Rows[0].Copies);
+        Assert.Equal(3, ClassifiedAccess.Copies(reg.Rows[0]));
+        Assert.Contains(reg.ValidateRow([.. reg.Cells()[0][..^1], "zero"], []), m => m.IsError && m.Message.Contains("copii"));
     }
 }
