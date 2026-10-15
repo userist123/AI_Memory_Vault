@@ -4,10 +4,18 @@
 // Prețurile din catalog sunt prețuri de listă de magazin, cu TVA inclus (aceeași bază ca bugetul din core/boq.ts):
 //   cost designer = listă × (1 − discount),  preț client = listă × (1 + adaos),  profit = preț client − cost.
 // Un preț necunoscut rămâne necunoscut (null), niciodată 0: linia nu intră în totaluri și e numărată separat.
-// Manopera e trecută la client fără adaos (cost = preț client, profit 0); onorariul de proiectare e venit integral.
+// Manopera e trecută la client fără adaos (cost = preț client, profit 0).
+//
+// Convenția de TVA (aceeași în contract, raport și proformă):
+//   * produsele (catalog și produse proprii) au prețuri de listă CU TVA inclus; proforma extrage TVA-ul din ele;
+//   * onorariul de proiectare e FĂRĂ TVA (net), calculat O SINGURĂ DATĂ de computeFee/feeFor din core/contract.ts
+//     (onorariul din contract sau din fișa proiectului, suprafața și baza bugetului); TVA-ul se adaugă doar dacă studioul
+//     e plătitor (ContractData.vatPayer). În profit intră doar onorariul net; în totalul de client, onorariul brut.
+// Produsele proprii: costul e prețul real de achiziție (costPrice × cantitate) când există, altfel din discountul furnizorului.
 //
 // Proforma nu e factură fiscală și nu trece prin e-Factura: e o cerere de plată pentru client.
 import type { BoqCategory } from './boq';
+import { safeCell, quoteCell } from './csv-safe';
 
 const r2 = (v: number) => Math.round((v + Number.EPSILON) * 100) / 100;
 
@@ -53,14 +61,17 @@ export const pctSum = (ms: Pick<Milestone, 'pct'>[]) => r2(ms.reduce((a, m) => a
 /** Procentele trebuie să facă exact 100% (dacă există etape cu procent). */
 export const pctOk = (ms: Pick<Milestone, 'pct'>[]) => !ms.some(m => m.pct != null) || Math.abs(pctSum(ms) - 100) < 0.005;
 
+/** Chei care, folosite ca nume de proprietate, ating prototipul obiectului: ignorate ca nume de furnizor. */
+const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const own = <T>(o: Record<string, T>, k: string): T | undefined => Object.prototype.hasOwnProperty.call(o, k) ? o[k] : undefined;
 export function checkCommercial(x: unknown): CommercialData {
   if (!x || typeof x !== 'object' || Array.isArray(x)) throw new CommercialError('Datele comerciale sunt invalide.');
   const o = x as any, out = emptyCommercial(), L = COMMERCIAL_LIMITS;
   out.defaults = checkTerms(o.defaults, 'Valori implicite');
   if (o.suppliers != null){ if (typeof o.suppliers !== 'object' || Array.isArray(o.suppliers)) throw new CommercialError('Lista furnizorilor e invalidă.');
-    const entries = Object.entries(o.suppliers); if (entries.length > L.suppliers) throw new CommercialError(`Cel mult ${L.suppliers} furnizori.`);
+    const entries = Object.entries(o.suppliers).filter(([k]) => !UNSAFE_KEYS.has(clean(k, L.supplierName))); if (entries.length > L.suppliers) throw new CommercialError(`Cel mult ${L.suppliers} furnizori.`);
     for (const [k, v] of entries){ const name = clean(k, L.supplierName); if (!name || k.length > L.supplierName) throw new CommercialError('Numele furnizorului e gol sau prea lung.');
-      if (Object.prototype.hasOwnProperty.call(out.suppliers, name) || name === '__proto__') throw new CommercialError('Furnizor duplicat.');
+      if (Object.prototype.hasOwnProperty.call(out.suppliers, name)) throw new CommercialError('Furnizor duplicat.');
       const t = checkTerms(v, name); if (Object.keys(t).length) out.suppliers[name] = t; } }
   if (o.milestones != null){ if (!Array.isArray(o.milestones)) throw new CommercialError('Graficul de plăți e invalid.');
     if (o.milestones.length > L.milestones) throw new CommercialError(`Cel mult ${L.milestones} etape de plată.`);
@@ -97,14 +108,16 @@ export const costOf = (list: number | null, discountPct = 0): number | null => l
 export const clientPriceOf = (list: number | null, markupPct = 0): number | null => list == null ? null : r2(list * (1 + markupPct / 100));
 /** Termenii unui furnizor: ai lui, apoi cei impliciți, apoi 0. */
 export function termsFor(d: Pick<CommercialData, 'defaults' | 'suppliers'>, supplier: string): Required<Terms> {
-  const s = d.suppliers[supplier] ?? {}; return { discountPct: s.discountPct ?? d.defaults.discountPct ?? 0, markupPct: s.markupPct ?? d.defaults.markupPct ?? 0 };
+  const s = own(d.suppliers, supplier) ?? {}; return { discountPct: s.discountPct ?? d.defaults.discountPct ?? 0, markupPct: s.markupPct ?? d.defaults.markupPct ?? 0 };
 }
 
 // ---------- raportul de profit ----------
 /** O linie de deviz, minimal: ce trebuie pentru profit și proformă. */
-export interface SourceLine { key: string; category: BoqCategory; label: string; supplier: string; qty: number; unit: string; unitPrice: number | null; total: number | null }
+export type LineCategory = BoqCategory | 'custom';
+/** `costTotal`: costul real al liniei (produs propriu cu preț de achiziție); lipsă/null → din discountul furnizorului. */
+export interface SourceLine { key: string; category: LineCategory; label: string; supplier: string; qty: number; unit: string; unitPrice: number | null; total: number | null; costTotal?: number | null }
 export interface SourceLabor { key: string; label: string; qty: number; unit: string; amount: number }
-export interface ProfitLine { key: string; category: BoqCategory; label: string; supplier: string; qty: number; unit: string;
+export interface ProfitLine { key: string; category: LineCategory; label: string; supplier: string; qty: number; unit: string;
   list: number | null; cost: number | null; client: number | null; profit: number | null; clientUnit: number | null; discountPct: number; markupPct: number }
 export interface ProfitGroup { list: number | null; cost: number | null; client: number | null; profit: number | null; lines: number; unknown: number }
 const addG = (g: ProfitGroup, l: Pick<ProfitLine, 'list' | 'cost' | 'client' | 'profit'>) => { g.lines++;
@@ -112,22 +125,26 @@ const addG = (g: ProfitGroup, l: Pick<ProfitLine, 'list' | 'cost' | 'client' | '
 const newG = (): ProfitGroup => ({ list: null, cost: null, client: null, profit: null, lines: 0, unknown: 0 });
 
 export function profitLine(d: Pick<CommercialData, 'defaults' | 'suppliers'>, s: SourceLine): ProfitLine {
-  const t = termsFor(d, s.supplier), list = s.total, cost = costOf(list, t.discountPct), client = clientPriceOf(list, t.markupPct);
+  const t = termsFor(d, s.supplier), list = s.total, cost = list != null && s.costTotal != null ? r2(s.costTotal) : costOf(list, t.discountPct), client = clientPriceOf(list, t.markupPct);
   return { key: s.key, category: s.category, label: s.label, supplier: s.supplier, qty: s.qty, unit: s.unit, list, cost, client,
     profit: client == null || cost == null ? null : r2(client - cost), clientUnit: list == null ? null : s.qty > 0 ? r2(client! / s.qty) : client, ...t };
 }
 export interface ProfitReport { lines: ProfitLine[]; bySupplier: Record<string, ProfitGroup>; byCategory: Record<string, ProfitGroup>; goods: ProfitGroup;
-  labor: number; fee: number | null; totals: { cost: number; client: number; profit: number; marginPct: number | null }; unknownLines: number; feeUnknown: boolean }
+  /** onorariul NET (fără TVA) și TVA-ul lui (0 dacă studioul nu e plătitor) */
+  labor: number; fee: number | null; feeVat: number; totals: { cost: number; client: number; profit: number; marginPct: number | null }; unknownLines: number; feeUnknown: boolean }
 /**
  * Profitul pe linie, pe furnizor, pe categorie și pe proiect. Totalurile proiectului adună doar valorile cunoscute;
  * `unknownLines` spune câte linii lipsesc, `feeUnknown` că onorariul nu se poate estima (de ex. pe oră).
  */
-export function profitReport(d: Pick<CommercialData, 'defaults' | 'suppliers'>, items: SourceLine[], labor: SourceLabor[], fee: number | null): ProfitReport {
-  const lines = items.map(i => profitLine(d, i)), bySupplier: Record<string, ProfitGroup> = {}, byCategory: Record<string, ProfitGroup> = {}, goods = newG();
-  for (const l of lines){ addG(bySupplier[l.supplier] ??= newG(), l); addG(byCategory[l.category] ??= newG(), l); addG(goods, l); }
-  const lab = r2(labor.reduce((a, l) => a + l.amount, 0)), f = fee ?? 0;
-  const cost = r2((goods.cost ?? 0) + lab), client = r2((goods.client ?? 0) + lab + f), profit = r2((goods.profit ?? 0) + f);
-  return { lines, bySupplier, byCategory, goods, labor: lab, fee, totals: { cost, client, profit, marginPct: client > 0 ? r2(profit / client * 100) : null }, unknownLines: goods.unknown, feeUnknown: fee == null };
+export function profitReport(d: Pick<CommercialData, 'defaults' | 'suppliers'>, items: SourceLine[], labor: SourceLabor[], fee: number | null, feeVat = 0): ProfitReport {
+  // Map, nu obiect: numele furnizorului e text introdus de utilizator („__proto__”, „constructor” nu ating prototipul)
+  const lines = items.map(i => profitLine(d, i)), sup = new Map<string, ProfitGroup>(), cat = new Map<string, ProfitGroup>(), goods = newG();
+  const group = (m: Map<string, ProfitGroup>, k: string) => { let g = m.get(k); if (!g) m.set(k, g = newG()); return g; };
+  for (const l of lines){ addG(group(sup, l.supplier), l); addG(group(cat, l.category), l); addG(goods, l); }
+  const bySupplier: Record<string, ProfitGroup> = Object.fromEntries(sup), byCategory: Record<string, ProfitGroup> = Object.fromEntries(cat);
+  const lab = r2(labor.reduce((a, l) => a + l.amount, 0)), f = fee ?? 0, fv = fee == null ? 0 : r2(feeVat);
+  const cost = r2((goods.cost ?? 0) + lab), client = r2((goods.client ?? 0) + lab + f + fv), profit = r2((goods.profit ?? 0) + f);
+  return { lines, bySupplier, byCategory, goods, labor: lab, fee, feeVat: fv, totals: { cost, client, profit, marginPct: client > 0 ? r2(profit / client * 100) : null }, unknownLines: goods.unknown, feeUnknown: fee == null };
 }
 
 // ---------- graficul de plăți ----------
@@ -152,25 +169,33 @@ export function paymentSchedule(ms: Milestone[], contractTotal: number, today: s
 export interface ProformaLine { code: string; name: string; unit: string; qty: number; unitNet: number; vatPct: number; net: number; vat: number; gross: number }
 export interface ProformaGroup { category: string; lines: ProformaLine[]; net: number; vat: number; gross: number }
 export interface Proforma { groups: ProformaGroup[]; net: number; vat: number; gross: number; vatPct: number; unknownLines: number;
-  milestone: { id: string; label: string; pct: number | null; amount: number; net: number; vat: number } | null; due: number }
+  /** false: studioul nu e plătitor de TVA, deci onorariul are TVA 0 (proforma o spune) */
+  feeVatPayer: boolean;
+  milestone: { id: string; label: string; pct: number | null; amount: number; net: number; vat: number; vatPct: number } | null; due: number }
 const cleanCode = (s: string) => s.replace(/[^\w.-]+/g, '-').replace(/^-+/, '').slice(0, 40) || 'linie';
 /**
- * Proforma din prețurile de client (cu TVA inclus): prețul unitar fără TVA = brut / (1 + TVA), rotunjit la 2 zecimale; TVA-ul
- * se calculează pe valoarea fără TVA a liniei, ca în programele de facturare. Liniile cu preț necunoscut nu apar (sunt numărate).
- * Cu o etapă aleasă, „de plată” e suma etapei din grafic; altfel, totalul.
+ * Proforma din prețurile de client. Produsele și manopera au TVA inclus: prețul unitar fără TVA = brut / (1 + TVA), rotunjit la
+ * 2 zecimale; TVA-ul se calculează pe valoarea fără TVA a liniei, ca în programele de facturare. Onorariul (r.fee) e NET:
+ * TVA-ul se adaugă doar pentru un studio plătitor (`vatPayer`, implicit: dacă raportul are TVA pe onorariu), altfel e 0.
+ * Liniile cu preț necunoscut nu apar (sunt numărate). Cu o etapă aleasă, „de plată” e suma etapei din grafic; altfel, totalul.
  */
-export function buildProforma(r: ProfitReport, laborLines: SourceLabor[], feeLabel: string, milestone: ScheduleRow | null, vatRate = VAT_RATE): Proforma {
+export function buildProforma(r: ProfitReport, laborLines: SourceLabor[], feeLabel: string, milestone: ScheduleRow | null, vatRate = VAT_RATE, vatPayer: boolean = r.feeVat > 0): Proforma {
   const mk = (code: string, name: string, unit: string, qty: number, grossTotal: number): ProformaLine => {
     const q = qty > 0 ? qty : 1, unitNet = r2(grossTotal / q / (1 + vatRate)), net = r2(unitNet * q), vat = r2(net * vatRate);
     return { code: cleanCode(code), name, unit, qty: q, unitNet, vatPct: r2(vatRate * 100), net, vat, gross: r2(net + vat) }; };
   const groups = new Map<string, ProformaLine[]>();
   for (const l of r.lines){ if (l.client == null) continue; const g = groups.get(l.category) ?? []; g.push(mk(l.key, l.label, l.unit, l.qty, l.client)); groups.set(l.category, g); }
   const lab = laborLines.filter(l => l.amount > 0).map(l => mk(l.key, l.label, l.unit, l.qty, l.amount)); if (lab.length) groups.set('labor', lab);
-  if (r.fee != null && r.fee > 0) groups.set('fee', [mk('onorariu', feeLabel, 'serv', 1, r.fee)]);
+  if (r.fee != null && r.fee > 0){ const net = r2(r.fee), rate = vatPayer ? vatRate : 0, vat = r2(net * rate);
+    groups.set('fee', [{ code: 'onorariu', name: feeLabel, unit: 'serv', qty: 1, unitNet: net, vatPct: r2(rate * 100), net, vat, gross: r2(net + vat) }]); }
   const out: ProformaGroup[] = [...groups].map(([category, lines]) => ({ category, lines, net: r2(lines.reduce((a, l) => a + l.net, 0)), vat: r2(lines.reduce((a, l) => a + l.vat, 0)), gross: r2(lines.reduce((a, l) => a + l.gross, 0)) }));
   const net = r2(out.reduce((a, g) => a + g.net, 0)), vat = r2(out.reduce((a, g) => a + g.vat, 0)), gross = r2(net + vat);
-  const ms = milestone ? (() => { const mNet = r2(milestone.amount / (1 + vatRate)); return { id: milestone.id, label: milestone.label, pct: milestone.pct ?? null, amount: r2(mNet + r2(mNet * vatRate)), net: mNet, vat: r2(mNet * vatRate) }; })() : null;
-  return { groups: out, net, vat, gross, vatPct: r2(vatRate * 100), unknownLines: r.unknownLines, milestone: ms, due: ms ? ms.amount : gross };
+  // etapa: o singură cotă dacă toate liniile au aceeași; altfel (onorariu fără TVA lângă produse cu TVA) cota efectivă a documentului
+  const rates = new Set(out.flatMap(g => g.lines.map(l => l.vatPct))), single = rates.size <= 1, rate1 = single ? (rates.size ? [...rates][0]! / 100 : vatRate) : 0;
+  const ms = milestone ? (() => {
+    const mNet = single ? r2(milestone.amount / (1 + rate1)) : gross > 0 ? r2(milestone.amount * net / gross) : r2(milestone.amount), mVat = single ? r2(mNet * rate1) : r2(milestone.amount - mNet);
+    return { id: milestone.id, label: milestone.label, pct: milestone.pct ?? null, amount: r2(mNet + mVat), net: mNet, vat: mVat, vatPct: single ? r2(rate1 * 100) : mNet > 0 ? r2(mVat / mNet * 100) : 0 }; })() : null;
+  return { groups: out, net, vat, gross, vatPct: r2(vatRate * 100), unknownLines: r.unknownLines, feeVatPayer: vatPayer, milestone: ms, due: ms ? ms.amount : gross };
 }
 
 /**
@@ -180,9 +205,9 @@ export function buildProforma(r: ProfitReport, laborLines: SourceLabor[], feeLab
  */
 export const PROFORMA_CSV_HEADER = ['cod', 'denumire', 'UM', 'cantitate', 'preț unitar fără TVA', 'cota TVA', 'valoare'];
 export function proformaCsv(p: Proforma): string {
-  const cell = (v: string | number) => { const s = String(v); return /[";\r\n]/.test(s) || /^[=+\-@]/.test(s) ? `"${(/^[=+\-@]/.test(s) ? "'" : '') + s.replace(/"/g, '""')}"` : s; };
+  const cell = (v: string | number) => quoteCell(typeof v === 'number' ? String(v) : safeCell(v));   // protecția comună (core/csv-safe.ts)
   const rows: (string | number)[][] = p.milestone
-    ? [[`avans-${p.milestone.id}`, `${p.milestone.label}${p.milestone.pct != null ? ` (${p.milestone.pct}%)` : ''} conform contract`, 'serv', 1, p.milestone.net, p.vatPct, p.milestone.net]]
+    ? [[`avans-${p.milestone.id}`, `${p.milestone.label}${p.milestone.pct != null ? ` (${p.milestone.pct}%)` : ''} conform contract`, 'serv', 1, p.milestone.net, p.milestone.vatPct, p.milestone.net]]
     : p.groups.flatMap(g => g.lines.map(l => [l.code, l.name, l.unit, l.qty, l.unitNet, l.vatPct, l.net]));
   return '﻿' + [PROFORMA_CSV_HEADER, ...rows].map(r => r.map(cell).join(';')).join('\r\n') + '\r\n';
 }

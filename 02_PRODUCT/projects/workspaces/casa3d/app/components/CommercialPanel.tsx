@@ -12,10 +12,13 @@ const numOrUndef = (s: string) => { const v = Number(s.replace(',', '.')); retur
 const newId = () => 'm' + Math.random().toString(36).slice(2, 10);
 
 export default function CommercialPanel({ id, cur, say }: { id: string; cur: string; say(s: string): void }){
-  const { t, lang } = usePrefs(), [r, setR] = useState<Resp | null>(null), [d, setD] = useState<CommercialData | null>(null), [busy, setBusy] = useState(false), [dirty, setDirty] = useState(false);
+  const { t, lang } = usePrefs(), [r, setR] = useState<Resp | null>(null), [d, setD] = useState<CommercialData | null>(null), [busy, setBusy] = useState(false), [dirty, setDirty] = useState(false), [loadErr, setLoadErr] = useState<string | null>(null);
   const money = (v: number | null | undefined) => formatMoney(v, cur, lang, t('common.unknownPrice'));
-  const load = () => fetch(`/api/projects/${id}/commercial`).then(x => x.ok ? x.json() : null).then((j: Resp | null) => { if (j){ setR(j); setD(j.data); setDirty(false); } }).catch(() => {});
+  // la o eroare de citire (de ex. 409: datele salvate nu trec validarea) formularul nu se afișează, deci nimic nu se salvează peste ele
+  const load = () => fetch(`/api/projects/${id}/commercial`).then(async x => { if (x.ok) return x.json(); const j = await x.json().catch(() => null); setLoadErr(j?.error || t('com.loadError')); return null; })
+    .then((j: Resp | null) => { if (j){ setR(j); setD(j.data); setDirty(false); setLoadErr(null); } }).catch(() => setLoadErr(t('com.loadError')));
   useEffect(() => { load(); }, [id]); // eslint-disable-line
+  if (loadErr && (!r || !d)) return <section className="commercial"><h3>{t('com.title')}</h3><p className="bad" role="alert">{loadErr}</p></section>;
   if (!r || !d) return <section className="commercial"><h3>{t('com.title')}</h3><p className="muted">{t('print.loading')}</p></section>;
   const edit = (fn: (x: CommercialData) => void) => { const x: CommercialData = JSON.parse(JSON.stringify(d)); fn(x); setD(x); setDirty(true); };
   const setTerms = (sup: string | null, k: keyof Terms, v: string) => edit(x => { const tgt = sup == null ? x.defaults : (x.suppliers[sup] ??= {}); const n = numOrUndef(v); if (n == null) delete tgt[k]; else tgt[k] = n;
@@ -50,7 +53,7 @@ export default function CommercialPanel({ id, cur, say }: { id: string; cur: str
     <table className="com-table"><thead><tr><th>{t('com.category')}</th><th>{t('com.cost')}</th><th>{t('com.clientPrice')}</th><th>{t('com.profitCol')}</th></tr></thead>
       <tbody>{Object.entries(rep.byCategory).map(([c, g]) => <tr key={c}><td>{t(`budget.cat.${c}`)}</td><td>{money(g.cost)}</td><td>{money(g.client)}</td><td>{money(g.profit)}</td></tr>)}
         <tr><td>{t('com.cat.labor')} <small>{t('com.passThrough')}</small></td><td>{money(rep.labor)}</td><td>{money(rep.labor)}</td><td>{money(0)}</td></tr>
-        <tr><td>{t('com.cat.fee')}</td><td>—</td><td>{money(rep.fee)}</td><td>{money(rep.fee)}</td></tr>
+        <tr><td>{t('com.cat.fee')}</td><td>—</td><td>{money(rep.fee == null ? null : rep.fee + rep.feeVat)}</td><td>{money(rep.fee)}</td></tr>
         <tr className="com-total"><td><b>{t('com.total')}</b></td><td><b>{money(rep.totals.cost)}</b></td><td><b>{money(rep.totals.client)}</b></td><td><b>{money(rep.totals.profit)}</b>{rep.totals.marginPct != null && <small> {t('com.margin', { p: rep.totals.marginPct })}</small>}</td></tr></tbody></table>
     {rep.unknownLines > 0 && <p className="muted small">{t('com.unknownLines', { n: rep.unknownLines })}</p>}
     {rep.feeUnknown && <p className="muted small">{t('com.feeUnknown')}</p>}

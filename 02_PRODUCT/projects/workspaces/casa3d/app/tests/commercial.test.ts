@@ -85,7 +85,7 @@ test('validarea: intervale, lungimi, maximum 20 etape și 100 de furnizori, proc
 
 test('proforma: doar prețuri de client, TVA 21% pe valoarea fără TVA, grupe pe categorie, etapa de plată', () => {
   const d = { defaults: { discountPct: 30, markupPct: 21 }, suppliers: {} };
-  const r = profitReport(d, [line('1', 'F', 1000), line('2', 'F', 200, 'finishes', 4), line('3', 'F', null)], [{ key: 'l', label: 'Zugrăvit', qty: 10, unit: 'm²', amount: 121 }], 1210);
+  const r = profitReport(d, [line('1', 'F', 1000), line('2', 'F', 200, 'finishes', 4), line('3', 'F', null)], [{ key: 'l', label: 'Zugrăvit', qty: 10, unit: 'm²', amount: 121 }], 1000, 210);   // onorariul e net (1000) + TVA 210 (studio plătitor)
   const p = buildProforma(r, [{ key: 'l', label: 'Zugrăvit', qty: 10, unit: 'm²', amount: 121 }], 'Onorariu', null);
   assert.deepEqual(p.groups.map(g => g.category), ['furniture', 'finishes', 'labor', 'fee']);
   const [f] = p.groups[0].lines; assert.deepEqual([f.unitNet, f.net, f.vat, f.gross, f.vatPct], [1000, 1000, 210, 1210, 21]);
