@@ -43,6 +43,7 @@ public static class DeviceInventory
             var enc = p.Letters.Select(l => bitlocker.TryGetValue(l, out var s) ? $"{l} {s}" : null).Where(s => s is not null).ToList();
             devices[i] = devices[i] with
             {
+                Kind = DeviceRules.WithSystemVolume(devices[i].Kind, p.Letters, Path.GetPathRoot(Environment.SystemDirectory) ?? ""),
                 Serial = devices[i].Serial.Length > 0 ? devices[i].Serial : LogAnalyzer.Dfir.Registers.MediaRegister.NormalizeSerial(p.Serial.TrimEnd('.')),
                 CapacityBytes = p.Size ?? devices[i].CapacityBytes,
                 Bus = p.Interface.Length > 0 ? p.Interface : devices[i].Bus,
