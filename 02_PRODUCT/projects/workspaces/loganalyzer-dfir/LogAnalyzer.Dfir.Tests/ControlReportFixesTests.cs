@@ -17,7 +17,7 @@ public class ControlReportFixesTests
 
     private static StationFacts Station(bool admin = true) => new()
     {
-        Host = "ST-TEST", PeriodStartUtc = Start, PeriodEndUtc = Start.AddDays(30), CollectedUtc = Start.AddDays(30), IsAdministrator = admin, StationShouldBeIsolated = true,
+        Host = "ST-TEST", PeriodStartUtc = Start, PeriodEndUtc = Start.AddDays(30), CollectedUtc = Start.AddDays(30), IsAdministrator = admin, Posture = LogAnalyzer.Core.Services.Edition.StationPosture.Standalone,
     };
 
     private static ControlCheck Check(ControlReport r, string id) => Assert.Single(r.Checks, c => c.Id == id);

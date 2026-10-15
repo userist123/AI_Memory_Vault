@@ -53,7 +53,8 @@ public sealed class StationFacts
     public DateTimeOffset PeriodStartUtc { get; init; }
     public DateTimeOffset PeriodEndUtc { get; init; }
     public bool IsAdministrator { get; init; }
-    public bool StationShouldBeIsolated { get; init; }
+    /// <summary>The edition's compile-time posture; decides which checks apply (see ControlApplicability). Default: the strictest, so a forgotten value never relaxes a rule.</summary>
+    public LogAnalyzer.Core.Services.Edition.StationPosture Posture { get; init; } = LogAnalyzer.Core.Services.Edition.StationPosture.Standalone;
     public List<LocalAccount> Accounts { get; init; } = [];
     public PasswordPolicy? PasswordPolicy { get; set; }
     public Dictionary<string, AuditSetting>? AuditPolicy { get; set; }
@@ -61,6 +62,12 @@ public sealed class StationFacts
     public List<string> DefenderExclusions { get; init; } = [];
     public List<NetworkProfileFact> NetworkProfiles { get; init; } = [];
     public List<string> ConnectedInterfacesNow { get; init; } = [];
+    /// <summary>Configured or present ways out of the station, read passively (check N11); null = not collected.</summary>
+    public List<EgressPathFact>? EgressPaths { get; set; }
+    /// <summary>The sources of check N11 that could not be read ("name (reason)"): with any of them N11 is never CONFORM.</summary>
+    public List<string> EgressUnread { get; init; } = [];
+    /// <summary>Result of the active N13 probe (Network edition only); null = not probed.</summary>
+    public DomainControllerProbeResult? DomainController { get; set; }
     public List<UsbDeviceFact> UsbDevices { get; init; } = [];
     public List<LogFact> Logs { get; init; } = [];
     public List<ChannelCoverage> Coverage { get; init; } = [];
@@ -115,8 +122,11 @@ public static class StationFactCollector
 
     /// <param name="classifiedFolders">The classified folders of the procedure profile (their audit rules are read); null = not collected.</param>
     /// <param name="offlineUpdates">The organisation's register of offline updates (compared with the installed updates); null = not given.</param>
-    public static StationFacts Collect(DateTimeOffset periodStartUtc, bool stationShouldBeIsolated, int maxPerId = 5000, CancellationToken ct = default,
-                                       IReadOnlyList<string>? classifiedFolders = null, IReadOnlyList<LogAnalyzer.Dfir.Registers.UpdateRow>? offlineUpdates = null)
+    /// <param name="dcProbe">The ACTIVE domain-controller probe (check N13); only the Network edition has one. Used only on the IsolatedNetwork posture and
+    /// only on a domain-joined station; null = not probed.</param>
+    public static StationFacts Collect(DateTimeOffset periodStartUtc, LogAnalyzer.Core.Services.Edition.StationPosture posture, int maxPerId = 5000, CancellationToken ct = default,
+                                       IReadOnlyList<string>? classifiedFolders = null, IReadOnlyList<LogAnalyzer.Dfir.Registers.UpdateRow>? offlineUpdates = null,
+                                       IDomainControllerProbe? dcProbe = null)
     {
         using var id = WindowsIdentity.GetCurrent();
         var facts = new StationFacts
@@ -124,7 +134,7 @@ public static class StationFactCollector
             PeriodStartUtc = periodStartUtc,
             PeriodEndUtc = DateTimeOffset.UtcNow,
             IsAdministrator = new WindowsPrincipal(id).IsInRole(WindowsBuiltInRole.Administrator),
-            StationShouldBeIsolated = stationShouldBeIsolated,
+            Posture = posture,
         };
         Try(facts, "Conturi locale", () => facts.Accounts.AddRange(ReadAccounts()));
         Try(facts, "Politica de parole", () => facts.PasswordPolicy = LocalPasswordPolicy.Query());
@@ -136,6 +146,11 @@ public static class StationFactCollector
         Try(facts, "Setări de securitate (extinse)", () => ReadSettingsWave2(facts));
         Try(facts, "Setări de securitate (stație izolată)", () => ReadSettingsWave3(facts));
         Try(facts, "Volume și BitLocker", () => ReadVolumes(facts));
+        Try(facts, "Căi spre internet (configurație locală)", () => facts.EgressPaths = EgressPathCollector.Collect(facts.EgressUnread));
+        Try(facts, "Apartenența la domeniu", () => ReadDomainMembership(facts));
+        if (dcProbe is not null && posture == LogAnalyzer.Core.Services.Edition.StationPosture.IsolatedNetwork
+            && facts.Settings.TryGetValue("Domain.PartOfDomain", out var joined) && joined == "da" && facts.Settings.TryGetValue("Domain.Name", out var domain))
+            Try(facts, "Controlerul de domeniu (verificare activă)", () => facts.DomainController = dcProbe.Probe(domain, ct));
         if (classifiedFolders is not null) facts.FolderAudits = ReadFolderAudits(classifiedFolders);
         if (offlineUpdates is not null) facts.OfflineUpdateRegister = [.. offlineUpdates];
         Try(facts, "Profiluri de rețea", () => facts.NetworkProfiles.AddRange(ReadNetworkProfiles()));
@@ -149,10 +164,15 @@ public static class StationFactCollector
         return facts;
     }
 
-    private static void Try(StationFacts f, string what, Action a)
+    /// <summary>
+    /// Runs one source. A source that cannot be read, or whose content cannot be parsed (a malformed registry value, a truncated blob), becomes a
+    /// gap and the checks that depend on it NEDETERMINATE; it never aborts the whole control run.
+    /// </summary>
+    internal static void Try(StationFacts f, string what, Action a)
     {
         try { a(); }
-        catch (Exception ex) when (ex is ManagementException or UnauthorizedAccessException or System.Security.SecurityException or IOException or System.Runtime.InteropServices.COMException or InvalidOperationException)
+        catch (Exception ex) when (ex is ManagementException or UnauthorizedAccessException or System.Security.SecurityException or IOException or System.Runtime.InteropServices.COMException or InvalidOperationException
+                                      or ArgumentException or FormatException or IndexOutOfRangeException or OverflowException)
         {
             f.Gaps.Add(new EvidenceGap(what, EvidenceStatus.Failed, ex.Message, "Verificările care depind de această sursă sunt NEDETERMINATE", "Rulare ca administrator", "Posibil"));
         }
@@ -413,7 +433,9 @@ public static class StationFactCollector
         {
             // Only the number of saved Wi-Fi profiles (the files are named by GUID); the profile contents are never opened.
             var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Wlansvc", "Profiles", "Interfaces");
-            s["Wlan.ProfileCount"] = Directory.Exists(dir) ? Directory.EnumerateFiles(dir, "*.xml", SearchOption.AllDirectories).Count().ToString() : "0";
+            // Directory.Exists says false on "access denied": a folder is "0 profiles" only when confirmed missing, otherwise the count stays unread.
+            if (EgressPathCollector.CountWifiProfiles(dir, out var why) is { } n) s["Wlan.ProfileCount"] = n.ToString();
+            else s["Wlan.ProfileUnread"] = why;
         });
         Guard(() =>
         {
@@ -527,6 +549,18 @@ public static class StationFactCollector
 
     private static readonly Guid SubNoneGuid = new("fea3413e-7e05-4911-9a71-700331f1c294");        // powercfg SUB_NONE
     private static readonly Guid ConsoleLockGuid = new("0e796bdb-100d-47d6-a2d5-f7d2daa51f51");    // powercfg CONSOLELOCK: password on wake
+
+    /// <summary>Domain membership (check N12), read from WMI Win32_ComputerSystem: "da" / "nu" and the domain or workgroup name. Local read only.</summary>
+    private static void ReadDomainMembership(StationFacts f)
+    {
+        using var cs = new ManagementObjectSearcher("SELECT PartOfDomain, Domain FROM Win32_ComputerSystem");
+        foreach (ManagementObject o in cs.Get())
+        {
+            f.Settings["Domain.PartOfDomain"] = o["PartOfDomain"] is true ? "da" : "nu";
+            f.Settings["Domain.Name"] = o["Domain"]?.ToString() ?? "";
+            break;
+        }
+    }
 
     private static void ReadSettingsWave3(StationFacts f)
     {

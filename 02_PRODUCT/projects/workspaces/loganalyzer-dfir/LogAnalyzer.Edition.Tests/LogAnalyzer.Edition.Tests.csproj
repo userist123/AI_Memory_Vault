@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Inspects the BUILD OUTPUT of the classified edition (P1) and fails if any network, AI or host-modifying code is in it
+  <!-- Inspects the BUILD OUTPUT of the three editions: Standalone must contain no network, AI or host-modifying code, Network no internet-only code
        (owner decision 13: "absent, not disabled"). The executables are referenced only so they are built first. -->
   <PropertyGroup>
     <TargetFramework>net10.0-windows</TargetFramework>
@@ -15,10 +15,12 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LogAnalyzer.App.Classified\LogAnalyzer.App.Classified.csproj" ReferenceOutputAssembly="false" Private="false" />
+    <ProjectReference Include="..\LogAnalyzer.App.Network\LogAnalyzer.App.Network.csproj" ReferenceOutputAssembly="false" Private="false" />
     <ProjectReference Include="..\LogAnalyzer.App\LogAnalyzer.App.csproj" ReferenceOutputAssembly="false" Private="false" />
   </ItemGroup>
   <PropertyGroup>
     <ClassifiedIncludeLocalAi Condition="'$(ClassifiedIncludeLocalAi)' == ''">false</ClassifiedIncludeLocalAi>
+    <NetworkIncludeLocalAi Condition="'$(NetworkIncludeLocalAi)' == ''">false</NetworkIncludeLocalAi>
   </PropertyGroup>
   <ItemGroup>
     <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
@@ -26,11 +28,19 @@
       <_Parameter2>$(ClassifiedIncludeLocalAi)</_Parameter2>
     </AssemblyAttribute>
     <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
-      <_Parameter1>ClassifiedOutput</_Parameter1>
+      <_Parameter1>StandaloneOutput</_Parameter1>
       <_Parameter2>$(MSBuildThisFileDirectory)..\LogAnalyzer.App.Classified\bin\$(Configuration)\net10.0-windows\</_Parameter2>
     </AssemblyAttribute>
     <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
-      <_Parameter1>UnclassifiedOutput</_Parameter1>
+      <_Parameter1>NetworkOutput</_Parameter1>
+      <_Parameter2>$(MSBuildThisFileDirectory)..\LogAnalyzer.App.Network\bin\$(Configuration)\net10.0-windows\</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>NetworkIncludeLocalAi</_Parameter1>
+      <_Parameter2>$(NetworkIncludeLocalAi)</_Parameter2>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>InternetOutput</_Parameter1>
       <_Parameter2>$(MSBuildThisFileDirectory)..\LogAnalyzer.App\bin\$(Configuration)\net10.0-windows\</_Parameter2>
     </AssemblyAttribute>
   </ItemGroup>

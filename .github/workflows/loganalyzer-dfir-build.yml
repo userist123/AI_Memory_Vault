@@ -86,9 +86,10 @@ jobs:
       - name: Test (Release)
         run: dotnet test LogAnalyzer.slnx --no-build --configuration Release --logger "trx;LogFilePrefix=test-results"
 
-      # Edition split (docs/dfir/EDITIONS.md): both executables were built by the solution build above; this step runs only the
-      # inspection of the classified (P1) build output so a violation is named in its own step.
-      - name: Classified edition contains no network, AI or host-modifying code
+      # Edition split (docs/dfir/EDITIONS_AND_POSTURE.md): the three executables were built by the solution build above; this step runs only the
+      # inspection of their build outputs (Standalone: no network, AI or host-modifying code; Network: no internet-only code; each edition's fixed posture)
+      # so a violation is named in its own step.
+      - name: Editions - Standalone has no network code, Network has no internet-only code, fixed postures
         run: dotnet test LogAnalyzer.Edition.Tests/LogAnalyzer.Edition.Tests.csproj --no-build --configuration Release
 
       # Failed tests become annotations: they are readable from the checks API without
@@ -176,12 +177,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - edition: LogAnalyzer            # unclassified (P2/P3)
-            project: LogAnalyzer.App/LogAnalyzer.App.csproj
-            artifact: LogAnalyzer-win-x64
-          - edition: LogAnalyzer.Classified # classified (P1)
+          # One codebase, three executables, each published to its own folder (publish/<AssemblyName>/win-x64) and uploaded as its own artifact.
+          - edition: LogAnalyzer.Standalone # air-gapped station, no network code (formerly the classified edition)
             project: LogAnalyzer.App.Classified/LogAnalyzer.App.Classified.csproj
-            artifact: LogAnalyzer-Classified-win-x64
+            artifact: LogAnalyzer-Standalone-win-x64
+          - edition: LogAnalyzer.Retea      # air-gapped LAN (domain, servers), no internet
+            project: LogAnalyzer.App.Network/LogAnalyzer.App.Network.csproj
+            artifact: LogAnalyzer-Retea-win-x64
+          - edition: LogAnalyzer.Internet   # everything (formerly LogAnalyzer.exe)
+            project: LogAnalyzer.App/LogAnalyzer.App.csproj
+            artifact: LogAnalyzer-Internet-win-x64
     env:
       EDITION: ${{ matrix.edition }}
     steps:
