@@ -34,6 +34,13 @@ public static class DeviceJournalStore
     public static string LegacyPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "LogAnalyzer", "device_monitor.json");
 
     private static readonly object SaveGate = new();
+    private static long _inPlaceSaves;
+
+    /// <summary>How many saves had to rewrite the journal in place in this process (the account cannot create a temporary file in the folder).</summary>
+    public static long InPlaceSaves => Interlocked.Read(ref _inPlaceSaves);
+
+    /// <summary>Notes an in-place save (called by <see cref="Save"/>; public so a test can simulate it).</summary>
+    public static void NoteInPlaceSave() => Interlocked.Increment(ref _inPlaceSaves);
     private static Mutex? _ownerMutex;
 
     /// <summary>
@@ -167,6 +174,7 @@ public static class DeviceJournalStore
                 catch (UnauthorizedAccessException) when (!tempWritten && File.Exists(full))
                 {
                     // cannot create a file in the folder: rewrite in place (flushed); the journal is a plain file anyway, the sealed audit is the record
+                    NoteInPlaceSave();
                     using var fs = new FileStream(full, FileMode.Open, FileAccess.Write, FileShare.Read, 4096, FileOptions.WriteThrough);
                     fs.Write(bytes);
                     fs.SetLength(bytes.Length);
@@ -201,6 +209,7 @@ public static class DeviceJournalStore
             j.Alerts ??= [];
             j.Runs ??= [];
             j.Radios ??= [];
+            j.PendingSeals ??= [];
             j.Devices.RemoveAll(d => d is null || d.Identity.Length == 0);
             return j;
         }
@@ -222,7 +231,7 @@ public static class DeviceJournalStore
     /// the SHA-256 of the damaged file, through <paramref name="audit"/>) and then set aside (renamed ".deteriorat-" and the time) so its content is kept and not
     /// overwritten by the next save; an empty journal starts. Check D05 shows the reset (DE VERIFICAT) instead of a tampering finding for every lost row.
     /// </summary>
-    public static DeviceJournal LoadForMonitor(string path, Func<string, string, string?> audit, out string problem)
+    public static DeviceJournal LoadForMonitor(string path, Func<string, string, string?> audit, out string problem, Func<DeviceAuditReading?>? history = null)
     {
         var j = Load(path, out problem, out var damaged);
         if (!damaged) return j;
@@ -239,6 +248,13 @@ public static class DeviceJournalStore
             problem += $"; a fost păstrat ca „{Path.GetFileName(aside)}” (SHA-256 {sha}) și se începe un jurnal nou.";
         }
         catch (Exception mv) when (mv is IOException or UnauthorizedAccessException) { problem += "; nu a putut fi păstrat deoparte: " + mv.Message + "."; }
+        // the new journal is not empty of what is known: the rows, numbers, first-seen times and alerts are rebuilt from the whole sealed audit (the reset stays sealed)
+        try
+        {
+            if (history?.Invoke() is { ChainValid: true } reading && DeviceJournalRebuild.FromAudit(j, reading) is > 0 and var rebuilt)
+                problem += $" {rebuilt} rânduri au fost refăcute din jurnalul sigilat (numere de înregistrare, prima apariție, alerte).";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { problem += "; rândurile nu au putut fi refăcute din jurnalul sigilat: " + ex.Message; }
         return j;
     }
 
@@ -339,4 +355,40 @@ public static class DeviceMonitorReport
 
     public static string AlertLine(DeviceAlertRecord a) =>
         $"{(a.Severity == DeviceAlertSeverity.Critical ? "ALERTĂ CRITICĂ" : "conectare")} {Utc(a.TimeUtc)}: {a.Device} ({DeviceMonitorRules.ClassText(a.Class)}) — {a.Text}";
+}
+
+/// <summary>
+/// Rebuilds the rows of a journal that was reset (damaged, set aside) from the WHOLE sealed audit: a registered medium keeps its registration number, its
+/// first-seen time and its alerts, so it does not become „fără număr de înregistrare” and check D05 finds nothing missing. The rows are not connected (the next
+/// reading marks what is plugged in); the sealed reset record stays and keeps check D05 at DE VERIFICAT.
+/// </summary>
+public static class DeviceJournalRebuild
+{
+    /// <summary>Adds a row for every device the audit sealed as first seen (class, name, serial, first-seen, registration number, last connection and disconnection, last state) and every sealed alert; returns the number of rows.</summary>
+    public static int FromAudit(DeviceJournal journal, DeviceAuditReading audit)
+    {
+        static string K(string identity) => LogAnalyzer.Dfir.Auth.OperationAudit.DeviceField(identity);
+        int rows = 0;
+        foreach (var sd in audit.Devices.OrderBy(d => d.FirstSeenUtc))
+        {
+            if (!Enum.TryParse<DeviceClass>(sd.Class, ignoreCase: true, out var cls) || journal.Devices.Any(d => K(d.Identity).Equals(sd.Identity, StringComparison.OrdinalIgnoreCase))) continue;
+            var e = new DeviceJournalEntry { Identity = sd.Identity, Class = cls, Name = sd.Device, Serial = sd.Serial, FirstSeenUtc = sd.FirstSeenUtc };
+            if (audit.LastRegistration.TryGetValue(sd.Identity, out var number)) e.RegistrationNumber = number;
+            var connects = audit.InfoAlerts.Concat(audit.CriticalAlerts).Where(a => a.Identity.Equals(sd.Identity, StringComparison.OrdinalIgnoreCase) && !DeviceMonitorRules.IsVolumeChangedAlert(a.Text)).Select(a => a.TimeUtc)
+                .Concat(audit.Presence.Where(p => p.Present && p.Identity.Equals(sd.Identity, StringComparison.OrdinalIgnoreCase)).Select(p => p.TimeUtc)).ToList();
+            if (connects.Count > 0) e.LastConnectedUtc = connects.Max();
+            if (audit.Presence.Where(p => !p.Present && p.Identity.Equals(sd.Identity, StringComparison.OrdinalIgnoreCase)).Select(p => (DateTimeOffset?)p.TimeUtc).Max() is { } gone) e.LastDisconnectedUtc = gone;
+            var states = audit.States.Where(x => x.Identity.Equals(sd.Identity, StringComparison.OrdinalIgnoreCase)).OrderBy(x => x.TimeUtc).ToList();
+            if (states.Count > 0) e.ConfigManagerErrorCode = states[^1].Code;
+            if (states.LastOrDefault(x => x.Active) is { } act) e.ActiveSeenUtc = act.TimeUtc;
+            journal.Devices.Add(e);
+            rows++;
+        }
+        foreach (var a in audit.CriticalAlerts.Select(a => (a, DeviceAlertSeverity.Critical)).Concat(audit.InfoAlerts.Select(a => (a, DeviceAlertSeverity.Info))).OrderBy(x => x.a.TimeUtc))
+        {
+            if (!Enum.TryParse<DeviceClass>(a.a.Class, ignoreCase: true, out var cls) || !journal.Devices.Any(d => K(d.Identity).Equals(a.a.Identity, StringComparison.OrdinalIgnoreCase))) continue;
+            DeviceJournalMerge.AddAlert(journal, new DeviceAlertRecord(a.a.TimeUtc, a.a.Identity, a.a.Device, cls, a.Item2, a.a.Text));
+        }
+        return rows;
+    }
 }

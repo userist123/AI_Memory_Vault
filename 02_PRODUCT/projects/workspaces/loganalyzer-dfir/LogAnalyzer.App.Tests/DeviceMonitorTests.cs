@@ -178,6 +178,7 @@ public sealed class DeviceMonitorTests
         public string? AuditRefusal;
         public int Saves;
         public DeviceJournal? Saved;
+        public Action? OnSave;
         public DateTimeOffset Now = T0;
         public string User = "";
 
@@ -186,7 +187,7 @@ public sealed class DeviceMonitorTests
             _ => new Dictionary<string, MediumInfo>(Media, StringComparer.OrdinalIgnoreCase),
             (ev, detail) => { lock (Audited) { if (AuditRefusal is null) Audited.Add((ev, detail)); } return AuditRefusal; },
             journal ?? new DeviceJournal(),
-            j => { Saves++; Saved = j.Copy(); return null; },
+            j => { Saves++; Saved = j.Copy(); OnSave?.Invoke(); return null; },
             isolated, () => Now, consoleUser: () => User, owner: owner);
 
         public List<(string Ev, string Detail)> Events(string ev) { lock (Audited) return Audited.Where(a => a.Ev == ev).ToList(); }
@@ -816,5 +817,250 @@ public sealed class DeviceMonitorTests
         Assert.Contains("<TabItem Header=\"Registrul de medii\" Visibility=\"{x:Static views:MediaRegisterUi.Visibility}\">", page);
         Assert.Contains("<TabItem Header=\"Registrul semnat\" Visibility=\"{x:Static views:MediaRegisterUi.Visibility}\">", page);
         Assert.Equal(System.Windows.Visibility.Collapsed, LogAnalyzer.UI.Views.MediaRegisterUi.Visibility);
+    }
+
+    // ---- review round 2 ---------------------------------------------------------------------------------------------------------------------
+
+    private static readonly PnpSnapshotEntry UsbWifi = new(@"USB\VID_0BDA&PID_8812\FAKEWIFI0001", "Fake USB Wi-Fi Wireless Adapter", "Net", "Fake", @"USB\VID_0BDA&PID_8812", "rtwlanu", 0);
+
+    private static DeviceJournal JournalWithWifi(out DeviceJournalEntry wifi)
+    {
+        var j = JournalWithStick("RN-7");
+        DeviceJournalMerge.Apply(j, [Mouse, NoDriver, UsbWifi], NoMedia, "—", T0.AddHours(3), initial: false);
+        wifi = j.Devices.Single(d => d.Class == DeviceClass.WiFi);
+        var text = DeviceMonitorRules.Decide(DeviceClass.WiFi, wifi.InstanceId, "", isolated: true).Reason;
+        DeviceJournalMerge.AddAlert(j, new DeviceAlertRecord(T0.AddHours(3), wifi.Identity, wifi.Name, DeviceClass.WiFi, DeviceAlertSeverity.Critical, text));
+        return j;
+    }
+
+    [Fact]
+    public void D05_a_sealed_forbidden_class_alert_is_NECONFORM_even_when_the_journal_row_was_edited_to_look_disabled()
+    {
+        var j = JournalWithWifi(out var wifi);
+        var audit = AuditFor(j, SealedFullRun());                                      // the sealed alert is there
+        Assert.Equal(ControlStatus.Neconform, D05(Facts(StationPosture.Standalone, j, audit)).Status);   // the unedited row already breaks the rule
+        wifi.ConfigManagerErrorCode = 22;                                              // the plain file is edited: "disabled, never active"
+        wifi.ActiveSeenUtc = null;
+        Assert.False(DeviceMonitorReport.ForbiddenSeen(wifi, isolated: true, PeriodFrom));
+        var d = D05(Facts(StationPosture.Standalone, j, audit));
+        Assert.Equal(ControlStatus.Neconform, d.Status);
+        Assert.Contains(d.Evidence, e => e.StartsWith("ÎNCALCĂ REGULA (jurnal sigilat)") && e.Contains("clasă interzisă"));
+        Assert.Equal(ControlStatus.DeVerificat, D05(Facts(StationPosture.Internet, j, audit)).Status);   // an internet station: to verify, never conform
+    }
+
+    [Fact]
+    public void D05_a_sealed_active_state_of_a_forbidden_class_is_NECONFORM_whatever_the_row_says()
+    {
+        // the adapter connected disabled (an information alert only), then was switched on: only the sealed state transition tells
+        var j = JournalWithStick("RN-7");
+        DeviceJournalMerge.Apply(j, [Mouse, NoDriver, UsbWifi with { ConfigManagerErrorCode = 22 }], NoMedia, "—", T0.AddHours(3), initial: false);
+        var wifi = j.Devices.Single(d => d.Class == DeviceClass.WiFi);
+        var disabled = AuditFor(j, SealedFullRun()) with { States = [new SealedDeviceState(T0.AddHours(3), OperationAudit.DeviceField(wifi.Identity), "WiFi", 22, false)] };
+        Assert.Equal(ControlStatus.Conform, D05(Facts(StationPosture.Standalone, j, disabled)).Status);   // disabled all along: what the policy asks
+        var enabled = disabled with { States = [.. disabled.States, new SealedDeviceState(T0.AddHours(4), OperationAudit.DeviceField(wifi.Identity), "WiFi", 0, true)] };
+        var d = D05(Facts(StationPosture.Standalone, j, enabled));
+        Assert.Equal(ControlStatus.Neconform, d.Status);
+        Assert.Contains(d.Evidence, e => e.StartsWith("ÎNCALCĂ REGULA (jurnal sigilat)") && e.Contains("activ"));
+        // active before the period and still active at its start counts too
+        var carried = disabled with { States = [new SealedDeviceState(PeriodFrom.AddDays(-3), OperationAudit.DeviceField(wifi.Identity), "WiFi", 0, true)] };
+        Assert.Equal(ControlStatus.Neconform, D05(Facts(StationPosture.Standalone, j, carried)).Status);
+    }
+
+    private static DeviceJournal JournalWithStickRemovedInPeriod(out DeviceJournalEntry row, out string id)
+    {
+        var before = PeriodFrom.AddDays(-5);
+        var j = new DeviceJournal { Runs = [SealedFullRun()] };
+        DeviceJournalMerge.Apply(j, [Mouse], NoMedia, "—", before, initial: true);
+        DeviceJournalMerge.Apply(j, [Mouse, Stick(), UsbParent()], NoMedia, @"LAB-PC\user", before.AddHours(1), initial: false);    // connected before the period
+        id = DeviceMonitorRules.Identity(Stick());
+        DeviceJournalMerge.SetRegistrationNumber(j, id, "RN-7");
+        DeviceJournalMerge.Apply(j, [Mouse], NoMedia, "—", T0.AddHours(2), initial: false);                                           // removed during it
+        row = j.Devices.Single(d => d.Class == DeviceClass.UsbStorage);
+        return j;
+    }
+
+    [Fact]
+    public void D05_a_stick_removed_in_the_period_whose_row_was_edited_to_absent_before_the_period_is_NECONFORM()
+    {
+        var j = JournalWithStickRemovedInPeriod(out var row, out var id);
+        var sealedGone = new SealedPresence(T0.AddHours(2), OperationAudit.DeviceField(id), "UsbStorage", false, @"LAB-PC\user");
+        var audit = AuditFor(j, SealedFullRun()) with { Presence = [sealedGone] };
+        Assert.Equal(ControlStatus.Conform, D05(Facts(StationPosture.Standalone, j, audit)).Status);      // the honest row agrees with the sealed disconnect
+        row.Present = false;
+        row.LastConnectedUtc = row.LastDisconnectedUtc = PeriodFrom.AddDays(-4);                           // the edited row: gone before the period began
+        var d = D05(Facts(StationPosture.Standalone, j, audit));
+        Assert.Equal(ControlStatus.Neconform, d.Status);
+        Assert.Contains(d.Evidence, e => e.StartsWith("NECONFORM:") && e.Contains("deconectare sigilată") && e.Contains("nu apare în perioadă"));
+    }
+
+    [Fact]
+    public void D05_a_sealed_presence_at_run_start_against_a_row_that_claims_absence_is_NECONFORM()
+    {
+        var j = JournalWithStickRemovedInPeriod(out var row, out var id);
+        var present = new SealedPresence(T0.AddHours(1), OperationAudit.DeviceField(id), "UsbStorage", true, @"LAB-PC\user");
+        var audit = AuditFor(j, SealedFullRun()) with { Presence = [present] };                            // sealed: present when a run started in the period, no disconnect after
+        row.Present = false;
+        row.LastDisconnectedUtc = PeriodFrom.AddDays(-4);
+        var d = D05(Facts(StationPosture.Standalone, j, audit));
+        Assert.Equal(ControlStatus.Neconform, d.Status);
+        Assert.Contains(d.Evidence, e => e.StartsWith("NECONFORM:") && e.Contains("prezent"));
+    }
+
+    [Fact]
+    public void D05_a_sealed_disconnect_with_another_time_than_the_row_is_NECONFORM()
+    {
+        var j = JournalWithStickRemovedInPeriod(out var row, out var id);
+        var audit = AuditFor(j, SealedFullRun()) with { Presence = [new SealedPresence(T0.AddHours(2), OperationAudit.DeviceField(id), "UsbStorage", false, "")] };
+        row.LastDisconnectedUtc = T0.AddHours(-20);                                                         // still in the period, but not when it was sealed
+        var d = D05(Facts(StationPosture.Standalone, j, audit));
+        Assert.Equal(ControlStatus.Neconform, d.Status);
+        Assert.Contains(d.Evidence, e => e.StartsWith("NECONFORM:") && e.Contains("altă oră"));
+    }
+
+    [Fact]
+    public void D05_a_journal_with_pending_seal_records_is_to_verify_never_conform_and_says_so()
+    {
+        var j = JournalWithStick("RN-7");
+        Assert.Equal(ControlStatus.Conform, D05(StationPosture.Standalone, j).Status);
+        j.PendingSeals.Add(new PendingSeal { Event = OperationAudit.DeviceAlertInfo, Detail = "identity=X; text=volum diferit" });
+        var d = D05(StationPosture.Standalone, j);
+        Assert.Equal(ControlStatus.DeVerificat, d.Status);
+        Assert.Contains(d.Evidence, e => e.StartsWith("ÎNREGISTRĂRI ÎN AȘTEPTARE") && e.Contains("1"));
+    }
+
+    [Fact]
+    public void D05_after_a_journal_reset_the_rebuilt_rows_keep_their_numbers_and_nothing_is_NECONFORM()
+    {
+        var j = JournalWithStick("RN-7");
+        var audit = AuditFor(j, SealedFullRun()) with { Resets = [new SealedJournalReset(T0.AddHours(5), "ab12cd", "jurnal deteriorat", "device_monitor.json.deteriorat-1")] };
+        var fresh = new DeviceJournal { Runs = [SealedFullRun()] };                                       // what the reset left
+        Assert.Equal(ControlStatus.Neconform, D05(Facts(StationPosture.Standalone, fresh, audit)).Status);  // not rebuilt: rows are missing
+        Assert.True(DeviceJournalRebuild.FromAudit(fresh, audit) > 0);
+        var d = D05(Facts(StationPosture.Standalone, fresh, audit));
+        Assert.Equal(ControlStatus.DeVerificat, d.Status);                                                  // the reset stays, to verify
+        Assert.DoesNotContain(d.Evidence, e => e.StartsWith("NECONFORM:") || e.Contains("ÎNCALCĂ REGULA"));
+        Assert.Equal("RN-7", fresh.Devices.Single(x => x.Class == DeviceClass.UsbStorage).RegistrationNumber);
+        Assert.Contains(d.Evidence, e => e.StartsWith("JURNAL RESETAT"));
+    }
+
+    [Fact]
+    public async Task The_monitor_seals_disconnections_the_set_present_at_start_and_the_problem_code_and_active_state()
+    {
+        var f = new Fakes { Present = [Mouse, UsbWifi], User = @"LAB-PC\user" };
+        using var vm = f.Create(isolated: true);
+        await vm.RefreshAsync(initial: true);
+        Assert.Equal(2, f.Events(OperationAudit.DevicePresent).Count);                        // the set present at the run start
+        Assert.All(f.Events(OperationAudit.DevicePresent), e => Assert.Contains("mon=", e.Detail));
+        var states = f.Events(OperationAudit.DeviceStateChanged);
+        Assert.Contains(states, e => e.Detail.Contains("class=WiFi") && e.Detail.Contains("code=0") && e.Detail.Contains("active=da"));
+        f.Present = [Mouse, UsbWifi with { ConfigManagerErrorCode = 22 }];                    // switched off
+        f.Now = T0.AddMinutes(1);
+        await vm.RefreshAsync(initial: false);
+        Assert.Contains(f.Events(OperationAudit.DeviceStateChanged), e => e.Detail.Contains("class=WiFi") && e.Detail.Contains("code=22") && e.Detail.Contains("active=nu"));
+        var before = f.Events(OperationAudit.DeviceStateChanged).Count;
+        f.Now = T0.AddMinutes(2);
+        await vm.RefreshAsync(initial: false);
+        Assert.Equal(before, f.Events(OperationAudit.DeviceStateChanged).Count);              // unchanged: not sealed again
+        f.Present = [Mouse];
+        f.User = @"LAB-PC\other";
+        f.Now = T0.AddMinutes(3);
+        await vm.RefreshAsync(initial: false);
+        var gone = Assert.Single(f.Events(OperationAudit.DeviceDisconnected));
+        Assert.Contains("class=WiFi", gone.Detail);
+        Assert.Contains(@"user=LAB-PC\other", gone.Detail);
+    }
+
+    [Fact]
+    public async Task A_refused_volume_info_alert_is_retried_at_the_next_reading()
+    {
+        var f = new Fakes { Present = [Mouse] };
+        using var vm = f.Create(isolated: true);
+        await vm.RefreshAsync(initial: true);
+        f.Present = [Mouse, Stick(), UsbParent(), Volume];
+        f.Media[Stick().InstanceId] = new MediumInfo("11112222", 16_000_000_000, "E:", "A");
+        f.Now = T0.AddMinutes(1);
+        await vm.RefreshAsync(initial: false);
+        f.Present = [Mouse];
+        f.Media.Clear();
+        f.Now = T0.AddMinutes(2);
+        await vm.RefreshAsync(initial: false);
+        f.Present = [Mouse, Stick(), UsbParent(), Volume];
+        f.Media[Stick().InstanceId] = new MediumInfo("99998888", 16_000_000_000, "E:", "B");
+        f.AuditRefusal = "disc plin";                                                          // the audit refuses while the same stick returns with another volume
+        f.Now = T0.AddMinutes(3);
+        await vm.RefreshAsync(initial: false);
+        Assert.DoesNotContain(f.Events(OperationAudit.DeviceAlertInfo), e => e.Detail.Contains(DeviceMonitorRules.VolumeChangedAlertText));
+        Assert.Contains(f.Saved!.PendingSeals, p => p.Event == OperationAudit.DeviceAlertInfo && p.Detail.Contains(DeviceMonitorRules.VolumeChangedAlertText));   // persisted, flagged pending
+        f.AuditRefusal = null;
+        f.Now = T0.AddMinutes(4);
+        await vm.RefreshAsync(initial: false);
+        Assert.Contains(f.Events(OperationAudit.DeviceAlertInfo), e => e.Detail.Contains(DeviceMonitorRules.VolumeChangedAlertText));
+        Assert.Empty(vm.JournalCopy().PendingSeals);
+    }
+
+    [Fact]
+    public async Task Pending_seal_records_survive_an_application_restart()
+    {
+        var journal = new DeviceJournal();
+        journal.PendingSeals.Add(new PendingSeal { Event = OperationAudit.DeviceAlertInfo, Detail = OperationAudit.DeviceAlertCriticalDetail("SN||X", "UsbStorage", "Fake Stick", DeviceMonitorRules.VolumeChangedAlertText) });
+        var f = new Fakes { Present = [Mouse] };
+        using var vm = f.Create(isolated: true, journal);                                      // the new process reads the journal the old one saved
+        await vm.RefreshAsync(initial: true);
+        Assert.Contains(f.Events(OperationAudit.DeviceAlertInfo), e => e.Detail.Contains("identity=SN||X") && e.Detail.Contains(DeviceMonitorRules.VolumeChangedAlertText));
+        Assert.Empty(vm.JournalCopy().PendingSeals);
+    }
+
+    [Fact]
+    public async Task A_journal_saved_in_place_is_noted_in_the_sealed_audit_once_per_run()
+    {
+        var f = new Fakes { Present = [Mouse] };
+        f.OnSave = DeviceJournalStore.NoteInPlaceSave;                                         // the save could not create its temporary file
+        using var vm = f.Create(isolated: true);
+        await vm.RefreshAsync(initial: true);
+        f.Present = [Mouse, Stick(), UsbParent()];
+        f.Now = T0.AddMinutes(1);
+        await vm.RefreshAsync(initial: false);
+        f.Present = [Mouse];
+        f.Now = T0.AddMinutes(2);
+        await vm.RefreshAsync(initial: false);
+        Assert.True(f.Saves >= 3);
+        Assert.Single(f.Events(OperationAudit.DeviceJournalInPlaceSave));
+    }
+
+    [Fact]
+    public async Task The_journal_of_a_real_monitor_run_agrees_with_the_audit_it_sealed_itself_no_false_tampering_finding()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "devmon_real_" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var svc = new LogAnalyzer.Dfir.Auth.AuthService(dir);
+            var f = new Fakes { Present = [Mouse, UsbWifi with { ConfigManagerErrorCode = 22 }], User = @"LAB-PC\user", Now = DateTimeOffset.UtcNow };
+            using var vm = new DeviceMonitorViewModel(() => f.Present.ToList(), _ => new Dictionary<string, MediumInfo>(f.Media, StringComparer.OrdinalIgnoreCase),
+                (ev, detail) => { svc.AuditOperation(null, ev, detail); return null; }, new DeviceJournal(), j => null, isolated: true, () => f.Now, consoleUser: () => f.User);
+            await vm.StartAsync(eventsAvailable: true);
+            f.Present = [Mouse, UsbWifi with { ConfigManagerErrorCode = 22 }, Stick(), UsbParent()];
+            f.Now = DateTimeOffset.UtcNow;
+            await vm.RefreshAsync(initial: false);
+            vm.Rows.Single(r => r.Class == DeviceClass.UsbStorage).RegistrationNumber = "RN-9";
+            f.Present = [Mouse, UsbWifi with { ConfigManagerErrorCode = 22 }];                   // the stick is removed
+            f.Now = DateTimeOffset.UtcNow;
+            await vm.RefreshAsync(initial: false);
+            vm.Stop();
+            var verdict = svc.VerifyAuditSnapshot(out var bytes);
+            Assert.Equal(LogAnalyzer.Dfir.Case.ChainStatus.Valid, verdict.Status);
+            var audit = OperationAudit.ReadDeviceMonitor(bytes, chainValid: true);
+            Assert.Equal(0, audit.Unreadable);
+            Assert.NotEmpty(audit.Presence);
+            var now = DateTimeOffset.UtcNow;
+            var facts = new StationFacts
+            {
+                Host = "LAB-PC", Posture = StationPosture.Standalone, IsAdministrator = true, CollectedUtc = now.AddHours(1), PeriodStartUtc = now.AddHours(-1), PeriodEndUtc = now.AddHours(1),
+                DeviceMonitor = vm.JournalCopy(), DeviceAudit = audit,
+            };
+            var d = D05(facts);
+            Assert.DoesNotContain(d.Evidence, e => e.StartsWith("NECONFORM:") || e.StartsWith("ÎNCALCĂ REGULA"));
+            Assert.NotEqual(ControlStatus.Neconform, d.Status);
+        }
+        finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
     }
 }

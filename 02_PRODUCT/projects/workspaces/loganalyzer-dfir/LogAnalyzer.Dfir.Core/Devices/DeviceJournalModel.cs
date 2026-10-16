@@ -56,6 +56,16 @@ public sealed record DeviceAlertRecord(
     [property: JsonPropertyName("text")] string Text);
 
 /// <summary>
+/// A record for the sealed audit whose write was refused (disk full, audit unavailable): kept in the journal so it survives an application restart and is
+/// written at the next reading. While it is pending it is NOT sealed: the journal is untrusted for it and check D05 never says CONFORM.
+/// </summary>
+public sealed class PendingSeal
+{
+    [JsonPropertyName("event")] public string Event { get; set; } = "";
+    [JsonPropertyName("detail")] public string Detail { get; set; } = "";
+}
+
+/// <summary>
 /// One window in which the monitor was running: when it started, the last heartbeat it wrote and, after a clean stop, when it ended. A window without an end is
 /// a monitor still running or one that died: its coverage ends at the last heartbeat. The journal keeps these only as a cross-check: the coverage the control
 /// uses is computed from the SEALED records of the same events (<see cref="DeviceAuditReading.Runs"/>).
@@ -96,6 +106,9 @@ public sealed class DeviceJournal
     /// <summary>Most critical alerts kept: a generous bound (they are the evidence of the control), the oldest dropped first only beyond it.</summary>
     public const int MaxCriticalAlerts = 10_000;
 
+    /// <summary>Sealed-audit records not written yet (a refused write): flagged pending, retried at every reading, also after a restart.</summary>
+    [JsonPropertyName("pending_seals")] public List<PendingSeal> PendingSeals { get; set; } = [];
+
     /// <summary>The windows in which the monitor itself was running (start, heartbeat, stop): a cross-check of the sealed ones.</summary>
     [JsonPropertyName("runs")] public List<MonitorRun> Runs { get; set; } = [];
 
@@ -110,7 +123,7 @@ public sealed class DeviceJournal
     public DeviceJournal Copy() => new()
     {
         Version = Version, Devices = Devices.Select(d => d.Copy()).ToList(), Alerts = [.. Alerts], Runs = Runs.Select(r => r.Copy()).ToList(),
-        Radios = Radios.Select(r => r.Copy()).ToList(),
+        Radios = Radios.Select(r => r.Copy()).ToList(), PendingSeals = PendingSeals.Select(p => new PendingSeal { Event = p.Event, Detail = p.Detail }).ToList(),
     };
 }
 
@@ -250,7 +263,7 @@ public static class DeviceJournalMerge
                 e.VolumeSerial = mm.VolumeSerial;
                 e.DiskSignature = mm.DiskSignature;
             }
-            if (d.Kind is DeviceClass.WiFi or DeviceClass.Bluetooth or DeviceClass.NetworkAdapter or DeviceClass.Modem && !DeviceMonitorRules.IsDisabledRadio(d.Kind, e.ConfigManagerErrorCode)) e.ActiveSeenUtc = nowUtc;
+            if (DeviceMonitorRules.IsRadioKind(d.Kind) && !DeviceMonitorRules.IsDisabledRadio(d.Kind, e.ConfigManagerErrorCode)) e.ActiveSeenUtc = nowUtc;
             string? cloneText = duplicate ? DeviceMonitorRules.DuplicateSerialAlertText
                 : cloneInstances.Contains(p.InstanceId) && (isNew || !e.Present) ? DeviceMonitorRules.CloneAlertText
                 : portClones.Contains(p.InstanceId) && (isNew || !e.Present) ? DeviceMonitorRules.PortCloneAlertText : null;

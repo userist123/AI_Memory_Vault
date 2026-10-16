@@ -78,6 +78,15 @@ public static class DeviceInventory
         var list = new List<DeviceRecord>();
         try
         {
+            // the container, service and parent of every node first: a disk is attached from outside the station when its container is a device container or its
+            // parent runs UASPStor (the same decision as the monitor page, DeviceScope.AttachedOutside)
+            var byId = new Dictionary<string, PnpSnapshotEntry>(StringComparer.OrdinalIgnoreCase);
+            var scan = new SP_DEVINFO_DATA { cbSize = (uint)Marshal.SizeOf<SP_DEVINFO_DATA>() };
+            for (uint i = 0; SetupDiEnumDeviceInfo(set, i, ref scan); i++)
+            {
+                var sid = Str(set, ref scan, InstGuid, 256);
+                if (sid.Length > 0) byId[sid] = new PnpSnapshotEntry(sid, "", Str(set, ref scan, NameGuid, 9), "", "", Str(set, ref scan, NameGuid, 6), 0, Container(set, ref scan), Str(set, ref scan, RelGuid, 8));
+            }
             var data = new SP_DEVINFO_DATA { cbSize = (uint)Marshal.SizeOf<SP_DEVINFO_DATA>() };
             for (uint i = 0; SetupDiEnumDeviceInfo(set, i, ref data); i++)
             {
@@ -89,11 +98,12 @@ public static class DeviceInventory
                 var parent = Str(set, ref data, RelGuid, 8);
                 if (id.StartsWith(@"SWD\WPDBUSENUM\{", StringComparison.OrdinalIgnoreCase) && name.Length > 0)
                     wpdVolumes[id.Substring(@"SWD\WPDBUSENUM\".Length, 38)] = name;      // a stick's volume: its label, keyed by volume GUID
-                var kind = DeviceRules.Classify(id, cls, hw + " " + parent, name);
+                var outside = cls.Equals("DiskDrive", StringComparison.OrdinalIgnoreCase) && byId.TryGetValue(id, out var node) && DeviceScope.AttachedOutside(node, byId);
+                var kind = DeviceScope.InventoryKind(id, cls, hw + " " + parent, name, outside);
                 if (kind is null) continue;
                 var (ven, prod) = DeviceRules.VendorProduct(id);
                 var manufacturer = Str(set, ref data, NameGuid, 13);
-                var serialSource = kind == DeviceKind.UsbStorage && id.StartsWith(@"SCSI\", StringComparison.OrdinalIgnoreCase) ? parent : id;
+                var serialSource = kind is DeviceKind.UsbStorage or DeviceKind.ExternalDisk && id.StartsWith(@"SCSI\", StringComparison.OrdinalIgnoreCase) ? parent : id;
                 list.Add(new DeviceRecord
                 {
                     Kind = kind.Value,
@@ -209,6 +219,15 @@ public static class DeviceInventory
             VolumeLabel = d.VolumeLabel.Length > 0 ? d.VolumeLabel : labelBySerial.GetValueOrDefault(d.Serial, ""),
             DriveLetters = d.DriveLetters.Length > 0 ? d.DriveLetters : letterBySerial.TryGetValue(d.Serial, out var l) ? l + " (ultima literă)" : "",
         }).ToList();
+    }
+
+    private static readonly Guid ContainerKeyFmt = new("8c7ed206-3f8a-4827-b3ab-ae9e1faefc6c");
+
+    /// <summary>DEVPKEY_Device_ContainerId (pid 2); the station's own container when DEVPKEY_Device_InLocalMachineContainer (pid 4) is true; "" = not readable.</summary>
+    private static string Container(IntPtr set, ref SP_DEVINFO_DATA d)
+    {
+        if (Raw(set, ref d, ContainerKeyFmt, 4, out var t) is { Length: >= 1 } b && t == 0x11 && b[0] != 0) return DeviceScope.LocalMachineContainer;
+        return Raw(set, ref d, ContainerKeyFmt, 2, out t) is { Length: 16 } g && t == 0x0D ? "{" + new Guid(g).ToString().ToUpperInvariant() + "}" : "";
     }
 
     private static string BluetoothAddress(string id)

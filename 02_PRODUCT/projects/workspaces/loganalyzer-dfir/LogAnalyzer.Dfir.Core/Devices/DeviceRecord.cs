@@ -7,6 +7,8 @@ namespace LogAnalyzer.Dfir.Devices;
 public enum DeviceKind
 {
     InternalDisk, UsbStorage, MemoryCard, Optical, PortableDevice, Bluetooth, NetworkDrive, VirtualDisk, Thunderbolt, Other,
+    /// <summary>A disk attached from outside the station that is not a USB stick (USB Attached SCSI, a USB-NVMe bridge, Thunderbolt / USB4 NVMe): „Disc extern”.</summary>
+    ExternalDisk,
 }
 
 /// <summary>
@@ -81,6 +83,7 @@ public static class DeviceText
         DeviceKind.NetworkDrive => "Unitate de rețea (folder partajat)",
         DeviceKind.VirtualDisk => "Disc virtual (VHD/ISO montat)",
         DeviceKind.Thunderbolt => "Dispozitiv Thunderbolt / FireWire",
+        DeviceKind.ExternalDisk => "Disc extern",
         _ => "Alt dispozitiv",
     };
 
@@ -95,6 +98,7 @@ public static class DeviceText
         DeviceKind.NetworkDrive => "Un folder de pe alt calculator folosit ca unitate. Pe o stație izolată nu ar trebui să existe.",
         DeviceKind.VirtualDisk => "Un fișier imagine (VHD, VHDX, ISO) montat ca disc. Poate aduce sau scoate date fără un suport fizic.",
         DeviceKind.Thunderbolt => "Un dispozitiv conectat prin Thunderbolt sau FireWire; poate fi un disc extern sau un adaptor.",
+        DeviceKind.ExternalDisk => "Un disc atașat din exterior (USB Attached SCSI, NVMe în carcasă USB, Thunderbolt / USB4), nu un stick. Se tratează ca un mediu de stocare amovibil.",
         _ => "Un dispozitiv care poate stoca sau transfera date.",
     };
 
@@ -123,7 +127,7 @@ public static class DeviceRules
             if (hw.Contains("MSFT") && hw.Contains("VIRTUAL")) return DeviceKind.VirtualDisk;
             if (id.StartsWith(@"SCSI\") && (hw.Contains("UASPSTOR") || hw.Contains(@"USB\VID_"))) return DeviceKind.UsbStorage;   // USB Attached SCSI: the parent is a USB device
             if (hw.Contains("SD/MMC") || hw.Contains("SDXC") || hw.Contains("SDHC") || hw.Contains("CARD READER")) return DeviceKind.MemoryCard;
-            if (attachedOutside) return DeviceKind.UsbStorage;                                                                   // UAS / USB-NVMe / external container
+            if (attachedOutside) return DeviceKind.ExternalDisk;                                                                      // UAS / USB-NVMe / external container
             return DeviceKind.InternalDisk;
         }
         if (cls == "WPD")
@@ -170,7 +174,7 @@ public static class DeviceRules
     }
 
     /// <summary>Kinds the media register is about (removable and internal storage, optical, cards, portable devices).</summary>
-    public static bool TrackedByRegister(DeviceKind k) => k is DeviceKind.UsbStorage or DeviceKind.MemoryCard or DeviceKind.InternalDisk or DeviceKind.Optical or DeviceKind.PortableDevice or DeviceKind.Thunderbolt;
+    public static bool TrackedByRegister(DeviceKind k) => k is DeviceKind.UsbStorage or DeviceKind.MemoryCard or DeviceKind.InternalDisk or DeviceKind.Optical or DeviceKind.PortableDevice or DeviceKind.Thunderbolt or DeviceKind.ExternalDisk;
 
     /// <summary>Compares a device with the media register (by serial, then by VID/PID when the device has no serial).</summary>
     public static DeviceAssessment Assess(DeviceRecord d, MediaRegister? register, DateOnly today, bool stationIsolated)

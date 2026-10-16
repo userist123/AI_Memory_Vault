@@ -288,6 +288,14 @@ public static class DeviceMonitorRules
         _ => false,
     };
 
+    /// <summary>The ending of the critical alert of a class the policy forbids on an isolated station (the sealed alert is compared with it by the control).</summary>
+    public const string ForbiddenClassAlertSuffix = "clasă interzisă pe o stație izolată";
+
+    public static bool IsForbiddenClassAlert(string text) => text.Contains(ForbiddenClassAlertSuffix, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>A radio or network kind: it can be switched on and off (problem code 22), so its "active" state is recorded.</summary>
+    public static bool IsRadioKind(DeviceClass c) => c is DeviceClass.WiFi or DeviceClass.Bluetooth or DeviceClass.BluetoothAdapter or DeviceClass.NetworkAdapter or DeviceClass.Modem;
+
     /// <summary>
     /// The alert for a connection: CRITICAL for a storage medium without a registration number (every posture) and for a class the policy forbids on an
     /// isolated station; information otherwise.
@@ -299,7 +307,7 @@ public static class DeviceMonitorRules
         if (IsDisabledRadio(c, configManagerErrorCode))
             return new(DeviceAlertSeverity.Info, "dispozitiv dezactivat (cod 22), deci nu este activ");
         if (isolated && ForbiddenOnIsolated(c, instanceId))
-            return new(DeviceAlertSeverity.Critical, $"{ClassText(c).ToLowerInvariant()}: clasă interzisă pe o stație izolată");
+            return new(DeviceAlertSeverity.Critical, $"{ClassText(c).ToLowerInvariant()}: {ForbiddenClassAlertSuffix}");
         return new(DeviceAlertSeverity.Info, "dispozitiv conectat");
     }
 

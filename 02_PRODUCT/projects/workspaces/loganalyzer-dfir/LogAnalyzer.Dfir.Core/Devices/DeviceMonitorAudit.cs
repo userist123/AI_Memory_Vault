@@ -11,6 +11,12 @@ public sealed record SealedDevice(string Identity, string Class, string Serial, 
 /// <summary>A radio state change sealed by the monitor ("device.radio_state"): <c>Blind</c> = from this time the radio is off, absent or disabled.</summary>
 public sealed record SealedRadioState(DateTimeOffset TimeUtc, string Kind, bool Blind, string Text, string User);
 
+/// <summary>A device seen present at the start of a monitor run ("device.present", <c>Present</c> true) or disconnected ("device.disconnected", false), with the console user.</summary>
+public sealed record SealedPresence(DateTimeOffset TimeUtc, string Identity, string Class, bool Present, string User);
+
+/// <summary>The problem code and the active state of a device as the monitor sealed them ("device.state_changed"): <c>Active</c> = not a disabled radio (code 22).</summary>
+public sealed record SealedDeviceState(DateTimeOffset TimeUtc, string Identity, string Class, int Code, bool Active);
+
 /// <summary>A damaged journal set aside and replaced by an empty one ("device.journal_reset"), with the SHA-256 of the damaged file.</summary>
 public sealed record SealedJournalReset(DateTimeOffset TimeUtc, string Sha256, string Reason, string File = "");
 
@@ -28,7 +34,7 @@ public sealed record DeviceAuditReading(bool ChainValid, IReadOnlyDictionary<str
     public IReadOnlyList<SealedGap> Gaps { get; init; } = [];
     public IReadOnlyList<DeviceAuditObservation> ObservedOnResume { get; init; } = [];
     public IReadOnlyList<string> Migrations { get; init; } = [];
-    /// <summary>The devices first seen (after the last journal reset): every journal row must have one, and every one must have its journal row.</summary>
+    /// <summary>The devices first seen (whole history, also before a journal reset: the monitor rebuilds the rows from them): every journal row must have one, and every one must have its journal row.</summary>
     public IReadOnlyList<SealedDevice> Devices { get; init; } = [];
     /// <summary>The informational alerts (a connection): each in the period must map to a journal row in the period.</summary>
     public IReadOnlyList<DeviceAuditAlert> InfoAlerts { get; init; } = [];
@@ -36,6 +42,10 @@ public sealed record DeviceAuditReading(bool ChainValid, IReadOnlyDictionary<str
     public IReadOnlyList<SealedJournalReset> Resets { get; init; } = [];
     /// <summary>The radio state changes (blind / observable again), in order.</summary>
     public IReadOnlyList<SealedRadioState> RadioStates { get; init; } = [];
+    /// <summary>Every sealed disconnection and the set of devices present at each run start (whole history).</summary>
+    public IReadOnlyList<SealedPresence> Presence { get; init; } = [];
+    /// <summary>The sealed problem code and active state transitions of the devices (whole history).</summary>
+    public IReadOnlyList<SealedDeviceState> States { get; init; } = [];
     /// <summary>The time of the last journal reset, or null.</summary>
     public DateTimeOffset? LastResetUtc => Resets.Count > 0 ? Resets.Max(r => r.TimeUtc) : null;
 }
@@ -136,6 +146,81 @@ public static class DeviceMonitorAuditCheck
                 findings.Add($"{kind} sigilată din {T(a.TimeUtc)} pentru {a.Device} ({ClassWord(a.Class)}) are în jurnalul monitorului alt tip: „{DeviceMonitorRules.ClassText(row.Class)}”");
         }
         return findings;
+    }
+
+    /// <summary>
+    /// What the SEALED audit says breaks the policy on an isolated station, whatever the journal row says (the plain journal's problem code and "active seen" time
+    /// can be edited): a sealed critical alert of the period for a class the policy forbids, and a sealed state transition showing such a device ACTIVE in the
+    /// period or still active from before it (<paramref name="isolated"/> only for the states; the alert exists only where the monitor raised it).
+    /// </summary>
+    public static IReadOnlyList<string> ForbiddenSealed(DeviceAuditReading audit, DateTimeOffset fromUtc, DateTimeOffset toUtc, bool isolated)
+    {
+        static string T(DateTimeOffset t) => DeviceMonitorReport.UtcText(t);
+        var found = new List<string>();
+        foreach (var a in AlertsInPeriod(audit, fromUtc, toUtc).Where(a => DeviceMonitorRules.IsForbiddenClassAlert(a.Text)))
+            found.Add($"{(a.Device.Length > 0 ? a.Device : a.Identity)} ({ClassWord(a.Class)}) — {a.Text} (alertă critică sigilată {T(a.TimeUtc)})");
+        if (isolated)
+            foreach (var g in audit.States.Where(x => x.TimeUtc <= toUtc).GroupBy(x => x.Identity, StringComparer.OrdinalIgnoreCase))
+            {
+                if (!Enum.TryParse<DeviceClass>(g.First().Class, ignoreCase: true, out var cls) || !DeviceMonitorRules.ForbiddenOnIsolated(cls, "")) continue;
+                var ordered = g.OrderBy(x => x.TimeUtc).ToList();
+                var activeInPeriod = ordered.FirstOrDefault(x => x.Active && x.TimeUtc >= fromUtc);
+                var carried = ordered.LastOrDefault(x => x.TimeUtc < fromUtc);
+                var hit = activeInPeriod ?? (carried is { Active: true } ? carried : null);
+                if (hit is not null)
+                    found.Add($"{audit.Devices.FirstOrDefault(d => d.Identity.Equals(g.Key, StringComparison.OrdinalIgnoreCase))?.Device ?? g.Key} ({ClassWord(hit.Class)}) — activ (cod {hit.Code}) în perioadă, stare sigilată {T(hit.TimeUtc)}");
+            }
+        return found;
+    }
+
+    /// <summary>
+    /// The sealed connections (the alerts of a connection, "device.present" at each run start) and disconnections ("device.disconnected") of a device against its
+    /// journal row: a sealed disconnection or presence in the period whose row is not among the rows of the period (<paramref name="inPeriod"/>), a row that claims
+    /// absence when the last sealed event is a presence (or presence when it is a disconnection), and a row whose last-disconnected time is not the sealed one.
+    /// Only events from the first sealed presence record on are compared (an audit written before the monitor sealed disconnections cannot be held against the row).
+    /// </summary>
+    public static IReadOnlyList<string> PresenceMismatches(DeviceJournal journal, DeviceAuditReading audit, DateTimeOffset fromUtc, DateTimeOffset toUtc, IEnumerable<DeviceJournalEntry> inPeriod)
+    {
+        static string T(DateTimeOffset t) => DeviceMonitorReport.UtcText(t);
+        static string K(string identity) => OperationAudit.DeviceField(identity);
+        var findings = new List<string>();
+        if (audit.Presence.Count == 0) return findings;
+        var since = audit.Presence.Min(p => p.TimeUtc);
+        var rows = new Dictionary<string, DeviceJournalEntry>(StringComparer.OrdinalIgnoreCase);
+        foreach (var d in journal.Devices) rows.TryAdd(K(d.Identity), d);
+        var listed = new HashSet<string>(inPeriod.Select(d => K(d.Identity)), StringComparer.OrdinalIgnoreCase);
+        // a record whose write was refused is pending (visible, never sealed): the device's comparison waits for it
+        var pending = new HashSet<string>(journal.PendingSeals.Where(p => p.Event is OperationAudit.DeviceDisconnected or OperationAudit.DevicePresent)
+            .Select(p => Field(p.Detail, "identity")).Where(x => x.Length > 0), StringComparer.OrdinalIgnoreCase);
+        const string Connect = "conectare sigilată";
+        var events = audit.Presence.Select(p => new PresenceEvent(p.TimeUtc, p.Identity, p.Present, p.Class, p.Present ? "prezență sigilată la pornirea monitorului" : "deconectare sigilată"))
+            .Concat(audit.InfoAlerts.Concat(audit.CriticalAlerts).Where(a => !DeviceMonitorRules.IsVolumeChangedAlert(a.Text)).Select(a => new PresenceEvent(a.TimeUtc, a.Identity, true, a.Class, Connect)))
+            .Where(e => e.TimeUtc >= since && e.TimeUtc <= toUtc).ToList();
+        foreach (var g in events.GroupBy(e => e.Identity, StringComparer.OrdinalIgnoreCase))
+        {
+            if (!rows.TryGetValue(g.Key, out var row) || pending.Contains(g.Key)) continue;
+            var ordered = g.OrderBy(e => e.TimeUtc).ToList();
+            var what = $"{(row.Name.Length > 0 ? row.Name : g.Key)} ({ClassWord(ordered[0].Class)})";
+            if (ordered.FirstOrDefault(e => e.TimeUtc >= fromUtc && e.Kind != Connect) is { } inP && !listed.Contains(g.Key))
+                findings.Add($"{what}: {inP.Kind} din {T(inP.TimeUtc)}, dar rândul lui nu apare în perioadă în jurnalul monitorului (dată sau stare schimbată în fișier?)");
+            var last = ordered[^1];
+            if (last.Present && !row.Present)
+                findings.Add($"{what}: jurnalul sigilat îl arată prezent ({last.Kind} {T(last.TimeUtc)}), dar rândul lui din jurnalul monitorului spune deconectat");
+            else if (!last.Present && row.Present)
+                findings.Add($"{what}: jurnalul sigilat îl arată deconectat la {T(last.TimeUtc)}, dar rândul lui din jurnalul monitorului spune conectat");
+            else if (!last.Present && (row.LastDisconnectedUtc is null || (row.LastDisconnectedUtc.Value - last.TimeUtc).Duration() > FirstSeenTolerance))
+                findings.Add($"{what}: deconectarea sigilată este la {T(last.TimeUtc)}, dar rândul lui din jurnalul monitorului are altă oră a deconectării ({(row.LastDisconnectedUtc is { } d ? T(d) : "nicio oră")})");
+        }
+        return findings;
+    }
+
+    private sealed record PresenceEvent(DateTimeOffset TimeUtc, string Identity, bool Present, string Class, string Kind);
+
+    private static string Field(string detail, string key)
+    {
+        foreach (var kv in detail.Split("; "))
+            if (kv.StartsWith(key + "=", StringComparison.Ordinal)) return kv[(key.Length + 1)..];
+        return "";
     }
 
     private static string ClassWord(string sealedClass) =>

@@ -94,6 +94,22 @@ public static class DeviceScope
     /// media page and the monitor agree. A disk drive enumerated by SCSI (USB Attached SCSI, a USB-NVMe bridge) that is attached from outside the station
     /// (<see cref="AttachedOutside"/>) is an external disk, never an internal one.
     /// </summary>
+    /// <summary>
+    /// The kind the media page gives a node: the SAME classification as the monitor (<see cref="StorageKind"/>), including <see cref="AttachedOutside"/>, so a disk
+    /// attached from outside the station that is not behind USBSTOR (UAS, USB-NVMe, an external NVMe over Thunderbolt / USB4 with a PCI parent and a container of
+    /// its own) is <see cref="DeviceKind.ExternalDisk"/> („Disc extern”) on both pages, never an internal disk and never a stick. Null for a node that is no medium.
+    /// </summary>
+    public static DeviceKind? InventoryKind(PnpSnapshotEntry e, IReadOnlyDictionary<string, PnpSnapshotEntry>? byId = null) =>
+        InventoryKind(e.InstanceId, e.SetupClass, e.HardwareIds, e.Name, U(e.SetupClass) == "DISKDRIVE" && AttachedOutside(e, byId));
+
+    /// <summary>The same decision for a caller that reads the node itself (the media page): <paramref name="attachedOutside"/> from <see cref="AttachedOutside"/>.</summary>
+    public static DeviceKind? InventoryKind(string instanceId, string setupClass, string hardwareIds, string name, bool attachedOutside)
+    {
+        var kind = DeviceRules.Classify(instanceId, setupClass, hardwareIds, name, attachedOutside);
+        if (kind == DeviceKind.UsbStorage && !U(instanceId).StartsWith(@"USBSTOR\", StringComparison.Ordinal)) return DeviceKind.ExternalDisk;   // UAS / USB-NVMe / external NVMe
+        return kind;
+    }
+
     private static DeviceClass? StorageKind(PnpSnapshotEntry e, IReadOnlyDictionary<string, PnpSnapshotEntry>? byId = null)
     {
         var id = U(e.InstanceId);
@@ -101,10 +117,10 @@ public static class DeviceScope
         if (cls is not ("DISKDRIVE" or "CDROM") && !id.StartsWith(@"USBSTOR\", StringComparison.Ordinal) && !id.StartsWith(@"SD\", StringComparison.Ordinal)
             && !id.StartsWith(@"SDBUS\", StringComparison.Ordinal) && !id.StartsWith(@"MMC\", StringComparison.Ordinal))
             return null;
-        var kind = DeviceRules.Classify(e.InstanceId, e.SetupClass, e.HardwareIds, e.Name, cls == "DISKDRIVE" && AttachedOutside(e, byId));
-        if (kind == DeviceKind.UsbStorage && !id.StartsWith(@"USBSTOR\", StringComparison.Ordinal)) return DeviceClass.ExternalDisk;   // UAS / USB-NVMe enclosure
+        var kind = InventoryKind(e.InstanceId, e.SetupClass, e.HardwareIds, e.Name, cls == "DISKDRIVE" && AttachedOutside(e, byId));
         return kind switch
         {
+            DeviceKind.ExternalDisk => DeviceClass.ExternalDisk,
             DeviceKind.UsbStorage => DeviceClass.UsbStorage,
             DeviceKind.MemoryCard => DeviceClass.MemoryCard,
             DeviceKind.Optical => DeviceClass.Optical,
@@ -118,7 +134,7 @@ public static class DeviceScope
     /// A disk attached from outside the station: its container is a device container (not the local machine's), its own service or its parent's is UASPStor
     /// (USB Attached SCSI), or its parent is a USB node (USB bus). Decided before a SCSI disk is taken as internal.
     /// </summary>
-    private static bool AttachedOutside(PnpSnapshotEntry e, IReadOnlyDictionary<string, PnpSnapshotEntry>? byId)
+    public static bool AttachedOutside(PnpSnapshotEntry e, IReadOnlyDictionary<string, PnpSnapshotEntry>? byId)
     {
         if (IsDeviceContainer(e.ContainerId)) return true;
         if (U(e.Service) == "UASPSTOR") return true;
