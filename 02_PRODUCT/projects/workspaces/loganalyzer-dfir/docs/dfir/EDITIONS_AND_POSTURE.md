@@ -175,7 +175,9 @@ At the next control, check A16 compares with the anchored state of the code type
   no longer be computed, or an earlier one (an older trace found) is DE VERIFICAT, to be confirmed from the proces-verbal; within one day it is the same;
 - without a typed code, or with an anchor that has no anchored state, A16 is NEDETERMINAT.
 
-Probe B (reinitialised store) therefore becomes visible at the first control after it, provided the officer types the code from the paper; note that a
-reinitialised chain also no longer contains the paper code, so A11 is NECONFORM as well. What remains: a reinstall BEFORE the first anchored control is not
+Probe B (reinitialised store) therefore becomes visible at the first control after it, provided the officer types the code from the paper. It is A11 that
+catches a reinitialisation: the new chain no longer contains the paper code, so A11 is NECONFORM, and A16 (which needs the anchored entry of that code) shows
+NEDETERMINAT "nu se poate compara: jurnalul nu mai conține codul de pe procesul-verbal (vezi A11)". A16's chain-identity check is defence in depth for the
+case where the anchored entry is still found. What remains: a reinstall BEFORE the first anchored control is not
 caught; an administrator who rewrites the anchored state entry (with the machine key) is caught by A11, because the code typed from the paper no longer
 matches.
