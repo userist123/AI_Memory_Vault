@@ -110,6 +110,17 @@ Pagina **„Medii de stocare și dispozitive”** (din meniu, „Registru medii�
 
 Aplicația **nu blochează** dispozitive; pentru blocare se folosesc politicile Windows (GPO) sau un produs dedicat. Windows păstrează în fișa unui dispozitiv doar **ultima** conectare; istoricul complet vine din jurnal și are o durată limitată.
 
+### 6.1 Istoricul mediilor și confruntarea între stații
+
+Ofițerul de securitate urmărește un mediu de transfer pe toate stațiile:
+
+1. **Pe fiecare stație**, după control, apăsați **„Exportă istoricul mediilor pentru ofițer”** (pagina de control, lângă „Copiază jurnalul pentru CD-R”). Ofițerul, prezent, introduce cardul și semnează; exportul (mediile văzute, conectările, fișierele scrise sau citite de pe ele, rândurile din registrul de transferuri, versiunea registrului semnat, codul de ancorare) se scrie pe mediul ofițerului. Exportul se trece întâi în jurnalul aplicației.
+2. **Pe stația ofițerului**, „Medii de stocare” → **„Confruntare între stații”**: alegeți perioada, apăsați „Importă exporturile stațiilor…” și selectați toate fișierele. Un export modificat, nesemnat sau semnat de altcineva decât un ofițer de pe listă este **respins**.
+3. Tabelul arată, în ordinea gravității: transferurile confirmate (mediul la sursă, la destinație, fișierele pe destinație), stațiile în care mediul a fost introdus fără un transfer aprobat (cu fișierele văzute acolo), mediile care nu sunt în registrul semnat, posibilele clonări ale seriei, stațiile cu registru învechit și stațiile care nu au predat exportul.
+4. **„Exportă raportul semnat”** scrie raportul PDF semnat cu cardul și tabelul CSV.
+
+Raportul spune mereu ce nu poate arăta: stațiile fără export, exporturile mai vechi decât perioada, mediile fără serie, stațiile fără auditarea fișierelor.
+
 ## 7. Registrele de utilizatori și de medii
 
 Registrele **nu se completează de mână**. Apăsați **„Preia de pe stație”**: aplicația adaugă conturile găsite pe stație, respectiv suporturile conectate vreodată (cu producător, model, serie). Dumneavoastră completați doar ce stația nu poate ști (autorizații, persoana responsabilă).

@@ -248,6 +248,64 @@
                 </ScrollViewer>
             </TabItem>
 
+            <!-- 6. the officer's reconciliation of the stations' signed media-history exports (owner decision 2026-10-16, every edition) -->
+            <TabItem Header="Confruntare între stații">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" DataContext="{Binding Cross}">
+                    <StackPanel Margin="8">
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"
+                                   Text="Ofițerul de securitate colectează pe mediul lui exporturile semnate ale tuturor stațiilor („Exportă istoricul mediilor pentru ofițer” pe pagina de control) și le confruntă aici: pentru fiecare transfer aprobat, mediul trebuie să apară la sursă și la destinație, iar fișierele pe destinație; orice altă stație în care a fost introdus mediul este arătată. Exporturile modificate sau nesemnate sunt respinse."/>
+                        <WrapPanel Margin="0,8,0,0">
+                            <TextBlock Text="De la" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <DatePicker SelectedDate="{Binding FromDate}" Margin="0,0,10,0" AutomationProperties.Name="Începutul perioadei"/>
+                            <TextBlock Text="până la" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <DatePicker SelectedDate="{Binding ToDate}" Margin="0,0,10,0" AutomationProperties.Name="Sfârșitul perioadei"/>
+                            <TextBlock Text="Timp minim de mutare între stații (minute)" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBox Text="{Binding MinMoveMinutes, UpdateSourceTrigger=PropertyChanged}" Width="50" AutomationProperties.Name="Timp minim de mutare între stații în minute"/>
+                        </WrapPanel>
+                        <DockPanel Margin="0,6,0,0">
+                            <TextBlock DockPanel.Dock="Left" Text="Stații care trebuie să predea exportul (opțional, separate prin virgulă)" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox Text="{Binding ExpectedStations, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Stații care trebuie să predea exportul"/>
+                        </DockPanel>
+                        <WrapPanel Margin="0,8,0,0">
+                            <Button Content="Importă exporturile stațiilor…" Command="{Binding ImportExportsCommand}" Margin="0,0,8,6"/>
+                            <Button Content="Confruntă din nou" Command="{Binding ReconcileCommand}" Margin="0,0,8,6"/>
+                            <Button Content="Exportă raportul semnat (cardul ofițerului)" Command="{Binding ExportSignedReportCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,8,6"/>
+                            <Button Content="Golește lista" Command="{Binding ClearExportsCommand}" Margin="0,0,8,6"/>
+                        </WrapPanel>
+                        <TextBlock Text="{Binding Status}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{Binding RegisterLine}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" FontWeight="Bold" Margin="0,6,0,0" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <DataGrid AutomationProperties.Name="Constatările confruntării între stații, în ordinea gravității" ItemsSource="{Binding Findings}" AutoGenerateColumns="False" IsReadOnly="True"
+                                  HeadersVisibility="Column" Margin="0,6,0,0" MaxHeight="420">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Gravitate" Binding="{Binding SeverityText}" Width="100"/>
+                                <DataGridTextColumn Header="Stația" Binding="{Binding Station}" Width="130"/>
+                                <DataGridTextColumn Header="Mediul" Binding="{Binding Medium}" Width="110"/>
+                                <DataGridTextColumn Header="Transferul" Binding="{Binding Transfer}" Width="110"/>
+                                <DataGridTextColumn Header="Constatarea" Binding="{Binding Text}" Width="*">
+                                    <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock Text="Exporturile importate" FontSize="14" FontWeight="SemiBold" Margin="0,12,0,4" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <DataGrid AutomationProperties.Name="Exporturile importate și verificarea lor" ItemsSource="{Binding Exports}" SelectedItem="{Binding SelectedExport}" AutoGenerateColumns="False"
+                                  IsReadOnly="True" HeadersVisibility="Column" MaxHeight="200">
+                            <DataGrid.Columns>
+                                <DataGridCheckBoxColumn Header="Acceptat" Binding="{Binding Accepted, Mode=OneWay}" Width="70"/>
+                                <DataGridTextColumn Header="Stația" Binding="{Binding StationLabel, Mode=OneWay}" Width="140"/>
+                                <DataGridTextColumn Header="Fișierul" Binding="{Binding FileName}" Width="2*"/>
+                                <DataGridTextColumn Header="Rezultat" Binding="{Binding Headline}" Width="3*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBox Text="{Binding SelectedExportText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Margin="0,4,0,0" MinHeight="40" AutomationProperties.Name="Verificarea exportului ales"/>
+                        <TextBlock Text="Limitări (ce confruntarea nu poate arăta)" FontSize="14" FontWeight="SemiBold" Margin="0,12,0,4" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <ItemsControl ItemsSource="{Binding Limits}">
+                            <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding StringFormat=• {0}}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/></DataTemplate></ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
         </TabControl>
     </Grid>
 </UserControl>
