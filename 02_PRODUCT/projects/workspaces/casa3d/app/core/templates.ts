@@ -34,6 +34,21 @@ export const ROOM_NAMES: Record<'ro' | 'en', Record<string, string>> = {
   ro: { hol: 'Hol', baie: 'Baie', bucatarie: 'Bucătărie', living: 'Living', dormitor: 'Dormitor' },
   en: { hol: 'Hall', baie: 'Bathroom', bucatarie: 'Kitchen', living: 'Living room', dormitor: 'Bedroom' },
 };
+/** Numele implicit al unui proiect nou, pe limbi (același text ca `home.defaultName` din interfață). */
+export const DEFAULT_PROJECT_NAME: Record<'ro' | 'en', string> = { ro: 'Casa mea', en: 'My home' };
+/** Corpul cererii POST /api/projects din panoul studioului: fără nume, numele implicit în limba proiectului. */
+export function newProjectRequest(name: string, template: string, lang: 'ro' | 'en'): { name: string; template: string; lang: 'ro' | 'en' } {
+  return { name: name.trim() || DEFAULT_PROJECT_NAME[lang], template, lang };
+}
+/**
+ * Limba unui proiect nou: cea trimisă de client (limba interfeței la creare); fără ea, prima limbă din antetul
+ * Accept-Language al browserului; altfel româna, limba de rezervă a aplicației.
+ */
+export function projectLang(requested: unknown, acceptLanguage?: string | null): 'ro' | 'en' {
+  if (requested === 'ro' || requested === 'en') return requested;
+  const first = (acceptLanguage ?? '').split(',')[0]!.trim().toLowerCase();
+  return /^en\b/.test(first) ? 'en' : 'ro';
+}
 /** Traduce numele implicite ale camerelor (de ex. „Dormitor 2” → „Bedroom 2”); numele personalizate (de ex. „WC”) rămân. */
 export function localizeRoomNames(floor: Floor, lang: 'ro' | 'en'): Floor {
   if (lang === 'ro') return floor;

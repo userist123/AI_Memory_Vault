@@ -9,9 +9,10 @@
 //  - nu apar pereți sub 20 cm: tăieturile prea aproape de capătul peretelui se lipesc de capăt, iar bucățile de închidere
 //    mai scurte de 20 cm (stau oricum în grosimea peretelui) nu se mai adaugă;
 //  - bucățile unui perete împărțit poartă id-ul lui (`<id>~…`), așa că, la revenirea pe aceeași linie, se lipesc la loc.
-import type { Floor, Issue, Opening, RoomRect, Wall } from './types';
+import type { Floor, Issue, Opening, Room, RoomRect, Wall } from './types';
 import { r3, wallLength } from './geometry';
 import { validateFloor } from './validate';
+import { clampEdge, edgeGroup, spanOf, MIN_ROOM_M } from './room-neighbours';
 
 const TOL = .03, EPS = .01;
 /** Lungimea minimă a unui perete, aceeași ca în validateFloor (WALL_TOO_SHORT). */
@@ -123,27 +124,37 @@ const issueKey = (i: Issue) => `${i.code}|${i.vars?.id ?? ''}|${i.vars?.op ?? ''
 
 /**
  * Camera `roomId` primește dreptunghiul `rect`; pereții de pe laturile mutate o urmează. Ușile și ferestrele rămân pe
- * peretele lor, în același loc în spațiu cât încap, altfel sunt împinse înapoi în perete. Celelalte camere nu se schimbă.
+ * peretele lor, în același loc în spațiu cât încap, altfel sunt împinse înapoi în perete. Fără `neighbours`, celelalte
+ * camere nu se schimbă. Cu `neighbours`, camerele care împart latura mutată (core/room-neighbours.ts) își mută latura comună
+ * cu aceeași distanță, iar mutarea se oprește (clamp) unde un vecin ar scădea sub `minRoom` (60 cm): dreptunghiul camerei
+ * din rezultat poate fi deci mai mic decât cel cerut.
  * Aruncă RoomResizeError când rezultatul ar avea pereți sau goluri invalide (validateFloor).
  */
-export function resizeRoom(floor: Floor, roomId: string, rect: RoomRect, newId: () => string): Floor {
+export function resizeRoom(floor: Floor, roomId: string, rect: RoomRect, newId: () => string, opts: { neighbours?: boolean; minRoom?: number } = {}): Floor {
   const room = floor.rooms.find(r => r.id === roomId); if (!room) return floor;
   const next: RoomRect = { x0: r3(Math.min(rect.x0, rect.x1)), x1: r3(Math.max(rect.x0, rect.x1)), z0: r3(Math.min(rect.z0, rect.z1)), z1: r3(Math.max(rect.z0, rect.z1)) };
   if (next.x1 - next.x0 < MIN_WALL_M - 1e-9 || next.z1 - next.z0 < MIN_WALL_M - 1e-9) refuse(`laturile trebuie să aibă cel puțin ${cm(MIN_WALL_M)} cm.`);
   const original = new Set(floor.walls);
   let walls = floor.walls; const old = room.rect;
   // laturile se aplică pe rând, fiecare cu întinderea camerei de după pașii anteriori (un colț mutat pe ambele axe rămâne legat)
-  let cur: RoomRect = { ...old };
+  // Cu vecini, grupul fiecărei laturi se calculează pe camerele de după pașii anteriori, iar pereții se mută o singură dată,
+  // pe toată întinderea grupului (latura comună, golurile ei și pereții perpendiculari de ambele părți).
+  const rects = new Map(floor.rooms.map(r => [r.id, { ...r.rect }]));
+  const rooms = () => floor.rooms.map(r => ({ ...r, rect: rects.get(r.id)! }));
   for (const e of movedEdges(old, next)){
-    const span = e.axis === 'x' ? { lo: cur.z0, hi: cur.z1 } : { lo: cur.x0, hi: cur.x1 };
-    walls = applyEdge(walls, { ...e, ...span }, newId);
-    cur = { ...cur, [e.key]: e.to };
+    const group = opts.neighbours ? edgeGroup(rooms(), roomId, e.key) : [{ id: roomId, key: e.key }];
+    const to = opts.neighbours ? clampEdge(rooms(), group, roomId, e.key, e.to, opts.minRoom ?? MIN_ROOM_M) : e.to;
+    next[e.key] = to; if (to === e.from) continue;
+    const spans = group.map(m => spanOf(rects.get(m.id)!, m.key));
+    walls = applyEdge(walls, { ...e, to, lo: Math.min(...spans.map(s => s[0])), hi: Math.max(...spans.map(s => s[1])) }, newId);
+    for (const m of group) rects.set(m.id, { ...rects.get(m.id)!, [m.key]: to });
   }
+  const moved = (r: Room) => { const q = rects.get(r.id)!; return q.x0 !== r.rect.x0 || q.x1 !== r.rect.x1 || q.z0 !== r.rect.z0 || q.z1 !== r.rect.z1; };
   walls = mergeSplitPieces(walls)
     // un perete schimbat, fără goluri, care a ajuns sub 20 cm (de ex. bucata de închidere când camera revine) dispare
     .filter(w => original.has(w) || w.openings.length > 0 || wallLength(w.a, w.b) >= MIN_WALL_M - 1e-9)
     .map(w => original.has(w) ? w : fitOpenings(w));
-  const result: Floor = { ...floor, walls, rooms: floor.rooms.map(r => r.id === roomId ? { ...r, rect: next } : r) };
+  const result: Floor = { ...floor, walls, rooms: floor.rooms.map(r => r.id === roomId ? { ...r, rect: next } : moved(r) ? { ...r, rect: rects.get(r.id)! } : r) };
   // plasa de siguranță: nicio eroare nouă de perete sau de gol (cele existente dinainte nu blochează)
   const before = new Set(validateFloor(floor).filter(i => i.severity === 'ERROR').map(issueKey));
   const fresh = validateFloor(result).find(i => i.severity === 'ERROR' && !before.has(issueKey(i)));

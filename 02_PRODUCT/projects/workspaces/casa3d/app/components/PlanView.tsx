@@ -16,6 +16,8 @@ import { doorSwing } from '@/core/doors';
 import { allFixturePoints } from '@/core/fixtures';
 import { finishesOf } from '@/core/boq';
 import { planItems, planKeyAction, type PlanKeyAction } from '@/core/plan-keys';
+import { resizeRoom, RoomResizeError } from '@/core/room-resize';
+import { MIN_ROOM_M, type EdgeKey } from '@/core/room-neighbours';
 
 export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'measure' | 'tech';
 export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
@@ -85,6 +87,7 @@ export default function PlanView(p: Props){
     const kind = t.dataset.k!, id = t.dataset.id!;
     if (kind === 'underlay'){ p.onSelect(null); drag.current = { kind, start: pt, moved: false, orig: null }; svg.current!.setPointerCapture(e.pointerId); return; }
     if (kind === 'handle'){ drag.current = { kind, wallId: t.dataset.w, end: t.dataset.end, start: pt, moved: false }; }
+    else if (kind === 'redge'){ drag.current = { kind, id, edge: t.dataset.edge, start: pt, moved: false, orig: null }; }
     else if (kind === 'opening'){ p.onSelect({ kind: 'opening', id, wallId: t.dataset.w! }); drag.current = { kind, id, wallId: t.dataset.w, start: pt, moved: false }; }
     else { p.onSelect({ kind: kind as any, id }); drag.current = { kind, id, start: pt, moved: false, orig: null }; }
     svg.current!.setPointerCapture(e.pointerId);
@@ -109,6 +112,11 @@ export default function PlanView(p: Props){
       else if (d.kind === 'stair'){ const a = o.floor.stairs?.find(x => x.id === d.id), b = s.floor.stairs?.find(x => x.id === d.id); if (a && b){ b.x = snapG(a.x + dx); b.z = snapG(a.z + dz); } }
       else if (d.kind === 'room'){ const a = o.floor.rooms.find(x => x.id === d.id)!.rect, b = s.floor.rooms.find(x => x.id === d.id)!; const ddx = snapG(dx), ddz = snapG(dz);
         b.rect = { x0: r3(a.x0 + ddx), x1: r3(a.x1 + ddx), z0: r3(a.z0 + ddz), z1: r3(a.z1 + ddz) }; }
+      // latura camerei alese: camera se redimensionează din dreptunghiul de la începutul tragerii, cu vecinii care împart latura
+      // (core/room-resize.ts, neighbours); camera nu scade sub 60 cm, iar o poziție refuzată lasă ultima poziție validă
+      else if (d.kind === 'redge'){ const a = o.floor.rooms.find(x => x.id === d.id)?.rect; if (!a) return; const k = d.edge as EdgeKey, ax = k[0] as 'x' | 'z';
+        let v = snapG(a[k] + (ax === 'x' ? dx : dz)); v = k.endsWith('0') ? Math.min(v, r3(a[`${ax}1`] - MIN_ROOM_M)) : Math.max(v, r3(a[`${ax}0`] + MIN_ROOM_M));
+        try { s.floor = resizeRoom(o.floor, d.id, { ...a, [k]: v }, () => `wall-${crypto.randomUUID().slice(0, 8)}`, { neighbours: true }); } catch (err){ if (!(err instanceof RoomResizeError)) throw err; } }
       else if (d.kind === 'wall'){ const a = o.floor.walls.find(x => x.id === d.id)!, b = s.floor.walls.find(x => x.id === d.id)!; const ddx = snapG(dx), ddz = snapG(dz);
         b.a = [r3(a.a[0] + ddx), r3(a.a[1] + ddz)]; b.b = [r3(a.b[0] + ddx), r3(a.b[1] + ddz)]; }
       else if (d.kind === 'handle'){ const b = s.floor.walls.find(x => x.id === d.wallId)!; const other = d.end === 'a' ? b.b : b.a; const np = ortho(other, snapPoint(pt, { ...s.floor, walls: s.floor.walls.filter(w => w.id !== d.wallId) }));
@@ -133,6 +141,8 @@ export default function PlanView(p: Props){
     if (a.type === 'select') p.onSelect({ kind: a.item.kind, id: a.item.id }); else p.onKey?.(a);
   }
   const fs = Math.max(.12, vb.w / 70), isSel = (k: string, id: string) => p.sel && p.sel.kind === k && p.sel.id === id;
+  // zona de apucare a mânerelor de latură: cel puțin 44 px în diametru pe ecran, oricât de mic e planul (tabletă, telefon)
+  const pxPerM = Math.min((svg.current?.clientWidth ?? 0) / vb.w, (svg.current?.clientHeight ?? 0) / vb.h), hitR = Math.max(fs * 2.2, pxPerM > 0 ? 22 / pxPerM : 0);
   return (<svg ref={svg} className="plan" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onContextMenu={e => { e.preventDefault(); setPreview(null); }}
     style={{ cursor: p.tool === 'select' ? 'default' : 'crosshair' }} role="application" aria-label={t('plan.aria')} tabIndex={0} onKeyDown={keyDown}>
     <defs><pattern id="g" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M1 0H0V1" fill="none" stroke="#e4e5e0" strokeWidth=".01" /></pattern></defs>
@@ -183,6 +193,13 @@ export default function PlanView(p: Props){
         <text x={mid[0]} y={mid[1] + fs * .3} textAnchor="middle" fontSize={fs * .78} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={sel ? '#8B6A45' : '#5E636B'} stroke="#F6F3EE" strokeWidth={fs * .3} strokeLinejoin="round" paintOrder="stroke" pointerEvents="none">{wl(L)}</text>
         {sel && ([['a', w.a], ['b', w.b]] as const).map(([end, pt]) => <circle key={end} data-k="handle" data-w={w.id} data-end={end} data-id={w.id} cx={pt[0]} cy={pt[1]} r={fs * .6} fill="#fff" stroke="#8B6A45" strokeWidth={.03} style={{ cursor: 'grab' }} />)}
       </g>); })}
+    {/* mânerele laturilor camerei alese (deasupra pereților); zona de apucare are ~44 px, pentru degete */}
+    {p.tool === 'select' && floor.rooms.filter(r => isSel('room', r.id)).map(r => (['x0', 'x1', 'z0', 'z1'] as const).map(k => {
+      const v = k[0] === 'x', cx = v ? r.rect[k] : (r.rect.x0 + r.rect.x1) / 2, cz = v ? (r.rect.z0 + r.rect.z1) / 2 : r.rect[k], len = fs * 1.6, th = fs * .55;
+      return (<g key={`re-${r.id}-${k}`} data-k="redge" data-id={r.id} data-edge={k} style={{ cursor: v ? 'ew-resize' : 'ns-resize', touchAction: 'none' }}>
+        <title>{t('plan.resizeEdge')}</title>
+        <circle cx={cx} cy={cz} r={hitR} fill="transparent" />
+        <rect x={cx - (v ? th : len) / 2} y={cz - (v ? len : th) / 2} width={v ? th : len} height={v ? len : th} rx={th / 2} fill="#fff" stroke="#7A5A36" strokeWidth={.03} /></g>); }))}
     {preview && <line x1={preview.a[0]} y1={preview.a[1]} x2={preview.b[0]} y2={preview.b[1]} stroke="#6E8798" strokeWidth={.15} strokeOpacity={.5} strokeDasharray=".1 .06" />}
     {preview && <text x={(preview.a[0] + preview.b[0]) / 2} y={(preview.a[1] + preview.b[1]) / 2 - fs} textAnchor="middle" fontSize={fs} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#8B6A45">{units === 'imperial' ? formatLength(wallLength(preview.a, preview.b), 'imperial', lang) : `${Math.round(wallLength(preview.a, preview.b) * 100)} cm`}</text>}
     {roomDraft && <rect x={Math.min(roomDraft.a[0], roomDraft.b[0])} y={Math.min(roomDraft.a[1], roomDraft.b[1])} width={Math.abs(roomDraft.b[0] - roomDraft.a[0])} height={Math.abs(roomDraft.b[1] - roomDraft.a[1])} fill="#6E8798" fillOpacity={.12} stroke="#6E8798" strokeWidth={.02} strokeDasharray=".08 .05" />}
