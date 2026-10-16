@@ -35,7 +35,10 @@ public static partial class ControlEvaluator
                 seen.Select(m => $"{m.Description} SN {(m.Serial.Length > 0 ? m.Serial : "(fără serie)")}{(m.ConnectedNow ? " — conectat acum" : "")}"), rec);
             return;
         }
-        var matches = seen.Select(m => SignedMediaMatcher.Match(reg.Doc!.Entries, m)).ToList();
+        // review M9: an unregistered medium seen only before the signed register existed is history (DE VERIFICAT), not a violation. The boundary is the first
+        // OFICIAL installation from the sealed audit; without it, on Standalone, the application's install date (activity before it is the station's history).
+        var historyBefore = reg.FirstInstalledUtc ?? (f.Posture == LogAnalyzer.Core.Services.Edition.StationPosture.Standalone ? f.AppInstalledUtc : null);
+        var matches = seen.Select(m => SignedMediaMatcher.Match(reg.Doc!.Entries, m, historyBefore)).ToList();
         var bad = matches.Where(m => m.IsViolation).ToList();
         var check = matches.Where(m => m.ToVerify).ToList();
         var ok = matches.Where(m => m.Kind == SignedMediaMatchKind.Registered).ToList();
@@ -45,7 +48,7 @@ public static partial class ControlEvaluator
             ? "Nu s-a văzut niciun mediu amovibil în ce s-a putut citi; absența observațiilor nu dovedește că nu au fost folosite."
             : $"{matches.Count} {(matches.Count == 1 ? "mediu văzut" : "medii văzute")}: {ok.Count} în registru" +
               (bad.Count > 0 ? $", {bad.Count(b => b.Kind == SignedMediaMatchKind.NotRegistered)} mediu neînregistrat, {bad.Count(b => b.Kind == SignedMediaMatchKind.UsedAfterRetirement)} retrase sau distruse folosite după data lor" : "") +
-              (check.Count > 0 ? $", {check.Count} de verificat (posibilă clonare a serialului sau dată necunoscută)" : "") + ".");
+              (check.Count > 0 ? $", {check.Count} de verificat (posibilă clonare a serialului, dată necunoscută sau istoric dinaintea registrului semnat)" : "") + ".");
         Add(r, id, area, title, status, detail.Trim(),
             bad.Select(m => "NECONFORM: " + m.Text).Concat(check.Select(m => "DE VERIFICAT: " + m.Text)).Concat(ok.Select(m => "în registru: " + m.Text)), rec);
     }

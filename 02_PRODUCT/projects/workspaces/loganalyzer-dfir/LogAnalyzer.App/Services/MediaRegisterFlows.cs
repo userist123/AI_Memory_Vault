@@ -64,10 +64,16 @@ namespace LogAnalyzer.UI.Services
         public static ActiveMediaRegister Active(SignedMediaRegisterStore store, string? auditPath)
         {
             int? last = null;
+            DateTimeOffset? first = null;
             if (auditPath is not null)
-                try { last = SignedMediaRegisterStore.LastInstalledVersion(LogAnalyzer.Dfir.Case.AuditAnchor.EventDetails(auditPath, LogAnalyzer.Dfir.Auth.OperationAudit.MediaRegisterImported)); }
+                try
+                {
+                    var imported = LogAnalyzer.Dfir.Case.AuditAnchor.Events(auditPath).Where(e => e.Event == LogAnalyzer.Dfir.Auth.OperationAudit.MediaRegisterImported).ToList();
+                    last = SignedMediaRegisterStore.LastInstalledVersion(imported.Select(e => e.Detail));
+                    first = SignedMediaRegisterStore.FirstInstalledUtc(imported.Select(e => (e.WhenUtc, e.Detail)));
+                }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
-            return store.LoadActive(SignedCmsVerifier.Instance, last);
+            return store.LoadActive(SignedCmsVerifier.Instance, last) with { FirstInstalledUtc = first };
         }
     }
 }

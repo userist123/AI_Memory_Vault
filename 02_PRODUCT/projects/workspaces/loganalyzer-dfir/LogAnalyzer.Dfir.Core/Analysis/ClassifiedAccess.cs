@@ -710,6 +710,8 @@ public static class ClassifiedAccess
                     reasons.Add($"suportul diferă (registru {row.MediumSerial}, observat {serial})");
                 if (MediumChannel(ch) && input.SignedMedia is { } signed && !signed.Contains(row.MediumSerial, row.MediumRegistration))
                     reasons.Add($"mediul nu este în registrul semnat ({(row.MediumSerial.Trim().Length > 0 ? "seria " + row.MediumSerial.Trim() : "numărul " + row.MediumRegistration.Trim())})");
+                else if (MediumChannel(ch) && input.SignedMedia is { } signed2 && (signed2.IsSuspect(serial, "") || signed2.IsSuspect(row.MediumSerial, row.MediumRegistration)))
+                    reasons.Add("mediul observat nu corespunde înregistrării din registru (posibilă clonare)");
                 var rowHashes = RowHashes(row);
                 if (rowHashes.Count > 0 && hash.Length == 64 && !rowHashes.Contains(hash, StringComparer.OrdinalIgnoreCase)) reasons.Add("amprenta din registru nu corespunde fișierului");
                 if (t is { } at && regTimes.Count > 0 && regTimes.All(u => (u - at).Duration() > RegisterTolerance))

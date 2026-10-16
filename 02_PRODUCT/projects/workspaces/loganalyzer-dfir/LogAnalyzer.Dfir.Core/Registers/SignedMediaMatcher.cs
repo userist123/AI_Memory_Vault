@@ -7,14 +7,15 @@ namespace LogAnalyzer.Dfir.Registers;
 public sealed record SeenMedium(string Serial, string VidPid, long? CapacityBytes, string BitLockerVolumeId, string Description, bool ConnectedNow,
                                     IReadOnlyList<DateTimeOffset> Seen);
 
-public enum SignedMediaMatchKind { Registered, NotRegistered, UsedAfterRetirement, RetiredTimeUnknown, CloneSuspected }
+/// <summary>HistoryBeforeRegister: not in the register, but seen only before the signed register existed on the station (and not connected now).</summary>
+public enum SignedMediaMatchKind { Registered, NotRegistered, UsedAfterRetirement, RetiredTimeUnknown, CloneSuspected, HistoryBeforeRegister }
 
 public sealed record SignedMediaMatch(SeenMedium Medium, SignedMediaMatchKind Kind, SignedMediaEntry? Entry, string Text)
 {
     /// <summary>NECONFORM on Standalone / IsolatedNetwork.</summary>
     public bool IsViolation => Kind is SignedMediaMatchKind.NotRegistered or SignedMediaMatchKind.UsedAfterRetirement;
     /// <summary>DE VERIFICAT.</summary>
-    public bool ToVerify => Kind is SignedMediaMatchKind.CloneSuspected or SignedMediaMatchKind.RetiredTimeUnknown;
+    public bool ToVerify => Kind is SignedMediaMatchKind.CloneSuspected or SignedMediaMatchKind.RetiredTimeUnknown or SignedMediaMatchKind.HistoryBeforeRegister;
 }
 
 /// <summary>
@@ -27,13 +28,21 @@ public static class SignedMediaMatcher
 {
     public const double CapacityTolerance = 0.02;
 
-    public static SignedMediaMatch Match(IReadOnlyList<SignedMediaEntry> entries, SeenMedium m)
+    /// <param name="historyBefore">
+    /// The boundary before which an unregistered medium is history (review M9): the first OFICIAL register installation from the sealed audit (or, on Standalone
+    /// without it, the application's install date). Null = unknown, so every unregistered medium stays a violation.
+    /// </param>
+    public static SignedMediaMatch Match(IReadOnlyList<SignedMediaEntry> entries, SeenMedium m, DateTimeOffset? historyBefore = null)
     {
         var serial = MediaRegister.NormalizeSerial(m.Serial);
+        SignedMediaMatch Unregistered(string text) =>
+            historyBefore is { } b && !m.ConnectedNow && m.Seen.Count > 0 && m.Seen.All(s => s < b)
+                ? new(m, SignedMediaMatchKind.HistoryBeforeRegister, null, $"{text} — istoric dinaintea registrului semnat (ultima dată văzut {m.Seen.Max():yyyy-MM-dd HH:mm} UTC, registrul este în vigoare din {b:yyyy-MM-dd HH:mm} UTC)")
+                : new(m, SignedMediaMatchKind.NotRegistered, null, text);
         if (serial.Length == 0)
-            return new(m, SignedMediaMatchKind.NotRegistered, null, $"{m.Description}: mediul nu are o serie unică, deci nu poate fi recunoscut în registrul semnat (mediu neînregistrat)");
+            return Unregistered($"{m.Description}: mediul nu are o serie unică, deci nu poate fi recunoscut în registrul semnat (mediu neînregistrat)");
         var same = entries.Where(e => MediaRegister.NormalizeSerial(e.UsbSerial) == serial).ToList();
-        if (same.Count == 0) return new(m, SignedMediaMatchKind.NotRegistered, null, $"{m.Description}, seria {serial}: mediu neînregistrat în registrul semnat");
+        if (same.Count == 0) return Unregistered($"{m.Description}, seria {serial}: mediu neînregistrat în registrul semnat");
 
         var full = same.Where(e => Mismatches(e, m).Count == 0).ToList();
         if (full.Count == 0)
@@ -73,18 +82,46 @@ public static class SignedMediaMatcher
     private static string Norm(string s) => new string((s ?? "").Where(char.IsLetterOrDigit).ToArray()).ToUpperInvariant();
 
     /// <summary>The serials and inventory numbers of the ACTIVE media of the register (used by the transfer register: a row approves only a registered medium).</summary>
+    /// <summary>
+    /// As <see cref="ActiveSet(SignedMediaRegisterDoc?)"/>, plus the serials of the active media for which a medium seen on the station carries the serial but
+    /// not the other registered attributes (review T1: a cloned serial must not let a transfer row approve).
+    /// </summary>
+    public static SignedMediaSet ActiveSet(SignedMediaRegisterDoc? doc, IEnumerable<SeenMedium>? observed)
+    {
+        var set = ActiveSet(doc);
+        if (doc is null || observed is null) return set;
+        var active = doc.Active.ToList();
+        var suspect = observed.Select(m => Match(active, m)).Where(x => x.Kind == SignedMediaMatchKind.CloneSuspected)
+                              .Select(x => MediaRegister.NormalizeSerial(x.Medium.Serial)).Where(s => s.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return set with { Suspect = suspect };
+    }
+
     public static SignedMediaSet ActiveSet(SignedMediaRegisterDoc? doc) =>
         new(doc?.Active.Select(e => MediaRegister.NormalizeSerial(e.UsbSerial)).Where(s => s.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [],
-            doc?.Active.Select(e => e.InventoryNumber.Trim()).Where(s => s.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase) ?? []);
+            doc?.Active.Select(e => e.InventoryNumber.Trim()).Where(s => s.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [])
+        { SerialByInventory = doc?.Active.Where(e => e.InventoryNumber.Trim().Length > 0).GroupBy(e => e.InventoryNumber.Trim(), StringComparer.OrdinalIgnoreCase)
+                                  .ToDictionary(g => g.Key, g => MediaRegister.NormalizeSerial(g.First().UsbSerial), StringComparer.OrdinalIgnoreCase) ?? [] };
 }
 
 /// <summary>The active media of the signed register, by serial and inventory number. Empty = no register in force (nothing is registered).</summary>
 public sealed record SignedMediaSet(IReadOnlySet<string> Serials, IReadOnlySet<string> InventoryNumbers)
 {
+    /// <summary>Registered serials seen on the station with other attributes (posibilă clonare).</summary>
+    public IReadOnlySet<string> Suspect { get; init; } = new HashSet<string>();
+    public IReadOnlyDictionary<string, string> SerialByInventory { get; init; } = new Dictionary<string, string>();
+
     public bool Contains(string serial, string inventoryNumber)
     {
         var s = MediaRegister.NormalizeSerial(serial);
         if (s.Length > 0) return Serials.Contains(s);
         return inventoryNumber.Trim().Length > 0 && InventoryNumbers.Contains(inventoryNumber.Trim());
+    }
+
+    /// <summary>True when the medium (by serial, or by the serial of its inventory number) was seen with attributes that differ from its register entry.</summary>
+    public bool IsSuspect(string serial, string inventoryNumber)
+    {
+        var s = MediaRegister.NormalizeSerial(serial);
+        if (s.Length == 0 && SerialByInventory.TryGetValue(inventoryNumber.Trim(), out var bySerial)) s = bySerial;
+        return s.Length > 0 && Suspect.Contains(s);
     }
 }
