@@ -1,5 +1,13 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-15T15:40:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-16T04:40:00Z
+ROUND 6 (2026-10-15/16, owner: "totul ca lucrat de profesionisti: programatori, web/UI/UX, 3D, automatizari" + tableta):
+  role audits (designer, UI/UX, 3D, QA) in scratchpad; fixed in waves: 792728e3 (QA saves/rate limits/doctor, 3D realism +
+  camera rule + Blender openings, designer one-total chain + single fee + autosave + diacritics), 312d073a (UI/UX tokens,
+  .btn system, tabs+bottom sheet <1024px, 44px touch, AA contrast, keyboard plan, dialogs, room resize moves walls).
+  Independent review of 312d073a: room-resize invalid walls (fixed), approval batch cap (dedupe + separate cap), dialogs on
+  route change (fixed). 537/537, tsc clean. PC updated to 312d073a, doctor all OK through tunnel.
+  NEXT: 3D follow-up running (Blender exposure +2-3 EV, bedroom/hall framing, pendant cord, contact shadows); UI leftovers
+  F-10/11 stage phases, F-13 palette, F-24 skeletons, F-21 empty states, print navigator; then accounts/hosting for sale.
 ROUND 5 (2026-10-15, owner: "mergi in ordinea recomandata" = business features first): DONE 12fa60d4 + 246d3503:
   supplier markup/discount + profit report, payment schedule, proforma (+generic CSV; not a fiscal invoice), contract &
   offer with fee calculator (template, not legal advice), own products with cost price + CSV import/export. Independent
