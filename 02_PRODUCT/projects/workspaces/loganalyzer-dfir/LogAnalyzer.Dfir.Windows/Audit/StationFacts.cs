@@ -103,6 +103,15 @@ public sealed class StationFacts
     public LogAnalyzer.Dfir.Analysis.SelfActivityWindow? SelfWindow { get; set; }
     /// <summary>The hashing windows of this and earlier controls (from the sealed audit): their records are the application's own, not someone's access.</summary>
     public List<LogAnalyzer.Dfir.Analysis.SelfActivityWindow> SelfWindows { get; init; } = [];
+    /// <summary>
+    /// Check A17: the programs the application started ("collector.exec" records of the sealed audit, validated against their control run); null = the audit
+    /// was not read (nothing is recognised, every event stays with the other checks).
+    /// </summary>
+    public LogAnalyzer.Dfir.Auth.OperationAudit.CollectorExecs? CollectorExecs { get; set; }
+    /// <summary>Events that match a valid "collector.exec" record exactly, moved out of <see cref="Logs"/> by the evaluator (never a finding).</summary>
+    public List<LogFact> OwnActivity { get; } = [];
+    /// <summary>Events that match only a refused "collector.exec" record (with the reason): they stay in <see cref="Logs"/>; A17 reports them DE VERIFICAT.</summary>
+    public List<(LogFact Log, string Why)> ClaimedActivity { get; } = [];
     /// <summary>Hashing windows of the sealed audit that failed validation (reported by A15, never used to hide records).</summary>
     public List<string> InvalidSelfWindows { get; init; } = [];
     /// <summary>The running application's executable and its SHA-256: a hashing window is accepted only when it names this file with this fingerprint.</summary>

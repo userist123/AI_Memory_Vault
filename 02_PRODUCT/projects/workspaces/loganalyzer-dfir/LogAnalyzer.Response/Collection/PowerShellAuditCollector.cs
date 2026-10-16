@@ -33,6 +33,62 @@ namespace LogAnalyzer.Response.Collection
 
         public static bool IsValidHostname(string? hostname) => hostname is not null && HostnameRegex.IsMatch(hostname);
 
+        private static readonly Lazy<string> BuildSha = new(() =>
+        {
+            using var s = typeof(PowerShellAuditCollector).Assembly.GetManifestResourceStream("LogAnalyzer.Response.Scripts.AuditCollector.ps1");
+            return s is null ? "" : Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(s));
+        });
+
+        /// <summary>SHA-256 of the collection script as it was when this assembly was built (embedded resource); empty if the resource is missing.</summary>
+        public static string BuildScriptSha256 => BuildSha.Value;
+
+        /// <summary>Windows PowerShell 5.1 by its fixed path (never from PATH).</summary>
+        public static string PowerShellPath => Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe");
+
+        /// <summary>The collection script shipped next to the executable; the collector never looks anywhere else.</summary>
+        public static string ScriptPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Scripts", "AuditCollector.ps1");
+
+        private static readonly Lazy<string> BuildBlockSha = new(() =>
+        {
+            using var s = typeof(PowerShellAuditCollector).Assembly.GetManifestResourceStream("LogAnalyzer.Response.Scripts.AuditCollector.ps1");
+            if (s is null) return "";
+            using var r = new StreamReader(s, detectEncodingFromByteOrderMarks: true);
+            return LogAnalyzer.Dfir.Auth.CollectorExec.ScriptSha256(r.ReadToEnd());
+        });
+
+        /// <summary>The script hash in the form "collector.exec" records it (text, line endings as "\n") of the script embedded at build time.</summary>
+        public static string BuildScriptBlockSha256 => BuildBlockSha.Value;
+
+        private static readonly System.Text.RegularExpressions.Regex ArgumentTail = new(
+            @"^(PC|Server|NAS|DataCenter) -OutputDirectory (""(?:[^""\\]|\\.)*""|[^\s""]+) -Hostname ([A-Za-z0-9][A-Za-z0-9._-]{0,62})$",
+            System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
+
+        /// <summary>
+        /// True only for the command line this collector emits (<see cref="BuildStartInfo"/>): <paramref name="powershell"/> with exactly these switches, the
+        /// script <paramref name="scriptPath"/>, one of the target types, an output folder and a host name the collector accepts. Nothing before, between or after.
+        /// </summary>
+        public static bool RunsTheCollectionScript(string commandLine, string powershell, string scriptPath)
+        {
+            const string Marker = " -TargetType ";
+            var sample = LogAnalyzer.Dfir.Auth.CollectorExec.CommandLineOf(BuildStartInfo(powershell, scriptPath, "PC", "x", "h"));
+            var head = sample[..(sample.IndexOf(Marker, StringComparison.Ordinal) + Marker.Length)];
+            return commandLine.StartsWith(head, StringComparison.Ordinal) && ArgumentTail.IsMatch(commandLine[head.Length..]);
+        }
+
+        /// <summary>
+        /// Why the script at <paramref name="scriptPath"/> must not be started (null = it is byte for byte the script of the build). Checked before every start:
+        /// a script changed after the build is refused, so the only script the application runs is the one whose hash is recorded in "collector.exec".
+        /// </summary>
+        public static string? ScriptRefusal(string scriptPath)
+        {
+            if (BuildScriptSha256.Length != 64) return "[ERROR] Amprenta scriptului de colectare nu există în aplicație (resursă lipsă); colectarea nu pornește.";
+            string actual;
+            try { actual = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(scriptPath))); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return $"[ERROR] Scriptul de colectare nu poate fi citit ({ex.Message}); colectarea nu pornește."; }
+            return actual == BuildScriptSha256 ? null
+                : $"[ERROR] Scriptul de colectare a fost modificat după construirea aplicației: amprenta SHA-256 a fișierului este {actual}, cea a versiunii livrate este {BuildScriptSha256}. Colectarea nu pornește; reinstalați pachetul.";
+        }
+
         /// <summary>
         /// The process start for the collection script: every value is one element of <see cref="ProcessStartInfo.ArgumentList"/>, so .NET quotes it
         /// (a trailing backslash such as "E:\", spaces, quotes) and nothing typed by the operator can add or shift script parameters.
@@ -76,11 +132,17 @@ namespace LogAnalyzer.Response.Collection
                         logCallback("[ERROR] Folderul de destinație este gol sau conține caractere nepermise. Colectarea nu a pornit.");
                         return;
                     }
-                    string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Scripts", "AuditCollector.ps1");
+                    string scriptPath = ScriptPath;
                     
                     if (!File.Exists(scriptPath))
                     {
                         logCallback($"[ERROR] Scriptul de colectare (livrat în pachet, Scripts\\AuditCollector.ps1) nu a fost găsit la: {scriptPath}. Reinstalați pachetul; colectarea nu caută în alte locații.");
+                        return;
+                    }
+
+                    if (ScriptRefusal(scriptPath) is { } refused)
+                    {
+                        logCallback(refused);
                         return;
                     }
 
@@ -89,7 +151,7 @@ namespace LogAnalyzer.Response.Collection
                     logCallback($"[INIT] Destinație: {outputDir}");
 
                     // Windows PowerShell 5.1 by full path (never from PATH); it ships with every supported Windows version.
-                    string powershell = Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe");
+                    string powershell = PowerShellPath;
                     if (!File.Exists(powershell))
                     {
                         logCallback($"[ERROR] Windows PowerShell 5.1 indisponibil pe acest sistem ({powershell} lipsește); colectarea de audit nu poate rula.");
@@ -98,8 +160,9 @@ namespace LogAnalyzer.Response.Collection
 
                     var startInfo = BuildStartInfo(powershell, scriptPath, targetType, outputDir, hostname);
 
-                    using var process = new Process { StartInfo = startInfo };
-                    
+                    // through the one recording path, with the script's SHA-256 (its PowerShell 4104 block is then recognised as the application's)
+                    using var process = LogAnalyzer.Dfir.Auth.CollectorExec.Start(startInfo, scriptPath);
+
                     process.OutputDataReceived += (s, e) =>
                     {
                         if (e.Data != null) logCallback(e.Data);
@@ -110,10 +173,10 @@ namespace LogAnalyzer.Response.Collection
                         if (e.Data != null) logCallback($"[STDERR] {e.Data}");
                     };
 
-                    process.Start();
                     process.BeginOutputReadLine();
                     process.BeginErrorReadLine();
                     process.WaitForExit();
+                    LogAnalyzer.Dfir.Auth.CollectorExec.Done(process);
 
                     logCallback(CompletionLine(process.ExitCode));
                 }

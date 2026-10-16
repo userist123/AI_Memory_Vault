@@ -20,20 +20,25 @@ namespace LogAnalyzer.Infrastructure.Services
     {
         private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(20);
 
+        /// <summary>The firewall tool this runner starts (System32); the editions that ship this runner add it to the application's program inventory.</summary>
+        public static string NetshPath => System.IO.Path.Combine(Environment.SystemDirectory, "netsh.exe");
+
         public CommandOutcome Netsh(string arguments)
         {
-            var psi = new ProcessStartInfo(System.IO.Path.Combine(Environment.SystemDirectory, "netsh.exe"), arguments)
+            var psi = new ProcessStartInfo(NetshPath, arguments)
             {
                 RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true,
             };
-            using var p = Process.Start(psi) ?? throw new InvalidOperationException("netsh.exe nu a putut fi pornit.");
+            using var p = LogAnalyzer.Dfir.Auth.CollectorExec.Start(psi);
             var stdout = p.StandardOutput.ReadToEndAsync();
             var stderr = p.StandardError.ReadToEndAsync();
             if (!p.WaitForExit(Timeout))
             {
                 try { p.Kill(entireProcessTree: true); } catch (InvalidOperationException) { /* exited between the check and the kill */ }
+                LogAnalyzer.Dfir.Auth.CollectorExec.Done(p);
                 return new CommandOutcome(-1, $"netsh nu a terminat în {Timeout.TotalSeconds:0} s; operația a fost oprită.");
             }
+            LogAnalyzer.Dfir.Auth.CollectorExec.Done(p);
             return new CommandOutcome(p.ExitCode, (stdout.Result + stderr.Result).Trim());
         }
     }
