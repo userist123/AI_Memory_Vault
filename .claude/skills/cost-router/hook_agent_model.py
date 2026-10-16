@@ -30,8 +30,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 RISK_PREFIXES = ("risk_detected", "risk_floor")
 SPAWN_TOOLS = ("Agent", "Task")  # "Task" is the legacy name of the spawn tool
 REVIEWER_MARKS = ("review", "verif")  # vault-reviewer, code-review, verifier: never below Opus
+# vault-worker, implementer: routed as implement; on risky code the floor moves to the mandatory
+# Opus reviewer (policy rules.implementer_risk_floor), so the worker stays on Sonnet.
+WORKER_MARKS = ("worker", "implement")
 VAULT_ROUTER_REASON = ("cost-router: run the Vault router first: python -m routing.route_cli route --goal \"<task>\""
                        " (PYTHONPATH=03_IMPLEMENTATION/packages), show the owner agent/model/cost, then dispatch.")
+
+
+def _cached_receipt(route_state, sid, task_class) -> bool:
+    """The Vault router already ran for this task class in this session: reuse that receipt."""
+    try:
+        return route_state.class_routed(sid, task_class)
+    except AttributeError:  # an older lib copy
+        return False
 
 
 def gate_and_mark(data: dict):
@@ -44,7 +55,8 @@ def gate_and_mark(data: dict):
             return None
         if (not route_state.enforcement_disabled() and not state.get("direct")
                 and state.get("task_class") in route_state.VAULT_GATED_CLASSES
-                and not state.get("vault_routed") and route_state.in_vault(data)):
+                and not state.get("vault_routed") and route_state.in_vault(data)
+                and not _cached_receipt(route_state, sid, state.get("task_class"))):
             return VAULT_ROUTER_REASON
         if not state.get("delegated"):
             route_state.mark(sid, "delegated")  # a marker file: no counter write can clear it
@@ -68,12 +80,17 @@ def _alias(policy, value):
 def choose(policy, mod, tool_input: dict):
     """Return (target_alias_or_None, route_decision)."""
     brief = f"{tool_input.get('description') or ''} {str(tool_input.get('prompt') or '')[:2000]}"
-    d = mod.route(policy, brief, for_subagent=True)
+    stype = str(tool_input.get("subagent_type") or "").lower()
+    reviewer = any(m in stype for m in REVIEWER_MARKS)
+    role = "reviewer" if reviewer else ("implementer" if any(m in stype for m in WORKER_MARKS) else None)
+    try:
+        d = mod.route(policy, brief, for_subagent=True, role=role)
+    except TypeError:  # a router copy older than the role parameter
+        d = mod.route(policy, brief, for_subagent=True)
     risky = any(r.startswith(RISK_PREFIXES) for r in d.applied_rules)
     explicit = _alias(policy, tool_input.get("model"))
     if explicit == "unknown":
         return None, d
-    reviewer = any(m in str(tool_input.get("subagent_type") or "").lower() for m in REVIEWER_MARKS)
     if d.task_class == "unclassified" and not risky:
         if reviewer and (explicit is None or policy.rank(explicit) < policy.rank("opus") or explicit == "fable"):
             return "opus", d
@@ -123,9 +140,11 @@ def main() -> int:
         return 0
     if not target or target == tool_input.get("model"):
         return 0
-    risky = any(r.startswith(RISK_PREFIXES) for r in d.applied_rules)
+    floored = any(r.startswith("risk_floor:") for r in d.applied_rules)
+    deferred = any(r.startswith("risk_floor_deferred") for r in d.applied_rules)
+    tag = ", risk floor" if floored else (", risk floor on the Opus reviewer, not this worker" if deferred else "")
     before = tool_input.get("model") or "agent default"
-    note = f"cost-router: subagent model {before} -> {target} (class {d.task_class}{', risk floor' if risky else ''})"
+    note = f"cost-router: subagent model {before} -> {target} (class {d.task_class}{tag})"
     updated = dict(tool_input)
     updated["model"] = target
     print(json.dumps({"hookSpecificOutput": {

@@ -113,10 +113,12 @@ def test_route_cli_dispatch_execute_with_real_config(tmp_path, monkeypatch, caps
 
 def test_route_cli_probe_uses_the_registry_executable(tmp_path, monkeypatch, capsys):
     _install_fakes(tmp_path, monkeypatch, names=("claude", "agy"), isolate_path=True)
+    monkeypatch.delenv("CLAUDECODE", raising=False)  # outside Claude Code: no host subagents
     monkeypatch.setattr(sys, "argv", ["route_cli", "probe"])
     route_cli.main()
     probe = json.loads(capsys.readouterr().out)
-    assert probe == {"claude_code": True, "codex": False, "antigravity": True, "perplexity": False, "local_llm": False}
+    assert probe == {"claude_code": True, "codex": False, "antigravity": True, "perplexity": False, "local_llm": False,
+                     "claude_subagent_worker": False, "claude_subagent_reviewer": False, "claude_subagent_explore": False}
 
 
 def _mutated_config(tmp_path: Path, mutate) -> Path:

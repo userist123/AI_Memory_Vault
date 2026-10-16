@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import argparse,json,shutil
+import argparse,json,os,shutil
 from pathlib import Path
 
 from .agent_router import AgentRouter
@@ -11,8 +11,14 @@ from .registry import RouteRegistry
 ROOT=Path(__file__).resolve().parents[3]
 REGISTRY=ROOT/"04_CONFIG"/"agent_router.json"
 
+def in_claude_code() -> bool:
+    """Claude Code sets CLAUDECODE=1 in the environment of the commands it runs."""
+    return os.environ.get("CLAUDECODE","").strip()=="1"
+
 def _runtime_available(rt) -> bool:
-    """A command runtime is available when the registry's `executable` is on PATH (same value the dispatcher runs)."""
+    """A command runtime is available when the registry's `executable` is on PATH (same value the dispatcher runs);
+    a claude_subagent runtime (vault-worker, vault-reviewer, Explore) when the router runs inside a Claude Code session."""
+    if rt.transport=="claude_subagent": return in_claude_code()
     return rt.transport=="command" and bool(rt.executable) and shutil.which(rt.executable) is not None
 
 def build_parser():
@@ -59,6 +65,9 @@ def _main()->int:
     if a.cmd=="dispatch" and a.execute:
         if decision.status.value!="ROUTED":
             raise SystemExit("route is not ROUTED; dispatch refused")
+        if decision.execution_contract.get("execute_via")=="claude_code_agent_tool":
+            raise SystemExit(f"route targets the Claude Code subagent {decision.execution_contract.get('subagent_type')}:"
+                             " spawn it with the Agent tool from the host session; dispatch refused")
         dispatcher=AgentDispatcher(reg)
         packet=dispatcher.make_packet(decision,a.goal,a.source_agent,tuple(a.accept))
         result=dispatcher.dispatch(decision,packet)

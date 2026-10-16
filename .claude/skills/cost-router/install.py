@@ -16,10 +16,11 @@ What it does (idempotent, prints every path it touched):
   2. copies the three subagents (Explore, vault-worker, vault-reviewer) to ~/.claude/agents/; a file
      of that name is replaced only when it is still the copy an earlier install wrote (owner edits are
      kept; --force overwrites them too);
-  3. merges five hooks into ~/.claude/settings.json (kept out with --no-hook): UserPromptSubmit (one
+  3. merges six hooks into ~/.claude/settings.json (kept out with --no-hook): UserPromptSubmit (one
      route line per non-trivial prompt; stores the route per session), PreToolUse on Agent|Task (sets each
      subagent's model from the route of its brief, whatever the subagent type), PreToolUse on
      Edit|Write|NotebookEdit|Bash|Read|Grep|Glob (hook_enforce_route.py: makes the route binding),
+     PreToolUse on SendMessage (hook_resume_guard.py: a subagent is resumed at most once),
      SessionStart repo map (a ~1k-token map of the
      current git repository, lib/repo_map.py, at startup, /clear and compaction) and SessionStart
      self-update (hook_self_update.py: at most hourly, fetches the latest skill from the canonical
@@ -57,6 +58,7 @@ HOOK_SPECS = (  # (event, script, matcher)
     ("UserPromptSubmit", "hook_prompt_route.py", None),
     ("PreToolUse", "hook_agent_model.py", "Agent|Task"),
     ("PreToolUse", "hook_enforce_route.py", "Edit|Write|NotebookEdit|Bash|Read|Grep|Glob"),
+    ("PreToolUse", "hook_resume_guard.py", "SendMessage"),
     ("SessionStart", "hook_repo_map.py", "startup|clear|compact"),
     ("SessionStart", "hook_self_update.py", "startup|resume"),
 )
@@ -83,6 +85,21 @@ CONTEXT_RULES = f"""{RULES_START}
   this owner): replies, short progress notes, commit messages, PR titles, descriptions and
   comments. File contents and internal text stay in English: code, skills, prompts, .md files,
   subagent briefs and self check-ins.
+## Agents and review rounds (every project; cost-router skill §2A, measured 2026-10-14..16)
+- Resume a subagent at most once (SendMessage). Any further round is a NEW agent seeded with a
+  checkpoint of at most 40 lines: task, branch/PR, head SHA, findings to fix, files, test commands.
+- Security-sensitive work: write the threat model / probe list into the worker brief before
+  implementation and give the reviewer the same list; crypto/PDF/signature briefs state the trust
+  model and the whitelist design. Ask the owner the open product questions before dispatch.
+- At most 2 review rounds; round 2 reviews only the delta and runs only the affected test
+  projects; then decide in the main session (fix, or an accepted residual recorded with the owner).
+  The full suite runs once before merge.
+- One implementation agent at a time. Agents push and stop; they never poll CI. The main session
+  checks CI once, then dispatches the review. Before parallel branches, reserve ids and file
+  ownership in the coordination checkpoint.
+- Implementers of risky code run on Sonnet because an Opus reviewer pass is mandatory; design,
+  root cause, verification, critical risk and live operations (production, deploy, delete,
+  rotate) stay on Opus.
 {RULES_END}
 """
 DISABLED_MARKER = "cost-router.disabled"  # written by --uninstall under ~/.claude; honoured by --session-start
