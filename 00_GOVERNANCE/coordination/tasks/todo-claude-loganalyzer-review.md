@@ -45,5 +45,5 @@
   networks, bridge drivers in AIRGAP-VM-PRESENT; D13 → WinRAR list key time dates the most recent entry; D14 → thresholds via data pack `channels`
   (test), exact display; G3 → offer on the legacy "Avansat" pages (`NoDataPanel.PageItemCount`, not seen in the running window: licence screen).
 - Tests: App 560, Dfir 1887 (+28 skipped), Edition 45, UI 353, all green.
-- Open: E10 (admin-share collection) needs an owner decision: the remote path is built on "the application never opens a connection".
+- E10: owner decision 2026-10-16, no admin-share collection (the application opens no SMB connection); row closed by that decision.
 - Next: E8 (deleted $MFT entries, timestomping) on a new branch from main after this PR.
