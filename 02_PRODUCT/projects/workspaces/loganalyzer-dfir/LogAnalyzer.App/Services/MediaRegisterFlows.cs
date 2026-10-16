@@ -60,6 +60,14 @@ namespace LogAnalyzer.UI.Services
             return check;
         }
 
+        /// <summary>
+        /// Offline case analysis (finding B7): the signed media register inside the case folder, verified like an import on the live path (same CMS check, officer
+        /// list, qualified-certificate trust and the paper fingerprint confirmed on this station). Null = the case holds none (nothing changes).
+        /// </summary>
+        public static CaseSignedRegister? FromCase(string caseRoot, SignedMediaRegisterStore? store = null) =>
+            SignedMediaRegisterCase.Find(caseRoot, SignedCmsVerifier.Instance, OfficerFlows.Trusted(OfficerStore.Shared.Load()), QualifiedSignatureTrust.FromDirectory(),
+                                         (store ?? SignedMediaRegisterStore.Shared).LoadState().PaperFingerprint);
+
         /// <summary>The register in force for the control: the installed version re-verified, compared with the last install recorded in the sealed audit.</summary>
         public static ActiveMediaRegister Active(SignedMediaRegisterStore store, string? auditPath)
         {

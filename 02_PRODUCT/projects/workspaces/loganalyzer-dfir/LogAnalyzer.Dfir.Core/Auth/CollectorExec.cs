@@ -38,7 +38,13 @@ public static class CollectorExec
     /// <summary>The id of the station control in progress ("control.started"); empty outside a control (such records are never confirmed).</summary>
     public static string CurrentRunId { get => Volatile.Read(ref _runId); set => Volatile.Write(ref _runId, value ?? ""); }
 
-    private static readonly ConditionalWeakTable<Process, string> Started = new();
+    /// <summary>The run a started program belongs to (a station control, or the action window of a command started outside one) with its execution id.</summary>
+    private sealed record StartedExec(string ExecId, string RunId, bool OwnsActionWindow);
+
+    private static readonly ConditionalWeakTable<Process, StartedExec> Started = new();
+
+    /// <summary>Prefix of the run id of an action window: "act-" + the execution id of the one program it covers (never a control run id).</summary>
+    public const string ActionRunPrefix = "act-";
     private static readonly Lazy<string> OwnSha = new(() => FileSha256(Environment.ProcessPath ?? ""));
 
     /// <summary>
@@ -50,22 +56,40 @@ public static class CollectorExec
     {
         var execId = Guid.NewGuid().ToString("N");
         var exe = psi.FileName;
-        var detail = ExecDetail(execId, CurrentRunId, Environment.ProcessId, OwnSha.Value, FileSha256(exe),
+        // A command started outside a station control (investigation, containment) gets an action window of its own (finding B5): "action.started" with the
+        // run id and the application hash BEFORE "collector.exec", "action.finished" after "collector.exec_done". The run id is the one the application
+        // wrote to its sealed audit; nothing in a process name or command line can create one.
+        var runId = CurrentRunId;
+        bool action = runId.Length == 0;
+        if (action)
+        {
+            runId = ActionRunPrefix + execId;
+            Sink?.Invoke(OperationAudit.ActionStarted, OperationAudit.ActionStartedDetail(runId, OwnSha.Value, Path.GetFileName(exe)));
+        }
+        var detail = ExecDetail(execId, runId, Environment.ProcessId, OwnSha.Value, FileSha256(exe),
                                 scriptPath is null ? "" : ScriptFileSha256(scriptPath), exe, CommandLineOf(psi));
         Sink?.Invoke(Exec, detail);
-        var p = Process.Start(psi) ?? throw new InvalidOperationException($"Could not start {exe}");
-        Started.AddOrUpdate(p, execId);
+        Process p;
+        try { p = Process.Start(psi) ?? throw new InvalidOperationException($"Could not start {exe}"); }
+        catch
+        {
+            if (action) Sink?.Invoke(OperationAudit.ActionFinished, OperationAudit.ActionFinishedDetail(runId));   // the window never stays open
+            throw;
+        }
+        Started.AddOrUpdate(p, new StartedExec(execId, runId, action));
         return p;
     }
 
     /// <summary>Records "collector.exec_done" for a program started by <see cref="Start"/> (child process id and exit code; -1 when it did not end).</summary>
     public static void Done(Process p)
     {
-        if (!Started.TryGetValue(p, out var execId)) return;
+        if (!Started.TryGetValue(p, out var started)) return;
+        Started.Remove(p);                                   // the first end counts; a second call writes nothing
         int pid, exit;
         try { pid = p.Id; } catch (InvalidOperationException) { pid = 0; }
         try { exit = p.HasExited ? p.ExitCode : -1; } catch (InvalidOperationException) { exit = -1; }
-        Sink?.Invoke(ExecDone, DoneDetail(execId, CurrentRunId, pid, exit, DateTimeOffset.UtcNow));
+        Sink?.Invoke(ExecDone, DoneDetail(started.ExecId, started.RunId, pid, exit, DateTimeOffset.UtcNow));
+        if (started.OwnsActionWindow) Sink?.Invoke(OperationAudit.ActionFinished, OperationAudit.ActionFinishedDetail(started.RunId));
     }
 
     // ---- detail lines ----
@@ -229,7 +253,32 @@ public static class CollectorExec
     public static bool InInventory(string exe, IEnumerable<string>? inventory = null)
     {
         var n = Normalize(exe);
-        return n.Length > 0 && (inventory ?? Inventory()).Any(i => Normalize(i).Equals(n, StringComparison.OrdinalIgnoreCase));
+        return n.Length > 0 && ((inventory ?? Inventory()).Any(i => Normalize(i).Equals(n, StringComparison.OrdinalIgnoreCase)) || IsDefenderPlatformMpCmdRun(exe));
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex DefenderPlatformVersion =
+        new(@"^[0-9]+(\.[0-9]+){3}(-[0-9]+)?\z", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// True only for exactly "%ProgramData%\Microsoft\Windows Defender\Platform\&lt;version&gt;\MpCmdRun.exe" (finding B9: the Defender command-line tool of the
+    /// platform folder, which the stub under Program Files starts). The path must already be in its canonical form (the same as Path.GetFullPath returns, so no
+    /// "..", no doubled or alternate separators, no 8.3 names, no trailing dot or space), a drive path (no UNC or device path), without an alternate data stream,
+    /// with exactly two segments after "Platform" (a version such as 4.18.26080.3-0, then the file); the comparison ignores case only.
+    /// </summary>
+    public static bool IsDefenderPlatformMpCmdRun(string exe)
+    {
+        var raw = exe.Trim('"');            // no whitespace trimming: a trailing space or dot is a different spelling and is refused
+        var programData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+        if (raw.Length < 4 || programData.Length < 3 || !Path.IsPathFullyQualified(raw) || raw.StartsWith(@"\\", StringComparison.Ordinal)) return false;
+        if (raw.IndexOf(':', 2) >= 0 || raw.Contains("..", StringComparison.Ordinal) || raw.Contains('/') || raw.Contains('?') || raw.Contains('*')) return false;
+        string full;
+        try { full = Path.GetFullPath(raw); }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException) { return false; }
+        if (!full.Equals(raw, StringComparison.OrdinalIgnoreCase)) return false;
+        var prefix = Path.Combine(Path.GetFullPath(programData), "Microsoft", "Windows Defender", "Platform") + Path.DirectorySeparatorChar;
+        if (!full.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) return false;
+        var rest = full[prefix.Length..].Split(Path.DirectorySeparatorChar);
+        return rest.Length == 2 && DefenderPlatformVersion.IsMatch(rest[0]) && rest[1].Equals("MpCmdRun.exe", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string Normalize(string path)

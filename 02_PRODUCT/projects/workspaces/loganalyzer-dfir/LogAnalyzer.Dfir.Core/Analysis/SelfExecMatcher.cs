@@ -11,6 +11,9 @@ public sealed record ProcessObservation(DateTimeOffset TimeUtc, string Kind, int
     public bool IsScriptBlock => Kind == "4104";
 }
 
+/// <summary>One 4104 event of a script block that Windows split over several events (same ScriptBlockId, MessageNumber of MessageTotal).</summary>
+public sealed record ScriptBlockPart(DateTimeOffset TimeUtc, int ProcessId, string ScriptBlockId, int Number, int Total, string Text);
+
 public enum SelfExecKind
 {
     /// <summary>Not a program of the application: the rules treat it as any other event.</summary>
@@ -56,10 +59,49 @@ public static class SelfExecMatcher
         return SelfExecMatch.NoMatch;
     }
 
-    internal static bool Matches(ProcessObservation o, CollectorExecRecord r)
+    /// <summary>
+    /// A script block split over several 4104 events (finding B5), all with the same ScriptBlockId and process. The parts are reassembled in MessageNumber order
+    /// and the text is matched like a single block. A set that is not exactly 1..MessageTotal, each number once and one agreed total, is never confirmed: when it
+    /// falls inside the window of a program record that carries a script hash it is "Claimed" (DE VERIFICAT) with the reason; otherwise it is not the application's.
+    /// Parts of different ScriptBlockIds are never merged: the caller passes one set per (ScriptBlockId, process).
+    /// </summary>
+    public static SelfExecMatch ClassifySplit(IReadOnlyList<ScriptBlockPart> parts, OperationAudit.CollectorExecs execs)
+    {
+        if (parts.Count == 0) return SelfExecMatch.NoMatch;
+        var first = parts.MinBy(p => p.TimeUtc)!; var last = parts.MaxBy(p => p.TimeUtc)!;
+        var totals = parts.Select(p => p.Total).Distinct().ToList();
+        var numbers = parts.Select(p => p.Number).ToList();
+        string? problem = null;
+        if (parts.Select(p => p.ScriptBlockId).Distinct(StringComparer.OrdinalIgnoreCase).Count() != 1 || parts.Select(p => p.ProcessId).Distinct().Count() != 1) problem = "părțile nu aparțin aceluiași bloc și proces";
+        else if (totals.Count != 1 || totals[0] < 2) problem = "părțile nu au același număr total de mesaje";
+        else if (numbers.Distinct().Count() != numbers.Count) problem = "o parte apare de mai multe ori (duplicat)";
+        else if (numbers.Any(n => n < 1 || n > totals[0]) || numbers.Count != totals[0]) problem = $"lipsesc părți: {numbers.Count} din {totals[0]}";
+        if (problem is null)
+        {
+            var ordered = parts.OrderBy(p => p.Number).ToList();
+            var text = string.Concat(ordered.Select(p => p.Text));
+            var a = Classify(new ProcessObservation(first.TimeUtc, "4104", first.ProcessId, 0, "", "", "", text), execs);
+            var b = Classify(new ProcessObservation(last.TimeUtc, "4104", last.ProcessId, 0, "", "", "", text), execs);
+            if (a.Kind == SelfExecKind.Own && b.Kind == SelfExecKind.Own && a.Record!.ExecId == b.Record!.ExecId) return a;
+            if (a.Kind == SelfExecKind.Claimed) return a;
+            if (b.Kind == SelfExecKind.Claimed) return b;
+            return SelfExecMatch.NoMatch;
+        }
+        foreach (var r in execs.Valid.Concat(execs.Refused.Select(x => x.Record)))
+            if (r.ScriptSha256.Length == 64 && InWindow(first.TimeUtc, r) && (first.ProcessId <= 0 || r.ChildPid <= 0 || first.ProcessId == r.ChildPid))
+                return new(SelfExecKind.Claimed, r, $"bloc de script împărțit în mai multe evenimente 4104 (ScriptBlockId {first.ScriptBlockId}), set incomplet sau inconsecvent: {problem}; amprenta scriptului nu poate fi verificată");
+        return SelfExecMatch.NoMatch;
+    }
+
+    private static bool InWindow(DateTimeOffset t, CollectorExecRecord r)
     {
         var end = r.EndUtc is { } e && e - r.StartUtc <= OperationAudit.MaxExecWindow ? e : r.StartUtc + OperationAudit.MaxExecWindow;
-        if (o.TimeUtc < r.StartUtc - Slack || o.TimeUtc > end + Slack) return false;
+        return t >= r.StartUtc - Slack && t <= end + Slack;
+    }
+
+    internal static bool Matches(ProcessObservation o, CollectorExecRecord r)
+    {
+        if (!InWindow(o.TimeUtc, r)) return false;
         if (o.IsScriptBlock)
             return r.ScriptSha256.Length == 64 && o.ScriptBlockText.Length > 0
                 && CollectorExec.ScriptSha256(o.ScriptBlockText).Equals(r.ScriptSha256, StringComparison.OrdinalIgnoreCase)

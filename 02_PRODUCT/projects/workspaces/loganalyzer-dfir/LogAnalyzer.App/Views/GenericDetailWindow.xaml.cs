@@ -51,7 +51,7 @@ namespace LogAnalyzer.UI.Views
 
         private void Copy_Click(object sender, RoutedEventArgs e)
         {
-            Clipboard.SetText(_sheet.ToPlainText());
+            if (LogAnalyzer.UI.Services.ExportAudit.Clipboard(LogAnalyzer.UI.Services.ExportAudit.LiveCaseId, "detail_sheet", _sheet.ToPlainText()) is { } refused) { StatusText.Text = refused; return; }
             StatusText.Text = "Copiat în clipboard.";
         }
 

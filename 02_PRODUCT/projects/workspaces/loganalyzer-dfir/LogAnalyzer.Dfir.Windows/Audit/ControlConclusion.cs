@@ -86,7 +86,7 @@ public sealed record ControlConclusion(string Verdict, IReadOnlyList<string> Ser
     // What the evaluator and the collector write when a source could not be read for lack of rights: the evaluator's "requires administrator"
     // texts and the access-denied messages of Windows (English and Romanian), which become the detail of the log-coverage checks.
     private static readonly string[] RightsMarkers =
-        ["administrator", "acces refuzat", "accesul este interzis", "access is denied", "unauthorized operation", "operațiune neautorizată"];
+        ["administrator", "necesită drepturi de administrator", "acces refuzat", "accesul este interzis", "access is denied", "unauthorized operation", "operațiune neautorizată"];
 
     /// <summary>A check that is NEDETERMINAT because a source could not be read without administrator rights (not cancelled, absent or unsupported).</summary>
     public static bool UndeterminedForLackOfRights(ControlCheck c) =>

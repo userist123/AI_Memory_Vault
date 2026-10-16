@@ -35,6 +35,21 @@ namespace LogAnalyzer.UI.Services
             return null;
         }
 
+        /// <summary>Same as <see cref="Run"/> for an asynchronous write (the legacy live-triage collector, finding B3).</summary>
+        public static async System.Threading.Tasks.Task<string?> RunAsync(string caseId, string format, int items, string path, Func<System.Threading.Tasks.Task> write)
+        {
+            if (AuthApp.TryRecord(OperationAudit.ExportUnmasked, OperationAudit.ExportIntentDetail(caseId, format, items)) is { } error)
+                return Refused(error);
+            try { await write().ConfigureAwait(true); }
+            catch (Exception ex)
+            {
+                AuthApp.Record(OperationAudit.ExportUnmasked, OperationAudit.ExportFailedDetail(caseId, format, items, ex.GetType().Name));
+                throw;
+            }
+            AuthApp.Record(OperationAudit.ExportUnmasked, OperationAudit.ExportWrittenDetail(caseId, format, items, path));
+            return null;
+        }
+
         /// <summary>
         /// Several files into one folder (review of PR #298: „Exportă pentru ofițer”, the CD-R copy of the log, the signed media history): the intent lists every
         /// planned file and is written BEFORE anything; when it cannot be written the whole export is refused and <paramref name="write"/> is not called.
@@ -55,6 +70,22 @@ namespace LogAnalyzer.UI.Services
             }
             foreach (var f in written.Where(System.IO.File.Exists).Distinct(StringComparer.OrdinalIgnoreCase))
                 AuthApp.Record(OperationAudit.ExportUnmasked, OperationAudit.ExportBundleFileDetail(caseId, format, folder, f));
+            return null;
+        }
+
+        /// <summary>Seam for tests: the call that really puts the text on the clipboard.</summary>
+        internal static Action<string> ClipboardSetter { get; set; } = t => System.Windows.Clipboard.SetText(t);
+
+        /// <summary>
+        /// Copies one unmasked case item to the clipboard (finding B1). The analyst needs the real value, so it is audited, not masked: kind, length and
+        /// SHA-256 of the text are written to the sealed audit BEFORE the copy (never the text). Returns null when copied, otherwise the refusal message
+        /// (the audit could not be written; nothing was put on the clipboard). A clipboard exception propagates, as with Clipboard.SetText.
+        /// </summary>
+        public static string? Clipboard(string caseId, string kind, string text)
+        {
+            if (AuthApp.TryRecord(OperationAudit.ClipboardCopy, OperationAudit.ClipboardCopyDetail(caseId, kind, text)) is { } error)
+                return Refused(error);
+            ClipboardSetter(text);
             return null;
         }
 

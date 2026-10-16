@@ -229,6 +229,12 @@
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                 <!-- a medium that is not in the register was connected: shown on every page (owner 2026-10-11, „ceva viu”) -->
                 <StackPanel Grid.Row="0">
+                <!-- the .NET runtime is older than 10.0.13 (finding B10): shown, never blocking -->
+                <Border Background="#FFF4E5" BorderBrush="{StaticResource WarningBrush}" BorderThickness="0,0,0,1" Padding="16,8"
+                        AutomationProperties.Name="Avertisment versiune .NET"
+                        Visibility="{Binding HasRuntimeWarning, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{Binding RuntimeWarning}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" VerticalAlignment="Center"/>
+                </Border>
                 <!-- the sealed audit could not be written (review 2026-10-15): persistent until the application is closed, never silent -->
                 <Border Background="#FFF4E5" BorderBrush="{StaticResource WarningBrush}" BorderThickness="0,0,0,1" Padding="16,8"
                         AutomationProperties.Name="Avertisment jurnal de audit"

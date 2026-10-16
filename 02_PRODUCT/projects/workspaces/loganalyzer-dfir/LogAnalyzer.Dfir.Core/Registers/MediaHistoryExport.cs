@@ -78,7 +78,7 @@ public sealed class MediaTransferEntry
 
 /// <summary>
 /// A tamper indicator of the station at export time, from the control just run (review R5): A05 (event logs cleared, 104/1102), A11 (anchor continuity),
-/// A12 (event log service stopped), A13 (officer list), A16 (application install date), S05 (clock against the application's time memory). <see cref="Status"/>
+/// A12 (event log service stopped), A13 (officer list), A16 (application install date), A17 (commands of the application itself, confirmed or not), S05 (clock against the application's time memory). <see cref="Status"/>
 /// is the control's word (CONFORM, NECONFORM, DE VERIFICAT, NEDETERMINAT, NU SE APLICĂ) or "lipsă" when the check did not run.
 /// </summary>
 public sealed class StationIndicator
@@ -130,7 +130,7 @@ public sealed class MediaHistoryDoc
     public List<MediumFileActivity> UnattributedFiles { get; set; } = [];
     public List<MediaTransferEntry> Transfers { get; set; } = [];
     public List<PresentFile> PresentFiles { get; set; } = [];
-    /// <summary>The station's tamper indicators at export time (A05, A11, A12, A13, A16, S05).</summary>
+    /// <summary>The station's tamper indicators at export time (A05, A11, A12, A13, A16, A17, S05).</summary>
     public List<StationIndicator> Indicators { get; set; } = [];
     public List<string> Notes { get; set; } = [];
 
@@ -166,7 +166,7 @@ public static class MediaHistoryExport
     public const string SignatureExtension = ".p7s";
     public const string StatusConform = "CONFORM", StatusNotApplicable = "NU SE APLICĂ", StatusMissing = "lipsă";
     /// <summary>The control checks whose state shows that a station's history may have been cleared or its clock moved (review R5, R4).</summary>
-    public static readonly string[] IndicatorIds = ["A05", "A11", "A12", "A13", "A16", "S05"];
+    public static readonly string[] IndicatorIds = ["A05", "A11", "A12", "A13", "A16", "A17", "S05"];
 
     private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 

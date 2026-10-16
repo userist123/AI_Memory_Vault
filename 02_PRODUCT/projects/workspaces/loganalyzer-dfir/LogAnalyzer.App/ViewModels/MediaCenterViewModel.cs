@@ -314,7 +314,11 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (SelectedDevice is null) return;
             var text = string.Join(Environment.NewLine, SelectedDetails.Select(d => $"{d.Label}: {d.Value}" + (d.Meaning.Length > 0 ? $" — {d.Meaning}" : "")));
-            try { Clipboard.SetText(text); Summary = "Datele dispozitivului au fost copiate; le puteți lipi în procesul-verbal."; }
+            try
+            {
+                if (LogAnalyzer.UI.Services.ExportAudit.Clipboard(LogAnalyzer.UI.Services.ExportAudit.LiveCaseId, "device_details", text) is { } refused) { Summary = refused; return; }
+                Summary = "Datele dispozitivului au fost copiate; le puteți lipi în procesul-verbal.";
+            }
             catch (System.Runtime.InteropServices.COMException) { Summary = "Clipboard-ul este ocupat de alt program; încercați din nou."; }
         }
 

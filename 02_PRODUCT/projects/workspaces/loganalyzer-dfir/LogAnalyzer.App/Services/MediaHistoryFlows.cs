@@ -38,7 +38,7 @@ namespace LogAnalyzer.UI.Services
                 StationId = stationId, StationName = f.Host, Edition = LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(f.Posture), Posture = f.Posture.ToString(),
                 TimeZone = TimeZoneInfo.Local.Id, NowUtc = nowUtc, Anchor = r.Anchor, Register = f.SignedMedia, Devices = devices, Classified = r.Classified,
                 FileHashes = f.ClassifiedHashes, Transfers = f.Transfers, FileAuditing = auditing, Notes = extra,
-                // review R5: the tamper indicators of this control travel with the export (A05, A11, A12, A13, A16, S05); a check that did not run is "lipsă"
+                // review R5: the tamper indicators of this control travel with the export (A05, A11, A12, A13, A16, A17, S05); a check that did not run is "lipsă"
                 Indicators = [.. r.Checks.Where(c => MediaHistoryExport.IndicatorIds.Contains(c.Id)).Select(c => new StationIndicator
                 {
                     Id = c.Id, Title = c.Title, Status = LogAnalyzer.Dfir.Windows.Audit.ControlReportPdf.StatusText(c.Status),
