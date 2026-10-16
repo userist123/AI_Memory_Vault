@@ -84,8 +84,8 @@ public static class AppInstallTraces
     /// <item>the installed executable's Prefetch, Amcache and 4688 traces set the date (see <see cref="ClassifyPrefetch"/>, <see cref="ClassifyAmcache"/>);</item>
     /// <item>an Amcache entry of an edition executable at ANOTHER path is DE VERIFICAT „aplicația a existat/rulat anterior în altă locație” with its path and
     /// last-write time; it does not set the date (a last-write time proves no run, so NECONFORM is not justified);</item>
-    /// <item>a .pf of the installed executable created long after an older Windows trace of an edition executable (another-folder Amcache or Prefetch,
-    /// Security 4688, the installed Amcache entry) is DE VERIFICAT „urmă Prefetch recreată”.</item>
+    /// <item>a .pf of the installed executable created long after an older Windows trace of the SAME installed path (its Amcache entry, Security 4688) is
+    /// DE VERIFICAT „urmă Prefetch mai nouă decât alte urme Windows — poate fi recreată de Windows sau ștearsă”.</item>
     /// </list>
     /// </summary>
     public static (List<AppTrace> Traces, List<string> Notes) Classify(IReadOnlyList<PrefetchSeen> prefetch, IEnumerable<(string LowerCaseLongPath, DateTime LastWriteUtc)> amcache,
@@ -104,15 +104,17 @@ public static class AppInstallTraces
             older.Add(t);
             notes.Add($"aplicația a existat/rulat anterior în altă locație: {e.LowerCaseLongPath}, {t:yyyy-MM-dd HH:mm} UTC (intrare Amcache, ora ultimei scrieri; nu dovedește o rulare)");
         }
-        // other-folder Prefetch files of an edition executable also show an older presence
-        older.AddRange(prefetch.Where(f => EditionExeNames.Contains(f.ExeName.ToUpperInvariant()) && f.ExeFullPath is not null && PathTail(f.ExeFullPath) != tail).Select(f => f.CreatedUtc));
+        // Probe E (review of PR #290): the installed .pf is compared ONLY with older traces of the SAME installed path (its Amcache entry and the Security
+        // 4688 starts, which are queried for the exact installed path). Other-path traces keep their own "altă locație" note above.
+        older.Clear();
         older.AddRange(security4688.Select(t => t.Utc));
         older.AddRange(amInstalled.Select(t => t.Utc));
         var installedName = Path.GetFileName(installedExePath).ToUpperInvariant();
         foreach (var f in prefetch.Where(f => f.ExeName.Equals(installedName, StringComparison.OrdinalIgnoreCase) && (f.ExeFullPath is null || PathTail(f.ExeFullPath) == tail)))
             if (older.Count > 0 && older.Min() < f.CreatedUtc - RecreatedTolerance)
-                notes.Add($"urmă Prefetch recreată: {f.FileName} a fost creat la {f.CreatedUtc:yyyy-MM-dd HH:mm} UTC, deși aplicația are urme Windows din {older.Min():yyyy-MM-dd HH:mm} UTC " +
-                          "(fișierul .pf anterior a fost probabil șters)");
+                // Probe F: Windows itself evicts and recreates the .pf of a rarely run program, so the note names both possibilities and blames neither.
+                notes.Add($"urmă Prefetch mai nouă decât alte urme Windows — poate fi recreată de Windows sau ștearsă: {f.FileName} a fost creat la {f.CreatedUtc:yyyy-MM-dd HH:mm} UTC, " +
+                          $"deși același executabil instalat are urme Windows din {older.Min():yyyy-MM-dd HH:mm} UTC");
         return (traces, notes);
     }
 

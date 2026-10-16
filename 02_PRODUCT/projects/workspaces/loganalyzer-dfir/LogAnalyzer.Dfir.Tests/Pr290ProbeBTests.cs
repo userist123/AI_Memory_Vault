@@ -31,8 +31,28 @@ public sealed class Pr290ProbeBTests
         // (1) the old-folder Amcache entry is reported, DE VERIFICAT, with its path and time; it does not set the date (a last-write time is no proof of a run)
         Assert.Contains(notes, n => n.StartsWith("aplicația a existat/rulat anterior în altă locație:") && n.Contains(OldPath.ToLowerInvariant()) && n.Contains(Day0.ToString("yyyy-MM-dd")));
         Assert.DoesNotContain(traces, t => t.Utc < reinstall.AddMinutes(-1));
-        // (2) the new .pf was created long after an older Windows trace of the edition executable: recreated Prefetch trace
-        Assert.Contains(notes, n => n.StartsWith("urmă Prefetch recreată:") && n.Contains("LOGANALYZER.STANDALONE.EXE-9F.pf"));
+        // (2) probe E: the other-path trace keeps its own "altă locație" note; it is NOT compared with the new installed path's .pf
+        Assert.DoesNotContain(notes, n => n.StartsWith("urmă Prefetch"));
+    }
+
+    [Fact]
+    public void Probe_E_an_other_path_trace_never_marks_the_installed_pf_as_newer()
+    {
+        var (_, notes) = AppInstallTraces.Classify(
+            [NewPf(Day0.AddDays(20))],
+            [(OldPath.ToLowerInvariant(), Day0.UtcDateTime)],
+            [], NewPath, true, 150);
+        Assert.Contains(notes, n => n.StartsWith("aplicația a existat/rulat anterior în altă locație:"));
+        Assert.DoesNotContain(notes, n => n.StartsWith("urmă Prefetch"));
+    }
+
+    [Fact]
+    public void Probe_F_a_pf_newer_than_an_older_trace_of_the_same_path_is_worded_without_blaming_a_deletion()
+    {
+        var (_, notes) = AppInstallTraces.Classify(
+            [NewPf(Day0.AddDays(20))], [(NewPath.ToLowerInvariant(), Day0.UtcDateTime)], [], NewPath, true, 150);
+        var n = Assert.Single(notes, x => x.StartsWith("urmă Prefetch mai nouă decât alte urme Windows — poate fi recreată de Windows sau ștearsă"));
+        Assert.DoesNotContain("probabil", n);
     }
 
     [Fact]
@@ -49,7 +69,7 @@ public sealed class Pr290ProbeBTests
     {
         var (_, notes) = AppInstallTraces.Classify(
             [NewPf(Day0.AddDays(20))], [], [new AppTrace("Security 4688: LogAnalyzer.Standalone.exe", Day0, AppTraceKind.WindowsRun)], NewPath, true, 150);
-        Assert.Contains(notes, n => n.StartsWith("urmă Prefetch recreată:"));
+        Assert.Contains(notes, n => n.StartsWith("urmă Prefetch mai nouă decât alte urme Windows — poate fi recreată de Windows sau ștearsă"));
     }
 
     [Fact]
@@ -61,7 +81,8 @@ public sealed class Pr290ProbeBTests
         var doc = File.ReadAllText(Path.Combine(root!, "docs", "dfir", "EDITIONS_AND_POSTURE.md"));
         Assert.Contains("Probe B", doc);
         Assert.Contains("existed/ran earlier in another location", doc);
-        Assert.Contains("recreated Prefetch trace", doc);
+        Assert.Contains("newer Prefetch trace", doc);
+        Assert.Contains("same installed path", doc);
         Assert.Contains("PR #289 (merged)", doc);
     }
 }
