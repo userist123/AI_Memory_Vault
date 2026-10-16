@@ -1561,7 +1561,10 @@ public static partial class ControlEvaluator
 
         // [NESIGUR] field names of Defender event 2000 ("Current Signature Version", "Signature Type") as rendered by EventLogReader; not checked against a
         // Microsoft schema, to confirm on a real station log.
+        // Only antivirus and antispyware signature updates count (a "Signature Type" of another kind, e.g. a network inspection system update, is not
+        // an antivirus signature package); an empty type is kept because older renderings omit the field.
         var updates = Logs(f, StationFactCollector.DefenderChannel, 2000).Where(l => l.TimeUtc >= f.PeriodStartUtc)
+            .Where(l => { var st = V(l, "Signature Type"); return st.Length == 0 || st.Contains("AntiVirus", StringComparison.OrdinalIgnoreCase) || st.Contains("AntiSpyware", StringComparison.OrdinalIgnoreCase); })
             .Select(l => (Version: V(l, "Current Signature Version").Trim(), l.TimeUtc)).Where(u => u.Version.Length > 0)
             .GroupBy(u => u.Version).Select(g => (Version: g.Key, TimeUtc: g.Min(u => u.TimeUtc))).OrderBy(u => u.TimeUtc).ToList();
         var stationNow = (version.Length > 0 ? $"versiunea {version}" : "versiune necitită") + (sigAt is { } s0 ? $" din {s0:yyyy-MM-dd}" : "");
@@ -1583,7 +1586,11 @@ public static partial class ControlEvaluator
         var unmatched = updates.Where(u => !rows.Any(x => Covers(x, u.Version, u.TimeUtc))).ToList();
         // rows the station does not reflect: newer than the signatures in force and naming no version the station has had
         var seen = updates.Select(u => u.Version).Append(version).Where(v => v.Length > 0).ToHashSet();
-        var notArrived = sigAt is { } now0
+        // The newest update in the log is the best "signatures in force" time; AntivirusSignatureLastUpdated may be the package build date.
+        DateTimeOffset? refAt = updates.Count > 0 ? updates.Max(u => u.TimeUtc) : sigAt;
+        var logStart = f.Coverage.FirstOrDefault(c => c.Channel == StationFactCollector.DefenderChannel)?.OldestUtc;
+        bool rotated = logReadable && logStart is { } ls && ls > f.PeriodStartUtc;
+        var notArrived = refAt is { } now0
             ? rows.Where(x => x.Date is { } rd && rd.Date > now0.UtcDateTime.Date.AddDays(1) && !x.Versions.Overlaps(seen)).ToList() : [];
 
         var ev = updates.Select(u => $"Semnături {u.Version} actualizate {u.TimeUtc:yyyy-MM-dd HH:mm} UTC" + (unmatched.Contains(u) ? " · NU este în registru" : " · în registru"))
@@ -1595,6 +1602,9 @@ public static partial class ControlEvaluator
                 (unmatched.Count > 0 ? $"{Ro.Capitalize(Ro.CountFem(unmatched.Count, "actualizare de semnături antivirus", "actualizări de semnături antivirus"))} de pe stație {(unmatched.Count == 1 ? "nu apare" : "nu apar")} în registru: {Names(unmatched.Select(u => $"{u.Version} ({u.TimeUtc:yyyy-MM-dd})"))}. Aflați cine a adus pachetul și de pe ce suport. " : "")
                 + (notArrived.Count > 0 ? $"Registrul arată {Ro.CountFem(notArrived.Count, "actualizare antivirus", "actualizări antivirus")} care nu a ajuns pe stație: {Names(notArrived.Select(x => $"{x.Row.Date} {x.Row.Package}"))}; semnăturile stației sunt {stationNow}." : "").TrimEnd(),
                 ev, Rec);
+        else if (rotated)
+            Add(r, "S06", "Software", Title, ControlStatus.DeVerificat,
+                $"Jurnalul Defender începe la {logStart:yyyy-MM-dd HH:mm} UTC, după începutul perioadei ({f.PeriodStartUtc:yyyy-MM-dd}), deci actualizările de semnături mai vechi nu pot fi verificate. Cele din jurnal ({Ro.CountFem(updates.Count, "actualizare", "actualizări")}) nu contrazic registrul; semnăturile stației: {stationNow}.", ev, Rec);
         else if (!logReadable)
             Add(r, "S06", "Software", Title, ControlStatus.DeVerificat,
                 $"Semnăturile de pe stație ({stationNow}) nu contrazic registrul, dar jurnalul Defender nu a putut fi citit, deci actualizările din perioadă nu pot fi confruntate cu registrul." + NoRead, ev, Rec);
@@ -1604,7 +1614,8 @@ public static partial class ControlEvaluator
         else
             Add(r, "S06", "Software", Title, ControlStatus.Conform,
                 (updates.Count == 0 ? $"Nicio actualizare de semnături în perioadă; semnăturile în vigoare ({stationNow}) apar în registru."
-                    : (updates.Count == 1 ? "Actualizarea de semnături antivirus din perioadă apare" : $"Toate cele {Ro.Count(updates.Count, "actualizare de semnături antivirus", "actualizări de semnături antivirus")} din perioadă apar") + " în registrul actualizărilor offline."),
+                    : (updates.Count == 1 ? "Actualizarea de semnături antivirus din perioadă apare" : $"Toate cele {Ro.Count(updates.Count, "actualizare de semnături antivirus", "actualizări de semnături antivirus")} din perioadă apar") + " în registrul actualizărilor offline.")
+                + (refAt is null ? " Rândurile mai noi din registru nu au putut fi comparate cu stația (ora semnăturilor nu este cunoscută)." : ""),
                 ev, Rec);
     }
 

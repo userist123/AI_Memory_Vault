@@ -471,7 +471,7 @@ public static class StationFactCollector
                 }
             }
             // D7: the drive's own profile list through IMAPI2, for drives whose WMI capabilities do not say "Supports Writing"
-            var (imapi, imapiProblem) = LogAnalyzer.Dfir.Windows.Devices.ImapiRecorders.Read(TimeSpan.FromSeconds(15));
+            var (imapi, imapiProblem) = LogAnalyzer.Dfir.Windows.Devices.ImapiRecorders.ReadCached(TimeSpan.FromSeconds(15));
             foreach (var rec in imapi ?? [])
                 if (rec.CanWrite && !rec.Drives.Any(writerDrives.Contains))
                     writers.Add($"{(rec.Product.Length > 0 ? rec.Product : "unitate")} {string.Join(" ", rec.Drives)} (IMAPI2: {string.Join(", ", rec.WritableProfiles)})".Trim());

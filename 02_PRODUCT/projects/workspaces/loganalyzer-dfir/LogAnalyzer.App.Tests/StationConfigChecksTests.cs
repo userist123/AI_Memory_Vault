@@ -431,6 +431,53 @@ public sealed class StationConfigChecksTests
     }
 
     [Fact]
+    public void S06_with_the_Defender_log_starting_after_the_period_start_is_DeVerificat_not_Conform()
+    {
+        var f = SignatureStation(SigUpdate(Now.AddDays(-5), "1.419.200.0"));
+        f.Coverage.RemoveAll(c => c.Channel == StationFactCollector.DefenderChannel);
+        f.Coverage.Add(new ChannelCoverage(StationFactCollector.DefenderChannel, f.PeriodStartUtc.AddDays(10), 10, true, ""));
+        f.OfflineUpdateRegister = [new UpdateRow { Date = "2026-10-07", Kind = "antivirus", Package = "Defender 1.419.200.0", BroughtBy = "Persoana A" }];
+        var c = Check(f, "S06");
+        Assert.Equal(ControlStatus.DeVerificat, c.Status);
+        Assert.Contains("începe la", c.Detail);
+        Assert.Contains("nu pot fi verificate", c.Detail);
+    }
+
+    [Fact]
+    public void S06_a_rotated_Defender_log_still_reports_Neconform_findings()
+    {
+        var f = SignatureStation(SigUpdate(Now.AddDays(-5), "1.419.200.0"));
+        f.Coverage.RemoveAll(c => c.Channel == StationFactCollector.DefenderChannel);
+        f.Coverage.Add(new ChannelCoverage(StationFactCollector.DefenderChannel, f.PeriodStartUtc.AddDays(10), 10, true, ""));
+        f.OfflineUpdateRegister = [new UpdateRow { Date = "2026-09-01", Kind = "antivirus", Package = "Defender 1.419.100.0", BroughtBy = "Persoana A" }];
+        Assert.Equal(ControlStatus.Neconform, Check(f, "S06").Status);
+    }
+
+    [Fact]
+    public void S06_compares_the_register_with_the_latest_logged_update_not_the_package_build_date()
+    {
+        // Station.SignaturesUtc is 5 days old, but the log holds an update 1 day old: a register row from 3 days ago has arrived.
+        var f = SignatureStation(SigUpdate(Now.AddDays(-1), "1.419.300.0"));
+        f.OfflineUpdateRegister =
+        [
+            new UpdateRow { Date = Now.AddDays(-1).ToString("yyyy-MM-dd"), Kind = "antivirus", Package = "Defender 1.419.300.0", BroughtBy = "Persoana A" },
+            new UpdateRow { Date = Now.AddDays(-3).ToString("yyyy-MM-dd"), Kind = "antivirus", Package = "Defender 1.419.250.0", BroughtBy = "Persoana B" },
+        ];
+        var c = Check(f, "S06");
+        Assert.DoesNotContain("nu a ajuns", c.Detail);
+    }
+
+    [Fact]
+    public void S06_ignores_signature_updates_of_other_types()
+    {
+        var f = SignatureStation(SigUpdate(Now.AddDays(-5), "1.419.200.0"), SigUpdate(Now.AddDays(-4), "1.2.3.4", "NetworkInspectionSystem"));
+        f.OfflineUpdateRegister = [new UpdateRow { Date = "2026-10-07", Kind = "antivirus", Package = "Defender 1.419.200.0", BroughtBy = "Persoana A" }];
+        var c = Check(f, "S06");
+        Assert.NotEqual(ControlStatus.Neconform, c.Status);
+        Assert.DoesNotContain(c.Evidence, e => e.Contains("1.2.3.4"));
+    }
+
+    [Fact]
     public void S06_with_the_Defender_log_unreadable_matches_only_the_current_signatures_and_never_says_Conform()
     {
         var f = Station(true, ("Defender.SignaturesUtc", Now.AddDays(-5).ToString("o")), ("Defender.SignatureVersion", "1.419.200.0"));

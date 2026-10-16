@@ -134,7 +134,7 @@ public sealed class AirGapFactsCollector : ICollector
                 b.Writers.Add(new OpticalWriterFact { Name = mo["Name"] as string ?? "", Drive = mo["Drive"] as string ?? "", CanWrite = caps.Contains((ushort)4) || desc.Any(d => d.Contains("Writing", StringComparison.OrdinalIgnoreCase)), Capabilities = desc });
             }
         // D7: the drive's own profile list through IMAPI2; a drive WMI reports as read-only but IMAPI2 lists writable profiles for is a writer
-        var (imapi, _) = LogAnalyzer.Dfir.Windows.Devices.ImapiRecorders.Read(TimeSpan.FromSeconds(15));
+        var (imapi, _) = LogAnalyzer.Dfir.Windows.Devices.ImapiRecorders.ReadCached(TimeSpan.FromSeconds(15));
         foreach (var rec in (imapi ?? []).Where(r => r.CanWrite))
         {
             var profiles = "IMAPI2: " + string.Join(", ", rec.WritableProfiles);

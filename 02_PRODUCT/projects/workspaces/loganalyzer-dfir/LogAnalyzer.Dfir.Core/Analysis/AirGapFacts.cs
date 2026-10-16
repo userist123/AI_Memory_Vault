@@ -107,7 +107,7 @@ public sealed class VirtualFacts
     public bool DiskImageSearchTruncated { get; set; }
     public List<string> WslDistributions { get; set; } = [];
     public List<string> Hypervisors { get; set; } = [];
-    /// <summary>D12: container engines installed or registered as services (Docker, Podman, Rancher Desktop, Windows Host Compute Service).</summary>
+    /// <summary>D12: container engines installed or registered as services (Docker, Podman, Rancher Desktop; the Windows Host Compute Service vmcompute is deliberately not listed, it runs on every Hyper-V capable host).</summary>
     public List<string> ContainerEngines { get; set; } = [];
     /// <summary>D12: Windows containers found in the Docker data folder (name or id), bounded.</summary>
     public List<string> Containers { get; set; } = [];
