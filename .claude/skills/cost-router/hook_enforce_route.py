@@ -11,8 +11,11 @@ subagent and is allowed without touching any state. Allowed silently as well: no
 state.delegated true (monotonic for the rest of the prompt once any Agent/Task spawn happened),
 COST_ROUTER_ENFORCE=0. A Bash command that actually invokes `python -m routing.route_cli route` or
 `... dispatch` (at the start or after ; & | &&, not merely mentioned) marks state.vault_routed and
-is always allowed. Any internal error:
-no output, exit 0 (allow).
+is always allowed; it also records the task class in the session's route receipt cache
+(route_state.add_routed_class), which hook_agent_model.py accepts for later prompts of the same
+class. Not counted (`exempt`): one single read-only or one-shot git/gh command (git status/log/diff,
+gh pr view/checks/merge/edit, ...; no chain, pipe or redirect) and a short Edit/Write of MEMORY.md,
+a memory/*.md note or a todo-*.md checkpoint. Any internal error: no output, exit 0 (allow).
 """
 from __future__ import annotations
 
@@ -33,6 +36,32 @@ ROUTER_CALL = re.compile(
     r"(?:\S*python[0-9.]*(?:\.exe)?|py(?:\.exe)?(?:\s+-[0-9][0-9.]*)?)"
     r"(?:\s+-[XW]\s+[^\s;&|-][^\s;&|]*|\s+-(?!m\b)[A-Za-z]+)*"  # only -X/-W take a value
     r"\s+-m\s+routing\.route_cli\s+(?:route|dispatch)\b")
+
+
+# Exempt from the delegation counter (owner rule 2026-10-16): a single read-only or one-shot git/gh
+# command and a one-line memory/checkpoint note. A subagent for these costs more than the action.
+SINGLE_COMMAND = re.compile(
+    r"^\s*(?:"
+    r"git(?:\s+-C\s+\S+)?\s+(?:status|log|diff|show|branch|fetch|rev-parse|remote|ls-files|ls-remote)"
+    r"|gh\s+pr\s+(?:view|checks|merge|edit|list|diff|comment|status|ready)"
+    r"|gh\s+run\s+(?:view|list)"
+    r"|gh\s+issue\s+(?:view|list|comment)"
+    r")(?:\s|$)")
+SHELL_CHAIN = re.compile(r"[;&|`\n<>]|\$\(")  # a chain, pipe, redirect or substitution is not single
+MEMORY_NOTE = re.compile(r"(?:^|[\\/])(?:MEMORY\.md|memory[\\/][^\\/]+\.md|todo-[^\\/]+\.md)$", re.I)
+
+
+def exempt(tool_name, tool_input: dict) -> bool:
+    if tool_name == "Bash":
+        cmd = str(tool_input.get("command") or "")
+        return len(cmd) <= 300 and not SHELL_CHAIN.search(cmd) and bool(SINGLE_COMMAND.match(cmd))
+    if tool_name in ("Edit", "Write"):
+        path = str(tool_input.get("file_path") or "")
+        if not MEMORY_NOTE.search(path):
+            return False
+        text = str(tool_input.get("new_string") if tool_name == "Edit" else tool_input.get("content") or "")
+        return text.count("\n") <= (5 if tool_name == "Edit" else 60)  # a note or a checkpoint, not a dump
+    return False
 
 
 def invokes_router(command: str) -> bool:
@@ -58,8 +87,11 @@ def decide(data: dict):
     if data.get("tool_name") == "Bash" and invokes_router(str(tool_input.get("command") or "")):
         if not state.get("vault_routed"):
             route_state.mark(sid, "vault_routed")
+        route_state.add_routed_class(sid, state.get("task_class"))  # receipt reused for this class
         return None
     if not state.get("subagent") or state.get("delegated"):
+        return None
+    if exempt(data.get("tool_name"), tool_input):
         return None
     try:
         calls = int(state.get("main_calls") or 0) + 1

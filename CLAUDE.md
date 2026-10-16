@@ -130,8 +130,8 @@ Fable 5.1 $10/$50, Opus 5.5 $4/$20, Sonnet 5.5 $2/$10, Haiku 5.5 $0.10/$0.50 per
 - Verification, diff review, security review → `vault-reviewer` (opus, high), in its own context.
 - Design, root cause, multi-file plans → main session, Opus at `xhigh`.
 - Fable only for the main session on ambiguous, long-horizon orchestration; never as a subagent.
-- Risk `high`/`critical` (detected from the task text, EN/RO) never below Opus, main session,
-  `vault-reviewer` before DONE. Keep tools and system prompt stable in a session
+- Risk `high`/`critical` (detected from the task text, EN/RO) never below Opus for design and verification,
+  `vault-reviewer` before DONE; the implementer of risky code is the exception (Sonnet, see the hard rules below). Keep tools and system prompt stable in a session
   (cache), lower `effort` before changing model, switch models between tasks, not inside one.
 
 Applied by the `cost-router` skill (`.claude/skills/cost-router/`, invoke with `/cost-router`; a
@@ -150,6 +150,22 @@ commits it with its work. On a cold resume, read only that checkpoint and the fi
 previous conversation; restart work as a new agent from the checkpoint instead of resuming a long transcript.
 Read excerpts rather than whole files, run the full suite once before the final push, and prefer one agent at a
 time. Full protocol and template: `00_GOVERNANCE/coordination/tasks/README.md`.
+
+Hard rules (owner, 2026-10-16; measured: 1.9 B cache-read tokens for 0.75 M output, 78% inside resumed subagents;
+enforced by the cost-router hooks, see `.claude/skills/cost-router/SKILL.md` §2A):
+- A subagent is resumed at most once. Any further round starts a NEW agent seeded with a checkpoint of at most
+  40 lines (task, branch/PR, head SHA, findings to fix, files, test commands). `hook_resume_guard.py` denies a
+  second `SendMessage` resume and warns on a first one above 150k context tokens.
+- Security-sensitive work: the worker brief carries a written threat model / probe list before implementation,
+  and the reviewer gets the same list; crypto/PDF/signature briefs state the trust model and the whitelist design.
+- At most 2 review rounds; round 2 reviews only the delta and runs only the affected test projects; then the main
+  session decides (fix, or an accepted residual recorded with the owner). The full suite runs once before merge.
+- One implementation agent at a time; agents push and stop, they never poll CI. The main session checks CI once.
+- Ask the owner the open product questions before dispatch; reserve check ids and file ownership in the
+  coordination checkpoint before parallel branches.
+- Implementers of risky code run on Sonnet because the Opus `vault-reviewer` pass is mandatory; critical risk and
+  live operations (production, deploy, delete, rotate) stay on Opus (`rules.implementer_risk_floor`).
+- One phase per session: at each milestone write `todo-claude-<task>.md` and continue in a new session with /clear.
 
 ## Global Production-Consumer Rule
 
