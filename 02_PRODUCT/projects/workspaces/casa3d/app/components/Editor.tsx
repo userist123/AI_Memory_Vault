@@ -68,6 +68,7 @@ import { editorIgnoresKey } from '@/lib/palette-keys';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 
 const uid = () => crypto.randomUUID();
+const newWallId = () => `wall-${uid().slice(0, 8)}`;
 const ROOM_TYPES = [['living', 'roomType.living'], ['dormitor', 'roomType.dormitor'], ['bucatarie', 'roomType.bucatarie'], ['baie', 'roomType.baie'], ['hol', 'roomType.hol']];
 const ICON: Record<Tool, string> = { select: 'M5 3l12 8-6 1 3 7-2 1-3-7-4 4z', wall: 'M3 12h18M3 9v6M21 9v6', room: 'M4 4h16v16H4z', door: 'M5 21V4h9v17M5 21h14M12 12h.01', window: 'M4 5h16v14H4zM12 5v14M4 12h16', measure: 'M3 17L17 3l4 4L7 21zM8 12l2 2M11 9l2 2M14 6l2 2', tech: 'M13 2L4 14h7l-1 8 9-12h-7z' };
 const TOOL_LABEL: Record<Tool, string> = { select: 'tool.select', wall: 'tool.wall', room: 'tool.room', door: 'tool.door', window: 'tool.window', measure: 'tool.measure', tech: 'tool.tech' };
@@ -173,6 +174,10 @@ export default function Editor({ id }: { id: string }){
   const patchUnderlay = (patch: Partial<NonNullable<Snapshot['underlay']>>, record: boolean) => { if (!snap?.underlay) return; const n = structuredClone(snap); Object.assign(n.underlay!, patch); commit(n, record); };
   const applyCalib = (realCm: number) => { const u = snap?.underlay; if (!snap || !u || calib?.stage !== 'enter' || !calib.a || !calib.b) return false; const w = scaleFromPoints(calib.a, calib.b, realCm, u.widthM); if (w == null) return false;
     const [x, z] = anchorAfterScale(u, calib.a, w); const n = structuredClone(snap); n.underlay = { ...u, widthM: w, x, z }; commit(n); setCalib(null); return true; };
+  // lățime/lungime din panou: camera și vecinii care împart latura mutată (un pas de anulare); un vecin nu scade sub 60 cm
+  const resizeSel = (roomId: string, rect: Room['rect']) => { if (!snap) return; try { const f = resizeRoom(snap.floor, roomId, rect, newWallId, { neighbours: true });
+    mutate(s => { s.floor = f; }); const got = f.rooms.find(r => r.id === roomId)!.rect; if (got.x1 !== r3(rect.x1) || got.z1 !== r3(rect.z1) || got.x0 !== r3(rect.x0) || got.z0 !== r3(rect.z0)) say(t('editor.resizeClamped')); }
+    catch (e) { if (e instanceof RoomResizeError) say(e.message); else throw e; } };
   const undo = () => { if (!house) return; const s = hist.current.undo(house); if (s){ setPending(null); setHouse(s); persist(s); force(x => x + 1); } };
   const redo = () => { if (!house) return; const s = hist.current.redo(house); if (s){ setHouse(s); persist(s); force(x => x + 1); } };
   const del = () => { if (!sel) return; mutate(s => {
@@ -243,6 +248,14 @@ export default function Editor({ id }: { id: string }){
   // etapa activă rămâne vizibilă în bara de etape (pe tabletă și telefon nu încap toate zece)
   const stageBar = useRef<HTMLElement>(null);
   useEffect(() => { const b = stageBar.current?.querySelector<HTMLElement>(`[data-stage="${stage}"]`); try { b?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); } catch { /* browser vechi */ } }, [stage]);
+  // când etapele nu încap (de ex. 1024 px), bara arată că se derulează: margini estompate pe partea cu etape ascunse și săgeți
+  const [barFade, setBarFade] = useState({ over: false, l: false, r: false });
+  // pe desktop săgețile apar doar din cauza depășirii: lățimea lor se adaugă înapoi, altfel odată afișate ar rămâne afișate
+  const measureBar = () => { const el = stageBar.current; if (!el) return; const max = el.scrollWidth - el.clientWidth;
+    const arrows = el.parentElement?.classList.contains('is-over') && matchMedia('(min-width: 1024px)').matches ? [...el.parentElement.querySelectorAll<HTMLElement>('.stage-step')].reduce((s, b) => s + b.offsetWidth, 0) : 0;
+    const over = max - arrows > 1, l = max > 1 && el.scrollLeft > 1, r = max > 1 && el.scrollLeft < max - 1;
+    setBarFade(f => f.over === over && f.l === l && f.r === r ? f : { over, l, r }); };
+  useEffect(() => { const el = stageBar.current; if (!el) return; measureBar(); if (typeof ResizeObserver === 'undefined') return; const ro = new ResizeObserver(measureBar); ro.observe(el); return () => ro.disconnect(); }); // eslint-disable-line
   // pe ecranele înguste „Plan + 3D” nu are loc: rămâne vederea plan
   useEffect(() => { if (compact && view === 'split') setView('2d'); }, [compact, view]);
   // paleta de comenzi: Ctrl+K / Cmd+K oriunde în editor (și în câmpuri), sau butonul „Caută” din antet
@@ -333,13 +346,13 @@ export default function Editor({ id }: { id: string }){
       {save === 'auth' && <span className="conflict-bar save-alert" role="alert"><Icon name="alert" />{t('editor.sessionExpired')} <a className="btn" href={reloginUrl(`/p/${id}`)} onClick={() => { if (latest.current) stashDraft(store(), id, latest.current, baseRev.current); saveRef.current = 'saved'; }}>{t('editor.relogin')}</a></span>}
       {stash && <span className="conflict-bar save-alert" role="alert">{t('editor.stashFound', { time: new Date(stash.at).toLocaleTimeString(intlLocale(lang), { hour: '2-digit', minute: '2-digit' }) })} <button className="btn" onClick={takeStash}>{t('editor.stashRestore')}</button><button className="btn" onClick={dropStash}>{t('editor.stashDrop')}</button></span>}
     </header>
-    <div className="stagewrap">
+    <div className={`stagewrap ${barFade.over ? 'is-over' : ''}`}>
     <button type="button" className="stage-step" aria-label={t('stage.prev')} title={t('stage.prev')} disabled={STAGES.indexOf(stageDef) === 0} onClick={() => setStage(STAGES[Math.max(0, STAGES.indexOf(stageDef) - 1)]!.id)}><Icon name="chevronLeft" /></button>
-    <nav className="stagebar" aria-label={t('stage.aria')} ref={stageBar}>
+    <nav className={`stagebar ${barFade.l ? 'fade-l' : ''} ${barFade.r ? 'fade-r' : ''}`} aria-label={t('stage.aria')} ref={stageBar} onScroll={measureBar}>
       {PHASES.map(ph => <div key={ph.id} className="phase" role="group" aria-label={t('phase.aria', { phase: t(`phase.${ph.id}`) })} data-phase={ph.id}>
         <span className="phase-label" aria-hidden="true">{t(`phase.${ph.id}`)}</span>
         {ph.stages.map(sid => { const st = STAGES.find(x => x.id === sid)!, i = STAGES.indexOf(st), ok = !!done?.[sid];
-          return <button key={st.id} data-stage={st.id} aria-current={stage === st.id ? 'step' : undefined} title={t(`stage.why.${st.id}`)} aria-label={`${String(i + 1).padStart(2, '0')} ${t(`stage.${st.id}`)} · ${ok ? t('stage.doneAria') : t('stage.todoAria')}${st.id === 'docs' && warnCount > 0 ? ` · ${t('stage.warnAria', { n: warnCount })}` : ''}`} onClick={() => setStage(st.id)}><i aria-hidden="true">{String(i + 1).padStart(2, '0')}</i><span className={`st-dot ${ok ? 'is-done' : ''}`} aria-hidden="true" /><span className="st-name" aria-hidden="true">{t(`stage.${st.id}`)}</span>{st.id === 'docs' && warnCount > 0 && <b className="count" title={t('stage.checks')} aria-hidden="true">{warnCount}</b>}</button>; })}
+          return <button key={st.id} data-stage={st.id} aria-current={stage === st.id ? 'step' : undefined} title={t(`stage.why.${st.id}`)} aria-label={`${String(i + 1).padStart(2, '0')} ${t(`stage.${st.id}`)} · ${ok ? t('stage.doneAria') : t('stage.todoAria')}${st.id === 'docs' && warnCount > 0 ? ` · ${t('stage.warnAria', { n: warnCount })}` : ''}`} onClick={() => setStage(st.id)} onFocus={e => { try { e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch { /* browser vechi */ } }}><i aria-hidden="true">{String(i + 1).padStart(2, '0')}</i><span className={`st-dot ${ok ? 'is-done' : ''}`} aria-hidden="true" /><span className="st-name" aria-hidden="true">{t(`stage.${st.id}`)}</span>{st.id === 'docs' && warnCount > 0 && <b className="count" title={t('stage.checks')} aria-hidden="true">{warnCount}</b>}</button>; })}
       </div>)}
     </nav>
     <button type="button" className="stage-step" aria-label={t('stage.next')} title={t('stage.next')} disabled={STAGES.indexOf(stageDef) === STAGES.length - 1} onClick={() => setStage(STAGES[Math.min(STAGES.length - 1, STAGES.indexOf(stageDef) + 1)]!.id)}><Icon name="chevronRight" /></button>
@@ -392,7 +405,7 @@ export default function Editor({ id }: { id: string }){
           </>}
           {selRoom && roomStage && <RoomPanel part={stage} room={selRoom} snap={snap} G={G} cat={catalog} mc={mc} cur={cur} onSwap={(pid: string, vid: string) => changePiece(pid, q => { q.variantId = vid; }, t('editor.variantNoFit'))} onFinish={(patch: Partial<RoomFinishes>) => mutate(s => { s.finishes = { ...(s.finishes || {}), [selRoom.id]: { ...finishesOf(s, selRoom), ...patch } }; })} onChange={(fn: (r: any) => void) => mutate(s => fn(s.floor.rooms.find(r => r.id === selRoom.id)!))}
             onAuto={() => { const r = autoLayout(snap, catalog, { roomId: selRoom.id }); commit(r.snapshot); say(r.notFit.length ? t('editor.someNotFit') : t('editor.roomAutoApplied', { room: selRoom.name })); }}
-            onAdd={(vid: string) => addToRoom(vid, selRoom)} onResize={(rect: Room['rect']) => { try { mutate(s => { s.floor = resizeRoom(s.floor, selRoom.id, rect, () => `wall-${uid().slice(0, 8)}`); }); } catch (e) { if (e instanceof RoomResizeError) say(e.message); else throw e; } }} num={num} />}
+            onAdd={(vid: string) => addToRoom(vid, selRoom)} onResize={(rect: Room['rect']) => resizeSel(selRoom.id, rect)} num={num} />}
           {selRoom && (stage === 'finishes' || stage === 'ffe') && <RoomOptionsPanel id={id} room={selRoom} snap={snap} cat={catalog} mc={mc} cur={cur} onSnap={n => commit(n)} say={say} />}
           {selRoom && stage === 'survey' && <button className="btn" title={t('stair.addTitle')} onClick={() => onAddStair(selRoom)}>{t('stair.add')}</button>}
           {selStair && stage === 'survey' && (() => { const g = stairGeometry(selStair, snap.floor.ceilingHeight + SLAB), cm1 = (m: number) => Math.round(m * 1000) / 10; return (<div style={{ display: 'grid', gap: 8 }}>

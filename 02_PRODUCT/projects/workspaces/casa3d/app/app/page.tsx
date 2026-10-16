@@ -4,10 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import EmptyState from '@/components/EmptyState';
 import { CardsSkeleton } from '@/components/Skeleton';
 import { singleFlight } from '@/lib/single-flight';
-import { TEMPLATES, floorArea } from '../core/templates';
+import { TEMPLATES, floorArea, newProjectRequest } from '../core/templates';
 import type { Floor } from '../core/types';
 import { formatArea } from '../core/format';
-import { usePrefs } from '@/lib/prefs';
+import { usePrefs, storedLang } from '@/lib/prefs';
 import { askPrompt } from '@/lib/dialog';
 import { intlLocale } from '@/lib/i18n';
 import PrefsSwitcher from '@/components/PrefsSwitcher';
@@ -19,7 +19,7 @@ import { PROJECT_STATUSES, daysLeft, type ProjectStatus } from '../core/project-
 type P = { id: string; name: string; updated_at: string; current_revision: number; status: ProjectStatus; client: string | null; dueDate: string | null };
 const ACTIVE: ProjectStatus[] = ['lead', 'offer', 'design', 'execution'];
 export default function Home(){
-  const { t, tp, lang, units } = usePrefs(), L = lang === 'en' ? 'en' : 'ro';
+  const { t, tp, lang, units, ready } = usePrefs(), L = lang === 'en' ? 'en' : 'ro';
   const [filter, setFilter] = useState<'all' | 'active' | ProjectStatus>('active'), [list, setList] = useState<P[] | null>(null), [plans, setPlans] = useState<Record<string, Floor>>({}), [name, setName] = useState(''), [err, setErr] = useState(''), [busy, setBusy] = useState(false);
   const [q, setQ] = useState(''), [sort, setSort] = useState<'due' | 'updated' | 'name'>('due'), [trash, setTrash] = useState<{ id: string; name: string; purgeAt: string }[]>([]), [undo, setUndo] = useState<{ id: string; name: string } | null>(null);
   const loadTrash = () => fetch('/api/projects/trash').then(r => r.ok ? r.json() : []).then(setTrash).catch(() => {});
@@ -47,8 +47,10 @@ export default function Home(){
     .catch(() => setErr(t('home.loadFailed'))); }, []); // eslint-disable-line
   // cheia rămâne ocupată după reușită: pagina trece în editor, orice alt click până atunci e ignorat
   const create = (template: string) => once('create', () => createNow(template), ok => ok === true);
-  async function createNow(template: string){ setBusy(true); setErr('');
-    try { const r = await fetch('/api/projects', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: name.trim() || t('home.defaultName'), template, lang }) }); const j = await r.json().catch(() => ({}));
+  // limba proiectului = limba interfeței la creare (camerele „Bucătărie, Hol…” și „Casa mea” în română); un clic înainte ca
+  // preferința să fie citită folosește aceeași regulă ca PrefsProvider, nu valoarea implicită de la prima randare
+  async function createNow(template: string){ setBusy(true); setErr(''); const lg = ready ? lang : storedLang();
+    try { const r = await fetch('/api/projects', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(newProjectRequest(name, template, lg)) }); const j = await r.json().catch(() => ({}));
       if (!r.ok){ setErr(j.error || t('home.error')); setBusy(false); return false; } location.href = `/p/${j.id}`; return true; }
     catch { setErr(t('home.error')); setBusy(false); return false; } }
   const today = new Date().toISOString().slice(0, 10);
