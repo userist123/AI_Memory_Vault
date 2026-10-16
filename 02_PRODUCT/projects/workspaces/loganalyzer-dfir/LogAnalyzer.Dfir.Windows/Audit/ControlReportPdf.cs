@@ -189,6 +189,14 @@ public static class ControlReportPdf
                     if (head) t.Bold();
                 }
 
+                // owner decision 2026-10-16: every device the real-time monitor saw in the period (check D05), with driver, state, registration number and alerts
+                P(col, DeviceSectionTitle).Bold().FontSize(11).FontColor(Ink);
+                foreach (var (text, head, color) in DeviceSectionLines(r))
+                {
+                    var t = P(col, W(text)).FontSize(head ? 8.5f : 7.5f).FontColor(color);
+                    if (head) t.Bold();
+                }
+
                 col.Item().Text("4. Acoperirea jurnalelor și surse lipsă sau incomplete").Bold().FontSize(11).FontColor(Ink);
                 foreach (var c in f.Coverage)
                     col.Item().Text($"{c.Channel}: {(c.Readable ? $"{LogAnalyzer.Dfir.Language.RoText.Count(c.Records, "eveniment", "evenimente")} citite, cel mai vechi {L(c.OldestUtc)}" : "NECITIT")} {c.Note}").FontSize(7.5f);
@@ -261,6 +269,7 @@ public static class ControlReportPdf
         if (r.Users.Count > 0) { A("RDP"); foreach (var u in r.Users) A(u.User); }
         foreach (var a in r.Actions.Take(1500)) { A(a.Action); A(a.Detail); A(a.Source); }
         foreach (var (text, _, _) in ClassifiedSectionLines(r)) A(text);
+        foreach (var (text, _, _) in DeviceSectionLines(r)) A(text);
         foreach (var lim in Limitations(f)) A(lim);
         foreach (var line in OfficerSectionLines(r)) A(line);
         return sb.ToString();
@@ -314,6 +323,38 @@ public static class ControlReportPdf
     };
 
     public const string ClassifiedSectionTitle = "3b. Informații clasificate — acces și ieșiri";
+
+    public const string DeviceSectionTitle = "3c. Dispozitive văzute de monitorul în timp real (verificarea D05)";
+
+    /// <summary>
+    /// The lines of the device section: a summary, the alerts raised in the period, then every device seen (those that break the rule first, in red) with class,
+    /// driver state, connected or disconnected and the registration number or „fără număr de înregistrare”. Pure, so the tests read it without parsing the PDF.
+    /// </summary>
+    public static List<(string Text, bool Head, string Color)> DeviceSectionLines(ControlReport r, int maxDevices = 1000)
+    {
+        const string Red = "#b91c1c", Amber = "#b45309";
+        var l = new List<(string, bool, string)>();
+        var f = r.Facts;
+        if (f.DeviceMonitorProblem.Length > 0) l.Add((f.DeviceMonitorProblem, false, Amber));
+        if (f.DeviceMonitor is not { } journal)
+        {
+            l.Add(("Jurnalul monitorului de dispozitive lipsește: monitorul nu a rulat pe această stație, deci dispozitivele nu pot fi listate (vezi istoricul Windows, D01).", false, Amber));
+            return l;
+        }
+        bool isolated = f.Posture != LogAnalyzer.Core.Services.Edition.StationPosture.Internet;
+        var s = LogAnalyzer.Dfir.Devices.DeviceMonitorReport.Build(journal, f.PeriodStartUtc, f.PeriodEndUtc == default ? DateTimeOffset.MaxValue : f.PeriodEndUtc, isolated);
+        l.Add(($"Dispozitive văzute în perioadă: {s.Devices.Count} ({s.Devices.Count(d => d.Present)} conectate acum) · încalcă regula: {s.Offending.Count} · alerte: {s.Alerts.Count} ({s.Critical} critice). " +
+               "Monitorul vede doar cât timp aplicația este pornită; orele sunt cele la care a observat schimbarea.", false, Ink));
+        l.Add(("Alertele date în perioadă", true, Ink));
+        if (s.Alerts.Count == 0) l.Add(("Nicio alertă în perioadă.", false, Muted));
+        foreach (var a in s.Alerts) l.Add((LogAnalyzer.Dfir.Devices.DeviceMonitorReport.AlertLine(a), false, a.Severity == LogAnalyzer.Dfir.Devices.DeviceAlertSeverity.Critical ? Red : Muted));
+        l.Add(("Dispozitivele (clasa, numele, driverul, starea, numărul de înregistrare)", true, Ink));
+        var offending = new HashSet<LogAnalyzer.Dfir.Devices.DeviceJournalEntry>(s.Offending);
+        foreach (var d in s.Offending.Concat(s.Devices.Where(d => !offending.Contains(d))).Take(maxDevices))
+            l.Add(((offending.Contains(d) ? "ÎNCALCĂ REGULA: " : "") + LogAnalyzer.Dfir.Devices.DeviceMonitorReport.Line(d), false, offending.Contains(d) ? Red : Ink));
+        if (s.Devices.Count > maxDevices) l.Add(($"… încă {s.Devices.Count - maxDevices} dispozitive (în jurnalul monitorului).", false, Muted));
+        return l;
+    }
 
     /// <summary>
     /// The lines of the classified-information section: per file (unjustified exits first), the exits with their verdict and register entry, then the
