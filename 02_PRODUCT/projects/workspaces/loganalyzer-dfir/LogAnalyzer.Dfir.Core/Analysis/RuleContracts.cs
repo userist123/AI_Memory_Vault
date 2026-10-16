@@ -356,7 +356,7 @@ public static class RuleContracts
             ["Setarea arată posibilitatea de a păstra fragmente de conținut, nu că ceva a fost extras.", "ActivitiesCache.db poate fi gol."],
             ["Conținutul istoricului, sincronizarea cu un cont."],
             ["Opriți istoricul prin politică (control P30).", "Examinați ActivitiesCache.db dacă se suspectează o scurgere."]),
-        R("AIRGAP-VM-PRESENT", W14, SemanticType.Presence, "Mașini virtuale Hyper-V, distribuții WSL sau produse de virtualizare sunt prezente pe un sistem air-gapped sau autonom.",
+        R("AIRGAP-VM-PRESENT", W14, SemanticType.Presence, "Mașini virtuale Hyper-V, distribuții WSL, produse de virtualizare, containere sau rețele virtuale sunt prezente pe un sistem air-gapped sau autonom.",
             ["Prezența nu arată că o mașină virtuală a fost pornită sau folosită.", "Controalele și jurnalele stației nu acoperă interiorul unei mașini virtuale.", "WSL și Hyper-V pot fi caracteristici Windows activate pentru alte motive."],
             ["Jurnalele Hyper-V, discurile virtuale, rețeaua mașinii virtuale, folderele partajate."],
             ["Identificați mașinile și scopul lor.", "Verificați dacă mașina are rețea sau foldere partajate."]),

@@ -288,6 +288,23 @@ public class AirGapChannelTests
     }
 
     [Fact]
+    public void Containers_virtual_networks_and_bridge_drivers_are_reported_and_a_bridge_driver_alone_is_named_as_a_path_to_the_physical_network()
+    {
+        var facts = new AirGapFacts { CollectedUtc = P0, Virtual = new()
+        {
+            ContainerEngines = ["Docker Desktop", "serviciul Docker Engine"], Containers = ["container-test"],
+            VirtualNetworks = ["comutator virtual Hyper-V: Comutator-test"], BridgeDrivers = ["VMware Bridge Protocol"],
+        } };
+        var f = One(Go([], facts), "AIRGAP-VM-PRESENT");
+        Assert.Contains("Docker Desktop", f.Description);
+        Assert.Contains("container-test", f.Description);
+        Assert.Contains("Comutator-test", f.Description);
+        Assert.Contains("rețeaua fizică", f.Description);
+        // a virtual network alone (no machine, no engine) is still a nested network on an isolated station
+        Assert.Contains("Comutator-test", One(Go([], new AirGapFacts { CollectedUtc = P0, Virtual = new() { VirtualNetworks = ["comutator virtual Hyper-V: Comutator-test"] } }), "AIRGAP-VM-PRESENT").Description);
+    }
+
+    [Fact]
     public void Disk_images_and_a_second_boot_entry_are_reported_and_one_entry_or_nothing_is_not()
     {
         var facts = new AirGapFacts { CollectedUtc = P0, Virtual = new() { DiskImages = [new() { Path = @"D:\VMs\masina.vhdx", Size = 40_000_000_000, LastWriteUtc = P0 }], BootOsEntries = 2, BootEntryNames = ["Windows 11", "Alt sistem"] } };
