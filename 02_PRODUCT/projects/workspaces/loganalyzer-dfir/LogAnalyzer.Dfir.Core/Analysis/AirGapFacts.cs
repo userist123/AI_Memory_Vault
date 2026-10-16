@@ -107,6 +107,14 @@ public sealed class VirtualFacts
     public bool DiskImageSearchTruncated { get; set; }
     public List<string> WslDistributions { get; set; } = [];
     public List<string> Hypervisors { get; set; } = [];
+    /// <summary>D12: container engines installed or registered as services (Docker, Podman, Rancher Desktop, Windows Host Compute Service).</summary>
+    public List<string> ContainerEngines { get; set; } = [];
+    /// <summary>D12: Windows containers found in the Docker data folder (name or id), bounded.</summary>
+    public List<string> Containers { get; set; } = [];
+    /// <summary>D12: virtual networks on the host: Hyper-V virtual switches and host-side virtual adapters (Hyper-V, VirtualBox, VMware).</summary>
+    public List<string> VirtualNetworks { get; set; } = [];
+    /// <summary>D12: bridge drivers that can join a virtual machine to the physical network (VirtualBox NetLwf, VMware VMnetBridge).</summary>
+    public List<string> BridgeDrivers { get; set; } = [];
     /// <summary>Operating-system entries of the boot configuration (bcdedit /enum all /v); null = not read.</summary>
     public int? BootOsEntries { get; set; }
     public List<string> BootEntryNames { get; set; } = [];

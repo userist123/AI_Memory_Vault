@@ -156,13 +156,19 @@ public static partial class Wp14Rules
         if (v.HyperVMachines.Count > 0) present.Add($"{LogAnalyzer.Dfir.Language.RoText.Count(v.HyperVMachines.Count, "mașină virtuală Hyper-V", "mașini virtuale Hyper-V")} ({string.Join(", ", v.HyperVMachines.Take(5))})");
         if (v.WslDistributions.Count > 0) present.Add($"{LogAnalyzer.Dfir.Language.RoText.Count(v.WslDistributions.Count, "distribuție WSL", "distribuții WSL")} ({string.Join(", ", v.WslDistributions.Take(5))})");
         if (v.Hypervisors.Count > 0) present.Add($"produse de virtualizare instalate: {string.Join(", ", v.Hypervisors.Take(5))}");
+        if (v.ContainerEngines.Count > 0) present.Add($"motoare de containere: {string.Join(", ", v.ContainerEngines.Take(5))}");
+        if (v.Containers.Count > 0) present.Add($"{LogAnalyzer.Dfir.Language.RoText.Count(v.Containers.Count, "container Windows", "containere Windows")} ({string.Join(", ", v.Containers.Take(5))})");
+        if (v.VirtualNetworks.Count > 0) present.Add($"rețele virtuale în interiorul stației: {string.Join("; ", v.VirtualNetworks.Take(5))}");
+        if (v.BridgeDrivers.Count > 0) present.Add($"drivere de punte care pot lega o mașină virtuală la rețeaua fizică a stației: {string.Join(", ", v.BridgeDrivers.Take(5))}");
         if (present.Count > 0)
-            o.Add(Chan(c, "AIRGAP-VM-PRESENT", "Virtualizare sau al doilea sistem de operare pe un sistem izolat", Sev(c, Severity.Medium), "NETWORK INTERFACE", "Hyper-V / WSL / VirtualBox / VMware",
+            o.Add(Chan(c, "AIRGAP-VM-PRESENT", "Virtualizare sau al doilea sistem de operare pe un sistem izolat", Sev(c, Severity.Medium), "NETWORK INTERFACE", "Hyper-V / WSL / VirtualBox / VMware / containere",
                 string.Join("; ", present), c.Facts!.CollectedUtc, null, "necunoscut: inventarul nu conține contul", "mașini virtuale / WSL", "necunoscută: o mașină virtuală poate avea propria rețea și foldere partajate cu stația", "mașină virtuală",
                 $"Pe sistemul {ScopeWord(c)}: {string.Join("; ", present)}. O mașină virtuală sau o distribuție WSL este un al doilea sistem care rulează în interiorul stației, cu propriul jurnal, propriul antivirus și, eventual, propria rețea sau foldere partajate; controalele și jurnalele stației nu îl acoperă. Prezența nu arată că a fost pornit sau folosit.",
-                "Mașini Hyper-V, distribuții WSL (registrul Lxss) sau produse de virtualizare instalate (VirtualBox, VMware), citite de pe stație.",
+                "Mașini Hyper-V, distribuții WSL (registrul Lxss), produse de virtualizare instalate (VirtualBox, VMware), motoare de containere (Docker, Podman) și containere Windows, comutatoare virtuale Hyper-V, adaptoare virtuale ale gazdei și drivere de punte, citite de pe stație.",
                 ["Mașina virtuală poate servi unei sarcini aprobate (testare, mediu de lucru izolat) și figura în documentația stației.", "WSL și Hyper-V sunt caracteristici Windows pe care un administrator le poate fi activat pentru unelte de dezvoltare.", "Un produs de virtualizare poate fi rămas instalat fără mașini create."],
-                [.. v.HyperVMachines.Take(5).Select(m => FactRef(c, $"virtual/hyperv/{m}", $"mașină virtuală {m}")), .. v.WslDistributions.Take(5).Select(m => FactRef(c, $"virtual/wsl/{m}", $"distribuție WSL {m}")), .. v.Hypervisors.Take(5).Select(m => FactRef(c, $"virtual/product/{m}", $"produs {m}"))],
+                [.. v.HyperVMachines.Take(5).Select(m => FactRef(c, $"virtual/hyperv/{m}", $"mașină virtuală {m}")), .. v.WslDistributions.Take(5).Select(m => FactRef(c, $"virtual/wsl/{m}", $"distribuție WSL {m}")), .. v.Hypervisors.Take(5).Select(m => FactRef(c, $"virtual/product/{m}", $"produs {m}")),
+                    .. v.ContainerEngines.Take(5).Select(m => FactRef(c, $"virtual/container-engine/{m}", m)), .. v.Containers.Take(5).Select(m => FactRef(c, $"virtual/container/{m}", $"container {m}")),
+                    .. v.VirtualNetworks.Take(5).Select(m => FactRef(c, $"virtual/network/{m}", m)), .. v.BridgeDrivers.Take(5).Select(m => FactRef(c, $"virtual/bridge/{m}", m))],
                 present, "", SemanticType.Presence));
         var images = v.DiskImages.OrderByDescending(d => d.Size).ToList();
         if (images.Count > 0)
