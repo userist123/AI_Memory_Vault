@@ -195,7 +195,7 @@ public sealed record ParserCapabilities(
         C("MftParser",
             ["Că o înregistrare liberă din $MFT păstrează numele și calea unui fișier șters, cu ultima schimbare cunoscută.", "Candidați la modificarea orelor: ora de creare din $STANDARD_INFORMATION mai veche decât cea din $FILE_NAME."],
             ["Momentul ștergerii.", "Cine a șters fișierul.", "Intenția.", "Că un candidat la modificarea orelor este o falsificare (unele programe copiază orele originale)."],
-            ["Înregistrările libere pot fi reutilizate și atunci numele dispare.", "Lista de atribute și numele non-rezidente nu sunt urmărite.", "Testat doar pe înregistrări sintetice."],
+            ["Înregistrările libere pot fi reutilizate și atunci numele dispare.", "Lista de atribute și numele non-rezidente nu sunt urmărite.", "Testat pe înregistrări sintetice și, doar ca număr de înregistrări, pe un $MFT real; achiziția live (profilul complet, administrator) nu urmărește un $MFT cu lista de extensii în lista de atribute."],
             ["Jurnalul USN, Security 4663/4660."]),
         C("ScheduledTaskParser",
             ["Ce configurație are o activitate planificată (acțiune, declanșatori, cont, ascuns/activ)."],

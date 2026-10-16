@@ -53,6 +53,6 @@
 - Done (9841c637f): `LogAnalyzer.Dfir.Core/FileSystem/MftParser.cs` parses an exported $MFT (update sequence check, resident $SI/$FN): deleted records
   with rebuilt path (`Kind=deleted`), timestomp candidates $SI created < $FN created (`Kind=timestomp`, Candidate), summary; fingerprint `ntfs_mft`,
   ImportType, registered (18 parsers), ParserCapabilities, AF08 now Detected/NotDetected with an MFT. Tests: `MftParserTests` (8, synthetic), fuzz test.
-- Next: live acquisition of $MFT from a volume (administrator: boot sector → MFT cluster → $DATA run list of record 0 → copy), as a collector step with
-  custody/audit; then validate the parser on a real $MFT (owner runs elevated); then PR. After E8: E6 (read the stick), then E7 (user activity).
-- Limits: synthetic records only; attribute lists and non-resident names not followed; $LogFile not read.
+- Done: live acquisition `LogAnalyzer.Dfir.Windows/Acquisition/MftAcquisition.cs` (boot sector, record 0 with shared `MftParser.ApplyFixup`, $DATA run list, read-only volume handle, SHA-256 while copying) and `MftCollector` (complete profile only, custody via RegisterStored; not elevated = NotAvailable gap). Tests: `MftAcquisitionTests` (synthetic + elevated live test, which ran and passed here).
+- Next: owner review and PR. After E8: E6 (read the stick), then E7 (user activity).
+- Limits: a $MFT whose run list is in an attribute list is refused; attribute lists and non-resident names not followed in the parser; $LogFile not read; real volume checked by counts only.

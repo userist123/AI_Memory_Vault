@@ -43,7 +43,7 @@ public sealed class MftParser : EvidenceParserBase
             "Timestomp: ora de creare din $STANDARD_INFORMATION mai veche decât cea din $FILE_NAME este un indiciu, nu o dovadă; unele programe de instalare și de copiere lasă același tipar.",
         ],
         Status = ParserMaturity.Tested,
-        Validation = "MftParserTests: înregistrări FILE construite octet cu octet (secvența de actualizare, atribute rezidente), cu valori exacte; neverificat pe un $MFT real",
+        Validation = "MftParserTests: înregistrări FILE construite octet cu octet (secvența de actualizare, atribute rezidente), cu valori exacte; pe un $MFT real (achiziție live, cu drepturi de administrator) s-au verificat doar numărul de înregistrări și ponderea celor deteriorate",
     };
 
     private sealed record Entry(uint Number, ushort Sequence, bool InUse, bool Directory, long[]? Si, string Name, ulong ParentRef, long[]? FnTimes);
@@ -162,22 +162,34 @@ public sealed class MftParser : EvidenceParserBase
 
     private static string Utc(long ft) => ft > 0 && ft < DateTime.MaxValue.ToFileTimeUtc() ? DateTime.FromFileTimeUtc(ft).ToString("o", CultureInfo.InvariantCulture) : "";
 
-    /// <summary>One record, or null when its update sequence or its attribute chain is not consistent.</summary>
-    private static Entry? Read(byte[] rec, long index)
+    /// <summary>
+    /// Applies the update sequence fixup to one FILE record in place: checks that each sector ends with the sequence number and puts the saved bytes back.
+    /// False when the record is torn or its array is inconsistent. Shared with the live acquisition, which reads record 0 of the volume.
+    /// </summary>
+    public static bool ApplyFixup(Span<byte> b)
     {
-        var b = rec.AsSpan();
+        if (b.Length < 0x30) return false;
         int usaOffset = BinaryPrimitives.ReadUInt16LittleEndian(b[0x04..]);
         int usaCount = BinaryPrimitives.ReadUInt16LittleEndian(b[0x06..]);
         int sectors = b.Length / 512;
-        if (usaCount != sectors + 1 || usaOffset < 0x28 || usaOffset + 2 * usaCount > b.Length) return null;
+        if (usaCount != sectors + 1 || usaOffset < 0x28 || usaOffset + 2 * usaCount > b.Length) return false;
         ushort usn = BinaryPrimitives.ReadUInt16LittleEndian(b[usaOffset..]);
         for (int s = 0; s < sectors; s++)
         {
             int end = 512 * (s + 1) - 2;
-            if (BinaryPrimitives.ReadUInt16LittleEndian(b[end..]) != usn) return null;
+            if (BinaryPrimitives.ReadUInt16LittleEndian(b[end..]) != usn) return false;
             b[end] = b[usaOffset + 2 + 2 * s];
             b[end + 1] = b[usaOffset + 3 + 2 * s];
         }
+        return true;
+    }
+
+    /// <summary>One record, or null when its update sequence or its attribute chain is not consistent.</summary>
+    private static Entry? Read(byte[] rec, long index)
+    {
+        var b = rec.AsSpan();
+        if (!ApplyFixup(b)) return null;
+        int usaOffset = BinaryPrimitives.ReadUInt16LittleEndian(b[0x04..]);
         ushort seq = BinaryPrimitives.ReadUInt16LittleEndian(b[0x10..]);
         int attr = BinaryPrimitives.ReadUInt16LittleEndian(b[0x14..]);
         ushort flags = BinaryPrimitives.ReadUInt16LittleEndian(b[0x16..]);

@@ -126,6 +126,32 @@ public sealed class SrumCollector : ICollector
 }
 
 /// <summary>
+/// The NTFS master file table ($MFT) of the system volume, read from the mounted volume (comparison row E8) in the complete profile only: it is large
+/// (hundreds of MB) and needs raw volume access. Read only, never writes to the volume. Without administrator rights the source is reported missing, not failed.
+/// </summary>
+public sealed class MftCollector : ICollector
+{
+    public string Name => "MftCollector";
+    public string Version => "1.0";
+    public bool RequiresElevation => true;
+    public CollectionProfile Profiles => CollectionProfile.FullForensic;
+
+    public CollectorOutcome Collect(CollectorContext ctx, CancellationToken ct)
+    {
+        var root = Path.GetPathRoot(Environment.SystemDirectory) ?? @"C:\";
+        var volume = root.TrimEnd('\\');
+        var src = volume + @"\$MFT";
+        if (!ctx.IsElevated) return CollectorOutcome.NotAvailable("$MFT necesită drepturi de administrator", src);
+        var dest = Path.Combine(ctx.Case.RawDir("MFT"), "$MFT");
+        var r = MftAcquisition.Acquire(volume, dest, ct);
+        var o = new CollectorOutcome { Tool = "citire directă a volumului (doar citire)", ToolVersion = Version, Source = src, Commands = { $"MftAcquisition {volume} -> $MFT: {(r.Ok ? r.Bytes + " octeți, SHA-256 " + r.Sha256 : r.Problem)}" } };
+        if (!r.Ok || !File.Exists(dest)) { o.Status = EvidenceStatus.NotAvailable; o.Errors.Add(r.Problem.Length > 0 ? r.Problem : "$MFT nu a putut fi citit"); return o; }
+        o.Evidence.Add(ctx.Case.RegisterStored(dest, src, "MFT", LogAnalyzer.Dfir.FileSystem.MftParser.SourceTypeName, TemporalType.Historical, Name, Version));
+        return o;
+    }
+}
+
+/// <summary>
 /// Windows Firewall text logs (pfirewall.log and its previous generation .old) of every profile, at the path the policy or the local setting names.
 /// When logging is off the source is reported as missing with how to turn it on; nothing is changed on the station.
 /// </summary>
