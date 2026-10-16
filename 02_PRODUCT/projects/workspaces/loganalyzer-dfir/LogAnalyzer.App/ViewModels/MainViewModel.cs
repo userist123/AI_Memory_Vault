@@ -292,7 +292,12 @@ namespace LogAnalyzer.UI.ViewModels
         }
 
         // Dashboard stats
-        [ObservableProperty] private int _selectedTabIndex = HomeViewModel.HomeTabIndex;   // WP5: the app opens on Home
+        [ObservableProperty, NotifyPropertyChangedFor(nameof(IsLegacyDataPage))] private int _selectedTabIndex = HomeViewModel.HomeTabIndex;   // WP5: the app opens on Home
+
+        /// <summary>G3: the older pages under "Avansat" that load their own events (dashboard, events, registry, alerts, timeline, risk, attack chain,
+        /// threat intelligence, MITRE); on them the window shows the empty offer while neither "Colectează tot" nor the page has data.</summary>
+        public static readonly int[] LegacyDataTabs = [0, 1, 2, 3, 4, 5, 6, 7, 10];
+        public bool IsLegacyDataPage => LegacyDataTabs.Contains(SelectedTabIndex);
         [ObservableProperty] private int _totalEventsCount;
         [ObservableProperty] private int _totalAlertsCount;
         // Severity counts of the loaded alerts; test alerts (DetectedIssue.IsTestAlert) are excluded.

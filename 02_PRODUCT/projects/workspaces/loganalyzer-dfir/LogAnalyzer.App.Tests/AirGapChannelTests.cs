@@ -288,6 +288,23 @@ public class AirGapChannelTests
     }
 
     [Fact]
+    public void Containers_virtual_networks_and_bridge_drivers_are_reported_and_a_bridge_driver_alone_is_named_as_a_path_to_the_physical_network()
+    {
+        var facts = new AirGapFacts { CollectedUtc = P0, Virtual = new()
+        {
+            ContainerEngines = ["Docker Desktop", "serviciul Docker Engine"], Containers = ["container-test"],
+            VirtualNetworks = ["comutator virtual Hyper-V: Comutator-test"], BridgeDrivers = ["VMware Bridge Protocol"],
+        } };
+        var f = One(Go([], facts), "AIRGAP-VM-PRESENT");
+        Assert.Contains("Docker Desktop", f.Description);
+        Assert.Contains("container-test", f.Description);
+        Assert.Contains("Comutator-test", f.Description);
+        Assert.Contains("rețeaua fizică", f.Description);
+        // a virtual network alone (no machine, no engine) is still a nested network on an isolated station
+        Assert.Contains("Comutator-test", One(Go([], new AirGapFacts { CollectedUtc = P0, Virtual = new() { VirtualNetworks = ["comutator virtual Hyper-V: Comutator-test"] } }), "AIRGAP-VM-PRESENT").Description);
+    }
+
+    [Fact]
     public void Disk_images_and_a_second_boot_entry_are_reported_and_one_entry_or_nothing_is_not()
     {
         var facts = new AirGapFacts { CollectedUtc = P0, Virtual = new() { DiskImages = [new() { Path = @"D:\VMs\masina.vhdx", Size = 40_000_000_000, LastWriteUtc = P0 }], BootOsEntries = 2, BootEntryNames = ["Windows 11", "Alt sistem"] } };
@@ -331,6 +348,39 @@ public class AirGapChannelTests
     {
         var facts = new AirGapFacts { CollectedUtc = P0, Archivers = [new() { Tool = "7-Zip", List = "CopyHistory", Value = @"F:\arhiva.7z" }] };
         One(Go([Usb("AA001", 1, "F:")], facts), "MEDIA-ARCHIVER-REMOVABLE");
+    }
+
+    [Fact]
+    public void The_upload_thresholds_come_from_the_data_pack_channels_section_and_default_without_it()
+    {
+        var d = LogAnalyzer.Dfir.Analysis.Wp14Data.FromJson("""{ "channels": { "srumUploadBytesPerDay": 524288000, "srumMedianFactor": 8, "srumMinDays": 7, "srumMaxFindings": 3 } }""");
+        Assert.Equal(524288000, d.Channels.SrumUploadBytesPerDay);
+        Assert.Equal(8, d.Channels.SrumMedianFactor);
+        Assert.Equal(7, d.Channels.SrumMinDays);
+        Assert.Equal(3, d.Channels.SrumMaxFindings);
+        Assert.Equal(100L * 1024 * 1024, LogAnalyzer.Dfir.Analysis.Wp14Data.FromJson("{}").Channels.SrumUploadBytesPerDay);
+    }
+
+    [Fact]
+    public void The_most_recent_WinRAR_entry_on_the_removable_drive_takes_the_time_its_list_was_last_written()
+    {
+        var t = P0.AddDays(-2);
+        var facts = new AirGapFacts
+        {
+            CollectedUtc = P0, RemovableLetters = ["E"],
+            Archivers = [new() { Tool = "WinRAR", List = "ArcHistory", Value = @"E:\transfer\documente.rar", Position = 0, ListLastWriteUtc = t },
+                         new() { Tool = "WinRAR", List = "ArcHistory", Value = @"C:\lucru.zip", Position = 1, ListLastWriteUtc = t }],
+        };
+        var f = One(Go([], facts), "MEDIA-ARCHIVER-REMOVABLE");
+        Assert.Equal(t, f.FirstSeenUtc);
+        Assert.Contains("cea mai recentă", f.Description);
+
+        // an older entry only says when the list changed last, not when that entry was added: no time on the finding
+        facts.Archivers = [new() { Tool = "WinRAR", List = "ArcHistory", Value = @"C:\lucru.zip", Position = 0, ListLastWriteUtc = t },
+                           new() { Tool = "WinRAR", List = "ArcHistory", Value = @"E:\transfer\documente.rar", Position = 1, ListLastWriteUtc = t }];
+        var older = One(Go([], facts), "MEDIA-ARCHIVER-REMOVABLE");
+        Assert.Null(older.FirstSeenUtc);
+        Assert.Contains("înainte de", older.Description);
     }
 
     // ---- D14: SRUM upload outliers ----

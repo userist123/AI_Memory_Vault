@@ -156,13 +156,19 @@ public static partial class Wp14Rules
         if (v.HyperVMachines.Count > 0) present.Add($"{LogAnalyzer.Dfir.Language.RoText.Count(v.HyperVMachines.Count, "mașină virtuală Hyper-V", "mașini virtuale Hyper-V")} ({string.Join(", ", v.HyperVMachines.Take(5))})");
         if (v.WslDistributions.Count > 0) present.Add($"{LogAnalyzer.Dfir.Language.RoText.Count(v.WslDistributions.Count, "distribuție WSL", "distribuții WSL")} ({string.Join(", ", v.WslDistributions.Take(5))})");
         if (v.Hypervisors.Count > 0) present.Add($"produse de virtualizare instalate: {string.Join(", ", v.Hypervisors.Take(5))}");
+        if (v.ContainerEngines.Count > 0) present.Add($"motoare de containere: {string.Join(", ", v.ContainerEngines.Take(5))}");
+        if (v.Containers.Count > 0) present.Add($"{LogAnalyzer.Dfir.Language.RoText.Count(v.Containers.Count, "container Windows", "containere Windows")} ({string.Join(", ", v.Containers.Take(5))})");
+        if (v.VirtualNetworks.Count > 0) present.Add($"rețele virtuale în interiorul stației: {string.Join("; ", v.VirtualNetworks.Take(5))}");
+        if (v.BridgeDrivers.Count > 0) present.Add($"drivere de punte care pot lega o mașină virtuală la rețeaua fizică a stației: {string.Join(", ", v.BridgeDrivers.Take(5))}");
         if (present.Count > 0)
-            o.Add(Chan(c, "AIRGAP-VM-PRESENT", "Virtualizare sau al doilea sistem de operare pe un sistem izolat", Sev(c, Severity.Medium), "NETWORK INTERFACE", "Hyper-V / WSL / VirtualBox / VMware",
+            o.Add(Chan(c, "AIRGAP-VM-PRESENT", "Virtualizare sau al doilea sistem de operare pe un sistem izolat", Sev(c, Severity.Medium), "NETWORK INTERFACE", "Hyper-V / WSL / VirtualBox / VMware / containere",
                 string.Join("; ", present), c.Facts!.CollectedUtc, null, "necunoscut: inventarul nu conține contul", "mașini virtuale / WSL", "necunoscută: o mașină virtuală poate avea propria rețea și foldere partajate cu stația", "mașină virtuală",
                 $"Pe sistemul {ScopeWord(c)}: {string.Join("; ", present)}. O mașină virtuală sau o distribuție WSL este un al doilea sistem care rulează în interiorul stației, cu propriul jurnal, propriul antivirus și, eventual, propria rețea sau foldere partajate; controalele și jurnalele stației nu îl acoperă. Prezența nu arată că a fost pornit sau folosit.",
-                "Mașini Hyper-V, distribuții WSL (registrul Lxss) sau produse de virtualizare instalate (VirtualBox, VMware), citite de pe stație.",
+                "Mașini Hyper-V, distribuții WSL (registrul Lxss), produse de virtualizare instalate (VirtualBox, VMware), motoare de containere (Docker, Podman) și containere Windows, comutatoare virtuale Hyper-V, adaptoare virtuale ale gazdei și drivere de punte, citite de pe stație.",
                 ["Mașina virtuală poate servi unei sarcini aprobate (testare, mediu de lucru izolat) și figura în documentația stației.", "WSL și Hyper-V sunt caracteristici Windows pe care un administrator le poate fi activat pentru unelte de dezvoltare.", "Un produs de virtualizare poate fi rămas instalat fără mașini create."],
-                [.. v.HyperVMachines.Take(5).Select(m => FactRef(c, $"virtual/hyperv/{m}", $"mașină virtuală {m}")), .. v.WslDistributions.Take(5).Select(m => FactRef(c, $"virtual/wsl/{m}", $"distribuție WSL {m}")), .. v.Hypervisors.Take(5).Select(m => FactRef(c, $"virtual/product/{m}", $"produs {m}"))],
+                [.. v.HyperVMachines.Take(5).Select(m => FactRef(c, $"virtual/hyperv/{m}", $"mașină virtuală {m}")), .. v.WslDistributions.Take(5).Select(m => FactRef(c, $"virtual/wsl/{m}", $"distribuție WSL {m}")), .. v.Hypervisors.Take(5).Select(m => FactRef(c, $"virtual/product/{m}", $"produs {m}")),
+                    .. v.ContainerEngines.Take(5).Select(m => FactRef(c, $"virtual/container-engine/{m}", m)), .. v.Containers.Take(5).Select(m => FactRef(c, $"virtual/container/{m}", $"container {m}")),
+                    .. v.VirtualNetworks.Take(5).Select(m => FactRef(c, $"virtual/network/{m}", m)), .. v.BridgeDrivers.Take(5).Select(m => FactRef(c, $"virtual/bridge/{m}", m))],
                 present, "", SemanticType.Presence));
         var images = v.DiskImages.OrderByDescending(d => d.Size).ToList();
         if (images.Count > 0)
@@ -203,11 +209,17 @@ public static partial class Wp14Rules
         {
             var items = g.Select(x => x.A).ToList();
             var tools = items.Select(a => a.Tool).Distinct().ToList();
+            // the list's key was last written when its most recent entry was added: a time for that entry only; older entries are "before" it
+            var recent = items.Where(a => a.Position == 0 && a.ListLastWriteUtc is not null).OrderByDescending(a => a.ListLastWriteUtc).FirstOrDefault();
+            var older = items.Where(a => a.Position > 0 && a.ListLastWriteUtc is not null).OrderBy(a => a.ListLastWriteUtc).FirstOrDefault();
+            var when = recent is not null
+                ? $" Intrarea „{Shorten(recent.Value)}” este cea mai recentă din lista {recent.Tool} {recent.List}, iar lista a fost scrisă ultima dată la {recent.ListLastWriteUtc:yyyy-MM-dd HH:mm:ss} UTC: atunci a fost scrisă lista ultima dată, ceea ce de obicei înseamnă că această intrare a fost adăugată atunci (golirea sau reordonarea istoricului scrie și ea cheia)."
+                : older is not null ? $" Intrările de pe {g.Key}: nu sunt cele mai recente din lista lor; au fost adăugate înainte de {older.ListLastWriteUtc:yyyy-MM-dd HH:mm:ss} UTC (ultima scriere a listei {older.Tool} {older.List})." : "";
             o.Add(Chan(c, "MEDIA-ARCHIVER-REMOVABLE", $"Arhivator cu căi pe unitatea amovibilă {g.Key}:", Sev(c, Severity.Medium), "PORTABLE STORAGE", $"{string.Join(" / ", tools)} (istoric din registru)",
-                $"{LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "cale", "căi")} pe unitatea {g.Key}: în istoricul {string.Join(" / ", tools)}", null, null, "necunoscut: istoricul din registru nu are cont pe intrare (este al utilizatorului al cărui profil a fost citit)",
+                $"{LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "cale", "căi")} pe unitatea {g.Key}: în istoricul {string.Join(" / ", tools)}", recent?.ListLastWriteUtc, null, "necunoscut: istoricul din registru nu are cont pe intrare (este al utilizatorului al cărui profil a fost citit)",
                 $"arhive pe unitatea {g.Key}:", "posibilă scriere pe mediu (arhiva poate fi creată sau doar deschisă)", $"suport de stocare amovibil {g.Key}:",
                 $"Istoricul {string.Join(" / ", tools)} conține {LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "cale", "căi")} pe unitatea {g.Key}:, care este o unitate amovibilă pe această stație: {string.Join("; ", items.Take(6).Select(a => $"{a.List}: {Shorten(a.Value)}"))}{(items.Count > 6 ? " …" : "")}. " +
-                "O arhivă (zip, rar, 7z) este felul obișnuit de a strânge multe fișiere într-unul singur înainte de a le muta pe un mediu. Istoricul arată că arhivatorul a lucrat cu acea cale; nu arată dacă arhiva a fost creată sau doar deschisă, ce conținea sau când (registrul nu păstrează ora fiecărei intrări).",
+                "O arhivă (zip, rar, 7z) este felul obișnuit de a strânge multe fișiere într-unul singur înainte de a le muta pe un mediu. Istoricul arată că arhivatorul a lucrat cu acea cale; nu arată dacă arhiva a fost creată sau doar deschisă, ce conținea sau când (registrul nu păstrează ora fiecărei intrări)." + when,
                 "Intrări din istoricul WinRAR (ArcHistory, DialogEditHistory) sau 7-Zip (File Manager: FolderHistory, CopyHistory, PanelPath) cu litera unei unități amovibile.",
                 ["Arhiva poate fi dintr-un mediu primit pe cale aprobată, deschis pentru citire.", "Litera unității amovibile poate fi reatribuită alt volum (MountedDevices păstrează ultima asociere).", "Istoricul poate data de dinainte ca stația să fie clasificată."],
                 items.Take(10).Select(a => FactRef(c, $"archivers/{a.Tool}/{a.List}", $"{a.Tool} {a.List}: {Shorten(a.Value)}")).ToList(), items.Take(5).Select(a => $"airgap_facts archivers/{a.Tool}/{a.List}").ToList(), "", SemanticType.Presence));
@@ -245,7 +257,7 @@ public static partial class Wp14Rules
             var times = x.Events.Select(T).Where(t => t is not null).Select(t => t!.Value).OrderBy(t => t).ToList();
             o.Add(Chan(c, "AIRGAP-UPLOAD-OUTLIER", $"{exe}: {x.Bytes / 1_000_000.0:0.#} MB trimiși într-o zi ({x.Day:yyyy-MM-dd})", Sev(c, Severity.Medium), "NETWORK INTERFACE", "SRUM Network Data Usage",
                 $"{x.Bytes / 1_000_000.0:0.#} MB trimiși de {exe} în ziua {x.Day:yyyy-MM-dd}", times.Count > 0 ? times[0] : null, times.Count > 0 ? times[^1] : null, WhoOf(x.Events), $"aplicația {exe}", "trimitere de date din stație către o rețea (SRUM nu arată destinația)", "necunoscută: SRUM nu păstrează adresele",
-                $"{exe} a trimis {x.Bytes:N0} octeți ({x.Bytes / 1_000_000.0:0.#} MB) în ziua {x.Day:yyyy-MM-dd} (UTC), peste pragul de {l.SrumUploadBytesPerDay / 1_000_000} MB pe zi; {hist}. " +
+                $"{exe} a trimis {x.Bytes:N0} octeți ({x.Bytes / 1_000_000.0:0.#} MB) în ziua {x.Day:yyyy-MM-dd} (UTC), peste pragul de {l.SrumUploadBytesPerDay / 1_000_000.0:0.#} MB pe zi; {hist}. " +
                 "SRUM numără octeții pe aplicație și pe interval de aproximativ o oră, pe toate interfețele (inclusiv rețeaua locală și bucla locală); nu arată destinația, protocolul sau conținutul.",
                 "Octeții trimiși de o aplicație într-o zi, din SRUM, peste pragul din fișierul de date și peste mediana zilelor aceleiași aplicații înmulțită cu factorul din fișierul de date.",
                 ["Actualizări Windows, antivirus sau copii de siguranță trimit volume mari legitim, mai ales în prima zi după o instalare.", "Sincronizarea unui folder cu un server aprobat din zona stației produce același volum.", "Volumul poate fi trafic pe o rețea locală aprobată, nu un trafic către exterior."],

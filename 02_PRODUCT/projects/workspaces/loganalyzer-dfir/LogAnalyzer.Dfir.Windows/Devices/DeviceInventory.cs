@@ -354,7 +354,7 @@ public static class DeviceInventory
         return list;
     }
 
-    private static DateTimeOffset? KeyLastWrite(RegistryKey key) =>
+    internal static DateTimeOffset? KeyLastWrite(RegistryKey key) =>
         RegQueryInfoKey(key.Handle, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, out var ft) == 0 && ft > 0
             ? new DateTimeOffset(DateTime.FromFileTimeUtc(ft)) : null;
 
