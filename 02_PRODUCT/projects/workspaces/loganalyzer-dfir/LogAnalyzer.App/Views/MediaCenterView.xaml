@@ -187,6 +187,67 @@
                 <views:RegisterView DataContext="{Binding Register}"/>
             </TabItem>
 
+            <!-- 5. the register signed by the security officer (owner decision 2026-10-16) -->
+            <TabItem Header="Registrul semnat">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" DataContext="{Binding Signed}">
+                    <StackPanel Margin="8">
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"
+                                   Text="Pe stația de transfer se introduc toate mediile deodată și se înrolează. Ofițerul de securitate semnează registrul cu certificatul calificat de pe card; registrul semnat se importă pe fiecare stație, care recunoaște apoi doar mediile din el. Orice schimbare (adăugare, retragere, distrugere) este o versiune nouă, semnată din nou; o versiune mai veche nu este acceptată."/>
+                        <TextBlock Text="{Binding ActiveText}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,8,0,0"/>
+
+                        <TextBlock Text="Pe stația de transfer" FontSize="16" FontWeight="SemiBold" Margin="0,14,0,4" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Înrolează mediile conectate" Command="{Binding EnrollConnectedCommand}" Margin="0,0,8,0"
+                                    AutomationProperties.HelpText="Citește toate mediile amovibile conectate acum (serie, VID/PID, producător, capacitate, serie de volum, BitLocker) și le adaugă în ciornă."/>
+                            <Button Content="Semnează și exportă (cardul ofițerului)" Command="{Binding SignAndExportCommand}" Margin="0,0,8,0"/>
+                            <Button Content="Golește ciorna" Command="{Binding ClearDraftCommand}"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding Warnings}" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" Margin="0,6,0,0"/>
+                        <DataGrid AutomationProperties.Name="Ciorna registrului de medii" ItemsSource="{Binding Draft}" AutoGenerateColumns="False" CanUserAddRows="False"
+                                  HeadersVisibility="Column" Margin="0,6,0,0" MaxHeight="320">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Nr. inventar" Binding="{Binding InventoryNumber, UpdateSourceTrigger=PropertyChanged}" Width="110"/>
+                                <DataGridTextColumn Header="Nivel de clasificare" Binding="{Binding Classification, UpdateSourceTrigger=PropertyChanged}" Width="150"/>
+                                <DataGridTextColumn Header="Deținător" Binding="{Binding Holder, UpdateSourceTrigger=PropertyChanged}" Width="150"/>
+                                <DataGridComboBoxColumn Header="Stare" SelectedItemBinding="{Binding Status}" Width="90">
+                                    <DataGridComboBoxColumn.ElementStyle>
+                                        <Style TargetType="ComboBox"><Setter Property="ItemsSource" Value="{Binding DataContext.StatusChoices, RelativeSource={RelativeSource AncestorType=DataGrid}}"/></Style>
+                                    </DataGridComboBoxColumn.ElementStyle>
+                                    <DataGridComboBoxColumn.EditingElementStyle>
+                                        <Style TargetType="ComboBox"><Setter Property="ItemsSource" Value="{Binding DataContext.StatusChoices, RelativeSource={RelativeSource AncestorType=DataGrid}}"/></Style>
+                                    </DataGridComboBoxColumn.EditingElementStyle>
+                                </DataGridComboBoxColumn>
+                                <DataGridTextColumn Header="Mediul" Binding="{Binding Identity, Mode=OneWay}" IsReadOnly="True" Width="2*"/>
+                                <DataGridTextColumn Header="Criptare" Binding="{Binding Encryption, Mode=OneWay}" IsReadOnly="True" Width="1.2*"/>
+                                <DataGridTextColumn Header="Origine" Binding="{Binding Origin, Mode=OneWay}" IsReadOnly="True" Width="140"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <TextBlock Text="Pe fiecare stație" FontSize="16" FontWeight="SemiBold" Margin="0,14,0,4" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"
+                                   Text="Scrieți amprenta certificatului ofițerului de pe procesul-verbal (16 grupe de 4 caractere). Fără ea registrul este NEOFICIAL și nu se folosește la control."/>
+                        <DockPanel Margin="0,4,0,0">
+                            <Button DockPanel.Dock="Right" Content="Importă registrul semnat" Command="{Binding ImportSignedCommand}" Margin="8,0,0,0"/>
+                            <TextBox Text="{Binding PaperFingerprint, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Amprenta ofițerului de pe procesul-verbal"/>
+                        </DockPanel>
+                        <TextBlock Text="{Binding Status}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,8,0,0" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBox Text="{Binding Result, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Margin="0,6,0,0" MinHeight="60" AutomationProperties.Name="Rezultatul verificării registrului"/>
+
+                        <TextBlock Text="Istoricul versiunilor pe această stație" FontSize="14" FontWeight="SemiBold" Margin="0,14,0,4" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <DataGrid AutomationProperties.Name="Istoricul versiunilor registrului semnat" ItemsSource="{Binding History}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="220">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Versiune" Binding="{Binding Version}" Width="70"/>
+                                <DataGridTextColumn Header="Verdict" Binding="{Binding Verdict}" Width="90"/>
+                                <DataGridCheckBoxColumn Header="Instalat" Binding="{Binding Installed}" Width="70"/>
+                                <DataGridTextColumn Header="Importat (UTC)" Binding="{Binding ImportedUtc}" Width="150"/>
+                                <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="3*"/>
+                                <DataGridTextColumn Header="SHA-256" Binding="{Binding Sha256}" Width="2*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
         </TabControl>
     </Grid>
 </UserControl>

@@ -70,6 +70,7 @@ public static partial class ControlEvaluator
         AccountChanges(f, r);
         Logons(f, r);
         Devices(f, r);
+        SignedMediaRegisterCheck(f, r);
         Network(f, r);
         Software(f, r);
         StationHardening(f, r);

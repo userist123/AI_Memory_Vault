@@ -140,6 +140,10 @@ public sealed class StationFacts
     public LogAnalyzer.Dfir.Case.AnchoredInstall? InstallAtPaperAnchor { get; set; }
     /// <summary>Check A16: the identity of the application audit chain now (its first record); null = not readable.</summary>
     public LogAnalyzer.Dfir.Case.ChainIdentity? CurrentChain { get; set; }
+    /// <summary>Check D04: the removable media the station has seen (connected now and history) with their identifying attributes; null = not read.</summary>
+    public List<LogAnalyzer.Dfir.Registers.SeenMedium>? ObservedMedia { get; set; }
+    /// <summary>Check D04 and the transfer register: the signed media register in force on the station (or why there is none); null = not checked.</summary>
+    public LogAnalyzer.Dfir.Registers.ActiveMediaRegister? SignedMedia { get; set; }
 }
 
 public static class StationFactCollector
@@ -226,6 +230,7 @@ public static class StationFactCollector
         Try(facts, "Profiluri de rețea", () => facts.NetworkProfiles.AddRange(ReadNetworkProfiles()));
         Try(facts, "Interfețe de rețea", () => facts.ConnectedInterfacesNow.AddRange(ReadConnectedInterfaces()));
         Try(facts, "Dispozitive USB (USBSTOR)", () => facts.UsbDevices.AddRange(ReadUsbStor()));
+        Try(facts, "Medii amovibile (registrul semnat)", () => facts.ObservedMedia = LogAnalyzer.Dfir.Registers.SignedMediaEnrollment.Observed(LogAnalyzer.Dfir.Windows.Devices.DeviceInventory.Collect().Devices));
         // classified folders: their access records have their own budget, so the general cap of 4663 cannot push them out
         Func<int, IReadOnlyDictionary<string, string>, bool>? classified = null;
         if (classifiedFolders is not null)
