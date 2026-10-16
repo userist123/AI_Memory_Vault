@@ -15,15 +15,16 @@ using Xunit;
 namespace LogAnalyzer.App.Tests;
 
 /// <summary>
-/// Owner decision 2026-10-16: the real-time device monitor in place of the signed media register (observe and alert only). Pure rules (snapshot diff, class,
-/// driver state, journal merge and registration number by identity, alert severity per posture), the D05 check and report section, the monitor's view model
-/// with fakes (no WPF window, no station access), and the switched-off register (D04 "Nu se aplică", the tabs gone from the menu). Serials are fake.
+/// Owner decision 2026-10-16: the real-time device monitor in place of the signed media register (observe and alert only). Snapshot diff, journal merge and
+/// registration number by identity, alert severity per posture, the D05 check (sealed coverage, audit comparison, scope) and report section, the monitor's view
+/// model with fakes (no WPF window, no station access), and the switched-off register (D04 "Nu se aplică", the tabs gone from the menu). The scope classifier,
+/// coverage, clones, rate limit and audit comparison are tested apart in LogAnalyzer.Dfir.Tests. Serials are fake.
 /// </summary>
 public sealed class DeviceMonitorTests
 {
     private static readonly DateTimeOffset T0 = new(2026, 10, 16, 8, 0, 0, TimeSpan.Zero);
 
-    // fake devices: the serials and ids are invented
+    // fake devices: the serials and ids are invented (no container id: the bus of the instance id decides)
     private static PnpSnapshotEntry Stick(string serial = "FAKESN0001", int code = 0) =>
         new($@"USBSTOR\Disk&Ven_Fake&Prod_Stick_3.0&Rev_1.00\{serial}&0", "Fake Stick USB Device", "DiskDrive", "(Unități de disc standard)", @"USBSTOR\DiskFake____Stick_3.0", "disk", code);
     private static PnpSnapshotEntry UsbParent(string serial = "FAKESN0001") =>
@@ -31,14 +32,13 @@ public sealed class DeviceMonitorTests
     private static readonly PnpSnapshotEntry Mouse = new(@"HID\VID_046D&PID_C077\7&1A2B3C4D&0&0000", "HID-compliant mouse", "Mouse", "Microsoft", @"HID\VID_046D&PID_C077", "mouhid", 0);
     private static readonly PnpSnapshotEntry Keyboard = new(@"HID\VID_046D&PID_C31C&MI_00\7&2B3C4D5E&0&0000", "HID Keyboard Device", "Keyboard", "(Tastaturi standard)", @"HID\VID_046D&PID_C31C&MI_00", "kbdhid", 0);
     private static readonly PnpSnapshotEntry Phone = new(@"USB\VID_04E8&PID_6860\FAKEPHONE01", "Galaxy (fake)", "WPD", "Samsung", @"USB\VID_04E8&PID_6860", "WUDFWpdMtp", 0);
-    private static readonly PnpSnapshotEntry Wifi = new(@"PCI\VEN_8086&DEV_2723&SUBSYS_00848086\4&11111111&0&00E0", "Intel(R) Wi-Fi 6 AX200 160MHz", "Net", "Intel", @"PCI\VEN_8086&DEV_2723", "Netwtw10", 0);
-    private static readonly PnpSnapshotEntry Ethernet = new(@"PCI\VEN_10EC&DEV_8168\4&22222222&0&00E4", "Realtek PCIe GbE Family Controller", "Net", "Realtek", @"PCI\VEN_10EC&DEV_8168", "rt640x64", 0);
     private static readonly PnpSnapshotEntry UsbEthernet = new(@"USB\VID_0BDA&PID_8153\FAKENIC0001", "Realtek USB GbE Family Controller", "Net", "Realtek", @"USB\VID_0BDA&PID_8153", "rtux64w10", 0);
     private static readonly PnpSnapshotEntry Printer = new(@"USBPRINT\FAKEPRINTER\7&33333333&0&USB001", "Fake LaserJet", "Printer", "Fake", @"USBPRINT\FAKEPRINTER", "", 0);
-    private static readonly PnpSnapshotEntry NoDriver = new(@"USB\VID_ABCD&PID_0001\FAKEGADGET01", "Unknown device", "", "", @"USB\VID_ABCD&PID_0001", "", 28);
+    private static readonly PnpSnapshotEntry NoDriver = new(@"USBPRINT\FAKEGADGET\7&44444444&0&USB002", "Fake Label Printer", "Printer", "Fake", @"USBPRINT\FAKEGADGET", "", 28);
+    private static readonly PnpSnapshotEntry BluetoothRadioOff = new(@"USB\VID_8087&PID_0AAA\5&55555555&0&10", "Intel(R) Wireless Bluetooth(R)", "Bluetooth", "Intel", "", "", 22, DeviceScope.LocalMachineContainer);
     private static readonly PnpSnapshotEntry Volume = new(@"STORAGE\VOLUME\_??_USBSTOR#DISK&VEN_FAKE#FAKESN0001&0", "Volume", "Volume", "Microsoft", @"STORAGE\Volume", "volume", 0);
 
-    private static readonly IReadOnlyDictionary<string, SignedDriverInfo> NoDrivers = new Dictionary<string, SignedDriverInfo>();
+    private static readonly IReadOnlyDictionary<string, MediumInfo> NoMedia = new Dictionary<string, MediumInfo>();
 
     // ---- snapshot diff ----------------------------------------------------------------------------------------------------------------------
 
@@ -54,78 +54,38 @@ public sealed class DeviceMonitorTests
         Assert.True(DeviceMonitorRules.Diff(after, after).IsEmpty);
     }
 
-    // ---- classes --------------------------------------------------------------------------------------------------------------------------
-
-    [Fact]
-    public void Every_class_is_recognised_and_duplicate_views_of_a_disk_are_skipped()
-    {
-        DeviceClass? C(PnpSnapshotEntry e) => DeviceMonitorRules.Classify(e.InstanceId, e.SetupClass, e.HardwareIds, e.Name);
-        Assert.Equal(DeviceClass.UsbStorage, C(Stick()));
-        Assert.Equal(DeviceClass.Controller, C(UsbParent()));
-        Assert.Equal(DeviceClass.Mouse, C(Mouse));
-        Assert.Equal(DeviceClass.Keyboard, C(Keyboard));
-        Assert.Equal(DeviceClass.Phone, C(Phone));
-        Assert.Equal(DeviceClass.WiFi, C(Wifi));
-        Assert.Equal(DeviceClass.NetworkAdapter, C(Ethernet));
-        Assert.Equal(DeviceClass.Printer, C(Printer));
-        Assert.Equal(DeviceClass.Other, C(NoDriver));
-        Assert.Null(C(Volume));
-        Assert.Null(DeviceMonitorRules.Classify(@"SWD\WPDBUSENUM\_??_USBSTOR#DISK&VEN_FAKE#FAKESN0001&0", "WPD", "", "E:\\"));
-        Assert.Equal(DeviceClass.Bluetooth, DeviceMonitorRules.Classify(@"BTHENUM\DEV_001122334455\8&1&0&BLUETOOTHDEVICE_001122334455", "Bluetooth", "", "Fake Headset"));
-        Assert.Equal(DeviceClass.Camera, DeviceMonitorRules.Classify(@"USB\VID_046D&PID_085B&MI_00\7&44444444&0&0000", "Camera", "", "Fake Webcam"));
-        Assert.Equal(DeviceClass.Scanner, DeviceMonitorRules.Classify(@"USB\VID_04B8&PID_0142\FAKESCAN01", "Image", "", "Fake Scanner"));
-        Assert.Equal(DeviceClass.Audio, DeviceMonitorRules.Classify(@"HDAUDIO\FUNC_01&VEN_10EC\4&55555555&0&0001", "MEDIA", "", "Realtek High Definition Audio"));
-        Assert.Equal(DeviceClass.Optical, DeviceMonitorRules.Classify(@"SCSI\CDROM&VEN_FAKE&PROD_DVD\4&66666666&0&000100", "CDROM", "", "Fake DVD"));
-        Assert.Equal(DeviceClass.Internal, DeviceMonitorRules.Classify(@"ACPI\PNP0C0A\1", "Battery", "", "Microsoft ACPI-Compliant Control Method Battery"));
-        Assert.Equal(DeviceClass.Internal, DeviceMonitorRules.Classify(@"SWD\PRINTENUM\{FAKE}", "PrintQueue", "", "Microsoft Print to PDF"));
-        Assert.Equal(DeviceClass.Internal, DeviceMonitorRules.Classify(@"ROOT\VMS_MP\0000", "Net", "", "Hyper-V Virtual Ethernet Adapter"));
-    }
-
-    // ---- driver state ---------------------------------------------------------------------------------------------------------------------
-
-    [Fact]
-    public void The_driver_state_comes_from_ConfigManagerErrorCode_and_the_signed_driver_data()
-    {
-        var signed = new SignedDriverInfo("10.0.26100.1", "Microsoft", "2026-01-15", true, "Microsoft Windows");
-        Assert.Equal(DriverState.Missing, DeviceMonitorRules.Driver(28, signed).State);
-        Assert.Contains("cod 28", DeviceMonitorRules.Driver(28, null).Text);
-        var err = DeviceMonitorRules.Driver(43, signed);
-        Assert.Equal(DriverState.Error, err.State);
-        Assert.Contains("cod 43", err.Text);
-        Assert.Equal(DriverState.Error, DeviceMonitorRules.Driver(22, null).State);
-        var ok = DeviceMonitorRules.Driver(0, signed);
-        Assert.Equal(DriverState.Installed, ok.State);
-        Assert.Contains("Microsoft 10.0.26100.1", ok.Text);
-        Assert.Contains("2026-01-15", ok.Text);
-        Assert.Contains("semnat de Microsoft Windows", ok.Text);
-        var unsigned = DeviceMonitorRules.Driver(0, signed with { IsSigned = false, Signer = "" });
-        Assert.Equal(DriverState.Unsigned, unsigned.State);
-        Assert.Contains("NESEMNAT", unsigned.Text);
-        Assert.Equal(DriverState.Installed, DeviceMonitorRules.Driver(0, null).State);   // works, details not read
-        Assert.Equal(DriverState.Unknown, DeviceMonitorRules.Driver(-1, null).State);
-    }
-
     // ---- journal merge and registration number ---------------------------------------------------------------------------------------------
 
     [Fact]
     public void The_first_snapshot_records_without_connections_then_arrivals_and_removals_are_dated()
     {
         var j = new DeviceJournal();
-        Assert.Empty(DeviceJournalMerge.Apply(j, [Mouse, Keyboard], NoDrivers, T0, initial: true));
-        Assert.Equal(2, j.Devices.Count);
+        Assert.Empty(DeviceJournalMerge.Apply(j, [Mouse, Keyboard], NoMedia, "—", T0, initial: true));
+        Assert.Equal(2, j.Devices.Count);                                        // without container ids two HID devices with different VID/PID are two rows
         Assert.All(j.Devices, d => { Assert.True(d.Present); Assert.Equal(T0, d.FirstSeenUtc); });
+    }
 
+    [Fact]
+    public void Arrivals_and_removals_are_dated_and_the_user_at_connection_is_recorded()
+    {
+        var j = new DeviceJournal();
+        DeviceJournalMerge.Apply(j, [Mouse], NoMedia, "—", T0, initial: true);
         var t1 = T0.AddMinutes(5);
-        var arrived = Assert.Single(DeviceJournalMerge.Apply(j, [Mouse, Keyboard, Stick(), UsbParent()], NoDrivers, t1, initial: false), c => c.Device.Class == DeviceClass.UsbStorage);
+        var arrived = Assert.Single(DeviceJournalMerge.Apply(j, [Mouse, Stick(), UsbParent()], NoMedia, @"LAB-PC\user", t1, initial: false));
         Assert.True(arrived.Arrived);
+        Assert.Equal(DeviceClass.UsbStorage, arrived.Device.Class);
         Assert.Equal(t1, arrived.Device.LastConnectedUtc);
         Assert.Equal("FAKESN0001", arrived.Device.Serial);
+        Assert.Equal(@"LAB-PC\user", arrived.Device.ConnectedUser);
+        Assert.Equal("—", j.Devices.Single(d => d.Class == DeviceClass.Mouse).ConnectedUser);
 
         var t2 = T0.AddMinutes(9);
-        var gone = DeviceJournalMerge.Apply(j, [Mouse, Keyboard], NoDrivers, t2, initial: false);
-        Assert.Equal(2, gone.Count);
-        Assert.All(gone, c => { Assert.False(c.Arrived); Assert.False(c.Device.Present); Assert.Equal(t2, c.Device.LastDisconnectedUtc); });
-        Assert.Equal(4, j.Devices.Count);                                       // the rows stay after disconnection
+        var gone = Assert.Single(DeviceJournalMerge.Apply(j, [Mouse], NoMedia, "—", t2, initial: false));
+        Assert.False(gone.Arrived);
+        Assert.False(gone.Device.Present);
+        Assert.Equal(t2, gone.Device.LastDisconnectedUtc);
+        Assert.Equal(2, j.Devices.Count);                                       // the row stays after disconnection
+        Assert.Equal(DeviceStatus.Disconnected, gone.Device.Status);
     }
 
     [Fact]
@@ -135,23 +95,23 @@ public sealed class DeviceMonitorTests
         try
         {
             var j = new DeviceJournal();
-            DeviceJournalMerge.Apply(j, [Stick()], NoDrivers, T0, initial: true);
+            DeviceJournalMerge.Apply(j, [Stick()], NoMedia, "—", T0, initial: true);
             var id = DeviceMonitorRules.Identity(Stick());
             Assert.StartsWith("SN|", id);
             Assert.Equal("", DeviceJournalMerge.SetRegistrationNumber(j, id, "  RN-0042 "));
             Assert.Null(DeviceJournalMerge.SetRegistrationNumber(j, "ID|NOT-THERE", "X"));
-            DeviceJournalMerge.Apply(j, [], NoDrivers, T0.AddMinutes(1), initial: false);   // unplugged
+            DeviceJournalMerge.Apply(j, [], NoMedia, "—", T0.AddMinutes(1), initial: false);   // unplugged
             LogAnalyzer.Dfir.IO.Json.Write(path, j);
 
             var reloaded = DeviceJournalStore.Load(path, out var problem);
             Assert.Equal("", problem);
             // plugged again after a restart; the id differs only in case: the same identity, the same number
             var again = Stick() with { InstanceId = Stick().InstanceId.ToLowerInvariant() };
-            var change = Assert.Single(DeviceJournalMerge.Apply(reloaded, [again], NoDrivers, T0.AddHours(1), initial: false));
+            var change = Assert.Single(DeviceJournalMerge.Apply(reloaded, [again], NoMedia, "—", T0.AddHours(1), initial: false));
             Assert.Equal("RN-0042", change.Device.RegistrationNumber);
             Assert.Single(reloaded.Devices);
             // another stick (other serial) has its own identity and no number
-            DeviceJournalMerge.Apply(reloaded, [again, Stick("FAKESN0002")], NoDrivers, T0.AddHours(2), initial: false);
+            DeviceJournalMerge.Apply(reloaded, [again, Stick("FAKESN0002")], NoMedia, "—", T0.AddHours(2), initial: false);
             Assert.Equal("", reloaded.Find(DeviceMonitorRules.Identity(Stick("FAKESN0002")))!.RegistrationNumber);
             // without a serial the identity is the instance id
             Assert.Equal("ID|" + Mouse.InstanceId.ToUpperInvariant(), DeviceMonitorRules.Identity(Mouse));
@@ -188,16 +148,17 @@ public sealed class DeviceMonitorTests
         // a storage medium without a number is critical on every posture; with a number it is information
         Assert.Equal(DeviceAlertSeverity.Critical, S(DeviceClass.UsbStorage, Stick().InstanceId));
         Assert.Equal(DeviceAlertSeverity.Critical, S(DeviceClass.MemoryCard, @"SD\FAKE\1"));
+        Assert.Equal(DeviceAlertSeverity.Critical, S(DeviceClass.ExternalDisk, Stick().InstanceId));
         Assert.Equal(DeviceAlertSeverity.Info, S(DeviceClass.UsbStorage, Stick().InstanceId, "RN-1"));
         var forbidden = forbiddenIsCritical ? DeviceAlertSeverity.Critical : DeviceAlertSeverity.Info;
         Assert.Equal(forbidden, S(DeviceClass.Phone, Phone.InstanceId, "RN-2"));
         Assert.Equal(forbidden, S(DeviceClass.Bluetooth, @"BTHENUM\DEV_001122334455\1"));
-        Assert.Equal(forbidden, S(DeviceClass.WiFi, Wifi.InstanceId));
+        Assert.Equal(forbidden, S(DeviceClass.WiFi, @"USB\VID_0BDA&PID_B812\FAKEWIFI001"));
         Assert.Equal(forbidden, S(DeviceClass.NetworkAdapter, UsbEthernet.InstanceId));
-        // a built-in wired adapter, a mouse or a printer is information everywhere
-        Assert.Equal(DeviceAlertSeverity.Info, S(DeviceClass.NetworkAdapter, Ethernet.InstanceId));
+        // a mouse, a printer or a card reader is information everywhere
         Assert.Equal(DeviceAlertSeverity.Info, S(DeviceClass.Mouse, Mouse.InstanceId));
         Assert.Equal(DeviceAlertSeverity.Info, S(DeviceClass.Printer, Printer.InstanceId));
+        Assert.Equal(DeviceAlertSeverity.Info, S(DeviceClass.CardReader, UsbParent().InstanceId));
         Assert.Contains("fără număr de înregistrare", DeviceMonitorRules.Decide(DeviceClass.UsbStorage, "", "", isolated).Reason);
     }
 
@@ -211,23 +172,23 @@ public sealed class DeviceMonitorTests
         public int Saves;
         public DeviceJournal? Saved;
         public DateTimeOffset Now = T0;
+        public string User = "";
 
-        public DeviceMonitorViewModel Create(bool isolated, DeviceJournal? journal = null) => new(
+        public DeviceMonitorViewModel Create(bool isolated, DeviceJournal? journal = null, bool owner = true) => new(
             () => Present.ToList(),
-            _ => new Dictionary<string, SignedDriverInfo>(StringComparer.OrdinalIgnoreCase)
-            {
-                [Stick().InstanceId] = new("10.0.26100.1", "Microsoft", "2026-01-15", true, "Microsoft Windows"),
-            },
-            (ev, detail) => { if (AuditRefusal is null) Audited.Add((ev, detail)); return AuditRefusal; },
+            _ => new Dictionary<string, MediumInfo>(StringComparer.OrdinalIgnoreCase),
+            (ev, detail) => { lock (Audited) { if (AuditRefusal is null) Audited.Add((ev, detail)); } return AuditRefusal; },
             journal ?? new DeviceJournal(),
             j => { Saves++; Saved = j.Copy(); return null; },
-            isolated, () => Now);
+            isolated, () => Now, consoleUser: () => User, owner: owner);
+
+        public List<(string Ev, string Detail)> Events(string ev) { lock (Audited) return Audited.Where(a => a.Ev == ev).ToList(); }
     }
 
     [Fact]
     public async Task The_monitor_shows_a_connection_immediately_alerts_and_keeps_the_row_red_after_disconnection()
     {
-        var f = new Fakes { Present = [Mouse] };
+        var f = new Fakes { Present = [Mouse], User = @"LAB-PC\user" };
         using var vm = f.Create(isolated: true);
         var alerts = new List<DeviceAlertRecord>();
         vm.Alert += alerts.Add;
@@ -241,22 +202,156 @@ public sealed class DeviceMonitorTests
         var stickRow = Assert.Single(vm.Rows, r => r.Class == DeviceClass.UsbStorage);
         Assert.True(stickRow.Present);
         Assert.True(stickRow.NeedsRegistration);
-        Assert.Equal("instalat", stickRow.DriverStateText);
-        Assert.Contains("semnat de Microsoft Windows", stickRow.DriverText);
+        Assert.Equal("Conectat", stickRow.StatusText);
+        Assert.Equal(@"LAB-PC\user", stickRow.ConnectedUser);
+        Assert.Equal("Stick USB", stickRow.ClassText);
+        Assert.Contains("fără număr de înregistrare", stickRow.AlertText);
+        Assert.True(stickRow.AlertIsCritical);
         Assert.Equal(2, alerts.Count);
         Assert.All(alerts, a => Assert.Equal(DeviceAlertSeverity.Critical, a.Severity));   // stick without number; phone on an isolated station
         Assert.Equal(2, vm.JournalCopy().Alerts.Count);
+        Assert.Equal(2, f.Events(OperationAudit.DeviceAlertCritical).Count);                // sealed when raised
 
         f.Present = [Mouse];
         f.Now = T0.AddMinutes(2);
         await vm.RefreshAsync(initial: false);
         stickRow = Assert.Single(vm.Rows, r => r.Class == DeviceClass.UsbStorage);
         Assert.False(stickRow.Present);                                          // red circle, row kept
-        Assert.Equal("deconectat", stickRow.StatusText);
+        Assert.Equal("Deconectat", stickRow.StatusText);
         Assert.NotEqual("", stickRow.LastDisconnectedText);
         Assert.Contains("UTC", stickRow.LastDisconnectedText);
         Assert.True(f.Saves > 0);
         Assert.Equal(3, f.Saved!.Devices.Count);
+    }
+
+    [Fact]
+    public async Task Nobody_logged_on_at_connection_shows_a_dash_and_internal_components_never_become_rows()
+    {
+        var f = new Fakes { Present = [new(@"ACPI\PNP0C0A\1", "Battery", "Battery", "Microsoft", "", "", 0, DeviceScope.LocalMachineContainer)] };
+        using var vm = f.Create(isolated: false);
+        await vm.RefreshAsync(initial: true);
+        Assert.Empty(vm.Rows);
+        f.Present = [.. f.Present, Mouse];
+        f.Now = T0.AddMinutes(1);
+        await vm.RefreshAsync(initial: false);
+        Assert.Equal("—", Assert.Single(vm.Rows).ConnectedUser);
+    }
+
+    [Fact]
+    public async Task A_status_word_shows_no_driver_and_disabled_without_any_driver_column()
+    {
+        var f = new Fakes { Present = [Mouse] };
+        using var vm = f.Create(isolated: false);
+        await vm.RefreshAsync(initial: true);
+        f.Present = [Mouse, NoDriver, UsbEthernet with { ConfigManagerErrorCode = 22 }];
+        f.Now = T0.AddMinutes(1);
+        await vm.RefreshAsync(initial: false);
+        Assert.Equal("Nu funcționează (fără driver)", vm.Rows.Single(r => r.Class == DeviceClass.Printer).StatusText);
+        Assert.Equal("Dezactivat", vm.Rows.Single(r => r.Class == DeviceClass.NetworkAdapter).StatusText);
+        Assert.DoesNotContain(typeof(DeviceMonitorRow).GetProperties(), p => p.Name.StartsWith("Driver", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task The_start_heartbeat_and_stop_of_the_monitor_are_sealed_and_written_in_the_journal()
+    {
+        var f = new Fakes { Present = [Mouse] };
+        var vm = f.Create(isolated: true);
+        await vm.StartAsync(eventsAvailable: true);
+        var started = Assert.Single(f.Events(OperationAudit.DeviceMonitorStarted));
+        Assert.StartsWith("mon=", started.Detail);
+        f.Now = T0.AddMinutes(15);
+        vm.Beat();
+        Assert.Single(f.Events(OperationAudit.DeviceMonitorHeartbeat));
+        f.Now = T0.AddMinutes(20);
+        vm.Dispose();
+        Assert.Single(f.Events(OperationAudit.DeviceMonitorStopped));
+        var run = Assert.Single(f.Saved!.Runs);
+        Assert.Equal(T0, run.StartUtc);
+        Assert.Equal(T0.AddMinutes(20), run.EndUtc);
+        Assert.Equal(started.Detail.Split("; ")[0][4..], run.RunId);                          // the same id in the journal and in the audit
+    }
+
+    [Fact]
+    public async Task A_second_instance_shows_the_journal_but_writes_nothing_and_refuses_edits()
+    {
+        var j = new DeviceJournal();
+        DeviceJournalMerge.Apply(j, [Stick()], NoMedia, "—", T0, initial: true);
+        var f = new Fakes();
+        using var vm = f.Create(isolated: true, j, owner: false);
+        await vm.StartAsync(eventsAvailable: true);
+        var row = Assert.Single(vm.Rows);
+        row.RegistrationNumber = "RN-1";
+        Assert.Equal("", row.RegistrationNumber);
+        Assert.Contains("altă instanță", vm.Problem);
+        Assert.Empty(f.Audited);
+        Assert.Equal(0, f.Saves);
+        Assert.Contains("Monitor nepornit", vm.Mode);
+    }
+
+    [Fact]
+    public async Task A_flapping_device_raises_one_popup_but_every_alert_is_recorded_and_sealed_and_the_counter_shows_the_rest()
+    {
+        var f = new Fakes { Present = [Mouse] };
+        using var vm = f.Create(isolated: true);
+        var popups = new List<DeviceAlertRecord>();
+        vm.Alert += popups.Add;
+        await vm.RefreshAsync(initial: true);
+        for (int i = 0; i < 5; i++)
+        {
+            f.Present = [Mouse, Stick()];
+            f.Now = T0.AddMinutes(1 + 2 * i);
+            await vm.RefreshAsync(initial: false);
+            f.Present = [Mouse];
+            f.Now = T0.AddMinutes(2 + 2 * i);
+            await vm.RefreshAsync(initial: false);
+        }
+        Assert.Single(popups);                                                       // within ten minutes: one pop-up
+        Assert.Equal(4, vm.SuppressedAlerts);
+        Assert.Equal("4 alerte suprimate", vm.SuppressedText);
+        Assert.Equal(5, vm.JournalCopy().Alerts.Count(a => a.Severity == DeviceAlertSeverity.Critical));   // the journal has all of them
+        var sealedAlerts = f.Events(OperationAudit.DeviceAlertCritical);
+        Assert.Equal(5, sealedAlerts.Count);                                         // so does the sealed audit, critical ones included
+        Assert.Equal(4, sealedAlerts.Count(a => a.Detail.Contains("popup=suprimat")));
+    }
+
+    [Fact]
+    public async Task A_lost_event_source_is_sealed_as_a_gap_and_the_rescan_records_what_changed_meanwhile()
+    {
+        var f = new Fakes { Present = [Mouse] };
+        using var vm = f.Create(isolated: true);
+        await vm.StartAsync(eventsAvailable: true);
+        f.Present = [Mouse, Phone];                                                  // a phone was connected while the events were lost
+        f.Now = T0.AddMinutes(20);
+        vm.ReportLoss("depășire de tampon: evenimente pierdute");
+        for (int i = 0; i < 100 && f.Events(OperationAudit.DeviceObservedOnResume).Count == 0; i++) await Task.Delay(30);
+        var gap = Assert.Single(f.Events(OperationAudit.DeviceMonitorGap));
+        Assert.Contains("reason=depășire de tampon", gap.Detail);
+        Assert.Contains("from=", gap.Detail);
+        var seen = Assert.Single(f.Events(OperationAudit.DeviceObservedOnResume));
+        Assert.Contains("change=apărut", seen.Detail);
+        Assert.Contains("observat la reluare", seen.Detail);
+        Assert.Contains(vm.JournalCopy().Alerts, a => a.Text.StartsWith("observat la reluare: "));
+    }
+
+    [Fact]
+    public async Task A_silence_between_readings_is_a_lost_interval_too()
+    {
+        var f = new Fakes { Present = [Mouse] };
+        using var vm = f.Create(isolated: true);
+        await vm.RefreshAsync(initial: true);
+        f.Now = T0.AddHours(3);                                                      // the station slept
+        await vm.RefreshAsync(initial: false);
+        Assert.Contains("pauza monitorului", Assert.Single(f.Events(OperationAudit.DeviceMonitorGap)).Detail);
+    }
+
+    [Fact]
+    public async Task A_bluetooth_radio_that_is_off_is_shown_and_never_presented_as_no_devices()
+    {
+        var f = new Fakes { Present = [BluetoothRadioOff, Mouse] };
+        using var vm = f.Create(isolated: true);
+        await vm.RefreshAsync(initial: true);
+        Assert.Contains("Bluetooth oprit – dispozitivele Bluetooth nu pot fi observate", vm.RadioNotice);
+        Assert.Contains(vm.JournalCopy().Radios, r => r.Kind == "Bluetooth" && r.BlindNow);
     }
 
     [Fact]
@@ -292,59 +387,198 @@ public sealed class DeviceMonitorTests
 
     // ---- check D05 and the report section --------------------------------------------------------------------------------------------------
 
+    private static readonly DateTimeOffset PeriodFrom = T0.AddDays(-30), PeriodTo = T0.AddDays(1);
+
+    private static MonitorRun SealedFullRun(string id = "r1") => new() { RunId = id, StartUtc = PeriodFrom.AddDays(-1), LastBeatUtc = PeriodTo.AddDays(1), EndUtc = PeriodTo.AddDays(1) };
+
     private static DeviceJournal JournalWithStick(string number)
     {
         var j = new DeviceJournal();
-        DeviceJournalMerge.Apply(j, [Mouse, NoDriver], NoDrivers, T0, initial: true);
-        DeviceJournalMerge.Apply(j, [Mouse, NoDriver, Stick()], NoDrivers, T0.AddHours(1), initial: false);
-        DeviceJournalMerge.Apply(j, [Mouse, NoDriver], NoDrivers, T0.AddHours(2), initial: false);
+        DeviceJournalMerge.Apply(j, [Mouse, NoDriver], NoMedia, "—", T0, initial: true);
+        DeviceJournalMerge.Apply(j, [Mouse, NoDriver, Stick()], NoMedia, @"LAB-PC\user", T0.AddHours(1), initial: false);
+        DeviceJournalMerge.Apply(j, [Mouse, NoDriver], NoMedia, "—", T0.AddHours(2), initial: false);
         if (number.Length > 0) DeviceJournalMerge.SetRegistrationNumber(j, DeviceMonitorRules.Identity(Stick()), number);
         DeviceJournalMerge.AddAlert(j, new DeviceAlertRecord(T0.AddHours(1), DeviceMonitorRules.Identity(Stick()), "Fake Stick USB Device", DeviceClass.UsbStorage,
             DeviceAlertSeverity.Critical, "mediu de stocare fără număr de înregistrare"));
+        j.Runs.Add(SealedFullRun());
         return j;
     }
 
-    private static StationFacts Facts(StationPosture posture, DeviceJournal? journal) => new()
+    /// <summary>The sealed audit as it would read for a journal: the registration numbers and the critical alerts written when they were raised, and the sealed running windows.</summary>
+    private static DeviceAuditReading AuditFor(DeviceJournal j, params MonitorRun[] runs) => new(true,
+        j.Devices.Where(d => d.RegistrationNumber.Length > 0).ToDictionary(d => OperationAudit.DeviceField(d.Identity), d => OperationAudit.DeviceField(d.RegistrationNumber), StringComparer.OrdinalIgnoreCase),
+        j.Alerts.Where(a => a.Severity == DeviceAlertSeverity.Critical).Select(a => new DeviceAuditAlert(a.TimeUtc, OperationAudit.DeviceField(a.Identity), OperationAudit.DeviceField(a.Device), OperationAudit.DeviceField(a.Text))).ToList(), 0)
+    { Runs = runs };
+
+    private static StationFacts Facts(StationPosture posture, DeviceJournal? journal, DeviceAuditReading? audit = null) => new()
     {
-        Host = "LAB-PC", Posture = posture, IsAdministrator = true, CollectedUtc = T0.AddDays(1), PeriodStartUtc = T0.AddDays(-30), PeriodEndUtc = T0.AddDays(1),
-        DeviceMonitor = journal,
+        Host = "LAB-PC", Posture = posture, IsAdministrator = true, CollectedUtc = T0.AddDays(1), PeriodStartUtc = PeriodFrom, PeriodEndUtc = PeriodTo,
+        DeviceMonitor = journal, DeviceAudit = audit,
     };
 
     private static ControlCheck D05(StationFacts f) => ControlEvaluator.Evaluate(f).Checks.Single(c => c.Id == "D05");
 
+    private static ControlCheck D05(StationPosture posture, DeviceJournal j) => D05(Facts(posture, j, AuditFor(j, SealedFullRun())));
+
     [Fact]
     public void D05_lists_every_device_seen_and_judges_storage_without_number_and_forbidden_classes_per_posture()
     {
-        var bad = D05(Facts(StationPosture.Standalone, JournalWithStick("")));
+        var bad = D05(StationPosture.Standalone, JournalWithStick(""));
         Assert.Equal(ControlStatus.Neconform, bad.Status);
-        Assert.Contains(bad.Evidence, e => e.StartsWith("ÎNCALCĂ REGULA: ") && e.Contains("Stocare USB") && e.Contains("fără număr de înregistrare") && e.Contains("deconectat la 2026-10-16 10:00:00 UTC"));
+        Assert.Contains(bad.Evidence, e => e.StartsWith("ÎNCALCĂ REGULA: ") && e.Contains("Stick USB") && e.Contains("fără număr de înregistrare") && e.Contains("deconectat la 2026-10-16 10:00:00 UTC"));
         Assert.Contains(bad.Evidence, e => e.StartsWith("ALERTĂ CRITICĂ 2026-10-16 09:00:00 UTC"));
-        Assert.Contains(bad.Evidence, e => e.Contains("Mouse") && e.Contains("conectat acum"));
-        Assert.Contains(bad.Evidence, e => e.Contains("fără driver (cod 28"));
+        Assert.Contains(bad.Evidence, e => e.Contains("Mouse extern") && e.Contains("conectat (din") && e.Contains("utilizator la conectare: —"));
+        Assert.Contains(bad.Evidence, e => e.Contains("Imprimantă") && e.Contains("nu funcționează (fără driver)"));
+        Assert.Contains(bad.Evidence, e => e.Contains("utilizator la conectare: LAB-PC\\user"));
         Assert.Contains("1 fără număr de înregistrare", bad.Detail);
         Assert.Contains("Monitorul vede doar cât timp aplicația este pornită", bad.Detail);
-        Assert.Equal(ControlStatus.DeVerificat, D05(Facts(StationPosture.Internet, JournalWithStick(""))).Status);
-        var good = D05(Facts(StationPosture.Standalone, JournalWithStick("RN-7")));
+        Assert.Equal(ControlStatus.DeVerificat, D05(StationPosture.Internet, JournalWithStick("")).Status);
+        var good = D05(StationPosture.Standalone, JournalWithStick("RN-7"));
         Assert.Equal(ControlStatus.Conform, good.Status);
         Assert.Contains(good.Evidence, e => e.Contains("nr. de înregistrare RN-7"));
         Assert.Equal(ControlStatus.Nedeterminat, D05(Facts(StationPosture.Standalone, null)).Status);
-        Assert.Equal(ControlStatus.DeVerificat, D05(Facts(StationPosture.Standalone, new DeviceJournal())).Status);
+        var empty = new DeviceJournal { Runs = [SealedFullRun()] };
+        Assert.Equal(ControlStatus.DeVerificat, D05(StationPosture.Standalone, empty).Status);
         // a phone seen on an isolated station breaks the rule even with a number
         var j = JournalWithStick("RN-7");
-        DeviceJournalMerge.Apply(j, [Mouse, NoDriver, Phone], NoDrivers, T0.AddHours(3), initial: false);
-        Assert.Equal(ControlStatus.Neconform, D05(Facts(StationPosture.IsolatedNetwork, j)).Status);
-        Assert.Equal(ControlStatus.Conform, D05(Facts(StationPosture.Internet, j)).Status);
+        DeviceJournalMerge.Apply(j, [Mouse, NoDriver, Phone], NoMedia, "—", T0.AddHours(3), initial: false);
+        Assert.Equal(ControlStatus.Neconform, D05(StationPosture.IsolatedNetwork, j).Status);
+        Assert.Equal(ControlStatus.Conform, D05(StationPosture.Internet, j).Status);
     }
 
     [Fact]
-    public void The_report_section_lists_class_driver_state_registration_and_the_alerts()
+    public void D05_lists_only_storage_media_and_external_devices_not_the_old_internal_rows_or_a_driver_count()
     {
-        var r = ControlEvaluator.Evaluate(Facts(StationPosture.Standalone, JournalWithStick("")));
+        var j = JournalWithStick("RN-7");
+        j.Devices.Add(new DeviceJournalEntry { Identity = "ID|ACPI\\BATTERY", Class = DeviceClass.Internal, Name = "Old internal battery row", Present = true, FirstSeenUtc = T0 });
+        j.Devices.Add(new DeviceJournalEntry { Identity = "ID|USB\\ROOT", Class = DeviceClass.Controller, Name = "Old root hub row", Present = true, FirstSeenUtc = T0 });
+        var d = D05(StationPosture.Standalone, j);
+        Assert.Equal(ControlStatus.Conform, d.Status);
+        Assert.DoesNotContain(d.Evidence, e => e.Contains("Old internal battery row") || e.Contains("Old root hub row") || e.Contains("componentă internă"));
+        Assert.DoesNotContain("driver nesemnat", d.Detail);
+        Assert.DoesNotContain("componente interne", d.Detail);
+    }
+
+    [Fact]
+    public void D05_without_a_sealed_run_over_the_period_is_undetermined_whatever_the_journal_says()
+    {
+        var j = JournalWithStick("RN-7");                                            // the journal claims a full run
+        var d = D05(Facts(StationPosture.Standalone, j, AuditFor(j)));               // the sealed audit has none
+        Assert.Equal(ControlStatus.Nedeterminat, d.Status);
+        Assert.Contains(d.Evidence, e => e.StartsWith("NICIO ACOPERIRE"));
+        Assert.Contains("nu acoperă vreo parte din perioadă", d.Detail);
+        // sealed runs that do not touch the period
+        Assert.Equal(ControlStatus.Nedeterminat, D05(Facts(StationPosture.Standalone, j, AuditFor(j, new MonitorRun { RunId = "old", StartUtc = PeriodFrom.AddDays(-9), LastBeatUtc = PeriodFrom.AddDays(-5), EndUtc = PeriodFrom.AddDays(-5) }))).Status);
+    }
+
+    [Fact]
+    public void D05_with_partial_sealed_coverage_is_to_verify_and_names_every_gap()
+    {
+        var j = JournalWithStick("RN-7");
+        var runs = new[]
+        {
+            new MonitorRun { RunId = "a", StartUtc = PeriodFrom.AddDays(2), LastBeatUtc = PeriodFrom.AddDays(10), EndUtc = PeriodFrom.AddDays(10) },
+            new MonitorRun { RunId = "b", StartUtc = PeriodFrom.AddDays(12), LastBeatUtc = PeriodTo.AddHours(1), EndUtc = PeriodTo.AddHours(1) },
+        };
+        j.Runs = runs.Select(r => r.Copy()).ToList();                                // the journal agrees with the sealed windows
+        var d = D05(Facts(StationPosture.Standalone, j, AuditFor(j, runs)));
+        Assert.Equal(ControlStatus.DeVerificat, d.Status);
+        Assert.Contains(d.Evidence, e => e.StartsWith("INTERVAL NEACOPERIT") && e.Contains("2026-09-16 08:00") && e.Contains("2026-09-18 08:00"));
+        Assert.Contains(d.Evidence, e => e.StartsWith("INTERVAL NEACOPERIT") && e.Contains("2026-09-26 08:00") && e.Contains("2026-09-28 08:00"));
+        Assert.Contains("Acoperire incompletă", d.Detail);
+    }
+
+    [Fact]
+    public void D05_a_run_that_only_the_journal_has_is_a_tampering_finding_not_coverage()
+    {
+        var j = JournalWithStick("RN-7");                                            // journal: one full run "r1"
+        var d = D05(Facts(StationPosture.Standalone, j, AuditFor(j, new MonitorRun { RunId = "s1", StartUtc = T0.AddDays(-2), LastBeatUtc = PeriodTo.AddDays(1), EndUtc = PeriodTo.AddDays(1) })));
+        Assert.Equal(ControlStatus.Neconform, d.Status);
+        Assert.Contains(d.Evidence, e => e.StartsWith("NECONFORM:") && e.Contains("nu are înregistrare în jurnalul sigilat"));
+        Assert.Contains(d.Evidence, e => e.StartsWith("INTERVAL NEACOPERIT"));        // the coverage still comes from the sealed record alone
+    }
+
+    [Fact]
+    public void D05_a_deleted_journal_row_with_a_sealed_registration_is_not_conform()
+    {
+        var j = JournalWithStick("RN-7");
+        var audit = AuditFor(j, SealedFullRun());
+        j.Devices.RemoveAll(d => d.Class == DeviceClass.UsbStorage);                 // the row is deleted from the plain file
+        var d = D05(Facts(StationPosture.Standalone, j, audit));
+        Assert.Equal(ControlStatus.Neconform, d.Status);
+        Assert.Contains(d.Evidence, e => e.StartsWith("NECONFORM:") && e.Contains("rândul lipsește din jurnalul monitorului") && e.Contains("RN-7"));
+    }
+
+    [Fact]
+    public void D05_an_edited_registration_number_is_not_conform()
+    {
+        var j = JournalWithStick("RN-7");
+        var audit = AuditFor(j, SealedFullRun());
+        DeviceJournalMerge.SetRegistrationNumber(j, DeviceMonitorRules.Identity(Stick()), "RN-FORGED");
+        Assert.Equal(ControlStatus.Neconform, D05(Facts(StationPosture.Standalone, j, audit)).Status);
+    }
+
+    [Fact]
+    public void D05_a_critical_alert_that_only_the_journal_holds_keeps_it_from_conform()
+    {
+        var j = JournalWithStick("RN-7");
+        var audit = AuditFor(j, SealedFullRun());
+        DeviceJournalMerge.AddAlert(j, new DeviceAlertRecord(T0.AddHours(2), DeviceMonitorRules.Identity(Stick()), "Fake Stick USB Device", DeviceClass.UsbStorage,
+            DeviceAlertSeverity.Critical, "alertă adăugată doar în jurnal"));
+        var d = D05(Facts(StationPosture.Standalone, j, audit));
+        Assert.Equal(ControlStatus.DeVerificat, d.Status);
+        Assert.Contains(d.Evidence, e => e.Contains("apare doar în jurnalul monitorului"));
+        Assert.Contains("nu apare în jurnalul sigilat", d.Detail);
+    }
+
+    [Fact]
+    public void D05_an_untrusted_journal_folder_keeps_it_from_conform_and_is_named()
+    {
+        var j = JournalWithStick("RN-7");
+        var f = Facts(StationPosture.Standalone, j, AuditFor(j, SealedFullRun()));
+        f.DeviceJournalUntrusted = "Folderul jurnalului monitorului aparține altui cont decât SYSTEM sau Administrators (S-1-5-21-1-2-3-1001); jurnalul nu este de încredere, contează jurnalul sigilat.";
+        var d = D05(f);
+        Assert.Equal(ControlStatus.DeVerificat, d.Status);
+        Assert.Contains(d.Evidence, e => e.StartsWith("JURNALUL MONITORULUI NU ESTE DE ÎNCREDERE"));
+    }
+
+    [Fact]
+    public void D05_names_a_bluetooth_radio_that_was_off_and_the_gaps_the_monitor_recorded_and_what_it_found_on_resume()
+    {
+        var j = JournalWithStick("RN-7");
+        DeviceJournalMerge.NoteRadios(j, DeviceMonitorRules.BlindRadios([BluetoothRadioOff]), T0.AddHours(1));
+        var baseAudit = AuditFor(j, SealedFullRun());
+        var audit = new DeviceAuditReading(true, baseAudit.LastRegistration, baseAudit.CriticalAlerts, 0)
+        {
+            Runs = [SealedFullRun()],
+            Gaps = [new SealedGap(T0.AddHours(5), T0.AddHours(6), "evenimente pierdute")],
+            ObservedOnResume = [new DeviceAuditObservation(T0.AddHours(6), "SN|X|Y", "Fake Phone", "apărut")],
+        };
+        var d = D05(Facts(StationPosture.Standalone, j, audit));
+        Assert.Equal(ControlStatus.DeVerificat, d.Status);                            // the lost hour is a gap
+        Assert.Contains(d.Evidence, e => e.StartsWith("INTERVAL PIERDUT") && e.Contains("evenimente pierdute"));
+        Assert.Contains(d.Evidence, e => e.StartsWith("observat la reluare") && e.Contains("Fake Phone"));
+        Assert.Contains(d.Evidence, e => e.StartsWith("Bluetooth oprit – dispozitivele Bluetooth nu pot fi observate"));
+        Assert.Contains("Bluetooth oprit", d.Detail);
+    }
+
+    [Fact]
+    public void The_report_section_lists_type_state_user_registration_and_the_alerts_with_the_same_devices_as_D05()
+    {
+        var j = JournalWithStick("");
+        var f = Facts(StationPosture.Standalone, j, AuditFor(j, SealedFullRun()));
+        j.Devices.Add(new DeviceJournalEntry { Identity = "ID|ACPI\\BATTERY", Class = DeviceClass.Internal, Name = "Old internal battery row", Present = true, FirstSeenUtc = T0 });
+        var r = ControlEvaluator.Evaluate(f);
         var lines = ControlReportPdf.DeviceSectionLines(r).Select(l => l.Text).ToList();
-        Assert.Contains(lines, l => l.StartsWith("Dispozitive văzute în perioadă: 3 (2 conectate acum) · încalcă regula: 1 · alerte: 1 (1 critice)"));
+        Assert.Contains(lines, l => l.StartsWith("Medii de stocare și dispozitive conectate extern, văzute în perioadă: 3 (2 conectate acum) · încalcă regula: 1 · alerte: 1 (1 critice)"));
+        Assert.Contains(lines, l => l.StartsWith("Acoperire: monitorul a rulat pe toată perioada"));
         Assert.Contains(lines, l => l.StartsWith("ALERTĂ CRITICĂ") && l.Contains("Fake Stick USB Device"));
-        Assert.Contains(lines, l => l.StartsWith("ÎNCALCĂ REGULA: Stocare USB") && l.Contains("SN FAKESN0001") && l.Contains("driver: ") && l.Contains(DeviceMonitorReport.NoRegistration));
-        Assert.Contains(lines, l => l.StartsWith("Mouse · HID-compliant mouse") && l.Contains("conectat acum") && l.Contains("VID/PID 046D:C077"));
+        Assert.Contains(lines, l => l.StartsWith("ÎNCALCĂ REGULA: Stick USB") && l.Contains("SN FAKESN0001") && l.Contains(DeviceMonitorReport.NoRegistration) && l.Contains("utilizator la conectare: LAB-PC\\user"));
+        Assert.Contains(lines, l => l.StartsWith("Mouse extern · HID-compliant mouse") && l.Contains("conectat (din") && l.Contains("VID/PID 046D:C077"));
+        Assert.DoesNotContain(lines, l => l.Contains("Old internal battery row") || l.Contains("driver:"));
+        // D05 lists the same devices
+        var d05 = r.Checks.Single(c => c.Id == "D05");
+        Assert.Equal(lines.Count(l => l.Contains(" · ") && !l.StartsWith("Medii de stocare") && !l.StartsWith("ALERTĂ") && !l.StartsWith("conectare")), d05.Evidence.Count(e => e.Contains(" · ") && !e.StartsWith("ALERTĂ")));
         Assert.Contains("3c. Dispozitive văzute de monitorul în timp real", ControlReportPdf.Corpus(r) + ControlReportPdf.DeviceSectionTitle);
         Assert.Contains("Fake Stick USB Device", ControlReportPdf.Corpus(r));
         var none = ControlReportPdf.DeviceSectionLines(ControlEvaluator.Evaluate(Facts(StationPosture.Standalone, null)));
@@ -392,6 +626,13 @@ public sealed class DeviceMonitorTests
         Assert.Contains("DataContext=\"{Binding Monitor}\"", page);
         Assert.Contains("Header=\"Nr. de înregistrare\" Binding=\"{Binding RegistrationNumber", page);
         Assert.Contains("<Ellipse", page);
+        // the columns the owner asked for, and no driver column
+        foreach (var header in new[] { "Tip", "Nume", "Producător", "Model", "VID/PID", "Serie", "Capacitate", "Literă", "Etichetă", "Utilizator conectat la momentul conectării", "Prima apariție", "Ultima conectare", "Ultima deconectare", "Alertă" })
+            Assert.Contains($"Header=\"{header}\"", page);
+        Assert.DoesNotContain("Detalii driver", page);
+        Assert.DoesNotContain("Header=\"Driver\"", page);
+        Assert.Contains("{Binding RadioNotice}", page);
+        Assert.Contains("{Binding SuppressedText}", page);
         // the register tabs stay in the code, switched off by the single flag
         Assert.Contains("<TabItem Header=\"Registrul de medii\" Visibility=\"{x:Static views:MediaRegisterUi.Visibility}\">", page);
         Assert.Contains("<TabItem Header=\"Registrul semnat\" Visibility=\"{x:Static views:MediaRegisterUi.Visibility}\">", page);

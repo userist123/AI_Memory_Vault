@@ -16,6 +16,7 @@ public sealed record DeviceChange(DateTimeOffset TimeUtc, bool Arrived, string I
 public sealed class DeviceWatcher : IDisposable
 {
     private readonly List<ManagementEventWatcher> _watchers = [];
+    private volatile bool _disposing;
     public event Action<DeviceChange>? Changed;
     public event Action<string>? Failed;
     /// <summary>Any Plug and Play device arrived (true) or left (false), whatever its class: PNP device id, arrival.</summary>
@@ -41,6 +42,8 @@ public sealed class DeviceWatcher : IDisposable
                 try { handler(a.NewEvent); }
                 catch (Exception ex) when (ex is ManagementException or COMException or InvalidCastException) { Failed?.Invoke("Un eveniment de dispozitiv nu a putut fi citit: " + ex.Message); }
             };
+            // the event session ended by itself (the WMI service stopped, the subscription broke): events are lost from here on
+            w.Stopped += (_, _) => { if (!_disposing) Failed?.Invoke("Supravegherea în timp real s-a oprit (serviciul WMI sau abonamentul la evenimente a căzut): " + query.Split(' ')[3]); };
             w.Start();
             _watchers.Add(w);
             return true;
@@ -75,6 +78,7 @@ public sealed class DeviceWatcher : IDisposable
 
     public void Dispose()
     {
+        _disposing = true;
         foreach (var w in _watchers)
         {
             try { w.Stop(); } catch (Exception ex) when (ex is ManagementException or COMException) { }

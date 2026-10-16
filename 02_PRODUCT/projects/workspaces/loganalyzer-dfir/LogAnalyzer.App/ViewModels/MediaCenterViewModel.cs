@@ -301,7 +301,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (_watcher is not null) return;
             _watcher = new DeviceWatcher();
             _watcher.Changed += c => Application.Current?.Dispatcher.BeginInvoke(() => OnChange(c));
-            _watcher.Failed += m => Application.Current?.Dispatcher.BeginInvoke(() => LiveStatus = m);
+            _watcher.Failed += m => Application.Current?.Dispatcher.BeginInvoke(() => { LiveStatus = m; _monitor?.ReportLoss(m); });   // a lost event source is a sealed gap + a rescan
             // the device monitor reads the device list again on every Plug and Play event, whatever the class of the device
             _watcher.PnpChanged += (_, _) => Application.Current?.Dispatcher.BeginInvoke(() => _monitor?.OnPnpEvent());
             _watcher.Start();

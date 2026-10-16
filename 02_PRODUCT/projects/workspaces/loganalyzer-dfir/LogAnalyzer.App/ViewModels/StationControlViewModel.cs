@@ -305,10 +305,18 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     // N13: only the Network edition registers the active probe (LogAnalyzer.Connectors); the other editions have none.
                     var dcProbe = global::LogAnalyzer.UI.AppComposition.ServiceProvider?.GetService(typeof(IDomainControllerProbe)) as IDomainControllerProbe;
-                    var facts = StationFactCollector.Collect(start, posture, classifiedFolders: folders, offlineUpdates: updates, dcProbe: dcProbe, transfers: transfers);
-                    // Time memory (S05): the latest time the application recorded, read BEFORE this report adds its own "clock.seen" entry.
                     string? auditPath = null;
                     try { auditPath = LogAnalyzer.UI.Services.AuthApp.Service.AuditPath; } catch (InvalidOperationException) { }
+                    // D05 reads the device monitor's records from the sealed audit (registration numbers, alerts, the monitor's running windows); only a chain that verifies counts
+                    bool deviceChainValid = false;
+                    if (auditPath is not null)
+                    {
+                        try { deviceChainValid = LogAnalyzer.UI.Services.AuthApp.Service.VerifyAudit().Status == LogAnalyzer.Dfir.Case.ChainStatus.Valid; }
+                        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { deviceChainValid = false; }
+                    }
+                    var facts = StationFactCollector.Collect(start, posture, classifiedFolders: folders, offlineUpdates: updates, dcProbe: dcProbe, transfers: transfers,
+                                                             auditPath: auditPath, auditChainValid: deviceChainValid);
+                    // Time memory (S05): the latest time the application recorded, read BEFORE this report adds its own "clock.seen" entry.
                     // D04 and the transfer register: the officer-signed media register in force (re-verified; compared with the last install in the sealed audit)
                     // owner decision 2026-10-16: with the register switched off (MediaRegisterFeature) it is not read; D04 is "Nu se aplică" and the transfer
                     // register does not require it (as for a case without a signed register)
