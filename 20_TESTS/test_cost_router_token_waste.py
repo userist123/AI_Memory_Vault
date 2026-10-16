@@ -259,3 +259,43 @@ def test_prompt_hook_reminds_to_checkpoint_when_the_main_transcript_is_large(hom
     small.write_text(json.dumps({"type": "assistant", "message": {"usage": {"input_tokens": 50_000}}}) + "\n",
                      encoding="utf-8")
     assert _prompt(home, "continua", transcript_path=str(small)) is None
+
+
+# -- review round 1 (PR #299) regressions ---------------------------------------------------------
+
+@pytest.mark.parametrize("goal", [
+    "update the stored password on the production-db server",
+    "Implement then redeploy the auth service",
+    "run the deployment of the new auth token flow",
+    "start deleting the old credentials from the server",
+    "Implement and push --force the auth fix to main",
+    "implementează ștergerea credentialelor și rotim parola",
+    "publish the release with the new signing token",
+])
+def test_inflected_live_operations_keep_the_opus_floor(goal):
+    assert route(POLICY, goal, for_subagent=True, role="implementer").model == "opus", goal
+
+
+@pytest.mark.parametrize("command", [
+    "git ls-remote --upload-pack='python -c \"x\"' .",
+    "git fetch origin main",
+    "git diff --output=src/a.py",
+    "git diff --ext-diff",
+    "git log --textconv",
+    "git -c core.pager=evil log",
+    "git branch -D main",
+    "git branch -f topic HEAD~3",
+    "git remote set-url origin https://example.invalid/x",
+    "gh pr merge 301 --admin",
+])
+def test_exemption_rejects_commands_that_execute_or_write(home, command):
+    _prompt(home, "implement the bounded parser change and add tests")
+    outs = [_tool(home, "Bash", {"command": command}) for _ in range(4)]
+    assert outs[3] and outs[3]["permissionDecision"] == "deny", command
+
+
+@pytest.mark.parametrize("command", ["git branch --show-current", "git branch", "git remote -v",
+                                     "git diff HEAD~1 --stat", "gh pr edit 301 --title x"])
+def test_exemption_keeps_the_read_only_forms(home, command):
+    _prompt(home, "implement the bounded parser change and add tests")
+    assert all(_tool(home, "Bash", {"command": command}) is None for _ in range(5))
