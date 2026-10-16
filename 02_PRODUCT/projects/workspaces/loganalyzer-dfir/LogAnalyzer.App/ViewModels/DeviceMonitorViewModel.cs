@@ -129,6 +129,8 @@ namespace LogAnalyzer.UI.ViewModels
         private bool _started, _stopped;
         private Timer? _timer, _beat;
         private CancellationTokenSource? _debounce;
+        /// <summary>First-seen records whose audit write was refused: retried at every reading (without its sealed record a row is a tampering finding in D05).</summary>
+        private readonly List<(string Ev, string Detail)> _unsealed = [];
 
         /// <param name="snapshot">Reads the present devices (SetupAPI).</param>
         /// <param name="media">Reads the medium of each drive (capacity, volume serial, letters, label) for the drive ids asked.</param>
@@ -170,7 +172,11 @@ namespace LogAnalyzer.UI.ViewModels
                 LogAnalyzer.UI.Services.AuthApp.TryRecord(OperationAudit.DeviceMonitorGap, OperationAudit.DeviceMonitorGapDetail("", now, now, "monitorul nu a putut porni: " + own.Reason));
             }
             if (own.State == MonitorOwnership.Owner && DeviceJournalStore.MigrateLegacy(DeviceJournalStore.LegacyPath, path, LogAnalyzer.UI.Services.AuthApp.TryRecord) is { } migration) problems.Add(migration);
-            var journal = DeviceJournalStore.Load(path, out var loadProblem);
+            // the running monitor (the owner) seals the reset of a damaged journal and sets it aside; anyone else only reads it
+            string loadProblem;
+            var journal = own.State == MonitorOwnership.Owner
+                ? DeviceJournalStore.LoadForMonitor(path, LogAnalyzer.UI.Services.AuthApp.TryRecord, out loadProblem)
+                : DeviceJournalStore.Load(path, out loadProblem);
             if (loadProblem.Length > 0) problems.Add(loadProblem);
             return new DeviceMonitorViewModel(
                 LogAnalyzer.Dfir.Windows.Devices.PnpEnumerator.Snapshot,
@@ -231,7 +237,8 @@ namespace LogAnalyzer.UI.ViewModels
             _lastReadUtc = now;
             await RefreshAsync(initial: true);
             SetEventsAvailable(eventsAvailable);
-            _beat = new Timer(_ => Beat(), null, DeviceJournalMerge.HeartbeatInterval, DeviceJournalMerge.HeartbeatInterval);
+            // the heartbeat runs on the window's thread like every reading (the journal and the rows are touched there)
+            _beat = new Timer(_ => Post(Beat), null, DeviceJournalMerge.HeartbeatInterval, DeviceJournalMerge.HeartbeatInterval);
         }
 
         /// <summary>The heartbeat: sealed in the audit and written in the journal (the control computes the coverage from the sealed one).</summary>
@@ -291,8 +298,9 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>Runs on the window's thread when there is one (timer callbacks), directly otherwise (tests).</summary>
         private static void Post(Action a)
         {
+            // a dispatcher whose thread is gone or shutting down never runs what is queued: the work is done directly then (it is serialised by the gate)
             var d = System.Windows.Application.Current?.Dispatcher;
-            if (d is null) a(); else d.BeginInvoke(a);
+            if (d is null || d.HasShutdownStarted || !d.Thread.IsAlive) a(); else d.BeginInvoke(a);
         }
 
         /// <summary>
@@ -323,6 +331,7 @@ namespace LogAnalyzer.UI.ViewModels
                 if (loss is { } l && _audit(OperationAudit.DeviceMonitorGap, OperationAudit.DeviceMonitorGapDetail(_runId, l.From, when, l.Reason)) is { } gapRefused)
                     Problem = "Intervalul pierdut nu a putut fi trecut în jurnalul de audit: " + gapRefused;
                 bool resume = loss is not null;
+                RetryUnsealed();
                 var diff = DeviceMonitorRules.Diff(_last, now);
                 _last = now;
                 var media = await ReadMediaAsync(now);
@@ -330,15 +339,30 @@ namespace LogAnalyzer.UI.ViewModels
                 if (user.Length == 0) user = "—";
                 List<DeviceJournalChange> changes;
                 var alerts = new List<(DeviceAlertRecord Record, bool Show)>();
+                var rekeys = new List<MediumRekey>();
+                IReadOnlyList<RadioChange> radios;
+                List<DeviceJournalEntry> firstSeen;
                 int before;
                 lock (_journal)
                 {
                     before = _journal.Devices.Count;
-                    changes = DeviceJournalMerge.Apply(_journal, now, media, user, when, initial).ToList();
-                    DeviceJournalMerge.NoteRadios(_journal, DeviceMonitorRules.BlindRadios(now), when);
+                    var known = new HashSet<string>(_journal.Devices.Select(d => d.Identity), StringComparer.OrdinalIgnoreCase);
+                    changes = DeviceJournalMerge.Apply(_journal, now, media, user, when, initial, rekeys).ToList();
+                    radios = DeviceJournalMerge.NoteRadios(_journal, DeviceMonitorRules.BlindRadios(now), when);
                     _lastReadUtc = when;
                     DeviceJournalMerge.Heartbeat(_journal, when);
+                    // a new row (not a card row that only got its real identity: that link is sealed as a re-key)
+                    firstSeen = _journal.Devices.Where(d => !known.Contains(d.Identity) && DeviceScope.IsInScope(d)
+                                                            && !rekeys.Any(r => !r.Merged && r.NewIdentity.Equals(d.Identity, StringComparison.OrdinalIgnoreCase))).ToList();
                 }
+                // review finding B1: every device is sealed on first sight (identity, class, serial, first-seen), a re-keyed card links its two identities, and a
+                // radio state change is sealed, so D05 compares the plain journal with the sealed audit both ways
+                foreach (var r in rekeys)
+                    Seal(OperationAudit.DeviceMediumRekeyed, OperationAudit.DeviceMediumRekeyedDetail(r.OldIdentity, r.NewIdentity, r.Device.Class.ToString(), r.Device.Name));
+                foreach (var e in firstSeen)
+                    Seal(OperationAudit.DeviceFirstSeen, OperationAudit.DeviceFirstSeenDetail(e.Identity, e.Class.ToString(), e.Name, e.Serial, e.FirstSeenUtc));
+                foreach (var r in radios)
+                    _audit(OperationAudit.DeviceRadioState, OperationAudit.DeviceRadioStateDetail(r.Kind, r.Blind, r.Text, user));
                 var gapFrom = loss?.From ?? (initial ? _resumeFrom : null);
                 foreach (var c in changes)
                 {
@@ -350,6 +374,8 @@ namespace LogAnalyzer.UI.ViewModels
                         : DeviceMonitorRules.Decide(c.Device.Class, c.Device.InstanceId, c.Device.RegistrationNumber, _isolated, c.Device.ConfigManagerErrorCode);
                     var text = gapFrom is not null && (resume || initial) ? "observat la reluare: " + decision.Reason : decision.Reason;
                     alerts.Add(RaiseAlert(c.Device, decision.Severity, text, when));
+                    // the same device back with another volume (reformatted, or a clone of its serial): its own sealed record, never a silent take-over
+                    if (c.InfoText is { } info) alerts.Add(RaiseAlert(c.Device, DeviceAlertSeverity.Info, info, when));
                 }
                 if (initial && gapFrom is { } g0)
                     foreach (var e in _journal.Devices.Where(e => e.FirstSeenUtc == when && DeviceScope.IsInScope(e) && changes.All(c => c.Device != e)))
@@ -363,6 +389,26 @@ namespace LogAnalyzer.UI.ViewModels
                 RadioNotice = string.Join(" · ", _journal.Radios.Where(r => r.BlindNow).Select(r => r.Text));
             }
             finally { _gate.Release(); }
+        }
+
+        /// <summary>Writes a record that D05 needs for every row; a refused write is kept and retried at the next reading (first the older ones).</summary>
+        private void Seal(string ev, string detail)
+        {
+            _unsealed.Add((ev, detail));
+            RetryUnsealed();
+        }
+
+        private void RetryUnsealed()
+        {
+            while (_unsealed.Count > 0)
+            {
+                if (_audit(_unsealed[0].Ev, _unsealed[0].Detail) is { } refused)
+                {
+                    Problem = $"{_unsealed.Count} înregistrări ale dispozitivelor nu au putut fi trecute în jurnalul de audit (se reîncearcă): " + refused;
+                    return;
+                }
+                _unsealed.RemoveAt(0);
+            }
         }
 
         /// <summary>
@@ -462,12 +508,17 @@ namespace LogAnalyzer.UI.ViewModels
         private void RefreshRows()
         {
             lock (_journal)
+            {
                 foreach (var e in _journal.Devices.Where(DeviceScope.IsInScope))
                 {
                     var (text, critical) = RowAlert(e);
                     if (_rows.TryGetValue(e.Identity, out var row)) row.Update(e, text, critical);
                     else { _rows[e.Identity] = row = new DeviceMonitorRow(e, this); row.Update(e, text, critical); }
                 }
+                // a card row re-keyed once its medium became readable: the row of the old identity goes (the journal no longer has it)
+                var ids = new HashSet<string>(_journal.Devices.Where(DeviceScope.IsInScope).Select(e => e.Identity), StringComparer.OrdinalIgnoreCase);
+                foreach (var stale in _rows.Keys.Where(k => !ids.Contains(k)).ToList()) _rows.Remove(stale);
+            }
         }
 
         private void UpdateSummary()

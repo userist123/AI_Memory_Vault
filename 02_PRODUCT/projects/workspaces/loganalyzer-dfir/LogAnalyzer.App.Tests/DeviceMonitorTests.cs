@@ -120,15 +120,21 @@ public sealed class DeviceMonitorTests
     }
 
     [Fact]
-    public void A_damaged_journal_is_set_aside_and_an_empty_one_is_started()
+    public void A_damaged_journal_is_set_aside_by_the_monitor_after_its_reset_is_sealed_and_an_empty_one_is_started()
     {
         var path = Path.Combine(Path.GetTempPath(), "la_devmon_" + Guid.NewGuid().ToString("N") + ".json");
         File.WriteAllText(path, "{ not json");
         try
         {
-            var j = DeviceJournalStore.Load(path, out var problem);
+            // the control only reads it (review M3): the file stays where it is
+            Assert.Empty(DeviceJournalStore.Load(path, out var readOnly).Devices);
+            Assert.Contains("deteriorat", readOnly);
+            Assert.True(File.Exists(path));
+            var sealedRecords = new List<string>();
+            var j = DeviceJournalStore.LoadForMonitor(path, (ev, _) => { sealedRecords.Add(ev); return null; }, out var problem);
             Assert.Empty(j.Devices);
             Assert.Contains("deteriorat", problem);
+            Assert.Equal([OperationAudit.DeviceJournalReset], sealedRecords);
             Assert.False(File.Exists(path));
             Assert.Single(Directory.GetFiles(Path.GetTempPath(), Path.GetFileName(path) + ".deteriorat-*"));
         }
@@ -167,6 +173,7 @@ public sealed class DeviceMonitorTests
     private sealed class Fakes
     {
         public List<PnpSnapshotEntry> Present = [];
+        public Dictionary<string, MediumInfo> Media = new(StringComparer.OrdinalIgnoreCase);
         public List<(string Ev, string Detail)> Audited = [];
         public string? AuditRefusal;
         public int Saves;
@@ -176,7 +183,7 @@ public sealed class DeviceMonitorTests
 
         public DeviceMonitorViewModel Create(bool isolated, DeviceJournal? journal = null, bool owner = true) => new(
             () => Present.ToList(),
-            _ => new Dictionary<string, MediumInfo>(StringComparer.OrdinalIgnoreCase),
+            _ => new Dictionary<string, MediumInfo>(Media, StringComparer.OrdinalIgnoreCase),
             (ev, detail) => { lock (Audited) { if (AuditRefusal is null) Audited.Add((ev, detail)); } return AuditRefusal; },
             journal ?? new DeviceJournal(),
             j => { Saves++; Saved = j.Copy(); return null; },
@@ -364,7 +371,7 @@ public sealed class DeviceMonitorTests
         int saves = f.Saves;
 
         row.RegistrationNumber = "RN-0042";
-        var (ev, detail) = Assert.Single(f.Audited);
+        var (ev, detail) = Assert.Single(f.Audited, a => a.Ev == OperationAudit.DeviceRegistrationChanged);   // besides the first-seen and radio records
         Assert.Equal(OperationAudit.DeviceRegistrationChanged, ev);
         Assert.Contains("old=(gol)", detail);
         Assert.Contains("new=RN-0042", detail);
@@ -374,8 +381,8 @@ public sealed class DeviceMonitorTests
         Assert.False(row.NeedsRegistration);
 
         row.RegistrationNumber = "RN-0043";
-        Assert.Contains("old=RN-0042", f.Audited[1].Detail);
-        Assert.Contains("new=RN-0043", f.Audited[1].Detail);
+        Assert.Contains("old=RN-0042", f.Events(OperationAudit.DeviceRegistrationChanged)[1].Detail);
+        Assert.Contains("new=RN-0043", f.Events(OperationAudit.DeviceRegistrationChanged)[1].Detail);
 
         // the audit cannot be written: the change is refused and the old value stays
         f.AuditRefusal = "disc plin";
@@ -404,11 +411,18 @@ public sealed class DeviceMonitorTests
         return j;
     }
 
-    /// <summary>The sealed audit as it would read for a journal: the registration numbers and the critical alerts written when they were raised, and the sealed running windows.</summary>
+    /// <summary>
+    /// The sealed audit as it would read for a journal: the registration numbers and the critical alerts written when they were raised, the first-seen record
+    /// of every device (sealed on first sight), and the sealed running windows.
+    /// </summary>
     private static DeviceAuditReading AuditFor(DeviceJournal j, params MonitorRun[] runs) => new(true,
         j.Devices.Where(d => d.RegistrationNumber.Length > 0).ToDictionary(d => OperationAudit.DeviceField(d.Identity), d => OperationAudit.DeviceField(d.RegistrationNumber), StringComparer.OrdinalIgnoreCase),
-        j.Alerts.Where(a => a.Severity == DeviceAlertSeverity.Critical).Select(a => new DeviceAuditAlert(a.TimeUtc, OperationAudit.DeviceField(a.Identity), OperationAudit.DeviceField(a.Device), OperationAudit.DeviceField(a.Text))).ToList(), 0)
-    { Runs = runs };
+        j.Alerts.Where(a => a.Severity == DeviceAlertSeverity.Critical).Select(a => new DeviceAuditAlert(a.TimeUtc, OperationAudit.DeviceField(a.Identity), OperationAudit.DeviceField(a.Device), OperationAudit.DeviceField(a.Text), a.Class.ToString())).ToList(), 0)
+    {
+        Runs = runs,
+        Devices = j.Devices.Where(DeviceScope.IsInScope).Select(d => new SealedDevice(OperationAudit.DeviceField(d.Identity), d.Class.ToString(), d.Serial, d.FirstSeenUtc, d.FirstSeenUtc, d.Name)).ToList(),
+        InfoAlerts = j.Alerts.Where(a => a.Severity == DeviceAlertSeverity.Info).Select(a => new DeviceAuditAlert(a.TimeUtc, OperationAudit.DeviceField(a.Identity), OperationAudit.DeviceField(a.Device), OperationAudit.DeviceField(a.Text), a.Class.ToString())).ToList(),
+    };
 
     private static StationFacts Facts(StationPosture posture, DeviceJournal? journal, DeviceAuditReading? audit = null) => new()
     {
@@ -551,6 +565,7 @@ public sealed class DeviceMonitorTests
         var audit = new DeviceAuditReading(true, baseAudit.LastRegistration, baseAudit.CriticalAlerts, 0)
         {
             Runs = [SealedFullRun()],
+            Devices = baseAudit.Devices,
             Gaps = [new SealedGap(T0.AddHours(5), T0.AddHours(6), "evenimente pierdute")],
             ObservedOnResume = [new DeviceAuditObservation(T0.AddHours(6), "SN|X|Y", "Fake Phone", "apărut")],
         };
@@ -560,6 +575,170 @@ public sealed class DeviceMonitorTests
         Assert.Contains(d.Evidence, e => e.StartsWith("observat la reluare") && e.Contains("Fake Phone"));
         Assert.Contains(d.Evidence, e => e.StartsWith("Bluetooth oprit – dispozitivele Bluetooth nu pot fi observate"));
         Assert.Contains("Bluetooth oprit", d.Detail);
+    }
+
+    // ---- review round 1: the journal against the sealed records (B1), and what keeps D05 from Conform ------------------------------------------
+
+    [Fact]
+    public void D05_a_row_re_classed_so_that_it_leaves_the_scope_is_not_conform()
+    {
+        var j = JournalWithStick("RN-7");
+        var audit = AuditFor(j, SealedFullRun());
+        j.Devices.Single(d => d.Class == DeviceClass.UsbStorage).Class = DeviceClass.Controller;   // "Hub": the stick would vanish from the report
+        var d = D05(Facts(StationPosture.Standalone, j, audit));
+        Assert.Equal(ControlStatus.Neconform, d.Status);
+        Assert.Contains(d.Evidence, e => e.StartsWith("NECONFORM:") && e.Contains("alt tip"));
+    }
+
+    [Fact]
+    public void D05_a_row_whose_dates_were_moved_before_the_period_is_not_conform()
+    {
+        var j = JournalWithStick("RN-7");
+        var audit = AuditFor(j, SealedFullRun());
+        var row = j.Devices.Single(d => d.Class == DeviceClass.UsbStorage);
+        row.FirstSeenUtc = PeriodFrom.AddDays(-10);
+        row.LastConnectedUtc = row.LastDisconnectedUtc = PeriodFrom.AddDays(-10);
+        j.Alerts.Clear();                                                             // and its alert deleted from the journal
+        var d = D05(Facts(StationPosture.Standalone, j, audit));
+        Assert.Equal(ControlStatus.Neconform, d.Status);
+        Assert.Contains(d.Evidence, e => e.StartsWith("NECONFORM:") && e.Contains("altă dată a primei observări"));
+        Assert.Contains(d.Evidence, e => e.StartsWith("NECONFORM:") && e.Contains("alerta critică sigilată") && e.Contains("nu are rând în perioadă"));
+    }
+
+    [Fact]
+    public void D05_a_row_added_by_hand_is_not_conform()
+    {
+        var j = JournalWithStick("RN-7");
+        var audit = AuditFor(j, SealedFullRun());
+        j.Devices.Add(new DeviceJournalEntry { Identity = "SN|FAKE|ADDED", Class = DeviceClass.UsbStorage, Name = "Added stick", FirstSeenUtc = T0.AddHours(3), Present = true });
+        var d = D05(Facts(StationPosture.Standalone, j, audit));
+        Assert.Equal(ControlStatus.Neconform, d.Status);
+        Assert.Contains(d.Evidence, e => e.StartsWith("NECONFORM:") && e.Contains("Added stick") && e.Contains("nu are înregistrarea primei observări"));
+    }
+
+    [Fact]
+    public void D05_unreadable_sealed_records_keep_it_from_conform()
+    {
+        var j = JournalWithStick("RN-7");
+        var a = AuditFor(j, SealedFullRun());
+        var unreadable = new DeviceAuditReading(a.ChainValid, a.LastRegistration, a.CriticalAlerts, 2) { Runs = a.Runs, Devices = a.Devices, InfoAlerts = a.InfoAlerts };
+        var d = D05(Facts(StationPosture.Standalone, j, unreadable));
+        Assert.Equal(ControlStatus.DeVerificat, d.Status);
+        Assert.Contains(d.Evidence, e => e.StartsWith("ÎNREGISTRĂRI SIGILATE NECITIBILE: 2"));
+    }
+
+    [Fact]
+    public void D05_a_sealed_journal_reset_is_to_verify_not_a_tampering_finding()
+    {
+        // the damaged journal was set aside: the new journal is empty, the sealed records of before the reset are not expected in it
+        var j = new DeviceJournal { Runs = [SealedFullRun()] };
+        DeviceJournalMerge.Apply(j, [Mouse], NoMedia, "—", T0.AddHours(5), initial: true);
+        var audit = AuditFor(j, SealedFullRun()) with { Resets = [new SealedJournalReset(T0.AddHours(5), "ab12cd", "jurnal deteriorat", "device_monitor.json.deteriorat-1")] };
+        var d = D05(Facts(StationPosture.Standalone, j, audit));
+        Assert.Equal(ControlStatus.DeVerificat, d.Status);
+        Assert.Contains(d.Evidence, e => e.StartsWith("JURNAL RESETAT") && e.Contains("ab12cd"));
+        Assert.DoesNotContain(d.Evidence, e => e.StartsWith("NECONFORM:"));
+    }
+
+    [Fact]
+    public void D05_a_short_lost_interval_or_a_device_observed_on_resume_keeps_it_from_conform()
+    {
+        var j = JournalWithStick("RN-7");
+        var lost = AuditFor(j, SealedFullRun()) with { Gaps = [new SealedGap(T0.AddHours(5), T0.AddHours(5).AddMinutes(1), "evenimente pierdute")] };
+        Assert.Equal(ControlStatus.DeVerificat, D05(Facts(StationPosture.Standalone, j, lost)).Status);
+        var resumed = AuditFor(j, SealedFullRun()) with { ObservedOnResume = [new DeviceAuditObservation(T0.AddHours(6), "SN|X|Y", "Fake Phone", "apărut")] };
+        Assert.Equal(ControlStatus.DeVerificat, D05(Facts(StationPosture.Standalone, j, resumed)).Status);
+    }
+
+    [Fact]
+    public void D05_a_volume_that_changed_is_to_verify_and_a_port_generated_clone_breaks_the_rule_on_an_isolated_station()
+    {
+        var j = JournalWithStick("RN-7");
+        var stickId = OperationAudit.DeviceField(DeviceMonitorRules.Identity(Stick()));
+        var volume = AuditFor(j, SealedFullRun()) with { InfoAlerts = [new DeviceAuditAlert(T0.AddHours(1), stickId, "Fake Stick USB Device", DeviceMonitorRules.VolumeChangedAlertText, "UsbStorage")] };
+        var v = D05(Facts(StationPosture.Standalone, j, volume));
+        Assert.Equal(ControlStatus.DeVerificat, v.Status);
+        Assert.Contains(v.Evidence, e => e.StartsWith("VOLUM DIFERIT"));
+        var clone = AuditFor(j, SealedFullRun()) with { CriticalAlerts = [new DeviceAuditAlert(T0.AddHours(1), stickId, "Fake Stick USB Device", DeviceMonitorRules.PortCloneAlertText, "UsbStorage")] };
+        Assert.Equal(ControlStatus.Neconform, D05(Facts(StationPosture.Standalone, j, clone)).Status);
+    }
+
+    [Fact]
+    public void D05_a_bluetooth_radio_that_was_never_switched_on_with_nothing_connected_through_it_can_be_conform()
+    {
+        var j = JournalWithStick("RN-7");
+        DeviceJournalMerge.NoteRadios(j, DeviceMonitorRules.BlindRadios([BluetoothRadioOff]), T0.AddHours(1));
+        var d = D05(Facts(StationPosture.Standalone, j, AuditFor(j, SealedFullRun())));
+        Assert.Equal(ControlStatus.Conform, d.Status);
+        Assert.Contains("Bluetooth oprit", d.Detail);
+    }
+
+    [Fact]
+    public async Task The_monitor_seals_each_device_on_first_sight_once_and_the_radio_state_changes()
+    {
+        var f = new Fakes { Present = [Mouse, BluetoothRadioOff] };
+        using var vm = f.Create(isolated: true);
+        await vm.RefreshAsync(initial: true);
+        var mouse = Assert.Single(f.Events(OperationAudit.DeviceFirstSeen));
+        Assert.Contains("identity=" + OperationAudit.DeviceField(DeviceMonitorRules.Identity(Mouse)), mouse.Detail);
+        Assert.Contains("class=Mouse", mouse.Detail);
+        Assert.Contains("state=neobservabil", Assert.Single(f.Events(OperationAudit.DeviceRadioState)).Detail);
+
+        f.Present = [Mouse, BluetoothRadioOff, Stick(), UsbParent()];
+        f.Now = T0.AddMinutes(1);
+        await vm.RefreshAsync(initial: false);
+        f.Present = [Mouse, BluetoothRadioOff];
+        f.Now = T0.AddMinutes(2);
+        await vm.RefreshAsync(initial: false);
+        f.Present = [Mouse, BluetoothRadioOff, Stick(), UsbParent()];
+        f.Now = T0.AddMinutes(3);
+        await vm.RefreshAsync(initial: false);
+        var all = f.Events(OperationAudit.DeviceFirstSeen);
+        Assert.Equal(2, all.Count);                                                     // the stick once, however often it comes back
+        Assert.Contains("class=UsbStorage", all[1].Detail);
+        Assert.Contains("serial=FAKESN0001", all[1].Detail);
+        Assert.Single(f.Events(OperationAudit.DeviceRadioState));                       // unchanged state: not sealed again
+
+        f.Present = [Mouse, BluetoothRadioOff with { ConfigManagerErrorCode = 0 }, Stick(), UsbParent()];   // the radio is switched on
+        f.Now = T0.AddMinutes(4);
+        await vm.RefreshAsync(initial: false);
+        Assert.Contains("state=observabil", f.Events(OperationAudit.DeviceRadioState)[1].Detail);
+    }
+
+    [Fact]
+    public async Task A_first_seen_record_the_audit_refused_is_written_at_the_next_reading()
+    {
+        var f = new Fakes { Present = [Mouse], AuditRefusal = "disc plin" };
+        using var vm = f.Create(isolated: true);
+        await vm.RefreshAsync(initial: true);
+        Assert.Empty(f.Events(OperationAudit.DeviceFirstSeen));
+        Assert.Contains("se reîncearcă", vm.Problem);
+        f.AuditRefusal = null;
+        f.Now = T0.AddMinutes(1);
+        await vm.RefreshAsync(initial: false);
+        Assert.Single(f.Events(OperationAudit.DeviceFirstSeen));
+    }
+
+    [Fact]
+    public async Task A_stick_back_with_another_volume_is_sealed_as_volum_diferit_and_keeps_its_row()
+    {
+        var f = new Fakes { Present = [Mouse] };
+        using var vm = f.Create(isolated: true);
+        await vm.RefreshAsync(initial: true);
+        f.Present = [Mouse, Stick(), UsbParent(), Volume];
+        f.Media[Stick().InstanceId] = new MediumInfo("11112222", 16_000_000_000, "E:", "A");
+        f.Now = T0.AddMinutes(1);
+        await vm.RefreshAsync(initial: false);
+        f.Present = [Mouse];
+        f.Media.Clear();
+        f.Now = T0.AddMinutes(2);
+        await vm.RefreshAsync(initial: false);
+        f.Present = [Mouse, Stick(), UsbParent(), Volume];
+        f.Media[Stick().InstanceId] = new MediumInfo("99998888", 16_000_000_000, "E:", "B");
+        f.Now = T0.AddMinutes(3);
+        await vm.RefreshAsync(initial: false);
+        Assert.Contains(f.Events(OperationAudit.DeviceAlertInfo), e => e.Detail.Contains(DeviceMonitorRules.VolumeChangedAlertText));
+        Assert.Single(vm.Rows, r => r.Class == DeviceClass.UsbStorage);
     }
 
     [Fact]

@@ -83,34 +83,85 @@ public static class OperationAudit
         $"from={DeviceField(fromFile)}; devices={devices}; sha256={DeviceField(sha256)}";
 
     /// <summary>
+    /// A device seen by the monitor for the FIRST time (a new journal row): its identity, class, serial and first-seen time, sealed so that check D05 can compare
+    /// every journal row with it both ways (a row deleted, re-classed, re-dated or added by hand in the plain journal shows up).
+    /// </summary>
+    public const string DeviceFirstSeen = "device.first_seen";
+
+    public static string DeviceFirstSeenDetail(string identity, string deviceClass, string device, string serial, DateTimeOffset firstSeenUtc, string note = "") =>
+        $"identity={DeviceField(identity)}; class={DeviceField(deviceClass)}; device={DeviceField(device)}; serial={DeviceField(serial)}; " +
+        $"first_seen={firstSeenUtc.ToUniversalTime().ToString("O", System.Globalization.CultureInfo.InvariantCulture)}" + (note.Length > 0 ? "; note=" + DeviceField(note) : "");
+
+    /// <summary>A card whose medium could not be identified at insertion (encrypted or RAW) got its real identity once the volume became readable: the link is sealed.</summary>
+    public const string DeviceMediumRekeyed = "device.medium_rekeyed";
+
+    public static string DeviceMediumRekeyedDetail(string oldIdentity, string newIdentity, string deviceClass, string device) =>
+        $"old={DeviceField(oldIdentity)}; new={DeviceField(newIdentity)}; class={DeviceField(deviceClass)}; device={DeviceField(device)}";
+
+    /// <summary>The monitor's journal file was damaged and set aside; a new journal was started. The SHA-256 of the damaged file is sealed with it.</summary>
+    public const string DeviceJournalReset = "device.journal_reset";
+
+    public static string DeviceJournalResetDetail(string asideFile, string sha256, string reason) =>
+        $"file={DeviceField(asideFile)}; sha256={DeviceField(sha256)}; reason={DeviceField(reason)}";
+
+    /// <summary>
+    /// A radio changed state as the monitor sees it (Bluetooth off or absent, every Wi-Fi adapter disabled, or observable again), sealed so that "the radio was
+    /// never switched on in the period" can be proven. It does not change check D05 by itself: a device that connected through a radio is a row evaluated normally.
+    /// </summary>
+    public const string DeviceRadioState = "device.radio_state";
+
+    public static string DeviceRadioStateDetail(string kind, bool blind, string text, string user) =>
+        $"kind={DeviceField(kind)}; state={(blind ? "neobservabil" : "observabil")}; text={DeviceField(text)}; user={DeviceField(user)}";
+
+    /// <summary>
     /// What the sealed audit says about the device monitor: the LAST registration number written for each device identity ("device.registration_number_changed",
-    /// empty for "(gol)"), the critical alerts ("device.alert_critical") with the time of their record, the monitor's running windows and lost intervals, the
-    /// devices observed on resume and the journal migrations. <paramref name="chainValid"/> is whether the audit chain verifies; a reading from a chain that does
-    /// not verify must not be trusted.
+    /// empty for "(gol)"), the critical and informational alerts with the time of their record, the devices first seen ("device.first_seen"), the monitor's
+    /// running windows and lost intervals, the devices observed on resume, the journal migrations and resets. A medium re-keyed after it became readable
+    /// ("device.medium_rekeyed") is followed to its new identity. After a sealed journal reset only the registrations and first-seen records written after the
+    /// LAST reset are expected in the journal (the reset itself is reported). <paramref name="chainValid"/> is whether the audit chain verifies; a reading from a
+    /// chain that does not verify must not be trusted.
     /// </summary>
     public static LogAnalyzer.Dfir.Devices.DeviceAuditReading ReadDeviceMonitor(string auditPath, bool chainValid)
     {
-        var last = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (!File.Exists(auditPath)) return Read(null, chainValid);
+        using var fs = new FileStream(auditPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        return Read(Scan(fs), chainValid);
+    }
+
+    /// <summary>The same reading from the bytes of the audit file read once (the bytes the chain was verified on, so both answers are about the same content).</summary>
+    public static LogAnalyzer.Dfir.Devices.DeviceAuditReading ReadDeviceMonitor(byte[] auditBytes, bool chainValid)
+    {
+        using var ms = new MemoryStream(auditBytes, writable: false);
+        return Read(Scan(ms), chainValid);
+    }
+
+    private static LogAnalyzer.Dfir.Devices.DeviceAuditReading Read(AuditScan? scan, bool chainValid)
+    {
+        var registrations = new List<(string Id, string Value, DateTimeOffset? When)>();
         var alerts = new List<LogAnalyzer.Dfir.Devices.DeviceAuditAlert>();
+        var infos = new List<LogAnalyzer.Dfir.Devices.DeviceAuditAlert>();
         var runs = new List<LogAnalyzer.Dfir.Devices.MonitorRun>();
         var gaps = new List<LogAnalyzer.Dfir.Devices.SealedGap>();
         var observed = new List<LogAnalyzer.Dfir.Devices.DeviceAuditObservation>();
+        var devices = new List<LogAnalyzer.Dfir.Devices.SealedDevice>();
+        var resets = new List<LogAnalyzer.Dfir.Devices.SealedJournalReset>();
+        var rename = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var migrations = new List<string>();
+        var radios = new List<LogAnalyzer.Dfir.Devices.SealedRadioState>();
         int unreadable = 0;
-        if (File.Exists(auditPath))
+        if (scan is not null)
         {
-            var scan = Scan(auditPath);
             foreach (var (detail, when) in scan.DeviceRegistrations)
             {
                 var f = Fields(detail);
                 if (!f.TryGetValue("identity", out var id) || id.Length == 0 || !f.TryGetValue("new", out var nv)) { unreadable++; continue; }
-                last[id] = nv == "(gol)" ? "" : nv;
+                registrations.Add((id, nv == "(gol)" ? "" : nv, when));
             }
-            foreach (var (detail, when) in scan.DeviceAlerts)
+            foreach (var (ev, detail, when) in scan.DeviceAlerts)
             {
                 var f = Fields(detail);
                 if (!f.TryGetValue("identity", out var id) || when is not { } t) { unreadable++; continue; }
-                alerts.Add(new(t, id, f.GetValueOrDefault("device", ""), f.GetValueOrDefault("text", "")));
+                (ev == DeviceAlertCritical ? alerts : infos).Add(new(t, id, f.GetValueOrDefault("device", ""), f.GetValueOrDefault("text", ""), f.GetValueOrDefault("class", "")));
             }
             var byRun = new Dictionary<string, LogAnalyzer.Dfir.Devices.MonitorRun>(StringComparer.Ordinal);
             foreach (var (ev, detail, when) in scan.DeviceMonitorEvents)
@@ -131,18 +182,52 @@ public static class OperationAudit
                 }
                 else if (ev == DeviceMonitorGap)
                 {
-                    if (DateTimeOffset.TryParse(f.GetValueOrDefault("from", ""), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var gf)
-                        && DateTimeOffset.TryParse(f.GetValueOrDefault("to", ""), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var gt))
-                        gaps.Add(new(gf, gt, f.GetValueOrDefault("reason", "")));
+                    if (TryTime(f, "from", out var gf) && TryTime(f, "to", out var gt)) gaps.Add(new(gf, gt, f.GetValueOrDefault("reason", "")));
                     else unreadable++;
                 }
                 else if (ev == DeviceObservedOnResume)
                     observed.Add(new(t, f.GetValueOrDefault("identity", ""), f.GetValueOrDefault("device", ""), f.GetValueOrDefault("change", "")));
                 else if (ev == DeviceJournalMigrated) migrations.Add(detail);
+                else if (ev == DeviceFirstSeen)
+                {
+                    if (!f.TryGetValue("identity", out var id) || id.Length == 0 || !TryTime(f, "first_seen", out var first)) { unreadable++; continue; }
+                    devices.Add(new(id, f.GetValueOrDefault("class", ""), f.GetValueOrDefault("serial", ""), first, t, f.GetValueOrDefault("device", "")));
+                }
+                else if (ev == DeviceMediumRekeyed)
+                {
+                    if (f.GetValueOrDefault("old", "") is { Length: > 0 } o && f.GetValueOrDefault("new", "") is { Length: > 0 } n) rename[o] = n;
+                    else unreadable++;
+                }
+                else if (ev == DeviceJournalReset)
+                    resets.Add(new(t, f.GetValueOrDefault("sha256", ""), f.GetValueOrDefault("reason", ""), f.GetValueOrDefault("file", "")));
+                else if (ev == DeviceRadioState)
+                {
+                    if (f.GetValueOrDefault("kind", "") is { Length: > 0 } k) radios.Add(new(t, k, f.GetValueOrDefault("state", "") == "neobservabil", f.GetValueOrDefault("text", ""), f.GetValueOrDefault("user", "")));
+                    else unreadable++;
+                }
             }
         }
-        return new(chainValid, last, alerts, unreadable) { Runs = runs, Gaps = gaps, ObservedOnResume = observed, Migrations = migrations };
+        // a re-keyed medium: every record of its old identity belongs to the new one (followed through several re-keys)
+        string Follow(string id)
+        {
+            for (int i = 0; i < 16 && rename.TryGetValue(id, out var next); i++) id = next;
+            return id;
+        }
+        DateTimeOffset? lastReset = resets.Count > 0 ? resets.Max(r => r.TimeUtc) : null;
+        bool AfterReset(DateTimeOffset? when) => lastReset is not { } lr || when is { } w && w >= lr;
+        var last = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (id, value, when) in registrations)
+            if (AfterReset(when)) last[Follow(id)] = value;
+        return new(chainValid, last, alerts.Select(a => a with { Identity = Follow(a.Identity) }).ToList(), unreadable)
+        {
+            Runs = runs, Gaps = gaps, ObservedOnResume = observed, Migrations = migrations,
+            Devices = devices.Where(d => AfterReset(d.RecordUtc)).Select(d => d with { Identity = Follow(d.Identity) }).ToList(),
+            InfoAlerts = infos.Select(a => a with { Identity = Follow(a.Identity) }).ToList(), Resets = resets, RadioStates = radios,
+        };
     }
+
+    private static bool TryTime(Dictionary<string, string> f, string key, out DateTimeOffset t) =>
+        DateTimeOffset.TryParse(f.GetValueOrDefault(key, ""), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out t);
 
     private static Dictionary<string, string> Fields(string detail)
     {
@@ -327,7 +412,7 @@ public static class OperationAudit
         public Dictionary<string, (string ExecId, string RunId, int ChildPid, int ExitCode, DateTimeOffset EndUtc)> Done { get; } = new(StringComparer.Ordinal);
         public List<string> Regressions { get; } = [];
         public List<(string Detail, DateTimeOffset? When)> DeviceRegistrations { get; } = [];
-        public List<(string Detail, DateTimeOffset? When)> DeviceAlerts { get; } = [];
+        public List<(string Event, string Detail, DateTimeOffset? When)> DeviceAlerts { get; } = [];
         public List<(string Event, string Detail, DateTimeOffset? When)> DeviceMonitorEvents { get; } = [];
         public int UnreadableHashing { get; set; }
         public int UnreadableExec { get; set; }
@@ -336,11 +421,16 @@ public static class OperationAudit
 
     private static AuditScan Scan(string auditPath)
     {
+        using var fs = new FileStream(auditPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        return Scan(fs);
+    }
+
+    private static AuditScan Scan(Stream stream)
+    {
         var scan = new AuditScan();
         int index = 0;
         DateTimeOffset? previous = null;
-        using var fs = new FileStream(auditPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-        using var sr = new StreamReader(fs);
+        using var sr = new StreamReader(stream, leaveOpen: true);
         while (sr.ReadLine() is { } line)
         {
             if (string.IsNullOrWhiteSpace(line)) continue;
@@ -375,8 +465,9 @@ public static class OperationAudit
                 else if (ev == ActionStarted && run.StartsWith(CollectorExec.ActionRunPrefix, StringComparison.Ordinal) && when is { } wa2 && !scan.Started.ContainsKey(run)) { scan.Started[run] = (wa2, index); scan.StartedSha[run] = TokenOf(detail, "app_sha256="); }
                 else if (ev == ActionFinished && run.StartsWith(CollectorExec.ActionRunPrefix, StringComparison.Ordinal) && when is { } wf2 && !scan.Finished.ContainsKey(run)) scan.Finished[run] = wf2;
                 else if (ev == DeviceRegistrationChanged) scan.DeviceRegistrations.Add((detail, when));
-                else if (ev == DeviceAlertCritical) scan.DeviceAlerts.Add((detail, when));
-                else if (ev is DeviceMonitorStarted or DeviceMonitorHeartbeat or DeviceMonitorStopped or DeviceMonitorGap or DeviceObservedOnResume or DeviceJournalMigrated) scan.DeviceMonitorEvents.Add((ev, detail, when));
+                else if (ev is DeviceAlertCritical or DeviceAlertInfo) scan.DeviceAlerts.Add((ev, detail, when));
+                else if (ev is DeviceMonitorStarted or DeviceMonitorHeartbeat or DeviceMonitorStopped or DeviceMonitorGap or DeviceObservedOnResume or DeviceJournalMigrated
+                         or DeviceFirstSeen or DeviceMediumRekeyed or DeviceJournalReset or DeviceRadioState) scan.DeviceMonitorEvents.Add((ev, detail, when));
                 else if (ev == ControlHashing)
                 {
                     if (TryParseControlHashing(detail, out var w)) scan.Hashing.Add((w, when, index));

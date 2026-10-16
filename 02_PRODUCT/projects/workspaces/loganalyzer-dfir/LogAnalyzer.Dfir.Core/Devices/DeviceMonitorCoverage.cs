@@ -18,7 +18,7 @@ public sealed record CoverageResult(IReadOnlyList<CoverageGap> Gaps, bool AnyCov
 /// <summary>Which part of a period the monitor's running windows cover (pure). The windows must come from the SEALED audit; the journal's own copy is only compared with them.</summary>
 public static class DeviceMonitorCoverage
 {
-    /// <summary>A gap shorter than this (an application restart) is not reported.</summary>
+    /// <summary>A gap between two runs shorter than this (an application restart) is not reported; an interval the monitor recorded as lost always is.</summary>
     public static readonly TimeSpan IgnoredGap = TimeSpan.FromMinutes(2);
 
     /// <summary>How far an end time may differ between the journal and the sealed audit before it is a disagreement.</summary>
@@ -67,7 +67,24 @@ public static class DeviceMonitorCoverage
             if (e > cursor) cursor = e;
         }
         if (toUtc - cursor > IgnoredGap) gaps.Add(new CoverageGap(cursor, toUtc));
-        return new CoverageResult(gaps, any);
+        // an interval the monitor itself recorded as lost always counts, however short (only a restart between two runs is ignored)
+        foreach (var g in lost ?? [])
+        {
+            var s = g.FromUtc < fromUtc ? fromUtc : g.FromUtc;
+            var e = g.ToUtc > toUtc ? toUtc : g.ToUtc;
+            if (e > s) gaps.Add(new CoverageGap(s, e));
+        }
+        // merge what overlaps (a lost interval inside or across a gap between runs is one gap)
+        var merged = new List<CoverageGap>();
+        foreach (var g in gaps.OrderBy(x => x.FromUtc))
+        {
+            if (merged.Count > 0 && g.FromUtc <= merged[^1].ToUtc)
+            {
+                if (g.ToUtc > merged[^1].ToUtc) merged[^1] = merged[^1] with { ToUtc = g.ToUtc };
+            }
+            else merged.Add(g);
+        }
+        return new CoverageResult(merged, any);
     }
 
     /// <summary>The uncovered intervals only (see <see cref="Analyze"/>).</summary>

@@ -132,10 +132,11 @@ public sealed class HashChain(string path)
     }
 
     /// <summary>Whether an entry with this <paramref name="seq"/> and <paramref name="hash"/> is on the chain (a copy of the head held outside the case).</summary>
-    public bool Contains(long seq, string hash)
+    public bool Contains(long seq, string hash) => File.Exists(Path) && ContainsIn(File.ReadLines(Path), seq, hash);
+
+    private static bool ContainsIn(IEnumerable<string> lines, long seq, string hash)
     {
-        if (!File.Exists(Path)) return false;
-        foreach (var line in File.ReadLines(Path))
+        foreach (var line in lines)
         {
             if (string.IsNullOrWhiteSpace(line)) continue;
             try
@@ -194,20 +195,43 @@ public sealed class HashChain(string path)
     }
 
     /// <summary>The plain chain check and, for a sealed log, that the chain ends exactly at the sealed head.</summary>
-    public ChainVerification Verify()
+    public ChainVerification Verify() => Verify(VerifyPlain(), Head, Contains);
+
+    /// <summary>
+    /// The same check on <paramref name="content"/>, the bytes of the log read once by the caller (who then reads the records from the same bytes, so the answer
+    /// and the records are about one and the same content). The sealed head is read from its own file.
+    /// </summary>
+    public ChainVerification Verify(byte[] content)
     {
-        var plain = VerifyPlain();
+        var lines = Encoding.UTF8.GetString(content).Split('\n').Select(l => l.TrimEnd('\r')).ToList();
+        (long, string) HeadOf()
+        {
+            var last = lines.LastOrDefault(l => !string.IsNullOrWhiteSpace(l));
+            if (last is null) return (0, Genesis);
+            try
+            {
+                var o = JsonNode.Parse(last)!.AsObject();
+                if (o["seq"] is { } s && o["hash"] is { } h) return (s.GetValue<long>(), h.GetValue<string>());
+            }
+            catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { }
+            return (0, Genesis);
+        }
+        return Verify(VerifyPlain(lines, content.Length > 0), HeadOf, (seq, hash) => ContainsIn(lines, seq, hash));
+    }
+
+    private ChainVerification Verify(ChainVerification plain, Func<(long Seq, string Head)> headOf, Func<long, string, bool> contains)
+    {
         if (!IsSealed(out var key) || plain.Status == ChainStatus.Broken) return plain;
         var name = System.IO.Path.GetFileName(Path);
         if (key is null) return Broken(name, plain.Entries, plain.LegacyLines, 0, KeyUnavailable.Replace("; nu s-a scris nimic", ""));
-        var (seq, head) = Head();
+        var (seq, head) = headOf();
         var h = ReadSealedHead();
         if (seq == 0 && h is null) return plain;
         if (h is null) return Broken(name, plain.Entries, plain.LegacyLines, seq, "capul lanțului nu are sigiliu (fișierul .head lipsește)");
         if (!CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(h.Mac), Encoding.ASCII.GetBytes(Mac(key, h.Seq, h.Hash))))
             return Broken(name, plain.Entries, plain.LegacyLines, h.Seq, "sigiliul capului lanțului nu este valid (lanț recalculat sau sigiliu falsificat)");
         if (h.Seq == seq && h.Hash == head) return plain;
-        if (seq > h.Seq && Contains(h.Seq, h.Hash))
+        if (seq > h.Seq && contains(h.Seq, h.Hash))
             return Broken(name, plain.Entries, plain.LegacyLines, h.Seq + 1, $"intrări adăugate după ultimul cap sigilat (Seq {h.Seq}) fără cheia de sigilare");
         return Broken(name, plain.Entries, plain.LegacyLines, Math.Min(seq, h.Seq), $"lanțul nu mai ajunge la capul sigilat (Seq {h.Seq}): trunchiat sau rescris");
     }
@@ -215,13 +239,16 @@ public sealed class HashChain(string path)
     /// <summary>Only the plain chain (seq, prevHash, hash of every entry), without the seal: what an external anchor relies on.</summary>
     public ChainVerification VerifyPlainChain() => VerifyPlain();
 
-    private ChainVerification VerifyPlain()
+    private ChainVerification VerifyPlain() =>
+        File.Exists(Path) ? VerifyPlain(File.ReadLines(Path), exists: true) : VerifyPlain([], exists: false);
+
+    private ChainVerification VerifyPlain(IEnumerable<string> lines, bool exists)
     {
         var name = System.IO.Path.GetFileName(Path);
-        if (!File.Exists(Path)) return new(name, ChainStatus.Valid, 0, 0, null, "", "gol");
+        if (!exists) return new(name, ChainStatus.Valid, 0, 0, null, "", "gol");
         int legacy = 0, chained = 0, lineNo = 0;
         long expectSeq = 1; string expectPrev = Genesis;
-        foreach (var line in File.ReadLines(Path))
+        foreach (var line in lines)
         {
             lineNo++;
             if (string.IsNullOrWhiteSpace(line)) continue;

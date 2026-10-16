@@ -12,6 +12,8 @@ public enum DeviceClass
     UsbStorage, MemoryCard, Phone, Bluetooth, WiFi, NetworkAdapter, Printer, Scanner, Camera, Optical, Keyboard, Mouse, Hid, Audio, Controller,
     InternalDisk, VirtualDisk, Internal, Other,
     ExternalDisk, Modem, SmartCardReader, CardReader,
+    /// <summary>A USB Bluetooth dongle that is not part of the station (outside the local machine container): „Adaptor Bluetooth USB”.</summary>
+    BluetoothAdapter,
 }
 
 /// <summary>How strongly a connection is announced: an information banner, or a critical alert with a sound.</summary>
@@ -24,13 +26,17 @@ public enum DeviceStatus { Connected, Disconnected, NotWorking, Disabled }
 /// One present Plug and Play device read now (SetupAPI). <see cref="ConfigManagerErrorCode"/> is the Configuration Manager problem code of the device,
 /// the same number Win32_PnPEntity.ConfigManagerErrorCode reports: 0 = works, 28 = no driver installed, 22 = disabled; -1 = not read.
 /// <see cref="ContainerId"/> is DEVPKEY_Device_ContainerId (all the nodes of one physical device share it; the local machine's own container is
-/// <see cref="DeviceScope.LocalMachineContainer"/>, also used when DEVPKEY_Device_InLocalMachineContainer is true); "" = not read.
+/// <see cref="DeviceScope.LocalMachineContainer"/>, also used when DEVPKEY_Device_InLocalMachineContainer is true); "" = not read. <see cref="Parent"/> is the
+/// instance id of the parent node (DEVPKEY_Device_Parent; a USB Attached SCSI disk hangs off a USB node whose service is UASPStor); "" = not read.
 /// </summary>
 public sealed record PnpSnapshotEntry(string InstanceId, string Name, string SetupClass, string Manufacturer, string HardwareIds, string Service, int ConfigManagerErrorCode,
-    string ContainerId = "");
+    string ContainerId = "", string Parent = "");
 
-/// <summary>What is known about the medium in a drive: the volume serial, the capacity of the disk, the drive letters and the volume label.</summary>
-public sealed record MediumInfo(string VolumeSerial, long CapacityBytes, string Letters, string Label);
+/// <summary>
+/// What is known about the medium in a drive: the volume serial, the capacity of the disk, the drive letters and the volume label, and the disk signature (MBR
+/// signature, "" = not readable) that identifies a medium whose volume cannot be read (encrypted or RAW).
+/// </summary>
+public sealed record MediumInfo(string VolumeSerial, long CapacityBytes, string Letters, string Label, string DiskSignature = "");
 
 /// <summary>What changed between two snapshots: devices that appeared, devices that are gone, devices whose name or problem code changed.</summary>
 public sealed record SnapshotDiff(IReadOnlyList<PnpSnapshotEntry> Arrived, IReadOnlyList<PnpSnapshotEntry> Removed, IReadOnlyList<PnpSnapshotEntry> Changed)
@@ -62,6 +68,7 @@ public static class DeviceMonitorRules
         DeviceClass.Mouse => "Mouse extern",
         DeviceClass.SmartCardReader => "Cititor de carduri smart",
         DeviceClass.CardReader => "Cititor de carduri",
+        DeviceClass.BluetoothAdapter => "Adaptor Bluetooth USB",
         _ => "În afara domeniului (componentă internă)",
     };
 
@@ -111,9 +118,30 @@ public static class DeviceMonitorRules
     /// </summary>
     public static string IdentityWithInstance(PnpSnapshotEntry e) => Identity(e) + "|" + e.InstanceId.ToUpperInvariant();
 
-    /// <summary>The identity of a medium in a drive: the drive's identity plus the volume serial and the capacity (one card = one row, however often it is inserted).</summary>
+    /// <summary>
+    /// The identity of a medium in a drive: the drive's identity plus the volume serial and the capacity (one card = one row, however often it is inserted). Without
+    /// a volume serial (an encrypted or RAW card) the disk signature is the key; without either the medium cannot be identified (see <see cref="CanIdentify"/>).
+    /// </summary>
     public static string MediumIdentity(PnpSnapshotEntry drive, MediumInfo m) =>
-        Identity(drive) + "|MEDIUM|" + m.VolumeSerial.ToUpperInvariant() + "-" + m.CapacityBytes.ToString(CultureInfo.InvariantCulture);
+        Identity(drive) + "|MEDIUM|" + (m.VolumeSerial.Length > 0 ? m.VolumeSerial.ToUpperInvariant() : "SIG-" + m.DiskSignature.ToUpperInvariant()) + "-" + m.CapacityBytes.ToString(CultureInfo.InvariantCulture);
+
+    /// <summary>Whether a medium can be told apart from another card: it has a volume serial or a disk signature (a capacity alone is shared by many cards).</summary>
+    public static bool CanIdentify(MediumInfo? m) => m is { } x && (x.VolumeSerial.Length > 0 || x.DiskSignature.Length > 0);
+
+    /// <summary>The mark of a card whose medium could not be identified (no volume serial, no disk signature): each insertion is a row of its own.</summary>
+    public const string UnidentifiableMediumText = "mediu neidentificabil (criptat/RAW)";
+
+    /// <summary>
+    /// Text of the critical alert raised for a device without a unique serial whose VID/PID matches a device with a serial present at the same time: Windows gives
+    /// the second device with a duplicated serial an instance id generated from the port, so a cloned serial looks like a device without one.
+    /// </summary>
+    public const string PortCloneAlertText = "dispozitiv fără serie unică, cu același VID/PID ca un dispozitiv cu serie conectat acum (posibilă clonă)";
+
+    /// <summary>Text of the informational alert raised when a device comes back with the same VID/PID, serial and capacity but another volume serial.</summary>
+    public const string VolumeChangedAlertText = "volum diferit (reformatat sau clonă)";
+
+    /// <summary>Whether an alert text is the „volum diferit” alert.</summary>
+    public static bool IsVolumeChangedAlert(string text) => text.Contains(VolumeChangedAlertText, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Text of the critical alert raised when two present devices carry the same serial and VID/PID.</summary>
     public const string CloneAlertText = "aceeași serie pe două dispozitive (posibilă clonare)";
@@ -161,6 +189,27 @@ public static class DeviceMonitorRules
             g.TryAdd(d.IdentityEntry.InstanceId, d);
         }
         return groups.Values.Where(g => g.Count > 1).Select(g => (IReadOnlyList<ScopedDevice>)g.Values.OrderBy(e => e.IdentityEntry.InstanceId, StringComparer.OrdinalIgnoreCase).ToList()).ToList();
+    }
+
+    /// <summary>
+    /// Present devices without a unique serial (instance id generated from the port) whose kind and VID/PID match a present device WITH a serial: the second of two
+    /// devices reporting the same serial is given a port-generated id by Windows, so this is a possible clone. Returns the instance ids of both sides (memory
+    /// cards and card readers are not compared: the slot's serial is the reader's).
+    /// </summary>
+    public static (IReadOnlySet<string> NoSerial, IReadOnlySet<string> Serialled) PortGeneratedClones(IEnumerable<ScopedDevice> present)
+    {
+        var list = present.Where(d => d.Kind is not (DeviceClass.MemoryCard or DeviceClass.CardReader)).ToList();
+        static string Vp(ScopedDevice d) => VidPid(d.IdentityEntry.InstanceId, d.IdentityEntry.HardwareIds).ToUpperInvariant();
+        var withSerial = list.Where(d => Serial(d.IdentityEntry.InstanceId).Length > 0 && Vp(d).Length > 0).ToList();
+        var noSerial = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var serialled = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var d in list.Where(d => HasNoUniqueSerial(d.IdentityEntry.InstanceId) && Vp(d).Length > 0))
+            foreach (var twin in withSerial.Where(t => t.Kind == d.Kind && Vp(t) == Vp(d)))
+            {
+                noSerial.Add(d.IdentityEntry.InstanceId);
+                serialled.Add(twin.IdentityEntry.InstanceId);
+            }
+        return (noSerial, serialled);
     }
 
     /// <summary>Arrivals, removals and changes between two snapshots, by Plug and Play device id (case-insensitive).</summary>
@@ -226,7 +275,7 @@ public static class DeviceMonitorRules
     /// for (consistent with N03), so it is not a forbidden ACTIVE device.
     /// </summary>
     public static bool IsDisabledRadio(DeviceClass c, int configManagerErrorCode) =>
-        configManagerErrorCode == 22 && c is DeviceClass.WiFi or DeviceClass.Bluetooth or DeviceClass.NetworkAdapter or DeviceClass.Modem;
+        configManagerErrorCode == 22 && c is DeviceClass.WiFi or DeviceClass.Bluetooth or DeviceClass.BluetoothAdapter or DeviceClass.NetworkAdapter or DeviceClass.Modem;
 
     /// <summary>
     /// The classes the station policy forbids on an isolated posture (Standalone and isolated LAN): phones (N05), Bluetooth (N04), Wi-Fi (N03) and network
@@ -235,7 +284,7 @@ public static class DeviceMonitorRules
     /// </summary>
     public static bool ForbiddenOnIsolated(DeviceClass c, string instanceId) => c switch
     {
-        DeviceClass.Phone or DeviceClass.Bluetooth or DeviceClass.WiFi or DeviceClass.NetworkAdapter or DeviceClass.Modem => true,
+        DeviceClass.Phone or DeviceClass.Bluetooth or DeviceClass.BluetoothAdapter or DeviceClass.WiFi or DeviceClass.NetworkAdapter or DeviceClass.Modem => true,
         _ => false,
     };
 

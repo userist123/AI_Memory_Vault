@@ -258,7 +258,7 @@ public sealed class DeviceScopeTests
             Assert.Equal(expected, DeviceScope.IsInScope(c));
             Assert.Equal(expected, DeviceScope.IsInScope(new DeviceJournalEntry { Identity = "x", Class = c }));
         }
-        Assert.Equal(16, Enum.GetValues<DeviceClass>().Count(DeviceScope.IsInScope));
+        Assert.Equal(17, Enum.GetValues<DeviceClass>().Count(DeviceScope.IsInScope));
     }
 
     [Fact]

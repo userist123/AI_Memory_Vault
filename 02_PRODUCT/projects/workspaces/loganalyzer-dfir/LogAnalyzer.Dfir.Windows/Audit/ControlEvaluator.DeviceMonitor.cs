@@ -11,14 +11,17 @@ public static partial class ControlEvaluator
     /// the same scope as the monitor page and report section 3c), with state, user at connection, registration number and alerts.
     /// <list type="bullet">
     /// <item>NECONFORM when a registration number in the journal does not match the LAST "device.registration_number_changed" entry of the sealed audit for that
-    /// identity (also an identity the audit has and the journal has lost), or when the journal's running windows disagree with the sealed ones.</item>
-    /// <item>NECONFORM on an isolated station (DE VERIFICAT on an internet station) when a storage medium has no number, a forbidden class was seen active, a
-    /// serial appeared on two devices (possible clone) or the sealed audit holds a critical alert for a device the journal does not have.</item>
+    /// identity (also an identity the audit has and the journal has lost), when the journal's running windows disagree with the sealed ones, or when the
+    /// journal's rows disagree with the devices sealed on first sight (a row missing, re-classed, re-dated or added by hand, or a sealed alert of the period
+    /// without an in-scope row of the same class in the period: <see cref="DeviceMonitorAuditCheck.DeviceMismatches"/>).</item>
+    /// <item>NECONFORM on an isolated station (DE VERIFICAT on an internet station) when a storage medium has no number, a forbidden class was seen active or a
+    /// serial appeared on two devices (possible clone, also a device without a unique serial next to a serialled twin).</item>
     /// <item>NEDETERMINAT when the journal or the sealed audit cannot be read or verified, or when no SEALED running window of the monitor covers any part of the
     /// period (coverage is computed only from sealed records).</item>
-    /// <item>DE VERIFICAT, never CONFORM, when the monitor did not run during the whole period (each uncovered interval is named, and the storage devices
-    /// Windows' own history shows in them are listed), when the journal is not trusted, when a critical alert exists only in the journal, or when it saw no
-    /// device at all.</item>
+    /// <item>DE VERIFICAT, never CONFORM, when the monitor did not run during the whole period or recorded a lost interval however short (each uncovered
+    /// interval is named, and the storage devices Windows' own history shows in them are listed), when it observed devices on resume, when the journal is not
+    /// trusted or was reset (damaged, sealed), when a critical alert exists only in the journal, when sealed records cannot be read, when a device came back
+    /// with another volume, or when it saw no device at all.</item>
     /// </list>
     /// CONFORM only with the whole period covered by sealed running windows, at least one device seen, none breaking the rule, no unsealed critical alert and the
     /// journal agreeing with the sealed audit.
@@ -53,7 +56,8 @@ public static partial class ControlEvaluator
         var sealedAlerts = auditUsable ? DeviceMonitorAuditCheck.AlertsInPeriod(audit!, from, to) : [];
         var cloneAlerts = sealedAlerts.Where(a => DeviceMonitorAuditCheck.IsCloneAlert(a.Text)).ToList();
         var journalCloneAlerts = s.Alerts.Where(a => a.Severity == DeviceAlertSeverity.Critical && DeviceMonitorAuditCheck.IsCloneAlert(a.Text)).ToList();
-        var orphanAlerts = sealedAlerts.Where(a => !DeviceMonitorAuditCheck.HasDevice(journal, a)).ToList();
+        // every journal row against the device's sealed first-seen record, both ways, and every sealed alert of the period against an in-period row (B1)
+        var deviceFindings = auditUsable ? DeviceMonitorAuditCheck.DeviceMismatches(journal, audit!, from, to, devices) : [];
         // the critical alerts of the journal that the sealed audit does not have (its write failed when they were raised, or they were added by hand)
         var unsealed = auditUsable ? s.Alerts.Where(a => a.Severity == DeviceAlertSeverity.Critical && !DeviceMonitorAuditCheck.InAudit(a, audit!)).ToList() : [];
 
@@ -63,24 +67,38 @@ public static partial class ControlEvaluator
         var runDisagreements = auditUsable ? DeviceMonitorCoverage.CrossCheck(journal.Runs, audit!.Runs, from, to) : [];
         var history = coverage is { Gaps.Count: > 0 } ? WindowsStorageHistoryInGaps(f, gaps).ToList() : [];
         var resumed = auditUsable ? audit!.ObservedOnResume.Where(o => o.TimeUtc >= from && o.TimeUtc <= to).ToList() : [];
+        var lostInPeriod = auditUsable ? audit!.Gaps.Where(g => g.ToUtc >= from && g.FromUtc <= to).ToList() : [];
+        var resets = auditUsable ? audit!.Resets.Where(x => x.TimeUtc >= from && x.TimeUtc <= to).ToList() : [];
+        var volumeAlerts = (auditUsable ? audit!.InfoAlerts.Concat(audit.CriticalAlerts).Where(a => a.TimeUtc >= from && a.TimeUtc <= to && DeviceMonitorRules.IsVolumeChangedAlert(a.Text))
+                               .Select(a => $"VOLUM DIFERIT {DeviceMonitorReport.UtcText(a.TimeUtc)}: {a.Device} — {a.Text} (jurnal sigilat)")
+                           : s.Alerts.Where(a => DeviceMonitorRules.IsVolumeChangedAlert(a.Text)).Select(a => "VOLUM DIFERIT " + DeviceMonitorReport.AlertLine(a))).ToList();
         var blind = journal.Radios.Where(x => x.BlindNow || x.LastBlindUtc >= from && x.FirstBlindUtc <= to).ToList();
+        int unreadable = auditUsable ? audit!.Unreadable : 0;
         bool untrusted = f.DeviceJournalUntrusted.Length > 0;
 
         // a journal window the sealed audit does not back is a tampering finding; when the sealed audit has no window over the period at all the status stays NEDETERMINAT
         // (the audit write may simply have failed), but the disagreement is still listed
-        bool tamper = mismatches.Count > 0 || runDisagreements.Count > 0 && coverage is { AnyCoverage: true };
-        bool policy = s.Offending.Count > 0 || cloneAlerts.Count > 0 || journalCloneAlerts.Count > 0 || orphanAlerts.Count > 0;
+        bool tamper = mismatches.Count > 0 || deviceFindings.Count > 0 || runDisagreements.Count > 0 && coverage is { AnyCoverage: true };
+        bool policy = s.Offending.Count > 0 || cloneAlerts.Count > 0 || journalCloneAlerts.Count > 0;
+        // owner decision 2026-10-16: never CONFORM while anything happened that the controller has to look at
+        bool toVerify = gaps.Count > 0 || lostInPeriod.Count > 0 || resumed.Count > 0 || devices.Count == 0 || unsealed.Count > 0 || untrusted || unreadable > 0
+                        || resets.Count > 0 || volumeAlerts.Count > 0;
         var status = tamper ? ControlStatus.Neconform
             : policy ? (isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat)
             : !auditUsable || coverage is { AnyCoverage: false } ? ControlStatus.Nedeterminat
-            : gaps.Count > 0 || devices.Count == 0 || unsealed.Count > 0 || untrusted ? ControlStatus.DeVerificat
+            : toVerify ? ControlStatus.DeVerificat
             : ControlStatus.Conform;
 
         var evidence = new List<string>();
         foreach (var m in mismatches)
             evidence.Add("NECONFORM: numărul de înregistrare din jurnal nu corespunde jurnalului sigilat — " + (m.Device is { } md ? DeviceMonitorReport.Line(md) : "dispozitiv " + m.Identity + " (rândul lipsește din jurnalul monitorului)") +
                          $" — în jurnal „{(m.InJournal.Length > 0 ? m.InJournal : "(gol)")}”, în jurnalul sigilat {(m.InAudit is null ? "nu există nicio înregistrare pentru acest dispozitiv" : $"„{(m.InAudit.Length > 0 ? m.InAudit : "(gol)")}”")}");
+        foreach (var d in deviceFindings) evidence.Add("NECONFORM: " + d + " — jurnalul monitorului nu corespunde jurnalului sigilat");
         foreach (var d in runDisagreements) evidence.Add("NECONFORM: " + d);
+        foreach (var x in resets)
+            evidence.Add($"JURNAL RESETAT {DeviceMonitorReport.UtcText(x.TimeUtc)}: jurnalul monitorului era deteriorat și a fost pus deoparte ({x.File}, SHA-256 {x.Sha256}); rândurile de dinainte nu se mai compară");
+        if (unreadable > 0) evidence.Add($"ÎNREGISTRĂRI SIGILATE NECITIBILE: {unreadable} înregistrări ale monitorului din jurnalul sigilat nu au putut fi citite");
+        evidence.AddRange(volumeAlerts);
         if (untrusted) evidence.Add("JURNALUL MONITORULUI NU ESTE DE ÎNCREDERE: " + f.DeviceJournalUntrusted);
         evidence.AddRange(s.Offending.Select(e => "ÎNCALCĂ REGULA: " + DeviceMonitorReport.Line(e)));
         foreach (var a in sealedAlerts)
@@ -114,6 +132,12 @@ public static partial class ControlEvaluator
               $"; {Ro.CountFem(s.Alerts.Count, "alertă", "alerte")} în perioadă ({s.Critical} critice)");
         var detail = parts[0] + ".";
         if (blind.Count > 0) detail += " " + string.Join(". ", blind.Select(x => x.Text)) + " (absența dispozitivelor de acest fel nu înseamnă că nu s-au conectat).";
+        if (deviceFindings.Count > 0)
+            detail += $" Rândurile jurnalului monitorului nu corespund înregistrărilor sigilate ale dispozitivelor în {Ro.CountMasc(deviceFindings.Count, "punct", "puncte")} (rând șters, adăugat, cu tip sau date schimbate, sau o alertă sigilată fără rând în perioadă): posibilă alterare a fișierului.";
+        if (resets.Count > 0) detail += " Jurnalul monitorului a fost resetat în perioadă (fișier deteriorat, păstrat deoparte; resetarea este sigilată).";
+        if (lostInPeriod.Count > 0 || resumed.Count > 0) detail += " Monitorul a pierdut evenimente în perioadă (intervale pierdute sau dispozitive observate la reluare, listate în dovezi).";
+        if (volumeAlerts.Count > 0) detail += " Un dispozitiv a revenit cu altă serie de volum (reformatat sau clonă).";
+        if (unreadable > 0) detail += $" {unreadable} înregistrări sigilate ale monitorului nu au putut fi citite.";
         if (mismatches.Count > 0)
             detail += $" Numărul de înregistrare din jurnal nu corespunde jurnalului sigilat pentru {Ro.CountMasc(mismatches.Count, "dispozitiv", "dispozitive")} (jurnalul monitorului este un fișier simplu; jurnalul sigilat este înregistrarea care contează).";
         if (runDisagreements.Count > 0)
@@ -121,8 +145,6 @@ public static partial class ControlEvaluator
         if (untrusted) detail += " " + f.DeviceJournalUntrusted;
         if (cloneAlerts.Count + journalCloneAlerts.Count > 0)
             detail += " S-a dat alerta de clonă („" + DeviceMonitorRules.CloneAlertText + "” sau „" + DeviceMonitorRules.DuplicateSerialAlertText + "”): aceeași serie și același VID/PID au apărut pe dispozitive diferite.";
-        if (orphanAlerts.Count > 0)
-            detail += $" {Ro.Capitalize(Ro.CountFem(orphanAlerts.Count, "alertă critică din jurnalul sigilat nu are", "alerte critice din jurnalul sigilat nu au"))} rând în jurnalul monitorului (rând șters?).";
         if (unsealed.Count > 0)
             detail += $" {Ro.Capitalize(Ro.CountFem(unsealed.Count, "alertă critică din jurnalul monitorului nu apare", "alerte critice din jurnalul monitorului nu apar"))} în jurnalul sigilat (verificarea nu poate fi Conform).";
         if (!auditUsable)

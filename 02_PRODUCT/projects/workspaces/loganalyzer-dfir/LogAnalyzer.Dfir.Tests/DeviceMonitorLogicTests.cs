@@ -152,18 +152,7 @@ public sealed class DeviceMonitorLogicTests : IDisposable
 
     // ---- clones ---------------------------------------------------------------------------------------------------------------------------------
 
-    [Fact]
-    public void Two_devices_with_the_same_serial_present_together_keep_two_rows_and_raise_the_clone_alert()
-    {
-        var a = Stick();
-        var b = a with { InstanceId = a.InstanceId.Replace("FAKESN0001&0", "FAKESN0001&1"), ContainerId = "{AAAAAAAA-0000-0000-0000-000000000002}" };
-        var j = new DeviceJournal();
-        var changes = DeviceJournalMerge.Apply(j, [a, b], null, "—", T0, initial: false);
-        Assert.Equal(2, j.Devices.Count);
-        Assert.All(changes, c => Assert.Equal(DeviceMonitorRules.CloneAlertText, c.CloneText));
-        Assert.All(j.Devices, d => Assert.True(d.DuplicateSerial));
-        Assert.True(DeviceMonitorRules.IsCloneAlert(DeviceMonitorRules.CloneAlertText));
-    }
+    // two sticks with the same serial present together: see DeviceMonitorReviewTests (the second one gets a port-generated instance id, as on a real station)
 
     [Fact]
     public void The_same_serial_back_with_another_capacity_is_a_separate_row_marked_as_a_possible_clone()
@@ -342,15 +331,16 @@ public sealed class DeviceMonitorLogicTests : IDisposable
         Assert.True(File.Exists(legacy));
 
         Assert.Null(DeviceJournalStore.MigrateLegacy(legacy, target, (e, d) => { audited.Add((e, d)); return null; }));
-        Assert.Single(audited);
+        Assert.Equal(2, audited.Count);
         Assert.Equal(OperationAudit.DeviceJournalMigrated, audited[0].Ev);
         Assert.Contains("devices=1", audited[0].Detail);
+        Assert.Equal(OperationAudit.DeviceFirstSeen, audited[1].Ev);                          // the migrated row gets its sealed first-seen record
         Assert.Single(DeviceJournalStore.Load(target, out var problem).Devices);
         Assert.Equal("", problem);
         Assert.False(File.Exists(legacy));
         // a second call changes nothing
         Assert.Null(DeviceJournalStore.MigrateLegacy(legacy, target, (e, d) => { audited.Add((e, d)); return null; }));
-        Assert.Single(audited);
+        Assert.Equal(2, audited.Count);
     }
 
     [Fact]
