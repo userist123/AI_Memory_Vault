@@ -123,3 +123,37 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | S03 | Windows version and last update | Known and documented | Known and documented | Recent |  |
 | S04 | Offline updates applied and update register | Register matches installed updates | Register matches installed updates | n/a | The offline update register exists only where updates cannot come online. |
 | S05 | Station clock versus the application's time memory | Consistent | Consistent | Consistent |  |
+
+## Application installation date: residual risk
+
+On a Standalone station every network connection after the installation of the application is NECONFORM, so the installation date is a boundary that an
+administrator could try to move later. What the application does (`AppInstallDate`, `AppInstallTraces`):
+
+- The first start is written into the application's audit chain (`app.first_start`) before licence activation, so a normal deployment (start, read the
+  Hardware ID, wait for the licence, configure) keeps its first run inside the chain.
+- The date is valid only if the whole chain verifies and starts with a store-creation record. It is the EARLIEST of the chain and of the traces of the
+  INSTALLED edition executable: the application's own files, Prefetch (creation and run times), Amcache (last-write time of its entry, not a first
+  sighting) and the oldest retained Security 4688 start.
+- NECONFORM: a sealed store reinitialisation after a primary administrator existed, a repeated administrator creation, a broken chain, and a Windows RUN
+  trace (Prefetch, 4688) of the installed executable before the chain began (history lost).
+- DE VERIFICAT: earlier file or Amcache times of the installed executable; a run of an edition executable from another folder ("aplicația a rulat și din
+  altă locație"); an Amcache entry of an edition executable at another path ("aplicația a existat/rulat anterior în altă locație", with path and last-write
+  time); a newer Prefetch trace, i.e. a .pf of the installed executable created long after an older Windows trace of the same installed path (its Amcache
+  entry or a Security 4688 start: "urmă Prefetch mai nouă decât alte urme Windows — poate fi recreată de Windows sau ștearsă", since Windows itself evicts
+  and recreates the .pf of a rarely run program); a missing .pf while Prefetch is active ("posibilă ștergere"); and the absence of every Windows trace.
+- The computed date and the time of the chain's first record are printed in every control report header, so two controls can be compared.
+
+### Probe B (what an administrator can still achieve)
+
+The administrator recreates the authentication store, reinstalls the application in a new folder and deletes the old .pf (Prefetch on, other .pf present):
+
+- Achieved: the computed installation date moves later (to the reinstall), and no NECONFORM is raised by the station alone, because no remaining Windows
+  trace proves a RUN before the new chain.
+- Notes that remain (DE VERIFICAT): the old-folder Amcache entry ("existed/ran earlier in another location", reported with path and time) as long as
+  Windows keeps it. The newer Prefetch trace note does not appear: it compares the new .pf only with older traces of the same installed path, and the
+  new folder has none.
+- Notes that disappear: "posibilă ștergere" (the new .pf hides it after the next run), and every note once Amcache drops or rewrites the old entry;
+  with Prefetch off and Amcache unreadable only the "urmele Windows lipsesc" note is left.
+
+The strong control is therefore the paper anchor: PR #289 (merged) anchors the station state on paper; adding the installation date to the anchored state
+follows in a later PR, after which any later change versus the paper-anchored value is NECONFORM.

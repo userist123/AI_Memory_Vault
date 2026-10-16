@@ -196,6 +196,11 @@ namespace LogAnalyzer.UI
                 splash.Show();
                 Step(debugLogPath, "SplashWindow shown.\n");
 
+                // 1b. Review of PR #290: the first start is recorded in the application's audit chain BEFORE licence activation, so the runs of a normal
+                // deployment (start, read the Hardware ID, wait for the licence, configure) are inside the chain and never read as "history lost".
+                try { if (LogAnalyzer.Dfir.Case.AppInstallDate.RecordFirstStart()) Step(debugLogPath, "First start recorded in the application audit chain.\n"); }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { Step(debugLogPath, $"First start not recorded: {ex.GetType().Name}\n"); }
+
                 // 2. Verificăm licența
                 var licenseService = ServiceProvider.GetRequiredService<LogAnalyzer.Core.Services.LicenseService>();
                 Step(debugLogPath, $"Verifying license... (IsActivated: {licenseService.IsActivated()})\n");

@@ -33,7 +33,7 @@ public static class ManualChecks
             "Cereți registrul stației de verificare și căutați înregistrarea pentru suporturile văzute pe stație.",
             "Istoricul conectărilor fiecărui suport (pagina „Medii de stocare”)."),
         new("M05", "Actualizările și semnăturile antivirus aduse offline sunt înregistrate (data, sursa, amprenta pachetului, cine le-a adus)?",
-            "Fără registru nu se poate dovedi că actualizările provin dintr-o sursă sigură.",
+            "Registrul este singura sursă pentru originea actualizărilor; dacă lipsește: sursă lipsă: registrul actualizărilor offline, de ce lipsește: nu este ținut, cum se pornește: se completează la fiecare aducere de actualizări (data, sursa, amprenta pachetului, cine le-a adus).",
             "Comparați data ultimei actualizări din aplicație cu registrul de actualizări.",
             "Verificările P09 (semnături antivirus) și versiunea Windows."),
         new("M06", "Exporturile de jurnale sunt înregistrate (cine, când, pe ce suport, unde se păstrează)?",
