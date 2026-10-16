@@ -131,6 +131,19 @@ public sealed class AirGapFactsCollector : ICollector
                 // Capabilities: 4 = "Supports Writing" (CIM_MediaAccessDevice)
                 b.Writers.Add(new OpticalWriterFact { Name = mo["Name"] as string ?? "", Drive = mo["Drive"] as string ?? "", CanWrite = caps.Contains((ushort)4) || desc.Any(d => d.Contains("Writing", StringComparison.OrdinalIgnoreCase)), Capabilities = desc });
             }
+        // D7: the drive's own profile list through IMAPI2; a drive WMI reports as read-only but IMAPI2 lists writable profiles for is a writer
+        var (imapi, _) = LogAnalyzer.Dfir.Windows.Devices.ImapiRecorders.Read(TimeSpan.FromSeconds(15));
+        foreach (var rec in (imapi ?? []).Where(r => r.CanWrite))
+        {
+            var profiles = "IMAPI2: " + string.Join(", ", rec.WritableProfiles);
+            if (b.Writers.FirstOrDefault(w => rec.Drives.Contains(w.Drive, StringComparer.OrdinalIgnoreCase)) is { } known)
+            {
+                known.CanWrite = true;
+                known.Capabilities = [.. known.Capabilities, profiles];
+            }
+            else
+                b.Writers.Add(new OpticalWriterFact { Name = rec.Product, Drive = rec.Drives.FirstOrDefault() ?? "", CanWrite = true, Capabilities = [profiles] });
+        }
         var staging = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "Windows", "Burn", "Burn");
         b.StagingPath = staging;
         b.StagingFolderExists = Directory.Exists(staging);
