@@ -251,6 +251,9 @@
                         <TextBlock Text="{Binding MediaCenter.AlertText}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource CriticalBrush}" VerticalAlignment="Center"/>
                     </DockPanel>
                 </Border>
+                <!-- G3: the older pages under "Avansat" load their own events; the offer shows there while neither "Colectează tot" nor the page has data -->
+                <ctrl:NoDataPanel Margin="20,12,20,0" PageItemCount="{Binding Events.Count}"
+                                  Visibility="{Binding IsLegacyDataPage, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </StackPanel>
                 <!-- TabControl Region Host (Bound to SelectedTabIndex & SelectedModuleIndex) -->
                 <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}" BorderThickness="0" Background="Transparent">
