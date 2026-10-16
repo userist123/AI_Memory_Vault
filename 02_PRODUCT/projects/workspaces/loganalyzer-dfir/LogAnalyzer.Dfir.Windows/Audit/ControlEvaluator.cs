@@ -45,6 +45,8 @@ public sealed class ControlReport
     public int Applicable => Checks.Count(c => c.Status != ControlStatus.NuSeAplica);
     /// <summary>The head of the application's audit log when the control finished, printed as the anchor code for the next control; null = not available.</summary>
     public LogAnalyzer.Dfir.Case.AuditAnchorPoint? Anchor { get; set; }
+    /// <summary>The values STORED in the anchored state entry (read back after writing it), printed next to the anchor code; null = not written.</summary>
+    public LogAnalyzer.Dfir.Case.AnchoredInstall? AnchoredState { get; set; }
     /// <summary>The trusted officers of the procedure profile, printed so their fingerprints are on paper.</summary>
     public IReadOnlyList<LogAnalyzer.Dfir.Reporting.SecurityOfficerRow> RegisteredOfficers { get; set; } = [];
 }
@@ -368,44 +370,58 @@ public static partial class ControlEvaluator
     }
 
     /// <summary>
-    /// A16: the application install date now against the one recorded with the anchor typed from the paper. A later date means the store or the application was
-    /// reinitialised or reinstalled after the previous control (NECONFORM); an earlier one means an older trace was found since (to verify).
+    /// A16: against the anchored state of the control typed from the paper. An INCIDENT is decided only by the identity of the application's audit chain (its first
+    /// record): another identity means the chain was reinitialised (NECONFORM). The install date computed from traces is informative: it legitimately moves later
+    /// after an update of the application, an eviction of Prefetch traces or a control under another Windows account, so any difference is only to verify.
     /// </summary>
     private static void InstallDateCheck(StationFacts f, ControlReport r)
     {
         const string title = "Data instalării aplicației față de controlul anterior";
         string Fmt(DateTimeOffset? t) => t is { } v ? v.UtcDateTime.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) + " UTC" : "necunoscută";
-        if (f.InstallAtPaperAnchor is not { } a) { Add(r, "A16", "Audit", title, ControlStatus.Nedeterminat, "Jurnalul aplicației nu a fost disponibil, deci data instalării de la controlul anterior nu s-a putut citi."); return; }
+        string Id(LogAnalyzer.Dfir.Case.ChainIdentity? c) => c is null ? "necunoscută" : $"prima înregistrare {c.FirstKind} la {c.FirstWhenUtc}, amprenta {(c.FirstHash.Length > 16 ? c.FirstHash[..16] : c.FirstHash)}";
+        if (f.InstallAtPaperAnchor is not { } a) { Add(r, "A16", "Audit", title, ControlStatus.Nedeterminat, "Jurnalul aplicației nu a fost disponibil, deci starea de la controlul anterior nu s-a putut citi."); return; }
         if (!a.Determinable || !a.Recorded)
         {
             Add(r, "A16", "Audit", title, ControlStatus.Nedeterminat, "Data instalării nu s-a putut compara: " + a.Why + ".",
                 rec: "Introduceți la începutul controlului codul de ancorare de pe procesul-verbal semnat al controlului anterior.");
             return;
         }
-        var ev = new List<string> { $"la controlul anterior (codul de pe procesul-verbal): {Fmt(a.Utc)} ({a.Basis})", $"acum: {Fmt(f.AppInstalledUtc)} ({f.AppInstallBasis})" };
-        var tolerance = TimeSpan.FromMinutes(1);
-        if (a.Utc is { } then && f.AppInstalledUtc is { } now)
+        var ev = new List<string>
         {
-            if (now - then > tolerance)
-                Add(r, "A16", "Audit", title, ControlStatus.Neconform,
-                    "Data instalării s-a schimbat după controlul anterior (posibilă reinițializare sau reinstalare): a fost " + Fmt(then) + ", acum este " + Fmt(now) + ".", ev,
-                    "Tratați stația ca incident de securitate: cereți explicația reinstalării sau reinițializării și comparați cu registrul de intervenții.");
-            else if (then - now > tolerance)
+            $"identitatea jurnalului la controlul anterior: {Id(a.Chain)}; acum: {Id(f.CurrentChain)}",
+            $"data instalării la controlul anterior (codul de pe procesul-verbal): {Fmt(a.Utc)} ({a.Basis})",
+            $"data instalării calculată acum: {Fmt(f.AppInstalledUtc)} ({f.AppInstallBasis})",
+        };
+        if (a.Chain is { } then && (f.CurrentChain is not { } now || now.FirstHash != then.FirstHash || now.FirstWhenUtc != then.FirstWhenUtc || now.FirstKind != then.FirstKind))
+        {
+            Add(r, "A16", "Audit", title, ControlStatus.Neconform,
+                "Jurnalul aplicației a fost reinițializat după controlul anterior (identitatea jurnalului s-a schimbat): " + Id(then) + " la controlul anterior, " + Id(f.CurrentChain) + " acum.", ev,
+                "Tratați stația ca incident de securitate: un jurnal reinițializat poate muta data instalării și ascunde conectări și operații dinaintea lui.");
+            return;
+        }
+        string chainNote = a.Chain is null ? " Identitatea jurnalului nu a fost înregistrată la controlul anterior, deci reinițializarea nu s-a putut verifica." : " Jurnalul aplicației este același ca la controlul anterior.";
+        var tolerance = TimeSpan.FromDays(1);
+        if (a.Utc is { } t0 && f.AppInstalledUtc is { } t1)
+        {
+            if (t1 - t0 > tolerance)
                 Add(r, "A16", "Audit", title, ControlStatus.DeVerificat,
-                    "Data instalării este acum mai veche decât la controlul anterior: s-a găsit o urmă mai veche a aplicației (" + Fmt(now) + ", față de " + Fmt(then) + ").", ev,
+                    $"Data instalării calculată din urme s-a mutat mai târziu ({Fmt(t0)} → {Fmt(t1)}) — normal după o actualizare a aplicației sau ștergerea urmelor Prefetch; confirmați din procesul-verbal." + chainNote, ev,
+                    "Comparați cu procesul-verbal și cu registrul de intervenții (actualizări ale aplicației).");
+            else if (t0 - t1 > tolerance)
+                Add(r, "A16", "Audit", title, ControlStatus.DeVerificat,
+                    $"Data instalării calculată din urme este acum mai veche ({Fmt(t1)}, față de {Fmt(t0)}): s-a găsit o urmă mai veche a aplicației." + chainNote, ev,
                     "Verificați de unde provine urma mai veche (o instalare anterioară sau o copie a aplicației).");
             else
-                Add(r, "A16", "Audit", title, ControlStatus.Conform, "Data instalării este aceeași ca la controlul anterior: " + Fmt(now) + ".", ev);
+                Add(r, "A16", "Audit", title, a.Chain is null ? ControlStatus.DeVerificat : ControlStatus.Conform, $"Data instalării este aceeași ca la controlul anterior ({Fmt(t1)})." + chainNote, ev);
             return;
         }
         if (a.Utc is not null)
-            Add(r, "A16", "Audit", title, ControlStatus.Neconform,
-                "Data instalării s-a schimbat după controlul anterior (posibilă reinițializare sau reinstalare): era cunoscută (" + Fmt(a.Utc) + "), iar acum nu se mai poate stabili (" + f.AppInstallBasis + ").", ev,
-                "Tratați stația ca incident de securitate: urmele instalării au dispărut după controlul anterior.");
+            Add(r, "A16", "Audit", title, ControlStatus.DeVerificat,
+                $"Data instalării era cunoscută la controlul anterior ({Fmt(a.Utc)}), iar acum nu se poate calcula din urme ({f.AppInstallBasis}) — de exemplu după ștergerea urmelor Prefetch sau un control din alt cont Windows." + chainNote, ev);
         else if (f.AppInstalledUtc is not null)
-            Add(r, "A16", "Audit", title, ControlStatus.DeVerificat, "La controlul anterior data instalării nu se putea stabili; acum este " + Fmt(f.AppInstalledUtc) + ".", ev);
+            Add(r, "A16", "Audit", title, ControlStatus.DeVerificat, "La controlul anterior data instalării nu se putea stabili; acum este " + Fmt(f.AppInstalledUtc) + "." + chainNote, ev);
         else
-            Add(r, "A16", "Audit", title, ControlStatus.Nedeterminat, "Data instalării nu se poate stabili, nici acum, nici la controlul anterior.", ev);
+            Add(r, "A16", "Audit", title, a.Chain is null ? ControlStatus.Nedeterminat : ControlStatus.Conform, "Data instalării nu se poate stabili, nici acum, nici la controlul anterior." + chainNote, ev);
     }
 
     /// <summary>A11: the anchor code of the previous control (from the signed paper) is still in the application's audit log (see LogAnalyzer.Dfir.Case.AuditAnchor).</summary>

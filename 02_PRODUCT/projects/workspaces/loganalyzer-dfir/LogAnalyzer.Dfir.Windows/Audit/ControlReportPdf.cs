@@ -239,9 +239,13 @@ public static class ControlReportPdf
             ? a.Line + ". Treceți codul pe procesul-verbal; la controlul următor se introduce în aplicație ca să se verifice că jurnalul aplicației nu a fost rescris (verificarea A11)."
             : "Cod de ancorare: indisponibil (jurnalul aplicației nu a putut fi citit).");
         // the install date is recorded with the anchor and compared at the next control (A16): it goes on the paper next to the code
-        l.Add("Data instalării aplicației (înregistrată odată cu codul de ancorare): " +
-              (r.Facts.AppInstalledUtc is { } inst ? inst.UtcDateTime.ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture) + " UTC" : "necunoscută") +
-              (r.Facts.AppInstallBasis.Length > 0 ? $" ({r.Facts.AppInstallBasis})" : "") + ". Treceți-o pe procesul-verbal lângă cod.");
+        // the values STORED in the anchored state entry (read back from the log), never a fresh computation
+        l.Add(r.AnchoredState is { } st
+            ? "Data instalării aplicației (din starea ancorată): " + (st.Utc is { } inst ? inst.UtcDateTime.ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture) + " UTC" : "necunoscută") +
+              (st.Basis.Length > 0 ? $" ({st.Basis})" : "") +
+              (st.Chain is { } c ? $"; identitatea jurnalului: prima înregistrare {c.FirstKind} la {c.FirstWhenUtc}, amprenta {(c.FirstHash.Length > 16 ? c.FirstHash[..16] : c.FirstHash)}" : "") +
+              ". Treceți-le pe procesul-verbal lângă cod."
+            : "Data instalării aplicației: indisponibilă (starea ancorată nu a fost scrisă).");
         l.Add(OfficialLabel + ". Ofițerul de securitate semnează fișierul cu certificatul calificat de pe cardul său („Semnează ca ofițer de securitate” în aplicație, sau în Adobe); semnătura se verifică cu „Verifică raport semnat”, comparând amprenta certificatului cu cea de pe procesul-verbal.");
         if (r.RegisteredOfficers.Count == 0) l.Add("Ofițeri de securitate declarați pe stație: niciunul.");
         foreach (var o in r.RegisteredOfficers)
