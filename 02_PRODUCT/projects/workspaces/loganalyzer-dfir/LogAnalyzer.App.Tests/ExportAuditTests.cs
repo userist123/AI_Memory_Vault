@@ -305,7 +305,11 @@ public sealed class ExportAuditTests : IDisposable
 
     /// <summary>A write call of the file API that creates or changes a file (reads are not matched).</summary>
     internal static readonly Regex RawWrite = new(
-        @"\bFile\.(?:Copy|Move|Replace|Create|OpenWrite|Write\w*|AppendAll\w*)\s*\(|new\s+(?:System\.IO\.)?(?:FileStream|StreamWriter)\s*\((?![^;\r\n]*FileAccess\.Read)|\bFile\.Open\s*\((?![^;\r\n]*FileAccess\.Read)");
+        @"\bFile\.(?:Copy|Move|Replace|Create|CreateText|AppendText|OpenWrite|Write\w*|AppendAll\w*)\s*\(" +
+        @"|new\s+(?:System\.IO\.)?(?:FileStream|StreamWriter)\s*\((?![^;\r\n]*FileAccess\.Read\b(?!Write))" +
+        @"|\bFile\.Open\s*\((?![^;\r\n]*FileAccess\.Read\b(?!Write))" +
+        @"|\b(?:fi|\w*(?:[Ff]ile|[Ii]nfo)\w*)\.(?:OpenWrite|Create|CreateText|AppendText)\s*\(\s*\)" +
+        @"|new\s+(?:System\.IO\.)?FileInfo\s*\([^;\r\n]*\)\s*\.(?:OpenWrite|Create|CreateText|AppendText)\s*\(");
 
     /// <summary>
     /// Methods with a raw file write that is neither a user export nor in need of ExportAudit.Run, with the reason. Everything else must call
@@ -369,12 +373,26 @@ public sealed class ExportAuditTests : IDisposable
     [InlineData("using var f = new FileStream(p, FileMode.Create);")]
     [InlineData("using var w = new StreamWriter(p);")]
     [InlineData("using var f = File.Open(p, FileMode.Create, FileAccess.Write);")]
+    [InlineData("using var f = new FileStream(p, FileMode.Create, FileAccess.ReadWrite);")]
+    [InlineData("using var f = File.Open(p, FileMode.OpenOrCreate, FileAccess.ReadWrite);")]
+    [InlineData("using var w = File.CreateText(p);")]
+    [InlineData("using var w = File.AppendText(p);")]
+    [InlineData("using var s = fileInfo.OpenWrite();")]
+    [InlineData("using var s = info.Create();")]
+    [InlineData("using var w = fi.CreateText();")]
+    [InlineData("using var w = fi.AppendText();")]
+    [InlineData("using var s = new FileInfo(p).Create();")]
     public void The_raw_write_guard_recognises_every_form_of_a_file_write(string code) => Assert.Matches(RawWrite, code);
 
     [Theory]
     [InlineData("var t = File.ReadAllText(p);")]
     [InlineData("using var f = new FileStream(p, FileMode.Open, FileAccess.Read);")]
     [InlineData("var ok = File.Exists(p);")]
+    [InlineData("using var f = File.Open(p, FileMode.Open, FileAccess.Read);")]
+    [InlineData("using var f = new FileStream(p, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);")]
+    [InlineData("var h = SHA256.Create();")]
+    [InlineData("using var r = new FileInfo(p).OpenRead();")]
+    [InlineData("var len = fileInfo.Length;")]
     public void The_raw_write_guard_does_not_match_reads(string code) => Assert.DoesNotMatch(RawWrite, code);
 
     [Fact]
@@ -401,14 +419,24 @@ public sealed class ExportAuditTests : IDisposable
 
     // ---- finding B1: single items copied unmasked to the clipboard are audited (kind, length, SHA-256), never masked and never with the text ----
 
-    /// <summary>Copies that carry no case data (explanations, anchor codes, hardware id): the reason they are not audited.</summary>
+    /// <summary>Copies that carry no case data (anchor codes, hardware id; explanations of checks and policy settings carry station data and are audited): the reason they are not audited.</summary>
     private static readonly Dictionary<string, string> ClipboardWithoutCaseData = new(StringComparer.Ordinal)
     {
-        ["PolicyViewModel.CopyExplanation"] = "explanation of a setting, no case data",
-        ["StationControlViewModel.CopyExplanation"] = "explanation of a check, no case data",
         ["StationControlViewModel.CopyAnchorCode"] = "anchor code of the application audit, no case data",
         ["ActivationWindow.CopyHwid_Click"] = "hardware id of the station for activation, no case data",
     };
+
+    [Fact]
+    public void The_clipboard_seam_is_not_public_and_not_used_outside_ExportAudit()
+    {
+        Assert.False(typeof(ExportAudit).GetProperty("ClipboardSetter", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static) is not null);
+        var users = new List<string>();
+        foreach (var file in Directory.GetFiles(AppDir(), "*.cs", SearchOption.AllDirectories)
+                     .Where(f => !f.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}") && !f.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}")))
+            if (!string.Equals(Path.GetFileName(file), "ExportAudit.cs", StringComparison.Ordinal) && Regex.IsMatch(StripComments(File.ReadAllText(file)), @"ClipboardSetter"))
+                users.Add(Path.GetFileName(file));
+        Assert.True(users.Count == 0, "ClipboardSetter used outside ExportAudit.cs: " + string.Join(", ", users));
+    }
 
     [Fact]
     public void Every_clipboard_copy_of_case_data_goes_through_ExportAudit_Clipboard()
@@ -433,7 +461,7 @@ public sealed class ExportAuditTests : IDisposable
         }
         Assert.True(problems.Count == 0, string.Join("\n", problems.Distinct()));
         Assert.DoesNotContain(ClipboardWithoutCaseData.Keys, k => !seen.Contains(k));
-        Assert.True(copies >= 3, "the scan is broken");
+        Assert.True(copies >= 2, "the scan is broken");
         foreach (var f in new[] { Path.Combine("ViewModels", "MainViewModel.cs"), Path.Combine("ViewModels", "InvestigationViewModel.cs"), Path.Combine("ViewModels", "MediaCenterViewModel.cs"), Path.Combine("Views", "GenericDetailWindow.xaml.cs") })
             Assert.Contains("ExportAudit.Clipboard(", File.ReadAllText(Path.Combine(AppDir(), f)), StringComparison.Ordinal);
     }

@@ -381,7 +381,7 @@ public sealed class SignedMediaRegisterTests : IDisposable
 
     private string PlaceInCase(byte[] json, byte[]? cms, int version = 1)
     {
-        var dir = Path.Combine(_dir, "case", "Evidence");
+        var dir = Path.Combine(_dir, "case");
         Directory.CreateDirectory(dir);
         var path = Path.Combine(dir, SignedMediaRegister.FileName(version));
         File.WriteAllBytes(path, json);
@@ -422,6 +422,27 @@ public sealed class SignedMediaRegisterTests : IDisposable
         Assert.False(r!.Used);
         Assert.Null(r.Active.Doc);
         Assert.Contains("NU este folosit", r.Note);
+    }
+
+    [Fact]
+    public void A_register_planted_in_imported_evidence_is_ignored_and_cannot_block_the_case_register()
+    {
+        var (doc, json, cms) = Issue(null, null, E("INV-1", "AA11"));
+        var root = PlaceInCase(json, cms, 1);
+        var evidence = Path.Combine(root, "Evidence", "imported");
+        Directory.CreateDirectory(evidence);
+        File.WriteAllBytes(Path.Combine(evidence, SignedMediaRegister.FileName(9)), Encoding.UTF8.GetBytes("{}"));   // higher version, invalid, unsigned
+        var r = SignedMediaRegisterCase.Find(root, new FakeCms(P.Officer), P.Officers, P.Trust(), PaperFp);
+        Assert.True(r!.Used);
+        Assert.Equal(doc.Version, r.Active.Doc!.Version);
+        // an invalid register in the case root itself is still refused with its reason
+        var bad = PlaceInCase(Encoding.UTF8.GetBytes("{}"), null, 10);
+        Assert.False(SignedMediaRegisterCase.Find(bad, new FakeCms(P.Officer), P.Officers, P.Trust(), PaperFp)!.Used);
+        // only an evidence-subfolder register: nothing in the case
+        var only = Path.Combine(_dir, "case2", "Evidence");
+        Directory.CreateDirectory(only);
+        File.WriteAllBytes(Path.Combine(only, SignedMediaRegister.FileName(1)), json);
+        Assert.Null(SignedMediaRegisterCase.Find(Path.Combine(_dir, "case2"), new FakeCms(P.Officer), P.Officers, P.Trust(), PaperFp));
     }
 
     [Fact]
