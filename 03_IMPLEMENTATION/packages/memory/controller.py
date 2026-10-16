@@ -3,6 +3,7 @@
 """
 import enum
 from typing import Any, Dict, Optional, List
+from collections.abc import Mapping
 import os
 import json
 from datetime import datetime, timezone, timedelta
@@ -23,6 +24,7 @@ from .cache import Cache
 
 # Security utilities
 from .security import sanitize_query, check_path_traversal, detect_cache_poisoning, check_query_size
+from security.verified_reduction import TRUSTED_STATUSES  # the pack builder's egress rule, mirrored at pagination
 from .security.pagination_token import PaginationToken, MissingHMACSecretError, InvalidPaginationTokenError
 
 # Context components
@@ -210,6 +212,31 @@ def _is_ontology_slot(note_id: Any, note: Optional[Dict[str, Any]] = None) -> bo
     if isinstance(note_id, str) and note_id.startswith(ONTOLOGY_SLOT_ID_PREFIX):
         return True
     return isinstance(note, dict) and note.get("type") == ONTOLOGY_SLOT_TYPE
+
+
+def egress_ineligibility(note: Dict[str, Any], *, allow_unverified: bool) -> Optional["ExclusionReason"]:
+    """Why the pack builder would reject `note` at egress, or None if it would not.
+
+    Mirrors `ContextPackBuilder._verify_and_reduce()` exactly, so a note that can
+    never be shown to this caller does not take a page slot. Two rules only:
+
+    * no provenance mapping and no `source_ref` to derive one from -- the egress
+      contract requires provenance on every model-facing result, and the builder
+      never fabricates it;
+    * a verification status outside TRUSTED_STATUSES when the caller has no
+      quarantine view (owners and agents have one, so for them this never fires).
+    """
+    if not isinstance(note.get("provenance"), Mapping) and note.get("source_ref") is None:
+        return ExclusionReason.PROVENANCE_MISSING
+    if not allow_unverified:
+        verification = note.get("verification")
+        if isinstance(verification, Mapping):
+            status = str(verification.get("status", verification.get("state", ""))).upper()
+        else:
+            status = str(verification or "").upper()
+        if status not in TRUSTED_STATUSES:
+            return ExclusionReason.UNVERIFIED_AT_EGRESS
+    return None
 
 
 class MemoryController:
@@ -1317,6 +1344,32 @@ class MemoryController:
                 disclosed = pd.sections(notes, sanitized, allow_unverified=allow_quarantined)
             else:
                 disclosed = pd.full_document(notes, allow_unverified=allow_quarantined)
+            # Egress eligibility, applied BEFORE the page is cut. The pack builder
+            # rejects, deterministically, any result with no provenance mapping
+            # and no source_ref (and, for callers without the quarantine view,
+            # any status outside TRUSTED_STATUSES). Until r0xx those notes still
+            # took page slots: they passed the lifecycle floor, ranked, filled
+            # the page, and were then thrown away at egress with nothing
+            # backfilled -- and the trace called it BUDGET_EXCEEDED. On benchmark
+            # v3 the agent's page was shorter than five in 41 of 130 cases and
+            # empty in 22, with up to 195 showable candidates left unused.
+            # Measured in 07_EVALUATION/reranker_envelope/DEVIATIONS.md.
+            eligible: List[Dict[str, Any]] = []
+            for d_note in disclosed:
+                reason = egress_ineligibility(d_note, allow_unverified=allow_quarantined)
+                if reason is None:
+                    eligible.append(d_note)
+                    continue
+                try:
+                    trace_collector.record_decision(
+                        d_note.get("id"), "EXCLUDED", reason, "egress_eligibility",
+                        {"provenance": type(d_note.get("provenance")).__name__,
+                         "verification": str(d_note.get("verification") or "")},
+                    )
+                except Exception:
+                    pass
+            candidate_trace['egress_ineligible_count'] = len(disclosed) - len(eligible)
+            disclosed = eligible
             # Pagination slicing
             total = len(disclosed)
             effective_page_size = min(page_size, tier_max_notes) if active_enable_cognitive_core else page_size
@@ -1393,20 +1446,50 @@ class MemoryController:
             }
             trace_collector.start_stage("context_pack")
             try:
-                pack = self.pack_builder.build(
-                    request_id='search',
-                    agent_id=principal.value,
-                    budget=pack_budget,
-                    results=page_results,
-                    disclosure_level=disclosure_level,
-                    minimal_provenance=None,
-                    next_page_token=next_token,
-                    audit_ref=None,
-                    # REVIEW/unverified results may be returned only as explicitly
-                    # quarantined data; the egress gate keeps them out of the
-                    # trusted model context while preserving lifecycle visibility.
-                    allow_unverified=(principal in {Principal.HUMAN, Principal.AI_AGENT, Principal.ADMIN}),
-                )
+                # Build, and backfill: when the builder drops page notes (a real
+                # budget overflow -- eligibility was settled before pagination),
+                # pull the next eligible candidates onto the page and rebuild,
+                # a bounded number of times, so a short page means the pool ran
+                # out, never that slots were wasted on notes that could not fit.
+                backfill_rounds = 0
+                while True:
+                    pack = self.pack_builder.build(
+                        request_id='search',
+                        agent_id=principal.value,
+                        budget=pack_budget,
+                        results=page_results,
+                        disclosure_level=disclosure_level,
+                        minimal_provenance=None,
+                        next_page_token=next_token,
+                        audit_ref=None,
+                        # REVIEW/unverified results may be returned only as explicitly
+                        # quarantined data; the egress gate keeps them out of the
+                        # trusted model context while preserving lifecycle visibility.
+                        allow_unverified=(principal in {Principal.HUMAN, Principal.AI_AGENT, Principal.ADMIN}),
+                    )
+                    deficit = effective_page_size - len(pack.get('results', []))
+                    if deficit <= 0 or end >= total or backfill_rounds >= 3:
+                        break
+                    kept_ids = {r.get('id') for r in pack.get('results', []) if isinstance(r, dict)}
+                    for p_note in page_results:
+                        if p_note.get('id') not in kept_ids:
+                            trace_collector.record_decision(
+                                p_note.get('id'), "EXCLUDED", ExclusionReason.BUDGET_EXCEEDED, "context_pack",
+                                {"budget": pack_budget, "backfill_round": backfill_rounds}
+                            )
+                    page_results = [p for p in page_results if p.get('id') in kept_ids]
+                    new_end = min(end + deficit, total)
+                    page_results.extend(disclosed[end:new_end])
+                    end = new_end
+                    backfill_rounds += 1
+                candidate_trace['backfill_rounds'] = backfill_rounds
+                if backfill_rounds and end < total:
+                    # The page moved past its original cut; the continuation token must too.
+                    payload['offset'] = end
+                    next_token = PaginationToken(payload, os.getenv('MEMORY_CONTROLLER_HMAC_SECRET').encode()).encode()
+                    pack['next_page_token'] = next_token
+                elif backfill_rounds and end >= total:
+                    next_token = None
             except BudgetExceededError:
                 # Preserve the canonical egress envelope even when the final
                 # representation cannot fit the requested hard budget. The
