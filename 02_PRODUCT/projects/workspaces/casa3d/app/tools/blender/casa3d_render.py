@@ -911,16 +911,31 @@ def frame_dirs(lx, lz, fov, width, height, nx=12, ny=8):
     return out
 
 
-def coverage(sc, deps, c, lx, lz, fov, width, height):
-    """Fracțiunea din cadru ocupată de ceva aflat la sub NEAR metri de obiectiv (canat, perete, draperie, piesă înaltă)."""
+FG_DIST = 2.2   # o piesă (alta decât cea principală) mai aproape de atât, în jumătatea de jos a cadrului: prim-plan
+
+
+def coverage(sc, deps, c, lx, lz, fov, width, height, items=(), skip=None):
+    """(acoperire, prim-plan): fracțiunea din cadru ocupată de ceva aflat la sub NEAR metri de obiectiv (canat, perete,
+    draperie, piesă înaltă) și fracțiunea jumătății de jos a cadrului ocupată de o piesă de mobilier la sub FG_DIST metri
+    (masa sau măsuța din fața obiectivului), fără piesa principală `skip`."""
     eye = to_blender((c[0], EYE, c[1]))
     dirs = frame_dirs(lx, lz, fov, width, height)
-    hit = 0
-    for d in dirs:
-        ok, loc, _n, _i, obj, _m = sc.ray_cast(deps, eye, d, distance=NEAR_OBJ)
-        if ok and (loc - eye).length < (NEAR if obj is not None and obj.get('c3d_wall') else NEAR_OBJ):
+    hit = fg = low = 0
+    for k, d in enumerate(dirs):
+        lower = k // 12 < 4   # frame_dirs: rândurile de jos întâi (12 raze pe rând)
+        low += lower
+        ok, loc, _n, _i, obj, _m = sc.ray_cast(deps, eye, d, distance=FG_DIST)
+        if not ok:
+            continue
+        dist = (loc - eye).length
+        if dist < (NEAR if obj is not None and obj.get('c3d_wall') else NEAR_OBJ):
             hit += 1
-    return hit / len(dirs)
+        if lower and not (obj is not None and obj.get('c3d_wall')):
+            px, pz, py = loc.x, -loc.y, loc.z
+            if any(it is not skip and it['fp'][0] - m < px < it['fp'][2] + m and it['fp'][1] - m < pz < it['fp'][3] + m and py < max(it['h'], 1.0) + .05
+                   for it in items for m in ((0.6 if it.get('m') == 'dining' else 0.05),)):   # scaunele mesei ies din amprenta ei
+                fg += 1
+    return hit / len(dirs), (fg / low if low else 0.0)
 
 
 def room_camera(scene_data, room, width, height, panorama=False, focus=None, avoid=None):
@@ -955,14 +970,24 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None, avo
         cands += [(x0 + k, z0 + k), (x1 - k, z0 + k), (x1 - k, z1 - k), (x0 + k, z1 - k), (cx, z0 + k), (x1 - k, cz), (cx, z1 - k), (x0 + k, cz)]
     for f in (0.25, 0.75):
         cands += [(x0 + (x1 - x0) * f, z0 + 0.35), (x0 + (x1 - x0) * f, z1 - 0.35), (x0 + 0.35, z0 + (z1 - z0) * f), (x1 - 0.35, z0 + (z1 - z0) * f)]
-    cands = [c for c in cands if x0 + .2 < c[0] < x1 - .2 and z0 + .2 < c[1] < z1 - .2]
+    for k in (0.35, 0.6):   # și de-a lungul pereților, din 0,5 în 0,5 m (fotograful se mută puțin ca să scoată o masă din cadru)
+        x = x0 + 0.6
+        while x < x1 - 0.55:
+            cands += [(x, z0 + k), (x, z1 - k)]
+            x += 0.5
+        z = z0 + 0.6
+        while z < z1 - 0.55:
+            cands += [(x0 + k, z), (x1 - k, z)]
+            z += 0.5
+    cands = list(dict.fromkeys((round(c[0], 3), round(c[1], 3)) for c in cands if x0 + .2 < c[0] < x1 - .2 and z0 + .2 < c[1] < z1 - .2))
 
     def blocked(c, margin=0.25):  # obiectivul (la 1,5 m) în interiorul sau prea aproape de o piesă care urcă până acolo
         for it in items:
             a, b, e, f = it['fp']
             if it['h'] > 0.9 and a - margin < c[0] < e + margin and b - margin < c[1] < f + margin:
                 return True
-            if a - 0.45 < c[0] < e + 0.45 and b - 0.45 < c[1] < f + 0.45:  # nici lipit de un WC sau de o masă
+            mg = 0.45 if it['h'] >= 0.5 else 0.25   # nici lipit de un WC sau de o masă; în fața unei comode TV joase se poate sta
+            if a - mg < c[0] < e + mg and b - mg < c[1] < f + mg:
                 return True
         return False
 
@@ -1019,10 +1044,21 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None, avo
         _foot = lambda c: ((c[0] - _bx) * math.sin(hero['r']) + (c[1] - _bz) * math.cos(hero['r'])) / (math.hypot(c[0] - _bx, c[1] - _bz) or 1)
         cands = [c for c in cands if _foot(c) >= 0.3] or cands
     aims = [beyond] + ([lambda c: (sum(m[0] * m[1] for m in main) / wsum, sum(m[0] * m[2] for m in main) / wsum)] if main else [])
+    grp = []
     if hero is not None and focus is None:   # privirea spre piesa principală, cu ținta trasă spre peretele din spatele ei (tăblia patului)
         _hd = 0.25 * min(hero['fp'][2] - hero['fp'][0], hero['fp'][3] - hero['fp'][1]) if hero['g'] != 'pat' else 0.45 * (hero['fp'][3] - hero['fp'][1] if abs(math.cos(hero['r'])) > 0.5 else hero['fp'][2] - hero['fp'][0])
         _ha = ((hero['fp'][0] + hero['fp'][2]) / 2 - math.sin(hero['r']) * _hd, (hero['fp'][1] + hero['fp'][3]) / 2 - math.cos(hero['r']) * _hd)
         aims.append(lambda c: _ha)
+        # grupul piesei principale: ea și piesele din fața ei (măsuța din fața canapelei, banca de la picioarele patului), ca
+        # amândouă să intre întregi în cadru, nu măsuța tăiată în colțul de jos
+        _fx, _fz = math.sin(hero['r']), math.cos(hero['r'])
+        _hx, _hz = (hero['fp'][0] + hero['fp'][2]) / 2, (hero['fp'][1] + hero['fp'][3]) / 2
+        grp[:] = [it for it in items if it is not hero and 0.3 < ((it['fp'][0] + it['fp'][2]) / 2 - _hx) * _fx + ((it['fp'][1] + it['fp'][3]) / 2 - _hz) * _fz < 2.5
+                and abs(((it['fp'][0] + it['fp'][2]) / 2 - _hx) * _fz - ((it['fp'][1] + it['fp'][3]) / 2 - _hz) * _fx) < 1.2 and it['h'] < 0.8]
+        if grp:
+            _gx = (_hx + sum((it['fp'][0] + it['fp'][2]) / 2 for it in grp)) / (len(grp) + 1)
+            _gz = (_hz + sum((it['fp'][1] + it['fp'][3]) / 2 for it in grp)) / (len(grp) + 1)
+            aims.append(lambda c: (_gx, _gz))
 
     def inward(o):  # normala ferestrei spre interiorul camerei
         nx, nz = o['n']
@@ -1041,17 +1077,23 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None, avo
     def composition(c, lx, lz, fov, with_hero=True):
         n = math.hypot(lx, lz) or 1
         s = 0.0
-        if hero is not None:
+        if hero is not None and with_hero:   # a doua vedere: piesele rămase, nu iar piesa principală
             hx, hz = (hero['fp'][0] + hero['fp'][2]) / 2, (hero['fp'][1] + hero['fp'][3]) / 2
             vx, vz = c[0] - hx, c[1] - hz
             vn = math.hypot(vx, vz) or 1
             cos_f = (vx * math.sin(hero['r']) + vz * math.cos(hero['r'])) / vn
             fwd_h, u_h = screen_u(c, lx, lz, hx, hz, fov)
             s += 5.0 * max(0.0, 1 - abs(u_h)) - (15.0 if fwd_h <= 0.3 or abs(u_h) > 0.85 else 0.0)   # piesa principală în cadru, spre mijloc
+            a, b, e, f = hero['fp']   # și întreagă: niciun colț al ei tăiat de marginile cadrului
+            if any(q[0] <= 0.3 or abs(q[1]) > 0.94 for q in (screen_u(c, lx, lz, px, pz, fov) for px, pz in ((a, b), (e, b), (e, f), (a, f)))):
+                s -= 25.0   # cât valorează piesa principală întreagă: o vedere largă cu ea tăiată nu bate una cu ea întreagă
+            for it in grp:   # și grupul ei (măsuța din fața canapelei): întreg sau deloc tăiat de marginea cadrului
+                a, b, e, f = it['fp']
+                s += -3.0 if any(q[0] <= 0.3 or abs(q[1]) > 0.94 for q in (screen_u(c, lx, lz, px, pz, fov) for px, pz in ((a, b), (e, b), (e, f), (a, f)))) else 3.0
             if hero['g'] == 'pat':   # dinspre picioare, pe diagonală (18°–65° față de axa patului); de la cap sau din lateral: nu
                 s += 14.0 * cos_f + (6.0 if 0.42 < cos_f < 0.95 else 0.0) - 40.0 * max(0.0, 0.35 - cos_f)
             else:
-                s += 7.0 * cos_f - (6.0 if cos_f < -0.1 else 0.0)
+                s += 7.0 * cos_f - 30.0 * max(0.0, 0.25 - cos_f)   # canapeaua, bucătăria: din față, nu din lateral
         wins_u = []
         for o in windows:
             fwd, u = screen_u(c, lx, lz, o['p'][0], o['p'][1], fov)
@@ -1059,7 +1101,8 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None, avo
                 continue
             ix, iz = inward(o)
             facing = -(lx * ix + lz * iz) / n      # 1 = privirea drept în fereastră (contra luminii)
-            s -= 9.0 * max(0.0, facing - 0.35) / 0.65 * max(0.0, 1 - abs(u) / 0.75)
+            # a doua vedere (spre piesele rămase) nu are voie să privească în ferestre: acolo pedeapsa e dublă
+            s -= (16.0 if with_hero else 20.0) * max(0.0, facing - 0.35) / 0.65 * max(0.0, 1 - abs(u) / 0.75)
             hw = float(o['w']) / 2 / fwd / math.tan(fov / 2)
             wins_u.append((u - hw, u + hw))
         for px, pz in pendants:
@@ -1105,26 +1148,32 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None, avo
                 keys += w
             elif any(in_view(c, px, pz, lx, lz, fov / 2) for px, pz in corners):
                 keys += w * 0.3
-        return total + 0.6 * seen + 8.0 * keys - 6.0 * (fov - HFOV) + composition(c, lx, lz, fov, focus is None)
+        # câte părți de mobilier se văd, plafonat: o bibliotecă plină (zeci de cărți) nu are voie să tragă cadrul spre ea
+        return total + 0.6 * min(seen, 60) + 8.0 * keys - 6.0 * (fov - HFOV) + composition(c, lx, lz, fov, focus is None)
 
     # o încăpere mică (baia, holul): se încearcă și 75° (limita regulii); nu mai folosim 100°, care deforma marginile
     fovs = [fov] + ([HFOV_MAX] if min(x1 - x0, z1 - z0) < 2.6 or (x1 - x0) * (z1 - z0) < 9 else [])
     ranked = sorted(((score(c, f, a), c, f, a) for c in cands for f in fovs for a in aims), key=lambda t: -t[0])
     # testul de acoperire pe cei mai buni candidați: prima poziție sub prag (scorul scade cu acoperirea); altfel cea mai liberă
-    best = None
-    for v, c, f, a in ranked[:16]:
+    best, probed = None, []
+    for v, c, f, a in ranked[:24]:
         lx, lz = look(c, a)
-        cov = coverage(sc, deps, c, lx, lz, f, width, height)
-        fin = v - 25.0 * cov
+        cov, fg = coverage(sc, deps, c, lx, lz, f, width, height, items, hero if focus is None else None)
+        fin = v - 25.0 * cov - (30.0 if focus is None else 120.0) * fg   # prim-planul (o masă, o măsuță la sub 2,2 m) costă: piesa principală se vede peste ea
+        if focus is not None and not any(in_view(c, (it['fp'][0] + it['fp'][2]) / 2, (it['fp'][1] + it['fp'][3]) / 2, lx, lz, f / 2, 0.3) for it in items if id(it) in focus):
+            fin -= 40.0   # a doua vedere există pentru piesele rămase: măcar mijlocul lor trebuie să fie în cadru
         cand = (cov <= MAX_COVER, fin if cov <= MAX_COVER else -cov, v, c, f, a, cov)
+        probed.append((round(fin, 1), round(cov, 2), round(fg, 2), c, aims.index(a)))
         if best is None or cand[:2] > best[:2]:
             best = cand
     _, _, v, c, fov, aim, cov = best
+    if os.environ.get('CASA3D_CAMDBG'):
+        print('[casa3d] cadre testate (final, acoperire, prim-plan, loc, țintă):', sorted(probed, key=lambda q: -q[0])[:8])
     print(f"[casa3d] cameră {room['id']}: ({c[0]:.2f},{c[1]:.2f}) {math.degrees(fov):.0f}° acoperire {cov * 100:.0f}% ; "
           + '; '.join(f'({p[0]:.2f},{p[1]:.2f}) {math.degrees(f):.0f}° {aims.index(a)} = {s:.1f} [{composition(p, *look(p, a), f, focus is None):+.1f}]' for s, p, f, a in ranked[:int(os.environ.get('CASA3D_CAMDBG', 4))]))
     lx, lz = look(c, aim)
     low_of = lambda it: max(0.45, (EYE - top(it)) / bottom(fov))
-    MISSING[ob.name] = [it for it in items if KEY.get(it['g'], 0) >= 2 and not all(in_view(c, px, pz, lx, lz, fov / 2 - math.radians(4), low_of(it)) for px, pz in ((it['fp'][0], it['fp'][1]), (it['fp'][2], it['fp'][1]), (it['fp'][2], it['fp'][3]), (it['fp'][0], it['fp'][3])))]
+    MISSING[ob.name] = [it for it in items if KEY.get(it['g'], 0) >= 1.5 and not all(in_view(c, px, pz, lx, lz, fov / 2 - math.radians(4), low_of(it)) for px, pz in ((it['fp'][0], it['fp'][1]), (it['fp'][2], it['fp'][1]), (it['fp'][2], it['fp'][3]), (it['fp'][0], it['fp'][3])))]
     ob.location = to_blender((c[0], EYE, c[1]))
     ob['c3d_xz'] = (c[0], c[1])
     ob.rotation_euler = to_blender((lx, 0, lz)).normalized().to_track_quat('-Z', 'Y').to_euler()
