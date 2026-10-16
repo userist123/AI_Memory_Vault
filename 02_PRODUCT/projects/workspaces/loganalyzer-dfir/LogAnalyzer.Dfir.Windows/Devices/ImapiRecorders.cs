@@ -40,13 +40,34 @@ public static class ImapiRecorders
         var t = new Thread(() =>
         {
             try { result = ReadCore(); }
-            catch (Exception ex) when (ex is COMException or InvalidCastException or Microsoft.CSharp.RuntimeBinder.RuntimeBinderException or UnauthorizedAccessException)
+            // Any failure of the late-bound COM calls (null properties, odd driver values) must end up as a problem text: an exception escaping a
+            // thread would take the whole process down.
+            catch (Exception ex)
             { problem = "IMAPI2 nu a putut fi folosit: " + ex.Message; }
         }) { IsBackground = true, Name = "imapi2-read" };
         t.SetApartmentState(ApartmentState.STA);
         t.Start();
         if (!t.Join(timeout)) return (null, $"IMAPI2 nu a răspuns în {timeout.TotalSeconds:0} s.");
         return (result, problem);
+    }
+
+    private static readonly object CacheLock = new();
+    private static (DateTime AtUtc, IReadOnlyList<ImapiRecorder>? Recorders, string Problem)? cache;
+    private static readonly TimeSpan CacheAge = TimeSpan.FromMinutes(2);
+
+    /// <summary>
+    /// <see cref="Read"/> with a process-wide cache: a result younger than two minutes is reused, so the two collectors of one run (station facts and
+    /// air-gap facts) cost one IMAPI2 call, and a hung drive costs one timeout instead of two.
+    /// </summary>
+    public static (IReadOnlyList<ImapiRecorder>? Recorders, string Problem) ReadCached(TimeSpan timeout)
+    {
+        lock (CacheLock)
+        {
+            if (cache is { } c && DateTime.UtcNow - c.AtUtc < CacheAge) return (c.Recorders, c.Problem);
+            var (recorders, problem) = Read(timeout);
+            cache = (DateTime.UtcNow, recorders, problem);
+            return (recorders, problem);
+        }
     }
 
     private static IReadOnlyList<ImapiRecorder>? ReadCore()
@@ -66,9 +87,10 @@ public static class ImapiRecorders
                 try
                 {
                     rec.InitializeDiscRecorder(id);
-                    var drives = ((object[])rec.VolumePathNames).Select(v => v?.ToString()?.TrimEnd('\\') ?? "").Where(v => v.Length > 0).ToList();
-                    var profiles = ((object[])rec.SupportedProfiles).Select(Convert.ToInt32).ToList();
-                    list.Add(new ImapiRecorder(drives, $"{((string)rec.VendorId).Trim()} {((string)rec.ProductId).Trim()}".Trim(), WritableProfiles(profiles)));
+                    var drives = (((object[]?)rec.VolumePathNames) ?? []).Select(v => v?.ToString()?.TrimEnd('\\') ?? "").Where(v => v.Length > 0).ToList();
+                    var profiles = (((object[]?)rec.SupportedProfiles) ?? []).Select(Convert.ToInt32).ToList();
+                    string vendor = ((string?)rec.VendorId)?.Trim() ?? "", product = ((string?)rec.ProductId)?.Trim() ?? "";
+                    list.Add(new ImapiRecorder(drives, $"{vendor} {product}".Trim(), WritableProfiles(profiles)));
                 }
                 finally { Marshal.FinalReleaseComObject(rec); }
             }
