@@ -299,3 +299,16 @@ def test_exemption_rejects_commands_that_execute_or_write(home, command):
 def test_exemption_keeps_the_read_only_forms(home, command):
     _prompt(home, "implement the bounded parser change and add tests")
     assert all(_tool(home, "Bash", {"command": command}) is None for _ in range(5))
+
+
+def test_installed_global_rules_carry_the_agent_hard_rules(tmp_path):
+    """The rules reach every project: the installer writes them into ~/.claude/CLAUDE.md."""
+    home = tmp_path / "home"
+    r = subprocess.run([sys.executable, str(SKILL / "install.py"), "--home", str(home)], capture_output=True,
+                       text=True, timeout=120)
+    assert r.returncode == 0, r.stderr
+    md = (home / ".claude" / "CLAUDE.md").read_text(encoding="utf-8")
+    block = md.split("cost-router:context-rules:start", 1)[1].split("cost-router:context-rules:end", 1)[0]
+    for needle in ("Resume a subagent at most once", "threat model", "At most 2 review rounds",
+                   "One implementation agent at a time", "never poll CI", "run on Sonnet"):
+        assert needle in block, needle
