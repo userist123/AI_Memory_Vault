@@ -39,6 +39,8 @@ namespace LogAnalyzer.UI.Services
             _service = new AuthService(storeDirectory, Classified);
             LogAnalyzer.Dfir.Policy.PolicyApprovals.Ledger = _service;   // review #2: policy approvals are recorded in and verified against the sealed auth audit
             OperatorIdentity.AuthenticationRequired = true;     // from now on registers / profile edits fail closed without an administrator session
+            // every program the application starts is written to the sealed audit before it starts ("collector.exec"); a failed write raises the audit warning
+            LogAnalyzer.Dfir.Auth.CollectorExec.Sink = Record;
         }
 
         public static void SetSession(AuthSession? s)

@@ -280,14 +280,16 @@ public sealed class ProcessScanner
         foreach (var a in new[] { "-Scan", "-ScanType", "3", "-File", path, "-DisableRemediation" }) psi.ArgumentList.Add(a);
         try
         {
-            using var proc = Process.Start(psi)!;
+            using var proc = LogAnalyzer.Dfir.Auth.CollectorExec.Start(psi);
             var outTask = proc.StandardOutput.ReadToEndAsync(ct);
             var errTask = proc.StandardError.ReadToEndAsync(ct);
             if (!proc.WaitForExit(DefenderTimeout))
             {
                 try { proc.Kill(true); } catch (InvalidOperationException) { }
+                LogAnalyzer.Dfir.Auth.CollectorExec.Done(proc);
                 return new DefenderVerdict(EvidenceStatus.Partial, null, "Scanarea Defender a depășit timpul alocat", null);
             }
+            LogAnalyzer.Dfir.Auth.CollectorExec.Done(proc);
             var output = (outTask.Result + errTask.Result).Trim();
             // MpCmdRun: 0 = no threat, 2 = threat found (file scan with remediation disabled).
             bool? threat = proc.ExitCode switch { 0 => false, 2 => true, _ => null };

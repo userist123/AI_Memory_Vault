@@ -56,5 +56,7 @@
     <!-- test seams (CaseArchive.ImportCore) stay internal -->
     <InternalsVisibleTo Include="LogAnalyzer.App.Tests" />
     <InternalsVisibleTo Include="LogAnalyzer.Dfir.Tests" />
+    <!-- the edition code that starts the firewall tool and the collection script registers them in the program inventory (CollectorExec) -->
+    <InternalsVisibleTo Include="LogAnalyzer.Response" />
   </ItemGroup>
 </Project>
