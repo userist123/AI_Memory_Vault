@@ -34,6 +34,15 @@ public static class OperationAudit
     public static string MediaHistoryReconciledDetail(string file, string sha256, int accepted, int rejected, int grave, int high) =>
         $"file={file.Replace(';', ',')}; sha256={sha256}; accepted={accepted}; rejected={rejected}; grav={grave}; ridicat={high}";
 
+    /// <summary>Real-time device monitor (owner decision 2026-10-16): the registration number of a device was set or changed in the monitor's row.</summary>
+    public const string DeviceRegistrationChanged = "device.registration_number_changed";
+
+    public static string DeviceRegistrationChangedDetail(string identity, string deviceClass, string device, string oldValue, string newValue)
+    {
+        static string C(string s) => s.Replace(';', ',').ReplaceLineEndings(" ");
+        return $"identity={C(identity)}; class={C(deviceClass)}; device={C(device)}; old={(oldValue.Length > 0 ? C(oldValue) : "(gol)")}; new={(newValue.Length > 0 ? C(newValue) : "(gol)")}";
+    }
+
     public static string AnchorRecordedDetail(LogAnalyzer.Dfir.Case.AuditAnchorPoint a, string reason) => $"seq={a.Seq}; anchor={a.Code}; chain={a.ChainId}; reason={reason}";
 
     /// <summary>
