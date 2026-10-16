@@ -209,11 +209,17 @@ public static partial class Wp14Rules
         {
             var items = g.Select(x => x.A).ToList();
             var tools = items.Select(a => a.Tool).Distinct().ToList();
+            // the list's key was last written when its most recent entry was added: a time for that entry only; older entries are "before" it
+            var recent = items.Where(a => a.Position == 0 && a.ListLastWriteUtc is not null).OrderByDescending(a => a.ListLastWriteUtc).FirstOrDefault();
+            var older = items.Where(a => a.Position > 0 && a.ListLastWriteUtc is not null).OrderBy(a => a.ListLastWriteUtc).FirstOrDefault();
+            var when = recent is not null
+                ? $" Intrarea „{Shorten(recent.Value)}” este cea mai recentă din lista {recent.Tool} {recent.List}, iar lista a fost scrisă ultima dată la {recent.ListLastWriteUtc:yyyy-MM-dd HH:mm:ss} UTC: atunci a lucrat arhivatorul cu această cale."
+                : older is not null ? $" Intrările de pe {g.Key}: nu sunt cele mai recente din lista lor; au fost adăugate înainte de {older.ListLastWriteUtc:yyyy-MM-dd HH:mm:ss} UTC (ultima scriere a listei {older.Tool} {older.List})." : "";
             o.Add(Chan(c, "MEDIA-ARCHIVER-REMOVABLE", $"Arhivator cu căi pe unitatea amovibilă {g.Key}:", Sev(c, Severity.Medium), "PORTABLE STORAGE", $"{string.Join(" / ", tools)} (istoric din registru)",
-                $"{LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "cale", "căi")} pe unitatea {g.Key}: în istoricul {string.Join(" / ", tools)}", null, null, "necunoscut: istoricul din registru nu are cont pe intrare (este al utilizatorului al cărui profil a fost citit)",
+                $"{LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "cale", "căi")} pe unitatea {g.Key}: în istoricul {string.Join(" / ", tools)}", recent?.ListLastWriteUtc, null, "necunoscut: istoricul din registru nu are cont pe intrare (este al utilizatorului al cărui profil a fost citit)",
                 $"arhive pe unitatea {g.Key}:", "posibilă scriere pe mediu (arhiva poate fi creată sau doar deschisă)", $"suport de stocare amovibil {g.Key}:",
                 $"Istoricul {string.Join(" / ", tools)} conține {LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "cale", "căi")} pe unitatea {g.Key}:, care este o unitate amovibilă pe această stație: {string.Join("; ", items.Take(6).Select(a => $"{a.List}: {Shorten(a.Value)}"))}{(items.Count > 6 ? " …" : "")}. " +
-                "O arhivă (zip, rar, 7z) este felul obișnuit de a strânge multe fișiere într-unul singur înainte de a le muta pe un mediu. Istoricul arată că arhivatorul a lucrat cu acea cale; nu arată dacă arhiva a fost creată sau doar deschisă, ce conținea sau când (registrul nu păstrează ora fiecărei intrări).",
+                "O arhivă (zip, rar, 7z) este felul obișnuit de a strânge multe fișiere într-unul singur înainte de a le muta pe un mediu. Istoricul arată că arhivatorul a lucrat cu acea cale; nu arată dacă arhiva a fost creată sau doar deschisă, ce conținea sau când (registrul nu păstrează ora fiecărei intrări)." + when,
                 "Intrări din istoricul WinRAR (ArcHistory, DialogEditHistory) sau 7-Zip (File Manager: FolderHistory, CopyHistory, PanelPath) cu litera unei unități amovibile.",
                 ["Arhiva poate fi dintr-un mediu primit pe cale aprobată, deschis pentru citire.", "Litera unității amovibile poate fi reatribuită alt volum (MountedDevices păstrează ultima asociere).", "Istoricul poate data de dinainte ca stația să fie clasificată."],
                 items.Take(10).Select(a => FactRef(c, $"archivers/{a.Tool}/{a.List}", $"{a.Tool} {a.List}: {Shorten(a.Value)}")).ToList(), items.Take(5).Select(a => $"airgap_facts archivers/{a.Tool}/{a.List}").ToList(), "", SemanticType.Presence));

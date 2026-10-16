@@ -350,6 +350,28 @@ public class AirGapChannelTests
         One(Go([Usb("AA001", 1, "F:")], facts), "MEDIA-ARCHIVER-REMOVABLE");
     }
 
+    [Fact]
+    public void The_most_recent_WinRAR_entry_on_the_removable_drive_takes_the_time_its_list_was_last_written()
+    {
+        var t = P0.AddDays(-2);
+        var facts = new AirGapFacts
+        {
+            CollectedUtc = P0, RemovableLetters = ["E"],
+            Archivers = [new() { Tool = "WinRAR", List = "ArcHistory", Value = @"E:\transfer\documente.rar", Position = 0, ListLastWriteUtc = t },
+                         new() { Tool = "WinRAR", List = "ArcHistory", Value = @"C:\lucru.zip", Position = 1, ListLastWriteUtc = t }],
+        };
+        var f = One(Go([], facts), "MEDIA-ARCHIVER-REMOVABLE");
+        Assert.Equal(t, f.FirstSeenUtc);
+        Assert.Contains("cea mai recentă", f.Description);
+
+        // an older entry only says when the list changed last, not when that entry was added: no time on the finding
+        facts.Archivers = [new() { Tool = "WinRAR", List = "ArcHistory", Value = @"C:\lucru.zip", Position = 0, ListLastWriteUtc = t },
+                           new() { Tool = "WinRAR", List = "ArcHistory", Value = @"E:\transfer\documente.rar", Position = 1, ListLastWriteUtc = t }];
+        var older = One(Go([], facts), "MEDIA-ARCHIVER-REMOVABLE");
+        Assert.Null(older.FirstSeenUtc);
+        Assert.Contains("înainte de", older.Description);
+    }
+
     // ---- D14: SRUM upload outliers ----
 
     private static TimelineEvent Srum(int day, string app, long bytes, int hour = 12) => new()

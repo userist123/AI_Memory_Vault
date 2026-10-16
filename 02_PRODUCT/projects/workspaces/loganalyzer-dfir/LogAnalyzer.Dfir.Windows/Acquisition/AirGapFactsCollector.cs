@@ -389,22 +389,25 @@ public sealed class AirGapFactsCollector : ICollector
 
     private static IEnumerable<ArchiverEntry> ReadArchivers()
     {
-        using (var k = Registry.CurrentUser.OpenSubKey(@"Software\WinRAR\ArcHistory"))
-            if (k is not null)
-                foreach (var n in k.GetValueNames())
-                    if (k.GetValue(n) is string s && s.Length > 0) yield return new ArchiverEntry { Tool = "WinRAR", List = "ArcHistory", Value = s };
-        foreach (var sub in new[] { "ArcName", "ExtrPath" })
+        // WinRAR keeps each list in its own key, values "0" (most recent), "1" …: the key's last write time is when the most recent entry was added
+        foreach (var (key, list) in new[] { (@"Software\WinRAR\ArcHistory", "ArcHistory"), (@"Software\WinRAR\DialogEditHistory\ArcName", @"DialogEditHistory\ArcName"), (@"Software\WinRAR\DialogEditHistory\ExtrPath", @"DialogEditHistory\ExtrPath") })
         {
-            using var k = Registry.CurrentUser.OpenSubKey(@"Software\WinRAR\DialogEditHistory\" + sub);
+            using var k = Registry.CurrentUser.OpenSubKey(key);
             if (k is null) continue;
+            var written = LogAnalyzer.Dfir.Windows.Devices.DeviceInventory.KeyLastWrite(k);
             foreach (var n in k.GetValueNames())
-                if (k.GetValue(n) is string s && s.Length > 0) yield return new ArchiverEntry { Tool = "WinRAR", List = "DialogEditHistory\\" + sub, Value = s };
+                if (k.GetValue(n) is string s && s.Length > 0)
+                    yield return new ArchiverEntry { Tool = "WinRAR", List = list, Value = s, Position = int.TryParse(n, out var pos) ? pos : null, ListLastWriteUtc = written };
         }
         using var fm = Registry.CurrentUser.OpenSubKey(@"Software\7-Zip\FM");
         if (fm is null) yield break;
+        // [NESIGUR] 7-Zip writes FolderHistory / CopyHistory most recent first (observed behaviour, not documented); the FM key also holds settings, so no time
         foreach (var name in new[] { "FolderHistory", "CopyHistory", "PanelPath0", "PanelPath1" })
+        {
+            int i = 0;
             foreach (var s in Decode(fm.GetValue(name)))
-                yield return new ArchiverEntry { Tool = "7-Zip", List = name, Value = s };
+                yield return new ArchiverEntry { Tool = "7-Zip", List = name, Value = s, Position = name.StartsWith("PanelPath", StringComparison.Ordinal) ? null : i++ };
+        }
     }
 
     /// <summary>7-Zip File Manager keeps history as REG_BINARY (UTF-16 strings separated by NUL) and the panel paths as REG_SZ.</summary>
