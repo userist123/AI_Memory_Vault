@@ -42,11 +42,15 @@ ROUTER_CALL = re.compile(
 # command and a one-line memory/checkpoint note. A subagent for these costs more than the action.
 SINGLE_COMMAND = re.compile(
     r"^\s*(?:"
-    r"git(?:\s+-C\s+\S+)?\s+(?:status|log|diff|show|branch|fetch|rev-parse|remote|ls-files|ls-remote)"
+    r"git(?:\s+-C\s+[^\s\"']+)?\s+(?:status|log|diff|show|rev-parse|ls-files)"
+    r"|git(?:\s+-C\s+[^\s\"']+)?\s+branch(?:\s+--show-current|\s+-[avr]+|\s+--list)?\s*$"
+    r"|git(?:\s+-C\s+[^\s\"']+)?\s+remote\s+-v\s*$"
     r"|gh\s+pr\s+(?:view|checks|merge|edit|list|diff|comment|status|ready)"
     r"|gh\s+run\s+(?:view|list)"
     r"|gh\s+issue\s+(?:view|list|comment)"
     r")(?:\s|$)")
+# Flags that make a "read-only" git/gh command run a program, write a file or bypass protection.
+UNSAFE_FLAG = re.compile(r"(?:^|\s)(?:-c(?=\s|$)|--(?:output|ext-diff|textconv|upload-pack|receive-pack|exec|config|admin)(?=[\s=]|$))")
 SHELL_CHAIN = re.compile(r"[;&|`\n<>]|\$\(")  # a chain, pipe, redirect or substitution is not single
 MEMORY_NOTE = re.compile(r"(?:^|[\\/])(?:MEMORY\.md|memory[\\/][^\\/]+\.md|todo-[^\\/]+\.md)$", re.I)
 
@@ -54,7 +58,8 @@ MEMORY_NOTE = re.compile(r"(?:^|[\\/])(?:MEMORY\.md|memory[\\/][^\\/]+\.md|todo-
 def exempt(tool_name, tool_input: dict) -> bool:
     if tool_name == "Bash":
         cmd = str(tool_input.get("command") or "")
-        return len(cmd) <= 300 and not SHELL_CHAIN.search(cmd) and bool(SINGLE_COMMAND.match(cmd))
+        return (len(cmd) <= 300 and not SHELL_CHAIN.search(cmd) and not UNSAFE_FLAG.search(cmd)
+                and bool(SINGLE_COMMAND.match(cmd)))
     if tool_name in ("Edit", "Write"):
         path = str(tool_input.get("file_path") or "")
         if not MEMORY_NOTE.search(path):

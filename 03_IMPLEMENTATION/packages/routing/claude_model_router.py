@@ -277,9 +277,11 @@ def _implementer_deferral(policy: ClaudeModelPolicy, task_class: str, risk: str,
                           goal: str) -> bool:
     """True when the risk floor moves from an implementation worker to its mandatory verifier.
 
-    Policy `rules.implementer_risk_floor` = {"classes", "max_risk", "never_for_keywords"}. Needs a
+    Policy `rules.implementer_risk_floor` = {"classes", "max_risk", "never_for_stems"}. Needs a
     verifier model at or above the floor and security work to require one; the risk must not exceed
-    max_risk (critical stays on the floor) and no live-operation keyword may appear in the goal.
+    max_risk (critical stays on the floor) and no live-operation stem may appear in the goal. A stem
+    matches at the start of a word with no right boundary ("delet" hits deleting, deletion;
+    "deploy" hits deployment; "production" hits production-db), so an inflected form keeps Opus.
     """
     rule = policy.rules.get("implementer_risk_floor") or {}
     if not floor or not rule or task_class not in rule.get("classes", ()):
@@ -291,7 +293,8 @@ def _implementer_deferral(policy: ClaudeModelPolicy, task_class: str, risk: str,
             and policy.rank(policy.verifier_model) >= policy.rank(floor)):
         return False
     text = " " + re.sub(r"\s+", " ", goal.lower()) + " "
-    return not any(_kw_hit(str(k).lower(), text) for k in rule.get("never_for_keywords", ()))
+    stems = [str(k).lower() for k in rule.get("never_for_stems", ())]
+    return not any(re.search(rf"(?<![^\W_]){re.escape(k)}", text) for k in stems if k)
 
 
 def route(

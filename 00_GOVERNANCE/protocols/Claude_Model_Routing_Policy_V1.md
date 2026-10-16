@@ -102,8 +102,10 @@ reads came from subagents. The cost was context re-reading, not generated code. 
   independent verifier at or above the floor is mandatory (`verifier_model` Opus,
   `security_requires_independent_verifier`). The decision records
   `risk_floor_deferred_to_verifier:high->opus` and `independent_verifier->opus`. Not deferred:
-  `critical` risk and any goal naming a live operation (`never_for_keywords`: production, deploy,
-  delete, purge, rotate, leaks, ...), because a review after the fact cannot undo it. Design and
+  `critical` risk and any goal naming a live operation (`never_for_stems`: production, deploy,
+  release, publish, delet-, purg-, revok-, rotat-, leak, --force, migrat-, șterg-, rotim, ...;
+  matched at a word start with no right boundary, so deleting/deployment/production-db hit too),
+  because a review after the fact cannot undo it. Design and
   root cause stay on Opus in the main session; a review route keeps its `vault-reviewer` subagent
   (already Opus) instead of falling back to the main session. `route(..., role=...)`: the Agent
   hook passes `implementer` for worker subagent types (a pricier text class such as review is
@@ -123,6 +125,11 @@ reads came from subagents. The cost was context re-reading, not generated code. 
   (`route-<sid>.routed_classes`); the Agent gate accepts it for later prompts of the same class.
 - **Single-command exemptions.** One read-only or one-shot git/gh command and a short edit of
   `MEMORY.md`, a memory note or a `todo-*.md` checkpoint do not count toward the 3-call limit.
+  Only explicit forms (`git status|log|diff|show|rev-parse|ls-files`, `git branch` listing,
+  `git remote -v`, `gh pr view|checks|merge|edit|list|diff|comment|status|ready`, `gh run|issue`
+  reads); no chain, pipe, redirect or substitution, and no flag that runs a program, writes a file
+  or bypasses protection (`-c`, `--output`, `--ext-diff`, `--textconv`, `--upload-pack`,
+  `--receive-pack`, `--exec`, `--config`, `--admin`). `git fetch`/`ls-remote` are not exempt.
 - **Bounded resumes.** `hook_resume_guard.py` (PreToolUse on SendMessage): a second resume of the
   same subagent is denied (start a new agent from a <=40-line checkpoint); a first one above 150k
   context tokens is warned. **Main-transcript reminder**: above 250k context tokens every prompt
