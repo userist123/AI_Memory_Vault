@@ -27,21 +27,22 @@ public sealed class AnchorInstallDateTests : IDisposable
     private long Anchor(DateTimeOffset? installUtc, string basis = "primul start al aplicației; fișierele programului")
     {
         _audit.AuditOperation(null, OperationAudit.ControlFinished, "host=ST-1");
-        _audit.AuditOperation(null, OperationAudit.AnchorState, OperationAudit.AnchorStateDetail(installUtc, basis));
+        _audit.AuditOperation(null, OperationAudit.AnchorState, OperationAudit.AnchorStateDetail(installUtc, basis, AuditAnchor.ChainIdentityOf(_audit.AuditPath)));
         var a = AuditAnchor.Current(_audit.AuditPath)!;
         _audit.AuditOperation(null, OperationAudit.AnchorRecorded, OperationAudit.AnchorRecordedDetail(a, "control"));
         return a.Seq;
     }
 
-    private static StationFacts Facts(DateTimeOffset? nowInstalled, AnchoredInstall? atAnchor, StationPosture posture = StationPosture.Standalone)
+    private StationFacts Facts(DateTimeOffset? nowInstalled, AnchoredInstall? atAnchor, StationPosture posture = StationPosture.Standalone, ChainIdentity? chainNow = null)
     {
         var f = new StationFacts { Host = "ST-1", PeriodStartUtc = Now.AddDays(-30), PeriodEndUtc = Now, CollectedUtc = Now, IsAdministrator = true, Posture = posture,
-                                   AppInstalledUtc = nowInstalled, AppInstallBasis = "primul start al aplicației", InstallAtPaperAnchor = atAnchor };
+                                   AppInstalledUtc = nowInstalled, AppInstallBasis = "primul start al aplicației", InstallAtPaperAnchor = atAnchor,
+                                   CurrentChain = chainNow ?? AuditAnchor.ChainIdentityOf(_audit.AuditPath) };
         foreach (var ch in StationFactCollector.Queries.Keys) f.Coverage.Add(new ChannelCoverage(ch, Now.AddDays(-90), 100, true, ""));
         return f;
     }
 
-    private static ControlCheck A16(StationFacts f) => Assert.Single(ControlEvaluator.Evaluate(f).Checks, c => c.Id == "A16");
+    private ControlCheck A16(StationFacts f) => Assert.Single(ControlEvaluator.Evaluate(f).Checks, c => c.Id == "A16");
 
     [Fact]
     public void The_anchor_event_carries_the_install_date_and_it_is_read_back_at_the_paper_anchor()
@@ -60,13 +61,47 @@ public sealed class AnchorInstallDateTests : IDisposable
     }
 
     [Fact]
-    public void A16_later_install_date_than_at_the_paper_anchor_is_NECONFORM()
+    public void Reviewer_probe_an_upgrade_or_Prefetch_eviction_moves_the_trace_date_later_and_is_only_to_verify()
     {
         var at = AnchoredInstallDate.At(_audit.AuditPath, Anchor(Installed));
-        var a14 = A16(Facts(Installed.AddDays(20), at));
-        Assert.Equal(ControlStatus.Neconform, a14.Status);
-        Assert.Contains("data instalării s-a schimbat după controlul anterior (posibilă reinițializare sau reinstalare)", a14.Detail, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(ControlStatus.Neconform, A16(Facts(null, at)).Status);   // the date cannot be established any more: the traces were removed
+        // upgrade: the program files are recreated later, the earliest trace moves later; same audit chain
+        var upgrade = A16(Facts(Installed.AddDays(20), at));
+        Assert.Equal(ControlStatus.DeVerificat, upgrade.Status);
+        Assert.Contains("s-a mutat mai târziu", upgrade.Detail);
+        Assert.DoesNotContain("incident", upgrade.Detail + upgrade.Recommendation, StringComparison.OrdinalIgnoreCase);
+        // Prefetch eviction or a control under another Windows account: the date cannot be computed now
+        Assert.Equal(ControlStatus.DeVerificat, A16(Facts(null, at)).Status);
+        // within a day: the same date
+        Assert.Equal(ControlStatus.Conform, A16(Facts(Installed.AddHours(12), at)).Status);
+    }
+
+    [Fact]
+    public void Reviewer_probe_a_reinitialised_audit_chain_changes_its_identity_and_is_NECONFORM()
+    {
+        var at = AnchoredInstallDate.At(_audit.AuditPath, Anchor(Installed));
+        Assert.NotNull(at.Chain);
+        var other = new ChainIdentity(new string('b', 64), "2026-10-10T07:00:00Z", "app.first_start");
+        var a16 = A16(Facts(Installed, at, chainNow: other));
+        Assert.Equal(ControlStatus.Neconform, a16.Status);
+        Assert.Contains("jurnalul aplicației a fost reinițializat după controlul anterior (identitatea jurnalului s-a schimbat)", a16.Detail, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(ControlStatus.Conform, A16(Facts(Installed, at)).Status);   // the same chain
+    }
+
+    [Fact]
+    public void The_anchor_is_not_issued_when_the_state_entry_cannot_be_written_and_the_stored_values_are_read_back()
+    {
+        _audit.AuditOperation(null, OperationAudit.ControlFinished, "host=ST-1");    // the chain already has records (app.first_start in a real station)
+        var failed = AnchorWriter.Write(_audit.AuditPath, (ev, detail) => false, Installed, "temei", "officer_state=store:none,trust:none,files:", "control");
+        Assert.Null(failed.Anchor);
+        Assert.Contains("nu a fost emis", failed.Error);
+        var ok = AnchorWriter.Write(_audit.AuditPath, (ev, detail) => { _audit.AuditOperation(null, ev, detail); return true; }, Installed, "temei; cu separatori",
+                                    "officer_state=store:none,trust:none,files:", "control");
+        Assert.NotNull(ok.Anchor);
+        Assert.Null(ok.Error);
+        Assert.Equal(OperationAudit.AnchorState, AuditAnchor.Events(_audit.AuditPath).First(e => e.Seq == ok.Anchor!.Seq).Event);
+        Assert.Equal(Installed, ok.Stored!.Utc);
+        Assert.Contains("temei", ok.Stored.Basis);
+        Assert.NotNull(ok.Stored.Chain);
     }
 
     [Fact]
@@ -106,12 +141,14 @@ public sealed class AnchorInstallDateTests : IDisposable
     }
 
     [Fact]
-    public void The_report_prints_the_install_date_next_to_the_anchor_code()
+    public void The_report_prints_the_values_stored_in_the_anchored_state_entry_not_a_fresh_computation()
     {
-        var r = ControlEvaluator.Evaluate(Facts(Installed, null));
+        var r = ControlEvaluator.Evaluate(Facts(Installed.AddDays(5), null));            // computed now: another date
         r.Anchor = new AuditAnchorPoint("0123456789abcdef", 12, new string('a', 64), AuditAnchor.Code("0123456789abcdef", 12, new string('a', 64)));
+        r.AnchoredState = new AnchoredInstall(true, true, Installed, "primul start al aplicației", "", new ChainIdentity(new string('c', 64), "2026-09-01T08:30:00Z", "app.first_start"));
         var lines = ControlReportPdf.OfficerSectionLines(r);
         Assert.Contains(lines, l => l.Contains(r.Anchor.Code));
-        Assert.Contains(lines, l => l.Contains("Data instalării aplicației") && l.Contains("2026-09-01 08:30 UTC") && l.Contains("primul start"));
+        Assert.Contains(lines, l => l.Contains("Data instalării aplicației") && l.Contains("2026-09-01 08:30 UTC") && l.Contains("primul start") && l.Contains("cccccccccccccccc"));
+        Assert.DoesNotContain(lines, l => l.Contains("2026-09-06"));
     }
 }

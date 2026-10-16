@@ -487,11 +487,11 @@
 
 ### A16
 
-- **Ce verificăm:** Dacă data instalării aplicației pe stație este aceeași ca la controlul anterior.
-- **De ce contează:** O dată de instalare mai nouă înseamnă că aplicația sau magazinul ei de date au fost reinstalate ori reinițializate după controlul anterior; pe o stație Standalone asta ar putea muta în trecut conectările la rețea.
-- **Cum verifică aplicația:** Data instalării calculată acum (primul start înregistrat în jurnalul aplicației și urmele programului în Windows) se compară cu data înregistrată odată cu codul de ancorare de la controlul anterior, cel tastat de pe procesul-verbal.
-- **Sursa tehnică:** `Jurnalul de audit al aplicației (audit.anchor_state, intrarea ancorată: install_utc, install_basis); AppInstallDate, AppInstallTraces`
-- **Cum se citește rezultatul:** Conform = aceeași dată. Neconform = data este acum mai nouă sau nu se mai poate stabili (posibilă reinițializare sau reinstalare). De verificat = data este acum mai veche (s-a găsit o urmă mai veche) sau nu se putea stabili la controlul anterior. Nedeterminat = nu s-a tastat codul de ancorare de pe procesul-verbal, sau ancora anterioară a fost înregistrată înainte ca data instalării să facă parte din ea.
+- **Ce verificăm:** Dacă jurnalul aplicației este același ca la controlul anterior (nu a fost reinițializat) și cum s-a schimbat data instalării calculată din urme.
+- **De ce contează:** Un jurnal reinițializat poate muta data instalării mai târziu și poate ascunde conectări și operații dinaintea lui; data calculată din urme se mută și în mod normal, după o actualizare a aplicației.
+- **Cum verifică aplicația:** Compară identitatea jurnalului aplicației (prima lui înregistrare: amprentă, oră, tip) și data instalării calculată din urme (primul start și urmele programului în Windows) cu valorile scrise în starea ancorată de la codul tastat de pe procesul-verbal anterior.
+- **Sursa tehnică:** `Jurnalul de audit al aplicației (audit.anchor_state, intrarea ancorată: install_utc, install_basis, chain_first_hash, chain_first_utc, chain_first_kind); AppInstallDate, AppInstallTraces`
+- **Cum se citește rezultatul:** Neconform = identitatea jurnalului s-a schimbat (jurnalul a fost reinițializat după controlul anterior). De verificat = data calculată din urme s-a mutat mai târziu (normal după o actualizare a aplicației sau ștergerea urmelor Prefetch; se confirmă din procesul-verbal), este mai veche (s-a găsit o urmă mai veche) sau nu se mai poate calcula (de exemplu control din alt cont Windows). Conform = același jurnal și aceeași dată (toleranță o zi). Nedeterminat = nu s-a tastat codul de pe procesul-verbal, sau ancora anterioară nu conține starea ancorată.
 
 ### U01
 
