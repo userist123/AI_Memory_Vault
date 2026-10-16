@@ -931,7 +931,7 @@
 - **De ce contează:** Pe o stație izolată fiecare actualizare vine pe un suport adus de cineva; o actualizare care nu apare în registru a intrat necontrolat.
 - **Cum verifică aplicația:** A citit lista actualizărilor Windows instalate (cu data) și a căutat numărul KB al fiecăreia în registrul actualizărilor offline completat în aplicație.
 - **Sursa tehnică:** `WMI Win32_QuickFixEngineering → HotFixID, InstalledOn; registrul actualizărilor offline (pagina Control stație)`
-- **Cum se citește rezultatul:** Conform = toate actualizările din perioadă apar în registru. Neconform = actualizări instalate care nu apar în registru. De verificat = registrul nu este completat în aplicație (comparați manual, verificarea M05) sau nu s-a instalat nimic în perioadă. Lista Windows nu cuprinde actualizările de antivirus; data semnăturilor se compară separat.
+- **Cum se citește rezultatul:** Conform = toate actualizările din perioadă apar în registru. Neconform = actualizări instalate care nu apar în registru. De verificat = registrul nu este completat în aplicație (comparați manual, verificarea M05) sau nu s-a instalat nimic în perioadă. Lista Windows nu cuprinde actualizările de antivirus; semnăturile se compară cu registrul în verificarea S06.
 
 ### S05
 
@@ -940,6 +940,14 @@
 - **Cum verifică aplicația:** Ce faceți: dacă ceasul este în urmă, corectați ora dintr-o sursă aprobată, verificați bateria CMOS și notați incidentul. Un salt mare înainte (peste 30 de zile) nu este o eroare: stația poate fi oprită mult timp; doar confirmați că data este cea reală.
 - **Sursa tehnică:** `Jurnalul de audit al aplicației (intrările clock.seen, lanț de amprente); jurnalul de custodie al cazului; HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion → InstallDate`
 - **Cum se citește rezultatul:** Conform = ora este în ordine. Neconform = ceasul este mai vechi cu peste 2 minute decât ultima activitate a aplicației sau dinaintea instalării Windows. De verificat = salt înainte de peste 30 de zile. Nedeterminat = aplicația nu are încă nicio înregistrare (prima rulare). Aplicația nu poate vedea o schimbare a ceasului făcută cât timp era oprită.
+
+### S06
+
+- **Ce verificăm:** Dacă fiecare actualizare a semnăturilor antivirus făcută pe stație în perioada controlată apare în registrul actualizărilor offline și dacă actualizările trecute în registru au ajuns pe stație.
+- **De ce contează:** Pe o stație izolată semnăturile vin pe un suport adus de cineva; o actualizare de semnături care nu apare în registru înseamnă un suport intrat necontrolat, iar una trecută în registru care nu apare pe stație înseamnă o procedură neaplicată.
+- **Cum verifică aplicația:** A citit versiunea și data semnăturilor Microsoft Defender în vigoare și actualizările de semnături din jurnalul Defender (o actualizare pe versiune), apoi le-a căutat în rândurile de fel „antivirus” din registru: un rând care scrie versiunea (de exemplu 1.419.200.0) se potrivește doar cu acea versiune; un rând fără versiune se potrivește cu o actualizare din aceeași zi (±1 zi, pentru că data din registru este locală, iar ora din jurnal este UTC).
+- **Sursa tehnică:** `WMI MSFT_MpComputerStatus → AntivirusSignatureVersion, AntivirusSignatureLastUpdated; Defender 2000; registrul actualizărilor offline (pagina Control stație)`
+- **Cum se citește rezultatul:** Conform = toate actualizările de semnături din perioadă apar în registru, iar registrul nu are actualizări mai noi decât semnăturile stației. Neconform = o actualizare de semnături de pe stație lipsește din registru, sau registrul are o actualizare antivirus mai nouă decât semnăturile stației, care nu a ajuns pe ea. De verificat = registrul nu are nicio actualizare antivirus (comparați manual, verificarea M05), jurnalul Defender nu a putut fi citit (se compară doar semnăturile în vigoare), sau semnăturile în vigoare nu apar în registru, iar jurnalul nu mai are actualizarea lor. Nedeterminat = starea Defender nu a putut fi citită. Limite: scanarea suportului pe stația de decontaminare, înainte de prima conectare, rămâne verificare manuală (M04); jurnalul Defender poate fi rotit și atunci actualizările vechi nu se mai văd; alt antivirus decât Microsoft Defender nu este citit.
 
 ## Ce înseamnă rezultatele
 
@@ -1064,6 +1072,7 @@
 | CurrentVersion\\CurrentBuild | valoare de registru | Numărul de build al Windows. | Identifică exact versiunea; 22000 sau mai mult înseamnă Windows 11. | Numele produsului din registru poate spune „Windows 10” și pe Windows 11. |
 | CurrentVersion\\UBR | valoare de registru | Numărul de revizie al actualizărilor instalate peste build. | Crește cu fiecare actualizare lunară instalată. | Se citește împreună cu build-ul: 26100.1234 înseamnă revizia 1234. |
 | Win32_QuickFixEngineering | interogare Windows (WMI) | Lista actualizărilor Windows instalate, cu numărul KB și data. | Se compară cu registrul actualizărilor offline. | Nu cuprinde actualizările antivirusului și nici toate componentele Windows. |
+| Defender 2000 | eveniment Windows | Microsoft Defender și-a actualizat semnăturile (versiunea veche și cea nouă). | Pe o stație izolată fiecare actualizare de semnături vine pe un suport și trebuie să apară în registrul actualizărilor offline. | Câmpul „Current Signature Version” arată versiunea nouă. |
 | Security 4732 | eveniment Windows | Un membru a fost adăugat într-un grup local (de exemplu Administrators). | Adăugarea în Administrators dă control total asupra stației. | SID-ul S-1-5-32-544 înseamnă grupul Administrators. |
 | Security 4733 | eveniment Windows | Un membru a fost eliminat dintr-un grup local. | Schimbă drepturile contului. |  |
 | Security 4720 | eveniment Windows | A fost creat un cont de utilizator nou. | Orice cont nou trebuie să aibă aprobare. |  |

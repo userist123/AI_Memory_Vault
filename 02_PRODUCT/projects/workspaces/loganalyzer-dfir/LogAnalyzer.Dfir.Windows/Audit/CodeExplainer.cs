@@ -111,6 +111,8 @@ public static class CodeExplainer
             "Un program rău-intenționat a ajuns pe stație; trebuie aflat de unde (de exemplu de pe un suport conectat).", "Câmpurile „Threat Name” și „Path” arată ce și unde."),
         [(StationFactCollector.DefenderChannel, 1117)] = E("Defender 1117", "eveniment Windows", "Microsoft Defender a luat o măsură împotriva unui program rău-intenționat (carantină, ștergere).",
             "Arată că amenințarea a fost tratată; originea ei trebuie totuși investigată.", ""),
+        [(StationFactCollector.DefenderChannel, 2000)] = E("Defender 2000", "eveniment Windows", "Microsoft Defender și-a actualizat semnăturile (versiunea veche și cea nouă).",
+            "Pe o stație izolată fiecare actualizare de semnături vine pe un suport și trebuie să apară în registrul actualizărilor offline.", "Câmpul „Current Signature Version” arată versiunea nouă."),
     };
 
     private static readonly Dictionary<string, string> ChannelAliases = new(StringComparer.OrdinalIgnoreCase)

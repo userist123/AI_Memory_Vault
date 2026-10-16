@@ -123,6 +123,7 @@ public static class ControlApplicability
         Row("S03", "Windows version and last update", Yes("Known and documented"), Yes("Known and documented"), Yes("Recent"), null),
         Row("S04", "Offline updates applied and update register", Yes("Register matches installed updates"), Yes("Register matches installed updates"), No, "The offline update register exists only where updates cannot come online."),
         Row("S05", "Station clock versus the application's time memory", Yes("Consistent"), Yes("Consistent"), Yes("Consistent"), null),
+        Row("S06", "Antivirus signatures and update register", Yes("Every signature update is in the register"), Yes("Every signature update is in the register"), No, "Signatures come on a medium only where updates cannot come online."),
     ];
     // END GENERATED TABLE
 

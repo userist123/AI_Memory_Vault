@@ -181,7 +181,8 @@ public static class StationFactCollector
         [AppLockerMsiChannel] = [8006, 8007],
         [CodeIntegrityChannel] = [3076, 3077],
         // Defender scans (1000 started, 1001 finished) and detections (1116, 1117): was a medium scanned right after it was connected?
-        [DefenderChannel] = [1000, 1001, 1116, 1117],
+        // Signature updates (2000): compared with the offline update register (S06).
+        [DefenderChannel] = [1000, 1001, 1116, 1117, 2000],
         // Printed documents (307: document name, user, printer); the log is off by default.
         [PrintServiceChannel] = [307],
     };
@@ -374,12 +375,13 @@ public static class StationFactCollector
 
         try
         {
-            using var mp = new ManagementObjectSearcher(@"root\Microsoft\Windows\Defender", "SELECT AntivirusEnabled, RealTimeProtectionEnabled, AntivirusSignatureLastUpdated, IsTamperProtected FROM MSFT_MpComputerStatus");
+            using var mp = new ManagementObjectSearcher(@"root\Microsoft\Windows\Defender", "SELECT AntivirusEnabled, RealTimeProtectionEnabled, AntivirusSignatureLastUpdated, AntivirusSignatureVersion, IsTamperProtected FROM MSFT_MpComputerStatus");
             foreach (ManagementObject o in mp.Get())
             {
                 s["Defender.AntivirusEnabled"] = o["AntivirusEnabled"]?.ToString() ?? "";
                 s["Defender.RealTime"] = o["RealTimeProtectionEnabled"]?.ToString() ?? "";
                 s["Defender.TamperProtected"] = o["IsTamperProtected"]?.ToString() ?? "";
+                s["Defender.SignatureVersion"] = o["AntivirusSignatureVersion"]?.ToString() ?? "";
                 if (o["AntivirusSignatureLastUpdated"] is string d)
                     s["Defender.SignaturesUtc"] = ManagementDateTimeConverter.ToDateTime(d).ToUniversalTime().ToString("o");
             }
