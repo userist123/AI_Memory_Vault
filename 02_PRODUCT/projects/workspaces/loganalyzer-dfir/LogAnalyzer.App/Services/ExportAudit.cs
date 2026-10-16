@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using LogAnalyzer.Dfir.Auth;
 
@@ -35,23 +36,25 @@ namespace LogAnalyzer.UI.Services
         }
 
         /// <summary>
-        /// Several files into one folder (review of PR #298: „Exportă pentru ofițer”): the intent lists every planned file and is written BEFORE anything; when it
-        /// cannot be written the whole export is refused and <paramref name="write"/> is not called. After the write, every file found under
-        /// <paramref name="folder"/> is recorded with its SHA-256; a failed write is recorded as failed and rethrown.
+        /// Several files into one folder (review of PR #298: „Exportă pentru ofițer”, the CD-R copy of the log, the signed media history): the intent lists every
+        /// planned file and is written BEFORE anything; when it cannot be written the whole export is refused and <paramref name="write"/> is not called.
+        /// <paramref name="write"/> returns the files it wrote; each is recorded with its SHA-256 (files already in a chosen folder are neither touched nor listed).
+        /// A failed write is recorded as failed and rethrown.
         /// </summary>
-        public static string? RunBundle(string caseId, string format, string folder, System.Collections.Generic.IReadOnlyList<string> plannedFiles, Action write)
+        public static string? RunBundle(string caseId, string format, string folder, System.Collections.Generic.IReadOnlyList<string> plannedFiles,
+            Func<System.Collections.Generic.IEnumerable<string>> write)
         {
             if (AuthApp.TryRecord(OperationAudit.ExportUnmasked, OperationAudit.ExportBundleIntentDetail(caseId, format, folder, plannedFiles)) is { } error)
                 return Refused(error);
-            try { write(); }
+            System.Collections.Generic.List<string> written;
+            try { written = write().ToList(); }
             catch (Exception ex)
             {
                 AuthApp.Record(OperationAudit.ExportUnmasked, OperationAudit.ExportFailedDetail(caseId, format, plannedFiles.Count, ex.GetType().Name));
                 throw;
             }
-            if (System.IO.Directory.Exists(folder))
-                foreach (var f in System.IO.Directory.EnumerateFiles(folder, "*", System.IO.SearchOption.AllDirectories))
-                    AuthApp.Record(OperationAudit.ExportUnmasked, OperationAudit.ExportBundleFileDetail(caseId, format, folder, f));
+            foreach (var f in written.Where(System.IO.File.Exists).Distinct(StringComparer.OrdinalIgnoreCase))
+                AuthApp.Record(OperationAudit.ExportUnmasked, OperationAudit.ExportBundleFileDetail(caseId, format, folder, f));
             return null;
         }
 

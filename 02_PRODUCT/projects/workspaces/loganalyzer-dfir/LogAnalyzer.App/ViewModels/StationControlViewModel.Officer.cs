@@ -151,7 +151,7 @@ namespace LogAnalyzer.UI.ViewModels
                 AnchorExport? exported = null;
                 var dest = Path.Combine(folder, AuditAnchor.ExportFolderName(now));
                 if (ExportAudit.RunBundle(ExportAudit.LiveCaseId, "jurnal-cd-r", dest, [Path.GetFileName(log), Path.GetFileName(HashChain.HeadPath(log)) + " (dacă există)", "ancorare.txt"],
-                        () => exported = AuditAnchor.Export(log, folder, Environment.MachineName, now)) is { } refused)
+                        () => { exported = AuditAnchor.Export(log, folder, Environment.MachineName, now); return Directory.GetFiles(exported.Folder); }) is { } refused)
                 { Status = "Copierea jurnalului nu s-a făcut: " + refused; return; }
                 var x = exported!;
                 AuthApp.Record(OperationAudit.AnchorExported, OperationAudit.AnchorExportedDetail(x.Anchor.Seq, x.Anchor.Code, x.LogSha256, x.Folder));

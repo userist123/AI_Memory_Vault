@@ -119,8 +119,17 @@ namespace LogAnalyzer.UI.ViewModels
             if (dlg.ShowDialog() != true) return;
             try
             {
-                var files = MediaHistoryFlows.ExportReport(dlg.FolderName, _result, _settings, Environment.MachineName, RegisterLine, cert, OfficerFlows.Trusted(OfficerStore.Shared.Load()),
-                                                           DateTimeOffset.UtcNow, AuthApp.Record);
+                // review of PR #298: the report and its table leave the station through the audited export (intent first, then the SHA-256 of each file)
+                MediaHistoryFlows.ReportFiles? written = null;
+                var result = _result; var settings = _settings;
+                if (ExportAudit.RunBundle(ExportAudit.LiveCaseId, "confruntare-statii", dlg.FolderName, ["raportul confruntării semnat (PDF)", "tabelul confruntării (CSV)"], () =>
+                    {
+                        written = MediaHistoryFlows.ExportReport(dlg.FolderName, result, settings, Environment.MachineName, RegisterLine, cert, OfficerFlows.Trusted(OfficerStore.Shared.Load()),
+                                                                 DateTimeOffset.UtcNow, AuthApp.Record);
+                        return [written.SignedPdf, written.Csv];
+                    }) is { } refused)
+                { Status = "Raportul NU a fost scris: " + refused; return; }
+                var files = written!;
                 Status = $"Raportul semnat a fost scris: {files.SignedPdf} (SHA-256 {files.SignedSha256}) și tabelul {files.Csv}.";
                 Process.Start(new ProcessStartInfo(files.SignedPdf) { UseShellExecute = true });
             }
