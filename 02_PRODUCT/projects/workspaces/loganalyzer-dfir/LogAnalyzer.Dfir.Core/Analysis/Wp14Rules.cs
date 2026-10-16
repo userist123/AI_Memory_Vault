@@ -21,6 +21,15 @@ public sealed class Wp14Input
     public AirGapFacts? Facts { get; init; }
     /// <summary>E1: evidence id → origin label for sources that are not the current system (archived log, Windows.old, shadow copy); see <see cref="EvidenceOrigin"/>.</summary>
     public IReadOnlyDictionary<string, string>? EvidenceOrigins { get; init; }
+    /// <summary>Installation date of the application on the analysed station (first chained record of its audit chain); null = take it from <see cref="Facts"/>, else unknown.</summary>
+    public DateTimeOffset? AppInstalledUtc { get; init; }
+    public string AppInstallBasis { get; init; } = "";
+    /// <summary>What contradicts the installation date; null = take it from <see cref="Facts"/>.</summary>
+    public IReadOnlyList<string>? AppInstallViolations { get; init; }
+    /// <summary>DE VERIFICAT notes about the installation date; null = take them from <see cref="Facts"/>.</summary>
+    public IReadOnlyList<string>? AppInstallToVerify { get; init; }
+    /// <summary>The sources present in the case ("EventLog:&lt;channel&gt;", "SRUM", "Firewall:pfirewall.log", "AirGapFacts"); null = not known, then a source counts as present when the timeline has a row from it.</summary>
+    public IReadOnlyCollection<string>? CollectedSources { get; init; }
 }
 
 /// <summary>
@@ -44,6 +53,7 @@ public static partial class Wp14Rules
         AfterConnectFindings(c, found);   // E5: what followed each connection (linked to the medium's findings above)
         Optical(c, found);
         AirGap(c, found);
+        FirewallLogPathFindings(c, found);   // review of PR #288: a refused firewall-log path is reported in every scope
         Channels(c, found);
         PayloadFindings(c, found);        // P1: shortcuts and hidden folders on media, execution from media, Startup folder, Run-dialog commands
         return found;
@@ -61,6 +71,20 @@ public static partial class Wp14Rules
         public bool InPeriod(DateTimeOffset? t) => t is { } x && (Scope.PeriodFromUtc is not { } a || x >= a) && (Scope.PeriodToUtc is not { } b || x <= b);
         public bool Classified => Scope.Classification == ClassificationLevel.Classified;
         public bool AirGapScope => Scope.Network is NetworkCategory.AirGappedNetwork or NetworkCategory.StandalonePc;
+        /// <summary>The Standalone posture (owner directive 2026-10-16): no network is ever authorised after the application was installed.</summary>
+        public bool Standalone => Scope.Network == NetworkCategory.StandalonePc;
+        public DateTimeOffset? AppInstalledUtc => Input.AppInstalledUtc ?? Facts?.AppInstalledUtc;
+        public string AppInstallBasis =>
+            Input.AppInstalledUtc is not null && Input.AppInstallBasis.Length > 0 ? Input.AppInstallBasis
+            : Facts is { AppInstallBasis.Length: > 0 } f ? f.AppInstallBasis
+            : Input.AppInstallBasis.Length > 0 ? Input.AppInstallBasis
+            : "sursă lipsă: data instalării aplicației, de ce lipsește: faptele stației (AirGapFacts) nu sunt în acest caz, cum se pornește: colectarea pe stația pe care este instalată aplicația (colectorul AirGapFacts citește jurnalul de audit al aplicației)";
+        public IReadOnlyList<string> AppInstallToVerify => Input.AppInstallToVerify ?? (IReadOnlyList<string>?)Facts?.AppInstallToVerify ?? [];
+        public IReadOnlyList<string> AppInstallViolations => Input.AppInstallViolations ?? (IReadOnlyList<string>?)Facts?.AppInstallViolations ?? [];
+        /// <summary>True when the source is in the case (or, when the case did not say, when the timeline has a row from it).</summary>
+        public bool Has(string source) => Input.CollectedSources is { } cs
+            ? cs.Contains(source, StringComparer.OrdinalIgnoreCase)
+            : Events.Any(e => e.Source.Equals(source, StringComparison.OrdinalIgnoreCase));
         public ProcedureProfile? Profile => Input.Profile;
         public string CaseClassText => Scope.Classification switch
         {

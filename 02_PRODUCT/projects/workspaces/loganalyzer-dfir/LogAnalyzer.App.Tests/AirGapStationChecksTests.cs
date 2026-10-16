@@ -143,7 +143,10 @@ public class AirGapStationChecksTests
         var f = AirGapFactsCollector.Read(false, null);
         Assert.True(f.CollectedUtc > DateTimeOffset.UtcNow.AddMinutes(-5));
         Assert.All(f.Errors, e => Assert.Contains(":", e));
-        Assert.Equal(15, f.StepMs.Count);   // every read is timed, so a slow one is visible (12 + the three P1 reads: media listings, Startup, Downloads/Desktop)
+        Assert.Equal(20, f.StepMs.Count);   // every read is timed, so a slow one is visible (12 + the three P1 reads + the five network-evidence reads: NetworkList, NCSI, firewall log, WFP audit, log retention)
+        Assert.True(f.Network.ProfilesRead || f.Errors.Any(e => e.StartsWith("profilurile și semnăturile de rețea", StringComparison.Ordinal)));
+        Assert.True(f.Network.FirewallRead || f.Errors.Any(e => e.StartsWith("jurnalizarea firewall-ului", StringComparison.Ordinal)));
+        Assert.True(f.AppInstalledUtc is not null || f.AppInstallBasis.StartsWith("sursă lipsă:", StringComparison.Ordinal));
         Assert.All(f.Adapters, a => Assert.Equal("Net", a.PnpClass));
         // P1 reads stay inside their bounds (structure only)
         Assert.True(f.MediaListings.Count <= AirGapFactsCollector.MaxMedia);

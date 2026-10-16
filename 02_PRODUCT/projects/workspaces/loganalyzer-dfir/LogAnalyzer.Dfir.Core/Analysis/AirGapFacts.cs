@@ -195,6 +195,77 @@ public sealed class ProfileFileFact
     public string Sha256 { get; set; } = "";
 }
 
+/// <summary>
+/// One saved network profile (HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Profiles\{guid}) joined with its signature
+/// (...\NetworkList\Signatures\Managed|Unmanaged\*, matched on ProfileGuid). Windows keeps the dates as SYSTEMTIME in LOCAL time; they are converted to UTC
+/// with the collecting station's zone.
+/// </summary>
+public sealed class NetworkListProfileFact
+{
+    public string ProfileGuid { get; set; } = "";
+    public string ProfileName { get; set; } = "";
+    public string Description { get; set; } = "";
+    /// <summary>0 public, 1 private, 2 domain; null = not stored.</summary>
+    public int? Category { get; set; }
+    /// <summary>6 wired, 71 wireless, 23 VPN, 243 mobile broadband; null = not stored.</summary>
+    public int? NameType { get; set; }
+    public DateTimeOffset? DateCreatedUtc { get; set; }
+    public DateTimeOffset? DateLastConnectedUtc { get; set; }
+    /// <summary>"Managed" (domain network) or "Unmanaged"; "" when no signature names this profile.</summary>
+    public string SignatureKind { get; set; } = "";
+    /// <summary>MAC of the default gateway the network was identified by ("AA-BB-..."); "" when not stored.</summary>
+    public string DefaultGatewayMac { get; set; } = "";
+    public string DnsSuffix { get; set; } = "";
+    public string FirstNetwork { get; set; } = "";
+
+    public static string NameTypeLabel(int? t) => t switch { 6 => "cablu (Ethernet)", 71 => "Wi-Fi", 23 => "VPN", 243 => "bandă largă mobilă", null => "tip necunoscut", var x => $"tip {x}" };
+    public static string CategoryLabel(int? c) => c switch { 0 => "publică", 1 => "privată", 2 => "domeniu", null => "categorie necunoscută", var x => $"categoria {x}" };
+}
+
+/// <summary>Logging settings of one Windows Firewall profile and the state of its log file.</summary>
+public sealed class FirewallLogFact
+{
+    /// <summary>"Domain", "Private" or "Public".</summary>
+    public string Profile { get; set; } = "";
+    public string Path { get; set; } = "";
+    public bool? LogAllowed { get; set; }
+    public bool? LogDropped { get; set; }
+    public bool FileExists { get; set; }
+    public long Size { get; set; }
+    /// <summary>Why the configured path was not read ("" = accepted): only a local absolute path on a fixed drive is read (no UNC, device or network-drive path).</summary>
+    public string Rejected { get; set; } = "";
+}
+
+/// <summary>The configuration of one event-log channel (EventLogConfiguration: retention mode, maximum size) and the number of its oldest record.</summary>
+public sealed class EventLogInfoFact
+{
+    public string Channel { get; set; } = "";
+    public bool? Enabled { get; set; }
+    /// <summary>"Circular" (overwrite oldest), "AutoBackup" (archive when full) or "Retain" (stop when full); "" when not read.</summary>
+    public string LogMode { get; set; } = "";
+    public long? MaxSizeBytes { get; set; }
+    /// <summary>EventRecordID of the oldest record still in the log; greater than 1 means older records were overwritten or cleared.</summary>
+    public long? OldestRecordNumber { get; set; }
+    public string Error { get; set; } = "";
+}
+
+/// <summary>What the facts collector read about the network evidence sources (owner directive 2026-10-16). A read that failed is named in <see cref="AirGapFacts.Errors"/>.</summary>
+public sealed class NetworkEvidenceFacts
+{
+    public bool ProfilesRead { get; set; }
+    public List<NetworkListProfileFact> Profiles { get; set; } = [];
+    /// <summary>HKLM\SYSTEM\CurrentControlSet\Services\NlaSvc\Parameters\Internet → EnableActiveProbing (0 = NCSI does not probe, so its "Internet" verdict is not tested); null = not read.</summary>
+    public int? NcsiEnableActiveProbing { get; set; }
+    /// <summary>Policy HKLM\SOFTWARE\Policies\Microsoft\Windows\NetworkConnectivityStatusIndicator → NoActiveProbe (1 = probing disabled by policy); null = not set.</summary>
+    public int? NcsiPolicyNoActiveProbe { get; set; }
+    public bool FirewallRead { get; set; }
+    public List<FirewallLogFact> FirewallLogs { get; set; } = [];
+    /// <summary>Audit of "Filtering Platform Connection" (Security 5156 success / 5157 failure); null = not readable (needs an administrator).</summary>
+    public bool? WfpAuditSuccess { get; set; }
+    public bool? WfpAuditFailure { get; set; }
+    public List<EventLogInfoFact> EventLogs { get; set; } = [];
+}
+
 /// <summary>Everything the facts collector read from the station, with the reads that failed.</summary>
 public sealed class AirGapFacts
 {
@@ -220,6 +291,17 @@ public sealed class AirGapFacts
     /// <summary>Machine-level consent for camera and microphone (CapabilityAccessManager): "Deny", "Allow" or "" when not set / not read. This is the value of control P19.</summary>
     public string WebcamPolicy { get; set; } = "";
     public string MicrophonePolicy { get; set; } = "";
+    /// <summary>Network evidence sources: NetworkList profiles and signatures, NCSI probing, firewall logging, WFP audit, event-log retention.</summary>
+    public NetworkEvidenceFacts Network { get; set; } = new();
+    /// <summary>Installation date of the application on the station (first chained record of its audit chain); null = not known, see <see cref="AppInstallBasis"/>.</summary>
+    public DateTimeOffset? AppInstalledUtc { get; set; }
+    public string AppInstallBasis { get; set; } = "";
+    /// <summary>What contradicts the installation date (store re-initialised, chain not starting at the store creation, other traces older than the chain): NECONFORM on Standalone.</summary>
+    public List<string> AppInstallViolations { get; set; } = [];
+    /// <summary>DE VERIFICAT notes about the installation date (mismatch that is not proof, missing Windows traces).</summary>
+    public List<string> AppInstallToVerify { get; set; } = [];
+    /// <summary>Time of the first chained record of the application's audit chain (printed next to the computed date).</summary>
+    public DateTimeOffset? AppInstallChainFirstUtc { get; set; }
     public List<string> Errors { get; set; } = [];
     /// <summary>Milliseconds each read took (diagnostic: shows which read is slow on a given station).</summary>
     public Dictionary<string, long> StepMs { get; set; } = [];
