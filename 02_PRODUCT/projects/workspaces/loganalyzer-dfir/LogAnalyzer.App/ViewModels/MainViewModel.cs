@@ -611,7 +611,7 @@ namespace LogAnalyzer.UI.ViewModels
             LogAnalyzer.Dfir.Language.LanguageLevelContext.Set(_languagePreferences.Load(PreferenceAccount));
             IsExpertLevel = LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert;
             RoleProfile = LogAnalyzer.Core.Services.Edition.RoleProfiles.For(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role, edition, AppModeContext.Current.Mode);
-            Home = new HomeViewModel(Investigation, tab => SelectedTabIndex = tab, profile: RoleProfile);
+            Home = new HomeViewModel(Investigation, tab => SelectedTabIndex = tab, profile: RoleProfile, quickControl: StationControl);
             // G3: „Colectează tot” anywhere in the window runs the complete collection and analysis for the role; the control station also runs its control.
             LogAnalyzer.UI.Services.CollectAllState.Handler = async () =>
             {

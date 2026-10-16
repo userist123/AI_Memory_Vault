@@ -140,11 +140,12 @@ namespace LogAnalyzer.UI.ViewModels
         {
             var log = AuditLogPath();
             if (log is null) { Status = "Jurnalul aplicației nu este disponibil (autentificarea nu este pornită)."; return; }
-            var dlg = new OpenFolderDialog { Title = "Alegeți unde se copiază jurnalul aplicației (apoi ardeți folderul pe un CD-R)" };
-            if (dlg.ShowDialog() != true) return;
+            // usability 2026-10-16: the dialog starts in the folder used last time
+            var folder = PickFolder("Alegeți unde se copiază jurnalul aplicației (apoi ardeți folderul pe un CD-R)", LogAnalyzer.Dfir.Language.FolderMemory.AnchorExport);
+            if (folder is null) return;
             try
             {
-                var x = AuditAnchor.Export(log, dlg.FolderName, Environment.MachineName, DateTimeOffset.UtcNow);
+                var x = AuditAnchor.Export(log, folder, Environment.MachineName, DateTimeOffset.UtcNow);
                 AuthApp.Record(OperationAudit.AnchorExported, OperationAudit.AnchorExportedDetail(x.Anchor.Seq, x.Anchor.Code, x.LogSha256, x.Folder));
                 OfficerInfo = $"Jurnalul aplicației a fost copiat în {x.Folder}.{Environment.NewLine}{x.Anchor.Line}. SHA-256 al copiei: {x.LogSha256}.{Environment.NewLine}" +
                               "Ardeți folderul pe un CD-R (se scrie o singură dată), notați pe disc data și stația și predați-l ofițerului de securitate.";
@@ -171,7 +172,7 @@ namespace LogAnalyzer.UI.ViewModels
         private void SignAsOfficer()
         {
             if (_report is null) { Status = "Rulați întâi controlul."; return; }
-            var pdf = _lastReportPdf ?? GenerateReport(showCopyDialog: false);
+            var pdf = _lastReportPdf ?? GenerateReport();
             if (pdf is null) return;
             var cert = PickCardCertificate("Semnează ca ofițer de securitate");
             if (cert is null) return;
@@ -209,7 +210,9 @@ namespace LogAnalyzer.UI.ViewModels
         private void VerifySignedReport()
         {
             var dlg = new OpenFileDialog { Title = "Alegeți raportul semnat de ofițerul de securitate (PDF)", Filter = "PDF (*.pdf)|*.pdf" };
+            if (LogAnalyzer.Dfir.Language.FolderMemory.Shared.Get(LogAnalyzer.Dfir.Language.FolderMemory.SignedReport) is { } last) dlg.InitialDirectory = last;
             if (dlg.ShowDialog() != true) return;
+            LogAnalyzer.Dfir.Language.FolderMemory.Shared.Remember(LogAnalyzer.Dfir.Language.FolderMemory.SignedReport, dlg.FileName);
             if (VerifyFingerprint.Trim().Length > 0 && OfficerFingerprint.Normalize(VerifyFingerprint).Length == 0)
             { VerifyResult = "Amprenta scrisă nu are forma corectă: 64 de caractere 0-9 și A-F (de regulă 16 grupe de 4), exact ca pe procesul-verbal."; return; }
             try

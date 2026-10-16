@@ -13,6 +13,12 @@
     <Window.InputBindings>
         <KeyBinding Key="K" Modifiers="Control" Command="{Binding ToggleCommandPaletteCommand}"/>
         <KeyBinding Key="Escape" Command="{Binding CloseCommandPaletteCommand}"/>
+        <!-- usability 2026-10-16: the primary actions from the keyboard, anywhere in the window (also written on the Home buttons) -->
+        <KeyBinding Key="Enter" Modifiers="Control" Command="{Binding Home.RunStationControlCommand}"/>
+        <KeyBinding Key="O" Modifiers="Control" Command="{Binding Home.OpenControlReportCommand}"/>
+        <KeyBinding Key="S" Modifiers="Control+Shift" Command="{Binding Home.SignControlReportCommand}"/>
+        <KeyBinding Key="E" Modifiers="Control" Command="{Binding Home.ExportForOfficerCommand}"/>
+        <KeyBinding Key="F1" Command="{Binding OpenGlossaryCommand}"/>
     </Window.InputBindings>
 
     <Grid Background="{StaticResource CanvasBrush}">
