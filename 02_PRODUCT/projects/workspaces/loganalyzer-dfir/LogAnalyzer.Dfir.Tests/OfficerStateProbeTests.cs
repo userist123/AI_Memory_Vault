@@ -31,10 +31,14 @@ public sealed class OfficerStateProbeTests : IDisposable
 
     private string State() => OfficerState.Compute(_store.Path, _trust).Detail;
 
-    /// <summary>What the application does at the end of a control: anchor the head, then record "audit.anchor" with the state. Returns the anchored seq (the paper code).</summary>
+    /// <summary>
+    /// What the application does at the end of a control: write the anchored state ("audit.anchor_state": install date and officer state), anchor the head
+    /// (that very entry), then record "audit.anchor". Returns the anchored seq (the paper code).
+    /// </summary>
     private long Anchor()
     {
         _audit.AuditOperation(null, OperationAudit.ControlFinished, "host=ST-1");
+        _audit.AuditOperation(null, OperationAudit.AnchorState, OperationAudit.AnchorStateDetail(null, "test") + "; " + State());
         var a = AuditAnchor.Current(_audit.AuditPath)!;
         _audit.AuditOperation(null, OperationAudit.AnchorRecorded, OperationAudit.AnchorRecordedDetail(a, "control") + "; " + State());
         return a.Seq;
@@ -88,6 +92,34 @@ public sealed class OfficerStateProbeTests : IDisposable
         var a13 = A13(OfficerState.Assess(_audit.AuditPath, paper, State()));
         Assert.Equal(ControlStatus.Neconform, a13.Status);
         Assert.Contains(a13.Evidence, e => e.Contains("fără o operație a aplicației"));
+    }
+
+    [Fact]
+    public void A_state_written_after_the_paper_anchor_is_never_the_baseline_of_A13()
+    {
+        // the anchored entry holds the state at the control; right after it, before "audit.anchor" is written, the store is edited by hand,
+        // so the anchor event (written after the anchored entry, not covered by the paper code) carries the new state
+        _audit.AuditOperation(null, OperationAudit.ControlFinished, "host=ST-1");
+        _audit.AuditOperation(null, OperationAudit.AnchorState, OperationAudit.AnchorStateDetail(null, "test") + "; " + State());
+        var a = AuditAnchor.Current(_audit.AuditPath)!;
+        Directory.CreateDirectory(Path.GetDirectoryName(_store.Path)!);
+        File.WriteAllText(_store.Path, "{\"officers\":[{\"name\":\"Admin\"}],\"pending\":[]}");
+        _audit.AuditOperation(null, OperationAudit.AnchorRecorded, OperationAudit.AnchorRecordedDetail(a, "control") + "; " + State());
+        var a13 = A13(OfficerState.Assess(_audit.AuditPath, a.Seq, State()));
+        Assert.Equal(ControlStatus.Neconform, a13.Status);
+    }
+
+    [Fact]
+    public void An_anchor_without_a_state_entry_is_NEDETERMINAT_with_the_reason()
+    {
+        _audit.AuditOperation(null, OperationAudit.ControlFinished, "host=ST-1");
+        var a = AuditAnchor.Current(_audit.AuditPath)!;                         // anchored before the state entry existed (older version)
+        _audit.AuditOperation(null, OperationAudit.AnchorRecorded, OperationAudit.AnchorRecordedDetail(a, "control") + "; " + State());
+        var assessed = OfficerState.Assess(_audit.AuditPath, a.Seq, State());
+        Assert.False(assessed.Determinable);
+        var a13 = A13(assessed);
+        Assert.Equal(ControlStatus.Nedeterminat, a13.Status);
+        Assert.Contains("stării ancorate", a13.Detail);
     }
 
     [Fact]

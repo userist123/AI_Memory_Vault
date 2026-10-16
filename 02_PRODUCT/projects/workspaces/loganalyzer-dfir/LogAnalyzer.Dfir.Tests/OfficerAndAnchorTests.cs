@@ -129,6 +129,7 @@ public sealed class OfficerAndAnchorTests : IDisposable
         var s = new AuthService(Path.Combine(_dir, "auth"));
         var empty = OfficerState.Compute(Path.Combine(_dir, "none.json"), Path.Combine(_dir, "none")).Detail;
         s.AuditOperation(null, OperationAudit.OfficerRegistered, OperationAudit.OfficerRegisteredDetail("AAAA", "Unu", OfficerRegistry.BasisFirst, "") + "; " + empty);
+        s.AuditOperation(null, OperationAudit.AnchorState, OperationAudit.AnchorStateDetail(null, "test") + "; " + empty);
         var a = AuditAnchor.Current(s.AuditPath)!;
         s.AuditOperation(null, OperationAudit.AnchorRecorded, OperationAudit.AnchorRecordedDetail(a, "control") + "; " + empty);
         Assert.Equal(a.Code, AuditAnchor.LastRecorded(s.AuditPath));
