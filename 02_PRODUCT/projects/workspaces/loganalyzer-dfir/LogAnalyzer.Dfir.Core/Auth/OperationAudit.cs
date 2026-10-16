@@ -160,6 +160,7 @@ public static class OperationAudit
                 : !IsSha256(r.ExeSha256) ? "nu are amprenta SHA-256 a programului pornit"
                 : !CollectorExec.InInventory(r.Exe, inventory) ? "programul nu face parte din inventarul fix al aplicației (instrumentele Windows pe care le pornește, la locul lor)"
                 : !currentSha256(r.Exe).Equals(r.ExeSha256, StringComparison.OrdinalIgnoreCase) ? "fișierul programului nu are acum amprenta SHA-256 consemnată"
+                : CollectorExec.ScriptHostRefusal(r) is { } scriptWhy ? scriptWhy
                 : r.EndUtc is not { } end || r.ChildPid <= 0 ? "nu are înregistrarea de sfârșit (procesul pornit și codul de ieșire)"
                 : end < r.StartUtc || end - r.StartUtc > MaxExecWindow ? $"a rulat mai mult de {MaxExecWindow.TotalMinutes:0} minute sau se termină înainte să înceapă"
                 : end > scan.Finished[r.RunId] ? "se termină după sfârșitul controlului ei"

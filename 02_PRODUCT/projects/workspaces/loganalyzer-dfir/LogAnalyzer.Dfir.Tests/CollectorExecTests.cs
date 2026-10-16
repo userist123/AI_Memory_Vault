@@ -262,7 +262,8 @@ public sealed class CollectorExecTests : IDisposable
         Assert.Empty(bad.Valid);
         Assert.Contains("amprent", Assert.Single(bad.Refused).Why);
         // the fixed inventory: by location, not by name
-        Assert.True(CollectorExec.InInventory(Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe").ToLowerInvariant()));
+        // PowerShell is not in the shared inventory: only the editions that ship the collection script register it, for that script alone
+        Assert.False(CollectorExec.InInventory(Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe").ToLowerInvariant()));
         Assert.True(CollectorExec.InInventory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windows Defender", "MpCmdRun.exe")));
         Assert.False(CollectorExec.InInventory(@"C:\Users\Public\reg.exe"));
         Assert.False(CollectorExec.InInventory(Path.Combine(Environment.SystemDirectory, "cmd.exe")));
@@ -273,6 +274,19 @@ public sealed class CollectorExecTests : IDisposable
         CollectorExec.AddToInventory(fw);
         Assert.True(CollectorExec.InInventory(fw.ToUpperInvariant()));
         Assert.Throws<ArgumentException>(() => CollectorExec.AddToInventory("netsh.exe"));
+    }
+
+    [Fact]
+    public void A_powershell_record_that_does_not_run_the_applications_collection_script_is_refused()
+    {
+        var ps = Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe");
+        var real = CollectorExec.FileSha256(ps);
+        Assert.Equal(64, real.Length);
+        var cmd = "\"" + ps + "\" -NoProfile -Command Get-Process";
+        var execs = OperationAudit.ReadCollectorExecs(Audit(Control("run-A", T0, T0.AddMinutes(20), Exec("p1", "run-A", T0.AddMinutes(1), T0.AddMinutes(2), exe: ps, cmd: cmd, exeSha: real))), chainValid: true);
+        Assert.Empty(execs.Valid);
+        var m = SelfExecMatcher.Classify(Start4688(T0.AddMinutes(1.5), image: ps, cmd: cmd), execs);
+        Assert.Equal(SelfExecKind.Claimed, m.Kind);
     }
 
     [Fact]
