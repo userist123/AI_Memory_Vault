@@ -1,8 +1,11 @@
 using System.Buffers.Binary;
 using System.Security.Cryptography;
+using LogAnalyzer.Dfir.Analysis;
+using LogAnalyzer.Dfir.Case;
 using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Windows.Acquisition;
+using LogAnalyzer.Dfir.Windows.Investigation;
 using Xunit;
 
 namespace LogAnalyzer.Dfir.Tests;
@@ -14,7 +17,15 @@ namespace LogAnalyzer.Dfir.Tests;
 public sealed class MftAcquisitionTests : IDisposable
 {
     private readonly string _dir = Directory.CreateTempSubdirectory("ladfir_mftacq_").FullName;
-    public void Dispose() { try { Directory.Delete(_dir, true); } catch (IOException) { } }
+    public void Dispose()
+    {
+        try
+        {
+            foreach (var f in Directory.EnumerateFiles(_dir, "*", SearchOption.AllDirectories)) File.SetAttributes(f, FileAttributes.Normal);   // registered evidence is read-only
+            Directory.Delete(_dir, true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+    }
 
     private static byte[] Boot(ushort bps = 512, byte spc = 8, ulong lcn = 786432, sbyte cpr = -10)
     {
@@ -198,7 +209,7 @@ public sealed class MftAcquisitionTests : IDisposable
     [InlineData("1:")]
     public void A_volume_that_is_not_a_drive_letter_is_refused_without_an_exception(string? volume)
     {
-        var r = MftAcquisition.Acquire(volume, Path.Combine(_dir, "x"), default);
+        var r = MftAcquisition.Acquire(volume, Path.Combine(_dir, "x"), elevated: false, default);
         Assert.False(r.Ok);
         Assert.Contains("Volum nevalid", r.Problem, StringComparison.Ordinal);
         Assert.False(File.Exists(Path.Combine(_dir, "x")));
@@ -209,7 +220,7 @@ public sealed class MftAcquisitionTests : IDisposable
     {
         // Z: is rarely mounted; if it is, the read is refused without administrator rights or ends in a refusal for a non-NTFS volume. Either way: no exception.
         var dest = Path.Combine(_dir, "z");
-        var r = MftAcquisition.Acquire("Z:", dest, default);
+        var r = MftAcquisition.Acquire("Z:", dest, elevated: false, default);
         if (!r.Ok) { Assert.NotEmpty(r.Problem); Assert.False(File.Exists(dest)); }
     }
 
@@ -220,7 +231,7 @@ public sealed class MftAcquisitionTests : IDisposable
     {
         var volume = Path.GetPathRoot(Environment.SystemDirectory)!.TrimEnd('\\');
         var dest = Path.Combine(_dir, "$MFT");
-        var r = MftAcquisition.Acquire(volume, dest, default);
+        var r = MftAcquisition.Acquire(volume, dest, elevated: true, default);
         Assert.True(r.Ok, r.Problem);
         try
         {
@@ -241,6 +252,131 @@ public sealed class MftAcquisitionTests : IDisposable
             Assert.True(res.MalformedRecords * 100 < res.Records, $"Malformed={res.MalformedRecords} of {res.Records}");   // counts only: no name or path from the volume is shown
         }
         finally { File.Delete(dest); }
+    }
+
+    // ---- what a refused open or a damaged boot sector means (no real volume) ----
+
+    [Fact]
+    public void A_refused_volume_open_is_an_absent_source_without_administrator_rights_and_a_failure_as_administrator()
+    {
+        var notAdmin = MftAcquisition.AccessDenied(elevated: false);
+        Assert.True(notAdmin.SourceAbsent);
+        Assert.Contains("administrator", notAdmin.Problem, StringComparison.Ordinal);
+        var admin = MftAcquisition.AccessDenied(elevated: true);
+        Assert.False(admin.Ok);
+        Assert.False(admin.SourceAbsent);
+        Assert.Equal("Accesul la volum a fost refuzat deși aplicația rulează ca administrator (posibil blocat de software-ul de securitate).", admin.Problem);
+    }
+
+    [Fact]
+    public void A_volume_without_the_NTFS_identifier_is_absent_but_an_NTFS_boot_sector_with_invalid_geometry_is_a_failure()
+    {
+        var fat = Boot();
+        "MSDOS5.0"u8.CopyTo(fat.AsSpan(3));
+        Assert.True(MftAcquisition.ReadBootSector(fat, out _)!.SourceAbsent);
+
+        var r = MftAcquisition.ReadBootSector(Boot(bps: 100), out _)!;   // labelled NTFS, impossible sector size
+        Assert.False(r.Ok);
+        Assert.False(r.SourceAbsent);
+        Assert.Contains("date nevalide", r.Problem, StringComparison.Ordinal);
+
+        Assert.Null(MftAcquisition.ReadBootSector(Boot(), out var geo));
+        Assert.Equal(1024, geo.RecordSize);
+    }
+
+    // ---- the collector outcome on a temporary case (no real volume) ----
+
+    private CaseWorkspace NewCase() => InvestigationPipeline.NewCase(Path.Combine(_dir, "cases"), "e8", TestScopes.Valid());
+
+    private static string VolumeOf(CaseWorkspace ws) => Path.GetPathRoot(ws.Root)!.TrimEnd('\\');
+    private static string OtherVolume(CaseWorkspace ws) => VolumeOf(ws).Equals("Q:", StringComparison.OrdinalIgnoreCase) ? "R:" : "Q:";
+
+    private static (string Dest, MftAcquisitionResult Ok) CopiedTable(CaseWorkspace ws)
+    {
+        var dest = Path.Combine(ws.RawDir("MFT"), "$MFT");
+        var bytes = new byte[2048];
+        "FILE"u8.CopyTo(bytes);
+        File.WriteAllBytes(dest, bytes);
+        return (dest, new MftAcquisitionResult(true, bytes.Length, Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(), 1024, ""));
+    }
+
+    private static string AuditText(CaseWorkspace ws) => File.ReadAllText(ws.AuditChainPath);
+
+    [Fact]
+    public void A_case_on_the_same_volume_gets_a_warning_in_the_warnings_the_evidence_notes_and_the_audit_but_no_error()
+    {
+        var ws = NewCase();
+        var volume = VolumeOf(ws);
+        var (dest, ok) = CopiedTable(ws);
+        var o = MftCollector.Finish(ws, volume, volume + @"\$MFT", dest, ok, "MftCollector", "1.0");
+        var warning = MftAcquisition.SameVolumeWarning(volume);
+        Assert.Equal(EvidenceStatus.Success, o.Status);
+        Assert.Empty(o.Errors);                                   // an error would become a Partial gap ("run as administrator / import")
+        Assert.Equal(warning, Assert.Single(o.Warnings));
+        var item = Assert.Single(o.Evidence);
+        Assert.Equal(EvidenceStatus.Success, item.Status);
+        Assert.Equal(warning, item.Notes);
+        Assert.Contains("acquisition.warning", AuditText(ws), StringComparison.Ordinal);
+        Assert.Contains("avertisment: " + warning, InvestigationPipeline.CollectionNotes(o), StringComparison.Ordinal);   // what the report lists for the collector
+    }
+
+    [Fact]
+    public void A_case_on_another_volume_has_no_warning()
+    {
+        var ws = NewCase();
+        var (dest, ok) = CopiedTable(ws);
+        var o = MftCollector.Finish(ws, OtherVolume(ws), @"Q:\$MFT", dest, ok, "MftCollector", "1.0");
+        Assert.Equal(EvidenceStatus.Success, o.Status);
+        Assert.Empty(o.Warnings);
+        Assert.Empty(o.Errors);
+        Assert.Equal("", Assert.Single(o.Evidence).Notes);
+        Assert.DoesNotContain("acquisition.warning", AuditText(ws), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(true, EvidenceStatus.NotAvailable)]
+    [InlineData(false, EvidenceStatus.Failed)]
+    public void A_read_that_produced_no_copy_maps_absent_to_not_available_and_anything_else_to_failed(bool absent, EvidenceStatus expected)
+    {
+        var ws = NewCase();
+        var r = MftAcquisition.AccessDenied(elevated: !absent);
+        var o = MftCollector.Finish(ws, OtherVolume(ws), @"Q:\$MFT", Path.Combine(ws.RawDir("MFT"), "$MFT"), r, "MftCollector", "1.0");
+        Assert.Equal(expected, o.Status);
+        Assert.Equal(r.Problem, Assert.Single(o.Errors));
+        Assert.Empty(o.Evidence);
+    }
+
+    [Fact]
+    public void A_copy_whose_hash_differs_is_registered_as_failed_counted_audited_and_not_parsed()
+    {
+        var ws = NewCase();
+        var (dest, ok) = CopiedTable(ws);
+        var o = MftCollector.Finish(ws, OtherVolume(ws), @"Q:\$MFT", dest, ok with { Sha256 = new string('0', 64) }, "MftCollector", "1.0");
+        Assert.Equal(EvidenceStatus.Failed, o.Status);
+        Assert.Contains("nu este de încredere", Assert.Single(o.Errors), StringComparison.Ordinal);
+        var item = Assert.Single(o.Evidence);                    // counted, so the collection row matches the evidence index
+        Assert.Equal(EvidenceStatus.Failed, item.Status);
+        Assert.Contains("nu este de încredere", item.Notes, StringComparison.Ordinal);
+        Assert.Equal(EvidenceStatus.Failed, Assert.Single(ws.LoadEvidence()).Status);
+        Assert.Contains("acquisition.hash_mismatch", AuditText(ws), StringComparison.Ordinal);
+
+        var run = new InvestigationPipeline().Run(ws, CollectionProfile.Quick, collect: false);
+        var pr = Assert.Single(run.Parsing, p => p.EvidenceId == item.EvidenceId);
+        Assert.Equal(EvidenceStatus.Failed, pr.Status);
+        Assert.Equal("-", pr.Parser);
+        Assert.StartsWith("Proba nu a fost analizată", pr.Error, StringComparison.Ordinal);
+        Assert.DoesNotContain(run.Timeline, e => e.EvidenceId == item.EvidenceId);
+        Assert.Equal(AntiForensicResult.Undetermined, run.AntiForensics.Single(c => c.Id == "AF08").Result);
+    }
+
+    [Fact]
+    public void A_trusted_copy_is_handed_to_the_MFT_parser()
+    {
+        var ws = NewCase();
+        var (dest, ok) = CopiedTable(ws);
+        var item = Assert.Single(MftCollector.Finish(ws, OtherVolume(ws), @"Q:\$MFT", dest, ok, "MftCollector", "1.0").Evidence);
+        var run = new InvestigationPipeline().Run(ws, CollectionProfile.Quick, collect: false);
+        Assert.Contains(run.Parsing, p => p.EvidenceId == item.EvidenceId && p.Parser != "-");
     }
 
     // ---- same-volume decision, plausibility bounds and the copy loop (no real volume) ----

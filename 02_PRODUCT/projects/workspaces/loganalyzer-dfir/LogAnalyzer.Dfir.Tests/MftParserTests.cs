@@ -204,13 +204,25 @@ public sealed class MftParserTests : IDisposable
 
     [Theory]
     [InlineData((ushort)3, (ushort)2)]          // a freed folder shows seq + 1
-    [InlineData((ushort)0, (ushort)65535)]      // wrap-around of the 16-bit sequence number
+    [InlineData((ushort)1, (ushort)65535)]      // wrap-around as Windows does it: 0 is skipped, 65535 becomes 1
+    [InlineData((ushort)0, (ushort)65535)]      // plain wrap-around, still accepted
     public void A_deleted_child_under_a_deleted_folder_gets_the_full_path_because_freeing_increments_the_folder_sequence(ushort folderNow, ushort childRefersTo)
     {
         byte[] mft = [.. Root(), .. Rec(40, folderNow, false, true, "Proiect", 5, 5), .. Rec(41, 1, false, false, "plan.txt", 40, childRefersTo)];
         var ev = Parse(Write(mft), out _);
         Assert.Equal(@"\Proiect\plan.txt", Assert.Single(ev, e => e.Fields["Kind"] == "deleted" && e.Fields["Record"] == "41").Path);
     }
+
+    [Theory]
+    [InlineData((ushort)2, (ushort)3, true)]
+    [InlineData((ushort)65535, (ushort)1, true)]
+    [InlineData((ushort)65535, (ushort)0, true)]
+    [InlineData((ushort)65535, (ushort)2, false)]
+    [InlineData((ushort)2, (ushort)2, false)]
+    [InlineData((ushort)2, (ushort)4, false)]
+    [InlineData((ushort)0, (ushort)1, true)]
+    public void The_next_sequence_after_freeing_is_one_higher_and_wraps_from_65535_to_1_or_0(ushort was, ushort now, bool expected) =>
+        Assert.Equal(expected, MftParser.IsNextSequence(was, now));
 
     [Fact]
     public void A_live_folder_whose_sequence_is_one_higher_is_a_reused_record_not_the_parent()
