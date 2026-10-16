@@ -181,7 +181,7 @@ def test_cached_route_receipt_is_accepted_for_the_same_task_class(home):
     ("Bash", {"command": "gh pr view 301 --json state"}),
     ("Bash", {"command": "git -C /repo status --short"}),
     ("Bash", {"command": "git log --oneline -5"}),
-    ("Edit", {"file_path": "/home/u/.claude/projects/p/memory/MEMORY.md", "old_string": "a", "new_string": "a\n- [x](x.md) - y"}),
+    ("Edit", {"file_path": "x/.claude/projects/p/memory/MEMORY.md", "old_string": "a", "new_string": "a\n- [x](x.md) - y"}),
     ("Write", {"file_path": "/r/00_GOVERNANCE/coordination/tasks/todo-claude-x.md", "content": "task\nnext\n"}),
 ])
 def test_single_commands_never_count_toward_delegation(home, tool, ti):
