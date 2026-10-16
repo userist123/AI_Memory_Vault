@@ -18,7 +18,7 @@ public sealed record CaseSignedRegister(string File, ActiveMediaRegister Active,
 /// EXACTLY as an import on the live path (<see cref="SignedMediaRegisterImport.Verify"/>: canonical file, detached CMS over the exact bytes, qualified
 /// certificate, signer on the station's officer list, fingerprint confirmed from the proces-verbal): only an OFICIAL register is used. An invalid,
 /// unsigned, unconfirmed or altered one is NOT used and the reason is returned; it is never trusted silently and a lower version is never substituted.
-/// No file in the case: <c>null</c>, behaviour unchanged.
+/// Only the case root is searched, never the imported evidence subfolders (a planted register there cannot block or replace the case's own). No file in the case: <c>null</c>, behaviour unchanged.
 /// </summary>
 public static class SignedMediaRegisterCase
 {
@@ -34,7 +34,7 @@ public static class SignedMediaRegisterCase
         try
         {
             if (!Directory.Exists(caseRoot)) return null;
-            foreach (var f in Directory.EnumerateFiles(caseRoot, "registru_medii_v*.json", SearchOption.AllDirectories))
+            foreach (var f in Directory.EnumerateFiles(caseRoot, "registru_medii_v*.json", SearchOption.TopDirectoryOnly))
             {
                 var m = Name.Match(Path.GetFileName(f));
                 if (!m.Success) continue;

@@ -79,7 +79,11 @@ namespace LogAnalyzer.UI.ViewModels
         private void CopyExplanation()
         {
             if (SelectedSettingExplanation is null) { Status = "Alegeți întâi o setare din plan."; return; }
-            try { Clipboard.SetText(SelectedSettingExplanation.ToPlainText()); Status = "Explicația a fost copiată; o puteți lipi în procesul-verbal."; }
+            try
+            {
+                if (LogAnalyzer.UI.Services.ExportAudit.Clipboard(LogAnalyzer.UI.Services.ExportAudit.LiveCaseId, "policy_setting_explanation", SelectedSettingExplanation.ToPlainText()) is { } refused) { Status = refused; return; }
+                Status = "Explicația a fost copiată; o puteți lipi în procesul-verbal.";
+            }
             catch (System.Runtime.InteropServices.COMException) { Status = "Clipboard-ul este ocupat de alt program; încercați din nou."; }
         }
 
