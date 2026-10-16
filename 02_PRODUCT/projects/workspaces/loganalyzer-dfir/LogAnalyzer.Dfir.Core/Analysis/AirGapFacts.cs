@@ -154,6 +154,8 @@ public sealed class MediaEntryFact
     public long Size { get; set; }
     public DateTimeOffset? CreatedUtc { get; set; }
     public DateTimeOffset? LastWriteUtc { get; set; }
+    /// <summary>Last access time (UTC); NTFS may not update it, so it is shown but never relied on.</summary>
+    public DateTimeOffset? LastAccessUtc { get; set; }
     /// <summary>SHA-256 (hex) for small files only; "" when not computed.</summary>
     public string Sha256 { get; set; } = "";
     /// <summary>For a .lnk: the target, arguments and working directory decoded by LnkParser (nothing is run); "" otherwise or when undecodable.</summary>
@@ -173,6 +175,10 @@ public sealed class MediaListingFact
     /// <summary>Device serial from the media inventory when known; "" otherwise.</summary>
     public string DeviceSerial { get; set; } = "";
     public bool Truncated { get; set; }
+    /// <summary>Folders or files that could not be read or hashed (access denied, I/O error); recorded, never thrown.</summary>
+    public int AccessErrors { get; set; }
+    /// <summary>Reparse points (junctions, links) listed but not followed.</summary>
+    public int LinksNotFollowed { get; set; }
     public List<MediaEntryFact> Entries { get; set; } = [];
     /// <summary>A short identity for the reader: serial, else letter and label.</summary>
     [System.Text.Json.Serialization.JsonIgnore] public string Identity => DeviceSerial.Length > 0 ? DeviceSerial : VolumeSerial.Length > 0 ? $"{Letter}: (volum {VolumeSerial})" : $"{Letter}: „{Label}”";

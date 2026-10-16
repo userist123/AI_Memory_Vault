@@ -140,8 +140,16 @@ namespace LogAnalyzer.UI.ViewModels
                 if (!force && !_inspected.Add(key)) continue;
                 _inspected.Add(key);
                 var label = a.Device.VolumeLabel;
-                var result = await Task.Run(() => RemovableMediaInspector.Inspect(letter + "\\", label));
-                var line = new MediumCheckLine(a.Device.DisplayName, result.Text, result.IsSuspicious);
+                var (result, arrival) = await Task.Run(() =>
+                {
+                    var r = RemovableMediaInspector.Inspect(letter + "\\", label);
+                    // read-only listing (E6): when the file times were copied onto the medium; shown as an observation, never as a suspicion
+                    var report = MediaArrivalAnalysis.Analyze(RemovableMediaInspector.List(letter + "\\", label));
+                    string fs; try { fs = new System.IO.DriveInfo(letter).DriveFormat; } catch (Exception ex) when (ex is IOException or ArgumentException or UnauthorizedAccessException) { fs = ""; }
+                    var usn = MediaArrivalReport.UsnNote(fs, letter[..1]);
+                    return (r, report.Text + (usn.Length > 0 ? " " + usn : ""));
+                });
+                var line = new MediumCheckLine(a.Device.DisplayName, result.Text + " " + arrival, result.IsSuspicious);
                 var old = MediumChecks.FirstOrDefault(m => m.Device == line.Device);
                 if (old is not null) MediumChecks.Remove(old);
                 MediumChecks.Add(line);
