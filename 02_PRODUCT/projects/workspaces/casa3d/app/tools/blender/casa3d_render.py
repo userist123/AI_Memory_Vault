@@ -49,6 +49,7 @@ def parse_args(argv):
     p.add_argument('--no-render', action='store_true')
     p.add_argument('--no-portals', action='store_true', help='fără portaluri de lumină în ferestre')
     p.add_argument('--exposure', default='auto', help="'auto' (pe cameră, dintr-o trecere rapidă) sau o valoare fixă în EV")
+    p.add_argument('--gamma', type=float, default=None, help='ridicarea tonurilor medii după AgX (implicit 1,1)')
     return p.parse_args(argv)
 
 
@@ -922,7 +923,7 @@ def coverage(sc, deps, c, lx, lz, fov, width, height):
     return hit / len(dirs)
 
 
-def room_camera(scene_data, room, width, height, panorama=False, focus=None):
+def room_camera(scene_data, room, width, height, panorama=False, focus=None, avoid=None):
     """Camera foto a încăperii (regula comună: 1,5 m, orizontală, deschidere ≤ 75°, deplasare în jos). Locul se alege dintre
     colțuri și mijlocul pereților, departe de uși (golurile vin din aplicație, cu ușile închise) și de spaleții de lângă goluri;
     câștigă poziția cu vederea liberă și adâncă și cu cele mai multe piese principale în cadru, după un test de acoperire
@@ -941,6 +942,7 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None):
     fov = HFOV
     # piesele din cameră (exportate din aplicație): obiectivul nu stă niciodată într-o piesă sau lipit de ea, iar piesele
     # principale (bucătăria, patul, canapeaua, WC-ul, lavoarul, dușul) trebuie să intre întregi în cadru
+    HERO = ('pat', 'canapea', 'bucatarie')
     KEY = {'bucatarie': 3.0, 'pat': 3.0, 'canapea': 3.0, 'wc': 2.5, 'lavoar': 2.5, 'dus': 2.0, 'masa': 1.5, 'dulap': 1.5, 'frigider': 1.0,
            'birou': 1.2, 'comodaTv': 1.0, 'pantofar': 1.0, 'oglinda': 0.8, 'biblioteca': 0.6, 'masuta': 0.8, 'noptiera': 0.4}
     items = [it for it in scene_data.get('items', []) if x0 - .05 <= (it['fp'][0] + it['fp'][2]) / 2 <= x1 + .05 and z0 - .05 <= (it['fp'][1] + it['fp'][3]) / 2 <= z1 + .05]
@@ -972,9 +974,11 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None):
         L2 = (bx - ax) ** 2 + (bz - az) ** 2 or 1e-9
         t = max(0.0, min(1.0, ((c[0] - ax) * (bx - ax) + (c[1] - az) * (bz - az)) / L2))
         return math.hypot(c[0] - ax - t * (bx - ax), c[1] - az - t * (bz - az))
-    near_window = lambda c: any(seg_dist(c, o['a'], o['b']) < 0.75 for o in windows)   # nu în perdele, nu lipit de geam
+    near_window = lambda c: any(seg_dist(c, o['a'], o['b']) < 0.5 for o in windows)   # nu lipit de geam (perdelele le respinge testul de acoperire)
     free = [c for c in cands if not blocked(c) and not near_door(c) and not near_pier(c) and not near_window(c)]
     cands = free or [c for c in cands if not blocked(c) and not near_door(c)] or [c for c in cands if not blocked(c)] or [(cx, cz)]
+    if avoid is not None:   # a doua vedere: alt loc decât prima (altfel ar ieși aceeași imagine)
+        cands = [c for c in cands if math.hypot(c[0] - avoid[0], c[1] - avoid[1]) > 1.2] or cands
     pieces = [e['p'] for e in scene_data.get('meshes', []) if x0 < e['p'][0] < x1 and z0 < e['p'][2] < z1 and 0.15 < e['p'][1] < 1.8]
     deps = bpy.context.evaluated_depsgraph_get()
     sc = bpy.context.scene
@@ -983,7 +987,6 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None):
     beyond = lambda c: (cx + (cx - c[0]) * 0.35, cz + (cz - c[1]) * 0.35)
     main = [(KEY[it['g']], (it['fp'][0] + it['fp'][2]) / 2, (it['fp'][1] + it['fp'][3]) / 2) for it in items if (id(it) in focus if focus else KEY.get(it['g'], 0) >= 1)]
     wsum = sum(m[0] for m in main)
-    aims = [beyond] + ([lambda c: (sum(m[0] * m[1] for m in main) / wsum, sum(m[0] * m[2] for m in main) / wsum)] if main else [])
 
     def look(c, aim=beyond):
         t = aim(c)
@@ -1003,6 +1006,70 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None):
     top = lambda it: min(it['h'], 0.42 if it['g'] in ('wc', 'bideu') else 1.5)
 
     near = lambda it: 0.6 if it['m'] == 'dining' else 0.1  # scaunele mesei ies din amprenta ei
+
+    # regulile fotografiei de interior (aceleași ca în aplicație, roomShot): piesa principală fotografiată din fața ei
+    # (patul dinspre picioare/ușă, pe diagonală spre peretele tăbliei), fereastra într-o parte, nu în mijloc în contra
+    # luminii, iar pendulul (cablul lui) nu taie mijlocul cadrului sau fereastra
+    hero = max((it for it in items if it['g'] in HERO), key=lambda it: KEY.get(it['g'], 0) * (it['fp'][2] - it['fp'][0]) * (it['fp'][3] - it['fp'][1]), default=None)
+    pendants = [(e['p'][0], e['p'][2]) for e in scene_data.get('meshes', []) if e['g'].get('t') == 'cyl' and e['g']['p'][0] <= 0.006
+                and e['g']['p'][2] > 0.1 and x0 < e['p'][0] < x1 and z0 < e['p'][2] < z1]
+
+    if hero is not None and hero['g'] == 'pat':   # dormitorul: niciodată de lângă tăblie sau din lateralul patului
+        _bx, _bz = (hero['fp'][0] + hero['fp'][2]) / 2, (hero['fp'][1] + hero['fp'][3]) / 2
+        _foot = lambda c: ((c[0] - _bx) * math.sin(hero['r']) + (c[1] - _bz) * math.cos(hero['r'])) / (math.hypot(c[0] - _bx, c[1] - _bz) or 1)
+        cands = [c for c in cands if _foot(c) >= 0.3] or cands
+    aims = [beyond] + ([lambda c: (sum(m[0] * m[1] for m in main) / wsum, sum(m[0] * m[2] for m in main) / wsum)] if main else [])
+    if hero is not None and focus is None:   # privirea spre piesa principală, cu ținta trasă spre peretele din spatele ei (tăblia patului)
+        _hd = 0.25 * min(hero['fp'][2] - hero['fp'][0], hero['fp'][3] - hero['fp'][1]) if hero['g'] != 'pat' else 0.45 * (hero['fp'][3] - hero['fp'][1] if abs(math.cos(hero['r'])) > 0.5 else hero['fp'][2] - hero['fp'][0])
+        _ha = ((hero['fp'][0] + hero['fp'][2]) / 2 - math.sin(hero['r']) * _hd, (hero['fp'][1] + hero['fp'][3]) / 2 - math.cos(hero['r']) * _hd)
+        aims.append(lambda c: _ha)
+
+    def inward(o):  # normala ferestrei spre interiorul camerei
+        nx, nz = o['n']
+        px, pz = o['p']
+        return (nx, nz) if x0 < px + nx * 0.4 < x1 and z0 < pz + nz * 0.4 < z1 else (-nx, -nz)
+
+    def screen_u(c, lx, lz, px, pz, fov):  # (adâncimea, poziția orizontală în cadru -1..1) a unui punct
+        n = math.hypot(lx, lz) or 1
+        fx, fz = lx / n, lz / n
+        dx, dz = px - c[0], pz - c[1]
+        fwd = dx * fx + dz * fz
+        if fwd <= 0.05:
+            return fwd, 9.0
+        return fwd, (dx * fz - dz * fx) / fwd / math.tan(fov / 2)
+
+    def composition(c, lx, lz, fov, with_hero=True):
+        n = math.hypot(lx, lz) or 1
+        s = 0.0
+        if hero is not None:
+            hx, hz = (hero['fp'][0] + hero['fp'][2]) / 2, (hero['fp'][1] + hero['fp'][3]) / 2
+            vx, vz = c[0] - hx, c[1] - hz
+            vn = math.hypot(vx, vz) or 1
+            cos_f = (vx * math.sin(hero['r']) + vz * math.cos(hero['r'])) / vn
+            fwd_h, u_h = screen_u(c, lx, lz, hx, hz, fov)
+            s += 5.0 * max(0.0, 1 - abs(u_h)) - (15.0 if fwd_h <= 0.3 or abs(u_h) > 0.85 else 0.0)   # piesa principală în cadru, spre mijloc
+            if hero['g'] == 'pat':   # dinspre picioare, pe diagonală (18°–65° față de axa patului); de la cap sau din lateral: nu
+                s += 14.0 * cos_f + (6.0 if 0.42 < cos_f < 0.95 else 0.0) - 40.0 * max(0.0, 0.35 - cos_f)
+            else:
+                s += 7.0 * cos_f - (6.0 if cos_f < -0.1 else 0.0)
+        wins_u = []
+        for o in windows:
+            fwd, u = screen_u(c, lx, lz, o['p'][0], o['p'][1], fov)
+            if fwd <= 0.3 or abs(u) > 1.2:
+                continue
+            ix, iz = inward(o)
+            facing = -(lx * ix + lz * iz) / n      # 1 = privirea drept în fereastră (contra luminii)
+            s -= 9.0 * max(0.0, facing - 0.35) / 0.65 * max(0.0, 1 - abs(u) / 0.75)
+            hw = float(o['w']) / 2 / fwd / math.tan(fov / 2)
+            wins_u.append((u - hw, u + hw))
+        for px, pz in pendants:
+            fwd, u = screen_u(c, lx, lz, px, pz, fov)
+            if fwd <= 0.3 or abs(u) > 1.0:
+                continue
+            s -= 8.0 * max(0.0, 1 - abs(u) / 0.45)                                # cablul în treimea din mijloc
+            if any(a - 0.03 < u < b + 0.03 for a, b in wins_u):
+                s -= 5.0                                                            # cablul peste fereastră
+        return s
 
     def score(c, fov=fov, aim=beyond):
         lx, lz = look(c, aim)
@@ -1038,7 +1105,7 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None):
                 keys += w
             elif any(in_view(c, px, pz, lx, lz, fov / 2) for px, pz in corners):
                 keys += w * 0.3
-        return total + 0.6 * seen + 8.0 * keys - 6.0 * (fov - HFOV)
+        return total + 0.6 * seen + 8.0 * keys - 6.0 * (fov - HFOV) + composition(c, lx, lz, fov, focus is None)
 
     # o încăpere mică (baia, holul): se încearcă și 75° (limita regulii); nu mai folosim 100°, care deforma marginile
     fovs = [fov] + ([HFOV_MAX] if min(x1 - x0, z1 - z0) < 2.6 or (x1 - x0) * (z1 - z0) < 9 else [])
@@ -1054,11 +1121,12 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None):
             best = cand
     _, _, v, c, fov, aim, cov = best
     print(f"[casa3d] cameră {room['id']}: ({c[0]:.2f},{c[1]:.2f}) {math.degrees(fov):.0f}° acoperire {cov * 100:.0f}% ; "
-          + '; '.join(f'({p[0]:.2f},{p[1]:.2f}) {math.degrees(f):.0f}° {aims.index(a)} = {s:.1f}' for s, p, f, a in ranked[:int(os.environ.get('CASA3D_CAMDBG', 4))]))
+          + '; '.join(f'({p[0]:.2f},{p[1]:.2f}) {math.degrees(f):.0f}° {aims.index(a)} = {s:.1f} [{composition(p, *look(p, a), f, focus is None):+.1f}]' for s, p, f, a in ranked[:int(os.environ.get('CASA3D_CAMDBG', 4))]))
     lx, lz = look(c, aim)
     low_of = lambda it: max(0.45, (EYE - top(it)) / bottom(fov))
     MISSING[ob.name] = [it for it in items if KEY.get(it['g'], 0) >= 2 and not all(in_view(c, px, pz, lx, lz, fov / 2 - math.radians(4), low_of(it)) for px, pz in ((it['fp'][0], it['fp'][1]), (it['fp'][2], it['fp'][1]), (it['fp'][2], it['fp'][3]), (it['fp'][0], it['fp'][3])))]
     ob.location = to_blender((c[0], EYE, c[1]))
+    ob['c3d_xz'] = (c[0], c[1])
     ob.rotation_euler = to_blender((lx, 0, lz)).normalized().to_track_quat('-Z', 'Y').to_euler()
     cam.lens_unit = 'FOV'
     cam.sensor_fit = 'HORIZONTAL'
@@ -1068,30 +1136,49 @@ def room_camera(scene_data, room, width, height, panorama=False, focus=None):
     return ob
 
 
-def auto_exposure(sc, width, height, key=0.18):
-    """Expunerea pe cameră: o trecere rapidă (160 px, 8 eșantioane) scrisă în EXR liniar; media logaritmică a luminanței
-    (fără cele mai luminoase 4 %, ferestrele) adusă la `key`, limitată la ±1,5 EV."""
+# expunerea pe cameră, calibrată pe fotografia imobiliară de interior: pereții luminoși, tonurile medii ridicate, fereastra
+# fără alb ars (AgX o rotunjește moale). Ținta e mediana luminanței scenei (robustă la ferestre și la zgomot), nu media;
+# plafonul vine de la cele mai luminoase 1 % (fereastra, peretele lovit de soare), ca AgX să nu ajungă în alb tăiat.
+EXPOSURE_KEY = 0.30        # mediana scenei după expunere (liniar); 0,18 dădea interioare cu 2–3 EV prea întunecate
+EXPOSURE_HI = 24.0         # luminanța maximă admisă la percentila 99 (AgX ajunge la alb pe la ~16 și rotunjește peste)
+EXPOSURE_GAMMA = 1.1       # ridicarea tonurilor medii după AgX (albul și negrul rămân pe loc)
+
+
+def exposure_from_luminance(lum, key=EXPOSURE_KEY, hi=EXPOSURE_HI):
+    """EV-ul pentru o listă de luminanțe liniare (fără date de culoare)."""
+    lum = sorted(lum)
+    if not lum:
+        return 0.0
+    med = lum[len(lum) // 2]
+    p99 = lum[min(len(lum) - 1, int(len(lum) * 0.99))]
+    ev = math.log2(key / max(1e-4, med))
+    ev = min(ev, math.log2(hi / max(1e-4, p99)))
+    return max(-2.0, min(5.5, ev))
+
+
+def auto_exposure(sc, width, height, key=EXPOSURE_KEY):
+    """Expunerea pe cameră: o trecere rapidă (192 px, 16 eșantioane, cu denoiser) scrisă în EXR liniar, apoi
+    exposure_from_luminance (mediana adusă la `key`, cu plafon pentru ferestre)."""
     import tempfile
     r = sc.render
     keep = (r.resolution_x, r.resolution_y, r.resolution_percentage, sc.cycles.samples, sc.cycles.use_denoising, r.filepath, r.image_settings.file_format, r.image_settings.color_depth)
     path = os.path.join(tempfile.mkdtemp(prefix='c3d_ae_'), 'ae.exr')
     try:
-        r.resolution_x, r.resolution_y, r.resolution_percentage = 160, max(1, round(160 * height / width)), 100
-        sc.cycles.samples, sc.cycles.use_denoising = 8, False
+        r.resolution_x, r.resolution_y, r.resolution_percentage = 192, max(1, round(192 * height / width)), 100
+        sc.cycles.samples, sc.cycles.use_denoising = 16, True
         r.image_settings.file_format, r.image_settings.color_depth = 'OPEN_EXR', '16'
         r.filepath = path
         bpy.ops.render.render(write_still=True)
         img = bpy.data.images.load(path)
         px = img.pixels[:]
         bpy.data.images.remove(img)
-        lum = sorted(0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2] for i in range(0, len(px), 4))
-        lum = lum[:max(1, int(len(lum) * 0.96))]
-        avg = sum(lum) / len(lum)   # media (nu cea logaritmică: la 8 eșantioane pixelii negri de zgomot o trag în jos)
-        ev = max(-1.5, min(3.5, math.log2(key / max(1e-4, avg))))
-        print(f'[casa3d] luminanța medie {avg:.4f} -> {ev:+.2f} EV')
+        lum = [0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2] for i in range(0, len(px), 4)]
+        ev = exposure_from_luminance(lum, key)
+        srt = sorted(lum)
+        print(f'[casa3d] luminanța mediană {srt[len(srt) // 2]:.4f}, p99 {srt[int(len(srt) * 0.99)]:.3f} -> {ev:+.2f} EV')
     except Exception as e:  # fără trecerea rapidă: expunerea fixă
         print(f'[casa3d] expunere automată indisponibilă: {e}')
-        ev = 0.0
+        ev = 3.5
     finally:
         (r.resolution_x, r.resolution_y, r.resolution_percentage, sc.cycles.samples, sc.cycles.use_denoising, r.filepath, r.image_settings.file_format, r.image_settings.color_depth) = keep
         try:
@@ -1123,7 +1210,8 @@ def setup_render(args):
         sc.view_settings.look = 'AgX - Base Contrast'
     except TypeError:
         sc.view_settings.look = 'None'
-    sc.view_settings.exposure = -0.4   # implicit; fiecare cameră primește expunerea ei (auto_exposure)
+    sc.view_settings.exposure = 3.5    # implicit; fiecare cameră primește expunerea ei (auto_exposure)
+    sc.view_settings.gamma = EXPOSURE_GAMMA
     sc.render.use_persistent_data = True   # BVH-ul rămâne între randări (trecerea de expunere + imaginea)
     device = 'CPU'
     if args.device.upper() != 'CPU':
@@ -1161,6 +1249,8 @@ def main():
     light_scene(data, args.assets, portals=not args.no_portals)
     setup_render(args)
     sc = bpy.context.scene
+    if args.gamma is not None:
+        sc.view_settings.gamma = args.gamma
     rooms = data.get('rooms', [])
     if args.rooms != 'all':
         wanted = set(args.rooms.split(','))
@@ -1189,7 +1279,7 @@ def main():
         print(f"[casa3d] {r.get('name', r['id'])}: {sc.render.filepath}")
         missing = MISSING.get(sc.camera.name) or []
         if missing:  # o piesă principală (WC, lavoar, duș, pat...) nu încape în prima poză: încă o vedere, spre ea
-            sc.camera = room_camera(data, r, args.width, args.height, focus={id(it) for it in missing})
+            sc.camera = room_camera(data, r, args.width, args.height, focus={id(it) for it in missing}, avoid=tuple(sc.camera['c3d_xz']))
             sc.render.filepath = os.path.join(os.path.abspath(args.out), f'{safe}-2.png')
             bpy.ops.render.render(write_still=True)
             print(f"[casa3d] {r.get('name', r['id'])} (a doua vedere): {sc.render.filepath}")
