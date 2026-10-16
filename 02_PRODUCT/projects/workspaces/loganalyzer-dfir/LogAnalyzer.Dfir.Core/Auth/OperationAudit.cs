@@ -39,8 +39,117 @@ public static class OperationAudit
 
     public static string DeviceRegistrationChangedDetail(string identity, string deviceClass, string device, string oldValue, string newValue)
     {
-        static string C(string s) => s.Replace(';', ',').ReplaceLineEndings(" ");
+        static string C(string s) => DeviceField(s);
         return $"identity={C(identity)}; class={C(deviceClass)}; device={C(device)}; old={(oldValue.Length > 0 ? C(oldValue) : "(gol)")}; new={(newValue.Length > 0 ? C(newValue) : "(gol)")}";
+    }
+
+    /// <summary>A value as the device records of the sealed audit hold it (no ";" and no line breaks): used to write a detail and to compare a journal value with it.</summary>
+    public static string DeviceField(string s) => s.Replace(';', ',').ReplaceLineEndings(" ").Trim();
+
+    /// <summary>Real-time device monitor: a CRITICAL alert, written to the sealed audit when it is raised (check D05 reads critical alerts from here, not only from the journal).</summary>
+    public const string DeviceAlertCritical = "device.alert_critical";
+
+    /// <summary>An informational alert (a connection), sealed as well so that a suppressed pop-up never means a missing record.</summary>
+    public const string DeviceAlertInfo = "device.alert_info";
+
+    public static string DeviceAlertCriticalDetail(string identity, string deviceClass, string device, string text) =>
+        $"identity={DeviceField(identity)}; class={DeviceField(deviceClass)}; device={DeviceField(device)}; text={DeviceField(text)}";
+
+    /// <summary>
+    /// The monitor's own running windows, sealed: the check computes coverage ONLY from these records (the journal is a plain file). The time of a record is the
+    /// time the audit gave it, so it cannot be set by the journal.
+    /// </summary>
+    public const string DeviceMonitorStarted = "device.monitor_started", DeviceMonitorHeartbeat = "device.monitor_heartbeat", DeviceMonitorStopped = "device.monitor_stopped";
+
+    /// <summary>An interval the monitor lost (watcher error or overflow, service stop, sleep): the check subtracts it from the coverage.</summary>
+    public const string DeviceMonitorGap = "device.monitor_gap";
+
+    /// <summary>A device that appeared or disappeared while the monitor was not watching, found by the full rescan on resume (observat la reluare).</summary>
+    public const string DeviceObservedOnResume = "device.observed_on_resume";
+
+    /// <summary>The one-time move of an old per-user device journal to the machine-wide one.</summary>
+    public const string DeviceJournalMigrated = "device.journal_migrated";
+
+    public static string DeviceMonitorRunDetail(string runId, string note) => $"mon={DeviceField(runId)}; {DeviceField(note)}";
+
+    public static string DeviceMonitorGapDetail(string runId, DateTimeOffset from, DateTimeOffset to, string reason) =>
+        $"mon={DeviceField(runId)}; from={from.ToString("O", System.Globalization.CultureInfo.InvariantCulture)}; to={to.ToString("O", System.Globalization.CultureInfo.InvariantCulture)}; reason={DeviceField(reason)}";
+
+    public static string DeviceObservedOnResumeDetail(string identity, string deviceClass, string device, bool appeared, DateTimeOffset gapFrom, DateTimeOffset gapTo) =>
+        $"identity={DeviceField(identity)}; class={DeviceField(deviceClass)}; device={DeviceField(device)}; change={(appeared ? "apărut" : "dispărut")}; " +
+        $"gap_from={gapFrom.ToString("O", System.Globalization.CultureInfo.InvariantCulture)}; gap_to={gapTo.ToString("O", System.Globalization.CultureInfo.InvariantCulture)}; observat la reluare";
+
+    public static string DeviceJournalMigratedDetail(string fromFile, int devices, string sha256) =>
+        $"from={DeviceField(fromFile)}; devices={devices}; sha256={DeviceField(sha256)}";
+
+    /// <summary>
+    /// What the sealed audit says about the device monitor: the LAST registration number written for each device identity ("device.registration_number_changed",
+    /// empty for "(gol)"), the critical alerts ("device.alert_critical") with the time of their record, the monitor's running windows and lost intervals, the
+    /// devices observed on resume and the journal migrations. <paramref name="chainValid"/> is whether the audit chain verifies; a reading from a chain that does
+    /// not verify must not be trusted.
+    /// </summary>
+    public static LogAnalyzer.Dfir.Devices.DeviceAuditReading ReadDeviceMonitor(string auditPath, bool chainValid)
+    {
+        var last = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var alerts = new List<LogAnalyzer.Dfir.Devices.DeviceAuditAlert>();
+        var runs = new List<LogAnalyzer.Dfir.Devices.MonitorRun>();
+        var gaps = new List<LogAnalyzer.Dfir.Devices.SealedGap>();
+        var observed = new List<LogAnalyzer.Dfir.Devices.DeviceAuditObservation>();
+        var migrations = new List<string>();
+        int unreadable = 0;
+        if (File.Exists(auditPath))
+        {
+            var scan = Scan(auditPath);
+            foreach (var (detail, when) in scan.DeviceRegistrations)
+            {
+                var f = Fields(detail);
+                if (!f.TryGetValue("identity", out var id) || id.Length == 0 || !f.TryGetValue("new", out var nv)) { unreadable++; continue; }
+                last[id] = nv == "(gol)" ? "" : nv;
+            }
+            foreach (var (detail, when) in scan.DeviceAlerts)
+            {
+                var f = Fields(detail);
+                if (!f.TryGetValue("identity", out var id) || when is not { } t) { unreadable++; continue; }
+                alerts.Add(new(t, id, f.GetValueOrDefault("device", ""), f.GetValueOrDefault("text", "")));
+            }
+            var byRun = new Dictionary<string, LogAnalyzer.Dfir.Devices.MonitorRun>(StringComparer.Ordinal);
+            foreach (var (ev, detail, when) in scan.DeviceMonitorEvents)
+            {
+                var f = Fields(detail);
+                if (when is not { } t) { unreadable++; continue; }
+                var runId = f.GetValueOrDefault("mon", "");
+                if (ev == DeviceMonitorStarted || ev == DeviceMonitorHeartbeat || ev == DeviceMonitorStopped)
+                {
+                    if (runId.Length == 0) { unreadable++; continue; }
+                    if (!byRun.TryGetValue(runId, out var r))
+                    {
+                        byRun[runId] = r = new LogAnalyzer.Dfir.Devices.MonitorRun { RunId = runId, StartUtc = t, LastBeatUtc = t };
+                        runs.Add(r);
+                    }
+                    if (t > r.LastBeatUtc) r.LastBeatUtc = t;
+                    if (ev == DeviceMonitorStopped && r.EndUtc is null) r.EndUtc = t;
+                }
+                else if (ev == DeviceMonitorGap)
+                {
+                    if (DateTimeOffset.TryParse(f.GetValueOrDefault("from", ""), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var gf)
+                        && DateTimeOffset.TryParse(f.GetValueOrDefault("to", ""), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var gt))
+                        gaps.Add(new(gf, gt, f.GetValueOrDefault("reason", "")));
+                    else unreadable++;
+                }
+                else if (ev == DeviceObservedOnResume)
+                    observed.Add(new(t, f.GetValueOrDefault("identity", ""), f.GetValueOrDefault("device", ""), f.GetValueOrDefault("change", "")));
+                else if (ev == DeviceJournalMigrated) migrations.Add(detail);
+            }
+        }
+        return new(chainValid, last, alerts, unreadable) { Runs = runs, Gaps = gaps, ObservedOnResume = observed, Migrations = migrations };
+    }
+
+    private static Dictionary<string, string> Fields(string detail)
+    {
+        var d = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var kv in detail.Split("; "))
+            if (kv.IndexOf('=') is var eq and > 0) d[kv[..eq]] = kv[(eq + 1)..];
+        return d;
     }
 
     public static string AnchorRecordedDetail(LogAnalyzer.Dfir.Case.AuditAnchorPoint a, string reason) => $"seq={a.Seq}; anchor={a.Code}; chain={a.ChainId}; reason={reason}";
@@ -217,6 +326,9 @@ public static class OperationAudit
         public List<(CollectorExecRecord R, int Index)> Execs { get; } = [];
         public Dictionary<string, (string ExecId, string RunId, int ChildPid, int ExitCode, DateTimeOffset EndUtc)> Done { get; } = new(StringComparer.Ordinal);
         public List<string> Regressions { get; } = [];
+        public List<(string Detail, DateTimeOffset? When)> DeviceRegistrations { get; } = [];
+        public List<(string Detail, DateTimeOffset? When)> DeviceAlerts { get; } = [];
+        public List<(string Event, string Detail, DateTimeOffset? When)> DeviceMonitorEvents { get; } = [];
         public int UnreadableHashing { get; set; }
         public int UnreadableExec { get; set; }
         public int FirstRegression { get; set; } = int.MaxValue;
@@ -262,6 +374,9 @@ public static class OperationAudit
                 // the action window of a command started outside a station control (finding B5): the same facts as a control run, for one program
                 else if (ev == ActionStarted && run.StartsWith(CollectorExec.ActionRunPrefix, StringComparison.Ordinal) && when is { } wa2 && !scan.Started.ContainsKey(run)) { scan.Started[run] = (wa2, index); scan.StartedSha[run] = TokenOf(detail, "app_sha256="); }
                 else if (ev == ActionFinished && run.StartsWith(CollectorExec.ActionRunPrefix, StringComparison.Ordinal) && when is { } wf2 && !scan.Finished.ContainsKey(run)) scan.Finished[run] = wf2;
+                else if (ev == DeviceRegistrationChanged) scan.DeviceRegistrations.Add((detail, when));
+                else if (ev == DeviceAlertCritical) scan.DeviceAlerts.Add((detail, when));
+                else if (ev is DeviceMonitorStarted or DeviceMonitorHeartbeat or DeviceMonitorStopped or DeviceMonitorGap or DeviceObservedOnResume or DeviceJournalMigrated) scan.DeviceMonitorEvents.Add((ev, detail, when));
                 else if (ev == ControlHashing)
                 {
                     if (TryParseControlHashing(detail, out var w)) scan.Hashing.Add((w, when, index));

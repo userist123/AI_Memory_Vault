@@ -1,31 +1,36 @@
-using System.Text.Json.Serialization;
+using System.Globalization;
 
 namespace LogAnalyzer.Dfir.Devices;
 
 /// <summary>
-/// The device classes of the real-time device monitor (owner decision 2026-10-16, modelled on Endpoint Protector's device control view): every Plug and
-/// Play device of the station, not only storage. Observe and alert only; the monitor never blocks or changes anything.
+/// The device classes the real-time device monitor shows (owner decision 2026-10-16, second round): storage media and externally connected devices only.
+/// The members after <see cref="Other"/>-style legacy values (Hid, Audio, Controller, InternalDisk, VirtualDisk, Internal, Other) are kept only so that
+/// rows an older journal holds can still be read; they are out of scope (see <see cref="DeviceScope"/>) and never shown or counted.
 /// </summary>
 public enum DeviceClass
 {
     UsbStorage, MemoryCard, Phone, Bluetooth, WiFi, NetworkAdapter, Printer, Scanner, Camera, Optical, Keyboard, Mouse, Hid, Audio, Controller,
     InternalDisk, VirtualDisk, Internal, Other,
+    ExternalDisk, Modem, SmartCardReader, CardReader,
 }
-
-/// <summary>Whether Windows has a working driver for the device.</summary>
-public enum DriverState { Installed, Unsigned, Missing, Error, Unknown }
 
 /// <summary>How strongly a connection is announced: an information banner, or a critical alert with a sound.</summary>
 public enum DeviceAlertSeverity { Info, Critical }
 
+/// <summary>The four states a row shows (no driver columns): connected, disconnected, not working (no driver) and disabled.</summary>
+public enum DeviceStatus { Connected, Disconnected, NotWorking, Disabled }
+
 /// <summary>
 /// One present Plug and Play device read now (SetupAPI). <see cref="ConfigManagerErrorCode"/> is the Configuration Manager problem code of the device,
-/// the same number Win32_PnPEntity.ConfigManagerErrorCode reports: 0 = works, 28 = no driver installed, any other value = an error; -1 = not read.
+/// the same number Win32_PnPEntity.ConfigManagerErrorCode reports: 0 = works, 28 = no driver installed, 22 = disabled; -1 = not read.
+/// <see cref="ContainerId"/> is DEVPKEY_Device_ContainerId (all the nodes of one physical device share it; the local machine's own container is
+/// <see cref="DeviceScope.LocalMachineContainer"/>, also used when DEVPKEY_Device_InLocalMachineContainer is true); "" = not read.
 /// </summary>
-public sealed record PnpSnapshotEntry(string InstanceId, string Name, string SetupClass, string Manufacturer, string HardwareIds, string Service, int ConfigManagerErrorCode);
+public sealed record PnpSnapshotEntry(string InstanceId, string Name, string SetupClass, string Manufacturer, string HardwareIds, string Service, int ConfigManagerErrorCode,
+    string ContainerId = "");
 
-/// <summary>The driver Windows installed for a device, from Win32_PnPSignedDriver (DriverVersion, DriverProviderName, DriverDate, IsSigned, Signer).</summary>
-public sealed record SignedDriverInfo(string DriverVersion, string DriverProviderName, string DriverDate, bool? IsSigned, string Signer);
+/// <summary>What is known about the medium in a drive: the volume serial, the capacity of the disk, the drive letters and the volume label.</summary>
+public sealed record MediumInfo(string VolumeSerial, long CapacityBytes, string Letters, string Label);
 
 /// <summary>What changed between two snapshots: devices that appeared, devices that are gone, devices whose name or problem code changed.</summary>
 public sealed record SnapshotDiff(IReadOnlyList<PnpSnapshotEntry> Arrived, IReadOnlyList<PnpSnapshotEntry> Removed, IReadOnlyList<PnpSnapshotEntry> Changed)
@@ -36,87 +41,32 @@ public sealed record SnapshotDiff(IReadOnlyList<PnpSnapshotEntry> Arrived, IRead
 /// <summary>The alert raised for one connection: how strong, and why (in the controller's words).</summary>
 public sealed record DeviceAlertDecision(DeviceAlertSeverity Severity, string Reason);
 
-/// <summary>Pure rules of the device monitor: class of a device, its stable identity, the diff of two snapshots, the driver state and the alert decision.</summary>
+/// <summary>Pure rules of the device monitor: identity, the diff of two snapshots, the status and the alert decision. Scope and kind: <see cref="DeviceScope"/>.</summary>
 public static class DeviceMonitorRules
 {
-    /// <summary>
-    /// The class of a Plug and Play device from its instance id, setup class, hardware ids and name; null for entries that only repeat a device already listed
-    /// (logical volumes, the portable-device view of a disk). Storage classes reuse <see cref="DeviceRules.Classify"/> so the media page and the monitor agree.
-    /// </summary>
-    public static DeviceClass? Classify(string instanceId, string setupClass, string hardwareIds, string name)
-    {
-        var id = instanceId.ToUpperInvariant();
-        var cls = setupClass.ToUpperInvariant();
-        var n = name.ToUpperInvariant();
-        if (id.Length == 0) return null;
-        if (cls is "VOLUME" or "VOLUMESNAPSHOT") return null;                           // a volume of a disk already listed
-        if (cls == "WPD" && id.StartsWith(@"SWD\WPDBUSENUM\", StringComparison.Ordinal)) return null;   // the portable-device view of a disk already listed
-        if (cls is "DISKDRIVE" or "CDROM" || id.StartsWith(@"USBSTOR\", StringComparison.Ordinal) || id.StartsWith(@"SD\", StringComparison.Ordinal)
-            || id.StartsWith(@"SDBUS\", StringComparison.Ordinal) || id.StartsWith(@"MMC\", StringComparison.Ordinal))
-            return DeviceRules.Classify(instanceId, setupClass, hardwareIds, name) switch
-            {
-                DeviceKind.UsbStorage => DeviceClass.UsbStorage,
-                DeviceKind.MemoryCard => DeviceClass.MemoryCard,
-                DeviceKind.Optical => DeviceClass.Optical,
-                DeviceKind.VirtualDisk => DeviceClass.VirtualDisk,
-                DeviceKind.InternalDisk => DeviceClass.InternalDisk,
-                _ => cls == "SDHOST" ? DeviceClass.Internal : DeviceClass.Other,
-            };
-        bool Software() => id.StartsWith(@"ROOT\", StringComparison.Ordinal) || id.StartsWith(@"SWD\", StringComparison.Ordinal) || id.StartsWith(@"SW\", StringComparison.Ordinal);
-        switch (cls)
-        {
-            case "WPD": return DeviceClass.Phone;
-            case "BLUETOOTH": return DeviceClass.Bluetooth;
-            case "NET":
-                if (id.StartsWith("BTH", StringComparison.Ordinal)) return DeviceClass.Bluetooth;                 // Bluetooth personal area network
-                if (Software() || n.Contains("WAN MINIPORT") || n.Contains("KERNEL DEBUG") || n.Contains("VIRTUAL") || n.Contains("LOOPBACK")) return DeviceClass.Internal;
-                return n.Contains("WI-FI") || n.Contains("WIFI") || n.Contains("WIRELESS") || n.Contains("WLAN") || n.Contains("802.11") ? DeviceClass.WiFi : DeviceClass.NetworkAdapter;
-            case "PRINTER":
-            case "PRINTQUEUE":
-                // the queues Windows creates for itself (print to PDF / XPS, OneNote, fax) are not printers
-                return n.Contains("PDF") || n.Contains("XPS") || n.Contains("ONENOTE") || n.Contains("FAX") || n.Contains("ROOT PRINT QUEUE") ? DeviceClass.Internal : DeviceClass.Printer;
-            case "IMAGE": return n.Contains("CAM") ? DeviceClass.Camera : DeviceClass.Scanner;
-            case "CAMERA": return DeviceClass.Camera;
-            case "KEYBOARD": return DeviceClass.Keyboard;
-            case "MOUSE": return DeviceClass.Mouse;
-            case "HIDCLASS": return n.Contains("GAME CONTROLLER") || n.Contains("GAMEPAD") || n.Contains("JOYSTICK") ? DeviceClass.Controller : DeviceClass.Hid;
-            case "XNACOMPOSITE": return DeviceClass.Controller;
-            case "MEDIA":
-            case "AUDIOENDPOINT": return DeviceClass.Audio;
-            case "USB":
-            case "USBDEVICE": return DeviceClass.Controller;
-        }
-        if (id.StartsWith(@"BTHENUM\", StringComparison.Ordinal) || id.StartsWith("BTHLE", StringComparison.Ordinal)) return DeviceClass.Bluetooth;
-        if (id.StartsWith(@"USB\", StringComparison.Ordinal)) return DeviceClass.Other;
-        return cls.Length > 0 || Software() || id.StartsWith(@"ACPI\", StringComparison.Ordinal) || id.StartsWith(@"PCI\", StringComparison.Ordinal)
-            ? DeviceClass.Internal : DeviceClass.Other;
-    }
-
     public static string ClassText(DeviceClass c) => c switch
     {
-        DeviceClass.UsbStorage => "Stocare USB (stick / disc extern)",
+        DeviceClass.UsbStorage => "Stick USB",
         DeviceClass.MemoryCard => "Card de memorie",
-        DeviceClass.Phone => "Telefon / dispozitiv portabil (MTP)",
-        DeviceClass.Bluetooth => "Bluetooth",
-        DeviceClass.WiFi => "Adaptor Wi-Fi",
-        DeviceClass.NetworkAdapter => "Adaptor de rețea",
+        DeviceClass.ExternalDisk => "Disc extern",
+        DeviceClass.Phone => "Telefon / tabletă",
+        DeviceClass.Camera => "Cameră foto/video",
+        DeviceClass.Scanner => "Scaner",
         DeviceClass.Printer => "Imprimantă",
-        DeviceClass.Scanner => "Scaner / dispozitiv de imagine",
-        DeviceClass.Camera => "Cameră",
-        DeviceClass.Optical => "Unitate CD/DVD",
-        DeviceClass.Keyboard => "Tastatură",
-        DeviceClass.Mouse => "Mouse",
-        DeviceClass.Hid => "Dispozitiv de intrare (HID)",
-        DeviceClass.Audio => "Audio",
-        DeviceClass.Controller => "Controler (USB, hub sau de joc)",
-        DeviceClass.InternalDisk => "Disc intern",
-        DeviceClass.VirtualDisk => "Disc virtual (VHD/ISO)",
-        DeviceClass.Internal => "Componentă internă",
-        _ => "Alt dispozitiv",
+        DeviceClass.NetworkAdapter => "Adaptor de rețea USB",
+        DeviceClass.WiFi => "Adaptor Wi-Fi USB",
+        DeviceClass.Modem => "Modem USB",
+        DeviceClass.Bluetooth => "Dispozitiv Bluetooth",
+        DeviceClass.Optical => "Unitate optică",
+        DeviceClass.Keyboard => "Tastatură externă",
+        DeviceClass.Mouse => "Mouse extern",
+        DeviceClass.SmartCardReader => "Cititor de carduri smart",
+        DeviceClass.CardReader => "Cititor de carduri",
+        _ => "În afara domeniului (componentă internă)",
     };
 
     /// <summary>Storage media: the classes that carry a registration number („Nr. de înregistrare”) and are alerted without one.</summary>
-    public static bool IsStorageMedium(DeviceClass c) => c is DeviceClass.UsbStorage or DeviceClass.MemoryCard;
+    public static bool IsStorageMedium(DeviceClass c) => c is DeviceClass.UsbStorage or DeviceClass.MemoryCard or DeviceClass.ExternalDisk;
 
     /// <summary>The serial of a device from its instance id, only where the last segment is a real device serial (USB, USB storage, USB Attached SCSI).</summary>
     public static string Serial(string instanceId)
@@ -124,6 +74,17 @@ public static class DeviceMonitorRules
         var id = instanceId.ToUpperInvariant();
         return id.StartsWith(@"USB\", StringComparison.Ordinal) || id.StartsWith(@"USBSTOR\", StringComparison.Ordinal) || id.StartsWith(@"SCSI\", StringComparison.Ordinal)
             ? DeviceRules.Serial(instanceId) : "";
+    }
+
+    /// <summary>
+    /// A USB or USB-storage device whose instance id has no serial of its own: Windows generated the last segment (like 7&amp;1A2B3C4D&amp;0), so the device
+    /// is told apart only by the port it sits in.
+    /// </summary>
+    public static bool HasNoUniqueSerial(string instanceId)
+    {
+        var id = instanceId.ToUpperInvariant();
+        bool usb = id.StartsWith(@"USB\", StringComparison.Ordinal) || id.StartsWith(@"USBSTOR\", StringComparison.Ordinal);
+        return usb && DeviceRules.Serial(instanceId).Length == 0;
     }
 
     /// <summary>VID:PID from the instance id or the hardware ids; for USB storage (which carries vendor and product names instead) "Ven Prod".</summary>
@@ -144,6 +105,64 @@ public static class DeviceMonitorRules
 
     public static string Identity(PnpSnapshotEntry e) => Identity(e.InstanceId, Serial(e.InstanceId), VidPid(e.InstanceId, e.HardwareIds));
 
+    /// <summary>
+    /// The identity of a device in the journal when several present devices report the same serial and VID/PID (a cloned serial): the plug-and-play instance
+    /// id is added, so each one keeps its own row (and its own registration number) instead of sharing one.
+    /// </summary>
+    public static string IdentityWithInstance(PnpSnapshotEntry e) => Identity(e) + "|" + e.InstanceId.ToUpperInvariant();
+
+    /// <summary>The identity of a medium in a drive: the drive's identity plus the volume serial and the capacity (one card = one row, however often it is inserted).</summary>
+    public static string MediumIdentity(PnpSnapshotEntry drive, MediumInfo m) =>
+        Identity(drive) + "|MEDIUM|" + m.VolumeSerial.ToUpperInvariant() + "-" + m.CapacityBytes.ToString(CultureInfo.InvariantCulture);
+
+    /// <summary>Text of the critical alert raised when two present devices carry the same serial and VID/PID.</summary>
+    public const string CloneAlertText = "aceeași serie pe două dispozitive (posibilă clonare)";
+
+    /// <summary>Text of the critical alert raised when a serial comes back with another capacity or manufacturer (seen at different times).</summary>
+    public const string DuplicateSerialAlertText = "serie duplicată – posibilă clonă (aceeași serie, altă capacitate sau alt producător)";
+
+    /// <summary>The mark a row carries when its serial is held by two different devices.</summary>
+    public const string DuplicateSerialMark = "serie duplicată – posibilă clonă";
+
+    /// <summary>The Serie column text for a device whose serial Windows made up.</summary>
+    public const string NoUniqueSerialText = "fără serie unică";
+
+    /// <summary>Whether an alert text is a clone alert (simultaneous clones or a duplicate serial over time).</summary>
+    public static bool IsCloneAlert(string text) => text.Contains("posibilă clon", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// A card in a card reader or slot: the drive is a memory-card kind (the slot has the reader's serial for every card put in it), so each card is told apart
+    /// by its own volume serial and capacity (see <see cref="MediumIdentity"/>).
+    /// </summary>
+    public static bool IsReaderSlot(DeviceClass c, string instanceId) =>
+        c == DeviceClass.MemoryCard && (instanceId.StartsWith(@"USBSTOR", StringComparison.OrdinalIgnoreCase) || instanceId.StartsWith(@"SD", StringComparison.OrdinalIgnoreCase)
+                                        || instanceId.StartsWith(@"MMC", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Whether a volume is present for a disk (a card is in the reader): the volume's id carries the disk's id with "#" for the backslash.</summary>
+    public static bool HasVolume(PnpSnapshotEntry disk, IEnumerable<PnpSnapshotEntry> present)
+    {
+        var key = disk.InstanceId.Replace('\\', '#').ToUpperInvariant();
+        return present.Any(v => v.SetupClass.Equals("Volume", StringComparison.OrdinalIgnoreCase) && v.InstanceId.ToUpperInvariant().Contains(key, StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// Groups of present, in-scope devices that share a serial and VID/PID but are different plug-and-play devices (different instance ids): a possible clone.
+    /// Media in a card slot are not compared (the slot's serial is the reader's).
+    /// </summary>
+    public static IReadOnlyList<IReadOnlyList<ScopedDevice>> CloneGroups(IEnumerable<ScopedDevice> present)
+    {
+        var groups = new Dictionary<string, Dictionary<string, ScopedDevice>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var d in present)
+        {
+            if (d.Kind == DeviceClass.MemoryCard) continue;
+            if (Serial(d.IdentityEntry.InstanceId).Length == 0) continue;
+            var key = Identity(d.IdentityEntry);
+            if (!groups.TryGetValue(key, out var g)) groups[key] = g = new(StringComparer.OrdinalIgnoreCase);
+            g.TryAdd(d.IdentityEntry.InstanceId, d);
+        }
+        return groups.Values.Where(g => g.Count > 1).Select(g => (IReadOnlyList<ScopedDevice>)g.Values.OrderBy(e => e.IdentityEntry.InstanceId, StringComparer.OrdinalIgnoreCase).ToList()).ToList();
+    }
+
     /// <summary>Arrivals, removals and changes between two snapshots, by Plug and Play device id (case-insensitive).</summary>
     public static SnapshotDiff Diff(IEnumerable<PnpSnapshotEntry> previous, IEnumerable<PnpSnapshotEntry> current)
     {
@@ -158,22 +177,25 @@ public static class DeviceMonitorRules
     }
 
     /// <summary>
-    /// The driver state from the Configuration Manager problem code (Win32_PnPEntity.ConfigManagerErrorCode: 28 = no driver, other non-zero = error) and the
-    /// signed-driver data (Win32_PnPSignedDriver). A working device with an unsigned driver is <see cref="DriverState.Unsigned"/>.
+    /// The status a row shows: disconnected when the device is not present; disabled for problem code 22 (or 29, disabled in firmware); not working
+    /// („fără driver”) for any other problem code (28 = the driver is not installed); connected otherwise.
     /// </summary>
-    public static (DriverState State, string Text) Driver(int configManagerErrorCode, SignedDriverInfo? d)
+    public static DeviceStatus Status(bool present, int configManagerErrorCode)
     {
-        if (configManagerErrorCode == 28) return (DriverState.Missing, "fără driver (cod 28: driverul nu este instalat)");
-        if (configManagerErrorCode > 0) return (DriverState.Error, $"eroare (cod {configManagerErrorCode}: {ProblemText(configManagerErrorCode)})");
-        if (configManagerErrorCode < 0) return (DriverState.Unknown, "starea driverului nu a putut fi citită");
-        if (d is null || d.DriverProviderName.Length + d.DriverVersion.Length == 0)
-            return (DriverState.Installed, "funcționează (detaliile driverului nu sunt disponibile)");
-        var who = $"{d.DriverProviderName} {d.DriverVersion}".Trim() + (d.DriverDate.Length > 0 ? $" din {d.DriverDate}" : "");
-        if (d.IsSigned == false) return (DriverState.Unsigned, $"driver NESEMNAT: {who}");
-        return (DriverState.Installed, $"driver instalat: {who}" + (d.Signer.Length > 0 ? $", semnat de {d.Signer}" : d.IsSigned == true ? ", semnat" : ""));
+        if (!present) return DeviceStatus.Disconnected;
+        if (configManagerErrorCode is 22 or 29) return DeviceStatus.Disabled;
+        return configManagerErrorCode > 0 ? DeviceStatus.NotWorking : DeviceStatus.Connected;
     }
 
-    /// <summary>The meaning of the common Configuration Manager problem codes; others are named by number only.</summary>
+    public static string StatusText(DeviceStatus s) => s switch
+    {
+        DeviceStatus.Connected => "Conectat",
+        DeviceStatus.Disconnected => "Deconectat",
+        DeviceStatus.NotWorking => "Nu funcționează (fără driver)",
+        _ => "Dezactivat",
+    };
+
+    /// <summary>The meaning of the common Configuration Manager problem codes (shown in the tooltip of the status); others are named by number only.</summary>
     public static string ProblemText(int code) => code switch
     {
         1 => "dispozitivul nu este configurat corect",
@@ -200,14 +222,20 @@ public static class DeviceMonitorRules
     };
 
     /// <summary>
+    /// A Wi-Fi, Bluetooth or network adapter that Windows reports as disabled (problem code 22): switched off, which is what the isolated-station policy asks
+    /// for (consistent with N03), so it is not a forbidden ACTIVE device.
+    /// </summary>
+    public static bool IsDisabledRadio(DeviceClass c, int configManagerErrorCode) =>
+        configManagerErrorCode == 22 && c is DeviceClass.WiFi or DeviceClass.Bluetooth or DeviceClass.NetworkAdapter or DeviceClass.Modem;
+
+    /// <summary>
     /// The classes the station policy forbids on an isolated posture (Standalone and isolated LAN): phones (N05), Bluetooth (N04), Wi-Fi (N03) and network
-    /// adapters connected by USB (N05: they give the station a way to another network). A built-in wired adapter is not a connection by itself (N01 judges
-    /// the connections). Removable storage is permitted only with a registration number, which <see cref="Decide"/> checks for every posture.
+    /// adapters connected by USB (N05: they give the station a way to another network). Removable storage is permitted only with a registration number,
+    /// which <see cref="Decide"/> checks for every posture.
     /// </summary>
     public static bool ForbiddenOnIsolated(DeviceClass c, string instanceId) => c switch
     {
-        DeviceClass.Phone or DeviceClass.Bluetooth or DeviceClass.WiFi => true,
-        DeviceClass.NetworkAdapter => instanceId.StartsWith(@"USB\", StringComparison.OrdinalIgnoreCase),
+        DeviceClass.Phone or DeviceClass.Bluetooth or DeviceClass.WiFi or DeviceClass.NetworkAdapter or DeviceClass.Modem => true,
         _ => false,
     };
 
@@ -215,141 +243,42 @@ public static class DeviceMonitorRules
     /// The alert for a connection: CRITICAL for a storage medium without a registration number (every posture) and for a class the policy forbids on an
     /// isolated station; information otherwise.
     /// </summary>
-    public static DeviceAlertDecision Decide(DeviceClass c, string instanceId, string registrationNumber, bool isolated)
+    public static DeviceAlertDecision Decide(DeviceClass c, string instanceId, string registrationNumber, bool isolated, int configManagerErrorCode = 0)
     {
         if (IsStorageMedium(c) && registrationNumber.Trim().Length == 0)
             return new(DeviceAlertSeverity.Critical, "mediu de stocare fără număr de înregistrare");
+        if (IsDisabledRadio(c, configManagerErrorCode))
+            return new(DeviceAlertSeverity.Info, "dispozitiv dezactivat (cod 22), deci nu este activ");
         if (isolated && ForbiddenOnIsolated(c, instanceId))
             return new(DeviceAlertSeverity.Critical, $"{ClassText(c).ToLowerInvariant()}: clasă interzisă pe o stație izolată");
         return new(DeviceAlertSeverity.Info, "dispozitiv conectat");
     }
-}
 
-/// <summary>One device in the monitor's journal: what it is, its driver, when it was seen and its registration number. Times are UTC, when the monitor saw them.</summary>
-public sealed class DeviceJournalEntry
-{
-    [JsonPropertyName("identity")] public string Identity { get; set; } = "";
-    [JsonPropertyName("instance_id")] public string InstanceId { get; set; } = "";
-    [JsonPropertyName("class")] public DeviceClass Class { get; set; } = DeviceClass.Other;
-    [JsonPropertyName("setup_class")] public string SetupClass { get; set; } = "";
-    [JsonPropertyName("name")] public string Name { get; set; } = "";
-    [JsonPropertyName("manufacturer")] public string Manufacturer { get; set; } = "";
-    [JsonPropertyName("vid_pid")] public string VidPid { get; set; } = "";
-    [JsonPropertyName("serial")] public string Serial { get; set; } = "";
-    [JsonPropertyName("config_manager_error_code")] public int ConfigManagerErrorCode { get; set; } = -1;
-    [JsonPropertyName("driver_state")] public DriverState DriverState { get; set; } = DriverState.Unknown;
-    [JsonPropertyName("driver_text")] public string DriverText { get; set; } = "";
-    [JsonPropertyName("driver_version")] public string DriverVersion { get; set; } = "";
-    [JsonPropertyName("driver_provider")] public string DriverProvider { get; set; } = "";
-    [JsonPropertyName("driver_date")] public string DriverDate { get; set; } = "";
-    [JsonPropertyName("driver_signed")] public bool? DriverSigned { get; set; }
-    [JsonPropertyName("driver_signer")] public string DriverSigner { get; set; } = "";
-    [JsonPropertyName("present")] public bool Present { get; set; }
-    [JsonPropertyName("first_seen_utc")] public DateTimeOffset FirstSeenUtc { get; set; }
-    [JsonPropertyName("last_connected_utc")] public DateTimeOffset? LastConnectedUtc { get; set; }
-    [JsonPropertyName("last_disconnected_utc")] public DateTimeOffset? LastDisconnectedUtc { get; set; }
-    [JsonPropertyName("registration_number")] public string RegistrationNumber { get; set; } = "";
+    // ---- radios that cannot be observed -----------------------------------------------------------------------------------------------------
 
-    public DeviceJournalEntry Copy() => (DeviceJournalEntry)MemberwiseClone();
-}
+    public const string BluetoothOffText = "Bluetooth oprit – dispozitivele Bluetooth nu pot fi observate";
+    public const string BluetoothAbsentText = "Bluetooth absent – dispozitivele Bluetooth nu pot fi observate";
+    public const string WifiOffText = "Wi-Fi oprit – dispozitivele Wi-Fi nu pot fi observate";
 
-/// <summary>One alert the monitor raised (kept in the journal for the control report).</summary>
-public sealed record DeviceAlertRecord(
-    [property: JsonPropertyName("time_utc")] DateTimeOffset TimeUtc,
-    [property: JsonPropertyName("identity")] string Identity,
-    [property: JsonPropertyName("device")] string Device,
-    [property: JsonPropertyName("class")] DeviceClass Class,
-    [property: JsonPropertyName("severity")] DeviceAlertSeverity Severity,
-    [property: JsonPropertyName("text")] string Text);
-
-/// <summary>The monitor's journal, persisted as JSON under the application data folder so rows survive a restart.</summary>
-public sealed class DeviceJournal
-{
-    public const int CurrentVersion = 1;
-    [JsonPropertyName("version")] public int Version { get; set; } = CurrentVersion;
-    [JsonPropertyName("devices")] public List<DeviceJournalEntry> Devices { get; set; } = [];
-    [JsonPropertyName("alerts")] public List<DeviceAlertRecord> Alerts { get; set; } = [];
-
-    /// <summary>Most alerts kept: the oldest are dropped first.</summary>
-    public const int MaxAlerts = 2000;
-
-    public DeviceJournalEntry? Find(string identity) => Devices.FirstOrDefault(d => d.Identity.Equals(identity, StringComparison.OrdinalIgnoreCase));
-
-    public DeviceJournal Copy() => new() { Version = Version, Devices = Devices.Select(d => d.Copy()).ToList(), Alerts = [.. Alerts] };
-}
-
-/// <summary>One connection or disconnection the merge found.</summary>
-public sealed record DeviceJournalChange(DeviceJournalEntry Device, bool Arrived);
-
-/// <summary>Merges a snapshot of the present devices into the journal (pure: the caller reads the station and saves the journal).</summary>
-public static class DeviceJournalMerge
-{
     /// <summary>
-    /// Every present device is added or updated (present, last connected when it was absent); every device of the journal that is not present any more is
-    /// marked disconnected at <paramref name="nowUtc"/>. Registration numbers are kept by identity. Returns the connections and disconnections; on the first
-    /// snapshot of a session (<paramref name="initial"/>) devices already present are not connections (they were there when the monitor started), only new
-    /// ones are recorded as first seen.
+    /// The radios the monitor cannot see through, from one snapshot: the Bluetooth radio adapter is disabled (problem code 22) or there is none, or every Wi-Fi
+    /// adapter is disabled. Returns (kind, text): never shown or reported as „no devices”.
     /// </summary>
-    public static IReadOnlyList<DeviceJournalChange> Apply(DeviceJournal journal, IEnumerable<PnpSnapshotEntry> present, IReadOnlyDictionary<string, SignedDriverInfo> drivers,
-        DateTimeOffset nowUtc, bool initial)
+    public static IReadOnlyList<(string Kind, string Text)> BlindRadios(IEnumerable<PnpSnapshotEntry> present)
     {
-        var changes = new List<DeviceJournalChange>();
-        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var p in present)
-        {
-            if (DeviceMonitorRules.Classify(p.InstanceId, p.SetupClass, p.HardwareIds, p.Name) is not { } cls) continue;
-            var identity = DeviceMonitorRules.Identity(p);
-            if (!seen.Add(identity)) continue;
-            var e = journal.Find(identity);
-            if (e is null)
-            {
-                e = new DeviceJournalEntry { Identity = identity, FirstSeenUtc = nowUtc };
-                journal.Devices.Add(e);
-            }
-            e.InstanceId = p.InstanceId;
-            e.Class = cls;
-            e.SetupClass = p.SetupClass;
-            if (p.Name.Length > 0) e.Name = p.Name;
-            if (p.Manufacturer.Length > 0) e.Manufacturer = p.Manufacturer;
-            e.Serial = DeviceMonitorRules.Serial(p.InstanceId);
-            e.VidPid = DeviceMonitorRules.VidPid(p.InstanceId, p.HardwareIds);
-            e.ConfigManagerErrorCode = p.ConfigManagerErrorCode;
-            drivers.TryGetValue(p.InstanceId, out var d);
-            if (d is not null)
-            {
-                e.DriverVersion = d.DriverVersion; e.DriverProvider = d.DriverProviderName; e.DriverDate = d.DriverDate; e.DriverSigned = d.IsSigned; e.DriverSigner = d.Signer;
-            }
-            var known = d ?? (e.DriverProvider.Length + e.DriverVersion.Length > 0 ? new SignedDriverInfo(e.DriverVersion, e.DriverProvider, e.DriverDate, e.DriverSigned, e.DriverSigner) : null);
-            (e.DriverState, e.DriverText) = DeviceMonitorRules.Driver(p.ConfigManagerErrorCode, known);
-            if (!e.Present)
-            {
-                e.Present = true;
-                e.LastConnectedUtc = nowUtc;
-                if (!initial) changes.Add(new(e, true));
-            }
-        }
-        foreach (var e in journal.Devices.Where(e => e.Present && !seen.Contains(e.Identity)))
-        {
-            e.Present = false;
-            e.LastDisconnectedUtc = nowUtc;
-            changes.Add(new(e, false));
-        }
-        return changes;
+        var all = present as IReadOnlyList<PnpSnapshotEntry> ?? present.ToList();
+        var res = new List<(string, string)>();
+        var bt = all.Where(e => e.SetupClass.Equals("Bluetooth", StringComparison.OrdinalIgnoreCase) && !IsRemoteBluetooth(e.InstanceId) && !IsBluetoothSoftware(e.InstanceId)).ToList();
+        if (bt.Count == 0) res.Add(("Bluetooth", BluetoothAbsentText));
+        else if (bt.All(e => e.ConfigManagerErrorCode is 22 or 29)) res.Add(("Bluetooth", BluetoothOffText));
+        var wifi = all.Where(e => e.SetupClass.Equals("Net", StringComparison.OrdinalIgnoreCase) && DeviceScope.LooksWifi(e) && !DeviceScope.IsVirtualAdapter(e)).ToList();
+        if (wifi.Count > 0 && wifi.All(e => e.ConfigManagerErrorCode is 22 or 29)) res.Add(("Wi-Fi", WifiOffText));
+        return res;
     }
 
-    /// <summary>Sets the registration number of a device; returns the previous value, or null when the identity is not in the journal.</summary>
-    public static string? SetRegistrationNumber(DeviceJournal journal, string identity, string number)
-    {
-        if (journal.Find(identity) is not { } e) return null;
-        var old = e.RegistrationNumber;
-        e.RegistrationNumber = number.Trim();
-        return old;
-    }
+    private static bool IsRemoteBluetooth(string id) =>
+        id.StartsWith(@"BTHENUM\", StringComparison.OrdinalIgnoreCase) || id.StartsWith(@"BTHLE\", StringComparison.OrdinalIgnoreCase) || id.StartsWith(@"BTHLEDEVICE\", StringComparison.OrdinalIgnoreCase);
 
-    /// <summary>Appends an alert, keeping at most <see cref="DeviceJournal.MaxAlerts"/>.</summary>
-    public static void AddAlert(DeviceJournal journal, DeviceAlertRecord alert)
-    {
-        journal.Alerts.Add(alert);
-        if (journal.Alerts.Count > DeviceJournal.MaxAlerts) journal.Alerts.RemoveRange(0, journal.Alerts.Count - DeviceJournal.MaxAlerts);
-    }
+    private static bool IsBluetoothSoftware(string id) => id.StartsWith(@"BTH\", StringComparison.OrdinalIgnoreCase) || id.StartsWith(@"ROOT\", StringComparison.OrdinalIgnoreCase)
+                                                            || id.StartsWith(@"SWD\", StringComparison.OrdinalIgnoreCase);
 }

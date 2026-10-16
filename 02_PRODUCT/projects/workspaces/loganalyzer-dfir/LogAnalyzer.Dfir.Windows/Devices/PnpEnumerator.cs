@@ -60,11 +60,28 @@ public static class PnpEnumerator
                 if (name.Length == 0) name = Text(set, ref data, SPDRP_DEVICEDESC);
                 int code = CM_Get_DevNode_Status(out var status, out var problem, data.DevInst, 0) == 0 ? ((status & DN_HAS_PROBLEM) != 0 ? (int)problem : 0) : -1;
                 res.Add(new(InstanceId(set, ref data), name, Text(set, ref data, SPDRP_CLASS), Text(set, ref data, SPDRP_MFG),
-                    string.Join(" ", Multi(set, ref data, SPDRP_HARDWAREID)), Text(set, ref data, SPDRP_SERVICE), code));
+                    string.Join(" ", Multi(set, ref data, SPDRP_HARDWAREID)), Text(set, ref data, SPDRP_SERVICE), code, Container(set, ref data)));
             }
         }
         finally { SetupDiDestroyDeviceInfoList(set); }
         return res;
+    }
+
+    private static readonly Guid ContainerKeyFmt = new("8c7ed206-3f8a-4827-b3ab-ae9e1faefc6c");
+
+    /// <summary>
+    /// DEVPKEY_Device_ContainerId (pid 2): all the nodes of one physical device share it. DEVPKEY_Device_InLocalMachineContainer (pid 4) true = a component of the
+    /// station itself, reported as the local machine container (see <see cref="LogAnalyzer.Dfir.Devices.DeviceScope.LocalMachineContainer"/>). "" = not readable.
+    /// </summary>
+    private static string Container(IntPtr set, ref SP_DEVINFO_DATA d)
+    {
+        var inLocal = new DEVPROPKEY { fmtid = ContainerKeyFmt, pid = 4 };
+        var buf = new byte[4];
+        if (SetupDiGetDevicePropertyW(set, ref d, ref inLocal, out var t, buf, (uint)buf.Length, out _, 0) && t == 0x11 && buf[0] != 0)
+            return LogAnalyzer.Dfir.Devices.DeviceScope.LocalMachineContainer;
+        var key = new DEVPROPKEY { fmtid = ContainerKeyFmt, pid = 2 };
+        var g = new byte[16];
+        return SetupDiGetDevicePropertyW(set, ref d, ref key, out t, g, 16, out _, 0) && t == 0x0D ? "{" + new Guid(g).ToString().ToUpperInvariant() + "}" : "";
     }
 
     private static byte[]? Raw(IntPtr set, ref SP_DEVINFO_DATA d, uint prop)
@@ -88,6 +105,12 @@ public static class PnpEnumerator
 
     [StructLayout(LayoutKind.Sequential)]
     private struct SP_DEVINFO_DATA { public uint cbSize; public Guid ClassGuid; public uint DevInst; public IntPtr Reserved; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct DEVPROPKEY { public Guid fmtid; public uint pid; }
+
+    [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern bool SetupDiGetDevicePropertyW(IntPtr set, ref SP_DEVINFO_DATA data, ref DEVPROPKEY key, out uint propertyType, byte[]? buffer, uint size, out uint required, uint flags);
 
     [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     private static extern IntPtr SetupDiGetClassDevsW(IntPtr classGuid, string? enumerator, IntPtr hwndParent, uint flags);

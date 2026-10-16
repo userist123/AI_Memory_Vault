@@ -78,17 +78,18 @@
                             <TextBlock Text="{Binding Summary}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
                             <TextBlock Text="{Binding Mode}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
                             <TextBlock Text="{Binding Problem}" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" Margin="0,2,0,0"/>
+                            <TextBlock Text="{Binding RadioNotice}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" Margin="0,2,0,0" AutomationProperties.Name="Radiouri oprite"/>
+                            <TextBlock Text="{Binding SuppressedText}" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" Margin="0,2,0,0" AutomationProperties.Name="Alerte suprimate"/>
                         </StackPanel>
                     </DockPanel>
                     <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"
-                               Text="Orice dispozitiv conectat sau scos apare aici singur, fără niciun buton. Cercul verde: conectat acum; roșu: deconectat (rândul rămâne și după repornire). Scrieți numărul de înregistrare al fiecărui mediu de stocare în coloana „Nr. de înregistrare” (se poate și pentru orice alt dispozitiv); fiecare schimbare se trece în jurnalul de audit al aplicației. Aplicația doar observă: nu blochează și nu schimbă nimic pe stație."/>
+                               Text="Aici apar doar mediile de stocare (stick, card, disc extern, unitate optică) și dispozitivele conectate extern (telefon, cameră, scaner, imprimantă, adaptor de rețea sau Wi-Fi USB, Bluetooth, tastatură și mouse externe, cititor de carduri); componentele interne nu se arată. Orice dispozitiv conectat sau scos apare singur, fără niciun buton. Cercul verde: conectat acum; roșu: deconectat (rândul rămâne și după repornire). Scrieți numărul de înregistrare al fiecărui mediu de stocare în coloana „Nr. de înregistrare” (se poate și pentru orice alt dispozitiv); fiecare schimbare se trece în jurnalul de audit al aplicației. Aplicația doar observă: nu blochează și nu schimbă nimic pe stație."/>
                     <DataGrid AutomationProperties.Name="Dispozitivele văzute de monitor" ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                               HeadersVisibility="Column" SelectionMode="Single">
                         <DataGrid.RowStyle>
                             <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding DriverProblem}" Value="True"><Setter Property="Foreground" Value="{StaticResource WarningBrush}"/></DataTrigger>
-                                    <DataTrigger Binding="{Binding NeedsRegistration}" Value="True"><Setter Property="Foreground" Value="{StaticResource CriticalBrush}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger>
+                                    <DataTrigger Binding="{Binding AlertIsCritical}" Value="True"><Setter Property="Foreground" Value="{StaticResource CriticalBrush}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </DataGrid.RowStyle>
@@ -96,7 +97,7 @@
                             <DataGridTemplateColumn Header="Stare" Width="70" SortMemberPath="Present">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" ToolTip="{Binding StatusText, Mode=OneWay}" AutomationProperties.Name="{Binding StatusText, Mode=OneWay}">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" ToolTip="{Binding StatusTip, Mode=OneWay}" AutomationProperties.Name="{Binding StatusText, Mode=OneWay}">
                                             <Ellipse Width="12" Height="12" Margin="4,0,6,0" VerticalAlignment="Center">
                                                 <Ellipse.Style>
                                                     <Style TargetType="Ellipse">
@@ -109,19 +110,24 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="Nr. de înregistrare" Binding="{Binding RegistrationNumber, UpdateSourceTrigger=LostFocus}" Width="130"/>
-                            <DataGridTextColumn Header="Clasa" Binding="{Binding ClassText, Mode=OneWay}" IsReadOnly="True" Width="1.2*"/>
-                            <DataGridTextColumn Header="Nume" Binding="{Binding Name, Mode=OneWay}" IsReadOnly="True" Width="1.6*"/>
+                            <DataGridTextColumn Header="Starea" Binding="{Binding StatusText, Mode=OneWay}" IsReadOnly="True" Width="1.1*"/>
+                            <DataGridTextColumn Header="Tip" Binding="{Binding ClassText, Mode=OneWay}" IsReadOnly="True" Width="1.1*"/>
+                            <DataGridTextColumn Header="Nume" Binding="{Binding Name, Mode=OneWay}" IsReadOnly="True" Width="1.5*"/>
                             <DataGridTextColumn Header="Producător" Binding="{Binding Manufacturer, Mode=OneWay}" IsReadOnly="True" Width="*"/>
+                            <DataGridTextColumn Header="Model" Binding="{Binding Model, Mode=OneWay}" IsReadOnly="True" Width="*"/>
                             <DataGridTextColumn Header="VID/PID" Binding="{Binding VidPid, Mode=OneWay}" IsReadOnly="True" Width="90"/>
                             <DataGridTextColumn Header="Serie" Binding="{Binding Serial, Mode=OneWay}" IsReadOnly="True" Width="*"/>
-                            <DataGridTextColumn Header="Driver" Binding="{Binding DriverStateText, Mode=OneWay}" IsReadOnly="True" Width="85"/>
-                            <DataGridTextColumn Header="Detalii driver" Binding="{Binding DriverText, Mode=OneWay}" IsReadOnly="True" Width="1.6*">
-                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            <DataGridTextColumn Header="Văzut prima dată" Binding="{Binding FirstSeenText, Mode=OneWay}" IsReadOnly="True" Width="150"/>
+                            <DataGridTextColumn Header="Capacitate" Binding="{Binding CapacityText, Mode=OneWay}" IsReadOnly="True" Width="80"/>
+                            <DataGridTextColumn Header="Literă" Binding="{Binding Letter, Mode=OneWay}" IsReadOnly="True" Width="55"/>
+                            <DataGridTextColumn Header="Etichetă" Binding="{Binding Label, Mode=OneWay}" IsReadOnly="True" Width="*"/>
+                            <DataGridTextColumn Header="Utilizator conectat la momentul conectării" Binding="{Binding ConnectedUser, Mode=OneWay}" IsReadOnly="True" Width="1.2*"/>
+                            <DataGridTextColumn Header="Prima apariție" Binding="{Binding FirstSeenText, Mode=OneWay}" IsReadOnly="True" Width="150"/>
                             <DataGridTextColumn Header="Ultima conectare" Binding="{Binding LastConnectedText, Mode=OneWay}" IsReadOnly="True" Width="150"/>
                             <DataGridTextColumn Header="Ultima deconectare" Binding="{Binding LastDisconnectedText, Mode=OneWay}" IsReadOnly="True" Width="150"/>
+                            <DataGridTextColumn Header="Nr. de înregistrare" Binding="{Binding RegistrationNumber, UpdateSourceTrigger=LostFocus}" Width="130"/>
+                            <DataGridTextColumn Header="Alertă" Binding="{Binding AlertText, Mode=OneWay}" IsReadOnly="True" Width="1.3*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>

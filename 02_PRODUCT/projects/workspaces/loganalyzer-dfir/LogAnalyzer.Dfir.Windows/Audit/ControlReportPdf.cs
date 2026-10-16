@@ -342,13 +342,25 @@ public static class ControlReportPdf
             return l;
         }
         bool isolated = f.Posture != LogAnalyzer.Core.Services.Edition.StationPosture.Internet;
-        var s = LogAnalyzer.Dfir.Devices.DeviceMonitorReport.Build(journal, f.PeriodStartUtc, f.PeriodEndUtc == default ? DateTimeOffset.MaxValue : f.PeriodEndUtc, isolated);
-        l.Add(($"Dispozitive văzute în perioadă: {s.Devices.Count} ({s.Devices.Count(d => d.Present)} conectate acum) · încalcă regula: {s.Offending.Count} · alerte: {s.Alerts.Count} ({s.Critical} critice). " +
+        var from = f.PeriodStartUtc;
+        var to = f.PeriodEndUtc == default ? DateTimeOffset.MaxValue : f.PeriodEndUtc;
+        var s = LogAnalyzer.Dfir.Devices.DeviceMonitorReport.Build(journal, from, to, isolated);
+        l.Add(($"Medii de stocare și dispozitive conectate extern, văzute în perioadă: {s.Devices.Count} ({s.Devices.Count(d => d.Present)} conectate acum) · încalcă regula: {s.Offending.Count} · alerte: {s.Alerts.Count} ({s.Critical} critice). " +
+               "Se listează doar mediile de stocare și dispozitivele conectate extern (aceeași listă ca în pagina monitorului și în verificarea D05); componentele interne nu se numără. " +
                "Monitorul vede doar cât timp aplicația este pornită; orele sunt cele la care a observat schimbarea.", false, Ink));
+        if (f.DeviceJournalUntrusted.Length > 0) l.Add((f.DeviceJournalUntrusted, false, Amber));
+        if (f.DeviceAudit is { ChainValid: true } audit && f.PeriodEndUtc != default)
+        {
+            var cov = LogAnalyzer.Dfir.Devices.DeviceMonitorCoverage.Analyze(audit.Runs, audit.Gaps, from, to);
+            l.Add((!cov.AnyCoverage ? "Acoperire: nicio rulare sigilată a monitorului nu acoperă perioada."
+                : cov.Gaps.Count == 0 ? "Acoperire: monitorul a rulat pe toată perioada (din înregistrările sigilate)."
+                : "Acoperire incompletă: " + string.Join("; ", cov.Gaps.Take(8).Select(g => $"{LogAnalyzer.Dfir.Devices.DeviceMonitorReport.UtcText(g.FromUtc)} – {LogAnalyzer.Dfir.Devices.DeviceMonitorReport.UtcText(g.ToUtc)}")) + ".", false, cov.Complete ? Ink : Amber));
+        }
+        foreach (var x in journal.Radios.Where(x => x.BlindNow || x.LastBlindUtc >= from && x.FirstBlindUtc <= to)) l.Add((x.Text, false, Amber));
         l.Add(("Alertele date în perioadă", true, Ink));
         if (s.Alerts.Count == 0) l.Add(("Nicio alertă în perioadă.", false, Muted));
         foreach (var a in s.Alerts) l.Add((LogAnalyzer.Dfir.Devices.DeviceMonitorReport.AlertLine(a), false, a.Severity == LogAnalyzer.Dfir.Devices.DeviceAlertSeverity.Critical ? Red : Muted));
-        l.Add(("Dispozitivele (clasa, numele, driverul, starea, numărul de înregistrare)", true, Ink));
+        l.Add(("Dispozitivele (tipul, numele, ids, starea, utilizatorul la conectare, numărul de înregistrare)", true, Ink));
         var offending = new HashSet<LogAnalyzer.Dfir.Devices.DeviceJournalEntry>(s.Offending);
         foreach (var d in s.Offending.Concat(s.Devices.Where(d => !offending.Contains(d))).Take(maxDevices))
             l.Add(((offending.Contains(d) ? "ÎNCALCĂ REGULA: " : "") + LogAnalyzer.Dfir.Devices.DeviceMonitorReport.Line(d), false, offending.Contains(d) ? Red : Ink));
