@@ -380,7 +380,7 @@ public sealed class ClassifiedAccessTests
         var otherPid = own with { Data = new Dictionary<string, string>(own.Data, StringComparer.OrdinalIgnoreCase) { ["ProcessId"] = "0x99" } };
         var input = new ClassifiedInput
         {
-            Folders = [new ClassifiedRoot(Root)], Records = [own], Media = [new MediumSeen(T0.AddMinutes(10), "SN1", "stick")], SelfWindows = [window], RegisterZone = TimeZoneInfo.Utc,
+            Folders = [new ClassifiedRoot(Root)], Records = [own], Media = [new MediumSeen(T0.AddMinutes(10), "SN1", "stick")], AppImagePath = Image, AppImageSha256 = AppSha, ImageSha256 = AppHashes, SelfWindows = [window], RegisterZone = TimeZoneInfo.Utc,
         };
         var rep = ClassifiedAccess.Analyze(input);
         Assert.Empty(rep.Files);
@@ -388,8 +388,8 @@ public sealed class ClassifiedAccessTests
         var self = Assert.Single(rep.SelfActivity);
         Assert.Contains("activitate proprie a aplicației (calcul amprente)", self.Access);
         // the same image with another process id, or outside the window, is a real access
-        Assert.Single(ClassifiedAccess.Analyze(new ClassifiedInput { Folders = input.Folders, Records = [otherPid], SelfWindows = [window], RegisterZone = TimeZoneInfo.Utc }).Files);
-        Assert.Single(ClassifiedAccess.Analyze(new ClassifiedInput { Folders = input.Folders, Records = [own with { TimeUtc = T0.AddHours(1) }], SelfWindows = [window], RegisterZone = TimeZoneInfo.Utc }).Files);
+        Assert.Single(ClassifiedAccess.Analyze(new ClassifiedInput { Folders = input.Folders, Records = [otherPid], AppImagePath = Image, AppImageSha256 = AppSha, ImageSha256 = AppHashes, SelfWindows = [window], RegisterZone = TimeZoneInfo.Utc }).Files);
+        Assert.Single(ClassifiedAccess.Analyze(new ClassifiedInput { Folders = input.Folders, Records = [own with { TimeUtc = T0.AddHours(1) }], AppImagePath = Image, AppImageSha256 = AppSha, ImageSha256 = AppHashes, SelfWindows = [window], RegisterZone = TimeZoneInfo.Utc }).Files);
     }
 
     [Fact]
@@ -460,7 +460,7 @@ public sealed class ClassifiedAccessTests
         var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 5, "run-1");
         var input = new ClassifiedInput
         {
-            Folders = [new ClassifiedRoot(Root)], SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc, RemovableDrives = new HashSet<string>(["E:"], StringComparer.OrdinalIgnoreCase),
+            Folders = [new ClassifiedRoot(Root)], AppImagePath = Image, AppImageSha256 = AppSha, ImageSha256 = AppHashes, SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc, RemovableDrives = new HashSet<string>(["E:"], StringComparer.OrdinalIgnoreCase),
             Records = [Own(T0, @"D:\Clasificat\a.docx", "0x120089"), Own(T0.AddMinutes(1), @"D:\Clasificat\a.docx", "0x2", "0x6"), Own(T0.AddMinutes(2), @"E:\a.docx", "0x2", "0x7")],
         };
         var rep = ClassifiedAccess.Analyze(input);
@@ -475,7 +475,7 @@ public sealed class ClassifiedAccessTests
         var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 1, "run-1");
         var rep = ClassifiedAccess.Analyze(new ClassifiedInput
         {
-            Folders = [new ClassifiedRoot(Root)], SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc,
+            Folders = [new ClassifiedRoot(Root)], AppImagePath = Image, AppImageSha256 = AppSha, ImageSha256 = AppHashes, SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc,
             Records = [Own(T0, @"D:\Clasificat\a.docx", "0x1"), Own(T0.AddMinutes(1), @"D:\Clasificat\b.docx", "0x1", "0x6")],
         });
         Assert.Empty(rep.SelfActivity);
@@ -525,7 +525,7 @@ public sealed class ClassifiedAccessTests
         var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 5, "run-1");
         var rep = ClassifiedAccess.Analyze(new ClassifiedInput
         {
-            Folders = [new ClassifiedRoot(Root)], SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc, RemovableDrives = new HashSet<string>(["E:"], StringComparer.OrdinalIgnoreCase),
+            Folders = [new ClassifiedRoot(Root)], AppImagePath = Image, AppImageSha256 = AppSha, ImageSha256 = AppHashes, SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc, RemovableDrives = new HashSet<string>(["E:"], StringComparer.OrdinalIgnoreCase),
             Records = [Own(T0, @"D:\Clasificat\a.docx", "0x1"), Own(T0.AddMinutes(1), @"E:\a.docx", "0x2", "0x7")],   // no KnownFiles: the file is gone from the folder
         });
         Assert.Single(rep.SelfActivity);
@@ -539,12 +539,12 @@ public sealed class ClassifiedAccessTests
         var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 5, "run-1");
         var start = new AccessRecord("event", "Security", 4688, T0.AddMinutes(-2), "Security 4688", new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             { ["NewProcessId"] = "0x4d2", ["NewProcessName"] = @"C:\Users\x\AppData\Local\Temp\tool.exe", ["SubjectUserName"] = "x" });
-        var rep = ClassifiedAccess.Analyze(new ClassifiedInput { Folders = [new ClassifiedRoot(Root)], SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc, Records = [start, Own(T0, @"D:\Clasificat\a.docx", "0x1")] });
+        var rep = ClassifiedAccess.Analyze(new ClassifiedInput { Folders = [new ClassifiedRoot(Root)], AppImagePath = Image, AppImageSha256 = AppSha, ImageSha256 = AppHashes, SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc, Records = [start, Own(T0, @"D:\Clasificat\a.docx", "0x1")] });
         Assert.Empty(rep.SelfActivity);
         Assert.Contains(rep.InvalidSelfWindows, x => x.Contains("fereastră de calcul amprente nevalidă") && x.Contains("tool.exe"));
         // started as the application itself: accepted
         var ok = start with { Data = new Dictionary<string, string>(start.Data, StringComparer.OrdinalIgnoreCase) { ["NewProcessName"] = Image } };
-        Assert.Single(ClassifiedAccess.Analyze(new ClassifiedInput { Folders = [new ClassifiedRoot(Root)], SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc, Records = [ok, Own(T0, @"D:\Clasificat\a.docx", "0x1")] }).SelfActivity);
+        Assert.Single(ClassifiedAccess.Analyze(new ClassifiedInput { Folders = [new ClassifiedRoot(Root)], AppImagePath = Image, AppImageSha256 = AppSha, ImageSha256 = AppHashes, SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc, Records = [ok, Own(T0, @"D:\Clasificat\a.docx", "0x1")] }).SelfActivity);
     }
 
     private static string AuditFile(params string[] lines)
@@ -586,5 +586,50 @@ public sealed class ClassifiedAccessTests
         Assert.Contains(read.Invalid, x => x.Contains("ancor"));
         var fine = AuditFile([AuditLine("audit.anchor", T0.AddMinutes(-10), "anchor=AAAAA-BBBBB-CCCCC-DDDDD"), .. Control("run-A", T0, w, T0.AddMinutes(5))]);
         Assert.Single(LogAnalyzer.Dfir.Auth.OperationAudit.ReadControlHashing(fine, chainValid: true).Valid);
+    }
+
+    // ---- fourth review of PR #291: a window is the application's only if it names the application's own executable -------------------------------
+
+    private static readonly string AppSha = new('c', 64);
+    private static readonly Dictionary<string, string> AppHashes = new(StringComparer.OrdinalIgnoreCase) { [Image] = AppSha };
+
+    private static AccessRecord ToolRead(DateTimeOffset t, string tool) =>
+        new("event", "Security", 4663, t, "Security 4663 tool", new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        { ["SubjectUserName"] = "admin", ["ObjectType"] = "File", ["ObjectName"] = @"D:\Clasificat\a.docx", ["AccessMask"] = "0x1", ["HandleId"] = "0x5", ["ProcessId"] = "0x63", ["ProcessName"] = tool });
+
+    [Fact]
+    public void A_window_naming_another_program_is_refused_even_without_a_4688_record()
+    {
+        const string tool = @"C:\Users\admin\copy.exe";
+        var forged = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x63, tool, "admin", 50, "run-F");
+        var rep = ClassifiedAccess.Analyze(new ClassifiedInput
+        {
+            Folders = [new ClassifiedRoot(Root)], RegisterZone = TimeZoneInfo.Utc, Records = [ToolRead(T0, tool)],
+            AppImagePath = Image, AppImageSha256 = AppSha, ImageSha256 = new Dictionary<string, string>(AppHashes) { [tool] = new string('d', 64) }, SelfWindows = [forged],
+        });
+        Assert.Empty(rep.SelfActivity);
+        Assert.Single(rep.Files);   // the tool's read is a real access
+        Assert.Contains(rep.InvalidSelfWindows, x => x.Contains("fereastră de calcul amprente nevalidă") && x.Contains("executabilul aplicației"));
+    }
+
+    [Fact]
+    public void A_window_naming_the_application_path_whose_file_has_another_fingerprint_is_refused()
+    {
+        var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 5, "run-1");
+        var input = new ClassifiedInput
+        {
+            Folders = [new ClassifiedRoot(Root)], RegisterZone = TimeZoneInfo.Utc, Records = [Own(T0, @"D:\Clasificat\a.docx", "0x1")],
+            AppImagePath = Image, AppImageSha256 = AppSha, ImageSha256 = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { [Image] = new string('e', 64) }, SelfWindows = [w],
+        };
+        var rep = ClassifiedAccess.Analyze(input);
+        Assert.Empty(rep.SelfActivity);
+        Assert.Contains(rep.InvalidSelfWindows, x => x.Contains("amprenta executabilului aplicației"));
+        // no application identity known (offline evidence): no window is accepted
+        Assert.Empty(ClassifiedAccess.Analyze(new ClassifiedInput { Folders = input.Folders, RegisterZone = TimeZoneInfo.Utc, Records = input.Records, SelfWindows = [w] }).SelfActivity);
+        // the application's own executable with its own fingerprint: accepted
+        Assert.Single(ClassifiedAccess.Analyze(new ClassifiedInput
+        {
+            Folders = input.Folders, RegisterZone = TimeZoneInfo.Utc, Records = input.Records, AppImagePath = @"c:\program files\loganalyzer\LOGANALYZER.EXE", AppImageSha256 = AppSha, ImageSha256 = AppHashes, SelfWindows = [w],
+        }).SelfActivity);
     }
 }

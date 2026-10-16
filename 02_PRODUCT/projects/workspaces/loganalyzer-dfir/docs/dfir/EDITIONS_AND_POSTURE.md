@@ -125,3 +125,5 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | S03 | Windows version and last update | Known and documented | Known and documented | Recent |  |
 | S04 | Offline updates applied and update register | Register matches installed updates | Register matches installed updates | n/a | The offline update register exists only where updates cannot come online. |
 | S05 | Station clock versus the application's time memory | Consistent | Consistent | Consistent |  |
+
+A14 / A15 (informații clasificate) — Limită: un administrator care deține cheia de sigilare poate adăuga după ultimul cod de ancorare o fereastră falsă pe numele aplicației; ea poate ascunde doar citiri de fișiere clasificate făcute de procesul aplicației, nu scrieri pe medii; protecția este ancora de pe procesul-verbal la controlul următor.

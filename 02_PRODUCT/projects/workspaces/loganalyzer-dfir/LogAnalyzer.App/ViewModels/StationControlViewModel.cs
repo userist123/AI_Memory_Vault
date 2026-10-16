@@ -320,6 +320,11 @@ namespace LogAnalyzer.UI.ViewModels
                             facts.SelfWindows.AddRange(windows.Valid);
                             facts.InvalidSelfWindows.AddRange(windows.Regressions);
                             facts.InvalidSelfWindows.AddRange(windows.Invalid);
+                            // a window is the application's only if it names this executable and the file there has this executable's fingerprint
+                            facts.AppImagePath = Environment.ProcessPath ?? "";
+                            facts.AppImageSha256 = Sha256OrEmpty(facts.AppImagePath);
+                            foreach (var img in windows.Valid.Select(w => w.ImagePath).Append(facts.AppImagePath).Where(p => p.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase))
+                                facts.ImageSha256[img] = Sha256OrEmpty(img);
                         }
                         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
                         try { LogAnalyzer.Dfir.Case.ClockMemory.RecordSeen(auditPath, facts.CollectedUtc, "raport de control stație"); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
@@ -403,6 +408,12 @@ namespace LogAnalyzer.UI.ViewModels
             ClassifiedSummary = $"Ieșiri nejustificate: {c.Unjustified} · de verificat: {c.ToVerify} · aprobate: {c.Approved} · fișiere șterse: {c.Deleted} · " +
                                 $"schimbări de reguli de audit sau permisiuni: {c.SecurityChanges.Count}." + (c.Notes.Count > 0 ? " " + string.Join(" ", c.Notes) : "");
             SelectedClassifiedFile = ClassifiedFiles.FirstOrDefault();
+        }
+
+        private static string Sha256OrEmpty(string path)
+        {
+            try { return File.Exists(path) ? LogAnalyzer.Dfir.IO.Hashing.Sha256File(path) : ""; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return ""; }
         }
 
         private void FillChecks()

@@ -105,6 +105,11 @@ public sealed class StationFacts
     public List<LogAnalyzer.Dfir.Analysis.SelfActivityWindow> SelfWindows { get; init; } = [];
     /// <summary>Hashing windows of the sealed audit that failed validation (reported by A15, never used to hide records).</summary>
     public List<string> InvalidSelfWindows { get; init; } = [];
+    /// <summary>The running application's executable and its SHA-256: a hashing window is accepted only when it names this file with this fingerprint.</summary>
+    public string AppImagePath { get; set; } = "";
+    public string AppImageSha256 { get; set; } = "";
+    /// <summary>SHA-256 of the file now at each image path named by a hashing window.</summary>
+    public Dictionary<string, string> ImageSha256 { get; init; } = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>The register of offline updates kept by the organisation; an empty list = the register is not filled in; null = not given.</summary>
     public List<LogAnalyzer.Dfir.Registers.UpdateRow>? OfflineUpdateRegister { get; set; }
     /// <summary>The latest time the application itself recorded in its chained audit logs ("time memory", check S05); null = no earlier record.</summary>

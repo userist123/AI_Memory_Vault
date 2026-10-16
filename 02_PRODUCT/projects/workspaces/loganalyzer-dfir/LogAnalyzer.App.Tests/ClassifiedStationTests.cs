@@ -226,6 +226,9 @@ public sealed class ClassifiedStationTests
         var f = Station();
         const string image = @"C:\Program Files\LogAnalyzer\LogAnalyzer.exe";
         f.SelfWindows.Add(new SelfActivityWindow(Now.AddDays(-1), Now.AddDays(-1).AddMinutes(2), 4242, image, "inspector", 1));
+        f.AppImagePath = image;                                   // the running application's executable and its fingerprint
+        f.AppImageSha256 = new string('c', 64);
+        f.ImageSha256[image] = new string('c', 64);
         f.Logs.Add(Sec(4663, Now.AddDays(-1).AddMinutes(1), ("SubjectUserName", "inspector"), ("ObjectType", "File"), ("ObjectName", @"D:\Clasificat\plan.docx"),
             ("AccessMask", "0x1"), ("HandleId", "0x5"), ("ProcessId", "0x1092"), ("ProcessName", image)));
         f.Logs.Add(new LogFact("Microsoft-Windows-Partition/Diagnostic", 1006, Now.AddDays(-1).AddMinutes(30), 1, "",
