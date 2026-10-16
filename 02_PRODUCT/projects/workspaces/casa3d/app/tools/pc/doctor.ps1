@@ -27,13 +27,15 @@
 [CmdletBinding()]
 param(
   [int]$Port = 3123,
-  [string]$AppDir = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)),
+  [string]$AppDir = '',
   [string]$RenderDir = 'D:\casa3d-render',
   [switch]$Fix,
   [int]$TimeoutSec = 10
 )
 
 $ErrorActionPreference = 'Stop'
+# PowerShell 5.1 leaves $PSScriptRoot empty inside param() defaults, so the app folder is resolved here
+if (-not $AppDir) { $AppDir = Split-Path -Parent (Split-Path -Parent $PSScriptRoot) }
 $script:failed = 0
 # TLS 1.2 for the tunnel (PowerShell 5.1 defaults to older protocols)
 try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12 } catch { }
