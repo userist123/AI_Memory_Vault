@@ -143,24 +143,16 @@ public class TermCatalogTests
     }
 
     [Fact]
-    public void The_officer_export_writes_the_media_history_and_names_its_folder_safely()
+    public void The_officer_bundle_has_no_unsigned_media_history_and_points_to_the_signed_export()
     {
-        var f = new StationFacts { Host = "ST-TEST" };
-        f.UsbDevices.Add(new UsbDeviceFact("Disk&Ven_Kingston", "SER123", "Kingston DataTraveler", "USBSTOR"));
-        f.ObservedMedia = [new LogAnalyzer.Dfir.Registers.SeenMedium("SER999", "0951:1666", 32_000_000_000, "", "Stick înrolat", true, [Start, Start.AddDays(2)])];
-        var path = Path.Combine(Path.GetTempPath(), $"media_{Guid.NewGuid():N}.csv");
-        try
-        {
-            Assert.Equal(2, OfficerExport.WriteMediaHistory(f, path));
-            var csv = File.ReadAllText(path);
-            Assert.Contains("SER123", csv);
-            Assert.Contains("SER999", csv);
-            Assert.Contains("2026-09-03 00:00:00", csv);
-        }
-        finally { File.Delete(path); }
+        // coordinator decision on PR #298: the media history goes to the officer only signed with the officer's card (#297), never as an unsigned CSV
         Assert.Equal("Pentru_ofiter_ST_X_20260901_000000", OfficerExport.FolderName("ST/X", Start));
         var readme = OfficerExport.Readme("ST-TEST", Start, ["raport.pdf — raportul de control"], "Cod de ancorare: ABCDE-…");
         Assert.Contains("raport.pdf", readme);
-        Assert.Contains(OfficerExport.MediaHistoryFile, readme);
+        Assert.DoesNotContain(".csv", readme);
+        Assert.Contains("„" + OfficerExport.SignedMediaHistoryButton + "”", readme);
+        Assert.Contains("semnat", readme);
+        Assert.Null(typeof(OfficerExport).GetMethod("WriteMediaHistory"));
+        Assert.Null(typeof(OfficerExport).GetField("MediaHistoryFile"));
     }
 }

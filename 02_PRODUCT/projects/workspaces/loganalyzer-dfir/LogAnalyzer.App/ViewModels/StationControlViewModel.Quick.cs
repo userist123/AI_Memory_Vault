@@ -37,8 +37,10 @@ namespace LogAnalyzer.UI.ViewModels
         void OpenReport();
         /// <summary>The officer signs the report with the card (the PIN is asked by Windows).</summary>
         void SignAsOfficer();
-        /// <summary>Report, log copy for the CD-R and media history in one folder (the folder used last time, asked only the first time).</summary>
+        /// <summary>Report and log copy for the CD-R in one folder (the folder used last time, confirmed every time).</summary>
         void ExportForOfficer();
+        /// <summary>The media history, signed with the officer's card (#297): the only way it goes to the officer.</summary>
+        void ExportSignedMediaHistory();
     }
 
     /// <summary>One result chip: the result word as printed (CONFORM, DE VERIFICAT…) and how many checks have it.</summary>
@@ -95,6 +97,7 @@ namespace LogAnalyzer.UI.ViewModels
         void IStationQuickControl.OpenReport() => OpenReport();
         void IStationQuickControl.SignAsOfficer() => SignAsOfficer();
         void IStationQuickControl.ExportForOfficer() => ExportForOfficer();
+        void IStationQuickControl.ExportSignedMediaHistory() => ExportMediaHistory();
 
         /// <summary>„Deschide raportul”: the report of this control, saved in the case the first time, then opened (no dialog).</summary>
         [RelayCommand]
@@ -144,7 +147,6 @@ namespace LogAnalyzer.UI.ViewModels
             var signedReports = Directory.EnumerateFiles(Path.GetDirectoryName(pdf)!, Path.GetFileNameWithoutExtension(pdf) + "*semnat*.pdf").ToList();
             var planned = new System.Collections.Generic.List<string> { Path.GetFileName(pdf) + " — raportul de control" };
             planned.AddRange(signedReports.Select(f => Path.GetFileName(f) + " — raportul semnat de ofițer"));
-            planned.Add(OfficerExport.MediaHistoryFile + " — istoricul mediilor (cu seriile lor)");
             if (log is not null) planned.Add(AuditAnchor.ExportFolderName(now) + " — copia jurnalului aplicației, pentru CD-R");
             planned.Add(OfficerExport.ReadmeFile + " — ce conține folderul");
             while (true)
@@ -166,7 +168,6 @@ namespace LogAnalyzer.UI.ViewModels
                     Directory.CreateDirectory(dest);
                     CopyWithSignature(pdf, Path.Combine(dest, Path.GetFileName(pdf)));
                     foreach (var signed in signedReports) File.Copy(signed, Path.Combine(dest, Path.GetFileName(signed)), overwrite: true);
-                    OfficerExport.WriteMediaHistory(facts, Path.Combine(dest, OfficerExport.MediaHistoryFile));
                     if (log is not null) { anchorCopy = AuditAnchor.Export(log, dest, Environment.MachineName, now); anchorLine = anchorCopy.Anchor.Line; }
                     File.WriteAllText(Path.Combine(dest, OfficerExport.ReadmeFile), OfficerExport.Readme(facts.Host, now, planned, anchorLine), new System.Text.UTF8Encoding(false));
                     return Directory.GetFiles(dest, "*", SearchOption.AllDirectories);   // a new folder: everything in it is this export

@@ -70,9 +70,11 @@
                                 </Button>
                                 <local:HelpButton Term="officer_signature" Margin="4,0,8,6"/>
                                 <Button Command="{Binding ExportForOfficerCommand}" Margin="0,0,8,6" AutomationProperties.Name="Exportă pentru ofițer"
-                                        ToolTip="Raportul, copia jurnalului pentru CD-R și istoricul mediilor într-un folder nou, în locul folosit data trecută (întreabă doar prima dată). Tastatură: Ctrl+E.">
+                                        ToolTip="Raportul și copia jurnalului pentru CD-R într-un folder nou, în locul folosit data trecută; folderul și fișierele se confirmă înainte de scriere. Istoricul mediilor se exportă separat, semnat. Tastatură: Ctrl+E.">
                                     <AccessText Text="_Exportă pentru ofițer"/>
                                 </Button>
+                                <Button Content="Exportă istoricul mediilor pentru ofițer" Command="{Binding ExportSignedMediaHistoryCommand}" Margin="0,0,8,6"
+                                        ToolTip="Istoricul mediilor stației, semnat cu cardul ofițerului de securitate; ofițerul îl confruntă cu al celorlalte stații. Doar așa ajunge istoricul la ofițer."/>
                                 <Button Content="Alege alt folder" Command="{Binding QuickControl.ChooseOfficerExportFolderCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,6"
                                         ToolTip="Schimbă folderul în care se face exportul pentru ofițer."/>
                                 <Button Content="Vezi toate detaliile" Command="{Binding ShowControlDetailsCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,6"
