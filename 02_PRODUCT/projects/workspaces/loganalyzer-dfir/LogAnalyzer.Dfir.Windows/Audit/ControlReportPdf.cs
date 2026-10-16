@@ -229,6 +229,10 @@ public static class ControlReportPdf
         l.Add(r.Anchor is { } a
             ? a.Line + ". Treceți codul pe procesul-verbal; la controlul următor se introduce în aplicație ca să se verifice că jurnalul aplicației nu a fost rescris (verificarea A11)."
             : "Cod de ancorare: indisponibil (jurnalul aplicației nu a putut fi citit).");
+        // the install date is recorded with the anchor and compared at the next control (A14): it goes on the paper next to the code
+        l.Add("Data instalării aplicației (înregistrată odată cu codul de ancorare): " +
+              (r.Facts.AppInstalledUtc is { } inst ? inst.UtcDateTime.ToString("yyyy-MM-dd HH:mm", System.Globalization.CultureInfo.InvariantCulture) + " UTC" : "necunoscută") +
+              (r.Facts.AppInstallBasis.Length > 0 ? $" ({r.Facts.AppInstallBasis})" : "") + ". Treceți-o pe procesul-verbal lângă cod.");
         l.Add(OfficialLabel + ". Ofițerul de securitate semnează fișierul cu certificatul calificat de pe cardul său („Semnează ca ofițer de securitate” în aplicație, sau în Adobe); semnătura se verifică cu „Verifică raport semnat”, comparând amprenta certificatului cu cea de pe procesul-verbal.");
         if (r.RegisteredOfficers.Count == 0) l.Add("Ofițeri de securitate declarați pe stație: niciunul.");
         foreach (var o in r.RegisteredOfficers)

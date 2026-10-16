@@ -305,6 +305,7 @@ public static class ControlEvaluator
         LogServiceStops(f, r);
         AnchorContinuityCheck(f, r);
         OfficerListCheck(f, r);
+        InstallDateCheck(f, r);
     }
 
     /// <summary>
@@ -362,6 +363,47 @@ public static class ControlEvaluator
             a.Changes.Count == 0 ? $"Nicio schimbare a listei ofițerilor de securitate sau a autorităților de încredere {a.Since}."
                                  : $"{Ro.Capitalize(Ro.CountFem(a.Changes.Count, "schimbare făcută", "schimbări făcute"))} din aplicație {a.Since}. Fiecare trebuie confirmată de ofițer: cine este pe listă poate semna raportul oficial.",
             a.Changes, "Comparați amprentele ofițerilor din raport cu cele de pe procesele-verbale semnate; o înregistrare necunoscută ofițerului este un incident de securitate.");
+    }
+
+    /// <summary>
+    /// A14: the application install date now against the one recorded with the anchor typed from the paper. A later date means the store or the application was
+    /// reinitialised or reinstalled after the previous control (NECONFORM); an earlier one means an older trace was found since (to verify).
+    /// </summary>
+    private static void InstallDateCheck(StationFacts f, ControlReport r)
+    {
+        const string title = "Data instalării aplicației față de controlul anterior";
+        string Fmt(DateTimeOffset? t) => t is { } v ? v.UtcDateTime.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) + " UTC" : "necunoscută";
+        if (f.InstallAtPaperAnchor is not { } a) { Add(r, "A14", "Audit", title, ControlStatus.Nedeterminat, "Jurnalul aplicației nu a fost disponibil, deci data instalării de la controlul anterior nu s-a putut citi."); return; }
+        if (!a.Determinable || !a.Recorded)
+        {
+            Add(r, "A14", "Audit", title, ControlStatus.Nedeterminat, "Data instalării nu s-a putut compara: " + a.Why + ".",
+                rec: "Introduceți la începutul controlului codul de ancorare de pe procesul-verbal semnat al controlului anterior.");
+            return;
+        }
+        var ev = new List<string> { $"la controlul anterior (codul de pe procesul-verbal): {Fmt(a.Utc)} ({a.Basis})", $"acum: {Fmt(f.AppInstalledUtc)} ({f.AppInstallBasis})" };
+        var tolerance = TimeSpan.FromMinutes(1);
+        if (a.Utc is { } then && f.AppInstalledUtc is { } now)
+        {
+            if (now - then > tolerance)
+                Add(r, "A14", "Audit", title, ControlStatus.Neconform,
+                    "Data instalării s-a schimbat după controlul anterior (posibilă reinițializare sau reinstalare): a fost " + Fmt(then) + ", acum este " + Fmt(now) + ".", ev,
+                    "Tratați stația ca incident de securitate: cereți explicația reinstalării sau reinițializării și comparați cu registrul de intervenții.");
+            else if (then - now > tolerance)
+                Add(r, "A14", "Audit", title, ControlStatus.DeVerificat,
+                    "Data instalării este acum mai veche decât la controlul anterior: s-a găsit o urmă mai veche a aplicației (" + Fmt(now) + ", față de " + Fmt(then) + ").", ev,
+                    "Verificați de unde provine urma mai veche (o instalare anterioară sau o copie a aplicației).");
+            else
+                Add(r, "A14", "Audit", title, ControlStatus.Conform, "Data instalării este aceeași ca la controlul anterior: " + Fmt(now) + ".", ev);
+            return;
+        }
+        if (a.Utc is not null)
+            Add(r, "A14", "Audit", title, ControlStatus.Neconform,
+                "Data instalării s-a schimbat după controlul anterior (posibilă reinițializare sau reinstalare): era cunoscută (" + Fmt(a.Utc) + "), iar acum nu se mai poate stabili (" + f.AppInstallBasis + ").", ev,
+                "Tratați stația ca incident de securitate: urmele instalării au dispărut după controlul anterior.");
+        else if (f.AppInstalledUtc is not null)
+            Add(r, "A14", "Audit", title, ControlStatus.DeVerificat, "La controlul anterior data instalării nu se putea stabili; acum este " + Fmt(f.AppInstalledUtc) + ".", ev);
+        else
+            Add(r, "A14", "Audit", title, ControlStatus.Nedeterminat, "Data instalării nu se poate stabili, nici acum, nici la controlul anterior.", ev);
     }
 
     /// <summary>A11: the anchor code of the previous control (from the signed paper) is still in the application's audit log (see LogAnalyzer.Dfir.Case.AuditAnchor).</summary>
