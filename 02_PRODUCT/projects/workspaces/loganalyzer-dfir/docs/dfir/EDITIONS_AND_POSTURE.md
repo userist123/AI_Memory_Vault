@@ -135,8 +135,9 @@ administrator could try to move later. What the application does (`AppInstallDat
   trace (Prefetch, 4688) of the installed executable before the chain began (history lost).
 - DE VERIFICAT: earlier file or Amcache times of the installed executable; a run of an edition executable from another folder ("aplicația a rulat și din
   altă locație"); an Amcache entry of an edition executable at another path ("aplicația a existat/rulat anterior în altă locație", with path and last-write
-  time); a .pf of the installed executable created long after an older Windows trace of the application ("urmă Prefetch recreată"); a missing .pf while
-  Prefetch is active ("posibilă ștergere"); and the absence of every Windows trace.
+  time); a newer Prefetch trace, i.e. a .pf of the installed executable created long after an older Windows trace of the same installed path (its Amcache
+  entry or a Security 4688 start: "urmă Prefetch mai nouă decât alte urme Windows — poate fi recreată de Windows sau ștearsă", since Windows itself evicts
+  and recreates the .pf of a rarely run program); a missing .pf while Prefetch is active ("posibilă ștergere"); and the absence of every Windows trace.
 - The computed date and the time of the chain's first record are printed in every control report header, so two controls can be compared.
 
 ### Probe B (what an administrator can still achieve)
@@ -146,7 +147,8 @@ The administrator recreates the authentication store, reinstalls the application
 - Achieved: the computed installation date moves later (to the reinstall), and no NECONFORM is raised by the station alone, because no remaining Windows
   trace proves a RUN before the new chain.
 - Notes that remain (DE VERIFICAT): the old-folder Amcache entry ("existed/ran earlier in another location", reported with path and time) as long as
-  Windows keeps it, and the "recreated Prefetch trace" note once the new .pf exists while that older trace is still there.
+  Windows keeps it. The newer Prefetch trace note does not appear: it compares the new .pf only with older traces of the same installed path, and the
+  new folder has none.
 - Notes that disappear: "posibilă ștergere" (the new .pf hides it after the next run), and every note once Amcache drops or rewrites the old entry;
   with Prefetch off and Amcache unreadable only the "urmele Windows lipsesc" note is left.
 
