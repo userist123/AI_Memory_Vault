@@ -1,6 +1,6 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-16T18:00:59Z
-ROUND 7 (UI, 2026-10-16, branch casa3d-ui-round7, not pushed; main session reviews then pushes):
+STATUS: IN_PROGRESS    UPDATED: 2026-10-16T19:38:29Z
+ROUND 7 (UI, 2026-10-16): PUSHED to codex/casa3d-memory (head 35196f30), PC updated, doctor all OK.
   DONE 131740ed: stages grouped in phases (Releveu/Concept/Detaliere/Livrare, core/stage-progress.ts) with a done dot
   derived from project data + rule text + Continue button (sidebar and <1024px bottom sheet); command palette Ctrl/Cmd+K +
   Search button (components/CommandPalette.tsx, lib/fuzzy.ts: diacritics-insensitive fuzzy, combobox/listbox, focus trap/return);
@@ -16,6 +16,11 @@ ROUND 7 (UI, 2026-10-16, branch casa3d-ui-round7, not pushed; main session revie
   (Enter on Close just closes); macOS Ctrl+K in text fields left to the system; Present stage counts only non-revoked links;
   Concept done only with real brief input (not the style a package writes); Romanian plural for the result count.
   vitest 557/557, tsc exit 0; browser re-check at 1366 and 390 (after-palette-fix-*.png in the session scratchpad).
+  35196f30: editor shortcuts pause only inside modal dialogs (dialog[open]/aria-modal), so Esc/? work again from the
+  shortcuts panel and the warnings box. Independent review: round 1 CHANGES_REQUIRED (5 findings, all fixed), round 2
+  APPROVE; final vitest 557/557, tsc 0. PC: old elevated server needed the owner's admin -Fix.
+  FOLLOW-UPS: at 1024px the stage bar clips 09-10 with no scroll hint; the default demo project has English room names
+  in Romanian mode; 'docs' done dot reflects only the level on screen.
   NEXT: room resize adjusts the neighbour rectangle.
 ROUND 6 (2026-10-15/16, owner: "totul ca lucrat de profesionisti: programatori, web/UI/UX, 3D, automatizari" + tableta):
   role audits (designer, UI/UX, 3D, QA) in scratchpad; fixed in waves: 792728e3 (QA saves/rate limits/doctor, 3D realism +
