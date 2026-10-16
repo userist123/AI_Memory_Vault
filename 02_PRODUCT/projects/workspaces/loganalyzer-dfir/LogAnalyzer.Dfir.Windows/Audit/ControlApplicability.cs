@@ -93,6 +93,7 @@ public static class ControlApplicability
         Row("A13", "Security officer list changed since the previous control", Yes("Review"), Yes("Review"), Yes("Review"), null),
         Row("A14", "Sources that show classified files leaving the station", Yes("Removable Storage, Handle Manipulation, Process Creation with command line and the print log on"), Yes("As standalone, plus Detailed File Share"), No, "Classified folders exist only in the controlled editions."),
         Row("A15", "Classified files: access and exits without approval", Yes("Review; non-conform on any exit not in the transfer register"), Yes("Review; non-conform on any exit not in the transfer register (network shares included)"), No, "Classified folders exist only in the controlled editions."),
+        Row("A16", "Application installation date versus the previous control (paper anchor)", Yes("Unchanged"), Yes("Unchanged"), Yes("Unchanged"), null),
         Row("U01", "Changes to the Administrators group", Yes("Review"), Yes("Review"), Yes("Review"), null),
         Row("U02", "Accounts created, deleted, enabled, disabled or reset", Yes("Review"), Yes("Review"), Yes("Review"), null),
         Row("U03", "Remote (RDP) logons", Yes("Review"), Yes("Review (administration over the LAN is normal)"), Yes("Review"), null),
