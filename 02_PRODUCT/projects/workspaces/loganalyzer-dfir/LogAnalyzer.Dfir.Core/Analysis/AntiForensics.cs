@@ -232,9 +232,26 @@ public static class AntiForensics
                     $". Acoperire: {Window()}.", [Ref(usn[0], "ID jurnal")]);
         }
 
-        Add("AF08", "Modificarea marcajelor de timp ale fișierelor (timestomp)", "T1070.006", AntiForensicResult.Undetermined,
-            "$MFT nu este parsat: comparația $STANDARD_INFORMATION / $FILE_NAME nu se poate face." +
-            (usn.Count > 0 ? " Motivul USN „Basic info change” apare și la schimbarea atributelor, deci nu dovedește singur o modificare a orelor." : ""));
+        {
+            const string Af08 = "Modificarea marcajelor de timp ale fișierelor (timestomp)";
+            var mft = events.Where(e => e.Source == "MFT").ToList();
+            var summary = mft.FirstOrDefault(e => F(e, "Kind") == "summary");
+            var stomped = mft.Where(e => F(e, "Kind") == "timestomp").ToList();
+            string usnNote = usn.Count > 0 ? " Motivul USN „Basic info change” apare și la schimbarea atributelor, deci nu dovedește singur o modificare a orelor." : "";
+            if (summary is null)
+                Add("AF08", Af08, "T1070.006", AntiForensicResult.Undetermined,
+                    "$MFT nu este parsat: comparația $STANDARD_INFORMATION / $FILE_NAME nu se poate face." + usnNote);
+            else if (stomped.Count > 0)
+                Add("AF08", Af08, "T1070.006", AntiForensicResult.Detected,
+                    $"{LogAnalyzer.Dfir.Language.RoText.Count(stomped.Count, "fișier are", "fișiere au")} ora de creare din $STANDARD_INFORMATION mai veche decât cea din $FILE_NAME (aceasta din urmă o scrie sistemul de fișiere): " +
+                    string.Join("; ", stomped.Take(10).Select(e => $"{(e.Path.Length > 0 ? e.Path : F(e, "FileName"))} (SI {F(e, "SiCreatedUtc")} față de FN {F(e, "FnCreatedUtc")})")) +
+                    ". Este un indiciu, nu o dovadă: unele programe (arhivare, copiere cu păstrarea orelor) produc același tipar." + usnNote,
+                    stomped.Select(e => Ref(e, "$STANDARD_INFORMATION mai vechi decât $FILE_NAME")));
+            else
+                Add("AF08", Af08, "T1070.006", AntiForensicResult.NotDetected,
+                    $"$MFT analizat ({F(summary, "Records")} înregistrări citite): niciun fișier cu ora de creare din $STANDARD_INFORMATION mai veche decât cea din $FILE_NAME." + usnNote,
+                    [Ref(summary, "rezumat $MFT")]);
+        }
 
         // AF09 — registry changes to logging and audit configuration, visible only with registry auditing (Sysmon 12–14, Security 4657).
         {

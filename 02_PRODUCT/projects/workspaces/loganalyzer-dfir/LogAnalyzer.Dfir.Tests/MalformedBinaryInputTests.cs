@@ -182,6 +182,7 @@ public sealed class MalformedBinaryInputTests : IDisposable
         Ok(new LnkParser(), "lnk", "ok.lnk", SampleLnk(), 1);
         Ok(new JumpListParser(), "jumplist_auto", "ok.automaticDestinations-ms", SampleJumpList(), 1);
         Ok(new UsnJournalParser(TimeZoneInfo.Utc), "usn_journal", "ok.csv", SampleUsn(), 2);
+        Ok(new MftParser(), "ntfs_mft", "ok.mft", MftParserTests.Sample(), 2);
         Ok(new PcapngParser(), "pcapng", "ok.pcapng", SamplePcapng(), 2);
         Assert.Equal(3, new CompoundFile(SampleCfb()).Entries.Count);
     }
@@ -285,6 +286,15 @@ public sealed class MalformedBinaryInputTests : IDisposable
         };
         var cuts = Enumerable.Range(1, 60).Select(i => text.Length * i / 61).Distinct().Select(n => new Case($"cut at char {n}", Encoding.UTF8.GetBytes(text[..n])));
         SmokeParser(new UsnJournalParser(TimeZoneInfo.Utc), "usn_journal", "m.csv", Truncations(v).Concat(cuts).Concat(hostile).Concat(RandomBytes(v, 64)));
+    }
+
+    // ------------------------------------------------------------------ $MFT
+
+    [Fact]
+    public void Mft_parser_survives_truncated_random_and_corrupted_files()
+    {
+        var v = MftParserTests.Sample();
+        SmokeParser(new MftParser(), "ntfs_mft", "m.mft", Truncations(v).Concat(RandomBytes(v, 0x20)).Concat(DwordMutations(v, Math.Min(v.Length, 4096))));
     }
 
     // ------------------------------------------------------------------ pcapng
