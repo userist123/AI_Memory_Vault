@@ -152,6 +152,17 @@ key. Neither is detectable from the station alone.
   name pointers are depth-limited); the exact CI case (last block cut inside its trailing length) has its own
   test that finishes at once and keeps every frame.
 
+## Hardening after the round-4 review
+
+- The signature appearance must START with the clip to its own box (`[q] 0 0 W H re W n`) and keep it in force
+  to the end: the graphics-state depth after `W n` is the clip's level, no `Q` may go below it (an unbalanced `Q`
+  is refused), except one `Q` that closes the leading `q` and must be the last operator. Our signer writes
+  `q 0 0 W H re W n … Q`. Within those rules the appearance can only draw inside the reserved box (viewers also
+  clip a form XObject to its BBox, which must equal the box); it can still draw anything there.
+- Font programs, ToUnicode and CIDToGIDMap streams are decoded under a 4 MB limit (appearances 1 MB); beyond it,
+  INVALID.
+- Not done yet: the installation date in the anchored state (it depends on AppInstallDate, which is not in main).
+
 ## Verifying outside the application (OpenSSL)
 
 The signature is a standard PAdES / CAdES detached signature. On a separate machine:
@@ -187,8 +198,15 @@ signature in its Signatures panel.
 - The whitelist is strict: if Adobe Reader writes extra keys or objects when signing (e.g. /Info or /Metadata
   updates, image appearances), an Adobe-signed report is INVALID until the whitelist is widened after the
   manual Adobe test. Our own signature passes.
-- A13 trusts the officer / trust events that the application wrote in its sealed log; an administrator who
-  rewrites the log after the paper anchor (with the machine key) is caught by A11, not by A13.
+- A13 trusts the officer / trust events that the application wrote in its sealed log. A11 covers the log only
+  up to the anchored entry: an administrator with the machine key can append (or rewrite) entries AFTER the
+  paper anchor, including officer / trust events that make a hand-made change look legitimate. Such events are
+  not NECONFORM; they appear in A13 as changes made through the application (DE VERIFICAT), which the officer
+  must confirm against the signed proces-verbal. Neither A11 nor A13 detects them by itself.
+- The report hashes that make an "original" acceptable are recorded on the station (`report.generated`, sealed
+  with the machine key): they do not stop a station administrator from recording a report of their own.
+  Off the station, `verify-report --report-sha256` is only as good as where that hash comes from (it should be
+  copied from the signed proces-verbal, not from the station).
 - A certificate revoked after signing makes older signatures fail too (the imported CRL parser keeps
   serial numbers, not revocation dates): conservative.
 - Without a timestamp authority the signing time `/M` is only claimed (PAdES B-B).
