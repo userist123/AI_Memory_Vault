@@ -266,6 +266,10 @@
                             <TextBlock DockPanel.Dock="Left" Text="Stații care trebuie să predea exportul (opțional, separate prin virgulă)" VerticalAlignment="Center" Margin="0,0,6,0"/>
                             <TextBox Text="{Binding ExpectedStations, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Stații care trebuie să predea exportul"/>
                         </DockPanel>
+                        <TextBlock Text="Codurile de ancorare de pe procesele-verbale (opțional, câte unul pe rând: STAȚIE = COD). Un cod diferit de cel din export înseamnă că jurnalul aplicației stației a fost rescris."
+                                   TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,6,0,2"/>
+                        <TextBox Text="{Binding PaperAnchors, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" MinHeight="44" TextWrapping="Wrap" FontFamily="Consolas"
+                                 AutomationProperties.Name="Codurile de ancorare de pe procesele-verbale ale stațiilor"/>
                         <WrapPanel Margin="0,8,0,0">
                             <Button Content="Importă exporturile stațiilor…" Command="{Binding ImportExportsCommand}" Margin="0,0,8,6"/>
                             <Button Content="Confruntă din nou" Command="{Binding ReconcileCommand}" Margin="0,0,8,6"/>
