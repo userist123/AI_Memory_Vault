@@ -457,15 +457,26 @@ public static class StationFactCollector
         s["Optical.DenyAll"] = Hklm(Rs, "Deny_All");
         Guard(() =>
         {
-            using var cd = new ManagementObjectSearcher("SELECT Name, Capabilities FROM Win32_CDROMDrive");
+            using var cd = new ManagementObjectSearcher("SELECT Name, Drive, Capabilities FROM Win32_CDROMDrive");
             var writers = new List<string>();
+            var writerDrives = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             int drives = 0;
             foreach (ManagementObject mo in cd.Get())
             {
                 drives++;
-                if (mo["Capabilities"] is ushort[] caps && caps.Contains((ushort)4)) writers.Add(mo["Name"] as string ?? "unitate");
+                if (mo["Capabilities"] is ushort[] caps && caps.Contains((ushort)4))
+                {
+                    writers.Add(mo["Name"] as string ?? "unitate");
+                    if (mo["Drive"] is string dl && dl.Length > 0) writerDrives.Add(dl);
+                }
             }
-            s["Optical.DriveCount"] = drives.ToString();
+            // D7: the drive's own profile list through IMAPI2, for drives whose WMI capabilities do not say "Supports Writing"
+            var (imapi, imapiProblem) = LogAnalyzer.Dfir.Windows.Devices.ImapiRecorders.Read(TimeSpan.FromSeconds(15));
+            foreach (var rec in imapi ?? [])
+                if (rec.CanWrite && !rec.Drives.Any(writerDrives.Contains))
+                    writers.Add($"{(rec.Product.Length > 0 ? rec.Product : "unitate")} {string.Join(" ", rec.Drives)} (IMAPI2: {string.Join(", ", rec.WritableProfiles)})".Trim());
+            s["Optical.WriterSource"] = imapi is null ? "WMI; " + imapiProblem : "WMI și IMAPI2";
+            s["Optical.DriveCount"] = Math.Max(drives, imapi?.Count ?? 0).ToString();
             s["Optical.WriterCount"] = writers.Count.ToString();
             s["Optical.WriterNames"] = string.Join("; ", writers);
         });

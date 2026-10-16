@@ -861,7 +861,7 @@ public static partial class ControlEvaluator
             bool denyWrite = S("Optical.DenyWrite") == "1" || S("Optical.DenyAll") == "1";
             bool explorerOnly = S("Optical.NoCDBurningMachine") == "1" || S("Optical.NoCDBurningUser") == "1";
             var ev = new[] { @"HKLM\SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices\{53f56308-b6bf-11d0-94f2-00a0c91efb8b} → Deny_Write = " + Shown(S("Optical.DenyWrite")),
-                             @"Policies\Explorer → NoCDBurning (mașină) = " + Shown(S("Optical.NoCDBurningMachine")) + "; (utilizator) = " + Shown(S("Optical.NoCDBurningUser")), "WMI Win32_CDROMDrive → Capabilities (4 = scrie discuri)" };
+                             @"Policies\Explorer → NoCDBurning (mașină) = " + Shown(S("Optical.NoCDBurningMachine")) + "; (utilizator) = " + Shown(S("Optical.NoCDBurningUser")), "WMI Win32_CDROMDrive → Capabilities (4 = scrie discuri)" + (S("Optical.WriterSource") is { Length: > 0 } src ? "; surse citite: " + src : ""), "IMAPI2 MsftDiscRecorder2 → SupportedProfiles (profiluri inscriptibile: CD-R, DVD+R, BD-R ...)" };
             Add(r, "P28", "Politici", "Inscripționarea de CD/DVD blocată",
                 writers == 0 || denyWrite ? ControlStatus.Conform : isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
                 writers == 0 ? $"Stația nu are nicio unitate optică cu capacitate de scriere ({Ro.CountFem(N("Optical.DriveCount"), "unitate optică", "unități optice")})."
