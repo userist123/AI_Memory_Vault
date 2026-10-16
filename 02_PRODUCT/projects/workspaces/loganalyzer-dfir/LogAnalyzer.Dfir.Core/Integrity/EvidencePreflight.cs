@@ -9,12 +9,13 @@ public static class EvidenceFingerprint
 {
     public static string Detect(string path)
     {
-        Span<byte> h = stackalloc byte[16];
+        Span<byte> h = stackalloc byte[0x20];
         int n;
         using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
             n = fs.ReadAtLeast(h, h.Length, throwOnEndOfStream: false);
         if (n == 0) return "empty";
         h = h[..n];
+        if (LogAnalyzer.Dfir.FileSystem.MftParser.LooksLikeMft(h)) return LogAnalyzer.Dfir.FileSystem.MftParser.Fingerprint;
         if (StartsWith(h, 0, "ElfFile\0"u8)) return "evtx";
         if (StartsWith(h, 0, "MAM\u0004"u8)) return "prefetch_mam";
         if (StartsWith(h, 4, "SCCA"u8)) return "prefetch";
@@ -80,6 +81,7 @@ public static class EvidenceFingerprint
         if (t is "live_snapshot" or "airgap_facts") return ["json"];
         if (t == "task_xml") return ["task_xml"];
         if (t == LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName) return ["pfirewall"];
+        if (t == LogAnalyzer.Dfir.FileSystem.MftParser.SourceTypeName || name.Equals("$MFT", StringComparison.OrdinalIgnoreCase)) return [LogAnalyzer.Dfir.FileSystem.MftParser.Fingerprint];
         if (t == "usn_journal") return ["usn_fsutil"];
         if (t is "chromium_history" or "firefox_places") return ["sqlite"];
         if (t == "jumplist_auto" || name.EndsWith(".automaticDestinations-ms", StringComparison.OrdinalIgnoreCase)) return ["cfb"];
