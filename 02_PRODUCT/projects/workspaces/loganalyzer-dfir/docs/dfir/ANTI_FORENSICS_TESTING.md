@@ -76,7 +76,7 @@ firewall-ului. Legătura lui cu incidentul este doar temporală până la o anal
 
 ## Limite
 
-- $MFT nu este colectat de pe sistemul viu (doar parsat dacă e exportat; AF08 rămâne UNDETERMINED fără el); ADS nu sunt colectate și nu sunt parsate (AF14 rămâne UNDETERMINED).
+- $MFT este colectat de pe sistemul viu doar în profilul complet și doar ca administrator (citire directă a volumului, doar citire; fără drepturi sursa este raportată ca lipsă); dacă dosarul cazului este pe același volum, copierea probelor creează înregistrări noi și poate suprascrie înregistrări libere ale fișierelor șterse, de aceea colectorul rulează primul și înregistrează un avertisment, iar pentru o achiziție curată dosarul cazului trebuie să fie pe alt volum. Un $MFT exportat se parsează; fără $MFT sau cu o tabelă necitibilă (nicio înregistrare citită sau peste 20% deteriorate) AF08 rămâne UNDETERMINED; ADS nu sunt colectate și nu sunt parsate (AF14 rămâne UNDETERMINED).
 - USN se citește din exportul `fsutil usn readjournal C: csv`, nu din `$UsnJrnl:$J` brut. Jurnalul acoperă doar ultimele ore sau zile (32 MB). În corpus nu include ziua incidentului, 19.09.
 - Ora din `fsutil` este locală. Conversia a fost verificată pe corpus față de orele de rulare din Prefetch: la cel puțin 50 de fișiere `.pf`, scrierea apare în USN în primul minut după rulare (UTC).
 - Citirea ID-ului jurnalului ca FILETIME este verificată empiric pe această stație (data instalării), nu dintr-o specificație Microsoft.

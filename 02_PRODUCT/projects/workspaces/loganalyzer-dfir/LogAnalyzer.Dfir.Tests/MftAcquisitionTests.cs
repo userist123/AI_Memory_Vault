@@ -242,4 +242,153 @@ public sealed class MftAcquisitionTests : IDisposable
         }
         finally { File.Delete(dest); }
     }
+
+    // ---- same-volume decision, plausibility bounds and the copy loop (no real volume) ----
+
+    [Theory]
+    [InlineData(@"C:\Cazuri\caz-1", "C:", true)]
+    [InlineData(@"c:\Cazuri\caz-1", "C:", true)]
+    [InlineData(@"C:\Cazuri\caz-1", @"C:\", true)]
+    [InlineData(@"D:\Cazuri\caz-1", "C:", false)]
+    [InlineData(@"\\server\share\caz", "C:", false)]
+    [InlineData("", "C:", false)]
+    [InlineData(null, "C:", false)]
+    [InlineData(@"C:\Cazuri", null, false)]
+    public void The_case_folder_is_on_the_same_volume_when_the_normalised_path_roots_match(string? caseRoot, string? volume, bool expected) =>
+        Assert.Equal(expected, MftAcquisition.IsSameVolume(caseRoot, volume));
+
+    [Fact]
+    public void The_same_volume_warning_names_the_volume_and_the_remedy()
+    {
+        var w = MftAcquisition.SameVolumeWarning("C:");
+        Assert.Contains("(C:)", w, StringComparison.Ordinal);
+        Assert.Contains("alt volum", w, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_boot_sector_total_sectors_are_read_from_offset_0x28()
+    {
+        var b = Boot();
+        BinaryPrimitives.WriteUInt64LittleEndian(b.AsSpan(0x28), 8000);
+        Assert.Equal(8000, NtfsBootSector.Parse(b).TotalSectors);
+    }
+
+    private static readonly NtfsBootSector SmallVolume = new(512, 8, 100, 1024, TotalSectors: 8000);   // 4 096 000 bytes, 1000 clusters of 4096
+
+    [Fact]
+    public void A_plausible_claim_passes_the_bounds_check_and_sparse_runs_are_not_placed_on_the_volume()
+    {
+        Assert.Null(MftAcquisition.CheckBounds(SmallVolume, 3_000_000, [new DataRuns.Run(100, 400), new DataRuns.Run(null, 5000), new DataRuns.Run(990, 10)]));
+    }
+
+    [Fact]
+    public void A_real_size_above_the_volume_or_above_the_hard_cap_is_refused()
+    {
+        var tooBig = MftAcquisition.CheckBounds(SmallVolume, 5_000_000, [new DataRuns.Run(100, 100)]);
+        Assert.NotNull(tooBig);
+        Assert.Contains("depășește dimensiunea volumului", tooBig, StringComparison.Ordinal);
+
+        var huge = new NtfsBootSector(512, 8, 100, 1024, TotalSectors: 1L << 40);   // a 512 TiB volume: the volume check passes, the cap does not
+        var capped = MftAcquisition.CheckBounds(huge, MftAcquisition.MaxMftBytes + 1, [new DataRuns.Run(100, 100)]);
+        Assert.NotNull(capped);
+        Assert.Contains("GiB", capped, StringComparison.Ordinal);
+        Assert.Null(MftAcquisition.CheckBounds(huge, MftAcquisition.MaxMftBytes, [new DataRuns.Run(100, 100)]));
+    }
+
+    [Theory]
+    [InlineData(990L, 11L)]            // ends one cluster after the last (1000)
+    [InlineData(1000L, 1L)]            // starts after the last cluster
+    [InlineData(0L, 1001L)]            // longer than the volume
+    [InlineData(long.MaxValue - 5, 10L)]   // overflow-prone
+    public void A_run_that_leaves_the_volume_is_refused(long lcn, long length)
+    {
+        var r = MftAcquisition.CheckBounds(SmallVolume, 4096, [new DataRuns.Run(lcn, length)]);
+        Assert.NotNull(r);
+        Assert.Contains("iese din volum", r, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_boot_sector_without_total_sectors_is_refused()
+    {
+        Assert.NotNull(MftAcquisition.CheckBounds(new NtfsBootSector(512, 8, 100, 1024), 4096, [new DataRuns.Run(1, 1)]));
+    }
+
+    // A fake volume of 16 clusters of 1024 bytes; byte i holds (i % 251) + 1, so no data byte is zero.
+    private const int FakeCluster = 1024;
+    private static readonly byte[] FakeVolume = Enumerable.Range(0, 16 * FakeCluster).Select(i => (byte)(i % 251 + 1)).ToArray();
+
+    private static int FakeRead(long offset, Span<byte> buffer)
+    {
+        int n = (int)Math.Min(buffer.Length, FakeVolume.Length - offset);
+        if (n <= 0) return 0;
+        FakeVolume.AsSpan((int)offset, n).CopyTo(buffer);
+        return n;
+    }
+
+    [Fact]
+    public void The_copy_is_truncated_to_the_real_size_and_hashed_over_exactly_those_bytes()
+    {
+        var dest = Path.Combine(_dir, "trunc");
+        var r = MftAcquisition.CopyRuns([new DataRuns.Run(2, 3)], FakeCluster, 2500, 1024, FakeRead, dest, default);
+        Assert.True(r.Ok, r.Problem);
+        var expected = FakeVolume.AsSpan(2 * FakeCluster, 2500).ToArray();
+        Assert.Equal(2500, r.Bytes);
+        Assert.Equal(expected, File.ReadAllBytes(dest));
+        Assert.Equal(Convert.ToHexString(SHA256.HashData(expected)).ToLowerInvariant(), r.Sha256);
+        Assert.Equal(1024, r.RecordSize);
+    }
+
+    [Fact]
+    public void A_sparse_run_is_written_as_zeroes_without_reading_the_volume()
+    {
+        var dest = Path.Combine(_dir, "sparse");
+        var offsets = new List<long>();
+        var r = MftAcquisition.CopyRuns([new DataRuns.Run(1, 1), new DataRuns.Run(null, 2), new DataRuns.Run(4, 1)], FakeCluster, 4 * FakeCluster, 1024,
+            (offset, buffer) => { offsets.Add(offset); return FakeRead(offset, buffer); }, dest, default);
+        Assert.True(r.Ok, r.Problem);
+        var bytes = File.ReadAllBytes(dest);
+        Assert.Equal(4 * FakeCluster, bytes.Length);
+        Assert.Equal(FakeVolume.AsSpan(FakeCluster, FakeCluster).ToArray(), bytes[..FakeCluster]);
+        Assert.All(bytes[FakeCluster..(3 * FakeCluster)], x => Assert.Equal(0, x));
+        Assert.Equal(FakeVolume.AsSpan(4 * FakeCluster, FakeCluster).ToArray(), bytes[(3 * FakeCluster)..]);
+        Assert.Equal([1L * FakeCluster, 4L * FakeCluster], offsets);   // the sparse clusters never reached the reader
+    }
+
+    [Fact]
+    public void A_read_failure_deletes_the_partial_file_and_rethrows()
+    {
+        var dest = Path.Combine(_dir, "ioerr");
+        int calls = 0;
+        Assert.Throws<IOException>(() => MftAcquisition.CopyRuns([new DataRuns.Run(0, 1), new DataRuns.Run(1, 1)], FakeCluster, 2 * FakeCluster, 1024,
+            (offset, buffer) => ++calls == 1 ? FakeRead(offset, buffer) : throw new IOException("simulat"), dest, default));
+        Assert.Equal(2, calls);
+        Assert.False(File.Exists(dest));
+    }
+
+    [Fact]
+    public void A_source_that_ends_early_deletes_the_partial_file()
+    {
+        var dest = Path.Combine(_dir, "eof");
+        Assert.Throws<IOException>(() => MftAcquisition.CopyRuns([new DataRuns.Run(0, 1)], FakeCluster, FakeCluster, 1024, (_, _) => 0, dest, default));
+        Assert.False(File.Exists(dest));
+    }
+
+    [Fact]
+    public void Cancellation_deletes_the_partial_file_and_rethrows()
+    {
+        var dest = Path.Combine(_dir, "cancel");
+        using var cts = new CancellationTokenSource();
+        Assert.Throws<OperationCanceledException>(() => MftAcquisition.CopyRuns([new DataRuns.Run(0, 1), new DataRuns.Run(1, 1)], FakeCluster, 2 * FakeCluster, 1024,
+            (offset, buffer) => { cts.Cancel(); return FakeRead(offset, buffer); }, dest, cts.Token));
+        Assert.False(File.Exists(dest));
+    }
+
+    [Fact]
+    public void Runs_that_cover_less_than_the_real_size_give_a_refusal_and_no_file()
+    {
+        var dest = Path.Combine(_dir, "short");
+        var r = MftAcquisition.CopyRuns([new DataRuns.Run(0, 1)], FakeCluster, 2 * FakeCluster, 1024, FakeRead, dest, default);
+        Assert.False(r.Ok);
+        Assert.False(File.Exists(dest));
+    }
 }
