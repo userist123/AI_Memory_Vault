@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
 using LogAnalyzer.Core.Services.Edition;
+using LogAnalyzer.Dfir.Devices;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Windows.Native;
 using Ro = LogAnalyzer.Dfir.Language.RoText;
@@ -74,6 +75,7 @@ public static partial class ControlEvaluator
         Logons(f, r);
         Devices(f, r);
         SignedMediaRegisterCheck(f, r);
+        DeviceMonitorCheck(f, r);
         Network(f, r);
         Software(f, r);
         StationHardening(f, r);
@@ -605,6 +607,52 @@ public static partial class ControlEvaluator
             f.UsbDevices.Select(u => $"{u.FriendlyName} [{u.Device}] SN {u.Serial}").Concat(partition.Select(l => $"{Ev(l)}: {V(l, "Manufacturer")} {V(l, "Model")} SN {V(l, "SerialNumber")}")),
             "Comparați cu registrul suporturilor aprobate.");
     }
+
+    /// <summary>
+    /// D05 (owner decision 2026-10-16): every device the real-time monitor saw in the period, of every class, with its driver, connection state and registration
+    /// number, and the alerts it raised. NECONFORM on an isolated station (DE VERIFICAT on an internet station) when a storage medium has no registration number
+    /// or a forbidden class was seen (phone, Bluetooth, Wi-Fi, USB network adapter); CONFORM when devices were seen and none breaks the rule. The monitor sees only
+    /// while the application runs, which the detail says every time.
+    /// </summary>
+    private static void DeviceMonitorCheck(StationFacts f, ControlReport r)
+    {
+        const string title = "Dispozitivele văzute de monitorul în timp real (toate clasele)";
+        const string rec = "Pentru fiecare mediu de stocare fără număr de înregistrare: aflați al cui este și treceți numărul în coloana „Nr. de înregistrare” a monitorului; pentru o clasă interzisă: aflați cine a conectat dispozitivul și de ce.";
+        const string limit = " Monitorul vede doar cât timp aplicația este pornită; ce s-a conectat cât a fost închisă apare doar în istoricul Windows (D01).";
+        var problem = f.DeviceMonitorProblem.Length > 0 ? " " + f.DeviceMonitorProblem : "";
+        if (f.DeviceMonitor is not { } journal)
+        {
+            Add(r, "D05", "Dispozitive", title, ControlStatus.Nedeterminat,
+                "Jurnalul monitorului de dispozitive lipsește: monitorul nu a rulat pe această stație (pornește automat cu aplicația)." + problem + limit, rec: rec);
+            return;
+        }
+        bool isolated = f.Posture != StationPosture.Internet;
+        var s = LogAnalyzer.Dfir.Devices.DeviceMonitorReport.Build(journal, f.PeriodStartUtc, f.PeriodEndUtc == default ? DateTimeOffset.MaxValue : f.PeriodEndUtc, isolated);
+        var evidence = DeviceMonitorEvidence(s);
+        if (s.Devices.Count == 0)
+        {
+            Add(r, "D05", "Dispozitive", title, ControlStatus.DeVerificat,
+                "Monitorul nu a văzut niciun dispozitiv în perioada controlată; absența observațiilor nu dovedește că nu s-a conectat nimic." + problem + limit, evidence, rec);
+            return;
+        }
+        int connected = s.Devices.Count(d => d.Present);
+        int storage = s.Devices.Count(d => LogAnalyzer.Dfir.Devices.DeviceMonitorRules.IsStorageMedium(d.Class));
+        int noNumber = s.Devices.Count(d => LogAnalyzer.Dfir.Devices.DeviceMonitorRules.IsStorageMedium(d.Class) && d.RegistrationNumber.Trim().Length == 0);
+        int forbidden = isolated ? s.Devices.Count(d => LogAnalyzer.Dfir.Devices.DeviceMonitorRules.ForbiddenOnIsolated(d.Class, d.InstanceId)) : 0;
+        int badDriver = s.Devices.Count(d => d.DriverState is LogAnalyzer.Dfir.Devices.DriverState.Missing or LogAnalyzer.Dfir.Devices.DriverState.Error or LogAnalyzer.Dfir.Devices.DriverState.Unsigned);
+        var detail = $"{Ro.Capitalize(Ro.CountMasc(s.Devices.Count, "dispozitiv văzut", "dispozitive văzute"))} în perioadă ({connected} conectate acum), dintre care {Ro.CountMasc(storage, "mediu de stocare", "medii de stocare")}" +
+                     (noNumber > 0 ? $", {noNumber} {DeviceMonitorReport.NoRegistration}" : "") + (forbidden > 0 ? $"; {forbidden} dintr-o clasă interzisă pe o stație izolată" : "") +
+                     (badDriver > 0 ? $"; {badDriver} fără driver, cu eroare de driver sau cu driver nesemnat" : "") +
+                     $"; {Ro.CountFem(s.Alerts.Count, "alertă", "alerte")} în perioadă ({s.Critical} critice)." + problem + limit;
+        var status = s.Offending.Count > 0 ? (isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat) : ControlStatus.Conform;
+        Add(r, "D05", "Dispozitive", title, status, detail, evidence, rec);
+    }
+
+    /// <summary>The evidence of D05: devices that break the rule first, then the critical alerts, then every other device seen.</summary>
+    public static IEnumerable<string> DeviceMonitorEvidence(DeviceMonitorSummary s) =>
+        s.Offending.Select(e => "ÎNCALCĂ REGULA: " + DeviceMonitorReport.Line(e))
+            .Concat(s.Alerts.Where(a => a.Severity == LogAnalyzer.Dfir.Devices.DeviceAlertSeverity.Critical).Select(DeviceMonitorReport.AlertLine))
+            .Concat(s.Devices.Except(s.Offending).Select(DeviceMonitorReport.Line));
 
     private static void Network(StationFacts f, ControlReport r)
     {
