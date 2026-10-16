@@ -607,7 +607,7 @@ export const ro: Dict = {
   // ---- paleta de comenzi (Ctrl+K) ----
   "cmdk.open": "Caută o comandă", "cmdk.openShort": "Caută", "cmdk.title": "Paleta de comenzi", "cmdk.placeholder": "Scrie o comandă sau o etapă…", "cmdk.close": "Închide paleta",
   "cmdk.empty": "Nicio comandă pentru „{q}”.", "cmdk.emptyHint": "Încearcă un cuvânt mai scurt, de exemplu „plan”, „deviz” sau „continuă”.",
-  "cmdk.keys": "↑ ↓ alegi · Enter deschizi · Esc închizi", "cmdk.results": "{n} rezultate",
+  "cmdk.keys": "↑ ↓ alegi · Enter deschizi · Esc închizi", "cmdk.results": "{n} rezultate", "cmdk.results.one": "1 rezultat", "cmdk.results.many": "{n} de rezultate",
   "cmdk.group.next": "Următorul pas", "cmdk.group.stages": "Etape", "cmdk.group.views": "Vederi", "cmdk.group.actions": "Comenzi", "cmdk.group.docs": "Documente",
   "cmdk.continue": "Continuă la {stage}", "cmdk.goStage": "Etapa {n} · {stage}", "cmdk.view2d": "Vedere plan", "cmdk.viewSplit": "Vedere plan + 3D", "cmdk.view3d": "Vedere 3D",
   "cmdk.print": "Deschide pachetul de planșe (PDF)", "cmdk.present": "Deschide prezentarea pentru client", "cmdk.board": "Deschide planșa de stil", "cmdk.home": "Înapoi la proiecte",

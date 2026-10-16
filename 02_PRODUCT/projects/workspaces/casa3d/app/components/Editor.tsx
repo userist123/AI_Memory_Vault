@@ -61,9 +61,10 @@ import { resizeRoom, RoomResizeError } from '@/core/room-resize';
 import { groupsForRoom, defaultGroupForRoom, swapFitHint } from '@/core/furniture-fit';
 import type { PlanKeyAction } from '@/core/plan-keys';
 import { isLocalHostname } from '@/lib/public-gate';
-import { PHASES, phaseOf, stageDone, nextStage, doneCount, STAGE_IDS } from '@/core/stage-progress';
+import { PHASES, phaseOf, stageDone, nextStage, doneCount, STAGE_IDS, activeShares } from '@/core/stage-progress';
 import CommandPalette, { type Command } from './CommandPalette';
 import { isPaletteShortcut } from '@/lib/fuzzy';
+import { editorIgnoresKey } from '@/lib/palette-keys';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 
 const uid = () => crypto.randomUUID();
@@ -85,7 +86,7 @@ export default function Editor({ id }: { id: string }){
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error' | 'conflict' | 'offline' | 'auth'>('saved'), baseRev = useRef<number | null>(null), saveRef = useRef<string>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
   const [showTech, setShowTech] = useState(true), [techKind, setTechKind] = useState<TechKind>('outlet_double');
   const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[] } | null>(null), [persistent, setPersistent] = useState(true), [demo, setDemo] = useState(false), [stage, setStageRaw] = useState<Stage>('survey'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
-  const hist = useRef(new History<Snapshot>()), dragStart = useRef<Snapshot | null>(null), timer = useRef<any>(null), latest = useRef<Snapshot | null>(null), [, force] = useState(0);
+  const paletteOpenRef = useRef(false), hist = useRef(new History<Snapshot>()), dragStart = useRef<Snapshot | null>(null), timer = useRef<any>(null), latest = useRef<Snapshot | null>(null), [, force] = useState(0);
   // Se salvează casa întreagă (`house`); editorul lucrează pe nivelul ales (`snap`, o vedere din core/levels.ts),
   // iar fiecare modificare a vederii se pune la loc în casă cu mergeLevel.
   const L = house ? Math.min(lvl, floors(house).length - 1) : 0;
@@ -209,7 +210,8 @@ export default function Editor({ id }: { id: string }){
       if (sel.kind === 'placement') nudge(sel.id, a.dxCm, a.dzCm);
       else if (sel.kind === 'stair'){ const st = snap?.floor.stairs?.find(x => x.id === sel.id); if (st) patchStair(sel.id, { x: r3(st.x + dx), z: r3(st.z + dz) }); }
       else if (sel.kind === 'room') mutate(s => { const r = s.floor.rooms.find(x => x.id === sel.id); if (r) r.rect = { x0: r3(r.rect.x0 + dx), x1: r3(r.rect.x1 + dx), z0: r3(r.rect.z0 + dz), z1: r3(r.rect.z1 + dz) }; }); } };
-  useEffect(() => { const k = (e: KeyboardEvent) => { if (preview || (e.target as HTMLElement).closest('input,select,textarea')) return;
+  useEffect(() => { const k = (e: KeyboardEvent) => { const el = e.target as HTMLElement;
+    if (editorIgnoresKey({ preview: !!preview, inField: !!el.closest?.('input,select,textarea,[contenteditable=true]'), inDialog: !!el.closest?.('dialog[open],[role=dialog],[role=alertdialog]'), paletteOpen: paletteOpenRef.current })) return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){ e.preventDefault(); e.shiftKey ? redo() : undo(); }
     else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y'){ e.preventDefault(); redo(); }
     else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd'){ e.preventDefault(); if (sel?.kind === 'placement') duplicate(sel.id); }
@@ -245,10 +247,13 @@ export default function Editor({ id }: { id: string }){
   useEffect(() => { if (compact && view === 'split') setView('2d'); }, [compact, view]);
   // paleta de comenzi: Ctrl+K / Cmd+K oriunde în editor (și în câmpuri), sau butonul „Caută” din antet
   const [cmdOpen, setCmdOpen] = useState(false), [mac, setMac] = useState(false);
-  useEffect(() => { setMac(/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent));
-    const k = (e: KeyboardEvent) => { if (isPaletteShortcut(e)){ e.preventDefault(); setCmdOpen(o => !o); } }; addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, []);
+  useEffect(() => { paletteOpenRef.current = cmdOpen; }, [cmdOpen]);
+  useEffect(() => { const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent); setMac(isMac);
+    const k = (e: KeyboardEvent) => { const el = e.target as HTMLElement | null;
+      if (isPaletteShortcut(e, { mac: isMac, inField: !!el?.closest?.('input,textarea,[contenteditable=true]') })){ e.preventDefault(); setCmdOpen(o => !o); } };
+    addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, []);
   // „gata” pe etapă, din datele proiectului (core/stage-progress.ts); se recalculează la fiecare modificare
-  const done = useMemo(() => house ? stageDone({ house, warnings: advice.filter(a => a.severity !== 'TIP').length, shares: shares.length, status: meta?.status ?? 'design' }) : null, [house, advice, shares, meta]);
+  const done = useMemo(() => house ? stageDone({ house, warnings: advice.filter(a => a.severity !== 'TIP').length, shares: activeShares(shares), status: meta?.status ?? 'design' }) : null, [house, advice, shares, meta]);
   if (!snap || !catalog || !mc) return toast ? <div className="home"><p className="muted" role="status">{toast}</p></div> : <EditorSkeleton label={t('editor.loading')} />;
   const G = groups(catalog);
   const onAddWall = (a: [number, number], b: [number, number]) => mutate(s => { s.floor.walls.push({ id: `wall-${uid().slice(0, 8)}`, a, b, thickness: .15, exterior: false, openings: [] }); });

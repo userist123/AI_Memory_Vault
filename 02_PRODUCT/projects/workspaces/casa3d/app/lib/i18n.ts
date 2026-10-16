@@ -21,9 +21,16 @@ export function t(lang: Lang, key: string, vars?: Vars): string {
   return vars ? s.replace(/\{(\w+)\}/g, (m, k: string) => k in vars ? String(vars[k]) : m) : s;
 }
 /** Singular/plural: pentru n = 1 se folosește `<cheie>.one` dacă există, altfel `<cheie>`; `{n}` e adăugat automat în variabile. */
+/** Plural form: "one" for 1; in Romanian "many" (the "de" form, 20 de rezultate) when n ≠ 0 and n % 100 is 0 or ≥ 20; otherwise "few" (0, 2–19, 101–119 rezultate). */
+export function pluralForm(lang: Lang, n: number): 'one' | 'few' | 'many' {
+  if (n === 1) return 'one';
+  if (lang === 'ro'){ const r = Math.abs(n) % 100; return n !== 0 && (r === 0 || r >= 20) ? 'many' : 'few'; }
+  return 'few';
+}
 export function tp(lang: Lang, key: string, n: number, vars?: Vars): string {
-  const one = `${key}.one`;
-  return t(lang, n === 1 && (one in DICTS[lang] || one in DICTS[DEFAULT_LANG]) ? one : key, { n, ...vars });
+  const has = (k: string) => k in DICTS[lang] || k in DICTS[DEFAULT_LANG], f = pluralForm(lang, n);
+  const k = f === 'one' && has(`${key}.one`) ? `${key}.one` : f === 'many' && has(`${key}.many`) ? `${key}.many` : key;
+  return t(lang, k, { n, ...vars });
 }
 export type Translate = (key: string, vars?: Vars) => string;
 export type TranslatePlural = (key: string, n: number, vars?: Vars) => string;
