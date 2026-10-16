@@ -20,9 +20,12 @@ namespace LogAnalyzer.Infrastructure.Services
     {
         private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(20);
 
+        /// <summary>The firewall tool this runner starts (System32); the editions that ship this runner add it to the application's program inventory.</summary>
+        public static string NetshPath => System.IO.Path.Combine(Environment.SystemDirectory, "netsh.exe");
+
         public CommandOutcome Netsh(string arguments)
         {
-            var psi = new ProcessStartInfo(System.IO.Path.Combine(Environment.SystemDirectory, "netsh.exe"), arguments)
+            var psi = new ProcessStartInfo(NetshPath, arguments)
             {
                 RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true,
             };

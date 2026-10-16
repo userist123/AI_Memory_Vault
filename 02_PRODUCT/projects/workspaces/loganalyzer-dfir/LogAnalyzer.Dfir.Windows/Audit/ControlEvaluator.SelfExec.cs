@@ -76,7 +76,7 @@ public static partial class ControlEvaluator
         }
         var claimed = f.ClaimedActivity.Select(c => $"{Ev(c.Log)}: {OwnText(c.Log)} — {SelfExecMatcher.ClaimedLabel}: {c.Why}");
         var detail = $"{Ro.Capitalize(Ro.CountMasc(f.ClaimedActivity.Count, "eveniment", "evenimente"))} {(f.ClaimedActivity.Count == 1 ? "este" : "sunt")} {SelfExecMatcher.ClaimedLabel}: " +
-                     "se potrivesc cu o comandă din jurnalul aplicației care nu trece verificarea (nu este în interiorul unui control valid, lanțul nu se verifică sau lipsesc datele programului); " +
+                     "se potrivesc cu o comandă din jurnalul aplicației care nu trece verificarea (nu este în interiorul unui control valid, lanțul nu se verifică, programul nu este din inventarul aplicației, fișierul lui nu mai are amprenta consemnată sau lipsesc datele programului); " +
                      "rămân la celelalte verificări ca orice eveniment. " +
                      (execs.Unreadable.Count > 0 ? $"{Ro.Capitalize(Ro.CountFem(execs.Unreadable.Count, "înregistrare", "înregistrări"))} „collector.exec” nu {(execs.Unreadable.Count == 1 ? "poate" : "pot")} fi citite. " : "") +
                      ownText;
