@@ -469,6 +469,14 @@
 - **Sursa tehnică:** `Jurnalul de audit al aplicației (sigilat): profile.officer_registered, profile.officer_requested, profile.officer_removed, officer_trust.imported, audit.anchor; amprentele SHA-256 ale fișierului listei de ofițeri și ale folderului autorităților de încredere`
 - **Cum se citește rezultatul:** Conform = nicio schimbare de la controlul anterior. De verificat = schimbări făcute din aplicație; fiecare apare în probe cu data, amprenta și cine a făcut-o. Neconform = lista de ofițeri sau autoritățile de încredere au fost schimbate în afara aplicației (fișiere modificate de mână), chiar dacă o operație ulterioară a aplicației le-a consemnat starea. Nedeterminat = nu s-a tastat codul de ancorare de pe procesul-verbal anterior, deci nu există o stare de referință sigură.
 
+### A14
+
+- **Ce verificăm:** Dacă data instalării aplicației pe stație este aceeași ca la controlul anterior.
+- **De ce contează:** O dată de instalare mai nouă înseamnă că aplicația sau magazinul ei de date au fost reinstalate ori reinițializate după controlul anterior; pe o stație Standalone asta ar putea muta în trecut conectările la rețea.
+- **Cum verifică aplicația:** Data instalării calculată acum (primul start înregistrat în jurnalul aplicației și urmele programului în Windows) se compară cu data înregistrată odată cu codul de ancorare de la controlul anterior, cel tastat de pe procesul-verbal.
+- **Sursa tehnică:** `Jurnalul de audit al aplicației (audit.anchor_state, intrarea ancorată: install_utc, install_basis); AppInstallDate, AppInstallTraces`
+- **Cum se citește rezultatul:** Conform = aceeași dată. Neconform = data este acum mai nouă sau nu se mai poate stabili (posibilă reinițializare sau reinstalare). De verificat = data este acum mai veche (s-a găsit o urmă mai veche) sau nu se putea stabili la controlul anterior. Nedeterminat = nu s-a tastat codul de ancorare de pe procesul-verbal, sau ancora anterioară a fost înregistrată înainte ca data instalării să facă parte din ea.
+
 ### U01
 
 - **Ce verificăm:** Cine a fost adăugat sau scos din grupul administratorilor în perioada controlată.

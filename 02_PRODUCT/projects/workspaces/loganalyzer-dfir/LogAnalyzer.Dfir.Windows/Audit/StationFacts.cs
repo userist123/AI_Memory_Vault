@@ -109,6 +109,8 @@ public sealed class StationFacts
     public bool PreviousAnchorFromStation { get; set; }
     /// <summary>Check A13: the officer list and trust folder against the state at the paper anchor; null = the audit log was not available.</summary>
     public LogAnalyzer.Dfir.Reporting.OfficerStateAssessment? OfficerAssessment { get; set; }
+    /// <summary>Check A14: the install date recorded with the anchor typed from the paper; null = the audit log was not available.</summary>
+    public LogAnalyzer.Dfir.Case.AnchoredInstall? InstallAtPaperAnchor { get; set; }
 }
 
 public static class StationFactCollector

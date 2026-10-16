@@ -96,6 +96,7 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | A11 | Application audit log continuous since the previous control (anchor code) | Previous anchor found | Previous anchor found | Previous anchor found |  |
 | A12 | Windows event log service stopped outside a shutdown | None or explained | None or explained | None or explained |  |
 | A13 | Security officer list changed since the previous control | Review | Review | Review |  |
+| A14 | Application installation date versus the previous control (paper anchor) | Unchanged | Unchanged | Unchanged |  |
 | U01 | Changes to the Administrators group | Review | Review | Review |  |
 | U02 | Accounts created, deleted, enabled, disabled or reset | Review | Review | Review |  |
 | U03 | Remote (RDP) logons | Review | Review (administration over the LAN is normal) | Review |  |
@@ -155,5 +156,11 @@ The administrator recreates the authentication store, reinstalls the application
 - Notes that disappear: "posibilă ștergere" (the new .pf hides it after the next run), and every note once Amcache drops or rewrites the old entry;
   with Prefetch off and Amcache unreadable only the "urmele Windows lipsesc" note is left.
 
-The strong control is therefore the paper anchor: PR #289 (merged) anchors the station state on paper; adding the installation date to the anchored state
-follows in a later PR, after which any later change versus the paper-anchored value is NECONFORM.
+The strong control is therefore the paper anchor: PR #289 (merged) anchors the station state on paper. The installation date (UTC and its basis) is now part of the anchored state: it is written as the
+`audit.anchor_state` entry immediately before the anchor is taken, so that entry IS the anchored one and the paper code covers its content, and it is
+printed next to the anchor code on the report, to be copied onto the proces-verbal. At the next control, check A14 compares the date now
+with the value recorded at the anchor whose code was typed from the paper: a LATER date (or a date that can no longer be established) is NECONFORM
+("data instalării s-a schimbat după controlul anterior (posibilă reinițializare sau reinstalare)"), an earlier one is DE VERIFICAT (an older trace was
+found), and without a typed code A14 is NEDETERMINAT. Probe B therefore becomes visible at the first control after the reinstall, provided the officer types
+the code from the paper. What remains: a reinstall BEFORE the first anchored control is not caught by A14; an administrator who rewrites the anchored
+state entry (with the machine key) is caught by A11, because the code typed from the paper no longer matches.

@@ -93,6 +93,8 @@ namespace LogAnalyzer.UI.ViewModels
             long? paperSeq = !fromStation && facts.PreviousAnchor.Status == AnchorContinuityStatus.Continuous ? facts.PreviousAnchor.MatchedSeq : null;
             try { facts.OfficerAssessment = OfficerState.Assess(auditPath, paperSeq, OfficerState.Current().Detail); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { facts.OfficerAssessment = null; }
+            try { facts.InstallAtPaperAnchor = AnchoredInstallDate.At(auditPath, paperSeq); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { facts.InstallAtPaperAnchor = null; }
         }
 
         /// <summary>After the control: the anchor of the head of the audit log, recorded in the log itself ("audit.anchor"), and the trusted officers to print.</summary>
@@ -112,6 +114,9 @@ namespace LogAnalyzer.UI.ViewModels
             if (log is null) return null;
             try
             {
+                // the anchored state goes in first, so it is the anchored entry and the paper code covers it (check A14 compares the install date at the next control)
+                var install = LogAnalyzer.Dfir.Windows.Acquisition.AppInstallTraces.ReadInstall();
+                AuthApp.Record(OperationAudit.AnchorState, OperationAudit.AnchorStateDetail(install.Utc, install.Basis));
                 var a = AuditAnchor.Current(log);
                 if (a is not null) RecordOfficerEvent(OperationAudit.AnchorRecorded, OperationAudit.AnchorRecordedDetail(a, reason));
                 return a;
