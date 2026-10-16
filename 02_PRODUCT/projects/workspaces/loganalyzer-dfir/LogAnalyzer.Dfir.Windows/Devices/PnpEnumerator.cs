@@ -40,6 +40,33 @@ public static class PnpEnumerator
         return res;
     }
 
+    private const uint DN_HAS_PROBLEM = 0x400;
+
+    /// <summary>
+    /// Every present device of every class, for the real-time device monitor: id, name, setup class, manufacturer, hardware ids, service and the Configuration
+    /// Manager problem code (the value Win32_PnPEntity.ConfigManagerErrorCode reports: 0 when the device has no problem, -1 when the status was not readable).
+    /// </summary>
+    public static List<LogAnalyzer.Dfir.Devices.PnpSnapshotEntry> Snapshot()
+    {
+        var res = new List<LogAnalyzer.Dfir.Devices.PnpSnapshotEntry>();
+        var set = SetupDiGetClassDevsW(IntPtr.Zero, null, IntPtr.Zero, DIGCF_ALLCLASSES | DIGCF_PRESENT);
+        if (set == InvalidHandle) throw new IOException("SetupAPI: lista dispozitivelor nu a putut fi deschisă (cod " + Marshal.GetLastWin32Error() + ")");
+        try
+        {
+            var data = new SP_DEVINFO_DATA { cbSize = (uint)Marshal.SizeOf<SP_DEVINFO_DATA>() };
+            for (uint i = 0; SetupDiEnumDeviceInfo(set, i, ref data); i++)
+            {
+                var name = Text(set, ref data, SPDRP_FRIENDLYNAME);
+                if (name.Length == 0) name = Text(set, ref data, SPDRP_DEVICEDESC);
+                int code = CM_Get_DevNode_Status(out var status, out var problem, data.DevInst, 0) == 0 ? ((status & DN_HAS_PROBLEM) != 0 ? (int)problem : 0) : -1;
+                res.Add(new(InstanceId(set, ref data), name, Text(set, ref data, SPDRP_CLASS), Text(set, ref data, SPDRP_MFG),
+                    string.Join(" ", Multi(set, ref data, SPDRP_HARDWAREID)), Text(set, ref data, SPDRP_SERVICE), code));
+            }
+        }
+        finally { SetupDiDestroyDeviceInfoList(set); }
+        return res;
+    }
+
     private static byte[]? Raw(IntPtr set, ref SP_DEVINFO_DATA d, uint prop)
     {
         SetupDiGetDeviceRegistryPropertyW(set, ref d, prop, out _, null, 0, out var size);
