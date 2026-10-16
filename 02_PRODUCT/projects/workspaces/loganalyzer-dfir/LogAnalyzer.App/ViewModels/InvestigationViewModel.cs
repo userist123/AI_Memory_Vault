@@ -223,7 +223,9 @@ namespace LogAnalyzer.UI.ViewModels
         private void AddFiles()
         {
             var dlg = new OpenFileDialog { Multiselect = true, Filter = "Probe (*.evtx;*.pf;SRUDB.dat;*.pcapng;hive-uri;Amcache.hve;History)|*.evtx;*.pf;SRUDB.dat;*.pcapng;SYSTEM;SOFTWARE;NTUSER.DAT;*.hiv;Amcache.hve;History|Toate fișierele|*.*" };
+            if (LogAnalyzer.Dfir.Language.FolderMemory.Shared.Get(LogAnalyzer.Dfir.Language.FolderMemory.Evidence) is { } last) dlg.InitialDirectory = last;   // usability 2026-10-16
             if (dlg.ShowDialog() != true) return;
+            LogAnalyzer.Dfir.Language.FolderMemory.Shared.Remember(LogAnalyzer.Dfir.Language.FolderMemory.Evidence, dlg.FileName);
             foreach (var f in dlg.FileNames) if (!ImportFiles.Contains(f)) ImportFiles.Add(f);
         }
 
@@ -231,7 +233,9 @@ namespace LogAnalyzer.UI.ViewModels
         private void AddFolder()
         {
             var dlg = new OpenFolderDialog { Title = "Folder cu probe (EVTX, Prefetch, SRUDB.dat, PCAPNG), căutat recursiv" };
+            if (LogAnalyzer.Dfir.Language.FolderMemory.Shared.Get(LogAnalyzer.Dfir.Language.FolderMemory.Evidence) is { } last) dlg.InitialDirectory = last;   // usability 2026-10-16
             if (dlg.ShowDialog() != true) return;
+            LogAnalyzer.Dfir.Language.FolderMemory.Shared.Remember(LogAnalyzer.Dfir.Language.FolderMemory.Evidence, dlg.FolderName);
             foreach (var f in Directory.EnumerateFiles(dlg.FolderName, "*", SearchOption.AllDirectories)
                          .Where(f => f.EndsWith(".evtx", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".pf", StringComparison.OrdinalIgnoreCase) ||
                                      f.EndsWith(".pcapng", StringComparison.OrdinalIgnoreCase) || Path.GetFileName(f).Equals("SRUDB.dat", StringComparison.OrdinalIgnoreCase)))
@@ -277,11 +281,19 @@ namespace LogAnalyzer.UI.ViewModels
             _ => BuildScope().MissingFields() is { Count: > 0 } m ? "Scopul cazului este incomplet; câmpuri lipsă: " + string.Join(", ", m) : null,
         };
 
+        /// <summary>
+        /// „Alege folderul…”: usability 2026-10-16 — the dialog starts in the folder used last time and, once a folder is chosen on the first step, the scan runs at
+        /// once (no extra „Înainte”).
+        /// </summary>
         [RelayCommand]
-        private void IntakePickFolder()
+        private async Task IntakePickFolder()
         {
             var dlg = new OpenFolderDialog { Title = "Folderul (sau suportul) cu probele aduse de la stația afectată" };
-            if (dlg.ShowDialog() == true) IntakeFolder = dlg.FolderName;
+            if (LogAnalyzer.Dfir.Language.FolderMemory.Shared.Get(LogAnalyzer.Dfir.Language.FolderMemory.Evidence) is { } last) dlg.InitialDirectory = last;
+            if (dlg.ShowDialog() != true) return;
+            IntakeFolder = dlg.FolderName;
+            LogAnalyzer.Dfir.Language.FolderMemory.Shared.Remember(LogAnalyzer.Dfir.Language.FolderMemory.Evidence, dlg.FolderName);
+            if (_intake.StepIndex == 0 && !_intake.Completed) await IntakeNext();
         }
 
         [RelayCommand]
@@ -430,8 +442,9 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (_result is null)
             {
+                // usability 2026-10-16: said on the page, without an extra window to close (it is not an authority or irreversible action)
                 Summary = "Ca să faceți raportul de incident, analizați întâi probele: alegeți mai jos de unde vin probele, apoi apăsați „Înainte” până la „Pornește analiza”.";
-                System.Windows.MessageBox.Show(Summary, "Raportul nu se poate face încă", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                ReportStatus = Summary;
                 return;
             }
             var dlg = new SaveFileDialog { FileName = $"Raport_{_result.Case.Info.CaseId}.pdf", Filter = "PDF (*.pdf)|*.pdf", InitialDirectory = _result.Case.Root };

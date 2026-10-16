@@ -133,13 +133,17 @@ namespace LogAnalyzer.UI.ViewModels
             if (certs.Count == 0) { Status = "Pe cardul introdus nu s-a găsit un certificat de semnătură calificată (cu utilizarea „nerepudiere”)."; return; }
             var cert = LogAnalyzer.UI.Views.CertificatePickerWindow.Pick("Semnează registrul de medii", certs);
             if (cert is null) return;
-            var dlg = new OpenFolderDialog { Title = "Alegeți unde se exportă registrul semnat (pentru transport la stații)" };
-            if (dlg.ShowDialog() != true) return;
+            // usability 2026-10-16: the dialog starts in the folder used last time
+            var folder = StationControlViewModel.PickFolder("Alegeți unde se exportă registrul semnat (pentru transport la stații)", LogAnalyzer.Dfir.Language.FolderMemory.MediaRegisterExport);
+            if (folder is null) return;
             try
             {
                 var signed = MediaRegisterFlows.Sign(doc, cert, OfficerFlows.Trusted(OfficerStore.Shared.Load()));
-                var path = MediaRegisterFlows.Export(dlg.FolderName, signed);
-                AuthApp.Record(OperationAudit.MediaRegisterSigned, OperationAudit.MediaRegisterDetail(doc.Version, signed.Sha256, "SEMNAT", false, OfficerFingerprint.Of(cert), $"{doc.Entries.Count} medii, exportat în {dlg.FolderName}"));
+                // review of PR #298: the register (media serials) leaves the station audited first; refused when the audit cannot be written
+                var path = Path.Combine(folder, SignedMediaRegister.FileName(doc.Version));
+                if (ExportAudit.Run(ExportAudit.LiveCaseId, "registru-medii-semnat", doc.Entries.Count, path, () => MediaRegisterFlows.Export(folder, signed)) is { } refused)
+                { Status = "Registrul a fost semnat, dar NU a fost exportat: " + refused; return; }
+                AuthApp.Record(OperationAudit.MediaRegisterSigned, OperationAudit.MediaRegisterDetail(doc.Version, signed.Sha256, "SEMNAT", false, OfficerFingerprint.Of(cert), $"{doc.Entries.Count} medii, exportat în {folder}"));
                 Result = $"Registrul versiunea {doc.Version} a fost semnat și exportat: {path} (și semnătura .p7s).{Environment.NewLine}SHA-256: {signed.Sha256}{Environment.NewLine}" +
                          "Importați-l pe fiecare stație (și pe aceasta) cu „Importă registrul semnat”, scriind amprenta ofițerului de pe procesul-verbal.";
                 Status = "Registrul a fost semnat cu certificatul calificat de pe card.";

@@ -146,7 +146,7 @@ namespace LogAnalyzer.UI.ViewModels
         public bool HasResult => Result is not null;
         public string FlowNextText => _flow.IsLastStep ? "Pornește controlul" : "Înainte";
 
-        partial void OnPeriodChoiceChanged(ControlPeriodChoice value) => OnPropertyChanged(nameof(IsCustomPeriod));
+        partial void OnPeriodChoiceChanged(ControlPeriodChoice value) { OnPropertyChanged(nameof(IsCustomPeriod)); OnPropertyChanged(nameof(PlannedPeriod)); }
         partial void OnResultChanged(ControlResultScreen? value)
         {
             OnPropertyChanged(nameof(HasResult));
@@ -433,14 +433,56 @@ namespace LogAnalyzer.UI.ViewModels
             SelectedCheck = Checks.FirstOrDefault();   // the explanation panel is never empty after a control
         }
 
+        /// <summary>
+        /// „Raport pentru proces-verbal (PDF)”: writes the report into the case and opens it. Usability 2026-10-16: no "save a copy" dialog any more on this
+        /// path (the original always stays in the case); a copy elsewhere is the separate „Salvează o copie…”.
+        /// </summary>
         [RelayCommand]
-        private void SaveReport() => GenerateReport(showCopyDialog: true);
+        private void SaveReport()
+        {
+            var pdf = GenerateReport();
+            if (pdf is not null) OpenFile(pdf);
+        }
+
+        /// <summary>„Salvează o copie…”: a copy of the report (and of its signature file) outside the case, audited; the dialog starts in the folder used last time.</summary>
+        [RelayCommand]
+        private void SaveReportCopy()
+        {
+            var pdf = _lastReportPdf ?? GenerateReport();
+            if (pdf is null) return;
+            var dlg = new SaveFileDialog { FileName = Path.GetFileName(pdf), Filter = "PDF (*.pdf)|*.pdf", Title = "Salvați o copie a raportului (originalul rămâne în caz)" };
+            if (LogAnalyzer.Dfir.Language.FolderMemory.Shared.Get(LogAnalyzer.Dfir.Language.FolderMemory.ReportCopy) is { } last) dlg.InitialDirectory = last;
+            if (dlg.ShowDialog() != true || string.Equals(dlg.FileName, pdf, StringComparison.OrdinalIgnoreCase)) return;
+            LogAnalyzer.Dfir.Language.FolderMemory.Shared.Remember(LogAnalyzer.Dfir.Language.FolderMemory.ReportCopy, dlg.FileName);
+            var ws = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
+            if (ws is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
+            // the copy leaves the case unmasked: audited first, refused when the audit cannot be written (the original stays in the case)
+            var refused = LogAnalyzer.UI.Services.ExportAudit.Run(Path.GetFileName(ws.Root.TrimEnd('\\', '/')), "pdf-control", _report?.Checks.Count ?? 0, dlg.FileName, () => CopyWithSignature(pdf, dlg.FileName));
+            Status = refused is null ? $"Copia raportului a fost salvată: {dlg.FileName}." : "Copia nu a fost salvată: " + refused;
+            if (refused is null) OpenFile(dlg.FileName);
+        }
+
+        private static void CopyWithSignature(string pdf, string destination)
+        {
+            File.Copy(pdf, destination, overwrite: true);
+            var sig = LogAnalyzer.Dfir.Reporting.ReportSignature.SigPath(pdf);
+            if (File.Exists(sig)) File.Copy(sig, LogAnalyzer.Dfir.Reporting.ReportSignature.SigPath(destination), overwrite: true);
+        }
+
+        /// <summary>Opens a file with its default program; a missing association is said in Status, never thrown.</summary>
+        private void OpenFile(string path)
+        {
+            try { Process.Start(new ProcessStartInfo(path) { UseShellExecute = true }); }
+            catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or FileNotFoundException)
+            { Status = $"Fișierul a fost salvat ({path}), dar nu a putut fi deschis: {ex.Message}"; }
+        }
 
         /// <summary>
         /// Writes the report into the case, records its SHA-256 in the sealed audit ("report.generated": a signed report is accepted only if its original part is
         /// one of these), and remembers it as the report "Semnează ca ofițer de securitate" signs. Returns the PDF path, or null with the reason in Status.
         /// </summary>
-        private string? GenerateReport(bool showCopyDialog)
+        /// <remarks>Usability 2026-10-16: it never opens a dialog; a copy elsewhere is <see cref="SaveReportCopy"/>.</remarks>
+        private string? GenerateReport()
         {
             if (_report is null) { Status = "Rulați întâi controlul."; return null; }
             var ws = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
@@ -451,21 +493,9 @@ namespace LogAnalyzer.UI.ViewModels
             using (var fs = File.OpenRead(pdf)) sha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fs));
             LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ReportGenerated, LogAnalyzer.Dfir.Auth.OperationAudit.ReportGeneratedDetail(Path.GetFileName(pdf), sha));
             _lastReportPdf = pdf;
-            var dlg = new SaveFileDialog { FileName = Path.GetFileName(pdf), Filter = "PDF (*.pdf)|*.pdf", Title = "Salvați o copie a raportului (originalul rămâne în caz)" };
             // F3: the report in the case is signed when the operator configured a signing key; a copy carries a copy of the same signature.
             var signLine = LogAnalyzer.Dfir.Reporting.ReportSigningSettings.Load().SignIfConfigured(pdf);
             ws.Audit("report.signature", $"{Path.GetFileName(pdf)}: {signLine}");
-            string? copyRefused = null;
-            if (showCopyDialog && dlg.ShowDialog() == true && !string.Equals(dlg.FileName, pdf, StringComparison.OrdinalIgnoreCase))
-            {
-                // the copy leaves the case unmasked: audited first, refused when the audit cannot be written (the original stays in the case)
-                copyRefused = LogAnalyzer.UI.Services.ExportAudit.Run(Path.GetFileName(ws.Root.TrimEnd('\\', '/')), "pdf-control", _report.Checks.Count, dlg.FileName, () =>
-                {
-                    File.Copy(pdf, dlg.FileName, overwrite: true);
-                    var sig = LogAnalyzer.Dfir.Reporting.ReportSignature.SigPath(pdf);
-                    if (File.Exists(sig)) File.Copy(sig, LogAnalyzer.Dfir.Reporting.ReportSignature.SigPath(dlg.FileName), overwrite: true);
-                });
-            }
             // confirmation page in words (UX research R19): where it is, its fingerprint as the reference for the official report, what comes next
             SavedReportInfo = $"Raportul a fost salvat.{Environment.NewLine}" +
                               $"Unde: {pdf}{Environment.NewLine}" +
@@ -473,9 +503,8 @@ namespace LogAnalyzer.UI.ViewModels
                               $"{signLine}{Environment.NewLine}" +
                               "Ce urmează: ofițerul de securitate semnează raportul cu certificatul calificat de pe card („Semnează ca ofițer de securitate”); tipăriți raportul, treceți amprenta și codul de ancorare în procesul-verbal. Dacă cineva modifică fișierul, amprenta nu se mai potrivește. " +
                               "Originalul rămâne în cazul stației; orice copie se verifică prin aceeași amprentă.";
-            Status = copyRefused is null ? "Raport salvat în caz." : "Raport salvat în caz; copia nu: " + copyRefused;
+            Status = "Raport salvat în caz.";
             LoadPreviousControls();
-            if (showCopyDialog) Process.Start(new ProcessStartInfo(copyRefused is null && dlg.FileName is { Length: > 0 } f && File.Exists(f) ? f : pdf) { UseShellExecute = true });
             return pdf;
         }
 

@@ -860,6 +860,12 @@
       "reason": "Plain markdown design note (security officer qualified signature, audit-log anchor); not a note. Frontmatter would require owner lifecycle/verification values."
     },
     {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/USABILITY_2026-10-16_CLICK_AUDIT.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown project document (usability click audit and in-place glossary); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
       "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-16_STANDARDS_STANDALONE_CLASSIFIED_WORKSTATIONS.md",
       "kind": "no_frontmatter",
       "category": "plain_document",

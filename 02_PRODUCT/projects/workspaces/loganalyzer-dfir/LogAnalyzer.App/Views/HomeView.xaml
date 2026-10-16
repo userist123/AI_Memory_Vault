@@ -1,7 +1,11 @@
 <UserControl x:Class="LogAnalyzer.UI.Views.HomeView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls">
+             xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls"
+             xmlns:local="clr-namespace:LogAnalyzer.UI.Views">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24">
             <!-- WP18 redesign (docs/dfir/RESEARCH_2026-10-11_UI_SI_POLITICI.md): one question, one list of actions, no card grid -->
@@ -12,6 +16,73 @@
                     <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding HasEditionWarning}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
                 </TextBlock>
                 <TextBlock Text="Ce doriți să faceți?" FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,2,0,16"/>
+
+                <!-- usability 2026-10-16: the station control in one click; the report, the officer's signature and the export follow in the same panel -->
+                <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,16" Visibility="{Binding ShowQuickControl, Converter={StaticResource BoolToVis}}">
+                    <StackPanel>
+                        <WrapPanel>
+                            <TextBlock Text="Codul de ancorare de pe procesul-verbal anterior:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox Text="{Binding QuickControl.PreviousAnchorCode, UpdateSourceTrigger=PropertyChanged}" Width="230" FontFamily="Consolas"
+                                     AutomationProperties.Name="Codul de ancorare de pe procesul-verbal anterior; gol la primul control"
+                                     ToolTip="Scrieți codul de pe procesul-verbal semnat al controlului anterior (4 grupe de 5 caractere). Lăsați gol la primul control."/>
+                            <local:HelpButton Term="anchor_code"/>
+                        </WrapPanel>
+                        <!-- review of PR #298: the period is said before the control runs, and can be changed on the control page -->
+                        <WrapPanel Margin="0,8,0,0">
+                            <TextBlock Text="{Binding QuickControl.PlannedPeriod}" TextWrapping="Wrap" MaxWidth="560" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock VerticalAlignment="Center">
+                                <Hyperlink Command="{Binding ShowControlDetailsCommand}" AutomationProperties.Name="Schimbă perioada controlului pe pagina Control stație"><Run Text="Schimbă perioada"/></Hyperlink>
+                            </TextBlock>
+                        </WrapPanel>
+                        <WrapPanel Margin="0,10,0,0">
+                            <Button Command="{Binding RunStationControlCommand}" Style="{StaticResource AccentButtonStyle}" Padding="18,8" Margin="0,0,10,0"
+                                    AutomationProperties.Name="Fă controlul stației" AutomationProperties.AcceleratorKey="Ctrl+Enter"
+                                    ToolTip="Verifică stația de la ultimul control (ultimele 90 de zile la primul control). Aplicația doar citește; nu modifică nimic. Tastatură: Ctrl+Enter.">
+                                <AccessText Text="_Fă controlul stației" FontSize="15" FontWeight="SemiBold"/>
+                            </Button>
+                            <ProgressBar Width="120" Height="4" IsIndeterminate="True" VerticalAlignment="Center" Visibility="{Binding QuickControl.IsBusy, Converter={StaticResource BoolToVis}}"/>
+                        </WrapPanel>
+                        <TextBlock Text="{Binding QuickControl.Status}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,0"/>
+                        <StackPanel Margin="0,8,0,0" Visibility="{Binding QuickControl.HasResult, Converter={StaticResource BoolToVis}}">
+                            <ItemsControl ItemsSource="{Binding QuickControl.ResultCounts}" AutomationProperties.Name="Rezultatele controlului">
+                                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource Surface2Brush}" CornerRadius="10" Padding="10,3" Margin="0,0,8,6">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Label}" FontWeight="SemiBold" local:TermTip.Auto="True"/>
+                                                <TextBlock Text="{Binding Count}" Margin="6,0,0,0"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBox Text="{Binding QuickControl.AnchorLine, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontWeight="Bold"
+                                     Foreground="{StaticResource TextPrimaryBrush}" AutomationProperties.Name="Codul de ancorare al acestui control, de trecut pe procesul-verbal"/>
+                            <WrapPanel Margin="0,8,0,0">
+                                <Button Command="{Binding OpenControlReportCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,8,6"
+                                        AutomationProperties.Name="Deschide raportul" ToolTip="Salvează raportul pentru procesul-verbal în cazul stației și îl deschide. Tastatură: Ctrl+O.">
+                                    <AccessText Text="_Deschide raportul"/>
+                                </Button>
+                                <Button Command="{Binding SignControlReportCommand}" Margin="0,0,0,6" AutomationProperties.Name="Semnează ca ofițer"
+                                        ToolTip="Ofițerul de securitate introduce cardul; Windows cere codul PIN. Doar raportul semnat astfel este oficial. Tastatură: Ctrl+Shift+S.">
+                                    <AccessText Text="_Semnează ca ofițer"/>
+                                </Button>
+                                <local:HelpButton Term="officer_signature" Margin="4,0,8,6"/>
+                                <Button Command="{Binding ExportForOfficerCommand}" Margin="0,0,8,6" AutomationProperties.Name="Exportă pentru ofițer"
+                                        ToolTip="Raportul și copia jurnalului pentru CD-R într-un folder nou, în locul folosit data trecută; folderul și fișierele se confirmă înainte de scriere. Istoricul mediilor se exportă separat, semnat. Tastatură: Ctrl+E.">
+                                    <AccessText Text="_Exportă pentru ofițer"/>
+                                </Button>
+                                <Button Content="Exportă istoricul mediilor pentru ofițer" Command="{Binding ExportSignedMediaHistoryCommand}" Margin="0,0,8,6"
+                                        ToolTip="Istoricul mediilor stației, semnat cu cardul ofițerului de securitate; ofițerul îl confruntă cu al celorlalte stații. Doar așa ajunge istoricul la ofițer."/>
+                                <Button Content="Alege alt folder" Command="{Binding QuickControl.ChooseOfficerExportFolderCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,6"
+                                        ToolTip="Schimbă folderul în care se face exportul pentru ofițer."/>
+                                <Button Content="Vezi toate detaliile" Command="{Binding ShowControlDetailsCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,6"
+                                        ToolTip="Pagina „Control stație”: fiecare verificare cu explicația ei, utilizatorii și cronologia."/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
 
                 <ItemsControl ItemsSource="{Binding PrimaryIntents}" AutomationProperties.Name="Acțiuni">
                     <ItemsControl.ItemTemplate>

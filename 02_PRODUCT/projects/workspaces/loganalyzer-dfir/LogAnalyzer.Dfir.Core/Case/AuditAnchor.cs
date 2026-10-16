@@ -97,10 +97,13 @@ public static class AuditAnchor
     /// Copies the log (and its seal file, if any) to <paramref name="destinationFolder"/> with an anchor file next to it, for burning on write-once media (CD-R).
     /// Nothing in the source is changed.
     /// </summary>
+    /// <summary>The name of the folder <see cref="Export"/> creates (so an audited export can list it before writing).</summary>
+    public static string ExportFolderName(DateTimeOffset nowUtc) => $"LogAnalyzer_ancorare_{nowUtc:yyyyMMdd_HHmmss}";
+
     public static AnchorExport Export(string logPath, string destinationFolder, string host, DateTimeOffset nowUtc)
     {
         var anchor = Current(logPath) ?? throw new InvalidOperationException("Jurnalul aplicației nu are încă înregistrări; nu există ce ancora.");
-        var folder = Path.Combine(destinationFolder, $"LogAnalyzer_ancorare_{nowUtc:yyyyMMdd_HHmmss}");
+        var folder = Path.Combine(destinationFolder, ExportFolderName(nowUtc));
         Directory.CreateDirectory(folder);
         var copy = Path.Combine(folder, Path.GetFileName(logPath));
         File.Copy(logPath, copy, overwrite: false);
