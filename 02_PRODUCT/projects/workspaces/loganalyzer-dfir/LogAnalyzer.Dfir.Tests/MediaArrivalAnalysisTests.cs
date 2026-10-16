@@ -19,7 +19,8 @@ public class MediaArrivalAnalysisTests
         var r = MediaArrivalAnalysis.Analyze(l);
         var c = Assert.Single(r.Copied);
         Assert.Equal("a.docx", c.Path);
-        Assert.Contains("copiat pe mediu la 2026-10-05 09:00", c.Text);
+        Assert.Contains("pare copiat pe mediu la 2026-10-05 09:00", c.Text);
+        Assert.Contains("dezarhivare", c.Text);
         Assert.Equal(3, r.Files);
         Assert.DoesNotContain("suspect", r.Text, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("nu este un semn de rău", r.Text);
@@ -33,6 +34,21 @@ public class MediaArrivalAnalysisTests
         Assert.Equal(2, r.Timeline.Count);
         Assert.Equal(2, r.Timeline[0].Files);
         Assert.Equal(new DateOnly(2026, 10, 7), r.Timeline[1].Day);
+        Assert.Contains("în 2 zile distincte", r.Text);
+    }
+
+    [Theory]
+    [InlineData("FAT32", true)]
+    [InlineData("exFAT", true)]
+    [InlineData("FAT", true)]
+    [InlineData("NTFS", false)]
+    [InlineData("", false)]
+    public void Fat_family_media_get_a_local_time_zone_caveat_and_others_do_not(string fs, bool expected)
+    {
+        var l = new MediaListingFact { Letter = "E", Entries = [F("x1", 0, 0)] };
+        var text = MediaArrivalAnalysis.Analyze(l, fs).Text;
+        Assert.Equal(expected, text.Contains("ora locală a calculatorului care a scris fișierul"));
+        Assert.Contains("ora ultimului acces poate reflecta chiar inspecția", text);
     }
 
     [Fact]
