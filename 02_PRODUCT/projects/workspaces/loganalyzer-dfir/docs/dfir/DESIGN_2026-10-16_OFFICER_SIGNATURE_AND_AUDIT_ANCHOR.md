@@ -154,8 +154,11 @@ key. Neither is detectable from the station alone.
 
 ## Hardening after the round-4 review
 
-- The signature appearance must START with the clip to its own box (`[q] 0 0 W H re W n`); our signer writes
-  exactly that, and any other beginning is INVALID.
+- The signature appearance must START with the clip to its own box (`[q] 0 0 W H re W n`) and keep it in force
+  to the end: the graphics-state depth after `W n` is the clip's level, no `Q` may go below it (an unbalanced `Q`
+  is refused), except one `Q` that closes the leading `q` and must be the last operator. Our signer writes
+  `q 0 0 W H re W n … Q`. Within those rules the appearance can only draw inside the reserved box (viewers also
+  clip a form XObject to its BBox, which must equal the box); it can still draw anything there.
 - Font programs, ToUnicode and CIDToGIDMap streams are decoded under a 4 MB limit (appearances 1 MB); beyond it,
   INVALID.
 - Not done yet: the installation date in the anchored state (it depends on AppInstallDate, which is not in main).
