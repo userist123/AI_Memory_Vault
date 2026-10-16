@@ -2,6 +2,12 @@
   "purpose": "Files under the storage engine's roots that FileStorageEngine cannot read, each with the reason it is allowed. test_notes_strict_yaml.py fails on any unreadable file not listed here and on any listed file that has become readable.",
   "entries": [
     {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
       "path": "01_ARCHITECTURE/FOLDER_COMMUNICATION_MAP.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
