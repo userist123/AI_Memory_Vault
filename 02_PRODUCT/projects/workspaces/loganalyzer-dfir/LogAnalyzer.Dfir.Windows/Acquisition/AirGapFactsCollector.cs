@@ -55,6 +55,8 @@ public sealed class AirGapFactsCollector : ICollector
         Try("Hyper-V", () => ReadHyperV(f.Virtual));
         Try("WSL", () => ReadWsl(f.Virtual));
         Try("produse de virtualizare", () => ReadHypervisors(f.Virtual));
+        Try("containere", () => ReadContainers(f.Virtual));
+        Try("rețele virtuale", () => ReadVirtualNetworks(f.Virtual));
         Try("imagini de disc virtual", () => ReadDiskImages(f.Virtual, ct));
         Try("configurația de pornire (BCD, cere drepturi de administrator)", () => ReadBcd(f.Virtual, elevated, workDir, ct));
         Try("istoricul arhivatoarelor", () => f.Archivers.AddRange(ReadArchivers()));
@@ -131,6 +133,19 @@ public sealed class AirGapFactsCollector : ICollector
                 // Capabilities: 4 = "Supports Writing" (CIM_MediaAccessDevice)
                 b.Writers.Add(new OpticalWriterFact { Name = mo["Name"] as string ?? "", Drive = mo["Drive"] as string ?? "", CanWrite = caps.Contains((ushort)4) || desc.Any(d => d.Contains("Writing", StringComparison.OrdinalIgnoreCase)), Capabilities = desc });
             }
+        // D7: the drive's own profile list through IMAPI2; a drive WMI reports as read-only but IMAPI2 lists writable profiles for is a writer
+        var (imapi, _) = LogAnalyzer.Dfir.Windows.Devices.ImapiRecorders.ReadCached(TimeSpan.FromSeconds(15));
+        foreach (var rec in (imapi ?? []).Where(r => r.CanWrite))
+        {
+            var profiles = "IMAPI2: " + string.Join(", ", rec.WritableProfiles);
+            if (b.Writers.FirstOrDefault(w => rec.Drives.Contains(w.Drive, StringComparer.OrdinalIgnoreCase)) is { } known)
+            {
+                known.CanWrite = true;
+                known.Capabilities = [.. known.Capabilities, profiles];
+            }
+            else
+                b.Writers.Add(new OpticalWriterFact { Name = rec.Product, Drive = rec.Drives.FirstOrDefault() ?? "", CanWrite = true, Capabilities = [profiles] });
+        }
         var staging = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "Windows", "Burn", "Burn");
         b.StagingPath = staging;
         b.StagingFolderExists = Directory.Exists(staging);
@@ -247,6 +262,63 @@ public sealed class AirGapFactsCollector : ICollector
         }
     }
 
+    private static readonly string[] ContainerProducts = ["Docker", "Podman", "Rancher Desktop", "containerd"];
+    // service name → what it is (vmcompute, the Host Compute Service, is left out: it comes with WSL 2 and Windows Sandbox too)
+    private static readonly (string Service, string Name)[] ContainerServices =
+        [("docker", "serviciul Docker Engine"), ("com.docker.service", "serviciul Docker Desktop"), ("containerd", "serviciul containerd")];
+    private static readonly (string Service, string Name)[] BridgeServices =
+        [("VBoxNetLwf", "VirtualBox NDIS6 Bridged Networking Driver"), ("VBoxNetFlt", "VirtualBox Bridged Networking Driver"), ("VMnetBridge", "VMware Bridge Protocol")];
+    private static readonly string[] VirtualAdapterMarks = ["Hyper-V Virtual Ethernet", "VirtualBox Host-Only", "VMware Virtual Ethernet", "vEthernet"];
+
+    private static void ReadContainers(VirtualFacts v)
+    {
+        foreach (var path in new[] { @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", @"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall" })
+        {
+            using var k = Registry.LocalMachine.OpenSubKey(path);
+            if (k is null) continue;
+            foreach (var n in k.GetSubKeyNames())
+            {
+                using var d = k.OpenSubKey(n);
+                if (d?.GetValue("DisplayName") is string dn && ContainerProducts.Any(h => dn.Contains(h, StringComparison.OrdinalIgnoreCase)) && !v.ContainerEngines.Contains(dn)) v.ContainerEngines.Add(dn);
+            }
+        }
+        foreach (var (svc, name) in ContainerServices)
+            if (Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\" + svc) is { } sk) { sk.Dispose(); v.ContainerEngines.Add(name); }
+        foreach (var (svc, name) in BridgeServices)
+            if (Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\" + svc) is { } sk) { sk.Dispose(); v.BridgeDrivers.Add(name); }
+        // Windows containers (process or Hyper-V isolation) keep one folder per container with its configuration; the name is in config.v2.json
+        var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Docker", "containers");
+        if (Directory.Exists(root))
+            foreach (var dir in Directory.EnumerateDirectories(root).Take(50))
+            {
+                var name = Path.GetFileName(dir);
+                var cfg = Path.Combine(dir, "config.v2.json");
+                try
+                {
+                    if (File.Exists(cfg) && new FileInfo(cfg).Length < 1_000_000
+                        && System.Text.Json.JsonDocument.Parse(File.ReadAllText(cfg)).RootElement.TryGetProperty("Name", out var nm) && nm.GetString() is { Length: > 0 } s)
+                        name = s.TrimStart('/');
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { }
+                v.Containers.Add(name);
+            }
+    }
+
+    private static void ReadVirtualNetworks(VirtualFacts v)
+    {
+        using (var a = new ManagementObjectSearcher("SELECT Name, NetConnectionID FROM Win32_NetworkAdapter"))
+            foreach (ManagementObject mo in a.Get())
+            {
+                var name = mo["Name"] as string ?? "";
+                if (VirtualAdapterMarks.Any(m => name.Contains(m, StringComparison.OrdinalIgnoreCase)))
+                    v.VirtualNetworks.Add($"adaptor virtual al gazdei: {name}" + (mo["NetConnectionID"] is string id && id.Length > 0 ? $" ({id})" : ""));
+            }
+        if (v.HyperVServicePresent != true) return;
+        // administrator only; a refusal leaves the adapters above
+        using var s = new ManagementObjectSearcher(new ManagementScope(@"\\.\root\virtualization\v2"), new ObjectQuery("SELECT ElementName FROM Msvm_VirtualEthernetSwitch"));
+        foreach (ManagementObject mo in s.Get()) v.VirtualNetworks.Add($"comutator virtual Hyper-V: {mo["ElementName"] as string ?? "(fără nume)"}");
+    }
+
     private static void ReadDiskImages(VirtualFacts v, CancellationToken ct)
     {
         var data = ImageExtensions();
@@ -317,22 +389,25 @@ public sealed class AirGapFactsCollector : ICollector
 
     private static IEnumerable<ArchiverEntry> ReadArchivers()
     {
-        using (var k = Registry.CurrentUser.OpenSubKey(@"Software\WinRAR\ArcHistory"))
-            if (k is not null)
-                foreach (var n in k.GetValueNames())
-                    if (k.GetValue(n) is string s && s.Length > 0) yield return new ArchiverEntry { Tool = "WinRAR", List = "ArcHistory", Value = s };
-        foreach (var sub in new[] { "ArcName", "ExtrPath" })
+        // WinRAR keeps each list in its own key, values "0" (most recent), "1" …: the key's last write time is when the most recent entry was added
+        foreach (var (key, list) in new[] { (@"Software\WinRAR\ArcHistory", "ArcHistory"), (@"Software\WinRAR\DialogEditHistory\ArcName", @"DialogEditHistory\ArcName"), (@"Software\WinRAR\DialogEditHistory\ExtrPath", @"DialogEditHistory\ExtrPath") })
         {
-            using var k = Registry.CurrentUser.OpenSubKey(@"Software\WinRAR\DialogEditHistory\" + sub);
+            using var k = Registry.CurrentUser.OpenSubKey(key);
             if (k is null) continue;
+            var written = LogAnalyzer.Dfir.Windows.Devices.DeviceInventory.KeyLastWrite(k);
             foreach (var n in k.GetValueNames())
-                if (k.GetValue(n) is string s && s.Length > 0) yield return new ArchiverEntry { Tool = "WinRAR", List = "DialogEditHistory\\" + sub, Value = s };
+                if (k.GetValue(n) is string s && s.Length > 0)
+                    yield return new ArchiverEntry { Tool = "WinRAR", List = list, Value = s, Position = int.TryParse(n, out var pos) ? pos : null, ListLastWriteUtc = written };
         }
         using var fm = Registry.CurrentUser.OpenSubKey(@"Software\7-Zip\FM");
         if (fm is null) yield break;
+        // [NESIGUR] 7-Zip writes FolderHistory / CopyHistory most recent first (observed behaviour, not documented); the FM key also holds settings, so no time
         foreach (var name in new[] { "FolderHistory", "CopyHistory", "PanelPath0", "PanelPath1" })
+        {
+            int i = 0;
             foreach (var s in Decode(fm.GetValue(name)))
-                yield return new ArchiverEntry { Tool = "7-Zip", List = name, Value = s };
+                yield return new ArchiverEntry { Tool = "7-Zip", List = name, Value = s, Position = name.StartsWith("PanelPath", StringComparison.Ordinal) ? null : i++ };
+        }
     }
 
     /// <summary>7-Zip File Manager keeps history as REG_BINARY (UTF-16 strings separated by NUL) and the panel paths as REG_SZ.</summary>

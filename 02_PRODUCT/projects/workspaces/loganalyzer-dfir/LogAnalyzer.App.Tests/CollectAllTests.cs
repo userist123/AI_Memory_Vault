@@ -97,4 +97,25 @@ public sealed class CollectAllTests : IDisposable
         var main = File.ReadAllText(Path.Combine(dir, "MainWindow.xaml"));
         Assert.Contains("Content=\"Colectează tot\" Command=\"{x:Static services:CollectAllState.Command}\"", main);
     }
+
+    [Fact]
+    public void The_older_pages_under_Avansat_get_the_offer_from_the_window_and_it_hides_when_the_page_has_its_own_events()
+    {
+        var dir = AppDir();
+        var main = XDocument.Load(Path.Combine(dir, "MainWindow.xaml"));
+        XNamespace ctrl = "clr-namespace:LogAnalyzer.UI.Views.Controls";
+        var panel = Assert.Single(main.Descendants(ctrl + "NoDataPanel"));
+        Assert.Equal("{Binding Events.Count}", (string?)panel.Attribute("PageItemCount"));
+        Assert.Contains("IsLegacyDataPage", (string?)panel.Attribute("Visibility"));
+        // the panel itself: visible only while there is no result AND the page holds nothing of its own
+        var own = File.ReadAllText(Path.Combine(dir, "Views", "Controls", "NoDataPanel.xaml"));
+        Assert.Contains("<Condition Binding=\"{Binding IsEmpty}\" Value=\"True\"/>", own);
+        Assert.Contains("<Condition Binding=\"{Binding HasPageData, ElementName=Root}\" Value=\"False\"/>", own);
+        // the pages that already carry their own panel are not in the list (no double offer)
+        Assert.DoesNotContain(LogAnalyzer.UI.ViewModels.HomeViewModel.HomeTabIndex, LogAnalyzer.UI.ViewModels.MainViewModel.LegacyDataTabs);
+        Assert.DoesNotContain(LogAnalyzer.UI.ViewModels.HomeViewModel.InvestigationTabIndex, LogAnalyzer.UI.ViewModels.MainViewModel.LegacyDataTabs);
+        Assert.DoesNotContain(LogAnalyzer.Core.Services.Edition.RoleProfiles.TabMediaRegister, LogAnalyzer.UI.ViewModels.MainViewModel.LegacyDataTabs);
+        Assert.DoesNotContain(14, LogAnalyzer.UI.ViewModels.MainViewModel.LegacyDataTabs); // Control stație
+        Assert.Contains(1, LogAnalyzer.UI.ViewModels.MainViewModel.LegacyDataTabs);          // evenimente EVTX
+    }
 }

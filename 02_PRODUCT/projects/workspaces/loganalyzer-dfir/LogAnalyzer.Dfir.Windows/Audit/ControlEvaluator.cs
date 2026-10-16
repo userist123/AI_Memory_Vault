@@ -1,4 +1,5 @@
-using System.Globalization;
+﻿using System.Globalization;
+using System.Text.RegularExpressions;
 using LogAnalyzer.Core.Services.Edition;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Windows.Native;
@@ -860,7 +861,7 @@ public static partial class ControlEvaluator
             bool denyWrite = S("Optical.DenyWrite") == "1" || S("Optical.DenyAll") == "1";
             bool explorerOnly = S("Optical.NoCDBurningMachine") == "1" || S("Optical.NoCDBurningUser") == "1";
             var ev = new[] { @"HKLM\SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices\{53f56308-b6bf-11d0-94f2-00a0c91efb8b} → Deny_Write = " + Shown(S("Optical.DenyWrite")),
-                             @"Policies\Explorer → NoCDBurning (mașină) = " + Shown(S("Optical.NoCDBurningMachine")) + "; (utilizator) = " + Shown(S("Optical.NoCDBurningUser")), "WMI Win32_CDROMDrive → Capabilities (4 = scrie discuri)" };
+                             @"Policies\Explorer → NoCDBurning (mașină) = " + Shown(S("Optical.NoCDBurningMachine")) + "; (utilizator) = " + Shown(S("Optical.NoCDBurningUser")), "WMI Win32_CDROMDrive → Capabilities (4 = scrie discuri)" + (S("Optical.WriterSource") is { Length: > 0 } src ? "; surse citite: " + src : ""), "IMAPI2 MsftDiscRecorder2 → SupportedProfiles (profiluri inscriptibile: CD-R, DVD+R, BD-R ...)" };
             Add(r, "P28", "Politici", "Inscripționarea de CD/DVD blocată",
                 writers == 0 || denyWrite ? ControlStatus.Conform : isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
                 writers == 0 ? $"Stația nu are nicio unitate optică cu capacitate de scriere ({Ro.CountFem(N("Optical.DriveCount"), "unitate optică", "unități optice")})."
@@ -1523,9 +1524,7 @@ public static partial class ControlEvaluator
             var reg = f.OfflineUpdateRegister;
             var regKbs = reg?.SelectMany(x => x.KbNumbers).ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
             var notInRegister = reg is { Count: > 0 } ? inPeriod.Where(u => u.HotFixId.StartsWith("KB", StringComparison.OrdinalIgnoreCase) && !regKbs.Contains(u.HotFixId.Trim())).ToList() : [];
-            var lastAv = reg?.Where(x => LogAnalyzer.Dfir.Registers.UpdateRegister.NormalizeKind(x.Kind) == "antivirus").Select(x => x.Date).Where(d => d.Length > 0).Order().LastOrDefault();
-            var avNote = reg is { Count: > 0 } && S("Defender.SignaturesUtc") is { Length: > 0 } sigText && DateTimeOffset.TryParse(sigText, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var sigAt)
-                ? $" Semnăturile antivirus de pe stație sunt din {sigAt:yyyy-MM-dd}; ultima actualizare antivirus din registru: {lastAv ?? "niciuna"}." : "";
+            const string avNote = " Semnăturile antivirus se compară cu registrul în verificarea S06.";
             Add(r, "S04", "Software", "Actualizări offline aplicate și registrul actualizărilor",
                 reg is not { Count: > 0 } ? ControlStatus.DeVerificat : notInRegister.Count > 0 ? ControlStatus.Neconform : inPeriod.Count == 0 ? ControlStatus.DeVerificat : ControlStatus.Conform,
                 reg is not { Count: > 0 } ? $"Registrul actualizărilor offline nu este completat în aplicație; comparați manual {(inPeriod.Count == 1 ? "actualizarea Windows instalată" : $"cele {Ro.Count(inPeriod.Count, "actualizare Windows instalată", "actualizări Windows instalate")}")} în perioadă cu registrul organizației (verificarea M05)."
@@ -1536,6 +1535,88 @@ public static partial class ControlEvaluator
                         .Prepend("WMI Win32_QuickFixEngineering → HotFixID, InstalledOn"),
                 "Fiecare actualizare adusă pe stație se trece în registrul actualizărilor offline (data, pachetul, amprenta, cine a adus suportul).");
         }
+
+        AntivirusSignatures(r, f, S);
+    }
+
+    [GeneratedRegex(@"\b\d+\.\d+\.\d+\.\d+\b", RegexOptions.CultureInvariant)] private static partial Regex SignatureVersionRegex();
+
+    /// <summary>
+    /// S06 (C8): every antivirus signature update Defender logged in the period (event 2000, one per signature type of the same package) and the
+    /// signatures in force now, compared with the antivirus rows of the offline update register. A row that names a version (1.419.200.0) matches
+    /// only that version; a row without one matches an update on the same date (±1 day: the register date is local, the log time UTC).
+    /// </summary>
+    private static void AntivirusSignatures(ControlReport r, StationFacts f, Func<string, string> S)
+    {
+        const string Title = "Semnături antivirus și registrul actualizărilor";
+        const string Rec = "Fiecare pachet de semnături adus pe stație se trece în registrul actualizărilor offline cu felul „antivirus”, data și versiunea semnăturilor (de exemplu 1.419.200.0).";
+        var version = S("Defender.SignatureVersion");
+        DateTimeOffset? sigAt = DateTimeOffset.TryParse(S("Defender.SignaturesUtc"), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var sa) ? sa : null;
+        bool logReadable = ChannelReadable(f, StationFactCollector.DefenderChannel);
+        if (sigAt is null && version.Length == 0 && !logReadable)
+        {
+            Add(r, "S06", "Software", Title, ControlStatus.Nedeterminat, "Starea semnăturilor Microsoft Defender nu a putut fi citită." + NoRead);
+            return;
+        }
+
+        // [NESIGUR] field names of Defender event 2000 ("Current Signature Version", "Signature Type") as rendered by EventLogReader; not checked against a
+        // Microsoft schema, to confirm on a real station log.
+        // Only antivirus and antispyware signature updates count (a "Signature Type" of another kind, e.g. a network inspection system update, is not
+        // an antivirus signature package); an empty type is kept because older renderings omit the field.
+        var updates = Logs(f, StationFactCollector.DefenderChannel, 2000).Where(l => l.TimeUtc >= f.PeriodStartUtc)
+            .Where(l => { var st = V(l, "Signature Type"); return st.Length == 0 || st.Contains("AntiVirus", StringComparison.OrdinalIgnoreCase) || st.Contains("AntiSpyware", StringComparison.OrdinalIgnoreCase); })
+            .Select(l => (Version: V(l, "Current Signature Version").Trim(), l.TimeUtc)).Where(u => u.Version.Length > 0)
+            .GroupBy(u => u.Version).Select(g => (Version: g.Key, TimeUtc: g.Min(u => u.TimeUtc))).OrderBy(u => u.TimeUtc).ToList();
+        var stationNow = (version.Length > 0 ? $"versiunea {version}" : "versiune necitită") + (sigAt is { } s0 ? $" din {s0:yyyy-MM-dd}" : "");
+        var avRows = (f.OfflineUpdateRegister ?? []).Where(x => LogAnalyzer.Dfir.Registers.UpdateRegister.NormalizeKind(x.Kind) == "antivirus").ToList();
+        if (avRows.Count == 0)
+        {
+            Add(r, "S06", "Software", Title, ControlStatus.DeVerificat,
+                $"Registrul actualizărilor offline nu are nicio actualizare antivirus. Semnăturile de pe stație: {stationNow}; " +
+                (logReadable ? $"jurnalul Defender arată {Ro.CountFem(updates.Count, "actualizare de semnături", "actualizări de semnături")} în perioadă." : "jurnalul Defender nu a putut fi citit.") +
+                " Comparați manual cu registrul organizației (verificarea M05).",
+                updates.Select(u => $"Semnături {u.Version} actualizate {u.TimeUtc:yyyy-MM-dd HH:mm} UTC").Prepend("WMI MSFT_MpComputerStatus → AntivirusSignatureVersion, AntivirusSignatureLastUpdated; Defender 2000"), Rec);
+            return;
+        }
+
+        var rows = avRows.Select(x => (Row: x, Versions: SignatureVersionRegex().Matches(x.Package + " " + x.Notes).Select(m => m.Value).ToHashSet(),
+            Date: LogAnalyzer.Dfir.Profile.ProfileTables.TryParseDate(x.Date, out var d) ? d.ToDateTime(TimeOnly.MinValue) : (DateTime?)null)).ToList();
+        bool Covers((LogAnalyzer.Dfir.Registers.UpdateRow Row, HashSet<string> Versions, DateTime? Date) x, string v, DateTimeOffset t) =>
+            x.Versions.Count > 0 ? x.Versions.Contains(v) : x.Date is { } rd && Math.Abs((rd.Date - t.UtcDateTime.Date).TotalDays) <= 1;
+        var unmatched = updates.Where(u => !rows.Any(x => Covers(x, u.Version, u.TimeUtc))).ToList();
+        // rows the station does not reflect: newer than the signatures in force and naming no version the station has had
+        var seen = updates.Select(u => u.Version).Append(version).Where(v => v.Length > 0).ToHashSet();
+        // The newest update in the log is the best "signatures in force" time; AntivirusSignatureLastUpdated may be the package build date.
+        DateTimeOffset? refAt = updates.Count > 0 ? updates.Max(u => u.TimeUtc) : sigAt;
+        var logStart = f.Coverage.FirstOrDefault(c => c.Channel == StationFactCollector.DefenderChannel)?.OldestUtc;
+        bool rotated = logReadable && logStart is { } ls && ls > f.PeriodStartUtc;
+        var notArrived = refAt is { } now0
+            ? rows.Where(x => x.Date is { } rd && rd.Date > now0.UtcDateTime.Date.AddDays(1) && !x.Versions.Overlaps(seen)).ToList() : [];
+
+        var ev = updates.Select(u => $"Semnături {u.Version} actualizate {u.TimeUtc:yyyy-MM-dd HH:mm} UTC" + (unmatched.Contains(u) ? " · NU este în registru" : " · în registru"))
+            .Concat(notArrived.Select(x => $"Registru: {x.Row.Date} {x.Row.Package} · nu apare pe stație"))
+            .Prepend($"Semnăturile în vigoare pe stație: {stationNow}").Prepend("WMI MSFT_MpComputerStatus → AntivirusSignatureVersion, AntivirusSignatureLastUpdated; Defender 2000").ToList();
+        string Names(IEnumerable<string> v) => string.Join(", ", v);
+        if (unmatched.Count > 0 || notArrived.Count > 0)
+            Add(r, "S06", "Software", Title, ControlStatus.Neconform,
+                (unmatched.Count > 0 ? $"{Ro.Capitalize(Ro.CountFem(unmatched.Count, "actualizare de semnături antivirus", "actualizări de semnături antivirus"))} de pe stație {(unmatched.Count == 1 ? "nu apare" : "nu apar")} în registru: {Names(unmatched.Select(u => $"{u.Version} ({u.TimeUtc:yyyy-MM-dd})"))}. Aflați cine a adus pachetul și de pe ce suport. " : "")
+                + (notArrived.Count > 0 ? $"Registrul arată {Ro.CountFem(notArrived.Count, "actualizare antivirus", "actualizări antivirus")} care nu a ajuns pe stație: {Names(notArrived.Select(x => $"{x.Row.Date} {x.Row.Package}"))}; semnăturile stației sunt {stationNow}." : "").TrimEnd(),
+                ev, Rec);
+        else if (rotated)
+            Add(r, "S06", "Software", Title, ControlStatus.DeVerificat,
+                $"Jurnalul Defender începe la {logStart:yyyy-MM-dd HH:mm} UTC, după începutul perioadei ({f.PeriodStartUtc:yyyy-MM-dd}), deci actualizările de semnături mai vechi nu pot fi verificate. Cele din jurnal ({Ro.CountFem(updates.Count, "actualizare", "actualizări")}) nu contrazic registrul; semnăturile stației: {stationNow}.", ev, Rec);
+        else if (!logReadable)
+            Add(r, "S06", "Software", Title, ControlStatus.DeVerificat,
+                $"Semnăturile de pe stație ({stationNow}) nu contrazic registrul, dar jurnalul Defender nu a putut fi citit, deci actualizările din perioadă nu pot fi confruntate cu registrul." + NoRead, ev, Rec);
+        else if ((version.Length == 0 && updates.Count == 0) || (version.Length > 0 && !rows.Any(x => x.Versions.Contains(version)) && !(sigAt is { } s1 && rows.Any(x => Covers(x, version, s1)))))
+            Add(r, "S06", "Software", Title, ControlStatus.DeVerificat,
+                $"Semnăturile în vigoare ({stationNow}) nu apar în registru, iar jurnalul Defender nu mai are actualizarea lor (jurnalul poate fi rotit). Comparați cu registrul organizației.", ev, Rec);
+        else
+            Add(r, "S06", "Software", Title, ControlStatus.Conform,
+                (updates.Count == 0 ? $"Nicio actualizare de semnături în perioadă; semnăturile în vigoare ({stationNow}) apar în registru."
+                    : (updates.Count == 1 ? "Actualizarea de semnături antivirus din perioadă apare" : $"Toate cele {Ro.Count(updates.Count, "actualizare de semnături antivirus", "actualizări de semnături antivirus")} din perioadă apar") + " în registrul actualizărilor offline.")
+                + (refAt is null ? " Rândurile mai noi din registru nu au putut fi comparate cu stația (ora semnăturilor nu este cunoscută)." : ""),
+                ev, Rec);
     }
 
     /// <summary>"Logon {0CCE9215-…}": the subcategory name next to the GUID Windows writes in 4719, so the timeline is readable.</summary>
