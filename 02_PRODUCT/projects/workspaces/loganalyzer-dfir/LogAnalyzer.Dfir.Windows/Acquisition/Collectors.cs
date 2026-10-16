@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Management;
 using System.Text.Json;
 using LogAnalyzer.Dfir.Analysis;
+using LogAnalyzer.Dfir.Case;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Windows.Containment;
 using LogAnalyzer.Dfir.Windows.Native;
@@ -121,6 +122,68 @@ public sealed class SrumCollector : ICollector
         var o = new CollectorOutcome { Tool = "esentutl.exe", ToolVersion = ToolRunner.FileVersion(ToolRunner.System32("esentutl.exe")), Source = src, ExitCode = run.ExitCode, Commands = { run.CommandLine } };
         if (run.ExitCode != 0 || !File.Exists(dest)) { o.Status = EvidenceStatus.Failed; o.Errors.Add($"esentutl exit {run.ExitCode}"); return o; }
         o.Evidence.Add(ctx.Case.RegisterStored(dest, src, "SRUM", "srum", TemporalType.Historical, Name, Version));
+        return o;
+    }
+}
+
+/// <summary>
+/// The NTFS master file table ($MFT) of the system volume, read from the mounted volume (comparison row E8) in the complete profile only: it is large
+/// (hundreds of MB) and needs raw volume access. Read only, never writes to the volume. Without administrator rights (or on a volume without the NTFS identifier) the source is reported missing; any other read failure is a failure, including a
+/// refused open while elevated (security software) and an NTFS volume with invalid geometry.
+/// It runs first among the collectors so the table is read before other artefacts are copied; a case folder on the same volume is acquired with a warning.
+/// </summary>
+public sealed class MftCollector : ICollector
+{
+    public string Name => "MftCollector";
+    public string Version => "1.0";
+    public bool RequiresElevation => true;
+    public CollectionProfile Profiles => CollectionProfile.FullForensic;
+
+    public CollectorOutcome Collect(CollectorContext ctx, CancellationToken ct)
+    {
+        var root = Path.GetPathRoot(Environment.SystemDirectory) ?? @"C:\";
+        var volume = root.TrimEnd('\\');
+        var src = volume + @"\$MFT";
+        if (!ctx.IsElevated) return CollectorOutcome.NotAvailable("$MFT necesită drepturi de administrator", src);
+        var dest = Path.Combine(ctx.Case.RawDir("MFT"), "$MFT");
+        var r = MftAcquisition.Acquire(volume, dest, ctx.IsElevated, ct);
+        return Finish(ctx.Case, volume, src, dest, r, Name, Version);
+    }
+
+    /// <summary>
+    /// Turns the acquisition result into the collector outcome; separated from the raw volume read so it can be tested on a temporary case.
+    /// The same-volume warning goes to <see cref="CollectorOutcome.Warnings"/>, the evidence notes and the audit trail, never to the errors (it is not a gap).
+    /// The copy is hashed before it is registered: a copy whose SHA-256 differs from the one computed while copying is registered with status Failed
+    /// (so the evidence count matches and the file stays under custody) and the parsing step skips it.
+    /// </summary>
+    internal static CollectorOutcome Finish(CaseWorkspace ws, string volume, string src, string dest, MftAcquisitionResult r, string name, string version)
+    {
+        var o = new CollectorOutcome { Tool = "citire directă a volumului (doar citire)", ToolVersion = version, Source = src, Commands = { $"MftAcquisition {volume} -> $MFT: {(r.Ok ? r.Bytes + " octeți, SHA-256 " + r.Sha256 : r.Problem)}" } };
+        var warning = MftAcquisition.IsSameVolume(ws.Root, volume) ? MftAcquisition.SameVolumeWarning(volume) : "";
+        if (warning.Length > 0) { o.Warnings.Add(warning); ws.Audit("acquisition.warning", $"{name}: {warning}"); }
+        // Only "nothing to read here" (not administrator, not NTFS) is an absent source; a read that was attempted and failed is a failure.
+        if (!r.Ok || !File.Exists(dest))
+        {
+            o.Status = r.SourceAbsent ? EvidenceStatus.NotAvailable : EvidenceStatus.Failed;
+            o.Errors.Add(r.Problem.Length > 0 ? r.Problem : "$MFT nu a putut fi citit");
+            return o;
+        }
+        var stored = LogAnalyzer.Dfir.IO.Hashing.Sha256File(dest);
+        bool trusted = string.Equals(stored, r.Sha256, StringComparison.OrdinalIgnoreCase);
+        var why = trusted ? "" : $"Suma SHA-256 a $MFT copiat ({stored}) diferă de cea calculată la copiere ({r.Sha256}): copia nu este de încredere și nu este analizată.";
+        var notes = string.Join(" ", new[] { why, warning }.Where(x => x.Length > 0));
+        var item = ws.RegisterStored(dest, src, "MFT", LogAnalyzer.Dfir.FileSystem.MftParser.SourceTypeName, TemporalType.Historical, name, version,
+                                     notes: notes, status: trusted ? EvidenceStatus.Success : EvidenceStatus.Failed);
+        o.Evidence.Add(item);
+        // RegisterStored hashes the file again; a difference there means it changed after the check above. That item is already recorded as Success,
+        // so the outcome still fails and the audit names it (the parsing preflight then refuses it against the registered hash if it changes again).
+        if (trusted && !string.Equals(item.Sha256, r.Sha256, StringComparison.OrdinalIgnoreCase))
+            why = $"Suma SHA-256 a $MFT înregistrat ({item.Sha256}) diferă de cea calculată la copiere ({r.Sha256}): copia nu este de încredere.";
+        if (why.Length > 0)
+        {
+            ws.Audit("acquisition.hash_mismatch", $"{name} {item.EvidenceId}: {why}");
+            o.Status = EvidenceStatus.Failed; o.Errors.Add(why);
+        }
         return o;
     }
 }

@@ -47,3 +47,12 @@
 - Tests: App 560, Dfir 1887 (+28 skipped), Edition 45, UI 353, all green.
 - E10: owner decision 2026-10-16, no admin-share collection (the application opens no SMB connection); row closed by that decision.
 - Next: E8 (deleted $MFT entries, timestomping) on a new branch from main after this PR.
+## Partial rows: PR #301 (2026-10-16), review fixes in faac91757; owner merges.
+
+## E8 deleted $MFT (2026-10-16, branch `claude/loganalyzer-mft-deleted`, worktree `.claude/worktrees/la-mft`)
+- Done (9841c637f): `LogAnalyzer.Dfir.Core/FileSystem/MftParser.cs` parses an exported $MFT (update sequence check, resident $SI/$FN): deleted records
+  with rebuilt path (`Kind=deleted`), timestomp candidates $SI created < $FN created (`Kind=timestomp`, Candidate), summary; fingerprint `ntfs_mft`,
+  ImportType, registered (18 parsers), ParserCapabilities, AF08 now Detected/NotDetected with an MFT. Tests: `MftParserTests` (8, synthetic), fuzz test.
+- Done: live acquisition `LogAnalyzer.Dfir.Windows/Acquisition/MftAcquisition.cs` (boot sector, record 0 with shared `MftParser.ApplyFixup`, $DATA run list, read-only volume handle, SHA-256 while copying) and `MftCollector` (complete profile only, custody via RegisterStored; not elevated = NotAvailable gap). Tests: `MftAcquisitionTests` (synthetic + elevated live test, which ran and passed here).
+- Next: owner review and PR. After E8: E6 (read the stick), then E7 (user activity).
+- Limits: a $MFT whose run list is in an attribute list is refused; attribute lists and non-resident names not followed in the parser; $LogFile not read; real volume checked by counts only.

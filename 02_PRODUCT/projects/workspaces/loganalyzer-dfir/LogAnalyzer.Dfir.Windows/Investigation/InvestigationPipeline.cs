@@ -76,8 +76,9 @@ public sealed class InvestigationPipeline
 
     public InvestigationPipeline(ParserRegistry? registry = null) => _registry = registry ?? WindowsParsers.Registry;
 
+    /// <summary>The $MFT collector is first on purpose: the table is read before the other artefacts are copied onto the volume.</summary>
     public static IReadOnlyList<ICollector> AllCollectors { get; } =
-        [new LiveStateCollector(), new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector()];
+        [new MftCollector(), new LiveStateCollector(), new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector()];
 
     /// <summary>Creates a case. <paramref name="scope"/> is mandatory (owner decision 23): an incomplete scope is refused with <see cref="CaseScopeIncompleteException"/>.</summary>
     public static CaseWorkspace NewCase(string casesRoot, string name, CaseScope scope)
@@ -123,6 +124,7 @@ public sealed class InvestigationPipeline
                        || Path.GetFileName(f).EndsWith("SYSTEM.hiv", StringComparison.OrdinalIgnoreCase) => "system_hive",
                 _ when Path.GetFileName(f).Equals("Amcache.hve", StringComparison.OrdinalIgnoreCase) => "amcache",
                 _ when EvidenceFingerprint.Detect(f) == "task_xml" => "task_xml",
+                _ when Path.GetFileName(f).Equals("$MFT", StringComparison.OrdinalIgnoreCase) || EvidenceFingerprint.Detect(f) == LogAnalyzer.Dfir.FileSystem.MftParser.Fingerprint => LogAnalyzer.Dfir.FileSystem.MftParser.SourceTypeName,
                 _ when EvidenceFingerprint.Detect(f) == "usn_fsutil" => "usn_journal",
                 _ when Path.GetFileName(f).Equals("History", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "chromium_history",
                 _ when Path.GetFileName(f).Equals("places.sqlite", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "firefox_places",
@@ -158,6 +160,17 @@ public sealed class InvestigationPipeline
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    /// <summary>The collector errors and, after them, its warnings (marked as such): the report lists both, but only errors make a gap.</summary>
+    internal static string CollectionNotes(CollectorOutcome o) =>
+        string.Join("; ", o.Errors.Concat(o.Warnings.Select(w => "avertisment: " + w)));
+
+    /// <summary>The parse record of evidence that was registered as Failed at acquisition and is therefore not parsed.</summary>
+    internal static ParseResult SkippedFailedEvidence(EvidenceItem ev) => new()
+    {
+        EvidenceId = ev.EvidenceId, Parser = "-", ParserVersion = "-", Status = EvidenceStatus.Failed, ExpectedSha256 = ev.Sha256,
+        Error = "Proba nu a fost analizată: a fost înregistrată ca eșuată la achiziție" + (ev.Notes.Length > 0 ? $" ({ev.Notes})" : "") + ".",
+    };
+
     private static bool IsAdministrator()
     {
         using var id = WindowsIdentity.GetCurrent();
@@ -236,7 +249,7 @@ public sealed class InvestigationPipeline
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
                 { o = new CollectorOutcome { Status = EvidenceStatus.Failed, Errors = { ex.Message } }; }
                 var end = DateTimeOffset.UtcNow;
-                r.Collection.Add(new CollectionRow(c.Name, o.Status, o.Evidence.Count, string.Join("; ", o.Errors), start, end));
+                r.Collection.Add(new CollectionRow(c.Name, o.Status, o.Evidence.Count, CollectionNotes(o), start, end));
                 ws.RecordCollection(new CollectionAuditRecord(c.Name, start, end, o.Status, o.ExitCode, o.Source, ws.Root, o.Evidence.Sum(e => e.Size),
                     "", o.Tool, o.ToolVersion, string.Join(" && ", o.Commands), string.Join("; ", o.Errors)));
                 if (o.Status is EvidenceStatus.NotAvailable or EvidenceStatus.Failed)
@@ -255,6 +268,14 @@ public sealed class InvestigationPipeline
         foreach (var ev in ws.LoadEvidence())
         {
             ct.ThrowIfCancellationRequested();
+            // Evidence registered as Failed (a copy whose hash did not match the one computed while acquiring it) is kept under custody but never
+            // parsed: its content is not trusted, so it must not feed the timeline or the anti-forensic checks. The collector already reported the gap.
+            if (ev.Status == EvidenceStatus.Failed)
+            {
+                r.Parsing.Add(SkippedFailedEvidence(ev));
+                ws.Audit("evidence.not_parsed", $"{ev.EvidenceId}: proba a fost înregistrată ca eșuată la achiziție");
+                continue;
+            }
             if (!ws.TryFullPath(ev.StoredPath, out var full))
             {
                 r.Parsing.Add(new ParseResult

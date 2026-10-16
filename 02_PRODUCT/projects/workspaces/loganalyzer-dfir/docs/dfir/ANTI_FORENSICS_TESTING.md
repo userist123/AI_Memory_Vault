@@ -25,7 +25,7 @@ sau a auditului pot fi legitime; analistul decide.
 | AF05 | timestamp manipulation (ora sistemului) | — | Security 4616, Kernel-General 1 | ora schimbată de alt proces decât svchost (W32Time), cu motivul 1 | System analizat |
 | AF06 | Prefetch deletion | T1070.004 | `EnablePrefetcher` din hive-ul SYSTEM; jurnalul USN (export `fsutil`) | valoarea 0, sau fișiere `.pf` șterse în USN (cu numărul recreat ulterior și cel mai mare grup pe secundă) | jurnalul USN analizat nu conține ștergeri `.pf` (doar pentru fereastra lui) |
 | AF07 | USN anomalies | T1070.004 | ID-ul jurnalului USN, citit ca FILETIME = momentul creării | exporturi cu ID-uri diferite, sau jurnal creat după cea mai veche înregistrare din jurnalele de evenimente (șters și recreat) | un singur jurnal, creat înainte |
-| AF08 | file timestamp changes | T1070.006 | — | — | $MFT nu este parsat; „Basic info change” din USN acoperă și atributele, deci nu dovedește singur o schimbare de ore |
+| AF08 | file timestamp changes | T1070.006 | — | — | un $MFT exportat este parsat (MftParser, 2026-10-16): AF08 = Detected la „SI creare mai veche decât FN”, NotDetected altfel; fără $MFT rămâne Undetermined. „Basic info change” din USN acoperă și atributele, deci nu dovedește singur o schimbare de ore |
 | AF09 | registry modifications | T1112 | Sysmon 12–14, Security 4657 | modificări pe cheile de jurnalizare/audit | există audit de registru și nu le arată |
 | AF10 | log policy changes | T1562.002 | Security 4719, System 7040 (EventLog), `Start` al serviciului EventLog | audit eliminat (%%8448/%%8450), serviciul EventLog modificat sau dezactivat | niciodată: 4719 depinde de auditarea subcategoriei Audit Policy Change |
 | AF11 | service deletion | T1070.009 | System 7045 față de serviciile din hive-ul SYSTEM | serviciu instalat care nu mai este configurat | toate serviciile instalate există |
@@ -76,7 +76,7 @@ firewall-ului. Legătura lui cu incidentul este doar temporală până la o anal
 
 ## Limite
 
-- $MFT și ADS nu sunt colectate și nu sunt parsate (AF08, AF14 rămân UNDETERMINED).
+- $MFT este colectat de pe sistemul viu doar în profilul complet și doar ca administrator (citire directă a volumului, doar citire; fără drepturi sursa este raportată ca lipsă); dacă dosarul cazului este pe același volum, copierea probelor creează înregistrări noi și poate suprascrie înregistrări libere ale fișierelor șterse, de aceea colectorul rulează primul și înregistrează un avertisment, iar pentru o achiziție curată dosarul cazului trebuie să fie pe alt volum. Un $MFT exportat se parsează; fără $MFT sau cu o tabelă necitibilă (nicio înregistrare citită sau peste 20% deteriorate) AF08 rămâne UNDETERMINED; ADS nu sunt colectate și nu sunt parsate (AF14 rămâne UNDETERMINED).
 - USN se citește din exportul `fsutil usn readjournal C: csv`, nu din `$UsnJrnl:$J` brut. Jurnalul acoperă doar ultimele ore sau zile (32 MB). În corpus nu include ziua incidentului, 19.09.
 - Ora din `fsutil` este locală. Conversia a fost verificată pe corpus față de orele de rulare din Prefetch: la cel puțin 50 de fișiere `.pf`, scrierea apare în USN în primul minut după rulare (UTC).
 - Citirea ID-ului jurnalului ca FILETIME este verificată empiric pe această stație (data instalării), nu dintr-o specificație Microsoft.

@@ -42,6 +42,8 @@ public sealed class CollectorOutcome
     public EvidenceStatus Status { get; set; } = EvidenceStatus.Success;
     public List<EvidenceItem> Evidence { get; } = [];
     public List<string> Errors { get; } = [];
+    /// <summary>Notes the report shows next to the collector that are not errors: they never turn the run into a gap or a partial result.</summary>
+    public List<string> Warnings { get; } = [];
     public List<string> Commands { get; } = [];
     public string Tool { get; set; } = "";
     public string ToolVersion { get; set; } = "";
