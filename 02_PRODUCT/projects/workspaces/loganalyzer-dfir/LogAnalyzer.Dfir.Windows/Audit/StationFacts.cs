@@ -103,6 +103,12 @@ public sealed class StationFacts
     public List<string> AppInstallToVerify { get; set; } = [];
     /// <summary>Time of the first chained record of the application's audit chain; printed in the report next to the computed date.</summary>
     public DateTimeOffset? AppInstallChainFirstUtc { get; set; }
+    /// <summary>Check A11: the previous anchor code checked against the application's audit log; null = not checked (the check is NEDETERMINAT).</summary>
+    public LogAnalyzer.Dfir.Case.AnchorContinuity? PreviousAnchor { get; set; }
+    /// <summary>True when the previous code checked in A11 is the one the station proposed (unsafe), false when it was typed from the paper.</summary>
+    public bool PreviousAnchorFromStation { get; set; }
+    /// <summary>Check A13: the officer list and trust folder against the state at the paper anchor; null = the audit log was not available.</summary>
+    public LogAnalyzer.Dfir.Reporting.OfficerStateAssessment? OfficerAssessment { get; set; }
 }
 
 public static class StationFactCollector
@@ -111,7 +117,7 @@ public static class StationFactCollector
     public static readonly IReadOnlyDictionary<string, int[]> Queries = new Dictionary<string, int[]>
     {
         ["Security"] = [4624, 4625, 4648, 4672, 4720, 4722, 4723, 4724, 4725, 4726, 4738, 4740, 4732, 4733, 4728, 4729, 4756, 4757,
-                        4719, 1102, 4616, 4697, 4698, 4702, 6416],
+                        4719, 1102, 1100, 4616, 4697, 4698, 4702, 6416],
         ["System"] = [104, 7045, 6005, 6006, 6008, 1074],
         ["Application"] = [11707, 11724, 1033, 1034],
         ["Microsoft-Windows-Partition/Diagnostic"] = [1006],

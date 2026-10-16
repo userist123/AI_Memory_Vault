@@ -283,6 +283,9 @@ namespace LogAnalyzer.UI.ViewModels
                 var posture = Posture;
                 SavedReportInfo = "";
                 var (folders, updates) = ControlInputs();
+                var previousAnchor = PreviousAnchorCode;
+                var previousFromStation = PreviousCodeIsStationHint();
+                _lastReportPdf = null;
                 bool auditedStart = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlStarted,
                     LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail(LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(posture), posture.ToString(),
                         new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent()).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator), PeriodDays, folders.Count));
@@ -296,6 +299,8 @@ namespace LogAnalyzer.UI.ViewModels
                     try { auditPath = LogAnalyzer.UI.Services.AuthApp.Service.AuditPath; } catch (InvalidOperationException) { }
                     if (auditPath is not null)
                     {
+                        // A11: the previous anchor code, checked before this control appends anything (an append never changes earlier entries anyway).
+                        PrepareAnchorFacts(facts, auditPath, previousAnchor, previousFromStation);
                         try
                         {
                             var cb = LogAnalyzer.Dfir.Case.ClockMemory.ReadBaseline(auditPath);
@@ -311,6 +316,7 @@ namespace LogAnalyzer.UI.ViewModels
                 bool auditedFinish = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinished,
                     LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinishedDetail(_report.Facts.Host, _report.Facts.IsAdministrator, _report.Checks.Count,
                         _report.Count(ControlStatus.Neconform), _report.Count(ControlStatus.DeVerificat), _report.Count(ControlStatus.Nedeterminat)));
+                AfterControlAnchor();
                 FillChecks();
                 Users.Clear();
                 foreach (var u in _report.Users) Users.Add(u);
@@ -345,19 +351,29 @@ namespace LogAnalyzer.UI.ViewModels
         }
 
         [RelayCommand]
-        private void SaveReport()
+        private void SaveReport() => GenerateReport(showCopyDialog: true);
+
+        /// <summary>
+        /// Writes the report into the case, records its SHA-256 in the sealed audit ("report.generated": a signed report is accepted only if its original part is
+        /// one of these), and remembers it as the report "Semnează ca ofițer de securitate" signs. Returns the PDF path, or null with the reason in Status.
+        /// </summary>
+        private string? GenerateReport(bool showCopyDialog)
         {
-            if (_report is null) { Status = "Rulați întâi controlul."; return; }
+            if (_report is null) { Status = "Rulați întâi controlul."; return null; }
             var ws = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
-            if (ws is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
+            if (ws is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return null; }
             if (Result is null) BuildResult();
             var (_, pdf) = ControlReportPdf.SaveToCase(_report, ws, Inspector, Notes, BuildHeader(_report), Result, ManualItems.Select(m => m.ToResult()).ToList());
+            string sha;
+            using (var fs = File.OpenRead(pdf)) sha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fs));
+            LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ReportGenerated, LogAnalyzer.Dfir.Auth.OperationAudit.ReportGeneratedDetail(Path.GetFileName(pdf), sha));
+            _lastReportPdf = pdf;
             var dlg = new SaveFileDialog { FileName = Path.GetFileName(pdf), Filter = "PDF (*.pdf)|*.pdf", Title = "Salvați o copie a raportului (originalul rămâne în caz)" };
             // F3: the report in the case is signed when the operator configured a signing key; a copy carries a copy of the same signature.
             var signLine = LogAnalyzer.Dfir.Reporting.ReportSigningSettings.Load().SignIfConfigured(pdf);
             ws.Audit("report.signature", $"{Path.GetFileName(pdf)}: {signLine}");
             string? copyRefused = null;
-            if (dlg.ShowDialog() == true && !string.Equals(dlg.FileName, pdf, StringComparison.OrdinalIgnoreCase))
+            if (showCopyDialog && dlg.ShowDialog() == true && !string.Equals(dlg.FileName, pdf, StringComparison.OrdinalIgnoreCase))
             {
                 // the copy leaves the case unmasked: audited first, refused when the audit cannot be written (the original stays in the case)
                 copyRefused = LogAnalyzer.UI.Services.ExportAudit.Run(Path.GetFileName(ws.Root.TrimEnd('\\', '/')), "pdf-control", _report.Checks.Count, dlg.FileName, () =>
@@ -368,17 +384,16 @@ namespace LogAnalyzer.UI.ViewModels
                 });
             }
             // confirmation page in words (UX research R19): where it is, its fingerprint as the reference for the official report, what comes next
-            string sha;
-            using (var fs = File.OpenRead(pdf)) sha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fs));
             SavedReportInfo = $"Raportul a fost salvat.{Environment.NewLine}" +
                               $"Unde: {pdf}{Environment.NewLine}" +
                               $"Amprenta fișierului (SHA-256): {sha}{Environment.NewLine}" +
                               $"{signLine}{Environment.NewLine}" +
-                              "Ce urmează: tipăriți raportul, treceți amprenta în procesul-verbal ca referință și semnați. Dacă cineva modifică fișierul, amprenta nu se mai potrivește. " +
+                              "Ce urmează: ofițerul de securitate semnează raportul cu certificatul calificat de pe card („Semnează ca ofițer de securitate”); tipăriți raportul, treceți amprenta și codul de ancorare în procesul-verbal. Dacă cineva modifică fișierul, amprenta nu se mai potrivește. " +
                               "Originalul rămâne în cazul stației; orice copie se verifică prin aceeași amprentă.";
             Status = copyRefused is null ? "Raport salvat în caz." : "Raport salvat în caz; copia nu: " + copyRefused;
             LoadPreviousControls();
-            Process.Start(new ProcessStartInfo(copyRefused is null && dlg.FileName is { Length: > 0 } f && File.Exists(f) ? f : pdf) { UseShellExecute = true });
+            if (showCopyDialog) Process.Start(new ProcessStartInfo(copyRefused is null && dlg.FileName is { Length: > 0 } f && File.Exists(f) ? f : pdf) { UseShellExecute = true });
+            return pdf;
         }
 
         [RelayCommand]
