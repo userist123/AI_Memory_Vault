@@ -21,7 +21,7 @@ public sealed record JournalFolderState(bool Trusted, string Warning);
 /// folder would give every Windows account its own journal, and the control run by one account would not see what another account's monitor recorded.
 /// <para>
 /// The folder is created with an explicit ACL: SYSTEM and Administrators have full control, Authenticated Users may only list and traverse it. The journal FILE
-/// gives Authenticated Users modify, so a second account can save its changes (the file is rewritten in place, so its ACL stays). A folder or file that already
+/// gives Authenticated Users modify, so a second account can save its changes (a save replaces the file and keeps its ACL; see <see cref="Save"/>). A folder or file that already
 /// exists with an owner other than SYSTEM or Administrators is not trusted: the journal is shown with a warning and the sealed audit wins (check D05 compares
 /// the registration numbers and the monitor's running windows with it).
 /// </para>
@@ -135,8 +135,11 @@ public static class DeviceJournalStore
     }
 
     /// <summary>
-    /// Writes the journal in place (the file keeps its ACL, so any account the file allows can save it). Serialised inside the process. Returns null when
-    /// written, otherwise the reason (the caller shows it: a journal that could not be saved is never reported as saved).
+    /// Writes the journal crash-safely: a temporary file in the same folder, flushed to disk, then <see cref="File.Replace(string, string, string?)"/> over the
+    /// journal (the journal keeps its ACL, so any account the file allows can still save it; a crash leaves the old or the new file, never half of one). An account
+    /// that may modify the file but not create one in the folder (a standard user: the folder gives Authenticated Users list and traverse only) cannot make the
+    /// temporary file; it rewrites the journal in place, flushed, as before. Serialised inside the process. Returns null when written, otherwise the reason (the
+    /// caller shows it: a journal that could not be saved is never reported as saved).
     /// </summary>
     public static string? Save(string path, DeviceJournal journal)
     {
@@ -144,25 +147,56 @@ public static class DeviceJournalStore
         {
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
-                File.WriteAllText(path, JsonSerializer.Serialize(journal, LogAnalyzer.Dfir.IO.Json.Options));
-                return null;
+                var full = Path.GetFullPath(path);
+                Directory.CreateDirectory(Path.GetDirectoryName(full)!);
+                var bytes = JsonSerializer.SerializeToUtf8Bytes(journal, LogAnalyzer.Dfir.IO.Json.Options);
+                var temp = full + ".tmp-" + Environment.ProcessId.ToString(CultureInfo.InvariantCulture);
+                bool tempWritten = false;
+                try
+                {
+                    using (var fs = new FileStream(temp, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
+                    {
+                        fs.Write(bytes);
+                        fs.Flush(true);
+                    }
+                    tempWritten = true;
+                    if (File.Exists(full)) File.Replace(temp, full, null, ignoreMetadataErrors: true);
+                    else File.Move(temp, full);
+                    return null;
+                }
+                catch (UnauthorizedAccessException) when (!tempWritten && File.Exists(full))
+                {
+                    // cannot create a file in the folder: rewrite in place (flushed); the journal is a plain file anyway, the sealed audit is the record
+                    using var fs = new FileStream(full, FileMode.Open, FileAccess.Write, FileShare.Read, 4096, FileOptions.WriteThrough);
+                    fs.Write(bytes);
+                    fs.SetLength(bytes.Length);
+                    fs.Flush(true);
+                    return null;
+                }
+                finally
+                {
+                    try { if (File.Exists(temp)) File.Delete(temp); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+                }
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return ex.Message; }
         }
     }
 
     /// <summary>
-    /// The journal at <paramref name="path"/>; a missing file is an empty journal without a problem. An unreadable or damaged file gives an empty journal and
-    /// the reason; a damaged file is first set aside (renamed with ".deteriorat-" and the time) so its content is not overwritten by the next save.
+    /// The journal at <paramref name="path"/>, READ-ONLY (the control collector uses it: it never renames, moves or writes the journal). A missing file is an empty
+    /// journal without a problem; an unreadable or damaged file gives an empty journal and the reason.
     /// </summary>
-    public static DeviceJournal Load(string path, out string problem)
+    public static DeviceJournal Load(string path, out string problem) => Load(path, out problem, out _);
+
+    private static DeviceJournal Load(string path, out string problem, out bool damaged)
     {
         problem = "";
+        damaged = false;
         try
         {
             if (!File.Exists(path)) return new DeviceJournal();
             var j = LogAnalyzer.Dfir.IO.Json.Read<DeviceJournal>(path);
+            if (j is null) throw new JsonException("fișier gol");
             j.Devices ??= [];
             j.Alerts ??= [];
             j.Runs ??= [];
@@ -172,14 +206,8 @@ public static class DeviceJournalStore
         }
         catch (Exception ex) when (ex is JsonException or InvalidDataException or NotSupportedException)
         {
+            damaged = true;
             problem = "Jurnalul monitorului de dispozitive este deteriorat (" + ex.Message + ")";
-            try
-            {
-                var aside = path + ".deteriorat-" + DateTime.UtcNow.ToString("yyyyMMddHHmmss", CultureInfo.InvariantCulture);
-                File.Move(path, aside);
-                problem += $"; a fost păstrat ca „{Path.GetFileName(aside)}” și se începe un jurnal nou.";
-            }
-            catch (Exception mv) when (mv is IOException or UnauthorizedAccessException) { problem += "; nu a putut fi păstrat deoparte: " + mv.Message + "."; }
             return new DeviceJournal();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -187,6 +215,31 @@ public static class DeviceJournalStore
             problem = "Jurnalul monitorului de dispozitive nu poate fi citit: " + ex.Message;
             return new DeviceJournal();
         }
+    }
+
+    /// <summary>
+    /// The journal for the RUNNING monitor (its owner): as <see cref="Load(string, out string)"/>, but a damaged file is first sealed ("device.journal_reset" with
+    /// the SHA-256 of the damaged file, through <paramref name="audit"/>) and then set aside (renamed ".deteriorat-" and the time) so its content is kept and not
+    /// overwritten by the next save; an empty journal starts. Check D05 shows the reset (DE VERIFICAT) instead of a tampering finding for every lost row.
+    /// </summary>
+    public static DeviceJournal LoadForMonitor(string path, Func<string, string, string?> audit, out string problem)
+    {
+        var j = Load(path, out problem, out var damaged);
+        if (!damaged) return j;
+        string sha = "";
+        try { sha = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(path))).ToLowerInvariant(); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { problem += "; amprenta lui nu a putut fi calculată: " + ex.Message; }
+        var aside = path + ".deteriorat-" + DateTime.UtcNow.ToString("yyyyMMddHHmmss", CultureInfo.InvariantCulture);
+        if (audit(LogAnalyzer.Dfir.Auth.OperationAudit.DeviceJournalReset,
+                LogAnalyzer.Dfir.Auth.OperationAudit.DeviceJournalResetDetail(Path.GetFileName(aside), sha, "jurnal deteriorat: " + problem)) is { } refused)
+            problem += "; resetarea nu a putut fi trecută în jurnalul de audit (" + refused + ")";
+        try
+        {
+            File.Move(path, aside);
+            problem += $"; a fost păstrat ca „{Path.GetFileName(aside)}” (SHA-256 {sha}) și se începe un jurnal nou.";
+        }
+        catch (Exception mv) when (mv is IOException or UnauthorizedAccessException) { problem += "; nu a putut fi păstrat deoparte: " + mv.Message + "."; }
+        return j;
     }
 
     /// <summary>
@@ -206,6 +259,10 @@ public static class DeviceJournalStore
             if (audit(LogAnalyzer.Dfir.Auth.OperationAudit.DeviceJournalMigrated,
                     LogAnalyzer.Dfir.Auth.OperationAudit.DeviceJournalMigratedDetail(@"%APPDATA%\LogAnalyzer\device_monitor.json", legacy.Devices.Count, sha)) is { } refused)
                 return "Jurnalul vechi al monitorului nu a fost mutat: mutarea nu a putut fi trecută în jurnalul de audit (" + refused + ").";
+            // every migrated device gets its sealed first-seen record, so check D05 can compare the migrated rows with the audit like any other
+            foreach (var d in legacy.Devices.Where(DeviceScope.IsInScope))
+                audit(LogAnalyzer.Dfir.Auth.OperationAudit.DeviceFirstSeen,
+                    LogAnalyzer.Dfir.Auth.OperationAudit.DeviceFirstSeenDetail(d.Identity, d.Class.ToString(), d.Name, d.Serial, d.FirstSeenUtc, "migrat din jurnalul vechi"));
             if (Save(newPath, legacy) is { } saveError) return "Jurnalul vechi al monitorului nu a putut fi mutat: " + saveError;
             try { File.Move(legacyPath, legacyPath + ".migrat", overwrite: true); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
             return null;
@@ -267,6 +324,7 @@ public static class DeviceMonitorReport
         if (e.VidPid.Length > 0) parts.Add("VID/PID " + e.VidPid);
         parts.Add(e.Serial.Length > 0 ? "SN " + e.Serial : DeviceMonitorRules.NoUniqueSerialText);
         if (e.DuplicateSerial) parts.Add(DeviceMonitorRules.DuplicateSerialMark.ToUpperInvariant());
+        if (e.UnidentifiableMedium) parts.Add(DeviceMonitorRules.UnidentifiableMediumText);
         if (e.CapacityBytes > 0) parts.Add("capacitate " + DeviceText.Bytes(e.CapacityBytes));
         if (e.VolumeLetters.Length > 0) parts.Add("litera " + e.VolumeLetters);
         if (e.VolumeLabel.Length > 0) parts.Add("etichetă „" + e.VolumeLabel + "”");

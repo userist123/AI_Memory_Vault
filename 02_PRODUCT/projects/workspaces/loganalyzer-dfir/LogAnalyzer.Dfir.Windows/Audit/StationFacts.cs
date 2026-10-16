@@ -217,7 +217,7 @@ public static class StationFactCollector
     public static StationFacts Collect(DateTimeOffset periodStartUtc, LogAnalyzer.Core.Services.Edition.StationPosture posture, int maxPerId = 5000, CancellationToken ct = default,
                                        IReadOnlyList<string>? classifiedFolders = null, IReadOnlyList<LogAnalyzer.Dfir.Registers.UpdateRow>? offlineUpdates = null,
                                        IDomainControllerProbe? dcProbe = null, LogAnalyzer.Dfir.Registers.TransferRegister? transfers = null,
-                                       string? auditPath = null, bool auditChainValid = false)
+                                       string? auditPath = null, bool auditChainValid = false, byte[]? auditBytes = null)
     {
         using var id = WindowsIdentity.GetCurrent();
         var facts = new StationFacts
@@ -263,7 +263,8 @@ public static class StationFactCollector
         Try(facts, "Dispozitive USB (USBSTOR)", () => facts.UsbDevices.AddRange(ReadUsbStor()));
         Try(facts, "Medii amovibile (registrul semnat)", () => facts.ObservedMedia = LogAnalyzer.Dfir.Registers.SignedMediaEnrollment.Observed(LogAnalyzer.Dfir.Windows.Devices.DeviceInventory.Collect().Devices));
         facts.SignedMediaRegisterInUse = LogAnalyzer.Dfir.Registers.MediaRegisterFeature.Enabled;
-        // D05: the device monitor's machine-wide journal (written by the application while it runs); no file = the monitor never ran on this station
+        // D05: the device monitor's machine-wide journal (written by the application while it runs); no file = the monitor never ran on this station.
+        // Read-only: the collector never renames, moves or writes the journal (a damaged file is only reported; the running monitor sets it aside and seals it)
         var journalPath = LogAnalyzer.Dfir.Devices.DeviceJournalStore.DefaultPath;
         if (File.Exists(journalPath))
         {
@@ -273,7 +274,10 @@ public static class StationFactCollector
             facts.DeviceJournalUntrusted = LogAnalyzer.Dfir.Devices.DeviceJournalStore.EnsureSecure(journalPath, create: false).Warning;
         }
         // D05: what the sealed audit says (registration numbers, critical alerts, the monitor's running windows); without it the journal cannot be checked
-        if (auditPath is not null)
+        // the records come from the same bytes the chain was verified on when the caller passes them (m5)
+        if (auditBytes is not null)
+            Try(facts, "Jurnalul sigilat (monitorul de dispozitive)", () => facts.DeviceAudit = LogAnalyzer.Dfir.Auth.OperationAudit.ReadDeviceMonitor(auditBytes, auditChainValid));
+        else if (auditPath is not null)
             Try(facts, "Jurnalul sigilat (monitorul de dispozitive)", () => facts.DeviceAudit = LogAnalyzer.Dfir.Auth.OperationAudit.ReadDeviceMonitor(auditPath, auditChainValid));
         // classified folders: their access records have their own budget, so the general cap of 4663 cannot push them out
         Func<int, IReadOnlyDictionary<string, string>, bool>? classified = null;

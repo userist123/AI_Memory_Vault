@@ -307,15 +307,17 @@ namespace LogAnalyzer.UI.ViewModels
                     var dcProbe = global::LogAnalyzer.UI.AppComposition.ServiceProvider?.GetService(typeof(IDomainControllerProbe)) as IDomainControllerProbe;
                     string? auditPath = null;
                     try { auditPath = LogAnalyzer.UI.Services.AuthApp.Service.AuditPath; } catch (InvalidOperationException) { }
-                    // D05 reads the device monitor's records from the sealed audit (registration numbers, alerts, the monitor's running windows); only a chain that verifies counts
+                    // D05 reads the device monitor's records from the sealed audit (registration numbers, alerts, the monitor's running windows); only a chain that verifies
+                    // counts, and the records are read from the very bytes the chain was verified on (the file is read once)
                     bool deviceChainValid = false;
+                    byte[]? deviceAuditBytes = null;
                     if (auditPath is not null)
                     {
-                        try { deviceChainValid = LogAnalyzer.UI.Services.AuthApp.Service.VerifyAudit().Status == LogAnalyzer.Dfir.Case.ChainStatus.Valid; }
+                        try { deviceChainValid = LogAnalyzer.UI.Services.AuthApp.Service.VerifyAuditSnapshot(out var bytes).Status == LogAnalyzer.Dfir.Case.ChainStatus.Valid; deviceAuditBytes = bytes; }
                         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { deviceChainValid = false; }
                     }
                     var facts = StationFactCollector.Collect(start, posture, classifiedFolders: folders, offlineUpdates: updates, dcProbe: dcProbe, transfers: transfers,
-                                                             auditPath: auditPath, auditChainValid: deviceChainValid);
+                                                             auditPath: auditPath, auditChainValid: deviceChainValid, auditBytes: deviceAuditBytes);
                     // Time memory (S05): the latest time the application recorded, read BEFORE this report adds its own "clock.seen" entry.
                     // D04 and the transfer register: the officer-signed media register in force (re-verified; compared with the last install in the sealed audit)
                     // owner decision 2026-10-16: with the register switched off (MediaRegisterFeature) it is not read; D04 is "Nu se aplică" and the transfer

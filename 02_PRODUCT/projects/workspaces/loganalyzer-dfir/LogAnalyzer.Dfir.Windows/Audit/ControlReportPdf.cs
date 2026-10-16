@@ -189,7 +189,7 @@ public static class ControlReportPdf
                     if (head) t.Bold();
                 }
 
-                // owner decision 2026-10-16: every device the real-time monitor saw in the period (check D05), with driver, state, registration number and alerts
+                // owner decision 2026-10-16: every device the real-time monitor saw in the period (check D05), with state, registration number and alerts
                 P(col, DeviceSectionTitle).Bold().FontSize(11).FontColor(Ink);
                 foreach (var (text, head, color) in DeviceSectionLines(r))
                 {
@@ -327,8 +327,9 @@ public static class ControlReportPdf
     public const string DeviceSectionTitle = "3c. Dispozitive văzute de monitorul în timp real (verificarea D05)";
 
     /// <summary>
-    /// The lines of the device section: a summary, the alerts raised in the period, then every device seen (those that break the rule first, in red) with class,
-    /// driver state, connected or disconnected and the registration number or „fără număr de înregistrare”. Pure, so the tests read it without parsing the PDF.
+    /// The lines of the device section: a summary, the alerts raised in the period, every device seen (those that break the rule first, in red) with class,
+    /// state (connected, disconnected, not working, disabled) and the registration number or „fără număr de înregistrare”. Pure, so the tests read it without
+    /// parsing the PDF.
     /// </summary>
     public static List<(string Text, bool Head, string Color)> DeviceSectionLines(ControlReport r, int maxDevices = 1000)
     {

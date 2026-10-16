@@ -106,9 +106,11 @@ public static class DeviceRules
 {
     /// <summary>
     /// The kind of a device from its instance id (enumerator), setup class and hardware ids; null when it is not a storage/connectable device we
-    /// track (keyboards, internal buses, Bluetooth service entries, volumes that belong to a disk we already list).
+    /// track (keyboards, internal buses, Bluetooth service entries, volumes that belong to a disk we already list). <paramref name="attachedOutside"/>: the caller
+    /// knows the disk is attached from outside the station (its container is not the local machine's, it hangs off a UASPStor or USB node, or its own service
+    /// is UASPStor); it is decided BEFORE a SCSI / NVMe disk is taken as internal, so a UAS or USB-NVMe enclosure is never an internal disk.
     /// </summary>
-    public static DeviceKind? Classify(string instanceId, string setupClass, string hardwareIds, string name)
+    public static DeviceKind? Classify(string instanceId, string setupClass, string hardwareIds, string name, bool attachedOutside = false)
     {
         var id = instanceId.ToUpperInvariant();
         var cls = setupClass.ToUpperInvariant();
@@ -121,6 +123,7 @@ public static class DeviceRules
             if (hw.Contains("MSFT") && hw.Contains("VIRTUAL")) return DeviceKind.VirtualDisk;
             if (id.StartsWith(@"SCSI\") && (hw.Contains("UASPSTOR") || hw.Contains(@"USB\VID_"))) return DeviceKind.UsbStorage;   // USB Attached SCSI: the parent is a USB device
             if (hw.Contains("SD/MMC") || hw.Contains("SDXC") || hw.Contains("SDHC") || hw.Contains("CARD READER")) return DeviceKind.MemoryCard;
+            if (attachedOutside) return DeviceKind.UsbStorage;                                                                   // UAS / USB-NVMe / external container
             return DeviceKind.InternalDisk;
         }
         if (cls == "WPD")

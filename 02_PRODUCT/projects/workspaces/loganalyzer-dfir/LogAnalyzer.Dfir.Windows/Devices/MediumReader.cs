@@ -39,7 +39,7 @@ public static class MediumReader
                     if (!letterByPart.TryGetValue(part, out var l)) letterByPart[part] = l = [];
                     l.Add(Key(r["Dependent"]));
                 }
-            using var disks = new ManagementObjectSearcher("SELECT DeviceID, PNPDeviceID, Size FROM Win32_DiskDrive");
+            using var disks = new ManagementObjectSearcher("SELECT DeviceID, PNPDeviceID, Size, Signature FROM Win32_DiskDrive");
             foreach (ManagementObject d in disks.Get())
             {
                 var pnp = d["PNPDeviceID"]?.ToString() ?? "";
@@ -48,7 +48,9 @@ public static class MediumReader
                 string label = "", serial = "";
                 foreach (var letter in letters)
                     if (Volume(letter + @"\") is { } v) { label = v.Label; serial = v.Serial; break; }
-                result[pnp] = new MediumInfo(serial, d["Size"] is ulong s ? (long)s : 0, string.Join(" ", letters), label);
+                // the MBR disk signature identifies a card whose volume cannot be read (encrypted or RAW); 0 / absent = not readable (GPT disks are not read here)
+                var signature = d["Signature"] is uint sig && sig != 0 ? sig.ToString("X8", System.Globalization.CultureInfo.InvariantCulture) : "";
+                result[pnp] = new MediumInfo(serial, d["Size"] is ulong s ? (long)s : 0, string.Join(" ", letters), label, signature);
             }
         }
         catch (Exception ex) when (ex is ManagementException or COMException or UnauthorizedAccessException or InvalidCastException) { }

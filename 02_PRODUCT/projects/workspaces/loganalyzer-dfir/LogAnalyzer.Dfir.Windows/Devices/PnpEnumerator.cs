@@ -60,7 +60,7 @@ public static class PnpEnumerator
                 if (name.Length == 0) name = Text(set, ref data, SPDRP_DEVICEDESC);
                 int code = CM_Get_DevNode_Status(out var status, out var problem, data.DevInst, 0) == 0 ? ((status & DN_HAS_PROBLEM) != 0 ? (int)problem : 0) : -1;
                 res.Add(new(InstanceId(set, ref data), name, Text(set, ref data, SPDRP_CLASS), Text(set, ref data, SPDRP_MFG),
-                    string.Join(" ", Multi(set, ref data, SPDRP_HARDWAREID)), Text(set, ref data, SPDRP_SERVICE), code, Container(set, ref data)));
+                    string.Join(" ", Multi(set, ref data, SPDRP_HARDWAREID)), Text(set, ref data, SPDRP_SERVICE), code, Container(set, ref data), Parent(set, ref data)));
             }
         }
         finally { SetupDiDestroyDeviceInfoList(set); }
@@ -82,6 +82,15 @@ public static class PnpEnumerator
         var key = new DEVPROPKEY { fmtid = ContainerKeyFmt, pid = 2 };
         var g = new byte[16];
         return SetupDiGetDevicePropertyW(set, ref d, ref key, out t, g, 16, out _, 0) && t == 0x0D ? "{" + new Guid(g).ToString().ToUpperInvariant() + "}" : "";
+    }
+
+    /// <summary>DEVPKEY_Device_Parent: the instance id of the parent node (a USB Attached SCSI disk hangs off a USB node whose service is UASPStor); "" = not readable.</summary>
+    private static string Parent(IntPtr set, ref SP_DEVINFO_DATA d)
+    {
+        var key = new DEVPROPKEY { fmtid = new Guid("4340a6c5-93fa-4706-972c-7b648008a5a7"), pid = 8 };
+        var buf = new byte[1024];
+        return SetupDiGetDevicePropertyW(set, ref d, ref key, out var t, buf, (uint)buf.Length, out var required, 0) && t == 0x12
+            ? Encoding.Unicode.GetString(buf, 0, (int)Math.Min(required, (uint)buf.Length)).TrimEnd('\0') : "";
     }
 
     private static byte[]? Raw(IntPtr set, ref SP_DEVINFO_DATA d, uint prop)
