@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.Analysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using LogAnalyzer.Dfir.Case;
@@ -180,6 +181,14 @@ public static class ControlReportPdf
                     }
                 });
 
+                // classified information: per file, accesses and exits (approved / unjustified / to verify), worst first
+                P(col, ClassifiedSectionTitle).Bold().FontSize(11).FontColor(Ink);
+                foreach (var (text, head, color) in ClassifiedSectionLines(r))
+                {
+                    var t = P(col, W(text)).FontSize(head ? 8.5f : 7.5f).FontColor(color);
+                    if (head) t.Bold();
+                }
+
                 col.Item().Text("4. Acoperirea jurnalelor și surse lipsă sau incomplete").Bold().FontSize(11).FontColor(Ink);
                 foreach (var c in f.Coverage)
                     col.Item().Text($"{c.Channel}: {(c.Readable ? $"{LogAnalyzer.Dfir.Language.RoText.Count(c.Records, "eveniment", "evenimente")} citite, cel mai vechi {L(c.OldestUtc)}" : "NECITIT")} {c.Note}").FontSize(7.5f);
@@ -236,6 +245,60 @@ public static class ControlReportPdf
         return l;
     }
 
+    /// <summary>The classified section for the JSON report (the origins are runtime objects and are left out).</summary>
+    private static object? ClassifiedJson(ControlReport r) => r.Classified is not { } c ? null : new
+    {
+        c.Unjustified, c.ToVerify, c.Approved, c.Deleted, c.AuditRecords, c.Notes,
+        SecurityChanges = c.SecurityChanges.Select(s => new { s.TimeUtc, s.Who, s.Process, s.Object, s.AuditRules, s.Evidence }),
+        Files = c.Ordered.Select(f => new
+        {
+            f.Path, f.StatusText,
+            Exits = f.Exits.Select(x => new { Channel = x.ChannelText, Verdict = x.VerdictText, x.TimeUtc, x.Who, x.Target, x.Detail, x.Chain, x.RegisterEntry, x.Weak }),
+            Accesses = f.Accesses.Select(a => new { a.TimeUtc, a.Who, a.Process, a.Access, a.Weak, a.Evidence }),
+        }),
+    };
+
+    public const string ClassifiedSectionTitle = "3b. Informații clasificate — acces și ieșiri";
+
+    /// <summary>
+    /// The lines of the classified-information section: per file (unjustified exits first), the exits with their verdict and register entry, then the
+    /// accesses; without classified folders, why nothing can be said. Pure, so the tests read it without parsing the PDF.
+    /// </summary>
+    public static List<(string Text, bool Head, string Color)> ClassifiedSectionLines(ControlReport r, int maxAccessesPerFile = 25)
+    {
+        var l = new List<(string, bool, string)>();
+        if (r.Classified is not { } c)
+        {
+            l.Add(("Profilul de proceduri nu definește foldere clasificate (sau nu a fost transmis controlului): accesul la documentele clasificate și ieșirile lor nu au putut fi urmărite.", false, "#b45309"));
+            return l;
+        }
+        l.Add(($"Ieșiri nejustificate: {c.Unjustified} · de verificat: {c.ToVerify} · aprobate (în registrul transferurilor): {c.Approved} · fișiere șterse: {c.Deleted} · " +
+               $"schimbări de permisiuni sau de reguli de audit: {c.SecurityChanges.Count} · înregistrări de audit citite: {c.AuditRecords}.", false, Ink));
+        foreach (var n in c.Notes) l.Add((n, false, "#b45309"));
+        foreach (var s in c.SecurityChanges)
+            l.Add(($"{(s.AuditRules ? "REGULI DE AUDIT SCHIMBATE" : "PERMISIUNI SCHIMBATE")}: {s.Object} — {s.Who}, {s.Process}, {(s.TimeUtc is { } t ? t.ToString("yyyy-MM-dd HH:mm:ss") + " UTC" : "ora necunoscută")} [{s.Evidence}]", false, s.AuditRules ? "#b91c1c" : "#b45309"));
+        if (c.Files.Count == 0) l.Add(("Niciun acces și nicio ieșire a unui fișier clasificat în sursele citite.", false, Muted));
+        if (c.SelfActivity.Count > 0)
+        {
+            l.Add(($"Înregistrări lăsate de aplicație la calculul amprentelor ({ClassifiedAccess.SelfLabel}): {c.SelfActivity.Count}; nu sunt accese ale cuiva.", false, Muted));
+            foreach (var a in c.SelfActivity.Take(10)) l.Add(($"  {(a.TimeUtc is { } t ? t.ToString("yyyy-MM-dd HH:mm:ss") + " UTC" : "ora necunoscută")} · {a.Who} · {a.Access} [{a.Evidence}]", false, Muted));
+        }
+        foreach (var f in c.Ordered)
+        {
+            l.Add(($"{f.StatusText} · {f.Path}", true, f.Rank == 0 ? "#b91c1c" : f.Rank == 1 ? "#b45309" : Ink));
+            foreach (var x in f.Exits.OrderBy(x => x.Verdict))
+            {
+                l.Add(($"  Ieșire {x.VerdictText}: {x.ChannelText} → {x.Target}, {(x.TimeUtc is { } t ? t.ToString("yyyy-MM-dd HH:mm:ss") + " UTC" : "ora necunoscută")}, {x.Who}. {x.Detail}" + (x.Weak ? " (dovadă mai slabă)" : ""),
+                       false, x.Verdict == ExitVerdict.Unjustified ? "#b91c1c" : x.Verdict == ExitVerdict.ToVerify ? "#b45309" : Ink));
+                foreach (var step in x.Chain) l.Add(("      – " + step, false, Muted));
+            }
+            foreach (var a in f.Accesses.OrderBy(a => a.TimeUtc).Take(maxAccessesPerFile))
+                l.Add(($"  Acces {(a.TimeUtc is { } t ? t.ToString("yyyy-MM-dd HH:mm:ss") + " UTC" : "ora necunoscută")} · {a.Who} · {a.Process} · {a.Access}{(a.Weak ? " (dovadă mai slabă)" : "")} [{a.Evidence}]", false, Muted));
+            if (f.Accesses.Count > maxAccessesPerFile) l.Add(($"  … încă {f.Accesses.Count - maxAccessesPerFile} accese (în fișierul JSON al raportului)", false, Muted));
+        }
+        return l;
+    }
+
     /// <summary>The limits of a control report, always printed (legal research G7, docs/dfir/RESEARCH_2026-10-11_PROBE_VALOARE_JURIDICA.md).</summary>
     public static IReadOnlyList<string> Limitations(StationFacts f)
     {
@@ -259,7 +322,7 @@ public static class ControlReportPdf
         var dir = Path.Combine(ws.Root, "Control", $"CONTROL_{r.Facts.CollectedUtc:yyyyMMdd_HHmmss}");
         Directory.CreateDirectory(dir);
         var json = Path.Combine(dir, "control_report.json");
-        File.WriteAllText(json, JsonSerializer.Serialize(new { r.Facts, r.Checks, r.Users, r.Actions, ManualChecks = manual ?? [] },
+        File.WriteAllText(json, JsonSerializer.Serialize(new { r.Facts, r.Checks, r.Users, r.Actions, Classified = ClassifiedJson(r), ManualChecks = manual ?? [] },
             new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } }));
         var pdf = Path.Combine(dir, $"Raport_control_{r.Facts.Host}_{r.Facts.CollectedUtc:yyyyMMdd}.pdf");
         var pre = LogAnalyzer.Dfir.Case.PreReportCheck.ForCase(ws);   // F2: re-verify the case evidence first; its audit entry is inside the printed chain heads

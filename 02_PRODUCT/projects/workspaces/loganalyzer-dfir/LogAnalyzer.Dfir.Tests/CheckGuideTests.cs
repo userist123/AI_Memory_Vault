@@ -23,7 +23,7 @@ public class CheckGuideTests
     [Fact]
     public void Every_check_the_evaluator_can_emit_has_a_written_guide()
     {
-        var ids = Regex.Matches(Source(Path.Combine("LogAnalyzer.Dfir.Windows", "Audit", "ControlEvaluator.cs")), @"Add\(r, ""([A-Z]\d\d)""")
+        var ids = Regex.Matches(Source(Path.Combine("LogAnalyzer.Dfir.Windows", "Audit", "ControlEvaluator.cs")) + Source(Path.Combine("LogAnalyzer.Dfir.Windows", "Audit", "ControlEvaluator.Classified.cs")), @"Add\(r, ""([A-Z]\d\d)""")
                        .Select(m => m.Groups[1].Value).Concat(["A03", "A04"]).Distinct().OrderBy(x => x).ToList();
         Assert.True(ids.Count >= 30, $"only {ids.Count} ids parsed");
         var missing = ids.Where(id => !CheckGuides.Ids.Contains(id)).ToList();
