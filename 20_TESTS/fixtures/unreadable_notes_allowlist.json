@@ -858,6 +858,18 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Plain markdown design note (security officer qualified signature, audit-log anchor); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-16_STANDARDS_STANDALONE_CLASSIFIED_WORKSTATIONS.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research document (protection of classified information on standalone workstations, public sources); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PROVENANCE_2026-10-16_PDF_SIGNING_LIBRARIES.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown provenance check (PDF signing libraries for reports); not a note. Frontmatter would require owner lifecycle/verification values."
     }
   ]
 }
