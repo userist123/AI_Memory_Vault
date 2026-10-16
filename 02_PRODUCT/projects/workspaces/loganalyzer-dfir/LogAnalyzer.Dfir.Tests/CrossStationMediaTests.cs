@@ -453,6 +453,18 @@ public sealed class CrossStationMediaTests
     }
 
     [Fact]
+    public void A_paper_anchor_code_for_a_station_without_an_imported_export_is_to_verify()
+    {
+        var (src, dst) = CleanTransfer();
+        var paper = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["STATIE-DSET"] = AnchorOf("STATIE-DEST"), ["HW-STATIE-DEST"] = AnchorOf("STATIE-DEST") };
+        var r = CrossStationReconciliation.Run([Accept(src), Accept(dst)], RegV2, RegV2Sha, Period with { PaperAnchors = paper });
+        var f = Assert.Single(r.Findings, x => x.Kind == CrossStationReconciliation.KindAnchorUnknownStation);
+        Assert.Equal(CrossSeverity.DeVerificat, f.Severity);
+        Assert.Contains("cod de pe procesul-verbal pentru o stație necunoscută: STATIE-DSET (verificați numele)", f.Text);
+        Assert.Contains(r.Limits, l => l.Contains("indicatorii de integritate sunt calculați de stația verificată însăși, la export", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void R2_an_expected_station_whose_export_predates_the_period_end_is_to_verify()
     {
         var (src, dst) = CleanTransfer();

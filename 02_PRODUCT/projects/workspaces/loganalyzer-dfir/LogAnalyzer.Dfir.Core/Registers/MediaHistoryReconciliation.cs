@@ -123,7 +123,7 @@ public static class CrossStationReconciliation
                         KindNotAtSource = "nevazut_la_sursa", KindNotAtDestination = "nevazut_la_destinatie", KindFilesMissing = "fisiere_negasite", KindElsewhere = "introdus_in_alta_statie",
                         KindFilesElsewhere = "fisiere_in_alta_statie", KindUnregistered = "mediu_neinregistrat", KindClone = "posibila_clonare", KindRowIncomplete = "rand_incomplet",
                         KindContradictory = "inregistrari_contradictorii", KindIndicators = "istoric_posibil_incomplet", KindAnchorMismatch = "ancorare_nepotrivita",
-                        KindStaleExport = "export_invechit";
+                        KindStaleExport = "export_invechit", KindAnchorUnknownStation = "cod_pentru_statie_necunoscuta";
 
     private sealed record Conn(MediaHistoryDoc Station, MediumHistory Medium, DateTimeOffset Start, DateTimeOffset? End);
     private sealed record Row(MediaTransferEntry Entry, string Serial, DateTimeOffset? TimeUtc, MediaHistoryDoc? Source, MediaHistoryDoc? Destination, List<string> Hashes);
@@ -171,7 +171,14 @@ public static class CrossStationReconciliation
         }
 
         // ---- tamper indicators and the paper anchor code (review R5) ----
-        res.Limits.Add("Un administrator poate șterge istoricul dispozitivelor unei stații; ștergerea lasă de regulă urme (104/1102, A11) raportate mai sus.");
+        res.Limits.Add("Un administrator poate șterge istoricul dispozitivelor unei stații; ștergerea lasă de regulă urme (104/1102, A11) raportate mai sus. " +
+                       "Indicatorii de integritate sunt calculați de stația verificată însăși, la export; un administrator care oprește serviciul de jurnale și șterge înregistrări individuale poate lăsa indicatorii curați; " +
+                       "codul de ancorare tastat de pe procesul-verbal dovedește doar că jurnalul aplicației nu a fost rescris, nu că istoricul dispozitivelor din Windows este complet.");
+        // a typed code whose station matches no imported export is a typing mistake or a missing export, never silently ignored
+        foreach (var (name, _) in s.PaperAnchors.Where(p => p.Key.Trim().Length > 0 && !string.IsNullOrWhiteSpace(p.Value)).OrderBy(p => p.Key.Trim(), StringComparer.OrdinalIgnoreCase))
+            if (Find(name) is null)
+                res.Findings.Add(new(CrossSeverity.DeVerificat, KindAnchorUnknownStation, name.Trim(), "", "",
+                    $"Atenție, cod de pe procesul-verbal pentru o stație necunoscută: {name.Trim()} (verificați numele) — niciun export acceptat nu are acest nume sau Hardware ID, deci codul nu a fost comparat."));
         foreach (var d in stations)
         {
             var dirty = Dirty(d);
