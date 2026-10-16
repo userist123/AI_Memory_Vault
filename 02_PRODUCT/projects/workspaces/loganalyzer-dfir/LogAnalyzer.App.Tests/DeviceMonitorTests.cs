@@ -342,6 +342,38 @@ public sealed class DeviceMonitorTests
     }
 
     [Fact]
+    public async Task A_loss_whose_rescan_never_ran_is_still_sealed_as_a_gap_when_the_monitor_stops()
+    {
+        // the monitor belongs to a thread whose dispatcher is alive but never pumps: the posted rescan does not run, the stop must still seal the gap
+        var f = new Fakes { Present = [Mouse] };
+        DeviceMonitorViewModel? vm = null;
+        using var created = new System.Threading.ManualResetEventSlim();
+        using var release = new System.Threading.ManualResetEventSlim();
+        var owner = new System.Threading.Thread(() =>
+        {
+            _ = System.Windows.Threading.Dispatcher.CurrentDispatcher;
+            vm = f.Create(isolated: true);
+            created.Set();
+            release.Wait();
+        }) { IsBackground = true };
+        owner.Start();
+        created.Wait();
+        try
+        {
+            await vm!.StartAsync(eventsAvailable: true);
+            f.Now = T0.AddMinutes(20);
+            vm.ReportLoss("serviciul WMI oprit");
+            Assert.Empty(f.Events(OperationAudit.DeviceMonitorGap));                 // the rescan is queued on the owner's dispatcher, not run here
+            f.Now = T0.AddMinutes(25);
+            vm.Dispose();
+            var gap = Assert.Single(f.Events(OperationAudit.DeviceMonitorGap));
+            Assert.Contains("reason=serviciul WMI oprit", gap.Detail);
+            Assert.Single(f.Events(OperationAudit.DeviceMonitorStopped));
+        }
+        finally { release.Set(); owner.Join(); }
+    }
+
+    [Fact]
     public async Task A_silence_between_readings_is_a_lost_interval_too()
     {
         var f = new Fakes { Present = [Mouse] };

@@ -129,6 +129,11 @@ namespace LogAnalyzer.UI.ViewModels
         private bool _started, _stopped;
         private Timer? _timer, _beat;
         private CancellationTokenSource? _debounce;
+        /// <summary>
+        /// The dispatcher of the thread that created the monitor (the window's thread in the application; none in tests). Timer work is posted there and
+        /// never to whatever <see cref="System.Windows.Application.Current"/> happens to be: a process-wide application can belong to another thread.
+        /// </summary>
+        private readonly System.Windows.Threading.Dispatcher? _dispatcher = System.Windows.Threading.Dispatcher.FromThread(Thread.CurrentThread);
         /// <summary>First-seen records whose audit write was refused: retried at every reading (without its sealed record a row is a tampering finding in D05).</summary>
         private readonly List<(string Ev, string Detail)> _unsealed = [];
         /// <summary>The problem code and active state last sealed for each present device (a change, a first sight or a reconnection is sealed).</summary>
@@ -264,6 +269,11 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (!_owner || !_started || _stopped) return;
             _stopped = true;
+            // a loss reported but not yet rescanned (the posted reading did not run before the stop) is still sealed as a gap, up to the stop
+            (DateTimeOffset From, string Reason)? loss;
+            lock (_journal) { loss = _pendingLoss; _pendingLoss = null; }
+            if (loss is { } l && _audit(OperationAudit.DeviceMonitorGap, OperationAudit.DeviceMonitorGapDetail(_runId, l.From, _clock(), l.Reason)) is { } gapRefused)
+                Problem = "Intervalul pierdut nu a putut fi trecut în jurnalul de audit: " + gapRefused;
             _audit(OperationAudit.DeviceMonitorStopped, OperationAudit.DeviceMonitorRunDetail(_runId, reason));
             lock (_journal) DeviceJournalMerge.StopRun(_journal, _clock());
             Save();
@@ -303,11 +313,11 @@ namespace LogAnalyzer.UI.ViewModels
             await RefreshAsync(initial: false);
         }
 
-        /// <summary>Runs on the window's thread when there is one (timer callbacks), directly otherwise (tests).</summary>
-        private static void Post(Action a)
+        /// <summary>Runs on the thread that created the monitor when it has a dispatcher (timer callbacks), directly otherwise (tests).</summary>
+        private void Post(Action a)
         {
             // a dispatcher whose thread is gone or shutting down never runs what is queued: the work is done directly then (it is serialised by the gate)
-            var d = System.Windows.Application.Current?.Dispatcher;
+            var d = _dispatcher;
             if (d is null || d.HasShutdownStarted || !d.Thread.IsAlive) a(); else d.BeginInvoke(a);
         }
 
