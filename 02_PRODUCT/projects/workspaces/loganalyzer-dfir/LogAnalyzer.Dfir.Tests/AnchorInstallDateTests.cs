@@ -154,6 +154,21 @@ public sealed class AnchorInstallDateTests : IDisposable
         Assert.Contains("propus de stație", AnchoredInstallDate.For(_audit.AuditPath, cont with { Status = AnchorContinuityStatus.Continuous, MatchedSeq = 1 }, fromStation: true).Why);
     }
 
+    [Fact]
+    public void A_log_that_could_not_be_read_is_not_reported_as_no_longer_containing_the_code()
+    {
+        var unreadable = new AnchorContinuity(AnchorContinuityStatus.Unreadable, "Jurnalul aplicației nu a putut fi citit: blocat", "ABCD", null);
+        foreach (var fromStation in new[] { false, true })
+        {
+            var why = AnchoredInstallDate.NoBaselineReason(unreadable, fromStation)!;
+            Assert.Contains("jurnalul aplicației nu a putut fi citit (vezi A11)", why);
+            Assert.DoesNotContain("nu mai conține codul", why);
+        }
+        var a16 = A16(Facts(Installed, AnchoredInstallDate.For(_audit.AuditPath, unreadable, fromStation: false)));
+        Assert.Equal(ControlStatus.Nedeterminat, a16.Status);
+        Assert.Contains("nu a putut fi citit (vezi A11)", a16.Detail);
+    }
+
     [Theory]
     [InlineData(StationPosture.Standalone)]
     [InlineData(StationPosture.IsolatedNetwork)]

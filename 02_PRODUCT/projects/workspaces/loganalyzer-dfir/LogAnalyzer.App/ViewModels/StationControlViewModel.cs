@@ -295,6 +295,8 @@ namespace LogAnalyzer.UI.ViewModels
                 bool auditedStart = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlStarted,
                     LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail(LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(posture), posture.ToString(),
                         new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent()).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator), PeriodDays, folders.Count, runId, LogAnalyzer.Dfir.Windows.Audit.ClassifiedFactCollector.AppSha256()));
+                // the programs the application starts during this control carry its id ("collector.exec"): only those are recognised later as its own
+                LogAnalyzer.Dfir.Auth.CollectorExec.CurrentRunId = runId;
                 _report = await Task.Run(() =>
                 {
                     // N13: only the Network edition registers the active probe (LogAnalyzer.Connectors); the other editions have none.
@@ -322,6 +324,8 @@ namespace LogAnalyzer.UI.ViewModels
                             facts.SelfWindows.AddRange(windows.Valid);
                             facts.InvalidSelfWindows.AddRange(windows.Regressions);
                             facts.InvalidSelfWindows.AddRange(windows.Invalid);
+                            // the programs the application started at earlier controls: their events are its own only on an exact match (A17)
+                            facts.CollectorExecs = LogAnalyzer.Dfir.Auth.OperationAudit.ReadCollectorExecs(auditPath, chainValid);
                             // a window is the application's only if it names this executable and the file there has this executable's fingerprint
                             facts.AppImagePath = Environment.ProcessPath ?? "";
                             facts.AppImageSha256 = Sha256OrEmpty(facts.AppImagePath);
@@ -371,7 +375,7 @@ namespace LogAnalyzer.UI.ViewModels
                 Status = $"Controlul s-a oprit din cauza unei erori neașteptate ({ex.GetType().Name}: {ex.Message}). " +
                          (audited ? "Eroarea a fost trecută în jurnalul de audit; repetați controlul." : "ATENȚIE: eroarea NU a putut fi trecută în jurnalul de audit (vezi avertismentul de sus); repetați controlul.");
             }
-            finally { IsBusy = false; }
+            finally { IsBusy = false; LogAnalyzer.Dfir.Auth.CollectorExec.CurrentRunId = ""; }
         }
 
         /// <summary>„Informații clasificate”: one row per classified file, unjustified exits first (owner request 2026-10-15: one tab, sorted by severity).</summary>

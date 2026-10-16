@@ -64,6 +64,8 @@ public static partial class ControlEvaluator
     public static ControlReport Evaluate(StationFacts f)
     {
         var r = new ControlReport { Facts = f };
+        // first: the events of the application's own programs (exact match with the sealed audit) leave the logs every other check reads
+        SeparateOwnActivity(f);
         Accounts(f, r);
         Policies(f, r);
         AuditAndLogs(f, r);
@@ -78,6 +80,7 @@ public static partial class ControlEvaluator
         AirGapStation(f, r);
         InternetEgress(f, r);
         DomainMembership(f, r);
+        OwnActivityCheck(f, r);
         // The posture of the executable decides which rules apply: the rest become "Nu se aplică" (never counted as findings).
         for (var i = 0; i < r.Checks.Count; i++) r.Checks[i] = ControlApplicability.Resolve(r.Checks[i], f.Posture);
         r.Actions.Sort((a, b) => a.TimeUtc.CompareTo(b.TimeUtc));

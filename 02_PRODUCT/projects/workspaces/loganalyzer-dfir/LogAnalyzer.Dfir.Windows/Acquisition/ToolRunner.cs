@@ -31,7 +31,8 @@ public static class ToolRunner
         foreach (var a in argList) psi.ArgumentList.Add(a);
 
         var start = DateTimeOffset.UtcNow;
-        using var p = Process.Start(psi) ?? throw new InvalidOperationException($"Could not start {exe}");
+        // through the one recording path: "collector.exec" in the sealed audit before the start, "collector.exec_done" after the end
+        using var p = LogAnalyzer.Dfir.Auth.CollectorExec.Start(psi);
         using var outW = new StreamWriter(outPath, false, new UTF8Encoding(false));
         using var errW = new StreamWriter(errPath, false, new UTF8Encoding(false));
         p.OutputDataReceived += (_, e) => { if (e.Data is not null) lock (outW) outW.WriteLine(e.Data); };
@@ -48,6 +49,7 @@ public static class ToolRunner
             }
             p.WaitForExit();
         }
+        LogAnalyzer.Dfir.Auth.CollectorExec.Done(p);
         ct.ThrowIfCancellationRequested();
         return new ToolRun(exe, argList, timedOut ? -1 : p.ExitCode, outPath, errPath, start, DateTimeOffset.UtcNow, timedOut);
     }
