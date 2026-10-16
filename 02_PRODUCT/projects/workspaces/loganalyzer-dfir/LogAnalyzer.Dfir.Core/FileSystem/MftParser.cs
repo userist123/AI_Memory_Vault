@@ -39,7 +39,8 @@ public sealed class MftParser : EvidenceParserBase
             "Se citesc doar atributele rezidente $STANDARD_INFORMATION și $FILE_NAME; un fișier cu multe nume poate avea numele într-o înregistrare de extensie (lista de atribute nu este urmată).",
             "O înregistrare liberă arată numele și orele rămase în ea; momentul ștergerii și cine a șters nu sunt înregistrate în $MFT (se caută în jurnalul USN sau în jurnalele Windows).",
             "O înregistrare liberă poate fi deja refolosită de alt fișier; atunci fișierul vechi nu mai apare deloc.",
-            "Calea unui fișier șters se reconstruiește din folderele părinte; dacă înregistrarea unui folder a fost refolosită între timp (alt număr de secvență), calea începe cu „…”.",
+            "Calea unui fișier șters se reconstruiește din folderele părinte; dacă înregistrarea unui folder a fost refolosită între timp (alt număr de secvență) sau tabela are un ciclu de părinți, calea începe cu „…”. Un folder șters este acceptat cu secvența cu 1 mai mare, pentru că NTFS o incrementează la eliberare.",
+            "Dacă $MFT a fost achiziționat de pe un volum viu, iar dosarul cazului este pe același volum, copierea probelor creează înregistrări noi și poate suprascrie înregistrări libere ale fișierelor șterse; pentru o achiziție curată, dosarul cazului trebuie să fie pe alt volum.",
             "Timestomp: ora de creare din $STANDARD_INFORMATION mai veche decât cea din $FILE_NAME este un indiciu, nu o dovadă; unele programe de instalare și de copiere lasă același tipar.",
         ],
         Status = ParserMaturity.Tested,
@@ -84,13 +85,16 @@ public sealed class MftParser : EvidenceParserBase
         {
             var parts = new List<string> { e.Name };
             var cur = e;
+            var visited = new HashSet<uint> { e.Number };   // a damaged table can hold a parent cycle: stop at the first repeat
             for (int depth = 0; depth < 256; depth++)
             {
                 uint parent = (uint)(cur.ParentRef & 0xFFFFFFFFFFFF);
                 ushort seq = (ushort)(cur.ParentRef >> 48);
                 if (parent == cur.Number) { parts.Reverse(); return string.Join("\\", parts.Select(p => p == "." ? "" : p)); }   // the root points at itself
-                // a parent record freed or reused since (different sequence number) is not the folder the file was in
-                if (!byNumber.TryGetValue(parent, out var p) || p.Sequence != seq) break;
+                if (!byNumber.TryGetValue(parent, out var p) || !visited.Add(parent)) break;
+                // The child references the sequence the folder had while it lived. NTFS increments the sequence number when it frees a record, so a
+                // freed folder shows seq + 1 (wrapping around at 65535); an in-use record must match exactly, otherwise it was reused for something else.
+                if (p.Sequence != seq && (p.InUse || p.Sequence != (ushort)(seq + 1))) break;
                 parts.Add(p.Name);
                 cur = p;
             }

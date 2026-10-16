@@ -76,8 +76,9 @@ public sealed class InvestigationPipeline
 
     public InvestigationPipeline(ParserRegistry? registry = null) => _registry = registry ?? WindowsParsers.Registry;
 
+    /// <summary>The $MFT collector is first on purpose: the table is read before the other artefacts are copied onto the volume.</summary>
     public static IReadOnlyList<ICollector> AllCollectors { get; } =
-        [new LiveStateCollector(), new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new MftCollector()];
+        [new MftCollector(), new LiveStateCollector(), new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector()];
 
     /// <summary>Creates a case. <paramref name="scope"/> is mandatory (owner decision 23): an incomplete scope is refused with <see cref="CaseScopeIncompleteException"/>.</summary>
     public static CaseWorkspace NewCase(string casesRoot, string name, CaseScope scope)

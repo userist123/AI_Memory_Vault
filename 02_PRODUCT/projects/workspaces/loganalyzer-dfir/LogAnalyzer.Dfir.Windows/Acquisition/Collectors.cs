@@ -127,7 +127,8 @@ public sealed class SrumCollector : ICollector
 
 /// <summary>
 /// The NTFS master file table ($MFT) of the system volume, read from the mounted volume (comparison row E8) in the complete profile only: it is large
-/// (hundreds of MB) and needs raw volume access. Read only, never writes to the volume. Without administrator rights the source is reported missing, not failed.
+/// (hundreds of MB) and needs raw volume access. Read only, never writes to the volume. Without administrator rights (or on a non-NTFS volume) the source is reported missing; any other read failure is a failure.
+/// It runs first among the collectors so the table is read before other artefacts are copied; a case folder on the same volume is acquired with a warning.
 /// </summary>
 public sealed class MftCollector : ICollector
 {
@@ -145,8 +146,24 @@ public sealed class MftCollector : ICollector
         var dest = Path.Combine(ctx.Case.RawDir("MFT"), "$MFT");
         var r = MftAcquisition.Acquire(volume, dest, ct);
         var o = new CollectorOutcome { Tool = "citire directă a volumului (doar citire)", ToolVersion = Version, Source = src, Commands = { $"MftAcquisition {volume} -> $MFT: {(r.Ok ? r.Bytes + " octeți, SHA-256 " + r.Sha256 : r.Problem)}" } };
-        if (!r.Ok || !File.Exists(dest)) { o.Status = EvidenceStatus.NotAvailable; o.Errors.Add(r.Problem.Length > 0 ? r.Problem : "$MFT nu a putut fi citit"); return o; }
-        o.Evidence.Add(ctx.Case.RegisterStored(dest, src, "MFT", LogAnalyzer.Dfir.FileSystem.MftParser.SourceTypeName, TemporalType.Historical, Name, Version));
+        var warning = MftAcquisition.IsSameVolume(ctx.Case.Root, volume) ? MftAcquisition.SameVolumeWarning(volume) : "";
+        if (warning.Length > 0) { o.Errors.Add(warning); ctx.Case.Audit("acquisition.warning", $"MftCollector: {warning}"); }
+        // Only "nothing to read here" (not administrator, not NTFS) is an absent source; a read that was attempted and failed is a failure.
+        if (!r.Ok || !File.Exists(dest))
+        {
+            o.Status = r.SourceAbsent ? EvidenceStatus.NotAvailable : EvidenceStatus.Failed;
+            o.Errors.Add(r.Problem.Length > 0 ? r.Problem : "$MFT nu a putut fi citit");
+            return o;
+        }
+        var item = ctx.Case.RegisterStored(dest, src, "MFT", LogAnalyzer.Dfir.FileSystem.MftParser.SourceTypeName, TemporalType.Historical, Name, Version, notes: warning);
+        if (!string.Equals(item.Sha256, r.Sha256, StringComparison.OrdinalIgnoreCase))
+        {
+            var why = $"Suma SHA-256 a $MFT copiat ({item.Sha256}) diferă de cea calculată la copiere ({r.Sha256}): copia nu este de încredere.";
+            ctx.Case.Audit("acquisition.hash_mismatch", $"MftCollector {item.EvidenceId}: {why}");
+            o.Status = EvidenceStatus.Failed; o.Errors.Add(why);
+            return o;
+        }
+        o.Evidence.Add(item);
         return o;
     }
 }
