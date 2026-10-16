@@ -108,7 +108,7 @@ public static class RemovableMediaInspector
         void Walk(string dir, string rel, int depth)
         {
             List<FileSystemInfo> items;
-            try { items = Read(dir); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return; }
+            try { items = Read(dir); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { listing.AccessErrors++; return; }
             foreach (var e in items)
             {
                 if (listing.Entries.Count >= maxEntries) { listing.Truncated = true; return; }
@@ -116,8 +116,9 @@ public static class RemovableMediaInspector
                 {
                     RelativePath = rel.Length == 0 ? e.Name : rel + "\\" + e.Name, IsDirectory = e is DirectoryInfo,
                     Hidden = e.Attributes.HasFlag(FileAttributes.Hidden), System = e.Attributes.HasFlag(FileAttributes.System),
-                    CreatedUtc = Utc(e.CreationTimeUtc), LastWriteUtc = Utc(e.LastWriteTimeUtc),
+                    CreatedUtc = Utc(e.CreationTimeUtc), LastWriteUtc = Utc(e.LastWriteTimeUtc), LastAccessUtc = Utc(e.LastAccessTimeUtc),
                 };
+                if (e.Attributes.HasFlag(FileAttributes.ReparsePoint)) listing.LinksNotFollowed++;
                 if (e is FileInfo fi)
                 {
                     entry.Size = fi.Length;
@@ -128,7 +129,7 @@ public static class RemovableMediaInspector
                             entry.Sha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fs));
                             hashed++;
                         }
-                        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+                        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { listing.AccessErrors++; }
                     if (fi.Extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase) && fi.Length is > 0 and <= MaxLinkBytes && ReadLink(fi.FullName) is { } link)
                     { entry.LnkTarget = link.Target; entry.LnkArguments = link.Arguments; entry.LnkWorkingDir = link.WorkingDir; }
                 }
