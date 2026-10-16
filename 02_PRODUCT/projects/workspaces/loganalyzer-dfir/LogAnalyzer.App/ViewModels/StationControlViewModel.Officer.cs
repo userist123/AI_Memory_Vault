@@ -61,6 +61,7 @@ namespace LogAnalyzer.UI.ViewModels
         partial void OnPreviousAnchorCodeChanged(string value)
         {
             if (!_applyingStationCode) _codeFromStation = false;
+            OnPropertyChanged(nameof(PlannedPeriod));   // the paper code moves the start of the one-click control's period
         }
 
         /// <summary>Puts the station's own suggestion in the field, marked as coming from the station (unsafe).</summary>
@@ -145,7 +146,14 @@ namespace LogAnalyzer.UI.ViewModels
             if (folder is null) return;
             try
             {
-                var x = AuditAnchor.Export(log, folder, Environment.MachineName, DateTimeOffset.UtcNow);
+                // review of PR #298: the copy of the log leaves the station audited first (every file listed), refused when the audit cannot be written
+                var now = DateTimeOffset.UtcNow;
+                AnchorExport? exported = null;
+                var dest = Path.Combine(folder, AuditAnchor.ExportFolderName(now));
+                if (ExportAudit.RunBundle(ExportAudit.LiveCaseId, "jurnal-cd-r", dest, [Path.GetFileName(log), Path.GetFileName(HashChain.HeadPath(log)) + " (dacă există)", "ancorare.txt"],
+                        () => exported = AuditAnchor.Export(log, folder, Environment.MachineName, now)) is { } refused)
+                { Status = "Copierea jurnalului nu s-a făcut: " + refused; return; }
+                var x = exported!;
                 AuthApp.Record(OperationAudit.AnchorExported, OperationAudit.AnchorExportedDetail(x.Anchor.Seq, x.Anchor.Code, x.LogSha256, x.Folder));
                 OfficerInfo = $"Jurnalul aplicației a fost copiat în {x.Folder}.{Environment.NewLine}{x.Anchor.Line}. SHA-256 al copiei: {x.LogSha256}.{Environment.NewLine}" +
                               "Ardeți folderul pe un CD-R (se scrie o singură dată), notați pe disc data și stația și predați-l ofițerului de securitate.";

@@ -146,7 +146,7 @@ namespace LogAnalyzer.UI.ViewModels
         public bool HasResult => Result is not null;
         public string FlowNextText => _flow.IsLastStep ? "Pornește controlul" : "Înainte";
 
-        partial void OnPeriodChoiceChanged(ControlPeriodChoice value) => OnPropertyChanged(nameof(IsCustomPeriod));
+        partial void OnPeriodChoiceChanged(ControlPeriodChoice value) { OnPropertyChanged(nameof(IsCustomPeriod)); OnPropertyChanged(nameof(PlannedPeriod)); }
         partial void OnResultChanged(ControlResultScreen? value)
         {
             OnPropertyChanged(nameof(HasResult));
@@ -460,14 +460,6 @@ namespace LogAnalyzer.UI.ViewModels
             var refused = LogAnalyzer.UI.Services.ExportAudit.Run(Path.GetFileName(ws.Root.TrimEnd('\\', '/')), "pdf-control", _report?.Checks.Count ?? 0, dlg.FileName, () => CopyWithSignature(pdf, dlg.FileName));
             Status = refused is null ? $"Copia raportului a fost salvată: {dlg.FileName}." : "Copia nu a fost salvată: " + refused;
             if (refused is null) OpenFile(dlg.FileName);
-        }
-
-        /// <summary>A copy of a case report (with its .sig) outside the case, for <see cref="ExportForOfficer"/>: audited first, refused when the audit cannot be written. Returns the refusal or null.</summary>
-        private string? CopyOutOfCase(string pdf, string destination, string format)
-        {
-            var ws = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
-            if (ws is null) return LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage;
-            return LogAnalyzer.UI.Services.ExportAudit.Run(Path.GetFileName(ws.Root.TrimEnd('\\', '/')), format, _report?.Checks.Count ?? 0, destination, () => CopyWithSignature(pdf, destination));
         }
 
         private static void CopyWithSignature(string pdf, string destination)

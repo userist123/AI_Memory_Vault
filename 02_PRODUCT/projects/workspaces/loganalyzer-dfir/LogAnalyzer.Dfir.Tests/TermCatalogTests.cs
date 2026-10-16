@@ -59,6 +59,14 @@ public class TermCatalogTests
     }
 
     [Fact]
+    public void Nedeterminat_also_explains_the_missing_anchor_code_and_the_comparison_that_cannot_be_made()
+    {
+        var t = TermCatalog.Find("NEDETERMINAT")!.Explanation;
+        Assert.Contains("codul de ancorare nu a fost introdus", t);
+        Assert.Contains("nu se poate compara (vezi A11)", t);
+    }
+
+    [Fact]
     public void An_unknown_word_has_no_entry_and_no_tooltip()
     {
         Assert.Null(TermCatalog.Find("ShimCache"));

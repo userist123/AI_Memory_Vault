@@ -139,7 +139,10 @@ namespace LogAnalyzer.UI.ViewModels
             try
             {
                 var signed = MediaRegisterFlows.Sign(doc, cert, OfficerFlows.Trusted(OfficerStore.Shared.Load()));
-                var path = MediaRegisterFlows.Export(folder, signed);
+                // review of PR #298: the register (media serials) leaves the station audited first; refused when the audit cannot be written
+                var path = Path.Combine(folder, SignedMediaRegister.FileName(doc.Version));
+                if (ExportAudit.Run(ExportAudit.LiveCaseId, "registru-medii-semnat", doc.Entries.Count, path, () => MediaRegisterFlows.Export(folder, signed)) is { } refused)
+                { Status = "Registrul a fost semnat, dar NU a fost exportat: " + refused; return; }
                 AuthApp.Record(OperationAudit.MediaRegisterSigned, OperationAudit.MediaRegisterDetail(doc.Version, signed.Sha256, "SEMNAT", false, OfficerFingerprint.Of(cert), $"{doc.Entries.Count} medii, exportat în {folder}"));
                 Result = $"Registrul versiunea {doc.Version} a fost semnat și exportat: {path} (și semnătura .p7s).{Environment.NewLine}SHA-256: {signed.Sha256}{Environment.NewLine}" +
                          "Importați-l pe fiecare stație (și pe aceasta) cu „Importă registrul semnat”, scriind amprenta ofițerului de pe procesul-verbal.";

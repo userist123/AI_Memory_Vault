@@ -105,6 +105,7 @@ public sealed class UsabilityGlossaryTests : IDisposable
         public string Summary => "";
         public bool HasResult { get; private set; }
         public string AnchorLine => "";
+        public string PlannedPeriod => "Perioada: de la ultimul control din jurnalul sigilat (12 zile).";
         public IReadOnlyList<StatusCount> ResultCounts => [];
         public string PreviousAnchorCode { get; set; } = "";
         public Task RunQuickAsync() { Runs++; HasResult = true; PropertyChanged?.Invoke(this, new(nameof(HasResult))); return Task.CompletedTask; }
@@ -145,6 +146,21 @@ public sealed class UsabilityGlossaryTests : IDisposable
         await vm.RunStationControlCommand.ExecuteAsync(null);
         Assert.Equal(0, quick.Runs);
         Assert.Contains("Control stație", vm.OpenStatus);
+        // review of PR #298: Ctrl+O, Ctrl+Shift+S and Ctrl+E are gated like the panel
+        vm.OpenControlReportCommand.Execute(null);
+        vm.SignControlReportCommand.Execute(null);
+        vm.ExportForOfficerCommand.Execute(null);
+        Assert.Equal((0, 0, 0), (quick.Opens, quick.Signs, quick.Exports));
+    }
+
+    [Fact]
+    public void Home_shows_the_period_before_the_one_click_control_and_lets_it_be_changed()
+    {
+        var home = File.ReadAllText(Path.Combine(AppDir(), "Views", "HomeView.xaml"));
+        Assert.Contains("{Binding QuickControl.PlannedPeriod}", home);
+        Assert.Contains("Schimbă perioada", home);
+        var vm = new StationControlViewModel();
+        Assert.StartsWith("Perioada controlului:", vm.PlannedPeriod);
     }
 
     [Fact]

@@ -34,6 +34,27 @@ namespace LogAnalyzer.UI.Services
             return null;
         }
 
+        /// <summary>
+        /// Several files into one folder (review of PR #298: „Exportă pentru ofițer”): the intent lists every planned file and is written BEFORE anything; when it
+        /// cannot be written the whole export is refused and <paramref name="write"/> is not called. After the write, every file found under
+        /// <paramref name="folder"/> is recorded with its SHA-256; a failed write is recorded as failed and rethrown.
+        /// </summary>
+        public static string? RunBundle(string caseId, string format, string folder, System.Collections.Generic.IReadOnlyList<string> plannedFiles, Action write)
+        {
+            if (AuthApp.TryRecord(OperationAudit.ExportUnmasked, OperationAudit.ExportBundleIntentDetail(caseId, format, folder, plannedFiles)) is { } error)
+                return Refused(error);
+            try { write(); }
+            catch (Exception ex)
+            {
+                AuthApp.Record(OperationAudit.ExportUnmasked, OperationAudit.ExportFailedDetail(caseId, format, plannedFiles.Count, ex.GetType().Name));
+                throw;
+            }
+            if (System.IO.Directory.Exists(folder))
+                foreach (var f in System.IO.Directory.EnumerateFiles(folder, "*", System.IO.SearchOption.AllDirectories))
+                    AuthApp.Record(OperationAudit.ExportUnmasked, OperationAudit.ExportBundleFileDetail(caseId, format, folder, f));
+            return null;
+        }
+
         /// <summary>The case id used for the exports of the main window: the folder name of the live case.</summary>
         public static string LiveCaseId => System.IO.Path.GetFileName(LiveCase.Root.TrimEnd('\\', '/'));
     }

@@ -135,7 +135,7 @@ public static class Glossary
         new("status_de_verificat", "DE VERIFICAT", "Trebuie comparat cu documentele", "To verify",
             "Aplicația arată faptele, dar doar organizația poate spune dacă erau aprobate. Comparați cu registrele și aprobările scrise.", ["DeVerificat", "De verificat"]),
         new("status_nedeterminat", "NEDETERMINAT", "Nu s-a putut verifica", "Undetermined",
-            "Sursa necesară nu a putut fi citită (de exemplu aplicația nu a rulat ca administrator). Nu înseamnă nici bine, nici rău și nu înseamnă că activitatea nu a avut loc.", ["Nedeterminat"]),
+            "Verificarea nu s-a putut face: sursa necesară nu a putut fi citită (de exemplu aplicația nu a rulat ca administrator), codul de ancorare nu a fost introdus, sau nu se poate compara (vezi A11) pentru că jurnalul nu mai conține codul tastat. Nu înseamnă nici bine, nici rău și nu înseamnă că activitatea nu a avut loc.", ["Nedeterminat"]),
         new("status_nu_se_aplica", "NU SE APLICĂ", "Regula nu privește această ediție", "Not applicable",
             "Regula nu privește postura acestei ediții (de exemplu o regulă de rețea pe o stație izolată). Nu se numără nici ca bine, nici ca abatere.", ["NuSeAplica", "NU SE APLICA", "Nu se aplică"]),
         new("status_neconfirmat", "NECONFIRMAT", "Nu s-a putut confirma aici", "Unconfirmed",
