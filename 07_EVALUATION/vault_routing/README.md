@@ -5,11 +5,11 @@ on the working tree of `claude/vault-universal-access` (base commit in the JSON)
 
 | Measure | Value |
 |---|---:|
-| Routes (files reachable by `vault://`) | 4433 |
-| Domains (`04_CONFIG/vault_domains.yaml`, `expand: subdirs` included) | 114 (113 before the Casa3D sub-directory landed on main: `expand: subdirs` adds one domain per sub-directory). `VAULT_STATE.md` states the current count (4433 routes, 117 domains; by URI 4433/4433, re-measured 2026-10-10) and a test checks it; the by-name rows below were re-measured 2026-10-10 on 4433 routes |
-| `vault_resolve(uri)` returns that route | 4433 / 4433 |
-| `vault_resolve(<last slug segment>)` returns that route | 4199 / 4433 (94.7%) |
-| … returns AMBIGUOUS (name shared by several files) | 234 (readme 116, agent 22, current 10, …) |
+| Routes (files reachable by `vault://`) | 4457 |
+| Domains (`04_CONFIG/vault_domains.yaml`, `expand: subdirs` included) | 114 (113 before the Casa3D sub-directory landed on main: `expand: subdirs` adds one domain per sub-directory). `VAULT_STATE.md` states the current count (4457 routes, 118 domains; by URI 4457/4457, re-measured 2026-10-15) and a test checks it; the by-name rows below were re-measured 2026-10-15 on 4457 routes |
+| `vault_resolve(uri)` returns that route | 4457 / 4457 |
+| `vault_resolve(<last slug segment>)` returns that route | 4216 / 4457 (94.6%) |
+| … returns AMBIGUOUS (name shared by several files) | 241 (readme 116, agent 22, current 10, …) |
 | … RESOLVED to a different file | **0** |
 
 What this does and does not show:
@@ -21,5 +21,5 @@ What this does and does not show:
   `07_EVALUATION/memory_usage/work_queries.json` returned their `source_file` 0/20 times, at top-1 and in the top 5.
   Those questions are about topics, and the file a task is listed in is not where its answer lives.
   Content questions remain `memory_search` / `vault_search`, whose measured quality is in `VAULT_STATE.md` §5.
-- Ambiguous names with the requested file outside the top 5 candidates: 129 (mostly `readme`).
+- Ambiguous names with the requested file outside the top 5 candidates: 136 (mostly `readme`).
   `vault_list(<domain>)` or the full URI reaches them.

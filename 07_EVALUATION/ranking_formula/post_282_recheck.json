@@ -1,0 +1,52 @@
+{
+  "schema": "ranking-arm-post-282-recheck.v1",
+  "why": "PR #282 fixed D-04 (a retrieval-cache hit returned an empty fused_ranking, collapsing the fused_score key to (0.0, id)). That bug could produce the same no-op symptom, so the sabotage control and the arm-independent ceiling were re-run on the rebased tree.",
+  "measured_on_base": "origin/fable/remediation-2026-10-14 (PR #282) + this PR, 2026-10-15",
+  "benchmark_sha256": "eeb53822ae5f022df89290d6fca789c1d4387b7572ed70103a7c08aae5b57eaa",
+  "n_notes_in_index": 1258,
+  "operating_point": {
+    "principal": "AI_AGENT",
+    "page_size": 5,
+    "graph_expansion": false
+  },
+  "scripts": [
+    "30_SCRIPTS/evaluation/run_ranking_arm_experiment.py (run_arm, run_arm_sabotaged, cases_with_different_order, summarise; agent point only)",
+    "30_SCRIPTS/evaluation/measure_reranker_ceiling.py"
+  ],
+  "fused_score": {
+    "context_recall": "24/130",
+    "sabotage_changed_cases": 0
+  },
+  "baseline": {
+    "context_recall": "22/130",
+    "sabotage_changed_cases": 158
+  },
+  "agent_page_shorter_than_5": 41,
+  "agent_page_empty": 22,
+  "ceiling": {
+    "gold_anywhere_in_pool": "92/130",
+    "reachable_by_reranker_below_rank_5": 68,
+    "not_in_pool": 38,
+    "ceiling_by_k": {
+      "5": 24,
+      "10": 35,
+      "20": 49,
+      "50": 74,
+      "100": 87,
+      "200": 92
+    }
+  },
+  "before_282": {
+    "fused_score": {
+      "context_recall": "24/130",
+      "sabotage_changed_cases": 0
+    },
+    "baseline": {
+      "context_recall": "22/130",
+      "sabotage_changed_cases": 154
+    },
+    "gold_anywhere_in_pool": "94/130",
+    "n_notes_in_index": 1134
+  },
+  "not_rerun": "the other three arms, the human point and the 3-run determinism check (about 35 min per arm per point on the shared runner); results.json and REPORT.md tables are the pre-#282 run"
+}

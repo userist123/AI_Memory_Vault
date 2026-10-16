@@ -83,6 +83,17 @@ REPORT_MD_PATH = (
 )
 
 
+def arm_suffixed(path: Path, ranking_arm: str) -> Path:
+    """Artifacts for a non-baseline arm get their own filename.
+
+    The committed baseline artifacts stay where they are: a second arm must be
+    comparable against them, not silently overwrite them.
+    """
+    if ranking_arm == RANKING_ARM_BASELINE:
+        return path
+    return path.with_name(f"{path.stem}__{ranking_arm}{path.suffix}")
+
+
 def wilson_score_interval(k: int, n: int, confidence: float = 0.95) -> Dict[str, float]:
     """Calculates asymmetric Wilson score confidence interval for a binomial proportion."""
     if n == 0:
@@ -169,11 +180,18 @@ class RetrievalLossFunnel:
         controller: Optional[MemoryController] = None,
         index: Optional[VaultIndex] = None,
         storage: Optional[FileStorageEngine] = None,
+        ranking_arm: str = RANKING_ARM_BASELINE,
     ):
         self.repo_root = Path(repo_root) if repo_root else REPO_ROOT
         self._index = index
         self._storage = storage
         self._controller = controller
+        # The original run hardcoded RANKING_ARM_BASELINE while search() defaults
+        # to RANKING_ARM_FUSED_SCORE, so the whole funnel described a ranking no
+        # caller uses. The default here stays BASELINE so the committed artifact
+        # remains reproducible; `--ranking-arm` measures the production arm and
+        # writes to its own files.
+        self.ranking_arm = ranking_arm
         self._cases: Optional[List[Dict[str, Any]]] = None
 
     @property
@@ -196,7 +214,7 @@ class RetrievalLossFunnel:
                 index=self.index,
                 enable_graph_expansion=False,
                 strict_graph_expansion=False,
-                ranking_arm=RANKING_ARM_BASELINE,
+                ranking_arm=self.ranking_arm,
                 enable_spreading_activation=False,
                 enable_cognitive_core=False,
             )
@@ -1044,8 +1062,32 @@ def render_report(data: Dict[str, Any]) -> str:
             interp = "Plafonul absolut al pool-ului actual de candidați BM25/fuziune."
         w(f"| $k = {k_str}$ | **{reach} / 130** | **{rec:.2f}%** | [{l:.2f}%, {u:.2f}%] | {interp} |")
     w("")
-    w("> [!TIP]")
-    w(f"> **Plafonul Oracol la k=200 este {agent_op['oracle_ceiling']['200']['recall']*100:.2f}%** ({agent_op['oracle_ceiling']['200']['reachable_cases']}/130). Aceasta demonstrează că generatorul existent identifică nota corectă în peste 3 sferturi din cazuri. Niciun reranker pe acest pool nu poate depăși 76.15%, dar spațiul de creștere de la 16.15% la 76.15% este uriaș (+60 pp).")
+    _oracle200 = agent_op["oracle_ceiling"]["200"]
+    _summary = agent_op["summary"]
+    _lc = agent_op["loss_categories"]
+    _count = lambda name: (_lc[name]["count"] if isinstance(_lc.get(name), dict) else _lc.get(name, 0))
+    _recoverable = _count("PAGINATION_CUT")
+    _generation = _count("NEVER_CANDIDATE") + _count("CANDIDATE_LIMIT_CUT")
+    _policy = _count("AGENT_LIFECYCLE_FLOOR_EXCLUDED") + _count("RAW_EXCLUDED")
+    w("> [!WARNING]")
+    w("> **Acest plafon nu este o proprietate a pool-ului de candidați și nu trebuie citat ca atare.**")
+    w("> `diagnose_case` caută rangul notei de aur mai întâi în pagina returnată și abia")
+    w("> apoi în ordinea de fuziune, deci plafonul se mișcă odată cu brațul de clasare,")
+    w("> pentru un pool identic. La $k$ = `page_size`, pe brațul care sortează chiar după")
+    w("> scorul de fuziune, definiția devine circulară și plafonul coincide cu recall-ul obținut.")
+    w(f"> Cifra măsurată aici, la $k=200$, este {_oracle200['recall'] * 100:.2f}% "
+      f"({_oracle200['reachable_cases']}/{_summary['total_cases']}), "
+      f"față de un recall obținut de {_summary['recall'] * 100:.2f}% "
+      f"({_summary['hits']}/{_summary['total_cases']}).")
+    w(">")
+    w("> Plafonul independent de braț este măsurat separat, din ordinea de fuziune și numai")
+    w("> din ea, de `30_SCRIPTS/evaluation/measure_reranker_ceiling.py`; rezultatul este în")
+    w("> `07_EVALUATION/ranking_formula/reranker_ceiling.json`.")
+    w(">")
+    w("> Marja utilă pentru un reranker nu este diferența dintre recall și plafon, ci numai")
+    w(f"> cazurile care au nota de aur în pool sub rangul returnat: **{_recoverable}**. Celelalte")
+    w(f"> ratări sunt {_generation} eșecuri de generare de candidați și {_policy} excluderi de")
+    w("> politică, pe care reorganizarea listei nu le atinge.")
     w("")
     w("---")
     w("")
@@ -1226,7 +1268,7 @@ def render_report(data: Dict[str, Any]) -> str:
     w("")
     w("Pentru rigoare epistemologică și protecția integrității deciziilor viitoare, consemnăm explicit limitele interpretative ale acestor măsurători:")
     w("")
-    w("1. **Nu se poate concluziona că un reranker va atinge în practică plafonul de 76.15%**: Plafonul oracol presupune un judecător omniscient. Modelele reale de reranking (cum ar fi BGE-Reranker sau MiniLM) au propriile rate de eroare și deplasare negativă a candidaților corecți.")
+    w(f"1. **Nu se poate concluziona că un reranker va atinge în practică plafonul de {agent_op['oracle_ceiling']['200']['recall'] * 100:.2f}%**: Plafonul oracol presupune un judecător omniscient. Modelele reale de reranking (cum ar fi BGE-Reranker sau MiniLM) au propriile rate de eroare și deplasare negativă a candidaților corecți.")
     w("2. **Nu se poate concluziona că Dense Retrieval este lipsit de valoare**: Deși nu este blocajul majoritar în prezent, cele 9 cazuri de nepotrivire totală de vocabular (`lexical_overlap == 0`) nu pot fi rezolvate de niciun reranker pe candidați BM25. Dense Retrieval va rămâne necesar ca a doua etapă de optimizare odată ce problema de clasare este rezolvată.")
     w("3. **Nu se poate extrapola comportamentul la un corpus deschis / neindexat**: Măsurătorile reflectă exact compoziția actuală a celor 969 de note din depozit. Modificări majore în ontologie sau adăugarea de sute de note noi pot schimba dinamica densității lexicale.")
     w("4. **Nu se poate concluziona că limba română este mai dificilă pentru modelele de limbaj**: Deficitul observat este strict un artefact mecanic de tokenizare regex în codul Python (`TOKEN_RE`), nu o incapacitate cognitivă a algoritmilor.")
@@ -1246,6 +1288,11 @@ def main() -> int:
     parser.add_argument("--diagnose", action="store_true", help="Run full diagnostic across operating points and generate artifacts (PR 3)")
     parser.add_argument("--render-only", action="store_true", help="Render LOSS_FUNNEL_REPORT.md from existing loss_funnel_cases.json")
     parser.add_argument("--all", action="store_true", help="Run negative controls and full diagnostic")
+    parser.add_argument(
+        "--ranking-arm", default=RANKING_ARM_BASELINE,
+        help=("Ranking arm to measure. The original run hardcoded 'baseline' while "
+              "search() defaults to 'fused_score'; pass fused_score to measure the "
+              "arm production actually uses. Non-baseline arms write to their own files."))
 
     args = parser.parse_args()
 
@@ -1254,16 +1301,19 @@ def main() -> int:
     run_diagnose = args.diagnose or args.all
     render_only = args.render_only
 
-    harness = RetrievalLossFunnel()
+    harness = RetrievalLossFunnel(ranking_arm=args.ranking_arm)
+    cases_json_path = arm_suffixed(CASES_JSON_PATH, args.ranking_arm)
+    report_md_path = arm_suffixed(REPORT_MD_PATH, args.ranking_arm)
+    print(f"RANKING_ARM={args.ranking_arm}")
 
     if render_only:
-        if not CASES_JSON_PATH.exists():
-            print(f"Error: {CASES_JSON_PATH} not found. Run with --diagnose first.")
+        if not cases_json_path.exists():
+            print(f"Error: {cases_json_path} not found. Run with --diagnose first.")
             return 1
-        data = json.loads(CASES_JSON_PATH.read_text(encoding="utf-8"))
+        data = json.loads(cases_json_path.read_text(encoding="utf-8"))
         report_text = render_report(data)
-        REPORT_MD_PATH.write_text(report_text, encoding="utf-8")
-        print(f"Rendered report written to {REPORT_MD_PATH}")
+        report_md_path.write_text(report_text, encoding="utf-8")
+        print(f"Rendered report written to {report_md_path}")
         return 0
 
     if run_controls:
@@ -1303,13 +1353,16 @@ def main() -> int:
         print("=================================================================")
         t0 = time.perf_counter()
         data = diagnose_operating_points(harness)
-        CASES_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
-        CASES_JSON_PATH.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-        print(f"Diagnostic artifact saved to {CASES_JSON_PATH} ({CASES_JSON_PATH.stat().st_size} bytes)")
+        # Recorded in the artifact, because the first run's numbers were quoted
+        # for weeks without anyone knowing which arm produced them.
+        data["ranking_arm"] = harness.ranking_arm
+        cases_json_path.parent.mkdir(parents=True, exist_ok=True)
+        cases_json_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"Diagnostic artifact saved to {cases_json_path} ({cases_json_path.stat().st_size} bytes)")
 
         report_text = render_report(data)
-        REPORT_MD_PATH.write_text(report_text, encoding="utf-8")
-        print(f"Rendered report saved to {REPORT_MD_PATH} ({REPORT_MD_PATH.stat().st_size} bytes)")
+        report_md_path.write_text(report_text, encoding="utf-8")
+        print(f"Rendered report saved to {report_md_path} ({report_md_path.stat().st_size} bytes)")
         elapsed = time.perf_counter() - t0
         print(f"Full diagnostic elapsed: {elapsed:.2f} seconds")
 

@@ -29,6 +29,15 @@ The repository layout is a trap for newcomers in three specific ways.
 is `03_IMPLEMENTATION/packages/memory/controller.py`, roughly 1000 lines. A
 `grep` inside `memory_controller/` finds nothing and is not evidence of
 absence. An external audit reached exactly that false conclusion.
+The shim has a second trap: a file reachable under both names is imported
+as **two module objects**. `retrieval.context.candidate_generation` and
+`memory_controller.context.candidate_generation` are the same file and `is`
+not the same module; the controller uses the latter. A monkeypatch on the
+former changes nothing the controller sees — which is how an entire
+experiment ran three identical arms and reported it as a result (section 5).
+Patch the module the controller's function actually belongs to
+(`sys.modules[MemoryController.__module__].generate_candidates.__module__`)
+and prove it with a negative control that must change the output.
 
 **A module existing is not a module being used.** Before believing any
 component is "in production", run the rule from `CLAUDE.md`:
@@ -73,7 +82,7 @@ in its constructor. Corrected 2026-09-06.
 | `30_SCRIPTS/ingestion/extract_book_concepts.py` (rule-based) | real, **unusable on books** | 28% of its 112 corpus candidates are not terms |
 | `03_IMPLEMENTATION/packages/routing/` (agent router + dispatcher) | real and tested, **NOT wired into production** | reachable only through the manual CLI `python -m routing.route_cli` (`probe` / `route` / `dispatch --execute`); no production module imports it, it does not call `memory_search`, and nothing dispatches the verifier it selects (`PENDING_VERIFICATION` is terminal). Dispatch is tested against the real `04_CONFIG/agent_router.json` with fake executables only; no real agent was invoked (`20_TESTS/test_agent_dispatch_real_config.py`). Since 2026-10-16 the registry lists the Claude Code subagents (`claude_subagent` transport: vault-worker, vault-reviewer, Explore), available only when `CLAUDECODE=1`; such a route is executed by the host's Agent tool, never by `dispatch`, and a missing vendor-independent verifier falls back to vault-reviewer as a logged fallback (`20_TESTS/test_cost_router_token_waste.py`) |
 | `03_IMPLEMENTATION/packages/agent_bridge/` (secure bridge) | library + tests, **NOT wired, no transport** | `transport: windows_named_pipe` is validated in `04_CONFIG/agent_bridge.json` but no pipe server exists; `load_bridge_config()` / `build_bridge()` and `AntigravitySession` have no consumer outside `20_TESTS`; nothing runs it end to end. `minimum_ttl_seconds` is enforced and an AGY session never carries context across tasks (`20_TESTS/test_agent_bridge_hardening.py`), verified against fakes, not the real `agy` |
-| Direct routes `vault://` (`vault_access/`, 04_CONFIG/vault_domains.yaml) | real, **in the MCP server, CLI and Telegram bot** | measured 2026-10-10: 4433 routes in 117 domains (clean checkout; re-checked by `test_route_and_domain_counts_are_current`); by URI 4433/4433; by file name (measured 2026-10-10 on 4433 routes) 4199 resolve to themselves, 234 AMBIGUOUS, **0 wrong**; `07_EVALUATION/vault_routing/`. Names and titles only — topical questions still go to `memory_search`. The first call needs the metadata of every route: the MCP server warms it in a background thread at start (C YAML loader when PyYAML has it, one frontmatter parse per file; `20_TESTS/test_vault_access_perf.py`) |
+| Direct routes `vault://` (`vault_access/`, 04_CONFIG/vault_domains.yaml) | real, **in the MCP server, CLI and Telegram bot** | measured 2026-10-15: 4457 routes in 118 domains (clean checkout; re-checked by `test_route_and_domain_counts_are_current`); by URI 4457/4457; by file name (measured 2026-10-15 on 4457 routes) 4216 resolve to themselves, 241 AMBIGUOUS, **0 wrong**; `07_EVALUATION/vault_routing/`. Names and titles only — topical questions still go to `memory_search`. The first call needs the metadata of every route: the MCP server warms it in a background thread at start (C YAML loader when PyYAML has it, one frontmatter parse per file; `20_TESTS/test_vault_access_perf.py`) |
 | Access policy per egress channel (`04_CONFIG/access_policy.yaml`) | real, enforced on every `vault_*` call; **two rule sets on one server** | cloud CLIs ≤ INTERNAL, Telegram ≤ INTERNAL, web export PUBLIC; inbox, archive, RAW skills never served to agents, and a refusal is returned as NOT_FOUND (real reason only in the audit); MCP and the CLI cannot assert the owner or the local channel (owner needs an interactive terminal). Single-user machine: an agent with a shell can still read files directly — this policy binds the vault tools, OS permissions bind the rest. Since 2026-10-14 a `quarantined: true` note is withheld by `vault_read`/`vault_get_metadata`/`vault_check_quotes` (and the Telegram bot) exactly as by `memory_get`: one predicate, `interfaces/vault_cli.eligible_for_agent` (`20_TESTS/test_vault_routes_quarantine_parity.py`); before, the vault routes served its body. Still divergent, not changed: `memory_search`/`memory_get`/`recall_cli` do not apply the domain/classification ceilings of `access_policy.yaml` nor `redact()` (0 notes carry a `classification` label today), and the REST gateway reads `storage` directly with no lifecycle floor, quarantine, audit or redaction. Unifying them is an architecture decision for the owner |
 | Ollama/Telegram assistant (`vault_access/ollama_assistant.py`) | real, **not yet run against a live Ollama** | reads are extractive (no model call); questions use native `/api/chat` with explicit `num_ctx`, truncation check and verbatim-quote verification; proved with a fake transport (assistant + Telegram: 39 tests) |
 | Book-to-Memory research modules (`lifecycle/validation/book_to_memory_*.py`, 19 modules: the 11 of phases 1-11 and 8 evaluation-integrity modules for PR #209 B03-B08: run config, leakage, paired statistics, raters, blind packet, real-model ablation harness, prompt audit, human labels) | **present, research-only, NOT wired** | no production consumer: only each other, the research runners and scripts (`08_RESEARCH/BOOK_TO_MEMORY/`, `30_SCRIPTS/evaluation/*b2m*`) and `20_TESTS/test_book_to_memory_*.py` import them. Their usage-test and ablation gates have no built-in scores: without supplied observations they report `INSUFFICIENT_DATA`, and without a recorded run config an ablation is refused as not comparable. The B03 task packet (`08_RESEARCH/BOOK_TO_MEMORY/b03_task_packet/`, 51 tasks, 204 trials, prompts only) has not been run: no real-model ablation, no multi-rater scoring and no human-label calibration exists (B03, B05, B06 wait on the owner). B07 was measured: 2 exact text overlaps in the frozen v1/v2 benchmarks (flagged), 0 in the H1 sets (`07_EVALUATION/b2m_leakage/`). Passing unit tests is not empirical evidence (PR #209 B01, B09); open items in `08_RESEARCH/BOOK_TO_MEMORY/OPEN_BLOCKERS.md`. Their owner-approval token is bound to the exact note: it signs the SHA-256 of the canonical note, its revision marker and an expiry, and an edit after approval, a replay, an expired or an old-format token is refused (B02; `20_TESTS/test_book_to_memory_lifecycle_gates.py::test_32_*`). A blocker's severity cannot be lowered, nor a blocker deleted, without an owner attestation in `08_RESEARCH/BOOK_TO_MEMORY/SEVERITY_ATTESTATIONS.md`; the `Repository Hygiene` workflow enforces it on pull requests (B12; `20_TESTS/research/test_blocker_severity_downgrade.py`) |
@@ -186,13 +195,60 @@ whole-corpus retrieval numbers.
   Across the whole graph population, 30 of 114 typed relations are verified (26.3% precision; 84 total rejections
   documented with rationales in `07_EVALUATION/edge_audit_v2_remaining/AUDIT_RESULT.md` and simulated in
   `07_EVALUATION/edge_audit_v2_remaining/audit_purge_dry_run_report.md`).
-- **Causal loss attribution of missed benchmark cases: measured, single run.** Evaluated on all 130
-  non-abstain benchmark v3 cases in `07_EVALUATION/loss_funnel/LOSS_FUNNEL_REPORT.md` (and `loss_funnel_cases.json`).
-  Under production agent operating point (`AI_AGENT`, `page_size=5`), 71.56% of misses are `PAGINATION_CUT`
-  (ranked > 5; median rank 20.5), 13.76% `AGENT_LIFECYCLE_FLOOR_EXCLUDED`, 11.93% `NEVER_CANDIDATE`, 1.83%
-  `CANDIDATE_LIMIT_CUT`, and 0.92% `RAW_EXCLUDED` (0.00% undetermined). A pre-registered decision rule
-  *points to* a cross-encoder / reranker rather than blind candidate generator expansion. That is the outcome of the
-  rule on one run, not an adoption: no reranker is built, wired or evaluated.
+- **Every benchmark figure quoted before 2026-10-07 was measured on a ranking arm production does not use.**
+  `search()` defaults to `RANKING_ARM_FUSED_SCORE`; the v3 runner, the loss funnel and the tokenizer
+  experiment all passed `RANKING_ARM_BASELINE`. Remeasured on the production arm at the agent operating point
+  (`AI_AGENT`, `page_size=5`, floor on, graph off), 130 measurable cases: recall 24/130 (18.46%), of which the
+  misses are 70 `PAGINATION_CUT`, 15 `AGENT_LIFECYCLE_FLOOR_EXCLUDED`, 13 `NEVER_CANDIDATE`, 7
+  `CANDIDATE_LIMIT_CUT`, 1 `RAW_EXCLUDED` (`07_EVALUATION/loss_funnel/LOSS_FUNNEL_REPORT__fused_score.md`).
+  The funnel's "oracle ceiling" is not a property of the candidate pool — it reads gold's rank from the returned
+  page first, so it moves with the arm (76.15% on baseline, 72.31% on fused_score, same pool). The arm-independent
+  ceiling, from the fusion order alone, is 92/130 (70.77%; re-measured 2026-10-15 on the tree after PR #282, 1258
+  notes in the index): 68 cases hold the right note in the pool below rank 5, which is what a reranker could reach;
+  38 do not have it in the pool at all, which it cannot. Before #282 (1134 notes) the same script gave 94/130, 70
+  and 36 (20 candidate-generation failures, 16 policy exclusions); the index grew from 1134 to 1258 notes in
+  between, and the change is not attributed further (`07_EVALUATION/ranking_formula/reranker_ceiling.json` holds the
+  pre-#282 run, `post_282_recheck.json` the new one; DEVIATIONS.md D-5). No reranker
+  is built, wired or evaluated.
+- **The production ranking step is a no-op.** `generate_candidates()` returns notes already sorted by
+  `(-fused_score, id)`, and `RANKING_ARM_FUSED_SCORE` sorts by the same key: on all 160 benchmark cases, replacing
+  its sort key with a constant changed nothing, while the same sabotage changed 154 pages under `baseline`
+  (`07_EVALUATION/ranking_formula/REPORT.md`; pinned by `20_TESTS/test_fused_score_ranking_is_a_noop.py`).
+  Re-measured 2026-10-15 after PR #282 fixed the retrieval cache (D-04: a hit had returned an empty
+  `fused_ranking`), because that bug could have produced the same symptom: still 0 of 160 changed under
+  `fused_score` (recall 24/130), 158 under `baseline` (22/130). The finding does not depend on the cache bug. r025's
+  gain over baseline came from *ceasing* to apply `RelevanceScorer`'s key, not from applying a new one. There is
+  no reranking anywhere in the pipeline: the page is the fusion top-k **minus whatever the context-pack builder
+  cannot fit** (next row), which is why it equals the fusion top-5 in only 93 of 130 benchmark cases. Of the five arms the
+  controller supports, none beats the default under the preregistered rule (`baseline` 22, `confidence_tiebreak`
+  19, `no_confidence` 18, all with ≥ 28 discordant cases and McNemar p ≥ 0.34; `07_EVALUATION/ranking_formula/`).
+  The arm is read only on the graph-OFF branch; turning expansion on would make it inert.
+- **Notes without provenance took page slots and were rejected at egress, emptying the agent's page.** 51 notes
+  have `provenance: null` and no `source_ref` (26 REVIEW, 1 ACTIVE pass the agent floor: `legal_source`,
+  `legal_index`, `legal_atomic_obligation`, `core`, `index`). The pack builder rejects them — the egress contract
+  requires provenance on every model-facing result — but only *after* they ranked and filled the page, and the
+  controller labelled every such drop `BUDGET_EXCEEDED`. On benchmark v3 at the agent point the page was shorter
+  than five in 41 of 130 cases and empty in 22 (R3-004: all five rejected, 195 candidates unused). Two earlier
+  explanations (a type filter; the token budget and the 100 k–1 M-character statute notes) were wrong and are kept
+  in `07_EVALUATION/reranker_envelope/DEVIATIONS.md` D-2 with how each was ruled out. Fixed on
+  `claude/pack-size-gate-backfill` (`846b4c04a`): eligibility settled before pagination with the true reason
+  recorded (`PROVENANCE_MISSING`, `UNVERIFIED_AT_EGRESS`), bounded backfill after a real budget drop. Measured after
+  the fix: recall 26/130 (from 24), short pages 4 (from 41), empty 1 (from 22). **Benchmark ceiling for an agent is
+  at most 105/130**, and it is a lifecycle matter, not provenance (an earlier wording here said otherwise): 12 cases'
+  gold notes are `core` governance documents with no `lifecycle` (Rules, Memory_Protocol, Identity, System_Architecture,
+  Goals, …), 4 are `NORMALIZED`/`raw` notes, and 9 cases' gold ids are `path:` files without frontmatter, in the index
+  but not in the storage pool production searches. The 27 floor-passing provenance-less notes get a derived provenance
+  on `claude/legal-provenance-derivation`. Open, separately: the eight 100 k–1 M-character notes still dominate fusion
+  ranks; which lifecycle the core governance documents should carry is the owner's decision.
+- **The ASCII tokenizer is in the production path and does not explain the Romanian gap.** It is called by
+  `candidate_generation.py` on every document and query. The first tokenizer experiment patched
+  `retrieval.context.candidate_generation.tokenize`; the controller uses
+  `memory_controller.context.candidate_generation`, a second module object for the same file created by the shim
+  (section 2), so all three arms ran the production tokenizer and its report presented 21/130 three times as a
+  finding. Re-run with the patch verified to reach the controller and a negative control (empty tokenizer →
+  1/130, 94 cases changed): ASCII 24/130, Unicode 24/130 (identical set), diacritics-stripped 25/130 (+1 RO,
+  p = 1.0). Preregistered verdict: keep the tokenizer. Romanian 5/61 vs English 19/69 on the production arm is
+  real and is not the tokenizer (`07_EVALUATION/tokenizer_experiment/`).
 - **Promoted notes were islands, and one still could be.** A note can declare
   a relation, validate on write and read correctly in Obsidian while
   contributing nothing to the graph: `SynapseStore.from_index()` reads
