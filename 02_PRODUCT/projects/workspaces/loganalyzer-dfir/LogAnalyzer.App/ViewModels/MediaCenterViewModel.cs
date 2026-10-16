@@ -140,17 +140,37 @@ namespace LogAnalyzer.UI.ViewModels
                 if (!force && !_inspected.Add(key)) continue;
                 _inspected.Add(key);
                 var label = a.Device.VolumeLabel;
-                var result = await Task.Run(() => RemovableMediaInspector.Inspect(letter + "\\", label));
-                var line = new MediumCheckLine(a.Device.DisplayName, result.Text, result.IsSuspicious);
-                var old = MediumChecks.FirstOrDefault(m => m.Device == line.Device);
-                if (old is not null) MediumChecks.Remove(old);
-                MediumChecks.Add(line);
+                // E6: the listing (no hashing, so no file is opened for the arrival analysis) is taken BEFORE Inspect reads any shortcut, so last-access times
+                // are not our own; the alert is published first and the arrival summary follows
+                var (result, listing, fs) = await Task.Run(() =>
+                {
+                    var l = RemovableMediaInspector.List(letter + "\\", label, maxHashed: 0);
+                    var r = RemovableMediaInspector.Inspect(letter + "\\", label);
+                    string f; try { f = new System.IO.DriveInfo(letter).DriveFormat; } catch (Exception ex) when (ex is IOException or ArgumentException or UnauthorizedAccessException) { f = ""; }
+                    return (r, l, f);
+                });
+                void Publish(string text)
+                {
+                    var line = new MediumCheckLine(a.Device.DisplayName, text, result.IsSuspicious);
+                    var old = MediumChecks.FirstOrDefault(m => m.Device == line.Device);
+                    if (old is not null) MediumChecks.Remove(old);
+                    MediumChecks.Add(line);
+                }
+                Publish(result.Text + " Se pregătește rezumatul sosirii fișierelor…");
                 Log(new LiveDeviceEntry(DateTimeOffset.UtcNow, "verificare suport", a.Device.DisplayName, a.Device.Serial, result.Text, result.IsSuspicious));
                 if (result.IsSuspicious)
                 {
                     AlertText = $"ATENȚIE {DateTime.Now:HH:mm:ss}: pe „{a.Device.DisplayName}” ({letter}) s-au găsit semne suspecte: {string.Join("; ", result.Findings.Take(5).Select(f => f.Message))}. Nu deschideți nimic de pe suport; anunțați responsabilul de securitate.";
                     System.Media.SystemSounds.Exclamation.Play();
                 }
+                var arrival = await Task.Run(() =>
+                {
+                    // when the file times were copied onto the medium; shown as an observation, never as a suspicion
+                    var report = MediaArrivalAnalysis.Analyze(listing, fs);
+                    var usn = MediaArrivalReport.UsnNote(fs, letter[..1]);
+                    return report.Text + (usn.Length > 0 ? " " + usn : "");
+                });
+                Publish(result.Text + " " + arrival);
             }
         }
 
