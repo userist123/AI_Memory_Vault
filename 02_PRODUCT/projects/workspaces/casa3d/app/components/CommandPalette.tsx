@@ -2,7 +2,8 @@
 // Command palette (Ctrl+K / Cmd+K or the search button): a modal <dialog> with a combobox and a listbox. Fuzzy search
 // without diacritics (lib/fuzzy.ts), arrows / Home / End / Enter / Esc, focus kept inside, focus returned on close.
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { fuzzyFilter, moveActive } from '@/lib/fuzzy';
+import { fuzzyFilter, moveActive, isPaletteShortcut } from '@/lib/fuzzy';
+import { paletteKeyAction, type PaletteTarget } from '@/lib/palette-keys';
 import { usePrefs } from '@/lib/prefs';
 import Icon from './Icon';
 
@@ -22,7 +23,7 @@ export interface Command {
 
 const FOCUSABLE = 'input,button:not([disabled])';
 export default function CommandPalette({ open, onClose, commands }: { open: boolean; onClose(): void; commands: Command[] }){
-  const { t } = usePrefs(), ref = useRef<HTMLDialogElement>(null), input = useRef<HTMLInputElement>(null), list = useRef<HTMLUListElement>(null);
+  const { t, tp } = usePrefs(), ref = useRef<HTMLDialogElement>(null), input = useRef<HTMLInputElement>(null), list = useRef<HTMLUListElement>(null);
   const back = useRef<HTMLElement | null>(null), [q, setQ] = useState(''), [active, setActive] = useState(0), uid = useId().replace(/:/g, '');
   const shown = useMemo(() => fuzzyFilter(commands.filter(c => !c.disabled), q, c => [c.label, c.group, ...(c.keywords ?? [])]), [commands, q]);
   // open / close the native modal dialog; remember and give back the focus
@@ -33,11 +34,15 @@ export default function CommandPalette({ open, onClose, commands }: { open: bool
   useEffect(() => { setActive(a => shown.length ? Math.min(a, shown.length - 1) : -1); }, [shown.length]);
   useEffect(() => { list.current?.querySelector<HTMLElement>(`[data-i="${active}"]`)?.scrollIntoView({ block: 'nearest' }); }, [active]);
   const run = (c: Command | undefined) => { if (!c) return; onClose(); setTimeout(() => c.run(), 0); };
-  const onKey = (e: React.KeyboardEvent) => {
-    if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key) && (e.key.startsWith('Arrow') || !q)){ e.preventDefault(); setActive(a => moveActive(e.key, a, shown.length)); }
-    else if (e.key === 'Enter'){ e.preventDefault(); run(shown[active]); }
-    else if (e.key === 'Escape'){ e.preventDefault(); onClose(); }
-    else if (e.key === 'Tab'){ const els = [...ref.current!.querySelectorAll<HTMLElement>(FOCUSABLE)]; if (!els.length) return; e.preventDefault();
+  // every key stays inside the dialog: the editor's shortcuts (arrows nudge, Delete, R) must not see it
+  const onKey = (e: React.KeyboardEvent) => { e.stopPropagation();
+    if (isPaletteShortcut(e.nativeEvent)){ e.preventDefault(); onClose(); return; }
+    const el = e.target as HTMLElement, where: PaletteTarget = el === input.current ? 'input' : el.getAttribute('role') === 'option' ? 'option' : el.tagName === 'BUTTON' ? 'button' : 'other';
+    const act = paletteKeyAction(e.key, where, !q);
+    if (act === 'move'){ e.preventDefault(); setActive(a => moveActive(e.key, a, shown.length)); }
+    else if (act === 'run'){ e.preventDefault(); run(shown[active]); }
+    else if (act === 'close'){ e.preventDefault(); onClose(); }
+    else if (act === 'trap'){ const els = [...ref.current!.querySelectorAll<HTMLElement>(FOCUSABLE)]; if (!els.length) return; e.preventDefault();
       const i = els.indexOf(document.activeElement as HTMLElement), n = e.shiftKey ? (i <= 0 ? els.length - 1 : i - 1) : (i + 1) % els.length; els[n]!.focus(); } };
   // groups in the order of their first result
   const groups: { name: string; rows: { c: Command; i: number }[] }[] = [];
@@ -63,7 +68,7 @@ export default function CommandPalette({ open, onClose, commands }: { open: bool
       </ul>
       {shown.length === 0 && <div className="cmdk-empty" role="status"><b>{t('cmdk.empty', { q: q.trim() })}</b><span>{t('cmdk.emptyHint')}</span></div>}
       <p className="cmdk-foot" aria-hidden="true">{t('cmdk.keys')}</p>
-      <p className="sr-only" role="status" aria-live="polite">{t('cmdk.results', { n: shown.length })}</p>
+      <p className="sr-only" role="status" aria-live="polite">{tp('cmdk.results', shown.length)}</p>
     </div>}
   </dialog>);
 }

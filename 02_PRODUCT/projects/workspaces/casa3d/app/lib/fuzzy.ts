@@ -40,7 +40,10 @@ export function moveActive(key: string, active: number, count: number): number {
   if (key === 'End') return count - 1;
   return Math.min(Math.max(active, 0), count - 1);
 }
-/** Ctrl+K on Windows/Linux, Cmd+K on macOS (either is accepted everywhere); never with Alt or Shift. */
-export function isPaletteShortcut(e: { key: string; ctrlKey: boolean; metaKey: boolean; altKey: boolean; shiftKey: boolean }): boolean {
-  return (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k';
+/** Ctrl+K on Windows/Linux, Cmd+K on macOS (either is accepted); never with Alt or Shift. On macOS, Ctrl+K inside a
+ *  text field keeps its native meaning (delete to the end of the line): there only Cmd+K opens the palette. */
+export function isPaletteShortcut(e: { key: string; ctrlKey: boolean; metaKey: boolean; altKey: boolean; shiftKey: boolean }, ctx: { mac?: boolean; inField?: boolean } = {}): boolean {
+  if (e.altKey || e.shiftKey || e.key.toLowerCase() !== 'k') return false;
+  if (e.metaKey) return true;
+  return e.ctrlKey && !(ctx.mac && ctx.inField);
 }

@@ -31,7 +31,7 @@ test('fiecare etapă devine gata din datele ei', () => {
   assert.equal(stageDone(input(h)).finishes, true);
   h.placements.push({ id: 'p1', group: 'canapea', variantId: 'v', roomId: 'r1', x: 1, z: 1, rotation: 0 } as any);
   h.tech = [{ id: 't', kind: 'outlet_double', roomId: 'r1', x: 0, z: 0 } as any];
-  h.budget = { target: 50000 } as any; h.brief = { style: 'scandinav' } as any;
+  h.budget = { target: 50000 } as any; h.brief = { notes: 'tema clientului' } as any;
   d = stageDone(input(h, { shares: 1, status: 'execution' }));
   assert.deepEqual(STAGE_IDS.filter(s => !d[s]), ['site']);
   assert.equal(stageDone(input(h, { shares: 1, status: 'done' })).site, true);
@@ -46,4 +46,25 @@ test('camerele de la etaj contează la finisaje', () => {
 
 test('Continuă duce la etapa următoare; pe ultima nu mai are unde', () => {
   assert.equal(nextStage('survey'), 'concept'); assert.equal(nextStage('ffe'), 'mep'); assert.equal(nextStage('site'), null);
+});
+
+test('linkurile revocate nu fac etapa Prezentare „gata”', async () => {
+  const { activeShares } = await import('../core/stage-progress');
+  assert.equal(activeShares([{ revokedAt: '2026-10-16T10:00:00Z' }]), 0);
+  assert.equal(activeShares([{ revokedAt: null }, { revokedAt: '2026-10-16T10:00:00Z' }, {}]), 2);
+  const h = blank(); h.floor.rooms.push(room('r1')); h.floor.walls.push(wall('w1'));
+  assert.equal(stageDone(input(h, { shares: activeShares([{ revokedAt: '2026-10-01' }]) })).present, false);
+});
+
+test('Concept nu e „gata” doar pentru că un stil a umplut tema din valorile implicite', async () => {
+  const { DEFAULT_BRIEF } = await import('../core/brief');
+  const h = blank();
+  h.brief = { ...DEFAULT_BRIEF, style: 'natural' }; // ce scrie core/styles.ts la aplicarea unui pachet de stil
+  assert.equal(stageDone(input(h)).concept, false);
+  h.brief = { ...DEFAULT_BRIEF, notes: 'Clientul lucrează de acasă' };
+  assert.equal(stageDone(input(h)).concept, true);
+  h.brief = { ...DEFAULT_BRIEF, occupants: 4 };
+  assert.equal(stageDone(input(h)).concept, true);
+  h.brief = { ...DEFAULT_BRIEF, priorities: ['depozitare' as any] };
+  assert.equal(stageDone(input(h)).concept, true);
 });

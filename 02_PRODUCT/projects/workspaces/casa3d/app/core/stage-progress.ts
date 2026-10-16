@@ -3,6 +3,16 @@
 import type { Snapshot } from './types';
 import type { ProjectStatus } from './project-meta';
 import { floors } from './levels';
+import { DEFAULT_BRIEF } from './brief';
+
+/** Client links that still work (revoked ones do not count as "sent"). */
+export function activeShares(list: { revokedAt?: string | null }[]): number { return list.filter(s => !s.revokedAt).length; }
+/** The brief holds real client input: some field other than the style differs from the defaults. Applying a style
+ *  package fills the brief from DEFAULT_BRIEF with only the style changed (core/styles.ts), which is not client input. */
+export function briefFilled(b: unknown): boolean {
+  if (!b || typeof b !== 'object') return false; const o = b as Record<string, unknown>, d = DEFAULT_BRIEF as unknown as Record<string, unknown>;
+  return Object.keys(o).some(k => k !== 'style' && JSON.stringify(o[k] ?? null) !== JSON.stringify(d[k] ?? null));
+}
 
 export const STAGE_IDS = ['survey', 'concept', 'finishes', 'ffe', 'mep', 'docs', 'quote', 'present', 'orders', 'site'] as const;
 export type StageId = typeof STAGE_IDS[number];
@@ -28,13 +38,12 @@ export interface ProgressInput {
 /** What "done" means for each stage, from data the project already has. Kept deliberately simple and explainable. */
 export function stageDone(i: ProgressInput): Record<StageId, boolean> {
   const fl = floors(i.house), rooms = fl.flatMap(f => f.rooms), walls = fl.reduce((n, f) => n + f.walls.length, 0);
-  const brief = i.house.brief as unknown as Record<string, unknown> | undefined;
   const target = i.house.budget?.target;
   return {
     // measured: at least one room and its walls drawn
     survey: rooms.length > 0 && walls > 0,
-    // concept: the designer recorded the client brief
-    concept: !!brief && Object.keys(brief).length > 0,
+    // concept: the designer recorded the client brief (more than the style a package wrote)
+    concept: briefFilled(i.house.brief),
     // finishes: every room has finishes chosen explicitly (not only the defaults)
     finishes: rooms.length > 0 && rooms.every(r => !!i.house.finishes?.[r.id]),
     // furniture: at least one piece placed
