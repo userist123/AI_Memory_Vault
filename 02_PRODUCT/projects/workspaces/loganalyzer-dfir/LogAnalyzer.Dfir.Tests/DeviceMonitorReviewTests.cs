@@ -256,7 +256,7 @@ public sealed class DeviceMonitorReviewTests : IDisposable
     }
 
     [Fact]
-    public void The_first_seen_and_reset_records_are_read_from_the_sealed_audit_and_a_reset_drops_what_came_before()
+    public void The_first_seen_and_reset_records_are_read_from_the_sealed_audit_and_a_reset_keeps_the_whole_history()
     {
         var svc = new AuthService(Path.Combine(_dir, "auth"));
         svc.AuditOperation(null, OperationAudit.DeviceFirstSeen, OperationAudit.DeviceFirstSeenDetail("SN|A|B", "UsbStorage", "Fake Stick", "FAKESN0001", T0));
@@ -272,8 +272,8 @@ public sealed class DeviceMonitorReviewTests : IDisposable
 
         svc.AuditOperation(null, OperationAudit.DeviceJournalReset, OperationAudit.DeviceJournalResetDetail("device_monitor.json.deteriorat-1", "ab12", "jurnal deteriorat"));
         var after = OperationAudit.ReadDeviceMonitor(svc.AuditPath, chainValid: true);
-        Assert.Empty(after.Devices);
-        Assert.Empty(after.LastRegistration);
+        Assert.Equal("SN|A|B", Assert.Single(after.Devices).Identity);                 // round 2: the whole history stays, the monitor rebuilds the new journal from it
+        Assert.Equal("RN-1", after.LastRegistration["SN|A|B"]);
         Assert.Equal("ab12", Assert.Single(after.Resets).Sha256);
         Assert.Equal(0, after.Unreadable);
     }

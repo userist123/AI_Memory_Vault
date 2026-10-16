@@ -131,6 +131,10 @@ namespace LogAnalyzer.UI.ViewModels
         private CancellationTokenSource? _debounce;
         /// <summary>First-seen records whose audit write was refused: retried at every reading (without its sealed record a row is a tampering finding in D05).</summary>
         private readonly List<(string Ev, string Detail)> _unsealed = [];
+        /// <summary>The problem code and active state last sealed for each present device (a change, a first sight or a reconnection is sealed).</summary>
+        private readonly Dictionary<string, (int Code, bool Active)> _sealedStates = new(StringComparer.OrdinalIgnoreCase);
+        private bool _pendingDirty, _inPlaceNoted;
+        private long _inPlaceSeen;
 
         /// <param name="snapshot">Reads the present devices (SetupAPI).</param>
         /// <param name="media">Reads the medium of each drive (capacity, volume serial, letters, label) for the drive ids asked.</param>
@@ -146,6 +150,10 @@ namespace LogAnalyzer.UI.ViewModels
             _snapshot = snapshot; _media = media; _audit = audit; _journal = journal; _save = save; _isolated = isolated; _clock = clock ?? (() => DateTimeOffset.UtcNow);
             _consoleUser = consoleUser ?? (() => ""); _owner = owner;
             foreach (var e in _journal.Devices.Where(DeviceScope.IsInScope)) _rows[e.Identity] = new DeviceMonitorRow(e, this);
+            // records a previous run could not seal (a refused write) were saved in the journal as pending: they are written at the first reading
+            _journal.PendingSeals ??= [];
+            if (owner) foreach (var p in _journal.PendingSeals) _unsealed.Add((p.Event, p.Detail));
+            _inPlaceSeen = DeviceJournalStore.InPlaceSaves;
             if (loadProblem.Length > 0) Problem = loadProblem;
             if (!owner) { Mode = notRunning.Length > 0 ? notRunning : "Monitor nepornit în această instanță."; }
             ApplyFilter();
@@ -175,7 +183,7 @@ namespace LogAnalyzer.UI.ViewModels
             // the running monitor (the owner) seals the reset of a damaged journal and sets it aside; anyone else only reads it
             string loadProblem;
             var journal = own.State == MonitorOwnership.Owner
-                ? DeviceJournalStore.LoadForMonitor(path, LogAnalyzer.UI.Services.AuthApp.TryRecord, out loadProblem)
+                ? DeviceJournalStore.LoadForMonitor(path, LogAnalyzer.UI.Services.AuthApp.TryRecord, out loadProblem, LogAnalyzer.UI.Services.AuthApp.ReadDeviceAudit)
                 : DeviceJournalStore.Load(path, out loadProblem);
             if (loadProblem.Length > 0) problems.Add(loadProblem);
             return new DeviceMonitorViewModel(
@@ -363,6 +371,21 @@ namespace LogAnalyzer.UI.ViewModels
                     Seal(OperationAudit.DeviceFirstSeen, OperationAudit.DeviceFirstSeenDetail(e.Identity, e.Class.ToString(), e.Name, e.Serial, e.FirstSeenUtc));
                 foreach (var r in radios)
                     _audit(OperationAudit.DeviceRadioState, OperationAudit.DeviceRadioStateDetail(r.Kind, r.Blind, r.Text, user));
+                // review round 2: every disconnection (who was logged on) and the set of devices present at each run start are sealed, so a row that claims
+                // absence, or dates outside the period, for a device the sealed audit saw is a finding; the problem code and the active state are sealed when they change
+                foreach (var c in changes.Where(c => !c.Arrived))
+                {
+                    Seal(OperationAudit.DeviceDisconnected, OperationAudit.DeviceDisconnectedDetail(c.Device.Identity, c.Device.Class.ToString(), c.Device.Name, user));
+                    _sealedStates.Remove(c.Device.Identity);
+                }
+                if (initial)
+                {
+                    List<DeviceJournalEntry> presentNow;
+                    lock (_journal) presentNow = _journal.Devices.Where(d => d.Present && DeviceScope.IsInScope(d)).ToList();
+                    foreach (var d in presentNow)
+                        Seal(OperationAudit.DevicePresent, OperationAudit.DevicePresentDetail(_runId, d.Identity, d.Class.ToString(), d.Name, user));
+                }
+                SealStates();
                 var gapFrom = loss?.From ?? (initial ? _resumeFrom : null);
                 foreach (var c in changes)
                 {
@@ -383,7 +406,7 @@ namespace LogAnalyzer.UI.ViewModels
                 bool structural = initial || changes.Count > 0 || _journal.Devices.Count != before || resume;
                 RefreshRows();
                 if (structural || !diff.IsEmpty) ApplyFilter();
-                if (structural || !diff.IsEmpty) Save();
+                if (structural || !diff.IsEmpty || _pendingDirty) Save();
                 UpdateSummary();
                 foreach (var (record, show) in alerts) if (show) Alert?.Invoke(record);
                 RadioNotice = string.Join(" · ", _journal.Radios.Where(r => r.BlindNow).Select(r => r.Text));
@@ -405,9 +428,37 @@ namespace LogAnalyzer.UI.ViewModels
                 if (_audit(_unsealed[0].Ev, _unsealed[0].Detail) is { } refused)
                 {
                     Problem = $"{_unsealed.Count} înregistrări ale dispozitivelor nu au putut fi trecute în jurnalul de audit (se reîncearcă): " + refused;
+                    SyncPending();
                     return;
                 }
                 _unsealed.RemoveAt(0);
+            }
+            SyncPending();
+        }
+
+        /// <summary>The records not sealed yet are kept in the journal, flagged pending, so they survive a restart (they stay untrusted until sealed; check D05 says DE VERIFICAT meanwhile).</summary>
+        private void SyncPending()
+        {
+            lock (_journal)
+            {
+                var cur = _journal.PendingSeals;
+                if (cur.Count == _unsealed.Count && cur.Select(p => (p.Event, p.Detail)).SequenceEqual(_unsealed)) return;
+                _journal.PendingSeals = _unsealed.Select(u => new PendingSeal { Event = u.Ev, Detail = u.Detail }).ToList();
+                _pendingDirty = true;
+            }
+        }
+
+        /// <summary>Seals the problem code and the active state of every present in-scope device that is new, reconnected or changed since it was last sealed.</summary>
+        private void SealStates()
+        {
+            List<DeviceJournalEntry> present;
+            lock (_journal) present = _journal.Devices.Where(d => d.Present && DeviceScope.IsInScope(d)).ToList();
+            foreach (var d in present)
+            {
+                var state = (d.ConfigManagerErrorCode, Active: !DeviceMonitorRules.IsDisabledRadio(d.Class, d.ConfigManagerErrorCode));
+                if (_sealedStates.TryGetValue(d.Identity, out var last) && last == state) continue;
+                _sealedStates[d.Identity] = state;
+                Seal(OperationAudit.DeviceStateChanged, OperationAudit.DeviceStateChangedDetail(d.Identity, d.Class.ToString(), state.ConfigManagerErrorCode, state.Active));
             }
         }
 
@@ -422,8 +473,8 @@ namespace LogAnalyzer.UI.ViewModels
             var gate = _limiter.Check(device.Identity, severity + "|" + text, when);
             lock (_journal) DeviceJournalMerge.AddAlert(_journal, record);
             var detail = OperationAudit.DeviceAlertCriticalDetail(device.Identity, device.Class.ToString(), device.Name, text) + "; popup=" + (gate == AlertGate.Show ? "afișat" : "suprimat");
-            if (_audit(severity == DeviceAlertSeverity.Critical ? OperationAudit.DeviceAlertCritical : OperationAudit.DeviceAlertInfo, detail) is { } refused && severity == DeviceAlertSeverity.Critical)
-                Problem = "Alerta critică nu a putut fi trecută în jurnalul de audit: " + refused;
+            // a refused write (any alert, critical or not) is kept and retried like a first-seen record, and saved in the journal as pending
+            Seal(severity == DeviceAlertSeverity.Critical ? OperationAudit.DeviceAlertCritical : OperationAudit.DeviceAlertInfo, detail);
             SuppressedText = _limiter.Suppressed > 0 ? $"{_limiter.Suppressed} alerte suprimate" : "";
             OnPropertyChanged(nameof(SuppressedAlerts));
             return (record, gate == AlertGate.Show);
@@ -481,6 +532,14 @@ namespace LogAnalyzer.UI.ViewModels
             string? error;
             lock (_journal) error = _save(_journal);
             if (error is not null) Problem = "Jurnalul monitorului nu a putut fi salvat: " + error;
+            _pendingDirty = false;
+            // accepted residual: an account that cannot create the temporary file rewrites the journal in place; noted once per run in the sealed audit
+            if (!_inPlaceNoted && DeviceJournalStore.InPlaceSaves != _inPlaceSeen)
+            {
+                _inPlaceNoted = true;
+                _inPlaceSeen = DeviceJournalStore.InPlaceSaves;
+                Seal(OperationAudit.DeviceJournalInPlaceSave, "journal=device_monitor.json; save=in-place (the account cannot create the temporary file in the folder)");
+            }
         }
 
         private (string Text, bool Critical) RowAlert(DeviceJournalEntry e)

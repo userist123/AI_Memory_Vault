@@ -181,7 +181,7 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>Checks every removable volume connected now that has not been checked yet (<paramref name="force"/> = all); raises the live alert on anything suspicious.</summary>
         public async Task InspectConnectedAsync(bool force = false)
         {
-            foreach (var a in ConnectedNow.Where(a => a.Device.Kind is DeviceKind.UsbStorage or DeviceKind.MemoryCard).ToList())
+            foreach (var a in ConnectedNow.Where(a => a.Device.Kind is DeviceKind.UsbStorage or DeviceKind.MemoryCard or DeviceKind.ExternalDisk).ToList())
             {
                 var letter = a.Device.DriveLetters.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(l => l.Length == 2 && l[1] == ':');
                 if (letter is null) continue;
@@ -281,7 +281,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             "Conectate acum" => a.Device.ConnectedNow,
             "Cer atenție (nu sunt în registru)" => a.NeedsAttention,
-            "Stocare USB și carduri" => a.Device.Kind is DeviceKind.UsbStorage or DeviceKind.MemoryCard,
+            "Stocare USB și carduri" => a.Device.Kind is DeviceKind.UsbStorage or DeviceKind.MemoryCard or DeviceKind.ExternalDisk,
             "Discuri interne" => a.Device.Kind == DeviceKind.InternalDisk,
             "Telefoane și Bluetooth" => a.Device.Kind is DeviceKind.PortableDevice or DeviceKind.Bluetooth,
             "Rețea și discuri virtuale" => a.Device.Kind is DeviceKind.NetworkDrive or DeviceKind.VirtualDisk,

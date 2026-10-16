@@ -98,6 +98,27 @@ public static class OperationAudit
     public static string DeviceMediumRekeyedDetail(string oldIdentity, string newIdentity, string deviceClass, string device) =>
         $"old={DeviceField(oldIdentity)}; new={DeviceField(newIdentity)}; class={DeviceField(deviceClass)}; device={DeviceField(device)}";
 
+    /// <summary>A device disconnected (identity, class, the console user at that time): the time of the record is the time of the disconnection.</summary>
+    public const string DeviceDisconnected = "device.disconnected";
+
+    public static string DeviceDisconnectedDetail(string identity, string deviceClass, string device, string user) =>
+        $"identity={DeviceField(identity)}; class={DeviceField(deviceClass)}; device={DeviceField(device)}; user={DeviceField(user)}";
+
+    /// <summary>A device present when a monitor run starts (one record per device): with the disconnections, the sealed presence a row of the plain journal is compared with.</summary>
+    public const string DevicePresent = "device.present";
+
+    public static string DevicePresentDetail(string runId, string identity, string deviceClass, string device, string user) =>
+        $"mon={DeviceField(runId)}; identity={DeviceField(identity)}; class={DeviceField(deviceClass)}; device={DeviceField(device)}; user={DeviceField(user)}";
+
+    /// <summary>The problem code and the active state of a device when it is first seen, connects, or either changes ("active" = not a disabled radio).</summary>
+    public const string DeviceStateChanged = "device.state_changed";
+
+    public static string DeviceStateChangedDetail(string identity, string deviceClass, int code, bool active) =>
+        $"identity={DeviceField(identity)}; class={DeviceField(deviceClass)}; code={code}; active={(active ? "da" : "nu")}";
+
+    /// <summary>The journal could only be saved by rewriting the file in place (the account cannot create a file in the folder): noted once per monitor run.</summary>
+    public const string DeviceJournalInPlaceSave = "device.journal_inplace_save";
+
     /// <summary>The monitor's journal file was damaged and set aside; a new journal was started. The SHA-256 of the damaged file is sealed with it.</summary>
     public const string DeviceJournalReset = "device.journal_reset";
 
@@ -117,8 +138,8 @@ public static class OperationAudit
     /// What the sealed audit says about the device monitor: the LAST registration number written for each device identity ("device.registration_number_changed",
     /// empty for "(gol)"), the critical and informational alerts with the time of their record, the devices first seen ("device.first_seen"), the monitor's
     /// running windows and lost intervals, the devices observed on resume, the journal migrations and resets. A medium re-keyed after it became readable
-    /// ("device.medium_rekeyed") is followed to its new identity. After a sealed journal reset only the registrations and first-seen records written after the
-    /// LAST reset are expected in the journal (the reset itself is reported). <paramref name="chainValid"/> is whether the audit chain verifies; a reading from a
+    /// ("device.medium_rekeyed") is followed to its new identity. A sealed journal reset does not drop anything: the whole history is read and the monitor
+    /// rebuilds the new journal from it (<see cref="LogAnalyzer.Dfir.Devices.DeviceJournalRebuild"/>); the reset itself is reported. <paramref name="chainValid"/> is whether the audit chain verifies; a reading from a
     /// chain that does not verify must not be trusted.
     /// </summary>
     public static LogAnalyzer.Dfir.Devices.DeviceAuditReading ReadDeviceMonitor(string auditPath, bool chainValid)
@@ -148,6 +169,8 @@ public static class OperationAudit
         var rename = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var migrations = new List<string>();
         var radios = new List<LogAnalyzer.Dfir.Devices.SealedRadioState>();
+        var presence = new List<LogAnalyzer.Dfir.Devices.SealedPresence>();
+        var states = new List<LogAnalyzer.Dfir.Devices.SealedDeviceState>();
         int unreadable = 0;
         if (scan is not null)
         {
@@ -200,6 +223,17 @@ public static class OperationAudit
                 }
                 else if (ev == DeviceJournalReset)
                     resets.Add(new(t, f.GetValueOrDefault("sha256", ""), f.GetValueOrDefault("reason", ""), f.GetValueOrDefault("file", "")));
+                else if (ev is DeviceDisconnected or DevicePresent)
+                {
+                    if (f.GetValueOrDefault("identity", "") is { Length: > 0 } pid) presence.Add(new(t, pid, f.GetValueOrDefault("class", ""), ev == DevicePresent, f.GetValueOrDefault("user", "")));
+                    else unreadable++;
+                }
+                else if (ev == DeviceStateChanged)
+                {
+                    if (f.GetValueOrDefault("identity", "") is { Length: > 0 } sid && int.TryParse(f.GetValueOrDefault("code", ""), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var code))
+                        states.Add(new(t, sid, f.GetValueOrDefault("class", ""), code, f.GetValueOrDefault("active", "da") != "nu"));
+                    else unreadable++;
+                }
                 else if (ev == DeviceRadioState)
                 {
                     if (f.GetValueOrDefault("kind", "") is { Length: > 0 } k) radios.Add(new(t, k, f.GetValueOrDefault("state", "") == "neobservabil", f.GetValueOrDefault("text", ""), f.GetValueOrDefault("user", "")));
@@ -213,16 +247,17 @@ public static class OperationAudit
             for (int i = 0; i < 16 && rename.TryGetValue(id, out var next); i++) id = next;
             return id;
         }
-        DateTimeOffset? lastReset = resets.Count > 0 ? resets.Max(r => r.TimeUtc) : null;
-        bool AfterReset(DateTimeOffset? when) => lastReset is not { } lr || when is { } w && w >= lr;
+        // the WHOLE history counts, also what came before a journal reset: the reset is reported (DE VERIFICAT) and the monitor rebuilds the rows of the new
+        // journal from these records, so a registered medium keeps its number and nothing sealed is forgotten
         var last = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var (id, value, when) in registrations)
-            if (AfterReset(when)) last[Follow(id)] = value;
+        foreach (var (id, value, _) in registrations)
+            last[Follow(id)] = value;
         return new(chainValid, last, alerts.Select(a => a with { Identity = Follow(a.Identity) }).ToList(), unreadable)
         {
             Runs = runs, Gaps = gaps, ObservedOnResume = observed, Migrations = migrations,
-            Devices = devices.Where(d => AfterReset(d.RecordUtc)).Select(d => d with { Identity = Follow(d.Identity) }).ToList(),
+            Devices = devices.Select(d => d with { Identity = Follow(d.Identity) }).ToList(),
             InfoAlerts = infos.Select(a => a with { Identity = Follow(a.Identity) }).ToList(), Resets = resets, RadioStates = radios,
+            Presence = presence.Select(p => p with { Identity = Follow(p.Identity) }).ToList(), States = states.Select(x => x with { Identity = Follow(x.Identity) }).ToList(),
         };
     }
 
@@ -467,7 +502,7 @@ public static class OperationAudit
                 else if (ev == DeviceRegistrationChanged) scan.DeviceRegistrations.Add((detail, when));
                 else if (ev is DeviceAlertCritical or DeviceAlertInfo) scan.DeviceAlerts.Add((ev, detail, when));
                 else if (ev is DeviceMonitorStarted or DeviceMonitorHeartbeat or DeviceMonitorStopped or DeviceMonitorGap or DeviceObservedOnResume or DeviceJournalMigrated
-                         or DeviceFirstSeen or DeviceMediumRekeyed or DeviceJournalReset or DeviceRadioState) scan.DeviceMonitorEvents.Add((ev, detail, when));
+                         or DeviceFirstSeen or DeviceMediumRekeyed or DeviceJournalReset or DeviceRadioState or DeviceDisconnected or DevicePresent or DeviceStateChanged) scan.DeviceMonitorEvents.Add((ev, detail, when));
                 else if (ev == ControlHashing)
                 {
                     if (TryParseControlHashing(detail, out var w)) scan.Hashing.Add((w, when, index));
