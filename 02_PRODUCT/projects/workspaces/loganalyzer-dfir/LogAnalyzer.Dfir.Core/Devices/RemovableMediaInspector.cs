@@ -95,6 +95,9 @@ public static class RemovableMediaInspector
     /// Read-only listing of a removable volume for the P1 rules (MEDIA-LNK-PAYLOAD, MEDIA-HIDDEN-MAILBOX, MEDIA-SAME-DROP): root and two levels, names,
     /// attributes, sizes and times; SHA-256 of files up to <paramref name="hashMaxBytes"/>; shortcuts decoded by <see cref="FileSystem.LnkParser.Decode"/>
     /// (read as bytes, never opened by the shell, never run). Reparse points are listed but not followed; Windows' own folders are not entered.
+    /// Read-only does not mean access-time neutral: hashing and reading shortcuts open files, which can update last-access times (FAT/exFAT, NTFS when enabled).
+    /// Each entry's times are captured before that entry is opened, and callers should list BEFORE anything else (e.g. <see cref="Inspect"/>) reads file contents;
+    /// even so, a last-access time may reflect an earlier read by this tool. Pass <c>maxHashed: 0</c> when hashes are not needed.
     /// </summary>
     /// <param name="maxDepth">Folder levels entered below the root (2 = root, its folders and their folders; the facts collector uses 1).</param>
     public static LogAnalyzer.Dfir.Analysis.MediaListingFact List(string root, string volumeLabel = "", int maxEntries = 3000, long hashMaxBytes = 16 * 1024 * 1024, int maxHashed = 300, int maxDepth = 2)
