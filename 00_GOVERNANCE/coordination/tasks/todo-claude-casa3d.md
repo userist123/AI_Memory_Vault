@@ -1,5 +1,17 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-16T17:07:35Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-16T17:47:08Z
+ROUND 7 (UI, 2026-10-16, branch casa3d-ui-round7, not pushed; main session reviews then pushes):
+  DONE 131740ed: stages grouped in phases (Releveu/Concept/Detaliere/Livrare, core/stage-progress.ts) with a done dot
+  derived from project data + rule text + Continue button (sidebar and <1024px bottom sheet); command palette Ctrl/Cmd+K +
+  Search button (components/CommandPalette.tsx, lib/fuzzy.ts: diacritics-insensitive fuzzy, combobox/listbox, focus trap/return);
+  layout-shaped skeletons (components/Skeleton.tsx) replace Loading texts in editor/print/present+share/docs/orders/site/home;
+  EmptyState with explanation + primary action for empty plan, rooms, MEP points, orders, revisions, renders, advisor, options,
+  filtered catalog, home list. DONE 5df1cab9: print package page navigator (components/PrintNav.tsx, lib/print-nav.ts):
+  IntersectionObserver current page, jump links, prev/next, fixed rail >=1600px, sticky collapsible bar below, hidden in print;
+  print page no longer scrolls sideways on phones (sheets scroll inside); duplicate React keys in room works fixed.
+  Evidence: vitest 551/551 (537 + 14 new), tsc exit 0; before/after shots at 1920/1366/1024/768/390 in the session scratchpad.
+  Reduced-motion paths are code-verified only (no emulation run).
+  NEXT: room resize adjusts the neighbour rectangle.
 ROUND 6 (2026-10-15/16, owner: "totul ca lucrat de profesionisti: programatori, web/UI/UX, 3D, automatizari" + tableta):
   role audits (designer, UI/UX, 3D, QA) in scratchpad; fixed in waves: 792728e3 (QA saves/rate limits/doctor, 3D realism +
   camera rule + Blender openings, designer one-total chain + single fee + autosave + diacritics), 312d073a (UI/UX tokens,
