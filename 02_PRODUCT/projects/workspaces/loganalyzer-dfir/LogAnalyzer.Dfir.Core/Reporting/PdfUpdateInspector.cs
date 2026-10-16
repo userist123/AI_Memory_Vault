@@ -258,8 +258,9 @@ public static class PdfUpdateInspector
         }
 
         /// <summary>
-        /// The appearance content: it must START with the clip to its own box ("[q] x0 y0 w h re W n"), so nothing it draws can leave the box, then use only
-        /// text and simple path operators.
+        /// The appearance content: it must START with the clip to its own box ("[q] x0 y0 w h re W n") and keep that clip in force to the end: no Q may go below
+        /// the graphics-state level of the clip, except the single Q that closes its leading q, which must be the last operator. It may use only text and simple
+        /// path operators. (Viewers also clip a form XObject to its BBox, which must equal the reserved box.)
         /// </summary>
         private static string? Content(byte[] data, double[] box)
         {
@@ -277,6 +278,10 @@ public static class PdfUpdateInspector
                 && Enumerable.Range(0, 4).All(i => first[k0 + i] is PdfNumber nmb && Math.Abs(nmb.Value - want[i]) < 0.01)
                 && first[k0 + 4] is PdfKeyword { Value: "re" } && first[k0 + 5] is PdfKeyword { Value: "W" } && first[k0 + 6] is PdfKeyword { Value: "n" };
             if (!clip) return "aspectul semnăturii nu începe cu decuparea la chenarul lui (0 0 lățime înălțime re W n)";
+            // the clip stays in force to the end: the graphics-state depth right after "W n" is the clip's level; a Q may never go below it, except one Q that
+            // closes the leading q of the clip and is then the very last operator
+            int clipLevel = k0, depth = 0, opIndex = 0;
+            bool closed = false;
             p = new PdfParser(data, 0, data.Length);
             int ops = 0;
             while (true)
@@ -288,6 +293,15 @@ public static class PdfUpdateInspector
                 {
                     if (!Operators.Contains(k.Value)) return $"aspectul semnăturii folosește operatorul nepermis „{k.Value}” (se permit doar text și linii simple)";
                     if (++ops > 20000) return "aspect prea complex";
+                    if (closed) return "aspectul semnăturii desenează după ce a închis decuparea la chenar";
+                    opIndex++;
+                    if (k.Value == "q") { if (++depth > 64) return "aspect prea complex"; }
+                    else if (k.Value == "Q")
+                    {
+                        if (depth == 0) return "aspectul semnăturii are un Q fără q (ar anula decuparea la chenar)";
+                        depth--;
+                        if (opIndex > 4 && depth < clipLevel) closed = true;     // the Q of the leading q: allowed only as the last operator
+                    }
                 }
                 else if (v is PdfDict or PdfRef) return "aspectul semnăturii conține dicționare sau trimiteri nepermise";
             }

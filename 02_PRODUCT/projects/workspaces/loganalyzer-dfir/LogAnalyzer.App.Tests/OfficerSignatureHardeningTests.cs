@@ -36,6 +36,27 @@ public sealed partial class OfficerQualifiedSignatureTests
         AssertModified(VerifyWithPaper(s, SignWith(s, rewrite: (n, b) => WithAppearance(b, content))));
     }
 
+    [Theory]
+    [InlineData("q 0 0 271 90 re W n Q 0 0 595 842 re f")]                                  // the clip closed at once, then drawing outside it
+    [InlineData("q 0 0 271 90 re W n Q Q 3 0 0 3 0 0 cm 0 0 100 100 re f")]                 // an extra Q, then scaled drawing
+    [InlineData("0 0 271 90 re W n Q 0 0 595 842 re f")]                                    // clip without a leading q, then Q, then drawing
+    [InlineData("q 0 0 271 90 re W n BT ET Q BT ET")]                                        // anything after the Q that closes the clip
+    public void H1_the_clip_cannot_be_closed_before_the_end_of_the_appearance(string content)
+    {
+        using var s = NewSetup();
+        AssertModified(VerifyWithPaper(s, SignWith(s, rewrite: (n, b) => WithAppearance(b, content))));
+    }
+
+    [Theory]
+    [InlineData("q 0 0 271 90 re W n q 1 g 0 0 10 10 re f Q BT ET Q")]
+    [InlineData("0 0 271 90 re W n q 1 g Q BT ET")]
+    [InlineData("q 0 0 271 90 re W n q BT ET")]
+    public void H1_balanced_drawing_inside_the_clip_is_accepted(string content)
+    {
+        using var s = NewSetup();
+        Assert.Equal(OfficialVerdict.Oficial, VerifyWithPaper(s, SignWith(s, rewrite: (n, b) => WithAppearance(b, content))).Verdict);
+    }
+
     [Fact]
     public void H2_a_font_program_that_inflates_beyond_the_limit_is_refused()
     {
