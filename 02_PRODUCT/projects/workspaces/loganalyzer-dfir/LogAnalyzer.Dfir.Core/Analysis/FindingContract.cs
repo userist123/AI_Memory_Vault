@@ -45,6 +45,7 @@ public static class FindingContract
         "UsnJournalParser" => "Jurnalul USN",
         "SrumNetworkParser" => "SRUM (rețea)",
         "PcapngParser" => "Captura de rețea (PCAPNG)",
+        "FirewallLogParser" => "Jurnalul firewall-ului (pfirewall.log)",
         var p when p.EndsWith("Parser", StringComparison.Ordinal) => p[..^6],
         _ => parserId,
     };
