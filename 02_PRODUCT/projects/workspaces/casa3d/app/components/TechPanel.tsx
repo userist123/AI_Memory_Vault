@@ -1,6 +1,7 @@
 'use client';
 // Panoul stratului tehnic: sugestii deterministe, adăugare manuală din plan, numărătoare pe camere pentru meseriași.
 import type { Snapshot } from '@/core/types';
+import EmptyState from './EmptyState';
 import { TECH_KINDS, techCounts, type TechKind } from '@/core/technical';
 import { usePrefs } from '@/lib/prefs';
 import { askConfirm } from '@/lib/dialog';
@@ -11,7 +12,7 @@ export const TECH_SYMBOL: Record<TechKind, { letter: string; color: string }> = 
 };
 const KINDS = Object.keys(TECH_KINDS) as TechKind[];
 
-export default function TechPanel({ snap, show, kind, onShow, onKind, onSuggest, onClear, onDelete }: { snap: Snapshot; show: boolean; kind: TechKind; onShow(v: boolean): void; onKind(k: TechKind): void; onSuggest(): void; onClear(): void; onDelete(id: string): void }){
+export default function TechPanel({ snap, show, kind, onShow, onKind, onSuggest, onClear, onDelete, onDraw }: { onDraw?(): void; snap: Snapshot; show: boolean; kind: TechKind; onShow(v: boolean): void; onKind(k: TechKind): void; onSuggest(): void; onClear(): void; onDelete(id: string): void }){
   const { t, lang } = usePrefs(), pts = snap.tech || [], c = techCounts(pts), label = (k: TechKind) => TECH_KINDS[k].label[lang === 'en' ? 'en' : 'ro'];
   const used = KINDS.filter(k => c.total[k]);
   return (<div className="design">
@@ -24,7 +25,7 @@ export default function TechPanel({ snap, show, kind, onShow, onKind, onSuggest,
     <label className="f" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked={show} onChange={e => onShow(e.target.checked)} /> {t('tech.show')}</label>
     <label className="f"><span>{t('tech.kind')}</span><select value={kind} onChange={e => onKind(e.target.value as TechKind)}>{KINDS.map(k => <option key={k} value={k}>{TECH_SYMBOL[k].letter} · {label(k)}</option>)}</select></label>
     <p className="prov" style={{ margin: 0 }}>{t('tech.addHint')}</p>
-    {!pts.length ? <p className="muted">{t('tech.none')}</p> : <>
+    {!pts.length ? <EmptyState title={t('empty.tech.title')} text={t('tech.none')} action={onDraw ? { label: t('empty.tech.action'), onClick: onDraw } : undefined} /> : <>
       <table className="techtable"><thead><tr><th>{t('tech.room')}</th>{used.map(k => <th key={k} title={label(k)}><i className="techdot" style={{ background: TECH_SYMBOL[k].color }}>{TECH_SYMBOL[k].letter}</i></th>)}</tr></thead>
         <tbody>{snap.floor.rooms.map(r => <tr key={r.id}><td>{r.name}</td>{used.map(k => <td key={k}>{c.byRoom[r.id]?.[k] ?? ''}</td>)}</tr>)}
           <tr className="tot"><td>{t('tech.total')}</td>{used.map(k => <td key={k}>{c.total[k]}</td>)}</tr></tbody></table>

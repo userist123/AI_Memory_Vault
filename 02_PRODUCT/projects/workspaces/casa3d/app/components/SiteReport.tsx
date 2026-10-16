@@ -1,6 +1,7 @@
 'use client';
 // Raportul de remedieri pentru echipe (PDF din browser): pe camere, cu număr, meserie, stare, descriere și poze.
 import { useEffect, useState } from 'react';
+import { DocSkeleton } from './Skeleton';
 import type { Snag } from '@/core/site';
 import type { Snapshot } from '@/core/types';
 import type { ProjectMeta } from '@/core/project-meta';
@@ -14,7 +15,7 @@ export default function SiteReport({ id }: { id: string }){
   useEffect(() => { Promise.all([fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject()), fetch(`/api/projects/${id}/site`).then(r => r.ok ? r.json() : Promise.reject())])
     .then(([p, items]) => setD({ snap: p.draft, meta: p.meta, items })).catch(() => setErr(true)); }, [id]);
   if (err) return <LoadError />;
-  if (!d) return <main className="report"><p className="muted">{t('print.loading')}</p></main>;
+  if (!d) return <main className="report"><DocSkeleton label={t('print.loading')} /></main>;
   const rooms = floors(d.snap).flatMap(f => f.rooms), list = d.items.filter(s => !open || s.status === 'open');
   const by = [...rooms.map(r => [r.id, r.name] as const), ['', t('site.noRoom')] as const].map(([rid, name]) => ({ name, items: list.filter(s => (s.roomId ?? '') === rid) })).filter(g => g.items.length);
   const date = (s: string) => new Date(s).toLocaleDateString(intlLocale(lang), { day: 'numeric', month: 'long', year: 'numeric' });

@@ -2,6 +2,7 @@
 // Panoul „Comercial” din etapa Ofertă (doar pentru designer): discount trade și adaos pe furnizor, profitul proiectului,
 // graficul de plăți și legăturile spre proformă și CSV. Nimic de aici nu ajunge pe linkul clientului.
 import { useEffect, useRef, useState } from 'react';
+import { ListSkeleton } from './Skeleton';
 import { formatMoney } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
 import { DEFAULT_MILESTONES, pctOk, pctSum, COMMERCIAL_LIMITS, type CommercialData, type Milestone, type ProfitReport, type ScheduleRow, type Terms, type ProjectChain } from '@/core/commercial';
@@ -27,7 +28,7 @@ export default function CommercialPanel({ id, cur, say }: { id: string; cur: str
   useEffect(() => { if (!dirty || !d) return; if (!pctOk(d.milestones)){ clearTimeout(timer.current); return; } setState('saving'); clearTimeout(timer.current);
     timer.current = setTimeout(() => save(seq.current), 800); return () => clearTimeout(timer.current); }, [d, dirty]); // eslint-disable-line
   if (loadErr && (!r || !d)) return <section className="commercial"><h3>{t('com.title')}</h3><p className="bad" role="alert">{loadErr}</p></section>;
-  if (!r || !d) return <section className="commercial"><h3>{t('com.title')}</h3><p className="muted">{t('print.loading')}</p></section>;
+  if (!r || !d) return <section className="commercial"><h3>{t('com.title')}</h3><ListSkeleton label={t('print.loading')} rows={2} /></section>;
   const edit = (fn: (x: CommercialData) => void) => { const x: CommercialData = JSON.parse(JSON.stringify(d)); fn(x); seq.current++; dirtyRef.current = true; setD(x); setDirty(true); };
   const setTerms = (sup: string | null, k: keyof Terms, v: string) => edit(x => { const tgt = sup == null ? x.defaults : (x.suppliers[sup] ??= {}); const n = numOrUndef(v); if (n == null) delete tgt[k]; else tgt[k] = n;
     if (sup != null && !Object.keys(tgt).length) delete x.suppliers[sup]; });

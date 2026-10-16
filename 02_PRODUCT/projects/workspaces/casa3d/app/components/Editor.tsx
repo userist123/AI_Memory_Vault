@@ -1,5 +1,6 @@
 'use client';
 import StylePanel from './StylePanel';
+import { EditorSkeleton } from './Skeleton';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalog, Snapshot, Severity, Issue, FurniturePlacement, MaterialsCatalog, BudgetSettings, RoomFinishes, Appearance, Finish, Room, Stair } from '@/core/types';
@@ -60,6 +61,9 @@ import { resizeRoom, RoomResizeError } from '@/core/room-resize';
 import { groupsForRoom, defaultGroupForRoom, swapFitHint } from '@/core/furniture-fit';
 import type { PlanKeyAction } from '@/core/plan-keys';
 import { isLocalHostname } from '@/lib/public-gate';
+import { PHASES, phaseOf, stageDone, nextStage, doneCount, STAGE_IDS } from '@/core/stage-progress';
+import CommandPalette, { type Command } from './CommandPalette';
+import { isPaletteShortcut } from '@/lib/fuzzy';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 
 const uid = () => crypto.randomUUID();
@@ -68,7 +72,7 @@ const ICON: Record<Tool, string> = { select: 'M5 3l12 8-6 1 3 7-2 1-3-7-4 4z', w
 const TOOL_LABEL: Record<Tool, string> = { select: 'tool.select', wall: 'tool.wall', room: 'tool.room', door: 'tool.door', window: 'tool.window', measure: 'tool.measure', tech: 'tool.tech' };
 
 /** Etapele unui proiect de amenajare, în ordinea în care lucrează un designer: fiecare are vederea, uneltele și panoul ei. */
-type Stage = 'survey' | 'concept' | 'finishes' | 'ffe' | 'mep' | 'docs' | 'quote' | 'present' | 'orders' | 'site';
+type Stage = typeof STAGE_IDS[number];
 const STAGES: { id: Stage; view: '2d' | '3d' | 'split'; tools: Tool[]; page?: true }[] = [
   { id: 'survey', view: '2d', tools: ['select', 'wall', 'room', 'door', 'window', 'measure'] }, { id: 'concept', view: 'split', tools: ['select', 'measure'] },
   { id: 'finishes', view: 'split', tools: ['select', 'measure'] }, { id: 'ffe', view: 'split', tools: ['select', 'measure'] },
@@ -239,7 +243,13 @@ export default function Editor({ id }: { id: string }){
   useEffect(() => { const b = stageBar.current?.querySelector<HTMLElement>(`[data-stage="${stage}"]`); try { b?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); } catch { /* browser vechi */ } }, [stage]);
   // pe ecranele înguste „Plan + 3D” nu are loc: rămâne vederea plan
   useEffect(() => { if (compact && view === 'split') setView('2d'); }, [compact, view]);
-  if (!snap || !catalog || !mc) return <div className="home"><p className="muted" role="status">{toast || t('editor.loading')}</p></div>;
+  // paleta de comenzi: Ctrl+K / Cmd+K oriunde în editor (și în câmpuri), sau butonul „Caută” din antet
+  const [cmdOpen, setCmdOpen] = useState(false), [mac, setMac] = useState(false);
+  useEffect(() => { setMac(/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent));
+    const k = (e: KeyboardEvent) => { if (isPaletteShortcut(e)){ e.preventDefault(); setCmdOpen(o => !o); } }; addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, []);
+  // „gata” pe etapă, din datele proiectului (core/stage-progress.ts); se recalculează la fiecare modificare
+  const done = useMemo(() => house ? stageDone({ house, warnings: advice.filter(a => a.severity !== 'TIP').length, shares: shares.length, status: meta?.status ?? 'design' }) : null, [house, advice, shares, meta]);
+  if (!snap || !catalog || !mc) return toast ? <div className="home"><p className="muted" role="status">{toast}</p></div> : <EditorSkeleton label={t('editor.loading')} />;
   const G = groups(catalog);
   const onAddWall = (a: [number, number], b: [number, number]) => mutate(s => { s.floor.walls.push({ id: `wall-${uid().slice(0, 8)}`, a, b, thickness: .15, exterior: false, openings: [] }); });
   const onAddRoom = (rect: any) => { const rid = `camera-${uid().slice(0, 8)}`; mutate(s => { s.floor.rooms.push({ id: rid, name: t('editor.newRoomName', { n: s.floor.rooms.length + 1 }), type: 'living', rect }); }); setSel({ kind: 'room', id: rid }); setTool('select'); };
@@ -248,6 +258,9 @@ export default function Editor({ id }: { id: string }){
     mutate(s => { s.floor.walls.find(x => x.id === wallId)!.openings.push({ id: oid, kind, offset: r3(Math.max(0, Math.min(L - width, offset - width / 2))), width }); }); setSel({ kind: 'opening', id: oid, wallId }); };
   // pe telefon nu e loc pentru plan + 3D unul sub altul: etapele care îl folosesc pornesc pe plan
   const setStage = (s: Stage) => { const st = STAGES.find(x => x.id === s)!; setStageRaw(s); setView(st.view === 'split' && isCompact() ? '2d' : st.view); if (!st.tools.includes(tool)) setTool('select'); if (s === 'mep') setShowTech(true); setSideOpen(true); setSheet('half'); };
+  const nextId = nextStage(stage);
+  // stările goale „desenează camerele”: etapa Releveu cu unealta Cameră, plan vizibil (și foaia de jos coborâtă pe ecranele mici)
+  const drawRooms = () => { if (stage !== 'survey') setStage('survey'); setView('2d'); setTool('room'); if (compact) setSheet('peek'); };
   const stageDef = STAGES.find(x => x.id === stage)!, warnCount = advice.filter(a => a.severity !== 'TIP').length;
   const total = snap.placements.reduce((a, p) => a + (resolve(catalog, p.variantId)?.offer?.price || 0), 0);
   const selPl = sel?.kind === 'placement' ? snap.placements.find(p => p.id === sel.id) : undefined, selRoom = sel?.kind === 'room' ? snap.floor.rooms.find(r => r.id === sel.id) : undefined;
@@ -272,13 +285,33 @@ export default function Editor({ id }: { id: string }){
   const num = (v: string, f: (x: number) => void, min = 0) => { const x = v.trim() === '' ? 0 : inputToCm(v, units), tol = units === 'imperial' ? 1.27 : 1e-9; if (x != null && x >= min - tol) f(Math.max(x, min)); };
   const cur = catalogCurrency(catalog), money = (v: number | null | undefined) => formatMoney(v, cur, lang, t('common.unknownPrice')), when = (d: string) => new Date(d).toLocaleString(intlLocale(lang)), inField = (m: number) => cmToInput(m * 100, units);
 
+  const kbd = (k: string) => mac ? `⌘${k}` : `Ctrl+${k}`, stageName = (sid: Stage) => t(`stage.${sid}`);
+  const commands: Command[] = [
+    ...(nextId ? [{ id: 'next', group: t('cmdk.group.next'), label: t('cmdk.continue', { stage: stageName(nextId) }), keywords: [t('stage.continue'), t('cmdk.kw.next')], done: !!done?.[nextId], run: () => setStage(nextId) }] : []),
+    ...STAGES.map((st, i) => ({ id: `st-${st.id}`, group: t('cmdk.group.stages'), label: t('cmdk.goStage', { n: String(i + 1).padStart(2, '0'), stage: stageName(st.id) }), keywords: [stageName(st.id), t(`phase.${phaseOf(st.id)}`)],
+      hint: stage === st.id ? t('stage.current') : undefined, done: !!done?.[st.id], run: () => setStage(st.id) })),
+    ...(stageDef.page ? [] : [{ id: 'v-2d', group: t('cmdk.group.views'), label: t('cmdk.view2d'), keywords: ['2D'], run: () => { setView('2d'); if (compact) setSheet('peek'); } },
+      { id: 'v-split', group: t('cmdk.group.views'), label: t('cmdk.viewSplit'), disabled: compact, run: () => setView('split') },
+      { id: 'v-3d', group: t('cmdk.group.views'), label: t('cmdk.view3d'), run: () => { setView('3d'); if (compact) setSheet('peek'); } }]),
+    { id: 'undo', group: t('cmdk.group.actions'), label: t('editor.undo'), hint: kbd('Z'), keywords: [t('cmdk.kw.undo')], disabled: !hist.current.canUndo, run: undo },
+    { id: 'redo', group: t('cmdk.group.actions'), label: t('editor.redo'), hint: kbd('Y'), disabled: !hist.current.canRedo, run: redo },
+    { id: 'rev', group: t('cmdk.group.actions'), label: t('editor.saveRevision'), keywords: [t('cmdk.kw.save')], disabled: revBusy, run: () => { setRevBusy(true); flight.run('revision', saveRevision).finally(() => setRevBusy(false)); } },
+    { id: 'help', group: t('cmdk.group.actions'), label: t('editor.shortcuts'), hint: '?', run: () => setHelp(true) },
+    { id: 'print', group: t('cmdk.group.docs'), label: t('cmdk.print'), keywords: [t('cmdk.kw.print')], run: () => { window.open(`/p/${id}/print`, '_blank', 'noopener'); } },
+    { id: 'present', group: t('cmdk.group.docs'), label: t('cmdk.present'), run: () => { window.open(`/p/${id}/present`, '_blank', 'noopener'); } },
+    { id: 'board', group: t('cmdk.group.docs'), label: t('cmdk.board'), run: () => { window.open(`/p/${id}/board`, '_blank', 'noopener'); } },
+    { id: 'home', group: t('cmdk.group.actions'), label: t('cmdk.home'), run: () => { location.href = '/'; } },
+  ];
+
   return (<div className="ws">
+    <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} commands={commands} />
     {(!persistent || demo) && <div className="banner">{t(demo ? 'editor.publicDemoBanner' : 'editor.demoBanner')}</div>}
     <header className="topbar">
       <a className="btn ghost icon-btn" href="/" aria-label={t('home.projects')} title={t('home.projects')}><Icon name="back" /><span className="lbl">{t('home.projects')}</span></a>
       <input className="name" value={snap.name} aria-label={t('editor.projectName')} maxLength={120} onChange={e => { const n = { ...house!, name: e.target.value }; setHouse(n); persist(n); }} />
       <SaveChip save={save} rev={rev} />
       <div className="tb-actions">
+      <button type="button" className="btn ghost cmdk-trigger" aria-haspopup="dialog" aria-expanded={cmdOpen} aria-keyshortcuts="Control+K Meta+K" title={`${t('cmdk.open')} (${kbd('K')})`} onClick={() => setCmdOpen(true)}><Icon name="search" /><span className="lbl">{t('cmdk.openShort')}</span><kbd className="cmdk-kbd" aria-hidden="true">{kbd('K')}</kbd></button>
       <button className="btn ghost icon-btn" onClick={undo} disabled={!hist.current.canUndo} title={hist.current.canUndo ? `${t('editor.undo')} (Ctrl+Z)` : t('editor.nothingToUndo')} aria-label={t('editor.undo')}><Icon name="undo" /><span className="lbl">{t('editor.undo')}</span></button>
       <button className="btn ghost icon-btn" onClick={redo} disabled={!hist.current.canRedo} title={hist.current.canRedo ? `${t('editor.redo')} (Ctrl+Y)` : t('editor.nothingToRedo')} aria-label={t('editor.redo')}><Icon name="redo" /><span className="lbl">{t('editor.redo')}</span></button>
       {!stageDef.page && <div className="seg" role="group" aria-label={t('editor.view')}>
@@ -298,11 +331,15 @@ export default function Editor({ id }: { id: string }){
     <div className="stagewrap">
     <button type="button" className="stage-step" aria-label={t('stage.prev')} title={t('stage.prev')} disabled={STAGES.indexOf(stageDef) === 0} onClick={() => setStage(STAGES[Math.max(0, STAGES.indexOf(stageDef) - 1)]!.id)}><Icon name="chevronLeft" /></button>
     <nav className="stagebar" aria-label={t('stage.aria')} ref={stageBar}>
-      {STAGES.map((st, i) => <button key={st.id} data-stage={st.id} aria-current={stage === st.id ? 'step' : undefined} aria-label={`${String(i + 1).padStart(2, '0')} ${t(`stage.${st.id}`)}${st.id === 'docs' && warnCount > 0 ? ` · ${t('stage.warnAria', { n: warnCount })}` : ''}`} onClick={() => setStage(st.id)}><i aria-hidden="true">{String(i + 1).padStart(2, '0')}</i><span className="st-name" aria-hidden="true">{t(`stage.${st.id}`)}</span>{st.id === 'docs' && warnCount > 0 && <b className="count" title={t('stage.checks')} aria-hidden="true">{warnCount}</b>}</button>)}
+      {PHASES.map(ph => <div key={ph.id} className="phase" role="group" aria-label={t('phase.aria', { phase: t(`phase.${ph.id}`) })} data-phase={ph.id}>
+        <span className="phase-label" aria-hidden="true">{t(`phase.${ph.id}`)}</span>
+        {ph.stages.map(sid => { const st = STAGES.find(x => x.id === sid)!, i = STAGES.indexOf(st), ok = !!done?.[sid];
+          return <button key={st.id} data-stage={st.id} aria-current={stage === st.id ? 'step' : undefined} title={t(`stage.why.${st.id}`)} aria-label={`${String(i + 1).padStart(2, '0')} ${t(`stage.${st.id}`)} · ${ok ? t('stage.doneAria') : t('stage.todoAria')}${st.id === 'docs' && warnCount > 0 ? ` · ${t('stage.warnAria', { n: warnCount })}` : ''}`} onClick={() => setStage(st.id)}><i aria-hidden="true">{String(i + 1).padStart(2, '0')}</i><span className={`st-dot ${ok ? 'is-done' : ''}`} aria-hidden="true" /><span className="st-name" aria-hidden="true">{t(`stage.${st.id}`)}</span>{st.id === 'docs' && warnCount > 0 && <b className="count" title={t('stage.checks')} aria-hidden="true">{warnCount}</b>}</button>; })}
+      </div>)}
     </nav>
     <button type="button" className="stage-step" aria-label={t('stage.next')} title={t('stage.next')} disabled={STAGES.indexOf(stageDef) === STAGES.length - 1} onClick={() => setStage(STAGES[Math.min(STAGES.length - 1, STAGES.indexOf(stageDef) + 1)]!.id)}><Icon name="chevronRight" /></button>
     </div>
-    {stageDef.page ? <div className="pagebody">{stage === 'orders' && <OrdersPage id={id} cur={cur} say={say} projectName={snap.name} rooms={floors(house!).flatMap(f => f.rooms).map(r => ({ id: r.id, name: r.name }))} />}{stage === 'site' && <SitePage id={id} rooms={floors(house!).flatMap(f => f.rooms)} say={say} />}</div> :
+    {stageDef.page ? <div className="pagebody">{stage === 'orders' && <OrdersPage onPickFurniture={() => setStage('ffe')} id={id} cur={cur} say={say} projectName={snap.name} rooms={floors(house!).flatMap(f => f.rooms).map(r => ({ id: r.id, name: r.name }))} />}{stage === 'site' && <SitePage id={id} rooms={floors(house!).flatMap(f => f.rooms)} say={say} />}</div> :
     <div className={`body ${compact ? `is-compact sheet-${sheet}` : ""}`}>
       <nav className="tools" aria-label={t('editor.tools')}>
         {(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk)).map(tk => <button key={tk} aria-pressed={tool === tk} onClick={() => setTool(tk)} title={t(TOOL_LABEL[tk])}><svg viewBox="0 0 24 24"><path d={ICON[tk]} /></svg>{t(TOOL_LABEL[tk])}</button>)}
@@ -312,6 +349,7 @@ export default function Editor({ id }: { id: string }){
           {floors(house!).map((_, i) => <button key={i} role="tab" aria-selected={i === L} className="btn" onClick={() => goLevel(i)}>{levelName(i)}</button>)}
           <button className="btn" onClick={onAddLevel} title={t('level.addTitle')} disabled={nLevels >= MAX_LEVELS}>{t('level.add')}</button></div>
         {(view === '2d' || (view === 'split' && !compact)) && <div className="planwrap"><PlanView onKey={onPlanKey} showTech={showTech && !preview} onTechAt={(x, z) => { if (!snap || preview) return; const pt = placeTechPoint(snap, techKind, x, z); if (!pt){ say(t('tech.outside')); return; } mutate(s => { s.tech = [...(s.tech || []), pt]; }); say(t('tech.placed', { rn: snap.floor.rooms.find(r => r.id === pt.roomId)?.name ?? '' })); }} key={(preview ? 'p' + preview.v.tier : 'live') + L} voids={voids} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} sel={preview ? null : sel} tool={preview ? 'select' : tool} severities={preview ? {} : sev} onSelect={preview ? () => {} : (s: Sel) => { setSel(s); if (s && compact && sheet === 'peek') setSheet('half'); }} onEdit={preview ? () => {} : onEdit} onAddWall={preview ? () => {} : onAddWall} onAddRoom={preview ? () => {} : onAddRoom} onAddOpening={preview ? () => {} : onAddOpening} calib={preview ? null : calib} onCalibPick={(a, b) => setCalib({ stage: 'enter', a, b })} />
+          {!preview && !snap.floor.rooms.length && !snap.floor.walls.length && tool !== 'room' && tool !== 'wall' && <EmptyState className="plan-empty" title={t('empty.plan.title')} text={t('empty.plan.text')} action={{ label: t('empty.plan.action'), onClick: drawRooms }} />}
           <p className="sr-only" aria-live="polite">{selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'measure' ? t('editor.hintMeasure') : t('editor.hintSelect')}</div></div>}
         {(view === '3d' || (view === 'split' && !compact)) && <Viewer3D projectId={id} voids={voids} mc={mc} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })} />}
         {preview && <div className="previewbar" role="status">{t('editor.previewBar', { title: preview.v.title })} <button className="btn" onClick={() => setPreview(null)}>{t('common.close')}</button></div>}
@@ -324,13 +362,15 @@ export default function Editor({ id }: { id: string }){
         <div className="sidetabs">
           {compact && <button type="button" className="sheet-grip" aria-label={sheet === 'full' ? t('editor.sheetLess') : t('editor.sheetMore')} aria-expanded={sheet !== 'peek'} onClick={() => setSheet(x => x === 'peek' ? 'half' : x === 'half' ? 'full' : 'peek')}><span aria-hidden="true" /></button>}
           <h2 className="stage-title"><i>{String(STAGES.indexOf(stageDef) + 1).padStart(2, '0')}</i>{t(`stage.${stage}`)}</h2>
+          {nextId && <button type="button" className="btn primary sm stage-continue" aria-label={t('stage.continueTo', { stage: t(`stage.${nextId}`) })} title={t('stage.continueTo', { stage: t(`stage.${nextId}`) })} onClick={() => setStage(nextId)}><span>{t('stage.continue')}</span><Icon name="chevronRight" size={16} /></button>}
           {compact && <button type="button" className="btn ghost icon-btn" aria-label={sheet === 'peek' ? t('editor.showPanel') : t('editor.hidePanel')} onClick={() => setSheet(x => x === 'peek' ? 'half' : 'peek')}><Icon name={sheet === 'peek' ? 'chevronUp' : 'chevronDown'} /></button>}
         </div>
+        <StageMeta stage={stage} done={done} />
         {(showSel || stage === 'survey') && <>
           {stage === 'survey' && floorIssues.filter(i => !(sel?.kind === 'stair' && i.vars?.stair === sel.id)).map((i, k) => <div key={k} className={`issue ${i.severity}`}>{iT(i)}</div>)}
           {!showSel && <>
             <h3>{snap.name}{nLevels > 1 ? ` · ${levelName(L)}` : ''}</h3>
-            {meta && <ProjectCard id={id} initial={meta} areaM2={floors(house!).flatMap(f => f.rooms).reduce((a, r) => a + area(r.rect), 0)} cur={cur} say={say} />}
+            {meta && <ProjectCard id={id} initial={meta} onSaved={setMeta} areaM2={floors(house!).flatMap(f => f.rooms).reduce((a, r) => a + area(r.rect), 0)} cur={cur} say={say} />}
             {meta && L === 0 && <TasksPanel projectId={id} />}
             {meta && L === 0 && <TimePanel id={id} cur={cur} say={say} />}
             {meta && L === 0 && <ContractPanel id={id} meta={meta} say={say} />}
@@ -406,9 +446,9 @@ export default function Editor({ id }: { id: string }){
         </>}
         {stage === 'concept' && !showSel && <DesignPanel id={id} snap={snap} say={say} cur={cur} flush={flushDraft} onBrief={onBrief} onPreview={(v: any, pid: string | null) => setPreview(v && pid ? { v, pid } : null)} onApplied={onApplied} />}
         {stage === 'concept' && !showSel && <TwinDesignPanel id={id} snap={snap} catalog={catalog} say={say} flush={flushDraft} onPreview={(s: Snapshot | null, label: string | null) => setPreview(s && label ? { v: { candidate: s, title: label, tier: 'twin-' + label }, pid: 'twin' } : null)} onApplied={onApplied} />}
-        {stage === 'finishes' && !showSel && <RoomPicker snap={snap} mc={mc} onPick={rid => setSel({ kind: 'room', id: rid })} />}
+        {stage === 'finishes' && !showSel && <RoomPicker snap={snap} mc={mc} onPick={rid => setSel({ kind: 'room', id: rid })} onDraw={drawRooms} />}
         {stage === 'ffe' && !showSel && <CatalogPanel locale={lang} units={units} catalog={catalog} snap={snap} onUse={(g, vid) => mutate(s => { s.selections[g] = vid; if (!s.picked.includes(g)) s.picked.push(g); })} onAdd={(vid: string) => addToRoom(vid, selRoom)} />}
-        {stage === 'mep' && <TechPanel snap={snap} show={showTech} kind={techKind} onShow={setShowTech} onKind={k => { setTechKind(k); setTool('tech'); }}
+        {stage === 'mep' && <TechPanel onDraw={() => setTool('tech')} snap={snap} show={showTech} kind={techKind} onShow={setShowTech} onKind={k => { setTechKind(k); setTool('tech'); }}
           onSuggest={() => { const pts = suggestTechPoints(snap); mutate(s => { s.tech = pts; }); setShowTech(true); say(t('tech.suggested', { n: pts.length })); }}
           onClear={() => mutate(s => { delete s.tech; })} onDelete={id => mutate(s => { s.tech = (s.tech || []).filter(p => p.id !== id); })} />}
         {stage === 'docs' && <DocsPanel id={id} lang={lang} onSchedule={() => downloadSchedule(finishSchedule(house!, catalog, mc), t, cur, snap.name || 'proiect', levelName)} />}
@@ -418,7 +458,7 @@ export default function Editor({ id }: { id: string }){
         {stage === 'present' && !showSel && <ClientPanel id={id} cur={cur} say={say} onLinked={loadRevs} flush={flushDraft} roomNames={Object.fromEntries(floors(house!).flatMap(f => f.rooms).map(r => [r.id, r.name]))} />}
         {stage === 'present' && !showSel && <RenderGallery id={id} />}
         {stage === 'present' && !showSel && <div className="docs"><a className="docrow" href={`/p/${id}/present`} target="_blank" rel="noopener"><b>{t('stage.openPresentation')}</b><small>{t('stage.openPresentationSub')}</small></a><a className="docrow" href={`/p/${id}/board`} target="_blank" rel="noopener"><b>{t('board.open')}</b><small>{t('board.openSub')}</small></a></div>}
-        {stage === 'present' && !showSel && <div className="revs"><h3>{t('stage.revisions')}</h3>{revs.length === 0 && <p className="muted">{t('editor.noRevsYet')}</p>}
+        {stage === 'present' && !showSel && <div className="revs"><h3>{t('stage.revisions')}</h3>{revs.length === 0 && <EmptyState title={t('empty.revs.title')} text={t('empty.revs.text')} action={{ label: t('editor.saveRevision'), onClick: () => { setRevBusy(true); flight.run('revision', saveRevision).finally(() => setRevBusy(false)); } }} />}
           {revs.map(r => <div key={r.number} className="r"><span>{t('editor.revisionN', { n: r.number })}{r.note ? ` · ${r.note}` : ''}</span><button className="btn" onClick={() => restore(r.number)}>{t('editor.revert')}</button><button className="btn" onClick={() => shareRevision(r.number)} title={t('editor.shareTitle')}>{t('editor.share')}</button><small>{when(r.created_at)}</small></div>)}
           <RevisionDiff id={id} revs={revs} lang={lang} units={units} />
           {shares.filter(s => !s.revokedAt).length > 0 && <><h4>{t('editor.activeShares')}</h4>{shares.filter(s => !s.revokedAt).map(s => <div key={s.token} className="r"><span>{t('editor.revisionN', { n: s.revisionNumber })}</span><a className="btn" href={s.path} target="_blank" rel="noopener">{t('common.open')}</a><button className="btn danger" onClick={() => revokeShare(s.token)}>{t('editor.revoke')}</button><small>{when(s.createdAt)}</small></div>)}</>}</div>}
@@ -486,9 +526,18 @@ function DoorPanel({ op, snap, mc, cur, onChange }: { op: { id: string; width: n
   </>);
 }
 
+/** Sub titlul etapei: faza, câte etape sunt gata și ce face etapa aceasta „gata” (aceeași regulă ca bulina din bara de etape). */
+function StageMeta({ stage, done }: { stage: Stage; done: Record<Stage, boolean> | null }){
+  const { t } = usePrefs(); if (!done) return null; const ok = done[stage];
+  return (<div className="stage-meta">
+    <p className="sm-phase">{t('stage.meta', { phase: t(`phase.${phaseOf(stage)}`), n: doneCount(done), total: STAGE_IDS.length })}</p>
+    <p className={`sm-why ${ok ? 'is-done' : ''}`}><span className={`st-dot ${ok ? 'is-done' : ''}`} aria-hidden="true" /><b>{ok ? t('stage.isDone') : t('stage.isTodo')}</b> · {t(`stage.why.${stage}`)}</p>
+  </div>);
+}
 /** Etapa Finisaje fără selecție: camerele ca listă de lucru, cu pardoseala aleasă și starea finisajelor. */
-function RoomPicker({ snap, mc, onPick }: { snap: Snapshot; mc: MaterialsCatalog; onPick(id: string): void }){
+function RoomPicker({ snap, mc, onPick, onDraw }: { snap: Snapshot; mc: MaterialsCatalog; onPick(id: string): void; onDraw(): void }){
   const { t, lang, units } = usePrefs();
+  if (!snap.floor.rooms.length) return <EmptyState title={t('empty.rooms.title')} text={t('empty.rooms.text')} action={{ label: t('empty.rooms.action'), onClick: onDraw }} />;
   return (<div className="roompick">
     <p className="muted">{t('stage.finishesPick')}</p>
     {snap.floor.rooms.map(r => { const f = finishesOf(snap, r), fl = materialOf(mc, f.floor), feats = (f.wallFeatures || []).length;
@@ -548,7 +597,7 @@ function RenderGallery({ id }: { id: string }){
   if (!data) return null;
   return (<div className="renders"><h3>{t('render.title')}</h3>
     {!data.available && <p className="muted">{t('render.notConfigured')}</p>}
-    {data.available && data.jobs.length === 0 && <p className="muted">{t('render.none')}</p>}
+    {data.available && data.jobs.length === 0 && <EmptyState title={t('empty.renders.title')} text={t('render.none')} />}
     {data.jobs.slice(0, 3).map(j => <div key={j.job} className="render-job"><small>{new Date(j.startedAt).toLocaleString(intlLocale(lang))} · {t(`render.status.${j.status}`)}</small>
       <div className="render-grid">{j.images.map(f => <a key={f} href={`/api/projects/${id}/renders/${j.job}/${f}`} target="_blank" rel="noopener"><img src={`/api/projects/${id}/renders/${j.job}/${f}`} alt={f} loading="lazy" /></a>)}</div></div>)}
   </div>);

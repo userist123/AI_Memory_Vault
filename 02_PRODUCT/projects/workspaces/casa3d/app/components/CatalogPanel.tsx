@@ -1,5 +1,6 @@
 'use client';
 import { useMemo, useState } from 'react';
+import EmptyState from './EmptyState';
 import type { Catalog, Snapshot } from '@/core/types';
 import { searchCatalog, catalogCurrencies, catalogMarkets } from '@/core/catalog-filter';
 import { groups } from '@/core/catalog';
@@ -50,6 +51,7 @@ export default function CatalogPanel({ catalog, snap, onUse, onAdd, locale = 'ro
     </div>
     {needCur && <div className="issue WARNING">{t('catalog.needCurrency')}</div>}
     <div className="prov" role="status">{rows.length} {t('catalog.results')}{rows.length > shown.length ? ` (${t('catalog.firstN')} ${shown.length})` : ''}</div>
+    {rows.length === 0 && !needCur && <EmptyState title={t('empty.catalog.title')} text={t('empty.catalog.text')} action={{ label: t('empty.catalog.action'), onClick: () => { setQ(''); setRet([]); setMk([]); setCur(''); setMinP(''); setMaxP(''); setMaxW(''); setMaxD(''); setGroup(''); } }} />}
     {shown.map(r => { const used = snap.selections[r.group] === r.variantId;
       const nm = cardNames(r.productName, r.variantName);
       return <div key={r.variantId} className="var" style={{ display: 'grid', gap: 4, minWidth: 0 }}>

@@ -1,6 +1,8 @@
 'use client';
 // Panoul studioului: proiectele în lucru (cu miniatura planului) și tipologiile de pornire pentru un proiect nou.
 import { useEffect, useRef, useState } from 'react';
+import EmptyState from '@/components/EmptyState';
+import { CardsSkeleton } from '@/components/Skeleton';
 import { singleFlight } from '@/lib/single-flight';
 import { TEMPLATES, floorArea } from '../core/templates';
 import type { Floor } from '../core/types';
@@ -72,7 +74,8 @@ export default function Home(){
       {list && list.length > 3 && <div className="home-tools"><input type="search" value={q} onChange={e => setQ(e.target.value)} placeholder={t('home.search')} aria-label={t('home.search')} />
         <select value={sort} onChange={e => setSort(e.target.value as any)} aria-label={t('home.sort')}><option value="due">{t('home.sortDue')}</option><option value="updated">{t('home.sortUpdated')}</option><option value="name">{t('home.sortName')}</option></select></div>}
       {undo && <div className="undo-toast" role="status">{t('home.trashed', { name: undo.name })} <button className="btn" onClick={() => restore(undo.id)}>{t('home.undo')}</button></div>}
-      {list === null ? <p className="muted">{t('home.loading')}</p> : list.length === 0 ? <p className="muted">{t('home.none')}</p> : shown.length === 0 ? <p className="muted">{t('home.noneFilter')}</p> :
+      {list === null ? <CardsSkeleton label={t('home.loading')} /> : list.length === 0 ? <EmptyState title={t('empty.home.title')} text={t('empty.home.text')} action={{ label: t('empty.home.action'), onClick: () => { const el = document.getElementById('new-project-name'); el?.scrollIntoView({ block: 'center' }); el?.focus({ preventScroll: true }); } }} />
+        : shown.length === 0 ? <EmptyState title={t('empty.homeFilter.title')} text={t('empty.homeFilter.text')} action={{ label: t('empty.homeFilter.action'), onClick: () => { setFilter('all'); setQ(''); } }} /> :
         <div className="pgrid">{shown.map(p => { const left = daysLeft({ status: p.status, dueDate: p.dueDate ?? undefined }, today); return <div key={p.id} className="pcard-wrap"><a className="pcard" href={`/p/${p.id}`}>
           {plans[p.id] ? <PlanThumb floor={plans[p.id]!} label={p.name} /> : <div className="thumb empty" />}
           <span className={`st st-${p.status}`}>{t(`pstatus.${p.status}`)}</span>
@@ -86,7 +89,7 @@ export default function Home(){
     {list !== null && <TasksPanel projects={(list ?? []).map(p => ({ id: p.id, name: p.name }))} />}
     <section>
       <div className="home-sec"><h2>{t('home.newProject')}</h2></div>
-      <div className="new"><label className="f"><span>{t('home.nameAria')}</span><input type="text" value={name} placeholder={t('home.defaultName')} onChange={e => setName(e.target.value)} maxLength={120} /></label></div>
+      <div className="new"><label className="f"><span>{t('home.nameAria')}</span><input id="new-project-name" type="text" value={name} placeholder={t('home.defaultName')} onChange={e => setName(e.target.value)} maxLength={120} /></label></div>
       <div className="tgrid" role="list" aria-label={t('home.templatesAria')}>
         <button className="tcard" role="listitem" disabled={busy} onClick={() => create('blank')}><div className="thumb empty blank">+</div><b>{t('home.blank')}</b><small>{t('home.blankSub')}</small></button>
         {TEMPLATES.map(tm => <button key={tm.id} className="tcard" role="listitem" disabled={busy} onClick={() => create(tm.id)} title={tm.description[L]}>

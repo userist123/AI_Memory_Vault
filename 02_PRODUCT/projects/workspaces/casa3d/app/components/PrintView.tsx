@@ -1,6 +1,7 @@
 'use client';
 // Pagină de tipărire (A4 landscape → „Salvează ca PDF”): plan la scară reală, tabel camere, listă de cumpărături și buget.
 import { finishSchedule } from '@/core/finish-schedule';
+import { PrintSkeleton } from './Skeleton';
 import { settingOut, type AxisPlan } from '@/core/setting-out';
 import { analyzeSurvey, type RoomSurvey } from '@/core/survey';
 import { ScheduleTable } from './FinishSchedule';
@@ -99,7 +100,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
     return { works, budget: computeBudget(snap, catalog, mc), furn: furnitureTotal(catalog, snap.placements) };
   }, [data]);
   if (err) return <LoadError />;
-  if (!data || !view) return <main className="print-page">{canvas}<p>{t('print.loading')}</p></main>;
+  if (!data || !view) return <main className="print-page">{canvas}<PrintSkeleton label={t('print.loading')} /></main>;
 
   const { p, catalog, mc } = data, snap = p.draft, budget = view.budget, finishRows = finishSchedule(snap, catalog, mc), tilePlans = settingOut(snap, catalog, mc);
   // câte o vedere pe nivel: planul, camerele și culorile se desenează pe nivelul lor

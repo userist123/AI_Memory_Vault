@@ -2,6 +2,7 @@
 // Etapa „Șantier”: remedierile găsite la vizite (snag list) — poză făcută pe loc, camera, meseria, descrierea, starea.
 // Gândită pentru telefon: butonul mare „+ Remediere”, camera se deschide direct, stările se schimbă dintr-o atingere.
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { ListSkeleton } from './Skeleton';
 import { TRADES, SNAG_STATUSES, snagSummary, type Snag, type SnagStatus, type Trade } from '@/core/site';
 import type { Room } from '@/core/types';
 import { shrinkPhoto } from '@/lib/image-resize';
@@ -26,7 +27,7 @@ export default function SitePage({ id, rooms, say }: { id: string; rooms: Room[]
     <div className="site-act"><button className="btn primary big" onClick={() => setAdding(true)}>{t('site.add')}</button><a className="btn" href={`/p/${id}/site-report`} target="_blank" rel="noopener">{t('site.report')}</a><a className="btn" href={`/p/${id}/handover`} target="_blank" rel="noopener">{t('ho.kicker')}</a>
       <div className="filters" role="tablist">{(['open', 'all'] as const).map(f => <button key={f} role="tab" aria-selected={filter === f} onClick={() => setFilter(f)}>{t(`site.filter.${f}`)}</button>)}</div></div>
     {adding && <SnagForm id={id} rooms={rooms} say={say} onDone={s => { setAdding(false); if (s) setItems(xs => [...(xs ?? []), s]); }} />}
-    {items === null ? <p className="muted">{t('site.loading')}</p> : groups.length === 0 ? (filter === 'open' && items.length ? <EmptyState title={t('site.allDone')} /> : <EmptyState title={t('empty.site.title')} text={t('site.none')} action={{ label: t('site.add'), onClick: () => setAdding(true) }} />) :
+    {items === null ? <ListSkeleton label={t('site.loading')} rows={3} /> : groups.length === 0 ? (filter === 'open' && items.length ? <EmptyState title={t('site.allDone')} /> : <EmptyState title={t('empty.site.title')} text={t('site.none')} action={{ label: t('site.add'), onClick: () => setAdding(true) }} />) :
       groups.map(([rid, list]) => <section key={rid} className="supplier"><header><h2>{roomName(rid || null)}</h2><span className="muted">{tp('site.count', list.length)}</span></header>
         <ul>{list.map(s => <li key={s.id} className={`snag st-s-${s.status}`}>
           <div className="snag-main"><b className="snag-n">#{s.number}</b><div className="snag-txt"><b>{s.title}</b>{s.body && <p>{s.body}</p>}

@@ -1,5 +1,6 @@
 'use client';
 import { profileLine, type StudioProfile } from '@/core/studio-profile';
+import { DocSkeleton } from './Skeleton';
 // Dosarul de predare pentru client (PDF din browser): produsele montate cu garanții, codurile finisajelor, îngrijire,
 // ce nu s-a livrat încă, remedierile deschise și un model de proces-verbal de recepție.
 import { useEffect, useState } from 'react';
@@ -17,7 +18,7 @@ export default function HandoverReport({ id }: { id: string }){
   useEffect(() => { fetch('/api/studio').then(r => r.ok ? r.json() : null).then(setProfile).catch(() => {}); }, []);
   useEffect(() => { fetch(`/api/projects/${id}/handover`).then(r => r.ok ? r.json() : Promise.reject()).then(setD).catch(() => setErr(true)); }, [id]);
   if (err) return <LoadError />;
-  if (!d) return <main className="report"><p className="muted">{t('print.loading')}</p></main>;
+  if (!d) return <main className="report"><DocSkeleton label={t('print.loading')} /></main>;
   const date = (s: string) => new Date(s.length === 10 ? s + 'T12:00:00' : s).toLocaleDateString(intlLocale(lang), { day: 'numeric', month: 'long', year: 'numeric' });
   const today = date(new Date().toISOString()), addr = d.meta.siteAddress || d.meta.client?.address;
   return (<main className="report handover">

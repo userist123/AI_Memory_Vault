@@ -2,6 +2,8 @@
 // Etapa „Comenzi”: tot ce e de cumpărat, grupat pe furnizor. Pe fiecare linie: starea (de comandat → ofertă cerută →
 // comandat → livrat → montat), nr. comenzii, datele; întârzierile sus. Lista unui furnizor se tipărește sau se descarcă (CSV).
 import { useEffect, useMemo, useRef, useState } from 'react';
+import EmptyState from './EmptyState';
+import { ListSkeleton } from './Skeleton';
 import { ORDER_STATUSES, withOrderState, bySupplier, procurementSummary, type OrderState, type ProcurementRow, type SupplierGroup } from '@/core/procurement';
 import { formatMoney, formatQty } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
@@ -13,7 +15,7 @@ import { ImportCsvButtons } from './CustomItemsImport';
 type Data = { rows: ProcurementRow[]; groups: SupplierGroup[]; summary: { lines: number; todo: number; ordered: number; delivered: number; installed: number; overdue: number; orderLate: number; orderSoon: number; ordersValue: number } };
 const csvCell = (v: unknown) => quoteCell(safeCell(v));   // protecția comună: formule, tab/CR în față, ghilimele
 type RoomRef = { id: string; name: string };
-export default function OrdersPage({ id, cur, say, projectName, rooms = [] }: { id: string; cur: string; say(s: string): void; projectName: string; rooms?: RoomRef[] }){
+export default function OrdersPage({ id, cur, say, projectName, rooms = [], onPickFurniture }: { onPickFurniture?(): void; id: string; cur: string; say(s: string): void; projectName: string; rooms?: RoomRef[] }){
   const { t, lang } = usePrefs(), [data, setData] = useState<Data | null>(null), [open, setOpen] = useState<string | null>(null), [filter, setFilter] = useState<'all' | 'open' | 'overdue'>('all');
   const load = () => fetch(`/api/projects/${id}/orders`).then(r => r.ok ? r.json() : null).then(j => j && setData(j)).catch(() => say(t('orders.loadError')));
   useEffect(() => { load(); }, [id]); // eslint-disable-line
@@ -32,7 +34,7 @@ export default function OrdersPage({ id, cur, say, projectName, rooms = [] }: { 
   function csv(g: SupplierGroup){ const head = [t('orders.col.product'), t('orders.col.code'), t('orders.col.qty'), t('orders.col.unit'), t('orders.col.packs'), t('orders.col.unitPrice'), t('orders.col.total'), t('orders.col.rooms'), t('orders.col.status'), t('orders.col.ref'), 'URL'];
     const lines = [head, ...g.rows.map(r => [r.product, r.code ?? '', r.qty, r.unit, r.packs ?? '', r.unitPrice ?? '', r.total ?? '', r.rooms.join(', '), t(`ostatus.${r.state.status}`), r.state.ref ?? '', r.url ?? ''])].map(l => l.map(csvCell).join(';')).join('\n');
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + lines], { type: 'text/csv;charset=utf-8' })); a.download = `${projectName || 'proiect'} - ${g.supplier}.csv`.replace(/[\\/:*?"<>|]/g, '_'); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
-  if (!data) return <div className="orders"><p className="muted">{t('orders.loading')}</p></div>;
+  if (!data) return <div className="orders"><ListSkeleton label={t('orders.loading')} rows={5} /></div>;
   const s = data.summary;
   return (<div className="orders">
     <header className="orders-head"><div><h1>{t('orders.title')}</h1><p className="muted">{t('orders.sub')}</p><p><a className="btn" href={`/p/${id}/handover`} target="_blank" rel="noopener">{t('ho.kicker')}</a></p></div>
@@ -42,7 +44,8 @@ export default function OrdersPage({ id, cur, say, projectName, rooms = [] }: { 
     <ClipAdder id={id} rooms={rooms} say={say} onAdded={load} />
     <ImportCsvButtons id={id} say={say} onDone={load} />
     <div className="filters" role="tablist">{(['all', 'open', 'overdue'] as const).map(f => <button key={f} role="tab" aria-selected={filter === f} onClick={() => setFilter(f)}>{t(`orders.filter.${f}`)}</button>)}</div>
-    {groups.length === 0 && <p className="muted">{t('orders.none')}</p>}
+    {groups.length === 0 && (filter !== 'all' ? <EmptyState title={t('empty.ordersFilter.title')} text={t('orders.none')} action={{ label: t('empty.ordersFilter.action'), onClick: () => setFilter('all') }} />
+      : <EmptyState title={t('empty.orders.title')} text={t('empty.orders.text')} action={onPickFurniture ? { label: t('empty.orders.action'), onClick: onPickFurniture } : undefined} />)}
     {groups.map(g => <section key={g.supplier} className="supplier">
       <header><h2>{g.supplier}</h2><span className="muted">{t('orders.groupInfo', { n: g.rows.length, open: g.open })}{g.overdue ? ` · ` : ''}{g.overdue ? <b className="late">{t('orders.groupLate', { n: g.overdue })}</b> : null}</span>
         <b className="gtotal">{money(g.total)}</b><button className="btn" onClick={() => csv(g)}>{t('orders.csv')}</button></header>

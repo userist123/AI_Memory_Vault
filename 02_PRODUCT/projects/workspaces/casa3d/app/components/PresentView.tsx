@@ -2,6 +2,7 @@
 // Prezentarea pentru client, ca planșe 16:9 (pe ecran sau „Salvează ca PDF”): copertă, moodboard, câte o planșă pe cameră
 // (imaginea 3D, mostrele de finisaj, piesele), planul și bugetul. Imaginile vin din motorul 3D, randate în afara ecranului.
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { DeckSkeleton } from './Skeleton';
 import type { Catalog, MaterialsCatalog, Snapshot } from '@/core/types';
 import { presentation, approvalItems } from '@/core/presentation';
 import { lighting, sunDirection } from '@/core/lighting';
@@ -105,7 +106,7 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
     addEventListener('keydown', on); return () => removeEventListener('keydown', on); }, []);
   const canvas = <canvas ref={canvasRef} width={1600} height={1000} aria-hidden="true" style={{ position: 'fixed', left: -10000, top: 0, width: 1600, height: 1000, pointerEvents: 'none' }} />;
   if (err) return <LoadError />;
-  if (!data || !pres) return <main className="deck">{canvas}<p className="muted">{t('print.loading')}</p></main>;
+  if (!data || !pres) return <main className="deck">{canvas}<DeckSkeleton label={t('print.loading')} /></main>;
   const cur = data.catalog.offers[0]?.currency ?? 'RON', money = (v: number | null) => formatMoney(v, cur, lang, '—'), date = new Date().toLocaleDateString(intlLocale(lang), { month: 'long', year: 'numeric' });
   const role = (r: string) => t(`pres.role.${r.split('.')[0]}`), title = (n?: string) => (n ?? '').split(',')[0];
   const fl = floors(data.snap)[0]!, b = floorBounds(fl) ?? { x0: 0, x1: 6, z0: 0, z1: 5 }, box = { x0: b.x0 - .4, z0: b.z0 - .4, w: b.x1 - b.x0 + .8, d: b.z1 - b.z0 + .8 };

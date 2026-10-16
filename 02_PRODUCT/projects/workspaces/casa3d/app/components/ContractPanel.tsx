@@ -1,6 +1,7 @@
 'use client';
 // Contract și ofertă în editor: tipul și suma onorariului, etapele, avansul, rundele de modificări, TVA; se salvează singură, separat de plan.
 import { useEffect, useRef, useState } from 'react';
+import { ListSkeleton } from './Skeleton';
 import { PHASE_IDS, FEE_HINTS, DEFAULT_CONTRACT, CONTRACT_LIMITS, hintPosition, type ContractData, type FeeKind, type PayRow } from '@/core/contract';
 import { FEE_KINDS, type ProjectMeta } from '@/core/project-meta';
 import { formatMoney } from '@/core/format';
@@ -18,7 +19,7 @@ export default function ContractPanel({ id, meta, say }: { id: string; meta: Pro
     timer.current = setTimeout(async () => { const r = await fetch(`/api/projects/${id}/contract`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...d, fee: d.fee ?? null }) }).catch(() => null);
       if (r?.ok){ apply(await r.json()); setState('saved'); } else { setState('error'); const j = await r?.json().catch(() => null); say(j?.error || t('ctr.saveError')); } }, 700);
     return () => clearTimeout(timer.current); }, [d]); // eslint-disable-line
-  if (!d) return <div className="ctr-panel"><h3>{t('ctr.title')}</h3>{loadErr ? <p className="bad" role="alert">{loadErr}</p> : <p className="muted">{state === 'error' ? t('ctr.saveError') : t('print.loading')}</p>}</div>;
+  if (!d) return <div className="ctr-panel"><h3>{t('ctr.title')}</h3>{loadErr ? <p className="bad" role="alert">{loadErr}</p> : state === 'error' ? <p className="muted">{t('ctr.saveError')}</p> : <ListSkeleton label={t('print.loading')} rows={2} />}</div>;
   const set = (p: Partial<ContractData>) => { dirty.current = true; setD(x => ({ ...(x ?? DEFAULT_CONTRACT), ...p })); };
   const fee = d.fee, setFee = (p: Partial<NonNullable<ContractData['fee']>>) => set({ fee: { kind: 'fixed', amount: 0, ...fee, ...p } });
   const hint = fee ? FEE_HINTS[fee.kind] : null, pos = hintPosition(fee), num = (v: string) => { const n = Number(v); return Number.isFinite(n) && n >= 0 ? n : null; };
