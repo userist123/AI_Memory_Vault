@@ -310,7 +310,11 @@ namespace LogAnalyzer.UI.ViewModels
                     string? auditPath = null;
                     try { auditPath = LogAnalyzer.UI.Services.AuthApp.Service.AuditPath; } catch (InvalidOperationException) { }
                     // D04 and the transfer register: the officer-signed media register in force (re-verified; compared with the last install in the sealed audit)
-                    facts.SignedMedia = LogAnalyzer.UI.Services.MediaRegisterFlows.Active(LogAnalyzer.Dfir.Registers.SignedMediaRegisterStore.Shared, auditPath);
+                    // owner decision 2026-10-16: with the register switched off (MediaRegisterFeature) it is not read; D04 is "Nu se aplică" and the transfer
+                    // register does not require it (as for a case without a signed register)
+                    facts.SignedMedia = LogAnalyzer.Dfir.Registers.MediaRegisterFeature.Enabled
+                        ? LogAnalyzer.UI.Services.MediaRegisterFlows.Active(LogAnalyzer.Dfir.Registers.SignedMediaRegisterStore.Shared, auditPath)
+                        : null;
                     (facts.MediaCapacityTolerance, var toleranceWarning) = LogAnalyzer.Dfir.Registers.MediaMatchSettings.Load();   // B7: station setting, default 0.02, 0..0.10
                     facts.MediaCapacityToleranceWarning = toleranceWarning ?? "";
                     if (auditPath is not null)
