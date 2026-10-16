@@ -143,18 +143,25 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task RunStationControl()
         {
-            if (QuickControl is null || !ShowQuickControl) { OpenStatus = "Controlul stației dintr-un clic nu este oferit pe această stație; folosiți pagina „Control stație”."; return; }
-            if (QuickControl.IsBusy) return;
+            if (QuickGate() is not { } q || q.IsBusy) return;
             OpenStatus = "";
-            await QuickControl.RunQuickAsync();
+            await q.RunQuickAsync();
         }
 
         /// <summary>„Deschide raportul” (Ctrl+O).</summary>
-        [RelayCommand] private void OpenControlReport() => QuickControl?.OpenReport();
+        [RelayCommand] private void OpenControlReport() { if (QuickGate() is { } q) q.OpenReport(); }
         /// <summary>„Semnează ca ofițer” (Ctrl+Shift+S): an authority action; Windows asks the card PIN.</summary>
-        [RelayCommand] private void SignControlReport() => QuickControl?.SignAsOfficer();
+        [RelayCommand] private void SignControlReport() { if (QuickGate() is { } q) q.SignAsOfficer(); }
         /// <summary>„Exportă pentru ofițer” (Ctrl+E).</summary>
-        [RelayCommand] private void ExportForOfficer() => QuickControl?.ExportForOfficer();
+        [RelayCommand] private void ExportForOfficer() { if (QuickGate() is { } q) q.ExportForOfficer(); }
+
+        /// <summary>Review of PR #298: the keyboard shortcuts pass the same role gate as the panel; null (with the reason on the page) when not offered.</summary>
+        private IStationQuickControl? QuickGate()
+        {
+            if (QuickControl is not null && ShowQuickControl) return QuickControl;
+            OpenStatus = "Controlul stației dintr-un clic nu este oferit pe această stație; folosiți pagina „Control stație”.";
+            return null;
+        }
         /// <summary>„Vezi toate detaliile”: the full control page (checks, users, timeline).</summary>
         [RelayCommand] private void ShowControlDetails() => _navigate(RoleProfiles.TabStationControl);
 

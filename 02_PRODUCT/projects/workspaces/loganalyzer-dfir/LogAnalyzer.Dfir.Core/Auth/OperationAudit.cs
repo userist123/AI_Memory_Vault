@@ -296,6 +296,14 @@ public static class OperationAudit
     public static string ExportWrittenDetail(string caseId, string format, int items, string outputPath) =>
         ExportUnmaskedDetail(caseId, format, items, outputPath) + "; phase=written";
 
+    /// <summary>Audit-first export of several files into one folder: the intent lists every file that will be written (review of PR #298).</summary>
+    public static string ExportBundleIntentDetail(string caseId, string format, string folder, IReadOnlyList<string> files) =>
+        $"case={(caseId.Length > 0 ? caseId : "(fără caz)")}; format={format}; items={files.Count}; folder={folder}; files={string.Join(" | ", files)}; phase=intent";
+
+    /// <summary>Audit-first export of several files: one record per written file, with its SHA-256.</summary>
+    public static string ExportBundleFileDetail(string caseId, string format, string folder, string file) =>
+        ExportUnmaskedDetail(caseId, format, 1, file) + $"; folder={folder}; file={Path.GetRelativePath(folder, file)}; phase=written";
+
     /// <summary>Audit-first export: the write failed after the intent was recorded.</summary>
     public static string ExportFailedDetail(string caseId, string format, int items, string error) =>
         $"case={(caseId.Length > 0 ? caseId : "(fără caz)")}; format={format}; items={items}; phase=failed; error={error}";
