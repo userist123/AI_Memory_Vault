@@ -80,6 +80,11 @@ public sealed class ClassifiedInput
     public IReadOnlyList<MediumSeen> Media { get; init; } = [];
     /// <summary>The approved transfer register; null = not defined (no exit can be shown as approved).</summary>
     public TransferRegister? Transfers { get; init; }
+    /// <summary>
+    /// The active media of the signed media register (owner decision 2026-10-16): a transfer row on a medium approves only when its medium is in it; otherwise
+    /// the exit stays NEJUSTIFICATĂ ("mediul nu este în registrul semnat"). Empty = no signed register in force. Null = not supplied (offline case analysis).
+    /// </summary>
+    public SignedMediaSet? SignedMedia { get; init; }
     /// <summary>Time zone of the times typed in the transfer register (the station's declared zone); null = not declared, so no register time can be compared.</summary>
     public TimeZoneInfo? RegisterZone { get; init; }
     /// <summary>The application's own reading windows (hashing); records of its process in a window are listed apart, never as accesses.</summary>
@@ -703,6 +708,8 @@ public static class ClassifiedAccess
                 if (MediumChannel(ch) && printRow) reasons.Add("intrarea este o tipărire, nu un suport");
                 if (serial.Length > 0 && row.MediumSerial.Trim().Length > 0 && MediaRegister.NormalizeSerial(row.MediumSerial) != MediaRegister.NormalizeSerial(serial))
                     reasons.Add($"suportul diferă (registru {row.MediumSerial}, observat {serial})");
+                if (MediumChannel(ch) && input.SignedMedia is { } signed && !signed.Contains(row.MediumSerial, row.MediumRegistration))
+                    reasons.Add($"mediul nu este în registrul semnat ({(row.MediumSerial.Trim().Length > 0 ? "seria " + row.MediumSerial.Trim() : "numărul " + row.MediumRegistration.Trim())})");
                 var rowHashes = RowHashes(row);
                 if (rowHashes.Count > 0 && hash.Length == 64 && !rowHashes.Contains(hash, StringComparer.OrdinalIgnoreCase)) reasons.Add("amprenta din registru nu corespunde fișierului");
                 if (t is { } at && regTimes.Count > 0 && regTimes.All(u => (u - at).Duration() > RegisterTolerance))

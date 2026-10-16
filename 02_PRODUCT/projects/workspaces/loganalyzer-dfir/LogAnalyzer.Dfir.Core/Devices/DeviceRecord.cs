@@ -40,6 +40,8 @@ public sealed record DeviceRecord
     public IReadOnlyList<ConnectionUsage> Usage { get; init; } = [];
     /// <summary>Serials of the volumes (file systems) on this medium, read from the boot records Windows logged in Partition/Diagnostic 1006; the same serial LNK files carry. Empty = none logged or not recognised.</summary>
     public IReadOnlyList<string> VolumeSerials { get; init; } = [];
+    /// <summary>BitLocker persistent volume id of the encrypted volume(s) on this medium (Win32_EncryptableVolume.PersistentVolumeID); "" = not encrypted or not readable.</summary>
+    public string BitLockerVolumeId { get; init; } = "";
     public string ConnectionsText => Connections.Count == 0 ? "" : $"{Connections.Count} conectări în jurnal; ultimele: {string.Join(", ", Connections.Take(5).Select(c => c.ToLocalTime().ToString("yyyy-MM-dd HH:mm")))}";
 
     public string KindText => DeviceText.Kind(Kind);

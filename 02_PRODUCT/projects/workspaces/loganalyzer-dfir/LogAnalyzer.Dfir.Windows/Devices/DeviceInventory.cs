@@ -36,11 +36,12 @@ public static class DeviceInventory
         try { foreach (var p in PresentOptical()) present[p.PnpId] = p; }
         catch (Exception ex) when (ex is ManagementException or COMException or UnauthorizedAccessException) { problems.Add("Unitățile CD/DVD (WMI Win32_CDROMDrive) nu au putut fi citite: " + ex.Message); }
 
-        var bitlocker = BitLockerByLetter(problems);
+        var bitlocker = BitLockerByLetter(problems, out var volumeIds);
         for (int i = 0; i < devices.Count; i++)
         {
             if (!present.TryGetValue(devices[i].InstanceId, out var p)) continue;
             var enc = p.Letters.Select(l => bitlocker.TryGetValue(l, out var s) ? $"{l} {s}" : null).Where(s => s is not null).ToList();
+            var blIds = p.Letters.Select(l => volumeIds.GetValueOrDefault(l, "")).Where(s => s.Length > 0).Distinct().ToList();
             devices[i] = devices[i] with
             {
                 Kind = DeviceRules.WithSystemVolume(devices[i].Kind, p.Letters, Path.GetPathRoot(Environment.SystemDirectory) ?? ""),
@@ -53,6 +54,7 @@ public static class DeviceInventory
                 FileSystem = string.Join(" · ", p.FileSystems.Where(l => l.Length > 0).Distinct()),
                 Encryption = enc.Count > 0 ? string.Join("; ", enc) : p.Letters.Count > 0 && bitlocker.Count == 0 ? "necunoscut (necesită administrator)" : "",
                 ConnectedNow = true,
+                BitLockerVolumeId = string.Join(";", blIds),
                 Sources = devices[i].Sources + ", WMI",
             };
         }
@@ -287,15 +289,19 @@ public static class DeviceInventory
         }
     }
 
-    private static Dictionary<string, string> BitLockerByLetter(List<string> problems)
+    private static Dictionary<string, string> BitLockerByLetter(List<string> problems, out Dictionary<string, string> volumeIds)
     {
         var r = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        volumeIds = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         try
         {
-            using var s = new ManagementObjectSearcher(@"root\cimv2\Security\MicrosoftVolumeEncryption", "SELECT DriveLetter, ProtectionStatus FROM Win32_EncryptableVolume");
+            using var s = new ManagementObjectSearcher(@"root\cimv2\Security\MicrosoftVolumeEncryption", "SELECT DriveLetter, ProtectionStatus, PersistentVolumeID FROM Win32_EncryptableVolume");
             foreach (ManagementObject v in s.Get())
                 if (v["DriveLetter"]?.ToString() is { Length: > 0 } l)
+                {
                     r[l] = v["ProtectionStatus"]?.ToString() switch { "1" => "criptat BitLocker", "0" => "necriptat", _ => "stare BitLocker necunoscută" };
+                    if (v["PersistentVolumeID"]?.ToString() is { Length: > 0 } pid) volumeIds[l] = pid;
+                }
         }
         catch (Exception ex) when (ex is ManagementException or COMException or UnauthorizedAccessException)
         {

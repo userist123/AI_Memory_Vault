@@ -19,6 +19,12 @@ public static class OperationAudit
                         ReportGenerated = "report.generated", OfficerRequested = "profile.officer_requested";
 
 
+    /// <summary>Signed media register (owner decision 2026-10-16): a version signed on the transfer station, a version installed or refused on a station.</summary>
+    public const string MediaRegisterSigned = "media_register.signed", MediaRegisterImported = "media_register.imported", MediaRegisterRefused = "media_register.refused";
+
+    public static string MediaRegisterDetail(int version, string sha256, string verdict, bool installed, string signerFingerprint, string reason) =>
+        $"version={version}; sha256={sha256}; verdict={verdict}; installed={(installed ? "da" : "nu")}; signer={signerFingerprint}; reason={reason.Replace(';', ',').ReplaceLineEndings(" ")}";
+
     public static string AnchorRecordedDetail(LogAnalyzer.Dfir.Case.AuditAnchorPoint a, string reason) => $"seq={a.Seq}; anchor={a.Code}; chain={a.ChainId}; reason={reason}";
 
     /// <summary>
