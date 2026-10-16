@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-16T17:47:08Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-16T18:00:59Z
 ROUND 7 (UI, 2026-10-16, branch casa3d-ui-round7, not pushed; main session reviews then pushes):
   DONE 131740ed: stages grouped in phases (Releveu/Concept/Detaliere/Livrare, core/stage-progress.ts) with a done dot
   derived from project data + rule text + Continue button (sidebar and <1024px bottom sheet); command palette Ctrl/Cmd+K +
@@ -11,6 +11,11 @@ ROUND 7 (UI, 2026-10-16, branch casa3d-ui-round7, not pushed; main session revie
   print page no longer scrolls sideways on phones (sheets scroll inside); duplicate React keys in room works fixed.
   Evidence: vitest 551/551 (537 + 14 new), tsc exit 0; before/after shots at 1920/1366/1024/768/390 in the session scratchpad.
   Reduced-motion paths are code-verified only (no emulation run).
+  REVIEW FIXES e4505a79: palette keys stop at the dialog and the editor ignores keys from open dialogs / while the palette
+  is open (arrows/Delete/R no longer touch the selected piece); Enter runs a command only from the search field or an option
+  (Enter on Close just closes); macOS Ctrl+K in text fields left to the system; Present stage counts only non-revoked links;
+  Concept done only with real brief input (not the style a package writes); Romanian plural for the result count.
+  vitest 557/557, tsc exit 0; browser re-check at 1366 and 390 (after-palette-fix-*.png in the session scratchpad).
   NEXT: room resize adjusts the neighbour rectangle.
 ROUND 6 (2026-10-15/16, owner: "totul ca lucrat de profesionisti: programatori, web/UI/UX, 3D, automatizari" + tableta):
   role audits (designer, UI/UX, 3D, QA) in scratchpad; fixed in waves: 792728e3 (QA saves/rate limits/doctor, 3D realism +
