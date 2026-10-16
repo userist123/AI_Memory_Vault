@@ -1,5 +1,6 @@
 'use client';
 import type { Advice, AdviceSeverity } from '@/core/advisor';
+import EmptyState from './EmptyState';
 import type { Units } from '@/core/format';
 import { adviceText, translator, type Lang } from '@/lib/i18n';
 
@@ -22,7 +23,7 @@ export default function AdvisorPanel({ advice, rooms, onShow, lang = 'ro', units
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '8px 0' }}>
         {ORDER.map(s => <span key={s} style={{ color: COLOR[s], fontWeight: 600 }}>{count(s)} {t(COUNT_KEY[s])}</span>)}
       </div>
-      {advice.length === 0 && <p className="muted">{t('advisor.empty')}</p>}
+      {advice.length === 0 && <EmptyState title={t('empty.advice.title')} text={t('advisor.empty')} />}
       {groups.map(g => (
         <section key={g.key} style={{ marginBottom: 12 }}>
           <h4 style={{ margin: '8px 0 4px' }}>{g.name}</h4>

@@ -2,6 +2,7 @@
 // Panoul de stil (mood board) al proiectului, cameră cu cameră: randarea camerei, paleta ponderată (60-30-10),
 // mostrele materialelor alese și piesele, cu prețuri — pagina se tipărește (A4 orizontal) sau se arată clientului.
 import { useEffect, useMemo, useState } from 'react';
+import { DocSkeleton } from './Skeleton';
 import type { Catalog, MaterialsCatalog, Snapshot } from '@/core/types';
 import { roomBoard, RATIO } from '@/core/moodboard';
 import { floors } from '@/core/levels';
@@ -20,7 +21,7 @@ export default function MoodBoard({ id }: { id: string }){
       setD({ name: p.name, draft: p.draft, cat, mc, renders }); }).catch(() => setErr(true)); }, [id]);
   const boards = useMemo(() => d ? floors(d.draft).flatMap(f => f.rooms).map(r => roomBoard(d.draft, d.cat, d.mc, r)).filter(b => b.materials.length || b.pieces.length) : [], [d]);
   if (err) return <LoadError />;
-  if (!d) return <main className="report"><p className="muted">{t('print.loading')}</p></main>;
+  if (!d) return <main className="report"><DocSkeleton label={t('print.loading')} /></main>;
   const money = (n: number | null) => n == null ? '—' : formatMoney(n, 'RON', lang), pct = (v: number) => `${Math.round(v * 100)}%`;
   return (<main className="report board">
     <div className="no-print report-bar"><button className="btn primary" onClick={() => print()}>{t('pres.pdf')}</button></div>

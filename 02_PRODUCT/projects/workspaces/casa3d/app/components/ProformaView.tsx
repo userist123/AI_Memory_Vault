@@ -3,6 +3,7 @@
 // liniile cu prețuri de client grupate pe categorie, TVA 21% și etapa de plată la care se referă.
 // Nu e factură fiscală și nu se transmite prin e-Factura; pagina o spune explicit.
 import { useEffect, useState } from 'react';
+import { DocSkeleton } from './Skeleton';
 import type { Proforma } from '@/core/commercial';
 import type { ClientInfo } from '@/core/project-meta';
 import type { StudioProfile } from '@/core/studio-profile';
@@ -17,7 +18,7 @@ export default function ProformaView({ id }: { id: string }){
   const { t, lang } = usePrefs(), [d, setD] = useState<Data | null>(null), [err, setErr] = useState(false);
   useEffect(() => { fetch(`/api/projects/${id}/commercial/proforma`).then(r => r.ok ? r.json() : Promise.reject()).then(setD).catch(() => setErr(true)); }, [id]);
   if (err) return <LoadError />;
-  if (!d) return <main className="report"><p className="muted">{t('print.loading')}</p></main>;
+  if (!d) return <main className="report"><DocSkeleton label={t('print.loading')} /></main>;
   const loc = intlLocale(lang), n2 = (v: number) => new Intl.NumberFormat(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
   const date = (s: string) => new Date(s + 'T12:00:00').toLocaleDateString(loc, { day: 'numeric', month: 'long', year: 'numeric' });
   // înainte de tipărire: ce date lipsesc de pe document (se completează în profilul studioului și în fișa proiectului)

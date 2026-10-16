@@ -1,6 +1,7 @@
 'use client';
 // Contract și ofertă de servicii (A4, PDF din browser). Textul îl construiește serverul din profilul studioului, fișa proiectului și datele contractului.
 import { useEffect, useState } from 'react';
+import { DocSkeleton } from './Skeleton';
 import type { ContractDoc } from '@/core/contract';
 import { usePrefs } from '@/lib/prefs';
 import LoadError from './LoadError';
@@ -9,7 +10,7 @@ export default function ContractPage({ id, kind }: { id: string; kind: 'contract
   const { t } = usePrefs(), [doc, setDoc] = useState<ContractDoc | null>(null), [err, setErr] = useState(false);
   useEffect(() => { fetch(`/api/projects/${id}/contract`).then(r => r.ok ? r.json() : Promise.reject()).then(j => setDoc(j[kind])).catch(() => setErr(true)); }, [id, kind]);
   if (err) return <LoadError />;
-  if (!doc) return <main className="report"><p className="muted">{t('print.loading')}</p></main>;
+  if (!doc) return <main className="report"><DocSkeleton label={t('print.loading')} /></main>;
   // câmpurile necompletate apar pe document ca „………” (se completează de mână sau în profil); pe ecran le numărăm înainte de tipărire
   const blanks = (JSON.stringify(doc).match(/…{3,}/g) ?? []).length;
   return (<main className="report contract-doc">

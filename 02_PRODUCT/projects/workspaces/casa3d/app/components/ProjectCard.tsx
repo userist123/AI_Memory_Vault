@@ -9,12 +9,12 @@ import { usePrefs } from '@/lib/prefs';
 import { askConfirm } from '@/lib/dialog';
 
 const today = () => new Date().toISOString().slice(0, 10);
-export default function ProjectCard({ id, initial, areaM2, cur, say }: { id: string; initial: ProjectMeta; areaM2: number; cur: string; say(s: string): void }){
+export default function ProjectCard({ id, initial, areaM2, cur, say, onSaved }: { id: string; initial: ProjectMeta; areaM2: number; cur: string; say(s: string): void; onSaved?(m: ProjectMeta): void }){
   const { t, lang } = usePrefs(), [m, setM] = useState<ProjectMeta>(initial), [state, setState] = useState<'saved' | 'saving' | 'error'>('saved'), timer = useRef<any>(null), first = useRef(true), [startOpen] = useState(!initial.client?.name);
   useEffect(() => { if (first.current){ first.current = false; return; } setState('saving'); clearTimeout(timer.current);
     // fără `fee`: onorariul are o singură sursă, contractul („Contract și ofertă”); serverul păstrează un onorariu vechi încă nemigrat
     timer.current = setTimeout(async () => { const { fee: _legacy, ...body } = m; const r = await fetch(`/api/projects/${id}/meta`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }).catch(() => null);
-      if (r?.ok) setState('saved'); else { setState('error'); const j = await r?.json().catch(() => null); say(j?.error || t('pcard.saveError')); } }, 700);
+      if (r?.ok){ setState('saved'); onSaved?.(m); } else { setState('error'); const j = await r?.json().catch(() => null); say(j?.error || t('pcard.saveError')); } }, 700);
     return () => clearTimeout(timer.current); }, [m]); // eslint-disable-line
   const c = m.client ?? {}, setC = (k: keyof NonNullable<ProjectMeta['client']>, v: string) => setM(x => ({ ...x, client: { ...x.client, [k]: v } }));
   const left = daysLeft(m, today()), tel = c.phone?.replace(/[^+0-9]/g, '');

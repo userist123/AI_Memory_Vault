@@ -792,3 +792,88 @@ label.f select,label.f input,label.f textarea,.side select{color:var(--ink);font
 @media (max-width:700px){ .decide-bar{gap:var(--s-2);padding:var(--s-2) var(--s-3) calc(var(--s-2) + env(safe-area-inset-bottom))} .decide-act{flex-wrap:nowrap} .decide-act .btn{flex:1 1 0;font-size:var(--fs-sm);padding:0 var(--s-2);white-space:normal;text-align:center;line-height:1.15} .decide-progress b{font-size:var(--fs-sm)} }
 /* butoanele din panou se rup pe două rânduri în loc să iasă din panou */
 .side .btn{white-space:normal;max-width:100%;text-align:center;line-height:1.25;padding-top:4px;padding-bottom:4px}
+
+/* ===================== Runda 7 (UI): faze de etape, paletă de comenzi, schelete, stări goale, navigator de pagini ===================== */
+/* ---- bara de etape grupată pe faze; bulina „gata” vine din datele proiectului (core/stage-progress.ts) ---- */
+.stagebar .phase{display:flex;align-items:stretch;flex:none;position:relative}
+.stagebar .phase + .phase{margin-left:var(--s-2);padding-left:var(--s-2)}
+.stagebar .phase + .phase::before{content:'';position:absolute;left:0;top:12px;bottom:12px;width:1px;background:var(--line-strong)}
+.phase-label{align-self:center;padding:0 var(--s-2) 0 var(--s-1);font:600 10.5px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--accent);white-space:nowrap}
+.st-dot{flex:none;align-self:center;width:8px;height:8px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--line-strong);background:transparent}
+.st-dot.is-done{background:var(--ok);box-shadow:none}
+.stagebar button[aria-current=step] .st-dot:not(.is-done){box-shadow:inset 0 0 0 1.5px var(--ink-3)}
+@media (max-width:1439px){ .phase-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap} }
+/* panoul: Continuă lângă titlu (în bara laterală și în foaia de jos), apoi faza și regula „gata” */
+.stage-continue{flex:none;gap:4px;padding-left:var(--s-3);padding-right:var(--s-2)}
+.stage-continue .ico{margin-right:-2px}
+.stage-meta{display:grid;gap:4px;margin-top:calc(-1 * var(--s-1))}
+.stage-meta p{margin:0;font-size:var(--fs-xs);line-height:1.45;color:var(--ink-3)}
+.stage-meta .sm-phase{font-weight:600;letter-spacing:.02em;color:var(--ink-2)}
+.stage-meta .sm-why .st-dot{display:inline-block;margin-right:6px;vertical-align:1px}
+.stage-meta .sm-why b{font-weight:600;color:var(--ink-2)} .stage-meta .sm-why.is-done b{color:var(--ok)}
+@media (max-width:1023px){ .side.sheet .stage-continue{min-height:44px} }
+@media (max-width:639px){ .stagebar .phase + .phase{margin-left:2px;padding-left:2px} .stagebar .phase + .phase::before{top:14px;bottom:14px} .stagebar button{gap:5px} }
+/* ---- paleta de comenzi (Ctrl+K): dialog modal sus, listă grupată, tastatură și atingere ---- */
+.cmdk-trigger{gap:8px;color:var(--ink-2);border-color:var(--line)!important;background:var(--bg)!important;padding-right:6px}
+.cmdk-trigger:hover{border-color:var(--line-strong)!important}
+.cmdk-kbd,.cmdk-hint{font:500 11px/1 var(--sans);letter-spacing:.02em;color:var(--ink-3);border:1px solid var(--line-strong);border-bottom-width:2px;border-radius:4px;padding:3px 5px;background:var(--surface);white-space:nowrap}
+@media (max-width:1023px){ .cmdk-kbd{display:none} .cmdk-trigger{padding:0 10px;min-width:max(var(--h-md),var(--hit))} }
+.dlg.cmdk{max-width:min(640px,calc(100vw - 24px));margin:12vh auto auto;overflow:visible;max-height:none}
+.dlg.cmdk::backdrop{background:rgb(30 28 25 / .38);backdrop-filter:blur(2px)}
+.cmdk-card{display:grid;grid-template-rows:auto minmax(0,1fr) auto;max-height:min(560px,72vh);background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-md);box-shadow:0 24px 64px rgb(30 28 25 / .28);overflow:hidden;position:relative}
+.cmdk-search{display:flex;align-items:center;gap:var(--s-2);padding:0 var(--s-2) 0 var(--s-4);border-bottom:1px solid var(--line);color:var(--ink-3)}
+.cmdk-search input{flex:1 1 auto;min-width:0;min-height:56px;border:0;background:transparent;font:400 var(--fs-md)/1.3 var(--sans);color:var(--ink);padding:0}
+.cmdk-search input:focus-visible{outline:none}
+.cmdk-card:has(input:focus-visible) .cmdk-search{box-shadow:inset 0 -2px 0 var(--accent)}
+.cmdk-list{list-style:none;margin:0;padding:var(--s-2);overflow-y:auto;overscroll-behavior:contain}
+.cmdk-list ul{list-style:none;margin:0;padding:0}
+.cmdk-group + .cmdk-group{margin-top:var(--s-2)}
+.cmdk-gname{display:block;padding:var(--s-2) var(--s-3) var(--s-1);font:600 10.5px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+.cmdk-opt{display:flex;align-items:center;gap:var(--s-3);min-height:44px;padding:0 var(--s-3);border-radius:var(--r-sm);cursor:pointer;color:var(--ink);font-size:var(--fs-sm)}
+.cmdk-opt .ico{color:var(--ink-3);flex:none} .cmdk-opt .st-dot{margin:0 4px}
+.cmdk-opt[aria-selected=true]{background:var(--ink);color:var(--bg)} .cmdk-opt[aria-selected=true] .ico{color:var(--bg)}
+.cmdk-opt[aria-selected=true] .st-dot:not(.is-done){box-shadow:inset 0 0 0 1.5px var(--bg)}
+.cmdk-opt[aria-selected=true] .cmdk-hint{background:transparent;color:var(--bg);border-color:rgb(246 243 238 / .45)}
+.cmdk-label{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.cmdk-empty{display:grid;gap:4px;padding:var(--s-5) var(--s-4);text-align:center;color:var(--ink-3);font-size:var(--fs-sm)} .cmdk-empty b{color:var(--ink);font-weight:600}
+.cmdk-foot{margin:0;padding:var(--s-2) var(--s-4);border-top:1px solid var(--line);font-size:var(--fs-xs);color:var(--ink-3);background:var(--bg)}
+@media (max-width:639px){ .dlg.cmdk{margin:8px auto auto;max-width:calc(100vw - 16px)} .cmdk-card{max-height:calc(100dvh - 16px)} .cmdk-foot{display:none} }
+@media (prefers-reduced-motion:no-preference){ .dlg.cmdk[open] .cmdk-card{animation:cmdk-in .16s cubic-bezier(.2,.8,.2,1)} @keyframes cmdk-in{from{opacity:0;transform:translateY(-6px) scale(.99)}} }
+/* ---- schelete de încărcare: forma paginii reale, strălucire oprită la prefers-reduced-motion ---- */
+.skel{display:block;flex:none;background:linear-gradient(90deg,var(--bg-2) 0%,#F7F3EC 45%,var(--bg-2) 90%) 0 0/300% 100%;border-radius:4px;animation:skel 1.6s ease-in-out infinite}
+@keyframes skel{from{background-position:100% 0}to{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){ .skel{animation:none;background:var(--bg-2)} }
+.skel-inner{display:contents}
+.skel-editor{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden;background:var(--bg)}
+.skel-top{display:flex;align-items:center;gap:var(--s-3);padding:var(--s-2) var(--s-4);min-height:54px;background:var(--surface);border-bottom:1px solid var(--line)}
+.skel-grow{flex:1 1 auto}
+.skel-stages{display:flex;align-items:center;gap:28px;padding:0 var(--s-4);min-height:45px;background:var(--surface);border-bottom:1px solid var(--line);overflow:hidden}
+.skel-body{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:64px minmax(0,1fr) clamp(340px,24vw,420px)}
+@media (max-width:1439px){ .skel-body{grid-template-columns:60px minmax(0,1fr) clamp(320px,30vw,380px)} }
+.skel-tools{display:flex;flex-direction:column;align-items:center;gap:16px;padding:12px 0;border-right:1px solid var(--line);background:var(--surface)}
+.skel-canvas{display:grid;place-items:center;padding:5%;min-width:0;min-height:0;overflow:hidden;background:var(--paper)}
+.skel-plan{position:relative;height:min(100%,640px);width:auto;max-width:100%;aspect-ratio:5/4;border:10px solid var(--bg-2);display:grid;grid-template-columns:1fr 2fr;grid-template-rows:1fr 1fr 1fr;gap:10px;background:var(--bg-2)}
+.skel-plan span{background:var(--paper)} .skel-plan span:nth-child(2){grid-row:span 2}
+.skel-side{display:flex;flex-direction:column;gap:14px;padding:var(--s-4);border-left:1px solid var(--line);background:var(--surface);overflow:hidden}
+@media (max-width:1023px){
+  .skel-body{grid-template-columns:minmax(0,1fr);grid-template-rows:56px minmax(0,1fr) 45dvh}
+  .skel-tools{flex-direction:row;justify-content:flex-start;padding:0 var(--s-3);border-right:0;border-bottom:1px solid var(--line)}
+  .skel-side{border-left:0;border-top:1px solid var(--line-strong);border-radius:14px 14px 0 0;box-shadow:0 -8px 24px rgb(30 28 25 / .1)}
+  .skel-hide-s{display:none} .skel-stages{gap:20px}
+}
+.skel-print{display:grid;gap:12mm}
+.skel-phead{display:flex;justify-content:space-between;gap:16px;padding-bottom:12px;border-bottom:1px solid var(--line)} .skel-phead > div{display:grid;gap:10px} .skel-pright{justify-items:end}
+.skel-cover{display:grid;grid-template-columns:58% 1fr;gap:12px} .skel-hero{width:100%;aspect-ratio:3/2} .skel-figs{display:grid;gap:12px;align-content:start}
+.skel-sheet{width:100%;aspect-ratio:297/210}
+@media (max-width:700px){ .skel-cover{grid-template-columns:1fr} .skel-phead{flex-direction:column} .skel-pright{justify-items:start} }
+.skel-deck{display:grid;gap:16px;width:min(1280px,94vw);margin:0 auto} .skel-slide{width:100%;aspect-ratio:16/9;border-radius:2px} .skel-thumbs{display:flex;gap:10px;overflow:hidden} .skel-thumb{width:140px;aspect-ratio:16/9}
+.skel-doc{display:grid;justify-items:center} .skel-a4{display:flex;flex-direction:column;gap:12px;width:min(794px,100%);padding:32px;background:var(--surface);border:1px solid var(--line)}
+.skel-list{display:grid;gap:10px} .skel-row{display:grid;grid-template-columns:40px minmax(0,1fr) 64px;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)} .skel-row > span{display:grid;gap:8px}
+.skel-card{display:grid;gap:10px} .skel-thumb-card{width:100%;aspect-ratio:4/3}
+/* ---- stări goale: aceeași componentă (EmptyState), acțiunea principală e butonul primar; pe plan, o carte centrată ---- */
+.empty-state .btn{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.empty-state .btn:hover:not(:disabled){background:var(--ink-2);border-color:var(--ink-2)}
+.empty-state .es-title{color:var(--ink)}
+.planwrap .plan-empty{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;width:min(380px,calc(100% - 32px));border-style:solid;border-color:var(--line-strong);border-radius:var(--r-md);box-shadow:var(--shadow-2);padding:var(--s-5)}
+.planwrap .plan-empty .es-title{font-size:var(--fs-lg)}
+.side .empty-state,.orders .empty-state,.home .empty-state{width:100%;box-sizing:border-box}

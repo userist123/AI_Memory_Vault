@@ -2,6 +2,7 @@
 // Variante A/B/C pe cameră, în editor: păstrează camera așa cum e, încearcă altceva, păstrează și varianta nouă,
 // compară costul și ce diferă, aplică oricare. Alegerea clientului de pe link apare lângă varianta aleasă.
 import { useEffect, useMemo, useState } from 'react';
+import EmptyState from './EmptyState';
 import type { Catalog, MaterialsCatalog, Room, Snapshot } from '@/core/types';
 import { captureOption, updateOption, removeOption, applyOption, compareOptions, optionDescription, MAX_OPTIONS, OptionError } from '@/core/room-options';
 import { groups } from '@/core/catalog';
@@ -24,7 +25,7 @@ export default function RoomOptionsPanel({ id, room, snap, cat, mc, cur, onSnap,
   const what = (c: { kind: string; label: string }) => c.kind === 'product' ? (G[c.label]?.label ?? c.label) : t(`ropt.slot.${c.label}`);
   return (<section className="ropt" aria-labelledby={`ropt-${room.id}`}>
     <h3 id={`ropt-${room.id}`}>{t('ropt.title')}</h3>
-    <p className="muted">{list.length ? t('ropt.intro') : t('ropt.empty')}</p>
+    {list.length ? <p className="muted">{t('ropt.intro')}</p> : <EmptyState title={t('empty.ropt.title')} text={t('ropt.empty')} />}
     {list.length > 0 && <ol className="ropt-list">{list.map((o, i) => <li key={o.option.id} className={o.active ? 'is-active' : ''}>
       <header><b className="ropt-tag">{o.option.label}</b><span>{(d => d.key ? t(d.key, d.vars) : d.text)(optionDescription(o.option.note, o.option.label, o.changes.filter(c => c.label !== 'other').map(what)))}</span>{o.active && <em>{t('ropt.current')}</em>}</header>
       <p className="ropt-cost"><span>{t('ropt.total')}: {money(o.total)}</span>{i > 0 && <b className={o.delta > 0 ? 'up' : o.delta < 0 ? 'down' : ''}>{o.delta === 0 ? t('ropt.sameCost') : t('ropt.vsA', { d: formatMoneyDelta(o.delta, cur, lang) })}</b>}</p>
