@@ -565,6 +565,14 @@
 - **Sursa tehnică:** `Partition 1006; Defender 1000, 1001, 1116, 1117`
 - **Cum se citește rezultatul:** Conform = fiecare conectare este urmată de o scanare. Neconform = antivirusul a găsit un program rău-intenționat după conectare. De verificat = conectări fără scanare pe această stație (scanarea se poate face înainte, pe stația de decontaminare: comparați cu registrul ei, verificarea M04). Aplicația nu vede stația de decontaminare.
 
+### D04
+
+- **Ce verificăm:** Dacă fiecare mediu de stocare văzut pe stație (conectat acum sau în istoric) este în registrul de medii semnat de ofițerul de securitate.
+- **De ce contează:** Pe stația izolată au voie să intre doar mediile înrolate pe stația de transfer și trecute în registrul pe care ofițerul l-a semnat cu cardul. Un mediu necunoscut sau unul retras din uz poate scoate sau aduce informații fără control.
+- **Cum verifică aplicația:** A citit lista mediilor amovibile pe care stația le cunoaște (conectate acum și din istoricul Windows) și a comparat fiecare cu registrul semnat instalat pe stație, după mai multe date deodată: seria, codul producătorului (VID/PID), capacitatea și, unde există, identificatorul volumului BitLocker. Înainte, a verificat că registrul instalat este cel importat de aplicație: semnătura ofițerului, amprenta confirmată de pe procesul-verbal și versiunea din jurnalul aplicației.
+- **Sursa tehnică:** `SetupAPI (USBSTOR, SD), WMI Win32_DiskDrive și Win32_EncryptableVolume (PersistentVolumeID), Partition/Diagnostic 1006; registrul semnat din %PROGRAMDATA%\LogAnalyzer\media_register (JSON canonic + semnătură CMS .p7s)`
+- **Cum se citește rezultatul:** Conform = toate mediile văzute sunt în registrul semnat în vigoare. Neconform = un mediu neînregistrat, un mediu retras sau distrus folosit după data retragerii, sau lipsa unui registru semnat valabil (ori unul schimbat în afara aplicației) când s-au văzut medii. De verificat = aceeași serie cu alte date (posibilă clonare a serialului), un mediu retras fără dată de conectare cunoscută, sau niciun mediu văzut (absența observațiilor nu dovedește nimic). Nedeterminat = lista mediilor nu a putut fi citită. Limită: un mediu fără serie unică nu poate fi recunoscut și apare ca neînregistrat; datele unui mediu pot fi falsificate de un dispozitiv construit special, de aceea se compară mai multe deodată.
+
 ### DM01
 
 - **Ce verificăm:** Ce conturi de persoane (nu de calculatoare) au un nume de serviciu (SPN) atașat.
