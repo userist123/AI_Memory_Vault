@@ -17,7 +17,7 @@ export default function StudioProfileForm(){
   if (!p) return null;
   async function save(){ setBusy(true); setMsg(null); const r = await fetch('/api/studio', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(p) }); const j = await r.json().catch(() => ({}));
     setBusy(false); if (r.ok){ setP(j); setMsg({ ok: true, text: t('studio.saved') }); } else setMsg({ ok: false, text: j.error || t('studio.error') }); }
-  return (<details className="studio-prof"><summary><b>{t('studio.title')}</b>{p.name && <span className="muted"> · {p.name}</span>}</summary>
+  return (<details className="studio-prof" id="studio"><summary><b>{t('studio.title')}</b>{p.name && <span className="muted"> · {p.name}</span>}</summary>
     <p className="prov">{t('studio.note')}</p>
     <div className="grid2">{FIELDS.map(k => <label key={k} className="f"><span>{t(`studio.${k}`)}</span><input value={p[k] ?? ''} maxLength={160} onChange={e => setP({ ...p, [k]: e.target.value })} /></label>)}</div>
     <div className="studio-logo">{p.logo ? <img src={p.logo} alt={t('studio.logo')} /> : <span className="muted">{t('studio.noLogo')}</span>}

@@ -5,7 +5,9 @@ import { profileLine, type StudioProfile } from '@/core/studio-profile';
 import { useEffect, useState } from 'react';
 import type { Handover } from '@/core/handover';
 import type { ProjectMeta } from '@/core/project-meta';
+import { formatQty } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
+import LoadError from './LoadError';
 import { intlLocale } from '@/lib/i18n';
 
 type Data = Handover & { name: string; meta: ProjectMeta; openSnags: { number: number; title: string; trade: string }[] };
@@ -14,7 +16,7 @@ export default function HandoverReport({ id }: { id: string }){
   const [profile, setProfile] = useState<StudioProfile | null>(null);
   useEffect(() => { fetch('/api/studio').then(r => r.ok ? r.json() : null).then(setProfile).catch(() => {}); }, []);
   useEffect(() => { fetch(`/api/projects/${id}/handover`).then(r => r.ok ? r.json() : Promise.reject()).then(setD).catch(() => setErr(true)); }, [id]);
-  if (err) return <main className="report"><p>{t('print.loadError')}</p></main>;
+  if (err) return <LoadError />;
   if (!d) return <main className="report"><p className="muted">{t('print.loading')}</p></main>;
   const date = (s: string) => new Date(s.length === 10 ? s + 'T12:00:00' : s).toLocaleDateString(intlLocale(lang), { day: 'numeric', month: 'long', year: 'numeric' });
   const today = date(new Date().toISOString()), addr = d.meta.siteAddress || d.meta.client?.address;
@@ -27,7 +29,7 @@ export default function HandoverReport({ id }: { id: string }){
       {d.items.length === 0 ? <p className="muted">{t('ho.noItems')}</p> :
       <table className="ho-table"><thead><tr><th>{t('orders.col.product')}</th><th>{t('ho.col.where')}</th><th>{t('ho.col.supplier')}</th><th>{t('ho.col.delivered')}</th><th>{t('ho.col.warranty')}</th></tr></thead>
         <tbody>{d.items.map((i, k) => <tr key={k}><td><b>{i.product}</b>{(i.code || i.ref) && <small>{[i.code && t('ho.code', { c: i.code }), i.ref && t('ho.ref', { r: i.ref })].filter(Boolean).join(' · ')}</small>}</td>
-          <td>{i.rooms.join(', ') || '—'}<small>{i.qty} {i.unit}</small></td><td>{i.supplier}</td><td>{i.deliveredAt ? date(i.deliveredAt) : '—'}</td>
+          <td>{i.rooms.join(', ') || '—'}<small>{formatQty(i.qty, i.unit, lang)}</small></td><td>{i.supplier}</td><td>{i.deliveredAt ? date(i.deliveredAt) : '—'}</td>
           <td>{i.warrantyMonths == null ? '—' : i.warrantyUntil ? <>{t('ho.until', { d: date(i.warrantyUntil) })}<small>{t('ho.months', { n: i.warrantyMonths })}</small></> : t('ho.months', { n: i.warrantyMonths })}</td></tr>)}</tbody></table>}
       <p className="muted small">{t('ho.warrantyNote')}</p></section>
 

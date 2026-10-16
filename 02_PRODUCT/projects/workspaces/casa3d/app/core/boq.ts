@@ -8,6 +8,7 @@ import { doorOpenings } from './doors';
 import { kitchenOf, kitchenRun, kitchenQuantities, KITCHEN_DEFAULT } from './kitchen';
 import { bathOf } from './bath';
 import { fixtureCount } from './fixtures';
+import { formatQty } from './format';
 const LIGHT_CATS = new Set(['lighting', 'spot', 'led_strip', 'pendant', 'wall_light', 'led_profile']);
 const FIXTURE_LABEL = { pendant: 'Pendul', sconce: 'Aplică', track: 'Șină cu spoturi' } as const;
 import { bandGeometry, bathTiles, layoutOf, floorWaste, floorLaborId, sideGeometry, wallpaperRolls, panelCount, pieceSizeCm, ceilingOf, FEATURE_CATEGORY, FEATURE_LABOR } from './finishes';
@@ -174,7 +175,7 @@ export function computeBudget(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog
   for (const sup of [...new Set(items.filter(i => i.category === 'furniture' || i.category === 'appliances' || i.category === 'sanitary').map(i => i.supplier).filter((x): x is string => !!x && x !== 'IKEA' && x !== 'Dedeman' && x !== 'UNKNOWN'))].sort())
     extra.push({ key: `transport-${sup.toLowerCase()}`, label: `Transport ${sup}`, amount: null, confidence: 'UNKNOWN', note: 'Se calculează la comandă, pe site-ul magazinului.' });
   const kit = snap.placements.find(p => p.group === 'bucatarie'), kitW = kit ? (resolve(cat, kit.variantId)?.w || 0) : 0;
-  if (kit && s.kitchenAssembly){ const k = svc('montaj-bucatarie-ikea'); extra.push({ key: 'montaj-bucatarie', label: `Montaj bucătărie (${r2(kitW)} ml)`, amount: k?.pricePerMeter ? r2(k.pricePerMeter * kitW) : null, confidence: k?.confidence ?? 'UNKNOWN', note: k?.note, sourceUrl: k?.sourceUrl }); }
+  if (kit && s.kitchenAssembly){ const k = svc('montaj-bucatarie-ikea'); extra.push({ key: 'montaj-bucatarie', label: `Montaj bucătărie (${formatQty(r2(kitW), 'ml', 'ro')})`, amount: k?.pricePerMeter ? r2(k.pricePerMeter * kitW) : null, confidence: k?.confidence ?? 'UNKNOWN', note: k?.note, sourceUrl: k?.sourceUrl }); }
   extra.push({ key: 'montaj-mobilier', label: 'Montaj mobilier', amount: s.furnitureAssembly, confidence: s.furnitureAssembly == null ? 'UNKNOWN' : 'MEDIUM', note: s.furnitureAssembly == null ? 'Depinde de ofertă (platformele de servicii arată intervale foarte largi); introdu valoarea primită.' : 'Valoare introdusă manual.' });
   // onorariul de proiectare NU mai e o linie a bugetului: are o singură sursă, contractul (core/contract.ts migratedFee preia
   // vechiul `design` de aici), și intră în total prin lanțul canonic (core/commercial.ts projectChain)

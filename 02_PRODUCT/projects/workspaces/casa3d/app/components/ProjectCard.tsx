@@ -6,6 +6,7 @@ import { PROJECT_STATUSES, daysLeft, type ProjectMeta } from '@/core/project-met
 import { FEE_EVENT } from './ChainTable';
 import { formatMoney } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
+import { askConfirm } from '@/lib/dialog';
 
 const today = () => new Date().toISOString().slice(0, 10);
 export default function ProjectCard({ id, initial, areaM2, cur, say }: { id: string; initial: ProjectMeta; areaM2: number; cur: string; say(s: string): void }){
@@ -43,7 +44,7 @@ export default function ProjectCard({ id, initial, areaM2, cur, say }: { id: str
       <label className="chk"><input type="checkbox" checked={!!m.shareOrders} onChange={e => setM(x => ({ ...x, shareOrders: e.target.checked || undefined }))} /><span>{t('pcard.shareOrders')}<small>{t('pcard.shareOrdersSub')}</small></span></label>
       <label className="f"><span>{t('pcard.notes')}</span><textarea rows={3} value={c.notes ?? ''} maxLength={4000} onChange={e => setC('notes', e.target.value)} /></label>
       <small className={`prov ${state === 'error' ? 'err' : ''}`}>{t(`pcard.${state}`)}</small>
-      <div className="pcard-act"><a className="btn" href={`/api/projects/${id}/export.zip`} download title={t('pcard.exportHint')}>{t('pcard.export')}</a><button className="btn danger" onClick={async () => { if (!confirm(t('pcard.trashConfirm'))) return; const r = await fetch(`/api/projects/${id}`, { method: 'DELETE' }); if (r.ok) location.href = '/'; else say(t('pcard.saveError')); }}>{t('pcard.trash')}</button></div>
+      <div className="pcard-act"><a className="btn" href={`/api/projects/${id}/export.zip`} download title={t('pcard.exportHint')}>{t('pcard.export')}</a><button className="btn danger" onClick={async () => { if (!(await askConfirm({ title: t('dlg.trashTitle'), body: t('pcard.trashConfirm'), confirmLabel: t('pcard.trash'), danger: true }))) return; const r = await fetch(`/api/projects/${id}`, { method: 'DELETE' }); if (r.ok) location.href = '/'; else say(t('pcard.saveError')); }}>{t('pcard.trash')}</button></div>
     </div>
   </details>);
 }

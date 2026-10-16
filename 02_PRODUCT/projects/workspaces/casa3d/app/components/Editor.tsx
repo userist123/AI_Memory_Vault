@@ -54,6 +54,12 @@ import PlanView, { type Tool, type Sel } from './PlanView';
 import { singleFlight } from '@/lib/single-flight';
 import { putDraft, retryDelay, shouldRetry, stashDraft, readStash, clearStash, stashBase, reloginUrl, type SaveOutcome, type Stash } from '@/lib/draft-sync';
 import { floors, levelView, mergeLevel, addLevel, removeLevel, stairIssues, stairGeometry, stairwells, comfortableStairLength, elevationOf, SLAB, MAX_LEVELS } from '@/core/levels';
+import Icon from './Icon';
+import { askConfirm, askPrompt } from '@/lib/dialog';
+import { resizeRoom, RoomResizeError } from '@/core/room-resize';
+import { groupsForRoom, defaultGroupForRoom, swapFitHint } from '@/core/furniture-fit';
+import type { PlanKeyAction } from '@/core/plan-keys';
+import { isLocalHostname } from '@/lib/public-gate';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 
 const uid = () => crypto.randomUUID();
@@ -71,7 +77,7 @@ const STAGES: { id: Stage; view: '2d' | '3d' | 'split'; tools: Tool[]; page?: tr
 export default function Editor({ id }: { id: string }){
   const { t, tp, lang, units } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units);
   const [meta, setMeta] = useState<ProjectMeta | null>(null), [house, setHouse] = useState<Snapshot | null>(null), [lvl, setLvl] = useState(0), [catalog, setCatalog] = useState<Catalog | null>(null), [mc, setMc] = useState<MaterialsCatalog | null>(null), [out, setOut] = useState<Outbound | null>(null);
-  const [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('2d'), [help, setHelp] = useState(false), [calib, setCalib] = useState<Calib | null>(null);
+  const compact = useCompact(), [sheet, setSheet] = useState<'peek' | 'half' | 'full'>('half'), [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('2d'), [help, setHelp] = useState(false), [calib, setCalib] = useState<Calib | null>(null);
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error' | 'conflict' | 'offline' | 'auth'>('saved'), baseRev = useRef<number | null>(null), saveRef = useRef<string>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
   const [showTech, setShowTech] = useState(true), [techKind, setTechKind] = useState<TechKind>('outlet_double');
   const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[] } | null>(null), [persistent, setPersistent] = useState(true), [demo, setDemo] = useState(false), [stage, setStageRaw] = useState<Stage>('survey'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
@@ -80,7 +86,7 @@ export default function Editor({ id }: { id: string }){
   // iar fiecare modificare a vederii se pune la loc în casă cu mergeLevel.
   const L = house ? Math.min(lvl, floors(house).length - 1) : 0;
   const snap = useMemo(() => house ? levelView(house, L) : null, [house, L]);
-  const say = (t: string) => { setToast(t); clearTimeout((say as any).t); (say as any).t = setTimeout(() => setToast(''), 3500); };
+  const toastT = useRef<any>(null), say = (t: string) => { setToast(t); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(''), 6000); };
 
   useEffect(() => { Promise.all([fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/catalog').then(r => r.json()), fetch('/api/health').then(r => r.json()), fetch('/api/materials').then(r => r.json())])
     .then(([p, c, h, m]) => { setHouse(p.draft); latest.current = p.draft; baseRev.current = p.draftRev ?? null; setMeta(p.meta ?? { status: 'design' }); setCatalog(c); setMc(m); setRev(p.currentRevision); setPersistent(h.persistent); setDemo(!!h.demo); const st = readStash(store(), id); if (st){ stashOpen.current = true; setStash(st); } }).catch(() => say(t('editor.loadError')));
@@ -132,8 +138,11 @@ export default function Editor({ id }: { id: string }){
   const setFinish = (map: Record<string, Finish> | undefined, id: string, patch: Partial<Record<keyof Finish, string | null>>): Record<string, Finish> => { const m = { ...(map || {}) }, f: any = { ...(m[id] || {}) };
     for (const [k, v] of Object.entries(patch)) if (v == null) delete f[k]; else f[k] = v; m[id] = f; return m; };
   // schimbarea variantei sau a dimensiunii unei piese trece prin validare: ERROR refuză, WARNING cere confirmare
-  const changePiece = (id: string, fn: (q: FurniturePlacement) => void, refused: string) => { if (!snap) return; const n = structuredClone(snap), q = n.placements.find(x => x.id === id)!; fn(q); const iss = validatePlacement(n, catalog!, q);
-    if (severityOf(iss) === 'ERROR'){ say(`${refused}: ${iT(iss.find(i => i.severity === 'ERROR')!)}`); return; } commit(n); if (iss.length) setPending({ before: house!, issues: iss }); };
+  const changePiece = (id: string, fn: (q: FurniturePlacement) => void, refused: string) => { if (!snap) return; const n = structuredClone(snap), q = n.placements.find(x => x.id === id)!, before = snap.placements.find(x => x.id === id)!; fn(q); const iss = validatePlacement(n, catalog!, q);
+    if (severityOf(iss) === 'ERROR'){ say(`${refused}: ${iT(iss.find(i => i.severity === 'ERROR')!)}${fitHint(before, q)}`); return; } commit(n); if (iss.length) setPending({ before: house!, issues: iss }); };
+  // de ce nu încape varianta nouă: latura care crește și cu câți cm (core/furniture-fit.ts)
+  const fitHint = (a: FurniturePlacement, b: FurniturePlacement) => { const dims = (p: FurniturePlacement) => p.size ? { w: p.size.w, d: p.size.d } : resolve(catalog!, p.variantId)?.variant.dimensionsCm;
+    const da = dims(a), db = dims(b), h = da && db ? swapFitHint(da, db) : null; return h ? ` ${t(h.dim === 'width' ? 'editor.swapHintW' : 'editor.swapHintD', { over: h.overCm, n: h.newCm, o: h.oldCm })}` : ''; };
 
   const stairIss = useMemo(() => house && catalog ? stairIssues(house, catalog) : [], [house, catalog]);
   const issues = useMemo(() => { const m: Record<string, Issue[]> = {}; if (snap && catalog) for (const p of snap.placements) m[p.id] = validatePlacement(snap, catalog, p);
@@ -174,7 +183,7 @@ export default function Editor({ id }: { id: string }){
   const levelName = (i: number) => i === 0 ? t('level.ground') : (house && floors(house)[i]?.name) || t('level.n', { n: i });
   const onAddLevel = () => { if (!house) return; const n = floors(house).length; if (n >= MAX_LEVELS){ say(t('level.max', { n: MAX_LEVELS })); return; }
     commitHouse(addLevel(house, { name: t('level.n', { n }) })); goLevel(n); };
-  const onRemoveLevel = () => { if (!house || L === 0 || !confirm(t('level.removeConfirm', { name: levelName(L) }))) return; commitHouse(removeLevel(house, L)); goLevel(L - 1); };
+  const onRemoveLevel = async () => { if (!house || L === 0 || !(await askConfirm({ title: t('dlg.removeLevelTitle'), body: t('level.removeConfirm', { name: levelName(L) }), confirmLabel: t('level.remove'), danger: true }))) return; commitHouse(removeLevel(house, L)); goLevel(L - 1); };
   // scara nouă: în mijlocul camerei, pe latura lungă, cât de lungă e confortabil și încape
   const onAddStair = (room: Room) => { if (!house || !snap) return; if (L >= floors(house).length - 1){ say(t('stair.needLevel')); return; }
     const w = room.rect.x1 - room.rect.x0, d = room.rect.z1 - room.rect.z0, alongX = w > d, long = alongX ? w : d, short = alongX ? d : w, rise = snap.floor.ceilingHeight + SLAB;
@@ -187,6 +196,15 @@ export default function Editor({ id }: { id: string }){
     if (!r.ok){ say(iT(r)); return; } commit(r.snapshot); setSel({ kind: 'placement', id: r.id }); if (r.issues.length) setPending({ before: house!, issues: r.issues }); };
   const nudge = (pid: string, dx: number, dz: number) => { if (!snap || !catalog) return; const r = nudgePlacement(snap, catalog, pid, dx, dz);
     if (!r.ok){ say(iT(r)); return; } commit(r.snapshot); };
+  // tastatura din plan (core/plan-keys.ts): săgețile mută piesa, scara sau camera aleasă, R rotește, Delete șterge
+  const onPlanKey = (a: PlanKeyAction) => { if (!a || !sel || preview) return;
+    if (a.type === 'deselect') setSel(null);
+    else if (a.type === 'delete') del();
+    else if (a.type === 'rotate'){ if (sel.kind === 'placement') rotate(sel.id); else if (sel.kind === 'stair') rotateStair(sel.id); }
+    else if (a.type === 'move'){ const dx = a.dxCm / 100, dz = a.dzCm / 100;
+      if (sel.kind === 'placement') nudge(sel.id, a.dxCm, a.dzCm);
+      else if (sel.kind === 'stair'){ const st = snap?.floor.stairs?.find(x => x.id === sel.id); if (st) patchStair(sel.id, { x: r3(st.x + dx), z: r3(st.z + dz) }); }
+      else if (sel.kind === 'room') mutate(s => { const r = s.floor.rooms.find(x => x.id === sel.id); if (r) r.rect = { x0: r3(r.rect.x0 + dx), x1: r3(r.rect.x1 + dx), z0: r3(r.rect.z0 + dz), z1: r3(r.rect.z1 + dz) }; }); } };
   useEffect(() => { const k = (e: KeyboardEvent) => { if (preview || (e.target as HTMLElement).closest('input,select,textarea')) return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){ e.preventDefault(); e.shiftKey ? redo() : undo(); }
     else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y'){ e.preventDefault(); redo(); }
@@ -206,17 +224,22 @@ export default function Editor({ id }: { id: string }){
     if (saveRef.current === 'conflict'){ say(t('editor.conflict')); return false; } if (saveRef.current === 'auth') return false;
     if (!latest.current) latest.current = house; const o = await send(); if (o.kind !== 'saved' && o.kind !== 'conflict' && o.kind !== 'auth') say(t('editor.flushBlocked')); return o.kind === 'saved'; };
   async function saveRevision(){ if (!house) return; if (!(await flushDraft())) return;
-    const note = prompt(t('editor.notePrompt')) ?? ''; const r = await fetch(`/api/projects/${id}/revisions`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ note }) }); if (!authOk(r)) return; const j = await r.json().catch(() => ({}));
+    const note = await askPrompt({ title: t('dlg.revTitle'), body: t('dlg.revBody'), confirmLabel: t('editor.saveRevision'), input: { label: t('editor.notePrompt'), placeholder: t('dlg.notePh'), maxLength: 200 } }); if (note == null) return; const r = await fetch(`/api/projects/${id}/revisions`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ note }) }); if (!authOk(r)) return; const j = await r.json().catch(() => ({}));
     if (!r.ok){ say(`${j.error || t('editor.saveFailed')} ${(Array.isArray(j.details) ? j.details : []).slice(0, 2).map((d: any) => iT(d)).join(' ')}`); return; } setRev(j.number); say(t('editor.revSaved', { n: j.number })); loadRevs(); }
   // un design aplicat pe server mută versiunea ciornei: editorul continuă de la ea (altfel următoarea salvare ar fi un conflict fals)
   const onApplied = (s: Snapshot, n: number, draftRev?: number | null) => { clearTimeout(timer.current); hist.current.push(house!); setHouse(s); latest.current = s; setRev(n); setSave('saved'); setSel(null);
     if (typeof draftRev === 'number') baseRev.current = draftRev; else refreshBase(); loadRevs(); };
   const onBrief = (brief: Snapshot['brief'], draftRev?: number | null) => { if (!house) return; const h = { ...(latest.current ?? house), brief }; setHouse(h); latest.current = h;
     if (typeof draftRev === 'number') baseRev.current = draftRev; else refreshBase(); };
-  async function restore(n: number){ if (!confirm(t('editor.restoreConfirm', { n }))) return;
+  async function restore(n: number){ if (!(await askConfirm({ title: t('dlg.restoreTitle', { n }), body: t('editor.restoreConfirm', { n }), confirmLabel: t('dlg.restoreOk', { n }) }))) return;
     clearTimeout(timer.current); const r = await fetch(`/api/projects/${id}/revisions/${n}`, { method: 'POST' }); if (!authOk(r)) return; if (!r.ok){ say(t('editor.restoreFailed')); return; } const s = await r.json(); hist.current.push(house!); setHouse(s); latest.current = s; setSel(null); refreshBase(); say(t('editor.restored', { n })); }
 
-  if (!snap || !catalog || !mc) return <div className="home"><p className="muted">{toast || t('editor.loading')}</p></div>;
+  // etapa activă rămâne vizibilă în bara de etape (pe tabletă și telefon nu încap toate zece)
+  const stageBar = useRef<HTMLElement>(null);
+  useEffect(() => { const b = stageBar.current?.querySelector<HTMLElement>(`[data-stage="${stage}"]`); try { b?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); } catch { /* browser vechi */ } }, [stage]);
+  // pe ecranele înguste „Plan + 3D” nu are loc: rămâne vederea plan
+  useEffect(() => { if (compact && view === 'split') setView('2d'); }, [compact, view]);
+  if (!snap || !catalog || !mc) return <div className="home"><p className="muted" role="status">{toast || t('editor.loading')}</p></div>;
   const G = groups(catalog);
   const onAddWall = (a: [number, number], b: [number, number]) => mutate(s => { s.floor.walls.push({ id: `wall-${uid().slice(0, 8)}`, a, b, thickness: .15, exterior: false, openings: [] }); });
   const onAddRoom = (rect: any) => { const rid = `camera-${uid().slice(0, 8)}`; mutate(s => { s.floor.rooms.push({ id: rid, name: t('editor.newRoomName', { n: s.floor.rooms.length + 1 }), type: 'living', rect }); }); setSel({ kind: 'room', id: rid }); setTool('select'); };
@@ -224,7 +247,7 @@ export default function Editor({ id }: { id: string }){
     if (L < width + .1){ say(t('editor.wallTooShort')); return; } const oid = `op-${uid().slice(0, 8)}`;
     mutate(s => { s.floor.walls.find(x => x.id === wallId)!.openings.push({ id: oid, kind, offset: r3(Math.max(0, Math.min(L - width, offset - width / 2))), width }); }); setSel({ kind: 'opening', id: oid, wallId }); };
   // pe telefon nu e loc pentru plan + 3D unul sub altul: etapele care îl folosesc pornesc pe plan
-  const setStage = (s: Stage) => { const st = STAGES.find(x => x.id === s)!; setStageRaw(s); setView(st.view === 'split' && typeof matchMedia === 'function' && matchMedia('(max-width: 600px)').matches ? '2d' : st.view); if (!st.tools.includes(tool)) setTool('select'); if (s === 'mep') setShowTech(true); setSideOpen(true); };
+  const setStage = (s: Stage) => { const st = STAGES.find(x => x.id === s)!; setStageRaw(s); setView(st.view === 'split' && isCompact() ? '2d' : st.view); if (!st.tools.includes(tool)) setTool('select'); if (s === 'mep') setShowTech(true); setSideOpen(true); setSheet('half'); };
   const stageDef = STAGES.find(x => x.id === stage)!, warnCount = advice.filter(a => a.severity !== 'TIP').length;
   const total = snap.placements.reduce((a, p) => a + (resolve(catalog, p.variantId)?.offer?.price || 0), 0);
   const selPl = sel?.kind === 'placement' ? snap.placements.find(p => p.id === sel.id) : undefined, selRoom = sel?.kind === 'room' ? snap.floor.rooms.find(r => r.id === sel.id) : undefined;
@@ -233,6 +256,14 @@ export default function Editor({ id }: { id: string }){
   const voids = stairwells(house!, L);
   const selStair = sel?.kind === 'stair' ? snap.floor.stairs?.find(s => s.id === sel.id) : undefined, nLevels = floors(house!).length;
   const selWall = sel?.kind === 'wall' ? snap.floor.walls.find(w => w.id === sel.id) : undefined, selOp = sel?.kind === 'opening' ? snap.floor.walls.find(w => w.id === sel.wallId)?.openings.find(o => o.id === sel.id) : undefined;
+  const selAnnounce = selPl ? t('plan.selPiece', { name: resolve(catalog, selPl.variantId)?.variant.name ?? selPl.group }) : selRoom ? t('plan.selRoom', { name: selRoom.name }) : selStair ? t('plan.selStair') : selWall ? t('editor.wall') : '';
+  // „Adaugă în cameră” fără cameră aleasă: camera potrivită grupei (dormitor pentru pat), altfel cea mai mare
+  const roomsFor = (vid: string) => { const g = groupOf(vid), bySize = [...snap.floor.rooms].sort((a, b) => area(b.rect) - area(a.rect));
+    return [...bySize.filter(r => groupsForRoom(r.type, [g]).suggested.includes(g)), ...bySize.filter(r => !groupsForRoom(r.type, [g]).suggested.includes(g))]; };
+  const addToRoom = (vid: string, room?: Room | null) => { const cands = room ? [room] : roomsFor(vid); if (!cands.length){ say(t('editor.noRoomYet')); return; }
+    for (const r0 of cands){ const r = addPlacement(snap, catalog, r0.id, vid); if (!r) continue;
+      commit(r); setSel({ kind: 'placement', id: r.placements.at(-1)!.id }); if (!room) say(t('editor.addedTo', { room: r0.name })); return; }
+    say(t('editor.noFreeSpot')); };
   // ce se vede în panou: selecția (dacă etapa o folosește) sau conținutul etapei
   const roomStage = stage === 'survey' || stage === 'finishes' || stage === 'ffe';
   const showSel = !!((selRoom || selWall || selOp || selStair) ? roomStage : selPl ? stage === 'ffe' || stage === 'concept' || stage === 'finishes' || stage === 'present' : false);
@@ -244,45 +275,56 @@ export default function Editor({ id }: { id: string }){
   return (<div className="ws">
     {(!persistent || demo) && <div className="banner">{t(demo ? 'editor.publicDemoBanner' : 'editor.demoBanner')}</div>}
     <header className="topbar">
-      <a className="btn" href="/" aria-label={t('home.projects')}>←<span className="lbl"> {t('home.projects')}</span></a>
+      <a className="btn ghost icon-btn" href="/" aria-label={t('home.projects')} title={t('home.projects')}><Icon name="back" /><span className="lbl">{t('home.projects')}</span></a>
       <input className="name" value={snap.name} aria-label={t('editor.projectName')} maxLength={120} onChange={e => { const n = { ...house!, name: e.target.value }; setHouse(n); persist(n); }} />
-      {save === 'conflict' && <span className="conflict-bar" role="alert">{t('editor.conflict')} <button className="btn" onClick={() => { dropStash(); saveRef.current = 'saved'; location.reload(); }}>{t('editor.conflictReload')}</button><button className="btn" onClick={() => send(true)}>{t('editor.conflictKeep')}</button></span>}
-      {save === 'offline' && <span className="conflict-bar save-alert" role="alert">{t('editor.offlineNote')} <button className="btn" onClick={() => { attempt.current = 0; send(); }}>{t('editor.retryNow')}</button></span>}
-      {save === 'auth' && <span className="conflict-bar save-alert" role="alert">{t('editor.sessionExpired')} <a className="btn" href={reloginUrl(`/p/${id}`)} onClick={() => { if (latest.current) stashDraft(store(), id, latest.current, baseRev.current); saveRef.current = 'saved'; }}>{t('editor.relogin')}</a></span>}
-      {stash && <span className="conflict-bar save-alert" role="alert">{t('editor.stashFound', { time: new Date(stash.at).toLocaleTimeString(intlLocale(lang), { hour: '2-digit', minute: '2-digit' }) })} <button className="btn" onClick={takeStash}>{t('editor.stashRestore')}</button><button className="btn" onClick={dropStash}>{t('editor.stashDrop')}</button></span>}<span className={`status ${save === 'error' || save === 'conflict' ? 'err' : ''}`}>{save === 'saved' ? t('editor.saved') : save === 'saving' ? t('editor.saving') : save === 'dirty' ? t('editor.dirty') : save === 'conflict' ? t('editor.conflictShort') : save === 'offline' ? t('editor.offline') : save === 'auth' ? t('editor.authLost') : t('editor.saveError')} · {rev ? t('editor.revisionN', { n: rev }) : t('editor.noRevisions')}</span>
-      <button className="btn" onClick={undo} disabled={!hist.current.canUndo} title="Ctrl+Z" aria-label={t('editor.undo')}>↶<span className="lbl"> {t('editor.undo')}</span></button>
-      <button className="btn" onClick={redo} disabled={!hist.current.canRedo} title="Ctrl+Y" aria-label={t('editor.redo')}>↷<span className="lbl"> {t('editor.redo')}</span></button>
-      <div className="seg" role="group" aria-label={t('editor.view')}>
-        {(['2d', 'split', '3d'] as const).map(vv => <button key={vv} className={`v-${vv}`} aria-pressed={view === vv} onClick={() => { setView(vv); if (vv === '3d' && typeof matchMedia === 'function' && matchMedia('(max-width: 900px)').matches) setSideOpen(false); }}>{vv === '2d' ? t('editor.view2d') : vv === '3d' ? '3D' : t('editor.viewSplit')}</button>)}
+      <SaveChip save={save} rev={rev} />
+      <div className="tb-actions">
+      <button className="btn ghost icon-btn" onClick={undo} disabled={!hist.current.canUndo} title={hist.current.canUndo ? `${t('editor.undo')} (Ctrl+Z)` : t('editor.nothingToUndo')} aria-label={t('editor.undo')}><Icon name="undo" /><span className="lbl">{t('editor.undo')}</span></button>
+      <button className="btn ghost icon-btn" onClick={redo} disabled={!hist.current.canRedo} title={hist.current.canRedo ? `${t('editor.redo')} (Ctrl+Y)` : t('editor.nothingToRedo')} aria-label={t('editor.redo')}><Icon name="redo" /><span className="lbl">{t('editor.redo')}</span></button>
+      {!stageDef.page && <div className="seg" role="group" aria-label={t('editor.view')}>
+        {compact ? (['2d', '3d', 'panel'] as const).map(vv => { const on = vv === 'panel' ? sheet === 'full' : view === vv && sheet !== 'full';
+            return <button key={vv} aria-pressed={on} onClick={() => { if (vv === 'panel'){ setSheet('full'); setSideOpen(true); } else { setView(vv); setSheet('peek'); } }}><Icon name={vv === '2d' ? 'plan' : vv === '3d' ? 'cube' : 'panel'} /><span>{vv === '2d' ? t('editor.view2d') : vv === '3d' ? '3D' : t('editor.viewPanel')}</span></button>; })
+          : (['2d', 'split', '3d'] as const).map(vv => <button key={vv} className={`v-${vv}`} aria-pressed={view === vv} onClick={() => setView(vv)}>{vv === '2d' ? t('editor.view2d') : vv === '3d' ? '3D' : t('editor.viewSplit')}</button>)}
+      </div>}
+      <span className="prefs-inline"><PrefsSwitcher /></span>
+      <details className="tb-more"><summary className="btn ghost icon-btn" aria-label={t('editor.more')} title={t('editor.more')}><Icon name="more" /></summary><div className="tb-menu"><PrefsSwitcher /><button type="button" className="btn ghost" onClick={() => setHelp(true)}>{t('editor.shortcuts')}</button></div></details>
       </div>
-      <PrefsSwitcher />
-      <button className="btn primary" disabled={revBusy} onClick={() => { setRevBusy(true); flight.run('revision', saveRevision).finally(() => setRevBusy(false)); }}><span className="lbl">{t('editor.saveRevision')}</span><span className="lbl-s">{t('editor.saveShort')}</span></button>
+      <button className="btn primary tb-save" disabled={revBusy} title={t('dlg.revBody')} onClick={() => { setRevBusy(true); flight.run('revision', saveRevision).finally(() => setRevBusy(false)); }}><span className="lbl">{t('editor.saveRevision')}</span><span className="lbl-s">{t('editor.saveShort')}</span></button>
+      {save === 'conflict' && <span className="conflict-bar" role="alert"><Icon name="alert" />{t('editor.conflict')} <button className="btn" onClick={() => { dropStash(); saveRef.current = 'saved'; location.reload(); }}>{t('editor.conflictReload')}</button><button className="btn" onClick={() => send(true)}>{t('editor.conflictKeep')}</button></span>}
+      {save === 'offline' && <span className="conflict-bar save-alert" role="alert"><Icon name="cloudOff" />{t('editor.offlineNote')} <button className="btn" onClick={() => { attempt.current = 0; send(); }}>{t('editor.retryNow')}</button></span>}
+      {save === 'auth' && <span className="conflict-bar save-alert" role="alert"><Icon name="alert" />{t('editor.sessionExpired')} <a className="btn" href={reloginUrl(`/p/${id}`)} onClick={() => { if (latest.current) stashDraft(store(), id, latest.current, baseRev.current); saveRef.current = 'saved'; }}>{t('editor.relogin')}</a></span>}
+      {stash && <span className="conflict-bar save-alert" role="alert">{t('editor.stashFound', { time: new Date(stash.at).toLocaleTimeString(intlLocale(lang), { hour: '2-digit', minute: '2-digit' }) })} <button className="btn" onClick={takeStash}>{t('editor.stashRestore')}</button><button className="btn" onClick={dropStash}>{t('editor.stashDrop')}</button></span>}
     </header>
-    <nav className="stagebar" aria-label={t('stage.aria')}>
-      {STAGES.map((st, i) => <button key={st.id} aria-current={stage === st.id ? 'step' : undefined} onClick={() => setStage(st.id)}><i>{String(i + 1).padStart(2, '0')}</i>{t(`stage.${st.id}`)}{st.id === 'docs' && warnCount > 0 && <b className="count" title={t('stage.checks')}>{warnCount}</b>}</button>)}
+    <div className="stagewrap">
+    <button type="button" className="stage-step" aria-label={t('stage.prev')} title={t('stage.prev')} disabled={STAGES.indexOf(stageDef) === 0} onClick={() => setStage(STAGES[Math.max(0, STAGES.indexOf(stageDef) - 1)]!.id)}><Icon name="chevronLeft" /></button>
+    <nav className="stagebar" aria-label={t('stage.aria')} ref={stageBar}>
+      {STAGES.map((st, i) => <button key={st.id} data-stage={st.id} aria-current={stage === st.id ? 'step' : undefined} aria-label={`${String(i + 1).padStart(2, '0')} ${t(`stage.${st.id}`)}${st.id === 'docs' && warnCount > 0 ? ` · ${t('stage.warnAria', { n: warnCount })}` : ''}`} onClick={() => setStage(st.id)}><i aria-hidden="true">{String(i + 1).padStart(2, '0')}</i><span className="st-name" aria-hidden="true">{t(`stage.${st.id}`)}</span>{st.id === 'docs' && warnCount > 0 && <b className="count" title={t('stage.checks')} aria-hidden="true">{warnCount}</b>}</button>)}
     </nav>
+    <button type="button" className="stage-step" aria-label={t('stage.next')} title={t('stage.next')} disabled={STAGES.indexOf(stageDef) === STAGES.length - 1} onClick={() => setStage(STAGES[Math.min(STAGES.length - 1, STAGES.indexOf(stageDef) + 1)]!.id)}><Icon name="chevronRight" /></button>
+    </div>
     {stageDef.page ? <div className="pagebody">{stage === 'orders' && <OrdersPage id={id} cur={cur} say={say} projectName={snap.name} rooms={floors(house!).flatMap(f => f.rooms).map(r => ({ id: r.id, name: r.name }))} />}{stage === 'site' && <SitePage id={id} rooms={floors(house!).flatMap(f => f.rooms)} say={say} />}</div> :
-    <div className="body">
+    <div className={`body ${compact ? `is-compact sheet-${sheet}` : ""}`}>
       <nav className="tools" aria-label={t('editor.tools')}>
         {(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk)).map(tk => <button key={tk} aria-pressed={tool === tk} onClick={() => setTool(tk)} title={t(TOOL_LABEL[tk])}><svg viewBox="0 0 24 24"><path d={ICON[tk]} /></svg>{t(TOOL_LABEL[tk])}</button>)}
       </nav>
-      <div className={`canvas ${view === 'split' ? 'split' : ''}`}>
+      <div className={`canvas ${view === 'split' && !compact ? 'split' : ''}`}>
         <div className="levelbar" role="tablist" aria-label={t('level.tabs')}>
           {floors(house!).map((_, i) => <button key={i} role="tab" aria-selected={i === L} className="btn" onClick={() => goLevel(i)}>{levelName(i)}</button>)}
           <button className="btn" onClick={onAddLevel} title={t('level.addTitle')} disabled={nLevels >= MAX_LEVELS}>{t('level.add')}</button></div>
-        {view !== '3d' && <div style={{ position: 'relative', minHeight: 0 }}><PlanView showTech={showTech && !preview} onTechAt={(x, z) => { if (!snap || preview) return; const pt = placeTechPoint(snap, techKind, x, z); if (!pt){ say(t('tech.outside')); return; } mutate(s => { s.tech = [...(s.tech || []), pt]; }); say(t('tech.placed', { rn: snap.floor.rooms.find(r => r.id === pt.roomId)?.name ?? '' })); }} key={(preview ? 'p' + preview.v.tier : 'live') + L} voids={voids} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} sel={preview ? null : sel} tool={preview ? 'select' : tool} severities={preview ? {} : sev} onSelect={preview ? () => {} : setSel} onEdit={preview ? () => {} : onEdit} onAddWall={preview ? () => {} : onAddWall} onAddRoom={preview ? () => {} : onAddRoom} onAddOpening={preview ? () => {} : onAddOpening} calib={preview ? null : calib} onCalibPick={(a, b) => setCalib({ stage: 'enter', a, b })} />
-          <div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'measure' ? t('editor.hintMeasure') : t('editor.hintSelect')}</div></div>}
-        {view !== '2d' && <Viewer3D projectId={id} voids={voids} mc={mc} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })} />}
+        {(view === '2d' || (view === 'split' && !compact)) && <div className="planwrap"><PlanView onKey={onPlanKey} showTech={showTech && !preview} onTechAt={(x, z) => { if (!snap || preview) return; const pt = placeTechPoint(snap, techKind, x, z); if (!pt){ say(t('tech.outside')); return; } mutate(s => { s.tech = [...(s.tech || []), pt]; }); say(t('tech.placed', { rn: snap.floor.rooms.find(r => r.id === pt.roomId)?.name ?? '' })); }} key={(preview ? 'p' + preview.v.tier : 'live') + L} voids={voids} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} sel={preview ? null : sel} tool={preview ? 'select' : tool} severities={preview ? {} : sev} onSelect={preview ? () => {} : (s: Sel) => { setSel(s); if (s && compact && sheet === 'peek') setSheet('half'); }} onEdit={preview ? () => {} : onEdit} onAddWall={preview ? () => {} : onAddWall} onAddRoom={preview ? () => {} : onAddRoom} onAddOpening={preview ? () => {} : onAddOpening} calib={preview ? null : calib} onCalibPick={(a, b) => setCalib({ stage: 'enter', a, b })} />
+          <p className="sr-only" aria-live="polite">{selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'measure' ? t('editor.hintMeasure') : t('editor.hintSelect')}</div></div>}
+        {(view === '3d' || (view === 'split' && !compact)) && <Viewer3D projectId={id} voids={voids} mc={mc} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })} />}
         {preview && <div className="previewbar" role="status">{t('editor.previewBar', { title: preview.v.title })} <button className="btn" onClick={() => setPreview(null)}>{t('common.close')}</button></div>}
         {help && <KeyboardHelp onClose={() => setHelp(false)} />}
         {pending && <div className="pending" role="alertdialog" aria-label={t('editor.warnings')}>
           <strong>{t('editor.positionWarnings')}</strong>{pending.issues.map((i, k) => <div key={k} className={`issue ${i.severity}`}>{iT(i)}</div>)}
           <div style={{ display: 'flex', gap: 8 }}><button className="btn primary" onClick={() => setPending(null)}>{t('editor.keepPosition')}</button><button className="btn" onClick={() => { setHouse(pending.before); persist(pending.before); setPending(null); }}>{t('editor.revert')}</button></div></div>}
       </div>
-      <aside className={`side ${sideOpen ? '' : 'closed'}`}>
-        <div className="sidetabs" style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+      <aside className={`side ${compact ? `sheet sheet-${sheet}` : ''}`} aria-label={t('editor.panelAria', { stage: t(`stage.${stage}`) })}>
+        <div className="sidetabs">
+          {compact && <button type="button" className="sheet-grip" aria-label={sheet === 'full' ? t('editor.sheetLess') : t('editor.sheetMore')} aria-expanded={sheet !== 'peek'} onClick={() => setSheet(x => x === 'peek' ? 'half' : x === 'half' ? 'full' : 'peek')}><span aria-hidden="true" /></button>}
           <h2 className="stage-title"><i>{String(STAGES.indexOf(stageDef) + 1).padStart(2, '0')}</i>{t(`stage.${stage}`)}</h2>
-          <button className="btn sidetoggle" aria-expanded={sideOpen} onClick={() => setSideOpen(o => !o)}>{sideOpen ? t('editor.hidePanel') : t('editor.showPanel')}</button>
+          {compact && <button type="button" className="btn ghost icon-btn" aria-label={sheet === 'peek' ? t('editor.showPanel') : t('editor.hidePanel')} onClick={() => setSheet(x => x === 'peek' ? 'half' : 'peek')}><Icon name={sheet === 'peek' ? 'chevronUp' : 'chevronDown'} /></button>}
         </div>
         {(showSel || stage === 'survey') && <>
           {stage === 'survey' && floorIssues.filter(i => !(sel?.kind === 'stair' && i.vars?.stair === sel.id)).map((i, k) => <div key={k} className={`issue ${i.severity}`}>{iT(i)}</div>)}
@@ -305,7 +347,7 @@ export default function Editor({ id }: { id: string }){
           </>}
           {selRoom && roomStage && <RoomPanel part={stage} room={selRoom} snap={snap} G={G} cat={catalog} mc={mc} cur={cur} onSwap={(pid: string, vid: string) => changePiece(pid, q => { q.variantId = vid; }, t('editor.variantNoFit'))} onFinish={(patch: Partial<RoomFinishes>) => mutate(s => { s.finishes = { ...(s.finishes || {}), [selRoom.id]: { ...finishesOf(s, selRoom), ...patch } }; })} onChange={(fn: (r: any) => void) => mutate(s => fn(s.floor.rooms.find(r => r.id === selRoom.id)!))}
             onAuto={() => { const r = autoLayout(snap, catalog, { roomId: selRoom.id }); commit(r.snapshot); say(r.notFit.length ? t('editor.someNotFit') : t('editor.roomAutoApplied', { room: selRoom.name })); }}
-            onAdd={(vid: string) => { const r = addPlacement(snap, catalog, selRoom.id, vid); if (!r){ say(t('editor.noFreeSpot')); return; } commit(r); setSel({ kind: 'placement', id: r.placements.at(-1)!.id }); }} num={num} />}
+            onAdd={(vid: string) => addToRoom(vid, selRoom)} onResize={(rect: Room['rect']) => { try { mutate(s => { s.floor = resizeRoom(s.floor, selRoom.id, rect, () => `wall-${uid().slice(0, 8)}`); }); } catch (e) { if (e instanceof RoomResizeError) say(e.message); else throw e; } }} num={num} />}
           {selRoom && (stage === 'finishes' || stage === 'ffe') && <RoomOptionsPanel id={id} room={selRoom} snap={snap} cat={catalog} mc={mc} cur={cur} onSnap={n => commit(n)} say={say} />}
           {selRoom && stage === 'survey' && <button className="btn" title={t('stair.addTitle')} onClick={() => onAddStair(selRoom)}>{t('stair.add')}</button>}
           {selStair && stage === 'survey' && (() => { const g = stairGeometry(selStair, snap.floor.ceilingHeight + SLAB), cm1 = (m: number) => Math.round(m * 1000) / 10; return (<div style={{ display: 'grid', gap: 8 }}>
@@ -360,12 +402,12 @@ export default function Editor({ id }: { id: string }){
         </>}
         {stage === 'concept' && !showSel && <>
           {house && <StylePanel house={house} cat={catalog} mc={mc} cur={cur} onApply={(h, id) => { commitHouse(h); say(t('style.applied', { name: t(`style.${id}`) })); }} />}
-          <button className="btn" onClick={() => { if (!confirm(t('editor.autoConfirm'))) return; const r = autoLayout(snap, catalog); commit(r.snapshot); say(r.notFit.length ? t('editor.notFit', { list: r.notFit.map(n => t('editor.notFitItem', { key: n.key, room: n.room })).join(', ') }) : t('editor.autoApplied')); }}>{t('editor.autoAll')}</button>
+          <button className="btn" onClick={async () => { if (!(await askConfirm({ title: t('dlg.autoTitle'), body: t('editor.autoConfirm'), confirmLabel: t('dlg.autoOk') }))) return; const r = autoLayout(snap, catalog); commit(r.snapshot); say(r.notFit.length ? t('editor.notFit', { list: r.notFit.map(n => t('editor.notFitItem', { key: n.key, room: n.room })).join(', ') }) : t('editor.autoApplied')); }}>{t('editor.autoAll')}</button>
         </>}
         {stage === 'concept' && !showSel && <DesignPanel id={id} snap={snap} say={say} cur={cur} flush={flushDraft} onBrief={onBrief} onPreview={(v: any, pid: string | null) => setPreview(v && pid ? { v, pid } : null)} onApplied={onApplied} />}
         {stage === 'concept' && !showSel && <TwinDesignPanel id={id} snap={snap} catalog={catalog} say={say} flush={flushDraft} onPreview={(s: Snapshot | null, label: string | null) => setPreview(s && label ? { v: { candidate: s, title: label, tier: 'twin-' + label }, pid: 'twin' } : null)} onApplied={onApplied} />}
         {stage === 'finishes' && !showSel && <RoomPicker snap={snap} mc={mc} onPick={rid => setSel({ kind: 'room', id: rid })} />}
-        {stage === 'ffe' && !showSel && <CatalogPanel locale={lang} units={units} catalog={catalog} snap={snap} onUse={(g, vid) => mutate(s => { s.selections[g] = vid; if (!s.picked.includes(g)) s.picked.push(g); })} onAdd={selRoom ? (vid: string) => { const r = addPlacement(snap, catalog, selRoom.id, vid); if (!r){ say(t('editor.noFreeSpot')); return; } commit(r); setSel({ kind: 'placement', id: r.placements.at(-1)!.id }); } : undefined} />}
+        {stage === 'ffe' && !showSel && <CatalogPanel locale={lang} units={units} catalog={catalog} snap={snap} onUse={(g, vid) => mutate(s => { s.selections[g] = vid; if (!s.picked.includes(g)) s.picked.push(g); })} onAdd={(vid: string) => addToRoom(vid, selRoom)} />}
         {stage === 'mep' && <TechPanel snap={snap} show={showTech} kind={techKind} onShow={setShowTech} onKind={k => { setTechKind(k); setTool('tech'); }}
           onSuggest={() => { const pts = suggestTechPoints(snap); mutate(s => { s.tech = pts; }); setShowTech(true); say(t('tech.suggested', { n: pts.length })); }}
           onClear={() => mutate(s => { delete s.tech; })} onDelete={id => mutate(s => { s.tech = (s.tech || []).filter(p => p.id !== id); })} />}
@@ -382,31 +424,36 @@ export default function Editor({ id }: { id: string }){
           {shares.filter(s => !s.revokedAt).length > 0 && <><h4>{t('editor.activeShares')}</h4>{shares.filter(s => !s.revokedAt).map(s => <div key={s.token} className="r"><span>{t('editor.revisionN', { n: s.revisionNumber })}</span><a className="btn" href={s.path} target="_blank" rel="noopener">{t('common.open')}</a><button className="btn danger" onClick={() => revokeShare(s.token)}>{t('editor.revoke')}</button><small>{when(s.createdAt)}</small></div>)}</>}</div>}
       </aside>
     </div>}
-    {toast && <div className="toast" role="status">{toast}</div>}
+    {toast && <div className={`toast ${compact ? "above-sheet" : ""}`} role="status" aria-live="polite" onMouseEnter={() => clearTimeout(toastT.current)} onMouseLeave={() => { toastT.current = setTimeout(() => setToast(""), 3000); }}><span>{toast}</span><button type="button" className="toast-x" aria-label={t("common.close")} onClick={() => setToast("")}><Icon name="close" size={16} /></button></div>}
   </div>);
 }
 
-function RoomPanel({ part, room, snap, G, cat, mc, cur, onFinish, onChange, onAuto, onAdd, onSwap, num }: any){
+function RoomPanel({ part, room, snap, G, cat, mc, cur, onFinish, onChange, onAuto, onAdd, onSwap, onResize, num }: any){
   const { t, tp, lang, units } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units), inField = (m: number) => cmToInput(m * 100, units);
-  const [grp, setGrp] = useState(Object.keys(G).find(k => !G[k].includedWith)!), [vi, setVi] = useState(0);
+  // „Adaugă mobilier” pornește de la grupele potrivite camerei (dormitor: pat, dulap, noptieră…), restul sub „Altele”
+  const avail = useMemo(() => Object.keys(G).filter(k => !G[k].includedWith), [G]), fit = useMemo(() => groupsForRoom(room.type, avail), [room.type, avail]);
+  const [grp, setGrp] = useState<string>(() => defaultGroupForRoom(room.type, avail) ?? avail[0]!), [vi, setVi] = useState(0);
+  useEffect(() => { setGrp(defaultGroupForRoom(room.type, avail) ?? avail[0]!); setVi(0); }, [room.id, room.type]); // eslint-disable-line
   const w = room.rect.x1 - room.rect.x0, d = room.rect.z1 - room.rect.z0;
   return (<>
     <h3>{room.name}</h3><div className="prov">{formatArea(area(room.rect), units, lang)} · {tp('editor.pieces', snap.placements.filter((p: any) => p.roomId === room.id).length)}</div>
     {part === 'survey' && <><div className="grid2">
       <label className="f"><span>{t('editor.name')}</span><input type="text" value={room.name} maxLength={60} onChange={e => onChange((r: any) => { r.name = e.target.value; })} /></label>
       <label className="f"><span>{t('editor.type')}</span><select value={room.type} onChange={e => onChange((r: any) => { r.type = e.target.value; })}>{ROOM_TYPES.map(([v, l]) => <option key={v} value={v}>{t(l)}</option>)}</select></label>
-      <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(w)} onChange={e => num(e.target.value, (x: number) => onChange((r: any) => { r.rect.x1 = r3(r.rect.x0 + x / 100); }), 60)} /></label>
-      <label className="f"><span>{t('editor.length', { u })}</span><input type="number" value={inField(d)} onChange={e => num(e.target.value, (x: number) => onChange((r: any) => { r.rect.z1 = r3(r.rect.z0 + x / 100); }), 60)} /></label>
+      <label className="f"><span>{t('editor.width', { u })}</span><input type="number" inputMode="decimal" value={inField(w)} onChange={e => num(e.target.value, (x: number) => onResize({ ...room.rect, x1: r3(room.rect.x0 + x / 100) }), 60)} /></label>
+      <label className="f"><span>{t('editor.length', { u })}</span><input type="number" inputMode="decimal" value={inField(d)} onChange={e => num(e.target.value, (x: number) => onResize({ ...room.rect, z1: r3(room.rect.z0 + x / 100) }), 60)} /></label>
       <label className="f"><span>{t('editor.posX', { u })}</span><input type="number" value={inField(room.rect.x0)} onChange={e => { const cm = inputToCm(e.target.value, units), x = cm == null ? NaN : cm / 100; if (Number.isFinite(x)) onChange((r: any) => { r.rect.x1 = r3(x + (r.rect.x1 - r.rect.x0)); r.rect.x0 = r3(x); }); }} /></label>
       <label className="f"><span>{t('editor.posZ', { u })}</span><input type="number" value={inField(room.rect.z0)} onChange={e => { const cm = inputToCm(e.target.value, units), z = cm == null ? NaN : cm / 100; if (Number.isFinite(z)) onChange((r: any) => { r.rect.z1 = r3(z + (r.rect.z1 - r.rect.z0)); r.rect.z0 = r3(z); }); }} /></label>
     </div>
-    <p className="prov" style={{ margin: 0 }} title={t('editor.roomWallsNote')}>{t('editor.roomWallsShort')}</p></>}
+    <p className="prov" style={{ margin: 0 }}>{t('editor.roomWallsShort')}</p></>}
     {part === 'finishes' && <FinishesPanel room={room} snap={snap} cat={cat} mc={mc} cur={cur} onFinish={onFinish} onSwap={onSwap} onAdd={onAdd} />}
     {part === 'ffe' && <><button className="btn" onClick={onAuto}>{t('editor.autoRoom')}</button>
     <h4>{t('editor.addFurniture')}</h4>
-    <select value={grp} onChange={e => { setGrp(e.target.value); setVi(0); }}>{Object.entries<any>(G).filter(([, g]) => !g.includedWith).map(([k, g]) => <option key={k} value={k}>{g.label}</option>)}</select>
-    <select value={vi} onChange={e => setVi(Number(e.target.value))}>{G[grp].variants.map((v: any, i: number) => <option key={v.id} value={i}>{v.name}</option>)}</select>
-    <button className="btn primary" onClick={() => onAdd(G[grp].variants[vi].id)}>{t('editor.addToRoom')}</button></>}
+    <label className="f"><span>{t('editor.addGroup')}</span><select value={grp} onChange={e => { setGrp(e.target.value); setVi(0); }}>
+      {fit.suggested.length > 0 && <optgroup label={t('editor.groupsFor', { room: t(`roomType.${room.type}`) })}>{fit.suggested.map(k => <option key={k} value={k}>{G[k].label}</option>)}</optgroup>}
+      <optgroup label={fit.suggested.length ? t('editor.groupsOther') : t('editor.groupsAll')}>{fit.others.map(k => <option key={k} value={k}>{G[k].label}</option>)}</optgroup></select></label>
+    <label className="f"><span>{t('editor.addVariant')}</span><select value={vi} onChange={e => setVi(Number(e.target.value))}>{(G[grp]?.variants ?? []).map((v: any, i: number) => <option key={v.id} value={i}>{v.name}</option>)}</select></label>
+    <button className="btn primary" disabled={!G[grp]?.variants[vi]} onClick={() => onAdd(G[grp].variants[vi].id)}>{t('editor.addToRoom')}</button></>}
   </>);
 }
 function PlacementPanel({ out, p, snap, catalog, issues, G, num, onVariant, onMove, onRotate, onDuplicate, onDelete }: { out: Outbound | null; p: FurniturePlacement; snap: Snapshot; catalog: Catalog; issues: Issue[]; G: any; num: any; onVariant(v: string): void; onMove(x: number, z: number): void; onRotate(): void; onDuplicate(): void; onDelete(): void }){
@@ -421,7 +468,7 @@ function PlacementPanel({ out, p, snap, catalog, issues, G, num, onVariant, onMo
       <label className="f"><span>{t('editor.xField', { u })}</span><input type="number" value={inField(p.x)} onChange={e => num(e.target.value, (x: number) => onMove(x / 100, p.z), -1e9)} /></label>
       <label className="f"><span>{t('editor.zField', { u })}</span><input type="number" value={inField(p.z)} onChange={e => num(e.target.value, (z: number) => onMove(p.x, z / 100), -1e9)} /></label>
     </div>
-    <div style={{ display: 'flex', gap: 8 }}><button className="btn" onClick={onRotate}>{t('editor.rotate')}</button><button className="btn" onClick={onDuplicate} title="Ctrl+D">{t('editor.duplicate')}</button>{rv.offer && out?.targets[`o:${rv.offer.id}`] && <a className="btn" href={`/go/o/${rv.offer.id}`} target="_blank" rel={relFor(out.targets[`o:${rv.offer.id}`])}>{t('editor.viewProduct')}{out.targets[`o:${rv.offer.id}`] === 'affiliate' ? ` ${t('editor.affiliateTag')}` : ''}</a>}<button className="btn danger" onClick={onDelete}>{t('common.delete')}</button></div>
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><button className="btn" onClick={onRotate}>{t('editor.rotate')}</button><button className="btn" onClick={onDuplicate} title="Ctrl+D">{t('editor.duplicate')}</button>{rv.offer && out?.targets[`o:${rv.offer.id}`] && <a className="btn" href={`/go/o/${rv.offer.id}`} target="_blank" rel={relFor(out.targets[`o:${rv.offer.id}`])}>{t('editor.viewProduct')}{out.targets[`o:${rv.offer.id}`] === 'affiliate' ? ` ${t('editor.affiliateTag')}` : ''}</a>}<button className="btn danger" onClick={onDelete}>{t('common.delete')}</button></div>
     <h4>{t('editor.variantsOnly', { n: g.variants.length })}</h4>
     {g.variants.map((v: any) => { const o = catalog.offers.find(x => x.variantId === v.id), dm = v.dimensionsCm;
       return <button key={v.id} className="var" aria-pressed={v.id === p.variantId} onClick={() => onVariant(v.id)}><span>{v.name}</span><span className="mono">{o ? lei(o.price) : '—'}</span><small>{dm ? formatDimsCm(dm, units, lang) : t('common.unknownDims')}{v.dimensionsConfidence === 'MEDIUM' ? ` ${t('common.approx')}` : ''}</small></button>; })}
@@ -472,7 +519,7 @@ function ClientPanel({ id, say, onLinked, flush, roomNames, cur }: { id: string;
   const making = useRef(false);
   async function make(){ if (making.current) return; making.current = true; setBusy(true); try { if (!(await flush())) return; const r = await fetch(`/api/projects/${id}/client-link`, { method: 'POST' }), j = await r.json();
       if (!r.ok){ say(j.error || t('client.failed')); return; }
-      const url = j.url ?? `${location.origin}${j.path}`, local = !j.url && /^(localhost|127\.|\[::1\])/.test(location.hostname);
+      const url = j.url ?? `${location.origin}${j.path}`, local = j.publicUrl === false && isLocalHostname(location.hostname);
       setLink({ url, local }); if (j.newRevision) say(t('client.newRev', { n: j.revisionNumber })); await copy(url); onLinked(); }
     catch { say(t('client.failed')); } finally { making.current = false; setBusy(false); } }
   async function toggle(f: ClientFeedback){ const r = await fetch(`/api/projects/${id}/feedback`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: f.id, resolved: !f.resolvedAt }) });
@@ -482,7 +529,7 @@ function ClientPanel({ id, say, onLinked, flush, roomNames, cur }: { id: string;
   return (<div className="client">
     <div className="docs"><button className="docrow" onClick={make} disabled={busy}><b>{t('client.link')}</b><small>{t('client.linkSub')}</small></button></div>
     {link && <div className="client-link"><input readOnly value={link.url} onFocus={e => e.currentTarget.select()} aria-label={t('client.link')} /><button className="btn" onClick={() => copy(link.url)}>{t('client.copy')}</button>
-      {link.local && <p className="muted">{t('client.localOnly')}</p>}</div>}
+      {link.local && <div className="notice warn" role="alert"><Icon name="alert" /><div><b>{t('client.localTitle')}</b><p>{t('client.localOnly')}</p></div></div>}</div>}
     <DesignerChanges id={id} cur={cur} say={say} />
     <h3>{t('client.feedback')}{open > 0 && <span className="pill">{t('client.open', { n: open })}</span>}</h3>
     {items && items.length === 0 && <EmptyState title={t('empty.feedback.title')} text={t('empty.feedback.text')} action={{ label: t('client.link'), onClick: make }} />}
@@ -505,4 +552,24 @@ function RenderGallery({ id }: { id: string }){
     {data.jobs.slice(0, 3).map(j => <div key={j.job} className="render-job"><small>{new Date(j.startedAt).toLocaleString(intlLocale(lang))} · {t(`render.status.${j.status}`)}</small>
       <div className="render-grid">{j.images.map(f => <a key={f} href={`/api/projects/${id}/renders/${j.job}/${f}`} target="_blank" rel="noopener"><img src={`/api/projects/${id}/renders/${j.job}/${f}`} alt={f} loading="lazy" /></a>)}</div></div>)}
   </div>);
+}
+
+/** Tabletă pe verticală și telefon (sub 1024 px): planul și 3D-ul ocupă tot ecranul, ca file (Plan / 3D / Panou), iar
+ *  panoul e o foaie care urcă de jos. Aceeași limită ca în globals.css (--bp-compact). */
+const COMPACT_Q = '(max-width: 1023px)';
+const isCompact = () => typeof matchMedia === 'function' && matchMedia(COMPACT_Q).matches;
+function useCompact(){
+  const [c, setC] = useState(false);
+  useEffect(() => { if (typeof matchMedia !== 'function') return; const m = matchMedia(COMPACT_Q), on = () => setC(m.matches); on();
+    m.addEventListener?.('change', on); return () => m.removeEventListener?.('change', on); }, []);
+  return c;
+}
+/** Starea salvării, vizibilă pe orice ecran (pe telefon doar pictograma și cuvântul): salvat, se salvează, eroare. */
+function SaveChip({ save, rev }: { save: string; rev: number }){
+  const { t } = usePrefs();
+  const label = save === 'saved' ? t('editor.saved') : save === 'saving' ? t('editor.saving') : save === 'dirty' ? t('editor.dirty') : save === 'conflict' ? t('editor.conflictShort') : save === 'offline' ? t('editor.offline') : save === 'auth' ? t('editor.authLost') : t('editor.saveError');
+  const kind = save === 'saved' ? 'ok' : save === 'saving' || save === 'dirty' ? 'busy' : 'err';
+  return (<span className={`status save-${kind}`} role="status" aria-live="polite" title={`${label} · ${rev ? t('editor.revisionN', { n: rev }) : t('editor.noRevisions')}`}>
+    <Icon name={kind === 'ok' ? 'cloudCheck' : kind === 'busy' ? 'spinner' : save === 'offline' ? 'cloudOff' : 'alert'} className={kind === 'busy' ? 'spin' : ''} />
+    <span className="status-main">{label}</span><span className="status-rev"> · {rev ? t('editor.revisionN', { n: rev }) : t('editor.noRevisions')}</span></span>);
 }

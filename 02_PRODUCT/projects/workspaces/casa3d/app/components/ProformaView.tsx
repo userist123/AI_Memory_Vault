@@ -7,6 +7,8 @@ import type { Proforma } from '@/core/commercial';
 import type { ClientInfo } from '@/core/project-meta';
 import type { StudioProfile } from '@/core/studio-profile';
 import { usePrefs } from '@/lib/prefs';
+import LoadError from './LoadError';
+import { formatNumber, normalizeUnit, qtyDecimals } from '@/core/format';
 import { intlLocale } from '@/lib/i18n';
 
 type Data = { name: string; client: ClientInfo | null; siteAddress: string | null; seller: StudioProfile; series: string; number: number; issueDate: string; dueDate: string | null; proforma: Proforma;
@@ -14,17 +16,20 @@ type Data = { name: string; client: ClientInfo | null; siteAddress: string | nul
 export default function ProformaView({ id }: { id: string }){
   const { t, lang } = usePrefs(), [d, setD] = useState<Data | null>(null), [err, setErr] = useState(false);
   useEffect(() => { fetch(`/api/projects/${id}/commercial/proforma`).then(r => r.ok ? r.json() : Promise.reject()).then(setD).catch(() => setErr(true)); }, [id]);
-  if (err) return <main className="report"><p>{t('print.loadError')}</p></main>;
+  if (err) return <LoadError />;
   if (!d) return <main className="report"><p className="muted">{t('print.loading')}</p></main>;
   const loc = intlLocale(lang), n2 = (v: number) => new Intl.NumberFormat(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
   const date = (s: string) => new Date(s + 'T12:00:00').toLocaleDateString(loc, { day: 'numeric', month: 'long', year: 'numeric' });
+  // înainte de tipărire: ce date lipsesc de pe document (se completează în profilul studioului și în fișa proiectului)
+  const missing = [!d.seller.name && t('doc.m.studio'), !d.seller.cui && 'CUI', !d.seller.iban && 'IBAN', !d.seller.address && t('doc.m.studioAddr'), !d.client?.name && t('doc.m.client')].filter(Boolean) as string[];
   const s = d.seller, p = d.proforma, catLabel = (c: string) => c === 'labor' ? t('com.cat.labor') : c === 'fee' ? t('com.cat.fee') : c === 'extras' ? t('com.cat.extras') : t(`budget.cat.${c}`);
   return (<main className="report proforma">
     <style>{`.proforma table{width:100%;border-collapse:collapse;font-size:12px}.proforma th,.proforma td{border-bottom:1px solid var(--rule);padding:4px 6px;text-align:left;vertical-align:top}
 .proforma td.n,.proforma th.n{text-align:right;white-space:nowrap}.pf-parties{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:12px 0}.pf-parties small{display:block}
 .pf-sum{margin-left:auto;max-width:340px}.pf-sum td{border:0}.pf-due td{font-weight:600;border-top:1px solid var(--ink)}.pf-logo{max-height:56px;max-width:180px}
-@page{size:A4;margin:14mm}@media (max-width:560px){.pf-parties{grid-template-columns:1fr}}`}</style>
-    <div className="no-print report-bar"><span className="muted small">{t('com.notFiscal')}{d.chain && <> · {t('pf.chainNote', { inv: n2(d.chain.invoiceable), total: n2(d.chain.total), res: n2(d.chain.contingency), pct: d.chain.contingencyPct })}</>}</span><button className="btn primary" onClick={() => print()}>{t('pres.pdf')}</button></div>
+@page{size:A4;margin:14mm;@bottom-right{content:'Pagina ' counter(page) ' din ' counter(pages);font:9pt 'Instrument Sans',sans-serif;color:#5F584F}}@media (max-width:560px){.pf-parties{grid-template-columns:1fr}}`}</style>
+    <div className="no-print report-bar"><span className="muted small">{d.chain ? t('pf.chainNote', { inv: n2(d.chain.invoiceable), total: n2(d.chain.total), res: n2(d.chain.contingency), pct: d.chain.contingencyPct }) : null}</span><button className="btn primary" onClick={() => print()}>{t('pres.pdf')}</button></div>
+    {missing.length > 0 && <p className="missing no-print" role="status"><b>{t('doc.missing')}</b>{missing.map(m => <span key={m}>{m}</span>)}</p>}
     <header>{s.logo && <img className="pf-logo" src={s.logo} alt="" />}<span className="kicker">{t('com.proformaKicker')}</span>
       <h1>{t('com.proformaNo', { s: d.series, n: d.number })}</h1>
       <p>{t('com.issued', { d: date(d.issueDate) })}{d.dueDate && <> · {t('com.due', { d: date(d.dueDate) })}</>} · {d.name}</p></header>
@@ -37,7 +42,7 @@ export default function ProformaView({ id }: { id: string }){
     </div>
     <table><thead><tr><th>#</th><th>{t('com.col.name')}</th><th>{t('com.col.unit')}</th><th className="n">{t('com.col.qty')}</th><th className="n">{t('com.col.unitNet')}</th><th className="n">{t('com.col.net')}</th><th className="n">{t('com.col.vat', { p: p.vatPct })}</th></tr></thead>
       {p.groups.map(g => <tbody key={g.category}><tr><td colSpan={7}><b>{catLabel(g.category)}</b></td></tr>
-        {g.lines.map((l, k) => <tr key={k}><td>{k + 1}</td><td>{l.name}</td><td>{l.unit}</td><td className="n">{l.qty}</td><td className="n">{n2(l.unitNet)}</td><td className="n">{n2(l.net)}</td><td className="n">{n2(l.vat)}</td></tr>)}
+        {g.lines.map((l, k) => <tr key={k}><td>{k + 1}</td><td>{l.name}</td><td>{normalizeUnit(l.unit)}</td><td className="n">{formatNumber(l.qty, lang, { decimals: qtyDecimals(l.unit, l.qty) })}</td><td className="n">{n2(l.unitNet)}</td><td className="n">{n2(l.net)}</td><td className="n">{n2(l.vat)}</td></tr>)}
         <tr><td colSpan={5} className="n"><small>{t('com.subtotal', { c: catLabel(g.category) })}</small></td><td className="n">{n2(g.net)}</td><td className="n">{n2(g.vat)}</td></tr></tbody>)}
     </table>
     <table className="pf-sum"><tbody>

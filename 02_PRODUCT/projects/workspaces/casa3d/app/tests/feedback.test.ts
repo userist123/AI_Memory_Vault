@@ -102,3 +102,48 @@ test('aprobare pe produs: doar produse din camera partajată, numele îl pune se
   await assert.rejects(addFeedback(token, { roomId: other.id, verdict: 'like', author: 'Ana', text: '', item: { key: prod.key } }), (e: any) => e.status === 400, 'produsul altei camere');
   assert.equal((await listFeedback(A, id)).filter(f => f.item).length, 2);
 });
+
+import { addApprovals, APPROVE_MAX } from '../lib/feedback';
+import { presentation, approvalItems } from '../core/presentation';
+test('„Aprobă camera”: toate produsele camerei într-o cerere, doar produse reale din camera partajată, în plafonul linkului', async () => {
+  const { id, token, room } = await shared();
+  const view = (await repo.getProject(A, id)).draft, [cat, mc] = await Promise.all([repo.getCatalog(), repo.getMaterials()]);
+  const keys = approvalItems(presentation(view, cat, mc).rooms.find(r => r.id === room)!).map(i => i.key); assert.ok(keys.length >= 2);
+  const out = await addApprovals(token, { roomId: room, author: ' Ana ', items: keys.map(key => ({ key })) });
+  assert.equal(out.length, keys.length); assert.ok(out.every(f => f.verdict === 'like' && f.author === 'Ana' && f.item && f.text === ''));
+  assert.deepEqual(out.map(f => f.item!.key), keys, 'numele produselor le pune serverul, pe cheile din cameră');
+  assert.equal((await listFeedbackForShare(token)).length, keys.length);
+  const bad = [{ roomId: room, author: 'Ana', items: [{ key: 'f:inventat' }] }, { roomId: room, author: 'Ana', items: [] }, { roomId: null, author: 'Ana', items: [{ key: keys[0] }] },
+    { roomId: 'nu-exista', author: 'Ana', items: [{ key: keys[0] }] }, { roomId: room, author: '', items: [{ key: keys[0] }] }, { roomId: room, author: 'Ana', items: Array.from({ length: APPROVE_MAX + 1 }, (_, i) => ({ key: `k${i}` })) },
+    { roomId: room, author: 'Ana', items: [{ key: keys[0] }, { key: 'f:inventat' }] }, { roomId: room, author: 'Ana', items: 'nu' }];
+  for (const b of bad) await assert.rejects(addApprovals(token, b), (e: any) => e.status === 400, JSON.stringify(b).slice(0, 80));
+  assert.equal((await listFeedbackForShare(token)).length, keys.length, 'o cerere cu o singură cheie greșită nu scrie nimic');
+  // plafonul aprobărilor pe link include fiecare rând nou: după un „aș schimba” pe fiecare produs, reaprobarea ar scrie
+  // keys.length rânduri noi, peste un plafon de keys.length + 1 → 429 și nu scrie nimic
+  for (const key of keys) await addFeedback(token, { roomId: room, verdict: 'change', author: 'Ana', text: 'altfel', item: { key } });
+  const cap = FEEDBACK_LIMITS.approvalsPerShare, before = (await listFeedbackForShare(token)).length; FEEDBACK_LIMITS.approvalsPerShare = keys.length + 1;
+  try { await assert.rejects(addApprovals(token, { roomId: room, author: 'Ana', items: keys.map(key => ({ key })) }), (e: any) => e.status === 429, 'plafonul pe link include fiecare rând'); }
+  finally { FEEDBACK_LIMITS.approvalsPerShare = cap; }
+  assert.equal((await listFeedbackForShare(token)).length, before, 'cererea refuzată nu scrie nimic');
+  assert.equal((await addApprovals(token, { roomId: room, author: 'Ana', items: keys.map(key => ({ key })) })).length, keys.length, 'după „aș schimba” produsul se poate aproba din nou');
+});
+
+test('„Aprobă camera” repetat nu dublează rândurile, iar aprobările nu pot umple plafonul întrebărilor', async () => {
+  const { id, token, room } = await shared();
+  const view = (await repo.getProject(A, id)).draft, [cat, mc] = await Promise.all([repo.getCatalog(), repo.getMaterials()]);
+  const keys = approvalItems(presentation(view, cat, mc).rooms.find(r => r.id === room)!).map(i => i.key);
+  const first = await addApprovals(token, { roomId: room, author: 'Ana', items: keys.slice(0, 1).map(key => ({ key })) }); assert.equal(first.length, 1);
+  const rest = await addApprovals(token, { roomId: room, author: 'Ana', items: keys.map(key => ({ key })) });
+  assert.deepEqual(rest.map(f => f.item!.key), keys.slice(1), 'doar produsele încă neaprobate primesc rânduri');
+  for (let i = 0; i < 10; i++) assert.deepEqual(await addApprovals(token, { roomId: room, author: 'Bot', items: keys.map(key => ({ key })) }), [], 'cererea repetată nu adaugă nimic');
+  const single = await addFeedback(token, { roomId: room, verdict: 'like', author: 'Bot', text: '', item: { key: keys[0] } });
+  assert.equal(single.id, first[0]!.id, 'aprobarea unui produs deja aprobat întoarce rândul existent');
+  assert.equal((await listFeedbackForShare(token)).length, keys.length, 'un singur rând de aprobare pe produs');
+  // aprobările (oricâte) nu intră în plafonul întrebărilor: clientul poate trimite încă perShare întrebări
+  for (let i = 0; i < FEEDBACK_LIMITS.perShare; i++) await addFeedback(token, { roomId: null, verdict: 'question', author: 'Ana', text: `întrebarea ${i}` });
+  await assert.rejects(addFeedback(token, { roomId: null, verdict: 'question', author: 'Ana', text: 'încă una' }), (e: any) => e.status === 429);
+  // nici invers: plafonul întrebărilor plin nu blochează aprobarea unui produs schimbat între timp
+  const cap = FEEDBACK_LIMITS.perShare; FEEDBACK_LIMITS.perShare = Number.MAX_SAFE_INTEGER;
+  try { await addFeedback(token, { roomId: room, verdict: 'change', author: 'Ana', text: 'altă culoare', item: { key: keys[0] } }); } finally { FEEDBACK_LIMITS.perShare = cap; }
+  assert.equal((await addApprovals(token, { roomId: room, author: 'Ana', items: [{ key: keys[0] }] })).length, 1);
+});

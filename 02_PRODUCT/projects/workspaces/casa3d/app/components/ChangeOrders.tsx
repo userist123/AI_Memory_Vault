@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { budgetWithChanges, type ChangeOrder } from '@/core/change-orders';
 import { formatMoney } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
+import { askConfirm } from '@/lib/dialog';
 import { intlLocale } from '@/lib/i18n';
 import ClientNameBox, { useClientNameBox } from './ClientNameBox';
 const signed = (v: number, f: (v: number) => string) => (v > 0 ? '+' : v < 0 ? '−' : '') + f(Math.abs(v));
@@ -59,7 +60,7 @@ export function DesignerChanges({ id, cur, say }: { id: string; cur: string; say
       <div><b>{t('co.no', { n: c.number })} · {c.title}</b><span>{signed(c.amount, money)}</span></div>
       <small className={`co-st co-${c.status}`}>{t(`co.st.${c.status}`)}{c.decidedBy ? ` · ${c.decidedBy}` : ''}{c.clientNote ? ` — „${c.clientNote}”` : ''}</small>
       <div className="dco-act">{c.status === 'draft' && <><button className="btn primary" disabled={busy} onClick={() => call(`/api/projects/${id}/changes/${c.id}`, 'PATCH', { action: 'send' })}>{t('co.send')}</button>
-        <button className="btn" disabled={busy} onClick={() => confirm(t('co.confirmDelete')) && call(`/api/projects/${id}/changes/${c.id}`, 'DELETE')}>{t('co.delete')}</button></>}
+        <button className="btn" disabled={busy} onClick={async () => { if (await askConfirm({ title: t('co.confirmDelete'), confirmLabel: t('dlg.coDeleteOk'), danger: true })) call(`/api/projects/${id}/changes/${c.id}`, 'DELETE'); }}>{t('co.delete')}</button></>}
         {c.status === 'sent' && <button className="btn" disabled={busy} onClick={() => call(`/api/projects/${id}/changes/${c.id}`, 'PATCH', { action: 'withdraw' })}>{t('co.withdraw')}</button>}</div></li>)}</ul>
     <div className="dco-new">
       <label className="f"><span>{t('co.what')}</span><input value={f.title} maxLength={160} onChange={e => setF(x => ({ ...x, title: e.target.value }))} placeholder={t('co.whatPh')} /></label>

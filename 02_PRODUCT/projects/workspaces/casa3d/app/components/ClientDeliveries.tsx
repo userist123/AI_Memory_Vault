@@ -2,6 +2,7 @@
 // Pe linkul clientului: stadiul comenzilor (doar starea și datele de livrare), cu data ultimei actualizări —
 // clientul nu mai trebuie să întrebe „când vine?”, iar o dată veche se vede ca veche.
 import type { ClientProgress } from '@/core/client-progress';
+import { formatQty } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
 import { intlLocale } from '@/lib/i18n';
 
@@ -20,8 +21,8 @@ export default function ClientDeliveries({ p }: { p: ClientProgress }){
   </section>);
 }
 function Row({ i, d }: { i: ClientProgress['items'][number]; d(s: string): string }){
-  const { t } = usePrefs();
+  const { t, lang } = usePrefs();
   return <li className={`cdel-row st-c-${i.status} ${i.late ? 'is-late' : ''}`}>
-    <span className="cdel-name"><b>{i.product}</b><small>{[`${i.qty} ${i.unit}`, i.rooms.join(', ')].filter(Boolean).join(' · ')}</small></span>
+    <span className="cdel-name"><b>{i.product}</b><small>{[formatQty(i.qty, i.unit, lang), i.rooms.join(', ')].filter(Boolean).join(' · ')}</small></span>
     <span className="cdel-st">{t(`cdel.st.${i.status}`)}<small>{i.late ? t('cdel.lateSince', { d: d(i.eta!) }) : i.eta ? t('cdel.eta', { d: d(i.eta) }) : i.deliveredAt ? t('cdel.on', { d: d(i.deliveredAt) }) : i.decideBy ? t(i.decideLate ? 'cdel.decideByLate' : 'cdel.decideBy', { d: d(i.decideBy) }) : ''}</small></span></li>;
 }

@@ -4,6 +4,7 @@ import { finishSchedule } from '@/core/finish-schedule';
 import { settingOut, type AxisPlan } from '@/core/setting-out';
 import { analyzeSurvey, type RoomSurvey } from '@/core/survey';
 import { ScheduleTable } from './FinishSchedule';
+import LoadError from './LoadError';
 import { CeilingSheet, FloorSheet, ElevationSheet } from './Drawings';
 import { wallElevations } from '@/core/drawings';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -17,7 +18,7 @@ import { lighting, sunDirection } from '@/core/lighting';
 import { viewerInput } from '@/lib/viewer-input';
 import { computeBudget } from '@/core/boq';
 import { floorBounds, wallDimensions, roomSchedule, printScale } from '@/core/dimensions';
-import { formatMoney, formatLength, formatArea, formatDimsCm, type Units } from '@/core/format';
+import { formatMoney, formatLength, formatArea, formatDimsCm, formatQty, type Units } from '@/core/format';
 import { intlLocale, translator, type Lang, type Translate } from '@/lib/i18n';
 import { suggestTechPoints, techCounts, TECH_KINDS, type TechKind } from '@/core/technical';
 import { TECH_SYMBOL } from './TechPanel';
@@ -97,7 +98,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
     const works = new Map(floors(snap).flatMap(f => f.rooms).map(r => [r.id, roomWorks(snap, catalog, mc, r.id)] as const));
     return { works, budget: computeBudget(snap, catalog, mc), furn: furnitureTotal(catalog, snap.placements) };
   }, [data]);
-  if (err) return <main className="print-page"><p>{t('print.loadError')}</p></main>;
+  if (err) return <LoadError />;
   if (!data || !view) return <main className="print-page">{canvas}<p>{t('print.loading')}</p></main>;
 
   const { p, catalog, mc } = data, snap = p.draft, budget = view.budget, finishRows = finishSchedule(snap, catalog, mc), tilePlans = settingOut(snap, catalog, mc);
@@ -182,9 +183,9 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
             <RoomTech snap={v} roomId={r.id} t={t} lang={locale} />
             <table className="print-table"><thead><tr><th>{t('print.finishesWorks')}</th><th className="num">{t('print.qty')}</th><th className="num">{t('print.cost')}</th></tr></thead>
               <tbody>{w.materials.length === 0 && <tr><td colSpan={3} className="muted">{t('print.noWorks')}</td></tr>}
-                {w.materials.map(m => <tr key={m.key}><td>{m.label}</td><td className="num">{m.qty} {m.unit}</td><td className="num">{money(m.cost, cur)}</td></tr>)}</tbody>
+                {w.materials.map(m => <tr key={m.key}><td>{m.label}</td><td className="num">{formatQty(m.qty, m.unit, locale)}</td><td className="num">{money(m.cost, cur)}</td></tr>)}</tbody>
               {w.labor.length > 0 && <><thead><tr><th>{t('print.laborWorks')}</th><th className="num">{t('print.qty')}</th><th className="num">{t('print.laborExpected')} ({t('print.laborRange')})</th></tr></thead>
-                <tbody>{w.labor.map(l => <tr key={l.key}><td>{l.label}</td><td className="num">{l.qty} {l.unit}</td><td className="num">{money(l.expected, cur)} <small>({money(l.low, cur)} – {money(l.high, cur)})</small></td></tr>)}</tbody></>}
+                <tbody>{w.labor.map(l => <tr key={l.key}><td>{l.label}</td><td className="num">{formatQty(l.qty, l.unit, locale)}</td><td className="num">{money(l.expected, cur)} <small>({money(l.low, cur)} – {money(l.high, cur)})</small></td></tr>)}</tbody></>}
             </table>
           </div>
           <div className="print-room-right">

@@ -3,14 +3,18 @@
 import { useEffect, useState } from 'react';
 import type { ContractDoc } from '@/core/contract';
 import { usePrefs } from '@/lib/prefs';
+import LoadError from './LoadError';
 
 export default function ContractPage({ id, kind }: { id: string; kind: 'contract' | 'offer' }){
   const { t } = usePrefs(), [doc, setDoc] = useState<ContractDoc | null>(null), [err, setErr] = useState(false);
   useEffect(() => { fetch(`/api/projects/${id}/contract`).then(r => r.ok ? r.json() : Promise.reject()).then(j => setDoc(j[kind])).catch(() => setErr(true)); }, [id, kind]);
-  if (err) return <main className="report"><p>{t('print.loadError')}</p></main>;
+  if (err) return <LoadError />;
   if (!doc) return <main className="report"><p className="muted">{t('print.loading')}</p></main>;
+  // câmpurile necompletate apar pe document ca „………” (se completează de mână sau în profil); pe ecran le numărăm înainte de tipărire
+  const blanks = (JSON.stringify(doc).match(/…{3,}/g) ?? []).length;
   return (<main className="report contract-doc">
     <div className="no-print report-bar"><a className="btn" href={`/p/${id}/${kind === 'contract' ? 'offer' : 'contract'}`}>{t(kind === 'contract' ? 'ctr.openOffer' : 'ctr.openContract')}</a><button className="btn primary" onClick={() => print()}>{t('pres.pdf')}</button></div>
+    {blanks > 0 && <p className="missing no-print" role="status"><b>{t('doc.missing')}</b><span>{t('doc.blanks', { n: blanks })}</span><a className="btn sm" href="/#studio">{t('doc.fillStudio')}</a></p>}
     <header>{doc.studioLines.map((l, k) => k === 0 ? <b key={k}>{l}</b> : <small key={k}>{l}</small>)}<h1>{doc.title}</h1><small>{doc.dateLine}</small></header>
     <p className="contract-notice">{doc.notice}</p>
     {doc.sections.map(s => <section key={s.id} id={s.id}><h2>{s.title}</h2>
