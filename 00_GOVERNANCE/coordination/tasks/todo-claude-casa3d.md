@@ -1,5 +1,5 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-16T06:35:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-16T17:07:35Z
 ROUND 6 (2026-10-15/16, owner: "totul ca lucrat de profesionisti: programatori, web/UI/UX, 3D, automatizari" + tableta):
   role audits (designer, UI/UX, 3D, QA) in scratchpad; fixed in waves: 792728e3 (QA saves/rate limits/doctor, 3D realism +
   camera rule + Blender openings, designer one-total chain + single fee + autosave + diacritics), 312d073a (UI/UX tokens,
@@ -8,9 +8,18 @@ ROUND 6 (2026-10-15/16, owner: "totul ca lucrat de profesionisti: programatori, 
   route change (fixed). 537/537, tsc clean. PC updated to 312d073a, doctor all OK through tunnel.
   616ef1d4: Blender exposure (median 0.30, highlight cap), interior-photo framing (bedrooms from the foot side), curtain rods
   exported horizontal, merged contact-shadow mesh. PC updated to 616ef1d4, doctor all OK.
-  NEXT 3D: demo living first view (table foreground, sofa cut), studio hall, two-bedroom bedrooms open door in walk, living-2
-  facing windows; contact shadows follow outline. UI leftovers
-  F-10/11 stage phases, F-13 palette, F-24 skeletons, F-21 empty states, print navigator; then accounts/hosting for sale.
+  ROUND 6b (3D framing + contact shadows), commit below: walk entry used a stale square aspect (cam.aspect=1 before the
+  first resize) so open doors sat at the frame edge; goRoom/renderView now resize first and roomShot takes the walk FOV.
+  roomShot: wall candidates every 0.5 m, aims rotated +-12/24 deg, open door leaves/gaps penalised in the tour, doorway
+  (sill) start in the tour, hero must be whole, probe() adds foreground-furniture fraction and view depth, halls shot
+  along their length (corridor perspective, side doors allowed), duplicate frames removed. Contact shadows follow each
+  part's outline (atlas, two blur layers, ovals for round parts). Blender room_camera: same probe (foreground furniture,
+  dining chairs margin), hero/group whole, sofa not from the side, second view only for missing pieces (KEY>=1.5),
+  must show them and not face windows, mesh-part count capped (bookshelves no longer pull the frame).
+  Evidence: before/after shots in the session scratchpad (not in repo); vitest 537/537, tsc clean.
+  NEXT UI: F-10/11 stage phases with done dots + Continue, F-13 command palette, F-24 skeletons, F-21 empty states,
+  print navigator on /p/<id>/print; verify at 1920/1366/1024/768/390. Then room resize moves the neighbour rectangle.
+  Owner decisions pending: repo URL update on the PC, 52 GitHub security alerts on main, accounts/hosting for sale.
 ROUND 5 (2026-10-15, owner: "mergi in ordinea recomandata" = business features first): DONE 12fa60d4 + 246d3503:
   supplier markup/discount + profit report, payment schedule, proforma (+generic CSV; not a fiscal invoice), contract &
   offer with fee calculator (template, not legal advice), own products with cost price + CSV import/export. Independent
