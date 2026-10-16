@@ -127,6 +127,10 @@ public sealed class ArchiverEntry
     /// <summary>The history list the value came from (ArcHistory, DialogEditHistory, FolderHistory, CopyHistory, PanelPath).</summary>
     public string List { get; set; } = "";
     public string Value { get; set; } = "";
+    /// <summary>Place in the most-recently-used list (0 = most recent; WinRAR values "0", "1" …); null when the list has no order (PanelPath).</summary>
+    public int? Position { get; set; }
+    /// <summary>Last write time of the registry key that holds only this list (WinRAR); null for 7-Zip, whose FM key also holds unrelated settings.</summary>
+    public DateTimeOffset? ListLastWriteUtc { get; set; }
 }
 
 public sealed class HardwareFact
