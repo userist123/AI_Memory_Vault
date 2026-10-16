@@ -13,6 +13,9 @@ Branch: claude/loganalyzer-signed-media-register
 - App: MediaRegisterFlows (SignedCms sign / export / audit-first import), SignedMediaRegisterViewModel + "Registrul semnat" tab.
 - Tests: Dfir SignedMediaRegisterTests (14), App SignedMediaRegisterFlowTests (4); annex regenerated; EDITIONS_AND_POSTURE.md.
 
+- Review of PR #295 addressed: M9 (history before the first official install = DE VERIFICAT), T1 (cloned serial cannot approve a transfer),
+  offline-case limit documented, register version + SHA-256 on the proces-verbal section.
+
 ## Next
 - Owner review; lab test with a real qualified card and real USB media (VID/PID and capacity sources differ between history and live).
 

@@ -316,6 +316,65 @@ public sealed class SignedMediaRegisterTests : IDisposable
         Assert.Contains("mediul nu este în registrul semnat", notIn.Detail);
         Assert.Equal(ExitVerdict.Unjustified, Assert.Single(ClassifiedAccess.Analyze(Input(SignedMediaMatcher.ActiveSet(null))).Exits).Verdict);   // no register in force
         Assert.Equal(ExitVerdict.Approved, Assert.Single(ClassifiedAccess.Analyze(Input(null)).Exits).Verdict);   // not supplied (offline case): unchanged
+
+        // review T1: the stick seen on the station carries the registered serial but other attributes (cloned serial): the row cannot approve
+        var doc = SignedMediaRegister.NextVersion(null, null, [E("INV-1", "SN1")], "T", Now);
+        var cloned = Assert.Single(ClassifiedAccess.Analyze(Input(SignedMediaMatcher.ActiveSet(doc, [M("SN1", vidpid: "abcd:0001")]))).Exits);
+        Assert.Equal(ExitVerdict.Unjustified, cloned.Verdict);
+        Assert.Contains("mediul observat nu corespunde înregistrării din registru (posibilă clonare)", cloned.Detail);
+        Assert.Equal(ExitVerdict.Approved, Assert.Single(ClassifiedAccess.Analyze(Input(SignedMediaMatcher.ActiveSet(doc, [M("SN1")]))).Exits).Verdict);
+    }
+
+    // ───────── review M9: history before the signed register ─────────
+
+    private static readonly DateTimeOffset FirstInstall = new(2026, 10, 10, 0, 0, 0, TimeSpan.Zero);
+
+    private static ControlCheck D04At(StationPosture posture, ActiveMediaRegister reg, DateTimeOffset? appInstalled, params SeenMedium[] seen) =>
+        ControlEvaluator.Evaluate(new StationFacts { Posture = posture, PeriodStartUtc = Now.AddDays(-30), PeriodEndUtc = Now, ObservedMedia = [.. seen], SignedMedia = reg, AppInstalledUtc = appInstalled })
+                        .Checks.Single(c => c.Id == "D04");
+
+    [Fact]
+    public void An_unregistered_medium_seen_only_before_the_first_signed_register_is_history_to_verify()
+    {
+        var reg = Active(E("INV-1", "AA11")) with { FirstInstalledUtc = FirstInstall };
+        var before = D04At(StationPosture.Standalone, reg, null, M("XX99", seen: FirstInstall.AddDays(-9)));
+        Assert.Equal(ControlStatus.DeVerificat, before.Status);
+        Assert.Contains(before.Evidence, e => e.Contains("istoric dinaintea registrului semnat"));
+        Assert.Equal(ControlStatus.Neconform, D04At(StationPosture.Standalone, reg, null, M("XX99", seen: [FirstInstall.AddDays(-9), FirstInstall.AddDays(1)])).Status);
+        Assert.Equal(ControlStatus.Neconform, D04At(StationPosture.Standalone, reg, null, M("XX99", now: true, seen: FirstInstall.AddDays(-9))).Status);
+        Assert.Equal(ControlStatus.Neconform, D04At(StationPosture.Standalone, reg, null, M("XX99")).Status);   // no times: cannot be placed in history
+        Assert.Equal(ControlStatus.DeVerificat, D04At(StationPosture.IsolatedNetwork, reg, null, M("XX99", seen: FirstInstall.AddDays(-1))).Status);
+        // without the audit date, on Standalone the application's install date is the boundary (activity before it is history)
+        var noAudit = Active(E("INV-1", "AA11"));
+        Assert.Equal(ControlStatus.DeVerificat, D04At(StationPosture.Standalone, noAudit, FirstInstall, M("XX99", seen: FirstInstall.AddDays(-3))).Status);
+        Assert.Equal(ControlStatus.Neconform, D04At(StationPosture.Standalone, noAudit, FirstInstall, M("XX99", seen: FirstInstall.AddDays(3))).Status);
+        Assert.Equal(ControlStatus.Neconform, D04At(StationPosture.Standalone, noAudit, null, M("XX99", seen: FirstInstall.AddDays(-3))).Status);
+    }
+
+    [Fact]
+    public void The_first_official_install_time_comes_from_the_sealed_audit()
+    {
+        (string, string)[] events =
+        [
+            ("2026-10-09T08:00:00.0000000+00:00", OperationAudit.MediaRegisterDetail(1, "a", "NEOFICIAL", false, "", "x")),
+            ("2026-10-10T08:00:00.0000000+00:00", OperationAudit.MediaRegisterDetail(1, "a", "OFICIAL", true, "", "ok")),
+            ("2026-10-12T08:00:00.0000000+00:00", OperationAudit.MediaRegisterDetail(2, "b", "OFICIAL", true, "", "ok")),
+        ];
+        Assert.Equal(new DateTimeOffset(2026, 10, 10, 8, 0, 0, TimeSpan.Zero), SignedMediaRegisterStore.FirstInstalledUtc(events));
+        Assert.Null(SignedMediaRegisterStore.FirstInstalledUtc([events[0]]));
+    }
+
+    // ───────── review item 4: the register in force on the proces-verbal ─────────
+
+    [Fact]
+    public void The_officer_section_prints_the_installed_register_version_and_hash()
+    {
+        var r = ControlEvaluator.Evaluate(new StationFacts { Posture = StationPosture.Standalone, SignedMedia = Active(E("INV-1", "AA11")) });
+        var lines = string.Join("\n", ControlReportPdf.OfficerSectionLines(r));
+        Assert.Contains("Registrul de medii semnat în vigoare: versiunea 1, SHA-256 abc", lines);
+        Assert.Contains("comparând procesele-verbale", lines);
+        var none = string.Join("\n", ControlReportPdf.OfficerSectionLines(ControlEvaluator.Evaluate(new StationFacts { SignedMedia = ActiveMediaRegister.None("niciunul") })));
+        Assert.Contains("Registrul de medii semnat: niciunul în vigoare", none);
     }
 }
 

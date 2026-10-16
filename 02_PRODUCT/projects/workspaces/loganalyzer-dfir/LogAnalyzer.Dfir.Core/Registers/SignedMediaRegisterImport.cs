@@ -118,6 +118,8 @@ public sealed record ActiveMediaRegister(SignedMediaRegisterDoc? Doc, string Sha
 {
     public static ActiveMediaRegister None(string why) => new(null, "", why);
     public bool Usable => Doc is not null && Problem.Length == 0;
+    /// <summary>When the FIRST official register was installed on this station, from the sealed audit; null = not known. Media seen only before it are history.</summary>
+    public DateTimeOffset? FirstInstalledUtc { get; init; }
 }
 
 /// <summary>One version seen on this station (installed or not), kept so the officer sees every import.</summary>
@@ -220,6 +222,17 @@ public sealed class SignedMediaRegisterStore(string? dir = null)
         {
             return ActiveMediaRegister.None("registrul activ nu poate fi citit: " + ex.Message);
         }
+    }
+
+    /// <summary>The time of the first "media_register.imported" entry with "installed=da" (events as (whenUtc, detail)); null when none.</summary>
+    public static DateTimeOffset? FirstInstalledUtc(IEnumerable<(string WhenUtc, string Detail)> importedEvents)
+    {
+        DateTimeOffset? first = null;
+        foreach (var (when, detail) in importedEvents)
+            if (Regex.IsMatch(detail, @"(?:^|; )installed=da(?:;|$)")
+                && DateTimeOffset.TryParse(when, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out var t)
+                && (first is null || t < first)) first = t.ToUniversalTime();
+        return first;
     }
 
     /// <summary>The highest version recorded as installed in the sealed audit ("media_register.imported" with "installed=da"); null when none.</summary>
