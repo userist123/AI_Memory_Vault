@@ -49,11 +49,13 @@ public static class AnchoredInstallDate
 
     /// <summary>
     /// Why there is no paper baseline for the previous control, in words that match what happened: no code typed, the station's proposal used, a mistyped code,
-    /// or a typed code the log no longer contains (A11 is NECONFORM then). Null when the typed code was found (the baseline is its entry).
+    /// a log that could not be read, or a typed code the log no longer contains (A11 is NECONFORM then). Null when the typed code was found (the baseline is its entry).
     /// </summary>
     public static string? NoBaselineReason(AnchorContinuity previous, bool fromStation) => previous.Status switch
     {
         AnchorContinuityStatus.NotGiven => "nu s-a introdus codul de ancorare de pe procesul-verbal, deci nu există o dată de referință sigură",
+        // A11 could not read the log at all: nothing can be said about the code, so the reason is the unreadable log, not a missing code
+        AnchorContinuityStatus.Unreadable => "nu se poate compara: jurnalul aplicației nu a putut fi citit (vezi A11)",
         _ when fromStation => "codul folosit este cel propus de stație (nesigur), nu cel tastat de pe procesul-verbal, deci nu există o referință sigură",
         AnchorContinuityStatus.InvalidCode => "nu se poate compara: codul tastat nu este un cod de ancorare valid (vezi A11)",
         AnchorContinuityStatus.Continuous when previous.MatchedSeq is not null => null,
