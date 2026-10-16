@@ -149,6 +149,7 @@ public static partial class ControlEvaluator
             // the control runs on the station itself: its zone is the station's zone, in which the register times are typed
             RegisterZone = TimeZoneInfo.Local,
             SelfWindows = [.. f.SelfWindows, .. f.SelfWindow is { } own ? new[] { own } : []],
+            AppImagePath = f.AppImagePath, AppImageSha256 = f.AppImageSha256, ImageSha256 = f.ImageSha256,
             SidNames = f.Accounts.Where(a => a.Sid.Length > 0).GroupBy(a => a.Sid).ToDictionary(g => g.Key, g => g.First().Name, StringComparer.OrdinalIgnoreCase),
         };
     }

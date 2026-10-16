@@ -84,6 +84,12 @@ public sealed class ClassifiedInput
     public TimeZoneInfo? RegisterZone { get; init; }
     /// <summary>The application's own reading windows (hashing); records of its process in a window are listed apart, never as accesses.</summary>
     public IReadOnlyList<SelfActivityWindow> SelfWindows { get; init; } = [];
+    /// <summary>The running application's own executable (full path); "" = unknown, so no hashing window can be accepted.</summary>
+    public string AppImagePath { get; init; } = "";
+    /// <summary>SHA-256 of the running application's executable.</summary>
+    public string AppImageSha256 { get; init; } = "";
+    /// <summary>SHA-256 of the file now at each image path named by a hashing window (path → hash); a path without an entry cannot be checked.</summary>
+    public IReadOnlyDictionary<string, string>? ImageSha256 { get; init; }
     /// <summary>Names of the files present now in the classified folders (to recognise a copy whose source read was not audited).</summary>
     public IReadOnlyList<string> KnownFiles { get; init; } = [];
     /// <summary>SHA-256 of the classified files present now, by full path (matched against the register's fingerprints).</summary>
@@ -303,8 +309,22 @@ public static class ClassifiedAccess
             r.EventId is 4656 or 4663 && SelfMatch(w, r) && (Mask(r) & ~SelfReadMask) == 0 && Mask(r) != 0 &&
             roots.Classify(Normalize(r.V("ObjectName"), input.VolumeMap), input.LongPath) is not null;
         var windows = new List<SelfActivityWindow>();
+        var imageHashes = (input.ImageSha256 ?? new Dictionary<string, string>()).GroupBy(kv => Normalize(kv.Key), StringComparer.OrdinalIgnoreCase)
+                                                                                .ToDictionary(g => g.Key, g => g.First().Value, StringComparer.OrdinalIgnoreCase);
         foreach (var w in input.SelfWindows)
         {
+            // the window is the application's only if it names the application's own executable, and the file at that path is that executable
+            var runText = w.RunId.Length > 0 ? w.RunId : "fără identificator";
+            if (input.AppImagePath.Length == 0 || !Normalize(w.ImagePath).Equals(Normalize(input.AppImagePath), StringComparison.OrdinalIgnoreCase))
+            {
+                rep.InvalidSelfWindows.Add($"fereastră de calcul amprente nevalidă: numește programul {w.ImagePath}, nu executabilul aplicației ({(input.AppImagePath.Length > 0 ? input.AppImagePath : "necunoscut")}) (control {runText}); înregistrările lui sunt tratate ca accese obișnuite.");
+                continue;
+            }
+            if (input.AppImageSha256.Length != 64 || !imageHashes.TryGetValue(Normalize(w.ImagePath), out var fileSha) || !fileSha.Equals(input.AppImageSha256, StringComparison.OrdinalIgnoreCase))
+            {
+                rep.InvalidSelfWindows.Add($"fereastră de calcul amprente nevalidă: fișierul {w.ImagePath} nu are (sau nu s-a putut verifica) amprenta executabilului aplicației (control {runText}); înregistrările lui sunt tratate ca accese obișnuite.");
+                continue;
+            }
             // the process of the window must have been started as the application (4688 for that process id, the latest before the window), when the log has it
             var started = events.Where(r => r.Channel == "Security" && r.EventId == 4688 && r.TimeUtc is { } st && st <= w.StartUtc.AddMinutes(1) && st >= w.StartUtc.AddDays(-7)
                                              && ParsePid(r.V("NewProcessId")) == w.ProcessId).OrderBy(r => r.TimeUtc).LastOrDefault();
