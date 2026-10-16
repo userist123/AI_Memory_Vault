@@ -82,10 +82,19 @@ public sealed class CrossStationMediaTests
     private static MediaHistoryDoc Station(string name, int regVersion = 2, string audit = "da", DateTimeOffset? exported = null) => new()
     {
         StationId = "HW-" + name, StationName = name, Edition = "Standalone", Posture = "Standalone", TimeZone = "UTC",
-        ExportedUtc = SignedMediaRegister.FormatUtc(exported ?? Now), AnchorCode = "ABCDE-FGHIJ-KLMNO-PQRST", AnchorSeq = 42,
+        ExportedUtc = SignedMediaRegister.FormatUtc(exported ?? Now), AnchorCode = AnchorOf(name), AnchorSeq = 42,
         RegisterVersion = regVersion, RegisterSha256 = regVersion == 2 ? RegV2Sha : regVersion == 1 ? RegV1Sha : "", FileAuditing = audit,
         HistoryFromUtc = "2026-09-01T00:00:00Z",
+        Indicators = [.. MediaHistoryExport.IndicatorIds.Select(id => new StationIndicator { Id = id, Title = id, Status = MediaHistoryExport.StatusConform })],
     };
+
+    private static string AnchorOf(string name) => LogAnalyzer.Dfir.Case.AuditAnchor.Code("chain-" + name, 42, new string('c', 64));
+
+    private static void SetIndicator(MediaHistoryDoc d, string id, string status, string detail = "")
+    {
+        var x = d.Indicators.First(i => i.Id == id);
+        x.Status = status; x.Detail = detail;
+    }
 
     private static MediaTransferEntry Row(string no, string when, string src, string dst, string serial, string sha) => new()
     {
@@ -124,7 +133,7 @@ public sealed class CrossStationMediaTests
         var json = MediaHistoryExport.Canonical(src);
         Assert.False(json[0] == 0xEF);
         var text = Encoding.UTF8.GetString(json);
-        Assert.StartsWith("{\"anchor_code\":\"ABCDE-FGHIJ-KLMNO-PQRST\",\"anchor_seq\":42,", text);
+        Assert.StartsWith("{\"anchor_code\":\"" + AnchorOf("STATIE-TRANSFER") + "\",\"anchor_seq\":42,", text);
         Assert.DoesNotContain(" \"", text);
         var back = MediaHistoryExport.Parse(json);
         Assert.Equal(json, MediaHistoryExport.Canonical(back));
@@ -348,5 +357,173 @@ public sealed class CrossStationMediaTests
         Assert.Equal(new DateTimeOffset(2026, 7, 1, 9, 0, 0, TimeSpan.Zero), u);
         CrossStationReconciliation.ToUtc(new DateTime(2026, 7, 1, 12, 0, 0), "nu-exista", out var unknown);
         Assert.False(unknown);
+    }
+
+    // ───────── review of PR #297: R1–R5 ─────────
+
+    private static string Sig(CrossStationResult r) =>
+        string.Join("\n", r.Ordered.Select(f => $"{f.Severity}|{f.Kind}|{f.Station}|{f.Medium}|{f.Transfer}|{f.Text}")) + "\n--\n" + string.Join("\n", r.Limits);
+
+    [Fact]
+    public void R1_contradictory_rows_for_one_transfer_are_grave_the_source_row_rules_and_the_result_does_not_depend_on_load_order()
+    {
+        var (src, dst) = CleanTransfer();
+        // the destination's register holds the same transfer number with another route and another file
+        dst.Transfers.Add(Row("TR-2026-0001", "2026-10-10 10:00", "STATIE-TRANSFER", "STATIE-X", "AA11", H2));
+        var a = CrossStationReconciliation.Run([Accept(src), Accept(dst)], RegV2, RegV2Sha, Period);
+        var b = CrossStationReconciliation.Run([Accept(dst), Accept(src)], RegV2, RegV2Sha, Period);
+        Assert.Equal(Sig(a), Sig(b));
+        var c = Assert.Single(a.Findings, f => f.Kind == CrossStationReconciliation.KindContradictory);
+        Assert.Equal(CrossSeverity.Grav, c.Severity);
+        Assert.Contains("înregistrări contradictorii pentru transferul TR-2026-0001 între stațiile STATIE-DEST și STATIE-TRANSFER", c.Text);
+        Assert.Contains("STATIE-X", c.Text);
+        // the source station's row (to STATIE-DEST, file H1) is the one evaluated
+        Assert.Contains(a.Findings, f => f.Kind == CrossStationReconciliation.KindTransferOk && f.Transfer == "TR-2026-0001");
+        Assert.Equal(1, a.TransfersChecked);
+    }
+
+    [Fact]
+    public void R1_the_same_row_held_by_both_stations_is_not_a_contradiction()
+    {
+        var (src, dst) = CleanTransfer();
+        dst.Transfers.Add(Row("TR-2026-0001", "2026-10-10 10:00", "statie-transfer", "STATIE-DEST", "aa11", H1.ToUpperInvariant()));
+        var r = CrossStationReconciliation.Run([Accept(dst), Accept(src)], RegV2, RegV2Sha, Period);
+        Assert.DoesNotContain(r.Findings, f => f.Kind == CrossStationReconciliation.KindContradictory);
+        Assert.Equal(1, r.TransfersChecked);
+    }
+
+    [Fact]
+    public void R5_tamper_indicators_travel_in_the_export_and_a_dirty_one_is_a_finding_for_that_station()
+    {
+        var doc = MediaHistoryExport.Build(new MediaHistoryInput
+        {
+            StationId = "HW-1", StationName = "STATIE-DEST", NowUtc = Now,
+            Indicators = [new StationIndicator { Id = "A05", Title = "Jurnale șterse", Status = "NECONFORM", Detail = "1102 la 2026-10-09" }],
+        });
+        Assert.Equal(MediaHistoryExport.IndicatorIds, doc.Indicators.Select(i => i.Id));
+        Assert.Equal("NECONFORM", doc.Indicators.Single(i => i.Id == "A05").Status);
+        Assert.Equal(MediaHistoryExport.StatusMissing, doc.Indicators.Single(i => i.Id == "A11").Status);
+        Assert.Equal("1102 la 2026-10-09", MediaHistoryExport.Parse(MediaHistoryExport.Canonical(doc)).Indicators.Single(i => i.Id == "A05").Detail);
+
+        var (src, dst) = CleanTransfer();
+        SetIndicator(dst, "A05", "NECONFORM", "jurnalul Security a fost golit (1102) la 2026-10-09");
+        SetIndicator(dst, "A11", "DE VERIFICAT", "codul anterior nu a fost tastat");
+        var r = CrossStationReconciliation.Run([Accept(src), Accept(dst)], RegV2, RegV2Sha, Period);
+        var f = Assert.Single(r.Findings, x => x.Kind == CrossStationReconciliation.KindIndicators);
+        Assert.Equal("STATIE-DEST", f.Station);
+        Assert.Equal(CrossSeverity.Ridicat, f.Severity);
+        Assert.Contains("istoricul acestei stații poate fi incomplet", f.Text);
+        Assert.Contains("A05 NECONFORM", f.Text);
+        Assert.Contains("A11 DE VERIFICAT", f.Text);
+        Assert.Contains(r.Limits, l => l.Contains("un administrator poate șterge istoricul dispozitivelor unei stații; ștergerea lasă de regulă urme (104/1102, A11)", StringComparison.OrdinalIgnoreCase));
+        // a confirmed transfer always says whether each involved station's indicators are clean
+        var ok = Assert.Single(r.Findings, x => x.Kind == CrossStationReconciliation.KindTransferOk);
+        Assert.Contains("STATIE-TRANSFER: indicatori de integritate curați", ok.Text);
+        Assert.Contains("STATIE-DEST: indicatori de integritate NECURAȚI (A05, A11)", ok.Text);
+    }
+
+    [Fact]
+    public void R5_an_export_without_indicators_is_not_taken_as_clean()
+    {
+        var (src, dst) = CleanTransfer();
+        dst.Indicators.Clear();
+        var r = CrossStationReconciliation.Run([Accept(src), Accept(dst)], RegV2, RegV2Sha, Period);
+        var f = Assert.Single(r.Findings, x => x.Kind == CrossStationReconciliation.KindIndicators);
+        Assert.Equal("STATIE-DEST", f.Station);
+        Assert.Contains("lipsă", f.Text);
+    }
+
+    [Fact]
+    public void R5_the_paper_anchor_code_is_compared_mismatch_is_grave_and_a_missing_one_is_noted()
+    {
+        var (src, dst) = CleanTransfer();
+        var other = LogAnalyzer.Dfir.Case.AuditAnchor.Code("alt-lant", 7, new string('d', 64));
+        var paper = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["STATIE-DEST"] = other, ["STATIE-TRANSFER"] = AnchorOf("STATIE-TRANSFER").Replace("-", " ").ToLowerInvariant(),
+        };
+        var r = CrossStationReconciliation.Run([Accept(src), Accept(dst)], RegV2, RegV2Sha, Period with { PaperAnchors = paper });
+        var g = Assert.Single(r.Findings, x => x.Kind == CrossStationReconciliation.KindAnchorMismatch);
+        Assert.Equal(CrossSeverity.Grav, g.Severity);
+        Assert.Equal("STATIE-DEST", g.Station);
+
+        var none = CrossStationReconciliation.Run([Accept(src), Accept(dst)], RegV2, RegV2Sha, Period);
+        Assert.DoesNotContain(none.Findings, x => x.Kind == CrossStationReconciliation.KindAnchorMismatch);
+        Assert.Contains(none.Limits, l => l.Contains("STATIE-DEST") && l.Contains("nu a fost comparat cu procesul-verbal"));
+    }
+
+    [Fact]
+    public void R2_an_expected_station_whose_export_predates_the_period_end_is_to_verify()
+    {
+        var (src, dst) = CleanTransfer();
+        var old = Station("STATIE-DEST", exported: new DateTimeOffset(2026, 10, 12, 0, 0, 0, TimeSpan.Zero));
+        old.Media.AddRange(dst.Media); old.PresentFiles.AddRange(dst.PresentFiles);
+        var r = CrossStationReconciliation.Run([Accept(src), Accept(old)], RegV2, RegV2Sha, Period);
+        var f = Assert.Single(r.Findings, x => x.Kind == CrossStationReconciliation.KindStaleExport);
+        Assert.Equal(CrossSeverity.DeVerificat, f.Severity);
+        Assert.Equal("STATIE-DEST", f.Station);
+        Assert.Contains("export învechit", f.Text);
+    }
+
+    [Fact]
+    public void R3_a_rejected_export_shows_the_file_name_and_marks_the_station_name_unverified()
+    {
+        var (src, dst) = CleanTransfer();
+        var json = MediaHistoryExport.Canonical(dst);
+        var bad = MediaHistoryVerify.Verify("istoric_dest.json", json, null, new FakeCms(P.Officer), P.Officers, P.Trust());
+        Assert.Equal("STATIE-DEST (nume din fișier neverificat)", bad.StationLabel);
+        var r = CrossStationReconciliation.Run([Accept(src), bad], RegV2, RegV2Sha, Period);
+        var f = Assert.Single(r.Findings, x => x.Kind == CrossStationReconciliation.KindRejected);
+        Assert.Equal("STATIE-DEST (nume din fișier neverificat)", f.Station);
+        Assert.Contains("istoric_dest.json", f.Text);
+    }
+
+    [Fact]
+    public void R4_clone_by_time_is_only_to_verify_when_a_clock_may_be_off()
+    {
+        var (src, dst) = CleanTransfer();
+        var at = new DateTimeOffset(2026, 10, 12, 8, 0, 0, TimeSpan.Zero);
+        dst.Media.Add(M("BB22", (at, at.AddMinutes(1))));
+        var x = Station("STATIE-X");
+        x.Media.Add(M("BB22", (at.AddMinutes(3), null)));
+        var clean = CrossStationReconciliation.Run([Accept(src), Accept(dst), Accept(x)], RegV2, RegV2Sha, Period);
+        Assert.Equal(CrossSeverity.Ridicat, Assert.Single(clean.Findings, f => f.Kind == CrossStationReconciliation.KindClone).Severity);
+
+        SetIndicator(x, "S05", "DE VERIFICAT", "ceasul a fost dat înapoi cu 3 ore");
+        var skew = CrossStationReconciliation.Run([Accept(src), Accept(dst), Accept(x)], RegV2, RegV2Sha, Period);
+        var f2 = Assert.Single(skew.Findings, f => f.Kind == CrossStationReconciliation.KindClone);
+        Assert.Equal(CrossSeverity.DeVerificat, f2.Severity);
+        Assert.Contains("ceasul stației STATIE-X poate fi decalat", f2.Text);
+        Assert.Contains("ceasul a fost dat înapoi cu 3 ore", f2.Text);
+
+        x.Indicators.RemoveAll(i => i.Id == "S05");                                 // unknown clock state
+        var unknown = CrossStationReconciliation.Run([Accept(src), Accept(dst), Accept(x)], RegV2, RegV2Sha, Period);
+        Assert.Equal(CrossSeverity.DeVerificat, Assert.Single(unknown.Findings, f => f.Kind == CrossStationReconciliation.KindClone).Severity);
+    }
+
+    [Theory]
+    [InlineData(-120, true)]
+    [InlineData(120, true)]
+    [InlineData(-121, false)]
+    [InlineData(121, false)]
+    public void R4_the_source_window_is_plus_minus_two_hours_inclusive(int minutes, bool seen)
+    {
+        var (src, dst) = CleanTransfer();
+        src.Media[0].Connections = [new MediumConnectionWindow { StartUtc = SignedMediaRegister.FormatUtc(T0.AddMinutes(minutes)) }];
+        var r = CrossStationReconciliation.Run([Accept(src), Accept(dst)], RegV2, RegV2Sha, Period);
+        Assert.Equal(!seen, r.Findings.Any(f => f.Kind == CrossStationReconciliation.KindNotAtSource));
+    }
+
+    [Theory]
+    [InlineData(72 * 60, true)]
+    [InlineData(-120, true)]
+    [InlineData(72 * 60 + 1, false)]
+    [InlineData(-121, false)]
+    public void R4_the_destination_window_is_from_two_hours_before_to_72_hours_after_inclusive(int minutes, bool seen)
+    {
+        var (src, dst) = CleanTransfer();
+        dst.Media[0].Connections = [new MediumConnectionWindow { StartUtc = SignedMediaRegister.FormatUtc(T0.AddMinutes(minutes)) }];
+        var r = CrossStationReconciliation.Run([Accept(src), Accept(dst)], RegV2, RegV2Sha, Period);
+        Assert.Equal(!seen, r.Findings.Any(f => f.Kind == CrossStationReconciliation.KindNotAtDestination));
     }
 }

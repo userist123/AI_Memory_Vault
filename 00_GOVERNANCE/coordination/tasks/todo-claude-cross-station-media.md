@@ -14,6 +14,10 @@ Branch: claude/loganalyzer-cross-station-media
   "Medii de stocare" tab "Confruntare între stații"; audit events media_history.exported / media_history.reconciled.
 - Tests: Dfir CrossStationMediaTests (13), App CrossStationFlowTests (3, real SignedCms). Docs: EDITIONS_AND_POSTURE.md, GHID_DE_UTILIZARE.md §6.1.
 
+- Review of PR #297 addressed (R1-R5): contradictory rows grouped by transfer number (source row evaluated, load-order independent), tamper indicators
+  A05/A11/A12/A13/A16/S05 in the export and as findings, paper anchor codes compared, "export învechit", refused export name marked unverified,
+  clone-by-time DE VERIFICAT when a clock is not CONFORM, window-edge tests. Tests failed first (7 Dfir + App compile), pass after.
+
 ## Next
 - Owner review; lab test with a real card and 3-4 stations (transport by the officer's medium).
 

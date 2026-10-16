@@ -90,6 +90,28 @@ public sealed class CrossStationFlowTests : IDisposable
     }
 
     [Fact]
+    public void R5_the_export_carries_the_tamper_indicators_of_the_control_just_run()
+    {
+        var r = new LogAnalyzer.Dfir.Windows.Audit.ControlReport { Facts = new LogAnalyzer.Dfir.Windows.Audit.StationFacts { Host = "STATIE-DEST", CollectedUtc = Now, IsAdministrator = true } };
+        r.Checks.Add(new("A05", "Audit", "Jurnale șterse", LogAnalyzer.Dfir.Windows.Audit.ControlStatus.Neconform, "1102 la 2026-10-09", [], ""));
+        r.Checks.Add(new("S05", "Software", "Ceasul", LogAnalyzer.Dfir.Windows.Audit.ControlStatus.Conform, "în ordine", [], ""));
+        var doc = MediaHistoryFlows.FromControl(r, [], "HW-1", Now);
+        Assert.Equal("NECONFORM", doc.Indicators.Single(i => i.Id == "A05").Status);
+        Assert.Equal("1102 la 2026-10-09", doc.Indicators.Single(i => i.Id == "A05").Detail);
+        Assert.Equal("CONFORM", doc.Indicators.Single(i => i.Id == "S05").Status);
+        Assert.Equal(MediaHistoryExport.StatusMissing, doc.Indicators.Single(i => i.Id == "A11").Status);
+    }
+
+    [Fact]
+    public void R5_paper_anchor_codes_are_typed_one_per_line_as_station_and_code()
+    {
+        var map = LogAnalyzer.UI.ViewModels.CrossStationViewModel.ParsePaperAnchors("STATIE-DEST = ABCDE-FGHIJ-KLMNO-PQRST\r\n\r\nstatie-transfer: 12345 67890 ABCDE FGHIJ\nfara-cod");
+        Assert.Equal(2, map.Count);
+        Assert.Equal("ABCDE-FGHIJ-KLMNO-PQRST", map["statie-dest"]);
+        Assert.Equal("12345 67890 ABCDE FGHIJ", map["STATIE-TRANSFER"]);
+    }
+
+    [Fact]
     public void Without_the_audit_entry_nothing_is_written()
     {
         var signed = MediaHistoryFlows.Sign(Station("STATIE-TRANSFER", Now.AddDays(-1), true), Officer, Officers);

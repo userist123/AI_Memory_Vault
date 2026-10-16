@@ -34,6 +34,22 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private DateTime? _toDate = DateTime.Today;
         [ObservableProperty] private int _minMoveMinutes = 10;
         [ObservableProperty] private string _expectedStations = "";
+        /// <summary>The anchor codes from the stations' proces-verbale, one per line: "STAȚIE = COD" (review R5; optional per station).</summary>
+        [ObservableProperty] private string _paperAnchors = "";
+
+        /// <summary>"STAȚIE = COD" or "STAȚIE: COD", one per line; lines without both parts are ignored. Keys are case-insensitive.</summary>
+        internal static Dictionary<string, string> ParsePaperAnchors(string text)
+        {
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var line in (text ?? "").Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries))
+            {
+                int i = line.IndexOfAny(['=', ':']);
+                if (i <= 0) continue;
+                var name = line[..i].Trim(); var code = line[(i + 1)..].Trim();
+                if (name.Length > 0 && code.Length > 0) map[name] = code;
+            }
+            return map;
+        }
         [ObservableProperty] private string _summary = "";
         [ObservableProperty] private string _registerLine = "";
         [ObservableProperty] private string _status = "Importați exporturile semnate ale stațiilor (istoric_medii_*.json, cu semnătura .p7s alături).";
@@ -76,6 +92,7 @@ namespace LogAnalyzer.UI.ViewModels
                 ToUtc = new DateTimeOffset(DateTime.SpecifyKind(to.Date.AddDays(1), DateTimeKind.Local)).ToUniversalTime(),
                 MinMoveTime = TimeSpan.FromMinutes(MinMoveMinutes),
                 ExpectedStations = ExpectedStations.Split([',', ';', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),
+                PaperAnchors = ParsePaperAnchors(PaperAnchors),
             };
             _result = CrossStationReconciliation.Run(checks, active.Usable ? active.Doc : null, active.Usable ? active.Sha256 : "", _settings);
             Exports.Clear();

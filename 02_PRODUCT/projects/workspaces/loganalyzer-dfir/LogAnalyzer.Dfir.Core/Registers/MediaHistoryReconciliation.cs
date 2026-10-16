@@ -11,7 +11,8 @@ namespace LogAnalyzer.Dfir.Registers;
 public sealed record MediaHistoryCheck(bool Accepted, string FileName, string Headline, IReadOnlyList<VerificationLine> Lines, MediaHistoryDoc? Doc, string Sha256,
                                        string SignerFingerprint, string SignerName)
 {
-    public string StationLabel => Doc?.Label is { Length: > 0 } l ? l : FileName;
+    /// <summary>The station's name; for a refused export the name read from the file is not trusted and is marked as such (review R3).</summary>
+    public string StationLabel => Doc?.Label is { Length: > 0 } l ? (Accepted ? l : l + " (nume din fișier neverificat)") : FileName;
     public string ToPlainText() => (Accepted ? "ACCEPTAT" : "RESPINS") + $" — {FileName}: {Headline}" + Environment.NewLine +
         string.Join(Environment.NewLine, Lines.Select(l => $"[{l.Mark}] {l.Text}"));
 }
@@ -87,6 +88,8 @@ public sealed record CrossStationSettings
     public TimeSpan DestinationWindow { get; init; } = TimeSpan.FromHours(72);
     /// <summary>Stations that must have exported (names or Hardware IDs), besides those named in the transfer register.</summary>
     public IReadOnlyList<string> ExpectedStations { get; init; } = [];
+    /// <summary>The anchor code written on each station's proces-verbal (station name or Hardware ID → code), typed by the officer; optional per station.</summary>
+    public IReadOnlyDictionary<string, string> PaperAnchors { get; init; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 }
 
 public sealed class CrossStationResult
@@ -96,7 +99,7 @@ public sealed class CrossStationResult
     public List<MediaHistoryCheck> Accepted { get; } = [];
     public List<MediaHistoryCheck> Rejected { get; } = [];
     public int TransfersChecked { get; set; }
-    public List<CrossStationFinding> Ordered => [.. Findings.OrderBy(f => f.Severity).ThenBy(f => f.Station, StringComparer.OrdinalIgnoreCase).ThenBy(f => f.Medium, StringComparer.Ordinal).ThenBy(f => f.Transfer, StringComparer.Ordinal)];
+    public List<CrossStationFinding> Ordered => [.. Findings.OrderBy(f => f.Severity).ThenBy(f => f.Station, StringComparer.OrdinalIgnoreCase).ThenBy(f => f.Medium, StringComparer.Ordinal).ThenBy(f => f.Transfer, StringComparer.Ordinal).ThenBy(f => f.Kind, StringComparer.Ordinal).ThenBy(f => f.Text, StringComparer.Ordinal)];
     public int Count(CrossSeverity s) => Findings.Count(f => f.Severity == s);
     public string Summary => $"GRAV {Count(CrossSeverity.Grav)} · RIDICAT {Count(CrossSeverity.Ridicat)} · DE VERIFICAT {Count(CrossSeverity.DeVerificat)} · " +
                              $"NEDETERMINAT {Count(CrossSeverity.Nedeterminat)} · CONFORM {Count(CrossSeverity.Conform)} · exporturi acceptate {Accepted.Count}, respinse {Rejected.Count} · transferuri confruntate {TransfersChecked}";
@@ -118,7 +121,9 @@ public static class CrossStationReconciliation
 
     public const string KindRejected = "export_respins", KindMissing = "statie_fara_export", KindStale = "registru_invechit", KindTransferOk = "transfer_confirmat",
                         KindNotAtSource = "nevazut_la_sursa", KindNotAtDestination = "nevazut_la_destinatie", KindFilesMissing = "fisiere_negasite", KindElsewhere = "introdus_in_alta_statie",
-                        KindFilesElsewhere = "fisiere_in_alta_statie", KindUnregistered = "mediu_neinregistrat", KindClone = "posibila_clonare", KindRowIncomplete = "rand_incomplet";
+                        KindFilesElsewhere = "fisiere_in_alta_statie", KindUnregistered = "mediu_neinregistrat", KindClone = "posibila_clonare", KindRowIncomplete = "rand_incomplet",
+                        KindContradictory = "inregistrari_contradictorii", KindIndicators = "istoric_posibil_incomplet", KindAnchorMismatch = "ancorare_nepotrivita",
+                        KindStaleExport = "export_invechit";
 
     private sealed record Conn(MediaHistoryDoc Station, MediumHistory Medium, DateTimeOffset Start, DateTimeOffset? End);
     private sealed record Row(MediaTransferEntry Entry, string Serial, DateTimeOffset? TimeUtc, MediaHistoryDoc? Source, MediaHistoryDoc? Destination, List<string> Hashes);
@@ -130,11 +135,12 @@ public static class CrossStationReconciliation
         foreach (var c in res.Rejected)
             res.Findings.Add(new(CrossSeverity.Grav, KindRejected, c.StationLabel, "", "", $"Exportul „{c.FileName}” a fost RESPINS și nu se folosește: {c.Headline}. Cereți stației un export nou, semnat la colectare."));
 
-        // one export per station: the most recent one (an older one adds nothing the newer one does not have)
+        // one export per station: the most recent one (an older one adds nothing the newer one does not have); stations in a fixed order (review R1:
+        // the result must not depend on the order in which the files were loaded)
         var stations = new List<MediaHistoryDoc>();
-        foreach (var g in res.Accepted.Select(c => c.Doc!).GroupBy(d => Key(d)))
+        foreach (var g in res.Accepted.Select(c => c.Doc!).GroupBy(d => Key(d)).OrderBy(g => g.Key, StringComparer.Ordinal))
         {
-            var latest = g.OrderByDescending(d => d.Exported).First();
+            var latest = g.OrderByDescending(d => d.Exported).ThenByDescending(d => d.AnchorSeq).ThenBy(d => SignedMediaRegister.Sha256Hex(MediaHistoryExport.Canonical(d)), StringComparer.Ordinal).First();
             stations.Add(latest);
             if (g.Count() > 1) res.Limits.Add($"Stația {latest.Label} a predat {g.Count()} exporturi; se folosește cel mai recent ({latest.ExportedUtc}).");
         }
@@ -164,6 +170,26 @@ public static class CrossStationReconciliation
             foreach (var n in d.Notes) res.Limits.Add($"Stația {d.Label}: {n}.");
         }
 
+        // ---- tamper indicators and the paper anchor code (review R5) ----
+        res.Limits.Add("Un administrator poate șterge istoricul dispozitivelor unei stații; ștergerea lasă de regulă urme (104/1102, A11) raportate mai sus.");
+        foreach (var d in stations)
+        {
+            var dirty = Dirty(d);
+            if (dirty.Count > 0)
+                res.Findings.Add(new(dirty.Any(x => x.Status == "NECONFORM") ? CrossSeverity.Ridicat : CrossSeverity.DeVerificat, KindIndicators, d.Label, "", "",
+                    $"Stația {d.Label}: istoricul acestei stații poate fi incomplet: " +
+                    string.Join("; ", dirty.Select(x => $"{x.Id} {x.Status}{(x.Detail.Trim().Length > 0 ? " (" + x.Detail.Trim().TrimEnd('.') + ")" : "")}")) + "."));
+            var typed = s.PaperAnchors.FirstOrDefault(p => p.Key.Trim().Length > 0 && (p.Key.Trim().Equals(d.StationName, StringComparison.OrdinalIgnoreCase) || p.Key.Trim().Equals(d.StationId, StringComparison.OrdinalIgnoreCase))).Value;
+            if (string.IsNullOrWhiteSpace(typed))
+                res.Limits.Add($"Codul de ancorare al stației {d.Label} ({(d.AnchorCode.Length > 0 ? d.AnchorCode : "lipsă din export")}) nu a fost comparat cu procesul-verbal: scrieți codul de pe hârtie ca să se vadă dacă jurnalul aplicației a fost rescris.");
+            else if (!LogAnalyzer.Dfir.Case.AuditAnchor.TryNormalize(typed, out var paper))
+                res.Findings.Add(new(CrossSeverity.DeVerificat, KindAnchorMismatch, d.Label, "", "",
+                    $"Stația {d.Label}: codul de ancorare tastat de pe procesul-verbal („{typed.Trim()}”) nu este un cod valid (greșeală de tastare?): nu a putut fi comparat."));
+            else if (!(LogAnalyzer.Dfir.Case.AuditAnchor.TryNormalize(d.AnchorCode, out var own) && own == paper))
+                res.Findings.Add(new(CrossSeverity.Grav, KindAnchorMismatch, d.Label, "", "",
+                    $"Stația {d.Label}: codul de ancorare din export ({(d.AnchorCode.Length > 0 ? d.AnchorCode : "lipsă")}) NU este cel de pe procesul-verbal ({paper}): jurnalul aplicației a fost rescris sau exportul nu provine din controlul consemnat."));
+        }
+
         // ---- stale register ----
         if (latestRegister is null)
             res.Limits.Add("Pe stația ofițerului nu există un registru de medii semnat în vigoare: versiunile stațiilor și mediile neînregistrate nu pot fi stabilite.");
@@ -182,25 +208,50 @@ public static class CrossStationReconciliation
         var serialByInv = latestRegister?.Entries.Where(e => e.InventoryNumber.Trim().Length > 0).GroupBy(e => e.InventoryNumber.Trim(), StringComparer.OrdinalIgnoreCase)
                                        .ToDictionary(g => g.Key, g => MediaRegister.NormalizeSerial((g.FirstOrDefault(e => e.IsActive) ?? g.First()).UsbSerial), StringComparer.OrdinalIgnoreCase)
                           ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        var rows = new List<Row>();
-        var seenRows = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var zoneUnknown = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        // Review R1: every station may hold the same transfer number. All copies are grouped by number; copies that differ in route, medium, time or files are
+        // "înregistrări contradictorii" (GRAV). The row of the SOURCE station (the station that holds it and is named as its source) is the one evaluated, so
+        // the result does not depend on the order in which the exports were loaded.
+        var candidates = new List<(MediaHistoryDoc Holder, Row Row, string Signature)>();
+        var zoneUnknown = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var d in stations)
             foreach (var t in d.Transfers)
             {
                 var serial = MediaRegister.NormalizeSerial(t.MediumSerial);
                 if (serial.Length == 0 && serialByInv.TryGetValue(t.MediumRegistration.Trim(), out var invSerial)) serial = invSerial;
-                if (!seenRows.Add($"{t.RegistrationNumber.Trim()}|{serial}|{t.MediumRegistration.Trim()}")) continue;
                 DateTimeOffset? at = null;
                 if (TransferRegister.TryDateTime(t.DateTime, out var local))
                 {
                     at = ToUtc(local, d.TimeZone, out var known);
                     if (!known) zoneUnknown.Add(d.Label);
                 }
-                rows.Add(new Row(t, serial, at, Find(t.SourceStation), Find(t.DestinationStation),
-                    [.. t.Sha256.Split([';', ',', ' ', '\n', '\r', '\t'], StringSplitOptions.RemoveEmptyEntries).Where(h => h.Length == 64 && h.All(Uri.IsHexDigit)).Select(h => h.ToLowerInvariant()).Distinct()]));
+                var hashes = t.Sha256.Split([';', ',', ' ', '\n', '\r', '\t'], StringSplitOptions.RemoveEmptyEntries).Where(h => h.Length == 64 && h.All(Uri.IsHexDigit))
+                                     .Select(h => h.ToLowerInvariant()).Distinct().OrderBy(h => h, StringComparer.Ordinal).ToList();
+                var row = new Row(t, serial, at, Find(t.SourceStation), Find(t.DestinationStation), hashes);
+                var sig = string.Join("|", t.SourceStation.Trim().ToUpperInvariant(), t.DestinationStation.Trim().ToUpperInvariant(), serial, t.MediumRegistration.Trim().ToUpperInvariant(),
+                                      at is { } a ? SignedMediaRegister.FormatUtc(a) : "?" + t.DateTime.Trim(), TransferRegister.ParseDirection(t.Direction)?.ToString() ?? t.Direction.Trim().ToLowerInvariant(),
+                                      string.Join(",", hashes));
+                candidates.Add((d, row, sig));
             }
         foreach (var z in zoneUnknown) res.Limits.Add($"Fusul orar al stației {z} nu este cunoscut aici: orele din registrul ei au fost luate ca UTC.");
+
+        var rows = new List<Row>();
+        foreach (var g in candidates.GroupBy(c => c.Row.Entry.RegistrationNumber.Trim().Length > 0 ? "#" + c.Row.Entry.RegistrationNumber.Trim().ToUpperInvariant() : "=" + c.Signature)
+                                    .OrderBy(g => g.Key, StringComparer.Ordinal))
+        {
+            var bySource = g.Where(c => ReferenceEquals(c.Row.Source, c.Holder)).OrderBy(c => Key(c.Holder), StringComparer.Ordinal).ThenBy(c => c.Signature, StringComparer.Ordinal).ToList();
+            var chosen = bySource.Count > 0 ? bySource[0] : g.OrderBy(c => Key(c.Holder), StringComparer.Ordinal).ThenBy(c => c.Signature, StringComparer.Ordinal).First();
+            rows.Add(chosen.Row);
+            var versions = g.GroupBy(c => c.Signature).ToList();
+            if (versions.Count < 2) continue;
+            var no = chosen.Row.Entry.RegistrationNumber.Trim();
+            var holders = g.Select(c => c.Holder.Label).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToList();
+            var described = g.OrderBy(c => c.Holder.Label, StringComparer.OrdinalIgnoreCase).ThenBy(c => c.Signature, StringComparer.Ordinal).Select(c =>
+                $"{c.Holder.Label}: {c.Row.Entry.SourceStation} → {c.Row.Entry.DestinationStation}, mediul {(c.Row.Serial.Length > 0 ? c.Row.Serial : c.Row.Entry.MediumRegistration)}, " +
+                $"ora {c.Row.Entry.DateTime}, {c.Row.Entry.Direction}, amprente {(c.Row.Hashes.Count > 0 ? string.Join(", ", c.Row.Hashes.Select(Short)) : "niciuna")}");
+            res.Findings.Add(new(CrossSeverity.Grav, KindContradictory, string.Join(", ", holders), chosen.Row.Serial, no,
+                $"Există înregistrări contradictorii pentru transferul {no} între stațiile {Join(holders)}: {string.Join("; ", described)}. " +
+                (bySource.Count > 0 ? $"Se evaluează rândul stației sursă {chosen.Holder.Label}." : $"Niciuna dintre stații nu este sursa numită în rândul ei; se evaluează rândul stației {chosen.Holder.Label}, de verificat pe registrul pe hârtie.")));
+        }
 
         var approved = new List<Row>();
         foreach (var r in rows)
@@ -224,7 +275,12 @@ public static class CrossStationReconciliation
         // ---- missing stations ----
         var expected = s.ExpectedStations.Select(x => x.Trim()).Where(x => x.Length > 0)
                         .Concat(approved.SelectMany(r => new[] { r.Entry.SourceStation.Trim(), r.Entry.DestinationStation.Trim() }).Where(x => x.Length > 0))
-                        .Distinct(StringComparer.OrdinalIgnoreCase);
+                        .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToList();
+        // review R2: an expected station whose export was taken before the end of the period does not show the end of the period
+        foreach (var d in expected.Select(Find).Where(d => d is not null).Distinct())
+            if (d!.Exported is { } ex && ex < s.ToUtc)
+                res.Findings.Add(new(CrossSeverity.DeVerificat, KindStaleExport, d.Label, "", "",
+                    $"Stația {d.Label}: export învechit — exportul este din {d.ExportedUtc}, înainte de sfârșitul perioadei ({SignedMediaRegister.FormatUtc(s.ToUtc)}); ce s-a întâmplat după nu se vede. Colectați un export nou."));
         foreach (var name in expected.Where(n => Find(n) is null))
         {
             var rejected = res.Rejected.Any(c => c.Doc is { } rd && (rd.StationName.Equals(name, StringComparison.OrdinalIgnoreCase) || rd.StationId.Equals(name, StringComparison.OrdinalIgnoreCase)));
@@ -284,7 +340,10 @@ public static class CrossStationReconciliation
                         (dd.PresentFiles.Count == 0 ? " (stația nu a exportat amprentele fișierelor clasificate prezente)." : ".")));
                 }
             }
-            if (!bad) res.Findings.Add(new(CrossSeverity.Conform, KindTransferOk, r.Destination?.Label ?? r.Source?.Label ?? "", r.Serial, no, $"Transferul {no} confirmat: {string.Join("; ", ok)}."));
+            // review R5: a confirmation always says whether the history of each station it relies on may have been cleared
+            var integrity = new[] { r.Source, r.Destination }.Where(x => x is not null).Distinct().Select(x => IntegrityText(x!)).ToList();
+            if (!bad) res.Findings.Add(new(CrossSeverity.Conform, KindTransferOk, r.Destination?.Label ?? r.Source?.Label ?? "", r.Serial, no,
+                $"Transferul {no} confirmat: {string.Join("; ", ok)}." + (integrity.Count > 0 ? " " + string.Join("; ", integrity) + "." : "")));
         }
 
         // ---- the medium on any OTHER station ----
@@ -344,13 +403,36 @@ public static class CrossStationReconciliation
                     // the gap between leaving one station and arriving at the other; a negative gap means both were connected at the same time
                     var gap = a.End is { } ae ? b.Start - ae : b.Start - a.Start;
                     if (gap >= s.MinMoveTime) continue;
-                    res.Findings.Add(new(CrossSeverity.Ridicat, KindClone, $"{a.Station.Label}, {b.Station.Label}", serial, "",
+                    // review R4: a timing argument holds only when both clocks are known to be right (S05); otherwise it is only to verify
+                    var clocks = new[] { ClockNote(a.Station), ClockNote(b.Station) }.Where(n => n is not null).ToList();
+                    res.Findings.Add(new(clocks.Count > 0 ? CrossSeverity.DeVerificat : CrossSeverity.Ridicat, KindClone, $"{a.Station.Label}, {b.Station.Label}", serial, "",
                         $"Posibilă clonare a serialului {serial}: conectat pe {a.Station.Label} la {U(a.Start)}{(a.End is { } e2 ? $" (deconectat {U(e2)})" : "")} și pe {b.Station.Label} la {U(b.Start)} — " +
-                        (gap < TimeSpan.Zero ? "în același timp pe ambele stații" : $"la {gap.TotalMinutes:0.#} min, mai puțin decât timpul minim de mutare ({s.MinMoveTime.TotalMinutes:0.#} min)") + "."));
+                        (gap < TimeSpan.Zero ? "în același timp pe ambele stații" : $"la {gap.TotalMinutes:0.#} min, mai puțin decât timpul minim de mutare ({s.MinMoveTime.TotalMinutes:0.#} min)") +
+                        (clocks.Count > 0 ? "; " + string.Join("; ", clocks) + ", deci diferența de timp nu este sigură" : "") + "."));
                 }
         }
         return res;
     }
+
+    /// <summary>The indicators of a station that are not clean, the ones the export lacks counted as "lipsă" (an export without them is never taken as clean).</summary>
+    private static List<StationIndicator> Dirty(MediaHistoryDoc d) =>
+        [.. MediaHistoryExport.IndicatorIds.Select(id => d.Indicators.FirstOrDefault(i => i.Id == id)
+                                                     ?? new StationIndicator { Id = id, Status = MediaHistoryExport.StatusMissing, Detail = "exportul nu conține indicatorul" })
+                                           .Where(i => !i.Clean)];
+
+    private static string IntegrityText(MediaHistoryDoc d) => Dirty(d) is { Count: > 0 } x
+        ? $"{d.Label}: indicatori de integritate NECURAȚI ({string.Join(", ", x.Select(i => i.Id))}), istoricul poate fi incomplet"
+        : $"{d.Label}: indicatori de integritate curați";
+
+    /// <summary>Why the station's clock cannot be trusted for a timing argument (S05 not CONFORM or not known); null when it is fine.</summary>
+    private static string? ClockNote(MediaHistoryDoc d)
+    {
+        var c = d.Indicators.FirstOrDefault(i => i.Id == "S05");
+        if (c is not null && c.Status == MediaHistoryExport.StatusConform) return null;
+        return $"ceasul stației {d.Label} poate fi decalat (S05 {(c is null ? MediaHistoryExport.StatusMissing : c.Status)}{(c is not null && c.Detail.Trim().Length > 0 ? ": " + c.Detail.Trim().TrimEnd('.') : "")})";
+    }
+
+    private static string Join(IReadOnlyList<string> names) => names.Count <= 1 ? string.Join("", names) : string.Join(", ", names.Take(names.Count - 1)) + " și " + names[^1];
 
     private static string Key(MediaHistoryDoc d) => (d.StationId.Length > 0 ? d.StationId : d.StationName).ToUpperInvariant();
     private static string U(DateTimeOffset t) => t.ToUniversalTime().ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) + " UTC";

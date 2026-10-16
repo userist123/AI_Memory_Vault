@@ -76,6 +76,21 @@ public sealed class MediaTransferEntry
     };
 }
 
+/// <summary>
+/// A tamper indicator of the station at export time, from the control just run (review R5): A05 (event logs cleared, 104/1102), A11 (anchor continuity),
+/// A12 (event log service stopped), A13 (officer list), A16 (application install date), S05 (clock against the application's time memory). <see cref="Status"/>
+/// is the control's word (CONFORM, NECONFORM, DE VERIFICAT, NEDETERMINAT, NU SE APLICĂ) or "lipsă" when the check did not run.
+/// </summary>
+public sealed class StationIndicator
+{
+    public string Id { get; set; } = "";
+    public string Title { get; set; } = "";
+    public string Status { get; set; } = "";
+    public string Detail { get; set; } = "";
+    /// <summary>CONFORM, or NU SE APLICĂ (the check does not apply to the edition): nothing that hides history.</summary>
+    public bool Clean => Status is MediaHistoryExport.StatusConform or MediaHistoryExport.StatusNotApplicable;
+}
+
 /// <summary>A classified file present on the station at export time, with its SHA-256 (from the control's hashing).</summary>
 public sealed class PresentFile
 {
@@ -115,6 +130,8 @@ public sealed class MediaHistoryDoc
     public List<MediumFileActivity> UnattributedFiles { get; set; } = [];
     public List<MediaTransferEntry> Transfers { get; set; } = [];
     public List<PresentFile> PresentFiles { get; set; } = [];
+    /// <summary>The station's tamper indicators at export time (A05, A11, A12, A13, A16, S05).</summary>
+    public List<StationIndicator> Indicators { get; set; } = [];
     public List<string> Notes { get; set; } = [];
 
     public DateTimeOffset? Exported => SignedMediaRegister.TryUtc(ExportedUtc);
@@ -138,6 +155,7 @@ public sealed record MediaHistoryInput
     public IReadOnlyDictionary<string, string>? FileHashes { get; init; }
     public TransferRegister? Transfers { get; init; }
     public string FileAuditing { get; init; } = "necunoscut";
+    public IReadOnlyList<StationIndicator> Indicators { get; init; } = [];
     public IReadOnlyList<string> Notes { get; init; } = [];
 }
 
@@ -146,6 +164,9 @@ public static class MediaHistoryExport
     public const string FormatId = "loganalyzer.media_history.v1";
     public const string ToMedium = "catre_mediu", FromMedium = "de_pe_mediu";
     public const string SignatureExtension = ".p7s";
+    public const string StatusConform = "CONFORM", StatusNotApplicable = "NU SE APLICĂ", StatusMissing = "lipsă";
+    /// <summary>The control checks whose state shows that a station's history may have been cleared or its clock moved (review R5, R4).</summary>
+    public static readonly string[] IndicatorIds = ["A05", "A11", "A12", "A13", "A16", "S05"];
 
     private static readonly JsonWriterOptions WriterOptions = new() { Indented = false, Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
@@ -217,6 +238,10 @@ public static class MediaHistoryExport
 
         var oldest = doc.Media.SelectMany(m => m.Connections).Select(w => w.Start).Where(t => t is not null).Min();
         doc.HistoryFromUtc = oldest is { } o ? SignedMediaRegister.FormatUtc(o) : "";
+        foreach (var id in IndicatorIds)
+            doc.Indicators.Add(i.Indicators.FirstOrDefault(x => x.Id == id) is { } ind
+                ? new StationIndicator { Id = ind.Id, Title = ind.Title, Status = ind.Status, Detail = ind.Detail }
+                : new StationIndicator { Id = id, Status = StatusMissing, Detail = "verificarea nu a rulat la acest control" });
         doc.Notes.AddRange(i.Notes);
         return doc;
     }
@@ -228,7 +253,7 @@ public static class MediaHistoryExport
     private static SortedDictionary<string, object> Map(MediaHistoryDoc d) => new(StringComparer.Ordinal)
     {
         ["anchor_code"] = d.AnchorCode ?? "", ["anchor_seq"] = d.AnchorSeq, ["edition"] = d.Edition ?? "", ["exported_utc"] = d.ExportedUtc ?? "", ["file_auditing"] = d.FileAuditing ?? "",
-        ["format"] = d.Format ?? "", ["history_from_utc"] = d.HistoryFromUtc ?? "", ["media"] = d.Media.Select(Map).Cast<object>().ToList(),
+        ["format"] = d.Format ?? "", ["history_from_utc"] = d.HistoryFromUtc ?? "", ["indicators"] = d.Indicators.Select(Map).Cast<object>().ToList(), ["media"] = d.Media.Select(Map).Cast<object>().ToList(),
         ["notes"] = d.Notes.Cast<object>().ToList(), ["posture"] = d.Posture ?? "", ["present_files"] = d.PresentFiles.Select(Map).Cast<object>().ToList(),
         ["register_sha256"] = d.RegisterSha256 ?? "", ["register_version"] = d.RegisterVersion, ["station_id"] = d.StationId ?? "", ["station_name"] = d.StationName ?? "",
         ["time_zone"] = d.TimeZone ?? "", ["transfers"] = d.Transfers.Select(Map).Cast<object>().ToList(), ["unattributed_files"] = d.UnattributedFiles.Select(Map).Cast<object>().ToList(),
@@ -252,6 +277,11 @@ public static class MediaHistoryExport
         ["approver"] = t.Approver ?? "", ["content"] = t.Content ?? "", ["date_time"] = t.DateTime ?? "", ["destination_station"] = t.DestinationStation ?? "", ["direction"] = t.Direction ?? "",
         ["medium_registration"] = t.MediumRegistration ?? "", ["medium_serial"] = t.MediumSerial ?? "", ["person"] = t.Person ?? "", ["registration_number"] = t.RegistrationNumber ?? "",
         ["sha256"] = t.Sha256 ?? "", ["source_station"] = t.SourceStation ?? "",
+    };
+
+    private static SortedDictionary<string, object> Map(StationIndicator x) => new(StringComparer.Ordinal)
+    {
+        ["detail"] = x.Detail ?? "", ["id"] = x.Id ?? "", ["status"] = x.Status ?? "", ["title"] = x.Title ?? "",
     };
 
     private static SortedDictionary<string, object> Map(PresentFile p) => new(StringComparer.Ordinal) { ["path"] = p.Path ?? "", ["sha256"] = p.Sha256 ?? "" };
@@ -293,6 +323,7 @@ public static class MediaHistoryExport
     private static readonly string[] TransferKeys = [.. Map(new MediaTransferEntry()).Keys];
     private static readonly string[] PresentKeys = ["path", "sha256"];
     private static readonly string[] WindowKeys = ["end_utc", "start_utc"];
+    private static readonly string[] IndicatorKeys = ["detail", "id", "status", "title"];
 
     /// <summary>
     /// Reads an export. Only the canonical form is accepted (the bytes must be exactly what <see cref="Canonical"/> writes for the content), so what the
@@ -313,6 +344,7 @@ public static class MediaHistoryExport
                 Format = Str(r, "format"), HistoryFromUtc = Str(r, "history_from_utc"), Posture = Str(r, "posture"), RegisterSha256 = Str(r, "register_sha256"),
                 RegisterVersion = Num(r, "register_version"), StationId = Str(r, "station_id"), StationName = Str(r, "station_name"), TimeZone = Str(r, "time_zone"),
                 Notes = [.. Arr(r, "notes").Select(e => e.ValueKind == JsonValueKind.String ? e.GetString() ?? "" : throw new FormatException("o notă nu este text"))],
+                Indicators = [.. Arr(r, "indicators").Select(e => Obj(e, IndicatorKeys, "indicator")).Select(e => new StationIndicator { Detail = Str(e, "detail"), Id = Str(e, "id"), Status = Str(e, "status"), Title = Str(e, "title") })],
                 PresentFiles = [.. Arr(r, "present_files").Select(e => Obj(e, PresentKeys, "fișier prezent")).Select(e => new PresentFile { Path = Str(e, "path"), Sha256 = Str(e, "sha256") })],
                 Transfers = [.. Arr(r, "transfers").Select(e => Obj(e, TransferKeys, "transfer")).Select(e => new MediaTransferEntry
                 {
