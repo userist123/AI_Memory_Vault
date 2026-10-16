@@ -1,6 +1,7 @@
 'use client';
 // Pagină de tipărire (A4 landscape → „Salvează ca PDF”): plan la scară reală, tabel camere, listă de cumpărături și buget.
 import { finishSchedule } from '@/core/finish-schedule';
+import PrintNav from './PrintNav';
 import { PrintSkeleton } from './Skeleton';
 import { settingOut, type AxisPlan } from '@/core/setting-out';
 import { analyzeSurvey, type RoomSurvey } from '@/core/survey';
@@ -129,6 +130,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
 
   return (<main className="print-page" ref={mainRef}>
     {canvas}
+    <PrintNav root={mainRef} t={t} ready={images} />
     <header className="print-head no-print-border">
       <div><h1>{snap.name || p.name || t('print.unnamed')}</h1><div className="muted">{t('print.printedOn')} {today} · {p.currentRevision ? `${t('print.revision')} ${p.currentRevision}` : t('print.noRevisions')}</div></div>
       <div className="print-brand">{profile?.logo && <img className="pb-logo" src={profile.logo} alt="" />}{studio}<button className="btn primary no-print" onClick={() => window.print()} disabled={busy}>{t('print.print')}</button>
@@ -184,9 +186,9 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
             <RoomTech snap={v} roomId={r.id} t={t} lang={locale} />
             <table className="print-table"><thead><tr><th>{t('print.finishesWorks')}</th><th className="num">{t('print.qty')}</th><th className="num">{t('print.cost')}</th></tr></thead>
               <tbody>{w.materials.length === 0 && <tr><td colSpan={3} className="muted">{t('print.noWorks')}</td></tr>}
-                {w.materials.map(m => <tr key={m.key}><td>{m.label}</td><td className="num">{formatQty(m.qty, m.unit, locale)}</td><td className="num">{money(m.cost, cur)}</td></tr>)}</tbody>
+                {w.materials.map((m, mi) => <tr key={`${m.key}-${mi}`}><td>{m.label}</td><td className="num">{formatQty(m.qty, m.unit, locale)}</td><td className="num">{money(m.cost, cur)}</td></tr>)}</tbody>
               {w.labor.length > 0 && <><thead><tr><th>{t('print.laborWorks')}</th><th className="num">{t('print.qty')}</th><th className="num">{t('print.laborExpected')} ({t('print.laborRange')})</th></tr></thead>
-                <tbody>{w.labor.map(l => <tr key={l.key}><td>{l.label}</td><td className="num">{formatQty(l.qty, l.unit, locale)}</td><td className="num">{money(l.expected, cur)} <small>({money(l.low, cur)} – {money(l.high, cur)})</small></td></tr>)}</tbody></>}
+                <tbody>{w.labor.map((l, li) => <tr key={`${l.key}-${li}`}><td>{l.label}</td><td className="num">{formatQty(l.qty, l.unit, locale)}</td><td className="num">{money(l.expected, cur)} <small>({money(l.low, cur)} – {money(l.high, cur)})</small></td></tr>)}</tbody></>}
             </table>
           </div>
           <div className="print-room-right">

@@ -625,4 +625,7 @@ export const en: Dict = {
   "empty.catalog.title": "No products found", "empty.catalog.text": "Change the search or clear the shop, price and size filters.", "empty.catalog.action": "Clear filters",
   "empty.home.title": "No projects yet", "empty.home.text": "Pick a template below or start from a blank plan; the project saves itself.", "empty.home.action": "Create the first project",
   "empty.homeFilter.title": "No projects here", "empty.homeFilter.text": "No project matches the chosen stage or search.", "empty.homeFilter.action": "Show all projects",
+  // ---- page navigator of the drawing package (not printed) ----
+  "pnav.aria": "Package pages", "pnav.title": "Pages", "pnav.cover": "Cover", "pnav.page": "Page {n}", "pnav.count": "{n} / {total}",
+  "pnav.prev": "Previous page", "pnav.next": "Next page",
 };
