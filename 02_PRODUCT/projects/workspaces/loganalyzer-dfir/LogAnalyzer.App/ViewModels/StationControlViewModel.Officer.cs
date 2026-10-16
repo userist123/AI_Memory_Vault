@@ -93,30 +93,36 @@ namespace LogAnalyzer.UI.ViewModels
             long? paperSeq = !fromStation && facts.PreviousAnchor.Status == AnchorContinuityStatus.Continuous ? facts.PreviousAnchor.MatchedSeq : null;
             try { facts.OfficerAssessment = OfficerState.Assess(auditPath, paperSeq, OfficerState.Current().Detail); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { facts.OfficerAssessment = null; }
+            try { facts.InstallAtPaperAnchor = AnchoredInstallDate.At(auditPath, paperSeq); facts.CurrentChain = AuditAnchor.ChainIdentityOf(auditPath); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { facts.InstallAtPaperAnchor = null; }
         }
 
         /// <summary>After the control: the anchor of the head of the audit log, recorded in the log itself ("audit.anchor"), and the trusted officers to print.</summary>
         private void AfterControlAnchor()
         {
             if (_report is null) return;
-            _report.Anchor = RecordAnchor("control");
+            var w = RecordAnchor("control");
+            _report.Anchor = w?.Anchor;
+            _report.AnchoredState = w?.Stored;
+            if (w?.Error is { } err) Status = err;
             _report.RegisteredOfficers = OfficerFlows.Trusted(OfficerStore.Shared.Load());
             OfficerStatus = ControlReportPdf.OfficialLabel + ". Ofițerul de securitate semnează cu cardul: „Semnează ca ofițer de securitate”.";
             OnPropertyChanged(nameof(AnchorLine)); OnPropertyChanged(nameof(HasAnchor));
         }
 
         /// <summary>Takes the anchor of the log head now and records it as "audit.anchor" (the event comes after the anchored entry, so the code stays valid).</summary>
-        private static AuditAnchorPoint? RecordAnchor(string reason)
+        private static AnchorWriteResult? RecordAnchor(string reason)
         {
             var log = AuditLogPath();
             if (log is null) return null;
             try
             {
-                var a = AuditAnchor.Current(log);
-                if (a is not null) RecordOfficerEvent(OperationAudit.AnchorRecorded, OperationAudit.AnchorRecordedDetail(a, reason));
-                return a;
+                // the anchored state (install date, chain identity, officer state) goes in first, so it is the anchored entry and the paper code covers it;
+                // if it cannot be written, no anchor code is issued
+                var install = LogAnalyzer.Dfir.Windows.Acquisition.AppInstallTraces.ReadInstall();
+                return AnchorWriter.Write(log, AuthApp.Record, install.Utc, install.Basis, OfficerState.Current().Detail, reason);
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return null; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return new AnchorWriteResult(null, null, "Codul de ancorare nu a fost emis: " + ex.Message); }
         }
 
         [RelayCommand]
@@ -191,9 +197,10 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (v.Verdict == OfficialVerdict.Invalid) return;
             AuthApp.Record(OperationAudit.ReportOfficerSigned, OperationAudit.OfficerSignedDetail(file, v.OriginalSha256, v.SignedSha256, v.SignerFingerprint, v.SignerName, v.VerdictWord));
-            var a = RecordAnchor("report.officer_signed");
-            _anchorAfterSigning = a?.Line ?? "";
-            if (a is not null && _report is not null) { _report.Anchor = a; OnPropertyChanged(nameof(AnchorLine)); OnPropertyChanged(nameof(HasAnchor)); }
+            var w = RecordAnchor("report.officer_signed");
+            var a = w?.Anchor;
+            _anchorAfterSigning = a?.Line ?? (w?.Error ?? "");
+            if (a is not null && _report is not null) { _report.Anchor = a; _report.AnchoredState = w!.Stored; OnPropertyChanged(nameof(AnchorLine)); OnPropertyChanged(nameof(HasAnchor)); }
         }
 
         [RelayCommand]

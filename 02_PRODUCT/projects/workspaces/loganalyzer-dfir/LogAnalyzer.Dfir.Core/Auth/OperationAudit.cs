@@ -21,6 +21,16 @@ public static class OperationAudit
 
     public static string AnchorRecordedDetail(LogAnalyzer.Dfir.Case.AuditAnchorPoint a, string reason) => $"seq={a.Seq}; anchor={a.Code}; chain={a.ChainId}; reason={reason}";
 
+    /// <summary>
+    /// "audit.anchor_state": the state that is anchored, written immediately BEFORE the anchor is taken, so it is the anchored entry itself and the paper code
+    /// covers it (a rewrite breaks A11): the application install date (UTC) and its basis (check A16), followed by the officer store / trust folder state (A13).
+    /// </summary>
+    public const string AnchorState = "audit.anchor_state";
+
+    public static string AnchorStateDetail(DateTimeOffset? installUtc, string installBasis, LogAnalyzer.Dfir.Case.ChainIdentity? chain = null) =>
+        $"{LogAnalyzer.Dfir.Case.AnchoredInstallDate.UtcKey}={LogAnalyzer.Dfir.Case.AnchoredInstallDate.Format(installUtc)}; {LogAnalyzer.Dfir.Case.AnchoredInstallDate.BasisKey}={installBasis.Replace(';', ',').ReplaceLineEndings(" ")}" +
+        (chain is null ? "" : $"; chain_first_hash={chain.FirstHash}; chain_first_utc={chain.FirstWhenUtc.Replace(';', ',')}; chain_first_kind={chain.FirstKind.Replace(';', ',')}");
+
     public static string OfficerSignedDetail(string reportFile, string originalSha256, string signedSha256, string certFingerprint, string signerCn, string verdict) =>
         $"report={reportFile}; original_sha256={originalSha256}; signed_sha256={signedSha256}; cert_fingerprint={certFingerprint}; signer={signerCn}; verdict={verdict}";
 

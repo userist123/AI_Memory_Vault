@@ -117,6 +117,11 @@ key. Neither is detectable from the station alone.
   from the proces-verbal; after it only an officer / trust event of the application may introduce a new state.
   A state that changes on an anchor or any other event, or differs now, is NECONFORM. Without a typed code A13
   is NEDETERMINAT.
+- **Update (anchored state entry):** the officer store / trust folder state, together with the application install
+  date (check A16), is now written in the `audit.anchor_state` entry immediately BEFORE the anchor is taken, so that
+  entry is the anchored one and the paper code covers it. A13 reads its baseline only from that entry at the
+  paper-typed seq; nothing written after it (the `audit.anchor` event included) is ever a baseline. An anchor made
+  by an older version, without that entry, gives A13 NEDETERMINAT with the reason.
 - The certificate line uses the same "calificată / avansată" label; a signature dictionary ending with its hex
   `/Contents` is read correctly.
 

@@ -135,10 +135,14 @@ public static class AuditAnchor
     }
 
     /// <summary>One entry of the audit log: seq, event, detail, who, when (as written).</summary>
-    public sealed record AuditEvent(long Seq, string Event, string Detail, string Who, string WhenUtc);
+    public sealed record AuditEvent(long Seq, string Event, string Detail, string Who, string WhenUtc, string Hash = "");
 
     public static List<AuditEvent> Events(string logPath) =>
-        Objects(logPath).Select(o => new AuditEvent(o["seq"] is { } s ? s.GetValue<long>() : 0, Str(o, "event"), Str(o, "detail"), Str(o, "who"), Str(o, "whenUtc"))).ToList();
+        Objects(logPath).Select(o => new AuditEvent(o["seq"] is { } s ? s.GetValue<long>() : 0, Str(o, "event"), Str(o, "detail"), Str(o, "who"), Str(o, "whenUtc"), Str(o, "hash"))).ToList();
+
+    /// <summary>The identity of the chain: its first record (seq 1) — hash, time, kind; null when the log has no chained record.</summary>
+    public static ChainIdentity? ChainIdentityOf(string logPath) =>
+        Events(logPath).FirstOrDefault(e => e.Seq == 1) is { } first ? new ChainIdentity(first.Hash, first.WhenUtc, first.Event) : null;
 
     /// <summary>The detail texts of every entry, in order.</summary>
     public static List<string> AllDetails(string logPath) => Objects(logPath).Select(o => Str(o, "detail")).ToList();

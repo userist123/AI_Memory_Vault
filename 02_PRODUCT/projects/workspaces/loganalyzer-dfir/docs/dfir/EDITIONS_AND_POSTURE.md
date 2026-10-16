@@ -98,6 +98,7 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | A13 | Security officer list changed since the previous control | Review | Review | Review |  |
 | A14 | Sources that show classified files leaving the station | Removable Storage, Handle Manipulation, Process Creation with command line and the print log on | As standalone, plus Detailed File Share | n/a | Classified folders exist only in the controlled editions. |
 | A15 | Classified files: access and exits without approval | Review; non-conform on any exit not in the transfer register | Review; non-conform on any exit not in the transfer register (network shares included) | n/a | Classified folders exist only in the controlled editions. |
+| A16 | Application installation date versus the previous control (paper anchor) | Unchanged | Unchanged | Unchanged |  |
 | U01 | Changes to the Administrators group | Review | Review | Review |  |
 | U02 | Accounts created, deleted, enabled, disabled or reset | Review | Review | Review |  |
 | U03 | Remote (RDP) logons | Review | Review (administration over the LAN is normal) | Review |  |
@@ -159,5 +160,22 @@ The administrator recreates the authentication store, reinstalls the application
 - Notes that disappear: "posibilă ștergere" (the new .pf hides it after the next run), and every note once Amcache drops or rewrites the old entry;
   with Prefetch off and Amcache unreadable only the "urmele Windows lipsesc" note is left.
 
-The strong control is therefore the paper anchor: PR #289 (merged) anchors the station state on paper; adding the installation date to the anchored state
-follows in a later PR, after which any later change versus the paper-anchored value is NECONFORM.
+The strong control is therefore the paper anchor: PR #289 (merged) anchors the station state on paper. The anchored state now also holds the installation
+date (UTC and its basis) and the identity of the application's audit chain (its first record: hash, time, kind). It is written as the
+`audit.anchor_state` entry immediately before the anchor is taken, so that entry IS the anchored one and the paper code covers its content; the report
+prints the values read back from that entry next to the anchor code, to be copied onto the proces-verbal. If the entry cannot be written, no anchor
+code is issued.
+
+At the next control, check A16 compares with the anchored state of the code typed from the paper:
+
+- the audit chain identity decides incidents: another first record means the chain was reinitialised after the previous control, NECONFORM
+  ("jurnalul aplicației a fost reinițializat după controlul anterior (identitatea jurnalului s-a schimbat)");
+- the installation date computed from traces is informative only. It legitimately moves LATER after an update of the application (program files
+  recreated), an eviction of Prefetch traces, or a control run under another Windows account (other LocalAppData traces), so a later date, a date that can
+  no longer be computed, or an earlier one (an older trace found) is DE VERIFICAT, to be confirmed from the proces-verbal; within one day it is the same;
+- without a typed code, or with an anchor that has no anchored state, A16 is NEDETERMINAT.
+
+Probe B (reinitialised store) therefore becomes visible at the first control after it, provided the officer types the code from the paper; note that a
+reinitialised chain also no longer contains the paper code, so A11 is NECONFORM as well. What remains: a reinstall BEFORE the first anchored control is not
+caught; an administrator who rewrites the anchored state entry (with the machine key) is caught by A11, because the code typed from the paper no longer
+matches.
