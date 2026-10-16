@@ -878,6 +878,12 @@
       "reason": "Plain markdown provenance check (PDF signing libraries for reports); not a note. Frontmatter would require owner lifecycle/verification values."
     },
     {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-cross-station-media.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
       "path": "00_GOVERNANCE/coordination/tasks/todo-claude-signed-media-register.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
