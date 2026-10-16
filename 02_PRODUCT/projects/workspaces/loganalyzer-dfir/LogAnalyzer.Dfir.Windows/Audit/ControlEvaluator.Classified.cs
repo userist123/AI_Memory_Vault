@@ -145,6 +145,8 @@ public static partial class ControlEvaluator
         return new ClassifiedInput
         {
             Folders = folders, Records = recs, VolumeMap = f.VolumeMap, RemovableDrives = removable, Media = media, Transfers = f.Transfers,
+            // a transfer row approves an exit on a medium only when that medium is in the signed register in force (none in force = nothing approves)
+            SignedMedia = f.SignedMedia is { } sm ? LogAnalyzer.Dfir.Registers.SignedMediaMatcher.ActiveSet(sm.Usable ? sm.Doc : null, f.ObservedMedia) : null,
             KnownFiles = f.ClassifiedFiles ?? [], FileHashes = f.ClassifiedHashes, NetworkApplies = f.Posture != StationPosture.Standalone,
             // the control runs on the station itself: its zone is the station's zone, in which the register times are typed
             RegisterZone = TimeZoneInfo.Local,

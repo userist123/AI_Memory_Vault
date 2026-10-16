@@ -303,6 +303,8 @@ namespace LogAnalyzer.UI.ViewModels
                     // Time memory (S05): the latest time the application recorded, read BEFORE this report adds its own "clock.seen" entry.
                     string? auditPath = null;
                     try { auditPath = LogAnalyzer.UI.Services.AuthApp.Service.AuditPath; } catch (InvalidOperationException) { }
+                    // D04 and the transfer register: the officer-signed media register in force (re-verified; compared with the last install in the sealed audit)
+                    facts.SignedMedia = LogAnalyzer.UI.Services.MediaRegisterFlows.Active(LogAnalyzer.Dfir.Registers.SignedMediaRegisterStore.Shared, auditPath);
                     if (auditPath is not null)
                     {
                         // A11: the previous anchor code, checked before this control appends anything (an append never changes earlier entries anyway).

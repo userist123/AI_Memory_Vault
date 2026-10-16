@@ -246,6 +246,12 @@ public static class ControlReportPdf
               (st.Chain is { } c ? $"; identitatea jurnalului: prima înregistrare {c.FirstKind} la {c.FirstWhenUtc}, amprenta {(c.FirstHash.Length > 16 ? c.FirstHash[..16] : c.FirstHash)}" : "") +
               ". Treceți-le pe procesul-verbal lângă cod."
             : "Data instalării aplicației: indisponibilă (starea ancorată nu a fost scrisă).");
+        // review of PR #295: the register in force goes on the paper, so the officer compares it across stations
+        if (r.Facts.SignedMedia is { } sm)
+            l.Add((sm.Usable
+                    ? $"Registrul de medii semnat în vigoare: versiunea {sm.Doc!.Version}, SHA-256 {sm.Sha256} (emis de „{sm.Doc.StationId}” la {sm.Doc.IssuedUtc})"
+                    : "Registrul de medii semnat: niciunul în vigoare (" + sm.Problem + ")") +
+                  ". Treceți versiunea și amprenta pe procesul-verbal; o stație care nu are ultima versiune se vede doar comparând procesele-verbale ale stațiilor.");
         l.Add(OfficialLabel + ". Ofițerul de securitate semnează fișierul cu certificatul calificat de pe cardul său („Semnează ca ofițer de securitate” în aplicație, sau în Adobe); semnătura se verifică cu „Verifică raport semnat”, comparând amprenta certificatului cu cea de pe procesul-verbal.");
         if (r.RegisteredOfficers.Count == 0) l.Add("Ofițeri de securitate declarați pe stație: niciunul.");
         foreach (var o in r.RegisteredOfficers)
