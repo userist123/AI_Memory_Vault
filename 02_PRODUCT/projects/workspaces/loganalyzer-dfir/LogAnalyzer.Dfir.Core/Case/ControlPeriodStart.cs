@@ -9,13 +9,16 @@ public sealed record ControlPeriodPlan(DateTimeOffset StartUtc, int Days, string
 /// Review of PR #298: where the default period of the one-click control starts. Not from the case folder (anyone who can write there could plant a recent
 /// "previous control" and shorten the period), but, in order:
 /// 1. the paper anchor code typed by the officer, when the application's log still contains it — the time of that anchored entry;
-/// 2. otherwise the last „control.finished” in the sealed audit log, when its plain chain is not broken;
+/// 2. otherwise the last „control.finished” in the sealed audit log, only when the sealed verification passes (<see cref="HashChain.Verify"/>);
 /// 3. otherwise the last 90 days.
 /// The result is always at least one day and at most <see cref="MaxDays"/>.
 /// </summary>
 public static class ControlPeriodStart
 {
     public const int DefaultDays = 90, MaxDays = 3650;
+
+    /// <summary>What Home says when the sealed audit cannot be verified: its "last control" is not used.</summary>
+    public const string SealUnverifiable = "jurnalul nu poate fi verificat (sigiliu) — perioada implicită 90 de zile";
 
     public static ControlPeriodPlan From(string? auditPath, string? paperCode, DateTimeOffset nowUtc)
     {
@@ -37,6 +40,13 @@ public static class ControlPeriodStart
                 return Plan(nowUtc, t, $"de la controlul ancorat pe procesul-verbal ({t.UtcDateTime:yyyy-MM-dd HH:mm} UTC)");
             prefix = "codul de pe procesul-verbal nu se regăsește în jurnal (verificarea A11 o va spune); ";
         }
+        // re-review of PR #298: this step trusts only a log whose head matches its seal; a plain-valid entry appended without the key (a "control" dated
+        // yesterday) would otherwise shorten the period to one day. The paper-code step above needs only the plain chain: the code itself is the anchor.
+        ChainVerification sealedCheck;
+        try { sealedCheck = new HashChain(auditPath).Verify(); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return Default(nowUtc, prefix + "jurnalul aplicației nu a putut fi citit"); }
+        if (sealedCheck.Status == ChainStatus.Broken)
+            return new ControlPeriodPlan(nowUtc.AddDays(-DefaultDays), DefaultDays, prefix + SealUnverifiable);
         var last = events.Where(e => e.Event == "control.finished").Select(Time).Where(t => t is { } x && x <= nowUtc).Max();
         if (last is { } l) return Plan(nowUtc, l, prefix + $"de la ultimul control din jurnalul sigilat ({l.UtcDateTime:yyyy-MM-dd HH:mm} UTC)");
         return Default(nowUtc, prefix + "niciun control anterior în jurnalul sigilat");

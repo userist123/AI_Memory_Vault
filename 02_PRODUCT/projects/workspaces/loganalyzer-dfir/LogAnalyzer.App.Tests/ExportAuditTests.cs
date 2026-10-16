@@ -208,6 +208,12 @@ public sealed class ExportAuditTests : IDisposable
         ["MainViewModel.SelectCollectionOutputDir"] = "chooses where the legacy collector writes evidence it acquires now (acquisition output, not an export of case data)",
     };
 
+    /// <summary>
+    /// Where a folder is taken from: a folder dialog, the shared picker helper — also class- or namespace-qualified (re-review of PR #298), but not its
+    /// declaration — or the folder memory.
+    /// </summary>
+    private static readonly Regex FolderPicker = new(@"new\s+(?:Microsoft\.Win32\.)?OpenFolderDialog\b|FolderBrowserDialog\b|(?<!(?:string\??|void|static|internal|private|public|protected)\s+)\b(?:[A-Za-z_]\w*\.)*PickFolder\(|FolderMemory\.Shared\.Get\(");
+
     [Fact]
     public void Every_write_to_a_folder_from_a_picker_or_from_the_folder_memory_is_audited_first()
     {
@@ -219,7 +225,7 @@ public sealed class ExportAuditTests : IDisposable
             var text = File.ReadAllText(file);
             var decls = MethodDecl.Matches(text).Cast<Match>().ToList();
             var cls = Path.GetFileNameWithoutExtension(file).Split('.')[0];
-            foreach (Match m in Regex.Matches(text, @"new\s+(?:Microsoft\.Win32\.)?OpenFolderDialog\b|FolderBrowserDialog\b|(?<![\w.])PickFolder\(|FolderMemory\.Shared\.Get\("))
+            foreach (Match m in FolderPicker.Matches(text))
             {
                 pickers++;
                 var decl = decls.LastOrDefault(d => d.Index < m.Index);
@@ -235,6 +241,24 @@ public sealed class ExportAuditTests : IDisposable
         Assert.True(pickers >= 10, $"only {pickers} folder pickers found: the scan is broken");
         Assert.True(problems.Count == 0, string.Join("\n", problems.Distinct()));
         Assert.DoesNotContain(ReadOnlyFolderPickers.Keys, k => !seen.Contains(k));   // the allowlist stays exact
+    }
+
+    [Theory]
+    [InlineData("var f = PickFolder(\"t\", k);")]
+    [InlineData("var f = StationControlViewModel.PickFolder(\"t\", k);")]
+    [InlineData("var f = LogAnalyzer.UI.ViewModels.StationControlViewModel.PickFolder(\"t\", k);")]
+    [InlineData("var d = new OpenFolderDialog { Title = \"t\" };")]
+    [InlineData("var d = new Microsoft.Win32.OpenFolderDialog();")]
+    [InlineData("using var d = new System.Windows.Forms.FolderBrowserDialog();")]
+    [InlineData("var last = FolderMemory.Shared.Get(FolderMemory.Evidence);")]
+    [InlineData("var last = LogAnalyzer.Dfir.Language.FolderMemory.Shared.Get(k);")]
+    public void The_folder_picker_guard_recognises_every_form_of_a_picker_call(string code) => Assert.Matches(FolderPicker, code);
+
+    [Fact]
+    public void The_folder_picker_guard_does_not_match_the_declaration_of_the_helper_or_other_names()
+    {
+        Assert.DoesNotMatch(FolderPicker, "internal static string? PickFolder(string title, string kind)");
+        Assert.DoesNotMatch(FolderPicker, "await IntakePickFolder();");
     }
 
     private static string AppDir()
