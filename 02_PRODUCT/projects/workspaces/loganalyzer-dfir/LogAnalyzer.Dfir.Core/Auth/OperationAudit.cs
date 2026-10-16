@@ -40,7 +40,7 @@ public static class OperationAudit
     /// controls read it back from the sealed audit and list the application's own access records apart (never as someone's access).
     /// </summary>
     public static string ControlHashingDetail(LogAnalyzer.Dfir.Analysis.SelfActivityWindow w) =>
-        $"run={w.RunId}; start={w.StartUtc.UtcDateTime:o}; end={w.EndUtc.UtcDateTime:o}; pid={w.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture)}; files={w.Files.ToString(System.Globalization.CultureInfo.InvariantCulture)}; account={w.Account}; image={w.ImagePath}";
+        $"run={w.RunId}; start={w.StartUtc.UtcDateTime:o}; end={w.EndUtc.UtcDateTime:o}; pid={w.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture)}; files={w.Files.ToString(System.Globalization.CultureInfo.InvariantCulture)}; account={w.Account}; app_sha256={w.AppSha256}; image={w.ImagePath}";
 
     public static bool TryParseControlHashing(string detail, out LogAnalyzer.Dfir.Analysis.SelfActivityWindow window)
     {
@@ -58,7 +58,7 @@ public static class OperationAudit
         if (!parts.TryGetValue("end", out var b) || !DateTimeOffset.TryParse(b, ci, rt, out var end)) return false;
         if (!parts.TryGetValue("pid", out var p) || !int.TryParse(p, System.Globalization.NumberStyles.Integer, ci, out var pid)) return false;
         int.TryParse(parts.GetValueOrDefault("files", "0"), System.Globalization.NumberStyles.Integer, ci, out var files);
-        window = new LogAnalyzer.Dfir.Analysis.SelfActivityWindow(start, end, pid, parts["image"], parts.GetValueOrDefault("account", ""), files, parts.GetValueOrDefault("run", ""));
+        window = new LogAnalyzer.Dfir.Analysis.SelfActivityWindow(start, end, pid, parts["image"], parts.GetValueOrDefault("account", ""), files, parts.GetValueOrDefault("run", ""), parts.GetValueOrDefault("app_sha256", ""));
         return true;
     }
 
@@ -89,6 +89,7 @@ public static class OperationAudit
         var regressions = new List<string>();
         if (!File.Exists(auditPath)) return new(valid, invalid);
         var started = new Dictionary<string, (DateTimeOffset When, int Index)>(StringComparer.Ordinal);
+        var startedSha = new Dictionary<string, string>(StringComparer.Ordinal);
         var finished = new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal);
         var anchors = new List<(int Index, DateTimeOffset When)>();
         var hashing = new List<(LogAnalyzer.Dfir.Analysis.SelfActivityWindow W, DateTimeOffset? When, int Index)>();
@@ -125,7 +126,7 @@ public static class OperationAudit
                     }
                     var run = RunOf(detail);
                     if (ev == AnchorEvent && when is { } wa) anchors.Add((index, wa));
-                    else if (ev == ControlStarted && run.Length > 0 && when is { } ws) started[run] = (ws, index);
+                    else if (ev == ControlStarted && run.Length > 0 && when is { } ws) { started[run] = (ws, index); startedSha[run] = TokenOf(detail, "app_sha256="); }
                     else if (ev == ControlFinished && run.Length > 0 && when is { } wf) finished[run] = wf;
                     else if (ev == ControlHashing)
                     {
@@ -147,6 +148,8 @@ public static class OperationAudit
                 : at > firstRegression || s0.Index > firstRegression ? "este după o înregistrare cu oră în urmă în jurnal"
                 : w.RunId.Length == 0 ? "nu numește controlul căruia îi aparține"
                 : s0.Index == 0 || !finished.TryGetValue(w.RunId, out var f0) ? "controlul ei nu are început și sfârșit înregistrate"
+                : w.AppSha256.Length != 64 || !w.AppSha256.Equals(startedSha.GetValueOrDefault(w.RunId, ""), StringComparison.OrdinalIgnoreCase)
+                    ? "fereastră scrisă de altă versiune a aplicației (amprenta executabilului din fereastră lipsește sau nu este cea înregistrată la începutul controlului ei)"
                 : anchorBefore is { } ab && s0.When < ab ? $"controlul ei începe ({s0.When.UtcDateTime:yyyy-MM-dd HH:mm} UTC) înaintea ancorării care îl precede în jurnal ({ab.UtcDateTime:yyyy-MM-dd HH:mm} UTC)"
                 : w.EndUtc < w.StartUtc || w.EndUtc - w.StartUtc > MaxHashingWindow ? $"durează mai mult de {MaxHashingWindow.TotalHours:0} ore sau se termină înainte să înceapă"
                 : w.StartUtc < s0.When || w.EndUtc > f0 || when is not { } rec || rec < s0.When || rec > f0 ? "nu este în interiorul controlului ei"
@@ -158,6 +161,13 @@ public static class OperationAudit
         return new(valid, invalid) { Regressions = regressions };
     }
 
+    private static string TokenOf(string detail, string prefix)
+    {
+        foreach (var kv in detail.Split("; "))
+            if (kv.StartsWith(prefix, StringComparison.Ordinal)) return kv[prefix.Length..].Trim();
+        return "";
+    }
+
     private static string RunOf(string detail)
     {
         foreach (var kv in detail.Split("; "))
@@ -167,8 +177,8 @@ public static class OperationAudit
 
     public static string Sha256Hex(string text) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
 
-    public static string ControlStartedDetail(string edition, string posture, bool elevated, int periodDays, int classifiedFolders, string runId = "") =>
-        $"edition={edition}; posture={posture}; elevated={(elevated ? "da" : "nu")}; scope=perioada {periodDays} zile, {classifiedFolders} foldere clasificate" + (runId.Length > 0 ? $"; run={runId}" : "");
+    public static string ControlStartedDetail(string edition, string posture, bool elevated, int periodDays, int classifiedFolders, string runId = "", string appSha256 = "") =>
+        $"edition={edition}; posture={posture}; elevated={(elevated ? "da" : "nu")}; scope=perioada {periodDays} zile, {classifiedFolders} foldere clasificate" + (runId.Length > 0 ? $"; run={runId}" : "") + (appSha256.Length > 0 ? $"; app_sha256={appSha256}" : "");
 
     public static string ControlFinishedDetail(string host, bool elevated, int checks, int neconform, int deVerificat, int nedeterminat, string runId = "") =>
         $"host={host}; elevated={(elevated ? "da" : "nu")}; checks={checks}; neconform={neconform}; de_verificat={deVerificat}; nedeterminat={nedeterminat}" + (runId.Length > 0 ? $"; run={runId}" : "");

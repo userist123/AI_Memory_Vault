@@ -374,7 +374,7 @@ public sealed class ClassifiedAccessTests
     public void The_applications_own_hashing_reads_are_listed_apart_and_never_become_accesses_exits_or_coincidences()
     {
         const string image = @"C:\Program Files\LogAnalyzer\LogAnalyzer.exe";
-        var window = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(5), 0x4d2, image, "STATIE\\inspector", 1);
+        var window = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(5), 0x4d2, image, "STATIE\\inspector", 1, AppSha256: AppSha);
         var own = Access(4663, T0, @"D:\Clasificat\a.docx", "0x1", proc: image) with { Data = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             { ["SubjectUserName"] = "inspector", ["ObjectType"] = "File", ["ObjectName"] = @"D:\Clasificat\a.docx", ["AccessMask"] = "0x1", ["HandleId"] = "0x5", ["ProcessId"] = "0x4d2", ["ProcessName"] = image } };
         var otherPid = own with { Data = new Dictionary<string, string>(own.Data, StringComparer.OrdinalIgnoreCase) { ["ProcessId"] = "0x99" } };
@@ -395,7 +395,7 @@ public sealed class ClassifiedAccessTests
     [Fact]
     public void The_hashing_window_round_trips_through_the_audit_detail()
     {
-        var w = new SelfActivityWindow(T0, T0.AddMinutes(3), 1234, @"C:\x\LogAnalyzer.exe", "STATIE\\inspector", 12, "run-1");
+        var w = new SelfActivityWindow(T0, T0.AddMinutes(3), 1234, @"C:\x\LogAnalyzer.exe", "STATIE\\inspector", 12, "run-1", AppSha256: AppSha);
         var detail = LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashingDetail(w);
         Assert.True(LogAnalyzer.Dfir.Auth.OperationAudit.TryParseControlHashing(detail, out var back));
         Assert.Equal(w with { Files = 0 }, back with { Files = 0 });
@@ -457,7 +457,7 @@ public sealed class ClassifiedAccessTests
     [Fact]
     public void R5_a_hashing_window_hides_only_reads_under_the_classified_folders_never_writes_or_removable_media()
     {
-        var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 5, "run-1");
+        var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 5, "run-1", AppSha256: AppSha);
         var input = new ClassifiedInput
         {
             Folders = [new ClassifiedRoot(Root)], AppImagePath = Image, AppImageSha256 = AppSha, ImageSha256 = AppHashes, SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc, RemovableDrives = new HashSet<string>(["E:"], StringComparer.OrdinalIgnoreCase),
@@ -472,7 +472,7 @@ public sealed class ClassifiedAccessTests
     [Fact]
     public void R5_a_window_that_reads_more_files_than_it_hashed_is_invalid_and_hides_nothing()
     {
-        var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 1, "run-1");
+        var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 1, "run-1", AppSha256: AppSha);
         var rep = ClassifiedAccess.Analyze(new ClassifiedInput
         {
             Folders = [new ClassifiedRoot(Root)], AppImagePath = Image, AppImageSha256 = AppSha, ImageSha256 = AppHashes, SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc,
@@ -492,18 +492,18 @@ public sealed class ClassifiedAccessTests
         var dir = Path.Combine(AppContext.BaseDirectory, "classified-audit-" + Guid.NewGuid().ToString("N")[..8]);
         Directory.CreateDirectory(dir);
         var path = Path.Combine(dir, "audit.jsonl");
-        var ok = new SelfActivityWindow(T0, T0.AddMinutes(3), 77, Image, "inspector", 2, "run-A");
+        var ok = new SelfActivityWindow(T0, T0.AddMinutes(3), 77, Image, "inspector", 2, "run-A", AppSha256: AppSha);
         var outside = ok with { StartUtc = T0.AddHours(-5), EndUtc = T0.AddHours(-4.9), RunId = "run-A" };
         var tooLong = ok with { EndUtc = T0.AddHours(3), RunId = "run-B" };
         var noRun = ok with { RunId = "" };
         File.WriteAllLines(path,
         [
-            AuditLine("control.started", T0.AddMinutes(-1), LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail("Standalone", "Standalone", true, 30, 1, "run-A")),
+            AuditLine("control.started", T0.AddMinutes(-1), LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail("Standalone", "Standalone", true, 30, 1, "run-A", AppSha)),
             AuditLine("control.hashing", T0.AddMinutes(4), LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashingDetail(ok)),
             AuditLine("control.hashing", T0.AddMinutes(4), LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashingDetail(outside)),
             AuditLine("control.hashing", T0.AddMinutes(4), LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashingDetail(noRun)),
             AuditLine("control.finished", T0.AddMinutes(5), LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinishedDetail("WS", true, 1, 0, 0, 0, "run-A")),
-            AuditLine("control.started", T0.AddMinutes(-1), LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail("Standalone", "Standalone", true, 30, 1, "run-B")),
+            AuditLine("control.started", T0.AddMinutes(-1), LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail("Standalone", "Standalone", true, 30, 1, "run-B", AppSha)),
             AuditLine("control.hashing", T0.AddHours(3), LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashingDetail(tooLong)),
             AuditLine("control.finished", T0.AddHours(3.1), LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinishedDetail("WS", true, 1, 0, 0, 0, "run-B")),
         ]);
@@ -522,7 +522,7 @@ public sealed class ClassifiedAccessTests
     [Fact]
     public void R5b_a_hidden_read_still_makes_the_name_classified_so_the_same_process_writing_it_to_a_stick_is_an_exit()
     {
-        var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 5, "run-1");
+        var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 5, "run-1", AppSha256: AppSha);
         var rep = ClassifiedAccess.Analyze(new ClassifiedInput
         {
             Folders = [new ClassifiedRoot(Root)], AppImagePath = Image, AppImageSha256 = AppSha, ImageSha256 = AppHashes, SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc, RemovableDrives = new HashSet<string>(["E:"], StringComparer.OrdinalIgnoreCase),
@@ -536,7 +536,7 @@ public sealed class ClassifiedAccessTests
     [Fact]
     public void R5_a_window_whose_process_was_started_as_another_program_is_invalid()
     {
-        var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 5, "run-1");
+        var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 5, "run-1", AppSha256: AppSha);
         var start = new AccessRecord("event", "Security", 4688, T0.AddMinutes(-2), "Security 4688", new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             { ["NewProcessId"] = "0x4d2", ["NewProcessName"] = @"C:\Users\x\AppData\Local\Temp\tool.exe", ["SubjectUserName"] = "x" });
         var rep = ClassifiedAccess.Analyze(new ClassifiedInput { Folders = [new ClassifiedRoot(Root)], AppImagePath = Image, AppImageSha256 = AppSha, ImageSha256 = AppHashes, SelfWindows = [w], RegisterZone = TimeZoneInfo.Utc, Records = [start, Own(T0, @"D:\Clasificat\a.docx", "0x1")] });
@@ -558,7 +558,7 @@ public sealed class ClassifiedAccessTests
 
     private static string[] Control(string run, DateTimeOffset start, SelfActivityWindow w, DateTimeOffset end) =>
     [
-        AuditLine("control.started", start, LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail("Standalone", "Standalone", true, 30, 1, run)),
+        AuditLine("control.started", start, LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail("Standalone", "Standalone", true, 30, 1, run, w.AppSha256)),
         AuditLine("control.hashing", w.EndUtc, LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashingDetail(w)),
         AuditLine("control.finished", end, LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinishedDetail("WS", true, 1, 0, 0, 0, run)),
     ];
@@ -566,8 +566,8 @@ public sealed class ClassifiedAccessTests
     [Fact]
     public void R5_a_backdated_control_appended_to_the_chain_is_refused_and_the_clock_regression_is_reported()
     {
-        var honest = new SelfActivityWindow(T0, T0.AddMinutes(3), 77, Image, "inspector", 2, "run-A");
-        var forged = new SelfActivityWindow(T0.AddDays(-3), T0.AddDays(-3).AddMinutes(30), 999, Image, "admin", 500, "run-F");
+        var honest = new SelfActivityWindow(T0, T0.AddMinutes(3), 77, Image, "inspector", 2, "run-A", AppSha256: AppSha);
+        var forged = new SelfActivityWindow(T0.AddDays(-3), T0.AddDays(-3).AddMinutes(30), 999, Image, "admin", 500, "run-F", AppSha256: AppSha);
         var path = AuditFile([.. Control("run-A", T0.AddMinutes(-1), honest, T0.AddMinutes(5)), .. Control("run-F", T0.AddDays(-3).AddMinutes(-1), forged, T0.AddDays(-3).AddMinutes(40))]);
         var read = LogAnalyzer.Dfir.Auth.OperationAudit.ReadControlHashing(path, chainValid: true);
         Assert.Equal(honest, Assert.Single(read.Valid));
@@ -578,7 +578,7 @@ public sealed class ClassifiedAccessTests
     [Fact]
     public void R5_a_control_that_starts_before_the_preceding_audit_anchor_is_refused()
     {
-        var w = new SelfActivityWindow(T0.AddMinutes(1), T0.AddMinutes(3), 77, Image, "inspector", 2, "run-A");
+        var w = new SelfActivityWindow(T0.AddMinutes(1), T0.AddMinutes(3), 77, Image, "inspector", 2, "run-A", AppSha256: AppSha);
         // the anchor is one minute AFTER the start that follows it: inside the clock tolerance, but a control cannot start before the anchor that precedes it
         var path = AuditFile([AuditLine("audit.anchor", T0.AddMinutes(1), "anchor=AAAAA-BBBBB-CCCCC-DDDDD"), .. Control("run-A", T0, w, T0.AddMinutes(5))]);
         var read = LogAnalyzer.Dfir.Auth.OperationAudit.ReadControlHashing(path, chainValid: true);
@@ -601,7 +601,7 @@ public sealed class ClassifiedAccessTests
     public void A_window_naming_another_program_is_refused_even_without_a_4688_record()
     {
         const string tool = @"C:\Users\admin\copy.exe";
-        var forged = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x63, tool, "admin", 50, "run-F");
+        var forged = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x63, tool, "admin", 50, "run-F", AppSha256: AppSha);
         var rep = ClassifiedAccess.Analyze(new ClassifiedInput
         {
             Folders = [new ClassifiedRoot(Root)], RegisterZone = TimeZoneInfo.Utc, Records = [ToolRead(T0, tool)],
@@ -615,7 +615,7 @@ public sealed class ClassifiedAccessTests
     [Fact]
     public void A_window_naming_the_application_path_whose_file_has_another_fingerprint_is_refused()
     {
-        var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 5, "run-1");
+        var w = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 5, "run-1", AppSha256: AppSha);
         var input = new ClassifiedInput
         {
             Folders = [new ClassifiedRoot(Root)], RegisterZone = TimeZoneInfo.Utc, Records = [Own(T0, @"D:\Clasificat\a.docx", "0x1")],
@@ -631,5 +631,43 @@ public sealed class ClassifiedAccessTests
         {
             Folders = input.Folders, RegisterZone = TimeZoneInfo.Utc, Records = input.Records, AppImagePath = @"c:\program files\loganalyzer\LOGANALYZER.EXE", AppImageSha256 = AppSha, ImageSha256 = AppHashes, SelfWindows = [w],
         }).SelfActivity);
+    }
+
+    // ---- fifth review of PR #291 (P4): a window is accepted only if it was written by this build of the application --------------------------------
+
+    [Fact]
+    public void P4_a_window_written_by_another_build_or_without_a_recorded_build_fingerprint_is_refused()
+    {
+        var older = new SelfActivityWindow(T0.AddMinutes(-1), T0.AddMinutes(10), 0x4d2, Image, "inspector", 5, "run-1", AppSha256: new string('9', 64));
+        ClassifiedInput In(SelfActivityWindow w) => new()
+        {
+            Folders = [new ClassifiedRoot(Root)], RegisterZone = TimeZoneInfo.Utc, Records = [Own(T0, @"D:\Clasificat\a.docx", "0x1")],
+            AppImagePath = Image, AppImageSha256 = AppSha, ImageSha256 = AppHashes, SelfWindows = [w],
+        };
+        var rep = ClassifiedAccess.Analyze(In(older));
+        Assert.Empty(rep.SelfActivity);
+        Assert.Contains(rep.InvalidSelfWindows, x => x.Contains("fereastră scrisă de altă versiune a aplicației"));
+        var none = ClassifiedAccess.Analyze(In(older with { AppSha256 = "" }));
+        Assert.Empty(none.SelfActivity);
+        Assert.Contains(none.InvalidSelfWindows, x => x.Contains("fereastră scrisă de altă versiune a aplicației"));
+        Assert.Single(ClassifiedAccess.Analyze(In(older with { AppSha256 = AppSha })).SelfActivity);
+    }
+
+    [Fact]
+    public void P4_the_audit_accepts_a_window_only_when_its_build_fingerprint_equals_the_one_recorded_at_its_control_start()
+    {
+        var w = new SelfActivityWindow(T0, T0.AddMinutes(3), 77, Image, "inspector", 2, "run-A", AppSha256: AppSha);
+        var detail = LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashingDetail(w);
+        Assert.Contains("app_sha256=" + AppSha, detail);
+        string Start(string sha) => AuditLine("control.started", T0.AddMinutes(-1), LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail("Standalone", "Standalone", true, 30, 1, "run-A", sha));
+        string Hash(SelfActivityWindow x) => AuditLine("control.hashing", T0.AddMinutes(4), LogAnalyzer.Dfir.Auth.OperationAudit.ControlHashingDetail(x));
+        var end = AuditLine("control.finished", T0.AddMinutes(5), LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinishedDetail("WS", true, 1, 0, 0, 0, "run-A"));
+        Assert.Single(LogAnalyzer.Dfir.Auth.OperationAudit.ReadControlHashing(AuditFile(Start(AppSha), Hash(w), end), chainValid: true).Valid);
+        var other = LogAnalyzer.Dfir.Auth.OperationAudit.ReadControlHashing(AuditFile(Start(new string('9', 64)), Hash(w), end), chainValid: true);
+        Assert.Empty(other.Valid);
+        Assert.Contains(other.Invalid, x => x.Contains("fereastră scrisă de altă versiune a aplicației"));
+        var old = LogAnalyzer.Dfir.Auth.OperationAudit.ReadControlHashing(AuditFile(Start(""), Hash(w with { AppSha256 = "" }), end), chainValid: true);
+        Assert.Empty(old.Valid);
+        Assert.Contains(old.Invalid, x => x.Contains("fereastră scrisă de altă versiune a aplicației"));
     }
 }

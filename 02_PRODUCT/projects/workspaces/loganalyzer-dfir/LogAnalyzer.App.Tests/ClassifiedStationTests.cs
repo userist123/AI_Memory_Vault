@@ -225,7 +225,7 @@ public sealed class ClassifiedStationTests
     {
         var f = Station();
         const string image = @"C:\Program Files\LogAnalyzer\LogAnalyzer.exe";
-        f.SelfWindows.Add(new SelfActivityWindow(Now.AddDays(-1), Now.AddDays(-1).AddMinutes(2), 4242, image, "inspector", 1));
+        f.SelfWindows.Add(new SelfActivityWindow(Now.AddDays(-1), Now.AddDays(-1).AddMinutes(2), 4242, image, "inspector", 1, AppSha256: new string('c', 64)));
         f.AppImagePath = image;                                   // the running application's executable and its fingerprint
         f.AppImageSha256 = new string('c', 64);
         f.ImageSha256[image] = new string('c', 64);
@@ -337,5 +337,18 @@ public sealed class ClassifiedStationTests
         var c = Check(f, "A15");
         Assert.Equal(ControlStatus.DeVerificat, c.Status);
         Assert.Contains("înregistrări cu oră în urmă în jurnalul aplicației", c.Detail);
+    }
+
+    [Fact]
+    public void P3_the_residual_limit_is_stated_exactly_in_the_guides_and_the_editions_document()
+    {
+        const string residual = "un administrator care deține cheia de sigilare și poate scrie în folderul aplicației poate adăuga, după ultimul cod de ancorare, o fereastră falsă pe numele aplicației; ea poate ascunde citiri de fișiere clasificate ale oricărui proces pornit din calea executabilului aplicației (inclusiv un alt program pus temporar acolo), niciodată scrieri pe medii; protecția este ancora de pe procesul-verbal la controlul următor și protejarea folderului aplicației (doar Administratori/SYSTEM pot scrie)";
+        Assert.Contains(residual, CheckGuides.For("A14").Meaning);
+        Assert.Contains(residual, CheckGuides.For("A15").Meaning);
+        string? doc = null;
+        for (var d = new DirectoryInfo(AppContext.BaseDirectory); d is not null && doc is null; d = d.Parent)
+            if (File.Exists(Path.Combine(d.FullName, "docs", "dfir", "EDITIONS_AND_POSTURE.md"))) doc = File.ReadAllText(Path.Combine(d.FullName, "docs", "dfir", "EDITIONS_AND_POSTURE.md"));
+        Assert.Contains(residual, doc!);
+        Assert.DoesNotContain("poate ascunde doar citiri de fișiere clasificate făcute de procesul aplicației", doc!);
     }
 }

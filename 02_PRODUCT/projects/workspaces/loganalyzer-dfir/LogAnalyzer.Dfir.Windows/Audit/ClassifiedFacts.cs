@@ -89,7 +89,7 @@ public static class ClassifiedFactCollector
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { unreadable++; }
             }
         using (var id = System.Security.Principal.WindowsIdentity.GetCurrent())
-            f.SelfWindow = new SelfActivityWindow(start, DateTimeOffset.UtcNow, Environment.ProcessId, Environment.ProcessPath ?? "", id.Name, hashes.Count);
+            f.SelfWindow = new SelfActivityWindow(start, DateTimeOffset.UtcNow, Environment.ProcessId, Environment.ProcessPath ?? "", id.Name, hashes.Count, AppSha256: AppSha256());
         if (files.Count >= MaxFiles)
             f.Gaps.Add(new LogAnalyzer.Dfir.Model.EvidenceGap("Fișierele din folderele clasificate", LogAnalyzer.Dfir.Model.EvidenceStatus.Partial, $"limitat la {MaxFiles} fișiere",
                 "Copiile fișierelor care nu au fost listate se recunosc doar dacă accesul lor a fost auditat", "Listarea completă a folderelor", "Da"));
@@ -116,6 +116,13 @@ public static class ClassifiedFactCollector
     /// SHA-256 of a file opened for reading with FILE_WRITE_ATTRIBUTES only so that SetFileTime(-1) can switch off the last-access update for this handle; when
     /// that open is refused the file is read normally and <c>kept</c> is false. Nothing is written to the file.
     /// </summary>
+    /// <summary>SHA-256 of the running application's executable (the build fingerprint written with each hashing window); "" when it cannot be read.</summary>
+    public static string AppSha256()
+    {
+        try { return Environment.ProcessPath is { } p && File.Exists(p) ? LogAnalyzer.Dfir.IO.Hashing.Sha256File(p) : ""; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return ""; }
+    }
+
     internal static (string Sha256, bool Kept) HashKeepingAccessTime(string path)
     {
         const uint GenericRead = 0x80000000, FileWriteAttributes = 0x100, OpenExisting = 3, ShareAll = 0x7, SequentialScan = 0x08000000;
