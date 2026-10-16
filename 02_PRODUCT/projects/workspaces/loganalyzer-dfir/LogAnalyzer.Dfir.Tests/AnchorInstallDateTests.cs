@@ -130,6 +130,30 @@ public sealed class AnchorInstallDateTests : IDisposable
         Assert.Equal(Installed, AnchoredInstallDate.At(_audit.AuditPath, paper).Utc);
     }
 
+    [Fact]
+    public void A_code_typed_from_paper_that_the_log_no_longer_contains_is_not_reported_as_missing()
+    {
+        Anchor(Installed);
+        var code = AuditAnchor.Current(_audit.AuditPath)!.Code;      // the code the officer has on paper (any entry of the old log)
+        // the log is reinitialised: a new chain from zero
+        File.Delete(_audit.AuditPath);
+        File.Delete(HashChain.HeadPath(_audit.AuditPath));
+        _audit.AuditOperation(null, OperationAudit.ControlFinished, "host=ST-1");
+        var cont = AuditAnchor.Verify(_audit.AuditPath, code);
+        Assert.Equal(AnchorContinuityStatus.Rewritten, cont.Status);
+        var at = AnchoredInstallDate.For(_audit.AuditPath, cont, fromStation: false);
+        Assert.False(at.Determinable);
+        Assert.Contains("nu mai conține codul de pe procesul-verbal (vezi A11)", at.Why);
+        var a16 = A16(Facts(Installed, at));
+        Assert.Equal(ControlStatus.Nedeterminat, a16.Status);
+        Assert.Contains("nu mai conține codul de pe procesul-verbal (vezi A11)", a16.Detail);
+        Assert.DoesNotContain("nu s-a introdus", a16.Detail);
+        // no code typed: still said as such
+        Assert.Contains("nu s-a introdus", AnchoredInstallDate.For(_audit.AuditPath, AuditAnchor.Verify(_audit.AuditPath, ""), false).Why);
+        // the station's proposal is not a typed code
+        Assert.Contains("propus de stație", AnchoredInstallDate.For(_audit.AuditPath, cont with { Status = AnchorContinuityStatus.Continuous, MatchedSeq = 1 }, fromStation: true).Why);
+    }
+
     [Theory]
     [InlineData(StationPosture.Standalone)]
     [InlineData(StationPosture.IsolatedNetwork)]
