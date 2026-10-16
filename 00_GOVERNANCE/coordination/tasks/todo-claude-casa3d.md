@@ -1,5 +1,22 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-16T19:38:29Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-16T21:40:00Z
+ROUND 8 (2026-10-16, route route_123af915ca60): COMMITTED LOCALLY 40c59705 on casa3d-ui-round7, NOT pushed, no review yet.
+  Neighbour resize: core/room-neighbours.ts (edgeGroup: rooms whose opposite edge is on the moved line within 1 cm and
+  overlap > 1 cm, closed transitively along the line; clampEdge: neighbours never below 60 cm, drag clamps instead of
+  refusing). resizeRoom(..., { neighbours: true }) moves walls once over the group's whole span (shared wall, its openings,
+  perpendicular walls on both sides). Editor width/length inputs + new plan edge handles (PlanView data-k=redge, hit area
+  >= 44 px) use it; one undo step; per level. tests/room-neighbours.test.ts (11 cases incl. all templates fuzz).
+  Found while verifying: the save chip growing to "Modificari nesalvate" wrapped the topbar (1366: +44 px, 390: +52 px),
+  shifting the plan under the pointer mid-drag; status now has a fixed width (172 px, 112 px < 640).
+  Stage bar: arrows + fade edges whenever it overflows (measured in Editor, arrows' width discounted so they hide again),
+  tighter buttons 1024-1279, focus scrolls the stage into view. Verified 1920/1366 fit, 1024/768/390 scroll.
+  New project language: the plumbing already existed (client sends lang); hardened: projectLang() (client lang, else
+  Accept-Language, else ro), newProjectRequest() default name per language, click before prefs load uses storedLang().
+  Server still refuses a blank name (existing repo test). tests/project-lang.test.ts.
+  Evidence: vitest 573/573, tsc 0; shots r8-*.png in the session scratchpad (drags via synthetic PointerEvents with
+  setPointerCapture stubbed, not real OS input). No console errors; no horizontal scroll at 390/768.
+  NEXT: independent review of 40c59705, then push. FOLLOW-UP: dragging an edge shared along a long line (e.g. demo x=3.2)
+  moves every room chained on that line, by design; owner may want a modifier to resize one room only.
 ROUND 7 (UI, 2026-10-16): PUSHED to codex/casa3d-memory (head 35196f30), PC updated, doctor all OK.
   DONE 131740ed: stages grouped in phases (Releveu/Concept/Detaliere/Livrare, core/stage-progress.ts) with a done dot
   derived from project data + rule text + Continue button (sidebar and <1024px bottom sheet); command palette Ctrl/Cmd+K +
