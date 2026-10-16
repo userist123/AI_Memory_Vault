@@ -71,4 +71,25 @@ public sealed class QuickControlPeriodTests : IDisposable
         var p = ControlPeriodStart.From(log, "", Now);
         Assert.Equal(90, p.Days);
     }
+
+    [Fact]
+    public void A_control_finished_appended_without_the_seal_key_does_not_shorten_the_period()
+    {
+        // re-review of PR #298: someone without the key appends a plain-valid „control.finished” dated yesterday; the sealed check refuses it
+        var log = Path.Combine(_dir, "sealed_audit.jsonl");
+        HashChain.RegisterHeadSeal(log, System.Security.Cryptography.RandomNumberGenerator.GetBytes(32));
+        var sealedChain = new HashChain(log);
+        sealedChain.Append(new { Event = "control.finished", Detail = "d", WhenUtc = Now.AddDays(-30).UtcDateTime.ToString("o") });
+        Assert.Equal(30, ControlPeriodStart.From(log, "", Now).Days);              // sealed and intact: the last control counts
+
+        var outside = Path.Combine(_dir, "copy_without_key.jsonl");                  // the same file, written by a process that has no key
+        File.Copy(log, outside);
+        new HashChain(outside).Append(new { Event = "control.finished", Detail = "d", WhenUtc = Now.AddDays(-1).UtcDateTime.ToString("o") });
+        File.Copy(outside, log, overwrite: true);
+        Assert.Equal(ChainStatus.Valid, new HashChain(log).VerifyPlainChain().Status);   // the plain chain alone cannot see it
+
+        var p = ControlPeriodStart.From(log, "", Now);
+        Assert.Equal(90, p.Days);
+        Assert.Contains("jurnalul nu poate fi verificat (sigiliu) — perioada implicită 90 de zile", p.Basis);
+    }
 }
