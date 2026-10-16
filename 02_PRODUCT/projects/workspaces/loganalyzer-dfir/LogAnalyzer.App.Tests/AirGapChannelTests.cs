@@ -351,6 +351,17 @@ public class AirGapChannelTests
     }
 
     [Fact]
+    public void The_upload_thresholds_come_from_the_data_pack_channels_section_and_default_without_it()
+    {
+        var d = LogAnalyzer.Dfir.Analysis.Wp14Data.FromJson("""{ "channels": { "srumUploadBytesPerDay": 524288000, "srumMedianFactor": 8, "srumMinDays": 7, "srumMaxFindings": 3 } }""");
+        Assert.Equal(524288000, d.Channels.SrumUploadBytesPerDay);
+        Assert.Equal(8, d.Channels.SrumMedianFactor);
+        Assert.Equal(7, d.Channels.SrumMinDays);
+        Assert.Equal(3, d.Channels.SrumMaxFindings);
+        Assert.Equal(100L * 1024 * 1024, LogAnalyzer.Dfir.Analysis.Wp14Data.FromJson("{}").Channels.SrumUploadBytesPerDay);
+    }
+
+    [Fact]
     public void The_most_recent_WinRAR_entry_on_the_removable_drive_takes_the_time_its_list_was_last_written()
     {
         var t = P0.AddDays(-2);
