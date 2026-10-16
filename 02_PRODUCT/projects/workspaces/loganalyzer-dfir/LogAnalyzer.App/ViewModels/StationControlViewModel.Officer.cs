@@ -90,10 +90,12 @@ namespace LogAnalyzer.UI.ViewModels
             facts.PreviousAnchor = AuditAnchor.Verify(auditPath, previousCode);
             facts.PreviousAnchorFromStation = fromStation;
             // A13: the baseline is the anchor TYPED from the paper (never the code the station proposes)
-            long? paperSeq = !fromStation && facts.PreviousAnchor.Status == AnchorContinuityStatus.Continuous ? facts.PreviousAnchor.MatchedSeq : null;
-            try { facts.OfficerAssessment = OfficerState.Assess(auditPath, paperSeq, OfficerState.Current().Detail); }
+            // a code typed from paper that the log no longer contains is said as such (see A11), never as "no code typed"
+            var noBaseline = AnchoredInstallDate.NoBaselineReason(facts.PreviousAnchor, fromStation);
+            long? paperSeq = noBaseline is null ? facts.PreviousAnchor.MatchedSeq : null;
+            try { facts.OfficerAssessment = OfficerState.Assess(auditPath, paperSeq, OfficerState.Current().Detail, noBaseline); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { facts.OfficerAssessment = null; }
-            try { facts.InstallAtPaperAnchor = AnchoredInstallDate.At(auditPath, paperSeq); facts.CurrentChain = AuditAnchor.ChainIdentityOf(auditPath); }
+            try { facts.InstallAtPaperAnchor = AnchoredInstallDate.For(auditPath, facts.PreviousAnchor, fromStation); facts.CurrentChain = AuditAnchor.ChainIdentityOf(auditPath); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { facts.InstallAtPaperAnchor = null; }
         }
 
