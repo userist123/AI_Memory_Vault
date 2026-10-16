@@ -27,9 +27,9 @@ public sealed class CollectorExecTests : IDisposable
     private static string Line(string ev, DateTimeOffset when, string detail) =>
         System.Text.Json.JsonSerializer.Serialize(new { Event = ev, WhenUtc = when, Detail = detail });
 
-    private static string[] Exec(string id, string run, DateTimeOffset start, DateTimeOffset? end, string exe = Reg, string cmd = Cmd, string script = "", string appSha = "") =>
+    private static string[] Exec(string id, string run, DateTimeOffset start, DateTimeOffset? end, string exe = Reg, string cmd = Cmd, string script = "", string appSha = "", string exeSha = "") =>
     [
-        Line(CollectorExec.Exec, start, CollectorExec.ExecDetail(id, run, AppPid, appSha.Length > 0 ? appSha : AppSha, ExeSha, script, exe, cmd)),
+        Line(CollectorExec.Exec, start, CollectorExec.ExecDetail(id, run, AppPid, appSha.Length > 0 ? appSha : AppSha, exeSha.Length > 0 ? exeSha : ExeSha, script, exe, cmd)),
         .. end is { } e ? new[] { Line(CollectorExec.ExecDone, e, CollectorExec.DoneDetail(id, run, ChildPid, 0, e)) } : [],
     ];
 
@@ -47,8 +47,12 @@ public sealed class CollectorExecTests : IDisposable
         return p;
     }
 
+    /// <summary>The synthetic reg.exe of these tests stands for an inventory program whose file has the recorded hash (the real check: the two inventory tests below).</summary>
+    private static OperationAudit.CollectorExecs Read(string path, bool chainValid) =>
+        OperationAudit.ReadCollectorExecs(path, chainValid, inventory: [Reg], currentSha256: p => p.Equals(Reg, StringComparison.OrdinalIgnoreCase) ? ExeSha : "");
+
     private OperationAudit.CollectorExecs Honest() =>
-        OperationAudit.ReadCollectorExecs(Audit(Control("run-A", T0, T0.AddMinutes(20), Exec("x1", "run-A", T0.AddMinutes(1), T0.AddMinutes(2)))), chainValid: true);
+        Read(Audit(Control("run-A", T0, T0.AddMinutes(20), Exec("x1", "run-A", T0.AddMinutes(1), T0.AddMinutes(2)))), chainValid: true);
 
     private static ProcessObservation Start4688(DateTimeOffset t, int pid = ChildPid, int parent = AppPid, string image = Reg, string cmd = Cmd, string sha = "") =>
         new(t, "4688", pid, parent, image, cmd, sha);
@@ -101,7 +105,7 @@ public sealed class CollectorExecTests : IDisposable
             .. Exec("f2", "", T0.AddHours(3), T0.AddHours(3).AddMinutes(1)),          // no control at all
             .. Exec("f3", "run-Z", T0.AddHours(4), T0.AddHours(4).AddMinutes(1)),     // a control that was never started
         ];
-        var execs = OperationAudit.ReadCollectorExecs(Audit(lines), chainValid: true);
+        var execs = Read(Audit(lines), chainValid: true);
         Assert.Empty(execs.Valid);
         Assert.Equal(3, execs.Refused.Count);
         var m = SelfExecMatcher.Classify(Start4688(T0.AddHours(2).AddSeconds(10)), execs);
@@ -121,14 +125,14 @@ public sealed class CollectorExecTests : IDisposable
             Exec("ok", "run-A", T0.AddMinutes(7), T0.AddMinutes(8)),
             Exec("n2", "run-A", T0.AddMinutes(9), T0.AddMinutes(20)))];
         var path = Audit(lines);
-        var execs = OperationAudit.ReadCollectorExecs(path, chainValid: true);
+        var execs = Read(path, chainValid: true);
         Assert.Equal("ok", Assert.Single(execs.Valid).ExecId);
         var why = execs.Refused.ToDictionary(x => x.Record.ExecId, x => x.Why);
         Assert.Contains("sfârșit", why["n1"]);
         Assert.Contains("10 minute", why["n2"]);
         Assert.Contains("altă versiune", why["n3"]);
         Assert.Contains("calea lui completă", why["n4"]);
-        var broken = OperationAudit.ReadCollectorExecs(path, chainValid: false);
+        var broken = Read(path, chainValid: false);
         Assert.Empty(broken.Valid);
         Assert.All(broken.Refused, x => Assert.Contains("nu se verifică", x.Why));
     }
@@ -137,7 +141,7 @@ public sealed class CollectorExecTests : IDisposable
     public void A_backdated_record_after_a_clock_regression_is_refused()
     {
         string[] lines = [.. Control("run-A", T0, T0.AddMinutes(20)), .. Control("run-B", T0.AddDays(-2), T0.AddDays(-2).AddMinutes(20), Exec("b1", "run-B", T0.AddDays(-2).AddMinutes(1), T0.AddDays(-2).AddMinutes(2)))];
-        var execs = OperationAudit.ReadCollectorExecs(Audit(lines), chainValid: true);
+        var execs = Read(Audit(lines), chainValid: true);
         Assert.Empty(execs.Valid);
         Assert.Contains("oră în urmă", Assert.Single(execs.Refused).Why);
     }
@@ -146,7 +150,7 @@ public sealed class CollectorExecTests : IDisposable
     public void A_script_block_is_the_applications_only_when_its_hash_is_the_recorded_script_hash()
     {
         var sha = CollectorExec.ScriptSha256(Script);
-        var execs = OperationAudit.ReadCollectorExecs(Audit(Control("run-A", T0, T0.AddMinutes(20), Exec("s1", "run-A", T0.AddMinutes(1), T0.AddMinutes(3), script: sha))), chainValid: true);
+        var execs = Read(Audit(Control("run-A", T0, T0.AddMinutes(20), Exec("s1", "run-A", T0.AddMinutes(1), T0.AddMinutes(3), script: sha))), chainValid: true);
         ProcessObservation Block(string text, int pid = ChildPid, double min = 2) => new(T0.AddMinutes(min), "4104", pid, 0, "", "", "", text);
         Assert.Equal(SelfExecKind.Own, SelfExecMatcher.Classify(Block(Script.Replace("\n", "\r\n")), execs).Kind);   // line endings do not matter
         Assert.Equal(SelfExecKind.Own, SelfExecMatcher.Classify(Block(Script, pid: 0), execs).Kind);
@@ -176,7 +180,7 @@ public sealed class CollectorExecTests : IDisposable
         { ["NewProcessId"] = "0x" + pid.ToString("x"), ["ProcessId"] = "0x" + parent.ToString("x"), ["NewProcessName"] = Reg, ["CommandLine"] = cmd, ["SubjectUserName"] = "inspector" });
 
     private OperationAudit.CollectorExecs ScriptRun(bool valid) =>
-        OperationAudit.ReadCollectorExecs(Audit(valid
+        Read(Audit(valid
             ? Control("run-A", T0, T0.AddMinutes(20), Exec("s1", "run-A", T0.AddMinutes(1), T0.AddMinutes(3), script: CollectorExec.ScriptSha256(Abused)), Exec("r1", "run-A", T0.AddMinutes(4), T0.AddMinutes(5)))
             : [.. Control("run-A", T0, T0.AddMinutes(20)), .. Exec("s1", "run-A", T0.AddHours(1), T0.AddHours(1).AddMinutes(2), script: CollectorExec.ScriptSha256(Abused))]), chainValid: true);
 
@@ -221,6 +225,54 @@ public sealed class CollectorExecTests : IDisposable
         var r = ControlEvaluator.Evaluate(Station(null, Block(T0.AddMinutes(2), Abused)));
         Assert.Equal(ControlStatus.DeVerificat, Assert.Single(r.Checks, c => c.Id == "U06").Status);
         Assert.DoesNotContain(r.Checks, c => c.Id == "A17");
+    }
+
+    // ---- review of PR #296: only the programs of the application's fixed inventory, with the hash their file has now ----
+
+    [Fact]
+    public void A_record_naming_a_program_outside_the_fixed_inventory_is_refused_and_its_event_is_only_claimed()
+    {
+        const string exfil = @"C:\Tools\exfil.exe";
+        const string cmd = "\"C:\\Tools\\exfil.exe\" E:\\";
+        var path = Audit(Control("run-A", T0, T0.AddMinutes(20), Exec("x9", "run-A", T0.AddMinutes(1), T0.AddMinutes(2), exe: exfil, cmd: cmd)));
+        var execs = OperationAudit.ReadCollectorExecs(path, chainValid: true);
+        Assert.Empty(execs.Valid);
+        Assert.Contains("inventar", Assert.Single(execs.Refused).Why);
+        var ev = new LogFact("Security", 4688, T0.AddMinutes(1.5), 9, "S-1-5-18", new Dictionary<string, string>
+            { ["NewProcessId"] = "0x" + ChildPid.ToString("x"), ["ProcessId"] = "0x" + AppPid.ToString("x"), ["NewProcessName"] = exfil, ["CommandLine"] = cmd });
+        var r = ControlEvaluator.Evaluate(Station(execs, ev));
+        var a17 = Assert.Single(r.Checks, c => c.Id == "A17");
+        Assert.Equal(ControlStatus.DeVerificat, a17.Status);
+        Assert.Contains(SelfExecMatcher.ClaimedLabel, a17.Detail);
+        Assert.Contains(r.Facts.Logs, l => l.RecordId == 9);      // stays with the other checks
+        Assert.Empty(r.Facts.OwnActivity);
+    }
+
+    [Fact]
+    public void An_inventory_program_is_accepted_only_while_its_file_has_the_recorded_hash()
+    {
+        var reg = Path.Combine(Environment.SystemDirectory, "reg.exe");
+        var real = CollectorExec.FileSha256(reg);
+        Assert.Equal(64, real.Length);
+        var cmd = "\"" + reg + "\" query HKLM";
+        var ok = OperationAudit.ReadCollectorExecs(Audit(Control("run-A", T0, T0.AddMinutes(20), Exec("g1", "run-A", T0.AddMinutes(1), T0.AddMinutes(2), exe: reg.ToUpperInvariant(), cmd: cmd, exeSha: real))), chainValid: true);
+        Assert.Single(ok.Valid);
+        // the same program with another hash (the file was replaced, or the record lies about it)
+        var bad = OperationAudit.ReadCollectorExecs(Audit(Control("run-A", T0, T0.AddMinutes(20), Exec("g2", "run-A", T0.AddMinutes(1), T0.AddMinutes(2), exe: reg, cmd: cmd, exeSha: new string('f', 64)))), chainValid: true);
+        Assert.Empty(bad.Valid);
+        Assert.Contains("amprent", Assert.Single(bad.Refused).Why);
+        // the fixed inventory: by location, not by name
+        Assert.True(CollectorExec.InInventory(Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe").ToLowerInvariant()));
+        Assert.True(CollectorExec.InInventory(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windows Defender", "MpCmdRun.exe")));
+        Assert.False(CollectorExec.InInventory(@"C:\Users\Public\reg.exe"));
+        Assert.False(CollectorExec.InInventory(Path.Combine(Environment.SystemDirectory, "cmd.exe")));
+        Assert.False(CollectorExec.InInventory(Path.Combine(Environment.SystemDirectory, "..", "Temp", "reg.exe")));
+        Assert.False(CollectorExec.InInventory("reg.exe"));
+        // the firewall tool is in the inventory only of the editions that ship its runner (they add it at composition)
+        var fw = Path.Combine(Environment.SystemDirectory, "netsh.exe");
+        CollectorExec.AddToInventory(fw);
+        Assert.True(CollectorExec.InInventory(fw.ToUpperInvariant()));
+        Assert.Throws<ArgumentException>(() => CollectorExec.AddToInventory("netsh.exe"));
     }
 
     [Fact]

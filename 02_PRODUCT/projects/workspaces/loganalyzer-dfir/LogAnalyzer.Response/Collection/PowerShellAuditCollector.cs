@@ -33,6 +33,29 @@ namespace LogAnalyzer.Response.Collection
 
         public static bool IsValidHostname(string? hostname) => hostname is not null && HostnameRegex.IsMatch(hostname);
 
+        private static readonly Lazy<string> BuildSha = new(() =>
+        {
+            using var s = typeof(PowerShellAuditCollector).Assembly.GetManifestResourceStream("LogAnalyzer.Response.Scripts.AuditCollector.ps1");
+            return s is null ? "" : Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(s));
+        });
+
+        /// <summary>SHA-256 of the collection script as it was when this assembly was built (embedded resource); empty if the resource is missing.</summary>
+        public static string BuildScriptSha256 => BuildSha.Value;
+
+        /// <summary>
+        /// Why the script at <paramref name="scriptPath"/> must not be started (null = it is byte for byte the script of the build). Checked before every start:
+        /// a script changed after the build is refused, so the only script the application runs is the one whose hash is recorded in "collector.exec".
+        /// </summary>
+        public static string? ScriptRefusal(string scriptPath)
+        {
+            if (BuildScriptSha256.Length != 64) return "[ERROR] Amprenta scriptului de colectare nu există în aplicație (resursă lipsă); colectarea nu pornește.";
+            string actual;
+            try { actual = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(scriptPath))); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return $"[ERROR] Scriptul de colectare nu poate fi citit ({ex.Message}); colectarea nu pornește."; }
+            return actual == BuildScriptSha256 ? null
+                : $"[ERROR] Scriptul de colectare a fost modificat după construirea aplicației: amprenta SHA-256 a fișierului este {actual}, cea a versiunii livrate este {BuildScriptSha256}. Colectarea nu pornește; reinstalați pachetul.";
+        }
+
         /// <summary>
         /// The process start for the collection script: every value is one element of <see cref="ProcessStartInfo.ArgumentList"/>, so .NET quotes it
         /// (a trailing backslash such as "E:\", spaces, quotes) and nothing typed by the operator can add or shift script parameters.
@@ -81,6 +104,12 @@ namespace LogAnalyzer.Response.Collection
                     if (!File.Exists(scriptPath))
                     {
                         logCallback($"[ERROR] Scriptul de colectare (livrat în pachet, Scripts\\AuditCollector.ps1) nu a fost găsit la: {scriptPath}. Reinstalați pachetul; colectarea nu caută în alte locații.");
+                        return;
+                    }
+
+                    if (ScriptRefusal(scriptPath) is { } refused)
+                    {
+                        logCallback(refused);
                         return;
                     }
 

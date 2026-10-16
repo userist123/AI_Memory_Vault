@@ -136,10 +136,14 @@ public static class OperationAudit
     /// The "collector.exec" records of the sealed audit with their "collector.exec_done". A record is accepted only on the same terms as a hashing window: the
     /// chain verifies, no backdated record before it, it names its control (run id), it lies between that control's start and end, it was written by the
     /// executable recorded at the start of that control, the control starts after the anchor before it; and moreover the record has the application's
-    /// process id, the executable's full path and SHA-256, its end record (child process id) and the program ran at most <see cref="MaxExecWindow"/>.
+    /// process id, the executable's full path and SHA-256 (a program of the fixed inventory whose file has that hash now), its end record (child process id) and the program ran at most <see cref="MaxExecWindow"/>.
     /// </summary>
-    public static CollectorExecs ReadCollectorExecs(string auditPath, bool chainValid)
+    /// <param name="inventory">The programs a record may name (default <see cref="CollectorExec.Inventory"/>); a record naming any other program is refused.</param>
+    /// <param name="currentSha256">SHA-256 of the file now at a path (default <see cref="CollectorExec.FileSha256"/>): it must equal the recorded hash.</param>
+    public static CollectorExecs ReadCollectorExecs(string auditPath, bool chainValid, IReadOnlyCollection<string>? inventory = null, Func<string, string>? currentSha256 = null)
     {
+        inventory ??= CollectorExec.Inventory();
+        currentSha256 ??= CollectorExec.FileSha256;
         var result = CollectorExecs.Empty;
         if (!File.Exists(auditPath)) return result;
         var scan = Scan(auditPath);
@@ -154,6 +158,8 @@ public static class OperationAudit
                 : r.AppPid <= 0 ? "nu are procesul aplicației"
                 : !Path.IsPathFullyQualified(r.Exe) ? "programul nu este dat prin calea lui completă"
                 : !IsSha256(r.ExeSha256) ? "nu are amprenta SHA-256 a programului pornit"
+                : !CollectorExec.InInventory(r.Exe, inventory) ? "programul nu face parte din inventarul fix al aplicației (instrumentele Windows pe care le pornește, la locul lor)"
+                : !currentSha256(r.Exe).Equals(r.ExeSha256, StringComparison.OrdinalIgnoreCase) ? "fișierul programului nu are acum amprenta SHA-256 consemnată"
                 : r.EndUtc is not { } end || r.ChildPid <= 0 ? "nu are înregistrarea de sfârșit (procesul pornit și codul de ieșire)"
                 : end < r.StartUtc || end - r.StartUtc > MaxExecWindow ? $"a rulat mai mult de {MaxExecWindow.TotalMinutes:0} minute sau se termină înainte să înceapă"
                 : end > scan.Finished[r.RunId] ? "se termină după sfârșitul controlului ei"

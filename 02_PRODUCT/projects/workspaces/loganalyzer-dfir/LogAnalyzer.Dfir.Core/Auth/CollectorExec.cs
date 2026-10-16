@@ -155,6 +155,52 @@ public static class CollectorExec
         sb.Append('"');
     }
 
+    // ---- the fixed inventory ----
+
+    /// <summary>
+    /// The only programs a "collector.exec" record may name to be accepted as the application's own (review of PR #296): the Windows tools the application
+    /// starts, by their fixed location (System32 from <see cref="Environment.SystemDirectory"/>, Defender under Program Files). Any other program is refused.
+    /// </summary>
+    public static IReadOnlyList<string> Inventory()
+    {
+        var sys = Environment.SystemDirectory;
+        string[] extra;
+        lock (Extra) extra = [.. Extra];
+        return
+        [
+            .. new[] { "reg.exe", "esentutl.exe", "bcdedit.exe", "auditpol.exe" }.Select(n => Path.Combine(sys, n)),
+            Path.Combine(sys, "WindowsPowerShell", "v1.0", "powershell.exe"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windows Defender", "MpCmdRun.exe"),
+            .. extra,
+        ];
+    }
+
+    private static readonly List<string> Extra = [];
+
+    /// <summary>
+    /// Adds a program to the inventory: called only by the composition of an edition that ships the code starting it (the firewall tool of the
+    /// Unclassified and Network editions). The Standalone edition has no such code and adds nothing.
+    /// </summary>
+    public static void AddToInventory(string fullPath)
+    {
+        if (!Path.IsPathFullyQualified(fullPath)) throw new ArgumentException("The inventory takes full paths only.", nameof(fullPath));
+        lock (Extra) if (!Extra.Contains(fullPath, StringComparer.OrdinalIgnoreCase)) Extra.Add(fullPath);
+    }
+
+    /// <summary>True when <paramref name="exe"/> is, after normalisation and ignoring case, one of the inventory paths.</summary>
+    public static bool InInventory(string exe, IEnumerable<string>? inventory = null)
+    {
+        var n = Normalize(exe);
+        return n.Length > 0 && (inventory ?? Inventory()).Any(i => Normalize(i).Equals(n, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string Normalize(string path)
+    {
+        path = path.Trim().Trim('"');
+        try { return Path.IsPathFullyQualified(path) ? Path.GetFullPath(path) : ""; }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException) { return ""; }
+    }
+
     // ---- hashes ----
 
     public static string FileSha256(string path)
