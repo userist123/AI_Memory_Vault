@@ -59,8 +59,9 @@ namespace LogAnalyzer.Response.Collection
         /// <summary>The script hash in the form "collector.exec" records it (text, line endings as "\n") of the script embedded at build time.</summary>
         public static string BuildScriptBlockSha256 => BuildBlockSha.Value;
 
+        // "\z", not "$": a trailing line feed must not let a different command line match (finding B6)
         private static readonly System.Text.RegularExpressions.Regex ArgumentTail = new(
-            @"^(PC|Server|NAS|DataCenter) -OutputDirectory (""(?:[^""\\]|\\.)*""|[^\s""]+) -Hostname ([A-Za-z0-9][A-Za-z0-9._-]{0,62})$",
+            @"^(PC|Server|NAS|DataCenter) -OutputDirectory (""(?:[^""\\]|\\.)*""|[^\s""]+) -Hostname ([A-Za-z0-9][A-Za-z0-9._-]{0,62})\z",
             System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
 
         /// <summary>

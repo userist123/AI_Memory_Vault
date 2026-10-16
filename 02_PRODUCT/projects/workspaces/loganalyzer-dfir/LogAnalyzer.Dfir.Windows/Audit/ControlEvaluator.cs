@@ -84,7 +84,37 @@ public static partial class ControlEvaluator
         // The posture of the executable decides which rules apply: the rest become "Nu se aplică" (never counted as findings).
         for (var i = 0; i < r.Checks.Count; i++) r.Checks[i] = ControlApplicability.Resolve(r.Checks[i], f.Posture);
         r.Actions.Sort((a, b) => a.TimeUtc.CompareTo(b.TimeUtc));
+        if (!f.IsAdministrator) ApplyRightsLimitation(r);
         return r;
+    }
+
+    /// <summary>What the security-log checks cannot tell without administrator rights (finding B2), by check id.</summary>
+    private static readonly Dictionary<string, string> RightsDependentChecks = new(StringComparer.Ordinal)
+    {
+        ["A05"] = "dacă s-au șters jurnale",
+        ["U01"] = "dacă s-a modificat grupul Administrators",
+        ["U02"] = "dacă s-au creat, șters sau modificat conturi",
+        ["U03"] = "dacă au existat autentificări de la distanță",
+        ["U04"] = "dacă au existat serii de parole greșite",
+    };
+
+    /// <summary>The detail of a check left NEDETERMINAT because the control ran without administrator rights (links to the rights limitation of the conclusion).</summary>
+    public static string RightsRequiredDetail(string whatIsUnknown) =>
+        $"Rezultatul necesită drepturi de administrator: jurnalul de securitate nu a putut fi citit fără ele, deci nu se poate spune {whatIsUnknown}. " +
+        "Aceasta este limitarea de drepturi din concluzie; rulați aplicația ca administrator și repetați controlul.";
+
+    /// <summary>
+    /// Only for a run WITHOUT administrator rights: a security-log check left NEDETERMINAT says that the result needs administrator rights, so it is recognised
+    /// as the rights limitation (ControlConclusion) instead of reading like a clean "none recorded". Elevated runs keep their own results untouched.
+    /// </summary>
+    private static void ApplyRightsLimitation(ControlReport r)
+    {
+        for (var i = 0; i < r.Checks.Count; i++)
+        {
+            var c = r.Checks[i];
+            if (c.Status == ControlStatus.Nedeterminat && RightsDependentChecks.TryGetValue(c.Id, out var what))
+                r.Checks[i] = c with { Detail = RightsRequiredDetail(what) };
+        }
     }
 
     // ---- helpers ----------------------------------------------------------------------------------------------

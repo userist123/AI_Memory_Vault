@@ -355,7 +355,15 @@ namespace LogAnalyzer.UI.ViewModels
                         ((IProgress<string>)progress).Report($"Import {files.Count} fișiere (copii; originalele nu se modifică)");
                         InvestigationPipeline.Import(ws, files);
                     }
-                    return new InvestigationPipeline().Run(ws, profile, collect, progress, _cts.Token, systemZone: zone);
+                    // B7: a signed media register in the case folder is verified like on the live path; an invalid one is not used and the reason is shown
+                    LogAnalyzer.Dfir.Registers.MediaRegister? signedMedia = null;
+                    if (LogAnalyzer.UI.Services.MediaRegisterFlows.FromCase(ws.Root) is { } signedInCase)
+                    {
+                        ((IProgress<string>)progress).Report(signedInCase.Note);
+                        ws.Audit(signedInCase.Used ? "register.signed_media_used" : "register.signed_media_refused", signedInCase.Note);
+                        if (signedInCase.Used) signedMedia = LogAnalyzer.Dfir.Registers.SignedMediaRegisterCase.ToMediaRegister(signedInCase.Active.Doc!);
+                    }
+                    return new InvestigationPipeline().Run(ws, profile, collect, progress, _cts.Token, mediaRegister: signedMedia, systemZone: zone);
                 });
                 ShowResult(_result);
                 var checkedCase = _result.Case;
@@ -511,7 +519,11 @@ namespace LogAnalyzer.UI.ViewModels
             if (IsReadOnlyCase) { ClosureText = "Cazul este deschis doar pentru citire: nu se mai poate închide din nou."; return; }
             var closure = LogAnalyzer.Dfir.Case.CaseClosure.Close(_result.Case, $"{Environment.UserDomainName}\\{Environment.UserName}");
             ClosureText = closure.RegisterText;
-            try { Clipboard.SetText(closure.RegisterText); ClosureText += Environment.NewLine + "(Copiat în clipboard.)"; }
+            try
+            {
+                if (LogAnalyzer.UI.Services.ExportAudit.Clipboard(_result.Case.Info.CaseId, "closure_register", closure.RegisterText) is { } refused) ClosureText += Environment.NewLine + refused;
+                else ClosureText += Environment.NewLine + "(Copiat în clipboard.)";
+            }
             catch (System.Runtime.InteropServices.COMException) { /* clipboard busy: the text stays on screen */ }
         }
 
