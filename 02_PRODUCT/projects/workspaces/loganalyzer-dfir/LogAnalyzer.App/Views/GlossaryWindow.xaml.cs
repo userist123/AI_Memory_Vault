@@ -2,6 +2,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using LogAnalyzer.Dfir.Language;
+using LogAnalyzer.Dfir.Windows.Audit;
 
 namespace LogAnalyzer.UI.Views
 {
@@ -21,11 +22,15 @@ namespace LogAnalyzer.UI.Views
         private void Refresh()
         {
             var q = SearchBox.Text.Trim();
+            // usability 2026-10-16: the whole catalogue (technical words, results, severity words and every control check id)
+            var all = TermCatalog.All;
             Grid.ItemsSource = string.IsNullOrEmpty(q)
-                ? Glossary.Terms.OrderBy(t => t.Romanian).ToList()
-                : Glossary.Terms.Where(t => t.Romanian.Contains(q, System.StringComparison.OrdinalIgnoreCase) || t.Technical.Contains(q, System.StringComparison.OrdinalIgnoreCase)
-                                             || t.Explanation.Contains(q, System.StringComparison.OrdinalIgnoreCase) || t.English.Contains(q, System.StringComparison.OrdinalIgnoreCase))
-                                .OrderBy(t => t.Romanian).ToList();
+                ? all.OrderBy(t => t.Romanian).ToList()
+                : all.Where(t => t.Spellings.Any(s => string.Equals(s, q, System.StringComparison.OrdinalIgnoreCase))).Concat(
+                  all.Where(t => t.Romanian.Contains(q, System.StringComparison.OrdinalIgnoreCase) || t.Technical.Contains(q, System.StringComparison.OrdinalIgnoreCase)
+                                 || t.Spellings.Any(s => s.Contains(q, System.StringComparison.OrdinalIgnoreCase))
+                                 || t.Explanation.Contains(q, System.StringComparison.OrdinalIgnoreCase) || t.English.Contains(q, System.StringComparison.OrdinalIgnoreCase))
+                     .OrderBy(t => t.Romanian)).Distinct().ToList();
         }
     }
 }

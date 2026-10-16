@@ -34,9 +34,10 @@ namespace LogAnalyzer.UI.ViewModels
 
         /// <param name="profile">The role profile (WP18): which intents this PC offers. Default: the role decided at startup, on the unclassified edition.</param>
         public HomeViewModel(InvestigationViewModel investigation, Action<int>? navigate = null, RecentCases? recent = null, Func<string?>? pickFolder = null,
-            RoleProfile? profile = null, Func<string?>? editionWarning = null)
+            RoleProfile? profile = null, Func<string?>? editionWarning = null, IStationQuickControl? quickControl = null)
         {
             _investigation = investigation;
+            QuickControl = quickControl;
             // Owner decision: the Internet edition on an isolated-looking station says so (passive facts only; never changes a result).
             try { EditionWarning = (editionWarning ?? (() => LogAnalyzer.Dfir.Windows.Audit.EditionFit.WarningForThisStation(StationPostureContext.Current)))() ?? ""; }
             catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or InvalidOperationException) { EditionWarning = ""; }
@@ -129,6 +130,42 @@ namespace LogAnalyzer.UI.ViewModels
             }
             OpenStatus = $"{intent.Title}: {intent.Description}";
         }
+
+        // ---- usability 2026-10-16: the station control in one click, and what follows it in the same panel ----
+
+        /// <summary>The station control the Home panel drives; null when the page was built without it (tests, other roles).</summary>
+        public IStationQuickControl? QuickControl { get; }
+
+        /// <summary>The one-click panel shows when this PC offers „Verifică această stație” and the control is wired.</summary>
+        public bool ShowQuickControl => QuickControl is not null && Profile.PrimaryIntents.Concat(Profile.MoreIntents).Any(i => i.Key == "check_station" && i.Enabled);
+
+        /// <summary>„Fă controlul stației” (Ctrl+Enter): the control with its defaults; the result and the follow-ups appear in the same panel.</summary>
+        [RelayCommand]
+        private async Task RunStationControl()
+        {
+            if (QuickGate() is not { } q || q.IsBusy) return;
+            OpenStatus = "";
+            await q.RunQuickAsync();
+        }
+
+        /// <summary>„Deschide raportul” (Ctrl+O).</summary>
+        [RelayCommand] private void OpenControlReport() { if (QuickGate() is { } q) q.OpenReport(); }
+        /// <summary>„Semnează ca ofițer” (Ctrl+Shift+S): an authority action; Windows asks the card PIN.</summary>
+        [RelayCommand] private void SignControlReport() { if (QuickGate() is { } q) q.SignAsOfficer(); }
+        /// <summary>„Exportă pentru ofițer” (Ctrl+E).</summary>
+        [RelayCommand] private void ExportForOfficer() { if (QuickGate() is { } q) q.ExportForOfficer(); }
+
+        /// <summary>Review of PR #298: the keyboard shortcuts pass the same role gate as the panel; null (with the reason on the page) when not offered.</summary>
+        private IStationQuickControl? QuickGate()
+        {
+            if (QuickControl is not null && ShowQuickControl) return QuickControl;
+            OpenStatus = "Controlul stației dintr-un clic nu este oferit pe această stație; folosiți pagina „Control stație”.";
+            return null;
+        }
+        /// <summary>„Exportă istoricul mediilor pentru ofițer”: the signed media history of #297 (the officer bundle has no unsigned copy).</summary>
+        [RelayCommand] private void ExportSignedMediaHistory() { if (QuickGate() is { } q) q.ExportSignedMediaHistory(); }
+        /// <summary>„Vezi toate detaliile”: the full control page (checks, users, timeline).</summary>
+        [RelayCommand] private void ShowControlDetails() => _navigate(RoleProfiles.TabStationControl);
 
         /// <summary>WP7 hook: maps a question to an existing workflow. Intentionally empty in WP5.</summary>
         public void ChooseQuestion(string question) { }

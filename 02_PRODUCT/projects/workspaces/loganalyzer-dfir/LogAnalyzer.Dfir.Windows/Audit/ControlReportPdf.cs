@@ -201,6 +201,13 @@ public static class ControlReportPdf
                 col.Item().PaddingTop(6).Text("5. Limitări").Bold().FontSize(11).FontColor(Ink);
                 foreach (var lim in Limitations(f))
                     col.Item().Text("• " + lim).FontSize(7.5f);
+                // usability 2026-10-16: every technical word, result and check id printed in this report, explained in plain Romanian (only those that appear)
+                var terms = TermCatalog.AppendixLines(Corpus(r, inspector, notes, header, result, manual));
+                if (terms.Count > 0)
+                {
+                    P(col, TermCatalog.AppendixTitle).Bold().FontSize(11).FontColor(Ink);
+                    foreach (var line in terms) P(col, "• " + line).FontSize(7.5f);
+                }
                 // basis and declaration (legal research G1, G4)
                 col.Item().PaddingTop(8).Text("Actul care autorizează controlul: " + (authorizingAct.Length > 0 ? authorizingAct : "nespecificat în scopul cazului")).FontSize(8)
                     .FontColor(authorizingAct.Length > 0 ? Ink : "#b45309");
@@ -223,6 +230,40 @@ public static class ControlReportPdf
         // the officer's signature place: an empty box on a last page of its own, and the empty signature field over it (owner decision, review round 3)
         SignatureBoxPage.Add(doc, header?.MarkingLine, SignHere); }).GeneratePdf();
         File.WriteAllBytes(path, LogAnalyzer.Dfir.Reporting.SignatureField.Reserve(generated));
+    }
+
+    /// <summary>
+    /// The texts this report prints (header, conclusion, results, checks, users, actions, classified files, coverage, limitations, the officer section and
+    /// the signature page): what the „Ce înseamnă termenii” appendix is built from, so it lists only the terms that appear in this report.
+    /// </summary>
+    public static string Corpus(ControlReport r, string inspector = "", string notes = "", ControlReportHeader? header = null, ControlResultScreen? result = null,
+        IReadOnlyList<LogAnalyzer.Dfir.Flow.ManualCheckResult>? manual = null)
+    {
+        var f = r.Facts;
+        var sb = new System.Text.StringBuilder();
+        void A(string? s) { if (!string.IsNullOrEmpty(s)) sb.Append(s).Append('\n'); }
+        A(OfficialLabel); A(SignHere); A(inspector); A(notes);
+        A(StatusText(ControlStatus.Conform)); A(StatusText(ControlStatus.Neconform)); A(StatusText(ControlStatus.DeVerificat)); A(StatusText(ControlStatus.Nedeterminat));
+        if (r.Count(ControlStatus.NuSeAplica) > 0) A(StatusText(ControlStatus.NuSeAplica));
+        if (header is not null) { A(header.MarkingLine); A(header.SignatureLeft); A(header.SignatureRight); foreach (var (l, v) in header.Lines()) { A(l); A(v); } }
+        var box = ControlConclusion.Build(r);
+        A(box.Verdict); A(box.Meaning); foreach (var s in box.Serious.Concat(box.NextSteps).Concat(box.NotChecked)) A(s);
+        if (result is not null) { A(result.Headline); A(result.Problem); A(result.Seriousness); A(result.Trust); A(result.Found); foreach (var s in result.NextSteps) A(s); }
+        foreach (var c in f.Coverage) { A(c.Channel); A(c.Note); }
+        foreach (var g in f.Gaps) { A(g.Artifact); A(g.Reason); A(g.Impact); }
+        foreach (var c in r.Checks)
+        {
+            A(StatusText(c.Status)); A(c.Id); A(c.Area); A(c.Title); A(c.Detail); A(c.Recommendation);
+            foreach (var e in c.Evidence.Take(25)) A(e);
+        }
+        foreach (var q in LogAnalyzer.Dfir.Flow.ManualChecks.All) { A(q.Id); A(q.Question); }
+        foreach (var m in manual ?? []) A(m.Note);
+        if (r.Users.Count > 0) { A("RDP"); foreach (var u in r.Users) A(u.User); }
+        foreach (var a in r.Actions.Take(1500)) { A(a.Action); A(a.Detail); A(a.Source); }
+        foreach (var (text, _, _) in ClassifiedSectionLines(r)) A(text);
+        foreach (var lim in Limitations(f)) A(lim);
+        foreach (var line in OfficerSectionLines(r)) A(line);
+        return sb.ToString();
     }
 
     /// <summary>Printed on every page: the report is official only with the security officer's qualified electronic signature (owner decision 2026-10-16).</summary>

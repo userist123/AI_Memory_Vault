@@ -36,7 +36,15 @@ namespace LogAnalyzer.UI.ViewModels
             try
             {
                 var signed = MediaHistoryFlows.Sign(doc, cert, OfficerFlows.Trusted(OfficerStore.Shared.Load()));
-                var path = MediaHistoryFlows.Export(dlg.FolderName, signed, AuthApp.Record);
+                // review of PR #298: the files leave the station through the audited export as well (intent listing them first, then their SHA-256)
+                string path = "";
+                var name = LogAnalyzer.Dfir.Registers.MediaHistoryExport.FileName(signed.Doc);
+                if (ExportAudit.RunBundle(ExportAudit.LiveCaseId, "istoric-medii-semnat", dlg.FolderName, [name, name + LogAnalyzer.Dfir.Registers.MediaHistoryExport.SignatureExtension], () =>
+                    {
+                        path = MediaHistoryFlows.Export(dlg.FolderName, signed, AuthApp.Record);
+                        return [path, path + LogAnalyzer.Dfir.Registers.MediaHistoryExport.SignatureExtension];
+                    }) is { } refused)
+                { Status = "Istoricul mediilor NU a fost exportat: " + refused; return; }
                 OfficerInfo = $"Istoricul mediilor a fost exportat și semnat de {OfficerFingerprint.CommonName(cert)}: {path} (și semnătura .p7s).{Environment.NewLine}" +
                               $"SHA-256: {signed.Sha256}. Medii: {doc.Media.Count}; transferuri cu medii: {doc.Transfers.Count}; registrul semnat: " +
                               (doc.RegisterVersion > 0 ? $"versiunea {doc.RegisterVersion}" : "niciunul în vigoare") + "." + Environment.NewLine +

@@ -281,6 +281,14 @@ public static class InvestigationReportPdf
                 P(col, "Corpul raportului folosește termeni în română; codurile în engleză din datele cazului (findings.json și celelalte fișiere din Analysis) se potrivesc astfel:").FontSize(7.5f);
                 foreach (var l in InvestigationReportText.Legend()) P(col, l).FontSize(7).FontColor(Muted);
 
+                // usability 2026-10-16: the technical words printed above (and the SHA-256 of the evidence annex), explained in plain Romanian; only those that appear
+                var explained = LogAnalyzer.Dfir.Windows.Audit.TermCatalog.AppendixLines(string.Join("\n", printed) + (evidence.Count > 0 ? "\nSHA-256" : ""));
+                if (explained.Count > 0)
+                {
+                    Head(LogAnalyzer.Dfir.Windows.Audit.TermCatalog.AppendixTitle);
+                    foreach (var l in explained) P(col, "• " + l).FontSize(7);
+                }
+
                 Head("Anexă: elemente de probă și amprente SHA-256");
                 foreach (var e in evidence.Values.OrderBy(e => e.EvidenceId, StringComparer.Ordinal))
                     P(col, $"{e.EvidenceId} · {RoText.ReadablePath(e.StoredPath)} · {RoText.Count(e.Size, "octet", "octeți")} · SHA-256 {e.Sha256} · {InvestigationReportText.AcquisitionRomanian(e.AcquisitionMethod)} {L(e.AcquiredAtUtc)}").FontSize(6.5f);
