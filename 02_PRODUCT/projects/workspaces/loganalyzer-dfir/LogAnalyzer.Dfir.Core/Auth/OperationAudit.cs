@@ -23,7 +23,7 @@ public static class OperationAudit
 
     /// <summary>
     /// "audit.anchor_state": the state that is anchored, written immediately BEFORE the anchor is taken, so it is the anchored entry itself and the paper code
-    /// covers it (a rewrite breaks A11). Today: the application install date (UTC) and its basis (check A14).
+    /// covers it (a rewrite breaks A11): the application install date (UTC) and its basis (check A16), followed by the officer store / trust folder state (A13).
     /// </summary>
     public const string AnchorState = "audit.anchor_state";
 

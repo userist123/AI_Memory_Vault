@@ -114,9 +114,9 @@ namespace LogAnalyzer.UI.ViewModels
             if (log is null) return null;
             try
             {
-                // the anchored state goes in first, so it is the anchored entry and the paper code covers it (check A14 compares the install date at the next control)
+                // the anchored state goes in first, so it is the anchored entry and the paper code covers it (check A16 compares the install date at the next control)
                 var install = LogAnalyzer.Dfir.Windows.Acquisition.AppInstallTraces.ReadInstall();
-                AuthApp.Record(OperationAudit.AnchorState, OperationAudit.AnchorStateDetail(install.Utc, install.Basis));
+                RecordOfficerEvent(OperationAudit.AnchorState, OperationAudit.AnchorStateDetail(install.Utc, install.Basis));   // + officer store / trust folder state (A13)
                 var a = AuditAnchor.Current(log);
                 if (a is not null) RecordOfficerEvent(OperationAudit.AnchorRecorded, OperationAudit.AnchorRecordedDetail(a, reason));
                 return a;

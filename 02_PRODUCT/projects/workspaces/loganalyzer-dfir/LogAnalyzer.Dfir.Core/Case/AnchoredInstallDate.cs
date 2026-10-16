@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 namespace LogAnalyzer.Dfir.Case;
 
 /// <summary>
-/// The application install date recorded with the anchor whose code was typed from the paper (check A14). <see cref="Determinable"/> is false without a typed
+/// The application install date recorded with the anchor whose code was typed from the paper (check A16). <see cref="Determinable"/> is false without a typed
 /// code; <see cref="Recorded"/> is false when that anchor carries no date (recorded before the check existed); <see cref="Utc"/> null = the date was unknown then.
 /// </summary>
 public sealed record AnchoredInstall(bool Determinable, bool Recorded, DateTimeOffset? Utc, string Basis, string Why);

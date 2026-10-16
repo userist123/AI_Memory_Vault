@@ -465,11 +465,11 @@
 
 - **Ce verificăm:** Dacă lista ofițerilor de securitate (cei care pot semna raportul oficial) s-a schimbat de la controlul anterior.
 - **De ce contează:** Cine reușește să se treacă pe listă poate semna rapoarte „oficiale”; de aceea orice schimbare trebuie confirmată de ofițer, cu procesul-verbal în mână.
-- **Cum verifică aplicația:** A pornit de la starea listei de ofițeri și a folderului autorităților de încredere înregistrată la codul de ancorare tastat de pe procesul-verbal anterior. După acel punct, o stare nouă este acceptată doar dacă a fost scrisă de o operație a aplicației pentru ofițeri sau autorități (înregistrare, cerere, import de certificate); apoi a comparat cu fișierele de acum.
+- **Cum verifică aplicația:** A pornit de la starea listei de ofițeri și a folderului autorităților de încredere din intrarea ancorată (cea acoperită de codul tastat de pe procesul-verbal anterior); nimic scris după acea intrare nu servește drept referință. După acel punct, o stare nouă este acceptată doar dacă a fost scrisă de o operație a aplicației pentru ofițeri sau autorități (înregistrare, cerere, import de certificate); apoi a comparat cu fișierele de acum.
 - **Sursa tehnică:** `Jurnalul de audit al aplicației (sigilat): profile.officer_registered, profile.officer_requested, profile.officer_removed, officer_trust.imported, audit.anchor; amprentele SHA-256 ale fișierului listei de ofițeri și ale folderului autorităților de încredere`
-- **Cum se citește rezultatul:** Conform = nicio schimbare de la controlul anterior. De verificat = schimbări făcute din aplicație; fiecare apare în probe cu data, amprenta și cine a făcut-o. Neconform = lista de ofițeri sau autoritățile de încredere au fost schimbate în afara aplicației (fișiere modificate de mână), chiar dacă o operație ulterioară a aplicației le-a consemnat starea. Nedeterminat = nu s-a tastat codul de ancorare de pe procesul-verbal anterior, deci nu există o stare de referință sigură.
+- **Cum se citește rezultatul:** Conform = nicio schimbare de la controlul anterior. De verificat = schimbări făcute din aplicație; fiecare apare în probe cu data, amprenta și cine a făcut-o. Neconform = lista de ofițeri sau autoritățile de încredere au fost schimbate în afara aplicației (fișiere modificate de mână), chiar dacă o operație ulterioară a aplicației le-a consemnat starea. Nedeterminat = nu s-a tastat codul de ancorare de pe procesul-verbal anterior, sau ancora a fost făcută cu o versiune mai veche, fără stare ancorată, deci nu există o stare de referință sigură.
 
-### A14
+### A16
 
 - **Ce verificăm:** Dacă data instalării aplicației pe stație este aceeași ca la controlul anterior.
 - **De ce contează:** O dată de instalare mai nouă înseamnă că aplicația sau magazinul ei de date au fost reinstalate ori reinițializate după controlul anterior; pe o stație Standalone asta ar putea muta în trecut conectările la rețea.

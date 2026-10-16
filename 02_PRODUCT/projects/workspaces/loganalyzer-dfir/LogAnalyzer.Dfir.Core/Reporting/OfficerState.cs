@@ -62,7 +62,7 @@ public static class OfficerState
     public static readonly IReadOnlySet<string> ChangeEvents = new HashSet<string> { LogAnalyzer.Dfir.Auth.OperationAudit.OfficerRegistered, LogAnalyzer.Dfir.Auth.OperationAudit.OfficerRequested, LogAnalyzer.Dfir.Auth.OperationAudit.OfficerRemoved, LogAnalyzer.Dfir.Auth.OperationAudit.OfficerTrustImported };
 
     /// <summary>
-    /// Check A13. The baseline is the state recorded with the anchor whose code was TYPED from the signed paper (entry <paramref name="paperAnchorSeq"/>); after
+    /// Check A13. The baseline is the state in the anchored entry ("audit.anchor_state") whose code was TYPED from the signed paper (entry <paramref name="paperAnchorSeq"/>); after
     /// it, a new state is accepted only from an officer / trust event of the application. A state that changes on any other event (an anchor, an import that
     /// was refused…) or differs now from the last accepted one was made outside the application. Without a typed code nothing can be asserted.
     /// </summary>
@@ -71,16 +71,12 @@ public static class OfficerState
         if (paperAnchorSeq is not { } n)
             return new(false, [], [], "nu s-a introdus codul de ancorare de pe procesul-verbal, deci nu există o stare de referință sigură");
         var events = LogAnalyzer.Dfir.Case.AuditAnchor.Events(auditPath);
-        // the baseline: the anchor event written right after entry N (it carries the state at N); otherwise the last state recorded up to N
-        var anchorEvent = events.FirstOrDefault(e => e.Seq > n && e.Event == LogAnalyzer.Dfir.Auth.OperationAudit.AnchorRecorded && System.Text.RegularExpressions.Regex.IsMatch(e.Detail, $@"(^|; )seq={n};"));
-        string expected; long from;
-        if (anchorEvent is not null && StateOf(anchorEvent.Detail) is { } st0) { expected = st0; from = anchorEvent.Seq; }
-        else
-        {
-            var before = events.LastOrDefault(e => e.Seq <= n && StateOf(e.Detail) is not null);
-            expected = before is null ? $"{Prefix}store:none,trust:none,files:" : StateOf(before.Detail)!;
-            from = n;
-        }
+        // the baseline is ONLY the anchored entry itself ("audit.anchor_state" at seq N): its content is covered by the code typed from the paper. Anything written
+        // after it (the "audit.anchor" event included) can be rewritten without A11 noticing, so it is never a baseline.
+        var anchored = events.FirstOrDefault(e => e.Seq == n);
+        if (anchored is null || anchored.Event != LogAnalyzer.Dfir.Auth.OperationAudit.AnchorState || StateOf(anchored.Detail) is not { } st0)
+            return new(false, [], [], $"înregistrarea nr. {n} a fost ancorată fără intrarea stării ancorate (versiune mai veche a aplicației), deci nu există o stare de referință sigură");
+        string expected = st0; long from = n;
         var outside = new List<string>();
         var changes = new List<string>();
         foreach (var e in events.Where(e => e.Seq > from))

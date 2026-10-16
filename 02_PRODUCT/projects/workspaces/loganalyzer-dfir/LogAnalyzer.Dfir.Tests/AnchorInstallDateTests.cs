@@ -7,7 +7,7 @@ using Xunit;
 
 namespace LogAnalyzer.Dfir.Tests;
 
-/// <summary>The application install date is part of the anchored state: recorded with each audit.anchor, printed next to the anchor code, compared at the next control (A14).</summary>
+/// <summary>The application install date is part of the anchored state: recorded with each audit.anchor, printed next to the anchor code, compared at the next control (A16).</summary>
 public sealed class AnchorInstallDateTests : IDisposable
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 16, 9, 0, 0, TimeSpan.Zero);
@@ -41,7 +41,7 @@ public sealed class AnchorInstallDateTests : IDisposable
         return f;
     }
 
-    private static ControlCheck A14(StationFacts f) => Assert.Single(ControlEvaluator.Evaluate(f).Checks, c => c.Id == "A14");
+    private static ControlCheck A16(StationFacts f) => Assert.Single(ControlEvaluator.Evaluate(f).Checks, c => c.Id == "A16");
 
     [Fact]
     public void The_anchor_event_carries_the_install_date_and_it_is_read_back_at_the_paper_anchor()
@@ -60,28 +60,28 @@ public sealed class AnchorInstallDateTests : IDisposable
     }
 
     [Fact]
-    public void A14_later_install_date_than_at_the_paper_anchor_is_NECONFORM()
+    public void A16_later_install_date_than_at_the_paper_anchor_is_NECONFORM()
     {
         var at = AnchoredInstallDate.At(_audit.AuditPath, Anchor(Installed));
-        var a14 = A14(Facts(Installed.AddDays(20), at));
+        var a14 = A16(Facts(Installed.AddDays(20), at));
         Assert.Equal(ControlStatus.Neconform, a14.Status);
         Assert.Contains("data instalării s-a schimbat după controlul anterior (posibilă reinițializare sau reinstalare)", a14.Detail, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(ControlStatus.Neconform, A14(Facts(null, at)).Status);   // the date cannot be established any more: the traces were removed
+        Assert.Equal(ControlStatus.Neconform, A16(Facts(null, at)).Status);   // the date cannot be established any more: the traces were removed
     }
 
     [Fact]
-    public void A14_earlier_date_is_to_verify_same_date_is_conform_and_no_typed_code_is_undetermined()
+    public void A16_earlier_date_is_to_verify_same_date_is_conform_and_no_typed_code_is_undetermined()
     {
         var at = AnchoredInstallDate.At(_audit.AuditPath, Anchor(Installed));
-        Assert.Equal(ControlStatus.DeVerificat, A14(Facts(Installed.AddDays(-40), at)).Status);
-        Assert.Equal(ControlStatus.Conform, A14(Facts(Installed, at)).Status);
-        Assert.Equal(ControlStatus.Nedeterminat, A14(Facts(Installed, AnchoredInstallDate.At(_audit.AuditPath, null))).Status);
-        Assert.Equal(ControlStatus.Nedeterminat, A14(Facts(Installed, null)).Status);
+        Assert.Equal(ControlStatus.DeVerificat, A16(Facts(Installed.AddDays(-40), at)).Status);
+        Assert.Equal(ControlStatus.Conform, A16(Facts(Installed, at)).Status);
+        Assert.Equal(ControlStatus.Nedeterminat, A16(Facts(Installed, AnchoredInstallDate.At(_audit.AuditPath, null))).Status);
+        Assert.Equal(ControlStatus.Nedeterminat, A16(Facts(Installed, null)).Status);
         // an anchor recorded before this check existed carries no date: nothing can be compared
         _audit.AuditOperation(null, OperationAudit.ControlFinished, "host=ST-1");
         var old = AuditAnchor.Current(_audit.AuditPath)!;
         _audit.AuditOperation(null, OperationAudit.AnchorRecorded, $"seq={old.Seq}; anchor={old.Code}; chain={old.ChainId}; reason=control");
-        Assert.Equal(ControlStatus.Nedeterminat, A14(Facts(Installed, AnchoredInstallDate.At(_audit.AuditPath, old.Seq))).Status);
+        Assert.Equal(ControlStatus.Nedeterminat, A16(Facts(Installed, AnchoredInstallDate.At(_audit.AuditPath, old.Seq))).Status);
     }
 
     [Fact]
@@ -99,10 +99,10 @@ public sealed class AnchorInstallDateTests : IDisposable
     [InlineData(StationPosture.Standalone)]
     [InlineData(StationPosture.IsolatedNetwork)]
     [InlineData(StationPosture.Internet)]
-    public void A14_applies_in_every_edition_and_has_a_guide(StationPosture posture)
+    public void A16_applies_in_every_edition_and_has_a_guide(StationPosture posture)
     {
-        Assert.True(ControlApplicability.Applies("A14", posture));
-        Assert.Contains("A14", CheckGuides.Ids);
+        Assert.True(ControlApplicability.Applies("A16", posture));
+        Assert.Contains("A16", CheckGuides.Ids);
     }
 
     [Fact]
