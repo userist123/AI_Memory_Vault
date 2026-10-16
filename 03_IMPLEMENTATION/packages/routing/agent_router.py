@@ -100,10 +100,14 @@ class AgentRouter:
             for c in verifier_pool:
                 a=self.registry.agents[c.agent_id]; r=self.registry.runtimes[c.runtime_id]
                 pa=self.registry.agents[primary.agent_id]; pr=self.registry.runtimes[primary.runtime_id]
+                if not r.tool_use: continue  # a verifier must read the diff and run the checks itself
                 if a.independence_group!=pa.independence_group and r.independence_group!=pr.independence_group:
                     verifier=VerifierDescriptor(c.agent_id,c.runtime_id,c.model_tier,a.independence_group,"independent review required")
                     break
-            if verifier is None: rejected.append("verifier:no_independent_route")
+            if verifier is None:
+                verifier=self._subagent_reviewer_fallback(primary,dispatchable)
+                if verifier is None: rejected.append("verifier:no_independent_route")
+                else: rejected.append(f"verifier:no_independent_route->fallback:{verifier.runtime_id}")
         qp=self._fingerprint(request.goal)
         memory=MemoryPlan(qp,len(request.goal),int(self.registry.defaults.get("max_memory_results",5)),
             3,int(self.registry.defaults.get("max_graph_hops",1)),False,True,"evidence")
@@ -119,7 +123,34 @@ class AgentRouter:
             alternatives=tuple(candidates[1:6]),memory_plan=memory,
             candidate_count=len(candidates),rejected=tuple(rejected),
             policy_gates=("risk_gate","privacy_gate","capability_gate","authority_gate","verifier_gate"),
-            warnings=(() if status==RouteStatus.ROUTED else ("runtime availability not confirmed",)),
+            warnings=(() if status==RouteStatus.ROUTED else ("runtime availability not confirmed",))
+                +((f"verifier fallback: {verifier.agent_id} on {verifier.runtime_id} (same vendor; independent by fresh context and model, not by vendor)",)
+                  if verifier is not None and verifier.reason.startswith("fallback") else ()),
             registry_fingerprint=self.registry.fingerprint,task_fingerprint=task_fp,
-            execution_contract={"execute_via":"dispatcher","prompt_profile":primary and self.registry.agents[primary.agent_id].prompt_profile})
+            execution_contract=self._execution_contract(primary,verifier))
         return receipt
+
+    def _subagent_reviewer_fallback(self, primary:RouteCandidate, pool:list[RouteCandidate])->VerifierDescriptor|None:
+        """Owner rule 2026-10-16: when no vendor-independent verifier exists (e.g. the only one left is
+        Codex as the primary itself), a security review is not BLOCKED if the host offers the Claude
+        Code `vault-reviewer` subagent: it reviews in a fresh context on Opus, a different agent
+        from the primary. The receipt logs it as a fallback (rejected + warnings), never as independent."""
+        pa=self.registry.agents[primary.agent_id]
+        for c in pool:
+            if c is primary: continue  # the same runtime is fine: every subagent spawn is a fresh context
+            rt=self.registry.runtimes[c.runtime_id]; a=self.registry.agents[c.agent_id]
+            if rt.transport!="claude_subagent" or "review" not in rt.capabilities or rt.writable: continue
+            if a.independence_group==pa.independence_group: continue
+            return VerifierDescriptor(c.agent_id,c.runtime_id,c.model_tier,a.independence_group,
+                                      f"fallback: no vendor-independent verifier; {rt.subagent_type} subagent in a fresh context")
+        return None
+
+    def _execution_contract(self, primary:RouteCandidate|None, verifier:VerifierDescriptor|None)->dict[str,Any]:
+        if primary is None: return {"execute_via":"dispatcher","prompt_profile":None}
+        rt=self.registry.runtimes[primary.runtime_id]
+        contract:dict[str,Any]={"execute_via":"dispatcher","prompt_profile":self.registry.agents[primary.agent_id].prompt_profile}
+        if rt.transport=="claude_subagent":
+            contract.update(execute_via="claude_code_agent_tool",subagent_type=rt.subagent_type)
+        if verifier is not None and self.registry.runtimes[verifier.runtime_id].transport=="claude_subagent":
+            contract["verifier_subagent_type"]=self.registry.runtimes[verifier.runtime_id].subagent_type
+        return contract

@@ -260,6 +260,7 @@ class AgentDispatcher:
         if adapter is None:
             if rt.transport=="command": adapter=CommandAdapter(packet.target_runtime, rt.adapter_ref, rt.model, executable=rt.executable or None, dispatch_root_path=self.artifact_root)
             elif rt.transport=="a2a": adapter=A2AAdapter(rt.adapter_ref,packet.timeout_seconds)
+            elif rt.transport=="claude_subagent": return DispatchResult(packet.task_id,packet.route_id,DispatchStatus.BLOCKED,packet.target_runtime,packet.target_agent,None,"",error=f"claude_subagent runtime: spawn {rt.subagent_type} with the host's Agent tool")
             else: return DispatchResult(packet.task_id,packet.route_id,DispatchStatus.BLOCKED,packet.target_runtime,packet.target_agent,None,"",error="no adapter configured")
         result=adapter.dispatch(packet,run_dir=run) if _accepts_run_dir(adapter) else adapter.dispatch(packet)
         if decision.verifier is not None and result.status == DispatchStatus.COMPLETED:

@@ -12,6 +12,10 @@ so the PreToolUse hooks can make it binding. A trivial prompt (continua, ok, few
 slash command) keeps the current route: it continues that task. Only a new non-trivial prompt
 replaces the state; a prompt containing "#direct" stores subagent null (owner override: the main
 session does the work itself).
+
+Once the main transcript's context (last assistant usage, lib/transcript_usage.py) exceeds
+MAIN_WARN_TOKENS (250k; env COST_ROUTER_MAIN_MAX_TOKENS) every prompt, trivial ones included, also
+gets a reminder to write the checkpoint and continue in a new session with /clear.
 """
 from __future__ import annotations
 
@@ -23,6 +27,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
 LOCAL_CLASSES = {"summarize"}  # text in -> short text out: work a local model does well
+MAIN_WARN_TOKENS = 250_000  # env COST_ROUTER_MAIN_MAX_TOKENS
 TRIVIAL = {"da", "nu", "yes", "no", "ok", "continua", "continue", "merci", "thanks", "mulțumesc", "multumesc"}
 
 
@@ -33,6 +38,28 @@ def owner_language() -> str:
     except Exception:
         return ""
     return value.strip() if isinstance(value, str) else ""
+
+
+def main_context_warning(data: dict) -> str:
+    """A reminder once the main transcript carries more than MAIN_WARN_TOKENS of context (owner rule:
+    one task per session; at a milestone write the checkpoint and start the next phase with /clear)."""
+    try:
+        import os
+        from transcript_usage import context_tokens  # noqa: E402
+        limit = int(os.environ.get("COST_ROUTER_MAIN_MAX_TOKENS", "") or MAIN_WARN_TOKENS)
+        tokens = context_tokens(data.get("transcript_path")) if data.get("transcript_path") else None
+    except Exception:
+        return ""
+    if not tokens or tokens <= limit:
+        return ""
+    return (f"cost-router: this main transcript carries ~{tokens // 1000}k context tokens (> {limit // 1000}k), re-read"
+            " on every call. At the next milestone write the checkpoint"
+            " 00_GOVERNANCE/coordination/tasks/todo-claude-<task>.md (task, branch/PR, done, next, key files)"
+            " and start the next phase in a new session with /clear from that checkpoint.")
+
+
+def _emit(ctx: str) -> None:
+    print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": ctx}}))
 
 
 def persist(data: dict, prompt: str, d=None, direct: bool = False) -> None:
@@ -68,16 +95,23 @@ def main() -> int:
             return 0
     except Exception:
         return 0
+    warning = main_context_warning(data)
     if "#direct" in prompt.lower() and len(words) < 4:
         persist(data, prompt, None, direct=True)  # owner override, however short the prompt
+        if warning:
+            _emit(warning)
         return 0
     if not prompt or prompt.startswith("/") or len(words) < 4 or prompt.lower().rstrip(".!") in TRIVIAL:
-        return 0  # a short follow-up continues the current task: keep its route
+        if warning:  # a short follow-up keeps its route, but the size reminder still applies
+            _emit(warning)
+        return 0
     try:
         from route import decide, one_line  # noqa: E402
         d = decide(prompt)
     except Exception:
         persist(data, prompt)
+        if warning:
+            _emit(warning)
         return 0
     persist(data, prompt, d)
     ctx = one_line(d) + "."
@@ -103,7 +137,7 @@ def main() -> int:
             ctx += (f" Free local LLM available ({model}): run `python \"{tool}\" --file <path> \"<instruction>\"`"
                     " first; fall back to the subagent only on exit 3 or a wrong answer.")
     ctx += " Apply the cost-router skill: excerpts not whole files, prove before DONE."
-    print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": ctx[:1000]}}))
+    _emit(ctx[:1000] + (" " + warning if warning else ""))
     return 0
 
 

@@ -16,10 +16,11 @@ What it does (idempotent, prints every path it touched):
   2. copies the three subagents (Explore, vault-worker, vault-reviewer) to ~/.claude/agents/; a file
      of that name is replaced only when it is still the copy an earlier install wrote (owner edits are
      kept; --force overwrites them too);
-  3. merges five hooks into ~/.claude/settings.json (kept out with --no-hook): UserPromptSubmit (one
+  3. merges six hooks into ~/.claude/settings.json (kept out with --no-hook): UserPromptSubmit (one
      route line per non-trivial prompt; stores the route per session), PreToolUse on Agent|Task (sets each
      subagent's model from the route of its brief, whatever the subagent type), PreToolUse on
      Edit|Write|NotebookEdit|Bash|Read|Grep|Glob (hook_enforce_route.py: makes the route binding),
+     PreToolUse on SendMessage (hook_resume_guard.py: a subagent is resumed at most once),
      SessionStart repo map (a ~1k-token map of the
      current git repository, lib/repo_map.py, at startup, /clear and compaction) and SessionStart
      self-update (hook_self_update.py: at most hourly, fetches the latest skill from the canonical
@@ -57,6 +58,7 @@ HOOK_SPECS = (  # (event, script, matcher)
     ("UserPromptSubmit", "hook_prompt_route.py", None),
     ("PreToolUse", "hook_agent_model.py", "Agent|Task"),
     ("PreToolUse", "hook_enforce_route.py", "Edit|Write|NotebookEdit|Bash|Read|Grep|Glob"),
+    ("PreToolUse", "hook_resume_guard.py", "SendMessage"),
     ("SessionStart", "hook_repo_map.py", "startup|clear|compact"),
     ("SessionStart", "hook_self_update.py", "startup|resume"),
 )
