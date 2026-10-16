@@ -192,7 +192,8 @@
                             <RadioButton Content="Investigație completă (caz)" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="16"/>
                             <RadioButton Content="Politici (import, aprobare, aplicare)" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="17"/>
                             <RadioButton Content="Profil de proceduri" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="18"/>
-                            <RadioButton Content="Registru medii" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="19"/>
+                            <!-- owner decision 2026-10-16: the media register page became the real-time device monitor (the register is switched off, MediaRegisterFeature) -->
+                            <RadioButton Content="Monitor dispozitive" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="19"/>
                             <RadioButton Content="Registrul de transferuri" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="23"/>
                             <RadioButton Content="Registru utilizatori" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="20"/>
                             <RadioButton Content="Autentificare și conturi" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="21"/>
@@ -241,14 +242,29 @@
                         Visibility="{Binding AuditHealth.HasWarning, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <TextBlock Text="{Binding AuditHealth.Warning}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" VerticalAlignment="Center"/>
                 </Border>
-                <Border Background="#FDECEA" BorderBrush="{StaticResource CriticalBrush}" BorderThickness="0,0,0,1" Padding="16,8"
+                <!-- a device was connected (device monitor): information in blue, critical in red (storage medium without a registration number, class forbidden by the posture) -->
+                <Border BorderThickness="0,0,0,1" Padding="16,8" AutomationProperties.Name="Alertă dispozitiv conectat"
                         Visibility="{Binding MediaCenter.HasAlert, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Background" Value="#E8F1FB"/>
+                            <Setter Property="BorderBrush" Value="{StaticResource TextSecondaryBrush}"/>
+                            <Style.Triggers><DataTrigger Binding="{Binding MediaCenter.AlertIsCritical}" Value="True"><Setter Property="Background" Value="#FDECEA"/><Setter Property="BorderBrush" Value="{StaticResource CriticalBrush}"/></DataTrigger></Style.Triggers>
+                        </Style>
+                    </Border.Style>
                     <DockPanel>
                         <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                             <Button Content="Vezi dispozitivul" Command="{Binding ShowMediaCenterCommand}" Margin="12,0,8,0"/>
                             <Button Content="Am văzut" Command="{Binding MediaCenter.DismissAlertCommand}"/>
                         </StackPanel>
-                        <TextBlock Text="{Binding MediaCenter.AlertText}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource CriticalBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding MediaCenter.AlertText}" TextWrapping="Wrap" FontWeight="SemiBold" VerticalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                    <Style.Triggers><DataTrigger Binding="{Binding MediaCenter.AlertIsCritical}" Value="True"><Setter Property="Foreground" Value="{StaticResource CriticalBrush}"/></DataTrigger></Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </DockPanel>
                 </Border>
                 <!-- G3: the older pages under "Avansat" load their own events; the offer shows there while neither "Colectează tot" nor the page has data -->
