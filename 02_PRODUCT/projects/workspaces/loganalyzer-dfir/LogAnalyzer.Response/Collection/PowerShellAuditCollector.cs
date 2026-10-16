@@ -98,8 +98,9 @@ namespace LogAnalyzer.Response.Collection
 
                     var startInfo = BuildStartInfo(powershell, scriptPath, targetType, outputDir, hostname);
 
-                    using var process = new Process { StartInfo = startInfo };
-                    
+                    // through the one recording path, with the script's SHA-256 (its PowerShell 4104 block is then recognised as the application's)
+                    using var process = LogAnalyzer.Dfir.Auth.CollectorExec.Start(startInfo, scriptPath);
+
                     process.OutputDataReceived += (s, e) =>
                     {
                         if (e.Data != null) logCallback(e.Data);
@@ -110,10 +111,10 @@ namespace LogAnalyzer.Response.Collection
                         if (e.Data != null) logCallback($"[STDERR] {e.Data}");
                     };
 
-                    process.Start();
                     process.BeginOutputReadLine();
                     process.BeginErrorReadLine();
                     process.WaitForExit();
+                    LogAnalyzer.Dfir.Auth.CollectorExec.Done(process);
 
                     logCallback(CompletionLine(process.ExitCode));
                 }

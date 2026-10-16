@@ -100,6 +100,7 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | A14 | Sources that show classified files leaving the station | Removable Storage, Handle Manipulation, Process Creation with command line and the print log on | As standalone, plus Detailed File Share | n/a | Classified folders exist only in the controlled editions. |
 | A15 | Classified files: access and exits without approval | Review; non-conform on any exit not in the transfer register | Review; non-conform on any exit not in the transfer register (network shares included) | n/a | Classified folders exist only in the controlled editions. |
 | A16 | Application installation date versus the previous control (paper anchor) | Unchanged | Unchanged | Unchanged |  |
+| A17 | The application's own commands recognised from its sealed audit | All recorded | All recorded | All recorded |  |
 | U01 | Changes to the Administrators group | Review | Review | Review |  |
 | U02 | Accounts created, deleted, enabled, disabled or reset | Review | Review | Review |  |
 | U03 | Remote (RDP) logons | Review | Review (administration over the LAN is normal) | Review |  |
@@ -183,3 +184,41 @@ NEDETERMINAT "nu se poate compara: jurnalul nu mai conține codul de pe procesul
 case where the anchored entry is still found. What remains: a reinstall BEFORE the first anchored control is not
 caught; an administrator who rewrites the anchored state entry (with the machine key) is caught by A11, because the code typed from the paper no longer
 matches.
+
+## The application's own commands (A17): recognition and residual risk
+
+Owner rule 2026-10-16: the programs the application itself starts to read logs, the registry, shadow copies, the audit policy or to hash files only
+check existence, absence and correlation of data; they must never be reported as abuse. Recognition never uses folder or file names (a name-based
+exclusion was removed earlier because an attacker can imitate it).
+
+Inventory of what the application starts (`CollectorExec.Start` is the only path; each start writes `collector.exec` to the sealed audit before it
+starts and `collector.exec_done` after it ends):
+
+| Caller | Program | What it reads or does | Rules it could trigger |
+|---|---|---|---|
+| `ToolRunner` (acquisition) | `reg.exe save`, `esentutl.exe /y /vss`, `bcdedit.exe /enum` | registry hives, SRUM / Amcache through a shadow copy, boot configuration | 4688 command-line rules, VSS rules, LOLBin / EXEC rules |
+| `PowerShellAuditCollector` (Unclassified, Network) | `powershell.exe -File Scripts\AuditCollector.ps1` (script SHA-256 recorded) | the bundled collection script | 4104 script-block rules (U06), 4688 |
+| `AuditPolicyChange` (Unclassified) | `auditpol.exe /set` | enables one audit subcategory after the operator agrees | 4688, audit-policy change (A06, the change itself stays reported) |
+| `NetshRunner` (Unclassified, Network) | `netsh.exe advfirewall` | firewall isolation rules started by the operator | 4688 |
+| `ProcessScanner` (containment) | `MpCmdRun.exe -Scan` | Defender scan of one file | 4688 |
+
+Not recorded: files and folders the operator opens from the interface (`UseShellExecute`, a report or `explorer.exe` on a folder). They are viewers
+the operator starts by hand, not collection, and their events stay ordinary events. Event logs are read through `EvtExportLog` / `EventLogReader`
+and WMI queries in-process: they start no program.
+
+An event (Security 4688, Sysmon 1, PowerShell 4104) is the application's own only when it matches a record that passes the same run validation as a
+hashing window (chain verifies, no backdated record before it, named control run with start and end, inside it, written by the executable recorded at
+the control start, the control starts after the anchor before it) and moreover: the application's process id, the program's full path and SHA-256, the end
+record (child process id, exit code), at most 10 minutes. The event must have the same child process id (or the application's process as parent)
+inside that window, the same path and the same command line, and, when it carries one (Sysmon), the same image hash; a script block must have the
+recorded script hash. Matched events leave every other check and are listed by A17 ("Activitate proprie a aplicației: N comenzi, toate consemnate");
+look-alikes stay ordinary events; an event that matches only a refused record is "activitate pretinsă a aplicației, neconfirmată" (A17 DE VERIFICAT)
+and stays with the other checks.
+
+Commands started outside a station control carry no run id and are therefore never confirmed; their events stay ordinary events (A17 lists them as
+claimed when they match a record).
+
+Residual: an administrator who holds the sealing key and can write to the application folder can append, after the latest anchor code, a forged
+`collector.exec` inside a control run and so hide one command for the next control. The protection is the same as for hashing windows: the anchor code
+on the signed paper at the next control (A11) and the application folder writable only by Administrators/SYSTEM. A long PowerShell script that Windows
+splits into several 4104 blocks is not recognised (only the whole block is hashed) and stays with the other checks.

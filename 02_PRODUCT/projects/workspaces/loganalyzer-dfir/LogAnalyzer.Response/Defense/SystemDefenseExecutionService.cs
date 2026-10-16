@@ -26,14 +26,16 @@ namespace LogAnalyzer.Infrastructure.Services
             {
                 RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true,
             };
-            using var p = Process.Start(psi) ?? throw new InvalidOperationException("netsh.exe nu a putut fi pornit.");
+            using var p = LogAnalyzer.Dfir.Auth.CollectorExec.Start(psi);
             var stdout = p.StandardOutput.ReadToEndAsync();
             var stderr = p.StandardError.ReadToEndAsync();
             if (!p.WaitForExit(Timeout))
             {
                 try { p.Kill(entireProcessTree: true); } catch (InvalidOperationException) { /* exited between the check and the kill */ }
+                LogAnalyzer.Dfir.Auth.CollectorExec.Done(p);
                 return new CommandOutcome(-1, $"netsh nu a terminat în {Timeout.TotalSeconds:0} s; operația a fost oprită.");
             }
+            LogAnalyzer.Dfir.Auth.CollectorExec.Done(p);
             return new CommandOutcome(p.ExitCode, (stdout.Result + stderr.Result).Trim());
         }
     }
