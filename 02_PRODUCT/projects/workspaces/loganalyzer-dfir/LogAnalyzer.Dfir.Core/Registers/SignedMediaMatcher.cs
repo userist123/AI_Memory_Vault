@@ -20,20 +20,40 @@ public sealed record SignedMediaMatch(SeenMedium Medium, SignedMediaMatchKind Ki
 
 /// <summary>
 /// Recognises an observed medium in the signed register by several attributes, not by the serial alone (a serial is easy to copy onto another stick):
-/// serial, VID/PID, capacity (within <see cref="CapacityTolerance"/>, Windows reports sizes from different sources) and, when both sides have it, the BitLocker
+/// serial, VID/PID, capacity (within the capacity tolerance, default <see cref="DefaultCapacityTolerance"/>, Windows reports sizes from different sources) and, when both sides have it, the BitLocker
 /// volume id. Same serial with a different attribute = "posibilă clonare a serialului" (DE VERIFICAT). A retired or destroyed medium seen after its
 /// status date = NECONFORM.
 /// </summary>
 public static class SignedMediaMatcher
 {
-    public const double CapacityTolerance = 0.02;
+    /// <summary>The default capacity tolerance (2 %). It can give a false "posibilă clonare" for two sources that round a capacity differently: verify it in the lab before changing it (not lab-verified).</summary>
+    public const double CapacityTolerance = 0.02, DefaultCapacityTolerance = 0.02;
+
+    /// <summary>The widest tolerance the station accepts (10 %): a wider value would let a clone of another capacity pass as the registered medium.</summary>
+    public const double MaxCapacityTolerance = 0.10;
+
+    /// <summary>
+    /// The tolerance to use for a requested value: 0..<see cref="MaxCapacityTolerance"/> as given; NaN, negative or too large falls back to the default and says so in
+    /// <paramref name="warning"/> (an out-of-range value never widens the matching).
+    /// </summary>
+    public static double ResolveTolerance(double requested, out string? warning)
+    {
+        if (double.IsNaN(requested) || requested < 0 || requested > MaxCapacityTolerance)
+        {
+            warning = $"Toleranța de capacitate cerută ({requested.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture)}) este în afara intervalului acceptat 0–{MaxCapacityTolerance:0.00}; se folosește valoarea implicită {DefaultCapacityTolerance:0.00}.";
+            return DefaultCapacityTolerance;
+        }
+        warning = null;
+        return requested;
+    }
 
     /// <param name="historyBefore">
     /// The boundary before which an unregistered medium is history (review M9): the first OFICIAL register installation from the sealed audit (or, on Standalone
     /// without it, the application's install date). Null = unknown, so every unregistered medium stays a violation.
     /// </param>
-    public static SignedMediaMatch Match(IReadOnlyList<SignedMediaEntry> entries, SeenMedium m, DateTimeOffset? historyBefore = null)
+    public static SignedMediaMatch Match(IReadOnlyList<SignedMediaEntry> entries, SeenMedium m, DateTimeOffset? historyBefore = null, double capacityTolerance = DefaultCapacityTolerance)
     {
+        capacityTolerance = ResolveTolerance(capacityTolerance, out _);
         var serial = MediaRegister.NormalizeSerial(m.Serial);
         SignedMediaMatch Unregistered(string text) =>
             historyBefore is { } b && !m.ConnectedNow && m.Seen.Count > 0 && m.Seen.All(s => s < b)
@@ -44,12 +64,12 @@ public static class SignedMediaMatcher
         var same = entries.Where(e => MediaRegister.NormalizeSerial(e.UsbSerial) == serial).ToList();
         if (same.Count == 0) return Unregistered($"{m.Description}, seria {serial}: mediu neînregistrat în registrul semnat");
 
-        var full = same.Where(e => Mismatches(e, m).Count == 0).ToList();
+        var full = same.Where(e => Mismatches(e, m, capacityTolerance).Count == 0).ToList();
         if (full.Count == 0)
         {
             var e0 = same[0];
             return new(m, SignedMediaMatchKind.CloneSuspected, e0,
-                $"{m.Description}, seria {serial}: posibilă clonare a serialului — seria este a mediului {e0.InventoryNumber} din registru, dar {string.Join(", ", Mismatches(e0, m))}");
+                $"{m.Description}, seria {serial}: posibilă clonare a serialului — seria este a mediului {e0.InventoryNumber} din registru, dar {string.Join(", ", Mismatches(e0, m, capacityTolerance))}");
         }
         // prefer the active entry (a medium re-enrolled after retirement keeps the old, retired entry too)
         var entry = full.FirstOrDefault(e => e.IsActive) ?? full[0];
@@ -67,12 +87,13 @@ public static class SignedMediaMatcher
     }
 
     /// <summary>The attributes known on both sides that differ, in words; empty = the same medium.</summary>
-    public static List<string> Mismatches(SignedMediaEntry e, SeenMedium m)
+    public static List<string> Mismatches(SignedMediaEntry e, SeenMedium m, double capacityTolerance = DefaultCapacityTolerance)
     {
+        capacityTolerance = ResolveTolerance(capacityTolerance, out _);
         var d = new List<string>();
         var ev = RegisterRules.NormalizeVidPid(e.VidPid); var mv = RegisterRules.NormalizeVidPid(m.VidPid);
         if (ev is not null && mv is not null && ev != mv) d.Add($"VID/PID diferă (registru {ev}, observat {mv})");
-        if (e.CapacityBytes > 0 && m.CapacityBytes is long mc && mc > 0 && Math.Abs(e.CapacityBytes - mc) > CapacityTolerance * Math.Max(e.CapacityBytes, mc))
+        if (e.CapacityBytes > 0 && m.CapacityBytes is long mc && mc > 0 && Math.Abs(e.CapacityBytes - mc) > capacityTolerance * Math.Max(e.CapacityBytes, mc))
             d.Add($"capacitatea diferă (registru {e.CapacityBytes} octeți, observat {mc} octeți)");
         var eb = Norm(e.BitLockerVolumeId); var mb = Norm(m.BitLockerVolumeId);
         if (eb.Length > 0 && mb.Length > 0 && eb != mb) d.Add("identificatorul volumului BitLocker diferă");

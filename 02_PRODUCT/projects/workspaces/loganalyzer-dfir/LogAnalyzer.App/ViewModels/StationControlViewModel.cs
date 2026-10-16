@@ -307,6 +307,8 @@ namespace LogAnalyzer.UI.ViewModels
                     try { auditPath = LogAnalyzer.UI.Services.AuthApp.Service.AuditPath; } catch (InvalidOperationException) { }
                     // D04 and the transfer register: the officer-signed media register in force (re-verified; compared with the last install in the sealed audit)
                     facts.SignedMedia = LogAnalyzer.UI.Services.MediaRegisterFlows.Active(LogAnalyzer.Dfir.Registers.SignedMediaRegisterStore.Shared, auditPath);
+                    (facts.MediaCapacityTolerance, var toleranceWarning) = LogAnalyzer.Dfir.Registers.MediaMatchSettings.Load();   // B7: station setting, default 0.02, 0..0.10
+                    facts.MediaCapacityToleranceWarning = toleranceWarning ?? "";
                     if (auditPath is not null)
                     {
                         // A11: the previous anchor code, checked before this control appends anything (an append never changes earlier entries anyway).

@@ -11,7 +11,7 @@ namespace LogAnalyzer.Dfir.Auth;
 /// </summary>
 public static class OperationAudit
 {
-    public const string ControlStarted = "control.started", ControlFinished = "control.finished", ExportUnmasked = "export.unmasked",
+    public const string ControlStarted = "control.started", ControlFinished = "control.finished", ExportUnmasked = "export.unmasked", ClipboardCopy = "clipboard.copy", ActionStarted = "action.started", ActionFinished = "action.finished",
                         CaseRemovedFromRecent = "case.removed_from_recent", ProfileEdited = "profile.edited", ClassifiedFoldersChanged = "profile.classified_folders_changed",
                         ReportOfficerSigned = "report.officer_signed", OfficerRegistered = "profile.officer_registered", AnchorExported = "audit.anchor_exported",
                         AnchorRecorded = "audit.anchor", OfficerRemoved = "profile.officer_removed",
@@ -161,7 +161,9 @@ public static class OperationAudit
         {
             var r = r0 with { Index = at };
             if (scan.Done.TryGetValue(r.ExecId, out var d) && d.RunId == r.RunId) r = r with { ChildPid = d.ChildPid, ExitCode = d.ExitCode, EndUtc = d.EndUtc };
-            string? why = RunWhy(scan, chainValid, r.RunId, r.AppSha256, at,
+            string? why = r.RunId.StartsWith(CollectorExec.ActionRunPrefix, StringComparison.Ordinal) && !r.RunId.Equals(CollectorExec.ActionRunPrefix + r.ExecId, StringComparison.Ordinal)
+                ? "fereastra de acțiune a unei comenzi acoperă exact acea comandă, iar această înregistrare îi aparține alteia"
+                : RunWhy(scan, chainValid, r.RunId, r.AppSha256, at,
                                  "comandă consemnată de altă versiune a aplicației (amprenta executabilului aplicației lipsește sau nu este cea înregistrată la începutul controlului)")
                 ?? (r.StartUtc < scan.Started[r.RunId].When || r.StartUtc > scan.Finished[r.RunId] ? "nu este în interiorul controlului ei"
                 : r.AppPid <= 0 ? "nu are procesul aplicației"
@@ -248,6 +250,9 @@ public static class OperationAudit
                 if (ev == AnchorEvent && when is { } wa) scan.Anchors.Add((index, wa));
                 else if (ev == ControlStarted && run.Length > 0 && when is { } ws) { scan.Started[run] = (ws, index); scan.StartedSha[run] = TokenOf(detail, "app_sha256="); }
                 else if (ev == ControlFinished && run.Length > 0 && when is { } wf) scan.Finished[run] = wf;
+                // the action window of a command started outside a station control (finding B5): the same facts as a control run, for one program
+                else if (ev == ActionStarted && run.StartsWith(CollectorExec.ActionRunPrefix, StringComparison.Ordinal) && when is { } wa2 && !scan.Started.ContainsKey(run)) { scan.Started[run] = (wa2, index); scan.StartedSha[run] = TokenOf(detail, "app_sha256="); }
+                else if (ev == ActionFinished && run.StartsWith(CollectorExec.ActionRunPrefix, StringComparison.Ordinal) && when is { } wf2 && !scan.Finished.ContainsKey(run)) scan.Finished[run] = wf2;
                 else if (ev == ControlHashing)
                 {
                     if (TryParseControlHashing(detail, out var w)) scan.Hashing.Add((w, when, index));
@@ -285,6 +290,12 @@ public static class OperationAudit
     public static string ControlStartedDetail(string edition, string posture, bool elevated, int periodDays, int classifiedFolders, string runId = "", string appSha256 = "") =>
         $"edition={edition}; posture={posture}; elevated={(elevated ? "da" : "nu")}; scope=perioada {periodDays} zile, {classifiedFolders} foldere clasificate" + (runId.Length > 0 ? $"; run={runId}" : "") + (appSha256.Length > 0 ? $"; app_sha256={appSha256}" : "");
 
+    /// <summary>Opens the action window of one program started outside a station control: the run id ("act-" + execution id), the application hash and the program name.</summary>
+    public static string ActionStartedDetail(string runId, string appSha256, string program) =>
+        $"run={runId}; app_sha256={appSha256}; program={program.ReplaceLineEndings(" ").Replace("; ", ", ")}";
+
+    public static string ActionFinishedDetail(string runId) => $"run={runId}";
+
     public static string ControlFinishedDetail(string host, bool elevated, int checks, int neconform, int deVerificat, int nedeterminat, string runId = "") =>
         $"host={host}; elevated={(elevated ? "da" : "nu")}; checks={checks}; neconform={neconform}; de_verificat={deVerificat}; nedeterminat={nedeterminat}" + (runId.Length > 0 ? $"; run={runId}" : "");
 
@@ -296,6 +307,14 @@ public static class OperationAudit
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         return $"case={(caseId.Length > 0 ? caseId : "(fără caz)")}; format={format}; items={items}; sha256={sha}";
     }
+
+    /// <summary>
+    /// A single case item copied unmasked to the clipboard (finding B1): kind, length in characters and SHA-256 of the text; NEVER the text itself.
+    /// </summary>
+    public static string ClipboardCopyDetail(string caseId, string kind, string text) =>
+        $"case={(caseId.Length > 0 ? caseId : "(fără caz)")}; kind={SafeToken(kind)}; length={text.Length}; sha256={Sha256Hex(text)}";
+
+    private static string SafeToken(string s) => new string(s.Where(c => char.IsLetterOrDigit(c) || c is '_' or '.' or '-').ToArray());
 
     /// <summary>Audit-first export: the intent, written before the file (the export is refused when this cannot be written).</summary>
     public static string ExportIntentDetail(string caseId, string format, int items) =>

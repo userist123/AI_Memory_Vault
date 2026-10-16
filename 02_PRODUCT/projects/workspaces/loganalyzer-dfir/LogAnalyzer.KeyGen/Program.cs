@@ -11,6 +11,8 @@ public static class Program
     public static void Main(string[] args)
     {
         Console.OutputEncoding = Encoding.UTF8;
+        // B10: a runtime older than .NET 10.0.13 is reported on stderr (the output of the commands stays clean); it never stops the command and needs no network
+        if (LogAnalyzer.Dfir.Reporting.RuntimeGuard.Warning(Environment.Version) is { } runtimeWarning) Console.Error.WriteLine("[!] Atenție .NET: " + runtimeWarning + ".");
         // Offline detection data packs (docs/dfir/ANALYSIS_2026-10-11_APPLICATION_UPDATES.md): run on the owner's offline machine only.
         if (args.Length >= 1 && args[0] == "datapack-keygen") { DataPackKeygen(args); return; }
         if (args.Length >= 1 && args[0] == "datapack-sign") { DataPackSign(args); return; }

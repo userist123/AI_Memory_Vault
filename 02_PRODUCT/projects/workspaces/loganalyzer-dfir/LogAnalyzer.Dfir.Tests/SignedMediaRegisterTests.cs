@@ -376,6 +376,159 @@ public sealed class SignedMediaRegisterTests : IDisposable
         var none = string.Join("\n", ControlReportPdf.OfficerSectionLines(ControlEvaluator.Evaluate(new StationFacts { SignedMedia = ActiveMediaRegister.None("niciunul") })));
         Assert.Contains("Registrul de medii semnat: niciunul în vigoare", none);
     }
+
+    // ───────── B7: offline case analysis uses the signed register of the case folder, verified like on the live path ─────────
+
+    private string PlaceInCase(byte[] json, byte[]? cms, int version = 1)
+    {
+        var dir = Path.Combine(_dir, "case", "Evidence");
+        Directory.CreateDirectory(dir);
+        var path = Path.Combine(dir, SignedMediaRegister.FileName(version));
+        File.WriteAllBytes(path, json);
+        if (cms is not null) File.WriteAllBytes(path + SignedMediaRegister.SignatureExtension, cms);
+        return Path.Combine(_dir, "case");
+    }
+
+    [Fact]
+    public void A_case_without_a_signed_register_changes_nothing()
+    {
+        Directory.CreateDirectory(Path.Combine(_dir, "case"));
+        Assert.Null(SignedMediaRegisterCase.Find(Path.Combine(_dir, "case"), new FakeCms(P.Officer), P.Officers, P.Trust(), PaperFp));
+        Assert.Null(SignedMediaRegisterCase.Find(Path.Combine(_dir, "nope"), new FakeCms(P.Officer), P.Officers, P.Trust(), PaperFp));
+    }
+
+    [Fact]
+    public void An_official_register_in_the_case_is_used_and_becomes_the_media_register_of_the_analysis()
+    {
+        var (doc, json, cms) = Issue(null, null, E("INV-1", "AA11"), E("INV-2", "BB22", status: "retras", changed: "2026-10-15T10:00:00Z"));
+        var r = SignedMediaRegisterCase.Find(PlaceInCase(json, cms), new FakeCms(P.Officer), P.Officers, P.Trust(), PaperFp);
+        Assert.NotNull(r);
+        Assert.True(r!.Used);
+        Assert.Equal(doc.Version, r.Active.Doc!.Version);
+        var media = SignedMediaRegisterCase.ToMediaRegister(r.Active.Doc!);
+        Assert.Equal(2, media.Rows.Count);
+        Assert.Equal(["active", "withdrawn"], media.Rows.Select(x => x.Status));
+        Assert.Equal("2026-10-15", media.Rows[1].ValidTo);
+        Assert.Empty(media.Validate().Where(i => i.IsError));
+    }
+
+    [Fact]
+    public void A_tampered_register_in_the_case_is_rejected_and_reported_never_trusted()
+    {
+        var (_, json, cms) = Issue(null, null, E("INV-1", "AA11"));
+        var tampered = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(json).Replace("AA11", "ZZ99"));
+        var r = SignedMediaRegisterCase.Find(PlaceInCase(tampered, cms), new FakeCms(P.Officer), P.Officers, P.Trust(), PaperFp);
+        Assert.NotNull(r);
+        Assert.False(r!.Used);
+        Assert.Null(r.Active.Doc);
+        Assert.Contains("NU este folosit", r.Note);
+    }
+
+    [Fact]
+    public void An_unsigned_register_in_the_case_is_not_used()
+    {
+        var (_, json, _) = Issue(null, null, E("INV-1", "AA11"));
+        var r = SignedMediaRegisterCase.Find(PlaceInCase(json, null), new FakeCms(P.Officer), P.Officers, P.Trust(), PaperFp);
+        Assert.False(r!.Used);
+        Assert.Contains("lipsește semnătura", r.Note);
+    }
+
+    [Fact]
+    public void A_register_whose_officer_fingerprint_was_not_confirmed_on_this_station_is_not_used()
+    {
+        var (_, json, cms) = Issue(null, null, E("INV-1", "AA11"));
+        var r = SignedMediaRegisterCase.Find(PlaceInCase(json, cms), new FakeCms(P.Officer), P.Officers, P.Trust(), paperFingerprint: null);
+        Assert.False(r!.Used);
+        Assert.Contains("NEOFICIAL", r.Note);
+    }
+
+    [Fact]
+    public void The_highest_version_in_the_case_is_the_one_judged_and_a_lower_valid_one_is_never_substituted()
+    {
+        var (d1, j1, c1) = Issue(null, null, E("INV-1", "AA11"));
+        var (_, j2, _) = Issue(d1, SignedMediaRegister.Sha256Hex(j1), E("INV-1", "AA11"), E("INV-2", "BB22"));
+        PlaceInCase(j1, c1, 1);
+        var root = PlaceInCase(j2, FakeCms.Sign(Encoding.UTF8.GetBytes("other")), 2);   // version 2 with a signature of other bytes
+        var r = SignedMediaRegisterCase.Find(root, new FakeCms(P.Officer), P.Officers, P.Trust(), PaperFp);
+        Assert.False(r!.Used);
+        Assert.EndsWith("v0002.json", r.File);
+    }
+
+    // ───────── B7: the capacity tolerance is a parameter, 0..0.10, default 0.02 ─────────
+
+    private static SeenMedium Seen(long cap) => new("AA11", "0951:1666", cap, "", "Kingston DataTraveler", true, []);
+
+    [Fact]
+    public void A_capacity_difference_between_the_default_and_the_configured_tolerance_is_a_clone_only_with_the_default()
+    {
+        var entries = new List<SignedMediaEntry> { E("INV-1", "AA11", cap: 32_000_000_000) };
+        var observed = Seen(32_000_000_000 - 1_600_000_000);          // -5 %
+        Assert.Equal(SignedMediaMatchKind.CloneSuspected, SignedMediaMatcher.Match(entries, observed).Kind);
+        Assert.Equal(SignedMediaMatchKind.CloneSuspected, SignedMediaMatcher.Match(entries, observed, null, 0.02).Kind);
+        Assert.Equal(SignedMediaMatchKind.Registered, SignedMediaMatcher.Match(entries, observed, null, 0.06).Kind);
+    }
+
+    [Theory]
+    [InlineData(0.5)]
+    [InlineData(0.1000001)]
+    [InlineData(-0.01)]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    public void An_out_of_range_tolerance_falls_back_to_the_default_with_a_warning_and_never_widens_the_matching(double requested)
+    {
+        Assert.Equal(SignedMediaMatcher.DefaultCapacityTolerance, SignedMediaMatcher.ResolveTolerance(requested, out var warning));
+        Assert.NotNull(warning);
+        var entries = new List<SignedMediaEntry> { E("INV-1", "AA11", cap: 32_000_000_000) };
+        Assert.Equal(SignedMediaMatchKind.CloneSuspected, SignedMediaMatcher.Match(entries, Seen(32_000_000_000 - 1_600_000_000), null, requested).Kind);
+        Assert.Contains("capacitatea diferă", string.Join("", SignedMediaMatcher.Mismatches(entries[0], Seen(24_000_000_000), requested)));
+    }
+
+    [Theory]
+    [InlineData(0.0)]
+    [InlineData(0.02)]
+    [InlineData(0.10)]
+    public void A_tolerance_inside_the_range_is_kept_without_a_warning(double requested)
+    {
+        Assert.Equal(requested, SignedMediaMatcher.ResolveTolerance(requested, out var warning));
+        Assert.Null(warning);
+    }
+
+    [Fact]
+    public void The_tolerance_is_read_from_the_station_setting_file_and_a_bad_file_gives_the_default_and_a_warning()
+    {
+        Directory.CreateDirectory(_dir);
+        var path = Path.Combine(_dir, "media_matching.json");
+        Assert.Equal((0.02, (string?)null), MediaMatchSettings.Load(path));                       // no file: default, no warning
+        File.WriteAllText(path, "{\"capacity_tolerance\": 0.05}");
+        Assert.Equal((0.05, (string?)null), MediaMatchSettings.Load(path));
+        File.WriteAllText(path, "{\"capacity_tolerance\": 0.9}");
+        var (t, w) = MediaMatchSettings.Load(path);
+        Assert.Equal(0.02, t); Assert.NotNull(w);
+        File.WriteAllText(path, "not json");
+        (t, w) = MediaMatchSettings.Load(path);
+        Assert.Equal(0.02, t); Assert.NotNull(w);
+    }
+
+    [Fact]
+    public void Check_D04_names_a_configured_tolerance_and_an_ignored_one()
+    {
+        var (doc, json, _) = Issue(null, null, E("INV-1", "AA11", cap: 32_000_000_000));
+        var facts = new StationFacts
+        {
+            Host = "LAB-PC", IsAdministrator = true, CollectedUtc = Now, Posture = LogAnalyzer.Core.Services.Edition.StationPosture.Standalone,
+            ObservedMedia = [Seen(32_000_000_000 - 1_600_000_000)],
+            SignedMedia = new ActiveMediaRegister(doc, SignedMediaRegister.Sha256Hex(json), ""),
+            MediaCapacityTolerance = 0.06,
+        };
+        var d04 = ControlEvaluator.Evaluate(facts).Checks.Single(c => c.Id == "D04");
+        Assert.Contains("de verificat în laborator", d04.Detail);
+        Assert.Equal(ControlStatus.Conform, d04.Status);              // 6 % accepts the 5 % difference
+        facts.MediaCapacityTolerance = 0.5;
+        facts.MediaCapacityToleranceWarning = "avertisment de test";
+        var d04b = ControlEvaluator.Evaluate(facts).Checks.Single(c => c.Id == "D04");
+        Assert.Contains("avertisment de test", d04b.Detail);
+        Assert.Equal(ControlStatus.DeVerificat, d04b.Status);         // out of range: the default 2 % applies, the 5 % difference is a possible clone
+    }
 }
 
 internal static class SignedMediaTestExtensions

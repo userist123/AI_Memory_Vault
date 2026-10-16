@@ -153,6 +153,10 @@ public sealed class StationFacts
     public List<LogAnalyzer.Dfir.Registers.SeenMedium>? ObservedMedia { get; set; }
     /// <summary>Check D04 and the transfer register: the signed media register in force on the station (or why there is none); null = not checked.</summary>
     public LogAnalyzer.Dfir.Registers.ActiveMediaRegister? SignedMedia { get; set; }
+    /// <summary>Check D04: the relative capacity tolerance of the media recognition (setting of the station, default 0.02; out of range = default).</summary>
+    public double MediaCapacityTolerance { get; set; } = LogAnalyzer.Dfir.Registers.SignedMediaMatcher.DefaultCapacityTolerance;
+    /// <summary>Check D04: why the configured tolerance was not used (out of range or unreadable); empty = none.</summary>
+    public string MediaCapacityToleranceWarning { get; set; } = "";
 }
 
 public static class StationFactCollector

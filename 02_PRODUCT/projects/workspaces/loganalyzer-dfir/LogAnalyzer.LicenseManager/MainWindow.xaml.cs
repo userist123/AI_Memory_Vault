@@ -21,6 +21,8 @@ public partial class MainWindow : Window
         InitializeComponent();
         DpCustom.SelectedDate = DateTime.Today.AddYears(1);
         RefreshLedger();
+        // B10: a runtime older than .NET 10.0.13 is shown in the status line; the window opens and works either way
+        if (LogAnalyzer.Dfir.Reporting.RuntimeGuard.Warning(Environment.Version) is { } runtimeWarning) ShowStatus("Atenție .NET: " + runtimeWarning + ".", ok: false);
     }
 
     private void UseLocalHwid_Click(object sender, RoutedEventArgs e)
