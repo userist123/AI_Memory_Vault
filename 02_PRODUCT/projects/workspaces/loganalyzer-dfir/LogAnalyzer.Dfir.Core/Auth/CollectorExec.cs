@@ -169,7 +169,6 @@ public static class CollectorExec
         return
         [
             .. new[] { "reg.exe", "esentutl.exe", "bcdedit.exe", "auditpol.exe" }.Select(n => Path.Combine(sys, n)),
-            Path.Combine(sys, "WindowsPowerShell", "v1.0", "powershell.exe"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windows Defender", "MpCmdRun.exe"),
             .. extra,
         ];
@@ -178,13 +177,52 @@ public static class CollectorExec
     private static readonly List<string> Extra = [];
 
     /// <summary>
-    /// Adds a program to the inventory: called only by the composition of an edition that ships the code starting it (the firewall tool of the
-    /// Unclassified and Network editions). The Standalone edition has no such code and adds nothing.
+    /// Adds a program to the inventory: called only by the edition code that starts it (LogAnalyzer.Response, registered by the Unclassified and Network
+    /// compositions: the firewall tool). The Standalone edition has no such code and adds nothing.
     /// </summary>
-    public static void AddToInventory(string fullPath)
+    internal static void AddToInventory(string fullPath)
     {
         if (!Path.IsPathFullyQualified(fullPath)) throw new ArgumentException("The inventory takes full paths only.", nameof(fullPath));
         lock (Extra) if (!Extra.Contains(fullPath, StringComparer.OrdinalIgnoreCase)) Extra.Add(fullPath);
+    }
+
+    /// <summary>A script interpreter the application starts for exactly one script: its path, the script-block hash of the build and the command-line test.</summary>
+    internal sealed record ScriptHost(string Exe, string ScriptSha256, Func<string, bool> RunsTheScript);
+
+    private static readonly List<ScriptHost> Hosts = [];
+
+    /// <summary>
+    /// Registers the interpreter that runs the application's collection script (only the editions that ship it). A record for that interpreter is accepted only
+    /// when its recorded script hash is <paramref name="scriptSha256"/> (the script embedded at build time) and <paramref name="runsTheScript"/> accepts its
+    /// command line (exactly the argument form the application emits).
+    /// </summary>
+    internal static void AddScriptHost(string exeFullPath, string scriptSha256, Func<string, bool> runsTheScript)
+    {
+        if (scriptSha256.Length != 64) throw new ArgumentException("The build-time script hash is missing.", nameof(scriptSha256));
+        AddToInventory(exeFullPath);
+        lock (Hosts)
+        {
+            Hosts.RemoveAll(h => h.Exe.Equals(exeFullPath, StringComparison.OrdinalIgnoreCase));
+            Hosts.Add(new ScriptHost(exeFullPath, scriptSha256, runsTheScript));
+        }
+    }
+
+    private static readonly string[] Interpreters = ["powershell.exe", "pwsh.exe", "powershell_ise.exe"];
+
+    /// <summary>
+    /// Why a record for a script interpreter is not the application's own (null = it is, or the program is not an interpreter): a PowerShell record must be
+    /// for a registered host, carry the build-time script hash and run exactly the collection script.
+    /// </summary>
+    internal static string? ScriptHostRefusal(CollectorExecRecord r)
+    {
+        ScriptHost? host;
+        lock (Hosts) host = Hosts.FirstOrDefault(h => Normalize(h.Exe).Equals(Normalize(r.Exe), StringComparison.OrdinalIgnoreCase));
+        if (host is null)
+            return Interpreters.Contains(Path.GetFileName(r.Exe.Trim().Trim('"')), StringComparer.OrdinalIgnoreCase)
+                ? "PowerShell este acceptat doar pentru scriptul de colectare al aplicației, iar această ediție nu îl are" : null;
+        if (!r.ScriptSha256.Equals(host.ScriptSha256, StringComparison.OrdinalIgnoreCase))
+            return "amprenta scriptului consemnată nu este cea a scriptului de colectare fixat la construirea aplicației";
+        return host.RunsTheScript(r.CommandLine) ? null : "linia de comandă PowerShell nu rulează exact scriptul de colectare al aplicației, în forma în care îl pornește aplicația";
     }
 
     /// <summary>True when <paramref name="exe"/> is, after normalisation and ignoring case, one of the inventory paths.</summary>

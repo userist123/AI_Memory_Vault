@@ -210,9 +210,12 @@ An event (Security 4688, Sysmon 1, PowerShell 4104) is the application's own onl
 hashing window (chain verifies, no backdated record before it, named control run with start and end, inside it, written by the executable recorded at
 the control start, the control starts after the anchor before it) and moreover: the application's process id, the program's full path and SHA-256, the end
 record (child process id, exit code), at most 10 minutes; the program must be one of the fixed inventory (System32 `reg.exe`, `esentutl.exe`,
-`bcdedit.exe`, `auditpol.exe`, `WindowsPowerShell\v1.0\powershell.exe`, resolved from `Environment.SystemDirectory`, and Defender's
-`MpCmdRun.exe` under Program Files; normalised, case-insensitive; the Unclassified and Network compositions add System32 `netsh.exe`, because only
-they ship the firewall runner, so the Standalone build contains no such entry) and the file at that path must hash now to the recorded SHA-256. A record naming
+`bcdedit.exe`, `auditpol.exe`, resolved from `Environment.SystemDirectory`, and Defender's `MpCmdRun.exe` under Program Files; normalised,
+case-insensitive; the Unclassified and Network compositions add System32 `netsh.exe` and `WindowsPowerShell\v1.0\powershell.exe`, because only they
+ship the firewall runner and the collection script, so the Standalone build contains neither). A PowerShell record is accepted only when its command
+line is exactly the one the collector emits (the fixed switches, `-File` with the shipped script path, one of the target types, an output folder and a
+host name the collector accepts, nothing else) and its recorded script hash is the hash of the script embedded at build time; any other PowerShell command line is refused. For every program, the file
+at that path must hash now to the recorded SHA-256. A record naming
 any other program (for example `C:\Tools\exfil.exe`) is refused. The collection script is started only when its SHA-256 equals the hash of the
 script embedded in the assembly at build time; a changed script is refused before anything starts. The event must have the same child process id (or the application's process as parent)
 inside that window, the same path and the same command line, and, when it carries one (Sysmon), the same image hash; a script block must have the
@@ -226,5 +229,8 @@ claimed when they match a record).
 Residual: an administrator who holds the sealing key can append, after the latest anchor code, forged records for the programs of the application's
 inventory and so hide any number of runs of those programs at the next control. A11 does not detect entries appended after the anchor (it proves only
 that what the paper code covers is unchanged). The officer compares the A17 list with what the application's operator actually ran. The inventory and
-the current-hash check limit what can be hidden to runs of those Windows tools with their own files; they do not limit how many. A long PowerShell
+the current-hash check limit what can be hidden to runs of those Windows tools with their own files; they do not limit how many. Between the check of
+the script's hash and PowerShell reading the script there is a short window in which an administrator who can write to the application folder can
+replace the script; with script block logging (4104) on, the replaced content shows as not matching; without it, only the PowerShell start is seen, and
+it is recognised as the application's own. A long PowerShell
 script that Windows splits into several 4104 blocks is not recognised (only the whole block is hashed) and stays with the other checks.

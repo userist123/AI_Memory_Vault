@@ -61,8 +61,8 @@ namespace LogAnalyzer.UI.Services
             services.AddSingleton<IConnectivityWatcher, NetworkChangeWatcher>();
             services.AddSingleton<IRegistryValueWriter, RegistryValueWriter>();
             services.AddSingleton<IAuditCollector, PowerShellAuditCollector>();
-            // this edition ships the firewall runner: its program is one the application starts (A17 recognises it only from the sealed audit)
-            LogAnalyzer.Dfir.Auth.CollectorExec.AddToInventory(LogAnalyzer.Infrastructure.Services.NetshRunner.NetshPath);
+            // this edition ships the firewall runner and the collection script: their programs join the inventory A17 recognises (only from the sealed audit)
+            LogAnalyzer.Response.ResponseProgramInventory.Register();
             services.AddSingleton<ISyslogReceiver, UdpSyslogReceiver>();
             services.AddSingleton<IAuditCollectionService, AuditCollectionService>();
         }

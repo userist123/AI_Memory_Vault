@@ -42,6 +42,39 @@ namespace LogAnalyzer.Response.Collection
         /// <summary>SHA-256 of the collection script as it was when this assembly was built (embedded resource); empty if the resource is missing.</summary>
         public static string BuildScriptSha256 => BuildSha.Value;
 
+        /// <summary>Windows PowerShell 5.1 by its fixed path (never from PATH).</summary>
+        public static string PowerShellPath => Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe");
+
+        /// <summary>The collection script shipped next to the executable; the collector never looks anywhere else.</summary>
+        public static string ScriptPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Scripts", "AuditCollector.ps1");
+
+        private static readonly Lazy<string> BuildBlockSha = new(() =>
+        {
+            using var s = typeof(PowerShellAuditCollector).Assembly.GetManifestResourceStream("LogAnalyzer.Response.Scripts.AuditCollector.ps1");
+            if (s is null) return "";
+            using var r = new StreamReader(s, detectEncodingFromByteOrderMarks: true);
+            return LogAnalyzer.Dfir.Auth.CollectorExec.ScriptSha256(r.ReadToEnd());
+        });
+
+        /// <summary>The script hash in the form "collector.exec" records it (text, line endings as "\n") of the script embedded at build time.</summary>
+        public static string BuildScriptBlockSha256 => BuildBlockSha.Value;
+
+        private static readonly System.Text.RegularExpressions.Regex ArgumentTail = new(
+            @"^(PC|Server|NAS|DataCenter) -OutputDirectory (""(?:[^""\\]|\\.)*""|[^\s""]+) -Hostname ([A-Za-z0-9][A-Za-z0-9._-]{0,62})$",
+            System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
+
+        /// <summary>
+        /// True only for the command line this collector emits (<see cref="BuildStartInfo"/>): <paramref name="powershell"/> with exactly these switches, the
+        /// script <paramref name="scriptPath"/>, one of the target types, an output folder and a host name the collector accepts. Nothing before, between or after.
+        /// </summary>
+        public static bool RunsTheCollectionScript(string commandLine, string powershell, string scriptPath)
+        {
+            const string Marker = " -TargetType ";
+            var sample = LogAnalyzer.Dfir.Auth.CollectorExec.CommandLineOf(BuildStartInfo(powershell, scriptPath, "PC", "x", "h"));
+            var head = sample[..(sample.IndexOf(Marker, StringComparison.Ordinal) + Marker.Length)];
+            return commandLine.StartsWith(head, StringComparison.Ordinal) && ArgumentTail.IsMatch(commandLine[head.Length..]);
+        }
+
         /// <summary>
         /// Why the script at <paramref name="scriptPath"/> must not be started (null = it is byte for byte the script of the build). Checked before every start:
         /// a script changed after the build is refused, so the only script the application runs is the one whose hash is recorded in "collector.exec".
@@ -99,7 +132,7 @@ namespace LogAnalyzer.Response.Collection
                         logCallback("[ERROR] Folderul de destinație este gol sau conține caractere nepermise. Colectarea nu a pornit.");
                         return;
                     }
-                    string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Scripts", "AuditCollector.ps1");
+                    string scriptPath = ScriptPath;
                     
                     if (!File.Exists(scriptPath))
                     {
@@ -118,7 +151,7 @@ namespace LogAnalyzer.Response.Collection
                     logCallback($"[INIT] Destinație: {outputDir}");
 
                     // Windows PowerShell 5.1 by full path (never from PATH); it ships with every supported Windows version.
-                    string powershell = Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe");
+                    string powershell = PowerShellPath;
                     if (!File.Exists(powershell))
                     {
                         logCallback($"[ERROR] Windows PowerShell 5.1 indisponibil pe acest sistem ({powershell} lipsește); colectarea de audit nu poate rula.");
