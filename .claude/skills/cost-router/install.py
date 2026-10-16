@@ -85,6 +85,21 @@ CONTEXT_RULES = f"""{RULES_START}
   this owner): replies, short progress notes, commit messages, PR titles, descriptions and
   comments. File contents and internal text stay in English: code, skills, prompts, .md files,
   subagent briefs and self check-ins.
+## Agents and review rounds (every project; cost-router skill §2A, measured 2026-10-14..16)
+- Resume a subagent at most once (SendMessage). Any further round is a NEW agent seeded with a
+  checkpoint of at most 40 lines: task, branch/PR, head SHA, findings to fix, files, test commands.
+- Security-sensitive work: write the threat model / probe list into the worker brief before
+  implementation and give the reviewer the same list; crypto/PDF/signature briefs state the trust
+  model and the whitelist design. Ask the owner the open product questions before dispatch.
+- At most 2 review rounds; round 2 reviews only the delta and runs only the affected test
+  projects; then decide in the main session (fix, or an accepted residual recorded with the owner).
+  The full suite runs once before merge.
+- One implementation agent at a time. Agents push and stop; they never poll CI. The main session
+  checks CI once, then dispatches the review. Before parallel branches, reserve ids and file
+  ownership in the coordination checkpoint.
+- Implementers of risky code run on Sonnet because an Opus reviewer pass is mandatory; design,
+  root cause, verification, critical risk and live operations (production, deploy, delete,
+  rotate) stay on Opus.
 {RULES_END}
 """
 DISABLED_MARKER = "cost-router.disabled"  # written by --uninstall under ~/.claude; honoured by --session-start
