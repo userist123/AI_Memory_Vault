@@ -169,6 +169,7 @@ namespace LogAnalyzer.UI.ViewModels
                     OfficerExport.WriteMediaHistory(facts, Path.Combine(dest, OfficerExport.MediaHistoryFile));
                     if (log is not null) { anchorCopy = AuditAnchor.Export(log, dest, Environment.MachineName, now); anchorLine = anchorCopy.Anchor.Line; }
                     File.WriteAllText(Path.Combine(dest, OfficerExport.ReadmeFile), OfficerExport.Readme(facts.Host, now, planned, anchorLine), new System.Text.UTF8Encoding(false));
+                    return Directory.GetFiles(dest, "*", SearchOption.AllDirectories);   // a new folder: everything in it is this export
                 });
                 if (refused is not null) { Status = "Exportul pentru ofițer nu s-a făcut: " + refused; return; }
                 if (anchorCopy is { } x) AuthApp.Record(OperationAudit.AnchorExported, OperationAudit.AnchorExportedDetail(x.Anchor.Seq, x.Anchor.Code, x.LogSha256, x.Folder));

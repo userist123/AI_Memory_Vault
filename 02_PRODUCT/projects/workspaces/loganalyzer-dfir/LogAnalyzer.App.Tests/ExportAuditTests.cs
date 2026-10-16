@@ -98,6 +98,7 @@ public sealed class ExportAuditTests : IDisposable
             File.WriteAllText(Path.Combine(dest, "raport.pdf"), "pdf");
             File.WriteAllText(Path.Combine(dest, "istoric_medii.csv"), "Serie\nSER1\n");
             File.WriteAllText(Path.Combine(dest, "citeste_ma.txt"), "readme");
+            return Directory.GetFiles(dest);
         });
         Assert.Null(refused);
         var lines = Audit().Where(e => e.Event == OperationAudit.ExportUnmasked).ToList();
@@ -113,6 +114,24 @@ public sealed class ExportAuditTests : IDisposable
     }
 
     [Fact]
+    public void A_bundle_export_into_a_chosen_folder_records_only_the_files_it_wrote()
+    {
+        var dest = Path.Combine(_dir, "officer-stick");
+        Directory.CreateDirectory(dest);
+        File.WriteAllText(Path.Combine(dest, "alt_document.txt"), "not ours");          // already on the medium: not part of this export
+        var refused = ExportAudit.RunBundle("CASE-9", "istoric-medii", dest, ["istoric.json", "istoric.json.p7s"], () =>
+        {
+            File.WriteAllText(Path.Combine(dest, "istoric.json"), "{}");
+            File.WriteAllText(Path.Combine(dest, "istoric.json.p7s"), "sig");
+            return [Path.Combine(dest, "istoric.json"), Path.Combine(dest, "istoric.json.p7s")];
+        });
+        Assert.Null(refused);
+        var written = Audit().Where(e => e.Event == OperationAudit.ExportUnmasked && e.Detail.EndsWith("phase=written")).ToList();
+        Assert.Equal(2, written.Count);
+        Assert.DoesNotContain(written, l => l.Detail.Contains("alt_document.txt"));
+    }
+
+    [Fact]
     public void A_bundle_export_whose_audit_cannot_be_written_writes_no_file_at_all()
     {
         AuthApp.Record("test.prime", "x");
@@ -120,7 +139,7 @@ public sealed class ExportAuditTests : IDisposable
         bool wrote = false;
         string? refused;
         using (new FileStream(AuthApp.Service.AuditPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
-            refused = ExportAudit.RunBundle("CASE-9", "pentru-ofiter", dest, ["raport.pdf"], () => { wrote = true; Directory.CreateDirectory(dest); });
+            refused = ExportAudit.RunBundle("CASE-9", "pentru-ofiter", dest, ["raport.pdf"], () => { wrote = true; Directory.CreateDirectory(dest); return []; });
         Assert.NotNull(refused);
         Assert.False(wrote);
         Assert.False(Directory.Exists(dest));
