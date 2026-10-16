@@ -25,6 +25,15 @@ public static class OperationAudit
     public static string MediaRegisterDetail(int version, string sha256, string verdict, bool installed, string signerFingerprint, string reason) =>
         $"version={version}; sha256={sha256}; verdict={verdict}; installed={(installed ? "da" : "nu")}; signer={signerFingerprint}; reason={reason.Replace(';', ',').ReplaceLineEndings(" ")}";
 
+    /// <summary>Media history across stations (owner decision 2026-10-16): a station's export signed by the officer at collection, and the officer's reconciliation report.</summary>
+    public const string MediaHistoryExported = "media_history.exported", MediaHistoryReconciled = "media_history.reconciled";
+
+    public static string MediaHistoryExportedDetail(string file, string sha256, string signerFingerprint, int media, int transfers, long anchorSeq) =>
+        $"file={file.Replace(';', ',')}; sha256={sha256}; signer={signerFingerprint}; media={media}; transfers={transfers}; anchor_seq={anchorSeq}";
+
+    public static string MediaHistoryReconciledDetail(string file, string sha256, int accepted, int rejected, int grave, int high) =>
+        $"file={file.Replace(';', ',')}; sha256={sha256}; accepted={accepted}; rejected={rejected}; grav={grave}; ridicat={high}";
+
     public static string AnchorRecordedDetail(LogAnalyzer.Dfir.Case.AuditAnchorPoint a, string reason) => $"seq={a.Seq}; anchor={a.Code}; chain={a.ChainId}; reason={reason}";
 
     /// <summary>
