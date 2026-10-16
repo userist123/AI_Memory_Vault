@@ -111,79 +111,159 @@ public static class OperationAudit
     {
         var valid = new List<LogAnalyzer.Dfir.Analysis.SelfActivityWindow>();
         var invalid = new List<string>();
-        var regressions = new List<string>();
         if (!File.Exists(auditPath)) return new(valid, invalid);
-        var started = new Dictionary<string, (DateTimeOffset When, int Index)>(StringComparer.Ordinal);
-        var startedSha = new Dictionary<string, string>(StringComparer.Ordinal);
-        var finished = new Dictionary<string, DateTimeOffset>(StringComparer.Ordinal);
-        var anchors = new List<(int Index, DateTimeOffset When)>();
-        var hashing = new List<(LogAnalyzer.Dfir.Analysis.SelfActivityWindow W, DateTimeOffset? When, int Index)>();
-        var unreadable = 0;
-        int index = 0, firstRegression = int.MaxValue;
-        DateTimeOffset? previous = null;
-        using (var fs = new FileStream(auditPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
-        using (var sr = new StreamReader(fs))
-            while (sr.ReadLine() is { } line)
-            {
-                if (string.IsNullOrWhiteSpace(line)) continue;
-                index++;
-                try
-                {
-                    using var doc = JsonDocument.Parse(line);
-                    if (doc.RootElement.ValueKind != JsonValueKind.Object) continue;
-                    string ev = "", detail = ""; DateTimeOffset? when = null;
-                    foreach (var pr in doc.RootElement.EnumerateObject())
-                    {
-                        if (pr.Value.ValueKind != JsonValueKind.String) continue;
-                        if (pr.Name.Equals("event", StringComparison.OrdinalIgnoreCase)) ev = pr.Value.GetString() ?? "";
-                        else if (pr.Name.Equals("detail", StringComparison.OrdinalIgnoreCase)) detail = pr.Value.GetString() ?? "";
-                        else if (pr.Name.Equals("whenUtc", StringComparison.OrdinalIgnoreCase) && pr.Value.TryGetDateTimeOffset(out var t)) when = t;
-                    }
-                    // the chain's times never go back: a record earlier than its predecessor (beyond the tolerance) is backdated or forged
-                    if (when is { } w0)
-                    {
-                        if (previous is { } p0 && w0 < p0 - ClockTolerance)
-                        {
-                            regressions.Add($"înregistrări cu oră în urmă în jurnalul aplicației: înregistrarea {index} ({ev}) are ora {w0.UtcDateTime:yyyy-MM-dd HH:mm} UTC, înaintea celei precedente ({p0.UtcDateTime:yyyy-MM-dd HH:mm} UTC); ferestrele de calcul al amprentelor de după ea nu sunt folosite");
-                            firstRegression = Math.Min(firstRegression, index);
-                        }
-                        previous = previous is { } pm && pm > w0 ? pm : w0;
-                    }
-                    var run = RunOf(detail);
-                    if (ev == AnchorEvent && when is { } wa) anchors.Add((index, wa));
-                    else if (ev == ControlStarted && run.Length > 0 && when is { } ws) { started[run] = (ws, index); startedSha[run] = TokenOf(detail, "app_sha256="); }
-                    else if (ev == ControlFinished && run.Length > 0 && when is { } wf) finished[run] = wf;
-                    else if (ev == ControlHashing)
-                    {
-                        if (TryParseControlHashing(detail, out var w)) hashing.Add((w, when, index));
-                        else unreadable++;
-                    }
-                }
-                catch (JsonException) { }
-            }
+        var scan = Scan(auditPath);
         const string Bad = "fereastră de calcul amprente nevalidă";
-        for (var k = 0; k < unreadable; k++) invalid.Add($"{Bad}: înregistrarea din jurnalul de audit nu poate fi citită.");
-        foreach (var (w, when, at) in hashing)
+        for (var k = 0; k < scan.UnreadableHashing; k++) invalid.Add($"{Bad}: înregistrarea din jurnalul de audit nu poate fi citită.");
+        foreach (var (w, when, at) in scan.Hashing)
         {
             var id = w.RunId.Length > 0 ? w.RunId : "fără identificator";
-            var s0 = started.TryGetValue(w.RunId, out var st) ? st : default;
-            var anchorBefore = anchors.Where(a => a.Index < s0.Index).Select(a => (DateTimeOffset?)a.When).LastOrDefault();
-            string? why =
-                !chainValid ? "jurnalul de audit nu se verifică (lanț rupt sau sigiliu nevalid)"
-                : at > firstRegression || s0.Index > firstRegression ? "este după o înregistrare cu oră în urmă în jurnal"
-                : w.RunId.Length == 0 ? "nu numește controlul căruia îi aparține"
-                : s0.Index == 0 || !finished.TryGetValue(w.RunId, out var f0) ? "controlul ei nu are început și sfârșit înregistrate"
-                : w.AppSha256.Length != 64 || !w.AppSha256.Equals(startedSha.GetValueOrDefault(w.RunId, ""), StringComparison.OrdinalIgnoreCase)
-                    ? "fereastră scrisă de altă versiune a aplicației (amprenta executabilului din fereastră lipsește sau nu este cea înregistrată la începutul controlului ei)"
-                : anchorBefore is { } ab && s0.When < ab ? $"controlul ei începe ({s0.When.UtcDateTime:yyyy-MM-dd HH:mm} UTC) înaintea ancorării care îl precede în jurnal ({ab.UtcDateTime:yyyy-MM-dd HH:mm} UTC)"
-                : w.EndUtc < w.StartUtc || w.EndUtc - w.StartUtc > MaxHashingWindow ? $"durează mai mult de {MaxHashingWindow.TotalHours:0} ore sau se termină înainte să înceapă"
-                : w.StartUtc < s0.When || w.EndUtc > f0 || when is not { } rec || rec < s0.When || rec > f0 ? "nu este în interiorul controlului ei"
+            var s0 = scan.Started.TryGetValue(w.RunId, out var st) ? st : default;
+            string? why = RunWhy(scan, chainValid, w.RunId, w.AppSha256, at,
+                                 "fereastră scrisă de altă versiune a aplicației (amprenta executabilului din fereastră lipsește sau nu este cea înregistrată la începutul controlului ei)")
+                ?? (w.EndUtc < w.StartUtc || w.EndUtc - w.StartUtc > MaxHashingWindow ? $"durează mai mult de {MaxHashingWindow.TotalHours:0} ore sau se termină înainte să înceapă"
+                : w.StartUtc < s0.When || w.EndUtc > scan.Finished[w.RunId] || when is not { } rec || rec < s0.When || rec > scan.Finished[w.RunId] ? "nu este în interiorul controlului ei"
                 : w.ProcessId <= 0 || w.ImagePath.Trim().Length == 0 ? "nu are procesul sau programul aplicației"
-                : null;
+                : null);
             if (why is null) valid.Add(w);
             else invalid.Add($"{Bad}: {why} (control {id}, {w.StartUtc.UtcDateTime:yyyy-MM-dd HH:mm}–{w.EndUtc.UtcDateTime:HH:mm} UTC); nu ascunde nicio înregistrare.");
         }
-        return new(valid, invalid) { Regressions = regressions };
+        return new(valid, invalid) { Regressions = scan.Regressions };
+    }
+
+    /// <summary>The longest a program started by the application may run and still be recognised as its own (owner rule: at most 10 minutes).</summary>
+    public static readonly TimeSpan MaxExecWindow = TimeSpan.FromMinutes(10);
+
+    /// <summary>Programs the application started, read back from the sealed audit: the ones that pass validation and the refused ones with the reason.</summary>
+    public sealed record CollectorExecs(List<CollectorExecRecord> Valid, List<(CollectorExecRecord Record, string Why)> Refused)
+    {
+        public List<string> Unreadable { get; init; } = [];
+        public static CollectorExecs Empty => new([], []);
+    }
+
+    /// <summary>
+    /// The "collector.exec" records of the sealed audit with their "collector.exec_done". A record is accepted only on the same terms as a hashing window: the
+    /// chain verifies, no backdated record before it, it names its control (run id), it lies between that control's start and end, it was written by the
+    /// executable recorded at the start of that control, the control starts after the anchor before it; and moreover the record has the application's
+    /// process id, the executable's full path and SHA-256 (a program of the fixed inventory whose file has that hash now), its end record (child process id) and the program ran at most <see cref="MaxExecWindow"/>.
+    /// </summary>
+    /// <param name="inventory">The programs a record may name (default <see cref="CollectorExec.Inventory"/>); a record naming any other program is refused.</param>
+    /// <param name="currentSha256">SHA-256 of the file now at a path (default <see cref="CollectorExec.FileSha256"/>): it must equal the recorded hash.</param>
+    public static CollectorExecs ReadCollectorExecs(string auditPath, bool chainValid, IReadOnlyCollection<string>? inventory = null, Func<string, string>? currentSha256 = null)
+    {
+        inventory ??= CollectorExec.Inventory();
+        currentSha256 ??= CollectorExec.FileSha256;
+        var result = CollectorExecs.Empty;
+        if (!File.Exists(auditPath)) return result;
+        var scan = Scan(auditPath);
+        for (var k = 0; k < scan.UnreadableExec; k++) result.Unreadable.Add("o înregistrare „collector.exec” din jurnalul de audit nu poate fi citită");
+        foreach (var (r0, at) in scan.Execs)
+        {
+            var r = r0 with { Index = at };
+            if (scan.Done.TryGetValue(r.ExecId, out var d) && d.RunId == r.RunId) r = r with { ChildPid = d.ChildPid, ExitCode = d.ExitCode, EndUtc = d.EndUtc };
+            string? why = RunWhy(scan, chainValid, r.RunId, r.AppSha256, at,
+                                 "comandă consemnată de altă versiune a aplicației (amprenta executabilului aplicației lipsește sau nu este cea înregistrată la începutul controlului)")
+                ?? (r.StartUtc < scan.Started[r.RunId].When || r.StartUtc > scan.Finished[r.RunId] ? "nu este în interiorul controlului ei"
+                : r.AppPid <= 0 ? "nu are procesul aplicației"
+                : !Path.IsPathFullyQualified(r.Exe) ? "programul nu este dat prin calea lui completă"
+                : !IsSha256(r.ExeSha256) ? "nu are amprenta SHA-256 a programului pornit"
+                : !CollectorExec.InInventory(r.Exe, inventory) ? "programul nu face parte din inventarul fix al aplicației (instrumentele Windows pe care le pornește, la locul lor)"
+                : !currentSha256(r.Exe).Equals(r.ExeSha256, StringComparison.OrdinalIgnoreCase) ? "fișierul programului nu are acum amprenta SHA-256 consemnată"
+                : CollectorExec.ScriptHostRefusal(r) is { } scriptWhy ? scriptWhy
+                : r.EndUtc is not { } end || r.ChildPid <= 0 ? "nu are înregistrarea de sfârșit (procesul pornit și codul de ieșire)"
+                : end < r.StartUtc || end - r.StartUtc > MaxExecWindow ? $"a rulat mai mult de {MaxExecWindow.TotalMinutes:0} minute sau se termină înainte să înceapă"
+                : end > scan.Finished[r.RunId] ? "se termină după sfârșitul controlului ei"
+                : null);
+            if (why is null) result.Valid.Add(r);
+            else result.Refused.Add((r, why));
+        }
+        return result;
+    }
+
+    private static bool IsSha256(string s) => s.Length == 64 && s.All(Uri.IsHexDigit);
+
+    /// <summary>What a record must satisfy to belong to a valid control run (the shared part of hashing windows and program records); null = it does.</summary>
+    private static string? RunWhy(AuditScan scan, bool chainValid, string runId, string appSha256, int at, string otherVersion)
+    {
+        var s0 = scan.Started.TryGetValue(runId, out var st) ? st : default;
+        var anchorBefore = scan.Anchors.Where(a => a.Index < s0.Index).Select(a => (DateTimeOffset?)a.When).LastOrDefault();
+        return !chainValid ? "jurnalul de audit nu se verifică (lanț rupt sau sigiliu nevalid)"
+            : at > scan.FirstRegression || s0.Index > scan.FirstRegression ? "este după o înregistrare cu oră în urmă în jurnal"
+            : runId.Length == 0 ? "nu numește controlul căruia îi aparține"
+            : s0.Index == 0 || !scan.Finished.ContainsKey(runId) ? "controlul ei nu are început și sfârșit înregistrate"
+            : appSha256.Length != 64 || !appSha256.Equals(scan.StartedSha.GetValueOrDefault(runId, ""), StringComparison.OrdinalIgnoreCase) ? otherVersion
+            : anchorBefore is { } ab && s0.When < ab ? $"controlul ei începe ({s0.When.UtcDateTime:yyyy-MM-dd HH:mm} UTC) înaintea ancorării care îl precede în jurnal ({ab.UtcDateTime:yyyy-MM-dd HH:mm} UTC)"
+            : null;
+    }
+
+    private sealed class AuditScan
+    {
+        public Dictionary<string, (DateTimeOffset When, int Index)> Started { get; } = new(StringComparer.Ordinal);
+        public Dictionary<string, string> StartedSha { get; } = new(StringComparer.Ordinal);
+        public Dictionary<string, DateTimeOffset> Finished { get; } = new(StringComparer.Ordinal);
+        public List<(int Index, DateTimeOffset When)> Anchors { get; } = [];
+        public List<(LogAnalyzer.Dfir.Analysis.SelfActivityWindow W, DateTimeOffset? When, int Index)> Hashing { get; } = [];
+        public List<(CollectorExecRecord R, int Index)> Execs { get; } = [];
+        public Dictionary<string, (string ExecId, string RunId, int ChildPid, int ExitCode, DateTimeOffset EndUtc)> Done { get; } = new(StringComparer.Ordinal);
+        public List<string> Regressions { get; } = [];
+        public int UnreadableHashing { get; set; }
+        public int UnreadableExec { get; set; }
+        public int FirstRegression { get; set; } = int.MaxValue;
+    }
+
+    private static AuditScan Scan(string auditPath)
+    {
+        var scan = new AuditScan();
+        int index = 0;
+        DateTimeOffset? previous = null;
+        using var fs = new FileStream(auditPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        using var sr = new StreamReader(fs);
+        while (sr.ReadLine() is { } line)
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            index++;
+            try
+            {
+                using var doc = JsonDocument.Parse(line);
+                if (doc.RootElement.ValueKind != JsonValueKind.Object) continue;
+                string ev = "", detail = ""; DateTimeOffset? when = null;
+                foreach (var pr in doc.RootElement.EnumerateObject())
+                {
+                    if (pr.Value.ValueKind != JsonValueKind.String) continue;
+                    if (pr.Name.Equals("event", StringComparison.OrdinalIgnoreCase)) ev = pr.Value.GetString() ?? "";
+                    else if (pr.Name.Equals("detail", StringComparison.OrdinalIgnoreCase)) detail = pr.Value.GetString() ?? "";
+                    else if (pr.Name.Equals("whenUtc", StringComparison.OrdinalIgnoreCase) && pr.Value.TryGetDateTimeOffset(out var t)) when = t;
+                }
+                // the chain's times never go back: a record earlier than its predecessor (beyond the tolerance) is backdated or forged
+                if (when is { } w0)
+                {
+                    if (previous is { } p0 && w0 < p0 - ClockTolerance)
+                    {
+                        scan.Regressions.Add($"înregistrări cu oră în urmă în jurnalul aplicației: înregistrarea {index} ({ev}) are ora {w0.UtcDateTime:yyyy-MM-dd HH:mm} UTC, înaintea celei precedente ({p0.UtcDateTime:yyyy-MM-dd HH:mm} UTC); ferestrele de calcul al amprentelor de după ea nu sunt folosite");
+                        scan.FirstRegression = Math.Min(scan.FirstRegression, index);
+                    }
+                    previous = previous is { } pm && pm > w0 ? pm : w0;
+                }
+                var run = RunOf(detail);
+                if (ev == AnchorEvent && when is { } wa) scan.Anchors.Add((index, wa));
+                else if (ev == ControlStarted && run.Length > 0 && when is { } ws) { scan.Started[run] = (ws, index); scan.StartedSha[run] = TokenOf(detail, "app_sha256="); }
+                else if (ev == ControlFinished && run.Length > 0 && when is { } wf) scan.Finished[run] = wf;
+                else if (ev == ControlHashing)
+                {
+                    if (TryParseControlHashing(detail, out var w)) scan.Hashing.Add((w, when, index));
+                    else scan.UnreadableHashing++;
+                }
+                else if (ev == CollectorExec.Exec)
+                {
+                    if (when is { } we && CollectorExec.TryParseExec(detail, we, out var r)) scan.Execs.Add((r, index));
+                    else scan.UnreadableExec++;
+                }
+                // the first end record of a program counts; a later one with the same id is ignored
+                else if (ev == CollectorExec.ExecDone && CollectorExec.TryParseDone(detail, out var d) && !scan.Done.ContainsKey(d.ExecId)) scan.Done[d.ExecId] = d;
+            }
+            catch (JsonException) { }
+        }
+        return scan;
     }
 
     private static string TokenOf(string detail, string prefix)
