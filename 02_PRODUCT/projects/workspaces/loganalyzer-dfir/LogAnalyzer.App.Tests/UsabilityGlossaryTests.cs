@@ -99,7 +99,7 @@ public sealed class UsabilityGlossaryTests : IDisposable
     private sealed class FakeQuick : IStationQuickControl
     {
         public event PropertyChangedEventHandler? PropertyChanged;
-        public int Runs, Opens, Signs, Exports;
+        public int Runs, Opens, Signs, Exports, SignedMedia;
         public bool IsBusy { get; set; }
         public string Status { get; set; } = "";
         public string Summary => "";
@@ -112,6 +112,7 @@ public sealed class UsabilityGlossaryTests : IDisposable
         public void OpenReport() => Opens++;
         public void SignAsOfficer() => Signs++;
         public void ExportForOfficer() => Exports++;
+        public void ExportSignedMediaHistory() => SignedMedia++;
     }
 
     [Fact]
@@ -129,6 +130,8 @@ public sealed class UsabilityGlossaryTests : IDisposable
         vm.SignControlReportCommand.Execute(null);
         vm.ExportForOfficerCommand.Execute(null);
         Assert.Equal((1, 1, 1), (quick.Opens, quick.Signs, quick.Exports));
+        vm.ExportSignedMediaHistoryCommand.Execute(null);                 // the media history goes to the officer only signed (#297)
+        Assert.Equal(1, quick.SignedMedia);
         vm.ShowControlDetailsCommand.Execute(null);
         Assert.Equal([RoleProfiles.TabStationControl], nav);
         quick.IsBusy = true;                                // a second Ctrl+Enter while it runs does not start another control
@@ -150,7 +153,20 @@ public sealed class UsabilityGlossaryTests : IDisposable
         vm.OpenControlReportCommand.Execute(null);
         vm.SignControlReportCommand.Execute(null);
         vm.ExportForOfficerCommand.Execute(null);
-        Assert.Equal((0, 0, 0), (quick.Opens, quick.Signs, quick.Exports));
+        vm.ExportSignedMediaHistoryCommand.Execute(null);
+        Assert.Equal((0, 0, 0, 0), (quick.Opens, quick.Signs, quick.Exports, quick.SignedMedia));
+    }
+
+    [Fact]
+    public void The_officer_bundle_writes_no_unsigned_media_history_and_home_points_to_the_signed_export()
+    {
+        var quick = File.ReadAllText(Path.Combine(AppDir(), "ViewModels", "StationControlViewModel.Quick.cs"));
+        Assert.DoesNotContain("WriteMediaHistory", quick);
+        Assert.DoesNotContain("istoric_medii.csv", quick);
+        var home = File.ReadAllText(Path.Combine(AppDir(), "Views", "HomeView.xaml"));
+        Assert.Contains("{Binding ExportSignedMediaHistoryCommand}", home);
+        Assert.Contains(LogAnalyzer.Dfir.Windows.Audit.OfficerExport.SignedMediaHistoryButton, home);
+        Assert.DoesNotContain("istoricul mediilor într-un folder nou", home);
     }
 
     [Fact]

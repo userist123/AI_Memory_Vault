@@ -124,7 +124,7 @@
                             ToolTip="Salvează raportul în cazul stației și îl deschide. O copie în alt loc: „Salvează o copie…”."/>
                     <Button Content="Salvează o copie…" Command="{Binding SaveReportCopyCommand}" Margin="0,0,8,6" ToolTip="O copie a raportului în alt folder (pornește din folderul folosit data trecută); originalul rămâne în caz."/>
                     <Button Content="Exportă pentru ofițer" Command="{Binding ExportForOfficerCommand}" Margin="0,0,8,6"
-                            ToolTip="Raportul, copia jurnalului pentru CD-R și istoricul mediilor într-un folder nou, în locul folosit data trecută (întreabă doar prima dată)."/>
+                            ToolTip="Raportul și copia jurnalului pentru CD-R într-un folder nou, în locul folosit data trecută; folderul și fișierele se confirmă înainte de scriere. Istoricul mediilor se exportă separat, semnat („Exportă istoricul mediilor pentru ofițer”)."/>
                     <Button Content="Compară cu controlul anterior" Command="{Binding CompareWithPreviousCommand}" Margin="0,0,8,6"/>
                     <Button Content="Deschide folderul rapoartelor" Command="{Binding OpenCaseFolderCommand}" Margin="0,0,8,6"/>
                     <Button Content="Control nou" Command="{Binding FlowRestartCommand}" Margin="0,0,8,6"/>

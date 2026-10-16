@@ -91,12 +91,12 @@ public sealed class ExportAuditTests : IDisposable
     {
         var dest = Path.Combine(_dir, "bundle");
         int linesWhenWriting = -1;
-        var refused = ExportAudit.RunBundle("CASE-9", "pentru-ofiter", dest, ["raport.pdf", "istoric_medii.csv", "citeste_ma.txt"], () =>
+        var refused = ExportAudit.RunBundle("CASE-9", "pentru-ofiter", dest, ["raport.pdf", "raport.pdf.sig", "citeste_ma.txt"], () =>
         {
             linesWhenWriting = Audit().Count(e => e.Event == OperationAudit.ExportUnmasked);
             Directory.CreateDirectory(dest);
             File.WriteAllText(Path.Combine(dest, "raport.pdf"), "pdf");
-            File.WriteAllText(Path.Combine(dest, "istoric_medii.csv"), "Serie\nSER1\n");
+            File.WriteAllText(Path.Combine(dest, "raport.pdf.sig"), "sig");
             File.WriteAllText(Path.Combine(dest, "citeste_ma.txt"), "readme");
             return Directory.GetFiles(dest);
         });
@@ -104,7 +104,7 @@ public sealed class ExportAuditTests : IDisposable
         var lines = Audit().Where(e => e.Event == OperationAudit.ExportUnmasked).ToList();
         Assert.Equal(1, linesWhenWriting);                                            // the intent, with the whole list, was written first
         Assert.EndsWith("phase=intent", lines[0].Detail);
-        foreach (var f in new[] { "raport.pdf", "istoric_medii.csv", "citeste_ma.txt" }) Assert.Contains(f, lines[0].Detail);
+        foreach (var f in new[] { "raport.pdf", "raport.pdf.sig", "citeste_ma.txt" }) Assert.Contains(f, lines[0].Detail);
         Assert.Equal(4, lines.Count);                                                 // then one record per written file
         foreach (var f in Directory.GetFiles(dest))
         {

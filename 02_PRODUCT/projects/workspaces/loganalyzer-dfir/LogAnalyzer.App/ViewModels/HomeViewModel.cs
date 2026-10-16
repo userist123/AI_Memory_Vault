@@ -162,6 +162,8 @@ namespace LogAnalyzer.UI.ViewModels
             OpenStatus = "Controlul stației dintr-un clic nu este oferit pe această stație; folosiți pagina „Control stație”.";
             return null;
         }
+        /// <summary>„Exportă istoricul mediilor pentru ofițer”: the signed media history of #297 (the officer bundle has no unsigned copy).</summary>
+        [RelayCommand] private void ExportSignedMediaHistory() { if (QuickGate() is { } q) q.ExportSignedMediaHistory(); }
         /// <summary>„Vezi toate detaliile”: the full control page (checks, users, timeline).</summary>
         [RelayCommand] private void ShowControlDetails() => _navigate(RoleProfiles.TabStationControl);
 
