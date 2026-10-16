@@ -811,7 +811,8 @@ label.f select,label.f input,label.f textarea,.side select{color:var(--ink);font
 .stage-meta .sm-phase{font-weight:600;letter-spacing:.02em;color:var(--ink-2)}
 .stage-meta .sm-why .st-dot{display:inline-block;margin-right:6px;vertical-align:1px}
 .stage-meta .sm-why b{font-weight:600;color:var(--ink-2)} .stage-meta .sm-why.is-done b{color:var(--ok)}
-@media (max-width:1023px){ .side.sheet .stage-continue{min-height:44px} }
+/* foaia de jos: mânerul (64 px lățime, 44 px înălțime) nu se suprapune peste Continuă */
+@media (max-width:1023px){ .side.sheet .stage-continue{min-height:44px;padding:0 6px 0 12px} .sheet-grip{width:64px} .side.sheet .sidetabs{gap:4px} }
 @media (max-width:639px){ .stagebar .phase + .phase{margin-left:2px;padding-left:2px} .stagebar .phase + .phase::before{top:14px;bottom:14px} .stagebar button{gap:5px} }
 /* ---- paleta de comenzi (Ctrl+K): dialog modal sus, listă grupată, tastatură și atingere ---- */
 .cmdk-trigger{gap:8px;color:var(--ink-2);border-color:var(--line)!important;background:var(--bg)!important;padding-right:6px}
@@ -877,3 +878,36 @@ label.f select,label.f input,label.f textarea,.side select{color:var(--ink);font
 .planwrap .plan-empty{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;width:min(380px,calc(100% - 32px));border-style:solid;border-color:var(--line-strong);border-radius:var(--r-md);box-shadow:var(--shadow-2);padding:var(--s-5)}
 .planwrap .plan-empty .es-title{font-size:var(--fs-lg)}
 .side .empty-state,.orders .empty-state,.home .empty-state{width:100%;box-sizing:border-box}
+/* ---- navigatorul de pagini al pachetului de planșe: bară lipită sus cu listă pliabilă; pe ecrane late, șină fixă în stânga ---- */
+.pnav{position:sticky;top:0;z-index:30;margin:-10mm -10mm 6mm;padding:0 10mm;background:var(--surface);border-bottom:1px solid var(--line);box-shadow:0 6px 18px rgb(30 28 25 / .06)}
+.pnav-bar{display:flex;align-items:center;gap:var(--s-1);min-height:52px}
+.pnav-toggle{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:var(--s-3);min-height:44px;padding:0 var(--s-3);border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--bg);color:var(--ink);font:500 var(--fs-sm)/1.2 var(--sans);text-align:left;cursor:pointer}
+.pnav-toggle:hover{border-color:var(--ink)}
+.pnav-count{flex:none;font:600 var(--fs-xs)/1 var(--sans);letter-spacing:.06em;color:var(--accent);font-variant-numeric:tabular-nums}
+.pnav-cur{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--serif);font-size:var(--fs-md)}
+.pnav-title{display:none}
+.pnav-list{display:none;list-style:none;margin:0;padding:var(--s-2);counter-reset:none}
+.pnav.is-open .pnav-list{display:grid;position:absolute;left:10mm;top:calc(100% - 4px);width:min(440px,calc(100% - 20mm));max-height:min(62vh,560px);overflow-y:auto;overscroll-behavior:contain;
+  background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-md);box-shadow:var(--shadow-2)}
+.pnav-list a{display:grid;grid-template-columns:28px minmax(0,1fr);gap:var(--s-2);align-items:baseline;min-height:40px;padding:10px var(--s-3) 10px 10px;border-radius:var(--r-sm);color:var(--ink-2);text-decoration:none;font-size:var(--fs-sm);line-height:1.3;border-left:2px solid transparent}
+.pnav-list a i{font:500 var(--fs-xs)/1 var(--sans);font-style:normal;color:var(--ink-num);font-variant-numeric:tabular-nums}
+.pnav-list a:hover{background:var(--bg-2);color:var(--ink)}
+.pnav-list a[aria-current=page]{background:var(--accent-soft);color:var(--ink);font-weight:600;border-left-color:var(--accent)} .pnav-list a[aria-current=page] i{color:var(--accent)}
+@media (pointer:coarse){ .pnav-list a{min-height:44px} }
+.print-page section[id^="pg-"]{scroll-margin-top:72px} .print-page section[id^="pg-"]:focus{outline:none}
+@media (min-width:1600px){
+  .pnav{position:fixed;top:24px;left:max(16px,calc((100vw - 297mm) / 2 - 272px));width:248px;margin:0;padding:0;background:transparent;border:0;box-shadow:none;display:flex;flex-direction:column;max-height:calc(100vh - 48px)}
+  .pnav-bar{order:2;min-height:0;padding-top:var(--s-2);border-top:1px solid var(--line)} .pnav-toggle{display:none}
+  .pnav-title{display:block;order:0;margin:0 0 var(--s-2) 12px;font:600 10.5px/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .pnav-list,.pnav.is-open .pnav-list{order:1;display:grid;position:static;width:auto;max-height:none;min-height:0;overflow-y:auto;padding:0 0 var(--s-2);background:transparent;border:0;box-shadow:none}
+  .print-page section[id^="pg-"]{scroll-margin-top:24px}
+}
+@media (max-width:640px){ .pnav{margin:-10mm -10mm 4mm;padding:0 12px} .pnav.is-open .pnav-list{left:8px;width:calc(100% - 16px)} }
+@media print{ .pnav{display:none!important} }
+/* pachetul pe ecrane mai înguste decât foaia A4: pagina nu mai derulează lateral; fiecare planșă derulează în cadrul ei (doar pe ecran) */
+@media screen and (max-width:1160px){
+  .print-page{max-width:100%;overflow-x:clip}
+  .print-page > section,.print-page > div > section{overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+  .print-cover{grid-template-columns:minmax(0,1fr)}
+  .print-head{flex-wrap:wrap}
+}

@@ -625,4 +625,7 @@ export const ro: Dict = {
   "empty.catalog.title": "Niciun produs găsit", "empty.catalog.text": "Schimbă căutarea sau scoate filtrele de magazin, preț și dimensiuni.", "empty.catalog.action": "Șterge filtrele",
   "empty.home.title": "Niciun proiect încă", "empty.home.text": "Alege un șablon mai jos sau pornește de la un plan gol; proiectul se salvează singur.", "empty.home.action": "Creează primul proiect",
   "empty.homeFilter.title": "Niciun proiect aici", "empty.homeFilter.text": "Niciun proiect nu se potrivește etapei sau căutării alese.", "empty.homeFilter.action": "Arată toate proiectele",
+  // ---- navigatorul de pagini din pachetul de planșe (nu se tipărește) ----
+  "pnav.aria": "Paginile pachetului", "pnav.title": "Pagini", "pnav.cover": "Copertă", "pnav.page": "Pagina {n}", "pnav.count": "{n} / {total}",
+  "pnav.prev": "Pagina anterioară", "pnav.next": "Pagina următoare",
 };
