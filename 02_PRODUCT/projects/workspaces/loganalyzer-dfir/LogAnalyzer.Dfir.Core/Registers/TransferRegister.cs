@@ -32,6 +32,8 @@ public sealed class TransferRow
     public string Witness { get; set; } = "";
     public string Approver { get; set; } = "";
     public string Notes { get; set; } = "";
+    /// <summary>How many copies / exits this entry covers ("" = 1).</summary>
+    public string Copies { get; set; } = "";
 
     [JsonIgnore] public TransferDirection? DirectionValue => TransferRegister.ParseDirection(Direction);
     [JsonIgnore] public SecrecyLevel? Level => SecrecyLevels.TryParse(Classification, out var l) ? l : null;
@@ -47,7 +49,7 @@ public sealed class TransferRegister : IRegisterData
     public const string DefaultFileName = "transfers.json";
     public static readonly string[] ColumnNames =
         ["RegistrationNumber", "DateTime", "Classification", "Direction", "Source", "SourceStation", "Destination", "DestinationStation", "Person", "PersonFunction",
-         "MediumType", "MediumSerial", "MediumRegistration", "Content", "Sha256", "Witness", "Approver", "Notes"];
+         "MediumType", "MediumSerial", "MediumRegistration", "Content", "Sha256", "Witness", "Approver", "Notes", "Copies"];
 
     [JsonPropertyName("schema_version")] public string SchemaVersion { get; set; } = CurrentSchemaVersion;
     public DateTimeOffset? UpdatedUtc { get; set; }
@@ -62,7 +64,7 @@ public sealed class TransferRegister : IRegisterData
     public List<string[]> Cells() => Rows.Select(r => new[]
     {
         r.RegistrationNumber, r.DateTime, r.Classification, r.Direction, r.Source, r.SourceStation, r.Destination, r.DestinationStation, r.Person, r.PersonFunction,
-        r.MediumType, r.MediumSerial, r.MediumRegistration, r.Content, r.Sha256, r.Witness, r.Approver, r.Notes,
+        r.MediumType, r.MediumSerial, r.MediumRegistration, r.Content, r.Sha256, r.Witness, r.Approver, r.Notes, r.Copies,
     }).ToList();
 
     public void SetCells(IEnumerable<IReadOnlyList<string>> rows) =>
@@ -71,7 +73,7 @@ public sealed class TransferRegister : IRegisterData
                    {
                        RegistrationNumber = c[0], DateTime = c[1], Classification = c[2], Direction = c[3], Source = c[4], SourceStation = c[5], Destination = c[6],
                        DestinationStation = c[7], Person = c[8], PersonFunction = c[9], MediumType = c[10], MediumSerial = c[11], MediumRegistration = c[12],
-                       Content = c[13], Sha256 = c[14], Witness = c[15], Approver = c[16], Notes = c[17],
+                       Content = c[13], Sha256 = c[14], Witness = c[15], Approver = c[16], Notes = c[17], Copies = c[18],
                    }).ToList();
 
     public static TransferDirection? ParseDirection(string s) => s.Trim().ToLowerInvariant() switch
@@ -124,7 +126,9 @@ public sealed class TransferRegister : IRegisterData
         else if (hashes.Any(h => !Hex64.IsMatch(h))) Err("o amprentă SHA-256 nu are 64 de caractere hexazecimale");
         if (Empty(c[15])) Err("martorul (regula celor patru ochi) lipsește");
         else if (!Empty(c[8]) && c[15].Trim().Equals(c[8].Trim(), StringComparison.OrdinalIgnoreCase)) Err("martorul nu poate fi aceeași persoană care face transferul (regula celor patru ochi)");
-        if (Empty(c[16])) Warn("aprobarea șefului structurii nu este completată");
+        if (Empty(c[16])) Warn("aprobarea șefului structurii nu este completată; fără ea transferul nu justifică la control ieșirea fișierelor clasificate");
+        if (c.Count > 18 && !Empty(c[18]) && !(int.TryParse(c[18].Trim(), System.Globalization.NumberStyles.Integer, CultureInfo.InvariantCulture, out var copies) && copies is > 0 and <= 1000))
+            Err($"numărul de copii „{c[18]}” nu este un număr între 1 și 1000");
         return m;
     }
 
