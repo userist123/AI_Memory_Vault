@@ -118,6 +118,18 @@ public sealed class StationFacts
     public string ClockSuspectNote { get; set; } = "";
     /// <summary>"corectat de ... la ..., motiv: ..." when the operator confirmed a clock correction (check S05); empty otherwise.</summary>
     public string ClockAckText { get; set; } = "";
+    /// <summary>
+    /// Installation date of the application on this station: the time of the first chained record of its audit chain (owner directive 2026-10-16).
+    /// On a Standalone station every network connection after it is NECONFORM; earlier ones are history (DE VERIFICAT). Null = unknown, see <see cref="AppInstallBasis"/>.
+    /// </summary>
+    public DateTimeOffset? AppInstalledUtc { get; set; }
+    public string AppInstallBasis { get; set; } = "";
+    /// <summary>What contradicts the installation date (see <see cref="LogAnalyzer.Dfir.Case.AppInstall.Violations"/>); NECONFORM on Standalone.</summary>
+    public List<string> AppInstallViolations { get; set; } = [];
+    /// <summary>DE VERIFICAT notes about the installation date (see <see cref="LogAnalyzer.Dfir.Case.AppInstall.ToVerify"/>).</summary>
+    public List<string> AppInstallToVerify { get; set; } = [];
+    /// <summary>Time of the first chained record of the application's audit chain; printed in the report next to the computed date.</summary>
+    public DateTimeOffset? AppInstallChainFirstUtc { get; set; }
     /// <summary>Check A11: the previous anchor code checked against the application's audit log; null = not checked (the check is NEDETERMINAT).</summary>
     public LogAnalyzer.Dfir.Case.AnchorContinuity? PreviousAnchor { get; set; }
     /// <summary>True when the previous code checked in A11 is the one the station proposed (unsafe), false when it was typed from the paper.</summary>
@@ -176,6 +188,9 @@ public static class StationFactCollector
             IsAdministrator = new WindowsPrincipal(id).IsInRole(WindowsBuiltInRole.Administrator),
             Posture = posture,
         };
+        var install = LogAnalyzer.Dfir.Windows.Acquisition.AppInstallTraces.ReadInstall();
+        facts.AppInstalledUtc = install.Utc; facts.AppInstallBasis = install.Basis; facts.AppInstallViolations.AddRange(install.Violations);
+        facts.AppInstallToVerify.AddRange(install.ToVerify); facts.AppInstallChainFirstUtc = install.ChainFirstUtc;
         Try(facts, "Conturi locale", () => facts.Accounts.AddRange(ReadAccounts()));
         Try(facts, "Politica de parole", () => facts.PasswordPolicy = LocalPasswordPolicy.Query());
         facts.AuditPolicy = AuditPolicy.Query() is { } ap ? new Dictionary<string, AuditSetting>(ap) : null;

@@ -53,9 +53,10 @@ public static class PdfIncrementalSigner
             $"Data: {look.SigningTime.ToUniversalTime():yyyy-MM-dd HH:mm} UTC",
             $"Emitent certificat: {Ascii(look.Issuer)}",
         };
-        var stream = new StringBuilder(string.Create(CultureInfo.InvariantCulture, $"q 0.95 0.95 0.95 rg 0 0 {w:0.##} {h:0.##} re f 0.2 0.2 0.2 RG 0.8 w 0.4 0.4 {w - 0.8:0.##} {h - 0.8:0.##} re S Q\nBT /F1 8 Tf 0 0 0 rg\n"));
+        // first the clip to the box (the inspector requires it), then the drawing, closed by the matching Q
+        var stream = new StringBuilder(string.Create(CultureInfo.InvariantCulture, $"q 0 0 {w:0.###} {h:0.###} re W n\nq 0.95 0.95 0.95 rg 0 0 {w:0.##} {h:0.##} re f 0.2 0.2 0.2 RG 0.8 w 0.4 0.4 {w - 0.8:0.##} {h - 0.8:0.##} re S Q\nBT /F1 8 Tf 0 0 0 rg\n"));
         for (int i = 0; i < lines.Length; i++) stream.Append(CultureInfo.InvariantCulture, $"1 0 0 1 8 {h - 18 - i * 16:0.##} Tm ({Esc(Trim(lines[i], (int)(w / 4.6)))}) Tj\n");
-        stream.Append("ET\n");
+        stream.Append("ET\nQ\n");
         var streamText = stream.ToString();
 
         objects[fontObj] = "<</Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding>>";
