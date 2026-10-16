@@ -93,8 +93,8 @@ public sealed class MftParser : EvidenceParserBase
                 if (parent == cur.Number) { parts.Reverse(); return string.Join("\\", parts.Select(p => p == "." ? "" : p)); }   // the root points at itself
                 if (!byNumber.TryGetValue(parent, out var p) || !visited.Add(parent)) break;
                 // The child references the sequence the folder had while it lived. NTFS increments the sequence number when it frees a record, so a
-                // freed folder shows seq + 1 (wrapping around at 65535); an in-use record must match exactly, otherwise it was reused for something else.
-                if (p.Sequence != seq && (p.InUse || p.Sequence != (ushort)(seq + 1))) break;
+                // freed folder shows seq + 1; an in-use record must match exactly, otherwise it was reused for something else.
+                if (p.Sequence != seq && (p.InUse || !IsNextSequence(seq, p.Sequence))) break;
                 parts.Add(p.Name);
                 cur = p;
             }
@@ -165,6 +165,13 @@ public sealed class MftParser : EvidenceParserBase
     }
 
     private static string Utc(long ft) => ft > 0 && ft < DateTime.MaxValue.ToFileTimeUtc() ? DateTime.FromFileTimeUtc(ft).ToString("o", CultureInfo.InvariantCulture) : "";
+
+    /// <summary>
+    /// True when <paramref name="now"/> is the sequence number a record freed while at <paramref name="was"/> carries: was + 1. Windows skips 0 when the
+    /// 16-bit counter wraps (65535 becomes 1), so after 65535 both 1 and 0 are accepted: 1 is what NTFS writes, 0 is kept for tools or older drivers that
+    /// wrap plainly, at the cost of one more value accepted for that single case.
+    /// </summary>
+    public static bool IsNextSequence(ushort was, ushort now) => was == ushort.MaxValue ? now is 0 or 1 : now == was + 1;
 
     /// <summary>
     /// Applies the update sequence fixup to one FILE record in place: checks that each sector ends with the sequence number and puts the saved bytes back.

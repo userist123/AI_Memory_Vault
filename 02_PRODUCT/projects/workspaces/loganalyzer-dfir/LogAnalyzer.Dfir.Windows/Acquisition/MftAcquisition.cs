@@ -120,7 +120,8 @@ public static partial class MftAcquisition
     }
 
     /// <summary>Copies the $MFT of <paramref name="volume"/> (for example "C:") to <paramref name="destinationPath"/>. Never throws except for cancellation.</summary>
-    public static MftAcquisitionResult Acquire(string? volume, string destinationPath, CancellationToken ct)
+    /// <param name="elevated">Whether the process runs as administrator: decides what a refused volume open means (see <see cref="AccessDenied"/>).</param>
+    public static MftAcquisitionResult Acquire(string? volume, string destinationPath, bool elevated, CancellationToken ct)
     {
         if (volume is null || !VolumePattern().IsMatch(volume)) return MftAcquisitionResult.Absent($"Volum nevalid „{volume}” (se așteaptă o literă de unitate, de exemplu C:).");
         var device = @"\\.\" + volume[..2];
@@ -129,9 +130,7 @@ public static partial class MftAcquisition
             using var handle = File.OpenHandle(device, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, FileOptions.None);
             var boot = new byte[4096];
             if (RandomAccess.Read(handle, boot, 0) < 0x44) return MftAcquisitionResult.Fail("Sectorul de boot al volumului nu a putut fi citit.");
-            NtfsBootSector geo;
-            try { geo = NtfsBootSector.Parse(boot); }
-            catch (InvalidDataException ex) { return MftAcquisitionResult.Absent(ex.Message); }   // not NTFS: there is no $MFT on this volume
+            if (ReadBootSector(boot, out var geo) is { } refusedBoot) return refusedBoot;
             int cluster = geo.ClusterSize;
             int span = (int)Math.Max(cluster, (geo.RecordSize + geo.BytesPerSector - 1) / geo.BytesPerSector * geo.BytesPerSector);
             var rec = new byte[span];
@@ -144,13 +143,39 @@ public static partial class MftAcquisition
                 return MftAcquisitionResult.Fail("Lista de extensii din înregistrarea 0 nu acoperă tot $MFT (probabil este într-o listă de atribute, care nu se urmărește).");
             return CopyRuns(runs, cluster, real, geo.RecordSize, (offset, buffer) => RandomAccess.Read(handle, buffer, offset), destinationPath, ct);
         }
-        catch (UnauthorizedAccessException) { return MftAcquisitionResult.Absent("$MFT necesită drepturi de administrator (accesul direct la volum a fost refuzat)."); }
+        catch (UnauthorizedAccessException) { return AccessDenied(elevated); }
         catch (InvalidDataException ex) { return MftAcquisitionResult.Fail(ex.Message); }
         catch (FileNotFoundException) { return MftAcquisitionResult.Absent($"Volumul {volume} nu există."); }
         catch (DirectoryNotFoundException) { return MftAcquisitionResult.Absent($"Volumul {volume} nu există."); }
         catch (Exception ex) when (ex is IOException or ArgumentException or NotSupportedException or OverflowException)
         { return MftAcquisitionResult.Fail($"$MFT nu a putut fi citit de pe {volume}: {ex.Message}"); }
     }
+
+    /// <summary>
+    /// Pure decision on the boot sector: without the "NTFS" identifier the volume has no $MFT (absent source); a volume that carries the identifier but
+    /// whose geometry is invalid is a damaged NTFS volume, so the read failed (invalid data), it is not absent. Returns null when the geometry is usable.
+    /// </summary>
+    internal static MftAcquisitionResult? ReadBootSector(ReadOnlySpan<byte> boot, out NtfsBootSector geo)
+    {
+        geo = default;
+        try { geo = NtfsBootSector.Parse(boot); return null; }
+        catch (InvalidDataException ex)
+        {
+            bool ntfs = boot.Length >= 11 && boot.Slice(3, 8).SequenceEqual("NTFS    "u8);
+            return ntfs ? MftAcquisitionResult.Fail($"Sectorul de boot NTFS are date nevalide: {ex.Message}") : MftAcquisitionResult.Absent(ex.Message);
+        }
+    }
+
+    /// <summary>Message for a refused raw open while the process runs as administrator.</summary>
+    public const string DeniedWhileElevated = "Accesul la volum a fost refuzat deși aplicația rulează ca administrator (posibil blocat de software-ul de securitate).";
+
+    /// <summary>
+    /// Pure decision on a refused raw volume open: without administrator rights the source is simply out of reach (absent); as administrator the
+    /// refusal comes from something else (typically security software blocking raw volume access), so the acquisition failed.
+    /// </summary>
+    internal static MftAcquisitionResult AccessDenied(bool elevated) => elevated
+        ? MftAcquisitionResult.Fail(DeniedWhileElevated)
+        : MftAcquisitionResult.Absent("$MFT necesită drepturi de administrator (accesul direct la volum a fost refuzat).");
 
     /// <summary>
     /// True when the case folder lies on the same volume as the one being read. Copying evidence then creates new MFT records (and can reuse the free
