@@ -142,6 +142,65 @@ def save(session_id, state: dict) -> bool:
         return False
 
 
+def _session_json(session_id, suffix: str) -> Optional[Path]:
+    path = state_path(session_id)
+    return None if path is None else path.with_suffix(suffix)
+
+
+def _read_json(path: Optional[Path], default):
+    try:
+        value = json.loads(path.read_text(encoding="utf-8")) if path is not None else default
+        return value if isinstance(value, type(default)) else default
+    except Exception:
+        return default
+
+
+def _write_json(path: Optional[Path], value) -> bool:
+    if path is None:
+        return False
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_name(path.name + f".{uuid.uuid4().hex[:8]}.tmp")
+        tmp.write_text(json.dumps(value), encoding="utf-8")
+        os.replace(tmp, path)
+        return True
+    except Exception:
+        return False
+
+
+def add_routed_class(session_id, task_class) -> bool:
+    """Session-level route receipt cache: the Vault router ran for this task class in this session.
+    Unlike the per-prompt markers, reset() keeps it; prune_cache() drops it with the session."""
+    if not task_class:
+        return False
+    path = _session_json(session_id, ".routed_classes")
+    classes = _read_json(path, [])
+    if task_class in classes:
+        return True
+    return _write_json(path, sorted(set(classes) | {str(task_class)}))
+
+
+def class_routed(session_id, task_class) -> bool:
+    return bool(task_class) and task_class in _read_json(_session_json(session_id, ".routed_classes"), [])
+
+
+def resume_count(session_id, agent_id: str) -> int:
+    try:
+        return int(_read_json(_session_json(session_id, ".resumes"), {}).get(agent_id, 0))
+    except (TypeError, ValueError):
+        return 0
+
+
+def record_resume(session_id, agent_id: str) -> bool:
+    path = _session_json(session_id, ".resumes")
+    counts = _read_json(path, {})
+    try:
+        counts[agent_id] = int(counts.get(agent_id, 0)) + 1
+    except (TypeError, ValueError):
+        counts[agent_id] = 1
+    return _write_json(path, counts)
+
+
 def new_state(task_class: str, model: Optional[str], subagent: Optional[str], prompt_hash: str,
               direct: bool = False) -> dict:
     return {"task_class": task_class, "model": model, "subagent": None if direct else subagent,
