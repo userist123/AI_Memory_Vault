@@ -351,7 +351,7 @@ public static partial class ControlEvaluator
         if (f.OfficerAssessment is not { } a) { Add(r, "A13", "Audit", title, ControlStatus.Nedeterminat, "Jurnalul aplicației nu a fost disponibil, deci lista ofițerilor nu s-a putut verifica."); return; }
         if (!a.Determinable)
         {
-            Add(r, "A13", "Audit", title, ControlStatus.Nedeterminat, "Lista ofițerilor nu se poate compara cu controlul anterior: " + a.Since + ".",
+            Add(r, "A13", "Audit", title, ControlStatus.Nedeterminat, "Lista ofițerilor de securitate: " + a.Since + ".",
                 rec: "Introduceți la începutul controlului codul de ancorare de pe procesul-verbal semnat al controlului anterior.");
             return;
         }
@@ -382,8 +382,9 @@ public static partial class ControlEvaluator
         if (f.InstallAtPaperAnchor is not { } a) { Add(r, "A16", "Audit", title, ControlStatus.Nedeterminat, "Jurnalul aplicației nu a fost disponibil, deci starea de la controlul anterior nu s-a putut citi."); return; }
         if (!a.Determinable || !a.Recorded)
         {
-            Add(r, "A16", "Audit", title, ControlStatus.Nedeterminat, "Data instalării nu s-a putut compara: " + a.Why + ".",
-                rec: "Introduceți la începutul controlului codul de ancorare de pe procesul-verbal semnat al controlului anterior.");
+            Add(r, "A16", "Audit", title, ControlStatus.Nedeterminat, Ro.Capitalize(a.Why) + ".",
+                rec: a.Why.StartsWith("nu s-a introdus", StringComparison.Ordinal) ? "Introduceți la începutul controlului codul de ancorare de pe procesul-verbal semnat al controlului anterior."
+                   : a.Why.Contains("vezi A11", StringComparison.Ordinal) ? "Urmați recomandarea verificării A11." : "");
             return;
         }
         var ev = new List<string>

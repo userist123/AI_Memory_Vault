@@ -47,6 +47,23 @@ public static class AnchoredInstallDate
 
     public static string Format(DateTimeOffset? utc) => utc is { } u ? u.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture) : Unknown;
 
+    /// <summary>
+    /// Why there is no paper baseline for the previous control, in words that match what happened: no code typed, the station's proposal used, a mistyped code,
+    /// or a typed code the log no longer contains (A11 is NECONFORM then). Null when the typed code was found (the baseline is its entry).
+    /// </summary>
+    public static string? NoBaselineReason(AnchorContinuity previous, bool fromStation) => previous.Status switch
+    {
+        AnchorContinuityStatus.NotGiven => "nu s-a introdus codul de ancorare de pe procesul-verbal, deci nu există o dată de referință sigură",
+        _ when fromStation => "codul folosit este cel propus de stație (nesigur), nu cel tastat de pe procesul-verbal, deci nu există o referință sigură",
+        AnchorContinuityStatus.InvalidCode => "nu se poate compara: codul tastat nu este un cod de ancorare valid (vezi A11)",
+        AnchorContinuityStatus.Continuous when previous.MatchedSeq is not null => null,
+        _ => "nu se poate compara: jurnalul nu mai conține codul de pe procesul-verbal (vezi A11)",
+    };
+
+    /// <summary>The anchored state for the previous control: read at the entry of the code typed from paper, or not determinable with the precise reason.</summary>
+    public static AnchoredInstall For(string auditPath, AnchorContinuity previous, bool fromStation) =>
+        NoBaselineReason(previous, fromStation) is { } why ? new(false, false, null, "", why) : At(auditPath, previous.MatchedSeq);
+
     public static AnchoredInstall At(string auditPath, long? paperAnchorSeq)
     {
         if (paperAnchorSeq is not { } n)

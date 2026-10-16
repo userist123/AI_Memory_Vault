@@ -66,10 +66,10 @@ public static class OfficerState
     /// it, a new state is accepted only from an officer / trust event of the application. A state that changes on any other event (an anchor, an import that
     /// was refused…) or differs now from the last accepted one was made outside the application. Without a typed code nothing can be asserted.
     /// </summary>
-    public static OfficerStateAssessment Assess(string auditPath, long? paperAnchorSeq, string? nowDetail)
+    public static OfficerStateAssessment Assess(string auditPath, long? paperAnchorSeq, string? nowDetail, string? noBaselineWhy = null)
     {
         if (paperAnchorSeq is not { } n)
-            return new(false, [], [], "nu s-a introdus codul de ancorare de pe procesul-verbal, deci nu există o stare de referință sigură");
+            return new(false, [], [], noBaselineWhy ?? "nu s-a introdus codul de ancorare de pe procesul-verbal, deci nu există o stare de referință sigură");
         var events = LogAnalyzer.Dfir.Case.AuditAnchor.Events(auditPath);
         // the baseline is ONLY the anchored entry itself ("audit.anchor_state" at seq N): its content is covered by the code typed from the paper. Anything written
         // after it (the "audit.anchor" event included) can be rewritten without A11 noticing, so it is never a baseline.
