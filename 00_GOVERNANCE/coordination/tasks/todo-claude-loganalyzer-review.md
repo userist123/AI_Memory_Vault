@@ -47,3 +47,12 @@
 - Tests: App 560, Dfir 1887 (+28 skipped), Edition 45, UI 353, all green.
 - E10: owner decision 2026-10-16, no admin-share collection (the application opens no SMB connection); row closed by that decision.
 - Next: E8 (deleted $MFT entries, timestomping) on a new branch from main after this PR.
+## Partial rows: PR #301 (2026-10-16), review fixes in faac91757; owner merges.
+
+## E8 deleted $MFT (2026-10-16, branch `claude/loganalyzer-mft-deleted`, worktree `.claude/worktrees/la-mft`)
+- Done (9841c637f): `LogAnalyzer.Dfir.Core/FileSystem/MftParser.cs` parses an exported $MFT (update sequence check, resident $SI/$FN): deleted records
+  with rebuilt path (`Kind=deleted`), timestomp candidates $SI created < $FN created (`Kind=timestomp`, Candidate), summary; fingerprint `ntfs_mft`,
+  ImportType, registered (18 parsers), ParserCapabilities, AF08 now Detected/NotDetected with an MFT. Tests: `MftParserTests` (8, synthetic), fuzz test.
+- Next: live acquisition of $MFT from a volume (administrator: boot sector → MFT cluster → $DATA run list of record 0 → copy), as a collector step with
+  custody/audit; then validate the parser on a real $MFT (owner runs elevated); then PR. After E8: E6 (read the stick), then E7 (user activity).
+- Limits: synthetic records only; attribute lists and non-resident names not followed; $LogFile not read.
