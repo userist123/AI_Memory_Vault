@@ -30,7 +30,7 @@ public sealed record MediumSeen(DateTimeOffset TimeUtc, string Serial, string La
 /// When and as whom the application itself read the classified files (to compute their SHA-256): its own reads must never be shown as someone's access.
 /// Recorded in the sealed audit at every control ("control.hashing").
 /// </summary>
-public sealed record SelfActivityWindow(DateTimeOffset StartUtc, DateTimeOffset EndUtc, int ProcessId, string ImagePath, string Account, int Files = 0, string RunId = "");
+public sealed record SelfActivityWindow(DateTimeOffset StartUtc, DateTimeOffset EndUtc, int ProcessId, string ImagePath, string Account, int Files = 0, string RunId = "", string AppSha256 = "");
 
 public enum ExitChannel { RemovableMedia, Print, Archive, CopyCommand, MoveOrRename, NetworkShare, OpenedFromMedium, TemporalCoincidence }
 public enum ExitVerdict { Unjustified, ToVerify, Approved }
@@ -318,6 +318,11 @@ public static class ClassifiedAccess
             if (input.AppImagePath.Length == 0 || !Normalize(w.ImagePath).Equals(Normalize(input.AppImagePath), StringComparison.OrdinalIgnoreCase))
             {
                 rep.InvalidSelfWindows.Add($"fereastră de calcul amprente nevalidă: numește programul {w.ImagePath}, nu executabilul aplicației ({(input.AppImagePath.Length > 0 ? input.AppImagePath : "necunoscut")}) (control {runText}); înregistrările lui sunt tratate ca accese obișnuite.");
+                continue;
+            }
+            if (w.AppSha256.Length != 64 || !w.AppSha256.Equals(input.AppImageSha256, StringComparison.OrdinalIgnoreCase))
+            {
+                rep.InvalidSelfWindows.Add($"fereastră de calcul amprente nevalidă: fereastră scrisă de altă versiune a aplicației (amprenta executabilului din fereastră {(w.AppSha256.Length > 0 ? w.AppSha256[..12] + "…" : "lipsește")}, a aplicației care rulează {(input.AppImageSha256.Length > 0 ? input.AppImageSha256[..Math.Min(12, input.AppImageSha256.Length)] + "…" : "necunoscută")}) (control {runText}); înregistrările lui sunt tratate ca accese obișnuite.");
                 continue;
             }
             if (input.AppImageSha256.Length != 64 || !imageHashes.TryGetValue(Normalize(w.ImagePath), out var fileSha) || !fileSha.Equals(input.AppImageSha256, StringComparison.OrdinalIgnoreCase))
