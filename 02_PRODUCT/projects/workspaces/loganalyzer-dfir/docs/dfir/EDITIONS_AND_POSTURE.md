@@ -92,10 +92,12 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | A07 | System time changed manually | None or explained | None or explained | None or explained |  |
 | A08 | File copies to removable media are audited | Audited | Audited | Audited | Owner decision: data leakage through removable media is a risk on every station, connected ones included. |
 | A09 | Programs stopped or flagged by the allow-list | Review | Review | Review |  |
-| A10 | Access auditing (SACL) on classified folders | SACL present | SACL present | n/a | Classified folders exist only in the controlled editions. |
+| A10 | Access auditing (SACL) on classified folders | SACL records read, write and delete for everyone, success and failure | SACL records read, write and delete for everyone, success and failure | n/a | Classified folders exist only in the controlled editions. |
 | A11 | Application audit log continuous since the previous control (anchor code) | Previous anchor found | Previous anchor found | Previous anchor found |  |
 | A12 | Windows event log service stopped outside a shutdown | None or explained | None or explained | None or explained |  |
 | A13 | Security officer list changed since the previous control | Review | Review | Review |  |
+| A14 | Sources that show classified files leaving the station | Removable Storage, Handle Manipulation, Process Creation with command line and the print log on | As standalone, plus Detailed File Share | n/a | Classified folders exist only in the controlled editions. |
+| A15 | Classified files: access and exits without approval | Review; non-conform on any exit not in the transfer register | Review; non-conform on any exit not in the transfer register (network shares included) | n/a | Classified folders exist only in the controlled editions. |
 | U01 | Changes to the Administrators group | Review | Review | Review |  |
 | U02 | Accounts created, deleted, enabled, disabled or reset | Review | Review | Review |  |
 | U03 | Remote (RDP) logons | Review | Review (administration over the LAN is normal) | Review |  |
@@ -123,6 +125,8 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | S03 | Windows version and last update | Known and documented | Known and documented | Recent |  |
 | S04 | Offline updates applied and update register | Register matches installed updates | Register matches installed updates | n/a | The offline update register exists only where updates cannot come online. |
 | S05 | Station clock versus the application's time memory | Consistent | Consistent | Consistent |  |
+
+A14 / A15 (informații clasificate) — Limită: un administrator care deține cheia de sigilare și poate scrie în folderul aplicației poate adăuga, după ultimul cod de ancorare, o fereastră falsă pe numele aplicației; ea poate ascunde citiri de fișiere clasificate ale oricărui proces pornit din calea executabilului aplicației (inclusiv un alt program pus temporar acolo), niciodată scrieri pe medii; protecția este ancora de pe procesul-verbal la controlul următor și protejarea folderului aplicației (doar Administratori/SYSTEM pot scrie).
 
 ## Application installation date: residual risk
 

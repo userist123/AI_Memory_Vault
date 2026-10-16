@@ -38,6 +38,8 @@ public sealed class ControlReport
     public List<ControlCheck> Checks { get; } = [];
     public List<UserActivity> Users { get; } = [];
     public List<ActionEntry> Actions { get; } = [];
+    /// <summary>Accesses to the classified folders' files and their exits (A15); null when the profile defines no classified folders.</summary>
+    public LogAnalyzer.Dfir.Analysis.ClassifiedAccessReport? Classified { get; set; }
     public int Count(ControlStatus s) => Checks.Count(c => c.Status == s);
     /// <summary>The checks that apply to the posture (every status except NU SE APLICĂ): the only ones counted in summaries and verdicts.</summary>
     public int Applicable => Checks.Count(c => c.Status != ControlStatus.NuSeAplica);
@@ -52,7 +54,7 @@ public sealed class ControlReport
 /// Pure function of <see cref="StationFacts"/>: no I/O, fully testable.
 /// "DeVerificat" means the facts are shown but only the organisation can say whether they were authorised.
 /// </summary>
-public static class ControlEvaluator
+public static partial class ControlEvaluator
 {
     private static readonly HashSet<string> SystemAccounts = new(StringComparer.OrdinalIgnoreCase)
     { "SYSTEM", "LOCAL SERVICE", "NETWORK SERVICE", "ANONYMOUS LOGON", "-", "" };
@@ -1354,37 +1356,8 @@ public static class ControlEvaluator
              @"HKLM\SYSTEM\CurrentControlSet\Services\SharedAccess → Start = " + Shown(icsSvc)],
             "Opriți partajarea și interziceți-o prin politică („Prohibit use of Internet Connection Sharing”).");
 
-        // A10 (A16) audit rules (SACL) on the classified folders of the procedure profile.
-        const string a10 = "Auditarea accesului la folderele clasificate (SACL)";
-        if (f.FolderAudits is not { } folders)
-            // not collected: the control ran without the procedure profile's folders (not a rights problem)
-            Add(r, "A10", "Audit", a10, ControlStatus.Nedeterminat,
-                "Folderele clasificate din profilul de proceduri nu au fost transmise controlului, deci regulile lor de audit nu au fost citite. Deschideți profilul de proceduri și repetați controlul.",
-                rec: "Treceți în profilul de proceduri folderele cu documente clasificate.");
-        else if (folders.Count == 0)
-            Add(r, "A10", "Audit", a10, ControlStatus.Nedeterminat,
-                "Profilul de proceduri nu definește foldere clasificate; completați tabelul «Foldere clasificate» și repetați controlul. Fără el aplicația nu știe ce foldere să verifice.",
-                rec: "Treceți în profilul de proceduri folderele cu documente clasificate.");
-        else
-        {
-            AuditSetting? fs = f.AuditPolicy?.GetValueOrDefault("File System");
-            var noRule = folders.Where(x => x.Exists && x.AuditRules == 0).ToList();
-            var missing = folders.Where(x => !x.Exists).ToList();
-            var unread = folders.Where(x => x.Exists && x.AuditRules is null).ToList();
-            var problems = noRule.Select(x => $"folderul {x.Path} nu are nicio regulă de audit").ToList();
-            if (fs is { } fsv && (fsv & AuditSetting.Success) != AuditSetting.Success)
-                problems.Add("subcategoria de audit „File System” nu este pornită, deci regulile de pe foldere nu produc niciun eveniment");
-            Add(r, "A10", "Audit", a10,
-                problems.Count > 0 ? ControlStatus.Neconform : unread.Count > 0 || fs is null ? ControlStatus.Nedeterminat : missing.Count > 0 ? ControlStatus.DeVerificat : ControlStatus.Conform,
-                problems.Count > 0 ? "Nu se va ști cine a deschis documentele: " + string.Join("; ", problems) + "."
-                    : unread.Count > 0 || fs is null ? $"Nu s-a putut stabili: {string.Join(", ", unread.Select(x => x.Path).Concat(fs is null ? ["politica de audit «File System»"] : []))}."
-                        + (f.IsAdministrator ? " Nu au putut fi citite deși aplicația rulează cu drepturi de administrator; verificați la stație dreptul „Manage auditing and security log” și accesul la folder." : NoRead)
-                    : missing.Count > 0 ? $"Folderele din profil care nu există pe stație: {string.Join(", ", missing.Select(x => x.Path))}. Corectați profilul sau verificați unde sunt documentele."
-                    : (folders.Count == 1 ? "Folderul clasificat are reguli de audit" : $"Toate cele {Ro.Count(folders.Count, "folder clasificat", "foldere clasificate")} au reguli de audit") + ", iar subcategoria „File System” este auditată.",
-                folders.Select(x => $"{x.Path}: " + (!x.Exists ? "nu există" : x.AuditRules is null ? x.Error : x.AuditRules == 0 ? "nicio regulă de audit" : $"{Ro.CountFem(x.AuditRules.Value, "regulă de audit", "reguli de audit")}: {x.Rules}"))
-                       .Append($"File System: {(fs is null ? "necitit" : fs.ToString())}"),
-                "Pe fiecare folder clasificat adăugați o regulă de audit (Proprietăți → Securitate → Complex → Auditare) pentru citire, scriere și ștergere, și porniți subcategoria „File System”.");
-        }
+        // A10, A14, A15: classified folders - audit rules, the sources that make exits visible, and the accesses and exits themselves.
+        ClassifiedFolders(f, r);
 
         // D02 (B8) BitLocker To Go on each connected removable volume; write access to unencrypted media.
         var rdv = S("BitLocker.RDVDenyWriteAccess");

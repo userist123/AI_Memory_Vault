@@ -80,6 +80,8 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _witness = "";
         [ObservableProperty] private string _approver = "";
         [ObservableProperty] private string _notes = "";
+        /// <summary>How many copies / exits the transfer covers ("" = 1): at a control each covered exit uses one.</summary>
+        [ObservableProperty] private string _copies = "";
         [ObservableProperty] private string _status = "Alegeți fișierele; restul este completat. Scrieți destinația și martorul, apoi „Înregistrează transferul”.";
         [ObservableProperty] private string _nextNumber = "";
         [ObservableProperty] private bool _isBusy;
@@ -209,7 +211,7 @@ namespace LogAnalyzer.UI.ViewModels
                 MediumType = MediumType, MediumSerial = MediumSerial, MediumRegistration = MediumRegistration,
                 Content = string.Join("; ", Files.Select(f => f.Name)),
                 Sha256 = string.Join(" ", Files.Select(f => f.Sha256)),
-                Witness = Witness, Approver = Approver, Notes = Notes,
+                Witness = Witness, Approver = Approver, Notes = Notes, Copies = Copies.Trim(),
             };
             // Control research P2: only the channels approved in the procedure profile (zone to zone, medium). A transfer outside them is stopped
             // once with a plain message; pressing again records it, with the deviation written in the notes for the controller.

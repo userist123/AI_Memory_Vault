@@ -276,7 +276,8 @@ public sealed class StationConfigChecksTests
     {
         var f = Station();
         f.AuditPolicy = new() { ["File System"] = AuditSetting.Success | AuditSetting.Failure };
-        f.FolderAudits = [new(@"D:\Clasificat", true, 2, "Everyone: ReadData (Success)", "")];
+        // read, write and delete for Everyone, success and failure, inherited by the files (A10 extended 2026-10-15)
+        f.FolderAudits = [new(@"D:\Clasificat", true, 1, "Everyone: Modify (Success, Failure)", "", [new AuditRuleFact("S-1-1-0", "Everyone", 0x301BF, true, true, true)])];
         Assert.Equal(ControlStatus.Conform, Check(f, "A10").Status);
     }
 
@@ -438,6 +439,15 @@ public sealed class StationConfigChecksTests
 
     // ---- guides and codes --------------------------------------------------------------------------------------------------------------------
 
+    /// <summary>All the files of the evaluator (ControlEvaluator.cs and its partial files, e.g. ControlEvaluator.Classified.cs).</summary>
+    private static string EvaluatorSource()
+    {
+        for (var d = new DirectoryInfo(AppContext.BaseDirectory); d is not null; d = d.Parent)
+            if (File.Exists(Path.Combine(d.FullName, "LogAnalyzer.slnx")))
+                return string.Join("\n", Directory.GetFiles(Path.Combine(d.FullName, "LogAnalyzer.Dfir.Windows", "Audit"), "ControlEvaluator*.cs").OrderBy(x => x).Select(File.ReadAllText));
+        throw new DirectoryNotFoundException("LogAnalyzer.slnx");
+    }
+
     private static string Source(params string[] relative)
     {
         for (var d = new DirectoryInfo(AppContext.BaseDirectory); d is not null; d = d.Parent)
@@ -449,7 +459,7 @@ public sealed class StationConfigChecksTests
     [Fact]
     public void Every_station_check_the_evaluator_can_emit_has_a_written_guide()
     {
-        var ids = Regex.Matches(Source("LogAnalyzer.Dfir.Windows", "Audit", "ControlEvaluator.cs"), @"Add\(r, ""([A-Z]\d\d)""")
+        var ids = Regex.Matches(EvaluatorSource(), @"Add\(r, ""([A-Z]\d\d)""")
                        .Select(m => m.Groups[1].Value).Concat(["A03", "A04"]).Distinct().OrderBy(x => x).ToList();
         Assert.True(ids.Count >= 60, $"only {ids.Count} ids parsed");
         Assert.All(NewIds, id => Assert.Contains(id, ids));
@@ -487,7 +497,7 @@ public sealed class StationConfigChecksTests
         var atRuntime = reports.SelectMany(r => r.Checks).Select(c => c.Id).Distinct().ToList();
         Assert.True(atRuntime.Count >= 60, $"only {atRuntime.Count} ids emitted");
         // Some checks appear only when their facts exist (A03/A04 per channel, ...): add every id written in an Add(r, "...") call.
-        var inSource = Regex.Matches(Source("LogAnalyzer.Dfir.Windows", "Audit", "ControlEvaluator.cs"), @"Add\(r, ""([A-Z]\d\d)""").Select(m => m.Groups[1].Value);
+        var inSource = Regex.Matches(EvaluatorSource(), @"Add\(r, ""([A-Z]\d\d)""").Select(m => m.Groups[1].Value);
         var emitted = atRuntime.Concat(inSource).Concat(["A03", "A04"]).Distinct().OrderBy(x => x).ToList();
         Assert.True(emitted.Count >= 78, $"only {emitted.Count} ids found");
         var wrong = emitted.Where(id => !guideCounts.TryGetValue(id, out var n) || n != 1).Select(id => $"{id}: {(guideCounts.TryGetValue(id, out var n) ? n : 0)} guides").ToList();
