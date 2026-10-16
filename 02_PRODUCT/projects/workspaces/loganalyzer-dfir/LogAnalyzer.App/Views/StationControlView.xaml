@@ -141,6 +141,8 @@
                                     ToolTip="Ofițerul de securitate introduce cardul în cititorul tastaturii; Windows cere codul PIN. Semnătura calificată se adaugă la sfârșitul raportului, fără să-l schimbe."/>
                             <Button Content="Copiază jurnalul pentru CD-R…" Command="{Binding ExportAnchorCommand}" Margin="0,0,8,6"
                                     ToolTip="Copiază jurnalul aplicației și codul de ancorare într-un folder ales; folderul se arde pe un CD-R și se predă ofițerului."/>
+                            <Button Content="Exportă istoricul mediilor pentru ofițer" Command="{Binding ExportMediaHistoryCommand}" Margin="0,0,8,6"
+                                    ToolTip="După control: istoricul tuturor mediilor amovibile ale stației (conectări, fișiere scrise sau citite, transferuri, registrul semnat în vigoare), semnat de ofițer cu cardul și scris pe mediul lui pentru confruntarea între stații."/>
                             <Button Content="Ofițeri de securitate…" Command="{Binding ManageOfficersCommand}" Margin="0,0,8,6"
                                     ToolTip="Înregistrează certificatul de semnătură al unui ofițer (de pe card sau dintr-un fișier). Primul ofițer: amprenta se trece pe procesul-verbal. Următorii: cu o cerere semnată de un ofițer deja înregistrat."/>
                             <Button Content="Importă autorități de certificare și liste de revocare…" Command="{Binding ImportOfficerTrustCommand}" Margin="0,0,8,6"

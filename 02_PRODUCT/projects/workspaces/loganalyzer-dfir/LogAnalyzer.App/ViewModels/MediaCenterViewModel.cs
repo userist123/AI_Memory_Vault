@@ -55,6 +55,10 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>"Registrul semnat": enrolment on the transfer station, officer signature, import on every station (created when its tab is first shown).</summary>
         public SignedMediaRegisterViewModel Signed => _signed ??= new SignedMediaRegisterViewModel();
 
+        private CrossStationViewModel? _cross;
+        /// <summary>"Confruntare între stații": the officer reconciles the signed media-history exports of every station (created when its tab is first shown).</summary>
+        public CrossStationViewModel Cross => _cross ??= new CrossStationViewModel();
+
         /// <summary>Every device the station knows (also those not connected now), with its media-register match; used to reconcile USB sessions with the transfer register.</summary>
         public IReadOnlyList<DeviceAssessment> AllDevices => _all;
         /// <summary>Raised after the device inventory was (re)read.</summary>
