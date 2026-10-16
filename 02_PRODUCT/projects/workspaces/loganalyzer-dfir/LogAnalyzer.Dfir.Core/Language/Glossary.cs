@@ -4,7 +4,13 @@ namespace LogAnalyzer.Dfir.Language;
 public enum GlossaryLanguage { Romanian, English }
 
 /// <summary>One glossary entry (UX contract §17, audit rows R18.1-R18.12): the technical term, its plain-language phrase in each language, and a short explanation (Romanian).</summary>
-public sealed record GlossaryTerm(string Key, string Technical, string Romanian, string English, string Explanation);
+/// <param name="Aliases">Other spellings that mean the same entry (the Romanian words on screen, enum names, inflected forms). Looked up like the key; never
+/// part of the jargon list, so a role page may show them bare.</param>
+public sealed record GlossaryTerm(string Key, string Technical, string Romanian, string English, string Explanation, IReadOnlyList<string>? Aliases = null)
+{
+    /// <summary>The technical name and every alias: what a screen or a report may print for this entry.</summary>
+    public IEnumerable<string> Spellings => Aliases is null ? [Technical] : Aliases.Prepend(Technical);
+}
 
 /// <summary>
 /// The single plain-language glossary. Normal views show the human phrase; advanced/technical views keep the technical name (with the
@@ -75,21 +81,105 @@ public static class Glossary
         new("gpo", "GPO", "Politica de grup", "Group policy",
             "Setările impuse de organizație calculatoarelor și conturilor; aplicația compară politica așteptată cu cea găsită pe stație."),
         new("anchor_code", "Audit anchor code", "Cod de ancorare", "Anchor code",
-            "Un cod scurt (4 grupe de 5 caractere) care rezumă tot jurnalul aplicației până la sfârșitul controlului. Se trece pe procesul-verbal semnat; la controlul următor se introduce din nou și aplicația verifică dacă jurnalul de acum îl mai conține. Dacă nu, jurnalul a fost rescris între timp."),
+            "Un cod scurt (4 grupe de 5 caractere) care rezumă tot jurnalul aplicației până la sfârșitul controlului. Se trece pe procesul-verbal semnat; la controlul următor se introduce din nou și aplicația verifică dacă jurnalul de acum îl mai conține. Dacă nu, jurnalul a fost rescris între timp.",
+            ["cod de ancorare", "codul de ancorare", "Cod de ancorare", "Codul de ancorare"]),
         new("officer_signature", "Qualified electronic signature (PAdES)", "Semnătura calificată a ofițerului de securitate", "Security officer's qualified signature",
-            "Semnătura pusă pe raportul de control cu certificatul calificat de pe cardul ofițerului de securitate (codul PIN îl cere Windows, aplicația nu îl vede). Se poate pune în aplicație sau în Adobe. Doar raportul semnat astfel este raport oficial; administratorul stației poate rula controlul, dar nu îl poate semna."),
+            "Semnătura pusă pe raportul de control cu certificatul calificat de pe cardul ofițerului de securitate (codul PIN îl cere Windows, aplicația nu îl vede). Se poate pune în aplicație sau în Adobe. Doar raportul semnat astfel este raport oficial; administratorul stației poate rula controlul, dar nu îl poate semna.",
+            ["semnătura calificată", "semnătură electronică calificată", "semnătura electronică calificată"]),
         new("cert_fingerprint", "Certificate SHA-256 fingerprint", "Amprenta certificatului", "Certificate fingerprint",
-            "Un șir de 64 de caractere (16 grupe de 4) care identifică exact certificatul ofițerului. Se trece pe procesul-verbal; la verificare, semnătura se compară cu amprenta de pe hârtie, nu doar cu lista din calculator."),
+            "Un șir de 64 de caractere (16 grupe de 4) care identifică exact certificatul ofițerului. Se trece pe procesul-verbal; la verificare, semnătura se compară cu amprenta de pe hârtie, nu doar cu lista din calculator.",
+            ["amprenta certificatului"]),
         new("write_once_media", "WORM / CD-R", "Disc care se scrie o singură dată", "Write-once disc",
-            "Un CD-R sau DVD-R ars o singură dată: ce s-a scris pe el nu mai poate fi modificat. Pe el se păstrează copia jurnalului aplicației de la fiecare control."),
+            "Un CD-R sau DVD-R ars o singură dată: ce s-a scris pe el nu mai poate fi modificat. Pe el se păstrează copia jurnalului aplicației de la fiecare control.",
+            ["CD-R", "DVD-R"]),
+        // Usability 2026-10-16: every technical word a controller meets on the control screens and in the reports.
+        new("sacl", "SACL", "Lista de audit a unui fișier", "File audit list",
+            "Setarea unui fișier sau folder care spune ce acces se înregistrează în jurnalul de securitate (citire, scriere, ștergere și de către cine). Fără ea, accesul la fișier nu lasă nicio urmă în jurnal."),
+        new("bitlocker_to_go", "BitLocker To Go", "Criptarea stick-ului USB", "USB stick encryption",
+            "Criptarea Windows pentru memorii USB și discuri externe: fără parolă sau cheie, conținutul nu poate fi citit pe alt calculator. Un suport pierdut nu mai expune informațiile."),
+        new("bitlocker", "BitLocker", "Criptarea discului", "Disk encryption",
+            "Criptarea Windows a discului întreg: dacă discul este scos din calculator, datele de pe el nu pot fi citite fără cheie."),
+        new("pades", "PAdES", "Semnătură electronică în PDF", "PDF electronic signature",
+            "Standardul european după care semnătura electronică se pune în interiorul fișierului PDF; orice program de citire PDF (de exemplu Adobe) arată cine a semnat și dacă documentul a fost modificat după semnare."),
+        new("uac", "UAC", "Confirmarea drepturilor de administrator", "Administrator confirmation prompt",
+            "Fereastra Windows care cere confirmare sau parolă înainte ca un program să primească drepturi de administrator. Dacă este oprită, orice program poate prelua controlul stației fără să întrebe."),
+        new("wmi", "WMI", "Interfața Windows de interogare", "Windows query interface",
+            "Mecanismul prin care un program cere de la Windows informații despre conturi, discuri, setări; aplicația îl folosește doar ca să citească."),
+        new("ldap", "LDAP", "Interogarea domeniului", "Directory query",
+            "Felul în care un program cere de la serverul de domeniu lista conturilor și a grupurilor; folosit doar în ediția de rețea."),
+        new("utc", "UTC", "Ora universală", "Universal time",
+            "Ora de referință mondială, fără oră de vară; România este UTC+2 iarna și UTC+3 vara. Rapoartele păstrează ora UTC ca să poată fi comparate între stații."),
+        new("dns", "DNS", "Traducerea numelor de site-uri în adrese", "Name resolution",
+            "Serviciul care transformă un nume (de exemplu exemplu.ro) în adresa de rețea a serverului; o cerere DNS arată că stația a încercat să ajungă la acel nume."),
+        new("mitre", "MITRE ATT&CK", "Catalogul tehnicilor de atac", "Attack technique catalogue",
+            "Lista publică a tehnicilor folosite de atacatori, fiecare cu un cod (de exemplu T1059); aplicația o folosește ca să numească la fel ce găsește."),
+        new("sam", "SAM", "Baza conturilor locale", "Local account database",
+            "Fișierul Windows în care sunt păstrate conturile locale ale calculatorului și amprentele parolelor lor."),
+        new("event_id", "Event ID", "Codul evenimentului", "Event code",
+            "Numărul prin care Windows spune ce fel de eveniment a notat (de exemplu 4624 = autentificare reușită, 1102 = jurnalul de securitate a fost șters).",
+            ["EID"]),
+        new("vss", "VSS", "Copiile de umbră ale discului", "Shadow copies",
+            "Copiile automate ale discului pe care Windows le face pentru restaurare; ștergerea lor este un semn frecvent de atac sau de ascundere a urmelor."),
     ];
+
+    /// <summary>
+    /// Words shown on screen and in the reports as they are (they are already Romanian or are the established label), but which a controller may not know:
+    /// the results of a check, the severity words and a few administrative and hardware words. They are explained, never replaced, so they are not jargon.
+    /// </summary>
+    public static IReadOnlyList<GlossaryTerm> Explained { get; } =
+    [
+        new("status_conform", "CONFORM", "Corespunde regulii", "Compliant",
+            "Ce s-a verificat corespunde regulii din procedură. Nu este nevoie de nicio acțiune.", ["Conform"]),
+        new("status_neconform", "NECONFORM", "Încalcă regula", "Non-compliant",
+            "Ce s-a găsit încalcă regula. Se trece în procesul-verbal și se cere remedierea.", ["Neconform"]),
+        new("status_de_verificat", "DE VERIFICAT", "Trebuie comparat cu documentele", "To verify",
+            "Aplicația arată faptele, dar doar organizația poate spune dacă erau aprobate. Comparați cu registrele și aprobările scrise.", ["DeVerificat", "De verificat"]),
+        new("status_nedeterminat", "NEDETERMINAT", "Nu s-a putut verifica", "Undetermined",
+            "Sursa necesară nu a putut fi citită (de exemplu aplicația nu a rulat ca administrator). Nu înseamnă nici bine, nici rău și nu înseamnă că activitatea nu a avut loc.", ["Nedeterminat"]),
+        new("status_nu_se_aplica", "NU SE APLICĂ", "Regula nu privește această ediție", "Not applicable",
+            "Regula nu privește postura acestei ediții (de exemplu o regulă de rețea pe o stație izolată). Nu se numără nici ca bine, nici ca abatere.", ["NuSeAplica", "NU SE APLICA", "Nu se aplică"]),
+        new("status_neconfirmat", "NECONFIRMAT", "Nu s-a putut confirma aici", "Unconfirmed",
+            "Verificarea nu s-a putut face complet pe această stație (de exemplu lipsește lista de revocare a autorității). Nu este o problemă găsită, dar nici o confirmare."),
+        new("severity_critical", "CRITICĂ", "Gravitate foarte mare", "Critical",
+            "Cea mai mare gravitate: semnul unui atac sau al unei încălcări care trebuie tratată imediat, înainte de orice altă lucrare.", ["CRITIC", "Critică", "Critical", "GRAV", "Atenție critică"]),
+        new("severity_high", "RIDICATĂ", "Gravitate mare", "High",
+            "Problemă serioasă care trebuie tratată în ziua controlului; poate ajuta un atacator sau poate ascunde urme.", ["RIDICAT", "Ridicată", "High"]),
+        new("severity_medium", "MEDIE", "Gravitate medie", "Medium",
+            "Problemă care slăbește protecția stației; se remediază în termenul stabilit de procedură.", ["MEDIU", "Medie", "Medium"]),
+        new("severity_low", "SCĂZUTĂ", "Gravitate mică", "Low",
+            "Abatere minoră sau un lucru de urmărit; nu cere măsuri imediate.", ["SCĂZUT", "Scăzută", "Low"]),
+        new("severity_info", "INFORMATIVĂ", "Doar informație", "Informational",
+            "Nu este o problemă: un fapt notat pentru context (de exemplu ce programe sunt instalate).", ["INFORMATIV", "Informativă", "Info"]),
+        new("proces_verbal", "proces-verbal", "Documentul oficial al controlului", "Inspection record",
+            "Documentul pe hârtie semnat de cel care controlează și de ofițerul de securitate; pe el se trec amprenta raportului și codul de ancorare.", ["procesul-verbal", "procesului-verbal", "Proces-verbal"]),
+        new("usb", "USB", "Mufa pentru memorii și dispozitive externe", "USB port",
+            "Mufa prin care se conectează memorii (stick-uri), discuri externe, telefoane sau tastaturi; un stick USB poate scoate informații de pe stație."),
+        new("pin", "PIN", "Codul secret al cardului", "Card PIN",
+            "Codul cardului ofițerului sau al operatorului; îl cere Windows, aplicația nu îl vede și nu îl păstrează."),
+        new("sid", "SID", "Numărul unic al contului", "Account identifier",
+            "Numărul pe care Windows îl dă fiecărui cont și grup; rămâne același chiar dacă numele contului se schimbă (de exemplu contul Administrator are mereu un SID care se termină în -500)."),
+        new("hash_fingerprint", "amprentă SHA-256", "Amprenta unui fișier", "File fingerprint",
+            "Un cod de 64 de caractere calculat din conținutul unui fișier; se schimbă dacă fișierul se schimbă cu un singur caracter. Pe procesul-verbal se trece amprenta raportului.",
+            ["amprenta SHA-256", "Amprenta fișierului (SHA-256)", "amprenta fișierului"]),
+    ];
+
+    /// <summary>The jargon terms and the explained words: what a tooltip, a „?” button or a report appendix may look up.</summary>
+    public static IEnumerable<GlossaryTerm> All => Terms.Concat(Explained);
+
+    /// <summary>The entry (jargon or explained word) whose key, technical name or alias matches; null when there is none.</summary>
+    public static GlossaryTerm? Lookup(string? term)
+    {
+        if (string.IsNullOrWhiteSpace(term)) return null;
+        var n = Norm(term);
+        return All.FirstOrDefault(t => Norm(t.Key) == n || t.Spellings.Any(s => Norm(s) == n));
+    }
 
     /// <summary>The entry whose key or technical name matches (case-insensitive; spaces and underscores are equivalent), or null.</summary>
     public static GlossaryTerm? Find(string? term)
     {
         if (string.IsNullOrWhiteSpace(term)) return null;
         var n = Norm(term);
-        return Terms.FirstOrDefault(t => Norm(t.Key) == n || Norm(t.Technical) == n);
+        return Terms.FirstOrDefault(t => Norm(t.Key) == n || t.Spellings.Any(s => Norm(s) == n));
     }
 
     private static string Norm(string s) => s.Trim().Replace('_', ' ').ToLowerInvariant();

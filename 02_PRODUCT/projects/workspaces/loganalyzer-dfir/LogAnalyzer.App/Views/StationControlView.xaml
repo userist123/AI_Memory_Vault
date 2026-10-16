@@ -78,6 +78,7 @@
                     <TextBlock Text="{Binding MarkingNote}" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                     <WrapPanel Margin="0,8,0,0">
                         <TextBlock Text="Codul de ancorare de la controlul anterior:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <local:HelpButton Term="anchor_code" Margin="0,0,6,0"/>
                         <TextBox AutomationProperties.Name="Codul de ancorare de la controlul anterior, de pe procesul-verbal semnat" Text="{Binding PreviousAnchorCode, UpdateSourceTrigger=PropertyChanged}"
                                  Width="230" FontFamily="Consolas" ToolTip="{Binding PreviousAnchorHelp}"/>
                     </WrapPanel>
@@ -119,7 +120,11 @@
                 </ItemsControl>
                 <TextBlock Text="{Binding Result.CoverageLine}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/>
                 <WrapPanel Margin="0,12,0,0">
-                    <Button Content="Raport pentru proces-verbal (PDF)" Command="{Binding SaveReportCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,8,6"/>
+                    <Button Content="Raport pentru proces-verbal (PDF)" Command="{Binding SaveReportCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,8,6"
+                            ToolTip="Salvează raportul în cazul stației și îl deschide. O copie în alt loc: „Salvează o copie…”."/>
+                    <Button Content="Salvează o copie…" Command="{Binding SaveReportCopyCommand}" Margin="0,0,8,6" ToolTip="O copie a raportului în alt folder (pornește din folderul folosit data trecută); originalul rămâne în caz."/>
+                    <Button Content="Exportă pentru ofițer" Command="{Binding ExportForOfficerCommand}" Margin="0,0,8,6"
+                            ToolTip="Raportul, copia jurnalului pentru CD-R și istoricul mediilor într-un folder nou, în locul folosit data trecută (întreabă doar prima dată)."/>
                     <Button Content="Compară cu controlul anterior" Command="{Binding CompareWithPreviousCommand}" Margin="0,0,8,6"/>
                     <Button Content="Deschide folderul rapoartelor" Command="{Binding OpenCaseFolderCommand}" Margin="0,0,8,6"/>
                     <Button Content="Control nou" Command="{Binding FlowRestartCommand}" Margin="0,0,8,6"/>
@@ -127,7 +132,11 @@
                 <!-- owner decision 2026-10-16: anchor code for the next control and the security officer's signature -->
                 <Border Background="{StaticResource CanvasBrush}" CornerRadius="6" Padding="10" Margin="0,6,0,0">
                     <StackPanel>
-                        <TextBlock Text="Semnătura ofițerului de securitate și codul de ancorare" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Semnătura ofițerului de securitate și codul de ancorare" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                            <local:HelpButton Term="officer_signature"/>
+                            <local:HelpButton Term="anchor_code"/>
+                        </StackPanel>
                         <TextBlock Text="{Binding OfficerStatus}" FontWeight="Bold" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                         <WrapPanel Margin="0,6,0,0" Visibility="{Binding HasAnchor, Converter={StaticResource BoolToVis}}">
                             <TextBox Text="{Binding AnchorLine, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontSize="15" FontWeight="Bold"
@@ -158,7 +167,7 @@
                     <DataGrid AutomationProperties.Name="Diferențe față de controlul anterior" ItemsSource="{Binding ComparisonChanges}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="220">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Ce s-a schimbat" Binding="{Binding Kind}" Width="110"/>
-                            <DataGridTextColumn Header="Cod" Binding="{Binding Id}" Width="60"/>
+                            <DataGridTextColumn Header="Cod" Binding="{Binding Id}" Width="60"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="local:TermTip.Auto" Value="True"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
                             <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*"/>
                             <DataGridTextColumn Header="Înainte" Binding="{Binding BeforeText}" Width="110"/>
                             <DataGridTextColumn Header="Acum" Binding="{Binding AfterText}" Width="110"/>
@@ -176,6 +185,7 @@
                            Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
                 <WrapPanel Margin="0,6,0,0">
                     <TextBlock Text="Amprenta certificatului ofițerului:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <local:HelpButton Term="cert_fingerprint" Margin="0,0,6,0"/>
                     <TextBox AutomationProperties.Name="Amprenta certificatului ofițerului de pe procesul-verbal" Text="{Binding VerifyFingerprint, UpdateSourceTrigger=PropertyChanged}" Width="520" FontFamily="Consolas" Margin="0,0,8,0"/>
                     <Button Content="Verifică raport semnat…" Command="{Binding VerifySignedReportCommand}" Style="{StaticResource AccentButtonStyle}"/>
                 </WrapPanel>
@@ -230,8 +240,8 @@
                         <DataGrid AutomationProperties.Name="Verificările controlului" ItemsSource="{Binding Checks}" SelectedItem="{Binding SelectedCheck}" SelectionMode="Single"
                                   AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" ToolTip="Dați clic pe o verificare: în dreapta apare ce înseamnă, pe înțeles.">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Rezultat" Binding="{Binding Status}" Width="110"/>
-                                <DataGridTextColumn Header="Cod" Binding="{Binding Id}" Width="50"/>
+                                <DataGridTextColumn Header="Rezultat" Binding="{Binding Status}" Width="110"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="local:TermTip.Auto" Value="True"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
+                                <DataGridTextColumn Header="Cod" Binding="{Binding Id}" Width="50"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="local:TermTip.Auto" Value="True"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
                                 <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*">
                                     <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
