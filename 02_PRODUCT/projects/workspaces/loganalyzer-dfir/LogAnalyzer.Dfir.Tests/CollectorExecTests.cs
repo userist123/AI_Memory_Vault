@@ -340,4 +340,277 @@ public sealed class CollectorExecTests : IDisposable
         }
         finally { CollectorExec.Sink = sink; CollectorExec.CurrentRunId = run; }
     }
+
+    // ---- B5: commands started outside a station control get an action window; a script block split over several 4104 events is reassembled ----
+
+    private static LogFact Part(DateTimeOffset t, string text, string blockId, int number, int total, int pid = ChildPid, long record = 1) =>
+        new("Microsoft-Windows-PowerShell/Operational", 4104, t, record, "S-1-5-18", new Dictionary<string, string>
+        { ["ScriptBlockText"] = text, ["ScriptBlockId"] = blockId, ["MessageNumber"] = number.ToString(), ["MessageTotal"] = total.ToString(), ["ProcessId"] = pid.ToString() });
+
+    /// <summary>The abused script cut into three consecutive pieces; their concatenation is exactly the script the record's hash was made from.</summary>
+    private static string[] ThreePieces()
+    {
+        var a = Abused.Length / 3;
+        return [Abused[..a], Abused[a..(2 * a)], Abused[(2 * a)..]];
+    }
+
+    [Fact]
+    public void A_script_block_split_over_several_events_is_reassembled_in_order_and_is_the_applications_own()
+    {
+        var p = ThreePieces();
+        Assert.Equal(Abused, string.Concat(p));
+        // delivered out of order, and mixed with an unrelated single block
+        var r = ControlEvaluator.Evaluate(Station(ScriptRun(valid: true),
+            Part(T0.AddMinutes(2), p[2], "BLOCK-1", 3, 3, record: 13), Part(T0.AddMinutes(2), p[0], "BLOCK-1", 1, 3, record: 11), Part(T0.AddMinutes(2), p[1], "BLOCK-1", 2, 3, record: 12)));
+        Assert.Equal(3, r.Facts.OwnActivity.Count);
+        Assert.DoesNotContain(r.Facts.Logs, l => l.Id == 4104);
+        Assert.Equal(ControlStatus.Conform, Assert.Single(r.Checks, c => c.Id == "A17").Status);
+        Assert.DoesNotContain(r.Checks, c => c.Id == "U06");
+    }
+
+    [Fact]
+    public void A_split_set_with_a_missing_part_is_not_confirmed_and_stays_DE_VERIFICAT_with_the_reason()
+    {
+        var p = ThreePieces();
+        var r = ControlEvaluator.Evaluate(Station(ScriptRun(valid: true), Part(T0.AddMinutes(2), p[0], "BLOCK-1", 1, 3, record: 11), Part(T0.AddMinutes(2), p[2], "BLOCK-1", 3, 3, record: 13)));
+        Assert.Empty(r.Facts.OwnActivity);
+        Assert.Equal(2, r.Facts.ClaimedActivity.Count);
+        Assert.Contains("lipsesc părți", r.Facts.ClaimedActivity[0].Why);
+        Assert.Equal(ControlStatus.DeVerificat, Assert.Single(r.Checks, c => c.Id == "A17").Status);
+        Assert.Equal(2, r.Facts.Logs.Count(l => l.Id == 4104));       // they stay with the other checks
+    }
+
+    [Fact]
+    public void A_split_set_with_a_duplicated_part_is_not_confirmed_even_when_every_number_is_present()
+    {
+        var p = ThreePieces();
+        var r = ControlEvaluator.Evaluate(Station(ScriptRun(valid: true),
+            Part(T0.AddMinutes(2), p[0], "BLOCK-1", 1, 3, record: 11), Part(T0.AddMinutes(2), p[1], "BLOCK-1", 2, 3, record: 12),
+            Part(T0.AddMinutes(2), p[1], "BLOCK-1", 2, 3, record: 14), Part(T0.AddMinutes(2), p[2], "BLOCK-1", 3, 3, record: 13)));
+        Assert.Empty(r.Facts.OwnActivity);
+        Assert.Equal(4, r.Facts.ClaimedActivity.Count);
+        Assert.Contains("duplicat", r.Facts.ClaimedActivity[0].Why);
+        Assert.Equal(ControlStatus.DeVerificat, Assert.Single(r.Checks, c => c.Id == "A17").Status);
+    }
+
+    [Fact]
+    public void Parts_of_two_different_script_blocks_are_never_merged()
+    {
+        var p = ThreePieces();
+        var head = p[0] + p[1];                     // X1
+        var tail = p[2];                            // X2: X1 + X2 is the recorded script, but they belong to two different blocks
+        var r = ControlEvaluator.Evaluate(Station(ScriptRun(valid: true),
+            Part(T0.AddMinutes(2), head, "BLOCK-A", 1, 2, record: 11), Part(T0.AddMinutes(2), "Write-Host unrelated", "BLOCK-A", 2, 2, record: 12),
+            Part(T0.AddMinutes(2), "Write-Host other", "BLOCK-B", 1, 2, record: 13), Part(T0.AddMinutes(2), tail, "BLOCK-B", 2, 2, record: 14)));
+        Assert.Empty(r.Facts.OwnActivity);
+        // the same ScriptBlockId in two processes is two sets as well
+        var r2 = ControlEvaluator.Evaluate(Station(ScriptRun(valid: true),
+            Part(T0.AddMinutes(2), head, "BLOCK-A", 1, 2, pid: ChildPid, record: 21), Part(T0.AddMinutes(2), tail, "BLOCK-A", 2, 2, pid: 9999, record: 22)));
+        Assert.Empty(r2.Facts.OwnActivity);
+    }
+
+    [Fact]
+    public void An_incomplete_split_set_outside_every_program_window_is_an_ordinary_event()
+    {
+        var p = ThreePieces();
+        var r = ControlEvaluator.Evaluate(Station(ScriptRun(valid: true), Part(T0.AddHours(6), p[0], "BLOCK-1", 1, 3, record: 11)));
+        Assert.Empty(r.Facts.OwnActivity);
+        Assert.Empty(r.Facts.ClaimedActivity);
+        Assert.Single(r.Facts.Logs, l => l.Id == 4104);
+    }
+
+    [Fact]
+    public void A_command_started_outside_a_control_is_confirmed_through_its_own_sealed_action_window()
+    {
+        var exec = Exec("x1", "act-x1", T0.AddMinutes(1), T0.AddMinutes(2));
+        var audit = Audit(Line(OperationAudit.ActionStarted, T0, OperationAudit.ActionStartedDetail("act-x1", AppSha, "reg.exe")), exec[0], exec[1],
+                          Line(OperationAudit.ActionFinished, T0.AddMinutes(3), OperationAudit.ActionFinishedDetail("act-x1")));
+        var execs = Read(audit, chainValid: true);
+        var rec = Assert.Single(execs.Valid);
+        Assert.Equal("act-x1", rec.RunId);
+        // A17 can now confirm the process start
+        var r = ControlEvaluator.Evaluate(Station(execs, Proc(T0.AddMinutes(1.5), Cmd)));
+        Assert.Single(r.Facts.OwnActivity);
+        Assert.Equal(ControlStatus.Conform, Assert.Single(r.Checks, c => c.Id == "A17").Status);
+    }
+
+    [Fact]
+    public void A_run_id_cannot_be_forged_the_window_must_be_in_the_sealed_audit_and_cover_exactly_that_command()
+    {
+        var exec = Exec("x1", "act-x1", T0.AddMinutes(1), T0.AddMinutes(2));
+        // no action.started / finished: a record that merely names an "act-" run id is refused
+        Assert.Empty(Read(Audit(exec), chainValid: true).Valid);
+        // an action window of another application build
+        var other = Audit(Line(OperationAudit.ActionStarted, T0, OperationAudit.ActionStartedDetail("act-x1", new string('c', 64), "reg.exe")), exec[0], exec[1],
+                          Line(OperationAudit.ActionFinished, T0.AddMinutes(3), OperationAudit.ActionFinishedDetail("act-x1")));
+        Assert.Contains("altă versiune", Assert.Single(Read(other, chainValid: true).Refused).Why);
+        // a record of another command inside the window of act-x1 (the window covers exactly one command)
+        var e2 = Exec("x2", "act-x1", T0.AddMinutes(1), T0.AddMinutes(2));
+        var wrong = Audit(Line(OperationAudit.ActionStarted, T0, OperationAudit.ActionStartedDetail("act-x1", AppSha, "reg.exe")), e2[0], e2[1],
+                          Line(OperationAudit.ActionFinished, T0.AddMinutes(3), OperationAudit.ActionFinishedDetail("act-x1")));
+        Assert.Contains("acoperă exact acea comandă", Assert.Single(Read(wrong, chainValid: true).Refused).Why);
+        // the command ended after the window was closed
+        var late = Audit(Line(OperationAudit.ActionStarted, T0, OperationAudit.ActionStartedDetail("act-x1", AppSha, "reg.exe")), exec[0], exec[1],
+                         Line(OperationAudit.ActionFinished, T0.AddMinutes(1.5), OperationAudit.ActionFinishedDetail("act-x1")));
+        Assert.Empty(Read(late, chainValid: true).Valid);
+        // a broken chain
+        var ok = Audit(Line(OperationAudit.ActionStarted, T0, OperationAudit.ActionStartedDetail("act-x1", AppSha, "reg.exe")), exec[0], exec[1],
+                       Line(OperationAudit.ActionFinished, T0.AddMinutes(3), OperationAudit.ActionFinishedDetail("act-x1")));
+        Assert.Empty(Read(ok, chainValid: false).Valid);
+        // a process name or command line that spells the run id proves nothing
+        Assert.Equal(SelfExecKind.None, SelfExecMatcher.Classify(Start4688(T0.AddMinutes(1.5), cmd: "\"C:\\Tools\\act-x1.exe\" run=act-x1"), Read(Audit(exec), chainValid: true)).Kind);
+    }
+
+    [Fact]
+    public void Start_outside_a_control_writes_the_action_window_around_the_command_record()
+    {
+        var cmdExe = Path.Combine(Environment.SystemDirectory, "cmd.exe");
+        var marker = "ACTIONWINDOW" + Guid.NewGuid().ToString("N")[..8];
+        var psi = new ProcessStartInfo(cmdExe) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true };
+        foreach (var a in new[] { "/d", "/c", "echo", marker }) psi.ArgumentList.Add(a);
+        var events = new List<(string Ev, string Detail)>();
+        var sink = CollectorExec.Sink;
+        var run = CollectorExec.CurrentRunId;
+        try
+        {
+            CollectorExec.Sink = (ev, detail) => { lock (events) events.Add((ev, detail)); return true; };
+            CollectorExec.CurrentRunId = "";
+            using var p = CollectorExec.Start(psi);
+            p.StandardOutput.ReadToEnd();
+            p.WaitForExit();
+            CollectorExec.Done(p);
+            CollectorExec.Done(p);                                   // a second call writes nothing
+            List<(string Ev, string Detail)> mine;
+            lock (events)
+            {
+                var exec = events.Single(e => e.Ev == CollectorExec.Exec && e.Detail.Contains(marker, StringComparison.Ordinal));
+                Assert.True(CollectorExec.TryParseExec(exec.Detail, T0, out var rec));
+                Assert.Equal(CollectorExec.ActionRunPrefix + rec.ExecId, rec.RunId);
+                mine = [.. events.Where(e => e.Detail.Contains("run=" + rec.RunId, StringComparison.Ordinal) || e.Detail.Contains("exec=" + rec.ExecId + ";", StringComparison.Ordinal))];
+            }
+            Assert.Equal([OperationAudit.ActionStarted, CollectorExec.Exec, CollectorExec.ExecDone, OperationAudit.ActionFinished], mine.Select(e => e.Ev));
+            Assert.Contains("app_sha256=", mine[0].Detail);
+            Assert.DoesNotContain(marker, mine[0].Detail, StringComparison.Ordinal);       // the window carries no command line
+        }
+        finally { CollectorExec.Sink = sink; CollectorExec.CurrentRunId = run; }
+    }
+
+    // ---- B9: MpCmdRun.exe of the Defender platform folder ----
+
+    private static string Platform(string rest) =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Microsoft", "Windows Defender", "Platform") + Path.DirectorySeparatorChar + rest;
+
+    [Theory]
+    [InlineData(@"4.18.26080.3-0\MpCmdRun.exe")]
+    [InlineData(@"4.18.26080.3\MpCmdRun.exe")]
+    [InlineData(@"4.18.26080.3-12\mpcmdrun.EXE")]
+    [InlineData(@"10.0.1.2\MpCmdRun.exe")]
+    public void The_defender_platform_MpCmdRun_at_its_exact_location_is_in_the_inventory(string rest)
+    {
+        var path = Platform(rest);
+        Assert.True(CollectorExec.IsDefenderPlatformMpCmdRun(path));
+        Assert.True(CollectorExec.InInventory(path));
+        Assert.True(CollectorExec.InInventory(path.ToUpperInvariant()));
+        Assert.True(CollectorExec.InInventory("\"" + path + "\""));
+    }
+
+    [Theory]
+    [InlineData(@"4.18.26080.3-0\..\MpCmdRun.exe")]                      // traversal
+    [InlineData(@"4.18.26080.3-0\..\..\Evil\MpCmdRun.exe")]
+    [InlineData(@"4.18.1.1\..\4.18.2.2\MpCmdRun.exe")]
+    [InlineData(@"4.18.26080.3-0\x\MpCmdRun.exe")]                       // extra segment
+    [InlineData(@"4.18.26080.3-0\MpCmdRun.exe\x")]
+    [InlineData(@"Evil\4.18.26080.3-0\MpCmdRun.exe")]
+    [InlineData(@"4.18.26080.3-0\MpCmdRun.exe:evil")]                    // alternate data stream
+    [InlineData(@"4.18.26080.3-0\MpCmdRun.exe:$DATA")]
+    [InlineData(@"4.18.26080.3-0:x\MpCmdRun.exe")]
+    [InlineData(@"4.18.26080.3-0\MpCmdRun.exe.")]                        // trailing dot / space
+    [InlineData(@"4.18.26080.3-0\MpCmdRun.exe ")]
+    [InlineData(@"4.18.26080.3-0\\MpCmdRun.exe")]                        // doubled separator
+    [InlineData(@"4.18.26080.3-0/MpCmdRun.exe")]                         // alternate separator
+    [InlineData(@"4.18\MpCmdRun.exe")]                                   // not a version
+    [InlineData(@"4.18.26080\MpCmdRun.exe")]
+    [InlineData(@"4.18.26080.3.1\MpCmdRun.exe")]
+    [InlineData(@"4.18.26080.3-0-1\MpCmdRun.exe")]
+    [InlineData(@"4.18.26080.3-\MpCmdRun.exe")]
+    [InlineData(@"abc\MpCmdRun.exe")]
+    [InlineData(@"٤.١٨.٢٦٠٨٠.٣\MpCmdRun.exe")]                           // non-ASCII digits
+    [InlineData(@"4.18.26080.3-0\MsMpEng.exe")]                          // another program
+    [InlineData(@"4.18.26080.3-0\MpCmdRun.exe.exe")]
+    [InlineData(@"4.18.26080.3-0\MpCmdRunX.exe")]
+    [InlineData(@"4.18.26080.3-0")]
+    public void A_look_alike_of_the_defender_platform_MpCmdRun_is_not_in_the_inventory(string rest)
+    {
+        var path = Platform(rest);
+        Assert.False(CollectorExec.IsDefenderPlatformMpCmdRun(path), path);
+        Assert.False(CollectorExec.InInventory(path), path);
+    }
+
+    [Fact]
+    public void Other_folders_and_path_forms_of_MpCmdRun_are_not_in_the_inventory()
+    {
+        var pd = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+        string[] bad =
+        [
+            Path.Combine(pd, "Microsoft", "Windows Defender", "MpCmdRun.exe"),                                           // no platform folder
+            Path.Combine(pd, "Microsoft", "Windows Defender", "Platform", "MpCmdRun.exe"),                                 // no version folder
+            Path.Combine(pd, "Microsoft", "Windows Defender Advanced Threat Protection", "Platform", "4.18.1.1", "MpCmdRun.exe"),
+            Path.Combine(pd, "Evil", "Microsoft", "Windows Defender", "Platform", "4.18.1.1", "MpCmdRun.exe"),
+            Path.Combine(pd, "Microsoft", "Windows Defender", "Platform", "4.18.1.1", "MpCmdRun.exe").Replace(pd, Path.Combine(Path.GetTempPath(), "x")),   // other root
+            @"C:\Users\Public\Platform\4.18.1.1\MpCmdRun.exe",
+            @"\\LAB-PC\C$\ProgramData\Microsoft\Windows Defender\Platform\4.18.1.1\MpCmdRun.exe",                          // UNC
+            @"\\?\" + Path.Combine(pd, "Microsoft", "Windows Defender", "Platform", "4.18.1.1", "MpCmdRun.exe"),             // device path
+            @"Platform\4.18.1.1\MpCmdRun.exe",                                                                              // relative
+            "MpCmdRun.exe",
+            "",
+        ];
+        foreach (var path in bad)
+        {
+            Assert.False(CollectorExec.IsDefenderPlatformMpCmdRun(path), path);
+            Assert.False(CollectorExec.InInventory(path), path);
+        }
+    }
+
+    [Fact]
+    public void A_record_for_the_defender_platform_MpCmdRun_passes_the_inventory_test_but_a_look_alike_is_refused_for_it()
+    {
+        var good = Platform(@"4.18.26080.3-0\MpCmdRun.exe");
+        var traversal = Platform(@"4.18.26080.3-0\..\MpCmdRun.exe");
+        string? Why(string exe)
+        {
+            var cmd = "\"" + exe + "\" -Scan -ScanType 3 -File C:\\Case\\x.bin";
+            var audit = Audit(Control("run-A", T0, T0.AddMinutes(20), Exec("m1", "run-A", T0.AddMinutes(1), T0.AddMinutes(2), exe: exe, cmd: cmd)));
+            var execs = OperationAudit.ReadCollectorExecs(audit, chainValid: true, inventory: [Reg], currentSha256: p => p.Equals(exe, StringComparison.OrdinalIgnoreCase) ? ExeSha : "");
+            return execs.Refused.Select(r => r.Why).SingleOrDefault();
+        }
+        Assert.Null(Why(good));                                                          // valid: recorded hash equals the file hash, location accepted
+        Assert.Contains("inventarul fix", Why(traversal));
+    }
+
+    // ---- B6: the collection-script command line is matched to its end ----
+
+    [Fact]
+    public void A_trailing_line_feed_or_a_second_command_does_not_match_the_collection_script_command_line()
+    {
+        var ps = Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe");
+        var script = Path.Combine(AppContext.BaseDirectory, "Scripts", "AuditCollector.ps1");
+        var psi = LogAnalyzer.Response.Collection.PowerShellAuditCollector.BuildStartInfo(ps, script, "PC", @"D:\Case 1\out", "HOST-1");
+        var cmd = CollectorExec.CommandLineOf(psi);
+        bool Runs(string c) => LogAnalyzer.Response.Collection.PowerShellAuditCollector.RunsTheCollectionScript(c, ps, script);
+        Assert.True(Runs(cmd));
+        Assert.False(Runs(cmd + "\n"));
+        Assert.False(Runs(cmd + "\r\n"));
+        Assert.False(Runs(cmd + "\nGet-Process"));
+        Assert.False(Runs(cmd + " "));
+        Assert.False(Runs(cmd + " -Hostname other"));
+    }
+
+    [Fact]
+    public void A_trailing_line_feed_does_not_make_a_firewall_command_match()
+    {
+        var runner = new LogAnalyzer.Infrastructure.Services.ComFirewallRunner();
+        var outcome = runner.Netsh("advfirewall firewall show rule name=\"x\"\n");
+        Assert.Equal(-1, outcome.ExitCode);
+        Assert.Contains("nerecunoscută", outcome.Output);
+    }
 }

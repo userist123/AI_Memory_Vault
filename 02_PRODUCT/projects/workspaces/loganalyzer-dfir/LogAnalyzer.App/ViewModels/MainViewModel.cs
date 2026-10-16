@@ -450,7 +450,7 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 try
                 {
-                    Clipboard.SetText(RawEventMessage);
+                    if (!CopyAudited("raw_event", RawEventMessage)) return;
                     StatusMessage = "📋 Detalii eveniment copiate în Clipboard.";
                 }
                 catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or System.Runtime.InteropServices.ExternalException) { StatusMessage = $"Clipboard indisponibil: {ex.Message}"; }
@@ -844,7 +844,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (item != null)
             {
                 var json = System.Text.Json.JsonSerializer.Serialize(item, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-                Clipboard.SetText(json);
+                if (!CopyAudited("row_json", json)) return;
                 StatusMessage = $"Event ID {item.EventId} copied to clipboard as JSON.";
             }
         }
@@ -854,7 +854,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (item != null)
             {
-                Clipboard.SetText(item.TimeCreated.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+                if (!CopyAudited("timestamp", item.TimeCreated.ToString("yyyy-MM-dd HH:mm:ss.fff"))) return;
                 StatusMessage = "UTC Timestamp copied to clipboard.";
             }
         }
@@ -884,7 +884,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (item != null && !string.IsNullOrEmpty(item.ValueData))
             {
-                Clipboard.SetText(item.ValueData);
+                if (!CopyAudited("registry_value", item.ValueData)) return;
                 StatusMessage = "Registry Value Data copied to clipboard.";
             }
         }
@@ -920,11 +920,25 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
+        /// <summary>The .NET runtime is older than 10.0.13 (finding B10): a banner on every page, never blocking.</summary>
+        public string RuntimeWarning => LogAnalyzer.UI.Services.StartupNotices.RuntimeWarning;
+        public bool HasRuntimeWarning => LogAnalyzer.UI.Services.StartupNotices.HasRuntimeWarning;
+
         /// <summary>Failures to write the sealed audit, shown as a persistent banner on every page.</summary>
         public LogAnalyzer.UI.Services.AuditHealth AuditHealth => LogAnalyzer.UI.Services.AuditHealth.Instance;
 
         /// <summary>The live case id written in the export audit lines of the main window.</summary>
         private static string LiveCaseId => LogAnalyzer.UI.Services.ExportAudit.LiveCaseId;
+
+        /// <summary>
+        /// Copies one unmasked case item to the clipboard through <c>ExportAudit.Clipboard</c> (audit of kind, length and SHA-256, never the text).
+        /// Returns false (and shows the refusal in the status line) when the audit could not be written; nothing is copied then.
+        /// </summary>
+        private bool CopyAudited(string kind, string text)
+        {
+            if (LogAnalyzer.UI.Services.ExportAudit.Clipboard(LiveCaseId, kind, text) is { } refused) { StatusMessage = refused; return false; }
+            return true;
+        }
 
         /// <summary>Shows the refusal of an export whose audit could not be written first (nothing was written).</summary>
         private void ShowExportRefused(string message)
@@ -1188,7 +1202,7 @@ namespace LogAnalyzer.UI.ViewModels
             var script = _rollbackEngine.GenerateRollbackForFinding(finding.AttackType, finding.TargetAccount);
             try
             {
-                Clipboard.SetText(script.GeneratedPowerShellScript);
+                if (!CopyAudited("rollback_script", script.GeneratedPowerShellScript)) return;
                 MessageBox.Show($"Scriptul de rollback PowerShell a fost copiat în Clipboard!\n\nȚintă: {script.TargetObject}\nAcțiune: {script.ActionDescription}", "Script Rollback ADAudit Generat", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
@@ -1243,12 +1257,14 @@ namespace LogAnalyzer.UI.ViewModels
 
             try
             {
-                await _collectionService.RunCollectionAsync(
+                // B3: the evidence the legacy collector acquires is written to a folder chosen by the analyst, so the intent and the outcome are audited
+                var outDir = CollectionOutputDir;
+                if (await LogAnalyzer.UI.Services.ExportAudit.RunAsync(LiveCaseId, "live-triage-collection", 1, outDir, () => _collectionService.RunCollectionAsync(
                     SelectedTargetType,
-                    CollectionOutputDir,
+                    outDir,
                     CollectionHostname,
                     log => App.Current.Dispatcher.Invoke(() => CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, log))
-                );
+                )) is { } refused) ShowExportRefused(refused);
             }
             catch (Exception ex)
             {
@@ -1281,10 +1297,11 @@ namespace LogAnalyzer.UI.ViewModels
                     }
                     allowed.Add(ip);
                 }
-                _collectionService.StartSyslogListener(
-                    new SyslogListenerOptions(SyslogPort, CollectionOutputDir, CollectionHostname, bind, allowed),
+                var syslogDir = CollectionOutputDir;
+                if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "live-triage-syslog", 1, syslogDir, () => _collectionService.StartSyslogListener(
+                    new SyslogListenerOptions(SyslogPort, syslogDir, CollectionHostname, bind, allowed),
                     log => App.Current.Dispatcher.Invoke(() => CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, log))
-                );
+                )) is { } refused) { ShowExportRefused(refused); return; }
             }
             catch (NetworkBlockedException ex)
             {
@@ -1547,7 +1564,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (!string.IsNullOrEmpty(value))
             {
-                Clipboard.SetText(value);
+                if (!CopyAudited("ioc_value", value)) return;
                 StatusMessage = $"IOC Value copied to clipboard: {value}";
             }
         }

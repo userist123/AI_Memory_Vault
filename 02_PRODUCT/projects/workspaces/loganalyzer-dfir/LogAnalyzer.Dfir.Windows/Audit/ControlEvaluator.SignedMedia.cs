@@ -38,7 +38,10 @@ public static partial class ControlEvaluator
         // review M9: an unregistered medium seen only before the signed register existed is history (DE VERIFICAT), not a violation. The boundary is the first
         // OFICIAL installation from the sealed audit; without it, on Standalone, the application's install date (activity before it is the station's history).
         var historyBefore = reg.FirstInstalledUtc ?? (f.Posture == LogAnalyzer.Core.Services.Edition.StationPosture.Standalone ? f.AppInstalledUtc : null);
-        var matches = seen.Select(m => SignedMediaMatcher.Match(reg.Doc!.Entries, m, historyBefore)).ToList();
+        var tolerance = SignedMediaMatcher.ResolveTolerance(f.MediaCapacityTolerance, out var toleranceWarning);
+        var matches = seen.Select(m => SignedMediaMatcher.Match(reg.Doc!.Entries, m, historyBefore, tolerance)).ToList();
+        var toleranceNote = (f.MediaCapacityToleranceWarning.Length > 0 ? " " + f.MediaCapacityToleranceWarning : toleranceWarning is not null ? " " + toleranceWarning : "")
+            + (Math.Abs(tolerance - SignedMediaMatcher.DefaultCapacityTolerance) > 1e-12 ? $" Toleranța de capacitate este setată la {tolerance:P1} (implicit {SignedMediaMatcher.DefaultCapacityTolerance:P0}); de verificat în laborator." : "");
         var bad = matches.Where(m => m.IsViolation).ToList();
         var check = matches.Where(m => m.ToVerify).ToList();
         var ok = matches.Where(m => m.Kind == SignedMediaMatchKind.Registered).ToList();
@@ -49,6 +52,7 @@ public static partial class ControlEvaluator
             : $"{matches.Count} {(matches.Count == 1 ? "mediu văzut" : "medii văzute")}: {ok.Count} în registru" +
               (bad.Count > 0 ? $", {bad.Count(b => b.Kind == SignedMediaMatchKind.NotRegistered)} mediu neînregistrat, {bad.Count(b => b.Kind == SignedMediaMatchKind.UsedAfterRetirement)} retrase sau distruse folosite după data lor" : "") +
               (check.Count > 0 ? $", {check.Count} de verificat (posibilă clonare a serialului, dată necunoscută sau istoric dinaintea registrului semnat)" : "") + ".");
+        detail += toleranceNote;
         Add(r, id, area, title, status, detail.Trim(),
             bad.Select(m => "NECONFORM: " + m.Text).Concat(check.Select(m => "DE VERIFICAT: " + m.Text)).Concat(ok.Select(m => "în registru: " + m.Text)), rec);
     }

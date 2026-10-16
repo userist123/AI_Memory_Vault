@@ -23,6 +23,8 @@ public static partial class ControlEvaluator
         _ => null,
     };
 
+    private static int Pid0(string v) => int.TryParse(v.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var d) ? d : 0;
+
     private static int Pid(string v)
     {
         v = v.Trim();
@@ -47,8 +49,21 @@ public static partial class ControlEvaluator
         f.ClaimedActivity.Clear();
         if (f.CollectorExecs is not { } execs) return;
         var own = new List<LogFact>();
+        // script blocks split over several 4104 events are reassembled per (ScriptBlockId, process) before matching (finding B5)
+        var splitMembers = new HashSet<LogFact>();
+        var splitSets = f.Logs.Where(l => l.Channel == PowerShellChannel && l.Id == 4104 && V(l, "ScriptBlockId").Length > 0 && Pid0(V(l, "MessageTotal")) > 1)
+                              .GroupBy(l => (Id: V(l, "ScriptBlockId").ToLowerInvariant(), Pid: Pid(V(l, "ProcessId")))).ToList();
+        foreach (var blockSet in splitSets)
+        {
+            foreach (var l in blockSet) splitMembers.Add(l);
+            var parts = blockSet.Select(l => new ScriptBlockPart(l.TimeUtc, blockSet.Key.Pid, blockSet.Key.Id, Pid0(V(l, "MessageNumber")), Pid0(V(l, "MessageTotal")), V(l, "ScriptBlockText"))).ToList();
+            var m = SelfExecMatcher.ClassifySplit(parts, execs);
+            if (m.Kind == SelfExecKind.Own) own.AddRange(blockSet);
+            else if (m.Kind == SelfExecKind.Claimed) f.ClaimedActivity.AddRange(blockSet.Select(l => (l, m.Why)));
+        }
         foreach (var l in f.Logs)
         {
+            if (splitMembers.Contains(l)) continue;
             if (Observation(l) is not { } o) continue;
             var m = SelfExecMatcher.Classify(o, execs);
             if (m.Kind == SelfExecKind.Own) own.Add(l);
