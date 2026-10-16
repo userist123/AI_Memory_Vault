@@ -6,13 +6,14 @@ import type { Snapshot } from '@/core/types';
 import type { ProjectMeta } from '@/core/project-meta';
 import { floors } from '@/core/levels';
 import { usePrefs } from '@/lib/prefs';
+import LoadError from './LoadError';
 import { intlLocale } from '@/lib/i18n';
 
 export default function SiteReport({ id }: { id: string }){
   const { t, lang } = usePrefs(), [d, setD] = useState<{ snap: Snapshot; meta: ProjectMeta; items: Snag[] } | null>(null), [err, setErr] = useState(false), [open, setOpen] = useState(true);
   useEffect(() => { Promise.all([fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject()), fetch(`/api/projects/${id}/site`).then(r => r.ok ? r.json() : Promise.reject())])
     .then(([p, items]) => setD({ snap: p.draft, meta: p.meta, items })).catch(() => setErr(true)); }, [id]);
-  if (err) return <main className="report"><p>{t('print.loadError')}</p></main>;
+  if (err) return <LoadError />;
   if (!d) return <main className="report"><p className="muted">{t('print.loading')}</p></main>;
   const rooms = floors(d.snap).flatMap(f => f.rooms), list = d.items.filter(s => !open || s.status === 'open');
   const by = [...rooms.map(r => [r.id, r.name] as const), ['', t('site.noRoom')] as const].map(([rid, name]) => ({ name, items: list.filter(s => (s.roomId ?? '') === rid) })).filter(g => g.items.length);

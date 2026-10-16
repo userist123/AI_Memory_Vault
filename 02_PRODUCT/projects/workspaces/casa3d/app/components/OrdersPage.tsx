@@ -3,8 +3,9 @@
 // comandat → livrat → montat), nr. comenzii, datele; întârzierile sus. Lista unui furnizor se tipărește sau se descarcă (CSV).
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ORDER_STATUSES, withOrderState, bySupplier, procurementSummary, type OrderState, type ProcurementRow, type SupplierGroup } from '@/core/procurement';
-import { formatMoney } from '@/core/format';
+import { formatMoney, formatQty } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
+import { askConfirm } from '@/lib/dialog';
 import { intlLocale } from '@/lib/i18n';
 import { safeCell, quoteCell } from '@/core/csv-safe';
 import { ImportCsvButtons } from './CustomItemsImport';
@@ -16,7 +17,7 @@ export default function OrdersPage({ id, cur, say, projectName, rooms = [] }: { 
   const { t, lang } = usePrefs(), [data, setData] = useState<Data | null>(null), [open, setOpen] = useState<string | null>(null), [filter, setFilter] = useState<'all' | 'open' | 'overdue'>('all');
   const load = () => fetch(`/api/projects/${id}/orders`).then(r => r.ok ? r.json() : null).then(j => j && setData(j)).catch(() => say(t('orders.loadError')));
   useEffect(() => { load(); }, [id]); // eslint-disable-line
-  async function removeItem(r: ProcurementRow){ if (!r.itemId || !confirm(t('clip.confirmDelete', { name: r.product }))) return;
+  async function removeItem(r: ProcurementRow){ if (!r.itemId || !(await askConfirm({ title: t('clip.confirmDelete', { name: r.product }), confirmLabel: t('dlg.clipDeleteOk'), danger: true }))) return;
     const res = await fetch(`/api/projects/${id}/items/${r.itemId}`, { method: 'DELETE' }); if (!res.ok){ say(t('clip.saveError')); return; } setOpen(null); load(); }
   async function setQty(r: ProcurementRow, qty: number){ if (!r.itemId) return;
     const res = await fetch(`/api/projects/${id}/items/${r.itemId}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ qty }) });
@@ -48,7 +49,7 @@ export default function OrdersPage({ id, cur, say, projectName, rooms = [] }: { 
       <ul>{g.rows.map(r => <li key={r.key} className={`oline st-${r.state.status} ${r.overdue ? 'is-late' : ''}`}>
         <button className="oline-main" aria-expanded={open === r.key} onClick={() => setOpen(o => o === r.key ? null : r.key)}>
           {r.image ? <img className="othumb" src={r.image} alt="" referrerPolicy="no-referrer" loading="lazy" /> : null}<span className="oname"><b>{r.product}</b><small>{[r.code, r.rooms.join(', ')].filter(Boolean).join(' · ')}</small></span>
-          <span className="oqty">{r.qty} {r.unit}{r.packs ? <small>{r.packs}</small> : null}</span>
+          <span className="oqty">{formatQty(r.qty, r.unit, lang)}{r.packs ? <small>{r.packs}</small> : null}</span>
           <span className="ototal">{money(r.total)}</span>
           <span className={`st st-o-${r.state.status}`}>{t(`ostatus.${r.state.status}`)}</span>
           {r.orderBy && (r.state.status === 'todo' || r.state.status === 'quoted') && <small className={r.orderUrgency ? 'late' : 'muted'}>{t(r.orderUrgency === 'late' ? 'orders.orderByLate' : 'orders.orderBy', { d: new Date(r.orderBy + 'T12:00:00').toLocaleDateString(intlLocale(lang), { day: 'numeric', month: 'long' }) })}</small>}

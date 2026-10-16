@@ -8,7 +8,19 @@ import { presentation, approvalItems } from '../core/presentation';
 
 export const FEEDBACK_VERDICTS = ['like', 'change', 'question'] as const;
 export type FeedbackVerdict = typeof FEEDBACK_VERDICTS[number];
-export const FEEDBACK_LIMITS = { author: 60, text: 2000, perShare: 200 };
+/**
+ * `perShare` = plafonul pe link pentru păreri și întrebări; `approvalsPerShare` = plafon separat pentru aprobările pe produs
+ * („îmi place” pe un finisaj sau o piesă), ca un șir de aprobări să nu poată bloca întrebările clientului.
+ */
+export const FEEDBACK_LIMITS = { author: 60, text: 2000, perShare: 200, approvalsPerShare: 200 };
+// aprobare pe produs = „îmi place” cu produs; restul rândurilor (inclusiv „aș schimba” pe un produs) sunt păreri
+const IS_APPROVAL = `verdict = 'like' and item is not null`;
+const tooMany = () => new HttpError(429, 'S-au trimis prea multe păreri pe acest link.');
+/** Cheile produselor din cameră a căror ultimă părere pe acest link e o aprobare (nu se mai aprobă încă o dată). */
+async function approvedKeys(q: (sql: string, p?: unknown[]) => Promise<{ rows: any[] }>, token: string, roomId: string): Promise<Map<string, any>> {
+  const { rows } = await q(`select distinct on (item->>'key') * from share_feedback where token=$1 and room_id=$2 and item is not null order by item->>'key', created_at desc, id desc`, [token, roomId]);
+  return new Map(rows.filter(r => r.verdict === 'like').map(r => [r.item.key as string, r] as const));
+}
 /** item = un finisaj sau o piesă anume din cameră (aprobare pe produs); lipsă = părere despre cameră sau proiect */
 export interface FeedbackItem { key: string; label: string; role: string | null }
 export interface Feedback { id: string; roomId: string | null; verdict: FeedbackVerdict; author: string; text: string; createdAt: string; resolvedAt: string | null; item: FeedbackItem | null }
@@ -38,10 +50,44 @@ export async function addFeedback(token: unknown, input: unknown): Promise<Feedb
   return tx(async q => {
     const { rows: [s] } = await q('select project_id from shares where token=$1 and revoked_at is null for update', [t]);
     if (!s) throw new HttpError(404, 'Link inexistent.');
-    const { rows: [c] } = await q('select count(*)::int as n from share_feedback where token=$1', [t]);
-    if (c.n >= FEEDBACK_LIMITS.perShare) throw new HttpError(429, 'S-au trimis prea multe păreri pe acest link.');
+    const approval = verdict === 'like' && item !== null;
+    // a doua aprobare a aceluiași produs (ultima părere despre el e deja „îmi place”) nu mai scrie un rând nou
+    if (approval){ const prev = (await approvedKeys(q, t, roomId)).get(item!.key); if (prev) return row(prev); }
+    const { rows: [c] } = await q(`select count(*)::int as n from share_feedback where token=$1 and ${approval ? '' : 'not '}(${IS_APPROVAL})`, [t]);
+    if (c.n >= (approval ? FEEDBACK_LIMITS.approvalsPerShare : FEEDBACK_LIMITS.perShare)) throw tooMany();
     const { rows } = await q('insert into share_feedback(token, project_id, room_id, verdict, author, body, item) values($1,$2,$3,$4,$5,$6,$7) returning *', [t, s.project_id, roomId, verdict, author, text, item ? JSON.stringify(item) : null]);
     return row(rows[0]); });
+}
+/**
+ * „Aprobă camera”: mai multe aprobări pe produs dintr-o singură cerere (aceeași cameră, același nume). Fiecare cheie trebuie
+ * să fie un finisaj sau o piesă din camera reviziei partajate; numele produselor le pune serverul. Produsele deja aprobate pe
+ * acest link (ultima lor părere e „îmi place”) se sar, deci aceeași cerere repetată nu adaugă rânduri; un produs se poate
+ * aproba din nou doar după un „aș schimba”, care intră în plafonul de păreri. Rândurile noi intră în plafonul separat de
+ * aprobări (approvalsPerShare): aprobările nu pot umple plafonul întrebărilor (perShare). Întoarce doar rândurile noi.
+ */
+export const APPROVE_MAX = 60;
+export async function addApprovals(token: unknown, input: unknown): Promise<Feedback[]> {
+  const view = await resolveShare(token);
+  const x = input as any; if (!x || typeof x !== 'object' || !Array.isArray(x.items)) throw new HttpError(400, 'Aprobarea nu e validă.');
+  const author = clean(x.author), roomId = x.roomId;
+  if (!author || author.length > FEEDBACK_LIMITS.author) throw new HttpError(400, 'Scrie-ți numele (cel mult 60 de caractere).');
+  if (typeof roomId !== 'string' || !view.snapshot.floor.rooms.concat(...(view.snapshot.levels ?? []).map(l => l.rooms)).some(r => r.id === roomId)) throw new HttpError(400, 'Camera nu există în prezentare.');
+  const keys = [...new Set(x.items.map((i: any) => i?.key))];
+  if (!keys.length || keys.length > APPROVE_MAX || keys.some(k => typeof k !== 'string' || k.length > 120)) throw new HttpError(400, 'Produsul nu există în prezentare.');
+  const [cat, mc] = await Promise.all([getCatalog(), getMaterials()]), slide = presentation(view.snapshot, cat, mc).rooms.find(r => r.id === roomId);
+  const known = new Map((slide ? approvalItems(slide) : []).map(i => [i.key, i] as const)), items = keys.map(k => known.get(k as string));
+  if (items.some(i => !i)) throw new HttpError(400, 'Produsul nu există în prezentare.');
+  const { tx } = await getDb(), t = token as string;
+  return tx(async q => {
+    const { rows: [s] } = await q('select project_id from shares where token=$1 and revoked_at is null for update', [t]);
+    if (!s) throw new HttpError(404, 'Link inexistent.');
+    const done = await approvedKeys(q, t, roomId), fresh = items.filter(it => !done.has(it!.key));
+    if (!fresh.length) return [];
+    const { rows: [c] } = await q(`select count(*)::int as n from share_feedback where token=$1 and ${IS_APPROVAL}`, [t]);
+    if (c.n + fresh.length > FEEDBACK_LIMITS.approvalsPerShare) throw tooMany();
+    const out: Feedback[] = [];
+    for (const it of fresh){ const { rows } = await q('insert into share_feedback(token, project_id, room_id, verdict, author, body, item) values($1,$2,$3,$4,$5,$6,$7) returning *', [t, s.project_id, roomId, 'like', author, '', JSON.stringify(it)]); out.push(row(rows[0])); }
+    return out; });
 }
 /** Ce vede clientul pe link: părerile trimise pe acest link, cu starea lor. */
 export async function listFeedbackForShare(token: unknown): Promise<Feedback[]> {

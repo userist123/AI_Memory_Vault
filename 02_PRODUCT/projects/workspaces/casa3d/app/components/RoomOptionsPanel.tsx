@@ -7,6 +7,7 @@ import { captureOption, updateOption, removeOption, applyOption, compareOptions,
 import { groups } from '@/core/catalog';
 import { formatMoney, formatMoneyDelta } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
+import { askConfirm } from '@/lib/dialog';
 import { intlLocale } from '@/lib/i18n';
 
 interface Choice { roomId: string; optionId: string; label: string; author: string; note: string; chosenAt: string; revisionNumber: number }
@@ -34,7 +35,7 @@ export default function RoomOptionsPanel({ id, room, snap, cat, mc, cur, onSnap,
       <div className="row">
         {!o.active && <button className="btn primary" onClick={() => run(() => applyOption(snap, room.id, o.option.id))}>{t('ropt.apply', { l: o.option.label })}</button>}
         {!o.active && <button className="btn" title={t('ropt.updateTitle')} onClick={() => run(() => updateOption(snap, room.id, o.option.id, new Date().toISOString()))}>{t('ropt.update')}</button>}
-        <button className="btn ghost" onClick={() => { if (confirm(t('ropt.removeConfirm', { l: o.option.label }))) run(() => removeOption(snap, room.id, o.option.id)); }}>{t('ropt.remove')}</button>
+        <button className="btn ghost" onClick={async () => { if (await askConfirm({ title: t('ropt.removeConfirm', { l: o.option.label }), confirmLabel: t('dlg.roptRemoveOk', { l: o.option.label }), danger: true })) run(() => removeOption(snap, room.id, o.option.id)); }}>{t('ropt.remove')}</button>
       </div></li>)}</ol>}
     {choice && !list.some(o => o.option.id === choice.optionId) && <p className="muted">{t('ropt.choiceGone', { who: choice.author, l: choice.label })}</p>}
     {list.length < MAX_OPTIONS && (active ? <p className="muted">{t('ropt.changeFirst', { l: active.option.label })}</p> : <div className="ropt-new">

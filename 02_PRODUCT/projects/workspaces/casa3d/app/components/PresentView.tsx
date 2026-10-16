@@ -10,6 +10,7 @@ import { floors, levelView, stairwells } from '@/core/levels';
 import { floorBounds } from '@/core/dimensions';
 import { formatMoney, formatArea } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
+import LoadError from './LoadError';
 import { intlLocale } from '@/lib/i18n';
 import { swatchStyle } from './MaterialPicker';
 import { PlanSvg } from './PrintView';
@@ -18,7 +19,10 @@ import ClientDeliveries from './ClientDeliveries';
 import { ClientChanges } from './ChangeOrders';
 import RoomChoiceBox, { type ClientChoice } from './RoomChoiceBox';
 import type { ClientProgress } from '@/core/client-progress';
-import { FULL_W, renderWidth, renderHeight, presentQuality, isMobileEnv, yieldToBrowser, goodEnough } from '@/lib/present-render';
+import { FULL_W, renderSize, presentQuality, isMobileEnv, yieldToBrowser, goodEnough } from '@/lib/present-render';
+import { useClientNameBox } from './ClientNameBox';
+import { askPrompt } from '@/lib/dialog';
+import { cleanClientName } from '@/lib/client-name';
 import './present.css';
 
 const nextFrame = () => new Promise<void>(res => requestAnimationFrame(() => res()));
@@ -33,7 +37,9 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
       .then(([p, catalog, mc]) => setData({ snap: p.draft, name: p.draft.name || p.name, catalog, mc })).catch(() => setErr(true)); }, [id, share]);
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   useEffect(() => { if (share) fetch(`/api/share/${share.token}/feedback`).then(r => r.ok ? r.json() : []).then(setFeedback).catch(() => {}); }, [share]);
-  const added = (f: FeedbackItem) => setFeedback(xs => [...xs, f]);
+  // serverul poate întoarce un rând existent (produs deja aprobat): nu se adaugă de două ori
+  const added = (f: FeedbackItem) => setFeedback(xs => xs.some(x => x.id === f.id) ? xs : [...xs, f]);
+  const nameBox = useClientNameBox(share?.token ?? ''), [bulk, setBulk] = useState<{ busy: boolean; msg: string | null }>({ busy: false, msg: null });
   const [choices, setChoices] = useState<ClientChoice[]>([]);
   useEffect(() => { if (share) fetch(`/api/share/${share.token}/choices`).then(r => r.ok ? r.json() : []).then(setChoices).catch(() => {}); }, [share]);
   // Imaginile 3D se fac la cerere, câte una (un singur motor WebGL, un lanț de lucrări): o planșă intră în ecran → imaginea ei,
@@ -48,15 +54,16 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
     try { const m = await import('./viewer3d-engine.js'); if (!canvasRef.current) return null; e.viewer = m.createViewer(canvasRef.current); const lp = lighting('day');
       e.viewer.setLighting({ ...lp, dir: sunDirection(lp.azimuthDeg, lp.elevationDeg) }); e.viewer.setQuality?.(presentQuality({ share: !!share, mobile })); return e.viewer; }
     catch { setNoGL(true); return null; } };   // fără WebGL: planșele rămân fără imagini
-  const shoot = (key: string, cssWidth: number, print = false): Promise<void> => { const e = eng.current, g = e.gen, d = data;
-    const w = renderWidth({ cssWidth, dpr: typeof devicePixelRatio === 'number' ? devicePixelRatio : 1, print }), tag = `${key}@${w}`;
+  // imaginea se cere în forma locului ei din planșă (lățime × înălțime reale), ca motorul 3D să încadreze camera pentru acel format
+  const shoot = (key: string, cssWidth: number, print = false, cssHeight?: number): Promise<void> => { const e = eng.current, g = e.gen, d = data;
+    const size = renderSize({ cssWidth, cssHeight, dpr: typeof devicePixelRatio === 'number' ? devicePixelRatio : 1, print, overview: key === 'overview' }), w = size.w, tag = `${key}@${w}x${size.h}`;
     if (!d || goodEnough(e.done[key], w) || e.queued.has(tag)) return e.chain;
     e.queued.add(tag); setQueued(n => n + 1);
     e.chain = e.chain.then(async () => { try { if (g !== e.gen || goodEnough(e.done[key], w)) return; const v = await ensureViewer(); if (!v || g !== e.gen) return;
         const L = levelOf[key] ?? 0;
         if (e.level !== L){ const lv = levelView(d.snap, L), { plan, items } = viewerInput(lv, d.catalog, undefined, { voids: stairwells(d.snap, L), mc: d.mc }); v.setState(plan, items); e.level = L;
           await nextFrame(); await nextFrame(); if (g !== e.gen) return; }
-        const url = key === 'overview' ? v.renderView(undefined, w, renderHeight(w, true)) : v.renderView({ roomId: key }, w, renderHeight(w));
+        const url = key === 'overview' ? v.renderView(undefined, size.w, size.h) : v.renderView({ roomId: key }, size.w, size.h);
         if (url && g === e.gen){ e.done[key] = w; setImages(m => ({ ...m, [key]: { url, w } })); } }
       catch { /* o cameră care nu se poate randa rămâne cu locul gol */ }
       finally { e.queued.delete(tag); if (g === e.gen) setQueued(n => Math.max(0, n - 1)); await yieldToBrowser(); } });
@@ -70,21 +77,34 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
   const imgFor = (roomId: string) => photoFor(roomId) ?? images[roomId]?.url;
   // fiecare planșă cu imagine 3D cere imaginea abia când se apropie de ecran
   useEffect(() => { if (!data) return; const els = [...document.querySelectorAll<HTMLElement>('[data-shot]')];
-    if (typeof IntersectionObserver === 'undefined'){ for (const el of els) shoot(el.dataset.shot!, el.getBoundingClientRect().width); return; }
-    const io = new IntersectionObserver(es => { for (const en of es) if (en.isIntersecting){ io.unobserve(en.target); const el = en.target as HTMLElement; shoot(el.dataset.shot!, en.boundingClientRect.width || el.clientWidth); } }, { rootMargin: '400px 0px' });
+    if (typeof IntersectionObserver === 'undefined'){ for (const el of els){ const b = el.getBoundingClientRect(); shoot(el.dataset.shot!, b.width, false, b.height); } return; }
+    const io = new IntersectionObserver(es => { for (const en of es) if (en.isIntersecting){ io.unobserve(en.target); const el = en.target as HTMLElement; shoot(el.dataset.shot!, en.boundingClientRect.width || el.clientWidth, false, en.boundingClientRect.height || el.clientHeight); } }, { rootMargin: '400px 0px' });
     for (const el of els) io.observe(el); return () => io.disconnect(); }, [data, photos]); // eslint-disable-line
   async function printDeck(){ if (printing || !data) return; setPrinting(true);
     try { const keys = ['overview', ...floors(data.snap).flatMap((_, i) => levelView(data.snap, i).floor.rooms.map(r => r.id)).filter(k => !photoFor(k))];
       for (const k of keys) shoot(k, FULL_W, true); await eng.current.chain; await nextFrame(); await nextFrame(); }
     finally { setPrinting(false); } print(); }
   const busy = queued > 0 || printing;
+  // linkul clientului: câte produse sunt aprobate din total (ultima părere pe fiecare produs) și „Aprobă tot”, cameră cu cameră
+  const lastOn = (key: string) => [...feedback].reverse().find(f => f.item?.key === key);
+  const pendingByRoom = useMemo(() => !share || !data ? [] : presentation(data.snap, data.catalog, data.mc).rooms.map(r => ({ id: r.id, keys: approvalItems(r).map(a => a.key) }))
+    .map(r => ({ ...r, todo: r.keys.filter(k => lastOn(k)?.verdict !== 'like') })), [share, data, feedback]); // eslint-disable-line
+  const apTotal = pendingByRoom.reduce((a, r) => a + r.keys.length, 0), apDone = apTotal - pendingByRoom.reduce((a, r) => a + r.todo.length, 0);
+  async function approveAll(){ if (!share || bulk.busy) return; let author = nameBox.ensure();
+    if (!author){ const n = await askPrompt({ title: t('fb.allNameTitle'), body: t('fb.allNameBody'), confirmLabel: t('fb.approveAllOk'), input: { label: t('fb.name'), maxLength: 60 } }); author = n ? nameBox.save(cleanClientName(n)) : null; }
+    if (!author) return; setBulk({ busy: true, msg: null });
+    try { for (const r of pendingByRoom.filter(x => x.todo.length)){ const res = await fetch(`/api/share/${share.token}/feedback`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ roomId: r.id, author, items: r.todo.map(key => ({ key })) }) });
+        const j = await res.json().catch(() => null); if (!res.ok){ setBulk({ busy: false, msg: j?.error || t('fb.error') }); return; } setFeedback(xs => [...xs, ...(j as FeedbackItem[])]); }
+      setBulk({ busy: false, msg: t('fb.allApproved') }); }
+    catch { setBulk({ busy: false, msg: t('fb.error') }); } }
+  const toComments = () => { const el = document.getElementById('fb-general'); el?.scrollIntoView({ behavior: 'smooth', block: 'start' }); el?.querySelector<HTMLElement>('[role=radio]')?.focus({ preventScroll: true }); };
   const pres = useMemo(() => data ? presentation(data.snap, data.catalog, data.mc) : null, [data]);
   // săgețile / PageDown trec la planșa următoare
   useEffect(() => { const on = (e: KeyboardEvent) => { if (!['ArrowRight', 'ArrowLeft', 'PageDown', 'PageUp'].includes(e.key)) return; const s = [...document.querySelectorAll<HTMLElement>('.slide')];
       const cur = s.findIndex(el => el.getBoundingClientRect().top > -10), k = e.key === 'ArrowRight' || e.key === 'PageDown' ? 1 : -1; s[Math.max(0, Math.min(s.length - 1, cur + k))]?.scrollIntoView({ behavior: 'smooth' }); e.preventDefault(); };
     addEventListener('keydown', on); return () => removeEventListener('keydown', on); }, []);
   const canvas = <canvas ref={canvasRef} width={1600} height={1000} aria-hidden="true" style={{ position: 'fixed', left: -10000, top: 0, width: 1600, height: 1000, pointerEvents: 'none' }} />;
-  if (err) return <main className="deck"><p>{t('print.loadError')}</p></main>;
+  if (err) return <LoadError />;
   if (!data || !pres) return <main className="deck">{canvas}<p className="muted">{t('print.loading')}</p></main>;
   const cur = data.catalog.offers[0]?.currency ?? 'RON', money = (v: number | null) => formatMoney(v, cur, lang, '—'), date = new Date().toLocaleDateString(intlLocale(lang), { month: 'long', year: 'numeric' });
   const role = (r: string) => t(`pres.role.${r.split('.')[0]}`), title = (n?: string) => (n ?? '').split(',')[0];
@@ -125,6 +145,11 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
       <footer>{num(n)}</footer></section>
     {share && <ClientChanges token={share.token} offered={pres.budget.total} cur={cur} />}
     {share?.progress && <ClientDeliveries p={share.progress} />}
-    {share && <FeedbackBox token={share.token} roomId={null} title={t('fb.general')} sub={t('fb.generalSub')} items={feedback.filter(f => f.roomId === null)} onAdded={added} />}
+    {share && <FeedbackBox id="fb-general" token={share.token} roomId={null} title={t('fb.general')} sub={t('fb.generalSub')} items={feedback.filter(f => f.roomId === null)} onAdded={added} />}
+    {share && apTotal > 0 && <div className="decide-bar no-print" role="region" aria-label={t('fb.decideAria')}>
+      <div className="decide-progress"><b>{t('fb.progress', { n: apDone, total: apTotal })}</b><span className="decide-track" aria-hidden="true"><i style={{ width: `${Math.round(apDone / apTotal * 100)}%` }} /></span>
+        {bulk.msg && <small role="status">{bulk.msg}</small>}</div>
+      <div className="decide-act"><button type="button" className="btn lg" onClick={toComments}>{t('fb.toComments')}</button>
+        <button type="button" className="btn primary lg" disabled={bulk.busy || apDone === apTotal} onClick={approveAll}>{apDone === apTotal ? t('fb.allDone') : t('fb.approveAll')}</button></div></div>}
   </main>);
 }

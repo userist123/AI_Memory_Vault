@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import Joystick from './Joystick';
+import Icon from './Icon';
 import { usePrefs } from '@/lib/prefs';
 import PanoramaView from './PanoramaView';
 import type { Catalog, Snapshot, MaterialsCatalog } from '@/core/types';
@@ -59,7 +60,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
     <canvas ref={ref} aria-label={t('viewer.aria')} />
     {mode === 'walk' && touch && !err && <Joystick onMove={(f, s) => v.current?.setMove(f, s)} />}
     <div className="v3bar">
-      <button className="btn" aria-pressed={mode === 'house'} onClick={() => go('house')}>{t('viewer.house')}</button>
+      <button className="btn" aria-pressed={mode === 'house'} onClick={() => go('house')}><Icon name="cube" size={16} /><span className="v3lbl">{t('viewer.house')}</span></button>
       {/* intrarea în camere: o listă, nu câte un buton pe cameră (bara încape pe un rând și pe laptop) */}
       <select className="btn" aria-label={t('viewer.tourPick')} value={mode === 'walk' && room ? room : ''} onChange={e => { const id = e.target.value; if (!id) { go('house'); return; } setMode('walk'); setRoom(id); v.current?.goRoom(id); }}>
         <option value="">{t('viewer.tourPick')}</option>
@@ -67,10 +68,10 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
       </select>
       {mode === 'walk' && room && <button className="btn" disabled={panoBusy || !!err} title={t('pano.title')} onClick={openPano}>360°</button>}
       {panoMsg && <span className="muted" role="status">{panoMsg}</span>}
-      <button className="btn" aria-pressed={doorsOpen} title={t('viewer.doors')} onClick={() => { const n = !doorsOpen; setDoorsOpen(n); v.current?.setDoors(n); }}>{doorsOpen ? t('viewer.doorsOpen') : t('viewer.doorsClosed')}</button>
-      <button className="btn" aria-expanded={lightOpen} onClick={() => setLightOpen(o => !o)} title={t('viewer.lightTitle')}>{t('viewer.light')}</button>
+      <button className="btn" aria-pressed={doorsOpen} title={t('viewer.doors')} aria-label={t('viewer.doorsOpen')} onClick={() => { const n = !doorsOpen; setDoorsOpen(n); v.current?.setDoors(n); }}><Icon name="door" size={16} /><span className="v3lbl" aria-hidden="true">{doorsOpen ? t('viewer.doorsOpen') : t('viewer.doorsClosed')}</span></button>
+      <button className="btn" aria-expanded={lightOpen} onClick={() => setLightOpen(o => !o)} title={t('viewer.lightTitle')} aria-label={t('viewer.lightTitle')}><Icon name="sun" size={16} /><span className="v3lbl" aria-hidden="true">{t('viewer.light')}</span></button>
       <div className="v3exp">
-        <button className="btn" aria-expanded={exportOpen} aria-haspopup="menu" disabled={!!err} onClick={() => setExportOpen(o => !o)} title={t('viewer.exportTitle')}>{t('viewer.export')}</button>
+        <button className="btn" aria-expanded={exportOpen} aria-haspopup="menu" disabled={!!err} onClick={() => setExportOpen(o => !o)} title={t('viewer.exportTitle')} aria-label={t('viewer.exportTitle')}><Icon name="download" size={16} /><span className="v3lbl" aria-hidden="true">{t('viewer.export')}</span><Icon name={exportOpen ? 'chevronUp' : 'chevronDown'} size={14} /></button>
         {exportOpen && <div className="v3menu" role="menu" onKeyDown={e => { if (e.key === 'Escape') setExportOpen(false); }}>
           <button role="menuitem" onClick={() => { setExportOpen(false); capture(); }} title={t('viewer.captureTitle')}>{t('viewer.capture')}</button>
           <button role="menuitem" onClick={() => { setExportOpen(false); exportBlender(); }} title={t('viewer.blenderTitle')}>{t('viewer.blender')}</button>

@@ -8,6 +8,7 @@ import { floors } from '@/core/levels';
 import { formatMoney, formatDimsCm } from '@/core/format';
 import { swatchStyle } from './MaterialPicker';
 import { usePrefs } from '@/lib/prefs';
+import LoadError from './LoadError';
 import EmptyState from './EmptyState';
 
 export default function MoodBoard({ id }: { id: string }){
@@ -18,7 +19,7 @@ export default function MoodBoard({ id }: { id: string }){
       for (const j of rj.jobs ?? []) if (j.status === 'done') for (const f of j.images) { const room = f.replace(/(-2)?\.png$/, ''); if (!renders[room] && !f.endsWith('-2.png')) renders[room] = `/api/projects/${id}/renders/${j.job}/${f}`; }
       setD({ name: p.name, draft: p.draft, cat, mc, renders }); }).catch(() => setErr(true)); }, [id]);
   const boards = useMemo(() => d ? floors(d.draft).flatMap(f => f.rooms).map(r => roomBoard(d.draft, d.cat, d.mc, r)).filter(b => b.materials.length || b.pieces.length) : [], [d]);
-  if (err) return <main className="report"><p>{t('print.loadError')}</p></main>;
+  if (err) return <LoadError />;
   if (!d) return <main className="report"><p className="muted">{t('print.loading')}</p></main>;
   const money = (n: number | null) => n == null ? '—' : formatMoney(n, 'RON', lang), pct = (v: number) => `${Math.round(v * 100)}%`;
   return (<main className="report board">

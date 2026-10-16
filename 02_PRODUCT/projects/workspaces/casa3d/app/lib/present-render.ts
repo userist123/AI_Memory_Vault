@@ -34,3 +34,17 @@ export function yieldToBrowser(w: { requestIdleCallback?: (cb: () => void, o?: {
 
 /** O imagine e destul de bună dacă are cel puțin lățimea cerută (pentru tipărire: FULL_W). */
 export const goodEnough = (have: number | undefined, need: number) => typeof have === 'number' && have >= need;
+
+/** Planșa tipărită are 297 × 167 mm; imaginea camerei ocupă 58 % din lățime (globals.css `.room`), coperta 60 % (present.css). */
+export const PRINT_SLIDE = { w: 297, h: 167 }, PRINT_ROOM_ASPECT = PRINT_SLIDE.h / (PRINT_SLIDE.w * .58), PRINT_COVER_ASPECT = PRINT_SLIDE.h / (PRINT_SLIDE.w * .6);
+/**
+ * Mărimea cerută lui renderView pentru o planșă: lățimea ca la renderWidth, iar înălțimea după forma reală a locului
+ * imaginii (înălțime / lățime CSS), ca motorul 3D să încadreze camera pentru acel format, nu să decupeze o imagine 16:10.
+ * La tipărire forma vine din planșa A4 (PRINT_*_ASPECT). Fără măsură: formatul vechi (ROOM_ASPECT / OVERVIEW_ASPECT).
+ */
+export function renderSize(o: { cssWidth: number; cssHeight?: number; dpr: number; print?: boolean; overview?: boolean }): { w: number; h: number } {
+  const w = renderWidth(o), fallback = o.overview ? OVERVIEW_ASPECT : ROOM_ASPECT;
+  const measured = Number.isFinite(o.cssHeight) && (o.cssHeight ?? 0) > 0 && o.cssWidth > 0 ? o.cssHeight! / o.cssWidth : null;
+  const aspect = o.print ? (o.overview ? PRINT_COVER_ASPECT : PRINT_ROOM_ASPECT) : measured ?? fallback;
+  return { w, h: Math.max(120, Math.round(w * Math.min(2.5, Math.max(.3, aspect)))) };
+}

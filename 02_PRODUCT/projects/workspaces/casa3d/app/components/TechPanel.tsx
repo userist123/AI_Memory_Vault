@@ -3,6 +3,7 @@
 import type { Snapshot } from '@/core/types';
 import { TECH_KINDS, techCounts, type TechKind } from '@/core/technical';
 import { usePrefs } from '@/lib/prefs';
+import { askConfirm } from '@/lib/dialog';
 
 export const TECH_SYMBOL: Record<TechKind, { letter: string; color: string }> = {
   outlet: { letter: 'P', color: '#8B6A45' }, outlet_double: { letter: 'P2', color: '#8B6A45' }, switch: { letter: 'I', color: '#5E636B' }, light_point: { letter: 'L', color: '#B7791F' },
@@ -17,8 +18,8 @@ export default function TechPanel({ snap, show, kind, onShow, onKind, onSuggest,
     <h3>{t('tech.title')}</h3>
     <p className="prov" style={{ margin: 0 }}>{t('tech.intro')}</p>
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-      <button className="btn primary" onClick={() => { if (pts.length && !confirm(t('tech.replaceConfirm'))) return; onSuggest(); }}>{t('tech.suggest')}</button>
-      {pts.length > 0 && <button className="btn danger" onClick={() => { if (confirm(t('tech.clearConfirm'))) onClear(); }}>{t('tech.clear')}</button>}
+      <button className="btn primary" onClick={async () => { if (pts.length && !(await askConfirm({ title: t('dlg.techReplaceTitle'), body: t('tech.replaceConfirm'), confirmLabel: t('dlg.techReplaceOk') }))) return; onSuggest(); }}>{t('tech.suggest')}</button>
+      {pts.length > 0 && <button className="btn danger" onClick={async () => { if (await askConfirm({ title: t('tech.clearConfirm'), confirmLabel: t('tech.clear'), danger: true })) onClear(); }}>{t('tech.clear')}</button>}
     </div>
     <label className="f" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked={show} onChange={e => onShow(e.target.checked)} /> {t('tech.show')}</label>
     <label className="f"><span>{t('tech.kind')}</span><select value={kind} onChange={e => onKind(e.target.value as TechKind)}>{KINDS.map(k => <option key={k} value={k}>{TECH_SYMBOL[k].letter} · {label(k)}</option>)}</select></label>

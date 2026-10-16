@@ -6,6 +6,7 @@ import { TRADES, SNAG_STATUSES, snagSummary, type Snag, type SnagStatus, type Tr
 import type { Room } from '@/core/types';
 import { shrinkPhoto } from '@/lib/image-resize';
 import { usePrefs } from '@/lib/prefs';
+import { askConfirm } from '@/lib/dialog';
 import { intlLocale } from '@/lib/i18n';
 import EmptyState from './EmptyState';
 
@@ -16,7 +17,7 @@ export default function SitePage({ id, rooms, say }: { id: string; rooms: Room[]
   const roomName = (rid: string | null) => rooms.find(r => r.id === rid)?.name ?? t('site.noRoom');
   async function patch(s: Snag, body: Partial<Snag>){ const r = await fetch(`/api/projects/${id}/site/${s.id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
     if (!r.ok){ const j = await r.json().catch(() => ({})); say(j.error || t('site.saveError')); return; } const n = await r.json(); setItems(xs => (xs ?? []).map(x => x.id === n.id ? n : x)); }
-  async function remove(s: Snag){ if (!confirm(t('site.deleteConfirm', { n: s.number }))) return; const r = await fetch(`/api/projects/${id}/site/${s.id}`, { method: 'DELETE' }); if (r.ok) setItems(xs => (xs ?? []).filter(x => x.id !== s.id)); }
+  async function remove(s: Snag){ if (!(await askConfirm({ title: t('site.deleteConfirm', { n: s.number }), confirmLabel: t('dlg.siteDeleteOk'), danger: true }))) return; const r = await fetch(`/api/projects/${id}/site/${s.id}`, { method: 'DELETE' }); if (r.ok) setItems(xs => (xs ?? []).filter(x => x.id !== s.id)); }
   const sum = snagSummary(items ?? []);
   const groups = useMemo(() => { const m = new Map<string, Snag[]>(); for (const s of (items ?? []).filter(x => filter === 'all' || x.status === 'open')) m.set(s.roomId ?? '', [...(m.get(s.roomId ?? '') ?? []), s]); return [...m.entries()]; }, [items, filter]);
   return (<div className="orders site">

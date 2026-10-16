@@ -6,6 +6,7 @@ import { TEMPLATES, floorArea } from '../core/templates';
 import type { Floor } from '../core/types';
 import { formatArea } from '../core/format';
 import { usePrefs } from '@/lib/prefs';
+import { askPrompt } from '@/lib/dialog';
 import { intlLocale } from '@/lib/i18n';
 import PrefsSwitcher from '@/components/PrefsSwitcher';
 import PlanThumb from '@/components/PlanThumb';
@@ -32,7 +33,7 @@ export default function Home(){
   const toTrash = (p: P) => once(`trash:${p.id}`, () => toTrashNow(p));
   async function toTrashNow(p: P){ const r = await fetch(`/api/projects/${p.id}`, { method: 'DELETE' }); if (!r.ok){ setErr(t('home.error')); return; } setUndo({ id: p.id, name: p.name }); reload(); loadTrash(); }
   async function restore(id: string){ const r = await fetch(`/api/projects/${id}/restore`, { method: 'POST' }); if (!r.ok){ setErr(t('home.error')); return; } setUndo(null); reload(); loadTrash(); }
-  async function purge(x: { id: string; name: string }){ const typed = prompt(t('home.purgeConfirm', { name: x.name })); if (typed == null) return;
+  async function purge(x: { id: string; name: string }){ const typed = await askPrompt({ title: t('dlg.purgeTitle', { name: x.name }), body: t('home.purgeConfirm', { name: x.name }), confirmLabel: t('home.purge'), danger: true, input: { label: t('dlg.purgeLabel'), mustEqual: x.name, maxLength: 200 } }); if (typed == null) return;
     const r = await fetch(`/api/projects/${x.id}/purge`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: typed }) }); const j = await r.json().catch(() => ({}));
     if (!r.ok){ setErr(j.error || t('home.error')); return; } loadTrash(); }
   const duplicate = (p: P) => once(`dup:${p.id}`, () => duplicateNow(p));

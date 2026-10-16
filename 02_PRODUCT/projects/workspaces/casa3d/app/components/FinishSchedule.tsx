@@ -1,7 +1,7 @@
 'use client';
 // Fișa de finisaje: tabel pentru prezentarea tipărită și export CSV (separator „;”, UTF-8 cu BOM, se deschide direct în Excel).
 import type { ScheduleRow } from '@/core/finish-schedule';
-import { formatMoney } from '@/core/format';
+import { formatMoney, formatNumber, qtyDecimals } from '@/core/format';
 
 import { detailText, unitText, scheduleCsv, type T } from '@/lib/finish-schedule-text';
 export { detailText, scheduleCsv };
@@ -19,7 +19,7 @@ export function ScheduleTable({ rows, t, cur, locale }: { rows: ScheduleRow[]; t
     {groups.map((g, i) => <tbody key={i}><tr><th colSpan={5}>{g.room}</th></tr>
       {g.rows.map((r, k) => <tr key={k}><td>{t(`sched.el.${r.element}`)}</td>
         <td>{r.product}<br /><small>{r.supplier}{r.code ? ` · ${t('sched.col.code')} ${r.code}` : ''}{r.url ? <> · <a href={r.url}>{t('sched.col.link')}</a></> : null}{r.verifiedAt ? ` · ${r.verifiedAt}` : ''}</small></td>
-        <td><small>{detailText(r, t)}</small></td><td className="num">{r.orderedQty} {unitText(r.unit, t)}{r.packs ? <><br /><small>{r.packs}</small></> : null}</td>
+        <td><small>{detailText(r, t)}</small></td><td className="num">{formatNumber(r.orderedQty, locale, { decimals: qtyDecimals(r.unit, r.orderedQty) })} {unitText(r.unit, t)}{r.packs ? <><br /><small>{r.packs}</small></> : null}</td>
         <td className="num">{r.total != null ? formatMoney(r.total, cur, locale) : t('budget.csv.unknown')}</td></tr>)}</tbody>)}
   </table>);
 }

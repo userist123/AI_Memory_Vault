@@ -3,6 +3,7 @@
 // Deschis de pe telefon (prin adresa publică, după login): doar butonul de ieșire.
 import { useEffect, useState } from 'react';
 import { usePrefs } from '@/lib/prefs';
+import { askConfirm } from '@/lib/dialog';
 import { intlLocale } from '@/lib/i18n';
 import { isLocalHostname } from '@/lib/public-gate';
 
@@ -18,7 +19,7 @@ export default function PhoneAccess(){
   async function save(e: React.FormEvent){ e.preventDefault(); if (pw !== pw2){ setMsg({ ok: false, s: t('phone.mismatch') }); return; } setBusy(true); setMsg(null);
     const r = await fetch('/api/auth/password', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: pw }) }), j = await r.json().catch(() => ({}));
     setBusy(false); if (!r.ok){ setMsg({ ok: false, s: j.error || t('phone.failed') }); return; } setPw(''); setPw2(''); setMsg({ ok: true, s: t('phone.saved') }); load(); }
-  async function off(){ if (!confirm(t('phone.offConfirm'))) return; await fetch('/api/auth/password', { method: 'DELETE' }); setMsg(null); load(); }
+  async function off(){ if (!(await askConfirm({ title: t('phone.offConfirm'), confirmLabel: t('dlg.phoneOffOk'), danger: true }))) return; await fetch('/api/auth/password', { method: 'DELETE' }); setMsg(null); load(); }
   const copy = async (u: string) => { try { await navigator.clipboard.writeText(u); setMsg({ ok: true, s: t('phone.copied') }); } catch { /* adresa rămâne afișată */ } };
   return (<section className="phone">
     <div className="home-sec"><h2>{t('phone.title')}</h2><span className={`muted ${st.enabled ? 'on' : ''}`}>{st.enabled ? t('phone.on', { d: new Date(st.updatedAt!).toLocaleDateString(intlLocale(lang), { day: 'numeric', month: 'short' }) }) : t('phone.off')}</span></div>

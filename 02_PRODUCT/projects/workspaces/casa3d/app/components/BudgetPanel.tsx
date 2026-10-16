@@ -10,6 +10,7 @@ import { WASTE, PAINT_COATS, BATH_TILE_HEIGHT, BACKSPLASH_HEIGHT, LIGHTS_EXTRA_P
 import { usePrefs } from '@/lib/prefs';
 import { formatMoney, formatLength, formatArea, catalogCurrency } from '@/core/format';
 import { formatNumber } from '@/lib/i18n';
+import { formatNumber as fmtNum, qtyDecimals } from '@/core/format';
 import { commercialSources, profitReport, projectChain, type CustomSource, type Terms } from '@/core/commercial';
 import { ChainTable, FEE_EVENT } from './ChainTable';
 import { excludedGroups } from '@/core/budget-excluded';
@@ -29,7 +30,7 @@ export function linkFor(i: BoqItem, out: Outbound | null){ const mat = i.categor
 export function Fresh({ at }: { at: string | null }){ const { t } = usePrefs(), f = freshness(at); return f.stale ? <span className="stale">{f.days == null ? t('budget.dateUnknown') : t('budget.staleDays', { days: f.days })}</span> : null; }
 export default function BudgetPanel({ snap, catalog, mc, out, onBudget, custom, com, projectId, onFee }: { snap: Snapshot; catalog: Catalog; mc: MaterialsCatalog; out: Outbound | null; onBudget(patch: Partial<BudgetSettings>): void; custom?: CustomSource[];
   com?: CommercialInputs | null; projectId?: string; onFee?(): void }){
-  const { t, lang, units } = usePrefs(), cur = catalogCurrency(catalog), lei = (v: number) => formatMoney(v, cur, lang), num = (v: number, d = 2) => formatNumber(v, lang, d), unit = (u: string) => UNIT[u]?.startsWith('budget.') ? t(UNIT[u]!) : UNIT[u] ?? u;
+  const { t, lang, units } = usePrefs(), cur = catalogCurrency(catalog), lei = (v: number) => formatMoney(v, cur, lang), num = (v: number, d = 2) => formatNumber(v, lang, d), qn = (v: number, u: string) => fmtNum(v, lang, { decimals: qtyDecimals(u, v) }), unit = (u: string) => UNIT[u]?.startsWith('budget.') ? t(UNIT[u]!) : UNIT[u] ?? u;
   const b = useMemo(() => computeBudget(snap, catalog, mc, custom), [snap, catalog, mc, custom]);
   const [open, setOpen] = useState<'mat' | 'lab' | 'mob' | null>(null), s = b.settings, c = b.chosen;
   const roomName = (id: string | null) => id ? snap.floor.rooms.find(r => r.id === id)?.name || '' : t('budget.wholeHouse');
@@ -73,10 +74,10 @@ export default function BudgetPanel({ snap, catalog, mc, out, onBudget, custom, 
     <button className="acc" onClick={() => setOpen(open === 'mat' ? null : 'mat')} aria-expanded={open === 'mat'}>{t('budget.materials', { n: b.items.filter(i => i.category === 'finishes' || i.category === 'lighting' || i.category === 'textiles').length })}</button>
     {open === 'mat' && <div className="tbl">{b.items.filter(i => i.category === 'finishes' || i.category === 'lighting' || i.category === 'textiles').map(i => <div key={i.key} className="trow">
       <ItemLink i={i} out={out} /><b className="mono">{i.total != null ? lei(i.total) : '—'}</b>
-      <small>{num(i.netQty)} {unit(i.unit)} {t('budget.net')}{i.wastePct ? ` + ${Math.round(i.wastePct * 100)}% = ` : ' · '}{i.packs != null ? `${i.packs} × ${i.packLabel} (${num(i.orderedQty)} ${unit(i.unit)})` : `${num(i.orderedQty)} ${unit(i.unit)}`} · {formatMoney(i.unitPrice || 0, cur, lang)}/{unit(i.unit)} · {i.supplier}, {i.verifiedAt}, {t(CONF[i.confidence]!)} <Fresh at={i.verifiedAt} /></small></div>)}</div>}
+      <small>{qn(i.netQty, i.unit)} {unit(i.unit)} {t('budget.net')}{i.wastePct ? ` + ${Math.round(i.wastePct * 100)}% = ` : ' · '}{i.packs != null ? `${i.packs} × ${i.packLabel} (${qn(i.orderedQty, i.unit)} ${unit(i.unit)})` : `${qn(i.orderedQty, i.unit)} ${unit(i.unit)}`} · {formatMoney(i.unitPrice || 0, cur, lang)}/{unit(i.unit)} · {i.supplier}, {i.verifiedAt}, {t(CONF[i.confidence]!)} <Fresh at={i.verifiedAt} /></small></div>)}</div>}
     <button className="acc" onClick={() => setOpen(open === 'lab' ? null : 'lab')} aria-expanded={open === 'lab'}>{t('budget.laborSection', { n: b.labor.length })}</button>
     {open === 'lab' && <div className="tbl">{b.labor.map(l => <div key={l.key} className="trow"><span>{l.label} · {roomName(l.roomId)}</span><b className="mono">{lei(l.expected)}</b>
-      <small>{num(l.qty)} {unit(l.unit)} · {t('budget.range', { low: lei(l.low), high: lei(l.high) })} · {t('budget.sources')}: {l.sources.map((x, k) => <a key={k} href={x.url} target="_blank" rel="noopener noreferrer">{x.name}</a>).reduce((a: any, el, k) => k ? [...a, '; ', el] : [el], [])}</small></div>)}</div>}
+      <small>{qn(l.qty, l.unit)} {unit(l.unit)} · {t('budget.range', { low: lei(l.low), high: lei(l.high) })} · {t('budget.sources')}: {l.sources.map((x, k) => <a key={k} href={x.url} target="_blank" rel="noopener noreferrer">{x.name}</a>).reduce((a: any, el, k) => k ? [...a, '; ', el] : [el], [])}</small></div>)}</div>}
     <button className="acc" onClick={() => setOpen(open === 'mob' ? null : 'mob')} aria-expanded={open === 'mob'}>{t('budget.furnitureSection', { n: b.items.filter(i => ['furniture', 'sanitary', 'appliances'].includes(i.category)).length })}</button>
     {open === 'mob' && <div className="tbl">{b.items.filter(i => ['furniture', 'sanitary', 'appliances'].includes(i.category)).map(i => <div key={i.key} className="trow">
       <ItemLink i={i} out={out} /><b className="mono">{i.total != null ? lei(i.total) : t('common.unknown')}</b><small>{roomName(i.roomId)} · {i.supplier}, {i.verifiedAt}, {t(CONF[i.confidence]!)} <Fresh at={i.verifiedAt} /></small></div>)}</div>}

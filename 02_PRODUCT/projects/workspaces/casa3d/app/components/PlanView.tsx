@@ -15,6 +15,7 @@ import { planSymbol, symbolAngle } from '@/core/plan-symbols';
 import { doorSwing } from '@/core/doors';
 import { allFixturePoints } from '@/core/fixtures';
 import { finishesOf } from '@/core/boq';
+import { planItems, planKeyAction, type PlanKeyAction } from '@/core/plan-keys';
 
 export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'measure' | 'tech';
 export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
@@ -25,7 +26,9 @@ interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severi
   calib?: Calib | null; onCalibPick?(a: [number, number], b: [number, number]): void;
   showTech?: boolean; onTechAt?(x: number, z: number): void;
   /** golurile din placă ale acestui nivel (scările care urcă de dedesubt) */
-  voids?: { x0: number; z0: number; x1: number; z1: number }[]; }
+  voids?: { x0: number; z0: number; x1: number; z1: number }[];
+  /** tastatura cu planul în focus: mută / rotește / șterge / renunță (Tab alege direct, prin onSelect) */
+  onKey?(a: PlanKeyAction): void; }
 const ROOM_FILL: Record<string, string> = { baie: '#e4e8e6', bucatarie: '#e6e8e3', hol: '#efeae1', living: '#f0e8da', dormitor: '#efe6dc' };
 const SEV: Record<Severity, string> = { PASS: '#8B6A45', WARNING: '#B7791F', ERROR: '#B3261E' };
 const G = .05;
@@ -122,9 +125,16 @@ export default function PlanView(p: Props){
   }
   const ortho = (a: [number, number], b: [number, number]): [number, number] => { const dx = b[0] - a[0], dz = b[1] - a[1]; if (Math.abs(dx) < Math.abs(dz) * .15) return [a[0], b[1]]; if (Math.abs(dz) < Math.abs(dx) * .15) return [b[0], a[1]]; return b; };
 
+  // Tab / Shift+Tab aleg camerele, piesele și scările pe rând (după ultimul, Tab iese din plan); restul tastelor merg la editor
+  function keyDown(e: React.KeyboardEvent<SVGSVGElement>){
+    const a = planKeyAction(e, planItems(p.snap), p.sel); if (!a) return;
+    if (a.type === 'leave') return;
+    e.preventDefault(); e.stopPropagation();
+    if (a.type === 'select') p.onSelect({ kind: a.item.kind, id: a.item.id }); else p.onKey?.(a);
+  }
   const fs = Math.max(.12, vb.w / 70), isSel = (k: string, id: string) => p.sel && p.sel.kind === k && p.sel.id === id;
   return (<svg ref={svg} className="plan" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onContextMenu={e => { e.preventDefault(); setPreview(null); }}
-    style={{ cursor: p.tool === 'select' ? 'default' : 'crosshair' }} role="application" aria-label={t('plan.aria')}>
+    style={{ cursor: p.tool === 'select' ? 'default' : 'crosshair' }} role="application" aria-label={t('plan.aria')} tabIndex={0} onKeyDown={keyDown}>
     <defs><pattern id="g" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M1 0H0V1" fill="none" stroke="#e4e5e0" strokeWidth=".01" /></pattern></defs>
     <rect x={vb.x} y={vb.y} width={vb.w} height={vb.h} fill="url(#g)" />
     {ul && <image data-k="underlay" href={ul.dataUrl} x={ul.x} y={ul.z} width={ul.widthM} height={ul.widthM * aspect} preserveAspectRatio="none" opacity={ul.opacity} pointerEvents={ul.locked || p.calib?.stage === 'pick' ? 'none' : 'auto'} style={{ cursor: ul.locked ? 'default' : 'move' }} />}
@@ -151,6 +161,9 @@ export default function PlanView(p: Props){
           {sym.outline && <path d={sym.outline} fill={sym.fill === 'soft' ? '#fffdf8' : '#fffdfa'} fillOpacity={.92} strokeWidth={sw * 1.4} />}
           {sym.detail && <path d={sym.detail} strokeWidth={sw * .8} />}</g>
         <rect data-k="placement" data-id={pl.id} x={fp.x0} y={fp.z0} width={fp.x1 - fp.x0} height={fp.z1 - fp.z0} fill={on ? '#8B6A45' : sv === 'PASS' ? 'transparent' : SEV[sv]} fillOpacity={on ? .12 : sv === 'PASS' ? 0 : .12} stroke={on ? '#8B6A45' : 'none'} strokeWidth={.02} strokeDasharray={on ? '.06 .04' : undefined} style={{ cursor: 'move' }} /></g>); })}
+    {/* camera aleasă: chenar punctat în interiorul pereților, vizibil și când e aleasă de la tastatură */}
+    {floor.rooms.filter(r => isSel('room', r.id)).map(r => <rect key={`sel-${r.id}`} pointerEvents="none" x={r.rect.x0 + .14} y={r.rect.z0 + .14} width={Math.max(0, r.rect.x1 - r.rect.x0 - .28)} height={Math.max(0, r.rect.z1 - r.rect.z0 - .28)}
+      fill="#7A5A36" fillOpacity={.07} stroke="#7A5A36" strokeWidth={.045} strokeDasharray=".14 .08" />)}
     {/* etichetele camerelor deasupra mobilierului, cu contur de hârtie ca să rămână lizibile */}
     {floor.rooms.map(r => { const w = r.rect.x1 - r.rect.x0, d = r.rect.z1 - r.rect.z0, cx = (r.rect.x0 + r.rect.x1) / 2, cz = (r.rect.z0 + r.rect.z1) / 2;
       return (<g key={`lbl-${r.id}`} pointerEvents="none" stroke="#f6f3ee" strokeWidth={fs * .35} strokeLinejoin="round" paintOrder="stroke">
