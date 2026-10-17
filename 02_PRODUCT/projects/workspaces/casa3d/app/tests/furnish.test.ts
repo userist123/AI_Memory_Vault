@@ -154,3 +154,140 @@ describe('reguli pe plan sintetic', () => {
     assert.ok(isSmallWc(fl, wc)); assert.ok(!isSmallWc(fl, big)); assert.ok(!isSmallWc({ ...fl, rooms: [wc] }, wc));
   });
 });
+
+describe('amenajare automată scalată pentru camere mari', () => {
+  test('livingul mare (31.9 m²) primește fotoliu și comodă pe lângă piesele de bază', () => {
+    const floor: Floor = {
+      id: 'f-large', name: 'Parter', ceilingHeight: 2.6,
+      rooms: [
+        { id: 'liv', name: 'Living', type: 'living', rect: { x0: 0, z0: 0, x1: 8.4, z1: 3.8 } },
+        { id: 'k', name: 'Bucătărie', type: 'bucatarie', rect: { x0: 8.4, z0: 0, x1: 12.0, z1: 3.8 } }
+      ],
+      walls: [
+        { id: 'w1', a: [0, 0], b: [8.4, 0], thickness: 0.25, exterior: true, openings: [{ id: 'wnd', kind: 'window', offset: 3, width: 2 }] },
+        { id: 'w2', a: [8.4, 0], b: [8.4, 3.8], thickness: 0.15, exterior: false, openings: [{ id: 'dr', kind: 'door', offset: 1.5, width: 0.9 }] },
+        { id: 'w3', a: [8.4, 3.8], b: [0, 3.8], thickness: 0.25, exterior: true, openings: [] },
+        { id: 'w4', a: [0, 3.8], b: [0, 0], thickness: 0.25, exterior: true, openings: [] },
+      ]
+    };
+    const snap: Snapshot = { name: 'Casa Mare', floor, placements: [], selections: defaultSelections(cat), picked: [] };
+    const res = autoLayout(snap, cat).snapshot;
+    const livPlacements = res.placements.filter(p => p.roomId === 'liv');
+    const g = livPlacements.map(p => p.group);
+    assert.ok(g.includes('canapea'), 'trebuie să aibă canapea');
+    assert.ok(g.includes('comodaTv'), 'trebuie să aibă comodaTv');
+    assert.ok(g.includes('fotoliu'), 'livingul de 31.9 m² trebuie să primească fotoliu');
+    assert.ok(g.includes('comoda'), 'livingul de 31.9 m² trebuie să primească comodă');
+    for (const p of livPlacements) {
+      assert.deepEqual(validatePlacement(res, cat, p), [], `piesa ${p.group} (${p.variantId}) nu trebuie să aibă erori`);
+    }
+  });
+
+  test('dormitorul mare (26.9 m²) primește comodă și fotoliu / dulap adițional', () => {
+    const floor: Floor = {
+      id: 'f-bed', name: 'Parter', ceilingHeight: 2.6,
+      rooms: [
+        { id: 'bed', name: 'Dormitor', type: 'dormitor', rect: { x0: 0, z0: 0, x1: 8.4, z1: 3.2 } },
+        { id: 'h', name: 'Hol', type: 'hol', rect: { x0: 0, z0: 3.2, x1: 8.4, z1: 5.0 } }
+      ],
+      walls: [
+        { id: 'wb1', a: [0, 0], b: [8.4, 0], thickness: 0.25, exterior: true, openings: [{ id: 'wnd1', kind: 'window', offset: 3, width: 1.5 }] },
+        { id: 'wb2', a: [8.4, 0], b: [8.4, 3.2], thickness: 0.25, exterior: true, openings: [] },
+        { id: 'wb3', a: [8.4, 3.2], b: [0, 3.2], thickness: 0.15, exterior: false, openings: [{ id: 'dr1', kind: 'door', offset: 7.0, width: 0.9 }] },
+        { id: 'wb4', a: [0, 3.2], b: [0, 0], thickness: 0.25, exterior: true, openings: [] },
+      ]
+    };
+    const snap: Snapshot = { name: 'Dormitor Mare', floor, placements: [], selections: defaultSelections(cat), picked: [] };
+    const res = autoLayout(snap, cat).snapshot;
+    const bedPlacements = res.placements.filter(p => p.roomId === 'bed');
+    const g = bedPlacements.map(p => p.group);
+    assert.ok(g.includes('pat'), 'trebuie să aibă pat');
+    assert.ok(g.includes('dulap'), 'trebuie să aibă dulap');
+    assert.ok(g.includes('comoda'), 'dormitorul mare trebuie să primească comodă');
+    assert.ok(g.includes('fotoliu') || g.filter(x => x === 'dulap').length >= 2, 'dormitorul mare trebuie să primească fotoliu sau al doilea dulap');
+    for (const p of bedPlacements) {
+      assert.deepEqual(validatePlacement(res, cat, p), [], `piesa ${p.group} (${p.variantId}) nu trebuie să aibă erori`);
+    }
+  });
+
+  test('baia mare (>7 m²) primește caloriferBaie și coloanaBaie', () => {
+    const floor: Floor = {
+      id: 'f-bath', name: 'Parter', ceilingHeight: 2.6,
+      rooms: [
+        { id: 'baie', name: 'Baie Mare', type: 'baie', rect: { x0: 0, z0: 0, x1: 3.0, z1: 2.8 } },
+        { id: 'hol', name: 'Hol', type: 'hol', rect: { x0: 0, z0: 2.8, x1: 3.0, z1: 4.8 } }
+      ],
+      walls: [
+        { id: 'wba1', a: [0, 0], b: [3.0, 0], thickness: 0.25, exterior: true, openings: [{ id: 'wndb', kind: 'window', offset: 1.0, width: 0.8 }] },
+        { id: 'wba2', a: [3.0, 0], b: [3.0, 2.8], thickness: 0.25, exterior: true, openings: [] },
+        { id: 'wba3', a: [3.0, 2.8], b: [0, 2.8], thickness: 0.15, exterior: false, openings: [{ id: 'drb', kind: 'door', offset: 0.3, width: 0.8 }] },
+        { id: 'wba4', a: [0, 2.8], b: [0, 0], thickness: 0.25, exterior: true, openings: [] },
+      ]
+    };
+    const snap: Snapshot = { name: 'Baie', floor, placements: [], selections: defaultSelections(cat), picked: [] };
+    const res = autoLayout(snap, cat).snapshot;
+    const bathPlacements = res.placements.filter(p => p.roomId === 'baie');
+    const g = bathPlacements.map(p => p.group);
+    assert.ok(g.includes('dus') || g.includes('cada'), 'trebuie să aibă duș sau cadă');
+    assert.ok(g.includes('wc'), 'trebuie să aibă wc');
+    assert.ok(g.includes('lavoar'), 'trebuie să aibă lavoar');
+    assert.ok(g.includes('caloriferBaie'), 'baia mare primește calorifer de baie');
+    for (const p of bathPlacements) {
+      assert.deepEqual(validatePlacement(res, cat, p), [], `piesa ${p.group} (${p.variantId}) nu trebuie să aibă erori`);
+    }
+  });
+
+  test('bucătăria mare (>=12 m²) primește comodă/bufet adițional pe lângă front, frigider și masă', () => {
+    const floor: Floor = {
+      id: 'f-kitch', name: 'Parter', ceilingHeight: 2.6,
+      rooms: [
+        { id: 'k', name: 'Bucătărie Mare', type: 'bucatarie', rect: { x0: 0, z0: 0, x1: 4.0, z1: 3.5 } },
+        { id: 'liv', name: 'Living', type: 'living', rect: { x0: 4.0, z0: 0, x1: 8.0, z1: 3.5 } }
+      ],
+      walls: [
+        { id: 'wk1', a: [0, 0], b: [4.0, 0], thickness: 0.25, exterior: true, openings: [{ id: 'wndk', kind: 'window', offset: 1.5, width: 1.2 }] },
+        { id: 'wk2', a: [4.0, 0], b: [4.0, 3.5], thickness: 0.15, exterior: false, openings: [{ id: 'drk', kind: 'door', offset: 1.5, width: 0.9 }] },
+        { id: 'wk3', a: [4.0, 3.5], b: [0, 3.5], thickness: 0.25, exterior: true, openings: [] },
+        { id: 'wk4', a: [0, 3.5], b: [0, 0], thickness: 0.25, exterior: true, openings: [] },
+      ]
+    };
+    const snap: Snapshot = { name: 'Bucătărie', floor, placements: [], selections: defaultSelections(cat), picked: [] };
+    const res = autoLayout(snap, cat).snapshot;
+    const kPlacements = res.placements.filter(p => p.roomId === 'k');
+    const g = kPlacements.map(p => p.group);
+    assert.ok(g.includes('bucatarie'), 'trebuie să aibă front bucătărie');
+    assert.ok(g.includes('frigider'), 'trebuie să aibă frigider');
+    assert.ok(g.includes('comoda'), 'bucătăria mare trebuie să primească comodă/bufet');
+    for (const p of kPlacements) {
+      assert.deepEqual(validatePlacement(res, cat, p), [], `piesa ${p.group} (${p.variantId}) nu trebuie să aibă erori`);
+    }
+  });
+
+  test('holul mare (>=7.5 m²) primește comodă/consolă pe lângă pantofar și oglindă', () => {
+    const floor: Floor = {
+      id: 'f-hall', name: 'Parter', ceilingHeight: 2.6,
+      rooms: [
+        { id: 'h', name: 'Hol Mare', type: 'hol', rect: { x0: 0, z0: 0, x1: 3.0, z1: 3.0 } },
+        { id: 'liv', name: 'Living', type: 'living', rect: { x0: 3.0, z0: 0, x1: 7.0, z1: 3.0 } }
+      ],
+      walls: [
+        { id: 'wh1', a: [0, 0], b: [3.0, 0], thickness: 0.25, exterior: true, openings: [{ id: 'ent', kind: 'door', offset: 1.0, width: 1.0, entrance: true }] },
+        { id: 'wh2', a: [3.0, 0], b: [3.0, 3.0], thickness: 0.15, exterior: false, openings: [{ id: 'drh', kind: 'door', offset: 1.0, width: 0.9 }] },
+        { id: 'wh3', a: [3.0, 3.0], b: [0, 3.0], thickness: 0.25, exterior: true, openings: [] },
+        { id: 'wh4', a: [0, 3.0], b: [0, 0], thickness: 0.25, exterior: true, openings: [] },
+      ]
+    };
+    const snap: Snapshot = { name: 'Hol', floor, placements: [], selections: defaultSelections(cat), picked: [] };
+    const res = autoLayout(snap, cat).snapshot;
+    const hPlacements = res.placements.filter(p => p.roomId === 'h');
+    const g = hPlacements.map(p => p.group);
+    assert.ok(g.includes('pantofar'), 'trebuie să aibă pantofar');
+    assert.ok(g.includes('oglinda'), 'trebuie să aibă oglindă');
+    assert.ok(g.includes('comoda'), 'holul mare trebuie să primească comodă/consolă');
+    for (const p of hPlacements) {
+      assert.deepEqual(validatePlacement(res, cat, p), [], `piesa ${p.group} (${p.variantId}) nu trebuie să aibă erori`);
+    }
+  });
+});
+
+

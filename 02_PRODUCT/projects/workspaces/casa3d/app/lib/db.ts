@@ -35,7 +35,7 @@ async function connect(): Promise<Db> {
     }
   }
   // PGlite ține tranzacția exclusiv: celelalte interogări așteaptă până la commit/rollback.
-  const tx: Tx = fn => db.transaction(t => fn((s, p) => t.query(s, p as any[]) as any));
+  const tx: Tx = fn => db.transaction((t: any) => fn((s, p) => t.query(s, p as any[]) as any));
   return { q: (s, p) => db.query(s, p as any[]) as any, tx, mode };
 }
 // Catalogul se completează la fiecare pornire, nu doar pe o bază goală: produsele noi din JSON ajung și în bazele existente,
