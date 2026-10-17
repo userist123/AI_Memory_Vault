@@ -9,6 +9,7 @@ import { askConfirm } from '@/lib/dialog';
 export const TECH_SYMBOL: Record<TechKind, { letter: string; color: string }> = {
   outlet: { letter: 'P', color: '#8B6A45' }, outlet_double: { letter: 'P2', color: '#8B6A45' }, switch: { letter: 'I', color: '#5E636B' }, light_point: { letter: 'L', color: '#B7791F' },
   data: { letter: 'D', color: '#2F6B4F' }, cooker: { letter: 'K', color: '#8a3b2b' }, water_cold: { letter: 'A', color: '#6E8798' }, water_hot: { letter: 'C', color: '#B3261E' }, drain: { letter: 'S', color: '#4a4a48' },
+  hvac_split: { letter: 'AC', color: '#2B6CB0' }, thermostat: { letter: 'T', color: '#319795' }, vent_exhaust: { letter: 'V', color: '#4A5568' }, radiator: { letter: 'R', color: '#9B2C2C' },
 };
 const KINDS = Object.keys(TECH_KINDS) as TechKind[];
 

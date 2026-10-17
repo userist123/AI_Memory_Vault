@@ -137,3 +137,109 @@ export function styleCosts(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
   return STYLE_PACKAGES.map(pkg => { const b = computeBOQ(applyStyle(snap, cat, mc, pkg), cat, mc), mine = b.items.filter(i => i.category === 'finishes' || i.category === 'lighting' || i.category === 'textiles');
     return { id: pkg.id, materials: Math.round(mine.reduce((a, i) => a + (i.total ?? 0), 0)), labor: Math.round(b.labor.reduce((a, l) => a + l.expected, 0)), unknown: b.unknown.length }; });
 }
+
+export type StyleScope =
+  | { kind: 'project' }
+  | { kind: 'level'; levelIndex: number }
+  | { kind: 'room'; roomId: string };
+
+export interface StylePreview {
+  scope: StyleScope;
+  affectedRoomIds: string[];
+  affectedRoomNames: string[];
+  overriddenRoomIds: string[];
+  overriddenRoomNames: string[];
+  doorsChanged: number;
+}
+
+function roomsInScope(snap: Snapshot, scope: StyleScope): Room[] {
+  const allLevels = floors(snap);
+  if (scope.kind === 'level') return allLevels[scope.levelIndex]?.rooms ?? [];
+  if (scope.kind === 'room') return allLevels.flatMap(f => f.rooms).filter(r => r.id === scope.roomId);
+  return allLevels.flatMap(f => f.rooms);
+}
+
+function hasRoomOverride(snap: Snapshot, room: Room): boolean {
+  const f = snap.finishes?.[room.id];
+  const app = snap.appearance?.rooms?.[room.id];
+  if (app?.walls?.color || app?.floor?.color || app?.ceiling?.color) return true;
+  if (!f) return false;
+  const def = defaultFinishes(room);
+  return f.floor !== def.floor || f.wallPaint !== def.wallPaint || f.wallTile !== def.wallTile || Boolean(f.wallFeatures?.length) || Boolean(f.kitchen) || Boolean(f.bath);
+}
+
+/**
+ * Evaluează fără efecte secundare ce camere, finisaje și uși vor fi modificate de aplicarea conceptului pe `scope`,
+ * evidențiind camerele care au deja finisaje personalizate (`overriddenRoomIds`).
+ */
+export function previewStyle(snap: Snapshot, pkg: StylePackage, scope: StyleScope = { kind: 'project' }): StylePreview {
+  const targets = roomsInScope(snap, scope);
+  const overridden = targets.filter(r => hasRoomOverride(snap, r));
+  const doorsChanged = scope.kind === 'project' ? doorOpenings(snap).filter(o => !o.entrance).length : 0;
+  return {
+    scope,
+    affectedRoomIds: targets.map(r => r.id),
+    affectedRoomNames: targets.map(r => r.name),
+    overriddenRoomIds: overridden.map(r => r.id),
+    overriddenRoomNames: overridden.map(r => r.name),
+    doorsChanged,
+  };
+}
+
+/**
+ * Aplică un pachet de stil pe întreaga locuință, pe un nivel sau pe o singură cameră.
+ * Când `preserveOverrides` este `true`, camerele care aveau deja excepții locale rămân neschimbate.
+ */
+export function applyStyleScoped(
+  snap: Snapshot,
+  cat: Catalog,
+  mc: MaterialsCatalog,
+  pkg: StylePackage,
+  opts: { scope?: StyleScope; preserveOverrides?: boolean } = {},
+): Snapshot {
+  const scope = opts.scope ?? { kind: 'project' };
+  const full = applyStyle(snap, cat, mc, pkg);
+  if (scope.kind === 'project' && !opts.preserveOverrides) return full;
+  const targets = new Set(roomsInScope(snap, scope).filter(r => !(opts.preserveOverrides && hasRoomOverride(snap, r))).map(r => r.id));
+  const out = structuredClone(snap);
+  out.finishes = { ...(snap.finishes || {}) };
+  for (const id of targets) {
+    if (full.finishes?.[id]) out.finishes[id] = full.finishes[id]!;
+  }
+  const nextRooms = { ...(snap.appearance?.rooms || {}) };
+  for (const id of targets) {
+    if (full.appearance?.rooms?.[id]) nextRooms[id] = full.appearance.rooms[id]!;
+  }
+  out.appearance = { ...(snap.appearance || {}), rooms: nextRooms };
+  if (scope.kind === 'project' && full.doors) {
+    out.doors = full.doors;
+    out.brief = full.brief;
+  }
+  return out;
+}
+
+/** Creează un concept/stil personalizat pornind de la un pachet de bază și suprascriind paleta și familiile de materiale. */
+export function createCustomStylePackage(
+  baseId: StylePackage['id'],
+  overrides: Partial<Pick<StylePackage, 'walls' | 'ceiling' | 'paint' | 'wallTile' | 'baseboard' | 'door' | 'handle' | 'fixtureColor'>> & {
+    dryFloor?: string;
+    wetFloor?: string;
+    kitchenFrontColor?: string;
+    bathMetal?: BathSpec['metal'];
+  },
+): StylePackage {
+  const base = structuredClone(styleById(baseId) ?? STYLE_PACKAGES[0]!);
+  if (overrides.walls) base.walls = overrides.walls;
+  if (overrides.ceiling) base.ceiling = overrides.ceiling;
+  if (overrides.paint) base.paint = overrides.paint;
+  if (overrides.wallTile) base.wallTile = overrides.wallTile;
+  if (overrides.baseboard !== undefined) base.baseboard = overrides.baseboard;
+  if (overrides.door) base.door = overrides.door;
+  if (overrides.handle) base.handle = overrides.handle;
+  if (overrides.fixtureColor) base.fixtureColor = overrides.fixtureColor;
+  if (overrides.dryFloor) base.floor.dry = overrides.dryFloor;
+  if (overrides.wetFloor) base.floor.wet = overrides.wetFloor;
+  if (overrides.kitchenFrontColor) base.kitchen.frontColor = overrides.kitchenFrontColor;
+  if (overrides.bathMetal) base.bath.metal = overrides.bathMetal;
+  return base;
+}

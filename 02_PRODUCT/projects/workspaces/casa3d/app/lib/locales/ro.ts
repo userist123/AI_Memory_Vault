@@ -630,4 +630,6 @@ export const ro: Dict = {
   // ---- navigatorul de pagini din pachetul de planșe (nu se tipărește) ----
   "pnav.aria": "Paginile pachetului", "pnav.title": "Pagini", "pnav.cover": "Copertă", "pnav.page": "Pagina {n}", "pnav.count": "{n} / {total}",
   "pnav.prev": "Pagina anterioară", "pnav.next": "Pagina următoare",
+  "style.scope": "Domeniu de aplicare", "style.scopeAll": "Toată locuința", "style.keepOverrides": "Păstrează excepțiile pe camere", "style.overriddenRooms": "Camere cu finisaje personalizate",
+  "editor.splitX": "Împarte X", "editor.splitZ": "Împarte Z", "editor.mergeWith": "Unește cu {room}",
 };

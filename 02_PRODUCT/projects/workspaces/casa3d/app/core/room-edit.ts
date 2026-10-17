@@ -86,3 +86,69 @@ export function edgeHandlePoint(floor: Floor, rect: RoomRect, key: EdgeKey, marg
   };
 }
 
+const MIN_SPLIT_SIDE = 0.6;
+
+/**
+ * Împarte o cameră în două camere adiacente printr-un perete interior pe axa `x` (verticală pe plan) sau `z` (orizontală pe plan).
+ * Refuză împărțirea dacă oricare din camerele rezultate ar avea latura sub 60 cm (`MIN_SPLIT_SIDE`).
+ */
+export function splitRoom(
+  floor: Floor,
+  roomId: string,
+  axis: 'x' | 'z',
+  at: number,
+  newRoom: { id: string; name: string; type: string },
+  newWallId: string,
+): Floor {
+  const room = floor.rooms.find(r => r.id === roomId);
+  if (!room) throw new Error(`Camera inexistentă: ${roomId}`);
+  const c = r3(at), { x0, z0, x1, z1 } = room.rect;
+  if (axis === 'x') {
+    if (c - x0 < MIN_SPLIT_SIDE - 1e-6 || x1 - c < MIN_SPLIT_SIDE - 1e-6) throw new Error('Împărțirea lasă o cameră sub 60 cm lățime.');
+    const rA = { ...room, rect: { x0, z0, x1: c, z1 } };
+    const rB = { id: newRoom.id, name: newRoom.name, type: newRoom.type, rect: { x0: c, z0, x1, z1 } };
+    const partWall = { id: newWallId, a: [c, z0] as [number, number], b: [c, z1] as [number, number], thickness: 0.125, exterior: false, openings: [] };
+    return { ...floor, rooms: floor.rooms.flatMap(r => (r.id === roomId ? [rA, rB] : [r])), walls: [...floor.walls, partWall] };
+  }
+  if (c - z0 < MIN_SPLIT_SIDE - 1e-6 || z1 - c < MIN_SPLIT_SIDE - 1e-6) throw new Error('Împărțirea lasă o cameră sub 60 cm adâncime.');
+  const rA = { ...room, rect: { x0, z0, x1, z1: c } };
+  const rB = { id: newRoom.id, name: newRoom.name, type: newRoom.type, rect: { x0, z0: c, x1, z1 } };
+  const partWall = { id: newWallId, a: [x0, c] as [number, number], b: [x1, c] as [number, number], thickness: 0.125, exterior: false, openings: [] };
+  return { ...floor, rooms: floor.rooms.flatMap(r => (r.id === roomId ? [rA, rB] : [r])), walls: [...floor.walls, partWall] };
+}
+
+/**
+ * Unește două camere adiacente care împart complet o latură comună, păstrând `roomAId` și eliminând peretele interior despărțitor.
+ */
+export function mergeRooms(floor: Floor, roomAId: string, roomBId: string): Floor {
+  if (roomAId === roomBId) throw new Error('Nu se poate uni o cameră cu ea însăși.');
+  const a = floor.rooms.find(r => r.id === roomAId), b = floor.rooms.find(r => r.id === roomBId);
+  if (!a || !b) throw new Error('Camerele de unit nu există.');
+  const ra = a.rect, rb = b.rect;
+  const shareX = (Math.abs(ra.x1 - rb.x0) < TOL || Math.abs(rb.x1 - ra.x0) < TOL) && Math.abs(ra.z0 - rb.z0) < TOL && Math.abs(ra.z1 - rb.z1) < TOL;
+  const shareZ = (Math.abs(ra.z1 - rb.z0) < TOL || Math.abs(rb.z1 - ra.z0) < TOL) && Math.abs(ra.x0 - rb.x0) < TOL && Math.abs(ra.x1 - rb.x1) < TOL;
+  if (!shareX && !shareZ) throw new Error('Camerele nu împart o latură comună completă.');
+  const mergedRect: RoomRect = {
+    x0: r3(Math.min(ra.x0, rb.x0)),
+    z0: r3(Math.min(ra.z0, rb.z0)),
+    x1: r3(Math.max(ra.x1, rb.x1)),
+    z1: r3(Math.max(ra.z1, rb.z1)),
+  };
+  const sharedCoord = shareX ? (Math.abs(ra.x1 - rb.x0) < TOL ? ra.x1 : rb.x1) : (Math.abs(ra.z1 - rb.z0) < TOL ? ra.z1 : rb.z1);
+  const walls = floor.walls.filter(w => {
+    if (w.exterior) return true;
+    if (shareX) {
+      const onLine = Math.abs(w.a[0] - sharedCoord) < TOL && Math.abs(w.b[0] - sharedCoord) < TOL;
+      const inSpan = Math.min(w.a[1], w.b[1]) >= mergedRect.z0 - TOL && Math.max(w.a[1], w.b[1]) <= mergedRect.z1 + TOL;
+      return !(onLine && inSpan);
+    }
+    const onLine = Math.abs(w.a[1] - sharedCoord) < TOL && Math.abs(w.b[1] - sharedCoord) < TOL;
+    const inSpan = Math.min(w.a[0], w.b[0]) >= mergedRect.x0 - TOL && Math.max(w.a[0], w.b[0]) <= mergedRect.x1 + TOL;
+    return !(onLine && inSpan);
+  });
+  return {
+    ...floor,
+    rooms: floor.rooms.filter(r => r.id !== roomBId).map(r => (r.id === roomAId ? { ...r, rect: mergedRect } : r)),
+    walls,
+  };
+}

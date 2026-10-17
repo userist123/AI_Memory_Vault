@@ -11,12 +11,16 @@ import { decorateSnapshot } from './decor';
 const uid = () => (globalThis.crypto as Crypto).randomUUID();
 
 export function defaultSelections(cat: Catalog){ const s: Record<string, string> = {}; for (const v of cat.variants){ const g = groupOf(v.id); if (v.legacyIndex === 0) s[g] = v.id; } return s; }
+export function emptyFloor(h = 2.6): Floor {
+  return { id: 'floor-1', name: 'Parter', ceilingHeight: h, rooms: [], walls: [] };
+}
 export function blankFloor(w = 5, d = 4, h = 2.6): Floor {
   const walls: Floor['walls'] = [[[0, 0], [w, 0]], [[w, 0], [w, d]], [[w, d], [0, d]], [[0, d], [0, 0]]].map((ab, i) => ({ id: `wall-${i + 1}`, a: ab[0] as [number, number], b: ab[1] as [number, number], thickness: .25, exterior: true, openings: i === 3 ? [{ id: 'op-1', kind: 'door' as const, offset: d / 2 - .45, width: .9, entrance: true }] : i === 0 ? [{ id: 'op-2', kind: 'window' as const, offset: w / 2 - .7, width: 1.4 }] : [] }));
   return { id: 'floor-1', name: 'Etaj', ceilingHeight: h, rooms: [{ id: 'camera-1', name: 'Living', type: 'living', rect: { x0: 0, z0: 0, x1: w, z1: d } }], walls };
 }
 /** Proiect nou: geometria șablonului, mobilierul automat și, când se dă catalogul de materiale, decorul (core/decor.ts: covoare, textile, lumini). */
 export function newSnapshot(cat: Catalog, name: string, template: string, lang: 'ro' | 'en' = 'ro', opts: { materials?: MaterialsCatalog } = {}): Snapshot {
+  if (template === 'empty') return { name, floor: emptyFloor(), placements: [], selections: defaultSelections(cat), picked: [] };
   const tpl = template === 'blank' ? undefined : getTemplate(template);
   if (template !== 'blank' && !tpl) throw new Error(`Șablon necunoscut: ${template}`);
   const floor = localizeRoomNames(tpl ? structuredClone(tpl.floor) : blankFloor(), lang);

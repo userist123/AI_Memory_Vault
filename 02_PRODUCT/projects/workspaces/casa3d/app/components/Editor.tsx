@@ -58,7 +58,7 @@ import { floors, levelView, mergeLevel, addLevel, removeLevel, stairIssues, stai
 import Icon from './Icon';
 import { askConfirm, askPrompt } from '@/lib/dialog';
 import { RoomResizeError } from '@/core/room-resize';
-import { planRoomResize, sameState } from '@/core/room-edit';
+import { planRoomResize, sameState, splitRoom, mergeRooms } from '@/core/room-edit';
 import { groupsForRoom, defaultGroupForRoom, swapFitHint } from '@/core/furniture-fit';
 import type { PlanKeyAction } from '@/core/plan-keys';
 import { isLocalHostname } from '@/lib/public-gate';
@@ -418,7 +418,9 @@ export default function Editor({ id }: { id: string }){
           </>}
           {selRoom && roomStage && <RoomPanel part={stage} room={selRoom} snap={snap} G={G} cat={catalog} mc={mc} cur={cur} onSwap={(pid: string, vid: string) => changePiece(pid, q => { q.variantId = vid; }, t('editor.variantNoFit'))} onFinish={(patch: Partial<RoomFinishes>) => mutate(s => { s.finishes = { ...(s.finishes || {}), [selRoom.id]: { ...finishesOf(s, selRoom), ...patch } }; })} onChange={(fn: (r: any) => void) => mutate(s => fn(s.floor.rooms.find(r => r.id === selRoom.id)!))}
             onAuto={() => { const r = autoLayout(snap, catalog, { roomId: selRoom.id }); commit(r.snapshot); say(r.notFit.length ? t('editor.someNotFit') : t('editor.roomAutoApplied', { room: selRoom.name })); }}
-            onAdd={(vid: string) => addToRoom(vid, selRoom)} onResize={(rect: Room['rect']) => resizeSel(selRoom.id, rect)} num={num} />}
+            onAdd={(vid: string) => addToRoom(vid, selRoom)} onResize={(rect: Room['rect']) => resizeSel(selRoom.id, rect)}
+            onSplit={(axis: 'x' | 'z') => { try { const mid = axis === 'x' ? r3((selRoom.rect.x0 + selRoom.rect.x1) / 2) : r3((selRoom.rect.z0 + selRoom.rect.z1) / 2), nid = `room-${uid().slice(0, 8)}`, nf = splitRoom(snap.floor, selRoom.id, axis, mid, { id: nid, name: `${selRoom.name} B`, type: selRoom.type }, newWallId()); mutate(s => { s.floor = nf; }); } catch (e: any) { say(e?.message || 'Error'); } }}
+            onMerge={(otherId: string) => { try { const nf = mergeRooms(snap.floor, selRoom.id, otherId); mutate(s => { s.floor = nf; s.placements = s.placements.map(p => p.roomId === otherId ? { ...p, roomId: selRoom.id } : p); }); } catch (e: any) { say(e?.message || 'Error'); } }} num={num} />}
           {selRoom && (stage === 'finishes' || stage === 'ffe') && <RoomOptionsPanel id={id} room={selRoom} snap={snap} cat={catalog} mc={mc} cur={cur} onSnap={n => commit(n)} say={say} />}
           {selRoom && stage === 'survey' && <button className="btn" title={t('stair.addTitle')} onClick={() => onAddStair(selRoom)}>{t('stair.add')}</button>}
           {selStair && stage === 'survey' && (() => { const g = stairGeometry(selStair, snap.floor.ceilingHeight + SLAB), cm1 = (m: number) => Math.round(m * 1000) / 10; return (<div style={{ display: 'grid', gap: 8 }}>
@@ -499,13 +501,14 @@ export default function Editor({ id }: { id: string }){
   </div>);
 }
 
-function RoomPanel({ part, room, snap, G, cat, mc, cur, onFinish, onChange, onAuto, onAdd, onSwap, onResize, num }: any){
+function RoomPanel({ part, room, snap, G, cat, mc, cur, onFinish, onChange, onAuto, onAdd, onSwap, onResize, onSplit, onMerge, num }: any){
   const { t, tp, lang, units } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units), inField = (m: number) => cmToInput(m * 100, units);
   // „Adaugă mobilier” pornește de la grupele potrivite camerei (dormitor: pat, dulap, noptieră…), restul sub „Altele”
   const avail = useMemo(() => Object.keys(G).filter(k => !G[k].includedWith), [G]), fit = useMemo(() => groupsForRoom(room.type, avail), [room.type, avail]);
   const [grp, setGrp] = useState<string>(() => defaultGroupForRoom(room.type, avail) ?? avail[0]!), [vi, setVi] = useState(0);
   useEffect(() => { setGrp(defaultGroupForRoom(room.type, avail) ?? avail[0]!); setVi(0); }, [room.id, room.type]); // eslint-disable-line
   const w = room.rect.x1 - room.rect.x0, d = room.rect.z1 - room.rect.z0;
+  const mergePeers = useMemo(() => (snap.floor?.rooms ?? []).filter((o: any) => o.id !== room.id && ((Math.abs(o.rect.z0 - room.rect.z0) < 1e-4 && Math.abs(o.rect.z1 - room.rect.z1) < 1e-4 && (Math.abs(o.rect.x0 - room.rect.x1) < 1e-4 || Math.abs(o.rect.x1 - room.rect.x0) < 1e-4)) || (Math.abs(o.rect.x0 - room.rect.x0) < 1e-4 && Math.abs(o.rect.x1 - room.rect.x1) < 1e-4 && (Math.abs(o.rect.z0 - room.rect.z1) < 1e-4 || Math.abs(o.rect.z1 - room.rect.z0) < 1e-4)))), [snap.floor?.rooms, room]);
   return (<>
     <h3>{room.name}</h3><div className="prov">{formatArea(area(room.rect), units, lang)} · {tp('editor.pieces', snap.placements.filter((p: any) => p.roomId === room.id).length)}</div>
     {part === 'survey' && <><div className="grid2">
@@ -515,6 +518,11 @@ function RoomPanel({ part, room, snap, G, cat, mc, cur, onFinish, onChange, onAu
       <label className="f"><span>{t('editor.length', { u })}</span><input type="number" inputMode="decimal" value={inField(d)} onChange={e => num(e.target.value, (x: number) => onResize({ ...room.rect, z1: r3(room.rect.z0 + x / 100) }), 60)} /></label>
       <label className="f"><span>{t('editor.posX', { u })}</span><input type="number" value={inField(room.rect.x0)} onChange={e => { const cm = inputToCm(e.target.value, units), x = cm == null ? NaN : cm / 100; if (Number.isFinite(x)) onChange((r: any) => { r.rect.x1 = r3(x + (r.rect.x1 - r.rect.x0)); r.rect.x0 = r3(x); }); }} /></label>
       <label className="f"><span>{t('editor.posZ', { u })}</span><input type="number" value={inField(room.rect.z0)} onChange={e => { const cm = inputToCm(e.target.value, units), z = cm == null ? NaN : cm / 100; if (Number.isFinite(z)) onChange((r: any) => { r.rect.z1 = r3(z + (r.rect.z1 - r.rect.z0)); r.rect.z0 = r3(z); }); }} /></label>
+    </div>
+    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      {onSplit && <button type="button" className="btn sm" disabled={w < 1.2} onClick={() => onSplit('x')}>{t('editor.splitX')}</button>}
+      {onSplit && <button type="button" className="btn sm" disabled={d < 1.2} onClick={() => onSplit('z')}>{t('editor.splitZ')}</button>}
+      {onMerge && mergePeers.map((o: any) => <button key={o.id} type="button" className="btn sm" onClick={() => onMerge(o.id)}>{t('editor.mergeWith', { room: o.name })}</button>)}
     </div>
     <p className="prov" style={{ margin: 0 }}>{t('editor.roomWallsShort')}</p></>}
     {part === 'finishes' && <FinishesPanel room={room} snap={snap} cat={cat} mc={mc} cur={cur} onFinish={onFinish} onSwap={onSwap} onAdd={onAdd} />}
