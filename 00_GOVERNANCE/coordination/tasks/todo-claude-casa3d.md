@@ -1,5 +1,18 @@
 # todo-claude-casa3d
-STATUS: IN_PROGRESS    UPDATED: 2026-10-16T21:40:00Z
+STATUS: IN_PROGRESS    UPDATED: 2026-10-17T09:10:00Z
+ROUND 9 (2026-10-17, route route_860d3fba2eb8): COMMITTED LOCALLY fed3cb90 on casa3d-ui-round7, NOT pushed, no review yet.
+  Fixes the 3 review findings on round 8. (1) No empty undo steps: core/room-edit.ts planRoomResize (changed/clamped)
+  so the width/length inputs skip mutate when the clamp leaves the plan identical (clamp message still shown); onEdit
+  'end' discards the history entry when the drag ends with sameState(before, after). (2) Stage bar: one ResizeObserver
+  per element via ref-callback (observes the nav and its phase groups), measureBar only on scroll/resize; synthetic
+  60-pointermove drag read .stagebar scrollWidth 2 times (was once per render). (3) Edge handle placed by edgeHandleAt:
+  middle of the longest edge stretch clear of openings by the hit radius, else the longest gap between openings, else
+  the middle; openings win the hit test over the handle (elementsFromPoint). Tooltip: the whole wall line moves (ro/en).
+  Evidence: vitest 580/580, tsc 0, tests/room-edit.test.ts (7). Browser 1366: hall handles off the doors, click on a
+  door under the handle's hit circle selects the door, clamp (kitchen 400->450 with hall at 60 cm) gives message and a
+  single Undo returns to 240 with Undo then disabled; clamped drag and drag-back also leave no entry. Stage bar arrows
+  at 1024/768/390, none at 1366/1920. No console errors. Shots r9-*.png in the session scratchpad.
+  NEXT: independent review of fed3cb90 (+ round 8 40c59705), then push.
 ROUND 8 (2026-10-16, route route_123af915ca60): COMMITTED LOCALLY 40c59705 on casa3d-ui-round7, NOT pushed, no review yet.
   Neighbour resize: core/room-neighbours.ts (edgeGroup: rooms whose opposite edge is on the moved line within 1 cm and
   overlap > 1 cm, closed transitively along the line; clampEdge: neighbours never below 60 cm, drag clamps instead of
