@@ -622,8 +622,6 @@ Do not expand into every P1/P2 item before completing a coherent tested vertical
 
 ---
 
----
-
 # 17. Cross-cutting reliability, secure imports, accessibility and project recovery
 
 This section adds quality gates that cut across the editor, client workflow and project lifecycle. It does not replace sections 1–16. Audit the current implementation first; fix confirmed gaps in the same branch and PR #305, without duplicating existing systems.
