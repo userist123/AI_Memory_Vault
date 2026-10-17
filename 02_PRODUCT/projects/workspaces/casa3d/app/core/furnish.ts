@@ -105,8 +105,9 @@ class Ctx {
     if (!insideRect(this.r, fp) || (front && !insideRect(this.r, front))) return false;
     const dz = this.doors(); if (dz.some(z => rectHit(z, fp)) || (front && !o.frontMayCrossDoor && dz.some(z => rectHit(z, front)))) return false;
     if ((o.extra || []).some(z => rectHit(z, fp) || (front && rectHit(z, front))) || (o.extraFp || []).some(z => rectHit(z, fp))) return false;
+    const fpHit = (a: RoomRect, b: RoomRect) => a.x0 < b.x1 - 1e-4 && a.x1 > b.x0 + 1e-4 && a.z0 < b.z1 - 1e-4 && a.z1 > b.z0 + 1e-4;
     for (const it of this.items){ if (o.ignore?.includes(it) || o.allowWith?.includes(it.group)) continue;
-      if (rectHit(it.fp, fp) || (it.front && rectHit(it.front, fp)) || (front && rectHit(it.fp, front))) return false; }
+      if (fpHit(it.fp, fp) || (it.front && rectHit(it.front, fp)) || (front && rectHit(it.fp, front))) return false; }
     return true;
   }
   /** Toate pozițiile lipite de perete pentru o variantă, cu pas de 5 cm; fără fereastră în spatele pieselor înalte și al comodei TV. */
@@ -187,14 +188,21 @@ export function refineFurnishing(cat: Catalog, inp: RefineInput): RefineResult {
     const hOf = (p: FurniturePlacement) => p.size ? p.size.h / 100 : dims(p.variantId)?.h ?? 0;
     const blocking = mine.some(p => { const it = toItem(p); return blocksWindow(floor, room, p.group, hOf(p), it.fp); });
     let need = false;
-    if (room.type === 'bucatarie') need = !has('bucatarie') || !has('frigider') || blocking;
-    // livingul se reface și când casa a rămas fără masă (motorul nu a găsit loc nici în bucătărie, nici aici)
+    const roomArea = area(room.rect);
+    const isTargetRoom = inp.roomId === room.id;
+    if (isTargetRoom) need = true;
+    else if (room.type === 'bucatarie') need = !has('bucatarie') || !has('frigider') || blocking || (roomArea >= 12 && !has('comoda'));
+    // livingul se reface și când casa a rămas fără masă (motorul nu a găsit loc nici în bucătărie, nici aici) sau e spațios și sub-mobilat
     else if (room.type === 'living') need = blocking || (has('canapea') && !has('comodaTv')) || (isStudioLiving(floor, room) && !has('pat'))
-      || (!isStudioLiving(floor, room) && !placements.some(p => p.group === 'masa'));
+      || (!isStudioLiving(floor, room) && !placements.some(p => p.group === 'masa'))
+      || (!isStudioLiving(floor, room) && roomArea >= 23.5 && !has('fotoliu') && !has('comoda'));
     else if (room.type === 'dormitor'){ const swing = doorSwingZones(floor, room), bed = mine.find(p => p.group === 'pat');
-      need = blocking || !bed || !has('dulap') || swing.some(z => rectHit(z, toItem(bed!).fp)) || (has('birou') && area(room.rect) < FURNISH_RULES.deskMinArea); }
-    else if (room.type === 'baie') need = !has('wc') || !has('lavoar') || (isSmallWc(floor, room) ? has('dus') || has('cada') : !has('dus') && !has('cada'));
-    else if (room.type === 'hol') need = blocking || mine.some(p => hOf(p) > FURNISH_RULES.hallMaxH + 1e-9) || !has('oglinda') || !has('pantofar');
+      need = blocking || !bed || !has('dulap') || swing.some(z => rectHit(z, toItem(bed!).fp)) || (has('birou') && roomArea < FURNISH_RULES.deskMinArea)
+        || (roomArea >= 19 && !has('comoda')); }
+    else if (room.type === 'baie') need = !has('wc') || !has('lavoar') || (isSmallWc(floor, room) ? has('dus') || has('cada') : !has('dus') && !has('cada'))
+      || (!isSmallWc(floor, room) && roomArea >= 7 && !has('caloriferBaie') && !has('coloanaBaie'));
+    else if (room.type === 'hol') need = blocking || mine.some(p => hOf(p) > FURNISH_RULES.hallMaxH + 1e-9) || !has('oglinda') || !has('pantofar')
+      || (roomArea >= 8.5 && !has('comoda'));
     if (!need) continue;
     // piesele puse de mână rămân ca obstacole; cele automate se refac
     for (const p of mine.filter(p => p.source !== 'auto')) ctx.items.push(toItem(p));
@@ -240,6 +248,9 @@ export function refineFurnishing(cat: Catalog, inp: RefineInput): RefineResult {
     if (!best) { ctx.items = base; return false; }
     ctx.items = (best as { items: Item[] }).items;
     if (dining){ const [cx, cz] = center(r); const t = ctx.placeFree('masa', dining, diningPad, (x, z, vi) => Math.hypot(x - cx, z - cz) + vi * .2); if (!t && dining.length && area(r) >= 9.5) nf.push({ key: 'masa', room: ctx.room.name }); }
+    if (area(r) >= 12) {
+      ctx.place('comoda', chain('comoda', smaller('comoda')), () => .6, (s, vi) => vi * .6 + Math.min(s.t, 1 - s.t) * 2);
+    }
     return true;
   }
 
@@ -320,11 +331,27 @@ export function refineFurnishing(cat: Catalog, inp: RefineInput): RefineResult {
     if (!small) return false; const it = ctx.placeFree('masa', [small], diningPad, () => 0); if (it) ctx.remove(it); return !!it;
   }
   function finishLivingRest(ctx: Ctx, kc: [number, number] | null, diningElsewhere: boolean, studio: boolean){
-    const r = ctx.r, [cx, cz] = center(r), dining = distinct(chain('masa', diningAlts()));
+    const r = ctx.r, [cx, cz] = center(r), roomArea = area(r), dining = distinct(chain('masa', diningAlts()));
     let dined = true;
     if (!diningElsewhere){ dined = !!ctx.placeFree('masa', studio ? [...dining].sort((a, b) => dims(a)!.w * dims(a)!.d - dims(b)!.w * dims(b)!.d) : dining, diningPad,
       (x, z, vi) => (kc ? Math.hypot(x - kc[0], z - kc[1]) * .5 : Math.hypot(x - cx, z - cz)) + vi * .3); }
-    for (let k = 0; k < (studio ? 1 : 2); k++) ctx.place('biblioteca', chain('biblioteca', []), () => .6, s => Math.min(s.t, 1 - s.t) * 4);
+    else if (roomArea >= 26) {
+      ctx.placeFree('masa', dining, diningPad, (x, z, vi) => (kc ? Math.hypot(x - kc[0], z - kc[1]) * .5 : Math.hypot(x - cx, z - cz)) + vi * .3);
+    }
+
+    const maxBiblio = studio ? 1 : roomArea >= 28 ? 4 : roomArea >= 25 ? 3 : 2;
+    for (let k = 0; k < maxBiblio; k++) ctx.place('biblioteca', chain('biblioteca', []), () => .6, s => Math.min(s.t, 1 - s.t) * 4);
+
+    if (roomArea >= (studio ? 26 : 23.5)) {
+      const armchairs = chain('fotoliu', smaller('fotoliu'));
+      const maxFotolii = roomArea >= 27 ? 2 : 1;
+      for (let k = 0; k < maxFotolii; k++) {
+        ctx.place('fotoliu', armchairs, () => .45, (s, vi) => vi * .5 + Math.min(s.t, 1 - s.t) * 2);
+      }
+      const sideboards = chain('comoda', smaller('comoda'));
+      ctx.place('comoda', sideboards, () => .6, (s, vi) => vi * .6 + Math.min(s.t, 1 - s.t) * 2);
+    }
+
     // în garsonieră masa e opțională (bucătăria e mică, zona de dormit are prioritate)
     return dined || studio;
   }
@@ -367,7 +394,21 @@ export function refineFurnishing(cat: Catalog, inp: RefineInput): RefineResult {
       if (!best || sc < best.sc - 1e-9) best = { items: ctx.items.slice(), sc };
     }
     if (!best) { ctx.items = base; return false; }
-    ctx.items = (best as { items: Item[] }).items; return true;
+    ctx.items = (best as { items: Item[] }).items;
+
+    const chosenBed = ctx.items.find(i => i.group === 'pat');
+    const pads = chosenBed ? bedPads(chosenBed) : [];
+    const roomArea = area(r);
+    if (roomArea >= 19) {
+      ctx.place('comoda', chain('comoda', smaller('comoda')), () => .6, (s, vi) => vi * .6 + Math.min(s.t, 1 - s.t) * 2, { extra: pads });
+    }
+    if (roomArea >= 22) {
+      ctx.place('dulap', wardrobes, v => isSliding(v) ? .6 : .9, (s, wi) => wi * .8 + Math.min(s.t, 1 - s.t) * 2, { extra: pads });
+      ctx.place('fotoliu', chain('fotoliu', smaller('fotoliu')), () => .45, (s, vi) => vi * .6 + Math.min(s.t, 1 - s.t) * 2, { extra: pads });
+      ctx.place('biblioteca', chain('biblioteca', []), () => .6, s => Math.min(s.t, 1 - s.t) * 4, { extra: pads });
+    }
+
+    return true;
   }
 
   function furnishBath(ctx: Ctx): boolean {
@@ -385,7 +426,17 @@ export function refineFurnishing(cat: Catalog, inp: RefineInput): RefineResult {
       if (!best || n > best.n || (n === best.n && sc < best.sc)) best = { items: ctx.items.slice(), n, sc };
       if (best.n === groups.length) break;
     }
-    ctx.items = best!.items; return best!.n > 0;
+    ctx.items = best!.items;
+
+    if (!small && area(r) >= 6.9) {
+      ctx.place('caloriferBaie', chain('caloriferBaie', []), () => 0, (s, vi) => vi * .5 + Math.min(s.t, 1 - s.t));
+      ctx.place('coloanaBaie', chain('coloanaBaie', []), () => .5, (s, vi) => vi * .5 + Math.min(s.t, 1 - s.t));
+      if (area(r) >= 8.0) {
+        ctx.place('bideu', chain('bideu', []), () => .6, (s, vi) => vi * .5 + Math.min(s.t, 1 - s.t));
+      }
+    }
+
+    return best!.n > 0;
   }
 
   function furnishHall(ctx: Ctx): boolean {
@@ -402,6 +453,17 @@ export function refineFurnishing(cat: Catalog, inp: RefineInput): RefineResult {
     const con = ctx.place('pantofar', consoles, () => .5, (s, vi) => { const [x, z] = center(s.fp); return vi * .6 + Math.hypot(x - ent[0], z - ent[1]) * .5; }, { extraFp: entrance, frontMayCrossDoor: true });
     const near = con ? center(con.fp) : ent;
     ctx.place('oglinda', mirrors, () => .6, (s, vi) => { const [x, z] = center(s.fp); return vi * .6 + Math.hypot(x - near[0], z - near[1]) * .5; }, { extraFp: entrance, frontMayCrossDoor: true });
+
+    if (area(r) >= 8.5) {
+      const lowComode = chain('comoda', smaller('comoda')).filter(low);
+      ctx.place('comoda', lowComode, () => .6, (s, vi) => vi * .6 + Math.min(s.t, 1 - s.t) * 2, { extraFp: entrance, frontMayCrossDoor: true });
+      if (area(r) >= 10.0) {
+        const lowChairs = chain('fotoliu', smaller('fotoliu')).filter(low);
+        ctx.place('fotoliu', lowChairs, () => .45, (s, vi) => vi * .6 + Math.min(s.t, 1 - s.t) * 2, { extraFp: entrance, frontMayCrossDoor: true });
+      }
+    }
+
     return true;
   }
 }
+
