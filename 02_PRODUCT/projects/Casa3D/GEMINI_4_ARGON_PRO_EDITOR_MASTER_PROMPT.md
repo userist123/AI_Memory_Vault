@@ -537,3 +537,88 @@ Do not interpret “more options” as adding a long menu of presets. The requir
 
 Before implementation, add a traceability table mapping each new requirement to (a) existing code, (b) the exact gap, (c) a test, (d) an implementation step and (e) evidence of completion. Then implement in the same Casa3D branch/PR #305, prioritizing real editing workflows over breadth of superficial controls. Preserve working features and existing project data. No auto-merge. No weakening tests. No fake demos. No unsupported claims of engineering/code compliance.
 
+
+
+---
+
+# 16. Additional research — professional project lifecycle, traceability and interoperability
+
+**Read the companion research note first:** `02_PRODUCT/projects/Casa3D/research-2026-10-18/research_professional_workflows.md`. These requirements extend the existing editor brief; they do not replace sections 1–15. Continue in this same branch and PR #305.
+
+## 16.1 Inspect existing lifecycle code before adding anything
+
+The repository already contains implementation surfaces for client choices, procurement/order state, site snags, handover and commercial data. Do not infer completeness from a route, type or database table. Inspect the current domain modules, UI, persistence/schema, authorization, client-share projections, tests and actual runtime. Build a matrix of **REAL / PARTIAL / MISSING / UNKNOWN**, with exact files and evidence. Extend existing sources of truth; do not create duplicate catalogs, approval models, procurement stores, revision systems or site-issue systems.
+
+## 16.2 Structured client brief and design-decision traceability
+
+Where not already implemented end-to-end, provide a structured project brief with room-level requirements, must-haves, constraints, retained furniture, preferred/forbidden materials, storage needs, budget range and explicit trade-offs. Link each decision to the requirement, affected room/object, selected alternative, approver, timestamp and project revision.
+
+Track the provenance of important survey/model values: **MEASURED**, **CLIENT_SUPPLIED**, **IMPORTED_OR_DETECTED**, **DESIGNER_ESTIMATE** or **UNKNOWN**, with source, author/date and tolerance/confidence when available. Do not silently promote estimates or detected raster geometry to confirmed measurements. Preserve this metadata in save/reload and relevant survey/drawing reports.
+
+## 16.3 FF&E selection, approval, substitution and procurement lifecycle
+
+Audit and complete the current product-choice/order/commercial path rather than creating another one. A complete workflow should support, where missing:
+- product/finish boards grouped by room, category or phase, with comparable specifications and known/unknown fields;
+- item-level client approve/reject/comment bound to the exact revision shown;
+- visible impact and reapproval when an approved item is substituted or its dimensions, finish or cost materially changes;
+- supplier/order status, order reference, ETA, partial delivery, delivery/installation/return/cancellation and issue notes;
+- supplier-grouped purchase-order/export views and estimated-versus-actual costs;
+- strict separation of internal margin/private notes from client-facing views.
+
+Do not invent supplier availability, delivery dates, prices or warranty data. Keep order status distinct from installation status and actual payment.
+
+## 16.4 Site visits, spatial issues and handover
+
+Audit the existing site/snags and handover implementations. If incomplete, complete the full user flow:
+- pin a snag to a floor, room, plan location or model object;
+- attach timestamped photos and notes; classify by trade/severity; assign responsibility and due date;
+- track status and preserve before/after evidence, reopen history and audit trail;
+- filter issues and export a useful PDF report with plan context and photos;
+- produce a handover pack from verified final plans, approved/substituted products, manuals/care instructions, warranty documents and dates where supplied, outstanding snags, exclusions and client acceptance state.
+
+Do not claim an item is installed because it is ordered, or invent warranty terms. A route without the complete UI/persistence/permission/report/test path remains PARTIAL.
+
+## 16.5 Project locale and commercial assumptions
+
+Units, locale, currency, date format, tax/VAT assumptions, labour rates, material consumption and waste assumptions must be explicit project settings with provenance/effective dates. Romanian defaults may be offered for Romanian projects but must not be hard-coded as global truth. Distinguish estimate, supplier quote, order value, actual cost and paid amount. Missing commercial data remains UNKNOWN, never zero by convenience.
+
+## 16.6 Lighting/daylight and ergonomic/accessibility analysis — only when real
+
+Evaluate these as later, bounded capabilities, not as decorative badges:
+- daylight analysis needs project orientation/location when supplied, window geometry/glazing, shading, room geometry and a defined calculation method or weather/climate basis;
+- separate artistic 3D lighting from actual daylight/illuminance or energy analysis;
+- ergonomic/accessibility checks should use versioned, configurable rules with jurisdiction/source, applicability, units, severity and mandatory/advisory status;
+- missing inputs/rules must yield NOT_EVALUATED/UNKNOWN. Do not fabricate lux, daylight autonomy, glare, energy savings, accessibility or code-compliance results.
+- never state that a home complies with a standard merely because a small subset of clearances passed. Specialist review remains necessary where applicable.
+
+## 16.7 Interoperability and export fidelity
+
+Keep proven PDF/DXF/CSV/JSON workflows and document their exact supported subsets. Consider IFC 4.3, IDS-based information checks and BCF-style issue exchange as staged, optional interoperability work only if the existing model can support a meaningful mapping. Any added format must declare version and supported subset, preserve stable IDs/units/levels/materials/properties where supported, report omitted or approximated data, and pass fixture-based round-trip plus malformed-file/security tests. Never claim universal IFC/BIM compatibility from a file extension or successful export call alone.
+
+## 16.8 Manufacturing outputs for custom joinery
+
+After parametric joinery is reliable, assess workshop-ready schedules with panel IDs/dimensions/thickness/material, grain direction, edge-banding sides, hardware, quantities and machining notes. Distinguish a conceptual cut list from optimized sheet nesting or CNC output. Implement nesting/CNC only if validated geometry and manufacturing constraints support it.
+
+## 16.9 New acceptance tests
+
+At minimum, test:
+1. Two unrelated projects with different briefs/locales/units do not share hidden template assumptions.
+2. Measured, client-supplied, estimated and unknown dimensions retain their provenance after save/reload.
+3. Changing an approved product triggers an explicit change delta and correct reapproval behavior.
+4. Partial delivery, substitution, installation and actual cost remain distinct states.
+5. A site issue can be pinned, assigned, documented with photos, resolved/reopened and exported to a real report.
+6. Handover includes only verified products/warranties/installation data and lists outstanding items.
+7. Missing daylight/accessibility inputs produce NOT_EVALUATED/UNKNOWN, not false pass results.
+8. Any newly supported open format round-trips a representative fixture and reports unsupported data.
+
+## 16.10 Prioritization and research evidence
+
+Prioritize in this order after baseline audit:
+- **P0:** structured brief/decision log, survey-value provenance, and completion of existing selection/approval/procurement flows;
+- **P1:** site visit/punch-list workflow, handover/warranty pack, explicit locale/commercial assumptions;
+- **P2:** daylight analysis, versioned accessibility/ergonomic rule packs, IFC/IDS/BCF interoperability, manufacturing nesting/CNC.
+
+Do not expand into every P1/P2 item before completing a coherent tested vertical slice. Record why an item is deferred and its acceptance criteria. Use the dated sources and limitations in the companion research note; verify the current implementation before calling anything missing.
+
+---
+
