@@ -88,6 +88,6 @@ describe('undo / redo — drag transaction', () => {
     const h = new History<number>(2); h.push(0); h.push(1); const m = h.begin(2); h.push(3);
     assert.equal(h.rollback(m), false);
     const k = new History<number>(2); k.push(0); k.push(1); const m2 = k.begin(2); // trims 0
-    assert.equal(k.rollback(m2), true); assert.equal(k.undo(9), 1); assert.equal(k.canUndo, false);
+    assert.equal(k.rollback(m2), true); assert.equal(k.undo(9), 1); assert.equal(k.undo(1), 0); assert.equal(k.canUndo, false); // trimmed step restored
   });
 });
