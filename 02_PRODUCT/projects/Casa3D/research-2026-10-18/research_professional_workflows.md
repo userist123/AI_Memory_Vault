@@ -218,3 +218,66 @@ The current prompt requires a real editor and a 2D/3D workflow, but it does not 
 
 These additions complement, rather than repeat, the existing sections on whole-home design, procurement, site work, handover, daylight, accessibility rule packs and interoperability.
 
+
+
+---
+
+## UI/UX flagship redesign and differentiation research (2026-10-18)
+
+### Question and scope
+
+What additional product and interface work would make Casa3D materially more compelling for professional interior designers, beyond the existing Pro Editor Master Prompt and lifecycle addendum? The user explicitly identifies the current UI as visually poor and requests a genuinely next-generation redesign. This is desk research plus source inspection of PR #305; it is not a claim that the app has been visually tested in a running browser.
+
+### Source-level observations from PR #305 branch
+
+- The workspace is a Next.js app at `02_PRODUCT/projects/workspaces/casa3d/app/`, with a central `app/app/globals.css` design-token layer and many domain-specific components.
+- The homepage (`app/app/page.tsx`) is a client-rendered project studio that fetches project lists and plan data and exposes filters/sorting, trash/restore and project creation. These are real workflow surfaces that a redesign must preserve.
+- The editor (`app/components/Editor.tsx`) composes 2D plan, 3D viewer, design/style, catalog, technical, finishes, budget, survey, orders, commercial and site workflows. A redesign must reduce cognitive load without deleting these capabilities or creating parallel state.
+- The existing CSS already declares semantic tokens for a warm-paper background, ink text, borders, accent, semantic status colors and control sizes. The next step should rationalize and extend this system, not layer an unrelated theme on top.
+- `02_PRODUCT/projects/Casa3D/NEXTGEN_AUDIT.md` documents a contextual inspector, keyboard camera controls, validation-to-object focus and a command palette. These should be checked in the live rendered UI; source presence alone does not prove visual quality or end-to-end usability.
+- No current screenshot or browser-runtime evidence was captured during this research. Therefore the user's visual complaint is an owner requirement, while the precise visual defects remain to be established by baseline captures and interaction testing.
+
+### Confirmed external design principles
+
+1. Apple's HIG layout guidance updated 2026-09-09 recommends a clear visual hierarchy, deliberate alignment and grouping, progressive disclosure and adaptive layouts. This supports a canvas-first editor with a compact tool rail and contextual inspector instead of displaying every control at once. Source: https://developer.apple.com/design/human-interface-guidelines/layout/
+2. Apple's design principles updated 2026-06-08 emphasize purpose, user agency, flexibility, simplicity, craft, recovery from mistakes, transparency and clear feedback. This supports preview-before-apply, reversible transactions, honest save states and a polished but unobtrusive interface. Source: https://developer.apple.com/design/human-interface-guidelines/design-principles
+3. Apple's panel guidance recommends inspectors that reflect the active selection and warns against large or distracting floating HUD panels. Source: https://developer.apple.com/design/human-interface-guidelines/panels
+4. W3C WCAG 2.2 includes minimum target-size guidance and requires alternatives to dragging for applicable operations. This matters directly to a floor-plan editor where object movement, resizing and placement must not depend exclusively on drag-and-drop. Source: https://www.w3.org/TR/WCAG22/
+5. Autodesk's 2026 Forma recap describes design review with models, drawings, comments, markups and analysis in a shared workspace, plus continuity between feedback and project data. This supports version-bound review and model-linked decisions as workflow ideas; it is vendor-published product information, not independent usability evidence. Source: https://blogs.autodesk.com/forma/2026/10/14/what-autodesk-forma-announced-au-2026/
+6. Chief Architect's feature catalogue documents synchronized 2D/3D editing, scoped object/material painting, model-derived schedules, customizable toolbars/themes and archiving. This supports evaluating synchronized editing, contextual controls and model-derived outputs. Source: https://www.chiefarchitect.com/products/features/
+
+### What is genuinely additive, not already covered
+
+The existing master prompt already covers free-form geometry, whole-home style, components, conceptual technical layers, drawing sets, setting-out, coordination checks, and later lifecycle additions for brief/procurement/site/handover/security. The UI and product differentiators should therefore focus on closing the interaction gap between these capabilities:
+
+- **Flagship visual system:** a documented art direction, canonical tokens, high-quality typography, clear canvas hierarchy, polished icon/control language, intentional motion, and responsive variants, validated with before/after screenshots.
+- **Professional editor shell:** command bar, compact tool rail, collapsible resource drawer, selection-aware inspector, status/history strip, split 2D/3D view where useful, and command palette. This must be adapted to actual code rather than imposed as an inflexible template.
+- **Design-options lab:** genuine revision-bound A/B comparison with synchronized views, changed objects, known/estimated/unknown cost delta and explicit trade-offs.
+- **Spatial requirement traceability:** client brief items linked to room/object/material/product, approval and downstream deliverables.
+- **Change-impact map:** identify drawings, quantities, budgets, approvals and procurement records affected by a model change.
+- **Client presentation/review:** attractive, accessible and revision-bound client portal, with object-level comments and explicit privacy boundaries.
+- **Evidence-based project health:** computed actionable blockers instead of fabricated AI scores or decorative KPIs.
+- **Truthful interaction states:** save/sync/import/render/export and AI-provider failures must be recoverable and visibly distinct.
+- **Visual QA as a release gate:** capture desktop/laptop/tablet/mobile states and test actual interactions, keyboard, reduced motion, focus, contrast and overflow.
+
+### Recommended execution order
+
+1. Capture and inspect the current UI; record actual defects rather than guessing from source alone.
+2. Define and implement one coherent design system; redesign the project dashboard and core editor shell while preserving all domain behavior.
+3. Verify key existing flows after redesign: new/open project, 2D/3D synchronization, selection/inspector, exact numeric edits, material application, undo/redo, save/reload, client review and export.
+4. Add design-options comparison and model-change impact reporting as a vertical slice, reusing existing revisions/proposals/BOQ/approval models.
+5. Add project-to-client decision traceability and a real next-action queue, reusing existing project brief, orders, choices, site issues and handover data.
+6. Defer any expensive AI, computer-vision, daylight, AR or full-BIM feature until its inputs, algorithm, data model and acceptance tests are defined. Never add dead UI just to imply capability.
+
+### Acceptance evidence required
+
+- Actual before/after screenshots with viewport dimensions and exact route/state.
+- Tested at 1440, 1280, 1024, 768 and 390 CSS-pixel widths, with no page-level horizontal overflow.
+- Interaction evidence for core editing, contextual inspector, design preview/apply/reject, save/reload, revision compare, client review and export.
+- Keyboard-only operation, visible focus, reduced-motion behavior, contrast/target-size checks, and non-drag alternatives for applicable spatial actions.
+- Typecheck, relevant test suite and production build with real exit codes.
+- Every feature labelled REAL / PARTIAL / UNKNOWN / MISSING using source plus runtime/test evidence. A polished screenshot alone cannot prove functionality.
+
+### Research limitations
+
+This was bounded desk research and source inspection of the PR branch. Vendor feature pages are marketing material; Apple and W3C sources are design/accessibility guidance, not proof of app quality. No browser screenshot or local runtime test was performed in this research step. The precise current visual defects and the actual usability of each component remain to be verified during implementation.
