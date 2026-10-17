@@ -331,27 +331,42 @@ public static class DeviceMonitorReport
 
     private static string Utc(DateTimeOffset t) => t.UtcDateTime.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) + " UTC";
 
-    /// <summary>One device in the controller's words: type, name, ids, medium, state, user at connection, times and its registration number.</summary>
+    /// <summary>
+    /// One device in the controller's words, with the fields of the monitor page in the same order: state, type, name, manufacturer and model, VID/PID, serial, capacity,
+    /// letter and label (storage media only), user at connection, first seen, last connection and disconnection, registration number and the register state
+    /// („Înregistrat” / „Neînregistrat”). Times are UTC, as everywhere in the report.
+    /// </summary>
     public static string Line(DeviceJournalEntry e)
     {
-        var parts = new List<string> { DeviceMonitorRules.ClassText(e.Class), e.Name.Length > 0 ? e.Name : "(fără nume)" };
+        var parts = new List<string>
+        {
+            "Stare: " + DeviceMonitorRules.StatusText(e.Status).ToLowerInvariant(),
+            DeviceMonitorRules.ClassText(e.Class),
+            e.Name.Length > 0 ? e.Name : "(fără nume)",
+        };
         if (e.Manufacturer.Length > 0) parts.Add(e.Manufacturer);
         if (e.Model.Length > 0) parts.Add("model " + e.Model);
         if (e.VidPid.Length > 0) parts.Add("VID/PID " + e.VidPid);
         parts.Add(e.Serial.Length > 0 ? "SN " + e.Serial : DeviceMonitorRules.NoUniqueSerialText);
         if (e.DuplicateSerial) parts.Add(DeviceMonitorRules.DuplicateSerialMark.ToUpperInvariant());
         if (e.UnidentifiableMedium) parts.Add(DeviceMonitorRules.UnidentifiableMediumText);
-        if (e.CapacityBytes > 0) parts.Add("capacitate " + DeviceText.Bytes(e.CapacityBytes));
-        if (e.VolumeLetters.Length > 0) parts.Add("litera " + e.VolumeLetters);
-        if (e.VolumeLabel.Length > 0) parts.Add("etichetă „" + e.VolumeLabel + "”");
-        parts.Add(DeviceMonitorRules.StatusText(e.Status).ToLowerInvariant() + (e.Present
-            ? (e.LastConnectedUtc is { } c ? " (din " + Utc(c) + ")" : "")
-            : (e.LastDisconnectedUtc is { } d ? " la " + Utc(d) : "") + (e.LastConnectedUtc is { } lc ? ", ultima conectare " + Utc(lc) : "")));
+        if (DeviceMonitorRules.IsStorageMedium(e.Class))
+        {
+            if (e.CapacityBytes > 0) parts.Add("capacitate " + DeviceText.CapacityRo(e.CapacityBytes));
+            if (e.VolumeLetters.Length > 0) parts.Add("litera " + e.VolumeLetters);
+            if (e.VolumeLabel.Length > 0) parts.Add("etichetă „" + e.VolumeLabel + "”");
+        }
         parts.Add("utilizator la conectare: " + (e.ConnectedUser.Length > 0 ? e.ConnectedUser : "—"));
         parts.Add("văzut prima dată " + Utc(e.FirstSeenUtc));
-        parts.Add(e.RegistrationNumber.Trim().Length > 0 ? "nr. de înregistrare " + e.RegistrationNumber.Trim() : NoRegistration);
+        if (e.LastConnectedUtc is { } lc) parts.Add("ultima conectare " + Utc(lc));
+        if (e.LastDisconnectedUtc is { } ld) parts.Add("ultima deconectare " + Utc(ld));
+        bool registered = e.RegistrationNumber.Trim().Length > 0;
+        parts.Add(registered ? "nr. de înregistrare " + e.RegistrationNumber.Trim() : NoRegistration);
+        parts.Add("registru: " + (registered ? RegisteredText : NotRegisteredText));
         return string.Join(" · ", parts);
     }
+
+    public const string RegisteredText = "Înregistrat", NotRegisteredText = "Neînregistrat";
 
     public static string AlertLine(DeviceAlertRecord a) =>
         $"{(a.Severity == DeviceAlertSeverity.Critical ? "ALERTĂ CRITICĂ" : "conectare")} {Utc(a.TimeUtc)}: {a.Device} ({DeviceMonitorRules.ClassText(a.Class)}) — {a.Text}";

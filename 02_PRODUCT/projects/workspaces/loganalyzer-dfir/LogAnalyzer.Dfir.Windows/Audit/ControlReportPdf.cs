@@ -361,7 +361,7 @@ public static class ControlReportPdf
         l.Add(("Alertele date în perioadă", true, Ink));
         if (s.Alerts.Count == 0) l.Add(("Nicio alertă în perioadă.", false, Muted));
         foreach (var a in s.Alerts) l.Add((LogAnalyzer.Dfir.Devices.DeviceMonitorReport.AlertLine(a), false, a.Severity == LogAnalyzer.Dfir.Devices.DeviceAlertSeverity.Critical ? Red : Muted));
-        l.Add(("Dispozitivele (tipul, numele, ids, starea, utilizatorul la conectare, numărul de înregistrare)", true, Ink));
+        l.Add(("Dispozitivele (stare, tip, nume, producător/model, VID/PID, serie, capacitate/literă, utilizator la conectare, prima apariție, ultima conectare/deconectare, nr. de înregistrare, registru)", true, Ink));
         var offending = new HashSet<LogAnalyzer.Dfir.Devices.DeviceJournalEntry>(s.Offending);
         foreach (var d in s.Offending.Concat(s.Devices.Where(d => !offending.Contains(d))).Take(maxDevices))
             l.Add(((offending.Contains(d) ? "ÎNCALCĂ REGULA: " : "") + LogAnalyzer.Dfir.Devices.DeviceMonitorReport.Line(d), false, offending.Contains(d) ? Red : Ink));

@@ -103,6 +103,13 @@ public static class DeviceMonitorRules
         return ven.Length + prod.Length > 0 ? $"{ven} {prod}".Trim() : "";
     }
 
+    /// <summary>The VID and PID of the journal's „VID:PID” text (4 hex digits each); both empty when the text is not of that form (a vendor / product name pair).</summary>
+    public static (string Vid, string Pid) SplitVidPid(string vidPid)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(vidPid, @"^([0-9A-Fa-f]{4}):([0-9A-Fa-f]{4})$");
+        return m.Success ? (m.Groups[1].Value.ToUpperInvariant(), m.Groups[2].Value.ToUpperInvariant()) : ("", "");
+    }
+
     /// <summary>
     /// The stable identity a device is remembered by across connections and restarts: serial + VID/PID when the device reports a unique serial (the same stick
     /// on another port is the same device), otherwise the instance id (a device without a serial is told apart only by where it is connected).

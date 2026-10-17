@@ -79,6 +79,8 @@ public static partial class ControlEvaluator
         var blind = journal.Radios.Where(x => x.BlindNow || x.LastBlindUtc >= from && x.FirstBlindUtc <= to).ToList();
         int unreadable = auditUsable ? audit!.Unreadable : 0;
         bool untrusted = f.DeviceJournalUntrusted.Length > 0;
+        // the monitor ran without the right to seal (not started as administrator): its records were refused by the sealed audit; never CONFORM
+        bool noSealRights = SealingHealth.InPeriod(journal, from, to);
 
         // a journal window the sealed audit does not back is a tampering finding; when the sealed audit has no window over the period at all the status stays NEDETERMINAT
         // (the audit write may simply have failed), but the disagreement is still listed
@@ -86,7 +88,7 @@ public static partial class ControlEvaluator
         bool policy = s.Offending.Count > 0 || cloneAlerts.Count > 0 || journalCloneAlerts.Count > 0 || forbiddenSealed.Count > 0;
         // owner decision 2026-10-16: never CONFORM while anything happened that the controller has to look at
         bool toVerify = gaps.Count > 0 || lostInPeriod.Count > 0 || resumed.Count > 0 || devices.Count == 0 || unsealed.Count > 0 || untrusted || unreadable > 0
-                        || resets.Count > 0 || volumeAlerts.Count > 0 || pendingSeals > 0;
+                        || resets.Count > 0 || volumeAlerts.Count > 0 || pendingSeals > 0 || noSealRights;
         var status = tamper ? ControlStatus.Neconform
             : policy ? (isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat)
             : !auditUsable || coverage is { AnyCoverage: false } ? ControlStatus.Nedeterminat
@@ -105,6 +107,7 @@ public static partial class ControlEvaluator
         evidence.AddRange(volumeAlerts);
         if (untrusted) evidence.Add("JURNALUL MONITORULUI NU ESTE DE ÎNCREDERE: " + f.DeviceJournalUntrusted);
         evidence.AddRange(forbiddenSealed.Select(x => "ÎNCALCĂ REGULA (jurnal sigilat): " + x));
+        if (noSealRights) evidence.Add(SealingHealth.Evidence(journal.SealingRefused!));
         if (pendingSeals > 0)
             evidence.Add($"ÎNREGISTRĂRI ÎN AȘTEPTARE: {pendingSeals} înregistrări ale monitorului nu au putut fi trecute încă în jurnalul sigilat (se reîncearcă); până atunci jurnalul monitorului nu este dovedit");
         evidence.AddRange(s.Offending.Select(e => "ÎNCALCĂ REGULA: " + DeviceMonitorReport.Line(e)));
@@ -153,6 +156,7 @@ public static partial class ControlEvaluator
             detail += $" Jurnalul sigilat arată {Ro.CountMasc(forbiddenSealed.Count, "dispozitiv dintr-o clasă interzisă", "dispozitive dintr-o clasă interzisă")} pe o stație izolată, activ în perioadă, oricum arată rândul din jurnalul monitorului.";
         if (pendingSeals > 0)
             detail += $" {pendingSeals} înregistrări ale monitorului așteaptă să fie trecute în jurnalul sigilat (verificarea nu poate fi Conform).";
+        if (noSealRights) detail += " Monitorul a rulat fără drept de sigilare (aplicația nu a fost pornită ca administrator): înregistrările lui nu au intrat în jurnalul sigilat, deci verificarea nu poate fi Conform până nu rulează ca administrator.";
         if (untrusted) detail += " " + f.DeviceJournalUntrusted;
         if (cloneAlerts.Count + journalCloneAlerts.Count > 0)
             detail += " S-a dat alerta de clonă („" + DeviceMonitorRules.CloneAlertText + "” sau „" + DeviceMonitorRules.DuplicateSerialAlertText + "”): aceeași serie și același VID/PID au apărut pe dispozitive diferite.";

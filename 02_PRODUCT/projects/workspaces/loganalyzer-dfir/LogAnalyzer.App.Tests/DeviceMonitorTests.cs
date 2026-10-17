@@ -227,7 +227,7 @@ public sealed class DeviceMonitorTests
         Assert.False(stickRow.Present);                                          // red circle, row kept
         Assert.Equal("Deconectat", stickRow.StatusText);
         Assert.NotEqual("", stickRow.LastDisconnectedText);
-        Assert.Contains("UTC", stickRow.LastDisconnectedText);
+        Assert.Matches(@"^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2}$", stickRow.LastDisconnectedText);      // local, dd.MM.yyyy HH:mm:ss
         Assert.True(f.Saves > 0);
         Assert.Equal(3, f.Saved!.Devices.Count);
     }
@@ -472,9 +472,9 @@ public sealed class DeviceMonitorTests
     {
         var bad = D05(StationPosture.Standalone, JournalWithStick(""));
         Assert.Equal(ControlStatus.Neconform, bad.Status);
-        Assert.Contains(bad.Evidence, e => e.StartsWith("ÎNCALCĂ REGULA: ") && e.Contains("Stick USB") && e.Contains("fără număr de înregistrare") && e.Contains("deconectat la 2026-10-16 10:00:00 UTC"));
+        Assert.Contains(bad.Evidence, e => e.StartsWith("ÎNCALCĂ REGULA: ") && e.Contains("Stick USB") && e.Contains("fără număr de înregistrare") && e.Contains("Stare: deconectat") && e.Contains("ultima deconectare 2026-10-16 10:00:00 UTC"));
         Assert.Contains(bad.Evidence, e => e.StartsWith("ALERTĂ CRITICĂ 2026-10-16 09:00:00 UTC"));
-        Assert.Contains(bad.Evidence, e => e.Contains("Mouse extern") && e.Contains("conectat (din") && e.Contains("utilizator la conectare: —"));
+        Assert.Contains(bad.Evidence, e => e.Contains("Mouse extern") && e.Contains("Stare: conectat") && e.Contains("ultima conectare") && e.Contains("utilizator la conectare: —") && e.Contains("registru: Neînregistrat"));
         Assert.Contains(bad.Evidence, e => e.Contains("Imprimantă") && e.Contains("nu funcționează (fără driver)"));
         Assert.Contains(bad.Evidence, e => e.Contains("utilizator la conectare: LAB-PC\\user"));
         Assert.Contains("1 fără număr de înregistrare", bad.Detail);
@@ -785,8 +785,8 @@ public sealed class DeviceMonitorTests
         Assert.Contains(lines, l => l.StartsWith("Medii de stocare și dispozitive conectate extern, văzute în perioadă: 3 (2 conectate acum) · încalcă regula: 1 · alerte: 1 (1 critice)"));
         Assert.Contains(lines, l => l.StartsWith("Acoperire: monitorul a rulat pe toată perioada"));
         Assert.Contains(lines, l => l.StartsWith("ALERTĂ CRITICĂ") && l.Contains("Fake Stick USB Device"));
-        Assert.Contains(lines, l => l.StartsWith("ÎNCALCĂ REGULA: Stick USB") && l.Contains("SN FAKESN0001") && l.Contains(DeviceMonitorReport.NoRegistration) && l.Contains("utilizator la conectare: LAB-PC\\user"));
-        Assert.Contains(lines, l => l.StartsWith("Mouse extern · HID-compliant mouse") && l.Contains("conectat (din") && l.Contains("VID/PID 046D:C077"));
+        Assert.Contains(lines, l => l.StartsWith("ÎNCALCĂ REGULA: Stare: ") && l.Contains(" · Stick USB · ") && l.Contains("SN FAKESN0001") && l.Contains(DeviceMonitorReport.NoRegistration) && l.Contains("utilizator la conectare: LAB-PC\\user"));
+        Assert.Contains(lines, l => l.StartsWith("Stare: conectat · Mouse extern · HID-compliant mouse") && l.Contains("ultima conectare") && l.Contains("VID/PID 046D:C077"));
         Assert.DoesNotContain(lines, l => l.Contains("Old internal battery row") || l.Contains("driver:"));
         // D05 lists the same devices
         var d05 = r.Checks.Single(c => c.Id == "D05");
@@ -839,8 +839,18 @@ public sealed class DeviceMonitorTests
         Assert.Contains("Header=\"Nr. de înregistrare\" Binding=\"{Binding RegistrationNumber", page);
         Assert.Contains("<Ellipse", page);
         // the columns the owner asked for, and no driver column
-        foreach (var header in new[] { "Tip", "Nume", "Producător", "Model", "VID/PID", "Serie", "Capacitate", "Literă", "Etichetă", "Utilizator conectat la momentul conectării", "Prima apariție", "Ultima conectare", "Ultima deconectare", "Alertă" })
+        foreach (var header in new[] { "Stare", "Nume", "Tip", "Producător", "Model", "VID", "PID", "Serie", "Capacitate", "Literă", "Etichetă", "Utilizator", "Prima apariție", "Ultima conectare", "Ultima deconectare", "Nr. de înregistrare", "Registru", "Alertă" })
             Assert.Contains($"Header=\"{header}\"", page);
+        // the columns in the owner's order, and no other data column (the last, headerless one is the „Istoric” button)
+        var grid = page[page.IndexOf("x:Name=\"DevicesGrid\"", StringComparison.Ordinal)..];
+        grid = grid[..grid.IndexOf("</DataGrid.Columns>", StringComparison.Ordinal)];
+        var headers = System.Text.RegularExpressions.Regex.Matches(grid, "<DataGrid(?:Text|Template)Column Header=\"([^\"]*)\"").Select(m => m.Groups[1].Value).ToArray();
+        Assert.Equal(["Stare", "Nume", "Tip", "Producător", "Model", "VID", "PID", "Serie", "Capacitate", "Literă", "Etichetă", "Utilizator", "Prima apariție", "Ultima conectare", "Ultima deconectare", "Nr. de înregistrare", "Registru", "Alertă", ""], headers);
+        Assert.DoesNotContain("Header=\"Starea\"", page);
+        Assert.DoesNotContain("Header=\"VID/PID\"", page);
+        Assert.Contains("Content=\"Istoric\"", page);
+        Assert.Contains("Content=\"Export CSV\"", page);
+        Assert.Contains("{Binding SealingBanner}", page);
         Assert.DoesNotContain("Detalii driver", page);
         Assert.DoesNotContain("Header=\"Driver\"", page);
         Assert.Contains("{Binding RadioNotice}", page);
@@ -1092,6 +1102,159 @@ public sealed class DeviceMonitorTests
             var d = D05(facts);
             Assert.DoesNotContain(d.Evidence, e => e.StartsWith("NECONFORM:") || e.StartsWith("ÎNCALCĂ REGULA"));
             Assert.NotEqual(ControlStatus.Neconform, d.Status);
+        }
+        finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
+    }
+
+    // ---- columns, history, CSV export and the monitor without the right to seal -------------------------------------------------------------
+
+    private const string KeyRefusal = "cheia de sigilare a jurnalului nu poate fi citită (porniți aplicația dintr-un cont de administrator Windows); nu s-a scris nimic";
+
+    [Fact]
+    public async Task The_row_has_the_page_columns_storage_fields_only_for_storage_and_split_VID_PID()
+    {
+        var f = new Fakes { Present = [Mouse], User = @"LAB-PC\user" };
+        using var vm = f.Create(isolated: true);
+        await vm.RefreshAsync(initial: true);
+        f.Media[Stick().InstanceId] = new MediumInfo("11112222", 14_900_000_000, "E:", "ETICHETA");
+        f.Present = [Mouse, Stick(), UsbParent(), Phone];
+        f.Now = T0.AddMinutes(1);
+        await vm.RefreshAsync(initial: false);
+        var stick = vm.Rows.Single(r => r.Class == DeviceClass.UsbStorage);
+        var phone = vm.Rows.Single(r => r.Class == DeviceClass.Phone);
+        Assert.Equal(("04E8", "6860"), (phone.Vid, phone.Pid));
+        var cells = stick.CsvCells();
+        Assert.Equal(DeviceCsv.Headers.Count, cells.Count);
+        Assert.Equal("Conectat", cells[0]);
+        Assert.Equal("14,9 GB", cells[8]);
+        Assert.Equal("E:", cells[9]);
+        Assert.Equal("ETICHETA", cells[10]);
+        Assert.Equal(@"LAB-PC\user", cells[11]);
+        Assert.Equal("Neînregistrat", cells[16]);
+        Assert.Matches(@"^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2}$", cells[12]);
+        Assert.Equal("", cells[14]);                                                  // never disconnected
+        var mouse = vm.Rows.Single(r => r.Class == DeviceClass.Mouse);
+        Assert.Equal(("046D", "C077"), (mouse.Vid, mouse.Pid));
+        Assert.Equal("", mouse.CapacityText);
+        Assert.Equal("", mouse.Letter);
+        Assert.Equal("", mouse.Label);
+        stick.RegistrationNumber = "RN-3";
+        Assert.Equal("Înregistrat", stick.RegistryText);
+        Assert.Equal("RN-3", stick.CsvCells()[15]);
+    }
+
+    [Fact]
+    public async Task The_default_order_is_connected_first_then_the_latest_connection_first()
+    {
+        var f = new Fakes { Present = [Mouse] };
+        using var vm = f.Create(isolated: true);
+        await vm.RefreshAsync(initial: true);
+        f.Present = [Mouse, Stick(), UsbParent()];
+        f.Now = T0.AddMinutes(1);
+        await vm.RefreshAsync(initial: false);
+        f.Present = [Mouse, Stick(), UsbParent(), Phone];
+        f.Now = T0.AddMinutes(2);
+        await vm.RefreshAsync(initial: false);
+        f.Present = [Mouse, Phone];                                                   // the stick is removed
+        f.Now = T0.AddMinutes(3);
+        await vm.RefreshAsync(initial: false);
+        var order = vm.Rows.Select(r => r.Class).ToList();
+        Assert.Equal(DeviceClass.UsbStorage, order[^1]);                              // disconnected last
+        Assert.Equal(DeviceClass.Phone, order[0]);                                    // connected most recently first
+    }
+
+    [Fact]
+    public async Task A_refused_seal_because_the_key_cannot_be_read_raises_the_banner_and_D05_never_says_conform()
+    {
+        var f = new Fakes { Present = [Stick(), UsbParent()], User = @"LAB-PC\user" };
+        f.AuditRefusal = KeyRefusal;
+        using var vm = f.Create(isolated: true);
+        Assert.False(vm.SealingBlocked);
+        await vm.StartAsync(eventsAvailable: true);
+        Assert.True(vm.SealingBlocked);
+        Assert.Equal("Monitorul nu poate sigila evenimentele: porniți LogAnalyzer ca administrator. Până atunci D05 rămâne DE VERIFICAT.", vm.SealingBanner);
+        var journal = vm.JournalCopy();
+        Assert.NotNull(journal.SealingRefused);
+        Assert.NotNull(f.Saved?.SealingRefused);                                      // saved, so a restart still knows
+        var run = new MonitorRun { RunId = "r", StartUtc = PeriodFrom.AddHours(-1), LastBeatUtc = PeriodTo.AddHours(1), EndUtc = PeriodTo.AddHours(1) };
+        journal.SealingRefused = new SealingRefusal { FirstUtc = PeriodFrom.AddHours(1), LastUtc = PeriodFrom.AddHours(2) };
+        var d = D05(Facts(StationPosture.Standalone, journal, AuditFor(journal, run)));
+        Assert.NotEqual(ControlStatus.Conform, d.Status);
+        Assert.Contains(d.Evidence, e => e.StartsWith("MONITORUL A RULAT FĂRĂ DREPT DE SIGILARE"));
+        // another refusal (disk full) is not the key: no banner
+        var g = new Fakes { Present = [Mouse], AuditRefusal = "discul este plin" };
+        using var vm2 = g.Create(isolated: true);
+        await vm2.StartAsync(eventsAvailable: true);
+        Assert.False(vm2.SealingBlocked);
+        Assert.Null(vm2.JournalCopy().SealingRefused);
+        // the right to seal is back: the banner goes
+        f.AuditRefusal = null;
+        f.Now = T0.AddMinutes(5);
+        await vm.RefreshAsync(initial: false);
+        Assert.False(vm.SealingBlocked);
+    }
+
+    [Fact]
+    public async Task Export_CSV_prepares_the_visible_rows_with_a_BOM_and_seals_a_note_with_the_hash_and_no_path()
+    {
+        var f = new Fakes { Present = [Mouse, Stick(), UsbParent()], User = @"LAB-PC\user" };
+        using var vm = f.Create(isolated: true);
+        await vm.RefreshAsync(initial: true);
+        var export = DeviceMonitorViewModel.PrepareCsv(vm.Rows.Take(1));
+        Assert.Equal(1, export.Rows);
+        Assert.Equal([0xEF, 0xBB, 0xBF], export.Bytes.Take(3).ToArray());
+        var text = System.Text.Encoding.UTF8.GetString(export.Bytes, 3, export.Bytes.Length - 3);
+        Assert.Equal(2, text.Split("\r\n", StringSplitOptions.RemoveEmptyEntries).Length);   // the header and the one row in view
+        Assert.StartsWith("Stare;Nume;Tip;", text);
+        Assert.Equal(Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(export.Bytes)), export.Sha256);
+        Assert.Null(vm.SealCsvExport(export));
+        var note = Assert.Single(f.Events(OperationAudit.DeviceExportCsv));
+        Assert.Contains("rows=1", note.Detail);
+        Assert.Contains("sha256=" + export.Sha256, note.Detail);
+        Assert.Contains("operator=", note.Detail);
+        Assert.DoesNotContain(Path.GetTempPath(), note.Detail, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(".csv", note.Detail, StringComparison.OrdinalIgnoreCase);
+        // the sealed audit refuses the note: the caller writes nothing
+        f.AuditRefusal = "audit indisponibil";
+        Assert.Contains("audit indisponibil", vm.SealCsvExport(export));
+    }
+
+    [Fact]
+    public async Task The_history_of_a_row_comes_from_the_sealed_audit_and_marks_pending_records()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "devhist_app_" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var svc = new LogAnalyzer.Dfir.Auth.AuthService(dir);
+            var f = new Fakes { Present = [Mouse], User = @"LAB-PC\user", Now = DateTimeOffset.UtcNow };
+            using var vm = new DeviceMonitorViewModel(() => f.Present.ToList(), _ => new Dictionary<string, MediumInfo>(),
+                (ev, detail) => { if (f.AuditRefusal is { } r) return r; svc.AuditOperation(null, ev, detail); return null; }, new DeviceJournal(), j => null, isolated: true, () => f.Now,
+                consoleUser: () => f.User, auditReader: () => { var v = svc.VerifyAuditSnapshot(out var b); return OperationAudit.ReadDeviceMonitor(b, v.Status == LogAnalyzer.Dfir.Case.ChainStatus.Valid); });
+            await vm.RefreshAsync(initial: true);
+            f.Present = [Mouse, Stick(), UsbParent()];
+            f.Now = DateTimeOffset.UtcNow;
+            await vm.RefreshAsync(initial: false);
+            var stick = vm.Rows.Single(r => r.Class == DeviceClass.UsbStorage);
+            stick.RegistrationNumber = "RN-4";
+            f.Present = [Mouse];
+            f.Now = DateTimeOffset.UtcNow;
+            await vm.RefreshAsync(initial: false);
+            f.AuditRefusal = "disc plin";                                              // the next records cannot be sealed: they stay pending
+            f.Present = [Mouse, Stick(), UsbParent()];
+            f.Now = DateTimeOffset.UtcNow;
+            await vm.RefreshAsync(initial: false);
+            var (events, notice) = vm.HistoryFor(stick);
+            Assert.Equal("", notice);
+            var sealedKinds = events.Where(e => !e.Pending).Select(e => e.Kind).ToList();
+            Assert.Equal(DeviceHistory.FirstSeen, sealedKinds[0]);
+            Assert.Contains(DeviceHistory.RegistrationChanged, sealedKinds);
+            Assert.Contains(DeviceHistory.Disconnected, sealedKinds);
+            Assert.Contains(events, e => e.Kind == DeviceHistory.RegistrationChanged && e.Details == "(gol) → RN-4");
+            var times = events.Where(e => !e.Pending).Select(e => e.TimeUtc).ToList();
+            Assert.Equal(times.OrderBy(t => t).ToList(), times);
+            // the reconnection could not be sealed: it is listed after the sealed ones, marked
+            Assert.Contains(events, e => e.Pending && e.Kind.Contains("în așteptare (nesigilat)"));
+            Assert.All(events.Where(e => e.Pending), e => Assert.Contains("în așteptare (nesigilat)", e.Kind));
         }
         finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
     }

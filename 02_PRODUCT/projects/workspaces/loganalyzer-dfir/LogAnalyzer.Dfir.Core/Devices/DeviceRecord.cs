@@ -102,6 +102,13 @@ public static class DeviceText
         _ => "Un dispozitiv care poate stoca sau transfera date.",
     };
 
+    /// <summary>The capacity as the monitor page and the CSV show it: decimal units with a decimal comma („14,9 GB”), whatever the language of the station.</summary>
+    public static string CapacityRo(long b) => b <= 0 ? "" : Bytes(b).Replace('.', ',');
+
+    /// <summary>A time as the monitor page shows it: the station's local time, dd.MM.yyyy HH:mm:ss; empty when unknown.</summary>
+    public static string LocalTime(DateTimeOffset? t) =>
+        t is { } v ? v.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) : "";
+
     public static string Bytes(long b) => b >= 1_000_000_000_000 ? $"{b / 1e12:0.#} TB" : b >= 1_000_000_000 ? $"{b / 1e9:0.#} GB" : b >= 1_000_000 ? $"{b / 1e6:0.#} MB" : $"{b} B";
 }
 
