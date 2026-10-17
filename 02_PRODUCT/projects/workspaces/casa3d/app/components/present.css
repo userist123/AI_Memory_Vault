@@ -1,0 +1,47 @@
+/* Planșele prezentării (copertă, concept) — doar aspectul; datele vin din core/presentation.ts */
+.slide.cover{grid-template-columns:60% 1fr}
+.slide.cover .cover-txt{padding:4.2cqw 3.6cqw 4.4cqw 3.4cqw;display:grid;grid-template-rows:auto 1fr auto auto;align-content:stretch;gap:0;background:#f4efe6;border-left:1px solid rgba(60,45,30,.12)}
+.slide.cover .cover-main{align-self:center;display:grid;gap:1.2cqw;padding:2cqw 0}
+.slide.cover h1{margin:0;font-size:4.6cqw;line-height:1.02;overflow-wrap:anywhere}
+.slide.cover .cover-main p{font:400 1.35cqw/1.45 var(--sans);color:var(--lead);margin:0;max-width:24cqw;padding-top:1.2cqw;border-top:1px solid rgba(60,45,30,.22)}
+.cover-pal{display:flex;flex-wrap:wrap;gap:.5cqw;align-items:center;margin-bottom:2.2cqw}
+.cover-pal i{width:3.4cqw;height:3.4cqw;border-radius:50%;display:block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)}
+.cover-pal small{flex-basis:100%;margin:.7cqw 0 0;font:500 .8cqw var(--sans);text-transform:uppercase;letter-spacing:.14em;color:var(--lead)}
+.cover-facts{display:grid;grid-template-columns:auto auto 1fr;gap:2.4cqw;margin:0;padding-top:1.6cqw;border-top:1px solid rgba(60,45,30,.22)}
+.cover-facts div{display:grid;gap:.3cqw}
+.cover-facts dt{font:500 .8cqw var(--sans);text-transform:uppercase;letter-spacing:.14em;color:var(--lead)}
+.cover-facts dd{margin:0;font:400 1.5cqw var(--serif);color:var(--ink)}
+
+.slide.pboard{padding:3.6cqw 4.5cqw 4cqw;grid-template-rows:auto auto 1fr auto;gap:2cqw;align-content:start}
+.pb-strip{display:flex;height:7cqw;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.pb-strip i{flex:1;display:block}
+.pb-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(14cqw,1fr));gap:2.2cqw;align-content:start}
+.pboard h3{font:500 .95cqw var(--sans);text-transform:uppercase;letter-spacing:.14em;color:var(--lead);margin:0 0 1cqw}
+.pb-col figure{margin:0 0 1.3cqw;display:grid;grid-template-columns:5.2cqw 1fr;gap:1.2cqw;align-items:center}
+.pb-col i{width:5.2cqw;height:5.2cqw;display:block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.pb-col figcaption{font:400 1.05cqw/1.3 var(--sans)} .pb-col small{display:block;color:var(--lead);font-size:.85cqw}
+.pb-rooms{border-top:1px solid rgba(60,45,30,.2);padding-top:1.6cqw;margin-bottom:1.6cqw}
+.pb-rooms ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:1.1cqw 3cqw}
+.pb-rooms li{display:flex;align-items:center;justify-content:space-between;gap:1cqw;font:400 1.05cqw var(--sans);min-width:0}
+.pb-rooms b{font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pb-rooms li span{display:flex;gap:.3cqw;flex:none}
+.pb-rooms li i{width:1.9cqw;height:1.9cqw;display:block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)}
+
+@media (max-width:700px){
+  .slide.cover .cover-txt{display:block;padding:20px 16px 8px;border-left:0}
+  .slide.cover h1{font-size:34px} .slide.cover .cover-main{padding:6px 0 10px} .slide.cover .cover-main p{font-size:15px;max-width:none}
+  .cover-pal{margin:6px 0 14px} .cover-pal i{width:26px;height:26px} .cover-pal small{font-size:10px}
+  .cover-facts{gap:20px;padding-top:12px} .cover-facts dt{font-size:10px} .cover-facts dd{font-size:15px}
+  .slide.pboard{display:block;padding:20px 16px 4px}
+  .pb-strip{height:36px;margin:14px 0}
+  .pb-grid{grid-template-columns:1fr;gap:16px} .pboard h3{font-size:12px;margin-bottom:8px}
+  .pb-col figure{grid-template-columns:48px 1fr;gap:12px;margin:0 0 10px} .pb-col i{width:48px;height:48px} .pb-col figcaption{font-size:14px} .pb-col small{font-size:12px}
+  .pb-rooms{margin-top:16px;padding-top:12px} .pb-rooms ul{grid-template-columns:1fr 1fr;gap:10px 14px} .pb-rooms li{font-size:13px} .pb-rooms li i{width:18px;height:18px}
+}
+
+/* imaginile 3D se fac la cerere: locul copertei e un bloc ca .room-img; până la randare, un fundal ușor care „respiră” */
+.slide .shot{min-height:0;min-width:0}
+.slide .ph-wait{background:linear-gradient(100deg,#f1ede6 30%,#f8f5f0 50%,#f1ede6 70%) 0 0/300% 100%;animation:ph-wait 1.6s ease-in-out infinite}
+@keyframes ph-wait{from{background-position:100% 0}to{background-position:0 0}}
+@media (prefers-reduced-motion:reduce){ .slide .ph-wait{animation:none} }
+@media print{ .slide .ph-wait{animation:none;background:#f1ede6} }
