@@ -537,3 +537,353 @@ Do not interpret “more options” as adding a long menu of presets. The requir
 
 Before implementation, add a traceability table mapping each new requirement to (a) existing code, (b) the exact gap, (c) a test, (d) an implementation step and (e) evidence of completion. Then implement in the same Casa3D branch/PR #305, prioritizing real editing workflows over breadth of superficial controls. Preserve working features and existing project data. No auto-merge. No weakening tests. No fake demos. No unsupported claims of engineering/code compliance.
 
+
+
+---
+
+# 16. Additional research — professional project lifecycle, traceability and interoperability
+
+**Read the companion research note first:** `02_PRODUCT/projects/Casa3D/research-2026-10-18/research_professional_workflows.md`. These requirements extend the existing editor brief; they do not replace sections 1–15. Continue in this same branch and PR #305.
+
+## 16.1 Inspect existing lifecycle code before adding anything
+
+The repository already contains implementation surfaces for client choices, procurement/order state, site snags, handover and commercial data. Do not infer completeness from a route, type or database table. Inspect the current domain modules, UI, persistence/schema, authorization, client-share projections, tests and actual runtime. Build a matrix of **REAL / PARTIAL / MISSING / UNKNOWN**, with exact files and evidence. Extend existing sources of truth; do not create duplicate catalogs, approval models, procurement stores, revision systems or site-issue systems.
+
+## 16.2 Structured client brief and design-decision traceability
+
+Where not already implemented end-to-end, provide a structured project brief with room-level requirements, must-haves, constraints, retained furniture, preferred/forbidden materials, storage needs, budget range and explicit trade-offs. Link each decision to the requirement, affected room/object, selected alternative, approver, timestamp and project revision.
+
+Track the provenance of important survey/model values: **MEASURED**, **CLIENT_SUPPLIED**, **IMPORTED_OR_DETECTED**, **DESIGNER_ESTIMATE** or **UNKNOWN**, with source, author/date and tolerance/confidence when available. Do not silently promote estimates or detected raster geometry to confirmed measurements. Preserve this metadata in save/reload and relevant survey/drawing reports.
+
+## 16.3 FF&E selection, approval, substitution and procurement lifecycle
+
+Audit and complete the current product-choice/order/commercial path rather than creating another one. A complete workflow should support, where missing:
+- product/finish boards grouped by room, category or phase, with comparable specifications and known/unknown fields;
+- item-level client approve/reject/comment bound to the exact revision shown;
+- visible impact and reapproval when an approved item is substituted or its dimensions, finish or cost materially changes;
+- supplier/order status, order reference, ETA, partial delivery, delivery/installation/return/cancellation and issue notes;
+- supplier-grouped purchase-order/export views and estimated-versus-actual costs;
+- strict separation of internal margin/private notes from client-facing views.
+
+Do not invent supplier availability, delivery dates, prices or warranty data. Keep order status distinct from installation status and actual payment.
+
+## 16.4 Site visits, spatial issues and handover
+
+Audit the existing site/snags and handover implementations. If incomplete, complete the full user flow:
+- pin a snag to a floor, room, plan location or model object;
+- attach timestamped photos and notes; classify by trade/severity; assign responsibility and due date;
+- track status and preserve before/after evidence, reopen history and audit trail;
+- filter issues and export a useful PDF report with plan context and photos;
+- produce a handover pack from verified final plans, approved/substituted products, manuals/care instructions, warranty documents and dates where supplied, outstanding snags, exclusions and client acceptance state.
+
+Do not claim an item is installed because it is ordered, or invent warranty terms. A route without the complete UI/persistence/permission/report/test path remains PARTIAL.
+
+## 16.5 Project locale and commercial assumptions
+
+Units, locale, currency, date format, tax/VAT assumptions, labour rates, material consumption and waste assumptions must be explicit project settings with provenance/effective dates. Romanian defaults may be offered for Romanian projects but must not be hard-coded as global truth. Distinguish estimate, supplier quote, order value, actual cost and paid amount. Missing commercial data remains UNKNOWN, never zero by convenience.
+
+## 16.6 Lighting/daylight and ergonomic/accessibility analysis — only when real
+
+Evaluate these as later, bounded capabilities, not as decorative badges:
+- daylight analysis needs project orientation/location when supplied, window geometry/glazing, shading, room geometry and a defined calculation method or weather/climate basis;
+- separate artistic 3D lighting from actual daylight/illuminance or energy analysis;
+- ergonomic/accessibility checks should use versioned, configurable rules with jurisdiction/source, applicability, units, severity and mandatory/advisory status;
+- missing inputs/rules must yield NOT_EVALUATED/UNKNOWN. Do not fabricate lux, daylight autonomy, glare, energy savings, accessibility or code-compliance results.
+- never state that a home complies with a standard merely because a small subset of clearances passed. Specialist review remains necessary where applicable.
+
+## 16.7 Interoperability and export fidelity
+
+Keep proven PDF/DXF/CSV/JSON workflows and document their exact supported subsets. Consider IFC 4.3, IDS-based information checks and BCF-style issue exchange as staged, optional interoperability work only if the existing model can support a meaningful mapping. Any added format must declare version and supported subset, preserve stable IDs/units/levels/materials/properties where supported, report omitted or approximated data, and pass fixture-based round-trip plus malformed-file/security tests. Never claim universal IFC/BIM compatibility from a file extension or successful export call alone.
+
+## 16.8 Manufacturing outputs for custom joinery
+
+After parametric joinery is reliable, assess workshop-ready schedules with panel IDs/dimensions/thickness/material, grain direction, edge-banding sides, hardware, quantities and machining notes. Distinguish a conceptual cut list from optimized sheet nesting or CNC output. Implement nesting/CNC only if validated geometry and manufacturing constraints support it.
+
+## 16.9 New acceptance tests
+
+At minimum, test:
+1. Two unrelated projects with different briefs/locales/units do not share hidden template assumptions.
+2. Measured, client-supplied, estimated and unknown dimensions retain their provenance after save/reload.
+3. Changing an approved product triggers an explicit change delta and correct reapproval behavior.
+4. Partial delivery, substitution, installation and actual cost remain distinct states.
+5. A site issue can be pinned, assigned, documented with photos, resolved/reopened and exported to a real report.
+6. Handover includes only verified products/warranties/installation data and lists outstanding items.
+7. Missing daylight/accessibility inputs produce NOT_EVALUATED/UNKNOWN, not false pass results.
+8. Any newly supported open format round-trips a representative fixture and reports unsupported data.
+
+## 16.10 Prioritization and research evidence
+
+Prioritize in this order after baseline audit:
+- **P0:** structured brief/decision log, survey-value provenance, and completion of existing selection/approval/procurement flows;
+- **P1:** site visit/punch-list workflow, handover/warranty pack, explicit locale/commercial assumptions;
+- **P2:** daylight analysis, versioned accessibility/ergonomic rule packs, IFC/IDS/BCF interoperability, manufacturing nesting/CNC.
+
+Do not expand into every P1/P2 item before completing a coherent tested vertical slice. Record why an item is deferred and its acceptance criteria. Use the dated sources and limitations in the companion research note; verify the current implementation before calling anything missing.
+
+---
+
+# 17. Cross-cutting reliability, secure imports, accessibility and project recovery
+
+This section adds quality gates that cut across the editor, client workflow and project lifecycle. It does not replace sections 1–16. Audit the current implementation first; fix confirmed gaps in the same branch and PR #305, without duplicating existing systems.
+
+## 17.1 Secure project and asset import
+
+Treat PDF/raster plans, CAD files, GLB/glTF models, product images and project archives as untrusted input. For every supported import path:
+- maintain an explicit allowlist of formats and a documented supported subset; validate actual file content/signature and parser-level structure, not only filename extension or browser-supplied MIME type;
+- enforce configurable file-size, decompressed-size, image-dimension, entity-count and parser-time/resource limits before expensive processing;
+- generate internal storage names; prevent path traversal and archive extraction outside the intended destination; never execute imported content;
+- authorize upload and subsequent read/write/download per project; keep private files outside a directly executable/public web root where the deployment supports it;
+- serve downloads with safe content headers and access checks; do not expose private client plans through predictable paths;
+- for URL-based sourcing, use an explicit allowlist or a constrained fetch service with redirect, DNS/IP, private-network, protocol and response-size checks. Do not fetch arbitrary URLs from the server or forward credentials/cookies to suppliers;
+- return a clear import report: accepted, rejected, approximated and unsupported entities, plus the reason. Never silently convert a failed import into an empty or apparently successful project.
+
+Add adversarial fixtures for spoofed MIME/extension, malformed/truncated files, oversized/decompression-bomb archives, invalid model buffers, path traversal, URL redirects to private/internal addresses, timeouts and unauthorized project access. Tests must prove the import fails safely without corrupting existing project data.
+
+## 17.2 Project durability, conflict handling and recoverability
+
+A professional project is valuable client work. Verify the complete data lifecycle rather than testing only a successful save call:
+- show truthful dirty/saving/saved/error/conflict states; never display “saved” before persistence confirms success;
+- preserve unsaved work through navigation errors and recoverable request failures; make retry idempotent and prevent duplicate uploads/orders/issues;
+- detect stale writes/concurrent edits and present a safe conflict resolution path; do not silently overwrite a newer revision;
+- support a documented project export/backup and restore/import path if compatible with the current architecture. Include schema/version metadata and validate the archive before mutating an existing project;
+- test interrupted save/upload, refresh during save, stale revision, duplicate retry, backup restore, corrupted backup and backward-compatible migration. A restore test must compare project IDs/relationships, geometry, units, provenance, materials, quantities and revision history—not merely confirm that a file was accepted;
+- if any backup, sync or offline feature depends on unavailable infrastructure, state that limitation and do not simulate success.
+
+## 17.3 Accessible precision editing across mouse, keyboard and touch
+
+Treat accessibility as part of editor correctness, not only a visual audit:
+- every drag-based operation must have a practical non-drag alternative where feasible: select an entity and enter exact dimensions/coordinates, use nudge/rotate controls, or use keyboard commands;
+- support visible keyboard focus, semantic labels, keyboard operation for dialogs/inspectors/layers, meaningful status/error announcements and focus that is not obscured by sticky panels;
+- test target sizes and spacing against WCAG 2.2 AA; aim for larger touch targets (approximately 44 CSS px) in mobile-critical controls where layout permits;
+- keep the canvas usable on narrow screens without horizontal page overflow; use a deliberate mobile interaction model rather than shrinking the desktop toolbar;
+- respect reduced-motion preferences and avoid communicating ERROR/WARNING/UNKNOWN through colour alone;
+- validate actual workflows at representative desktop, tablet and phone widths, with keyboard-only and touch input. A passing automated accessibility scan is useful but does not replace interaction tests.
+
+## 17.4 Privacy, client-sharing and lifecycle controls
+
+Inspect the complete ownership and sharing path for project records, imported plans, photos, supplier costs and exports:
+- enforce least privilege on the server for every project-scoped read/write; hiding a button in the UI is not authorization;
+- client links must be revocable, scoped to the intended project/revision/data projection, resistant to guessing, and free of internal notes, supplier margin, credentials or unrelated client data;
+- record meaningful audit events for approvals, substitutions, exports, shares and destructive actions without logging secrets or full sensitive payloads;
+- collect only client information needed for the workflow; document retention/deletion/export behavior and avoid keeping personal data indefinitely without a justified purpose;
+- verify project duplication, deletion/trash, restore, share revocation and exports do not leak or resurrect another project's data.
+
+Do not claim GDPR compliance from a checklist alone. Map implemented controls and known gaps to the applicable legal review; the software should provide controls and evidence, not make unsupported legal assurances.
+
+## 17.5 Measured performance and graceful degradation
+
+Create representative fixtures based on realistic project complexity, then measure rather than guess:
+- initial editor load, plan interaction latency, 2D/3D synchronization, save/reload time, render stability and memory as project size grows;
+- texture/model loading, cleanup on scene rebuild, WebGL context loss, browser/device limits and repeated project switching;
+- define budgets from a recorded baseline and target hardware, and make regressions visible in CI where stable;
+- use lazy loading, bounded texture/model sizes, caching or level-of-detail only where measurements justify them;
+- if 3D rendering or an optional analysis engine is unavailable, preserve 2D editing and project data, show a truthful fallback state, and never block manual work on an AI/provider call.
+
+## 17.6 Additional acceptance gates
+
+1. Import malformed and oversized plan/model files; verify a useful rejection report and no project mutation.
+2. Attempt an unauthorized upload/read/write and a URL redirect to a private address; verify denial.
+3. Interrupt a save, retry it and reload; verify truthful status and no duplicate data.
+4. Restore a project backup into a new project and compare model relationships, provenance, quantities and revisions.
+5. Complete the core editing flow using keyboard/numeric controls without dragging; repeat on a phone-sized viewport with no page overflow.
+6. Revoke a client link and verify it cannot access the project; verify client exports exclude internal commercial notes.
+7. Run a recorded large-project benchmark and verify 2D editing remains usable if WebGL or AI is unavailable.
+
+## 17.7 Research basis
+
+- OWASP File Upload Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html
+- OWASP SSRF Prevention Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html
+- W3C WCAG 2.2, including target size and alternatives to dragging: https://www.w3.org/TR/WCAG22/
+- European Commission — GDPR principles (data minimisation, storage limitation, integrity/confidentiality and accountability): https://commission.europa.eu/law/law-topic/data-protection/information-and-business-organisations/principles-gdpr_en
+
+These are control references, not proof of Casa3D compliance. Verify each control against source, tests and runtime behavior.
+
+
+
+---
+
+# 18. Flagship UI/UX overhaul — Casa3D must feel like a next-generation design studio
+
+**Owner requirement:** the current interface is not visually or ergonomically good enough. This is a product-level redesign, not a color-only reskin. Continue in the same branch and PR #305. The result must feel like a credible, premium professional spatial-design studio while preserving the existing geometry, project data, APIs and workflows. Do not create a disconnected prototype or replace working domain logic with mock data.
+
+## 18.1 Research and baseline before changing the UI
+
+1. Inspect the current rendered app and representative flows in the actual branch: home/dashboard, new-project creation, editor 2D, editor 3D, contextual inspector, style/material selection, budget/BOQ, technical plans, client presentation/share, project print/export and mobile layout.
+2. Capture baseline screenshots before changing styles. If browser automation or a runnable environment is unavailable, state that limitation and do not claim visual verification.
+3. Read the existing CSS tokens, component styles, fonts, icon system, responsive breakpoints, and UI tests. The current code has a central token layer in `app/app/globals.css` and a large editor with contextual panels; preserve and rationalize that architecture instead of stacking more overrides.
+4. Create a concise design-direction record: audience, interaction model, visual direction, semantic tokens, typography, grid/spacing, component rules, motion rules, responsive behavior, accessibility target and rejection criteria. Include desktop and mobile wireframes before implementation.
+5. Audit every screen for real workflow completeness. A visually attractive button that does nothing is a defect. Do not fabricate catalog images, supplier facts, project statistics, client approvals or AI results to make screenshots look impressive.
+
+## 18.2 Visual direction: architectural craft meets advanced creative software
+
+Create a coherent, recognizable visual identity for Casa3D—premium, contemporary, architectural and calm, with strong contrast and unusually good craft. The editor should give the plan/model most of the visual space; the interface should support the work rather than compete with it.
+
+Direction to explore and validate against the existing product:
+- **Studio chrome:** restrained graphite/ink navigation and tool surfaces; clean warm-paper or neutral drawing canvas; one distinctive high-visibility accent for the primary action/selection, with separate semantic colors for success, warning and error.
+- **Architectural editorial character:** confident typography hierarchy, precise alignment, purposeful whitespace, crisp technical labels and well-composed real project thumbnails/material photography.
+- **Canvas-first composition:** the plan or 3D scene is the hero. Keep panels visually quiet, compact and contextual. Avoid card-on-card nesting, huge empty hero copy inside the working editor, decorative gradients behind technical data, oversized radii, random icon styles and unnecessary badges.
+- **Controlled depth:** use elevation/translucency only when it helps separate floating controls from the canvas. Do not blanket the app in glassmorphism, blur, glow or shadows.
+- **Design system, not page-by-page styling:** one source of truth for color, typography, spacing, radii, borders, focus rings, elevation, icon sizes, control heights, animation and responsive breakpoints. Existing legacy CSS aliases may remain temporarily, but map them to canonical semantic tokens and remove contradictory overrides as files are touched.
+- **Light/dark modes** only if both can be made complete and tested. A dark canvas/editor mode must not force printed drawing sheets or client deliverables into dark output.
+- Keep the brand recognizable and use real Casa3D assets or properly licensed imagery. Do not change the public product name as a side effect of a visual refresh.
+
+The design must be original and product-specific, not a clone of Figma, Linear, Autodesk, Apple or another competitor. Use competitor research to understand workflows and quality bars, not to copy their visual identity.
+
+## 18.3 Rebuild the editor information architecture around the work
+
+Use the following as a target architecture; adapt it to the actual code and prove the flow rather than forcing an inflexible layout:
+
+1. **Top command bar:** project name and status, save/sync state, undo/redo, current level, 2D / 3D / split view, compare/revision controls, collaboration/share, and export. Show unsaved/offline/conflict states honestly.
+2. **Left tool rail:** a small, consistent set of primary modes (Select/Edit, Build/Geometry, Furnish, Materials/Concept, Technical Layers, Sheets/Outputs). Each icon has a tooltip, accessible name and shortcut. Put secondary commands in contextual drawers rather than exposing dozens of unrelated buttons at once.
+3. **Expandable resource drawer:** searchable, filterable objects/materials/components with clear categories, dimensions, provenance and “place/add” actions. The drawer must not permanently steal most of the canvas width.
+4. **Main spatial workspace:** large interactive plan/3D view, reliable zoom/pan/fit-to-project, visible scale/units/level, layer visibility, selection state and useful minimap/level navigator when it adds value. 2D and 3D must remain synchronized with the canonical model. Split view is optional if the actual layout can keep both views useful.
+5. **Contextual inspector:** updates to the current selection (room, wall, opening, furniture, light, material or technical object); separates basic controls from advanced properties; uses exact numeric inputs with units, constraints and validation. Avoid a permanently open universal form full of irrelevant controls.
+6. **Bottom status / history strip:** scale, units, active tool, selection summary, validation count, save state and accessible zoom controls. Add a meaningful action history/timeline if it integrates with real undo/revision data.
+7. **Command palette:** searchable actions and navigation with keyboard shortcut (for example Ctrl/Cmd+K), recent actions and contextual commands. Commands must invoke existing operations; no dead entries. Show shortcuts and respect text input focus.
+
+Provide clear ways to collapse/resize side panels, restore the default workspace, focus the canvas, and switch between beginner-friendly and advanced controls without hiding critical errors or altering project data. Remember panel widths and view preferences only if the current preference architecture supports safe persistence.
+
+## 18.4 Transform the project dashboard and first-run experience
+
+The first screen should look like a professional studio, not a generic admin table or a template marketplace.
+
+- A compact studio header with clear primary action **New project** and secondary actions for import/open/recent work.
+- A visual project archive with useful, real plan/render thumbnails; name, client (subject to privacy), project stage, last edited, next deadline and unresolved decisions where the data actually exists.
+- Search, filters and sort that work; sensible empty/loading/error states; no fake KPI cards.
+- New-project flow starts from blank, measured survey, imported plan, an existing project copy or optional editable starter. Explain scale confirmation and unsupported import entities.
+- A new user can reach the first editable plan quickly; do not require a long wizard when the user already knows what to do.
+- Project actions (duplicate, archive/trash, restore, delete) must retain existing confirmation, undo, permission and data-isolation behavior.
+- At smaller widths, reflow into a compact project list/cards without horizontal page overflow or hidden critical actions.
+
+## 18.5 Material and concept workflow should feel like a creative instrument
+
+Upgrade moodboards/material selection from ordinary form fields to a visually rich, but data-honest, workflow:
+
+- image-led swatches and cards with material/color, manufacturer/SKU when known, dimensions/format, price and source timestamp where known, and explicit unknown/unverified states;
+- drag-to-apply where supported, plus a keyboard-accessible non-drag equivalent;
+- compare material/product alternatives side by side and preview the impact on selected room/object and whole-home concept before applying;
+- project-wide / level / room / object scope is always visible before a bulk change; list affected objects and preserve local overrides unless the user explicitly changes that policy;
+- bind each swatch to real persisted project data and source/license provenance; no static mock material cards masquerading as real catalog records;
+- keep an elegant client-facing moodboard/presentation view separate from dense technical editing controls.
+
+## 18.6 AI should be a contextual design copilot, not a decorative chatbot
+
+Integrate AI into the spatial workflow only where the existing model/provider path genuinely supports it:
+
+- The user can ask for an edit to the selected room/object or project (e.g. “try a warmer oak in the living room while preserving the kitchen fronts”).
+- The system resolves the request into typed operations against the canonical model, validates constraints, and shows a preview/diff: affected objects, geometry/material changes, budget delta, warnings and source assumptions.
+- The designer explicitly applies or rejects the proposal. Applying is one reversible transaction with an undo path and revision record; stale proposals must not overwrite newer edits.
+- AI must not silently mutate the project, invent dimensions/prices/products, bypass deterministic validation, or claim that a generated render is a measured technical plan.
+- If AI/provider is unavailable, manual editing remains fully usable. Display a clear fallback instead of a spinner that never resolves.
+- Contextual suggestions should be short, tied to the current selection and project brief, and explain the trade-off. Do not make a chat panel the default dominant surface.
+
+## 18.7 Signature interactions and micro-interactions
+
+Use motion and feedback to improve spatial orientation and precision, not as decoration:
+- selected objects and affected rooms are highlighted consistently across plan, 3D, inspector, schedule and coordination findings;
+- clicking a validation finding navigates to the exact object and reveals the relevant layer/panel;
+- applying a global style previews the result and affected-object count before commit;
+- save, sync, import, render and export have explicit queued/running/succeeded/failed states, with retry or recovery where applicable;
+- undo/redo gives clear feedback and never lies about whether a change was reverted;
+- transitions are brief and purposeful, with `prefers-reduced-motion` support;
+- avoid animations that obstruct measurement, camera control or dense technical work.
+
+## 18.8 Responsive behavior and accessibility are first-class
+
+Target WCAG 2.2 AA for the web UI where applicable. At minimum:
+- semantic landmarks, accessible names, logical heading structure, visible focus, keyboard-operable dialogs/menus/inspectors and non-color-only status cues;
+- minimum 24×24 CSS px targets or a documented WCAG exception, with comfortable spacing for frequent controls;
+- every drag interaction (moving/resizing objects, reordering, placing or drawing) has an equivalent single-pointer or numeric/keyboard route where applicable;
+- keyboard alternatives for numeric positioning, rotation, dimensions, selection, zoom and common editor actions;
+- contrast testing for text, technical labels, selected objects, warnings, disabled states and chart/plan overlays;
+- reduced motion, browser zoom and high-contrast considerations;
+- mobile is a purpose-designed companion workflow: project browsing, brief/review, approvals, comments, site photos and status updates. Do not squeeze the entire desktop CAD editor onto a phone; if precision editing is unsupported on a viewport, state that and provide a usable alternative.
+- test desktop and compact widths, including at least 1440, 1280, 1024, 768 and 390 CSS pixels, plus keyboard-only and reduced-motion states. Fix overflow, clipped popovers and controls hidden behind panels.
+
+## 18.9 UI quality gates — screenshots are evidence, not decoration
+
+Before calling the redesign complete:
+1. Capture the same representative screens and states before and after the redesign using browser automation, where available.
+2. Inspect screenshots at wide desktop, laptop, tablet and phone widths. Record artifact paths, dimensions, viewport and tested state.
+3. Test real interactions: create/open project, switch 2D/3D, select an object, edit exact dimensions, apply a material, open coordination findings, undo/redo, save/reload, share/presentation and export.
+4. Verify keyboard focus, keyboard-only paths, reduced motion, contrast, loading/error/empty/disabled states and page overflow.
+5. Run typecheck, relevant tests and production build; report actual commands and exit codes. Add visual regression tests only where they are stable and meaningful.
+6. Review all changed UI files for duplicated styles, raw magic values, inconsistent controls, accessibility regressions, dead buttons and broken project data flows.
+7. Keep a before/after scorecard for visual hierarchy, canvas space, navigation clarity, consistency, accessibility, responsive behavior and interaction latency. Each score must cite screenshot/test evidence; subjective visual judgments must be labeled as such.
+
+Do not claim a rendered redesign was verified if no browser/runtime was available. A CSS-only patch, static screenshot, or new dashboard that leaves the editor clumsy does not satisfy this section.
+
+---
+
+# 19. Differentiators that could make Casa3D genuinely memorable
+
+Do not implement every idea indiscriminately. Audit existing capabilities first, rank opportunities by user value, implementation cost, data integrity and testability, then implement a coherent vertical slice with working end-to-end behavior. Reuse existing domain models and revision/approval systems.
+
+## 19.1 Spatial brief-to-model traceability graph
+
+Connect the complete chain:
+**client requirement → room/zone → model object or finish → selected product → price/quantity → client decision → procurement/order → site installation → handover record**.
+
+A designer should be able to click a requirement and see which rooms/objects satisfy it, what remains unresolved, which approved choices depend on it, and which downstream outputs change when it changes. The graph must be derived from real IDs and current revision data; unresolved links must be visible. This is more valuable than another disconnected dashboard.
+
+## 19.2 Design options lab with explainable trade-offs
+
+Allow a designer to compare multiple genuine model states side by side:
+- synchronized 2D plans and 3D viewpoints;
+- changed objects/materials and spatial constraints;
+- budget delta split into known, estimated and unknown amounts;
+- impact on storage, circulation, client must-haves and other explicitly implemented metrics;
+- what changed, why it was proposed, and which assumptions remain unresolved.
+
+A/B/C options must be independently persisted proposals tied to a base revision, not three labels over the same state. Applying one option is explicit and reversible; a stale option cannot overwrite later edits. Never generate numerical claims for criteria the app does not calculate.
+
+## 19.3 Spatial command language with deterministic preview
+
+Provide an optional command surface for high-level operations such as “duplicate this cabinet run on the opposite wall” or “show every unresolved electrical point on level 2.” Parse commands into typed, auditable operations. The deterministic geometry/model layer validates them. Before applying a change, show a human-readable plan, affected object IDs, constraints, warnings and an explicit confirmation for bulk/destructive changes. The feature must be useful with the AI service disabled via searchable deterministic commands where feasible.
+
+## 19.4 Live design impact map
+
+When a wall, opening, room, finish or component changes, identify downstream effects: affected dimensions/areas, 2D/3D views, schedules, quantities, budget, drawings, approved client choices and procurement items. Show an impact summary before committing a high-impact change. Use dependency tracking from actual model relationships rather than heuristic claims. Do not silently invalidate an approval or purchase order.
+
+## 19.5 Client review that is visual, version-bound and low-friction
+
+Build on the existing share/choice/feedback model:
+- polished client presentation with room-by-room story, moodboards, renders/plan views and selectable alternatives;
+- comments anchored to a room/object/material and exact revision;
+- clear approve/reject/request-change actions at item level;
+- compare current and proposed versions, with a readable summary of changed items and cost effects;
+- private designer notes, supplier cost/margin and internal risk data never appear in the client projection;
+- accessible phone workflow, revocable share links and tests for stale/revoked links.
+
+Do not create a second approval engine or publish data outside the current permission model.
+
+## 19.6 Evidence-based project health and next-best-action queue
+
+A project cockpit should summarize only computed and sourced facts: unresolved geometry, missing client decisions, products with unknown dimensions/prices, late deliveries, open site issues, pending approvals, unissued sheets and incomplete handover. Each item links to the exact object/record and offers a real next action. Do not invent completion percentages or display generic “AI score” metrics without a defined and tested calculation.
+
+## 19.7 Capture-to-design bridge
+
+If technically feasible with the current stack, make site survey and field capture feed the canonical model: photo/measurement records tied to room, wall or object, with timestamp, author, provenance and confidence. Support correction and manual confirmation. Any computer-vision extraction remains a suggestion until the designer validates it; preserve original source evidence and never auto-promote inferred dimensions to measured truth.
+
+## 19.8 Model-driven deliverables, not screenshots pretending to be documents
+
+From the same canonical model, generate a coherent issue set with plan sheets, room/finish/door/window/light schedules, material board, BOQ, procurement list and client handover. Every output carries project ID, revision, date, units, status and provenance as applicable. A change-impact report must reveal which outputs are stale after model changes. Verify actual PDF/DXF/CSV/JSON artifacts and round trips rather than only asserting that export functions were called.
+
+## 19.9 Build order and scope discipline
+
+Prioritize:
+- **P0:** visual design system + editor/dashboard redesign; responsive/accessibility gates; spatial brief/decision traceability; reliable save and revision states; real before/after visual evidence.
+- **P1:** design options lab, live impact map, client review tied to exact revisions, project health queue; only after verifying existing code paths.
+- **P2:** capture-to-design automation, richer command language, advanced rendering/daylight and broader interoperability after inputs/algorithms and performance are validated.
+
+A smaller, fully working, visually excellent vertical slice beats a long list of controls that are disconnected or fake. Keep all new work in the same PR #305 and branch. Do not merge or create a separate PR without explicit authorization.
+
+## 19.10 Additional design and workflow research
+
+- Apple Human Interface Guidelines — Layout (updated 2026-09-09): visual hierarchy, alignment, grouping, progressive disclosure and adaptive layouts: https://developer.apple.com/design/human-interface-guidelines/layout/
+- Apple Human Interface Guidelines — Design principles (updated 2026-06-08): purpose, agency, flexibility, simplicity, craft, delight, recovery and clear feedback: https://developer.apple.com/design/human-interface-guidelines/design-principles
+- Apple Human Interface Guidelines — Panels: contextual inspectors and controls that follow the active selection: https://developer.apple.com/design/human-interface-guidelines/panels
+- W3C WCAG 2.2: keyboard/accessibility criteria, dragging alternatives and target size: https://www.w3.org/TR/WCAG22/
+- Autodesk Forma (2026): iterative design options, model-linked review, comments/markups and continuity between design review and project data; use as workflow evidence, not a claim that Casa3D should copy its UI: https://blogs.autodesk.com/forma/2026/10/14/what-autodesk-forma-announced-au-2026/
+- Chief Architect feature catalogue: synchronized 2D/3D editing, contextual material/object painting, model-derived schedules, customizable toolbars/themes and project archiving: https://www.chiefarchitect.com/products/features/
+
