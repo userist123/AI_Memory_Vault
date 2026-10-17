@@ -73,3 +73,21 @@ describe('undo / redo', () => {
   });
   test('o acțiune nouă golește redo', () => { const h = new History<number>(); h.push(1); h.undo(2); assert.equal(h.canRedo, true); h.push(3); assert.equal(h.canRedo, false); });
 });
+describe('undo / redo — drag transaction', () => {
+  test('rollback of an unchanged drag removes its own step and keeps redo', () => {
+    const h = new History<number>(); h.push(1); h.undo(2); assert.equal(h.canRedo, true);
+    const m = h.begin(1); assert.equal(h.canRedo, false);
+    assert.equal(h.rollback(m), true); assert.equal(h.canUndo, false); assert.equal(h.canRedo, true); assert.equal(h.redo(1), 2);
+  });
+  test('undo during the drag: rollback must not drop the earlier step', () => {
+    const h = new History<number>(); h.push(0); // earlier edit: S0 -> S1
+    const m = h.begin(1); h.undo(1); // Ctrl+Z mid-drag pops the drag step
+    assert.equal(h.rollback(m), false); assert.equal(h.canUndo, true); assert.equal(h.undo(1), 0);
+  });
+  test('rollback is a no-op after another push or at the trim limit', () => {
+    const h = new History<number>(2); h.push(0); h.push(1); const m = h.begin(2); h.push(3);
+    assert.equal(h.rollback(m), false);
+    const k = new History<number>(2); k.push(0); k.push(1); const m2 = k.begin(2); // trims 0
+    assert.equal(k.rollback(m2), true); assert.equal(k.undo(9), 1); assert.equal(k.canUndo, false);
+  });
+});
