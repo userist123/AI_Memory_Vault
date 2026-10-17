@@ -191,18 +191,18 @@ export function refineFurnishing(cat: Catalog, inp: RefineInput): RefineResult {
     const roomArea = area(room.rect);
     const isTargetRoom = inp.roomId === room.id;
     if (isTargetRoom) need = true;
-    else if (room.type === 'bucatarie') need = !has('bucatarie') || !has('frigider') || blocking || (roomArea >= 12 && !has('comoda'));
+    else if (room.type === 'bucatarie') need = !has('bucatarie') || !has('frigider') || blocking || (roomArea >= 10.5 && !has('comoda'));
     // livingul se reface și când casa a rămas fără masă (motorul nu a găsit loc nici în bucătărie, nici aici) sau e spațios și sub-mobilat
     else if (room.type === 'living') need = blocking || (has('canapea') && !has('comodaTv')) || (isStudioLiving(floor, room) && !has('pat'))
       || (!isStudioLiving(floor, room) && !placements.some(p => p.group === 'masa'))
-      || (!isStudioLiving(floor, room) && roomArea >= 23.5 && !has('fotoliu') && !has('comoda'));
+      || (!isStudioLiving(floor, room) && roomArea >= 22.5 && (!has('fotoliu') || (roomArea >= 24.0 && !has('comoda'))));
     else if (room.type === 'dormitor'){ const swing = doorSwingZones(floor, room), bed = mine.find(p => p.group === 'pat');
       need = blocking || !bed || !has('dulap') || swing.some(z => rectHit(z, toItem(bed!).fp)) || (has('birou') && roomArea < FURNISH_RULES.deskMinArea)
-        || (roomArea >= 19 && !has('comoda')); }
+        || (roomArea >= 18.2 && !has('comoda')) || (roomArea >= 21.0 && !has('fotoliu')); }
     else if (room.type === 'baie') need = !has('wc') || !has('lavoar') || (isSmallWc(floor, room) ? has('dus') || has('cada') : !has('dus') && !has('cada'))
-      || (!isSmallWc(floor, room) && roomArea >= 7 && !has('caloriferBaie') && !has('coloanaBaie'));
+      || (!isSmallWc(floor, room) && roomArea >= 6.8 && (!has('caloriferBaie') || (roomArea >= 7.8 && !has('coloanaBaie'))));
     else if (room.type === 'hol') need = blocking || mine.some(p => hOf(p) > FURNISH_RULES.hallMaxH + 1e-9) || !has('oglinda') || !has('pantofar')
-      || (roomArea >= 8.5 && !has('comoda'));
+      || (roomArea >= 8.0 && !has('comoda')) || (roomArea >= 9.5 && !has('fotoliu'));
     if (!need) continue;
     // piesele puse de mână rămân ca obstacole; cele automate se refac
     for (const p of mine.filter(p => p.source !== 'auto')) ctx.items.push(toItem(p));
@@ -220,7 +220,7 @@ export function refineFurnishing(cat: Catalog, inp: RefineInput): RefineResult {
     const fresh = ctx.items.filter(i => !i.ghost && !i.keep).map<FurniturePlacement>(i => ({ id: uid(), roomId: room.id, group: i.group, variantId: i.variantId, x: r3(i.x), z: r3(i.z), rotation: i.rot, source: 'auto' }));
     // nu se pierde nicio grupă pe care motorul o pusese, în afară de cele scoase intenționat de reguli
     // (dușul din WC-ul mic, biroul din dormitorul mic); altfel rămâne amenajarea motorului
-    const dropOk = new Set([...(isSmallWc(floor, room) ? ['dus', 'cada'] : []), ...(room.type === 'dormitor' && area(room.rect) < FURNISH_RULES.deskMinArea ? ['birou', 'scaunBirou'] : [])]);
+    const dropOk = new Set([...(isSmallWc(floor, room) ? ['dus', 'cada'] : []), ...(room.type === 'dormitor' && area(room.rect) < FURNISH_RULES.deskMinArea ? ['birou', 'scaunBirou'] : []), 'fotoliu', 'comoda', 'biblioteca', 'caloriferBaie', 'coloanaBaie', 'bideu']);
     if (auto.some(p => !dropOk.has(p.group) && !fresh.some(f => f.group === p.group))) continue;
     redone.push(room.id);
     placements = [...placements.filter(p => p.roomId !== room.id || p.source !== 'auto'), ...fresh];
@@ -248,7 +248,7 @@ export function refineFurnishing(cat: Catalog, inp: RefineInput): RefineResult {
     if (!best) { ctx.items = base; return false; }
     ctx.items = (best as { items: Item[] }).items;
     if (dining){ const [cx, cz] = center(r); const t = ctx.placeFree('masa', dining, diningPad, (x, z, vi) => Math.hypot(x - cx, z - cz) + vi * .2); if (!t && dining.length && area(r) >= 9.5) nf.push({ key: 'masa', room: ctx.room.name }); }
-    if (area(r) >= 12) {
+    if (area(r) >= 10.5) {
       ctx.place('comoda', chain('comoda', smaller('comoda')), () => .6, (s, vi) => vi * .6 + Math.min(s.t, 1 - s.t) * 2);
     }
     return true;
@@ -342,12 +342,14 @@ export function refineFurnishing(cat: Catalog, inp: RefineInput): RefineResult {
     const maxBiblio = studio ? 1 : roomArea >= 28 ? 4 : roomArea >= 25 ? 3 : 2;
     for (let k = 0; k < maxBiblio; k++) ctx.place('biblioteca', chain('biblioteca', []), () => .6, s => Math.min(s.t, 1 - s.t) * 4);
 
-    if (roomArea >= (studio ? 26 : 23.5)) {
+    if (roomArea >= (studio ? 26 : 22.5)) {
       const armchairs = chain('fotoliu', smaller('fotoliu'));
-      const maxFotolii = roomArea >= 27 ? 2 : 1;
+      const maxFotolii = roomArea >= (studio ? 27 : 26.0) ? 2 : 1;
       for (let k = 0; k < maxFotolii; k++) {
         ctx.place('fotoliu', armchairs, () => .45, (s, vi) => vi * .5 + Math.min(s.t, 1 - s.t) * 2);
       }
+    }
+    if (roomArea >= (studio ? 26 : 24.0)) {
       const sideboards = chain('comoda', smaller('comoda'));
       ctx.place('comoda', sideboards, () => .6, (s, vi) => vi * .6 + Math.min(s.t, 1 - s.t) * 2);
     }
@@ -399,10 +401,10 @@ export function refineFurnishing(cat: Catalog, inp: RefineInput): RefineResult {
     const chosenBed = ctx.items.find(i => i.group === 'pat');
     const pads = chosenBed ? bedPads(chosenBed) : [];
     const roomArea = area(r);
-    if (roomArea >= 19) {
+    if (roomArea >= 18.2) {
       ctx.place('comoda', chain('comoda', smaller('comoda')), () => .6, (s, vi) => vi * .6 + Math.min(s.t, 1 - s.t) * 2, { extra: pads });
     }
-    if (roomArea >= 22) {
+    if (roomArea >= 21.0) {
       ctx.place('dulap', wardrobes, v => isSliding(v) ? .6 : .9, (s, wi) => wi * .8 + Math.min(s.t, 1 - s.t) * 2, { extra: pads });
       ctx.place('fotoliu', chain('fotoliu', smaller('fotoliu')), () => .45, (s, vi) => vi * .6 + Math.min(s.t, 1 - s.t) * 2, { extra: pads });
       ctx.place('biblioteca', chain('biblioteca', []), () => .6, s => Math.min(s.t, 1 - s.t) * 4, { extra: pads });
@@ -428,10 +430,10 @@ export function refineFurnishing(cat: Catalog, inp: RefineInput): RefineResult {
     }
     ctx.items = best!.items;
 
-    if (!small && area(r) >= 6.9) {
+    if (!small && area(r) >= 6.8) {
       ctx.place('caloriferBaie', chain('caloriferBaie', []), () => 0, (s, vi) => vi * .5 + Math.min(s.t, 1 - s.t));
       ctx.place('coloanaBaie', chain('coloanaBaie', []), () => .5, (s, vi) => vi * .5 + Math.min(s.t, 1 - s.t));
-      if (area(r) >= 8.0) {
+      if (area(r) >= 7.8) {
         ctx.place('bideu', chain('bideu', []), () => .6, (s, vi) => vi * .5 + Math.min(s.t, 1 - s.t));
       }
     }
@@ -454,10 +456,10 @@ export function refineFurnishing(cat: Catalog, inp: RefineInput): RefineResult {
     const near = con ? center(con.fp) : ent;
     ctx.place('oglinda', mirrors, () => .6, (s, vi) => { const [x, z] = center(s.fp); return vi * .6 + Math.hypot(x - near[0], z - near[1]) * .5; }, { extraFp: entrance, frontMayCrossDoor: true });
 
-    if (area(r) >= 8.5) {
+    if (area(r) >= 8.0) {
       const lowComode = chain('comoda', smaller('comoda')).filter(low);
       ctx.place('comoda', lowComode, () => .6, (s, vi) => vi * .6 + Math.min(s.t, 1 - s.t) * 2, { extraFp: entrance, frontMayCrossDoor: true });
-      if (area(r) >= 10.0) {
+      if (area(r) >= 9.5) {
         const lowChairs = chain('fotoliu', smaller('fotoliu')).filter(low);
         ctx.place('fotoliu', lowChairs, () => .45, (s, vi) => vi * .6 + Math.min(s.t, 1 - s.t) * 2, { extraFp: entrance, frontMayCrossDoor: true });
       }
