@@ -537,3 +537,164 @@ Do not interpret “more options” as adding a long menu of presets. The requir
 
 Before implementation, add a traceability table mapping each new requirement to (a) existing code, (b) the exact gap, (c) a test, (d) an implementation step and (e) evidence of completion. Then implement in the same Casa3D branch/PR #305, prioritizing real editing workflows over breadth of superficial controls. Preserve working features and existing project data. No auto-merge. No weakening tests. No fake demos. No unsupported claims of engineering/code compliance.
 
+
+
+---
+
+# 16. Additional research — professional project lifecycle, traceability and interoperability
+
+**Read the companion research note first:** `02_PRODUCT/projects/Casa3D/research-2026-10-18/research_professional_workflows.md`. These requirements extend the existing editor brief; they do not replace sections 1–15. Continue in this same branch and PR #305.
+
+## 16.1 Inspect existing lifecycle code before adding anything
+
+The repository already contains implementation surfaces for client choices, procurement/order state, site snags, handover and commercial data. Do not infer completeness from a route, type or database table. Inspect the current domain modules, UI, persistence/schema, authorization, client-share projections, tests and actual runtime. Build a matrix of **REAL / PARTIAL / MISSING / UNKNOWN**, with exact files and evidence. Extend existing sources of truth; do not create duplicate catalogs, approval models, procurement stores, revision systems or site-issue systems.
+
+## 16.2 Structured client brief and design-decision traceability
+
+Where not already implemented end-to-end, provide a structured project brief with room-level requirements, must-haves, constraints, retained furniture, preferred/forbidden materials, storage needs, budget range and explicit trade-offs. Link each decision to the requirement, affected room/object, selected alternative, approver, timestamp and project revision.
+
+Track the provenance of important survey/model values: **MEASURED**, **CLIENT_SUPPLIED**, **IMPORTED_OR_DETECTED**, **DESIGNER_ESTIMATE** or **UNKNOWN**, with source, author/date and tolerance/confidence when available. Do not silently promote estimates or detected raster geometry to confirmed measurements. Preserve this metadata in save/reload and relevant survey/drawing reports.
+
+## 16.3 FF&E selection, approval, substitution and procurement lifecycle
+
+Audit and complete the current product-choice/order/commercial path rather than creating another one. A complete workflow should support, where missing:
+- product/finish boards grouped by room, category or phase, with comparable specifications and known/unknown fields;
+- item-level client approve/reject/comment bound to the exact revision shown;
+- visible impact and reapproval when an approved item is substituted or its dimensions, finish or cost materially changes;
+- supplier/order status, order reference, ETA, partial delivery, delivery/installation/return/cancellation and issue notes;
+- supplier-grouped purchase-order/export views and estimated-versus-actual costs;
+- strict separation of internal margin/private notes from client-facing views.
+
+Do not invent supplier availability, delivery dates, prices or warranty data. Keep order status distinct from installation status and actual payment.
+
+## 16.4 Site visits, spatial issues and handover
+
+Audit the existing site/snags and handover implementations. If incomplete, complete the full user flow:
+- pin a snag to a floor, room, plan location or model object;
+- attach timestamped photos and notes; classify by trade/severity; assign responsibility and due date;
+- track status and preserve before/after evidence, reopen history and audit trail;
+- filter issues and export a useful PDF report with plan context and photos;
+- produce a handover pack from verified final plans, approved/substituted products, manuals/care instructions, warranty documents and dates where supplied, outstanding snags, exclusions and client acceptance state.
+
+Do not claim an item is installed because it is ordered, or invent warranty terms. A route without the complete UI/persistence/permission/report/test path remains PARTIAL.
+
+## 16.5 Project locale and commercial assumptions
+
+Units, locale, currency, date format, tax/VAT assumptions, labour rates, material consumption and waste assumptions must be explicit project settings with provenance/effective dates. Romanian defaults may be offered for Romanian projects but must not be hard-coded as global truth. Distinguish estimate, supplier quote, order value, actual cost and paid amount. Missing commercial data remains UNKNOWN, never zero by convenience.
+
+## 16.6 Lighting/daylight and ergonomic/accessibility analysis — only when real
+
+Evaluate these as later, bounded capabilities, not as decorative badges:
+- daylight analysis needs project orientation/location when supplied, window geometry/glazing, shading, room geometry and a defined calculation method or weather/climate basis;
+- separate artistic 3D lighting from actual daylight/illuminance or energy analysis;
+- ergonomic/accessibility checks should use versioned, configurable rules with jurisdiction/source, applicability, units, severity and mandatory/advisory status;
+- missing inputs/rules must yield NOT_EVALUATED/UNKNOWN. Do not fabricate lux, daylight autonomy, glare, energy savings, accessibility or code-compliance results.
+- never state that a home complies with a standard merely because a small subset of clearances passed. Specialist review remains necessary where applicable.
+
+## 16.7 Interoperability and export fidelity
+
+Keep proven PDF/DXF/CSV/JSON workflows and document their exact supported subsets. Consider IFC 4.3, IDS-based information checks and BCF-style issue exchange as staged, optional interoperability work only if the existing model can support a meaningful mapping. Any added format must declare version and supported subset, preserve stable IDs/units/levels/materials/properties where supported, report omitted or approximated data, and pass fixture-based round-trip plus malformed-file/security tests. Never claim universal IFC/BIM compatibility from a file extension or successful export call alone.
+
+## 16.8 Manufacturing outputs for custom joinery
+
+After parametric joinery is reliable, assess workshop-ready schedules with panel IDs/dimensions/thickness/material, grain direction, edge-banding sides, hardware, quantities and machining notes. Distinguish a conceptual cut list from optimized sheet nesting or CNC output. Implement nesting/CNC only if validated geometry and manufacturing constraints support it.
+
+## 16.9 New acceptance tests
+
+At minimum, test:
+1. Two unrelated projects with different briefs/locales/units do not share hidden template assumptions.
+2. Measured, client-supplied, estimated and unknown dimensions retain their provenance after save/reload.
+3. Changing an approved product triggers an explicit change delta and correct reapproval behavior.
+4. Partial delivery, substitution, installation and actual cost remain distinct states.
+5. A site issue can be pinned, assigned, documented with photos, resolved/reopened and exported to a real report.
+6. Handover includes only verified products/warranties/installation data and lists outstanding items.
+7. Missing daylight/accessibility inputs produce NOT_EVALUATED/UNKNOWN, not false pass results.
+8. Any newly supported open format round-trips a representative fixture and reports unsupported data.
+
+## 16.10 Prioritization and research evidence
+
+Prioritize in this order after baseline audit:
+- **P0:** structured brief/decision log, survey-value provenance, and completion of existing selection/approval/procurement flows;
+- **P1:** site visit/punch-list workflow, handover/warranty pack, explicit locale/commercial assumptions;
+- **P2:** daylight analysis, versioned accessibility/ergonomic rule packs, IFC/IDS/BCF interoperability, manufacturing nesting/CNC.
+
+Do not expand into every P1/P2 item before completing a coherent tested vertical slice. Record why an item is deferred and its acceptance criteria. Use the dated sources and limitations in the companion research note; verify the current implementation before calling anything missing.
+
+---
+
+# 17. Cross-cutting reliability, secure imports, accessibility and project recovery
+
+This section adds quality gates that cut across the editor, client workflow and project lifecycle. It does not replace sections 1–16. Audit the current implementation first; fix confirmed gaps in the same branch and PR #305, without duplicating existing systems.
+
+## 17.1 Secure project and asset import
+
+Treat PDF/raster plans, CAD files, GLB/glTF models, product images and project archives as untrusted input. For every supported import path:
+- maintain an explicit allowlist of formats and a documented supported subset; validate actual file content/signature and parser-level structure, not only filename extension or browser-supplied MIME type;
+- enforce configurable file-size, decompressed-size, image-dimension, entity-count and parser-time/resource limits before expensive processing;
+- generate internal storage names; prevent path traversal and archive extraction outside the intended destination; never execute imported content;
+- authorize upload and subsequent read/write/download per project; keep private files outside a directly executable/public web root where the deployment supports it;
+- serve downloads with safe content headers and access checks; do not expose private client plans through predictable paths;
+- for URL-based sourcing, use an explicit allowlist or a constrained fetch service with redirect, DNS/IP, private-network, protocol and response-size checks. Do not fetch arbitrary URLs from the server or forward credentials/cookies to suppliers;
+- return a clear import report: accepted, rejected, approximated and unsupported entities, plus the reason. Never silently convert a failed import into an empty or apparently successful project.
+
+Add adversarial fixtures for spoofed MIME/extension, malformed/truncated files, oversized/decompression-bomb archives, invalid model buffers, path traversal, URL redirects to private/internal addresses, timeouts and unauthorized project access. Tests must prove the import fails safely without corrupting existing project data.
+
+## 17.2 Project durability, conflict handling and recoverability
+
+A professional project is valuable client work. Verify the complete data lifecycle rather than testing only a successful save call:
+- show truthful dirty/saving/saved/error/conflict states; never display “saved” before persistence confirms success;
+- preserve unsaved work through navigation errors and recoverable request failures; make retry idempotent and prevent duplicate uploads/orders/issues;
+- detect stale writes/concurrent edits and present a safe conflict resolution path; do not silently overwrite a newer revision;
+- support a documented project export/backup and restore/import path if compatible with the current architecture. Include schema/version metadata and validate the archive before mutating an existing project;
+- test interrupted save/upload, refresh during save, stale revision, duplicate retry, backup restore, corrupted backup and backward-compatible migration. A restore test must compare project IDs/relationships, geometry, units, provenance, materials, quantities and revision history—not merely confirm that a file was accepted;
+- if any backup, sync or offline feature depends on unavailable infrastructure, state that limitation and do not simulate success.
+
+## 17.3 Accessible precision editing across mouse, keyboard and touch
+
+Treat accessibility as part of editor correctness, not only a visual audit:
+- every drag-based operation must have a practical non-drag alternative where feasible: select an entity and enter exact dimensions/coordinates, use nudge/rotate controls, or use keyboard commands;
+- support visible keyboard focus, semantic labels, keyboard operation for dialogs/inspectors/layers, meaningful status/error announcements and focus that is not obscured by sticky panels;
+- test target sizes and spacing against WCAG 2.2 AA; aim for larger touch targets (approximately 44 CSS px) in mobile-critical controls where layout permits;
+- keep the canvas usable on narrow screens without horizontal page overflow; use a deliberate mobile interaction model rather than shrinking the desktop toolbar;
+- respect reduced-motion preferences and avoid communicating ERROR/WARNING/UNKNOWN through colour alone;
+- validate actual workflows at representative desktop, tablet and phone widths, with keyboard-only and touch input. A passing automated accessibility scan is useful but does not replace interaction tests.
+
+## 17.4 Privacy, client-sharing and lifecycle controls
+
+Inspect the complete ownership and sharing path for project records, imported plans, photos, supplier costs and exports:
+- enforce least privilege on the server for every project-scoped read/write; hiding a button in the UI is not authorization;
+- client links must be revocable, scoped to the intended project/revision/data projection, resistant to guessing, and free of internal notes, supplier margin, credentials or unrelated client data;
+- record meaningful audit events for approvals, substitutions, exports, shares and destructive actions without logging secrets or full sensitive payloads;
+- collect only client information needed for the workflow; document retention/deletion/export behavior and avoid keeping personal data indefinitely without a justified purpose;
+- verify project duplication, deletion/trash, restore, share revocation and exports do not leak or resurrect another project's data.
+
+Do not claim GDPR compliance from a checklist alone. Map implemented controls and known gaps to the applicable legal review; the software should provide controls and evidence, not make unsupported legal assurances.
+
+## 17.5 Measured performance and graceful degradation
+
+Create representative fixtures based on realistic project complexity, then measure rather than guess:
+- initial editor load, plan interaction latency, 2D/3D synchronization, save/reload time, render stability and memory as project size grows;
+- texture/model loading, cleanup on scene rebuild, WebGL context loss, browser/device limits and repeated project switching;
+- define budgets from a recorded baseline and target hardware, and make regressions visible in CI where stable;
+- use lazy loading, bounded texture/model sizes, caching or level-of-detail only where measurements justify them;
+- if 3D rendering or an optional analysis engine is unavailable, preserve 2D editing and project data, show a truthful fallback state, and never block manual work on an AI/provider call.
+
+## 17.6 Additional acceptance gates
+
+1. Import malformed and oversized plan/model files; verify a useful rejection report and no project mutation.
+2. Attempt an unauthorized upload/read/write and a URL redirect to a private address; verify denial.
+3. Interrupt a save, retry it and reload; verify truthful status and no duplicate data.
+4. Restore a project backup into a new project and compare model relationships, provenance, quantities and revisions.
+5. Complete the core editing flow using keyboard/numeric controls without dragging; repeat on a phone-sized viewport with no page overflow.
+6. Revoke a client link and verify it cannot access the project; verify client exports exclude internal commercial notes.
+7. Run a recorded large-project benchmark and verify 2D editing remains usable if WebGL or AI is unavailable.
+
+## 17.7 Research basis
+
+- OWASP File Upload Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html
+- OWASP SSRF Prevention Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html
+- W3C WCAG 2.2, including target size and alternatives to dragging: https://www.w3.org/TR/WCAG22/
+- European Commission — GDPR principles (data minimisation, storage limitation, integrity/confidentiality and accountability): https://commission.europa.eu/law/law-topic/data-protection/information-and-business-organisations/principles-gdpr_en
+
+These are control references, not proof of Casa3D compliance. Verify each control against source, tests and runtime behavior.
+
