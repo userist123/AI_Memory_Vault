@@ -20,17 +20,18 @@ namespace LogAnalyzer.UI.Views
         {
             InitializeComponent();
             _form = ScopeForm.FromScope(current);
+            if (string.IsNullOrWhiteSpace(_form.Systems)) _form.Systems = Environment.MachineName;   // default: the station being checked
             if (afterEmergency)
                 Intro.Text = "Izolarea a pornit pe scopul provizoriu. Completați acum scopul cazului: de ce, pentru ce perioadă, pe ce sisteme, cine aprobă. Până la confirmare, rapoartele și exporturile poartă mențiunea „scop provizoriu, neconfirmat”.";
             LegalBox.ItemsSource = ScopeForm.LegalBases; NetworkBox.ItemsSource = ScopeForm.NetworkCategories; ClassBox.ItemsSource = ScopeForm.ClassificationLevels;
-            PurposeBox.Text = _form.Purpose; ApproverBox.Text = _form.Approver; SystemsBox.Text = _form.Systems; NotesBox.Text = _form.Notes;
+            PurposeBox.Text = _form.Purpose; ApproverBox.Text = _form.Approver; SystemsBox.Text = _form.Systems; NotesBox.Text = _form.Notes; ActBox.Text = _form.AuthorizingAct;
             FromPicker.SelectedDate = _form.PeriodFrom; ToPicker.SelectedDate = _form.PeriodTo;
             LegalBox.SelectedIndex = _form.LegalBasisIndex; NetworkBox.SelectedIndex = _form.NetworkIndex; ClassBox.SelectedIndex = _form.ClassificationIndex;
         }
 
         private void Confirm_Click(object sender, RoutedEventArgs e)
         {
-            _form.Purpose = PurposeBox.Text; _form.Approver = ApproverBox.Text; _form.Systems = SystemsBox.Text; _form.Notes = NotesBox.Text;
+            _form.Purpose = PurposeBox.Text; _form.Approver = ApproverBox.Text; _form.Systems = SystemsBox.Text; _form.Notes = NotesBox.Text; _form.AuthorizingAct = ActBox.Text;
             _form.PeriodFrom = FromPicker.SelectedDate; _form.PeriodTo = ToPicker.SelectedDate;
             _form.LegalBasisIndex = LegalBox.SelectedIndex; _form.NetworkIndex = NetworkBox.SelectedIndex; _form.ClassificationIndex = ClassBox.SelectedIndex;
             if (!_form.TryBuild(out var scope, out var missing))

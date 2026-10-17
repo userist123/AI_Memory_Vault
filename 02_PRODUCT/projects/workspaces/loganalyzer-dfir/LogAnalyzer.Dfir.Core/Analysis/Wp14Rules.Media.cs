@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.Devices;
 using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Registers;
@@ -20,6 +21,8 @@ public static partial class Wp14Rules
         public List<TimelineEvent> Events { get; } = [];
         public List<string> Channels { get; } = [];
         public HashSet<string> Users { get; } = new(StringComparer.OrdinalIgnoreCase);
+        /// <summary>Volume serials of the file systems on this medium, read from the boot records logged in Partition/Diagnostic 1006 (the serial LNK files carry).</summary>
+        public HashSet<string> VolumeSerials { get; } = new(StringComparer.OrdinalIgnoreCase);
         public List<DateTimeOffset> Times => Events.Select(T).Where(t => t is not null).Select(t => t!.Value).ToList();
     }
 
@@ -29,7 +32,7 @@ public static partial class Wp14Rules
         return s.Length >= 1 && char.IsAsciiLetter(s[0]) && (s.Length == 1 || s[1] == ':') ? char.ToUpperInvariant(s[0]).ToString() : "";
     }
 
-    private static void AddObs(Dictionary<string, Observed> map, TimelineEvent e, string rawSerial, string vidPid, string label, string letter, string channel, string user = "")
+    private static Observed AddObs(Dictionary<string, Observed> map, TimelineEvent e, string rawSerial, string vidPid, string label, string letter, string channel, string user = "")
     {
         var serial = MediaRegister.NormalizeSerial(rawSerial);
         var key = serial.Length > 0 ? serial : "nosn|" + label.Trim().ToLowerInvariant();
@@ -40,6 +43,7 @@ public static partial class Wp14Rules
         o.Events.Add(e);
         if (!o.Channels.Contains(channel)) o.Channels.Add(channel);
         if (user.Length > 0) o.Users.Add(user);
+        return o;
     }
 
     /// <summary>
@@ -57,7 +61,10 @@ public static partial class Wp14Rules
             {
                 var bus = F(e, "BusType").Trim();
                 if (bus is "7" or "12" or "13" && F(e, "Capacity") is not ("0" or ""))
-                    AddObs(map, e, F(e, "SerialNumber"), "", $"{F(e, "Manufacturer")} {F(e, "Model")}".Trim(), "", "Partition/Diagnostic 1006");
+                {
+                    var o = AddObs(map, e, F(e, "SerialNumber"), "", $"{F(e, "Manufacturer")} {F(e, "Model")}".Trim(), "", "Partition/Diagnostic 1006");
+                    foreach (var v in VolumeBootRecord.FromEvent(n => F(e, n))) o.VolumeSerials.Add(v.Serial);
+                }
             }
             else if (Ev(e, "Security", 6416))
             {
@@ -85,10 +92,10 @@ public static partial class Wp14Rules
     private static Verdict Compare(Ctx c, Observed o)
     {
         var reg = c.Input.Media;
-        if (reg is null || !reg.IsDefined) return new(ObservedMediaStatus.Unknown, ["registru nedefinit: nu există un registru de medii cu rânduri, deci observația nu poate fi comparată (un registru gol nu dovedește autorizarea)"], null);
-        if (o.Serial.Length == 0) return new(ObservedMediaStatus.Unknown, ["fără serie: mediul nu poate fi regăsit în registru"], null);
+        if (reg is null || !reg.IsDefined) return new(ObservedMediaStatus.Unknown, ["registrul de evidență a suporturilor nu este definit: nu există un registru cu rânduri, deci observația nu poate fi comparată (un registru gol nu dovedește autorizarea)"], null);
+        if (o.Serial.Length == 0) return new(ObservedMediaStatus.Unknown, ["fără serie: suportul nu poate fi regăsit în registru"], null);
         var rows = reg.Rows.Where(r => MediaRegister.NormalizeSerial(r.Serial) == o.Serial).ToList();
-        if (rows.Count == 0) return new(ObservedMediaStatus.Unregistered, [$"seria {o.Serial} nu este în registrul de medii ({reg.Rows.Count} rânduri)"], null);
+        if (rows.Count == 0) return new(ObservedMediaStatus.Unregistered, [$"seria {o.Serial} nu este în registrul de evidență a suporturilor ({LogAnalyzer.Dfir.Language.RoText.Count(reg.Rows.Count, "rând", "rânduri")})"], null);
         var row = rows.FirstOrDefault(r => r.StatusValue == MediaStatus.Active) ?? rows[0];
         var times = o.Times;
 
@@ -204,21 +211,21 @@ public static partial class Wp14Rules
             };
             var word = status switch
             {
-                ObservedMediaStatus.Authorized => "AUTHORIZED (înregistrat, activ, valabil la momentul observat; utilizatorul și zona se potrivesc sau registrul nu le cere)",
-                ObservedMediaStatus.Registered => "REGISTERED (înregistrat, dar utilizatorul, zona, valabilitatea sau VID/PID nu se potrivesc)",
-                ObservedMediaStatus.Unregistered => "UNREGISTERED (seria nu este în registru)",
-                ObservedMediaStatus.Unauthorized => "UNAUTHORIZED (retras / distrus sau în afara valabilității)",
-                _ => "UNKNOWN (fără serie sau registru nedefinit)",
+                ObservedMediaStatus.Authorized => "AUTORIZAT (înregistrat, activ, valabil la momentul observat; utilizatorul și zona se potrivesc sau registrul nu le cere)",
+                ObservedMediaStatus.Registered => "ÎNREGISTRAT (înregistrat, dar utilizatorul, zona, valabilitatea sau VID/PID nu se potrivesc)",
+                ObservedMediaStatus.Unregistered => "NEÎNREGISTRAT (seria nu este în registru)",
+                ObservedMediaStatus.Unauthorized => "NEAUTORIZAT (retras / distrus sau în afara valabilității)",
+                _ => "NEDETERMINAT (fără serie sau registru nedefinit)",
             };
             var regLine = v.Row is { } r ? $"Registru: {r.RegistrationNumber} (tip {r.Type}, nivel {SecrecyLevels.Describe(r.Classification)}, atribuit {(r.AssignedUser.Length > 0 ? r.AssignedUser : "nespecificat")}, zona {(r.Zone.Length > 0 ? r.Zone : "nespecificată")})."
                 : c.Input.Media is { IsDefined: true } ? "Registru: niciun rând pentru această serie." : "Registru: nedefinit.";
             var copyLine = m.Letter.Length == 0
-                ? "Prezență, nu copiere: litera de unitate nu este cunoscută, deci activitatea pe volum nu poate fi atribuită acestui mediu; prezență, nu copiere."
+                ? "Prezență, nu copiere: litera de unitate nu este cunoscută, deci activitatea pe volum nu poate fi atribuită acestui suport."
                 : activity.Count == 0
-                    ? $"Prezența mediului nu este o copiere: prezență, nu copiere — nu există dovezi de scriere sau de acces la fișiere (LNK/JumpList, 4663, USN) pe unitatea {m.Letter}: în sursele colectate."
+                    ? $"Prezență, nu copiere: nu există dovezi de scriere sau de acces la fișiere (LNK/JumpList, 4663, USN) pe unitatea {m.Letter}: în sursele colectate."
                     : $"Există urme de activitate pe unitatea {m.Letter}: (vezi MEDIA-FILE-ACTIVITY); ele nu stabilesc singure o copiere.";
             var clearanceNote = v.Row?.Level is not null && c.Input.Users is not { IsDefined: true } ? " Registrul de utilizatori este nedefinit: abilitarea utilizatorului nu a putut fi verificată." : "";
-            var desc = $"{Kind(m)} (seria {(m.Serial.Length > 0 ? m.Serial : "necunoscută")}{(m.VidPid.Length > 0 ? ", " + m.VidPid : "")}): {m.Events.Count} observații în {string.Join(", ", m.Channels)}; " +
+            var desc = $"{Kind(m)} (seria {(m.Serial.Length > 0 ? m.Serial : "necunoscută")}{(m.VidPid.Length > 0 ? ", " + m.VidPid : "")}): {LogAnalyzer.Dfir.Language.RoText.Count(m.Events.Count, "observație", "observații")} în {string.Join(", ", m.Channels)}; " +
                        $"{(times.Count > 0 ? Time(times[0]) + " – " + Time(times[^1]) : "oră necunoscută")}. Stare: {word}. " +
                        (v.Reasons.Count > 0 ? string.Join("; ", v.Reasons) + ". " : "") + regLine + clearanceNote + " " + copyLine;
             var users = m.Users.Count > 0 ? string.Join(", ", m.Users) : "";
@@ -226,8 +233,10 @@ public static partial class Wp14Rules
             o.Add(new Finding
             {
                 FindingId = c.NextId(), RuleId = status switch { ObservedMediaStatus.Authorized => "MEDIA-AUTHORIZED", ObservedMediaStatus.Registered => "MEDIA-REGISTERED", ObservedMediaStatus.Unregistered => "MEDIA-UNREGISTERED", ObservedMediaStatus.Unauthorized => "MEDIA-UNAUTHORIZED", _ => "MEDIA-UNKNOWN" },
-                Title = $"Mediu amovibil {(m.Serial.Length > 0 ? m.Serial : Kind(m))}: {status.ToString().ToUpperInvariant()}",
-                Severity = sev, Category = c.FindingCategory, Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1052.001",
+                Title = $"Suport de stocare amovibil {(m.Serial.Length > 0 ? m.Serial : Kind(m))}: {status switch { ObservedMediaStatus.Authorized => "AUTORIZAT", ObservedMediaStatus.Registered => "ÎNREGISTRAT", ObservedMediaStatus.Unregistered => "NEÎNREGISTRAT", ObservedMediaStatus.Unauthorized => "NEAUTORIZAT", _ => "NEDETERMINAT" }}",
+                Severity = sev, Category = c.FindingCategory, Classification = Classification.Direct, Confidence = Confidence.High,
+                // T1052.001 (exfiltration over a physical medium) only for statuses that indicate it; presence of an UNKNOWN / AUTHORIZED medium is not exfiltration.
+                MitreTechniqueId = status is ObservedMediaStatus.Registered or ObservedMediaStatus.Unregistered or ObservedMediaStatus.Unauthorized ? "T1052.001" : "",
                 FirstSeenUtc = times.Count > 0 ? times[0] : null, LastSeenUtc = times.Count > 0 ? times[^1] : null, User = users,
                 Description = desc,
                 ClassificationReason = "Dispozitivul de stocare amovibil apare în sursele colectate (USBSTOR, Partition/Diagnostic, Security 6416, Kernel-PnP, DriverFrameworks) și a fost comparat cu registrul de medii; starea vine din comparație, nu dintr-o dovadă de utilizare.",
@@ -241,12 +250,12 @@ public static partial class Wp14Rules
                         ObservedMediaStatus.Unknown => c.Input.Media is { IsDefined: true } ? "mediul nu are serie: nu poate fi comparat cu registrul" : "registru nedefinit: autorizarea nu poate fi stabilită",
                         _ => string.Join("; ", v.Reasons),
                     },
-                    $"{Kind(m)} prezent pe stație ({m.Events.Count} observații)", times.Count > 0 ? times[0] : null,
+                    $"{Kind(m)} prezent pe stație ({LogAnalyzer.Dfir.Language.RoText.Count(m.Events.Count, "observație", "observații")})", times.Count > 0 ? times[0] : null,
                     users.Length > 0 ? users : "necunoscut: sursele colectate pentru acest mediu nu conțin contul care l-a folosit",
                     $"mediu {(m.Serial.Length > 0 ? m.Serial : "fără serie")}" + (v.Row is { } r2 ? $" ({r2.RegistrationNumber})" : ""),
                     c.CaseClassText, v.Row is { } r3 ? SecrecyLevels.Describe(r3.Classification) : "nu se aplică (mediul nu este în registru)",
                     write ? "scriere pe mediu (vezi MEDIA-FILE-ACTIVITY)" : "necunoscută: prezența mediului nu arată direcția transferului",
-                    $"mediu amovibil {(m.Letter.Length > 0 ? m.Letter + ":" : "(literă necunoscută)")}",
+                    $"suport de stocare amovibil {(m.Letter.Length > 0 ? m.Letter + ":" : "(literă necunoscută)")}",
                     m.Events.Take(5).Select(e => $"{e.Source} {e.EventId} {e.Locator}".Trim()).ToList()),
             });
 
@@ -272,7 +281,7 @@ public static partial class Wp14Rules
                     AirGap = new AirGapDetail("USB", "LNK / JumpList / Security 4663 / USN", auth, "vezi starea mediului în constatarea MEDIA-*", $"activitate pe unitatea {m.Letter}: ({(write ? "cu scriere" : "fără scriere dovedită")})",
                         actTimes.Count > 0 ? actTimes[0] : null, users.Length > 0 ? users : "necunoscut: urmele de fișier nu conțin contul decât în 4663",
                         $"mediu {m.Serial}", c.CaseClassText, v.Row is { } r4 ? SecrecyLevels.Describe(r4.Classification) : "nu se aplică (mediul nu este în registru)",
-                        write ? "scriere pe mediu" : "necunoscută: acces fără dovadă de scriere", $"mediu amovibil {m.Letter}:", activity.Take(5).Select(a => a.What).ToList()),
+                        write ? "scriere pe mediu" : "necunoscută: acces fără dovadă de scriere", $"suport de stocare amovibil {m.Letter}:", activity.Take(5).Select(a => a.What).ToList()),
                 });
             }
         }

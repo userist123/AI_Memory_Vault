@@ -171,7 +171,12 @@ namespace LogAnalyzer.UI.Tests
             var (k, pub) = NewKey();
             var r = EditionPolicyVerifier.Verify(Policy(k, AppMode.Network, StationRole.Csirt), pub, "PC1", Now);
             var d = Decide(EditionKind.Unclassified, r);
-            Assert.Contains("neclasificat", d.Summary, StringComparison.OrdinalIgnoreCase);
+            // The edition is named by the compile-time posture of the executable ("Ediția: Standalone / Rețea air-gap / Internet").
+            StationPostureContext.ResetForTests();
+            StationPostureContext.Initialize(StationPosture.Internet);
+            try { Assert.Contains("Ediția: Internet", d.Summary); }
+            finally { StationPostureContext.ResetForTests(); }
+            Assert.Contains("Ediția: Standalone", d.Summary);      // nothing initialised: the strictest posture, fail closed
             Assert.Contains("conectat", d.Summary, StringComparison.OrdinalIgnoreCase);
             Assert.Contains(r.PolicySha256![..12], d.Summary);
             foreach (var reason in d.Reasons) Assert.Contains(reason, d.Summary);

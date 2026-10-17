@@ -28,6 +28,11 @@ public sealed record ParserDescriptor
     public required ParserMaturity Status { get; init; }
     /// <summary>The tests behind <see cref="Status"/>.</summary>
     public required string Validation { get; init; }
+    /// <summary>
+    /// Largest input this parser accepts, in bytes (0: no cap; the parser streams). Parsers that read the whole file into memory declare one;
+    /// <see cref="EvidenceParserBase"/> refuses a larger file before reading it, with a gap (research backlog #4 / H3).
+    /// </summary>
+    public long MaxInputBytes { get; init; }
 
     /// <summary>What this parser can and cannot prove, its limits and correlation sources (lessons learned §2); null if none recorded.</summary>
     public LogAnalyzer.Dfir.Analysis.ParserCapabilities? Capabilities => LogAnalyzer.Dfir.Analysis.ParserCapabilities.For(ParserId);
@@ -74,6 +79,8 @@ public interface IEvidenceParser
 /// </summary>
 public abstract class EvidenceParserBase : IEvidenceParser
 {
+    public const string TooLargeReason = "fișier prea mare pentru acest parser";
+
     public abstract ParserDescriptor Descriptor { get; }
     public string Name => Descriptor.ParserId;
     public string Version => Descriptor.Version;
@@ -89,6 +96,21 @@ public abstract class EvidenceParserBase : IEvidenceParser
             r.Status = EvidenceStatus.NotAvailable;
             r.Error = $"Evidence file not found: {fullPath}";
             return r;
+        }
+        if (Descriptor.MaxInputBytes > 0 && File.Exists(fullPath))
+        {
+            long size;
+            try { size = new FileInfo(fullPath).Length; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { size = -1; }
+            if (size > Descriptor.MaxInputBytes)
+            {
+                r.Status = EvidenceStatus.Failed;
+                r.Error = $"{TooLargeReason} ({size:N0} octeți; limita parserului {Descriptor.ParserId} este {Descriptor.MaxInputBytes:N0})";
+                r.Gaps.Add(new EvidenceGap(Path.GetFileName(fullPath), EvidenceStatus.Failed, r.Error,
+                    "Proba nu a fost interpretată de acest parser (citirea ei integrală în memorie nu este sigură)",
+                    "O unealtă dedicată sau un export filtrat al aceleiași surse", "Posibil, cu altă unealtă"));
+                return r;
+            }
         }
         try
         {

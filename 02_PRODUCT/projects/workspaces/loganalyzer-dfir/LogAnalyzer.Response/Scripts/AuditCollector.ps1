@@ -22,6 +22,16 @@ param(
 
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
+# The application reads this output as UTF-8; without this, Windows PowerShell 5.1 writes the OEM code page and Romanian letters arrive as "?".
+try { [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false) } catch { }
+
+# PC and Server collections read THIS machine: label the evidence with this machine's real name, never with a name typed in the form
+# (a fixed default name once labelled one station's evidence with another station's name). NAS reads a share, so its name stays as given.
+if ($TargetType -in 'PC', 'Server' -and $env:COMPUTERNAME -and $Hostname -ne $env:COMPUTERNAME) {
+    # ASCII only: this file has no BOM, so Windows PowerShell 5.1 reads it in the ANSI code page.
+    Write-Output "[Collector] ATENTIE: numele introdus ($Hostname) nu este numele acestui calculator. Datele colectate sunt de pe $($env:COMPUTERNAME), deci sunt etichetate $($env:COMPUTERNAME)."
+    $Hostname = $env:COMPUTERNAME
+}
 
 if ($Hostname -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]{0,62}$') {
     Write-Output "[Collector] ERROR Hostname invalid: only letters, digits, '.', '_' and '-' are accepted."
@@ -88,7 +98,12 @@ function Export-Channel([string]$Channel) {
         $session.ExportLog($Channel, [System.Diagnostics.Eventing.Reader.PathType]::LogName, '*', $dest)
         Add-Manifest $name 'OK' '' $dest
     }
-    catch { Add-Manifest $name 'ERROR' $_.Exception.Message }
+    catch {
+        # ExportLog wraps the real cause: "unauthorized operation" means the collection was not started as administrator (Security needs it).
+        $inner = $_.Exception; while ($inner.InnerException) { $inner = $inner.InnerException }
+        if ($inner -is [System.UnauthorizedAccessException]) { Add-Manifest $name 'ERROR' "acces refuzat: jurnalul $Channel se poate citi doar ca administrator. Porniti aplicatia cu 'Run as administrator' si reluati colectarea." }
+        else { Add-Manifest $name 'ERROR' $_.Exception.Message }
+    }
 }
 
 function Get-UsersRoot {
@@ -103,7 +118,12 @@ function Get-TaskRows {
         $info = Get-ScheduledTaskInfo -TaskName $_.TaskName -TaskPath $_.TaskPath -ErrorAction SilentlyContinue
         [pscustomobject]@{
             TaskName = $_.TaskName; TaskPath = $_.TaskPath; State = $_.State
-            Actions = (($_.Actions | ForEach-Object { "$($_.Execute) $($_.Arguments)" }) -join '; ')
+            # A task action is not always a command line: COM-handler actions have ClassId/Data instead of Execute/Arguments (StrictMode throws on a missing property).
+            Actions = (($_.Actions | ForEach-Object {
+                if ($_.PSObject.Properties['Execute']) { "$($_.Execute) $(if ($_.PSObject.Properties['Arguments']) { $_.Arguments })".Trim() }
+                elseif ($_.PSObject.Properties['ClassId']) { "COM $($_.ClassId) $(if ($_.PSObject.Properties['Data']) { $_.Data })".Trim() }
+                else { $_.CimClass.CimClassName }
+            }) -join '; ')
             RunAs = $_.Principal.UserId
             LastRun = $(if ($info) { $info.LastRunTime } else { $null }); NextRun = $(if ($info) { $info.NextRunTime } else { $null }); LastResult = $(if ($info) { $info.LastTaskResult } else { $null })
         }

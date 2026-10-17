@@ -121,7 +121,29 @@ public sealed partial class CaseWorkspace
 
     public IReadOnlyList<EvidenceItem> LoadEvidence() => Json.ReadLines<EvidenceItem>(EvidenceIndexPath).ToList();
 
-    public string FullPath(string storedPath) => Path.GetFullPath(Path.Combine(Root, storedPath));
+    /// <summary>
+    /// Resolves a path stored in the case metadata (evidence index, outputs) against <see cref="Root"/>. Stored paths come from files that can be
+    /// imported or tampered with, so an absolute path, a UNC path or a <c>..\</c> path that resolves outside the case folder is refused
+    /// with <see cref="ArgumentException"/> (security audit #17): nothing outside the case is ever analysed or hashed as evidence.
+    /// </summary>
+    public string FullPath(string storedPath) =>
+        TryFullPath(storedPath, out var full) ? full : throw new ArgumentException($"Calea probei iese din folderul cazului: {storedPath}", nameof(storedPath));
+
+    /// <summary>As <see cref="FullPath"/>, but returns false instead of throwing when the path is invalid or resolves outside the case folder.</summary>
+    public bool TryFullPath(string storedPath, out string full)
+    {
+        full = "";
+        if (string.IsNullOrEmpty(storedPath)) return false;
+        string candidate;
+        try { candidate = Path.GetFullPath(Path.Combine(Root, storedPath)); }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException) { return false; }
+        if (!candidate.StartsWith(Root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) return false;
+        full = candidate;
+        return true;
+    }
+
+    /// <summary>Gap reason used by the pipeline when a stored path resolves outside the case folder.</summary>
+    public const string OutsideCaseReason = "calea probei iese din folderul cazului";
 
     /// <summary>Folder for raw evidence of one logical source; collectors write here, then call <see cref="RegisterStored"/>.</summary>
     public string RawDir(string source)

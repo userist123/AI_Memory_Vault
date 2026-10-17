@@ -1,0 +1,86 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- NETWORK edition: an air-gapped LAN (domain controllers, servers, domains) with NO internet. It compiles the UI sources of LogAnalyzer.App
+       (linked, not copied) and adds the internal-network features: LogAnalyzer.Connectors (read-only AD / directory collection, syslog, internal
+       SIEM, live event watchers) and LogAnalyzer.Response (CSIRT actions). It does NOT reference LogAnalyzer.Ai (the AI layer, which uses an HTTP
+       client): -p:NetworkIncludeLocalAi=true adds it, REQUIRES OWNER APPROVAL, off by default. There is no cloud client and no online
+       downloader or updater anywhere in the codebase, and the edition test (LogAnalyzer.Edition.Tests) fails if HTTP/web client code appears
+       outside LogAnalyzer.Connectors in this output. The posture (IsolatedNetwork) is fixed in Edition\NetworkComposition.cs. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>..\LogAnalyzer.App\app.manifest</ApplicationManifest>
+    <AssemblyName>LogAnalyzer.Retea</AssemblyName>
+    <RootNamespace>LogAnalyzer.UI</RootNamespace>
+    <!-- Restore also sees the win-x64 single-file publish settings, so packages.lock.json covers the publish too and CI can publish in locked mode (security audit #9). -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+    <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
+    <DefineConstants>$(DefineConstants);NETWORK_EDITION</DefineConstants>
+    <NetworkIncludeLocalAi Condition="'$(NetworkIncludeLocalAi)' == ''">false</NetworkIncludeLocalAi>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LogAnalyzer.Core\LogAnalyzer.Core.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Infrastructure\LogAnalyzer.Infrastructure.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Dfir.Windows\LogAnalyzer.Dfir.Windows.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Connectors\LogAnalyzer.Connectors.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Response\LogAnalyzer.Response.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />
+    <PackageReference Include="QuestPDF" Version="2026.7.2" />
+    <PackageReference Include="DiscUtils.Registry" Version="0.16.13" />
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="9.0.0" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlcipher" Version="2.1.10" />
+    <PackageReference Include="System.Diagnostics.EventLog" Version="10.0.10" />
+    <PackageReference Include="System.Management" Version="10.0.10" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.10" />
+  </ItemGroup>
+
+  <!-- Public key (base64 SPKI, ECDSA P-256) that verifies the edition policy; a policy can only narrow the mode, never the posture. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\LogAnalyzer.App\Edition\Unclassified\edition-policy-public-key.b64" LogicalName="edition-policy-public-key.b64"
+                      Condition="Exists('..\LogAnalyzer.App\Edition\Unclassified\edition-policy-public-key.b64')" />
+  </ItemGroup>
+
+  <!-- Shared UI sources, linked from LogAnalyzer.App. The Internet-only composition and the AI screen stay out; containment and domain investigation are in. -->
+  <ItemGroup>
+    <Compile Include="..\LogAnalyzer.App\**\*.cs" Exclude="..\LogAnalyzer.App\obj\**;..\LogAnalyzer.App\bin\**;..\LogAnalyzer.App\Edition\Unclassified\**"
+             Link="%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\LogAnalyzer.App\Edition\Unclassified\ContainmentViewModel.cs;..\LogAnalyzer.App\Edition\Unclassified\DomainInvestigationViewModel.cs;..\LogAnalyzer.App\Edition\Unclassified\ProcessContainmentView.xaml.cs;..\LogAnalyzer.App\Edition\Unclassified\DomainInvestigationView.xaml.cs"
+             Link="Edition\%(Filename)%(Extension)" />
+    <Compile Include="Edition\NetworkComposition.cs" />
+    <ApplicationDefinition Include="..\LogAnalyzer.App\App.xaml" Link="App.xaml" />
+    <Page Include="..\LogAnalyzer.App\**\*.xaml" Exclude="..\LogAnalyzer.App\App.xaml;..\LogAnalyzer.App\obj\**;..\LogAnalyzer.App\bin\**;..\LogAnalyzer.App\Edition\Unclassified\**"
+          Link="%(RecursiveDir)%(Filename)%(Extension)" />
+    <Page Include="..\LogAnalyzer.App\Edition\Unclassified\ProcessContainmentView.xaml;..\LogAnalyzer.App\Edition\Unclassified\DomainInvestigationView.xaml" Link="Edition\%(Filename)%(Extension)" />
+    <None Include="..\LogAnalyzer.App\Categories\*.json" Link="Categories\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Explicit, documented option: the local-AI layer (loopback HTTP) in the Network build. Off by default (owner approval required). -->
+  <ItemGroup Condition="'$(NetworkIncludeLocalAi)' == 'true'">
+    <ProjectReference Include="..\LogAnalyzer.Ai\LogAnalyzer.Ai.csproj" />
+    <Compile Include="..\LogAnalyzer.App\Edition\Unclassified\AiAnalysisViewModel.cs;..\LogAnalyzer.App\Edition\Unclassified\AiAnalysisView.xaml.cs" Link="Edition\%(Filename)%(Extension)" />
+    <Page Include="..\LogAnalyzer.App\Edition\Unclassified\AiAnalysisView.xaml" Link="Edition\AiAnalysisView.xaml" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(NetworkIncludeLocalAi)' == 'true'">
+    <DefineConstants>$(DefineConstants);NETWORK_LOCAL_AI</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>NetworkIncludeLocalAi</_Parameter1>
+      <_Parameter2>$(NetworkIncludeLocalAi)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+  <!-- Security audit #5: SHA-256 manifest of the native libraries next to the published exe, verified at startup. -->
+  <Import Project="..\eng\NativeLibraryManifest.targets" />
+
+</Project>

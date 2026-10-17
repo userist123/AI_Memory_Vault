@@ -40,12 +40,21 @@ public sealed class CsvWriter : IDisposable
         _ => v.ToString() ?? "",
     };
 
-    public static string Escape(string s)
+    public static string Escape(string s) => Quote(NeutraliseFormula(LogAnalyzer.Dfir.Language.ReportText.Clean(s)));   // hidden characters removed (research backlog #3)
+
+    /// <summary>
+    /// Neutralises spreadsheet formula injection from evidence-derived text (spec §116/§118, security audit #8): a cell starting with
+    /// = + - @ TAB or CR gets a leading apostrophe, unless it is a plain number (e.g. -5) or a lone "-" placeholder.
+    /// </summary>
+    public static string NeutraliseFormula(string s)
     {
-        // Neutralize spreadsheet formula injection from evidence-derived text (spec §116/§118).
-        if (s.Length > 0 && "=+-@".Contains(s[0]) && !double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out _)) s = "'" + s;
-        return s.IndexOfAny(['"', ',', '\r', '\n']) >= 0 ? "\"" + s.Replace("\"", "\"\"") + "\"" : s;
+        if (s.Length == 0 || s == "-") return s;
+        if ("=+-@\t\r".Contains(s[0]) && !double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out _)) return "'" + s;
+        return s;
     }
+
+    /// <summary>RFC 4180 quoting only (no formula handling): quoted when it holds a quote, comma or line break.</summary>
+    public static string Quote(string s) => s.IndexOfAny(['"', ',', '\r', '\n']) >= 0 ? "\"" + s.Replace("\"", "\"\"") + "\"" : s;
 
     public void Dispose() => _w.Dispose();
 }

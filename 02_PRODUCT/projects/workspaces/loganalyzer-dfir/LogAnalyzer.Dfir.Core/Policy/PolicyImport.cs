@@ -1,3 +1,4 @@
+using System.Xml.Linq;
 using System.Globalization;
 using System.Text;
 
@@ -104,6 +105,13 @@ public static class PolicyImport
         if (g.UserPol is not null) AddPol(b, RegistryPol.Parse(g.UserPol), "HKCU", "user", "User/registry.pol");
         if (g.SecurityTemplate is not null) AddInf(b, SecurityTemplate.Parse(g.SecurityTemplate), "GptTmpl.inf");
         if (g.AuditCsv is not null) AddAudit(b, AuditCsv.Parse(g.AuditCsv), "audit.csv");
+        foreach (var (path, text) in g.Preferences ?? []) AddPreference(b, path, text);
+        foreach (var (path, text) in g.Scripts ?? [])
+        {
+            var first = text.Split('\n').Select(l => l.Trim()).FirstOrDefault(l => l.Length > 0 && !l.StartsWith('[') && !l.StartsWith('#')) ?? "";
+            b.Unsupported.Add($"{Short(path)}: script din GPO, nu este executat și nu este evaluat de motor (efectul lui nu poate fi verificat automat){(first.Length > 0 ? "; prima linie: " + (first.Length > 120 ? first[..120] + "…" : first) : "")}");
+        }
+        foreach (var path in g.NotRead ?? []) b.Unsupported.Add($"{Short(path)}: fișier din backup pe care motorul nu îl citește");
         return b.Build("gpo-backup", sourcePath);
     }
 
@@ -134,6 +142,75 @@ public static class PolicyImport
         var b = new Builder(id, version, $"Audit avansat {Path.GetFileName(sourcePath)}", author, "Importat din audit.csv.");
         AddAudit(b, AuditCsv.Parse(csv), "audit.csv");
         return b.Build("audit-csv", sourcePath);
+    }
+
+    private static string Short(string path)
+    {
+        var i = path.IndexOf("/DomainSysvol/GPO/", StringComparison.OrdinalIgnoreCase);
+        return i >= 0 ? path[(i + "/DomainSysvol/GPO/".Length)..] : path;
+    }
+
+    /// <summary>
+    /// Group Policy Preferences (WP18, owner GPOs): Registry.xml items become registry controls and Services.xml start types become the
+    /// service's <c>Start</c> value (2 automatic, 3 manual, 4 disabled). Anything else in a preference file is listed as unsupported, never dropped.
+    /// </summary>
+    private static void AddPreference(Builder b, string path, string text)
+    {
+        var source = "Preferences/" + Short(path).Split("/Preferences/", StringSplitOptions.None).Last();
+        var scope = path.Contains("/User/", StringComparison.OrdinalIgnoreCase) ? "user" : "machine";
+        XDocument x;
+        try { x = LogAnalyzer.Dfir.IO.SafeXml.Parse(text); }
+        catch (System.Xml.XmlException ex) { b.Unsupported.Add($"{source}: XML invalid ({ex.Message})"); return; }
+        var root = x.Root!;
+        switch (root.Name.LocalName)
+        {
+            case "RegistrySettings":
+                foreach (var item in root.Descendants().Where(e => e.Name.LocalName == "Registry"))
+                {
+                    var p = item.Elements().FirstOrDefault(e => e.Name.LocalName == "Properties");
+                    if (p is null) continue;
+                    string A(string n) => (string?)p.Attribute(n) ?? "";
+                    var hive = A("hive") switch { "HKEY_LOCAL_MACHINE" => "HKLM", "HKEY_CURRENT_USER" => "HKCU", var h => h };
+                    var (key, name, type, value, action) = (A("key"), A("name"), A("type"), A("value"), A("action"));
+                    var where = $@"{source}: {hive}\{key}\{name}";
+                    if (hive is not ("HKLM" or "HKCU")) { b.Unsupported.Add($"{where}: ramura {A("hive")} nu este acceptată"); continue; }
+                    if (item.Elements().Any(e => e.Name.LocalName == "Filters" && e.HasElements))
+                        b.Unsupported.Add($"{where}: are filtre de țintire (item-level targeting); controlul se aplică fără ele");
+                    if (action == "D") { b.Registry(scope, hive, key, name, "string", "", source, absent: true); continue; }
+                    switch (type)
+                    {
+                        case "REG_DWORD" or "REG_QWORD":
+                            if (ulong.TryParse(value, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out var num))
+                                b.Registry(scope, hive, key, name, type == "REG_DWORD" ? "dword" : "qword", num.ToString(System.Globalization.CultureInfo.InvariantCulture), source);
+                            else b.Unsupported.Add($"{where}: valoare numerică ilizibilă „{value}”");
+                            break;
+                        case "REG_SZ": b.Registry(scope, hive, key, name, "string", value, source); break;
+                        case "REG_EXPAND_SZ": b.Registry(scope, hive, key, name, "expand_string", value, source); break;
+                        default: b.Unsupported.Add($"{where}: tip {type} nu este acceptat de motor"); break;
+                    }
+                }
+                break;
+            case "NTServices":
+                foreach (var svc in root.Descendants().Where(e => e.Name.LocalName == "NTService"))
+                {
+                    var p = svc.Elements().FirstOrDefault(e => e.Name.LocalName == "Properties");
+                    if (p is null) continue;
+                    var name = (string?)p.Attribute("serviceName") ?? (string?)svc.Attribute("name") ?? "";
+                    var start = ((string?)p.Attribute("startupType") ?? "").ToUpperInvariant() switch
+                    {
+                        "AUTOMATIC" or "AUTOMATIC_DELAYED" => "2", "MANUAL" => "3", "DISABLED" => "4", _ => null,
+                    };
+                    if (name.Length == 0) continue;
+                    if (start is null) { b.Unsupported.Add($"{source}: serviciul {name} fără tip de pornire acceptat ({(string?)p.Attribute("startupType")})"); continue; }
+                    b.Registry("machine", "HKLM", $@"SYSTEM\CurrentControlSet\Services\{name}", "Start", "dword", start, $"{source} ({name}: {(string?)p.Attribute("startupType")})");
+                    if (((string?)p.Attribute("serviceAction") ?? "") is { Length: > 0 } act and not "NOACTION")
+                        b.Unsupported.Add($"{source}: serviciul {name}, acțiunea „{act}” (oprire/pornire la aplicare) nu este o stare verificabilă; se verifică doar tipul de pornire");
+                }
+                break;
+            default:
+                b.Unsupported.Add($"{source}: preferința „{root.Name.LocalName}” nu este acceptată de motor ({root.Elements().Count()} elemente)");
+                break;
+        }
     }
 
     private static void AddPol(Builder b, IEnumerable<PolEntry> entries, string hive, string scope, string source)

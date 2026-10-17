@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scroll Scrub Canvas Demo - Terminal Industries Style</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    body { margin: 0; background-color: #0b0c0e; color: white; font-family: system-ui, sans-serif; overflow-x: hidden; }
+    canvas { display: block; width: 100vw; height: 100vh; object-fit: cover; }
+  </style>
+</head>
+<body>
+
+  <div class="h-screen flex items-center justify-center text-center">
+    <h1 class="text-4xl font-bold tracking-tight">Scroll down to inspect the Truck Engine & Yard</h1>
+  </div>
+
+  <div id="scroll-section" class="relative h-[350vh]">
+    <div class="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
+      <canvas id="hero-canvas"></canvas>
+
+      <div id="card-1" class="absolute left-10 md:left-24 top-1/3 opacity-0 max-w-md bg-black/60 backdrop-blur-md p-6 rounded-2xl border border-white/10">
+        <span class="text-xs font-mono uppercase bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded">Telemetry Data</span>
+        <h2 class="text-2xl font-bold mt-2">Aerodynamic Hull Active</h2>
+        <p class="text-sm text-gray-400 mt-1">Real-time wind-drag coefficients calculated per frame.</p>
+      </div>
+
+      <div id="card-2" class="absolute right-10 md:right-24 bottom-24 opacity-0 max-w-md bg-black/60 backdrop-blur-md p-6 rounded-2xl border border-white/10">
+        <span class="text-xs font-mono uppercase bg-blue-500/20 text-blue-400 px-2 py-1 rounded">Autonomous Docking</span>
+        <h2 class="text-2xl font-bold mt-2">Sub-inch Alignment</h2>
+        <p class="text-sm text-gray-400 mt-1">Computer vision gates automatically calibrate trailer angle.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="h-screen flex items-center justify-center">
+    <p class="text-gray-500">Footer / Content continuation</p>
+  </div>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    const canvas = document.getElementById("hero-canvas");
+    const ctx = canvas.getContext("2d");
+    const frameCount = 60;
+    const images = [];
+    const frameObj = { frame: 0 };
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      render();
+    }
+    window.addEventListener("resize", resize);
+
+    for (let i = 0; i < frameCount; i++) {
+      const offCanvas = document.createElement("canvas");
+      offCanvas.width = 1920;
+      offCanvas.height = 1080;
+      const offCtx = offCanvas.getContext("2d");
+      
+      offCtx.fillStyle = "#0e1013";
+      offCtx.fillRect(0, 0, 1920, 1080);
+      
+      const angle = (i / frameCount) * Math.PI * 2;
+      offCtx.save();
+      offCtx.translate(960, 540);
+      offCtx.rotate(angle);
+      offCtx.fillStyle = "#10b981";
+      offCtx.fillRect(-150, -80, 300, 160);
+      offCtx.fillStyle = "#ffffff";
+      offCtx.font = "bold 32px monospace";
+      offCtx.fillText(`FRAME ${i + 1}/${frameCount}`, -120, 10);
+      offCtx.restore();
+
+      const img = new Image();
+      img.src = offCanvas.toDataURL();
+      images.push(img);
+    }
+
+    function render() {
+      const img = images[Math.floor(frameObj.frame)];
+      if (!img) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    }
+
+    images[0].onload = () => {
+      resize();
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: "#scroll-section",
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 0.1,
+        }
+      });
+
+      tl.to(frameObj, {
+        frame: frameCount - 1,
+        ease: "none",
+        onUpdate: render,
+        duration: 10
+      }, 0);
+
+      tl.fromTo("#card-1", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 2 }, 1.5);
+      tl.to("#card-1", { opacity: 0, y: -20, duration: 1.5 }, 4);
+
+      tl.fromTo("#card-2", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 2 }, 6);
+      tl.to("#card-2", { opacity: 0, duration: 1.5 }, 9);
+    };
+  </script>
+</body>
+</html>

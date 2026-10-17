@@ -42,12 +42,12 @@ verifice. Nimic din ce scrie modelul nu modifică constatările sau clasificări
 - Se înregistrează în caz: `Analysis/ai_catalog.txt`, `ai_raw_response.json`, `ai_reasoning.json`. În jurnalul de audit apar
   modelul, digest-ul lui (din `/api/tags`), SHA-256 al promptului și al răspunsului.
 
-## Ce s-a încercat pe cazul real (NanAgent, 2026-10-06)
+## Ce s-a încercat pe cazul real (VendorAgent, 2026-10-06)
 
 Ollama 0.35.1, modele locale `qwen3:30b-a3b` (digest `ad815644918f…`) și `qwen2.5:7b-instruct` (digest `845dbda0ea48…`).
 
-1. **Doar citări obligatorii.** `qwen2.5:7b` a scris că „NanAgent32.exe a fost asociat cu execuția SETUP.EXE” și a citat doar
-   elementul Prefetch al lui SETUP.EXE, care nu menționează NanAgent32.exe. Regula 3 o respinge.
+1. **Doar citări obligatorii.** `qwen2.5:7b` a scris că „VendorAgent32.exe a fost asociat cu execuția SETUP.EXE” și a citat doar
+   elementul Prefetch al lui SETUP.EXE, care nu menționează VendorAgent32.exe. Regula 3 o respinge.
    Același model a citat până la 40 de elemente pe afirmație, de unde regula 2.
 2. **Un al doilea model ca verificator** (descompunere în afirmații atomice, fiecare căutată în elementele citate).
    Rezultatul a fost neîncrezător în ambele direcții:

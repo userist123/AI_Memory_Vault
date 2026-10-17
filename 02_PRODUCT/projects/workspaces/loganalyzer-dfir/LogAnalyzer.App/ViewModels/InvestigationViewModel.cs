@@ -39,23 +39,23 @@ namespace LogAnalyzer.UI.ViewModels
             IReadOnlyList<EvidenceItem> items;
             try { items = r.Case.LoadEvidence(); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { items = []; }
-            return new LogAnalyzer.Dfir.Presentation.EvidenceContext { Items = items, Timeline = r.Timeline, Parsing = r.Parsing, Gaps = r.Gaps };
+            return new LogAnalyzer.Dfir.Presentation.EvidenceContext { Items = items, Timeline = r.Timeline, Parsing = r.Parsing, Gaps = r.Gaps, PeriodFromUtc = r.Case.Info.Scope.PeriodFromUtc, PeriodToUtc = r.Case.Info.Scope.PeriodToUtc };
         }
         /// <summary>WP14a: the findings of the "Air-gap integrity" category (Finding.AirGap carries channel, authorised?, who, when, object, classification, direction, destination, evidence).</summary>
         public ObservableCollection<Finding> AirGapFindings { get; } = new();
-        [ObservableProperty] private string _airGapSummary = "Integritate air-gap: nedefinit (nicio analiză încă).";
+        [ObservableProperty] private string _airGapSummary = "Integritate air-gap: nedefinită (nicio analiză încă).";
         /// <summary>WP14b: the findings of the "Combined sequences" category (control gap + media, SMB + staging + USB, portable software + archive + USB); Finding.Sequence carries the ordered steps.</summary>
         public ObservableCollection<Finding> SequenceFindings { get; } = new();
-        [ObservableProperty] private string _sequenceSummary = "Secvențe combinate: nedefinit (nicio analiză încă).";
+        [ObservableProperty] private string _sequenceSummary = "Secvențe combinate: nedefinite (nicio analiză încă).";
         [ObservableProperty] private string _sequenceSteps = "";
         /// <summary>WP14a: the zone of the analysed system, as the operator declares it (compared with the zone in the media register).</summary>
         [ObservableProperty] private string _systemZone = "";
-        [ObservableProperty] private string _registerLine = "Registre: nedefinit (nicio analiză încă).";
+        [ObservableProperty] private string _registerLine = "Registre: nedefinite (nicio analiză încă).";
         public ObservableCollection<TimelineEvent> Timeline { get; } = new();
         public ObservableCollection<LogAnalyzer.Dfir.Analysis.AntiForensicCheck> AntiForensics { get; } = new();
         /// <summary>WP15b: "Cronologie politici" (same lines as the investigation PDF).</summary>
         public ObservableCollection<LogAnalyzer.Dfir.Analysis.PolicyReportLine> PolicyTimelineLines { get; } = new();
-        [ObservableProperty] private string _policyTimelineSummary = "Cronologie politici: nedefinit (nicio analiză încă).";
+        [ObservableProperty] private string _policyTimelineSummary = "Cronologie politici: nedefinită (nicio analiză încă).";
         public ObservableCollection<LogAnalyzer.Dfir.Graph.Entity> GraphEntities { get; } = new();
         public ObservableCollection<LogAnalyzer.Dfir.Graph.GraphEdgeRow> GraphEdges { get; } = new();
 
@@ -164,8 +164,30 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private int _networkIndex = -1;
         [ObservableProperty] private int _classificationIndex = -1;
 
+        // Notes and the authorizing act come from the scope dialog (this form has no fields for them); they are carried so a later Configure does not drop them.
+        private string _scopeNotes = "", _scopeAct = "";
+
+        /// <summary>
+        /// The scope is asked at the start (dialog pre-filled from the last case); this copies a confirmed scope into the form fields when the form is still incomplete,
+        /// so the investigation does not ask for the same answers twice. A form the operator already filled in is never overwritten.
+        /// </summary>
+        public bool AskScopeAtStart()
+        {
+            if (!LogAnalyzer.UI.Services.LiveCase.EnsureScopeAtStart()) return BuildScope().MissingFields().Count == 0;
+            if (BuildScope().MissingFields().Count == 0) return true;
+            if (LogAnalyzer.UI.Services.LiveCase.CurrentScope is not { IsConfirmed: true } s) return false;
+            ScopePurpose = s.Purpose; ScopeApprover = s.Approver; ScopeSystems = string.Join("; ", s.SystemsInScope);
+            ScopeFrom = s.PeriodFromUtc?.UtcDateTime.Date; ScopeTo = s.PeriodToUtc?.UtcDateTime.Date;
+            LegalBasisIndex = s.LegalBasis switch { LegalBasis.Incident => 0, LegalBasis.Audit => 1, LegalBasis.Control => 2, _ => -1 };
+            NetworkIndex = s.Network switch { NetworkCategory.AirGappedNetwork => 0, NetworkCategory.StandalonePc => 1, NetworkCategory.Connected => 2, _ => -1 };
+            ClassificationIndex = s.Classification switch { ClassificationLevel.Classified => 0, ClassificationLevel.Unclassified => 1, _ => -1 };
+            _scopeNotes = s.Notes; _scopeAct = s.AuthorizingAct;
+            return BuildScope().MissingFields().Count == 0;
+        }
+
         private CaseScope BuildScope() => new()
         {
+            Notes = _scopeNotes, AuthorizingAct = _scopeAct,
             Purpose = ScopePurpose.Trim(),
             Approver = ScopeApprover.Trim(),
             SystemsInScope = ScopeSystems.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(),
@@ -201,7 +223,9 @@ namespace LogAnalyzer.UI.ViewModels
         private void AddFiles()
         {
             var dlg = new OpenFileDialog { Multiselect = true, Filter = "Probe (*.evtx;*.pf;SRUDB.dat;*.pcapng;hive-uri;Amcache.hve;History)|*.evtx;*.pf;SRUDB.dat;*.pcapng;SYSTEM;SOFTWARE;NTUSER.DAT;*.hiv;Amcache.hve;History|Toate fișierele|*.*" };
+            if (LogAnalyzer.Dfir.Language.FolderMemory.Shared.Get(LogAnalyzer.Dfir.Language.FolderMemory.Evidence) is { } last) dlg.InitialDirectory = last;   // usability 2026-10-16
             if (dlg.ShowDialog() != true) return;
+            LogAnalyzer.Dfir.Language.FolderMemory.Shared.Remember(LogAnalyzer.Dfir.Language.FolderMemory.Evidence, dlg.FileName);
             foreach (var f in dlg.FileNames) if (!ImportFiles.Contains(f)) ImportFiles.Add(f);
         }
 
@@ -209,7 +233,9 @@ namespace LogAnalyzer.UI.ViewModels
         private void AddFolder()
         {
             var dlg = new OpenFolderDialog { Title = "Folder cu probe (EVTX, Prefetch, SRUDB.dat, PCAPNG), căutat recursiv" };
+            if (LogAnalyzer.Dfir.Language.FolderMemory.Shared.Get(LogAnalyzer.Dfir.Language.FolderMemory.Evidence) is { } last) dlg.InitialDirectory = last;   // usability 2026-10-16
             if (dlg.ShowDialog() != true) return;
+            LogAnalyzer.Dfir.Language.FolderMemory.Shared.Remember(LogAnalyzer.Dfir.Language.FolderMemory.Evidence, dlg.FolderName);
             foreach (var f in Directory.EnumerateFiles(dlg.FolderName, "*", SearchOption.AllDirectories)
                          .Where(f => f.EndsWith(".evtx", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".pf", StringComparison.OrdinalIgnoreCase) ||
                                      f.EndsWith(".pcapng", StringComparison.OrdinalIgnoreCase) || Path.GetFileName(f).Equals("SRUDB.dat", StringComparison.OrdinalIgnoreCase)))
@@ -255,17 +281,26 @@ namespace LogAnalyzer.UI.ViewModels
             _ => BuildScope().MissingFields() is { Count: > 0 } m ? "Scopul cazului este incomplet; câmpuri lipsă: " + string.Join(", ", m) : null,
         };
 
+        /// <summary>
+        /// „Alege folderul…”: usability 2026-10-16 — the dialog starts in the folder used last time and, once a folder is chosen on the first step, the scan runs at
+        /// once (no extra „Înainte”).
+        /// </summary>
         [RelayCommand]
-        private void IntakePickFolder()
+        private async Task IntakePickFolder()
         {
             var dlg = new OpenFolderDialog { Title = "Folderul (sau suportul) cu probele aduse de la stația afectată" };
-            if (dlg.ShowDialog() == true) IntakeFolder = dlg.FolderName;
+            if (LogAnalyzer.Dfir.Language.FolderMemory.Shared.Get(LogAnalyzer.Dfir.Language.FolderMemory.Evidence) is { } last) dlg.InitialDirectory = last;
+            if (dlg.ShowDialog() != true) return;
+            IntakeFolder = dlg.FolderName;
+            LogAnalyzer.Dfir.Language.FolderMemory.Shared.Remember(LogAnalyzer.Dfir.Language.FolderMemory.Evidence, dlg.FolderName);
+            if (_intake.StepIndex == 0 && !_intake.Completed) await IntakeNext();
         }
 
         [RelayCommand]
         private async Task IntakeNext()
         {
             if (_intake.Completed) { _intake.Restart(); RaiseIntake(); return; }
+            if (_intake.StepIndex == 0) AskScopeAtStart();   // scope first, at the start; the later scope step is then already filled
             var error = ValidateIntakeStep();
             if (error is not null) { IntakeError = error; return; }
             bool wasLast = _intake.IsLastStep;
@@ -290,6 +325,7 @@ namespace LogAnalyzer.UI.ViewModels
         private async Task Run()
         {
             if (!CollectFromThisStation && ImportFiles.Count == 0) { Log += "Alegeți colectarea de pe această stație sau adăugați probe de importat." + Environment.NewLine; return; }
+            if (BuildScope().MissingFields().Count > 0) AskScopeAtStart();
             var scope = BuildScope();
             var missingScope = scope.MissingFields();
             if (missingScope.Count > 0)
@@ -319,7 +355,15 @@ namespace LogAnalyzer.UI.ViewModels
                         ((IProgress<string>)progress).Report($"Import {files.Count} fișiere (copii; originalele nu se modifică)");
                         InvestigationPipeline.Import(ws, files);
                     }
-                    return new InvestigationPipeline().Run(ws, profile, collect, progress, _cts.Token, systemZone: zone);
+                    // B7: a signed media register in the case folder is verified like on the live path; an invalid one is not used and the reason is shown
+                    LogAnalyzer.Dfir.Registers.MediaRegister? signedMedia = null;
+                    if (LogAnalyzer.UI.Services.MediaRegisterFlows.FromCase(ws.Root) is { } signedInCase)
+                    {
+                        ((IProgress<string>)progress).Report(signedInCase.Note);
+                        ws.Audit(signedInCase.Used ? "register.signed_media_used" : "register.signed_media_refused", signedInCase.Note);
+                        if (signedInCase.Used) signedMedia = LogAnalyzer.Dfir.Registers.SignedMediaRegisterCase.ToMediaRegister(signedInCase.Active.Doc!);
+                    }
+                    return new InvestigationPipeline().Run(ws, profile, collect, progress, _cts.Token, mediaRegister: signedMedia, systemZone: zone);
                 });
                 ShowResult(_result);
                 var checkedCase = _result.Case;
@@ -367,9 +411,10 @@ namespace LogAnalyzer.UI.ViewModels
                 $"{Environment.NewLine}  Legătură: {f.Sequence?.Link}{Environment.NewLine}  Constatări componente: {string.Join(", ", f.RelatedFindingIds)}"));
             RegisterLine = _result.RegisterLine;
             AirGapSummary = AirGapFindings.Count == 0
-                ? "Integritate air-gap: nu s-a observat nimic în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (jurnalele au o istorie limitată; unele canale pot lipsi, vezi „Goluri de probă”)."
+                ? "Integritate air-gap: nu s-a observat nimic în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (jurnalele au o istorie limitată; unele canale pot lipsi, vezi „Surse lipsă sau incomplete”)."
                 : $"Integritate air-gap: {AirGapFindings.Count} constatări ({AirGapFindings.Count(a => a.Severity >= Severity.High)} ridicate).";
             ResultChanged?.Invoke(this, EventArgs.Empty);
+            LogAnalyzer.UI.Services.CollectAllState.Instance.Publish(result);   // G3: one result, reused by every page
             FillTimeline();
             var chains = _result.Findings.Where(f => f.RuleId == "INCIDENT-CHAIN").ToList();
             Chains = chains.Count == 0 ? "Niciun lanț de incident (constatări grave grupate în timp)." :
@@ -403,12 +448,28 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ExportPdf()
         {
-            if (_result is null) return;
+            if (_result is null)
+            {
+                // usability 2026-10-16: said on the page, without an extra window to close (it is not an authority or irreversible action)
+                Summary = "Ca să faceți raportul de incident, analizați întâi probele: alegeți mai jos de unde vin probele, apoi apăsați „Înainte” până la „Pornește analiza”.";
+                ReportStatus = Summary;
+                return;
+            }
             var dlg = new SaveFileDialog { FileName = $"Raport_{_result.Case.Info.CaseId}.pdf", Filter = "PDF (*.pdf)|*.pdf", InitialDirectory = _result.Case.Root };
             if (dlg.ShowDialog() != true) return;
             var audience = (LogAnalyzer.Dfir.Reporting.ReportAudience)Math.Clamp(ReportAudienceIndex, 0, ReportAudienceLabels.Length - 1);
-            InvestigationReportPdf.Write(_result, dlg.FileName, LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified, audience: audience);
+            // F2: Write re-verifies every evidence hash first and prints the result on page 1; F3: the PDF is then signed when a key is configured.
+            var result = _result;
+            if (LogAnalyzer.UI.Services.ExportAudit.Run(result.Case.Info.CaseId, "pdf", result.Findings.Count, dlg.FileName,
+                    () => InvestigationReportPdf.Write(result, dlg.FileName, LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified, audience: audience)) is { } refused)
+            {
+                ReportStatus = refused;
+                System.Windows.MessageBox.Show(refused, "Export refuzat", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return;
+            }
             _result.Case.Audit("report.pdf", $"{dlg.FileName} · {LogAnalyzer.Dfir.Reporting.ReportAudiences.Label(audience)}");
+            ReportStatus = SignReport(dlg.FileName, _result.Case);
+            IntegrityLine = _result.Case.LastRecheck?.Summary ?? IntegrityLine;
             Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });
         }
 
@@ -458,7 +519,11 @@ namespace LogAnalyzer.UI.ViewModels
             if (IsReadOnlyCase) { ClosureText = "Cazul este deschis doar pentru citire: nu se mai poate închide din nou."; return; }
             var closure = LogAnalyzer.Dfir.Case.CaseClosure.Close(_result.Case, $"{Environment.UserDomainName}\\{Environment.UserName}");
             ClosureText = closure.RegisterText;
-            try { Clipboard.SetText(closure.RegisterText); ClosureText += Environment.NewLine + "(Copiat în clipboard.)"; }
+            try
+            {
+                if (LogAnalyzer.UI.Services.ExportAudit.Clipboard(_result.Case.Info.CaseId, "closure_register", closure.RegisterText) is { } refused) ClosureText += Environment.NewLine + refused;
+                else ClosureText += Environment.NewLine + "(Copiat în clipboard.)";
+            }
             catch (System.Runtime.InteropServices.COMException) { /* clipboard busy: the text stays on screen */ }
         }
 

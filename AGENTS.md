@@ -145,6 +145,17 @@ Direct unauthenticated filesystem scans, raw `os.walk` traversals outside the au
 > - `P16/P17/P18` = Invariante separate de telemetrie hardware și criminalistică.
 > - `P0-P18` = Termen umbrelă sintetic; nu reprezintă 19 invariante secvențiale de memorie.
 
+## Owner privacy
+
+This repository is public. Never commit, push or publish anything about the owner's own machine or about material the owner hands over. This covers:
+- the machine name, the Windows user name and `C:\Users\<user>\...` profile paths (in every form: backslash, forward slash, escaped, `/c/Users/<user>`);
+- device, USB and disk serials, account SIDs, Wi-Fi network names, case ids from real runs;
+- the content of reports, logs, screenshots or files the owner provides.
+
+The rule applies to files, test fixtures, docs, generated artifacts, commit messages and PR/issue text. Use placeholders instead: `LAB-PC`, `user`, `C:\Users\user`, fake same-format serials and SIDs. Functional paths in code become environment variables or relative paths. Analysis of owner material stays in local scratch space only, never in the repository.
+
+Before every commit, grep the staged diff and the commit message against the local, untracked list `%APPDATA%\ai-memory-vault\private_identifiers.txt` (never commit that list); a hit blocks the commit. Rewriting Git history and changing repository visibility are the owner's decision, never an agent's.
+
 ## Multi-Agent Development Coordination
 
 When multiple AI development environments/agents (Antigravity, Claude Code, ChatGPT, Perplexity, etc.) operate on this repository:

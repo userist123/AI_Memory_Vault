@@ -24,7 +24,7 @@ namespace LogAnalyzer.UI.ViewModels
         public ProfileTable Table { get; }
         public string Title => ProfileTables.Title(Table);
         public string Section => ProfileTables.Section(Table);
-        public string Columns => string.Join(" | ", ProfileTables.Columns(Table));
+        public string Columns => string.Join(" · ", ProfileTables.Columns(Table).Select(LogAnalyzer.UI.Views.ColumnLabels.For));
         public DataTable Data { get; }
         public DataView View => Data.DefaultView;
 
@@ -41,6 +41,7 @@ namespace LogAnalyzer.UI.ViewModels
             ProfileTable.Zones => "Zonele organizației (ex. ROSU, PUBLIC). Fără zone, orice conectivitate pe un sistem air-gapped este „conectivitate observată, necesită explicație”.",
             ProfileTable.TransferChannels => "FromZone/ToZone: zone definite mai sus; Medium: suport sau cale de transfer aprobată.",
             ProfileTable.NetworkDestinations => "Address: IP, rețea CIDR sau nume; Zone: zona în care se află.",
+            ProfileTable.ClassifiedFolders => "Path: calea completă a unui folder cu documente clasificate (ex. D:\\Clasificat). La controlul stației se verifică dacă accesul la fișierele din el este auditat.",
             _ => "",
         };
 
@@ -199,13 +200,26 @@ namespace LogAnalyzer.UI.ViewModels
             Pull();
             try
             {
+                var before = ProfileStore.Load(path).Profile;
                 var issues = ProfileStore.Save(_profile, path, out var sha);
                 ShowIssues(issues);
                 Refresh();
                 if (issues.Any(i => i.IsError)) { Status = $"Nu s-a salvat nimic: {issues.Count(i => i.IsError)} erori (vezi lista, pe linii)."; return; }
                 Sha256 = sha;
+                // the profile is written at this point: a failure of the audit below is reported as such, never as a failed save (review 2026-10-15)
+                string? auditError = null;
+                if (LogAnalyzer.UI.Services.AuthApp.IsReady)
+                {
+                    try { LogAnalyzer.Dfir.Auth.OperationAudit.AuditProfileSave(LogAnalyzer.UI.Services.AuthApp.Service, LogAnalyzer.UI.Services.AuthApp.Session, before, _profile, Path.GetFileName(path)); }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+                    {
+                        auditError = ex.Message;
+                        LogAnalyzer.UI.Services.AuditHealth.Instance.Report(LogAnalyzer.Dfir.Auth.OperationAudit.ProfileEdited, ex.Message);
+                    }
+                }
                 if (string.Equals(Path.GetFullPath(path), Path.GetFullPath(_provider.Path), StringComparison.OrdinalIgnoreCase)) _provider.Replace(_profile);
-                Status = $"Profil salvat în {path} (SHA-256 {sha}). Se folosește la următoarea analiză; fiecare caz își păstrează o copie și hash-ul în custodie.";
+                Status = $"Profil salvat în {path} (SHA-256 {sha}). Se folosește la următoarea analiză; fiecare caz își păstrează o copie și hash-ul în custodie." +
+                         (auditError is null ? "" : $" ATENȚIE: modificarea nu a putut fi trecută în jurnalul de audit: {auditError}");
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
@@ -225,6 +239,9 @@ namespace LogAnalyzer.UI.ViewModels
         {
             var r = ProfileImport.FromJson(json);
             ShowIssues(r.Issues);
+            // the officer list is never imported with a profile; that someone tried is itself recorded (check A13)
+            if (r.Issues.Any(i => i.Message == ProfileImport.OfficerEntriesIgnored) && LogAnalyzer.UI.Services.AuthApp.IsReady)
+                StationControlViewModel.RecordOfficerEvent(LogAnalyzer.Dfir.Auth.OperationAudit.OfficerImportIgnored, "source=" + Path.GetFileName(source));
             if (r.Profile is null) { Status = $"Importul din {source} a eșuat; nimic nu s-a schimbat."; return; }
             _profile = r.Profile;
             Push();
@@ -234,7 +251,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ImportCsv()
         {
-            if (SelectedTable is null) return;
+            if (SelectedTable is null) { Status = "Ca să importați un CSV, alegeți întâi tabelul în care intră datele (dați clic pe el în listă)."; return; }
             var dlg = new OpenFileDialog { Filter = "CSV / text (*.csv;*.tsv;*.txt)|*.csv;*.tsv;*.txt|Toate fișierele|*.*", Title = $"Importați CSV în „{SelectedTable.Title}”" };
             if (dlg.ShowDialog() == true) ImportText(File.ReadAllText(dlg.FileName), dlg.FileName);
         }
@@ -242,7 +259,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void Paste()
         {
-            if (SelectedTable is null) return;
+            if (SelectedTable is null) { Status = "Ca să lipiți date, alegeți întâi tabelul în care intră (dați clic pe el în listă)."; return; }
             string text;
             try { text = Clipboard.GetText(); }
             catch (System.Runtime.InteropServices.COMException) { Status = "Clipboard-ul nu este disponibil."; return; }

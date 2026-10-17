@@ -69,7 +69,7 @@ public sealed class UserHiveParser : EvidenceParserBase
         ParserId = "UserHiveParser", Version = "1.0", Artifact = "Hive utilizator (NTUSER.DAT) — UserAssist și cheile Run/RunOnce",
         SourceTypes = ["ntuser_hive"], FileNames = ["NTUSER.DAT", "NTUSER*.hiv", "HKCU.hiv"], Fingerprints = ["regf"],
         SupportedOs = "Oricare (citire offline cu RawRegistry)",
-        FormatVersions = ["UserAssist versiunea 5 (Windows 7 – 11, 72 de octeți) și versiunea 3 (XP, 16 octeți)", "Run / RunOnce (REG_SZ, REG_EXPAND_SZ neexpandat)"],
+        FormatVersions = ["UserAssist versiunea 5 (Windows 7 – 11, 72 de octeți) și versiunea 3 (XP, 16 octeți)", "Run / RunOnce (REG_SZ, REG_EXPAND_SZ neexpandat)", "RunMRU (ordinea din MRUList) și TypedPaths (url1 = cea mai nouă); doar intrarea cea mai nouă are ora cheii"],
         Limitations =
         [
             "UserAssist înregistrează doar programele pornite din interfața grafică (Explorer, meniul Start), nu din linia de comandă.",
@@ -111,7 +111,7 @@ public sealed class UserHiveParser : EvidenceParserBase
                         Time = Timestamp.FromFileTime(ft, "UserAssist FILETIME"),
                         TimeSemantics = "last run from Explorer / Start menu (GUI, UserAssist)",
                         Source = "UserAssist", EvidenceId = item.EvidenceId, Path = path, Process = SafeFileName(path),
-                        Summary = $"UserAssist: {path} pornit din interfață de {runs} ori",
+                        Summary = $"UserAssist: {path} pornit din interfață de {LogAnalyzer.Dfir.Language.RoText.Times(runs)}",
                         TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.Medium,
                         Locator = $@"NTUSER\{keyPath}\{v.Name}",
                         Fields =
@@ -129,6 +129,103 @@ public sealed class UserHiveParser : EvidenceParserBase
         foreach (var key in new[] { @"Software\Microsoft\Windows\CurrentVersion\Run", @"Software\Microsoft\Windows\CurrentVersion\RunOnce",
                                     @"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run" })
             Hive.RunKey(reg, "NTUSER", key, item, sink, result);
+
+        EmitMountPoints2(reg, item, sink, result, ct);
+        EmitTypedCommands(reg, item, sink, result);
+        DeletedRegistryTraces.Emit(fullPath, "NTUSER", item, sink, result, ct);
+    }
+
+    internal const string RunMruKey = @"Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU";
+    internal const string TypedPathsKey = @"Software\Microsoft\Windows\CurrentVersion\Explorer\TypedPaths";
+
+    /// <summary>
+    /// What the user typed or pasted in the Run dialog (Win+R, RunMRU) and in the Explorer address bar (TypedPaths): the place ClickFix / FileFix lures make
+    /// the user paste a command (T1204.004). Order: RunMRU follows MRUList (first letter = newest), TypedPaths url1 = newest. The key's last write time is the
+    /// time of the newest entry only; the other entries have no time of their own and are emitted without one.
+    /// </summary>
+    internal static void EmitTypedCommands(RawRegistry reg, EvidenceItem item, IEventSink sink, ParseResult result)
+    {
+        var account = ProfileName(item.OriginalPath);
+        var run = reg.OpenKey(RunMruKey);
+        if (run is not null)
+        {
+            var values = run.Values.Where(v => v.Name.Length == 1 && char.IsAsciiLetter(v.Name[0])).ToDictionary(v => v.Name, StringComparer.OrdinalIgnoreCase);
+            var order = (run.Values.FirstOrDefault(v => v.Name.Equals("MRUList", StringComparison.OrdinalIgnoreCase))?.AsText ?? "").Select(c => c.ToString()).ToList();
+            foreach (var n in values.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase)) if (!order.Contains(n, StringComparer.OrdinalIgnoreCase)) order.Add(n);
+            int pos = 0;
+            foreach (var n in order)
+            {
+                if (!values.TryGetValue(n, out var v)) continue;
+                var command = v.AsText;
+                if (command.EndsWith("\\1", StringComparison.Ordinal)) command = command[..^2];   // RunMRU stores "command\1"
+                Typed(sink, item, "RunMRU", RunMruKey, v.Name, command, pos, run, account, "Run dialog (Win+R) entry");
+                pos++;
+                result.Records++;
+            }
+        }
+        var typed = reg.OpenKey(TypedPathsKey);
+        if (typed is not null)
+        {
+            var urls = typed.Values.Select(v => (V: v, N: v.Name.StartsWith("url", StringComparison.OrdinalIgnoreCase) && int.TryParse(v.Name[3..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var i) ? i : int.MaxValue))
+                .Where(x => x.N != int.MaxValue).OrderBy(x => x.N).ToList();
+            int pos = 0;
+            foreach (var (v, _) in urls)
+            {
+                Typed(sink, item, "TypedPaths", TypedPathsKey, v.Name, v.AsText, pos, typed, account, "Explorer address bar entry");
+                pos++;
+                result.Records++;
+            }
+        }
+    }
+
+    private static void Typed(IEventSink sink, EvidenceItem item, string source, string key, string valueName, string command, int position, RawKey k, string account, string what)
+    {
+        var exe = CommandLine.Executable(command);
+        sink.Add(new TimelineEvent
+        {
+            Time = position == 0 ? Hive.KeyTime(k) : Timestamp.Unknown(),
+            TimeSemantics = position == 0 ? $"{what}: key last written (time of the newest entry)" : $"{what}: no time of its own (only the newest entry has the key time)",
+            Source = source, EvidenceId = item.EvidenceId, Path = exe, Process = exe.Length > 0 ? WinPath.GetFileName(exe) : "",
+            Summary = $"{(source == "RunMRU" ? "Comandă tastată sau lipită în fereastra Run (Win+R)" : "Cale tastată sau lipită în bara de adrese Explorer")} de profilul „{account}” (poziția {position + 1}): {LnkText.Depad(command).Text}",
+            TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.Medium,
+            Locator = $@"NTUSER\{key}\{valueName}",
+            Fields = { ["Command"] = command, ["ValueName"] = valueName, ["MruPosition"] = position.ToString(CultureInfo.InvariantCulture), ["Account"] = account, ["Key"] = key },
+        });
+    }
+
+    /// <summary>
+    /// MountPoints2 volume GUIDs: the volumes this profile mounted. The key's last write is the profile's last use of that volume. Network shares
+    /// (##server#share) are not emitted here: the device inventory reads them. The profile name is taken from the original path (…\Users\&lt;name&gt;\NTUSER.DAT).
+    /// </summary>
+    internal const string MountPoints2Key = @"Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2";
+
+    internal static void EmitMountPoints2(RawRegistry reg, EvidenceItem item, IEventSink sink, ParseResult result, CancellationToken ct)
+    {
+        var account = ProfileName(item.OriginalPath);
+        foreach (var k in reg.SubKeys(MountPoints2Key))
+        {
+            ct.ThrowIfCancellationRequested();
+            var leaf = k.Path[(k.Path.LastIndexOf('\\') + 1)..];
+            if (!(leaf.StartsWith('{') && leaf.EndsWith('}'))) continue;
+            var guid = leaf.ToUpperInvariant();
+            sink.Add(new TimelineEvent
+            {
+                Time = Hive.KeyTime(k), TimeSemantics = "MountPoints2 key last written (the profile's last use of this volume)",
+                Source = "MountPoints2", EvidenceId = item.EvidenceId, Path = "", Process = "",
+                Summary = $"Profilul „{account}” a montat volumul {guid} (MountPoints2)",
+                TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.Medium,
+                Locator = $@"NTUSER\{MountPoints2Key}\{leaf}",
+                Fields = { ["Account"] = account, ["VolumeGuid"] = guid },
+            });
+            result.Records++;
+        }
+    }
+
+    /// <summary>The profile folder name from a path such as C:\Users\&lt;name&gt;\NTUSER.DAT; "profil necunoscut" when the path has no such folder.</summary>
+    internal static string ProfileName(string originalPath)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(originalPath ?? "", @"[\\/]Users[\\/]([^\\/]+)[\\/]", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        return m.Success ? m.Groups[1].Value : "profil necunoscut";
     }
 
     public static string Rot13(string s) => string.Create(s.Length, s, (span, src) =>
@@ -233,6 +330,8 @@ public sealed class SoftwareHiveParser : EvidenceParserBase
                 result.Records++;
             }
         }
+
+        DeletedRegistryTraces.Emit(fullPath, "SOFTWARE", item, sink, result, ct);
     }
 
     private static bool IsDefaultUserinit(string v)

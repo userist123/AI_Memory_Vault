@@ -48,7 +48,7 @@ Un obiect fără probe, cu probe din afara cazului sau fără hash este refuzat 
   funcția reală `interfaces.memory_access.propose()` din acest depozit. Controller-ul de test doar înregistrează nota
   (nu există stocare, deci nu se scrie nimic în vault). Regulile vault-ului decid: tipul, cheile și `source_type` din
   proveniență, lungimile. Fiecare notă rezultată este `Principal.AI_AGENT`, `REVIEW`, `unverified`.
-- Pe cazul NanAgent, toate constatările ajung în propuneri și niciuna nu este refuzată.
+- Pe cazul VendorAgent, toate constatările ajung în propuneri și niciuna nu este refuzată.
 
 ## Limite
 

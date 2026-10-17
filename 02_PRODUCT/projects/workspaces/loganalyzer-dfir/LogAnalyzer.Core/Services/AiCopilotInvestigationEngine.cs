@@ -56,7 +56,7 @@ namespace LogAnalyzer.Core.Services
                 result.RegulatoryImpactRo = "Impact potențial asupra conformității cu HG 585/2002 privind protecția informațiilor clasificate.";
                 if (sList.Any(s => s.FindingType.Contains("auditpol", StringComparison.OrdinalIgnoreCase)))
                 {
-                    result.ExecutiveSummaryRo += "A fost detectată alterarea politicilor locale de auditare (tentativă de mascare a activității). ";
+                    result.ExecutiveSummaryRo += "A fost detectată alterarea politicilor locale de auditare (tentativă de deghizare a activității). ";
                     result.RecommendedContainmentSteps.Add("Restaurați imediat politica de audit standard din baseline-ul securizat HG 585.");
                 }
                 if (sList.Any(s => s.FindingType.Contains("USB", StringComparison.OrdinalIgnoreCase)))

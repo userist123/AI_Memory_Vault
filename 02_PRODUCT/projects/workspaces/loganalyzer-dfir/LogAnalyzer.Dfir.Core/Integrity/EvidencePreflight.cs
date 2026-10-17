@@ -26,6 +26,7 @@ public static class EvidenceFingerprint
         if (n >= 4 && BinaryPrimitives.ReadUInt32LittleEndian(h) == 0x0A0D0D0A) return "pcapng";
         if (IsTaskXml(path)) return "task_xml";
         if (IsUsnExport(path)) return "usn_fsutil";
+        if (IsFirewallLog(path)) return "pfirewall";
         var t = h.TrimStart(" \t\r\n﻿"u8);
         if (t.Length > 0 && (t[0] == (byte)'{' || t[0] == (byte)'[') || StartsWith(h, 0, [0xEF, 0xBB, 0xBF, (byte)'{'])) return "json";
         return "unknown";
@@ -56,6 +57,16 @@ public static class EvidenceFingerprint
         return head.TrimStart('\uFEFF').StartsWith("USN Journal ID", StringComparison.Ordinal);
     }
 
+    /// <summary>Windows Firewall text log: "#Version:" then "#Software: Microsoft Windows Firewall".</summary>
+    private static bool IsFirewallLog(string path)
+    {
+        var buf = new byte[256];
+        int n;
+        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            n = fs.ReadAtLeast(buf, buf.Length, throwOnEndOfStream: false);
+        return LogAnalyzer.Dfir.Network.FirewallLogParser.LooksLikeFirewallLog(System.Text.Encoding.UTF8.GetString(buf, 0, n));
+    }
+
     /// <summary>Formats an evidence item may legitimately have, from its declared type or name; null when not checked.</summary>
     public static IReadOnlyCollection<string>? Expected(EvidenceItem item)
     {
@@ -66,8 +77,9 @@ public static class EvidenceFingerprint
         if (t == "srum" || name.Equals("SRUDB.dat", StringComparison.OrdinalIgnoreCase)) return ["ese"];
         if (t is "system_hive" or "amcache" or "ntuser_hive" or "software_hive") return ["regf"];
         if (t == "pcapng" || name.EndsWith(".pcapng", StringComparison.OrdinalIgnoreCase)) return ["pcapng"];
-        if (t == "live_snapshot") return ["json"];
+        if (t is "live_snapshot" or "airgap_facts") return ["json"];
         if (t == "task_xml") return ["task_xml"];
+        if (t == LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName) return ["pfirewall"];
         if (t == "usn_journal") return ["usn_fsutil"];
         if (t is "chromium_history" or "firefox_places") return ["sqlite"];
         if (t == "jumplist_auto" || name.EndsWith(".automaticDestinations-ms", StringComparison.OrdinalIgnoreCase)) return ["cfb"];
@@ -87,6 +99,18 @@ public sealed record PreflightResult(string EvidenceId, PreflightStatus Status, 
 {
     /// <summary>Unverified = readable and of the declared format, but there is no acquisition hash to compare with.</summary>
     public bool CanParse => Status is PreflightStatus.Ok or PreflightStatus.Unverified;
+
+    /// <summary>
+    /// The file is gone or its content changed after acquisition: results attributed to it no longer belong to the acquired source.
+    /// A format mismatch with an intact hash is not this: the file is the acquired one, it was only not interpreted.
+    /// </summary>
+    public bool IsIntegrityFailure => Status is PreflightStatus.Missing or PreflightStatus.SizeMismatch or PreflightStatus.HashMismatch;
+
+    /// <summary>Reader-facing notice for a format mismatch; empty for every other state.</summary>
+    public string FormatNotice => Status != PreflightStatus.FormatMismatch ? ""
+        : ExpectedSha256.Length > 0
+            ? "fișier gol sau format neașteptat; amprenta este intactă; elementul de probă nu a fost interpretat"
+            : "fișier gol sau format neașteptat; nu există amprentă de la achiziție; elementul de probă nu a fost interpretat";
 
     /// <summary>Code used in errors, gaps and the audit log.</summary>
     public string Code => Status switch
@@ -152,7 +176,7 @@ public static class EvidencePreflight
         var expected = acceptedFormats ?? EvidenceFingerprint.Expected(item);
         if (expected is not null && !expected.Contains(fingerprint))
             return new(item.EvidenceId, PreflightStatus.FormatMismatch, size, sha, item.Sha256, fingerprint,
-                $"Conținutul are formatul „{fingerprint}”, dar proba este declarată {item.SourceType} (așteptat: {string.Join("/", expected)}).", fileTime);
+                (fingerprint == "empty" ? "Fișierul este gol" : $"Conținutul are formatul „{fingerprint}”") + $", dar elementul de probă este declarat {item.SourceType} (așteptat: {string.Join("/", expected)}).", fileTime);
         if (item.Sha256.Length == 0)
             return new(item.EvidenceId, PreflightStatus.Unverified, size, sha, "", fingerprint,
                 "Proba nu are un SHA-256 de la achiziție; integritatea nu poate fi verificată.", fileTime);

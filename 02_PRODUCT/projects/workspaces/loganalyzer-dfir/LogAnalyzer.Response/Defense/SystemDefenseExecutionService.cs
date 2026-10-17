@@ -20,20 +20,25 @@ namespace LogAnalyzer.Infrastructure.Services
     {
         private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(20);
 
+        /// <summary>The firewall tool this runner starts (System32); the editions that ship this runner add it to the application's program inventory.</summary>
+        public static string NetshPath => System.IO.Path.Combine(Environment.SystemDirectory, "netsh.exe");
+
         public CommandOutcome Netsh(string arguments)
         {
-            var psi = new ProcessStartInfo(System.IO.Path.Combine(Environment.SystemDirectory, "netsh.exe"), arguments)
+            var psi = new ProcessStartInfo(NetshPath, arguments)
             {
                 RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true,
             };
-            using var p = Process.Start(psi) ?? throw new InvalidOperationException("netsh.exe nu a putut fi pornit.");
+            using var p = LogAnalyzer.Dfir.Auth.CollectorExec.Start(psi);
             var stdout = p.StandardOutput.ReadToEndAsync();
             var stderr = p.StandardError.ReadToEndAsync();
             if (!p.WaitForExit(Timeout))
             {
                 try { p.Kill(entireProcessTree: true); } catch (InvalidOperationException) { /* exited between the check and the kill */ }
+                LogAnalyzer.Dfir.Auth.CollectorExec.Done(p);
                 return new CommandOutcome(-1, $"netsh nu a terminat în {Timeout.TotalSeconds:0} s; operația a fost oprită.");
             }
+            LogAnalyzer.Dfir.Auth.CollectorExec.Done(p);
             return new CommandOutcome(p.ExitCode, (stdout.Result + stderr.Result).Trim());
         }
     }
@@ -53,17 +58,18 @@ namespace LogAnalyzer.Infrastructure.Services
 
         /// <summary>Blocks all outbound traffic of the station with one firewall rule.</summary>
         public static DefenseActionResult IsolateHostFromNetwork(IFirewallCommandRunner? runner = null) =>
-            AddRule(runner ?? Default, FirewallIsolationRuleName, $"dir=out action=block profile=any",
+            NotAuthorized() ?? AddRule(runner ?? Default, FirewallIsolationRuleName, $"dir=out action=block profile=any",
                 "Stația este izolată: regula „{0}” blochează tot traficul de ieșire.", "Izolarea stației");
 
         /// <summary>Removes the isolation rule and checks that it is gone.</summary>
         public static DefenseActionResult RestoreNetworkAccess(IFirewallCommandRunner? runner = null) =>
-            DeleteRule(runner ?? Default, FirewallIsolationRuleName,
+            NotAuthorized() ?? DeleteRule(runner ?? Default, FirewallIsolationRuleName,
                 "Izolarea a fost ridicată: regula „{0}” nu mai există.", "Regula de izolare „{0}” nu există; nu era nimic de ridicat.", "Ridicarea izolării");
 
         /// <summary>Blocks outbound traffic to one IP address or CIDR range. Nothing is run for an empty or invalid target.</summary>
         public static DefenseActionResult BlockMaliciousIoC(string iocTarget, IFirewallCommandRunner? runner = null)
         {
+            if (NotAuthorized() is { } refused) return refused;
             var target = (iocTarget ?? string.Empty).Trim();
             if (!IsIpOrCidr(target))
                 return new DefenseActionResult
@@ -75,6 +81,14 @@ namespace LogAnalyzer.Infrastructure.Services
                 "Traficul de ieșire către {1} este blocat de regula „{0}”. Se șterge din Windows Defender Firewall sau cu: netsh advfirewall firewall delete rule name=\"{0}\".",
                 $"Blocarea {target}", target);
         }
+
+        /// <summary>Role gate (security audit #2): a signed-in operator never changes the station's firewall; nothing is run.</summary>
+        private static DefenseActionResult? NotAuthorized() =>
+            LogAnalyzer.Dfir.Auth.OperatorIdentity.MayChangeHost ? null : new DefenseActionResult
+            {
+                Status = DefenseActionResult.NotAuthorized,
+                Message = LogAnalyzer.Dfir.Auth.OperatorIdentity.HostChangeRefusedMessage,
+            };
 
         public static bool IsIpOrCidr(string s)
         {

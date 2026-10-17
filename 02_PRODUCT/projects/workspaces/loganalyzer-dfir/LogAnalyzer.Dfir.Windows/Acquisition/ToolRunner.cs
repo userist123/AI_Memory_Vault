@@ -16,7 +16,7 @@ public sealed record ToolRun(string Executable, IReadOnlyList<string> Arguments,
 /// </summary>
 public static class ToolRunner
 {
-    public static ToolRun Run(string exe, IEnumerable<string> args, string logDir, string label, TimeSpan timeout, CancellationToken ct)
+    public static ToolRun Run(string exe, IEnumerable<string> args, string logDir, string label, TimeSpan timeout, CancellationToken ct, Encoding? outputEncoding = null)
     {
         Directory.CreateDirectory(logDir);
         string stamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff");
@@ -25,13 +25,14 @@ public static class ToolRunner
         {
             UseShellExecute = false, CreateNoWindow = true,
             RedirectStandardOutput = true, RedirectStandardError = true,
-            StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8,
+            StandardOutputEncoding = outputEncoding ?? Encoding.UTF8, StandardErrorEncoding = outputEncoding ?? Encoding.UTF8,
         };
         var argList = args.ToList();
         foreach (var a in argList) psi.ArgumentList.Add(a);
 
         var start = DateTimeOffset.UtcNow;
-        using var p = Process.Start(psi) ?? throw new InvalidOperationException($"Could not start {exe}");
+        // through the one recording path: "collector.exec" in the sealed audit before the start, "collector.exec_done" after the end
+        using var p = LogAnalyzer.Dfir.Auth.CollectorExec.Start(psi);
         using var outW = new StreamWriter(outPath, false, new UTF8Encoding(false));
         using var errW = new StreamWriter(errPath, false, new UTF8Encoding(false));
         p.OutputDataReceived += (_, e) => { if (e.Data is not null) lock (outW) outW.WriteLine(e.Data); };
@@ -48,8 +49,20 @@ public static class ToolRunner
             }
             p.WaitForExit();
         }
+        LogAnalyzer.Dfir.Auth.CollectorExec.Done(p);
         ct.ThrowIfCancellationRequested();
         return new ToolRun(exe, argList, timedOut ? -1 : p.ExitCode, outPath, errPath, start, DateTimeOffset.UtcNow, timedOut);
+    }
+
+    /// <summary>The console OEM code page that console tools such as bcdedit write in (cp852 / cp850 ...); falls back to UTF-8 when the code page is not available.</summary>
+    public static Encoding ConsoleOemEncoding()
+    {
+        try
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            return Encoding.GetEncoding(System.Globalization.CultureInfo.CurrentCulture.TextInfo.OEMCodePage);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException) { return Encoding.UTF8; }
     }
 
     public static string FileVersion(string exe)

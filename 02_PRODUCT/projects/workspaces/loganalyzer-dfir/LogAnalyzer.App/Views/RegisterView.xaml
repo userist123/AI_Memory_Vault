@@ -14,7 +14,7 @@
             <TextBlock Text="{Binding Notice}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
             <TextBlock Text="{Binding AccessNotice}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource CriticalBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
             <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
-                       Text="Date introduse manual, lipite din tabel sau importate (JSON / CSV). Analiza le compară cu ce s-a observat; nimic nu se aplică pe Windows. Un registru fără rânduri este „registru nedefinit”, niciodată „conform”. Fiecare modificare salvată intră într-un jurnal de audit înlănțuit prin hash."/>
+                       Text="Rândurile se preiau de pe stație („Preia de pe stație”); persoana completează doar ce stația nu poate ști. Se pot și lipi din tabel sau importa (JSON / CSV). Analiza le compară cu ce s-a observat; nimic nu se aplică pe Windows. Un registru fără rânduri este „registru nedefinit”, niciodată „conform”. Fiecare modificare salvată intră într-un jurnal de audit înlănțuit prin hash."/>
         </StackPanel>
 
         <Border Grid.Row="1" Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,8">
@@ -22,6 +22,8 @@
                 <WrapPanel VerticalAlignment="Center">
                     <TextBlock Text="Fișier:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <TextBox Text="{Binding RegisterPath, Mode=OneWay}" IsReadOnly="True" Width="420" Margin="0,0,10,0"/>
+                    <Button Content="Preia de pe stație" Command="{Binding DiscoverCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"
+                            AutomationProperties.HelpText="Citește de pe această stație conturile sau mediile existente și adaugă rândurile care lipsesc. Nu modifică nimic pe Windows și nu schimbă rândurile deja existente."/>
                     <Button Content="Salvează" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Reîncarcă" Command="{Binding ReloadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Deschide…" Command="{Binding OpenFileCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
@@ -40,7 +42,7 @@
             <DockPanel Margin="8">
                 <TextBlock DockPanel.Dock="Top" Text="{Binding Columns}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <TextBlock DockPanel.Dock="Top" Text="{Binding Hint}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,2,0,8"/>
-                <DataGrid ItemsSource="{Binding View}" AutoGenerateColumns="True" CanUserAddRows="True" CanUserDeleteRows="True"
+                <DataGrid ItemsSource="{Binding View}" AutoGenerateColumns="True" AutoGeneratingColumn="Grid_AutoGeneratingColumn" CanUserAddRows="True" CanUserDeleteRows="True"
                           HeadersVisibility="Column" SelectionUnit="CellOrRowHeader" ClipboardCopyMode="IncludeHeader"/>
             </DockPanel>
         </Border>
