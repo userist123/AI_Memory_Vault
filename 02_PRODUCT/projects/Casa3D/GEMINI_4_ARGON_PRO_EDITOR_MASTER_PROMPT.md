@@ -622,3 +622,81 @@ Do not expand into every P1/P2 item before completing a coherent tested vertical
 
 ---
 
+---
+
+# 17. Cross-cutting reliability, secure imports, accessibility and project recovery
+
+This section adds quality gates that cut across the editor, client workflow and project lifecycle. It does not replace sections 1–16. Audit the current implementation first; fix confirmed gaps in the same branch and PR #305, without duplicating existing systems.
+
+## 17.1 Secure project and asset import
+
+Treat PDF/raster plans, CAD files, GLB/glTF models, product images and project archives as untrusted input. For every supported import path:
+- maintain an explicit allowlist of formats and a documented supported subset; validate actual file content/signature and parser-level structure, not only filename extension or browser-supplied MIME type;
+- enforce configurable file-size, decompressed-size, image-dimension, entity-count and parser-time/resource limits before expensive processing;
+- generate internal storage names; prevent path traversal and archive extraction outside the intended destination; never execute imported content;
+- authorize upload and subsequent read/write/download per project; keep private files outside a directly executable/public web root where the deployment supports it;
+- serve downloads with safe content headers and access checks; do not expose private client plans through predictable paths;
+- for URL-based sourcing, use an explicit allowlist or a constrained fetch service with redirect, DNS/IP, private-network, protocol and response-size checks. Do not fetch arbitrary URLs from the server or forward credentials/cookies to suppliers;
+- return a clear import report: accepted, rejected, approximated and unsupported entities, plus the reason. Never silently convert a failed import into an empty or apparently successful project.
+
+Add adversarial fixtures for spoofed MIME/extension, malformed/truncated files, oversized/decompression-bomb archives, invalid model buffers, path traversal, URL redirects to private/internal addresses, timeouts and unauthorized project access. Tests must prove the import fails safely without corrupting existing project data.
+
+## 17.2 Project durability, conflict handling and recoverability
+
+A professional project is valuable client work. Verify the complete data lifecycle rather than testing only a successful save call:
+- show truthful dirty/saving/saved/error/conflict states; never display “saved” before persistence confirms success;
+- preserve unsaved work through navigation errors and recoverable request failures; make retry idempotent and prevent duplicate uploads/orders/issues;
+- detect stale writes/concurrent edits and present a safe conflict resolution path; do not silently overwrite a newer revision;
+- support a documented project export/backup and restore/import path if compatible with the current architecture. Include schema/version metadata and validate the archive before mutating an existing project;
+- test interrupted save/upload, refresh during save, stale revision, duplicate retry, backup restore, corrupted backup and backward-compatible migration. A restore test must compare project IDs/relationships, geometry, units, provenance, materials, quantities and revision history—not merely confirm that a file was accepted;
+- if any backup, sync or offline feature depends on unavailable infrastructure, state that limitation and do not simulate success.
+
+## 17.3 Accessible precision editing across mouse, keyboard and touch
+
+Treat accessibility as part of editor correctness, not only a visual audit:
+- every drag-based operation must have a practical non-drag alternative where feasible: select an entity and enter exact dimensions/coordinates, use nudge/rotate controls, or use keyboard commands;
+- support visible keyboard focus, semantic labels, keyboard operation for dialogs/inspectors/layers, meaningful status/error announcements and focus that is not obscured by sticky panels;
+- test target sizes and spacing against WCAG 2.2 AA; aim for larger touch targets (approximately 44 CSS px) in mobile-critical controls where layout permits;
+- keep the canvas usable on narrow screens without horizontal page overflow; use a deliberate mobile interaction model rather than shrinking the desktop toolbar;
+- respect reduced-motion preferences and avoid communicating ERROR/WARNING/UNKNOWN through colour alone;
+- validate actual workflows at representative desktop, tablet and phone widths, with keyboard-only and touch input. A passing automated accessibility scan is useful but does not replace interaction tests.
+
+## 17.4 Privacy, client-sharing and lifecycle controls
+
+Inspect the complete ownership and sharing path for project records, imported plans, photos, supplier costs and exports:
+- enforce least privilege on the server for every project-scoped read/write; hiding a button in the UI is not authorization;
+- client links must be revocable, scoped to the intended project/revision/data projection, resistant to guessing, and free of internal notes, supplier margin, credentials or unrelated client data;
+- record meaningful audit events for approvals, substitutions, exports, shares and destructive actions without logging secrets or full sensitive payloads;
+- collect only client information needed for the workflow; document retention/deletion/export behavior and avoid keeping personal data indefinitely without a justified purpose;
+- verify project duplication, deletion/trash, restore, share revocation and exports do not leak or resurrect another project's data.
+
+Do not claim GDPR compliance from a checklist alone. Map implemented controls and known gaps to the applicable legal review; the software should provide controls and evidence, not make unsupported legal assurances.
+
+## 17.5 Measured performance and graceful degradation
+
+Create representative fixtures based on realistic project complexity, then measure rather than guess:
+- initial editor load, plan interaction latency, 2D/3D synchronization, save/reload time, render stability and memory as project size grows;
+- texture/model loading, cleanup on scene rebuild, WebGL context loss, browser/device limits and repeated project switching;
+- define budgets from a recorded baseline and target hardware, and make regressions visible in CI where stable;
+- use lazy loading, bounded texture/model sizes, caching or level-of-detail only where measurements justify them;
+- if 3D rendering or an optional analysis engine is unavailable, preserve 2D editing and project data, show a truthful fallback state, and never block manual work on an AI/provider call.
+
+## 17.6 Additional acceptance gates
+
+1. Import malformed and oversized plan/model files; verify a useful rejection report and no project mutation.
+2. Attempt an unauthorized upload/read/write and a URL redirect to a private address; verify denial.
+3. Interrupt a save, retry it and reload; verify truthful status and no duplicate data.
+4. Restore a project backup into a new project and compare model relationships, provenance, quantities and revisions.
+5. Complete the core editing flow using keyboard/numeric controls without dragging; repeat on a phone-sized viewport with no page overflow.
+6. Revoke a client link and verify it cannot access the project; verify client exports exclude internal commercial notes.
+7. Run a recorded large-project benchmark and verify 2D editing remains usable if WebGL or AI is unavailable.
+
+## 17.7 Research basis
+
+- OWASP File Upload Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html
+- OWASP SSRF Prevention Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html
+- W3C WCAG 2.2, including target size and alternatives to dragging: https://www.w3.org/TR/WCAG22/
+- European Commission — GDPR principles (data minimisation, storage limitation, integrity/confidentiality and accountability): https://commission.europa.eu/law/law-topic/data-protection/information-and-businesses/principles-gdpr_en
+
+These are control references, not proof of Casa3D compliance. Verify each control against source, tests and runtime behavior.
+
