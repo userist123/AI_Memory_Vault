@@ -138,7 +138,6 @@ Provide a usable object/scene tree grouped by level and room. For every supporte
 - ensure keyboard/mouse interactions do not conflict with text inputs, 2D drawing tools, or camera controls.
 
 Use the current 3D stack's supported controls where appropriate. Do not add Three.js-specific code if the app uses a different renderer.
-
 ## 5.2 Custom furniture / parametric objects
 
 The designer must be able to create a custom object from primitives and/or editable parameters. Prioritize practical interior-design use cases:
@@ -277,8 +276,7 @@ Treat these as architectural acceptance requirements, not optional polish.
 - save/reload must preserve object IDs, geometry, transforms, materials, level assignment, custom-component definitions and catalogue references;
 - implement or reuse schema migrations and backward-compatible loading for existing projects;
 - test duplicate/copy/paste and undo/redo for ID collisions and reference corruption;
-- handle concurrent save conflicts without silently overwriting newer work;
-- avoid destructive project migration and avoid touching production/customer data in tests;
+- handle concurrent save conflicts without silently overwriting newer work;- avoid destructive project migration and avoid touching production/customer data in tests;
 - sanitize imported files and user-provided text; enforce authentication/authorization on private APIs and uploaded assets;
 - avoid logging secrets, client personal data, project share tokens or private file contents;
 - ensure share links and public client views expose only intended data;
@@ -378,3 +376,179 @@ Respond in Romanian and provide:
 8. Explicit statement of what was not implemented or could not be verified.
 
 **Do not auto-merge. Do not bypass owner approval. Do not report success without fresh evidence.**
+
+---
+
+# 14. Additional owner requirement — complete, adaptable whole-home concept and systems design
+
+**This section extends the existing brief; it does not replace or narrow earlier requirements.** The owner explicitly requires that Casa3D serve a professional interior designer who receives unrelated projects, not a consumer who selects one fixed house template. Extend the *same implementation effort and PR #258*. Do not create a disconnected demo, a parallel product, or a second source of truth.
+
+## 14.1 Start from the actual project, not a preset
+
+Every new project must support an independent geometry and design brief. A project can start from:
+- an empty canvas and manually drawn survey;
+- a client/architect PDF or raster plan used as a trace underlay;
+- a supported CAD file, imported with a clear report of supported and unsupported entities;
+- a measured existing apartment/house;
+- a partial brief such as “redesign the kitchen and living room” without inventing the rest of the home;
+- an existing Casa3D project copied as a new version.
+
+The workflow must ask for or let the designer define the actual footprint, wall positions/thicknesses, openings, dimensions, levels, ceiling heights and room names. Imported plans are references until the designer verifies scale and geometry. Provide a review/confirmation step before converting detected lines into authoritative walls. Never silently interpret a raster/PDF as precise CAD geometry or invent missing dimensions.
+
+A template or style preset can accelerate setup, but must remain optional, editable, and subordinate to the current project's model. Do not hard-code a standard number of rooms, a rectangular footprint, one fixed kitchen, one bathroom, or one specific style.
+
+## 14.2 Whole-home concept and style system
+
+Implement a **project-wide design concept** that applies to the whole house/apartment but supports controlled exceptions at level, room, surface and object scope.
+
+The concept should include editable attributes, not only a label such as “Modern”:
+- design direction (e.g. contemporary, minimalist, Japandi, Scandinavian, industrial, classic, transitional, Mediterranean, eclectic or user-defined);
+- palette: primary/secondary/accent colors and neutrals;
+- material families and specific selected materials for floors, walls, ceilings, doors, trim, cabinetry, worktops and metal finishes;
+- furniture language, shapes, proportions and finish;
+- lighting temperature/intensity intent where supported;
+- hardware, handles, skirting, architraves, door/window frame finish;
+- textiles and decor direction;
+- room-by-room overrides and object-level exceptions;
+- reference images/moodboard, designer notes, client approval status and concept revision.
+
+The user must be able to define a completely custom style, save it as a reusable preset, apply it selectively, and later update either (a) only selected objects, (b) a room, (c) a level, or (d) the whole project. Before a global change, show a preview and the number/types of affected objects; support undo and clear conflict resolution for local overrides. Never overwrite deliberate per-room decisions without showing the effect.
+
+A concept is not complete if it only changes a theme color in the UI. It must update real persisted material/style assignments on actual project objects, and the result must survive save/reload and export.
+
+## 14.3 Whole-home architectural and interior components
+
+Provide a data-driven, extensible component library with create/edit/import/save/reuse behavior. Include, where supported by the actual geometry engine:
+
+- **Building shell:** straight and angled walls, variable wall thickness/height, internal partitions, columns, beams, niches, wall openings, doors, windows, sliding doors, glazing, stairs, landings, railings, multiple floors, balconies, terraces, roof forms, sloped ceilings and dormers.
+- **Room construction and finishes:** floor build-up/thickness where relevant, ceiling planes, false ceilings, bulkheads/scafas, cornices, skirting, wall panels, decorative slats, cladding, tile/stone/wood patterns and transitions between finishes.
+- **Kitchen:** independently configurable base/wall/tall cabinets, fillers, end panels, plinths, fronts, hinges/handles, drawers, internal shelves, worktops, islands, backsplashes, sinks, taps and appliance cut-outs. Modules must have real dimensions and clearances, not just stretchable pictures.
+- **Bathrooms:** vanity, basin, WC, bidet, bath, shower tray/walk-in shower, screens, taps, mirrors, niches, towel rails, drains and accessories; model placement and service points when supported.
+- **Living, dining and bedrooms:** sofas, sectional pieces, tables, chairs, beds, wardrobes, nightstands, TV/media units, desks, shelving, curtains/blinds, rugs and custom-built storage.
+- **Custom joinery:** a configurable cabinet/wardrobe/shelving builder that composes panels, carcass, fronts, shelves, drawers and hardware; supports custom dimensions, material assignment, a dimensioned elevation and a component/cut list where geometry/data permits.
+- **Exterior/site if in scope:** entrance, facade finishes, paving, fence, driveway, patio/deck, garden elements and outdoor lighting.
+
+Every family should declare its editable properties, units, constraints, default values, supported views, measurable/non-measurable status and schema version. Users must be able to add new families or user-owned assets rather than wait for a code release to support every object. A generic imported mesh must not falsely claim parametric editability.
+
+## 14.4 Technical concept plans — especially electrical, lighting, plumbing and HVAC
+
+The project should support **separate, toggleable, versioned plan layers** over the same verified architectural geometry. At minimum evaluate and implement the highest-value complete slices below, in this order:
+
+### Electrical and lighting layout
+- place and edit sockets/receptacles, switches, dimmers, light points, ceiling/wall lights, LED strips, data/network outlets and electrical panel symbols;
+- store mounting height, wall/room association, circuit/zone, device type and designer notes;
+- assign lights to switches/lighting groups and show relationships clearly;
+- create schematic circuit routes where the model supports them, with panel/circuit identifiers and schedules;
+- distinguish the 2D symbol from the 3D fixture and real light source;
+- include lighting scenes/groups for presentation (e.g. general, task, accent) if the renderer supports it;
+- produce a dedicated electrical/lighting plan and fixture/device schedule.
+
+### Plumbing and sanitary layout
+- place hot/cold water points, sanitary fixtures, drains and plumbing connection markers;
+- represent pipe routes, nominal size/material/slope only where those values are entered or computed by a validated rule;
+- maintain fixture-to-service-point associations and expose missing or unconnected points;
+- produce a plumbing plan and fixture schedule when the required data is present.
+
+### HVAC and ventilation
+- allow HVAC equipment, supply/return/exhaust points, duct/pipe routes and control locations as typed elements where supported;
+- keep system data separate from architectural geometry and allow the layer to be hidden independently;
+- show incomplete connections or unknown sizing rather than inventing capacities or engineering calculations.
+
+### Other coordinated plans
+- ceiling/reflected ceiling plan, lighting plan, floor-finish plan, tile setting-out plan, furniture/joinery plan, door/window schedule, demolition/existing-vs-proposed plan, and low-voltage/smart-home layout;
+- fire-safety/security elements only as documented design placeholders unless the app implements a validated code-aware workflow;
+- use shared coordinates and dimensions so these views agree with the underlying model.
+
+**Safety/competence boundary:** Casa3D can help the designer document intent and identify missing information. It must not present conceptual electrical, plumbing, HVAC, structural or fire-safety layouts as construction-ready engineering or code-compliant merely because symbols connect. Clearly label conceptual/preliminary outputs; keep rule sources, jurisdiction, version, applicability and evidence visible. Unknowns become warnings or “needs specialist verification”, never silent green checks. Any actual sizing/calculation must have an explicit, testable algorithm and suitable source basis, and should require review by a qualified professional where legally or technically necessary.
+
+## 14.5 Real technical drawing sheets and issue sets
+
+From the same model, provide a professional drawing-set workflow:
+- choose which views/sheets to issue and in what order;
+- floor plan with dimensions, room names/areas and scale;
+- furniture layout, ceiling plan, lighting/electrical plan, plumbing plan, floor finishes/tile setting-out, elevations and sections where supported;
+- schedules for doors/windows, fixtures, lights, finishes, materials and custom joinery;
+- sheet number, project/client, designer, date, scale, units, status (draft/for review/issued), revision and change summary;
+- revision cloud or equivalent change annotation where feasible;
+- print/PDF output with legible line weights, symbols, labels and page size;
+- compare two issued revisions and show what changed.
+
+A screenshot of the 3D scene is not a substitute for a dimensioned technical plan. Do not include unsupported view types as blank sheets or fabricated drawings. If a plan cannot yet be generated, report it as PARTIAL/UNKNOWN and identify the exact missing model capability.
+
+## 14.6 Surface layout and material quantities
+
+For tiles, planks, panels, wallpaper and cladding, support actual layout intent instead of applying a generic texture only:
+- choose a start/reference point and direction;
+- configure tile/plank/panel dimensions, grout/gap, pattern (grid, staggered, herringbone or other implemented patterns), offsets and rotations;
+- preview cuts at boundaries and openings;
+- show cut pieces and potential narrow slivers;
+- calculate theoretical quantities and configurable waste allowance from the actual surface geometry;
+- distinguish net area, gross area, estimated waste and manually confirmed order quantity;
+- generate a setting-out drawing and a schedule only when inputs are sufficient.
+
+All quantities must derive from model geometry and declared product dimensions. Never infer a manufacturer-specific installation rule without a source. Show calculation assumptions and allow the designer to override them with a recorded reason.
+
+## 14.7 Project data, procurement and custom products
+
+Each catalog item or custom component should be able to carry:
+- stable internal ID, category, manufacturer/brand (optional), model/SKU (optional), source URL, license/asset provenance;
+- real dimensions and units, finish/material, image/model references and variant options;
+- supplier, price/currency, price timestamp and availability status only when sourced or manually entered;
+- project quantity, waste, labour, notes, approval status and procurement state where the existing Casa3D workflow supports it.
+
+Allow the designer to create a product manually from client-provided data, import a local model, or reference a product URL through a controlled allowlisted workflow. Do not scrape arbitrary URLs without SSRF protection, do not trust remote images/files, and do not invent prices, SKUs, product dimensions, availability or certification. Keep internal acquisition cost/margin private from client views unless explicitly authorized by the existing access model.
+
+## 14.8 Validation and coordination checks
+
+Add a non-destructive project review panel that reports:
+- unclosed/invalid wall geometry, unresolved dimensions and scale not confirmed;
+- objects intersecting walls/openings or each other where the collision logic is reliable;
+- cabinetry/appliance/door conflicts and blocked clearances;
+- missing material assignments and missing product dimensions;
+- unconnected electrical/plumbing/HVAC elements in the corresponding conceptual systems;
+- drawing sheets with missing scale, dimensions, legend or revision metadata;
+- estimates with missing prices, quantities or waste assumptions;
+- imported assets with unknown scale, provenance or license.
+
+Every finding needs severity, affected object IDs, explanation, rule/source and a way to locate the object in the plan. Separate **ERROR** (cannot safely apply/publish), **WARNING** (designer review), **INFO** (advisory), and **UNKNOWN** (not evaluated). Do not label a project compliant with building codes unless the rule set, jurisdiction, source version and actual checks are explicitly implemented and verified.
+
+## 14.9 Expanded acceptance tests — real designer scenarios, not demos
+
+Add realistic tests using different project shapes and briefs, not repeated versions of the same fixture:
+1. Irregular apartment plan with angled walls and a niche; edit exact dimensions and confirm area/3D synchronization.
+2. Existing house with two levels, stairs, different ceiling heights and a non-rectangular room.
+3. Designer imports a scanned plan, calibrates it from a known dimension, traces walls, reviews detected geometry and saves it.
+4. Apply a whole-home concept, override the bathroom floor and kitchen fronts, then change the global palette; verify preview, scope, overrides, undo and reload.
+5. Build a custom wardrobe or kitchen run with non-default dimensions and parts, save it to the user's library and reuse it in another unrelated project.
+6. Import a user GLB, set a known size, assign a material, record source/license status and confirm the BOQ treats it as measurable only after required metadata is provided.
+7. Place switches, lights and outlets on the electrical layer, associate a switch group, hide/show the layer and export a plan/schedule; confirm it is labelled preliminary.
+8. Place sanitary fixtures and service points; ensure missing connections are reported as unknown/incomplete rather than fabricated.
+9. Set a tile pattern origin and dimensions on an irregular room, inspect edge cuts and verify quantity calculations against a deterministic fixture.
+10. Change a door, wall, finish or custom cabinet and verify the correct sheets, schedules, quantities and revision diff update from the same model.
+11. Export an actual PDF drawing set and open/check the artifact; a test that only checks the function was called is insufficient.
+12. Confirm no feature is a dead control, hard-coded showcase, static screenshot or fake success response.
+
+The end-to-end acceptance path should be: **new arbitrary project → verified plan geometry → whole-home concept → custom furniture/components → technical system layers → quantities/schedules → save/reload → revision comparison → real export**. Where the entire chain is too large for one iteration, implement a coherent vertical slice and explicitly mark the rest PARTIAL/UNKNOWN with follow-up acceptance criteria.
+
+## 14.10 Additional research references
+
+Use these as documented workflow references, not as claims that Casa3D already has equivalent capabilities:
+
+- Chief Architect feature catalogue (2D/3D editing, custom solids, material scopes, electrical/HVAC, automatic schedules and material lists): https://www.chiefarchitect.com/products/features/
+- Autodesk Revit electrical systems (devices, panels, circuits, switch systems and schedules): https://help.autodesk.com/cloudhelp/2024/ENU/Revit-MEPEng/files/GUID-8BB35A3A-475A-4FE0-99C0-B01054EE0F2A.htm
+- Autodesk electrical workflow tutorial: https://www.autodesk.com/learn/ondemand/module/build-electrical-systems-in-revit
+- Sweet Home 3D user guide (editable room geometry, doors/windows, furniture dimensions, levels, custom model import and export): https://www.sweethome3d.com/users-guide/
+- Planner 5D plan import workflow and accepted formats: https://support.planner5d.com/en/articles/14434484-how-to-upload-a-floor-plan
+- SketchUp CAD import/export and supported entity caveats: https://help.sketchup.com/en/sketchup/importing-and-exporting-cad-files
+- DDX XDesignPRO (parametric cabinetry, solid modeling, custom furniture and technical output): https://www.ddxgroup.com/en/software/furniture/xdesignpro/
+- Chief Architect lighting placement and material/fixture lighting: https://www.chiefarchitect.com/support/article/KB-00777/working-with-lighting.html
+
+Research is a starting point, not authority for local building compliance. Product marketing pages can overstate capability; validate requirements against official documentation and test behavior in Casa3D itself.
+
+---
+
+# 15. Final instruction to Gemini — prioritize real flexibility
+
+Do not interpret “more options” as adding a long menu of presets. The required upgrade is a flexible design system in which the designer can **create, dimension, compose, customize, save, reuse, coordinate and document** the actual objects and plans for each unique project.
+
+Before implementation, add a traceability table mapping each new requirement to (a) existing code, (b) the exact gap, (c) a test, (d) an implementation step and (e) evidence of completion. Then implement in the same Casa3D branch/PR, prioritizing real editing workflows over breadth of superficial controls. Preserve working features and existing project data. No auto-merge. No weakening tests. No fake demos. No unsupported claims of engineering/code compliance.
