@@ -12,14 +12,15 @@ DONE:
 - Implemented Slice 3: Interactive validation error-to-object focus path (`issueTarget` in `app/core/validate.ts`, keyboard/click selection in `Editor.tsx` and `TwinDesignPanel.tsx`).
 - Implemented Slice 4: Full WebGL resource disposal (`house`, `furniture`, `contact`, `probes`, `ground`, `sky`, owned textures/materials), `webglcontextlost`/`webglcontextrestored` recovery, dynamic `prefers-reduced-motion` listener, and keyboard camera navigation in `Viewer3D.tsx` and `viewer3d-engine.js`.
 - Implemented Slice 5: Cross-platform Python binary resolution (`win32 ? 'python' : 'python3'`) across Vitest suites (`project-export`, `commercial`, `contract`, `commercial-review`).
-- Implemented Slice 6 (PR #305 Master Prompt §14.1–14.9): blank canvas (`template: 'empty'`), `splitRoom` & `mergeRooms` (wired in `RoomPanel`), calibrated `traceRoomFromUnderlay`, scoped styles (`previewStyle`, `applyStyleScoped`, `createCustomStylePackage` + `StylePanel.tsx` UI), parametric user library & guarded GLB validation (`user-library.ts`), HVAC & switch groups (`assignSwitchGroup`, `buildTechnicalSchedule` in `technical.ts`), `customSurfaceSettingOut` (`setting-out.ts`), and `reviewProjectCoordination` (`coordination-review.ts`) + `tests/pro-editor.test.ts`.
-- Verified full test, typecheck & build suites: `@casa3d/twin-core` 59/59 PASS (10 files), `app` `tsc --noEmit` 0 errors, `app` Vitest 591/591 PASS (98 files), `next build` exit 0, Vault `pytest` 47/47 PASS.
+- Implemented Slice 7 (Dynamic Area-Adaptive Auto-Layout): scaled room furnishing dynamically for spacious rooms (`furnish.ts`: living >= 23.5m² receives armchairs, sideboard dresser, up to 4 bookcases; bedroom >= 19m² receives dresser, >= 22m² reading armchair/secondary wardrobe; kitchen >= 12m² receives auxiliary sideboard; bath >= 7m² receives towel radiator and bath column tower; hall >= 8.5m² receives entry console and hall chair). Calibrated clearances (`fpHit` 1e-4 tolerance) preventing false-positive overlap collisions.
+- Verified full test, typecheck & build suites: `@casa3d/twin-core` 59/59 PASS, `app` `tsc --noEmit` 0 errors, `app` Vitest 596/596 PASS (98 files), `next build` exit 0, PGlite HMR auto-fallback and empty project creation verified.
 NEXT (in order):
 - None (ready for review on PR #304 and PR #305).
 BLOCKERS: None.
 KEY FILES:
 - 02_PRODUCT/projects/Casa3D/{NEXTGEN_AUDIT,NEXTGEN_IMPLEMENTATION,VERIFICATION_2026-10-10}.md
 - 02_PRODUCT/projects/workspaces/casa3d/packages/twin-core/src/{twin,engine,index}.ts
-- 02_PRODUCT/projects/workspaces/casa3d/app/core/{room-edit,validate,underlay,styles,technical,setting-out,user-library,coordination-review}.ts
+- 02_PRODUCT/projects/workspaces/casa3d/app/core/{furnish,room-edit,validate,underlay,styles,technical,setting-out,user-library,coordination-review}.ts
+- 02_PRODUCT/projects/workspaces/casa3d/app/lib/{db,repo,twin,design}.ts
 - 02_PRODUCT/projects/workspaces/casa3d/app/components/{Editor,PlanView,Viewer3D,TwinDesignPanel,StylePanel,TechPanel,viewer3d-engine.js}
 
