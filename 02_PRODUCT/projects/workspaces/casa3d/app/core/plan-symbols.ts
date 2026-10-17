@@ -26,11 +26,11 @@ export function planSymbol(group: string, w: number, d: number, chairs = 4): Pla
       parts.push(rrect(-X, -Y, X, -Y + back, .04), rrect(-X, -Y + back, -X + arm, Y, .04), rrect(X - arm, -Y + back, X, Y, .04));
       const sw = (w - 2 * arm) / seats; for (let i = 1; i < seats; i++) parts.push(line(-X + arm + i * sw, -Y + back, -X + arm + i * sw, Y - .04));
       return { outline: fmt(rrect(-X, -Y, X, Y, .06)), detail: fmt(parts.join('')), fill: 'soft' }; }
-    case 'masa': { // blatul și scaunele pe laturile lungi (în afara blatului)
-      const per = Math.max(1, Math.round(chairs / 2)), long = w >= d, L = long ? w : d, cs = .42;
+    case 'masa': { // blatul și scaunele pe laturile lungi (trase sub masă, ieșind discret cu spătarul)
+      const per = Math.max(1, Math.round(chairs / 2)), long = w >= d, L = long ? w : d, cs = .38, tuck = .12;
       for (let i = 0; i < per; i++){ const t = -L / 2 + L * (i + .5) / per;
-        if (long){ parts.push(rrect(t - cs / 2, -Y - .3, t + cs / 2, -Y - .3 + cs, .06), rrect(t - cs / 2, Y + .3 - cs, t + cs / 2, Y + .3, .06)); }
-        else { parts.push(rrect(-X - .3, t - cs / 2, -X - .3 + cs, t + cs / 2, .06), rrect(X + .3 - cs, t - cs / 2, X + .3, t + cs / 2, .06)); } }
+        if (long){ parts.push(rrect(t - cs / 2, -Y - tuck, t + cs / 2, -Y - tuck + cs, .06), rrect(t - cs / 2, Y + tuck - cs, t + cs / 2, Y + tuck, .06)); }
+        else { parts.push(rrect(-X - tuck, t - cs / 2, -X - tuck + cs, t + cs / 2, .06), rrect(X + tuck - cs, t - cs / 2, X + tuck, t + cs / 2, .06)); } }
       return { outline: fmt(rrect(-X, -Y, X, Y, .02)), detail: fmt(parts.join('')) }; }
     case 'masuta': return { outline: fmt(rrect(-X, -Y, X, Y, .03)), detail: fmt(rrect(-X + .05, -Y + .05, X - .05, Y - .05, .02)) };
     case 'dulap': { // dulap cu bară de umerașe (linie întreruptă pe axă) și uși
