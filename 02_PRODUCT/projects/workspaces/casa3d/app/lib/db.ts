@@ -21,10 +21,22 @@ async function connect(): Promise<Db> {
   const dir = process.env.PGLITE_DIR || './.data/pglite';
   // PGlite creează doar ultimul director: pe o copie curată ./.data lipsește încă.
   if (!memory && !dir.includes('://')){ const { mkdirSync } = await import('node:fs'); mkdirSync(dir, { recursive: true }); }
-  const db = memory ? new PGlite() : new PGlite(dir);
+  let db: any;
+  let mode: DbMode = memory ? 'pglite-memory' : 'pglite-file';
+  if (memory){
+    db = new PGlite();
+  } else {
+    try {
+      db = new PGlite(dir);
+    } catch (err) {
+      console.warn('PGlite on-disk open failed, falling back to clean in-memory database:', err);
+      db = new PGlite();
+      mode = 'pglite-memory';
+    }
+  }
   // PGlite ține tranzacția exclusiv: celelalte interogări așteaptă până la commit/rollback.
   const tx: Tx = fn => db.transaction(t => fn((s, p) => t.query(s, p as any[]) as any));
-  return { q: (s, p) => db.query(s, p as any[]) as any, tx, mode: memory ? 'pglite-memory' : 'pglite-file' };
+  return { q: (s, p) => db.query(s, p as any[]) as any, tx, mode };
 }
 // Catalogul se completează la fiecare pornire, nu doar pe o bază goală: produsele noi din JSON ajung și în bazele existente,
 // iar un preț verificat mai recent decât cel din bază (inclusiv unul pus manual) îl înlocuiește și intră în istoric.
@@ -65,6 +77,16 @@ async function migrate(q: Query){
   await seedCatalog(q);
   await seedOutbound(q);
 }
-export async function getDb(){ if (!ready) ready = (async () => { const c = await connect(); await migrate(c.q); return c; })(); return ready; }
-export function resetDbForTests(){ ready = null; }
+export async function getDb(){
+  const g = globalThis as unknown as { __casa3d_db_ready?: Promise<Db> | null };
+  if (!g.__casa3d_db_ready) {
+    g.__casa3d_db_ready = (async () => {
+      const c = await connect();
+      await migrate(c.q);
+      return c;
+    })();
+  }
+  return g.__casa3d_db_ready;
+}
+export function resetDbForTests(){ (globalThis as any).__casa3d_db_ready = null; ready = null; }
 export async function reseedForTests(){ await migrate((await getDb()).q); }
