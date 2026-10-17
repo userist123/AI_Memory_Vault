@@ -25,7 +25,7 @@ import { suggestTechPoints, placeTechPoint, type TechKind } from '@/core/technic
 import { RoomLookPanel, WallLookPanel, OpeningLookPanel, ItemLookPanel } from './AppearanceControls';
 import { finishesOf, budgetOf, roomGeometry, computeBudget } from '@/core/boq';
 import { appearanceColors } from '@/core/appearance';
-import { History } from '@/core/history';
+import { History, type HistoryMark } from '@/core/history';
 import { usePrefs } from '@/lib/prefs';
 import { issueText } from '@/lib/i18n';
 import { intlLocale } from '@/lib/i18n';
@@ -88,7 +88,7 @@ export default function Editor({ id }: { id: string }){
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error' | 'conflict' | 'offline' | 'auth'>('saved'), baseRev = useRef<number | null>(null), saveRef = useRef<string>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
   const [showTech, setShowTech] = useState(true), [techKind, setTechKind] = useState<TechKind>('outlet_double');
   const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[] } | null>(null), [persistent, setPersistent] = useState(true), [demo, setDemo] = useState(false), [stage, setStageRaw] = useState<Stage>('survey'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
-  const paletteOpenRef = useRef(false), hist = useRef(new History<Snapshot>()), dragStart = useRef<Snapshot | null>(null), timer = useRef<any>(null), latest = useRef<Snapshot | null>(null), [, force] = useState(0);
+  const paletteOpenRef = useRef(false), hist = useRef(new History<Snapshot>()), dragStart = useRef<Snapshot | null>(null), dragMark = useRef<HistoryMark | null>(null), timer = useRef<any>(null), latest = useRef<Snapshot | null>(null), [, force] = useState(0);
   // Se salvează casa întreagă (`house`); editorul lucrează pe nivelul ales (`snap`, o vedere din core/levels.ts),
   // iar fiecare modificare a vederii se pune la loc în casă cu mergeLevel.
   const L = house ? Math.min(lvl, floors(house).length - 1) : 0;
@@ -163,13 +163,14 @@ export default function Editor({ id }: { id: string }){
 
   // editare din plan: mutările se validează la final (ERROR → revine, WARNING → cere confirmare)
   const onEdit = (fn: (s: Snapshot) => void, phase: 'start' | 'move' | 'end') => { if (!snap || !catalog) return;
-    if (phase === 'start'){ dragStart.current = house; hist.current.push(house!); }
-    if (phase === 'end'){ const before = dragStart.current!; dragStart.current = null;
+    if (phase === 'start'){ dragStart.current = house; dragMark.current = hist.current.begin(house!); }
+    if (phase === 'end'){ const before = dragStart.current!, mark = dragMark.current; dragStart.current = null; dragMark.current = null;
+      const discard = () => { if (mark) hist.current.rollback(mark); };
       // o tragere care se termină cu planul neschimbat (clamp, înapoi la locul inițial) nu lasă pas de anulare
-      if (sameState(before, latest.current)){ hist.current.discardLast(); force(x => x + 1); return; }
+      if (sameState(before, latest.current)){ discard(); force(x => x + 1); return; }
       const cur = levelView(latest.current!, L);
       if (sel?.kind === 'placement'){ const p = cur.placements.find(x => x.id === sel.id); const iss = p ? validatePlacement(cur, catalog, p) : [];
-        if (severityOf(iss) === 'ERROR'){ hist.current.discardLast(); setHouse(before); persist(before); say(t('editor.positionRefused', { msg: iT(iss.find(i => i.severity === 'ERROR')!) })); return; }
+        if (severityOf(iss) === 'ERROR'){ discard(); setHouse(before); persist(before); say(t('editor.positionRefused', { msg: iT(iss.find(i => i.severity === 'ERROR')!) })); return; }
         if (severityOf(iss) === 'WARNING'){ setPending({ before, issues: iss }); } }
       return; }
     const base = latest.current || house!, n = structuredClone(levelView(base, L)); fn(n); const h = mergeLevel(base, L, n); latest.current = h; setHouse(h); persist(h); };
@@ -183,8 +184,8 @@ export default function Editor({ id }: { id: string }){
   const resizeSel = (roomId: string, rect: Room['rect']) => { if (!snap) return; try { const r = planRoomResize(snap.floor, roomId, rect, newWallId);
     if (r.changed) mutate(s => { s.floor = r.floor; }); if (r.clamped) say(t('editor.resizeClamped')); }
     catch (e) { if (e instanceof RoomResizeError) say(e.message); else throw e; } };
-  const undo = () => { if (!house) return; const s = hist.current.undo(house); if (s){ setPending(null); setHouse(s); persist(s); force(x => x + 1); } };
-  const redo = () => { if (!house) return; const s = hist.current.redo(house); if (s){ setHouse(s); persist(s); force(x => x + 1); } };
+  const undo = () => { if (!house || dragStart.current) return; const s = hist.current.undo(house); if (s){ setPending(null); setHouse(s); persist(s); force(x => x + 1); } };
+  const redo = () => { if (!house || dragStart.current) return; const s = hist.current.redo(house); if (s){ setHouse(s); persist(s); force(x => x + 1); } };
   const del = () => { if (!sel) return; mutate(s => {
     if (sel.kind === 'placement') s.placements = s.placements.filter(p => p.id !== sel.id);
     if (sel.kind === 'wall') s.floor.walls = s.floor.walls.filter(w => w.id !== sel.id);
