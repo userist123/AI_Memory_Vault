@@ -1,4 +1,4 @@
-﻿# todo-claude-casa3d
+# todo-claude-casa3d
 STATUS: IN_PROGRESS    UPDATED: 2026-10-17T09:12:44Z
 ROUND 9 (2026-10-17, route route_860d3fba2eb8): PUSHED (fed3cb90..146d421a), reviewed, PC updated.
   Fixes the 3 review findings on round 8. (1) No empty undo steps: core/room-edit.ts planRoomResize (changed/clamped)
