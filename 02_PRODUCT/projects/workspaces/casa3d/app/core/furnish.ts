@@ -257,7 +257,13 @@ export function refineFurnishing(cat: Catalog, inp: RefineInput): RefineResult {
   type Pair = { sofa: [string, Side, number, RoomRect]; tv: [string, Side, number, RoomRect] | null; table: [string, RoomRect, number] | null; zone: RoomRect; sc: number };
   /** Perechea canapea–TV pe același ax, ordonată după scor (cea mai bună întâi); doar câte o variantă pe fiecare poziție a canapelei. */
   function sofaTvOptions(ctx: Ctx, farFrom: [number, number] | null): Pair[] {
-    const r = ctx.r, sofas = distinct(chain('canapea', smaller('canapea'))).slice(0, 3), tvs = distinct(chain('comodaTv', smaller('comodaTv'))).slice(0, 3), tables = distinct(chain('masuta', smaller('masuta'))).slice(0, 4);
+    const r = ctx.r, roomArea = area(r);
+    const sofas = distinct(chain('canapea', smaller('canapea'))).slice(0, 3), tvs = distinct(chain('comodaTv', smaller('comodaTv'))).slice(0, 3);
+    const rawTables = distinct(chain('masuta', smaller('masuta')));
+    // în camere mici/medii (< 22 m²), măsuțele compacte (ex. 75x75, 80x60, 69x69) au prioritate în fața blaturilor gigantice de 118x78
+    const tables = roomArea < 22
+      ? [...rawTables].sort((a, b) => { const da = dims(a)!, db = dims(b)!; return (da.w * da.d) - (db.w * db.d); }).slice(0, 5)
+      : rawTables.slice(0, 5);
     const opts: Pair[] = [], tvSpots = new Map<string, { along: number; fp: RoomRect }[]>();
     // pozițiile libere ale comodei TV nu depind de canapea: se calculează o dată pe variantă și perete
     const tvFree = (tv: string, side: Side) => { const k = tv + side; if (!tvSpots.has(k)) tvSpots.set(k, ctx.wallSpots('comodaTv', tv, 0, [side]).filter(t => ctx.free(t.fp, null)).map(t => ({ along: t.along, fp: t.fp }))); return tvSpots.get(k)!; };
