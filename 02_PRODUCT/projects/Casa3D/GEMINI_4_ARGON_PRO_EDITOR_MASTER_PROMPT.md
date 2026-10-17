@@ -696,7 +696,7 @@ Create representative fixtures based on realistic project complexity, then measu
 - OWASP File Upload Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html
 - OWASP SSRF Prevention Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html
 - W3C WCAG 2.2, including target size and alternatives to dragging: https://www.w3.org/TR/WCAG22/
-- European Commission — GDPR principles (data minimisation, storage limitation, integrity/confidentiality and accountability): https://commission.europa.eu/law/law-topic/data-protection/information-and-businesses/principles-gdpr_en
+- European Commission — GDPR principles (data minimisation, storage limitation, integrity/confidentiality and accountability): https://commission.europa.eu/law/law-topic/data-protection/information-and-business-organisations/principles-gdpr_en
 
 These are control references, not proof of Casa3D compliance. Verify each control against source, tests and runtime behavior.
 
