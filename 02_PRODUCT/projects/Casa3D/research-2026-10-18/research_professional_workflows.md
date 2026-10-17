@@ -163,3 +163,58 @@ Extend the existing custom joinery/cut-list idea only after the parametric cabin
 ## Confidence and limitations
 
 This is a desk-research synthesis, not a fresh runtime audit of every Casa3D screen. Vendor pages are promotional. The repository's existing gap analysis is useful but is dated 2026-10-11 and itself marks some claims unverified. Before implementation, inspect current code, tests and live UI and update each recommendation to REAL/PARTIAL/MISSING/UNKNOWN with evidence.
+
+## Follow-up research: cross-cutting reliability and trust controls (2026-10-18)
+
+The previous lifecycle research covered missing professional workflows. A further review of official security, accessibility and EU data-protection guidance identifies cross-cutting acceptance criteria that should be explicit before treating Casa3D as a professional client-project tool. These are not automatically missing features; they must be checked against the current branch and marked REAL/PARTIAL/MISSING/UNKNOWN with evidence.
+
+### P0 — Secure import and remote asset sourcing
+
+PDF/raster plans, CAD, GLB/glTF, images and project archives are untrusted input. The OWASP File Upload guidance calls for allowlisted extensions, content-based validation, size limits, generated filenames, authorization and safe storage. OWASP SSRF guidance is relevant to the existing product-URL/remote-asset workflow. Therefore the acceptance contract should cover:
+- format allowlists and actual content/signature/parser validation;
+- byte, decompressed-size, image-dimension, entity-count and processing-resource limits;
+- safe archive extraction, generated internal names and path-traversal prevention;
+- server-side authorization for upload/read/write/download;
+- URL fetch controls for redirects, DNS/IP resolution, private/internal network targets, protocols and response size;
+- explicit import reports for rejected, approximated and unsupported entities;
+- malformed/oversized file fixtures and proof that rejection does not mutate a valid project.
+
+Sources:
+- OWASP File Upload Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html
+- OWASP SSRF Prevention Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html
+
+### P0 — Recoverability and truthful persistence state
+
+The app README and code inventory indicate autosave, revisions, save-conflict handling and a demonstration-mode persistence warning, but those do not by themselves prove full recovery. Test the whole lifecycle: interrupted save, stale write, idempotent retry, corrupted backup, restore into a new project and backward-compatible migration. A backup restore must preserve model relationships, units, provenance, material assignments, quantities and revision history. If infrastructure cannot support cloud backup/offline sync, do not simulate success; document the limitation and provide only a verified export/restore path that the architecture can support.
+
+This is an engineering reliability recommendation grounded in the value and complexity of client project data; it should be treated as a verification gap until tests demonstrate it.
+
+### P1 — Precision-editor accessibility
+
+WCAG 2.2 AA includes a minimum pointer target size criterion and a requirement that dragging functionality have a single-pointer alternative unless dragging is essential. Casa3D already has numeric inspectors and keyboard support in parts of the editor; the gap is whether *all core editing paths* have usable alternatives and work on small screens. Test select → exact dimension edit → move/rotate by keyboard or controls → save, with visible focus, non-colour-only errors, no horizontal overflow and a truthful fallback when WebGL is unavailable. Larger touch targets around 44 CSS px are a useful mobile design target, distinct from WCAG 2.2 AA's 24 CSS px minimum criterion.
+
+Source:
+- W3C WCAG 2.2: https://www.w3.org/TR/WCAG22/
+- W3C explanation of new WCAG 2.2 criteria: https://www.w3.org/WAI/standards-guidelines/wcag/new-in-22/
+
+### P1 — Client data privacy and lifecycle controls
+
+The European Commission's summary of GDPR principles highlights purpose limitation, data minimisation, storage limitation, accuracy, integrity/confidentiality and accountability. For Casa3D this translates into testable product controls: project-scoped server authorization, revocable revision-bound share links, client-visible projections that exclude internal margin/notes, safe deletion/trash/restore behavior, bounded audit logs, and documented retention/export/deletion behavior for client details, site photos and imported plans. Do not claim legal compliance from a checklist; report the controls implemented and unresolved policy/legal decisions.
+
+Source:
+- European Commission — Principles of personal data processing under the GDPR: https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/principles-gdpr_en
+
+### P1 — Performance evidence and graceful degradation
+
+The current prompt requires a real editor and a 2D/3D workflow, but it does not set an evidence-based scaling gate. Build representative project fixtures and record a baseline for editor load, edit latency, save/reload, scene rebuild/resource disposal and behavior when WebGL or AI is unavailable. Define thresholds only after measuring the actual target environment; do not invent performance claims. Manual 2D editing and data persistence should remain usable when optional 3D rendering or AI is unavailable.
+
+### Priority recommendation
+
+1. Verify and harden import/upload/remote fetch paths first, because untrusted client files and product URLs cross a security boundary.
+2. Prove recovery and non-destructive conflict behavior for project data.
+3. Close core accessibility gaps in precision editing and mobile workflows.
+4. Verify project-scoped privacy and client-share projections.
+5. Add benchmark-driven performance gates without arbitrary thresholds.
+
+These additions complement, rather than repeat, the existing sections on whole-home design, procurement, site work, handover, daylight, accessibility rule packs and interoperability.
+
