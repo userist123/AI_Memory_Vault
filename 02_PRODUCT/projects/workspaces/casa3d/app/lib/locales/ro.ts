@@ -48,7 +48,7 @@ export const ro: Dict = {
   "editor.floorFinish": "Pardoseală", "editor.wallPaint": "Vopsea pereți și tavan", "editor.wallTile": "Faianță", "editor.noTile": "Fără faianță", "editor.baseboard": "Plintă", "editor.noBaseboard": "Fără plintă",
   "editor.light": "Corp de iluminat", "editor.lightCount": "Număr corpuri",
   // ---- plan, vizualizare 3D, comenzi rapide ----
-  "plan.resizeEdge": "Trage ca să redimensionezi camera; camera vecină de pe aceeași latură se ajustează odată cu ea.",
+  "plan.resizeEdge": "Trage ca să redimensionezi camera. Se mută toată linia peretelui: camerele lipite de această linie se mută odată cu ea.",
   "editor.resizeClamped": "Redimensionarea s-a oprit ca o cameră vecină să nu scadă sub 60 cm.",
   "plan.aria": "Plan 2D editabil. Tab alege camerele și piesele pe rând; săgețile mută, R rotește, Delete șterge, Escape renunță.",
   "viewer.aria": "Vizualizare 3D", "viewer.house": "Machetă 3D", "viewer.tour": "Tur: {room}", "viewer.tourPick": "Intră în cameră…", "viewer.light": "Lumină", "viewer.lightTitle": "Momentul zilei și orientarea soarelui",

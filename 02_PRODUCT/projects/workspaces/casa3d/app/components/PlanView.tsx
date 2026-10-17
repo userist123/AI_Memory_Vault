@@ -18,6 +18,7 @@ import { finishesOf } from '@/core/boq';
 import { planItems, planKeyAction, type PlanKeyAction } from '@/core/plan-keys';
 import { resizeRoom, RoomResizeError } from '@/core/room-resize';
 import { MIN_ROOM_M, type EdgeKey } from '@/core/room-neighbours';
+import { edgeHandleAt } from '@/core/room-edit';
 
 export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'measure' | 'tech';
 export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
@@ -82,7 +83,9 @@ export default function PlanView(p: Props){
     if (p.tool === 'wall'){ const s = snapPoint(pt, floor); if (!preview) setPreview({ a: s, b: s }); else { const b = ortho(preview.a, snapPoint(pt, floor)); if (wallLength(preview.a, b) >= .2) p.onAddWall(preview.a, b); setPreview({ a: b, b }); } return; }
     if (p.tool === 'room'){ const s: [number, number] = [snapG(pt[0]), snapG(pt[1])]; setRoomDraft({ a: s, b: s }); svg.current!.setPointerCapture(e.pointerId); return; }
     if (p.tool === 'door' || p.tool === 'window'){ const w = nearestWall(pt); if (w) p.onAddOpening(w.id, w.offset, p.tool); return; }
-    const t = (e.target as Element).closest('[data-k]') as HTMLElement | null;
+    let t = (e.target as Element).closest('[data-k]') as HTMLElement | null;
+    // ușile și ferestrele au prioritate față de mânerul laturii (zona lui de 44 px poate atinge un gol pe un plan mic)
+    if (t?.dataset.k === 'redge'){ const op = document.elementsFromPoint?.(e.clientX, e.clientY).find(x => (x as HTMLElement).dataset?.k === 'opening') as HTMLElement | undefined; if (op) t = op; }
     if (!t){ p.onSelect(null); if (e.pointerType === 'touch') pan.current = { x: e.clientX, y: e.clientY, vb }; return; }
     const kind = t.dataset.k!, id = t.dataset.id!;
     if (kind === 'underlay'){ p.onSelect(null); drag.current = { kind, start: pt, moved: false, orig: null }; svg.current!.setPointerCapture(e.pointerId); return; }
@@ -195,7 +198,8 @@ export default function PlanView(p: Props){
       </g>); })}
     {/* mânerele laturilor camerei alese (deasupra pereților); zona de apucare are ~44 px, pentru degete */}
     {p.tool === 'select' && floor.rooms.filter(r => isSel('room', r.id)).map(r => (['x0', 'x1', 'z0', 'z1'] as const).map(k => {
-      const v = k[0] === 'x', cx = v ? r.rect[k] : (r.rect.x0 + r.rect.x1) / 2, cz = v ? (r.rect.z0 + r.rect.z1) / 2 : r.rect[k], len = fs * 1.6, th = fs * .55;
+      // mânerul stă pe cea mai lungă porțiune a laturii fără uși / ferestre (la o rază de apucare de ele), nu la mijloc peste ușă
+      const v = k[0] === 'x', along = edgeHandleAt(floor, r.rect, k, hitR), cx = v ? r.rect[k] : along, cz = v ? along : r.rect[k], len = fs * 1.6, th = fs * .55;
       return (<g key={`re-${r.id}-${k}`} data-k="redge" data-id={r.id} data-edge={k} style={{ cursor: v ? 'ew-resize' : 'ns-resize', touchAction: 'none' }}>
         <title>{t('plan.resizeEdge')}</title>
         <circle cx={cx} cy={cz} r={hitR} fill="transparent" />

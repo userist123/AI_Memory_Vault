@@ -57,7 +57,8 @@ import { putDraft, retryDelay, shouldRetry, stashDraft, readStash, clearStash, s
 import { floors, levelView, mergeLevel, addLevel, removeLevel, stairIssues, stairGeometry, stairwells, comfortableStairLength, elevationOf, SLAB, MAX_LEVELS } from '@/core/levels';
 import Icon from './Icon';
 import { askConfirm, askPrompt } from '@/lib/dialog';
-import { resizeRoom, RoomResizeError } from '@/core/room-resize';
+import { RoomResizeError } from '@/core/room-resize';
+import { planRoomResize, sameState } from '@/core/room-edit';
 import { groupsForRoom, defaultGroupForRoom, swapFitHint } from '@/core/furniture-fit';
 import type { PlanKeyAction } from '@/core/plan-keys';
 import { isLocalHostname } from '@/lib/public-gate';
@@ -163,7 +164,10 @@ export default function Editor({ id }: { id: string }){
   // editare din plan: mutările se validează la final (ERROR → revine, WARNING → cere confirmare)
   const onEdit = (fn: (s: Snapshot) => void, phase: 'start' | 'move' | 'end') => { if (!snap || !catalog) return;
     if (phase === 'start'){ dragStart.current = house; hist.current.push(house!); }
-    if (phase === 'end'){ const before = dragStart.current!; dragStart.current = null; const cur = levelView(latest.current!, L);
+    if (phase === 'end'){ const before = dragStart.current!; dragStart.current = null;
+      // o tragere care se termină cu planul neschimbat (clamp, înapoi la locul inițial) nu lasă pas de anulare
+      if (sameState(before, latest.current)){ hist.current.discardLast(); force(x => x + 1); return; }
+      const cur = levelView(latest.current!, L);
       if (sel?.kind === 'placement'){ const p = cur.placements.find(x => x.id === sel.id); const iss = p ? validatePlacement(cur, catalog, p) : [];
         if (severityOf(iss) === 'ERROR'){ hist.current.discardLast(); setHouse(before); persist(before); say(t('editor.positionRefused', { msg: iT(iss.find(i => i.severity === 'ERROR')!) })); return; }
         if (severityOf(iss) === 'WARNING'){ setPending({ before, issues: iss }); } }
@@ -175,8 +179,9 @@ export default function Editor({ id }: { id: string }){
   const applyCalib = (realCm: number) => { const u = snap?.underlay; if (!snap || !u || calib?.stage !== 'enter' || !calib.a || !calib.b) return false; const w = scaleFromPoints(calib.a, calib.b, realCm, u.widthM); if (w == null) return false;
     const [x, z] = anchorAfterScale(u, calib.a, w); const n = structuredClone(snap); n.underlay = { ...u, widthM: w, x, z }; commit(n); setCalib(null); return true; };
   // lățime/lungime din panou: camera și vecinii care împart latura mutată (un pas de anulare); un vecin nu scade sub 60 cm
-  const resizeSel = (roomId: string, rect: Room['rect']) => { if (!snap) return; try { const f = resizeRoom(snap.floor, roomId, rect, newWallId, { neighbours: true });
-    mutate(s => { s.floor = f; }); const got = f.rooms.find(r => r.id === roomId)!.rect; if (got.x1 !== r3(rect.x1) || got.z1 !== r3(rect.z1) || got.x0 !== r3(rect.x0) || got.z0 !== r3(rect.z0)) say(t('editor.resizeClamped')); }
+  // un rezultat identic cu planul de acum (vecinul deja la 60 cm) nu lasă pas de anulare; mesajul de limitare apare oricum
+  const resizeSel = (roomId: string, rect: Room['rect']) => { if (!snap) return; try { const r = planRoomResize(snap.floor, roomId, rect, newWallId);
+    if (r.changed) mutate(s => { s.floor = r.floor; }); if (r.clamped) say(t('editor.resizeClamped')); }
     catch (e) { if (e instanceof RoomResizeError) say(e.message); else throw e; } };
   const undo = () => { if (!house) return; const s = hist.current.undo(house); if (s){ setPending(null); setHouse(s); persist(s); force(x => x + 1); } };
   const redo = () => { if (!house) return; const s = hist.current.redo(house); if (s){ setHouse(s); persist(s); force(x => x + 1); } };
@@ -246,16 +251,22 @@ export default function Editor({ id }: { id: string }){
     clearTimeout(timer.current); const r = await fetch(`/api/projects/${id}/revisions/${n}`, { method: 'POST' }); if (!authOk(r)) return; if (!r.ok){ say(t('editor.restoreFailed')); return; } const s = await r.json(); hist.current.push(house!); setHouse(s); latest.current = s; setSel(null); refreshBase(); say(t('editor.restored', { n })); }
 
   // etapa activă rămâne vizibilă în bara de etape (pe tabletă și telefon nu încap toate zece)
-  const stageBar = useRef<HTMLElement>(null);
+  const stageBar = useRef<HTMLElement | null>(null);
   useEffect(() => { const b = stageBar.current?.querySelector<HTMLElement>(`[data-stage="${stage}"]`); try { b?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' }); } catch { /* browser vechi */ } }, [stage]);
   // când etapele nu încap (de ex. 1024 px), bara arată că se derulează: margini estompate pe partea cu etape ascunse și săgeți
   const [barFade, setBarFade] = useState({ over: false, l: false, r: false });
   // pe desktop săgețile apar doar din cauza depășirii: lățimea lor se adaugă înapoi, altfel odată afișate ar rămâne afișate
-  const measureBar = () => { const el = stageBar.current; if (!el) return; const max = el.scrollWidth - el.clientWidth;
+  // măsurarea citește layoutul: rulează doar la derulare și când bara sau conținutul ei își schimbă mărimea, nu la fiecare
+  // randare (în timpul unei trageri pe plan ar forța layoutul la fiecare mișcare a cursorului)
+  const measureBar = useCallback(() => { const el = stageBar.current; if (!el) return; const max = el.scrollWidth - el.clientWidth;
     const arrows = el.parentElement?.classList.contains('is-over') && matchMedia('(min-width: 1024px)').matches ? [...el.parentElement.querySelectorAll<HTMLElement>('.stage-step')].reduce((s, b) => s + b.offsetWidth, 0) : 0;
     const over = max - arrows > 1, l = max > 1 && el.scrollLeft > 1, r = max > 1 && el.scrollLeft < max - 1;
-    setBarFade(f => f.over === over && f.l === l && f.r === r ? f : { over, l, r }); };
-  useEffect(() => { const el = stageBar.current; if (!el) return; measureBar(); if (typeof ResizeObserver === 'undefined') return; const ro = new ResizeObserver(measureBar); ro.observe(el); return () => ro.disconnect(); }); // eslint-disable-line
+    setBarFade(f => f.over === over && f.l === l && f.r === r ? f : { over, l, r }); }, []);
+  // un singur ResizeObserver pe element (ref-callback): urmărește bara și grupurile de etape (lățimea lor se schimbă cu limba
+  // sau cu numărul de avertismente); la desprinderea elementului observatorul se oprește
+  const barRO = useRef<ResizeObserver | null>(null);
+  const stageBarRef = useCallback((el: HTMLElement | null) => { barRO.current?.disconnect(); barRO.current = null; stageBar.current = el; if (!el) return;
+    measureBar(); if (typeof ResizeObserver === 'undefined') return; const ro = new ResizeObserver(measureBar); ro.observe(el); for (const c of Array.from(el.children)) ro.observe(c); barRO.current = ro; }, [measureBar]);
   // pe ecranele înguste „Plan + 3D” nu are loc: rămâne vederea plan
   useEffect(() => { if (compact && view === 'split') setView('2d'); }, [compact, view]);
   // paleta de comenzi: Ctrl+K / Cmd+K oriunde în editor (și în câmpuri), sau butonul „Caută” din antet
@@ -348,7 +359,7 @@ export default function Editor({ id }: { id: string }){
     </header>
     <div className={`stagewrap ${barFade.over ? 'is-over' : ''}`}>
     <button type="button" className="stage-step" aria-label={t('stage.prev')} title={t('stage.prev')} disabled={STAGES.indexOf(stageDef) === 0} onClick={() => setStage(STAGES[Math.max(0, STAGES.indexOf(stageDef) - 1)]!.id)}><Icon name="chevronLeft" /></button>
-    <nav className={`stagebar ${barFade.l ? 'fade-l' : ''} ${barFade.r ? 'fade-r' : ''}`} aria-label={t('stage.aria')} ref={stageBar} onScroll={measureBar}>
+    <nav className={`stagebar ${barFade.l ? 'fade-l' : ''} ${barFade.r ? 'fade-r' : ''}`} aria-label={t('stage.aria')} ref={stageBarRef} onScroll={measureBar}>
       {PHASES.map(ph => <div key={ph.id} className="phase" role="group" aria-label={t('phase.aria', { phase: t(`phase.${ph.id}`) })} data-phase={ph.id}>
         <span className="phase-label" aria-hidden="true">{t(`phase.${ph.id}`)}</span>
         {ph.stages.map(sid => { const st = STAGES.find(x => x.id === sid)!, i = STAGES.indexOf(st), ok = !!done?.[sid];
