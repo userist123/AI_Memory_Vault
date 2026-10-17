@@ -15,7 +15,7 @@ export const DXF_LAYERS = [
 ] as const;
 /** Straturi adăugate doar când există mai multe niveluri sau scări; mereu în tabelul LAYER. */
 export const DXF_LEVEL_LAYERS = [{ name: 'LEVELS', color: 30 }, { name: 'STAIRS', color: 140 }] as const;
-export const TECH_SYMBOL: Record<TechKind, string> = { outlet: 'P', outlet_double: 'P2', switch: 'I', light_point: 'L', data: 'D', cooker: 'K', water_cold: 'A', water_hot: 'C', drain: 'S' };
+export const TECH_SYMBOL: Record<TechKind, string> = { outlet: 'P', outlet_double: 'P2', switch: 'I', light_point: 'L', data: 'D', cooker: 'K', water_cold: 'A', water_hot: 'C', drain: 'S', hvac_split: 'AC', thermostat: 'T', vent_exhaust: 'V', radiator: 'R' };
 
 /** Text sigur pentru R12: fără caractere de control, fără coduri %% (oricâte %), fără \, non-ASCII ca \U+XXXX (convenția AutoCAD). */
 export function dxfText(s: string, max = 120): string {

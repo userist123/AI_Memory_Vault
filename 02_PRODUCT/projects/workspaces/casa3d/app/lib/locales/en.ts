@@ -630,4 +630,6 @@ export const en: Dict = {
   // ---- page navigator of the drawing package (not printed) ----
   "pnav.aria": "Package pages", "pnav.title": "Pages", "pnav.cover": "Cover", "pnav.page": "Page {n}", "pnav.count": "{n} / {total}",
   "pnav.prev": "Previous page", "pnav.next": "Next page",
+  "style.scope": "Scope", "style.scopeAll": "Entire home", "style.keepOverrides": "Keep room overrides", "style.overriddenRooms": "Rooms with custom finishes",
+  "editor.splitX": "Split X", "editor.splitZ": "Split Z", "editor.mergeWith": "Merge {room}",
 };

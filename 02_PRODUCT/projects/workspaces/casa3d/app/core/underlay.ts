@@ -22,3 +22,32 @@ export function anchorAfterScale(u: Pick<Underlay, 'x' | 'z' | 'widthM'>, a: Pt,
 export function fitWithin(w: number, h: number, maxSide: number = UNDERLAY_LIMITS.maxSide): { w: number; h: number } {
   const k = Math.min(1, maxSide / Math.max(w, h)); return { w: Math.max(1, Math.round(w * k)), h: Math.max(1, Math.round(h * k)) };
 }
+
+/**
+ * Convertește un dreptunghi trasat peste releveul/imaginea de calc în cameră + pereți autoritativi,
+ * doar după ce scara imaginii a fost calibrată și confirmată explicit (`u.confirmed !== false`).
+ */
+export function traceRoomFromUnderlay(
+  u: Underlay,
+  bounds: import('./types').RoomRect,
+  roomSpec: { id: string; name: string; type: string },
+  wallIdPrefix = 'trace-wall',
+): { room: import('./types').Room; walls: import('./types').Wall[] } {
+  if (u.confirmed === false || !(u.widthM >= UNDERLAY_LIMITS.minWidthM && u.widthM <= UNDERLAY_LIMITS.maxWidthM)) {
+    throw new Error('UNDERLAY_SCALE_UNCONFIRMED: Calibrează și confirmă scara releveului înainte de a genera pereți.');
+  }
+  const x0 = r3(Math.min(bounds.x0, bounds.x1)), x1 = r3(Math.max(bounds.x0, bounds.x1));
+  const z0 = r3(Math.min(bounds.z0, bounds.z1)), z1 = r3(Math.max(bounds.z0, bounds.z1));
+  if (x1 - x0 < 0.6 || z1 - z0 < 0.6) throw new Error('Camera trasată trebuie să aibă cel puțin 60 cm pe fiecare latură.');
+  const room: import('./types').Room = { id: roomSpec.id, name: roomSpec.name, type: roomSpec.type, rect: { x0, z0, x1, z1 } };
+  const pts: [[number, number], [number, number]][] = [[[x0, z0], [x1, z0]], [[x1, z0], [x1, z1]], [[x1, z1], [x0, z1]], [[x0, z1], [x0, z0]]];
+  const walls: import('./types').Wall[] = pts.map(([a, b], i) => ({
+    id: `${wallIdPrefix}-${i + 1}`,
+    a,
+    b,
+    thickness: 0.25,
+    exterior: true,
+    openings: [],
+  }));
+  return { room, walls };
+}

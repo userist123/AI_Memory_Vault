@@ -63,12 +63,27 @@ relations:
 - **Problem**: 6 tests in `app/tests/{project-export,commercial,contract,commercial-review}.test.ts` hardcoded `execFileSync('python3', ...)`, failing with `ENOENT` on Windows environments where Python is invoked as `python`.
 - **Solution**: Used `const PY_BIN = process.platform === 'win32' ? 'python' : 'python3'` across all 4 test files.
 
+### Slice 6 — Pro-Grade Parametric Home & Apartment Editor (PR #305 Master Prompt §14.1–14.9)
+- **Blank Canvas, Room Split/Merge & Calibrated Underlay Trace (§14.1)**:
+  - `02_PRODUCT/projects/workspaces/casa3d/app/core/project.ts:13-22`: Added `emptyFloor()` so `newSnapshot(cat, name, 'empty')` starts from a true blank canvas (`0` rooms, `0` walls).
+  - `02_PRODUCT/projects/workspaces/casa3d/app/core/room-edit.ts:95-155` & `app/components/Editor.tsx:422-423,522-526`: Added `splitRoom` and `mergeRooms` and wired Split X / Split Z / Merge controls into `RoomPanel`.
+  - `02_PRODUCT/projects/workspaces/casa3d/app/core/underlay.ts:52-88`: Added `traceRoomFromUnderlay` converting pixel rectangles on calibrated blueprints into metric rooms + exterior walls, refusing conversion unless calibration scale is explicitly confirmed (`underlay.confirmed === true`).
+- **Scoped Whole-Home Style System & Custom Style Packages (§14.2)**:
+  - `02_PRODUCT/projects/workspaces/casa3d/app/core/styles.ts:43-128` & `app/components/StylePanel.tsx:13-45`: Added `StyleScope` (`project`, `level`, `room`), `previewStyle` listing overridden rooms before apply, `applyStyleScoped` with `preserveOverrides`, and `createCustomStylePackage`.
+- **Parametric User Library & Guarded GLB 3D Asset Validation (§14.3, §14.7)**:
+  - `02_PRODUCT/projects/workspaces/casa3d/app/core/user-library.ts:1-130`: Added `createParametricItem`, `saveToUserLibrary`, `instantiateFromLibrary` (with isolated per-instance overrides), and `validateGlbAsset` (magic `glTF`, version `2`, JSON chunk parsing, SSRF blocklist on `sourceUrl`, bounding-box dimension extraction, and `measurable: false` when scale/source/license are missing).
+- **Technical Concept Plans: Switch Groups, HVAC & Preliminary Schedule (§14.4)**:
+  - `02_PRODUCT/projects/workspaces/casa3d/app/core/technical.ts:7-34,125-171`: Added HVAC kinds (`hvac_split`, `thermostat`, `vent_exhaust`, `radiator`), `assignSwitchGroup`, and `buildTechnicalSchedule` (`status: 'PRELIMINARY_CONCEPT'`).
+- **Surface Tile Setting-Out & Project Coordination Review (§14.6, §14.8)**:
+  - `02_PRODUCT/projects/workspaces/casa3d/app/core/setting-out.ts:39-78`: Added `customSurfaceSettingOut` with explicit origin (`originCm`) and pattern waste (`straight`, `brick`, `herringbone`, `diagonal`).
+  - `02_PRODUCT/projects/workspaces/casa3d/app/core/coordination-review.ts:1-96`: Added `reviewProjectCoordination` classifying geometry, clearance, MEP/plumbing, custom items, and budget/BOQ status as `ERROR | WARNING | INFO | UNKNOWN` without coercing unknown costs to `0`.
+
 ## 2. Empirical Verification Matrix
 
 | Suite / Check | Command | Result |
 |---|---|---|
 | `@casa3d/twin-core` unit & e2e tests | `npm --prefix 02_PRODUCT/projects/workspaces/casa3d/packages/twin-core test` | **PASS** — 10 test files, **59/59** tests passed (exit code `0`) |
 | `casa-mea-3d` TypeScript typecheck | `npm --prefix 02_PRODUCT/projects/workspaces/casa3d/app run typecheck` | **PASS** — `tsc --noEmit` clean (exit code `0`) |
-| `casa-mea-3d` full test suite | `npm --prefix 02_PRODUCT/projects/workspaces/casa3d/app test` | **PASS** — 97 test files, **586/586** tests passed (exit code `0`) |
+| `casa-mea-3d` full test suite | `npm --prefix 02_PRODUCT/projects/workspaces/casa3d/app test` | **PASS** — 98 test files, **591/591** tests passed (exit code `0`) |
 | `casa-mea-3d` production build | `npm --prefix 02_PRODUCT/projects/workspaces/casa3d/app run build` | **PASS** — `next build` compiled & generated all routes (exit code `0`) |
 | Vault schema, state & untrusted guard | `python -m pytest 20_TESTS/test_vault_state_accuracy.py 20_TESTS/test_lifecycle_schema_parity.py 20_TESTS/test_untrusted_content_guard.py -q` | **PASS** — **47/47** tests passed (exit code `0`) |

@@ -59,7 +59,7 @@ export function checkUnderlay(u: any): Underlay {
   if (!fin(u.widthM) || u.widthM < 1 || u.widthM > 100) throw bad('Lățimea imaginii de calc trebuie să fie între 1 și 100 m.');
   if (!fin(u.opacity) || u.opacity < 0.1 || u.opacity > 1) throw bad('Opacitatea imaginii de calc trebuie să fie între 0,1 și 1.');
   if (typeof u.locked !== 'boolean') throw bad('Starea de blocare a imaginii de calc este invalidă.');
-  return { dataUrl: u.dataUrl, x: u.x, z: u.z, widthM: u.widthM, opacity: u.opacity, locked: u.locked };
+  return { dataUrl: u.dataUrl, x: u.x, z: u.z, widthM: u.widthM, opacity: u.opacity, locked: u.locked, ...(typeof u.confirmed === 'boolean' ? { confirmed: u.confirmed } : {}) };
 }
 export function checkSnapshot(s: any): Snapshot {
   if (!s || typeof s !== 'object' || !s.floor || !Array.isArray(s.floor.rooms) || !Array.isArray(s.floor.walls) || !Array.isArray(s.placements) || typeof s.selections !== 'object') throw new HttpError(400, 'Structura proiectului e invalidă.');

@@ -6,9 +6,22 @@ import { finishesOf } from './boq';
 import { LIGHTS_EXTRA_PER_M2 } from './rules.boq';
 import { area } from './geometry';
 
-export type TechKind = 'outlet' | 'outlet_double' | 'switch' | 'light_point' | 'data' | 'water_cold' | 'water_hot' | 'drain' | 'cooker';
-export interface TechPoint { id: string; kind: TechKind; roomId: string; x: number; z: number; height: number; reason: string }
-export const TECH_KINDS: Record<TechKind, { category: 'electric' | 'plumbing'; height: number; label: { ro: string; en: string } }> = {
+export type TechKind =
+  | 'outlet' | 'outlet_double' | 'switch' | 'light_point' | 'data' | 'water_cold' | 'water_hot' | 'drain' | 'cooker'
+  | 'hvac_split' | 'thermostat' | 'vent_exhaust' | 'radiator';
+export interface TechPoint {
+  id: string;
+  kind: TechKind;
+  roomId: string;
+  x: number;
+  z: number;
+  height: number;
+  reason: string;
+  switchGroup?: string;
+  circuitId?: string;
+  linkedIds?: string[];
+}
+export const TECH_KINDS: Record<TechKind, { category: 'electric' | 'plumbing' | 'hvac'; height: number; label: { ro: string; en: string } }> = {
   outlet: { category: 'electric', height: 0.3, label: { ro: 'Priză simplă', en: 'Single socket' } },
   outlet_double: { category: 'electric', height: 0.3, label: { ro: 'Priză dublă', en: 'Double socket' } },
   switch: { category: 'electric', height: 1.1, label: { ro: 'Întrerupător', en: 'Light switch' } },
@@ -18,6 +31,10 @@ export const TECH_KINDS: Record<TechKind, { category: 'electric' | 'plumbing'; h
   water_cold: { category: 'plumbing', height: 0.55, label: { ro: 'Apă rece', en: 'Cold water' } },
   water_hot: { category: 'plumbing', height: 0.55, label: { ro: 'Apă caldă', en: 'Hot water' } },
   drain: { category: 'plumbing', height: 0.45, label: { ro: 'Scurgere', en: 'Drain' } },
+  hvac_split: { category: 'hvac', height: 2.2, label: { ro: 'Unitate AC interioară (split)', en: 'Indoor AC split unit' } },
+  thermostat: { category: 'hvac', height: 1.4, label: { ro: 'Termostat ambiental', en: 'Room thermostat' } },
+  vent_exhaust: { category: 'hvac', height: 2.3, label: { ro: 'Grilă/ventilator extracție', en: 'Exhaust vent / fan' } },
+  radiator: { category: 'hvac', height: 0.15, label: { ro: 'Racord calorifer / încălzire', en: 'Radiator / heating connection' } },
 };
 /** Numărul minim de prize (simple sau duble) pe tip de cameră — regulă uzuală, orientativă. */
 export const MIN_OUTLETS: Record<string, number> = { living: 5, dormitor: 4, bucatarie: 6, hol: 1, baie: 2, birou: 4 };
@@ -105,7 +122,20 @@ export function sanitizeTech(x: unknown, snap: Pick<Snapshot, 'floor'>): TechPoi
     if (!r || typeof q.kind !== 'string' || !Object.hasOwn(TECH_KINDS, q.kind) || typeof q.id !== 'string' || !/^[\w:.-]{1,80}$/.test(q.id) || seen.has(q.id)) continue;
     if (![q.x, q.z, q.height].every(n => typeof n === 'number' && Number.isFinite(n))) continue;
     if (q.x < r.rect.x0 - 0.05 || q.x > r.rect.x1 + 0.05 || q.z < r.rect.z0 - 0.05 || q.z > r.rect.z1 + 0.05 || q.height < 0 || q.height > ceil + 1e-9) continue;
-    seen.add(q.id); out.push({ id: q.id, kind: q.kind, roomId: q.roomId, x: q.x, z: q.z, height: q.height, reason: typeof q.reason === 'string' ? q.reason.slice(0, 120) : '' }); }
+    seen.add(q.id);
+    const pt: TechPoint = {
+      id: q.id,
+      kind: q.kind,
+      roomId: q.roomId,
+      x: q.x,
+      z: q.z,
+      height: q.height,
+      reason: typeof q.reason === 'string' ? q.reason.slice(0, 120) : '',
+      ...(typeof q.switchGroup === 'string' && q.switchGroup.trim() ? { switchGroup: q.switchGroup.trim().slice(0, 40) } : {}),
+      ...(typeof q.circuitId === 'string' && q.circuitId.trim() ? { circuitId: q.circuitId.trim().slice(0, 40) } : {}),
+      ...(Array.isArray(q.linkedIds) ? { linkedIds: q.linkedIds.filter((id: unknown) => typeof id === 'string' && /^[\w:.-]{1,80}$/.test(id)).slice(0, 20) } : {}),
+    };
+    out.push(pt); }
   return out;
 }
 /** Punctul plasat manual: pe peretele cel mai apropiat al camerei în care s-a dat clic. */
@@ -115,3 +145,58 @@ export function placeTechPoint(snap: Snapshot, kind: TechKind, x: number, z: num
   const used = new Set((snap.tech || []).map(t => t.id)); let i = 1; while (used.has(`${kind}:${room.id}:m${i}`)) i++;
   return { id: `${kind}:${room.id}:m${i}`, kind, roomId: room.id, x: Math.round(at.x * 1000) / 1000, z: Math.round(at.z * 1000) / 1000, height: kind === 'light_point' ? ceil : TECH_KINDS[kind].height, reason: 'manual' };
 }
+
+/** Asociază un întrerupător cu unul sau mai multe puncte de lumină din aceeași cameră într-un grup de aprindere. */
+export function assignSwitchGroup(points: TechPoint[], switchId: string, lightIds: string[], groupName: string): TechPoint[] {
+  const sw = points.find(p => p.id === switchId && p.kind === 'switch');
+  if (!sw) throw new Error(`Întrerupător inexistent: ${switchId}`);
+  const validLights = new Set(points.filter(p => p.roomId === sw.roomId && p.kind === 'light_point' && lightIds.includes(p.id)).map(p => p.id));
+  if (!validLights.size) throw new Error('Selectează cel puțin un punct de lumină din aceeași cameră.');
+  const g = groupName.trim() || `${sw.roomId}-G1`;
+  return points.map(p => {
+    if (p.id === sw.id) return { ...p, switchGroup: g, linkedIds: [...validLights] };
+    if (validLights.has(p.id)) return { ...p, switchGroup: g };
+    return p;
+  });
+}
+
+export interface TechnicalSchedule {
+  status: 'PRELIMINARY_CONCEPT';
+  disclaimer: string;
+  byCategory: { electric: TechPoint[]; plumbing: TechPoint[]; hvac: TechPoint[] };
+  switchGroups: { group: string; roomId: string; switchId: string; lightIds: string[] }[];
+  unlinkedSwitches: string[];
+  unlinkedLights: string[];
+}
+
+/**
+ * Generează borderoul tehnic conceptual (electrice/iluminat, sanitare, HVAC) marcat explicit ca PRELIMINAR,
+ * împreună cu grupurile de întrerupătoare și elementele neasociate.
+ */
+export function buildTechnicalSchedule(snap: Snapshot): TechnicalSchedule {
+  const pts = snap.tech ?? [];
+  const electric = pts.filter(p => TECH_KINDS[p.kind].category === 'electric');
+  const plumbing = pts.filter(p => TECH_KINDS[p.kind].category === 'plumbing');
+  const hvac = pts.filter(p => TECH_KINDS[p.kind].category === 'hvac');
+  const switchGroups: TechnicalSchedule['switchGroups'] = [];
+  const linkedLightSet = new Set<string>();
+  const unlinkedSwitches: string[] = [];
+  for (const sw of electric.filter(p => p.kind === 'switch')) {
+    if (sw.switchGroup && sw.linkedIds?.length) {
+      sw.linkedIds.forEach(id => linkedLightSet.add(id));
+      switchGroups.push({ group: sw.switchGroup, roomId: sw.roomId, switchId: sw.id, lightIds: [...sw.linkedIds] });
+    } else {
+      unlinkedSwitches.push(sw.id);
+    }
+  }
+  const unlinkedLights = electric.filter(p => p.kind === 'light_point' && !linkedLightSet.has(p.id) && !p.switchGroup).map(p => p.id);
+  return {
+    status: 'PRELIMINARY_CONCEPT',
+    disclaimer: 'Schemă conceptuală preliminară de arhitectură interioară — necesită verificare și proiectare de specialitate (instalator/electrician autorizat).',
+    byCategory: { electric, plumbing, hvac },
+    switchGroups,
+    unlinkedSwitches,
+    unlinkedLights,
+  };
+}
+

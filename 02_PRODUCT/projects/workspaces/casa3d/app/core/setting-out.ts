@@ -28,7 +28,8 @@ export function axisPlan(L: number, T: number, g: number, options: StartRule[] =
   return best!;
 }
 export interface SurfacePlan { roomId: string; room: string; surface: 'floor' | 'N' | 'S' | 'W' | 'E' | 'backsplash'; material: string; tileCm: [number, number]; groutMm: number;
-  widthM: number; heightM: number; across: AxisPlan; along: AxisPlan; tiles: number; sliver: boolean }
+  widthM: number; heightM: number; across: AxisPlan; along: AxisPlan; tiles: number; sliver: boolean;
+  pattern?: import('./types').FloorPattern; netAreaM2?: number; grossAreaM2?: number; wastePct?: number }
 
 /** Planurile de placare pentru toate camerele cu gresie (așezare dreaptă / tablă de șah) sau faianță. */
 export function settingOut(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog): SurfacePlan[] {
@@ -52,3 +53,73 @@ function roomPlans(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, fl: Floor
   if (room.type === 'bucatarie' && (!f.kitchen || kitchenOf(f).backsplash === 'tile')){ const run = kitchenRun(snap, cat, room.id); if (run) out.push(plan(room, 'backsplash', wt.name, tile, grout, run.lengthM, BACKSPLASH_HEIGHT, true)); }
   return out;
 }
+
+const PATTERN_WASTE_PCT: Record<import('./types').FloorPattern, number> = {
+  straight: 10,
+  checker: 10,
+  brick: 12,
+  third: 12,
+  diagonal: 15,
+  herringbone: 15,
+  chevron: 15,
+};
+
+/**
+ * Calculează planul de placare cu origine explicită (`originCm`), model (`pattern`: grid/straight, brick/staggered, herringbone etc.)
+ * și pierdere estimată configurabilă (`wastePctOverride`), returnând tăieturile la margini, aria netă, aria brută și numărul de plăci.
+ */
+export function customSurfaceSettingOut(opts: {
+  roomId: string;
+  roomName: string;
+  surface: SurfacePlan['surface'];
+  material: string;
+  widthM: number;
+  heightM: number;
+  tileCm: [number, number];
+  groutMm?: number;
+  pattern?: import('./types').FloorPattern;
+  originCm?: [number, number];
+  wastePctOverride?: number;
+}): SurfacePlan {
+  const groutMm = opts.groutMm ?? 3;
+  const pattern = opts.pattern ?? 'straight';
+  const T1 = opts.tileCm[0] / 100, T2 = opts.tileCm[1] / 100, g = groutMm / 1000;
+  const across = opts.originCm
+    ? (() => {
+        const s = norm(-(opts.originCm[0] / 100), T1 + g);
+        const ps = piecesAt(opts.widthM, T1, g, s), cuts = ps.filter(x => x < T1 - 1e-3), minCut = cuts.length ? Math.min(...cuts) : null;
+        return { start: 'edge' as StartRule, pieces: ps.length, full: ps.length - cuts.length, cuts, minCut, sliver: minCut != null && minCut < T1 / 3 };
+      })()
+    : axisPlan(opts.widthM, T1, g);
+  const along = opts.originCm
+    ? (() => {
+        const s = norm(-(opts.originCm[1] / 100), T2 + g);
+        const ps = piecesAt(opts.heightM, T2, g, s), cuts = ps.filter(x => x < T2 - 1e-3), minCut = cuts.length ? Math.min(...cuts) : null;
+        return { start: 'edge' as StartRule, pieces: ps.length, full: ps.length - cuts.length, cuts, minCut, sliver: minCut != null && minCut < T2 / 3 };
+      })()
+    : axisPlan(opts.heightM, T2, g);
+  const netAreaM2 = r3(opts.widthM * opts.heightM);
+  const wastePct = opts.wastePctOverride ?? PATTERN_WASTE_PCT[pattern] ?? 10;
+  const grossAreaM2 = r3(netAreaM2 * (1 + wastePct / 100));
+  const tileAreaM2 = T1 * T2;
+  const tiles = Math.max(across.pieces * along.pieces, Math.ceil(grossAreaM2 / Math.max(tileAreaM2, 1e-6)));
+  return {
+    roomId: opts.roomId,
+    room: opts.roomName,
+    surface: opts.surface,
+    material: opts.material,
+    tileCm: opts.tileCm,
+    groutMm,
+    widthM: r3(opts.widthM),
+    heightM: r3(opts.heightM),
+    across,
+    along,
+    tiles,
+    sliver: across.sliver || along.sliver,
+    pattern,
+    netAreaM2,
+    grossAreaM2,
+    wastePct,
+  };
+}
+
