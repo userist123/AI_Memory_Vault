@@ -151,3 +151,9 @@ new server; after an update, check one static chunk returns 200, not just `updat
   Wi-Fi names, real case ids or content of material the owner hands over: not in files, fixtures, docs, commit messages
   or PR/issue text (repositories may be public). Use placeholders: LAB-PC, user, C:\Users\user, fake serials.
 - If something already slipped into a pushed branch, tell the owner; history rewrites and visibility are their decision.
+
+## 2026-10-17 — Casa3D: a privacy check that aborts is not a pass
+- Incident: a Git Bash loop `grep -qiF "$id"` over private_identifiers.txt aborted on every line (locale), the hit counter
+  stayed 0 and the commit was pushed; a re-check with PowerShell `IndexOf(..., OrdinalIgnoreCase)` confirmed 0 hits.
+- Rule: run the identifier check in PowerShell or node, and fail closed if the checker itself errors. Also on Windows
+  PowerShell 5.1 `Set-Content -Encoding UTF8` writes a BOM; write repo files with `[IO.File]::WriteAllText(..., UTF8Encoding($false))`.
