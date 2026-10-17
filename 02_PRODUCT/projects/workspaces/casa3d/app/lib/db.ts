@@ -19,19 +19,30 @@ async function connect(): Promise<Db> {
   const { PGlite } = await import('@electric-sql/pglite');
   const memory = !!process.env.VERCEL || process.env.PGLITE_MEMORY === '1';
   const dir = process.env.PGLITE_DIR || './.data/pglite';
-  // PGlite creează doar ultimul director: pe o copie curată ./.data lipsește încă.
-  if (!memory && !dir.includes('://')){ const { mkdirSync } = await import('node:fs'); mkdirSync(dir, { recursive: true }); }
+  const { mkdirSync, rmSync } = await import('node:fs');
   let db: any;
   let mode: DbMode = memory ? 'pglite-memory' : 'pglite-file';
   if (memory){
     db = new PGlite();
   } else {
     try {
+      if (!dir.includes('://')) mkdirSync(dir, { recursive: true });
       db = new PGlite(dir);
+      await db.query('SELECT 1');
     } catch (err) {
-      console.warn('PGlite on-disk open failed, falling back to clean in-memory database:', err);
-      db = new PGlite();
-      mode = 'pglite-memory';
+      console.warn('PGlite on-disk open/probe failed, attempting cleanup and reinit:', err);
+      try {
+        if (!dir.includes('://')) {
+          rmSync(dir, { recursive: true, force: true });
+          mkdirSync(dir, { recursive: true });
+        }
+        db = new PGlite(dir);
+        await db.query('SELECT 1');
+      } catch (recoveryErr) {
+        console.warn('PGlite on-disk recovery failed, falling back to clean in-memory database:', recoveryErr);
+        db = new PGlite();
+        mode = 'pglite-memory';
+      }
     }
   }
   // PGlite ține tranzacția exclusiv: celelalte interogări așteaptă până la commit/rollback.
@@ -77,13 +88,28 @@ async function migrate(q: Query){
   await seedCatalog(q);
   await seedOutbound(q);
 }
-export async function getDb(){
+export async function getDb(): Promise<Db> {
   const g = globalThis as unknown as { __casa3d_db_ready?: Promise<Db> | null };
   if (!g.__casa3d_db_ready) {
     g.__casa3d_db_ready = (async () => {
-      const c = await connect();
-      await migrate(c.q);
-      return c;
+      try {
+        const c = await connect();
+        await migrate(c.q);
+        return c;
+      } catch (err) {
+        console.warn('Primary DB initialization/migration failed, falling back to memory DB:', err);
+        try {
+          const { PGlite } = await import('@electric-sql/pglite');
+          const memDb = new PGlite();
+          const tx: Tx = fn => memDb.transaction((t: any) => fn((s, p) => t.query(s, p as any[]) as any));
+          const fallback: Db = { q: (s, p) => memDb.query(s, p as any[]) as any, tx, mode: 'pglite-memory' };
+          await migrate(fallback.q);
+          return fallback;
+        } catch (fatalErr) {
+          g.__casa3d_db_ready = null;
+          throw fatalErr;
+        }
+      }
     })();
   }
   return g.__casa3d_db_ready;
