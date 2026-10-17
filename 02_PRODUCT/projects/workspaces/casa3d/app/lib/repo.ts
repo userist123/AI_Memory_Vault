@@ -131,7 +131,7 @@ export async function saveMeta(owner: string, id: string, meta: unknown){
 }
 /** Proiect nou: camerele șablonului urmează limba de la creare (numele implicit „Casa mea” / „My home” îl pune clientul). */
 export async function createProject(owner: string, name: unknown, template: unknown = 'demo', lang: unknown = 'ro'){
-  if (typeof template !== 'string' || (template !== 'blank' && !getTemplate(template))) throw new HttpError(400, 'Șablon necunoscut. Alege unul dintre șabloanele din listă sau „Plan gol”.');
+  if (typeof template !== 'string' || (template !== 'blank' && template !== 'empty' && !getTemplate(template))) throw new HttpError(400, 'Șablon necunoscut. Alege unul dintre șabloanele din listă sau „Plan gol”.');
   const lg = projectLang(lang);
   const { q } = await getDb(); const cat = await getCatalog(); const n = cleanName(name);
   // decorul șablonului folosește doar materialele din catalogul curent; proiectul trece prin aceeași verificare ca orice salvare
