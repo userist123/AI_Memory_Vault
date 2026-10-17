@@ -1,0 +1,14 @@
+import { NextResponse } from 'next/server';
+import { HttpError } from '@/lib/repo';
+import { ownerId } from '@/lib/owner';
+import { startRender, listRenders } from '@/lib/renders';
+import { isDemo } from '@/lib/demo';
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+type Ctx = { params: Promise<{ id: string }> };
+const fail = (e: any) => { if (e instanceof HttpError) return NextResponse.json({ error: e.message }, { status: e.status }); console.error(e); return NextResponse.json({ error: 'Eroare internă.' }, { status: 500 }); };
+export const GET = async (_req: Request, { params }: Ctx) => { try { const { id } = await params; return NextResponse.json(await listRenders((await ownerId(true))!, id), { headers: { 'cache-control': 'no-store' } }); } catch (e){ return fail(e); } };
+export const POST = async (req: Request, { params }: Ctx) => { if (isDemo()) return NextResponse.json({ error: 'Randarea foto nu e disponibilă în demo.' }, { status: 404 });
+  try { const { id } = await params, u = new URL(req.url);
+    const job = await startRender((await ownerId(true))!, id, await req.text(), { samples: Number(u.searchParams.get('samples') ?? 256), rooms: u.searchParams.get('rooms') ?? 'all' });
+    return NextResponse.json(job, { status: 202 }); } catch (e){ return fail(e); } };
