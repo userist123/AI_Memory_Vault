@@ -43,6 +43,12 @@ public static class OperationAudit
         return $"identity={C(identity)}; class={C(deviceClass)}; device={C(device)}; old={(oldValue.Length > 0 ? C(oldValue) : "(gol)")}; new={(newValue.Length > 0 ? C(newValue) : "(gol)")}";
     }
 
+    /// <summary>The device list was exported to a CSV file from the monitor page: the operator, the number of rows and the SHA-256 of the file (never its path).</summary>
+    public const string DeviceExportCsv = "device.export_csv";
+
+    public static string DeviceExportCsvDetail(string operatorName, int rows, string sha256) =>
+        $"operator={DeviceField(operatorName)}; rows={rows}; sha256={DeviceField(sha256)}";
+
     /// <summary>A value as the device records of the sealed audit hold it (no ";" and no line breaks): used to write a detail and to compare a journal value with it.</summary>
     public static string DeviceField(string s) => s.Replace(';', ',').ReplaceLineEndings(" ").Trim();
 
@@ -88,9 +94,9 @@ public static class OperationAudit
     /// </summary>
     public const string DeviceFirstSeen = "device.first_seen";
 
-    public static string DeviceFirstSeenDetail(string identity, string deviceClass, string device, string serial, DateTimeOffset firstSeenUtc, string note = "") =>
+    public static string DeviceFirstSeenDetail(string identity, string deviceClass, string device, string serial, DateTimeOffset firstSeenUtc, string note = "", string user = "") =>
         $"identity={DeviceField(identity)}; class={DeviceField(deviceClass)}; device={DeviceField(device)}; serial={DeviceField(serial)}; " +
-        $"first_seen={firstSeenUtc.ToUniversalTime().ToString("O", System.Globalization.CultureInfo.InvariantCulture)}" + (note.Length > 0 ? "; note=" + DeviceField(note) : "");
+        $"first_seen={firstSeenUtc.ToUniversalTime().ToString("O", System.Globalization.CultureInfo.InvariantCulture)}" + (note.Length > 0 ? "; note=" + DeviceField(note) : "") + (user.Length > 0 ? "; user=" + DeviceField(user) : "");
 
     /// <summary>A card whose medium could not be identified at insertion (encrypted or RAW) got its real identity once the volume became readable: the link is sealed.</summary>
     public const string DeviceMediumRekeyed = "device.medium_rekeyed";
@@ -252,8 +258,19 @@ public static class OperationAudit
         var last = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var (id, value, _) in registrations)
             last[Follow(id)] = value;
+        var history = new List<LogAnalyzer.Dfir.Devices.SealedDeviceEvent>();
+        if (scan is not null)
+            foreach (var (ev, detail, when, who) in scan.DeviceRaw)
+            {
+                if (when is not { } t || !LogAnalyzer.Dfir.Devices.DeviceHistory.IsHistoryEvent(ev)) continue;
+                var f = Fields(detail);
+                var id = f.GetValueOrDefault("identity", "");
+                if (id.Length == 0) continue;
+                history.Add(new(t, ev, Follow(id), who, f));
+            }
         return new(chainValid, last, alerts.Select(a => a with { Identity = Follow(a.Identity) }).ToList(), unreadable)
         {
+            Events = history,
             Runs = runs, Gaps = gaps, ObservedOnResume = observed, Migrations = migrations,
             Devices = devices.Select(d => d with { Identity = Follow(d.Identity) }).ToList(),
             InfoAlerts = infos.Select(a => a with { Identity = Follow(a.Identity) }).ToList(), Resets = resets, RadioStates = radios,
@@ -449,6 +466,8 @@ public static class OperationAudit
         public List<(string Detail, DateTimeOffset? When)> DeviceRegistrations { get; } = [];
         public List<(string Event, string Detail, DateTimeOffset? When)> DeviceAlerts { get; } = [];
         public List<(string Event, string Detail, DateTimeOffset? When)> DeviceMonitorEvents { get; } = [];
+        /// <summary>Every "device.*" record with the account that wrote it (the per-device history).</summary>
+        public List<(string Event, string Detail, DateTimeOffset? When, string Who)> DeviceRaw { get; } = [];
         public int UnreadableHashing { get; set; }
         public int UnreadableExec { get; set; }
         public int FirstRegression { get; set; } = int.MaxValue;
@@ -474,12 +493,13 @@ public static class OperationAudit
             {
                 using var doc = JsonDocument.Parse(line);
                 if (doc.RootElement.ValueKind != JsonValueKind.Object) continue;
-                string ev = "", detail = ""; DateTimeOffset? when = null;
+                string ev = "", detail = "", who = ""; DateTimeOffset? when = null;
                 foreach (var pr in doc.RootElement.EnumerateObject())
                 {
                     if (pr.Value.ValueKind != JsonValueKind.String) continue;
                     if (pr.Name.Equals("event", StringComparison.OrdinalIgnoreCase)) ev = pr.Value.GetString() ?? "";
                     else if (pr.Name.Equals("detail", StringComparison.OrdinalIgnoreCase)) detail = pr.Value.GetString() ?? "";
+                    else if (pr.Name.Equals("who", StringComparison.OrdinalIgnoreCase)) who = pr.Value.GetString() ?? "";
                     else if (pr.Name.Equals("whenUtc", StringComparison.OrdinalIgnoreCase) && pr.Value.TryGetDateTimeOffset(out var t)) when = t;
                 }
                 // the chain's times never go back: a record earlier than its predecessor (beyond the tolerance) is backdated or forged
@@ -492,6 +512,7 @@ public static class OperationAudit
                     }
                     previous = previous is { } pm && pm > w0 ? pm : w0;
                 }
+                if (ev.StartsWith("device.", StringComparison.Ordinal)) scan.DeviceRaw.Add((ev, detail, when, who));
                 var run = RunOf(detail);
                 if (ev == AnchorEvent && when is { } wa) scan.Anchors.Add((index, wa));
                 else if (ev == ControlStarted && run.Length > 0 && when is { } ws) { scan.Started[run] = (ws, index); scan.StartedSha[run] = TokenOf(detail, "app_sha256="); }

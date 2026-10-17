@@ -92,6 +92,51 @@ public sealed class RadioObservation
     public RadioObservation Copy() => (RadioObservation)MemberwiseClone();
 }
 
+/// <summary>
+/// The monitor ran without the right to seal: the sealed audit refused its records because the sealing key cannot be read (the application was not started as
+/// administrator). Kept in the journal (the audit cannot take it): the first and the last refusal. Untrusted like the rest of the journal,
+/// but it can only make check D05 more careful.
+/// </summary>
+public sealed class SealingRefusal
+{
+    [JsonPropertyName("first_utc")] public DateTimeOffset FirstUtc { get; set; }
+    [JsonPropertyName("last_utc")] public DateTimeOffset LastUtc { get; set; }
+
+    public SealingRefusal Copy() => (SealingRefusal)MemberwiseClone();
+}
+
+/// <summary>When the monitor cannot seal (the key of the sealed audit cannot be read), what the page and check D05 say.</summary>
+public static class SealingHealth
+{
+    /// <summary>The words of the refusal <c>HashChain</c> gives when the sealing key cannot be read (a test keeps this in step with the real message).</summary>
+    public const string KeyUnavailableMarker = "cheia de sigilare";
+
+    public const string Banner = "Monitorul nu poate sigila evenimentele: porniți LogAnalyzer ca administrator. Până atunci D05 rămâne DE VERIFICAT.";
+
+    public static bool IsKeyUnavailable(string? reason) => reason is not null && reason.Contains(KeyUnavailableMarker, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>How often the last refusal is moved forward (a refused record is retried at every reading; the journal is not rewritten for each retry).</summary>
+    public static readonly TimeSpan NoteEvery = TimeSpan.FromMinutes(1);
+
+    /// <summary>Notes a refusal in the journal (first and last time); returns whether the journal changed and has to be saved.</summary>
+    public static bool Note(DeviceJournal journal, DateTimeOffset nowUtc)
+    {
+        if (journal.SealingRefused is null) { journal.SealingRefused = new SealingRefusal { FirstUtc = nowUtc, LastUtc = nowUtc }; return true; }
+        if (nowUtc - journal.SealingRefused.LastUtc < NoteEvery) return false;
+        journal.SealingRefused.LastUtc = nowUtc;
+        return true;
+    }
+
+    /// <summary>Whether the refusals overlap the period.</summary>
+    public static bool InPeriod(DeviceJournal journal, DateTimeOffset fromUtc, DateTimeOffset toUtc) =>
+        journal.SealingRefused is { } r && r.FirstUtc <= toUtc && r.LastUtc >= fromUtc;
+
+    /// <summary>The line check D05 lists as evidence.</summary>
+    public static string Evidence(SealingRefusal r) =>
+        $"MONITORUL A RULAT FĂRĂ DREPT DE SIGILARE: între {DeviceMonitorReport.UtcText(r.FirstUtc)} și {DeviceMonitorReport.UtcText(r.LastUtc)} jurnalul de audit a refuzat înregistrările monitorului " +
+        "(cheia de sigilare nu poate fi citită: aplicația nu a fost pornită ca administrator); ce a văzut monitorul atunci nu este dovedit de jurnalul sigilat";
+}
+
 /// <summary>The monitor's journal, persisted as JSON in the machine-wide folder so rows survive a restart.</summary>
 public sealed class DeviceJournal
 {
@@ -112,6 +157,9 @@ public sealed class DeviceJournal
     /// <summary>The windows in which the monitor itself was running (start, heartbeat, stop): a cross-check of the sealed ones.</summary>
     [JsonPropertyName("runs")] public List<MonitorRun> Runs { get; set; } = [];
 
+    /// <summary>Set when the monitor ran without the right to seal (see <see cref="SealingRefusal"/>); null = never refused.</summary>
+    [JsonPropertyName("sealing_refused")] public SealingRefusal? SealingRefused { get; set; }
+
     /// <summary>The radios the monitor could not see through (by kind).</summary>
     [JsonPropertyName("radios")] public List<RadioObservation> Radios { get; set; } = [];
 
@@ -123,7 +171,7 @@ public sealed class DeviceJournal
     public DeviceJournal Copy() => new()
     {
         Version = Version, Devices = Devices.Select(d => d.Copy()).ToList(), Alerts = [.. Alerts], Runs = Runs.Select(r => r.Copy()).ToList(),
-        Radios = Radios.Select(r => r.Copy()).ToList(), PendingSeals = PendingSeals.Select(p => new PendingSeal { Event = p.Event, Detail = p.Detail }).ToList(),
+        Radios = Radios.Select(r => r.Copy()).ToList(), PendingSeals = PendingSeals.Select(p => new PendingSeal { Event = p.Event, Detail = p.Detail }).ToList(), SealingRefused = SealingRefused?.Copy(),
     };
 }
 

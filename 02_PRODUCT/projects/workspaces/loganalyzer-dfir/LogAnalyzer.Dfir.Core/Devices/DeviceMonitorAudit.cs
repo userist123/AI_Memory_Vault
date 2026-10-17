@@ -17,6 +17,9 @@ public sealed record SealedPresence(DateTimeOffset TimeUtc, string Identity, str
 /// <summary>The problem code and the active state of a device as the monitor sealed them ("device.state_changed"): <c>Active</c> = not a disabled radio (code 22).</summary>
 public sealed record SealedDeviceState(DateTimeOffset TimeUtc, string Identity, string Class, int Code, bool Active);
 
+/// <summary>One sealed record of a device as the history shows it: the record's time, event name, the device identity, the account that wrote it and its fields.</summary>
+public sealed record SealedDeviceEvent(DateTimeOffset TimeUtc, string Event, string Identity, string Operator, IReadOnlyDictionary<string, string> Fields);
+
 /// <summary>A damaged journal set aside and replaced by an empty one ("device.journal_reset"), with the SHA-256 of the damaged file.</summary>
 public sealed record SealedJournalReset(DateTimeOffset TimeUtc, string Sha256, string Reason, string File = "");
 
@@ -46,6 +49,8 @@ public sealed record DeviceAuditReading(bool ChainValid, IReadOnlyDictionary<str
     public IReadOnlyList<SealedPresence> Presence { get; init; } = [];
     /// <summary>The sealed problem code and active state transitions of the devices (whole history).</summary>
     public IReadOnlyList<SealedDeviceState> States { get; init; } = [];
+    /// <summary>Every sealed record that concerns one device (first seen, connection and disconnection, registration change, alert, state change), in the order of the audit, with the account that wrote it.</summary>
+    public IReadOnlyList<SealedDeviceEvent> Events { get; init; } = [];
     /// <summary>The time of the last journal reset, or null.</summary>
     public DateTimeOffset? LastResetUtc => Resets.Count > 0 ? Resets.Max(r => r.TimeUtc) : null;
 }

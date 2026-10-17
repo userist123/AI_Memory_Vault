@@ -38,6 +38,8 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _manufacturer = "";
         [ObservableProperty] private string _model = "";
         [ObservableProperty] private string _vidPid = "";
+        [ObservableProperty] private string _vid = "";
+        [ObservableProperty] private string _pid = "";
         [ObservableProperty] private string _serial = "";
         [ObservableProperty] private string _capacityText = "";
         [ObservableProperty] private string _letter = "";
@@ -47,12 +49,19 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _firstSeenText = "";
         [ObservableProperty] private string _lastConnectedText = "";
         [ObservableProperty] private string _lastDisconnectedText = "";
+        /// <summary>The raw values the columns sort by (the text of a date is dd.MM.yyyy, which does not sort as a date).</summary>
+        [ObservableProperty] private long _capacityBytes;
+        [ObservableProperty] private DateTimeOffset _firstSeenUtc;
+        [ObservableProperty] private DateTimeOffset? _lastConnectedUtc;
+        [ObservableProperty] private DateTimeOffset? _lastDisconnectedUtc;
         [ObservableProperty] private string _alertText = "";
         [ObservableProperty] private bool _alertIsCritical;
 
         public string ClassText => DeviceMonitorRules.ClassText(Class);
         public string StatusText => DeviceMonitorRules.StatusText(Status);
         public bool IsStorageMedium => DeviceMonitorRules.IsStorageMedium(Class);
+        /// <summary>„Registru”: whether the device has a registration number.</summary>
+        public string RegistryText => RegistrationNumber.Trim().Length > 0 ? DeviceMonitorReport.RegisteredText : DeviceMonitorReport.NotRegisteredText;
         /// <summary>A storage medium without a registration number: the row is shown in red until the number is written.</summary>
         public bool NeedsRegistration => IsStorageMedium && RegistrationNumber.Trim().Length == 0;
 
@@ -67,6 +76,7 @@ namespace LogAnalyzer.UI.ViewModels
                 if (_owner.SetRegistrationNumber(this, _registrationNumber, v)) _registrationNumber = v;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(NeedsRegistration));
+                OnPropertyChanged(nameof(RegistryText));
                 _owner.Refresh(this);
             }
         }
@@ -80,16 +90,29 @@ namespace LogAnalyzer.UI.ViewModels
             StatusTip = StatusText + (e.Present && e.ConfigManagerErrorCode > 0 ? $" (cod {e.ConfigManagerErrorCode}: {DeviceMonitorRules.ProblemText(e.ConfigManagerErrorCode)})" : "");
             Name = e.Name.Length > 0 ? e.Name : "(fără nume)"; Manufacturer = e.Manufacturer; Model = e.Model; VidPid = e.VidPid;
             Serial = e.Serial.Length > 0 ? e.Serial : e.NoUniqueSerial ? DeviceMonitorRules.NoUniqueSerialText : "";
-            CapacityText = e.CapacityBytes > 0 ? DeviceText.Bytes(e.CapacityBytes) : "";
-            Letter = e.VolumeLetters; Label = e.VolumeLabel;
+            (Vid, Pid) = DeviceMonitorRules.SplitVidPid(e.VidPid);
+            // capacity, letter and label belong to storage media only
+            bool storage = DeviceMonitorRules.IsStorageMedium(e.Class);
+            CapacityBytes = storage ? e.CapacityBytes : 0;
+            CapacityText = storage ? DeviceText.CapacityRo(e.CapacityBytes) : "";
+            Letter = storage ? e.VolumeLetters : ""; Label = storage ? e.VolumeLabel : "";
             ConnectedUser = e.ConnectedUser.Length > 0 ? e.ConnectedUser : "—";
             InstanceId = e.InstanceId;
+            FirstSeenUtc = e.FirstSeenUtc; LastConnectedUtc = e.LastConnectedUtc; LastDisconnectedUtc = e.LastDisconnectedUtc;
             FirstSeenText = DeviceMonitorViewModel.When(e.FirstSeenUtc);
             LastConnectedText = DeviceMonitorViewModel.When(e.LastConnectedUtc);
             LastDisconnectedText = DeviceMonitorViewModel.When(e.LastDisconnectedUtc);
             AlertText = alertText; AlertIsCritical = alertCritical;
             if (e.RegistrationNumber != _registrationNumber) { _registrationNumber = e.RegistrationNumber; OnPropertyChanged(nameof(RegistrationNumber)); OnPropertyChanged(nameof(NeedsRegistration)); }
+            OnPropertyChanged(nameof(RegistryText));
         }
+
+        /// <summary>The cells of the CSV row, in the order of <see cref="DeviceCsv.Headers"/>.</summary>
+        public IReadOnlyList<string> CsvCells() =>
+        [
+            StatusText, Name, ClassText, Manufacturer, Model, Vid, Pid, Serial, CapacityText, Letter, Label, ConnectedUser,
+            FirstSeenText, LastConnectedText, LastDisconnectedText, RegistrationNumber, RegistryText, AlertText,
+        ];
     }
 
     /// <summary>
@@ -110,6 +133,7 @@ namespace LogAnalyzer.UI.ViewModels
         private readonly Func<IReadOnlyList<PnpSnapshotEntry>> _snapshot;
         private readonly Func<IReadOnlyCollection<string>, IReadOnlyDictionary<string, MediumInfo>> _media;
         private readonly Func<string, string, string?> _audit;
+        private readonly Func<DeviceAuditReading?>? _auditReader;
         private readonly Func<DeviceJournal, string?> _save;
         private readonly Func<DateTimeOffset> _clock;
         private readonly Func<string> _consoleUser;
@@ -150,9 +174,11 @@ namespace LogAnalyzer.UI.ViewModels
         /// <param name="owner">This process runs the monitor; false = another instance does (or the monitor could not start) and this one only shows the journal.</param>
         public DeviceMonitorViewModel(Func<IReadOnlyList<PnpSnapshotEntry>> snapshot, Func<IReadOnlyCollection<string>, IReadOnlyDictionary<string, MediumInfo>> media,
             Func<string, string, string?> audit, DeviceJournal journal, Func<DeviceJournal, string?> save, bool isolated, Func<DateTimeOffset>? clock = null,
-            string loadProblem = "", Func<string>? consoleUser = null, bool owner = true, string notRunning = "")
+            string loadProblem = "", Func<string>? consoleUser = null, bool owner = true, string notRunning = "", Func<DeviceAuditReading?>? auditReader = null)
         {
-            _snapshot = snapshot; _media = media; _audit = audit; _journal = journal; _save = save; _isolated = isolated; _clock = clock ?? (() => DateTimeOffset.UtcNow);
+            _snapshot = snapshot; _media = media; _auditReader = auditReader;
+            // every write to the sealed audit goes through here: a refusal because the sealing key cannot be read (not started as administrator) is noted
+            _audit = (ev, detail) => { var refused = audit(ev, detail); NoteSealResult(refused); return refused; }; _journal = journal; _save = save; _isolated = isolated; _clock = clock ?? (() => DateTimeOffset.UtcNow);
             _consoleUser = consoleUser ?? (() => ""); _owner = owner;
             foreach (var e in _journal.Devices.Where(DeviceScope.IsInScope)) _rows[e.Identity] = new DeviceMonitorRow(e, this);
             // records a previous run could not seal (a refused write) were saved in the journal as pending: they are written at the first reading
@@ -200,7 +226,7 @@ namespace LogAnalyzer.UI.ViewModels
                 LogAnalyzer.Core.Services.Edition.StationPostureContext.Current != LogAnalyzer.Core.Services.Edition.StationPosture.Internet,
                 loadProblem: string.Join(" ", problems),
                 consoleUser: LogAnalyzer.Dfir.Windows.Devices.ConsoleUser.Current,
-                owner: own.State == MonitorOwnership.Owner, notRunning: notRunning);
+                owner: own.State == MonitorOwnership.Owner, notRunning: notRunning, auditReader: LogAnalyzer.UI.Services.AuthApp.ReadDeviceAudit);
         }
 
         /// <summary>Raised for every connection seen after the first reading whose pop-up is not suppressed (information or critical).</summary>
@@ -217,6 +243,26 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _summary = "Monitorul pornește singur la deschiderea aplicației.";
         [ObservableProperty] private string _mode = "";
         [ObservableProperty] private string _problem = "";
+        /// <summary>
+        /// Persistent red banner while the sealed audit refuses the monitor's records because its sealing key cannot be read (the application was not started as
+        /// administrator); empty otherwise. The manifest and the elevation are not touched: the operator restarts the application as administrator.
+        /// </summary>
+        [ObservableProperty] private string _sealingBanner = "";
+        partial void OnSealingBannerChanged(string value) => OnPropertyChanged(nameof(SealingBlocked));
+        public bool SealingBlocked => SealingBanner.Length > 0;
+        /// <summary>The result of the last "Export CSV" (where it went is not recorded: the sealed note has the hash, not the path).</summary>
+        [ObservableProperty] private string _exportNote = "";
+
+        private void NoteSealResult(string? refused)
+        {
+            if (refused is null) { if (SealingBanner.Length > 0) SealingBanner = ""; return; }
+            if (!SealingHealth.IsKeyUnavailable(refused)) return;
+            SealingBanner = SealingHealth.Banner;
+            bool changed;
+            lock (_journal) changed = SealingHealth.Note(_journal, _clock());
+            if (changed) _pendingDirty = true;
+        }
+
         /// <summary>Radios the monitor cannot see through (Bluetooth off or absent, Wi-Fi disabled): never presented as „no devices”.</summary>
         [ObservableProperty] private string _radioNotice = "";
         /// <summary>„N alerte suprimate”: pop-ups held back by the rate limit (the records are all written).</summary>
@@ -228,9 +274,8 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>The journal as it is now (a copy, for the control report and the tests).</summary>
         public DeviceJournal JournalCopy() { lock (_journal) return _journal.Copy(); }
 
-        /// <summary>Local time with the UTC time next to it; empty when unknown.</summary>
-        public static string When(DateTimeOffset? t) =>
-            t is { } v ? $"{v.ToLocalTime():yyyy-MM-dd HH:mm:ss} (UTC {v.UtcDateTime:HH:mm:ss})" : "";
+        /// <summary>Local time, dd.MM.yyyy HH:mm:ss; empty when unknown.</summary>
+        public static string When(DateTimeOffset? t) => DeviceText.LocalTime(t);
 
         /// <summary>
         /// The monitor starts: its start is sealed (and written in the journal), then the first reading (no alerts: what is connected was there when the monitor
@@ -378,7 +423,7 @@ namespace LogAnalyzer.UI.ViewModels
                 foreach (var r in rekeys)
                     Seal(OperationAudit.DeviceMediumRekeyed, OperationAudit.DeviceMediumRekeyedDetail(r.OldIdentity, r.NewIdentity, r.Device.Class.ToString(), r.Device.Name));
                 foreach (var e in firstSeen)
-                    Seal(OperationAudit.DeviceFirstSeen, OperationAudit.DeviceFirstSeenDetail(e.Identity, e.Class.ToString(), e.Name, e.Serial, e.FirstSeenUtc));
+                    Seal(OperationAudit.DeviceFirstSeen, OperationAudit.DeviceFirstSeenDetail(e.Identity, e.Class.ToString(), e.Name, e.Serial, e.FirstSeenUtc, user: e.ConnectedUser));
                 foreach (var r in radios)
                     _audit(OperationAudit.DeviceRadioState, OperationAudit.DeviceRadioStateDetail(r.Kind, r.Blind, r.Text, user));
                 // review round 2: every disconnection (who was logged on) and the set of devices present at each run start are sealed, so a row that claims
@@ -482,7 +527,7 @@ namespace LogAnalyzer.UI.ViewModels
             var record = new DeviceAlertRecord(when, device.Identity, device.Name, device.Class, severity, text);
             var gate = _limiter.Check(device.Identity, severity + "|" + text, when);
             lock (_journal) DeviceJournalMerge.AddAlert(_journal, record);
-            var detail = OperationAudit.DeviceAlertCriticalDetail(device.Identity, device.Class.ToString(), device.Name, text) + "; popup=" + (gate == AlertGate.Show ? "afișat" : "suprimat");
+            var detail = OperationAudit.DeviceAlertCriticalDetail(device.Identity, device.Class.ToString(), device.Name, text) + (device.ConnectedUser.Length > 0 ? "; user=" + OperationAudit.DeviceField(device.ConnectedUser) : "") + "; popup=" + (gate == AlertGate.Show ? "afișat" : "suprimat");
             // a refused write (any alert, critical or not) is kept and retried like a first-seen record, and saved in the journal as pending
             Seal(severity == DeviceAlertSeverity.Critical ? OperationAudit.DeviceAlertCritical : OperationAudit.DeviceAlertInfo, detail);
             SuppressedText = _limiter.Suppressed > 0 ? $"{_limiter.Suppressed} alerte suprimate" : "";
@@ -536,6 +581,38 @@ namespace LogAnalyzer.UI.ViewModels
             UpdateSummary();
             return true;
         }
+
+        /// <summary>
+        /// „Istoric”: the events of one device from the SEALED audit (read now, verified chain), with the records still waiting to be sealed marked as such.
+        /// <c>Notice</c> says when the sealed audit could not be read or does not verify.
+        /// </summary>
+        public (IReadOnlyList<DeviceHistoryEvent> Events, string Notice) HistoryFor(DeviceMonitorRow row)
+        {
+            DeviceAuditReading? audit = null;
+            try { audit = _auditReader?.Invoke(); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { audit = null; }
+            List<PendingSeal> pending;
+            lock (_journal) pending = _journal.PendingSeals.Select(p => new PendingSeal { Event = p.Event, Detail = p.Detail }).ToList();
+            return (DeviceHistory.Build(row.Identity, audit, pending), DeviceHistory.Notice(audit));
+        }
+
+        /// <summary>The CSV of the rows in view: the bytes of the file (UTF-8 with a byte-order mark), the number of rows and the SHA-256 of the bytes.</summary>
+        public sealed record CsvExport(byte[] Bytes, int Rows, string Sha256);
+
+        /// <summary>„Export CSV”, step 1: the file as it would be written, for the rows in view in the order the operator sorted them.</summary>
+        public static CsvExport PrepareCsv(IEnumerable<DeviceMonitorRow> rows)
+        {
+            var list = rows.ToList();
+            var bytes = DeviceCsv.ToBytes(list.Select(r => r.CsvCells()));
+            return new CsvExport(bytes, list.Count, Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(bytes)));
+        }
+
+        /// <summary>
+        /// „Export CSV”, step 2: seals "device.export_csv" (operator, number of rows, SHA-256 of the file, never its path) BEFORE the file is written; returns null
+        /// when sealed, otherwise the reason (the caller then writes nothing). The caller wraps both in the application's audit-first export (<c>ExportAudit.Run</c>).
+        /// </summary>
+        public string? SealCsvExport(CsvExport export) =>
+            _audit(OperationAudit.DeviceExportCsv, OperationAudit.DeviceExportCsvDetail(OperatorIdentity.Who, export.Rows, export.Sha256));
 
         private void Save()
         {
