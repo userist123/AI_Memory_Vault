@@ -60,10 +60,13 @@ namespace LogAnalyzer.UI.ViewModels
         public string ClassText => DeviceMonitorRules.ClassText(Class);
         public string StatusText => DeviceMonitorRules.StatusText(Status);
         public bool IsStorageMedium => DeviceMonitorRules.IsStorageMedium(Class);
-        /// <summary>„Registru”: whether the device has a registration number.</summary>
-        public string RegistryText => RegistrationNumber.Trim().Length > 0 ? DeviceMonitorReport.RegisteredText : DeviceMonitorReport.NotRegisteredText;
-        /// <summary>A storage medium without a registration number: the row is shown in red until the number is written.</summary>
-        public bool NeedsRegistration => IsStorageMedium && RegistrationNumber.Trim().Length == 0;
+        /// <summary>„Registru”, from the SEALED audit (never from the journal alone): „Înregistrat”, „Neînregistrat” or „Neconfirmat (nesigilat)”.</summary>
+        public RegistryState Registry => _owner.RegistryStateOf(Identity, _registrationNumber);
+        public string RegistryText => DeviceMonitorReport.RegistryTextOf(Registry);
+        /// <summary>A storage medium whose registration the sealed audit does not confirm (no number, a different one, or one still pending): the row is shown in red.</summary>
+        public bool NeedsRegistration => IsStorageMedium && Registry != RegistryState.Registered;
+        /// <summary>A storage medium with no registration number at all (the filter and the summary count these).</summary>
+        public bool HasNoNumber => IsStorageMedium && _registrationNumber.Trim().Length == 0;
 
         /// <summary>„Nr. de înregistrare”: editable for every device. A change the sealed audit refuses is undone and the reason shown on the page.</summary>
         public string RegistrationNumber
@@ -132,7 +135,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         private readonly Func<IReadOnlyList<PnpSnapshotEntry>> _snapshot;
         private readonly Func<IReadOnlyCollection<string>, IReadOnlyDictionary<string, MediumInfo>> _media;
-        private readonly Func<string, string, string?> _audit;
+        private readonly Func<string, string, AuditRefusal?> _audit;
         private readonly Func<DeviceAuditReading?>? _auditReader;
         private readonly Func<DeviceJournal, string?> _save;
         private readonly Func<DateTimeOffset> _clock;
@@ -173,7 +176,7 @@ namespace LogAnalyzer.UI.ViewModels
         /// <param name="consoleUser">The account of the active console session ("" = nobody logged on).</param>
         /// <param name="owner">This process runs the monitor; false = another instance does (or the monitor could not start) and this one only shows the journal.</param>
         public DeviceMonitorViewModel(Func<IReadOnlyList<PnpSnapshotEntry>> snapshot, Func<IReadOnlyCollection<string>, IReadOnlyDictionary<string, MediumInfo>> media,
-            Func<string, string, string?> audit, DeviceJournal journal, Func<DeviceJournal, string?> save, bool isolated, Func<DateTimeOffset>? clock = null,
+            Func<string, string, AuditRefusal?> audit, DeviceJournal journal, Func<DeviceJournal, string?> save, bool isolated, Func<DateTimeOffset>? clock = null,
             string loadProblem = "", Func<string>? consoleUser = null, bool owner = true, string notRunning = "", Func<DeviceAuditReading?>? auditReader = null)
         {
             _snapshot = snapshot; _media = media; _auditReader = auditReader;
@@ -220,7 +223,7 @@ namespace LogAnalyzer.UI.ViewModels
             return new DeviceMonitorViewModel(
                 LogAnalyzer.Dfir.Windows.Devices.PnpEnumerator.Snapshot,
                 LogAnalyzer.Dfir.Windows.Devices.MediumReader.For,
-                LogAnalyzer.UI.Services.AuthApp.TryRecord,
+                LogAnalyzer.UI.Services.AuthApp.TryRecordTyped,
                 journal,
                 j => DeviceJournalStore.Save(path, j),
                 LogAnalyzer.Core.Services.Edition.StationPostureContext.Current != LogAnalyzer.Core.Services.Edition.StationPosture.Internet,
@@ -253,10 +256,10 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>The result of the last "Export CSV" (where it went is not recorded: the sealed note has the hash, not the path).</summary>
         [ObservableProperty] private string _exportNote = "";
 
-        private void NoteSealResult(string? refused)
+        private void NoteSealResult(AuditRefusal? refused)
         {
             if (refused is null) { if (SealingBanner.Length > 0) SealingBanner = ""; return; }
-            if (!SealingHealth.IsKeyUnavailable(refused)) return;
+            if (!refused.KeyUnavailable) return;
             SealingBanner = SealingHealth.Banner;
             bool changed;
             lock (_journal) changed = SealingHealth.Note(_journal, _clock());
@@ -576,10 +579,40 @@ namespace LogAnalyzer.UI.ViewModels
                 return false;
             }
             lock (_journal) DeviceJournalMerge.SetRegistrationNumber(_journal, row.Identity, newValue);
+            lock (_sealedGate) { _sealedByMe[OperationAudit.DeviceField(row.Identity)] = OperationAudit.DeviceField(newValue); _sealedRead = null; }
             Problem = "";
             Save();
             UpdateSummary();
             return true;
+        }
+
+        private readonly object _sealedGate = new();
+        private readonly Dictionary<string, string> _sealedByMe = new(StringComparer.OrdinalIgnoreCase);
+        private (DeviceAuditReading? Audit, DateTimeOffset At)? _sealedRead;
+        private static readonly TimeSpan SealedReadEvery = TimeSpan.FromSeconds(30);
+
+        /// <summary>The sealed audit as the page relies on it: the reader's reading (verified chain, kept 30 s and dropped after a change of a number); without a reader, only what this instance sealed itself.</summary>
+        private DeviceAuditReading? SealedAudit()
+        {
+            lock (_sealedGate)
+            {
+                if (_auditReader is null) return new DeviceAuditReading(true, new Dictionary<string, string>(_sealedByMe, StringComparer.OrdinalIgnoreCase), [], 0);
+                var now = _clock();
+                if (_sealedRead is { } c && now - c.At < SealedReadEvery && now >= c.At) return c.Audit;
+                DeviceAuditReading? a = null;
+                try { a = _auditReader(); }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { a = null; }
+                _sealedRead = (a, now);
+                return a;
+            }
+        }
+
+        /// <summary>„Registru” of a row: the number in the journal against the number the sealed audit holds (and a change still waiting to be sealed).</summary>
+        internal RegistryState RegistryStateOf(string identity, string journalNumber)
+        {
+            List<PendingSeal> pending;
+            lock (_journal) pending = (_journal.PendingSeals ?? []).ToList();
+            return DeviceMonitorReport.RegistryStateOf(identity, journalNumber, SealedAudit(), pending);
         }
 
         /// <summary>
@@ -611,7 +644,7 @@ namespace LogAnalyzer.UI.ViewModels
         /// „Export CSV”, step 2: seals "device.export_csv" (operator, number of rows, SHA-256 of the file, never its path) BEFORE the file is written; returns null
         /// when sealed, otherwise the reason (the caller then writes nothing). The caller wraps both in the application's audit-first export (<c>ExportAudit.Run</c>).
         /// </summary>
-        public string? SealCsvExport(CsvExport export) =>
+        public AuditRefusal? SealCsvExport(CsvExport export) =>
             _audit(OperationAudit.DeviceExportCsv, OperationAudit.DeviceExportCsvDetail(OperatorIdentity.Who, export.Rows, export.Sha256));
 
         private void Save()
@@ -670,7 +703,7 @@ namespace LogAnalyzer.UI.ViewModels
         private void UpdateSummary()
         {
             var all = _rows.Values.ToList();
-            int connected = all.Count(r => r.Present), noNumber = all.Count(r => r.NeedsRegistration);
+            int connected = all.Count(r => r.Present), noNumber = all.Count(r => r.HasNoNumber);
             Summary = $"Conectate acum: {connected} · cunoscute de monitor: {all.Count}" +
                       (noNumber > 0 ? $" · {noNumber} {(noNumber == 1 ? "mediu de stocare" : "medii de stocare")} {DeviceMonitorReport.NoRegistration}" : "") + ".";
         }
@@ -679,7 +712,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             FilterConnected => r.Present,
             FilterStorage => r.IsStorageMedium,
-            FilterNoNumber => r.NeedsRegistration,
+            FilterNoNumber => r.HasNoNumber,
             FilterAlert => r.AlertText.Length > 0,
             _ => true,
         };

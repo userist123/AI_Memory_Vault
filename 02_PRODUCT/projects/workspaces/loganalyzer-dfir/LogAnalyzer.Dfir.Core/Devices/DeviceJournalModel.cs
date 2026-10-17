@@ -105,15 +105,20 @@ public sealed class SealingRefusal
     public SealingRefusal Copy() => (SealingRefusal)MemberwiseClone();
 }
 
+/// <summary>
+/// A refused write to the sealed audit: the reason, and whether it is because the sealing key cannot be read (a typed signal from the audit, never a guess from the text).
+/// A plain string converts to a refusal of another kind.
+/// </summary>
+public sealed record AuditRefusal(string Reason, bool KeyUnavailable = false)
+{
+    public override string ToString() => Reason;
+    public static implicit operator AuditRefusal?(string? reason) => reason is null ? null : new AuditRefusal(reason);
+}
+
 /// <summary>When the monitor cannot seal (the key of the sealed audit cannot be read), what the page and check D05 say.</summary>
 public static class SealingHealth
 {
-    /// <summary>The words of the refusal <c>HashChain</c> gives when the sealing key cannot be read (a test keeps this in step with the real message).</summary>
-    public const string KeyUnavailableMarker = "cheia de sigilare";
-
     public const string Banner = "Monitorul nu poate sigila evenimentele: porniți LogAnalyzer ca administrator. Până atunci D05 rămâne DE VERIFICAT.";
-
-    public static bool IsKeyUnavailable(string? reason) => reason is not null && reason.Contains(KeyUnavailableMarker, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>How often the last refusal is moved forward (a refused record is retried at every reading; the journal is not rewritten for each retry).</summary>
     public static readonly TimeSpan NoteEvery = TimeSpan.FromMinutes(1);

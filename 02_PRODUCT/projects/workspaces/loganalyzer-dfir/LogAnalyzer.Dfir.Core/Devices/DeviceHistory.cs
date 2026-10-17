@@ -6,7 +6,11 @@ namespace LogAnalyzer.Dfir.Devices;
 /// One line of a device's history: <c>TimeUtc</c> null = the time is not known (a record whose write was refused and is still pending). <c>Pending</c> = the record is NOT
 /// sealed yet: it comes from the monitor's journal, which is untrusted, and its <c>Kind</c> says so.
 /// </summary>
-public sealed record DeviceHistoryEvent(DateTimeOffset? TimeUtc, string Kind, string User, string Details, bool Pending);
+public sealed record DeviceHistoryEvent(DateTimeOffset? TimeUtc, string Kind, string User, string Details, bool Pending)
+{
+    /// <summary>True when the sealed record cannot be relied on (the audit chain does not verify, or the record comes after one with an earlier time): its <c>Kind</c> says so.</summary>
+    public bool Unverified { get; init; }
+}
 
 /// <summary>
 /// The history of one device as the SEALED operation audit holds it (pure, from <see cref="DeviceAuditReading.Events"/>): first seen, connections, disconnections, changes of the
@@ -17,6 +21,7 @@ public static class DeviceHistory
 {
     public const string Title = "din jurnalul sigilat";
     public const string PendingMark = "în așteptare (nesigilat)";
+    public const string UnverifiedMark = "neverificat", BackdatedMark = "neverificat (dată anterioară)";
     public const string FirstSeen = "Prima apariție", Connected = "Conectare", Disconnected = "Deconectare", PresentAtStart = "Prezent la pornirea monitorului",
                         RegistrationChanged = "Schimbare nr. de înregistrare", Alert = "Alertă", StateChanged = "Schimbare stare";
     public const string NoUser = "—";
@@ -34,13 +39,18 @@ public static class DeviceHistory
         int order = 0;
         if (audit is not null)
             foreach (var e in audit.Events.Where(e => e.Identity.Equals(key, StringComparison.OrdinalIgnoreCase)))
+            {
+                // a chain that does not verify proves nothing; a record after one with an earlier time has a time that cannot be relied on
+                var mark = !audit.ChainValid ? UnverifiedMark : e.Index >= audit.FirstRegression ? BackdatedMark : null;
                 foreach (var (kind, user, details) in Map(e.Event, e.Fields, e.Operator))
-                    sealedLines.Add((e.TimeUtc, order++, new DeviceHistoryEvent(e.TimeUtc, kind, user, details, false)));
+                    sealedLines.Add((e.TimeUtc, order++, new DeviceHistoryEvent(e.TimeUtc, mark is null ? kind : kind + " — " + mark, user, details, false) { Unverified = mark is not null }));
+            }
         var result = sealedLines.OrderBy(x => x.Time).ThenBy(x => x.Order).Select(x => x.Event).ToList();
         foreach (var p in pending ?? [])
         {
             var f = Fields(p.Detail);
-            if (!f.TryGetValue("identity", out var id) || !id.Equals(key, StringComparison.OrdinalIgnoreCase)) continue;
+            // a pending record carries the identity of its time: a medium re-keyed since keeps its pending history (the sealed re-key map is followed)
+            if (!f.TryGetValue("identity", out var id) || !(audit?.Follow(id) ?? id).Equals(key, StringComparison.OrdinalIgnoreCase)) continue;
             if (!IsHistoryEvent(p.Event)) continue;
             DateTimeOffset? when = f.TryGetValue("first_seen", out var fs) && DateTimeOffset.TryParse(fs, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var t) ? t : null;
             foreach (var (kind, user, details) in Map(p.Event, f, ""))

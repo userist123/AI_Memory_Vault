@@ -364,7 +364,7 @@ public static class ControlReportPdf
         l.Add(("Dispozitivele (stare, tip, nume, producător/model, VID/PID, serie, capacitate/literă, utilizator la conectare, prima apariție, ultima conectare/deconectare, nr. de înregistrare, registru)", true, Ink));
         var offending = new HashSet<LogAnalyzer.Dfir.Devices.DeviceJournalEntry>(s.Offending);
         foreach (var d in s.Offending.Concat(s.Devices.Where(d => !offending.Contains(d))).Take(maxDevices))
-            l.Add(((offending.Contains(d) ? "ÎNCALCĂ REGULA: " : "") + LogAnalyzer.Dfir.Devices.DeviceMonitorReport.Line(d), false, offending.Contains(d) ? Red : Ink));
+            l.Add(((offending.Contains(d) ? "ÎNCALCĂ REGULA: " : "") + LogAnalyzer.Dfir.Devices.DeviceMonitorReport.Line(d, f.DeviceAudit, journal.PendingSeals), false, offending.Contains(d) ? Red : Ink));
         if (s.Devices.Count > maxDevices) l.Add(($"… încă {s.Devices.Count - maxDevices} dispozitive (în jurnalul monitorului).", false, Muted));
         return l;
     }

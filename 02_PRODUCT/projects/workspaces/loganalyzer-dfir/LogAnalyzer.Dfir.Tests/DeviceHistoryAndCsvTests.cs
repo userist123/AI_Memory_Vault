@@ -70,6 +70,86 @@ public sealed class DeviceHistoryAndCsvTests : IDisposable
     }
 
     [Fact]
+    public void When_the_chain_does_not_verify_every_sealed_row_is_marked_unverified()
+    {
+        var audit = Audit(false, Ev(0, OperationAudit.DeviceFirstSeen, "", ("device", "Fake Stick")), Ev(10, OperationAudit.DeviceDisconnected, "", ("device", "Fake Stick")));
+        var h = DeviceHistory.Build(Id, audit);
+        Assert.Equal(2, h.Count);
+        Assert.All(h, x => { Assert.Contains(DeviceHistory.UnverifiedMark, x.Kind); Assert.True(x.Unverified); });
+        Assert.All(DeviceHistory.Build(Id, Audit(true, Ev(0, OperationAudit.DeviceFirstSeen, "", ("device", "Fake Stick")))), x => Assert.False(x.Unverified));
+    }
+
+    [Fact]
+    public void Rows_after_a_record_with_an_earlier_time_are_marked_with_a_date_that_cannot_be_relied_on()
+    {
+        static SealedDeviceEvent At(int minutes, int index, string ev) => new(T0.AddMinutes(minutes), ev, Id, "", new Dictionary<string, string> { ["device"] = "Fake Stick" }, index);
+        var audit = new DeviceAuditReading(true, new Dictionary<string, string>(), [], 0)
+        {
+            Events = [At(0, 1, OperationAudit.DeviceFirstSeen), At(60, 2, OperationAudit.DevicePresent), At(5, 3, OperationAudit.DeviceDisconnected), At(70, 4, OperationAudit.DevicePresent)],
+            FirstRegression = 3,
+        };
+        var h = DeviceHistory.Build(Id, audit);
+        Assert.DoesNotContain(DeviceHistory.BackdatedMark, h.Single(x => x.Kind.StartsWith(DeviceHistory.FirstSeen)).Kind);
+        Assert.Equal(2, h.Count(x => x.Kind.Contains(DeviceHistory.BackdatedMark)));
+        Assert.Single(h, x => x.Kind.StartsWith(DeviceHistory.PresentAtStart) && !x.Unverified);
+    }
+
+    [Fact]
+    public void The_real_audit_without_a_backdated_record_marks_nothing()
+    {
+        var svc = new AuthService(Path.Combine(_dir, "authb"));
+        svc.AuditOperation(null, OperationAudit.DeviceFirstSeen, OperationAudit.DeviceFirstSeenDetail(Id, "UsbStorage", "Fake Stick", "FAKESN0001", DateTimeOffset.UtcNow, user: "LAB-PC\\user"));
+        svc.AuditOperation(null, OperationAudit.DeviceDisconnected, OperationAudit.DeviceDisconnectedDetail(Id, "UsbStorage", "Fake Stick", "LAB-PC\\user"));
+        var r = OperationAudit.ReadDeviceMonitor(svc.AuditPath, chainValid: true);
+        Assert.Equal(int.MaxValue, r.FirstRegression);
+        Assert.All(DeviceHistory.Build(Id, r), x => Assert.False(x.Unverified));
+    }
+
+    [Fact]
+    public void A_pending_record_of_an_old_identity_stays_in_the_history_of_the_rekeyed_card()
+    {
+        const string oldId = "CARD|0781:5567|old", newId = "FAKESN0001|0781:5567";
+        var audit = new DeviceAuditReading(true, new Dictionary<string, string>(), [], 0)
+        {
+            Renames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { [OperationAudit.DeviceField(oldId)] = OperationAudit.DeviceField(newId) },
+        };
+        var pending = new[] { new PendingSeal { Event = OperationAudit.DeviceDisconnected, Detail = OperationAudit.DeviceDisconnectedDetail(oldId, "UsbStorage", "Fake Card", "LAB-PC\\user") } };
+        var h = DeviceHistory.Build(newId, audit, pending);
+        var one = Assert.Single(h);
+        Assert.True(one.Pending);
+        Assert.Contains(DeviceHistory.PendingMark, one.Kind);
+        Assert.Empty(DeviceHistory.Build("OTHER|1", audit, pending));
+    }
+
+    [Fact]
+    public void The_real_audit_follows_a_rekey_so_pending_records_of_the_old_identity_match()
+    {
+        var svc = new AuthService(Path.Combine(_dir, "authc"));
+        svc.AuditOperation(null, OperationAudit.DeviceMediumRekeyed, OperationAudit.DeviceMediumRekeyedDetail("CARD|1|old", Id, "UsbStorage", "Fake Card"));
+        var r = OperationAudit.ReadDeviceMonitor(svc.AuditPath, chainValid: true);
+        var pending = new[] { new PendingSeal { Event = OperationAudit.DeviceDisconnected, Detail = OperationAudit.DeviceDisconnectedDetail("CARD|1|old", "UsbStorage", "Fake Card", "u") } };
+        Assert.Single(DeviceHistory.Build(Id, r, pending));
+    }
+
+    [Fact]
+    public void The_report_never_says_registered_for_a_number_only_the_journal_has()
+    {
+        var e = new DeviceJournalEntry { Identity = Id, Class = DeviceClass.UsbStorage, Name = "Fake Stick", Serial = "FAKESN0001", RegistrationNumber = "RN-9", FirstSeenUtc = T0 };
+        DeviceAuditReading A(string? sealedNumber, bool valid = true) =>
+            new(valid, sealedNumber is null ? new Dictionary<string, string>() : new Dictionary<string, string> { [OperationAudit.DeviceField(Id)] = sealedNumber }, [], 0);
+        Assert.EndsWith("registru: Înregistrat", DeviceMonitorReport.Line(e, A("RN-9")));
+        Assert.EndsWith("registru: Neconfirmat (nesigilat)", DeviceMonitorReport.Line(e, A("RN-1")));          // the journal was edited
+        Assert.EndsWith("registru: Neconfirmat (nesigilat)", DeviceMonitorReport.Line(e, A(null)));
+        Assert.EndsWith("registru: Neconfirmat (nesigilat)", DeviceMonitorReport.Line(e, A("RN-9", valid: false)));
+        Assert.EndsWith("registru: Neconfirmat (nesigilat)", DeviceMonitorReport.Line(e));                 // no sealed audit at all
+        var pend = new[] { new PendingSeal { Event = OperationAudit.DeviceRegistrationChanged, Detail = OperationAudit.DeviceRegistrationChangedDetail(Id, "UsbStorage", "Fake Stick", "RN-1", "RN-9") } };
+        Assert.EndsWith("registru: Neconfirmat (nesigilat)", DeviceMonitorReport.Line(e, A("RN-9"), pend));
+        e.RegistrationNumber = "";
+        Assert.EndsWith("registru: Neînregistrat", DeviceMonitorReport.Line(e, A(null)));
+        Assert.EndsWith("registru: Neconfirmat (nesigilat)", DeviceMonitorReport.Line(e, A("RN-1")));          // the journal lost a sealed number
+    }
+
+    [Fact]
     public void An_unreadable_or_broken_audit_is_said_so_and_the_history_is_empty_or_pending_only()
     {
         Assert.Contains("nu a putut fi citit", DeviceHistory.Notice(null));
@@ -140,6 +220,26 @@ public sealed class DeviceHistoryAndCsvTests : IDisposable
 
     private static IReadOnlyList<string> Row(params string[] cells) => cells;
 
+    [Theory]
+    [InlineData("+1")]
+    [InlineData("-1")]
+    [InlineData("@SUM(A1)")]
+    [InlineData("\tx")]
+    [InlineData("\rx")]
+    public void A_cell_that_starts_like_a_formula_is_defused_for_each_trigger_character(string value)
+    {
+        var q = DeviceCsv.Quote(value);
+        Assert.True(q.TrimStart('"').StartsWith('\''), q);
+        Assert.DoesNotContain(q[0], new[] { '+', '-', '@', '\t', '\r' });
+    }
+
+    [Fact]
+    public void The_csv_of_no_rows_is_the_header_alone()
+    {
+        var bytes = DeviceCsv.ToBytes([]);
+        Assert.Equal(DeviceCsv.Line(DeviceCsv.Headers) + "\r\n", new UTF8Encoding(false).GetString(bytes, 3, bytes.Length - 3));
+    }
+
     [Fact]
     public void Capacity_and_time_are_human_readable()
     {
@@ -162,9 +262,11 @@ public sealed class DeviceHistoryAndCsvTests : IDisposable
         try
         {
             var ex = Assert.ThrowsAny<Exception>(() => svc.AuditOperation(null, "test.second", "x=2"));
-            Assert.True(SealingHealth.IsKeyUnavailable(ex.Message), ex.Message);
-            Assert.False(SealingHealth.IsKeyUnavailable("discul este plin"));
-            Assert.False(SealingHealth.IsKeyUnavailable(null));
+            Assert.IsType<SealingKeyUnavailableException>(ex);                          // a type, not a guess from the words of the message
+            Assert.IsAssignableFrom<UnauthorizedAccessException>(ex);
+            Assert.True(new AuditRefusal(ex.Message, KeyUnavailable: true).KeyUnavailable);
+            AuditRefusal? plain = "discul este plin";
+            Assert.False(plain!.KeyUnavailable);
         }
         finally { HashChain.RegisterHeadSeal(svc.AuditPath, [1, 2, 3]); }
     }
