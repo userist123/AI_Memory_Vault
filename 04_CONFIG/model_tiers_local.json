@@ -1,0 +1,14 @@
+{
+  "light": {
+    "provider": "local",
+    "model": "qwen2.5-coder:3b"
+  },
+  "standard": {
+    "provider": "local",
+    "model": "qwen2.5:7b-instruct"
+  },
+  "heavy": {
+    "provider": "local",
+    "model": "llama3.1:8b"
+  }
+}

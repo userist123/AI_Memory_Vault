@@ -854,46 +854,10 @@
       "reason": "Agent checkpoint file (00_GOVERNANCE/coordination/tasks/README.md template); not a memory note, intentionally has no note frontmatter."
     },
     {
-      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/EDITIONS_AND_POSTURE.md",
+      "path": "10_DOCUMENTATION/journal/2026-10-09-local-model-teacher-student.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
-      "reason": "Plain markdown project document (three editions and per-posture check applicability); not a note. Frontmatter would require owner lifecycle/verification values."
-    },
-    {
-      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/DESIGN_2026-10-16_OFFICER_SIGNATURE_AND_AUDIT_ANCHOR.md",
-      "kind": "no_frontmatter",
-      "category": "plain_document",
-      "reason": "Plain markdown design note (security officer qualified signature, audit-log anchor); not a note. Frontmatter would require owner lifecycle/verification values."
-    },
-    {
-      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/USABILITY_2026-10-16_CLICK_AUDIT.md",
-      "kind": "no_frontmatter",
-      "category": "plain_document",
-      "reason": "Plain markdown project document (usability click audit and in-place glossary); not a note. Frontmatter would require owner lifecycle/verification values."
-    },
-    {
-      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-16_STANDARDS_STANDALONE_CLASSIFIED_WORKSTATIONS.md",
-      "kind": "no_frontmatter",
-      "category": "plain_document",
-      "reason": "Plain markdown research document (protection of classified information on standalone workstations, public sources); not a note. Frontmatter would require owner lifecycle/verification values."
-    },
-    {
-      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PROVENANCE_2026-10-16_PDF_SIGNING_LIBRARIES.md",
-      "kind": "no_frontmatter",
-      "category": "plain_document",
-      "reason": "Plain markdown provenance check (PDF signing libraries for reports); not a note. Frontmatter would require owner lifecycle/verification values."
-    },
-    {
-      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-cross-station-media.md",
-      "kind": "no_frontmatter",
-      "category": "plain_document",
-      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
-    },
-    {
-      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-signed-media-register.md",
-      "kind": "no_frontmatter",
-      "category": "plain_document",
-      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+      "reason": "Dated journal record (prose, not a memory note); intentionally has no note frontmatter."
     }
   ]
 }

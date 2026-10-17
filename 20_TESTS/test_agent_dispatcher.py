@@ -7,6 +7,7 @@ from routing.models import DispatchResult, DispatchStatus, TaskRequest, RouteSta
 from routing.agent_router import AgentRouter
 from routing.registry import RouteRegistry
 from pathlib import Path
+from types import SimpleNamespace
 from routing.dispatcher import CommandAdapter, WorkPacket
 
 
@@ -153,17 +154,100 @@ def test_local_llm_uses_registry_binary_and_model(monkeypatch, tmp_path):
     captured = {}
     class Proc:
         returncode = 0
-        stdout = "local result"
+        stdout = "STATUS: PASS\nRESULT: local result\nEVIDENCE: verified\nCHANGES: none\nFAILURES: none\nUNKNOWNS: none"
         stderr = ""
     monkeypatch.setattr("routing.dispatcher.shutil.which", lambda name: "/mock/" + name)
     def fake_run(cmd, **kwargs):
-        captured["cmd"] = cmd; captured["input"] = kwargs["input"]; return Proc()
+        captured["cmd"] = cmd; captured["input"] = kwargs["input"]
+        if cmd and cmd[0] == "ollama":
+            return SimpleNamespace(returncode=0, stdout="STATUS: PASS\nRESULT: ok\nEVIDENCE: verified\nCHANGES: none\nFAILURES: none\nUNKNOWNS: none", stderr="")
+        return Proc()
     monkeypatch.setattr("routing.dispatcher.subprocess.run", fake_run)
     adapter = CommandAdapter("local_llm", runtime.adapter_ref, runtime.model, working_directory=tmp_path)
     packet = WorkPacket("local-task","local-route","router","local_ai_engineer","local_llm","local-ai","command","LOCAL GOAL")
     result = adapter.dispatch(packet)
     assert result.status is DispatchStatus.COMPLETED
     assert captured["cmd"] == ["ollama", "run", "llama3.2"]
+
+
+def test_local_llm_model_can_be_overridden_per_workstation(monkeypatch, tmp_path):
+    root = Path(__file__).resolve().parents[1]
+    reg = RouteRegistry.from_file(root / "04_CONFIG" / "agent_router.json")
+    runtime = reg.runtimes["local_llm"]
+    captured = {}
+
+    def fake_run(cmd, **kwargs):
+        captured["cmd"] = cmd
+        return SimpleNamespace(returncode=0, stdout="STATUS: PASS\nRESULT: ok\nEVIDENCE: verified\nCHANGES: none\nFAILURES: none\nUNKNOWNS: none", stderr="")
+
+    monkeypatch.setenv("AI_MEMORY_VAULT_LOCAL_MODEL", "qwen2.5:7b-instruct")
+    monkeypatch.setattr("routing.dispatcher.shutil.which", lambda name: "/mock/" + name)
+    monkeypatch.setattr("routing.dispatcher.subprocess.run", fake_run)
+    adapter = CommandAdapter("local_llm", runtime.adapter_ref, runtime.model, working_directory=tmp_path)
+    packet = WorkPacket("local-override", "local-route", "router", "local_ai_engineer", "local_llm", "local-ai", "command", "LOCAL GOAL")
+
+    result = adapter.dispatch(packet)
+
+    assert result.status == DispatchStatus.COMPLETED
+    assert captured["cmd"] == ["ollama", "run", "qwen2.5:7b-instruct"]
+    assert result.metadata["model"] == "qwen2.5:7b-instruct"
+    assert result.metadata["model_digest"].startswith("sha256:")
+
+
+@pytest.mark.parametrize("override", [
+    "llama3.2; rm -rf /",            # shell metacharacters
+    "$(id)",                         # command substitution
+    "../../bin/sh",                  # path traversal
+    "/usr/bin/ollama",               # absolute path
+    "..\\..\\evil",                  # Windows traversal
+    "--help",                        # option injection
+    "-v",
+    "qwen2.5:7b-instruct --verbose", # extra argv inside one value
+    "qwen2.5:7b-instruct\nllama3.2", # newline smuggling
+    "mistral:7b",                    # well-formed but not allowlisted
+    "LLAMA3.2",                      # allowlist is exact, not case-folded
+])
+def test_local_llm_override_fails_closed_for_unsafe_or_unlisted_models(monkeypatch, tmp_path, override):
+    calls = []
+    monkeypatch.setenv("AI_MEMORY_VAULT_LOCAL_MODEL", override)
+    monkeypatch.setattr("routing.dispatcher.shutil.which", lambda name: "/mock/" + name)
+    monkeypatch.setattr("routing.dispatcher.subprocess.run", lambda *a, **k: calls.append(a) or SimpleNamespace(
+        returncode=0, stdout="STATUS: PASS\nRESULT: ok\nEVIDENCE: e\nCHANGES: none\nFAILURES: none\nUNKNOWNS: none", stderr=""))
+    packet = WorkPacket("local-bad-model", "route", "router", "agent", "local_llm", "profile", "command", "goal")
+    result = CommandAdapter("local_llm", "ollama", "llama3.2", working_directory=tmp_path).dispatch(packet)
+    assert result.status is DispatchStatus.FAILED
+    assert result.error in {"invalid local model", "local model is not allowlisted"}
+    assert calls == [], "nothing may be executed for a refused model"
+
+
+def test_local_llm_unsafe_registry_model_fails_closed_too(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.delenv("AI_MEMORY_VAULT_LOCAL_MODEL", raising=False)
+    monkeypatch.setattr("routing.dispatcher.shutil.which", lambda name: "/mock/" + name)
+    monkeypatch.setattr("routing.dispatcher.subprocess.run", lambda *a, **k: calls.append(a))
+    packet = WorkPacket("local-bad-registry", "route", "router", "agent", "local_llm", "profile", "command", "goal")
+    result = CommandAdapter("local_llm", "ollama", "../model", working_directory=tmp_path).dispatch(packet)
+    assert result.status is DispatchStatus.FAILED and result.error == "invalid local model"
+    assert calls == []
+
+
+def test_local_llm_override_without_tier_config_only_allows_the_registry_model(monkeypatch, tmp_path):
+    """A missing/unreadable tier file must shrink the allowlist, never widen it."""
+    import routing.dispatcher as d
+    real_read = d.Path.read_text
+    def read_text(self, *a, **k):
+        if self.name == "model_tiers_local.json":
+            raise OSError("gone")
+        return real_read(self, *a, **k)
+    monkeypatch.setattr(d.Path, "read_text", read_text)
+    monkeypatch.setenv("AI_MEMORY_VAULT_LOCAL_MODEL", "qwen2.5:7b-instruct")
+    monkeypatch.setattr("routing.dispatcher.shutil.which", lambda name: "/mock/" + name)
+    calls = []
+    monkeypatch.setattr("routing.dispatcher.subprocess.run", lambda *a, **k: calls.append(a))
+    packet = WorkPacket("local-no-tiers", "route", "router", "agent", "local_llm", "profile", "command", "goal")
+    result = CommandAdapter("local_llm", "ollama", "llama3.2", working_directory=tmp_path).dispatch(packet)
+    assert result.status is DispatchStatus.FAILED and result.error == "local model is not allowlisted"
+    assert calls == []
 
 
 def test_command_adapters_never_put_goal_in_argv(monkeypatch, tmp_path):
@@ -174,15 +258,43 @@ def test_command_adapters_never_put_goal_in_argv(monkeypatch, tmp_path):
         stderr = ""
     monkeypatch.setattr("routing.dispatcher.shutil.which", lambda name: "/mock/" + name)
     def fake_run(cmd, **kwargs):
-        captured["cmd"] = cmd; captured["input"] = kwargs["input"]; return Proc()
+        captured["cmd"] = cmd; captured["input"] = kwargs["input"]
+        if cmd and cmd[0] == "ollama":
+            return SimpleNamespace(returncode=0, stdout="STATUS: PASS\nRESULT: ok\nEVIDENCE: verified\nCHANGES: none\nFAILURES: none\nUNKNOWNS: none", stderr="")
+        return Proc()
     monkeypatch.setattr("routing.dispatcher.subprocess.run", fake_run)
-    for runtime_id, adapter_ref, model in (("claude_code","claude",None),("codex","codex",None),("antigravity","agy",None),("local_llm","ollama","registry-model")):
+    for runtime_id, adapter_ref, model in (("claude_code","claude",None),("codex","codex",None),("antigravity","agy",None),("local_llm","ollama","llama3.2")):
         goal=f"UNIQUE SECRET GOAL {runtime_id}"
         packet=WorkPacket("task-"+runtime_id,"route-"+runtime_id,"router","agent",runtime_id,"profile","command",goal)
         result=CommandAdapter(runtime_id,adapter_ref,model,working_directory=tmp_path).dispatch(packet)
         assert result.status is not DispatchStatus.FAILED
         assert all(goal not in str(arg) for arg in captured["cmd"])
         assert goal in captured["input"]
+
+
+def test_local_llm_rejects_unstructured_success(monkeypatch, tmp_path):
+    monkeypatch.setattr("routing.dispatcher.shutil.which", lambda name: "/mock/" + name)
+    monkeypatch.setattr("routing.dispatcher.subprocess.run", lambda *a, **k: SimpleNamespace(returncode=0, stdout="local result", stderr=""))
+    packet = WorkPacket("local-contract", "route", "router", "agent", "local_llm", "profile", "command", "goal")
+    result = CommandAdapter("local_llm", model="llama3.2", working_directory=tmp_path).dispatch(packet)
+    assert result.status is DispatchStatus.FAILED
+
+
+def test_a2a_brief_does_not_include_local_execution_contract(monkeypatch):
+    import json
+    from routing.dispatcher import A2AAdapter
+    captured = {}
+    class Response:
+        def __enter__(self): return self
+        def __exit__(self, *args): return False
+        def read(self): return json.dumps({"result": {"message": {"parts": [{"text": "ok"}]}}}).encode()
+    def fake(request, timeout):
+        captured["text"] = json.loads(request.data.decode())["params"]["message"]["parts"][0]["text"]
+        return Response()
+    monkeypatch.setattr("routing.dispatcher.urllib.request.urlopen", fake)
+    packet = WorkPacket("a2a-contract", "route", "router", "agent", "antigravity", "profile", "a2a", "goal")
+    A2AAdapter("https://agent.example/rpc").dispatch(packet)
+    assert "EXECUTION CONTRACT" not in captured["text"]
 
 
 # ── regressions for the PR #211 review ──────────────────────────────────────────────────
