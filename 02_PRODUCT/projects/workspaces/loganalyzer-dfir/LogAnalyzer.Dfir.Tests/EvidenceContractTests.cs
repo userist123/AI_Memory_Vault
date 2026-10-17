@@ -125,6 +125,27 @@ public sealed class EvidenceContractTests : IDisposable
     }
 
     [Fact]
+    public void Empty_evidence_with_intact_hash_is_a_notice_not_invalid_results()
+    {
+        var empty = Path.Combine(_dir, "EMPTY.EXE-11111111.pf");
+        File.WriteAllBytes(empty, []);
+        var (ws, ev) = CaseWith(empty);
+        var r = new InvestigationPipeline().Run(ws, CollectionProfile.Quick, collect: false);
+
+        var check = ReportIntegrity.Check(r);
+        Assert.True(check.AllIntact);
+        Assert.DoesNotContain("INVALID", check.Banner);
+        Assert.DoesNotContain("nu mai pot fi atribuite", check.Banner);
+        Assert.Contains("fișier gol sau format neașteptat", check.Banner);
+        Assert.Contains("amprenta este intactă", check.Banner);
+        Assert.Contains("elementul de probă nu a fost interpretat", check.Banner);
+
+        var gap = Assert.Single(r.Gaps, g => g.Artifact == Path.GetFileName(ev.StoredPath));
+        Assert.DoesNotContain("nu provină din sursa achiziționată", gap.Impact);
+        Assert.Contains("amprenta este intactă", gap.Impact);
+    }
+
+    [Fact]
     public void Preflight_uses_spec_status_names()
     {
         var (ws, ev) = CaseWith(SystemHiveWithBam());

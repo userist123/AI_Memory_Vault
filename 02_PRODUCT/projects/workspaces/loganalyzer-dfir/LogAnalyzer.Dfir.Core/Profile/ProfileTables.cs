@@ -24,6 +24,7 @@ public static partial class ProfileTables
         ProfileTable.Zones => "Zone",
         ProfileTable.TransferChannels => "Canale de transfer aprobate",
         ProfileTable.NetworkDestinations => "Destinații de rețea autorizate",
+        ProfileTable.ClassifiedFolders => "Foldere clasificate",
         _ => t.ToString(),
     };
 
@@ -33,6 +34,7 @@ public static partial class ProfileTables
         ProfileTable.ApprovedAccounts or ProfileTable.MaintenanceWindows or ProfileTable.RotationProcedure => "Mentenanța jurnalelor",
         ProfileTable.ApprovedSoftware => "Software aprobat",
         ProfileTable.ExpectedPolicies => "Politică GPO așteptată",
+        ProfileTable.ClassifiedFolders => "Foldere clasificate",
         _ => "Zone și transferuri",
     };
 
@@ -49,6 +51,7 @@ public static partial class ProfileTables
         ProfileTable.Zones => ["Name", "Description"],
         ProfileTable.TransferChannels => ["Name", "FromZone", "ToZone", "Medium", "Note"],
         ProfileTable.NetworkDestinations => ["Address", "Zone", "Purpose"],
+        ProfileTable.ClassifiedFolders => ["Path", "Note"],
         _ => [],
     };
 
@@ -65,6 +68,7 @@ public static partial class ProfileTables
         ProfileTable.Zones => p.Zones.Count,
         ProfileTable.TransferChannels => p.TransferChannels.Count,
         ProfileTable.NetworkDestinations => p.NetworkDestinations.Count,
+        ProfileTable.ClassifiedFolders => p.ClassifiedFolders.Count,
         _ => 0,
     };
 
@@ -81,6 +85,7 @@ public static partial class ProfileTables
         ProfileTable.Zones => p.Zones.Select(r => new[] { r.Name, r.Description }).ToList(),
         ProfileTable.TransferChannels => p.TransferChannels.Select(r => new[] { r.Name, r.FromZone, r.ToZone, r.Medium, r.Note }).ToList(),
         ProfileTable.NetworkDestinations => p.NetworkDestinations.Select(r => new[] { r.Address, r.Zone, r.Purpose }).ToList(),
+        ProfileTable.ClassifiedFolders => p.ClassifiedFolders.Select(r => new[] { r.Path, r.Note }).ToList(),
         _ => [],
     };
 
@@ -103,6 +108,7 @@ public static partial class ProfileTables
             case ProfileTable.TransferChannels:
                 p.TransferChannels = data.Select(c => new TransferChannelRow { Name = c[0], FromZone = c[1], ToZone = c[2], Medium = c[3], Note = c[4] }).ToList(); break;
             case ProfileTable.NetworkDestinations: p.NetworkDestinations = data.Select(c => new NetworkDestinationRow { Address = c[0], Zone = c[1], Purpose = c[2] }).ToList(); break;
+            case ProfileTable.ClassifiedFolders: p.ClassifiedFolders = data.Select(c => new ClassifiedFolderRow { Path = c[0], Note = c[1] }).ToList(); break;
         }
     }
 
@@ -218,6 +224,10 @@ public static partial class ProfileTables
             case ProfileTable.NetworkDestinations:
                 if (Empty(c[0])) Err("adresa lipsește");
                 if (knownZones is { Count: > 0 } && !Empty(c[1]) && !knownZones.Contains(c[1].Trim(), StringComparer.OrdinalIgnoreCase)) Err($"zona „{c[1]}” nu este definită în tabelul de zone");
+                break;
+            case ProfileTable.ClassifiedFolders:
+                if (Empty(c[0])) Err("calea folderului lipsește");
+                else if (!System.IO.Path.IsPathFullyQualified(c[0].Trim())) Err($"calea „{c[0]}” trebuie scrisă complet, cu litera discului (de exemplu D:\\Clasificat)");
                 break;
         }
         return m;

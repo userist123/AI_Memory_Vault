@@ -226,7 +226,23 @@ public static class Authenticode
     private static extern bool CryptCATAdminReleaseContext(IntPtr hCatAdmin, uint dwFlags);
 }
 
-public sealed record TcpConnection(int Pid, IPEndPoint Local, IPEndPoint Remote, string State);
+/// <param name="Local">Serialized as "address:port" text: IPEndPoint has no JSON shape (reading IPv4 ScopeId throws), which crashed the live-state collection.</param>
+public sealed record TcpConnection(int Pid,
+    [property: System.Text.Json.Serialization.JsonConverter(typeof(IPEndPointJsonConverter))] IPEndPoint Local,
+    [property: System.Text.Json.Serialization.JsonConverter(typeof(IPEndPointJsonConverter))] IPEndPoint Remote,
+    string State);
+
+/// <summary>IPEndPoint as JSON text ("192.0.2.1:443", "[2001:db8::1]:443") and back.</summary>
+public sealed class IPEndPointJsonConverter : System.Text.Json.Serialization.JsonConverter<IPEndPoint>
+{
+    public override IPEndPoint? Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, System.Text.Json.JsonSerializerOptions options) =>
+        reader.TokenType == System.Text.Json.JsonTokenType.Null ? null
+        : IPEndPoint.TryParse(reader.GetString() ?? "", out var ep) ? ep
+        : throw new System.Text.Json.JsonException($"Not an IP end point: '{reader.GetString()}'.");
+
+    public override void Write(System.Text.Json.Utf8JsonWriter writer, IPEndPoint value, System.Text.Json.JsonSerializerOptions options) =>
+        writer.WriteStringValue(value.ToString());
+}
 
 /// <summary>Current TCP table with owning PIDs (GetExtendedTcpTable), IPv4 and IPv6. Read-only.</summary>
 public static class TcpTable

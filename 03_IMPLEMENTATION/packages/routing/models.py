@@ -89,6 +89,7 @@ class RuntimeDescriptor:
     model:str|None=None
     enabled:bool=True
     executable:str=""
+    subagent_type:str=""  # transport "claude_subagent": the Claude Code Agent tool subagent_type
 
 
 @dataclass(frozen=True)

@@ -38,6 +38,22 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private bool _isAdministrator;
         [ObservableProperty] private bool _isPrimaryAdmin;
         [ObservableProperty] private string _status = "";
+
+        // Offline update of the detection lists (signed data pack brought on a registered medium); administrator only.
+        public string DataPackLine => "Liste de detecție folosite: " + LogAnalyzer.Dfir.Analysis.ShippedData.Description +
+                                      (LogAnalyzer.Dfir.Analysis.ShippedData.Problem is { Length: > 0 } p ? " — " + p : "") + ".";
+        [ObservableProperty] private string _dataPackStatus = "";
+
+        [RelayCommand]
+        private void ImportDataPack()
+        {
+            if (!LogAnalyzer.Dfir.Auth.OperatorIdentity.MayEditAdministration) { DataPackStatus = LogAnalyzer.Dfir.Auth.OperatorIdentity.AdministratorOnlyMessage + "."; return; }
+            var dlg = new Microsoft.Win32.OpenFileDialog { Title = "Pachetul de date semnat (.zip)", Filter = "Pachet de date (*.zip)|*.zip" };
+            if (dlg.ShowDialog() != true) return;
+            var r = LogAnalyzer.Dfir.Analysis.DataPack.Import(dlg.FileName);
+            DataPackStatus = r.Message;
+            if (r.Ok && Services.AuthApp.Session is { } session) Services.AuthApp.Service.AuditSessionContext(session, $"datapack.import {r.Manifest!.PackId} v{r.Manifest.Version}");
+        }
         [ObservableProperty] private AccountRow? _selectedAccount;
         [ObservableProperty] private CardRow? _selectedCard;
         [ObservableProperty] private DetectedCardRow? _selectedDetected;

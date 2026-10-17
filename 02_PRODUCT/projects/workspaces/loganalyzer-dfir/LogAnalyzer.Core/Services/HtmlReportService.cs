@@ -25,6 +25,7 @@ namespace LogAnalyzer.Core.Services
             sb.AppendLine("<html lang=\"ro\">");
             sb.AppendLine("<head>");
             sb.AppendLine("    <meta charset=\"UTF-8\">");
+            sb.AppendLine("    " + HtmlText.CspMetaTag);
             sb.AppendLine("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">");
             sb.AppendLine("    <title>Raport Oficial DFIR - Cyber Threat Investigation</title>");
             sb.AppendLine("    <style>");
@@ -71,7 +72,7 @@ namespace LogAnalyzer.Core.Services
             sb.AppendLine("        <div class=\"header\">");
             sb.AppendLine("            <div class=\"header-title\">");
             sb.AppendLine("                <h1>RAPORT OFICIAL INVESTIGAȚIE FORENZICĂ (DFIR)</h1>");
-            sb.AppendLine($"                <p>Generat la: {DateTime.Now:yyyy-MM-dd HH:mm:ss} | Investigator: <strong>{operatorName}</strong></p>");
+            sb.AppendLine($"                <p>Generat la: {DateTime.Now:yyyy-MM-dd HH:mm:ss} | Investigator: <strong>{HtmlText.Encode(operatorName)}</strong></p>");
             sb.AppendLine("            </div>");
             sb.AppendLine("            <div class=\"badge-status\">AIR-GAPPED COMPLIANCE VERIFIED</div>");
             sb.AppendLine("        </div>");
@@ -99,7 +100,7 @@ namespace LogAnalyzer.Core.Services
             // Chain of Custody
             sb.AppendLine("        <div class=\"section\">");
             sb.AppendLine("            <div class=\"section-header\">1. LANȚUL DE CUSTODIE ȘI INTEGRITATEA PROBELOR (SHA-256)</div>");
-            sb.AppendLine($"            <div class=\"hashes-block\">{System.Web.HttpUtility.HtmlEncode(sessionHashes)}</div>");
+            sb.AppendLine($"            <div class=\"hashes-block\">{HtmlText.Encode(sessionHashes)}</div>");
             sb.AppendLine("        </div>");
 
             // Security Alerts
@@ -124,7 +125,7 @@ namespace LogAnalyzer.Core.Services
                 sb.AppendLine("                <tbody>");
                 foreach (var issue in issues)
                 {
-                    string sevClass = issue.Severity.ToLowerInvariant() switch
+                    string sevClass = (issue.Severity ?? string.Empty).ToLowerInvariant() switch
                     {
                         "critical" => "severity-critical",
                         "high" => "severity-high",
@@ -132,11 +133,11 @@ namespace LogAnalyzer.Core.Services
                         _ => "severity-info"
                     };
                     sb.AppendLine("                    <tr>");
-                    sb.AppendLine($"                        <td><span class=\"{sevClass}\">{issue.Severity.ToUpper()}</span></td>");
-                    sb.AppendLine($"                        <td><strong>{issue.MitreTechniqueId}</strong></td>");
-                    sb.AppendLine($"                        <td>{issue.ComplianceTag}</td>");
-                    sb.AppendLine($"                        <td><strong>{issue.Title}</strong></td>");
-                    sb.AppendLine($"                        <td>{issue.Explanation}</td>");
+                    sb.AppendLine($"                        <td><span class=\"{sevClass}\">{HtmlText.Encode(issue.Severity?.ToUpperInvariant())}</span></td>");
+                    sb.AppendLine($"                        <td><strong>{HtmlText.Encode(issue.MitreTechniqueId)}</strong></td>");
+                    sb.AppendLine($"                        <td>{HtmlText.Encode(issue.ComplianceTag)}</td>");
+                    sb.AppendLine($"                        <td><strong>{HtmlText.Encode(issue.Title)}</strong></td>");
+                    sb.AppendLine($"                        <td>{HtmlText.Encode(issue.Explanation)}</td>");
                     sb.AppendLine("                    </tr>");
                 }
                 sb.AppendLine("                </tbody>");
@@ -168,10 +169,10 @@ namespace LogAnalyzer.Core.Services
                 {
                     sb.AppendLine("                    <tr>");
                     sb.AppendLine($"                        <td style=\"font-family: monospace;\">{item.Timestamp:yyyy-MM-dd HH:mm:ss}</td>");
-                    sb.AppendLine($"                        <td><strong>{item.Source}</strong></td>");
-                    sb.AppendLine($"                        <td>{item.Category}</td>");
-                    sb.AppendLine($"                        <td>{item.UserOrHost}</td>");
-                    sb.AppendLine($"                        <td>{item.Description}</td>");
+                    sb.AppendLine($"                        <td><strong>{HtmlText.Encode(item.Source)}</strong></td>");
+                    sb.AppendLine($"                        <td>{HtmlText.Encode(item.Category)}</td>");
+                    sb.AppendLine($"                        <td>{HtmlText.Encode(item.UserOrHost)}</td>");
+                    sb.AppendLine($"                        <td>{HtmlText.Encode(item.Description)}</td>");
                     sb.AppendLine("                    </tr>");
                 }
                 sb.AppendLine("                </tbody>");

@@ -70,7 +70,7 @@ The production consumers of what the gate checks are the CI job above and the ow
 # PowerShell 7, .NET 10 SDK, from the repository root
 cd 02_PRODUCT/projects/workspaces/loganalyzer-dfir
 pwsh release-gate/Invoke-ReleaseGate.ps1 -Mode Enforce -Version 0.1.0-dfir `
-     -RunTests -CorpusRoot D:\corpus\NanAgentCase -RunDifferential
+     -RunTests -CorpusRoot D:\corpus\VendorAgentCase -RunDifferential
 ```
 
 `-RunTests` runs the whole solution in Release into `release-gate/out/trx`; `-CorpusRoot` sets `LADFIR_CORPUS` and

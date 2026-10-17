@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using LogAnalyzer.Core.Models;
 using LogAnalyzer.Dfir.Analysis;
 
@@ -12,8 +14,24 @@ namespace LogAnalyzer.Core.Services.Network
         /// <summary>Approved accounts and maintenance windows from the procedure profile (WP15a); <c>null</c> = no profile, log clears stay NotAssessed.</summary>
         public LogMaintenancePolicy? MaintenancePolicy { get; set; }
 
-        private readonly List<string> _failedLogonHistory = new();
-        private DateTime _lastCleanupUtc = DateTime.UtcNow;
+        /// <summary>Failed logons kept for <see cref="FailureWindow"/>: (station, source address) → (account, time). Per station and per source, never global.</summary>
+        private readonly Dictionary<string, List<(string User, DateTime Utc)>> _failures = new(StringComparer.OrdinalIgnoreCase);
+        public static readonly TimeSpan FailureWindow = TimeSpan.FromMinutes(10);
+        public const int SameAccountThreshold = 5, SprayAccountsThreshold = 10;
+
+        // -enc / -EncodedCommand followed by a base64 blob; "bypass" alone is NOT suspicious (management tools use -ExecutionPolicy Bypass every day).
+        private static readonly Regex EncodedPowerShell = new(@"(?:^|[\s""'])-(?:e|ec|en|enc|enco|encod|encode|encoded|encodedcommand)\s+[A-Za-z0-9+/=]{16,}", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex PowerShellAbuse = new(@"downloadstring|downloadfile|\biex\s*\(|invoke-expression|amsiutils|amsiinitfailed|amsiscanbuffer|frombase64string\(.{0,80}\)\s*\|\s*iex", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex LogClearCommand = new(@"\bwevtutil(?:\.exe)?\s+(?:/\S+\s+)*(?:cl|clear-log)\b|\bclear-eventlog\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        /// <summary>A named field of the event's XML (EventData/UserData), or null.</summary>
+        public static string? Field(string? xml, string name)
+        {
+            if (string.IsNullOrEmpty(xml)) return null;
+            var m = Regex.Match(xml, "<Data Name=[\"']" + Regex.Escape(name) + "[\"']>([^<]*)</Data>");
+            var v = m.Success ? m.Groups[1].Value.Trim() : null;
+            return string.IsNullOrEmpty(v) || v == "-" ? null : v;
+        }
 
         /// <summary>
         /// Evaluează în memorie un eveniment nou sosit în timp real și returnează o alertă dacă se detectează un atac sau anomalie.
@@ -26,19 +44,18 @@ namespace LogAnalyzer.Core.Services.Network
             string provider = (ev.ProviderName ?? string.Empty).ToLowerInvariant();
 
             // 1. Phishing & Malicious Payload Staging (T1566 / T1204 / T1105)
-            if (msg.Contains("certutil") && (msg.Contains("urlcache") || msg.Contains("-f http")) ||
-                msg.Contains("mshta") && (msg.Contains("http://") || msg.Contains("https://")) ||
-                msg.Contains("curl") && (msg.Contains("http://") || msg.Contains("https://")) && (msg.Contains("-o") || msg.Contains(">")) ||
-                (msg.Contains("downloads") || msg.Contains("appdata\\local\\temp")) && (msg.Contains(".iso") || msg.Contains(".hta") || msg.Contains(".vbs") || msg.Contains(".lnk") || msg.Contains(".js")) && (msg.Contains("wscript") || msg.Contains("cscript")) ||
-                msg.Contains("tentativa phishing") || msg.Contains("phishing") || msg.Contains("simulare phishing"))
+            bool mshtaUrl = msg.Contains("mshta") && (msg.Contains("http://") || msg.Contains("https://"));
+            bool scriptFromDownload = (msg.Contains("downloads") || msg.Contains("appdata\\local\\temp")) && (msg.Contains(".iso") || msg.Contains(".hta") || msg.Contains(".vbs") || msg.Contains(".lnk") || msg.Contains(".js ") || msg.EndsWith(".js") || msg.Contains(".js\"")) && (msg.Contains("wscript") || msg.Contains("cscript"));
+            if (msg.Contains("certutil") && (msg.Contains("urlcache") || msg.Contains("-f http")) || mshtaUrl ||
+                msg.Contains("curl") && (msg.Contains("http://") || msg.Contains("https://")) && (msg.Contains(" -o") || msg.Contains(">")) || scriptFromDownload)
             {
                 return new DetectedIssue
                 {
-                    Title = "🎣 ALERTĂ CRITICĂ: Tentativă de Phishing / Descărcare Payload Malițios",
-                    Severity = "Critical",
-                    MitreTechniqueId = "T1566.001",
-                    MitreTacticName = "Initial Access",
-                    Explanation = $"A fost interceptată o tentativă de phishing / inginerie socială sau descărcare de payload din sursă externă pe [{ev.MachineName}]. Se recomandă izolarea imediată și blocarea conexiunilor C2.",
+                    Title = "🚨 ALERTĂ MARE: Fișier adus din Internet sau script pornit din Descărcări",
+                    Severity = "High",
+                    MitreTechniqueId = mshtaUrl ? "T1218.005" : scriptFromDownload ? "T1204.002" : "T1105",
+                    MitreTacticName = mshtaUrl ? "Defense Evasion" : scriptFromDownload ? "Execution" : "Command and Control",
+                    Explanation = $"Pe [{ev.MachineName}] o unealtă a sistemului (certutil, curl, mshta sau wscript/cscript) a adus un fișier din Internet sau a pornit un script din Descărcări/Temp. Este calea obișnuită prin care ajunge un program rău pe stație după un mesaj înșelător. Verificați cine a rulat comanda (vedeți evenimentul) și ce fișier a rezultat.",
                     CreatedAt = DateTime.UtcNow,
                     RelatedEvents = new List<ParsedEvent> { ev }
                 };
@@ -62,10 +79,7 @@ namespace LogAnalyzer.Core.Services.Network
             }
 
             // 2. PowerShell Codificat / Obfuscat / Download Cradle / Bypass (EID 4104 / EID 4688 / Sysmon 1 / Engine 400)
-            if (msg.Contains("-enc") || msg.Contains("-encodedcommand") || msg.Contains("downloadstring") || 
-                msg.Contains("iex(") || msg.Contains("bypass") || msg.Contains("downloadfile") ||
-                msg.Contains("invoke-webrequest") || msg.Contains("invoke-expression") || msg.Contains("w hidden") ||
-                (provider.Contains("powershell") && (msg.Contains("scriptblock") && msg.Contains("-enc"))))
+            if (EncodedPowerShell.IsMatch(ev.Message ?? "") || PowerShellAbuse.IsMatch(msg))
             {
                 return new DetectedIssue
                 {
@@ -127,7 +141,7 @@ namespace LogAnalyzer.Core.Services.Network
             }
 
             // 6. Curățare Jurnal de Securitate (Anti-Forensics EID 1102 / 104)
-            if (ev.EventId == 1102 || ev.EventId == 104 || (msg.Contains("wevtutil") && (msg.Contains("cl") || msg.Contains("clear-log"))))
+            if (ev.EventId == 1102 || ev.EventId == 104 || LogClearCommand.IsMatch(msg))
             {
                 string channel = ev.EventId == 1102 ? "Security" : ev.EventId == 104 ? "System" : "indicat în linia de comandă wevtutil";
                 var (clearUser, clearDomain) = LogClearAssessment.SubjectFromXml(ev.XmlData);
@@ -160,36 +174,24 @@ namespace LogAnalyzer.Core.Services.Network
                 };
             }
 
-            // 8. Eșecuri Repetate de Autentificare / Brute Force (EID 4625)
+            // 8. Eșecuri repetate de autentificare (EID 4625): același cont (T1110.001) sau multe conturi din aceeași sursă (T1110.003)
             if (ev.EventId == 4625)
             {
-                TrackFailedLogon(ev.MachineName ?? "Unknown");
-                if (_failedLogonHistory.Count >= 5)
-                {
-                    return new DetectedIssue
-                    {
-                        Title = "🚨 ALERTĂ MARE: Atac de Tip Brute Force / Password Spraying Detectat",
-                        Severity = "High",
-                        MitreTechniqueId = "T1110.001",
-                        MitreTacticName = "Credential Access",
-                        Explanation = $"Au fost interceptate {_failedLogonHistory.Count} autentificări eșuate consecutive într-un interval scurt pe [{ev.MachineName}].",
-                        CreatedAt = DateTime.UtcNow,
-                        RelatedEvents = new List<ParsedEvent> { ev }
-                    };
-                }
+                var failure = TrackFailedLogon(ev);
+                if (failure is not null) return failure;
             }
 
             // 9. Exploits Kernel Ring 0 / BYOVD - Bring Your Own Vulnerable Driver (T1068 / T1543.003)
-            if (msg.Contains("gdrv.sys") || msg.Contains("mhyprot2.sys") || msg.Contains("procexp152.sys") || 
+            if (msg.Contains("gdrv.sys") || msg.Contains("mhyprot2.sys") || msg.Contains("procexp152.sys") ||
                 msg.Contains("dbutil") || msg.Contains("rtcore64.sys") || msg.Contains("kprocesshacker") ||
-                msg.Contains("byovd") || msg.Contains("loldrivers") || 
+                msg.Contains("byovd") || msg.Contains("loldrivers") ||
                 (msg.Contains("kernel driver") && (msg.Contains("installed") || msg.Contains("service installed") || msg.Contains("vulnerable driver"))))
             {
                 return new DetectedIssue
                 {
                     Title = "☣️ ALERTĂ CRITICĂ: Tentativă Încărcare Driver Kernel Vulnerabil (BYOVD / Ring 0)",
                     Severity = "Critical",
-                    MitreTechniqueId = "T1068 / T1543.003",
+                    MitreTechniqueId = "T1068",
                     MitreTacticName = "Privilege Escalation",
                     Explanation = $"A fost detectată tentativa de încărcare a unui driver de sistem vulnerabil cunoscut (BYOVD - Bring Your Own Vulnerable Driver) pe [{ev.MachineName}]. Atacatorii folosesc această tehnică pentru a eluda EDR-ul și a obține execuție de cod la nivel de Kernel Ring 0.",
                     CreatedAt = DateTime.UtcNow,
@@ -215,14 +217,14 @@ namespace LogAnalyzer.Core.Services.Network
             }
 
             // 11. Atac Fizic / Hardware (BadUSB / Rubber Ducky HID Injection T1052)
-            if (msg.Contains("rubber ducky") || msg.Contains("badusb") || msg.Contains("hid keyboard") || 
+            if (msg.Contains("rubber ducky") || msg.Contains("badusb") || msg.Contains("hid keyboard") ||
                 (msg.Contains("usb") && (msg.Contains("keystroke") || msg.Contains("payload injection"))))
             {
                 return new DetectedIssue
                 {
                     Title = "🔌 ALERTĂ CRITICĂ: Atac Fizic BadUSB / Rubber Ducky (HID Keystroke Injection)",
                     Severity = "Critical",
-                    MitreTechniqueId = "T1052.001",
+                    MitreTechniqueId = "T1200",
                     MitreTacticName = "Initial Access",
                     Explanation = $"A fost detectat un dispozitiv hardware neautorizat care simulează tastarea umană la viteză mare (BadUSB/Rubber Ducky) încercând injectarea de comenzi pe [{ev.MachineName}].",
                     CreatedAt = DateTime.UtcNow,
@@ -231,7 +233,7 @@ namespace LogAnalyzer.Core.Services.Network
             }
 
             // 12. Furt Sesiuni, Infostealere & Bypass MFA (AiTM / Evilginx / Token Theft T1556 / T1539)
-            if (msg.Contains("evilginx") || msg.Contains("evilproxy") || msg.Contains("lumma") || msg.Contains("redline") || 
+            if (msg.Contains("evilginx") || msg.Contains("evilproxy") || msg.Contains("lumma") || msg.Contains("redline") ||
                 msg.Contains("stealc") || (msg.Contains("cookie") && (msg.Contains("theft") || msg.Contains("exfiltrat"))) ||
                 (msg.Contains("appdata") && (msg.Contains("login data") || msg.Contains("web data")) && msg.Contains("sqlite")))
             {
@@ -239,7 +241,7 @@ namespace LogAnalyzer.Core.Services.Network
                 {
                     Title = "🍪 ALERTĂ CRITICĂ: Furt Token-uri Sesiune & Bypass MFA (Infostealer / AiTM)",
                     Severity = "Critical",
-                    MitreTechniqueId = "T1539 / T1556",
+                    MitreTechniqueId = "T1539",
                     MitreTacticName = "Credential Access",
                     Explanation = $"Tentativă de extragere a bazelor de date cu credențiale și cookie-uri de sesiune OAuth/MFA din browser pe [{ev.MachineName}].",
                     CreatedAt = DateTime.UtcNow,
@@ -248,7 +250,7 @@ namespace LogAnalyzer.Core.Services.Network
             }
 
             // 13. Otrăvire Rețea Locală & Captură NTLM (LLMNR / NBT-NS Poisoning - Responder T1557.001)
-            if (msg.Contains("responder") || msg.Contains("llmnr") || msg.Contains("nbt-ns") || msg.Contains("inveigh") || msg.Contains("ntlm relay"))
+            if (msg.Contains("responder.py") || msg.Contains("inveigh") || msg.Contains("ntlmrelayx") || msg.Contains("ntlm relay"))
             {
                 return new DetectedIssue
                 {
@@ -263,7 +265,7 @@ namespace LogAnalyzer.Core.Services.Network
             }
 
             // 14. Abuz de Token-uri & Escaladare Privilegii (PrintSpoofer / Potato Exploits T1134)
-            if (msg.Contains("printspoofer") || msg.Contains("juicypotato") || msg.Contains("godpotato") || 
+            if (msg.Contains("printspoofer") || msg.Contains("juicypotato") || msg.Contains("godpotato") ||
                 (msg.Contains("seimpersonateprivilege") && (msg.Contains("escalat") || msg.Contains("system"))))
             {
                 return new DetectedIssue
@@ -293,30 +295,30 @@ namespace LogAnalyzer.Core.Services.Network
                 };
             }
 
-            // 16. Hardware Side-Channel & Anomalie Fizică (Rowhammer / Speculative Execution T1499)
-            if (msg.Contains("rowhammer") || msg.Contains("spectre") || msg.Contains("meltdown") || msg.Contains("zenbleed") || msg.Contains("downfall") || msg.Contains("cpu silicon"))
+            // 16. CPU side channels cannot be measured from an event log: a keyword is only a hint to check by hand
+            if (msg.Contains("rowhammer") || msg.Contains("zenbleed") || msg.Contains("cpu silicon"))
             {
                 return new DetectedIssue
                 {
-                    Title = "🔬 ALERTĂ CRITICĂ: Atac pe Siliciu CPU & Memorie Fizică (Rowhammer / Spectre)",
-                    Severity = "Critical",
-                    MitreTechniqueId = "T1499 / CPU Silicon",
-                    MitreTacticName = "Defense Evasion",
-                    Explanation = $"Anomalie critică de microarhitectură pe siliciu detectată (Rowhammer DRAM bit-flip sau Speculative Execution Cache Leak) pe [{ev.MachineName}].",
+                    Title = "[NEVERIFICAT - doar cuvinte cheie] Mesaj care pomenește un atac asupra procesorului",
+                    Severity = "Low",
+                    MitreTechniqueId = "",
+                    MitreTacticName = "",
+                    Explanation = $"Mesajul de pe [{ev.MachineName}] conține un cuvânt asociat atacurilor asupra procesorului (Rowhammer, Zenbleed). Un jurnal de evenimente nu poate arăta un astfel de atac; aceasta NU este o detecție, doar un indiciu de verificat manual.",
                     CreatedAt = DateTime.UtcNow,
                     RelatedEvents = new List<ParsedEvent> { ev }
                 };
             }
 
             // 17. Air-Gap Săritură & Exfiltrare Acustică / Ventilatoare (Fansmitter / Covert Channel T1048)
-            if (msg.Contains("fansmitter") || msg.Contains("acoustic") || msg.Contains("ventilatoare") || 
+            if (msg.Contains("fansmitter") || msg.Contains("acoustic") || msg.Contains("ventilatoare") ||
                 msg.Contains("pwm fan") || msg.Contains("air-gap covert channel") || msg.Contains("tempest"))
             {
                 return new DetectedIssue
                 {
                     Title = "[NEVERIFICAT - doar cuvinte cheie] Posibil canal acustic ascuns (Fansmitter)",
                     Severity = "Low",
-                    MitreTechniqueId = "T1048 / T1052 (Air-Gap)",
+                    MitreTechniqueId = "T1052",
                     MitreTacticName = "Exfiltration",
                     Explanation = $"Mesajul de pe [{ev.MachineName}] conține un cuvânt cheie asociat tehnicii Fansmitter. Nu există nicio măsurătoare acustică sau de hardware a ventilatoarelor; aceasta NU este o detecție confirmată de exfiltrare, doar un indiciu de verificat manual.",
                     CreatedAt = DateTime.UtcNow,
@@ -343,14 +345,45 @@ namespace LogAnalyzer.Core.Services.Network
             return null;
         }
 
-        private void TrackFailedLogon(string machineName)
+        private DetectedIssue? TrackFailedLogon(ParsedEvent ev)
         {
-            if ((DateTime.UtcNow - _lastCleanupUtc).TotalMinutes > 2)
-            {
-                _failedLogonHistory.Clear();
-                _lastCleanupUtc = DateTime.UtcNow;
-            }
-            _failedLogonHistory.Add(machineName);
+            var at = ev.TimeCreated == default ? DateTime.UtcNow : ev.TimeCreated.ToUniversalTime();
+            var user = Field(ev.XmlData, "TargetUserName") ?? "(necunoscut)";
+            var source = Field(ev.XmlData, "IpAddress") ?? Field(ev.XmlData, "WorkstationName") ?? "(sursă necunoscută)";
+            var key = $"{ev.MachineName}|{source}";
+            if (!_failures.TryGetValue(key, out var list)) _failures[key] = list = new();
+            list.RemoveAll(f => at - f.Utc > FailureWindow);
+            list.Add((user, at));
+            if (_failures.Count > 500)
+                foreach (var k in _failures.Where(p => p.Value.Count == 0 || at - p.Value[^1].Utc > FailureWindow).Select(p => p.Key).ToList()) _failures.Remove(k);
+
+            int accounts = list.Select(f => f.User).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+            if (accounts >= SprayAccountsThreshold)
+                return new DetectedIssue
+                {
+                    Title = "🚨 ALERTĂ MARE: Parole încercate pe multe conturi din aceeași sursă (password spraying)",
+                    Severity = "High",
+                    MitreTechniqueId = "T1110.003",
+                    MitreTacticName = "Credential Access",
+                    Explanation = $"Din sursa {source}, pe [{ev.MachineName}], s-au încercat fără succes {accounts} conturi diferite în ultimele {FailureWindow.TotalMinutes:0} minute. " +
+                                  "Cineva încearcă aceeași parolă pe multe conturi. Verificați ce calculator este sursa și dacă vreunul din conturi a reușit apoi să intre (eveniment 4624).",
+                    CreatedAt = DateTime.UtcNow,
+                    RelatedEvents = new List<ParsedEvent> { ev }
+                };
+            int same = list.Count(f => f.User.Equals(user, StringComparison.OrdinalIgnoreCase));
+            if (same >= SameAccountThreshold)
+                return new DetectedIssue
+                {
+                    Title = "⚠️ ALERTĂ MEDIE: Parolă greșită de mai multe ori pentru același cont",
+                    Severity = "Medium",
+                    MitreTechniqueId = "T1110.001",
+                    MitreTacticName = "Credential Access",
+                    Explanation = $"Contul {user} a primit {same} parole greșite din sursa {source} pe [{ev.MachineName}] în ultimele {FailureWindow.TotalMinutes:0} minute. " +
+                                  "Poate fi un utilizator care și-a uitat parola sau cineva care o ghicește. Întrebați titularul contului; dacă nu a fost el, tratați ca incident.",
+                    CreatedAt = DateTime.UtcNow,
+                    RelatedEvents = new List<ParsedEvent> { ev }
+                };
+            return null;
         }
     }
 }

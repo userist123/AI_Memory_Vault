@@ -22,10 +22,11 @@ namespace LogAnalyzer.Core.Services
             sb.AppendLine("<html lang=\"ro\">");
             sb.AppendLine("<head>");
             sb.AppendLine("<meta charset=\"utf-8\"/>");
+            sb.AppendLine(HtmlText.CspMetaTag);
             sb.AppendLine("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>");
             
             string title = isAirGapped ? "Raport Securitate & Audit Forensic Stație Standalone (HG 585 / ISO 27042)" : "Raport Executiv Securitate Active Directory & Enterprise SOC";
-            sb.AppendLine($"<title>{title}</title>");
+            sb.AppendLine($"<title>{HtmlText.Encode(title)}</title>");
             sb.AppendLine("<style>");
             sb.AppendLine("body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0A0E17; color: #E2E8F0; margin: 0; padding: 32px; line-height: 1.5; }");
             sb.AppendLine(".container { max-width: 1200px; margin: 0 auto; }");
@@ -65,11 +66,11 @@ namespace LogAnalyzer.Core.Services
             {
                 // KPI Ribbon Standalone
                 sb.AppendLine("<div class=\"kpi-grid\">");
-                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Jurnale Securitate Stație</div><div class=\"card-val\">{adSummary.TotalAdEventsAnalyzed}</div></div>");
-                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Admini Locali SAM</div><div class=\"card-val\" style=\"color:#EF4444;\">{samSummary.LocalAdminGroupModifications}</div></div>");
-                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Medii USB Conectate</div><div class=\"card-val\" style=\"color:#F59E0B;\">{samSummary.UsbStorageEventsCount}</div></div>");
-                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Alterări Politici Audit</div><div class=\"card-val\" style=\"color:#F59E0B;\">{samSummary.AuditPolicyTamperingCount}</div></div>");
-                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Abuz SeDebugPrivilege</div><div class=\"card-val\" style=\"color:#38BDF8;\">{samSummary.HighPrivilegeAssignmentsCount}</div></div>");
+                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Jurnale Securitate Stație</div><div class=\"card-val\">{HtmlText.Encode(adSummary.TotalAdEventsAnalyzed)}</div></div>");
+                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Admini Locali SAM</div><div class=\"card-val\" style=\"color:#EF4444;\">{HtmlText.Encode(samSummary.LocalAdminGroupModifications)}</div></div>");
+                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Medii USB Conectate</div><div class=\"card-val\" style=\"color:#F59E0B;\">{HtmlText.Encode(samSummary.UsbStorageEventsCount)}</div></div>");
+                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Alterări Politici Audit</div><div class=\"card-val\" style=\"color:#F59E0B;\">{HtmlText.Encode(samSummary.AuditPolicyTamperingCount)}</div></div>");
+                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Abuz SeDebugPrivilege</div><div class=\"card-val\" style=\"color:#38BDF8;\">{HtmlText.Encode(samSummary.HighPrivilegeAssignmentsCount)}</div></div>");
                 sb.AppendLine("</div>");
 
                 // 1. Standalone SAM Findings
@@ -82,7 +83,7 @@ namespace LogAnalyzer.Core.Services
                     foreach (var sf in sList)
                     {
                         string badgeClass = sf.Severity == "Critical" || sf.Severity == "High" ? "badge-crit" : "badge-warn";
-                        sb.AppendLine($"<tr><td>{sf.Category}</td><td><strong>{sf.FindingType}</strong></td><td><span class=\"{badgeClass}\">{sf.Severity}</span></td><td>{sf.TargetAccountOrResource}</td><td>{sf.MitreTechniqueId}</td><td>{sf.Description}<br/><span style=\"color:#38BDF8;\">Măsură: {sf.RemediationActionRo}</span></td></tr>");
+                        sb.AppendLine($"<tr><td>{HtmlText.Encode(sf.Category)}</td><td><strong>{HtmlText.Encode(sf.FindingType)}</strong></td><td><span class=\"{badgeClass}\">{HtmlText.Encode(sf.Severity)}</span></td><td>{HtmlText.Encode(sf.TargetAccountOrResource)}</td><td>{HtmlText.Encode(sf.MitreTechniqueId)}</td><td>{HtmlText.Encode(sf.Description)}<br/><span style=\"color:#38BDF8;\">Măsură: {HtmlText.Encode(sf.RemediationActionRo)}</span></td></tr>");
                     }
                 }
                 else
@@ -95,11 +96,11 @@ namespace LogAnalyzer.Core.Services
             {
                 // KPI Ribbon Network
                 sb.AppendLine("<div class=\"kpi-grid\">");
-                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Evenimente Active Directory</div><div class=\"card-val\">{adSummary.TotalAdEventsAnalyzed}</div></div>");
-                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Grupuri Domain Admins</div><div class=\"card-val\" style=\"color:#EF4444;\">{adSummary.PrivilegedGroupChanges}</div></div>");
-                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Atacuri Kerberos / AD</div><div class=\"card-val\" style=\"color:#EF4444;\">{adSummary.KerberosAttacksDetected}</div></div>");
-                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Modificări Politici GPO</div><div class=\"card-val\" style=\"color:#F59E0B;\">{adSummary.GpoPolicyChanges}</div></div>");
-                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Anomalii UBA Domeniu</div><div class=\"card-val\" style=\"color:#38BDF8;\">{ubaAnomalies?.Count() ?? 0}</div></div>");
+                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Evenimente Active Directory</div><div class=\"card-val\">{HtmlText.Encode(adSummary.TotalAdEventsAnalyzed)}</div></div>");
+                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Grupuri Domain Admins</div><div class=\"card-val\" style=\"color:#EF4444;\">{HtmlText.Encode(adSummary.PrivilegedGroupChanges)}</div></div>");
+                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Atacuri Kerberos / AD</div><div class=\"card-val\" style=\"color:#EF4444;\">{HtmlText.Encode(adSummary.KerberosAttacksDetected)}</div></div>");
+                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Modificări Politici GPO</div><div class=\"card-val\" style=\"color:#F59E0B;\">{HtmlText.Encode(adSummary.GpoPolicyChanges)}</div></div>");
+                sb.AppendLine($"<div class=\"card\"><div class=\"card-lbl\">Anomalii UBA Domeniu</div><div class=\"card-val\" style=\"color:#38BDF8;\">{HtmlText.Encode(ubaAnomalies?.Count() ?? 0)}</div></div>");
                 sb.AppendLine("</div>");
 
                 // 1. AD Attack Findings
@@ -112,7 +113,7 @@ namespace LogAnalyzer.Core.Services
                     foreach (var f in adList)
                     {
                         string badgeClass = f.Severity == "Critical" || f.Severity == "High" ? "badge-crit" : "badge-warn";
-                        sb.AppendLine($"<tr><td>{f.Category}</td><td><strong>{f.AttackType}</strong></td><td><span class=\"{badgeClass}\">{f.Severity}</span></td><td>{f.TargetAccount}</td><td>{f.MitreTechniqueId}</td><td>{f.Description}</td></tr>");
+                        sb.AppendLine($"<tr><td>{HtmlText.Encode(f.Category)}</td><td><strong>{HtmlText.Encode(f.AttackType)}</strong></td><td><span class=\"{badgeClass}\">{HtmlText.Encode(f.Severity)}</span></td><td>{HtmlText.Encode(f.TargetAccount)}</td><td>{HtmlText.Encode(f.MitreTechniqueId)}</td><td>{HtmlText.Encode(f.Description)}</td></tr>");
                     }
                 }
                 else
@@ -131,7 +132,7 @@ namespace LogAnalyzer.Core.Services
                     foreach (var u in ubaList)
                     {
                         string badgeClass = u.Severity == "Critical" || u.Severity == "High" ? "badge-crit" : "badge-warn";
-                        sb.AppendLine($"<tr><td><strong>{u.Username}</strong></td><td>{u.AnomalyType}</td><td><span class=\"{badgeClass}\">{u.Severity}</span></td><td>{u.RiskWeight}/100</td><td>{u.Description}</td></tr>");
+                        sb.AppendLine($"<tr><td><strong>{HtmlText.Encode(u.Username)}</strong></td><td>{HtmlText.Encode(u.AnomalyType)}</td><td><span class=\"{badgeClass}\">{HtmlText.Encode(u.Severity)}</span></td><td>{HtmlText.Encode(u.RiskWeight)}/100</td><td>{HtmlText.Encode(u.Description)}</td></tr>");
                     }
                 }
                 else
@@ -151,7 +152,7 @@ namespace LogAnalyzer.Core.Services
                 foreach (var cr in cList)
                 {
                     string badgeClass = cr.Status == ComplianceStatus.Conform ? "badge-ok" : (cr.Status == ComplianceStatus.NonConform ? "badge-crit" : (cr.Status == ComplianceStatus.NotAssessed ? "badge-na" : "badge-warn"));
-                    sb.AppendLine($"<tr><td>{cr.Framework}</td><td>{cr.ArticleOrControl}</td><td><strong>{cr.ControlTitle}</strong></td><td><span class=\"{badgeClass}\">{cr.Status}</span></td><td>{cr.EvidenceSummary}</td><td>{cr.RequiredAction}</td></tr>");
+                    sb.AppendLine($"<tr><td>{HtmlText.Encode(cr.Framework)}</td><td>{HtmlText.Encode(cr.ArticleOrControl)}</td><td><strong>{HtmlText.Encode(cr.ControlTitle)}</strong></td><td><span class=\"{badgeClass}\">{HtmlText.Encode(cr.Status)}</span></td><td>{HtmlText.Encode(cr.EvidenceSummary)}</td><td>{HtmlText.Encode(cr.RequiredAction)}</td></tr>");
                 }
             }
             sb.AppendLine("</table>");

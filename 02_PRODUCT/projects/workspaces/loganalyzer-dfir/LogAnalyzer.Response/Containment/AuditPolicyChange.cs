@@ -8,6 +8,7 @@ public static class AuditPolicyChange
 {
     public static (bool Ok, string Detail) EnableBlockedConnectionFailureAudit()
     {
+        if (!LogAnalyzer.Dfir.Auth.OperatorIdentity.MayChangeHost) return (false, LogAnalyzer.Dfir.Auth.OperatorIdentity.HostChangeRefusedMessage);
         var psi = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "auditpol.exe"))
         {
             RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true,
@@ -15,9 +16,10 @@ public static class AuditPolicyChange
         foreach (var a in new[] { "/set", $"/subcategory:{BlockedConnectionLog.FilteringPlatformConnectionGuid}", "/failure:enable" }) psi.ArgumentList.Add(a);
         try
         {
-            using var p = Process.Start(psi)!;
+            using var p = LogAnalyzer.Dfir.Auth.CollectorExec.Start(psi);
             var o = p.StandardOutput.ReadToEnd() + p.StandardError.ReadToEnd();
             p.WaitForExit(30_000);
+            LogAnalyzer.Dfir.Auth.CollectorExec.Done(p);
             return (p.ExitCode == 0, o.Trim());
         }
         catch (System.ComponentModel.Win32Exception ex)

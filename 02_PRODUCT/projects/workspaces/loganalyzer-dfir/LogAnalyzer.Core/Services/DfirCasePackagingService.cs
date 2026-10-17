@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -31,6 +32,11 @@ namespace LogAnalyzer.Core.Services
 
     public class DfirCasePackagingService
     {
+        /// <summary>
+        /// Writes the sealed package directly into <paramref name="destinationZipPath"/> (security audit #14): every part is built in memory, hashed
+        /// for the manifest and added to the zip; nothing is staged in %TEMP%. The zip is written to "&lt;destination&gt;.partial" and moved into place
+        /// only when complete; on any exception the partial file is deleted and the exception propagates.
+        /// </summary>
         public string PackageAndSealCase(
             string destinationZipPath,
             string caseId,
@@ -42,85 +48,70 @@ namespace LogAnalyzer.Core.Services
             string nis2DraftContent,
             string superTimelineCsvContent)
         {
-            string tempDir = Path.Combine(Path.GetTempPath(), "DFIR_Case_" + Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(tempDir);
+            var manifest = new CaseManifest
+            {
+                CaseId = caseId,
+                CaseTitle = caseTitle,
+                Organization = organization,
+                LeadInvestigator = investigatorName,
+                SealedAtUtc = DateTime.UtcNow
+            };
+            var parts = new List<(string Name, byte[] Data)>();
+            void Part(string name, string content, string description)
+            {
+                var data = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(content)).ToArray();   // same bytes File.WriteAllText(…, UTF8) wrote
+                parts.Add((name, data));
+                AddManifestEntry(manifest, name, data, description);
+            }
 
+            // 1. Provenance Ledger
+            Part("Provenance_Ledger_ChainOfCustody.json", JsonSerializer.Serialize(ledger, new JsonSerializerOptions { WriteIndented = true }),
+                 "Jurnal Imutabil de Proveniență (Hash-Chained SHA-256)");
+            // 2. CASE/UCO 1.3
+            if (!string.IsNullOrWhiteSpace(ucoJsonLdContent))
+                Part("Case_UCO_Ontology_v1.3.jsonld", ucoJsonLdContent, "Pachet Standardizat CASE 1.3 / UCO JSON-LD");
+            // 3. NIS2 draft
+            if (!string.IsNullOrWhiteSpace(nis2DraftContent))
+                Part("DNSC_NIS2_Notification_Draft.txt", nis2DraftContent, "Draft Notificare Oficială DNSC conform Directiva NIS2 / OUG 155/2024");
+            // 4. Super-Timeline
+            if (!string.IsNullOrWhiteSpace(superTimelineCsvContent))
+                Part("SuperTimeline_Plaso_MACB.csv", superTimelineCsvContent, "Cronologie Forenzică Unificată Super-Timeline (Plaso / Timesketch CSV)");
+            // 5. Certificate of authenticity
+            Part("CERTIFICATE_OF_AUTHENTICITY.txt", GenerateCertificate(manifest), "Certificat Formal de Autenticitate și Integritate Probatorie");
+            // 6. MANIFEST.json (not listed in itself)
+            var manifestBytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }))).ToArray();
+            parts.Add(("MANIFEST.json", manifestBytes));
+
+            // 7. Zip, written next to the destination and moved into place when complete
+            var full = Path.GetFullPath(destinationZipPath);
+            var partial = full + ".partial";
             try
             {
-                var manifest = new CaseManifest
-                {
-                    CaseId = caseId,
-                    CaseTitle = caseTitle,
-                    Organization = organization,
-                    LeadInvestigator = investigatorName,
-                    SealedAtUtc = DateTime.UtcNow
-                };
-
-                // 1. Scriere Provenance Ledger
-                string ledgerJson = JsonSerializer.Serialize(ledger, new JsonSerializerOptions { WriteIndented = true });
-                string ledgerFile = Path.Combine(tempDir, "Provenance_Ledger_ChainOfCustody.json");
-                File.WriteAllText(ledgerFile, ledgerJson, Encoding.UTF8);
-                AddManifestEntry(manifest, ledgerFile, "Jurnal Imutabil de Proveniență (Hash-Chained SHA-256)");
-
-                // 2. Scriere CASE/UCO 1.3
-                if (!string.IsNullOrWhiteSpace(ucoJsonLdContent))
-                {
-                    string ucoFile = Path.Combine(tempDir, "Case_UCO_Ontology_v1.3.jsonld");
-                    File.WriteAllText(ucoFile, ucoJsonLdContent, Encoding.UTF8);
-                    AddManifestEntry(manifest, ucoFile, "Pachet Standardizat CASE 1.3 / UCO JSON-LD");
-                }
-
-                // 3. Scriere NIS2 Draft
-                if (!string.IsNullOrWhiteSpace(nis2DraftContent))
-                {
-                    string nis2File = Path.Combine(tempDir, "DNSC_NIS2_Notification_Draft.txt");
-                    File.WriteAllText(nis2File, nis2DraftContent, Encoding.UTF8);
-                    AddManifestEntry(manifest, nis2File, "Draft Notificare Oficială DNSC conform Directiva NIS2 / OUG 155/2024");
-                }
-
-                // 4. Scriere Super-Timeline
-                if (!string.IsNullOrWhiteSpace(superTimelineCsvContent))
-                {
-                    string timelineFile = Path.Combine(tempDir, "SuperTimeline_Plaso_MACB.csv");
-                    File.WriteAllText(timelineFile, superTimelineCsvContent, Encoding.UTF8);
-                    AddManifestEntry(manifest, timelineFile, "Cronologie Forenzică Unificată Super-Timeline (Plaso / Timesketch CSV)");
-                }
-
-                // 5. Scriere Certificat de Autenticitate
-                string certPath = Path.Combine(tempDir, "CERTIFICATE_OF_AUTHENTICITY.txt");
-                string certContent = GenerateCertificate(manifest);
-                File.WriteAllText(certPath, certContent, Encoding.UTF8);
-                AddManifestEntry(manifest, certPath, "Certificat Formal de Autenticitate și Integritate Probatorie");
-
-                // 6. Scriere MANIFEST.json
-                string manifestJson = JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(Path.Combine(tempDir, "MANIFEST.json"), manifestJson, Encoding.UTF8);
-
-                // 7. Împachetare ZIP
-                if (File.Exists(destinationZipPath)) File.Delete(destinationZipPath);
-                ZipFile.CreateFromDirectory(tempDir, destinationZipPath, CompressionLevel.Optimal, false);
-
-                // Calcul hash ZIP final
-                using var sha = SHA256.Create();
-                using var stream = File.OpenRead(destinationZipPath);
-                string finalZipSha256 = Convert.ToHexString(sha.ComputeHash(stream)).ToLowerInvariant();
-
-                return finalZipSha256;
+                using (var fs = new FileStream(partial, FileMode.Create, FileAccess.Write, FileShare.None))
+                using (var zip = new ZipArchive(fs, ZipArchiveMode.Create))
+                    foreach (var (name, data) in parts)
+                    {
+                        using var es = zip.CreateEntry(name, CompressionLevel.Optimal).Open();
+                        es.Write(data, 0, data.Length);
+                    }
+                File.Move(partial, full, overwrite: true);
             }
-            finally
+            catch
             {
-                try { Directory.Delete(tempDir, true); } catch { }
+                try { if (File.Exists(partial)) File.Delete(partial); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+                throw;
             }
+
+            using var stream = File.OpenRead(full);
+            return Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
         }
 
-        private static void AddManifestEntry(CaseManifest manifest, string filePath, string description)
+        private static void AddManifestEntry(CaseManifest manifest, string name, byte[] bytes, string description)
         {
-            using var sha = SHA256.Create();
-            byte[] bytes = File.ReadAllBytes(filePath);
             manifest.Files.Add(new ManifestItem
             {
-                RelativePath = Path.GetFileName(filePath),
-                Sha256Hash = Convert.ToHexString(sha.ComputeHash(bytes)).ToLowerInvariant(),
+                RelativePath = name,
+                Sha256Hash = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant(),
                 SizeBytes = bytes.Length,
                 Description = description
             });

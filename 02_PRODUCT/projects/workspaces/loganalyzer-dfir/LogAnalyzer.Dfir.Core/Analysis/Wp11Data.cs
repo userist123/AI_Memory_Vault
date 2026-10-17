@@ -46,6 +46,10 @@ public sealed class RemoteToolRow
     public string Name { get; set; } = "";
     public List<string> Aliases { get; set; } = [];
     public List<string> Executables { get; set; } = [];
+    /// <summary>File names too generic to identify the tool alone (level.exe, windowsagent.exe): they count only when the full path contains one of <see cref="PathHints"/>.</summary>
+    public List<string> ConditionalExecutables { get; set; } = [];
+    /// <summary>Lower-case path fragments (for example "\n-able\\") that make a <see cref="ConditionalExecutables"/> name belong to this tool.</summary>
+    public List<string> PathHints { get; set; } = [];
     public List<string> ServiceNames { get; set; } = [];
     public List<string> DisplayContains { get; set; } = [];
     public List<string> ProductContains { get; set; } = [];
@@ -96,8 +100,29 @@ public sealed class VssLists
     public List<string> ImpactDetectionKeywords { get; set; } = [];
 }
 
+public sealed class PowerShellKeyword
+{
+    public string Text { get; set; } = "";
+    public int Weight { get; set; } = 1;
+    /// <summary>MITRE technique when this keyword is the strongest in a block; empty = T1059.001.</summary>
+    public string Mitre { get; set; } = "";
+    /// <summary>True for protection-tampering indicators (AMSI): one hit makes the block High.</summary>
+    public bool High { get; set; }
+}
+
+/// <summary>PS-SUSPICIOUS: weighted keywords searched (case-insensitive substring) in one script block (4104).</summary>
+public sealed class PowerShellLists
+{
+    /// <summary>A block with fewer than two distinct keywords needs at least this summed weight to be a finding.</summary>
+    public int MinScore { get; set; } = 3;
+    /// <summary>Summed weight from which a block is High (unless a keyword is flagged <see cref="PowerShellKeyword.High"/>).</summary>
+    public int HighScore { get; set; } = 8;
+    public List<PowerShellKeyword> Keywords { get; set; } = [];
+}
+
 public sealed class RuleLists
 {
+    public PowerShellLists Powershell { get; set; } = new();
     public PrivilegedGroupLists PrivilegedGroups { get; set; } = new();
     public List<string> ExecutableExtensions { get; set; } = [];
     public List<string> SharePipesOfInterest { get; set; } = [];
@@ -124,19 +149,28 @@ public sealed class Wp11Data
         Lists = JsonSerializer.Deserialize<RuleLists>(listsJson, Json) ?? new(),
     };
 
-    private static readonly Lazy<Wp11Data> Shipped = new(() => FromJson(Read("security_agents.json"), Read("remote_access_tools.json"), Read("rule_lists.json")));
+    private static readonly Lazy<Wp11Data> Shipped = new(() => FromJson(Read("security_agents.json"), Read("remote_access_tools.json"),
+        WithMissingSections(Read("rule_lists.json"), ShippedData.ReadEmbedded("rule_lists.json"))));
+
+    /// <summary>
+    /// A data pack written before a section existed (for example "powershell") must not turn that section into an empty list: every top-level
+    /// section missing from <paramref name="packJson"/> is taken from <paramref name="embeddedJson"/>, section by section.
+    /// </summary>
+    public static string WithMissingSections(string packJson, string embeddedJson)
+    {
+        if (System.Text.Json.Nodes.JsonNode.Parse(packJson, null, new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip }) is not System.Text.Json.Nodes.JsonObject pack) return embeddedJson;
+        if (System.Text.Json.Nodes.JsonNode.Parse(embeddedJson, null, new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip }) is not System.Text.Json.Nodes.JsonObject embedded) return packJson;
+        var present = new HashSet<string>(pack.Select(p => p.Key), StringComparer.OrdinalIgnoreCase);
+        foreach (var (name, node) in embedded)
+            if (!present.Contains(name) && !name.StartsWith('_')) pack[name] = node?.DeepClone();
+        return pack.ToJsonString();
+    }
 
     /// <summary>The data shipped with the application.</summary>
     public static Wp11Data Default => Shipped.Value;
 
-    private static string Read(string file)
-    {
-        var asm = typeof(Wp11Data).Assembly;
-        using var s = asm.GetManifestResourceStream("LogAnalyzer.Dfir.Analysis.Data." + file)
-                      ?? throw new InvalidOperationException($"Resursa încorporată {file} lipsește din {asm.GetName().Name}.");
-        using var r = new StreamReader(s);
-        return r.ReadToEnd();
-    }
+    // the installed, verified data pack when there is one, else the embedded resource (offline updates, ANALYSIS_2026-10-11_APPLICATION_UPDATES.md)
+    private static string Read(string file) => ShippedData.Read(file);
 }
 
 /// <summary>Tunable thresholds of the WP11 rules (defaults are the documented ones).</summary>

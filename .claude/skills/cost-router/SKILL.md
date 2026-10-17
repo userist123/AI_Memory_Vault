@@ -28,7 +28,8 @@ entrepreneur does:
   before it reaches the client. An employee never signs off their own work.
 - **Manage failure.** When an employee fails the check, find out why, then rebrief or give the job
   to the next tier up; do not repeat the same failed assignment.
-- **Run the team in parallel** when the jobs are independent; keep for yourself only the decisions:
+- **One implementer at a time** (owner rule, §2A); run read-only jobs (Explore, a reviewer) in
+  parallel only when they are independent; keep for yourself only the decisions:
   design, root cause, risk, and the final check.
 - **Keep the books.** Know what the work cost (`route.py` estimate, `claude_model_cli report`) and
   cut waste, never quality.
@@ -50,9 +51,12 @@ entrepreneur does:
 | unclear | keywords don't match | you, session default | say so; never guess cheaper |
 
 Risk `high`/`critical` (production, credentials, secrets, deletes, auth, trust boundaries, git
-history): never below Opus, and always an independent `vault-reviewer` pass before DONE. The route
-helper detects these words itself (English and Romanian); if the hint says sonnet/haiku for such
-work, the hint is wrong and this rule wins. Fable is never a subagent or verifier model. Escalation order on a failed check: local → haiku → sonnet → opus → fable,
+history): design, root cause and verification never below Opus, and always an independent
+`vault-reviewer` pass before DONE. The route helper detects these words itself (English and
+Romanian). Owner rule 2026-10-16: the *implementer* of risky code stays on Sonnet (high effort)
+because that Opus review is mandatory afterwards; the floor binds the reviewer, not the worker
+(policy `rules.implementer_risk_floor`). Critical risk and live operations (production, deploy,
+delete, rotate, leaks) keep Opus: a review after the fact cannot undo them. Fable is never a subagent or verifier model. Escalation order on a failed check: local → haiku → sonnet → opus → fable,
 one notch, only after the check actually failed.
 
 Optional precise answer: `python3 "<this dir>/lib/route.py" "<task>"` prints class, model, effort,
@@ -85,6 +89,33 @@ for multi-step code, design, risky work or verification. Cloud sessions have no 
 - Launch independent subagents in one message, not serially. Each subagent is a fresh prefix: give
   it everything it needs in the brief; it cannot see your conversation.
 
+## 2A. Agent lifecycle and review rounds (hard rules, measured 2026-10-14..16)
+
+6,491 Opus requests, 1.9 B cache-read tokens, 0.75 M output: the money went to re-reading
+context, 78% of it inside long-lived subagents. Therefore:
+
+1. **Resume a subagent at most once.** Any further round starts a NEW agent seeded with a
+   checkpoint of at most 40 lines: task, branch/PR, head SHA, findings to fix, files, test
+   commands. `hook_resume_guard.py` denies a second `SendMessage` resume and warns on a first one
+   above 150k context tokens.
+2. **Prevent findings, do not iterate on them.** For security-sensitive work the worker brief
+   carries a written THREAT MODEL / probe list *before* implementation (inputs an attacker
+   controls, trust boundary, what must fail closed, the probes the reviewer will run); the
+   reviewer gets the same list. For crypto/PDF/signature work the brief states the trust model
+   and the allowed-objects/whitelist design up front.
+3. **At most 2 review rounds.** Round 1 reviews the PR; round 2 reviews only the DELTA and runs
+   only the affected test projects. The full suite runs once before merge (CI runs it anyway).
+   After round 2 the main session decides: fix it itself, or document it as an accepted residual
+   with the owner.
+4. **One implementation agent at a time.** Agents never wait for CI: they push and stop. The main
+   session checks CI once (`gh pr checks <n>`, or the PR monitor) and only then dispatches review.
+5. **Ask the product questions first.** Before dispatching, ask the owner the 1-2 product
+   questions the spec leaves open (e.g. "card only, no passphrase file?"). Before parallel
+   branches, reserve check ids and file ownership in a short table in the coordination checkpoint.
+6. **One phase per session.** At each milestone write
+   `00_GOVERNANCE/coordination/tasks/todo-claude-<task>.md` and start the next phase in a new
+   session with /clear from it; the prompt hook reminds you once the main transcript passes 250k.
+
 ## 3. Token hygiene (the free wins; apply always)
 
 1. **Read excerpts**: `grep -n`, `sed -n a,bp`, `Read` with offset/limit. Never dump whole large
@@ -114,6 +145,44 @@ for multi-step code, design, risky work or verification. Cloud sessions have no 
   with that output in the brief (re-run-failures policy: usually half the cost of running everything
   at the top tier, same pass rate).
 - Price per completed task, not per request: a cheap model that needs three retries is not cheap.
+
+## 4A. Enforcement (the route is binding, not advisory)
+
+- **Escalation ceiling**: Opus is the top of the ladder; a route escalates to Fable only for the
+  `frontier` class in the main session. The route line says "stay on Opus" otherwise.
+- **Route state**: the prompt hook stores the route per session in
+  `~/.claude/cache/cost-router/route-<session_id>.json`. A short follow-up (`continua`, `ok`, under
+  4 words, a slash command) keeps it; only a new non-trivial prompt replaces it. `delegated` and
+  `vault_routed` are marker files next to it, so a concurrent counter write never clears them; each
+  holds the prompt's epoch nonce, so a marker that could not be deleted is void for the next
+  prompt. Cache files older than 7 days are pruned on each new prompt.
+- **Main session dispatches**: when the route names a subagent, `hook_enforce_route.py`
+  (PreToolUse on Edit/Write/NotebookEdit/Bash/Read/Grep/Glob) allows 3 direct tool calls, then
+  denies until the work is delegated with the Agent tool (any Agent/Task spawn unlocks it for the
+  rest of the prompt). Not counted: one single read-only or one-shot git/gh command (`git status`,
+  `git log`, `gh pr view|checks|merge|edit`, ...; no chain, pipe or redirect) and a short edit of
+  `MEMORY.md`, a memory note or a `todo-*.md` checkpoint. A subagent's own calls (`agent_id`/`agent_type` set) are never counted.
+  A reviewer/verifier `subagent_type` is never below Opus.
+- **Vault router first**: inside the AI Memory Vault, an Agent spawn for an
+  implement/review/design/frontier route is denied until
+  `python -m routing.route_cli route|dispatch` actually ran in Bash (at the command start or after a
+  separator; merely mentioning it does not count; `PYTHONPATH=03_IMPLEMENTATION/packages`).
+  The call is also recorded per session as a route receipt for the prompt's task class; a later
+  prompt of the same class reuses it instead of running the router again. Inside Claude Code
+  (`CLAUDECODE=1`) the router offers `vault-worker`, `vault-reviewer` and `Explore` as runtimes
+  (`execute_via: claude_code_agent_tool`); a security review with no vendor-independent verifier
+  falls back to `vault-reviewer`, logged in the receipt, instead of BLOCKED.
+  Launchers recognised: `python`/`python3` (any path, flags such as `-I`, `-X utf8`), `py [-3]`,
+  `uv run python`, `env VAR=x python`. Known limitation: the mark is set in PreToolUse, when the
+  command is about to run, not after it succeeded (the Bash PostToolUse input does not reliably
+  expose an exit code), so a router call that fails still counts as routed.
+- **Resume guard**: `hook_resume_guard.py` (PreToolUse on SendMessage) finds the target's
+  transcript (`<session>/subagents/agent-<id>.jsonl`); a second resume of the same subagent is
+  denied, a first one above 150k context tokens (`COST_ROUTER_RESUME_MAX_TOKENS`) gets a warning.
+  Teammates, other sessions and unknown names are left alone.
+- **Overrides**: `#direct` in the prompt, even a short one such as `#direct do it` (owner: the
+  main session does it itself), or
+  `COST_ROUTER_ENFORCE=0` in the environment. Any hook error allows the call.
 
 ## 5. Report shape (end of task)
 

@@ -34,9 +34,13 @@ namespace LogAnalyzer.UI.ViewModels
 
         /// <param name="profile">The role profile (WP18): which intents this PC offers. Default: the role decided at startup, on the unclassified edition.</param>
         public HomeViewModel(InvestigationViewModel investigation, Action<int>? navigate = null, RecentCases? recent = null, Func<string?>? pickFolder = null,
-            RoleProfile? profile = null)
+            RoleProfile? profile = null, Func<string?>? editionWarning = null, IStationQuickControl? quickControl = null)
         {
             _investigation = investigation;
+            QuickControl = quickControl;
+            // Owner decision: the Internet edition on an isolated-looking station says so (passive facts only; never changes a result).
+            try { EditionWarning = (editionWarning ?? (() => LogAnalyzer.Dfir.Windows.Audit.EditionFit.WarningForThisStation(StationPostureContext.Current)))() ?? ""; }
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or InvalidOperationException) { EditionWarning = ""; }
             _navigate = navigate ?? (_ => { });
             _recent = recent ?? new RecentCases(RecentCases.DefaultFile());
             _pickFolder = pickFolder ?? PickFolderWithDialog;
@@ -44,9 +48,19 @@ namespace LogAnalyzer.UI.ViewModels
             foreach (var i in Profile.PrimaryIntents) PrimaryIntents.Add(new HomeIntentView(i));
             foreach (var i in Profile.MoreIntents) MoreIntents.Add(new HomeIntentView(i));
             _investigation.StateChanged += (_, _) => Refresh();
+            ClockMemory.WarningChanged += () =>
+            {
+                var d = System.Windows.Application.Current?.Dispatcher;
+                if (d is null || d.CheckAccess()) OnPropertyChanged(nameof(ClockWarning));
+                else d.BeginInvoke(new Action(() => OnPropertyChanged(nameof(ClockWarning))));
+            };
             Refresh();
             ReloadRecent();
         }
+
+        /// <summary>"Ediție nepotrivită: …" when the Internet edition runs on a station that looks isolated; empty otherwise.</summary>
+        public string EditionWarning { get; } = "";
+        public bool HasEditionWarning => EditionWarning.Length > 0;
 
         // The five answers.
         [ObservableProperty] private string _attentionLabel = "";
@@ -61,6 +75,20 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private bool _isReadOnly;
         [ObservableProperty] private string _readOnlyNotice = "";
         [ObservableProperty] private string _openStatus = "";
+        /// <summary>Non-blocking warning from the application's time memory (clock behind its own record or before the Windows install); empty when fine.</summary>
+        public string ClockWarning => ClockMemory.StartupWarning;
+        /// <summary>Non-blocking startup warning (unprotected install folder in a Debug build, unverified libraries); empty when fine.</summary>
+        public string StartupNotice => LogAnalyzer.Dfir.IO.StartupNotice.Text;
+        /// <summary>Why the clock is confirmed as corrected (required; written to the chained audit).</summary>
+        [ObservableProperty] private string _clockAckReason = "";
+
+        /// <summary>The operator confirms the clock was corrected: writes "clock.ack" and re-evaluates the warning.</summary>
+        [RelayCommand]
+        private void ConfirmClockCorrected()
+        {
+            OpenStatus = LogAnalyzer.UI.Services.AuthApp.ConfirmClockCorrected(ClockAckReason);
+            if (ClockWarning.Length == 0) ClockAckReason = "";
+        }
         [ObservableProperty] private bool _isBusy;
 
         /// <summary>Short, data-driven next steps (at most <see cref="HomeAggregator.MaxNextSteps"/>).</summary>
@@ -73,6 +101,8 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>The role profile this page renders (WP18 S2): data, not decisions.</summary>
         public RoleProfile Profile { get; }
         public string RoleTitle => Profile.Title;
+        /// <summary>Heading of the Home intents: the station's name (owner, 2026-10-11: the role is not shown).</summary>
+        public string StationHeading => $"Stația {Environment.MachineName}";
         public string RoleIntro => Profile.Intro;
         /// <summary>At most five big buttons, in the user's words. Unavailable ones stay visible, disabled, with the reason.</summary>
         public ObservableCollection<HomeIntentView> PrimaryIntents { get; } = new();
@@ -100,6 +130,42 @@ namespace LogAnalyzer.UI.ViewModels
             }
             OpenStatus = $"{intent.Title}: {intent.Description}";
         }
+
+        // ---- usability 2026-10-16: the station control in one click, and what follows it in the same panel ----
+
+        /// <summary>The station control the Home panel drives; null when the page was built without it (tests, other roles).</summary>
+        public IStationQuickControl? QuickControl { get; }
+
+        /// <summary>The one-click panel shows when this PC offers „Verifică această stație” and the control is wired.</summary>
+        public bool ShowQuickControl => QuickControl is not null && Profile.PrimaryIntents.Concat(Profile.MoreIntents).Any(i => i.Key == "check_station" && i.Enabled);
+
+        /// <summary>„Fă controlul stației” (Ctrl+Enter): the control with its defaults; the result and the follow-ups appear in the same panel.</summary>
+        [RelayCommand]
+        private async Task RunStationControl()
+        {
+            if (QuickGate() is not { } q || q.IsBusy) return;
+            OpenStatus = "";
+            await q.RunQuickAsync();
+        }
+
+        /// <summary>„Deschide raportul” (Ctrl+O).</summary>
+        [RelayCommand] private void OpenControlReport() { if (QuickGate() is { } q) q.OpenReport(); }
+        /// <summary>„Semnează ca ofițer” (Ctrl+Shift+S): an authority action; Windows asks the card PIN.</summary>
+        [RelayCommand] private void SignControlReport() { if (QuickGate() is { } q) q.SignAsOfficer(); }
+        /// <summary>„Exportă pentru ofițer” (Ctrl+E).</summary>
+        [RelayCommand] private void ExportForOfficer() { if (QuickGate() is { } q) q.ExportForOfficer(); }
+
+        /// <summary>Review of PR #298: the keyboard shortcuts pass the same role gate as the panel; null (with the reason on the page) when not offered.</summary>
+        private IStationQuickControl? QuickGate()
+        {
+            if (QuickControl is not null && ShowQuickControl) return QuickControl;
+            OpenStatus = "Controlul stației dintr-un clic nu este oferit pe această stație; folosiți pagina „Control stație”.";
+            return null;
+        }
+        /// <summary>„Exportă istoricul mediilor pentru ofițer”: the signed media history of #297 (the officer bundle has no unsigned copy).</summary>
+        [RelayCommand] private void ExportSignedMediaHistory() { if (QuickGate() is { } q) q.ExportSignedMediaHistory(); }
+        /// <summary>„Vezi toate detaliile”: the full control page (checks, users, timeline).</summary>
+        [RelayCommand] private void ShowControlDetails() => _navigate(RoleProfiles.TabStationControl);
 
         /// <summary>WP7 hook: maps a question to an existing workflow. Intentionally empty in WP5.</summary>
         public void ChooseQuestion(string question) { }
@@ -175,7 +241,10 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (entry is null) return;
             _recent.Forget(entry.Entry.Path);
+            bool audited = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.CaseRemovedFromRecent,
+                LogAnalyzer.Dfir.Auth.OperationAudit.CaseRemovedFromRecentDetail(System.IO.Path.GetFileName(entry.Entry.Path.TrimEnd('\\', '/')), "removed_from_recent_list; folder_untouched"));
             ReloadRecent();
+            if (!audited) OpenStatus = "Cazul a fost scos din listă (folderul nu a fost atins), dar operația nu a putut fi trecută în jurnalul de audit (vezi avertismentul de sus).";
         }
 
         /// <summary>Opens a case folder on a background task (the integrity re-check can be long) and shows it; a refused folder says why.</summary>

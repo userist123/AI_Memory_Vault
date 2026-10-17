@@ -117,10 +117,10 @@ public class Wp11ToolTests
         Row("Prefetch", m, exe, path, f: [("RunCount", "4"), ("ReferencedFiles", @"\VOLUME{01d}" + path.Replace("C:", ""))]);
 
     [Fact]
-    public void Execution_artifact_gives_REMOTE_TOOL_EXECUTED_Medium_with_Execution_semantic()
+    public void Execution_artifact_gives_REMOTE_TOOL_EXECUTED_High_with_Execution_semantic()
     {
         var f = One(Run([Prefetch(0, "ANYDESK.EXE")]), "REMOTE-TOOL-EXECUTED");
-        Assert.Equal(Severity.Medium, f.Severity);
+        Assert.Equal(Severity.High, f.Severity);
         Assert.Equal(SemanticType.Execution, f.SemanticType);
         Assert.Equal("T1219", f.MitreTechniqueId);
         Assert.Contains("AnyDesk", f.Title);
@@ -183,7 +183,7 @@ public class Wp11ToolTests
         Assert.Equal(Severity.Info, ok.Severity);
         Assert.Contains("aprobat în profil", ok.Title + ok.Description);
         var portable = One(Run([Prefetch(0, "ANYDESK.EXE", @"C:\Users\bob\Downloads\AnyDesk.exe")], profile), "REMOTE-TOOL-EXECUTED");
-        Assert.Equal(Severity.Medium, portable.Severity);
+        Assert.Equal(Severity.High, portable.Severity);
         Assert.DoesNotContain("aprobat în profil", portable.Title + portable.Description);
     }
 
@@ -195,10 +195,10 @@ public class Wp11ToolTests
         Assert.Equal(Severity.Info, One(Run([tv], byName), "REMOTE-TOOL-EXECUTED").Severity);
         var sha = new string('a', 64);
         var byHash = ProfileWithSoftware(("TeamViewer", "", "", sha));
-        Assert.Equal(Severity.Medium, One(Run([tv], byHash), "REMOTE-TOOL-EXECUTED").Severity);   // a hash row needs the hash in the evidence
+        Assert.Equal(Severity.High, One(Run([tv], byHash), "REMOTE-TOOL-EXECUTED").Severity);   // a hash row needs the hash in the evidence
         var withHash = Sysmon(1, 0, ("Image", @"C:\Program Files\TeamViewer\TeamViewer.exe"), ("CommandLine", "x"), ("Hashes", "MD5=AA,SHA256=" + sha.ToUpperInvariant() + ",IMPHASH=BB"));
         Assert.Equal(Severity.Info, One(Run([withHash], byHash), "REMOTE-TOOL-EXECUTED").Severity);      // Sysmon 1 carries the hash
-        Assert.Equal(Severity.Medium, One(Run([tv]), "REMOTE-TOOL-EXECUTED").Severity);                    // no profile: nothing is approved
+        Assert.Equal(Severity.High, One(Run([tv]), "REMOTE-TOOL-EXECUTED").Severity);                    // no profile: nothing is approved
     }
 
     [Fact]

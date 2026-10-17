@@ -9,6 +9,11 @@ namespace LogAnalyzer.UI.Views
         {
             InitializeComponent();
             DataContext = viewModel;
+            Title += " — Ediția: " + LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(LogAnalyzer.Core.Services.Edition.StationPostureContext.Current);
+            // the media page is „alive” for the whole session: first inventory and live supervision start with the main window
+            // start the device inventory and live supervision a few seconds after the window is up, so they do not compete with the first frame
+            Loaded += async (_, _) => { await System.Threading.Tasks.Task.Delay(3000); viewModel.MediaCenter.Activate(); };
+            Closed += (_, _) => viewModel.MediaCenter.Dispose();
         }
 
         private void SimulateMenuButton_Click(object sender, RoutedEventArgs e)
