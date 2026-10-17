@@ -62,11 +62,15 @@ namespace LogAnalyzer.UI.Services
             return LogAnalyzer.Dfir.Auth.OperationAudit.ReadDeviceMonitor(bytes, verdict.Status == LogAnalyzer.Dfir.Case.ChainStatus.Valid);
         }
 
-        public static string? TryRecord(string ev, string detail)
+        public static string? TryRecord(string ev, string detail) => TryRecordTyped(ev, detail)?.Reason;
+
+        /// <summary>Like <see cref="TryRecord"/>, but says by type (not by the text) when the refusal is because the sealing key cannot be read.</summary>
+        public static LogAnalyzer.Dfir.Devices.AuditRefusal? TryRecordTyped(string ev, string detail)
         {
-            if (_service is null) return "autentificarea aplicației nu este pornită";
+            if (_service is null) return new("autentificarea aplicației nu este pornită");
             try { _service.AuditOperation(Session, ev, detail); return null; }
-            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or InvalidOperationException) { return ex.Message; }
+            catch (LogAnalyzer.Dfir.Case.SealingKeyUnavailableException ex) { return new(ex.Message, KeyUnavailable: true); }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or InvalidOperationException) { return new(ex.Message); }
         }
 
         /// <summary>

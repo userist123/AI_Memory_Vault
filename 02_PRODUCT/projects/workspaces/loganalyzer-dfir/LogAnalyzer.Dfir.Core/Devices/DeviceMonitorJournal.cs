@@ -294,6 +294,9 @@ public sealed record DeviceMonitorSummary(IReadOnlyList<DeviceJournalEntry> Devi
 }
 
 /// <summary>The device section of the station control report (check D05 and the report section): pure, from the journal.</summary>
+/// <summary>The register state of a device as the sealed audit proves it.</summary>
+public enum RegistryState { NotRegistered, Registered, Unconfirmed }
+
 public static class DeviceMonitorReport
 {
     public const string NoRegistration = "fără număr de înregistrare";
@@ -336,7 +339,7 @@ public static class DeviceMonitorReport
     /// letter and label (storage media only), user at connection, first seen, last connection and disconnection, registration number and the register state
     /// („Înregistrat” / „Neînregistrat”). Times are UTC, as everywhere in the report.
     /// </summary>
-    public static string Line(DeviceJournalEntry e)
+    public static string Line(DeviceJournalEntry e, DeviceAuditReading? audit = null, IEnumerable<PendingSeal>? pending = null)
     {
         var parts = new List<string>
         {
@@ -360,13 +363,43 @@ public static class DeviceMonitorReport
         parts.Add("văzut prima dată " + Utc(e.FirstSeenUtc));
         if (e.LastConnectedUtc is { } lc) parts.Add("ultima conectare " + Utc(lc));
         if (e.LastDisconnectedUtc is { } ld) parts.Add("ultima deconectare " + Utc(ld));
-        bool registered = e.RegistrationNumber.Trim().Length > 0;
-        parts.Add(registered ? "nr. de înregistrare " + e.RegistrationNumber.Trim() : NoRegistration);
-        parts.Add("registru: " + (registered ? RegisteredText : NotRegisteredText));
+        bool hasNumber = e.RegistrationNumber.Trim().Length > 0;
+        var state = RegistryStateOf(e.Identity, e.RegistrationNumber, audit, pending);
+        parts.Add(hasNumber ? "nr. de înregistrare " + e.RegistrationNumber.Trim() : NoRegistration);
+        parts.Add("registru: " + RegistryTextOf(state));
         return string.Join(" · ", parts);
     }
 
-    public const string RegisteredText = "Înregistrat", NotRegisteredText = "Neînregistrat";
+    public const string RegisteredText = "Înregistrat", NotRegisteredText = "Neînregistrat", UnconfirmedText = "Neconfirmat (nesigilat)";
+
+    /// <summary>The words for a register state.</summary>
+    public static string RegistryTextOf(RegistryState s) => s switch { RegistryState.Registered => RegisteredText, RegistryState.Unconfirmed => UnconfirmedText, _ => NotRegisteredText };
+
+    /// <summary>
+    /// „Registru”, from the SEALED audit and never from the journal alone (the journal is a plain file any user can edit): <c>Registered</c> only when the sealed audit
+    /// (chain verified) holds the same number as the journal and no change of it is still waiting to be sealed; <c>NotRegistered</c> when neither the journal nor the
+    /// sealed audit has a number; <c>Unconfirmed</c> in every other case (the numbers differ, the number is only pending, or the sealed audit is missing or does not verify).
+    /// </summary>
+    public static RegistryState RegistryStateOf(string identity, string journalNumber, DeviceAuditReading? audit, IEnumerable<PendingSeal>? pending = null)
+    {
+        var key = LogAnalyzer.Dfir.Auth.OperationAudit.DeviceField(identity);
+        var inJournal = LogAnalyzer.Dfir.Auth.OperationAudit.DeviceField((journalNumber ?? "").Trim());
+        bool isPending = (pending ?? []).Any(p => p.Event == LogAnalyzer.Dfir.Auth.OperationAudit.DeviceRegistrationChanged
+            && Fields(p.Detail).TryGetValue("identity", out var id) && (audit?.Follow(id) ?? id).Equals(key, StringComparison.OrdinalIgnoreCase));
+        if (isPending) return RegistryState.Unconfirmed;
+        if (audit is null || !audit.ChainValid) return inJournal.Length == 0 && audit is null ? RegistryState.NotRegistered : RegistryState.Unconfirmed;
+        var inAudit = audit.LastRegistration.TryGetValue(key, out var v) ? v : "";
+        if (inAudit.Length == 0 && inJournal.Length == 0) return RegistryState.NotRegistered;
+        return string.Equals(inJournal, inAudit, StringComparison.Ordinal) ? RegistryState.Registered : RegistryState.Unconfirmed;
+    }
+
+    private static Dictionary<string, string> Fields(string detail)
+    {
+        var d = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var kv in detail.Split("; "))
+            if (kv.IndexOf('=') is var eq and > 0) d[kv[..eq]] = kv[(eq + 1)..];
+        return d;
+    }
 
     public static string AlertLine(DeviceAlertRecord a) =>
         $"{(a.Severity == DeviceAlertSeverity.Critical ? "ALERTĂ CRITICĂ" : "conectare")} {Utc(a.TimeUtc)}: {a.Device} ({DeviceMonitorRules.ClassText(a.Class)}) — {a.Text}";

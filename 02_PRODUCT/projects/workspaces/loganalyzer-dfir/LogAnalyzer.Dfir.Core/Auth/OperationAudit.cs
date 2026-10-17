@@ -260,17 +260,17 @@ public static class OperationAudit
             last[Follow(id)] = value;
         var history = new List<LogAnalyzer.Dfir.Devices.SealedDeviceEvent>();
         if (scan is not null)
-            foreach (var (ev, detail, when, who) in scan.DeviceRaw)
+            foreach (var (ev, detail, when, who, rawIndex) in scan.DeviceRaw)
             {
                 if (when is not { } t || !LogAnalyzer.Dfir.Devices.DeviceHistory.IsHistoryEvent(ev)) continue;
                 var f = Fields(detail);
                 var id = f.GetValueOrDefault("identity", "");
                 if (id.Length == 0) continue;
-                history.Add(new(t, ev, Follow(id), who, f));
+                history.Add(new(t, ev, Follow(id), who, f, rawIndex));
             }
         return new(chainValid, last, alerts.Select(a => a with { Identity = Follow(a.Identity) }).ToList(), unreadable)
         {
-            Events = history,
+            Events = history, FirstRegression = scan?.FirstRegression ?? int.MaxValue, Renames = new Dictionary<string, string>(rename, StringComparer.OrdinalIgnoreCase),
             Runs = runs, Gaps = gaps, ObservedOnResume = observed, Migrations = migrations,
             Devices = devices.Select(d => d with { Identity = Follow(d.Identity) }).ToList(),
             InfoAlerts = infos.Select(a => a with { Identity = Follow(a.Identity) }).ToList(), Resets = resets, RadioStates = radios,
@@ -467,7 +467,7 @@ public static class OperationAudit
         public List<(string Event, string Detail, DateTimeOffset? When)> DeviceAlerts { get; } = [];
         public List<(string Event, string Detail, DateTimeOffset? When)> DeviceMonitorEvents { get; } = [];
         /// <summary>Every "device.*" record with the account that wrote it (the per-device history).</summary>
-        public List<(string Event, string Detail, DateTimeOffset? When, string Who)> DeviceRaw { get; } = [];
+        public List<(string Event, string Detail, DateTimeOffset? When, string Who, int Index)> DeviceRaw { get; } = [];
         public int UnreadableHashing { get; set; }
         public int UnreadableExec { get; set; }
         public int FirstRegression { get; set; } = int.MaxValue;
@@ -512,7 +512,7 @@ public static class OperationAudit
                     }
                     previous = previous is { } pm && pm > w0 ? pm : w0;
                 }
-                if (ev.StartsWith("device.", StringComparison.Ordinal)) scan.DeviceRaw.Add((ev, detail, when, who));
+                if (ev.StartsWith("device.", StringComparison.Ordinal)) scan.DeviceRaw.Add((ev, detail, when, who, index));
                 var run = RunOf(detail);
                 if (ev == AnchorEvent && when is { } wa) scan.Anchors.Add((index, wa));
                 else if (ev == ControlStarted && run.Length > 0 && when is { } ws) { scan.Started[run] = (ws, index); scan.StartedSha[run] = TokenOf(detail, "app_sha256="); }

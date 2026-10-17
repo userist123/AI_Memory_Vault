@@ -176,6 +176,9 @@ public sealed class DeviceMonitorTests
         public Dictionary<string, MediumInfo> Media = new(StringComparer.OrdinalIgnoreCase);
         public List<(string Ev, string Detail)> Audited = [];
         public string? AuditRefusal;
+        /// <summary>The refusal is the typed one (the sealing key cannot be read), not just text.</summary>
+        public bool KeyRefusal;
+        public Func<DeviceAuditReading?>? Reader;
         public int Saves;
         public DeviceJournal? Saved;
         public Action? OnSave;
@@ -185,10 +188,10 @@ public sealed class DeviceMonitorTests
         public DeviceMonitorViewModel Create(bool isolated, DeviceJournal? journal = null, bool owner = true) => new(
             () => Present.ToList(),
             _ => new Dictionary<string, MediumInfo>(Media, StringComparer.OrdinalIgnoreCase),
-            (ev, detail) => { lock (Audited) { if (AuditRefusal is null) Audited.Add((ev, detail)); } return AuditRefusal; },
+            (ev, detail) => { lock (Audited) { if (AuditRefusal is null) Audited.Add((ev, detail)); } return AuditRefusal is null ? null : new LogAnalyzer.Dfir.Devices.AuditRefusal(AuditRefusal, KeyRefusal); },
             journal ?? new DeviceJournal(),
             j => { Saves++; Saved = j.Copy(); OnSave?.Invoke(); return null; },
-            isolated, () => Now, consoleUser: () => User, owner: owner);
+            isolated, () => Now, consoleUser: () => User, owner: owner, auditReader: Reader);
 
         public List<(string Ev, string Detail)> Events(string ev) { lock (Audited) return Audited.Where(a => a.Ev == ev).ToList(); }
     }
@@ -1164,10 +1167,108 @@ public sealed class DeviceMonitorTests
     }
 
     [Fact]
+    public async Task A_refusal_with_the_same_words_but_not_typed_as_key_unavailable_raises_no_banner()
+    {
+        var f = new Fakes { Present = [Stick(), UsbParent()], User = @"LAB-PC\user" };
+        f.AuditRefusal = KeyRefusal;                                                  // the words alone are not a signal
+        using var vm = f.Create(isolated: true);
+        await vm.StartAsync(eventsAvailable: true);
+        Assert.False(vm.SealingBlocked);
+        Assert.Null(vm.JournalCopy().SealingRefused);
+    }
+
+    private static async Task<(DeviceMonitorViewModel Vm, DeviceJournal Journal, string Identity, Fakes F)> StickWithJournalNumber(string journalNumber, string? sealedNumber, bool chainValid = true)
+    {
+        var f = new Fakes { Present = [Stick(), UsbParent()], User = @"LAB-PC\user" };
+        using (var first = f.Create(isolated: true)) await first.RefreshAsync(initial: true);
+        var journal = f.Saved!.Copy();
+        var entry = journal.Devices.Single(d => d.Class == DeviceClass.UsbStorage);
+        entry.RegistrationNumber = journalNumber;                                     // what an editor of the plain file wrote
+        var map = sealedNumber is null ? new Dictionary<string, string>() : new Dictionary<string, string> { [OperationAudit.DeviceField(entry.Identity)] = sealedNumber };
+        f.Reader = () => new DeviceAuditReading(chainValid, map, [], 0);
+        var vm = f.Create(isolated: true, journal);
+        return (vm, journal, entry.Identity, f);
+    }
+
+    [Fact]
+    public async Task A_registration_number_only_the_journal_has_is_never_shown_as_registered_on_the_page_the_csv_or_the_report()
+    {
+        var (vm, journal, _, f) = await StickWithJournalNumber("RN-FAKE", sealedNumber: null);
+        using (vm)
+        {
+            var row = vm.Rows.Single(r => r.Class == DeviceClass.UsbStorage);
+            Assert.Equal("RN-FAKE", row.RegistrationNumber);                          // the cell shows the journal value ...
+            Assert.Equal("Neconfirmat (nesigilat)", row.RegistryText);                // ... with its state visible
+            Assert.True(row.NeedsRegistration);                                       // the red style follows the sealed state
+            Assert.False(row.HasNoNumber);
+            var cells = row.CsvCells();
+            Assert.Equal("RN-FAKE", cells[15]);
+            Assert.Equal("Neconfirmat (nesigilat)", cells[16]);
+            Assert.DoesNotContain(cells, c => c == "Înregistrat");
+            Assert.EndsWith("registru: Neconfirmat (nesigilat)", DeviceMonitorReport.Line(journal.Devices.Single(d => d.Class == DeviceClass.UsbStorage), f.Reader!()));
+        }
+    }
+
+    [Fact]
+    public async Task A_journal_number_that_differs_from_the_sealed_one_is_unconfirmed_and_an_equal_one_is_registered()
+    {
+        var (vm, _, _, _) = await StickWithJournalNumber("RN-9", sealedNumber: "RN-1");
+        using (vm) Assert.Equal("Neconfirmat (nesigilat)", vm.Rows.Single(r => r.Class == DeviceClass.UsbStorage).RegistryText);
+        var (vm2, _, _, _) = await StickWithJournalNumber("RN-1", sealedNumber: "RN-1");
+        using (vm2)
+        {
+            var row = vm2.Rows.Single(r => r.Class == DeviceClass.UsbStorage);
+            Assert.Equal("Înregistrat", row.RegistryText);
+            Assert.False(row.NeedsRegistration);
+        }
+        var (vm3, _, _, _) = await StickWithJournalNumber("RN-1", sealedNumber: "RN-1", chainValid: false);      // a chain that does not verify proves nothing
+        using (vm3) Assert.Equal("Neconfirmat (nesigilat)", vm3.Rows.Single(r => r.Class == DeviceClass.UsbStorage).RegistryText);
+        var (vm4, _, _, _) = await StickWithJournalNumber("", sealedNumber: null);
+        using (vm4)
+        {
+            var row = vm4.Rows.Single(r => r.Class == DeviceClass.UsbStorage);
+            Assert.Equal("Neînregistrat", row.RegistryText);
+            Assert.True(row.NeedsRegistration);
+            Assert.True(row.HasNoNumber);
+        }
+    }
+
+    [Fact]
+    public async Task A_number_sealed_by_this_monitor_is_registered_until_the_sealed_audit_says_otherwise()
+    {
+        var f = new Fakes { Present = [Stick(), UsbParent()], User = @"LAB-PC\user" };
+        using var vm = f.Create(isolated: true);
+        await vm.RefreshAsync(initial: true);
+        var row = vm.Rows.Single(r => r.Class == DeviceClass.UsbStorage);
+        row.RegistrationNumber = "RN-3";
+        Assert.Equal("Înregistrat", row.RegistryText);
+        f.AuditRefusal = "disc plin";
+        row.RegistrationNumber = "RN-4";                                              // refused: not sealed, not changed
+        Assert.Equal("RN-3", row.RegistrationNumber);
+        Assert.Equal("Înregistrat", row.RegistryText);
+    }
+
+    [Fact]
+    public async Task An_export_of_no_rows_seals_zero_rows_and_the_file_is_only_the_header()
+    {
+        var f = new Fakes { Present = [Mouse], User = @"LAB-PC\user" };
+        using var vm = f.Create(isolated: true);
+        await vm.RefreshAsync(initial: true);
+        var export = DeviceMonitorViewModel.PrepareCsv([]);
+        Assert.Equal(0, export.Rows);
+        Assert.Null(vm.SealCsvExport(export));
+        Assert.Contains("rows=0", Assert.Single(f.Events(OperationAudit.DeviceExportCsv)).Detail);
+        Assert.Contains("sha256=" + export.Sha256, f.Events(OperationAudit.DeviceExportCsv)[0].Detail);
+        var text = new System.Text.UTF8Encoding(false).GetString(export.Bytes, 3, export.Bytes.Length - 3);
+        Assert.Equal(DeviceCsv.Line(DeviceCsv.Headers) + "\r\n", text);
+    }
+
+    [Fact]
     public async Task A_refused_seal_because_the_key_cannot_be_read_raises_the_banner_and_D05_never_says_conform()
     {
         var f = new Fakes { Present = [Stick(), UsbParent()], User = @"LAB-PC\user" };
         f.AuditRefusal = KeyRefusal;
+        f.KeyRefusal = true;
         using var vm = f.Create(isolated: true);
         Assert.False(vm.SealingBlocked);
         await vm.StartAsync(eventsAvailable: true);
@@ -1216,7 +1317,7 @@ public sealed class DeviceMonitorTests
         Assert.DoesNotContain(".csv", note.Detail, StringComparison.OrdinalIgnoreCase);
         // the sealed audit refuses the note: the caller writes nothing
         f.AuditRefusal = "audit indisponibil";
-        Assert.Contains("audit indisponibil", vm.SealCsvExport(export));
+        Assert.Contains("audit indisponibil", vm.SealCsvExport(export)?.Reason);
     }
 
     [Fact]

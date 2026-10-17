@@ -18,7 +18,7 @@ public sealed record SealedPresence(DateTimeOffset TimeUtc, string Identity, str
 public sealed record SealedDeviceState(DateTimeOffset TimeUtc, string Identity, string Class, int Code, bool Active);
 
 /// <summary>One sealed record of a device as the history shows it: the record's time, event name, the device identity, the account that wrote it and its fields.</summary>
-public sealed record SealedDeviceEvent(DateTimeOffset TimeUtc, string Event, string Identity, string Operator, IReadOnlyDictionary<string, string> Fields);
+public sealed record SealedDeviceEvent(DateTimeOffset TimeUtc, string Event, string Identity, string Operator, IReadOnlyDictionary<string, string> Fields, int Index = 0);
 
 /// <summary>A damaged journal set aside and replaced by an empty one ("device.journal_reset"), with the SHA-256 of the damaged file.</summary>
 public sealed record SealedJournalReset(DateTimeOffset TimeUtc, string Sha256, string Reason, string File = "");
@@ -51,6 +51,16 @@ public sealed record DeviceAuditReading(bool ChainValid, IReadOnlyDictionary<str
     public IReadOnlyList<SealedDeviceState> States { get; init; } = [];
     /// <summary>Every sealed record that concerns one device (first seen, connection and disconnection, registration change, alert, state change), in the order of the audit, with the account that wrote it.</summary>
     public IReadOnlyList<SealedDeviceEvent> Events { get; init; } = [];
+    /// <summary>Index (1-based line number) of the first record whose time goes back in the audit, or <see cref="int.MaxValue"/> when none does: times of records from there on cannot be relied on.</summary>
+    public int FirstRegression { get; init; } = int.MaxValue;
+    /// <summary>Re-keyed media, old identity → new identity (as sealed; followed through several re-keys by <see cref="Follow"/>).</summary>
+    public IReadOnlyDictionary<string, string> Renames { get; init; } = new Dictionary<string, string>();
+    /// <summary>The identity a (possibly old) identity has now, following the sealed re-keys.</summary>
+    public string Follow(string id)
+    {
+        for (int i = 0; i < 16 && Renames.TryGetValue(id, out var next); i++) id = next;
+        return id;
+    }
     /// <summary>The time of the last journal reset, or null.</summary>
     public DateTimeOffset? LastResetUtc => Resets.Count > 0 ? Resets.Max(r => r.TimeUtc) : null;
 }

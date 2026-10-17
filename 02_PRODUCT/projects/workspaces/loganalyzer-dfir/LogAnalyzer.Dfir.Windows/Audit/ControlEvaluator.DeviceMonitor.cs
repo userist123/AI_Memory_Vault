@@ -97,7 +97,7 @@ public static partial class ControlEvaluator
 
         var evidence = new List<string>();
         foreach (var m in mismatches)
-            evidence.Add("NECONFORM: numărul de înregistrare din jurnal nu corespunde jurnalului sigilat — " + (m.Device is { } md ? DeviceMonitorReport.Line(md) : "dispozitiv " + m.Identity + " (rândul lipsește din jurnalul monitorului)") +
+            evidence.Add("NECONFORM: numărul de înregistrare din jurnal nu corespunde jurnalului sigilat — " + (m.Device is { } md ? DeviceMonitorReport.Line(md, audit, journal.PendingSeals) : "dispozitiv " + m.Identity + " (rândul lipsește din jurnalul monitorului)") +
                          $" — în jurnal „{(m.InJournal.Length > 0 ? m.InJournal : "(gol)")}”, în jurnalul sigilat {(m.InAudit is null ? "nu există nicio înregistrare pentru acest dispozitiv" : $"„{(m.InAudit.Length > 0 ? m.InAudit : "(gol)")}”")}");
         foreach (var d in deviceFindings) evidence.Add("NECONFORM: " + d + " — jurnalul monitorului nu corespunde jurnalului sigilat");
         foreach (var d in runDisagreements) evidence.Add("NECONFORM: " + d);
@@ -110,7 +110,7 @@ public static partial class ControlEvaluator
         if (noSealRights) evidence.Add(SealingHealth.Evidence(journal.SealingRefused!));
         if (pendingSeals > 0)
             evidence.Add($"ÎNREGISTRĂRI ÎN AȘTEPTARE: {pendingSeals} înregistrări ale monitorului nu au putut fi trecute încă în jurnalul sigilat (se reîncearcă); până atunci jurnalul monitorului nu este dovedit");
-        evidence.AddRange(s.Offending.Select(e => "ÎNCALCĂ REGULA: " + DeviceMonitorReport.Line(e)));
+        evidence.AddRange(s.Offending.Select(e => "ÎNCALCĂ REGULA: " + DeviceMonitorReport.Line(e, audit, journal.PendingSeals)));
         foreach (var a in sealedAlerts)
             evidence.Add($"ALERTĂ CRITICĂ {DeviceMonitorReport.UtcText(a.TimeUtc)}: {a.Device} — {a.Text} (jurnal sigilat)" +
                          (DeviceMonitorAuditCheck.HasDevice(journal, a) ? "" : " — dispozitivul nu are rând în jurnalul monitorului"));
@@ -126,7 +126,7 @@ public static partial class ControlEvaluator
         evidence.AddRange(resumed.Select(o => $"observat la reluare {DeviceMonitorReport.UtcText(o.TimeUtc)}: {o.Device} ({o.Change})"));
         evidence.AddRange(blind.Select(x => x.Text + (x.BlindNow ? "" : $" (văzut așa la {DeviceMonitorReport.UtcText(x.LastBlindUtc ?? to)})")));
         evidence.AddRange(history);
-        evidence.AddRange(devices.Except(s.Offending).Select(DeviceMonitorReport.Line));
+        evidence.AddRange(devices.Except(s.Offending).Select(d => DeviceMonitorReport.Line(d, audit, journal.PendingSeals)));
 
         int connected = devices.Count(d => d.Present);
         int storage = devices.Count(d => DeviceMonitorRules.IsStorageMedium(d.Class));

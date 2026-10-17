@@ -13,6 +13,9 @@ public sealed record ChainVerification(string Log, ChainStatus Status, int Entri
 
 public sealed record ChainReport(ChainVerification Custody, ChainVerification Audit);
 
+/// <summary>The sealed log refuses to append because its sealing key cannot be read (the application was not started as administrator). A type, so no caller has to recognise the message.</summary>
+public sealed class SealingKeyUnavailableException(string message) : UnauthorizedAccessException(message);
+
 /// <summary>
 /// Append-only JSONL log in which every line carries <c>seq</c>, <c>prevHash</c> and <c>hash</c>,
 /// <c>hash = SHA-256(canonical JSON of the line without "hash")</c>; the first <c>prevHash</c> is 64 zeros.
@@ -81,7 +84,7 @@ public sealed class HashChain(string path)
         lock (_gate)
         {
             if (!IsSealed(out var key)) throw new InvalidOperationException("jurnalul nu este sigilat");
-            if (key is null) throw new UnauthorizedAccessException(KeyUnavailable);
+            if (key is null) throw new SealingKeyUnavailableException(KeyUnavailable);
             if (VerifyPlain().Status == ChainStatus.Broken) throw new InvalidOperationException("lanțul simplu este rupt; nu se sigilează");
             var (seq, head) = Head();
             if (seq > 0) WriteSealedHead(key, seq, head);
@@ -97,7 +100,7 @@ public sealed class HashChain(string path)
         lock (_gate)
         {
             bool sealedLog = IsSealed(out var key);
-            if (sealedLog && key is null) throw new UnauthorizedAccessException(KeyUnavailable);
+            if (sealedLog && key is null) throw new SealingKeyUnavailableException(KeyUnavailable);
             using var fs = OpenExclusive();
             var (seq, head) = ReadHead(fs);
             bool moveSeal = sealedLog && SealMatches(key!, ReadSealedHead(), seq, head);
