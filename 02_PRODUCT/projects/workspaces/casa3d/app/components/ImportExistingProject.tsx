@@ -8,7 +8,7 @@ import { imageFileToUnderlayDataUrl, parseImportedSnapshot, ProjectImportError }
 const baseName = (name: string) => name.replace(/\.[^.]+$/, '').replace(/[<>:"/\\|?*\u0000-\u001f]/g, ' ').trim().slice(0, 100);
 
 export default function ImportExistingProject({ projectName }: { projectName: string }) {
-  const { lang } = usePrefs();
+  const { lang, t } = usePrefs();
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -22,9 +22,9 @@ export default function ImportExistingProject({ projectName }: { projectName: st
       const isImage = ['image/png', 'image/jpeg'].includes(file.type);
       const isJson = file.type === 'application/json' || /\.json$/i.test(file.name);
       if (!isImage && !isJson) {
-        throw new ProjectImportError('Acum sunt acceptate planuri PNG/JPEG și proiecte Casa3D în format JSON. Pentru PDF/DWG/DXF/IFC este necesar un adaptor dedicat; nu le vom trata fals ca geometrie editabilă.');
+        throw new ProjectImportError(t('import.err.types'));
       }
-      const name = (projectName.trim() || baseName(file.name) || 'Proiect importat').slice(0, 120);
+      const name = (projectName.trim() || baseName(file.name) || t('import.defaultName')).slice(0, 120);
       let importedSnapshot: any = null;
       let underlay: string | null = null;
       if (isImage) underlay = await imageFileToUnderlayDataUrl(file);
@@ -36,13 +36,13 @@ export default function ImportExistingProject({ projectName }: { projectName: st
         body: JSON.stringify(newProjectRequest(name, 'blank', lang === 'en' ? 'en' : 'ro')),
       });
       const created = await create.json().catch(() => ({}));
-      if (!create.ok || typeof created.id !== 'string') throw new Error(created.error || 'Nu am putut crea proiectul de import.');
+      if (!create.ok || typeof created.id !== 'string') throw new Error(created.error || t('import.err.create'));
       createdId = created.id;
 
       const initialResponse = await fetch(`/api/projects/${createdId}`);
       const initial = await initialResponse.json().catch(() => ({}));
       if (!initialResponse.ok || !initial.draft || !Number.isInteger(initial.draftRev)) {
-        throw new Error(initial.error || 'Nu am putut încărca proiectul nou pentru import.');
+        throw new Error(initial.error || t('import.err.load'));
       }
       const snapshot = importedSnapshot
         ? { ...importedSnapshot, name }
@@ -57,14 +57,12 @@ export default function ImportExistingProject({ projectName }: { projectName: st
         body: JSON.stringify({ snapshot, base: initial.draftRev }),
       });
       const savedBody = await saved.json().catch(() => ({}));
-      if (!saved.ok) throw new Error(savedBody.error || 'Importul a fost respins de validarea proiectului.');
-      setMessage(isImage
-        ? 'Planul a fost atașat ca releveu de referință. În editor, calibrează scara și trasează/confirmă geometria; camerele nu sunt inventate automat.'
-        : 'Proiectul Casa3D a fost importat. Se deschide editorul.');
+      if (!saved.ok) throw new Error(savedBody.error || t('import.err.rejected'));
+      setMessage(isImage ? t('import.ok.underlay') : t('import.ok.native'));
       location.href = `/p/${createdId}`;
     } catch (e) {
       if (createdId) await fetch(`/api/projects/${createdId}`, { method: 'DELETE' }).catch(() => {});
-      setError(e instanceof Error ? e.message : 'Importul a eșuat.');
+      setError(e instanceof Error ? e.message : t('import.err.failed'));
     } finally {
       setBusy(false);
       if (input.current) input.current.value = '';
@@ -73,20 +71,20 @@ export default function ImportExistingProject({ projectName }: { projectName: st
 
   return (
     <section className="import-existing" aria-labelledby="import-existing-title">
-      <div className="import-existing-mark" aria-hidden="true"><span>↗</span><i>PLAN / MODEL</i></div>
+      <div className="import-existing-mark" aria-hidden="true"><span>↗</span><i>{t('import.mark')}</i></div>
       <div className="import-existing-copy">
-        <p className="import-eyebrow">CONTINUĂ UN PROIECT EXISTENT</p>
-        <h2 id="import-existing-title">Nu porni de la zero. Adu casa ta în studio.</h2>
-        <p>Încarcă <strong>proiect.json</strong> exportat din Casa3D sau un releveu PNG/JPEG. Importul păstrează proiectul nativ; imaginile devin plan de referință calibrabil, nu geometrie inventată.</p>
+        <p className="import-eyebrow">{t('import.eyebrow')}</p>
+        <h2 id="import-existing-title">{t('import.title')}</h2>
+        <p>{t('import.desc')}</p>
         {error && <p className="issue ERROR" role="alert">{error}</p>}
         {message && <p className="issue WARNING" role="status">{message}</p>}
         <div className="import-existing-actions">
-          <button type="button" className="btn primary lg" disabled={busy} onClick={() => input.current?.click()}>{busy ? 'Se importă…' : 'Alege proiectul sau planul'}</button>
-          <span>JSON Casa3D · PNG · JPEG · max. 15 MB pentru imagini</span>
-          <input ref={input} className="sr-only" type="file" accept=".json,application/json,image/png,image/jpeg" disabled={busy} onChange={e => importFile(e.target.files?.[0])} aria-label="Alege proiectul Casa3D sau planul casei" />
+          <button type="button" className="btn primary lg" disabled={busy} onClick={() => input.current?.click()}>{busy ? t('import.btnBusy') : t('import.btn')}</button>
+          <span>{t('import.hint')}</span>
+          <input ref={input} className="sr-only" type="file" accept=".json,application/json,image/png,image/jpeg" disabled={busy} onChange={e => importFile(e.target.files?.[0])} aria-label={t('import.aria')} />
         </div>
       </div>
-      <div className="import-existing-note"><span>01</span><p>Import</p><span>02</span><p>Calibrare</p><span>03</span><p>Editare</p></div>
+      <div className="import-existing-note"><span>01</span><p>{t('import.step1')}</p><span>02</span><p>{t('import.step2')}</p><span>03</span><p>{t('import.step3')}</p></div>
     </section>
   );
 }
