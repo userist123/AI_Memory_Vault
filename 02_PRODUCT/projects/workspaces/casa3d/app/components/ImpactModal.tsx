@@ -1,5 +1,5 @@
 'use client';
-// Modal pentru harta de impact live (Live Design Impact Map)
+import { useEffect } from 'react';
 import type { DesignImpact } from '@/core/impact-map';
 import { usePrefs } from '@/lib/prefs';
 import { formatMoney } from '@/core/format';
@@ -15,6 +15,14 @@ export default function ImpactModal({
   const { lang, t } = usePrefs();
   const lei = (v: number) => formatMoney(v, 'RON', lang);
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
   const riskClass: Record<string, string> = {
     LOW: 'PASS',
     MEDIUM: 'WARNING',
@@ -25,6 +33,9 @@ export default function ImpactModal({
     <div
       role="dialog"
       aria-modal="true"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       style={{
         position: 'fixed',
         inset: 0,

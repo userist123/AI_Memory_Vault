@@ -724,6 +724,51 @@ function model(it){
         box(.06, .05, L, postMat, (x0 + x1) / 2, 1, (z0 + z1) / 2, Math.atan2(x1 - x0, z1 - z0), walls); box(.03, .03, L, postMat, (x0 + x1) / 2, .5, (z0 + z1) / 2, Math.atan2(x1 - x0, z1 - z0), walls).castShadow = false; };
       side('z0', v.x0, v.z0, v.x1, v.z0); side('z1', v.x0, v.z1, v.x1, v.z1); side('x0', v.x0, v.z0, v.x0, v.z1); side('x1', v.x1, v.z0, v.x1, v.z1);
       structBlockers.push({ x0: v.x0, z0: v.z0, x1: v.x1, z1: v.z1 }); });
+    // stâlpi / coloane structurale
+    (p.stalpi || []).forEach(col => {
+      const w = col.w || 0.35, d = col.d || 0.35;
+      if (col.shape === 'round') {
+        const geo = sharedGeo('col-rnd-' + k3(w, H, 0), () => new THREE.CylinderGeometry(w / 2, w / 2, H, 24));
+        const m = new THREE.Mesh(geo, wallMat);
+        m.position.set(col.x, H / 2, col.z);
+        m.castShadow = m.receiveShadow = true;
+        m.userData.wall = true;
+        walls.add(m);
+      } else {
+        box(w, H, d, wallMat, col.x, H / 2, col.z, 0, walls).userData.wall = true;
+      }
+      structBlockers.push({ x0: col.x - w / 2, z0: col.z - d / 2, x1: col.x + w / 2, z1: col.z + d / 2 });
+    });
+    // grinzi sub tavan
+    (p.grinzi || []).forEach(bm => {
+      const bw = bm.width || 0.25, bd = bm.depth || 0.35;
+      const L = Math.hypot(bm.b[0] - bm.a[0], bm.b[1] - bm.a[1]);
+      if (L < 0.05) return;
+      const mx = (bm.a[0] + bm.b[0]) / 2, mz = (bm.a[1] + bm.b[1]) / 2;
+      const rot = Math.atan2(bm.b[0] - bm.a[0], bm.b[1] - bm.a[1]);
+      const bMesh = box(bw, bd, L, wallMat, mx, H - bd / 2, mz, rot, ceilings);
+      bMesh.userData.beam = true;
+    });
+    // pereți vitrați / compartimentări din sticlă
+    (p.peretiSticla || []).forEach(gw => {
+      const th = gw.thickness || 0.08;
+      const L = Math.hypot(gw.b[0] - gw.a[0], gw.b[1] - gw.a[1]);
+      if (L < 0.05) return;
+      const mx = (gw.a[0] + gw.b[0]) / 2, mz = (gw.a[1] + gw.b[1]) / 2;
+      const rot = Math.atan2(gw.b[0] - gw.a[0], gw.b[1] - gw.a[1]);
+      const gPane = box(th * 0.35, H - 0.06, L - 0.04, glass, mx, H / 2, mz, rot, walls);
+      gPane.castShadow = false;
+      const fm = MAT('metal', gw.frameColor || '#23262B');
+      box(th, 0.04, L, fm, mx, 0.02, mz, rot, walls).castShadow = false;
+      box(th, 0.04, L, fm, mx, H - 0.02, mz, rot, walls).castShadow = false;
+      const mullions = gw.mullions ?? Math.max(1, Math.round(L / 0.9));
+      for (let m = 0; m <= mullions; m++) {
+        const frac = m / mullions;
+        const px = gw.a[0] + (gw.b[0] - gw.a[0]) * frac;
+        const pz = gw.a[1] + (gw.b[1] - gw.a[1]) * frac;
+        box(th, H, 0.04, fm, px, H / 2, pz, rot, walls).castShadow = false;
+      }
+    });
     const xs = p.camere.flatMap(r => [r.x0, r.x1]), zs = p.camere.flatMap(r => [r.z0, r.z1]);
     const minX = Math.min(...xs, 0), maxX = Math.max(...xs, 1), minZ = Math.min(...zs, 0), maxZ = Math.max(...zs, 1);
     W = maxX - minX; D = maxZ - minZ; C.set((minX + maxX) / 2, 0, (minZ + maxZ) / 2); placeSun(); sun.target.position.copy(C);

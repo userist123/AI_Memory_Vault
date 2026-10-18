@@ -51,9 +51,12 @@ export function addLevel(s: Snapshot, o: { name: string; id?: () => string }): S
   const fl = floors(s); if (fl.length >= MAX_LEVELS) throw new RangeError(`Cel mult ${MAX_LEVELS} niveluri.`);
   const id = o.id ?? (() => globalThis.crypto.randomUUID().slice(0, 8)), top = fl[fl.length - 1];
   const floor: Floor = { id: `nivel-${id()}`, name: o.name, ceilingHeight: top.ceilingHeight,
-    rooms: top.rooms.map(r => ({ ...r, id: `camera-${id()}`, rect: { ...r.rect } })),
+    rooms: top.rooms.map(r => ({ ...r, id: `camera-${id()}`, rect: { ...r.rect }, ...(r.boundary ? { boundary: r.boundary.map(pt => [...pt] as [number, number]) } : {}) })),
     walls: top.walls.map(w => ({ ...w, id: `wall-${id()}`, a: [...w.a] as [number, number], b: [...w.b] as [number, number],
-      openings: w.openings.filter(op => !op.entrance).map(op => ({ ...op, id: `gol-${id()}` })) })) };
+      openings: w.openings.filter(op => !op.entrance).map(op => ({ ...op, id: `gol-${id()}` })) })),
+    ...(top.columns?.length ? { columns: top.columns.map(c => ({ ...c, id: `col-${id()}` })) } : {}),
+    ...(top.beams?.length ? { beams: top.beams.map(b => ({ ...b, id: `bm-${id()}`, a: [...b.a] as [number, number], b: [...b.b] as [number, number] })) } : {}),
+    ...(top.glassWalls?.length ? { glassWalls: top.glassWalls.map(gw => ({ ...gw, id: `gw-${id()}`, a: [...gw.a] as [number, number], b: [...gw.b] as [number, number] })) } : {}) };
   return { ...s, levels: [...(s.levels ?? []), floor] };
 }
 /** Șterge un etaj (nu parterul) cu tot ce ține de el; scările care urcau la el dispar dacă era ultimul. */
