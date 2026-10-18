@@ -77,15 +77,36 @@ DONE:
     - `11_beam_created_2d.png`: grindă de tavan cu travee și cotă de lungime.
     - `12_glass_wall_created_2d.png`: perete de sticlă cu montanți și grosime.
     - `13_stair_created_2d.png`: scară plasată direct în living cu calcul de trepte și avertizări de gabarit.
-    - `15_primitives_split_view.png`: randare simultană 2D plan + 3D WebGL (sticlă translucidă, profile metalice, stâlp și scară 3D).
-- Sincronizare Git & PR:
-  - Modificările au fost comise respectând normele de confidențialitate și împinse atât pe `gemini/casa3d-nextgen-functionality-uiux` (PR #304), cât și pe `prompt/casa3d-pro-editor-2026` (PR #305).
+- Implementare HUD Selecție Contextuală pe Planul 2D (`PlanView.tsx`, `Editor.tsx`):
+  - Pill plutitor interactiv ancorat direct deasupra elementului selectat (mobilier, stâlp, cameră) pentru reducerea fricțiunii mouse-ului.
+  - Butoane acțiuni rapide SVG: Rotație 90° (R), Duplicare (Ctrl+D), Ștergere rapidă (Del / buton roșu), Comutare formă stâlp (rotund/pătrat), Auto-mobilare cameră și Divizare cameră.
+  - Badge dinamic cu dimensiunile exacte ale elementului (ex: `64×243 cm`).
+- Trasee Bucle Circuite Instalații Electrice & Iluminat (`app/core/technical.ts`, `PlanView.tsx`):
+  - Conformitate cu standardele europene și românești de instalații electrice SR EN 60617 / IEC 60617.
+  - Funcție dedicată `computeLightingWiringArcs(snap, catalog)` cu fallback automat pe punctele de instalații sugerate.
+  - Conectează întrerupătoarele de la ușă cu corpurile de iluminat și spoturile din fiecare cameră prin arce Bezier curbate aurii (`#D97706`), linie întreruptă și etichete de circuit (`L1`, etc.).
+- Preseturi de Cameră 3D Viewport (`Viewer3D.tsx`, `viewer3d-engine.js`):
+  - Butoane de unghiuri cameră în bara de unelte 3D: `Plan 3D` (vedere ortogonală de sus / Top View), `Izometric` (axonometrie izometrică 45°) și `Frontal` (elevație / vedere din față).
+  - Tranziție unghiulară fluidă și randare de înaltă fidelitate a întregii clădiri cu iluminare și umbre.
+- Cartuș Arhitectural Standardizat ISO 7200 / SR EN ISO 7200 / OAR (`ArchitecturalTitleBlock.tsx`, `PrintView.tsx`, `Drawings.tsx`, `globals.css`):
+  - Componentă dedicată de cartuș tehnic pentru planșele de tipar și dosarele de execuție: Birou Proiectare (date firmă, CUI, contact, logo), Beneficiar, Denumire Obiectiv / Proiect, Faza de Proiectare (P.Th. / Amenajare Interioară), Roluri & Semnături (Șef Proiect, Proiectat, Verificat), Titlu Planșă, Scară (1:50, 1:100), Dată, Revizie și Număr Planșă cu contor automat.
+  - Integrare completă pe toate planșele din `PrintView.tsx` (Plan cotat, Plan tavan & iluminat, Plan finisaje pardoseli, Elevații interioare, Plan montaj plăci, Tablou finisaje, Buget & achiziții).
+- Verificare Automată, Teste & Typecheck:
+  - 107 fișiere de test trecute (634/634 teste trecute, 0 eșuate), `tsc --noEmit` fără nicio eroare de tip (exit code 0).
+  - Capturi de ecran Playwright pe flux complet:
+    - `16_contextual_selection_hud.png`: HUD plutitor deasupra piesei selectate cu acțiuni și cotă `64×243 cm`.
+    - `17_mep_electrical_wiring_arcs.png`: Circuite electrice MEP desenate pe planul 2D cu bucle aurii și etichete `L1`.
+    - `18_3d_viewport_isometric.png`: Cameră 3D axonometrică izometrică 45°.
+    - `19_3d_viewport_top_plan.png`: Cameră 3D vedere de sus (Top / Plan 3D).
+    - `20_3d_viewport_front_elevation.png`: Cameră 3D vedere frontală / elevație.
+    - `21_iso7200_architectural_title_block.png`: Cartuș arhitectural ISO 7200 pe planșa tehnică de tipar.
 NEXT (in order):
 - Finalizare și fuziune PR #304 & PR #305 în main.
 BLOCKERS: None.
 KEY FILES:
-- 02_PRODUCT/projects/workspaces/casa3d/app/core/{types,levels,room-geometry,project-import,furnish}.ts
-- 02_PRODUCT/projects/workspaces/casa3d/app/lib/{viewer-input,locales/ro,locales/en,twin}.ts
-- 02_PRODUCT/projects/workspaces/casa3d/app/components/{Editor,PlanView,viewer3d-engine.js,DesignOptionsLab,ImpactModal}.tsx
-- 02_PRODUCT/projects/workspaces/casa3d/app/tests/{creation-primitives.test.ts,i18n.test.ts,levels.test.ts}
+- 02_PRODUCT/projects/workspaces/casa3d/app/components/{Editor,PlanView,Viewer3D,viewer3d-engine.js,PrintView,Drawings,ArchitecturalTitleBlock}.tsx
+- 02_PRODUCT/projects/workspaces/casa3d/app/core/{technical,plan-keys,types,levels,room-geometry,furnish}.ts
+- 02_PRODUCT/projects/workspaces/casa3d/app/lib/locales/{ro,en}.ts
+- 02_PRODUCT/projects/workspaces/casa3d/app/tests/{architectural-title-block.test.ts,technical.test.ts,plan-keys.test.ts,creation-primitives.test.ts,i18n.test.ts}
+
 
