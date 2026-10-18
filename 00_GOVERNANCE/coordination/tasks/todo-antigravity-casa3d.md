@@ -12,15 +12,16 @@ DONE:
 - Implemented Slice 3: Interactive validation error-to-object focus path (`issueTarget` in `app/core/validate.ts`, keyboard/click selection in `Editor.tsx` and `TwinDesignPanel.tsx`).
 - Implemented Slice 4: Full WebGL resource disposal (`house`, `furniture`, `contact`, `probes`, `ground`, `sky`, owned textures/materials), `webglcontextlost`/`webglcontextrestored` recovery, dynamic `prefers-reduced-motion` listener, and keyboard camera navigation in `Viewer3D.tsx` and `viewer3d-engine.js`.
 - Implemented Slice 5: Cross-platform Python binary resolution (`win32 ? 'python' : 'python3'`) across Vitest suites (`project-export`, `commercial`, `contract`, `commercial-review`).
-- Implemented Slice 7 (Dynamic Area-Adaptive Auto-Layout): scaled room furnishing dynamically for spacious rooms (`furnish.ts`: living >= 23.5m² receives armchairs, sideboard dresser, up to 4 bookcases; bedroom >= 19m² receives dresser, >= 22m² reading armchair/secondary wardrobe; kitchen >= 12m² receives auxiliary sideboard; bath >= 7m² receives towel radiator and bath column tower; hall >= 8.5m² receives entry console and hall chair). Calibrated clearances (`fpHit` 1e-4 tolerance) preventing false-positive overlap collisions.
-- Verified full test, typecheck & build suites: `@casa3d/twin-core` 59/59 PASS, `app` `tsc --noEmit` 0 errors, `app` Vitest 596/596 PASS (98 files), `next build` exit 0, PGlite HMR auto-fallback and empty project creation verified.
+- Implemented Slice 7 (Dynamic Area-Adaptive Auto-Layout & Proportional Furniture Sizing): scaled room furnishing dynamically for spacious rooms (`furnish.ts`: living >= 23.5m² receives armchairs, sideboard dresser, up to 4 bookcases; bedroom >= 19m² receives dresser, >= 22m² reading armchair/secondary wardrobe; kitchen >= 12m² receives auxiliary sideboard; bath >= 7m² receives towel radiator and bath column tower; hall >= 8.5m² receives entry console and hall chair). Calibrated clearances (`fpHit` 1e-4 tolerance) preventing false-positive overlap collisions. In compact/medium rooms (< 22m²), prioritize compact coffee tables (75x75, 80x60, 69x69) over oversized 118x78 models.
+- Calibrated 2D canvas symbols (`plan-symbols.ts`): tucked dining chairs from 0.3m outward offset to 0.12m tucked-in position under table, eliminating perceived oversized dining footprint while maintaining realistic clearance checks.
+- Implemented Section 17.1 (Secure Imports & File Hardening): created `app/lib/secure-import.ts` with authentic magic bytes validation (PNG, JPEG, PDF, ZIP, GLB), size limit enforcement, path traversal filtering (`sanitizeImportFilename`), and decompression bomb ratio protection (`assertSafeDecompressionRatio`).
+- Verified full test, typecheck & build suites: `@casa3d/twin-core` 59/59 PASS, `app` `tsc --noEmit` 0 errors, `app` Vitest 601/601 PASS (99 test suites), exit code 0.
 NEXT (in order):
-- None (ready for review on PR #304 and PR #305).
+- Merge PR #304 & PR #305 and monitor designer feedback.
 BLOCKERS: None.
 KEY FILES:
 - 02_PRODUCT/projects/Casa3D/{NEXTGEN_AUDIT,NEXTGEN_IMPLEMENTATION,VERIFICATION_2026-10-10}.md
 - 02_PRODUCT/projects/workspaces/casa3d/packages/twin-core/src/{twin,engine,index}.ts
-- 02_PRODUCT/projects/workspaces/casa3d/app/core/{furnish,room-edit,validate,underlay,styles,technical,setting-out,user-library,coordination-review}.ts
-- 02_PRODUCT/projects/workspaces/casa3d/app/lib/{db,repo,twin,design}.ts
+- 02_PRODUCT/projects/workspaces/casa3d/app/core/{furnish,plan-symbols,room-edit,validate,underlay,styles,technical,setting-out,user-library,coordination-review}.ts
+- 02_PRODUCT/projects/workspaces/casa3d/app/lib/{db,repo,twin,design,secure-import}.ts
 - 02_PRODUCT/projects/workspaces/casa3d/app/components/{Editor,PlanView,Viewer3D,TwinDesignPanel,StylePanel,TechPanel,viewer3d-engine.js}
-
