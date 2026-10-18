@@ -26,7 +26,7 @@ describe('existing project import', () => {
   });
 
   test('rejects oversized files and missing names', () => {
-    expect(() => parseImportedSnapshot(' '.repeat(1_500_001), 'Import')).toThrow(/depășește/);
+    expect(() => parseImportedSnapshot(' '.repeat(3_500_001), 'Import')).toThrow(/depășește/);
     expect(() => parseImportedSnapshot(JSON.stringify(snapshot), '   ')).toThrow(/Introdu un nume/);
   });
 });
