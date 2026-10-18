@@ -38,8 +38,15 @@ DONE:
     - `09_health_cockpit.png`: Project Health Cockpit with 90% score and prioritized action queue.
     - `10_design_options_lab.png`: Design Options & Trade-offs Lab comparing Base vs Circulation Optimized variants.
     - `11_impact_map.png`: Live Design Impact Map showing downstream impacts.
-- Verified full test, typecheck & build suites: `@casa3d/twin-core` 59/59 PASS, `app` `tsc --noEmit` 0 errors, `app` Vitest 611/611 PASS (all 103 test files), exit code 0.
-- Synchronized and pushed commit `25800018` to both branches: `gemini/casa3d-nextgen-functionality-uiux` (PR #304) and `prompt/casa3d-pro-editor-2026` (PR #305).
+- Implemented Comprehensive Text Contrast Repair & WCAG Audit (PR #305 & Section 22):
+  - Researched root cause: `.ws .side` set `--ink-3` but failed to declare `--lead`, `--graphite`, `--rule`, `--paper`, `--paper-2`, causing hundreds of labels, metadata strings, empty-state descriptions, and subtotals to inherit pale `#A99BA8` on `#F7F2E9` (1.96:1 contrast). Furthermore, `.wordmark b` on Home had 2.61:1 contrast, and Home primary buttons had dark text on bronze background (2.57:1).
+  - Fixed in `app/app/globals.css`: defined `--lead: #4B3D4A;`, `--ink-2: #3B2F3A;`, `--ink-3: #4B3D4A;`, `--graphite: #1F1720;`, `--rule: #D6C9C0;`, `--paper: #F7F2E9;`, `--paper-2: #EEE6DC;` in `.ws .side`, with high-contrast text rules across all panels (contrast jumping to 8.7:1 - 15.5:1). Unified `.btn.primary` across Home, Editor chrome, and Side panel to rich terracotta `#C63C29` with `#FFF8F1` text (contrast 5.8:1 - 6.5:1).
+  - Fixed in `PlanView.tsx`: enhanced room names, dimensions, and wall lengths with high-contrast text fills (`#1A141C`, `#3D343B`, `#B8432C`) and subtle light stroke halos, with root SVG default text color `#1A141C`.
+  - Fixed in `AdvisorPanel.tsx`: updated severity badge and label colors (`#A8221A`, `#8C5311`, `#5A462B`) to guarantee >= 5.5:1 contrast against both cream backgrounds and white badge text.
+  - Automated WCAG Contrast Audit (`wcag_contrast_detector.js` & `deep_side_audit.js`): verified 0 elements with contrast < 4.5:1 across Home Page and all 8 editor stages (`survey`, `concept`, `finishes`, `ffe`, `mep`, `docs`, `quote`, `present`).
+  - Captured updated browser screenshots across all stages (`audit_stage_*.png`, `audit_home_contrast.png`).
+- Verified full test, typecheck & build suites: `tsc --noEmit` 0 errors, Vitest 611/611 PASS (all 103 test files), exit code 0.
+- Synchronized and pushed commit `a0180b5c` to both branches: `gemini/casa3d-nextgen-functionality-uiux` (PR #304) and `prompt/casa3d-pro-editor-2026` (PR #305).
 NEXT (in order):
 - Merge PR #304 & PR #305 into main.
 BLOCKERS: None.
