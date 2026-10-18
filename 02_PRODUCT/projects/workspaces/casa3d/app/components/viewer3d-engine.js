@@ -514,6 +514,29 @@ function model(it){
     const H = p.inaltime;
     // scări (blocuri pline) și goluri de placă; deschiderile din podea/tavan se taie ca bucăți dreptunghiulare
     const stairs = p.scari || [], voids = p.goluriPlaca || []; structBlockers = [];
+    const roomShapeGeometry = (contour, bounds, holes = []) => {
+      const rw = Math.max(1e-6, bounds.x1 - bounds.x0), rd = Math.max(1e-6, bounds.z1 - bounds.z0);
+      const toShape = (x, z) => [x - bounds.x0, -(z - bounds.z0)];
+      const signedArea = pts => pts.reduce((sum, p, i) => { const q = pts[(i + 1) % pts.length]; return sum + p[0] * q[1] - q[0] * p[1]; }, 0) / 2;
+      let pts = contour.map(p => toShape(p[0], p[1]));
+      if (pts.length < 3) return new THREE.BufferGeometry();
+      if (signedArea(pts) < 0) pts = [...pts].reverse();
+      const shape = new THREE.Shape(); shape.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) shape.lineTo(pts[i][0], pts[i][1]);
+      shape.closePath();
+      const inside = (x, z) => { let hit = false; for (let i = 0, j = contour.length - 1; i < contour.length; j = i++) { const a = contour[i], b = contour[j]; if ((a[1] > z) !== (b[1] > z) && x < (b[0] - a[0]) * (z - a[1]) / (b[1] - a[1]) + a[0]) hit = !hit; } return hit; };
+      for (const h of holes) {
+        const corners = [[h.x0,h.z0],[h.x1,h.z0],[h.x1,h.z1],[h.x0,h.z1]];
+        if (corners.some(([x,z]) => x < bounds.x0 || x > bounds.x1 || z < bounds.z0 || z > bounds.z1 || !inside(x,z))) continue;
+        const hp = corners.map(([x,z]) => toShape(x,z)).reverse(), hole = new THREE.Path();
+        hole.moveTo(hp[0][0], hp[0][1]); for (let i = 1; i < hp.length; i++) hole.lineTo(hp[i][0], hp[i][1]); hole.closePath(); shape.holes.push(hole);
+      }
+      const geometry = new THREE.ShapeGeometry(shape);
+      const pos = geometry.getAttribute('position'), uv = geometry.getAttribute('uv');
+      for (let i = 0; i < pos.count; i++) uv.setXY(i, pos.getX(i) / rw, -pos.getY(i) / rd);
+      uv.needsUpdate = true;
+      return geometry;
+    };
     const rectsMinus = (r, holes) => { let ps = [{ x0: r.x0, z0: r.z0, x1: r.x1, z1: r.z1 }];
       for (const h of holes){ const nx = []; for (const q of ps){ const hx0 = Math.max(h.x0, q.x0), hx1 = Math.min(h.x1, q.x1), hz0 = Math.max(h.z0, q.z0), hz1 = Math.min(h.z1, q.z1);
         if (hx0 >= hx1 - 1e-6 || hz0 >= hz1 - 1e-6){ nx.push(q); continue; }
@@ -523,18 +546,21 @@ function model(it){
     p.camere.forEach(r => { const wet = r.tip === 'baie' || r.tip === 'bucatarie', sc = wet ? .9 : 1.6;
       // pardoseala aleasă (modul de așezare, mărimea plăcii, rostul) e desenată o dată pe toată camera; altfel textura generică
       const ff = r.fin && r.fin.floor, rw = r.x1 - r.x0, rd = r.z1 - r.z0, ft = ff ? floorTexture(ff, rw, rd, r.id) : null, tileFloor = ff ? ff.kind === 'tile' : wet;
-      for (const q of rectsMinus(r, voids)){ const w = q.x1 - q.x0, d = q.z1 - q.z0; let t;
+      const polygonRoom = Array.isArray(r.contur) && r.contur.length >= 3;
+      for (const q of (polygonRoom ? [{ ...r, __polygonRoom: true }] : rectsMinus(r, voids))){ const w = q.x1 - q.x0, d = q.z1 - q.z0; let t;
         if (ft){ t = ft.clone(); t.userData = { owned: true }; t.needsUpdate = true; t.repeat.set(w / rw, d / rd); t.offset.set((q.x0 - r.x0) / rw, (r.z1 - q.z1) / rd); }
         else { t = (wet ? tiles : parquet).clone(); t.userData = { owned: true }; t.needsUpdate = true; t.repeat.set(w / sc, d / sc); t.offset.set((q.x0 - r.x0) / sc, (r.z1 - q.z1) / sc); }
         const fmat = owned(new THREE.MeshStandardMaterial({ map: t, roughness: tileFloor ? .35 : .6, color: lin(r.podea || '#ffffff') }));
         if (ft) fmat.userData = { ...fmat.userData, kind: ff.kind === 'tile' ? 'tile' : 'parquet', pat: { ...ff, rect: [r.x0, r.z0, r.x1, r.z1] } };
-        const f = new THREE.Mesh(new THREE.PlaneGeometry(w, d), fmat); f.rotation.x = -Math.PI / 2; f.position.set((q.x0 + q.x1) / 2, 0, (q.z0 + q.z1) / 2); f.receiveShadow = true; house.add(f); }
+        const fg = q.__polygonRoom ? roomShapeGeometry(r.contur, r, voids) : new THREE.PlaneGeometry(w, d);
+        const f = new THREE.Mesh(fg, fmat); f.rotation.x = q.__polygonRoom ? -Math.PI / 2 : -Math.PI / 2; f.position.set(q.__polygonRoom ? r.x0 : (q.x0 + q.x1) / 2, 0, q.__polygonRoom ? r.z0 : (q.z0 + q.z1) / 2); f.receiveShadow = true; house.add(f); }
       // covorul camerei, centrat, cu latura lungă după cameră (sau rotit)
       if (r.fin && r.fin.rug){ const rg = r.fin.rug, rm = MAT('rug', rg.color || '#c8b79a'); const o = new THREE.Mesh(sharedGeo('rug' + k3(rg.w, .016, rg.d), () => rgeo(rg.w, .016, rg.d, .006)), rm); o.position.set((r.x0 + r.x1) / 2, .008, (r.z0 + r.z1) / 2); o.receiveShadow = true; house.add(o); }   // covor cu grosime și margini rotunjite, textil cu fir (nu o placă albă)
       // tavan: drept la H; fals coborât cu `drop`; cu scafă: banda de lângă pereți rămâne sus, panoul din mijloc coboară, cu bandă LED pe margine
       const cv = r.fin && r.fin.ceiling, cmat = r.tavan ? lookMat('ceil', r.tavan, 1) : ceilMat, ctop = cv && cv.type === 'drop' ? H - cv.drop : H;
-      const ceilPlane = (rect, y) => { for (const q of rectsMinus(rect, stairs.map(a => a.rect))){ const w = q.x1 - q.x0, d = q.z1 - q.z0;
-        const c = new THREE.Mesh(new THREE.PlaneGeometry(w, d), cmat); c.rotation.x = Math.PI / 2; c.position.set((q.x0 + q.x1) / 2, y, (q.z0 + q.z1) / 2); c.castShadow = c.receiveShadow = true; ceilings.add(c); } };   // tavanul ține soarele afară
+      const ceilPlane = (rect, y) => { if (Array.isArray(rect.contur) && rect.contur.length >= 3){ const g = roomShapeGeometry(rect.contur, rect, stairs.map(a => a.rect)); g.rotateX(Math.PI / 2); const c = new THREE.Mesh(g, cmat); c.position.set(rect.x0, y, rect.z0); c.castShadow = c.receiveShadow = true; ceilings.add(c); return; }
+        for (const q of rectsMinus(rect, stairs.map(a => a.rect))){ const w = q.x1 - q.x0, d = q.z1 - q.z0;
+          const c = new THREE.Mesh(new THREE.PlaneGeometry(w, d), cmat); c.rotation.x = Math.PI / 2; c.position.set((q.x0 + q.x1) / 2, y, (q.z0 + q.z1) / 2); c.castShadow = c.receiveShadow = true; ceilings.add(c); } };   // tavanul ține soarele afară
       ceilPlane(r, ctop);
       const low = cv && cv.type !== 'flat' ? H - cv.drop : H;
       if (cv && cv.type === 'cove'){ const k = cv.cove, inner = { x0: r.x0 + k, z0: r.z0 + k, x1: r.x1 - k, z1: r.z1 - k };
