@@ -173,6 +173,23 @@ export default function Editor({ id }: { id: string }){
       if (sel?.kind === 'placement'){ const p = cur.placements.find(x => x.id === sel.id); const iss = p ? validatePlacement(cur, catalog, p) : [];
         if (severityOf(iss) === 'ERROR'){ discard(); setHouse(before); persist(before); say(t('editor.positionRefused', { msg: iT(iss.find(i => i.severity === 'ERROR')!) })); return; }
         if (severityOf(iss) === 'WARNING'){ setPending({ before, issues: iss, discard }); } }
+      else {
+        const changedRooms = cur.floor.rooms.filter(nr => {
+          const old = before.floor.rooms.find(or => or.id === nr.id);
+          return !old || Math.abs(old.rect.x0 - nr.rect.x0) > 0.01 || Math.abs(old.rect.x1 - nr.rect.x1) > 0.01 ||
+            Math.abs(old.rect.z0 - nr.rect.z0) > 0.01 || Math.abs(old.rect.z1 - nr.rect.z1) > 0.01;
+        });
+        if (changedRooms.length > 0) {
+          let updated = cur;
+          for (const cr of changedRooms) {
+            if (updated.placements.some(p => p.roomId === cr.id && p.source === 'auto')) {
+              const relaid = autoLayout(updated, catalog, { roomId: cr.id });
+              updated = { ...updated, placements: relaid.snapshot.placements };
+            }
+          }
+          const h = mergeLevel(latest.current!, L, updated); latest.current = h; setHouse(h); persist(h);
+        }
+      }
       return; }
     const base = latest.current || house!, n = structuredClone(levelView(base, L)); fn(n); const h = mergeLevel(base, L, n); latest.current = h; setHouse(h); persist(h); };
   const addUnderlay = (dataUrl: string) => mutate(s => { const xs = s.floor.rooms.flatMap(r => [r.rect.x0, r.rect.x1]), zs = s.floor.rooms.flatMap(r => [r.rect.z0]);
@@ -182,8 +199,22 @@ export default function Editor({ id }: { id: string }){
     const [x, z] = anchorAfterScale(u, calib.a, w); const n = structuredClone(snap); n.underlay = { ...u, widthM: w, x, z }; commit(n); setCalib(null); return true; };
   // lățime/lungime din panou: camera și vecinii care împart latura mutată (un pas de anulare); un vecin nu scade sub 60 cm
   // un rezultat identic cu planul de acum (vecinul deja la 60 cm) nu lasă pas de anulare; mesajul de limitare apare oricum
-  const resizeSel = (roomId: string, rect: Room['rect']) => { if (!snap) return; try { const r = planRoomResize(snap.floor, roomId, rect, newWallId);
-    if (r.changed) mutate(s => { s.floor = r.floor; }); if (r.clamped) say(t('editor.resizeClamped')); }
+  const resizeSel = (roomId: string, rect: Room['rect']) => { if (!snap || !catalog) return; try { const r = planRoomResize(snap.floor, roomId, rect, newWallId);
+    if (r.changed) mutate(s => {
+      s.floor = r.floor;
+      const changedRooms = r.floor.rooms.filter(nr => {
+        const old = snap.floor.rooms.find(or => or.id === nr.id);
+        return !old || Math.abs(old.rect.x0 - nr.rect.x0) > 0.01 || Math.abs(old.rect.x1 - nr.rect.x1) > 0.01 ||
+          Math.abs(old.rect.z0 - nr.rect.z0) > 0.01 || Math.abs(old.rect.z1 - nr.rect.z1) > 0.01;
+      });
+      for (const cr of changedRooms) {
+        if (s.placements.some(p => p.roomId === cr.id && p.source === 'auto')) {
+          const relaid = autoLayout(s, catalog, { roomId: cr.id });
+          s.placements = relaid.snapshot.placements;
+        }
+      }
+    });
+    if (r.clamped) say(t('editor.resizeClamped')); }
     catch (e) { if (e instanceof RoomResizeError) say(e.message); else throw e; } };
   const undo = () => { if (!house || dragStart.current) return; const s = hist.current.undo(house); if (s){ setPending(null); setHouse(s); persist(s); force(x => x + 1); } };
   const redo = () => { if (!house || dragStart.current) return; const s = hist.current.redo(house); if (s){ setHouse(s); persist(s); force(x => x + 1); } };
