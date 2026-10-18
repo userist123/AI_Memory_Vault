@@ -50,7 +50,15 @@ DONE:
   - Parser și adaptor `app/core/project-import.ts` cu verificări de securitate și teste unitare dedicate (`tests/project-import.test.ts`).
   - Localizare completă i18n (`lib/locales/ro.ts`, `lib/locales/en.ts`, `components/ImportExistingProject.tsx`) cu respectarea strictă a invariantelor `tests/i18n.test.ts` (0 texte ne-localizate în JSX).
   - Verificare contrast WCAG AA/AAA și captură de ecran în browser (`audit_import_existing.png`, `audit_import_existing_ro.png`).
-- Suita completă de teste: 104/104 fișiere de test trecute (615/615 teste), `tsc --noEmit` curat (exit code 0).
+- Integrat Wave Nou din PR #305 (Geometrie Poligonală Camere & Reconstrucție Substrat Balcoane):
+  - Balcoane deschise la trasare: `traceRoomFromUnderlay` în `underlay.ts` recunoaște balcoanele și terasele deschise (`isBalcony`), evitând generarea automată a pereților perimetrali opaci.
+  - Geometrie camere poligonale non-dreptunghiulare (în formă de L, etc.): `app/core/room-geometry.ts` (`roomBoundary`, `polygonArea`, `polygonPerimeter`, `roomArea`, `roomCentroid`, `roomBoundaryPath`, `transformBoundary`, `pointInRoom`).
+  - Extindere `Room`: suport pentru `boundary?: [number, number][]` și `spaceKind?: RoomSpaceKind` în `app/core/types.ts`.
+  - Randare 2D SVG: `PlanView.tsx` desenează camerele folosind conturul real `boundary` prin `<polygon points="..." />` și `<path />`.
+  - Randare 3D WebGL: `viewer3d-engine.js` generează geometria 3D a podelei și tavanului prin `THREE.Shape` din conturul camerei.
+  - Digital Twin & Redimensionare: `app/lib/twin.ts` mapează poligoanele camerelor în `Twin.rooms`, iar `app/core/room-resize.ts` scalează conturul afin proporțional prin `transformBoundary`.
+  - Teste unitare dedicate: `tests/underlay.test.ts` (5 teste) și `tests/room-geometry.test.ts` (4 teste).
+- Suita completă de teste: 105/105 fișiere de test trecute (621/621 teste, exit code 0), `tsc --noEmit` curat (exit code 0).
 - Ramurile `prompt/casa3d-pro-editor-2026` (PR #305) și `gemini/casa3d-nextgen-functionality-uiux` (PR #304) sincronizate și împinse pe `origin`.
 NEXT (in order):
 - Finalizare și fuziune PR #304 & PR #305 în main.
