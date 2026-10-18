@@ -222,10 +222,13 @@ export function refineFurnishing(cat: Catalog, inp: RefineInput): RefineResult {
     })();
     if (!ok) continue;
     const fresh = ctx.items.filter(i => !i.ghost && !i.keep).map<FurniturePlacement>(i => ({ id: uid(), roomId: room.id, group: i.group, variantId: i.variantId, x: r3(i.x), z: r3(i.z), rotation: i.rot, source: 'auto' }));
-    // nu se pierde nicio grupă pe care motorul o pusese, în afară de cele scoase intenționat de reguli
-    // (dușul din WC-ul mic, biroul din dormitorul mic); altfel rămâne amenajarea motorului
-    const dropOk = new Set([...(isSmallWc(floor, room) ? ['dus', 'cada'] : []), ...(room.type === 'dormitor' && area(room.rect) < FURNISH_RULES.deskMinArea ? ['birou', 'scaunBirou'] : []), 'fotoliu', 'comoda', 'biblioteca', 'caloriferBaie', 'coloanaBaie', 'bideu']);
-    if (auto.some(p => !dropOk.has(p.group) && !fresh.some(f => f.group === p.group))) continue;
+    const anyAutoOutside = auto.some(p => {
+      const d = dims(p.variantId);
+      const w = d ? d.w : 0.5, depth = d ? d.d : 0.5;
+      return p.x - w / 2 < r.x0 - 0.05 || p.x + w / 2 > r.x1 + 0.05 || p.z - depth / 2 < r.z0 - 0.05 || p.z + depth / 2 > r.z1 + 0.05;
+    });
+    const dropOk = new Set([...(isSmallWc(floor, room) ? ['dus', 'cada'] : []), 'birou', 'scaunBirou', 'fotoliu', 'comoda', 'biblioteca', 'caloriferBaie', 'coloanaBaie', 'bideu']);
+    if (!anyAutoOutside && auto.some(p => !dropOk.has(p.group) && !fresh.some(f => f.group === p.group))) continue;
     redone.push(room.id);
     placements = [...placements.filter(p => p.roomId !== room.id || p.source !== 'auto'), ...fresh];
   }
