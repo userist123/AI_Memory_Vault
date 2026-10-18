@@ -58,15 +58,34 @@ DONE:
   - Randare 3D WebGL: `viewer3d-engine.js` generează geometria 3D a podelei și tavanului prin `THREE.Shape` din conturul camerei.
   - Digital Twin & Redimensionare: `app/lib/twin.ts` mapează poligoanele camerelor în `Twin.rooms`, iar `app/core/room-resize.ts` scalează conturul afin proporțional prin `transformBoundary`.
   - Teste unitare dedicate: `tests/underlay.test.ts` (5 teste) și `tests/room-geometry.test.ts` (4 teste).
-- Suita completă de teste: 105/105 fișiere de test trecute (621/621 teste, exit code 0), `tsc --noEmit` curat (exit code 0).
-- Ramurile `prompt/casa3d-pro-editor-2026` (PR #305) și `gemini/casa3d-nextgen-functionality-uiux` (PR #304) sincronizate și împinse pe `origin`.
+- Audit Complet Click-cu-Click & Remediere Blocaje Modale:
+  - Identificat și remediat capcanele de evenimente la dialogurile modale (`DesignOptionsLab`, `ImpactModal`, `Editor` pentru `showHealth`): adăugat handler global pentru tasta `Escape` și `onClick` pe fundalul întunecat (backdrop) pentru închidere imediată fără blocarea uneltelor ulterioare.
+  - Audit automatizat cap-coadă prin Playwright (`scratch/comprehensive_app_audit.js`): 22 de interacțiuni validate pe viu, 0 erori de consolă, 0 blocaje pe toate cele 8 etape de proiectare.
+- Instrumente Arhitecturale Noi de Creare (dincolo de pereți, geamuri, camere, uși):
+  - Stâlp / Coloană Structurală (`tool.column` / `stalpi`): secțiune dreptunghiulară sau circulară, lățime și adâncime configurabile, rotație 90° (R), randare 2D cu hașură diagonală arhitecturală, randare 3D extrudată în scenă și blocare structurală pentru mobilier.
+  - Grindă de Tavan (`tool.beam` / `grinzi`): travee între două puncte, lățime și înălțime/drop de grindă configurabile, randare 2D linie punctată cu etichetă de lungime, randare 3D suspendată la tavan.
+  - Perete Despărțitor din Sticlă / Perete Cortină (`tool.glass_wall` / `peretiSticla`): grosime și număr de montanți verticali configurabili, randare 2D dublă cu montanți cyan, randare 3D cu sticlă fizică translucidă și profile metalice perimetrale și verticale.
+  - Unealtă Creare Scară Directă (`tool.stair` / `scari`): plasare directă pe plan cu geometrie de trepte, săgeată de sens, calcul confort pas și urcare 3D la etajul superior.
+- Localizare Bilingvă Completă (Română & Engleză):
+  - Adăugat toate cheile în `lib/locales/ro.ts` și `lib/locales/en.ts` cu verificarea riguroasă a simetriei prin `tests/i18n.test.ts` (15/15 teste trecute).
+- Testare Automată & Typecheck:
+  - Creat fișierul `tests/creation-primitives.test.ts` (6 teste) care acoperă crearea, modificarea, rotația, propagarea pe etaje multi-nivel și alimentarea viewer-ului 3D.
+  - Suită completă: 106/106 fișiere de test trecute (627/627 teste trecute, 0 eșuate, 0 omise), `tsc --noEmit` curat (0 erori de tip).
+- Verificare Vizuală Automată prin Playwright:
+  - Scriptul `scratch/verify_creation_primitives.js` a parcurs fiecare unealtă pe un proiect activ, a plasat elementele în plan, a inspectat panourile laterale și a capturat capturi de ecran:
+    - `10_column_created_2d.png`: stâlp structural creat cu hașură și inspector de proprietăți.
+    - `11_beam_created_2d.png`: grindă de tavan cu travee și cotă de lungime.
+    - `12_glass_wall_created_2d.png`: perete de sticlă cu montanți și grosime.
+    - `13_stair_created_2d.png`: scară plasată direct în living cu calcul de trepte și avertizări de gabarit.
+    - `15_primitives_split_view.png`: randare simultană 2D plan + 3D WebGL (sticlă translucidă, profile metalice, stâlp și scară 3D).
+- Sincronizare Git & PR:
+  - Modificările au fost comise respectând normele de confidențialitate și împinse atât pe `gemini/casa3d-nextgen-functionality-uiux` (PR #304), cât și pe `prompt/casa3d-pro-editor-2026` (PR #305).
 NEXT (in order):
 - Finalizare și fuziune PR #304 & PR #305 în main.
 BLOCKERS: None.
 KEY FILES:
-- 02_PRODUCT/projects/Casa3D/{NEXTGEN_AUDIT,NEXTGEN_IMPLEMENTATION,VERIFICATION_2026-10-10}.md
-- 02_PRODUCT/projects/workspaces/casa3d/packages/twin-core/src/{twin,engine,index}.ts
-- 02_PRODUCT/projects/workspaces/casa3d/app/core/{furnish,plan-symbols,room-edit,validate,underlay,styles,technical,setting-out,user-library,coordination-review,traceability,design-lab,impact-map,project-health}.ts
-- 02_PRODUCT/projects/workspaces/casa3d/app/lib/{db,repo,twin,design,secure-import,i18n}.ts
-- 02_PRODUCT/projects/workspaces/casa3d/app/components/{Editor,PlanView,Viewer3D,TwinDesignPanel,StylePanel,TechPanel,TraceabilityPanel,DesignOptionsLab,ImpactModal,ProjectHealthPanel,viewer3d-engine.js}
+- 02_PRODUCT/projects/workspaces/casa3d/app/core/{types,levels,room-geometry,project-import,furnish}.ts
+- 02_PRODUCT/projects/workspaces/casa3d/app/lib/{viewer-input,locales/ro,locales/en,twin}.ts
+- 02_PRODUCT/projects/workspaces/casa3d/app/components/{Editor,PlanView,viewer3d-engine.js,DesignOptionsLab,ImpactModal}.tsx
+- 02_PRODUCT/projects/workspaces/casa3d/app/tests/{creation-primitives.test.ts,i18n.test.ts,levels.test.ts}
 
