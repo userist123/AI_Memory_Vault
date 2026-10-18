@@ -29,9 +29,27 @@ test('săgețile mută cu 5 cm (Shift: 50 cm), R rotește, Delete și Backspace 
   assert.deepEqual(planKeyAction({ key: 'Delete' }, it, p), { type: 'delete' }); assert.deepEqual(planKeyAction({ key: 'Backspace' }, it, p), { type: 'delete' });
   assert.deepEqual(planKeyAction({ key: 'Escape' }, it, p), { type: 'deselect' });
 });
-test('fără selecție, săgețile, R și Delete nu fac nimic; combinațiile cu Ctrl rămân scurtăturile editorului', () => {
+test('fără selecție, săgețile, R și Delete nu fac nimic; combinațiile cu Ctrl rămân scurtăturile editorului (mai puțin Ctrl+D care duplică)', () => {
   const it = planItems(snap);
   for (const key of ['ArrowLeft', 'r', 'Delete', 'Escape']) assert.equal(planKeyAction({ key }, it, null), null, key);
   assert.equal(planKeyAction({ key: 'ArrowLeft' }, it, { kind: 'placement', id: 'dispărut' }), null);
   assert.equal(planKeyAction({ key: 'z', ctrlKey: true }, it, { kind: 'placement', id: 'p1' }), null);
+  assert.deepEqual(planKeyAction({ key: 'd', ctrlKey: true }, it, { kind: 'placement', id: 'p1' }), { type: 'duplicate' });
 });
+
+test('planItems include elementele structurale (coloane, grinzi, pereți de sticlă)', () => {
+  const s2 = {
+    ...snap,
+    floor: {
+      ...snap.floor,
+      columns: [{ id: 'col1', x: 2, z: 2, w: 0.3, d: 0.3 }],
+      beams: [{ id: 'bm1', a: [0, 2], b: [3, 2] }],
+      glassWalls: [{ id: 'gw1', a: [0, 3], b: [3, 3] }],
+    },
+  };
+  const items = planItems(s2);
+  assert.ok(items.some(i => i.kind === 'column' && i.id === 'col1'));
+  assert.ok(items.some(i => i.kind === 'beam' && i.id === 'bm1'));
+  assert.ok(items.some(i => i.kind === 'glass_wall' && i.id === 'gw1'));
+});
+

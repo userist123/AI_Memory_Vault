@@ -2,7 +2,7 @@ import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import catalogJson from '../data/catalog.v1.json';
 import { newSnapshot } from '../core/project';
-import { suggestTechPoints, techCounts, nearestWallPoint, MIN_OUTLETS } from '../core/technical';
+import { suggestTechPoints, techCounts, nearestWallPoint, MIN_OUTLETS, computeLightingWiringArcs } from '../core/technical';
 import type { Catalog, Snapshot } from '../core/types';
 const cat = catalogJson as unknown as Catalog, demo = (): Snapshot => newSnapshot(cat, 'T', 'demo');
 const onEdge = (s: Snapshot, roomId: string, x: number, z: number) => { const r = s.floor.rooms.find(q => q.id === roomId)!.rect, e = 0.03;
@@ -78,3 +78,21 @@ test('tipurile de punct moștenite de la Object (toString, __proto__) sunt respi
   s.tech = ['toString', 'constructor', '__proto__', 'hasOwnProperty'].map((kind, i) => ({ ...ok, id: `x${i}`, kind: kind as any })).concat([ok]);
   assert.deepEqual(checkSnapshot(structuredClone(s)).tech!.map(p => p.id), [ok.id]);
 });
+
+test('computeLightingWiringArcs generează bucle de cablaj conform SR EN 60617 conectând întrerupătorul la corpurile de iluminat', () => {
+  const s = demo();
+  s.tech = [
+    { id: 'sw1', kind: 'switch', roomId: 'living', x: 0.2, z: 0.2, height: 1.1, reason: 'intrare', switchGroup: 'L1' },
+    { id: 'lp1', kind: 'light_point', roomId: 'living', x: 2.0, z: 2.0, height: 2.6, reason: 'centru' },
+    { id: 'lp2', kind: 'light_point', roomId: 'living', x: 4.0, z: 2.0, height: 2.6, reason: 'spoturi' },
+  ];
+  const arcs = computeLightingWiringArcs(s, cat);
+  assert.ok(arcs.length >= 2, 'trebuie să genereze cel puțin 2 arce (sw -> lp1 și lp1 -> lp2)');
+  assert.equal(arcs[0]!.switchId, 'sw1');
+  assert.equal(arcs[0]!.targetId, 'lp1');
+  assert.equal(arcs[0]!.circuitLabel, 'L1');
+  assert.ok(arcs[0]!.ctrl[0] !== (arcs[0]!.from[0] + arcs[0]!.to[0]) / 2, 'punctul de control Bezier trebuie să fie curbat');
+  assert.equal(arcs[1]!.from[0], 2.0);
+  assert.equal(arcs[1]!.to[0], 4.0);
+});
+

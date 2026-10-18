@@ -1195,13 +1195,30 @@ function model(it){
     R.info.autoReset = false; const steady = count(); R.shadowMap.needsUpdate = true; const sh = count(); R.info.autoReset = ar; const mats = new Set(); let meshes = 0, pl = 0; const vis = o => { for (let a = o; a; a = a.parent) if (!a.visible) return false; return true; };
     scene.traverse(o => { if (o.isMesh && vis(o)){ meshes++; (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => mats.add(m)); } if (o.isPointLight && vis(o)) pl++; });
     return { calls: steady.calls, triangles: steady.triangles, callsWithShadow: sh.calls, geometries: R.info.memory.geometries, textures: R.info.memory.textures, programs: R.info.programs ? R.info.programs.length : 0, meshes, materials: mats.size, pointLights: pl, mode, shot: lastShot }; }
-  canvas.__casa3dStats = getStats;
+  function setCameraPreset(preset){
+    if (mode === 'walk') setMode('house');
+    if (preset === 'top'){
+      orbit.th = 0;
+      orbit.ph = 0.05;
+      orbit.r = Math.max(W, D, 4) * 1.35;
+    } else if (preset === 'iso'){
+      orbit.th = -Math.PI / 4;
+      orbit.ph = Math.PI / 4;
+      orbit.r = Math.max(W, D, 4) * 1.25;
+    } else if (preset === 'front'){
+      orbit.th = 0;
+      orbit.ph = Math.PI / 2 - 0.08;
+      orbit.r = Math.max(W, D, 4) * 1.3;
+    }
+    dirty();
+  }
   return {
     setState(p, items){ plan = p; buildHouse(p); buildFurniture(items); },
     getStats,
     setDecor(on){ decorOn = !!on; buildDecor(lastItems); },
     setDoors(open){ doorsOpen = !!open; doorsNow(doorsOpen); },
     setMode, goRoom, getMode: () => mode, setLighting, capture, renderView, renderPanorama, exportScene, exportGLB,
+    setCameraPreset,
     setQuality(q){ quality = q === 'high' ? 'high' : 'normal'; if (quality === 'high' && !composer){ try { setupComposer(); } catch (e){ quality = 'normal'; composer = null; } } return quality; },
     setMove(forward, strafe){ joy.f = Number.isFinite(forward) ? Math.max(-1, Math.min(1, forward)) : 0; joy.s = Number.isFinite(strafe) ? Math.max(-1, Math.min(1, strafe)) : 0; },
     dispose(){ alive = false; unTex(); if (mql && mql.removeEventListener) mql.removeEventListener('change', onMql); cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('webglcontextlost', onCtxLost); canvas.removeEventListener('webglcontextrestored', onCtxRestored); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('pointercancel', pu); canvas.removeEventListener('wheel', wh); disposeGroup(house); disposeGroup(furniture); if (contact){ contact.geometry.dispose(); if (contact.material.uniforms.map.value) contact.material.uniforms.map.value.dispose(); contact.material.dispose(); contact = null; } probes.forEach(p => { p.rt.dispose(); p.mats.forEach(m => m.dispose()); }); probes.length = 0; ground.geometry.dispose(); ground.material.dispose(); skyGeo.dispose(); sky.material.dispose(); parquet.dispose(); tiles.dispose(); wallMat.dispose(); extMat.dispose(); glass.dispose(); frameMat.dispose(); ceilMat.dispose(); skirtMat.dispose(); Object.values(lookCache).forEach(m => m.dispose()); scene.environment?.dispose?.(); pm.dispose(); if (composer){ ssao.dispose(); composer.renderTarget1.dispose(); composer.renderTarget2.dispose(); composer = null; } R.dispose(); }

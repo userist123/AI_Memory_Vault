@@ -62,6 +62,9 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
     {mode === 'walk' && touch && !err && <Joystick onMove={(f, s) => v.current?.setMove(f, s)} />}
     <div className="v3bar">
       <button className="btn" aria-pressed={mode === 'house'} onClick={() => go('house')}><Icon name="cube" size={16} /><span className="v3lbl">{t('viewer.house')}</span></button>
+      <button className="btn" title={t('viewer.camTopTitle')} aria-label={t('viewer.camTopTitle')} onClick={() => { go('house'); v.current?.setCameraPreset('top'); }}><Icon name="plan" size={16} /><span className="v3lbl">{t('viewer.camTop')}</span></button>
+      <button className="btn" title={t('viewer.camIsoTitle')} aria-label={t('viewer.camIsoTitle')} onClick={() => { go('house'); v.current?.setCameraPreset('iso'); }}><Icon name="cube" size={16} /><span className="v3lbl">{t('viewer.camIso')}</span></button>
+      <button className="btn" title={t('viewer.camFrontTitle')} aria-label={t('viewer.camFrontTitle')} onClick={() => { go('house'); v.current?.setCameraPreset('front'); }}><Icon name="panel" size={16} /><span className="v3lbl">{t('viewer.camFront')}</span></button>
       {/* intrarea în camere: o listă, nu câte un buton pe cameră (bara încape pe un rând și pe laptop) */}
       <select className="btn" aria-label={t('viewer.tourPick')} value={mode === 'walk' && room ? room : ''} onChange={e => { const id = e.target.value; if (!id) { go('house'); return; } setMode('walk'); setRoom(id); v.current?.goRoom(id); }}>
         <option value="">{t('viewer.tourPick')}</option>

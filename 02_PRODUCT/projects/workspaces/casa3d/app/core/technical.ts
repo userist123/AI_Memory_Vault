@@ -1,10 +1,11 @@
 // Stratul tehnic: prize, întrerupătoare, puncte de lumină și de date, apă rece/caldă, scurgeri.
 // Sugestiile sunt deterministe, din mobila așezată și tipul camerei; pragurile sunt reguli uzuale de bun-simț,
 // nu norme legale (normativele diferă pe țări). Utilizatorul acceptă sau modifică punctele.
-import type { Floor, FurniturePlacement, Room, Snapshot } from './types';
+import type { Floor, FurniturePlacement, Room, Snapshot, Catalog } from './types';
 import { finishesOf } from './boq';
 import { LIGHTS_EXTRA_PER_M2 } from './rules.boq';
 import { area } from './geometry';
+import { allFixturePoints } from './fixtures';
 
 export type TechKind =
   | 'outlet' | 'outlet_double' | 'switch' | 'light_point' | 'data' | 'water_cold' | 'water_hot' | 'drain' | 'cooker'
@@ -197,6 +198,108 @@ export function buildTechnicalSchedule(snap: Snapshot): TechnicalSchedule {
     switchGroups,
     unlinkedSwitches,
     unlinkedLights,
+  };
+}
+
+export interface WiringArc {
+  switchId: string;
+  targetId: string;
+  roomId: string;
+  from: [number, number];
+  to: [number, number];
+  ctrl: [number, number];
+  circuitLabel?: string;
+}
+
+/**
+ * Calculează arcele de cablaj conform standardelor de instalații electrice (SR EN 60617 / IEC 60617).
+ * Conectează întrerupătoarele de corpurile de iluminat sau punctele de lumină din încăpere
+ * prin arce Bezier curbate cu etichetă de circuit.
+ */
+export function computeLightingWiringArcs(snap: Snapshot, catalog?: Catalog): WiringArc[] {
+  const out: WiringArc[] = [];
+  const tech = (snap.tech && snap.tech.length > 0) ? snap.tech : suggestTechPoints(snap);
+  const switches = tech.filter(p => p.kind === 'switch');
+  if (!switches.length) return out;
+
+  const techLights = tech.filter(p => p.kind === 'light_point');
+  const fixtures = catalog ? allFixturePoints(snap, catalog, snap.floor.rooms, finishesOf) : [];
+
+  for (const sw of switches) {
+    const room = snap.floor.rooms.find(r => r.id === sw.roomId);
+    if (!room) continue;
+
+    // Puncte de lumină din aceeași cameră
+    let roomLights = techLights.filter(l => l.roomId === sw.roomId);
+    if (sw.linkedIds && sw.linkedIds.length > 0) {
+      const linked = roomLights.filter(l => sw.linkedIds!.includes(l.id));
+      if (linked.length > 0) roomLights = linked;
+    }
+
+    const roomFixtures = fixtures.filter(f =>
+      f.x >= room.rect.x0 && f.x <= room.rect.x1 && f.z >= room.rect.z0 && f.z <= room.rect.z1
+    );
+
+    const targets: { id: string; x: number; z: number }[] = [
+      ...roomLights.map(l => ({ id: l.id, x: l.x, z: l.z })),
+      ...roomFixtures.map((f, i) => ({ id: `fix-${sw.roomId}-${i}`, x: f.x, z: f.z })),
+    ];
+
+    if (!targets.length) continue;
+
+    // Sortează după distanța față de întrerupător
+    targets.sort((a, b) => Math.hypot(a.x - sw.x, a.z - sw.z) - Math.hypot(b.x - sw.x, b.z - sw.z));
+
+    const circuitLabel = sw.switchGroup || 'L1';
+
+    // Primul arc: de la întrerupător la primul corp de iluminat
+    const first = targets[0]!;
+    const arc0 = buildBezierArc(sw.id, first.id, sw.roomId, [sw.x, sw.z], [first.x, first.z], circuitLabel);
+    if (arc0) out.push(arc0);
+
+    // Conectare în buclă / cascadă (daisy chain) între corpurile de iluminat
+    for (let i = 0; i < targets.length - 1; i++) {
+      const from = targets[i]!;
+      const to = targets[i + 1]!;
+      const arcN = buildBezierArc(from.id, to.id, sw.roomId, [from.x, from.z], [to.x, to.z], circuitLabel);
+      if (arcN) out.push(arcN);
+    }
+  }
+
+  return out;
+}
+
+function buildBezierArc(
+  switchId: string,
+  targetId: string,
+  roomId: string,
+  from: [number, number],
+  to: [number, number],
+  circuitLabel?: string
+): WiringArc | null {
+  const dx = to[0] - from[0];
+  const dz = to[1] - from[1];
+  const len = Math.hypot(dx, dz);
+  if (len < 0.05) return null;
+
+  const mx = (from[0] + to[0]) / 2;
+  const mz = (from[1] + to[1]) / 2;
+  const nx = -dz / len;
+  const nz = dx / len;
+
+  // Curbură arc: ~20% din lungime în sens normal
+  const curvature = 0.2 * len;
+  const cx = Math.round((mx + nx * curvature) * 1000) / 1000;
+  const cz = Math.round((mz + nz * curvature) * 1000) / 1000;
+
+  return {
+    switchId,
+    targetId,
+    roomId,
+    from: [Math.round(from[0] * 1000) / 1000, Math.round(from[1] * 1000) / 1000],
+    to: [Math.round(to[0] * 1000) / 1000, Math.round(to[1] * 1000) / 1000],
+    ctrl: [cx, cz],
+    circuitLabel,
   };
 }
 

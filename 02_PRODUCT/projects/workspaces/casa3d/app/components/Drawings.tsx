@@ -102,3 +102,4 @@ export function ElevationSheet({ elevs, t, units, locale }: { elevs: Elevation[]
     </figure>); })}</div>);
 }
 export const roomElevations = (snap: Snapshot, mc: MaterialsCatalog, cat: Catalog, fl: Floor, room: Room) => wallElevations(snap, mc, cat, fl, room);
+export { ArchitecturalTitleBlock } from './ArchitecturalTitleBlock';

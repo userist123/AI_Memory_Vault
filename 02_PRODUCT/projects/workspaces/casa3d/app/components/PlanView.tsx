@@ -20,6 +20,7 @@ import { planItems, planKeyAction, type PlanKeyAction } from '@/core/plan-keys';
 import { resizeRoom, RoomResizeError } from '@/core/room-resize';
 import { MIN_ROOM_M, type EdgeKey } from '@/core/room-neighbours';
 import { edgeHandleAt, edgeHandlePoint } from '@/core/room-edit';
+import { computeLightingWiringArcs } from '@/core/technical';
 
 export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'measure' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair';
 export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
@@ -31,6 +32,12 @@ interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severi
   onAddBeam?(a: [number, number], b: [number, number]): void;
   onAddGlassWall?(a: [number, number], b: [number, number]): void;
   onAddStairAt?(x: number, z: number): void;
+  onRotateSelected?(): void;
+  onDuplicateSelected?(): void;
+  onDeleteSelected?(): void;
+  onToggleColumnShape?(): void;
+  onAutoFurnishRoom?(roomId: string): void;
+  onSplitRoom?(roomId: string, axis: 'x' | 'z'): void;
   calib?: Calib | null; onCalibPick?(a: [number, number], b: [number, number]): void;
   showTech?: boolean; onTechAt?(x: number, z: number): void;
   /** golurile din placă ale acestui nivel (scările care urcă de dedesubt) */
@@ -61,6 +68,57 @@ export default function PlanView(p: Props){
   useEffect(() => { if (p.calib?.stage !== 'pick') setCalA(null); }, [p.calib?.stage]);
   const [ruler, setRuler] = useState<{ a: [number, number]; b: [number, number] | null } | null>(null);
   useEffect(() => { setRuler(null); }, [p.tool]);
+
+  const wiringArcs = useMemo(() => {
+    if (!p.showTech) return [];
+    return computeLightingWiringArcs(p.snap, p.catalog);
+  }, [p.showTech, p.snap, p.catalog]);
+
+  const hud = useMemo(() => {
+    if (p.tool !== 'select' || !p.sel) return null;
+    const { kind, id } = p.sel;
+    if (kind === 'placement') {
+      const pl = p.snap.placements.find(x => x.id === id);
+      if (!pl) return null;
+      const fp = footprintOf(p.catalog, pl);
+      const w = fp ? fp.x1 - fp.x0 : 0.8, d = fp ? fp.z1 - fp.z0 : 0.8;
+      const tag = `${Math.round(w * 100)}×${Math.round(d * 100)} cm`;
+      return { x: pl.x, z: (fp ? fp.z0 : pl.z - d / 2) - 0.28, kind, id, tag, canRotate: true, canDuplicate: true, canDelete: true };
+    }
+    if (kind === 'column') {
+      const col = floor.columns?.find(x => x.id === id);
+      if (!col) return null;
+      const tag = `${Math.round(col.w * 100)}×${Math.round(col.d * 100)} cm`;
+      return { x: col.x, z: col.z - col.d / 2 - 0.28, kind, id, tag, canRotate: true, canToggleShape: true, canDelete: true };
+    }
+    if (kind === 'stair') {
+      const st = floor.stairs?.find(x => x.id === id);
+      if (!st) return null;
+      const tag = `${Math.round(st.width * 100)}×${Math.round(st.length * 100)} cm`;
+      return { x: st.x, z: st.z - st.length / 2 - 0.28, kind, id, tag, canRotate: true, canDelete: true };
+    }
+    if (kind === 'beam') {
+      const bm = floor.beams?.find(x => x.id === id);
+      if (!bm) return null;
+      const L = wallLength(bm.a, bm.b);
+      const tag = `${Math.round(L * 100)} cm`;
+      return { x: (bm.a[0] + bm.b[0]) / 2, z: (bm.a[1] + bm.b[1]) / 2 - 0.28, kind, id, tag, canDelete: true };
+    }
+    if (kind === 'glass_wall') {
+      const gw = floor.glassWalls?.find(x => x.id === id);
+      if (!gw) return null;
+      const L = wallLength(gw.a, gw.b);
+      const tag = `${Math.round(L * 100)} cm`;
+      return { x: (gw.a[0] + gw.b[0]) / 2, z: (gw.a[1] + gw.b[1]) / 2 - 0.28, kind, id, tag, canDelete: true };
+    }
+    if (kind === 'room') {
+      const rm = floor.rooms.find(x => x.id === id);
+      if (!rm) return null;
+      const tag = formatArea(roomArea(rm), units, lang);
+      return { x: (rm.rect.x0 + rm.rect.x1) / 2, z: rm.rect.z0 + 0.32, kind, id, tag, canAutoFurnish: true, canSplit: true, canDelete: true };
+    }
+    return null;
+  }, [p.tool, p.sel, p.snap, p.catalog, floor, units, lang]);
   const drag = useRef<any>(null), pan = useRef<any>(null);
   // atingeri: două degete = zoom și deplasare; un deget pe un loc gol (la selecție) = deplasare, atingere scurtă = deselectare
   const touches = useRef(new Map<number, Pt>()), pinch = useRef<{ vb: typeof vb; ctm: { a: number; d: number; e: number; f: number }; mid: Pt; dist: number } | null>(null);
@@ -271,6 +329,36 @@ export default function PlanView(p: Props){
         return <g key={`fx${i}`} pointerEvents="none"><line x1={x0} y1={z0} x2={x1} y2={z1} stroke={c} strokeWidth={.03} />{Array.from({ length: n }, (_, k) => { const o = (k + .5) / n; return <circle key={k} cx={x0 + (x1 - x0) * o} cy={z0 + (z1 - z0) * o} r={r * .45} fill="#fff" stroke={c} strokeWidth={.015} />; })}</g>; }
       if (f.kind === 'sconce'){ const a = Math.atan2(f.nz, f.nx) * 180 / Math.PI; return <path key={`fx${i}`} pointerEvents="none" transform={`translate(${f.x} ${f.z}) rotate(${a})`} d={`M0 ${-r} A${r} ${r} 0 0 1 0 ${r} Z`} fill="#fff" stroke={c} strokeWidth={.02} />; }
       return <g key={`fx${i}`} pointerEvents="none"><circle cx={f.x} cy={f.z} r={r} fill="#fff" stroke={c} strokeWidth={.02} /><path d={`M${f.x - r * .7} ${f.z - r * .7}L${f.x + r * .7} ${f.z + r * .7}M${f.x - r * .7} ${f.z + r * .7}L${f.x + r * .7} ${f.z - r * .7}`} stroke={c} strokeWidth={.015} /></g>; })}
+    {p.showTech && wiringArcs.map((arc, i) => (
+      <g key={`warc-${i}`} pointerEvents="none">
+        <path
+          className="wiring-arc"
+          d={`M ${arc.from[0]} ${arc.from[1]} Q ${arc.ctrl[0]} ${arc.ctrl[1]} ${arc.to[0]} ${arc.to[1]}`}
+          fill="none"
+          stroke="#D97706"
+          strokeWidth={fs * 0.12}
+          strokeDasharray={`${fs * 0.4} ${fs * 0.2}`}
+          strokeOpacity={0.88}
+        />
+        {arc.circuitLabel && (
+          <text
+            x={arc.ctrl[0]}
+            y={arc.ctrl[1]}
+            fontSize={fs * 0.55}
+            fill="#B45309"
+            stroke="#fff"
+            strokeWidth={fs * 0.15}
+            paintOrder="stroke"
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontFamily="Instrument Sans, Segoe UI, sans-serif"
+            fontWeight={600}
+          >
+            {arc.circuitLabel}
+          </text>
+        )}
+      </g>
+    ))}
     {p.showTech && (p.snap.tech || []).map(tp => { const sym = TECH_SYMBOL[tp.kind], r = fs * (sym.letter.length > 1 ? .62 : .5);
       return <g key={tp.id} pointerEvents="none"><circle cx={tp.x} cy={tp.z} r={r} fill={sym.color} stroke="#fff" strokeWidth={fs * .08} opacity={.92} />
         <text x={tp.x} y={tp.z + fs * .2} textAnchor="middle" fontSize={fs * (sym.letter.length > 1 ? .5 : .6)} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#fff">{sym.letter}</text></g>; })}
@@ -281,6 +369,61 @@ export default function PlanView(p: Props){
     {p.calib && (() => { const a = p.calib.stage === 'enter' ? p.calib.a : calA, b = p.calib.stage === 'enter' ? p.calib.b : (calA && cursor) || undefined; if (!a) return null; return (<g pointerEvents="none">
       {b && <line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke="#7A4A7F" strokeWidth={.03} strokeDasharray=".1 .05" />}
       <circle cx={a[0]} cy={a[1]} r={fs * .3} fill="#7A4A7F" />{b && <circle cx={b[0]} cy={b[1]} r={fs * .3} fill="#7A4A7F" />}</g>); })()}
+    {hud && (() => {
+      const hx = hud.x, hz = hud.z;
+      const bRad = fs * 0.75, bDia = bRad * 2, gap = fs * 0.35;
+      const btns: { key: string; label: string; icon: string; title: string; act(): void; danger?: boolean }[] = [];
+      if (hud.canRotate) btns.push({ key: 'rot', label: 'R', icon: '⟳', title: t('hud.rotate'), act: () => p.onRotateSelected?.() });
+      if (hud.canToggleShape) btns.push({ key: 'shape', label: '◯', icon: '◯', title: t('hud.toggleShape'), act: () => p.onToggleColumnShape?.() });
+      if (hud.canDuplicate) btns.push({ key: 'dup', label: '📋', icon: '⧉', title: t('hud.duplicate'), act: () => p.onDuplicateSelected?.() });
+      if (hud.canAutoFurnish) btns.push({ key: 'auto', label: '⚡', icon: '⚡', title: t('hud.autoFurnish'), act: () => p.onAutoFurnishRoom?.(hud.id) });
+      if (hud.canSplit) btns.push({ key: 'split', label: '✂', icon: '✂', title: t('hud.splitRoom'), act: () => p.onSplitRoom?.(hud.id, 'x') });
+      if (hud.canDelete) btns.push({ key: 'del', label: '✕', icon: '✕', title: t('hud.delete'), act: () => p.onDeleteSelected?.(), danger: true });
+      const tagW = fs * (hud.tag.length * 0.55 + 1.2);
+      const totalW = btns.length * (bDia + gap) + (hud.tag ? tagW + gap : 0);
+      const startX = hx - totalW / 2;
+      return (
+        <g className="plan-hud" data-testid="plan-hud" style={{ pointerEvents: 'all' }}>
+          <rect
+            x={startX - gap}
+            y={hz - bRad - fs * 0.25}
+            width={totalW + gap}
+            height={bDia + fs * 0.5}
+            rx={bRad + fs * 0.25}
+            fill="#0F172A"
+            fillOpacity={0.94}
+            stroke="#334155"
+            strokeWidth={fs * 0.08}
+            filter="drop-shadow(0 4px 10px rgba(0,0,0,0.35))"
+          />
+          {btns.map((btn, bi) => {
+            const bx = startX + bi * (bDia + gap) + bRad;
+            return (
+              <g
+                key={btn.key}
+                data-testid={`hud-btn-${btn.key}`}
+                style={{ cursor: 'pointer' }}
+                onPointerDown={e => { e.stopPropagation(); }}
+                onClick={e => { e.stopPropagation(); btn.act(); }}
+              >
+                <title>{btn.title}</title>
+                <circle cx={bx} cy={hz} r={bRad} fill={btn.danger ? '#7F1D1D' : '#1E293B'} stroke={btn.danger ? '#DC2626' : '#475569'} strokeWidth={fs * 0.08} />
+                <text x={bx} y={hz + fs * 0.05} textAnchor="middle" dominantBaseline="central" fontSize={fs * 0.85} fill={btn.danger ? '#FCA5A5' : '#F8FAFC'} fontWeight={600} fontFamily="Instrument Sans, Segoe UI, sans-serif" pointerEvents="none">{btn.icon}</text>
+              </g>
+            );
+          })}
+          {hud.tag && (() => {
+            const tx = startX + btns.length * (bDia + gap);
+            return (
+              <g key="hud-tag" pointerEvents="none">
+                <rect x={tx} y={hz - bRad * 0.75} width={tagW} height={bRad * 1.5} rx={bRad * 0.75} fill="#334155" stroke="#475569" strokeWidth={fs * 0.05} />
+                <text x={tx + tagW / 2} y={hz + fs * 0.04} textAnchor="middle" dominantBaseline="central" fontSize={fs * 0.65} fill="#E2E8F0" fontWeight={500} fontFamily="Instrument Sans, Segoe UI, sans-serif">{hud.tag}</text>
+              </g>
+            );
+          })()}
+        </g>
+      );
+    })()}
     {cursor && <text x={vb.x + vb.w - fs * .6} y={vb.y + vb.h - fs * .6} textAnchor="end" fontSize={fs * .8} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#5E636B" pointerEvents="none">{units === 'imperial' ? `x ${formatLength(cursor[0], 'imperial', lang)} · z ${formatLength(cursor[1], 'imperial', lang)}` : `x ${cursor[0].toFixed(2)} · z ${cursor[1].toFixed(2)} m`}</text>}
   </svg>);
 }
