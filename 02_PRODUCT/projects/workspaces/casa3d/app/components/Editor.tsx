@@ -1,5 +1,11 @@
 'use client';
 import StylePanel from './StylePanel';
+import TraceabilityPanel from './TraceabilityPanel';
+import DesignOptionsLab from './DesignOptionsLab';
+import ProjectHealthPanel from './ProjectHealthPanel';
+import ImpactModal from './ImpactModal';
+import { computeDesignImpact, type DesignImpact } from '@/core/impact-map';
+import { evaluateProjectHealth, type HealthAction } from '@/core/project-health';
 import { EditorSkeleton } from './Skeleton';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -88,12 +94,25 @@ export default function Editor({ id }: { id: string }){
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error' | 'conflict' | 'offline' | 'auth'>('saved'), baseRev = useRef<number | null>(null), saveRef = useRef<string>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
   const [showTech, setShowTech] = useState(true), [techKind, setTechKind] = useState<TechKind>('outlet_double');
   const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[]; discard?: () => void } | null>(null), [persistent, setPersistent] = useState(true), [demo, setDemo] = useState(false), [stage, setStageRaw] = useState<Stage>('survey'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
+  const [showLab, setShowLab] = useState(false), [showHealth, setShowHealth] = useState(false), [activeImpact, setActiveImpact] = useState<DesignImpact | null>(null);
   const paletteOpenRef = useRef(false), hist = useRef(new History<Snapshot>()), dragStart = useRef<Snapshot | null>(null), dragMark = useRef<HistoryMark | null>(null), timer = useRef<any>(null), latest = useRef<Snapshot | null>(null), [, force] = useState(0);
   // Se salvează casa întreagă (`house`); editorul lucrează pe nivelul ales (`snap`, o vedere din core/levels.ts),
   // iar fiecare modificare a vederii se pune la loc în casă cu mergeLevel.
   const L = house ? Math.min(lvl, floors(house).length - 1) : 0;
   const snap = useMemo(() => house ? levelView(house, L) : null, [house, L]);
-  const toastT = useRef<any>(null), say = (t: string) => { setToast(t); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(''), 6000); };
+  const health = useMemo(() => snap && catalog && mc ? evaluateProjectHealth(snap, catalog, mc) : null, [snap, catalog, mc]);
+  const labAlternatives = useMemo(() => {
+    const alts = [];
+    if (preview?.v?.candidate) {
+      alts.push({ id: 'preview-alt', title: preview.v.title || t('lab.currentProposal'), snapshot: preview.v.candidate });
+    }
+    if (catalog && snap) {
+      const relaid = autoLayout(snap, catalog);
+      alts.push({ id: 'auto-alt', title: t('lab.circulationOpt'), snapshot: relaid.snapshot });
+    }
+    return alts;
+  }, [preview, snap, catalog, t]);
+  const toastT = useRef<any>(null), say = (msg: string) => { setToast(msg); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(''), 6000); };
 
   useEffect(() => { Promise.all([fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/catalog').then(r => r.json()), fetch('/api/health').then(r => r.json()), fetch('/api/materials').then(r => r.json())])
     .then(([p, c, h, m]) => { setHouse(p.draft); latest.current = p.draft; baseRev.current = p.draftRev ?? null; setMeta(p.meta ?? { status: 'design' }); setCatalog(c); setMc(m); setRev(p.currentRevision); setPersistent(h.persistent); setDemo(!!h.demo); const st = readStash(store(), id); if (st){ stashOpen.current = true; setStash(st); } }).catch(() => say(t('editor.loadError')));
@@ -384,6 +403,29 @@ export default function Editor({ id }: { id: string }){
           : (['2d', 'split', '3d'] as const).map(vv => <button key={vv} className={`v-${vv}`} aria-pressed={view === vv} onClick={() => setView(vv)}>{vv === '2d' ? t('editor.view2d') : vv === '3d' ? '3D' : t('editor.viewSplit')}</button>)}
       </div>}
       <span className="prefs-inline"><PrefsSwitcher /></span>
+      {health && (
+        <button
+          type="button"
+          className="btn sm"
+          style={{
+            height: 32,
+            padding: '0 10px',
+            gap: 6,
+            borderRadius: '999px',
+            backgroundColor: health.score >= 85 ? 'var(--ok-soft)' : health.score >= 65 ? 'var(--warn-soft)' : 'var(--err-soft)',
+            borderColor: health.score >= 85 ? 'var(--ok)' : health.score >= 65 ? 'var(--warn)' : 'var(--err)',
+            color: health.score >= 85 ? 'var(--ok)' : health.score >= 65 ? 'var(--warn)' : 'var(--err)',
+            fontWeight: 600,
+          }}
+          title={t('health.scoreTitle')}
+          onClick={() => setShowHealth(true)}
+        >
+          <span>{health.score}%</span>
+          <small style={{ fontWeight: 400, opacity: 0.85 }}>
+            {t('health.short')}
+          </small>
+        </button>
+      )}
       <details className="tb-more"><summary className="btn ghost icon-btn" aria-label={t('editor.more')} title={t('editor.more')}><Icon name="more" /></summary><div className="tb-menu"><PrefsSwitcher /><button type="button" className="btn ghost" onClick={() => setHelp(true)}>{t('editor.shortcuts')}</button></div></details>
       </div>
       <button className="btn primary tb-save" disabled={revBusy} title={t('dlg.revBody')} onClick={() => { setRevBusy(true); flight.run('revision', saveRevision).finally(() => setRevBusy(false)); }}><span className="lbl">{t('editor.saveRevision')}</span><span className="lbl-s">{t('editor.saveShort')}</span></button>
@@ -507,8 +549,45 @@ export default function Editor({ id }: { id: string }){
             onVariant={vid => changePiece(selPl.id, q => { q.variantId = vid; }, t('editor.variantNoFit'))} />}
         </>}
         {stage === 'concept' && !showSel && <>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
+            <button
+              type="button"
+              className="btn primary sm"
+              onClick={() => setShowLab(true)}
+            >
+              {t('lab.openBtn')}
+            </button>
+            <button
+              type="button"
+              className="btn sm"
+              onClick={() => {
+                if (house && catalog && mc) {
+                  const impact = computeDesignImpact(house, snap, catalog, mc);
+                  setActiveImpact(impact);
+                }
+              }}
+            >
+              {t('impact.openBtn')}
+            </button>
+          </div>
           {house && <StylePanel house={house} cat={catalog} mc={mc} cur={cur} onApply={(h, id) => { commitHouse(h); say(t('style.applied', { name: t(`style.${id}`) })); }} />}
           <button className="btn" onClick={async () => { if (!(await askConfirm({ title: t('dlg.autoTitle'), body: t('editor.autoConfirm'), confirmLabel: t('dlg.autoOk') }))) return; const r = autoLayout(snap, catalog); commit(r.snapshot); say(r.notFit.length ? t('editor.notFit', { list: r.notFit.map(n => t('editor.notFitItem', { key: n.key, room: n.room })).join(', ') }) : t('editor.autoApplied')); }}>{t('editor.autoAll')}</button>
+          {catalog && mc && (
+            <TraceabilityPanel
+              snap={snap}
+              catalog={catalog}
+              mc={mc}
+              onFocus={target => {
+                if (target.kind === 'placement') {
+                  setStageRaw('ffe');
+                  setSel({ kind: 'placement', id: target.id });
+                } else if (target.kind === 'room') {
+                  setStageRaw('survey');
+                  setSel({ kind: 'room', id: target.id });
+                }
+              }}
+            />
+          )}
         </>}
         {stage === 'concept' && !showSel && <DesignPanel id={id} snap={snap} say={say} cur={cur} flush={flushDraft} onBrief={onBrief} onPreview={(v: any, pid: string | null) => setPreview(v && pid ? { v, pid } : null)} onApplied={onApplied} />}
         {stage === 'concept' && !showSel && <TwinDesignPanel id={id} snap={snap} catalog={catalog} say={say} flush={flushDraft} onSelect={s => { setStageRaw(s.kind === 'placement' ? 'ffe' : 'survey'); setSel(s); }} onPreview={(s: Snapshot | null, label: string | null) => setPreview(s && label ? { v: { candidate: s, title: label, tier: 'twin-' + label }, pid: 'twin' } : null)} onApplied={onApplied} />}
@@ -531,6 +610,79 @@ export default function Editor({ id }: { id: string }){
       </aside>
     </div>}
     {toast && <div className={`toast ${compact ? "above-sheet" : ""}`} role="status" aria-live="polite" onMouseEnter={() => clearTimeout(toastT.current)} onMouseLeave={() => { toastT.current = setTimeout(() => setToast(""), 3000); }}><span>{toast}</span><button type="button" className="toast-x" aria-label={t("common.close")} onClick={() => setToast("")}><Icon name="close" size={16} /></button></div>}
+    {showLab && snap && catalog && mc && (
+      <DesignOptionsLab
+        baseSnap={snap}
+        alternatives={labAlternatives}
+        catalog={catalog}
+        mc={mc}
+        onApply={(optSnap, title) => {
+          commit(optSnap);
+          say(t('lab.appliedToast', { title }));
+        }}
+        onClose={() => setShowLab(false)}
+      />
+    )}
+    {showHealth && snap && catalog && mc && (
+      <div
+        role="dialog"
+        aria-modal="true"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 100,
+          backgroundColor: 'rgba(25, 24, 22, 0.72)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 20,
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: 12,
+            maxWidth: 580,
+            width: '100%',
+            padding: 20,
+            boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+            position: 'relative',
+            maxHeight: '85vh',
+            overflowY: 'auto',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <h3 style={{ margin: 0, fontSize: 'var(--fs-md)' }}>
+              {t('health.cockpit')}
+            </h3>
+            <button type="button" className="btn ghost sm" onClick={() => setShowHealth(false)}>
+              <Icon name="close" size={18} />
+            </button>
+          </div>
+          <ProjectHealthPanel
+            snap={snap}
+            catalog={catalog}
+            mc={mc}
+            onAction={act => {
+              if (act.stageTarget) setStageRaw(act.stageTarget as any);
+              if (act.targetKind === 'placement' && act.targetId) {
+                setSel({ kind: 'placement', id: act.targetId });
+              } else if (act.targetKind === 'room' && act.targetId) {
+                setSel({ kind: 'room', id: act.targetId });
+              }
+              setShowHealth(false);
+            }}
+          />
+        </div>
+      </div>
+    )}
+    {activeImpact && (
+      <ImpactModal
+        impact={activeImpact}
+        onClose={() => setActiveImpact(null)}
+      />
+    )}
   </div>);
 }
 
