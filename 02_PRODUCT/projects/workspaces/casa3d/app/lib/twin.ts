@@ -19,7 +19,7 @@ export function snapshotToTwin(snap: Snapshot, cat: Catalog, twinId = 'project')
   const t = emptyTwin(twinId);
   const h = snap.floor.ceilingHeight || 2.6;
   t.rooms = snap.floor.rooms.map((r): Room => ({ id: r.id, name: r.name, height: h,
-    polygon: [{ x: r.rect.x0, y: r.rect.z0 }, { x: r.rect.x1, y: r.rect.z0 }, { x: r.rect.x1, y: r.rect.z1 }, { x: r.rect.x0, y: r.rect.z1 }] }));
+    polygon: (r.boundary && r.boundary.length >= 3 ? r.boundary.map(([x, z]) => ({ x, y: z })) : [{ x: r.rect.x0, y: r.rect.z0 }, { x: r.rect.x1, y: r.rect.z0 }, { x: r.rect.x1, y: r.rect.z1 }, { x: r.rect.x0, y: r.rect.z1 }]) }));
   t.walls = snap.floor.walls.map((w): Wall => ({ id: w.id, a: { x: w.a[0], y: w.a[1] }, b: { x: w.b[0], y: w.b[1] }, thickness: w.thickness, roomIds: [] }));
   t.openings = snap.floor.walls.flatMap(w => w.openings.map((o): Opening => ({ id: o.id, kind: o.kind, wallId: w.id, offset: o.offset, width: o.width,
     clearDepth: o.kind === 'door' ? DOOR_CLEAR_DEPTH : 0, sillHeight: o.kind === 'window' ? WINDOW_SILL : 0 })));
