@@ -13,6 +13,7 @@ import { intlLocale } from '@/lib/i18n';
 import PrefsSwitcher from '@/components/PrefsSwitcher';
 import PlanThumb from '@/components/PlanThumb';
 import PhoneAccess from '@/components/PhoneAccess';
+import ImportExistingProject from '@/components/ImportExistingProject';
 import TasksPanel from '@/components/TasksPanel';
 import StudioProfileForm from '@/components/StudioProfileForm';
 import { PROJECT_STATUSES, daysLeft, type ProjectStatus } from '../core/project-meta';
@@ -89,6 +90,7 @@ export default function Home(){
           <button className="btn" onClick={() => restore(x.id)}>{t('home.restore')}</button><button className="btn danger" onClick={() => purge(x)}>{t('home.purge')}</button></li>)}</ul></details>}
     </section>
     {list !== null && <TasksPanel projects={(list ?? []).map(p => ({ id: p.id, name: p.name }))} />}
+    <ImportExistingProject projectName={name} />
     <section className="project-create">
       <div className="home-sec"><h2>{t('home.newProject')}</h2></div>
       <div className="new"><label className="f"><span>{t('home.nameAria')}</span><input id="new-project-name" type="text" value={name} placeholder={t('home.defaultName')} onChange={e => setName(e.target.value)} maxLength={120} /></label></div>
