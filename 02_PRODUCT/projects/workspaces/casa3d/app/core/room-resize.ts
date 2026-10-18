@@ -13,6 +13,7 @@ import type { Floor, Issue, Opening, Room, RoomRect, Wall } from './types';
 import { r3, wallLength } from './geometry';
 import { validateFloor } from './validate';
 import { clampEdge, edgeGroup, spanOf, MIN_ROOM_M } from './room-neighbours';
+import { transformBoundary } from './room-geometry';
 
 const TOL = .03, EPS = .01;
 /** Lungimea minimă a unui perete, aceeași ca în validateFloor (WALL_TOO_SHORT). */
@@ -154,7 +155,7 @@ export function resizeRoom(floor: Floor, roomId: string, rect: RoomRect, newId: 
     // un perete schimbat, fără goluri, care a ajuns sub 20 cm (de ex. bucata de închidere când camera revine) dispare
     .filter(w => original.has(w) || w.openings.length > 0 || wallLength(w.a, w.b) >= MIN_WALL_M - 1e-9)
     .map(w => original.has(w) ? w : fitOpenings(w));
-  const result: Floor = { ...floor, walls, rooms: floor.rooms.map(r => r.id === roomId ? { ...r, rect: next } : moved(r) ? { ...r, rect: rects.get(r.id)! } : r) };
+  const result: Floor = { ...floor, walls, rooms: floor.rooms.map(r => { const nr = r.id === roomId ? next : moved(r) ? rects.get(r.id)! : r.rect; if (nr === r.rect) return r; return { ...r, rect: nr, ...(r.boundary ? { boundary: transformBoundary(r.boundary, r.rect, nr) } : {}) }; }) };
   // plasa de siguranță: nicio eroare nouă de perete sau de gol (cele existente dinainte nu blochează)
   const before = new Set(validateFloor(floor).filter(i => i.severity === 'ERROR').map(issueKey));
   const fresh = validateFloor(result).find(i => i.severity === 'ERROR' && !before.has(issueKey(i)));
