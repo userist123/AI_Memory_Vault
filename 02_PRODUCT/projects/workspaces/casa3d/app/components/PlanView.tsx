@@ -21,12 +21,16 @@ import { resizeRoom, RoomResizeError } from '@/core/room-resize';
 import { MIN_ROOM_M, type EdgeKey } from '@/core/room-neighbours';
 import { edgeHandleAt, edgeHandlePoint } from '@/core/room-edit';
 
-export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'measure' | 'tech';
-export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
+export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'measure' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair';
+export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
 type Phase = 'start' | 'move' | 'end';
 interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severities: Record<string, Severity>;
   onSelect(s: Sel): void; onEdit(fn: (s: Snapshot) => void, phase: Phase): void; onAddWall(a: [number, number], b: [number, number]): void;
   onAddRoom(r: { x0: number; z0: number; x1: number; z1: number }): void; onAddOpening(wallId: string, offset: number, kind: 'door' | 'window'): void;
+  onAddColumn?(x: number, z: number, shape?: 'rect' | 'round'): void;
+  onAddBeam?(a: [number, number], b: [number, number]): void;
+  onAddGlassWall?(a: [number, number], b: [number, number]): void;
+  onAddStairAt?(x: number, z: number): void;
   calib?: Calib | null; onCalibPick?(a: [number, number], b: [number, number]): void;
   showTech?: boolean; onTechAt?(x: number, z: number): void;
   /** golurile din placă ale acestui nivel (scările care urcă de dedesubt) */
@@ -84,6 +88,10 @@ export default function PlanView(p: Props){
     if (e.button !== 0) return; const pt = toWorld(e);
     if (p.calib?.stage === 'pick'){ const q: [number, number] = [r3(pt[0]), r3(pt[1])]; if (!calA) setCalA(q); else if (Math.hypot(q[0] - calA[0], q[1] - calA[1]) > .05){ p.onCalibPick?.(calA, q); setCalA(null); } return; }
     if (p.tool === 'tech'){ p.onTechAt?.(pt[0], pt[1]); return; }
+    if (p.tool === 'column'){ const s = snapPoint(pt, floor); p.onAddColumn?.(s[0], s[1]); return; }
+    if (p.tool === 'beam'){ const s = snapPoint(pt, floor); if (!preview) setPreview({ a: s, b: s }); else { const b = ortho(preview.a, snapPoint(pt, floor)); if (wallLength(preview.a, b) >= .2) p.onAddBeam?.(preview.a, b); setPreview({ a: b, b }); } return; }
+    if (p.tool === 'glass_wall'){ const s = snapPoint(pt, floor); if (!preview) setPreview({ a: s, b: s }); else { const b = ortho(preview.a, snapPoint(pt, floor)); if (wallLength(preview.a, b) >= .2) p.onAddGlassWall?.(preview.a, b); setPreview({ a: b, b }); } return; }
+    if (p.tool === 'stair'){ const s = snapPoint(pt, floor); p.onAddStairAt?.(s[0], s[1]); return; }
     if (p.tool === 'measure'){ const s = snapPoint(pt, floor); setRuler(r => r && !r.b ? { a: r.a, b: s } : { a: s, b: null }); return; }
     if (p.tool === 'wall'){ const s = snapPoint(pt, floor); if (!preview) setPreview({ a: s, b: s }); else { const b = ortho(preview.a, snapPoint(pt, floor)); if (wallLength(preview.a, b) >= .2) p.onAddWall(preview.a, b); setPreview({ a: b, b }); } return; }
     if (p.tool === 'room'){ const s: [number, number] = [snapG(pt[0]), snapG(pt[1])]; setRoomDraft({ a: s, b: s }); svg.current!.setPointerCapture(e.pointerId); return; }
@@ -106,7 +114,7 @@ export default function PlanView(p: Props){
     const pt = toWorld(e); setCursor(pt);
     if (pan.current){ const s = svg.current!.getScreenCTM()!, k = 1 / s.a; setVb({ ...pan.current.vb, x: pan.current.vb.x - (e.clientX - pan.current.x) * k, y: pan.current.vb.y - (e.clientY - pan.current.y) * k }); return; }
     if (ruler && !ruler.b) { setRulerHover(snapPoint(pt, floor)); }
-    if (preview && p.tool === 'wall'){ setPreview({ a: preview.a, b: ortho(preview.a, snapPoint(pt, floor)) }); return; }
+    if (preview && (p.tool === 'wall' || p.tool === 'beam' || p.tool === 'glass_wall')){ setPreview({ a: preview.a, b: ortho(preview.a, snapPoint(pt, floor)) }); return; }
     if (roomDraft){ setRoomDraft({ a: roomDraft.a, b: [snapG(pt[0]), snapG(pt[1])] }); return; }
     const d = drag.current; if (!d) return;
     const dx = pt[0] - d.start[0], dz = pt[1] - d.start[1]; if (!d.moved && Math.hypot(dx, dz) < .03) return;
@@ -118,6 +126,9 @@ export default function PlanView(p: Props){
       else if (d.kind === 'placement'){ const a = o.placements.find(x => x.id === d.id)!, b = s.placements.find(x => x.id === d.id)!; b.x = snapG(a.x + dx); b.z = snapG(a.z + dz);
         const room = s.floor.rooms.find(r => b.x >= r.rect.x0 && b.x <= r.rect.x1 && b.z >= r.rect.z0 && b.z <= r.rect.z1); if (room) b.roomId = room.id; b.source = 'manual'; }
       else if (d.kind === 'stair'){ const a = o.floor.stairs?.find(x => x.id === d.id), b = s.floor.stairs?.find(x => x.id === d.id); if (a && b){ b.x = snapG(a.x + dx); b.z = snapG(a.z + dz); } }
+      else if (d.kind === 'column'){ const a = o.floor.columns?.find(x => x.id === d.id), b = s.floor.columns?.find(x => x.id === d.id); if (a && b){ b.x = snapG(a.x + dx); b.z = snapG(a.z + dz); } }
+      else if (d.kind === 'beam'){ const a = o.floor.beams?.find(x => x.id === d.id), b = s.floor.beams?.find(x => x.id === d.id); if (a && b){ const ddx = snapG(dx), ddz = snapG(dz); b.a = [r3(a.a[0] + ddx), r3(a.a[1] + ddz)]; b.b = [r3(a.b[0] + ddx), r3(a.b[1] + ddz)]; } }
+      else if (d.kind === 'glass_wall'){ const a = o.floor.glassWalls?.find(x => x.id === d.id), b = s.floor.glassWalls?.find(x => x.id === d.id); if (a && b){ const ddx = snapG(dx), ddz = snapG(dz); b.a = [r3(a.a[0] + ddx), r3(a.a[1] + ddz)]; b.b = [r3(a.b[0] + ddx), r3(a.b[1] + ddz)]; } }
       else if (d.kind === 'room'){ const a = o.floor.rooms.find(x => x.id === d.id)!.rect, b = s.floor.rooms.find(x => x.id === d.id)!; const ddx = snapG(dx), ddz = snapG(dz);
         b.rect = { x0: r3(a.x0 + ddx), x1: r3(a.x1 + ddx), z0: r3(a.z0 + ddz), z1: r3(a.z1 + ddz) }; if (a && b.boundary) b.boundary = b.boundary.map(([x, z]) => [r3(x + ddx), r3(z + ddz)]); }
       // latura camerei alese: camera se redimensionează din dreptunghiul de la începutul tragerii, cu vecinii care împart latura
@@ -200,6 +211,49 @@ export default function PlanView(p: Props){
         <text x={mid[0]} y={mid[1] + fs * .3} textAnchor="middle" fontSize={fs * .78} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={sel ? '#B8432C' : '#3D343B'} stroke="#FFFDF8" strokeWidth={fs * .18} strokeLinejoin="round" paintOrder="stroke" pointerEvents="none">{wl(L)}</text>
         {sel && ([['a', w.a], ['b', w.b]] as const).map(([end, pt]) => <circle key={end} data-k="handle" data-w={w.id} data-end={end} data-id={w.id} cx={pt[0]} cy={pt[1]} r={fs * .6} fill="#fff" stroke="#8B6A45" strokeWidth={.03} style={{ cursor: 'grab' }} />)}
       </g>); })}
+    {/* Grinzi sub tavan */}
+    {(floor.beams || []).map(bm => {
+      const bs = isSel('beam', bm.id);
+      const L = wallLength(bm.a, bm.b);
+      const mid = [(bm.a[0] + bm.b[0]) / 2, (bm.a[1] + bm.b[1]) / 2];
+      return (<g key={bm.id} data-k="beam" data-id={bm.id} style={{ cursor: 'pointer' }}>
+        <title>{t('tool.beam')} ({Math.round(bm.width * 100)}×{Math.round(bm.depth * 100)} cm)</title>
+        <line x1={bm.a[0]} y1={bm.a[1]} x2={bm.b[0]} y2={bm.b[1]} stroke={bs ? '#8B6A45' : '#718096'} strokeWidth={bm.width} strokeDasharray=".12 .06" strokeOpacity={.75} />
+        <text x={mid[0]} y={mid[1] - fs * .3} textAnchor="middle" fontSize={fs * .65} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={bs ? '#8B6A45' : '#4A5568'} pointerEvents="none">{t('tool.beam')} {Math.round(bm.width * 100)}×{Math.round(bm.depth * 100)}</text>
+      </g>);
+    })}
+    {/* Pereți vitrați / Compartimentări sticlă */}
+    {(floor.glassWalls || []).map(gw => {
+      const gs = isSel('glass_wall', gw.id);
+      const L = wallLength(gw.a, gw.b);
+      const ux = L > 0.01 ? (gw.b[0] - gw.a[0]) / L : 1, uz = L > 0.01 ? (gw.b[1] - gw.a[1]) / L : 0, nx = -uz, nz = ux;
+      const mullions = gw.mullions ?? Math.max(1, Math.round(L / 0.9));
+      return (<g key={gw.id} data-k="glass_wall" data-id={gw.id} style={{ cursor: 'pointer' }}>
+        <title>{t('tool.glass_wall')}</title>
+        <line x1={gw.a[0]} y1={gw.a[1]} x2={gw.b[0]} y2={gw.b[1]} stroke="#93C5FD" strokeWidth={gw.thickness} strokeOpacity={.65} />
+        <line x1={gw.a[0] + nx * gw.thickness * .45} y1={gw.a[1] + nz * gw.thickness * .45} x2={gw.b[0] + nx * gw.thickness * .45} y2={gw.b[1] + nz * gw.thickness * .45} stroke={gs ? '#2563EB' : '#1E293B'} strokeWidth={.015} pointerEvents="none" />
+        <line x1={gw.a[0] - nx * gw.thickness * .45} y1={gw.a[1] - nz * gw.thickness * .45} x2={gw.b[0] - nx * gw.thickness * .45} y2={gw.b[1] - nz * gw.thickness * .45} stroke={gs ? '#2563EB' : '#1E293B'} strokeWidth={.015} pointerEvents="none" />
+        {Array.from({ length: mullions + 1 }, (_, mi) => {
+          const fr = mi / mullions;
+          const px = gw.a[0] + (gw.b[0] - gw.a[0]) * fr, pz = gw.a[1] + (gw.b[1] - gw.a[1]) * fr;
+          return <line key={mi} x1={px - nx * gw.thickness * .45} y1={pz - nz * gw.thickness * .45} x2={px + nx * gw.thickness * .45} y2={pz + nz * gw.thickness * .45} stroke={gs ? '#2563EB' : '#1E293B'} strokeWidth={.018} pointerEvents="none" />;
+        })}
+      </g>);
+    })}
+    {/* Stâlpi / Coloane structurale */}
+    {(floor.columns || []).map(col => {
+      const cs = isSel('column', col.id);
+      return (<g key={col.id} data-k="column" data-id={col.id} style={{ cursor: 'move' }}>
+        <title>{t('tool.column')} ({Math.round(col.w * 100)}×{Math.round(col.d * 100)} cm)</title>
+        {col.shape === 'round' ? (
+          <circle cx={col.x} cy={col.z} r={col.w / 2} fill="#3D343B" stroke={cs ? '#8B6A45' : '#1A141C'} strokeWidth={cs ? .04 : .02} />
+        ) : (
+          <rect x={col.x - col.w / 2} y={col.z - col.d / 2} width={col.w} height={col.d} fill="#3D343B" stroke={cs ? '#8B6A45' : '#1A141C'} strokeWidth={cs ? .04 : .02} />
+        )}
+        <line x1={col.x - col.w * .35} y1={col.z - col.d * .35} x2={col.x + col.w * .35} y2={col.z + col.d * .35} stroke="#E2E8F0" strokeWidth={.015} pointerEvents="none" />
+        <line x1={col.x - col.w * .35} y1={col.z + col.d * .35} x2={col.x + col.w * .35} y2={col.z - col.d * .35} stroke="#E2E8F0" strokeWidth={.015} pointerEvents="none" />
+      </g>);
+    })}
     {/* mânerele laturilor camerei alese (deasupra pereților); zona de apucare are ~44 px, pentru degete */}
     {p.tool === 'select' && floor.rooms.filter(r => isSel('room', r.id)).map(r => (['x0', 'x1', 'z0', 'z1'] as const).map(k => {
       // mânerul stă pe cea mai lungă porțiune a laturii fără uși / ferestre; dacă golurile acoperă toată latura, e decalat perpendicular în afara camerei

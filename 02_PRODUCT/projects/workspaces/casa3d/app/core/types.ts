@@ -10,7 +10,15 @@ export interface Opening { id: string; kind: 'door' | 'window'; offset: number; 
 export interface Wall { id: string; a: [number, number]; b: [number, number]; thickness: number; exterior: boolean; openings: Opening[] }
 /** Scară dreaptă pe un nivel, care urcă la nivelul următor (centrul x/z, lățime și lungime în m, rotație în multipli de 90°). */
 export interface Stair { id: string; x: number; z: number; width: number; length: number; rotation: number }
-export interface Floor { id: string; name: string; ceilingHeight: number; rooms: Room[]; walls: Wall[]; stairs?: Stair[] }
+/** Stâlp / coloană structurală (dreptunghiular sau rotund, poziție x/z, dimensiuni w/d în m). */
+export interface Column { id: string; x: number; z: number; w: number; d: number; shape: 'rect' | 'round'; rotation?: number; material?: string }
+/** Grindă structurală sub tavan (de la a la b, lățime și înălțime/drop în m). */
+export interface Beam { id: string; a: [number, number]; b: [number, number]; width: number; depth: number }
+/** Perete vitrat / compartimentare din sticlă cu profile metalice. */
+export interface GlassWall { id: string; a: [number, number]; b: [number, number]; thickness: number; mullions?: number; frameColor?: string }
+/** Nișă încastrată în perete. */
+export interface Niche { id: string; wallId: string; offset: number; width: number; height: number; depth: number; elevation: number }
+export interface Floor { id: string; name: string; ceilingHeight: number; rooms: Room[]; walls: Wall[]; stairs?: Stair[]; columns?: Column[]; beams?: Beam[]; glassWalls?: GlassWall[]; niches?: Niche[] }
 /** `size` (cm) = piesă pe comandă cu altă dimensiune decât varianta din catalog; prețul ei devine necunoscut. */
 export interface FurniturePlacement { id: string; roomId: string; group: string; variantId: string; x: number; z: number; rotation: number; source: 'auto' | 'manual'; size?: { w: number; d: number; h: number } }
 /** Culoare (hex #rrggbb) și, unde modelul permite, material; lipsa înseamnă aspectul implicit. */

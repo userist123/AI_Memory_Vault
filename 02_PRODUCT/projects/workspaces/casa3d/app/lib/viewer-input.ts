@@ -40,5 +40,8 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   snap.floor.walls.forEach((w, wi) => w.openings.forEach((o, oi) => { if (o.kind !== 'door') return; const g = plan.pereti[wi]?.goluri[oi]; if (g) g.sw = doorSwing(snap.floor, wi, oi); }));
   // corpurile de iluminat plasate (culoarea: aleasă, a produsului, sau negru)
   const lumini = allFixturePoints(snap, catalog, snap.floor.rooms, finishesOf).map(f => ({ kind: f.kind, x: f.x, z: f.z, y: f.y, nx: f.nx, nz: f.nz, len: f.len, alongX: f.alongX, top: f.top, color: f.color ?? (mc ? materialOf(mc, f.material)?.specs?.color : undefined) ?? '#1c1c1c' }));
-  return { plan: { ...plan, scari, lumini, goluriPlaca: extra.voids ?? [] }, items };
+  const stalpi = snap.floor.columns ?? [];
+  const grinzi = snap.floor.beams ?? [];
+  const peretiSticla = snap.floor.glassWalls ?? [];
+  return { plan: { ...plan, scari, lumini, stalpi, grinzi, peretiSticla, goluriPlaca: extra.voids ?? [] }, items };
 }

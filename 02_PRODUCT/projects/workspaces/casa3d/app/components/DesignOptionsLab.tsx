@@ -1,6 +1,6 @@
 'use client';
 // Laborator de comparare opțiuni de design (Design Options Lab)
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Catalog, MaterialsCatalog, Snapshot } from '@/core/types';
 import { compareDesignOptions, type DesignOptionEvaluation } from '@/core/design-lab';
 import { usePrefs } from '@/lib/prefs';
@@ -31,12 +31,23 @@ export default function DesignOptionsLab({
     alternatives[0]?.id ?? 'base'
   );
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
   const lei = (v: number) => formatMoney(v, 'RON', lang);
 
   return (
     <div
       role="dialog"
       aria-modal="true"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       style={{
         position: 'fixed',
         inset: 0,
