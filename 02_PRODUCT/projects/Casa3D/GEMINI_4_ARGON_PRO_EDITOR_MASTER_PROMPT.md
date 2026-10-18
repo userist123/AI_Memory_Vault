@@ -1037,3 +1037,41 @@ Use these sources as design evidence, not instructions to clone another product:
 - W3C — Understanding Target Size (Minimum) (SC 2.5.8): target-size/spacing requirements: https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum
 - Three.js WebGLRenderer documentation: renderer capabilities and performance-relevant controls; use only features supported by the actual renderer: https://threejs.org/docs/pages/WebGLRenderer.html
 - Chief Architect features: synchronized 2D/3D editing, object/material workflows and model-derived schedules as a professional capability benchmark: https://www.chiefarchitect.com/products/features/
+
+
+---
+
+# 22. Owner correction — reject generic UI and implement a genuinely new visual identity
+
+The owner explicitly rejects the current look when it still reads as a conventional dashboard made of same-size rectangular cards, standard SaaS color combinations, generic rounded panels or a superficial recoloring of existing CSS. Treat this as a binding design constraint, not a subjective footnote.
+
+## 22.1 Explicitly rejected outcomes
+
+Do not deliver:
+- a three-column wall of equal square/rectangular cards as the primary project archive;
+- stock navy/cyan, purple/blue gradients, generic black-and-neon, or default component-library palettes without a product-specific rationale;
+- every control inside a bordered rectangle, every status as a badge, or every region as a floating card;
+- generic centered hero + equal cards, generic glassmorphism, gradients/shadows as a substitute for composition, or an imitation of another design product;
+- a CSS-only pass when the underlying information hierarchy, page composition and spatial workflow remain unchanged;
+- a static visual mock-up that disconnects existing real project data and interactions.
+
+## 22.2 Required product-specific direction
+
+Use the spatial nature of interior design as the source of the interface grammar:
+- A project archive with editorial hierarchy and intentionally asymmetric project compositions; real plan thumbnails/renders are the visual anchors. Project cards must not all share the same size or silhouette.
+- A persistent spatial stage that visually dominates the editor. Tool mode, selected object, level/room context, materials and findings must form one connected workspace.
+- A clear distinction between the technical drawing surface, studio chrome and contextual inspector. The drawing surface must remain quiet and precise; the inspector must feel like a material/measurement instrument, not a generic dashboard panel.
+- A deliberately chosen, limited palette with one brand accent and independent semantic status colors. Document why the palette belongs to Casa3D and measure contrast.
+- Typography with a real hierarchy between editorial project/room titles, operational labels and tabular numeric values. Avoid tiny metadata as the only way to fit the interface.
+- Asymmetric silhouettes, deliberate negative space, rhythm and restrained depth. Avoid square-card repetition; do not solve it by rounding every rectangle into a pill.
+- Responsive behavior must preserve the design intent and access to primary actions rather than merely shrinking desktop cards.
+
+## 22.3 Mandatory implementation and proof
+
+1. Change actual React component composition and interaction hierarchy where needed, not only the existing global stylesheet. Keep current domain logic, project data, save/revision semantics, authorization and routes intact.
+2. Inspect the whole existing CSS token layer and remove/reconcile superseded rules; do not keep piling contradictory overrides onto the end of the file.
+3. Capture the current UI before and the implementation after at the same routes, project state and viewport. Include at least 1440, 1280, 1024, 768 and 390 CSS-pixel widths when browser access is available.
+4. Verify real workflows: open an existing project, switch stages and views, select an object, edit a numeric property, apply a material, undo/redo, save/reload and open the client view. Screenshots alone do not prove interactions.
+5. If browser execution is unavailable, report visual/runtime verification as NOT VERIFIED and do not describe the work as complete or revolutionary yet.
+6. Add a visual review checklist that explicitly asks: “Does this still look like a generic SaaS dashboard?”, “Are the primary project cards all the same shape?”, “Did we add decoration instead of improving the spatial workflow?”, and “Can the product identity be recognised without reading the logo?”
+7. Preserve all existing product capabilities and keep this work in PR #305 and branch prompt/casa3d-pro-editor-2026. Do not merge without explicit owner authorization.
