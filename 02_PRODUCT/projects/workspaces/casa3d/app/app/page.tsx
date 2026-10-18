@@ -63,12 +63,12 @@ export default function Home(){
   const daysTo = (iso: string) => Math.max(0, Math.ceil((Date.parse(iso) - Date.now()) / 864e5));
   const count = (f: typeof filter) => (list ?? []).filter(p => f === 'all' ? true : f === 'active' ? ACTIVE.includes(p.status) : p.status === f).length;
   const when = (d: string) => new Date(d).toLocaleDateString(intlLocale(lang), { day: 'numeric', month: 'short', year: 'numeric' });
-  return (<main className="home">
-    <header className="home-head"><span className="wordmark">Casa<b>3D</b></span><span className="home-sub">{t('home.studio')}</span><PrefsSwitcher /></header>
+  return (<main className="home studio-home" data-ui="spatial-studio">
+    <header className="home-head"><div className="brand-lockup"><span className="wordmark">Casa<b>3D</b></span><span className="home-sub">{t('home.studio')}</span></div><PrefsSwitcher /></header>
     {demo && <section className="demo-hero"><span className="kicker">{t('demo.kicker')}</span><h1>{t('demo.title')}</h1><p>{t('demo.lead')}</p>
       <ul>{['plan', 'products', 'finishes', 'budget', 'client', 'docs'].map(k => <li key={k}>{t(`demo.f.${k}`)}</li>)}</ul>
       <div className="row"><button className="btn primary" disabled={busy} onClick={() => create('demo')}>{t('demo.open')}</button><span className="muted">{t('demo.note')}</span></div></section>}
-    <section>
+    <section className="project-archive">
       <div className="home-sec"><h1>{t('home.projects')}</h1>{list && list.length > 0 && <span className="muted">{tp('home.count', list.length)}</span>}</div>
       {err && <p className="issue ERROR">{err}</p>}
       {list && list.length > 0 && <div className="filters" role="tablist">{(['active', 'all', ...PROJECT_STATUSES] as const).filter(f => f === 'active' || f === 'all' || count(f) > 0).map(f =>
@@ -89,7 +89,7 @@ export default function Home(){
           <button className="btn" onClick={() => restore(x.id)}>{t('home.restore')}</button><button className="btn danger" onClick={() => purge(x)}>{t('home.purge')}</button></li>)}</ul></details>}
     </section>
     {list !== null && <TasksPanel projects={(list ?? []).map(p => ({ id: p.id, name: p.name }))} />}
-    <section>
+    <section className="project-create">
       <div className="home-sec"><h2>{t('home.newProject')}</h2></div>
       <div className="new"><label className="f"><span>{t('home.nameAria')}</span><input id="new-project-name" type="text" value={name} placeholder={t('home.defaultName')} onChange={e => setName(e.target.value)} maxLength={120} /></label></div>
       <div className="tgrid" role="list" aria-label={t('home.templatesAria')}>
@@ -98,7 +98,7 @@ export default function Home(){
           <PlanThumb floor={tm.floor} label={tm.name[L]} /><b>{tm.name[L]}</b><small>{tp('home.rooms', tm.floor.rooms.length)} · {formatArea(floorArea(tm.floor), units, lang)}</small></button>)}
       </div>
     </section>
-    <section><StudioProfileForm /></section>
+    <section className="studio-settings"><StudioProfileForm /></section>
     {!demo && <PhoneAccess />}
   </main>);
 }
