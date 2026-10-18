@@ -40,8 +40,11 @@ export function traceRoomFromUnderlay(
   const z0 = r3(Math.min(bounds.z0, bounds.z1)), z1 = r3(Math.max(bounds.z0, bounds.z1));
   if (x1 - x0 < 0.6 || z1 - z0 < 0.6) throw new Error('Camera trasată trebuie să aibă cel puțin 60 cm pe fiecare latură.');
   const room: import('./types').Room = { id: roomSpec.id, name: roomSpec.name, type: roomSpec.type, rect: { x0, z0, x1, z1 } };
+  // Balcoanele sunt spații exterioare: nu inventăm patru pereți în jurul lor doar pentru că dreptunghiul de trasare
+  // are patru laturi. Pereții laterali, parapetul și tâmplăria se adaugă separat numai după confirmarea planului.
+  const isOpenBalcony = /^(balcon|balcony|terrace|teras[aă])$/i.test(roomSpec.type.trim());
   const pts: [[number, number], [number, number]][] = [[[x0, z0], [x1, z0]], [[x1, z0], [x1, z1]], [[x1, z1], [x0, z1]], [[x0, z1], [x0, z0]]];
-  const walls: import('./types').Wall[] = pts.map(([a, b], i) => ({
+  const walls: import('./types').Wall[] = isOpenBalcony ? [] : pts.map(([a, b], i) => ({
     id: `${wallIdPrefix}-${i + 1}`,
     a,
     b,

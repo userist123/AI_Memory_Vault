@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import catalogJson from '../data/catalog.v1.json';
 import { newSnapshot } from '../core/project';
 import { checkSnapshot, MAX_UNDERLAY_BYTES } from '../lib/repo';
-import { scaleFromPoints, anchorAfterScale, fitWithin } from '../core/underlay';
+import { scaleFromPoints, anchorAfterScale, fitWithin, traceRoomFromUnderlay } from '../core/underlay';
 import type { Catalog, Snapshot, Underlay } from '../core/types';
 const cat = catalogJson as unknown as Catalog;
 const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
@@ -37,4 +37,25 @@ test('calibrarea: distanța de pe imagine devine distanța reală', () => {
   // punctul de ancorare rămâne pe loc
   const [x, z] = anchorAfterScale({ x: 2, z: 1, widthM: 10 }, [4, 3], 20); assert.deepEqual([x, z], [0, -1]);
   assert.deepEqual(fitWithin(4000, 1000), { w: 2000, h: 500 }); assert.deepEqual(fitWithin(800, 600), { w: 800, h: 600 });
+});
+
+
+test('reconstrucția unui balcon nu inventează pereți sau tâmplărie', () => {
+  const traced = traceRoomFromUnderlay(
+    u({ confirmed: true }),
+    { x0: 0, z0: 0, x1: 3.13, z1: 2.2 },
+    { id: 'balcon-6', name: 'Balcon', type: 'balcon' },
+  );
+  assert.equal(traced.room.type, 'balcon');
+  assert.equal(traced.room.rect.x1, 3.13);
+  assert.deepEqual(traced.walls, [], 'spațiul rămâne deschis; parapetul/pereții se adaugă doar pe baza unor date confirmate');
+});
+
+test('camerele obișnuite păstrează pereții de contur la trasare', () => {
+  const traced = traceRoomFromUnderlay(
+    u({ confirmed: true }),
+    { x0: 0, z0: 0, x1: 3, z1: 2 },
+    { id: 'living-1', name: 'Living', type: 'living' },
+  );
+  assert.equal(traced.walls.length, 4);
 });
