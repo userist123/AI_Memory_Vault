@@ -110,3 +110,14 @@ Position Casa3D as a **spatial design instrument**: professional CAD precision, 
 ## Implementation decision
 
 The new requirements are appended to `GEMINI_4_ARGON_PRO_EDITOR_MASTER_PROMPT.md` as sections 20–21. Keep the implementation in PR #305 and its existing branch. Audit existing functionality before creating parallel systems, use a coherent P0 vertical slice, and do not merge without explicit authorization.
+
+
+## Implementation status — actual UI pass (2026-10-18)
+
+The first code-level visual redesign has now been committed on the same PR #305 branch:
+- File: `02_PRODUCT/projects/workspaces/casa3d/app/app/globals.css`
+- Commit: `48092ec8e2316dada87e779e2c5852f256d96aed`
+- Scope: scoped redesign of the project dashboard and editor chrome; graphite drafting-instrument surfaces, cyan active/selection accent, a deliberately light technical canvas, clearer status controls, contextual inspector styling, and responsive dashboard cards.
+- The change is CSS-only: no new product behavior or JSX restructuring is claimed in this pass.
+- **Runtime render verification: NOT VERIFIED.** No before/after browser screenshots or interaction trace have been captured in this environment. The Casa3D Build & Test workflow was still pending when checked. Do not mark the redesign accepted until desktop (1280px), intermediate (1024px) and mobile (375px) renders are inspected, keyboard/focus and contrast are checked, and the create/open/edit/save/reload flow is exercised.
+- Remaining design work: inspect actual screenshots, remove any conflicting legacy overrides, and make evidence-led structural changes to the editor layout where the render shows they are necessary. Do not call the current CSS pass a complete or revolutionary redesign yet.
