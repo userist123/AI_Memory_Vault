@@ -480,6 +480,35 @@ input[type=file]{font-size:var(--fs-xs);color:var(--lead)} input[type=file]::fil
 .print-index ol{list-style:none;margin:0;padding:0;columns:2;column-gap:14px;font-size:10.5px} .print-index li{display:flex;gap:8px;padding:2px 0;break-inside:avoid} .print-index li span{font-weight:600;min-width:20px}
 .print-revs table{border-collapse:collapse;font-size:12px} .print-revs td{border-bottom:1px solid var(--rule);padding:3px 10px 3px 0}
 @media screen{ .tblock{opacity:.75} }
+/* Cartuș arhitectural ISO 7200 / SR EN ISO 7200 / OAR */
+.arch-title-block{margin-top:14px;border:1.5px solid var(--ink);background:#fff;color:var(--ink);font-family:var(--sans);break-inside:avoid;box-sizing:border-box}
+.arch-tb-grid{display:grid;grid-template-columns:2fr 1fr;border-collapse:collapse}
+.arch-tb-cell{border-bottom:1px solid var(--ink);padding:4px 8px;box-sizing:border-box}
+.arch-tb-studio{border-right:1px solid var(--ink)}
+.arch-tb-proj{border-right:1px solid var(--ink)}
+.arch-tb-team-meta{grid-column:1 / -1;display:grid;grid-template-columns:1.5fr 2fr 1.5fr}
+.arch-tb-signatures{border-right:1px solid var(--ink);padding:4px 8px;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.arch-tb-sig-row{display:flex;justify-content:space-between;font-size:9px}
+.arch-tb-drawing{border-right:1px solid var(--ink);padding:4px 8px;display:flex;flex-direction:column;justify-content:center}
+.arch-tb-sheet-meta{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+.arch-tb-meta-box{padding:3px 6px;border-bottom:1px solid var(--ink);border-right:1px solid var(--ink);display:flex;flex-direction:column;justify-content:center}
+.arch-tb-meta-box:nth-child(2),.arch-tb-meta-box:nth-child(4){border-right:none}
+.arch-tb-meta-box:nth-child(3),.arch-tb-meta-box:nth-child(4){border-bottom:none}
+.arch-tb-sheet-num{background:rgba(0,0,0,.03)}
+.arch-tb-lbl{font-size:7.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--lead);font-weight:600;display:block;margin-bottom:1px}
+.arch-tb-lbl-inline{font-size:8px;text-transform:uppercase;letter-spacing:.05em;color:var(--lead);font-weight:600}
+.arch-tb-val{font-size:10px;font-weight:500;color:var(--ink)}
+.arch-tb-val-inline{font-size:9px;font-weight:600;color:var(--ink)}
+.arch-tb-val-bold{font-weight:600}
+.arch-tb-val-lg{font-size:11px;font-weight:700;color:var(--ink)}
+.arch-tb-val-xl{font-size:12px;font-weight:800;color:var(--ink)}
+.arch-tb-name{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.arch-tb-details{font-size:8px;color:var(--lead)}
+.arch-tb-studio-body{display:flex;gap:8px;align-items:center}
+.arch-tb-logo{max-height:24px;max-width:80px;object-fit:contain}
+.arch-title-block .tb-n::before{content:counter(sheet, decimal-leading-zero);font-style:normal}
+@media screen{.arch-title-block{opacity:.85;transition:opacity .2s}.arch-title-block:hover{opacity:1}}
+@media print{.arch-title-block{opacity:1 !important}}
 .print-figs .print-index h2,.print-figs .print-revs h2{font-size:15px;margin:14px 0 4px} .print-index li{padding:1px 0} .print-revs td{font-size:10.5px;padding:2px 8px 2px 0}
 /* Releveu pe șantier */
 .survey{display:grid;gap:8px;margin:14px 0;border-top:1px solid var(--rule);padding-top:12px} .survey h3{display:flex;gap:8px;align-items:center;margin:0}

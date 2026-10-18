@@ -515,7 +515,35 @@ export default function Editor({ id }: { id: string }){
         <div className="levelbar" role="tablist" aria-label={t('level.tabs')}>
           {floors(house!).map((_, i) => <button key={i} role="tab" aria-selected={i === L} className="btn" onClick={() => goLevel(i)}>{levelName(i)}</button>)}
           <button className="btn" onClick={onAddLevel} title={t('level.addTitle')} disabled={nLevels >= MAX_LEVELS}>{t('level.add')}</button></div>
-        {(view === '2d' || (view === 'split' && !compact)) && <div className="planwrap"><PlanView onKey={onPlanKey} showTech={showTech && !preview} onTechAt={(x, z) => { if (!snap || preview) return; const pt = placeTechPoint(snap, techKind, x, z); if (!pt){ say(t('tech.outside')); return; } mutate(s => { s.tech = [...(s.tech || []), pt]; }); say(t('tech.placed', { rn: snap.floor.rooms.find(r => r.id === pt.roomId)?.name ?? '' })); }} key={(preview ? 'p' + preview.v.tier : 'live') + L} voids={voids} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} sel={preview ? null : sel} tool={preview ? 'select' : tool} severities={preview ? {} : sev} onSelect={preview ? () => {} : (s: Sel) => { setSel(s); if (s && compact && sheet === 'peek') setSheet('half'); }} onEdit={preview ? () => {} : onEdit} onAddWall={preview ? () => {} : onAddWall} onAddRoom={preview ? () => {} : onAddRoom} onAddOpening={preview ? () => {} : onAddOpening} onAddColumn={preview ? undefined : onAddColumn} onAddBeam={preview ? undefined : onAddBeam} onAddGlassWall={preview ? undefined : onAddGlassWall} onAddStairAt={preview ? undefined : onAddStairAt} calib={preview ? null : calib} onCalibPick={(a, b) => setCalib({ stage: 'enter', a, b })} />
+        {(view === '2d' || (view === 'split' && !compact)) && <div className="planwrap"><PlanView
+          onKey={onPlanKey}
+          showTech={showTech && !preview}
+          onTechAt={(x, z) => { if (!snap || preview) return; const pt = placeTechPoint(snap, techKind, x, z); if (!pt){ say(t('tech.outside')); return; } mutate(s => { s.tech = [...(s.tech || []), pt]; }); say(t('tech.placed', { rn: snap.floor.rooms.find(r => r.id === pt.roomId)?.name ?? '' })); }}
+          key={(preview ? 'p' + preview.v.tier : 'live') + L}
+          voids={voids}
+          snap={preview ? shown(preview.v.candidate) : snap}
+          catalog={catalog}
+          sel={preview ? null : sel}
+          tool={preview ? 'select' : tool}
+          severities={preview ? {} : sev}
+          onSelect={preview ? () => {} : (s: Sel) => { setSel(s); if (s && compact && sheet === 'peek') setSheet('half'); }}
+          onEdit={preview ? () => {} : onEdit}
+          onAddWall={preview ? () => {} : onAddWall}
+          onAddRoom={preview ? () => {} : onAddRoom}
+          onAddOpening={preview ? () => {} : onAddOpening}
+          onAddColumn={preview ? undefined : onAddColumn}
+          onAddBeam={preview ? undefined : onAddBeam}
+          onAddGlassWall={preview ? undefined : onAddGlassWall}
+          onAddStairAt={preview ? undefined : onAddStairAt}
+          onRotateSelected={() => { if (!sel) return; if (sel.kind === 'placement') rotate(sel.id); else if (sel.kind === 'stair') rotateStair(sel.id); else if (sel.kind === 'column') rotateColumn(sel.id); }}
+          onDuplicateSelected={() => { if (sel?.kind === 'placement') duplicate(sel.id); }}
+          onDeleteSelected={del}
+          onToggleColumnShape={() => { if (sel?.kind === 'column') mutate(s => { const c = s.floor.columns?.find(x => x.id === sel.id); if (c) c.shape = c.shape === 'round' ? 'rect' : 'round'; }); }}
+          onAutoFurnishRoom={(roomId: string) => { const r = autoLayout(snap, catalog, { roomId }); commit(r.snapshot); say(r.notFit.length ? t('editor.someNotFit') : t('editor.roomAutoApplied', { room: snap.floor.rooms.find(x => x.id === roomId)?.name ?? '' })); }}
+          onSplitRoom={(roomId: string, axis: 'x' | 'z') => { const r = snap.floor.rooms.find(x => x.id === roomId); if (!r) return; try { const mid = axis === 'x' ? r3((r.rect.x0 + r.rect.x1) / 2) : r3((r.rect.z0 + r.rect.z1) / 2), nid = `room-${uid().slice(0, 8)}`, nf = splitRoom(snap.floor, r.id, axis, mid, { id: nid, name: `${r.name} B`, type: r.type }, newWallId()); mutate(s => { s.floor = nf; }); } catch (e: any) { say(e?.message || 'Error'); } }}
+          calib={preview ? null : calib}
+          onCalibPick={(a, b) => setCalib({ stage: 'enter', a, b })}
+        />
           {!preview && !snap.floor.rooms.length && !snap.floor.walls.length && tool !== 'room' && tool !== 'wall' && <EmptyState className="plan-empty" title={t('empty.plan.title')} text={t('empty.plan.text')} action={{ label: t('empty.plan.action'), onClick: drawRooms }} />}
           <p className="sr-only" aria-live="polite">{selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'column' ? t('editor.hintColumn') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : t('editor.hintSelect')}</div></div>}
         {(view === '3d' || (view === 'split' && !compact)) && <Viewer3D projectId={id} voids={voids} mc={mc} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })} />}
