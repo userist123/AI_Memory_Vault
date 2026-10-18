@@ -930,8 +930,8 @@ label.f select,label.f input,label.f textarea,.side select{color:var(--ink);font
    The selected object/active mode uses the single brand accent; semantic status colours remain separate. */
 .home{
   --bg:#F1EDE5;--bg-2:#E7E0D6;--surface:#FBF8F1;--surface-2:#FFFDF8;
-  --ink:#241B24;--ink-2:#4C404B;--ink-3:#746873;--ink-num:#655962;
-  --line:#DCD1C8;--line-strong:#BEB0A7;--accent:#E85B45;--accent-soft:#F7E3DC;
+  --ink:#241B24;--ink-2:#4C404B;--ink-3:#62545F;--ink-num:#655962;
+  --line:#DCD1C8;--line-strong:#BEB0A7;--accent:#F06A53;--accent-soft:#F7E3DC;
   --ok:#2F6853;--ok-soft:#E0EEE5;--warn:#86551D;--warn-soft:#F5E8CE;
   --err:#A33E3A;--err-soft:#F6E2DF;--focus:#B83B2C;
   --paper:var(--bg);--paper-2:var(--bg-2);--graphite:var(--ink);--lead:var(--ink-3);--rule:var(--line);
@@ -1063,7 +1063,7 @@ label.f select,label.f input,label.f textarea,.side select{color:var(--ink);font
 .ws .stagebar button:hover{background:transparent;color:#FFF8F1}
 .ws .stagebar button[aria-current=step]{color:#FFF8F1;background:transparent}
 .ws .stagebar button[aria-current=step]:after{background:var(--accent);height:3px;border-radius:999px}
-.ws .stagebar button i{color:#8F7D8F}
+.ws .stagebar button i{color:#B1A0AF}
 .ws .stagebar button[aria-current=step] i{color:#F5A08E}
 .ws .stage-step{background:transparent;color:#C6B7C4;border:0;border-radius:50%}
 .ws .stage-step:hover:not(:disabled){background:#3A2D3B;color:#FFF8F1}
@@ -1082,27 +1082,27 @@ label.f select,label.f input,label.f textarea,.side select{color:var(--ink);font
 .ws .v3bar .btn:hover:not(:disabled),.ws .v3light .btn:hover:not(:disabled){background:#4A3447;color:#fff}
 .ws .v3bar .btn[aria-pressed=true],.ws .v3light .btn[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#241B24}
 .ws .hintbar{border:1px solid #D5C9BE;border-radius:999px;background:rgba(255,251,244,.96);color:#574653;box-shadow:0 4px 14px rgba(36,27,36,.08)}
-.ws .side{--ink:#2A202A;--ink-2:#4F414D;--ink-3:#716471;--ink-num:#655762;--surface:#F7F2E9;--surface-2:#FFFCF6;--line:#E1D6CC;--line-strong:#BFB0A7;--accent:#D94E3A;--accent-soft:#F7E3DC;--focus:#B83B2C;
+.ws .side{--ink:#2A202A;--ink-2:#4F414D;--ink-3:#665762;--ink-num:#655762;--surface:#F7F2E9;--surface-2:#FFFCF6;--line:#E1D6CC;--line-strong:#BFB0A7;--accent:#F06A53;--accent-soft:#F7E3DC;--focus:#B83B2C;
   padding:18px;gap:15px;border-left:1px solid #D6C9C0;box-shadow:-12px 0 32px rgba(25,20,27,.08);background:#F7F2E9;color:#2A202A;color-scheme:light}
 .ws .side h3,.ws .side h2,.ws .side h4{color:#2A202A}
 .ws .side .sidetabs{border-bottom-color:#D8CCC2;padding-bottom:12px}
 .ws .side .stage-title{font:500 22px/1.12 var(--serif);letter-spacing:-.025em;color:#2A202A}
 .ws .side .stage-title i{display:inline-grid;place-items:center;min-width:28px;height:28px;border-radius:50% 50% 50% 8px;background:#D94E3A;color:#FFF8F1;font:700 10px/1 var(--sans);letter-spacing:0}
-.ws .side .stage-continue{background:#D94E3A;border-color:#D94E3A;color:#FFF8F1;border-radius:999px}
+.ws .side .stage-continue{background:#F06A53;border-color:#F06A53;color:#241B24;border-radius:999px}
 .ws .side .stage-meta{padding:12px 14px;border:1px solid #E0D4CA;border-radius:20px 20px 20px 6px;background:#EEE6DC}
-.ws .side .sm-phase{margin:0 0 5px;color:#7C6A77;font-size:10px;font-weight:750;letter-spacing:.12em;text-transform:uppercase}
+.ws .side .sm-phase{margin:0 0 5px;color:#665762;font-size:10px;font-weight:750;letter-spacing:.12em;text-transform:uppercase}
 .ws .side .sm-why{margin:0;color:#574A56;font-size:12px;line-height:1.6}
 .ws .side .sm-why b{color:#2A202A}
 .ws .side .sm-why.is-done .st-dot{background:#3B795E}
 .ws .side .sec-title,.ws .side h3:not(:first-child){border-top-color:#E0D4CA;color:#6C5A68}
-.ws .side .prov,.ws .side .muted{color:#756775}
+.ws .side .prov,.ws .side .muted{color:#62545F}
 .ws .side input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]):not([type=range]):not([type=hidden]):not([type=button]):not([type=submit]),
 .ws .side select,.ws .side textarea,.ws .side .mpick-cur{background:#FFFCF6;border-color:#CFC0B6;color:#2A202A;border-radius:12px}
-.ws .side input::placeholder,.ws .side textarea::placeholder{color:#887985}
+.ws .side input::placeholder,.ws .side textarea::placeholder{color:#6E5E6B}
 .ws .side input:focus-visible,.ws .side select:focus-visible,.ws .side textarea:focus-visible{border-color:#D94E3A;outline-color:#D94E3A}
 .ws .side .btn{border-color:#CFC0B6;background:#FFFCF6;color:#40323F;border-radius:999px}
 .ws .side .btn:hover:not(:disabled){background:#F0E6DD;border-color:#A994A2;color:#241B24}
-.ws .side .btn.primary,.ws .side .btn.primary:hover:not(:disabled){background:#D94E3A;border-color:#D94E3A;color:#FFF8F1}
+.ws .side .btn.primary,.ws .side .btn.primary:hover:not(:disabled){background:#F06A53;border-color:#F06A53;color:#241B24}
 .ws .side .btn.danger{border-color:#D9B3AD;background:#FFF7F4;color:#A33E3A}
 .ws .side .var,.ws .side .docrow,.ws .side .roomrow,.ws .side .vcard,.ws .side .r,.ws .side .trow{border-color:#E0D4CA;background:#FFFCF6;color:#40323F;border-radius:18px 18px 18px 5px}
 .ws .side .var:hover,.ws .side .docrow:hover,.ws .side .roomrow:hover{border-color:#D99B8F;background:#FFF7F1}
