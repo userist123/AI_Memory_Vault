@@ -386,10 +386,10 @@ export default function Editor({ id }: { id: string }){
     { id: 'home', group: t('cmdk.group.actions'), label: t('cmdk.home'), run: () => { location.href = '/'; } },
   ];
 
-  return (<div className="ws">
+  return (<div className="ws spatial-studio" data-ui="spatial-studio">
     <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} commands={commands} />
     {(!persistent || demo) && <div className="banner">{t(demo ? 'editor.publicDemoBanner' : 'editor.demoBanner')}</div>}
-    <header className="topbar">
+    <header className="topbar studio-topbar">
       <a className="btn ghost icon-btn" href="/" aria-label={t('home.projects')} title={t('home.projects')}><Icon name="back" /><span className="lbl">{t('home.projects')}</span></a>
       <input className="name" value={snap.name} aria-label={t('editor.projectName')} maxLength={120} onChange={e => { const n = { ...house!, name: e.target.value }; setHouse(n); persist(n); }} />
       <SaveChip save={save} rev={rev} />
@@ -434,7 +434,7 @@ export default function Editor({ id }: { id: string }){
       {save === 'auth' && <span className="conflict-bar save-alert" role="alert"><Icon name="alert" />{t('editor.sessionExpired')} <a className="btn" href={reloginUrl(`/p/${id}`)} onClick={() => { if (latest.current) stashDraft(store(), id, latest.current, baseRev.current); saveRef.current = 'saved'; }}>{t('editor.relogin')}</a></span>}
       {stash && <span className="conflict-bar save-alert" role="alert">{t('editor.stashFound', { time: new Date(stash.at).toLocaleTimeString(intlLocale(lang), { hour: '2-digit', minute: '2-digit' }) })} <button className="btn" onClick={takeStash}>{t('editor.stashRestore')}</button><button className="btn" onClick={dropStash}>{t('editor.stashDrop')}</button></span>}
     </header>
-    <div className={`stagewrap ${barFade.over ? 'is-over' : ''}`}>
+    <div className={`stagewrap studio-stagewrap ${barFade.over ? 'is-over' : ''}`}>
     <button type="button" className="stage-step" aria-label={t('stage.prev')} title={t('stage.prev')} disabled={STAGES.indexOf(stageDef) === 0} onClick={() => setStage(STAGES[Math.max(0, STAGES.indexOf(stageDef) - 1)]!.id)}><Icon name="chevronLeft" /></button>
     <nav className={`stagebar ${barFade.l ? 'fade-l' : ''} ${barFade.r ? 'fade-r' : ''}`} aria-label={t('stage.aria')} ref={stageBarRef} onScroll={measureBar}>
       {PHASES.map(ph => <div key={ph.id} className="phase" role="group" aria-label={t('phase.aria', { phase: t(`phase.${ph.id}`) })} data-phase={ph.id}>
@@ -446,11 +446,11 @@ export default function Editor({ id }: { id: string }){
     <button type="button" className="stage-step" aria-label={t('stage.next')} title={t('stage.next')} disabled={STAGES.indexOf(stageDef) === STAGES.length - 1} onClick={() => setStage(STAGES[Math.min(STAGES.length - 1, STAGES.indexOf(stageDef) + 1)]!.id)}><Icon name="chevronRight" /></button>
     </div>
     {stageDef.page ? <div className="pagebody">{stage === 'orders' && <OrdersPage onPickFurniture={() => setStage('ffe')} id={id} cur={cur} say={say} projectName={snap.name} rooms={floors(house!).flatMap(f => f.rooms).map(r => ({ id: r.id, name: r.name }))} />}{stage === 'site' && <SitePage id={id} rooms={floors(house!).flatMap(f => f.rooms)} say={say} />}</div> :
-    <div className={`body ${compact ? `is-compact sheet-${sheet}` : ""}`}>
-      <nav className="tools" aria-label={t('editor.tools')}>
+    <div className={`body studio-body ${compact ? `is-compact sheet-${sheet}` : ""}`}>
+      <nav className="tools studio-toolrail" aria-label={t('editor.tools')}>
         {(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk)).map(tk => <button key={tk} aria-pressed={tool === tk} onClick={() => setTool(tk)} title={t(TOOL_LABEL[tk])}><svg viewBox="0 0 24 24"><path d={ICON[tk]} /></svg>{t(TOOL_LABEL[tk])}</button>)}
       </nav>
-      <div className={`canvas ${view === 'split' && !compact ? 'split' : ''}`}>
+      <div className={`canvas studio-canvas ${view === 'split' && !compact ? 'split' : ''}`}>
         <div className="levelbar" role="tablist" aria-label={t('level.tabs')}>
           {floors(house!).map((_, i) => <button key={i} role="tab" aria-selected={i === L} className="btn" onClick={() => goLevel(i)}>{levelName(i)}</button>)}
           <button className="btn" onClick={onAddLevel} title={t('level.addTitle')} disabled={nLevels >= MAX_LEVELS}>{t('level.add')}</button></div>
@@ -464,7 +464,7 @@ export default function Editor({ id }: { id: string }){
           <strong>{t('editor.positionWarnings')}</strong>{pending.issues.map((i, k) => { const tgt = issueTarget(i, snap?.floor, snap?.placements); return <div key={k} className={`issue ${i.severity}`} role={tgt ? 'button' : undefined} tabIndex={tgt ? 0 : undefined} style={tgt ? { cursor: 'pointer' } : undefined} onClick={tgt ? () => focusIssue(i) : undefined} onKeyDown={tgt ? e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); focusIssue(i); } } : undefined}>{iT(i)}</div>; })}
           <div style={{ display: 'flex', gap: 8 }}><button className="btn primary" onClick={() => setPending(null)}>{t('editor.keepPosition')}</button><button className="btn" onClick={() => { pending.discard?.(); setHouse(pending.before); persist(pending.before); setPending(null); force(x => x + 1); }}>{t('editor.revert')}</button></div></div>}
       </div>
-      <aside className={`side ${compact ? `sheet sheet-${sheet}` : ''}`} aria-label={t('editor.panelAria', { stage: t(`stage.${stage}`) })}>
+      <aside className={`side studio-inspector ${compact ? `sheet sheet-${sheet}` : ''}`} aria-label={t('editor.panelAria', { stage: t(`stage.${stage}`) })}>
         <div className="sidetabs">
           {compact && <button type="button" className="sheet-grip" aria-label={sheet === 'full' ? t('editor.sheetLess') : t('editor.sheetMore')} aria-expanded={sheet !== 'peek'} onClick={() => setSheet(x => x === 'peek' ? 'half' : x === 'half' ? 'full' : 'peek')}><span aria-hidden="true" /></button>}
           <h2 className="stage-title"><i>{String(STAGES.indexOf(stageDef) + 1).padStart(2, '0')}</i>{t(`stage.${stage}`)}</h2>
