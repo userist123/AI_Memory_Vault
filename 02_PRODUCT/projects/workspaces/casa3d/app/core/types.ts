@@ -2,7 +2,9 @@
 export type Confidence = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
 export interface Provenance { source: string; sourceUrl: string | null; verifiedAt: string | null; verificationType: string; confidence: Confidence }
 export interface RoomRect { x0: number; z0: number; x1: number; z1: number }
-export interface Room { id: string; name: string; type: string; rect: RoomRect }
+export type RoomSpaceKind = 'interior' | 'open_balcony' | 'covered_balcony' | 'terrace' | 'outdoor';
+/** `boundary` stores a rectilinear editable room contour as [x,z] points in metres. `rect` remains its bounding box for legacy tools. */
+export interface Room { id: string; name: string; type: string; rect: RoomRect; boundary?: [number, number][]; spaceKind?: RoomSpaceKind }
 /** `hinge`: capătul golului cu balamalele ('start' = spre `a`-ul peretelui); `swing`: partea peretelui spre care se deschide ușa (+1 = spre normala (-uz, ux), -1 = invers). Lipsă → regula implicită din core/doors.ts. */
 export interface Opening { id: string; kind: 'door' | 'window'; offset: number; width: number; entrance?: boolean; height?: number; sill?: number; hinge?: 'start' | 'end'; swing?: 1 | -1 }
 export interface Wall { id: string; a: [number, number]; b: [number, number]; thickness: number; exterior: boolean; openings: Opening[] }
