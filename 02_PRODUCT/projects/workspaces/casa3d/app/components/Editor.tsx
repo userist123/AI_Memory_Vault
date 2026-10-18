@@ -182,7 +182,8 @@ export default function Editor({ id }: { id: string }){
         if (changedRooms.length > 0) {
           let updated = cur;
           for (const cr of changedRooms) {
-            if (updated.placements.some(p => p.roomId === cr.id && p.source === 'auto')) {
+            const hasManual = updated.placements.some(p => p.roomId === cr.id && p.source === 'manual');
+            if (!hasManual) {
               const relaid = autoLayout(updated, catalog, { roomId: cr.id });
               updated = { ...updated, placements: relaid.snapshot.placements };
             }
@@ -208,7 +209,8 @@ export default function Editor({ id }: { id: string }){
           Math.abs(old.rect.z0 - nr.rect.z0) > 0.01 || Math.abs(old.rect.z1 - nr.rect.z1) > 0.01;
       });
       for (const cr of changedRooms) {
-        if (s.placements.some(p => p.roomId === cr.id && p.source === 'auto')) {
+        const hasManual = s.placements.some(p => p.roomId === cr.id && p.source === 'manual');
+        if (!hasManual) {
           const relaid = autoLayout(s, catalog, { roomId: cr.id });
           s.placements = relaid.snapshot.placements;
         }
