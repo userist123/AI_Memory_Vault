@@ -121,3 +121,19 @@ The first code-level visual redesign has now been committed on the same PR #305 
 - The change is CSS-only: no new product behavior or JSX restructuring is claimed in this pass.
 - **Runtime render verification: NOT VERIFIED.** No before/after browser screenshots or interaction trace have been captured in this environment. The Casa3D Build & Test workflow was still pending when checked. Do not mark the redesign accepted until desktop (1280px), intermediate (1024px) and mobile (375px) renders are inspected, keyboard/focus and contrast are checked, and the create/open/edit/save/reload flow is exercised.
 - Remaining design work: inspect actual screenshots, remove any conflicting legacy overrides, and make evidence-led structural changes to the editor layout where the render shows they are necessary. Do not call the current CSS pass a complete or revolutionary redesign yet.
+
+
+## Follow-up implementation pass — owner rejected generic card-dashboard direction (2026-10-18)
+
+The owner clarified that a modernized palette or a row of standard cards is not sufficient. The next pass now changes actual React structure and the shared visual rules in PR #305:
+
+- `app/app/page.tsx`: added explicit studio/archive/create/settings regions and a brand lockup so the dashboard can use a distinct editorial composition.
+- `app/components/Editor.tsx`: named the top bar, workflow navigation, tool rail, spatial canvas and contextual inspector as explicit spatial-studio regions; existing editing handlers and project model remain the source of truth.
+- `app/app/globals.css`: replaced the prior generic navy/cyan styling pass with a more specific visual direction: aubergine studio chrome, mineral-paper plan/inspector surfaces, a single oxidised-vermilion brand accent, editorial serif display typography, asymmetrical project archive proportions and non-uniform project silhouettes. The 2D plan remains a calm technical surface; the 3D viewport stays dark and material-focused.
+- `GEMINI_4_ARGON_PRO_EDITOR_MASTER_PROMPT.md`: added section 22 as an explicit owner correction rejecting generic SaaS cards, stock palettes and CSS-only facelifts.
+
+### Current verification status
+
+- Repository writes: verified by successful GitHub contents API commits on branch `prompt/casa3d-pro-editor-2026`.
+- Runtime screenshots, visual regression, contrast measurement against rendered pixels, keyboard/accessibility checks and end-to-end browser interactions: **NOT VERIFIED** in this pass. Source edits alone do not establish that the design renders correctly or that all existing UI states remain usable.
+- Next required gate: run the Casa3D build/test workflow, open the real app in a browser, capture matching before/after states at desktop/intermediate/mobile widths, inspect the result, then repair concrete defects. Do not call the redesign finished until that evidence exists.
