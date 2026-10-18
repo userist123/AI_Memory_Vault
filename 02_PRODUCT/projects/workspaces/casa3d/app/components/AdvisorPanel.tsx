@@ -7,7 +7,7 @@ import { adviceText, translator, type Lang } from '@/lib/i18n';
 const SEV_KEY: Record<AdviceSeverity, string> = { BLOCKER: 'advisor.sev.BLOCKER', WARNING: 'advisor.sev.WARNING', TIP: 'advisor.sev.TIP' };
 const COUNT_KEY: Record<AdviceSeverity, string> = { BLOCKER: 'advisor.count.BLOCKER', WARNING: 'advisor.count.WARNING', TIP: 'advisor.count.TIP' };
 
-const COLOR: Record<AdviceSeverity, string> = { BLOCKER: '#B3261E', WARNING: '#B7791F', TIP: '#8B6A45' };
+const COLOR: Record<AdviceSeverity, string> = { BLOCKER: '#A8221A', WARNING: '#8C5311', TIP: '#5A462B' };
 const ORDER: AdviceSeverity[] = ['BLOCKER', 'WARNING', 'TIP'];
 
 export default function AdvisorPanel({ advice, rooms, onShow, lang = 'ro', units = 'metric', currency = 'RON' }: { advice: Advice[]; rooms: { id: string; name: string }[]; onShow(a: Advice): void; lang?: Lang; units?: Units; currency?: string }){
