@@ -288,6 +288,52 @@ describe('amenajare automată scalată pentru camere mari', () => {
       assert.deepEqual(validatePlacement(res, cat, p), [], `piesa ${p.group} (${p.variantId}) nu trebuie să aibă erori`);
     }
   });
+
+  test('livingul compact (< 18 m²) primește canapea și măsuță proporționale (nu variante maxime gigantice)', () => {
+    const floor: Floor = {
+      id: 'f-small-liv', name: 'Parter', ceilingHeight: 2.6,
+      rooms: [
+        { id: 'liv', name: 'Living Mic', type: 'living', rect: { x0: 0, z0: 0, x1: 4.2, z1: 3.6 } }, // 15.1 m²
+        { id: 'k', name: 'Bucătărie', type: 'bucatarie', rect: { x0: 4.2, z0: 0, x1: 7.2, z1: 3.6 } }
+      ],
+      walls: [
+        { id: 'w1', a: [0, 0], b: [4.2, 0], thickness: 0.25, exterior: true, openings: [{ id: 'wnd', kind: 'window', offset: 1.5, width: 1.4 }] },
+        { id: 'w2', a: [4.2, 0], b: [4.2, 3.6], thickness: 0.15, exterior: false, openings: [{ id: 'dr', kind: 'door', offset: 1.0, width: 0.9 }] },
+        { id: 'w3', a: [4.2, 3.6], b: [0, 3.6], thickness: 0.25, exterior: true, openings: [] },
+        { id: 'w4', a: [0, 3.6], b: [0, 0], thickness: 0.25, exterior: true, openings: [] },
+      ]
+    };
+    const snap: Snapshot = { name: 'Small Living', floor, placements: [], selections: defaultSelections(cat), picked: [] };
+    const res = autoLayout(snap, cat).snapshot;
+    const livPlacements = res.placements.filter(p => p.roomId === 'liv');
+    const table = livPlacements.find(p => p.group === 'masuta');
+    assert.ok(table, 'trebuie să aibă măsuță cafea');
+    const td = resolve(cat, table.variantId);
+    assert.ok(td && td.w <= 0.85 && td.d <= 0.85, `măsuța în living mic trebuie să fie compactă (<= 85 cm), obținut: ${td?.w}x${td?.d}`);
+    const sofa = livPlacements.find(p => p.group === 'canapea');
+    assert.ok(sofa, 'trebuie să aibă canapea');
+    const sd = resolve(cat, sofa.variantId);
+    assert.ok(sd && sd.w <= 2.20, `canapeaua în living mic trebuie să fie compactă (<= 2.20 m), obținut: ${sd?.w}`);
+  });
+
+  test('livingul mare (>= 21 m²) primește două fotolii pentru conversație', () => {
+    const floor: Floor = {
+      id: 'f-big-liv', name: 'Parter', ceilingHeight: 2.6,
+      rooms: [
+        { id: 'liv', name: 'Living Mare', type: 'living', rect: { x0: 0, z0: 0, x1: 6.2, z1: 4.5 } } // 27.9 m²
+      ],
+      walls: [
+        { id: 'w1', a: [0, 0], b: [6.2, 0], thickness: 0.25, exterior: true, openings: [{ id: 'wnd', kind: 'window', offset: 2.0, width: 1.8 }] },
+        { id: 'w2', a: [6.2, 0], b: [6.2, 4.5], thickness: 0.25, exterior: true, openings: [{ id: 'dr', kind: 'door', offset: 2.2, width: 0.9 }] },
+        { id: 'w3', a: [6.2, 4.5], b: [0, 4.5], thickness: 0.25, exterior: true, openings: [] },
+        { id: 'w4', a: [0, 4.5], b: [0, 0], thickness: 0.25, exterior: true, openings: [] },
+      ]
+    };
+    const snap: Snapshot = { name: 'Big Living', floor, placements: [], selections: defaultSelections(cat), picked: [] };
+    const res = autoLayout(snap, cat).snapshot;
+    const armchairs = res.placements.filter(p => p.roomId === 'liv' && p.group === 'fotoliu');
+    assert.ok(armchairs.length >= 2, `livingul generos trebuie să primească 2 fotolii, obținut: ${armchairs.length}`);
+  });
 });
 
 
