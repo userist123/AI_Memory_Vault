@@ -13,7 +13,7 @@ export class ProjectImportError extends Error {
  * resulting Snapshot again before persistence.
  */
 export function parseImportedSnapshot(raw: string, projectName: string): Snapshot {
-  if (raw.length > 1_500_000) throw new ProjectImportError('Fișierul JSON depășește limita de 1,5 MB.');
+  if (raw.length > 3_500_000) throw new ProjectImportError('Fișierul JSON depășește limita de 3,5 MB.');
   let value: unknown;
   try { value = JSON.parse(raw); }
   catch { throw new ProjectImportError('Fișier JSON invalid sau incomplet.'); }
@@ -36,7 +36,8 @@ export function parseImportedSnapshot(raw: string, projectName: string): Snapsho
   const name = projectName.trim().slice(0, 120);
   if (!name) throw new ProjectImportError('Introdu un nume pentru proiect.');
   const result = { ...snapshot, name } as unknown as Snapshot;
-  const { underlay: _underlay, ...geometryAndData } = result;
+  const geometryAndData = { ...result };
+  delete geometryAndData.underlay;
   if (JSON.stringify(geometryAndData).length > 950_000) {
     throw new ProjectImportError('Proiectul JSON este prea mare pentru importul direct (limita datelor proiectului este aproximativ 950 KB, separat de imaginea de calc).');
   }
