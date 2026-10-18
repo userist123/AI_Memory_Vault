@@ -36,8 +36,9 @@ export function parseImportedSnapshot(raw: string, projectName: string): Snapsho
   const name = projectName.trim().slice(0, 120);
   if (!name) throw new ProjectImportError('Introdu un nume pentru proiect.');
   const result = { ...snapshot, name } as unknown as Snapshot;
-  if (JSON.stringify(result).length > 950_000) {
-    throw new ProjectImportError('Proiectul JSON este prea mare pentru importul direct (limita proiectului este aproximativ 950 KB).');
+  const { underlay: _underlay, ...geometryAndData } = result;
+  if (JSON.stringify(geometryAndData).length > 950_000) {
+    throw new ProjectImportError('Proiectul JSON este prea mare pentru importul direct (limita datelor proiectului este aproximativ 950 KB, separat de imaginea de calc).');
   }
   return result;
 }
