@@ -45,10 +45,15 @@ DONE:
   - Fixed in `AdvisorPanel.tsx`: updated severity badge and label colors (`#A8221A`, `#8C5311`, `#5A462B`) to guarantee >= 5.5:1 contrast against both cream backgrounds and white badge text.
   - Automated WCAG Contrast Audit (`wcag_contrast_detector.js` & `deep_side_audit.js`): verified 0 elements with contrast < 4.5:1 across Home Page and all 8 editor stages (`survey`, `concept`, `finishes`, `ffe`, `mep`, `docs`, `quote`, `present`).
   - Captured updated browser screenshots across all stages (`audit_stage_*.png`, `audit_home_contrast.png`).
-- Verified full test, typecheck & build suites: `tsc --noEmit` 0 errors, Vitest 611/611 PASS (all 103 test files), exit code 0.
-- Synchronized and pushed commit `a0180b5c` to both branches: `gemini/casa3d-nextgen-functionality-uiux` (PR #304) and `prompt/casa3d-pro-editor-2026` (PR #305).
+- Sincronizat cu noul scope din PR #305 (Secțiunea 23 — Import proiect existent / releveu):
+  - Componentă dedicată `ImportExistingProject.tsx` pe Home cu suport pentru proiect Casa3D nativ (`proiect.json`) sau plan de referință raster (PNG/JPEG).
+  - Parser și adaptor `app/core/project-import.ts` cu verificări de securitate și teste unitare dedicate (`tests/project-import.test.ts`).
+  - Localizare completă i18n (`lib/locales/ro.ts`, `lib/locales/en.ts`, `components/ImportExistingProject.tsx`) cu respectarea strictă a invariantelor `tests/i18n.test.ts` (0 texte ne-localizate în JSX).
+  - Verificare contrast WCAG AA/AAA și captură de ecran în browser (`audit_import_existing.png`, `audit_import_existing_ro.png`).
+- Suita completă de teste: 104/104 fișiere de test trecute (615/615 teste), `tsc --noEmit` curat (exit code 0).
+- Ramurile `prompt/casa3d-pro-editor-2026` (PR #305) și `gemini/casa3d-nextgen-functionality-uiux` (PR #304) sincronizate și împinse pe `origin`.
 NEXT (in order):
-- Merge PR #304 & PR #305 into main.
+- Finalizare și fuziune PR #304 & PR #305 în main.
 BLOCKERS: None.
 KEY FILES:
 - 02_PRODUCT/projects/Casa3D/{NEXTGEN_AUDIT,NEXTGEN_IMPLEMENTATION,VERIFICATION_2026-10-10}.md
