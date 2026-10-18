@@ -887,3 +887,153 @@ A smaller, fully working, visually excellent vertical slice beats a long list of
 - Autodesk Forma (2026): iterative design options, model-linked review, comments/markups and continuity between design review and project data; use as workflow evidence, not a claim that Casa3D should copy its UI: https://blogs.autodesk.com/forma/2026/10/14/what-autodesk-forma-announced-au-2026/
 - Chief Architect feature catalogue: synchronized 2D/3D editing, contextual material/object painting, model-derived schedules, customizable toolbars/themes and project archiving: https://www.chiefarchitect.com/products/features/
 
+
+
+# 20. Revolutionary UI/UX direction — make Casa3D feel like a next-generation spatial design studio
+
+This section is additive to §§17–19. It is not permission to replace working domain logic with a visual mock-up. The goal is a distinctive, professional, production-credible interface that makes the app more coherent, spatial, precise and desirable. Audit first, then implement against the real code in this branch.
+
+## 20.1 Product thesis and signature experience
+
+Design Casa3D as a spatial design instrument, not a generic SaaS dashboard and not a toy room planner. Combine the clarity of professional CAD, the material richness of a high-end interior-design studio, and the immediacy of a modern creative application.
+
+The signature experience is a persistent, model-centred workspace:
+- The project and its floor/room context remain oriented as users move between geometry, furniture, finishes, lighting, technical layers and documentation.
+- A selected room/object is the shared context for canvas, inspector, materials/products, quantities, warnings and revision history.
+- 2D plans, 3D scenes, schedules and client presentation are different views of the same canonical model, never independent mock data.
+- Important actions give immediate feedback and are reversible where appropriate.
+- Complexity is progressively disclosed: the first layer is calm; advanced controls remain discoverable without overwhelming the workspace.
+
+Do not settle for “make it modern”, a recolored admin dashboard, generic glassmorphism, a competitor clone or an isolated marketing landing page. The product-specific spatial interaction is the differentiator.
+
+## 20.2 Visual language: architectural editorial + precision instrument
+
+Develop and document one coherent visual system:
+- Canvas: quiet warm-white/neutral paper for 2D plans, crisp line hierarchy, deliberate grid/snap cues, legible dimensions and restrained selection colors. The 3D viewport uses a controlled neutral studio environment that makes materials and lighting legible.
+- Studio chrome: restrained graphite/ink surfaces for primary tools and neutral surfaces for inspectors/data. Choose one recognisable Casa3D accent; reserve semantic colors for success, warning, error and selection. Test contrast.
+- Typography: deliberate scale for project titles, room/object names, numeric dimensions, technical annotations, labels and metadata. Use tabular numerals for dimensions, areas and prices where available. Do not make essential data tiny, low contrast or uppercase-only.
+- Geometry and spacing: consistent alignment, compact but comfortable controls, precise dividers and clear grouping. Avoid every element becoming a pill or floating card.
+- Imagery: real project plans, licensed material/product imagery and actual renders where available. Missing assets have designed fallbacks. Never fabricate client projects, brands, render outputs or catalog provenance.
+- Depth and motion: elevation/translucency only when it separates contextual overlays from the workspace. Motion is short, intentional and spatially informative; avoid constant glow, parallax, floating particles and expensive blur behind technical data.
+- Brand: derive a recognisable Casa3D identity from its spatial grammar (plan lines, room geometry, material palette), not a copied competitor identity.
+
+The result should be striking because hierarchy, composition, typography, spatial canvas and material imagery are excellent—not because there are more gradients, shadows or animations.
+
+## 20.3 New workspace composition, not just a stylesheet
+
+Audit the current UI and compare at least two layout directions before choosing. Adapt these functional regions to the actual app; do not create disconnected widgets:
+
+1. Project spine/navigation: project name, current level and room context, compact floor/room navigator, and access to brief, concepts, technical layers and outputs. It collapses to reclaim canvas space.
+2. Primary tool dock: consistent modes such as Build, Furnish, Materials, Lighting, Systems and Sheets. The active mode is unmistakable; tooltips, accessible labels and shortcuts are provided.
+3. Spatial stage: the largest region, supporting plan, 3D and (if performant) synchronized split view. It owns zoom, pan, fit, orbit, selection, scale/units, floor context, layer visibility and view presets. Avoid overlays that cover dimensions or object handles.
+4. Context inspector: resizable and tied to the selected entity; relevant properties first, exact numeric values/units, validation, provenance and advanced properties available without unrelated fields.
+5. Contextual asset/material browser: searchable drawer with dimensions, finish, source/licence and known/unknown commercial facts. It closes and never permanently shrinks the drawing to a narrow strip.
+6. Command/action surface: keyboard-accessible command palette (for example Ctrl/Cmd+K), recent actions and contextual commands. It invokes real operations, respects text-input focus and permissions, and has no dead entries.
+7. Status and recovery: truthful save/sync state, active tool, scale/units, validation summary and undo/redo. Unsaved, offline, conflict, pending export and failed states must be distinct.
+
+Support panel resize/collapse, canvas focus mode, predictable keyboard navigation and reset-to-default workspace. Do not overengineer a docking framework unless the current architecture can support it reliably.
+
+## 20.4 Signature “wow” features — implement a coherent vertical slice
+
+Audit for equivalents first. Reuse complete capabilities; otherwise prioritise a few differentiators end to end. Do not add buttons for prototype-only interactions.
+
+### A. Live spatial view
+- Switch between 2D, 3D and synchronized split view without losing selection, floor, room or pending edits.
+- Selecting a wall, opening, light, furniture item or material highlights the same entity in all supported views and the inspector.
+- Provide fit-project/fit-room and useful camera presets.
+- If performant split view is not feasible with the current stack, deliver a fast, reliable 2D↔3D toggle first and document the limitation.
+
+### B. Material and lighting studio
+- Preview finishes in context on a selected object/room and, where practical, in a material board.
+- Compare two or three real alternatives side by side with known dimensions, finish, provenance and price status. Unknowns remain explicit.
+- A before/after comparison or swipe divider must compare real, correctly versioned states.
+- Lighting presets (e.g. neutral daylight/warm evening) must change actual renderer parameters. Label artistic previews as previews, not photometric proof.
+- Material changes update canonical model, concepts, quantities and dependent deliverables as supported. Show scope and impact before broad changes.
+
+### C. Design options lab
+- Compare genuine independently persisted options A/B/C against a known base revision, with synchronized views, changed-object lists, material deltas and computed budget impact.
+- Distinguish confirmed facts, estimates and unknowns.
+- Applying an option is explicit, reversible and revision-bound; a stale option cannot overwrite newer edits.
+- Never invent AI scores, savings, ergonomic compliance or totals.
+
+### D. Spatial issue/impact navigation
+- Clicking a warning, missing decision, stale drawing or coordination finding focuses the exact room/object, enables the required layer and opens the relevant inspector.
+- A change shows an impact preview for affected areas/dimensions, schedules, quantities, budget, approvals and outputs only where those relationships are implemented and computed.
+- Every finding links to evidence; no decorative red/green dashboard without a real next action.
+
+### E. Premium client presentation
+- Generate a distraction-free client view from actual project data: room sequence, available renders, plans, concept/moodboard, material choices and approved alternatives.
+- Include readable captions, project/revision/status metadata and correct share permissions.
+- Internal notes, margin, private survey data and unapproved options remain private.
+- This is a distinct view of the same project, not a manually maintained copy or fake slideshow.
+
+### F. First-run and project archive
+- Curated professional studio archive: real thumbnails, typographic hierarchy, project stage, last edit, next action and unresolved items only where data exists.
+- New project paths include blank project, trace/import, measured survey and duplicate; optional starters never force a predefined house shape.
+- Reach the first editable canvas quickly. No marketing hero, template marketplace or fake KPI tiles between designer and work.
+- Empty, loading, error, offline and no-results states receive the same design quality as populated screens.
+
+## 20.5 Interaction craft and precision
+
+- Make selection, hover, snapping, dimension entry, rotation, multi-select and transform handles consistent across modes.
+- Numeric and keyboard alternatives exist for placement, movement, rotation, dimensions and resizing; dragging is not the only route.
+- Contextual mini-toolbars follow real selections and never obscure the plan.
+- Save, import, render, AI proposal and export expose queued/running/success/failure states and recovery where supported.
+- Bulk style/material operations show scope and affected-object count before commit. Preserve overrides by default.
+- Destructive actions are explicit, reversible where possible and protected by existing permissions.
+- Shortcuts are discoverable and do not conflict with browser/system shortcuts.
+- Respect reduced-motion preferences; animation must not undermine precision or spatial orientation.
+- No dead buttons, fake progress bars, simulated AI results, decorative controls without behavior, or success toasts before persistence is confirmed.
+
+## 20.6 Design tokens, component quality and 3D performance
+
+- Start with the existing central token layer in app/app/globals.css. Audit for duplication, contradictory overrides, hard-coded values and legacy aliases before adding CSS.
+- Define semantic tokens for canvas/chrome/surfaces, text, borders, selection, status, focus, spacing, radii, shadows, typography, control heights, z-index and motion.
+- Rationalise reusable primitives for buttons, icon buttons, tooltips, view controls, inspector sections, searchable assets, empty states, status indicators, dialogs, toasts and tables.
+- Use one icon family consistently. Icon-only controls require accessible names and tooltips; do not substitute emoji or Unicode symbols for interface icons.
+- Theme changes must not alter exported drawing-sheet appearance. Only offer light/dark modes if both are complete and tested.
+- Do not install a new UI library or replace the stack before auditing dependencies and architecture.
+- Profile 3D cost; avoid unnecessary React rerenders, lazy-load heavy views safely, dispose GPU resources and provide a usable fallback when WebGL is unavailable. Do not trade editor responsiveness for decorative effects.
+
+## 20.7 Mandatory design deliverables and verification
+
+Before implementation:
+1. Inspect actual screens/components/styles and capture baseline screenshots if a runnable browser exists.
+2. Produce a visual audit tied to concrete screens/files: hierarchy, spacing, density, typography, inconsistent controls, canvas obstruction, responsiveness and accessibility.
+3. Compare two distinct design directions as written/wireframe proposals; select based on usability and technical fit, not novelty alone.
+4. Document visual system, interaction model, responsive rules, accessibility gates and screen/component inventory.
+5. Identify reusable features, missing end-to-end flows and non-goals.
+
+After implementation:
+1. Capture before/after screenshots for identical screens/states at 1440, 1280, 1024, 768 and 390 CSS px where runtime allows; record route, state, viewport and artifact path.
+2. Exercise real flows: open/create project, edit dimension, select/place object, apply material, switch views, inspect warning, undo/redo, save/reload and open client presentation.
+3. Test keyboard-only, focus visibility, reduced motion, contrast, zoom, empty/loading/error/offline states and horizontal overflow.
+4. Run typecheck, focused tests, full relevant tests and production build. Report exact commands and exit codes.
+5. Record limitations. Never claim browser verification or visual regression checks that did not run.
+
+## 20.8 Acceptance gates
+
+Accept only when:
+- the spatial canvas dominates and selected entity/context are immediately clear;
+- archive, editor, materials/concepts, technical layers and client presentation share a coherent system;
+- key controls are real and wired to application logic;
+- selection/context remain coherent across supported views;
+- panel collapse/resize or a reliable compact mode preserves usable canvas space;
+- major actions expose truthful state and recovery;
+- no fake data, dead controls, broken permissions or misleading status exist;
+- WCAG 2.2 AA is the target, with documented keyboard, focus, drag-alternative, contrast and target-size checks;
+- screenshots/tests support claims, with unavailable runtime evidence explicitly marked NOT VERIFIED.
+
+---
+
+# 21. Additional verified research for the next-generation UI/UX direction
+
+Use these sources as design evidence, not instructions to clone another product:
+- Apple Human Interface Guidelines — Layout, updated 2026-09-09: adaptive composition and clear hierarchy: https://developer.apple.com/design/human-interface-guidelines/layout/
+- Apple Human Interface Guidelines — Design principles, updated 2026-06-08: purpose, agency, flexibility, simplicity, craft, delight, feedback and recovery: https://developer.apple.com/design/human-interface-guidelines/design-principles
+- Apple Human Interface Guidelines — Panels: contextual controls tied to active content/selection: https://developer.apple.com/design/human-interface-guidelines/panels
+- W3C WCAG 2.2: normative accessibility requirements: https://www.w3.org/TR/WCAG22/
+- W3C — Understanding Dragging Movements (SC 2.5.7): provide a single-pointer alternative to drag-only operations: https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements
+- W3C — Understanding Target Size (Minimum) (SC 2.5.8): target-size/spacing requirements: https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum
+- Three.js WebGLRenderer documentation: renderer capabilities and performance-relevant controls; use only features supported by the actual renderer: https://threejs.org/docs/pages/WebGLRenderer.html
+- Chief Architect features: synchronized 2D/3D editing, object/material workflows and model-derived schedules as a professional capability benchmark: https://www.chiefarchitect.com/products/features/
