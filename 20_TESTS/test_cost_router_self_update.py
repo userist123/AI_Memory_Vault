@@ -86,11 +86,34 @@ def _self_update_entry(hooks: dict) -> dict:
     return found[0]
 
 
+def _find_bash() -> str | None:
+    if sys.platform != "win32":
+        return shutil.which("bash") or shutil.which("sh")
+    candidates = [
+        r"C:\Program Files\Git\bin\bash.exe",
+        r"C:\Program Files (x86)\Git\bin\bash.exe",
+        os.path.expandvars(r"%LOCALAPPDATA%\Programs\Git\bin\bash.exe"),
+    ]
+    for c in candidates:
+        if os.path.isfile(c):
+            return c
+    w = shutil.which("bash")
+    if w and not w.lower().startswith(r"c:\windows\system32"):
+        return w
+    w = shutil.which("sh")
+    if w and not w.lower().startswith(r"c:\windows\system32"):
+        return w
+    return None
+
+
 def _hook_command(home: Path):
     """Run the hook exactly as settings.json registers it (only where it cannot reach the network)."""
+    bash = _find_bash()
+    if not bash:
+        pytest.skip("Functional bash interpreter not available on this platform")
     settings = json.loads((home / ".claude" / "settings.json").read_text(encoding="utf-8"))
     cmd = _self_update_entry(settings["hooks"])["hooks"][0]["command"]
-    return subprocess.run(["bash", "-c", cmd], input='{"hook_event_name":"SessionStart","source":"startup"}',
+    return subprocess.run([bash, "-c", cmd], input='{"hook_event_name":"SessionStart","source":"startup"}',
                           env=_env(home), capture_output=True, text=True, timeout=120)
 
 

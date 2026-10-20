@@ -52,11 +52,15 @@ def default_projects_dir() -> Path:
     return Path(os.environ.get("CLAUDE_CONFIG_DIR", Path.home() / ".claude")) / "projects"
 
 
-def project_slug(project_dir: Path) -> str:
+def project_slug(project_dir: Path | str) -> str:
     """Claude Code names the transcript folder after the absolute path with every
-    non-alphanumeric character replaced by `-` (`<root>/u/AI_Vault` -> `-root-u-AI-Vault`)."""
+    non-alphanumeric character replaced by `-` (`<root>/u/AI_Vault` -> `-root-u-AI-Vault`,
+    `C:\\Users\\u\\AI_Vault` -> `C--Users-u-AI-Vault`)."""
     import re
-    return re.sub(r"[^A-Za-z0-9]", "-", str(Path(project_dir).resolve()))
+    p = Path(project_dir)
+    if not p.drive and p.as_posix().startswith("/"):
+        return re.sub(r"[^A-Za-z0-9]", "-", p.as_posix())
+    return re.sub(r"[^A-Za-z0-9]", "-", str(p.resolve()))
 
 
 def iter_transcripts(projects_dir: Path, project_dir: Optional[Path] = None) -> Iterator[Path]:

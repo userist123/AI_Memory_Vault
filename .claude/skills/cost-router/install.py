@@ -106,8 +106,9 @@ DISABLED_MARKER = "cost-router.disabled"  # written by --uninstall under ~/.clau
 
 
 def hook_entry(skill_dir: Path, script: str = "hook_prompt_route.py", matcher=None) -> dict:
+    target = (skill_dir / script).as_posix()
     cmd = (f'for py in python3 python; do if "$py" -c "import sys" >/dev/null 2>&1; then '
-           f'"$py" "{skill_dir / script}"; exit 0; fi; done; exit 0')
+           f'"$py" "{target}"; exit 0; fi; done; exit 0')
     entry = {"hooks": [{"type": "command", "command": cmd, "timeout": HOOK_TIMEOUT.get(script, 10)}]}
     return {"matcher": matcher, **entry} if matcher else entry
 
