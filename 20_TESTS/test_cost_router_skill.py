@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -14,6 +16,26 @@ SKILL = ROOT / ".claude" / "skills" / "cost-router"
 HOOK = SKILL / "hook_prompt_route.py"
 ROUTE = SKILL / "lib" / "route.py"
 INSTALL = SKILL / "install.py"
+
+
+def _find_bash() -> str | None:
+    if sys.platform != "win32":
+        return shutil.which("bash") or shutil.which("sh")
+    candidates = [
+        r"C:\Program Files\Git\bin\bash.exe",
+        r"C:\Program Files (x86)\Git\bin\bash.exe",
+        os.path.expandvars(r"%LOCALAPPDATA%\Programs\Git\bin\bash.exe"),
+    ]
+    for c in candidates:
+        if os.path.isfile(c):
+            return c
+    w = shutil.which("bash")
+    if w and not w.lower().startswith(r"c:\windows\system32"):
+        return w
+    w = shutil.which("sh")
+    if w and not w.lower().startswith(r"c:\windows\system32"):
+        return w
+    return None
 
 
 def _frontmatter(text: str) -> dict:
@@ -103,7 +125,7 @@ def test_install_is_self_contained_idempotent_and_reversible(tmp_path):
     _run([str(INSTALL), "--home", str(home)])
     settings = json.loads((home / ".claude" / "settings.json").read_text())
     entries = settings["hooks"]["UserPromptSubmit"]
-    assert len(entries) == 1 and "cost-router/hook_prompt_route.py" in json.dumps(entries)
+    assert len(entries) == 1 and "cost-router/hook_prompt_route.py" in json.dumps(entries).replace("\\\\", "/")
     # a pre-existing user hook survives
     settings["hooks"]["UserPromptSubmit"].insert(0, {"hooks": [{"type": "command", "command": "echo mine"}]})
     (home / ".claude" / "settings.json").write_text(json.dumps(settings))
@@ -139,11 +161,13 @@ def test_project_settings_register_the_same_hook():
 
 def test_session_start_command_runs_quietly_and_installs(tmp_path):
     """Run the SessionStart command exactly as settings.json spells it, against a scratch HOME."""
-    import os
+    bash = _find_bash()
+    if not bash:
+        pytest.skip("Functional bash interpreter not available on this platform")
     settings = json.loads((ROOT / ".claude" / "settings.json").read_text(encoding="utf-8"))
     cmd = settings["hooks"]["SessionStart"][0]["hooks"][0]["command"]
-    env = dict(os.environ, CLAUDE_PROJECT_DIR=str(ROOT), HOME=str(tmp_path))
-    r = subprocess.run(["bash", "-c", cmd], env=env, capture_output=True, text=True, timeout=60)
+    env = dict(os.environ, CLAUDE_PROJECT_DIR=str(ROOT), HOME=str(tmp_path), USERPROFILE=str(tmp_path))
+    r = subprocess.run([bash, "-c", cmd], env=env, capture_output=True, text=True, timeout=60)
     assert r.returncode == 0 and r.stdout == "", (r.stdout, r.stderr)
     assert (tmp_path / ".claude" / "skills" / "cost-router" / "SKILL.md").exists()
     assert (tmp_path / ".claude" / "agents" / "Explore.md").exists()
