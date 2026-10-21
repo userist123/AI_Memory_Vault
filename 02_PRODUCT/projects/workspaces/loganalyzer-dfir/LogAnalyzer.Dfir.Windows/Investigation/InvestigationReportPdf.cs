@@ -199,6 +199,13 @@ public static class InvestigationReportPdf
                     P(col, "Limitările specifice unei constatări sunt trecute la constatarea respectivă.").FontSize(7).Italic().FontColor(Muted);
                 }
 
+                // E7: user activity (ShellBags, RecentDocs, Office MRU, Recycle Bin): counts and the strongest rows, with what each time means; never an overclaim
+                foreach (var (text, head) in InvestigationReportText.UserActivityLines(r))
+                {
+                    var line = P(col, RoText.CleanPathsInText(text)).FontSize(head ? 8.5f : 7.5f);
+                    if (head) line.Bold();
+                }
+
                 }
                 if (S(LogAnalyzer.Dfir.Reporting.ReportSection.EvidenceCollected))
                 {

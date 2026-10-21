@@ -230,6 +230,24 @@
                              Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="12" FontSize="12.5"/>
                 </Grid>
             </TabItem>
+            <TabItem Header="Activitatea utilizatorului" Style="{StaticResource InspectorTabItemStyle}" AutomationProperties.Name="Activitatea utilizatorului: foldere și fișiere folosite, șterse">
+                <DockPanel Margin="8">
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding UserActivitySummary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding UserActivityTimeNote, Mode=OneWay}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                    <DataGrid AutomationProperties.Name="Activitatea utilizatorului" ItemsSource="{Binding UserActivity}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" EnableRowVirtualization="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Relevanță" Binding="{Binding Relevance}" Width="1.6*"/>
+                            <DataGridTextColumn Header="Sursă" Binding="{Binding SourceLabel}" Width="1.3*"/>
+                            <DataGridTextColumn Header="Cale" Binding="{Binding Path}" Width="3*"/>
+                            <DataGridTextColumn Header="Ora" Binding="{Binding TimeText}" Width="150"/>
+                            <DataGridTextColumn Header="Ce înseamnă ora" Binding="{Binding TimeMeaning}" Width="3*"/>
+                            <DataGridTextColumn Header="Utilizator / SID" Binding="{Binding Who}" Width="1.4*"/>
+                            <DataGridTextColumn Header="Detalii" Binding="{Binding Detail}" Width="3*"/>
+                            <DataGridTextColumn Header="Probă" Binding="{Binding Origin.EvidenceId}" Width="85"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
             <TabItem Header="Cronologie" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">

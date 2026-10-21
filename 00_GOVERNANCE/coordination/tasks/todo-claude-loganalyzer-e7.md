@@ -104,3 +104,22 @@
   later decoder pass. Parse gaps 2 (BagMRU missing in two other profiles' UsrClass.dat: correct).
 - Hive transaction logs (.LOG1/.LOG2) are not copied (dirty hives may miss recent writes): owner decision whether to add them (2 more snapshots per profile).
 - Slice 3 (rules, UI tab, report rows, docs, comparison row E7).
+
+## Slice 3 done (2026-10-21, vault-worker Sonnet, NOT yet reviewed)
+- Engine `Core/Analysis/UserActivityAnalysis.cs` (pure: rows, relevance, time meaning per source, `ReportLines`), rules `Wp14Rules.UserActivity.cs`
+  (`USER-ACTIVITY-CLASSIFIED/-REMOVABLE/-DELETED`, DE VERIFICAT = Candidate + Medium at most; possible-removable letters Low; one finding per folder / letter,
+  no NECONFORM from these traces), 3 catalog contracts in `RuleContracts.cs` (CLASSIFIED-ACCESS text corrected: it no longer says "no rule uses them").
+- Source strings: `ShellBags`, `RecentDocs`, `OfficeMRU` (not "Office MRU"), `RecycleBin`. RecentDocs holds only the name: it never matches a folder (stated).
+- Removable: by drive letter. Confirmed = letter in USB/Partition device events or `AirGapFacts.RemovableLetters`; other letters than C: = "possible" (Low),
+  except paths inside a configured classified folder (their letter is not guessed). Letter reuse caveat in the finding text.
+- UI: tab "Activitatea utilizatorului" on the INVESTIGATION page (`InvestigationView.xaml`, `InvestigationViewModel.FillUserActivity`, cap 5 000 rows). The
+  "Informații clasificate" tab lives on the live Station Control, which has no timeline (StationFacts), so it was not used. `InvestigationResult.UserActivityView()`.
+- Reports: investigation PDF (after "Limitări generale", inside the Findings section: no new ReportSection), control PDF section 3b via
+  `ControlReport.UserActivity` (null today in the control flow: the line says "nu a fost evaluată de acest raport"; wiring an investigation of the same station
+  into the control is a follow-up, not forced). JSON of the control report carries `UserActivity` when set.
+- No hook into ClassifiedAccess exits / anti-forensics: those records are audit-based (4663/4660); mixing weak $I traces into the exit verdicts would change
+  their evidence class. Not forced.
+- Docs: GHID §4.7, comparison row E7 (HAVE for the four artifacts with the real-station counts; Zone.Identifier / MOTW NOT done), no check-guide annex exists for these rules.
+- Tests: `UserActivityRulesTests` (21, Dfir.Tests), `UserActivityUiTests` (6, App.Tests).
+- Suites after slice 3: Dfir.Tests 2115 passed / 31 skipped / 0 failed; App.Tests 635; UI.Tests 353; Edition.Tests 45.
+- Next: Opus review of slice 3 (probe list: hostile paths in Analyze, wording against the semantics above, no NECONFORM), then PR order unchanged.

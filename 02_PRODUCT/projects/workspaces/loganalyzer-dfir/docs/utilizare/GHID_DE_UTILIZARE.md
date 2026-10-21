@@ -96,6 +96,23 @@ Raportul se salvează în cazul stației, cu amprenta lui; vi se oferă și salv
 - Fiecare copie primește amprenta SHA-256 în momentul colectării, iar în notele probei apar SID-ul și profilul.
 - Ce nu s-a putut lua apare ca lacună, cu motivul: lipsa drepturilor, copia de umbră indisponibilă sau eșuată, folderul profilului lipsă sau necitibil, hive lipsă, Coș necitibil, limite atinse (cel mult 200 de profiluri, 10 000 de fișiere `$I` pentru un SID și 20 000 în total, un `$I` de cel mult 128 KiB). Legăturile (joncțiuni, legături simbolice) din calea profilului sau din Coș nu se urmează, iar folderele al căror nume nu este un SID se omit cu o notă.
 
+### 4.7 „Activitatea utilizatorului”: ce arată fila și ce înseamnă orele
+
+În pagina **Investigație**, fila **„Activitatea utilizatorului”** listează urmele pe care Windows le păstrează în profilul fiecărui utilizator și în Coșul de reciclare: **ShellBags** (foldere afișate în Explorer), **RecentDocs** (documente recente), **Office MRU** (fișiere deschise recent în Word, Excel etc.) și **Coșul de reciclare ($I)** (elemente șterse). Ele apar doar dacă investigația a folosit profilul de colectare „Complet” (vezi 4.6) sau dacă ați importat hive-urile și fișierele `$I`; fără ele fila spune că nu există nicio urmă, ceea ce **nu dovedește** că nu s-a întâmplat nimic.
+
+Coloanele sunt: **Relevanță** (folder clasificat din profilul de proceduri, volum amovibil sau „—”), **Sursă**, **Cale**, **Ora**, **Ce înseamnă ora**, **Utilizator / SID** (profilul, sau SID-ul proprietarului pentru Coș), **Detalii** și **Probă**. Rândurile din foldere clasificate sau de pe volume amovibile sunt primele. Deasupra tabelului sunt numărătorile și explicația orelor.
+
+**Ce înseamnă ora, pe sursă (nu este niciodată „ora accesului”):**
+
+- **ShellBags**: ultima actualizare a intrării folderului de către Explorer (ora cheii BagMRU). Nu este prima deschidere și nu dovedește că un fișier a fost citit, doar că Explorer a afișat folderul. Doar cea mai nouă intrare din cheie are ora cheii; celelalte apar „fără oră”. Orele din interiorul elementului (data DOS, rezoluție 2 secunde, ora locală fără fus) sunt ale folderului însuși și apar doar la Detalii.
+- **RecentDocs**: ora cheii, valabilă doar pentru cea mai nouă intrare. RecentDocs păstrează numai numele documentului, nu calea întreagă, deci nu poate fi legat de un folder.
+- **Office MRU**: ultima deschidere a fișierului de către aplicația Office (UTC).
+- **Coș de reciclare**: ora ștergerii (UTC), calea inițială și dimensiunea. Dacă fișierul `$R` lipsește, textul spune „conținut golit sau eliminat”: asta nu înseamnă că elementul nu a existat. Ștergerea definitivă (Shift+Del) nu lasă urme în Coș.
+
+**Regulile care citesc aceste urme** (apar la Constatări și în fila „Integritate air-gap”): `USER-ACTIVITY-CLASSIFIED` (un folder clasificat apare în ShellBags sau Office MRU), `USER-ACTIVITY-REMOVABLE` (căi pe litera unui suport amovibil din istoricul dispozitivelor din caz, sau doar „posibil amovibilă” pentru alte litere decât C:, cu incertitudinea scrisă) și `USER-ACTIVITY-DELETED` (elemente din Coș șterse dintr-un folder clasificat sau de pe un volum amovibil). Sunt urme slabe și indirecte: rezultatul este **DE VERIFICAT**, niciodată NECONFORM din ele singure, iar severitatea este provizorie, o stabilește proprietarul procedurii. Legătura cu un suport se face după **litera** unității, nu după seria volumului; o literă poate fi reutilizată.
+
+**În raport:** raportul investigației are, după constatări, un paragraf „Activitatea utilizatorului” (numărători, cele mai relevante urme, cu ora și ce înseamnă ea). În raportul de control, secțiunea 3b arată același paragraf doar când controlul primește o investigație a aceleiași stații; altfel spune că activitatea utilizatorului nu a fost evaluată de acest raport. **Nu sunt încă făcute:** Zone.Identifier (Mark-of-the-Web) și copierea jurnalelor de tranzacții ale hive-urilor (`.LOG1`, `.LOG2`).
+
 ## 5. Cum citiți rezultatele
 
 | Rezultat | Ce înseamnă | Ce faceți |

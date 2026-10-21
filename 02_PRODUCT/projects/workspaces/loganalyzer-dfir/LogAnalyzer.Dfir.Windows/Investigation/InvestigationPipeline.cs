@@ -39,6 +39,10 @@ public sealed class InvestigationResult
     public List<AntiForensicCheck> AntiForensics { get; } = [];
     /// <summary>The procedure profile used by this run (null = none: log clears stay NotAssessed). Its snapshot is Analysis/procedure_profile.json.</summary>
     public ProcedureProfile? Procedure { get; set; }
+    /// <summary>E7: drive letters the station facts tie to removable media (empty for a case opened later: the page then uses the device events of the timeline only).</summary>
+    public List<string> FactsRemovableLetters { get; } = [];
+    /// <summary>E7: ShellBags / RecentDocs / Office MRU / Recycle Bin rows of the timeline read against the profile's classified folders and the removable volumes (same view as the USER-ACTIVITY-* rules).</summary>
+    public LogAnalyzer.Dfir.Analysis.UserActivityReport UserActivityView() => LogAnalyzer.Dfir.Analysis.Wp14Rules.UserActivityForCase(Timeline, Procedure, FactsRemovableLetters);
     /// <summary>WP15b: policy change timeline, configured/applied/enforced/observed levels, control gaps and unreliable-time windows (Analysis/policy_timeline.json).</summary>
     public PolicyTimelineResult? PolicyTimeline { get; set; }
     public string PolicyTimelineLine => PolicyTimeline is null ? "Cronologie politici: nedefinită (nu a fost calculată)."
@@ -361,7 +365,9 @@ public sealed class InvestigationPipeline
         // WP14a: removable media against the media register, CD/DVD, and NIC / Wi-Fi / Bluetooth / DHCP on an air-gapped or standalone scope.
         progress?.Report("Suporturi de stocare amovibile și integritate air-gap");
         int wp14No = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n0) ? n0 : 0).DefaultIfEmpty(0).Max();
-        var wp14 = Wp14Analysis.Run(ws, r.Timeline, () => $"F-{++wp14No:D4}", mediaRegister, usersRegister, procedureProfile, systemZone, facts: LoadAirGapFacts(ws, r));
+        var airGapFacts = LoadAirGapFacts(ws, r);
+        r.FactsRemovableLetters.AddRange(airGapFacts?.RemovableLetters ?? []);
+        var wp14 = Wp14Analysis.Run(ws, r.Timeline, () => $"F-{++wp14No:D4}", mediaRegister, usersRegister, procedureProfile, systemZone, facts: airGapFacts);
         found.AddRange(wp14.Findings);
         r.MediaRegisterSha256 = wp14.MediaSha256; r.UsersRegisterSha256 = wp14.UsersSha256; r.RegisterLine = wp14.Line;
         foreach (var live in ws.LoadEvidence().Where(e => e.SourceType == "live_snapshot"))
