@@ -6,7 +6,7 @@
 - **Head:** 96dc39395. Dfir.Tests 1981 passed / 0 failed / 30 skipped; App.Tests 629/629; App.Classified builds.
 - **PR order:** open after #303 (E6) is merged by the owner; #302 (E8) and #303 conflict on different rows of the
   comparison table; resolve after the first merge.
-- **Updated:** 2026-10-17.
+- **Updated:** 2026-10-21.
 
 ## Done (device monitor)
 - One pure scope classifier (`DeviceScope`) for the page, D05 and section 3c; one row per physical device; UAS and
@@ -25,8 +25,9 @@
 
 ## Next
 - Owner checks the Standalone build on the real station (as administrator and as a standard user: red banner).
-- Owner decision pending: capacity shown in binary units like Windows Explorer (14,9 GB) or decimal (16 GB).
-- Owner decision pending: elevation (banner today; options: always elevated, or a Windows service later).
+- Owner decisions 2026-10-21, applied: capacity in both units, Explorer first then the label („14,9 GB (16 GB pe etichetă)”,
+  `DeviceText.CapacityRo`); the app always runs elevated (`LogAnalyzer.App/app.manifest` requireAdministrator, shared by the three
+  editions; test `The_application_always_asks_for_administrator_rights`). The red banner stays as a defence when the run is not elevated.
 - Open PR after #303; then task 2 (users register), task 3 (E7).
 
 ## Known residuals

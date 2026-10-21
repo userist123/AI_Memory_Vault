@@ -243,7 +243,11 @@ public sealed class DeviceHistoryAndCsvTests : IDisposable
     [Fact]
     public void Capacity_and_time_are_human_readable()
     {
-        Assert.Equal("14,9 GB", DeviceText.CapacityRo(14_900_000_000));
+        // owner, 2026-10-21: as Explorer shows it (binary), then as the label says it (decimal)
+        Assert.Equal("14,9 GB (16 GB pe etichetă)", DeviceText.CapacityRo(16_008_609_792));
+        Assert.Equal("13,9 GB (14,9 GB pe etichetă)", DeviceText.CapacityRo(14_900_000_000));
+        Assert.Equal("931,5 GB (1 TB pe etichetă)", DeviceText.CapacityRo(1_000_204_886_016));
+        Assert.Equal("1,8 TB (2 TB pe etichetă)", DeviceText.CapacityRo(2_000_398_934_016));
         Assert.Equal("", DeviceText.CapacityRo(0));
         Assert.Equal("512 B", DeviceText.CapacityRo(512));
         Assert.Equal("", DeviceText.LocalTime(null));

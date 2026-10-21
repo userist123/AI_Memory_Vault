@@ -1129,7 +1129,7 @@ public sealed class DeviceMonitorTests
         var cells = stick.CsvCells();
         Assert.Equal(DeviceCsv.Headers.Count, cells.Count);
         Assert.Equal("Conectat", cells[0]);
-        Assert.Equal("14,9 GB", cells[8]);
+        Assert.Equal("13,9 GB (14,9 GB pe etichetă)", cells[8]);
         Assert.Equal("E:", cells[9]);
         Assert.Equal("ETICHETA", cells[10]);
         Assert.Equal(@"LAB-PC\user", cells[11]);
