@@ -21,6 +21,12 @@ internal static class UserActivity
     internal const int MaxBagNodes = 20000;
     /// <summary>Most subkey reads in one walk; each read also reads the names of that key's children, so this bounds the work, not only the node count.</summary>
     internal const int MaxBagReads = 40000;
+    /// <summary>
+    /// Most subkey names read in one walk. Reading a key also reads the name of every one of its subkeys, so a hive whose BagMRU keys each list
+    /// tens of thousands of subkeys could cost billions of name reads under <see cref="MaxBagReads"/> alone (review round 2). Real profiles read a few
+    /// thousand names; two million is a few seconds of work.
+    /// </summary>
+    internal const int MaxBagNameReads = 2_000_000;
     private const int MaxRecentDocsSubkeys = 1000;
     private const int MaxOfficeApps = 200;
     private const int MaxOfficeUserIds = 100;
@@ -116,7 +122,7 @@ internal static class UserActivity
     private sealed record Frame(RawKey Key, string[] Segments, int Depth);
 
     /// <summary>Walks one BagMRU tree: one event per folder entry with its full path; shell-item times go in the details, never in the event time.</summary>
-    internal static void ShellBags(RawRegistry reg, string hiveLabel, string rootPath, EvidenceItem item, IEventSink sink, ParseResult result, CancellationToken ct)
+    internal static void ShellBags(RawRegistry reg, string hiveLabel, string rootPath, EvidenceItem item, IEventSink sink, ParseResult result, CancellationToken ct, long maxNameReads = MaxBagNameReads)
     {
         var root = reg.OpenKey(rootPath);
         if (root is null) return;
@@ -126,7 +132,8 @@ internal static class UserActivity
         var visited = new HashSet<int> { root.CellOffset };
         stack.Push(new Frame(root, [], 0));
         int nodes = 0, orphans = 0, tooDeep = 0, cycles = 0, damaged = 0, reads = 0;
-        bool capped = false;
+        long nameReads = 0;
+        bool capped = false, nameCapped = false;
         while (stack.Count > 0)
         {
             ct.ThrowIfCancellationRequested();
@@ -149,6 +156,8 @@ internal static class UserActivity
                 try
                 {
                     var child = reg.ReadChild(key, off);
+                    nameReads += child.SubkeyNames.Count;
+                    if (nameReads > maxNameReads) { capped = true; nameCapped = true; break; }
                     var childName = child.Path[(child.Path.LastIndexOf('\\') + 1)..];
                     children.TryAdd(childName, child);
                 }
@@ -212,7 +221,9 @@ internal static class UserActivity
         if (capped)
         {
             result.MalformedRecords++;
-            result.Gaps.Add(new EvidenceGap("ShellBags", EvidenceStatus.Partial, $"s-au citit {MaxBagNodes:N0} chei BagMRU, limita parserului; restul nu a fost parcurs",
+            result.Gaps.Add(new EvidenceGap("ShellBags", EvidenceStatus.Partial, nameCapped
+                    ? $"s-au citit peste {maxNameReads:N0} nume de subchei BagMRU, limita parserului de lucru; restul nu a fost parcurs"
+                    : $"s-au citit {MaxBagNodes:N0} chei BagMRU, limita parserului; restul nu a fost parcurs",
                 "Foldere răsfoite de utilizator pot lipsi din cronologie", "Un instrument dedicat pentru ShellBags", "Posibil, cu alt instrument"));
         }
         if (tooDeep > 0)
@@ -418,7 +429,7 @@ public sealed class ShellBagsParser : EvidenceParserBase
             "Doar intrarea cea mai nouă dintr-o cheie are ora cheii; celelalte sunt ordonate, fără oră.",
             "Elementele neînțelese sunt raportate ca „element necunoscut (tip 0x..)” cu hex; tipurile ZIP/MTP/URI sunt decodate doar aproximativ.",
             "Numele lungi din blocul de extensie sunt validate doar pe date sintetice; jurnalele de tranzacții ale hive-ului nu sunt aplicate.",
-            "Limite de siguranță: adâncime 48, 20.000 de chei, 40.000 de citiri de subchei; depășirea lor este raportată ca lacună.",
+            "Limite de siguranță: adâncime 48, 20.000 de chei, 40.000 de citiri de subchei, 2.000.000 de nume de subchei citite; depășirea lor este raportată ca lacună.",
             "Dacă MRUListEx lipsește, ordinea intrărilor este necunoscută: nicio intrare nu primește ora cheii ca cea mai nouă.",
         ],
         Status = ParserMaturity.Tested,

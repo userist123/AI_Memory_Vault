@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Text;
 using LogAnalyzer.Dfir.FileSystem;
+using LogAnalyzer.Dfir.IO;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Parsing;
 using LogAnalyzer.Dfir.Tests.Synthetic;
@@ -230,6 +231,36 @@ public sealed class UserActivityParserTests : IDisposable
         Assert.Equal(EvidenceStatus.Partial, r.Status);
         Assert.Contains(r.Gaps, g => g.Reason.Contains("limita parserului"));
         Assert.Equal(n, s.Events.Count);                                      // every entry of the first node is read; the extra nodes are not walked
+    }
+
+    [Fact]
+    public void ShellBags_name_budget_bounds_work_when_few_keys_list_many_subkeys()
+    {
+        // Few BagMRU keys, each listing many subkeys: the read count stays small but each read lists all the names, so the work is bounded by names.
+        var root = new RegfBuilder.Key("ROOT", T0);
+        var bag = Chain(root, BagRoot, T0);
+        for (int i = 0; i < 6; i++)
+        {
+            bag.Value(i.ToString(), RegfBuilder.Binary, List(FileEntry(0x31, "d" + i, 0, Shell)));
+            var k = Child(bag, i.ToString(), T1);
+            for (int j = 0; j < 400; j++) Child(k, "s" + j, T1);
+        }
+        var p = Save(root, "UsrClass.dat");
+        const long budget = 1000;                                              // far below 6 x 400 = 2 400 names; the production value is UserActivity.MaxBagNameReads
+        var sink = new ListSink();
+        var result = new ParseResult { EvidenceId = "EV-U", Parser = "t", ParserVersion = "1" };
+        using (var fs = new FileStream(p, FileMode.Open, FileAccess.Read))
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            UserActivity.ShellBags(new RawRegistry(fs), "UsrClass", BagRoot, Item(p, "usrclass_hive"), sink, result, default, budget);
+            Assert.True(sw.Elapsed < TimeSpan.FromSeconds(10));
+        }
+        Assert.Contains(result.Gaps, g => g.Reason.Contains("nume de subchei") && g.Reason.Contains("limita"));
+        Assert.Equal(EvidenceStatus.Partial, result.Gaps.First(g => g.Reason.Contains("nume de subchei")).Status);
+
+        // The same hive under the production budget is read fully and reports no cap gap.
+        var (r2, _) = RunUsrClass(p);
+        Assert.DoesNotContain(r2.Gaps, g => g.Reason.Contains("limita"));
     }
 
     [Fact]
