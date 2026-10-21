@@ -24,7 +24,7 @@ public sealed class RecycleBinInfoParser : EvidenceParserBase
     {
         ParserId = "RecycleBinInfoParser", Version = "1.0", Artifact = "Metadate Coș de reciclare ($I)",
         MaxInputBytes = MaxInfoFileBytes,
-        SourceTypes = [SourceTypeName], FileNames = ["$I*"], Fingerprints = [SourceTypeName],
+        SourceTypes = [SourceTypeName], Fingerprints = [SourceTypeName],
         SupportedOs = "Windows Vista și ulterioare (format binar citit în cod gestionat)",
         FormatVersions = ["Versiunea 1 (544 de octeți, cale de 260 de caractere)", "Versiunea 2 (Windows 10+, lungimea căii în fișier)"],
         Limitations =

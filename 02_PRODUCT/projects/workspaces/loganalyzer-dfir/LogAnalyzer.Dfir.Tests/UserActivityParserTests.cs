@@ -280,6 +280,63 @@ public sealed class UserActivityParserTests : IDisposable
     }
 
     [Fact]
+    public void ShellBags_shared_subkey_lists_finish_quickly_and_are_reported()
+    {
+        const int n = 200;
+        var root = new RegfBuilder.Key("ROOT", T0);
+        var bag = Chain(root, BagRoot, T0);
+        for (int i = 0; i < n; i++)
+        {
+            bag.Value(i.ToString(), RegfBuilder.Binary, List(FileEntry(0x31, "d", 0, Shell)));
+            Child(bag, i.ToString(), T1);
+        }
+        bag.Value("MRUListEx", RegfBuilder.Binary, Mru(Enumerable.Range(0, n).Select(i => (uint)i).Append(End).ToArray()));
+        var hive = RegfBuilder.Build(root, "UsrClass.dat");
+        int listOfBag = BinaryPrimitives.ReadInt32LittleEndian(hive.AsSpan(FindNk(hive, "BagMRU") + 0x1C));
+        for (int i = 0; i < n; i++)                                           // every child shares BagMRU's list of n children
+        {
+            int nk = FindNk(hive, i.ToString());
+            BinaryPrimitives.WriteInt32LittleEndian(hive.AsSpan(nk + 0x14), n);
+            BinaryPrimitives.WriteInt32LittleEndian(hive.AsSpan(nk + 0x1C), listOfBag);
+        }
+        var p = Path.Combine(_dir, "UsrClass.dat");
+        File.WriteAllBytes(p, hive);
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var (r, s) = RunUsrClass(p);
+        sw.Stop();
+
+        Assert.True(sw.ElapsedMilliseconds < 2000, $"took {sw.ElapsedMilliseconds} ms");
+        Assert.Equal(EvidenceStatus.Partial, r.Status);
+        Assert.Contains(r.Gaps, g => g.Reason.Contains("circulară"));
+        Assert.Equal(n, s.Events.Count);
+    }
+
+    [Fact]
+    public void Missing_mrulistex_is_reported_and_no_entry_is_taken_as_the_newest()
+    {
+        var root = new RegfBuilder.Key("ROOT", T0);
+        var bag = Chain(root, BagRoot, T1);
+        bag.Value("0", RegfBuilder.Binary, List(FileEntry(0x31, "unu", 0, Shell)));
+        bag.Value("1", RegfBuilder.Binary, List(FileEntry(0x31, "doi", 0, Shell)));
+        var (r, s) = RunUsrClass(Save(root, "UsrClass.dat"));
+        Assert.Equal(2, s.Events.Count);
+        Assert.All(s.Events, e => Assert.False(e.Time.IsKnown));
+        Assert.Equal(EvidenceStatus.Partial, r.Status);
+        Assert.Contains(r.Gaps, g => g.Reason.Contains("MRUListEx"));
+
+        var root2 = new RegfBuilder.Key("ROOT", T0);
+        var rd = Chain(root2, @"Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs", T1);
+        rd.Value("0", RegfBuilder.Binary, RecentValue("unu.docx"));
+        rd.Value("1", RegfBuilder.Binary, RecentValue("doi.docx"));
+        var (r2, s2) = RunNtUser(Save(root2, "NTUSER.DAT"));
+        var docs = s2.Events.Where(e => e.Source == "RecentDocs").ToList();
+        Assert.Equal(2, docs.Count);
+        Assert.All(docs, e => Assert.False(e.Time.IsKnown));
+        Assert.Contains(r2.Gaps, g => g.Reason.Contains("MRUListEx"));
+    }
+
+    [Fact]
     public void ShellBags_hive_without_bagmru_reports_the_gap_not_an_empty_success()
     {
         var root = new RegfBuilder.Key("ROOT", T0);

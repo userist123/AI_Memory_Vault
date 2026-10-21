@@ -257,7 +257,7 @@ public static class ShellItems
     private static string? LongName(ReadOnlySpan<byte> item, int start, int size, int version)
     {
         int end = Math.Min(start + size, item.Length) - 2;   // the last two bytes of the block are not text
-        int fixedOff = version switch { 3 => 0x12, 7 => 0x26, 8 => 0x2A, _ when version >= 9 => 0x2E, _ => 0x26 };
+        int fixedOff = version switch { 3 => 0x14, 7 => 0x26, 8 => 0x2A, _ when version >= 9 => 0x2E, _ => 0x26 };
         for (int p = start + fixedOff; p <= start + fixedOff + 16 && p + 2 <= end; p += 2)
         {
             if (p != start + fixedOff && version == 3) break;   // version 3 has one fixed position

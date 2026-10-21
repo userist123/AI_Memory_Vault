@@ -77,6 +77,7 @@ public sealed class UserHiveParser : EvidenceParserBase
             "Ora unei valori Run este LastWriteTime al cheii, comună tuturor valorilor din cheie.",
             "SID-ul proprietarului nu este stocat în hive; se deduce din locul de unde a fost copiat.",
             "Jurnalele de tranzacții ale hive-ului nu sunt aplicate.",
+            "Părțile adăugate în versiunea 1.1 (RecentDocs, Office MRU, ShellBags din NTUSER) sunt validate doar pe hive-uri sintetice; starea VALIDATED privește UserAssist și Run/RunOnce, verificate pe corpus real.",
             "RecentDocs nu păstrează calea completă (doar numele); doar cea mai nouă intrare dintr-o cheie are o oră. Ora [T] din Office MRU este ultima deschidere de către aplicația Office respectivă.",
             "ShellBags din NTUSER.DAT (BagMRU) acoperă în principal Windows XP și locuri speciale; pe Windows 7+ folderele locale sunt în UsrClass.dat. Ora cheii BagMRU este ultima actualizare a intrării de către Explorer, nu prima deschidere, iar orele din elementul shell sunt DOS (oră locală fără fus orar, 2 s).",
         ],

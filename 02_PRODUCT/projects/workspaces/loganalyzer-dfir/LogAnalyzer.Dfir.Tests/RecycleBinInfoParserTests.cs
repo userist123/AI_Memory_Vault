@@ -198,8 +198,11 @@ public sealed class RecycleBinInfoParserTests : IDisposable
         Assert.Equal("recycle_info", byType.Preflight!.Fingerprint);
         Assert.Contains(byType.Parsers, x => x.Descriptor.ParserId == "RecycleBinInfoParser");
 
-        var byName = WindowsParsers.Registry.Select(Item(p, "file"), p);
-        Assert.Contains(byName.Parsers, x => x.Descriptor.ParserId == "RecycleBinInfoParser");
+        // A "$I" name alone is not a selector: an item typed "file" gets no candidate (skipped by design), not a failed preflight.
+        Assert.Empty(WindowsParsers.Registry.Candidates(Item(p, "file")));
+        var notInfo = Write("$Ijust.txt", Encoding.UTF8.GetBytes("text oarecare"));
+        Assert.Empty(WindowsParsers.Registry.Select(Item(notInfo, "file"), notInfo).Parsers);
+        Assert.Null(WindowsParsers.Registry.Select(Item(notInfo, "file"), notInfo).Preflight);
     }
 
     [Fact]
