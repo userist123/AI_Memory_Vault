@@ -1,5 +1,5 @@
-# todo-claude-casa3d
-STATUS: IN_PROGRESS        UPDATED: 2026-10-21T23:40:00+03:00
+# todo-claude-casa3d-pins
+STATUS: IN_PROGRESS        UPDATED: 2026-10-22T00:30:00+03:00
 TASK: Casa3D — continuare din todo-antigravity-casa3d.md (NEXT: IBAN fixtures, fuziune PR, pini 3D pe /share)
 BRANCH / PR: gemini/casa3d-nextgen-functionality-uiux / PR #304
 DONE:
@@ -9,10 +9,20 @@ DONE:
   - Garda nu a fost slăbită, allowlist neatins.
 - Dovezi: `python 30_SCRIPTS/verification/personal_data_guard.py` -> PASS exit 0; vitest 107/107 fișiere, 634/634 teste; `tsc --noEmit` exit 0.
 - `npm ci` rulat în `casa3d/app` (node_modules lipsea în acest checkout).
+- Pini clientului pe /share cu PIN (decizie owner: „Doar cu cod PIN”): design + threat model P1-P11 în
+  00_GOVERNANCE/coordination/projects/CASA3D/SHARE_PINS_DESIGN.md; implementat de vault-worker :
+  lib/share-pin.ts, lib/share-public-http.ts, rute /api/share/[token]/pin|pins, /api/projects/[id]/shares/pin, components/PinLayer.tsx,
+  tests/share-pins.test.ts (15). Raport worker: vitest 108/649, tsc 0. Browser verificat local (PIN greșit/corect, pin plasat, bypass 400).
+- Checkpoint redenumit din todo-claude-casa3d.md (conflict add/add cu PR #257).
+- Fuziune pregătită (owner apasă merge): #305 inclus integral în #304; #304 +77 față de main, mergeable; #257 4 commituri docs neabsorbite; #258 218 commituri, CONFLICTING.
 NEXT (in order):
+- Revizie Opus vault-reviewer: APPROVE, P1-P11 PASS; L1 (no-store) și L2 (sameOriginJson pe ruta proprietarului) reparate + test.
+  Final: vitest 108/650, tsc 0, personal_data_guard PASS. Commit + push pe PR #304.
+NEXT:
+- Owner: merge #304 (închide #305 ca absorbit), decizie #257/#258.
+- Neverificat: panoul PIN din Editor vizual; header x-forwarded-proto pe tunelul cloudflared (cookie Secure).
 - Verificare CI pe PR #304 după push.
 - Fuziune PR #305 în main + consolidare #304/#257/#258 — necesită decizia owner-ului (merge = acțiune de autoritate).
-- Pini/comentarii 3D pentru beneficiar pe `/share/[token]`.
 BLOCKERS: none
 NOTES:
 - Fișierele necomise ale Antigravity (CASA3D_*_AUDIT/INVENTORY/STATUS/EVIDENCE*.md, edit în todo-antigravity-casa3d.md) au fost lăsate neatinse.

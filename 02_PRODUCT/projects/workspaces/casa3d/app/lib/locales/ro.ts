@@ -690,4 +690,6 @@ export const ro: Dict = {
   "import.step1": "Import",
   "import.step2": "Calibrare",
   "import.step3": "Editare",
+  // ---- pinii de comentariu pe imagini (linkul clientului, cu PIN) ----
+  "pin.add": "Adaugă pin", "pin.cancel": "Renunță", "pin.pinLabel": "PIN-ul primit de la designer (6 cifre)", "pin.unlock": "Continuă", "pin.clickHint": "Atinge imaginea unde vrei să lași comentariul.", "pin.placeAria": "Alege locul pinului pe imagine", "pin.sent": "Mulțumim! Pinul a fost adăugat.", "pin.aria": "Pin {n}: {text}", "pin.layerAria": "Pini pe imagine", "pin.needPin": "Introdu din nou PIN-ul primit de la designer.", "pin.adminTitle": "PIN pentru comentarii", "pin.adminSub": "Clientul poate pune pini pe imagini doar cu acest PIN; părerile obișnuite nu îl cer.", "pin.generate": "Generează PIN", "pin.regenerate": "Regenerează", "pin.disable": "Dezactivează", "pin.shown": "PIN: {pin} — trimite-l clientului; nu se mai arată a doua oară.", "pin.enabled": "Pinii sunt activați pe linkul curent.", "pin.disabled": "Pinii au fost dezactivați.", "pin.noLink": "Creează întâi linkul pentru client.", "pin.failed": "PIN-ul nu s-a putut schimba.", "pin.onImage": "pin pe imagine", "pin.viewOnImage": "Vezi pe imagine",
 };

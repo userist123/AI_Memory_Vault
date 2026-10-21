@@ -7,7 +7,7 @@ import { usePrefs } from '@/lib/prefs';
 import { intlLocale } from '@/lib/i18n';
 import ClientNameBox, { useClientNameBox } from './ClientNameBox';
 
-export interface FeedbackItem { id: string; roomId: string | null; verdict: 'like' | 'change' | 'question'; author: string; text: string; createdAt: string; resolvedAt: string | null; item?: { key: string; label: string; role: string | null } | null }
+export interface FeedbackItem { id: string; roomId: string | null; verdict: 'like' | 'change' | 'question'; author: string; text: string; createdAt: string; resolvedAt: string | null; item?: { key: string; label: string; role: string | null } | null; anchor?: { surface: 'room' | 'overview'; u: number; v: number } | null }
 export interface ApprovalItem { key: string; label: string; role: string | null; swatch?: React.CSSProperties }
 const VERDICTS = ['like', 'change', 'question'] as const;
 

@@ -45,6 +45,12 @@ create table if not exists share_feedback(id uuid primary key default gen_random
 create index if not exists share_feedback_project on share_feedback(project_id, created_at desc);
 create index if not exists share_feedback_token on share_feedback(token);
 alter table share_feedback add column if not exists item jsonb;
+alter table share_feedback add column if not exists anchor jsonb;
+alter table shares add column if not exists pin_hash text;
+alter table shares add column if not exists pin_salt text;
+alter table shares add column if not exists pin_key text;
+alter table shares add column if not exists pin_failures int not null default 0;
+alter table shares add column if not exists pin_locked_until timestamptz;
 create table if not exists site_photos(id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id) on delete cascade,
   mime text not null, data bytea not null, bytes int not null, created_at timestamptz not null default now());
 create index if not exists site_photos_project on site_photos(project_id);

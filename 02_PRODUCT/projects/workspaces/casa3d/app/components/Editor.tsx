@@ -916,9 +916,29 @@ function DocsPanel({ id, lang, onSchedule }: { id: string; lang: string; onSched
 
 /** Randările fotorealiste făcute pe acest calculator (Blender Cycles), cele mai noi întâi; se reîmprospătează cât timp lucrează. */
 // Linkul pentru client și părerile venite pe el: un buton care salvează versiunea și copiază linkul; părerile grupate pe camere, de bifat.
-type ClientFeedback = { id: string; roomId: string | null; verdict: 'like' | 'change' | 'question'; author: string; text: string; createdAt: string; resolvedAt: string | null; revisionNumber: number; item?: { key: string; label: string; role: string | null } | null };
+type ClientFeedback = { id: string; roomId: string | null; verdict: 'like' | 'change' | 'question'; author: string; text: string; createdAt: string; resolvedAt: string | null; revisionNumber: number; item?: { key: string; label: string; role: string | null } | null; anchor?: { surface: 'room' | 'overview'; u: number; v: number } | null; token?: string };
+// PIN-ul pentru pinii pe imagine, pe linkul activ cel mai nou: Generează / Regenerează (cookie-urile vechi ale clientului mor) / Dezactivează.
+// PIN-ul se arată o singură dată (serverul ține doar hash-ul).
+function SharePinAdmin({ id, tick, say }: { id: string; tick: number; say(s: string): void }){
+  const { t } = usePrefs(), [share, setShare] = useState<{ token: string; pinEnabled: boolean } | null | undefined>(undefined), [shown, setShown] = useState<string | null>(null), [busy, setBusy] = useState(false);
+  useEffect(() => { let alive = true; fetch(`/api/projects/${id}/shares`).then(r => r.ok ? r.json() : []).then((xs: any[]) => { if (!alive) return; const s = xs.find(x => !x.revokedAt);
+    setShare(s ? { token: s.token, pinEnabled: !!s.pinEnabled } : null); setShown(null); }).catch(() => { if (alive) setShare(null); }); return () => { alive = false; }; }, [id, tick]);
+  async function act(method: 'POST' | 'DELETE'){ if (!share || busy) return; setBusy(true);
+    try { const r = await fetch(`/api/projects/${id}/shares/pin`, { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token: share.token }) }), j = await r.json().catch(() => null);
+      if (!r.ok){ say(j?.error || t('pin.failed')); return; }
+      setShare({ ...share, pinEnabled: method === 'POST' }); setShown(method === 'POST' ? String(j?.pin ?? '') : null); if (method === 'DELETE') say(t('pin.disabled')); }
+    catch { say(t('pin.failed')); } finally { setBusy(false); } }
+  if (share === undefined) return null;
+  return (<div className="pin-admin"><h3>{t('pin.adminTitle')}</h3><p className="muted small">{t('pin.adminSub')}</p>
+    {!share ? <p className="muted small">{t('pin.noLink')}</p> : <>
+      {share.pinEnabled && !shown && <p className="small">{t('pin.enabled')}</p>}
+      {shown && <p className="notice" role="status"><b>{t('pin.shown', { pin: shown })}</b></p>}
+      <div className="row"><button type="button" className="btn" disabled={busy} onClick={() => act('POST')}>{share.pinEnabled ? t('pin.regenerate') : t('pin.generate')}</button>
+        {share.pinEnabled && <button type="button" className="btn" disabled={busy} onClick={() => act('DELETE')}>{t('pin.disable')}</button>}</div></>}
+  </div>);
+}
 function ClientPanel({ id, say, onLinked, flush, roomNames, cur }: { id: string; say(s: string): void; onLinked(): void; flush(): Promise<boolean>; roomNames: Record<string, string>; cur: string }){
-  const { t, lang } = usePrefs(), [link, setLink] = useState<{ url: string; local: boolean } | null>(null), [busy, setBusy] = useState(false), [items, setItems] = useState<ClientFeedback[] | null>(null);
+  const { t, lang } = usePrefs(), [link, setLink] = useState<{ url: string; local: boolean } | null>(null), [busy, setBusy] = useState(false), [items, setItems] = useState<ClientFeedback[] | null>(null), [tick, setTick] = useState(0);
   useEffect(() => { let alive = true; const load = () => fetch(`/api/projects/${id}/feedback`).then(r => r.ok ? r.json() : null).then(j => { if (alive && j) setItems(j); }).catch(() => {});
     load(); const iv = setInterval(load, 30000); return () => { alive = false; clearInterval(iv); }; }, [id]);
   const copy = async (url: string) => { try { await navigator.clipboard.writeText(url); say(t('client.copied')); } catch { /* fără clipboard: linkul rămâne afișat */ } };
@@ -926,7 +946,7 @@ function ClientPanel({ id, say, onLinked, flush, roomNames, cur }: { id: string;
   async function make(){ if (making.current) return; making.current = true; setBusy(true); try { if (!(await flush())) return; const r = await fetch(`/api/projects/${id}/client-link`, { method: 'POST' }), j = await r.json();
       if (!r.ok){ say(j.error || t('client.failed')); return; }
       const url = j.url ?? `${location.origin}${j.path}`, local = j.publicUrl === false && isLocalHostname(location.hostname);
-      setLink({ url, local }); if (j.newRevision) say(t('client.newRev', { n: j.revisionNumber })); await copy(url); onLinked(); }
+      setLink({ url, local }); setTick(n => n + 1); if (j.newRevision) say(t('client.newRev', { n: j.revisionNumber })); await copy(url); onLinked(); }
     catch { say(t('client.failed')); } finally { making.current = false; setBusy(false); } }
   async function toggle(f: ClientFeedback){ const r = await fetch(`/api/projects/${id}/feedback`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: f.id, resolved: !f.resolvedAt }) });
     if (r.ok){ const j = await r.json(); setItems(xs => (xs ?? []).map(x => x.id === f.id ? { ...x, resolvedAt: j.resolvedAt } : x)); } }
@@ -936,11 +956,13 @@ function ClientPanel({ id, say, onLinked, flush, roomNames, cur }: { id: string;
     <div className="docs"><button className="docrow" onClick={make} disabled={busy}><b>{t('client.link')}</b><small>{t('client.linkSub')}</small></button></div>
     {link && <div className="client-link"><input readOnly value={link.url} onFocus={e => e.currentTarget.select()} aria-label={t('client.link')} /><button className="btn" onClick={() => copy(link.url)}>{t('client.copy')}</button>
       {link.local && <div className="notice warn" role="alert"><Icon name="alert" /><div><b>{t('client.localTitle')}</b><p>{t('client.localOnly')}</p></div></div>}</div>}
+    <SharePinAdmin id={id} tick={tick} say={say} />
     <DesignerChanges id={id} cur={cur} say={say} />
     <h3>{t('client.feedback')}{open > 0 && <span className="pill">{t('client.open', { n: open })}</span>}</h3>
     {items && items.length === 0 && <EmptyState title={t('empty.feedback.title')} text={t('empty.feedback.text')} action={{ label: t('client.link'), onClick: make }} />}
     {[...groups.entries()].map(([room, fs]) => <div key={room} className="fbg"><h4>{room ? roomNames[room] ?? room : t('client.general')}</h4>
-      {fs.map(f => <div key={f.id} className={`fbi ${f.resolvedAt ? 'done' : ''}`}><span className={`fb-tag fb-${f.verdict}`}>{f.item && f.verdict === 'like' ? t('fb.isApproved') : t(`fb.${f.verdict}`)}{f.item ? ` · ${f.item.label}` : ''}</span>{f.text && <q>{f.text}</q>}
+      {fs.map(f => <div key={f.id} className={`fbi ${f.resolvedAt ? 'done' : ''}`}><span className={`fb-tag fb-${f.verdict}`}>{f.item && f.verdict === 'like' ? t('fb.isApproved') : t(`fb.${f.verdict}`)}{f.item ? ` · ${f.item.label}` : ''}</span>{f.anchor && <span className="fb-tag pin-tag">{t('pin.onImage')}</span>}{f.text && <q>{f.text}</q>}
+        {f.anchor && f.token && <a className="linkish small" href={`/share/${f.token}#pin-${f.id}`} target="_blank" rel="noopener">{t('pin.viewOnImage')}</a>}
         <small>{f.author} · {new Date(f.createdAt).toLocaleString(intlLocale(lang), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} · {t('client.rev', { n: f.revisionNumber })}</small>
         <button className="btn" onClick={() => toggle(f)}>{f.resolvedAt ? t('client.reopen') : t('client.resolve')}</button></div>)}</div>)}
   </div>);
