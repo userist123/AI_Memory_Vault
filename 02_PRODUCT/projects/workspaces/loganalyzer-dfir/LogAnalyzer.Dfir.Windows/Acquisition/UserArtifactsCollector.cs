@@ -343,7 +343,8 @@ public sealed class UserArtifactsCollector : ICollector
                 if (a.HasFlag(FileAttributes.ReparsePoint)) return cur;
             }
             catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException) { return ""; }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return ""; }
+            // fail closed: a component whose attributes cannot be read may be a link, so the path is refused, never followed
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return cur + " (atributele nu pot fi citite)"; }
         }
         return "";
     }
