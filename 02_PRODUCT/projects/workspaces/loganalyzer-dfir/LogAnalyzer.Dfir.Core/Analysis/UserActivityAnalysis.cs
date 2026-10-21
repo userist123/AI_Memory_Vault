@@ -169,7 +169,8 @@ public static class UserActivityAnalysis
         if (evaluate)
             foreach (var (r, canonical) in roots)
                 if (ClassifiedAccess.IsUnder(normalized, r)) { root = canonical; break; }
-        var letter = DriveOf(normalized);
+        // the drive letter comes only from the path as Explorer showed it: a resolved known-folder path is the profile's own default location, never a statement about the drive
+        var letter = DriveOf(ClassifiedAccess.Normalize(path, volumeMap));
         // a path in a classified folder of the profile is on the volume the profile declares for it: its letter is "possible" only if nothing says so, so it is not guessed
         var drive = !evaluate || letter.Length == 0 || letter == "C:" ? DriveMatch.None : removable.Contains(letter) ? DriveMatch.Removable : root.Length > 0 ? DriveMatch.None : DriveMatch.Possible;
         var known = e.Time.Utc is not null;
@@ -201,6 +202,7 @@ public static class UserActivityAnalysis
             case ShellBags:
                 parts.Add($"tip element {F(e, "ShellItemType")} ({F(e, "ShellItemKind")})");
                 if (F(e, "MruPosition") is { Length: > 0 } p && int.TryParse(p, out var pos)) parts.Add($"poziția {pos + 1} în lista cheii");
+                if (F(e, "ResolutionNote") is { Length: > 0 } rn) parts.Add(rn);
                 if (F(e, "ShellModifiedLocal") is { Length: > 0 } m) parts.Add($"ora proprie a folderului (modificat, ora locală fără fus, rezoluție 2 s): {m}; nu este ora accesului");
                 break;
             case RecentDocs:

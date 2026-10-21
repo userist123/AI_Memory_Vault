@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.FileSystem;
 
@@ -6,7 +7,7 @@ namespace LogAnalyzer.Dfir.FileSystem;
 /// Resolves the root of a ShellBags path (a known-folder GUID such as Documents, Desktop or Downloads, or the network root) to an absolute path, so a folder that Explorer
 /// showed as "Documente\Clasificat" can be matched against a classified-folder root such as C:\Users\x\Documents\Clasificat. Pure; the display path is never changed,
 /// the resolved one is a separate field. Limits (stated in the rule contract): a redirected known folder (OneDrive, a server share, another drive) resolves to the default
-/// location under the profile, and a profile folder that cannot be found leaves the path unresolved.
+/// location under the profile, and a profile folder that cannot be found (an imported hive, whose path is on the examiner's machine) leaves the path unresolved.
 /// </summary>
 public static class KnownFolders
 {
@@ -34,21 +35,26 @@ public static class KnownFolders
 
     // \x5C is the backslash
     private static readonly Regex NoteProfile = new(@"^Profil \S+ \((?<p>.+?)\)\. ", RegexOptions.Compiled | RegexOptions.CultureInvariant);
-    // the profile folder is the one that holds NTUSER.DAT, or the one whose AppData\Local\Microsoft\Windows holds UsrClass.dat: the whole path is checked from its end, so a "Users" folder higher up is never taken for the profile
-    private static readonly Regex PathProfile = new(@"^(?<p>(?:[A-Za-z]:|\x5C\x5C(?![?.])[^\x5C/]+\x5C[^\x5C/]+)(?:[\x5C/]+[^\x5C/]+)*?[\x5C/]+Users[\x5C/]+[^\x5C/]+)[\x5C/]+(?:NTUSER\.DAT|AppData[\x5C/]+Local[\x5C/]+Microsoft[\x5C/]+Windows[\x5C/]+UsrClass\.dat)$", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
 
     /// <summary>
-    /// The profile folder of the hive's owner: from the collection note "Profil &lt;SID&gt; (&lt;path&gt;)" when present, else from the hive's original path
-    /// (Users\name\NTUSER.DAT or Users\name\AppData\Local\Microsoft\Windows\UsrClass.dat) when that path starts with a drive letter or a share. "" when unknown.
+    /// The profile folder of the hive's owner, ONLY from the collection note "Profil &lt;SID&gt; (&lt;path&gt;)" written by UserArtifactsCollector on the station itself
+    /// (Collector == UserArtifactsCollector and AcquisitionMethod == "acquired": the same trust rule as the Recycle Bin $R state). An imported hive's original path is on the
+    /// examiner's machine, not on the station's disk, so it is never used and a crafted note on an import is ignored. "" when unknown or when the path is a device path.
     /// </summary>
-    public static string ProfileDirOf(string? originalPath, string? notes)
+    public static string ProfileDirOf(EvidenceItem item)
     {
-        if (notes is { Length: > 0 } && NoteProfile.Match(notes) is { Success: true } n && IsAbsolute(n.Groups["p"].Value)) return n.Groups["p"].Value.TrimEnd(Bs, '/');
-        if (originalPath is { Length: > 0 } && PathProfile.Match(originalPath) is { Success: true } m) return m.Groups["p"].Value.Replace('/', Bs);
-        return "";
+        if (item.Collector != RecycleBinInfoParser.CollectedBy || item.AcquisitionMethod != "acquired" || string.IsNullOrEmpty(item.Notes)) return "";
+        return NoteProfile.Match(item.Notes) is { Success: true } n && IsAbsolute(n.Groups["p"].Value) ? n.Groups["p"].Value.TrimEnd(Bs, '/') : "";
     }
 
-    private static bool IsAbsolute(string p) => p.Length >= 3 && ((char.IsAsciiLetter(p[0]) && p[1] == ':' && (p[2] == Bs || p[2] == '/')) || p.StartsWith(Unc, StringComparison.Ordinal));
+    /// <summary>True when the GUID is a known-folder root that needs the profile folder to be placed on a disk (Documents, Desktop, Downloads...).</summary>
+    public static bool IsProfileRoot(string guid) => guid.Length > 0 && UnderProfile.ContainsKey(guid);
+
+    /// <summary>True when the GUID is a root that <see cref="Resolve"/> can anchor (a profile known folder or the network root).</summary>
+    public static bool IsKnownRoot(string guid) => IsProfileRoot(guid) || guid.Equals(NetworkRootGuid, StringComparison.OrdinalIgnoreCase);
+
+    // a device prefix (question mark or dot right after the two leading backslashes) is refused, like for the hive path: it names a device, not a folder of the station's disk
+    private static bool IsAbsolute(string p) => p.Length >= 3 && ((char.IsAsciiLetter(p[0]) && p[1] == ':' && (p[2] == Bs || p[2] == '/')) || (p.StartsWith(Unc, StringComparison.Ordinal) && p.Length > 3 && p[2] != '?' && p[2] != '.'));
 
     /// <summary>
     /// The absolute path for a BagMRU path whose first item is a root folder with GUID <paramref name="rootGuid"/>; <paramref name="segments"/> are all items, the root first.

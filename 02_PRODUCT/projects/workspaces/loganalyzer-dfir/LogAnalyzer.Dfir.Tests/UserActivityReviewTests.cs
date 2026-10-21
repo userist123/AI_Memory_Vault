@@ -51,6 +51,9 @@ public sealed class UserActivityReviewTests : IDisposable
         var pc = new RegfBuilder.Key("1", T0.AddDays(2)); bag.Children.Add(pc);
         pc.Value("0", RegfBuilder.Binary, List(Volume(@"E:\")));
         pc.Value("MRUListEx", RegfBuilder.Binary, Mru(0, End));
+        var e = new RegfBuilder.Key("0", T0.AddDays(3)); pc.Children.Add(e);
+        e.Value("0", RegfBuilder.Binary, List(FileEntry(0x31, "Clasificat", 0, Shell)));
+        e.Value("MRUListEx", RegfBuilder.Binary, Mru(0, End));
         var p = Path.Combine(dir, "UsrClass.dat");
         File.WriteAllBytes(p, RegfBuilder.Build(root, "UsrClass.dat"));
         return p;
@@ -61,7 +64,8 @@ public sealed class UserActivityReviewTests : IDisposable
         var hive = WriteHive(profile);
         var ws = InvestigationPipeline.NewCase(Path.Combine(_dir, "cases"), "ua-reopen", TestScopes.Valid());
         InvestigationPipeline.Import(ws, [hive]);
-        var classified = Path.Combine(_dir, "Users", profile, "Documents", "Clasificat");
+        // the imported hive's own path is on this machine, so Documente\Clasificat is NOT placed on the station's disk (E7 final decision 2); the E:\Clasificat entry is matched by its displayed path
+        var classified = @"E:\Clasificat";
         var prof = new ProcedureProfile { ClassifiedFolders = [new ClassifiedFolderRow { Path = classified, Note = "test" }] };
         var run = new InvestigationPipeline().Run(ws, CollectionProfile.Quick, collect: false, procedureProfile: prof);
         return (run, ws, classified);
@@ -75,7 +79,9 @@ public sealed class UserActivityReviewTests : IDisposable
     {
         var (run, ws, classified) = RunCase();
         var before = run.UserActivityView();
-        Assert.True(before.Items.Any(i => i.ClassifiedRoot.Equals(classified, StringComparison.OrdinalIgnoreCase)), string.Join(" || ", Rows(before)) + " ## " + classified);   // Documente\Clasificat resolved through the profile folder
+        Assert.True(before.Items.Any(i => i.ClassifiedRoot.Equals(classified, StringComparison.OrdinalIgnoreCase)), string.Join(" || ", Rows(before)) + " ## " + classified);   // matched by the displayed path
+        Assert.DoesNotContain(before.Items, i => i.ResolvedPath.Length > 0);                         // an imported hive: known folders are not resolved
+        Assert.Contains(before.Items, i => i.Detail.Contains("nu au putut fi plasate pe discul stației"));
         Assert.True(before.HasFolders);
         Assert.True(File.Exists(ws.FullPath(UserActivityContext.RelPath)));
 
@@ -118,6 +124,50 @@ public sealed class UserActivityReviewTests : IDisposable
         ctx.Write(path);
         var view = CaseLoader.Open(ws.Root, recheck: false).Case!.Result.UserActivityView();
         Assert.Contains("neevaluabil la redeschidere", view.Summary);
+        Assert.Contains("nu corespunde cu timeline.csv", view.Summary);     // says what happened: the context exists but is not the one of this timeline
+        Assert.DoesNotContain("nu au fost salvate", view.Summary);
+    }
+
+    private static void AssertCaseLoadsWithUnevaluableActivity(string root, InvestigationResult run, string cause)
+    {
+        var res = CaseLoader.Open(root, recheck: false);
+        Assert.True(res.Opened, res.RefusedReason);                          // the optional file never refuses the case
+        var result = res.Case!.Result;
+        var view = result.UserActivityView();
+        Assert.True(view.Total > 0);
+        Assert.Contains("neevaluabil la redeschidere", view.Summary);
+        Assert.Contains(cause, view.Summary);
+        Assert.DoesNotContain("nu au fost salvate", view.Summary);
+        Assert.Contains(res.Case.Notes, n => n.Contains(cause));
+        Assert.Equal(run.Findings.Select(f => f.FindingId).Order(), result.Findings.Select(f => f.FindingId).Order());   // findings come from findings.json, unchanged
+        Assert.NotEmpty(result.Findings);
+    }
+
+    [Fact]
+    public void A_malformed_user_activity_file_makes_only_the_view_unevaluable()
+    {
+        var (run, ws, _) = RunCase();
+        File.WriteAllText(ws.FullPath(UserActivityContext.RelPath), "{ not json ]");
+        AssertCaseLoadsWithUnevaluableActivity(ws.Root, run, "nu a putut fi citit");
+    }
+
+    [Fact]
+    public void An_oversized_user_activity_file_is_not_read_and_does_not_refuse_the_case()
+    {
+        var (run, ws, _) = RunCase();
+        using (var fs = new FileStream(ws.FullPath(UserActivityContext.RelPath), FileMode.Create, FileAccess.Write)) fs.SetLength(UserActivityContext.MaxFileBytes + 1);
+        AssertCaseLoadsWithUnevaluableActivity(ws.Root, run, "peste limita");
+    }
+
+    [Fact]
+    public void A_user_activity_file_with_an_unsupported_schema_makes_only_the_view_unevaluable()
+    {
+        var (run, ws, _) = RunCase();
+        var path = ws.FullPath(UserActivityContext.RelPath);
+        var ctx = UserActivityContext.Read(path)!;
+        ctx.SchemaVersion = "9.0";
+        ctx.Write(path);
+        AssertCaseLoadsWithUnevaluableActivity(ws.Root, run, "nu a putut fi citit");
     }
 
     [Fact]
@@ -167,13 +217,23 @@ public sealed class UserActivityReviewTests : IDisposable
     }
 
     [Fact]
-    public void The_profile_folder_comes_from_the_collection_note_or_the_hive_path()
+    public void The_profile_folder_comes_only_from_the_collection_note_of_a_collected_item()
     {
-        Assert.Equal(@"C:\Users\ana", KnownFolders.ProfileDirOf(@"\\?\GLOBALROOT\Device\X\Users\ana\NTUSER.DAT", @"Profil S-1-5-21-1-2-3-1001 (C:\Users\ana). Copiat din copia de umbră VSS."));
-        Assert.Equal(@"C:\Users\ana", KnownFolders.ProfileDirOf(@"C:\Users\ana\NTUSER.DAT", ""));
-        Assert.Equal(@"D:\Users\ana", KnownFolders.ProfileDirOf(@"D:\Users\ana\AppData\Local\Microsoft\Windows\UsrClass.dat", null));
-        Assert.Equal("", KnownFolders.ProfileDirOf(@"\\?\GLOBALROOT\Device\X\Users\ana\NTUSER.DAT", ""));   // a device path is not a profile folder
-        Assert.Equal("", KnownFolders.ProfileDirOf("NTUSER.DAT", ""));
+        static EvidenceItem It(string collector, string method, string original, string notes) =>
+            new() { EvidenceId = "E", CaseId = "C", Source = "s", SourceType = "usrclass_hive", Collector = collector, AcquisitionMethod = method, OriginalPath = original, Notes = notes };
+        const string Note = @"Profil S-1-5-21-1-2-3-1001 (C:\Users\ana). Copiat din copia de umbră VSS.";
+        const string Device = @"\\?\GLOBALROOT\Device\X\Users\ana\NTUSER.DAT";
+        Assert.Equal(@"C:\Users\ana", KnownFolders.ProfileDirOf(It(RecycleBinInfoParser.CollectedBy, "acquired", Device, Note)));
+        // an imported hive: the original path is the examiner's, a crafted note is not trusted
+        Assert.Equal("", KnownFolders.ProfileDirOf(It("Import", "imported", @"C:\Users\ana\NTUSER.DAT", Note)));
+        Assert.Equal("", KnownFolders.ProfileDirOf(It(RecycleBinInfoParser.CollectedBy, "imported", @"C:\Users\ana\NTUSER.DAT", Note)));
+        Assert.Equal("", KnownFolders.ProfileDirOf(It("Import", "acquired", @"C:\Users\ana\NTUSER.DAT", Note)));
+        // collected, but no note: the hive path is not used
+        Assert.Equal("", KnownFolders.ProfileDirOf(It(RecycleBinInfoParser.CollectedBy, "acquired", @"C:\Users\ana\NTUSER.DAT", "")));
+        // device prefixes in the note are refused
+        Assert.Equal("", KnownFolders.ProfileDirOf(It(RecycleBinInfoParser.CollectedBy, "acquired", "", @"Profil S-1-5-21-1-2-3-1001 (\\?\GLOBALROOT\Device\X\Users\ana). x")));
+        Assert.Equal("", KnownFolders.ProfileDirOf(It(RecycleBinInfoParser.CollectedBy, "acquired", "", @"Profil S-1-5-21-1-2-3-1001 (\\.\C:\Users\ana). x")));
+        Assert.Equal(@"\\srv\share\Users\ana", KnownFolders.ProfileDirOf(It(RecycleBinInfoParser.CollectedBy, "acquired", "", @"Profil S-1-5-21-1-2-3-1001 (\\srv\share\Users\ana). x")));
     }
 
     [Fact]
