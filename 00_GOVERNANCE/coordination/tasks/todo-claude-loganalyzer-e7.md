@@ -110,7 +110,7 @@
   (`USER-ACTIVITY-CLASSIFIED/-REMOVABLE/-DELETED`, DE VERIFICAT = Candidate + Medium at most; possible-removable letters Low; one finding per folder / letter,
   no NECONFORM from these traces), 3 catalog contracts in `RuleContracts.cs` (CLASSIFIED-ACCESS text corrected: it no longer says "no rule uses them").
 - Source strings: `ShellBags`, `RecentDocs`, `OfficeMRU` (not "Office MRU"), `RecycleBin`. RecentDocs holds only the name: it never matches a folder (stated).
-- Removable: by drive letter. Confirmed = letter in USB/Partition device events or `AirGapFacts.RemovableLetters`; other letters than C: = "possible" (Low),
+- Removable: by drive letter. Confirmed = letter in USBSTOR (USB source) device events (Partition events carry no letter) or `AirGapFacts.RemovableLetters`; other letters than C: = "possible" (Low),
   except paths inside a configured classified folder (their letter is not guessed). Letter reuse caveat in the finding text.
 - UI: tab "Activitatea utilizatorului" on the INVESTIGATION page (`InvestigationView.xaml`, `InvestigationViewModel.FillUserActivity`, cap 5 000 rows). The
   "Informații clasificate" tab lives on the live Station Control, which has no timeline (StationFacts), so it was not used. `InvestigationResult.UserActivityView()`.
@@ -123,3 +123,11 @@
 - Tests: `UserActivityRulesTests` (21, Dfir.Tests), `UserActivityUiTests` (6, App.Tests).
 - Suites after slice 3: Dfir.Tests 2115 passed / 31 skipped / 0 failed; App.Tests 635; UI.Tests 353; Edition.Tests 45.
 - Next: Opus review of slice 3 (probe list: hostile paths in Analyze, wording against the semantics above, no NECONFORM), then PR order unchanged.
+
+## Slice 3 review round 1 (Opus) and fixes (2026-10-21, claude-sonnet)
+- 1 MEDIUM reopened case: `Analysis/user_activity.json` (UserActivityContext: classified folders used, removable letters, parser Fields of the 4 sources) written by the pipeline, read by CaseLoader; absent or not matching timeline.csv => "neevaluabil la redeschidere: ..." (no relevance, no "nedefinite").
+- 2 MEDIUM known folders: `KnownFolders` (Dfir.Core/FileSystem) resolves Documents/Desktop/Downloads/Pictures/Music/Videos/profile by GUID with the profile folder (note "Profil <SID> (<path>)" or hive path ...\Users\name\NTUSER.DAT / ...\AppData\Local\Microsoft\Windows\UsrClass.dat) and Rețea\server\share to \server\share; field `ResolvedPath`, displayed path kept. Limits (redirected folders, unresolved profile) in the contract and GHID 4.7.
+- 3 wording: RecentDocs never matches (contract); letters confirmed by USBSTOR and AirGapFacts only (comment and this file); "alias" wording removed.
+- 4 comparison row E7: real run validated collection and parsing only. 5 `Drive()` requires an ASCII letter; tests for control characters and 50 000 events.
+- Suites: Dfir.Tests 2131 passed / 31 skipped / 0 failed; App.Tests 636; UI.Tests 353; Edition.Tests 45.
+- Next: round 2 reviews only this delta; then the PR order unchanged.

@@ -39,10 +39,23 @@ public sealed class InvestigationResult
     public List<AntiForensicCheck> AntiForensics { get; } = [];
     /// <summary>The procedure profile used by this run (null = none: log clears stay NotAssessed). Its snapshot is Analysis/procedure_profile.json.</summary>
     public ProcedureProfile? Procedure { get; set; }
-    /// <summary>E7: drive letters the station facts tie to removable media (empty for a case opened later: the page then uses the device events of the timeline only).</summary>
+    /// <summary>E7: drive letters the station facts tie to removable media (a reopened case gets them back from Analysis/user_activity.json).</summary>
     public List<string> FactsRemovableLetters { get; } = [];
+    /// <summary>E7: the classified folders of the profile this run used (Analysis/user_activity.json); null = take them from <see cref="Procedure"/>. A reopened case gets them from the file.</summary>
+    public List<LogAnalyzer.Dfir.Profile.ClassifiedFolderRow>? ActivityFolders { get; set; }
+    /// <summary>E7: set by the case loader for a reopened case that has user-activity rows but no saved context (written before it existed): the view then says it cannot be evaluated.</summary>
+    public string ActivityUnevaluable { get; set; } = "";
     /// <summary>E7: ShellBags / RecentDocs / Office MRU / Recycle Bin rows of the timeline read against the profile's classified folders and the removable volumes (same view as the USER-ACTIVITY-* rules).</summary>
-    public LogAnalyzer.Dfir.Analysis.UserActivityReport UserActivityView() => LogAnalyzer.Dfir.Analysis.Wp14Rules.UserActivityForCase(Timeline, Procedure, FactsRemovableLetters);
+    public LogAnalyzer.Dfir.Analysis.UserActivityReport UserActivityView()
+    {
+        if (ActivityUnevaluable.Length > 0)
+        {
+            // rows are listed, but none is read against folders or letters that were not saved: no relevance, no "nedefinite în profil"
+            var plain = LogAnalyzer.Dfir.Analysis.UserActivityAnalysis.Analyze(Timeline, [], [], evaluate: false);
+            return plain.Total == 0 ? plain : new LogAnalyzer.Dfir.Analysis.UserActivityReport { Items = plain.Items, Unevaluable = ActivityUnevaluable };
+        }
+        return LogAnalyzer.Dfir.Analysis.Wp14Rules.UserActivityForCase(Timeline, ActivityFolders ?? Procedure?.ClassifiedFolders, FactsRemovableLetters);
+    }
     /// <summary>WP15b: policy change timeline, configured/applied/enforced/observed levels, control gaps and unreliable-time windows (Analysis/policy_timeline.json).</summary>
     public PolicyTimelineResult? PolicyTimeline { get; set; }
     public string PolicyTimelineLine => PolicyTimeline is null ? "Cronologie politici: nedefinită (nu a fost calculată)."
@@ -419,6 +432,10 @@ public sealed class InvestigationPipeline
         r.TimelineCsv = Path.Combine(analysisDir, "timeline.csv");
         TimelineCsv.Write(r.TimelineCsv, r.Timeline);
         ws.RecordOutput("Analysis/timeline.csv", Producer, DfirInfo.ApplicationVersion, evidenceIds);
+        // E7: what the user-activity view needs after the case is reopened (timeline.csv does not keep the parser fields, the profile or the station's removable letters).
+        r.ActivityFolders = [.. r.Procedure?.ClassifiedFolders.Select(f => new LogAnalyzer.Dfir.Profile.ClassifiedFolderRow { Path = f.Path, Note = f.Note }) ?? []];
+        LogAnalyzer.Dfir.Analysis.UserActivityContext.From(r.Timeline, r.ActivityFolders, r.FactsRemovableLetters).Write(Path.Combine(analysisDir, "user_activity.json"));
+        ws.RecordOutput(LogAnalyzer.Dfir.Analysis.UserActivityContext.RelPath, Producer, DfirInfo.ApplicationVersion, evidenceIds);
         r.FindingsJson = Path.Combine(analysisDir, "findings.json");
         File.WriteAllText(r.FindingsJson, SchemaVersions.WithVersion(new { r.Findings, r.Gaps, r.Collection, RejectedFindings = r.RejectedFindings.Select(x => new { x.Finding.FindingId, x.Finding.RuleId, x.Finding.Title, x.Reason }) }, SchemaVersions.Findings));
         ws.RecordOutput("Analysis/findings.json", Producer, DfirInfo.ApplicationVersion, evidenceIds);

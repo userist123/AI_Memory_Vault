@@ -15,12 +15,16 @@ public static partial class Wp14Rules
     internal const string UserActivityDeletedRuleId = "USER-ACTIVITY-DELETED";
 
     /// <summary>
-    /// The user-activity view of a case timeline: the classified folders of the procedure profile, the drive letters that the case's device facts (USB history,
-    /// partition events, the station facts <paramref name="factLetters"/>) tie to removable media. The rules, the investigation page and the reports all use this.
+    /// The user-activity view of a case timeline: the classified folders of the procedure profile, the drive letters that the case's device facts (the USB history, USBSTOR,
+    /// and the station facts <paramref name="factLetters"/>, which also include CD-ROM letters) tie to removable media. The rules, the investigation page and the reports all use this.
     /// </summary>
-    public static UserActivityReport UserActivityForCase(IReadOnlyList<TimelineEvent> events, LogAnalyzer.Dfir.Profile.ProcedureProfile? profile, IEnumerable<string>? factLetters = null)
+    public static UserActivityReport UserActivityForCase(IReadOnlyList<TimelineEvent> events, LogAnalyzer.Dfir.Profile.ProcedureProfile? profile, IEnumerable<string>? factLetters = null) =>
+        UserActivityForCase(events, profile?.ClassifiedFolders, factLetters);
+
+    /// <summary>The same view from the classified folders themselves (the profile's rows, or the ones saved with a case).</summary>
+    public static UserActivityReport UserActivityForCase(IReadOnlyList<TimelineEvent> events, IEnumerable<LogAnalyzer.Dfir.Profile.ClassifiedFolderRow>? classifiedFolders, IEnumerable<string>? factLetters)
     {
-        var folders = profile?.ClassifiedFolders.Where(f => f.Path.Trim().Length > 0).Select(f => new ClassifiedRoot(f.Path.Trim(), null, f.Note)).ToList() ?? [];
+        var folders = classifiedFolders?.Where(f => f.Path.Trim().Length > 0).Select(f => new ClassifiedRoot(f.Path.Trim(), null, f.Note)).ToList() ?? [];
         var letters = new List<string>();
         foreach (var m in ObservedUsb(events)) if (m.Letter.Length > 0) letters.Add(m.Letter);
         letters.AddRange(factLetters ?? []);
