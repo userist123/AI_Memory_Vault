@@ -126,6 +126,7 @@ public sealed class InvestigationPipeline
                 _ when EvidenceFingerprint.Detect(f) == "usn_fsutil" => "usn_journal",
                 _ when Path.GetFileName(f).Equals("History", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "chromium_history",
                 _ when Path.GetFileName(f).Equals("places.sqlite", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "firefox_places",
+                _ when Path.GetFileName(f).StartsWith("$I", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "recycle_info" => "recycle_info",
                 _ when RegistryHiveType(Path.GetFileName(f)) is { } hiveType && EvidenceFingerprint.Detect(f) == "regf" => hiveType,
                 // Any other file is still evidence: copied, hashed, listed (no parser → SKIPPED_BY_DESIGN) and available to
                 // hash IOCs and YARA rules.
@@ -139,6 +140,7 @@ public sealed class InvestigationPipeline
         var n = name.ToUpperInvariant();
         if (n is "NTUSER.DAT" or "HKCU.HIV" || n.StartsWith("NTUSER", StringComparison.Ordinal) && n.EndsWith(".HIV", StringComparison.Ordinal)) return "ntuser_hive";
         if (n is "SOFTWARE" or "SOFTWARE.HIV" || n.EndsWith("_SOFTWARE.HIV", StringComparison.Ordinal)) return "software_hive";
+        if (n is "USRCLASS.DAT" or "USRCLASS.HIV" || n.StartsWith("USRCLASS", StringComparison.Ordinal) && n.EndsWith(".HIV", StringComparison.Ordinal)) return "usrclass_hive";
         return null;
     }
 

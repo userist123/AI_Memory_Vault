@@ -452,7 +452,7 @@ public static class RuleContracts
         R("CLASSIFIED-ACCESS", W14, SemanticType.Observation, "Cronologia acceselor la un fișier dintr-un folder clasificat: cine, cu ce program, ce fel de acces, când (auditul Windows al fișierelor și, separat, urmele stației).",
             ["Windows înregistrează accesul doar dacă folderul avea reguli de audit (SACL) și subcategoria „File System” era pornită ÎNAINTE de acces; nu se poate recupera retroactiv.",
              "Scurtăturile (LNK), Jump Lists și jurnalul USN arată că fișierul a fost deschis sau schimbat, nu cine a făcut-o: sunt dovezi mai slabe.",
-             "Istoricul RecentDocs, listele Office MRU și ShellBags nu sunt citite încă."],
+             "RecentDocs, Office MRU, ShellBags și metadatele Coșului de reciclare ($I) sunt citite și apar în cronologie, dar nicio regulă nu le folosește încă pentru această concluzie; ora ShellBags este ultima actualizare a intrării de către Explorer, nu momentul accesului."],
             ["Regulile de audit ale folderului la data accesului, jurnalul Security complet al perioadei."],
             ["Comparați conturile cu lista persoanelor autorizate pentru informațiile clasificate.", "Verificați dacă accesele în afara programului au justificare."]),
         R("CLASSIFIED-EXPORT-UNJUSTIFIED", W14, SemanticType.Correlation, "Un fișier clasificat (sau unul cu același nume) a ieșit din folderul lui sau de pe stație — scris pe un suport amovibil, tipărit, arhivat sau copiat spre un suport, mutat în afara folderului, citit prin rețea — și registrul transferurilor nu are o intrare care să acopere ieșirea (fișier, suport, oră).",
