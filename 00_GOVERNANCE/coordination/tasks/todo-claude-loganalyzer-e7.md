@@ -96,6 +96,11 @@
   destination folders, CreateNew + Unique, caps, leftover shadow reported not deleted, $R spoof needs Collector=UserArtifactsCollector + acquired).
   Fixed: `ReparseOnPath` failed open on an unreadable component; now refuses the path. Residual: TOCTOU between the hive reparse check and esentutl.
   Suites after the fix: Dfir.Tests 2094 passed / 30 skipped / 0 failed (before the one-line fix), related 89/89 after; App.Tests 629.
-- Owner run as administrator (Complet) on a real station to confirm esentutl /vss on live NTUSER.DAT.
+- Real station run 2026-10-21 (owner's station, elevated without a UAC prompt, owner approval in chat): `LiveUserFact` test
+  `UserArtifactsLiveTests` (admin + `LADFIR_LIVE_USER=1`, prints counts only): collector Success, 11 items (3 NTUSER, 3 UsrClass, 5 $I), 0 gaps,
+  no leftover shadow; esentutl /vss copies the logged-on user's NTUSER.DAT. Pipeline: UserHiveParser and ShellBagsParser Success; timeline
+  ShellBags 2174, RecentDocs 644, Office MRU 122, Recycle Bin 5. Long names (ext block v7/8/9) validated: 1 of 912 items with an 8.3 name kept
+  the short name only. Unknown shell item types 113 of 2174 (0x6F 13, 0x52 12, 0xAD 9, 0x7E 5, 0x01 4, ...): reported with hex, candidates for a
+  later decoder pass. Parse gaps 2 (BagMRU missing in two other profiles' UsrClass.dat: correct).
 - Hive transaction logs (.LOG1/.LOG2) are not copied (dirty hives may miss recent writes): owner decision whether to add them (2 more snapshots per profile).
 - Slice 3 (rules, UI tab, report rows, docs, comparison row E7).
