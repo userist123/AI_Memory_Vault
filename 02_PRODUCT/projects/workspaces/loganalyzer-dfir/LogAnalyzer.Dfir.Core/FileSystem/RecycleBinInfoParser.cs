@@ -22,7 +22,7 @@ public sealed class RecycleBinInfoParser : EvidenceParserBase
 
     public override ParserDescriptor Descriptor { get; } = new()
     {
-        ParserId = "RecycleBinInfoParser", Version = "1.0", Artifact = "Metadate Coș de reciclare ($I)",
+        ParserId = "RecycleBinInfoParser", Version = "1.1", Artifact = "Metadate Coș de reciclare ($I)",
         MaxInputBytes = MaxInfoFileBytes,
         SourceTypes = [SourceTypeName], Fingerprints = [SourceTypeName],
         SupportedOs = "Windows Vista și ulterioare (format binar citit în cod gestionat)",
@@ -30,12 +30,12 @@ public sealed class RecycleBinInfoParser : EvidenceParserBase
         Limitations =
         [
             "Ora este momentul trimiterii în Coș (FILETIME UTC), nu al ultimei utilizări a fișierului și nu al golirii Coșului.",
-            "Fișierul $R (conținutul) nu este citit; dacă lipsește lângă $I, conținutul a fost golit sau eliminat, nu înseamnă că fișierul nu a existat.",
+            "Fișierul $R (conținutul) nu este citit; dacă lipsește lângă $I, conținutul a fost golit sau eliminat, nu înseamnă că fișierul nu a existat. La colectarea live $R nu se copiază: se consemnează doar dacă exista și ce dimensiune avea în momentul colectării.",
             "Un $I rămâne doar cât timp elementul este în Coș; după golire metadatele pot dispărea.",
             "Versiuni necunoscute sau fișiere trunchiate sunt raportate ca lacune, nu interpretate.",
         ],
         Status = ParserMaturity.Tested,
-        Validation = "RecycleBinInfoParserTests: fișiere $I sintetice v1 și v2 cu valori exacte și intrări ostile (lungimi negative sau peste fișier, versiune necunoscută, fișier trunchiat)",
+        Validation = "RecycleBinInfoParserTests: fișiere $I sintetice v1 și v2 cu valori exacte și intrări ostile (lungimi negative sau peste fișier, versiune necunoscută, fișier trunchiat); UserArtifactsCollectorTests: starea $R consemnată la colectare",
     };
 
     private static readonly Regex OwnerSid = new(@"[\\/]\$Recycle\.Bin[\\/](S-1-[0-9-]+)[\\/]", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
@@ -70,8 +70,21 @@ public sealed class RecycleBinInfoParser : EvidenceParserBase
         }
 
         // $R is the content; it is looked at only when the stored file keeps its $I name, so a lone imported $I is not read as "content removed".
+        // E7 slice 2: the live collector never copies $R; it records at collection whether $R was there and how large it was, and that record wins.
         string content = "not_checked", contentText = "prezența fișierului $R nu a putut fi verificată";
-        if (name.Length > 2 && name.StartsWith("$I", StringComparison.OrdinalIgnoreCase))
+        string rSize = "";
+        if (CollectedRState(item) is { } collected)
+        {
+            (content, rSize) = collected;
+            contentText = content switch
+            {
+                "present" => "conținutul ($R) exista lângă $I la colectare" + (rSize.Length > 0 ? $" ({rSize} octeți)" : "") + "; nu a fost copiat",
+                "present_folder" => "conținutul ($R) exista lângă $I la colectare, ca folder (un folder șters); nu a fost copiat",
+                "absent" => "conținutul ($R) lipsea lângă $I la colectare: conținut golit sau eliminat",
+                _ => "prezența fișierului $R nu a putut fi verificată la colectare",
+            };
+        }
+        else if (name.Length > 2 && name.StartsWith("$I", StringComparison.OrdinalIgnoreCase))
         {
             var dir = Path.GetDirectoryName(fullPath) ?? "";
             var r = Path.Combine(dir, "$R" + name[2..]);
@@ -93,13 +106,39 @@ public sealed class RecycleBinInfoParser : EvidenceParserBase
             Fields =
             {
                 ["OriginalPath"] = info.OriginalPath, ["OriginalSize"] = info.Size.ToString(CultureInfo.InvariantCulture), ["FormatVersion"] = info.Version.ToString(CultureInfo.InvariantCulture),
-                ["DeletedFileTime"] = info.DeletedFileTime.ToString(CultureInfo.InvariantCulture), ["RContent"] = content, ["OwnerSid"] = sid, ["InfoFile"] = name,
+                ["DeletedFileTime"] = info.DeletedFileTime.ToString(CultureInfo.InvariantCulture), ["RContent"] = content, ["RSize"] = rSize, ["OwnerSid"] = sid, ["InfoFile"] = name,
             },
         });
         result.Records++;
     }
 
     public sealed record Info(int Version, long Size, long DeletedFileTime, string OriginalPath);
+
+    /// <summary>The live collector (E7 slice 2) that copies $I files; only its notes are trusted for the $R record.</summary>
+    public const string CollectedBy = "UserArtifactsCollector";
+    /// <summary>Prefix of the $R record the collector writes into the evidence notes.</summary>
+    public const string RNotePrefix = "$R la colectare: ";
+
+    private static readonly Regex RNoteRx = new(@"\$R la colectare: (prezent ca folder|prezent|lipsă|neverificat)(?:, (\d{1,19}) octeți)?", RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+
+    /// <summary>The $R record as the collector writes it: existence and size only, the content is never copied.</summary>
+    public static string RNote(string state, long? size = null) => RNotePrefix + state switch
+    {
+        "present" => "prezent" + (size is { } n ? ", " + n.ToString(CultureInfo.InvariantCulture) + " octeți" : ""),
+        "present_folder" => "prezent ca folder",
+        "absent" => "lipsă",
+        _ => "neverificat",
+    } + " (conținutul $R nu este copiat)";
+
+    /// <summary>The $R state recorded at collection, or null when the item was not collected by <see cref="CollectedBy"/> (an import keeps the old rule).</summary>
+    public static (string State, string Size)? CollectedRState(EvidenceItem item)
+    {
+        if (item.Collector != CollectedBy || item.AcquisitionMethod != "acquired" || string.IsNullOrEmpty(item.Notes)) return null;
+        var m = RNoteRx.Match(item.Notes);
+        if (!m.Success) return null;
+        var state = m.Groups[1].Value switch { "prezent" => "present", "prezent ca folder" => "present_folder", "lipsă" => "absent", _ => "not_checked" };
+        return (state, m.Groups[2].Success ? m.Groups[2].Value : "");
+    }
 
     /// <summary>Decodes a $I file. False with a reason (Romanian) when the bytes are not a readable v1 or v2 record; never throws for bad input.</summary>
     public static bool Decode(ReadOnlySpan<byte> d, out Info info, out string problem)
