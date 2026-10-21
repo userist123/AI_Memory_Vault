@@ -103,7 +103,22 @@ public static class DeviceText
     };
 
     /// <summary>The capacity as the monitor page and the CSV show it: decimal units with a decimal comma („14,9 GB”), whatever the language of the station.</summary>
-    public static string CapacityRo(long b) => b <= 0 ? "" : Bytes(b).Replace('.', ',');
+    /// <summary>
+    /// The capacity of a medium as the monitor shows it (owner, 2026-10-21: both units): first as Windows Explorer shows it (binary units,
+    /// 1 GB = 2^30 bytes), then in brackets as the label on the stick says it (decimal units, 1 GB = 10^9 bytes): „14,9 GB (16 GB pe etichetă)”.
+    /// Below 1 MB (decimal) the two are the same number of bytes and only one is shown.
+    /// </summary>
+    public static string CapacityRo(long b)
+    {
+        if (b <= 0) return "";
+        if (b < 1_000_000) return $"{b} B";
+        return BinaryBytes(b).Replace('.', ',') + " (" + Bytes(b).Replace('.', ',') + " pe etichetă)";
+    }
+
+    /// <summary>Bytes in binary units, as Windows Explorer shows them (KB, MB, GB, TB are powers of 1024).</summary>
+    public static string BinaryBytes(long b) =>
+        b >= 1L << 40 ? $"{b / (double)(1L << 40):0.#} TB" : b >= 1L << 30 ? $"{b / (double)(1L << 30):0.#} GB"
+        : b >= 1L << 20 ? $"{b / (double)(1L << 20):0.#} MB" : b >= 1L << 10 ? $"{b / 1024.0:0.#} KB" : $"{b} B";
 
     /// <summary>A time as the monitor page shows it: the station's local time, dd.MM.yyyy HH:mm:ss; empty when unknown.</summary>
     public static string LocalTime(DateTimeOffset? t) =>

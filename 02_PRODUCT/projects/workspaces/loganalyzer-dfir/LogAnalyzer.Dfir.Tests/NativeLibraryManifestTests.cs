@@ -251,6 +251,18 @@ public sealed class NativeLibraryManifestTests : IDisposable
     }
 
     [Fact]
+    public void The_application_always_asks_for_administrator_rights()
+    {
+        // owner, 2026-10-21: the device monitor cannot seal anything without administrator rights, so the app never runs as a standard user
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var manifest = File.ReadAllText(Path.Combine(root, "LogAnalyzer.App", "app.manifest"));
+        var active = System.Text.RegularExpressions.Regex.Replace(manifest, "<!--.*?-->", "", System.Text.RegularExpressions.RegexOptions.Singleline);
+        Assert.Contains("level=\"requireAdministrator\"", active);
+        Assert.DoesNotContain("highestAvailable", active);
+        Assert.DoesNotContain("asInvoker", active);
+    }
+
+    [Fact]
     public void Install_folder_writable_by_standard_users_refuses_an_elevated_start_and_warns_otherwise()
     {
         var weak = new LogAnalyzer.Dfir.Auth.StoreAclResult(false, ["LogAnalyzer: BUILTIN\\Users poate scrie"]);
