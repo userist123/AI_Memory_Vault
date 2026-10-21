@@ -121,7 +121,7 @@ test('API: doar proprietarul citește și scrie (altul primește 404); salvarea 
     await assert.rejects(f(), (e: any) => e.status === 404);
   await assert.rejects(saveCommercial(A, id, { milestones: [{ id: 'a', label: 'Avans', pct: 30 }] }), (e: any) => e.status === 400 && /100%/.test(e.message));
   await assert.rejects(saveCommercial(A, 'nu-e-uuid', {}), (e: any) => e.status === 404 || e.status === 400);
-  await saveProfile(A, { name: 'Studio Exemplu', cui: '2816464', iban: 'RO49 AAAA 1B31 0075 9384 0000', bank: 'Banca Exemplu' });
+  await saveProfile(A, { name: 'Studio Exemplu', cui: '2816464', iban: 'DE89 3704 0044 0532 0130 00', bank: 'Banca Exemplu' });
   const pf = await getProforma(A, id, '2026-10-15');
   assert.equal(pf.seller.name, 'Studio Exemplu'); assert.equal(pf.client?.name, 'Client Exemplu'); assert.equal(`${pf.series}${pf.number}`, 'PF12');
   assert.equal(pf.dueDate, '2020-01-01'); assert.equal(pf.issueDate, '2026-10-15'); assert.equal(pf.proforma.vatPct, 21);

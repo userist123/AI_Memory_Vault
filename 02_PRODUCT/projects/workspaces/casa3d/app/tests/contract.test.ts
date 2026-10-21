@@ -102,7 +102,7 @@ describe('persistență și izolare pe proprietar', () => {
 });
 
 describe('textul documentelor', () => {
-  const ctx = (over: Partial<DocContext> = {}): DocContext => ({ studio: { name: 'Studio Exemplu SRL', cui: 'RO1234567', address: 'Str. Studio 2', email: 's@exemplu.ro', iban: 'RO49 AAAA 1B31 0075 9384 0000', bank: 'Banca Exemplu' }, client: { name: 'Client Exemplu', address: 'Str. Client 3' }, projectName: 'Apartament Exemplu',
+  const ctx = (over: Partial<DocContext> = {}): DocContext => ({ studio: { name: 'Studio Exemplu SRL', cui: 'RO1234567', address: 'Str. Studio 2', email: 's@exemplu.ro', iban: 'DE89 3704 0044 0532 0130 00', bank: 'Banca Exemplu' }, client: { name: 'Client Exemplu', address: 'Str. Client 3' }, projectName: 'Apartament Exemplu',
     rooms: [{ name: 'Living', areaM2: 21.3 }, { name: 'Dormitor', areaM2: 12 }], areaM2: 33.3, meta: { startDate: '2026-11-01', dueDate: '2026-12-15' }, data: { ...DEFAULT_CONTRACT, fee: { kind: 'per_m2', amount: 120 }, contractNo: '7/2026' }, budgetBase: 20000, today: '2026-10-15', ...over });
   test('contractul are toate secțiunile, avertismentul și semnăturile', () => {
     const d = buildContract(ctx()), ids = d.sections.map(s => s.id);
