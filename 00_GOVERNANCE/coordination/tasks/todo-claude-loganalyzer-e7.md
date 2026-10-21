@@ -46,3 +46,9 @@
 ## Review round 1 fixes (2026-10-21)
 - v3 ext block long name at +0x14 (builder fixed, hand-written byte-array test); BagMRU walk checks visited before ReadChild + ct in loop + 40 000 read cap (shared-list n=200 test); missing MRUListEx -> anomaly gap, no "newest" time; descriptors honest (UserHive: new parts synthetic only; ShellBags cites UserActivityParserTests); `$I*` FileNames removed so a "file"-typed `$I` is skipped, not failed.
 - Suites: Dfir.Tests 2041 passed / 30 skipped / 0 failed; App.Tests 629 passed.
+
+## Review round 2 fixes (2026-10-21, final)
+- Findings: (1) `$I` record with original extension (`$I...lnk/.evtx/.pf/.automaticDestinations-ms`) typed by extension, deletion record lost -> `ImportType` checks `$I` name + `recycle_info` content BEFORE the extension switch. (2) MaxBagReads bounded reads, not work (200 keys x 20 000 subkeys = 7.4 s measured) -> `MaxBagNameReads = 2_000_000` on subkey names read, own gap text ("peste N nume de subchei BagMRU, limita parserului de lucru"), testable via `maxNameReads` parameter (default = production constant). (3) raw NUL byte in ShellItemsTests.cs replaced by `\0` (git sees text).
+- Tests added: 4-case theory + non-`$I` .lnk/.evtx keep type (RecycleBinInfoParserTests), name-budget test (UserActivityParserTests). Dfir.Tests 2047 passed / 30 skipped / 0 failed; App.Tests 629 passed.
+- Review rounds used: 2 (max). Slice 1 CLOSED pending owner.
+- Next: slice 2 (live collection of NTUSER.DAT / UsrClass.dat / `$Recycle.Bin\<SID>\$I*`), then slice 3 (rules, UI, report rows, docs, comparison row E7).

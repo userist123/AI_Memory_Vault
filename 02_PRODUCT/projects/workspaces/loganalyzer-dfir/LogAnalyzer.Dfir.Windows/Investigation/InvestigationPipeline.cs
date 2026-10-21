@@ -113,6 +113,9 @@ public sealed class InvestigationPipeline
     /// <summary>The evidence type <see cref="Import"/> gives a file. Every file is evidence; one with no known type is "file" (hash IOCs, YARA). WP18: the intake screen uses the same rule.</summary>
     public static string ImportType(string f)
     {
+            // A Recycle Bin $I record keeps the original extension ($IAB12CD.lnk, $IAB12CD.evtx): it is checked before the extension, by name and
+            // content, or a deleted shortcut or event log would be typed by its extension and its deletion record lost (review round 2).
+            if (Path.GetFileName(f).StartsWith("$I", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "recycle_info") return "recycle_info";
             var ext = Path.GetExtension(f).ToLowerInvariant();
             return ext switch
             {
@@ -126,7 +129,6 @@ public sealed class InvestigationPipeline
                 _ when EvidenceFingerprint.Detect(f) == "usn_fsutil" => "usn_journal",
                 _ when Path.GetFileName(f).Equals("History", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "chromium_history",
                 _ when Path.GetFileName(f).Equals("places.sqlite", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "firefox_places",
-                _ when Path.GetFileName(f).StartsWith("$I", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "recycle_info" => "recycle_info",
                 _ when RegistryHiveType(Path.GetFileName(f)) is { } hiveType && EvidenceFingerprint.Detect(f) == "regf" => hiveType,
                 // Any other file is still evidence: copied, hashed, listed (no parser → SKIPPED_BY_DESIGN) and available to
                 // hash IOCs and YARA rules.

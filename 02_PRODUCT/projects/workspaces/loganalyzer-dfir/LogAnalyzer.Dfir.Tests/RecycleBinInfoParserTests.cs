@@ -231,6 +231,32 @@ public sealed class RecycleBinInfoParserTests : IDisposable
         Assert.Equal("file", InvestigationPipeline.ImportType(notInfo));
     }
 
+    [Theory]
+    [InlineData("$IAB12CD.lnk")]
+    [InlineData("$IAB12CD.evtx")]
+    [InlineData("$IAB12CD.pf")]
+    [InlineData("$IAB12CD.automaticDestinations-ms")]
+    public void Import_type_keeps_the_deletion_record_whatever_the_original_extension(string name)
+    {
+        var p = Write(name, V2(Original));
+        Assert.Equal("recycle_info", InvestigationPipeline.ImportType(p));
+        var sel = WindowsParsers.Registry.Select(Item(p, "recycle_info"), p);
+        Assert.Contains(sel.Parsers, x => x.Descriptor.ParserId == "RecycleBinInfoParser");
+    }
+
+    [Fact]
+    public void Import_type_keeps_the_extension_type_for_files_not_named_I()
+    {
+        // A real shortcut and a real event log that are not Recycle Bin records keep their type (no regression).
+        var lnk = Write("document.lnk", new byte[] { 0x4C, 0, 0, 0, 0x01, 0x14, 0x02, 0, 0, 0, 0, 0, 0xC0, 0, 0, 0, 0, 0, 0, 0x46 });
+        Assert.Equal("lnk", InvestigationPipeline.ImportType(lnk));
+        var evtx = Write("Security.evtx", Encoding.ASCII.GetBytes("ElfFile\0").Concat(new byte[4096]).ToArray());
+        Assert.Equal("evtx", InvestigationPipeline.ImportType(evtx));
+        // Even a $I-named file that is not a deletion record is typed by its extension.
+        var fake = Write("$Inotrecord.evtx", Encoding.ASCII.GetBytes("ElfFile\0").Concat(new byte[4096]).ToArray());
+        Assert.Equal("evtx", InvestigationPipeline.ImportType(fake));
+    }
+
     [Fact]
     public void Descriptor_is_honest_about_its_limits()
     {
