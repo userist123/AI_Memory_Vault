@@ -61,6 +61,8 @@ public static class CaseLoader
         List<CollectionRow> collection = [];
         VerificationReport? verification = null;
         RunState? run = null;
+        LogAnalyzer.Dfir.Analysis.UserActivityContext? activity = null;
+        bool activityRestored = false;
         var analysis = Path.Combine(full, "Analysis");
         try
         {
@@ -83,6 +85,8 @@ public static class CaseLoader
             {
                 SchemaVersions.Accept(manifest.VersionOf("timeline.csv"), "timeline.csv");
                 timeline = TimelineCsv.Read(timelinePath);
+                activity = LogAnalyzer.Dfir.Analysis.UserActivityContext.Read(Path.Combine(analysis, "user_activity.json"));
+                activityRestored = activity is not null && activity.TryRestoreFields(timeline);
                 notes.Add("Cronologia a fost citită din timeline.csv: conține doar coloanele acelui fișier (câmpurile specifice parserelor nu sunt păstrate în el).");
             }
             else if (ff is not null) notes.Add("Analysis/timeline.csv lipsește: cronologia nu poate fi arătată.");
@@ -126,6 +130,17 @@ public static class CaseLoader
         result.Collection.AddRange(collection);
         result.Parsing.AddRange(parsing);
         result.Timeline.AddRange(timeline);
+        if (activityRestored)
+        {
+            result.ActivityFolders = activity!.ClassifiedFolders;
+            result.FactsRemovableLetters.AddRange(activity.RemovableLetters);
+        }
+        else
+        {
+            result.ActivityUnevaluable = LogAnalyzer.Dfir.Analysis.UserActivityContext.UnevaluableText;
+            if (timeline.Any(e => e.Source is "ShellBags" or "RecentDocs" or "OfficeMRU" or "RecycleBin"))
+                notes.Add("Activitatea utilizatorului: " + LogAnalyzer.Dfir.Analysis.UserActivityContext.UnevaluableText);
+        }
         if (File.Exists(Path.Combine(analysis, "timeline.csv"))) result.TimelineCsv = Path.Combine(analysis, "timeline.csv");
         result.Verification = verification;
         if (verification is not null)

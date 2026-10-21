@@ -60,6 +60,23 @@ public sealed class UserActivityUiTests : IDisposable
     }
 
     [Fact]
+    public void A_reopened_case_without_the_saved_context_says_so_on_the_tab_and_in_the_pdf_lines()
+    {
+        var ws = _k.Case(_k.File("a.bin", "alpha"));
+        var result = new InvestigationResult { Case = ws, ActivityUnevaluable = UserActivityContext.UnevaluableText };
+        result.Timeline.AddRange([Bag(Root, T0), Bag(@"F:\y")]);
+        var vm = new InvestigationViewModel();
+        vm.FillUserActivity(result.UserActivityView());
+        Assert.Equal(2, vm.UserActivity.Count);
+        Assert.Contains("neevaluabil la redeschidere", vm.UserActivitySummary);
+        Assert.DoesNotContain("nedefinite", vm.UserActivitySummary);
+        Assert.All(vm.UserActivity, i => Assert.Equal("—", i.Relevance));
+        var lines = InvestigationReportText.UserActivityLines(result);
+        Assert.Contains(lines, l => l.Text.Contains("neevaluabil la redeschidere"));
+        Assert.DoesNotContain(lines, l => l.Text.Contains("nedefinite"));
+    }
+
+    [Fact]
     public void A_very_long_list_is_capped_and_the_summary_says_so()
     {
         var events = Enumerable.Range(0, InvestigationViewModel.MaxUserActivityRows + 10).Select(n => Bag($@"E:\d{n}", T0.AddSeconds(n))).ToList();

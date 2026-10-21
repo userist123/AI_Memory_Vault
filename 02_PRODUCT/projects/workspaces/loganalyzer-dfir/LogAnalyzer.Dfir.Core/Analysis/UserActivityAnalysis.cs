@@ -30,6 +30,8 @@ public sealed class UserActivityItem
     /// <summary>The classified folder the path is in or equal to ("" = none).</summary>
     public string ClassifiedRoot { get; init; } = "";
     public DriveMatch Drive { get; init; }
+    /// <summary>ShellBags only: the absolute path the known-folder root (Documente, Desktop, Descărcări, Rețea...) was resolved to, used for matching; "" = not resolved (the displayed <see cref="Path"/> is then matched as it is).</summary>
+    public string ResolvedPath { get; init; } = "";
     /// <summary>"E:" when the path is on a drive letter, else "".</summary>
     public string DriveLetter { get; init; } = "";
     /// <summary>Plain words for the "Relevanță" column.</summary>
@@ -53,9 +55,12 @@ public sealed class UserActivityReport
     public int Total => Items.Count;
     public int Count(string source) => Items.Count(i => i.Source == source);
     public bool HasFolders { get; init; }
+    /// <summary>Set when the case was reopened without the saved profile and device letters: the rows are listed, but not read against the classified folders or removable volumes.</summary>
+    public string Unevaluable { get; init; } = "";
 
     /// <summary>One line for the page header and the reports.</summary>
     public string Summary =>
+        Unevaluable.Length > 0 ? $"Activitatea utilizatorului: {Total:N0} urme în cronologie; {Unevaluable}" :
         Total == 0
             ? "Activitatea utilizatorului: nicio urmă ShellBags, RecentDocs, Office MRU sau Coș de reciclare ($I) în sursele citite; asta nu dovedește că nu s-a întâmplat nimic (hive-urile utilizatorilor sau Coșul pot să nu fi fost colectate: profilul „Complet”)."
             : $"Activitatea utilizatorului: {Total:N0} urme (ShellBags {Count(UserActivityAnalysis.ShellBags):N0}, RecentDocs {Count(UserActivityAnalysis.RecentDocs):N0}, Office MRU {Count(UserActivityAnalysis.OfficeMru):N0}, Coș de reciclare {Count(UserActivityAnalysis.RecycleBin):N0}) · " +
@@ -116,11 +121,11 @@ public static class UserActivityAnalysis
     public static string DriveOf(string normalizedPath) => ClassifiedAccess.Drive(normalizedPath);
 
     /// <summary>
-    /// Builds the view over the timeline. <paramref name="folders"/> are the classified folders of the procedure profile (with aliases); <paramref name="removableLetters"/> the
+    /// Builds the view over the timeline. <paramref name="folders"/> are the classified folders of the procedure profile; <paramref name="removableLetters"/> the
     /// drive letters ("E" or "E:") that the case's device facts tie to removable media; any other letter than C: is "possible" with the uncertainty stated.
     /// </summary>
     public static UserActivityReport Analyze(IReadOnlyList<TimelineEvent> events, IEnumerable<ClassifiedRoot>? folders = null, IEnumerable<string>? removableLetters = null,
-        IReadOnlyDictionary<string, string>? volumeMap = null)
+        IReadOnlyDictionary<string, string>? volumeMap = null, bool evaluate = true)
     {
         var roots = new List<(string Root, string Canonical)>();
         foreach (var f in folders ?? [])
@@ -142,7 +147,7 @@ public static class UserActivityAnalysis
         foreach (var e in events)
         {
             if (!Sources.Contains(e.Source)) continue;
-            items.Add(Build(e, roots, removable, volumeMap));
+            items.Add(Build(e, roots, removable, volumeMap, evaluate));
         }
         // the relevant rows first (classified, then removable, then possible), newest first; undated rows last
         var ordered = items
@@ -155,23 +160,25 @@ public static class UserActivityAnalysis
 
     private static string F(TimelineEvent e, string key) => e.Fields.TryGetValue(key, out var v) ? v : "";
 
-    private static UserActivityItem Build(TimelineEvent e, List<(string Root, string Canonical)> roots, HashSet<string> removable, IReadOnlyDictionary<string, string>? volumeMap)
+    private static UserActivityItem Build(TimelineEvent e, List<(string Root, string Canonical)> roots, HashSet<string> removable, IReadOnlyDictionary<string, string>? volumeMap, bool evaluate)
     {
         var path = e.Source == RecycleBin && F(e, "OriginalPath").Length > 0 ? F(e, "OriginalPath") : e.Path;
-        var normalized = ClassifiedAccess.Normalize(path, volumeMap);
+        var resolvedPath = e.Source == ShellBags ? F(e, "ResolvedPath") : "";
+        var normalized = ClassifiedAccess.Normalize(resolvedPath.Length > 0 ? resolvedPath : path, volumeMap);
         var root = "";
-        foreach (var (r, canonical) in roots)
-            if (ClassifiedAccess.IsUnder(normalized, r)) { root = canonical; break; }
+        if (evaluate)
+            foreach (var (r, canonical) in roots)
+                if (ClassifiedAccess.IsUnder(normalized, r)) { root = canonical; break; }
         var letter = DriveOf(normalized);
         // a path in a classified folder of the profile is on the volume the profile declares for it: its letter is "possible" only if nothing says so, so it is not guessed
-        var drive = letter.Length == 0 || letter == "C:" ? DriveMatch.None : removable.Contains(letter) ? DriveMatch.Removable : root.Length > 0 ? DriveMatch.None : DriveMatch.Possible;
+        var drive = !evaluate || letter.Length == 0 || letter == "C:" ? DriveMatch.None : removable.Contains(letter) ? DriveMatch.Removable : root.Length > 0 ? DriveMatch.None : DriveMatch.Possible;
         var known = e.Time.Utc is not null;
         var time = e.Time.Utc;
         var who = e.Source == RecycleBin
             ? (F(e, "OwnerSid").Length > 0 ? "SID " + F(e, "OwnerSid") : e.User)
             : F(e, "Account") is { Length: > 0 } acc ? acc : e.User;
         var rcontent = e.Source == RecycleBin ? F(e, "RContent") : "";
-        var relevance = root.Length > 0 ? $"Folder clasificat: {root}" : "";
+        var relevance = root.Length > 0 ? $"Folder clasificat: {root}" + (resolvedPath.Length > 0 ? $" (calea afișată de Explorer a fost rezolvată la {resolvedPath})" : "") : "";
         if (drive == DriveMatch.Removable)
             relevance += (relevance.Length > 0 ? "; " : "") + $"Volum amovibil {letter} (litera apare în istoricul dispozitivelor din caz)";
         else if (drive == DriveMatch.Possible)
@@ -182,7 +189,7 @@ public static class UserActivityAnalysis
             Origin = e, Source = e.Source, SourceLabel = SourceLabel(e.Source), Path = path, TimeUtc = time,
             TimeText = time is { } t ? t.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture) + " UTC" : "fără oră",
             TimeMeaning = TimeMeaningFor(e.Source, known), Who = who.Length > 0 ? who : "necunoscut în sursă", Detail = DetailOf(e, rcontent),
-            ClassifiedRoot = root, Drive = drive, DriveLetter = letter, Relevance = relevance, RContent = rcontent,
+            ClassifiedRoot = root, ResolvedPath = resolvedPath, Drive = drive, DriveLetter = letter, Relevance = relevance, RContent = rcontent,
         };
     }
 

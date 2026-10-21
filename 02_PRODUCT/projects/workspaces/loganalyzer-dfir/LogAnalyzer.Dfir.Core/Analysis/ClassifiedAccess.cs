@@ -226,7 +226,7 @@ public static class ClassifiedAccess
     private static string Stem(string name) => name.LastIndexOf('.') is var i and > 0 ? name[..i] : name;
 
     /// <summary>The drive letter of a normalised path ("E:"), "" otherwise.</summary>
-    public static string Drive(string path) => path.Length >= 2 && path[1] == ':' ? char.ToUpperInvariant(path[0]) + ":" : "";
+    public static string Drive(string path) => path.Length >= 2 && path[1] == ':' && char.IsAsciiLetter(path[0]) ? char.ToUpperInvariant(path[0]) + ":" : "";
 
     private sealed class Roots(ClassifiedInput input)
     {
