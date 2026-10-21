@@ -131,3 +131,21 @@
 - 4 comparison row E7: real run validated collection and parsing only. 5 `Drive()` requires an ASCII letter; tests for control characters and 50 000 events.
 - Suites: Dfir.Tests 2131 passed / 31 skipped / 0 failed; App.Tests 636; UI.Tests 353; Edition.Tests 45.
 - Next: round 2 reviews only this delta; then the PR order unchanged.
+
+## Slice 3 review round 2 and final owner decisions (2026-10-21, claude-sonnet)
+- Round 2 findings (owner-side decision after the last review, no further rounds): (1) the drive letter was taken from the resolved path; (2) known folders were
+  resolved from the hive path of an import (the examiner's machine) and from a note on any item; (3) the known-folder GUID was only read from the first BagMRU item,
+  so Explorer's default "Acest PC" -> Documente layout never resolved; (4) CaseLoader: a mismatching context said "nu au fost salvate" and a malformed or huge
+  user_activity.json refused the whole case.
+- Implemented, each with a regression test (UserActivityFinalTests, UserActivityReviewTests):
+  1. `UserActivityAnalysis.Build`: Drive/DriveLetter/Possible/Removable only from the displayed path; ResolvedPath only for classified-folder matching.
+  2. `KnownFolders.ProfileDirOf(EvidenceItem)`: only the note "Profil <SID> (<path>)" of an item with Collector == UserArtifactsCollector and AcquisitionMethod == "acquired"
+     (same trust rule as the $R state); no fallback to the hive path; device prefixes in the note refused. Imported: ResolvedPath empty, row field `ResolutionNote`
+     ("nu au putut fi plasate pe discul stației"), shown in the row detail; disclosed in RuleContracts.cs and GHID 4.7.
+  3. Parser: first known-folder root GUID at any depth anchors (`Frame.RootIndex`), later segments appended; synthetic hive "Acest PC\Documente\Clasificat" resolves and USER-ACTIVITY-CLASSIFIED fires.
+  4. `UserActivityContext.Read` caps the file at 64 MB; CaseLoader catches Json/InvalidData/IO: only the view becomes "neevaluabil la redeschidere: <cause>", findings still load;
+     mismatch text says the saved context does not match timeline.csv.
+- Suites: Dfir.Tests 2138 passed / 31 skipped / 0 failed; App.Tests 636; UI.Tests 353; Edition.Tests 45.
+- E7 status: DONE pending owner. Next: PR after #303 and the device-monitor PR (order unchanged).
+- Not done / later: unknown shell item types 0x6F/0x52/0xAD/0x7E/0x01 (decoder pass); .LOG1/.LOG2 copying (owner decision); Zone.Identifier / MOTW not done;
+  `ControlReport.UserActivity` has no production caller yet (the control PDF says "nu a fost evaluată de acest raport").

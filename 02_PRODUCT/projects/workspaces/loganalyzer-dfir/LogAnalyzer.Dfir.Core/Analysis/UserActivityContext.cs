@@ -14,6 +14,11 @@ namespace LogAnalyzer.Dfir.Analysis;
 public sealed class UserActivityContext
 {
     public const string RelPath = "Analysis/user_activity.json";
+    /// <summary>The largest user_activity.json the loader reads: an optional file, so an oversized one is reported, not read.</summary>
+    public const long MaxFileBytes = 64L * 1024 * 1024;
+    public const string UnevaluablePrefix = "neevaluabil la redeschidere: ";
+    public const string MismatchText = UnevaluablePrefix + "contextul salvat (Analysis/user_activity.json) nu corespunde cu timeline.csv, deci nu este amestecat cu el.";
+    public static string UnevaluableBecause(string cause) => UnevaluablePrefix + cause;
     public const string UnevaluableText = "neevaluabil la redeschidere: profilul și literele confirmate nu au fost salvate cu acest caz.";
 
     [JsonPropertyName("schema_version")] public string SchemaVersion { get; set; } = "1.0";
@@ -43,6 +48,8 @@ public sealed class UserActivityContext
     public static UserActivityContext? Read(string path)
     {
         if (!File.Exists(path)) return null;
+        var size = new FileInfo(path).Length;
+        if (size > MaxFileBytes) throw new InvalidDataException($"user_activity.json are {size:N0} octeți, peste limita de {MaxFileBytes:N0}; nu a fost citit");
         var c = JsonSerializer.Deserialize<UserActivityContext>(File.ReadAllText(path), Json.Options) ?? throw new JsonException("user_activity.json este gol");
         SchemaVersions.Accept(c.SchemaVersion, "user_activity.json");
         return c;

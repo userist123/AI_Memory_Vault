@@ -119,7 +119,7 @@ internal static class UserActivity
 
     // ---- ShellBags ----
 
-    private sealed record Frame(RawKey Key, string[] Segments, int Depth, string RootGuid = "");
+    private sealed record Frame(RawKey Key, string[] Segments, int Depth, string RootGuid = "", int RootIndex = -1);
 
     /// <summary>Walks one BagMRU tree: one event per folder entry with its full path; shell-item times go in the details, never in the event time.</summary>
     internal static void ShellBags(RawRegistry reg, string hiveLabel, string rootPath, EvidenceItem item, IEventSink sink, ParseResult result, CancellationToken ct, long maxNameReads = MaxBagNameReads)
@@ -131,7 +131,7 @@ internal static class UserActivity
         // Visited by cell offset, not by path: a hive whose subkey lists loop back to an ancestor reaches the same cell twice.
         var visited = new HashSet<int> { root.CellOffset };
         stack.Push(new Frame(root, [], 0));
-        var profileDir = KnownFolders.ProfileDirOf(item.OriginalPath, item.Notes);
+        var profileDir = KnownFolders.ProfileDirOf(item);
         int nodes = 0, orphans = 0, tooDeep = 0, cycles = 0, damaged = 0, reads = 0;
         long nameReads = 0;
         bool capped = false, nameCapped = false;
@@ -179,7 +179,10 @@ internal static class UserActivity
                 }
                 var shell = list.Items[0];
                 var segments = frame.Segments.Append(shell.PathSegment).ToArray();
-                var rootGuid = frame.Segments.Length == 0 ? (shell.Kind == ShellItemKind.RootFolder ? shell.Guid : "") : frame.RootGuid;
+                // the first segment at any depth that is a known-folder root anchors the resolution ("Acest PC" -> Documente: the anchor is Documente, not the first item)
+                var rootGuid = frame.RootGuid;
+                var rootIndex = frame.RootIndex;
+                if (rootGuid.Length == 0 && shell.Kind == ShellItemKind.RootFolder && KnownFolders.IsKnownRoot(shell.Guid)) { rootGuid = shell.Guid; rootIndex = segments.Length - 1; }
                 var full = ShellItems.JoinPath(segments);
                 Timestamp time;
                 string semantics, uncertainty;
@@ -189,7 +192,7 @@ internal static class UserActivity
                     time = Hive.KeyTime(childKey); semantics = BagTimeSemantics;
                     uncertainty = "cheie de registru: ora ultimei actualizări a intrării de către Explorer, nu momentul primei deschideri";
                     if (frame.Depth + 1 >= MaxBagDepth) tooDeep++;
-                    else stack.Push(new Frame(childKey, segments, frame.Depth + 1, rootGuid));
+                    else stack.Push(new Frame(childKey, segments, frame.Depth + 1, rootGuid, rootIndex));
                 }
                 else if (pos == 0 && orderKnown)
                 {
@@ -207,7 +210,9 @@ internal static class UserActivity
                 };
                 AddShellFields(fields, shell);
                 // known-folder roots (Documente, Desktop, Descărcări, Rețea...) resolved to absolute paths for matching; the displayed path stays as Explorer showed it
-                if (KnownFolders.Resolve(rootGuid, segments, profileDir) is { Length: > 0 } resolved) fields["ResolvedPath"] = resolved;
+                if (rootIndex >= 0 && KnownFolders.Resolve(rootGuid, segments[rootIndex..], profileDir) is { Length: > 0 } resolved) fields["ResolvedPath"] = resolved;
+                else if (rootIndex >= 0 && KnownFolders.IsProfileRoot(rootGuid))
+                    fields["ResolutionNote"] = "folderele cunoscute (Documente, Desktop, Descărcări...) nu au putut fi plasate pe discul stației: calea profilului nu provine dintr-o colectare de pe stație (hive importat sau profil necunoscut)";
                 if (list.Issues.Count > 0) fields["ItemIssues"] = string.Join("; ", list.Issues);
                 sink.Add(new TimelineEvent
                 {
