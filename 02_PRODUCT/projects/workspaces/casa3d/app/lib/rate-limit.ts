@@ -20,11 +20,11 @@ export function createLimiter(o: { windowMs: number; max: number; maxKeys?: numb
 /** Adresa clientului: tunelul (cloudflared) pune cf-connecting-ip; pe calculatorul designerului nu există. */
 export const clientIp = (h: { get(k: string): string | null }) => h.get('cf-connecting-ip')?.trim() || 'local';
 
-export type ShareAction = 'feedback' | 'choices' | 'changes';
+export type ShareAction = 'feedback' | 'choices' | 'changes' | 'pin';
 const WINDOW = 10 * 60e3;
 // pe adresă și link (un client normal trimite câteva păreri) și, separat, pe link de pe toate adresele (mai larg)
-const PER_IP: Record<ShareAction, Limiter> = { feedback: createLimiter({ windowMs: WINDOW, max: 20 }), choices: createLimiter({ windowMs: WINDOW, max: 30 }), changes: createLimiter({ windowMs: WINDOW, max: 20 }) };
-const PER_TOKEN: Record<ShareAction, Limiter> = { feedback: createLimiter({ windowMs: WINDOW, max: 100 }), choices: createLimiter({ windowMs: WINDOW, max: 150 }), changes: createLimiter({ windowMs: WINDOW, max: 100 }) };
+const PER_IP: Record<ShareAction, Limiter> = { feedback: createLimiter({ windowMs: WINDOW, max: 20 }), choices: createLimiter({ windowMs: WINDOW, max: 30 }), changes: createLimiter({ windowMs: WINDOW, max: 20 }), pin: createLimiter({ windowMs: WINDOW, max: 10 }) };
+const PER_TOKEN: Record<ShareAction, Limiter> = { feedback: createLimiter({ windowMs: WINDOW, max: 100 }), choices: createLimiter({ windowMs: WINDOW, max: 150 }), changes: createLimiter({ windowMs: WINDOW, max: 100 }), pin: createLimiter({ windowMs: WINDOW, max: 30 }) };
 export const minutesLeft = (ms: number) => Math.max(1, Math.ceil(ms / 60e3));
 export const shareLimitMessage = (ms: number) => `Prea multe trimiteri de pe acest link. Încearcă din nou peste ${minutesLeft(ms)} ${minutesLeft(ms) === 1 ? 'minut' : 'minute'}.`;
 

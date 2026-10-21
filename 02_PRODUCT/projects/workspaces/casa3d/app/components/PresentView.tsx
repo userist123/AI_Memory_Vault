@@ -16,6 +16,7 @@ import { intlLocale } from '@/lib/i18n';
 import { swatchStyle } from './MaterialPicker';
 import { PlanSvg } from './PrintView';
 import FeedbackBox, { type FeedbackItem } from './FeedbackBox';
+import PinLayer from './PinLayer';
 import ClientDeliveries from './ClientDeliveries';
 import { ClientChanges } from './ChangeOrders';
 import RoomChoiceBox, { type ClientChoice } from './RoomChoiceBox';
@@ -40,6 +41,10 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
   useEffect(() => { if (share) fetch(`/api/share/${share.token}/feedback`).then(r => r.ok ? r.json() : []).then(setFeedback).catch(() => {}); }, [share]);
   // serverul poate întoarce un rând existent (produs deja aprobat): nu se adaugă de două ori
   const added = (f: FeedbackItem) => setFeedback(xs => xs.some(x => x.id === f.id) ? xs : [...xs, f]);
+  // designerul deschide /share/<token>#pin-<id>: pinul apare după încărcarea părerilor, deci se caută atunci
+  const pinCount = feedback.filter(f => f.anchor).length;
+  useEffect(() => { if (!share || !pinCount) return; const h = location.hash; if (!/^#pin-[0-9a-f-]{36}$/i.test(h)) return;
+    const el = document.getElementById(h.slice(1)); if (el){ el.scrollIntoView({ block: 'center' }); el.focus({ preventScroll: true }); } }, [share, pinCount, data]);
   const nameBox = useClientNameBox(share?.token ?? ''), [bulk, setBulk] = useState<{ busy: boolean; msg: string | null }>({ busy: false, msg: null });
   const [choices, setChoices] = useState<ClientChoice[]>([]);
   useEffect(() => { if (share) fetch(`/api/share/${share.token}/choices`).then(r => r.ok ? r.json() : []).then(setChoices).catch(() => {}); }, [share]);
@@ -115,7 +120,8 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
     {share && <p className="fb-intro no-print">{t('fb.intro')}</p>}
     <div className="deck-bar no-print"><span>{busy ? t('print.preparing') : t('pres.keys')}</span><button className="btn primary" onClick={printDeck} disabled={printing}>{t('pres.pdf')}</button></div>
     <section className="slide cover">
-      <div className="shot" data-shot="overview">{images.overview ? <img src={images.overview.url} alt="" /> : <div className={noGL ? 'ph' : 'ph ph-wait'} role="img" aria-label={t('pres.renderWait')} />}</div>
+      <div className="shot" data-shot="overview">{images.overview ? <img src={images.overview.url} alt="" /> : <div className={noGL ? 'ph' : 'ph ph-wait'} role="img" aria-label={t('pres.renderWait')} />}
+        {share && <PinLayer token={share.token} surface="overview" roomId={null} pins={feedback.filter(f => f.anchor?.surface === 'overview')} onAdded={added} />}</div>
       <div className="cover-txt"><span className="kicker">{t('pres.kicker')}</span>
         <div className="cover-main"><h1>{data.name}</h1><p>{t('pres.coverSub', { rooms: pres.rooms.length, area: formatArea(pres.totalArea, units, lang) })}</p></div>
         {pres.palette.length > 0 && <div className="cover-pal" aria-label={t('pres2.palette')}>{pres.palette.map((c, i) => <i key={i} style={c.material ? { ...swatchStyle(c.material), backgroundColor: c.color } : { background: c.color }} />)}<small>{t('pres2.palette')}</small></div>}
@@ -128,7 +134,8 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
       <div className="pb-rooms"><h3>{t('pres2.byRoom')}</h3><ul>{pres.rooms.slice(0, 8).map(r => <li key={r.id}><b>{r.name}</b><span>{r.swatches.slice(0, 4).map((s, k) => <i key={k} title={s.material ? title(s.material.name) : s.color} style={s.material ? { ...swatchStyle(s.material), backgroundColor: s.color } : { background: s.color }} />)}</span></li>)}</ul></div>
       <footer>{num(2)}</footer></section>
     {pres.rooms.map((r, i) => <Fragment key={r.id}><section className="slide room">
-      <div className="room-img" data-shot={photoFor(r.id) ? undefined : r.id}>{imgFor(r.id) ? <img src={imgFor(r.id)} alt={r.name} /> : <div className={noGL ? 'ph' : 'ph ph-wait'} role="img" aria-label={t('pres.renderWait')} />}</div>
+      <div className="room-img" data-shot={photoFor(r.id) ? undefined : r.id}>{imgFor(r.id) ? <img src={imgFor(r.id)} alt={r.name} /> : <div className={noGL ? 'ph' : 'ph ph-wait'} role="img" aria-label={t('pres.renderWait')} />}
+        {share && <PinLayer token={share.token} surface="room" roomId={r.id} pins={feedback.filter(f => f.anchor?.surface === 'room' && f.roomId === r.id)} onAdded={added} />}</div>
       <div className="room-txt"><span className="kicker">{t(`roomType.${r.type}`)} · {formatArea(r.areaM2, units, lang)}</span><h2>{r.name}</h2>
         <ul className="sw-list">{r.swatches.slice(0, 9).map((s, k) => <li key={k}><i style={s.material ? { ...swatchStyle(s.material), backgroundColor: s.color } : { background: s.color }} /><span><small>{role(s.role)}</small>{s.material ? title(s.material.name) : s.color}</span></li>)}</ul>
         {r.products.length > 0 && <p className="prod">{r.products.slice(0, 6).map(p => p.name).join(' · ')}</p>}</div>
