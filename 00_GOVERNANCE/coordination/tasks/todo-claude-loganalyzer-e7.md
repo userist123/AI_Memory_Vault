@@ -91,6 +91,11 @@
   unreadable, hive missing / unreadable / a folder, Recycle Bin unreadable / not a folder / a link, caps. Not testable here: ACL-unreadable folder.
 
 ## Next (after slice 2)
-- vault-reviewer (Opus) with the slice 2 probe list; owner run as administrator (Complet) on a real station to confirm esentutl /vss on live NTUSER.DAT.
+- Slice 2 review (2026-10-21, main session: the router sent the Agent reviewer to a local model, refused for high-risk code): probes checked in code and
+  tests (ProfileImagePath UNC/relative/../%, reparse on path and in $Recycle.Bin, TOCTOU re-check after the $I copy, ArgumentList for esentutl, SID-validated
+  destination folders, CreateNew + Unique, caps, leftover shadow reported not deleted, $R spoof needs Collector=UserArtifactsCollector + acquired).
+  Fixed: `ReparseOnPath` failed open on an unreadable component; now refuses the path. Residual: TOCTOU between the hive reparse check and esentutl.
+  Suites after the fix: Dfir.Tests 2094 passed / 30 skipped / 0 failed (before the one-line fix), related 89/89 after; App.Tests 629.
+- Owner run as administrator (Complet) on a real station to confirm esentutl /vss on live NTUSER.DAT.
 - Hive transaction logs (.LOG1/.LOG2) are not copied (dirty hives may miss recent writes): owner decision whether to add them (2 more snapshots per profile).
 - Slice 3 (rules, UI tab, report rows, docs, comparison row E7).
