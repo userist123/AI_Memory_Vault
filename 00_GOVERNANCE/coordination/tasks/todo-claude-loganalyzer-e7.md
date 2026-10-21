@@ -42,3 +42,7 @@
 ## Next
 - vault-reviewer (Opus) with the probe list above. Known review points: long-name offsets of ext block v7/8/9 come from public docs, validated on synthetic data only (parser maturity TESTED); 0x74/0x61/0x00/network items are best effort; a damaged nk makes its PARENT unreadable (RawRegistry reads child names), so loss is one level above the damage, reported as a gap.
 - Slice 2 (live collection of NTUSER.DAT / UsrClass.dat / `$Recycle.Bin\<SID>\$I*`), slice 3 (rules, UI, report rows, docs, comparison row E7).
+
+## Review round 1 fixes (2026-10-21)
+- v3 ext block long name at +0x14 (builder fixed, hand-written byte-array test); BagMRU walk checks visited before ReadChild + ct in loop + 40 000 read cap (shared-list n=200 test); missing MRUListEx -> anomaly gap, no "newest" time; descriptors honest (UserHive: new parts synthetic only; ShellBags cites UserActivityParserTests); `$I*` FileNames removed so a "file"-typed `$I` is skipped, not failed.
+- Suites: Dfir.Tests 2041 passed / 30 skipped / 0 failed; App.Tests 629 passed.

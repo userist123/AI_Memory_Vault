@@ -19,6 +19,8 @@ internal static class UserActivity
     internal const int MaxBagDepth = 48;
     /// <summary>Most BagMRU keys visited in one hive.</summary>
     internal const int MaxBagNodes = 20000;
+    /// <summary>Most subkey reads in one walk; each read also reads the names of that key's children, so this bounds the work, not only the node count.</summary>
+    internal const int MaxBagReads = 40000;
     private const int MaxRecentDocsSubkeys = 1000;
     private const int MaxOfficeApps = 200;
     private const int MaxOfficeUserIds = 100;
@@ -53,7 +55,7 @@ internal static class UserActivity
     /// Numbered entries of an MRU key in MRUListEx order (newest first). An index with no value, a repeated index and a list without the
     /// 0xFFFFFFFF terminator are counted in <c>Anomalies</c>; numbered values the list does not mention follow in numeric order.
     /// </summary>
-    internal static (List<(string Name, RawValue Value)> Ordered, int Anomalies) MruOrder(RawKey key)
+    internal static (List<(string Name, RawValue Value)> Ordered, int Anomalies, bool OrderKnown) MruOrder(RawKey key)
     {
         var entries = new Dictionary<string, RawValue>(StringComparer.Ordinal);
         foreach (var v in key.Values)
@@ -76,9 +78,10 @@ internal static class UserActivity
             }
             if (!terminated) anomalies++;
         }
+        else if (entries.Count > 0) anomalies++;   // no MRUListEx: the order of the entries is not known
         foreach (var n in entries.Keys.OrderBy(k => int.Parse(k, CultureInfo.InvariantCulture)))
             if (seen.Add(n)) ordered.Add((n, entries[n]));
-        return (ordered, anomalies);
+        return (ordered, anomalies, list is not null);
     }
 
     private static void NoteAnomalies(ParseResult result, string artifact, string keyPath, int anomalies)
@@ -122,7 +125,7 @@ internal static class UserActivity
         // Visited by cell offset, not by path: a hive whose subkey lists loop back to an ancestor reaches the same cell twice.
         var visited = new HashSet<int> { root.CellOffset };
         stack.Push(new Frame(root, [], 0));
-        int nodes = 0, orphans = 0, tooDeep = 0, cycles = 0, damaged = 0;
+        int nodes = 0, orphans = 0, tooDeep = 0, cycles = 0, damaged = 0, reads = 0;
         bool capped = false;
         while (stack.Count > 0)
         {
@@ -131,19 +134,22 @@ internal static class UserActivity
             nodes++;
             var frame = stack.Pop();
             var key = frame.Key;
-            var (ordered, anomalies) = MruOrder(key);
+            var (ordered, anomalies, orderKnown) = MruOrder(key);
             NoteAnomalies(result, "ShellBags", key.Path, anomalies);
 
             // The children are read once per node, by offset: reading each by path would rescan the siblings every time.
             var children = new Dictionary<string, RawKey>(StringComparer.OrdinalIgnoreCase);
             foreach (var off in reg.ChildOffsets(key))
             {
+                ct.ThrowIfCancellationRequested();
                 if (children.Count >= MaxBagNodes) break;
+                // Visited is checked before the key is read: a shared or looping subkey list must not cost a read per reference.
+                if (!visited.Add(off)) { cycles++; continue; }
+                if (++reads > MaxBagReads) { capped = true; break; }
                 try
                 {
                     var child = reg.ReadChild(key, off);
                     var childName = child.Path[(child.Path.LastIndexOf('\\') + 1)..];
-                    if (!visited.Add(off)) { cycles++; continue; }
                     children.TryAdd(childName, child);
                 }
                 catch (InvalidDataException) { damaged++; }   // one damaged subkey must not hide its siblings
@@ -174,7 +180,7 @@ internal static class UserActivity
                     if (frame.Depth + 1 >= MaxBagDepth) tooDeep++;
                     else stack.Push(new Frame(childKey, segments, frame.Depth + 1));
                 }
-                else if (pos == 0)
+                else if (pos == 0 && orderKnown)
                 {
                     time = Hive.KeyTime(key); semantics = BagLeafTimeSemantics;
                     uncertainty = "ora cheii părinte: se aplică doar celei mai noi intrări din cheie";
@@ -268,7 +274,7 @@ internal static class UserActivity
 
     private static void RecentDocsKeyEvents(RawKey key, string extension, string account, EvidenceItem item, IEventSink sink, ParseResult result)
     {
-        var (ordered, anomalies) = MruOrder(key);
+        var (ordered, anomalies, orderKnown) = MruOrder(key);
         NoteAnomalies(result, "RecentDocs", key.Path, anomalies);
         int pos = 0;
         foreach (var (valueName, value) in ordered)
@@ -279,7 +285,7 @@ internal static class UserActivity
             while (end + 2 <= d.Length && (d[end] != 0 || d[end + 1] != 0)) end += 2;
             var name = Encoding.Unicode.GetString(d, 0, end);
             var shell = end + 2 < d.Length ? ShellItems.ParseList(d.AsSpan(end + 2)) : new ShellItemList([], false, 0, []);
-            bool first = pos == 0;
+            bool first = pos == 0 && orderKnown;
             var fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 ["Name"] = name, ["Extension"] = extension, ["Key"] = key.Path, ["ValueName"] = valueName,
@@ -412,10 +418,11 @@ public sealed class ShellBagsParser : EvidenceParserBase
             "Doar intrarea cea mai nouă dintr-o cheie are ora cheii; celelalte sunt ordonate, fără oră.",
             "Elementele neînțelese sunt raportate ca „element necunoscut (tip 0x..)” cu hex; tipurile ZIP/MTP/URI sunt decodate doar aproximativ.",
             "Numele lungi din blocul de extensie sunt validate doar pe date sintetice; jurnalele de tranzacții ale hive-ului nu sunt aplicate.",
-            "Limite de siguranță: adâncime 48, 20.000 de chei; depășirea lor este raportată ca lacună.",
+            "Limite de siguranță: adâncime 48, 20.000 de chei, 40.000 de citiri de subchei; depășirea lor este raportată ca lacună.",
+            "Dacă MRUListEx lipsește, ordinea intrărilor este necunoscută: nicio intrare nu primește ora cheii ca cea mai nouă.",
         ],
         Status = ParserMaturity.Tested,
-        Validation = "ShellBagsParserTests: hive-uri sintetice (RegfBuilder) cu căi, ore și cazuri ostile (cicluri, adâncime, elemente trunchiate, MRUListEx invalid); fără corpus real",
+        Validation = "UserActivityParserTests: hive-uri sintetice (RegfBuilder) cu căi, ore și cazuri ostile (cicluri, adâncime, elemente trunchiate, MRUListEx invalid); fără corpus real",
     };
 
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)

@@ -62,7 +62,7 @@ public static class ShellItemBuilder
             l.AddRange([0x04, 0x00, 0xEF, 0xBE]);
             PutDos(l, ext.Created);
             PutDos(l, ext.Accessed);
-            if (ext.Version == 3) l.AddRange(new byte[2]);             // name at +0x12
+            if (ext.Version == 3) l.AddRange(new byte[4]);             // +0x10 name offset, +0x12 string size; name at +0x14
             else
             {
                 l.AddRange(new byte[4]);                               // +0x10, +0x12
