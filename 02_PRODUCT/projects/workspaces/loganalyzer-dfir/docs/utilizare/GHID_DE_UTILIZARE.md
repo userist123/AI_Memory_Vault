@@ -87,6 +87,15 @@ Apăsați **„Raport pentru proces-verbal (PDF)”**. **Prima dată** pe o sta�
 
 Raportul se salvează în cazul stației, cu amprenta lui; vi se oferă și salvarea unei copii unde doriți (originalul rămâne în caz). Raportul conține verificările, pe ce se bazează fiecare și golurile de probă (sursele care nu au putut fi citite și ce înseamnă asta pentru control).
 
+### 4.6 Colectarea pentru investigație: ce aduce profilul „Complet”
+
+În ecranul de investigație, profilul de colectare „Complet (+ hive-uri utilizatori, Coș $I)” aduce, pe lângă ce aduce „Standard”, urmele de activitate ale **fiecărui profil de utilizator** de pe stație. Fișierele utilizatorilor doar se citesc; singura urmă lăsată pe stație este copia de umbră temporară, pe care o creează și o elimină `esentutl` (aplicația verifică după colectare că nu a rămas niciuna și raportează dacă a rămas). Este nevoie de drepturi de administrator: fără ele aplicația scrie că nu a colectat nimic și de ce.
+
+- **NTUSER.DAT** și **UsrClass.dat** (`AppData\Local\Microsoft\Windows`) ale fiecărui profil din lista de profiluri a Windows (cheia `ProfileList`): se copiază dintr-o copie de umbră (VSS) cu `esentutl /vss`, la fel ca Amcache și SRUM. Profilurile de serviciu (S-1-5-18, 19, 20) se iau doar dacă au hive. Jurnalele de tranzacții ale hive-urilor (`.LOG1`, `.LOG2`) nu se copiază.
+- **Coșul de reciclare**: fișierele `$I` din `$Recycle.Bin\<SID>` de pe fiecare volum fix (ora ștergerii, calea inițială, dimensiunea). Pentru fiecare `$I` se notează doar **dacă fișierul `$R` (conținutul) exista și ce dimensiune avea** în momentul colectării; **conținutul `$R` nu se copiază niciodată**.
+- Fiecare copie primește amprenta SHA-256 în momentul colectării, iar în notele probei apar SID-ul și profilul.
+- Ce nu s-a putut lua apare ca lacună, cu motivul: lipsa drepturilor, copia de umbră indisponibilă sau eșuată, folderul profilului lipsă sau necitibil, hive lipsă, Coș necitibil, limite atinse (cel mult 200 de profiluri, 10 000 de fișiere `$I` pentru un SID și 20 000 în total, un `$I` de cel mult 128 KiB). Legăturile (joncțiuni, legături simbolice) din calea profilului sau din Coș nu se urmează, iar folderele al căror nume nu este un SID se omit cu o notă.
+
 ## 5. Cum citiți rezultatele
 
 | Rezultat | Ce înseamnă | Ce faceți |

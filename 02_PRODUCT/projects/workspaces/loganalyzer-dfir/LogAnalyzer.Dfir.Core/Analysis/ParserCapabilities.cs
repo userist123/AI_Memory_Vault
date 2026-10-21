@@ -168,7 +168,7 @@ public sealed record ParserCapabilities(
             ["Ora cheii BagMRU este ultima actualizare a intrării folderului, nu prima deschidere; doar intrarea cea mai nouă a unei chei are ora cheii.", "Orele din elementul shell sunt DOS: oră locală fără fus orar, rezoluție 2 secunde, MAC propriu al folderului, nu moment de acces.", "Tipurile neînțelese sunt raportate ca elemente necunoscute, cu hex."],
             ["NTUSER.DAT (RecentDocs), LNK, Jump Lists, USBSTOR / MountPoints2 pentru legarea de un suport."]),
         C("RecycleBinInfoParser",
-            ["Că un element a fost trimis în Coșul de reciclare, cu ora ștergerii (UTC), calea inițială și dimensiunea.", "Dacă fișierul $R de lângă $I mai există (când ambele au fost colectate)."],
+            ["Că un element a fost trimis în Coșul de reciclare, cu ora ștergerii (UTC), calea inițială și dimensiunea.", "Dacă fișierul $R de lângă $I mai exista: la colectarea live (colectarea Completă) existența și dimensiunea lui $R se consemnează în momentul colectării, iar conținutul $R nu se copiază; la un import, doar dacă $R a fost adus lângă $I."],
             ["Cine a șters elementul (doar SID-ul profilului din calea $Recycle.Bin, când există).", "Conținutul fișierului șters.", "Că $R lipsă înseamnă că fișierul nu a existat: înseamnă conținut golit sau eliminat."],
             ["Ora este momentul trimiterii în Coș, nu golirea Coșului.", "După golire, metadatele pot dispărea.", "Fișierele $I trunchiate sau cu versiune necunoscută sunt raportate ca lacune."],
             ["USN, ShellBags, LNK / Jump Lists, SRUM, EVTX pentru aceeași cale."]),

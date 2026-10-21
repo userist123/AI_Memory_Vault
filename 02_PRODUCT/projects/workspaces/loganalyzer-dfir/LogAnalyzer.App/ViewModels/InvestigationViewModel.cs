@@ -147,7 +147,7 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _remoteJustification = "";
         [ObservableProperty] private string _remoteStatus = "Pachetul rulează pe stația țintă (local, fără rețea), calculează SHA-256 acolo; îl aduceți pe suport extern și îl verificați aici înainte de import.";
 
-        public string[] Profiles { get; } = { "Rapid (jurnale, Prefetch, stare live)", "Standard (+ SRUM)", "Complet" };
+        public string[] Profiles { get; } = { "Rapid (jurnale, Prefetch, stare live)", "Standard (+ SRUM)", "Complet (+ hive-uri utilizatori, Coș $I)" };
         [ObservableProperty] private int _profileIndex = 1;
         [ObservableProperty] private bool _collectFromThisStation = true;
         // Case scope (owner decision 23): mandatory; the case is not created while a field is missing. Nothing is pre-filled on the operator's behalf.
