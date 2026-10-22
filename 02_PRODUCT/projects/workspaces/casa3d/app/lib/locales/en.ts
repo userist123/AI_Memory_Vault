@@ -24,7 +24,7 @@ export const en: Dict = {
   "editor.saved": "Saved", "editor.saving": "Saving…", "editor.dirty": "Unsaved changes", "editor.saveError": "Save error",
   "editor.revisionN": "Revision {n}", "editor.noRevisions": "no revisions", "editor.undo": "Undo", "editor.redo": "Redo",
   "editor.view": "View", "editor.view2d": "Plan", "editor.viewSplit": "Plan + 3D", "editor.exportDxf": "DXF", "editor.print": "Print / PDF", "editor.saveRevision": "Save revision", "editor.tools": "Tools",
-  "editor.hintWall": "Click to start, click each corner · Esc or right-click to finish", "editor.hintRoom": "Drag a rectangle", "editor.hintOpening": "Click next to a wall",
+  "editor.hintWall": "Click to start, click each corner · type a length (320, 3.2 or 3.2 m) + Enter · Esc or right-click to finish", "editor.hintRoom": "Drag a rectangle or click two corners · after the first click you can type 4.5;3.2 + Enter", "editor.hintOpening": "Click next to a wall",
   "editor.hintColumn": "Click on plan to place a column · R = rotate", "editor.hintBeam": "Drag to place a ceiling beam", "editor.hintGlassWall": "Drag to place a glass partition", "editor.hintStair": "Click on plan to place stairs",
   "editor.hintMeasure": "Click two points to measure the distance · Esc to stop", "editor.hintSelect": "Wheel = zoom · Alt+drag = pan · R = rotate · Delete = remove · ? = shortcuts",
   "editor.previewBar": "Preview: {title} (not saved)", "editor.warnings": "Warnings", "editor.positionWarnings": "This position has warnings",
@@ -52,7 +52,7 @@ export const en: Dict = {
   "editor.floorFinish": "Flooring", "editor.wallPaint": "Wall and ceiling paint", "editor.wallTile": "Wall tiles", "editor.noTile": "No tiles", "editor.baseboard": "Baseboard", "editor.noBaseboard": "No baseboard",
   "editor.light": "Light fixture", "editor.lightCount": "Number of fixtures",
   // ---- plan, 3D view, shortcuts ----
-  "plan.resizeEdge": "Drag to resize the room. The whole wall line moves: every room touching that line moves with it.",
+  "plan.typeHint": "type a size", "plan.resizeEdge": "Drag to resize the room. The whole wall line moves: every room touching that line moves with it.",
   "editor.resizeClamped": "The resize stopped so that a neighbouring room does not drop below 60 cm.",
   "plan.aria": "Editable 2D plan. Tab selects rooms and pieces in turn; arrow keys move, R rotates, Delete removes, Escape cancels.",
   "viewer.aria": "3D view", "viewer.house": "3D model", "viewer.tour": "Tour: {room}", "viewer.tourPick": "Walk into a room…", "viewer.light": "Light", "viewer.lightTitle": "Time of day and sun direction",
