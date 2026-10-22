@@ -1,5 +1,5 @@
 # todo-claude-casa3d-pins
-STATUS: BLOCKED_ON_OWNER   UPDATED: 2026-10-22T09:00:00+03:00
+STATUS: DONE               UPDATED: 2026-10-22T09:00:00+03:00
 TASK: Casa3D — CI green on PR #304 + PIN-gated client pins on /share
 BRANCH / PR: gemini/casa3d-nextgen-functionality-uiux / PR #304    REMOTE HEAD: c22666479
 DONE (all pushed):
@@ -26,10 +26,10 @@ NEXT (in order):
    - repository hygiene TEST_ABSOLUTE_PATH: 20_TESTS/test_claude_model_router.py, test_cost_router_self_update.py, test_cost_router_skill.py
    - layout IMPLEMENTATION_ABSOLUTE_PATH: 03_IMPLEMENTATION/packages/routing/claude_usage_report.py
    - test_claude_model_router.py::test_project_slug_matches_claude_code_layout (hardcoded Windows slug; fails on Linux CI)
-4. BLOCKED: `gh pr merge 304 --squash` denied by the auto-mode permission classifier — owner merges #304 (squash, head
-   c22666479), then close #305 (verified: every #305 commit is an ancestor of #304 head).
-   Recommendations: #257 close as superseded (2026-10-10 reconciliation, add/add conflict on VERIFICATION_2026-10-10.md
-   with #304); #258 do not merge (218 commits/510 files, 202 patches not in #304, CONFLICTING) — salvage in its own session.
+4. DONE 2026-10-22 (owner derogation): #304 squash-merged as 5e4687289; #305 closed (contained); #257 closed
+   (superseded, add/add conflict). #258 left OPEN, not merged (218 commits/510 files, 202 patches not in main, CONFLICTING).
+   main CI on 5e4687289 checked once: no failures, several jobs still in progress (not re-polled).
+NEXT: salvage #258 in its own session if the owner wants anything from it.
 UNVERIFIED: cloudflared tunnel sends x-forwarded-proto https (cookie Secure flag).
 NOTES:
 - Antigravity's uncommitted files (CASA3D_*_AUDIT/INVENTORY/STATUS/EVIDENCE*.md, edits in todo-antigravity-casa3d.md) left untouched.
