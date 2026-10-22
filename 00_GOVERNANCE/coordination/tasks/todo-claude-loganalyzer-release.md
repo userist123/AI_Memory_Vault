@@ -409,3 +409,14 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   beginner (onboarding, plain language, first-run guidance) and propose concrete changes to the owner. Then: owner decision J/K
   (investigation page: two parallel forms + empty grey panels); CLEANUP of ALL test data with the owner's OK on the exact list
   (rule above); CI read once; merge #303 -> #306 -> #307 -> #308.
+
+## Beginner cold start DONE (2026-10-22, main session; installed dbc39de92, test account; screenshots sent to owner, scratchpad only)
+- Report + proposals: `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/utilizare/PORNIRE_INCEPATOR_2026-10-22.md` (21 findings B/C/D, 10 proposals, 4 owner questions).
+- B items: three look-alike collect/control buttons on Home; anchor code as first field; one Bluetooth headset = ~12 red rows
+  (BT services/profiles not folded); investigation J/K. Also: two different "last control" times (Home = last control.finished in the
+  sealed audit, Control page = newest saved report folder `StationControlViewModel.cs:197`); "Cont nou" boxes without visible labels;
+  Advanced menu duplicates the main pages and clips "MITRE ATT&CK".
+- UIA driver rebuilt: scratchpad `drv/driver.ps1` (elevated, file queue cmd/out; nav needs real clicks `xy=120,<y>`, UIA Select does not navigate;
+  `max` on a hidden main window SHOWS it before sign-in - never send `max` before signing in).
+- Next: owner answers the 4 questions in the report, then fix B items (BT fold is device-monitor = security-relevant -> Opus review), then C/D;
+  cleanup of test data with owner OK; CI read once; merge chain.
