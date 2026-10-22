@@ -607,6 +607,9 @@ namespace LogAnalyzer.UI.ViewModels
             ReloadRegistryFromDb();
         }
 
+        /// <summary>The status-bar line for a finished control or investigation; an active audit-health warning stays in front of it, never overwritten.</summary>
+        internal static string ActivityStatusLine(string line, string? auditWarning) => string.IsNullOrWhiteSpace(auditWarning) ? line : auditWarning + " · " + line;
+
         public MainViewModel(
             IEventParser eventParser, IAnalysisEngine analysisEngine, IRegistryParser registryParser,
             AuditLogService auditService, KnowledgeBaseService kbService, PluginManagerService pluginManager,
@@ -631,7 +634,7 @@ namespace LogAnalyzer.UI.ViewModels
             RoleProfile = LogAnalyzer.Core.Services.Edition.RoleProfiles.For(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role, edition, AppModeContext.Current.Mode);
             Home = new HomeViewModel(Investigation, tab => SelectedTabIndex = tab, profile: RoleProfile, quickControl: StationControl);
             // 2026-10-22 PC walkthrough: the status bar follows the last control or investigation instead of staying on „Nicio analiză încă.”
-            LogAnalyzer.UI.Services.CollectAllState.Instance.ActivityRecorded += line => StatusMessage = line;
+            LogAnalyzer.UI.Services.CollectAllState.Instance.ActivityRecorded += line => StatusMessage = ActivityStatusLine(line, AuditHealth.HasWarning ? AuditHealth.Warning : null);
             // G3: „Colectează tot” anywhere in the window runs the complete collection and analysis for the role; the control station also runs its control.
             LogAnalyzer.UI.Services.CollectAllState.Handler = async () =>
             {

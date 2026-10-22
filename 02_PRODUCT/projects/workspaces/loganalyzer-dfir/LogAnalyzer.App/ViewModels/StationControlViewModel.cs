@@ -310,6 +310,7 @@ namespace LogAnalyzer.UI.ViewModels
                 var previousAnchor = PreviousAnchorCode;
                 var previousFromStation = PreviousCodeIsStationHint();
                 _lastReportPdf = null;
+                _controlFinishAudited = false;
                 bool auditedStart = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlStarted,
                     LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail(LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(posture), posture.ToString(),
                         new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent()).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator), PeriodDays, folders.Count, runId, LogAnalyzer.Dfir.Windows.Audit.ClassifiedFactCollector.AppSha256()));
@@ -379,6 +380,7 @@ namespace LogAnalyzer.UI.ViewModels
                 bool auditedFinish = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinished,
                     LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinishedDetail(_report.Facts.Host, _report.Facts.IsAdministrator, _report.Checks.Count,
                         _report.Count(ControlStatus.Neconform), _report.Count(ControlStatus.DeVerificat), _report.Count(ControlStatus.Nedeterminat), runId));
+                _controlFinishAudited = auditedFinish;
                 AfterControlAnchor();
                 FillChecks();
                 Users.Clear();
@@ -518,11 +520,16 @@ namespace LogAnalyzer.UI.ViewModels
         /// one of these), and remembers it as the report "Semnează ca ofițer de securitate" signs. Returns the PDF path, or null with the reason in Status.
         /// </summary>
         /// <remarks>Usability 2026-10-16: it never opens a dialog; a copy elsewhere is <see cref="SaveReportCopy"/>.</remarks>
+        /// <summary>The control and its anchor are "saved" only when the anchor code was issued and the end of the control reached the sealed audit.</summary>
+        internal static string ReportScopeMessage(bool anchorIssued, bool finishAudited) => LogAnalyzer.UI.Services.LiveCase.ReportScopeMessage(anchorIssued && finishAudited);
+
+        private bool _controlFinishAudited;
+
         private string? GenerateReport()
         {
             if (_report is null) { Status = "Rulați întâi controlul."; return null; }
             var ws = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
-            if (ws is null) { Status = LogAnalyzer.UI.Services.LiveCase.ReportScopeRequiredMessage; return null; }
+            if (ws is null) { Status = ReportScopeMessage(_report.Anchor is not null, _controlFinishAudited); return null; }
             if (Result is null) BuildResult();
             var (_, pdf) = ControlReportPdf.SaveToCase(_report, ws, Inspector, Notes, BuildHeader(_report), Result, ManualItems.Select(m => m.ToResult()).ToList());
             string sha;

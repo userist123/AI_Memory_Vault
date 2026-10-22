@@ -362,3 +362,14 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   then the cleanup above; CI read once; merge order #303 -> #306 -> #307 -> #308.
 - UIA driver: elevated PowerShell script in the session scratchpad (steps start/signin/max/click=<name>/xy=x,y/size=w,h/shot); rebuild it in the new
   session (UIPI: the app is requireAdministrator, so the driver must run elevated; pass multi-word steps quoted).
+
+## Review fixes round 1 (99dc8dd4d)
+
+- Report-scope message now states "control si cod de ancorare salvate" only when `_report.Anchor` exists and the finish was audited (`LiveCase.ReportScopeMessage`, `StationControlViewModel.ReportScopeMessage`).
+- `CollectAllState.IsEmpty` is analysis-only again; new `IsEmptyForHome` + `NoDataPanel.HideAfterControl` (Home, Control page) hide the offer after a control; Investigation/Media keep it.
+- `HomeViewModel.RecordLiveCase`: no `LiveCase.Get()`; reads case.json directly, wider catch (Json/InvalidData/IO/Unauthorized).
+- `HomeTextFixes20261022Tests` joined collection `CollectAllState`.
+- Opened case: status bar says "Caz deschis: ..." (`Publish(r, opened)`), not "Investigatie finalizata".
+- Status bar keeps an active audit-health warning (`MainViewModel.ActivityStatusLine`).
+- Recent cases row: Romanian state (`DisplayState`), local dd.MM.yyyy HH:mm, full path as tooltip; stored data unchanged.
+- Tests: App 683 pass, UI 354 pass (1 skipped), Dfir 2391 pass (31 skipped), all exit 0. Not yet verified on the owner PC.
