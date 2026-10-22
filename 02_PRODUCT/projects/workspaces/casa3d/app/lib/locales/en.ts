@@ -633,7 +633,7 @@ export const en: Dict = {
   "cmdk.open": "Search commands", "cmdk.openShort": "Search", "cmdk.title": "Command palette", "cmdk.placeholder": "Type a command or a stage…", "cmdk.close": "Close the palette",
   "cmdk.empty": "No command for “{q}”.", "cmdk.emptyHint": "Try a shorter word, for example “plan”, “quote” or “continue”.",
   "cmdk.keys": "↑ ↓ choose · Enter open · Esc close", "cmdk.results": "{n} results", "cmdk.results.one": "1 result", "cmdk.results.many": "{n} results",
-  "cmdk.group.next": "Next step", "cmdk.group.stages": "Stages", "cmdk.group.views": "Views", "cmdk.group.actions": "Commands", "cmdk.group.docs": "Documents",
+  "cmdk.group.next": "Next step", "cmdk.group.stages": "Stages", "cmdk.group.views": "Views", "cmdk.group.actions": "Commands", "cmdk.group.tools": "Tools", "cmdk.group.docs": "Documents",
   "cmdk.continue": "Continue to {stage}", "cmdk.goStage": "Stage {n} · {stage}", "cmdk.view2d": "Plan view", "cmdk.viewSplit": "Plan + 3D view", "cmdk.view3d": "3D view",
   "cmdk.print": "Open the drawing package (PDF)", "cmdk.present": "Open the client presentation", "cmdk.board": "Open the mood board", "cmdk.home": "Back to projects",
   "cmdk.kw.next": "next stage step forward", "cmdk.kw.print": "print pdf drawings documents", "cmdk.kw.undo": "back mistake", "cmdk.kw.save": "version save",
