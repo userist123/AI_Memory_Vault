@@ -1249,3 +1249,15 @@ label.f select,label.f input,label.f textarea,.side select{color:var(--ink);font
 .import-existing .issue{margin-top:12px}
 @media(max-width:760px){.import-existing{grid-template-columns:52px minmax(0,1fr);gap:18px 22px;margin:28px 0 38px;padding:28px 22px;border-radius:34px 6px 34px 6px}.import-existing-mark>span{font-size:64px}.import-existing-mark>i{font-size:8px}.import-existing-copy h2{font-size:clamp(30px,8vw,42px)}.import-existing-note{grid-column:2;display:flex;gap:8px;border-left:0;border-top:1px solid rgb(246 240 232 / .22);padding:16px 0 0}.import-existing-note p{margin-right:12px;font-size:12px}.import-existing-note span:not(:first-child){margin-left:4px}}
 @media(max-width:440px){.import-existing{grid-template-columns:minmax(0,1fr);gap:20px}.import-existing-mark{flex-direction:row;align-items:center}.import-existing-mark>span{font-size:54px}.import-existing-mark>i{writing-mode:horizontal-tb;transform:none}.import-existing-note{grid-column:1}.import-existing-actions{align-items:flex-start;flex-direction:column}.import-existing-actions .btn{width:100%}}
+/* UI/UX P1-4: confirmarea „Aprobați tot” cu listă bifabilă pe camere și istoricul deciziilor de pe linkul clientului */
+.dlg-check{border:0;margin:0 0 var(--s-3);padding:0;min-width:0}
+.dlg-check legend{display:flex;gap:var(--s-2);align-items:baseline;justify-content:space-between;width:100%;font-size:var(--fs-sm);color:var(--lead);padding:0 0 6px}
+.dlg-check-list{max-height:min(46vh,420px);overflow:auto;border:1px solid var(--rule);border-radius:8px;padding:4px 12px;background:var(--surface)}
+.dlg-check-group h3{font:600 var(--fs-xs) var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--lead);margin:12px 0 4px}
+.dlg-check-group label{display:flex;gap:10px;align-items:center;min-height:44px;font-size:var(--fs-sm);cursor:pointer}
+.dlg-check-group input{width:20px;height:20px;flex:none;accent-color:var(--accent)}
+.fb-log{width:min(1280px,100%);box-sizing:border-box;margin:0 auto var(--s-4);padding:var(--s-3) var(--s-4);background:var(--surface);border:1px solid var(--rule)}
+.fb-log summary{cursor:pointer;font-weight:500;min-height:44px;display:flex;align-items:center}
+.fb-log ol{list-style:none;margin:var(--s-2) 0 0;padding:0;display:grid;gap:6px;font-size:var(--fs-sm)}
+.fb-log li{display:grid;grid-template-columns:9.5em 1fr;gap:var(--s-2)} .fb-log time{color:var(--lead);font-variant-numeric:tabular-nums}
+@media (max-width:700px){ .fb-log li{grid-template-columns:1fr} }

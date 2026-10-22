@@ -23,10 +23,11 @@ import RoomChoiceBox, { type ClientChoice } from './RoomChoiceBox';
 import type { ClientProgress } from '@/core/client-progress';
 import { FULL_W, renderSize, presentQuality, isMobileEnv, yieldToBrowser, goodEnough } from '@/lib/present-render';
 import { useClientNameBox } from './ClientNameBox';
-import { askPrompt } from '@/lib/dialog';
+import { askReview } from '@/lib/dialog';
 import { cleanClientName } from '@/lib/client-name';
 import './present.css';
 import { localizeSnapshotRoomNames } from '@/core/templates';
+import { feedbackLog } from '@/core/feedback-log';
 
 const nextFrame = () => new Promise<void>(res => requestAnimationFrame(() => res()));
 /** Pe linkul pentru client (`share`) prezentarea vine din revizia partajată și are, sub fiecare planșă de cameră, caseta de păreri. */
@@ -95,16 +96,25 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
     finally { setPrinting(false); } print(); }
   const busy = queued > 0 || printing;
   // linkul clientului: câte produse sunt aprobate din total (ultima părere pe fiecare produs) și „Aprobă tot”, cameră cu cameră
-  const lastOn = (key: string) => [...feedback].reverse().find(f => f.item?.key === key);
+  // decizia pe un element se caută în camera lui: același material (aceeași cheie) apare în mai multe camere
+  const lastOn = (roomId: string, key: string) => [...feedback].reverse().find(f => f.roomId === roomId && f.item?.key === key);
   const pendingByRoom = useMemo(() => !share || !data ? [] : presentation(data.snap, data.catalog, data.mc).rooms.map(r => ({ id: r.id, keys: approvalItems(r).map(a => a.key) }))
-    .map(r => ({ ...r, todo: r.keys.filter(k => lastOn(k)?.verdict !== 'like') })), [share, data, feedback]); // eslint-disable-line
+    .map(r => ({ ...r, todo: r.keys.filter(k => lastOn(r.id, k)?.verdict !== 'like') })), [share, data, feedback]); // eslint-disable-line
   const apTotal = pendingByRoom.reduce((a, r) => a + r.keys.length, 0), apDone = apTotal - pendingByRoom.reduce((a, r) => a + r.todo.length, 0);
-  async function approveAll(){ if (!share || bulk.busy) return; let author = nameBox.ensure();
-    if (!author){ const n = await askPrompt({ title: t('fb.allNameTitle'), body: t('fb.allNameBody'), confirmLabel: t('fb.approveAllOk'), input: { label: t('fb.name'), maxLength: 60 } }); author = n ? nameBox.save(cleanClientName(n)) : null; }
-    if (!author) return; setBulk({ busy: true, msg: null });
-    try { for (const r of pendingByRoom.filter(x => x.todo.length)){ const res = await fetch(`/api/share/${share.token}/feedback`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ roomId: r.id, author, items: r.todo.map(key => ({ key })) }) });
-        const j = await res.json().catch(() => null); if (!res.ok){ setBulk({ busy: false, msg: j?.error || t('fb.error') }); return; } setFeedback(xs => [...xs, ...(j as FeedbackItem[])]); }
-      setBulk({ busy: false, msg: t('fb.allApproved') }); }
+  // „Aprobați tot”: clientul vede exact ce aprobă (pe camere), poate scoate excepții și confirmă cu numele; fiecare decizie
+  // intră în istoric cu nume și dată (Mydoma/Houzz: aprobarea per element, cu jurnal datat)
+  async function approveAll(){ if (!share || bulk.busy || !pres) return;
+    const rooms = pendingByRoom.filter(x => x.todo.length), total = rooms.reduce((a, r) => a + r.todo.length, 0);
+    const labelOf = new Map(pres.rooms.flatMap(r => approvalItems(r).map(a => [`${r.id}|${a.key}`, a.label] as const))), nameOf = new Map(pres.rooms.map(r => [r.id, r.name] as const));
+    const res = await askReview({ title: t('fb.allTitle'), body: t('fb.allBody', { n: total }), confirmLabel: t('fb.approveAllOk'),
+      input: { label: t('fb.name'), maxLength: 60, minLength: 2, initial: nameBox.name ?? cleanClientName(nameBox.draft) ?? '' },
+      checklist: rooms.map(r => ({ heading: nameOf.get(r.id) ?? r.id, items: r.todo.map(k => ({ key: `${r.id}|${k}`, label: labelOf.get(`${r.id}|${k}`) ?? k })) })) });
+    if (!res) return; const author = nameBox.save(cleanClientName(res.text)); if (!author) return;
+    const chosen = new Set(res.keys); setBulk({ busy: true, msg: null });
+    try { for (const r of rooms){ const items = r.todo.filter(k => chosen.has(`${r.id}|${k}`)); if (!items.length) continue;
+        const resp = await fetch(`/api/share/${share.token}/feedback`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ roomId: r.id, author, items: items.map(key => ({ key })) }) });
+        const j = await resp.json().catch(() => null); if (!resp.ok){ setBulk({ busy: false, msg: j?.error || t('fb.error') }); return; } setFeedback(xs => [...xs, ...(j as FeedbackItem[])]); }
+      setBulk({ busy: false, msg: chosen.size === total ? t('fb.allApproved') : t('fb.someApproved', { n: chosen.size, total }) }); }
     catch { setBulk({ busy: false, msg: t('fb.error') }); } }
   const toComments = () => { const el = document.getElementById('fb-general'); el?.scrollIntoView({ behavior: 'smooth', block: 'start' }); el?.querySelector<HTMLElement>('[role=radio]')?.focus({ preventScroll: true }); };
   const pres = useMemo(() => data ? presentation(data.snap, data.catalog, data.mc) : null, [data]);
@@ -157,6 +167,13 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
     {share && <ClientChanges token={share.token} offered={pres.budget.total} cur={cur} />}
     {share?.progress && <ClientDeliveries p={share.progress} />}
     {share && <FeedbackBox id="fb-general" token={share.token} roomId={null} title={t('fb.general')} sub={t('fb.generalSub')} items={feedback.filter(f => f.roomId === null)} onAdded={added} />}
+    {/* istoricul deciziilor: cine, ce și când (trasabilitate pentru client și designer); cele mai noi primele */}
+    {share && feedback.length > 0 && <details className="fb-log no-print"><summary>{t('fb.logTitle', { n: feedback.length })}</summary>
+      <ol>{feedbackLog(feedback, rid => (rid ? pres?.rooms.find(r => r.id === rid)?.name : null) ?? t('fb.general')).slice(0, 200).map(e => <li key={e.id}>
+        <time dateTime={e.at}>{new Date(e.at).toLocaleString(intlLocale(lang), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</time>
+        <span><b>{e.author}</b> · {e.verdict === 'like' ? t('fb.logLiked') : e.verdict === 'change' ? t('fb.logChange') : t('fb.logQuestion')} · {e.count > 1
+          ? t('fb.logGroup', { n: e.count, rooms: e.rooms.map(r => `${r.name} ${r.count}`).join(', ') })
+          : `${e.rooms[0]!.name}${e.label ? ` · ${e.label}` : ''}`}{e.text ? `: „${e.text}”` : ''}</span></li>)}</ol></details>}
     {share && apTotal > 0 && <div className="decide-bar no-print" role="region" aria-label={t('fb.decideAria')}>
       <div className="decide-progress"><b>{t('fb.progress', { n: apDone, total: apTotal })}</b><span className="decide-track" aria-hidden="true"><i style={{ width: `${Math.round(apDone / apTotal * 100)}%` }} /></span>
         {bulk.msg && <small role="status">{bulk.msg}</small>}</div>
