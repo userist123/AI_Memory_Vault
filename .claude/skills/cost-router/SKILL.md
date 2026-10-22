@@ -266,7 +266,23 @@ context, 78% of it inside long-lived subagents. Therefore:
   no git, no network, no write under `~/.claude`.
 - Hook-driven refresh is OFF by default (owner, 2026-10-22): `install.py --session-start/--self-update` and
   `hook_self_update.py` do nothing unless `COST_ROUTER_SELF_INSTALL=1` or `~/.claude/cost-router.auto-refresh`
-  exists (`--uninstall` removes it). The opt-outs above keep priority. HIGH-2 (unpinned remote) stays open.
+  exists (`--uninstall` removes it). The opt-outs above keep priority. HIGH-2 is fixed by the pinned release below.
+
+### Pinned release (HIGH-2)
+
+The self-update hook never follows `main`. It re-syncs to the commit named by the INSTALLED `release_pin.json`
+(`lib/release_pin.py`): fetch by SHA, verify every byte against the pin, then run the installed `install.py
+--self-update --source-root <staging> --release-pin <temp copy of the validated pin> --source-ref <pin commit>`. No
+installed pin -> `no-pin`; an install whose `VERSION` line 1 is not the pin commit (e.g. a plain checkout install) ->
+`not-pinned-install`; in both cases nothing happens.
+Residual: the pin is unsigned and the update only re-syncs to the installed pin; a lower `seq` is refused without `--force`.
+Release procedure (owner): 1) commit the change; 2) `python .claude/skills/cost-router/lib/release_pin.py generate --repo . --commit <sha> --seq <n>`
+(`seq` above the previous pin; writes `.claude/skills/cost-router/release_pin.json`, which never lists itself);
+3) commit the pin in a later commit (that commit changes nothing else) and push both; 4) from that trusted checkout run
+`python .claude/skills/cost-router/install.py --source-ref <pinned sha>` on each machine: VERSION records the pinned
+commit, so the hook keeps that install in sync (a mismatching `--source-ref` is refused). Without `--source-ref` the
+install records the checkout HEAD and the hook leaves it alone (`not-pinned-install`). The pin file is never part of
+the commit it pins.
 
 ## 4B. Install integrity (VERSION and --verify)
 

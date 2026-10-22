@@ -25,6 +25,8 @@ Class numbering RT01..RT16 follows the test names (RT17 = false success). The au
 | 17 | False success | failing pytest in harness | not recorded as correct | `test_rt17_a_failing_pytest_in_the_benchmark_harness_is_not_recorded_as_correct` | pass | MED | Guarded |
 
 ## HIGH-2 proposal (not implemented; owner release-process decision)
+
+> Update 2026-10-22 (phase 9): pin + SHA-256 manifest implemented on branch `claude/cost-router-pinned-self-update` (`lib/release_pin.py`; fetch by commit SHA, bytes verified before the trusted installed installer runs, downgrade refused). Signing is still open. See `00_GOVERNANCE/coordination/tasks/todo-claude-cost-router-pinned-update.md`.
 Finding (SOURCE_VERIFIED, audit B): `hook_self_update.py` clones the unpinned, unsigned `main` branch and runs its installer on a throttle (about hourly), so anyone able to push to `main` (or to redirect the URL) executes code on every opted-in machine.
 Proposal:
 1. Pin updates to a signed release tag, or to a signed `MANIFEST.sha256` published with the release.

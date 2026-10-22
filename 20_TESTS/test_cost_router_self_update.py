@@ -1,8 +1,9 @@
 """The cost-router self-update: one install keeps itself current from the canonical repository.
 
 A local git repository stands in for GitHub (passed to update() directly; the hook has no URL
-override), so the tests run offline and exercise the real path: sparse shallow clone -> that copy's
-`install.py --self-update`. The registered hook command itself is run only where it cannot reach
+override), so the tests run offline and exercise the real path: fetch of the PINNED commit -> hash
+verification -> the installed `install.py --self-update --source-root <verified staging>`. (Pinned-update
+probes P1..P11 are in test_cost_router_pinned_update.py; HIGH-2: the hook no longer follows `main`.) The registered hook command itself is run only where it cannot reach
 the network (throttled, disabled, no git).
 """
 from __future__ import annotations
@@ -54,6 +55,7 @@ def origin(tmp_path):
         else:
             shutil.copy2(src, dst)
     _git(repo, "init", "-q", "-b", "main")
+    _git(repo, "config", "uploadpack.allowAnySHA1InWant", "true")
     _git(repo, "config", "uploadpack.allowFilter", "true")
     _git(repo, "-c", "user.name=t", "-c", "user.email=t@t", "add", "-A")
     _git(repo, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "v1")
@@ -65,6 +67,14 @@ def _commit(repo: Path, rel: str, extra: str) -> str:
     p.write_text(p.read_text(encoding="utf-8") + extra, encoding="utf-8")
     _git(repo, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-am", "next")
     return _git(repo, "rev-parse", "--short", "HEAD")
+
+
+def _pin_for(origin: Path, ref: str, out: Path, seq: int = 1) -> Path:
+    spec = importlib.util.spec_from_file_location("rp_selfupdate", SKILL / "lib" / "release_pin.py")
+    rp = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rp)
+    out.write_text(json.dumps(rp.generate(origin, ref, seq), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return out
 
 
 def _env(home: Path) -> dict:
@@ -128,6 +138,9 @@ def _hook_command(home: Path):
 
 
 def _install(home: Path, *extra: str):
+    if "--release-pin" in extra and "--source-ref" not in extra:  # a pinned release install records the pin's commit
+        pin_file = Path(extra[extra.index("--release-pin") + 1])
+        extra += ("--source-ref", json.loads(pin_file.read_text(encoding="utf-8"))["commit"])
     r = subprocess.run([sys.executable, str(INSTALL), "--home", str(home), *extra], env=_env(home),
                        capture_output=True, text=True, timeout=90)
     assert r.returncode == 0, r.stderr
@@ -150,13 +163,13 @@ def test_install_registers_each_hook_once_and_uninstall_removes_them(tmp_path):
 
 def test_update_pulls_the_latest_version_silently(tmp_path, origin, capsys):
     home = tmp_path / "home"
-    _install(home)
     _commit(origin, ".claude/skills/cost-router/SKILL.md", "\n<!-- v2 -->\n")
     ref = _commit(origin, ".claude/agents/Explore.md", "\n<!-- agent v2 -->\n")
+    _install(home, "--release-pin", str(_pin_for(origin, "HEAD", tmp_path / "pin.json")))  # the owner pins v2
     assert _update(home, origin, capsys) == "updated"
     installed = home / ".claude" / "skills" / "cost-router"
     assert "<!-- v2 -->" in (installed / "SKILL.md").read_text(encoding="utf-8")
-    assert (installed / "VERSION").read_text(encoding="utf-8").splitlines()[0] == ref  # line 2 is the manifest hash
+    assert (installed / "VERSION").read_text(encoding="utf-8").splitlines()[0].startswith(ref)  # full pinned sha; line 2 is the manifest hash
     # an agent the owner never edited follows the repository
     assert "<!-- agent v2 -->" in (home / ".claude" / "agents" / "Explore.md").read_text(encoding="utf-8")
     hooks = json.loads((home / ".claude" / "settings.json").read_text(encoding="utf-8"))["hooks"]
@@ -168,26 +181,29 @@ def test_update_pulls_the_latest_version_silently(tmp_path, origin, capsys):
 
 def test_owner_edited_agent_survives_the_update(tmp_path, origin):
     home = tmp_path / "home"
-    _install(home)
+    _commit(origin, ".claude/agents/vault-worker.md", "\n<!-- upstream change -->\n")
+    _install(home, "--release-pin", str(_pin_for(origin, "HEAD", tmp_path / "pin.json")))
     mine = home / ".claude" / "agents" / "vault-worker.md"
     mine.write_text("my own worker\n", encoding="utf-8")
-    _commit(origin, ".claude/agents/vault-worker.md", "\n<!-- upstream change -->\n")
     assert _update(home, origin) == "updated"
     assert mine.read_text(encoding="utf-8") == "my own worker\n"
 
 
 def test_throttle_future_stamp_and_offline(tmp_path, origin, capsys):
     home = tmp_path / "home"
-    _install(home)
+    _install(home, "--release-pin", str(_pin_for(origin, "HEAD", tmp_path / "pin.json")))
     skill_md = home / ".claude" / "skills" / "cost-router" / "SKILL.md"
     stamp = home / ".claude" / "cost-router.last-update"
+    skill_md.write_text("drift 1\n", encoding="utf-8")
     assert _update(home, origin) == "updated"
-    _commit(origin, ".claude/skills/cost-router/SKILL.md", "\n<!-- v3 -->\n")
+    pinned = skill_md.read_bytes()  # the pinned blob bytes (git may have stored LF where the worktree has CRLF)
+    assert pinned != b"drift 1\n"
+    skill_md.write_text("drift 2\n", encoding="utf-8")
     assert _update(home, origin, capsys) == "throttled"  # same hour
-    assert "<!-- v3 -->" not in skill_md.read_text(encoding="utf-8")
+    assert skill_md.read_text(encoding="utf-8") == "drift 2\n"
     stamp.write_text(f"{time.time() + 86400:.0f}\n", encoding="utf-8")  # clock moved back
     assert _update(home, origin) == "updated"
-    assert "<!-- v3 -->" in skill_md.read_text(encoding="utf-8")
+    assert skill_md.read_bytes() == pinned
     stamp.unlink()
     before = skill_md.read_bytes()
     assert _updater(home).update(home, url=(tmp_path / "no-such-repo").as_uri()) == "fetch-failed"
@@ -263,8 +279,9 @@ def test_registered_command_is_silent_offline_and_never_blocks(tmp_path):
 def test_update_keeps_the_owners_context_choice(tmp_path, origin):
     """--no-context at install time stays honoured by every later self-update, and vice versa."""
     off, on = tmp_path / "off", tmp_path / "on"
-    _install(off, "--no-context")
-    _install(on)
+    pin = str(_pin_for(origin, "HEAD", tmp_path / "pin.json"))
+    _install(off, "--no-context", "--release-pin", pin)
+    _install(on, "--release-pin", pin)
     assert _update(off, origin) == "updated" and _update(on, origin) == "updated"
     assert not (off / ".claude" / "CLAUDE.md").exists()
     assert "deny" not in json.loads((off / ".claude" / "settings.json").read_text(encoding="utf-8")).get("permissions", {})
