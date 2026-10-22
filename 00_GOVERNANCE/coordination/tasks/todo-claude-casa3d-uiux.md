@@ -1,5 +1,5 @@
 # todo-claude-casa3d-uiux
-STATUS: IN_PROGRESS   UPDATED: 2026-10-23T01:52:00+03:00
+STATUS: IN_PROGRESS   UPDATED: 2026-10-23T02:20:00+03:00
 TASK: Casa3D UI/UX P1 from the research report (owner request 2026-10-22; report kept locally, not in repo)
 BRANCH / PR: claude/casa3d-uiux-p1 (worktree D:/w/uiux, base origin/main 6eb24f87)
 P1 items (report table rows 1-7):
@@ -26,5 +26,9 @@ DONE:
 - (7) WCAG 2.5.7: plan zoom/pan/fit buttons and 3D nudge buttons (engine nudge()); global prefers-reduced-motion;
   checkboxes 20 px with 24 px labels; 44 px targets on the client link under pointer:coarse / <=700 px.
   Browser-verified (screens u01-u09 kept locally). Suite 692/692, tsc clean.
-NEXT: items 2, 3; independent review; PR; merge.
+- (2) scripts/check-slides.mjs (no deps: headless Chrome over CDP): stress project with long names -> revision -> share;
+  audits every slide type at 390 px and 16:9 (1024/1280/1920) for content leaving the slide or clipped text; exit 1 on
+  failure. Found and fixed: long project name pushed the cover row past the slide (footer cut) -> fixed row, smaller
+  title steps (>40, >70 chars), 4-line clamp with title attr; floating deck bar covered cover data -> in flow above slides.
+NEXT: item 3; independent review; PR; merge.
 KEY FILES: casa3d/app/core/templates.ts, core/boq.ts, core/budget-excluded.ts, components/{Editor,PresentView,PrintView,SiteReport,MoodBoard,PlanView,Viewer3D,DialogHost}.tsx, core/{typed-dimension,feedback-log}.ts, lib/dialog.ts
