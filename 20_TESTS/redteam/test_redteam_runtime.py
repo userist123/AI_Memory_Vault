@@ -115,7 +115,7 @@ def test_rt08_hook_state_ids_cannot_escape_the_state_dir(home, monkeypatch):
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.setenv("USERPROFILE", str(home))
     rs = rt.load_file(rt.SKILL / "lib" / "route_state.py", "_rt_route_state")
-    for sid in ("../../evil", "..", "a/b", "a\\b", "C:/x", "x" * 300, ""):
+    for sid in ("../../evil", "..", "a/b", "a\\b", "C:/x", "x" * 300, ""): # hygiene: intentional-absolute-path
         assert rs.state_path(sid) is None
         assert rs.record_resume(sid, "agent") is False
         assert rs.seen_event(sid, "k") is False
