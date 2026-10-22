@@ -293,3 +293,12 @@ Not fixed yet; each needs the screen re-checked after the fix.
 6. Home: a stale tooltip „Monitor dispozitive” stays drawn over the left menu after the pointer moved (may be the automation; recheck by hand).
 Pending screens (not yet seen): control step 3 + result, PDF report, investigation, transfer register, users, procedures, policies, accounts.
 - Context of the main session > 250k: next phase starts in a NEW session from this checkpoint.
+
+## Design/text fixes (2026-10-22, new session, main session)
+1. Monitor table: Name and Capacity wrap (Capacity 130 px), every other read-only column ends in „…” with the full text as tooltip (`MonitorCellTrim`/`MonitorCellWrap` in `Views/MediaCenterView.xaml`). Horizontal scroll at 1500 px stays (19 columns).
+2. Two counts: the page-level inventory summary is hidden on the monitor tab (DataTrigger SelectedTab=0); the monitor keeps its own count.
+3. Dates: the `FrameworkElement.Language` metadata override had no effect (DatePicker/Calendar use CurrentCulture unless Language is set on the element; a default does not count). Implicit `DatePicker`/`Calendar` styles in `App.xaml` set `Language=ro-RO`.
+4. „Test” prefill: by design - `ScopeForm.FromScope` prefills Purpose/Systems from the last case on disk (an earlier attempt typed „Test”). No change.
+5. Limbaj: the checkbox became a Simplu | Expert pair of `ChipTabStyle` radio buttons (`MainViewModel.IsSimpleLevel`).
+6. Stale tooltip: not reproduced in code; recheck by hand on the PC.
+- Next: tests App/UI; publish + reinstall demo; screenshots of monitor, scope dialog, header; CI read once on PR #308.

@@ -103,11 +103,14 @@ namespace LogAnalyzer.UI.ViewModels
         private static string PreferenceAccount => AuthApp.Session?.Account ?? Environment.UserName;
         [ObservableProperty] private bool _isExpertLevel = LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert;
         public string LanguageLevelText => IsExpertLevel ? "Expert" : "Simplu";
+        /// <summary>The "Simplu" half of the header's Simplu | Expert switch (2026-10-22 round 3: a bare checkbox read as unclear).</summary>
+        public bool IsSimpleLevel { get => !IsExpertLevel; set => IsExpertLevel = !value; }
         partial void OnIsExpertLevelChanged(bool value)
         {
             LogAnalyzer.Dfir.Language.LanguageLevelContext.Set(value ? LogAnalyzer.Dfir.Language.UiLanguageLevel.Expert : LogAnalyzer.Dfir.Language.UiLanguageLevel.Simple);
             _languagePreferences.Save(PreferenceAccount, LogAnalyzer.Dfir.Language.LanguageLevelContext.Current);
             OnPropertyChanged(nameof(LanguageLevelText));
+            OnPropertyChanged(nameof(IsSimpleLevel));
         }
         /// <summary>"Ce înseamnă?": the single glossary, searchable.</summary>
         [RelayCommand]
