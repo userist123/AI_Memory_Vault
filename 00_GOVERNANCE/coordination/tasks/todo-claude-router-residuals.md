@@ -40,7 +40,7 @@ dirty with other agents' work). No commit/push/global changes; never run `claude
 - [ ] 1 - [ ] 2 - [ ] 3 - [ ] 4 - [ ] 5
 
 ## Owner decisions still open (do not act)
-- HIGH-2: sign/pin the remote self-update (proposal in SECURITY_REDTEAM_RESULTS.md).
+- HIGH-2: sign/pin the remote self-update (proposal in SECURITY_REDTEAM_RESULTS.md). Phase 9: pin + hash implemented (branch claude/cost-router-pinned-self-update); signing still open.
 - Self-update opt-in default; MED-B accepted residual; commit of mission files on a dedicated branch.
 - 2026-10-22 implementer subagent (claude-opus-5-5): tasks 1-4 DONE (UNREVIEWED, task 5 pending). hook_agent_model.py: _resolve_model (alias/id/alias[..]/longest id prefix), unknown explicit model capped (unclassified -> session tier, classified -> route model, risky/review -> floor), _agent_default_model reads project then ~/.claude/agents, UNKNOWN_DEFAULT (plugin a:b, path-like, non-builtin w/o file, unreadable, unrecognised model:) -> session tier; same-tier spelling kept. Tests: 71 new r2_ cases in test_cost_router_escalation_matrix.py (54 fail on the pre-fix hook copy); enforce.py exact assertions restored; test_cost_router_claude_hooks.py banana-9 test updated to the R2-2 contract. Suites (matrix+cost_router_*+benchmark+redteam+antigravity) 642 passed/3 xfailed in both orders; git diff --check clean.
 - 2026-10-22 tasks 1-5 DONE: review round 1 APPROVE WITH NOTES; F1-F3 (frontmatter dash-in-value, unclosed -> fail closed, BOM, #escalate vs unrankable agent model) fixed by worker (claude-sonnet-5-5) in hook_agent_model.py with 5 test_r2b_ tests in the matrix file.

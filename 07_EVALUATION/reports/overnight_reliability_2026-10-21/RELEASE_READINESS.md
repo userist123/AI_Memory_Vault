@@ -53,3 +53,5 @@ Checkpoint files (todo-claude-*) get frontmatter only if G7 required it (GATE_LO
 
 ## Global state touched by this mission
 None intended. Observed global changes during the mission window are attributed in GATE_LOG.md G5 (frontend-design plugin installed by the separate frontend-design session; cost-router global copy rewritten at 23:32:44 by the SessionStart of session 9eb044d1 (RUNTIME_VERIFIED, 20:32:44Z), not by a mission command).
+
+> Update 2026-10-22 (phase 9): pin + SHA-256 manifest implemented on branch `claude/cost-router-pinned-self-update` (`lib/release_pin.py`; fetch by commit SHA, bytes verified before the trusted installed installer runs, downgrade refused). Signing is still open. See `00_GOVERNANCE/coordination/tasks/todo-claude-cost-router-pinned-update.md`.
