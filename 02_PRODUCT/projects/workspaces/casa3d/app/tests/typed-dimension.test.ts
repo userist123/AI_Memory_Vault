@@ -13,6 +13,7 @@ test('lungime: întreg = cm, zecimală = m, sufixele au prioritate; virgula e ze
 test('dimensiunile camerei: „lățime;adâncime”, „x”, „×” sau spațiu', () => {
   for (const s of ['4,5;3,2', '450x320', '450 × 320', '4,5 3,2', '450*320', '4.5m;320']) { const r = parseTypedSize(s, 'metric'); near(r?.w, 4.5); near(r?.d, 3.2); }
   assert.equal(parseTypedSize('450', 'metric'), null); assert.equal(parseTypedSize('450;abc', 'metric'), null); assert.equal(parseTypedSize('1;2;3', 'metric'), null);
+  assert.equal(parseTypedSize('50;300', 'metric'), null, 'sub 0,6 m, ca la camera trasă'); near(parseTypedSize('60;300', 'metric')?.w, .6);
 });
 test('capătul peretelui: pe direcția mouse-ului, la lungimea exactă; fără direcție, spre dreapta', () => {
   const b = typedEndpoint([1, 1], [1, 5], 3.2); near(b[0], 1); near(b[1], 4.2);

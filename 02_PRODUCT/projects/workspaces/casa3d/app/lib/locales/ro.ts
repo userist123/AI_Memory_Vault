@@ -11,7 +11,7 @@ export const ro: Dict = {
   "tool.select": "Selecție", "tool.wall": "Perete", "tool.room": "Cameră", "tool.door": "Ușă", "tool.window": "Fereastră", "tool.column": "Stâlp", "tool.beam": "Grindă", "tool.glass_wall": "Perete sticlă", "tool.stair": "Scară", "tool.measure": "Cote",
   "roomType.living": "Living", "roomType.dormitor": "Dormitor", "roomType.bucatarie": "Bucătărie", "roomType.baie": "Baie", "roomType.hol": "Hol",
   "tab.props": "Proprietăți", "tab.catalog": "Catalog", "tab.budget": "Buget", "tab.design": "Design", "tab.twin": "Twin", "tab.revs": "Revizii", "tab.advisor": "Consilier",
-  "editor.roomsTranslated": "Numele camerelor au fost traduse în română. Poți anula cu Ctrl+Z.", "editor.loadError": "Proiectul nu există sau nu ai acces la el.", "editor.loading": "Se încarcă proiectul…",
+  "editor.loadError": "Proiectul nu există sau nu ai acces la el.", "editor.loading": "Se încarcă proiectul…",
   "editor.shareFailed": "Partajarea a eșuat.", "editor.shareCopied": "Link de vizualizare copiat; arată doar această revizie.", "editor.shareLink": "Link de vizualizare: {url}",
   "editor.revokeFailed": "Revocarea a eșuat.", "editor.revoked": "Linkul a fost revocat.", "editor.saveFailed": "Salvarea a eșuat.",
   "editor.positionRefused": "Poziție refuzată: {msg}", "editor.rotateNoFit": "Rotită nu încape: {msg}", "editor.variantNoFit": "Varianta nu încape aici", "editor.sizeNoFit": "Dimensiunea nu încape aici",

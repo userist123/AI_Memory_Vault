@@ -22,7 +22,7 @@ export default function DialogHost(){
   const ok = canConfirm(d, text, checked.size), done = (v: Parameters<typeof answerDialog>[0]) => answerDialog(v);
   const allKeys = (d.checklist ?? []).flatMap(g => g.items.map(i => i.key)), toggle = (k: string) => setChecked(s => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   const accept = () => { if (!ok) return; done(d.kind === 'prompt' ? text : d.kind === 'review' ? { text: text.trim(), keys: allKeys.filter(k => checked.has(k)) } : true); };
-  const onKey = (e: React.KeyboardEvent) => { const single = (e.target as HTMLElement).tagName === 'INPUT', act = dialogKey(e.key, single);
+  const onKey = (e: React.KeyboardEvent) => { const el = e.target as HTMLInputElement, single = el.tagName === 'INPUT' && el.type !== 'checkbox', act = dialogKey(e.key, single);
     if (act === 'cancel'){ e.preventDefault(); done(d.kind === 'confirm' ? false : null); }
     else if (act === 'confirm'){ e.preventDefault(); accept(); }
     else if (act === 'trap'){ const els = [...ref.current!.querySelectorAll<HTMLElement>(FOCUSABLE)], i = trapFocusIndex(els.length, els.indexOf(document.activeElement as HTMLElement), e.shiftKey);
@@ -38,7 +38,7 @@ export default function DialogHost(){
         : <input type="text" value={text} maxLength={d.input.maxLength} placeholder={d.input.placeholder} autoComplete="off" onChange={e => setText(e.target.value)} aria-invalid={d.input.mustEqual != null && text.length > 0 && !ok} />}</label>}
       {d.checklist && <fieldset className="dlg-check"><legend>{t('dlg.checkCount', { n: checked.size, total: allKeys.length })}
           <button type="button" className="linkish" onClick={() => setChecked(checked.size === allKeys.length ? new Set() : new Set(allKeys))}>{checked.size === allKeys.length ? t('dlg.checkNone') : t('dlg.checkAll')}</button></legend>
-        <div className="dlg-check-list">{d.checklist.map(g => <div key={g.heading} className="dlg-check-group"><h3>{g.heading}</h3>
+        <div className="dlg-check-list">{d.checklist.map((g, gi) => <div key={gi} className="dlg-check-group"><h3>{g.heading}</h3>
           {g.items.map(i => <label key={i.key}><input type="checkbox" checked={checked.has(i.key)} onChange={() => toggle(i.key)} /><span>{i.label}</span></label>)}</div>)}</div></fieldset>}
       <div className="dlg-act">
         <button type="button" className="btn" data-cancel onClick={() => done(d.kind === 'confirm' ? false : null)}>{d.cancelLabel ?? t('dlg.cancel')}</button>

@@ -36,13 +36,14 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
   const { t, lang, units } = usePrefs();
   // pe link datele vin deja de pe server: planșele (și coperta, elementul LCP) sunt în HTML-ul inițial, nu după hidratare
   const fromShare = (sh: SharedDeck) => ({ snap: sh.snapshot, name: sh.snapshot.name || sh.name, catalog: sh.catalog, mc: sh.mc });
-  const [data, setData] = useState<{ snap: Snapshot; name: string; catalog: Catalog; mc: MaterialsCatalog } | null>(() => share ? fromShare(share) : null), [err, setErr] = useState(false);
+  const [raw, setData] = useState<{ snap: Snapshot; name: string; catalog: Catalog; mc: MaterialsCatalog } | null>(() => share ? fromShare(share) : null), [err, setErr] = useState(false);
   const [images, setImages] = useState<Record<string, { url: string; w: number }>>({}), [queued, setQueued] = useState(0), [printing, setPrinting] = useState(false), [noGL, setNoGL] = useState(false), canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => { if (share){ setData(d => d && d.catalog === share.catalog ? d : fromShare(share)); return; }
     Promise.all([fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/catalog').then(r => r.json()), fetch('/api/materials').then(r => r.json())])
       .then(([p, catalog, mc]) => setData({ snap: p.draft, name: p.draft.name || p.name, catalog, mc })).catch(() => setErr(true)); }, [id, share]);
-  // numele implicite ale camerelor în limba cititorului („Kitchen” → „Bucătărie”), doar la afișare; numele personalizate rămân
-  useEffect(() => { setData(d => { if (!d) return d; const snap = localizeSnapshotRoomNames(d.snap, lang); return snap === d.snap ? d : { ...d, snap }; }); }, [data, lang]);
+  // numele implicite ale camerelor în limba cititorului („Kitchen” → „Bucătărie”), doar la afișare; numele personalizate rămân.
+  // Derivat, nu stare: același obiect când nu e nimic de tradus, deci motorul 3D nu repornește degeaba
+  const data = useMemo(() => { if (!raw) return raw; const snap = localizeSnapshotRoomNames(raw.snap, lang); return snap === raw.snap ? raw : { ...raw, snap }; }, [raw, lang]);
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   useEffect(() => { if (share) fetch(`/api/share/${share.token}/feedback`).then(r => r.ok ? r.json() : []).then(setFeedback).catch(() => {}); }, [share]);
   // serverul poate întoarce un rând existent (produs deja aprobat): nu se adaugă de două ori
@@ -113,7 +114,7 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
     const rooms = pendingByRoom.filter(x => x.todo.length), total = rooms.reduce((a, r) => a + r.todo.length, 0);
     const labelOf = new Map(pres.rooms.flatMap(r => approvalItems(r).map(a => [`${r.id}|${a.key}`, a.label] as const))), nameOf = new Map(pres.rooms.map(r => [r.id, r.name] as const));
     const res = await askReview({ title: t('fb.allTitle'), body: t('fb.allBody', { n: total }), confirmLabel: t('fb.approveAllOk'),
-      input: { label: t('fb.name'), maxLength: 60, minLength: 2, initial: nameBox.name ?? cleanClientName(nameBox.draft) ?? '' },
+      input: { label: t('fb.name'), maxLength: 60, minLength: 2, initial: nameBox.name || cleanClientName(nameBox.draft) || '' },
       checklist: rooms.map(r => ({ heading: nameOf.get(r.id) ?? r.id, items: r.todo.map(k => ({ key: `${r.id}|${k}`, label: labelOf.get(`${r.id}|${k}`) ?? k })) })) });
     if (!res) return; const author = nameBox.save(cleanClientName(res.text)); if (!author) return;
     const chosen = new Set(res.keys); setBulk({ busy: true, msg: null });

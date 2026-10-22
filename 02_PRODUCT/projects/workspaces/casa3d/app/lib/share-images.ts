@@ -9,7 +9,7 @@ import { FULL_W, renderSize, presentQuality, isMobileEnv, yieldToBrowser } from 
 
 const WIDTHS = [800, 1600] as const;
 const nextFrame = () => new Promise<void>(res => requestAnimationFrame(() => res()));
-type State = { revisionNumber: number; snapshot: Snapshot; keys: string[]; have: Record<string, number[]> };
+type State = { revisionNumber: number; snapshot: Snapshot | null; keys: string[]; have: Record<string, number[]> };
 
 /** Ce lipsește: cheile care nu au ambele lățimi. Funcție pură, testată. */
 export const missingRenders = (keys: readonly string[], have: Record<string, number[]>) => keys.filter(k => !WIDTHS.every(w => have[k]?.includes(w)));
@@ -32,18 +32,18 @@ export async function prepareShareImages(projectId: string, rev: number, onProgr
   const canvas = document.createElement('canvas'); let viewer: any = null, sent = 0;
   try {
     const st: State = await fetch(`/api/projects/${projectId}/revisions/${rev}/renders`).then(r => r.ok ? r.json() : Promise.reject(r));
-    const todo = missingRenders(st.keys, st.have); if (!todo.length) return 0;
+    const todo = missingRenders(st.keys, st.have), snap = st.snapshot; if (!todo.length || !snap) return 0;
     const [catalog, mc]: [Catalog, MaterialsCatalog] = await Promise.all([fetch('/api/catalog').then(r => r.json()), fetch('/api/materials').then(r => r.json())]);
     Object.assign(canvas.style, { position: 'fixed', left: '-10000px', top: '0', width: '1600px', height: '1000px', pointerEvents: 'none' }); canvas.width = 1600; canvas.height = 1000;
     canvas.setAttribute('aria-hidden', 'true'); document.body.appendChild(canvas);
     const m = await import('@/components/viewer3d-engine.js'); viewer = m.createViewer(canvas); const lp = lighting('day');
     viewer.setLighting({ ...lp, dir: sunDirection(lp.azimuthDeg, lp.elevationDeg) }); viewer.setQuality?.(presentQuality({ share: false, mobile: isMobileEnv(window) }));
     const levelOf: Record<string, number> = { overview: 0 };
-    for (let i = 0; i < floors(st.snapshot).length; i++) for (const r of levelView(st.snapshot, i).floor.rooms) levelOf[r.id] ??= i;
+    for (let i = 0; i < floors(snap).length; i++) for (const r of levelView(snap, i).floor.rooms) levelOf[r.id] ??= i;
     let level = -1;
     for (const key of todo.sort((a, b) => (levelOf[a] ?? 0) - (levelOf[b] ?? 0))){
       const L = levelOf[key] ?? 0;
-      if (L !== level){ const lv = levelView(st.snapshot, L), { plan, items } = viewerInput(lv, catalog, undefined, { voids: stairwells(st.snapshot, L), mc });
+      if (L !== level){ const lv = levelView(snap, L), { plan, items } = viewerInput(lv, catalog, undefined, { voids: stairwells(snap, L), mc });
         viewer.setState(plan, items); level = L; await nextFrame(); await nextFrame(); }
       const size = renderSize({ cssWidth: FULL_W, dpr: 1, print: true, overview: key === 'overview' });
       const png: string | null = key === 'overview' ? viewer.renderView(undefined, size.w, size.h) : viewer.renderView({ roomId: key }, size.w, size.h);
@@ -54,5 +54,8 @@ export async function prepareShareImages(projectId: string, rev: number, onProgr
     }
     return sent;
   } catch { return sent; }
-  finally { running.delete(tag); try { viewer?.dispose(); } catch { /* deja eliberat */ } canvas.remove(); }
+  // contextul WebGL se eliberează explicit: browserul ține doar câteva deodată, iar editorul are deja unul pentru vederea 3D
+  finally { running.delete(tag); try { viewer?.dispose(); } catch { /* deja eliberat */ }
+    try { ((canvas.getContext('webgl2') || canvas.getContext('webgl')) as WebGLRenderingContext | null)?.getExtension('WEBGL_lose_context')?.loseContext(); } catch { /* fără extensie */ }
+    canvas.remove(); }
 }
