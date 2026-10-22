@@ -90,5 +90,10 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
     </div>}
     <div className="hintbar">{err ? t('viewer.noWebgl') : (mode === 'walk' ? (touch ? t('viewer.hintWalkTouch') : t('viewer.hintWalk')) : (touch ? t('viewer.hintHouseTouch') : t('viewer.hintHouse')))}</div>
     {pano && <PanoramaView url={pano.url} title={pano.title} fileName={pano.file} onClose={() => setPano(null)} />}
+    {/* WCAG 2.2 2.5.7: tot ce se face prin tragere (rotire, înclinare, zoom) are și un buton */}
+    {!err && <div className="v3nudge" role="group" aria-label={t('viewer.nudgeAria')}>
+      {([['left', '◀'], ['up', '▲'], ['down', '▼'], ['right', '▶'], ['in', '+'], ['out', '−']] as const).map(([k, sym]) =>
+        <button key={k} type="button" className="btn" aria-label={t(`viewer.nudge.${k}`)} title={t(`viewer.nudge.${k}`)} onClick={() => v.current?.nudge?.(k)}>{sym}</button>)}
+    </div>}
   </div>);
 }
