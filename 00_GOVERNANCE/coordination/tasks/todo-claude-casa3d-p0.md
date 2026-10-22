@@ -1,5 +1,5 @@
 # todo-claude-casa3d-p0
-STATUS: PR_OPEN   UPDATED: 2026-10-22T21:00:00+03:00
+STATUS: IN_REVIEW   UPDATED: 2026-10-22T21:00:00+03:00
 TASK: Casa3D P0 „Harden today's app” (SALES_READINESS_PLAN.md §3.1 items 1, 3, 4; §4 phase P0) — slice 1
 BRANCH / PR: claude/casa3d-p0-hardening (worktree D:/w/p0harden, base origin/main f0ee40d6)
 DONE:
@@ -16,10 +16,15 @@ DONE:
 - Review round 1 (vault-reviewer): REQUEST_CHANGES F1 (-H0.0.0.0 bypass), F2 (middleware headers override route
   headers in Next 15: send-response only sets missing keys), F3 (shareDays coercion) → fixed in 31da8ca5.
 - Review round 2 on delta 31da8ca5: APPROVE (no new findings).
+- CI round 1: npm lockfiles (next critical GHSA-2464-fhr4-w9xw) and test_notes_strict_yaml (checkpoint not on
+  allowlist) → fixed in c0cd6abd5 (next 15.5.28, postcss override, allowlist entry).
+- 3.1.4 share probe list + 3.1.6 security-lockdown: 3 independent auditors (A secrets/history/logging, B auth/IDOR/share,
+  C input/XSS/SQL/errors); gitleaks 8.30.1 history 144 commits clean; 17 findings fixed (app/SECURITY_AUDIT.md),
+  incl. db.ts deleting the owner's data dir on open failure, CSRF on 34 routes, demo AI on owner key, body limits.
+  Tests 680/680, tsc 0, build 0; runtime: bad env → exit 1, CSRF 403/201, xff → 401, 600 KB → 413, UI writes OK.
 NEXT (in order):
-1. Draft PR pushed; main session checks CI once; owner merges.
-2. Remaining P0: 3.1.4 independent review of every /api/share/* route (probe list in plan); 3.1.5 DB-backed
-   rate limits; 3.1.6 security-lockdown audit + SECURITY_AUDIT.md + GitHub alert triage; 3.1.7/3.1.8 ops.
+1. Independent review of the audit-fix delta; push; CI once; merge PR #316 (owner authorised merge when green).
+2. Then: UI/UX research (owner request 2026-10-22).
 OWNER DECISIONS / RESIDUALS:
 - Existing share links (created before this change) never expire; owner may revoke old ones in Presentation.
 - A local reverse proxy that rewrites Host to localhost without cf-connecting-ip still gets local trust (pre-existing).

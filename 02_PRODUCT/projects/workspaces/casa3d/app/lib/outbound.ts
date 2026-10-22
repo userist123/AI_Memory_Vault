@@ -1,4 +1,5 @@
 // Faza 4 (mod testare): redirect, contorizare anonimă, linkuri de afiliere opționale, istoric de preț, verificare linkuri.
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { getDb } from './db';
 import { HttpError } from './repo';
 import { activeLink, destination, deviceBucket, hourOf, isAllowedUrl, type OfferLink, type Retailer, type LinkType } from '../core/outbound';
@@ -26,7 +27,10 @@ export async function outboundStatus(){
   return { targets, disclosure: Object.values(targets).includes('affiliate') };
 }
 // ---------- administrare (doar cu ADMIN_TOKEN) ----------
-export function assertAdmin(req: Request){ const t = process.env.ADMIN_TOKEN; if (!t || t.length < 16) throw new HttpError(404, 'Indisponibil.'); if (req.headers.get('x-admin-token') !== t) throw new HttpError(401, 'Neautorizat.'); }
+// comparația se face pe hash-uri SHA-256 de lungime fixă, în timp constant (nu dezvăluie prefixul corect prin durată)
+const digest = (v: string) => createHash('sha256').update(v).digest();
+export function assertAdmin(req: Request){ const t = process.env.ADMIN_TOKEN; if (!t || t.length < 16) throw new HttpError(404, 'Indisponibil.');
+  if (!timingSafeEqual(digest(req.headers.get('x-admin-token') ?? ''), digest(t))) throw new HttpError(401, 'Neautorizat.'); }
 export async function addLink(input: any){
   const kind = String(input.kind), id = String(input.targetId), type = input.type === 'affiliate' ? 'affiliate' : 'direct', network = type === 'affiliate' ? String(input.network || '') : null;
   if (!kindOk(kind) || !idOk(id)) throw new HttpError(400, 'Țintă invalidă.');

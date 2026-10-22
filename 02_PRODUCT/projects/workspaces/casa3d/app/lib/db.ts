@@ -10,7 +10,7 @@ type Db = { q: Query; tx: Tx; mode: DbMode };
 let ready: Promise<Db> | null = null;
 
 async function connect(): Promise<Db> {
-  if (process.env.DATABASE_URL){ const { Pool } = await import('pg'); const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5, ssl: process.env.DATABASE_URL.includes('localhost') ? undefined : { rejectUnauthorized: false } });
+  if (process.env.DATABASE_URL){ const { Pool } = await import('pg'); const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 5, ssl: process.env.DATABASE_URL.includes('localhost') ? undefined : { rejectUnauthorized: process.env.DATABASE_SSL_NO_VERIFY !== '1' } });
     const tx: Tx = async fn => { const c = await pool.connect();
       try { await c.query('begin'); const out = await fn((s, p) => c.query(s, p as any[])); await c.query('commit'); return out; }
       catch (e){ await c.query('rollback').catch(() => {}); throw e; }
@@ -19,31 +19,16 @@ async function connect(): Promise<Db> {
   const { PGlite } = await import('@electric-sql/pglite');
   const memory = !!process.env.VERCEL || process.env.PGLITE_MEMORY === '1';
   const dir = process.env.PGLITE_DIR || './.data/pglite';
-  const { mkdirSync, rmSync } = await import('node:fs');
+  const { mkdirSync } = await import('node:fs');
   let db: any;
-  let mode: DbMode = memory ? 'pglite-memory' : 'pglite-file';
-  if (memory){
-    db = new PGlite();
-  } else {
-    try {
-      if (!dir.includes('://')) mkdirSync(dir, { recursive: true });
-      db = new PGlite(dir);
-      await db.query('SELECT 1');
-    } catch (err) {
-      console.warn('PGlite on-disk open/probe failed, attempting cleanup and reinit:', err);
-      try {
-        if (!dir.includes('://')) {
-          rmSync(dir, { recursive: true, force: true });
-          mkdirSync(dir, { recursive: true });
-        }
-        db = new PGlite(dir);
-        await db.query('SELECT 1');
-      } catch (recoveryErr) {
-        console.warn('PGlite on-disk recovery failed, falling back to clean in-memory database:', recoveryErr);
-        db = new PGlite();
-        mode = 'pglite-memory';
-      }
-    }
+  const mode: DbMode = memory ? 'pglite-memory' : 'pglite-file';
+  if (memory) db = new PGlite();
+  else {
+    // Baza de pe disc conține proiectele proprietarului: dacă nu se deschide (alt server pe același director, disc
+    // plin, fișiere deteriorate), serverul se oprește cu eroare. Nu se șterge nimic și nu se trece tăcut pe o bază
+    // goală în memorie, unde tot ce se scrie s-ar pierde la repornire.
+    try { if (!dir.includes('://')) mkdirSync(dir, { recursive: true }); db = new PGlite(dir); await db.query('SELECT 1'); }
+    catch (err){ throw new Error(`Baza de date locală (${dir}) nu poate fi deschisă: ${err instanceof Error ? err.message : String(err)}. Verifică dacă nu rulează deja alt server Casa3D pe același director.`); }
   }
   // PGlite ține tranzacția exclusiv: celelalte interogări așteaptă până la commit/rollback.
   const tx: Tx = fn => db.transaction((t: any) => fn((s, p) => t.query(s, p as any[]) as any));
@@ -92,24 +77,9 @@ export async function getDb(): Promise<Db> {
   const g = globalThis as unknown as { __casa3d_db_ready?: Promise<Db> | null };
   if (!g.__casa3d_db_ready) {
     g.__casa3d_db_ready = (async () => {
-      try {
-        const c = await connect();
-        await migrate(c.q);
-        return c;
-      } catch (err) {
-        console.warn('Primary DB initialization/migration failed, falling back to memory DB:', err);
-        try {
-          const { PGlite } = await import('@electric-sql/pglite');
-          const memDb = new PGlite();
-          const tx: Tx = fn => memDb.transaction((t: any) => fn((s, p) => t.query(s, p as any[]) as any));
-          const fallback: Db = { q: (s, p) => memDb.query(s, p as any[]) as any, tx, mode: 'pglite-memory' };
-          await migrate(fallback.q);
-          return fallback;
-        } catch (fatalErr) {
-          g.__casa3d_db_ready = null;
-          throw fatalErr;
-        }
-      }
+      // Fără rezervă în memorie: o bază care nu pornește e o eroare vizibilă, nu o aplicație goală care pierde datele.
+      try { const c = await connect(); await migrate(c.q); return c; }
+      catch (err){ g.__casa3d_db_ready = null; throw err; }
     })();
   }
   return g.__casa3d_db_ready;
