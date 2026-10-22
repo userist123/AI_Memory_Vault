@@ -50,21 +50,35 @@ public sealed class ResponseVerificationTests : IDisposable
 
     [Theory]
     [MemberData(nameof(ReaderFailures))]
-    public void Reread_that_throws_is_denied_unsupported_or_times_out_is_not_verified_with_the_cause(string mode, string cause)
+    public void Reread_that_throws_is_denied_unsupported_or_times_out_is_not_verified_with_the_cause(string mode, string cause) =>
+        AssertReaderFailure(mode, cause);
+
+    /// <summary>
+    /// Deterministic: the failure modes get a generous limit (they answer at once, a slow machine cannot turn "acces refuzat" into "(timeout)");
+    /// the timeout mode blocks on a signal that is released only after the verdict, so it times out for certain and frees its thread afterwards.
+    /// </summary>
+    internal static void AssertReaderFailure(string mode, string cause, Action<bool>? onReaderThread = null)
     {
-        Func<ResponseObservation> read = mode switch
+        using var hold = new ManualResetEventSlim(false);
+        try
         {
-            "denied" => () => throw new UnauthorizedAccessException("fără drepturi"),
-            "unsupported" => () => throw new NotSupportedException("API absent"),
-            "io" => () => throw new IOException("disc"),
-            "null" => () => null!,
-            _ => () => { Thread.Sleep(3000); return ResponseObservation.Holds("prea târziu"); },
-        };
-        var o = ResponseVerifier.Verify("test", "apply", [new ResponseProbe("ținta", "aplicat", read)], TimeSpan.FromMilliseconds(200));
-        Assert.Equal(ResponseStatus.NotVerified, o.Status);
-        Assert.False(o.IsSuccess);
-        Assert.Contains(cause, o.Checks.Single().Observed);
-        Assert.Contains(cause, o.Cause);
+            Func<ResponseObservation> body = mode switch
+            {
+                "denied" => () => throw new UnauthorizedAccessException("fără drepturi"),
+                "unsupported" => () => throw new NotSupportedException("API absent"),
+                "io" => () => throw new IOException("disc"),
+                "null" => () => null!,
+                _ => () => { hold.Wait(); return ResponseObservation.Holds("prea târziu"); },
+            };
+            Func<ResponseObservation> read = () => { onReaderThread?.Invoke(Thread.CurrentThread.IsThreadPoolThread); return body(); };
+            var limit = mode == "timeout" ? TimeSpan.FromMilliseconds(200) : TimeSpan.FromSeconds(60);
+            var o = ResponseVerifier.Verify("test", "apply", [new ResponseProbe("ținta", "aplicat", read)], limit);
+            Assert.Equal(ResponseStatus.NotVerified, o.Status);
+            Assert.False(o.IsSuccess);
+            Assert.Contains(cause, o.Checks.Single().Observed);
+            Assert.Contains(cause, o.Cause);
+        }
+        finally { hold.Set(); }
     }
 
     [Fact]
@@ -391,5 +405,43 @@ public sealed class ResponseVerificationTests : IDisposable
 
         var missing = await new MediaSanitizationEngine().SanitizeMediaAsync(Path.Combine(_dir, "nu-exista.bin"), SanitizationMethod.NistClearZero);
         Assert.Equal(ResponseStatus.Failed, missing.Verification.Status);
+    }
+}
+
+[CollectionDefinition(nameof(ThreadPoolSaturationCollection), DisableParallelization = true)]
+public sealed class ThreadPoolSaturationCollection { }
+
+/// <summary>
+/// WP4 final round, flaky WP9 test: the re-read must not depend on the thread pool. With every pool worker blocked (2 x ProcessorCount work items
+/// waiting on a signal) each reader failure still gets its own cause, never a false "(timeout)", and the re-read never runs on a pool thread.
+/// Runs alone (no parallel test classes) so the saturation does not slow other tests.
+/// </summary>
+[Collection(nameof(ThreadPoolSaturationCollection))]
+public sealed class ResponseVerificationPoolSaturationTests
+{
+    [Fact]
+    public void Reread_failures_keep_their_cause_while_the_thread_pool_is_saturated_and_never_run_on_a_pool_thread()
+    {
+        using var release = new ManualResetEventSlim(false);
+        var blockers = Enumerable.Range(0, 2 * Environment.ProcessorCount).Select(_ => Task.Run(() => release.Wait())).ToArray();
+        try
+        {
+            var onPool = new List<bool>();
+            foreach (var row in ResponseVerificationTests.ReaderFailures)
+            {
+                string mode = (string)row[0], cause = (string)row[1];
+                ResponseVerificationTests.AssertReaderFailure(mode, cause, p => { lock (onPool) onPool.Add(p); });
+            }
+            lock (onPool)
+            {
+                Assert.Equal(5, onPool.Count);
+                Assert.All(onPool, p => Assert.False(p, "the re-read ran on a thread-pool thread"));
+            }
+        }
+        finally
+        {
+            release.Set();
+            Task.WaitAll(blockers, TimeSpan.FromSeconds(30));
+        }
     }
 }

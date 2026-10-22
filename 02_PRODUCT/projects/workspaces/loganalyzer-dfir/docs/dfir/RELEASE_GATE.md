@@ -55,13 +55,17 @@ empty or always-green class with that name. The `minExecuted` guard in `gate-ite
 - `ai_claim_validation` (WP4) proves the contract with fakes, never with a real model: every AI statement is split into claims and checked
   against THIS case (`LogAnalyzer.Dfir.Core/AI/AiClaimValidator.cs`, no model as judge, no network). The validator confirms VALUES, never
   MEANING. A claim is VALORI_CONFIRMATE (display "valori confirmate") only when it cites an event or a finding (not just an evidence file) and
-  every value it states occurs in the cited record(s): timestamps to the stated precision, paths, hashes, addresses and ports, file names,
+  ONE cited record contains every value it states (values spread over several cited records are at most PARTIAL, "valorile provin din
+  înregistrări diferite"; counts of the cited set are still recomputed over the whole set): timestamps to the stated precision, a time of day
+  ("la ora 11", "ora 10:30", compared with the hour and minute of the record's time on the clock the record states), paths, hashes, addresses and ports, file names,
   user names (`DOMAIN\user`, `user@host`, after "utilizatorul" / "user"), host names (after "hostul" / "stația", FQDN), MITRE ids, quoted values,
   and counts (events / findings / evidence are recomputed from the case; "de N ori" / "N conexiuni" must occur in the record). It is never shown
   without the caveat "afirmație a modelului, nu constatare; s-au confirmat doar valorile citate, nu sensul". PARTIAL = citations exist but nothing
   is comparable, or the claim cites only the evidence file ("citează doar fișierul, nu evenimentul"), or it contains a negation or an overall
   verdict (nu, niciodată, fără, never, benign, curat, compromis, clean, malicious ...): "sensul nu poate fi verificat automat". NESUSTINUT = no
-  citation, missing / foreign / self-referential id, a value that does not match, or an instruction aimed at the assistant (when the quoted
+  citation, missing / foreign / self-referential id, a value that does not match, look-alike characters ("conține caractere care imită alte
+  litere": a token mixing scripts such as Latin with Cyrillic or Greek, an invisible format character, a non-ASCII digit, a letter of a small
+  fixed confusable table; the claim is NFKC-normalised first, plain Romanian diacritics are never flagged), or an instruction aimed at the assistant (when the quoted
   instruction really is in the cited evidence the reason says so and it is shown as a quote, not as a confirmed claim). NEVERIFICABIL = the
   validator could not run (cause given), the validation is stale, or `ai_validation.json` no longer matches its custody SHA-256 ("fișierul de
   validare a fost modificat"). NESUSTINUT is moved to the rejected list, struck in the screen and the PDF, never a finding. The result is
@@ -77,6 +81,13 @@ empty or always-green class with that name. The `minExecuted` guard in `gate-ite
   keyword ("utilizatorul", "hostul"), without `DOMAIN\user` / `user@host` form or quotes is not compared; negation and verdict words are matched
   by a fixed list (a paraphrase outside it is not caught); the WPF screen is covered by reflection and row logic, not rendered; the scan needs
   new report writers to be added to the list by hand (an unlisted `*ReportPdf` / `*Export` fails).
+  Accepted residuals of the extraction (final WP4 review, 2026-10-22), each a value or a sense that is NOT compared, so a claim relying on it
+  can still reach VALORI_CONFIRMATE on its other values: (a) a bare 1-2 digit number without a keyword (no "ori" / "conexiuni" / "evenimente"
+  etc.) is not compared, only a time of day ("la ora N", "ora N:MM") is; (b) a paraphrased negation or verdict outside the fixed list
+  ("blocat de antivirus", "binar legitim", "quarantined") is not recognised; (c) a user or host name in prose without a keyword, without
+  `DOMAIN\user` / `user@host` form or quotes is not compared; (d) numbers written as words ("de trei ori", "three times") are not compared;
+  (e) a word written entirely in Cyrillic or Greek letters, with no Latin letter and no digit in the same token, is not a look-alike by the
+  token rule (it also matches no Latin value of the case).
 - The gate does not read CodeQL or code-scanning alerts. `critical_findings` is the owner's register; an empty or missing register
   is not "no findings", it is `NOT_IMPLEMENTED`.
 - `tests_passing` depends on the tests being meaningful. On Windows CI everything runs; the corpus and lab tests are skipped there and are
@@ -164,6 +175,14 @@ Limit: the private key is an unencrypted file; its protection is the owner's. A 
 ```
 
 The gate fails on any `critical` + `open` entry, and on a file that does not follow the schema.
+
+**Draft (2026-10-22).** `release-gate/findings-register.draft.json` was prepared by an agent (`"prepared_by": "agent, unverified"`)
+from `SECURITY_AUDIT.md`: every fixed finding (#1-#9, #11-#20, R3, R4, V1-V6, W1-W5; `status` `resolved`, `disposition` `fixed`, with
+its fix commit) and the open owner items (#10 Authenticode, #21 legacy trees, the offline licence key, the QuestPDF Community
+eligibility; `status` `open`, `disposition` `owner-decision`). `status` keeps the gate's vocabulary; `disposition` is informative. The gate
+never reads the draft: it reads only the exact path above (`release-gate/tests/Test-ReleaseGate.ps1` checks this). **The owner reviews
+the draft and saves it as `findings-register.json`**; only the owner creates that file, and saving it is the owner's attestation that the
+entries are right (an owner item may become `accepted` once decided).
 
 ## 5. Synthetic corpus (decision 7)
 
