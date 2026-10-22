@@ -323,3 +323,12 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   period is shown as „2026-10-17 18:26 UTC” (ISO/UTC) while dates elsewhere are dd.MM.yyyy local; G. result count badges have no colour
   (NECONFORM not red); H. dialog title „Scopul cazului LIVE” vs heading „Scopul cazului stației”.
 - Next: owner scope values -> PDF + investigation screenshots; fix A-H (needs reading HomeViewModel/StationControlViewModel); CI read once on #308.
+- Owner 2026-10-22: test values allowed („după testări facem clean”) -> scope confirmed with the prefilled „Test” values; CLEAN the LIVE case
+  and the investigation case of MARIUS-PC after testing (owner's request).
+- PDF (CONTROL_20261022_175407, 29 A4 pages): VERIFIED - Segoe UI only, no cedilla/mojibake, counts 35/23/24/5/3 consistent in summary, tiles,
+  section 1; section 6 carries the anchor LTR5T… nr. 530 + install date; layout clean. Footer audit „nr. 113” is the case audit, the anchor
+  „nr. 530” the app log: same word „înregistrare” for two journals (finding I, wording only).
+- Investigation (Colectează acum, case CASE-MARIUS-PC-20261022-180157): 257,033 events, 1 critical, 130 raised, 316 findings, 6 gaps;
+  re-verification valid (624 probes). More findings: J. two parallel forms (wizard „Pasul 1 din 3” + full form with the scope fields);
+  K. empty grey panels before a run; N. „257,033” English thousands separator; O. „analiză: Parțial (…)” capital mid-sentence;
+  P. chain severities „[CRITICAL]/[HIGH]” in English; Q. status bar still „Nicio analiză încă.” after the investigation (confirms B).
