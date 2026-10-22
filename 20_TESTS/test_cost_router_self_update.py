@@ -90,18 +90,18 @@ def _find_bash() -> str | None:
     if sys.platform != "win32":
         return shutil.which("bash") or shutil.which("sh")
     candidates = [
-        r"C:\Program Files\Git\bin\bash.exe",
-        r"C:\Program Files (x86)\Git\bin\bash.exe",
+        r"C:\Program Files\Git\bin\bash.exe",  # hygiene: intentional-absolute-path
+        r"C:\Program Files (x86)\Git\bin\bash.exe",  # hygiene: intentional-absolute-path
         os.path.expandvars(r"%LOCALAPPDATA%\Programs\Git\bin\bash.exe"),
     ]
     for c in candidates:
         if os.path.isfile(c):
             return c
     w = shutil.which("bash")
-    if w and not w.lower().startswith(r"c:\windows\system32"):
+    if w and not w.lower().startswith(r"c:\windows\system32"):  # hygiene: intentional-absolute-path
         return w
     w = shutil.which("sh")
-    if w and not w.lower().startswith(r"c:\windows\system32"):
+    if w and not w.lower().startswith(r"c:\windows\system32"):  # hygiene: intentional-absolute-path
         return w
     return None
 
