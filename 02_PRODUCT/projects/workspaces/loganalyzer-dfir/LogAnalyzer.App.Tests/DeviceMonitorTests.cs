@@ -201,7 +201,6 @@ public sealed class DeviceMonitorTests
     {
         var f = new Fakes { Present = [Mouse], User = @"LAB-PC\user" };
         using var vm = f.Create(isolated: true);
-        vm.Filter = DeviceMonitorViewModel.FilterAll;   // the history view (the list opens on „Conectate acum”, owner decision 2026-10-22)
         var alerts = new List<DeviceAlertRecord>();
         vm.Alert += alerts.Add;
         await vm.RefreshAsync(initial: true);
@@ -1152,7 +1151,6 @@ public sealed class DeviceMonitorTests
     {
         var f = new Fakes { Present = [Mouse] };
         using var vm = f.Create(isolated: true);
-        vm.Filter = DeviceMonitorViewModel.FilterAll;   // the history view (the list opens on „Conectate acum”, owner decision 2026-10-22)
         await vm.RefreshAsync(initial: true);
         f.Present = [Mouse, Stick(), UsbParent()];
         f.Now = T0.AddMinutes(1);

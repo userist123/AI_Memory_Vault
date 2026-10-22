@@ -94,7 +94,7 @@ namespace LogAnalyzer.UI.ViewModels
             // a row an older version named after the drive letter („F:\”) shows the model or the manufacturer instead
             var name = DeviceMonitorRules.FriendlyName([e.Name], e.Model.Length > 0 ? e.Model : LogAnalyzer.Dfir.Devices.DeviceJournalMerge.KnownManufacturer(e.Manufacturer).Length > 0 ? e.Manufacturer.Trim() : "");
             Name = name.Length > 0 ? name : "(fără nume)"; Manufacturer = e.Manufacturer; Model = e.Model; VidPid = e.VidPid;
-            Serial = e.Serial.Length > 0 ? e.Serial : e.NoUniqueSerial ? DeviceMonitorRules.NoUniqueSerialText : "";
+            Serial = DeviceMonitorRules.SerialText(e.Serial, e.NoUniqueSerial, e.GenericSerial);
             (Vid, Pid) = DeviceMonitorRules.SplitVidPid(e.VidPid);
             // capacity, letter and label belong to storage media only
             bool storage = DeviceMonitorRules.IsStorageMedium(e.Class);
@@ -242,8 +242,8 @@ namespace LogAnalyzer.UI.ViewModels
         public string[] Filters { get; } = { FilterAll, FilterConnected, FilterStorage, FilterNoNumber, FilterAlert };
         public const string FilterAll = "Toate dispozitivele", FilterConnected = "Conectate acum", FilterStorage = "Medii de stocare",
                             FilterNoNumber = "Medii fără număr de înregistrare", FilterAlert = "Cu alertă";
-        /// <summary>Owner decision 2026-10-22: the list opens on the devices connected now; the disconnected ones stay under „Toate dispozitivele” and in „Istoric”.</summary>
-        [ObservableProperty] private string _filter = FilterConnected;
+        /// <summary>Owner decision 2026-10-22 (supersedes „connected only”): the list opens on the devices that were plugged into the station as external devices, connected or disconnected, one row per physical device.</summary>
+        [ObservableProperty] private string _filter = FilterAll;
         partial void OnFilterChanged(string value) => ApplyFilter();
 
         [ObservableProperty] private string _summary = "Monitorul pornește singur la deschiderea aplicației.";
@@ -409,6 +409,7 @@ namespace LogAnalyzer.UI.ViewModels
                 List<DeviceJournalChange> changes;
                 var alerts = new List<(DeviceAlertRecord Record, bool Show)>();
                 var rekeys = new List<MediumRekey>();
+                var reclassified = new List<DeviceReclassification>();
                 IReadOnlyList<RadioChange> radios;
                 List<DeviceJournalEntry> firstSeen;
                 int before;
@@ -416,7 +417,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     before = _journal.Devices.Count;
                     var known = new HashSet<string>(_journal.Devices.Select(d => d.Identity), StringComparer.OrdinalIgnoreCase);
-                    changes = DeviceJournalMerge.Apply(_journal, now, media, user, when, initial, rekeys).ToList();
+                    changes = DeviceJournalMerge.Apply(_journal, now, media, user, when, initial, rekeys, reclassified).ToList();
                     radios = DeviceJournalMerge.NoteRadios(_journal, DeviceMonitorRules.BlindRadios(now), when);
                     _lastReadUtc = when;
                     DeviceJournalMerge.Heartbeat(_journal, when);
@@ -429,7 +430,10 @@ namespace LogAnalyzer.UI.ViewModels
                 foreach (var r in rekeys)
                     Seal(OperationAudit.DeviceMediumRekeyed, OperationAudit.DeviceMediumRekeyedDetail(r.OldIdentity, r.NewIdentity, r.Device.Class.ToString(), r.Device.Name));
                 foreach (var e in firstSeen)
-                    Seal(OperationAudit.DeviceFirstSeen, OperationAudit.DeviceFirstSeenDetail(e.Identity, e.Class.ToString(), e.Name, e.Serial, e.FirstSeenUtc, user: e.ConnectedUser));
+                    Seal(OperationAudit.DeviceFirstSeen, OperationAudit.DeviceFirstSeenDetail(e.Identity, e.Class.ToString(), e.Name, e.Serial, e.FirstSeenUtc, user: e.ConnectedUser, classifier: DeviceScope.ClassifierVersion));
+                // the kind of a known device changed because the classifier changed (not the device): one sealed note, informational for check D05
+                foreach (var c in reclassified)
+                    Seal(OperationAudit.DeviceReclassified, OperationAudit.DeviceReclassifiedDetail(c.Identity, c.OldClass.ToString(), c.NewClass.ToString(), c.OldVersion, c.NewVersion, c.Device.Name));
                 foreach (var r in radios)
                     _audit(OperationAudit.DeviceRadioState, OperationAudit.DeviceRadioStateDetail(r.Kind, r.Blind, r.Text, user));
                 // review round 2: every disconnection (who was logged on) and the set of devices present at each run start are sealed, so a row that claims

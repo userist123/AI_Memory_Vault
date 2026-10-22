@@ -20,6 +20,10 @@ public sealed class DeviceJournalEntry
     [JsonPropertyName("serial")] public string Serial { get; set; } = "";
     /// <summary>The instance id carries no serial of its own (Windows made one up like 7&amp;1A2B&amp;0): shown as „fără serie unică”.</summary>
     [JsonPropertyName("no_unique_serial")] public bool NoUniqueSerial { get; set; }
+    /// <summary>The serial in the instance id was a placeholder (all one character, 000000000000): not stored as the serial, never compared for clones, shown as „fără serie unică (serie generică)”.</summary>
+    [JsonPropertyName("generic_serial")] public bool GenericSerial { get; set; }
+    /// <summary>The version of the classifier (<see cref="DeviceScope.ClassifierVersion"/>) that last set <see cref="Class"/>; 0 = a row written before the version was recorded (version 1).</summary>
+    [JsonPropertyName("classifier_version")] public int ClassifierVersion { get; set; }
     /// <summary>The same serial was held by another device (simultaneously, or with another capacity or manufacturer at another time): „serie duplicată – posibilă clonă”.</summary>
     [JsonPropertyName("duplicate_serial")] public bool DuplicateSerial { get; set; }
     [JsonPropertyName("config_manager_error_code")] public int ConfigManagerErrorCode { get; set; } = -1;
@@ -195,6 +199,12 @@ public sealed record DeviceJournalChange(DeviceJournalEntry Device, bool Arrived
 /// <summary>A radio state change found by <see cref="DeviceJournalMerge.NoteRadios"/> (the caller seals it): <c>Blind</c> = off, absent or disabled from now on.</summary>
 public sealed record RadioChange(string Kind, string Text, bool Blind);
 
+/// <summary>
+/// A row whose kind changed because the classifier changed (the same identity, a row sealed by an older <see cref="DeviceScope.ClassifierVersion"/>): the caller
+/// seals one "device.reclassified" note (old and new kind, both classifier versions, operator = application).
+/// </summary>
+public sealed record DeviceReclassification(string Identity, DeviceClass OldClass, DeviceClass NewClass, int OldVersion, int NewVersion, DeviceJournalEntry Device);
+
 /// <summary>A card row whose identity changed once its medium became readable (encrypted card unlocked): <c>Merged</c> = the medium was known before, its row is used.</summary>
 public sealed record MediumRekey(string OldIdentity, string NewIdentity, DeviceJournalEntry Device, bool Merged);
 
@@ -221,7 +231,7 @@ public static class DeviceJournalMerge
     /// </list>
     /// </summary>
     public static IReadOnlyList<DeviceJournalChange> Apply(DeviceJournal journal, IEnumerable<PnpSnapshotEntry> present, IReadOnlyDictionary<string, MediumInfo>? media,
-        string connectedUser, DateTimeOffset nowUtc, bool initial, ICollection<MediumRekey>? rekeyed = null)
+        string connectedUser, DateTimeOffset nowUtc, bool initial, ICollection<MediumRekey>? rekeyed = null, ICollection<DeviceReclassification>? reclassified = null)
     {
         media ??= NoMedia;
         var all = present as IReadOnlyList<PnpSnapshotEntry> ?? present.ToList();
@@ -321,10 +331,16 @@ public static class DeviceJournalMerge
                 journal.Devices.Add(e);
             }
             // review finding 1: a known capacity is never overwritten by another one (the row keeps the first); a row seen with two capacities is a clone
-            if (mi is { CapacityBytes: > 0 } mc && e.CapacityBytes > 0 && mc.CapacityBytes != e.CapacityBytes && d.Kind != DeviceClass.MemoryCard) duplicate = true;
+            if (mi is { CapacityBytes: > 0 } mc && e.CapacityBytes > 0 && mc.CapacityBytes != e.CapacityBytes && d.Kind != DeviceClass.MemoryCard
+                && !DeviceMonitorRules.HasGenericSerial(p.InstanceId)) duplicate = true;   // a placeholder serial (000000000000) is shared by many devices: no comparison on it
             if (duplicate || cloneInstances.Contains(p.InstanceId) || portClones.Contains(p.InstanceId) || portTwins.Contains(p.InstanceId)) e.DuplicateSerial = true;
             if (d.Kind == DeviceClass.MemoryCard) e.UnidentifiableMedium = unidentifiable;
             e.InstanceId = p.InstanceId;
+            // the same physical identity with another kind because the CLASSIFIER changed (a row of an older version): one sealed „device.reclassified” note, the
+            // caller seals it; the same classifier version, or no earlier kind, is not a reclassification (check D05 keeps its finding for a kind that changes then)
+            if (!isNew && e.Class != d.Kind && Math.Max(e.ClassifierVersion, 1) < DeviceScope.ClassifierVersion)
+                reclassified?.Add(new DeviceReclassification(e.Identity, e.Class, d.Kind, Math.Max(e.ClassifierVersion, 1), DeviceScope.ClassifierVersion, e));
+            if (isNew || Math.Max(e.ClassifierVersion, 1) < DeviceScope.ClassifierVersion || e.Class == d.Kind) e.ClassifierVersion = DeviceScope.ClassifierVersion;
             e.Class = d.Kind;
             e.SetupClass = d.Primary.SetupClass;
             // the device's friendly name, never the drive letter Windows gave the portable-device view of a phone's storage („F:\”)
@@ -336,6 +352,7 @@ public static class DeviceJournalMerge
             if (prod.Length > 0) e.Model = prod;
             e.Serial = DeviceMonitorRules.Serial(p.InstanceId);
             e.NoUniqueSerial = DeviceMonitorRules.HasNoUniqueSerial(p.InstanceId);
+            e.GenericSerial = DeviceMonitorRules.HasGenericSerial(p.InstanceId);
             e.VidPid = DeviceMonitorRules.VidPid(p.InstanceId, p.HardwareIds);
             e.ConfigManagerErrorCode = d.Primary.ConfigManagerErrorCode > 0 ? d.Primary.ConfigManagerErrorCode : p.ConfigManagerErrorCode;
             if (mi is { } mm)
@@ -463,7 +480,7 @@ public static class DeviceJournalMerge
 
     /// <summary>A row the serial comparison applies to: a real serial (not one Windows made up), not a card in a slot nor a card reader (their serial is the reader's).</summary>
     private static bool SerialComparable(DeviceJournalEntry e) =>
-        e.Serial.Length > 0 && !e.NoUniqueSerial && e.Class is not (DeviceClass.MemoryCard or DeviceClass.CardReader) && !e.Identity.Contains("|MEDIUM|", StringComparison.OrdinalIgnoreCase);
+        e.Serial.Length > 0 && !e.NoUniqueSerial && !e.GenericSerial && !DeviceMonitorRules.IsGenericSerial(e.Serial) && e.Class is not (DeviceClass.MemoryCard or DeviceClass.CardReader) && !e.Identity.Contains("|MEDIUM|", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Whether two rows with the same serial are two different physical devices (a clone of the serial), from KNOWN attributes only: another VID (or another PID

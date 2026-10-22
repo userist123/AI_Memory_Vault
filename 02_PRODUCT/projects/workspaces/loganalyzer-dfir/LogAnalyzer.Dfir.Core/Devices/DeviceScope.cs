@@ -28,6 +28,13 @@ public sealed record ScopedDevice(DeviceClass Kind, PnpSnapshotEntry Primary, Pn
 /// </summary>
 public static class DeviceScope
 {
+    /// <summary>
+    /// The version of the kind classification (what <see cref="DeviceJournalEntry.Class"/> is computed from). 1 = before 2026-10-22 (a device with several HID
+    /// collections took the kind of any of them); 2 = the kind of the first interface (a Razer mouse with a keyboard collection is a mouse). Recorded in the
+    /// journal row and in "device.first_seen"; a kind that changes under an older version is sealed as "device.reclassified" (check D05: informational).
+    /// </summary>
+    public const int ClassifierVersion = 2;
+
     /// <summary>DEVPKEY_Device_ContainerId of every component of the station itself (DEVPKEY_Device_InLocalMachineContainer).</summary>
     public const string LocalMachineContainer = "{00000000-0000-0000-FFFF-FFFFFFFFFFFF}";
 

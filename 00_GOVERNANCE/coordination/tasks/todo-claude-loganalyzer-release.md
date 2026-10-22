@@ -199,9 +199,26 @@ All in `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`; each fix has a test s
 - R3.3 integrated camera: the station's row is an old per-node row; `IsInternalRow` (integrated name, or non-external bus ACPI/PCI/HID\ELAN) hides such rows;
   `Classify` also drops Camera/Keyboard/Mouse groups with an „Integrated/Built-in” name.
 - R3.4 `App/Views/TransferRegisterView.xaml`: MinWidth on every column, Data 140, horizontal scroll, first column frozen.
-- Owner decision 2026-10-22 (b): default filter „Conectate acum” (`App/ViewModels/DeviceMonitorViewModel.cs`), page text `Views/MediaCenterView.xaml`, guide §monitor in
-  `docs/utilizare/GHID_DE_UTILIZARE.md`. Nothing deleted from journal or sealed audit. Two App tests now set „Toate dispozitivele” explicitly (history view).
+- Owner decision 2026-10-22 (b) "default filter Conectate acum" is SUPERSEDED (see the follow-up below): the default is again `FilterAll` (connected + disconnected external devices).
 Tests: new `Dfir.Tests/DeviceMonitorRound3Tests.cs` (38), `App.Tests/UiWalkthroughRound3Tests.cs` (6). Dfir 2332/31/0, App 667, UI 354/1, Edition 45, build 0 errors.
 Open (decide with owner / Opus): (1) D05 compares a row's class with its FIRST sealed class: a device whose kind changes with this version (the station's
 mouse row Tastatură -> Mouse) gives a D05 „alt tip” finding until a sealed reclassification record is designed (not done: D05 is a gate). (2)
 an all-zero serial („000000000000”) is treated as a real serial. (3) report 3c / D05 still list folded and old internal rows (by design). (4) live re-check on the station.
+
+## Follow-up 2026-10-22 (vault-worker): owner decision on the list, D05 reclassification, placeholder serial (DONE, needs Opus vault-reviewer: D05 is a gate)
+1. OWNER DECISION 2026-10-22 (supersedes "connected only"): the list shows external devices that were plugged into the station (storage media and external devices),
+   connected OR disconnected, one row per physical device; internal/integrated/virtual/system nodes and every HID interface on its own do not appear. Default filter
+   back to `FilterAll` (the filter list is kept), page text `Views/MediaCenterView.xaml` and guide §monitor updated; the two App tests no longer set the filter.
+   Test: `UiWalkthroughRound3Tests.The_list_opens_on_the_external_devices_connected_or_disconnected_and_hides_internal_nodes` (seen failing with the old default).
+2. D05 reclassification: `DeviceScope.ClassifierVersion = 2` (1 = before round 3), stored in `DeviceJournalEntry.ClassifierVersion` (0 = v1) and in "device.first_seen"
+   (`classifier=`; absent = 1). `DeviceJournalMerge.Apply(..., reclassified)`: same identity, kind changed, row version < current -> `DeviceReclassification`; the VM
+   seals one "device.reclassified" (identity, class_old/new, classifier_old/new, operator=application). `DeviceMonitorAuditCheck.KindChain` follows first-seen kind
+   + notes (note must continue the chain and raise the version); `DeviceMismatches` accepts the row/alert kinds of a valid chain; `Reclassifications` lists the
+   informational lines (D05 evidence + section 3c + Istoric "Tip reclasificat"). Same classifier version, no note, a note for another identity/kind = today's finding.
+   Tests: `Dfir.Tests/DeviceMonitorReclassifyTests.cs` (3 D05 cases, chain edge cases, round trip through the real audit), App test for the sealed note.
+3. Placeholder serial (all one character, e.g. 000000000000, 111111): `DeviceMonitorRules.Serial` returns "" (identity = instance id, `GenericSerial` flag),
+   no clone comparison (also not the "two capacities" rule), old stored rows are not flagged on Load; shown "fără serie unică (serie generică)".
+   Annex D05 regenerated (`LA_UPDATE_DOCS=1`), `CheckGuide` text and sources list updated.
+Tests: Dfir 2347/31/0, App 668, UI 354/1, Edition 45, build 0 errors.
+Open: (1) two different sticks of one model sharing a placeholder serial share the instance id, hence one row (capacity of the first kept); (2) old rows keyed "SN|..|000000000000"
+stay as rows of their own until folded; (3) live re-check on the station; (4) Opus review of KindChain trust rules.

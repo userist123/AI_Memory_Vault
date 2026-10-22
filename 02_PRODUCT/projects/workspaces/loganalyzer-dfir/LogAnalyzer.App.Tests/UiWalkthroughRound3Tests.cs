@@ -8,7 +8,7 @@ using Xunit;
 namespace LogAnalyzer.App.Tests;
 
 /// <summary>
-/// Real-PC walkthrough round 3 and the independent review (2026-10-22): the device list opens on the devices connected now (owner decision), one physical
+/// Real-PC walkthrough round 3 and the independent review (2026-10-22): the device list opens on the external devices, connected or disconnected (owner decision 2026-10-22), one physical
 /// device is one row, the risk page shows no score and no green „normal” without an analysis, the transfer register's first columns keep a readable width,
 /// and the control collector reads the monitor's journal through its safe path. Neutral fixtures: FAKE serials.
 /// </summary>
@@ -45,23 +45,44 @@ public sealed class UiWalkthroughRound3Tests
     }
 
     [Fact]
-    public async Task The_list_opens_on_the_devices_connected_now_and_keeps_the_others_under_all_devices()
+    public async Task The_list_opens_on_the_external_devices_connected_or_disconnected_and_hides_internal_nodes()
     {
-        var s = new Station { Present = [Mouse, Stick()] };
+        var internalNode = new PnpSnapshotEntry(@"ACPI\VEN_FAKE&DEV_0001", "Fake internal sensor", "System", "FAKE", @"ACPI\VEN_FAKE&DEV_0001", "fakesys", 0);
+        var s = new Station { Present = [Mouse, Stick(), internalNode] };
         using var vm = s.Create();
-        Assert.Equal(DeviceMonitorViewModel.FilterConnected, vm.Filter);
-        Assert.Equal("Conectate acum", vm.Filter);
+        Assert.Equal(DeviceMonitorViewModel.FilterAll, vm.Filter);  // owner decision 2026-10-22: connected AND disconnected external devices
         await vm.RefreshAsync(initial: true);
-        Assert.Equal(2, vm.Rows.Count);
-        s.Present = [Mouse];                                       // the stick is removed
+        Assert.Equal(2, vm.Rows.Count);                            // the internal node never appears
+        s.Present = [Mouse, internalNode];                          // the stick is removed
         s.Now = T0.AddMinutes(5);
         await vm.RefreshAsync(initial: false);
+        Assert.Equal(2, vm.Rows.Count);                            // the disconnected stick stays in the default list
+        Assert.Contains(vm.Rows, r => r.Class == DeviceClass.UsbStorage && !r.Present);
+        Assert.Contains(vm.Rows, r => r.Class == DeviceClass.Mouse && r.Present);
+        Assert.DoesNotContain(vm.Rows, r => r.Name.Contains("internal sensor"));
+        vm.Filter = DeviceMonitorViewModel.FilterConnected;         // the filter list is kept
         var row = Assert.Single(vm.Rows);
         Assert.Equal(DeviceClass.Mouse, row.Class);
-        Assert.Equal(2, vm.JournalCopy().Devices.Count);           // nothing is deleted from the journal
-        vm.Filter = DeviceMonitorViewModel.FilterAll;
-        Assert.Equal(2, vm.Rows.Count);
-        Assert.Contains(vm.Rows, r => r.Class == DeviceClass.UsbStorage && !r.Present);
+    }
+
+    [Fact]
+    public async Task A_known_row_whose_kind_changes_with_the_classifier_seals_one_device_reclassified_note()
+    {
+        var sealedRecords = new List<(string Event, string Detail)>();
+        var identity = DeviceMonitorRules.Identity(Mouse);
+        var journal = new DeviceJournal
+        {
+            Devices = [new DeviceJournalEntry { Identity = identity, InstanceId = Mouse.InstanceId, Class = DeviceClass.Keyboard, Name = "HID-compliant mouse", FirstSeenUtc = T0.AddDays(-3), ClassifierVersion = 0 }],
+        };
+        using var vm = new DeviceMonitorViewModel(() => [Mouse], _ => new Dictionary<string, MediumInfo>(), (ev, detail) => { sealedRecords.Add((ev, detail)); return null; }, journal, _ => null, isolated: false, () => T0);
+        await vm.RefreshAsync(initial: true);
+        var note = Assert.Single(sealedRecords, r => r.Event == "device.reclassified");
+        Assert.Contains("class_old=Keyboard", note.Detail);
+        Assert.Contains("class_new=Mouse", note.Detail);
+        Assert.Contains("classifier_old=1; classifier_new=" + DeviceScope.ClassifierVersion, note.Detail);
+        Assert.Contains("operator=application", note.Detail);
+        await vm.RefreshAsync(initial: false);
+        Assert.Single(sealedRecords, r => r.Event == "device.reclassified");     // once
     }
 
     [Fact]
@@ -86,12 +107,12 @@ public sealed class UiWalkthroughRound3Tests
     }
 
     [Fact]
-    public void The_monitor_page_and_the_guide_say_that_the_list_shows_the_connected_devices_by_default()
+    public void The_monitor_page_and_the_guide_say_that_the_list_shows_connected_and_disconnected_external_devices_by_default()
     {
         var page = File.ReadAllText(Path.Combine(AppDir(), "Views", "MediaCenterView.xaml"));
-        Assert.Contains("Lista arată implicit doar dispozitivele conectate acum; cele deconectate se văd cu filtrul „Toate dispozitivele” și în „Istoric”", page);
+        Assert.Contains("Lista arată implicit dispozitivele care au fost conectate la stație ca medii de stocare sau dispozitive externe, conectate sau deconectate", page);
         var guide = File.ReadAllText(Path.Combine(ProjectDir(), "docs", "utilizare", "GHID_DE_UTILIZARE.md"));
-        Assert.Contains("**Lista arată implicit doar dispozitivele conectate acum**", guide);
+        Assert.Contains("**Lista arată implicit dispozitivele conectate sau deconectate care au fost conectate la stație ca medii de stocare sau dispozitive externe**", guide);
         Assert.Contains("un mouse cu colecții de tastatură pentru macro-uri este „Mouse extern”", guide);
     }
 
