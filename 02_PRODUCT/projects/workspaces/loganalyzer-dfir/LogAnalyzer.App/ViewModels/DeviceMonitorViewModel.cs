@@ -185,7 +185,7 @@ namespace LogAnalyzer.UI.ViewModels
             // every write to the sealed audit goes through here: a refusal because the sealing key cannot be read (not started as administrator) is noted
             _audit = (ev, detail) => { var refused = audit(ev, detail); NoteSealResult(refused); return refused; }; _journal = journal; _save = save; _isolated = isolated; _clock = clock ?? (() => DateTimeOffset.UtcNow);
             _consoleUser = consoleUser ?? (() => ""); _owner = owner;
-            foreach (var e in _journal.Devices.Where(DeviceScope.IsInScope)) _rows[e.Identity] = new DeviceMonitorRow(e, this);
+            foreach (var e in _journal.Devices.Where(DeviceScope.IsShown)) _rows[e.Identity] = new DeviceMonitorRow(DeviceJournalMerge.ShownView(_journal, e), this);
             // records a previous run could not seal (a refused write) were saved in the journal as pending: they are written at the first reading
             _journal.PendingSeals ??= [];
             if (owner) foreach (var p in _journal.PendingSeals) _unsealed.Add((p.Event, p.Detail));
@@ -242,7 +242,8 @@ namespace LogAnalyzer.UI.ViewModels
         public string[] Filters { get; } = { FilterAll, FilterConnected, FilterStorage, FilterNoNumber, FilterAlert };
         public const string FilterAll = "Toate dispozitivele", FilterConnected = "Conectate acum", FilterStorage = "Medii de stocare",
                             FilterNoNumber = "Medii fără număr de înregistrare", FilterAlert = "Cu alertă";
-        [ObservableProperty] private string _filter = FilterAll;
+        /// <summary>Owner decision 2026-10-22: the list opens on the devices connected now; the disconnected ones stay under „Toate dispozitivele” and in „Istoric”.</summary>
+        [ObservableProperty] private string _filter = FilterConnected;
         partial void OnFilterChanged(string value) => ApplyFilter();
 
         [ObservableProperty] private string _summary = "Monitorul pornește singur la deschiderea aplicației.";
@@ -627,8 +628,13 @@ namespace LogAnalyzer.UI.ViewModels
             try { audit = _auditReader?.Invoke(); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { audit = null; }
             List<PendingSeal> pending;
-            lock (_journal) pending = _journal.PendingSeals.Select(p => new PendingSeal { Event = p.Event, Detail = p.Detail }).ToList();
-            return (DeviceHistory.Build(row.Identity, audit, pending), DeviceHistory.Notice(audit));
+            IReadOnlyList<string> identities;
+            lock (_journal)
+            {
+                pending = _journal.PendingSeals.Select(p => new PendingSeal { Event = p.Event, Detail = p.Detail }).ToList();
+                identities = DeviceJournalMerge.FoldedIdentities(_journal, row.Identity);   // the history of every row folded into this one
+            }
+            return (DeviceHistory.Build(identities.ToList(), audit, pending), DeviceHistory.Notice(audit));
         }
 
         /// <summary>The CSV of the rows in view: the bytes of the file (UTF-8 with a byte-order mark), the number of rows and the SHA-256 of the bytes.</summary>
@@ -683,6 +689,7 @@ namespace LogAnalyzer.UI.ViewModels
             lock (_journal) e = _journal.Find(row.Identity);
             if (e is null) return;
             var (text, critical) = RowAlert(e);
+            lock (_journal) e = DeviceJournalMerge.ShownView(_journal, e);
             row.Update(e, text, critical);
         }
 
@@ -690,14 +697,16 @@ namespace LogAnalyzer.UI.ViewModels
         {
             lock (_journal)
             {
-                foreach (var e in _journal.Devices.Where(DeviceScope.IsInScope))
+                // one physical device is one row: rows folded into another one (interfaces, the bridge of a disk, an old clone mark) are not listed while absent
+                foreach (var e in _journal.Devices.Where(DeviceScope.IsShown))
                 {
                     var (text, critical) = RowAlert(e);
-                    if (_rows.TryGetValue(e.Identity, out var row)) row.Update(e, text, critical);
-                    else { _rows[e.Identity] = row = new DeviceMonitorRow(e, this); row.Update(e, text, critical); }
+                    var v = DeviceJournalMerge.ShownView(_journal, e);
+                    if (_rows.TryGetValue(e.Identity, out var row)) row.Update(v, text, critical);
+                    else { _rows[e.Identity] = row = new DeviceMonitorRow(v, this); row.Update(v, text, critical); }
                 }
                 // a card row re-keyed once its medium became readable: the row of the old identity goes (the journal no longer has it)
-                var ids = new HashSet<string>(_journal.Devices.Where(DeviceScope.IsInScope).Select(e => e.Identity), StringComparer.OrdinalIgnoreCase);
+                var ids = new HashSet<string>(_journal.Devices.Where(DeviceScope.IsShown).Select(e => e.Identity), StringComparer.OrdinalIgnoreCase);
                 foreach (var stale in _rows.Keys.Where(k => !ids.Contains(k)).ToList()) _rows.Remove(stale);
             }
         }

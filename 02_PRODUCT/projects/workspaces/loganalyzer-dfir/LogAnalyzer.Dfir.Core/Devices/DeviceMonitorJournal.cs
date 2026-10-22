@@ -196,6 +196,12 @@ public static class DeviceJournalStore
     /// </summary>
     public static DeviceJournal Load(string path, out string problem) => Load(path, out problem, out _);
 
+    /// <summary>A row the JSON gave a null text field (a hand-edited or damaged file): the rules would throw on it.</summary>
+    private static bool HasNullText(DeviceJournalEntry d) =>
+        d.Identity is null || d.InstanceId is null || d.SetupClass is null || d.Name is null || d.Manufacturer is null || d.Model is null || d.VidPid is null
+        || d.Serial is null || d.RegistrationNumber is null || d.VolumeLetters is null || d.VolumeLabel is null || d.VolumeSerial is null || d.DiskSignature is null
+        || d.ConnectedUser is null;
+
     private static DeviceJournal Load(string path, out string problem, out bool damaged)
     {
         problem = "";
@@ -210,10 +216,28 @@ public static class DeviceJournalStore
             j.Runs ??= [];
             j.Radios ??= [];
             j.PendingSeals ??= [];
-            j.Devices.RemoveAll(d => d is null || d.Identity.Length == 0);
+            // review finding 3 (2026-10-22): a row with a missing (null) text field is damaged: it is left out and reported, the rest of the journal is read; the
+            // rules below never see a null (they threw NullReferenceException / ArgumentNullException past this method before)
+            int damagedRows = j.Devices.RemoveAll(d => d is null || HasNullText(d));
+            damagedRows += j.Alerts.RemoveAll(a => a is null || a.Identity is null || a.Device is null || a.Text is null);
+            damagedRows += j.Runs.RemoveAll(r => r is null || r.RunId is null);
+            damagedRows += j.Radios.RemoveAll(r => r is null || r.Kind is null || r.Text is null);
+            damagedRows += j.PendingSeals.RemoveAll(p => p is null || p.Event is null || p.Detail is null);
+            j.Devices.RemoveAll(d => d.Identity.Length == 0);
             // the stored clone marks are not trusted: recomputed from the rows (older versions marked the nodes of one stick as clones of each other)
             DeviceJournalMerge.RecomputeDuplicateSerials(j);
+            // rows of one physical device are folded for the page (display only, recomputed on every reading)
+            DeviceJournalMerge.MarkSuperseded(j);
+            if (damagedRows > 0)
+                problem = $"Jurnalul monitorului de dispozitive este parțial deteriorat: {damagedRows} {(damagedRows == 1 ? "înregistrare cu câmpuri lipsă a fost ignorată" : "înregistrări cu câmpuri lipsă au fost ignorate")} (cauza: câmp null în fișier); restul jurnalului a fost citit.";
             return j;
+        }
+        catch (Exception ex) when (ex is NullReferenceException or ArgumentNullException)
+        {
+            // defence in depth: a field the checks above do not know of; the file is treated as damaged, never an exception for the caller
+            damaged = true;
+            problem = "Jurnalul monitorului de dispozitive este deteriorat (câmp lipsă: " + ex.GetType().Name + ")";
+            return new DeviceJournal();
         }
         catch (Exception ex) when (ex is JsonException or InvalidDataException or NotSupportedException)
         {
