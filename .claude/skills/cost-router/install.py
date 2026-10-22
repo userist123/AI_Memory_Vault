@@ -10,6 +10,8 @@
     python3 .claude/skills/cost-router/install.py --session-start # what the SessionStart hook runs:
                                                                   # skill + agents only, and nothing at
                                                                   # all after an --uninstall (marker file)
+    python3 .claude/skills/cost-router/install.py --release-pin <file>  # install and record this pinned release
+    python3 .claude/skills/cost-router/install.py --source-root <dir>   # copy from <dir> (a verified staging tree)
     --session-start and --self-update do nothing unless the owner opted in (default OFF since
     2026-10-22): COST_ROUTER_SELF_INSTALL=1, or create ~/.claude/cost-router.auto-refresh.
 
@@ -26,17 +28,18 @@ What it does (idempotent, prints every path it touched):
      PreToolUse on SendMessage (hook_resume_guard.py: a subagent is resumed at most once),
      SessionStart repo map (a ~1k-token map of the
      current git repository, lib/repo_map.py, at startup, /clear and compaction) and SessionStart
-     self-update (hook_self_update.py: at most hourly, fetches the latest skill from the canonical
-     repository and re-runs this installer, so one install stays current);
+     self-update (hook_self_update.py: at most hourly, re-syncs to the release pinned in the installed
+     release_pin.json, hash-verified, and re-runs THIS installed installer on it);
   4. context economy for every project (kept out with --no-context): a marked block of reading
      rules in ~/.claude/CLAUDE.md (the rest of that file is never touched) and Read deny rules for
      tool caches (__pycache__, .pytest_cache, .mypy_cache, .ruff_cache, .git/objects) in
      ~/.claude/settings.json permissions.deny (not with --no-hook, which never touches settings.json).
      --uninstall removes exactly the block and these rules.
 The installer itself runs nothing from the network and writes only under ~/.claude. The self-update
-hook it registers runs install.py from the canonical repository's `main` at most hourly ONLY after the
-owner opted in (COST_ROUTER_SELF_INSTALL=1 or ~/.claude/cost-router.auto-refresh; default OFF since
-2026-10-22; `main` is unpinned and unsigned: HIGH-2 open); --no-hook installs without it. Every install holds
+hook it registers re-syncs the skill to the commit pinned in the INSTALLED release_pin.json (fetched by SHA,
+every byte verified; fetched code is never executed before verification, the pinned code runs later as the installed hooks) at most hourly ONLY after the owner opted in
+(COST_ROUTER_SELF_INSTALL=1 or ~/.claude/cost-router.auto-refresh; default OFF since 2026-10-22; the pin is
+unsigned, advancing it needs the owner, a lower seq is refused without --force); --no-hook installs without it. Every install holds
 ~/.claude/cost-router.lock and swaps the skill directory in with a rename, so concurrent sessions or
 a killed run never leave a half-deleted skill behind.
 """
@@ -55,6 +58,18 @@ from contextlib import contextmanager
 from pathlib import Path
 
 SKILL_SRC = Path(__file__).resolve().parent
+
+
+def _load_release_pin():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("cost_router_release_pin", SKILL_SRC / "lib" / "release_pin.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+release_pin = _load_release_pin()
+PIN_NAME = release_pin.PIN_NAME
 REPO = SKILL_SRC.parents[2]
 ROUTER_SRC = REPO / "03_IMPLEMENTATION" / "packages" / "routing" / "claude_model_router.py"
 POLICY_SRC = REPO / "04_CONFIG" / "claude_model_routing.json"
@@ -342,6 +357,13 @@ def source_manifest() -> dict[str, str]:
     return manifest(SKILL_SRC, _added_files())
 
 
+def _pin_seq(path: Path) -> int | None:
+    try:
+        return release_pin.load_pin(path)["seq"]
+    except release_pin.PinError:
+        return None
+
+
 def manifest_hash(m: dict[str, str]) -> str:
     return hashlib.sha256(json.dumps(dict(sorted(m.items())), sort_keys=True).encode("utf-8")).hexdigest()
 
@@ -367,7 +389,8 @@ def verify(home: Path) -> dict:
     """Read-only: compare what install() would copy with the installed skill directory."""
     skill_dir = home / ".claude" / "skills" / "cost-router"
     want = source_manifest()
-    have = manifest(skill_dir) if skill_dir.is_dir() else {}
+    have_all = manifest(skill_dir) if skill_dir.is_dir() else {}
+    have = {k: v for k, v in have_all.items() if k != PIN_NAME or PIN_NAME in want}  # an installed pin is not drift
     vfile = skill_dir / "VERSION"
     version = vfile.read_text(encoding="utf-8").splitlines() if vfile.is_file() else []
     missing = sorted(set(want) - set(have))
@@ -377,7 +400,7 @@ def verify(home: Path) -> dict:
     if version:
         if not _VERSION_REF.match(version[0].strip()):
             version_problem = f"line 1 is not a git ref or 'unknown': {version[0][:40]!r}"
-        elif len(version) < 2 or version[1].strip() != manifest_hash(have):
+        elif len(version) < 2 or version[1].strip() != manifest_hash(have_all):
             version_problem = "line 2 does not match the manifest hash of the installed tree"
     return {"ok": bool(version) and not (missing or extra or differing or version_problem),
             "installed_dir": str(skill_dir),
@@ -387,7 +410,15 @@ def verify(home: Path) -> dict:
 
 
 def install(home: Path, with_hook: bool, force: bool, session_start: bool = False,
-            with_context: bool = True, source_ref: str | None = None, self_update: bool = False) -> list[str]:
+            with_context: bool = True, source_ref: str | None = None, self_update: bool = False,
+            source_root: Path | None = None, pin_file: Path | None = None) -> list[str]:
+    if source_root is not None:
+        skill_src = source_root / ".claude" / "skills" / "cost-router"
+        router_src = source_root / "03_IMPLEMENTATION" / "packages" / "routing" / "claude_model_router.py"
+        policy_src = source_root / "04_CONFIG" / "claude_model_routing.json"
+        agents_src = source_root / ".claude" / "agents"
+    else:
+        skill_src, router_src, policy_src, agents_src = SKILL_SRC, ROUTER_SRC, POLICY_SRC, AGENTS_SRC
     touched: list[str] = []
     marker = home / ".claude" / DISABLED_MARKER
     if (session_start or self_update) and marker.exists():
@@ -395,20 +426,41 @@ def install(home: Path, with_hook: bool, force: bool, session_start: bool = Fals
     if with_hook:
         load_settings(home / ".claude" / "settings.json")  # fail before anything is copied
     skill_dir = home / ".claude" / "skills" / "cost-router"
+    if self_update and source_ref is not None:  # re-checked under the lock: an install made during the fetch wins
+        vfile = skill_dir / "VERSION"
+        current = vfile.read_text(encoding="utf-8").splitlines()[:1] if vfile.is_file() else []
+        if current != [source_ref]:
+            raise ValueError(f"installed copy is no longer the pinned release {source_ref} (changed during the update)")
+    pin_bytes = None
+    new_pin = pin_file or (skill_src / PIN_NAME if (skill_src / PIN_NAME).is_file() else None)
+    if new_pin is not None:  # validate and read it once, before anything is copied or swapped
+        try:
+            pin_bytes = Path(new_pin).read_bytes()  # one read: the bytes validated are the bytes written
+            pin_data = release_pin.parse_pin(pin_bytes)
+        except (OSError, release_pin.PinError) as exc:
+            raise ValueError(f"release pin {new_pin} is invalid: {exc}") from exc
+        new_seq = pin_data["seq"]
+        if source_ref is not None and pin_data["commit"] != source_ref:
+            raise ValueError(f"release pin commit {pin_data['commit']} != --source-ref {source_ref}")
+        old_seq = _pin_seq(skill_dir / PIN_NAME)
+        if old_seq is not None and new_seq < old_seq and not force:
+            raise ValueError(f"downgrade refused: installed release pin seq {old_seq} > {new_seq} (--force to override)")
     written = _written(skill_dir)
     staging = home / ".claude" / f"cost-router.staging-{os.getpid()}"  # same filesystem, outside skills/
     for leftover in (*(home / ".claude").glob("cost-router.staging-*"), *(home / ".claude").glob("cost-router.old-*")):
         shutil.rmtree(leftover, ignore_errors=True)  # from a killed run; safe, we hold the lock
-    shutil.copytree(SKILL_SRC, staging, ignore=shutil.ignore_patterns(*_IGNORE))  # chat/ is the claude.ai upload
+    shutil.copytree(skill_src, staging, ignore=shutil.ignore_patterns(*_IGNORE))  # chat/ is the claude.ai upload
     (staging / "lib").mkdir(exist_ok=True)
-    shutil.copy2(ROUTER_SRC, staging / "lib" / "claude_model_router.py")
-    shutil.copy2(POLICY_SRC, staging / "policy.json")
+    shutil.copy2(router_src, staging / "lib" / "claude_model_router.py")
+    shutil.copy2(policy_src, staging / "policy.json")
+    if pin_bytes is not None:
+        (staging / PIN_NAME).write_bytes(pin_bytes)  # the pin being installed replaces whatever the source had
     (staging / "VERSION").write_text(
-        f"{source_ref or _repo_head()}\n{manifest_hash(source_manifest())}\n", encoding="utf-8")
+        f"{source_ref or _repo_head()}\n{manifest_hash(manifest(staging))}\n", encoding="utf-8")
     agents_dir = home / ".claude" / "agents"
     agents_dir.mkdir(parents=True, exist_ok=True)
     agent_hashes = {}
-    for src in sorted(AGENTS_SRC.glob("*.md")):
+    for src in sorted(agents_src.glob("*.md")):
         dst = agents_dir / src.name
         if dst.exists() and not force:
             current = _sha(dst)
@@ -479,6 +531,12 @@ def main(argv=None) -> int:
     ap.add_argument("--uninstall", action="store_true")
     ap.add_argument("--self-update", action="store_true",
                     help="what the self-update hook runs: hooks included, skipped after an --uninstall, never re-enables")
+    ap.add_argument("--source-root", type=Path,
+                    help="copy the skill, router, policy and agents from this repo-shaped tree (the self-update hook "
+                         "passes its verified staging dir)")
+    ap.add_argument("--release-pin", type=Path,
+                    help="release_pin.json to record in the install (validated); a lower seq than the installed pin "
+                         "is refused unless --force")
     ap.add_argument("--source-ref", help="commit the files came from (written to VERSION; set by the self-update hook)")
     ap.add_argument("--session-start", action="store_true", help="quiet mode for the SessionStart hook: implies --no-hook, honours the disabled marker")
     ap.add_argument("--verify", action="store_true", help="read-only: compare the installed skill with this source; exit 1 on any difference")
@@ -492,7 +550,14 @@ def main(argv=None) -> int:
     if a.session_start:
         a.no_hook = True
         a.no_context = True
-    for p in (ROUTER_SRC, POLICY_SRC, AGENTS_SRC):
+    if a.source_root is not None:
+        a.source_root = a.source_root.resolve()
+        checks = (a.source_root / "03_IMPLEMENTATION" / "packages" / "routing" / "claude_model_router.py",
+                  a.source_root / "04_CONFIG" / "claude_model_routing.json", a.source_root / ".claude" / "agents",
+                  a.source_root / ".claude" / "skills" / "cost-router" / "SKILL.md")
+    else:
+        checks = (ROUTER_SRC, POLICY_SRC, AGENTS_SRC)
+    for p in checks:
         if not p.exists():
             print(f"missing source: {p}", file=sys.stderr)
             return 1
@@ -516,7 +581,8 @@ def main(argv=None) -> int:
             if a.self_update:  # keep whatever the owner chose at install time
                 a.no_context = not _context_installed(a.home)
             touched = uninstall(a.home) if a.uninstall else install(
-                a.home, not a.no_hook, a.force, a.session_start, not a.no_context, a.source_ref, a.self_update)
+                a.home, not a.no_hook, a.force, a.session_start, not a.no_context, a.source_ref, a.self_update,
+                a.source_root, a.release_pin)
     except LockBusy as exc:
         print(f"skipped: {exc}" if quiet else f"not installed: {exc}", file=sys.stdout if quiet else sys.stderr)
         return 0 if quiet else 1
