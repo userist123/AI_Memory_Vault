@@ -73,6 +73,7 @@ import CommandPalette, { type Command } from './CommandPalette';
 import { isPaletteShortcut } from '@/lib/fuzzy';
 import { editorIgnoresKey } from '@/lib/palette-keys';
 import { localizeSnapshotRoomNames } from '@/core/templates';
+import { prepareShareImages } from '@/lib/share-images';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 
 const uid = () => crypto.randomUUID();
@@ -156,10 +157,13 @@ export default function Editor({ id }: { id: string }){
   useEffect(() => { if (!house || !prefsReady || roomsLocalized.current === `${id}:${lang}`) return; roomsLocalized.current = `${id}:${lang}`;
     const next = localizeSnapshotRoomNames(house, lang); if (next !== house){ commitHouse(next); say(t('editor.roomsTranslated')); } }, [house, lang, prefsReady]); // eslint-disable-line
   const loadRevs = () => { fetch(`/api/projects/${id}/revisions`).then(r => r.ok ? r.json() : []).then(setRevs); fetch(`/api/projects/${id}/shares`).then(r => r.ok ? r.json() : []).then(setShares); };
+  // linkurile active fără imagini gata randate (linkuri vechi, o randare întreruptă) se completează în fundal, fără mesaj
+  useEffect(() => { const revs = [...new Set(shares.filter(s => s.active).map(s => s.revisionNumber as number))]; if (!revs.length) return;
+    const tm = setTimeout(() => { revs.reduce((p, n) => p.then(() => prepareShareImages(id, n)).then(() => {}), Promise.resolve()); }, 4000); return () => clearTimeout(tm); }, [shares, id]);
   const flight = useRef(singleFlight()).current, [revBusy, setRevBusy] = useState(false);
   async function shareRevision(n: number){ return flight.run(`share:${n}`, () => shareRevisionNow(n)); }
   async function shareRevisionNow(n: number){ const r = await fetch(`/api/projects/${id}/shares`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ revision: n }) }); if (!authOk(r)) return; const j = await r.json().catch(() => ({}));
-    if (!r.ok){ say(j.error || t('editor.shareFailed')); return; } const url = `${location.origin}${j.path}`; try { await navigator.clipboard.writeText(url); say(t('editor.shareCopied')); } catch { say(t('editor.shareLink', { url })); } loadRevs(); }
+    if (!r.ok){ say(j.error || t('editor.shareFailed')); return; } prepareShareImages(id, n).then(k => { if (k) say(t('client.imagesReady')); }); const url = `${location.origin}${j.path}`; try { await navigator.clipboard.writeText(url); say(t('editor.shareCopied')); } catch { say(t('editor.shareLink', { url })); } loadRevs(); }
   async function revokeShare(token: string){ const r = await fetch(`/api/projects/${id}/shares`, { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token }) }); if (!authOk(r)) return; if (!r.ok){ say(t('editor.revokeFailed')); return; } say(t('editor.revoked')); loadRevs(); }
   // fiecare salvare spune de la ce versiune a pornit; dacă proiectul s-a schimbat între timp (alt dispozitiv), nu suprascrie tăcut
   // Salvările merg una după alta (fiecare pornește de la versiunea primită de precedenta); rețeaua căzută nu aruncă: starea devine
@@ -965,7 +969,8 @@ function ClientPanel({ id, say, onLinked, flush, roomNames, cur }: { id: string;
   async function make(){ if (making.current) return; making.current = true; setBusy(true); try { if (!(await flush())) return; const r = await fetch(`/api/projects/${id}/client-link`, { method: 'POST' }), j = await r.json();
       if (!r.ok){ say(j.error || t('client.failed')); return; }
       const url = j.url ?? `${location.origin}${j.path}`, local = j.publicUrl === false && isLocalHostname(location.hostname);
-      setLink({ url, local }); setTick(n => n + 1); if (j.newRevision) say(t('client.newRev', { n: j.revisionNumber })); await copy(url); onLinked(); }
+      setLink({ url, local }); setTick(n => n + 1); if (j.newRevision) say(t('client.newRev', { n: j.revisionNumber })); await copy(url); onLinked();
+      prepareShareImages(id, j.revisionNumber).then(k => { if (k) say(t('client.imagesReady')); }); }
     catch { say(t('client.failed')); } finally { making.current = false; setBusy(false); } }
   async function toggle(f: ClientFeedback){ const r = await fetch(`/api/projects/${id}/feedback`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: f.id, resolved: !f.resolvedAt }) });
     if (r.ok){ const j = await r.json(); setItems(xs => (xs ?? []).map(x => x.id === f.id ? { ...x, resolvedAt: j.resolvedAt } : x)); } }
