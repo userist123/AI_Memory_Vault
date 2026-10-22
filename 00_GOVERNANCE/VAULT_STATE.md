@@ -84,10 +84,10 @@ in its constructor. Corrected 2026-09-06.
 
 | Measure | Value |
 |---|---:|
-| Notes in the index (`VaultIndex`, export residue excluded) | 1280 |
+| Notes in the index (`VaultIndex`, export residue excluded) | 1328 |
 | Notes visible to `FileStorageEngine` | 858 |
-| Graph edges | 483 |
-| — declared / inferred / wikilink | 152 / 153 / 178 |
+| Graph edges | 533 |
+| — declared / inferred / wikilink | 177 / 178 / 178 |
 | Notes usable as a graph **seed** (out-edge) | 195 |
 | Notes reachable as graph **gold** (in-edge) | 142 |
 | Graph cases with pairwise-disjoint nodes | 32 |
