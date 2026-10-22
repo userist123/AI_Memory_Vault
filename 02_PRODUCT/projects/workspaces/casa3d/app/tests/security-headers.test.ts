@@ -7,7 +7,7 @@ import path from 'node:path';
 process.env.CASA3D_AUTH_FILE = path.join(import.meta.dirname, '__no_auth_file__.json');
 import { NextRequest } from 'next/server';
 import { middleware } from '../middleware';
-import { contentSecurityPolicy, hstsFor } from '../lib/security-headers';
+import { contentSecurityPolicy, hstsFor, API_CSP } from '../lib/security-headers';
 const tok = 'A'.repeat(43);
 const req = (url: string, extra: Record<string, string> = {}, host = 'localhost:3123') => new NextRequest(`http://${host}${url}`, { headers: { host, ...extra } });
 const remote = (url: string, extra: Record<string, string> = {}) => req(url, { 'cf-connecting-ip': '203.0.113.7', ...extra });
@@ -16,13 +16,21 @@ const nonceOf = (csp: string) => /'nonce-([A-Za-z0-9+/=]+)'/.exec(csp)?.[1];
 test('toate deciziile porții (permis, login, 401, 404) primesc antetele', () => {
   const cases = [req('/'), remote('/'), remote('/api/projects'), remote('/api/admin/stats'), remote(`/share/${tok}`)];
   const statuses = new Set<number>();
-  for (const r of cases){ const res = middleware(r); statuses.add(res.status);
+  for (const r of cases.filter(c => !c.nextUrl.pathname.startsWith('/api/'))){ const res = middleware(r); statuses.add(res.status);
     const csp = res.headers.get('content-security-policy')!; assert.ok(csp, r.url);
     for (const d of ["default-src 'self'", "frame-ancestors 'none'", "object-src 'none'", "base-uri 'self'", "'strict-dynamic'"]) assert.ok(csp.includes(d), `${r.url}: ${d}`);
     assert.ok(nonceOf(csp)!.length >= 22, 'nonce de cel puțin 128 de biți');
     assert.equal(res.headers.get('x-content-type-options'), 'nosniff'); assert.equal(res.headers.get('x-frame-options'), 'DENY');
     assert.match(res.headers.get('permissions-policy')!, /camera=\(\)/); assert.equal(res.headers.get('strict-transport-security'), null, 'fără HSTS pe http'); }
+  for (const r of cases.filter(c => c.nextUrl.pathname.startsWith('/api/'))){ const res = middleware(r); statuses.add(res.status);
+    assert.equal(res.headers.get('content-security-policy'), API_CSP, r.url); assert.equal(res.headers.get('x-content-type-options'), 'nosniff'); }
   assert.deepEqual([...statuses].sort(), [200, 401, 404]);
+});
+test('review F2: antetele middleware-ului înlocuiesc pe ale rutei, deci pe /api și /go/ se alege varianta strictă aici', () => {
+  // Next pune întâi antetele din middleware; un antet cu același nume pus de rută se ignoră
+  const photo = middleware(req('/api/projects/12345678-1234-4234-8234-123456789abc/site/photos/x'));
+  assert.equal(photo.headers.get('content-security-policy'), API_CSP); assert.match(API_CSP, /sandbox/); assert.match(API_CSP, /default-src 'none'/);
+  for (const u of ['/go/o/offer-1', '/go/m/mat-1']) assert.equal(middleware(req(u)).headers.get('referrer-policy'), 'no-referrer', u);
 });
 test('nonce nou la fiecare cerere și transmis lui Next.js în cerere', () => {
   const a = middleware(req('/')), b = middleware(req('/'));
