@@ -59,6 +59,12 @@ public sealed class DeviceJournalEntry
     /// <summary>The medium on the row now is not the one the number was set for: the row is unregistered (shown, counted and judged as such) until the registered medium is back or a number is set for this one.</summary>
     [JsonPropertyName("registration_medium_mismatch")] public bool RegistrationMediumMismatch { get; set; }
     /// <summary>The account of the active console session when the device was connected; empty = nobody was logged on (shown as „—”).</summary>
+    /// <summary>
+    /// A Bluetooth radio row that a live reading ATTESTED as a component of the station (the same instance id was seen in the local machine container,
+    /// <see cref="DeviceScope.LocalMachineContainer"/>) while it was not connected as an outside device: not listed on the page. Display only, journal-resident
+    /// (check D05 and the report still compare the row); withdrawn the moment the row is connected again as an outside device (a dongle plugged in).
+    /// </summary>
+    [JsonPropertyName("station_internal")] public bool StationInternal { get; set; }
     [JsonPropertyName("connected_user")] public string ConnectedUser { get; set; } = "";
 
     /// <summary>
@@ -429,6 +435,13 @@ public static class DeviceJournalMerge
             e.LastDisconnectedUtc = nowUtc;
             if (DeviceScope.IsInScope(e)) changes.Add(new(e, false));
         }
+        // a Bluetooth radio row whose node a live reading sees in the local machine container is a component of the station (attested by the PnP stack, never by a name)
+        var local = new HashSet<string>(all.Where(n => DeviceScope.IsLocalContainer(n.ContainerId)).Select(n => n.InstanceId), StringComparer.OrdinalIgnoreCase);
+        foreach (var e in journal.Devices)
+        {
+            if (e.Present) e.StationInternal = false;
+            else if (e.Class is DeviceClass.Bluetooth or DeviceClass.BluetoothAdapter && e.InstanceId.Length > 0 && local.Contains(e.InstanceId)) e.StationInternal = true;
+        }
         MarkSuperseded(journal);
         return changes;
     }
@@ -694,6 +707,30 @@ public static class DeviceJournalMerge
         }
     }
 
+    /// <summary>The row shows as a Bluetooth device (a stored Bluetooth keyboard or mouse of an older version counts as one).</summary>
+    private static bool IsBluetoothRow(DeviceJournalEntry e) => DeviceScope.IsInScope(e) && DeviceMonitorRules.DisplayClass(e) == DeviceClass.Bluetooth;
+
+    /// <summary>
+    /// A disconnected row of a service, profile or GATT node of a remote Bluetooth device (older versions journaled each node on its own) is folded under the row of
+    /// the DEVICE NODE (BTHENUM\DEV_, BTHLE\DEV_, BTHLEDEVICE\DEV_) with the SAME Bluetooth address. Only the exact 12-hex address in the instance id decides: another
+    /// address (even the same name or VID/PID), a malformed id, a missing device row, different registration numbers and a serial conflict all leave the row visible
+    /// (fail closed). Several device rows of one address (classic + LE): the connected one, else the earliest. Display only.
+    /// </summary>
+    private static void FoldBluetoothServices(List<DeviceJournalEntry> rows, Dictionary<DeviceJournalEntry, DeviceJournalEntry> into)
+    {
+        var targets = rows.Where(t => !into.ContainsKey(t) && IsBluetoothRow(t) && DeviceScope.IsBluetoothDeviceNode(t.InstanceId))
+            .GroupBy(t => DeviceScope.BluetoothAddress(t.InstanceId), StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => g.OrderBy(t => t.Present ? 0 : 1).ThenBy(t => t.FirstSeenUtc).ThenBy(t => t.Identity, StringComparer.OrdinalIgnoreCase).First(), StringComparer.Ordinal);
+        foreach (var r in rows)
+        {
+            if (r.Present || into.ContainsKey(r) || !IsBluetoothRow(r) || DeviceScope.IsBluetoothDeviceNode(r.InstanceId)) continue;
+            var mac = DeviceScope.BluetoothAddress(r.InstanceId);
+            if (mac.Length == 0 || !targets.TryGetValue(mac, out var target) || ReferenceEquals(target, r) || NumbersDiffer(r, target)) continue;
+            if (rows.Any(o => SerialConflict(r, o))) continue;   // a real clone of the serial (or the original of one) is never folded
+            into[r] = target;
+        }
+    }
+
     /// <summary>
     /// Recomputes <see cref="DeviceJournalEntry.SupersededBy"/> on every row (deterministic, whatever the order of the rows). Folded, when the two rows carry no
     /// different registration numbers:
@@ -723,6 +760,8 @@ public static class DeviceJournalMerge
         FoldLegacyIntoPresent(rows, into);
         // 1c. a disconnected row with the SAME instance id as a connected one (any identity scheme)
         FoldSameInstance(rows, into);
+        // 1d. the service, profile and GATT rows of one remote Bluetooth device under the row of its device node (same Bluetooth address, never by name)
+        FoldBluetoothServices(rows, into);
         // 2. interface rows of an older version
         var legacy = rows.Where(r => !into.ContainsKey(r) && IsInterfaceRow(r) && !rows.Any(o => SerialConflict(r, o))).ToList();
         foreach (var g in legacy.GroupBy(r => r.VidPid.ToUpperInvariant()))

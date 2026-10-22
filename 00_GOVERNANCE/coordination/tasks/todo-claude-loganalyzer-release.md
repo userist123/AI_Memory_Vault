@@ -418,5 +418,8 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   Advanced menu duplicates the main pages and clips "MITRE ATT&CK".
 - UIA driver rebuilt: scratchpad `drv/driver.ps1` (elevated, file queue cmd/out; nav needs real clicks `xy=120,<y>`, UIA Select does not navigate;
   `max` on a hidden main window SHOWS it before sign-in - never send `max` before signing in).
-- Next: owner answers the 4 questions in the report, then fix B items (BT fold is device-monitor = security-relevant -> Opus review), then C/D;
+- OWNER DECISIONS 2026-10-22 ("pentru tot folosește recomandarea"): (1) Simplu hides „Colectează tot/acum”, first-run guide of 3 screens (skippable, once);
+  (2) Investigation: step wizard in Simplu, full form only in Expert; (3) "last control" = last control FINISHED (sealed audit), same text/format on Home and Control;
+  (4) order B -> C -> D, Bluetooth fold reviewed by Opus.
+- Next (was: owner answers): fix B items (BT fold is device-monitor = security-relevant -> Opus review), then C/D;
   cleanup of test data with owner OK; CI read once; merge chain.

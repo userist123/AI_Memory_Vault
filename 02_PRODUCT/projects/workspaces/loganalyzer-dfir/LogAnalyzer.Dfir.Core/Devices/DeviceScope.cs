@@ -83,6 +83,8 @@ public static class DeviceScope
     public static bool IsInternalRow(DeviceJournalEntry e)
     {
         if (DeviceMonitorRules.IsStorageMedium(e.Class) || e.Class is DeviceClass.Optical or DeviceClass.CardReader) return false;
+        // the radio of the station: a live reading saw this very node in the local machine container (never decided from a name; see DeviceJournalEntry.StationInternal)
+        if (e.StationInternal && e.Class is DeviceClass.Bluetooth or DeviceClass.BluetoothAdapter) return true;
         if (IsIntegratedName(e.Name)) return true;
         return e.InstanceId.Length > 0 && !LooksExternalById(e.InstanceId);
     }
@@ -331,9 +333,58 @@ public static class DeviceScope
         return cur;
     }
 
-    private static string GroupKey(PnpSnapshotEntry node, IReadOnlyDictionary<string, PnpSnapshotEntry>? byId = null)
+    // ---- Bluetooth: one remote device is many PnP nodes (device node, services, profiles, GATT services, HID children) ----------------------------
+    // Their instance ids carry the 48-bit Bluetooth device address of the remote device; the PnP tree (parents) leads to the device node. Matching is strict
+    // (anchored, exactly 12 hex digits, no extra suffix) and case-insensitive (Windows instance ids are); anything else has no address and stays a separate row.
+
+    private const string ServiceGuid = @"\{[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}\}";
+    private const RegexOptions IdOptions = RegexOptions.IgnoreCase | RegexOptions.CultureInvariant;
+
+    /// <summary>BTHENUM\DEV_mac\x, BTHLE\DEV_mac\x, BTHLEDEVICE\DEV_mac\x: the node of the remote device itself.</summary>
+    private static readonly Regex BtDeviceNodeId = new(@"^BTH(?:ENUM|LE|LEDEVICE)\\DEV_([0-9A-F]{12})\\[^\\]+$", IdOptions);
+
+    /// <summary>BTHENUM\{service uuid}[_VID&amp;_PID&amp;]\...&amp;mac_C0000000: a classic profile / service node.</summary>
+    private static readonly Regex BtEnumServiceId = new(@"^BTHENUM\\" + ServiceGuid + @"[^\\]*\\[^\\]*&([0-9A-F]{12})_C[0-9A-F]{8}$", IdOptions);
+
+    /// <summary>BTHLEDEVICE\{uuid}_DEV_[VID&amp;_PID&amp;_REV&amp;_]mac\... and HID\{uuid}_DEV_...mac[&amp;COLnn]\...: a GATT service or its HID child.</summary>
+    private static readonly Regex BtGattServiceId = new(
+        @"^(?:BTHLEDEVICE|HID)\\" + ServiceGuid + @"_DEV_(?:VID&[0-9A-F]{4,8}_PID&[0-9A-F]{4}(?:_REV&[0-9A-F]{4})?_)?([0-9A-F]{12})(?:&COL[0-9A-F]{2})?\\[^\\]+$", IdOptions);
+
+    /// <summary>
+    /// The 12-hex Bluetooth device address in the instance id of a Bluetooth node of a remote device (its device node, a classic service, a GATT service or its
+    /// HID child), upper case; "" when the id has none or is malformed (short or long address, extra suffix, no instance part). Never read from a name.
+    /// </summary>
+    public static string BluetoothAddress(string instanceId)
+    {
+        var id = instanceId.Trim();
+        foreach (var rx in new[] { BtDeviceNodeId, BtEnumServiceId, BtGattServiceId })
+            if (rx.Match(id) is { Success: true } m) return m.Groups[1].Value.ToUpperInvariant();
+        return "";
+    }
+
+    /// <summary>The node of the remote device itself (BTHENUM\DEV_, BTHLE\DEV_, BTHLEDEVICE\DEV_ with a valid address): the row a Bluetooth device is named and keyed by.</summary>
+    public static bool IsBluetoothDeviceNode(string instanceId) => BtDeviceNodeId.IsMatch(instanceId.Trim());
+
+    /// <summary>The address of a node: its own id's, else the one of the nearest ancestor that has one (at most four levels up the PnP tree); "" = none.</summary>
+    private static string BluetoothAddressOf(PnpSnapshotEntry node, IReadOnlyDictionary<string, PnpSnapshotEntry>? byId)
+    {
+        var cur = node;
+        for (int i = 0; i < 5; i++)
+        {
+            if (BluetoothAddress(cur.InstanceId) is { Length: > 0 } mac) return mac;
+            if (cur.Parent.Length == 0) break;
+            if (byId is null || !byId.TryGetValue(cur.Parent, out var p)) return BluetoothAddress(cur.Parent);   // a parent outside the snapshot may still carry the address
+            cur = p;
+        }
+        return "";
+    }
+
+    private static string GroupKey(PnpSnapshotEntry node, IReadOnlyDictionary<string, PnpSnapshotEntry>? byId = null, IReadOnlyDictionary<string, string>? btContainers = null)
     {
         if (IsDeviceContainer(node.ContainerId)) return "C|" + NormContainer(node.ContainerId);
+        // a Bluetooth node without a container id of its own: the container of the other nodes of the same remote address, else the address itself
+        if (BluetoothAddressOf(node, byId) is { Length: > 0 } mac)
+            return btContainers is not null && btContainers.TryGetValue(mac, out var bc) ? bc : "B|" + mac;
         // without a container id the interfaces and HID collections of one USB device are grouped with it through their parents
         var e = UsbRoot(node, byId);
         if (!ReferenceEquals(e, node) && IsDeviceContainer(e.ContainerId)) return "C|" + NormContainer(e.ContainerId);
@@ -379,7 +430,8 @@ public static class DeviceScope
     private static DeviceClass? NodeInputKind(PnpSnapshotEntry e) => U(e.SetupClass) switch { "KEYBOARD" => DeviceClass.Keyboard, "MOUSE" => DeviceClass.Mouse, _ => null };
 
     private static (DeviceClass Kind, PnpSnapshotEntry Node) Best(List<(DeviceClass Kind, PnpSnapshotEntry Node)> candidates) =>
-        candidates.OrderByDescending(c => Priority(c.Kind)).ThenBy(c => U(c.Node.InstanceId).Contains("&MI_", StringComparison.Ordinal) ? 1 : 0)
+        candidates.OrderByDescending(c => Priority(c.Kind)).ThenBy(c => IsBluetoothDeviceNode(c.Node.InstanceId) ? 0 : 1)   // a Bluetooth device is named and keyed by its device node, never by a service
+            .ThenBy(c => U(c.Node.InstanceId).Contains("&MI_", StringComparison.Ordinal) ? 1 : 0)
             .ThenBy(c => InterfaceOrder(c.Node.InstanceId).Interface).ThenBy(c => InterfaceOrder(c.Node.InstanceId).Collection).First();
 
     private static int Priority(DeviceClass c) => c switch
@@ -450,8 +502,12 @@ public static class DeviceScope
             }
             result.Add(new ScopedDevice(sk, p, identity, [p], p, mi));
         }
+        // the container of every remote Bluetooth address (when its nodes agree on one): a service whose container id was not read joins that group
+        var btContainers = snapshot.Where(e => IsDeviceContainer(e.ContainerId) && BluetoothAddressOf(e, byId).Length > 0)
+            .GroupBy(e => BluetoothAddressOf(e, byId), StringComparer.Ordinal).Where(g => g.Select(e => NormContainer(e.ContainerId)).Distinct().Count() == 1)
+            .ToDictionary(g => g.Key, g => "C|" + NormContainer(g.First().ContainerId), StringComparer.Ordinal);
         // 2. everything else, one row per physical device
-        foreach (var g in snapshot.Where(e => !driveIds.Contains(e.InstanceId) && !IsLocalContainer(e.ContainerId)).GroupBy(e => GroupKey(e, byId)))
+        foreach (var g in snapshot.Where(e => !driveIds.Contains(e.InstanceId) && !IsLocalContainer(e.ContainerId)).GroupBy(e => GroupKey(e, byId, btContainers)))
         {
             var members = g.ToList();
             bool container = g.Key.StartsWith("C|", StringComparison.Ordinal);
