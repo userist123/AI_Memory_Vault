@@ -344,3 +344,21 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
 - H: titlul `ScopeDialog` = „Scopul cazului stației”.
 - N/O/P: rezumat investigație cu ro-RO (257.033), stare cu litere mici, severitate în română (`RoLabels.Severity`) în lanțuri și secvențe; valorile stocate/exportate neschimbate.
 - Teste: `HomeTextFixes20261022Tests` + asert în `QuickControlPeriodTests`. App 677, UI 354(+1 skip), Dfir 2391(+31 skip) verzi. De verificat pe PC cu captură.
+
+## RESUME HERE (end of session 2026-10-22 evening; main context > 250k)
+- Head 99dc8dd4d (worker: Home/investigation text fixes A-H, N-Q; App 677/0 re-run by the main session, UI 354/1, Dfir 2391/31/0 per worker).
+  Pushed to PR #308. CI on 8780c0b44: all LogAnalyzer jobs green; only red = „npm lockfiles” from an unrelated imported project
+  (02_PRODUCT/projects/imported/nu-sterge/trading-journal…, critical in `next`) - not LogAnalyzer.
+- OWNER RULES: (1) no demos ever (memory `no-demos-real-apps-only`); the real app is `C:\Program Files\LogAnalyzer` (old Demo folder deleted
+  with owner approval). (2) „Totul se curăță înainte să dăm aplicația gata de folosire”: BEFORE declaring the app ready, clean ALL test data
+  (LIVE-LAB-PC case + controls/reports, CASE-LAB-PC-20261022-180157, the „Test” scope, test entries in registers/journals as the app
+  allows) - show the owner the exact list (what is deleted / what stays: licence, accounts, sealed audit chain?) and get his OK first.
+  (3) Test account administrator.principal may be used for testing; the password is NOT stored anywhere - ask the owner in chat.
+- Next: Opus vault-reviewer pass on 850a92c19..99dc8dd4d (UI text + CollectAllState/RecentCases/StatusMessage wiring); publish Release Standalone
+  (`dotnet publish LogAnalyzer.App.Classified/LogAnalyzer.App.Classified.csproj -c Release -p:PublishProfile=win-x64-singlefile`), install to
+  `C:\Program Files\LogAnalyzer` elevated (keep license.lic, AuditLogs, provenance_ledger.json; check exe hash = publish, `--self-test` 0),
+  screenshots of Home after a control (banner gone, status bar, recent cases, coloured chips, local period time) and Investigation after a run
+  (257.033, „parțial”, Romanian severities); owner decision on J/K (investigation page has two parallel forms + empty grey panels);
+  then the cleanup above; CI read once; merge order #303 -> #306 -> #307 -> #308.
+- UIA driver: elevated PowerShell script in the session scratchpad (steps start/signin/max/click=<name>/xy=x,y/size=w,h/shot); rebuild it in the new
+  session (UIPI: the app is requireAdministrator, so the driver must run elevated; pass multi-word steps quoted).
