@@ -52,6 +52,7 @@ test('doar proprietarul scrie; camera trebuie să existe; linkul activ servește
   const img = await shareRender(s.token, room, 800); assert.equal(img?.mime, 'image/webp'); assert.equal(img?.bytes.length, 80);
   assert.equal(await shareRender(s.token, room, 1600), null); assert.equal(await shareRender(s.token, '../x', 800), null);
   await revokeShare(A, id, s.token);
+  await assert.rejects(saveRevisionRender(A, id, number, { key: 'overview', width: 1600, image: webp() }), (e: any) => e.status === 409, 'după revocare nu se mai scrie');
   assert.deepEqual(await shareRenderSet(s.token), {}); assert.equal(await shareRender(s.token, 'overview', 1600), null);
   const { rows } = await (await getDb()).q('select count(*)::int as n from revision_renders where project_id=$1', [id]); assert.equal(rows[0].n, 0, 'șterse la revocare: niciun alt link nu le mai arată');
 });
