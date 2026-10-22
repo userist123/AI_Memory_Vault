@@ -59,15 +59,18 @@ namespace LogAnalyzer.UI.Services
             await Handler();
         }
 
-        [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasData), nameof(IsEmpty))] private InvestigationResult? _current;
+        [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasData), nameof(IsEmpty), nameof(IsEmptyForHome))] private InvestigationResult? _current;
         [ObservableProperty] private string _status = EmptySubtitle;
         [ObservableProperty] private bool _isRunning;
 
         public bool HasData => Current is not null;
-        public bool IsEmpty => Current is null && !ControlDone;
+        public bool IsEmpty => Current is null;
+
+        /// <summary>Empty for Home and the control page: no analysis result and no station control yet. Investigation and Media keep <see cref="IsEmpty"/> (a control gives them no data).</summary>
+        public bool IsEmptyForHome => Current is null && !ControlDone;
 
         /// <summary>True once a station control finished in this session: the empty-page banner then no longer applies (2026-10-22 PC walkthrough).</summary>
-        [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsEmpty))] private bool _controlDone;
+        [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsEmptyForHome))] private bool _controlDone;
 
         /// <summary>One line about the last result of this session (control or analysis), for the status bar; empty before any.</summary>
         [ObservableProperty] private string _lastActivity = "";
@@ -86,11 +89,14 @@ namespace LogAnalyzer.UI.Services
         /// <summary>Raised after a new result is published (pages refresh what they show from it).</summary>
         public event Action<InvestigationResult>? Published;
 
-        public void Publish(InvestigationResult r)
+        /// <param name="opened">True when the result comes from a case opened from disk: the status bar then says „Caz deschis”, not „Investigație finalizată”.</param>
+        public void Publish(InvestigationResult r, bool opened = false)
         {
             Current = r;
             Status = $"Date colectate și analizate: {r.Timeline.Count.ToString("N0", RoRo)} evenimente, {r.Findings.Count} constatări (caz {r.Case.Info.CaseId}). Toate paginile folosesc acest rezultat.";
-            LastActivity = $"Investigație finalizată: {r.Timeline.Count.ToString("N0", RoRo)} evenimente, {r.Findings.Count} constatări (caz {r.Case.Info.CaseId}).";
+            LastActivity = opened
+                ? $"Caz deschis: {(string.IsNullOrWhiteSpace(r.Case.Info.Name) ? r.Case.Info.CaseId : r.Case.Info.Name)} ({r.Timeline.Count.ToString("N0", RoRo)} evenimente, {r.Findings.Count} constatări)."
+                : $"Investigație finalizată: {r.Timeline.Count.ToString("N0", RoRo)} evenimente, {r.Findings.Count} constatări (caz {r.Case.Info.CaseId}).";
             ActivityRecorded?.Invoke(LastActivity);
             Published?.Invoke(r);
         }

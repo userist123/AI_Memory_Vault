@@ -18,6 +18,14 @@
                         </MultiDataTrigger.Conditions>
                         <Setter Property="Visibility" Value="Visible"/>
                     </MultiDataTrigger>
+                    <!-- Home and the control page: a finished station control also removes the offer (Investigation and Media have no data from it). -->
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding ControlDone}" Value="True"/>
+                            <Condition Binding="{Binding HideAfterControl, ElementName=Root}" Value="True"/>
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                    </MultiDataTrigger>
                 </Style.Triggers>
             </Style>
         </Border.Style>

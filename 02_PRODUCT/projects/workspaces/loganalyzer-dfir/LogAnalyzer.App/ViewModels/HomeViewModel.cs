@@ -207,11 +207,17 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>The station's LIVE case (where a control saves its report and anchor) is listed once it exists on disk.</summary>
         private void RecordLiveCase()
         {
+            // the LIVE case is not opened here: opening it would open the case, may confirm a scope (case.json + audit) and start a background re-check
             try
             {
-                if (System.IO.File.Exists(System.IO.Path.Combine(LogAnalyzer.UI.Services.LiveCase.Root, "case.json"))) RecordCase(LogAnalyzer.UI.Services.LiveCase.Get());
+                var root = LogAnalyzer.UI.Services.LiveCase.Root;
+                var file = System.IO.Path.Combine(root, "case.json");
+                if (!System.IO.File.Exists(file)) return;
+                var info = LogAnalyzer.Dfir.IO.Json.Read<LogAnalyzer.Dfir.Model.CaseInfo>(file);
+                _recent.Record(root, string.IsNullOrWhiteSpace(info.Name) ? info.CaseId : info.Name, CaseLifecycle.Active);
+                ReloadRecent();
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { /* the list is a convenience */ }
+            catch (Exception ex) when (ex is System.Text.Json.JsonException or InvalidDataException or IOException or UnauthorizedAccessException or InvalidOperationException) { /* the list is a convenience */ }
         }
 
         private void RecordCase(CaseWorkspace ws)

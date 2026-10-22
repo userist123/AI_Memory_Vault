@@ -24,7 +24,7 @@
         </DockPanel>
 
         <StackPanel Grid.Row="1" MaxWidth="900" HorizontalAlignment="Left">
-            <ctrl:NoDataPanel/>
+            <ctrl:NoDataPanel HideAfterControl="True"/>
         <!-- WP18 S4: the guided control in three steps -->
         <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,12">
             <StackPanel>

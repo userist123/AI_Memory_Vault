@@ -10,7 +10,7 @@
         <StackPanel Margin="24">
             <!-- WP18 redesign (docs/dfir/RESEARCH_2026-10-11_UI_SI_POLITICI.md): one question, one list of actions, no card grid -->
             <StackPanel MaxWidth="760" HorizontalAlignment="Left">
-                <ctrl:NoDataPanel/>
+                <ctrl:NoDataPanel HideAfterControl="True"/>
                 <TextBlock Text="{Binding StationHeading}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"/>
                 <TextBlock Text="{Binding EditionWarning}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" Margin="0,6,0,0">
                     <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding HasEditionWarning}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
@@ -219,11 +219,11 @@
                                             Command="{Binding DataContext.ForgetRecentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
                                     <Button DockPanel.Dock="Right" Content="Deschide" AutomationProperties.Name="{Binding Entry.Title, StringFormat='Deschide cazul {0}'}" Style="{StaticResource OutlineButtonStyle}"
                                             Command="{Binding DataContext.OpenRecentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                                    <TextBlock Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                                    <TextBlock Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding Entry.Path}">
                                         <Run Text="{Binding Entry.Title, Mode=OneWay}" FontWeight="SemiBold"/>
-                                        <Run Text="{Binding StateText, Mode=OneWay}"/>
-                                        <Run Text="{Binding Entry.LastOpenedUtc, Mode=OneWay, StringFormat='deschis ultima dată {0:yyyy-MM-dd HH:mm} UTC'}"/>
-                                        <Run Text="{Binding Entry.Path, Mode=OneWay}" Foreground="{StaticResource TextMutedBrush}"/>
+                                        <Run Text="{Binding DisplayState, Mode=OneWay, StringFormat='· {0}'}"/>
+                                        <Run Text="{Binding LastOpenedLocalText, Mode=OneWay, StringFormat='· {0}'}"/>
+                                        <Run Text="{Binding Entry.Path, Mode=OneWay, StringFormat='· {0}'}" Foreground="{StaticResource TextMutedBrush}"/>
                                     </TextBlock>
                                 </DockPanel>
                             </DataTemplate>

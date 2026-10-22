@@ -33,8 +33,14 @@ namespace LogAnalyzer.UI.Services
         /// <summary>Shown by the screens when the operator closes the scope dialog without confirming.</summary>
         public const string ScopeRequiredMessage = "Nu s-a salvat nimic: ca să lucrați pe această stație, trebuie completat o dată scopul (de ce se face, perioada, ce sisteme, cine a aprobat). Apăsați din nou butonul și completați fereastra care se deschide.";
 
-        /// <summary>Shown when only the report needs the scope: the control and its anchor code are already saved (2026-10-22 PC walkthrough).</summary>
-        public const string ReportScopeRequiredMessage = "Raportul nu s-a generat: completați scopul cazului (de ce se face, perioada, ce sisteme, cine a aprobat) în fereastra care se deschide, apoi apăsați din nou butonul raportului (de exemplu „Deschide raportul”). Controlul și codul de ancorare sunt deja salvate.";
+        /// <summary>Shown when only the report needs the scope (2026-10-22 PC walkthrough). Use <see cref="ReportScopeMessage"/>: whether the control and anchor are saved depends on the real state.</summary>
+        public const string ReportScopeRequiredMessage = "Raportul nu s-a generat: completați scopul cazului (de ce se face, perioada, ce sisteme, cine a aprobat) în fereastra care se deschide, apoi apăsați din nou butonul raportului (de exemplu „Deschide raportul”).";
+
+        /// <summary>Added only when the control was audited as finished and its anchor code was issued.</summary>
+        public const string ControlAndAnchorSavedSuffix = " Controlul și codul de ancorare sunt deja salvate.";
+
+        /// <summary>The report-scope message; it claims the anchor is saved only when it really is.</summary>
+        public static string ReportScopeMessage(bool controlAndAnchorSaved) => controlAndAnchorSaved ? ReportScopeRequiredMessage + ControlAndAnchorSavedSuffix : ReportScopeRequiredMessage;
 
         /// <summary>Folder of the station's live case (may not exist yet). WP18: used to list previous controls without confirming a scope.</summary>
         public static string Root => RootPath();

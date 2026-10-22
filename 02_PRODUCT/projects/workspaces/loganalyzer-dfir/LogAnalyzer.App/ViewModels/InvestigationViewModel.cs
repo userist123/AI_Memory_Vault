@@ -139,7 +139,7 @@ namespace LogAnalyzer.UI.ViewModels
         /// </summary>
         public void ShowLoaded(LogAnalyzer.Dfir.Windows.Investigation.LoadedCase loaded)
         {
-            ShowResult(loaded.Result);
+            ShowResult(loaded.Result, opened: true);
             Loaded = loaded;
             IntegrityLine = loaded.Recheck?.Summary ?? "Reverificare: nerulată (nedeterminat).";
             VerificationLine = VerificationText(loaded.Result);
@@ -404,7 +404,7 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>Fills every collection and summary line of the page from a result: a run that just finished or an existing case that was opened (WP5).</summary>
         private static readonly System.Globalization.CultureInfo Ro = System.Globalization.CultureInfo.GetCultureInfo("ro-RO");
 
-        private void ShowResult(InvestigationResult result)
+        private void ShowResult(InvestigationResult result, bool opened = false)
         {
             _result = result;
             SelectedFinding = null;
@@ -430,7 +430,7 @@ namespace LogAnalyzer.UI.ViewModels
                 ? "Integritate air-gap: nu s-a observat nimic în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (jurnalele au o istorie limitată; unele canale pot lipsi, vezi „Surse lipsă sau incomplete”)."
                 : $"Integritate air-gap: {AirGapFindings.Count} constatări ({AirGapFindings.Count(a => a.Severity >= Severity.High)} ridicate).";
             ResultChanged?.Invoke(this, EventArgs.Empty);
-            LogAnalyzer.UI.Services.CollectAllState.Instance.Publish(result);   // G3: one result, reused by every page
+            LogAnalyzer.UI.Services.CollectAllState.Instance.Publish(result, opened);   // G3: one result, reused by every page
             FillTimeline();
             var chains = _result.Findings.Where(f => f.RuleId == "INCIDENT-CHAIN").ToList();
             Chains = chains.Count == 0 ? "Niciun lanț de incident (constatări grave grupate în timp)." :
