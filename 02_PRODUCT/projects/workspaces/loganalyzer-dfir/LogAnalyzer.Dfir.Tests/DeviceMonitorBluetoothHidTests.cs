@@ -166,4 +166,47 @@ public sealed class DeviceMonitorBluetoothHidTests
         DeviceJournalMerge.Apply(j4, [BleParent, BleKeyboard], null, "u", T0.AddDays(1), initial: false, reclassified: rec4, sealedKinds: Sealed(identity, "Keyboard", DeviceScope.ClassifierVersion));
         Assert.Empty(rec4);
     }
+
+    // ---- 3. a stored row of an older classifier is SHOWN as Bluetooth (display and alert presentation only) ---------------------------------------
+
+    private const string StoredBleId = @"HID\{00001812-0000-1000-8000-00805F9B34FB}_DEV_VID&02AAAA_PID&BBBB_REV&0001_AABBCCDDEEFF&COL01\8&1A2B3C4D&0&0000";
+
+    private static DeviceJournalEntry StoredBleKeyboard() => new()
+    {
+        Identity = "ID|" + StoredBleId, InstanceId = StoredBleId, Name = "HID Keyboard Device", Class = DeviceClass.Keyboard, Manufacturer = "Synthetic Inc", ClassifierVersion = 0,
+        Present = false, FirstSeenUtc = T0, LastConnectedUtc = T0, LastDisconnectedUtc = T0.AddHours(1),
+    };
+
+    [Fact]
+    public void A_stored_ble_keyboard_row_is_shown_as_bluetooth_with_the_note_and_the_forbidden_class_alert_without_rewriting_the_stored_kind()
+    {
+        var e = StoredBleKeyboard();
+        Assert.Equal(DeviceClass.Bluetooth, DeviceMonitorRules.DisplayClass(e));
+        Assert.Equal("tastatură prin Bluetooth (tip vechi înregistrat: Tastatură externă)", DeviceMonitorRules.DisplayDetail(e));
+        var d = DeviceMonitorRules.Decide(DeviceMonitorRules.DisplayClass(e), e.InstanceId, "", isolated: true);
+        Assert.Equal(DeviceAlertSeverity.Critical, d.Severity);
+        Assert.True(DeviceMonitorRules.IsForbiddenClassAlert(d.Reason));
+        Assert.Equal(DeviceClass.Keyboard, e.Class);                           // the stored kind is untouched
+        Assert.Equal(0, e.ClassifierVersion);
+
+        var line = DeviceMonitorReport.Line(e);
+        Assert.Contains("Dispozitiv Bluetooth", line);
+        Assert.Contains("tip vechi înregistrat: Tastatură externă", line);
+        Assert.True(DeviceMonitorReport.ForbiddenSeen(e, isolated: true));
+        Assert.False(DeviceMonitorReport.ForbiddenSeen(e, isolated: false));
+    }
+
+    [Fact]
+    public void A_stored_usb_keyboard_row_and_a_bluetooth_bus_mouse_row_are_decided_by_their_instance_id()
+    {
+        var usb = new DeviceJournalEntry { Identity = "ID|" + Usb, InstanceId = Usb, Name = "USB Keyboard", Class = DeviceClass.Keyboard, FirstSeenUtc = T0 };
+        Assert.Equal(DeviceClass.Keyboard, DeviceMonitorRules.DisplayClass(usb));
+        Assert.Equal("", DeviceMonitorRules.DisplayDetail(usb));
+        Assert.Contains("Tastatură externă", DeviceMonitorReport.Line(usb));
+        Assert.False(DeviceMonitorReport.ForbiddenSeen(usb, isolated: true));
+
+        var bth = new DeviceJournalEntry { Identity = "ID|bth", InstanceId = @"BTHENUM\DEV_001122334455\7&1&0&BLUETOOTHDEVICE_001122334455", Class = DeviceClass.Mouse, FirstSeenUtc = T0 };
+        Assert.Equal(DeviceClass.Bluetooth, DeviceMonitorRules.DisplayClass(bth));
+        Assert.StartsWith("mouse prin Bluetooth", DeviceMonitorRules.DisplayDetail(bth));
+    }
 }

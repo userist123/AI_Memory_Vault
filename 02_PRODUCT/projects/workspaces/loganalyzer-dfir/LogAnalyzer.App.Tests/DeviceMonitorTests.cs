@@ -1359,4 +1359,34 @@ public sealed class DeviceMonitorTests
         }
         finally { try { Directory.Delete(dir, true); } catch (IOException) { } }
     }
+
+    [Fact]
+    public async Task A_stored_ble_keyboard_row_is_shown_as_bluetooth_with_the_note_and_the_alert_and_a_stored_usb_keyboard_is_unchanged()
+    {
+        const string ble = @"HID\{00001812-0000-1000-8000-00805F9B34FB}_DEV_VID&02AAAA_PID&BBBB_REV&0001_AABBCCDDEEFF&COL01\8&1A2B3C4D&0&0000";
+        const string usb = @"USB\VID_1234&PID_00AB\SYNTH0001";
+        var journal = new DeviceJournal
+        {
+            Devices =
+            [
+                new DeviceJournalEntry { Identity = "ID|" + ble, InstanceId = ble, Name = "HID Keyboard Device", Class = DeviceClass.Keyboard, ClassifierVersion = 0,
+                    FirstSeenUtc = T0, LastConnectedUtc = T0, LastDisconnectedUtc = T0.AddHours(1) },
+                new DeviceJournalEntry { Identity = "SN|1234:00AB|SYNTH0001", InstanceId = usb, Name = "USB Keyboard", Class = DeviceClass.Keyboard, ClassifierVersion = 0, Serial = "SYNTH0001", VidPid = "1234:00AB",
+                    FirstSeenUtc = T0, LastConnectedUtc = T0, LastDisconnectedUtc = T0.AddHours(1) },
+            ],
+        };
+        var f = new Fakes { Present = [] };
+        using var vm = f.Create(isolated: true, journal: journal);
+        await vm.RefreshAsync(initial: true);
+        var bt = Assert.Single(vm.Rows, r => r.InstanceId == ble);
+        Assert.Equal(DeviceClass.Bluetooth, bt.Class);
+        Assert.Equal("Dispozitiv Bluetooth", bt.ClassText);
+        Assert.Contains("tastatură prin Bluetooth (tip vechi înregistrat: Tastatură externă)", bt.StatusTip);
+        Assert.True(bt.AlertIsCritical);
+        Assert.True(DeviceMonitorRules.IsForbiddenClassAlert(bt.AlertText));
+        var u = Assert.Single(vm.Rows, r => r.InstanceId == usb);
+        Assert.Equal("Tastatură externă", u.ClassText);
+        Assert.False(u.AlertIsCritical);
+        Assert.Equal(DeviceClass.Keyboard, journal.Devices.First(d => d.InstanceId == ble).Class);   // the stored kind is never rewritten
+    }
 }

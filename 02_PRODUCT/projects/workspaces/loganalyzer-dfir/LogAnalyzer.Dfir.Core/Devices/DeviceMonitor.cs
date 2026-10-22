@@ -343,6 +343,20 @@ public static class DeviceMonitorRules
         _ => false,
     };
 
+    /// <summary>
+    /// A stored row of a keyboard or mouse whose instance id is Bluetooth (an older classifier kept it as "Tastatură externă" / "Mouse extern"). Display and alert
+    /// presentation only: the stored kind is never rewritten and no reclassification is sealed from it.
+    /// </summary>
+    public static bool IsStoredBluetoothInput(DeviceJournalEntry e) =>
+        e.Class is DeviceClass.Keyboard or DeviceClass.Mouse && DeviceScope.IsBluetoothInstanceId(e.InstanceId);
+
+    /// <summary>The class a row is shown and alerted as: Bluetooth for a stored Bluetooth keyboard or mouse, the stored class otherwise.</summary>
+    public static DeviceClass DisplayClass(DeviceJournalEntry e) => IsStoredBluetoothInput(e) ? DeviceClass.Bluetooth : e.Class;
+
+    /// <summary>The detail of a stored Bluetooth keyboard or mouse row (with the old stored kind); the stored detail otherwise.</summary>
+    public static string DisplayDetail(DeviceJournalEntry e) => !IsStoredBluetoothInput(e) ? e.Detail
+        : $"{(e.Class == DeviceClass.Keyboard ? "tastatură" : "mouse")} prin Bluetooth (tip vechi înregistrat: {ClassText(e.Class)})";
+
     /// <summary>The ending of the critical alert of a class the policy forbids on an isolated station (the sealed alert is compared with it by the control).</summary>
     public const string ForbiddenClassAlertSuffix = "clasă interzisă pe o stație izolată";
 

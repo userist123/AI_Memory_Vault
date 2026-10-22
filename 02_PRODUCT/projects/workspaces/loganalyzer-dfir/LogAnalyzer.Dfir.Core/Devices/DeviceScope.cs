@@ -271,20 +271,32 @@ public static class DeviceScope
 
     private const string BluetoothBaseUuid = "-0000-1000-8000-00805F9B34FB}";
 
+    /// <summary>An instance id on a Bluetooth bus: BTHENUM, BTHLE, BTHLEDEVICE or BTH.</summary>
+    private static bool IsBluetoothBus(string id) => id.StartsWith(@"BTHENUM\", StringComparison.Ordinal) || id.StartsWith(@"BTHLE\", StringComparison.Ordinal)
+                                                     || id.StartsWith(@"BTHLEDEVICE\", StringComparison.Ordinal) || id.StartsWith(@"BTH\", StringComparison.Ordinal);
+
+    /// <summary>
+    /// The one source of truth for "this instance id is Bluetooth": a BTH* bus id, or a HID node whose own id is a Bluetooth HID service
+    /// (HID\{0000xxxx-0000-1000-8000-00805F9B34FB}_DEV_VID&amp;...). Used by the live classifier, the page and the report rows of an older stored row.
+    /// </summary>
+    public static bool IsBluetoothInstanceId(string instanceId)
+    {
+        var id = U(instanceId);
+        return IsBluetoothBus(id) || id.StartsWith(@"HID\{", StringComparison.Ordinal) && id.Contains(BluetoothBaseUuid, StringComparison.Ordinal);
+    }
+
     /// <summary>
     /// A HID node that is Bluetooth: its own id is a Bluetooth HID service (HID\{0000xxxx-0000-1000-8000-00805F9B34FB}_DEV_VID&amp;..., BLE or classic) or BTHENUM / BTHLE /
     /// BTHLEDEVICE, or one of its parents (at most four levels) is a BTH* node. Decided from the id and the PnP tree, never from a name.
     /// </summary>
     public static bool IsBluetoothHid(PnpSnapshotEntry e, IReadOnlyDictionary<string, PnpSnapshotEntry>? byId)
     {
-        static bool Bth(string id) => id.StartsWith(@"BTHENUM\", StringComparison.Ordinal) || id.StartsWith(@"BTHLE\", StringComparison.Ordinal)
-                                      || id.StartsWith(@"BTHLEDEVICE\", StringComparison.Ordinal) || id.StartsWith(@"BTH\", StringComparison.Ordinal);
         var id = U(e.InstanceId);
-        if (Bth(id) || id.StartsWith(@"HID\{", StringComparison.Ordinal) && id.Contains(BluetoothBaseUuid, StringComparison.Ordinal)) return true;
+        if (IsBluetoothInstanceId(id)) return true;
         var cur = e;
         for (int i = 0; i < 4 && cur.Parent.Length > 0; i++)
         {
-            if (Bth(U(cur.Parent))) return true;
+            if (IsBluetoothBus(U(cur.Parent))) return true;
             if (byId is null || !byId.TryGetValue(cur.Parent, out var p)) break;
             cur = p;
         }
