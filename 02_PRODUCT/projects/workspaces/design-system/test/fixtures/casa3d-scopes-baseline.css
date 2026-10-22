@@ -1,0 +1,78 @@
+/* Frozen from git show e5e62ac53:02_PRODUCT/projects/workspaces/casa3d/app/app/globals.css (before phase 2).
+   Only the custom properties of the three Visual System 02 scopes; the phase-2 parity test compares against it. */
+.home{
+  --bg:#F1EDE5;
+  --bg-2:#E7E0D6;
+  --surface:#FBF8F1;
+  --surface-2:#FFFDF8;
+  --ink:#241B24;
+  --ink-2:#4C404B;
+  --ink-3:#62545F;
+  --ink-num:#655962;
+  --line:#DCD1C8;
+  --line-strong:#BEB0A7;
+  --accent:#F06A53;
+  --accent-soft:#F7E3DC;
+  --ok:#2F6853;
+  --ok-soft:#E0EEE5;
+  --warn:#86551D;
+  --warn-soft:#F5E8CE;
+  --err:#A33E3A;
+  --err-soft:#F6E2DF;
+  --focus:#B83B2C;
+  --paper:var(--bg);
+  --paper-2:var(--bg-2);
+  --graphite:var(--ink);
+  --lead:var(--ink-3);
+  --rule:var(--line);
+}
+.ws{
+  --bg:#211A23;
+  --bg-2:#302630;
+  --surface:#28212B;
+  --surface-2:#342B36;
+  --ink:#F6F0E9;
+  --ink-2:#D8CDD5;
+  --ink-3:#A99BA8;
+  --ink-num:#C7B9C5;
+  --line:#453745;
+  --line-strong:#655264;
+  --accent:#F06A53;
+  --accent-soft:#4A2C32;
+  --ok:#9AD1A9;
+  --ok-soft:#203B30;
+  --warn:#EFC777;
+  --warn-soft:#49381E;
+  --err:#FF9D95;
+  --err-soft:#4B272D;
+  --focus:#FF8C78;
+  --paper:#F2EEE6;
+  --paper-2:#E6DED3;
+  --graphite:var(--ink);
+  --lead:var(--ink-3);
+  --rule:var(--line);
+}
+.ws .side{
+  --ink:#1F1720;
+  --ink-2:#3B2F3A;
+  --ink-3:#4B3D4A;
+  --ink-num:#4B3D4A;
+  --lead:#4B3D4A;
+  --graphite:#1F1720;
+  --rule:#D6C9C0;
+  --paper:#F7F2E9;
+  --paper-2:#EEE6DC;
+  --surface:#F7F2E9;
+  --surface-2:#FFFCF6;
+  --line:#E1D6CC;
+  --line-strong:#BFB0A7;
+  --accent:#C63C29;
+  --accent-soft:#F7E3DC;
+  --focus:#A82F1F;
+  --ok:#245842;
+  --ok-soft:#E0EEE5;
+  --warn:#7A4A0A;
+  --warn-soft:#F5E8CE;
+  --err:#9A2C22;
+  --err-soft:#F6E2DF;
+}
