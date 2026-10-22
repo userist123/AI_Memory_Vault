@@ -382,6 +382,7 @@ def test_agent_usage_sidecar_skips_corrupt_lines_and_caps_strings(tmp_path, monk
 def vault_project(tmp_path):
     cli = tmp_path / "proj" / "03_IMPLEMENTATION" / "packages" / "routing" / "route_cli.py"
     cli.parent.mkdir(parents=True)
+    (cli.parent / "__init__.py").write_text("", encoding="utf-8")  # regular package: wins over an editable install
     cli.write_text("", encoding="utf-8")
     return tmp_path / "proj"
 

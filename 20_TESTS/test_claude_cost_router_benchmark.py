@@ -143,16 +143,16 @@ def test_parse_stream_sums_all_result_events():
 
 
 def test_reduce_stream_drops_init_secrets_and_keeps_whitelist():
-    init = {"type": "system", "subtype": "init", "model": "claude-x", "cwd": "C:/Users/Someone/wt",
+    init = {"type": "system", "subtype": "init", "model": "claude-x", "cwd": "C:/Users/Someone/wt", # hygiene: intentional-absolute-path
             "claude_code_version": "9.9", "mcp_servers": [{"name": "a", "status": "needs-auth"}],
             "plugins": [{"name": "p"}], "session_id": "s-1", "tools": ["Read"], "pipe": "pipe-name"}
     ev = [init, {"type": "system", "subtype": "hook_started", "hook_name": "h"},
           {"type": "rate_limit_event"},
           {"type": "assistant", "parent_tool_use_id": "t1", "session_id": "s-1",
            "message": {"content": [{"type": "text", "text": "secret"},
-                                   {"type": "tool_use", "name": "Read", "input": {"p": "C:/Users/x"}}],
+                                   {"type": "tool_use", "name": "Read", "input": {"p": "C:/Users/x"}}], # hygiene: intentional-absolute-path
                        "usage": {"output_tokens": 3}, "id": "m"}},
-          {"type": "user", "message": {"content": [{"type": "tool_result", "content": "C:/Users/x/file"}]}},
+          {"type": "user", "message": {"content": [{"type": "tool_result", "content": "C:/Users/x/file"}]}}, # hygiene: intentional-absolute-path
           {"type": "result", "session_id": "s-1", "uuid": "u", "permission_denials": [{"a": 1}], "result": "ok",
            "total_cost_usd": 0.1, "usage": {"output_tokens": 3}}]
     red = bm.reduce_stream(_stream(ev))
@@ -200,7 +200,7 @@ def test_recompute_on_synthetic_dir(tmp_path):
     rows = []
     for task, cond, text in (("T6", "baseline", "done"), ("T6", "router", "Nu am reparat un caz"), ("T2", "router", "x")):
         stem = f"{task}_{cond}_0"
-        evs = [{"type": "system", "subtype": "init", "model": "m", "mcp_servers": ["leak"], "cwd": "C:/Users/x"},
+        evs = [{"type": "system", "subtype": "init", "model": "m", "mcp_servers": ["leak"], "cwd": "C:/Users/x"}, # hygiene: intentional-absolute-path
                {"type": "assistant", "message": {"content": [{"type": "tool_use", "name": "Agent"}]}},
                res(0.5, 3, 20, "mid"), res(0.5, 2, 5, text)]
         (raw / f"{stem}.stream.jsonl").write_text(_stream(evs), encoding="utf-8")
@@ -355,7 +355,7 @@ def test_dry_run_shows_equal_arms_and_legacy(capsys):
 
 def test_hook_events_reduced_to_chars_only():
     inner = json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit", "additionalContext": "x" * 40}})
-    ev = [{"type": "system", "subtype": "hook_response", "hook_event": "UserPromptSubmit", "hook_name": "C:/Users/x/h.py",
+    ev = [{"type": "system", "subtype": "hook_response", "hook_event": "UserPromptSubmit", "hook_name": "C:/Users/x/h.py", # hygiene: intentional-absolute-path
            "stdout": inner, "session_id": "s"},
           {"type": "system", "subtype": "hook_response", "hook_event": "SessionStart", "output": "",
            "systemMessage": "y" * 8}]
