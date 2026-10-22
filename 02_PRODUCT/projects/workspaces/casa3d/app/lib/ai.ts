@@ -5,7 +5,9 @@ import { groups } from '../core/catalog';
 import { floors } from '../core/levels';
 import { computeBudget } from '../core/boq';
 import type { DesignBrief } from '../core/brief';
-export const aiConfigured = () => !!process.env.ANTHROPIC_API_KEY;
+// În demo (CASA3D_DEMO=1, deschis oricui fără login) AI-ul rămâne oprit chiar dacă cheia există: altfel oricine ar
+// consuma cheia proprietarului, fără limită. Demo-ul folosește motorul de reguli.
+export const aiConfigured = () => !!process.env.ANTHROPIC_API_KEY && process.env.CASA3D_DEMO !== '1';
 export const aiModel = () => process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5';
 
 export function buildPrompt(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, brief: DesignBrief){

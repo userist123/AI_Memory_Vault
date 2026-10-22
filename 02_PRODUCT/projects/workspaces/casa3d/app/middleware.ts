@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { gate, isLocalRequest } from './lib/public-gate';
+import { gate, isLocalRequest, isCrossSiteWrite } from './lib/public-gate';
 import { readAuth, verifySession, SESSION_COOKIE } from './lib/auth';
 import { newNonce, contentSecurityPolicy, policyFor, applySecurityHeaders } from './lib/security-headers';
 // Din afară (prin tunel) se văd linkurile pentru client și pagina de login; după login, toată aplicația
@@ -13,6 +13,8 @@ export function middleware(req: NextRequest){
   // Next.js citește CSP-ul din cererea transmisă mai departe și pune nonce-ul pe scripturile pe care le randează
   const forward = new Headers(req.headers); forward.set('content-security-policy', csp); forward.set('x-nonce', nonce);
   const done = (res: NextResponse) => applySecurityHeaders(res, policy, req.headers);
+  // CSRF: nicio scriere în API de pe altă origine (inclusiv linkurile clientului: acolo scrie doar pagina linkului)
+  if (path.startsWith('/api/') && isCrossSiteWrite(req.method, req.headers)) return done(NextResponse.json({ error: 'Cerere refuzată.' }, { status: 403, headers: H }));
   const d = gate({ local, path, method: req.method, session: !local && verifySession(readAuth(), req.cookies.get(SESSION_COOKIE)?.value), demo: process.env.CASA3D_DEMO === '1' });
   if (d === 'allow') return done(NextResponse.next({ request: { headers: forward } }));
   // pagina de login se arată chiar la adresa cerută (fără redirecționare: serverul nu știe adresa publică a tunelului);

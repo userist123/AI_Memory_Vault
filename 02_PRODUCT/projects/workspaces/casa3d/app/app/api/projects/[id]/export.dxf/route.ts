@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { HttpError } from '@/lib/repo';
 import { ownerId } from '@/lib/owner';
 import { exportProjectDxf } from '@/lib/dxfExport';
+import { logError } from '@/lib/log';
 export const dynamic = 'force-dynamic';
 type Ctx = { params: Promise<{ id: string }> };
 export const GET = async (req: Request, { params }: Ctx) => {
@@ -11,6 +12,6 @@ export const GET = async (req: Request, { params }: Ctx) => {
     return new Response(body, { status: 200, headers: { 'content-type': 'application/dxf', 'content-disposition': `attachment; filename="${filename}"`, 'cache-control': 'no-store' } });
   } catch (e: any){
     if (e instanceof HttpError) return NextResponse.json({ error: e.message, details: e.details ?? null }, { status: e.status });
-    console.error(e); return NextResponse.json({ error: 'Eroare internă.' }, { status: 500 });
+    logError('api/projects/[id]/export.dxf', e); return NextResponse.json({ error: 'Eroare internă.' }, { status: 500 });
   }
 };

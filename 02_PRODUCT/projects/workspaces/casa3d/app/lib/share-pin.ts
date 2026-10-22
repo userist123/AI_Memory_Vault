@@ -56,6 +56,12 @@ export function pinCookies(header: string | null): string[] {
   if (!header) return [];
   return header.split(';').map(s => s.trim()).filter(s => s.startsWith(`${PIN_COOKIE}=`)).map(s => s.slice(PIN_COOKIE.length + 1)).slice(0, 4);
 }
+/** Linkul activ are PIN-ul activat (designerul l-a pus): atunci și deciziile clientului cer sesiunea PIN. */
+export async function pinRequired(token: string): Promise<boolean> {
+  if (!isShareToken(token)) return false;
+  const { q } = await getDb(); const { rows: [s] } = await q(`select pin_key from shares where token=$1 and ${shareActive()}`, [token]);
+  return !!s?.pin_key;
+}
 /** Linkul activ are pinii activați și una din valorile cookie e o sesiune validă pentru el. */
 export async function hasPinSession(token: string, values: string[], now = Date.now()): Promise<boolean> {
   if (!isShareToken(token) || !values.length) return false;

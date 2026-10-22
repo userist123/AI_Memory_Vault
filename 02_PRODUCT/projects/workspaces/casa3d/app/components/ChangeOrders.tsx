@@ -12,14 +12,21 @@ const signed = (v: number, f: (v: number) => string) => (v > 0 ? '+' : v < 0 ? '
 
 export function ClientChanges({ token, offered, cur }: { token: string; offered: number; cur: string }){
   const { t, lang } = usePrefs(), [list, setList] = useState<ChangeOrder[] | null>(null), box = useClientNameBox(token), [note, setNote] = useState<Record<string, string>>({}), [busy, setBusy] = useState(''), [msg, setMsg] = useState('');
+  // linkul cu PIN: decizia cere sesiunea PIN (401); clientul îl introduce aici și decizia se reia
+  const [pinFor, setPinFor] = useState<{ c: ChangeOrder; decision: 'approved' | 'rejected' } | null>(null), [pin, setPin] = useState('');
   const money = (v: number) => formatMoney(v, cur, lang, '—');
   const load = () => fetch(`/api/share/${token}/changes`).then(r => r.ok ? r.json() : []).then(setList).catch(() => setList([]));
   useEffect(() => { load(); }, [token]); // eslint-disable-line
   async function decide(c: ChangeOrder, decision: 'approved' | 'rejected'){
     const author = box.ensure(); if (!author){ setMsg(t('co.nameFirst')); return; } setBusy(c.id); setMsg('');
     try { const r = await fetch(`/api/share/${token}/changes/${c.id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ decision, author, note: note[c.id] ?? '', seen: c.sentAt }) }), j = await r.json().catch(() => ({}));
-      if (!r.ok){ setMsg(j.error || t('co.error')); } else { setMsg(t(decision === 'approved' ? 'co.thanksOk' : 'co.thanksNo')); }
+      if (r.status === 401){ setPinFor({ c, decision }); setMsg(j.error || t('co.error')); return; }
+      if (!r.ok){ setMsg(j.error || t('co.error')); } else { setPinFor(null); setMsg(t(decision === 'approved' ? 'co.thanksOk' : 'co.thanksNo')); }
       load(); } finally { setBusy(''); } }
+  async function unlock(e: React.FormEvent){ e.preventDefault(); if (!pinFor || !/^\d{6}$/.test(pin) || busy) return; setBusy('pin'); setMsg('');
+    try { const r = await fetch(`/api/share/${token}/pin`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ pin }) }), j = await r.json().catch(() => ({}));
+      if (!r.ok){ setMsg(j.error || t('co.error')); return; } } finally { setBusy(''); }
+    setPin(''); const next = pinFor; setPinFor(null); await decide(next.c, next.decision); }
   if (!list || list.length === 0) return null;
   const b = budgetWithChanges(offered, list), open = list.filter(c => c.status === 'sent'), done = list.filter(c => c.status !== 'sent');
   const when = (s: string) => new Date(s).toLocaleDateString(intlLocale(lang), { day: 'numeric', month: 'long' });
@@ -36,6 +43,8 @@ export function ClientChanges({ token, offered, cur }: { token: string; offered:
         <input className="cco-note" value={note[c.id] ?? ''} maxLength={1000} onChange={e => setNote(x => ({ ...x, [c.id]: e.target.value }))} placeholder={t('co.notePh')} aria-label={t('co.notePh')} />
         <div className="cco-act"><button className="btn primary" disabled={!!busy} onClick={() => decide(c, 'approved')}>{t('co.approve')}</button><button className="btn" disabled={!!busy} onClick={() => decide(c, 'rejected')}>{t('co.reject')}</button></div></article>)}
     </>}
+    {pinFor && <form className="cco-pin" onSubmit={unlock}><label>{t('pin.pinLabel')}<input inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} value={pin} onChange={e => setPin(e.target.value.replace(/\D/g, ''))} /></label>
+      <button className="btn primary" disabled={!!busy || pin.length !== 6}>{t('pin.unlock')}</button></form>}
     {msg && <p className="cco-msg" role="status">{msg}</p>}
     {done.length > 0 && <ul className="cco-done">{done.map(c => <li key={c.id}><span>{t('co.no', { n: c.number })} · {c.title}</span><span>{signed(c.amount, money)}</span>
       <small className={`co-st co-${c.status}`}>{t(`co.st.${c.status}`)}{c.decidedBy ? ` · ${c.decidedBy}` : ''}{c.decidedAt ? ` · ${when(c.decidedAt)}` : ''}{c.clientNote ? ` — „${c.clientNote}”` : ''}</small></li>)}</ul>}
