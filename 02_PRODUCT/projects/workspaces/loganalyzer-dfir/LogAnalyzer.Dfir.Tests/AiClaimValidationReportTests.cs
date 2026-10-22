@@ -58,7 +58,7 @@ public sealed class AiClaimValidationReportTests : IDisposable
         var ai = AiCaseAnalysis.ValidateAndStore(r, Fake(), Catalog());
 
         Assert.NotNull(ai.Validation);
-        Assert.Equal(["SUSTINUT", "PARTIAL", "NESUSTINUT", "NESUSTINUT", "SUSTINUT", "NESUSTINUT"], States(ai.Validation!));
+        Assert.Equal(["VALORI_CONFIRMATE", "PARTIAL", "NESUSTINUT", "NESUSTINUT", "VALORI_CONFIRMATE", "NESUSTINUT"], States(ai.Validation!));
         Assert.Equal(3, ai.Accepted.Count);
         Assert.All(ai.Accepted, s => Assert.NotNull(s.Validation));
         Assert.DoesNotContain(ai.Accepted, s => s.Validation!.State == ClaimState.Nesustinut);
@@ -115,14 +115,14 @@ public sealed class AiClaimValidationReportTests : IDisposable
         _c.Lab.Evidence("late");   // a new evidence item: the evidence set the validation was bound to is no longer the case's
         var stale = AiValidationStore.TryRead(r.Case.Root, out _)!.CheckAgainst(AiCaseFactsFactory.ForResult(r));
         Assert.True(stale.Stale);
-        Assert.False(stale.AllSustained);
+        Assert.False(stale.AllValuesConfirmed);
         Assert.All(stale.Claims, c => Assert.Equal(ClaimState.Neverificabil, c.State));
-        Assert.Contains(stale.Claims, c => c.StateAtValidation == ClaimState.Sustinut);
+        Assert.Contains(stale.Claims, c => c.StateAtValidation == ClaimState.ValoriConfirmate);
         Assert.Contains("probele cazului s-au schimbat", stale.StaleReason);
 
         var lines = AiValidationText.Lines(r.Case.Root, AiCaseFactsFactory.ForResult(r));
         Assert.Contains(lines, l => l.Heading && l.Text.Contains("ÎNVECHITĂ"));
-        Assert.DoesNotContain(lines, l => l.Text.StartsWith("[SUSTINUT]"));
+        Assert.DoesNotContain(lines, l => l.Text.StartsWith("[VALORI_CONFIRMATE]"));
     }
 
     [Fact]
@@ -138,7 +138,7 @@ public sealed class AiClaimValidationReportTests : IDisposable
     }
 
     [Fact]
-    public void Report_lines_mark_every_state_and_only_SUSTINUT_has_no_warning()
+    public void Report_lines_mark_every_state_and_every_line_has_a_caveat_or_warning()
     {
         var r = Result();
         AiCaseAnalysis.ValidateAndStore(r, Fake(), Catalog());
@@ -146,15 +146,16 @@ public sealed class AiClaimValidationReportTests : IDisposable
         var head = lines.First();
         Assert.True(head.Heading);
         Assert.Contains("6 afirmații", head.Text);
-        Assert.Contains("2 SUSTINUT", head.Text);
+        Assert.Contains("2 VALORI_CONFIRMATE", head.Text);
         Assert.Contains("1 PARTIAL", head.Text);
         Assert.Contains("3 NESUSTINUT", head.Text);
-        Assert.True(head.Warning);   // not all sustained
+        Assert.True(head.Warning);
 
         var statements = lines.Where(l => l.State is not null && !l.Heading).ToList();
         Assert.Equal(6, statements.Count);
-        Assert.All(statements.Where(l => l.State == ClaimState.Sustinut), l => { Assert.False(l.Warning); Assert.False(l.Struck); Assert.StartsWith("[SUSTINUT]", l.Text); });
-        Assert.All(statements.Where(l => l.State != ClaimState.Sustinut), l => Assert.True(l.Warning));
+        Assert.All(statements.Where(l => l.State == ClaimState.ValoriConfirmate),
+            l => { Assert.True(l.Warning); Assert.False(l.Struck); Assert.StartsWith("[VALORI_CONFIRMATE]", l.Text); Assert.Contains(ClaimStates.Caveat, l.Text); });
+        Assert.All(statements, l => Assert.True(l.Warning));
         var struck = statements.Where(l => l.Struck).ToList();
         Assert.Equal(3, struck.Count);
         Assert.All(struck, l => { Assert.StartsWith("[NESUSTINUT — nu este constatare]", l.Text); Assert.Contains("motiv:", l.Text); });
@@ -214,7 +215,7 @@ public sealed class AiClaimValidationReportTests : IDisposable
         AiCaseAnalysis.ValidateAndStore(r, Fake(), Catalog());
         var report = CaseVerifier.Evaluate(r.Case, new VerificationOptions());
         Assert.Equal(3, report.AiStatements.Count);
-        Assert.Contains(report.AiStatements, s => s.ClaimValidation == "SUSTINUT");
+        Assert.Contains(report.AiStatements, s => s.ClaimValidation == "VALORI_CONFIRMATE");
         Assert.Contains(report.AiStatements, s => s.ClaimValidation == "PARTIAL");
         Assert.DoesNotContain(report.AiStatements, s => s.ClaimValidation == "NESUSTINUT");
         Assert.DoesNotContain(report.AiStatements, s => s.Text.Contains("8.8.8.8"));

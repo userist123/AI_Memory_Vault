@@ -74,7 +74,7 @@ public sealed class AiStatementVerdict
     public List<string> Cites { get; set; } = [];
     public StandardState Verdict { get; set; } = StandardState.Unproven;
     public string Reason { get; set; } = "";
-    /// <summary>R22.5: the case-level claim validation state of this statement as written by the AI step (SUSTINUT / PARTIAL / NESUSTINUT / NEVERIFICABIL); NEVERIFICABIL when the file carries none.</summary>
+    /// <summary>R22.5: the case-level claim validation state of this statement as written by the AI step (VALORI_CONFIRMATE / PARTIAL / NESUSTINUT / NEVERIFICABIL); NEVERIFICABIL when the file carries none.</summary>
     public string ClaimValidation { get; set; } = "NEVERIFICABIL";
 }
 

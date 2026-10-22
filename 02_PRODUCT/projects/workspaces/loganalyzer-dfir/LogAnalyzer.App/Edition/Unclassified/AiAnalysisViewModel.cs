@@ -11,12 +11,14 @@ namespace LogAnalyzer.UI.ViewModels
     /// "Analiză AI (locală)": the optional explanation layer over a finished investigation. Part of the unclassified edition only;
     /// findings, timeline and graph never depend on it.
     /// </summary>
-    /// <summary>One validated AI statement as the grid shows it. Only SUSTINUT has no warning; NESUSTINUT (listed with the rejected) is shown struck with its reason.</summary>
+    /// <summary>One validated AI statement as the grid shows it. Every state carries a caveat or warning (VALORI_CONFIRMATE: only the cited values were confirmed, not the meaning); NESUSTINUT (listed with the rejected) is shown struck with its reason.</summary>
     public sealed class AiClaimRow
     {
         public string Section { get; init; } = "";
         public string Text { get; init; } = "";
         public string State { get; init; } = "";
+        /// <summary>What the statement is, whatever its validation says: a model statement, not a finding (the old "Clasificare" column).</summary>
+        public string Classification { get; init; } = "UNPROVEN (afirmație a modelului)";
         public string Warning { get; init; } = "";
         public int Citations { get; init; }
         public bool IsStruck { get; init; }
@@ -27,8 +29,8 @@ namespace LogAnalyzer.UI.ViewModels
             var state = v?.State ?? LogAnalyzer.Dfir.AI.ClaimState.Neverificabil;
             return new AiClaimRow
             {
-                Section = s.Section, Text = s.Text, State = LogAnalyzer.Dfir.AI.ClaimStates.ToSpec(state) + (v is null ? " (fără validare)" : ""), Citations = s.Citations.Count,
-                Warning = state == LogAnalyzer.Dfir.AI.ClaimState.Sustinut ? "" : (v?.Reason is { Length: > 0 } r ? r : "afirmația nu a trecut validarea la nivel de caz"),
+                Section = s.Section, Text = s.Text, State = LogAnalyzer.Dfir.AI.ClaimStates.ToDisplay(state) + (v is null ? " (fără validare)" : ""), Citations = s.Citations.Count,
+                Warning = state == LogAnalyzer.Dfir.AI.ClaimState.ValoriConfirmate ? LogAnalyzer.Dfir.AI.ClaimStates.Caveat : (v?.Reason is { Length: > 0 } r ? r : "afirmația nu a trecut validarea la nivel de caz"),
                 IsStruck = state == LogAnalyzer.Dfir.AI.ClaimState.Nesustinut,
             };
         }
@@ -45,7 +47,7 @@ namespace LogAnalyzer.UI.ViewModels
         // Local model (Ollama on this machine, loopback only).
         [ObservableProperty] private string _aiEndpoint = "http://127.0.0.1:11434";
         [ObservableProperty] private string _aiModel = "qwen3:30b-a3b";
-        [ObservableProperty] private string _aiStatus = "Analiza AI folosește doar un model local (Ollama, adresă loopback) și doar rezultatele verificate ale cazului. Fiecare afirmație trebuie să citeze probe; rezultatul rămâne UNPROVEN până îl verificați.";
+        [ObservableProperty] private string _aiStatus = "Analiza AI folosește doar un model local (Ollama, adresă loopback) și doar rezultatele verificate ale cazului. Fiecare afirmație trebuie să citeze probe; rezultatul rămâne UNPROVEN până îl verificați. Validarea confirmă doar valorile citate (timp, cale, hash, adresă, număr, utilizator, gazdă), nu sensul afirmației.";
 
         public AiAnalysisViewModel(InvestigationViewModel investigation) => _investigation = investigation;
 

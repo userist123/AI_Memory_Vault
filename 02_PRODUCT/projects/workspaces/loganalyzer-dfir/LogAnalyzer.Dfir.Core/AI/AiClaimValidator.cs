@@ -8,24 +8,32 @@ using System.Text.RegularExpressions;
 namespace LogAnalyzer.Dfir.AI;
 
 /// <summary>
-/// SUSTINUT: every cited item exists in THIS case and contains every checkable fact the claim states. PARTIAL: citations exist and nothing contradicts them,
-/// but the claim states nothing the validator can compare (only the citation is confirmed). NESUSTINUT: no citation, a citation to a missing / foreign /
-/// self-referential item, a fact that does not match, or instruction-like text. NEVERIFICABIL: the validator could not run (the cause is given) or the
-/// validation is stale. Only SUSTINUT may be shown without a warning; NESUSTINUT is never a finding.
+/// VALORI_CONFIRMATE: every cited item exists in THIS case and the cited record(s) contain every checkable VALUE the claim states. It never confirms the
+/// MEANING of the claim (a deterministic check compares values, not sense) and is never shown without <see cref="ClaimStates.Caveat"/>. PARTIAL: citations
+/// exist and nothing contradicts them, but the claim states nothing comparable, cites only an evidence file (not an event or finding), or contains a
+/// negation or an overall verdict whose sense cannot be checked. NESUSTINUT: no citation, a citation to a missing / foreign / self-referential item, a
+/// value that does not match, or instruction-like text. NEVERIFICABIL: the validator could not run (the cause is given) or the validation is stale or
+/// was modified. NESUSTINUT is never a finding.
 /// </summary>
 [JsonConverter(typeof(ClaimStateConverter))]
-public enum ClaimState { Sustinut, Partial, Nesustinut, Neverificabil }
+public enum ClaimState { ValoriConfirmate, Partial, Nesustinut, Neverificabil }
 
 public static class ClaimStates
 {
+    /// <summary>Shown next to every state, in particular next to the top one: what was and was not checked.</summary>
+    public const string Caveat = "afirmație a modelului, nu constatare; s-au confirmat doar valorile citate, nu sensul";
+
     public static string ToSpec(this ClaimState s) => s switch
     {
-        ClaimState.Sustinut => "SUSTINUT", ClaimState.Partial => "PARTIAL", ClaimState.Nesustinut => "NESUSTINUT", _ => "NEVERIFICABIL",
+        ClaimState.ValoriConfirmate => "VALORI_CONFIRMATE", ClaimState.Partial => "PARTIAL", ClaimState.Nesustinut => "NESUSTINUT", _ => "NEVERIFICABIL",
     };
+
+    /// <summary>The wording for screens: the top state reads "valori confirmate", the others keep their spec word.</summary>
+    public static string ToDisplay(this ClaimState s) => s == ClaimState.ValoriConfirmate ? "valori confirmate" : s.ToSpec();
 
     public static ClaimState Parse(string? s) => s?.Trim().ToUpperInvariant() switch
     {
-        "SUSTINUT" => ClaimState.Sustinut, "PARTIAL" => ClaimState.Partial, "NESUSTINUT" => ClaimState.Nesustinut, _ => ClaimState.Neverificabil,
+        "VALORI_CONFIRMATE" => ClaimState.ValoriConfirmate, "PARTIAL" => ClaimState.Partial, "NESUSTINUT" => ClaimState.Nesustinut, _ => ClaimState.Neverificabil,
     };
 }
 
@@ -41,11 +49,13 @@ public sealed record AiClaimInput(string Section, string Text, IReadOnlyList<str
 /// <summary>One fact found in a claim and whether the cited items contain it.</summary>
 public sealed record ClaimFactCheck(string Kind, string Value, bool Matched, string Note = "");
 
-/// <summary>The verdict on one claim. <see cref="Reason"/> is always filled for anything but SUSTINUT.</summary>
+/// <summary>The verdict on one claim. <see cref="Reason"/> is always filled for anything but VALORI_CONFIRMATE (which carries <see cref="ClaimStates.Caveat"/> instead).</summary>
 public sealed record ValidatedClaim(string Section, string Text, IReadOnlyList<string> Cites, ClaimState State, string Reason, IReadOnlyList<ClaimFactCheck> Facts)
 {
-    /// <summary>Only a SUSTINUT claim may be presented as a statement of the analysis; the others carry a warning or are struck.</summary>
-    [JsonIgnore] public bool NeedsWarning => State != ClaimState.Sustinut;
+    /// <summary>Every state carries a caveat or warning: even VALORI_CONFIRMATE is a model statement whose values were compared, not a finding.</summary>
+    [JsonIgnore] public bool NeedsWarning => true;
+    /// <summary>The text shown next to the state: the reason, or for VALORI_CONFIRMATE the caveat.</summary>
+    [JsonIgnore] public string Notice => State == ClaimState.ValoriConfirmate ? ClaimStates.Caveat : Reason;
     /// <summary>NESUSTINUT is shown struck through with its reason and is never a finding.</summary>
     [JsonIgnore] public bool IsStruck => State == ClaimState.Nesustinut;
     [JsonIgnore] public string Label => State.ToSpec();
@@ -72,15 +82,17 @@ public sealed class AiValidationResult
     public string Method { get; init; } = MethodText;
 
     public const string MethodText =
-        "Verificare deterministă față de cazul curent: citările trebuie să existe în acest caz, iar valorile citate (timp, cale, hash, adresă, număr) să apară exact " +
-        "în elementele citate; numerele de tip „N evenimente / constatări / probe” sunt recalculate din caz. Fără model folosit ca judecător.";
+        "Verificare deterministă față de cazul curent: citările trebuie să existe în acest caz, iar valorile citate (timp, cale, hash, adresă, număr, utilizator, gazdă, " +
+        "tehnică MITRE, port) să apară exact în evenimentul sau constatarea citată (o citare doar la fișier confirmă cel mult parțial); numerele de tip " +
+        "„N evenimente / constatări / probe” sunt recalculate din caz. Se confirmă VALORI, niciodată sensul; negațiile și concluziile globale nu pot fi confirmate. " +
+        "Fără model folosit ca judecător.";
 
     public Dictionary<string, int> Counts => Enum.GetValues<ClaimState>().ToDictionary(s => s.ToSpec(), s => Claims.Count(c => c.State == s));
-    [JsonIgnore] public int Sustained => Claims.Count(c => c.State == ClaimState.Sustinut);
-    [JsonIgnore] public bool AllSustained => Claims.Count > 0 && Claims.All(c => c.State == ClaimState.Sustinut) && !Stale;
+    [JsonIgnore] public int ValuesConfirmed => Claims.Count(c => c.State == ClaimState.ValoriConfirmate);
+    [JsonIgnore] public bool AllValuesConfirmed => Claims.Count > 0 && Claims.All(c => c.State == ClaimState.ValoriConfirmate) && !Stale;
 
     public string SummaryRomanian =>
-        $"Validarea afirmațiilor AI față de caz: {Claims.Count} afirmații — {Sustained} SUSTINUT, {Claims.Count(c => c.State == ClaimState.Partial)} PARTIAL, " +
+        $"Validarea afirmațiilor AI față de caz: {Claims.Count} afirmații — {ValuesConfirmed} VALORI_CONFIRMATE (valori citate confirmate, nu sensul), {Claims.Count(c => c.State == ClaimState.Partial)} PARTIAL, " +
         $"{Claims.Count(c => c.State == ClaimState.Nesustinut)} NESUSTINUT, {Claims.Count(c => c.State == ClaimState.Neverificabil)} NEVERIFICABIL" +
         (Stale ? $". VALIDARE ÎNVECHITĂ: {StaleReason}" : "") + ".";
 
@@ -90,6 +102,7 @@ public sealed class AiValidationResult
     /// </summary>
     public AiValidationResult CheckAgainst(IAiCaseFacts current)
     {
+        if (Stale) return this;   // already stale (or modified): keep the first cause
         string now, why = "";
         try { now = current.EvidenceBindingSha256; }
         catch (Exception ex) { now = ""; why = $"legătura cu probele nu a putut fi recalculată ({ex.GetType().Name})"; }
@@ -172,18 +185,45 @@ public static class AiClaimValidator
 
     private static readonly Regex SelfReference = new(@"^(ai[-_:#]|ai$)|ai_(reasoning|raw_response|catalog|validation)|Analysis[/\\]ai_|^(S|AI|MODEL|ANS|RASPUNS)[-_]?\d+$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+    // Imperative instructions aimed at the assistant. "act as" alone is ordinary language ("can act as a host"); only "act as" + an assistant/role word counts.
     private static readonly Regex Injection = new(
         @"ignor\w*\s+(all\s+|toate\s+)?(the\s+)?(previous|prior|above|earlier|anterioare|precedente)|ignor\w*\s+.{0,20}(instruc|prompt)|disregard\s+.{0,30}(instruction|rule|above)|" +
         @"mark\s+(all|everything|the\s+case)\s+.{0,20}(clean|safe|benign|harmless)|marchează\s+.{0,30}(curat|inofensiv|benign|sigur)|" +
-        @"(system|developer)\s+prompt|you\s+are\s+now\b|\bact\s+as\b|do\s+not\s+report|nu\s+raporta|override\s+(the\s+)?(rules|instructions|policy)|new\s+instructions?|instruc\w+\s+noi",
+        @"(system|developer)\s+prompt|you\s+are\s+now\b|\bact\s+as\s+(an?\s+|the\s+)?(assistant|ai\b|model|llm|chatbot|admin|administrator|root|jailbr|unrestricted|dan\b)|" +
+        @"do\s+not\s+report|nu\s+raporta|override\s+(the\s+)?(rules|instructions|policy)|new\s+instructions?|instruc\w+\s+noi",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    // A negation or an overall verdict changes the MEANING of a claim; the validator compares values only, so such a claim cannot reach VALORI_CONFIRMATE.
+    private static readonly Regex NegationOrVerdict = new(
+        @"(?<![\p{L}\p{N}_])(nu|niciodat[aă]|f[aă]r[aă]|nimic|nici|nicio|nicun[a]?|not|never|no|none|without|cannot|neither|nor|" +
+        @"benign\w*|curat\w*|sigur\w*|compromis\w*|compromised|clean|malicious|mali[tț]io\w*|safe|harmless|inofensiv\w*)(?![\p{L}\p{N}_])|n['’]t\b",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    internal const string NegationReason = "conține o negație sau o concluzie: sensul nu poate fi verificat automat";
+    internal const string EvidenceOnlyReason = "citează doar fișierul, nu evenimentul sau constatarea: valorile nu sunt legate de un singur înregistrare";
+    internal const string InjectionGeneric = "conține text de tip instrucțiune (posibilă injecție din probe sau din model); nu este tratat ca instrucțiune și nu este o constatare";
+    internal const string InjectionQuoted = "citatul există în probă, dar conține text de tip instrucțiune; afișat ca citat, nu ca afirmație confirmată";
+
+    private static string InjectionReason(AiClaimInput c, IReadOnlyList<string> cites, IAiCaseFacts facts)
+    {
+        var recs = new List<AiCaseRecord>();
+        foreach (var id in cites)
+        {
+            if (SelfReference.IsMatch(id)) continue;
+            var r = facts.Find(id);
+            if (r is not null && (r.CaseId.Length == 0 || string.Equals(r.CaseId, facts.CaseId, StringComparison.Ordinal))) recs.Add(r);
+        }
+        if (recs.Count == 0) return InjectionGeneric;
+        var candidates = ClaimFacts.QuotedValues(c.Text).Where(q => Injection.IsMatch(q)).ToList();
+        if (candidates.Count == 0) candidates = Injection.Matches(c.Text).Select(m => m.Value.Trim()).ToList();
+        bool present = candidates.Any(q => q.Length > 0 && recs.Any(r => r.Blob.Contains(q, StringComparison.OrdinalIgnoreCase)));
+        return present ? InjectionQuoted : InjectionGeneric;
+    }
 
     private static ValidatedClaim ValidateOne(AiClaimInput c, IAiCaseFacts facts)
     {
         if (string.IsNullOrWhiteSpace(c.Text)) return Make(c, ClaimState.Nesustinut, "afirmație goală", []);
-        if (Injection.IsMatch(c.Text))
-            return Make(c, ClaimState.Nesustinut, "conține text de tip instrucțiune (posibilă injecție din probe sau din model); nu este tratat ca instrucțiune și nu este o constatare", []);
         var cites = c.Cites.Select(x => x?.Trim().Trim('[', ']') ?? "").Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (Injection.IsMatch(c.Text)) return Make(c, ClaimState.Nesustinut, InjectionReason(c, cites, facts), []);
         if (cites.Count == 0) return Make(c, ClaimState.Nesustinut, "nu citează nicio probă din caz", []);
 
         var cited = new List<AiCaseRecord>();
@@ -198,13 +238,21 @@ public static class AiClaimValidator
         }
         if (problems.Count > 0) return Make(c, ClaimState.Nesustinut, "citare nevalidă — " + string.Join("; ", problems), []);
 
-        var checks = ClaimFacts.Check(c.Text, cited);
+        // Values are compared against the specific cited records (events, findings, ...). An evidence FILE holds every event of that file, so a value found "somewhere in
+        // the file" says nothing about the event the claim talks about: such a claim is compared against the file but can reach PARTIAL at most.
+        var specific = cited.Where(r => r.Kind != "evidence").ToList();
+        var basis = specific.Count > 0 ? specific : cited;
+        var checks = ClaimFacts.Check(c.Text, basis);
         var bad = checks.Where(f => !f.Matched).ToList();
         if (bad.Count > 0)
             return Make(c, ClaimState.Nesustinut, "valori care nu apar exact în elementele citate — " + string.Join("; ", bad.Select(b => $"{b.Kind} „{b.Value}”" + (b.Note.Length > 0 ? " (" + b.Note + ")" : ""))), checks);
         if (checks.Count == 0)
             return Make(c, ClaimState.Partial, "citările există în caz, dar afirmația nu conține valori pe care validatorul să le poată compara determinist (timp, cale, hash, adresă, număr, valoare între ghilimele)", checks);
-        return Make(c, ClaimState.Sustinut, "", checks);
+        var caps = new List<string>();
+        if (specific.Count == 0) caps.Add(EvidenceOnlyReason);
+        if (NegationOrVerdict.IsMatch(c.Text)) caps.Add(NegationReason);
+        if (caps.Count > 0) return Make(c, ClaimState.Partial, string.Join("; ", caps), checks);
+        return Make(c, ClaimState.ValoriConfirmate, "", checks);
     }
 }
 
@@ -214,7 +262,35 @@ internal static class ClaimFacts
     private static readonly Regex Timestamp = new(@"\b(?<d>\d{4}-\d{2}-\d{2})[T ](?<h>\d{2}):(?<m>\d{2})(?::(?<s>\d{2})(?:\.(?<f>\d{1,7}))?)?(?<z>Z|[+-]\d{2}:?\d{2})?(?![\d])", RegexOptions.Compiled);
     private static readonly Regex DateOnly = new(@"\b\d{4}-\d{2}-\d{2}\b", RegexOptions.Compiled);
     private static readonly Regex Hash = new(@"\b[0-9a-fA-F]{12,128}\b", RegexOptions.Compiled);
-    private static readonly Regex Ipv4 = new(@"(?<![\d.])(?:\d{1,3}\.){3}\d{1,3}(?![\d]|\.\d)", RegexOptions.Compiled);
+    private static readonly Regex Ipv4 = new(@"(?<![\d.])(?<ip>(?:\d{1,3}\.){3}\d{1,3})(?![\d]|\.\d)(?::(?<port>\d{1,5})(?![\d\w]))?", RegexOptions.Compiled);
+    private static readonly Regex EmailLike = new(@"(?<![\w.\-])[\w.\-]{1,64}@[A-Za-z0-9][A-Za-z0-9.\-]{0,100}[A-Za-z0-9](?![\w@])", RegexOptions.Compiled);
+    private static readonly Regex DomainUser = new(@"(?<![\w\\])(?<d>[A-Za-z][\w\-]{0,30})\\(?<u>[A-Za-z0-9][\w.$\-]{0,40})(?![\w\\])", RegexOptions.Compiled);
+    private static readonly Regex Mitre = new(@"(?<![\w.])T\d{4}(?:\.\d{3})?(?![\w]|\.\d)", RegexOptions.Compiled);
+    private static readonly Regex Fqdn = new(@"(?<![\w.\-])(?=[A-Za-z0-9\-]*[A-Za-z])[A-Za-z0-9\-]+(?:\.[A-Za-z0-9\-]+)+\.[A-Za-z]{2,}(?![\w\-])", RegexOptions.Compiled);
+    private static readonly Regex UserKeyword = new(@"(?<![\p{L}\d])(?:utilizatorul|utilizatorului|utilizator|username|user|contul|account)\s*[:=]?\s*(?<v>[\p{L}\d][\w.$\-]{0,40})", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex HostKeyword = new(@"(?<![\p{L}\d])(?:hostul|host|hostname|stația|statia|calculatorul|computerul|computer|serverul|server|mașina|masina|machine|workstation)\s*[:=]?\s*(?<v>[A-Za-z0-9][\w\-]{1,62}(?:\.[A-Za-z0-9][\w\-]*)*)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex PortKeyword = new(@"(?<![\p{L}\d])port(?:ul|uri|urile|s)?\s*[:=]?\s*(?<p>\d{1,5})(?![\d\w])", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex Times = new(
+        @"(?<n>\d{1,3}(?:[.,]\d{3})+|\d+)\s+(?:de\s+)?(?<w>ori|times|sesiuni|sesiune|conexiuni|conexiune|logări|logare|autentificări|autentificare|încercări|încercare|accesări|accesare|procese|proces|fișiere|fișier|utilizatori|attempts?|connections?|sessions?|logons?|logins?|processes|files|users|hosts?|gazde|hosturi)(?![\p{L}\d])",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    /// <summary>Words that follow "user" / "host" in ordinary prose and are not names (verbs, articles, prepositions); best effort, a name that is one of them is not compared.</summary>
+    private static readonly HashSet<string> NotNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "a", "au", "ai", "am", "are", "as", "este", "sunt", "era", "fost", "fi", "va", "să", "sa", "se", "si", "și", "sau", "dar", "nu", "cu", "de", "din", "în", "in", "la", "pe", "prin", "pentru", "către",
+        "care", "ce", "un", "o", "unui", "unei", "the", "is", "was", "were", "be", "been", "has", "had", "have", "did", "does", "do", "can", "could", "will", "would", "may", "might", "must", "should",
+        "and", "or", "on", "of", "to", "for", "from", "by", "with", "at", "in", "into", "that", "who", "which", "also", "then", "not", "never", "this", "these", "those", "its", "their",
+        "s-a", "și-a", "ul", "ului", "lui", "lor", "respectiv", "însuși", "insusi", "local", "remote", "name", "nume", "numele", "id", "ip", "account", "cont", "host", "user", "server", "computer", "machine",
+    };
+
+    private static bool LooksLikeNoun(string v) =>
+        !NotNames.Contains(v) && !(v.Length > 4 && (v.EndsWith("ed", StringComparison.OrdinalIgnoreCase) || v.EndsWith("ing", StringComparison.OrdinalIgnoreCase) ||
+                                                       v.EndsWith("ează", StringComparison.OrdinalIgnoreCase) || v.EndsWith("ește", StringComparison.OrdinalIgnoreCase)));
+
+    /// <summary>The quoted values of a text (the same extraction the fact check uses).</summary>
+    internal static List<string> QuotedValues(string text) =>
+        Quoted.Matches(text).Select(m => (m.Groups["a"].Success ? m.Groups["a"] : m.Groups["b"].Success ? m.Groups["b"] : m.Groups["c"].Success ? m.Groups["c"] : m.Groups["d"].Success ? m.Groups["d"] : m.Groups["e"]).Value.Trim())
+              .Where(v => v.Length > 0).ToList();
     private static readonly Regex WinPath = new(@"(?<![\w])[A-Za-z]:[\\/][^\s""'<>|*?„”“«»`]*[^\s""'<>|*?„”“«»`.,;:!)\]]|\\\\[\w.$-]+\\[^\s""'<>|*?„”“«»`]*[^\s""'<>|*?„”“«»`.,;:!)\]]", RegexOptions.Compiled);
     private static readonly Regex Quoted = new(@"„(?<a>[^”""]{1,300})[”""]|""(?<b>[^""]{1,300})""|“(?<c>[^”]{1,300})”|«(?<d>[^»]{1,300})»|`(?<e>[^`]{1,300})`", RegexOptions.Compiled);
     private static readonly Regex FileName = new(@"\b[\w\-.]+\.(?:exe|dll|sys|ps1|bat|cmd|vbs|js|hta|msi|zip|rar|7z|lnk|evtx|pf|scr|tmp|dat|log|txt|docx?|xlsx?|pdf|iso|vhdx?|jar|py|sh)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled);
@@ -228,7 +304,7 @@ internal static class ClaimFacts
     {
         var checks = new List<ClaimFactCheck>();
         var rest = new StringBuilder(text);
-        void Blank(Match m) { for (int i = m.Index; i < m.Index + m.Length; i++) rest[i] = ' '; }
+        void Blank(Group m) { for (int i = m.Index; i < m.Index + m.Length; i++) rest[i] = ' '; }
         bool InAny(string token, bool norm = false) => cited.Any(r => ContainsBounded(norm ? r.BlobNormalized : r.Blob, norm ? token.Replace('/', '\\') : token));
 
         // quoted values first (a quoted path or name is one value)
@@ -265,9 +341,23 @@ internal static class ClaimFacts
             checks.Add(new ClaimFactCheck("hash", v, ok));
             Blank(m);
         }
+        foreach (Match m in EmailLike.Matches(rest.ToString()))
+        {
+            var at = m.Value.IndexOf('@');
+            bool ok = InAny(m.Value) || InAny(m.Value[..at]) && InAny(m.Value[(at + 1)..]);
+            checks.Add(new ClaimFactCheck("utilizator", m.Value, ok));
+            Blank(m);
+        }
         foreach (Match m in Ipv4.Matches(rest.ToString()))
         {
-            checks.Add(new ClaimFactCheck("adresă IP", m.Value, InAny(m.Value)));
+            checks.Add(new ClaimFactCheck("adresă IP", m.Groups["ip"].Value, InAny(m.Groups["ip"].Value)));
+            if (m.Groups["port"].Success) checks.Add(new ClaimFactCheck("port", m.Groups["port"].Value, InAny(m.Groups["port"].Value)));
+            Blank(m);
+        }
+        foreach (Match m in Mitre.Matches(rest.ToString()))
+        {
+            bool ok = InAny(m.Value) || !m.Value.Contains('.') && cited.Any(r => Regex.IsMatch(r.Blob, Regex.Escape(m.Value) + @"\.\d{3}(?![\w])", RegexOptions.IgnoreCase));   // a technique id matches its sub-technique
+            checks.Add(new ClaimFactCheck("tehnică MITRE", m.Value, ok));
             Blank(m);
         }
         foreach (Match m in FileName.Matches(rest.ToString()))
@@ -280,6 +370,22 @@ internal static class ClaimFacts
             checks.Add(new ClaimFactCheck("domeniu", m.Value, InAny(m.Value)));
             Blank(m);
         }
+        foreach (Match m in Fqdn.Matches(rest.ToString()))
+        {
+            checks.Add(new ClaimFactCheck("gazdă", m.Value, InAny(m.Value)));
+            Blank(m);
+        }
+        foreach (Match m in DomainUser.Matches(rest.ToString()))
+        {
+            bool ok = InAny(m.Value, norm: true) || InAny(m.Groups["d"].Value) && InAny(m.Groups["u"].Value);
+            checks.Add(new ClaimFactCheck("utilizator", m.Value, ok));
+            Blank(m);
+        }
+        foreach (Match m in PortKeyword.Matches(rest.ToString()))
+        {
+            checks.Add(new ClaimFactCheck("port", m.Groups["p"].Value, InAny(m.Groups["p"].Value)));
+            Blank(m);
+        }
         foreach (Match m in Count.Matches(rest.ToString()))
         {
             var n = ParseInt(m.Groups["n"].Value);
@@ -288,6 +394,28 @@ internal static class ClaimFacts
             bool ok = n is { } v && allowed.Contains(v);
             checks.Add(new ClaimFactCheck("număr", m.Value, ok, ok ? "" : $"în caz, pentru elementele citate: {string.Join(" sau ", allowed.OrderBy(x => x))}"));
             Blank(m);
+        }
+        // counts of things the case does not recompute ("de 50 de ori", "3 conexiuni"): the number itself must occur in the cited record
+        foreach (Match m in Times.Matches(rest.ToString()))
+        {
+            var digits = new string(m.Groups["n"].Value.Where(char.IsDigit).ToArray());
+            bool ok = InAny(m.Groups["n"].Value) || InAny(digits);
+            checks.Add(new ClaimFactCheck("număr", m.Value, ok, ok ? "" : "numărul nu apare în elementul citat"));
+            Blank(m);
+        }
+        foreach (Match m in UserKeyword.Matches(rest.ToString()))
+        {
+            var v = m.Groups["v"].Value.TrimEnd('.', '-', '$');
+            if (v.Length < 2 || !LooksLikeNoun(v)) continue;
+            checks.Add(new ClaimFactCheck("utilizator", v, InAny(v)));
+            Blank(m.Groups["v"]);
+        }
+        foreach (Match m in HostKeyword.Matches(rest.ToString()))
+        {
+            var v = m.Groups["v"].Value.TrimEnd('.', '-');
+            if (v.Length < 2 || !LooksLikeNoun(v)) continue;
+            checks.Add(new ClaimFactCheck("gazdă", v, InAny(v)));
+            Blank(m.Groups["v"]);
         }
         foreach (Match m in BareNumber.Matches(rest.ToString()))
         {

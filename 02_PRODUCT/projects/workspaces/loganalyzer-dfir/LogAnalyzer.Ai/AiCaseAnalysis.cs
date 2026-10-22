@@ -72,7 +72,7 @@ public static class AiCaseAnalysis
             at += ins.Count;
             if (mine.Count == 0) continue;
             var worst = mine.OrderByDescending(c => Rank(c.State)).First().State;
-            var reason = string.Join(" | ", mine.Where(c => c.State != ClaimState.Sustinut).Select(c => c.Reason).Where(x => x.Length > 0).Distinct());
+            var reason = string.Join(" | ", mine.Where(c => c.State != ClaimState.ValoriConfirmate).Select(c => c.Reason).Where(x => x.Length > 0).Distinct());
             var agg = new ValidatedClaim(st.Section, st.Text, st.Citations.Select(c => c.Item).ToList(), worst, reason, mine.SelectMany(c => c.Facts).ToList());
             if (worst == ClaimState.Nesustinut) rejected.Add(new RejectedStatement(st.Section, st.Text, agg.Cites, "validare la nivel de caz: " + reason));
             else accepted.Add(st with { Validation = agg });
