@@ -3,6 +3,7 @@ import { readAuth, checkPassword, makeSession, takeLoginAttempt, loginSucceeded,
 import { sameOriginJson } from '@/lib/public-gate';
 import { readJsonLimited } from '@/lib/body-limit';
 import { HttpError } from '@/lib/repo';
+import { wantsSecureCookie } from '@/lib/share-public-http';
 export const dynamic = 'force-dynamic';
 const H = { 'cache-control': 'no-store', 'x-robots-tag': 'noindex' };
 // Login de pe telefon: parola setată pe calculatorul designerului. La reușită primești sesiunea și proiectele lui.
@@ -17,7 +18,8 @@ export const POST = async (req: Request) => {
     const b = await readJsonLimited(req, 2048) as any;
     if (!(await checkPassword(cfg, b?.password))) throw new HttpError(401, 'Parolă greșită.');
     loginSucceeded(ip);
-    const res = NextResponse.json({ ok: true }, { headers: H }), secure = process.env.NODE_ENV === 'production';
+    // Secure în producție; în dev, doar pentru cererile venite prin tunel sau pe https (local pe http rămâne fără)
+    const res = NextResponse.json({ ok: true }, { headers: H }), secure = process.env.NODE_ENV === 'production' || wantsSecureCookie(req);
     res.cookies.set(SESSION_COOKIE, makeSession(cfg), { httpOnly: true, sameSite: 'lax', secure, path: '/', maxAge: SESSION_DAYS * 86400 });
     res.cookies.set('casa_owner', cfg.owner, { httpOnly: true, sameSite: 'lax', secure, path: '/', maxAge: 60 * 60 * 24 * 365 * 2 });
     return res;

@@ -100,13 +100,20 @@ test('P3: sesiunea e semnată per link, expiră și moare la PIN nou sau dezacti
   void room;
 });
 
-test('P3/P9: ruta /pin pune cookie HttpOnly, SameSite=Strict, pe calea linkului, 12h; Secure doar pe https', async () => {
+test('P3/P9: ruta /pin pune cookie HttpOnly, SameSite=Strict, pe calea linkului, 12h; Secure prin tunel sau pe https', async () => {
   const { id, token, room } = await shared(), { pin } = await setSharePin(A, id, token);
+  // prin tunel (cf-connecting-ip), chiar fără x-forwarded-proto: Secure — nu depinde de antetul pus de tunel
   const res = await pinPOST(req(`/api/share/${token}/pin`, { pin }), ctx(token)); assert.equal(res.status, 200);
   const c = res.headers.get('set-cookie')!;
-  assert.match(c, new RegExp(`^${PIN_COOKIE}=\\d{13}\\.[\\w-]{43}; Path=/api/share/${token}; Max-Age=43200; HttpOnly; SameSite=Strict$`));
+  assert.match(c, new RegExp(`^${PIN_COOKIE}=\\d{13}\\.[\\w-]{43}; Path=/api/share/${token}; Max-Age=43200; HttpOnly; SameSite=Strict; Secure$`));
   assert.equal(res.headers.get('cache-control'), 'no-store');
-  const sec = await pinPOST(req(`/api/share/${token}/pin`, { pin }, { 'x-forwarded-proto': 'https' }), ctx(token)); assert.match(sec.headers.get('set-cookie')!, /; Secure$/);
+  const local = (headers: Record<string, string> = {}) => pinPOST(new Request(`http://localhost/api/share/${token}/pin`, { method: 'POST',
+    headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify({ pin }) }), ctx(token));
+  // pe acest calculator, pe http: fără Secure (altfel cookie-ul n-ar merge pe http://localhost în toate browserele)
+  assert.match((await local()).headers.get('set-cookie')!, /; SameSite=Strict$/);
+  // https declarat: Secure; o gazdă nelocală în x-forwarded-host (venită prin tunel) tot Secure
+  assert.match((await local({ 'x-forwarded-proto': 'https' })).headers.get('set-cookie')!, /; Secure$/);
+  assert.match((await local({ 'x-forwarded-host': 'casa.example' })).headers.get('set-cookie')!, /; Secure$/);
   // cookie-ul deschide /pins
   const ok = await pinsPOST(req(`/api/share/${token}/pins`, { ...pin_, roomId: room, anchor: { surface: 'room', u: 0.5, v: 0.25 } }, { cookie: `other=1; ${cookieOf(res)}` }), ctx(token));
   assert.equal(ok.status, 201); const j = await ok.json(); assert.deepEqual(j.anchor, { surface: 'room', u: 0.5, v: 0.25 });

@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server';
 import { HttpError } from './repo';
 import { PinLockedError } from './share-pin';
+import { isLocalRequest } from './public-gate';
 export const PUBLIC_HEADERS = { 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } as const;
 /** Corpul trebuie să fie JSON (un formular străin nu poate trimite application/json fără preflight CORS). */
 export const isJsonRequest = (req: Request) => /^application\/json(;|$)/i.test(req.headers.get('content-type') ?? '');
@@ -15,3 +16,8 @@ export function publicFail(e: unknown){
 /** Cererea a venit pe https (direct sau prin tunel): cookie-ul primește Secure. */
 export const isHttps = (req: Request) => { try { if (new URL(req.url).protocol === 'https:') return true; } catch { /* adresă relativă */ }
   return (req.headers.get('x-forwarded-proto') ?? '').split(',')[0]!.trim().toLowerCase() === 'https'; };
+/** Cookie-ul primește Secure pe https sau când cererea nu e de pe acest calculator (a venit prin tunel, care e pe https):
+ *  nu depinde de x-forwarded-proto. Un antet fals poate doar adăuga Secure, niciodată să-l scoată pentru o cerere din tunel. */
+export const wantsSecureCookie = (req: Request) => { if (isHttps(req)) return true;
+  let host = req.headers.get('host'); if (!host) try { host = new URL(req.url).host; } catch { host = null; }
+  return !isLocalRequest(host, req.headers); };
