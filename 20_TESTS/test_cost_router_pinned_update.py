@@ -264,7 +264,7 @@ def test_p4_truncated_blob_reads_fail_verification(env, monkeypatch):
 
 # ---- P5 bad manifest keys ----------------------------------------------------------------------------------------
 
-@pytest.mark.parametrize("key", ["../x", "/abs", "C:/x", "a\\b", "", ".", "README.md", PIN_PATH,
+@pytest.mark.parametrize("key", ["../x", "/abs", "C:/x", "a\\b", "", ".", "README.md", PIN_PATH,  # hygiene: intentional-absolute-path
                                  ".claude/skills/cost-router/../../x", ".claude/skills/cost-router//x",
                                  ".claude/skills/cost-router/./x", ".claude/skills/cost-router/a\x00b",
                                  ".claude/skills-evil/x", "04_CONFIG/claude_model_routing.json/../../x"])
