@@ -57,7 +57,19 @@
 | Investigation PDF | no AI text | validated AI section (summary, warnings, struck NESUSTINUT, stale notice) |
 | Vault export / other PDFs / CSV | no AI text | unchanged, listed in the registry test (must not touch raw AI text) |
 
+- 2026-10-22 WP4 review round 1 (Opus) + design decision (main session): a deterministic validator confirms VALUES, never MEANING. Fixes (vault-worker):
+  (A) top state SUSTINUT -> VALORI_CONFIRMATE ("valori confirmate"), always with caveat `ClaimStates.Caveat`; AI screen has "Clasificare" (UNPROVEN) + "Validare";
+  (B) values matched against the cited event/finding only (evidence file alone -> PARTIAL "citează doar fișierul, nu evenimentul"; the file never lends other events' values);
+  (C) extraction of users (domain-user, user@host, keyword), hosts (keyword, FQDN), MITRE ids (sub-technique accepted), ports, "de N ori"/"N conexiuni";
+  (D) negation / verdict words -> PARTIAL "sensul nu poate fi verificat automat"; (E) `AiClaims` (verification.json) applies CheckAgainst + custody check, never
+  VALORI_CONFIRMATE next to REJECTED/CONTRADICTED; (F) injection reason says when the quote is in the evidence, "act as" no longer matches alone;
+  (G) `AiValidationStore.TryRead` checks custody SHA-256 (mismatch / no entry -> all NEVERIFICABIL "fișierul de validare a fost modificat");
+  (H) App.Tests scan fails on ANY App type reading raw AI types besides AiAnalysisViewModel/AiClaimRow. Tests: `AiClaimValidationReview{,Report}Tests` (Dfir.Tests).
+  Tests: Dfir 2260/31/0, App 644, UI 354, Edition 45 (one ResponseVerificationTests timing flake seen once, passes on rerun).
+  Residuals: extraction is best effort (names in prose without keyword not compared; fixed negation word list; stoplist after "user"/"host"); statement-level state in
+  ai_reasoning.json is not cross-checked claim by claim against ai_validation.json (only the validation file's custody hash + evidence binding). Round 2 = delta only.
+
 ## Next
 - Opus `vault-reviewer` round 2 on the WP9 fix delta only (max 2 rounds), then main session decides. Residuals: IL scan excludes WPF assemblies and delegate-injected
   primitives; `NotVerified` incidents are not re-contained automatically; LIVE case is opened for station-wide defense audit.
-- WP4 needs an Opus `vault-reviewer` pass (risk: extractor false negatives; unrecognised fact kinds are not compared). Next: findings register + notices + docs (item 3).
+- WP4 review round 1 fixed (above); round 2 (delta only) optional. Next: findings register + notices + docs (item 3).

@@ -36,13 +36,20 @@ verifice. Nimic din ce scrie modelul nu modifică constatările sau clasificări
 ## Validarea la nivel de caz (WP4, R22.5)
 
 După verificările de mai sus, fiecare afirmație trece prin `AiClaimValidator` (determinist, fără model-judecător, fără rețea) față de cazul
-curent: citările trebuie să existe în acest caz, iar valorile afirmate (timp, cale, hash, adresă, nume de fișier, valoare între ghilimele,
-numere) trebuie să apară exact în elementele citate; numerele „N evenimente / constatări / probe” sunt recalculate din caz. Stări:
-**SUSTINUT** (singura fără avertisment), **PARTIAL** (citările există, dar nu e nimic comparabil), **NESUSTINUT** (fără citare, citare
-inexistentă / din alt caz / la propriul răspuns AI, valoare care nu se potrivește, text de tip instrucțiune; apare tăiată, cu motivul, în
-lista respinselor, niciodată ca constatare), **NEVERIFICABIL** (validatorul nu a putut rula, cu cauza, sau validarea e învechită).
+curent. Validatorul confirmă **valori**, niciodată **sensul**: citările trebuie să existe în acest caz, iar valorile afirmate (timp, cale, hash,
+adresă și port, nume de fișier, utilizator, gazdă, tehnică MITRE, valoare între ghilimele, numere) trebuie să apară exact în **evenimentul sau
+constatarea citată** (nu doar undeva în fișierul de probă); numerele „N evenimente / constatări / probe” sunt recalculate din caz, iar „de N ori”
+sau „N conexiuni” trebuie să apară în elementul citat. Stări:
+**VALORI_CONFIRMATE** (afișat „valori confirmate”; mereu cu avertismentul „afirmație a modelului, nu constatare; s-au confirmat doar valorile
+citate, nu sensul”), **PARTIAL** (citările există dar nu e nimic comparabil, sau afirmația citează doar fișierul, nu evenimentul, sau conține o
+negație ori o concluzie globală: „sensul nu poate fi verificat automat”), **NESUSTINUT** (fără citare, citare inexistentă / din alt caz / la
+propriul răspuns AI, valoare care nu se potrivește, instrucțiune adresată asistentului; apare tăiată, cu motivul, în lista respinselor,
+niciodată ca constatare; dacă citatul există în probă, motivul spune asta), **NEVERIFICABIL** (validatorul nu a putut rula, validarea e
+învechită sau fișierul de validare nu mai corespunde hash-ului din custodie: „fișierul de validare a fost modificat”).
 Rezultatul este `Analysis/ai_validation.json` (în custodie, în auditul înlănțuit, legat de hash-urile probelor: la orice schimbare a
-probelor devine „învechit”). Ecranul și raportul PDF afișează doar rezultatul validării.
+probelor devine „învechit”). Ecranul și raportul PDF afișează doar rezultatul validării; `verification.json` aplică aceeași legare și nu
+poartă niciodată VALORI_CONFIRMATE lângă un verdict REJECTED sau CONTRADICTED. Limită: o propoziție cu toate valorile corecte poate fi totuși
+falsă (subiect, verb sau relație inversată); de aceea starea de sus nu spune „sustinut”, ci „valori confirmate”.
 
 ## Transportul
 
