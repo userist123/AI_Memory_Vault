@@ -7,7 +7,7 @@
 
 ## Gate state (2026-10-22, from code; the gate needs PowerShell 7, not installed locally, CI runs it)
 - PASS expected: tests_passing, synthetic_corpus, evidence_integrity; audit_integrity probably PASS (AuditChainCustodyTests exists; RELEASE_GATE.md "Today" stale).
-- Blocking, code work: (1) response_verification (WP9) DONE 2026-10-22, (2) ai_claim_validation (WP4, `AiClaimValidation*Tests`),
+- Blocking, code work: (1) response_verification (WP9) DONE 2026-10-22, (2) ai_claim_validation (WP4, `AiClaimValidation*Tests`) DONE 2026-10-22,
   (3) critical_findings (`release-gate/findings-register.json`, format in RELEASE_GATE.md).
 - Waivable, owner: real_corpus, differential (owner run or signed waiver).
 - Other: QuestPDF missing from THIRD_PARTY_NOTICES.md; RELEASE_GATE.md "Today" column stale.
@@ -42,7 +42,22 @@
   Tests: Dfir 2175/31/0, App 637, UI 354, Edition 45. Changed contract: HostChangeRoleGateTests now expects the refusal audit line.
   Residual: VM does not pass a suspect SHA-256 (SuspectProcess has none); round 2 review = delta only.
 
+- 2026-10-22 WP4 ai_claim_validation (R22.5): case-level validator `LogAnalyzer.Dfir.Core/AI/{AiCaseFacts,AiClaimValidator,AiValidationStore}.cs`
+  (SUSTINUT/PARTIAL/NESUSTINUT/NEVERIFICABIL; deterministic, no model judge, no network; counts recomputed; injection text = NESUSTINUT; result
+  `Analysis/ai_validation.json` in custody + `ai.claim_validation` audit entry + evidence binding -> stale). Gate `AiCaseAnalysis.ValidateAndStore`.
+  Tests: `AiClaimValidationTests`, `AiClaimValidationReportTests` (Dfir.Tests, incl. IL registry of AI-text paths), `AiClaimValidationUiTests` (App.Tests).
+  HostChangeRoleGateTests narrowed (only audit_chain.jsonl + LogAnalyzer_Audit.log change under Logs on a refusal).
+  Tests: Dfir 2225/31/0, App 643, UI 354, Edition 45.
+
+| AI text path | Before | Now |
+|---|---|---|
+| AI screen (AiAnalysisView grids) | raw accepted statements | validated rows (state, warning, struck NESUSTINUT) |
+| Analysis/ai_reasoning.json (+ raw, catalog) | raw accepted list | accepted = validated only, NESUSTINUT moved to rejected, per-statement `Validation` |
+| Analysis/verification.json AiStatements | text, verdict | + `ClaimValidation` (NEVERIFICABIL if the file has none) |
+| Investigation PDF | no AI text | validated AI section (summary, warnings, struck NESUSTINUT, stale notice) |
+| Vault export / other PDFs / CSV | no AI text | unchanged, listed in the registry test (must not touch raw AI text) |
+
 ## Next
 - Opus `vault-reviewer` round 2 on the WP9 fix delta only (max 2 rounds), then main session decides. Residuals: IL scan excludes WPF assemblies and delegate-injected
   primitives; `NotVerified` incidents are not re-contained automatically; LIVE case is opened for station-wide defense audit.
-- Then WP4 ai_claim_validation.
+- WP4 needs an Opus `vault-reviewer` pass (risk: extractor false negatives; unrecognised fact kinds are not compared). Next: findings register + notices + docs (item 3).

@@ -33,6 +33,17 @@ O afirmație este respinsă, cu motivul păstrat, dacă:
 O afirmație acceptată rămâne **UNPROVEN**. Este afișată cu citările ei (EvidenceId, locator, SHA-256), ca analistul să o
 verifice. Nimic din ce scrie modelul nu modifică constatările sau clasificările.
 
+## Validarea la nivel de caz (WP4, R22.5)
+
+După verificările de mai sus, fiecare afirmație trece prin `AiClaimValidator` (determinist, fără model-judecător, fără rețea) față de cazul
+curent: citările trebuie să existe în acest caz, iar valorile afirmate (timp, cale, hash, adresă, nume de fișier, valoare între ghilimele,
+numere) trebuie să apară exact în elementele citate; numerele „N evenimente / constatări / probe” sunt recalculate din caz. Stări:
+**SUSTINUT** (singura fără avertisment), **PARTIAL** (citările există, dar nu e nimic comparabil), **NESUSTINUT** (fără citare, citare
+inexistentă / din alt caz / la propriul răspuns AI, valoare care nu se potrivește, text de tip instrucțiune; apare tăiată, cu motivul, în
+lista respinselor, niciodată ca constatare), **NEVERIFICABIL** (validatorul nu a putut rula, cu cauza, sau validarea e învechită).
+Rezultatul este `Analysis/ai_validation.json` (în custodie, în auditul înlănțuit, legat de hash-urile probelor: la orice schimbare a
+probelor devine „învechit”). Ecranul și raportul PDF afișează doar rezultatul validării.
+
 ## Transportul
 
 - Model local servit de Ollama (`/api/chat`, `stream: false`, `think: false`, `temperature: 0`, `seed: 0`).
