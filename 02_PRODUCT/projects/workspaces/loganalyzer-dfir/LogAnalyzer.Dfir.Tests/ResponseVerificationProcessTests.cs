@@ -139,8 +139,103 @@ public sealed class ResponseVerificationProcessTests : IDisposable
         Assert.Equal(ContainmentState.Contained, inc2.State);
         p.Table.Throws = new TimeoutException("lista proceselor");
         var released = p.Svc.Release(inc2, "test");
+        Assert.Empty(p.Resumed);                                      // unreadable list: the PID may be reused, nothing is resumed
+        Assert.True(released.ProcessSuspended);
         Assert.Equal(ResponseStatus.NotVerified, released.ReleaseVerification!.Status);
+        Assert.Contains("NU a fost reluat", released.ReleaseVerification.Cause);
+        Assert.Contains(released.Actions, a => a.Action == "process.resume" && !a.Success && a.Detail.Contains("Verificați manual"));
         Assert.NotEqual(ContainmentState.Released, released.State);  // never claimed released without the re-check
+    }
+
+    [Fact]
+    public void Unknown_identity_is_never_suspended_nor_resumed_even_after_pid_reuse()
+    {
+        // SYSTEM process: the image cannot be read (MainModule denied), so its identity cannot be established.
+        var r = NewRig();
+        r.Table.Processes[4242] = new ProcessObservation(4242, Start, null, false);
+        var inc = r.Svc.Contain(r.Path, 4242, "test", Suspend);
+        Assert.Empty(r.Suspended);                                    // refused: cannot confirm the PID is the program
+        Assert.False(inc.ProcessSuspended);
+        Assert.Null(inc.ProcessIdentity);
+        Assert.Equal(ContainmentState.NotVerified, inc.State);
+        Assert.Contains(inc.Verification!.Checks, c => c.Target == "proces PID 4242" && c.Status == ResponseStatus.Rejected && c.Observed.Contains("NU a fost atins"));
+        Assert.Equal(2, inc.Verification.Checks.Count(c => c.Status == ResponseStatus.Verified));   // the rules are checked separately
+        Assert.Contains(inc.Actions, a => a.Action == "process.suspend" && !a.Success && a.Detail.Contains("refuzată"));
+
+        // An incident saved suspended without identity (before WP9), then the PID is reused: Release must not resume the new owner.
+        var basis = r.Svc.Contain(r.Path, null, "test", new ContainmentOptions(false, false));
+        var legacy = new ProcessIncident
+        {
+            IncidentId = basis.IncidentId, CaseId = basis.CaseId, ProgramPath = basis.ProgramPath, Pid = 4242, Trigger = "vechi",
+            State = ContainmentState.Contained, ProcessSuspended = true, FirewallRules = basis.FirewallRules.ToList(),
+        };
+        r.Table.Processes[4242] = new ProcessObservation(4242, Start.AddMinutes(30), Path.Combine(_root, "svc.exe"), true);
+        var released = r.Svc.Release(legacy, "test");
+        Assert.Empty(r.Resumed);
+        Assert.True(released.ProcessSuspended);
+        Assert.Equal(ResponseStatus.NotVerified, released.ReleaseVerification!.Status);
+        Assert.Contains("identitatea", released.ReleaseVerification.Cause);
+        Assert.NotEqual(ContainmentState.Released, released.State);
+    }
+
+    [Fact]
+    public void A_pid_that_runs_another_program_is_not_suspended_and_the_firewall_part_is_stated_separately()
+    {
+        var r = NewRig();
+        var other = Path.Combine(_root, "unrelated.exe");
+        r.Table.Processes[4242] = new ProcessObservation(4242, Start, other, false);   // stale suspect list: PID now runs another program
+        r.Table.Hashes[other] = "DD44";
+        var inc = r.Svc.Contain(r.Path, 4242, "test", Suspend);
+        Assert.Empty(r.Suspended);
+        Assert.NotEqual(ContainmentState.Contained, inc.State);
+        Assert.Equal(ResponseStatus.NotVerified, inc.Verification!.Status);
+        Assert.Contains("unrelated.exe", inc.Verification.Cause);
+        Assert.NotEqual("IZOLAT (VERIFICAT)", inc.StateText);
+        var summary = ContainmentText.Summary(inc);
+        Assert.Contains("reguli firewall: 2 din 2 confirmate", summary);
+        Assert.Contains("REJECTED", summary);
+
+        // Same path, but the suspect's SHA-256 is known and the running image differs: refused as well.
+        var s = NewRig();
+        var inc2 = s.Svc.Contain(s.Path, 4242, "test", Suspend with { ExpectedSha256 = "FFFF" });
+        Assert.Empty(s.Suspended);
+        Assert.Contains("SHA-256", inc2.Verification!.Cause);
+
+        var ok = NewRig();                                            // matching SHA-256: suspended and verified
+        Assert.Equal(ContainmentState.Contained, ok.Svc.Contain(ok.Path, 4242, "test", Suspend with { ExpectedSha256 = "aa11" }).State);
+        Assert.Equal(new[] { 4242 }, ok.Suspended);
+    }
+
+    [Fact]
+    public void Failed_partial_containment_names_the_active_rules_and_automatic_containment_skips_it()
+    {
+        var r = NewRig();
+        r.Fw.SilentlyDropped.Add(FirewallDirection.Inbound);
+        var inc = r.Svc.Contain(r.Path, null, "test", new ContainmentOptions(false, false));
+        Assert.Equal(ContainmentState.Failed, inc.State);
+        var summary = ContainmentText.Summary(inc);
+        Assert.Contains("reguli rămase ACTIVE", summary);
+        Assert.Contains(inc.FirewallRules.First(n => n.EndsWith("-out")), summary);
+        Assert.Contains(r.Path, ContainmentAutoPolicy.AlreadyHandled([inc]));   // not re-contained every tick
+
+        var none = new ProcessIncident { IncidentId = "INC-9", CaseId = "C", ProgramPath = @"C:\x\y.exe", Trigger = "t", State = ContainmentState.Failed };
+        var released = new ProcessIncident { IncidentId = "INC-8", CaseId = "C", ProgramPath = @"C:\x\z.exe", Trigger = "t", State = ContainmentState.Released };
+        Assert.Empty(ContainmentAutoPolicy.AlreadyHandled([none, released]));   // nothing active: may be contained again
+        Assert.Contains("nicio regulă activă", ContainmentText.Summary(none));
+    }
+
+    [Fact]
+    public void Incident_saved_before_verification_is_not_shown_as_verified()
+    {
+        var old = new ProcessIncident { IncidentId = "INC-1", CaseId = "C", ProgramPath = @"C:\x\a.exe", Trigger = "t", State = ContainmentState.Contained };
+        Assert.Equal("izolat (neverificat: incident înregistrat înainte de verificare)", old.StateText);
+        Assert.Equal(old.StateText, ContainmentText.State(old));
+        var oldReleased = new ProcessIncident { IncidentId = "INC-2", CaseId = "C", ProgramPath = @"C:\x\a.exe", Trigger = "t", State = ContainmentState.Released };
+        Assert.DoesNotContain("(VERIFICAT)", oldReleased.StateText);
+
+        var r = NewRig();
+        var inc = r.Svc.Contain(r.Path, 4242, "test", Suspend);
+        Assert.Equal("IZOLAT (VERIFICAT)", inc.StateText);
     }
 
     [Fact]

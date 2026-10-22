@@ -53,7 +53,7 @@ public sealed class ProcessContainmentService
     [ControlledResponse("firewall rules re-read (name, program, direction, enabled); process re-enumerated (PID + start + image SHA-256, threads suspended)")]
     public ProcessIncident Contain(string programPath, int? pid, string trigger, ContainmentOptions options, CancellationToken ct = default)
     {
-        LogAnalyzer.Dfir.Auth.OperatorIdentity.RequireHostChange(); // before any rule, suspension or case write
+        RequireHostChange("contain", programPath); // before any rule, suspension or incident; only the refusal itself is audited
         programPath = Path.GetFullPath(programPath);
         var incident = new ProcessIncident
         {
@@ -85,19 +85,32 @@ public sealed class ProcessContainmentService
                 Record(incident, $"firewall.block.{dir.ToString().ToLowerInvariant()}", name, false, ex.Message);
             }
         }
-        // 2. Optional suspension (operator's choice). The identity is taken first so the re-check cannot confuse a reused PID.
+        // 2. Optional suspension (operator's choice). The identity is taken first so the re-check cannot confuse a reused PID, and the
+        // process holding the PID must BE the program being contained (image path, and SHA-256 when the suspect's is known): a stale
+        // suspect list must never suspend an unrelated process. Mismatch or unreadable -> no suspension (REJECTED, with the cause);
+        // the firewall rules for the path are applied and re-checked separately.
         bool suspendRequested = options.SuspendProcess && pid is not null && _suspend is not null;
+        string? suspendRefused = null;
         if (suspendRequested && pid is int p)
         {
-            incident.ProcessIdentity = CaptureIdentity(p);
-            try { _suspend(p); incident.ProcessSuspended = true; Record(incident, "process.suspend", p.ToString(), true, ""); }
-            catch (InvalidOperationException ex) { Record(incident, "process.suspend", p.ToString(), false, ex.Message); }
+            (incident.ProcessIdentity, suspendRefused) = IdentifyTarget(p, programPath, options.ExpectedSha256);
+            if (suspendRefused is not null) Record(incident, "process.suspend", p.ToString(), false, "suspendare refuzată: " + suspendRefused);
+            else
+            {
+                try { _suspend!(p); incident.ProcessSuspended = true; Record(incident, "process.suspend", p.ToString(), true, ""); }
+                catch (InvalidOperationException ex) { Record(incident, "process.suspend", p.ToString(), false, ex.Message); }
+            }
         }
 
         // VERIFY: re-read the firewall and the process list; the action's own return value is not evidence.
         var probes = rules.Select(r => RulePresent(r.Name, programPath, r.Dir)).ToList();
-        if (suspendRequested && pid is int sp) probes.Add(ProcessVerification.Suspended(incident.ProcessIdentity, sp, _processes));
+        if (suspendRequested && pid is int sp)
+            probes.Add(suspendRefused is { } why
+                ? new ResponseProbe($"proces PID {sp}", "suspendat (toate firele)",
+                    () => new ResponseObservation(ResponseStatus.Rejected, $"suspendare refuzată, procesul NU a fost atins: {why}"))
+                : ProcessVerification.Suspended(incident.ProcessIdentity, sp, _processes));
         incident.Verification = Verified("containment", "apply", probes);
+        // A Failed incident may still hold active rules (partial containment): FirewallRules lists them, and ContainmentText.Summary names them.
         incident.State = incident.FirewallRules.Count == 0 ? ContainmentState.Failed : incident.Verification.Status switch
         {
             ResponseStatus.Verified => ContainmentState.Contained,
@@ -151,20 +164,29 @@ public sealed class ProcessContainmentService
     [ControlledResponse("firewall rules re-read (absent); process re-enumerated (resumed, or ended / PID reused)")]
     public ProcessIncident Release(ProcessIncident incident, string reason)
     {
-        LogAnalyzer.Dfir.Auth.OperatorIdentity.RequireHostChange();
+        RequireHostChange("release", incident.IncidentId);
         bool resumeRequested = incident.ProcessSuspended && incident.Pid is not null && _resume is not null;
+        string? resumeRefused = null;
         if (resumeRequested && incident.Pid is int p)
         {
-            // A PID that now belongs to another process (other start time or image) is never touched: the original has ended.
-            var gone = OriginalEnded(incident.ProcessIdentity, p);
-            if (gone is not null)
+            // Resume ONLY when the current holder of the PID is the captured process (PID + start time + image SHA-256). A PID that now
+            // belongs to another process is never touched (the original has ended); an unknown identity or an unreadable process list
+            // is never resumed either: the PID may have been reused, and resuming it could wake an unrelated (or malicious) process.
+            var (m, observed) = CurrentHolder(incident.ProcessIdentity, p);
+            if (m is ProcessVerification.Match.Gone or ProcessVerification.Match.Reused)
             {
                 incident.ProcessSuspended = false;
-                Record(incident, "process.resume", p.ToString(), true, "nu s-a reluat nimic: " + gone);
+                Record(incident, "process.resume", p.ToString(), true, "nu s-a reluat nimic: " + observed);
+            }
+            else if (m != ProcessVerification.Match.Same)
+            {
+                resumeRefused = observed;
+                Record(incident, "process.resume", p.ToString(), false,
+                    $"NU s-a reluat: {observed}. Verificați manual procesul PID {p} și reluați-l doar dacă este programul izolat.");
             }
             else
             {
-                try { _resume(p); incident.ProcessSuspended = false; Record(incident, "process.resume", p.ToString(), true, reason); }
+                try { _resume!(p); incident.ProcessSuspended = false; Record(incident, "process.resume", p.ToString(), true, reason); }
                 catch (InvalidOperationException ex) { Record(incident, "process.resume", p.ToString(), false, ex.Message); }
             }
         }
@@ -187,7 +209,11 @@ public sealed class ProcessContainmentService
         var ruleNames = targets.Concat(incident.Actions.Where(x => x.Action.StartsWith("firewall.block.", StringComparison.Ordinal)).Select(x => x.Target))
                                .Distinct(StringComparer.Ordinal).ToList();
         var probes = ruleNames.Select(RuleAbsent).ToList();
-        if (resumeRequested && incident.Pid is int rp) probes.Add(ProcessVerification.NotSuspended(incident.ProcessIdentity, rp, _processes));
+        if (resumeRequested && incident.Pid is int rp)
+            probes.Add(resumeRefused is { } why
+                ? new ResponseProbe($"proces PID {rp}", "nu mai este suspendat (reluat sau terminat)",
+                    () => ResponseObservation.Unknown($"procesul NU a fost reluat (identitatea nu poate fi confirmată): {why}"))
+                : ProcessVerification.NotSuspended(incident.ProcessIdentity, rp, _processes));
         incident.ReleaseVerification = Verified("containment", "rollback", probes);
         // A rule the re-read did not confirm as gone stays on the incident, so a new release tries it again.
         foreach (var c in incident.ReleaseVerification.Checks.Where(c => c.Status != ResponseStatus.Verified && ruleNames.Contains(c.Target)))
@@ -197,23 +223,62 @@ public sealed class ProcessContainmentService
         return incident;
     }
 
-    private ResponseProcessIdentity? CaptureIdentity(int pid)
+    /// <summary>
+    /// The identity of the process holding <paramref name="pid"/>, or why it must not be suspended: no process reader, the PID is free,
+    /// its image or start time cannot be read, its image is not <paramref name="programPath"/>, or its SHA-256 differs from the suspect's.
+    /// </summary>
+    private (ResponseProcessIdentity? Identity, string? Refused) IdentifyTarget(int pid, string programPath, string? expectedSha256)
     {
-        if (_processes is null) return null;
-        try { return ProcessVerification.Capture(_processes, pid); }
-        catch (Exception ex) when (ex is not OutOfMemoryException) { return null; }   // unknown identity: the re-check reports NOT_VERIFIED
-    }
-
-    /// <summary>Why the original process has ended (gone, or PID reused), or null when it is the same process or that cannot be told.</summary>
-    private string? OriginalEnded(ResponseProcessIdentity? id, int pid)
-    {
-        if (id is null || _processes is null) return null;
+        if (_processes is null) return (null, "nu există un cititor al listei de procese: nu se poate confirma că PID-ul este programul izolat");
         try
         {
-            var (m, observed) = ProcessVerification.Compare(id, _processes.Observe(pid), _processes);
-            return m is ProcessVerification.Match.Gone or ProcessVerification.Match.Reused ? observed : null;
+            var now = _processes.Observe(pid);
+            if (now is null) return (null, $"niciun proces cu PID {pid}");
+            if (string.IsNullOrEmpty(now.ImagePath) || now.StartUtc is null)
+                return (null, $"imaginea sau ora de start a PID {pid} nu pot fi citite: nu se poate confirma că este {Path.GetFileName(programPath)}");
+            if (!SamePath(now.ImagePath, programPath))
+                return (null, $"PID {pid} rulează {now.ImagePath}, nu {programPath} (listă de suspecți învechită sau PID refolosit)");
+            var id = ProcessVerification.Capture(_processes, pid);
+            if (id is null) return (null, $"identitatea PID {pid} (start, SHA-256 al imaginii) nu poate fi stabilită");
+            if (!SamePath(id.ImagePath, programPath)) return (null, $"PID {pid} rulează {id.ImagePath}, nu {programPath}");
+            if (expectedSha256 is { Length: > 0 } want && !want.Equals(id.ImageSha256, StringComparison.OrdinalIgnoreCase))
+                return (null, $"imaginea PID {pid} are SHA-256 {id.ImageSha256[..Math.Min(12, id.ImageSha256.Length)]}…, nu cel al suspectului ({want[..Math.Min(12, want.Length)]}…)");
+            return (id, null);
         }
-        catch (Exception ex) when (ex is not OutOfMemoryException) { return null; }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            return (null, $"lista proceselor nu poate fi citită ({ex.GetType().Name}: {ex.Message})");
+        }
+    }
+
+    private static bool SamePath(string a, string b)
+    {
+        try { return string.Equals(Path.GetFullPath(a), Path.GetFullPath(b), StringComparison.OrdinalIgnoreCase); }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException) { return false; }
+    }
+
+    /// <summary>What holds the PID now compared with the captured identity; Unknown when there is no identity or the list cannot be read.</summary>
+    private (ProcessVerification.Match Match, string Observed) CurrentHolder(ResponseProcessIdentity? id, int pid)
+    {
+        if (_processes is null) return (ProcessVerification.Match.Unknown, "nu există un cititor al listei de procese");
+        if (id is null) return (ProcessVerification.Match.Unknown, "identitatea procesului (start, SHA-256) nu a fost stabilită la izolare");
+        try { return ProcessVerification.Compare(id, _processes.Observe(pid), _processes); }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            return (ProcessVerification.Match.Unknown, $"lista proceselor nu poate fi citită ({ex.GetType().Name}: {ex.Message})");
+        }
+    }
+
+    /// <summary>The host-change gate; a refusal is written to the case audit (who, what) before it propagates. Nothing else is written.</summary>
+    private void RequireHostChange(string action, string target)
+    {
+        try { LogAnalyzer.Dfir.Auth.OperatorIdentity.RequireHostChange(); }
+        catch (LogAnalyzer.Dfir.Auth.HostChangeNotAuthorizedException)
+        {
+            _case.Audit("containment.refused",
+                $"{action} {target} NOT_AUTHORIZED: {LogAnalyzer.Dfir.Auth.OperatorIdentity.Who} nu are dreptul de a schimba stația; nu s-a schimbat nimic");
+            throw;
+        }
     }
 
     private ResponseProbe RulePresent(string name, string programPath, FirewallDirection dir) =>
