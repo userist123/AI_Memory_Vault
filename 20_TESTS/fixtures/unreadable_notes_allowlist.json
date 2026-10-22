@@ -80,6 +80,18 @@
       "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
     },
     {
+      "path": "02_PRODUCT/projects/Casa3D/GEMINI_4_ARGON_FLEXIBLE_INTERIOR_DESIGN_UPGRADE_PROMPT.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/Casa3D/GEMINI_4_ARGON_PRO_EDITOR_MASTER_PROMPT.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
       "path": "02_PRODUCT/projects/JARVIS_COGNITIVE_BRAIN.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
@@ -894,6 +906,84 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/CONSTITUTION.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE1.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE2.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE3.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE4.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE5.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/README.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/tools/blender/README.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/packages/twin-core/README.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/projects/CASA3D/SHARE_PINS_DESIGN.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-antigravity-casa3d.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-antigravity-cost-router.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d-pins.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
     }
   ]
 }

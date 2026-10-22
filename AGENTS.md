@@ -174,6 +174,20 @@ previous conversation; restart work as a new agent from the checkpoint instead o
 Read excerpts rather than whole files, run the full suite once before the final push, and prefer one agent at a
 time. Full protocol and template: `00_GOVERNANCE/coordination/tasks/README.md`.
 
+### Context Economy & Precision Navigation Protocol
+1. **Targeted Reading and Target Edit Single-Shot**: For files exceeding 800 lines (or tool maximum window), do not read the full file without line ranges; locate the target symbol via narrow search and inspect the contextual block. For small-to-medium files (<= 800 lines) designated as modification targets, direct single-shot reading is preferred over multi-round chunking to prevent token inflation from conversational history re-transmission.
+2. **Permitted Context Expansion**: Full-file or multi-section reading is explicitly permitted when required for:
+   - architectural reviews, cross-module data flow analysis, and circular dependency checks;
+   - structured specifications, YAML/JSON configuration files, and tabular protocols;
+   - security audits, threat modeling, and forensic investigations (e.g., verifying sanitization throughout an execution path).
+3. **Conditional Context Reuse and Git Verification Hygiene**: Do not re-read a file if the required excerpt is still available, trustworthy, and demonstrably unexpired in the active context. Do not execute redundant pre-edit git status or inspect commands if working directory status is already established. Re-reading is required only when:
+   - verifying disk state immediately after applying an edit;
+   - resuming after session compaction, context degradation, or cold resume;
+   - test failures or compiler diagnostics indicate unexpected behavior outside previously inspected lines;
+   - any external tool, script, or concurrent process could have altered the file.
+4. **Directory Scan Guard**: Never run unconstrained recursive directory traversals (`dir /s`, `find .`, `Get-ChildItem -Recurse`) across heavy paths (`.git`, `node_modules`, `venv`, `build`, `dist`, `.mypy_cache`, `.tempmediaStorage`). Targeted inspection of specific build/dependency metadata (e.g. `package.json`, `.gitleaks.toml`) remains permitted.
+5. **Compaction Hygiene & Checkpoint Cadence**: Agents must not attempt to trigger compaction automatically. Major milestones and meaningful progress justify updating `todo-<agent>.md`. A session reaching approximately 50 turns is an advisory cue to re-evaluate context size and recommend `/compact` to the owner, not an unconditional mandate to rewrite the checkpoint.
+
 ## Global Production-Consumer Rule
 
 Before constructing a new layer over a component, verify who consumes that component in the production path:

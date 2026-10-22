@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Casa mea 3D — design interior automat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Vocabular vizual: planșă de arhitect — hârtie albă, grafit, cerneală albastră de marcaj */
+:root{
+  --paper:#FBFBF9; --paper-2:#F1F1EC; --graphite:#23262B; --lead:#5E636B; --rule:#D9DAD4;
+  --ink:#1F4E79; --ink-2:#2E6DA4; --ok:#2F6B4F;
+  --sans:'IBM Plex Sans','Segoe UI',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --paper:#FBFBF9; } }
+:root[data-theme="dark"]{ --paper:#FBFBF9; }
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%; margin:0}
+body{background:var(--paper); color:var(--graphite); font:400 14px/1.5 var(--sans); overflow:hidden; -webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--ink-2); outline-offset:2px}
+#view{position:fixed; inset:0; width:100vw; height:100%; display:block; touch-action:none}
+button{font:inherit; color:inherit; cursor:pointer}
+
+/* bara de sus */
+.top{position:fixed; left:12px; right:12px; top:calc(12px + env(safe-area-inset-top,0px)); z-index:10; display:flex; align-items:center; gap:10px; pointer-events:none}
+.brand{pointer-events:auto; display:flex; flex-direction:column; padding:8px 14px; background:rgba(251,251,249,.92); border:1px solid var(--rule); border-radius:10px; backdrop-filter:blur(8px)}
+.brand b{font:600 15px/1.2 var(--sans)} .brand span{font:400 12px/1.3 var(--mono); color:var(--lead)}
+.modes{pointer-events:auto; margin-left:auto; display:flex; padding:3px; background:rgba(251,251,249,.92); border:1px solid var(--rule); border-radius:10px}
+.modes button{border:0; background:transparent; min-height:38px; padding:0 14px; border-radius:7px; font-weight:500}
+.modes button[aria-pressed="true"]{background:var(--graphite); color:#fff}
+.listbtn{pointer-events:auto; min-height:44px; padding:0 16px; border-radius:10px; border:1px solid var(--ink); background:var(--ink); color:#fff; font-weight:500; display:flex; align-items:center; gap:8px}
+.listbtn .n{font:500 12px/1 var(--mono); background:rgba(255,255,255,.18); padding:3px 7px; border-radius:6px}
+
+/* camere */
+.rooms{position:fixed; left:12px; right:12px; bottom:calc(14px + env(safe-area-inset-bottom,0px)); z-index:10; display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; pointer-events:none}
+.rooms::-webkit-scrollbar{display:none}
+.rooms button{pointer-events:auto; flex:none; min-height:44px; padding:0 14px; border-radius:10px; border:1px solid var(--rule); background:rgba(251,251,249,.94); display:flex; flex-direction:column; justify-content:center; text-align:left; line-height:1.15}
+.rooms button small{font:400 11px/1.2 var(--mono); color:var(--lead)}
+.rooms button.on{border-color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink)}
+
+/* minimap plan */
+.mini{position:fixed; right:12px; bottom:calc(72px + env(safe-area-inset-bottom,0px)); z-index:10; width:200px; background:rgba(251,251,249,.94); border:1px solid var(--rule); border-radius:10px; padding:8px}
+.mini svg{display:block; width:100%; height:auto}
+.mini .cap{display:flex; justify-content:space-between; font:400 11px/1 var(--mono); color:var(--lead); margin-bottom:6px}
+
+/* joystick mobil */
+.joy{position:fixed; left:18px; bottom:calc(76px + env(safe-area-inset-bottom,0px)); z-index:11; width:112px; height:112px; border-radius:50%; border:1px solid rgba(35,38,43,.25); background:rgba(251,251,249,.55); backdrop-filter:blur(6px); display:none; touch-action:none}
+.joy i{position:absolute; left:50%; top:50%; width:46px; height:46px; margin:-23px 0 0 -23px; border-radius:50%; background:var(--graphite); opacity:.8}
+body.walk.touch .joy{display:block}
+.hint{position:fixed; left:50%; top:calc(78px + env(safe-area-inset-top,0px)); transform:translateX(-50%); z-index:9; background:rgba(35,38,43,.86); color:#fff; font-size:12.5px; padding:8px 12px; border-radius:8px; pointer-events:none; transition:opacity .6s; white-space:nowrap}
+
+/* card produs */
+.card{position:fixed; left:12px; top:calc(84px + env(safe-area-inset-top,0px)); z-index:12; width:min(320px, calc(100vw - 24px)); background:var(--paper); border:1px solid var(--graphite); border-radius:12px; padding:16px; box-shadow:0 20px 50px rgba(0,0,0,.18); display:none}
+.card.on{display:block}
+.card h3{margin:0 0 4px; font:600 16px/1.3 var(--sans)}
+.card .store{font:400 12px/1.4 var(--mono); color:var(--lead)}
+.card .price{font:600 24px/1.1 var(--sans); margin:12px 0 4px; font-variant-numeric:tabular-nums}
+.card dl{display:grid; grid-template-columns:auto 1fr; gap:4px 12px; margin:10px 0 14px; font:400 12.5px/1.4 var(--mono)}
+.card dt{color:var(--lead)}
+.card .row{display:flex; gap:8px}
+.card a,.card .x{min-height:42px; display:inline-flex; align-items:center; justify-content:center; padding:0 14px; border-radius:8px; text-decoration:none; font-weight:500}
+.card a{background:var(--ink); color:#fff; flex:1} .card .x{border:1px solid var(--rule); background:#fff}
+
+/* panou listă cumpărături */
+.panel{position:fixed; top:0; right:0; bottom:0; z-index:20; width:min(460px, 100vw); background:var(--paper); border-left:1px solid var(--graphite); transform:translateX(102%); transition:transform .35s cubic-bezier(.2,.8,.2,1); display:flex; flex-direction:column; padding-top:env(safe-area-inset-top,0px)}
+.panel.on{transform:none}
+.panel header{display:flex; align-items:flex-start; gap:12px; padding:18px 18px 12px; border-bottom:1px solid var(--rule)}
+.panel header h2{margin:0; font:600 18px/1.25 var(--sans)} .panel header p{margin:4px 0 0; color:var(--lead); font-size:12.5px}
+.panel header button{margin-left:auto; min-width:42px; min-height:42px; border-radius:8px; border:1px solid var(--rule); background:#fff; font-size:18px}
+.panel .body{overflow:auto; padding:6px 18px 18px; flex:1}
+.panel h4{margin:18px 0 6px; font:600 13px/1.3 var(--sans); display:flex; justify-content:space-between; border-bottom:1px solid var(--graphite); padding-bottom:6px}
+.panel h4 span{font:500 12.5px/1.3 var(--mono)}
+.item{display:grid; grid-template-columns:1fr auto; gap:2px 12px; padding:9px 0; border-bottom:1px dashed var(--rule)}
+.item a{color:var(--graphite); text-decoration:none; font-weight:500} .item a:hover{color:var(--ink); text-decoration:underline}
+.item .meta{grid-column:1; font:400 11.5px/1.35 var(--mono); color:var(--lead)}
+.item .p{grid-row:1 / span 2; grid-column:2; font:500 13px/1.3 var(--mono); text-align:right; font-variant-numeric:tabular-nums; align-self:center}
+.totals{border-top:2px solid var(--graphite); padding:14px 18px calc(16px + env(safe-area-inset-bottom,0px)); background:var(--paper-2)}
+.totals .line{display:flex; justify-content:space-between; font:400 12.5px/1.8 var(--mono)}
+.totals .grand{font:600 20px/1.3 var(--sans); display:flex; justify-content:space-between; margin-top:6px}
+.totals small{display:block; color:var(--lead); font-size:11.5px; margin-top:8px; line-height:1.45}
+.totals .acts{display:flex; gap:8px; margin-top:12px}
+.totals .acts button{flex:1; min-height:42px; border-radius:8px; border:1px solid var(--graphite); background:#fff; font-weight:500}
+.panel .note{margin:16px 0 0; padding:12px; border:1px solid var(--rule); border-radius:8px; font-size:12.5px; color:var(--lead); background:#fff}
+
+.card{max-height:calc(100vh - 110px); overflow:auto}
+.optsTitle{font:500 12px/1 var(--sans); color:var(--lead); margin:4px 0 8px}
+.opts{display:flex; flex-direction:column; gap:6px; margin-bottom:12px}
+.opt{display:grid; grid-template-columns:28px 1fr auto; gap:10px; align-items:center; text-align:left; padding:8px 10px; border:1px solid var(--rule); border-radius:8px; background:#fff; min-height:48px}
+.opt i{width:28px; height:28px; border-radius:6px; box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.opt b{display:block; font:500 12.5px/1.3 var(--sans)} .opt small{font:400 11px/1.3 var(--mono); color:var(--lead)}
+.opt span.p{font:500 12.5px/1 var(--mono); white-space:nowrap}
+.opt[aria-selected="true"]{border-color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink); background:#f3f7fb}
+.opt.nofit{opacity:.45}
+.tools{display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap}
+.tools button,.nudge button{min-height:40px; padding:0 12px; border-radius:8px; border:1px solid var(--graphite); background:#fff; font-weight:500}
+.nudge{border:1px dashed var(--ink); border-radius:8px; padding:10px; margin-bottom:10px}
+.nudge .gaps{font:400 12px/1.6 var(--mono); margin-bottom:8px}
+.nudge .gaps b{color:var(--ink)} .nudge .gaps .bad{color:#b3261e}
+.nudge .pad{display:flex; gap:6px; margin-bottom:8px}
+.nudge .pad button{flex:1; font-size:16px}
+.nudge .done{width:100%; background:var(--ink); color:#fff; border-color:var(--ink)}
+.toast{position:fixed; left:50%; bottom:calc(76px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); z-index:30; background:var(--graphite); color:#fff; padding:10px 14px; border-radius:8px; font-size:13px; opacity:0; pointer-events:none; transition:opacity .3s; max-width:90vw}
+.toast.on{opacity:1}
+.disclaim{position:fixed; left:12px; top:calc(76px + env(safe-area-inset-top,0px)); z-index:8; font:400 11px/1.3 var(--mono); color:var(--lead); background:rgba(251,251,249,.85); padding:4px 8px; border-radius:6px}
+@media (max-width: 700px){
+  .brand span{display:none}
+  .mini{width:140px; bottom:calc(70px + env(safe-area-inset-bottom,0px))}
+  .modes button{padding:0 10px}
+  .listbtn .t{display:none}
+}
+@media print{
+  body{overflow:visible} #view,.top,.rooms,.mini,.joy,.hint,.card{display:none!important}
+  .panel{position:static; transform:none; width:auto; border:0} .panel header button,.totals .acts{display:none}
+}
+</style>
+</head>
+<body>
+<canvas id="view" aria-label="Vizualizare 3D a apartamentului"></canvas>
+
+<div class="top">
+  <div class="brand"><b id="projName">Apartament 2 camere</b><span id="projMeta"></span></div>
+  <div class="modes" role="group" aria-label="Mod de vizualizare">
+    <button type="button" id="mWalk" aria-pressed="true">Tur</button>
+    <button type="button" id="mHouse" aria-pressed="false">Machetă</button>
+  </div>
+  <button class="listbtn" id="openList" type="button"><span class="t">Lista de cumpărături</span><span class="n" id="listTotal">0 lei</span></button>
+</div>
+
+<div class="disclaim">Modele 3D la dimensiunile și finisajele oficiale</div>
+<div class="hint" id="hint">Trage ca să privești în jur · W A S D sau săgețile ca să mergi</div>
+<nav class="rooms" id="rooms" aria-label="Camere"></nav>
+<div class="mini" aria-label="Plan"><div class="cap"><span>Plan</span><span id="miniArea"></span></div><svg id="miniSvg"></svg></div>
+<div class="joy" id="joy" aria-hidden="true"><i id="joyKnob"></i></div>
+
+<div class="card" id="card" role="dialog" aria-live="polite">
+  <h3 id="cName"></h3><div class="store" id="cStore"></div>
+  <div class="price" id="cPrice"></div>
+  <dl id="cDims"></dl>
+  <div class="optsTitle" id="optsTitle">Alege varianta</div>
+  <div class="opts" id="cOpts" role="listbox" aria-label="Variante"></div>
+  <div class="tools" id="cTools">
+    <button type="button" id="tMove">Mută</button><button type="button" id="tRot">Rotește 90°</button><button type="button" id="tReset">Poziție automată</button>
+  </div>
+  <div class="nudge" id="cNudge" hidden>
+    <div class="gaps" id="cGaps"></div>
+    <div class="pad"><button type="button" data-n="0,-1" aria-label="Sus 5 cm">↑</button><button type="button" data-n="-1,0" aria-label="Stânga 5 cm">←</button><button type="button" data-n="1,0" aria-label="Dreapta 5 cm">→</button><button type="button" data-n="0,1" aria-label="Jos 5 cm">↓</button></div>
+    <button type="button" id="tDone" class="done">Gata</button>
+  </div>
+  <div class="row"><a id="cLink" target="_blank" rel="noopener">Vezi produsul</a><button class="x" id="cClose" type="button">Închide</button></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<aside class="panel" id="panel" aria-label="Lista de cumpărături">
+  <header><div><h2>Lista de cumpărături</h2><p id="panelSub"></p></div><button type="button" id="closeList" aria-label="Închide lista">×</button></header>
+  <div class="body" id="listBody"></div>
+  <div class="totals" id="totals"></div>
+</aside>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/environments/RoomEnvironment.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script>
+/* =====================================================================
+   1) PLANUL — se completează din releveul apartamentului (planșa din
+   documentația cadastrală). Unități: metri. x spre dreapta, z în jos.
+   ===================================================================== */
+const PLAN = {
+  nume: 'Apartament 2 camere, decomandat', inaltime: 2.6,
+  camere: [
+    { id: 'hol',       nume: 'Hol',       tip: 'hol',       x0: 0,   z0: 2.6, x1: 3.2, z1: 5.0 },
+    { id: 'bucatarie', nume: 'Bucătărie', tip: 'bucatarie', x0: 0,   z0: 0,   x1: 3.2, z1: 2.6 },
+    { id: 'living',    nume: 'Living',    tip: 'living',    x0: 3.2, z0: 0,   x1: 8.8, z1: 3.8 },
+    { id: 'dormitor',  nume: 'Dormitor',  tip: 'dormitor',  x0: 3.2, z0: 3.8, x1: 8.8, z1: 7.0 },
+    { id: 'baie',      nume: 'Baie',      tip: 'baie',      x0: 0,   z0: 5.0, x1: 3.2, z1: 7.0 }
+  ],
+  // pereți: capete + goluri (la = distanța de la începutul peretelui, l = lățimea golului)
+  pereti: [
+    { a: [0, 0],     b: [8.8, 0],   ext: true, goluri: [{ tip: 'fereastra', la: .8, l: 1.4 }, { tip: 'fereastra', la: 5.0, l: 2.5 }] },
+    { a: [8.8, 0],   b: [8.8, 7],   ext: true, goluri: [{ tip: 'fereastra', la: .8, l: 2.0 }, { tip: 'fereastra', la: 4.6, l: 1.6 }] },
+    { a: [8.8, 7],   b: [0, 7],     ext: true, goluri: [] },
+    { a: [0, 7],     b: [0, 0],     ext: true, goluri: [{ tip: 'usa', la: 2.7, l: .9, intrare: true }] },
+    { a: [3.2, 0],   b: [3.2, 7],   goluri: [{ tip: 'usa', la: 2.8, l: .8 }, { tip: 'usa', la: 4.0, l: .8 }] },
+    { a: [0, 2.6],   b: [3.2, 2.6], goluri: [{ tip: 'usa', la: 2.2, l: .8 }] },
+    { a: [0, 5.0],   b: [3.2, 5.0], goluri: [{ tip: 'usa', la: 2.2, l: .8 }] },
+    { a: [3.2, 3.8], b: [8.8, 3.8], goluri: [] }
+  ]
+};
+
+/* =====================================================================
+   2) CATALOGUL — produse reale, prețuri verificate pe 30.09.2026.
+   Dimensiuni în cm (lățime x adâncime x înălțime). Prețurile se schimbă:
+   verifică pe site înainte de comandă.
+   ===================================================================== */
+/* =====================================================================
+   2) CATALOGUL — 3-5 variante reale pentru fiecare piesă, prețuri
+   verificate pe 30.09.2026 pe ikea.com/ro și dedeman.ro. Dimensiuni în cm
+   (lățime x adâncime x înălțime). „aprox" = dimensiune estimată, verifică
+   fișa produsului. Prețurile se schimbă: verifică înainte de comandă.
+   ===================================================================== */
+const DATA_PRET = '30.09.2026';
+const IK = 'https://www.ikea.com/ro/ro/', DD = 'https://www.dedeman.ro/ro/';
+const OPTS = {
+  canapea: { eticheta: 'Canapea', model: 'sofa', v: [
+    { nume: 'KIVIK canapea 3 locuri, Tibbleby bej/gri', mag: 'IKEA', pret: 2299, w: 228, d: 95, h: 83, url: IK + 'p/kivik-canapea-3-locuri-tibbleby-bej-gri-s49440597/', s: { mat: 'fabric', col: '#aea395' } },
+    { nume: 'KIVIK canapea 3 locuri, Tresund bej deschis', mag: 'IKEA', pret: 2049, w: 228, d: 95, h: 83, url: IK + 'p/kivik-canapea-3-locuri-tresund-bej-deschis-s89482830/', s: { mat: 'fabric', col: '#d8ccb8' } },
+    { nume: 'KIVIK canapea 3 locuri, Kelinge gri-turcoaz', mag: 'IKEA', pret: 2599, w: 228, d: 95, h: 83, url: IK + 'p/kivik-canapea-3-locuri-kelinge-gri-turcoaz-s39443049/', s: { mat: 'velvet', col: '#3c6a6b' } },
+    { nume: 'KIVIK canapea 3 locuri, piele Grann/Bomstad negru', mag: 'IKEA', pret: 3500, w: 228, d: 95, h: 83, url: IK + 'p/kivik-canapea-3-locuri-grann-bomstad-negru-00519525/', s: { mat: 'leather', col: '#1c1c1e' } },
+    { nume: 'KIVIK canapea 3 locuri cu șezlong, Tresund antracit', mag: 'IKEA', pret: 3349, w: 280, d: 163, h: 83, aprox: true, url: IK + 'p/kivik-canapea-3-locuri-cu-sezlong-tresund-antracit-s99482839/', s: { mat: 'fabric', col: '#4a4c50', chaise: true } } ] },
+  comodaTv: { eticheta: 'Comodă TV', model: 'tv', v: [
+    { nume: 'BESTÅ comodă TV cu uși, alb/Lappviken, 180x42x38', mag: 'IKEA', pret: 775, w: 180, d: 42, h: 38, url: IK + 'p/besta-comoda-tv-cu-usi-alb-lappviken-alb-s89330691/', s: { col: '#f3f3f0', fronts: 3 } },
+    { nume: 'BESTÅ comodă TV + uși, alb/Lappviken, 240x42x38', mag: 'IKEA', pret: 1110, w: 240, d: 42, h: 38, url: IK + 'cat/comode-tv-besta-12153/', s: { col: '#f3f3f0', fronts: 4 } },
+    { nume: 'BESTÅ comodă TV cu uși, aspect stejar antichizat, 120x42x74', mag: 'IKEA', pret: 750, w: 120, d: 42, h: 74, url: IK + 'cat/comode-tv-besta-12153/', s: { col: '#b89a74', wood: true, fronts: 2, tall: true } },
+    { nume: 'BESTÅ comodă TV, alb, 120x40x48 (deschisă)', mag: 'IKEA', pret: 440, w: 120, d: 40, h: 48, url: IK + 'cat/comode-tv-besta-12153/', s: { col: '#f3f3f0', open: true } } ] },
+  masuta: { eticheta: 'Măsuță de cafea', model: 'coffee', v: [
+    { nume: 'LACK măsuță cafea, alb, 118x78 cm', mag: 'IKEA', pret: 179, w: 118, d: 78, h: 45, url: IK + 'p/lack-masuta-cafea-alb-80449901/', s: { type: 'lack', col: '#f2f2ef' } },
+    { nume: 'VITTSJÖ măsuță cafea, negru-maro/sticlă, Ø75 cm', mag: 'IKEA', pret: 199.90, w: 75, d: 75, h: 45, url: IK + 'p/vittsjoe-masuta-cafea-negru-maro-sticla-80213309/', s: { type: 'vittsjo', col: '#2a2522' } },
+    { nume: 'HEMNES măsuță cafea, negru-maro, 90x90 cm', mag: 'IKEA', pret: 699, w: 90, d: 90, h: 46, url: IK + 'p/hemnes-masuta-cafea-negru-maro-10176292/', s: { type: 'hemnes', col: '#3b2c24' } },
+    { nume: 'LISTERBY măsuță cafea, furnir stejar, 140x60 cm', mag: 'IKEA', pret: 999, w: 140, d: 60, h: 37, url: IK + 'p/listerby-masuta-cafea-frnr-stjr-30513904/', s: { type: 'listerby', col: '#c9a57a' } } ] },
+  biblioteca: { eticheta: 'Bibliotecă', model: 'shelf', v: [
+    { nume: 'BILLY bibliotecă, alb, 40x28x202 cm', mag: 'IKEA', pret: 199, w: 40, d: 28, h: 202, url: IK + 'cat/familia-billy-28102/', s: { type: 'billy', col: '#f3f3f0' } },
+    { nume: 'BILLY bibliotecă, alb, 80x28x202 cm', mag: 'IKEA', pret: 279, w: 80, d: 28, h: 202, url: IK + 'p/billy-biblioteca-alb-00263850/', s: { type: 'billy', col: '#f3f3f0' } },
+    { nume: 'BILLY bibliotecă, aspect stejar, 80x28x202 cm', mag: 'IKEA', pret: 349, w: 80, d: 28, h: 202, url: IK + 'p/billy-biblioteca-aspect-stejar-10508932/', s: { type: 'billy', col: '#c4a27a', wood: true } },
+    { nume: 'KALLAX etajeră, alb, 77x39x147 cm', mag: 'IKEA', pret: 259, w: 77, d: 39, h: 147, url: IK + 'p/kallax-etajera-alb-80275887/', s: { type: 'kallax', col: '#f3f3f0' } },
+    { nume: 'KALLAX etajeră cu uși, alb, 77x39x147 cm', mag: 'IKEA', pret: 399, w: 77, d: 39, h: 147, url: IK + 'p/kallax-etajera-cu-usi-alb-s99017186/', s: { type: 'kallax', col: '#f3f3f0', doors: true } } ] },
+  masa: { eticheta: 'Masă cu scaune', model: 'dining', v: [
+    { nume: 'EKEDALEN masă extensibilă + 4 scaune, maro-închis/Orrsta gri, 120/180', mag: 'IKEA', pret: 1775, w: 120, d: 80, h: 75, chairs: 4, url: IK + 'p/ekedalen-ekedalen-masa-4-scaune-maro-i-orrsta-gri-s69221278/', s: { top: '#3f2d22', chair: 'orrsta' } },
+    { nume: 'EKEDALEN/ÄLVSTA masă + 4 scaune ratan, maro-închis, 120/180', mag: 'IKEA', pret: 2174.60, w: 120, d: 80, h: 75, chairs: 4, url: IK + 'p/ekedalen-aelvsta-masa-4-scaune-maro-i-ratan-negru-s49570819/', s: { top: '#3f2d22', chair: 'rattan' } },
+    { nume: 'LANEBERG/EKEDALEN masă + 4 scaune, alb, 130/190x80', mag: 'IKEA', pret: 1775, w: 130, d: 80, h: 75, chairs: 4, url: IK + 'p/laneberg-ekedalen-masa-4-scaune-alb-alb-gri-s89304791/', s: { top: '#efefec', chair: 'orrstaWhite' } },
+    { nume: 'EKEDALEN/INGOLF masă + 4 scaune, alb, 80/120', mag: 'IKEA', pret: 1655, w: 80, d: 70, h: 75, chairs: 4, url: IK + 'p/ekedalen-ingolf-masa-4-scaune-alb-alb-s69482968/', s: { top: '#efefec', chair: 'ingolf' } },
+    { nume: 'EKEDALEN masă extensibilă + 2 scaune, maro-închis, 80/120', mag: 'IKEA', pret: 1137, w: 80, d: 70, h: 75, chairs: 2, url: IK + 'p/ekedalen-ekedalen-masa-2-scaune-maro-i-orrsta-gri-s29296874/', s: { top: '#3f2d22', chair: 'orrsta' } } ] },
+  pat: { eticheta: 'Pat', model: 'bed', v: [
+    { nume: 'MALM cadru pat + saltea Valevåg, alb, 160x200', mag: 'IKEA', pret: 2298, w: 176, d: 209, h: 100, url: IK + 'p/malm-cadru-pat-saltea-alb-valevag-ferma-s99536842/', s: { col: '#f1f1ee' } },
+    { nume: 'MALM cadru pat + saltea Valevåg, negru-maro, 160x200', mag: 'IKEA', pret: 2348, w: 176, d: 209, h: 100, url: IK + 'p/malm-cadru-pat-saltea-negru-maro-valevag-ferma-s79536838/', s: { col: '#2d2521', wood: true } },
+    { nume: 'MALM cadru pat înalt + 4 cutii, alb, 160x200 (fără saltea)', mag: 'IKEA', pret: 1499, w: 176, d: 209, h: 100, url: IK + 'p/malm-cadru-pat-inalt-4-cutii-depozitare-alb-s99931611/', s: { col: '#f1f1ee', boxes: 4 } },
+    { nume: 'MALM cadru pat înalt, furnir stejar alb, 160x200 (fără saltea)', mag: 'IKEA', pret: 1139, w: 176, d: 209, h: 100, url: IK + 'p/malm-cadru-pat-inalt-furnir-stejar-alb-luroey-s59027390/', s: { col: '#d9c3a2', wood: true } } ] },
+  noptiera: { eticheta: 'Noptieră', model: 'night', v: [
+    { nume: 'BRIMNES noptieră, alb, 39x41x53 cm', mag: 'IKEA', pret: 159, w: 39, d: 41, h: 53, url: IK + 'p/brimnes-noptiera-alb-10234942/', s: { type: 'brimnes', col: '#f3f3f0' } },
+    { nume: 'SONGESAND noptieră, alb, 42x40 cm', mag: 'IKEA', pret: 199.90, w: 42, d: 40, h: 55, aprox: true, url: IK + 'cat/noptiere-20656/', s: { type: 'songesand', col: '#f3f3f0' } },
+    { nume: 'HEMNES noptieră, gri-verde/maro deschis, 46x35 cm', mag: 'IKEA', pret: 299, w: 46, d: 35, h: 70, aprox: true, url: IK + 'cat/noptiere-20656/', s: { type: 'hemnes', col: '#7d8b7c' } } ] },
+  dulap: { eticheta: 'Dulap', model: 'wardrobe', v: [
+    { nume: 'BRIMNES dulap 3 uși cu oglindă, alb, 117x50x190', mag: 'IKEA', pret: 699, w: 117, d: 50, h: 190, url: IK + 'p/brimnes-dulap-cu-3-usi-alb-40407922/', s: { type: 'brimnes', col: '#f3f3f0' } },
+    { nume: 'BRIMNES dulap 3 uși cu oglindă, negru, 117x50x190', mag: 'IKEA', pret: 799, w: 117, d: 50, h: 190, url: IK + 'p/brimnes-dulap-cu-3-usi-negru-60407577/', s: { type: 'brimnes', col: '#1e1e20' } },
+    { nume: 'KLEPPSTAD dulap cu uși glisante, alb, 117x55x176', mag: 'IKEA', pret: 649, w: 117, d: 55, h: 176, url: IK + 'cat/dulapuri-de-haine-19053/', s: { type: 'kleppstad', col: '#f3f3f0' } } ] },
+  birou: { eticheta: 'Birou', model: 'desk', v: [
+    { nume: 'MICKE birou, alb, 105x50 cm', mag: 'IKEA', pret: 399, w: 105, d: 50, h: 75, url: IK + 'p/micke-birou-alb-80213074/', s: { type: 'micke' } },
+    { nume: 'MICKE birou, alb, 142x50 cm', mag: 'IKEA', pret: 449, w: 142, d: 50, h: 75, url: IK + 'cat/birouri-birouri-pentru-computer-20649/', s: { type: 'micke' } },
+    { nume: 'MICKE birou, alb, 73x50 cm', mag: 'IKEA', pret: 249, w: 73, d: 50, h: 75, url: IK + 'p/micke-birou-alb-30213076/', s: { type: 'micke' } },
+    { nume: 'TORALD birou, alb, 65x40 cm', mag: 'IKEA', pret: 99.90, w: 65, d: 40, h: 75, aprox: true, url: IK + 'cat/birouri-birouri-pentru-computer-20649/', s: { type: 'torald' } } ] },
+  scaunBirou: { eticheta: 'Scaun de birou', model: 'ochair', v: [
+    { nume: 'MARKUS scaun rotativ, Vissle gri închis, mic (S)', mag: 'IKEA', pret: 599, w: 62, d: 60, h: 129, url: IK + 'p/markus-scaun-rotativ-vissle-gri-inchis-30588800/', s: {} },
+    { nume: 'MARKUS scaun rotativ, Vissle gri închis, mediu (M)', mag: 'IKEA', pret: 699, w: 62, d: 60, h: 136, aprox: true, url: IK + 'cat/scaune-de-birou-20652/', s: {} },
+    { nume: 'MARKUS scaun rotativ, Vissle gri închis, mare (L)', mag: 'IKEA', pret: 899, w: 62, d: 60, h: 140, aprox: true, url: IK + 'cat/scaune-de-birou-20652/', s: {} } ] },
+  bucatarie: { eticheta: 'Bucătărie', model: 'kitchen', v: [
+    { nume: 'ENHET bucătărie, antracit/alb, 243x63.5x241 (fără electrocasnice)', mag: 'IKEA', pret: 3119.70, w: 243, d: 64, h: 241, url: IK + 'p/enhet-bucatarie-antracit-alb-s19338049/', s: { frame: '#34363a' } },
+    { nume: 'ENHET bucătărie, antracit/gri cadru, 203x63.5x222', mag: 'IKEA', pret: 3543.50, w: 203, d: 64, h: 222, url: IK + 'p/enhet-bucatarie-antracit-gri-cadru-s19337399/', s: { frame: '#34363a', fronts: '#8d8f8e' } },
+    { nume: 'ENHET bucătărie, antracit/alb, 163x63.5x222', mag: 'IKEA', pret: 1971.80, w: 163, d: 64, h: 222, url: IK + 'p/enhet-bucatarie-antracit-alb-s99337282/', s: { frame: '#34363a' } } ] },
+  frigider: { eticheta: 'Frigider', model: 'fridge', v: [
+    { nume: 'LAGAN frigider/congelator, alb, 197/65 l', mag: 'IKEA', pret: 1999, w: 55, d: 60, h: 180, aprox: true, url: IK + 'p/lagan-frigider-congelator-independent-alb-00571293/', s: { col: '#f6f6f4' } },
+    { nume: 'LAGAN frigider/congelator, alb, 115/59 l', mag: 'IKEA', pret: 1899, w: 47, d: 52, h: 150, url: IK + 'p/lagan-frigider-congelator-independent-alb-50619457/', s: { col: '#f6f6f4' } },
+    { nume: 'ALINGSÅS frigider/congelator, inox, 210/106 l', mag: 'IKEA', pret: 3499, w: 60, d: 66, h: 186, aprox: true, url: IK + 'cat/independente-20824/', s: { col: '#c8cbce', inox: true } } ] },
+  plita: { eticheta: 'Plită', inclus: 'bucatarie', v: [
+    { nume: 'VILSTA plită cu inducție, 59 cm', mag: 'IKEA', pret: 1199, url: IK + 'cat/electrocasnice-ka002/' },
+    { nume: 'MATMÄSSIG plită cu inducție, 59 cm', mag: 'IKEA', pret: 1699, url: IK + 'p/lagan-frigider-congelator-independent-alb-70490118/' },
+    { nume: 'LAGAN plită cu inducție plug-in, 2 zone', mag: 'IKEA', pret: 799, url: IK + 'cat/familia-lagan-53227/' } ] },
+  cuptor: { eticheta: 'Cuptor', inclus: 'bucatarie', v: [
+    { nume: 'LAGAN cuptor, alb', mag: 'IKEA', pret: 999, url: IK + 'cat/familia-lagan-53227/' },
+    { nume: 'MATÄLSKARE cuptor cu convecție', mag: 'IKEA', pret: 1999, url: IK + 'p/enhet-bucatarie-antracit-alb-s19338049/' } ] },
+  hota: { eticheta: 'Hotă', inclus: 'bucatarie', v: [
+    { nume: 'LAGAN hotă perete, 60 cm', mag: 'IKEA', pret: 299, url: IK + 'p/enhet-bucatarie-colt-alb-s39337992/' },
+    { nume: 'VIGGBO hotă perete, negru, 52 cm', mag: 'IKEA', pret: 399, url: IK + 'p/lagan-frigider-congelator-independent-alb-70490118/' } ] },
+  dus: { eticheta: 'Cabină de duș', model: 'shower', v: [
+    { nume: 'Cabină duș pătrată Seldus EUR4, sticlă transparentă, profil cromat, 90x90x190', mag: 'Dedeman', pret: 845, w: 90, d: 90, h: 190, url: DD + 'obiecte-sanitare-baie-si-accesorii/c/14', s: { prof: '#c9ccd0' } },
+    { nume: 'Cabină duș pătrată West CB84-90WST09, profil cromat, 90x90x190', mag: 'Dedeman', pret: 1784, w: 90, d: 90, h: 190, url: DD + 'cabina-dus-patrata-west-cb84-90wst09-profil-cromat-90-x-90-x-190-cm/p/3035756', s: { prof: '#c9ccd0', thick: true } },
+    { nume: 'Cabină duș semirotundă + cădiță Kadda Rena, profil alb, 90x90x192.5', mag: 'Dedeman', pret: 794.99, w: 90, d: 90, h: 193, url: DD + 'cabina-dus-semirotunda-cadita-kadda-rena-90-x-90-x-192-5-cm-sticla-securizata-cu-model-profil-alb/p/3024530', s: { prof: '#f2f2f2', round: true, frost: true } },
+    { nume: 'Cabină duș pătrată West CB90WST03, profil negru, 90x90x200', mag: 'Dedeman', pret: 3120, w: 90, d: 90, h: 200, url: DD + 'cabina-dus-patrata-west-cb90wst03-profil-cromat-90-x-90-x-200-cm/p/3028598', s: { prof: '#1c1c1c', thick: true } } ] },
+  lavoar: { eticheta: 'Lavoar cu mobilier', model: 'vanity', v: [
+    { nume: 'Mască baie + lavoar Goodmob Nemo/Neon 60, alb, suspendat', mag: 'Dedeman', pret: 579, w: 60, d: 34, h: 68, url: DD + 'mobilier-baie/c/65', s: { col: '#f5f5f3', hang: true } },
+    { nume: 'Mască baie + lavoar Larisa, cu uși, alb, 60x33.6x72', mag: 'Dedeman', pret: 585.65, w: 60, d: 34, h: 72, url: DD + 'chiuvete-baie-cu-masca/c/1390', s: { col: '#f5f5f3' } },
+    { nume: 'Mască baie + lavoar Goodmob Crea/Neon, negru, suspendat, 60 cm', mag: 'Dedeman', pret: 697.99, w: 60, d: 34, h: 68, url: DD + 'mobilier-baie/c/65', s: { col: '#1f1f21', hang: true } },
+    { nume: 'Savini Due Creta 60 cu oglindă și lampă, stejar gri/alb lucios', mag: 'Dedeman', pret: 990, w: 60, d: 46, h: 86, url: DD + 'masca-baie-lavoar-oglinda-lampa-savini-due-creta-60-cu-sertare-stejar-gri-alb-lucios/p/3050421', s: { col: '#8c877f', wood: true, legs: true } } ] },
+  wc: { eticheta: 'Vas WC', model: 'wc', v: [
+    { nume: 'Set rezervor încastrat + vas WC Grohe Solido 4 în 1, Rimless', mag: 'Dedeman', pret: 1389, w: 36, d: 54, h: 40, url: DD + 'seturi-rezervoare-incastrate-cu-vase-wc/c/3934', s: { square: false } },
+    { nume: 'Vas WC suspendat Roca Debba Square Rimless (rezervorul se cumpără separat)', mag: 'Dedeman', pret: 577.84, w: 36, d: 54, h: 40, url: 'https://dedeman.ro/ro/vas-wc-suspendat-roca-debba-square-rimless-a34699l000-cu-evacuare-orizontala-35-5-x-54-x-40-cm/p/3033605', s: { square: true } } ] },
+  pantofar: { eticheta: 'Pantofar', model: 'shoe', v: [
+    { nume: 'HEMNES dulap pantofi 4 compartimente, alb, 107x22x101', mag: 'IKEA', pret: 599, w: 107, d: 22, h: 101, url: IK + 'p/hemnes-dulap-pantofi-cu-4-compartimente-alb-60156121/', s: { col: '#f3f3f0' } },
+    { nume: 'HEMNES dulap pantofi 4 compartimente, negru-maro, 107x22x101', mag: 'IKEA', pret: 699, w: 107, d: 22, h: 101, url: IK + 'p/hemnes-dulap-pantofi-cu-4-compartimente-negru-maro-80156120/', s: { col: '#2f2621', wood: true } },
+    { nume: 'HEMNES dulap pantofi 2 compartimente, negru-maro, 89x30x127', mag: 'IKEA', pret: 699, w: 89, d: 30, h: 127, url: IK + 'p/hemnes-dulap-pantofi-cu-2-compartimente-negru-maro-40216908/', s: { col: '#2f2621', wood: true, two: true } } ] },
+  oglinda: { eticheta: 'Corp cu oglindă', model: 'mirror', v: [
+    { nume: 'HEMNES corp înalt + ușă cu oglindă, alb, 49x31x200', mag: 'IKEA', pret: 1199, w: 49, d: 31, h: 200, url: IK + 'p/hemnes-corp-inalt-usa-cu-oglinda-alb-70217685/', s: {} },
+    { nume: 'HEMNES dulap cu oglindă (suspendat), alb, 103x16x98', mag: 'IKEA', pret: 999, w: 103, d: 16, h: 98, url: IK + 'cat/hemnes-oglinzi-si-dulapuri-cu-oglinzi-700478/', s: { wall: true } } ] }
+};
+const SEL = Object.fromEntries(Object.keys(OPTS).map(k => [k, 0]));
+let PICKED = new Set(); try { PICKED = new Set(JSON.parse(localStorage.getItem('casa_picked') || '[]')); } catch (e) {}
+try { Object.assign(SEL, JSON.parse(localStorage.getItem('casa_sel') || '{}')); } catch (e) {}
+const cur = k => { const g = OPTS[k]; return g ? Object.assign({ model: g.model }, g.v[Math.min(SEL[k] || 0, g.v.length - 1)]) : null; };
+const CAT = new Proxy({}, { get: (_, k) => cur(k) });
+
+(function(){
+'use strict';
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const lei = v => v.toLocaleString('ro-RO', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 }) + ' lei';
+const H = PLAN.inaltime, WT = .15, reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const area = r => (r.x1 - r.x0) * (r.z1 - r.z0);
+
+/* =====================================================================
+   3) AMENAJAREA AUTOMATĂ — reguli pe tip de cameră, cu distanțe minime
+   de circulație (90 cm în fața dulapurilor, 60 cm lângă pat, 45 cm
+   între canapea și măsuță, 75 cm pentru tras scaunele) și fără să
+   blocheze ușile sau să acopere ferestrele cu mobilier înalt.
+   ===================================================================== */
+function openingsOnSide(room, side){
+  const out = [];
+  PLAN.pereti.forEach(w => {
+    const [ax, az] = w.a, [bx, bz] = w.b, horiz = az === bz;
+    const onN = side === 'N' && horiz && az === room.z0, onS = side === 'S' && horiz && az === room.z1;
+    const onW = side === 'W' && !horiz && ax === room.x0, onE = side === 'E' && !horiz && ax === room.x1;
+    if (!(onN || onS || onW || onE)) return;
+    const dir = horiz ? Math.sign(bx - ax) : Math.sign(bz - az), s0 = horiz ? ax : az;
+    w.goluri.forEach(g => { const p = s0 + dir * g.la, q = s0 + dir * (g.la + g.l); out.push({ tip: g.tip, a: Math.min(p, q), b: Math.max(p, q) }); });
+  });
+  const lo = side === 'N' || side === 'S' ? room.x0 : room.z0, hi = side === 'N' || side === 'S' ? room.x1 : room.z1;
+  return out.filter(o => o.b > lo + .01 && o.a < hi - .01);
+}
+const rectHit = (A, B) => A.x0 < B.x1 - 1e-3 && A.x1 > B.x0 + 1e-3 && A.z0 < B.z1 - 1e-3 && A.z1 > B.z0 + 1e-3;
+const sideLen = (r, s) => s === 'N' || s === 'S' ? r.x1 - r.x0 : r.z1 - r.z0;
+const OPP = { N: 'S', S: 'N', W: 'E', E: 'W' };
+function footprint(room, side, along, w, d){ const t = WT / 2 + .01;
+  if (side === 'N') return { x0: along - w / 2, x1: along + w / 2, z0: room.z0 + t, z1: room.z0 + t + d, rot: 0 };
+  if (side === 'S') return { x0: along - w / 2, x1: along + w / 2, z0: room.z1 - t - d, z1: room.z1 - t, rot: Math.PI };
+  if (side === 'W') return { z0: along - w / 2, z1: along + w / 2, x0: room.x0 + t, x1: room.x0 + t + d, rot: Math.PI / 2 };
+  return { z0: along - w / 2, z1: along + w / 2, x0: room.x1 - t - d, x1: room.x1 - t, rot: -Math.PI / 2 }; }
+function frontZone(fp, side, depth){
+  if (side === 'N') return { x0: fp.x0, x1: fp.x1, z0: fp.z1, z1: fp.z1 + depth };
+  if (side === 'S') return { x0: fp.x0, x1: fp.x1, z0: fp.z0 - depth, z1: fp.z0 };
+  if (side === 'W') return { z0: fp.z0, z1: fp.z1, x0: fp.x1, x1: fp.x1 + depth };
+  return { z0: fp.z0, z1: fp.z1, x0: fp.x0 - depth, x1: fp.x0 }; }
+function doorZones(room){ const z = [];
+  ['N', 'S', 'W', 'E'].forEach(s => openingsOnSide(room, s).filter(o => o.tip === 'usa').forEach(o => {
+    const fake = s === 'N' || s === 'S' ? { x0: o.a - .05, x1: o.b + .05, z0: room.z0, z1: room.z1 } : { z0: o.a - .05, z1: o.b + .05, x0: room.x0, x1: room.x1 };
+    if (s === 'N') fake.z1 = room.z0 + .95; if (s === 'S') fake.z0 = room.z1 - .95; if (s === 'W') fake.x1 = room.x0 + .95; if (s === 'E') fake.x0 = room.x1 - .95;
+    z.push(fake); }));
+  return z; }
+const inside = (room, r) => r.x0 >= room.x0 - 1e-3 && r.x1 <= room.x1 + 1e-3 && r.z0 >= room.z0 - 1e-3 && r.z1 <= room.z1 + 1e-3;
+function freeOf(room, r, placed, extra){ if (!inside(room, r)) return false;
+  if (doorZones(room).some(z => rectHit(z, r))) return false;
+  if (placed.some(p => rectHit(p.fp, r) || (p.front && rectHit(p.front, r)))) return false;
+  return !(extra || []).some(z => rectHit(z, r)); }
+function findSpot(room, key, placed, o){
+  const it = CAT[key], w = it.w / 100, d = it.d / 100; let best = null;
+  (o.sides || ['N', 'E', 'S', 'W']).forEach((s, si) => {
+    const L = sideLen(room, s), lo = (s === 'N' || s === 'S' ? room.x0 : room.z0) + w / 2 + .06, hi = lo + L - w - .12;
+    if (hi < lo) return;
+    const ops = openingsOnSide(room, s);
+    for (let c = lo; c <= hi + 1e-6; c += .05){
+      if (it.h > 95 && ops.some(op => op.tip === 'fereastra' && c + w / 2 > op.a && c - w / 2 < op.b)) continue;
+      if (ops.some(op => op.tip === 'usa' && c + w / 2 > op.a - .05 && c - w / 2 < op.b + .05)) continue;
+      const fp = footprint(room, s, c, w, d), fr = o.front ? frontZone(fp, s, o.front) : null;
+      const check = fr ? { x0: Math.min(fp.x0, fr.x0), x1: Math.max(fp.x1, fr.x1), z0: Math.min(fp.z0, fr.z0), z1: Math.max(fp.z1, fr.z1) } : fp;
+      if (!freeOf(room, check, placed, o.extra)) continue;
+      const mid = (lo + hi) / 2, t = hi > lo ? (c - lo) / (hi - lo) : .5;
+      let score = si * 10 + (o.prefer === 'corner' ? Math.min(t, 1 - t) * 4 : Math.abs(c - mid)) + (o.windowPenalty ? ops.filter(op => op.tip === 'fereastra').length * 3 : 0);
+      if (o.near){ const cx = (fp.x0 + fp.x1) / 2, cz = (fp.z0 + fp.z1) / 2; score += Math.hypot(cx - o.near[0], cz - o.near[1]) * 2; }
+      if (!best || score < best.score) best = { key, room: room.id, side: s, along: c, fp, front: fr, score };
+    }
+  });
+  if (best) placed.push(best);
+  return best;
+}
+function sidesByLength(room, penaliseWin){
+  return ['N', 'S', 'W', 'E'].map(s => { const ops = openingsOnSide(room, s), doors = ops.filter(o => o.tip === 'usa').length, win = ops.filter(o => o.tip === 'fereastra').length;
+    return { s, v: sideLen(room, s) - doors * 1.2 - (penaliseWin ? win * 2 : 0) }; }).sort((a, b) => b.v - a.v).map(x => x.s);
+}
+function freeRect(room, placed, w, d, pad){ pad = pad || .08; // caută loc liber în mijlocul camerei (ex. masa cu scaune)
+  let best = null; const cx = (room.x0 + room.x1) / 2, cz = (room.z0 + room.z1) / 2;
+  for (let x = room.x0 + pad + w / 2; x <= room.x1 - pad - w / 2; x += .1) for (let z = room.z0 + pad + d / 2; z <= room.z1 - pad - d / 2; z += .1){
+    const r = { x0: x - w / 2 - pad, x1: x + w / 2 + pad, z0: z - d / 2 - pad, z1: z + d / 2 + pad };
+    if (!freeOf(room, r, placed)) continue; const sc = Math.hypot(x - cx, z - cz);
+    if (!best || sc < best.sc) best = { x, z, sc }; }
+  return best;
+}
+function placeDining(r, placed){ // masa aleasă; dacă n-ai ales-o tu și nu încape, se ia automat prima variantă care încape
+  if (tryDining(r, placed)) return true; if (PICKED.has('masa')) return false;
+  const keep = SEL.masa; for (let i = 0; i < OPTS.masa.v.length; i++){ if (i === keep) continue; SEL.masa = i; if (tryDining(r, placed)) return true; } SEL.masa = keep; return false; }
+function tryDining(r, placed){ // spațiu pentru scaune: 60-65 cm pe laturile cu scaune
+  const it = CAT.masa, w = it.w / 100, d = it.d / 100, px = (it.chairs || 4) === 2 ? .45 : .65, pz = .6;
+  const f = freeRect(r, placed, w + 2 * px, d + 2 * pz, 0); if (!f) return false;
+  placed.push({ key: 'masa', room: r.id, free: true, x: f.x, z: f.z, rot: 0, fp: { x0: f.x - w / 2, x1: f.x + w / 2, z0: f.z - d / 2, z1: f.z + d / 2 }, front: { x0: f.x - w / 2 - px, x1: f.x + w / 2 + px, z0: f.z - d / 2 - pz, z1: f.z + d / 2 + pz } }); return true; }
+function autoFurnish(){
+  const placed = [], byType = t => PLAN.camere.filter(r => r.tip === t), kitchen = byType('bucatarie')[0];
+  let diningInKitchen = false;
+  byType('bucatarie').forEach(r => {
+    const k = findSpot(r, 'bucatarie', placed, { sides: sidesByLength(r, true), front: 1.0, prefer: 'corner', windowPenalty: true });
+    findSpot(r, 'frigider', placed, { sides: k ? [k.side, ...['N', 'S', 'E', 'W'].filter(s => s !== k.side)] : undefined, front: .9, prefer: 'corner', near: k ? [(k.fp.x0 + k.fp.x1) / 2, (k.fp.z0 + k.fp.z1) / 2] : null });
+    if (area(r) >= 9.5 && placeDining(r, placed)) diningInKitchen = true;
+  });
+  byType('living').forEach(r => {
+    const cx0 = (r.x0 + r.x1) / 2, cz0 = (r.z0 + r.z1) / 2, kc = kitchen ? [(kitchen.x0 + kitchen.x1) / 2, (kitchen.z0 + kitchen.z1) / 2] : [cx0, cz0];
+    const wide = r.x1 - r.x0 >= r.z1 - r.z0, farEnd = diningInKitchen ? null : wide ? [kc[0] < cx0 ? r.x1 - 1.4 : r.x0 + 1.4, cz0] : [cx0, kc[1] < cz0 ? r.z1 - 1.4 : r.z0 + 1.4];
+    const sofa = findSpot(r, 'canapea', placed, { sides: sidesByLength(r, true), front: .45 + .78 + .9, windowPenalty: true, near: farEnd });
+    if (sofa){ const tvSide = OPP[sofa.side], c = sofa.along;
+      const fpTv = footprint(r, tvSide, c, CAT.comodaTv.w / 100, CAT.comodaTv.d / 100);
+      if (freeOf(r, fpTv, placed)) placed.push({ key: 'comodaTv', room: r.id, side: tvSide, along: c, fp: fpTv });
+      else findSpot(r, 'comodaTv', placed, { sides: [tvSide], near: [c, c] });
+      const f = frontZone(sofa.fp, sofa.side, .45 + .78), mt = frontZone(sofa.fp, sofa.side, .45);
+      const cx = (sofa.fp.x0 + sofa.fp.x1) / 2, cz = (sofa.fp.z0 + sofa.fp.z1) / 2, horiz = sofa.side === 'N' || sofa.side === 'S';
+      const w = CAT.masuta.w / 100, d = CAT.masuta.d / 100;
+      const fp = horiz ? { x0: cx - w / 2, x1: cx + w / 2, z0: sofa.side === 'N' ? mt.z1 : mt.z0 - d, z1: sofa.side === 'N' ? mt.z1 + d : mt.z0 } : { z0: cz - w / 2, z1: cz + w / 2, x0: sofa.side === 'W' ? mt.x1 : mt.x0 - d, x1: sofa.side === 'W' ? mt.x1 + d : mt.x0 };
+      sofa.front = null; placed.push({ key: 'masuta', room: r.id, free: true, x: (fp.x0 + fp.x1) / 2, z: (fp.z0 + fp.z1) / 2, rot: horiz ? 0 : Math.PI / 2, fp }); }
+    if (!diningInKitchen && !placeDining(r, placed)) NOFIT.push({ key: 'masa', room: r.nume });
+    findSpot(r, 'biblioteca', placed, { front: .6, prefer: 'corner' });
+    findSpot(r, 'biblioteca', placed, { front: .6, prefer: 'corner' });
+  });
+  byType('dormitor').forEach(r => {
+    const bed = findSpot(r, 'pat', placed, { sides: sidesByLength(r, true), front: .6, windowPenalty: true, extra: [] });
+    if (bed){ const horiz = bed.side === 'N' || bed.side === 'S', w = CAT.pat.w / 100;
+      [-1, 1].forEach(k => { const c = bed.along + k * (w / 2 + .21), fp = footprint(r, bed.side, c, .39, .41);
+        if (freeOf(r, fp, placed)) placed.push({ key: 'noptiera', room: r.id, side: bed.side, along: c, fp }); });
+      bed.front = frontZone(bed.fp, bed.side, .6);
+      const sidePad = horiz ? [{ x0: bed.fp.x0 - .6, x1: bed.fp.x0, z0: bed.fp.z0, z1: bed.fp.z1 }, { x0: bed.fp.x1, x1: bed.fp.x1 + .6, z0: bed.fp.z0, z1: bed.fp.z1 }] : [{ z0: bed.fp.z0 - .6, z1: bed.fp.z0, x0: bed.fp.x0, x1: bed.fp.x1 }, { z0: bed.fp.z1, z1: bed.fp.z1 + .6, x0: bed.fp.x0, x1: bed.fp.x1 }];
+      findSpot(r, 'dulap', placed, { front: .9, prefer: 'corner', extra: sidePad });
+      const d = findSpot(r, 'birou', placed, { front: .8, extra: sidePad, sides: ['N', 'E', 'S', 'W'].sort((a, b) => openingsOnSide(r, b).filter(o => o.tip === 'fereastra').length - openingsOnSide(r, a).filter(o => o.tip === 'fereastra').length) });
+      if (d){ const fz = frontZone(d.fp, d.side, .45), cx = (fz.x0 + fz.x1) / 2, cz = (fz.z0 + fz.z1) / 2; placed.push({ key: 'scaunBirou', room: r.id, free: true, x: cx, z: cz, rot: d.fp.rot + Math.PI, fp: { x0: cx - .3, x1: cx + .3, z0: cz - .3, z1: cz + .3 }, decorFp: true }); } }
+  });
+  byType('baie').forEach(r => {
+    const door = ['N', 'S', 'W', 'E'].map(s => ({ s, o: openingsOnSide(r, s).find(o => o.tip === 'usa') })).find(x => x.o);
+    const far = door ? (door.s === 'N' || door.s === 'S' ? [((door.o.a + door.o.b) / 2 < (r.x0 + r.x1) / 2 ? r.x1 : r.x0), door.s === 'N' ? r.z1 : r.z0] : [door.s === 'W' ? r.x1 : r.x0, ((door.o.a + door.o.b) / 2 < (r.z0 + r.z1) / 2 ? r.z1 : r.z0)]) : [r.x1, r.z1];
+    findSpot(r, 'dus', placed, { prefer: 'corner', near: far, sides: [far[1] === r.z1 ? 'S' : 'N', far[0] === r.x1 ? 'E' : 'W', far[1] === r.z1 ? 'N' : 'S', far[0] === r.x1 ? 'W' : 'E'] });
+    findSpot(r, 'lavoar', placed, { front: .6 });
+    findSpot(r, 'wc', placed, { front: .6 });
+  });
+  byType('hol').forEach(r => { findSpot(r, 'pantofar', placed, { front: .5 }); findSpot(r, 'oglinda', placed, { front: .6, prefer: 'corner' }); });
+  return placed;
+}
+
+/* =====================================================================
+   4) SCENA 3D
+   ===================================================================== */
+const canvas = $('#view');
+const R = new THREE.WebGLRenderer({ canvas, antialias: true });
+R.setPixelRatio(Math.min(devicePixelRatio, innerWidth < 700 ? 1.6 : 2));
+R.outputEncoding = THREE.sRGBEncoding; R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = .78;
+R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene(); scene.background = new THREE.Color('#e9ebe7'); scene.fog = new THREE.Fog('#e9ebe7', 25, 60);
+const cam = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, .05, 200);
+const W = Math.max(...PLAN.camere.map(r => r.x1)), D = Math.max(...PLAN.camere.map(r => r.z1)), C = new THREE.Vector3(W / 2, 0, D / 2);
+if (THREE.RoomEnvironment){ const pm = new THREE.PMREMGenerator(R); scene.environment = pm.fromScene(new THREE.RoomEnvironment(), .04).texture; }
+scene.add(new THREE.HemisphereLight(0xffffff, 0xcfc8bc, .22));
+const sun = new THREE.DirectionalLight(0xfff3e2, 1.1); sun.position.set(C.x + 6, 11, C.z - 8); sun.target.position.copy(C);
+sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 40 }); sun.shadow.bias = -.0005;
+scene.add(sun, sun.target);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshStandardMaterial({ color: '#dcdfd9', roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.position.y = -.02; ground.receiveShadow = true; scene.add(ground);
+const lin = c => new THREE.Color(c).convertSRGBToLinear();
+const M = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: lin(c), roughness: .75 }, o || {}));
+const tex = (w, h, draw, rep) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d'), w, h); const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t; };
+const parquet = tex(512, 512, (g, w, h) => { const cols = ['#b88a5a', '#a97c4f', '#c29665', '#9f7248', '#b5855a'];
+  for (let y = 0; y < h; y += 32) for (let x = -((y / 32) % 3) * 64; x < w; x += 192){ g.fillStyle = cols[(x / 64 + y / 32 * 7 & 7) % 5]; g.fillRect(x, y, 190, 30);
+    for (let k = 0; k < 6; k++){ g.strokeStyle = 'rgba(70,40,20,.10)'; g.beginPath(); g.moveTo(x, y + 4 + k * 4.5); g.bezierCurveTo(x + 60, y + 2 + k * 4.5, x + 120, y + 8 + k * 4.5, x + 190, y + 4 + k * 4.5); g.stroke(); } } });
+const tiles = tex(512, 512, (g, w, h) => { g.fillStyle = '#b9bab5'; g.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 128) for (let x = 0; x < w; x += 128){ const v = 222 + (Math.random() * 12 | 0); g.fillStyle = `rgb(${v},${v - 1},${v - 4})`; g.fillRect(x + 2, y + 2, 124, 124); } });
+const wallMat = M('#f4f3ef', { roughness: .92 }), extMat = M('#ecebe6', { roughness: .95 }), glass = new THREE.MeshPhysicalMaterial({ color: lin('#cfe3ee'), transparent: true, opacity: .28, roughness: .05, metalness: 0 });
+const frameMat = M('#ffffff', { roughness: .5 }), ceilMat = M('#fbfbf9', { roughness: 1 });
+
+// podele + tavane
+const floors = [], ceilings = new THREE.Group(); scene.add(ceilings);
+PLAN.camere.forEach(r => { const wet = r.tip === 'baie' || r.tip === 'bucatarie', w = r.x1 - r.x0, d = r.z1 - r.z0, t = (wet ? tiles : parquet).clone(); t.needsUpdate = true; t.repeat.set(w / (wet ? .9 : 1.6), d / (wet ? .9 : 1.6));
+  const f = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ map: t, roughness: wet ? .35 : .6 })); f.rotation.x = -Math.PI / 2; f.position.set((r.x0 + r.x1) / 2, 0, (r.z0 + r.z1) / 2); f.receiveShadow = true; f.userData.room = r.id; scene.add(f); floors.push(f);
+  const c = new THREE.Mesh(new THREE.PlaneGeometry(w, d), ceilMat); c.rotation.x = Math.PI / 2; c.position.set((r.x0 + r.x1) / 2, H, (r.z0 + r.z1) / 2); ceilings.add(c);
+  const pl = new THREE.PointLight(0xfff0dc, .35, 7, 2); pl.position.set((r.x0 + r.x1) / 2, H - .3, (r.z0 + r.z1) / 2); ceilings.add(pl); });
+
+// pereți cu goluri pentru uși și ferestre
+const walls = new THREE.Group(); scene.add(walls); const colliders = [];
+function box(w, h, d, mat, x, y, z, rotY, parent){ const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.rotation.y = rotY || 0; m.castShadow = m.receiveShadow = true; (parent || scene).add(m); return m; }
+PLAN.pereti.forEach(wl => {
+  const [ax, az] = wl.a, [bx, bz] = wl.b, L = Math.hypot(bx - ax, bz - az), ux = (bx - ax) / L, uz = (bz - az) / L, rot = -Math.atan2(uz, ux), th = wl.ext ? .25 : WT, mat = wl.ext ? extMat : wallMat;
+  const gs = [...wl.goluri].sort((a, b) => a.la - b.la); let p = 0;
+  const seg = (s0, s1, y0, y1) => { if (s1 - s0 < .005 || y1 - y0 < .005) return; const m = (s0 + s1) / 2; box(s1 - s0, y1 - y0, th, mat, ax + ux * m, (y0 + y1) / 2, az + uz * m, rot, walls); };
+  gs.forEach(g => { seg(p, g.la, 0, H);
+    if (g.tip === 'usa'){ seg(g.la, g.la + g.l, 2.1, H); const m = g.la + g.l / 2;
+      [[g.la, .05], [g.la + g.l, .05]].forEach(([s]) => box(.05, 2.1, th + .02, frameMat, ax + ux * s, 1.05, az + uz * s, rot, walls));
+      box(g.l, .05, th + .02, frameMat, ax + ux * m, 2.1, az + uz * m, rot, walls); }
+    else { seg(g.la, g.la + g.l, 0, .9); seg(g.la, g.la + g.l, 2.2, H); const m = g.la + g.l / 2;
+      box(g.l, 1.3, .02, glass, ax + ux * m, 1.55, az + uz * m, rot, walls).castShadow = false;
+      box(g.l, .05, th + .04, frameMat, ax + ux * m, .9, az + uz * m, rot, walls); box(g.l, .05, th + .02, frameMat, ax + ux * m, 2.2, az + uz * m, rot, walls);
+      box(.04, 1.3, th + .02, frameMat, ax + ux * m, 1.55, az + uz * m, rot, walls); }
+    colliders.push({ ax, az, ux, uz, s0: p, s1: g.la }); if (g.tip === 'fereastra') colliders.push({ ax, az, ux, uz, s0: g.la, s1: g.la + g.l }); p = g.la + g.l; });
+  seg(p, L, 0, H); colliders.push({ ax, az, ux, uz, s0: p, s1: L });
+});
+
+/* ---------- materiale realiste (texturi generate, fără imagini externe) ---------- */
+const gray = (w, h, draw) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d'), w, h); const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t; };
+const weave = gray(256, 256, (g, w, h) => { const id = g.createImageData(w, h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++){ const i = (y * w + x) * 4, v = 205 + ((x % 4 < 2) ^ (y % 4 < 2) ? 18 : 0) + Math.random() * 30; id.data[i] = id.data[i + 1] = id.data[i + 2] = Math.min(255, v); id.data[i + 3] = 255; } g.putImageData(id, 0, 0); });
+weave.repeat.set(6, 6);
+const grain = gray(512, 512, (g, w, h) => { g.fillStyle = '#d8d8d8'; g.fillRect(0, 0, w, h); for (let i = 0; i < 260; i++){ const y = Math.random() * h, a = .05 + Math.random() * .12; g.strokeStyle = `rgba(0,0,0,${a})`; g.lineWidth = .6 + Math.random() * 1.8; g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= w; x += 32) g.lineTo(x, y + Math.sin(x / 70 + i) * 3); g.stroke(); } });
+const rattan = gray(128, 128, (g, w, h) => { g.fillStyle = '#b8b8b8'; g.fillRect(0, 0, w, h); g.strokeStyle = '#6d6d6d'; g.lineWidth = 2; for (let i = -w; i < w * 2; i += 10){ g.beginPath(); g.moveTo(i, 0); g.lineTo(i + h, h); g.stroke(); g.beginPath(); g.moveTo(i + h, 0); g.lineTo(i, h); g.stroke(); } });
+rattan.repeat.set(3, 3);
+const matCache = {};
+function MAT(kind, col){ const k = kind + col; if (matCache[k]) return matCache[k]; const c = lin(col); let m;
+  switch (kind){
+    case 'fabric': m = new THREE.MeshStandardMaterial({ color: c, map: weave, bumpMap: weave, bumpScale: .003, roughness: .97 }); break;
+    case 'velvet': m = new THREE.MeshPhysicalMaterial({ color: c, map: weave, roughness: .85, sheen: lin('#9fc3c2') }); break;
+    case 'leather': m = new THREE.MeshPhysicalMaterial({ color: c, roughness: .42, clearcoat: .35, clearcoatRoughness: .5, bumpMap: weave, bumpScale: .001 }); break;
+    case 'wood': m = new THREE.MeshStandardMaterial({ color: c, map: grain, roughness: .58 }); break;
+    case 'paint': m = new THREE.MeshStandardMaterial({ color: c, roughness: .48 }); break;
+    case 'metal': m = new THREE.MeshStandardMaterial({ color: c, metalness: .9, roughness: .32 }); break;
+    case 'chrome': m = new THREE.MeshStandardMaterial({ color: c, metalness: 1, roughness: .12 }); break;
+    case 'glass': m = new THREE.MeshPhysicalMaterial({ color: c, transparent: true, opacity: .22, roughness: .04, metalness: 0, depthWrite: false }); break;
+    case 'frost': m = new THREE.MeshPhysicalMaterial({ color: c, transparent: true, opacity: .55, roughness: .6, depthWrite: false }); break;
+    case 'mirror': m = new THREE.MeshStandardMaterial({ color: c, metalness: 1, roughness: .03 }); break;
+    case 'ceramic': m = new THREE.MeshPhysicalMaterial({ color: c, roughness: .12, clearcoat: .8 }); break;
+    case 'rattan': m = new THREE.MeshStandardMaterial({ color: c, map: rattan, roughness: .8 }); break;
+    case 'screen': m = new THREE.MeshStandardMaterial({ color: c, roughness: .2, metalness: .2 }); break;
+    default: m = new THREE.MeshStandardMaterial({ color: c, roughness: .8 }); }
+  return matCache[k] = m; }
+// cutie cu muchii rotunjite (perne, tapițerie)
+function rgeo(w, h, d, r){ r = Math.max(.002, Math.min(r, w / 2 - .002, h / 2 - .002, d / 2 - .002)); const s = new THREE.Shape(), x = -(w - 2 * r) / 2, y = -(h - 2 * r) / 2, W2 = w - 2 * r, H2 = h - 2 * r, q = Math.min(W2, H2) * .08;
+  s.moveTo(x + q, y); s.lineTo(x + W2 - q, y); s.quadraticCurveTo(x + W2, y, x + W2, y + q); s.lineTo(x + W2, y + H2 - q); s.quadraticCurveTo(x + W2, y + H2, x + W2 - q, y + H2); s.lineTo(x + q, y + H2); s.quadraticCurveTo(x, y + H2, x, y + H2 - q); s.lineTo(x, y + q); s.quadraticCurveTo(x, y, x + q, y);
+  const g = new THREE.ExtrudeGeometry(s, { depth: Math.max(.001, d - 2 * r), bevelEnabled: true, bevelSize: r, bevelThickness: r, bevelSegments: 4, curveSegments: 6 }); g.translate(0, 0, -(d - 2 * r) / 2); return g; }
+
+/* ---------- modele 3D pe variante, la dimensiunile oficiale ---------- */
+function model(key){
+  const it = CAT[key], s = it.s || {}, g = new THREE.Group(), w = it.w / 100, d = it.d / 100, h = it.h / 100;
+  const B = (bw, bh, bd, x, y, z, m) => { const o = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; g.add(o); return o; };
+  const RB = (bw, bh, bd, r, x, y, z, m) => { const o = new THREE.Mesh(rgeo(bw, bh, bd, r), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; g.add(o); return o; };
+  const CY = (rt, rb, hh, x, y, z, m, seg) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, hh, seg || 24), m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
+  const body = (c) => s.wood ? MAT('wood', c) : MAT('paint', c);
+  switch (it.model){
+    case 'sofa': { const up = MAT(s.mat || 'fabric', s.col), dark = MAT('paint', '#1b1b1b'), ad = .95, arm = .24; const sw = s.chaise ? w - .02 : w;
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => CY(.02, .018, .06, a * (sw / 2 - .08), .03, b * (ad / 2 - .08), dark, 10));
+      RB(sw, .22, ad, .03, 0, .17, 0, up);                          // bază
+      RB(.24, .36, ad, .06, -sw / 2 + arm / 2, .46, 0, up);         // cotiere joase și late (specific KIVIK)
+      if (!s.chaise) RB(.24, .36, ad, .06, sw / 2 - arm / 2, .46, 0, up);
+      const seatW = (sw - arm * (s.chaise ? 1 : 2)), n = 3; const x0 = -sw / 2 + arm;
+      for (let i = 0; i < n; i++) RB(seatW / n - .01, .17, ad - .22, .07, x0 + seatW / n * (i + .5), .365, .08, up); // perne șezut
+      for (let i = 0; i < n; i++) RB(seatW / n - .02, .44, .2, .09, x0 + seatW / n * (i + .5), .62, -ad / 2 + .15, up); // perne spătar
+      RB(sw - .02, .38, .16, .03, 0, .45, -ad / 2 + .08, up);          // spătar
+      if (s.chaise){ const cd = d, cx = sw / 2 - .45; RB(.9, .22, cd, .03, cx, .17, (cd - ad) / 2, up); RB(.86, .17, cd - .24, .07, cx, .365, (cd - ad) / 2 + .1, up); }
+      g.children.forEach(o => { o.position.z -= (d - ad) / 2 * (s.chaise ? 1 : 0); }); if (s.chaise) g.children.forEach(o => { o.position.z += 0; });
+      if (s.chaise) g.position.z = 0; break; }
+    case 'coffee': { const c = s.col;
+      if (s.type === 'lack'){ const m = MAT('paint', c); B(w, .05, d, 0, h - .025, 0, m); B(w - .1, .02, d - .1, 0, .16, 0, m); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.05, h - .05, .05, a * (w / 2 - .035), (h - .05) / 2, b * (d / 2 - .035), m)); }
+      else if (s.type === 'vittsjo'){ const m = MAT('metal', c); CY(w / 2, w / 2, .008, 0, h - .004, 0, MAT('glass', '#dfeaee'), 48); CY(w / 2 - .02, w / 2 - .02, .01, 0, .12, 0, MAT('paint', '#1f1c1a'), 48); for (let i = 0; i < 4; i++){ const a = i * Math.PI / 2 + Math.PI / 4; CY(.008, .008, h - .01, Math.cos(a) * (w / 2 - .03), (h - .01) / 2, Math.sin(a) * (w / 2 - .03), m, 8); } { const r = new THREE.Mesh(new THREE.TorusGeometry(w / 2 - .03, .007, 6, 48), m); r.rotation.x = Math.PI / 2; r.position.y = h - .02; g.add(r); } }
+      else if (s.type === 'hemnes'){ const m = MAT('wood', c); B(w, .04, d, 0, h - .02, 0, m); B(w - .06, .07, d - .06, 0, h - .075, 0, m); B(w - .1, .02, d - .1, 0, .13, 0, MAT('rattan', '#8b6a4a')); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.06, h - .04, .06, a * (w / 2 - .04), (h - .04) / 2, b * (d / 2 - .04), m)); }
+      else { const m = MAT('wood', c); RB(w, .035, d, .008, 0, h - .018, 0, m); for (let i = 0; i < 9; i++) B(w - .16, .015, .045, 0, .12, -d / 2 + .08 + i * (d - .16) / 8, m); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.05, h - .035, .05, a * (w / 2 - .06), (h - .035) / 2, b * (d / 2 - .06), m)); }
+      const deco = MAT('paint', '#2f5d50'); CY(.06, .05, .12, w * .18, h + .06, 0, deco, 16); B(.22, .03, .16, -w * .2, h + .015, 0, MAT('paint', '#c8b89a')); break; }
+    case 'tv': { const m = body(s.col); if (s.open){ B(w, .02, d, 0, h - .01, 0, m); B(w, .02, d, 0, .01, 0, m); for (let i = 0; i <= 3; i++) B(.02, h, d, -w / 2 + .01 + i * (w - .02) / 3, h / 2, 0, m); B(w, h, .01, 0, h / 2, -d / 2 + .005, m); }
+      else { B(w, h - .01, d, 0, h / 2 + .005, 0, m); const n = s.fronts || 3; for (let i = 0; i < n; i++){ B(w / n - .006, h - .03, .016, -w / 2 + w / n * (i + .5), h / 2 + .005, d / 2 + .008, body(s.col)); } }
+      B(1.45, .84, .03, 0, h + .02 + .5, -.06, MAT('screen', '#0b0c0e')); B(.32, .02, .2, 0, h + .01, -.06, MAT('metal', '#222')); B(.04, .09, .04, 0, h + .065, -.06, MAT('metal', '#222')); break; }
+    case 'shelf': { const m = body(s.col);
+      if (s.type === 'kallax'){ const t = .035; B(w, t, d, 0, t / 2, 0, m); B(w, t, d, 0, h - t / 2, 0, m); B(t, h, d, -w / 2 + t / 2, h / 2, 0, m); B(t, h, d, w / 2 - t / 2, h / 2, 0, m); B(.015, h - t * 2, d, 0, h / 2, 0, m);
+        for (let i = 1; i < 4; i++) B(w - t * 2, .015, d, 0, t + i * (h - 2 * t) / 4, 0, m);
+        for (let r = 0; r < 4; r++) for (let c = 0; c < 2; c++){ const cx = (c ? 1 : -1) * (w / 4 - .005), cy = t + (r + .5) * (h - 2 * t) / 4; if (s.doors && (r + c) % 2 === 0) B(w / 2 - .05, (h - 2 * t) / 4 - .03, .016, cx, cy, d / 2, m); else if ((r * 2 + c) % 3 !== 1) B(.28, .26, .3, cx, cy - .03, 0, MAT('fabric', ['#c9bda8', '#6c7b6f', '#b88f6a'][(r + c) % 3])); } }
+      else { B(.018, h, d, -w / 2 + .009, h / 2, 0, m); B(.018, h, d, w / 2 - .009, h / 2, 0, m); B(w, h, .005, 0, h / 2, -d / 2 + .003, m); B(w, .06, d, 0, .03, 0, m);
+        for (let i = 0; i < 6; i++){ const y = .06 + i * (h - .08) / 5; B(w - .036, .016, d - .01, 0, y, 0, m); if (i < 5){ let x = -w / 2 + .03; while (x < w / 2 - .06){ const bw = .02 + Math.random() * .03, bh = .19 + Math.random() * .1; B(bw, bh, d - .07, x + bw / 2, y + .008 + bh / 2, .01, MAT('paint', ['#7d3a2e', '#2d4a66', '#c9b27c', '#3c5f4a', '#d8d4cc', '#1f2327'][Math.random() * 6 | 0])); x += bw + .003; } } } }
+      break; }
+    case 'dining': { const top = s.top, tm = top === '#efefec' ? MAT('paint', top) : MAT('wood', top);
+      B(w, .03, d, 0, h - .015, 0, tm); B(w - .08, .06, d - .08, 0, h - .06, 0, tm); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.05, h - .03, .05, a * (w / 2 - .05), (h - .03) / 2, b * (d / 2 - .05), tm));
+      const pos = (it.chairs || 4) === 2 ? [[0, -1], [0, 1]] : [[-w * .24, -1], [w * .24, -1], [-w * .24, 1], [w * .24, 1]];
+      pos.forEach(([x, sd]) => { const z = sd * (d / 2 + .1), cg = new THREE.Group(); cg.position.set(x, 0, z); cg.rotation.y = sd > 0 ? Math.PI : 0; g.add(cg);
+        const add = (bw, bh, bd, px, py, pz, m) => { const o = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), m); o.position.set(px, py, pz); o.castShadow = true; cg.add(o); };
+        const fr = s.chair === 'ingolf' || s.chair === 'orrstaWhite' ? MAT('paint', '#f1f1ee') : s.chair === 'rattan' ? MAT('paint', '#1c1c1c') : MAT('wood', '#3f2d22');
+        [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => add(.03, .45, .03, a * .19, .225, b * .19, fr));
+        if (s.chair === 'rattan'){ add(.42, .03, .42, 0, .46, 0, MAT('rattan', '#b08858')); add(.42, .4, .02, 0, .7, -.2, MAT('rattan', '#b08858')); add(.03, .45, .03, -.19, .7, -.2, fr); add(.03, .45, .03, .19, .7, -.2, fr); }
+        else if (s.chair === 'ingolf'){ add(.42, .04, .42, 0, .46, 0, fr); for (let k = -2; k <= 2; k++) add(.018, .42, .018, k * .08, .7, -.2, fr); add(.44, .05, .03, 0, .92, -.2, fr); add(.03, .5, .03, -.2, .7, -.2, fr); add(.03, .5, .03, .2, .7, -.2, fr); }
+        else { const cu = MAT('fabric', s.chair === 'orrstaWhite' ? '#d9d9d6' : '#9a9c98'); const o = new THREE.Mesh(rgeo(.43, .06, .43, .02), cu); o.position.set(0, .48, 0); o.castShadow = true; cg.add(o); add(.42, .08, .025, 0, .88, -.2, fr); add(.42, .02, .02, 0, .66, -.2, fr); add(.03, .45, .03, -.19, .7, -.2, fr); add(.03, .45, .03, .19, .7, -.2, fr); } });
+      break; }
+    case 'bed': { const fr = body(s.col), hb = s.wood ? MAT('wood', s.col) : MAT('paint', s.col);
+      B(w, .3, .02, 0, .2, d / 2 - .01, fr); B(.02, .3, d - .1, -w / 2 + .01, .2, .04, fr); B(.02, .3, d - .1, w / 2 - .01, .2, .04, fr); B(w, h, .05, 0, h / 2, -d / 2 + .025, hb);
+      [[-1, 1], [1, 1]].forEach(([a, b]) => B(.03, .05, .03, a * (w / 2 - .03), .025, b * (d / 2 - .03), MAT('paint', '#222')));
+      if (s.boxes){ for (let i = 0; i < 2; i++) [-1, 1].forEach(sd => B(.02, .16, .9, sd * (w / 2 + .012), .12, -.35 + i * .95, fr)); }
+      RB(w - .1, .2, d - .14, .05, 0, .44, .05, MAT('fabric', '#f7f7f5'));                   // saltea
+      RB(w - .08, .07, d * .6, .03, 0, .565, d * .18, MAT('fabric', '#8a9fb1'));               // pilotă
+      RB(w - .08, .04, .25, .02, 0, .545, d * .18 - d * .3 + .1, MAT('fabric', '#8a9fb1'));
+      [-1, 1].forEach(a => RB(.62, .13, .38, .06, a * (w / 4 - .02), .61, -d / 2 + .3, MAT('fabric', '#ffffff'))); break; }
+    case 'night': { const m = body(s.col);
+      if (s.type === 'hemnes'){ B(w, .03, d, 0, h - .015, 0, MAT('wood', '#b98f63')); B(w - .02, .22, d - .02, 0, h - .14, 0, m); B(w - .04, .02, d - .04, 0, .2, 0, m); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.04, h - .03, .04, a * (w / 2 - .025), (h - .03) / 2, b * (d / 2 - .025), m)); CY(.012, .012, .02, 0, h - .14, d / 2, MAT('metal', '#8a7a64'), 10); }
+      else if (s.type === 'songesand'){ B(w, h - .06, d, 0, (h - .06) / 2 + .06, 0, m); [0, 1].forEach(i => B(w - .03, (h - .1) / 2 - .01, .015, 0, .08 + (h - .1) / 4 + i * (h - .1) / 2, d / 2 + .008, m)); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.03, .06, .03, a * (w / 2 - .03), .03, b * (d / 2 - .03), m)); }
+      else { B(w, h, d, 0, h / 2, 0, m); B(w - .03, .14, .01, 0, h - .1, d / 2 + .005, MAT('frost', '#e9ecec')); B(w - .04, .015, d - .04, 0, h * .4, 0, m); }
+      CY(.075, .08, .02, 0, h + .01, 0, MAT('metal', '#2b2b2b')); CY(.01, .01, .3, 0, h + .16, 0, MAT('metal', '#2b2b2b'), 8);
+      { const sh = new THREE.Mesh(new THREE.CylinderGeometry(.09, .14, .18, 28, 1, true), new THREE.MeshStandardMaterial({ color: lin('#efe6d6'), side: THREE.DoubleSide, roughness: .9, emissive: lin('#ffd9a0'), emissiveIntensity: .35 })); sh.position.set(0, h + .37, 0); g.add(sh); } break; }
+    case 'wardrobe': { const m = body(s.col);
+      if (s.type === 'kleppstad'){ B(w, h, d - .04, 0, h / 2, -.02, m); B(w / 2 + .02, h - .06, .02, -w / 4 + .01, h / 2, d / 2 - .03, m); B(w / 2 + .02, h - .06, .02, w / 4 - .01, h / 2, d / 2 - .005, m); B(.012, h - .2, .02, -.06, h / 2, d / 2 - .01, MAT('metal', '#9a9a9a')); B(.012, h - .2, .02, .06, h / 2, d / 2 + .01, MAT('metal', '#9a9a9a')); }
+      else { B(w, h - .05, d, 0, (h - .05) / 2 + .05, 0, m); B(w - .04, .05, d - .04, 0, .025, 0, m);
+        for (let i = -1; i <= 1; i++){ B(w / 3 - .006, h - .08, .018, i * w / 3, h / 2 + .02, d / 2 + .009, i === 0 ? MAT('mirror', '#dfe6ea') : body(s.col)); if (i !== 0) CY(.012, .012, .025, i * w / 3 + (i < 0 ? .15 : -.15), h * .52, d / 2 + .03, MAT('metal', '#8f8f8f'), 12).rotation.x = Math.PI / 2; } }
+      break; }
+    case 'desk': { const m = MAT('paint', '#f2f2ef');
+      if (s.type === 'torald'){ B(w, .02, d, 0, h - .01, 0, m); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => CY(.012, .012, h - .02, a * (w / 2 - .03), (h - .02) / 2, b * (d / 2 - .03), MAT('metal', '#e8e8e6'), 10)); }
+      else { B(w, .03, d, 0, h - .015, 0, m); B(.02, h - .03, d, -w / 2 + .01, (h - .03) / 2, 0, m); B(.35, h - .03, d, w / 2 - .175, (h - .03) / 2, 0, m); for (let i = 0; i < 2; i++) B(.33, .2, .01, w / 2 - .175, h - .15 - i * .25, d / 2 + .005, m); B(w - .37, .3, .01, -.17, h - .3, -d / 2 + .01, m); }
+      B(.54, .32, .02, -w * .12, h + .23, -d / 2 + .12, MAT('screen', '#0c0d0f')); B(.05, .12, .05, -w * .12, h + .06, -d / 2 + .12, MAT('metal', '#333')); B(.42, .015, .14, -w * .12, h + .008, .06, MAT('paint', '#2b2d31')); break; }
+    case 'ochair': { const fab = MAT('fabric', '#3b3d42'), mesh = MAT('paint', '#1d1e21');
+      for (let i = 0; i < 5; i++){ const a = i / 5 * Math.PI * 2, leg = B(.3, .03, .04, Math.cos(a) * .15, .07, Math.sin(a) * .15, mesh); leg.rotation.y = -a; CY(.025, .025, .04, Math.cos(a) * .3, .025, Math.sin(a) * .3, mesh, 10); }
+      CY(.028, .028, .38, 0, .28, 0, MAT('chrome', '#bbb')); RB(.5, .09, .5, .03, 0, .5, .02, fab); RB(.5, h - .75, .06, .02, 0, .55 + (h - .75) / 2 + .1, -.23, mesh); RB(.3, .12, .06, .02, 0, h - .08, -.24, fab);
+      [-1, 1].forEach(a => B(.04, .2, .25, a * .27, .64, 0, mesh)); break; }
+    case 'kitchen': { const frame = MAT('metal', s.frame || '#34363a'), front = MAT('paint', s.fronts || '#f4f4f1'), wd = .6;
+      B(w, .08, wd - .05, 0, .04, -d / 2 + wd / 2, MAT('paint', '#2b2c2f')); B(w, .78, wd - .02, 0, .47, -d / 2 + wd / 2, MAT('paint', '#2d2f33'));
+      const n = Math.round(w / .6); for (let i = 0; i < n; i++){ B(w / n - .006, .74, .018, -w / 2 + w / n * (i + .5), .46, -d / 2 + wd + .009, front); B(.18, .012, .015, -w / 2 + w / n * (i + .5), .78, -d / 2 + wd + .025, MAT('metal', '#222')); }
+      B(w + .01, .038, d, 0, .88, 0, MAT('wood', '#cdb592')); // blat
+      B(.46, .015, .4, -w / 2 + .45, .9, 0, MAT('chrome', '#c6c9cc')); CY(.015, .015, .25, -w / 2 + .45, 1.02, -d / 2 + .08, MAT('chrome', '#c6c9cc'), 10);
+      B(.58, .006, .5, w / 2 - .55, .901, 0, MAT('screen', '#0d0d0e')); B(.56, .56, .012, w / 2 - .55, .46, -d / 2 + wd + .02, MAT('screen', '#141517'));
+      // polițe ENHET cu cadru deschis (antracit) + dulapuri suspendate
+      const top = h - .02; B(w, .02, .32, 0, top, -d / 2 + .16, frame); B(w, .02, .32, 0, top - .72, -d / 2 + .16, frame); for (let i = 0; i <= n; i++) B(.02, .72, .32, -w / 2 + .01 + i * (w - .02) / n, top - .36, -d / 2 + .16, frame);
+      B(w, .015, .3, 0, top - .36, -d / 2 + .16, frame); for (let i = 0; i < n; i += 2) B(w / n - .01, .7, .015, -w / 2 + w / n * (i + .5), top - .36, -d / 2 + .32, front);
+      for (let i = 1; i < n; i += 2){ B(.1, .12, .1, -w / 2 + w / n * (i + .5) - .08, top - .64, -d / 2 + .15, MAT('ceramic', '#eae6de')); B(.14, .1, .14, -w / 2 + w / n * (i + .5) + .08, top - .3, -d / 2 + .15, MAT('ceramic', '#6a7c72')); }
+      B(.6, .12, .46, w / 2 - .55, top - .9, -d / 2 + .23, MAT('metal', '#bfc2c5')); B(w, .01, .02, 0, 1.25, -d / 2 + .01, MAT('ceramic', '#f1efea')); break; }
+    case 'fridge': { const m = s.inox ? MAT('metal', s.col) : MAT('paint', s.col); RB(w, h, d, .02, 0, h / 2, 0, m); B(w - .01, .004, .01, 0, h * .64, d / 2 + .001, MAT('paint', '#bdbdbd')); B(.02, .4, .03, w / 2 - .05, h * .8, d / 2 + .015, MAT('metal', '#aaa')); B(.02, .3, .03, w / 2 - .05, h * .45, d / 2 + .015, MAT('metal', '#aaa')); break; }
+    case 'shower': { const pm = MAT('metal', s.prof), gl = MAT(s.frost ? 'frost' : 'glass', '#dcecf2'); B(w, .05, d, 0, .025, 0, MAT('ceramic', '#fafafa'));
+      if (s.round){ const arc = new THREE.Mesh(new THREE.CylinderGeometry(w - .02, w - .02, h - .06, 32, 1, true, 0, Math.PI / 2), gl); arc.position.set(-w / 2 + .01, h / 2 + .03, -d / 2 + .01); g.add(arc); }
+      else { const t = s.thick ? .03 : .02; [[w, .008, 0, d / 2 - .004], [.008, d, w / 2 - .004, 0]].forEach(([a, b, x, z]) => { const p = new THREE.Mesh(new THREE.BoxGeometry(a, h - .06, b), gl); p.position.set(x, h / 2 + .03, z); g.add(p); });
+        B(t, h - .05, t, w / 2 - t / 2, h / 2, d / 2 - t / 2, pm); B(w, t, t, 0, h - t / 2, d / 2 - t / 2, pm); B(t, t, d, w / 2 - t / 2, h - t / 2, 0, pm); }
+      CY(.012, .012, h - .4, -w / 2 + .12, h / 2 + .1, -d / 2 + .04, MAT('chrome', '#cfcfcf'), 10); CY(.1, .1, .015, -w / 2 + .2, h - .1, -d / 2 + .2, MAT('chrome', '#cfcfcf'), 24); break; }
+    case 'vanity': { const m = body(s.col), y0 = s.hang ? .3 : 0; if (s.legs) [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => B(.03, .15, .03, a * (w / 2 - .04), .075, b * (d / 2 - .04), MAT('metal', '#222')));
+      const hb = (s.hang ? h - .15 : h - .15) - (s.legs ? .15 : 0); B(w, hb, d, 0, y0 + (s.legs ? .15 : 0) + hb / 2, 0, m); B(w / 2 - .01, hb - .03, .015, -w / 4, y0 + (s.legs ? .15 : 0) + hb / 2, d / 2 + .008, m); B(w / 2 - .01, hb - .03, .015, w / 4, y0 + (s.legs ? .15 : 0) + hb / 2, d / 2 + .008, m);
+      const ty = y0 + (s.legs ? .15 : 0) + hb; RB(w + .01, .14, d + .06, .03, 0, ty + .07, .03, MAT('ceramic', '#fdfdfd')); CY(.012, .012, .15, 0, ty + .2, -d / 2 + .05, MAT('chrome', '#cfcfcf'), 10);
+      B(w * .85, .6, .02, 0, 1.55, -d / 2 + .01, MAT('mirror', '#dde6ea')); if (s.legs) B(w * .6, .04, .06, 0, 1.9, -d / 2 + .04, MAT('paint', '#f4f4f1')); break; }
+    case 'wc': { const cer = MAT('ceramic', '#fdfdfd'); if (s.square){ RB(.36, .3, .52, .06, 0, .27, .05, cer); } else { const b = new THREE.Mesh(new THREE.CylinderGeometry(.18, .13, .32, 32), cer); b.scale.z = 1.4; b.position.set(0, .24, .06); b.castShadow = true; g.add(b); }
+      RB(.37, .03, .5, .015, 0, .42, .06, cer); B(.42, .9, .12, 0, .75, -d / 2 + .06, MAT('paint', '#efefec')); B(.24, .16, .01, 0, 1.0, -d / 2 + .125, MAT('chrome', '#d4d4d4')); break; }
+    case 'shoe': { const m = body(s.col); B(w, h - .04, d, 0, (h - .04) / 2 + .04, 0, m); B(w + .02, .025, d + .02, 0, h - .012, 0, m); [[-1, 1], [1, 1]].forEach(([a, b]) => B(.03, .04, .03, a * (w / 2 - .03), .02, b * (d / 2 - .03), m));
+      const rows = s.two ? 2 : 2, cols = s.two ? 1 : 2; for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++){ const fw = w / cols - .01, fh = (h - .1) / rows - .015, x = -w / 2 + w / cols * (c + .5), y = .06 + (h - .1) / rows * (r + .5); B(fw, fh, .018, x, y, d / 2 + .009, m); CY(.012, .012, .02, x, y + fh / 2 - .05, d / 2 + .025, MAT('metal', '#7c6a55'), 10).rotation.x = Math.PI / 2; }
+      break; }
+    case 'mirror': { const m = MAT('paint', '#f3f3f0'), y0 = s.wall ? .95 : 0; B(w, h, d, 0, y0 + h / 2, 0, m); B(w - .06, h - .08, .01, 0, y0 + h / 2, d / 2 + .006, MAT('mirror', '#dfe6ea')); break; }
+  }
+  return g;
+}
+
+/* ---------- construirea casei: amenajare + ajustările făcute de tine ---------- */
+let OVR = {}; try { OVR = JSON.parse(localStorage.getItem('casa_ovr') || '{}'); } catch (e) {}
+const saveState = () => { try { localStorage.setItem('casa_picked', JSON.stringify([...PICKED])); localStorage.setItem('casa_sel', JSON.stringify(SEL)); localStorage.setItem('casa_ovr', JSON.stringify(OVR)); } catch (e) {} };
+const furniture = new THREE.Group(); scene.add(furniture);
+let placed = [], pickables = [], blockers = [], NOFIT = [];
+const fpFrom = (x, z, rot, w, d) => { const q = Math.round(rot / (Math.PI / 2)) % 2 !== 0; const hw = (q ? d : w) / 2, hd = (q ? w : d) / 2; return { x0: x - hw, x1: x + hw, z0: z - hd, z1: z + hd, rot }; };
+function validSpot(p, fp, others){ const room = PLAN.camere.find(r => r.id === p.room); if (!room || !inside(room, fp)) return false;
+  if (doorZones(room).some(z => rectHit(z, fp))) return false; return !others.some(o => o !== p && rectHit(o.fp, fp)); }
+function rebuild(){
+  NOFIT = []; placed = autoFurnish();
+  const cnt = {}; placed.forEach(p => { const k = p.key + '#' + p.room; cnt[k] = (cnt[k] || 0) + 1; p.id = k + '#' + cnt[k]; });
+  placed.forEach(p => { const o = OVR[p.id]; if (!o) return; const it = CAT[p.key], fp = fpFrom(o.x, o.z, o.rot, it.w / 100, it.d / 100);
+    if (validSpot(p, fp, placed)){ p.free = true; p.x = o.x; p.z = o.z; p.rot = o.rot; p.fp = fp; p.front = null; } else delete OVR[p.id]; });
+  while (furniture.children.length) furniture.remove(furniture.children[0]);
+  pickables = []; placed.forEach(p => { const m = model(p.key);
+    if (p.free){ m.position.set(p.x, 0, p.z); m.rotation.y = p.rot || 0; } else { const fp = p.fp; m.position.set((fp.x0 + fp.x1) / 2, 0, (fp.z0 + fp.z1) / 2); m.rotation.y = fp.rot; p.x = m.position.x; p.z = m.position.z; p.rot = fp.rot; }
+    m.userData = { pid: p.id, key: p.key }; m.traverse(o => { o.userData.item = m; }); furniture.add(m); pickables.push(m); p.obj = m; });
+  blockers = placed.filter(p => p.key !== 'scaunBirou').map(p => p.fp);
+  drawMini(); renderList(); saveState();
+}
+
+/* =====================================================================
+   5) NAVIGARE + EDITARE
+   ===================================================================== */
+let mode = 'walk', yaw = 0, pitch = 0; const EYE = 1.6, player = new THREE.Vector3();
+const W0 = Math.max(W, D) * 1.15;
+function collide(x, z){ const r = .24;
+  for (const c of colliders){ const px = x - c.ax, pz = z - c.az, s = Math.max(c.s0, Math.min(c.s1, px * c.ux + pz * c.uz)), cx = c.ax + c.ux * s, cz = c.az + c.uz * s, dx = x - cx, dz = z - cz, dd = Math.hypot(dx, dz);
+    if (dd < r + .07 && dd > 1e-6){ const k = (r + .07 - dd) / dd; x += dx * k; z += dz * k; } }
+  for (const b of blockers){ if (x > b.x0 - r && x < b.x1 + r && z > b.z0 - r && z < b.z1 + r){
+    const dl = x - (b.x0 - r), dr = (b.x1 + r) - x, du = z - (b.z0 - r), dn = (b.z1 + r) - z, m = Math.min(dl, dr, du, dn);
+    if (m === dl) x = b.x0 - r; else if (m === dr) x = b.x1 + r; else if (m === du) z = b.z0 - r; else z = b.z1 + r; } }
+  return [x, z]; }
+const roomAt = (x, z) => PLAN.camere.find(r => x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1);
+function spawnFor(room){ let best = null; ['N', 'S', 'W', 'E'].forEach(s => openingsOnSide(room, s).filter(o => o.tip === 'usa').forEach(o => { const m = (o.a + o.b) / 2;
+    const p = s === 'N' ? [m, room.z0 + .55] : s === 'S' ? [m, room.z1 - .55] : s === 'W' ? [room.x0 + .55, m] : [room.x1 - .55, m]; if (!best) best = p; }));
+  const cx = (room.x0 + room.x1) / 2, cz = (room.z0 + room.z1) / 2; const p = best || [cx, cz]; const [x, z] = collide(p[0], p[1]); return { x, z, yaw: Math.atan2(-(cx - x), -(cz - z)) }; }
+function goRoom(id, instant){ const r = PLAN.camere.find(q => q.id === id); if (!r) return; if (mode !== 'walk') setMode('walk', true);
+  const s = spawnFor(r), dy = ((s.yaw - yaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+  if (instant || reduce || !window.gsap){ player.set(s.x, 0, s.z); yaw = s.yaw; pitch = -.08; return; }
+  gsap.to(player, { x: s.x, z: s.z, duration: 1.1, ease: 'power2.inOut' }); const o = { v: yaw }; gsap.to(o, { v: yaw + dy, duration: 1.1, ease: 'power2.inOut', onUpdate: () => { yaw = o.v; } }); pitch = -.08; }
+const keys = {}; addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; }); addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+let dragging = false, lx = 0, ly = 0, moved = 0, orbit = { th: -.7, ph: .95, r: W0 };
+const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), hitPt = new THREE.Vector3();
+let sel = null, editing = false, dragOff = null, lastValid = null;
+const ghost = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: 0x2F6B4F, transparent: true, opacity: .35, depthWrite: false })); ghost.rotation.x = -Math.PI / 2; ghost.position.y = .012; ghost.visible = false; scene.add(ghost);
+const floorAt = e => { ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, cam); return ray.ray.intersectPlane(floorPlane, hitPt) ? hitPt.clone() : null; };
+canvas.addEventListener('pointerdown', e => { dragging = true; lx = e.clientX; ly = e.clientY; moved = 0; canvas.setPointerCapture(e.pointerId);
+  if (editing && sel){ const f = floorAt(e); if (f) dragOff = { x: sel.x - f.x, z: sel.z - f.z }; } });
+canvas.addEventListener('pointermove', e => { if (!dragging) return; const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
+  if (editing && sel && dragOff){ const f = floorAt(e); if (f) moveSel(f.x + dragOff.x, f.z + dragOff.z, true); return; }
+  if (mode === 'walk'){ yaw -= dx * .0045; pitch = Math.max(-1.2, Math.min(1.1, pitch - dy * .0035)); } else { orbit.th -= dx * .006; orbit.ph = Math.max(.12, Math.min(1.45, orbit.ph - dy * .005)); } });
+canvas.addEventListener('pointerup', e => { dragging = false; if (editing && sel && dragOff){ dragOff = null; commitMove(); return; } if (moved < 6) pick(e); });
+canvas.addEventListener('wheel', e => { if (mode === 'house'){ orbit.r = Math.max(5, Math.min(26, orbit.r + e.deltaY * .01)); e.preventDefault(); } }, { passive: false });
+const joy = $('#joy'), knob = $('#joyKnob'); let jx = 0, jz = 0, jOn = false;
+if (matchMedia('(pointer:coarse)').matches) document.body.classList.add('touch');
+joy.addEventListener('pointerdown', e => { jOn = true; joy.setPointerCapture(e.pointerId); jmove(e); });
+joy.addEventListener('pointermove', e => { if (jOn) jmove(e); });
+joy.addEventListener('pointerup', () => { jOn = false; jx = jz = 0; knob.style.transform = ''; });
+function jmove(e){ const r = joy.getBoundingClientRect(), dx = e.clientX - r.left - r.width / 2, dy = e.clientY - r.top - r.height / 2, L = Math.min(40, Math.hypot(dx, dy)), a = Math.atan2(dy, dx); jx = Math.cos(a) * L / 40; jz = Math.sin(a) * L / 40; knob.style.transform = `translate(${Math.cos(a) * L}px,${Math.sin(a) * L}px)`; }
+function toast(t){ const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 3200); }
+
+// selectare + variante
+function pick(e){ ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, cam);
+  const hit = ray.intersectObjects(pickables, true)[0]; if (!hit){ if (!editing) closeCard(); return; }
+  const pid = hit.object.userData.item.userData.pid; sel = placed.find(p => p.id === pid); showCard(); }
+function showCard(){ if (!sel) return; const key = sel.key, g = OPTS[key], it = CAT[key], room = PLAN.camere.find(r => r.id === sel.room);
+  $('#cName').textContent = it.nume; $('#cStore').textContent = `${it.mag} · ${g.eticheta} · ${room.nume} · preț la ${DATA_PRET}`; $('#cPrice').textContent = lei(it.pret);
+  const inc = Object.entries(OPTS).filter(([, x]) => x.inclus === key);
+  $('#cDims').innerHTML = `<dt>Dimensiuni</dt><dd>${it.w} × ${it.d} × ${it.h} cm${it.aprox ? ' (aprox.)' : ''}</dd>` + inc.map(([k, x]) => `<dt>${esc(x.eticheta)}</dt><dd><select data-inc="${k}" style="max-width:100%;font:inherit">${x.v.map((v, i) => `<option value="${i}"${SEL[k] === i ? ' selected' : ''}>${esc(v.nume)} · ${lei(v.pret)}</option>`).join('')}</select></dd>`).join('');
+  $('#cDims').querySelectorAll('select').forEach(sl => sl.onchange = () => { SEL[sl.dataset.inc] = +sl.value; renderList(); saveState(); showCard(); });
+  $('#optsTitle').textContent = `Alege varianta (${g.v.length})`;
+  $('#cOpts').innerHTML = g.v.map((v, i) => `<button type="button" class="opt" role="option" data-i="${i}" aria-selected="${SEL[key] === i}"><i style="background:${esc((v.s && (v.s.col || v.s.top || v.s.frame || v.s.prof)) || '#ddd')}"></i><span><b>${esc(v.nume)}</b><small>${v.w} × ${v.d} × ${v.h} cm${v.aprox ? ' aprox.' : ''}</small></span><span class="p">${lei(v.pret)}</span></button>`).join('');
+  $('#cLink').href = it.url; $('#card').classList.add('on'); }
+$('#cOpts').addEventListener('click', e => { const b = e.target.closest('.opt'); if (!b || !sel) return; const key = sel.key, prev = SEL[key], pid = sel.id; SEL[key] = +b.dataset.i; PICKED.add(key); rebuild();
+  const again = placed.find(p => p.id === pid) || placed.find(p => p.key === key);
+  if (!again){ SEL[key] = prev; rebuild(); toast('Varianta asta nu încape în cameră fără să blocheze ușa sau circulația. Alege una mai mică.'); sel = placed.find(p => p.id === pid) || null; }
+  else { sel = again; toast(`Ai ales ${CAT[key].nume.split(',')[0]}. Lista s-a actualizat.`); }
+  if (NOFIT.length) toast(`${OPTS[NOFIT[0].key].eticheta}: nu încape în ${NOFIT[0].room}. Alege o variantă mai mică.`);
+  showCard(); });
+function closeCard(){ $('#card').classList.remove('on'); endEdit(); sel = null; }
+$('#cClose').onclick = closeCard;
+
+// mutare exactă: trage, lipire de perete, rotire, pași de 5 cm
+function gapsFor(p){ const room = PLAN.camere.find(r => r.id === p.room), t = WT / 2, fp = p.fp;
+  return { st: (fp.x0 - room.x0 - t) * 100, dr: (room.x1 - t - fp.x1) * 100, sus: (fp.z0 - room.z0 - t) * 100, jos: (room.z1 - t - fp.z1) * 100 }; }
+function showGaps(ok){ const g = gapsFor(sel), f = v => `<b>${Math.max(0, Math.round(v))} cm</b>`;
+  $('#cGaps').innerHTML = `Față de pereți: stânga ${f(g.st)} · dreapta ${f(g.dr)} · sus ${f(g.sus)} · jos ${f(g.jos)}` + (ok ? '' : '<br><span class="bad">Poziție invalidă: se suprapune sau blochează o ușă.</span>'); }
+function moveSel(x, z, snap){ const it = CAT[sel.key], w = it.w / 100, d = it.d / 100, room = PLAN.camere.find(r => r.id === sel.room), t = WT / 2 + .005; let rot = sel.rot;
+  let fp = fpFrom(x, z, rot, w, d);
+  const wallItem = !['masuta', 'masa', 'scaunBirou'].includes(sel.key);
+  if (snap){ const gs = [['W', fp.x0 - room.x0 - t], ['E', room.x1 - t - fp.x1], ['N', fp.z0 - room.z0 - t], ['S', room.z1 - t - fp.z1]].sort((a, b) => Math.abs(a[1]) - Math.abs(b[1]));
+    const [side, gap] = gs[0]; if (Math.abs(gap) < .25){ if (wallItem) rot = { N: 0, S: Math.PI, W: Math.PI / 2, E: -Math.PI / 2 }[side]; fp = fpFrom(x, z, rot, w, d);
+      const hw = (fp.x1 - fp.x0) / 2, hd = (fp.z1 - fp.z0) / 2; if (side === 'W') x = room.x0 + t + hw; if (side === 'E') x = room.x1 - t - hw; if (side === 'N') z = room.z0 + t + hd; if (side === 'S') z = room.z1 - t - hd; fp = fpFrom(x, z, rot, w, d); } }
+  const hw = (fp.x1 - fp.x0) / 2, hd = (fp.z1 - fp.z0) / 2; x = Math.max(room.x0 + t + hw, Math.min(room.x1 - t - hw, x)); z = Math.max(room.z0 + t + hd, Math.min(room.z1 - t - hd, z)); fp = fpFrom(x, z, rot, w, d);
+  sel.x = x; sel.z = z; sel.rot = rot; sel.fp = fp; sel.obj.position.set(x, 0, z); sel.obj.rotation.y = rot;
+  const ok = validSpot(sel, fp, placed); ghost.visible = true; ghost.scale.set(fp.x1 - fp.x0, fp.z1 - fp.z0, 1); ghost.position.set(x, .012, z); ghost.material.color.set(ok ? 0x2F6B4F : 0xB3261E); showGaps(ok); if (ok) lastValid = { x, z, rot }; return ok; }
+function commitMove(){ const ok = validSpot(sel, sel.fp, placed); if (!ok && lastValid){ moveSel(lastValid.x, lastValid.z, false); sel.rot = lastValid.rot; }
+  OVR[sel.id] = { x: sel.x, z: sel.z, rot: sel.rot }; sel.free = true; blockers = placed.filter(p => p.key !== 'scaunBirou').map(p => p.fp); drawMini(); saveState(); }
+function startEdit(){ if (!sel) return; editing = true; lastValid = { x: sel.x, z: sel.z, rot: sel.rot }; setMode('house'); orbit.ph = .14; orbit.th = 0; orbit.r = W0 * .95;
+  $('#cNudge').hidden = false; $('#cTools').hidden = true; $('#cOpts').hidden = true; $('#optsTitle').hidden = true; moveSel(sel.x, sel.z, false); toast('Trage piesa pe plan. Lângă un perete se lipește automat de el.'); }
+function endEdit(){ if (!editing) return; editing = false; ghost.visible = false; $('#cNudge').hidden = true; $('#cTools').hidden = false; $('#cOpts').hidden = false; $('#optsTitle').hidden = false; }
+$('#tMove').onclick = startEdit; $('#tDone').onclick = () => { commitMove(); endEdit(); toast('Poziție salvată.'); };
+$('#tRot').onclick = () => { if (!sel) return; if (!editing) startEdit(); const r = sel.rot; sel.rot = (sel.rot + Math.PI / 2) % (Math.PI * 2); if (!moveSel(sel.x, sel.z, false)){ sel.rot = r; moveSel(sel.x, sel.z, false); toast('Rotită nu încape aici. Mut-o întâi.'); } else commitMove(); };
+$('#tReset').onclick = () => { if (!sel) return; const pid = sel.id; delete OVR[pid]; endEdit(); rebuild(); sel = placed.find(p => p.id === pid) || null; if (sel) showCard(); else closeCard(); toast('Piesa a revenit la poziția automată.'); };
+$('#cNudge').addEventListener('click', e => { const b = e.target.closest('[data-n]'); if (!b || !sel) return; const [a, c] = b.dataset.n.split(',').map(Number); moveSel(sel.x + a * .05, sel.z + c * .05, false); commitMove(); });
+
+function setMode(m, silent){ mode = m; $('#mWalk').setAttribute('aria-pressed', String(m === 'walk')); $('#mHouse').setAttribute('aria-pressed', String(m === 'house'));
+  document.body.classList.toggle('walk', m === 'walk'); ceilings.visible = m === 'walk';
+  const sy = m === 'walk' ? 1 : .42; if (window.gsap && !reduce && !silent) gsap.to(walls.scale, { y: sy, duration: .8, ease: 'power2.inOut' }); else walls.scale.y = sy;
+  $('#hint').textContent = m === 'walk' ? 'Trage ca să privești · W A S D, săgețile sau joystick-ul ca să mergi · apasă pe o piesă ca s-o schimbi' : 'Trage ca să rotești macheta · apasă pe o piesă ca s-o schimbi sau s-o muți';
+  $('#hint').style.opacity = 1; clearTimeout(setMode.t); setMode.t = setTimeout(() => $('#hint').style.opacity = 0, 4500); }
+$('#mWalk').onclick = () => { endEdit(); setMode('walk'); goRoom((roomAt(player.x, player.z) || PLAN.camere[0]).id); };
+$('#mHouse').onclick = () => setMode('house');
+
+/* =====================================================================
+   6) INTERFAȚĂ: camere, plan, listă de cumpărături
+   ===================================================================== */
+const totalArea = PLAN.camere.reduce((a, r) => a + area(r), 0);
+$('#projName').textContent = PLAN.nume; $('#projMeta').textContent = `${totalArea.toFixed(1)} m² utili · ${PLAN.camere.length} încăperi`;
+$('#rooms').innerHTML = PLAN.camere.map(r => `<button type="button" data-r="${r.id}">${esc(r.nume)}<small>${area(r).toFixed(1)} m²</small></button>`).join('');
+$('#rooms').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ endEdit(); goRoom(b.dataset.r); } });
+const S = 20, svg = $('#miniSvg'); svg.setAttribute('viewBox', `-4 -4 ${W * S + 8} ${D * S + 8}`); $('#miniArea').textContent = totalArea.toFixed(0) + ' m²';
+function drawMini(){ svg.innerHTML = PLAN.camere.map(r => `<rect data-r="${r.id}" x="${r.x0 * S}" y="${r.z0 * S}" width="${(r.x1 - r.x0) * S}" height="${(r.z1 - r.z0) * S}" fill="${r.tip === 'baie' || r.tip === 'bucatarie' ? '#e6e8e3' : '#efe7da'}" stroke="#23262B" stroke-width="1.2" style="cursor:pointer"/><text x="${(r.x0 + r.x1) / 2 * S}" y="${(r.z0 + r.z1) / 2 * S + 4}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#5E636B" pointer-events="none">${esc(r.nume)}</text>`).join('')
+  + placed.map(p => `<rect x="${p.fp.x0 * S}" y="${p.fp.z0 * S}" width="${(p.fp.x1 - p.fp.x0) * S}" height="${(p.fp.z1 - p.fp.z0) * S}" fill="#1F4E79" opacity=".22" pointer-events="none"/>`).join('')
+  + `<g id="me" pointer-events="none"><circle r="5" fill="#1F4E79"/><path d="M0 0 L-6 -14 L6 -14 Z" fill="#1F4E79" opacity=".35"/></g>`; }
+svg.addEventListener('click', e => { const t = e.target.closest('rect[data-r]'); if (t){ endEdit(); goRoom(t.dataset.r); } });
+function renderList(){
+  const rows = []; placed.forEach(p => { rows.push({ key: p.key, room: p.room }); Object.entries(OPTS).filter(([, x]) => x.inclus === p.key).forEach(([k]) => rows.push({ key: k, room: p.room })); });
+  const byRoom = {}; rows.forEach(r => { (byRoom[r.room] = byRoom[r.room] || {}); byRoom[r.room][r.key] = (byRoom[r.room][r.key] || 0) + 1; });
+  let total = 0; const byStore = {};
+  $('#listBody').innerHTML = PLAN.camere.filter(r => byRoom[r.id]).map(r => { let sub = 0;
+    const items = Object.entries(byRoom[r.id]).map(([k, q]) => { const it = CAT[k], v = it.pret * q; sub += v; total += v; byStore[it.mag] = (byStore[it.mag] || 0) + v;
+      return `<div class="item"><a href="${it.url}" target="_blank" rel="noopener">${esc(it.nume)}</a><div class="p">${q > 1 ? q + ' × ' : ''}${lei(v)}</div><div class="meta">${esc(it.mag)}${it.w ? ` · ${it.w}×${it.d}×${it.h} cm` : ''}${q > 1 ? ` · ${lei(it.pret)}/buc.` : ''}</div></div>`; }).join('');
+    return `<h4>${esc(r.nume)} <span>${lei(sub)}</span></h4>${items}`; }).join('')
+    + (NOFIT.length ? `<p class="note">${NOFIT.map(n => `${esc(OPTS[n.key].eticheta)}: varianta aleasă nu încape în ${esc(n.room)}.`).join(' ')}</p>` : '')
+    + `<p class="note">Prețuri verificate pe ${DATA_PRET} pe ikea.com/ro și dedeman.ro; se pot schimba. Nu includ transportul, montajul (IKEA montează bucătăria ENHET de la 160 lei/metru liniar în București și Timiș), instalațiile sau finisajele.</p>`;
+  $('#totals').innerHTML = Object.entries(byStore).map(([m, v]) => `<div class="line"><span>${esc(m)}</span><span>${lei(v)}</span></div>`).join('')
+    + `<div class="grand"><span>Total</span><span>${lei(total)}</span></div><small>${rows.length} produse în ${Object.keys(byRoom).length} încăperi. Apasă pe orice piesă din casă ca să alegi altă variantă.</small><div class="acts"><button type="button" id="printBtn">Printează / PDF</button><button type="button" id="copyBtn">Copiază lista</button></div>`;
+  $('#listTotal').textContent = lei(total); $('#panelSub').textContent = `${PLAN.nume} · ${totalArea.toFixed(1)} m²`;
+  $('#printBtn').onclick = () => window.print();
+  $('#copyBtn').onclick = () => { const txt = rows.map(r => `${CAT[r.key].nume} — ${CAT[r.key].mag} — ${lei(CAT[r.key].pret)} — ${CAT[r.key].url}`).join('\n') + `\nTotal: ${lei(total)}`; navigator.clipboard && navigator.clipboard.writeText(txt).then(() => { $('#copyBtn').textContent = 'Copiat'; setTimeout(() => $('#copyBtn').textContent = 'Copiază lista', 1500); }); };
+}
+$('#openList').onclick = () => $('#panel').classList.add('on'); $('#closeList').onclick = () => $('#panel').classList.remove('on');
+
+/* =====================================================================
+   7) PORNIRE + BUCLA
+   ===================================================================== */
+function resize(){ R.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; cam.fov = innerWidth < innerHeight ? 78 : 68; cam.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+rebuild(); goRoom('hol', true); setMode('walk', true); setMode.t = setTimeout(() => $('#hint').style.opacity = 0, 5000);
+let last = performance.now(), lastRoom = null;
+(function loop(){ requestAnimationFrame(loop); const now = performance.now(), dt = Math.min(.05, (now - last) / 1000); last = now;
+  if (mode === 'walk'){ let f = 0, s = 0; if (keys.w || keys.arrowup) f += 1; if (keys.s || keys.arrowdown) f -= 1; if (keys.a || keys.arrowleft) s -= 1; if (keys.d || keys.arrowright) s += 1; f -= jz; s += jx;
+    if (f || s){ const sp = 1.7 * dt, fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw); const [x, z] = collide(player.x + (fx * f + rx * s) * sp, player.z + (fz * f + rz * s) * sp); player.x = x; player.z = z; }
+    cam.position.set(player.x, EYE, player.z); cam.rotation.order = 'YXZ'; cam.rotation.set(pitch, yaw, 0);
+  } else { const t = new THREE.Vector3(C.x + Math.sin(orbit.th) * Math.sin(orbit.ph) * orbit.r, Math.cos(orbit.ph) * orbit.r, C.z + Math.cos(orbit.th) * Math.sin(orbit.ph) * orbit.r); cam.position.lerp(t, Math.min(1, dt * 5)); cam.lookAt(C); }
+  const rm = roomAt(player.x, player.z); if (rm && rm.id !== lastRoom){ lastRoom = rm.id; document.querySelectorAll('#rooms button').forEach(b => b.classList.toggle('on', b.dataset.r === rm.id)); }
+  const me = document.getElementById('me'); if (me) me.setAttribute('transform', `translate(${player.x * S} ${player.z * S}) rotate(${-yaw * 180 / Math.PI})`);
+  R.render(scene, cam); })();
+})();
+
+</script>
+</body>
+</html>
