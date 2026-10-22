@@ -1,0 +1,49 @@
+{
+ "judge": "Opus subagent, blind, Latin-square rotated letters, 2026-10-22",
+ "overall": {
+  "T1": {
+   "A": 8,
+   "B": 7,
+   "C": 5,
+   "D": 8
+  },
+  "T2": {
+   "A": 7,
+   "B": 6,
+   "C": 8,
+   "D": 9
+  },
+  "T3": {
+   "A": 6,
+   "B": 8,
+   "C": 8,
+   "D": 7
+  }
+ },
+ "key": {
+  "T1": {
+   "A": "vault_forced",
+   "B": "director_official",
+   "C": "baseline",
+   "D": "official_forced"
+  },
+  "T2": {
+   "A": "director_official",
+   "B": "baseline",
+   "C": "official_forced",
+   "D": "vault_forced"
+  },
+  "T3": {
+   "A": "baseline",
+   "B": "official_forced",
+   "C": "vault_forced",
+   "D": "director_official"
+  }
+ },
+ "means": {
+  "vault_forced": 8.33,
+  "director_official": 7.0,
+  "baseline": 5.67,
+  "official_forced": 8.0
+ }
+}
