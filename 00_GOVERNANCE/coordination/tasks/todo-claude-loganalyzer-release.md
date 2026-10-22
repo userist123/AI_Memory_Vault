@@ -393,3 +393,19 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
 - Status bar keeps an active audit-health warning (`MainViewModel.ActivityStatusLine`).
 - Recent cases row: Romanian state (`DisplayState`), local dd.MM.yyyy HH:mm, full path as tooltip; stored data unchanged.
 - Tests: App 683 pass, UI 354 pass (1 skipped), Dfir 2391 pass (31 skipped), all exit 0. Not yet verified on the owner PC.
+
+## RESUME HERE (2026-10-22 late; supersedes the earlier "RESUME HERE")
+- Head dbc39de92 pushed to PR #308. Review of 99dc8dd4d: round 1 CHANGES_REQUIRED -> fixed 88de2625f; round 2 APPROVE (Opus, independent);
+  its LOW residual (null State in recent_cases.json) fixed dc13ec9fb (+test). App 684/0, Dfir touched classes 208/0 (worker: Dfir 2399/31/0).
+- Defender: test fixtures obfuscated (dbc39de92, test-only; 8 SHA-256 guard tests prove byte-identical decode); built Dfir.Tests.dll scans
+  clean, BEFORE copy was detected as HackTool:Win32/PsAttack.A. Owner was told: no name-based self-suppression in the product (attacker
+  could name malware like the app); old Defender events stay in the logs until they leave the control period (clearing Defender history
+  only with the owner's explicit OK). PsAttack.R „unsetenv” hits came from shell command lines carrying raw signature words - never echo them.
+- Installed real app = dbc39de92 build (exe F313BA92…, self-test 0). Verified on PC: Home after control (banner gone, coloured chips, status
+  bar line, recent cases in Romanian with local time), period „dd.MM.yyyy HH:mm, ora stației”, dialog title, investigation summary
+  „257.079”, „parțial”, „[critică]/[ridicată]”, Investigation keeps the no-data offer.
+- NEXT (owner order 2026-10-22): (1) COLD START as a complete beginner: fresh start of the app, go screen by screen, write down what a
+  beginner understands / where he gets stuck / unclear words; (2) if needed, research how the app should look to be understood by a
+  beginner (onboarding, plain language, first-run guidance) and propose concrete changes to the owner. Then: owner decision J/K
+  (investigation page: two parallel forms + empty grey panels); CLEANUP of ALL test data with the owner's OK on the exact list
+  (rule above); CI read once; merge #303 -> #306 -> #307 -> #308.
