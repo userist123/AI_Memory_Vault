@@ -44,6 +44,30 @@ public static class DeviceScope
     /// <summary>The single scope predicate for a journal row.</summary>
     public static bool IsInScope(DeviceJournalEntry e) => IsInScope(e.Class);
 
+    /// <summary>
+    /// Whether the monitor page lists a journal row (real-PC walkthrough round 3, 2026-10-22): an in-scope row, except, while it is not connected, a row folded
+    /// into another one (<see cref="DeviceJournalEntry.SupersededBy"/>: an interface of a device, the USB-SATA bridge of a disk, an old clone mark that no longer
+    /// holds) and a row of a component of the station that an older version listed (<see cref="IsInternalRow"/>). Display only: check D05 and the report compare
+    /// every in-scope row with the sealed audit (<see cref="IsInScope(DeviceJournalEntry)"/>), so nothing is hidden from the control.
+    /// </summary>
+    public static bool IsShown(DeviceJournalEntry e) => IsInScope(e) && (e.Present || e.SupersededBy.Length == 0 && !IsInternalRow(e));
+
+    /// <summary>
+    /// A row of a component of the station itself, from an older version of the monitor that judged every node on its own: an integrated camera, keyboard or
+    /// touchpad (by its name), or a node that does not hang off the outside of the station (ACPI, PCI, an I2C touchpad „HID\ELAN…”). Storage media, optical
+    /// drives and card readers are judged by their drive, never by this.
+    /// </summary>
+    public static bool IsInternalRow(DeviceJournalEntry e)
+    {
+        if (DeviceMonitorRules.IsStorageMedium(e.Class) || e.Class is DeviceClass.Optical or DeviceClass.CardReader) return false;
+        if (IsIntegratedName(e.Name)) return true;
+        return e.InstanceId.Length > 0 && !LooksExternalById(e.InstanceId);
+    }
+
+    /// <summary>A name Windows gives a built-in component („Integrated Camera”, „Integrated Webcam”, „Built-in Keyboard”).</summary>
+    public static bool IsIntegratedName(string name) =>
+        U(name) is var n && (n.Contains("INTEGRATED", StringComparison.Ordinal) || n.Contains("BUILT-IN", StringComparison.Ordinal) || n.Contains("BUILTIN", StringComparison.Ordinal));
+
     /// <summary>Order of the list: storage media first, then communication and peripherals.</summary>
     public static int SortOrder(DeviceClass c) => IsInScope(c) ? Array.IndexOf(InScopeClasses, c) : 100;
 
@@ -198,17 +222,39 @@ public static class DeviceScope
     }
 
     /// <summary>Without a container id: the bus of the instance id says whether a node hangs off the outside of the station (USB, Bluetooth, USB-HID, USB printer).</summary>
-    private static bool LooksExternalById(PnpSnapshotEntry e)
+    private static bool LooksExternalById(PnpSnapshotEntry e) => LooksExternalById(e.InstanceId);
+
+    private static bool LooksExternalById(string instanceId)
     {
-        var id = U(e.InstanceId);
+        var id = U(instanceId);
         return id.StartsWith(@"USB\", StringComparison.Ordinal) || id.StartsWith(@"USBPRINT\", StringComparison.Ordinal) || id.StartsWith(@"BTHENUM\", StringComparison.Ordinal)
                || id.StartsWith(@"BTHLE\", StringComparison.Ordinal) || id.StartsWith(@"BTHLEDEVICE\", StringComparison.Ordinal) || id.StartsWith(@"HID\VID_", StringComparison.Ordinal)
                || id.StartsWith(@"HID\{", StringComparison.Ordinal) || id.StartsWith(@"SWD\WPDBUSENUM\", StringComparison.Ordinal) || id.StartsWith(@"SCFILTER\", StringComparison.Ordinal);
     }
 
-    private static string GroupKey(PnpSnapshotEntry e)
+    /// <summary>
+    /// The USB device a node belongs to: an interface (USB\VID_..&amp;MI_xx) or a HID collection (HID\VID_..&amp;MI_xx&amp;COLyy) is followed up its parents to the
+    /// USB node without „&amp;MI_” (at most four levels); the node itself when it has no such parent.
+    /// </summary>
+    private static PnpSnapshotEntry UsbRoot(PnpSnapshotEntry e, IReadOnlyDictionary<string, PnpSnapshotEntry>? byId)
     {
-        if (IsDeviceContainer(e.ContainerId)) return "C|" + NormContainer(e.ContainerId);
+        var cur = e;
+        for (int i = 0; i < 4 && byId is not null && cur.Parent.Length > 0 && byId.TryGetValue(cur.Parent, out var p); i++)
+        {
+            var pid = U(p.InstanceId);
+            if (!(pid.StartsWith(@"USB\VID_", StringComparison.Ordinal) || pid.StartsWith(@"HID\VID_", StringComparison.Ordinal))) break;
+            cur = p;
+            if (pid.StartsWith(@"USB\VID_", StringComparison.Ordinal) && !pid.Contains("&MI_", StringComparison.Ordinal)) break;
+        }
+        return cur;
+    }
+
+    private static string GroupKey(PnpSnapshotEntry node, IReadOnlyDictionary<string, PnpSnapshotEntry>? byId = null)
+    {
+        if (IsDeviceContainer(node.ContainerId)) return "C|" + NormContainer(node.ContainerId);
+        // without a container id the interfaces and HID collections of one USB device are grouped with it through their parents
+        var e = UsbRoot(node, byId);
+        if (!ReferenceEquals(e, node) && IsDeviceContainer(e.ContainerId)) return "C|" + NormContainer(e.ContainerId);
         var id = U(e.InstanceId);
         var serial = DeviceMonitorRules.Serial(e.InstanceId);
         if (serial.Length > 0) return "S|" + serial;
@@ -218,6 +264,34 @@ public static class DeviceScope
             if (vp.Length > 0) return "V|" + vp;   // the HID collections of one USB device (no container id read)
         }
         return "I|" + id;
+    }
+
+    /// <summary>A USB mass-storage interface node: driver USBSTOR or UASPStor, interface class 08, or Windows' name for it („USB Mass Storage Device”).</summary>
+    private static bool IsMassStorageInterface(PnpSnapshotEntry e) =>
+        U(e.Service) is "USBSTOR" or "UASPSTOR" || U(e.HardwareIds).Contains("CLASS_08", StringComparison.Ordinal) || U(e.Name).Contains("MASS STORAGE", StringComparison.Ordinal);
+
+    /// <summary>The interface number of a node (MI_xx; 0 without one) and its HID collection (COLxx; 0 without one): the primary function comes first.</summary>
+    private static (int Interface, int Collection) InterfaceOrder(string instanceId)
+    {
+        var id = U(instanceId);
+        var mi = Regex.Match(id, "&MI_([0-9A-F]{2})");
+        var col = Regex.Match(id, "&COL([0-9A-F]{2})");
+        return (mi.Success ? Convert.ToInt32(mi.Groups[1].Value, 16) : 0, col.Success ? Convert.ToInt32(col.Groups[1].Value, 16) : 0);
+    }
+
+    /// <summary>
+    /// Keyboard or mouse (owner correction 2026-10-22): one physical device is the kind of its PRIMARY function, the keyboard or mouse node on its first interface
+    /// (lowest MI_xx, then lowest COLxx), not of any interface. A gaming mouse exposes keyboard and consumer collections for its macros on later interfaces: its
+    /// first interface is the mouse, so it is one „Mouse extern”; a keyboard whose mouse collection sits on a later interface stays a keyboard. On equal order the
+    /// mouse wins. The nodes of the other kind are dropped from the candidates.
+    /// </summary>
+    private static void PrimaryInputKind(List<(DeviceClass Kind, PnpSnapshotEntry Node)> candidates)
+    {
+        var input = candidates.Where(c => c.Kind is DeviceClass.Keyboard or DeviceClass.Mouse).ToList();
+        if (input.Select(c => c.Kind).Distinct().Count() < 2) return;
+        var primary = input.OrderBy(c => InterfaceOrder(c.Node.InstanceId).Interface).ThenBy(c => InterfaceOrder(c.Node.InstanceId).Collection)
+            .ThenBy(c => c.Kind == DeviceClass.Mouse ? 0 : 1).ThenBy(c => c.Node.InstanceId, StringComparer.OrdinalIgnoreCase).First().Kind;
+        candidates.RemoveAll(c => c.Kind is DeviceClass.Keyboard or DeviceClass.Mouse && c.Kind != primary);
     }
 
     private static int Priority(DeviceClass c) => c switch
@@ -260,6 +334,10 @@ public static class DeviceScope
         var readerKeys = new HashSet<string>(StringComparer.Ordinal);
         var byId = new Dictionary<string, PnpSnapshotEntry>(StringComparer.OrdinalIgnoreCase);
         foreach (var p in snapshot) byId.TryAdd(p.InstanceId, p);
+        // the container and the serial of every external storage medium: the USB node of its enclosure (a USB-SATA bridge, „USB Mass Storage Device”) and the
+        // portable-device view of its volume are parts of that medium, never a phone of their own
+        var storageGroups = new HashSet<string>(StringComparer.Ordinal);
+        var storageSerials = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         // 1. storage media: the drive node is the row
         foreach (var p in snapshot)
         {
@@ -270,16 +348,22 @@ public static class DeviceScope
             media?.TryGetValue(p.InstanceId, out mi);
             if (sk == DeviceClass.MemoryCard)
             {
-                if (U(p.InstanceId).StartsWith(@"USBSTOR\", StringComparison.Ordinal) && !IsLocalContainer(p.ContainerId)) readerKeys.Add(GroupKey(p));
+                if (U(p.InstanceId).StartsWith(@"USBSTOR\", StringComparison.Ordinal) && !IsLocalContainer(p.ContainerId)) readerKeys.Add(GroupKey(p, byId));
                 if (!DeviceMonitorRules.HasVolume(p, snapshot)) continue;     // an empty slot is not a medium
             }
             else if (sk == DeviceClass.UsbStorage && LooksLikeDisk(p, mi)) sk = DeviceClass.ExternalDisk;
             // a UAS / USB-NVMe disk: its serial and VID/PID are on the USB node it hangs off
             var identity = sk == DeviceClass.ExternalDisk && !U(p.InstanceId).StartsWith(@"USBSTOR\", StringComparison.Ordinal) && UsbParentWithSerial(p, byId) is { } up ? up : p;
+            if (sk != DeviceClass.MemoryCard)
+            {
+                if (IsDeviceContainer(p.ContainerId)) storageGroups.Add(GroupKey(p, byId));
+                foreach (var n in new[] { p, identity })
+                    if (DeviceMonitorRules.Serial(n.InstanceId) is { Length: > 0 } s) storageSerials.Add(s);
+            }
             result.Add(new ScopedDevice(sk, p, identity, [p], p, mi));
         }
         // 2. everything else, one row per physical device
-        foreach (var g in snapshot.Where(e => !driveIds.Contains(e.InstanceId) && !IsLocalContainer(e.ContainerId)).GroupBy(GroupKey))
+        foreach (var g in snapshot.Where(e => !driveIds.Contains(e.InstanceId) && !IsLocalContainer(e.ContainerId)).GroupBy(e => GroupKey(e, byId)))
         {
             var members = g.ToList();
             bool container = g.Key.StartsWith("C|", StringComparison.Ordinal);
@@ -294,9 +378,17 @@ public static class DeviceScope
                 candidates.Add((k, m));
             }
             bool reader = readerKeys.Contains(g.Key);
+            // the enclosure of a storage medium (same container or serial as its drive, or a USB mass-storage interface): the portable-device view of its volume
+            // is no phone or camera, the device is the medium's row (real-PC walkthrough round 3: a USB-SATA bridge listed as „Telefon / tabletă”)
+            if (storageGroups.Contains(g.Key) || members.Any(m => IsMassStorageInterface(m) || DeviceMonitorRules.Serial(m.InstanceId) is { Length: > 0 } s && storageSerials.Contains(s)))
+                candidates.RemoveAll(c => c.Kind is DeviceClass.Phone or DeviceClass.Camera && U(c.Node.InstanceId).StartsWith(@"SWD\WPDBUSENUM\", StringComparison.Ordinal));
+            // a built-in camera, keyboard or touchpad that Windows put in a container of its own is still a component of the station
+            candidates.RemoveAll(c => c.Kind is DeviceClass.Camera or DeviceClass.Keyboard or DeviceClass.Mouse && members.Any(m => IsIntegratedName(m.Name)));
+            PrimaryInputKind(candidates);
             if (candidates.Count == 0 && !reader) continue;
             if (reader && candidates.All(c => Priority(c.Kind) < Priority(DeviceClass.CardReader))) candidates.Add((DeviceClass.CardReader, BestIdentity(members, members[0])));
-            var best = candidates.OrderByDescending(c => Priority(c.Kind)).ThenBy(c => U(c.Node.InstanceId).Contains("&MI_", StringComparison.Ordinal) ? 1 : 0).First();
+            var best = candidates.OrderByDescending(c => Priority(c.Kind)).ThenBy(c => U(c.Node.InstanceId).Contains("&MI_", StringComparison.Ordinal) ? 1 : 0)
+                .ThenBy(c => InterfaceOrder(c.Node.InstanceId).Interface).ThenBy(c => InterfaceOrder(c.Node.InstanceId).Collection).First();
             var identity = BestIdentity(members, best.Node);
             result.Add(new ScopedDevice(best.Kind, best.Node, identity, members, null, null));
         }

@@ -99,7 +99,7 @@
                         </StackPanel>
                     </DockPanel>
                     <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"
-                               Text="Orice dispozitiv conectat sau scos apare singur, fără niciun buton. Cercul verde: conectat acum; roșu: deconectat (rândul rămâne și după repornire). Scrieți numărul de înregistrare al fiecărui mediu de stocare în coloana „Nr. de înregistrare” (se poate și pentru orice alt dispozitiv); fiecare schimbare se trece în jurnalul de audit al aplicației. Aplicația doar observă: nu blochează și nu schimbă nimic pe stație."/>
+                               Text="Orice dispozitiv conectat sau scos apare singur, fără niciun buton. Lista arată implicit doar dispozitivele conectate acum; cele deconectate se văd cu filtrul „Toate dispozitivele” și în „Istoric” (nimic nu se șterge din jurnal). Cercul verde: conectat acum; roșu: deconectat (rândul rămâne și după repornire). Scrieți numărul de înregistrare al fiecărui mediu de stocare în coloana „Nr. de înregistrare” (se poate și pentru orice alt dispozitiv); fiecare schimbare se trece în jurnalul de audit al aplicației. Aplicația doar observă: nu blochează și nu schimbă nimic pe stație."/>
                     <DataGrid x:Name="DevicesGrid" AutomationProperties.Name="Dispozitivele văzute de monitor" ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                               HeadersVisibility="Column" SelectionMode="Single" HorizontalScrollBarVisibility="Auto" FrozenColumnCount="2">
                         <DataGrid.RowStyle>

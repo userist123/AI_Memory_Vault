@@ -266,13 +266,18 @@ public static class StationFactCollector
         // D05: the device monitor's machine-wide journal (written by the application while it runs); no file = the monitor never ran on this station.
         // Read-only: the collector never renames, moves or writes the journal (a damaged file is only reported; the running monitor sets it aside and seals it)
         var journalPath = LogAnalyzer.Dfir.Devices.DeviceJournalStore.DefaultPath;
+        // review finding 3 (2026-10-22): through Try, so a journal the reader cannot handle is a gap of this source, never the end of the whole control run
         if (File.Exists(journalPath))
-        {
-            facts.DeviceMonitor = LogAnalyzer.Dfir.Devices.DeviceJournalStore.Load(journalPath, out var journalProblem);
-            facts.DeviceMonitorProblem = journalProblem;
-            // a folder or file owned by another account than SYSTEM / Administrators: the journal is shown but not trusted (the sealed audit wins)
-            facts.DeviceJournalUntrusted = LogAnalyzer.Dfir.Devices.DeviceJournalStore.EnsureSecure(journalPath, create: false).Warning;
-        }
+            Try(facts, "Jurnalul monitorului de dispozitive", () =>
+            {
+                // until the reading succeeds the journal is an empty one with a problem (D05 says the journal could not be read, not „the monitor never ran”)
+                facts.DeviceMonitor = new LogAnalyzer.Dfir.Devices.DeviceJournal();
+                facts.DeviceMonitorProblem = "Jurnalul monitorului de dispozitive nu a putut fi citit.";
+                facts.DeviceMonitor = LogAnalyzer.Dfir.Devices.DeviceJournalStore.Load(journalPath, out var journalProblem);
+                facts.DeviceMonitorProblem = journalProblem;
+                // a folder or file owned by another account than SYSTEM / Administrators: the journal is shown but not trusted (the sealed audit wins)
+                facts.DeviceJournalUntrusted = LogAnalyzer.Dfir.Devices.DeviceJournalStore.EnsureSecure(journalPath, create: false).Warning;
+            });
         // D05: what the sealed audit says (registration numbers, critical alerts, the monitor's running windows); without it the journal cannot be checked
         // the records come from the same bytes the chain was verified on when the caller passes them (m5)
         if (auditBytes is not null)

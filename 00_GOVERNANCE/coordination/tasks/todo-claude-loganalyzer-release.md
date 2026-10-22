@@ -3,7 +3,7 @@
 - **Task:** owner order 2026-10-22: work until LogAnalyzer is ready for use. Measure = the project's own release gate
   (`02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RELEASE_GATE.md`, `release-gate/gate-items.json`) + SECURITY_AUDIT.md.
 - **Branch:** `claude/loganalyzer-release-gate`, worktree `.claude/worktrees/la-rel` (build ONLY here), base E7 head efa0a03b9 (stack on #307).
-- **Updated:** 2026-10-22 (WP4 closed, register draft, notices).
+- **Updated:** 2026-10-22 (WP4 closed, register draft, notices; monitor review findings 1-4 + round 3 + owner decisions done, needs Opus review).
 
 ## Gate state (2026-10-22, from code; the gate needs PowerShell 7, not installed locally, CI runs it)
 - PASS expected: tests_passing, synthetic_corpus, evidence_integrity; audit_integrity probably PASS (AuditChainCustodyTests exists; RELEASE_GATE.md "Today" stale).
@@ -174,3 +174,34 @@ Still wrong (real data, owner's station):
 3. "Integrated Camera" (Realtek 04F2/B83E, internal laptop camera) is listed although the scope says integrated devices are not shown.
 4. Transfer register grid: after the width change the first columns (Nr., Data, Direcție) collapse ("TR", "20", "ieș").
 5. Not yet checked: whether the Alertă column still shows "posibilă clonă" on those rows (the grid could not be scrolled right by automation).
+Status 2026-10-22 (vault-worker, after round 3): items 1-4 DONE below; item 5 not re-checked on screen (the old clone rows are folded, see 5 below).
+
+## Review findings on the clone change + round 3 + owner decisions (2026-10-22, vault-worker; DONE, needs Opus vault-reviewer)
+All in `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`; each fix has a test seen failing on e7819c71d (17 Dfir cases run against the HEAD sources; the rest need the new API).
+- F1 HIGH LUN/capacity: `Dfir.Core/Devices/DeviceJournalModel.cs` `SameDevice`/`CapacityDiffers`: under ONE identity any two known capacities must agree
+  (LUN number/type is device-controlled); `SerialConflict` uses the LUN only between identities; a known capacity is never overwritten (kept, row flagged).
+- F2 HIGH manufacturer: `ManufacturerWords` + `SameManufacturer`: equal after normalisation (case, punctuation, company suffixes Inc/Ltd/Corp/Co/LLC/GmbH/
+  Electronics/Technology/...) or whole-word prefix of >= 4 chars („Razer Inc” = „Razer USA Ltd.”; „S” != „Samsung”, „WD” != „Western Digital”); a real
+  manufacturer is never overwritten (only a placeholder or empty field is filled).
+- F3 MEDIUM null rows: `Dfir.Core/Devices/DeviceMonitorJournal.cs` `Load`: rows/alerts/runs/radios/pending with null fields dropped, problem
+  „parțial deteriorat … (cauza: câmp null)”, rest loaded (not reset); NRE/ArgumentNull = damaged. `Dfir.Windows/Audit/StationFacts.cs` reads it inside `Try`.
+- F4 LOW risk page: `App/ViewModels/MainViewModel.cs`: no score, no factors, neutral colour, „Nu există date analizate.” without events, and nothing scored at
+  start-up (announce=false) so the page agrees with „Nicio analiză încă.”.
+- R3.1 one device = one row: cause on the station = rows of an OLDER version (per-HID-node „ID|HID\...” rows of 2026-10-16 and „|DUP|1” rows of the old clone
+  rule of 2026-10-17), not the live grouping. `DeviceJournalMerge.MarkSuperseded` (on every Load and after Apply, deterministic, never stored) FOLDS them
+  for the page (`DeviceScope.IsShown`, `ShownView` earliest first-seen/latest connection, `FoldedIdentities` + `DeviceHistory.Build(identities)` for Istoric).
+  Rows are NOT deleted or re-keyed (D05 still compares every row with the sealed audit); rows with two different registration numbers are not folded.
+  Live: `DeviceScope.GroupKey` follows Parent to the USB device when no container id.
+- Owner decision 2026-10-22 (a), mouse vs keyboard: `DeviceScope.PrimaryInputKind`: the kind of the FIRST interface (lowest MI_xx, then COLxx; mouse wins on a tie). Deviation from
+  the literal wording „mouse if any mouse interface”: the station's 258A/013B keyboard has a mouse collection on MI_01 and would become a mouse.
+- R3.2 bridge: `DeviceScope.Classify` drops the WPD volume view (SWD\WPDBUSENUM) as phone/camera in a group sharing container/serial with a drive or with a
+  mass-storage interface (USBSTOR/UASPStor/Class_08/„Mass Storage”); old bridge rows folded into the disk with the same serial.
+- R3.3 integrated camera: the station's row is an old per-node row; `IsInternalRow` (integrated name, or non-external bus ACPI/PCI/HID\ELAN) hides such rows;
+  `Classify` also drops Camera/Keyboard/Mouse groups with an „Integrated/Built-in” name.
+- R3.4 `App/Views/TransferRegisterView.xaml`: MinWidth on every column, Data 140, horizontal scroll, first column frozen.
+- Owner decision 2026-10-22 (b): default filter „Conectate acum” (`App/ViewModels/DeviceMonitorViewModel.cs`), page text `Views/MediaCenterView.xaml`, guide §monitor in
+  `docs/utilizare/GHID_DE_UTILIZARE.md`. Nothing deleted from journal or sealed audit. Two App tests now set „Toate dispozitivele” explicitly (history view).
+Tests: new `Dfir.Tests/DeviceMonitorRound3Tests.cs` (38), `App.Tests/UiWalkthroughRound3Tests.cs` (6). Dfir 2332/31/0, App 667, UI 354/1, Edition 45, build 0 errors.
+Open (decide with owner / Opus): (1) D05 compares a row's class with its FIRST sealed class: a device whose kind changes with this version (the station's
+mouse row Tastatură -> Mouse) gives a D05 „alt tip” finding until a sealed reclassification record is designed (not done: D05 is a gate). (2)
+an all-zero serial („000000000000”) is treated as a real serial. (3) report 3c / D05 still list folded and old internal rows (by design). (4) live re-check on the station.

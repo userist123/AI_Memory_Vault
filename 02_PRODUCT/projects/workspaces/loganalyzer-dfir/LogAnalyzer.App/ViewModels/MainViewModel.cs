@@ -171,7 +171,11 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<AiAnomalyItem> AiAnomalies { get; set; } = new();
         [ObservableProperty] private int _aiRiskScore = 0;
         [ObservableProperty] private string _aiRiskLevel = "NEDETERMINAT (analiza nu a fost rulată)";
-        [ObservableProperty] private string _aiRiskColor = "#94a3b8";
+        [ObservableProperty] private string _aiRiskColor = NeutralRiskColor;
+        /// <summary>The colour of a risk level that was not computed (grey, never the green of „normal”).</summary>
+        public const string NeutralRiskColor = "#94a3b8";
+        /// <summary>The summary when there is no event to analyse (review finding 4, 2026-10-22).</summary>
+        public const string NoDataSummary = "Nu există date analizate.";
         [ObservableProperty] private int _aiHighEntropyCount = 0;
         [ObservableProperty] private int _aiMasqueradingCount = 0;
         [ObservableProperty] private int _aiOffHoursCount = 0;
@@ -2734,16 +2738,19 @@ namespace LogAnalyzer.UI.ViewModels
 
                 // Evaluare Scor de Risc Explicabil (ISO/IEC 27042)
                 var explainableRisk = _explainableAiEngine.Evaluate(DetectedIssues, entropyCount, masqCount, offHoursCount, yaraMatches.Count, LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.WorkingHours);
-                // no score without evidence: with no event analysed the engine's baseline (5 points) is not a risk of this station
-                bool evidence = eventsForAnalysis.Count > 0;
+                // no score without evidence: with no event analysed the engine's baseline (5 points) is not a risk of this station. Review finding 4 (2026-10-22):
+                // nor at start-up, when only an earlier session's data was re-read (announce = false) and the status bar says „Nicio analiză încă.”; then the
+                // page says that nothing was analysed, in a neutral colour, never „Parametrii analizați se încadrează în limitele normale” in green
+                bool evidence = eventsForAnalysis.Count > 0 && announce;
                 AiRiskScore = evidence ? explainableRisk.TotalScore : 0;
-                AiRiskLevel = evidence ? explainableRisk.Level : "NEDETERMINAT (nu există date analizate)";
-                AiRiskColor = explainableRisk.LevelColor;
-                AiExecutiveSummary = explainableRisk.ExecutiveSummaryRo;
+                AiRiskLevel = evidence ? explainableRisk.Level : eventsForAnalysis.Count > 0 ? "NEDETERMINAT (analiza nu a fost rulată în această sesiune)" : "NEDETERMINAT (nu există date analizate)";
+                AiRiskColor = evidence ? explainableRisk.LevelColor : NeutralRiskColor;
+                AiExecutiveSummary = evidence ? explainableRisk.ExecutiveSummaryRo
+                    : eventsForAnalysis.Count > 0 ? "Nicio analiză în această sesiune: importați sau colectați jurnale ori apăsați butonul de analiză." : NoDataSummary;
                 AiTacticalRecommendation = "1. Examinați factorii de risc ponderați din tabelul explicabil.\n2. Verificați alertele Kerberos/AD și procesele LOLBAS identificate.\n3. Generați draftul de notificare NIS2 / DNSC dacă incidentul este semnificativ.\n4. Exportați lanțul de custodie în format CASE/UCO 1.3.";
 
                 ExplainableRiskFactors.Clear();
-                foreach (var factor in explainableRisk.Factors)
+                foreach (var factor in explainableRisk.Factors.Where(_ => evidence))
                 {
                     ExplainableRiskFactors.Add(factor);
                 }

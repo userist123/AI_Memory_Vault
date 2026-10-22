@@ -41,6 +41,12 @@ public sealed class DeviceJournalEntry
     /// <summary>The account of the active console session when the device was connected; empty = nobody was logged on (shown as „—”).</summary>
     [JsonPropertyName("connected_user")] public string ConnectedUser { get; set; } = "";
 
+    /// <summary>
+    /// The identity of the row this one is folded into on the monitor page (an interface row of an older version, the USB-SATA bridge of a disk, an old clone
+    /// mark that no longer holds); "" = a row of its own. Never stored: recomputed on every reading (<see cref="DeviceJournalMerge.MarkSuperseded"/>).
+    /// </summary>
+    [JsonIgnore] public string SupersededBy { get; set; } = "";
+
     public DeviceStatus Status => DeviceMonitorRules.Status(Present, ConfigManagerErrorCode);
 
     public DeviceJournalEntry Copy() => (DeviceJournalEntry)MemberwiseClone();
@@ -267,7 +273,8 @@ public static class DeviceJournalMerge
                 if (DeviceMonitorRules.Serial(p.InstanceId).Length > 0 && !cloneInstances.Contains(p.InstanceId))
                 {
                     var candidates = journal.Devices.Where(x => x.Identity.Equals(identity, StringComparison.OrdinalIgnoreCase)
-                                                                || x.Identity.StartsWith(identity + "|DUP|", StringComparison.OrdinalIgnoreCase)).ToList();
+                                                                || x.Identity.StartsWith(identity + "|DUP|", StringComparison.OrdinalIgnoreCase))
+                                                    .OrderBy(x => x.SupersededBy.Length > 0 ? 1 : 0).ToList();   // a folded old clone row last
                     if (candidates.Count > 0)
                     {
                         long cap = mi?.CapacityBytes ?? 0;
@@ -313,6 +320,8 @@ public static class DeviceJournalMerge
                 e = new DeviceJournalEntry { Identity = identity, FirstSeenUtc = nowUtc, ConnectedUser = connectedUser };
                 journal.Devices.Add(e);
             }
+            // review finding 1: a known capacity is never overwritten by another one (the row keeps the first); a row seen with two capacities is a clone
+            if (mi is { CapacityBytes: > 0 } mc && e.CapacityBytes > 0 && mc.CapacityBytes != e.CapacityBytes && d.Kind != DeviceClass.MemoryCard) duplicate = true;
             if (duplicate || cloneInstances.Contains(p.InstanceId) || portClones.Contains(p.InstanceId) || portTwins.Contains(p.InstanceId)) e.DuplicateSerial = true;
             if (d.Kind == DeviceClass.MemoryCard) e.UnidentifiableMedium = unidentifiable;
             e.InstanceId = p.InstanceId;
@@ -321,8 +330,9 @@ public static class DeviceJournalMerge
             // the device's friendly name, never the drive letter Windows gave the portable-device view of a phone's storage („F:\”)
             var name = DeviceMonitorRules.FriendlyName(new[] { d.Primary.Name, p.Name }.Concat(d.Members.Select(m => m.Name)), prod.Length > 0 ? prod : KnownManufacturer(mfr).Length > 0 ? mfr.Trim() : "");
             if (name.Length > 0 && !(DeviceMonitorRules.IsDriveLetterName(name) && e.Name.Length > 0 && !DeviceMonitorRules.IsDriveLetterName(e.Name))) e.Name = name;
-            // a placeholder („(Standard disk drives)”) never overwrites the real manufacturer a node reported before
-            if (mfr.Length > 0 && (KnownManufacturer(mfr).Length > 0 || KnownManufacturer(e.Manufacturer).Length == 0)) e.Manufacturer = mfr;
+            // a real manufacturer, once known, is never overwritten (review finding 2: „Samsung” must not become „S”): a real one replaces only a placeholder
+            // („(Standard disk drives)”) or nothing, and a placeholder only fills an empty field
+            if (mfr.Length > 0 && KnownManufacturer(e.Manufacturer).Length == 0 && (KnownManufacturer(mfr).Length > 0 || e.Manufacturer.Length == 0)) e.Manufacturer = mfr;
             if (prod.Length > 0) e.Model = prod;
             e.Serial = DeviceMonitorRules.Serial(p.InstanceId);
             e.NoUniqueSerial = DeviceMonitorRules.HasNoUniqueSerial(p.InstanceId);
@@ -330,7 +340,7 @@ public static class DeviceJournalMerge
             e.ConfigManagerErrorCode = d.Primary.ConfigManagerErrorCode > 0 ? d.Primary.ConfigManagerErrorCode : p.ConfigManagerErrorCode;
             if (mi is { } mm)
             {
-                if (mm.CapacityBytes > 0) e.CapacityBytes = mm.CapacityBytes;
+                if (mm.CapacityBytes > 0 && e.CapacityBytes == 0) e.CapacityBytes = mm.CapacityBytes;
                 e.VolumeLetters = mm.Letters;
                 e.VolumeLabel = mm.Label;
                 e.VolumeSerial = mm.VolumeSerial;
@@ -354,6 +364,7 @@ public static class DeviceJournalMerge
             e.LastDisconnectedUtc = nowUtc;
             if (DeviceScope.IsInScope(e)) changes.Add(new(e, false));
         }
+        MarkSuperseded(journal);
         return changes;
     }
 
@@ -362,8 +373,13 @@ public static class DeviceJournalMerge
     // device”, no capacity), the USBSTOR disk (USBSTOR\Disk&Ven_..\<serial>&0, „(Standard disk drives)”, the capacity only once the medium was read) and,
     // for a UAS disk, the USB node with the vendor of the SCSI disk („Fakeven ”, padded). Placeholders and a capacity of 0 are UNKNOWN, never different.
 
+    // Review finding 1 (2026-10-22): the LUN number and type in a USBSTOR id are reported by the device itself, and the serial drops the „&N”, so a clone that
+    // reports „…\SERIAL&1” or „CdRom&…” has the same identity as the original. Under ONE identity (same serial + VID/PID or vendor/product) a different known
+    // capacity on any LUN is therefore a clone; the LUN only separates capacities between different identities of one stick.
     private static bool SameDevice(DeviceJournalEntry x, long capacity, string manufacturer, string instanceId) =>
-        SameManufacturer(x.Manufacturer, manufacturer) && !CapacityConflict(x.CapacityBytes, x.InstanceId, capacity, instanceId);
+        SameManufacturer(x.Manufacturer, manufacturer) && !CapacityDiffers(x.CapacityBytes, capacity);
+
+    private static bool CapacityDiffers(long a, long b) => a > 0 && b > 0 && a != b;
 
     /// <summary>
     /// The manufacturer a node really reported, normalised (upper case, letters and digits only); empty for a placeholder Windows puts on a class driver
@@ -378,12 +394,46 @@ public static class DeviceJournalMerge
         return new string(t.Where(char.IsLetterOrDigit).ToArray());
     }
 
-    /// <summary>Two manufacturers are the same unless both are known and neither contains the other („FAKEVEN” = „Fakeven ” = „Fakeven Electronics”).</summary>
+    /// <summary>Company-form words dropped from the end of a manufacturer before two are compared („Samsung Electronics Co., Ltd.” → „SAMSUNG”).</summary>
+    private static readonly HashSet<string> CompanySuffixes = new(StringComparer.Ordinal)
+    {
+        "INC", "INCORPORATED", "LTD", "LIMITED", "CORP", "CORPORATION", "CO", "COMPANY", "LLC", "GMBH", "AG", "SA", "SRL", "BV", "KK", "PLC",
+        "ELECTRONICS", "ELECTRONIC", "TECHNOLOGY", "TECHNOLOGIES", "INTERNATIONAL", "INTL",
+    };
+
+    /// <summary>
+    /// The words of a real manufacturer (upper case, punctuation dropped, company-form suffixes Inc / Ltd / Corp / Co / LLC / GmbH / Electronics / Technology /…
+    /// dropped from the end); empty for a placeholder (<see cref="KnownManufacturer"/>).
+    /// </summary>
+    public static IReadOnlyList<string> ManufacturerWords(string manufacturer)
+    {
+        if (KnownManufacturer(manufacturer).Length == 0) return [];
+        var words = new List<string>();
+        var cur = new System.Text.StringBuilder();
+        foreach (var ch in manufacturer.Trim().ToUpperInvariant())
+        {
+            if (char.IsLetterOrDigit(ch)) { cur.Append(ch); continue; }
+            if (cur.Length > 0) { words.Add(cur.ToString()); cur.Clear(); }
+        }
+        if (cur.Length > 0) words.Add(cur.ToString());
+        while (words.Count > 1 && CompanySuffixes.Contains(words[^1])) words.RemoveAt(words.Count - 1);
+        return words;
+    }
+
+    /// <summary>
+    /// Whether two manufacturers can be the same company (review finding 2, 2026-10-22; a substring match let „Samsung” → „S” → „SanDisk” pass). A placeholder or
+    /// an empty value is UNKNOWN and matches anything. Two real ones match only when their words are equal after normalisation („Kingston” = „KINGSTON ”,
+    /// „Fakeven” = „Fakeven Electronics”), or when the words of one are the first whole words of the other and are at least 4 characters long („Razer Inc” =
+    /// „Razer USA Ltd.”: „RAZER” is the first word of „RAZER USA”). „S” never matches „Samsung”, „WD” never matches „Western Digital”.
+    /// </summary>
     public static bool SameManufacturer(string a, string b)
     {
-        var x = KnownManufacturer(a);
-        var y = KnownManufacturer(b);
-        return x.Length == 0 || y.Length == 0 || x.Contains(y, StringComparison.Ordinal) || y.Contains(x, StringComparison.Ordinal);
+        var x = ManufacturerWords(a);
+        var y = ManufacturerWords(b);
+        if (x.Count == 0 || y.Count == 0) return true;
+        if (x.SequenceEqual(y)) return true;
+        var (shorter, longer) = x.Count <= y.Count ? (x, y) : (y, x);
+        return shorter.Count < longer.Count && longer.Take(shorter.Count).SequenceEqual(shorter) && string.Concat(shorter).Length >= 4;
     }
 
     /// <summary>The logical unit a capacity belongs to: „DISK|0” for a USBSTOR disk LUN 0 (a CD-ROM LUN of the same stick is „CDROM|1”), „DISK|0” for any other node.</summary>
@@ -430,7 +480,8 @@ public static class DeviceJournalMerge
             if (va != vb) return true;
             if (pa != pb && DeviceMonitorRules.IsStorageMedium(a.Class) && DeviceMonitorRules.IsStorageMedium(b.Class)) return true;
         }
-        if (CapacityConflict(a.CapacityBytes, a.InstanceId, b.CapacityBytes, b.InstanceId)) return true;
+        // under one identity any two known capacities must agree (whatever LUN the device claims); between two identities of one stick only the same LUN's
+        if (SameBase(a.Identity, b.Identity) ? CapacityDiffers(a.CapacityBytes, b.CapacityBytes) : CapacityConflict(a.CapacityBytes, a.InstanceId, b.CapacityBytes, b.InstanceId)) return true;
         // the manufacturer is compared only between nodes of the same kind (same serial + VID/PID or vendor/product): a USBSTOR vendor is cut to 8 characters
         // and need not match the USB node's manufacturer
         return SameBase(a.Identity, b.Identity) && !SameManufacturer(a.Manufacturer, b.Manufacturer);
@@ -455,6 +506,131 @@ public static class DeviceJournalMerge
             if (flag != r.DuplicateSerial) { r.DuplicateSerial = flag; changed++; }
         }
         return changed;
+    }
+
+    // ---- one physical device, one row on the page (real-PC walkthrough round 3, 2026-10-22) ------------------------------------------------------
+    // The station's journal showed one device as several rows: rows of an older version that judged every HID interface / collection on its own
+    // („ID|HID\VID_xxxx&PID_yyyy&MI_01&COL01\…”), rows „…|DUP|1” the earlier clone rule made for the nodes of one device (a stick, an SSD, a mouse: one
+    // „Conectat” and one „Deconectat” row each), and the USB-SATA bridge of an SSD (USB\VID_xxxx&PID_yyyy\<the SSD's serial>, „USB Mass Storage Device”).
+    // They are FOLDED for the page, never deleted or re-keyed: the row stays in the journal with its own class and dates, so check D05 still compares it with
+    // its sealed records; the page shows the device once, with the earliest first sight, the latest connection and the history of every folded row.
+
+    private static readonly System.Text.RegularExpressions.Regex InterfaceNode = new(@"^(USB|HID)\\VID_[0-9A-F]{4}&PID_[0-9A-F]{4}(&MI_[0-9A-F]{2}|&COL[0-9A-F]{2}|\\)",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    /// <summary>A row of an older version for one interface or HID collection of a USB device (never the identity the monitor gives a device now).</summary>
+    private static bool IsInterfaceRow(DeviceJournalEntry e) =>
+        e.Identity.StartsWith("ID|", StringComparison.OrdinalIgnoreCase) && e.VidPid.Length > 0
+        && (e.InstanceId.StartsWith(@"HID\", StringComparison.OrdinalIgnoreCase) || e.InstanceId.Contains("&MI_", StringComparison.OrdinalIgnoreCase)) && InterfaceNode.IsMatch(e.InstanceId);
+
+    private static (int Interface, int Collection) InterfaceOrderOf(string instanceId)
+    {
+        var mi = System.Text.RegularExpressions.Regex.Match(instanceId, "&MI_([0-9A-Fa-f]{2})");
+        var col = System.Text.RegularExpressions.Regex.Match(instanceId, "&COL([0-9A-Fa-f]{2})");
+        return (mi.Success ? Convert.ToInt32(mi.Groups[1].Value, 16) : 0, col.Success ? Convert.ToInt32(col.Groups[1].Value, 16) : 0);
+    }
+
+    /// <summary>Two different registration numbers: the rows are not folded (the number of each is evidence; the operator decides).</summary>
+    private static bool NumbersDiffer(DeviceJournalEntry a, DeviceJournalEntry b) =>
+        a.RegistrationNumber.Length > 0 && b.RegistrationNumber.Length > 0 && !a.RegistrationNumber.Equals(b.RegistrationNumber, StringComparison.OrdinalIgnoreCase);
+
+    private static int Chronological(DeviceJournalEntry a, DeviceJournalEntry b)
+    {
+        int c = a.FirstSeenUtc.CompareTo(b.FirstSeenUtc);
+        return c != 0 ? c : string.Compare(a.Identity, b.Identity, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Recomputes <see cref="DeviceJournalEntry.SupersededBy"/> on every row (deterministic, whatever the order of the rows). Folded, when the two rows carry no
+    /// different registration numbers:
+    /// <list type="bullet">
+    /// <item>a „…|DUP|n” row into its base row when the two do not conflict (<see cref="SerialConflict"/>; same class) and the row conflicts with no other row;</item>
+    /// <item>an interface / HID-collection row of an older version into the one current row with the same VID/PID (when there is none or several, the interface
+    /// rows of that VID/PID into the one of the first interface: lowest MI_xx and COLxx, then the earliest);</item>
+    /// <item>the USB node of a storage enclosure („USB Mass Storage Device”, or a name that is only a drive letter) with a serial into the earliest storage-medium row
+    /// with that serial.</item>
+    /// </list>
+    /// Chains are followed to the final row. Returns the number of folded rows.
+    /// </summary>
+    public static int MarkSuperseded(DeviceJournal journal)
+    {
+        var rows = journal.Devices;
+        foreach (var r in rows) r.SupersededBy = "";
+        var into = new Dictionary<DeviceJournalEntry, DeviceJournalEntry>(ReferenceEqualityComparer.Instance);
+        // 1. an old clone mark that no longer holds
+        foreach (var r in rows)
+        {
+            int i = r.Identity.IndexOf("|DUP|", StringComparison.OrdinalIgnoreCase);
+            if (i < 0 || journal.Find(r.Identity[..i]) is not { } b || b.Class != r.Class || NumbersDiffer(r, b)) continue;
+            if (rows.Any(o => SerialConflict(r, o))) continue;
+            into[r] = b;
+        }
+        // 2. interface rows of an older version
+        var legacy = rows.Where(r => !into.ContainsKey(r) && IsInterfaceRow(r)).ToList();
+        foreach (var g in legacy.GroupBy(r => r.VidPid.ToUpperInvariant()))
+        {
+            var group = g.ToList();
+            var targets = rows.Where(t => !IsInterfaceRow(t) && !into.ContainsKey(t) && t.VidPid.Equals(g.Key, StringComparison.OrdinalIgnoreCase) && DeviceScope.IsInScope(t)
+                                          && !DeviceMonitorRules.IsStorageMedium(t.Class)).ToList();
+            DeviceJournalEntry target;
+            if (targets.Count == 1) target = targets[0];
+            else
+            {
+                var ordered = group.ToList();
+                ordered.Sort((a, b) =>
+                {
+                    var (ia, ca) = InterfaceOrderOf(a.InstanceId);
+                    var (ib, cb) = InterfaceOrderOf(b.InstanceId);
+                    return ia != ib ? ia.CompareTo(ib) : ca != cb ? ca.CompareTo(cb) : Chronological(a, b);
+                });
+                target = ordered[0];
+            }
+            foreach (var r in group)
+                if (!ReferenceEquals(r, target) && !NumbersDiffer(r, target)) into[r] = target;
+        }
+        // 3. the USB node of a storage enclosure (a USB-SATA bridge with the disk's serial)
+        foreach (var r in rows)
+        {
+            if (into.ContainsKey(r) || DeviceMonitorRules.IsStorageMedium(r.Class) || r.Serial.Length == 0 || !r.InstanceId.StartsWith(@"USB\VID_", StringComparison.OrdinalIgnoreCase)) continue;
+            if (!(r.Name.Contains("MASS STORAGE", StringComparison.OrdinalIgnoreCase) || DeviceMonitorRules.IsDriveLetterName(r.Name))) continue;
+            var disks = rows.Where(t => DeviceMonitorRules.IsStorageMedium(t.Class) && !into.ContainsKey(t) && t.Serial.Equals(r.Serial, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (disks.Count == 0) continue;
+            disks.Sort(Chronological);
+            if (!NumbersDiffer(r, disks[0])) into[r] = disks[0];
+        }
+        // every folded row points at the final row of its chain
+        int folded = 0;
+        foreach (var (r, _) in into)
+        {
+            var t = r;
+            for (int i = 0; i < 16 && into.TryGetValue(t, out var next); i++) t = next;
+            if (ReferenceEquals(t, r) || into.ContainsKey(t)) continue;   // a cycle: left as rows of their own
+            r.SupersededBy = t.Identity;
+            folded++;
+        }
+        return folded;
+    }
+
+    /// <summary>The identities whose history the page shows for a row: its own and every row folded into it (in journal order).</summary>
+    public static IReadOnlyList<string> FoldedIdentities(DeviceJournal journal, string identity) =>
+        [identity, .. journal.Devices.Where(d => d.SupersededBy.Equals(identity, StringComparison.OrdinalIgnoreCase)).Select(d => d.Identity)];
+
+    /// <summary>
+    /// What the page shows for a row: the row itself, with the earliest first sight and the latest connection / disconnection of the rows folded into it (a copy;
+    /// the journal row is not changed, its dates stay the ones the sealed audit has).
+    /// </summary>
+    public static DeviceJournalEntry ShownView(DeviceJournal journal, DeviceJournalEntry e)
+    {
+        var folded = journal.Devices.Where(d => d.SupersededBy.Length > 0 && d.SupersededBy.Equals(e.Identity, StringComparison.OrdinalIgnoreCase)).ToList();
+        if (folded.Count == 0) return e;
+        var v = e.Copy();
+        foreach (var f in folded)
+        {
+            if (f.FirstSeenUtc < v.FirstSeenUtc) v.FirstSeenUtc = f.FirstSeenUtc;
+            if (f.LastConnectedUtc is { } c && (v.LastConnectedUtc is null || c > v.LastConnectedUtc)) v.LastConnectedUtc = c;
+            if (f.LastDisconnectedUtc is { } x && (v.LastDisconnectedUtc is null || x > v.LastDisconnectedUtc)) v.LastDisconnectedUtc = x;
+        }
+        return v;
     }
 
     /// <summary>Sets the registration number of a device; returns the previous value, or null when the identity is not in the journal.</summary>
