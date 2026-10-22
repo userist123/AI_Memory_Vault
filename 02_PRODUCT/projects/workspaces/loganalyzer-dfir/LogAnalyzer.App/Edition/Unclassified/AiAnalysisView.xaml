@@ -10,11 +10,13 @@
             <Button Content="Analizează cazul" Command="{Binding AnalyzeWithLocalAiCommand}" Style="{StaticResource AccentButtonStyle}"/>
         </WrapPanel>
         <TextBlock DockPanel.Dock="Top" Text="{Binding AiStatus}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-        <Expander DockPanel.Dock="Bottom" Header="Afirmații respinse de verificări (cu motivul)" Foreground="{StaticResource TextPrimaryBrush}">
+        <Expander DockPanel.Dock="Bottom" Header="Afirmații respinse (NESUSTINUT sau respinse structural; nu sunt constatări), tăiate, cu motivul" Foreground="{StaticResource TextPrimaryBrush}">
             <DataGrid ItemsSource="{Binding AiRejected}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="180">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Secțiune" Binding="{Binding Section}" Width="140"/>
-                    <DataGridTextColumn Header="Text" Binding="{Binding Text}" Width="3*"/>
+                    <DataGridTextColumn Header="Text (nu este constatare)" Binding="{Binding Text}" Width="3*">
+                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextDecorations" Value="Strikethrough"/><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
                     <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="2*"/>
                 </DataGrid.Columns>
             </DataGrid>
@@ -22,11 +24,19 @@
         <DataGrid ItemsSource="{Binding AiStatements}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Secțiune" Binding="{Binding Section}" Width="160"/>
-                <DataGridTextColumn Header="Clasificare" Binding="{Binding Classification}" Width="90"/>
+                <DataGridTextColumn Header="Validare" Binding="{Binding State}" Width="130"/>
                 <DataGridTextColumn Header="Afirmație" Binding="{Binding Text}" Width="4*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="TextWrapping" Value="Wrap"/>
+                            <Style.Triggers><DataTrigger Binding="{Binding IsStruck}" Value="True"><Setter Property="TextDecorations" Value="Strikethrough"/></DataTrigger></Style.Triggers>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Avertisment" Binding="{Binding Warning}" Width="2*">
                     <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Citări" Binding="{Binding Citations.Count}" Width="60"/>
+                <DataGridTextColumn Header="Citări" Binding="{Binding Citations}" Width="60"/>
             </DataGrid.Columns>
         </DataGrid>
     </DockPanel>

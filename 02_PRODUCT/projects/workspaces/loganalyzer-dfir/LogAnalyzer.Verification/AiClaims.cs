@@ -68,6 +68,7 @@ public static class AiClaims
             }
             v.Verdict = state == StandardState.Verified ? StandardState.Inferred : state;   // belt and braces: never VERIFIED
             v.Reason = reason;
+            if (Prop(st, "validation") is { ValueKind: JsonValueKind.Object } cv && Text(cv, "state") is { Length: > 0 } cs) v.ClaimValidation = cs.ToUpperInvariant();
             result.Add(v);
         }
         return result;

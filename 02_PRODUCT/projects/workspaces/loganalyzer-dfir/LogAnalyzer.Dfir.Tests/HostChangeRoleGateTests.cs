@@ -172,9 +172,14 @@ public sealed class HostChangeRoleGateTests : IDisposable
         Assert.Empty(fw.Rules);
         Assert.Empty(suspended);
         Assert.False(Directory.Exists(svc.IncidentsDir));
-        // Nothing is written except the refusal itself, which the case audit must record (who was refused, which action).
-        var logs = Path.Combine(root, "Logs");
-        Assert.Equal(before.Where(f => !f.StartsWith(logs, StringComparison.OrdinalIgnoreCase)), Snapshot(root).Where(f => !f.StartsWith(logs, StringComparison.OrdinalIgnoreCase)));
+        // Nothing is written except the refusal itself, which the case audit must record (who was refused, which action): outside Logs nothing
+        // changes, and under Logs only the two files CaseWorkspace.Audit writes (the hash chain and its plain-text mirror) may change.
+        var logs = Path.Combine(root, "Logs") + Path.DirectorySeparatorChar;
+        var after = Snapshot(root);
+        Assert.Equal(before.Where(f => !f.StartsWith(logs, StringComparison.OrdinalIgnoreCase)), after.Where(f => !f.StartsWith(logs, StringComparison.OrdinalIgnoreCase)));
+        var changedInLogs = after.Except(before).Concat(before.Except(after)).Where(f => f.StartsWith(logs, StringComparison.OrdinalIgnoreCase))
+            .Select(f => Path.GetFileName(f.Split('|')[0])).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n).ToArray();
+        Assert.Equal(new[] { "audit_chain.jsonl", "LogAnalyzer_Audit.log" }.OrderBy(n => n).ToArray(), changedInLogs);
         var audit = File.ReadAllText(ws.AuditChainPath);
         Assert.Contains("containment.refused", audit);
         Assert.Contains("contain ", audit);

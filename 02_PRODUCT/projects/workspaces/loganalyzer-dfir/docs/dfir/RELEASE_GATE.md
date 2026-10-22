@@ -6,9 +6,9 @@ Source of the rules: `CONTRACT_AUDIT_STAGE1.md` section 7 (WP12) and section 8, 
 ## 1. What a release needs today
 
 **A release is currently impossible.** In enforce mode the gate fails unless every item is `PASS` or `WAIVED`. Blocking items
-without a capability behind them when this was written: AI claim validation and the findings register (response verification got
-its test classes with WP9 on 2026-10-22; audit integrity see the table). They
-become checkable only when the remaining work lands (WP4) and the owner creates the findings register. Until then
+without a capability behind them when this was written: the findings register (response verification got its test classes with WP9
+and AI claim validation with WP4, both on 2026-10-22; audit integrity see the table). It becomes checkable only when the owner
+creates the findings register. Until then
 the gate reports them `NOT_IMPLEMENTED` and an enforce run fails. The gate never turns a missing capability into a pass, and no
 waiver can cover a blocking item.
 
@@ -23,7 +23,7 @@ It reads the `.trx` files of a `dotnet test` run, a findings register and a waiv
 | `synthetic_corpus` | R21.5, decision 7 | blocking | `SyntheticCorpusTests`: 14 or more executed, none failed | real check |
 | `evidence_integrity` | R22.4 | blocking | `EvidenceIntegrityTests` and `EvidenceContractTests` executed and passing | real check, unit level only (see limits) |
 | `audit_integrity` | R22.7 | blocking | a test class `AuditIntegrity*Tests`, `AuditChain*Tests` or `CustodyChain*Tests` must exist and pass | `AuditChainCustodyTests` exists (Dfir.Tests); the gate judges it from the CI test results (PASS only when CI says so) |
-| `ai_claim_validation` | R22.5 | blocking | a test class `AiClaimValidation*Tests` must exist and pass | NOT_IMPLEMENTED (WP4) |
+| `ai_claim_validation` | R22.5 | blocking | a test class `AiClaimValidation*Tests` must exist and pass | real check since WP4 (2026-10-22): `AiClaimValidationTests`, `AiClaimValidationReportTests` (Dfir.Tests), `AiClaimValidationUiTests` (App.Tests); fakes only, see limits |
 | `response_verification` | R22.6 | blocking | a test class `ResponseVerification*Tests` must exist and pass | real check since WP9 (2026-10-22): `ResponseVerificationTests`, `ResponseVerificationProcessTests`, `ResponseVerificationRegistryTests` (fakes only, see limits) |
 | `critical_findings` | R22.8 | blocking | `release-gate/findings-register.json` must exist, be valid, and hold no `critical` + `open` entry | NOT_IMPLEMENTED (no register) |
 | `real_corpus` | R22.2 | waivable | `forensic_validation.txt` says `AVAILABLE` and every corpus test ran and passed | NOT_RUN in CI |
@@ -52,6 +52,20 @@ empty or always-green class with that name. The `minExecuted` guard in `gate-ite
   Process safety (review 2026-10-22): a PID is suspended only when it runs the program being contained (image path, and SHA-256
   when known) with a readable identity; it is resumed only when its current holder matches the captured PID + start time + image
   SHA-256; unknown identity or an unreadable process list -> nothing is resumed, NOT_VERIFIED with the cause.
+- `ai_claim_validation` (WP4) proves the contract with fakes, never with a real model: every AI statement is split into claims and checked
+  against THIS case (`LogAnalyzer.Dfir.Core/AI/AiClaimValidator.cs`, no model as judge, no network). A claim is SUSTINUT only when each cited id
+  exists in the case and the cited records contain every value it states (timestamps to the stated precision, paths, hashes, addresses,
+  file names, quoted values; counts of events / findings / evidence are recomputed from the case); PARTIAL = citations exist but nothing is
+  comparable; NESUSTINUT = no citation, missing / foreign / self-referential id, a value that does not match, or instruction-like text;
+  NEVERIFICABIL = the validator could not run (cause given) or the validation is stale. NESUSTINUT is moved to the rejected list, struck
+  in the screen and the PDF, never a finding. The result is `Analysis/ai_validation.json`, registered as a case output that depends on every
+  evidence item, with an `ai.claim_validation` entry in the hash-chained audit; it is bound to the evidence set (ids, SHA-256, sizes) and shows
+  as stale, every claim NEVERIFICABIL, once that set changes. `AiClaimValidationReportTests` scans the IL of the production assemblies: every
+  type that touches raw AI text (model statements, verification verdicts on them, `ai_*` files) must be in an explicit registry, a stale
+  entry fails too, and every report / PDF / export writer is listed with whether it goes through `AiValidationText`. Limits: the check is
+  literal and cannot judge meaning (a true-looking sentence with no comparable value is only PARTIAL); a fact the extractor does not
+  recognise (a name without extension or quotes) is not compared; the WPF screen is covered by reflection and row logic, not rendered; the
+  scan excludes the WPF assemblies and a new writer must be added to the list by hand (an unlisted `*ReportPdf` / `*Export` fails).
 - The gate does not read CodeQL or code-scanning alerts. `critical_findings` is the owner's register; an empty or missing register
   is not "no findings", it is `NOT_IMPLEMENTED`.
 - `tests_passing` depends on the tests being meaningful. On Windows CI everything runs; the corpus and lab tests are skipped there and are
