@@ -262,4 +262,7 @@ Not verified: `Removable` on a real internal webcam/keyboard (CM_DEVCAP_REMOVABL
 - LOW residual (pre-existing, not a regression, NEEDS OWNER ACCEPTANCE): `FoldLegacyIntoPresent` can fold a disconnected legacy row of another class
   (e.g. v0 NetworkAdapter `&MI_02`) or another unit of the same model (HID\ id, no USB parent) under a connected row: the page shows the connected row's
   decision. Display only (D05/report use IsInScope). Possible fix: cross-class fold only for pairs in `KnownReclassifications`.
-- Next: round-2 review of the fix delta only; then owner: station control run, merge #303 -> #306 -> #307 -> #308.
+- Round 2 (delta 9d4f2fedf only): APPROVE, DeviceMonitor/Journal/Scope 153/0. Pushed 9d4f2fedf to PR #308. Device-monitor review CLOSED (2 rounds used).
+- Further residuals (pre-existing, display only, owner to accept): step 3 (enclosure USB node onto a disk by serial) has no SerialConflict guard; an `ID|`
+  row with a real conflicting serial could still be folded by 1b / step 2 (unknown whether real `ID|` rows carry comparable serials).
+- Next: CI read once on PR #308; owner: accept or fix the LOW fold residuals, station control run (screenshots), merge #303 -> #306 -> #307 -> #308.
