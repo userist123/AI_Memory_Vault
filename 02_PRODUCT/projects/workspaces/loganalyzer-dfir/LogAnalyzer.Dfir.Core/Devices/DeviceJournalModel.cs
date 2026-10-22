@@ -636,8 +636,15 @@ public static class DeviceJournalMerge
     /// </summary>
     private static bool KindFoldAllowed(DeviceJournalEntry older, DeviceJournalEntry target) =>
         older.Class == target.Class
-        || Math.Max(older.ClassifierVersion, 1) < 2 && target.ClassifierVersion >= 2
+        || Math.Max(older.ClassifierVersion, 1) < Math.Max(target.ClassifierVersion, 1)
            && DeviceScope.IsKnownReclassification(Math.Max(older.ClassifierVersion, 1), Math.Max(target.ClassifierVersion, 1), older.Class, target.Class);
+
+    /// <summary>
+    /// The fold of step 2 when its target is NOT one current-classifier row (an old row, or the first interface of the group): only within one kind, or within the
+    /// keyboard/mouse family the old classifier mixed up (a composite mouse journaled as keyboard + mouse interfaces). Any other kind stays visible.
+    /// </summary>
+    private static bool SameFamily(DeviceJournalEntry a, DeviceJournalEntry b) =>
+        a.Class == b.Class || a.Class is DeviceClass.Keyboard or DeviceClass.Mouse && b.Class is DeviceClass.Keyboard or DeviceClass.Mouse;
 
     /// <summary>
     /// Disconnected per-interface rows of an older version (classifier 1 when their kind differs) folded into the ONE connected row of the same physical device:
@@ -738,7 +745,7 @@ public static class DeviceJournalMerge
             }
             foreach (var r in group)
                 if (!ReferenceEquals(r, target) && !NumbersDiffer(r, target)
-                    && (targets.Count != 1 || target.ClassifierVersion < 2 || KindFoldAllowed(r, target))) into[r] = target;   // a row of another kind under a CURRENT-classifier row: only a known reclassification
+                    && (targets.Count == 1 && target.ClassifierVersion >= 2 ? KindFoldAllowed(r, target) : SameFamily(r, target))) into[r] = target;   // another kind: a known reclassification, else the keyboard/mouse family only
         }
         // 3. the USB node of a storage enclosure (a USB-SATA bridge with the disk's serial)
         foreach (var r in rows)

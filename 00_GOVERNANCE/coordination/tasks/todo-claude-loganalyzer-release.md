@@ -273,3 +273,6 @@ Not verified: `Removable` on a real internal webcam/keyboard (CM_DEVCAP_REMOVABL
 - Teste: `LogAnalyzer.Dfir.Tests/DeviceMonitorFoldResidualTests.cs` (14, 8 roșii înainte, 3 încă roșii după garda serie până la fix-ul pasului 2); `IsInScope` neschimbat (doar `SupersededBy`), D05/raportul neatinse.
 - Verificat: Dfir 2387 passed/31 skipped/0 failed; App 670/0.
 - Reziduu rămas: un rând legacy `HID\` fără părinte USB al ALTUI exemplar din același model (același VID/PID) se pliază încă sub unitatea conectată; nu se poate distinge fără euristici pe nume; rămâne la decizia owner-ului.
+- Review round 1 of 98102663e: CHANGES_REQUIRED (step 2 still crossed kinds: a single OLD target, no target, two current targets). FIXED: step 2 uses
+  `KindFoldAllowed` only for one current-classifier target, otherwise `SameFamily` (same kind or keyboard/mouse); `KindFoldAllowed` now allows any
+  older<newer known pair (v2->v3 Keyboard/Mouse->Bluetooth folds). 4 tests (red before). Dfir 2391/31/0, App 670/0. Next: round-2 review of this delta.
