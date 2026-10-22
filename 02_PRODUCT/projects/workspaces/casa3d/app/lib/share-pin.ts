@@ -6,7 +6,7 @@
 import { scrypt, randomBytes, randomInt, timingSafeEqual, createHmac } from 'node:crypto';
 import { getDb } from './db';
 import { HttpError, getProject } from './repo';
-import { isShareToken, resolveShare } from './share';
+import { isShareToken, resolveShare, shareActive } from './share';
 
 export const PIN_COOKIE = 'casa_share_pin', PIN_SESSION_MS = 12 * 3600e3, PIN_MAX_FAILURES = 5, PIN_LOCK_MS = 15 * 60e3;
 const PIN_RE = /^\d{6}$/, SESSION_RE = /^(\d{13})\.([\w-]{43})$/;
@@ -28,7 +28,7 @@ export async function setSharePin(owner: string, projectId: string, token: unkno
   const hash = (await hashPin(pin, salt)).toString('base64'), key = randomBytes(32).toString('base64url');
   const { q } = await getDb();
   const { rows } = await q(`update shares set pin_hash=$3, pin_salt=$4, pin_key=$5, pin_failures=0, pin_locked_until=null
-    where token=$1 and project_id=$2 and revoked_at is null returning token`, [token, projectId, hash, salt, key]);
+    where token=$1 and project_id=$2 and ${shareActive()} returning token`, [token, projectId, hash, salt, key]);
   if (!rows[0]) throw notFound();
   return { pin };
 }
@@ -56,10 +56,16 @@ export function pinCookies(header: string | null): string[] {
   if (!header) return [];
   return header.split(';').map(s => s.trim()).filter(s => s.startsWith(`${PIN_COOKIE}=`)).map(s => s.slice(PIN_COOKIE.length + 1)).slice(0, 4);
 }
+/** Linkul activ are PIN-ul activat (designerul l-a pus): atunci și deciziile clientului cer sesiunea PIN. */
+export async function pinRequired(token: string): Promise<boolean> {
+  if (!isShareToken(token)) return false;
+  const { q } = await getDb(); const { rows: [s] } = await q(`select pin_key from shares where token=$1 and ${shareActive()}`, [token]);
+  return !!s?.pin_key;
+}
 /** Linkul activ are pinii activați și una din valorile cookie e o sesiune validă pentru el. */
 export async function hasPinSession(token: string, values: string[], now = Date.now()): Promise<boolean> {
   if (!isShareToken(token) || !values.length) return false;
-  const { q } = await getDb(); const { rows: [s] } = await q('select pin_key from shares where token=$1 and revoked_at is null', [token]);
+  const { q } = await getDb(); const { rows: [s] } = await q(`select pin_key from shares where token=$1 and ${shareActive()}`, [token]);
   return !!s?.pin_key && values.some(v => verifyPinSession(s.pin_key, token, v, now));
 }
 
@@ -73,7 +79,7 @@ export async function verifySharePin(token: unknown, pin: unknown, now = Date.no
   await resolveShare(token); const t = token as string;
   const { tx } = await getDb();
   const out = await tx(async q => {
-    const { rows: [s] } = await q('select pin_hash, pin_salt, pin_key, pin_failures, pin_locked_until from shares where token=$1 and revoked_at is null for update', [t]);
+    const { rows: [s] } = await q(`select pin_hash, pin_salt, pin_key, pin_failures, pin_locked_until from shares where token=$1 and ${shareActive()} for update`, [t]);
     if (!s) return { err: notFound() };
     if (!s.pin_hash || !s.pin_salt || !s.pin_key) return { err: new HttpError(403, 'Pinii pe imagine nu sunt activați pe acest link.') };
     const lockedUntil = s.pin_locked_until ? new Date(s.pin_locked_until).getTime() : 0;

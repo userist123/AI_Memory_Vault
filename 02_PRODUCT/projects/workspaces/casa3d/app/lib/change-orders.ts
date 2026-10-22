@@ -2,7 +2,7 @@
 // O modificare trimisă nu se mai poate edita (clientul a văzut-o); se poate retrage doar cât nu e decisă.
 import { getDb } from './db';
 import { HttpError, getProject } from './repo';
-import { isShareToken } from './share';
+import { isShareToken, shareActive } from './share';
 import { checkChange, checkDecision, ChangeError, CHANGE_LIMITS, type ChangeOrder } from '../core/change-orders';
 
 const ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -50,7 +50,7 @@ export async function deleteChange(owner: string, projectId: string, id: unknown
 
 async function shareProject(token: unknown): Promise<string> {
   if (!isShareToken(token)) throw new HttpError(404, 'Link inexistent.');
-  const { q } = await getDb(), { rows } = await q('select project_id from shares where token=$1 and revoked_at is null', [token]);
+  const { q } = await getDb(), { rows } = await q(`select project_id from shares where token=$1 and ${shareActive()}`, [token]);
   if (!rows[0]) throw new HttpError(404, 'Link inexistent.'); return rows[0].project_id;
 }
 /** Ce vede clientul: doar modificările trimise sau decise (ciornele rămân la designer). */
