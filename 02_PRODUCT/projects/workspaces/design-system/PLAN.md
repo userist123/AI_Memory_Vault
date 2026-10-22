@@ -49,7 +49,27 @@ Checkpoint: `00_GOVERNANCE/coordination/tasks/todo-claude-design-system-a2.md`.
 - Chromium: all 50 original custom properties compute to their original values; home page full-page screenshot
   pixel-identical (0 of 3 394 350 px) to the same page with the original `:root` rule put back via CSSOM.
 
-## Phase 2 (next session)
-- Model the `.home` and `.ws` overrides (Visual System 02) as DTCG scopes/themes of the casa3d brand and generate
-  them; then start replacing the 477 raw literals with semantic tokens, page by page, each with the same
-  pixel-parity check. TS/Motion output once a component consumes motion tokens.
+## Phase 2 — scopes (2026-10-22)
+- The three Visual System 02 re-themes are DTCG scopes of the casa3d brand: `tokens/brands/casa3d/scopes/{home,ws,ws-side}`
+  (19 + 21 + 20 colours, OKLCH computed from the original hex), configured in `brand.json` `scopes` (`.ws .side`
+  nested under `.ws`). The legacy names (`--paper`, `--paper-2`, `--graphite`, `--lead`, `--rule`) became aliases;
+  `color.paper.*` and `color.border.rule` are references (`{color.bg.canvas}` …) because the editor keeps a light
+  plan on a dark chrome and the inspector draws `--rule` darker than its border.
+- Build rule: a scope emits what its files declare plus every token whose final value differs from the parent's, and
+  repeats the aliases of the tokens it emits (`var()` is substituted where declared, so `--bg` on `:root` would not
+  follow a scope's canvas). `globals.css` keeps only the non-token declarations of those rules and `color-scheme`.
+- Evidence: design-system `npm test` 22/22; mutation probes (no scope aliases, only declared tokens emitted, scope
+  hex changed with and without rebuild, property put back in `globals.css`, token property in another rule, scope
+  path not in the brand, dangling reference) each caught; dropping `parent` of `.ws .side` is equivalent with the
+  current data (identical output). Casa3D: tsc 0, `next build` 0, Vitest 108/108 files (651 tests).
+  Chromium (dev server, CDP, light scheme, reduced motion, animations frozen): 100–150 custom properties on
+  `:root`/`.home`/`.ws`/`.ws .side` compute equal to the original rules put back via CSSOM, on home and editor at
+  1440×900 and 390×844. Pixels: editor 0 px (desktop and mobile); home ≤ 2/255 on ~55 px at the pill buttons' top
+  edge, the same as a null control that re-inserts the generated rules unchanged (raster artefact of the CSSOM
+  edit); positive control (one channel +1 on one colour) changes 79 k – 2.2 M px.
+- Metric: raw colour literals in `globals.css` 477 → 415 (same regex as phase 1).
+
+## Phase 3 (next session)
+- Replace the 415 raw literals with semantic tokens, page by page (home first: `.home …` rules, then the editor
+  chrome `.ws …`), each with the same Chromium parity check; new semantic tokens only where a literal has a role
+  the current set does not name. TS/Motion output once a component consumes motion tokens.

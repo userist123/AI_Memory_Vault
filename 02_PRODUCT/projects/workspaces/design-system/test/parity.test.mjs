@@ -48,6 +48,6 @@ test('later :root blocks in globals.css only override --hit', () => {
 });
 
 test('migrated values live in tokens.css, not in globals.css', () => {
-  const legacy = ['--paper', '--paper-2', '--graphite', '--lead', '--rule'];
-  assert.deepEqual([...kept.keys()].sort(), legacy.sort());
+  // Phase 2 moved the legacy aliases (--paper, --lead, --rule, ...) into the token build too.
+  assert.deepEqual([...kept.keys()], []);
 });

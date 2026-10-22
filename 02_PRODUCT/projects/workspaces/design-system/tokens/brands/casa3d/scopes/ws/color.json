@@ -1,0 +1,251 @@
+{
+  "color": {
+    "$description": "Casa3D Visual System 02 re-theme for `.ws`, migrated 1:1 from app/app/globals.css (phase 2: no visual change). Holds the literal values the original block declared; tokens that reference them (paper, rule) follow in the build.",
+    "$type": "color",
+    "bg": {
+      "canvas": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.2301,
+            0.02,
+            318.65
+          ],
+          "hex": "#211A23"
+        }
+      },
+      "sunken": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.2841,
+            0.0229,
+            326.16
+          ],
+          "hex": "#302630"
+        }
+      },
+      "surface": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.26,
+            0.0209,
+            315.73
+          ],
+          "hex": "#28212B"
+        }
+      },
+      "raised": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.3034,
+            0.0231,
+            320.11
+          ],
+          "hex": "#342B36"
+        }
+      }
+    },
+    "fg": {
+      "default": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.9579,
+            0.0114,
+            71.9
+          ],
+          "hex": "#F6F0E9"
+        }
+      },
+      "secondary": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.8595,
+            0.0162,
+            335.1
+          ],
+          "hex": "#D8CDD5"
+        }
+      },
+      "muted": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.7056,
+            0.0246,
+            328.04
+          ],
+          "hex": "#A99BA8"
+        }
+      },
+      "numeric": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.801,
+            0.0228,
+            330.36
+          ],
+          "hex": "#C7B9C5"
+        }
+      }
+    },
+    "border": {
+      "default": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.3573,
+            0.0303,
+            326.19
+          ],
+          "hex": "#453745"
+        }
+      },
+      "strong": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.4642,
+            0.0374,
+            327.84
+          ],
+          "hex": "#655264"
+        }
+      }
+    },
+    "accent": {
+      "default": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.6845,
+            0.1702,
+            31.65
+          ],
+          "hex": "#F06A53"
+        }
+      },
+      "soft": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.3324,
+            0.0452,
+            6.8
+          ],
+          "hex": "#4A2C32"
+        }
+      }
+    },
+    "status": {
+      "ok": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.8117,
+            0.08,
+            152.84
+          ],
+          "hex": "#9AD1A9"
+        }
+      },
+      "ok-soft": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.3268,
+            0.0388,
+            166.14
+          ],
+          "hex": "#203B30"
+        }
+      },
+      "warn": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.8476,
+            0.1087,
+            83.59
+          ],
+          "hex": "#EFC777"
+        }
+      },
+      "warn-soft": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.3528,
+            0.0466,
+            76.94
+          ],
+          "hex": "#49381E"
+        }
+      },
+      "err": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.7941,
+            0.1184,
+            25.09
+          ],
+          "hex": "#FF9D95"
+        }
+      },
+      "err-soft": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.3222,
+            0.0544,
+            9.9
+          ],
+          "hex": "#4B272D"
+        }
+      }
+    },
+    "focus": {
+      "ring": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.7609,
+            0.1432,
+            31.02
+          ],
+          "hex": "#FF8C78"
+        }
+      }
+    },
+    "paper": {
+      "default": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.95,
+            0.0115,
+            84.58
+          ],
+          "hex": "#F2EEE6"
+        }
+      },
+      "sunken": {
+        "$value": {
+          "colorSpace": "oklch",
+          "components": [
+            0.9039,
+            0.0172,
+            76.1
+          ],
+          "hex": "#E6DED3"
+        }
+      }
+    }
+  }
+}
