@@ -11,7 +11,7 @@ export const en: Dict = {
   "tool.select": "Select", "tool.wall": "Wall", "tool.room": "Room", "tool.door": "Door", "tool.window": "Window", "tool.column": "Column", "tool.beam": "Beam", "tool.glass_wall": "Glass partition", "tool.stair": "Stair", "tool.measure": "Measure",
   "roomType.living": "Living room", "roomType.dormitor": "Bedroom", "roomType.bucatarie": "Kitchen", "roomType.baie": "Bathroom", "roomType.hol": "Hallway",
   "tab.props": "Properties", "tab.catalog": "Catalog", "tab.budget": "Budget", "tab.design": "Design", "tab.twin": "Twin", "tab.revs": "Revisions", "tab.advisor": "Advisor",
-  "editor.loadError": "This project does not exist or you do not have access to it.", "editor.loading": "Loading project…",
+  "editor.roomsTranslated": "Room names were translated to English. Undo with Ctrl+Z.", "editor.loadError": "This project does not exist or you do not have access to it.", "editor.loading": "Loading project…",
   "editor.shareFailed": "Sharing failed.", "editor.shareCopied": "View-only link copied; it shows this revision only.", "editor.shareLink": "View-only link: {url}",
   "editor.revokeFailed": "Revoking failed.", "editor.revoked": "The link has been revoked.", "editor.saveFailed": "Saving failed.",
   "editor.positionRefused": "Position refused: {msg}", "editor.rotateNoFit": "Rotated, it does not fit: {msg}", "editor.variantNoFit": "This variant does not fit here", "editor.sizeNoFit": "This size does not fit here",
