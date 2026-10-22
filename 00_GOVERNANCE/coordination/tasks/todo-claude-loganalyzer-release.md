@@ -307,3 +307,19 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   `C:\Program Files\LogAnalyzer` (Release Standalone from 850a92c19, exe hash = publish C538E68D…, `--self-test` exit 0, writable only by
   Administrators/SYSTEM/TrustedInstaller); licence, provenance_ledger.json and AuditLogs copied from the old folder. The old folder
   `C:\Program Files\LogAnalyzerDemo` is still there (old instance was running): delete only after the owner confirms.
+
+## Real-PC check of 850a92c19 (2026-10-22, installed real app, test account; screenshots in the session scratchpad only)
+- VERIFIED on screen: header „Limbaj: Simplu | Expert”; monitor at 3440 px and 1500 px (names wrap, capacity on two lines, one count only on the
+  monitor tab; at 1500 px the rest of the table is reached by horizontal scroll); scope dialog dates 01.09.2026 / 01.10.2026; calendar
+  „septembrie 2026”, L M M J V S D, Monday first.
+- Station control ran (provisional scope, „Mai târziu”): 90 checks = NECONFORM 23 + DE VERIFICAT 24 + NEDETERMINAT 5 + CONFORM 35 + NU SE APLICĂ 3,
+  62 timeline actions, anchor code issued (registration nr. 530).
+- „Deschide raportul” asks for a CONFIRMED scope; the dialog is prefilled with „Test”/„test” from an earlier attempt. NOT confirmed: the owner
+  must give the real scope values (purpose, approver, systems, period, legal basis, category, classification) before the PDF can be checked.
+- New text findings on Home after a finished control (not fixed yet):
+  A. „Nu există încă date” banner stays after the control finished; B. status bar „Nicio analiză încă.”; C. „Cazuri recente: Nicio intrare”
+  after the control registered nr. 530; D. „Control finalizat … Dublu-click pe orice rând pentru detalii” but Home has no rows;
+  E. after „Mai târziu” on the report: „Nu s-a salvat nimic …” next to an anchor code that WAS registered (contradiction); F. the control
+  period is shown as „2026-10-17 18:26 UTC” (ISO/UTC) while dates elsewhere are dd.MM.yyyy local; G. result count badges have no colour
+  (NECONFORM not red); H. dialog title „Scopul cazului LIVE” vs heading „Scopul cazului stației”.
+- Next: owner scope values -> PDF + investigation screenshots; fix A-H (needs reading HomeViewModel/StationControlViewModel); CI read once on #308.
