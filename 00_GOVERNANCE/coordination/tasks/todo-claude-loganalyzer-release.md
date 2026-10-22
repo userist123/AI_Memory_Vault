@@ -281,3 +281,15 @@ Not verified: `Removable` on a real internal webcam/keyboard (CM_DEVCAP_REMOVABL
   "Dispozitiv Bluetooth" red; control wizard step 1 -> scope dialog („Mai târziu”, scope stays provisional) -> step 2 (period „De la ultimul control”).
   Step 3 click was refused by the auto-mode classifier: owner must allow it (permission rule) or press „Înainte” + „Fă controlul stației” himself.
 - Next: finish the control run + PDF + investigation screenshots; CI read once on PR #308; merge #303 -> #306 -> #307 -> #308.
+
+## Design/text findings from the real-PC screenshots (2026-10-22, owner rule: verify EVERYTHING incl. text fitting, fonts, design)
+Not fixed yet; each needs the screen re-checked after the fix.
+1. Monitor table: Name cells cut mid-word with no ellipsis/tooltip („Bluetooth LE Generic Attribute S”, „Razer DeathAdder V2 X HyperSp”,
+   „Kingston DataTraveler 3.0 USB D”, „Samsung SSD 850 EVO 250G US”); Capacity cut („230,9 GB (248 G”); the table needs a horizontal scroll at 1500 px.
+2. Monitor header: „Inventarul Windows: conectate acum 3” vs „Conectate acum (stocare și externe): 6” on the same screen - two different counts with no explanation.
+3. Scope dialog („Scopul cazului LIVE”): dates shown as „01-Sep-26” / „01-Oct-26” - English month abbreviations in a Romanian UI (culture not ro-RO).
+4. Scope dialog fields came prefilled with „Test”/„test” from an earlier attempt (check whether a draft is persisted or a default leaks).
+5. Header: „Limbaj: [checkbox] Simplu” - a bare checkbox as a Simple/Expert toggle reads as unclear (design).
+6. Home: a stale tooltip „Monitor dispozitive” stays drawn over the left menu after the pointer moved (may be the automation; recheck by hand).
+Pending screens (not yet seen): control step 3 + result, PDF report, investigation, transfer register, users, procedures, policies, accounts.
+- Context of the main session > 250k: next phase starts in a NEW session from this checkpoint.
