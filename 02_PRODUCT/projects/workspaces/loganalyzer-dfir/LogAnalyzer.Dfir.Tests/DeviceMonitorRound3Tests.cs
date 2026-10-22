@@ -276,9 +276,11 @@ public sealed class DeviceMonitorRound3Tests : IDisposable
     {
         PnpSnapshotEntry[] snap =
         [
-            new(@"USB\VID_ABCD&PID_EF01&MI_00\6&CCCC0001&0&0000", "Integrated Camera", "Camera", "Fakecam", @"USB\VID_ABCD&PID_EF01&MI_00", "usbvideo", 0, "{AAAA0000-0000-0000-0000-00000000F005}"),
+            new(@"USB\VID_ABCD&PID_EF01&MI_00\6&CCCC0001&0&0000", "Integrated Camera", "Camera", "Fakecam", @"USB\VID_ABCD&PID_EF01&MI_00", "usbvideo", 0, "{AAAA0000-0000-0000-0000-00000000F005}", Removable: false),
         ];
-        Assert.Empty(DeviceScope.Classify(snap));
+        Assert.Empty(DeviceScope.Classify(snap));                  // attested by the PnP stack (not removable), whatever its name
+        // the name alone decides nothing any more (final review 2026-10-22): without the attestation the same node is listed
+        Assert.Equal(DeviceClass.Camera, Assert.Single(DeviceScope.Classify([snap[0] with { Removable = null }])).Kind);
         // and the row an older version wrote for it is not shown (it stays in the journal for check D05)
         var old = new DeviceJournalEntry { Identity = @"ID|USB\VID_ABCD&PID_EF01&MI_00\6&CCCC0001&0&0000", InstanceId = @"USB\VID_ABCD&PID_EF01&MI_00\6&CCCC0001&0&0000", Name = "Integrated Camera", Class = DeviceClass.Camera, VidPid = "ABCD:EF01" };
         Assert.True(DeviceScope.IsInScope(old));

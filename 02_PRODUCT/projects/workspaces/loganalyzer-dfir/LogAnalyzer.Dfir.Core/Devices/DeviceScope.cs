@@ -8,6 +8,15 @@ namespace LogAnalyzer.Dfir.Devices;
 /// </summary>
 public sealed record ScopedDevice(DeviceClass Kind, PnpSnapshotEntry Primary, PnpSnapshotEntry IdentityEntry, IReadOnlyList<PnpSnapshotEntry> Members, PnpSnapshotEntry? Drive, MediumInfo? Medium)
 {
+    /// <summary>
+    /// The kind the FIRST classifier (version 1) gave this device: with a keyboard and a mouse node and nothing of higher priority, the keyboard (priority order), where
+    /// version 2 takes the kind of the first interface. Used to check that a kind change is exactly what the classifier change makes (<see cref="DeviceScope.IsKnownReclassification"/>).
+    /// </summary>
+    public DeviceClass LegacyV1Kind { get; init; } = Kind;
+
+    /// <summary>The kind the classifier of <paramref name="version"/> gives this device now (a version above the first gives <see cref="Kind"/>).</summary>
+    public DeviceClass KindAtVersion(int version) => version <= 1 ? LegacyV1Kind : Kind;
+
     /// <summary>A storage medium (stick, disk, card, optical drive): the row is the drive node itself.</summary>
     public bool IsMedium => Drive is not null;
 }
@@ -70,6 +79,28 @@ public static class DeviceScope
         if (IsIntegratedName(e.Name)) return true;
         return e.InstanceId.Length > 0 && !LooksExternalById(e.InstanceId);
     }
+
+    /// <summary>
+    /// The ONLY attested internal group: every node of the device reports, from the PnP stack (the removable capability the hub or port - ACPI _UPC/_PLD - gives), that it
+    /// is NOT removable. Never a friendly name or a product string (a driverless interface takes its name from the device's own strings: an injector can call itself
+    /// „Integrated Camera”). Unknown (null) counts as external: such a device is journaled.
+    /// </summary>
+    public static bool IsAttestedInternal(IReadOnlyList<PnpSnapshotEntry> members) => members.Count > 0 && members.All(m => m.Removable == false);
+
+    /// <summary>
+    /// The kind changes a classifier version bump is KNOWN to make (explicit table, nothing else is accepted as a reclassification): 1 → 2 turns the keyboard of a
+    /// device whose first interface is a mouse into a mouse. The monitor additionally re-runs the old rule on the live snapshot (<see cref="ScopedDevice.KindAtVersion"/>).
+    /// </summary>
+    private static readonly Dictionary<(int From, int To), (DeviceClass Old, DeviceClass New)[]> KnownReclassifications = new()
+    {
+        [(1, 2)] = [(DeviceClass.Keyboard, DeviceClass.Mouse)],
+    };
+
+    public static bool IsKnownReclassification(int fromVersion, int toVersion, DeviceClass oldKind, DeviceClass newKind) =>
+        KnownReclassifications.TryGetValue((fromVersion, toVersion), out var t) && t.Contains((oldKind, newKind));
+
+    public static bool IsKnownReclassification(int fromVersion, int toVersion, string oldKind, string newKind) =>
+        Enum.TryParse<DeviceClass>(oldKind, ignoreCase: true, out var o) && Enum.TryParse<DeviceClass>(newKind, ignoreCase: true, out var n) && IsKnownReclassification(fromVersion, toVersion, o, n);
 
     /// <summary>A name Windows gives a built-in component („Integrated Camera”, „Integrated Webcam”, „Built-in Keyboard”).</summary>
     public static bool IsIntegratedName(string name) =>
@@ -389,15 +420,19 @@ public static class DeviceScope
             // is no phone or camera, the device is the medium's row (real-PC walkthrough round 3: a USB-SATA bridge listed as „Telefon / tabletă”)
             if (storageGroups.Contains(g.Key) || members.Any(m => IsMassStorageInterface(m) || DeviceMonitorRules.Serial(m.InstanceId) is { Length: > 0 } s && storageSerials.Contains(s)))
                 candidates.RemoveAll(c => c.Kind is DeviceClass.Phone or DeviceClass.Camera && U(c.Node.InstanceId).StartsWith(@"SWD\WPDBUSENUM\", StringComparison.Ordinal));
-            // a built-in camera, keyboard or touchpad that Windows put in a container of its own is still a component of the station
-            candidates.RemoveAll(c => c.Kind is DeviceClass.Camera or DeviceClass.Keyboard or DeviceClass.Mouse && members.Any(m => IsIntegratedName(m.Name)));
+            // a built-in camera, keyboard or touchpad that Windows put in a container of its own is still a component of the station: decided ONLY by what the PnP stack
+            // attests (every node non-removable), never by a name the device itself can set (review 2026-10-22: a keyboard injector with an „Integrated Camera” interface)
+            if (IsAttestedInternal(members)) candidates.RemoveAll(c => c.Kind is DeviceClass.Camera or DeviceClass.Keyboard or DeviceClass.Mouse);
+            var inputKinds = candidates.Where(c => c.Kind is DeviceClass.Keyboard or DeviceClass.Mouse).Select(c => c.Kind).Distinct().Count();
             PrimaryInputKind(candidates);
             if (candidates.Count == 0 && !reader) continue;
             if (reader && candidates.All(c => Priority(c.Kind) < Priority(DeviceClass.CardReader))) candidates.Add((DeviceClass.CardReader, BestIdentity(members, members[0])));
             var best = candidates.OrderByDescending(c => Priority(c.Kind)).ThenBy(c => U(c.Node.InstanceId).Contains("&MI_", StringComparison.Ordinal) ? 1 : 0)
                 .ThenBy(c => InterfaceOrder(c.Node.InstanceId).Interface).ThenBy(c => InterfaceOrder(c.Node.InstanceId).Collection).First();
             var identity = BestIdentity(members, best.Node);
-            result.Add(new ScopedDevice(best.Kind, best.Node, identity, members, null, null));
+            // version 1 took the keyboard when a keyboard and a mouse node were both there (higher priority), where version 2 takes the first interface's kind
+            var v1 = inputKinds == 2 && best.Kind is DeviceClass.Keyboard or DeviceClass.Mouse ? DeviceClass.Keyboard : best.Kind;
+            result.Add(new ScopedDevice(best.Kind, best.Node, identity, members, null, null) { LegacyV1Kind = v1 });
         }
         return result;
     }

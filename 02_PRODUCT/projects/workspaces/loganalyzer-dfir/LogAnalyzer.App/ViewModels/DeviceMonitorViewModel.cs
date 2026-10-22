@@ -61,12 +61,13 @@ namespace LogAnalyzer.UI.ViewModels
         public string StatusText => DeviceMonitorRules.StatusText(Status);
         public bool IsStorageMedium => DeviceMonitorRules.IsStorageMedium(Class);
         /// <summary>„Registru”, from the SEALED audit (never from the journal alone): „Înregistrat”, „Neînregistrat” or „Neconfirmat (nesigilat)”.</summary>
-        public RegistryState Registry => _owner.RegistryStateOf(Identity, _registrationNumber);
+        public RegistryState Registry => _mediumMismatch ? RegistryState.NotRegistered : _owner.RegistryStateOf(Identity, _registrationNumber);
+        private bool _mediumMismatch;
         public string RegistryText => DeviceMonitorReport.RegistryTextOf(Registry);
         /// <summary>A storage medium whose registration the sealed audit does not confirm (no number, a different one, or one still pending): the row is shown in red.</summary>
         public bool NeedsRegistration => IsStorageMedium && Registry != RegistryState.Registered;
         /// <summary>A storage medium with no registration number at all (the filter and the summary count these).</summary>
-        public bool HasNoNumber => IsStorageMedium && _registrationNumber.Trim().Length == 0;
+        public bool HasNoNumber => IsStorageMedium && (_registrationNumber.Trim().Length == 0 || _mediumMismatch);
 
         /// <summary>„Nr. de înregistrare”: editable for every device. A change the sealed audit refuses is undone and the reason shown on the page.</summary>
         public string RegistrationNumber
@@ -108,6 +109,7 @@ namespace LogAnalyzer.UI.ViewModels
             LastConnectedText = DeviceMonitorViewModel.When(e.LastConnectedUtc);
             LastDisconnectedText = DeviceMonitorViewModel.When(e.LastDisconnectedUtc);
             AlertText = alertText; AlertIsCritical = alertCritical;
+            if (e.RegistrationMediumMismatch != _mediumMismatch) { _mediumMismatch = e.RegistrationMediumMismatch; OnPropertyChanged(nameof(NeedsRegistration)); }
             if (e.RegistrationNumber != _registrationNumber) { _registrationNumber = e.RegistrationNumber; OnPropertyChanged(nameof(RegistrationNumber)); OnPropertyChanged(nameof(NeedsRegistration)); }
             OnPropertyChanged(nameof(RegistryText));
         }
@@ -417,7 +419,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     before = _journal.Devices.Count;
                     var known = new HashSet<string>(_journal.Devices.Select(d => d.Identity), StringComparer.OrdinalIgnoreCase);
-                    changes = DeviceJournalMerge.Apply(_journal, now, media, user, when, initial, rekeys, reclassified).ToList();
+                    changes = DeviceJournalMerge.Apply(_journal, now, media, user, when, initial, rekeys, reclassified, ReadSealedKinds).ToList();
                     radios = DeviceJournalMerge.NoteRadios(_journal, DeviceMonitorRules.BlindRadios(now), when);
                     _lastReadUtc = when;
                     DeviceJournalMerge.Heartbeat(_journal, when);
@@ -459,7 +461,7 @@ namespace LogAnalyzer.UI.ViewModels
                     if (!c.Arrived) continue;
                     var decision = c.CloneText is not null
                         ? new DeviceAlertDecision(DeviceAlertSeverity.Critical, c.CloneText)
-                        : DeviceMonitorRules.Decide(c.Device.Class, c.Device.InstanceId, c.Device.RegistrationNumber, _isolated, c.Device.ConfigManagerErrorCode);
+                        : DeviceMonitorRules.Decide(c.Device.Class, c.Device.InstanceId, DeviceMonitorRules.EffectiveNumber(c.Device), _isolated, c.Device.ConfigManagerErrorCode);
                     var text = gapFrom is not null && (resume || initial) ? "observat la reluare: " + decision.Reason : decision.Reason;
                     alerts.Add(RaiseAlert(c.Device, decision.Severity, text, when));
                     // the same device back with another volume (reformatted, or a clone of its serial): its own sealed record, never a silent take-over
@@ -614,6 +616,16 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
+        /// <summary>
+        /// The kind and classifier version of every device as the SEALED audit holds them, read fresh (the reclassification must be sealed at the very reading that
+        /// sees the change); null when there is no reader or the chain does not verify: then nothing is a reclassification and check D05 keeps its finding.
+        /// </summary>
+        private IReadOnlyDictionary<string, SealedKind>? ReadSealedKinds()
+        {
+            try { return _auditReader?.Invoke() is { ChainValid: true } a ? DeviceMonitorAuditCheck.SealedKinds(a) : null; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { return null; }
+        }
+
         /// <summary>„Registru” of a row: the number in the journal against the number the sealed audit holds (and a change still waiting to be sealed).</summary>
         internal RegistryState RegistryStateOf(string identity, string journalNumber)
         {
@@ -681,7 +693,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (e.DuplicateSerial) { parts.Add(DeviceMonitorRules.DuplicateSerialMark); critical = true; }
             if (e.Present || e.LastConnectedUtc is not null)
             {
-                var d = DeviceMonitorRules.Decide(e.Class, e.InstanceId, e.RegistrationNumber, _isolated, e.ConfigManagerErrorCode);
+                var d = DeviceMonitorRules.Decide(e.Class, e.InstanceId, DeviceMonitorRules.EffectiveNumber(e), _isolated, e.ConfigManagerErrorCode);
                 if (d.Severity == DeviceAlertSeverity.Critical) { parts.Add(d.Reason); critical = true; }
             }
             return (string.Join("; ", parts), critical);

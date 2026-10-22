@@ -222,3 +222,22 @@ an all-zero serial („000000000000”) is treated as a real serial. (3) report 
 Tests: Dfir 2347/31/0, App 668, UI 354/1, Edition 45, build 0 errors.
 Open: (1) two different sticks of one model sharing a placeholder serial share the instance id, hence one row (capacity of the first kept); (2) old rows keyed "SN|..|000000000000"
 stay as rows of their own until folded; (3) live re-check on the station; (4) Opus review of KindChain trust rules.
+
+## Final review fixes 2026-10-22 (vault-worker, after the last review round; device monitor CLOSED pending the real-PC check)
+Probes of the reviewer (p4 a1-a4, c2, c3; p5) are tests in `Dfir.Tests/DeviceMonitorFinalReviewTests.cs` (13) + `App.Tests/UiWalkthroughRound3Tests` (1 new VM test).
+1. HIGH integrated/built-in by NAME removed from `DeviceScope.Classify`: a group is internal ONLY when `IsAttestedInternal` (every node `PnpSnapshotEntry.Removable == false`,
+   read by `PnpEnumerator.Removable` = DEVPKEY_Device_Capabilities CM_DEVCAP_REMOVABLE, i.e. the hub/port/ACPI data; null = unknown = external). The local machine
+   container was already out of scope. A node with any external or unknown indicator is journaled. `IsInternalRow` (display of OLD disconnected rows) still hides by
+   name: display only, D05/report still list the row (residual, recorded). Test: p4 c3 + `A_group_is_internal_only_when_every_node_is_attested_not_removable`.
+2. HIGH laundering: `DeviceJournalMerge.Apply(..., sealedKinds)`: old kind and old classifier version come ONLY from the SEALED audit (`DeviceMonitorAuditCheck.SealedKinds`
+   = first-seen + valid notes; the VM reads it fresh, chain must verify; none = no reclassification); the change must be in `DeviceScope.KnownReclassifications`
+   (v1->v2: Keyboard->Mouse only, also enforced in `KindChain`); and the v1 rule re-run on the live snapshot (`ScopedDevice.KindAtVersion`, v1 = keyboard when a
+   keyboard and a mouse node are both there) must give the sealed old kind. Anything else stays the D05 „alt tip” finding. The journal's ClassifierVersion is no longer read for the trigger.
+   Existing reclassify/App tests moved to the keyboard+mouse pair and a sealed first-seen record (their old fixtures were a mouse-only device and journal-only version).
+3. MEDIUM generic serial, OWNER-CHANGEABLE DECISION (main session): a registration number on a medium without a unique serial (placeholder/no serial, not a card) is bound to
+   the capacity + volume serial + disk signature recorded when the number was set (`DeviceJournalEntry.RegistrationBound*`). A later medium on that row whose KNOWN
+   capacity, volume serial or signature differs does not inherit it: `RegistrationMediumMismatch`, shown „neînregistrat”, critical alert „mediu fără serie unică: nu
+   corespunde mediului înregistrat” (also when swapped between two readings), `DeviceMonitorRules.EffectiveNumber` is "" for D04/D05 counts, report, page, alert decision.
+   Same capacity and volume serial = registered; the registered stick back clears it. Setting a number on the mismatched row binds it to the new medium (one number per row).
+   Residuals: the binding is journal-resident (the number and the alert are sealed, the binding is not); a registered legacy row is bound to the first medium seen after upgrade; one row = one number.
+Not verified: `Removable` on a real internal webcam/keyboard (CM_DEVCAP_REMOVABLE of the interface children) - if Windows reports them removable the internal camera is listed (fail closed) - real-PC check pending.

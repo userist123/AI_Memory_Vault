@@ -1,4 +1,5 @@
 using System.Globalization;
+using LogAnalyzer.Dfir.Auth;
 using System.Text.Json.Serialization;
 
 namespace LogAnalyzer.Dfir.Devices;
@@ -42,6 +43,19 @@ public sealed class DeviceJournalEntry
     /// <summary>A card whose medium had neither a volume serial nor a disk signature (encrypted or RAW): each insertion is its own row, marked „mediu neidentificabil”.</summary>
     [JsonPropertyName("unidentifiable_medium")] public bool UnidentifiableMedium { get; set; }
     [JsonPropertyName("disk_signature")] public string DiskSignature { get; set; } = "";
+    /// <summary>Media: the capacity of the medium seen on this row LAST (<see cref="CapacityBytes"/> keeps the first one).</summary>
+    [JsonPropertyName("live_capacity_bytes")] public long LiveCapacityBytes { get; set; }
+    /// <summary>
+    /// A registration number on a medium WITHOUT a unique serial (a placeholder serial, or none) is bound to the medium it was set for (owner-changeable decision
+    /// 2026-10-22, review p5): its capacity, volume serial and disk signature at that time. A later medium on the same row whose known value differs does not
+    /// inherit the number (<see cref="RegistrationMediumMismatch"/>). Journal-resident: the number itself is sealed, the binding is not.
+    /// </summary>
+    [JsonPropertyName("registration_bound")] public bool RegistrationBound { get; set; }
+    [JsonPropertyName("registration_bound_capacity_bytes")] public long RegistrationBoundCapacityBytes { get; set; }
+    [JsonPropertyName("registration_bound_volume_serial")] public string RegistrationBoundVolumeSerial { get; set; } = "";
+    [JsonPropertyName("registration_bound_disk_signature")] public string RegistrationBoundDiskSignature { get; set; } = "";
+    /// <summary>The medium on the row now is not the one the number was set for: the row is unregistered (shown, counted and judged as such) until the registered medium is back or a number is set for this one.</summary>
+    [JsonPropertyName("registration_medium_mismatch")] public bool RegistrationMediumMismatch { get; set; }
     /// <summary>The account of the active console session when the device was connected; empty = nobody was logged on (shown as „—”).</summary>
     [JsonPropertyName("connected_user")] public string ConnectedUser { get; set; } = "";
 
@@ -205,6 +219,9 @@ public sealed record RadioChange(string Kind, string Text, bool Blind);
 /// </summary>
 public sealed record DeviceReclassification(string Identity, DeviceClass OldClass, DeviceClass NewClass, int OldVersion, int NewVersion, DeviceJournalEntry Device);
 
+/// <summary>The last kind of a device and the classifier version it was sealed with, as the SEALED audit holds them (first-seen record, then its valid reclassification notes).</summary>
+public sealed record SealedKind(string Class, int Version);
+
 /// <summary>A card row whose identity changed once its medium became readable (encrypted card unlocked): <c>Merged</c> = the medium was known before, its row is used.</summary>
 public sealed record MediumRekey(string OldIdentity, string NewIdentity, DeviceJournalEntry Device, bool Merged);
 
@@ -231,8 +248,12 @@ public static class DeviceJournalMerge
     /// </list>
     /// </summary>
     public static IReadOnlyList<DeviceJournalChange> Apply(DeviceJournal journal, IEnumerable<PnpSnapshotEntry> present, IReadOnlyDictionary<string, MediumInfo>? media,
-        string connectedUser, DateTimeOffset nowUtc, bool initial, ICollection<MediumRekey>? rekeyed = null, ICollection<DeviceReclassification>? reclassified = null)
+        string connectedUser, DateTimeOffset nowUtc, bool initial, ICollection<MediumRekey>? rekeyed = null, ICollection<DeviceReclassification>? reclassified = null,
+        Func<IReadOnlyDictionary<string, SealedKind>?>? sealedKinds = null)
     {
+        // read at most once, and only when a known row's kind differs from the live one; null = no sealed audit: nothing is a reclassification
+        IReadOnlyDictionary<string, SealedKind>? sealedKindMap = null;
+        bool sealedKindsRead = false;
         media ??= NoMedia;
         var all = present as IReadOnlyList<PnpSnapshotEntry> ?? present.ToList();
         var scoped = DeviceScope.Classify(all, media);
@@ -337,9 +358,19 @@ public static class DeviceJournalMerge
             if (d.Kind == DeviceClass.MemoryCard) e.UnidentifiableMedium = unidentifiable;
             e.InstanceId = p.InstanceId;
             // the same physical identity with another kind because the CLASSIFIER changed (a row of an older version): one sealed „device.reclassified” note, the
-            // caller seals it; the same classifier version, or no earlier kind, is not a reclassification (check D05 keeps its finding for a kind that changes then)
-            if (!isNew && e.Class != d.Kind && Math.Max(e.ClassifierVersion, 1) < DeviceScope.ClassifierVersion)
-                reclassified?.Add(new DeviceReclassification(e.Identity, e.Class, d.Kind, Math.Max(e.ClassifierVersion, 1), DeviceScope.ClassifierVersion, e));
+            // caller seals it. Review 2026-10-22 (no laundering): the old kind and the old classifier version come ONLY from the SEALED audit (never from the journal,
+            // which anyone may edit), the change must be one the version bump is known to make (DeviceScope.IsKnownReclassification), and the old rule re-run on the
+            // live snapshot must give the sealed old kind. Anything else is not a reclassification: check D05 keeps its „alt tip” finding.
+            if (!isNew && e.Class != d.Kind && reclassified is not null)
+            {
+                if (!sealedKindsRead) { sealedKindMap = sealedKinds?.Invoke(); sealedKindsRead = true; }
+                if (sealedKindMap is not null && sealedKindMap.TryGetValue(OperationAudit.DeviceField(e.Identity), out var sk)
+                    && Enum.TryParse<DeviceClass>(sk.Class, ignoreCase: true, out var sealedOld) && sealedOld != d.Kind
+                    && Math.Max(sk.Version, 1) < DeviceScope.ClassifierVersion
+                    && DeviceScope.IsKnownReclassification(Math.Max(sk.Version, 1), DeviceScope.ClassifierVersion, sealedOld, d.Kind)
+                    && d.KindAtVersion(Math.Max(sk.Version, 1)) == sealedOld)
+                    reclassified.Add(new DeviceReclassification(e.Identity, sealedOld, d.Kind, Math.Max(sk.Version, 1), DeviceScope.ClassifierVersion, e));
+            }
             if (isNew || Math.Max(e.ClassifierVersion, 1) < DeviceScope.ClassifierVersion || e.Class == d.Kind) e.ClassifierVersion = DeviceScope.ClassifierVersion;
             e.Class = d.Kind;
             e.SetupClass = d.Primary.SetupClass;
@@ -355,8 +386,20 @@ public static class DeviceJournalMerge
             e.GenericSerial = DeviceMonitorRules.HasGenericSerial(p.InstanceId);
             e.VidPid = DeviceMonitorRules.VidPid(p.InstanceId, p.HardwareIds);
             e.ConfigManagerErrorCode = d.Primary.ConfigManagerErrorCode > 0 ? d.Primary.ConfigManagerErrorCode : p.ConfigManagerErrorCode;
+            // a registration number on a medium without a unique serial belongs to the medium it was set for: another medium on the same row (same model, same
+            // placeholder serial) does not inherit it (review p5)
+            bool mismatchNow = e.RegistrationMediumMismatch, newlyMismatched = false;
+            if (mi is { } live && DeviceMonitorRules.HasNoUniqueIdentity(e) && e.RegistrationNumber.Trim().Length > 0)
+            {
+                if (!e.RegistrationBound) BindRegistration(e, live);     // a row registered before the binding existed: bound to the first medium seen now
+                else if (MediumDiffers(e, live)) mismatchNow = true;
+                else if (MediumMatches(e, live)) mismatchNow = false;
+                newlyMismatched = mismatchNow && !e.RegistrationMediumMismatch;
+                e.RegistrationMediumMismatch = mismatchNow;
+            }
             if (mi is { } mm)
             {
+                if (mm.CapacityBytes > 0) e.LiveCapacityBytes = mm.CapacityBytes;
                 if (mm.CapacityBytes > 0 && e.CapacityBytes == 0) e.CapacityBytes = mm.CapacityBytes;
                 e.VolumeLetters = mm.Letters;
                 e.VolumeLabel = mm.Label;
@@ -367,6 +410,7 @@ public static class DeviceJournalMerge
             string? cloneText = duplicate ? DeviceMonitorRules.DuplicateSerialAlertText
                 : cloneInstances.Contains(p.InstanceId) && (isNew || !e.Present) ? DeviceMonitorRules.CloneAlertText
                 : portClones.Contains(p.InstanceId) && (isNew || !e.Present) ? DeviceMonitorRules.PortCloneAlertText : null;
+            if (cloneText is null && mismatchNow && (newlyMismatched || !e.Present)) cloneText = DeviceMonitorRules.MediumNotRegisteredAlertText;
             if (!e.Present)
             {
                 e.Present = true;
@@ -374,6 +418,7 @@ public static class DeviceJournalMerge
                 e.ConnectedUser = connectedUser;
                 if (!initial || cloneText is not null || infoText is not null) changes.Add(new(e, true, cloneText, infoText));
             }
+            else if (newlyMismatched) changes.Add(new(e, true, DeviceMonitorRules.MediumNotRegisteredAlertText, null));   // swapped between two readings: never a silent take-over
         }
         foreach (var e in journal.Devices.Where(e => e.Present && !seen.Contains(e.Identity)))
         {
@@ -650,14 +695,37 @@ public static class DeviceJournalMerge
         return v;
     }
 
-    /// <summary>Sets the registration number of a device; returns the previous value, or null when the identity is not in the journal.</summary>
+    /// <summary>Sets the registration number of a device (a medium without a unique serial: bound to the medium on the row now); returns the previous value, or null when the identity is not in the journal.</summary>
     public static string? SetRegistrationNumber(DeviceJournal journal, string identity, string number)
     {
         if (journal.Find(identity) is not { } e) return null;
         var old = e.RegistrationNumber;
         e.RegistrationNumber = number.Trim();
+        e.RegistrationMediumMismatch = false;
+        if (e.RegistrationNumber.Length > 0 && DeviceMonitorRules.HasNoUniqueIdentity(e))
+            BindRegistration(e, new MediumInfo(e.VolumeSerial, e.LiveCapacityBytes > 0 ? e.LiveCapacityBytes : e.CapacityBytes, e.VolumeLetters, e.VolumeLabel, e.DiskSignature));
+        else { e.RegistrationBound = false; e.RegistrationBoundCapacityBytes = 0; e.RegistrationBoundVolumeSerial = ""; e.RegistrationBoundDiskSignature = ""; }
         return old;
     }
+
+    private static void BindRegistration(DeviceJournalEntry e, MediumInfo m)
+    {
+        e.RegistrationBound = true;
+        e.RegistrationBoundCapacityBytes = m.CapacityBytes;
+        e.RegistrationBoundVolumeSerial = m.VolumeSerial ?? "";
+        e.RegistrationBoundDiskSignature = m.DiskSignature ?? "";
+    }
+
+    /// <summary>The medium differs from the one the number was set for in a value KNOWN on both sides (capacity, volume serial, disk signature).</summary>
+    private static bool MediumDiffers(DeviceJournalEntry e, MediumInfo m) =>
+        e.RegistrationBoundCapacityBytes > 0 && m.CapacityBytes > 0 && e.RegistrationBoundCapacityBytes != m.CapacityBytes
+        || e.RegistrationBoundVolumeSerial.Length > 0 && m.VolumeSerial.Length > 0 && !e.RegistrationBoundVolumeSerial.Equals(m.VolumeSerial, StringComparison.OrdinalIgnoreCase)
+        || e.RegistrationBoundDiskSignature.Length > 0 && m.DiskSignature.Length > 0 && !e.RegistrationBoundDiskSignature.Equals(m.DiskSignature, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>At least one value is known on both sides and they agree (and none differs): the registered medium is back.</summary>
+    private static bool MediumMatches(DeviceJournalEntry e, MediumInfo m) =>
+        !MediumDiffers(e, m) && (e.RegistrationBoundCapacityBytes > 0 && m.CapacityBytes > 0 || e.RegistrationBoundVolumeSerial.Length > 0 && m.VolumeSerial.Length > 0
+                                 || e.RegistrationBoundDiskSignature.Length > 0 && m.DiskSignature.Length > 0);
 
     /// <summary>
     /// Appends an alert. Informational alerts are capped at <see cref="DeviceJournal.MaxInfoAlerts"/> (the oldest dropped); critical alerts are kept up to a

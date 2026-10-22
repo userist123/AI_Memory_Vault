@@ -181,11 +181,28 @@ public static class DeviceMonitorAuditCheck
         foreach (var r in audit.Reclassifications.Where(r => r.Identity.Equals(identity, StringComparison.OrdinalIgnoreCase)).OrderBy(r => r.TimeUtc))
         {
             if (!r.OldClass.Equals(current, StringComparison.OrdinalIgnoreCase) || r.NewClass.Equals(r.OldClass, StringComparison.OrdinalIgnoreCase)
-                || r.NewVersion <= r.OldVersion || r.NewVersion <= version || r.OldVersion < version) continue;
+                || r.NewVersion <= r.OldVersion || r.NewVersion <= version || r.OldVersion < version
+                || !DeviceScope.IsKnownReclassification(r.OldVersion, r.NewVersion, r.OldClass, r.NewClass)) continue;   // only what that version bump is known to change
             current = r.NewClass; version = r.NewVersion;
             chain.Add((current, r));
         }
         return chain;
+    }
+
+    /// <summary>
+    /// The last kind of every device and the classifier version it was sealed with, by sealed identity (the monitor's source for a reclassification; never the
+    /// journal): the first-seen record's kind and version, moved on by every valid sealed note (<see cref="KindChain"/>).
+    /// </summary>
+    public static IReadOnlyDictionary<string, SealedKind> SealedKinds(DeviceAuditReading audit)
+    {
+        var map = new Dictionary<string, SealedKind>(StringComparer.OrdinalIgnoreCase);
+        foreach (var g in audit.Devices.GroupBy(d => d.Identity, StringComparer.OrdinalIgnoreCase))
+        {
+            var first = g.OrderBy(d => d.FirstSeenUtc).First();
+            var chain = KindChain(audit, g.Key, first);
+            map[g.Key] = new SealedKind(chain[^1].Class, chain[^1].Via?.NewVersion ?? first.ClassifierVersion);
+        }
+        return map;
     }
 
     private static bool ClassAgrees(DeviceAuditReading audit, string identity, SealedDevice first, DeviceClass rowClass) =>
