@@ -2,7 +2,7 @@
 
 - **Task:** E7, user activity: ShellBags, RecentDocs, Office MRU, Recycle Bin `$I` (comparison row E7, docs/dfir/RESEARCH_2026-10-12_COMPARATIE_AIRGAP_LOGANALYZER_INSPECTRA.md:135).
 - **Branch:** `claude/loganalyzer-e7-user-activity`, worktree `.claude/worktrees/la-e7` (build ONLY here: Defender exclusion), base `claude/loganalyzer-device-monitor` 56dd08d0c.
-- **PR order:** after #303 (E6) and the device monitor PR.
+- **PRs (2026-10-22):** draft #307 (E7, base `claude/loganalyzer-device-monitor`) on draft #306 (device monitor, base `claude/loganalyzer-read-medium`) on #303 (E6). After the owner merges #303 and #302, retarget #306 then #307 to `main` and resolve the comparison-table conflicts.
 - **Updated:** 2026-10-21. Owner chose E7 over the users register (2026-10-21).
 
 ## Slices
@@ -149,3 +149,8 @@
 - E7 status: DONE pending owner. Next: PR after #303 and the device-monitor PR (order unchanged).
 - Not done / later: unknown shell item types 0x6F/0x52/0xAD/0x7E/0x01 (decoder pass); .LOG1/.LOG2 copying (owner decision); Zone.Identifier / MOTW not done;
   `ControlReport.UserActivity` has no production caller yet (the control PDF says "nu a fost evaluată de acest raport").
+
+## Next (2026-10-22, after E7)
+- Owner: merge #303/#302; decide rule severities and .LOG1/.LOG2 copying; look at the "Activitatea utilizatorului" tab.
+- Candidate next work (owner-independent): decode the unknown shell item types seen on the real station (0x6F, 0x52, 0xAD, 0x7E, 0x01, 0x2E);
+  Zone.Identifier / Mark-of-the-Web (rest of E7); a production caller for `ControlReport.UserActivity` (control PDF 3b); then the users register (B9).
