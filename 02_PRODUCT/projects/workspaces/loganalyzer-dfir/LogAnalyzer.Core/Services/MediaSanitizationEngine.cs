@@ -42,6 +42,14 @@ namespace LogAnalyzer.Core.Services
         /// <summary>Why the read-back was not done or did not confirm the wipe.</summary>
         public string ReadBackNote { get; set; } = string.Empty;
 
+        /// <summary>The read-back found data that is not 0x00: the wipe FAILED (not merely unverified).</summary>
+        public bool ReadBackFoundData => !ReadBackVerified && ReadBackMismatchOffset is not null;
+
+        /// <summary>Operator text of the read-back, in the response contract: verified / FAILED (data found) / NOT VERIFIED (why).</summary>
+        public string ReadBackVerdict => ReadBackVerified ? "verificată prin citire"
+            : ReadBackMismatchOffset is { } off ? $"EȘUATĂ (citirea de verificare a găsit date nenule la offset {off})"
+            : $"NEVERIFICATĂ ({ReadBackNote})";
+
         /// <summary>
         /// The overwrite in the shared response contract: VERIFIED only when the read-back confirmed every byte; a read-back that found
         /// data is FAILED; a method whose result cannot be read back (random last pass, partial erase) is NOT_VERIFIED.

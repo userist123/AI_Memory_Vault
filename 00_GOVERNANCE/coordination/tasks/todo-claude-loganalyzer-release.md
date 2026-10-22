@@ -31,7 +31,18 @@
 | Media sanitization (Sanitizare) | read-back already | mapped to `SanitizationResult.Verification` |
 | Kill / service stop / USB block / quarantine | not present in production (kill redirects to containment) | - |
 
+- 2026-10-22 WP9 review round 1 (Opus) + fixes (vault-worker): (1) HIGH resume only when the PID's current holder matches the
+  captured PID+start+SHA-256; unknown identity / unreadable list -> not resumed, NOT_VERIFIED, operator told; (2) HIGH suspend only when
+  the PID runs `programPath` (and `ContainmentOptions.ExpectedSha256` when given), else REJECTED check, rules verified separately;
+  (3) pre-WP9 Contained/Released without re-check shown as "neverificat" (grid, detail, PDF: `ContainmentText.State(incident)`);
+  (4) `ContainmentAutoPolicy.AlreadyHandled` skips Failed incidents with active rules, `ContainmentText.Summary` names them;
+  (5) Registry IL scan: missing assembly fails, Dfir.Tests references LogAnalyzer.Infrastructure; (6) refused contain/release and
+  audit-policy refusals audited; sanitization read-back with data = EȘUATĂ (UI, text+PDF certificate, hash covers flag);
+  Release handler `ContainmentRelease.Run` never throws, says resume happened + audit failed; RELEASE_GATE.md audit_integrity row.
+  Tests: Dfir 2175/31/0, App 637, UI 354, Edition 45. Changed contract: HostChangeRoleGateTests now expects the refusal audit line.
+  Residual: VM does not pass a suspect SHA-256 (SuspectProcess has none); round 2 review = delta only.
+
 ## Next
-- Opus `vault-reviewer` on the WP9 commit (risk: host-change paths). Residuals: IL scan excludes WPF assemblies and delegate-injected
+- Opus `vault-reviewer` round 2 on the WP9 fix delta only (max 2 rounds), then main session decides. Residuals: IL scan excludes WPF assemblies and delegate-injected
   primitives; `NotVerified` incidents are not re-contained automatically; LIVE case is opened for station-wide defense audit.
 - Then WP4 ai_claim_validation.

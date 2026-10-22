@@ -3077,14 +3077,15 @@ namespace LogAnalyzer.UI.ViewModels
                             var certData = SanitizationCertificateData.FromResult(result, targetFile, OperatorName);
 
                             _sanitizationPdfGenerator.GeneratePdfCertificate(saveDialog.FileName, certData);
-                            var verdict = result.ReadBackVerified ? "verificată prin citire" : $"NEVERIFICATĂ ({result.ReadBackNote})";
+                            var verdict = result.ReadBackVerdict;   // a read-back that found data is EȘUATĂ, not NEVERIFICATĂ
                             _provenanceLedger.AppendEntry("MEDIA_SANITIZED_CERT_PDF", saveDialog.FileName, result.PostSanitizationSha256,
                                 $"Suprascriere {result.Method} pe '{Path.GetFileName(targetFile)}', {verdict}. Hash audit certificat: {certData.TamperEvidentAuditHash}.");
 
                             MessageBox.Show($"Fișierul a fost suprascris; zeroizarea este {verdict}.\n\nRaportul PDF a fost salvat în:\n{saveDialog.FileName}\n\n" +
                                 "Seria dispozitivului și al doilea operator nu sunt cunoscute de aplicație și apar ca NEDECLARAT.",
-                                "Sanitizare", MessageBoxButton.OK, result.ReadBackVerified ? MessageBoxImage.Information : MessageBoxImage.Warning);
-                            StatusMessage = result.ReadBackVerified ? "Sanitizare finalizată și verificată prin citire." : "Sanitizare finalizată, dar NEVERIFICATĂ.";
+                                "Sanitizare", MessageBoxButton.OK, result.ReadBackVerified ? MessageBoxImage.Information : result.ReadBackFoundData ? MessageBoxImage.Error : MessageBoxImage.Warning);
+                            StatusMessage = result.ReadBackVerified ? "Sanitizare finalizată și verificată prin citire."
+                                : result.ReadBackFoundData ? "Sanitizare EȘUATĂ: citirea de verificare a găsit date nenule." : "Sanitizare finalizată, dar NEVERIFICATĂ.";
                         }
                         else
                         {

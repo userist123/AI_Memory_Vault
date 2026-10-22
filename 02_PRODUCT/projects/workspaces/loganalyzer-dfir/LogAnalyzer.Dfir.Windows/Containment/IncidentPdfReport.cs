@@ -35,8 +35,8 @@ public static class IncidentPdfReport
                         c.Item().Text($"Raport incident {i.IncidentId} — {Path.GetFileName(i.ProgramPath)}").Bold().FontSize(14).FontColor(Ink);
                         c.Item().Text($"Caz {i.CaseId} ({caseName}) · stația {host} · generat {Local(DateTimeOffset.UtcNow)} ({zone.Id})").FontSize(8).FontColor(Muted);
                     });
-                    r.ConstantItem(130).AlignRight().Container().Background(i.State == ContainmentState.Contained ? Danger : Ink)
-                        .PaddingVertical(4).PaddingHorizontal(8).Text(ContainmentText.State(i.State)).Bold().FontSize(8).FontColor(Colors.White);
+                    r.ConstantItem(130).AlignRight().Container().Background(i.State == ContainmentState.Contained && i.Verification?.Status == LogAnalyzer.Dfir.Response.ResponseStatus.Verified ? Danger : Ink)
+                        .PaddingVertical(4).PaddingHorizontal(8).Text(ContainmentText.State(i)).Bold().FontSize(8).FontColor(Colors.White);
                 });
                 h.Item().PaddingTop(6).LineHorizontal(1.2f).LineColor(Ink);
             });

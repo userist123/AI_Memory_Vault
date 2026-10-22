@@ -148,8 +148,8 @@ namespace LogAnalyzer.UI.ViewModels
                 Status = inc.State switch
                 {
                     ContainmentState.Contained => $"{inc.IncidentId}: {Path.GetFileName(path)} izolat de rețea, VERIFICAT prin re-citirea firewall-ului, și scanat ({inc.Findings.Count} constatări).",
-                    ContainmentState.NotVerified => $"{inc.IncidentId}: izolarea a fost aplicată, dar NU a putut fi verificată ({inc.Verification?.Cause}). Scanarea s-a făcut.",
-                    _ => $"{inc.IncidentId}: izolarea a EȘUAT ({inc.Verification?.Cause ?? "vezi jurnalul incidentului"}; de obicei lipsesc drepturile de administrator). Scanarea s-a făcut.",
+                    ContainmentState.NotVerified => $"{inc.IncidentId}: izolarea a fost aplicată, dar NU a putut fi verificată ({inc.Verification?.Cause}). {ContainmentText.Summary(inc)}. Scanarea s-a făcut.",
+                    _ => $"{inc.IncidentId}: izolarea a EȘUAT ({inc.Verification?.Cause ?? "vezi jurnalul incidentului"}; de obicei lipsesc drepturile de administrator). {ContainmentText.Summary(inc)}. Scanarea s-a făcut.",
                 } + (inc.Verification?.AuditError is { } ae ? " ATENȚIE: " + ae + "." : "");
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
@@ -168,7 +168,8 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (IsBusy) return;
             EnsureCase();
-            var contained = Incidents.Where(i => i.State is ContainmentState.Contained or ContainmentState.NotVerified).Select(i => i.ProgramPath).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            // A Failed partial containment still holds active rules: it is skipped too, never re-contained every tick.
+            var contained = ContainmentAutoPolicy.AlreadyHandled(Incidents);
             var suspects = await Task.Run(() => SuspiciousProcessDetector.Scan(_trusted));
             foreach (var s in suspects.Where(s => s.EligibleForAutoContainment && !contained.Contains(s.Path)))
             {
@@ -215,14 +216,8 @@ namespace LogAnalyzer.UI.ViewModels
             if (SelectedIncident is not { } inc || _service is null) return;
             if (MessageBox.Show($"Ridicați izolarea pentru {Path.GetFileName(inc.ProgramPath)}?\nProgramul va avea din nou acces la rețea.",
                     "Ridicare izolare", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
-            _service.Release(inc, "ridicată de operator");
+            Status = ContainmentRelease.Run(_service, inc, "ridicată de operator");
             IncidentDetail = IncidentDetailFormatter.Format(inc);
-            var rv = inc.ReleaseVerification;
-            Status = $"{inc.IncidentId}: " + (inc.State == ContainmentState.Released
-                ? "izolare ridicată, VERIFICAT prin re-citirea firewall-ului."
-                : rv?.Status == LogAnalyzer.Dfir.Response.ResponseStatus.NotVerified
-                    ? $"ridicarea NU a putut fi verificată ({rv.Cause}); apăsați din nou pentru o nouă încercare."
-                    : $"ridicarea a EȘUAT ({rv?.Cause ?? "vezi jurnalul"}).") + (rv?.AuditError is { } ae ? " ATENȚIE: " + ae + "." : "");
             var idx = Incidents.IndexOf(inc);
             if (idx >= 0) { Incidents[idx] = inc; SelectedIncident = inc; }
         }
@@ -279,6 +274,30 @@ namespace LogAnalyzer.UI.ViewModels
         }
     }
 
+    /// <summary>Runs a release for the screen and returns the operator's status line; never throws for an audit or role failure.</summary>
+    public static class ContainmentRelease
+    {
+        public static string Run(ProcessContainmentService service, ProcessIncident inc, string reason)
+        {
+            bool suspendedBefore = inc.ProcessSuspended;
+            try { service.Release(inc, reason); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+            {
+                // The release may have run partly (process resumed, rules removed) before the audit write failed: say what happened.
+                return $"{inc.IncidentId}: ridicarea a fost întreruptă: {ex.Message}. " +
+                       (suspendedBefore && !inc.ProcessSuspended ? "Procesul A FOST reluat. " : "") +
+                       (ex is LogAnalyzer.Dfir.Auth.HostChangeNotAuthorizedException ? "" : "Jurnalul cazului NU a putut fi scris complet. ") +
+                       $"Acțiuni făcute: {(inc.Actions.Count == 0 ? "niciuna" : string.Join("; ", inc.Actions.TakeLast(4).Select(a => $"{a.Action} {a.Target} {(a.Success ? "OK" : "EȘUAT")}")))}.";
+            }
+            var rv = inc.ReleaseVerification;
+            return $"{inc.IncidentId}: " + (inc.State == ContainmentState.Released
+                ? "izolare ridicată, VERIFICAT prin re-citirea firewall-ului."
+                : rv?.Status == LogAnalyzer.Dfir.Response.ResponseStatus.NotVerified
+                    ? $"ridicarea NU a putut fi verificată ({rv.Cause}); apăsați din nou pentru o nouă încercare."
+                    : $"ridicarea a EȘUAT ({rv?.Cause ?? "vezi jurnalul"}).") + (rv?.AuditError is { } ae ? " ATENȚIE: " + ae + "." : "");
+        }
+    }
+
     /// <summary>Plain-text detail of an incident for the side panel (the PDF carries the same content).</summary>
     public static class IncidentDetailFormatter
     {
@@ -287,7 +306,7 @@ namespace LogAnalyzer.UI.ViewModels
             string L(DateTimeOffset? t) => t is { } v ? TimeZoneInfo.ConvertTime(v, TimeZoneInfo.Local).ToString("yyyy-MM-dd HH:mm:ss") : "—";
             var sb = new StringBuilder();
             var s = i.Scan;
-            sb.AppendLine($"{i.IncidentId} — {Path.GetFileName(i.ProgramPath)} — {ContainmentText.State(i.State)}");
+            sb.AppendLine($"{i.IncidentId} — {Path.GetFileName(i.ProgramPath)} — {ContainmentText.State(i)}");
             foreach (var line in ContainmentText.Verification("Re-verificarea izolării", i.Verification)) sb.AppendLine(line);
             if (i.ReleaseVerification is not null) foreach (var line in ContainmentText.Verification("Re-verificarea ridicării", i.ReleaseVerification)) sb.AppendLine(line);
             sb.AppendLine($"Declanșator: {i.Trigger}");

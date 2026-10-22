@@ -27,8 +27,12 @@ public static class AuditPolicyChange
         Func<(int ExitCode, string Output)>? apply = null, Func<bool>? reread = null)
     {
         if (!LogAnalyzer.Dfir.Auth.OperatorIdentity.MayChangeHost)
-            return new(ResponseOutcome.NotAttempted(Action, "apply", ResponseStatus.NotAuthorized, LogAnalyzer.Dfir.Auth.OperatorIdentity.HostChangeRefusedMessage),
-                LogAnalyzer.Dfir.Auth.OperatorIdentity.HostChangeRefusedMessage);
+        {
+            // The refusal is an outcome too: it goes to the case audit (who was refused, nothing changed).
+            var refused = ResponseVerifier.Record(
+                ResponseOutcome.NotAttempted(Action, "apply", ResponseStatus.NotAuthorized, LogAnalyzer.Dfir.Auth.OperatorIdentity.HostChangeRefusedMessage), caseAudit);
+            return new(refused, LogAnalyzer.Dfir.Auth.OperatorIdentity.HostChangeRefusedMessage + (refused.AuditError is null ? "" : " " + refused.AuditError));
+        }
         (int exit, string output) = (apply ?? RunAuditpol)();
         var probe = new ResponseProbe("Filtering Platform Connection", "auditul eșecurilor activ", () =>
             (reread ?? ReadFailureFlag)() ? ResponseObservation.Holds("auditul eșecurilor este activ") : ResponseObservation.Differs("auditul eșecurilor este inactiv"));

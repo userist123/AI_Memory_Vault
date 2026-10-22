@@ -44,18 +44,28 @@ public sealed class ResponseVerificationRegistryTests
         ("System.ServiceProcess.ServiceController", ["Stop", "Pause"]),
     ];
 
-    private static IEnumerable<Assembly> Load()
+    /// <summary>
+    /// Every assembly of <see cref="ProductionAssemblies"/>, loaded by name. A missing one is a test failure, never a silent skip: an
+    /// assembly that is not scanned could hold an unverified response (the test project references each of them).
+    /// </summary>
+    private static List<Assembly> Load()
     {
-        // Touch one type of each so the assemblies are loaded, then take them by name.
-        _ = typeof(LogAnalyzer.Dfir.Windows.Containment.ProcessContainmentService);
-        _ = typeof(LogAnalyzer.Infrastructure.Services.SystemDefenseExecutionService);
-        _ = typeof(LogAnalyzer.Core.Services.MediaSanitizationEngine);
+        var loaded = new List<Assembly>();
+        var missing = new List<string>();
         foreach (var name in ProductionAssemblies)
         {
-            Assembly a;
-            try { a = Assembly.Load(name); } catch (FileNotFoundException) { continue; }
-            yield return a;
+            try { loaded.Add(Assembly.Load(name)); }
+            catch (FileNotFoundException ex) { missing.Add($"{name} ({ex.Message})"); }
         }
+        Assert.True(missing.Count == 0, "Ansambluri de producție nescanate (lipsesc din bin-ul testelor): " + string.Join("; ", missing));
+        return loaded;
+    }
+
+    [Fact]
+    public void Every_listed_production_assembly_is_loaded_and_scanned()
+    {
+        var names = Load().Select(a => a.GetName().Name).ToList();
+        Assert.Equal(ProductionAssemblies.OrderBy(n => n), names.OrderBy(n => n));
     }
 
     private static string Key(MethodBase m)
