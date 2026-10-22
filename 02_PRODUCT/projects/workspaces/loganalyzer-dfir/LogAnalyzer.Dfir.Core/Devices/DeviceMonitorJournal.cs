@@ -376,7 +376,8 @@ public static class DeviceMonitorReport
         if (e.Manufacturer.Length > 0) parts.Add(e.Manufacturer);
         if (e.Model.Length > 0) parts.Add("model " + e.Model);
         if (e.VidPid.Length > 0) parts.Add("VID/PID " + e.VidPid);
-        parts.Add(e.Serial.Length > 0 ? "SN " + e.Serial : DeviceMonitorRules.NoUniqueSerialText);
+        var serialText = DeviceMonitorRules.SerialText(e.Serial, e.NoUniqueSerial, e.GenericSerial);
+        parts.Add(serialText.Length > 0 && serialText == e.Serial && !DeviceMonitorRules.IsGenericSerial(e.Serial) ? "SN " + e.Serial : serialText.Length > 0 ? serialText : DeviceMonitorRules.NoUniqueSerialText);
         if (e.DuplicateSerial) parts.Add(DeviceMonitorRules.DuplicateSerialMark.ToUpperInvariant());
         if (e.UnidentifiableMedium) parts.Add(DeviceMonitorRules.UnidentifiableMediumText);
         if (DeviceMonitorRules.IsStorageMedium(e.Class))

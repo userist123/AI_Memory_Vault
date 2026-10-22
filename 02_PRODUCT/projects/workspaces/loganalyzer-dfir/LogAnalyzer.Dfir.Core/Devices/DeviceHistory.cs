@@ -23,13 +23,13 @@ public static class DeviceHistory
     public const string PendingMark = "în așteptare (nesigilat)";
     public const string UnverifiedMark = "neverificat", BackdatedMark = "neverificat (dată anterioară)";
     public const string FirstSeen = "Prima apariție", Connected = "Conectare", Disconnected = "Deconectare", PresentAtStart = "Prezent la pornirea monitorului",
-                        RegistrationChanged = "Schimbare nr. de înregistrare", Alert = "Alertă", StateChanged = "Schimbare stare";
+                        RegistrationChanged = "Schimbare nr. de înregistrare", Alert = "Alertă", StateChanged = "Schimbare stare", Reclassified = "Tip reclasificat";
     public const string NoUser = "—";
 
     /// <summary>The audit records that belong in a device's history.</summary>
     public static bool IsHistoryEvent(string ev) =>
         ev is OperationAudit.DeviceFirstSeen or OperationAudit.DeviceDisconnected or OperationAudit.DevicePresent or OperationAudit.DeviceRegistrationChanged
-            or OperationAudit.DeviceAlertCritical or OperationAudit.DeviceAlertInfo or OperationAudit.DeviceStateChanged;
+            or OperationAudit.DeviceAlertCritical or OperationAudit.DeviceAlertInfo or OperationAudit.DeviceStateChanged or OperationAudit.DeviceReclassified;
 
     /// <summary>The history of the device named <paramref name="identity"/>: sealed events by time (the audit order for equal times), then the pending ones.</summary>
     public static IReadOnlyList<DeviceHistoryEvent> Build(string identity, DeviceAuditReading? audit, IEnumerable<PendingSeal>? pending = null) =>
@@ -80,6 +80,9 @@ public static class DeviceHistory
         {
             case OperationAudit.DeviceFirstSeen:
                 yield return (FirstSeen, User(), Join(V("device"), V("serial").Length > 0 ? "serie " + V("serial") : "", V("note")));
+                break;
+            case OperationAudit.DeviceReclassified:
+                yield return (Reclassified, V("operator").Length > 0 ? V("operator") : NoUser, DeviceMonitorAuditCheck.ReclassifiedText(f));
                 break;
             case OperationAudit.DevicePresent:
                 yield return (PresentAtStart, User(), V("device"));

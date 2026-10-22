@@ -94,9 +94,32 @@ public static class DeviceMonitorRules
     public static string Serial(string instanceId)
     {
         var id = instanceId.ToUpperInvariant();
-        return id.StartsWith(@"USB\", StringComparison.Ordinal) || id.StartsWith(@"USBSTOR\", StringComparison.Ordinal) || id.StartsWith(@"SCSI\", StringComparison.Ordinal)
+        var serial = id.StartsWith(@"USB\", StringComparison.Ordinal) || id.StartsWith(@"USBSTOR\", StringComparison.Ordinal) || id.StartsWith(@"SCSI\", StringComparison.Ordinal)
             ? DeviceRules.Serial(instanceId) : "";
+        return IsGenericSerial(serial) ? "" : serial;   // a made-up serial (000000000000) is not a serial: the device is told apart by its instance id
     }
+
+    /// <summary>
+    /// A serial that is the same character repeated (000000000000, 111111, FFFFFFFF): cheap devices ship the same placeholder, so it identifies nothing and is
+    /// never compared for clones (owner decision 2026-10-22).
+    /// </summary>
+    public static bool IsGenericSerial(string serial)
+    {
+        var s = serial.Trim();
+        return s.Length > 0 && s.All(c => char.ToUpperInvariant(c) == char.ToUpperInvariant(s[0]));
+    }
+
+    /// <summary>The instance id of a USB, USB-storage or SCSI device carries a serial that is a placeholder (<see cref="IsGenericSerial"/>).</summary>
+    public static bool HasGenericSerial(string instanceId)
+    {
+        var id = instanceId.ToUpperInvariant();
+        return (id.StartsWith(@"USB\", StringComparison.Ordinal) || id.StartsWith(@"USBSTOR\", StringComparison.Ordinal) || id.StartsWith(@"SCSI\", StringComparison.Ordinal))
+               && IsGenericSerial(DeviceRules.Serial(instanceId));
+    }
+
+    /// <summary>What a row shows in the serial column: the serial, „fără serie unică (serie generică)” for a placeholder, „fără serie unică”, or nothing.</summary>
+    public static string SerialText(string serial, bool noUniqueSerial, bool genericSerial) =>
+        genericSerial || IsGenericSerial(serial) ? GenericSerialText : serial.Length > 0 ? serial : noUniqueSerial ? NoUniqueSerialText : "";
 
     /// <summary>
     /// A USB or USB-storage device whose instance id has no serial of its own: Windows generated the last segment (like 7&amp;1A2B3C4D&amp;0), so the device
@@ -106,7 +129,7 @@ public static class DeviceMonitorRules
     {
         var id = instanceId.ToUpperInvariant();
         bool usb = id.StartsWith(@"USB\", StringComparison.Ordinal) || id.StartsWith(@"USBSTOR\", StringComparison.Ordinal);
-        return usb && DeviceRules.Serial(instanceId).Length == 0;
+        return usb && (DeviceRules.Serial(instanceId).Length == 0 || HasGenericSerial(instanceId));
     }
 
     /// <summary>VID:PID from the instance id or the hardware ids; for USB storage (which carries vendor and product names instead) "Ven Prod".</summary>
@@ -175,7 +198,7 @@ public static class DeviceMonitorRules
     public const string DuplicateSerialMark = "serie duplicată – posibilă clonă";
 
     /// <summary>The Serie column text for a device whose serial Windows made up.</summary>
-    public const string NoUniqueSerialText = "fără serie unică";
+    public const string NoUniqueSerialText = "fără serie unică", GenericSerialText = "fără serie unică (serie generică)";
 
     /// <summary>Whether an alert text is a clone alert (simultaneous clones or a duplicate serial over time).</summary>
     public static bool IsCloneAlert(string text) => text.Contains("posibilă clon", StringComparison.OrdinalIgnoreCase);
