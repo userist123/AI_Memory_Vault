@@ -262,10 +262,12 @@ input[type=file]{font-size:var(--fs-xs);color:var(--lead)} input[type=file]::fil
 .board-col figure{margin:0 0 1.4cqw;display:grid;grid-template-columns:5.2cqw 1fr;gap:1cqw;align-items:center} .board-col i{width:5.2cqw;height:5.2cqw;display:block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
 .board-col figcaption{font:400 1.1cqw/1.3 var(--sans)} .board-col small{display:block;color:var(--lead);font-size:.9cqw}
 .room{grid-template-columns:58% 1fr} .room-img{min-height:0} .room-txt{padding:4cqw 3.6cqw 4.6cqw;display:grid;align-content:start;gap:.3cqw}
-.sw-list{list-style:none;margin:2.4cqw 0 0;padding:0;display:grid;gap:1cqw} .sw-list li{display:grid;grid-template-columns:3.4cqw 1fr;gap:1.1cqw;align-items:center} .sw-list i{width:3.4cqw;height:3.4cqw;display:block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+/* încape și cazul maxim din PresentView (9 materiale + 6 produse) în planșa 16:9, fără să atingă numărul planșei */
+.sw-list{list-style:none;margin:1.6cqw 0 0;padding:0;display:grid;gap:.7cqw} .sw-list li{display:grid;grid-template-columns:2.9cqw 1fr;gap:1.1cqw;align-items:center} .sw-list i{width:2.9cqw;height:2.9cqw;display:block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
 .sw-list span{font:400 1.1cqw/1.25 var(--sans)} .sw-list small{display:block;font:500 .8cqw var(--sans);text-transform:uppercase;letter-spacing:.1em;color:var(--lead)}
-.room .prod{font:400 1cqw/1.5 var(--sans);color:var(--lead);margin:2cqw 0 0;border-top:1px solid var(--rule);padding-top:1.2cqw}
-.planslide,.budgetslide{grid-template-rows:auto 1fr;padding:4cqw 4.5cqw} .plan-wrap{display:grid;place-items:center;min-height:0} .plan-wrap svg{max-width:100%;max-height:100%;width:auto;height:auto}
+.room .prod{font:400 1cqw/1.5 var(--sans);color:var(--lead);margin:1.4cqw 0 0;border-top:1px solid var(--rule);padding-top:1cqw}
+.planslide,.budgetslide{grid-template-rows:auto 1fr;padding:4cqw 4.5cqw} /* flex cu înălțime definită: max-height:100% pe SVG se aplică (în grila de dinainte rândul era nedefinit și planul ieșea din planșă) */
+.plan-wrap{display:flex;align-items:center;justify-content:center;min-height:0;height:100%;overflow:hidden} .plan-wrap svg{max-width:100%;max-height:100%;width:auto;height:auto}
 .bud{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5cqw;align-items:start;margin-top:3cqw} .bud-total small{font:500 1cqw var(--sans);text-transform:uppercase;letter-spacing:.12em;color:var(--lead)} .bud-total b{display:block;font:400 6cqw/1 var(--serif);margin:1cqw 0} .bud-total p{font-size:1.1cqw;color:var(--lead)}
 .bud dl{margin:0;display:grid} .bud dl div{display:flex;justify-content:space-between;border-bottom:1px solid var(--rule);padding:1cqw 0;font-size:1.25cqw} .bud dd{margin:0;font-family:var(--serif)}
 @page slides{size:297mm 167mm;margin:0}
@@ -455,6 +457,7 @@ input[type=file]{font-size:var(--fs-xs);color:var(--lead)} input[type=file]::fil
 .cco-bud{display:flex;gap:26px;flex-wrap:wrap;margin:0} .cco-bud div{display:grid} .cco-bud dt{font:500 var(--fs-xs) var(--sans);text-transform:uppercase;letter-spacing:.1em;color:var(--lead)} .cco-bud dd{margin:0;font:400 var(--fs-xl) var(--serif)} .cco-bud .cur dd{font-size:var(--fs-xl);color:var(--ink)}
 .cco-name{max-width:360px} .cco-item{border:1px solid var(--rule);padding:14px 16px;display:grid;gap:8px;background:#fff}
 .cco-item header{display:flex;justify-content:space-between;gap:12px;align-items:baseline} .cco-item header span{font:400 var(--fs-lg) var(--serif);white-space:nowrap} .cco-item .up{color:#8a4b2f} .cco-item .down{color:#4f6b4a} .cco-item p{margin:0}
+.cco-pin{display:grid;gap:6px;justify-items:start} .cco-pin label{font-size:13px} .cco-pin-row{display:flex;gap:8px;align-items:center} .cco-pin input{min-height:44px;width:10ch;padding:0 12px;font-size:18px;font-variant-numeric:tabular-nums;letter-spacing:.25em} .cco-pin .btn{min-height:44px;min-width:110px}
 .cco-act{display:flex;gap:8px;flex-wrap:wrap} .cco-act .btn{min-height:44px;min-width:110px} .cco-msg{margin:0;font-weight:500}
 .cco-done,.dco-list{list-style:none;margin:0;padding:0} .cco-done li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:8px 0;border-top:1px solid var(--rule)} .cco-done small{grid-column:1/-1}
 .co-st{color:var(--lead);font-size:var(--fs-xs)} .co-approved{color:#4f6b4a} .co-rejected{color:var(--err)} .co-sent{color:#4a5c74}
@@ -821,6 +824,8 @@ select,textarea{font-size:var(--fs-sm)}
 .decide-progress{display:grid;gap:6px;min-width:180px;flex:1 1 200px} .decide-progress b{font:600 var(--fs-md) var(--sans)} .decide-progress small{color:var(--ink-2)}
 .decide-track{display:block;height:6px;border-radius:3px;background:var(--bg-2);overflow:hidden} .decide-track i{display:block;height:100%;background:var(--ok)}
 .decide-act{display:flex;gap:var(--s-2);flex-wrap:wrap} .decide-act .btn{flex:1 1 auto}
+/* pe desktop, bara de navigare a planșelor stă deasupra barei de aprobare (altfel se suprapun în dreapta jos) */
+@media (min-width:701px){ body:has(.decide-bar) .deck-bar{bottom:88px} }
 @media (max-width:700px){ .decide-act{width:100%} .deck-bar{bottom:96px} }
 .tb-actions{margin-left:auto} .tb-save{flex:none}
 @media (max-width:1023px){ .topbar .name{order:1} .topbar .status{order:2} .tb-save{order:3} .tb-actions{order:4} .topbar > .btn:first-child{order:0} .conflict-bar{order:5} }

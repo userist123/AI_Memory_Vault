@@ -7,19 +7,31 @@ import type { Snapshot } from '../core/types';
 export const TOKEN_BYTES = 32;
 const TOKEN_RE = /^[A-Za-z0-9_-]{43}$/;
 export const isShareToken = (t: unknown): t is string => typeof t === 'string' && TOKEN_RE.test(t);
+/** Un link e activ dacă nu e revocat și nu a expirat (expires_at null = link vechi, fără expirare). Toate rutele publice
+ *  folosesc același predicat, ca un link expirat să nu mai poată fi folosit nicăieri (vizualizare, păreri, alegeri, PIN). */
+export const shareActive = (alias = '') => { const a = alias ? alias + '.' : ''; return `${a}revoked_at is null and (${a}expires_at is null or ${a}expires_at > now())`; };
+export const SHARE_DEFAULT_DAYS = 90, SHARE_MAX_DAYS = 365;
+/** Valabilitatea cerută: implicit 90 de zile; 0 = fără expirare (alegere explicită a designerului); altfel 1–365 zile. */
+// Doar un număr întreg sau un șir de cifre: false, "", [] sau "0x10" nu trebuie să devină tacit „fără expirare” sau altă valoare.
+export function shareDays(v: unknown){ if (v == null) return SHARE_DEFAULT_DAYS;
+  const n = typeof v === 'number' ? v : typeof v === 'string' && /^\d{1,3}$/.test(v) ? Number(v) : NaN;
+  if (!Number.isInteger(n) || n < 0 || n > SHARE_MAX_DAYS) throw new HttpError(400, `Valabilitatea linkului trebuie să fie între 1 și ${SHARE_MAX_DAYS} zile (0 = fără expirare).`); return n; }
 
-export async function createShare(owner: string, id: string, revisionNumber: unknown){
-  const n = Number(revisionNumber); if (!Number.isInteger(n) || n < 1) throw new HttpError(400, 'Revizie invalidă.');
+export async function createShare(owner: string, id: string, revisionNumber: unknown, expiresInDays?: unknown){
+  const n = Number(revisionNumber); if (!Number.isInteger(n) || n < 1) throw new HttpError(400, 'Revizie invalidă.'); const days = shareDays(expiresInDays);
   await getProject(owner, id); const { q } = await getDb();
   const rev = await q('select number from revisions where project_id=$1 and number=$2', [id, n]); if (!rev.rows[0]) throw new HttpError(404, 'Revizie inexistentă.');
   const token = randomBytes(TOKEN_BYTES).toString('base64url');
-  const { rows } = await q('insert into shares(token, project_id, revision_number) values($1,$2,$3) returning created_at', [token, id, n]);
-  return { token, revisionNumber: n, createdAt: rows[0].created_at, path: `/share/${token}` };
+  const { rows } = await q(`insert into shares(token, project_id, revision_number, expires_at) values($1,$2,$3, case when $4::int = 0 then null else now() + make_interval(days => $4::int) end)
+    returning created_at, expires_at`, [token, id, n, days]);
+  return { token, revisionNumber: n, createdAt: rows[0].created_at, expiresAt: rows[0].expires_at as string | null, path: `/share/${token}` };
 }
 export async function listShares(owner: string, id: string){
   await getProject(owner, id); const { q } = await getDb();
-  const { rows } = await q('select token, revision_number, created_at, revoked_at, (pin_hash is not null) as pin_enabled from shares where project_id=$1 order by created_at desc', [id]);
-  return rows.map(r => ({ token: r.token, revisionNumber: r.revision_number, createdAt: r.created_at, revokedAt: r.revoked_at, pinEnabled: !!r.pin_enabled, path: `/share/${r.token}` }));
+  const { rows } = await q(`select token, revision_number, created_at, revoked_at, expires_at, last_access_at, (pin_hash is not null) as pin_enabled, (${shareActive()}) as active
+    from shares where project_id=$1 order by created_at desc`, [id]);
+  return rows.map(r => ({ token: r.token, revisionNumber: r.revision_number, createdAt: r.created_at, revokedAt: r.revoked_at, expiresAt: r.expires_at, lastAccessAt: r.last_access_at,
+    active: !!r.active, pinEnabled: !!r.pin_enabled, path: `/share/${r.token}` }));
 }
 export async function revokeShare(owner: string, id: string, token: unknown){
   await getProject(owner, id); if (typeof token !== 'string' || !TOKEN_RE.test(token)) throw new HttpError(404, 'Link inexistent.');
@@ -27,13 +39,15 @@ export async function revokeShare(owner: string, id: string, token: unknown){
   if (!rows[0]) throw new HttpError(404, 'Link inexistent.'); return { ok: true, revokedAt: rows[0].revoked_at };
 }
 export interface SharedView { projectName: string; revisionNumber: number; note: string; createdAt: string; snapshot: Snapshot; readOnly: true }
-/** Public: un token necunoscut, revocat sau fără revizie dă același 404, fără alte detalii. */
+/** Public: un token necunoscut, revocat, expirat sau fără revizie dă același 404, fără alte detalii.
+ *  Ultima deschidere se notează cel mult o dată pe oră (fără IP, fără agent): designerul vede dacă linkul e folosit. */
 export async function resolveShare(token: unknown): Promise<SharedView> {
   if (typeof token !== 'string' || !TOKEN_RE.test(token)) throw new HttpError(404, 'Link inexistent.');
   const { q } = await getDb();
   const { rows } = await q(`select r.number, r.note, r.created_at, r.snapshot from shares s
-    join revisions r on r.project_id = s.project_id and r.number = s.revision_number where s.token=$1 and s.revoked_at is null`, [token]);
+    join revisions r on r.project_id = s.project_id and r.number = s.revision_number where s.token=$1 and ${shareActive('s')}`, [token]);
   if (!rows[0]) throw new HttpError(404, 'Link inexistent.');
+  await q(`update shares set last_access_at = date_trunc('hour', now()) where token=$1 and (last_access_at is null or last_access_at < date_trunc('hour', now()))`, [token]);
   // Numele vine din revizia partajată: o redenumire ulterioară a proiectului nu apare pe linkurile vechi.
   return { projectName: String(rows[0].snapshot?.name ?? ''), revisionNumber: rows[0].number, note: rows[0].note, createdAt: rows[0].created_at, snapshot: rows[0].snapshot as Snapshot, readOnly: true };
 }
@@ -49,7 +63,7 @@ export async function clientLink(owner: string, id: string){
   const last = await q('select r.number, (r.snapshot = p.draft) as same from revisions r join projects p on p.id = r.project_id where r.project_id=$1 order by r.number desc limit 1', [id]);
   const same = !!last.rows[0]?.same;
   const number = same ? last.rows[0].number as number : (await createRevision(owner, id, 'Predat clientului')).number;
-  const old = await q('select token from shares where project_id=$1 and revision_number=$2 and revoked_at is null order by created_at desc limit 1', [id, number]);
+  const old = await q(`select token from shares where project_id=$1 and revision_number=$2 and ${shareActive()} order by created_at desc limit 1`, [id, number]);
   const s = old.rows[0] ? { token: old.rows[0].token as string, path: `/share/${old.rows[0].token}` } : await createShare(owner, id, number);
   const base = publicBase();
   // publicUrl: false = linkul folosește adresa din browser (pe localhost merge doar pe acest calculator); revisionNote: ce s-a salvat

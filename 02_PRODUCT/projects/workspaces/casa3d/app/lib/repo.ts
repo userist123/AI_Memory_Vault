@@ -61,6 +61,12 @@ export function checkUnderlay(u: any): Underlay {
   if (typeof u.locked !== 'boolean') throw bad('Starea de blocare a imaginii de calc este invalidă.');
   return { dataUrl: u.dataUrl, x: u.x, z: u.z, widthM: u.widthM, opacity: u.opacity, locked: u.locked, ...(typeof u.confirmed === 'boolean' ? { confirmed: u.confirmed } : {}) };
 }
+/** Cheile de pe primul nivel ale modelului (core/types.ts, interfața Snapshot). Orice altă cheie se elimină la salvare,
+ *  ca la scări: în proiect nu ajung câmpuri pe care nimic nu le validează. Testul din tests/audit-fixes.test.ts (C-2)
+ *  compară lista cu interfața, ca o cheie nouă din model să nu fie ștearsă din greșeală. */
+export const SNAPSHOT_KEYS = ['name', 'floor', 'levels', 'placements', 'selections', 'picked', 'finishes', 'appearance', 'underlay', 'tech', 'doors', 'budget', 'brief', 'joinery', 'roomOptions', 'userLibrary'] as const;
+/** Coordonatele (metri) rămân într-un pătrat de 2 km: valori uriașe (1e300) ar face suprafețele și bugetul Infinity. */
+export const COORD_MAX_M = 1000;
 export function checkSnapshot(s: any): Snapshot {
   if (!s || typeof s !== 'object' || !s.floor || !Array.isArray(s.floor.rooms) || !Array.isArray(s.floor.walls) || !Array.isArray(s.placements) || typeof s.selections !== 'object') throw new HttpError(400, 'Structura proiectului e invalidă.');
   const { underlay: rawUnderlay, ...rest } = s;
@@ -77,15 +83,19 @@ export function checkSnapshot(s: any): Snapshot {
     if (s.levels && !(all(f => [f.id]) && all(f => f.rooms.map((r: any) => r.id)) && all(f => f.walls.map((w: any) => w.id)))) throw new HttpError(400, 'Camerele, pereții și nivelurile trebuie să aibă id-uri unice pe toată casa.'); }
   const fls: any[] = floors(s);
   for (const f of fls) for (const r of f.rooms) if (!['x0', 'z0', 'x1', 'z1'].every(k => num(r.rect?.[k])) || r.rect.x1 <= r.rect.x0 || r.rect.z1 <= r.rect.z0) throw new HttpError(400, `Camera ${r.id} are dimensiuni invalide.`);
+  const inBox = (v: unknown) => num(v) && Math.abs(v as number) <= COORD_MAX_M;
+  for (const f of fls) for (const r of f.rooms) if (!['x0', 'z0', 'x1', 'z1'].every(k => inBox(r.rect?.[k]))) throw new HttpError(400, `Camera ${String(r.id).slice(0, 80)} e în afara planului (maximum ${COORD_MAX_M} m).`);
+  for (const f of fls) for (const r of f.rooms) r.name = String(r.name ?? '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 80);
+  for (const f of fls) for (const w of f.walls) if (![w.a?.[0], w.a?.[1], w.b?.[0], w.b?.[1]].every(inBox)) throw new HttpError(400, `Peretele ${String(w.id).slice(0, 80)} e în afara planului (maximum ${COORD_MAX_M} m).`);
   for (const f of fls) for (const w of f.walls) if (!num(w.a?.[0]) || !num(w.a?.[1]) || !num(w.b?.[0]) || !num(w.b?.[1]) || !Array.isArray(w.openings)) throw new HttpError(400, `Peretele ${w.id} e invalid.`);
   // scări: dreptunghi plauzibil; se păstrează doar câmpurile modelului
   for (const f of fls){ if (f.stairs == null){ delete f.stairs; continue; }
     if (!Array.isArray(f.stairs) || f.stairs.length > 20) throw new HttpError(400, 'Scările sunt invalide.');
-    f.stairs = f.stairs.map((st: any) => { if (!st || typeof st.id !== 'string' || !/^[\w-]{1,80}$/.test(st.id) || !num(st.x) || !num(st.z) || !num(st.rotation)
+    f.stairs = f.stairs.map((st: any) => { if (!st || typeof st.id !== 'string' || !/^[\w-]{1,80}$/.test(st.id) || !inBox(st.x) || !inBox(st.z) || !num(st.rotation)
         || !(num(st.width) && st.width >= .6 && st.width <= 3) || !(num(st.length) && st.length >= .8 && st.length <= 8)) throw new HttpError(400, 'O scară are dimensiuni invalide (lățime 60–300 cm, lungime 80–800 cm).');
       return { id: st.id, x: st.x, z: st.z, width: st.width, length: st.length, rotation: st.rotation }; });
     if (!f.stairs.length) delete f.stairs; }
-  for (const p of s.placements) if (!num(p.x) || !num(p.z) || !num(p.rotation) || typeof p.variantId !== 'string') throw new HttpError(400, 'O piesă de mobilier e invalidă.');
+  for (const p of s.placements) if (!inBox(p.x) || !inBox(p.z) || !num(p.rotation) || typeof p.variantId !== 'string') throw new HttpError(400, 'O piesă de mobilier e invalidă.');
   // dimensiuni pe comandă (cm) și goluri cu înălțime/parapet: doar valori plauzibile
   const cm = (v: unknown) => num(v) && (v as number) >= SIZE_LIMITS_CM.min && (v as number) <= SIZE_LIMITS_CM.max;
   for (const p of s.placements){ if (p.size == null){ delete p.size; continue; }
@@ -115,6 +125,7 @@ export function checkSnapshot(s: any): Snapshot {
     if (typeof s.joinery === 'object' && !Array.isArray(s.joinery)) for (const [k, v] of Object.entries(s.joinery).slice(0, 200)){ if (!ids.has(k)) continue; try { out[k] = checkWardrobe(v); } catch (e: any){ throw new HttpError(400, e.message); } }
     if (Object.keys(out).length) s.joinery = out; else delete s.joinery; }
   s.name = cleanName(s.name); s.picked = Array.isArray(s.picked) ? s.picked.filter((x: unknown) => typeof x === 'string') : [];
+  for (const k of Object.keys(s)) if (!(SNAPSHOT_KEYS as readonly string[]).includes(k)) delete s[k];
   return s as Snapshot;
 }
 export async function listProjects(owner: string){

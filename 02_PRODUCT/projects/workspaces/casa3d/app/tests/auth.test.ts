@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'casa3d-auth-')); process.env.CASA3D_AUTH_FILE = path.join(dir, 'auth.json');
-import { readAuth, setPassword, removePassword, checkPassword, makeSession, verifySession, takeLoginAttempt, loginSucceeded, resetLoginLimits, SESSION_DAYS } from '../lib/auth';
+import { readAuth, setPassword, removePassword, checkPassword, makeSession, verifySession, takeLoginAttempt, loginRetryAfterMs, loginSucceeded, resetLoginLimits, SESSION_DAYS } from '../lib/auth';
 import { sameOriginJson } from '../lib/public-gate';
 const OWNER = '77777777-7777-4777-8777-777777777777';
 beforeEach(() => { removePassword(); resetLoginLimits(); });
@@ -31,14 +31,17 @@ test('sesiuni: semnate, expiră, nu se pot falsifica; parolă nouă le închide 
   setPassword('a doua parolă bună', OWNER); assert.equal(verifySession(readAuth(), s, now + 1000), false, 'parola nouă închide sesiunile vechi');
 });
 
-test('ghicitul parolei: încercarea se rezervă înainte de verificare, 5 pe adresă, fără blocaj global', () => {
+test('ghicitul parolei: încercarea se rezervă înainte de verificare, 5 pe adresă, plafon global de 60 (audit B-3)', () => {
   const t = Date.now();
   // cereri simultane: toate își iau încercarea înainte de vreo verificare — doar 5 trec
   assert.equal(Array.from({ length: 50 }, () => takeLoginAttempt('1.1.1.1', t)).filter(Boolean).length, 5);
   assert.equal(takeLoginAttempt('1.1.1.1', t + 16 * 60e3), true, 'după 15 minute se poate din nou');
-  resetLoginLimits(); for (let i = 0; i < 500; i++) for (let k = 0; k < 5; k++) takeLoginAttempt(`10.0.${i >> 8}.${i & 255}`, t);
-  assert.equal(takeLoginAttempt('3.3.3.3', t), true, 'încercările altora nu blochează designerul');
-  for (let k = 0; k < 4; k++) takeLoginAttempt('4.4.4.4', t); loginSucceeded('4.4.4.4'); assert.equal(takeLoginAttempt('4.4.4.4', t), true, 'o reușită șterge încercările');
+  resetLoginLimits(); for (let k = 0; k < 4; k++) takeLoginAttempt('4.4.4.4', t); loginSucceeded('4.4.4.4'); assert.equal(takeLoginAttempt('4.4.4.4', t), true, 'o reușită șterge încercările');
+  // rotația adresei la fiecare cerere (boți, antet falsificat) se oprește la plafonul global, apoi se deblochează
+  resetLoginLimits(); const ok = Array.from({ length: 500 }, (_, i) => takeLoginAttempt(`10.0.${i >> 8}.${i & 255}`, t)).filter(Boolean).length;
+  assert.equal(ok, 60); assert.equal(takeLoginAttempt('3.3.3.3', t), false); assert.ok(loginRetryAfterMs('3.3.3.3', t) > 0);
+  assert.equal(takeLoginAttempt('3.3.3.3', t + 16 * 60e3), true, 'plafonul global expiră după 15 minute');
+  resetLoginLimits();
 });
 
 test('parola se poate schimba doar din aplicație, nu dintr-o pagină străină (CSRF)', () => {
