@@ -1,5 +1,5 @@
 # todo-claude-casa3d-uiux
-STATUS: IN_PROGRESS   UPDATED: 2026-10-23T03:05:00+03:00
+STATUS: IN_PROGRESS   UPDATED: 2026-10-23T03:40:00+03:00
 TASK: Casa3D UI/UX P1 from the research report (owner request 2026-10-22; report kept locally, not in repo)
 BRANCH / PR: claude/casa3d-uiux-p1 (worktree D:/w/uiux, base origin/main 6eb24f87)
 P1 items (report table rows 1-7):
@@ -12,8 +12,8 @@ P1 items (report table rows 1-7):
 7. Accessibility foundation (WCAG 2.2 2.5.7 click alternatives, target sizes, reduced motion)
 DONE:
 - (1) localizeRoomNames any-language -> reader language + localizeSnapshotRoomNames (floor + levels, identity when
-  unchanged); applied at display in PresentView/share, PrintView, SiteReport, MoodBoard; Editor translates once per UI
-  language on load as an undoable, saved change with a toast. BOQ paint label: colour name (colorName, tinted greys
+  unchanged); applied at display only in PresentView/share, PrintView, SiteReport, MoodBoard (the Editor auto-translate was
+  removed after review round 1: it rewrote the draft, causing 409s on other devices and spurious revisions). BOQ paint label: colour name (colorName, tinted greys
   "gri verzui") + exact hex kept in BoqItem.color; wall sides nord/sud/est/vest instead of N/S/E/W.
   tests/clean-data.test.ts (3), finishes.test.ts updated. Suite 684/684.
 - (4) askReview dialog kind: checklist grouped by room, select/deselect all, typed name (min 2), only checked keys
@@ -36,5 +36,10 @@ DONE:
   "client link" / share and in the background for active links; link uses <img srcset>, cover fetchpriority=high,
   three.js only for missing images. Slow 4G + 4x CPU at 390 px: LCP 3741 ms -> 806 ms, no three.js download, CLS 0.
   tests/share-renders.test.ts (4); share-gate-routes inventory updated. Suite 696/696.
-NEXT: independent review (vault-reviewer); PR; CI; merge.
+REVIEW round 1 (vault-reviewer): NOT READY, 0 blockers, 3 MEDIUM fixed: PlanView room draft cleared on tool change;
+  Editor auto-translate removed; share link language from Accept-Language on the server (nested PrefsProvider
+  initialLang) + localized snapshot derived with useMemo. LOW fixed: typed room min 0.6 m, name prefill, Enter on
+  checkbox no longer submits, unique group keys, render state sends the snapshot only when images are missing,
+  renders deleted on revoke when no other active link shows the revision, explicit WebGL context loss. Suite 697/697.
+NEXT: review round 2; PR; CI; merge.
 KEY FILES: casa3d/app/core/templates.ts, core/boq.ts, core/budget-excluded.ts, components/{Editor,PresentView,PrintView,SiteReport,MoodBoard,PlanView,Viewer3D,DialogHost}.tsx, core/{typed-dimension,feedback-log}.ts, lib/{dialog,share-renders,share-images}.ts, scripts/check-slides.mjs

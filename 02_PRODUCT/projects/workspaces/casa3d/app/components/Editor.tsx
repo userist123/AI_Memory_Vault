@@ -72,7 +72,6 @@ import { PHASES, phaseOf, stageDone, nextStage, doneCount, STAGE_IDS, activeShar
 import CommandPalette, { type Command } from './CommandPalette';
 import { isPaletteShortcut } from '@/lib/fuzzy';
 import { editorIgnoresKey } from '@/lib/palette-keys';
-import { localizeSnapshotRoomNames } from '@/core/templates';
 import { prepareShareImages } from '@/lib/share-images';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 
@@ -121,7 +120,7 @@ const STAGES: { id: Stage; view: '2d' | '3d' | 'split'; tools: Tool[]; page?: tr
   { id: 'site', view: '2d', tools: [], page: true }
 ];
 export default function Editor({ id }: { id: string }){
-  const { t, tp, lang, units, ready: prefsReady, setLang, setUnits } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units);
+  const { t, tp, lang, units, setLang, setUnits } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units);
   const [meta, setMeta] = useState<ProjectMeta | null>(null), [house, setHouse] = useState<Snapshot | null>(null), [lvl, setLvl] = useState(0), [catalog, setCatalog] = useState<Catalog | null>(null), [mc, setMc] = useState<MaterialsCatalog | null>(null), [out, setOut] = useState<Outbound | null>(null);
   const compact = useCompact(), [sheet, setSheet] = useState<'peek' | 'half' | 'full'>('half'), [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('2d'), [help, setHelp] = useState(false), [calib, setCalib] = useState<Calib | null>(null);
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error' | 'conflict' | 'offline' | 'auth'>('saved'), baseRev = useRef<number | null>(null), saveRef = useRef<string>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
@@ -151,11 +150,6 @@ export default function Editor({ id }: { id: string }){
     .then(([p, c, h, m]) => { setHouse(p.draft); latest.current = p.draft; baseRev.current = p.draftRev ?? null; setMeta(p.meta ?? { status: 'design' }); setCatalog(c); setMc(m); setRev(p.currentRevision); setPersistent(h.persistent); setDemo(!!h.demo); const st = readStash(store(), id); if (st){ stashOpen.current = true; setStash(st); } }).catch(() => say(t('editor.loadError')));
     fetch('/api/outbound').then(r => r.ok ? r.json() : null).then(setOut).catch(() => {});
     loadRevs(); }, [id]); // eslint-disable-line
-  // Numele implicite ale camerelor urmează limba interfeței (un proiect creat în engleză afișa „Kitchen” în interfața
-  // română și pe linkul clientului). Se traduc o dată per limbă, ca modificare obișnuită: salvată și anulabilă cu Undo.
-  const roomsLocalized = useRef('');
-  useEffect(() => { if (!house || !prefsReady || roomsLocalized.current === `${id}:${lang}`) return; roomsLocalized.current = `${id}:${lang}`;
-    const next = localizeSnapshotRoomNames(house, lang); if (next !== house){ commitHouse(next); say(t('editor.roomsTranslated')); } }, [house, lang, prefsReady]); // eslint-disable-line
   const loadRevs = () => { fetch(`/api/projects/${id}/revisions`).then(r => r.ok ? r.json() : []).then(setRevs); fetch(`/api/projects/${id}/shares`).then(r => r.ok ? r.json() : []).then(setShares); };
   // linkurile active fără imagini gata randate (linkuri vechi, o randare întreruptă) se completează în fundal, fără mesaj
   useEffect(() => { const revs = [...new Set(shares.filter(s => s.active).map(s => s.revisionNumber as number))]; if (!revs.length) return;

@@ -47,10 +47,20 @@ test('doar proprietarul scrie; camera trebuie să existe; linkul activ servește
   await saveRevisionRender(A, id, number, { key: room, width: 800, image: webp() });
   await saveRevisionRender(A, id, number, { key: room, width: 800, image: webp(80) }); // înlocuire, nu dublură
   assert.deepEqual(await shareRenderSet(s.token), { overview: [800, 1600], [room]: [800] });
-  assert.deepEqual((await revisionRenderState(A, id, number)).have, { overview: [800, 1600], [room]: [800] });
+  const st = await revisionRenderState(A, id, number); assert.deepEqual(st.have, { overview: [800, 1600], [room]: [800] });
+  assert.ok(st.snapshot && st.missing.includes(room) && !st.missing.includes('overview'), 'instantaneul vine doar când lipsește ceva');
   const img = await shareRender(s.token, room, 800); assert.equal(img?.mime, 'image/webp'); assert.equal(img?.bytes.length, 80);
   assert.equal(await shareRender(s.token, room, 1600), null); assert.equal(await shareRender(s.token, '../x', 800), null);
   await revokeShare(A, id, s.token);
   assert.deepEqual(await shareRenderSet(s.token), {}); assert.equal(await shareRender(s.token, 'overview', 1600), null);
-  const { rows } = await (await getDb()).q('select count(*)::int as n from revision_renders where project_id=$1', [id]); assert.equal(rows[0].n, 3);
+  const { rows } = await (await getDb()).q('select count(*)::int as n from revision_renders where project_id=$1', [id]); assert.equal(rows[0].n, 0, 'șterse la revocare: niciun alt link nu le mai arată');
+});
+test('revocarea păstrează imaginile cât timp alt link activ arată aceeași revizie; fără nimic de randat, fără instantaneu', async () => {
+  const id = await repo.createProject(A, 'Două linkuri', 'demo'), { number } = await repo.createRevision(A, id, 'Predat');
+  const s1 = await createShare(A, id, number), s2 = await createShare(A, id, number), keys = (await revisionRenderState(A, id, number)).keys;
+  for (const key of keys) for (const width of [800, 1600]) await saveRevisionRender(A, id, number, { key, width, image: webp() });
+  const full = await revisionRenderState(A, id, number); assert.deepEqual(full.missing, []); assert.equal(full.snapshot, null);
+  await revokeShare(A, id, s1.token); assert.equal(Object.keys(await shareRenderSet(s2.token)).length, keys.length, 's2 le vede în continuare');
+  await revokeShare(A, id, s2.token);
+  const { rows } = await (await getDb()).q('select count(*)::int as n from revision_renders where project_id=$1', [id]); assert.equal(rows[0].n, 0);
 });

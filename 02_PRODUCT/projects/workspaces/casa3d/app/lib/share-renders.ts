@@ -40,11 +40,13 @@ async function revisionSnapshot(id: string, n: number): Promise<Snapshot> {
 }
 const revNumber = (v: unknown) => { const n = typeof v === 'string' && /^\d{1,9}$/.test(v) ? Number(v) : v; if (!Number.isInteger(n) || (n as number) < 1) throw new HttpError(400, 'Revizie invalidă.'); return n as number; };
 
-/** Designerul: instantaneul reviziei (de randat) și ce imagini există deja. */
+/** Designerul: ce imagini există deja și ce lipsește; instantaneul reviziei (poate avea și 1 MB, cu planul importat)
+ *  se trimite doar când e ceva de randat, ca verificarea din fundal de la fiecare deschidere a editorului să fie ieftină. */
 export async function revisionRenderState(owner: string, id: string, rev: unknown){
   const n = revNumber(rev); await getProject(owner, id); const snapshot = await revisionSnapshot(id, n), { q } = await getDb();
   const { rows } = await q('select key, width from revision_renders where project_id=$1 and revision_number=$2', [id, n]);
-  return { revisionNumber: n, snapshot, keys: renderKeys(snapshot), have: toSet(rows) };
+  const keys = renderKeys(snapshot), have = toSet(rows), missing = keys.filter(k => !RENDER_WIDTHS.every(w => have[k]?.includes(w)));
+  return { revisionNumber: n, keys, have, missing, snapshot: missing.length ? snapshot : null };
 }
 /** Designerul salvează o imagine: cheia trebuie să existe în revizie, lățimea e una din RENDER_WIDTHS. */
 export async function saveRevisionRender(owner: string, id: string, rev: unknown, b: { key?: unknown; width?: unknown; image?: unknown }){

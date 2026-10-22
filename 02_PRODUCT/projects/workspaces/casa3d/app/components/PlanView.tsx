@@ -64,7 +64,9 @@ export default function PlanView(p: Props){
   const [roomDraft, setRoomDraft] = useState<{ a: [number, number]; b: [number, number]; pending?: boolean } | null>(null);
   // cota tastată în timpul desenării (UI/UX P1-6): cifrele merg în chipul de lângă cursor, Enter construiește exact
   const [typed, setTyped] = useState('');
-  useEffect(() => { setTyped(''); }, [p.tool]);
+  // la schimbarea uneltei se renunță la ce era pe jumătate (cota tastată, camera pornită cu un clic): altfel ciorna
+  // rămâne după cursor și blochează tragerea în Selecție
+  useEffect(() => { setTyped(''); setRoomDraft(null); }, [p.tool]);
   const [cursor, setCursor] = useState<[number, number] | null>(null);
   const [rulerHover, setRulerHover] = useState<[number, number] | null>(null);
   const [aspect, setAspect] = useState(1), [calA, setCalA] = useState<[number, number] | null>(null);

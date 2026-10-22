@@ -3,7 +3,7 @@
 // întreg = cm („320”), zecimală = m („3,20”; virgula e zecimală), sufixele au prioritate (m, cm, mm; imperial ft/′, in/″).
 import type { Units } from './format';
 
-const M_PER_IN = .0254, MIN_M = .2, MAX_M = 1000;
+const M_PER_IN = .0254, MIN_M = .2, MAX_M = 1000, ROOM_MIN_M = .6;
 const UNIT: Record<string, number> = { m: 1, cm: .01, mm: .001, ft: .3048, "'": .3048, '′': .3048, in: M_PER_IN, '"': M_PER_IN, '″': M_PER_IN };
 
 /** Lungimea tastată, în metri; null dacă nu e o lungime plauzibilă (20 cm – 1 km). */
@@ -13,11 +13,12 @@ export function parseTypedLength(text: string, units: Units): number | null {
   const metres = unit ? n * UNIT[unit]! : units === 'imperial' ? n * M_PER_IN : /[.,]/.test(raw) ? n : n / 100;
   return Number.isFinite(metres) && metres >= MIN_M - 1e-9 && metres <= MAX_M ? metres : null;
 }
-/** Dimensiunile unei camere: „lățime;adâncime” (sau x, ×, *, spațiu); fiecare cu regulile de mai sus. */
+/** Dimensiunile unei camere: „lățime;adâncime” (sau x, ×, *, spațiu); fiecare cu regulile de mai sus și cel puțin
+ *  0,6 m, ca la camera trasă cu mouse-ul. */
 export function parseTypedSize(text: string, units: Units): { w: number; d: number } | null {
   const parts = text.trim().split(/\s*[;x×*]\s*|\s+(?=\d)/i).filter(Boolean); if (parts.length !== 2) return null;
   const w = parseTypedLength(parts[0]!, units), d = parseTypedLength(parts[1]!, units);
-  return w != null && d != null ? { w, d } : null;
+  return w != null && d != null && w >= ROOM_MIN_M - 1e-9 && d >= ROOM_MIN_M - 1e-9 ? { w, d } : null;
 }
 /** Capătul peretelui: din `a`, pe direcția spre `toward` (mouse-ul), la lungimea `len`; fără direcție, spre dreapta. */
 export function typedEndpoint(a: [number, number], toward: [number, number], len: number): [number, number] {
