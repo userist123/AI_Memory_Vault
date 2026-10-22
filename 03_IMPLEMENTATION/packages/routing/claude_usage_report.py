@@ -54,9 +54,12 @@ def default_projects_dir() -> Path:
 
 def project_slug(project_dir: Path | str) -> str:
     """Claude Code names the transcript folder after the absolute path with every
-    non-alphanumeric character replaced by `-` (`<root>/u/AI_Vault` -> `-root-u-AI-Vault`,
-    `C:\\Users\\u\\AI_Vault` -> `C--Users-u-AI-Vault`)."""
+    non-alphanumeric character replaced by `-` (`<root>/u/AI_Vault` -> `-root-u-AI-Vault`;
+    a Windows drive path `<D>:<sep>Users<sep>u<sep>AI_Vault` -> `<D>--Users-u-AI-Vault`).
+    A Windows drive path is slugged as written on every OS, so Linux CI matches Windows."""
     import re
+    if re.match(r"^[A-Za-z]:", str(project_dir)):
+        return re.sub(r"[^A-Za-z0-9]", "-", str(project_dir))
     p = Path(project_dir)
     if not p.drive and p.as_posix().startswith("/"):
         return re.sub(r"[^A-Za-z0-9]", "-", p.as_posix())
