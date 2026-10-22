@@ -26,7 +26,8 @@ test('implicit 90 de zile; 0 = fără expirare; valori invalide → 400', async 
   const s = await shared(); const left = new Date(s.expiresAt!).getTime() - Date.now();
   assert.ok(Math.abs(left - SHARE_DEFAULT_DAYS * day) < 60_000, `expiră în ~90 de zile (${left / day})`);
   assert.equal((await shared(0)).expiresAt, null); assert.ok(Math.abs(new Date((await shared(7)).expiresAt!).getTime() - Date.now() - 7 * day) < 60_000);
-  for (const v of [-1, 366, 1.5, 'x']) await assert.rejects(shared(v), (e: any) => e.status === 400, String(v));
+  for (const v of [-1, 366, 1.5, 'x', false, true, '', ' ', [], '0x10', '90 ', '1e2']) await assert.rejects(shared(v), (e: any) => e.status === 400, JSON.stringify(v));
+  assert.ok(Math.abs(new Date((await shared('30')).expiresAt!).getTime() - Date.now() - 30 * day) < 60_000, 'șir de cifre acceptat');
 });
 test('linkul expirat dă 404 pe toate rutele publice, ca unul inexistent', async () => {
   const s = await shared(), room = (await resolveShare(s.token)).snapshot.floor.rooms[0].id;

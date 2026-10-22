@@ -38,10 +38,22 @@ export function hstsFor(headers: { get(k: string): string | null }){
   return proto === 'https' ? 'max-age=31536000; includeSubDomains' : null;
 }
 
-/** Aplică toate antetele pe un răspuns. Antetele deja puse de rută (ex. referrer-policy: no-referrer pe /share) rămân. */
-export function applySecurityHeaders(res: { headers: Headers }, csp: string, reqHeaders: { get(k: string): string | null }){
-  res.headers.set('content-security-policy', csp);
-  for (const [k, v] of Object.entries(STATIC_SECURITY_HEADERS)) if (!res.headers.has(k)) res.headers.set(k, v);
+/** Răspunsurile API (JSON, fișiere, poze încărcate) nu sunt pagini: dacă sunt deschise direct în browser, nu pot rula
+ *  nimic și nu pot fi încadrate. E cel puțin la fel de strict ca CSP-ul propriu al rutei de poze (`default-src 'none'; sandbox`). */
+export const API_CSP = "default-src 'none'; frame-ancestors 'none'; sandbox";
+/** Politica pe cale. Atenție: Next.js pune întâi antetele din middleware, iar un antet cu același nume pus de rută se
+ *  ignoră (send-response: doar dacă lipsește). De aceea varianta cea mai strictă se alege aici, după cale, nu în rută. */
+export function policyFor(path: string, nonce: string){
+  const api = /^\/api\//.test(path);
+  // tokenul linkului de client e în cale; /go/ redirecționează spre magazine externe: nu trimitem nici măcar originea
+  const noReferrer = /^\/(api\/)?share\//.test(path) || /^\/go\//.test(path);
+  return { csp: api ? API_CSP : contentSecurityPolicy(nonce), referrer: noReferrer ? 'no-referrer' : STATIC_SECURITY_HEADERS['referrer-policy'] };
+}
+/** Aplică toate antetele pe un răspuns din middleware. */
+export function applySecurityHeaders<T extends { headers: Headers }>(res: T, policy: { csp: string; referrer: string }, reqHeaders: { get(k: string): string | null }){
+  res.headers.set('content-security-policy', policy.csp);
+  for (const [k, v] of Object.entries(STATIC_SECURITY_HEADERS)) res.headers.set(k, v);
+  res.headers.set('referrer-policy', policy.referrer);
   const hsts = hstsFor(reqHeaders); if (hsts) res.headers.set('strict-transport-security', hsts);
   return res;
 }

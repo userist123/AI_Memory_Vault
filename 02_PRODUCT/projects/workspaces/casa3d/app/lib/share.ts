@@ -12,7 +12,9 @@ export const isShareToken = (t: unknown): t is string => typeof t === 'string' &
 export const shareActive = (alias = '') => { const a = alias ? alias + '.' : ''; return `${a}revoked_at is null and (${a}expires_at is null or ${a}expires_at > now())`; };
 export const SHARE_DEFAULT_DAYS = 90, SHARE_MAX_DAYS = 365;
 /** Valabilitatea cerută: implicit 90 de zile; 0 = fără expirare (alegere explicită a designerului); altfel 1–365 zile. */
-export function shareDays(v: unknown){ if (v == null) return SHARE_DEFAULT_DAYS; const n = Number(v);
+// Doar un număr întreg sau un șir de cifre: false, "", [] sau "0x10" nu trebuie să devină tacit „fără expirare” sau altă valoare.
+export function shareDays(v: unknown){ if (v == null) return SHARE_DEFAULT_DAYS;
+  const n = typeof v === 'number' ? v : typeof v === 'string' && /^\d{1,3}$/.test(v) ? Number(v) : NaN;
   if (!Number.isInteger(n) || n < 0 || n > SHARE_MAX_DAYS) throw new HttpError(400, `Valabilitatea linkului trebuie să fie între 1 și ${SHARE_MAX_DAYS} zile (0 = fără expirare).`); return n; }
 
 export async function createShare(owner: string, id: string, revisionNumber: unknown, expiresInDays?: unknown){

@@ -3,10 +3,12 @@
 import { test, afterEach } from 'vitest';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { isLocalRequest, localTrustEnabled, gate } from '../lib/public-gate';
 const H = (o: Record<string, string> = {}) => ({ get: (k: string) => o[k] ?? null });
 const saved = { trust: process.env.CASA3D_LOCAL_TRUST, vercel: process.env.VERCEL };
-afterEach(() => { process.env.CASA3D_LOCAL_TRUST = saved.trust; if (saved.vercel === undefined) delete process.env.VERCEL; else process.env.VERCEL = saved.vercel; });
+afterEach(() => { if (saved.trust === undefined) delete process.env.CASA3D_LOCAL_TRUST; else process.env.CASA3D_LOCAL_TRUST = saved.trust; if (saved.vercel === undefined) delete process.env.VERCEL; else process.env.VERCEL = saved.vercel; });
 
 test('fără încredere locală, „Host: localhost” e tratat ca cerere din afară', () => {
   delete process.env.CASA3D_LOCAL_TRUST;
@@ -25,5 +27,12 @@ test('scripturile locale ascultă doar pe 127.0.0.1 și activează încrederea; 
   assert.equal(pkg.start, 'node scripts/run-local.mjs start'); assert.equal(pkg.dev, 'node scripts/run-local.mjs dev');
   assert.ok(!/LOCAL_TRUST/.test(pkg['start:hosted']));
   const launcher = readFileSync(new URL('../scripts/run-local.mjs', import.meta.url), 'utf8');
-  assert.match(launcher, /'-H', '127\.0\.0\.1'/); assert.match(launcher, /CASA3D_LOCAL_TRUST: '1'/);
+  assert.match(launcher, /\.\.\.rest, '-H', '127\.0\.0\.1'\]/, '-H vine după argumentele utilizatorului, deci câștigă'); assert.match(launcher, /CASA3D_LOCAL_TRUST: '1'/);
+});
+test('launcher-ul refuză orice formă de adresă, înainte să pornească Next (review F1: -H0.0.0.0)', () => {
+  const script = fileURLToPath(new URL('../scripts/run-local.mjs', import.meta.url));
+  for (const args of [['-H0.0.0.0'], ['-H=0.0.0.0'], ['-H', '0.0.0.0'], ['--hostname', '0.0.0.0'], ['--hostname=0.0.0.0'], ['--hostname0.0.0.0']]){
+    const r = spawnSync(process.execPath, [script, 'start', '-p', '3399', ...args], { encoding: 'utf8', timeout: 15000 });
+    assert.equal(r.status, 2, `${args.join(' ')} → ${r.status} ${r.stderr}`); assert.match(r.stderr, /127\.0\.0\.1/); }
+  assert.equal(spawnSync(process.execPath, [script, 'build'], { encoding: 'utf8', timeout: 15000 }).status, 2, 'doar dev|start');
 });
