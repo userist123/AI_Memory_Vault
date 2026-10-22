@@ -602,6 +602,56 @@ public static class DeviceJournalMerge
         return c != 0 ? c : string.Compare(a.Identity, b.Identity, StringComparison.OrdinalIgnoreCase);
     }
 
+    private static readonly System.Text.RegularExpressions.Regex VidPidInId = new(@"VID_([0-9A-F]{4})&PID_([0-9A-F]{4})",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+    /// <summary>VID:PID of a row: the stored field, else the one in its instance id; "" = unknown.</summary>
+    private static string VidPidOf(DeviceJournalEntry e)
+    {
+        if (e.VidPid.Length > 0 && System.Text.RegularExpressions.Regex.IsMatch(e.VidPid, "^[0-9A-Fa-f]{4}:[0-9A-Fa-f]{4}$")) return e.VidPid.ToUpperInvariant();
+        var m = VidPidInId.Match(e.InstanceId);
+        return m.Success ? (m.Groups[1].Value + ":" + m.Groups[2].Value).ToUpperInvariant() : "";
+    }
+
+    /// <summary>A per-interface / HID-collection node of a device (what the older versions journaled on its own).</summary>
+    private static bool IsNodeInstance(string id) =>
+        id.StartsWith(@"HID\", StringComparison.OrdinalIgnoreCase) || id.Contains("&MI_", StringComparison.OrdinalIgnoreCase) || id.Contains("&COL", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>The parent part of the last segment of a USB instance id („6&amp;1A2B&amp;0” of „6&amp;1A2B&amp;0&amp;0000” and of „6&amp;1A2B&amp;0&amp;2”); "" = not a USB id or not derivable.</summary>
+    private static string UsbParentPrefix(string instanceId)
+    {
+        if (!instanceId.StartsWith(@"USB\", StringComparison.OrdinalIgnoreCase)) return "";
+        var seg = instanceId[(instanceId.LastIndexOf('\\') + 1)..];
+        var parts = seg.Split('&');
+        return parts.Length >= 3 ? string.Join('&', parts[..^1]).ToUpperInvariant() : "";
+    }
+
+    /// <summary>
+    /// Disconnected per-interface rows of an older version (classifier 1 when their kind differs) folded into the ONE connected row of the same physical device:
+    /// same VID/PID (the stored one or the one in the instance id; a legacy row with none is folded only by the same USB parent), never two connected rows, never
+    /// different registration numbers or different known VID/PID. When several connected rows share the VID/PID, only the one with the same USB parent.
+    /// </summary>
+    private static void FoldLegacyIntoPresent(List<DeviceJournalEntry> rows, Dictionary<DeviceJournalEntry, DeviceJournalEntry> into)
+    {
+        foreach (var r in rows)
+        {
+            if (r.Present || into.ContainsKey(r) || !DeviceScope.IsInScope(r) || DeviceMonitorRules.IsStorageMedium(r.Class)) continue;
+            if (!r.Identity.StartsWith("ID|", StringComparison.OrdinalIgnoreCase) || !IsNodeInstance(r.InstanceId)) continue;
+            var vp = VidPidOf(r);
+            var rp = UsbParentPrefix(r.InstanceId);
+            if (vp.Length == 0 && rp.Length == 0) continue;
+            var cands = rows.Where(t => t.Present && !ReferenceEquals(t, r) && !into.ContainsKey(t) && DeviceScope.IsInScope(t) && !DeviceMonitorRules.IsStorageMedium(t.Class)
+                                        && !NumbersDiffer(r, t)
+                                        && !(IsNodeInstance(t.InstanceId) && Math.Max(t.ClassifierVersion, 1) < DeviceScope.ClassifierVersion)   // a connected legacy node is itself folded later: never a target (its chain would skip the number check)
+                                        && (t.Class == r.Class || Math.Max(r.ClassifierVersion, 1) < DeviceScope.ClassifierVersion && t.ClassifierVersion >= DeviceScope.ClassifierVersion)).ToList();
+            if (vp.Length > 0) cands = cands.Where(t => VidPidOf(t) is var tv && tv.Equals(vp, StringComparison.Ordinal)).ToList();
+            else cands = cands.Where(t => rp.Length > 0 && UsbParentPrefix(t.InstanceId).Equals(rp, StringComparison.Ordinal)).ToList();
+            if (cands.Count > 1) cands = cands.Where(t => rp.Length > 0 && UsbParentPrefix(t.InstanceId).Equals(rp, StringComparison.Ordinal)).ToList();
+            else if (cands.Count == 1 && rp.Length > 0 && UsbParentPrefix(cands[0].InstanceId) is { Length: > 0 } cp && !cp.Equals(rp, StringComparison.Ordinal)) cands.Clear();   // another unit of the same model
+            if (cands.Count == 1) into[r] = cands[0];
+        }
+    }
+
     /// <summary>
     /// Recomputes <see cref="DeviceJournalEntry.SupersededBy"/> on every row (deterministic, whatever the order of the rows). Folded, when the two rows carry no
     /// different registration numbers:
@@ -627,8 +677,10 @@ public static class DeviceJournalMerge
             if (rows.Any(o => SerialConflict(r, o))) continue;
             into[r] = b;
         }
+        // 1b. disconnected per-interface rows of an older version into the one connected row of the same physical device (whatever its kind)
+        FoldLegacyIntoPresent(rows, into);
         // 2. interface rows of an older version
-        var legacy = rows.Where(r => !into.ContainsKey(r) && IsInterfaceRow(r)).ToList();
+        var legacy =rows.Where(r => !into.ContainsKey(r) && IsInterfaceRow(r)).ToList();
         foreach (var g in legacy.GroupBy(r => r.VidPid.ToUpperInvariant()))
         {
             var group = g.ToList();
