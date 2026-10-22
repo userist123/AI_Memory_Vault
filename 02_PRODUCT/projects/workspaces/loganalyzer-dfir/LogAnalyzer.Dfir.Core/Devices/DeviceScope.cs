@@ -15,7 +15,13 @@ public sealed record ScopedDevice(DeviceClass Kind, PnpSnapshotEntry Primary, Pn
     public DeviceClass LegacyV1Kind { get; init; } = Kind;
 
     /// <summary>The kind the classifier of <paramref name="version"/> gives this device now (a version above the first gives <see cref="Kind"/>).</summary>
-    public DeviceClass KindAtVersion(int version) => version <= 1 ? LegacyV1Kind : Kind;
+    public DeviceClass KindAtVersion(int version) => version <= 1 ? LegacyV1Kind : version == 2 ? LegacyV2Kind : Kind;
+
+    /// <summary>The kind the classifier of version 2 gave this device: a keyboard or mouse that hangs off Bluetooth was a "Tastatura externa" / "Mouse extern" then, a "Dispozitiv Bluetooth" since version 3.</summary>
+    public DeviceClass LegacyV2Kind { get; init; } = Kind;
+
+    /// <summary>For a keyboard or mouse seen through Bluetooth: the inner function ("tastatura prin Bluetooth", "mouse prin Bluetooth"); "" otherwise.</summary>
+    public string BluetoothFunction { get; init; } = "";
 
     /// <summary>A storage medium (stick, disk, card, optical drive): the row is the drive node itself.</summary>
     public bool IsMedium => Drive is not null;
@@ -39,10 +45,11 @@ public static class DeviceScope
 {
     /// <summary>
     /// The version of the kind classification (what <see cref="DeviceJournalEntry.Class"/> is computed from). 1 = before 2026-10-22 (a device with several HID
-    /// collections took the kind of any of them); 2 = the kind of the first interface (a Razer mouse with a keyboard collection is a mouse). Recorded in the
+    /// collections took the kind of any of them); 2 = the kind of the first interface (a Razer mouse with a keyboard collection is a mouse); 3 = a keyboard or mouse
+    /// that hangs off Bluetooth (BLE HID, BTHENUM, a BTH* parent) is a "Dispozitiv Bluetooth", a forbidden class on an isolated station. Recorded in the
     /// journal row and in "device.first_seen"; a kind that changes under an older version is sealed as "device.reclassified" (check D05: informational).
     /// </summary>
-    public const int ClassifierVersion = 2;
+    public const int ClassifierVersion = 3;
 
     /// <summary>DEVPKEY_Device_ContainerId of every component of the station itself (DEVPKEY_Device_InLocalMachineContainer).</summary>
     public const string LocalMachineContainer = "{00000000-0000-0000-FFFF-FFFFFFFFFFFF}";
@@ -94,6 +101,8 @@ public static class DeviceScope
     private static readonly Dictionary<(int From, int To), (DeviceClass Old, DeviceClass New)[]> KnownReclassifications = new()
     {
         [(1, 2)] = [(DeviceClass.Keyboard, DeviceClass.Mouse)],
+        [(1, 3)] = [(DeviceClass.Keyboard, DeviceClass.Mouse), (DeviceClass.Keyboard, DeviceClass.Bluetooth), (DeviceClass.Mouse, DeviceClass.Bluetooth)],
+        [(2, 3)] = [(DeviceClass.Keyboard, DeviceClass.Bluetooth), (DeviceClass.Mouse, DeviceClass.Bluetooth)],
     };
 
     public static bool IsKnownReclassification(int fromVersion, int toVersion, DeviceClass oldKind, DeviceClass newKind) =>
@@ -219,7 +228,7 @@ public static class DeviceScope
     }
 
     /// <summary>The kind a non-storage node stands for (ignoring where it is connected); null when the node is only part of a device or is not in scope at all.</summary>
-    private static DeviceClass? NodeKind(PnpSnapshotEntry e)
+    private static DeviceClass? NodeKind(PnpSnapshotEntry e, IReadOnlyDictionary<string, PnpSnapshotEntry>? byId = null)
     {
         var id = U(e.InstanceId);
         var cls = U(e.SetupClass);
@@ -238,6 +247,7 @@ public static class DeviceScope
             case "ANDROIDUSBDEVICECLASS": return DeviceClass.Phone;
             case "USBDEVICE" when n.Contains("ADB") || n.Contains("ANDROID") || n.Contains("MTP"): return DeviceClass.Phone;
             case "BLUETOOTH":
+                if (id.StartsWith(@"BTHLEDEVICE\{", StringComparison.Ordinal) && id.Contains("_DEV_", StringComparison.Ordinal)) return DeviceClass.Bluetooth;   // the GATT device of a BLE peripheral
                 if (id.StartsWith(@"BTHENUM\DEV_", StringComparison.Ordinal) || id.StartsWith(@"BTHLE\DEV_", StringComparison.Ordinal) || id.StartsWith(@"BTHLEDEVICE\DEV_", StringComparison.Ordinal))
                     return DeviceClass.Bluetooth;
                 // a USB radio: a dongle when it is in a container of its own (the caller checks), the station's own radio otherwise; service entries are not devices
@@ -252,11 +262,33 @@ public static class DeviceScope
                 return id.StartsWith(@"USBPRINT\", StringComparison.Ordinal) || id.StartsWith(@"USB\", StringComparison.Ordinal) || id.StartsWith(@"BTHENUM\", StringComparison.Ordinal) ? DeviceClass.Printer : null;
             case "IMAGE": return LooksCamera(e.Name) ? DeviceClass.Camera : DeviceClass.Scanner;
             case "CAMERA": return DeviceClass.Camera;
-            case "KEYBOARD": return DeviceClass.Keyboard;
-            case "MOUSE": return DeviceClass.Mouse;
+            case "KEYBOARD": return IsBluetoothHid(e, byId) ? DeviceClass.Bluetooth : DeviceClass.Keyboard;
+            case "MOUSE": return IsBluetoothHid(e, byId) ? DeviceClass.Bluetooth : DeviceClass.Mouse;
             case "SMARTCARDREADER": return DeviceClass.SmartCardReader;
         }
         return null;
+    }
+
+    private const string BluetoothBaseUuid = "-0000-1000-8000-00805F9B34FB}";
+
+    /// <summary>
+    /// A HID node that is Bluetooth: its own id is a Bluetooth HID service (HID\{0000xxxx-0000-1000-8000-00805F9B34FB}_DEV_VID&amp;..., BLE or classic) or BTHENUM / BTHLE /
+    /// BTHLEDEVICE, or one of its parents (at most four levels) is a BTH* node. Decided from the id and the PnP tree, never from a name.
+    /// </summary>
+    public static bool IsBluetoothHid(PnpSnapshotEntry e, IReadOnlyDictionary<string, PnpSnapshotEntry>? byId)
+    {
+        static bool Bth(string id) => id.StartsWith(@"BTHENUM\", StringComparison.Ordinal) || id.StartsWith(@"BTHLE\", StringComparison.Ordinal)
+                                      || id.StartsWith(@"BTHLEDEVICE\", StringComparison.Ordinal) || id.StartsWith(@"BTH\", StringComparison.Ordinal);
+        var id = U(e.InstanceId);
+        if (Bth(id) || id.StartsWith(@"HID\{", StringComparison.Ordinal) && id.Contains(BluetoothBaseUuid, StringComparison.Ordinal)) return true;
+        var cur = e;
+        for (int i = 0; i < 4 && cur.Parent.Length > 0; i++)
+        {
+            if (Bth(U(cur.Parent))) return true;
+            if (byId is null || !byId.TryGetValue(cur.Parent, out var p)) break;
+            cur = p;
+        }
+        return false;
     }
 
     /// <summary>Without a container id: the bus of the instance id says whether a node hangs off the outside of the station (USB, Bluetooth, USB-HID, USB printer).</summary>
@@ -331,6 +363,12 @@ public static class DeviceScope
             .ThenBy(c => c.Kind == DeviceClass.Mouse ? 0 : 1).ThenBy(c => c.Node.InstanceId, StringComparer.OrdinalIgnoreCase).First().Kind;
         candidates.RemoveAll(c => c.Kind is DeviceClass.Keyboard or DeviceClass.Mouse && c.Kind != primary);
     }
+
+    private static DeviceClass? NodeInputKind(PnpSnapshotEntry e) => U(e.SetupClass) switch { "KEYBOARD" => DeviceClass.Keyboard, "MOUSE" => DeviceClass.Mouse, _ => null };
+
+    private static (DeviceClass Kind, PnpSnapshotEntry Node) Best(List<(DeviceClass Kind, PnpSnapshotEntry Node)> candidates) =>
+        candidates.OrderByDescending(c => Priority(c.Kind)).ThenBy(c => U(c.Node.InstanceId).Contains("&MI_", StringComparison.Ordinal) ? 1 : 0)
+            .ThenBy(c => InterfaceOrder(c.Node.InstanceId).Interface).ThenBy(c => InterfaceOrder(c.Node.InstanceId).Collection).First();
 
     private static int Priority(DeviceClass c) => c switch
     {
@@ -411,7 +449,7 @@ public static class DeviceScope
             foreach (var m in members)
             {
                 if (!container && !LooksExternalById(m)) continue;
-                if (NodeKind(m) is not { } k) continue;
+                if (NodeKind(m, byId) is not { } k) continue;
                 if (k == DeviceClass.BluetoothAdapter && !container) continue;   // without a device container a USB radio may be the station's own
                 candidates.Add((k, m));
             }
@@ -424,15 +462,26 @@ public static class DeviceScope
             // attests (every node non-removable), never by a name the device itself can set (review 2026-10-22: a keyboard injector with an „Integrated Camera” interface)
             if (IsAttestedInternal(members)) candidates.RemoveAll(c => c.Kind is DeviceClass.Camera or DeviceClass.Keyboard or DeviceClass.Mouse);
             var inputKinds = candidates.Where(c => c.Kind is DeviceClass.Keyboard or DeviceClass.Mouse).Select(c => c.Kind).Distinct().Count();
+            // version 2 judged a Bluetooth keyboard or mouse as a keyboard or mouse: the candidates as that version saw them, for the reclassification check
+            var btInput = members.Where(m => NodeInputKind(m) is not null && IsBluetoothHid(m, byId)).ToList();
+            var v2Candidates = candidates.Select(c => (Kind: c.Kind == DeviceClass.Bluetooth && btInput.Contains(c.Node) ? NodeInputKind(c.Node)!.Value : c.Kind, c.Node)).ToList();
+            var v2Inputs = v2Candidates.Where(c => c.Kind is DeviceClass.Keyboard or DeviceClass.Mouse).Select(c => c.Kind).Distinct().Count();
             PrimaryInputKind(candidates);
             if (candidates.Count == 0 && !reader) continue;
             if (reader && candidates.All(c => Priority(c.Kind) < Priority(DeviceClass.CardReader))) candidates.Add((DeviceClass.CardReader, BestIdentity(members, members[0])));
-            var best = candidates.OrderByDescending(c => Priority(c.Kind)).ThenBy(c => U(c.Node.InstanceId).Contains("&MI_", StringComparison.Ordinal) ? 1 : 0)
-                .ThenBy(c => InterfaceOrder(c.Node.InstanceId).Interface).ThenBy(c => InterfaceOrder(c.Node.InstanceId).Collection).First();
+            var best = Best(candidates);
             var identity = BestIdentity(members, best.Node);
+            DeviceClass v2Kind = best.Kind;
+            if (btInput.Count > 0)
+            {
+                PrimaryInputKind(v2Candidates);
+                v2Kind = Best(v2Candidates).Kind;
+            }
             // version 1 took the keyboard when a keyboard and a mouse node were both there (higher priority), where version 2 takes the first interface's kind
-            var v1 = inputKinds == 2 && best.Kind is DeviceClass.Keyboard or DeviceClass.Mouse ? DeviceClass.Keyboard : best.Kind;
-            result.Add(new ScopedDevice(best.Kind, best.Node, identity, members, null, null) { LegacyV1Kind = v1 });
+            var v1 = v2Inputs == 2 && v2Kind is DeviceClass.Keyboard or DeviceClass.Mouse ? DeviceClass.Keyboard : v2Kind;
+            var fn = best.Kind == DeviceClass.Bluetooth && btInput.Count > 0
+                ? (btInput.Select(NodeInputKind).Distinct().Count() > 1 ? "tastatur\u0103/mouse prin Bluetooth" : NodeInputKind(btInput[0]) == DeviceClass.Keyboard ? "tastatur\u0103 prin Bluetooth" : "mouse prin Bluetooth") : "";
+            result.Add(new ScopedDevice(best.Kind, best.Node, identity, members, null, null) { LegacyV1Kind = v1, LegacyV2Kind = v2Kind, BluetoothFunction = fn });
         }
         return result;
     }

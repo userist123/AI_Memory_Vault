@@ -41,3 +41,8 @@
   DeviceMonitorAudit.cs, DeviceMonitorCoverage.cs, DeviceHistory.cs, DeviceCsv.cs, AlertRateLimiter.cs
 - LogAnalyzer.Dfir.Windows/Audit/ControlEvaluator.DeviceMonitor.cs; LogAnalyzer.App/ViewModels/DeviceMonitorViewModel.cs;
   LogAnalyzer.App/Views/MediaCenterView.xaml, DeviceHistoryDialog.xaml
+
+## 2026-10-22 (claude-sonnet) - real journal, two fixes
+- Fold: a disconnected row with the SAME instance id as a connected one (any identity scheme, incl. DUP) folds into it (FoldSameInstance; guards: registration numbers, known VID/PID, kind equal or legacy v0/v1 vs present v2+). Display only.
+- Kind: a keyboard/mouse under Bluetooth (HID\{...-0000-1000-8000-00805F9B34FB}, BTHENUM/BTHLE/BTHLEDEVICE, BTH* parent) is Bluetooth (forbidden class); ClassifierVersion 3; whitelist (1,3) and (2,3) Keyboard/Mouse->Bluetooth, only if KindAtVersion(old) matches the live snapshot; journal field `detail` ("tastatura prin Bluetooth").
+- Not covered: the old BLE COL06 leftover (different instance id from any present row) stays visible until the mouse reconnects over Bluetooth. Tests: DeviceMonitorBluetoothHidTests.cs. Suites: Dfir 2370/31/0, App 669, UI 354/1, Edition 45.

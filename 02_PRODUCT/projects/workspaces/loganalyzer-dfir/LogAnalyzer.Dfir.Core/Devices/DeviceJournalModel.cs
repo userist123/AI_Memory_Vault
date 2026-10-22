@@ -27,6 +27,8 @@ public sealed class DeviceJournalEntry
     [JsonPropertyName("classifier_version")] public int ClassifierVersion { get; set; }
     /// <summary>The same serial was held by another device (simultaneously, or with another capacity or manufacturer at another time): „serie duplicată – posibilă clonă”.</summary>
     [JsonPropertyName("duplicate_serial")] public bool DuplicateSerial { get; set; }
+    /// <summary>What the device is inside its kind, when that says something the kind does not (a Bluetooth keyboard: "tastatura prin Bluetooth"); "" = nothing to add.</summary>
+    [JsonPropertyName("detail")] public string Detail { get; set; } = "";
     [JsonPropertyName("config_manager_error_code")] public int ConfigManagerErrorCode { get; set; } = -1;
     [JsonPropertyName("present")] public bool Present { get; set; }
     [JsonPropertyName("first_seen_utc")] public DateTimeOffset FirstSeenUtc { get; set; }
@@ -373,6 +375,7 @@ public static class DeviceJournalMerge
             }
             if (isNew || Math.Max(e.ClassifierVersion, 1) < DeviceScope.ClassifierVersion || e.Class == d.Kind) e.ClassifierVersion = DeviceScope.ClassifierVersion;
             e.Class = d.Kind;
+            e.Detail = d.BluetoothFunction;
             e.SetupClass = d.Primary.SetupClass;
             // the device's friendly name, never the drive letter Windows gave the portable-device view of a phone's storage („F:\”)
             var name = DeviceMonitorRules.FriendlyName(new[] { d.Primary.Name, p.Name }.Concat(d.Members.Select(m => m.Name)), prod.Length > 0 ? prod : KnownManufacturer(mfr).Length > 0 ? mfr.Trim() : "");
@@ -642,12 +645,32 @@ public static class DeviceJournalMerge
             if (vp.Length == 0 && rp.Length == 0) continue;
             var cands = rows.Where(t => t.Present && !ReferenceEquals(t, r) && !into.ContainsKey(t) && DeviceScope.IsInScope(t) && !DeviceMonitorRules.IsStorageMedium(t.Class)
                                         && !NumbersDiffer(r, t)
-                                        && !(IsNodeInstance(t.InstanceId) && Math.Max(t.ClassifierVersion, 1) < DeviceScope.ClassifierVersion)   // a connected legacy node is itself folded later: never a target (its chain would skip the number check)
-                                        && (t.Class == r.Class || Math.Max(r.ClassifierVersion, 1) < DeviceScope.ClassifierVersion && t.ClassifierVersion >= DeviceScope.ClassifierVersion)).ToList();
+                                        && !(IsNodeInstance(t.InstanceId) && Math.Max(t.ClassifierVersion, 1) < 2)   // a connected legacy node is itself folded later: never a target (its chain would skip the number check)
+                                        && (t.Class == r.Class || Math.Max(r.ClassifierVersion, 1) < 2 && t.ClassifierVersion >= 2)).ToList();
             if (vp.Length > 0) cands = cands.Where(t => VidPidOf(t) is var tv && tv.Equals(vp, StringComparison.Ordinal)).ToList();
             else cands = cands.Where(t => rp.Length > 0 && UsbParentPrefix(t.InstanceId).Equals(rp, StringComparison.Ordinal)).ToList();
             if (cands.Count > 1) cands = cands.Where(t => rp.Length > 0 && UsbParentPrefix(t.InstanceId).Equals(rp, StringComparison.Ordinal)).ToList();
             else if (cands.Count == 1 && rp.Length > 0 && UsbParentPrefix(cands[0].InstanceId) is { Length: > 0 } cp && !cp.Equals(rp, StringComparison.Ordinal)) cands.Clear();   // another unit of the same model
+            if (cands.Count == 1) into[r] = cands[0];
+        }
+    }
+
+    /// <summary>
+    /// A disconnected row whose instance id EQUALS the instance id of a connected row (whatever the identity scheme: "ID|", "SN|", "SN|...|DUP|n", the old clone
+    /// rule or an older identity of the same node) is the same node: folded into it when the kinds agree, or when the older row was written by an older classifier
+    /// than the connected one (the kind changed with the classifier). Never with different registration numbers or different known VID/PID, never into two
+    /// connected rows (more than one candidate: not folded). Display only.
+    /// </summary>
+    private static void FoldSameInstance(List<DeviceJournalEntry> rows, Dictionary<DeviceJournalEntry, DeviceJournalEntry> into)
+    {
+        foreach (var r in rows)
+        {
+            if (r.Present || into.ContainsKey(r) || r.InstanceId.Length == 0 || !DeviceScope.IsInScope(r) || DeviceMonitorRules.IsStorageMedium(r.Class)) continue;
+            var vp = VidPidOf(r);
+            var cands = rows.Where(t => t.Present && !ReferenceEquals(t, r) && !into.ContainsKey(t) && DeviceScope.IsInScope(t) && !DeviceMonitorRules.IsStorageMedium(t.Class)
+                                        && t.InstanceId.Equals(r.InstanceId, StringComparison.OrdinalIgnoreCase) && !NumbersDiffer(r, t)
+                                        && (vp.Length == 0 || VidPidOf(t) is var tv && (tv.Length == 0 || tv.Equals(vp, StringComparison.Ordinal)))
+                                        && (t.Class == r.Class || Math.Max(r.ClassifierVersion, 1) < 2 && Math.Max(t.ClassifierVersion, 1) >= 2)).ToList();
             if (cands.Count == 1) into[r] = cands[0];
         }
     }
@@ -679,6 +702,8 @@ public static class DeviceJournalMerge
         }
         // 1b. disconnected per-interface rows of an older version into the one connected row of the same physical device (whatever its kind)
         FoldLegacyIntoPresent(rows, into);
+        // 1c. a disconnected row with the SAME instance id as a connected one (any identity scheme)
+        FoldSameInstance(rows, into);
         // 2. interface rows of an older version
         var legacy =rows.Where(r => !into.ContainsKey(r) && IsInterfaceRow(r)).ToList();
         foreach (var g in legacy.GroupBy(r => r.VidPid.ToUpperInvariant()))
