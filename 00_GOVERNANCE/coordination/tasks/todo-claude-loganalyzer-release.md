@@ -434,7 +434,10 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   marker LOCALAPPDATA\LogAnalyzer\preferences\first-run-guide.seen, reopen from Glossary/Home). Pinned change: Wp18FlowTests "din 3" -> "din 4".
   MAIN DECISION (owner said "use the recommendation"): Simplu Investigation wizard step 1 must offer "această stație" (collect here) AND "un folder adus" -
   today Simplu is import-only (CSIRT collect only in Expert). TODO in the next UI worker.
-- BT worker resumed ONCE (its last allowed resume) with F1-F5 + design decision; then Opus round 2 on the delta only.
+- BT fix c47a58a3a (main re-ran device-monitor 188/188; worker Dfir 2418/31/0). Opus round 2 (delta): APPROVE. BT review CLOSED (2 rounds used).
+  ACCEPTED RESIDUALS (owner: "use the recommendation"): (a) no "sealed external alert" check for the radio hide; (b) LOW: a row first sealed before v2,
+  journal classifier_version edited down + device attached so PnP puts it in the local machine container -> hidden from the PAGE only (D05, report 3c and the
+  sealed alert still list it). NIT: IsBluetoothDeviceNode true for DEV_000000000000 (harmless). Realtek row hides only after the first live reading.
 - After that: C/D items of PORNIRE_INCEPATOR (table rows 4,7-10,12-20), publish + reinstall + real-PC screenshots (do NOT send `max` before sign-in), CI once, cleanup list for owner.
 - Next (was: owner answers): fix B items (BT fold is device-monitor = security-relevant -> Opus review), then C/D;
   cleanup of test data with owner OK; CI read once; merge chain.
