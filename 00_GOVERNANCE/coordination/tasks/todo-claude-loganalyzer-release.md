@@ -108,3 +108,17 @@
 - Owner: sign in with the primary admin password; QuestPDF licence before any public institution; Authenticode; #21 legacy trees.
 - Next (optional, owner-independent): unknown shell item types, Zone.Identifier/MOTW, ControlReport.UserActivity caller, users register (B9),
   NU1510 warnings (redundant PackageReference ProtectedData/EventLog after the SDK update).
+
+## Real-PC UI walkthrough 2026-10-22 (installed Standalone demo, signed in with the owner's test account; screenshots in the session scratchpad only)
+Findings to fix (UI only, no behaviour change):
+1. Every page: the "no data" banner shows the same text as title and subtitle ("Nu există încă date — Colectează acum" twice).
+2. Status bar: "Analiză AI finalizată: Risc 35/100 | 0 Kerberos …" with no data collected (misleading: no analysis ran); and "Izolare automată: nu este disponibilă în ediția clasificată" (edition is now "Standalone").
+3. Home card "Verifică un suport" says "cu driverul" (driver columns were removed from the monitor).
+4. Device monitor grid: Nume/Tip/Producător/Model columns collapse to ~2 characters; the Alertă column wraps one character per line so one row fills the screen; header text lists "controlere și componente interne" (contradicts the scope text below); two different counts ("Conectate acum: 3 · cunoscute de stație: 6" vs "Conectate acum: 7 · cunoscute de monitor: 45") without saying what each counts; large empty gap above the scope text.
+5. DatePicker watermark "Select a date" in English (transfer register, investigation); dates shown "01-Sep-26" (scope dialog) instead of Romanian dd.MM.yyyy.
+6. Transfer register: grid headers truncated ("Clasi", "Destina", "Medi", "Mart"); text refers to page „Medii de stocare” (now „Monitor dispozitive”); an external SSD is called "stick".
+7. English help text: users register (Person; Accounts; Sids; Clearance; ClearanceValidFrom/To; NeedToKnow; ZonesAllowed), procedure profile ("Day: Mon..Sun … Start/End"), policies (DRAFT → VALIDATED → TESTED → APPROVED → DEPLOYED → VERIFIED).
+8. "Autentificare și conturi": the three password-change boxes have no labels (current / new / repeat).
+9. Station-control wizard: the hint "Apăsați „Înainte” ca să alegeți perioada" stays on steps 2 and 3.
+10. Window title in English marketing text ("Threat Triage & Incident Response Command Center").
+Not exercised: running the station control by automated click was refused by the session's permission classifier.
