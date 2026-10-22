@@ -302,3 +302,8 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
 5. Limbaj: the checkbox became a Simplu | Expert pair of `ChipTabStyle` radio buttons (`MainViewModel.IsSimpleLevel`).
 6. Stale tooltip: not reproduced in code; recheck by hand on the PC.
 - Next: tests App/UI; publish + reinstall demo; screenshots of monitor, scope dialog, header; CI read once on PR #308.
+- Tests after the fixes: App 670/0, UI 354/1 skipped. Commit 850a92c19.
+- OWNER RULE 2026-10-22: no demos ever (memory `no-demos-real-apps-only`). The app is now installed as the real application in
+  `C:\Program Files\LogAnalyzer` (Release Standalone from 850a92c19, exe hash = publish C538E68D…, `--self-test` exit 0, writable only by
+  Administrators/SYSTEM/TrustedInstaller); licence, provenance_ledger.json and AuditLogs copied from the old folder. The old folder
+  `C:\Program Files\LogAnalyzerDemo` is still there (old instance was running): delete only after the owner confirms.
