@@ -1,5 +1,6 @@
 # todo-claude-codeql-check
-STATUS: IN_PROGRESS        UPDATED: 2026-10-10T10:40Z
+STATUS: DONE   UPDATED: 2026-10-22T17:30:00+03:00
+CLOSED-NOTE (claude, 2026-10-22T17:30:00+03:00): #259 merged 2026-10-10; check "CodeQL" = SUCCESS (not neutral) on PR #304 and #312 (verified 2026-10-22). Stale java-kotlin/swift configs on main left untouched (not approved).
 TASK: Make the PR check "Code scanning results / CodeQL" end pass/fail instead of "neutral".
 BRANCH / PR: claude/blissful-cannon-6w2cnz / #259 merged (23041ac9); follow-up PR for the cleanup loop    BASE: main @ 23041ac9
 SPEC: check-run text on PR #256 / #254: "6 configurations present on refs/heads/main were not found":
