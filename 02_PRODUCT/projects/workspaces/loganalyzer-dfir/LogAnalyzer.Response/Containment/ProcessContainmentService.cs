@@ -3,13 +3,16 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using LogAnalyzer.Dfir.Case;
 using LogAnalyzer.Dfir.Model;
+using LogAnalyzer.Dfir.Response;
 
 namespace LogAnalyzer.Dfir.Windows.Containment;
 
 /// <summary>
 /// Contains one program without disconnecting the station: per-program firewall block rules (outbound and inbound),
 /// optional suspension, then a read-only scan. Everything is recorded in the case (audit log, custody, evidence).
-/// Every action is reversible through <see cref="Release"/>.
+/// Every action is reversible through <see cref="Release"/>. Both are controlled responses: after applying, the firewall rules are
+/// re-read and the process is re-enumerated (PID + start time + image SHA-256); the outcome (VERIFIED / NOT_VERIFIED / FAILED) and
+/// its evidence go to the case audit, and the incident state claims "contained" or "released" only when the re-check confirmed it.
 /// </summary>
 public sealed class ProcessContainmentService
 {
@@ -27,10 +30,16 @@ public sealed class ProcessContainmentService
     private readonly Action<int>? _suspend;
     private readonly Action<int>? _resume;
     private readonly string _operator;
+    private readonly IProcessTable? _processes;
+
+    /// <summary>Time limit of each re-read.</summary>
+    public TimeSpan VerifyTimeout { get; init; } = ResponseVerifier.DefaultTimeout;
 
     public ProcessContainmentService(IFirewallController firewall, ProcessScanner scanner, CaseWorkspace caseWorkspace,
-                                     Action<int>? suspend = null, Action<int>? resume = null, string? operatorName = null)
+                                     Action<int>? suspend = null, Action<int>? resume = null, string? operatorName = null,
+                                     IProcessTable? processes = null)
     {
+        _processes = processes;
         _firewall = firewall;
         _scanner = scanner;
         _case = caseWorkspace;
@@ -41,6 +50,7 @@ public sealed class ProcessContainmentService
 
     public string IncidentsDir => Path.Combine(_case.Root, "Incidents");
 
+    [ControlledResponse("firewall rules re-read (name, program, direction, enabled); process re-enumerated (PID + start + image SHA-256, threads suspended)")]
     public ProcessIncident Contain(string programPath, int? pid, string trigger, ContainmentOptions options, CancellationToken ct = default)
     {
         LogAnalyzer.Dfir.Auth.OperatorIdentity.RequireHostChange(); // before any rule, suspension or case write
@@ -75,14 +85,25 @@ public sealed class ProcessContainmentService
                 Record(incident, $"firewall.block.{dir.ToString().ToLowerInvariant()}", name, false, ex.Message);
             }
         }
-        if (incident.FirewallRules.Count == 0) incident.State = ContainmentState.Failed;
-
-        // 2. Optional suspension (operator's choice).
-        if (options.SuspendProcess && pid is int p && _suspend is not null)
+        // 2. Optional suspension (operator's choice). The identity is taken first so the re-check cannot confuse a reused PID.
+        bool suspendRequested = options.SuspendProcess && pid is not null && _suspend is not null;
+        if (suspendRequested && pid is int p)
         {
+            incident.ProcessIdentity = CaptureIdentity(p);
             try { _suspend(p); incident.ProcessSuspended = true; Record(incident, "process.suspend", p.ToString(), true, ""); }
             catch (InvalidOperationException ex) { Record(incident, "process.suspend", p.ToString(), false, ex.Message); }
         }
+
+        // VERIFY: re-read the firewall and the process list; the action's own return value is not evidence.
+        var probes = rules.Select(r => RulePresent(r.Name, programPath, r.Dir)).ToList();
+        if (suspendRequested && pid is int sp) probes.Add(ProcessVerification.Suspended(incident.ProcessIdentity, sp, _processes));
+        incident.Verification = Verified("containment", "apply", probes);
+        incident.State = incident.FirewallRules.Count == 0 ? ContainmentState.Failed : incident.Verification.Status switch
+        {
+            ResponseStatus.Verified => ContainmentState.Contained,
+            ResponseStatus.Failed => ContainmentState.Failed,
+            _ => ContainmentState.NotVerified,
+        };
 
         // 3. Read-only scan, then evidence.
         ct.ThrowIfCancellationRequested();
@@ -127,15 +148,28 @@ public sealed class ProcessContainmentService
         return incident;
     }
 
+    [ControlledResponse("firewall rules re-read (absent); process re-enumerated (resumed, or ended / PID reused)")]
     public ProcessIncident Release(ProcessIncident incident, string reason)
     {
         LogAnalyzer.Dfir.Auth.OperatorIdentity.RequireHostChange();
-        if (incident.ProcessSuspended && incident.Pid is int p && _resume is not null)
+        bool resumeRequested = incident.ProcessSuspended && incident.Pid is not null && _resume is not null;
+        if (resumeRequested && incident.Pid is int p)
         {
-            try { _resume(p); incident.ProcessSuspended = false; Record(incident, "process.resume", p.ToString(), true, reason); }
-            catch (InvalidOperationException ex) { Record(incident, "process.resume", p.ToString(), false, ex.Message); }
+            // A PID that now belongs to another process (other start time or image) is never touched: the original has ended.
+            var gone = OriginalEnded(incident.ProcessIdentity, p);
+            if (gone is not null)
+            {
+                incident.ProcessSuspended = false;
+                Record(incident, "process.resume", p.ToString(), true, "nu s-a reluat nimic: " + gone);
+            }
+            else
+            {
+                try { _resume(p); incident.ProcessSuspended = false; Record(incident, "process.resume", p.ToString(), true, reason); }
+                catch (InvalidOperationException ex) { Record(incident, "process.resume", p.ToString(), false, ex.Message); }
+            }
         }
-        foreach (var rule in incident.FirewallRules.ToList())
+        var targets = incident.FirewallRules.ToList();
+        foreach (var rule in targets)
         {
             try
             {
@@ -148,9 +182,61 @@ public sealed class ProcessContainmentService
                 Record(incident, "firewall.remove", rule, false, ex.Message);
             }
         }
-        if (incident.FirewallRules.Count == 0) incident.State = ContainmentState.Released;
+        // VERIFY the rollback: every rule re-read as absent, the process re-enumerated.
+        // Every rule this incident ever tried to create is re-read, so a release with nothing left to remove is still checked.
+        var ruleNames = targets.Concat(incident.Actions.Where(x => x.Action.StartsWith("firewall.block.", StringComparison.Ordinal)).Select(x => x.Target))
+                               .Distinct(StringComparer.Ordinal).ToList();
+        var probes = ruleNames.Select(RuleAbsent).ToList();
+        if (resumeRequested && incident.Pid is int rp) probes.Add(ProcessVerification.NotSuspended(incident.ProcessIdentity, rp, _processes));
+        incident.ReleaseVerification = Verified("containment", "rollback", probes);
+        // A rule the re-read did not confirm as gone stays on the incident, so a new release tries it again.
+        foreach (var c in incident.ReleaseVerification.Checks.Where(c => c.Status != ResponseStatus.Verified && ruleNames.Contains(c.Target)))
+            if (!incident.FirewallRules.Contains(c.Target)) incident.FirewallRules.Add(c.Target);
+        if (incident.FirewallRules.Count == 0 && incident.ReleaseVerification.Status == ResponseStatus.Verified) incident.State = ContainmentState.Released;
         Save(incident);
         return incident;
+    }
+
+    private ResponseProcessIdentity? CaptureIdentity(int pid)
+    {
+        if (_processes is null) return null;
+        try { return ProcessVerification.Capture(_processes, pid); }
+        catch (Exception ex) when (ex is not OutOfMemoryException) { return null; }   // unknown identity: the re-check reports NOT_VERIFIED
+    }
+
+    /// <summary>Why the original process has ended (gone, or PID reused), or null when it is the same process or that cannot be told.</summary>
+    private string? OriginalEnded(ResponseProcessIdentity? id, int pid)
+    {
+        if (id is null || _processes is null) return null;
+        try
+        {
+            var (m, observed) = ProcessVerification.Compare(id, _processes.Observe(pid), _processes);
+            return m is ProcessVerification.Match.Gone or ProcessVerification.Match.Reused ? observed : null;
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException) { return null; }
+    }
+
+    private ResponseProbe RulePresent(string name, string programPath, FirewallDirection dir) =>
+        new(name, $"regulă de blocare activă pentru {Path.GetFileName(programPath)}, {dir}", () =>
+        {
+            var r = _firewall.ListContainmentRules().FirstOrDefault(x => x.Name == name);
+            if (r is null) return ResponseObservation.Differs("regula nu există în firewall");
+            if (!r.Enabled) return ResponseObservation.Differs("regula există, dar este dezactivată");
+            if (r.Direction != dir) return ResponseObservation.Differs($"regula are direcția {r.Direction}");
+            if (!string.Equals(r.ProgramPath, programPath, StringComparison.OrdinalIgnoreCase)) return ResponseObservation.Differs($"regula este pentru {r.ProgramPath}");
+            return ResponseObservation.Holds("regula există, activă, pentru program");
+        });
+
+    private ResponseProbe RuleAbsent(string name) =>
+        new(name, "regula nu mai există", () =>
+            _firewall.ListContainmentRules().Any(x => x.Name == name)
+                ? ResponseObservation.Differs("regula există în continuare")
+                : ResponseObservation.Holds("regula nu mai există în firewall"));
+
+    private ResponseOutcome Verified(string action, string phase, List<ResponseProbe> probes)
+    {
+        var o = ResponseVerifier.Verify(action, phase, probes, VerifyTimeout);
+        return ResponseVerifier.Record(o, (a, d) => _case.Audit($"containment.{a}", d));
     }
 
     public IReadOnlyList<ProcessIncident> LoadAll()

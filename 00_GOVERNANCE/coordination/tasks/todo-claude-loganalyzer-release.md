@@ -7,14 +7,31 @@
 
 ## Gate state (2026-10-22, from code; the gate needs PowerShell 7, not installed locally, CI runs it)
 - PASS expected: tests_passing, synthetic_corpus, evidence_integrity; audit_integrity probably PASS (AuditChainCustodyTests exists; RELEASE_GATE.md "Today" stale).
-- Blocking, code work: (1) response_verification (WP9, `ResponseVerification*Tests`), (2) ai_claim_validation (WP4, `AiClaimValidation*Tests`),
+- Blocking, code work: (1) response_verification (WP9) DONE 2026-10-22, (2) ai_claim_validation (WP4, `AiClaimValidation*Tests`),
   (3) critical_findings (`release-gate/findings-register.json`, format in RELEASE_GATE.md).
 - Waivable, owner: real_corpus, differential (owner run or signed waiver).
 - Other: QuestPDF missing from THIRD_PARTY_NOTICES.md; RELEASE_GATE.md "Today" column stale.
 - Owner only: Authenticode certificate + signed SHA256SUMS (#10), legacy trees decision (#21), licence keygen key, QuestPDF Community eligibility, HG585 paperwork.
 
 ## Order
-1. WP9 response verification. 2. WP4 AI claim validation. 3. findings register + notices + docs. 4. CI gate run read once. 5. Nice-to-have code rows.
+1. ~~WP9 response verification~~ (done, needs Opus vault-reviewer pass). 2. WP4 AI claim validation. 3. findings register + notices + docs. 4. CI gate run read once. 5. Nice-to-have code rows.
 
 ## Done
-- (nothing yet)
+- 2026-10-22 WP9 response_verification (vault-worker): one contract `LogAnalyzer.Dfir.Core/Response/ResponseVerification.cs`
+  (ResponseVerifier re-reads each target with timeout; throw/denied/timeout -> NOT_VERIFIED, old state -> FAILED, partial -> FAILED + list;
+  `[ControlledResponse]`; process identity PID+start+image SHA-256). Tests `ResponseVerification{,Process,Registry}Tests` (Dfir.Tests, fakes;
+  Registry = IL scan of production assemblies for gate/primitive callers). 2 UI.Tests assertions NOT_VERIFIED -> FAILED (stricter contract).
+
+| Response (UI trigger) | Before | Now |
+|---|---|---|
+| Program containment / release (Izolare procese suspecte) | Success after COM call, no re-read | rules re-read + process re-enumerated; Contained/Released only if VERIFIED; new state NotVerified; reused PID not resumed |
+| Station isolate / restore / IoC block (countermeasure modal) | APPLY/VERIFY, but re-read error read as "absent"; not in case audit | tri-state re-read (0/1/other); outcome to LIVE case audit, unaudited = no success |
+| Audit-policy change (Activare audit) | exit code only | effective policy re-read (AuditQuerySystemPolicy) |
+| Policy apply / rollback (Politici) | re-read already; rollback re-read error = RollbackFailed | + RollbackNotVerified; `ExecutionRecord.Verification` |
+| Media sanitization (Sanitizare) | read-back already | mapped to `SanitizationResult.Verification` |
+| Kill / service stop / USB block / quarantine | not present in production (kill redirects to containment) | - |
+
+## Next
+- Opus `vault-reviewer` on the WP9 commit (risk: host-change paths). Residuals: IL scan excludes WPF assemblies and delegate-injected
+  primitives; `NotVerified` incidents are not re-contained automatically; LIVE case is opened for station-wide defense audit.
+- Then WP4 ai_claim_validation.

@@ -5,9 +5,10 @@ Source of the rules: `CONTRACT_AUDIT_STAGE1.md` section 7 (WP12) and section 8, 
 
 ## 1. What a release needs today
 
-**A release is currently impossible.** In enforce mode the gate fails unless every item is `PASS` or `WAIVED`. Four blocking items
-have no capability behind them yet (audit integrity, AI claim validation, response verification, the findings register). They
-become checkable only when the later work packages land (WP3, WP4, WP9) and the owner creates the findings register. Until then
+**A release is currently impossible.** In enforce mode the gate fails unless every item is `PASS` or `WAIVED`. Blocking items
+without a capability behind them when this was written: AI claim validation and the findings register (response verification got
+its test classes with WP9 on 2026-10-22; audit integrity see the table). They
+become checkable only when the remaining work lands (WP4) and the owner creates the findings register. Until then
 the gate reports them `NOT_IMPLEMENTED` and an enforce run fails. The gate never turns a missing capability into a pass, and no
 waiver can cover a blocking item.
 
@@ -23,7 +24,7 @@ It reads the `.trx` files of a `dotnet test` run, a findings register and a waiv
 | `evidence_integrity` | R22.4 | blocking | `EvidenceIntegrityTests` and `EvidenceContractTests` executed and passing | real check, unit level only (see limits) |
 | `audit_integrity` | R22.7 | blocking | a test class `AuditIntegrity*Tests`, `AuditChain*Tests` or `CustodyChain*Tests` must exist and pass | NOT_IMPLEMENTED (WP3) |
 | `ai_claim_validation` | R22.5 | blocking | a test class `AiClaimValidation*Tests` must exist and pass | NOT_IMPLEMENTED (WP4) |
-| `response_verification` | R22.6 | blocking | a test class `ResponseVerification*Tests` must exist and pass | NOT_IMPLEMENTED (WP9) |
+| `response_verification` | R22.6 | blocking | a test class `ResponseVerification*Tests` must exist and pass | real check since WP9 (2026-10-22): `ResponseVerificationTests`, `ResponseVerificationProcessTests`, `ResponseVerificationRegistryTests` (fakes only, see limits) |
 | `critical_findings` | R22.8 | blocking | `release-gate/findings-register.json` must exist, be valid, and hold no `critical` + `open` entry | NOT_IMPLEMENTED (no register) |
 | `real_corpus` | R22.2 | waivable | `forensic_validation.txt` says `AVAILABLE` and every corpus test ran and passed | NOT_RUN in CI |
 | `differential` | R22.3 | waivable | the `ForensicLab` tests (`LADFIR_LAB=1`) executed and passed | NOT_RUN in CI |
@@ -39,6 +40,15 @@ empty or always-green class with that name. The `minExecuted` guard in `gate-ite
 
 - `evidence_integrity` is a unit-level check (hashing, mutation refusal, evidence contract). No artefact yet attests the integrity
   of the shipped rule set and parsers (audit R22.4).
+- `response_verification` (WP9) proves the contract with fakes, never on a real firewall or process: every controlled response
+  (per-program containment and its release, station isolation / restore, IoC block, audit-policy change, policy apply / rollback,
+  media sanitization) returns a `ResponseOutcome` from one verifier (`LogAnalyzer.Dfir.Core/Response/ResponseVerification.cs`) that
+  re-reads the target after the action; a re-read that throws, is denied or times out is NOT_VERIFIED, a re-read showing the old state
+  is FAILED; the outcome goes to the case audit (policy: its own hash-chained `audit.jsonl`; sanitization: the provenance ledger) and
+  an audit write failure removes the success. `ResponseVerificationRegistryTests` scans the IL of the production assemblies and fails on
+  any method reaching the host-change gate or a host-changing primitive without `[ControlledResponse]`. Not covered by that scan: the
+  WPF assemblies, and a primitive injected as a delegate (the suspend / resume `Action<int>`); the real-firewall run is the existing
+  `[AdminFact]` in `ContainmentTests`, skipped unless elevated.
 - The gate does not read CodeQL or code-scanning alerts. `critical_findings` is the owner's register; an empty or missing register
   is not "no findings", it is `NOT_IMPLEMENTED`.
 - `tests_passing` depends on the tests being meaningful. On Windows CI everything runs; the corpus and lab tests are skipped there and are

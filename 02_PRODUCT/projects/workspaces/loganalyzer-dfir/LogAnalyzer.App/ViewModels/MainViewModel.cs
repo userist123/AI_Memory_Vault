@@ -1973,7 +1973,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (MessageBox.Show("Izolați ÎNTREAGA stație de rețea (tot traficul de ieșire blocat)?\n\nPentru un singur program suspect folosiți „Izolare procese suspecte”, care lasă restul PC-ului conectat.",
                     "Izolare stație", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
-            var res = _hostDefense.IsolateHostFromNetwork();
+            var res = RecordResponse(_hostDefense.IsolateHostFromNetwork());
             StatusMessage = $"🛡️ {res.Message}";
             IsCountermeasureModalVisible = false;
             _auditService.LogAction("HOST_ISOLATION", $"{OperatorName} - {res.Status} - {res.Message}");
@@ -1983,10 +1983,27 @@ namespace LogAnalyzer.UI.ViewModels
                 res.Success ? MessageBoxImage.Information : MessageBoxImage.Warning);
         }
 
+        /// <summary>
+        /// Writes a station-wide response and its re-check evidence to the station's case audit (hash-chained). A case that cannot be opened
+        /// or written is kept on the result and turns its success off: an unaudited response is never shown as a success.
+        /// </summary>
+        private static DefenseActionResult RecordResponse(DefenseActionResult res)
+        {
+            if (res.Status == DefenseActionResult.Unavailable) return res;   // not part of this edition: nothing attempted, no case is opened
+            Action<string, string>? sink;
+            try { var ws = LogAnalyzer.UI.Services.LiveCase.Get(); sink = (a, d) => ws.Audit("defense." + a, d); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+            {
+                var why = ex.Message;
+                sink = (_, _) => throw new IOException("cazul stației nu poate fi deschis: " + why);
+            }
+            return res.RecordTo(sink);
+        }
+
         [RelayCommand]
         private void ExecuteRestoreNetwork()
         {
-            var res = _hostDefense.RestoreNetworkAccess();
+            var res = RecordResponse(_hostDefense.RestoreNetworkAccess());
             StatusMessage = $"🌐 {res.Message}";
             _auditService.LogAction("HOST_RESTORE_NETWORK", $"{OperatorName} - {res.Status} - {res.Message}");
             MessageBox.Show(res.Success ? res.Message : $"{res.Message}\n\n{res.ExecutionDetails}", $"Restaurare rețea — {res.Status}", MessageBoxButton.OK,
@@ -2026,7 +2043,7 @@ namespace LogAnalyzer.UI.ViewModels
                     "Blocare IoC", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
             foreach (var ip in ips)
             {
-                var res = _hostDefense.BlockMaliciousIoC(ip);
+                var res = RecordResponse(_hostDefense.BlockMaliciousIoC(ip));
                 _auditService.LogAction("BLOCK_IOC_FIREWALL", $"{OperatorName} - Tinta: {ip}, {res.Status}: {res.Message}");
                 StatusMessage = res.Message;
                 if (!res.Success)

@@ -94,7 +94,7 @@
                     <DataGrid ItemsSource="{Binding Incidents}" SelectedItem="{Binding SelectedIncident}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Incident" Binding="{Binding IncidentId}" Width="Auto"/>
-                            <DataGridTextColumn Header="Stare" Binding="{Binding State}" Width="Auto"/>
+                            <DataGridTextColumn Header="Stare" Binding="{Binding StateText}" Width="Auto"/>
                             <DataGridTextColumn Header="Creat (UTC)" Binding="{Binding CreatedUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="Auto"/>
                             <DataGridTextColumn Header="Program" Binding="{Binding ProgramPath}" Width="*"/>
                         </DataGrid.Columns>
