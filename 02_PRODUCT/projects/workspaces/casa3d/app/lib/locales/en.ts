@@ -52,10 +52,10 @@ export const en: Dict = {
   "editor.floorFinish": "Flooring", "editor.wallPaint": "Wall and ceiling paint", "editor.wallTile": "Wall tiles", "editor.noTile": "No tiles", "editor.baseboard": "Baseboard", "editor.noBaseboard": "No baseboard",
   "editor.light": "Light fixture", "editor.lightCount": "Number of fixtures",
   // ---- plan, 3D view, shortcuts ----
-  "plan.typeHint": "type a size", "plan.resizeEdge": "Drag to resize the room. The whole wall line moves: every room touching that line moves with it.",
+  "plan.nudgeAria": "Zoom and pan the plan", "plan.nudge.in": "Zoom in", "plan.nudge.out": "Zoom out", "plan.nudge.fit": "Fit the whole plan", "plan.nudge.left": "Pan left", "plan.nudge.right": "Pan right", "plan.nudge.up": "Pan up", "plan.nudge.down": "Pan down", "plan.typeHint": "type a size", "plan.resizeEdge": "Drag to resize the room. The whole wall line moves: every room touching that line moves with it.",
   "editor.resizeClamped": "The resize stopped so that a neighbouring room does not drop below 60 cm.",
   "plan.aria": "Editable 2D plan. Tab selects rooms and pieces in turn; arrow keys move, R rotates, Delete removes, Escape cancels.",
-  "viewer.aria": "3D view", "viewer.house": "3D model", "viewer.tour": "Tour: {room}", "viewer.tourPick": "Walk into a room…", "viewer.light": "Light", "viewer.lightTitle": "Time of day and sun direction",
+  "viewer.nudgeAria": "Rotate and zoom", "viewer.nudge.left": "Rotate left", "viewer.nudge.right": "Rotate right", "viewer.nudge.up": "View from higher", "viewer.nudge.down": "View from lower", "viewer.nudge.in": "Zoom in", "viewer.nudge.out": "Zoom out", "viewer.aria": "3D view", "viewer.house": "3D model", "viewer.tour": "Tour: {room}", "viewer.tourPick": "Walk into a room…", "viewer.light": "Light", "viewer.lightTitle": "Time of day and sun direction",
   "viewer.camTop": "Top 3D", "viewer.camTopTitle": "Top-down / 3D floor plan view", "viewer.camIso": "Isometric", "viewer.camIsoTitle": "Isometric axonometric 45° view", "viewer.camFront": "Front", "viewer.camFrontTitle": "Front elevation view",
   "hud.rotate": "Rotate 90° (R)", "hud.duplicate": "Duplicate (Ctrl+D)", "hud.delete": "Delete (Del)", "hud.toggleShape": "Toggle shape (rect / round)", "hud.autoFurnish": "Auto-furnish", "hud.splitRoom": "Split room",
   "viewer.blender": "Photo render", "viewer.blenderTitle": "Export the scene for a photoreal render",
@@ -631,7 +631,7 @@ export const en: Dict = {
   "stage.why.quote": "Done when the target budget is set.", "stage.why.present": "Done when the client link was sent.",
   "stage.why.orders": "Done when the project moves to Execution.", "stage.why.site": "Done when the project is marked Finished.",
   // ---- command palette (Ctrl+K) ----
-  "cmdk.open": "Search commands", "cmdk.openShort": "Search", "cmdk.title": "Command palette", "cmdk.placeholder": "Type a command or a stage…", "cmdk.close": "Close the palette",
+  "cmdk.group.tools": "Tools", "cmdk.group.objects": "Objects in the plan", "cmdk.group.settings": "Settings", "cmdk.active": "active", "cmdk.room": "room", "cmdk.kw.tool": "tool", "cmdk.kw.room": "room space", "cmdk.health": "Project health (checks)", "cmdk.kw.health": "checks issues errors warnings", "cmdk.kw.lang": "language", "cmdk.kw.units": "units metric imperial", "cmdk.unitsImperial": "Units: imperial (ft, in)", "cmdk.unitsMetric": "Units: metric (m, cm)", "cmdk.doc.offer": "Offer (A4)", "cmdk.doc.contract": "Contract (A4)", "cmdk.doc.proforma": "Pro forma", "cmdk.doc.handover": "Handover report", "cmdk.doc.site-report": "Site report", "cmdk.open": "Search commands", "cmdk.openShort": "Search", "cmdk.title": "Command palette", "cmdk.placeholder": "Type a command or a stage…", "cmdk.close": "Close the palette",
   "cmdk.empty": "No command for “{q}”.", "cmdk.emptyHint": "Try a shorter word, for example “plan”, “quote” or “continue”.",
   "cmdk.keys": "↑ ↓ choose · Enter open · Esc close", "cmdk.results": "{n} results", "cmdk.results.one": "1 result", "cmdk.results.many": "{n} results",
   "cmdk.group.next": "Next step", "cmdk.group.stages": "Stages", "cmdk.group.views": "Views", "cmdk.group.actions": "Commands", "cmdk.group.docs": "Documents",

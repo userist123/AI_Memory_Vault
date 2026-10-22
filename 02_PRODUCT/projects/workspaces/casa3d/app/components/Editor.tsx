@@ -34,7 +34,7 @@ import { appearanceColors } from '@/core/appearance';
 import { History, type HistoryMark } from '@/core/history';
 import { usePrefs } from '@/lib/prefs';
 import { issueText } from '@/lib/i18n';
-import { intlLocale } from '@/lib/i18n';
+import { intlLocale, LANGS } from '@/lib/i18n';
 import PrefsSwitcher from './PrefsSwitcher';
 import { formatMoney, formatArea, formatLength, formatDimsCm, cmToInput, inputToCm, lengthInputUnit, catalogCurrency } from '@/core/format';
 import { validatePlacement, validateFloor, severityOf, issueTarget } from '@/core/validate';
@@ -120,7 +120,7 @@ const STAGES: { id: Stage; view: '2d' | '3d' | 'split'; tools: Tool[]; page?: tr
   { id: 'site', view: '2d', tools: [], page: true }
 ];
 export default function Editor({ id }: { id: string }){
-  const { t, tp, lang, units, ready: prefsReady } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units);
+  const { t, tp, lang, units, ready: prefsReady, setLang, setUnits } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units);
   const [meta, setMeta] = useState<ProjectMeta | null>(null), [house, setHouse] = useState<Snapshot | null>(null), [lvl, setLvl] = useState(0), [catalog, setCatalog] = useState<Catalog | null>(null), [mc, setMc] = useState<MaterialsCatalog | null>(null), [out, setOut] = useState<Outbound | null>(null);
   const compact = useCompact(), [sheet, setSheet] = useState<'peek' | 'half' | 'full'>('half'), [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('2d'), [help, setHelp] = useState(false), [calib, setCalib] = useState<Calib | null>(null);
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error' | 'conflict' | 'offline' | 'auth'>('saved'), baseRev = useRef<number | null>(null), saveRef = useRef<string>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
@@ -451,6 +451,19 @@ export default function Editor({ id }: { id: string }){
     { id: 'present', group: t('cmdk.group.docs'), label: t('cmdk.present'), run: () => { window.open(`/p/${id}/present`, '_blank', 'noopener'); } },
     { id: 'board', group: t('cmdk.group.docs'), label: t('cmdk.board'), run: () => { window.open(`/p/${id}/board`, '_blank', 'noopener'); } },
     { id: 'home', group: t('cmdk.group.actions'), label: t('cmdk.home'), run: () => { location.href = '/'; } },
+    // UI/UX P1-5: paleta acoperă tot ce se poate face din editor: unelte, obiecte după nume, setări, toate documentele
+    ...(stageDef.page ? [] : stageDef.tools.map(tk => ({ id: `tool-${tk}`, group: t('cmdk.group.tools'), label: t(TOOL_LABEL[tk]), keywords: [t('cmdk.kw.tool')],
+      hint: tool === tk ? t('cmdk.active') : undefined, run: () => setTool(tk) }))),
+    ...(stageDef.page ? [] : snap.floor.rooms.map(r => ({ id: `room-${r.id}`, group: t('cmdk.group.objects'), label: r.name, keywords: [t(`roomType.${r.type}`), t('cmdk.kw.room')],
+      hint: t('cmdk.room'), run: () => { setTool('select'); setSel({ kind: 'room', id: r.id }); } }))),
+    ...(stageDef.page ? [] : snap.placements.map(pl => { const rv = resolve(catalog, pl.variantId), room = snap.floor.rooms.find(r => r.id === pl.roomId)?.name;
+      return { id: `pl-${pl.id}`, group: t('cmdk.group.objects'), label: rv ? rv.product.name : pl.group, keywords: [rv?.variant.name ?? '', room ?? '', pl.group],
+        hint: room, run: () => { setTool('select'); setSel({ kind: 'placement', id: pl.id }); } }; })),
+    { id: 'health', group: t('cmdk.group.actions'), label: t('cmdk.health'), keywords: [t('cmdk.kw.health')], run: () => setShowHealth(true) },
+    { id: 'lang', group: t('cmdk.group.settings'), label: LANGS.find(l => l.code !== lang)!.name, keywords: [t('cmdk.kw.lang'), 'language', 'limba'], run: () => setLang(lang === 'ro' ? 'en' : 'ro') },
+    { id: 'units', group: t('cmdk.group.settings'), label: units === 'metric' ? t('cmdk.unitsImperial') : t('cmdk.unitsMetric'), keywords: [t('cmdk.kw.units')], run: () => setUnits(units === 'metric' ? 'imperial' : 'metric') },
+    ...(['offer', 'contract', 'proforma', 'handover', 'site-report'] as const).map(d => ({ id: `doc-${d}`, group: t('cmdk.group.docs'), label: t(`cmdk.doc.${d}`), keywords: [t('cmdk.kw.print')],
+      run: () => { window.open(`/p/${id}/${d}`, '_blank', 'noopener'); } })),
   ];
 
   return (<div className="ws spatial-studio" data-ui="spatial-studio">
