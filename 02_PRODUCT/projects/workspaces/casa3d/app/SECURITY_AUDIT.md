@@ -3,7 +3,7 @@ Scope: `02_PRODUCT/projects/workspaces/casa3d` (app: Next.js 15.5.28, React 19, 
 Method: security-lockdown skill; three independent read-only auditors (zones: secrets/history/logging, authn/authz/share routes, input/XSS/SQL/errors) plus runtime checks; fixes reviewed by an independent reviewer.
 
 Commands run (exit codes):
-- `npx tsc --noEmit` → 0; `npx vitest run` (app) → 0, 112 files / 680 tests; twin-core `npx vitest run` → 0, 59 tests; `npm run build` → 0.
+- `npx tsc --noEmit` → 0; `npx vitest run` (app) → 0, 112 files / 681 tests; twin-core `npx vitest run` → 0, 59 tests; `npm run build` → 0.
 - `npm audit` (app) → 0 vulnerabilities; twin-core → 0. `npm audit` before the fix: next critical (GHSA-2464-fhr4-w9xw), postcss high, vite high.
 - `gitleaks git --log-opts="--all -- 02_PRODUCT/projects/workspaces/casa3d"` (v8.30.1) → 144 commits, no leaks.
 - `gitleaks dir 02_PRODUCT/projects/workspaces/casa3d` → 6 hits, all Next.js build keys generated locally in `app/.next/` (preview mode, server-action encryption): build output, not tracked (`.gitignore`), not served.
@@ -29,6 +29,8 @@ Commands run (exit codes):
 | F-15 | low | Local-proxy bypass: a proxy rewriting Host to localhost kept local trust | `lib/public-gate.ts` | non-loopback `x-forwarded-for` → not local | test B-8; curl → 401 |
 | F-16 | low | Admin token compared with `!==`; no startup config validation | `lib/outbound.ts`, `lib/env-check.ts`, `instrumentation.ts` | `timingSafeEqual` on SHA-256; invalid env stops startup with a clear message | `ADMIN_TOKEN=scurt npm start` → exit 1; test A-5 |
 | F-17 | low | 404 of the public share GET without `no-store` | `app/api/share/[token]/route.ts` | `no-store` | test B-7 |
+| F-18 | low | Review: scrypt N=2^17 under a burst (60 parallel ≈ 564 MiB, threadpool saturated); old hashes never upgraded | `lib/auth.ts`, login route | at most 2 scrypt at once; rehash to N=2^17 on successful login, same session key | test "review L2" |
+| F-19 | low | Review: stair positions not bounded; demo started with `npm start` gave an unclear error | `lib/repo.ts`, `lib/env-check.ts` | stairs within ±1000 m; message points to `npm run start:hosted` | tests |
 
 ## Open findings
 | # | Severity | Finding | Why open | Owner action needed |
@@ -40,6 +42,8 @@ Commands run (exit codes):
 | O-5 | low | Links created before 2026-10-22 never expire | not breaking links already sent to clients | revoke old links in Presentation if wanted |
 | O-6 | low | Some `repo.ts` catch blocks turn any `e.message` into a 400 (could expose an internal TypeError text) | no reproducible leak found | none |
 | O-7 | info | 86 open Dependabot alerts in the repository belong to other projects (imported/, RAW_IMPORTS, skills); the 10 Casa3D alerts (vite, postcss) are fixed by this branch and close on merge | out of Casa3D scope | triage per project |
+| O-9 | low | Remote-login lockout: 12 distinct IPs (or /64s) × 5 attempts reach the global cap and block phone login for 15 min (renewable with ~4 requests/min); existing 30-day sessions and local access unaffected | accepted tradeoff vs. unlimited guessing (review L3) | none; revisit with accounts (P2) |
+| O-10 | low | `DATABASE_SSL_NO_VERIFY=1` has no effect when DATABASE_URL carries `sslmode=`; a provider with a private CA needs `sslrootcert=` | documented in `.env.example` | only if a non-public-CA Postgres is used |
 | O-8 | ops | Plan §3.1.7–3.1.8: secrets in the host's secret store and rotated at go-live; request logs without personal data, error tracking, uptime check | only relevant once hosted (P3) | at go-live |
 
 ## The 19 checks
