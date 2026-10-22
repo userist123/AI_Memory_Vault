@@ -330,7 +330,7 @@ export const ro: Dict = {
   "cdel.on": "pe {d}",
   "pcard.shareOrders": "Clientul vede stadiul comenzilor pe link",
   "pcard.shareOrdersSub": "Doar starea și datele de livrare; fără furnizori, prețuri de achiziție sau note.",
-  "co.kicker": "Cost",
+  "co.pinNeeded": "Pentru această decizie, introduceți PIN-ul primit de la designer.", "co.kicker": "Cost",
   "co.title": "Modificări față de ofertă",
   "co.offered": "Oferta",
   "co.approvedSum": "Modificări aprobate",
