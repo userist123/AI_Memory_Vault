@@ -651,6 +651,7 @@ The workflows in [`.github/workflows/`](.github/workflows/), grouped by what the
 | retrieval on the held-out benchmark, frozen by SHA-256 | `r009b-heldout-benchmark.yml` |
 | LogAnalyzer DFIR (.NET): build, tests and the editions' win-x64 packages | `loganalyzer-dfir-build.yml` |
 | Casa3D: typecheck, Vitest and the Next.js build for the app and twin-core | `casa3d-build.yml` |
+| Design tokens (DTCG): types, OKLCH↔hex, Casa3D parity and the drift gate on the generated `tokens.css` | `design-system-build.yml` |
 | Dependency audit (npm, .NET) per manifest; fails on CRITICAL | `dependency-audit.yml` |
 | imported material, scanned for injected instructions | `untrusted-content-guard.yml` |
 | owner approval for PRs (GitHub environment; effective only once the owner sets its reviewers) | `owner-approval-gate.yml` |

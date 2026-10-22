@@ -48,6 +48,10 @@ Origin: todo-claude-frontend-design.md -> owner picked A2 (2026-10-22, chat).
 - [x] PR #304 was already MERGED (squash) -> owner OK (2026-10-22): branch rewritten onto origin/main f0ee40d67
       (47e71dd35, 13/13), PR #312 base changed to main.
 
+- [x] CI #312 (regression-and-heldout): 3 failures, all from this PR: new workflow missing from the CI tables in
+      README.md/README.en.md; checkpoint + design-system PLAN/README have no note frontmatter -> added to
+      20_TESTS/fixtures/unreadable_notes_allowlist.json (repo convention for plain documents). Re-run: 12 + 10 passed.
+
 ## Next
 - CI on #312 once; then mark ready for review on owner ask (merge = owner).
 - Phase 2 (new session): see PLAN.md "Phase 2".
