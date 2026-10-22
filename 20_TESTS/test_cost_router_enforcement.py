@@ -166,6 +166,9 @@ def test_agent_hook_requires_the_vault_router_for_implement_in_the_vault(home, t
     proj = tmp_path / "proj"
     cli = proj / "03_IMPLEMENTATION" / "packages" / "routing" / "route_cli.py"
     cli.parent.mkdir(parents=True)
+    # a regular package (like the real one): with `pip install -e .` (CI) the real `routing` is a regular package
+    # and would win over a namespace-only fake, so the real router would run instead of this crashing one
+    (cli.parent / "__init__.py").write_text("", encoding="utf-8")
     cli.write_text("import sys; sys.exit(1)", encoding="utf-8")
     _prompt(home, IMPLEMENT)
     out = _agent(home, project=proj)

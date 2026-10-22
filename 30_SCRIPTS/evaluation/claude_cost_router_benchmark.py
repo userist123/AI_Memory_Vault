@@ -164,7 +164,8 @@ class GrepTask(Task):
 
 
 def _pytest(wt: Path, test_file: str, *extra: str):
-    return subprocess.run([sys.executable, "-m", "pytest", test_file, "-q", "-p", "no:cacheprovider", *extra],
+    # -B: no .pyc, or a same-size edit within the same second (Linux, 1 s pyc mtime) is graded against stale bytecode
+    return subprocess.run([sys.executable, "-B", "-m", "pytest", test_file, "-q", "-p", "no:cacheprovider", *extra],
                           cwd=wt, capture_output=True, text=True, timeout=600)
 
 
