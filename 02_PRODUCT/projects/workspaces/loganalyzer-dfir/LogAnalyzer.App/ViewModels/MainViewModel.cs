@@ -700,7 +700,8 @@ namespace LogAnalyzer.UI.ViewModels
                         ReloadRegistryFromDb();
                         ReloadTimelineFromDb();
                         ReloadDashboardStats();
-                        _ = RunAiAnalysis();
+                        // the data stored by an earlier session is re-read, but no summary is announced for it: the status bar says what ran in THIS session
+                        _ = RunAnalysisAsync(announce: false);
                         if (IsNetworkMode)
                             StartLiveMonitoring();
                     });
@@ -2634,7 +2635,13 @@ namespace LogAnalyzer.UI.ViewModels
         /// the window ~0.45 s with 7.6k events and ~1.25 s with 50k, right after start-up); only filling the lists happens on the UI thread.
         /// </summary>
         [RelayCommand]
-        public async Task RunAiAnalysis()
+        public Task RunAiAnalysis() => RunAnalysisAsync(announce: true);
+
+        /// <summary>
+        /// <paramref name="announce"/> = the analysis ran on data collected or imported in this session (or on the operator's request): only then does the status
+        /// bar give its summary. Re-reading the stored data at start-up (<c>false</c>) leaves „Nicio analiză încă.”; without any event no score is shown.
+        /// </summary>
+        private async Task RunAnalysisAsync(bool announce)
         {
             if (_analysisEngine is not AnalysisEngine ae || _aiRunning) return;
             _aiRunning = true;
@@ -2727,8 +2734,10 @@ namespace LogAnalyzer.UI.ViewModels
 
                 // Evaluare Scor de Risc Explicabil (ISO/IEC 27042)
                 var explainableRisk = _explainableAiEngine.Evaluate(DetectedIssues, entropyCount, masqCount, offHoursCount, yaraMatches.Count, LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.WorkingHours);
-                AiRiskScore = explainableRisk.TotalScore;
-                AiRiskLevel = explainableRisk.Level;
+                // no score without evidence: with no event analysed the engine's baseline (5 points) is not a risk of this station
+                bool evidence = eventsForAnalysis.Count > 0;
+                AiRiskScore = evidence ? explainableRisk.TotalScore : 0;
+                AiRiskLevel = evidence ? explainableRisk.Level : "NEDETERMINAT (nu există date analizate)";
                 AiRiskColor = explainableRisk.LevelColor;
                 AiExecutiveSummary = explainableRisk.ExecutiveSummaryRo;
                 AiTacticalRecommendation = "1. Examinați factorii de risc ponderați din tabelul explicabil.\n2. Verificați alertele Kerberos/AD și procesele LOLBAS identificate.\n3. Generați draftul de notificare NIS2 / DNSC dacă incidentul este semnificativ.\n4. Exportați lanțul de custodie în format CASE/UCO 1.3.";
@@ -2880,7 +2889,8 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 // 2026-10-22 walkthrough: no summary without collected data, and the AI label only where the edition has the AI layer (Standalone has none).
-                StatusMessage = eventsForAnalysis.Count == 0
+                // 2026-10-22 round 2: nor right after sign-in, when only the data of an earlier session was re-read (announce = false)
+                StatusMessage = eventsForAnalysis.Count == 0 || !announce
                     ? "Nicio analiză încă."
                     : (Edition.Has(LogAnalyzer.Core.Services.Edition.EditionFeature.AiAnalysis) ? "✅ Analiză AI finalizată" : "✅ Analiză finalizată")
                       + $": Risc {AiRiskScore}/100 | {kerbFindings.Count} Kerberos | {lolbas.Count} LOLBAS | {multiCorrelations.Count} Lanțuri Corelate";

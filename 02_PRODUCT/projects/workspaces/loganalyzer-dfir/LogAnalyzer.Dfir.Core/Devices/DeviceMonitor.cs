@@ -72,6 +72,21 @@ public static class DeviceMonitorRules
         _ => "În afara domeniului (componentă internă)",
     };
 
+    /// <summary>A name that is only a drive letter or a volume path („F:\”, „F:”): Windows names the portable-device view of a phone's storage that way.</summary>
+    public static bool IsDriveLetterName(string name) => System.Text.RegularExpressions.Regex.IsMatch(name.Trim(), @"^[A-Za-z]:\\?$");
+
+    /// <summary>
+    /// The name a row shows: the first friendly name among <paramref name="names"/> that is not a drive letter (the device's own name or model, not the volume
+    /// letter a phone's storage got); when every name is a drive letter, <paramref name="fallback"/> (the model or manufacturer) if known, else the first name.
+    /// </summary>
+    public static string FriendlyName(IEnumerable<string> names, string fallback = "")
+    {
+        var list = names.Where(n => !string.IsNullOrWhiteSpace(n)).Select(n => n.Trim()).ToList();
+        var good = list.FirstOrDefault(n => !IsDriveLetterName(n));
+        if (good is not null) return good;
+        return fallback.Trim().Length > 0 ? fallback.Trim() : list.FirstOrDefault() ?? "";
+    }
+
     /// <summary>Storage media: the classes that carry a registration number („Nr. de înregistrare”) and are alerted without one.</summary>
     public static bool IsStorageMedium(DeviceClass c) => c is DeviceClass.UsbStorage or DeviceClass.MemoryCard or DeviceClass.ExternalDisk;
 

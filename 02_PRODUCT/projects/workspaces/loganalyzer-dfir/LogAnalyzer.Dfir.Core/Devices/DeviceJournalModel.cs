@@ -204,7 +204,9 @@ public static class DeviceJournalMerge
     /// (they were there when the monitor started), only new ones are recorded as first seen.
     /// <list type="bullet">
     /// <item>Two present devices with the same serial and VID/PID (a cloned serial) keep separate rows, told apart by their instance id.</item>
-    /// <item>A serial that returns with another capacity or manufacturer (seen at a different time) is a separate row marked „serie duplicată – posibilă clonă”.</item>
+    /// <item>A serial that returns with another KNOWN capacity or manufacturer (seen at a different time) is a separate row marked „serie duplicată – posibilă clonă”;
+    /// a serial seen under a new identity with another known VID (or PID of a storage medium) or capacity of the same LUN is marked too (see <see cref="SerialConflict"/>).
+    /// The nodes of one stick (USB node, USBSTOR disk, placeholders, capacity 0) are never clones of each other.</item>
     /// <item>A card in a reader or slot is identified by the medium (volume serial, else disk signature, + capacity), not by the reader: the same card is the same
     /// row however often it is inserted; an empty slot is not a medium. A card with neither (encrypted or RAW) is one row per insertion, marked „mediu
     /// neidentificabil (criptat/RAW)”; once its volume becomes readable the row is re-keyed (<paramref name="rekeyed"/> gets the link, the caller seals it).</item>
@@ -269,7 +271,7 @@ public static class DeviceJournalMerge
                     if (candidates.Count > 0)
                     {
                         long cap = mi?.CapacityBytes ?? 0;
-                        var match = candidates.FirstOrDefault(x => SameDevice(x, cap, mfr));
+                        var match = candidates.FirstOrDefault(x => SameDevice(x, cap, mfr, p.InstanceId));
                         if (match is not null)
                         {
                             identity = match.Identity;
@@ -283,6 +285,22 @@ public static class DeviceJournalMerge
                             identity += "|DUP|" + candidates.Count.ToString(CultureInfo.InvariantCulture);
                             duplicate = true;
                             foreach (var c in candidates) c.DuplicateSerial = true;
+                        }
+                    }
+                    // the same serial under another identity (another VID/PID, or the same device seen through another node): a clone only when a KNOWN
+                    // attribute differs (VID, the PID of a storage medium, or the capacity of the same LUN); raised once, when that identity is new
+                    if (!duplicate && journal.Find(identity) is null)
+                    {
+                        var probe = new DeviceJournalEntry
+                        {
+                            Identity = identity, InstanceId = p.InstanceId, Class = d.Kind, Serial = DeviceMonitorRules.Serial(p.InstanceId),
+                            VidPid = DeviceMonitorRules.VidPid(p.InstanceId, p.HardwareIds), CapacityBytes = mi?.CapacityBytes ?? 0, Manufacturer = mfr,
+                        };
+                        var clashing = journal.Devices.Where(x => !SameBase(x.Identity, identity) && SerialConflict(probe, x)).ToList();
+                        if (clashing.Count > 0)
+                        {
+                            duplicate = true;
+                            foreach (var c in clashing) c.DuplicateSerial = true;
                         }
                     }
                 }
@@ -300,9 +318,11 @@ public static class DeviceJournalMerge
             e.InstanceId = p.InstanceId;
             e.Class = d.Kind;
             e.SetupClass = d.Primary.SetupClass;
-            var name = d.Primary.Name.Length > 0 ? d.Primary.Name : p.Name;
-            if (name.Length > 0) e.Name = name;
-            if (mfr.Length > 0) e.Manufacturer = mfr;
+            // the device's friendly name, never the drive letter Windows gave the portable-device view of a phone's storage („F:\”)
+            var name = DeviceMonitorRules.FriendlyName(new[] { d.Primary.Name, p.Name }.Concat(d.Members.Select(m => m.Name)), prod.Length > 0 ? prod : KnownManufacturer(mfr).Length > 0 ? mfr.Trim() : "");
+            if (name.Length > 0 && !(DeviceMonitorRules.IsDriveLetterName(name) && e.Name.Length > 0 && !DeviceMonitorRules.IsDriveLetterName(e.Name))) e.Name = name;
+            // a placeholder („(Standard disk drives)”) never overwrites the real manufacturer a node reported before
+            if (mfr.Length > 0 && (KnownManufacturer(mfr).Length > 0 || KnownManufacturer(e.Manufacturer).Length == 0)) e.Manufacturer = mfr;
             if (prod.Length > 0) e.Model = prod;
             e.Serial = DeviceMonitorRules.Serial(p.InstanceId);
             e.NoUniqueSerial = DeviceMonitorRules.HasNoUniqueSerial(p.InstanceId);
@@ -337,11 +357,104 @@ public static class DeviceJournalMerge
         return changes;
     }
 
-    private static bool SameDevice(DeviceJournalEntry x, long capacity, string manufacturer)
+    // ---- one physical device or a clone of its serial ----------------------------------------------------------------------------------------------
+    // One stick shows up as several Windows nodes that share its serial: the USB node (USB\VID_x&PID_y\<serial>, manufacturer „Compatible USB storage
+    // device”, no capacity), the USBSTOR disk (USBSTOR\Disk&Ven_..\<serial>&0, „(Standard disk drives)”, the capacity only once the medium was read) and,
+    // for a UAS disk, the USB node with the vendor of the SCSI disk („Fakeven ”, padded). Placeholders and a capacity of 0 are UNKNOWN, never different.
+
+    private static bool SameDevice(DeviceJournalEntry x, long capacity, string manufacturer, string instanceId) =>
+        SameManufacturer(x.Manufacturer, manufacturer) && !CapacityConflict(x.CapacityBytes, x.InstanceId, capacity, instanceId);
+
+    /// <summary>
+    /// The manufacturer a node really reported, normalised (upper case, letters and digits only); empty for a placeholder Windows puts on a class driver
+    /// („(Standard disk drives)”, „Compatible USB storage device”, „(Standard USB Host Controller)”, „Microsoft”, „Generic”, …) or an empty one.
+    /// </summary>
+    public static string KnownManufacturer(string manufacturer)
     {
-        if (x.CapacityBytes > 0 && capacity > 0 && x.CapacityBytes != capacity) return false;
-        if (x.Manufacturer.Length > 0 && manufacturer.Length > 0 && !x.Manufacturer.Equals(manufacturer, StringComparison.OrdinalIgnoreCase)) return false;
-        return true;
+        var t = manufacturer.Trim().ToUpperInvariant();
+        if (t.Length == 0 || t.StartsWith('(') || t.StartsWith("STANDARD ", StringComparison.Ordinal) || t.StartsWith("COMPATIBLE ", StringComparison.Ordinal)
+            || t.StartsWith("GENERIC", StringComparison.Ordinal) || t is "USB" or "USB2.0" or "USB3.0" or "MASS STORAGE" or "GENERAL" or "MULTIPLE" or "MICROSOFT" or "NONE" or "UNKNOWN")
+            return "";
+        return new string(t.Where(char.IsLetterOrDigit).ToArray());
+    }
+
+    /// <summary>Two manufacturers are the same unless both are known and neither contains the other („FAKEVEN” = „Fakeven ” = „Fakeven Electronics”).</summary>
+    public static bool SameManufacturer(string a, string b)
+    {
+        var x = KnownManufacturer(a);
+        var y = KnownManufacturer(b);
+        return x.Length == 0 || y.Length == 0 || x.Contains(y, StringComparison.Ordinal) || y.Contains(x, StringComparison.Ordinal);
+    }
+
+    /// <summary>The logical unit a capacity belongs to: „DISK|0” for a USBSTOR disk LUN 0 (a CD-ROM LUN of the same stick is „CDROM|1”), „DISK|0” for any other node.</summary>
+    private static string LunKey(string instanceId)
+    {
+        var parts = instanceId.ToUpperInvariant().Split('\\');
+        if (parts.Length < 3 || parts[0] != "USBSTOR") return "DISK|0";
+        var type = parts[1].Split('&')[0];
+        var last = parts[^1];
+        var amp = last.LastIndexOf('&');
+        var lun = amp > 0 && last[(amp + 1)..].All(char.IsDigit) ? last[(amp + 1)..] : "0";
+        return type + "|" + lun;
+    }
+
+    private static bool CapacityConflict(long a, string idA, long b, string idB) =>
+        a > 0 && b > 0 && a != b && LunKey(idA) == LunKey(idB);
+
+    /// <summary>The identity without the row suffix (a „|DUP|n” row or a „|&lt;instance id&gt;” row of a simultaneous clone): serial + VID/PID.</summary>
+    private static string BaseIdentity(string identity)
+    {
+        if (!identity.StartsWith("SN|", StringComparison.OrdinalIgnoreCase)) return identity;
+        var parts = identity.Split('|');
+        return parts.Length > 3 ? string.Join('|', parts.Take(3)) : identity;
+    }
+
+    private static bool SameBase(string a, string b) => BaseIdentity(a).Equals(BaseIdentity(b), StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>A row the serial comparison applies to: a real serial (not one Windows made up), not a card in a slot nor a card reader (their serial is the reader's).</summary>
+    private static bool SerialComparable(DeviceJournalEntry e) =>
+        e.Serial.Length > 0 && !e.NoUniqueSerial && e.Class is not (DeviceClass.MemoryCard or DeviceClass.CardReader) && !e.Identity.Contains("|MEDIUM|", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Whether two rows with the same serial are two different physical devices (a clone of the serial), from KNOWN attributes only: another VID (or another PID
+    /// for a storage medium: a phone changes its PID with its USB mode), another capacity of the same logical unit, or, under the same serial + VID/PID, another
+    /// real manufacturer. Rows of one stick (its USB node, its USBSTOR disk, its UAS node) never conflict: their placeholders and capacity 0 are unknown.
+    /// </summary>
+    public static bool SerialConflict(DeviceJournalEntry a, DeviceJournalEntry b)
+    {
+        if (ReferenceEquals(a, b) || !SerialComparable(a) || !SerialComparable(b) || !a.Serial.Equals(b.Serial, StringComparison.OrdinalIgnoreCase)) return false;
+        var (va, pa) = DeviceMonitorRules.SplitVidPid(a.VidPid);
+        var (vb, pb) = DeviceMonitorRules.SplitVidPid(b.VidPid);
+        if (va.Length > 0 && vb.Length > 0)
+        {
+            if (va != vb) return true;
+            if (pa != pb && DeviceMonitorRules.IsStorageMedium(a.Class) && DeviceMonitorRules.IsStorageMedium(b.Class)) return true;
+        }
+        if (CapacityConflict(a.CapacityBytes, a.InstanceId, b.CapacityBytes, b.InstanceId)) return true;
+        // the manufacturer is compared only between nodes of the same kind (same serial + VID/PID or vendor/product): a USBSTOR vendor is cut to 8 characters
+        // and need not match the USB node's manufacturer
+        return SameBase(a.Identity, b.Identity) && !SameManufacturer(a.Manufacturer, b.Manufacturer);
+    }
+
+    /// <summary>
+    /// Recomputes „serie duplicată – posibilă clonă” on every row when a journal is read: the stored flag is not trusted (older versions marked the nodes of one
+    /// stick as clones of each other). A row is marked when its serial conflicts with another row (<see cref="SerialConflict"/>); the marks of the rules that need
+    /// the devices present at the same time are kept as stored: a simultaneous clone (its row carries the instance id), and a port-generated clone (a row without
+    /// a unique serial) with its twin (same class and VID/PID). Returns how many rows changed.
+    /// </summary>
+    public static int RecomputeDuplicateSerials(DeviceJournal journal)
+    {
+        var rows = journal.Devices;
+        var portClones = rows.Where(r => r.DuplicateSerial && r.NoUniqueSerial && r.VidPid.Length > 0).ToList();
+        int changed = 0;
+        foreach (var r in rows)
+        {
+            bool simultaneous = r.Identity.StartsWith("SN|", StringComparison.OrdinalIgnoreCase) && r.Identity.Split('|') is { Length: 4 } parts && parts[3].Contains('\\');
+            bool portRule = r.NoUniqueSerial || portClones.Any(c => c.Class == r.Class && c.VidPid.Equals(r.VidPid, StringComparison.OrdinalIgnoreCase));
+            bool flag = r.DuplicateSerial && (simultaneous || portRule) || rows.Any(o => SerialConflict(r, o));
+            if (flag != r.DuplicateSerial) { r.DuplicateSerial = flag; changed++; }
+        }
+        return changed;
     }
 
     /// <summary>Sets the registration number of a device; returns the previous value, or null when the identity is not in the journal.</summary>

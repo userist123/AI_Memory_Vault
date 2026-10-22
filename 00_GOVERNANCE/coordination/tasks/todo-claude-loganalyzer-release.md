@@ -144,3 +144,20 @@ Build: `dotnet build LogAnalyzer.slnx` 0 errors. Tests: Dfir 2284 passed / 31 sk
 Tests: new `LogAnalyzer.App.Tests/UiWalkthrough20261022Tests.cs`. Pinned old strings updated: `CollectAllTests.cs` (Status default),
 `UI.Tests/TransferReconciliationTests.cs` (message), `UI.Tests/StationRoleTests.cs` ("clasificat" -> "Standalone"), `UI.Tests/EditionPolicyTests.cs`.
 Open: SplashWindow.xaml still has the English tagline; live click-through of the banner/watermark/monitor layout not done (refused earlier).
+
+## Real-PC walkthrough round 2 (2026-10-22, vault-worker; branch claude/loganalyzer-release-gate)
+A. HIGH clone false positive (every medium "serie duplicată – posibilă clonă"): cause = the duplicate-serial rule compared raw manufacturers/capacities;
+   one stick appears as USB node + USBSTOR disk (+ UAS node) with placeholders ("(Standard disk drives)", "Compatible USB storage device", vendor padded with a space)
+   and capacity 0. Fix in `Dfir.Core/Devices/DeviceJournalModel.cs`: `KnownManufacturer` (placeholders = unknown, trimmed, case-insensitive, containment),
+   capacity compared only per LUN (`LunKey`), `SerialConflict` (other VID; other PID only for storage media - a phone changes PID by USB mode; other known
+   capacity of the same LUN; other real manufacturer under the same serial+VID/PID), live cross-identity check raised once for a new identity,
+   `RecomputeDuplicateSerials` on every `DeviceJournalStore.Load` (stored flag not trusted; simultaneous-clone rows and port-generated clone + twin keep
+   their stored mark, these need simultaneous presence). Placeholder never overwrites a real manufacturer. Old sealed alerts are untouched.
+   Tests: `Dfir.Tests/DeviceMonitorCloneNodesTests.cs` (SSD/stick/peripheral/phone no clone; two capacities, other VID/PID still clones; recompute on load).
+B. `Views/MediaCenterView.xaml`: MinWidth on every monitor column, HorizontalScrollBarVisibility=Auto, FrozenColumnCount=2, scope text once (top);
+   phone row named "F:\" -> `DeviceMonitorRules.FriendlyName` (core merge + `DeviceMonitorViewModel` for old rows).
+C. Status bar: the 35 came from the anomaly/YARA heuristics (baseline 5) over events stored by an EARLIER session, re-read at start-up. Start-up now runs
+   `RunAnalysisAsync(announce: false)` -> "Nicio analiză încă."; import/collect/button announce. No events -> score 0, level NEDETERMINAT.
+D. Home: `HomeView.xaml` binds `QuickControl.HomeStatus` (wizard hints replaced by `StationControlViewModel.HomeHint`).
+Tests: Dfir 2294/31/0, App 661, UI 354/1, Edition 45 (build 0 errors). New `App.Tests/UiWalkthroughRound2Tests.cs`.
+Open: needs Opus vault-reviewer (clone detection is security-relevant); live re-check on the station not done; VM row HomeStatus not UI-verified.
