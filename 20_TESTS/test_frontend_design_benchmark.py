@@ -175,8 +175,8 @@ def test_vault_dir_required(tmp_path):
 
 
 def test_redact_variants():
-    h = "C:\\Users\\Someone"
-    out = fdb.redact({"a": "C:\\Users\\Someone\\x", "b": ["C:/Users/Someone/y", 3]}, home=h)
+    h = "C:\\Users\\Someone"  # hygiene: intentional-absolute-path
+    out = fdb.redact({"a": "C:\\Users\\Someone\\x", "b": ["C:/Users/Someone/y", 3]}, home=h)  # hygiene: intentional-absolute-path
     assert out == {"a": "<HOME>\\x", "b": ["<HOME>/y", 3]}
 
 
