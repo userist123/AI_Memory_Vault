@@ -136,7 +136,7 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
       <div className="shot" data-shot="overview">{images.overview ? <img src={images.overview.url} alt="" /> : <div className={noGL ? 'ph' : 'ph ph-wait'} role="img" aria-label={t('pres.renderWait')} />}
         {share && <PinLayer token={share.token} surface="overview" roomId={null} pins={feedback.filter(f => f.anchor?.surface === 'overview')} onAdded={added} />}</div>
       <div className="cover-txt"><span className="kicker">{t('pres.kicker')}</span>
-        <div className="cover-main"><h1>{data.name}</h1><p>{t('pres.coverSub', { rooms: pres.rooms.length, area: formatArea(pres.totalArea, units, lang) })}</p></div>
+        <div className="cover-main"><h1 className={data.name.length > 70 ? 'long xlong' : data.name.length > 40 ? 'long' : undefined} title={data.name}>{data.name}</h1><p>{t('pres.coverSub', { rooms: pres.rooms.length, area: formatArea(pres.totalArea, units, lang) })}</p></div>
         {pres.palette.length > 0 && <div className="cover-pal" aria-label={t('pres2.palette')}>{pres.palette.map((c, i) => <i key={i} style={c.material ? { ...swatchStyle(c.material), backgroundColor: c.color } : { background: c.color }} />)}<small>{t('pres2.palette')}</small></div>}
         <dl className="cover-facts"><div><dt>{t('pres2.rooms')}</dt><dd>{pres.rooms.length}</dd></div><div><dt>{t('pres2.area')}</dt><dd>{formatArea(pres.totalArea, units, lang)}</dd></div><div><dt>{t('pres2.prepared')}</dt><dd>{date}</dd></div></dl></div>
       <footer>{num(1)}</footer></section>
