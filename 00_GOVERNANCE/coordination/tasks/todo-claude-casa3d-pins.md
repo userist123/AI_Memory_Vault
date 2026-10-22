@@ -1,5 +1,5 @@
 # todo-claude-casa3d-pins
-STATUS: IN_PROGRESS        UPDATED: 2026-10-22T04:00:00+03:00
+STATUS: BLOCKED_ON_OWNER   UPDATED: 2026-10-22T07:30:00+03:00
 TASK: Casa3D — CI green on PR #304 + PIN-gated client pins on /share
 BRANCH / PR: gemini/casa3d-nextgen-functionality-uiux / PR #304    REMOTE HEAD: 8c8616e76
 DONE (all pushed):
@@ -13,7 +13,10 @@ DONE (all pushed):
 NEXT (in order):
 1. DONE 2026-10-22: main checkout fast-forwarded to 8c8616e76; worktrees D:/w/ci304 and D:/w/cimain removed (both clean),
    D:/w/ci304_pytest.txt deleted.
-2. Check PR #304 CI once.
+2. DONE 2026-10-22 (head d503e6ab9): CI checked once. All Casa3D jobs green (app typecheck/test/build ubuntu+windows,
+   twin-core, CodeQL js/ts/python, Gitleaks, personal data). Red = only item 3 below: 2x "Structural and path hygiene"
+   (3 TEST_ABSOLUTE_PATH) + "enforce" (1 IMPLEMENTATION_ABSOLUTE_PATH claude_usage_report.py). Pending at check time:
+   regression-and-heldout, Analyze (csharp) — not re-polled.
 3. Remaining red, NOT Casa3D (cost-router, other agent has uncommitted edits in these files — do not touch, report to owner):
    - repository hygiene TEST_ABSOLUTE_PATH: 20_TESTS/test_claude_model_router.py, test_cost_router_self_update.py, test_cost_router_skill.py
    - layout IMPLEMENTATION_ABSOLUTE_PATH: 03_IMPLEMENTATION/packages/routing/claude_usage_report.py
