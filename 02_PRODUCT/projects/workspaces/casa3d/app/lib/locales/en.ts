@@ -41,6 +41,7 @@ export const en: Dict = {
   "beam.depth": "Beam depth ({u})", "glassWall.mullions": "Vertical mullions",
   "editor.noRevsYet": "No revisions yet. Use \"Save revision\".", "editor.shareTitle": "View-only link to this revision", "editor.share": "Share",
   "editor.activeShares": "Active view-only links", "editor.revoke": "Revoke",
+  "editor.shareExpires": "expires {date}", "editor.shareNoExpiry": "no expiry", "editor.shareLastOpen": "last opened {date}", "editor.shareNeverOpened": "not opened yet",
   "editor.name": "Name", "editor.type": "Type", "editor.posX": "Position x ({u})", "editor.posZ": "Position z ({u})",
   "editor.roomWallsNote": "The room and its walls are edited separately: after you change the size, adjust the walls too (or the other way round).",
   "editor.autoRoom": "Auto-furnish this room", "editor.addFurniture": "Add furniture", "editor.addToRoom": "Add to room",

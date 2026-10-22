@@ -3,7 +3,7 @@
 // eticheta o pune serverul. Designerul vede alegerile tuturor linkurilor și aplică varianta din editor.
 import { getDb } from './db';
 import { HttpError, getProject } from './repo';
-import { resolveShare } from './share';
+import { resolveShare, shareActive } from './share';
 import { floors } from '../core/levels';
 
 export const CHOICE_LIMITS = { author: 60, note: 500 };
@@ -21,7 +21,7 @@ export async function chooseOption(token: unknown, input: unknown): Promise<Room
   const opt = view.snapshot.roomOptions?.[x.roomId]?.find(o => o.id === x.optionId);
   if (!opt) throw new HttpError(400, 'Varianta nu există în prezentare.');
   const { q } = await getDb(), { rows } = await q(`insert into room_choices(token, project_id, room_id, option_id, label, author, note)
-      select s.token, s.project_id, $2, $3, $4, $5, $6 from shares s where s.token=$1 and s.revoked_at is null
+      select s.token, s.project_id, $2, $3, $4, $5, $6 from shares s where s.token=$1 and ${shareActive('s')}
       on conflict (token, room_id) do update set option_id=excluded.option_id, label=excluded.label, author=excluded.author, note=excluded.note, chosen_at=now() returning *`,
     [token, x.roomId, opt.id, opt.label, author, note]);
   if (!rows[0]) throw new HttpError(404, 'Link inexistent.');

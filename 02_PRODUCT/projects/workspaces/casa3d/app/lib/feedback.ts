@@ -3,7 +3,7 @@
 // și bifarea „rezolvat” sunt doar ale proprietarului proiectului.
 import { getDb } from './db';
 import { HttpError, getProject, getCatalog, getMaterials } from './repo';
-import { resolveShare, type SharedView } from './share';
+import { resolveShare, shareActive, type SharedView } from './share';
 import { presentation, approvalItems } from '../core/presentation';
 
 export const FEEDBACK_VERDICTS = ['like', 'change', 'question'] as const;
@@ -70,7 +70,7 @@ async function validateFeedback(view: SharedView, input: unknown, allowItem: boo
 async function saveFeedback(t: string, f: Valid, anchor: PinAnchor | null): Promise<Feedback> {
   const { tx } = await getDb(), { verdict, author, text, roomId, item } = f;
   return tx(async q => {
-    const { rows: [s] } = await q('select project_id from shares where token=$1 and revoked_at is null for update', [t]);
+    const { rows: [s] } = await q(`select project_id from shares where token=$1 and ${shareActive()} for update`, [t]);
     if (!s) throw new HttpError(404, 'Link inexistent.');
     const approval = verdict === 'like' && item !== null;
     // a doua aprobare a aceluiași produs (ultima părere despre el e deja „îmi place”) nu mai scrie un rând nou
@@ -117,7 +117,7 @@ export async function addApprovals(token: unknown, input: unknown): Promise<Feed
   if (items.some(i => !i)) throw new HttpError(400, 'Produsul nu există în prezentare.');
   const { tx } = await getDb(), t = token as string;
   return tx(async q => {
-    const { rows: [s] } = await q('select project_id from shares where token=$1 and revoked_at is null for update', [t]);
+    const { rows: [s] } = await q(`select project_id from shares where token=$1 and ${shareActive()} for update`, [t]);
     if (!s) throw new HttpError(404, 'Link inexistent.');
     const done = await approvedKeys(q, t, roomId), fresh = items.filter(it => !done.has(it!.key));
     if (!fresh.length) return [];

@@ -41,6 +41,7 @@ export const ro: Dict = {
   "beam.depth": "Înălțime grindă ({u})", "glassWall.mullions": "Montanți verticali",
   "editor.noRevsYet": "Nicio revizie încă. Folosește „Salvează revizia”.", "editor.shareTitle": "Link doar pentru vizualizare, către această revizie", "editor.share": "Partajează",
   "editor.activeShares": "Linkuri de vizualizare active", "editor.revoke": "Revocă",
+  "editor.shareExpires": "expiră {date}", "editor.shareNoExpiry": "fără expirare", "editor.shareLastOpen": "deschis ultima dată {date}", "editor.shareNeverOpened": "nedeschis încă",
   "editor.name": "Nume", "editor.type": "Tip", "editor.posX": "Poziție x ({u})", "editor.posZ": "Poziție z ({u})",
   "editor.roomWallsNote": "Camera și pereții se editează separat: după ce schimbi dimensiunile, ajustează și pereții (sau invers).",
   "editor.autoRoom": "Amenajare automată în cameră", "editor.addFurniture": "Adaugă mobilier", "editor.addToRoom": "Adaugă în cameră",
