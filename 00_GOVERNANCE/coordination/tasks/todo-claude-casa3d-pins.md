@@ -1,31 +1,26 @@
 # todo-claude-casa3d-pins
-STATUS: IN_PROGRESS        UPDATED: 2026-10-22T00:30:00+03:00
-TASK: Casa3D — continuare din todo-antigravity-casa3d.md (NEXT: IBAN fixtures, fuziune PR, pini 3D pe /share)
-BRANCH / PR: gemini/casa3d-nextgen-functionality-uiux / PR #304
-DONE:
-- Deblocat `Structural and path hygiene`: fixtures cu IBAN RO valid mod-97 eliminate din sursă.
-  - `tests/commercial.test.ts`, `tests/contract.test.ts`: IBAN exemplu public DE89… (garda vizează doar RO).
-  - `tests/studio-profile.test.ts`: IBAN RO construit la rulare (`roIban`), aceleași aserțiuni (valid, lowercase, grupare, o cifră greșită respinsă).
-  - Garda nu a fost slăbită, allowlist neatins.
-- Dovezi: `python 30_SCRIPTS/verification/personal_data_guard.py` -> PASS exit 0; vitest 107/107 fișiere, 634/634 teste; `tsc --noEmit` exit 0.
-- `npm ci` rulat în `casa3d/app` (node_modules lipsea în acest checkout).
-- Pini clientului pe /share cu PIN (decizie owner: „Doar cu cod PIN”): design + threat model P1-P11 în
-  00_GOVERNANCE/coordination/projects/CASA3D/SHARE_PINS_DESIGN.md; implementat de vault-worker :
-  lib/share-pin.ts, lib/share-public-http.ts, rute /api/share/[token]/pin|pins, /api/projects/[id]/shares/pin, components/PinLayer.tsx,
-  tests/share-pins.test.ts (15). Raport worker: vitest 108/649, tsc 0. Browser verificat local (PIN greșit/corect, pin plasat, bypass 400).
-- Checkpoint redenumit din todo-claude-casa3d.md (conflict add/add cu PR #257).
-- Fuziune pregătită (owner apasă merge): #305 inclus integral în #304; #304 +77 față de main, mergeable; #257 4 commituri docs neabsorbite; #258 218 commituri, CONFLICTING.
+STATUS: IN_PROGRESS        UPDATED: 2026-10-22T04:00:00+03:00
+TASK: Casa3D — CI green on PR #304 + PIN-gated client pins on /share
+BRANCH / PR: gemini/casa3d-nextgen-functionality-uiux / PR #304    REMOTE HEAD: 8c8616e76
+DONE (all pushed):
+- a8c614b03 IBAN fixtures: personal_data_guard PASS (guard and allowlist untouched).
+- d0e31c2f7 PIN-gated pins (design + threat model P1-P11: 00_GOVERNANCE/coordination/projects/CASA3D/SHARE_PINS_DESIGN.md);
+  Opus review APPROVE, L1/L2 fixed; vitest 108/650, tsc 0; browser: client flow + Editor PIN panel and "pin pe imagine" verified.
+- 8c8616e76 (pushed from clean worktree D:/w/ci304) vault checks: casa3d-build.yml persist-credentials false, README CI tables,
+  CASA3D/CURRENT.md, allowlist (Casa3D docs + agent checkpoints as plain_document), VAULT_STATE 1328 notes / 533 edges (177/178/178).
+- Full 20_TESTS on D:/w/ci304: only extra failure vs main = test_repository_layout (cost-router absolute path);
+  14 failures + 2 errors in b2m/vault_access/import_external_skills are Windows-only and identical on clean main (D:/w/cimain).
 NEXT (in order):
-- Revizie Opus vault-reviewer: APPROVE, P1-P11 PASS; L1 (no-store) și L2 (sameOriginJson pe ruta proprietarului) reparate + test.
-  Final: vitest 108/650, tsc 0, personal_data_guard PASS. Commit + push pe PR #304.
-NEXT:
-- Owner: merge #304 (închide #305 ca absorbit), decizie #257/#258.
-- Neverificat: panoul PIN din Editor vizual; header x-forwarded-proto pe tunelul cloudflared (cookie Secure).
-- Verificare CI pe PR #304 după push.
-- Fuziune PR #305 în main + consolidare #304/#257/#258 — necesită decizia owner-ului (merge = acțiune de autoritate).
-BLOCKERS: none
+1. DONE 2026-10-22: main checkout fast-forwarded to 8c8616e76; worktrees D:/w/ci304 and D:/w/cimain removed (both clean),
+   D:/w/ci304_pytest.txt deleted.
+2. Check PR #304 CI once.
+3. Remaining red, NOT Casa3D (cost-router, other agent has uncommitted edits in these files — do not touch, report to owner):
+   - repository hygiene TEST_ABSOLUTE_PATH: 20_TESTS/test_claude_model_router.py, test_cost_router_self_update.py, test_cost_router_skill.py
+   - layout IMPLEMENTATION_ABSOLUTE_PATH: 03_IMPLEMENTATION/packages/routing/claude_usage_report.py
+   - test_claude_model_router.py::test_project_slug_matches_claude_code_layout (hardcoded Windows slug; fails on Linux CI)
+4. Owner: merge #304 (close #305 as contained), decide #257 (4 docs commits) / #258 (218 commits, conflicting).
+UNVERIFIED: cloudflared tunnel sends x-forwarded-proto https (cookie Secure flag).
 NOTES:
-- Fișierele necomise ale Antigravity (CASA3D_*_AUDIT/INVENTORY/STATUS/EVIDENCE*.md, edit în todo-antigravity-casa3d.md) au fost lăsate neatinse.
-KEY FILES:
-- 02_PRODUCT/projects/workspaces/casa3d/app/tests/{studio-profile,commercial,contract}.test.ts
-- 30_SCRIPTS/verification/personal_data_guard.py
+- Antigravity's uncommitted files (CASA3D_*_AUDIT/INVENTORY/STATUS/EVIDENCE*.md, edits in todo-antigravity-casa3d.md) left untouched.
+- .claude/launch.json has a local "casa3d" dev-server entry (not committed).
+KEY FILES: SHARE_PINS_DESIGN.md; casa3d/app/{lib/share-pin.ts,lib/feedback.ts,components/PinLayer.tsx,tests/share-pins.test.ts}
