@@ -188,3 +188,44 @@ def test_rules_block_keeps_crlf_and_leaves_a_damaged_block_alone(tmp_path):
     r = _run([INSTALL, "--home", home, "--no-hook"], home)
     assert r.returncode == 0 and "damaged" in r.stdout
     assert md.read_text(encoding="utf-8") == damaged
+
+
+def _big_repo(tmp_path):
+    repo = _small_repo(tmp_path)
+    for i in range(100):
+        d = repo / f"pkg{i:02d}"
+        d.mkdir()
+        for j in range(1 + i // 10):
+            (d / f"m{j}.py").write_text("x = 1", encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-qm", "many dirs")
+    return repo
+
+
+def test_hook_caps_the_map_at_1500_chars_by_default_and_keeps_root_and_tests(tmp_path):
+    repo = _big_repo(tmp_path)
+    r = _run([HOOK], tmp_path / "home", env_extra={"CLAUDE_PROJECT_DIR": str(repo)})
+    ctx = json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert len(ctx) <= 1500 and "Root files:" in ctx and "smaller directories omitted" in ctx
+    assert "pkg90/" in ctx  # largest directory kept, smallest trimmed
+    assert "pkg00/" not in ctx
+
+
+def test_hook_map_cap_is_overridable_and_opt_out_prints_nothing(tmp_path):
+    repo = _big_repo(tmp_path)
+    r = _run([HOOK], tmp_path / "home", env_extra={"CLAUDE_PROJECT_DIR": str(repo), "COST_ROUTER_REPO_MAP_MAX_CHARS": "4000"})
+    assert 1500 < len(json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]) <= 4000
+    r = _run([HOOK], tmp_path / "home", env_extra={"CLAUDE_PROJECT_DIR": str(repo), "COST_ROUTER_NO_REPO_MAP": "1"})
+    assert r.returncode == 0 and r.stdout == ""
+
+
+def test_repo_map_only_on_startup_by_default_and_always_restores(tmp_path):
+    repo = _small_repo(tmp_path)
+    env = {"CLAUDE_PROJECT_DIR": str(repo)}
+    out = lambda src, extra=None: _run([HOOK], tmp_path / "home", stdin=json.dumps({"source": src, "session_id": "s1"}),
+                                       env_extra={**env, **(extra or {})}).stdout  # noqa: E731
+    assert "additionalContext" in out("startup")
+    assert out("clear") == "" and out("resume") == ""
+    assert "Root files" not in out("compact")  # compaction: at most the one-line state, never the map
+    for src in ("clear", "compact"):
+        assert "additionalContext" in out(src, {"COST_ROUTER_REPO_MAP": "always"})

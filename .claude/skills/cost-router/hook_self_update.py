@@ -8,10 +8,13 @@ seconds) and runs that copy's `install.py --self-update`, which swaps the skill 
 a lock, refreshes agents the owner has not edited and re-merges the hooks. Offline, slow or broken
 fetches leave the installed copy as it is. It prints nothing (SessionStart stdout would become
 context), never blocks a session, stays under the 60 s hook timeout and always exits 0. Nothing runs
-after `install.py --uninstall` (the disabled marker).
+after `install.py --uninstall` (the disabled marker), and nothing at all unless the owner opted in
+(default OFF since 2026-10-22): COST_ROUTER_SELF_INSTALL=1 or ~/.claude/cost-router.auto-refresh.
 
-Trust model: it runs install.py from the `main` branch of REPO_URL, fixed here (no environment
-override), as the owner approved on 2026-10-10. Tests pass another URL to update() directly.
+Trust model: when opted in it runs install.py from the `main` branch of REPO_URL, fixed here (no
+environment override). `main` is unpinned and unsigned (HIGH-2, open). Tests pass another URL to
+update() directly. Migration: a copy installed before 2026-10-22 has no gate; re-run install.py once
+(or --uninstall) on every machine that registered this hook.
 """
 from __future__ import annotations
 
@@ -33,6 +36,7 @@ SPARSE = (  # no leading "/": Git Bash would rewrite it into a Windows path
 THROTTLE_SECONDS = 3600
 STAMP = "cost-router.last-update"
 DISABLED_MARKER = "cost-router.disabled"
+OPT_IN_MARKER = "cost-router.auto-refresh"  # same opt-in as install.py (default OFF since 2026-10-22)
 
 
 def _rm_readonly(func, path, _exc):
@@ -87,6 +91,13 @@ def update(home: Path, now: float | None = None, url: str = REPO_URL) -> str:
 
 
 def main() -> int:
+    if os.environ.get("COST_ROUTER_OFF", "").strip().lower() in ("1", "true", "yes", "on"):
+        return 0  # same switch as lib/route_state.disabled_by_env(); this hook is standalone (no lib import)
+    if os.environ.get("COST_ROUTER_NO_SELF_INSTALL", "").strip() == "1":
+        return 0  # isolation (tests, benchmark children, owner opt-out): no git, no network, no write under ~/.claude
+    if not (os.environ.get("COST_ROUTER_SELF_INSTALL", "").strip() == "1"
+            or (Path.home() / ".claude" / OPT_IN_MARKER).exists()):
+        return 0  # default OFF (owner, 2026-10-22): no remote fetch without an explicit opt-in (HIGH-2 stays open)
     try:
         sys.stdin.read()
     except Exception:
