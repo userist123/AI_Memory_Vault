@@ -64,7 +64,24 @@ namespace LogAnalyzer.UI.Services
         [ObservableProperty] private bool _isRunning;
 
         public bool HasData => Current is not null;
-        public bool IsEmpty => Current is null;
+        public bool IsEmpty => Current is null && !ControlDone;
+
+        /// <summary>True once a station control finished in this session: the empty-page banner then no longer applies (2026-10-22 PC walkthrough).</summary>
+        [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsEmpty))] private bool _controlDone;
+
+        /// <summary>One line about the last result of this session (control or analysis), for the status bar; empty before any.</summary>
+        [ObservableProperty] private string _lastActivity = "";
+
+        /// <summary>Raised when a control or an analysis result is recorded, with the line for the status bar.</summary>
+        public event Action<string>? ActivityRecorded;
+
+        /// <summary>A station control finished: the empty banner goes away and the status bar gets the summary.</summary>
+        public void RecordControl(string summary)
+        {
+            ControlDone = true;
+            LastActivity = summary;
+            ActivityRecorded?.Invoke(summary);
+        }
 
         /// <summary>Raised after a new result is published (pages refresh what they show from it).</summary>
         public event Action<InvestigationResult>? Published;
@@ -72,11 +89,15 @@ namespace LogAnalyzer.UI.Services
         public void Publish(InvestigationResult r)
         {
             Current = r;
-            Status = $"Date colectate și analizate: {r.Timeline.Count:N0} evenimente, {r.Findings.Count} constatări (caz {r.Case.Info.CaseId}). Toate paginile folosesc acest rezultat.";
+            Status = $"Date colectate și analizate: {r.Timeline.Count.ToString("N0", RoRo)} evenimente, {r.Findings.Count} constatări (caz {r.Case.Info.CaseId}). Toate paginile folosesc acest rezultat.";
+            LastActivity = $"Investigație finalizată: {r.Timeline.Count.ToString("N0", RoRo)} evenimente, {r.Findings.Count} constatări (caz {r.Case.Info.CaseId}).";
+            ActivityRecorded?.Invoke(LastActivity);
             Published?.Invoke(r);
         }
 
-        public void Clear() { Current = null; Status = EmptySubtitle; }
+        private static readonly System.Globalization.CultureInfo RoRo = System.Globalization.CultureInfo.GetCultureInfo("ro-RO");
+
+        public void Clear() { Current = null; ControlDone = false; LastActivity = ""; Status = EmptySubtitle; }
 
         /// <summary>The plan for a role: the incident-response station collects everything (complete profile); the control station collects the standard set and runs the station control.</summary>
         public static CollectAllPlan Plan(StationRole role) => role switch

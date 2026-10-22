@@ -48,7 +48,18 @@
                                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="{StaticResource Surface2Brush}" CornerRadius="10" Padding="10,3" Margin="0,0,8,6">
+                                        <Border CornerRadius="10" Padding="10,3" Margin="0,0,8,6" BorderThickness="1">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="{StaticResource Surface2Brush}"/>
+                                                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Tone}" Value="Critical"><Setter Property="Background" Value="{StaticResource BadgeCriticalBgBrush}"/><Setter Property="BorderBrush" Value="{StaticResource CriticalBrush}"/></DataTrigger>
+                                                        <DataTrigger Binding="{Binding Tone}" Value="Warning"><Setter Property="Background" Value="{StaticResource BadgeHighBgBrush}"/><Setter Property="BorderBrush" Value="{StaticResource HighBrush}"/></DataTrigger>
+                                                        <DataTrigger Binding="{Binding Tone}" Value="Success"><Setter Property="Background" Value="{StaticResource BadgeSuccessBgBrush}"/><Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}"/></DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="{Binding Label}" FontWeight="SemiBold" local:TermTip.Auto="True"/>
                                                 <TextBlock Text="{Binding Count}" Margin="6,0,0,0"/>

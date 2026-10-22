@@ -392,9 +392,11 @@ namespace LogAnalyzer.UI.ViewModels
                 GapsText = _report.Facts.Gaps.Count == 0 ? "" :
                     "Surse lipsă sau incomplete: " + string.Join("; ", _report.Facts.Gaps.Select(g => $"{g.Artifact} ({g.Reason})"));
                 Status = _report.Facts.IsAdministrator
-                    ? $"Control finalizat: {_report.Checks.Count} verificări, {_report.Actions.Count} acțiuni în cronologie. Dublu-click pe orice rând pentru detalii."
+                    ? $"Control finalizat: {_report.Checks.Count} verificări, {_report.Actions.Count} acțiuni în cronologie.{DoubleClickHint}"
                     : "Control finalizat FĂRĂ drepturi de administrator: jurnalul Security și o parte din setări nu au putut fi citite (verificările respective sunt NEDETERMINATE). Reporniți aplicația ca administrator.";
                 if (!auditedStart || !auditedFinish || !auditedHashing) Status += " ATENȚIE: controlul nu a putut fi trecut în jurnalul de audit (vezi avertismentul de sus).";
+                // 2026-10-22 PC walkthrough: the empty-data banner and the status bar must follow a finished control
+                LogAnalyzer.UI.Services.CollectAllState.Instance.RecordControl("Control stație finalizat: " + Summary + ".");
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
             {
@@ -520,7 +522,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (_report is null) { Status = "Rulați întâi controlul."; return null; }
             var ws = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
-            if (ws is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return null; }
+            if (ws is null) { Status = LogAnalyzer.UI.Services.LiveCase.ReportScopeRequiredMessage; return null; }
             if (Result is null) BuildResult();
             var (_, pdf) = ControlReportPdf.SaveToCase(_report, ws, Inspector, Notes, BuildHeader(_report), Result, ManualItems.Select(m => m.ToResult()).ToList());
             string sha;

@@ -332,3 +332,15 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   re-verification valid (624 probes). More findings: J. two parallel forms (wizard „Pasul 1 din 3” + full form with the scope fields);
   K. empty grey panels before a run; N. „257,033” English thousands separator; O. „analiză: Parțial (…)” capital mid-sentence;
   P. chain severities „[CRITICAL]/[HIGH]” in English; Q. status bar still „Nicio analiză încă.” after the investigation (confirms B).
+
+## Home/investigation text fixes (2026-10-22, de pe PC-ul real)
+- A: `CollectAllState.IsEmpty` e fals și după un control (`RecordControl`), deci bannerul „Nu există încă date” dispare.
+- B/Q: bara de stare primește linia ultimului control/investigații (`ActivityRecorded` -> `MainViewModel.StatusMessage`).
+- C: `HomeViewModel` înscrie în „Cazuri recente” cazul creat de investigație și cazul LIVE al controlului.
+- D: `HomeStatus` scoate „Dublu-click pe orice rând”; pagina Control stație o păstrează (`DoubleClickHint`).
+- E: `LiveCase.ReportScopeRequiredMessage` (raportul nu s-a generat; controlul și ancora sunt salvate) în `GenerateReport`; `ScopeRequiredMessage` rămâne unde nu s-a salvat nimic.
+- F: `ControlPeriodStart` arată ora locală `dd.MM.yyyy HH:mm, ora stației`.
+- G: chip-urile de rezultat au ton (`StatusCount.Tone`) cu perii Badge*/Critical/High/Success din teme.
+- H: titlul `ScopeDialog` = „Scopul cazului stației”.
+- N/O/P: rezumat investigație cu ro-RO (257.033), stare cu litere mici, severitate în română (`RoLabels.Severity`) în lanțuri și secvențe; valorile stocate/exportate neschimbate.
+- Teste: `HomeTextFixes20261022Tests` + asert în `QuickControlPeriodTests`. App 677, UI 354(+1 skip), Dfir 2391(+31 skip) verzi. De verificat pe PC cu captură.

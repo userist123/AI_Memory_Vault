@@ -38,6 +38,9 @@ public sealed class QuickControlPeriodTests : IDisposable
         Assert.Equal(20, p.Days);
         Assert.Equal(Now.AddDays(-20), p.StartUtc);
         Assert.Contains("jurnalul sigilat", p.Basis);
+        // 2026-10-22 PC walkthrough: local time in the Romanian format, not UTC in ISO format
+        Assert.Matches(@"\(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}, ora stației\)", p.Basis);
+        Assert.DoesNotContain("UTC", p.Basis);
     }
 
     [Fact]

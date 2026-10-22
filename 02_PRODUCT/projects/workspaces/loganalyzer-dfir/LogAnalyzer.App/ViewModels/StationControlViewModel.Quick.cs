@@ -46,7 +46,17 @@ namespace LogAnalyzer.UI.ViewModels
     }
 
     /// <summary>One result chip: the result word as printed (CONFORM, DE VERIFICAT…) and how many checks have it.</summary>
-    public sealed record StatusCount(string Label, int Count);
+    public sealed record StatusCount(string Label, int Count, string Tone = "Muted")
+    {
+        /// <summary>Colour tone of a result word, matching the PDF tiles: NECONFORM red, DE VERIFICAT orange, CONFORM green, the rest muted.</summary>
+        public static string ToneOf(ControlStatus s) => s switch
+        {
+            ControlStatus.Neconform => "Critical",
+            ControlStatus.DeVerificat => "Warning",
+            ControlStatus.Conform => "Success",
+            _ => "Muted",
+        };
+    }
 
     public partial class StationControlViewModel : IStationQuickControl
     {
@@ -54,14 +64,18 @@ namespace LogAnalyzer.UI.ViewModels
         public const string HomeHint = "Apăsați „Fă controlul stației” ca să verificați stația. Controlul doar citește; nu modifică stația.";
 
         /// <inheritdoc cref="IStationQuickControl.HomeStatus"/>
-        public string HomeStatus => Array.IndexOf(FlowHints, Status) >= 0 || Status.Contains("„Înainte”", StringComparison.Ordinal) ? HomeHint : Status;
+        public string HomeStatus => Array.IndexOf(FlowHints, Status) >= 0 || Status.Contains("„Înainte”", StringComparison.Ordinal) ? HomeHint
+            : Status.Replace(DoubleClickHint, "", StringComparison.Ordinal);   // Home has no rows to double-click (2026-10-22 PC walkthrough)
+
+        /// <summary>The hint appended to the result line; only the Control stație page has the grid it refers to.</summary>
+        public const string DoubleClickHint = " Dublu-click pe orice rând pentru detalii.";
 
         partial void OnStatusChanged(string value) => OnPropertyChanged(nameof(HomeStatus));
 
         /// <summary>The result chips of the last control, worst first; empty before the first control.</summary>
         public System.Collections.Generic.IReadOnlyList<StatusCount> ResultCounts =>
             _report is null ? [] : new[] { ControlStatus.Neconform, ControlStatus.DeVerificat, ControlStatus.Nedeterminat, ControlStatus.Conform, ControlStatus.NuSeAplica }
-                .Select(st => new StatusCount(ControlReportPdf.StatusText(st), _report.Count(st))).Where(c => c.Count > 0 || c.Label != ControlReportPdf.StatusText(ControlStatus.NuSeAplica)).ToList();
+                .Select(st => new StatusCount(ControlReportPdf.StatusText(st), _report.Count(st), StatusCount.ToneOf(st))).Where(c => c.Count > 0 || c.Label != ControlReportPdf.StatusText(ControlStatus.NuSeAplica)).ToList();
 
         partial void OnSummaryChanged(string value) => OnPropertyChanged(nameof(ResultCounts));
 
