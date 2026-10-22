@@ -219,6 +219,8 @@ namespace LogAnalyzer.UI.ViewModels
         partial void OnReportAudienceIndexChanged(int value) => OnPropertyChanged(nameof(ReportAudienceDescription));
         [ObservableProperty] private string _log = "";
         [ObservableProperty] private bool _isBusy;
+        /// <summary>True once a result (a run, or a case opened from disk) is shown; before it, „Simplu” shows one sentence instead of empty result tabs.</summary>
+        [ObservableProperty] private bool _hasResult;
         /// <summary>Operation state of the last run (UX contract §20), in Romanian. "Finalizat" does not mean any finding is verified.</summary>
         [ObservableProperty] private string _operationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[OperationState.NotStarted];
         [ObservableProperty] private string _summary = "";
@@ -291,7 +293,22 @@ namespace LogAnalyzer.UI.ViewModels
         {
             0 => string.IsNullOrWhiteSpace(IntakeFolder) || !Directory.Exists(IntakeFolder) ? "Alegeți folderul cu probele aduse de la stație." : null,
             1 => IntakeScan is { HasAnything: true } ? null : "Folderul nu conține probe pe care aplicația să le poată importa; alegeți alt folder.",
-            _ => BuildScope().MissingFields() is { Count: > 0 } m ? "Scopul cazului este incomplet; câmpuri lipsă: " + string.Join(", ", m) : null,
+            _ => BuildScope().MissingFields() is { Count: > 0 } m ? "Scopul cazului este incomplet; câmpuri lipsă: " + string.Join(", ", m.Select(ScopeFieldRo)) : null,
+        };
+
+        /// <summary>The field names of <see cref="CaseScope.MissingFields"/> in Romanian: in „Simplu” the wizard is the only form, and its message must not be in English.</summary>
+        internal static string ScopeFieldRo(string field) => field switch
+        {
+            "purpose" => "scopul",
+            "period.from" => "perioada de la",
+            "period.to" => "perioada până la",
+            "period (to precedes from)" => "perioada (data de sfârșit e înaintea celei de început)",
+            "systems in scope" => "sistemele în scop",
+            "approver" => "aprobatorul",
+            "legal basis" => "temeiul",
+            "system category (network)" => "categoria sistemului (rețea)",
+            "system category (classified/unclassified)" => "nivelul de clasificare",
+            _ => field,
         };
 
         /// <summary>
@@ -407,6 +424,7 @@ namespace LogAnalyzer.UI.ViewModels
         private void ShowResult(InvestigationResult result, bool opened = false)
         {
             _result = result;
+            HasResult = true;
             SelectedFinding = null;
             _evidenceContext = BuildEvidenceContext(result);
             Findings.Clear();

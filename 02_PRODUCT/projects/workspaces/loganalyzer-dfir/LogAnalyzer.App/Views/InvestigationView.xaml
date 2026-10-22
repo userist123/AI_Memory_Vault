@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:LogAnalyzer.UI.Views"
              xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls"
-             xmlns:views="clr-namespace:LogAnalyzer.UI.Views">
+             xmlns:views="clr-namespace:LogAnalyzer.UI.Views"
+             xmlns:services="clr-namespace:LogAnalyzer.UI.Services">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
@@ -55,19 +56,72 @@
                 </StackPanel>
                 <StackPanel>
                     <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IntakeStepIndex}" Value="2"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
-                    <TextBlock Text="Completați scopul cazului în formularul de mai jos, apoi apăsați „Pornește analiza”." Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                    <!-- Expert: the full form is below the wizard -->
+                    <TextBlock Text="Completați scopul cazului în formularul de mai jos, apoi apăsați „Pornește analiza”." Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap">
+                        <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsExpert, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                    </TextBlock>
+                    <!-- Simplu (owner decision 2026-10-22): the wizard is the only form, so the scope of the case is asked here; same fields and rules as the full form -->
+                    <StackPanel>
+                        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                        <TextBlock Text="Completați scopul cazului, apoi apăsați „Pornește analiza”. Toate câmpurile sunt obligatorii în afară de numele cazului." Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                        <WrapPanel Margin="0,0,0,6">
+                            <TextBlock Text="Nume caz (opțional):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Nume caz" Text="{Binding CaseName, UpdateSourceTrigger=PropertyChanged}" Width="280"/>
+                        </WrapPanel>
+                        <WrapPanel Margin="0,0,0,6">
+                            <TextBlock Text="De ce (scop):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Scopul cazului" Text="{Binding ScopePurpose, UpdateSourceTrigger=PropertyChanged}" Width="260" Margin="0,0,10,0"/>
+                            <TextBlock Text="Cine aprobă:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Aprobator" Text="{Binding ScopeApprover, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                        </WrapPanel>
+                        <WrapPanel Margin="0,0,0,6">
+                            <TextBlock Text="Pe ce sisteme:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Sisteme în scop" Text="{Binding ScopeSystems, UpdateSourceTrigger=PropertyChanged}" Width="260" Margin="0,0,10,0"/>
+                            <TextBlock Text="Perioada de la:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <DatePicker AutomationProperties.Name="Perioada de la" SelectedDate="{Binding ScopeFrom}" Width="130" Margin="0,0,10,0"/>
+                            <TextBlock Text="până la:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <DatePicker AutomationProperties.Name="Perioada până la" SelectedDate="{Binding ScopeTo}" Width="130"/>
+                        </WrapPanel>
+                        <WrapPanel>
+                            <TextBlock Text="Temei:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <ComboBox AutomationProperties.Name="Temei legal" ItemsSource="{Binding LegalBases}" SelectedIndex="{Binding LegalBasisIndex}" Width="100" Margin="0,0,10,0"/>
+                            <TextBlock Text="Sistemul este:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <ComboBox AutomationProperties.Name="Categoria sistemului" ItemsSource="{Binding NetworkCategories}" SelectedIndex="{Binding NetworkIndex}" Width="140" Margin="0,0,6,0"/>
+                            <ComboBox AutomationProperties.Name="Nivel de clasificare" ItemsSource="{Binding ClassificationLevels}" SelectedIndex="{Binding ClassificationIndex}" Width="110"/>
+                        </WrapPanel>
+                    </StackPanel>
                 </StackPanel>
                 <TextBlock Text="{Binding IntakeError}" Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,6,0,0"/>
                 <WrapPanel Margin="0,8,0,0">
                     <Button Content="Înapoi" Command="{Binding IntakeBackCommand}" IsEnabled="{Binding IntakeCanGoBack}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="{Binding IntakeNextText}" AutomationProperties.Name="Înainte sau Pornește analiza" Command="{Binding IntakeNextCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Oprește" Command="{Binding IntakeStopCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="De la început" Command="{Binding IntakeRestartCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                    <Button Content="De la început" Command="{Binding IntakeRestartCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Oprește analiza" Command="{Binding CancelCommand}" Style="{StaticResource DangerButtonStyle}" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"
+                            ToolTip="Oprește analiza care rulează acum; ce s-a colectat până aici rămâne în caz."/>
                 </WrapPanel>
+                <!-- Simplu: the progress of the run, only when there is something to say (the form's own log box is hidden with the form) -->
+                <TextBox AutomationProperties.Name="Jurnalul investigației (progres)" Text="{Binding Log, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Height="110" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                         FontFamily="Consolas" FontSize="12" Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="8" Margin="0,8,0,0">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Log}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                                <DataTrigger Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
             </StackPanel>
         </Border>
 
-        <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,12">
+        <!-- Expert: the full form. Simplu (owner decision 2026-10-22): only the wizard above; the form is hidden, so there are not two parallel forms -->
+        <Border Margin="0,0,0,12">
+            <Border.Style>
+                <Style TargetType="Border" BasedOn="{StaticResource ObsidianCardStyle}">
+                    <Style.Triggers><DataTrigger Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
+                </Style>
+            </Border.Style>
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
@@ -121,7 +175,37 @@
         </Border>
         </StackPanel>
 
+        <!-- Simplu, before the first result: one sentence instead of empty tabs -->
+        <TextBlock Grid.Row="2" Text="Rezultatele apar aici după ce porniți investigația." Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" Margin="4,8,0,0">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"/>
+                                <Condition Binding="{Binding HasResult}" Value="False"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
         <TabControl AutomationProperties.Name="Rezultatele investigației" Grid.Row="2" ctrl:PageFill.MinHeight="360" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
+            <TabControl.Style>
+                <Style TargetType="TabControl">
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"/>
+                                <Condition Binding="{Binding HasResult}" Value="False"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TabControl.Style>
             <TabItem Header="Lanțul incidentului" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <TextBlock DockPanel.Dock="Top" Text="{Binding Summary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>

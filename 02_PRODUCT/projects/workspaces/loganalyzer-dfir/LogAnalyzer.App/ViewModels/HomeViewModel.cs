@@ -47,6 +47,8 @@ namespace LogAnalyzer.UI.ViewModels
             Profile = profile ?? RoleProfiles.For(StationRoleContext.Role, new UnclassifiedEditionProfile(), AppModeContext.Current.Mode);
             foreach (var i in Profile.PrimaryIntents) PrimaryIntents.Add(new HomeIntentView(i));
             foreach (var i in Profile.MoreIntents) MoreIntents.Add(new HomeIntentView(i));
+            RefreshShownIntents();
+            System.ComponentModel.PropertyChangedEventManager.AddHandler(LogAnalyzer.UI.Services.LanguageLevelState.Instance, OnLanguageLevelChanged, nameof(LogAnalyzer.UI.Services.LanguageLevelState.IsSimple));
             _investigation.StateChanged += (_, _) => { Refresh(); RecordSessionCase(); };
             ClockMemory.WarningChanged += () =>
             {
@@ -110,6 +112,29 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<HomeIntentView> MoreIntents { get; } = new();
 
         /// <summary>
+        /// What Home shows as the big actions. Owner decision 2026-10-22: in „Simplu” the big „Fă controlul stației” button is the one main action, so the card
+        /// „Verifică această stație” (the same action) is left out while that button exists; Expert shows both, as before. Without the quick control the card is the only way
+        /// to the control and stays. <see cref="PrimaryIntents"/> keeps the role's full data.
+        /// </summary>
+        public ObservableCollection<HomeIntentView> ShownPrimaryIntents { get; } = new();
+
+        private void RefreshShownIntents()
+        {
+            bool dropControlCard = !LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert && ShowQuickControl;
+            var wanted = PrimaryIntents.Where(i => !(dropControlCard && i.Key == "check_station")).ToList();
+            if (wanted.SequenceEqual(ShownPrimaryIntents)) return;
+            ShownPrimaryIntents.Clear();
+            foreach (var i in wanted) ShownPrimaryIntents.Add(i);
+        }
+
+        /// <summary>The one line under the big button: what happens when it is pressed.</summary>
+        public const string WhatHappensQuickControlText = "Ce se întâmplă: verifică stația pe perioada de mai jos și arată rezultatul aici. Aplicația doar citește; nu modifică nimic pe stație.";
+        public string WhatHappensQuickControl => WhatHappensQuickControlText;
+
+        /// <summary>„Ghidul de început” (3 ecrane): reopened from Home at any time.</summary>
+        [RelayCommand] private void OpenGuide() => FirstRunGuideLauncher.Show();
+
+        /// <summary>
         /// Titles of the primary intents (U22, now per role). The question chooser ("A rulat un program?") belongs to WP7; its hook is
         /// <see cref="ChooseQuestion"/>, which does nothing yet.
         /// </summary>
@@ -135,6 +160,16 @@ namespace LogAnalyzer.UI.ViewModels
 
         /// <summary>The station control the Home panel drives; null when the page was built without it (tests, other roles).</summary>
         public IStationQuickControl? QuickControl { get; }
+
+        // a named method, not a lambda: the weak event manager keeps only a weak reference to the handler's target, and a lambda may live in a compiler-made closure that is collected at once
+        private void OnLanguageLevelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            // the level changes from the header switch or at sign-in (the UI thread); a change from another thread is handed to the thread that owns the bound collection
+            if (_ownerDispatcher is { } d && !d.CheckAccess()) d.BeginInvoke(new Action(RefreshShownIntents));
+            else RefreshShownIntents();
+        }
+
+        private readonly System.Windows.Threading.Dispatcher? _ownerDispatcher = System.Windows.Threading.Dispatcher.FromThread(System.Threading.Thread.CurrentThread);
 
         /// <summary>The one-click panel shows when this PC offers „Verifică această stație” and the control is wired.</summary>
         public bool ShowQuickControl => QuickControl is not null && Profile.PrimaryIntents.Concat(Profile.MoreIntents).Any(i => i.Key == "check_station" && i.Enabled);

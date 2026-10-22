@@ -24,7 +24,7 @@
         </DockPanel>
 
         <StackPanel Grid.Row="1" MaxWidth="900" HorizontalAlignment="Left">
-            <ctrl:NoDataPanel HideAfterControl="True"/>
+            <ctrl:NoDataPanel HideAfterControl="True" HideInSimpleLevel="True"/>
         <!-- WP18 S4: the guided control in three steps -->
         <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,12">
             <StackPanel>
@@ -41,9 +41,26 @@
                     <TextBlock Text="{Binding PreviousNote}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                     <TextBlock Text="{Binding PostureLine}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/>
                 </StackPanel>
-                <!-- step 2: the period -->
+                <!-- step 2: the previous proces-verbal (optional; owner decision 2026-10-22: the anchor code is asked here, not first on Home) -->
                 <StackPanel>
                     <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding FlowStepIndex}" Value="1"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                    <TextBlock Text="{Binding AnchorWhyText}" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                    <WrapPanel Margin="0,4,0,0">
+                        <TextBlock Text="Codul de ancorare de la controlul anterior:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <local:HelpButton Term="anchor_code" Margin="0,0,6,0"/>
+                        <TextBox AutomationProperties.Name="Codul de ancorare de la controlul anterior, de pe procesul-verbal semnat" Text="{Binding PreviousAnchorCode, UpdateSourceTrigger=PropertyChanged}"
+                                 Width="230" FontFamily="Consolas" ToolTip="{Binding PreviousAnchorHelp}"/>
+                    </WrapPanel>
+                    <TextBlock Text="{Binding PreviousAnchorHelp}" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+                    <WrapPanel Margin="0,4,0,0">
+                        <Button Content="Folosește codul propus de stație (nesigur)" Command="{Binding UseStationAnchorCodeCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,0"
+                                ToolTip="Completează câmpul cu codul pe care stația și-l amintește de la ultimul control. Nu înlocuiește procesul-verbal: cine a rescris jurnalul poate schimba și propunerea; verificările A11 și A13 vor spune că nu a fost tastat de pe hârtie."/>
+                        <TextBlock Text="{Binding StationAnchorHint}" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" VerticalAlignment="Center" MaxWidth="560"/>
+                    </WrapPanel>
+                </StackPanel>
+                <!-- step 3: the period -->
+                <StackPanel>
+                    <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding FlowStepIndex}" Value="2"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
                     <WrapPanel>
                         <ComboBox AutomationProperties.Name="Perioada controlului" ItemsSource="{Binding PeriodOptions}" DisplayMemberPath="Label" SelectedValuePath="Choice" SelectedValue="{Binding PeriodChoice}" Width="220" Margin="0,0,10,0"/>
                         <StackPanel Orientation="Horizontal" Visibility="{Binding IsCustomPeriod, Converter={StaticResource BoolToVis}}">
@@ -53,9 +70,9 @@
                     </WrapPanel>
                     <TextBlock Text="{Binding PeriodNote}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                 </StackPanel>
-                <!-- step 3: the procedures, the inspector, then start -->
+                <!-- step 4: the procedures, the inspector, then start -->
                 <StackPanel>
-                    <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding FlowStepIndex}" Value="2"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                    <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding FlowStepIndex}" Value="3"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
                     <TextBlock Text="{Binding ProfileLine}" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
                     <ItemsControl ItemsSource="{Binding ProfileSections}" Margin="0,4,0,6">
                         <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
@@ -76,18 +93,6 @@
                         <TextBox AutomationProperties.Name="Marcajul raportului, introdus manual" Text="{Binding MarkingLevel, UpdateSourceTrigger=PropertyChanged}" Width="180"/>
                     </WrapPanel>
                     <TextBlock Text="{Binding MarkingNote}" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
-                    <WrapPanel Margin="0,8,0,0">
-                        <TextBlock Text="Codul de ancorare de la controlul anterior:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <local:HelpButton Term="anchor_code" Margin="0,0,6,0"/>
-                        <TextBox AutomationProperties.Name="Codul de ancorare de la controlul anterior, de pe procesul-verbal semnat" Text="{Binding PreviousAnchorCode, UpdateSourceTrigger=PropertyChanged}"
-                                 Width="230" FontFamily="Consolas" ToolTip="{Binding PreviousAnchorHelp}"/>
-                    </WrapPanel>
-                    <TextBlock Text="{Binding PreviousAnchorHelp}" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
-                    <WrapPanel Margin="0,4,0,0">
-                        <Button Content="Folosește codul propus de stație (nesigur)" Command="{Binding UseStationAnchorCodeCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,0"
-                                ToolTip="Completează câmpul cu codul pe care stația și-l amintește de la ultimul control. Nu înlocuiește procesul-verbal: cine a rescris jurnalul poate schimba și propunerea; verificările A11 și A13 vor spune că nu a fost tastat de pe hârtie."/>
-                        <TextBlock Text="{Binding StationAnchorHint}" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" VerticalAlignment="Center" MaxWidth="560"/>
-                    </WrapPanel>
                 </StackPanel>
 
                 <TextBlock Text="{Binding FlowError}" Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,6,0,0"/>

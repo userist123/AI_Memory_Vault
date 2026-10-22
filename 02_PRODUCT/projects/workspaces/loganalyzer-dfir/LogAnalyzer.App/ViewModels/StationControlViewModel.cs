@@ -8,7 +8,9 @@ using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LogAnalyzer.Core.Services.Connectivity;
+using LogAnalyzer.Dfir.Case;
 using LogAnalyzer.Dfir.Flow;
+using LogAnalyzer.Dfir.Language;
 using LogAnalyzer.Dfir.Profile;
 using LogAnalyzer.Dfir.Windows.Audit;
 using Microsoft.Win32;
@@ -94,7 +96,8 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>The line under the wizard for each step (2026-10-22 walkthrough: the first step's hint stayed on steps 2 and 3).</summary>
         private static readonly string[] FlowHints =
         [
-            "Apăsați „Înainte” ca să alegeți perioada. Controlul doar citește; nu modifică stația.",
+            "Apăsați „Înainte” ca să continuați, apoi alegeți perioada. Controlul doar citește; nu modifică stația.",
+            "Dacă aveți procesul-verbal al controlului anterior, scrieți codul de ancorare de pe el (se poate lăsa gol), apoi apăsați „Înainte” ca să alegeți perioada.",
             "Alegeți perioada de verificare, apoi apăsați „Înainte” ca să alegeți procedurile.",
             "Apăsați „Pornește controlul” ca să rulați verificarea. Controlul doar citește; nu modifică stația.",
         ];
@@ -110,6 +113,7 @@ namespace LogAnalyzer.UI.ViewModels
             _flow = new GuidedFlow("Verifică această stație",
             [
                 new FlowStep("station", "Ce stație?", "Controlul se face pe acest calculator. Aplicația doar citește; nu modifică nimic."),
+                new FlowStep("anchor", "Procesul-verbal anterior (opțional)", "Aveți procesul-verbal al controlului anterior?"),
                 new FlowStep("period", "Ce perioadă?", "Alegeți perioada pe care o verificați.", ValidatePeriod),
                 new FlowStep("procedures", "Ce proceduri?", "Acestea sunt procedurile după care se judecă stația. O secțiune nedefinită nu poate da CONFORM."),
             ]);
@@ -122,6 +126,28 @@ namespace LogAnalyzer.UI.ViewModels
         }
 
         public IReadOnlyList<PeriodOption> PeriodOptions { get; }
+
+        /// <summary>One sentence under the optional anchor question: why the code matters, and that it may stay empty.</summary>
+        public const string AnchorWhy = "Dacă îl aveți, scrieți codul de ancorare de pe el: controlul verifică atunci dacă jurnalul stației a rămas același de la acel raport (continuitatea față de controlul anterior). Câmpul se poate lăsa gol, de exemplu la primul control.";
+        public string AnchorWhyText => AnchorWhy;
+
+        /// <summary>
+        /// The line about earlier controls. „Ultimul control” means one thing on every page: the last control FINISHED, taken from the sealed audit (<see cref="ControlPeriodStart.LastFinished"/>),
+        /// in the format Home uses. The newest saved report folder is named separately, only when it is a different moment (a report is saved shortly around the end of its control).
+        /// </summary>
+        public static string PreviousNoteText(int savedCount, DateTimeOffset? lastFinished, DateTimeOffset? newestSaved, int unreadable)
+        {
+            string problems = unreadable > 0 ? $" Foldere necitite: {unreadable}." : "";
+            if (savedCount == 0 && lastFinished is null) return "Niciun control anterior salvat pe această stație." + problems;
+            var parts = new System.Collections.Generic.List<string>();
+            if (lastFinished is { } done) parts.Add($"ultimul control terminat: {ControlPeriodStart.Describe(done)}");
+            bool sameMoment = lastFinished is { } f && newestSaved is { } s && (f - s).Duration() <= TimeSpan.FromMinutes(30);
+            if (newestSaved is { } saved && !sameMoment) parts.Add($"ultimul raport salvat: {ControlPeriodStart.Describe(saved)}");
+            var head = savedCount == 0 ? "Niciun raport de control salvat" : RoText.Count(savedCount, "control anterior", "controale anterioare");
+            var line = head + (parts.Count > 0 ? "; " + string.Join("; ", parts) : "") + ".";
+            if (lastFinished is null) line += " Jurnalul sigilat nu are un control terminat verificabil.";
+            return line + problems;
+        }
         [ObservableProperty] private ControlPeriodChoice _periodChoice = ControlPeriodChoice.SinceLastControl;
         [ObservableProperty] private int _customDays = 30;
         [ObservableProperty] private string _periodNote = "";
@@ -193,8 +219,8 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 var list = ControlArchive.List(LogAnalyzer.UI.Services.LiveCase.Root, out var problems);
                 foreach (var p in list) PreviousControls.Add(p);
-                PreviousNote = list.Count == 0 ? "Niciun control anterior salvat pe această stație."
-                    : $"{list.Count} controale anterioare; cel mai recent: {list[0].Label}." + (problems.Count > 0 ? $" Foldere necitite: {problems.Count}." : "");
+                LogAnalyzer.UI.Services.CollectAllState.Instance.HasEarlierControls = list.Count > 0;   // the empty-page offer is hidden by the same list
+                PreviousNote = PreviousNoteText(list.Count, ControlPeriodStart.LastFinished(AuditLogPath(), DateTimeOffset.UtcNow), list.Count > 0 ? list[0].CollectedUtc : null, problems.Count);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { PreviousNote = "Controalele anterioare nu au putut fi citite: " + ex.Message; }
         }
@@ -242,7 +268,7 @@ namespace LogAnalyzer.UI.ViewModels
                 Status = "Scopul cazului nu a fost completat; veți fi întrebat din nou la salvarea raportului.";
             if (!_flow.Next()) { RaiseFlow(); return; }
             SetFlowHint();
-            if (_flow.StepIndex == 2 && !wasLast) LoadProfileSections();
+            if (_flow.StepIndex == 3 && !wasLast) LoadProfileSections();
             RaiseFlow();
             if (wasLast && _flow.Completed)
             {
