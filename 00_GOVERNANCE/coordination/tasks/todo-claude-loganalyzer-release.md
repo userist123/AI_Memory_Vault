@@ -161,3 +161,16 @@ C. Status bar: the 35 came from the anomaly/YARA heuristics (baseline 5) over ev
 D. Home: `HomeView.xaml` binds `QuickControl.HomeStatus` (wizard hints replaced by `StationControlViewModel.HomeHint`).
 Tests: Dfir 2294/31/0, App 661, UI 354/1, Edition 45 (build 0 errors). New `App.Tests/UiWalkthroughRound2Tests.cs`.
 Open: needs Opus vault-reviewer (clone detection is security-relevant); live re-check on the station not done; VM row HomeStatus not UI-verified.
+
+## Real-PC walkthrough round 3 (2026-10-22, build 8802d7d92 installed, hash-checked)
+Verified fixed on screen: Romanian window title; banner title != subtitle; home hint; status bar "Nicio analiză încă."; "ediția Standalone";
+"Alegeți data" watermark; transfer register points to „Monitor dispozitive” and calls a disk "mediu de stocare"; monitor columns readable,
+horizontal scroll, scope text once.
+Still wrong (real data, owner's station):
+1. One physical device -> several rows: the Razer keyboard (VID 1532 PID 009C) has 3 rows, a (Standard keyboards) 258A/013B keyboard 2 rows
+   (multi-interface HID collections); Kingston, Samsung SSD and the Razer keyboard each have a "Conectat" and a "Deconectat" row.
+2. The Samsung SSD's USB-SATA bridge (VID 0BDA PID 9201, Realtek; "USB Mass Storage Device", same serial as the SSD) is shown as
+   "Telefon / tabletă" and as a separate device.
+3. "Integrated Camera" (Realtek 04F2/B83E, internal laptop camera) is listed although the scope says integrated devices are not shown.
+4. Transfer register grid: after the width change the first columns (Nr., Data, Direcție) collapse ("TR", "20", "ieș").
+5. Not yet checked: whether the Alertă column still shows "posibilă clonă" on those rows (the grid could not be scrolled right by automation).
