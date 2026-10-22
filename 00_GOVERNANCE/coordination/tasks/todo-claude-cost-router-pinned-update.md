@@ -50,7 +50,7 @@ malformed / wrong schema / non-40-hex commit; P11 eol conversion turning a good 
 
 ## Done
 - [x] worker implementation + failing-first tests  - [x] main re-run  - [x] opus review (2 rounds, SAFE)
-- [x] targeted + redteam + regression suites  - [x] full suite once  - [ ] privacy scan, commit, push, draft PR, CI once
+- [x] targeted + redteam + regression suites  - [x] full suite once  - [x] privacy scan, commit, push, draft PR, CI once
 
 ## Notes
 - 2026-10-22 worker round 1 (TEST_VERIFIED by main): lib/release_pin.py (SPARSE, safe_rel, load_pin, generate CLI,
@@ -94,3 +94,9 @@ malformed / wrong schema / non-40-hex commit; P11 eol conversion turning a good 
   -> reproduce on Linux semantics (paths/shell), fix on branch claude/overnight-reliability-p6-p7, then rebase #317.
   (c) "enforce" check: read its log. NEXT SESSION: start from this note; worktree D:/w/costrouter-p9 (checkout the p6-p7
   branch for the fix; C: is full -> temp on D:).
+- CI fixes: #313 1978dcf11 (hygiene markers; benchmark harness pytest -B vs stale .pyc on Linux; fake `routing` made a
+  regular package so the CI editable install cannot shadow it) -> hygiene + regression-and-heldout PASS. Merged into #317
+  (f05303e13) + 3c2669d01 (hygiene marker on the C:/x bad-key probe). Last check: #313 40 pass / 2 pending (enforce,
+  phase13-contract); #317 8/8 pass.
+- NEXT (owner): confirm the 2 pending #313 jobs; mark #313 then #317 ready for review/merge; after merge generate the first
+  pin (`lib/release_pin.py generate --commit <merged sha> --seq 1`), commit it separately, install with --source-ref.
