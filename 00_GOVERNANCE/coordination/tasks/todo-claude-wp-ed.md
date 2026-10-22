@@ -1,5 +1,6 @@
 # todo-claude-wp-ed
-STATUS: IN_PROGRESS        UPDATED: 2026-10-08
+STATUS: DONE   UPDATED: 2026-10-22T17:30:00+03:00
+CLOSED-NOTE (claude, 2026-10-22T17:30:00+03:00): PR1 #234 merged 2026-10-09; PR2 WP-PKG #236 merged 2026-10-09. Owner questions below were not re-checked.
 TASK: LogAnalyzer WP-ED (edition split P1 classified / P2-P3 unclassified), then WP-PKG (self-contained, AI-independent, Windows tooling compat)
 BRANCH / PR: PR1 #234 loganalyzer/wp-ed-editions -> main (open, CI running). PR2 loganalyzer/wp-pkg-selfcontained (stacked on PR1) / not opened yet.
 SPEC: origin/claude/wonderful-bohr-iifqfn: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/{CONTRACT_AUDIT_STAGE1.md (decisions 13-26),WINDOWS_TOOLING_COMPAT.md (Part 3)}

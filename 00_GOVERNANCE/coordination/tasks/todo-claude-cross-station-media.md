@@ -1,6 +1,7 @@
 # todo-claude-cross-station-media
 
-STATUS: PR OPEN (awaiting review)
+STATUS: DONE   UPDATED: 2026-10-22T17:30:00+03:00
+CLOSED-NOTE (claude, 2026-10-22T17:30:00+03:00): PR #297 merged 2026-10-16. Lab test with real card / stations still the owner's.
 Task: LogAnalyzer media history across stations (owner decision 2026-10-16): each station exports a signed history of removable media, the security
 officer reconciles the exports of all stations on the officer's station.
 Branch: claude/loganalyzer-cross-station-media

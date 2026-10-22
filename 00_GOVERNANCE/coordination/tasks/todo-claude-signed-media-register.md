@@ -1,6 +1,7 @@
 # todo-claude-signed-media-register
 
-STATUS: PR OPEN (awaiting review)
+STATUS: DONE   UPDATED: 2026-10-22T17:30:00+03:00
+CLOSED-NOTE (claude, 2026-10-22T17:30:00+03:00): PR #295 merged 2026-10-16. Lab test with real card / USB media still the owner's.
 Task: LogAnalyzer signed media register (owner decision 2026-10-16): enrolment on the transfer station, officer card signature (detached CMS),
 import with anti-rollback on every station, check D04, transfer-register linkage.
 Branch: claude/loganalyzer-signed-media-register
