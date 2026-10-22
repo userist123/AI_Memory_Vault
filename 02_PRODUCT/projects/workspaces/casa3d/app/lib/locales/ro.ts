@@ -24,7 +24,7 @@ export const ro: Dict = {
   "editor.saved": "Salvat", "editor.saving": "Se salvează…", "editor.dirty": "Modificări nesalvate", "editor.saveError": "Eroare la salvare",
   "editor.revisionN": "Revizia {n}", "editor.noRevisions": "fără revizii", "editor.undo": "Anulează", "editor.redo": "Refă",
   "editor.view": "Vizualizare", "editor.view2d": "Plan", "editor.viewSplit": "Plan + 3D", "editor.exportDxf": "DXF", "editor.print": "Tipărește / PDF", "editor.saveRevision": "Salvează revizia", "editor.tools": "Unelte",
-  "editor.hintWall": "Click pentru început, click pentru fiecare colț · Esc sau click dreapta termină", "editor.hintRoom": "Trage un dreptunghi", "editor.hintOpening": "Apasă lângă un perete",
+  "editor.hintWall": "Click pentru început, click pentru fiecare colț · tastează lungimea (320, 3,2 sau 3,2 m) + Enter · Esc sau click dreapta termină", "editor.hintRoom": "Trage un dreptunghi sau dă clic în două colțuri · după primul clic poți tasta 4,5;3,2 + Enter", "editor.hintOpening": "Apasă lângă un perete",
   "editor.hintColumn": "Click în plan pentru a plasa un stâlp · R = rotire", "editor.hintBeam": "Trage o linie pentru a plasa o grindă de tavan", "editor.hintGlassWall": "Trage o linie pentru a plasa un perete despărțitor de sticlă", "editor.hintStair": "Click în plan pentru a plasa o scară",
   "editor.hintMeasure": "Click pe două puncte ca să afli distanța · Esc oprește", "editor.hintSelect": "Rotița = zoom · Alt+trage = deplasare · R = rotește · Delete = șterge · ? = comenzi rapide",
   "editor.previewBar": "Previzualizare: {title} (nesalvată)", "editor.warnings": "Avertismente", "editor.positionWarnings": "Poziția are avertismente",
@@ -52,7 +52,7 @@ export const ro: Dict = {
   "editor.floorFinish": "Pardoseală", "editor.wallPaint": "Vopsea pereți și tavan", "editor.wallTile": "Faianță", "editor.noTile": "Fără faianță", "editor.baseboard": "Plintă", "editor.noBaseboard": "Fără plintă",
   "editor.light": "Corp de iluminat", "editor.lightCount": "Număr corpuri",
   // ---- plan, vizualizare 3D, comenzi rapide ----
-  "plan.resizeEdge": "Trage ca să redimensionezi camera. Se mută toată linia peretelui: camerele lipite de această linie se mută odată cu ea.",
+  "plan.typeHint": "tastați cota", "plan.resizeEdge": "Trage ca să redimensionezi camera. Se mută toată linia peretelui: camerele lipite de această linie se mută odată cu ea.",
   "editor.resizeClamped": "Redimensionarea s-a oprit ca o cameră vecină să nu scadă sub 60 cm.",
   "plan.aria": "Plan 2D editabil. Tab alege camerele și piesele pe rând; săgețile mută, R rotește, Delete șterge, Escape renunță.",
   "viewer.aria": "Vizualizare 3D", "viewer.house": "Machetă 3D", "viewer.tour": "Tur: {room}", "viewer.tourPick": "Intră în cameră…", "viewer.light": "Lumină", "viewer.lightTitle": "Momentul zilei și orientarea soarelui",
