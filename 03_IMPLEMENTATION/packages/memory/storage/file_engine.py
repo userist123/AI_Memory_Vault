@@ -66,7 +66,28 @@ class FileStorageEngine:
         #: audit event. Before this existed, unreadable or id-less notes vanished
         #: from the index without a trace (D-01).
         self.load_report: Dict[str, Any] = {"scanned": 0, "indexed": 0, "skipped": []}
+        #: Indexed notes whose file could not be read/parsed at the last
+        #: query()/store read (id -> relative path). Lets a caller tell a degraded
+        #: result from a genuinely empty one.
+        self._read_skips: Dict[str, str] = {}
         self._initialize_index()
+
+    def _note_read_skip(self, note_id: str) -> None:
+        filepath = self.id_to_path.get(note_id)
+        if not filepath or not os.path.exists(filepath):
+            return
+        try:
+            rel = os.path.relpath(filepath, self.vault_root)
+        except ValueError:
+            rel = os.path.basename(filepath)
+        self._read_skips[note_id] = rel.replace("\\", "/")
+
+    def skip_report(self, cap: int = 20) -> Dict[str, Any]:
+        """Corrupt/unreadable note files seen so far: load-time skips plus
+        read-time failures. Paths only, capped; never raises."""
+        paths = [e.get("path") for e in self.load_report.get("skipped", [])]
+        paths += [p for p in self._read_skips.values() if p not in paths]
+        return {"skipped_corrupt": len(paths), "skipped_paths": paths[:cap]}
 
     def _record_skip(self, filepath: str, reason: str, exc: Optional[BaseException]) -> None:
         try:
@@ -270,10 +291,12 @@ class FileStorageEngine:
         """Query notes, excluding RAW notes."""
         from memory_controller.controller import Lifecycle
         results = []
+        self._read_skips = {}
         for note_id in list(self.id_to_path.keys()):
             try:
                 note = self.get(note_id)
                 if not note:
+                    self._note_read_skip(note_id)
                     continue
                 if note.get('lifecycle') == Lifecycle.RAW.value:
                     continue
@@ -283,6 +306,7 @@ class FileStorageEngine:
                     continue
                 results.append(note)
             except Exception:
+                self._note_read_skip(note_id)
                 continue
         return results
 
@@ -294,8 +318,11 @@ class FileStorageEngine:
     def store(self) -> Dict[str, Any]:
         """Read-only view of notes mapping id -> note dict for compatibility."""
         res = {}
+        self._read_skips = {}
         for nid in list(self.id_to_path.keys()):
             note = self.get(nid)
             if note:
                 res[nid] = note
+            else:
+                self._note_read_skip(nid)
         return res
