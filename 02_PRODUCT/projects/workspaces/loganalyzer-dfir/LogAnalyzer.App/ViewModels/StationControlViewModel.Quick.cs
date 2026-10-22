@@ -22,6 +22,8 @@ namespace LogAnalyzer.UI.ViewModels
     {
         bool IsBusy { get; }
         string Status { get; }
+        /// <summary>The status line the home page shows: the wizard's step hints name the wizard's buttons („Înainte”), which the home page does not have.</summary>
+        string HomeStatus => Status;
         string Summary { get; }
         bool HasResult { get; }
         string AnchorLine { get; }
@@ -48,6 +50,14 @@ namespace LogAnalyzer.UI.ViewModels
 
     public partial class StationControlViewModel : IStationQuickControl
     {
+        /// <summary>The home page's own hint, in place of a wizard hint (2026-10-22 round 2: the home page said „Apăsați „Înainte”” and has no such button).</summary>
+        public const string HomeHint = "Apăsați „Fă controlul stației” ca să verificați stația. Controlul doar citește; nu modifică stația.";
+
+        /// <inheritdoc cref="IStationQuickControl.HomeStatus"/>
+        public string HomeStatus => Array.IndexOf(FlowHints, Status) >= 0 || Status.Contains("„Înainte”", StringComparison.Ordinal) ? HomeHint : Status;
+
+        partial void OnStatusChanged(string value) => OnPropertyChanged(nameof(HomeStatus));
+
         /// <summary>The result chips of the last control, worst first; empty before the first control.</summary>
         public System.Collections.Generic.IReadOnlyList<StatusCount> ResultCounts =>
             _report is null ? [] : new[] { ControlStatus.Neconform, ControlStatus.DeVerificat, ControlStatus.Nedeterminat, ControlStatus.Conform, ControlStatus.NuSeAplica }

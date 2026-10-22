@@ -211,6 +211,8 @@ public static class DeviceJournalStore
             j.Radios ??= [];
             j.PendingSeals ??= [];
             j.Devices.RemoveAll(d => d is null || d.Identity.Length == 0);
+            // the stored clone marks are not trusted: recomputed from the rows (older versions marked the nodes of one stick as clones of each other)
+            DeviceJournalMerge.RecomputeDuplicateSerials(j);
             return j;
         }
         catch (Exception ex) when (ex is JsonException or InvalidDataException or NotSupportedException)

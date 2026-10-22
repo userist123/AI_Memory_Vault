@@ -91,7 +91,9 @@ namespace LogAnalyzer.UI.ViewModels
         {
             Present = e.Present; Class = e.Class; Status = e.Status;
             StatusTip = StatusText + (e.Present && e.ConfigManagerErrorCode > 0 ? $" (cod {e.ConfigManagerErrorCode}: {DeviceMonitorRules.ProblemText(e.ConfigManagerErrorCode)})" : "");
-            Name = e.Name.Length > 0 ? e.Name : "(fără nume)"; Manufacturer = e.Manufacturer; Model = e.Model; VidPid = e.VidPid;
+            // a row an older version named after the drive letter („F:\”) shows the model or the manufacturer instead
+            var name = DeviceMonitorRules.FriendlyName([e.Name], e.Model.Length > 0 ? e.Model : LogAnalyzer.Dfir.Devices.DeviceJournalMerge.KnownManufacturer(e.Manufacturer).Length > 0 ? e.Manufacturer.Trim() : "");
+            Name = name.Length > 0 ? name : "(fără nume)"; Manufacturer = e.Manufacturer; Model = e.Model; VidPid = e.VidPid;
             Serial = e.Serial.Length > 0 ? e.Serial : e.NoUniqueSerial ? DeviceMonitorRules.NoUniqueSerialText : "";
             (Vid, Pid) = DeviceMonitorRules.SplitVidPid(e.VidPid);
             // capacity, letter and label belong to storage media only
