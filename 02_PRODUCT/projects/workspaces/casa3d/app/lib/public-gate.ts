@@ -7,11 +7,15 @@ const PUBLIC_PATHS = [
   /^\/api\/share\/[A-Za-z0-9_-]{43}(\/feedback|\/choices|\/changes(\/[0-9a-f-]{36})?|\/pins?)?$/,  // revizia partajată, părerile, alegerea variantelor pe cameră, modificările de aprobat, PIN-ul și pinii pe imagine
   /^\/_next\//, /^\/tex\//, /^\/models\//, /^\/favicon\.(ico|svg)$/,
 ];
-/** Cererea vine de pe acest calculator (nu prin tunel): gazda e locală, fără antetul pus de tunel; x-forwarded-host
- *  (Next.js îl completează singur din Host) trebuie să fie și el local, dacă există. */
+/** Încrederea „local” e opt-in: o pornesc doar `npm start` / `npm run dev` (scripts/run-local.mjs), care ascultă numai pe
+ *  127.0.0.1. Antetul Host îl alege clientul, deci pe un server accesibil direct (VPS, rețea locală) „Host: localhost” nu
+ *  dovedește nimic; acolo variabila lipsește și totul cere login, iar administrarea rămâne închisă. Pe Vercel nu se activează. */
+export const localTrustEnabled = () => process.env.CASA3D_LOCAL_TRUST === '1' && !process.env.VERCEL;
+/** Cererea vine de pe acest calculator (nu prin tunel): încrederea locală e activă, gazda e locală, fără antetul pus de
+ *  tunel; x-forwarded-host (Next.js îl completează singur din Host) trebuie să fie și el local, dacă există. */
 export function isLocalRequest(host: string | null, headers: { get(k: string): string | null }){
   const fwd = headers.get('x-forwarded-host');
-  return !!host && LOCAL_HOST.test(host) && !headers.get('cf-connecting-ip') && (!fwd || fwd.split(',').every(h => LOCAL_HOST.test(h.trim())));
+  return localTrustEnabled() && !!host && LOCAL_HOST.test(host) && !headers.get('cf-connecting-ip') && (!fwd || fwd.split(',').every(h => LOCAL_HOST.test(h.trim())));
 }
 /** Numele gazdei din bara de adresă (location.hostname, fără port) e al acestui calculator; aceeași regulă ca LOCAL_HOST. */
 export const isLocalHostname = (h: string) => LOCAL_HOST.test(h) || h === '::1';
