@@ -330,7 +330,7 @@ export const en: Dict = {
   "cdel.on": "on {d}",
   "pcard.shareOrders": "The client sees order status on the link",
   "pcard.shareOrdersSub": "Status and delivery dates only; no suppliers, buy prices or notes.",
-  "co.kicker": "Cost",
+  "co.pinNeeded": "To decide on this change, enter the PIN you received from the designer.", "co.kicker": "Cost",
   "co.title": "Changes to the quote",
   "co.offered": "Quote",
   "co.approvedSum": "Approved changes",

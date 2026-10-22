@@ -20,7 +20,7 @@ export function ClientChanges({ token, offered, cur }: { token: string; offered:
   async function decide(c: ChangeOrder, decision: 'approved' | 'rejected'){
     const author = box.ensure(); if (!author){ setMsg(t('co.nameFirst')); return; } setBusy(c.id); setMsg('');
     try { const r = await fetch(`/api/share/${token}/changes/${c.id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ decision, author, note: note[c.id] ?? '', seen: c.sentAt }) }), j = await r.json().catch(() => ({}));
-      if (r.status === 401){ setPinFor({ c, decision }); setMsg(j.error || t('co.error')); return; }
+      if (r.status === 401){ setPinFor({ c, decision }); setMsg(t('co.pinNeeded')); return; }
       if (!r.ok){ setMsg(j.error || t('co.error')); } else { setPinFor(null); setMsg(t(decision === 'approved' ? 'co.thanksOk' : 'co.thanksNo')); }
       load(); } finally { setBusy(''); } }
   async function unlock(e: React.FormEvent){ e.preventDefault(); if (!pinFor || !/^\d{6}$/.test(pin) || busy) return; setBusy('pin'); setMsg('');
@@ -43,9 +43,10 @@ export function ClientChanges({ token, offered, cur }: { token: string; offered:
         <input className="cco-note" value={note[c.id] ?? ''} maxLength={1000} onChange={e => setNote(x => ({ ...x, [c.id]: e.target.value }))} placeholder={t('co.notePh')} aria-label={t('co.notePh')} />
         <div className="cco-act"><button className="btn primary" disabled={!!busy} onClick={() => decide(c, 'approved')}>{t('co.approve')}</button><button className="btn" disabled={!!busy} onClick={() => decide(c, 'rejected')}>{t('co.reject')}</button></div></article>)}
     </>}
-    {pinFor && <form className="cco-pin" onSubmit={unlock}><label>{t('pin.pinLabel')}<input inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} value={pin} onChange={e => setPin(e.target.value.replace(/\D/g, ''))} /></label>
-      <button className="btn primary" disabled={!!busy || pin.length !== 6}>{t('pin.unlock')}</button></form>}
     {msg && <p className="cco-msg" role="status">{msg}</p>}
+    {pinFor && <form className="cco-pin" onSubmit={unlock}><label htmlFor="cco-pin-in">{t('pin.pinLabel')}</label>
+      <div className="cco-pin-row"><input id="cco-pin-in" inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} autoFocus value={pin} onChange={e => setPin(e.target.value.replace(/\D/g, ''))} />
+      <button className="btn primary" disabled={!!busy || pin.length !== 6}>{t('pin.unlock')}</button></div></form>}
     {done.length > 0 && <ul className="cco-done">{done.map(c => <li key={c.id}><span>{t('co.no', { n: c.number })} · {c.title}</span><span>{signed(c.amount, money)}</span>
       <small className={`co-st co-${c.status}`}>{t(`co.st.${c.status}`)}{c.decidedBy ? ` · ${c.decidedBy}` : ''}{c.decidedAt ? ` · ${when(c.decidedAt)}` : ''}{c.clientNote ? ` — „${c.clientNote}”` : ''}</small></li>)}</ul>}
   </section>);
