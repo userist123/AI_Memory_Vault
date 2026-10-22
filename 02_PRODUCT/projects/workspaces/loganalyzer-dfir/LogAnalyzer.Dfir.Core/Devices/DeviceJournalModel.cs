@@ -630,6 +630,16 @@ public static class DeviceJournalMerge
     }
 
     /// <summary>
+    /// Whether a disconnected row of an older version may be folded under a connected row of another kind: the same kind, or a kind change the classifier is KNOWN to
+    /// have made between the two versions (<see cref="DeviceScope.IsKnownReclassification(int,int,DeviceClass,DeviceClass)"/>; the list of pairs is not widened here).
+    /// Fail-closed: an unknown pair leaves both rows visible.
+    /// </summary>
+    private static bool KindFoldAllowed(DeviceJournalEntry older, DeviceJournalEntry target) =>
+        older.Class == target.Class
+        || Math.Max(older.ClassifierVersion, 1) < 2 && target.ClassifierVersion >= 2
+           && DeviceScope.IsKnownReclassification(Math.Max(older.ClassifierVersion, 1), Math.Max(target.ClassifierVersion, 1), older.Class, target.Class);
+
+    /// <summary>
     /// Disconnected per-interface rows of an older version (classifier 1 when their kind differs) folded into the ONE connected row of the same physical device:
     /// same VID/PID (the stored one or the one in the instance id; a legacy row with none is folded only by the same USB parent), never two connected rows, never
     /// different registration numbers or different known VID/PID. When several connected rows share the VID/PID, only the one with the same USB parent.
@@ -643,10 +653,11 @@ public static class DeviceJournalMerge
             var vp = VidPidOf(r);
             var rp = UsbParentPrefix(r.InstanceId);
             if (vp.Length == 0 && rp.Length == 0) continue;
+            if (rows.Any(o => SerialConflict(r, o))) continue;   // a real clone of the serial (or the original of one) is never folded
             var cands = rows.Where(t => t.Present && !ReferenceEquals(t, r) && !into.ContainsKey(t) && DeviceScope.IsInScope(t) && !DeviceMonitorRules.IsStorageMedium(t.Class)
                                         && !NumbersDiffer(r, t)
                                         && !(IsNodeInstance(t.InstanceId) && Math.Max(t.ClassifierVersion, 1) < 2)   // a connected legacy node is itself folded later: never a target (its chain would skip the number check)
-                                        && (t.Class == r.Class || Math.Max(r.ClassifierVersion, 1) < 2 && t.ClassifierVersion >= 2)).ToList();
+                                        && KindFoldAllowed(r, t)).ToList();
             if (vp.Length > 0) cands = cands.Where(t => VidPidOf(t) is var tv && tv.Equals(vp, StringComparison.Ordinal)).ToList();
             else cands = cands.Where(t => rp.Length > 0 && UsbParentPrefix(t.InstanceId).Equals(rp, StringComparison.Ordinal)).ToList();
             if (cands.Count > 1) cands = cands.Where(t => rp.Length > 0 && UsbParentPrefix(t.InstanceId).Equals(rp, StringComparison.Ordinal)).ToList();
@@ -671,7 +682,7 @@ public static class DeviceJournalMerge
             var cands = rows.Where(t => t.Present && !ReferenceEquals(t, r) && !into.ContainsKey(t) && DeviceScope.IsInScope(t) && !DeviceMonitorRules.IsStorageMedium(t.Class)
                                         && t.InstanceId.Equals(r.InstanceId, StringComparison.OrdinalIgnoreCase) && !NumbersDiffer(r, t)
                                         && (vp.Length == 0 || VidPidOf(t) is var tv && (tv.Length == 0 || tv.Equals(vp, StringComparison.Ordinal)))
-                                        && (t.Class == r.Class || Math.Max(r.ClassifierVersion, 1) < 2 && Math.Max(t.ClassifierVersion, 1) >= 2)).ToList();
+                                        && KindFoldAllowed(r, t)).ToList();
             if (cands.Count == 1) into[r] = cands[0];
         }
     }
@@ -706,7 +717,7 @@ public static class DeviceJournalMerge
         // 1c. a disconnected row with the SAME instance id as a connected one (any identity scheme)
         FoldSameInstance(rows, into);
         // 2. interface rows of an older version
-        var legacy =rows.Where(r => !into.ContainsKey(r) && IsInterfaceRow(r)).ToList();
+        var legacy = rows.Where(r => !into.ContainsKey(r) && IsInterfaceRow(r) && !rows.Any(o => SerialConflict(r, o))).ToList();
         foreach (var g in legacy.GroupBy(r => r.VidPid.ToUpperInvariant()))
         {
             var group = g.ToList();
@@ -726,16 +737,19 @@ public static class DeviceJournalMerge
                 target = ordered[0];
             }
             foreach (var r in group)
-                if (!ReferenceEquals(r, target) && !NumbersDiffer(r, target)) into[r] = target;
+                if (!ReferenceEquals(r, target) && !NumbersDiffer(r, target)
+                    && (targets.Count != 1 || target.ClassifierVersion < 2 || KindFoldAllowed(r, target))) into[r] = target;   // a row of another kind under a CURRENT-classifier row: only a known reclassification
         }
         // 3. the USB node of a storage enclosure (a USB-SATA bridge with the disk's serial)
         foreach (var r in rows)
         {
             if (into.ContainsKey(r) || DeviceMonitorRules.IsStorageMedium(r.Class) || r.Serial.Length == 0 || !r.InstanceId.StartsWith(@"USB\VID_", StringComparison.OrdinalIgnoreCase)) continue;
+            if (rows.Any(o => SerialConflict(r, o))) continue;   // a node whose serial is cloned by another row is never hidden behind a disk
             if (!(r.Name.Contains("MASS STORAGE", StringComparison.OrdinalIgnoreCase) || DeviceMonitorRules.IsDriveLetterName(r.Name))) continue;
             var disks = rows.Where(t => DeviceMonitorRules.IsStorageMedium(t.Class) && !into.ContainsKey(t) && t.Serial.Equals(r.Serial, StringComparison.OrdinalIgnoreCase)).ToList();
             if (disks.Count == 0) continue;
             disks.Sort(Chronological);
+            if (rows.Any(o => SerialConflict(disks[0], o))) continue;   // the disk itself is in a serial conflict (a clone of it): nothing is folded onto it
             if (!NumbersDiffer(r, disks[0])) into[r] = disks[0];
         }
         // every folded row points at the final row of its chain

@@ -266,3 +266,10 @@ Not verified: `Removable` on a real internal webcam/keyboard (CM_DEVCAP_REMOVABL
 - Further residuals (pre-existing, display only, owner to accept): step 3 (enclosure USB node onto a disk by serial) has no SerialConflict guard; an `ID|`
   row with a real conflicting serial could still be folded by 1b / step 2 (unknown whether real `ID|` rows carry comparable serials).
 - Next: CI read once on PR #308; owner: accept or fix the LOW fold residuals, station control run (screenshots), merge #303 -> #306 -> #307 -> #308.
+
+## Fold residuals fix (2026-10-22, fail-closed, owner decision)
+- `DeviceJournalMerge.MarkSuperseded`: plierea între clase diferite (1b, 1c, pasul 2 cu țintă unică de clasificator curent) doar dacă `DeviceScope.IsKnownReclassification` (lista de perechi NELĂRGITĂ; v0/v1 Keyboard sub Mouse v2/v3 și sub Bluetooth v3 rămân pliate, NetworkAdapter v0 sub Keyboard v3 nu).
+- Garda `SerialConflict` pe rândul pliat în 1b și pasul 2; în pasul 3 pe nodul USB și pe discul țintă.
+- Teste: `LogAnalyzer.Dfir.Tests/DeviceMonitorFoldResidualTests.cs` (14, 8 roșii înainte, 3 încă roșii după garda serie până la fix-ul pasului 2); `IsInScope` neschimbat (doar `SupersededBy`), D05/raportul neatinse.
+- Verificat: Dfir 2387 passed/31 skipped/0 failed; App 670/0.
+- Reziduu rămas: un rând legacy `HID\` fără părinte USB al ALTUI exemplar din același model (același VID/PID) se pliază încă sub unitatea conectată; nu se poate distinge fără euristici pe nume; rămâne la decizia owner-ului.
