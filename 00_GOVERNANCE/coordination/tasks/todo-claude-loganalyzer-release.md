@@ -241,3 +241,15 @@ Probes of the reviewer (p4 a1-a4, c2, c3; p5) are tests in `Dfir.Tests/DeviceMon
    Same capacity and volume serial = registered; the registered stick back clears it. Setting a number on the mismatched row binds it to the new medium (one number per row).
    Residuals: the binding is journal-resident (the number and the alert are sealed, the binding is not); a registered legacy row is bound to the first medium seen after upgrade; one row = one number.
 Not verified: `Removable` on a real internal webcam/keyboard (CM_DEVCAP_REMOVABLE of the interface children) - if Windows reports them removable the internal camera is listed (fail closed) - real-PC check pending.
+
+## State at end of session (2026-10-22, main session)
+- Branch `claude/loganalyzer-release-gate` head 5b4ded8a6, draft PR #308 (on #307 on #306 on #303). Installed demo = this head
+  (%ProgramFiles%\LogAnalyzerDemo\LogAnalyzer.Standalone, hash = publish, --self-test PASSED); suites Dfir 2372/31/0, App 670, UI 354/1, Edition 45.
+- Real-PC verified with screenshots (owner rule, memory `verify-on-real-pc-with-screenshots`): home/status bar, transfer register, device
+  monitor (Razer = one "Mouse extern" row; the same mouse over Bluetooth = "Dispozitiv Bluetooth" with alert; bridge/camera rows gone).
+- Device-monitor review: 2 Opus rounds used (clone detection); later small changes (fold by same instance id, Bluetooth kind v3, stored BT rows)
+  were verified by tests + real PC only, not by an Opus review: run one `vault-reviewer` pass on 55e0a4a00..5b4ded8a6 before merge.
+- Not exercised on the real PC: station control run (automated click refused by the permission classifier), investigation with user activity, PDF reports.
+- Disk: C: had 0 GB; old worktrees' bin/obj/publish deleted (owner rule, memory `disk-full-move-to-d-and-clean`), 5.4 GB free.
+- Next: Opus review of the delta above; owner starts "Fă controlul stației" (or allows the automated click) so the control, PDF and
+  investigation pages can be checked with screenshots; then merge order #303 -> #306 -> #307 -> #308.
