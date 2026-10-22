@@ -93,3 +93,18 @@
 - Owner: review `findings-register.draft.json` and save as `findings-register.json`; QuestPDF licence decision (public-sector clause); #10, #21, licence key.
 - Residuals WP9: IL scan excludes WPF assemblies and delegate-injected primitives; `NotVerified` incidents are not re-contained automatically; abandoned hung re-read
   threads stay alive (background) until the reader returns.
+
+## Release state 2026-10-22 (main session, verified)
+- Gate (pwsh 7.6.7 installed with owner OK): `Invoke-ReleaseGate -Mode Enforce` on fresh TRX = RELEASE READY for 0.1.0-dfir, PASS=7 WAIVED=2, exit 0;
+  gate self-tests 35/35. real_corpus + differential WAIVED by a waiver signed by Claude with the owner's delegation (key pair in
+  %USERPROFILE%\.loganalyzer-waiver, public key committed); findings register finalized with the same delegation (36: 32 resolved, 4 owner items).
+  The corpus is not on this station (D:\LAB_CORPUS missing); the lab needs it too.
+- Licence: key pair made with LogAnalyzer.KeyGen (private key DPAPI in %USERPROFILE%\.loganalyzer-license); public key in
+  LogAnalyzer.Core/Licensing/license-public-keys.txt, kept LOCAL (owner's .git/info/exclude); demo licence for this station until 2027-04-22,
+  verified by `OwnerLicenseLiveTests` (LADFIR_LICENSE_FILE). A CI build has no key, so it refuses every licence (fail closed) by design.
+- SDK 10.0.301 -> 10.0.402 (runtime 10.0.13, fixes the SignedCms CVE flagged by RuntimeGuard); lock files refreshed, locked restore clean.
+- Demo installed: %ProgramFiles%\LogAnalyzerDemo\LogAnalyzer.Standalone (Release single-file, self-contained, runtime 10.0.13+4099f8, license.lic next to
+  it); `--self-test` PASSED; started elevated: sign-in window (licence accepted; primary admin account already exists on the station).
+- Owner: sign in with the primary admin password; QuestPDF licence before any public institution; Authenticode; #21 legacy trees.
+- Next (optional, owner-independent): unknown shell item types, Zone.Identifier/MOTW, ControlReport.UserActivity caller, users register (B9),
+  NU1510 warnings (redundant PackageReference ProtectedData/EventLog after the SDK update).
