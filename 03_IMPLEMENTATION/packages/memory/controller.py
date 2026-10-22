@@ -825,6 +825,16 @@ class MemoryController:
             candidate_trace['lifecycles_requested'] = [
                 getattr(l, 'value', str(l)) for l in (lifecycles or [])
             ]
+            # Surface corrupt/unreadable note files so an error is distinguishable
+            # from an empty result (never raises into the search path).
+            try:
+                _skip = getattr(self.storage, "skip_report", None)
+                _rep = _skip() if callable(_skip) else {"skipped_corrupt": 0, "skipped_paths": []}
+                candidate_trace['skipped_corrupt'] = int(_rep.get("skipped_corrupt", 0))
+                candidate_trace['skipped_paths'] = list(_rep.get("skipped_paths", []))
+            except Exception:
+                candidate_trace['skipped_corrupt'] = 0
+                candidate_trace['skipped_paths'] = []
             active_classifier_filter_arm = (
                 classifier_filter_arm if classifier_filter_arm is not None
                 else getattr(self, 'classifier_filter_arm', None)
