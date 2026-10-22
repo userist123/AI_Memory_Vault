@@ -252,36 +252,81 @@ public sealed class DeviceMonitorBluetoothFoldTests
         Serial = "00E04C000001", ClassifierVersion = 0, Present = false, FirstSeenUtc = T0, LastDisconnectedUtc = T0.AddHours(1),
     };
 
+    private static Func<IReadOnlyDictionary<string, SealedKind>?> Sealed(int version) =>
+        () => new Dictionary<string, SealedKind>(StringComparer.OrdinalIgnoreCase) { ["SN|0BDA:4853|00E04C000001"] = new("Bluetooth", version) };
+
     [Fact]
-    public void The_old_row_of_the_stations_own_radio_is_hidden_only_when_the_live_snapshot_attests_the_local_container()
+    public void The_old_row_of_the_stations_own_radio_is_hidden_only_when_the_live_snapshot_and_the_sealed_audit_attest_it()
     {
         // unknown (no snapshot attests it): still listed - it cannot be told from a dongle
         var j0 = new DeviceJournal { Devices = [OldRadioRow()] };
         DeviceJournalMerge.MarkSuperseded(j0);
-        Assert.Single(j0.Devices.Where(DeviceScope.IsShown));
-        // the same node in the local machine container: the station's own component
+        Assert.Single(j0.Devices, DeviceScope.IsShown);
+        // the node is in the local machine container now, the row is a legacy one, the sealed audit says legacy too
         var j = new DeviceJournal { Devices = [OldRadioRow()] };
-        DeviceJournalMerge.Apply(j, [RadioNode(DeviceScope.LocalMachineContainer)], null, "u", T0.AddDays(1), initial: false);
+        DeviceJournalMerge.Apply(j, [RadioNode(DeviceScope.LocalMachineContainer)], null, "u", T0.AddDays(1), initial: false, sealedKinds: Sealed(1));
         var row = Assert.Single(j.Devices);                                   // never deleted, still in scope for D05 and the report
         Assert.True(DeviceScope.IsInScope(row));
         Assert.Equal(DeviceClass.Bluetooth, row.Class);
         Assert.False(DeviceScope.IsShown(row));
         Assert.False(row.Present);
+        // no sealed audit readable, or the sealed audit says a container-aware version wrote it: fail closed, shown
+        var j1 = new DeviceJournal { Devices = [OldRadioRow()] };
+        DeviceJournalMerge.Apply(j1, [RadioNode(DeviceScope.LocalMachineContainer)], null, "u", T0.AddDays(1), initial: false);
+        Assert.True(DeviceScope.IsShown(j1.Devices[0]));
+        var j2 = new DeviceJournal { Devices = [OldRadioRow()] };
+        DeviceJournalMerge.Apply(j2, [RadioNode(DeviceScope.LocalMachineContainer)], null, "u", T0.AddDays(1), initial: false, sealedKinds: Sealed(3));
+        Assert.True(DeviceScope.IsShown(j2.Devices[0]));
+        // the next reading without the attesting snapshot: the display is recomputed, not remembered
+        DeviceJournalMerge.Apply(j, [], null, "u", T0.AddDays(2), initial: false, sealedKinds: Sealed(1));
+        Assert.True(DeviceScope.IsShown(row));
     }
 
     [Fact]
-    public void A_dongle_plugged_in_from_outside_with_a_container_of_its_own_still_shows_and_alerts_even_on_an_attested_row()
+    public void A_hand_edited_flag_in_the_journal_file_hides_nothing()
+    {
+        var headset = Row(HeadsetNode(HeadsetBox), present: false, version: 3);
+        var json = System.Text.Json.JsonSerializer.Serialize(headset);
+        Assert.DoesNotContain("station_internal", json);                      // never stored
+        var edited = System.Text.Json.JsonSerializer.Deserialize<DeviceJournalEntry>(json.TrimEnd('}') + ",\"station_internal\":true}")!;
+        Assert.True(DeviceScope.IsShown(edited));
+        var j = new DeviceJournal { Devices = [edited] };
+        DeviceJournalMerge.Apply(j, [], null, "u", T0.AddDays(1), initial: false, sealedKinds: Sealed(1));
+        Assert.True(DeviceScope.IsShown(edited));
+    }
+
+    [Fact]
+    public void A_dongle_seen_with_its_own_container_is_never_hidden_when_the_same_instance_id_later_shows_in_the_local_container()
     {
         var row = OldRadioRow();
-        row.StationInternal = true;                                           // was attested as the station's own at some point
         var j = new DeviceJournal { Devices = [row] };
-        var changes = DeviceJournalMerge.Apply(j, [RadioNode("{AAAAAAAA-0000-0000-0000-00000000B777}")], null, "u", T0.AddDays(2), initial: false);
+        var changes = DeviceJournalMerge.Apply(j, [RadioNode("{AAAAAAAA-0000-0000-0000-00000000B777}")], null, "u", T0.AddDays(2), initial: false, sealedKinds: Sealed(1));
         Assert.True(row.Present);
         Assert.True(DeviceScope.IsShown(row));
-        Assert.False(row.StationInternal);
         Assert.Contains(changes, c => c.Arrived && ReferenceEquals(c.Device, row));
-        row.Present = false;
+        DeviceJournalMerge.Apply(j, [], null, "u", T0.AddDays(3), initial: false, sealedKinds: Sealed(1));
+        Assert.False(row.Present);
+        DeviceJournalMerge.Apply(j, [RadioNode(DeviceScope.LocalMachineContainer)], null, "u", T0.AddDays(4), initial: false, sealedKinds: Sealed(1));
+        Assert.True(DeviceScope.IsShown(row));                                // it was an outside device once: it stays listed
+    }
+
+    [Fact]
+    public void A_remote_device_named_like_a_built_in_component_is_still_one_shown_row()
+    {
+        var rows = HeadsetNodes(HeadsetBox, Mac, "Built-in Speaker").Select(n => Row(n, present: false)).ToList();
+        var j = new DeviceJournal { Devices = rows };
         DeviceJournalMerge.MarkSuperseded(j);
-        Assert.True(DeviceScope.IsShown(row));                                // gone again: shown, as its attestation was withdrawn
+        var shown = Assert.Single(j.Devices, DeviceScope.IsShown);
+        Assert.Contains(@"\DEV_", shown.InstanceId);
+    }
+
+    [Fact]
+    public void An_all_zero_or_all_F_address_is_no_address_and_two_radios_are_not_grouped()
+    {
+        Assert.Equal("", DeviceScope.BluetoothAddress(@"BTHENUM\DEV_000000000000\7&FAKE&0&BLUETOOTHDEVICE_000000000000"));
+        Assert.Equal("", DeviceScope.BluetoothAddress(@"BTHLE\DEV_FFFFFFFFFFFF\7&FAKE&0&FFFFFFFFFFFF"));
+        var a = new PnpSnapshotEntry(@"BTHENUM\DEV_000000000000\7&AAAA&0&BLUETOOTHDEVICE_000000000000", "Radio A", "Bluetooth", "x", "", "", 0, "");
+        var b = new PnpSnapshotEntry(@"BTHLE\DEV_000000000000\7&BBBB&0&000000000000", "Radio B", "Bluetooth", "x", "", "", 0, "");
+        Assert.All(DeviceScope.Classify([a, b]), d => Assert.Single(d.Members));
     }
 }

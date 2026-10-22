@@ -59,13 +59,13 @@ public sealed class DeviceJournalEntry
     /// <summary>The medium on the row now is not the one the number was set for: the row is unregistered (shown, counted and judged as such) until the registered medium is back or a number is set for this one.</summary>
     [JsonPropertyName("registration_medium_mismatch")] public bool RegistrationMediumMismatch { get; set; }
     /// <summary>The account of the active console session when the device was connected; empty = nobody was logged on (shown as „—”).</summary>
-    /// <summary>
-    /// A Bluetooth radio row that a live reading ATTESTED as a component of the station (the same instance id was seen in the local machine container,
-    /// <see cref="DeviceScope.LocalMachineContainer"/>) while it was not connected as an outside device: not listed on the page. Display only, journal-resident
-    /// (check D05 and the report still compare the row); withdrawn the moment the row is connected again as an outside device (a dongle plugged in).
-    /// </summary>
-    [JsonPropertyName("station_internal")] public bool StationInternal { get; set; }
     [JsonPropertyName("connected_user")] public string ConnectedUser { get; set; } = "";
+    /// <summary>
+    /// Display only, NEVER stored (a hand-edited "station_internal" in the file is ignored): re-derived on every <see cref="DeviceJournalMerge.Apply"/> from the live
+    /// snapshot. True only for a disconnected Bluetooth radio row of a legacy classifier whose very instance id is in the local machine container NOW, whose sealed
+    /// kind record is a legacy one too, and that has never been connected by a container-aware version (any live connection raises the row's version).
+    /// </summary>
+    [JsonIgnore] public bool StationInternal { get; set; }
 
     /// <summary>
     /// The identity of the row this one is folded into on the monitor page (an interface row of an older version, the USB-SATA bridge of a disk, an old clone
@@ -435,12 +435,16 @@ public static class DeviceJournalMerge
             e.LastDisconnectedUtc = nowUtc;
             if (DeviceScope.IsInScope(e)) changes.Add(new(e, false));
         }
-        // a Bluetooth radio row whose node a live reading sees in the local machine container is a component of the station (attested by the PnP stack, never by a name)
+        // Display attestation, recomputed on every reading and never stored (review F1/F2): a disconnected LEGACY (before the container-aware classifier) Bluetooth radio
+        // row whose instance id is in the local machine container in THIS snapshot, with a sealed audit record that is legacy too. Unknown anything: shown.
         var local = new HashSet<string>(all.Where(n => DeviceScope.IsLocalContainer(n.ContainerId)).Select(n => n.InstanceId), StringComparer.OrdinalIgnoreCase);
         foreach (var e in journal.Devices)
         {
-            if (e.Present) e.StationInternal = false;
-            else if (e.Class is DeviceClass.Bluetooth or DeviceClass.BluetoothAdapter && e.InstanceId.Length > 0 && local.Contains(e.InstanceId)) e.StationInternal = true;
+            e.StationInternal = false;
+            if (e.Present || e.Class is not (DeviceClass.Bluetooth or DeviceClass.BluetoothAdapter) || e.InstanceId.Length == 0 || !local.Contains(e.InstanceId)) continue;
+            if (Math.Max(e.ClassifierVersion, 1) >= 2) continue;   // written (or raised by a live connection) under the container-aware classifier: it was seen as an outside device
+            if (!sealedKindsRead) { sealedKindMap = sealedKinds?.Invoke(); sealedKindsRead = true; }
+            if (sealedKindMap is not null && sealedKindMap.TryGetValue(OperationAudit.DeviceField(e.Identity), out var sk) && Math.Max(sk.Version, 1) < 2) e.StationInternal = true;
         }
         MarkSuperseded(journal);
         return changes;
