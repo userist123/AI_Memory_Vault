@@ -18,11 +18,19 @@
                         </MultiDataTrigger.Conditions>
                         <Setter Property="Visibility" Value="Visible"/>
                     </MultiDataTrigger>
-                    <!-- Home and the control page: a finished station control also removes the offer (Investigation and Media have no data from it). -->
+                    <!-- Home and the control page: a finished station control, or earlier controls saved on this station, also remove the offer (Investigation and Media have no data from it). -->
                     <MultiDataTrigger>
                         <MultiDataTrigger.Conditions>
-                            <Condition Binding="{Binding ControlDone}" Value="True"/>
+                            <Condition Binding="{Binding OfferHiddenOnHome}" Value="True"/>
                             <Condition Binding="{Binding HideAfterControl, ElementName=Root}" Value="True"/>
+                        </MultiDataTrigger.Conditions>
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                    </MultiDataTrigger>
+                    <!-- Owner decision 2026-10-22: in „Simplu” Home and the control page have one main path (the control); „Colectează acum” stays in Expert. -->
+                    <MultiDataTrigger>
+                        <MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"/>
+                            <Condition Binding="{Binding HideInSimpleLevel, ElementName=Root}" Value="True"/>
                         </MultiDataTrigger.Conditions>
                         <Setter Property="Visibility" Value="Collapsed"/>
                     </MultiDataTrigger>

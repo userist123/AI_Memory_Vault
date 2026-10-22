@@ -69,8 +69,17 @@ namespace LogAnalyzer.UI.Services
         /// <summary>Empty for Home and the control page: no analysis result and no station control yet. Investigation and Media keep <see cref="IsEmpty"/> (a control gives them no data).</summary>
         public bool IsEmptyForHome => Current is null && !ControlDone;
 
+        /// <summary>
+        /// True when earlier station controls are saved on this station: the same list the control page shows („N controale anterioare”, from the report folders). Set when that
+        /// list is read. Disk state, not session state: <see cref="Clear"/> does not reset it. Kept apart from <see cref="IsEmptyForHome"/> (which is session state).
+        /// </summary>
+        [ObservableProperty] [NotifyPropertyChangedFor(nameof(OfferHiddenOnHome))] private bool _hasEarlierControls;
+
+        /// <summary>Home and the control page hide „Nu există încă date / Colectează acum” when a control finished in this session or earlier controls exist on disk (2026-10-22 beginner walkthrough, finding 6).</summary>
+        public bool OfferHiddenOnHome => ControlDone || HasEarlierControls;
+
         /// <summary>True once a station control finished in this session: the empty-page banner then no longer applies (2026-10-22 PC walkthrough).</summary>
-        [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsEmptyForHome))] private bool _controlDone;
+        [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsEmptyForHome), nameof(OfferHiddenOnHome))] private bool _controlDone;
 
         /// <summary>One line about the last result of this session (control or analysis), for the status bar; empty before any.</summary>
         [ObservableProperty] private string _lastActivity = "";

@@ -17,6 +17,13 @@ namespace LogAnalyzer.UI.Views
             SearchBox.Focus();
         }
 
+        /// <summary>Reopens the three-screen guide: this window closes first (it is modal), then the guide opens beside the main window.</summary>
+        private void Guide_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+            LogAnalyzer.UI.ViewModels.FirstRunGuideLauncher.Show();
+        }
+
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) => Refresh();
 
         private void Refresh()

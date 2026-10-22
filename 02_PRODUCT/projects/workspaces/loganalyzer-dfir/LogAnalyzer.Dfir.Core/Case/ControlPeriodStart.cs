@@ -52,6 +52,25 @@ public static class ControlPeriodStart
         return Default(nowUtc, prefix + "niciun control anterior în jurnalul sigilat");
     }
 
+    /// <summary>
+    /// The time of the last FINISHED control: the newest „control.finished” of the sealed audit log, only when the log's chain and its seal verify (same trust rules as
+    /// <see cref="From"/>). Null when there is no log, no such control, or the log cannot be trusted. This is the single meaning of „ultimul control” on Home and on the control page.
+    /// </summary>
+    public static DateTimeOffset? LastFinished(string? auditPath, DateTimeOffset nowUtc)
+    {
+        if (auditPath is null || !File.Exists(auditPath)) return null;
+        try
+        {
+            var chain = new HashChain(auditPath);
+            if (chain.VerifyPlainChain().Status == ChainStatus.Broken || chain.Verify().Status == ChainStatus.Broken) return null;
+            return AuditAnchor.Events(auditPath).Where(e => e.Event == "control.finished").Select(Time).Where(t => t is { } x && x <= nowUtc).Max();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return null; }
+    }
+
+    /// <summary>Station local time in the Romanian format shown everywhere in the UI (dd.MM.yyyy HH:mm, ora stației).</summary>
+    public static string Describe(DateTimeOffset t) => Local(t);
+
     /// <summary>Station local time in the Romanian format shown everywhere in the UI (dd.MM.yyyy HH:mm, ora stației).</summary>
     private static string Local(DateTimeOffset t) => t.ToLocalTime().ToString("dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture) + ", ora stației";
 
