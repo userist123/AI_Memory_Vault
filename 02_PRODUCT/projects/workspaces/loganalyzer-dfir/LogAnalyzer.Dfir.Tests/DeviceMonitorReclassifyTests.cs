@@ -16,7 +16,19 @@ public sealed class DeviceMonitorReclassifyTests : IDisposable
     public DeviceMonitorReclassifyTests() => Directory.CreateDirectory(_dir);
     public void Dispose() { try { Directory.Delete(_dir, true); } catch (IOException) { } }
 
-    private static readonly PnpSnapshotEntry Mouse = new(@"HID\VID_046D&PID_C077\7&1A2B3C4D&0&0000", "HID-compliant mouse", "Mouse", "Microsoft", @"HID\VID_046D&PID_C077", "mouhid", 0);
+    private const string Box = "{CCCCCCCC-0000-0000-0000-00000000A002}";
+
+    /// <summary>The station's Razer shape (fake ids): a composite device whose first interface is a mouse and whose second a keyboard (macros): version 1 said keyboard, version 2 says mouse.</summary>
+    private static readonly PnpSnapshotEntry[] Razer =
+    [
+        new(@"USB\VID_1532&PID_0042\FAKERZ0001", "USB Composite Device", "USB", "(Standard USB Host Controller)", @"USB\VID_1532&PID_0042", "usbccgp", 0, Box),
+        new(@"HID\VID_1532&PID_0042&MI_00\8&AAA&0&0000", "HID-compliant mouse", "Mouse", "Microsoft", @"HID\VID_1532&PID_0042&MI_00", "mouhid", 0, Box),
+        new(@"HID\VID_1532&PID_0042&MI_01\8&BBB&0&0000", "HID Keyboard Device", "Keyboard", "(Standard keyboards)", @"HID\VID_1532&PID_0042&MI_01", "kbdhid", 0, Box),
+    ];
+
+    /// <summary>What the sealed audit says about the device: its kind and the classifier version it was sealed with.</summary>
+    private static Func<IReadOnlyDictionary<string, SealedKind>?> Sealed(string identity, string kind, int version) =>
+        () => new Dictionary<string, SealedKind>(StringComparer.OrdinalIgnoreCase) { [K(identity)] = new(kind, version) };
 
     private static string K(string identity) => OperationAudit.DeviceField(identity);
 
@@ -24,7 +36,7 @@ public sealed class DeviceMonitorReclassifyTests : IDisposable
     private static (DeviceJournal Journal, DeviceJournalEntry Row, SealedDevice First) OldRow(int sealedClassifier = 1)
     {
         var j = new DeviceJournal();
-        DeviceJournalMerge.Apply(j, [Mouse], null, "u", T0, initial: false);
+        DeviceJournalMerge.Apply(j, Razer, null, "u", T0, initial: false);
         var row = Assert.Single(j.Devices);
         row.Class = DeviceClass.Keyboard;
         row.ClassifierVersion = 0;
@@ -51,13 +63,13 @@ public sealed class DeviceMonitorReclassifyTests : IDisposable
     {
         var (j, row, _) = OldRow();
         var notes = new List<DeviceReclassification>();
-        DeviceJournalMerge.Apply(j, [Mouse], null, "u", T0.AddDays(1), initial: false, reclassified: notes);
+        DeviceJournalMerge.Apply(j, Razer, null, "u", T0.AddDays(1), initial: false, reclassified: notes, sealedKinds: Sealed(row.Identity, "Keyboard", 1));
         var n = Assert.Single(notes);
         Assert.Equal((row.Identity, DeviceClass.Keyboard, DeviceClass.Mouse, 1, DeviceScope.ClassifierVersion), (n.Identity, n.OldClass, n.NewClass, n.OldVersion, n.NewVersion));
         Assert.Equal(DeviceClass.Mouse, row.Class);
         Assert.Equal(DeviceScope.ClassifierVersion, row.ClassifierVersion);
         notes.Clear();
-        DeviceJournalMerge.Apply(j, [Mouse], null, "u", T0.AddDays(2), initial: false, reclassified: notes);
+        DeviceJournalMerge.Apply(j, Razer, null, "u", T0.AddDays(2), initial: false, reclassified: notes, sealedKinds: Sealed(row.Identity, "Keyboard", 1));
         Assert.Empty(notes);                                       // sealed once, not at every reading
     }
 
@@ -65,9 +77,9 @@ public sealed class DeviceMonitorReclassifyTests : IDisposable
     public void A_kind_that_changes_under_the_same_classifier_version_is_not_a_reclassification()
     {
         var (j, row, _) = OldRow();
-        row.ClassifierVersion = DeviceScope.ClassifierVersion;     // the row was written by this very classifier: the kind has no excuse
         var notes = new List<DeviceReclassification>();
-        DeviceJournalMerge.Apply(j, [Mouse], null, "u", T0.AddDays(1), initial: false, reclassified: notes);
+        // the SEALED audit says this very classifier version wrote the kind: the kind has no excuse (the journal's own version is not read)
+        DeviceJournalMerge.Apply(j, Razer, null, "u", T0.AddDays(1), initial: false, reclassified: notes, sealedKinds: Sealed(row.Identity, "Keyboard", DeviceScope.ClassifierVersion));
         Assert.Empty(notes);
         Assert.Equal(DeviceClass.Mouse, row.Class);
     }
@@ -76,7 +88,7 @@ public sealed class DeviceMonitorReclassifyTests : IDisposable
     public void A_new_row_carries_the_classifier_version_and_the_first_seen_record_seals_it()
     {
         var j = new DeviceJournal();
-        DeviceJournalMerge.Apply(j, [Mouse], null, "u", T0, initial: false);
+        DeviceJournalMerge.Apply(j, Razer, null, "u", T0, initial: false);
         Assert.Equal(DeviceScope.ClassifierVersion, Assert.Single(j.Devices).ClassifierVersion);
         var svc = new AuthService(Path.Combine(_dir, "auth1"));
         var row = j.Devices[0];

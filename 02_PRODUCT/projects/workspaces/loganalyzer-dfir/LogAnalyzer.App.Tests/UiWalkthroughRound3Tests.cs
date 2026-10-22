@@ -66,15 +66,50 @@ public sealed class UiWalkthroughRound3Tests
     }
 
     [Fact]
+    public async Task A_registered_stick_with_a_placeholder_serial_replaced_by_another_is_unregistered_with_a_sealed_critical_alert()
+    {
+        var sealedRecords = new List<(string Event, string Detail)>();
+        var stick = new PnpSnapshotEntry(@"USBSTOR\Disk&Ven_Generic&Prod_Flash&Rev_1.00\000000000000&0", "Generic Flash USB Device", "DiskDrive", "(Standard disk drives)", @"USBSTOR\DiskGeneric_Flash", "disk", 0, "{CCCCCCCC-0000-0000-0000-00000000B001}");
+        var medium = new MediumInfo("AAAA0001", 16_000_000_000, "E:", "x");
+        var present = new List<PnpSnapshotEntry> { stick };
+        var now = T0;
+        using var vm = new DeviceMonitorViewModel(() => present.ToList(), _ => new Dictionary<string, MediumInfo> { [stick.InstanceId] = medium }, (ev, detail) => { sealedRecords.Add((ev, detail)); return null; },
+            new DeviceJournal(), _ => null, isolated: false, () => now);
+        await vm.RefreshAsync(initial: true);
+        var row = Assert.Single(vm.Rows);
+        row.RegistrationNumber = "NR-7/2026";
+        Assert.False(row.HasNoNumber);
+        present.Clear(); now = T0.AddMinutes(5);
+        await vm.RefreshAsync(initial: false);
+        present.Add(stick); medium = new MediumInfo("BBBB0002", 64_000_000_000, "E:", "y"); now = T0.AddMinutes(10);       // another stick, same model and placeholder serial
+        await vm.RefreshAsync(initial: false);
+        Assert.True(row.HasNoNumber, string.Join(" // ", sealedRecords.Select(r => r.Event + ":" + r.Detail)));                              // shown, counted and filtered as unregistered
+        Assert.True(row.NeedsRegistration);
+        Assert.Equal(RegistryState.NotRegistered, row.Registry);
+        Assert.True(sealedRecords.Any(r => r.Event == "device.alert_critical" && r.Detail.Contains("nu corespunde mediului înregistrat")), string.Join(" // ", sealedRecords.Where(r => r.Event.Contains("alert")).Select(r => r.Event + ":" + r.Detail)));
+    }
+
+    [Fact]
     public async Task A_known_row_whose_kind_changes_with_the_classifier_seals_one_device_reclassified_note()
     {
         var sealedRecords = new List<(string Event, string Detail)>();
-        var identity = DeviceMonitorRules.Identity(Mouse);
+        const string box = "{CCCCCCCC-0000-0000-0000-00000000A003}";
+        PnpSnapshotEntry[] razer =
+        [
+            new(@"USB\VID_1532&PID_0042\FAKERZ0002", "USB Composite Device", "USB", "(Standard USB Host Controller)", @"USB\VID_1532&PID_0042", "usbccgp", 0, box),
+            new(@"HID\VID_1532&PID_0042&MI_00\8&AAA&0&0000", "HID-compliant mouse", "Mouse", "Microsoft", @"HID\VID_1532&PID_0042&MI_00", "mouhid", 0, box),
+            new(@"HID\VID_1532&PID_0042&MI_01\8&BBB&0&0000", "HID Keyboard Device", "Keyboard", "(Standard keyboards)", @"HID\VID_1532&PID_0042&MI_01", "kbdhid", 0, box),
+        ];
+        var identity = DeviceMonitorRules.Identity(razer[0]);
         var journal = new DeviceJournal
         {
-            Devices = [new DeviceJournalEntry { Identity = identity, InstanceId = Mouse.InstanceId, Class = DeviceClass.Keyboard, Name = "HID-compliant mouse", FirstSeenUtc = T0.AddDays(-3), ClassifierVersion = 0 }],
+            Devices = [new DeviceJournalEntry { Identity = identity, InstanceId = razer[0].InstanceId, Class = DeviceClass.Keyboard, Name = "HID-compliant mouse", FirstSeenUtc = T0.AddDays(-3), ClassifierVersion = 0 }],
         };
-        using var vm = new DeviceMonitorViewModel(() => [Mouse], _ => new Dictionary<string, MediumInfo>(), (ev, detail) => { sealedRecords.Add((ev, detail)); return null; }, journal, _ => null, isolated: false, () => T0);
+        // the sealed audit (never the journal) holds the old kind and the old classifier version
+        var first = new SealedDevice(LogAnalyzer.Dfir.Auth.OperationAudit.DeviceField(identity), "Keyboard", "", T0.AddDays(-3), T0.AddDays(-3), "HID-compliant mouse", 1);
+        var audit = new DeviceAuditReading(true, new Dictionary<string, string>(), [], 0) { Devices = [first] };
+        using var vm = new DeviceMonitorViewModel(() => razer, _ => new Dictionary<string, MediumInfo>(), (ev, detail) => { sealedRecords.Add((ev, detail)); return null; }, journal, _ => null, isolated: false, () => T0,
+            auditReader: () => audit);
         await vm.RefreshAsync(initial: true);
         var note = Assert.Single(sealedRecords, r => r.Event == "device.reclassified");
         Assert.Contains("class_old=Keyboard", note.Detail);

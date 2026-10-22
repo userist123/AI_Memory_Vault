@@ -133,7 +133,7 @@ public static partial class ControlEvaluator
 
         int connected = devices.Count(d => d.Present);
         int storage = devices.Count(d => DeviceMonitorRules.IsStorageMedium(d.Class));
-        int noNumber = devices.Count(d => DeviceMonitorRules.IsStorageMedium(d.Class) && d.RegistrationNumber.Trim().Length == 0);
+        int noNumber = devices.Count(d => DeviceMonitorRules.IsStorageMedium(d.Class) && DeviceMonitorRules.EffectiveNumber(d).Trim().Length == 0);
         int forbidden = devices.Count(d => DeviceMonitorReport.ForbiddenSeen(d, isolated, from));
         int duplicate = devices.Count(d => d.DuplicateSerial);
         var parts = new List<string>();

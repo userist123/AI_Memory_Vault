@@ -60,7 +60,7 @@ public static class PnpEnumerator
                 if (name.Length == 0) name = Text(set, ref data, SPDRP_DEVICEDESC);
                 int code = CM_Get_DevNode_Status(out var status, out var problem, data.DevInst, 0) == 0 ? ((status & DN_HAS_PROBLEM) != 0 ? (int)problem : 0) : -1;
                 res.Add(new(InstanceId(set, ref data), name, Text(set, ref data, SPDRP_CLASS), Text(set, ref data, SPDRP_MFG),
-                    string.Join(" ", Multi(set, ref data, SPDRP_HARDWAREID)), Text(set, ref data, SPDRP_SERVICE), code, Container(set, ref data), Parent(set, ref data)));
+                    string.Join(" ", Multi(set, ref data, SPDRP_HARDWAREID)), Text(set, ref data, SPDRP_SERVICE), code, Container(set, ref data), Parent(set, ref data), Removable(set, ref data)));
             }
         }
         finally { SetupDiDestroyDeviceInfoList(set); }
@@ -82,6 +82,17 @@ public static class PnpEnumerator
         var key = new DEVPROPKEY { fmtid = ContainerKeyFmt, pid = 2 };
         var g = new byte[16];
         return SetupDiGetDevicePropertyW(set, ref d, ref key, out t, g, 16, out _, 0) && t == 0x0D ? "{" + new Guid(g).ToString().ToUpperInvariant() + "}" : "";
+    }
+
+    /// <summary>
+    /// DEVPKEY_Device_Capabilities (pid 17), CM_DEVCAP_REMOVABLE (0x4): what the PnP stack says about the port the device hangs off (a hub's removable bit, ACPI _UPC/_PLD),
+    /// never a string the device reports. null = not readable (treated as external by the scope).
+    /// </summary>
+    private static bool? Removable(IntPtr set, ref SP_DEVINFO_DATA d)
+    {
+        var key = new DEVPROPKEY { fmtid = new Guid("a45c254e-df1c-4efd-8020-67d146a850e0"), pid = 17 };
+        var buf = new byte[4];
+        return SetupDiGetDevicePropertyW(set, ref d, ref key, out var t, buf, (uint)buf.Length, out _, 0) && t == 0x07 ? (BitConverter.ToUInt32(buf, 0) & 0x4) != 0 : null;
     }
 
     /// <summary>DEVPKEY_Device_Parent: the instance id of the parent node (a USB Attached SCSI disk hangs off a USB node whose service is UASPStor); "" = not readable.</summary>

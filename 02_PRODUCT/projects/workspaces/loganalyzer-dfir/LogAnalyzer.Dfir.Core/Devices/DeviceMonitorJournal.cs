@@ -200,7 +200,7 @@ public static class DeviceJournalStore
     private static bool HasNullText(DeviceJournalEntry d) =>
         d.Identity is null || d.InstanceId is null || d.SetupClass is null || d.Name is null || d.Manufacturer is null || d.Model is null || d.VidPid is null
         || d.Serial is null || d.RegistrationNumber is null || d.VolumeLetters is null || d.VolumeLabel is null || d.VolumeSerial is null || d.DiskSignature is null
-        || d.ConnectedUser is null;
+        || d.ConnectedUser is null || d.RegistrationBoundVolumeSerial is null || d.RegistrationBoundDiskSignature is null;
 
     private static DeviceJournal Load(string path, out string problem, out bool damaged)
     {
@@ -346,7 +346,7 @@ public static class DeviceMonitorReport
     }
 
     public static bool Offends(DeviceJournalEntry e, bool isolated, DateTimeOffset? fromUtc = null) =>
-        (DeviceMonitorRules.IsStorageMedium(e.Class) && e.RegistrationNumber.Trim().Length == 0) || ForbiddenSeen(e, isolated, fromUtc);
+        (DeviceMonitorRules.IsStorageMedium(e.Class) && DeviceMonitorRules.EffectiveNumber(e).Trim().Length == 0) || ForbiddenSeen(e, isolated, fromUtc);
 
     /// <summary>
     /// A class the policy forbids on an isolated station, active in the period. A Wi-Fi, Bluetooth or network adapter that is disabled (problem code 22) is what
@@ -390,9 +390,9 @@ public static class DeviceMonitorReport
         parts.Add("văzut prima dată " + Utc(e.FirstSeenUtc));
         if (e.LastConnectedUtc is { } lc) parts.Add("ultima conectare " + Utc(lc));
         if (e.LastDisconnectedUtc is { } ld) parts.Add("ultima deconectare " + Utc(ld));
-        bool hasNumber = e.RegistrationNumber.Trim().Length > 0;
-        var state = RegistryStateOf(e.Identity, e.RegistrationNumber, audit, pending);
-        parts.Add(hasNumber ? "nr. de înregistrare " + e.RegistrationNumber.Trim() : NoRegistration);
+        bool hasNumber = DeviceMonitorRules.EffectiveNumber(e).Trim().Length > 0;
+        var state = e.RegistrationMediumMismatch ? RegistryState.NotRegistered : RegistryStateOf(e.Identity, e.RegistrationNumber, audit, pending);
+        parts.Add(hasNumber ? "nr. de înregistrare " + e.RegistrationNumber.Trim() : e.RegistrationMediumMismatch ? DeviceMonitorRules.MediumNotRegisteredAlertText : NoRegistration);
         parts.Add("registru: " + RegistryTextOf(state));
         return string.Join(" · ", parts);
     }

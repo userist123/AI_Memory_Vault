@@ -30,7 +30,7 @@ public enum DeviceStatus { Connected, Disconnected, NotWorking, Disabled }
 /// instance id of the parent node (DEVPKEY_Device_Parent; a USB Attached SCSI disk hangs off a USB node whose service is UASPStor); "" = not read.
 /// </summary>
 public sealed record PnpSnapshotEntry(string InstanceId, string Name, string SetupClass, string Manufacturer, string HardwareIds, string Service, int ConfigManagerErrorCode,
-    string ContainerId = "", string Parent = "");
+    string ContainerId = "", string Parent = "", bool? Removable = null);
 
 /// <summary>
 /// What is known about the medium in a drive: the volume serial, the capacity of the disk, the drive letters and the volume label, and the disk signature (MBR
@@ -86,6 +86,16 @@ public static class DeviceMonitorRules
         if (good is not null) return good;
         return fallback.Trim().Length > 0 ? fallback.Trim() : list.FirstOrDefault() ?? "";
     }
+
+    public const string MediumNotRegisteredAlertText = "mediu fără serie unică: nu corespunde mediului înregistrat";
+
+    /// <summary>A storage medium (not a card: its identity is its volume) that the monitor cannot tell from another of the same model by a serial: a placeholder serial, or none.</summary>
+    public static bool HasNoUniqueIdentity(DeviceJournalEntry e) =>
+        IsStorageMedium(e.Class) && e.Class != DeviceClass.MemoryCard && !e.Identity.Contains("|MEDIUM|", StringComparison.OrdinalIgnoreCase)
+        && (e.NoUniqueSerial || e.GenericSerial || e.Serial.Length == 0 || IsGenericSerial(e.Serial));
+
+    /// <summary>The registration number the row really has: none while the medium on it is not the one the number was set for.</summary>
+    public static string EffectiveNumber(DeviceJournalEntry e) => e.RegistrationMediumMismatch ? "" : e.RegistrationNumber;
 
     /// <summary>Storage media: the classes that carry a registration number („Nr. de înregistrare”) and are alerted without one.</summary>
     public static bool IsStorageMedium(DeviceClass c) => c is DeviceClass.UsbStorage or DeviceClass.MemoryCard or DeviceClass.ExternalDisk;
