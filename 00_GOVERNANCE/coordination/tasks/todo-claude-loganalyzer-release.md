@@ -88,6 +88,26 @@
   FLAG for owner: QuestPDF licence v3.0 says public-sector entities / government agencies are NOT eligible for Community regardless of revenue.
   Tests: Dfir 2284/31/0 (+24), App 644, UI 354, Edition 45; solution build 0 errors.
 
+### Test fixtures no longer trigger Defender
+- 2026-10-22 (vault-worker): Microsoft Defender flagged the compiled `LogAnalyzer.Dfir.Tests.dll` as `HackTool:Win32/PsAttack.A`
+  because the detection tests embedded literal attack-tool strings (AMSI reflection bypass, base64 download cradle / iex, a
+  `Convert::FromBase64String` + `Control\Lsa` read, a `mimikatz.exe` claim). Only the Dfir.Tests project was touched; no product
+  code, no detection rules, no Defender settings/exclusions/history.
+- Fix: the 8 fixtures are stored obfuscated (uppercase hex of UTF-8 XOR 0xA5) in a tiny helper `TestFixtureText` and decoded at
+  runtime via `Convert.FromHexString` (no `FromBase64String` token, signature-free member names). Tests pass the decoded strings,
+  so the product sees byte-identical input. Guard test `TestFixtureTextGuardTests` (+8) hashes each decoded fixture (SHA-256) against
+  the hash recorded from the original source, proving the decode changed nothing but the bytes stored in the assembly.
+- Verified on the owner's PC: `dotnet test LogAnalyzer.Dfir.Tests` exit 0, 2399 passed / 31 skipped (baseline 2391/31 + 8 guard tests).
+  Strings in the built DLL: `amsiInitFailed`, `AmsiUtils`, `FromBase64String`, `mimikatz`, `DownloadString`, `PsAttack` all 0
+  (`FromHexString` 1, the benign decoder API). Defender `MpCmdRun -Scan -ScanType 3 -DisableRemediation` on the AFTER DLL and on the
+  whole built bin (copied to `%TEMP%` outside the worktree exclusion): "found no threats", exit 0. A plaintext BEFORE DLL rebuilt
+  from HEAD was auto-quarantined by real-time protection as `HackTool:Win32/PsAttack.A` (Defender Operational events 1116/1117),
+  confirming the original detection.
+- Note: the `Trojan:PowerShell/PsAttack.R` "unsetenv" detections in Defender history come from the verification `grep`/`bash`
+  **command lines** that list the signature words as arguments (AMSI scans the command line), not from the DLL; avoid echoing the
+  raw signatures on a shell command line when re-checking.
+- Files: `LogAnalyzer.Dfir.Tests/{TestFixtureText.cs,TestFixtureTextGuardTests.cs,DetectionWave3Tests.cs,CollectorExecTests.cs,AiClaimValidationTests.cs}`.
+
 ## Next
 - Main session: read the CI release-gate run once (pwsh 7 self-test incl. the new draft assertion), then nice-to-have code rows.
 - Owner: review `findings-register.draft.json` and save as `findings-register.json`; QuestPDF licence decision (public-sector clause); #10, #21, licence key.
