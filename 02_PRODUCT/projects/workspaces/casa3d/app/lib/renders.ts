@@ -9,7 +9,7 @@ import { HttpError, getProject } from './repo';
 const ROOT = () => process.env.CASA3D_RENDER_DIR || path.join(process.cwd(), '.data', 'renders');
 const SCRIPT = () => path.join(process.cwd(), 'tools', 'blender', 'casa3d_render.py');
 export const JOB_RE = /^\d{13}$/, FILE_RE = /^[\w-]{1,80}\.png$/, ID_RE = /^[\w-]{1,80}$/;
-const MAX_SCENE = 40 * 1024 * 1024, TIMEOUT_MS = 45 * 60 * 1000;
+export const MAX_SCENE = 40 * 1024 * 1024, TIMEOUT_MS = 45 * 60 * 1000;
 const running = new Map<string, ChildProcess>();   // proiect → procesul Blender
 
 /** Șterge toate randările unui proiect de pe disc (la ștergerea definitivă). */

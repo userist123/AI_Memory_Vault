@@ -28,6 +28,16 @@ FILES = (".claude/skills/cost-router", ".claude/agents",
 pytestmark = pytest.mark.skipif(shutil.which("git") is None, reason="git not installed")
 
 
+@pytest.fixture(autouse=True)
+def _hermetic_switches(monkeypatch):
+    """A runner (benchmark child, CI) may export the isolation switches; each test sets the one it exercises."""
+    for k in ("COST_ROUTER_NO_SELF_INSTALL", "COST_ROUTER_OFF"):
+        monkeypatch.delenv(k, raising=False)
+    # Hook-driven refresh is default OFF since 2026-10-22 (owner); these tests exercise the refresh machinery of an
+    # owner who opted in. The default-off behaviour is pinned in regression/test_phase6_stabilization.py.
+    monkeypatch.setenv("COST_ROUTER_SELF_INSTALL", "1")
+
+
 def _git(repo: Path, *args: str) -> str:
     return subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True, text=True).stdout.strip()
 
@@ -129,8 +139,8 @@ def test_install_registers_each_hook_once_and_uninstall_removes_them(tmp_path):
     _install(home)
     _install(home)
     hooks = json.loads((home / ".claude" / "settings.json").read_text(encoding="utf-8"))["hooks"]
-    assert sorted(hooks) == ["PreToolUse", "SessionStart", "UserPromptSubmit"]
-    assert [len(hooks[k]) for k in ("PreToolUse", "SessionStart", "UserPromptSubmit")] == [3, 2, 1]
+    assert sorted(hooks) == ["PostToolUse", "PreToolUse", "SessionStart", "UserPromptSubmit"]
+    assert [len(hooks[k]) for k in ("PostToolUse", "PreToolUse", "SessionStart", "UserPromptSubmit")] == [1, 3, 2, 1]
     start = _self_update_entry(hooks)
     assert start["matcher"] == "startup|resume" and start["hooks"][0]["timeout"] == 60
     assert "cost-router/hook_self_update.py" in start["hooks"][0]["command"].replace("\\", "/")
@@ -146,11 +156,11 @@ def test_update_pulls_the_latest_version_silently(tmp_path, origin, capsys):
     assert _update(home, origin, capsys) == "updated"
     installed = home / ".claude" / "skills" / "cost-router"
     assert "<!-- v2 -->" in (installed / "SKILL.md").read_text(encoding="utf-8")
-    assert (installed / "VERSION").read_text(encoding="utf-8").strip() == ref
+    assert (installed / "VERSION").read_text(encoding="utf-8").splitlines()[0] == ref  # line 2 is the manifest hash
     # an agent the owner never edited follows the repository
     assert "<!-- agent v2 -->" in (home / ".claude" / "agents" / "Explore.md").read_text(encoding="utf-8")
     hooks = json.loads((home / ".claude" / "settings.json").read_text(encoding="utf-8"))["hooks"]
-    assert [len(hooks[k]) for k in ("PreToolUse", "SessionStart", "UserPromptSubmit")] == [3, 2, 1], \
+    assert [len(hooks[k]) for k in ("PostToolUse", "PreToolUse", "SessionStart", "UserPromptSubmit")] == [1, 3, 2, 1], \
         "re-install must not duplicate hooks"
     assert not list((home / ".claude").glob("cost-router.staging-*")) and not list((home / ".claude").glob("cost-router.old-*"))
     assert not (home / ".claude" / "cost-router.lock").exists()
@@ -259,3 +269,114 @@ def test_update_keeps_the_owners_context_choice(tmp_path, origin):
     assert not (off / ".claude" / "CLAUDE.md").exists()
     assert "deny" not in json.loads((off / ".claude" / "settings.json").read_text(encoding="utf-8")).get("permissions", {})
     assert "cost-router:context-rules:start" in (on / ".claude" / "CLAUDE.md").read_text(encoding="utf-8")
+
+
+def _verify(home: Path, *extra: str):
+    return subprocess.run([sys.executable, str(INSTALL), "--home", str(home), "--verify", *extra], env=_env(home),
+                          capture_output=True, text=True, timeout=90)
+
+
+def test_verify_passes_right_after_install_and_names_drift(tmp_path):
+    home = tmp_path / "home"
+    _install(home)
+    r = _verify(home)
+    assert r.returncode == 0, r.stdout + r.stderr
+    skill = home / ".claude" / "skills" / "cost-router"
+    version = (skill / "VERSION").read_text(encoding="utf-8").splitlines()
+    assert len(version) == 2 and len(version[1]) == 64
+    assert json.loads(_verify(home, "--json").stdout)["ok"] is True
+    (skill / "SKILL.md").write_text("tampered", encoding="utf-8")
+    (skill / "stray.txt").write_text("x", encoding="utf-8")
+    (skill / "policy.json").unlink()
+    r = _verify(home)
+    assert r.returncode == 1
+    assert "differing: SKILL.md" in r.stdout and "extra: stray.txt" in r.stdout and "missing: policy.json" in r.stdout
+    data = json.loads(_verify(home, "--json").stdout)
+    assert data["ok"] is False and data["differing"] == ["SKILL.md"]
+
+
+def test_verify_fails_without_version_or_install(tmp_path):
+    home = tmp_path / "home"
+    _install(home)
+    (home / ".claude" / "skills" / "cost-router" / "VERSION").unlink()
+    r = _verify(home)
+    assert r.returncode == 1 and "MISSING" in r.stdout
+    assert _verify(tmp_path / "empty").returncode == 1
+
+
+def test_verify_rejects_a_bogus_version_hash_and_a_bad_ref(tmp_path):
+    home = tmp_path / "home"
+    _install(home)
+    vfile = home / ".claude" / "skills" / "cost-router" / "VERSION"
+    good = vfile.read_text(encoding="utf-8").splitlines()
+    vfile.write_text(f"{good[0]}\nbogus\n", encoding="utf-8")
+    r = _verify(home)
+    assert r.returncode == 1 and "VERSION problem" in r.stdout and "manifest hash" in r.stdout
+    vfile.write_text(f"bad ref with spaces\n{good[1]}\n", encoding="utf-8")
+    r = _verify(home)
+    assert r.returncode == 1 and "VERSION problem" in r.stdout
+    vfile.write_text("\n".join(good) + "\n", encoding="utf-8")
+    assert _verify(home).returncode == 0
+
+
+def test_session_start_install_writes_version_and_stays_quiet(tmp_path, monkeypatch):
+    for k in ("COST_ROUTER_NO_SELF_INSTALL", "COST_ROUTER_OFF"):  # hermetic: a runner may export the kill switches
+        monkeypatch.delenv(k, raising=False)
+    home = tmp_path / "home"
+    _install(home, "--session-start")
+    assert len((home / ".claude" / "skills" / "cost-router" / "VERSION").read_text(encoding="utf-8").splitlines()) == 2
+    assert _verify(home).returncode == 0
+
+
+def test_session_start_is_inert_under_cost_router_no_self_install(tmp_path):
+    """E1 (phase 4): benchmark children set COST_ROUTER_NO_SELF_INSTALL=1; --session-start must not touch --home."""
+    home = tmp_path / "home"
+    home.mkdir()
+    env = dict(_env(home), COST_ROUTER_NO_SELF_INSTALL="1")
+    r = subprocess.run([sys.executable, str(INSTALL), "--home", str(home), "--session-start"], env=env,
+                       capture_output=True, text=True, timeout=90)
+    assert r.returncode == 0 and r.stdout == "" and r.stderr == ""
+    assert list(home.rglob("*")) == [], "no files may be written"
+    env.pop("COST_ROUTER_NO_SELF_INSTALL")  # control: without the switch it installs
+    r = subprocess.run([sys.executable, str(INSTALL), "--home", str(home), "--session-start"], env=env,
+                       capture_output=True, text=True, timeout=90)
+    assert r.returncode == 0 and (home / ".claude" / "skills" / "cost-router" / "VERSION").exists()
+
+
+@pytest.mark.parametrize("switch", ["COST_ROUTER_NO_SELF_INSTALL", "COST_ROUTER_OFF"])
+def test_self_update_hook_main_is_inert_under_the_isolation_switches(tmp_path, monkeypatch, switch):
+    """Audit B HIGH-1: no git, no network, no subprocess and no write under HOME when a switch is set."""
+    home = tmp_path / "home"
+    home.mkdir()
+    for k in ("COST_ROUTER_NO_SELF_INSTALL", "COST_ROUTER_OFF"):
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setenv(switch, "1")
+    monkeypatch.setenv("HOME", str(home))
+    monkeypatch.setenv("USERPROFILE", str(home))
+    mod = _updater(home, ROOT / ".claude" / "skills" / "cost-router" / "hook_self_update.py")
+
+    calls = []
+
+    def boom(*a, **k):  # main() swallows exceptions, so record the call and assert on the record
+        calls.append(a)
+        raise AssertionError("self-update ran a command under an isolation switch")
+
+    monkeypatch.setattr(mod, "_git", boom)
+    monkeypatch.setattr(mod, "update", boom)
+    monkeypatch.setattr(mod.subprocess, "run", boom)
+    monkeypatch.setattr(mod.sys, "stdin", __import__("io").StringIO('{"hook_event_name":"SessionStart"}'))
+    assert mod.main() == 0
+    assert calls == [], calls
+    assert list(home.rglob("*")) == []
+
+
+def test_install_self_update_is_inert_under_no_self_install(tmp_path):
+    """Audit B HIGH-1: install.py --self-update honours COST_ROUTER_NO_SELF_INSTALL like --session-start."""
+    home = tmp_path / "home"
+    home.mkdir()
+    env = dict(_env(home), COST_ROUTER_NO_SELF_INSTALL="1")
+    env.pop("COST_ROUTER_OFF", None)
+    r = subprocess.run([sys.executable, str(INSTALL), "--home", str(home), "--self-update", "--source-ref", "abc1234"],
+                       env=env, capture_output=True, text=True, timeout=90)
+    assert r.returncode == 0 and r.stdout == "" and r.stderr == ""
+    assert list(home.rglob("*")) == [], "no files may be written"

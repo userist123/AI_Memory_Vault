@@ -50,11 +50,12 @@
     "sonnet": {
       "model_id": "claude-sonnet-5-5",
       "display": "Claude Sonnet 5.5",
+      "cache_read_source": "2026-10-21 fit of 50 sonnet modelUsage records (07_EVALUATION/reports/cost_router_claude_ab_benchmark_2026-10-21_phase3_{final,rerun}): implied cache_read = 0.10 USD/MTok exactly (spread 0) with the other card prices fixed; earlier 0.2 overcharged 4-26%. The 0.10 fit holds with cache writes priced at cache_write_1h = 4.0 (Claude Code main-session writes are 1h); modelUsage.costUSD is Claude Code's client-side list-price estimate, not provider billing",
       "tier_rank": 2,
       "usd_per_mtok": {
         "input": 2.0,
         "output": 10.0,
-        "cache_read": 0.2,
+        "cache_read": 0.1,
         "cache_write_5m": 2.5,
         "cache_write_1h": 4.0
       },
