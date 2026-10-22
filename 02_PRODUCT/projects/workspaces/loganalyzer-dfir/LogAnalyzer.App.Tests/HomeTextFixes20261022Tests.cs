@@ -171,4 +171,12 @@ public sealed class HomeTextFixes20261022Tests
         Assert.Contains("RoLabels.Severity(c.Severity).ToLower(Ro)", vm);
         Assert.DoesNotContain("[{c.Severity.ToSpec()}]", vm);
     }
+
+    [Fact]
+    public void A_recent_case_with_a_missing_state_shows_a_word_instead_of_throwing()
+    {
+        var view = new LogAnalyzer.Dfir.Case.RecentCaseView(new LogAnalyzer.Dfir.Case.RecentCase("case-path", "t", System.DateTimeOffset.UnixEpoch, null!), true);
+        Assert.Equal("necunoscut", view.DisplayState);
+        Assert.Equal("activ", LogAnalyzer.Dfir.Case.CaseLifecycleNames.LabelFromSpec("ACTIVE"));
+    }
 }
