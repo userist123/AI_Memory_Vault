@@ -30,7 +30,10 @@ NEXT (in order):
    (superseded, add/add conflict). #258 left OPEN, not merged (218 commits/510 files, 202 patches not in main, CONFLICTING).
    main CI on 5e4687289 checked once: no failures, several jobs still in progress (not re-polled).
 NEXT: salvage #258 in its own session if the owner wants anything from it.
-UNVERIFIED: cloudflared tunnel sends x-forwarded-proto https (cookie Secure flag).
+RESOLVED BY DESIGN 2026-10-22 (branch claude/casa3d-secure-cookie-tunnel): cookies (PIN + login) no longer depend on
+  x-forwarded-proto — wantsSecureCookie = https || !isLocalRequest (same rule as the gate); tunnel probe was denied by the
+  permission classifier, so cloudflared's header itself stays UNVERIFIED but no longer matters. vitest 108/651, tsc 0,
+  Opus vault-reviewer APPROVE (2 nits fixed).
 NOTES:
 - Antigravity's uncommitted files (CASA3D_*_AUDIT/INVENTORY/STATUS/EVIDENCE*.md, edits in todo-antigravity-casa3d.md) left untouched.
 - .claude/launch.json has a local "casa3d" dev-server entry (not committed).
