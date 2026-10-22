@@ -84,8 +84,8 @@ public static class DeviceScope
     {
         if (DeviceMonitorRules.IsStorageMedium(e.Class) || e.Class is DeviceClass.Optical or DeviceClass.CardReader) return false;
         // the radio of the station: a live reading saw this very node in the local machine container (never decided from a name; see DeviceJournalEntry.StationInternal)
-        if (e.StationInternal && e.Class is DeviceClass.Bluetooth or DeviceClass.BluetoothAdapter) return true;
-        if (IsIntegratedName(e.Name)) return true;
+        if (e.StationInternal) return true;
+        if (IsIntegratedName(e.Name) && e.Class is not (DeviceClass.Bluetooth or DeviceClass.BluetoothAdapter)) return true;   // never by the name of a remote Bluetooth device
         return e.InstanceId.Length > 0 && !LooksExternalById(e.InstanceId);
     }
 
@@ -358,7 +358,7 @@ public static class DeviceScope
     {
         var id = instanceId.Trim();
         foreach (var rx in new[] { BtDeviceNodeId, BtEnumServiceId, BtGattServiceId })
-            if (rx.Match(id) is { Success: true } m) return m.Groups[1].Value.ToUpperInvariant();
+            if (rx.Match(id) is { Success: true } m && m.Groups[1].Value.ToUpperInvariant() is var mac && mac.Any(c => c != '0') && mac.Any(c => c != 'F')) return mac;   // 000000000000 / FFFFFFFFFFFF are placeholders (LOCALMFG), not an address
         return "";
     }
 

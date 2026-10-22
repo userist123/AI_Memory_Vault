@@ -421,5 +421,20 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
 - OWNER DECISIONS 2026-10-22 ("pentru tot folosește recomandarea"): (1) Simplu hides „Colectează tot/acum”, first-run guide of 3 screens (skippable, once);
   (2) Investigation: step wizard in Simplu, full form only in Expert; (3) "last control" = last control FINISHED (sealed audit), same text/format on Home and Control;
   (4) order B -> C -> D, Bluetooth fold reviewed by Opus.
+- BT fold 0c954bdda (worker; Dfir 2413/31/0, App 684; main re-ran device-monitor classes 185/185). Opus round 1: CHANGES_REQUIRED:
+  F1/F2 MEDIUM `station_internal` is journal-resident (Authenticated Users can edit; never re-checked) and keyed on a device-chosen instance id -> an external
+  dongle/headset row can be hidden from the page, D05 silent; F3 MEDIUM IsIntegratedName hide now hides the whole folded BT device; F4 LOW all-zero MAC; F5 doc comment.
+  Main-session decision: no stored flag; re-derive each reading from the live snapshot, only for rows of the pre-container classifier never seen with an own
+  container or a sealed external alert; no name-based hide for BT rows; reject 000000000000/FFFFFFFFFFFF. Pending: resume the BT worker once AFTER the UI worker
+  ends (one implementer at a time), then round-2 review of the delta only.
+- UI B items DONE d1880149f (worker; main re-ran App 713/0; worker: UI 354/1, Dfir 2415/31/0, build 0 errors): A Home Simplu hides „Colectează tot” + offer
+  (LanguageLevelState, NoDataPanel.HideInSimpleLevel, offer also hidden when ControlArchive has earlier controls); B anchor code = optional wizard step 2 of 4;
+  C Control page "ultimul control terminat: dd.MM.yyyy HH:mm, ora stației" (ControlPeriodStart.LastFinished), report named separately if >30 min apart;
+  D Investigation Simplu = wizard only (step 3 has every scope field), results empty-state sentence; E first-run guide (FirstRunGuideWindow, modeless,
+  marker LOCALAPPDATA\LogAnalyzer\preferences\first-run-guide.seen, reopen from Glossary/Home). Pinned change: Wp18FlowTests "din 3" -> "din 4".
+  MAIN DECISION (owner said "use the recommendation"): Simplu Investigation wizard step 1 must offer "această stație" (collect here) AND "un folder adus" -
+  today Simplu is import-only (CSIRT collect only in Expert). TODO in the next UI worker.
+- BT worker resumed ONCE (its last allowed resume) with F1-F5 + design decision; then Opus round 2 on the delta only.
+- After that: C/D items of PORNIRE_INCEPATOR (table rows 4,7-10,12-20), publish + reinstall + real-PC screenshots (do NOT send `max` before sign-in), CI once, cleanup list for owner.
 - Next (was: owner answers): fix B items (BT fold is device-monitor = security-relevant -> Opus review), then C/D;
   cleanup of test data with owner OK; CI read once; merge chain.
