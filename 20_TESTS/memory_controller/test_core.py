@@ -93,7 +93,8 @@ def test_audit_logger_writes_and_reads(tmp_path):
 def test_security_sanitize_and_path():
     bad = "{{ secret }} <script>alert(1)</script> normal"
     clean = sanitize_query(bad)
-    assert "{{" not in clean and "<script>" not in clean
+    # Owner-approved contract change 2026-10-22: query is data; escape at render sites.
+    assert clean == bad and "{{ secret }}" in clean and "<script>" in clean
     # path traversal detection
     with pytest.raises(ValueError):
         check_path_traversal("..\\outside\\file.txt")

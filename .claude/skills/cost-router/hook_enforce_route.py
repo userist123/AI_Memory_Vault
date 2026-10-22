@@ -4,7 +4,7 @@
 Makes the route binding: when the current prompt's route (written by hook_prompt_route.py to
 ~/.claude/cache/cost-router/route-<session_id>.json) names a subagent and the main session has not
 delegated yet, the main session gets FREE_MAIN_CALLS (3) tool calls of its own (one-minute work);
-the next one is denied with a reason telling it to delegate with the Agent tool.
+the next one is denied (read-only Read/Grep/Glob only get the reason as additionalContext once; COST_ROUTER_DENY_READS=1 denies them too) with a reason telling it to delegate with the Agent tool.
 
 Only the main session is bound: a call carrying a non-empty agent_id or agent_type comes from a
 subagent and is allowed without touching any state. Allowed silently as well: no state, route.subagent null (main-session classes, trivial prompts, "#direct"),
@@ -15,11 +15,15 @@ is always allowed; it also records the task class in the session's route receipt
 (route_state.add_routed_class), which hook_agent_model.py accepts for later prompts of the same
 class. Not counted (`exempt`): one single read-only or one-shot git/gh command (git status/log/diff,
 gh pr view/checks/merge/edit, ...; no chain, pipe or redirect) and a short Edit/Write of MEMORY.md,
-a memory/*.md note or a todo-*.md checkpoint. Any internal error: no output, exit 0 (allow).
+a memory/*.md note or a todo-*.md checkpoint. Never both paths closed: when hook_agent_model.py denied a spawn (marker delegation_denied, per prompt
+epoch) up to BREAKER_EXTRA_CALLS (6) calls past the free ones are allowed (the first with a one-line
+additionalContext), then denied.
+Any internal error: no output, exit 0 (allow).
 """
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -76,11 +80,81 @@ def invokes_router(command: str) -> bool:
 
 
 def from_subagent(data: dict) -> bool:
+    # Main-session payloads carry no agent_id/agent_type (probe-verified, Claude Code 2.1.304).
     return any(str(data.get(k) or "").strip() for k in ("agent_id", "agent_type"))
 
 
+BREAKER_EXTRA_CALLS = 6  # direct calls allowed past the free ones after a refused spawn
+
+
+class AllowNote(str):
+    """decide() result that allows the call and carries one line of additionalContext."""
+
+
+ALLOW_NOTE = AllowNote("cost-router: delegation was refused by the Agent gate; direct work allowed for this"
+                       " prompt (run the Vault router to delegate)")
+
+
+def _tier(policy, value):
+    """Policy alias of a model name/id/alias ('claude-opus-5-5', 'opus[1m]', 'sonnet'), or None."""
+    v = str(value or "").strip().lower()
+    if not v:
+        return None
+    if v in policy.models:
+        return v
+    for alias, spec in policy.models.items():
+        if v.startswith(spec.model_id.lower()):
+            return alias
+    for alias in policy.models:
+        if alias in v:
+            return alias
+    return None
+
+
+def _advisory_note(sid, state: dict):
+    """A note when the route's model tier EQUALS the session's model tier (delegating to the same tier only adds
+    overhead); None when the session model is unknown, above the route tier (delegation saves money) or below it
+    (a risk-floored or review route must still go to the stronger model). Never raises."""
+    try:
+        import route_state  # noqa: E402
+        from route import _load_router, policy_path  # noqa: E402
+        if state.get("same_tier"):  # the prompt hook found session tier == route tier (class/risk checked there)
+            return f"cost-router: same tier ({state.get('model')}): direct work ok, delegation is advisory here"
+        # Fallback for states written before the prompt hook learned `same_tier`: the same class/risk exclusions
+        # apply (review, design and frontier routes, and any risk-floored route, are never relaxed).
+        if state.get("task_class") in ("review", "design", "frontier") or state.get("risk") in ("high", "critical"):
+            return None
+        session = route_state.session_model(sid)
+        if not session:
+            return None
+        policy = _load_router().ClaudeModelPolicy.from_file(policy_path())
+        s_tier, r_tier = _tier(policy, session), _tier(policy, state.get("model"))
+        if s_tier and r_tier and policy.rank(r_tier) == policy.rank(s_tier):  # equal tiers only: never relax a
+            return (f"cost-router: delegation is advisory here (session model {session} is on the route"  # risk floor
+                    f" tier {r_tier})")
+    except Exception:
+        return None
+    return None
+
+
+READ_TOOLS = ("Read", "Grep", "Glob")
+
+
+def _soften(data: dict, calls: int, reason: str):
+    """A deny of a read-only tool costs a whole retry request (prefix re-read) and the model re-issues the read
+    anyway: allow it and deliver the reason once as context. COST_ROUTER_DENY_READS=1 restores the deny."""
+    if data.get("tool_name") not in READ_TOOLS or os.environ.get("COST_ROUTER_DENY_READS", "").strip() == "1":
+        return reason
+    return AllowNote(reason) if calls == route_state_free() + 1 else None
+
+
+def route_state_free() -> int:
+    import route_state  # noqa: E402
+    return route_state.FREE_MAIN_CALLS
+
+
 def decide(data: dict):
-    """Return a deny reason, or None to allow. Updates the session state as a side effect."""
+    """Return a deny reason, an AllowNote (allow + context), or None to allow. Updates the session state as a side effect."""
     import route_state  # noqa: E402
     if route_state.enforcement_disabled() or from_subagent(data):
         return None
@@ -98,20 +172,42 @@ def decide(data: dict):
         return None
     if exempt(data.get("tool_name"), tool_input):
         return None
-    try:
-        calls = int(state.get("main_calls") or 0) + 1
-    except (TypeError, ValueError):
-        calls = 1
-    state["main_calls"] = calls
-    route_state.save(sid, state)
+    tid = str(data.get("tool_use_id") or "")
+    prior = route_state.seen_get(sid, "pre:" + tid) if tid else None
+    if prior is not None:  # replay of an already counted call: same decision, no second count
+        calls = int(prior) if str(prior).isdigit() else 1
+    else:
+        try:
+            calls = int(state.get("main_calls") or 0) + 1
+        except (TypeError, ValueError):
+            calls = 1
+        state["main_calls"] = calls
+        route_state.save(sid, state)
+        if tid:
+            route_state.seen_event(sid, "pre:" + tid, calls)
     if calls <= route_state.FREE_MAIN_CALLS:
         return None
-    return (f"cost-router: route is {state.get('task_class')} -> delegate to {state.get('subagent')}"
-            f" ({state.get('model')}) with the Agent tool; the main session dispatches, it does not do"
-            " this work itself. Owner override: put #direct in the prompt.")
+    advisory = _advisory_note(sid, state)
+    if advisory:  # delegating to a model that is not cheaper than this session is pure overhead: never deny
+        return AllowNote(advisory) if calls == route_state.FREE_MAIN_CALLS + 1 else None
+    if state.get("delegation_denied"):  # the Agent gate refused the spawn: a capped direct allowance
+        cap = route_state.FREE_MAIN_CALLS + BREAKER_EXTRA_CALLS
+        if calls > cap:
+            return _soften(data, calls, f"cost-router: direct-work allowance after a refused dispatch is used up ({cap} calls);"
+                           " fix the blocker named by the Agent gate or put #direct in the prompt")
+        return ALLOW_NOTE if calls == route_state.FREE_MAIN_CALLS + 1 else None
+    return _soften(data, calls, f"cost-router: route is {state.get('task_class')} -> delegate to {state.get('subagent')}"
+                   f" ({state.get('model')}) with the Agent tool; the main session dispatches, it does not do"
+                   " this work itself. Owner override: put #direct in the prompt.")
 
 
 def main() -> int:
+    try:  # COST_ROUTER_OFF=1: equal-arm benchmarks / owner kill switch; no output, no state
+        import route_state as _rs  # noqa: E402
+        if _rs.disabled_by_env():
+            return 0
+    except Exception:
+        pass
     try:
         data = json.load(sys.stdin)
         if not isinstance(data, dict):
@@ -122,7 +218,9 @@ def main() -> int:
         reason = decide(data)
     except Exception:
         return 0
-    if reason:
+    if isinstance(reason, AllowNote):
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": str(reason)}}))
+    elif reason:
         print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse",
                                                  "permissionDecision": "deny",
                                                  "permissionDecisionReason": reason}}))

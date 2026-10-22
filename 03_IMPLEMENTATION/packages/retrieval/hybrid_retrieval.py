@@ -23,6 +23,7 @@ import json
 import math
 import re
 import time
+import unicodedata
 import urllib.error
 import urllib.request
 from collections import Counter, defaultdict
@@ -32,7 +33,10 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from .vault_index import Note, VaultIndex
 
-TOKEN_RE = re.compile(r"[a-z0-9][a-z0-9_\-\.]*")
+# Unicode-aware: first char is a letter/digit (any script, no "_"), the rest may
+# also contain "_", "-" and ".". Accents are folded (NFKD) before matching so
+# "sedinta" and "ședință" produce the same token.
+TOKEN_RE = re.compile(r"[^\W_][\w\-\.]*", re.UNICODE)
 # Entity/identifier heuristics. NOTE: the "version" branch requires three
 # dot-separated groups (X.Y.Z), not two (X.Y). A two-part pattern also matches
 # generic decimal literals (probabilities, thresholds, scores like "0.15",
@@ -57,8 +61,15 @@ STOP = set(
 )
 
 
+def _fold(text: str) -> str:
+    return "".join(c for c in unicodedata.normalize("NFKD", text.lower())
+                   if not unicodedata.combining(c))
+
+
 def tokenize(text: str) -> List[str]:
-    return [t for t in TOKEN_RE.findall(text.lower()) if t not in STOP and len(t) > 1]
+    # 1-char tokens are dropped (noise) except digits (ids like "7" in "RFC 7").
+    return [t for t in TOKEN_RE.findall(_fold(text))
+            if t not in STOP and (len(t) > 1 or t.isdigit())]
 
 
 def entities(text: str) -> set:
