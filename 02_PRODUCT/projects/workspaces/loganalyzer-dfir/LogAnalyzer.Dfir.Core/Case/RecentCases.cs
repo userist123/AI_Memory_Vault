@@ -21,7 +21,8 @@ public static class CaseLifecycleNames
     };
 
     /// <summary>Romanian label of a stored spec name (ACTIVE -> activ); an unknown value is shown lower-cased, never dropped.</summary>
-    public static string LabelFromSpec(string spec) =>
+    public static string LabelFromSpec(string? spec) =>
+        string.IsNullOrEmpty(spec) ? "necunoscut" :
         Enum.GetValues<CaseLifecycle>().Where(l => Spec(l) == spec).Select(l => (CaseLifecycle?)l).FirstOrDefault() is { } life ? Label(life) : spec.ToLowerInvariant();
 }
 
