@@ -71,7 +71,7 @@ def _snapshot(home: Path) -> dict:
     for sub in ("skills/cost-router", "agents"):
         base = home / ".claude" / sub
         for p in sorted(base.rglob("*")):
-            if p.is_file():
+            if p.is_file() and "__pycache__" not in p.parts:  # bytecode cache is not installed content
                 out[p.relative_to(home).as_posix()] = p.read_bytes()
     return out
 
