@@ -12,8 +12,10 @@ For a SendMessage whose `to` names a subagent of this session (its transcript is
   - a second resume of the same agent is denied, with the checkpoint recipe in the reason;
   - a first resume of an agent whose context exceeds RESUME_WARN_TOKENS (150k; env
     COST_ROUTER_RESUME_MAX_TOKENS) is allowed with a warning suggesting a fresh agent.
-Anything else (a teammate, another session, "main", an unknown name) is left alone, as is every
-call when COST_ROUTER_ENFORCE=0 or the prompt carries "#direct". Any error: no output, exit 0.
+Anything else (a teammate, another session, "main", an unknown name) is left alone when the session's
+subagents directory exists; when it cannot be resolved (no transcript path, no directory) the resume is
+counted by the named agent id, so a second resume is still denied instead of failing open. Every call is
+left alone when COST_ROUTER_ENFORCE=0 or the prompt carries "#direct". Any error: no output, exit 0.
 """
 from __future__ import annotations
 
@@ -44,21 +46,39 @@ def decide(data: dict):
     if route_state.enforcement_disabled():
         return None
     tool_input = data.get("tool_input") if isinstance(data.get("tool_input"), dict) else {}
-    found = transcript_usage.resolve_subagent(data.get("transcript_path"), str(tool_input.get("to") or ""))
+    to = str(tool_input.get("to") or "")
+    found = transcript_usage.resolve_subagent(data.get("transcript_path"), to)
     if found is None:
-        return None
+        d = transcript_usage.subagents_dir(data.get("transcript_path")) if data.get("transcript_path") else None
+        if d is not None and d.is_dir():
+            return None  # the session's subagents are known and `to` is not one of them (teammate, "main")
+        # Audit B LOW-6: the transcript cannot be resolved -> count by the named agent id instead of failing
+        # open, so a second resume of the same id is still denied (owner override: #direct).
+        bare = to.split(" [", 1)[0].strip()
+        aid = bare[len("agent-"):] if bare.startswith("agent-") else bare
+        if not aid or aid.lower() == "main":
+            return None
+        found = (aid, None)
     agent_id, transcript = found
     sid = data.get("session_id")
     state = route_state.load(sid) or {}
     if state.get("direct"):
         return None
-    tokens = transcript_usage.context_tokens(transcript)
+    tokens = transcript_usage.context_tokens(transcript) if transcript is not None else 0
     size = f"~{tokens // 1000}k context tokens" if tokens else "unknown size"
+    tid = str(data.get("tool_use_id") or "")
+    key = "resume:" + tid
+    replay = bool(tid) and route_state.seen_event(sid, key, record=False)  # this id was already recorded
     done = route_state.resume_count(sid, agent_id)
+    if replay:
+        done = max(0, done - 1)  # exclude the resume this very call already counted
     if done >= MAX_RESUMES:
         return "deny", (f"cost-router: subagent {agent_id} was already resumed {done}x ({size}); a subagent is"
                         f" resumed at most once. Instead {CHECKPOINT}. Owner override: #direct.")
-    route_state.record_resume(sid, agent_id)
+    if not replay:
+        route_state.record_resume(sid, agent_id)
+        if tid:
+            route_state.seen_event(sid, key)
     if tokens and tokens > threshold():
         return "warn", (f"cost-router: subagent {agent_id} carries {size} (> {threshold() // 1000}k); every call of"
                         f" this resume re-reads all of it. Prefer to {CHECKPOINT}.")
@@ -66,6 +86,12 @@ def decide(data: dict):
 
 
 def main() -> int:
+    try:  # COST_ROUTER_OFF=1: equal-arm benchmarks / owner kill switch; no output, no state
+        import route_state as _rs  # noqa: E402
+        if _rs.disabled_by_env():
+            return 0
+    except Exception:
+        pass
     try:
         data = json.load(sys.stdin)
         if not isinstance(data, dict) or data.get("tool_name") != "SendMessage":

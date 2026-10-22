@@ -87,7 +87,8 @@ def test_route_helper_resolves_from_repo_layout():
     assert d["model"] == "opus" and d["verifier_model"] == "opus" and d["subagent"] is None
 
 
-def test_hook_injects_one_line_of_context_for_a_real_prompt():
+def test_hook_injects_one_line_of_context_for_a_real_prompt(monkeypatch):
+    monkeypatch.setenv("COST_ROUTER_VERBOSE_ROUTE", "1")  # long form is opt-in since the compact default
     r = _run([str(HOOK)], stdin=json.dumps({"prompt": "find which files import memory_controller and list them", "hook_event_name": "UserPromptSubmit"}))
     assert r.returncode == 0, r.stderr
     out = json.loads(r.stdout)
@@ -159,14 +160,21 @@ def test_project_settings_register_the_same_hook():
     assert cmd.rstrip().endswith("exit 0") and "exit 2" not in cmd
 
 
-def test_session_start_command_runs_quietly_and_installs(tmp_path):
+def test_session_start_command_runs_quietly_and_installs(tmp_path, monkeypatch):
     """Run the SessionStart command exactly as settings.json spells it, against a scratch HOME."""
+    for k in ("COST_ROUTER_NO_SELF_INSTALL", "COST_ROUTER_OFF", "COST_ROUTER_SELF_INSTALL"):  # hermetic switches
+        monkeypatch.delenv(k, raising=False)
     bash = _find_bash()
     if not bash:
         pytest.skip("Functional bash interpreter not available on this platform")
     settings = json.loads((ROOT / ".claude" / "settings.json").read_text(encoding="utf-8"))
     cmd = settings["hooks"]["SessionStart"][0]["hooks"][0]["command"]
     env = dict(os.environ, CLAUDE_PROJECT_DIR=str(ROOT), HOME=str(tmp_path), USERPROFILE=str(tmp_path))
+    # default OFF (owner, 2026-10-22): the registered command writes nothing under HOME without an opt-in
+    r = subprocess.run([bash, "-c", cmd], env=env, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0 and r.stdout == "", (r.stdout, r.stderr)
+    assert list(tmp_path.rglob("*")) == [], "no opt-in: nothing may be written"
+    env["COST_ROUTER_SELF_INSTALL"] = "1"  # the owner opted in
     r = subprocess.run([bash, "-c", cmd], env=env, capture_output=True, text=True, timeout=60)
     assert r.returncode == 0 and r.stdout == "", (r.stdout, r.stderr)
     assert (tmp_path / ".claude" / "skills" / "cost-router" / "SKILL.md").exists()
@@ -174,8 +182,11 @@ def test_session_start_command_runs_quietly_and_installs(tmp_path):
     assert not (tmp_path / ".claude" / "settings.json").exists(), "--session-start writes no user settings"
 
 
-def test_uninstall_stops_the_session_start_reinstall(tmp_path):
+def test_uninstall_stops_the_session_start_reinstall(tmp_path, monkeypatch):
     """Reviewer finding 3: opening the repo must not undo an uninstall."""
+    for k in ("COST_ROUTER_NO_SELF_INSTALL", "COST_ROUTER_OFF"):  # hermetic: a runner may export the kill switches
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setenv("COST_ROUTER_SELF_INSTALL", "1")  # even an opted-in session start must not undo the uninstall
     home = tmp_path / "home"
     assert _run([str(INSTALL), "--home", str(home)]).returncode == 0
     assert _run([str(INSTALL), "--home", str(home), "--uninstall"]).returncode == 0
@@ -215,7 +226,8 @@ def test_chat_skill_is_uploadable_and_not_installed_into_claude_code(tmp_path):
     assert not (home / ".claude" / "skills" / "cost-router" / "chat").exists()
 
 
-def test_hook_reminds_the_reply_language_from_user_settings(tmp_path):
+def test_hook_reminds_the_reply_language_from_user_settings(tmp_path, monkeypatch):
+    monkeypatch.setenv("COST_ROUTER_VERBOSE_ROUTE", "1")
     """Owner report 2026-10-11: replies drifted to English because every injected line is English."""
     import os
     home = tmp_path / "home"

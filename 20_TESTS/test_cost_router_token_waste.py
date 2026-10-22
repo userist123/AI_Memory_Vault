@@ -63,7 +63,7 @@ def _tool(home, tool, tool_input, sid=SID):
 
 
 def _agent(home, prompt, subagent_type="general-purpose", sid=SID, **ti):
-    return _run(AGENT_HOOK, {"session_id": sid, "tool_name": "Agent", "cwd": str(ROOT),
+    return _run(AGENT_HOOK, {"session_id": sid, "tool_name": "Agent", "cwd": str(ROOT), "model": "opus",
                              "tool_input": {"description": "task", "prompt": prompt,
                                             "subagent_type": subagent_type, **ti}}, home)
 
@@ -98,12 +98,14 @@ def test_design_in_the_main_session_keeps_the_floor():
 
 
 def test_agent_hook_worker_stays_on_sonnet_reviewer_goes_to_opus(home):
+    """Owner rule 2026-10-16 (rules.implementer_risk_floor): a high-risk implementer stays on sonnet because the
+    Opus reviewer pass is mandatory; the reviewer itself is never below opus."""
     out = _agent(home, SECURITY_FIX + "; the Opus reviewer will verify it", subagent_type="vault-worker",
                  model="opus")  # an explicit one-notch escalation is still honoured
     assert out is None or out["updatedInput"]["model"] == "opus"
     out = _agent(home, SECURITY_FIX + "; the Opus reviewer will verify it", subagent_type="vault-worker")
-    assert out["updatedInput"]["model"] == "sonnet"
-    assert "reviewer, not this worker" in out["additionalContext"]
+    assert out["permissionDecision"] == "allow" and out["updatedInput"]["model"] == "sonnet"
+    assert "reviewer, not this worker" in out["permissionDecisionReason"]
     out = _agent(home, SECURITY_FIX, subagent_type="vault-reviewer", model="sonnet")
     assert out["updatedInput"]["model"] == "opus"
 
@@ -159,18 +161,65 @@ def test_route_cli_dispatch_refuses_a_subagent_route():
     assert r.returncode != 0 and "Agent tool" in r.stderr
 
 
-def test_cached_route_receipt_is_accepted_for_the_same_task_class(home):
+FAKE_ROUTER = """import json, os, sys
+with open(os.path.join(os.environ["FAKE_ROUTE_DIR"], "calls.txt"), "a") as fh:
+    fh.write("x")
+mode = os.environ.get("FAKE_ROUTE_STATUS", "ROUTED")
+if mode == "CRASH":
+    sys.exit(1)
+print(json.dumps({"status": mode, "execution_contract": {"subagent_type": "vault-worker",
+                                                          "execute_via": "claude_code_agent_tool"}}))
+"""
+
+
+def _fake_vault(tmp_path):
+    pkg = tmp_path / "vault" / "03_IMPLEMENTATION" / "packages" / "routing"
+    pkg.mkdir(parents=True)
+    (pkg / "__init__.py").write_text("", encoding="utf-8")
+    (pkg / "route_cli.py").write_text(FAKE_ROUTER, encoding="utf-8")
+    return tmp_path / "vault"
+
+
+def _agent_in(home, vault, status, prompt, subagent_type="general-purpose"):
+    return _run(AGENT_HOOK, {"session_id": SID, "tool_name": "Agent", "cwd": str(vault), "model": "opus",
+                             "tool_input": {"description": "task", "prompt": prompt,
+                                            "subagent_type": subagent_type}}, home,
+                CLAUDE_PROJECT_DIR=str(vault), FAKE_ROUTE_STATUS=status, FAKE_ROUTE_DIR=str(home))
+
+
+def _router_calls(home):
+    f = home / "calls.txt"
+    return len(f.read_text()) if f.exists() else 0
+
+
+def test_unavailable_router_denies_until_a_bash_receipt_for_the_same_task_class(home, tmp_path):
+    vault = _fake_vault(tmp_path)  # environment-independent: the real router is never consulted
     _prompt(home, "implement the bounded parser change and add tests")
-    deny = _agent(home, "implement the bounded parser change and add tests")
+    deny = _agent_in(home, vault, "CRASH", "implement the bounded parser change and add tests")
     assert deny and deny["permissionDecision"] == "deny"
+    assert "in-hook router unavailable: exit 1" in deny["permissionDecisionReason"]
     _tool(home, "Bash", {"command": "python -m routing.route_cli route --goal \"parser change\""})
-    assert _agent(home, "implement the bounded parser change and add tests")["permissionDecision"] == "allow"
+    assert _agent_in(home, vault, "CRASH", "implement the bounded parser change and add tests")[
+        "permissionDecision"] == "allow"
     # a new prompt of the same class reuses the receipt; another class still has to route
     _prompt(home, "implement the second parser change and add more tests")
-    assert _agent(home, "implement the second parser change and add tests")["permissionDecision"] == "allow"
+    assert _agent_in(home, vault, "CRASH", "implement the second parser change and add tests")[
+        "permissionDecision"] == "allow"
     _prompt(home, "review the parser diff for regressions and verify the tests")
-    deny = _agent(home, "review the parser diff for regressions", subagent_type="vault-reviewer")
+    deny = _agent_in(home, vault, "CRASH", "review the parser diff for regressions", "vault-reviewer")
     assert deny and deny["permissionDecision"] == "deny"
+
+
+def test_routed_decision_records_a_receipt_reused_for_the_same_task_class(home, tmp_path):
+    vault = _fake_vault(tmp_path)
+    _prompt(home, "implement the bounded parser change and add tests")
+    out = _agent_in(home, vault, "ROUTED", "implement the bounded parser change and add tests")
+    assert out["permissionDecision"] == "allow" and "vault-router: ROUTED -> vault-worker" in out["permissionDecisionReason"] and "additionalContext" not in out
+    assert _router_calls(home) == 1
+    _prompt(home, "implement the second parser change and add more tests")
+    assert _agent_in(home, vault, "CRASH", "implement the second parser change and add tests")[
+        "permissionDecision"] == "allow"
+    assert _router_calls(home) == 1  # receipt reused: the router did not run again
 
 
 # -- A6: single-command exemptions ----------------------------------------------------------------
