@@ -1,7 +1,7 @@
 # todo-claude-casa3d-uiux
-STATUS: IN_PROGRESS   UPDATED: 2026-10-23T03:40:00+03:00
+STATUS: DONE   UPDATED: 2026-10-23T04:30:00+03:00
 TASK: Casa3D UI/UX P1 from the research report (owner request 2026-10-22; report kept locally, not in repo)
-BRANCH / PR: claude/casa3d-uiux-p1 (worktree D:/w/uiux, base origin/main 6eb24f87)
+BRANCH / PR: claude/casa3d-uiux-p1 -> PR #321 (worktree D:/w/uiux, base origin/main 6eb24f87)
 P1 items (report table rows 1-7):
 1. Clean data on link and documents: room names in the reader's language, colour names instead of hex
 2. Responsive slides + automatic overflow tests (390 px and 16:9)
@@ -41,5 +41,8 @@ REVIEW round 1 (vault-reviewer): NOT READY, 0 blockers, 3 MEDIUM fixed: PlanView
   initialLang) + localized snapshot derived with useMemo. LOW fixed: typed room min 0.6 m, name prefill, Enter on
   checkbox no longer submits, unique group keys, render state sends the snapshot only when images are missing,
   renders deleted on revoke when no other active link shows the revision, explicit WebGL context loss. Suite 697/697.
-NEXT: review round 2; PR; CI; merge.
+REVIEW round 2: READY; its two LOW findings fixed (no throwaway WebGL context; uploads need an active link). CI green on
+  PR #321 (app typecheck/test/build ubuntu + windows, CodeQL, Gitleaks, vault checks). Merged via PR #321.
+LIMITS: images of expired (not revoked) links stay stored but unreachable; the 20_TESTS pytest cannot run in this sparse
+  worktree (CI covers it).
 KEY FILES: casa3d/app/core/templates.ts, core/boq.ts, core/budget-excluded.ts, components/{Editor,PresentView,PrintView,SiteReport,MoodBoard,PlanView,Viewer3D,DialogHost}.tsx, core/{typed-dimension,feedback-log}.ts, lib/{dialog,share-renders,share-images}.ts, scripts/check-slides.mjs
