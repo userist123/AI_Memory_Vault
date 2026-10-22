@@ -156,4 +156,58 @@ public sealed class DeviceMonitorFoldResidualTests
         Assert.Equal(1, Fold(iface, target));
         Assert.Equal(target.Identity, iface.SupersededBy);
     }
+
+    // ---- review round 1 of the fail-closed fold: step 2 must not cross families on its other paths ----------------------------------------------
+
+    private static DeviceJournalEntry OldSerialRow(DeviceClass cls, string serial = "SYNTHKB01") => new()
+    {
+        Identity = "SN|1532:009C|" + serial, InstanceId = @"USB\VID_1532&PID_009C\" + serial, Name = "USB Input Device", Class = cls, VidPid = "1532:009C",
+        Serial = serial, ClassifierVersion = 0, Present = false, FirstSeenUtc = T0, LastConnectedUtc = T0, LastDisconnectedUtc = T0.AddHours(1),
+    };
+
+    [Fact]
+    public void Step_2_with_a_single_old_target_does_not_fold_another_family_under_it()
+    {
+        var target = OldSerialRow(DeviceClass.Keyboard);
+        var net = Legacy(DeviceClass.NetworkAdapter, 0, "MI_02");
+        var mouse = Legacy(DeviceClass.Mouse, 0, "MI_00");
+        Fold(target, net, mouse);
+        Assert.Equal("", net.SupersededBy);                       // a Critical kind on an isolated station is never hidden under a keyboard
+        Assert.Equal(target.Identity, mouse.SupersededBy);        // the keyboard/mouse family of the old classifier still folds (station shape)
+    }
+
+    [Fact]
+    public void Step_2_without_a_target_folds_only_within_the_family_of_the_first_interface()
+    {
+        var kb = Legacy(DeviceClass.Keyboard, 0, "MI_00");
+        var mouse = Legacy(DeviceClass.Mouse, 0, "MI_01");
+        var bt = Legacy(DeviceClass.Bluetooth, 0, "MI_02");
+        Fold(kb, mouse, bt);
+        Assert.Equal("", kb.SupersededBy);
+        Assert.Equal(kb.Identity, mouse.SupersededBy);
+        Assert.Equal("", bt.SupersededBy);
+    }
+
+    [Fact]
+    public void Step_2_with_two_current_targets_does_not_fold_a_row_step_1b_refused()
+    {
+        var a = Connected(DeviceClass.Keyboard, 3);
+        var b = Connected(DeviceClass.Keyboard, 3); b.Identity = b.Identity.Replace("FAKE01", "FAKE02"); b.InstanceId = b.InstanceId.Replace("FAKE01", "FAKE02");
+        var kb = Legacy(DeviceClass.Keyboard, 1, "MI_00");
+        var net = Legacy(DeviceClass.NetworkAdapter, 1, "MI_02");
+        Fold(a, b, kb, net);
+        Assert.Equal("", net.SupersededBy);
+    }
+
+    [Fact]
+    public void A_v2_keyboard_row_folds_under_its_v3_bluetooth_row_when_the_pair_is_known()
+    {
+        Assert.True(DeviceScope.IsKnownReclassification(2, 3, DeviceClass.Keyboard, DeviceClass.Bluetooth));
+        var legacy = Legacy(DeviceClass.Keyboard, 2);
+        var bt = Connected(DeviceClass.Bluetooth, 3);
+        Assert.Equal(1, Fold(legacy, bt));
+        Assert.Equal(bt.Identity, legacy.SupersededBy);
+        // the same version on both sides is never a reclassification
+        Assert.Equal(0, Fold(Legacy(DeviceClass.Keyboard, 3), Connected(DeviceClass.Bluetooth, 3)));
+    }
 }
