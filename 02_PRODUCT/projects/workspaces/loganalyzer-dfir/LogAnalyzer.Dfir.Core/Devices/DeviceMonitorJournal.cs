@@ -353,8 +353,8 @@ public static class DeviceMonitorReport
     /// the policy asks for and does not count, unless it was seen enabled since <paramref name="fromUtc"/>.
     /// </summary>
     public static bool ForbiddenSeen(DeviceJournalEntry e, bool isolated, DateTimeOffset? fromUtc = null) =>
-        isolated && DeviceMonitorRules.ForbiddenOnIsolated(e.Class, e.InstanceId)
-        && !(DeviceMonitorRules.IsDisabledRadio(e.Class, e.ConfigManagerErrorCode) && !(e.ActiveSeenUtc is { } a && a >= (fromUtc ?? DateTimeOffset.MinValue)));
+        isolated && DeviceMonitorRules.ForbiddenOnIsolated(DeviceMonitorRules.DisplayClass(e), e.InstanceId)
+        && !(DeviceMonitorRules.IsDisabledRadio(DeviceMonitorRules.DisplayClass(e), e.ConfigManagerErrorCode) && !(e.ActiveSeenUtc is { } a && a >= (fromUtc ?? DateTimeOffset.MinValue)));
 
     public static string UtcText(DateTimeOffset t) => Utc(t);
 
@@ -370,7 +370,7 @@ public static class DeviceMonitorReport
         var parts = new List<string>
         {
             "Stare: " + DeviceMonitorRules.StatusText(e.Status).ToLowerInvariant(),
-            DeviceMonitorRules.ClassText(e.Class),
+            DeviceMonitorRules.IsStoredBluetoothInput(e) ? DeviceMonitorRules.ClassText(DeviceMonitorRules.DisplayClass(e)) + " — " + DeviceMonitorRules.DisplayDetail(e) : DeviceMonitorRules.ClassText(e.Class),
             e.Name.Length > 0 ? e.Name : "(fără nume)",
         };
         if (e.Manufacturer.Length > 0) parts.Add(e.Manufacturer);

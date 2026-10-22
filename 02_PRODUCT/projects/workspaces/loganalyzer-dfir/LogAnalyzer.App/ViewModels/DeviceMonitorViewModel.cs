@@ -90,8 +90,8 @@ namespace LogAnalyzer.UI.ViewModels
 
         public void Update(DeviceJournalEntry e, string alertText = "", bool alertCritical = false)
         {
-            Present = e.Present; Class = e.Class; Status = e.Status;
-            StatusTip = StatusText + (e.Present && e.ConfigManagerErrorCode > 0 ? $" (cod {e.ConfigManagerErrorCode}: {DeviceMonitorRules.ProblemText(e.ConfigManagerErrorCode)})" : "") + (e.Detail.Length > 0 ? " – " + e.Detail : "");
+            Present = e.Present; Class = DeviceMonitorRules.DisplayClass(e); Status = e.Status;
+            StatusTip = StatusText + (e.Present && e.ConfigManagerErrorCode > 0 ? $" (cod {e.ConfigManagerErrorCode}: {DeviceMonitorRules.ProblemText(e.ConfigManagerErrorCode)})" : "") + (DeviceMonitorRules.DisplayDetail(e) is { Length: > 0 } dd ? " – " + dd : "");
             // a row an older version named after the drive letter („F:\”) shows the model or the manufacturer instead
             var name = DeviceMonitorRules.FriendlyName([e.Name], e.Model.Length > 0 ? e.Model : LogAnalyzer.Dfir.Devices.DeviceJournalMerge.KnownManufacturer(e.Manufacturer).Length > 0 ? e.Manufacturer.Trim() : "");
             Name = name.Length > 0 ? name : "(fără nume)"; Manufacturer = e.Manufacturer; Model = e.Model; VidPid = e.VidPid;
@@ -693,7 +693,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (e.DuplicateSerial) { parts.Add(DeviceMonitorRules.DuplicateSerialMark); critical = true; }
             if (e.Present || e.LastConnectedUtc is not null)
             {
-                var d = DeviceMonitorRules.Decide(e.Class, e.InstanceId, DeviceMonitorRules.EffectiveNumber(e), _isolated, e.ConfigManagerErrorCode);
+                var d = DeviceMonitorRules.Decide(DeviceMonitorRules.DisplayClass(e), e.InstanceId, DeviceMonitorRules.EffectiveNumber(e), _isolated, e.ConfigManagerErrorCode);
                 if (d.Severity == DeviceAlertSeverity.Critical) { parts.Add(d.Reason); critical = true; }
             }
             return (string.Join("; ", parts), critical);
