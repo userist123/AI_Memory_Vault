@@ -1,3 +1,4 @@
+import './tokens.css';
 import './globals.css';
 import { PrefsProvider } from '@/lib/prefs';
 import DialogHost from '@/components/DialogHost';

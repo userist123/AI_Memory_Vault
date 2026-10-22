@@ -1,0 +1,23 @@
+:root{
+  /* culoare */
+  --bg:#F6F3EE; --bg-2:#EEE9E1; --surface:#FFFDFA; --surface-2:#FFFFFF;
+  --ink:#1E1C19; --ink-2:#4A453E; --ink-3:#5F584F; --ink-num:#6F675D;
+  --line:#E3DDD3; --line-strong:#CFC6B8;
+  --accent:#7A5A36; --accent-soft:#F1E9DE;
+  --ok:#3F5F41; --ok-soft:#E8F0E8; --warn:#7A4F0E; --warn-soft:#F8EBCF; --err:#9E3A2F; --err-soft:#F7E8E4;
+  --focus:#5E3F1D;
+  /* alias pentru regulile mai vechi */
+  --paper:var(--bg); --paper-2:var(--bg-2); --graphite:var(--ink); --lead:var(--ink-3); --rule:var(--line);
+  /* distanțe (4 pt) */
+  --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px; --s-7:48px;
+  /* raze și umbre */
+  --r-sm:6px; --r-md:10px; --r-full:999px;
+  --shadow-1:0 1px 2px rgb(30 28 25 / .08); --shadow-2:0 8px 24px rgb(30 28 25 / .14);
+  /* tipografie: șase mărimi în loc de peste douăzeci */
+  --fs-xs:12px; --fs-sm:14px; --fs-md:16px; --fs-lg:20px; --fs-xl:28px; --fs-2xl:40px;
+  --serif:'Newsreader',Georgia,'Times New Roman',serif; --sans:'Instrument Sans','Segoe UI',system-ui,sans-serif; --mono:var(--sans);
+  /* înălțimi de control: 32 / 36 / 44; pe ecranele tactile minimul e 44 px (--hit) */
+  --h-sm:32px; --h-md:36px; --h-lg:44px; --hit:36px;
+  --sheet-peek:64px;
+  color-scheme: light;
+}
