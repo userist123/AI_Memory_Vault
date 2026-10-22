@@ -2879,7 +2879,11 @@ namespace LogAnalyzer.UI.ViewModels
                     ProvenanceEntries.Add(entry);
                 }
 
-                StatusMessage = $"✅ Analiză AI finalizată: Risc {AiRiskScore}/100 | {kerbFindings.Count} Kerberos | {lolbas.Count} LOLBAS | {multiCorrelations.Count} Lanțuri Corelate";
+                // 2026-10-22 walkthrough: no summary without collected data, and the AI label only where the edition has the AI layer (Standalone has none).
+                StatusMessage = eventsForAnalysis.Count == 0
+                    ? "Nicio analiză încă."
+                    : (Edition.Has(LogAnalyzer.Core.Services.Edition.EditionFeature.AiAnalysis) ? "✅ Analiză AI finalizată" : "✅ Analiză finalizată")
+                      + $": Risc {AiRiskScore}/100 | {kerbFindings.Count} Kerberos | {lolbas.Count} LOLBAS | {multiCorrelations.Count} Lanțuri Corelate";
                 UpdateStorylineAndAptAttribution();
             }
             catch (Exception ex) when (ex is not OutOfMemoryException)

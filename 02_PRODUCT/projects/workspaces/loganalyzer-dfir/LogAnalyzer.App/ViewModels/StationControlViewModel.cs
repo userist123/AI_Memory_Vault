@@ -34,7 +34,7 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _inspector = LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified;
         [ObservableProperty] private string _notes = "";
         [ObservableProperty] private bool _isBusy;
-        [ObservableProperty] private string _status = "Apăsați „Înainte” ca să alegeți perioada. Controlul doar citește; nu modifică stația.";
+        [ObservableProperty] private string _status = FlowHints[0];
         [ObservableProperty] private string _summary = "";
         [ObservableProperty] private string _statusFilter = "Toate";
         [ObservableProperty] private string _gapsText = "";
@@ -90,6 +90,19 @@ namespace LogAnalyzer.UI.ViewModels
         public sealed record PeriodOption(ControlPeriodChoice Choice, string Label);
 
         private readonly GuidedFlow _flow;
+
+        /// <summary>The line under the wizard for each step (2026-10-22 walkthrough: the first step's hint stayed on steps 2 and 3).</summary>
+        private static readonly string[] FlowHints =
+        [
+            "Apăsați „Înainte” ca să alegeți perioada. Controlul doar citește; nu modifică stația.",
+            "Alegeți perioada de verificare, apoi apăsați „Înainte” ca să alegeți procedurile.",
+            "Apăsați „Pornește controlul” ca să rulați verificarea. Controlul doar citește; nu modifică stația.",
+        ];
+
+        private void SetFlowHint()
+        {
+            if (_flow.StepIndex >= 0 && _flow.StepIndex < FlowHints.Length) Status = FlowHints[_flow.StepIndex];
+        }
 
         public StationControlViewModel()
         {
@@ -228,6 +241,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (_flow.StepIndex == 0 && !LogAnalyzer.UI.Services.LiveCase.EnsureScopeAtStart() && LogAnalyzer.UI.Services.LiveCase.ScopePrompt is not null)
                 Status = "Scopul cazului nu a fost completat; veți fi întrebat din nou la salvarea raportului.";
             if (!_flow.Next()) { RaiseFlow(); return; }
+            SetFlowHint();
             if (_flow.StepIndex == 2 && !wasLast) LoadProfileSections();
             RaiseFlow();
             if (wasLast && _flow.Completed)
@@ -238,9 +252,9 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
-        [RelayCommand] private void FlowBack() { _flow.Back(); RaiseFlow(); }
+        [RelayCommand] private void FlowBack() { _flow.Back(); SetFlowHint(); RaiseFlow(); }
         [RelayCommand] private void FlowStop() { _flow.Stop(); RaiseFlow(); Status = "Controlul a fost oprit. Ce ați ales rămâne; apăsați „Înainte” ca să continuați."; }
-        [RelayCommand] private void FlowRestart() { _flow.Restart(); Result = null; Comparison = null; ComparisonChanges.Clear(); RaiseFlow(); }
+        [RelayCommand] private void FlowRestart() { _flow.Restart(); Result = null; Comparison = null; ComparisonChanges.Clear(); SetFlowHint(); RaiseFlow(); }
 
         /// <summary>"Compară cu controlul anterior": a difference against the selected (or the most recent) saved control.</summary>
         [RelayCommand]

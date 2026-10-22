@@ -48,9 +48,9 @@
                     <TextBlock Text="Schimbarea cere parola curentă. Cel puțin 14 caractere, diferită de nume, nu o parolă obișnuită. Parola rămâne valabilă chiar dacă aveți card înrolat."
                                FontSize="11" TextWrapping="Wrap" Margin="0,2,0,6" Foreground="{StaticResource TextSecondaryBrush}"/>
                     <WrapPanel>
-                        <PasswordBox AutomationProperties.Name="Parola actuală" x:Name="CurrentPw" Width="200" Margin="0,0,6,0" ToolTip="Parola curentă"/>
-                        <PasswordBox AutomationProperties.Name="Parola nouă" x:Name="NewPw" Width="200" Margin="0,0,6,0" ToolTip="Parola nouă"/>
-                        <PasswordBox AutomationProperties.Name="Confirmarea parolei noi" x:Name="ConfirmPw" Width="200" Margin="0,0,6,0" ToolTip="Confirmare"/>
+                        <StackPanel Margin="0,0,6,0"><TextBlock Text="Parola curentă" Margin="0,0,0,2" Foreground="{StaticResource TextSecondaryBrush}"/><PasswordBox AutomationProperties.Name="Parola curentă" x:Name="CurrentPw" Width="200"/></StackPanel>
+                        <StackPanel Margin="0,0,6,0"><TextBlock Text="Parola nouă" Margin="0,0,0,2" Foreground="{StaticResource TextSecondaryBrush}"/><PasswordBox AutomationProperties.Name="Parola nouă" x:Name="NewPw" Width="200"/></StackPanel>
+                        <StackPanel Margin="0,0,6,0"><TextBlock Text="Repetați parola nouă" Margin="0,0,0,2" Foreground="{StaticResource TextSecondaryBrush}"/><PasswordBox AutomationProperties.Name="Repetați parola nouă" x:Name="ConfirmPw" Width="200"/></StackPanel>
                         <Button Content="Schimbă parola" Click="ChangePassword_Click" Style="{StaticResource OutlineButtonStyle}"/>
                     </WrapPanel>
                 </StackPanel>
@@ -114,7 +114,7 @@
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,10">
                     <StackPanel>
                         <TextBlock Text="Parametri" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <CheckBox Content="Refuză autentificarea când lista certificatelor revocate (CRL) nu este la zi (implicit: ediția clasificată refuză, cea neclasificată avertizează)" IsChecked="{Binding MissingCrlRefuse}" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,4"/>
+                        <CheckBox Content="Refuză autentificarea când lista certificatelor revocate (CRL) nu este la zi (implicit: ediția Standalone refuză, cea neclasificată avertizează)" IsChecked="{Binding MissingCrlRefuse}" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,4"/>
                         <WrapPanel>
                             <TextBlock Text="Blocare după inactivitate (min):" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                             <TextBox AutomationProperties.Name="Blocare după inactivitate, minute" Text="{Binding IdleLockMinutes}" Width="50" Margin="0,0,16,0"/>

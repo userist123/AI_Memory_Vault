@@ -7,6 +7,16 @@
     <!-- Owner 2026-10-11: „pentru mediile de stocare îmi trebuie toate datele … ceva viu ca la Endpoint Protector”. DataContext: MediaCenterViewModel. -->
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <!-- An empty status line takes no space (2026-10-22 walkthrough: the empty lines left a gap above the scope text). -->
+        <Style x:Key="OptionalLine" TargetType="TextBlock">
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,2,0,0"/>
+            <Style.Triggers>
+                <Trigger Property="Text" Value="">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
     <Grid Margin="24,20,24,16">
         <Grid.RowDefinitions>
@@ -17,7 +27,7 @@
 
         <StackPanel Grid.Row="0" Margin="0,0,0,10">
             <TextBlock Text="Medii de stocare și dispozitive" FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-            <TextBlock Text="Tot ce se conectează la această stație, în timp real: stick-uri, carduri, telefoane, Bluetooth, adaptoare Wi-Fi și de rețea, imprimante, scanere, camere, CD/DVD, tastaturi, mouse-uri, audio, controlere și componente interne. Aplicația doar citește; nu blochează și nu modifică nimic."
+            <TextBlock Text="Aici apar mediile de stocare (stick USB, card, disc extern, unitate optică) și dispozitivele conectate extern (telefon, cameră, scaner, imprimantă, adaptor de rețea sau Wi-Fi USB, Bluetooth, tastatură și mouse externe). Componentele interne nu se arată. Aplicația doar citește; nu blochează și nu modifică nimic."
                        TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
         </StackPanel>
 
@@ -62,7 +72,7 @@
                 <StackPanel>
                     <TextBlock Text="{Binding Summary}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
                     <TextBlock Text="{Binding LiveStatus}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
-                    <TextBlock Text="{Binding Problems}" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" Margin="0,2,0,0"/>
+                    <TextBlock Text="{Binding Problems}" Style="{StaticResource OptionalLine}" Foreground="{StaticResource WarningBrush}"/>
                 </StackPanel>
             </DockPanel>
             <ProgressBar IsIndeterminate="True" Height="4" Margin="0,6,0,0" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
@@ -81,11 +91,11 @@
                         <ComboBox DockPanel.Dock="Right" AutomationProperties.Name="Ce dispozitive arată monitorul" ItemsSource="{Binding Filters}" SelectedItem="{Binding Filter}" Width="280" VerticalAlignment="Top"/>
                         <StackPanel Margin="0,0,12,0">
                             <TextBlock Text="{Binding Summary}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
-                            <TextBlock Text="{Binding Mode}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
-                            <TextBlock Text="{Binding Problem}" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" Margin="0,2,0,0"/>
-                            <TextBlock Text="{Binding RadioNotice}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" Margin="0,2,0,0" AutomationProperties.Name="Radiouri oprite"/>
-                            <TextBlock Text="{Binding SuppressedText}" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" Margin="0,2,0,0" AutomationProperties.Name="Alerte suprimate"/>
-                            <TextBlock Text="{Binding ExportNote}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" AutomationProperties.Name="Rezultatul exportului"/>
+                            <TextBlock Text="{Binding Mode}" Style="{StaticResource OptionalLine}" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock Text="{Binding Problem}" Style="{StaticResource OptionalLine}" Foreground="{StaticResource WarningBrush}"/>
+                            <TextBlock Text="{Binding RadioNotice}" Style="{StaticResource OptionalLine}" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" AutomationProperties.Name="Radiouri oprite"/>
+                            <TextBlock Text="{Binding SuppressedText}" Style="{StaticResource OptionalLine}" Foreground="{StaticResource WarningBrush}" AutomationProperties.Name="Alerte suprimate"/>
+                            <TextBlock Text="{Binding ExportNote}" Style="{StaticResource OptionalLine}" Foreground="{StaticResource TextSecondaryBrush}" AutomationProperties.Name="Rezultatul exportului"/>
                         </StackPanel>
                     </DockPanel>
                     <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"
@@ -117,10 +127,10 @@
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="Nume" Binding="{Binding Name, Mode=OneWay}" IsReadOnly="True" Width="1.5*"/>
-                            <DataGridTextColumn Header="Tip" Binding="{Binding ClassText, Mode=OneWay}" IsReadOnly="True" Width="1.1*"/>
-                            <DataGridTextColumn Header="Producător" Binding="{Binding Manufacturer, Mode=OneWay}" IsReadOnly="True" Width="*"/>
-                            <DataGridTextColumn Header="Model" Binding="{Binding Model, Mode=OneWay}" IsReadOnly="True" Width="*"/>
+                            <DataGridTextColumn Header="Nume" Binding="{Binding Name, Mode=OneWay}" IsReadOnly="True" Width="1.5*" MinWidth="170"/>
+                            <DataGridTextColumn Header="Tip" Binding="{Binding ClassText, Mode=OneWay}" IsReadOnly="True" Width="1.1*" MinWidth="120"/>
+                            <DataGridTextColumn Header="Producător" Binding="{Binding Manufacturer, Mode=OneWay}" IsReadOnly="True" Width="*" MinWidth="140"/>
+                            <DataGridTextColumn Header="Model" Binding="{Binding Model, Mode=OneWay}" IsReadOnly="True" Width="*" MinWidth="160"/>
                             <DataGridTextColumn Header="VID" Binding="{Binding Vid, Mode=OneWay}" IsReadOnly="True" Width="60"/>
                             <DataGridTextColumn Header="PID" Binding="{Binding Pid, Mode=OneWay}" IsReadOnly="True" Width="60"/>
                             <DataGridTextColumn Header="Serie" Binding="{Binding Serial, Mode=OneWay}" IsReadOnly="True" Width="*"/>
@@ -133,7 +143,7 @@
                             <DataGridTextColumn Header="Ultima deconectare" Binding="{Binding LastDisconnectedText, Mode=OneWay}" SortMemberPath="LastDisconnectedUtc" IsReadOnly="True" Width="140"/>
                             <DataGridTextColumn Header="Nr. de înregistrare" Binding="{Binding RegistrationNumber, UpdateSourceTrigger=LostFocus}" Width="130"/>
                             <DataGridTextColumn Header="Registru" Binding="{Binding RegistryText, Mode=OneWay}" IsReadOnly="True" Width="95"/>
-                            <DataGridTextColumn Header="Alertă" Binding="{Binding AlertText, Mode=OneWay}" IsReadOnly="True" Width="1.3*">
+                            <DataGridTextColumn Header="Alertă" Binding="{Binding AlertText, Mode=OneWay}" IsReadOnly="True" Width="1.3*" MinWidth="260">
                                 <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
                             <!-- row action, not a data column -->

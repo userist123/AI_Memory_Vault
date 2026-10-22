@@ -16,7 +16,7 @@ namespace LogAnalyzer.UI.Services
 
     /// <summary>
     /// Creates the view models and views of the screens whose code lives only in the unclassified edition. The classified
-    /// edition registers <see cref="NoFeatureViews"/>: those screens then show "nu este disponibil în ediția clasificată".
+    /// edition registers <see cref="NoFeatureViews"/>: those screens then show "nu este disponibil în ediția Standalone".
     /// </summary>
     public interface IFeatureViewFactory
     {

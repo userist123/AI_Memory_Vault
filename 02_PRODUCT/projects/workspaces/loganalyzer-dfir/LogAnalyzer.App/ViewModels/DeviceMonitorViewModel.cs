@@ -704,7 +704,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             var all = _rows.Values.ToList();
             int connected = all.Count(r => r.Present), noNumber = all.Count(r => r.HasNoNumber);
-            Summary = $"Conectate acum: {connected} · cunoscute de monitor: {all.Count}" +
+            Summary = $"Conectate acum (stocare și externe): {connected} · văzute de monitor (inclusiv deconectate): {all.Count}" +
                       (noNumber > 0 ? $" · {noNumber} {(noNumber == 1 ? "mediu de stocare" : "medii de stocare")} {DeviceMonitorReport.NoRegistration}" : "") + ".";
         }
 

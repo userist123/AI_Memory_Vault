@@ -30,14 +30,14 @@ namespace LogAnalyzer.UI.ViewModels
 
         public string Hint => Table switch
         {
-            ProfileTable.WorkingHours => "Day: Mon..Sun (sau Luni..Duminică); Start/End: HH:mm. Un schimb de noapte (22:00-06:00) este acceptat.",
-            ProfileTable.Holidays => "Date: yyyy-MM-dd.",
-            ProfileTable.Shifts => "Name; Start/End: HH:mm.",
-            ProfileTable.ApprovedAccounts => "Account: DOMENIU\\utilizator sau utilizator. Conturile care au voie să golească jurnalele.",
-            ProfileTable.MaintenanceWindows => "Kind: once (Date), weekly (Day) sau monthly (Ordinal 1-4/last + Day), de exemplu prima zi de luni din lună = monthly, Mon, 1, 08:00-10:00. Ora locală a stației.",
+            ProfileTable.WorkingHours => "Ziua (Day): Luni..Duminică (sau Mon..Sun); începutul și sfârșitul (Start/End): HH:mm. Un schimb de noapte (22:00-06:00) este acceptat.",
+            ProfileTable.Holidays => "Data (Date): aaaa-LL-zz.",
+            ProfileTable.Shifts => "Numele (Name); începutul și sfârșitul (Start/End): HH:mm.",
+            ProfileTable.ApprovedAccounts => "Contul (Account): DOMENIU\\utilizator sau utilizator. Conturile care au voie să golească jurnalele.",
+            ProfileTable.MaintenanceWindows => "Tipul (Kind): once (o singură dată, Date), weekly (săptămânal, Day) sau monthly (lunar, Ordinal 1-4/last + Day), de exemplu prima zi de luni din lună = monthly, Mon, 1, 08:00-10:00. Ora locală a stației.",
             ProfileTable.RotationProcedure => "Pașii, în ordinea procedurii: EXPORT → HASH → ARCHIVE → VERIFY → CLEAR.",
-            ProfileTable.ApprovedSoftware => "Name; Publisher; PathPattern (ex. C:\\Program Files\\7-Zip\\*); Sha256 (opțional, 64 hex).",
-            ProfileTable.ExpectedPolicies => "PolicyPath: calea politicii din secțiunea Politici (import GPO existent; nu se copiază aici); Sha256 opțional.",
+            ProfileTable.ApprovedSoftware => "Numele (Name); editorul (Publisher); șablonul căii (PathPattern, ex. C:\\Program Files\\7-Zip\\*); Sha256 (opțional, 64 de caractere hexazecimale).",
+            ProfileTable.ExpectedPolicies => "Calea politicii (PolicyPath): calea din secțiunea Politici (import GPO existent; nu se copiază aici); Sha256 opțional.",
             ProfileTable.Zones => "Zonele organizației (ex. ROSU, PUBLIC). Fără zone, orice conectivitate pe un sistem air-gapped este „conectivitate observată, necesită explicație”.",
             ProfileTable.TransferChannels => "FromZone/ToZone: zone definite mai sus; Medium: suport sau cale de transfer aprobată.",
             ProfileTable.NetworkDestinations => "Address: IP, rețea CIDR sau nume; Zone: zona în care se află.",

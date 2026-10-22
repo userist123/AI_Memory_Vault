@@ -122,3 +122,25 @@ Findings to fix (UI only, no behaviour change):
 9. Station-control wizard: the hint "Apăsați „Înainte” ca să alegeți perioada" stays on steps 2 and 3.
 10. Window title in English marketing text ("Threat Triage & Incident Response Command Center").
 Not exercised: running the station control by automated click was refused by the session's permission classifier.
+
+### Fix session 2026-10-22 (items 1-10 DONE in code; UI only; not committed to main)
+Build: `dotnet build LogAnalyzer.slnx` 0 errors. Tests: Dfir 2284 passed / 31 skipped / 0 failed; App 656/0 (644 + 12 new); UI 354 / 1 skipped; Edition 45/0.
+1. Banner title/subtitle: `LogAnalyzer.App/Services/CollectAll.cs` (EmptyTitle, EmptySubtitle, Status default), `Views/Controls/NoDataPanel.xaml`.
+2. Status bar: `ViewModels/MainViewModel.cs` RunAiAnalysis (neutral "Nicio analiză încă." without events; AI label only if Edition.Has(AiAnalysis));
+   AI tab hidden in Standalone: `Views/InvestigationView.xaml` + `ViewModels/InvestigationViewModel.cs` (HasAiAnalysis); "ediția Standalone" in
+   `MainWindow.xaml`, `Views/DashboardView.xaml`, `Views/AuthView.xaml`, `Core/Services/Edition/EditionProfile.cs|StationRole.cs|RoleProfile.cs`,
+   `Dfir.Windows/Policy/SettingProviders.cs`; `Views/RiskAnalysisView.xaml` button renamed (no "AI" in Standalone).
+3. Home card: `Core/Services/Edition/RoleProfile.cs` ("cu driverul" removed).
+4. Device monitor: `Views/MediaCenterView.xaml` (scope header, MinWidth on Nume/Tip/Producător/Model/Alertă, OptionalLine style collapses empty lines),
+   `ViewModels/DeviceMonitorViewModel.cs` and `ViewModels/MediaCenterViewModel.cs` (count labels). Empty-gap cause NOT reproduced visually.
+5. Dates/watermark: `App.xaml.cs` (FrameworkElement.LanguageProperty ro-RO, static ctor), `App.xaml` (DatePickerTextBox template, "Alegeți data").
+   Thread culture deliberately NOT changed (report formatting would change). Watermark template NOT verified visually.
+6. Transfer register: `Views/TransferRegisterView.xaml` (MinWidth headers, "Monitor dispozitive"), `ViewModels/TransferViewModel.cs`,
+   `Dfir.Core/Registers/TransferReconciliation.cs` (message "mediu de stocare ...").
+7. Help texts: `ViewModels/RegisterViewModel.cs` (Hint), `ViewModels/ProcedureProfileViewModel.cs`, `Views/PolicyView.xaml`, `ViewModels/PolicyViewModel.cs`.
+8. Password labels: `Views/AuthView.xaml` (Parola curentă / Parola nouă / Repetați parola nouă + AutomationProperties.Name).
+9. Wizard hints: `ViewModels/StationControlViewModel.cs` (FlowHints, SetFlowHint on Next/Back/Restart).
+10. Window title: `MainWindow.xaml` Title="LogAnalyzer" (suffix " — Ediția: Standalone" from MainWindow.xaml.cs).
+Tests: new `LogAnalyzer.App.Tests/UiWalkthrough20261022Tests.cs`. Pinned old strings updated: `CollectAllTests.cs` (Status default),
+`UI.Tests/TransferReconciliationTests.cs` (message), `UI.Tests/StationRoleTests.cs` ("clasificat" -> "Standalone"), `UI.Tests/EditionPolicyTests.cs`.
+Open: SplashWindow.xaml still has the English tagline; live click-through of the banner/watermark/monitor layout not done (refused earlier).
